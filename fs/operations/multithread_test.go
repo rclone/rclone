@@ -106,7 +106,6 @@ func TestMultithreadCalculateChunks(t *testing.T) {
 
 func TestMultithreadCopy(t *testing.T) {
 	r := fstest.NewRun(t)
-	defer r.Finalise()
 	ctx := context.Background()
 
 	for _, test := range []struct {

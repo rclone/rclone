@@ -7,7 +7,6 @@ import (
 	"flag"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"os"
 	"os/exec"
@@ -100,7 +99,7 @@ func (r *Run) startMountSubProcess() {
 // Find a free path to run the mount on
 func findMountPath() string {
 	if runtime.GOOS != "windows" {
-		mountPath, err := ioutil.TempDir("", "rclonefs-mount")
+		mountPath, err := os.MkdirTemp("", "rclonefs-mount")
 		if err != nil {
 			log.Fatalf("Failed to create mount dir: %v", err)
 		}
@@ -181,9 +180,12 @@ func startMount(mountFn mountlib.MountFn, useVFS bool, opts string) {
 // line to send to stdout with an exit flag.
 //
 // The format of the lines is
-//     command \t parameter (optional)
+//
+//	command \t parameter (optional)
+//
 // The response should be
-//     OK|ERR \t result (optional)
+//
+//	OK|ERR \t result (optional)
 func doMountCommand(vfs *vfs.VFS, rx string) (tx string, exit bool) {
 	command := strings.Split(rx, "\t")
 	// log.Printf("doMountCommand: %q received", command)

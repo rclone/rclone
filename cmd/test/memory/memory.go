@@ -1,3 +1,4 @@
+// Package memory provides the memory test command.
 package memory
 
 import (
@@ -19,12 +20,16 @@ func init() {
 var commandDefinition = &cobra.Command{
 	Use:   "memory remote:path",
 	Short: `Load all the objects at remote:path into memory and report memory stats.`,
+	Annotations: map[string]string{
+		"versionIntroduced": "v1.55",
+	},
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(1, 1, command, args)
 		fsrc := cmd.NewFsSrc(args)
 		cmd.Run(false, false, command, func() error {
 			ctx := context.Background()
 			ci := fs.GetConfig(context.Background())
+			metadata := ci.Metadata && fsrc.Features().ReadMetadata
 			objects, _, _, err := operations.Count(ctx, fsrc)
 			if err != nil {
 				return err
@@ -35,6 +40,13 @@ var commandDefinition = &cobra.Command{
 			runtime.ReadMemStats(&before)
 			var mu sync.Mutex
 			err = operations.ListFn(ctx, fsrc, func(o fs.Object) {
+				// Read the metadata so it gets cached in the object
+				if metadata {
+					_, err := fs.GetMetadata(ctx, o)
+					if err != nil {
+						fs.Errorf(o, "Failed to read metadata: %v", err)
+					}
+				}
 				mu.Lock()
 				objs = append(objs, o)
 				mu.Unlock()

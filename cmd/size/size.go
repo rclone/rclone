@@ -1,3 +1,4 @@
+// Package size provides the size command.
 package size
 
 import (
@@ -43,6 +44,9 @@ Rclone will then show a notice in the log indicating how many such
 files were encountered, and count them in as empty files in the output
 of the size command.
 `,
+	Annotations: map[string]string{
+		"versionIntroduced": "v1.23",
+	},
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(1, 1, command, args)
 		fsrc := cmd.NewFsSrc(args)

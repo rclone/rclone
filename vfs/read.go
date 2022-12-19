@@ -20,19 +20,19 @@ type ReadFileHandle struct {
 	baseHandle
 	done        func(ctx context.Context, err error)
 	mu          sync.Mutex
-	cond        *sync.Cond // cond lock for out of sequence reads
-	closed      bool       // set if handle has been closed
+	cond        sync.Cond // cond lock for out of sequence reads
 	r           *accounting.Account
-	readCalled  bool  // set if read has been called
 	size        int64 // size of the object (0 for unknown length)
 	offset      int64 // offset of read of o
 	roffset     int64 // offset of Read() calls
-	noSeek      bool
-	sizeUnknown bool // set if size of source is not known
 	file        *File
 	hash        *hash.MultiHasher
-	opened      bool
 	remote      string
+	closed      bool // set if handle has been closed
+	readCalled  bool // set if read has been called
+	noSeek      bool
+	sizeUnknown bool // set if size of source is not known
+	opened      bool
 }
 
 // Check interfaces
@@ -63,7 +63,7 @@ func newReadFileHandle(f *File) (*ReadFileHandle, error) {
 		size:        nonNegative(o.Size()),
 		sizeUnknown: o.Size() < 0,
 	}
-	fh.cond = sync.NewCond(&fh.mu)
+	fh.cond = sync.Cond{L: &fh.mu}
 	return fh, nil
 }
 
@@ -215,7 +215,7 @@ func (fh *ReadFileHandle) ReadAt(p []byte, off int64) (n int, err error) {
 
 // This waits for *poff to equal off or aborts after the timeout.
 //
-// Waits here potentially affect all seeks so need to keep them short
+// Waits here potentially affect all seeks so need to keep them short.
 //
 // Call with fh.mu Locked
 func waitSequential(what string, remote string, cond *sync.Cond, maxWait time.Duration, poff *int64, off int64) {
@@ -267,7 +267,7 @@ func (fh *ReadFileHandle) readAt(p []byte, off int64) (n int, err error) {
 		maxBuf = len(p)
 	}
 	if gap := off - fh.offset; gap > 0 && gap < int64(8*maxBuf) {
-		waitSequential("read", fh.remote, fh.cond, fh.file.VFS().Opt.ReadWait, &fh.offset, off)
+		waitSequential("read", fh.remote, &fh.cond, fh.file.VFS().Opt.ReadWait, &fh.offset, off)
 	}
 	doSeek := off != fh.offset
 	if doSeek && fh.noSeek {

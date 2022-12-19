@@ -118,7 +118,7 @@ func init() {
 					Help:  "Microsoft Cloud Germany",
 				}, {
 					Value: regionCN,
-					Help:  "Azure and Office 365 operated by 21Vianet in China",
+					Help:  "Azure and Office 365 operated by Vnet Group in China",
 				},
 			},
 		}, {
@@ -600,14 +600,14 @@ type Options struct {
 	Enc                     encoder.MultiEncoder `config:"encoding"`
 }
 
-// Fs represents a remote one drive
+// Fs represents a remote OneDrive
 type Fs struct {
 	name         string             // name of this remote
 	root         string             // the path we are working on
 	opt          Options            // parsed options
 	ci           *fs.ConfigInfo     // global config
 	features     *fs.Features       // optional features
-	srv          *rest.Client       // the connection to the one drive server
+	srv          *rest.Client       // the connection to the OneDrive server
 	dirCache     *dircache.DirCache // Map of directory path to directory id
 	pacer        *fs.Pacer          // pacer for API calls
 	tokenRenewer *oauthutil.Renew   // renew the token on expiry
@@ -615,7 +615,7 @@ type Fs struct {
 	driveType    string             // https://developer.microsoft.com/en-us/graph/docs/api-reference/v1.0/resources/drive
 }
 
-// Object describes a one drive object
+// Object describes a OneDrive object
 //
 // Will definitely have info but maybe not meta
 type Object struct {
@@ -645,7 +645,7 @@ func (f *Fs) Root() string {
 
 // String converts this Fs to a string
 func (f *Fs) String() string {
-	return fmt.Sprintf("One drive root '%s'", f.root)
+	return fmt.Sprintf("OneDrive root '%s'", f.root)
 }
 
 // Features returns the optional features of this Fs
@@ -653,7 +653,7 @@ func (f *Fs) Features() *fs.Features {
 	return f.features
 }
 
-// parsePath parses a one drive 'url'
+// parsePath parses a OneDrive 'url'
 func parsePath(path string) (root string) {
 	root = strings.Trim(path, "/")
 	return
@@ -727,7 +727,7 @@ func shouldRetry(ctx context.Context, resp *http.Response, err error) (bool, err
 // "shared with me" folders in OneDrive Personal (See #2536, #2778)
 // This path pattern comes from https://github.com/OneDrive/onedrive-api-docs/issues/908#issuecomment-417488480
 //
-// If `relPath` == '', do not append the slash (See #3664)
+// If `relPath` == ”, do not append the slash (See #3664)
 func (f *Fs) readMetaDataForPathRelativeToID(ctx context.Context, normalizedID string, relPath string) (info *api.Item, resp *http.Response, err error) {
 	opts, _ := f.newOptsCallWithIDPath(normalizedID, relPath, true, "GET", "")
 
@@ -890,6 +890,12 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		ServerSideAcrossConfigs: opt.ServerSideAcrossConfigs,
 	}).Fill(ctx, f)
 	f.srv.SetErrorHandler(errorHandler)
+
+	// Disable change polling in China region
+	// See: https://github.com/rclone/rclone/issues/6444
+	if f.opt.Region == regionCN {
+		f.features.ChangeNotify = nil
+	}
 
 	// Renew the token in the background
 	f.tokenRenewer = oauthutil.NewRenew(f.String(), ts, func() error {
@@ -1137,7 +1143,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 // Creates from the parameters passed in a half finished Object which
 // must have setMetaData called on it
 //
-// Returns the object, leaf, directoryID and error
+// Returns the object, leaf, directoryID and error.
 //
 // Used to create new objects
 func (f *Fs) createObject(ctx context.Context, remote string, modTime time.Time, size int64) (o *Object, leaf string, directoryID string, err error) {
@@ -1156,7 +1162,7 @@ func (f *Fs) createObject(ctx context.Context, remote string, modTime time.Time,
 
 // Put the object into the container
 //
-// Copy the reader in to the new object which is returned
+// Copy the reader in to the new object which is returned.
 //
 // The new object may have been created if an error is returned
 func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
@@ -1280,9 +1286,9 @@ func (f *Fs) waitForJob(ctx context.Context, location string, o *Object) error {
 
 // Copy src to this remote using server-side copy operations.
 //
-// This is stored with the remote path given
+// This is stored with the remote path given.
 //
-// It returns the destination Object and a possible error
+// It returns the destination Object and a possible error.
 //
 // Will only be called if src.Fs().Name() == f.Name()
 //
@@ -1387,9 +1393,9 @@ func (f *Fs) Purge(ctx context.Context, dir string) error {
 
 // Move src to this remote using server-side move operations.
 //
-// This is stored with the remote path given
+// This is stored with the remote path given.
 //
-// It returns the destination Object and a possible error
+// It returns the destination Object and a possible error.
 //
 // Will only be called if src.Fs().Name() == f.Name()
 //
@@ -1760,16 +1766,6 @@ func (o *Object) rootPath() string {
 	return o.fs.rootPath(o.remote)
 }
 
-// srvPath returns a path for use in server given a remote
-func (f *Fs) srvPath(remote string) string {
-	return f.opt.Enc.FromStandardPath(f.rootSlash() + remote)
-}
-
-// srvPath returns a path for use in server
-func (o *Object) srvPath() string {
-	return o.fs.srvPath(o.remote)
-}
-
 // Hash returns the SHA-1 of an object returning a lowercase hex string
 func (o *Object) Hash(ctx context.Context, t hash.Type) (string, error) {
 	if o.fs.driveType == driveTypePersonal {
@@ -1852,7 +1848,6 @@ func (o *Object) readMetaData(ctx context.Context) (err error) {
 }
 
 // ModTime returns the modification time of the object
-//
 //
 // It attempts to read the objects mtime and if that isn't present the
 // LastModified returned in the http headers
@@ -2194,7 +2189,7 @@ func (o *Object) ID() string {
  *       3. To avoid region-related issues, please don't manually build rest.Opts from scratch.
  *          Instead, use these helper function, and customize the URL afterwards if needed.
  *
- *       currently, the 21ViaNet's API differs in the following places:
+ *       currently, the Vnet Group's API differs in the following places:
  *       - https://{Endpoint}/drives/{driveID}/items/{leaf}:/{route}
  *           - this API doesn't work (gives invalid request)
  *           - can be replaced with the following API:
@@ -2243,7 +2238,7 @@ func escapeSingleQuote(str string) string {
 // newOptsCallWithIDPath build the rest.Opts structure with *a normalizedID (driveID#fileID, or simply fileID) and leaf*
 // using url template https://{Endpoint}/drives/{driveID}/items/{leaf}:/{route} (for international OneDrive)
 // or https://{Endpoint}/drives/{driveID}/items/children('{leaf}')/{route}
-// and https://{Endpoint}/drives/{driveID}/items/children('@a1')/{route}?@a1=URLEncode("'{leaf}'") (for 21ViaNet)
+// and https://{Endpoint}/drives/{driveID}/items/children('@a1')/{route}?@a1=URLEncode("'{leaf}'") (for Vnet Group)
 // if isPath is false, this function will only work when the leaf is "" or a child name (i.e. it doesn't accept multi-level leaf)
 // if isPath is true, multi-level leaf like a/b/c can be passed
 func (f *Fs) newOptsCallWithIDPath(normalizedID string, leaf string, isPath bool, method string, route string) (opts rest.Opts, ok bool) {

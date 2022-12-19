@@ -1,3 +1,4 @@
+// Package lshelp provides common help for list commands.
 package lshelp
 
 import (
@@ -25,7 +26,7 @@ Note that |ls| and |lsl| recurse by default - use |--max-depth 1| to stop the re
 
 The other list commands |lsd|,|lsf|,|lsjson| do not recurse by default - use |-R| to make them recurse.
 
-Listing a non-existent directory will produce an error except for
+Listing a nonexistent directory will produce an error except for
 remotes which can't have empty directories (e.g. s3, swift, or gcs -
 the bucket-based remotes).
 `, "|", "`")

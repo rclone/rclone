@@ -1,11 +1,12 @@
-//go:generate go run assets_generate.go
+// Package data provides utilities for DLNA server.
 // The "go:generate" directive compiles static assets by running assets_generate.go
-
+//
+//go:generate go run assets_generate.go
 package data
 
 import (
 	"fmt"
-	"io/ioutil"
+	"io"
 	"text/template"
 
 	"github.com/rclone/rclone/fs"
@@ -20,7 +21,7 @@ func GetTemplate() (tpl *template.Template, err error) {
 
 	defer fs.CheckClose(templateFile, &err)
 
-	templateBytes, err := ioutil.ReadAll(templateFile)
+	templateBytes, err := io.ReadAll(templateFile)
 	if err != nil {
 		return nil, fmt.Errorf("get template read: %w", err)
 	}

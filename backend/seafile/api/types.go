@@ -1,3 +1,4 @@
+// Package api provides types used by the Seafile API.
 package api
 
 // Some api objects are duplicated with only small differences,

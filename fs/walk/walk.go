@@ -50,7 +50,7 @@ type Func func(path string, entries fs.DirEntries, err error) error
 // Note that fn will not be called concurrently whereas the directory
 // listing will proceed concurrently.
 //
-// Parent directories are always listed before their children
+// Parent directories are always listed before their children.
 //
 // This is implemented by WalkR if Config.UseListR is true
 // and f supports it and level > 1, or WalkN otherwise.
@@ -64,7 +64,7 @@ type Func func(path string, entries fs.DirEntries, err error) error
 func Walk(ctx context.Context, f fs.Fs, path string, includeAll bool, maxLevel int, fn Func) error {
 	ci := fs.GetConfig(ctx)
 	fi := filter.GetConfig(ctx)
-	ctx = filter.SetUseFilter(ctx, !includeAll) // make filter-aware backends constrain List
+	ctx = filter.SetUseFilter(ctx, f.Features().FilterAware && !includeAll) // make filter-aware backends constrain List
 	if ci.NoTraverse && fi.HaveFilesFrom() {
 		return walkR(ctx, f, path, includeAll, maxLevel, fn, fi.MakeListR(ctx, f.NewObject))
 	}
@@ -158,7 +158,7 @@ func ListR(ctx context.Context, f fs.Fs, path string, includeAll bool, maxLevel 
 		fi.UsesDirectoryFilters() { // ...using any directory filters
 		return listRwalk(ctx, f, path, includeAll, maxLevel, listType, fn)
 	}
-	ctx = filter.SetUseFilter(ctx, !includeAll) // make filter-aware backends constrain List
+	ctx = filter.SetUseFilter(ctx, f.Features().FilterAware && !includeAll) // make filter-aware backends constrain List
 	return listR(ctx, f, path, includeAll, listType, fn, doListR, listType.Dirs() && f.Features().BucketBased)
 }
 

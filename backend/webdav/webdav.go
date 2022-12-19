@@ -148,7 +148,7 @@ type Fs struct {
 	features           *fs.Features  // optional features
 	endpoint           *url.URL      // URL of the host
 	endpointURL        string        // endpoint as a string
-	srv                *rest.Client  // the connection to the one drive server
+	srv                *rest.Client  // the connection to the server
 	pacer              *fs.Pacer     // pacer for API calls
 	precision          time.Duration // mod time precision
 	canStream          bool          // set if can stream
@@ -800,7 +800,7 @@ func (f *Fs) createObject(remote string, modTime time.Time, size int64) (o *Obje
 
 // Put the object
 //
-// Copy the reader in to the new object which is returned
+// Copy the reader in to the new object which is returned.
 //
 // The new object may have been created if an error is returned
 func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
@@ -975,9 +975,9 @@ func (f *Fs) Precision() time.Duration {
 
 // Copy or Move src to this remote using server-side copy operations.
 //
-// This is stored with the remote path given
+// This is stored with the remote path given.
 //
-// It returns the destination Object and a possible error
+// It returns the destination Object and a possible error.
 //
 // Will only be called if src.Fs().Name() == f.Name()
 //
@@ -991,6 +991,7 @@ func (f *Fs) copyOrMove(ctx context.Context, src fs.Object, remote string, metho
 		}
 		return nil, fs.ErrorCantMove
 	}
+	srcFs := srcObj.fs
 	dstPath := f.filePath(remote)
 	err := f.mkParentDir(ctx, dstPath)
 	if err != nil {
@@ -1013,9 +1014,10 @@ func (f *Fs) copyOrMove(ctx context.Context, src fs.Object, remote string, metho
 	if f.useOCMtime {
 		opts.ExtraHeaders["X-OC-Mtime"] = fmt.Sprintf("%d", src.ModTime(ctx).Unix())
 	}
-	err = f.pacer.Call(func() (bool, error) {
-		resp, err = f.srv.Call(ctx, &opts)
-		return f.shouldRetry(ctx, resp, err)
+	// Direct the MOVE/COPY to the source server
+	err = srcFs.pacer.Call(func() (bool, error) {
+		resp, err = srcFs.srv.Call(ctx, &opts)
+		return srcFs.shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
 		return nil, fmt.Errorf("Copy call failed: %w", err)
@@ -1029,9 +1031,9 @@ func (f *Fs) copyOrMove(ctx context.Context, src fs.Object, remote string, metho
 
 // Copy src to this remote using server-side copy operations.
 //
-// This is stored with the remote path given
+// This is stored with the remote path given.
 //
-// It returns the destination Object and a possible error
+// It returns the destination Object and a possible error.
 //
 // Will only be called if src.Fs().Name() == f.Name()
 //
@@ -1051,9 +1053,9 @@ func (f *Fs) Purge(ctx context.Context, dir string) error {
 
 // Move src to this remote using server-side move operations.
 //
-// This is stored with the remote path given
+// This is stored with the remote path given.
 //
-// It returns the destination Object and a possible error
+// It returns the destination Object and a possible error.
 //
 // Will only be called if src.Fs().Name() == f.Name()
 //
@@ -1109,9 +1111,10 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 			"Overwrite":   "F",
 		},
 	}
-	err = f.pacer.Call(func() (bool, error) {
-		resp, err = f.srv.Call(ctx, &opts)
-		return f.shouldRetry(ctx, resp, err)
+	// Direct the MOVE/COPY to the source server
+	err = srcFs.pacer.Call(func() (bool, error) {
+		resp, err = srcFs.srv.Call(ctx, &opts)
+		return srcFs.shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
 		return fmt.Errorf("DirMove MOVE call failed: %w", err)
@@ -1291,7 +1294,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 
 // Update the object with the contents of the io.Reader, modTime and size
 //
-// If existing is set then it updates the object rather than creating a new one
+// If existing is set then it updates the object rather than creating a new one.
 //
 // The new object may have been created if an error is returned
 func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (err error) {

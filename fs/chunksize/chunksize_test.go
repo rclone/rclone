@@ -2,34 +2,100 @@ package chunksize
 
 import (
 	"testing"
-	"time"
 
 	"github.com/rclone/rclone/fs"
-	"github.com/rclone/rclone/fs/object"
 )
 
 func TestComputeChunkSize(t *testing.T) {
-	tests := map[string]struct {
-		fileSize         fs.SizeSuffix
+	for _, test := range []struct {
+		name             string
+		size             fs.SizeSuffix
 		maxParts         int
 		defaultChunkSize fs.SizeSuffix
-		expected         fs.SizeSuffix
+		want             fs.SizeSuffix
 	}{
-		"default size returned when file size is small enough":             {fileSize: 1000, maxParts: 10000, defaultChunkSize: toSizeSuffixMiB(10), expected: toSizeSuffixMiB(10)},
-		"default size returned when file size is just 1 byte small enough": {fileSize: toSizeSuffixMiB(100000) - 1, maxParts: 10000, defaultChunkSize: toSizeSuffixMiB(10), expected: toSizeSuffixMiB(10)},
-		"no rounding up when everything divides evenly":                    {fileSize: toSizeSuffixMiB(1000000), maxParts: 10000, defaultChunkSize: toSizeSuffixMiB(100), expected: toSizeSuffixMiB(100)},
-		"rounding up to nearest MiB when not quite enough parts":           {fileSize: toSizeSuffixMiB(1000000), maxParts: 9999, defaultChunkSize: toSizeSuffixMiB(100), expected: toSizeSuffixMiB(101)},
-		"rounding up to nearest MiB when one extra byte":                   {fileSize: toSizeSuffixMiB(1000000) + 1, maxParts: 10000, defaultChunkSize: toSizeSuffixMiB(100), expected: toSizeSuffixMiB(101)},
-		"expected MiB value when rounding sets to absolute minimum":        {fileSize: toSizeSuffixMiB(1) - 1, maxParts: 1, defaultChunkSize: toSizeSuffixMiB(1), expected: toSizeSuffixMiB(1)},
-		"expected MiB value when rounding to absolute min with extra":      {fileSize: toSizeSuffixMiB(1) + 1, maxParts: 1, defaultChunkSize: toSizeSuffixMiB(1), expected: toSizeSuffixMiB(2)},
-	}
+		{
+			name:             "streaming file",
+			size:             -1,
+			maxParts:         10000,
+			defaultChunkSize: toSizeSuffixMiB(10),
+			want:             toSizeSuffixMiB(10),
+		}, {
+			name:             "default size returned when file size is small enough",
+			size:             1000,
+			maxParts:         10000,
+			defaultChunkSize: toSizeSuffixMiB(10),
+			want:             toSizeSuffixMiB(10),
+		}, {
+			name:             "default size returned when file size is just 1 byte small enough",
+			size:             toSizeSuffixMiB(100000) - 1,
+			maxParts:         10000,
+			defaultChunkSize: toSizeSuffixMiB(10),
+			want:             toSizeSuffixMiB(10),
+		}, {
+			name:             "no rounding up when everything divides evenly",
+			size:             toSizeSuffixMiB(1000000),
+			maxParts:         10000,
+			defaultChunkSize: toSizeSuffixMiB(100),
+			want:             toSizeSuffixMiB(100),
+		}, {
+			name:             "rounding up to nearest MiB when not quite enough parts",
+			size:             toSizeSuffixMiB(1000000),
+			maxParts:         9999,
+			defaultChunkSize: toSizeSuffixMiB(100),
+			want:             toSizeSuffixMiB(101),
+		}, {
+			name:             "rounding up to nearest MiB when one extra byte",
+			size:             toSizeSuffixMiB(1000000) + 1,
+			maxParts:         10000,
+			defaultChunkSize: toSizeSuffixMiB(100),
+			want:             toSizeSuffixMiB(101),
+		}, {
+			name:             "expected MiB value when rounding sets to absolute minimum",
+			size:             toSizeSuffixMiB(1) - 1,
+			maxParts:         1,
+			defaultChunkSize: toSizeSuffixMiB(1),
+			want:             toSizeSuffixMiB(1),
+		}, {
+			name:             "expected MiB value when rounding to absolute min with extra",
+			size:             toSizeSuffixMiB(1) + 1,
+			maxParts:         1,
+			defaultChunkSize: toSizeSuffixMiB(1),
+			want:             toSizeSuffixMiB(2),
+		}, {
+			name:             "issue from forum #1",
+			size:             120864818840,
+			maxParts:         10000,
+			defaultChunkSize: 5 * 1024 * 1024,
+			want:             toSizeSuffixMiB(12),
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			got := Calculator(test.name, int64(test.size), test.maxParts, test.defaultChunkSize)
+			if got != test.want {
+				t.Fatalf("expected: %v, got: %v", test.want, got)
+			}
+			if test.size < 0 {
+				return
+			}
+			parts := func(result fs.SizeSuffix) int {
+				n := test.size / result
+				r := test.size % result
+				if r != 0 {
+					n++
+				}
+				return int(n)
+			}
+			// Check this gives the parts in range
+			if parts(got) > test.maxParts {
+				t.Fatalf("too many parts %d", parts(got))
+			}
+			// Check that setting chunk size smaller gave too many parts
+			if got > test.defaultChunkSize {
+				if parts(got-toSizeSuffixMiB(1)) <= test.maxParts {
+					t.Fatalf("chunk size %v too big as %v only gives %d parts", got, got-toSizeSuffixMiB(1), parts(got-toSizeSuffixMiB(1)))
+				}
 
-	for name, tc := range tests {
-		t.Run(name, func(t *testing.T) {
-			src := object.NewStaticObjectInfo("mock", time.Now(), int64(tc.fileSize), true, nil, nil)
-			result := Calculator(src, tc.maxParts, tc.defaultChunkSize)
-			if result != tc.expected {
-				t.Fatalf("expected: %v, got: %v", tc.expected, result)
 			}
 		})
 	}

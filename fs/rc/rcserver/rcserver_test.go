@@ -5,7 +5,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -14,14 +13,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-
 	_ "github.com/rclone/rclone/backend/local"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/accounting"
 	"github.com/rclone/rclone/fs/config/configfile"
 	"github.com/rclone/rclone/fs/rc"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 const (
@@ -50,24 +48,24 @@ func TestMain(m *testing.M) {
 // We'll do the majority of the testing with the httptest framework
 func TestRcServer(t *testing.T) {
 	opt := rc.DefaultOpt
-	opt.HTTPOptions.ListenAddr = testBindAddress
-	opt.HTTPOptions.Template = testTemplate
+	opt.HTTP.ListenAddr = []string{testBindAddress}
+	opt.Template.Path = testTemplate
 	opt.Enabled = true
 	opt.Serve = true
 	opt.Files = testFs
 	mux := http.NewServeMux()
-	rcServer := newServer(context.Background(), &opt, mux)
+	rcServer, err := newServer(context.Background(), &opt, mux)
+	require.NoError(t, err)
 	assert.NoError(t, rcServer.Serve())
 	defer func() {
-		rcServer.Close()
+		assert.NoError(t, rcServer.Shutdown())
 		rcServer.Wait()
 	}()
-	testURL := rcServer.Server.URL()
+	testURL := rcServer.server.URLs()[0]
 
 	// Do the simplest possible test to check the server is alive
 	// Do it a few times to wait for the server to start
 	var resp *http.Response
-	var err error
 	for i := 0; i < 10; i++ {
 		resp, err = http.Get(testURL + "file.txt")
 		if err == nil {
@@ -77,7 +75,7 @@ func TestRcServer(t *testing.T) {
 	}
 
 	require.NoError(t, err)
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	_ = resp.Body.Close()
 
 	require.NoError(t, err)
@@ -90,6 +88,8 @@ func TestRcServer(t *testing.T) {
 type testRun struct {
 	Name        string
 	URL         string
+	User        string
+	Pass        string
 	Status      int
 	Method      string
 	Range       string
@@ -104,9 +104,11 @@ type testRun struct {
 func testServer(t *testing.T, tests []testRun, opt *rc.Options) {
 	ctx := context.Background()
 	configfile.Install()
-	mux := http.NewServeMux()
-	opt.HTTPOptions.Template = testTemplate
-	rcServer := newServer(ctx, opt, mux)
+	opt.Template.Path = testTemplate
+	rcServer, err := newServer(ctx, opt, http.DefaultServeMux)
+	require.NoError(t, err)
+	testURL := rcServer.server.URLs()[0]
+	mux := rcServer.server.Router()
 	for _, test := range tests {
 		t.Run(test.Name, func(t *testing.T) {
 			method := test.Method
@@ -126,13 +128,16 @@ func testServer(t *testing.T, tests []testRun, opt *rc.Options) {
 			if test.ContentType != "" {
 				req.Header.Add("Content-Type", test.ContentType)
 			}
+			if test.User != "" && test.Pass != "" {
+				req.SetBasicAuth(test.User, test.Pass)
+			}
 
 			w := httptest.NewRecorder()
-			rcServer.handler(w, req)
+			mux.ServeHTTP(w, req)
 			resp := w.Result()
 
 			assert.Equal(t, test.Status, resp.StatusCode)
-			body, err := ioutil.ReadAll(resp.Body)
+			body, err := io.ReadAll(resp.Body)
 			require.NoError(t, err)
 
 			if test.Contains == nil {
@@ -142,6 +147,9 @@ func testServer(t *testing.T, tests []testRun, opt *rc.Options) {
 			}
 
 			for k, v := range test.Headers {
+				if v == "testURL" {
+					v = testURL
+				}
 				assert.Equal(t, v, resp.Header.Get(k), k)
 			}
 		})
@@ -152,6 +160,7 @@ func testServer(t *testing.T, tests []testRun, opt *rc.Options) {
 func newTestOpt() rc.Options {
 	opt := rc.DefaultOpt
 	opt.Enabled = true
+	opt.HTTP.ListenAddr = []string{testBindAddress}
 	return opt
 }
 
@@ -551,7 +560,7 @@ func TestMethods(t *testing.T) {
 		Status:   http.StatusOK,
 		Expected: "",
 		Headers: map[string]string{
-			"Access-Control-Allow-Origin":   "http://localhost:5572/",
+			"Access-Control-Allow-Origin":   "testURL",
 			"Access-Control-Request-Method": "POST, OPTIONS, GET, HEAD",
 			"Access-Control-Allow-Headers":  "authorization, Content-Type",
 		},
@@ -560,12 +569,7 @@ func TestMethods(t *testing.T) {
 		URL:    "",
 		Method: "POTATO",
 		Status: http.StatusMethodNotAllowed,
-		Expected: `{
-	"error": "method \"POTATO\" not allowed",
-	"input": null,
-	"path": "",
-	"status": 405
-}
+		Expected: `Method Not Allowed
 `,
 	}}
 	opt := newTestOpt()
@@ -733,20 +737,40 @@ func TestNoAuth(t *testing.T) {
 
 func TestWithUserPass(t *testing.T) {
 	tests := []testRun{{
-		Name:        "auth",
+		Name:        "authMissing",
+		URL:         "rc/noopauth",
+		Method:      "POST",
+		Body:        `{}`,
+		ContentType: "application/javascript",
+		Status:      http.StatusUnauthorized,
+		Expected:    "401 Unauthorized\n",
+	}, {
+		Name:        "authWrong",
+		URL:         "rc/noopauth",
+		Method:      "POST",
+		Body:        `{}`,
+		ContentType: "application/javascript",
+		Status:      http.StatusUnauthorized,
+		Expected:    "401 Unauthorized\n",
+		User:        "user1",
+		Pass:        "pass2",
+	}, {
+		Name:        "authOK",
 		URL:         "rc/noopauth",
 		Method:      "POST",
 		Body:        `{}`,
 		ContentType: "application/javascript",
 		Status:      http.StatusOK,
 		Expected:    "{}\n",
+		User:        "user",
+		Pass:        "pass",
 	}}
 	opt := newTestOpt()
 	opt.Serve = false
 	opt.Files = ""
 	opt.NoAuth = false
-	opt.HTTPOptions.BasicUser = "user"
-	opt.HTTPOptions.BasicPass = "pass"
+	opt.Auth.BasicUser = "user"
+	opt.Auth.BasicPass = "pass"
 	testServer(t, tests, &opt)
 }
 
@@ -775,6 +799,29 @@ func TestRCAsync(t *testing.T) {
 	"status": 400
 }
 `,
+	}}
+	opt := newTestOpt()
+	opt.Serve = true
+	opt.Files = ""
+	testServer(t, tests, &opt)
+}
+
+// Check the debug handlers are attached
+func TestRCDebug(t *testing.T) {
+	tests := []testRun{{
+		Name:        "index",
+		URL:         "debug/pprof/",
+		Method:      "GET",
+		ContentType: "text/html",
+		Status:      http.StatusOK,
+		Contains:    regexp.MustCompile(`Types of profiles available`),
+	}, {
+		Name:        "goroutines",
+		URL:         "debug/pprof/goroutine?debug=1",
+		Method:      "GET",
+		ContentType: "text/html",
+		Status:      http.StatusOK,
+		Contains:    regexp.MustCompile(`goroutine profile`),
 	}}
 	opt := newTestOpt()
 	opt.Serve = true

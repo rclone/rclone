@@ -1,3 +1,4 @@
+// Package copyurl provides the copyurl command.
 package copyurl
 
 import (
@@ -50,6 +51,9 @@ destination if there is one with the same name.
 Setting ` + "`--stdout`" + ` or making the output file name ` + "`-`" + `
 will cause the output to be written to standard output.
 `,
+	Annotations: map[string]string{
+		"versionIntroduced": "v1.43",
+	},
 	RunE: func(command *cobra.Command, args []string) (err error) {
 		cmd.CheckArgs(1, 2, command, args)
 

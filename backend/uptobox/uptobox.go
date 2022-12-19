@@ -1,3 +1,4 @@
+// Package uptobox provides an interface to the Uptobox storage system.
 package uptobox
 
 import (
@@ -6,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 	"path"
@@ -162,7 +162,7 @@ func (f *Fs) splitPathFull(pth string) (string, string) {
 	return "//" + fullPath[:i], fullPath[i+1:]
 }
 
-// splitPath is modified splitPath version that doesn't include the seperator
+// splitPath is modified splitPath version that doesn't include the separator
 // in the base path
 func (f *Fs) splitPath(pth string) (string, string) {
 	// chop of any leading or trailing '/'
@@ -238,7 +238,7 @@ func NewFs(ctx context.Context, name string, root string, config configmap.Mappe
 func (f *Fs) decodeError(resp *http.Response, response interface{}) (err error) {
 	defer fs.CheckClose(resp.Body, &err)
 
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return err
 	}
@@ -478,7 +478,7 @@ func (f *Fs) putUnchecked(ctx context.Context, in io.Reader, remote string, size
 	} else if size == 0 {
 		return nil, fs.ErrorCantUploadEmptyFiles
 	}
-	// yes it does take take 4 requests if we're uploading to root and 6+ if we're uploading to any subdir :(
+	// yes it does take 4 requests if we're uploading to root and 6+ if we're uploading to any subdir :(
 
 	// create upload request
 	opts := rest.Opts{
@@ -756,7 +756,7 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 	if err != nil {
 		return fmt.Errorf("dirmove: source not found: %w", err)
 	}
-	// check if the destination allready exists
+	// check if the destination already exists
 	dstPath := f.dirPath(dstRemote)
 	_, err = f.readMetaDataForPath(ctx, dstPath, &api.MetadataRequestOptions{Limit: 1})
 	if err == nil {
@@ -781,7 +781,7 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 	needMove := srcBase != dstBase
 
 	// if we have to rename we'll have to use a temporary name since
-	// there could allready be a directory with the same name as the src directory
+	// there could already be a directory with the same name as the src directory
 	if needRename {
 		// rename to a temporary name
 		tmpName := "rcloneTemp" + random.String(8)
@@ -918,11 +918,6 @@ func (o *Object) Remote() string {
 	return o.remote
 }
 
-// Returns the full remote path for the object
-func (o *Object) filePath() string {
-	return o.fs.dirPath(o.remote)
-}
-
 // ModTime returns the modification time of the object
 //
 // It attempts to read the objects mtime and if that isn't present the
@@ -996,7 +991,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 
 // Update the already existing object
 //
-// Copy the reader into the object updating modTime and size
+// Copy the reader into the object updating modTime and size.
 //
 // The new object may have been created if an error is returned
 func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {

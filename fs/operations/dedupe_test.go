@@ -45,7 +45,6 @@ func skipIfNoModTime(t *testing.T, f fs.Fs) {
 
 func TestDeduplicateInteractive(t *testing.T) {
 	r := fstest.NewRun(t)
-	defer r.Finalise()
 	skipIfCantDedupe(t, r.Fremote)
 	skipIfNoHash(t, r.Fremote)
 
@@ -62,7 +61,6 @@ func TestDeduplicateInteractive(t *testing.T) {
 
 func TestDeduplicateSkip(t *testing.T) {
 	r := fstest.NewRun(t)
-	defer r.Finalise()
 	skipIfCantDedupe(t, r.Fremote)
 	haveHash := r.Fremote.Hashes().GetOne() != hash.None
 
@@ -84,7 +82,6 @@ func TestDeduplicateSkip(t *testing.T) {
 
 func TestDeduplicateSizeOnly(t *testing.T) {
 	r := fstest.NewRun(t)
-	defer r.Finalise()
 	skipIfCantDedupe(t, r.Fremote)
 	ctx := context.Background()
 	ci := fs.GetConfig(ctx)
@@ -107,7 +104,6 @@ func TestDeduplicateSizeOnly(t *testing.T) {
 
 func TestDeduplicateFirst(t *testing.T) {
 	r := fstest.NewRun(t)
-	defer r.Finalise()
 	skipIfCantDedupe(t, r.Fremote)
 
 	file1 := r.WriteUncheckedObject(context.Background(), "one", "This is one", t1)
@@ -136,7 +132,6 @@ func TestDeduplicateFirst(t *testing.T) {
 
 func TestDeduplicateNewest(t *testing.T) {
 	r := fstest.NewRun(t)
-	defer r.Finalise()
 	skipIfCantDedupe(t, r.Fremote)
 	skipIfNoModTime(t, r.Fremote)
 
@@ -153,7 +148,6 @@ func TestDeduplicateNewest(t *testing.T) {
 
 func TestDeduplicateNewestByHash(t *testing.T) {
 	r := fstest.NewRun(t)
-	defer r.Finalise()
 	skipIfNoHash(t, r.Fremote)
 	skipIfNoModTime(t, r.Fremote)
 	contents := random.String(100)
@@ -172,7 +166,6 @@ func TestDeduplicateNewestByHash(t *testing.T) {
 
 func TestDeduplicateOldest(t *testing.T) {
 	r := fstest.NewRun(t)
-	defer r.Finalise()
 	skipIfCantDedupe(t, r.Fremote)
 
 	file1 := r.WriteUncheckedObject(context.Background(), "one", "This is one", t1)
@@ -188,7 +181,6 @@ func TestDeduplicateOldest(t *testing.T) {
 
 func TestDeduplicateLargest(t *testing.T) {
 	r := fstest.NewRun(t)
-	defer r.Finalise()
 	skipIfCantDedupe(t, r.Fremote)
 
 	file1 := r.WriteUncheckedObject(context.Background(), "one", "This is one", t1)
@@ -204,7 +196,6 @@ func TestDeduplicateLargest(t *testing.T) {
 
 func TestDeduplicateSmallest(t *testing.T) {
 	r := fstest.NewRun(t)
-	defer r.Finalise()
 	skipIfCantDedupe(t, r.Fremote)
 
 	file1 := r.WriteUncheckedObject(context.Background(), "one", "This is one", t1)
@@ -220,7 +211,6 @@ func TestDeduplicateSmallest(t *testing.T) {
 
 func TestDeduplicateRename(t *testing.T) {
 	r := fstest.NewRun(t)
-	defer r.Finalise()
 	skipIfCantDedupe(t, r.Fremote)
 
 	file1 := r.WriteUncheckedObject(context.Background(), "one.txt", "This is one", t1)
@@ -260,7 +250,6 @@ func TestDeduplicateRename(t *testing.T) {
 // doesn't have enough tools to make it easy
 func TestMergeDirs(t *testing.T) {
 	r := fstest.NewRun(t)
-	defer r.Finalise()
 
 	mergeDirs := r.Fremote.Features().MergeDirs
 	if mergeDirs == nil {

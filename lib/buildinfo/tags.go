@@ -1,3 +1,4 @@
+// Package buildinfo provides build information.
 package buildinfo
 
 import (

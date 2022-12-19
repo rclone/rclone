@@ -5,13 +5,13 @@ package local
 
 import (
 	"os"
-	"time"
 	"syscall"
+	"time"
 )
 
 const haveSetBTime = true
 
-// setBTime sets the the birth time of the file passed in
+// setBTime sets the birth time of the file passed in
 func setBTime(name string, btime time.Time) (err error) {
 	h, err := syscall.Open(name, os.O_RDWR, 0755)
 	if err != nil {

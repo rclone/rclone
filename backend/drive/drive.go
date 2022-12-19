@@ -14,11 +14,10 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"mime"
 	"net/http"
+	"os"
 	"path"
-	"regexp"
 	"sort"
 	"strconv"
 	"strings"
@@ -51,6 +50,7 @@ import (
 	drive_v2 "google.golang.org/api/drive/v2"
 	drive "google.golang.org/api/drive/v3"
 	"google.golang.org/api/googleapi"
+	"google.golang.org/api/option"
 )
 
 // Constants
@@ -757,6 +757,9 @@ func (f *Fs) shouldRetry(ctx context.Context, err error) (bool, error) {
 			} else if f.opt.StopOnDownloadLimit && reason == "downloadQuotaExceeded" {
 				fs.Errorf(f, "Received download limit error: %v", err)
 				return false, fserrors.FatalError(err)
+			} else if f.opt.StopOnUploadLimit && reason == "quotaExceeded" {
+				fs.Errorf(f, "Received upload limit error: %v", err)
+				return false, fserrors.FatalError(err)
 			} else if f.opt.StopOnUploadLimit && reason == "teamDriveFileLimitExceeded" {
 				fs.Errorf(f, "Received Shared Drive file limit error: %v", err)
 				return false, fserrors.FatalError(err)
@@ -1104,7 +1107,7 @@ func createOAuthClient(ctx context.Context, opt *Options, name string, m configm
 
 	// try loading service account credentials from env variable, then from a file
 	if len(opt.ServiceAccountCredentials) == 0 && opt.ServiceAccountFile != "" {
-		loadedCreds, err := ioutil.ReadFile(env.ShellExpand(opt.ServiceAccountFile))
+		loadedCreds, err := os.ReadFile(env.ShellExpand(opt.ServiceAccountFile))
 		if err != nil {
 			return nil, fmt.Errorf("error opening service account credentials file: %w", err)
 		}
@@ -1206,17 +1209,18 @@ func newFs(ctx context.Context, name, path string, m configmap.Mapper) (*Fs, err
 		WriteMimeType:           true,
 		CanHaveEmptyDirectories: true,
 		ServerSideAcrossConfigs: opt.ServerSideAcrossConfigs,
+		FilterAware:             true,
 	}).Fill(ctx, f)
 
 	// Create a new authorized Drive client.
 	f.client = oAuthClient
-	f.svc, err = drive.New(f.client)
+	f.svc, err = drive.NewService(context.Background(), option.WithHTTPClient(f.client))
 	if err != nil {
 		return nil, fmt.Errorf("couldn't create Drive client: %w", err)
 	}
 
 	if f.opt.V2DownloadMinSize >= 0 {
-		f.v2Svc, err = drive_v2.New(f.client)
+		f.v2Svc, err = drive_v2.NewService(context.Background(), option.WithHTTPClient(f.client))
 		if err != nil {
 			return nil, fmt.Errorf("couldn't create Drive v2 client: %w", err)
 		}
@@ -2176,7 +2180,7 @@ func (f *Fs) createFileInfo(ctx context.Context, remote string, modTime time.Tim
 
 // Put the object
 //
-// Copy the reader in to the new object which is returned
+// Copy the reader in to the new object which is returned.
 //
 // The new object may have been created if an error is returned
 func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
@@ -2410,9 +2414,9 @@ func (f *Fs) Precision() time.Duration {
 
 // Copy src to this remote using server-side copy operations.
 //
-// This is stored with the remote path given
+// This is stored with the remote path given.
 //
-// It returns the destination Object and a possible error
+// It returns the destination Object and a possible error.
 //
 // Will only be called if src.Fs().Name() == f.Name()
 //
@@ -2645,9 +2649,9 @@ func (f *Fs) About(ctx context.Context) (*fs.Usage, error) {
 
 // Move src to this remote using server-side move operations.
 //
-// This is stored with the remote path given
+// This is stored with the remote path given.
 //
-// It returns the destination Object and a possible error
+// It returns the destination Object and a possible error.
 //
 // Will only be called if src.Fs().Name() == f.Name()
 //
@@ -2992,12 +2996,12 @@ func (f *Fs) changeServiceAccountFile(ctx context.Context, file string) (err err
 		return fmt.Errorf("drive: failed when making oauth client: %w", err)
 	}
 	f.client = oAuthClient
-	f.svc, err = drive.New(f.client)
+	f.svc, err = drive.NewService(context.Background(), option.WithHTTPClient(f.client))
 	if err != nil {
 		return fmt.Errorf("couldn't create Drive client: %w", err)
 	}
 	if f.opt.V2DownloadMinSize >= 0 {
-		f.v2Svc, err = drive_v2.New(f.client)
+		f.v2Svc, err = drive_v2.NewService(context.Background(), option.WithHTTPClient(f.client))
 		if err != nil {
 			return fmt.Errorf("couldn't create Drive v2 client: %w", err)
 		}
@@ -3298,10 +3302,10 @@ drives found and a combined drive.
 
     [AllDrives]
     type = combine
-    remote = "My Drive=My Drive:" "Test Drive=Test Drive:"
+    upstreams = "My Drive=My Drive:" "Test Drive=Test Drive:"
 
 Adding this to the rclone config file will cause those team drives to
-be accessible with the aliases shown. Any illegal charactes will be
+be accessible with the aliases shown. Any illegal characters will be
 substituted with "_" and duplicate names will have numbers suffixed.
 It will also add a remote called AllDrives which shows all the shared
 drives combined into one directory tree.
@@ -3426,13 +3430,12 @@ func (f *Fs) Command(ctx context.Context, name string, arg []string, opt map[str
 		if err != nil {
 			return nil, err
 		}
-		re := regexp.MustCompile(`[^\w_. -]+`)
 		if _, ok := opt["config"]; ok {
 			lines := []string{}
 			upstreams := []string{}
 			names := make(map[string]struct{}, len(drives))
 			for i, drive := range drives {
-				name := re.ReplaceAllString(drive.Name, "_")
+				name := fspath.MakeConfigName(drive.Name)
 				for {
 					if _, found := names[name]; !found {
 						break
@@ -3525,12 +3528,6 @@ func (o *baseObject) Size() int64 {
 	return o.bytes
 }
 
-// getRemoteInfo returns a drive.File for the remote
-func (f *Fs) getRemoteInfo(ctx context.Context, remote string) (info *drive.File, err error) {
-	info, _, _, _, _, err = f.getRemoteInfoWithExport(ctx, remote)
-	return
-}
-
 // getRemoteInfoWithExport returns a drive.File and the export settings for the remote
 func (f *Fs) getRemoteInfoWithExport(ctx context.Context, remote string) (
 	info *drive.File, extension, exportName, exportMimeType string, isDocument bool, err error) {
@@ -3570,7 +3567,6 @@ func (f *Fs) getRemoteInfoWithExport(ctx context.Context, remote string) (
 }
 
 // ModTime returns the modification time of the object
-//
 //
 // It attempts to read the objects mtime and if that isn't present the
 // LastModified returned in the http headers
@@ -3802,7 +3798,7 @@ func (o *linkObject) Open(ctx context.Context, options ...fs.OpenOption) (in io.
 		data = data[:limit]
 	}
 
-	return ioutil.NopCloser(bytes.NewReader(data)), nil
+	return io.NopCloser(bytes.NewReader(data)), nil
 }
 
 func (o *baseObject) update(ctx context.Context, updateInfo *drive.File, uploadMimeType string, in io.Reader,
@@ -3828,7 +3824,7 @@ func (o *baseObject) update(ctx context.Context, updateInfo *drive.File, uploadM
 
 // Update the already existing object
 //
-// Copy the reader into the object updating modTime and size
+// Copy the reader into the object updating modTime and size.
 //
 // The new object may have been created if an error is returned
 func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {

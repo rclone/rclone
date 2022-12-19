@@ -1,3 +1,4 @@
+// Package lsjson provides the lsjson command.
 package lsjson
 
 import (
@@ -83,7 +84,7 @@ If ` + "`--files-only`" + ` is not specified directories in addition to the file
 will be returned.
 
 If ` + "`--metadata`" + ` is set then an additional Metadata key will be returned.
-This will have metdata in rclone standard format as a JSON object.
+This will have metadata in rclone standard format as a JSON object.
 
 if ` + "`--stat`" + ` is set then a single JSON blob will be returned about the
 item pointed to. This will return an error if the item isn't found.
@@ -111,6 +112,9 @@ will be shown ("2017-05-31T16:15:57+01:00").
 The whole output can be processed as a JSON blob, or alternatively it
 can be processed line by line as each item is written one to a line.
 ` + lshelp.Help,
+	Annotations: map[string]string{
+		"versionIntroduced": "v1.37",
+	},
 	RunE: func(command *cobra.Command, args []string) error {
 		cmd.CheckArgs(1, 1, command, args)
 		var fsrc fs.Fs

@@ -1,3 +1,4 @@
+// Package deletefile provides the deletefile command.
 package deletefile
 
 import (
@@ -21,6 +22,9 @@ Remove a single file from remote.  Unlike ` + "`" + `delete` + "`" + ` it cannot
 remove a directory and it doesn't obey include/exclude filters - if the specified file exists,
 it will always be removed.
 `,
+	Annotations: map[string]string{
+		"versionIntroduced": "v1.42",
+	},
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(1, 1, command, args)
 		fs, fileName := cmd.NewFsFile(args[0])

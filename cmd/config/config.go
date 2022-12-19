@@ -1,3 +1,4 @@
+// Package config provides the config command.
 package config
 
 import (
@@ -43,6 +44,9 @@ var configCommand = &cobra.Command{
 remotes and manage existing ones. You may also set or remove a
 password to protect your configuration.
 `,
+	Annotations: map[string]string{
+		"versionIntroduced": "v1.39",
+	},
 	RunE: func(command *cobra.Command, args []string) error {
 		cmd.CheckArgs(0, 0, command, args)
 		return config.EditConfig(context.Background())
@@ -53,12 +57,18 @@ var configEditCommand = &cobra.Command{
 	Use:   "edit",
 	Short: configCommand.Short,
 	Long:  configCommand.Long,
-	Run:   configCommand.Run,
+	Annotations: map[string]string{
+		"versionIntroduced": "v1.39",
+	},
+	Run: configCommand.Run,
 }
 
 var configFileCommand = &cobra.Command{
 	Use:   "file",
 	Short: `Show path of configuration file in use.`,
+	Annotations: map[string]string{
+		"versionIntroduced": "v1.38",
+	},
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(0, 0, command, args)
 		config.ShowConfigLocation()
@@ -68,6 +78,9 @@ var configFileCommand = &cobra.Command{
 var configTouchCommand = &cobra.Command{
 	Use:   "touch",
 	Short: `Ensure configuration file exists.`,
+	Annotations: map[string]string{
+		"versionIntroduced": "v1.56",
+	},
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(0, 0, command, args)
 		config.SaveConfig()
@@ -77,6 +90,9 @@ var configTouchCommand = &cobra.Command{
 var configPathsCommand = &cobra.Command{
 	Use:   "paths",
 	Short: `Show paths used for configuration, cache, temp etc.`,
+	Annotations: map[string]string{
+		"versionIntroduced": "v1.57",
+	},
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(0, 0, command, args)
 		fmt.Printf("Config file: %s\n", config.GetConfigPath())
@@ -88,6 +104,9 @@ var configPathsCommand = &cobra.Command{
 var configShowCommand = &cobra.Command{
 	Use:   "show [<remote>]",
 	Short: `Print (decrypted) config file, or the config for a single remote.`,
+	Annotations: map[string]string{
+		"versionIntroduced": "v1.38",
+	},
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(0, 1, command, args)
 		if len(args) == 0 {
@@ -102,6 +121,9 @@ var configShowCommand = &cobra.Command{
 var configDumpCommand = &cobra.Command{
 	Use:   "dump",
 	Short: `Dump the config file as JSON.`,
+	Annotations: map[string]string{
+		"versionIntroduced": "v1.39",
+	},
 	RunE: func(command *cobra.Command, args []string) error {
 		cmd.CheckArgs(0, 0, command, args)
 		return config.Dump()
@@ -111,6 +133,9 @@ var configDumpCommand = &cobra.Command{
 var configProvidersCommand = &cobra.Command{
 	Use:   "providers",
 	Short: `List in JSON format all the providers and options.`,
+	Annotations: map[string]string{
+		"versionIntroduced": "v1.39",
+	},
 	RunE: func(command *cobra.Command, args []string) error {
 		cmd.CheckArgs(0, 0, command, args)
 		return config.JSONListProviders()
@@ -139,7 +164,7 @@ are 100% certain you are already passing obscured passwords then use
 |rclone config password| command.
 
 The flag |--non-interactive| is for use by applications that wish to
-configure rclone themeselves, rather than using rclone's text based
+configure rclone themselves, rather than using rclone's text based
 configuration questions. If this flag is set, and rclone needs to ask
 the user a question, a JSON blob will be returned with the question in
 it.
@@ -151,7 +176,7 @@ This will look something like (some irrelevant detail removed):
     "State": "*oauth-islocal,teamdrive,,",
     "Option": {
         "Name": "config_is_local",
-        "Help": "Use auto config?\n * Say Y if not sure\n * Say N if you are working on a remote or headless machine\n",
+        "Help": "Use web browser to automatically authenticate rclone with remote?\n * Say Y if the machine running rclone has a web browser you can use\n * Say N if running rclone on a (remote) machine without web browser access\nIf not sure try Y. If Y failed, try N.\n",
         "Default": true,
         "Examples": [
             {
@@ -225,6 +250,9 @@ using remote authorization you would do this:
 
     rclone config create mydrive drive config_is_local=false
 `, "|", "`") + configPasswordHelp,
+	Annotations: map[string]string{
+		"versionIntroduced": "v1.39",
+	},
 	RunE: func(command *cobra.Command, args []string) error {
 		cmd.CheckArgs(2, 256, command, args)
 		in, err := argsToMap(args[2:])
@@ -288,6 +316,9 @@ require this add an extra parameter thus:
 
     rclone config update myremote env_auth=true config_refresh_token=false
 `, "|", "`") + configPasswordHelp,
+	Annotations: map[string]string{
+		"versionIntroduced": "v1.39",
+	},
 	RunE: func(command *cobra.Command, args []string) error {
 		cmd.CheckArgs(1, 256, command, args)
 		in, err := argsToMap(args[1:])
@@ -303,6 +334,9 @@ require this add an extra parameter thus:
 var configDeleteCommand = &cobra.Command{
 	Use:   "delete name",
 	Short: "Delete an existing remote.",
+	Annotations: map[string]string{
+		"versionIntroduced": "v1.39",
+	},
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(1, 1, command, args)
 		config.DeleteRemote(args[0])
@@ -325,6 +359,9 @@ For example, to set password of a remote of name myremote you would do:
 This command is obsolete now that "config update" and "config create"
 both support obscuring passwords directly.
 `, "|", "`"),
+	Annotations: map[string]string{
+		"versionIntroduced": "v1.39",
+	},
 	RunE: func(command *cobra.Command, args []string) error {
 		cmd.CheckArgs(1, 256, command, args)
 		in, err := argsToMap(args[1:])

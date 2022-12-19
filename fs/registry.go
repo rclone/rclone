@@ -10,6 +10,7 @@ import (
 	"reflect"
 	"sort"
 	"strings"
+	"sync"
 
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/configstruct"
@@ -27,7 +28,7 @@ type RegInfo struct {
 	// Prefix for command line flags for this fs - defaults to Name if not set
 	Prefix string
 	// Create a new file system.  If root refers to an existing
-	// object, then it should return an Fs which which points to
+	// object, then it should return an Fs which points to
 	// the parent of that object and ErrorIsFile.
 	NewFs func(ctx context.Context, name string, root string, config configmap.Mapper) (Fs, error) `json:"-"`
 	// Function to call to help with config - see docs for ConfigIn for more info
@@ -129,16 +130,16 @@ const (
 
 // Option is describes an option for the config wizard
 //
-// This also describes command line options and environment variables
+// This also describes command line options and environment variables.
 //
 // To create a multiple-choice option, specify the possible values
 // in the Examples property. Whether the option's value is required
 // to be one of these depends on other properties:
-// - Default is to allow any value, either from specified examples,
-//   or any other value. To restrict exclusively to the specified
-//   examples, also set Exclusive=true.
-// - If empty string should not be allowed then set Required=true,
-//   and do not set Default.
+//   - Default is to allow any value, either from specified examples,
+//     or any other value. To restrict exclusively to the specified
+//     examples, also set Exclusive=true.
+//   - If empty string should not be allowed then set Required=true,
+//     and do not set Default.
 type Option struct {
 	Name       string           // name of the option in snake_case
 	Help       string           // help, start with a single sentence on a single line that will be extracted for command line help
@@ -178,7 +179,7 @@ func (o *Option) MarshalJSON() ([]byte, error) {
 	})
 }
 
-// GetValue gets the current current value which is the default if not set
+// GetValue gets the current value which is the default if not set
 func (o *Option) GetValue() interface{} {
 	val := o.Value
 	if val == nil {
@@ -291,7 +292,7 @@ func Find(name string) (*RegInfo, error) {
 
 // MustFind looks for an Info object for the type name passed in
 //
-// Services are looked up in the config file
+// Services are looked up in the config file.
 //
 // Exits with a fatal error if not found
 func MustFind(name string) *RegInfo {
@@ -300,4 +301,34 @@ func MustFind(name string) *RegInfo {
 		log.Fatalf("Failed to find remote: %v", err)
 	}
 	return fs
+}
+
+// Type returns a textual string to identify the type of the remote
+func Type(f Fs) string {
+	typeName := fmt.Sprintf("%T", f)
+	typeName = strings.TrimPrefix(typeName, "*")
+	typeName = strings.TrimSuffix(typeName, ".Fs")
+	return typeName
+}
+
+var (
+	typeToRegInfoMu sync.Mutex
+	typeToRegInfo   = map[string]*RegInfo{}
+)
+
+// Add the RegInfo to the reverse map
+func addReverse(f Fs, fsInfo *RegInfo) {
+	typeToRegInfoMu.Lock()
+	defer typeToRegInfoMu.Unlock()
+	typeToRegInfo[Type(f)] = fsInfo
+}
+
+// FindFromFs finds the *RegInfo used to create this Fs, provided
+// it was created by fs.NewFs or cache.Get
+//
+// It returns nil if not found
+func FindFromFs(f Fs) *RegInfo {
+	typeToRegInfoMu.Lock()
+	defer typeToRegInfoMu.Unlock()
+	return typeToRegInfo[Type(f)]
 }

@@ -4,9 +4,9 @@
 package cmount
 
 import (
+	"errors"
 	"fmt"
 	"os"
-	"errors"
 	"path/filepath"
 	"regexp"
 
@@ -80,7 +80,7 @@ func handleDefaultMountpath() (string, error) {
 func handleNetworkShareMountpath(mountpath string, opt *mountlib.Options) (string, error) {
 	// Assuming mount path is a valid network share path (UNC format, "\\Server\Share").
 	// Always mount as network drive, regardless of the NetworkMode option.
-	// Find an unused drive letter to use as mountpoint, the the supplied path can
+	// Find an unused drive letter to use as mountpoint, the supplied path can
 	// be used as volume prefix (network share path) instead of mountpoint.
 	if !opt.NetworkMode {
 		fs.Debugf(nil, "Forcing --network-mode because mountpoint path is network share UNC format")

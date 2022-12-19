@@ -81,7 +81,7 @@ func addVirtual(remote string, size int64, isDir bool) error {
 	return nil
 }
 
-func newTestCacheOpt(t *testing.T, opt vfscommon.Options) (r *fstest.Run, c *Cache, cleanup func()) {
+func newTestCacheOpt(t *testing.T, opt vfscommon.Options) (r *fstest.Run, c *Cache) {
 	r = fstest.NewRun(t)
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -90,18 +90,17 @@ func newTestCacheOpt(t *testing.T, opt vfscommon.Options) (r *fstest.Run, c *Cac
 	c, err := New(ctx, r.Fremote, &opt, addVirtual)
 	require.NoError(t, err)
 
-	cleanup = func() {
+	t.Cleanup(func() {
 		err := c.CleanUp()
 		require.NoError(t, err)
 		assertPathNotExist(t, c.root)
 		cancel()
-		r.Finalise()
-	}
+	})
 
-	return r, c, cleanup
+	return r, c
 }
 
-func newTestCache(t *testing.T) (r *fstest.Run, c *Cache, cleanup func()) {
+func newTestCache(t *testing.T) (r *fstest.Run, c *Cache) {
 	opt := vfscommon.DefaultOpt
 
 	// Disable the cache cleaner as it interferes with these tests
@@ -114,8 +113,7 @@ func newTestCache(t *testing.T) (r *fstest.Run, c *Cache, cleanup func()) {
 }
 
 func TestCacheNew(t *testing.T) {
-	r, c, cleanup := newTestCache(t)
-	defer cleanup()
+	r, c := newTestCache(t)
 
 	assert.Contains(t, c.root, "vfs")
 	assert.Contains(t, c.fcache.Root(), filepath.Base(r.Fremote.Root()))
@@ -191,8 +189,7 @@ func TestCacheNew(t *testing.T) {
 }
 
 func TestCacheOpens(t *testing.T) {
-	_, c, cleanup := newTestCache(t)
-	defer cleanup()
+	_, c := newTestCache(t)
 
 	assert.Equal(t, []string(nil), itemAsString(c))
 	potato := c.Item("potato")
@@ -240,8 +237,7 @@ func TestCacheOpens(t *testing.T) {
 
 // test the open, createItemDir, purge, close, purge sequence
 func TestCacheOpenMkdir(t *testing.T) {
-	_, c, cleanup := newTestCache(t)
-	defer cleanup()
+	_, c := newTestCache(t)
 
 	// open
 	potato := c.Item("sub/potato")
@@ -288,8 +284,7 @@ func TestCacheOpenMkdir(t *testing.T) {
 }
 
 func TestCachePurgeOld(t *testing.T) {
-	_, c, cleanup := newTestCache(t)
-	defer cleanup()
+	_, c := newTestCache(t)
 
 	// Test funcs
 	c.purgeOld(-10 * time.Second)
@@ -342,8 +337,7 @@ func TestCachePurgeOld(t *testing.T) {
 }
 
 func TestCachePurgeOverQuota(t *testing.T) {
-	_, c, cleanup := newTestCache(t)
-	defer cleanup()
+	_, c := newTestCache(t)
 
 	// Test funcs
 
@@ -428,8 +422,7 @@ func TestCachePurgeOverQuota(t *testing.T) {
 
 // test reset clean files
 func TestCachePurgeClean(t *testing.T) {
-	r, c, cleanup := newItemTestCache(t)
-	defer cleanup()
+	r, c := newItemTestCache(t)
 	contents, obj, potato1 := newFile(t, r, c, "existing")
 	_ = contents
 
@@ -450,7 +443,7 @@ func TestCachePurgeClean(t *testing.T) {
 	_, err = os.Stat(potato1.c.toOSPath(potato1.name))
 	require.NoError(t, err)
 
-	// Add some potatos
+	// Add some potatoes
 	potato2 := c.Item("sub/dir/potato2")
 	require.NoError(t, potato2.Open(nil))
 	require.NoError(t, potato2.Truncate(5))
@@ -491,8 +484,7 @@ func TestCachePurgeClean(t *testing.T) {
 }
 
 func TestCacheInUse(t *testing.T) {
-	_, c, cleanup := newTestCache(t)
-	defer cleanup()
+	_, c := newTestCache(t)
 
 	assert.False(t, c.InUse("potato"))
 
@@ -510,8 +502,7 @@ func TestCacheInUse(t *testing.T) {
 }
 
 func TestCacheDirtyItem(t *testing.T) {
-	_, c, cleanup := newTestCache(t)
-	defer cleanup()
+	_, c := newTestCache(t)
 
 	assert.Nil(t, c.DirtyItem("potato"))
 
@@ -530,8 +521,7 @@ func TestCacheDirtyItem(t *testing.T) {
 }
 
 func TestCacheExistsAndRemove(t *testing.T) {
-	_, c, cleanup := newTestCache(t)
-	defer cleanup()
+	_, c := newTestCache(t)
 
 	assert.False(t, c.Exists("potato"))
 
@@ -554,8 +544,7 @@ func TestCacheExistsAndRemove(t *testing.T) {
 }
 
 func TestCacheRename(t *testing.T) {
-	_, c, cleanup := newTestCache(t)
-	defer cleanup()
+	_, c := newTestCache(t)
 
 	// setup
 
@@ -603,7 +592,7 @@ func TestCacheRename(t *testing.T) {
 	assertPathNotExist(t, osPathMeta)
 	assert.False(t, c.Exists("sub/newPotato"))
 
-	// non-existent file - is ignored
+	// nonexistent file - is ignored
 	assert.NoError(t, c.Rename("nonexist", "nonexist2", nil))
 }
 
@@ -611,8 +600,7 @@ func TestCacheCleaner(t *testing.T) {
 	opt := vfscommon.DefaultOpt
 	opt.CachePollInterval = 10 * time.Millisecond
 	opt.CacheMaxAge = 20 * time.Millisecond
-	_, c, cleanup := newTestCacheOpt(t, opt)
-	defer cleanup()
+	_, c := newTestCacheOpt(t, opt)
 
 	time.Sleep(2 * opt.CachePollInterval)
 
@@ -634,8 +622,7 @@ func TestCacheCleaner(t *testing.T) {
 }
 
 func TestCacheSetModTime(t *testing.T) {
-	_, c, cleanup := newTestCache(t)
-	defer cleanup()
+	_, c := newTestCache(t)
 
 	t1 := time.Date(2010, 1, 2, 3, 4, 5, 9, time.UTC)
 
@@ -653,8 +640,7 @@ func TestCacheSetModTime(t *testing.T) {
 }
 
 func TestCacheTotaInUse(t *testing.T) {
-	_, c, cleanup := newTestCache(t)
-	defer cleanup()
+	_, c := newTestCache(t)
 
 	assert.Equal(t, int(0), c.TotalInUse())
 
@@ -681,8 +667,7 @@ func TestCacheTotaInUse(t *testing.T) {
 }
 
 func TestCacheDump(t *testing.T) {
-	_, c, cleanup := newTestCache(t)
-	defer cleanup()
+	_, c := newTestCache(t)
 
 	out := (*Cache)(nil).Dump()
 	assert.Equal(t, "Cache: <nil>\n", out)
@@ -703,8 +688,7 @@ func TestCacheDump(t *testing.T) {
 }
 
 func TestCacheStats(t *testing.T) {
-	_, c, cleanup := newTestCache(t)
-	defer cleanup()
+	_, c := newTestCache(t)
 
 	out := c.Stats()
 	assert.Equal(t, int64(0), out["bytesUsed"])

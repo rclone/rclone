@@ -1,3 +1,4 @@
+// Package moveto provides the moveto command.
 package moveto
 
 import (
@@ -48,6 +49,9 @@ successful transfer.
 
 **Note**: Use the ` + "`-P`" + `/` + "`--progress`" + ` flag to view real-time transfer statistics.
 `,
+	Annotations: map[string]string{
+		"versionIntroduced": "v1.35",
+	},
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(2, 2, command, args)
 		fsrc, srcFileName, fdst, dstFileName := cmd.NewFsSrcDstFiles(args)

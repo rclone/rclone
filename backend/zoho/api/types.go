@@ -1,3 +1,4 @@
+// Package api provides types used by the Zoho API.
 package api
 
 import (
@@ -5,7 +6,7 @@ import (
 	"time"
 )
 
-// Time represents represents date and time information for Zoho
+// Time represents date and time information for Zoho
 // Zoho uses milliseconds since unix epoch (Java currentTimeMillis)
 type Time time.Time
 

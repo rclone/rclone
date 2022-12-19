@@ -1,3 +1,4 @@
+// Package jottacloud provides an interface to the Jottacloud storage system.
 package jottacloud
 
 import (
@@ -11,7 +12,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"math/rand"
 	"net/http"
 	"net/url"
@@ -284,7 +284,6 @@ sync or the backup section, for example, you must choose yes.`)
 		if err != nil {
 			return nil, err
 		}
-		m.Set(configUsername, cust.Username)
 
 		acc, err := getDriveInfo(ctx, jfsSrv, cust.Username)
 		if err != nil {
@@ -317,10 +316,14 @@ a new by entering a unique name.`, defaultDevice)
 			return nil, err
 		}
 		jfsSrv := rest.NewClient(oAuthClient).SetRoot(jfsURL)
+		apiSrv := rest.NewClient(oAuthClient).SetRoot(apiURL)
 
-		username, _ := m.Get(configUsername)
+		cust, err := getCustomerInfo(ctx, apiSrv)
+		if err != nil {
+			return nil, err
+		}
 
-		acc, err := getDriveInfo(ctx, jfsSrv, username)
+		acc, err := getDriveInfo(ctx, jfsSrv, cust.Username)
 		if err != nil {
 			return nil, err
 		}
@@ -335,7 +338,7 @@ a new by entering a unique name.`, defaultDevice)
 		var dev *api.JottaDevice
 		if isNew {
 			fs.Debugf(nil, "Creating new device: %s", device)
-			dev, err = createDevice(ctx, jfsSrv, path.Join(username, device))
+			dev, err = createDevice(ctx, jfsSrv, path.Join(cust.Username, device))
 			if err != nil {
 				return nil, err
 			}
@@ -343,7 +346,7 @@ a new by entering a unique name.`, defaultDevice)
 		m.Set(configDevice, device)
 
 		if !isNew {
-			dev, err = getDeviceInfo(ctx, jfsSrv, path.Join(username, device))
+			dev, err = getDeviceInfo(ctx, jfsSrv, path.Join(cust.Username, device))
 			if err != nil {
 				return nil, err
 			}
@@ -373,11 +376,16 @@ You may create a new by entering a unique name.`, device)
 			return nil, err
 		}
 		jfsSrv := rest.NewClient(oAuthClient).SetRoot(jfsURL)
+		apiSrv := rest.NewClient(oAuthClient).SetRoot(apiURL)
 
-		username, _ := m.Get(configUsername)
+		cust, err := getCustomerInfo(ctx, apiSrv)
+		if err != nil {
+			return nil, err
+		}
+
 		device, _ := m.Get(configDevice)
 
-		dev, err := getDeviceInfo(ctx, jfsSrv, path.Join(username, device))
+		dev, err := getDeviceInfo(ctx, jfsSrv, path.Join(cust.Username, device))
 		if err != nil {
 			return nil, err
 		}
@@ -395,7 +403,7 @@ You may create a new by entering a unique name.`, device)
 				return nil, fmt.Errorf("custom mountpoints not supported on built-in %s device: %w", defaultDevice, err)
 			}
 			fs.Debugf(nil, "Creating new mountpoint: %s", mountpoint)
-			_, err := createMountPoint(ctx, jfsSrv, path.Join(username, device, mountpoint))
+			_, err := createMountPoint(ctx, jfsSrv, path.Join(cust.Username, device, mountpoint))
 			if err != nil {
 				return nil, err
 			}
@@ -813,7 +821,7 @@ func (f *Fs) allocatePathRaw(file string, absolute bool) string {
 func grantTypeFilter(req *http.Request) {
 	if legacyTokenURL == req.URL.String() {
 		// read the entire body
-		refreshBody, err := ioutil.ReadAll(req.Body)
+		refreshBody, err := io.ReadAll(req.Body)
 		if err != nil {
 			return
 		}
@@ -823,7 +831,7 @@ func grantTypeFilter(req *http.Request) {
 		refreshBody = []byte(strings.Replace(string(refreshBody), "grant_type=refresh_token", "grant_type=REFRESH_TOKEN", 1))
 
 		// set the new ReadCloser (with a dummy Close())
-		req.Body = ioutil.NopCloser(bytes.NewReader(refreshBody))
+		req.Body = io.NopCloser(bytes.NewReader(refreshBody))
 	}
 }
 
@@ -1239,7 +1247,7 @@ func (f *Fs) createObject(remote string, modTime time.Time, size int64) (o *Obje
 
 // Put the object
 //
-// Copy the reader in to the new object which is returned
+// Copy the reader in to the new object which is returned.
 //
 // The new object may have been created if an error is returned
 func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
@@ -1389,9 +1397,9 @@ func (f *Fs) copyOrMove(ctx context.Context, method, src, dest string) (info *ap
 
 // Copy src to this remote using server-side copy operations.
 //
-// This is stored with the remote path given
+// This is stored with the remote path given.
 //
-// It returns the destination Object and a possible error
+// It returns the destination Object and a possible error.
 //
 // Will only be called if src.Fs().Name() == f.Name()
 //
@@ -1409,7 +1417,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	}
 	info, err := f.copyOrMove(ctx, "cp", srcObj.filePath(), remote)
 
-	// if destination was a trashed file then after a successfull copy the copied file is still in trash (bug in api?)
+	// if destination was a trashed file then after a successful copy the copied file is still in trash (bug in api?)
 	if err == nil && bool(info.Deleted) && !f.opt.TrashedOnly && info.State == "COMPLETED" {
 		fs.Debugf(src, "Server-side copied to trashed destination, restoring")
 		info, err = f.createOrUpdate(ctx, remote, srcObj.modTime, srcObj.size, srcObj.md5)
@@ -1425,9 +1433,9 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 
 // Move src to this remote using server-side move operations.
 //
-// This is stored with the remote path given
+// This is stored with the remote path given.
 //
-// It returns the destination Object and a possible error
+// It returns the destination Object and a possible error.
 //
 // Will only be called if src.Fs().Name() == f.Name()
 //
@@ -1780,7 +1788,7 @@ func readMD5(in io.Reader, size, threshold int64) (md5sum string, out io.Reader,
 		var tempFile *os.File
 
 		// create the cache file
-		tempFile, err = ioutil.TempFile("", cachePrefix)
+		tempFile, err = os.CreateTemp("", cachePrefix)
 		if err != nil {
 			return
 		}
@@ -1808,7 +1816,7 @@ func readMD5(in io.Reader, size, threshold int64) (md5sum string, out io.Reader,
 	} else {
 		// that's a small file, just read it into memory
 		var inData []byte
-		inData, err = ioutil.ReadAll(teeReader)
+		inData, err = io.ReadAll(teeReader)
 		if err != nil {
 			return
 		}
@@ -1821,7 +1829,7 @@ func readMD5(in io.Reader, size, threshold int64) (md5sum string, out io.Reader,
 
 // Update the object with the contents of the io.Reader, modTime and size
 //
-// If existing is set then it updates the object rather than creating a new one
+// If existing is set then it updates the object rather than creating a new one.
 //
 // The new object may have been created if an error is returned
 func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (err error) {
@@ -1905,7 +1913,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 
 		// copy the already uploaded bytes into the trash :)
 		var result api.UploadResponse
-		_, err = io.CopyN(ioutil.Discard, in, response.ResumePos)
+		_, err = io.CopyN(io.Discard, in, response.ResumePos)
 		if err != nil {
 			return err
 		}

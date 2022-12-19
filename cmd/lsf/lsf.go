@@ -1,3 +1,4 @@
+// Package lsf provides the lsf command.
 package lsf
 
 import (
@@ -141,6 +142,9 @@ those only (without traversing the whole directory structure):
     rclone copy --files-from-raw new_files /path/to/local remote:path
 
 ` + lshelp.Help,
+	Annotations: map[string]string{
+		"versionIntroduced": "v1.40",
+	},
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(1, 1, command, args)
 		fsrc := cmd.NewFsSrc(args)

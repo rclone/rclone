@@ -3,8 +3,9 @@ package http
 import (
 	"context"
 	"flag"
-	"io/ioutil"
+	"io"
 	"net/http"
+	"os"
 	"strings"
 	"testing"
 	"time"
@@ -13,14 +14,14 @@ import (
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config/configfile"
 	"github.com/rclone/rclone/fs/filter"
-	httplib "github.com/rclone/rclone/lib/http"
+	libhttp "github.com/rclone/rclone/lib/http"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 var (
 	updateGolden = flag.Bool("updategolden", false, "update golden files for regression test")
-	httpServer   *server
+	sc           *serveCmd
 	testURL      string
 )
 
@@ -29,16 +30,25 @@ const (
 	testTemplate    = "testdata/golden/testindex.html"
 )
 
-func startServer(t *testing.T, f fs.Fs) {
-	opt := httplib.DefaultOpt
-	opt.ListenAddr = testBindAddress
-	httpServer = newServer(f, testTemplate)
-	router, err := httplib.Router()
-	if err != nil {
-		t.Fatal(err.Error())
+func start(t *testing.T, f fs.Fs) {
+	ctx := context.Background()
+
+	opts := Options{
+		HTTP: libhttp.DefaultCfg(),
+		Template: libhttp.TemplateConfig{
+			Path: testTemplate,
+		},
 	}
-	httpServer.Bind(router)
-	testURL = httplib.URL()
+	opts.HTTP.ListenAddr = []string{testBindAddress}
+
+	s, err := run(ctx, f, opts)
+	require.NoError(t, err, "failed to start server")
+	sc = s
+
+	urls := s.server.URLs()
+	require.Len(t, urls, 1, "expected one URL")
+
+	testURL = urls[0]
 
 	// try to connect to the test server
 	pause := time.Millisecond
@@ -53,7 +63,6 @@ func startServer(t *testing.T, f fs.Fs) {
 		pause *= 2
 	}
 	t.Fatal("couldn't connect to server")
-
 }
 
 var (
@@ -83,7 +92,7 @@ func TestInit(t *testing.T) {
 	require.NoError(t, err)
 	require.NoError(t, obj.SetModTime(context.Background(), expectedTime))
 
-	startServer(t, f)
+	start(t, f)
 }
 
 // check body against the file, or re-write body if -updategolden is
@@ -91,10 +100,10 @@ func TestInit(t *testing.T) {
 func checkGolden(t *testing.T, fileName string, got []byte) {
 	if *updateGolden {
 		t.Logf("Updating golden file %q", fileName)
-		err := ioutil.WriteFile(fileName, got, 0666)
+		err := os.WriteFile(fileName, got, 0666)
 		require.NoError(t, err)
 	} else {
-		want, err := ioutil.ReadFile(fileName)
+		want, err := os.ReadFile(fileName)
 		require.NoError(t, err)
 		wants := strings.Split(string(want), "\n")
 		gots := strings.Split(string(got), "\n")
@@ -210,7 +219,7 @@ func TestGET(t *testing.T) {
 		resp, err := http.DefaultClient.Do(req)
 		require.NoError(t, err)
 		assert.Equal(t, test.Status, resp.StatusCode, test.Golden)
-		body, err := ioutil.ReadAll(resp.Body)
+		body, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
 
 		// Check we got a Last-Modified header and that it is a valid date
@@ -227,8 +236,4 @@ func TestGET(t *testing.T) {
 
 		checkGolden(t, test.Golden, body)
 	}
-}
-
-func TestFinalise(t *testing.T) {
-	_ = httplib.Shutdown()
 }

@@ -1,3 +1,4 @@
+// Package tree provides the tree command.
 package tree
 
 import (
@@ -60,7 +61,6 @@ func init() {
 	flags.StringVarP(cmdFlags, &sort, "sort", "", "", "Select sort: name,version,size,mtime,ctime")
 	// Graphics
 	flags.BoolVarP(cmdFlags, &opts.NoIndent, "noindent", "", false, "Don't print indentation lines")
-	flags.BoolVarP(cmdFlags, &opts.Colorize, "color", "C", false, "Turn colorization on always")
 }
 
 var commandDefinition = &cobra.Command{
@@ -94,6 +94,9 @@ short options as they conflict with rclone's short options.
 For a more interactive navigation of the remote see the
 [ncdu](/commands/rclone_ncdu/) command.
 `,
+	Annotations: map[string]string{
+		"versionIntroduced": "v1.38",
+	},
 	RunE: func(command *cobra.Command, args []string) error {
 		cmd.CheckArgs(1, 1, command, args)
 		fsrc := cmd.NewFsSrc(args)
@@ -112,6 +115,7 @@ For a more interactive navigation of the remote see the
 		opts.SizeSort = sort == "size"
 		ci := fs.GetConfig(context.Background())
 		opts.UnitSize = ci.HumanReadable
+		opts.Colorize = ci.TerminalColorMode != fs.TerminalColorModeNever
 		if opts.DeepLevel == 0 {
 			opts.DeepLevel = ci.MaxDepth
 		}

@@ -16,7 +16,7 @@ var (
 	errSentinel = errors.New("an error")
 )
 
-func mockNewFs(t *testing.T) (func(), func(ctx context.Context, path string) (fs.Fs, error)) {
+func mockNewFs(t *testing.T) func(ctx context.Context, path string) (fs.Fs, error) {
 	called = 0
 	create := func(ctx context.Context, path string) (f fs.Fs, err error) {
 		assert.Equal(t, 0, called)
@@ -32,15 +32,12 @@ func mockNewFs(t *testing.T) (func(), func(ctx context.Context, path string) (fs
 		t.Fatalf("Unknown path %q", path)
 		panic("unreachable")
 	}
-	cleanup := func() {
-		Clear()
-	}
-	return cleanup, create
+	t.Cleanup(Clear)
+	return create
 }
 
 func TestGet(t *testing.T) {
-	cleanup, create := mockNewFs(t)
-	defer cleanup()
+	create := mockNewFs(t)
 
 	assert.Equal(t, 0, Entries())
 
@@ -56,8 +53,7 @@ func TestGet(t *testing.T) {
 }
 
 func TestGetFile(t *testing.T) {
-	cleanup, create := mockNewFs(t)
-	defer cleanup()
+	create := mockNewFs(t)
 
 	assert.Equal(t, 0, Entries())
 
@@ -82,8 +78,7 @@ func TestGetFile(t *testing.T) {
 }
 
 func TestGetFile2(t *testing.T) {
-	cleanup, create := mockNewFs(t)
-	defer cleanup()
+	create := mockNewFs(t)
 
 	assert.Equal(t, 0, Entries())
 
@@ -108,8 +103,7 @@ func TestGetFile2(t *testing.T) {
 }
 
 func TestGetError(t *testing.T) {
-	cleanup, create := mockNewFs(t)
-	defer cleanup()
+	create := mockNewFs(t)
 
 	assert.Equal(t, 0, Entries())
 
@@ -121,8 +115,7 @@ func TestGetError(t *testing.T) {
 }
 
 func TestPut(t *testing.T) {
-	cleanup, create := mockNewFs(t)
-	defer cleanup()
+	create := mockNewFs(t)
 
 	f := mockfs.NewFs(context.Background(), "mock", "/alien")
 
@@ -151,10 +144,9 @@ func TestPut(t *testing.T) {
 }
 
 func TestPin(t *testing.T) {
-	cleanup, create := mockNewFs(t)
-	defer cleanup()
+	create := mockNewFs(t)
 
-	// Test pinning and unpinning non-existent
+	// Test pinning and unpinning nonexistent
 	f := mockfs.NewFs(context.Background(), "mock", "/alien")
 	Pin(f)
 	Unpin(f)
@@ -167,8 +159,7 @@ func TestPin(t *testing.T) {
 }
 
 func TestClearConfig(t *testing.T) {
-	cleanup, create := mockNewFs(t)
-	defer cleanup()
+	create := mockNewFs(t)
 
 	assert.Equal(t, 0, Entries())
 
@@ -183,8 +174,7 @@ func TestClearConfig(t *testing.T) {
 }
 
 func TestClear(t *testing.T) {
-	cleanup, create := mockNewFs(t)
-	defer cleanup()
+	create := mockNewFs(t)
 
 	// Create something
 	_, err := GetFn(context.Background(), "mock:/", create)
@@ -198,8 +188,7 @@ func TestClear(t *testing.T) {
 }
 
 func TestEntries(t *testing.T) {
-	cleanup, create := mockNewFs(t)
-	defer cleanup()
+	create := mockNewFs(t)
 
 	assert.Equal(t, 0, Entries())
 

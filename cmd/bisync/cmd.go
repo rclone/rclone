@@ -9,7 +9,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -116,6 +115,9 @@ var commandDefinition = &cobra.Command{
 	Use:   "bisync remote1:path1 remote2:path2",
 	Short: shortHelp,
 	Long:  longHelp,
+	Annotations: map[string]string{
+		"versionIntroduced": "v1.58",
+	},
 	RunE: func(command *cobra.Command, args []string) error {
 		cmd.CheckArgs(2, 2, command, args)
 		fs1, file1, fs2, file2 := cmd.NewFsSrcDstFiles(args)
@@ -198,7 +200,7 @@ func (opt *Options) applyFilters(ctx context.Context) (context.Context, error) {
 	_ = f.Close()
 
 	hashFile := filtersFile + ".md5"
-	wantHash, err := ioutil.ReadFile(hashFile)
+	wantHash, err := os.ReadFile(hashFile)
 	if err != nil && !opt.Resync {
 		return ctx, fmt.Errorf("filters file md5 hash not found (must run --resync): %s", filtersFile)
 	}
@@ -209,7 +211,7 @@ func (opt *Options) applyFilters(ctx context.Context) (context.Context, error) {
 
 	if opt.Resync {
 		fs.Infof(nil, "Storing filters file hash to %s", hashFile)
-		if err := ioutil.WriteFile(hashFile, []byte(gotHash), bilib.PermSecure); err != nil {
+		if err := os.WriteFile(hashFile, []byte(gotHash), bilib.PermSecure); err != nil {
 			return ctx, err
 		}
 	}

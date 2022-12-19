@@ -26,6 +26,20 @@
     <div class="container-fluid">
       <div class="row">
         <div class="col-md-9">
+          {{ $statusMap := dict
+            "deprecated" "This feature is currently deprecated."
+            "experimental" "This feature is currently experimental and any use is at your own risk."
+            "beta" "This feature is currently in beta must be used with care."
+          }}
+
+          {{ if .Params.versionIntroduced }}<span class="badge badge-pill badge-secondary float-right" style="margin-top: 30px; font-size: 100%" title="This feature needs Rclone {{ .Params.versionIntroduced }} or later.">{{ .Params.versionIntroduced }}</span>{{ end }}
+
+          {{ with .Params.status | lower }}
+            {{ $statusCode := . }}
+            {{ $statusMessage := index $statusMap $statusCode }}
+            <span class="badge badge-pill badge-danger float-right" style="margin-top: 30px; font-size: 100%" title="{{ $statusMessage }}">{{ $statusCode }}</span>
+          {{ end }}
+
           {{ block "main" . }}
           {{ end }}
         </div>
@@ -42,9 +56,8 @@
                 &copy; <a href="https://www.craig-wood.com/nick/">Nick Craig-Wood</a> 2014-{{ now.Format "2006" }}<br>
                 {{ if .File}}{{ with $path := strings.TrimPrefix "/" .File.Path }}Source file <a href="https://github.com/rclone/rclone/blob/master/docs/content/{{ $path }}">{{ $path }}</a>{{ end }}
                 last updated <a href="https://github.com/rclone/rclone/commit/{{ with .GitInfo }}{{ .Hash }}{{ end }}">{{ .Lastmod.Format "2006-01-02" }}</a><br>{{end}}
-                Website hosted on a <a href="https://www.memset.com/dedicated-servers/vps/"><span style="font-weight: bold; font-family: arial black, arial, sans-serif; font-style: italic;">MEMSET CLOUD VPS</span></a>,
-                uploaded with <a href="https://rclone.org">rclone</a>
-                and built with <a href="https://github.com/spf13/hugo">Hugo</a>.
+                Uploaded with <a href="https://rclone.org">rclone</a>.
+                Built with <a href="https://github.com/spf13/hugo">Hugo</a>.
                 Logo by <a href="https://twitter.com/andy23">@andy23</a>.
               </p>
             </div>

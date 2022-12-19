@@ -16,7 +16,6 @@ import (
 // which can't be tested there due to import loops.
 func TestListDirSorted(t *testing.T) {
 	r := fstest.NewRun(t)
-	defer r.Finalise()
 
 	ctx := context.Background()
 	fi := filter.GetConfig(ctx)

@@ -1,8 +1,7 @@
-// Package ftp implements an FTP server for rclone
-
 //go:build !plan9
 // +build !plan9
 
+// Package ftp implements an FTP server for rclone
 package ftp
 
 import (
@@ -100,6 +99,9 @@ By default this will serve files without needing a login.
 
 You can set a single username and password with the --user and --pass flags.
 ` + vfs.Help + proxy.Help,
+	Annotations: map[string]string{
+		"versionIntroduced": "v1.44",
+	},
 	Run: func(command *cobra.Command, args []string) {
 		var f fs.Fs
 		if proxyflags.Opt.AuthProxy == "" {
@@ -154,7 +156,7 @@ func newServer(ctx context.Context, f fs.Fs, opt *Options) (*server, error) {
 	}
 	s.useTLS = s.opt.TLSKey != ""
 
-	// Check PassivePorts format since the the server library doesn't!
+	// Check PassivePorts format since the server library doesn't!
 	if !passivePortsRe.MatchString(opt.PassivePorts) {
 		return nil, fmt.Errorf("invalid format for passive ports %q", opt.PassivePorts)
 	}
@@ -184,26 +186,28 @@ func (s *server) serve() error {
 	return s.srv.ListenAndServe()
 }
 
-// serve runs the ftp server
+// close stops the ftp server
+//
+//lint:ignore U1000 unused when not building linux
 func (s *server) close() error {
 	fs.Logf(s.f, "Stopping FTP on %s", s.srv.Hostname+":"+strconv.Itoa(s.srv.Port))
 	return s.srv.Shutdown()
 }
 
-//Logger ftp logger output formatted message
+// Logger ftp logger output formatted message
 type Logger struct{}
 
-//Print log simple text message
+// Print log simple text message
 func (l *Logger) Print(sessionID string, message interface{}) {
 	fs.Infof(sessionID, "%s", message)
 }
 
-//Printf log formatted text message
+// Printf log formatted text message
 func (l *Logger) Printf(sessionID string, format string, v ...interface{}) {
 	fs.Infof(sessionID, format, v...)
 }
 
-//PrintCommand log formatted command execution
+// PrintCommand log formatted command execution
 func (l *Logger) PrintCommand(sessionID string, command string, params string) {
 	if command == "PASS" {
 		fs.Infof(sessionID, "> PASS ****")
@@ -212,7 +216,7 @@ func (l *Logger) PrintCommand(sessionID string, command string, params string) {
 	}
 }
 
-//PrintResponse log responses
+// PrintResponse log responses
 func (l *Logger) PrintResponse(sessionID string, code int, message string) {
 	fs.Infof(sessionID, "< %d %s", code, message)
 }
@@ -236,7 +240,7 @@ func (s *server) NewDriver() (ftp.Driver, error) {
 	return d, nil
 }
 
-//Driver implementation of ftp server
+// Driver implementation of ftp server
 type Driver struct {
 	s    *server
 	vfs  *vfs.VFS
@@ -264,7 +268,7 @@ func (d *Driver) CheckPasswd(user, pass string) (ok bool, err error) {
 	return true, nil
 }
 
-//Stat get information on file or folder
+// Stat get information on file or folder
 func (d *Driver) Stat(path string) (fi ftp.FileInfo, err error) {
 	defer log.Trace(path, "")("fi=%+v, err = %v", &fi, &err)
 	n, err := d.vfs.Stat(path)
@@ -274,7 +278,7 @@ func (d *Driver) Stat(path string) (fi ftp.FileInfo, err error) {
 	return &FileInfo{n, n.Mode(), d.vfs.Opt.UID, d.vfs.Opt.GID}, err
 }
 
-//ChangeDir move current folder
+// ChangeDir move current folder
 func (d *Driver) ChangeDir(path string) (err error) {
 	d.lock.Lock()
 	defer d.lock.Unlock()
@@ -289,7 +293,7 @@ func (d *Driver) ChangeDir(path string) (err error) {
 	return nil
 }
 
-//ListDir list content of a folder
+// ListDir list content of a folder
 func (d *Driver) ListDir(path string, callback func(ftp.FileInfo) error) (err error) {
 	d.lock.Lock()
 	defer d.lock.Unlock()
@@ -325,7 +329,7 @@ func (d *Driver) ListDir(path string, callback func(ftp.FileInfo) error) (err er
 	return nil
 }
 
-//DeleteDir delete a folder and his content
+// DeleteDir delete a folder and his content
 func (d *Driver) DeleteDir(path string) (err error) {
 	d.lock.Lock()
 	defer d.lock.Unlock()
@@ -344,7 +348,7 @@ func (d *Driver) DeleteDir(path string) (err error) {
 	return nil
 }
 
-//DeleteFile delete a file
+// DeleteFile delete a file
 func (d *Driver) DeleteFile(path string) (err error) {
 	d.lock.Lock()
 	defer d.lock.Unlock()
@@ -363,7 +367,7 @@ func (d *Driver) DeleteFile(path string) (err error) {
 	return nil
 }
 
-//Rename rename a file or folder
+// Rename rename a file or folder
 func (d *Driver) Rename(oldName, newName string) (err error) {
 	d.lock.Lock()
 	defer d.lock.Unlock()
@@ -371,7 +375,7 @@ func (d *Driver) Rename(oldName, newName string) (err error) {
 	return d.vfs.Rename(oldName, newName)
 }
 
-//MakeDir create a folder
+// MakeDir create a folder
 func (d *Driver) MakeDir(path string) (err error) {
 	d.lock.Lock()
 	defer d.lock.Unlock()
@@ -384,7 +388,7 @@ func (d *Driver) MakeDir(path string) (err error) {
 	return err
 }
 
-//GetFile download a file
+// GetFile download a file
 func (d *Driver) GetFile(path string, offset int64) (size int64, fr io.ReadCloser, err error) {
 	d.lock.Lock()
 	defer d.lock.Unlock()
@@ -416,7 +420,7 @@ func (d *Driver) GetFile(path string, offset int64) (size int64, fr io.ReadClose
 	return node.Size(), handle, nil
 }
 
-//PutFile upload a file
+// PutFile upload a file
 func (d *Driver) PutFile(path string, data io.Reader, appendData bool) (n int64, err error) {
 	d.lock.Lock()
 	defer d.lock.Unlock()
@@ -478,7 +482,7 @@ func (d *Driver) PutFile(path string, data io.Reader, appendData bool) (n int64,
 	return bytes, nil
 }
 
-//FileInfo struct to hold file info for ftp server
+// FileInfo struct to hold file info for ftp server
 type FileInfo struct {
 	os.FileInfo
 
@@ -487,12 +491,12 @@ type FileInfo struct {
 	group uint32
 }
 
-//Mode return mode of file.
+// Mode return mode of file.
 func (f *FileInfo) Mode() os.FileMode {
 	return f.mode
 }
 
-//Owner return owner of file. Try to find the username if possible
+// Owner return owner of file. Try to find the username if possible
 func (f *FileInfo) Owner() string {
 	str := fmt.Sprint(f.owner)
 	u, err := user.LookupId(str)
@@ -502,7 +506,7 @@ func (f *FileInfo) Owner() string {
 	return u.Username
 }
 
-//Group return group of file. Try to find the group name if possible
+// Group return group of file. Try to find the group name if possible
 func (f *FileInfo) Group() string {
 	str := fmt.Sprint(f.group)
 	g, err := user.LookupGroupId(str)

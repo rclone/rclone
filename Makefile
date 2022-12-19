@@ -81,6 +81,9 @@ quicktest:
 racequicktest:
 	RCLONE_CONFIG="/notfound" go test $(BUILDTAGS) -cpu=2 -race ./...
 
+compiletest:
+	RCLONE_CONFIG="/notfound" go test $(BUILDTAGS) -run XXX ./...
+
 # Do source code quality checks
 check:	rclone
 	@echo "-- START CODE QUALITY REPORT -------------------------------"

@@ -29,11 +29,15 @@ For example
     1 directories, 5 files
 
 You can use any of the filtering options with the tree command (e.g.
---include and --exclude).  You can also use --fast-list.
+`--include` and `--exclude`.  You can also use `--fast-list`.
 
 The tree command has many options for controlling the listing which
-are compatible with the tree command.  Note that not all of them have
+are compatible with the tree command, for example you can include file
+sizes with `--size`.  Note that not all of them have
 short options as they conflict with rclone's short options.
+
+For a more interactive navigation of the remote see the
+[ncdu](/commands/rclone_ncdu/) command.
 
 
 ```
@@ -44,7 +48,6 @@ rclone tree remote:path [flags]
 
 ```
   -a, --all             All files are listed (list . files too)
-  -C, --color           Turn colorization on always
   -d, --dirs-only       List directories only
       --dirsfirst       List directories before files (-U disables)
       --full-path       Print the full path prefix for each file

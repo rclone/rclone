@@ -2,7 +2,6 @@ package mountlib_test
 
 import (
 	"context"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -36,7 +35,7 @@ func TestRc(t *testing.T) {
 	assert.NotNil(t, getMountTypes)
 
 	localDir := t.TempDir()
-	err := ioutil.WriteFile(filepath.Join(localDir, "file.txt"), []byte("hello"), 0666)
+	err := os.WriteFile(filepath.Join(localDir, "file.txt"), []byte("hello"), 0666)
 	require.NoError(t, err)
 
 	mountPoint := t.TempDir()

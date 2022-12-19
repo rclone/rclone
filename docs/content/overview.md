@@ -15,48 +15,50 @@ show through.
 Here is an overview of the major features of each cloud storage system.
 
 | Name                         | Hash             | ModTime | Case Insensitive | Duplicate Files | MIME Type | Metadata |
-|------------------------------|:----------------:|:-------:|:----------------:|:---------------:|:---------:|:--------:|
-| 1Fichier                     | Whirlpool        | -       |        No        | Yes             | R         | -        |
-| Akamai Netstorage            | MD5, SHA256      | R/W     |        No        | No              | R         | -        |
-| Amazon Drive                 | MD5              | -       |       Yes        | No              | R         | -        |
-| Amazon S3 (or S3 compatible) | MD5              | R/W     |        No        | No              | R/W       | RWU      |
-| Backblaze B2                 | SHA1             | R/W     |        No        | No              | R/W       | -        |
-| Box                          | SHA1             | R/W     |       Yes        | No              | -         | -        |
-| Citrix ShareFile             | MD5              | R/W     |       Yes        | No              | -         | -        |
-| Dropbox                      | DBHASH ¹         | R       |       Yes        | No              | -         | -        |
+| ---------------------------- |:----------------:|:-------:|:----------------:|:---------------:|:---------:|:--------:|
+| 1Fichier                     | Whirlpool        | -       | No               | Yes             | R         | -        |
+| Akamai Netstorage            | MD5, SHA256      | R/W     | No               | No              | R         | -        |
+| Amazon Drive                 | MD5              | -       | Yes              | No              | R         | -        |
+| Amazon S3 (or S3 compatible) | MD5              | R/W     | No               | No              | R/W       | RWU      |
+| Backblaze B2                 | SHA1             | R/W     | No               | No              | R/W       | -        |
+| Box                          | SHA1             | R/W     | Yes              | No              | -         | -        |
+| Citrix ShareFile             | MD5              | R/W     | Yes              | No              | -         | -        |
+| Dropbox                      | DBHASH ¹         | R       | Yes              | No              | -         | -        |
 | Estuary                      | -                | R/W     |        No        | No              | R/W       | -        |
-| Enterprise File Fabric       | -                | R/W     |       Yes        | No              | R/W       | -        |
-| FTP                          | -                | R/W ¹⁰  |        No        | No              | -         | -        |
-| Google Cloud Storage         | MD5              | R/W     |        No        | No              | R/W       | -        |
-| Google Drive                 | MD5              | R/W     |        No        | Yes             | R/W       | -        |
-| Google Photos                | -                | -       |        No        | Yes             | R         | -        |
-| HDFS                         | -                | R/W     |        No        | No              | -         | -        |
-| HTTP                         | -                | R       |        No        | No              | R         | -        |
-| Hubic                        | MD5              | R/W     |        No        | No              | R/W       | -        |
-| Internet Archive             | MD5, SHA1, CRC32 | R/W ¹¹  |        No        | No              | -         | -        |
-| Jottacloud                   | MD5              | R/W     |       Yes        | No              | R         | -        |
-| Koofr                        | MD5              | -       |       Yes        | No              | -         | -        |
-| Mail.ru Cloud                | Mailru ⁶         | R/W     |       Yes        | No              | -         | -        |
-| Mega                         | -                | -       |        No        | Yes             | -         | -        |
-| Memory                       | MD5              | R/W     |        No        | No              | -         | -        |
-| Microsoft Azure Blob Storage | MD5              | R/W     |        No        | No              | R/W       | -        |
-| Microsoft OneDrive           | SHA1 ⁵           | R/W     |       Yes        | No              | R         | -        |
-| OpenDrive                    | MD5              | R/W     |       Yes        | Partial ⁸       | -         | -        |
-| OpenStack Swift              | MD5              | R/W     |        No        | No              | R/W       | -        |
-| pCloud                       | MD5, SHA1 ⁷      | R       |        No        | No              | W         | -        |
-| premiumize.me                | -                | -       |       Yes        | No              | R         | -        |
-| put.io                       | CRC-32           | R/W     |        No        | Yes             | R         | -        |
-| QingStor                     | MD5              | - ⁹     |        No        | No              | R/W       | -        |
-| Seafile                      | -                | -       |        No        | No              | -         | -        |
-| SFTP                         | MD5, SHA1 ²      | R/W     |     Depends      | No              | -         | -        |
-| Sia                          | -                | -       |        No        | No              | -         | -        |
-| SugarSync                    | -                | -       |        No        | No              | -         | -        |
-| Storj                        | -                | R       |        No        | No              | -         | -        |
-| Uptobox                      | -                | -       |        No        | Yes             | -         | -        |
-| WebDAV                       | MD5, SHA1 ³      | R ⁴     |     Depends      | No              | -         | -        |
-| Yandex Disk                  | MD5              | R/W     |        No        | No              | R         | -        |
-| Zoho WorkDrive               | -                | -       |        No        | No              | -         | -        |
-| The local filesystem         | All              | R/W     |     Depends      | No              | -         | RWU      |
+| Enterprise File Fabric       | -                | R/W     | Yes              | No              | R/W       | -        |
+| FTP                          | -                | R/W ¹⁰  | No               | No              | -         | -        |
+| Google Cloud Storage         | MD5              | R/W     | No               | No              | R/W       | -        |
+| Google Drive                 | MD5              | R/W     | No               | Yes             | R/W       | -        |
+| Google Photos                | -                | -       | No               | Yes             | R         | -        |
+| HDFS                         | -                | R/W     | No               | No              | -         | -        |
+| HiDrive                      | HiDrive ¹²       | R/W     | No               | No              | -         | -        |
+| HTTP                         | -                | R       | No               | No              | R         | -        |
+| Internet Archive             | MD5, SHA1, CRC32 | R/W ¹¹  | No               | No              | -         | RWU      |
+| Jottacloud                   | MD5              | R/W     | Yes              | No              | R         | -        |
+| Koofr                        | MD5              | -       | Yes              | No              | -         | -        |
+| Mail.ru Cloud                | Mailru ⁶         | R/W     | Yes              | No              | -         | -        |
+| Mega                         | -                | -       | No               | Yes             | -         | -        |
+| Memory                       | MD5              | R/W     | No               | No              | -         | -        |
+| Microsoft Azure Blob Storage | MD5              | R/W     | No               | No              | R/W       | -        |
+| Microsoft OneDrive           | SHA1 ⁵           | R/W     | Yes              | No              | R         | -        |
+| OpenDrive                    | MD5              | R/W     | Yes              | Partial ⁸       | -         | -        |
+| OpenStack Swift              | MD5              | R/W     | No               | No              | R/W       | -        |
+| Oracle Object Storage        | MD5              | R/W     | No               | No              | R/W       | -        |
+| pCloud                       | MD5, SHA1 ⁷      | R       | No               | No              | W         | -        |
+| premiumize.me                | -                | -       | Yes              | No              | R         | -        |
+| put.io                       | CRC-32           | R/W     | No               | Yes             | R         | -        |
+| QingStor                     | MD5              | - ⁹     | No               | No              | R/W       | -        |
+| Seafile                      | -                | -       | No               | No              | -         | -        |
+| SFTP                         | MD5, SHA1 ²      | R/W     | Depends          | No              | -         | -        |
+| Sia                          | -                | -       | No               | No              | -         | -        |
+| SMB                          | -                | -       | Yes              | No              | -         | -        |
+| SugarSync                    | -                | -       | No               | No              | -         | -        |
+| Storj                        | -                | R       | No               | No              | -         | -        |
+| Uptobox                      | -                | -       | No               | Yes             | -         | -        |
+| WebDAV                       | MD5, SHA1 ³      | R ⁴     | Depends          | No              | -         | -        |
+| Yandex Disk                  | MD5              | R/W     | No               | No              | R         | -        |
+| Zoho WorkDrive               | -                | -       | No               | No              | -         | -        |
+| The local filesystem         | All              | R/W     | Depends          | No              | -         | RWU      |
 
 ### Notes
 
@@ -94,6 +96,11 @@ for more details.
 ¹¹ Internet Archive requires option `wait_archive` to be set to a non-zero value
 for full modtime support.
 
+¹² HiDrive supports [its own custom
+hash](https://static.hidrive.com/dev/0001).
+It combines SHA1 sums for each 4 KiB block hierarchically to a single
+top-level sum.
+
 ### Hash ###
 
 The cloud storage system supports various hash types of the objects.
@@ -106,7 +113,7 @@ systems they must support a common hash type.
 
 ### ModTime ###
 
-Allmost all cloud storage systems store some sort of timestamp
+Almost all cloud storage systems store some sort of timestamp
 on objects, but several of them not something that is appropriate
 to use for syncing. E.g. some backends will only write a timestamp
 that represent the time of the upload. To be relevant for syncing
@@ -476,8 +483,8 @@ upon backend-specific capabilities.
 | Google Drive                 | Yes   | Yes  | Yes  | Yes     | Yes     | Yes   | Yes          | Yes          | Yes   | Yes      |
 | Google Photos                | No    | No   | No   | No      | No      | No    | No           | No           | No    | No       |
 | HDFS                         | Yes   | No   | Yes  | Yes     | No      | No    | Yes          | No           | Yes   | Yes      |
+| HiDrive                      | Yes   | Yes  | Yes  | Yes     | No      | No    | Yes          | No           | No    | Yes      |
 | HTTP                         | No    | No   | No   | No      | No      | No    | No           | No           | No    | Yes      |
-| Hubic                        | Yes † | Yes  | No   | No      | No      | Yes   | Yes          | No           | Yes   | No       |
 | Internet Archive             | No    | Yes  | No   | No      | Yes     | Yes   | No           | Yes          | Yes   | No       |
 | Jottacloud                   | Yes   | Yes  | Yes  | Yes     | Yes     | Yes   | No           | Yes          | Yes   | Yes      |
 | Koofr                        | Yes   | Yes  | Yes  | Yes     | No      | No    | Yes          | Yes          | Yes   | Yes      |
@@ -488,6 +495,7 @@ upon backend-specific capabilities.
 | Microsoft OneDrive           | Yes   | Yes  | Yes  | Yes     | Yes     | No    | No           | Yes          | Yes   | Yes      |
 | OpenDrive                    | Yes   | Yes  | Yes  | Yes     | No      | No    | No           | No           | No    | Yes      |
 | OpenStack Swift              | Yes † | Yes  | No   | No      | No      | Yes   | Yes          | No           | Yes   | No       |
+| Oracle Object Storage        | No    | Yes  | No   | No      | Yes     | Yes   | Yes          | No           | No    | No       |
 | pCloud                       | Yes   | Yes  | Yes  | Yes     | Yes     | No    | No           | Yes          | Yes   | Yes      |
 | premiumize.me                | Yes   | No   | Yes  | Yes     | No      | No    | No           | Yes          | Yes   | Yes      |
 | put.io                       | Yes   | No   | Yes  | Yes     | Yes     | No    | Yes          | No           | Yes   | Yes      |
@@ -495,8 +503,9 @@ upon backend-specific capabilities.
 | Seafile                      | Yes   | Yes  | Yes  | Yes     | Yes     | Yes   | Yes          | Yes          | Yes   | Yes      |
 | SFTP                         | No    | No   | Yes  | Yes     | No      | No    | Yes          | No           | Yes   | Yes      |
 | Sia                          | No    | No   | No   | No      | No      | No    | Yes          | No           | No    | Yes      |
+| SMB                          | No    | No   | Yes  | Yes     | No      | No    | Yes          | No           | No    | Yes      |
 | SugarSync                    | Yes   | Yes  | Yes  | Yes     | No      | No    | Yes          | Yes          | No    | Yes      |
-| Storj                        | Yes † | No   | Yes  | No      | No      | Yes   | Yes          | No           | No    | No       |
+| Storj                        | Yes † | Yes  | Yes  | No      | No      | Yes   | Yes          | No           | No    | No       |
 | Uptobox                      | No    | Yes  | Yes  | Yes     | No      | No    | No           | No           | No    | No       |
 | WebDAV                       | Yes   | Yes  | Yes  | Yes     | No      | No    | Yes ‡        | No           | Yes   | Yes      |
 | Yandex Disk                  | Yes   | Yes  | Yes  | Yes     | Yes     | No    | Yes          | Yes          | Yes   | Yes      |
@@ -508,7 +517,7 @@ upon backend-specific capabilities.
 This deletes a directory quicker than just deleting all the files in
 the directory.
 
-† Note Swift, Hubic, and Storj implement this in order to delete
+† Note Swift and Storj implement this in order to delete
 directory markers but they don't actually have a quicker way of deleting
 files other than deleting them individually.
 

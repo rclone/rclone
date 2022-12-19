@@ -1,3 +1,4 @@
+// Package backend provides the backend command.
 package backend
 
 import (
@@ -57,6 +58,9 @@ Pass arguments to the backend by placing them on the end of the line
 Note to run these commands on a running backend then see
 [backend/command](/rc/#backend-command) in the rc docs.
 `,
+	Annotations: map[string]string{
+		"versionIntroduced": "v1.52",
+	},
 	RunE: func(command *cobra.Command, args []string) error {
 		cmd.CheckArgs(2, 1e6, command, args)
 		name, remote := args[0], args[1]

@@ -158,7 +158,9 @@ func mediaWithResources(nodes vfs.Nodes) (vfs.Nodes, map[vfs.Node]vfs.Nodes) {
 	for _, node := range nodes {
 		baseName, ext := splitExt(strings.ToLower(node.Name()))
 		switch ext {
-		case ".srt":
+		case ".srt", ".ass", ".ssa", ".sub", ".idx", ".sup", ".jss", ".txt", ".usf", ".cue", ".vtt", ".css":
+			// .idx should be with .sub, .css should be with vtt otherwise they should be culled,
+			// and their mimeTypes are not consistent, but anyway these negatives don't throw errors.
 			subtitlesByName[baseName] = node
 		default:
 			mediaByName[baseName] = append(mediaByName[baseName], node)

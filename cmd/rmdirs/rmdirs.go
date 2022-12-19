@@ -1,3 +1,4 @@
+// Package rmdir provides the rmdir command.
 package rmdir
 
 import (
@@ -37,6 +38,9 @@ used with option ` + "`--rmdirs`" + `).
 To delete a path and any objects in it, use [purge](/commands/rclone_purge/)
 command.
 `,
+	Annotations: map[string]string{
+		"versionIntroduced": "v1.35",
+	},
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(1, 1, command, args)
 		fdst := cmd.NewFsDir(args)

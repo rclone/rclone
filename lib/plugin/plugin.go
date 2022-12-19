@@ -6,7 +6,6 @@ package plugin
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"plugin"
@@ -19,7 +18,7 @@ func init() {
 		return
 	}
 	// Get file names of plugin dir
-	listing, err := ioutil.ReadDir(dir)
+	listing, err := os.ReadDir(dir)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "Failed to open plugin directory:", err)
 	}

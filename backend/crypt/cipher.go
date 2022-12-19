@@ -127,11 +127,11 @@ type fileNameEncoding interface {
 // RFC4648
 //
 // The standard encoding is modified in two ways
-//  * it becomes lower case (no-one likes upper case filenames!)
-//  * we strip the padding character `=`
+//   - it becomes lower case (no-one likes upper case filenames!)
+//   - we strip the padding character `=`
 type caseInsensitiveBase32Encoding struct{}
 
-// EncodeToString encodes a strign using the modified version of
+// EncodeToString encodes a string using the modified version of
 // base32 encoding.
 func (caseInsensitiveBase32Encoding) EncodeToString(src []byte) string {
 	encoded := base32.HexEncoding.EncodeToString(src)
@@ -244,7 +244,7 @@ func (c *Cipher) putBlock(buf []byte) {
 
 // encryptSegment encrypts a path segment
 //
-// This uses EME with AES
+// This uses EME with AES.
 //
 // EME (ECB-Mix-ECB) is a wide-block encryption mode presented in the
 // 2003 paper "A Parallelizable Enciphering Mode" by Halevi and
@@ -254,8 +254,8 @@ func (c *Cipher) putBlock(buf []byte) {
 // same filename must encrypt to the same thing.
 //
 // This means that
-//  * filenames with the same name will encrypt the same
-//  * filenames which start the same won't have a common prefix
+//   - filenames with the same name will encrypt the same
+//   - filenames which start the same won't have a common prefix
 func (c *Cipher) encryptSegment(plaintext string) string {
 	if plaintext == "" {
 		return ""
@@ -1085,7 +1085,7 @@ func (c *Cipher) DecryptData(rc io.ReadCloser) (io.ReadCloser, error) {
 
 // DecryptDataSeek decrypts the data stream from offset
 //
-// The open function must return a ReadCloser opened to the offset supplied
+// The open function must return a ReadCloser opened to the offset supplied.
 //
 // You must use this form of DecryptData if you might want to Seek the file handle
 func (c *Cipher) DecryptDataSeek(ctx context.Context, open OpenRangeSeek, offset, limit int64) (ReadSeekCloser, error) {

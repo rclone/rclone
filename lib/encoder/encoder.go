@@ -1,15 +1,13 @@
-/*
-Translate file names for usage on restrictive storage systems
-
-The restricted set of characters are mapped to a unicode equivalent version
-(most to their FULLWIDTH variant) to increase compatibility with other
-storage systems.
-See: http://unicode-search.net/unicode-namesearch.pl?term=FULLWIDTH
-
-Encoders will also quote reserved characters to differentiate between
-the raw and encoded forms.
-*/
-
+// Package encoder provides functionality to translate file names
+// for usage on restrictive storage systems.
+//
+// The restricted set of characters are mapped to a unicode equivalent version
+// (most to their FULLWIDTH variant) to increase compatibility with other
+// storage systems.
+// See: http://unicode-search.net/unicode-namesearch.pl?term=FULLWIDTH
+//
+// Encoders will also quote reserved characters to differentiate between
+// the raw and encoded forms.
 package encoder
 
 import (

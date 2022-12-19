@@ -153,3 +153,21 @@ func TestRcProviders(t *testing.T) {
 	}
 	assert.True(t, foundLocal, "didn't find local provider")
 }
+
+func TestRcSetPath(t *testing.T) {
+	oldPath := config.GetConfigPath()
+	newPath := oldPath + ".newPath"
+	call := rc.Calls.Get("config/setpath")
+	assert.NotNil(t, call)
+	in := rc.Params{
+		"path": newPath,
+	}
+	_, err := call.Fn(context.Background(), in)
+	require.NoError(t, err)
+	assert.Equal(t, newPath, config.GetConfigPath())
+
+	in["path"] = oldPath
+	_, err = call.Fn(context.Background(), in)
+	require.NoError(t, err)
+	assert.Equal(t, oldPath, config.GetConfigPath())
+}

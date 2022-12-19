@@ -17,9 +17,9 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/url"
+	"os"
 	"path"
 	"strconv"
 	"strings"
@@ -183,7 +183,7 @@ func refreshJWTToken(ctx context.Context, jsonFile string, boxSubType string, na
 }
 
 func getBoxConfig(configFile string) (boxConfig *api.ConfigJSON, err error) {
-	file, err := ioutil.ReadFile(configFile)
+	file, err := os.ReadFile(configFile)
 	if err != nil {
 		return nil, fmt.Errorf("box: failed to read Box config: %w", err)
 	}
@@ -266,7 +266,7 @@ type Fs struct {
 	root         string                // the path we are working on
 	opt          Options               // parsed options
 	features     *fs.Features          // optional features
-	srv          *rest.Client          // the connection to the one drive server
+	srv          *rest.Client          // the connection to the server
 	dirCache     *dircache.DirCache    // Map of directory path to directory id
 	pacer        *fs.Pacer             // pacer for API calls
 	tokenRenewer *oauthutil.Renew      // renew the token on expiry
@@ -692,7 +692,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 // Creates from the parameters passed in a half finished Object which
 // must have setMetaData called on it
 //
-// Returns the object, leaf, directoryID and error
+// Returns the object, leaf, directoryID and error.
 //
 // Used to create new objects
 func (f *Fs) createObject(ctx context.Context, remote string, modTime time.Time, size int64) (o *Object, leaf string, directoryID string, err error) {
@@ -752,7 +752,7 @@ func (f *Fs) preUploadCheck(ctx context.Context, leaf, directoryID string, size 
 
 // Put the object
 //
-// Copy the reader in to the new object which is returned
+// Copy the reader in to the new object which is returned.
 //
 // The new object may have been created if an error is returned
 func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
@@ -792,9 +792,9 @@ func (f *Fs) PutStream(ctx context.Context, in io.Reader, src fs.ObjectInfo, opt
 
 // PutUnchecked the object into the container
 //
-// This will produce an error if the object already exists
+// This will produce an error if the object already exists.
 //
-// Copy the reader in to the new object which is returned
+// Copy the reader in to the new object which is returned.
 //
 // The new object may have been created if an error is returned
 func (f *Fs) PutUnchecked(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
@@ -877,9 +877,9 @@ func (f *Fs) Precision() time.Duration {
 
 // Copy src to this remote using server-side copy operations.
 //
-// This is stored with the remote path given
+// This is stored with the remote path given.
 //
-// It returns the destination Object and a possible error
+// It returns the destination Object and a possible error.
 //
 // Will only be called if src.Fs().Name() == f.Name()
 //
@@ -995,9 +995,9 @@ func (f *Fs) About(ctx context.Context) (usage *fs.Usage, err error) {
 
 // Move src to this remote using server-side move operations.
 //
-// This is stored with the remote path given
+// This is stored with the remote path given.
 //
-// It returns the destination Object and a possible error
+// It returns the destination Object and a possible error.
 //
 // Will only be called if src.Fs().Name() == f.Name()
 //
@@ -1235,7 +1235,6 @@ func (o *Object) readMetaData(ctx context.Context) (err error) {
 
 // ModTime returns the modification time of the object
 //
-//
 // It attempts to read the objects mtime and if that isn't present the
 // LastModified returned in the http headers
 func (o *Object) ModTime(ctx context.Context) time.Time {
@@ -1346,9 +1345,9 @@ func (o *Object) upload(ctx context.Context, in io.Reader, leaf, directoryID str
 
 // Update the object with the contents of the io.Reader, modTime and size
 //
-// If existing is set then it updates the object rather than creating a new one
+// If existing is set then it updates the object rather than creating a new one.
 //
-// The new object may have been created if an error is returned
+// The new object may have been created if an error is returned.
 func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (err error) {
 	if o.fs.tokenRenewer != nil {
 		o.fs.tokenRenewer.Start()

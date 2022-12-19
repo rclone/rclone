@@ -7,7 +7,8 @@ import (
 // Help contains text describing file and directory caching to add to
 // the command help.
 // Warning: "!" (sic) will be replaced by backticks below,
-//          but the pipe character "|" can be used as is.
+//
+//	but the pipe character "|" can be used as is.
 var Help = strings.ReplaceAll(`
 ### VFS - Virtual File System
 
@@ -306,6 +307,13 @@ The flag controls whether "fixup" is performed to satisfy the target.
 If the flag is not provided on the command line, then its default value depends
 on the operating system where rclone runs: "true" on Windows and macOS, "false"
 otherwise. If the flag is provided without a value, then it is "true".
+
+### VFS Disk Options
+
+This flag allows you to manually set the statistics about the filing system.
+It can be useful when those statistics cannot be read correctly automatically.
+
+    --vfs-disk-space-total-size    Manually set the total disk space size (example: 256G, default: -1)
 
 ### Alternate report of used bytes
 

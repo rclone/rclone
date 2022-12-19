@@ -9,7 +9,6 @@ import (
 	"flag"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"math/rand"
 	"os"
@@ -411,7 +410,7 @@ func Time(timeString string) time.Time {
 
 // LocalRemote creates a temporary directory name for local remotes
 func LocalRemote() (path string, err error) {
-	path, err = ioutil.TempDir("", "rclone")
+	path, err = os.MkdirTemp("", "rclone")
 	if err == nil {
 		// Now remove the directory
 		err = os.Remove(path)

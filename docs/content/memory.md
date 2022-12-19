@@ -1,6 +1,7 @@
 ---
 title: "Memory"
 description: "Rclone docs for Memory backend"
+versionIntroduced: "v1.51.0"
 ---
 
 # {{< icon "fas fa-memory" >}} Memory

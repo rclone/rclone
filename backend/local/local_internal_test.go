@@ -4,16 +4,18 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"os"
 	"path"
 	"path/filepath"
 	"runtime"
+	"sort"
 	"testing"
 	"time"
 
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config/configmap"
+	"github.com/rclone/rclone/fs/filter"
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/fs/object"
 	"github.com/rclone/rclone/fstest"
@@ -31,7 +33,6 @@ func TestMain(m *testing.M) {
 // Test copy with source file that's updating
 func TestUpdatingCheck(t *testing.T) {
 	r := fstest.NewRun(t)
-	defer r.Finalise()
 	filePath := "sub dir/local test"
 	r.WriteFile(filePath, "content", time.Now())
 
@@ -76,7 +77,6 @@ func TestUpdatingCheck(t *testing.T) {
 func TestSymlink(t *testing.T) {
 	ctx := context.Background()
 	r := fstest.NewRun(t)
-	defer r.Finalise()
 	f := r.Flocal.(*Fs)
 	dir := f.root
 
@@ -148,7 +148,7 @@ func TestSymlink(t *testing.T) {
 	// Check reading the object
 	in, err := o.Open(ctx)
 	require.NoError(t, err)
-	contents, err := ioutil.ReadAll(in)
+	contents, err := io.ReadAll(in)
 	require.NoError(t, err)
 	require.Equal(t, "file.txt", string(contents))
 	require.NoError(t, in.Close())
@@ -156,7 +156,7 @@ func TestSymlink(t *testing.T) {
 	// Check reading the object with range
 	in, err = o.Open(ctx, &fs.RangeOption{Start: 2, End: 5})
 	require.NoError(t, err)
-	contents, err = ioutil.ReadAll(in)
+	contents, err = io.ReadAll(in)
 	require.NoError(t, err)
 	require.Equal(t, "file.txt"[2:5+1], string(contents))
 	require.NoError(t, in.Close())
@@ -175,7 +175,6 @@ func TestSymlinkError(t *testing.T) {
 func TestHashOnUpdate(t *testing.T) {
 	ctx := context.Background()
 	r := fstest.NewRun(t)
-	defer r.Finalise()
 	const filePath = "file.txt"
 	when := time.Now()
 	r.WriteFile(filePath, "content", when)
@@ -190,7 +189,7 @@ func TestHashOnUpdate(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, "9a0364b9e99bb480dd25e1f0284c8555", md5)
 
-	// Reupload it with diferent contents but same size and timestamp
+	// Reupload it with different contents but same size and timestamp
 	var b = bytes.NewBufferString("CONTENT")
 	src := object.NewStaticObjectInfo(filePath, when, int64(b.Len()), true, nil, f)
 	err = o.Update(ctx, b, src)
@@ -206,7 +205,6 @@ func TestHashOnUpdate(t *testing.T) {
 func TestHashOnDelete(t *testing.T) {
 	ctx := context.Background()
 	r := fstest.NewRun(t)
-	defer r.Finalise()
 	const filePath = "file.txt"
 	when := time.Now()
 	r.WriteFile(filePath, "content", when)
@@ -235,7 +233,6 @@ func TestHashOnDelete(t *testing.T) {
 func TestMetadata(t *testing.T) {
 	ctx := context.Background()
 	r := fstest.NewRun(t)
-	defer r.Finalise()
 	const filePath = "metafile.txt"
 	when := time.Now()
 	const dayLength = len("2001-01-01")
@@ -365,4 +362,36 @@ func TestMetadata(t *testing.T) {
 		}
 	})
 
+}
+
+func TestFilter(t *testing.T) {
+	ctx := context.Background()
+	r := fstest.NewRun(t)
+	when := time.Now()
+	r.WriteFile("included", "included file", when)
+	r.WriteFile("excluded", "excluded file", when)
+	f := r.Flocal.(*Fs)
+
+	// Check set up for filtering
+	assert.True(t, f.Features().FilterAware)
+
+	// Add a filter
+	ctx, fi := filter.AddConfig(ctx)
+	require.NoError(t, fi.AddRule("+ included"))
+	require.NoError(t, fi.AddRule("- *"))
+
+	// Check listing without use filter flag
+	entries, err := f.List(ctx, "")
+	require.NoError(t, err)
+	sort.Sort(entries)
+	require.Equal(t, "[excluded included]", fmt.Sprint(entries))
+
+	// Add user filter flag
+	ctx = filter.SetUseFilter(ctx, true)
+
+	// Check listing with use filter flag
+	entries, err = f.List(ctx, "")
+	require.NoError(t, err)
+	sort.Sort(entries)
+	require.Equal(t, "[included]", fmt.Sprint(entries))
 }

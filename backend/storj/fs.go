@@ -160,6 +160,7 @@ var (
 	_ fs.ListRer     = &Fs{}
 	_ fs.PutStreamer = &Fs{}
 	_ fs.Mover       = &Fs{}
+	_ fs.Copier      = &Fs{}
 )
 
 // NewFs creates a filesystem backed by Storj.
@@ -683,9 +684,9 @@ func newPrefix(prefix string) string {
 
 // Move src to this remote using server-side move operations.
 //
-// This is stored with the remote path given
+// This is stored with the remote path given.
 //
-// It returns the destination Object and a possible error
+// It returns the destination Object and a possible error.
 //
 // Will only be called if src.Fs().Name() == f.Name()
 //
@@ -719,4 +720,44 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 
 	// Read the new object
 	return f.NewObject(ctx, remote)
+}
+
+// Copy src to this remote using server-side copy operations.
+//
+// This is stored with the remote path given.
+//
+// It returns the destination Object and a possible error.
+//
+// Will only be called if src.Fs().Name() == f.Name()
+//
+// If it isn't possible then return fs.ErrorCantCopy
+func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
+	srcObj, ok := src.(*Object)
+	if !ok {
+		fs.Debugf(src, "Can't copy - not same remote type")
+		return nil, fs.ErrorCantCopy
+	}
+
+	// Copy parameters
+	srcBucket, srcKey := bucket.Split(srcObj.absolute)
+	dstBucket, dstKey := f.absolute(remote)
+	options := uplink.CopyObjectOptions{}
+
+	// Do the copy
+	newObject, err := f.project.CopyObject(ctx, srcBucket, srcKey, dstBucket, dstKey, &options)
+	if err != nil {
+		// Make sure destination bucket exists
+		_, err := f.project.EnsureBucket(ctx, dstBucket)
+		if err != nil {
+			return nil, fmt.Errorf("copy object failed to create destination bucket: %w", err)
+		}
+		// And try again
+		newObject, err = f.project.CopyObject(ctx, srcBucket, srcKey, dstBucket, dstKey, &options)
+		if err != nil {
+			return nil, fmt.Errorf("copy object failed: %w", err)
+		}
+	}
+
+	// Return the new object
+	return newObjectFromUplink(f, remote, newObject), nil
 }

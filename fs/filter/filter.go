@@ -2,14 +2,11 @@
 package filter
 
 import (
-	"bufio"
 	"context"
 	"errors"
 	"fmt"
 	"log"
-	"os"
 	"path"
-	"regexp"
 	"strings"
 	"time"
 
@@ -22,75 +19,14 @@ import (
 // This is accessed through GetConfig and AddConfig
 var globalConfig = mustNewFilter(nil)
 
-// rule is one filter rule
-type rule struct {
-	Include bool
-	Regexp  *regexp.Regexp
-}
-
-// Match returns true if rule matches path
-func (r *rule) Match(path string) bool {
-	return r.Regexp.MatchString(path)
-}
-
-// String the rule
-func (r *rule) String() string {
-	c := "-"
-	if r.Include {
-		c = "+"
-	}
-	return fmt.Sprintf("%s %s", c, r.Regexp.String())
-}
-
-// rules is a slice of rules
-type rules struct {
-	rules    []rule
-	existing map[string]struct{}
-}
-
-// add adds a rule if it doesn't exist already
-func (rs *rules) add(Include bool, re *regexp.Regexp) {
-	if rs.existing == nil {
-		rs.existing = make(map[string]struct{})
-	}
-	newRule := rule{
-		Include: Include,
-		Regexp:  re,
-	}
-	newRuleString := newRule.String()
-	if _, ok := rs.existing[newRuleString]; ok {
-		return // rule already exists
-	}
-	rs.rules = append(rs.rules, newRule)
-	rs.existing[newRuleString] = struct{}{}
-}
-
-// clear clears all the rules
-func (rs *rules) clear() {
-	rs.rules = nil
-	rs.existing = nil
-}
-
-// len returns the number of rules
-func (rs *rules) len() int {
-	return len(rs.rules)
-}
-
-// FilesMap describes the map of files to transfer
-type FilesMap map[string]struct{}
-
 // Opt configures the filter
 type Opt struct {
 	DeleteExcluded bool
-	FilterRule     []string
-	FilterFrom     []string
-	ExcludeRule    []string
-	ExcludeFrom    []string
+	RulesOpt       // embedded so we don't change the JSON API
 	ExcludeFile    []string
-	IncludeRule    []string
-	IncludeFrom    []string
 	FilesFrom      []string
 	FilesFromRaw   []string
+	MetaRules      RulesOpt
 	MinAge         fs.Duration
 	MaxAge         fs.Duration
 	MinSize        fs.SizeSuffix
@@ -106,6 +42,9 @@ var DefaultOpt = Opt{
 	MaxSize: fs.SizeSuffix(-1),
 }
 
+// FilesMap describes the map of files to transfer
+type FilesMap map[string]struct{}
+
 // Filter describes any filtering in operation
 type Filter struct {
 	Opt         Opt
@@ -113,6 +52,7 @@ type Filter struct {
 	ModTimeTo   time.Time
 	fileRules   rules
 	dirRules    rules
+	metaRules   rules
 	files       FilesMap // files if filesFrom
 	dirs        FilesMap // dirs from filesFrom
 }
@@ -142,57 +82,14 @@ func NewFilter(opt *Opt) (f *Filter, err error) {
 		fs.Debugf(nil, "--max-age %v to %v", f.Opt.MaxAge, f.ModTimeFrom)
 	}
 
-	addImplicitExclude := false
-	foundExcludeRule := false
-
-	for _, rule := range f.Opt.IncludeRule {
-		err = f.Add(true, rule)
-		if err != nil {
-			return nil, err
-		}
-		addImplicitExclude = true
-	}
-	for _, rule := range f.Opt.IncludeFrom {
-		err := forEachLine(rule, false, func(line string) error {
-			return f.Add(true, line)
-		})
-		if err != nil {
-			return nil, err
-		}
-		addImplicitExclude = true
-	}
-	for _, rule := range f.Opt.ExcludeRule {
-		err = f.Add(false, rule)
-		if err != nil {
-			return nil, err
-		}
-		foundExcludeRule = true
-	}
-	for _, rule := range f.Opt.ExcludeFrom {
-		err := forEachLine(rule, false, func(line string) error {
-			return f.Add(false, line)
-		})
-		if err != nil {
-			return nil, err
-		}
-		foundExcludeRule = true
+	err = parseRules(&f.Opt.RulesOpt, f.Add, f.Clear)
+	if err != nil {
+		return nil, err
 	}
 
-	if addImplicitExclude && foundExcludeRule {
-		fs.Errorf(nil, "Using --filter is recommended instead of both --include and --exclude as the order they are parsed in is indeterminate")
-	}
-
-	for _, rule := range f.Opt.FilterRule {
-		err = f.AddRule(rule)
-		if err != nil {
-			return nil, err
-		}
-	}
-	for _, rule := range f.Opt.FilterFrom {
-		err := forEachLine(rule, false, f.AddRule)
-		if err != nil {
-			return nil, err
-		}
+	err = parseRules(&f.Opt.MetaRules, f.metaRules.Add, f.metaRules.clear)
+	if err != nil {
+		return nil, err
 	}
 
 	inActive := f.InActive()
@@ -225,12 +122,6 @@ func NewFilter(opt *Opt) (f *Filter, err error) {
 		}
 	}
 
-	if addImplicitExclude {
-		err = f.Add(false, "/**")
-		if err != nil {
-			return nil, err
-		}
-	}
 	if fs.GetConfig(context.Background()).Dump&fs.DumpFilters != 0 {
 		fmt.Println("--- start filters ---")
 		fmt.Println(f.DumpFilters())
@@ -301,24 +192,15 @@ func (f *Filter) Add(Include bool, glob string) error {
 //
 // These are
 //
-//   + glob
 //   - glob
-//   !
+//   - glob
+//     !
 //
 // '+' includes the glob, '-' excludes it and '!' resets the filter list
 //
 // Line comments may be introduced with '#' or ';'
 func (f *Filter) AddRule(rule string) error {
-	switch {
-	case rule == "!":
-		f.Clear()
-		return nil
-	case strings.HasPrefix(rule, "- "):
-		return f.Add(false, rule[2:])
-	case strings.HasPrefix(rule, "+ "):
-		return f.Add(true, rule[2:])
-	}
-	return fmt.Errorf("malformed rule %q", rule)
+	return addRule(rule, f.Add, f.Clear)
 }
 
 // initAddFile creates f.files and f.dirs
@@ -359,6 +241,7 @@ func (f *Filter) Files() FilesMap {
 func (f *Filter) Clear() {
 	f.fileRules.clear()
 	f.dirRules.clear()
+	f.metaRules.clear()
 }
 
 // InActive returns false if any filters are active
@@ -370,17 +253,18 @@ func (f *Filter) InActive() bool {
 		f.Opt.MaxSize < 0 &&
 		f.fileRules.len() == 0 &&
 		f.dirRules.len() == 0 &&
+		f.metaRules.len() == 0 &&
 		len(f.Opt.ExcludeFile) == 0)
 }
 
 // IncludeRemote returns whether this remote passes the filter rules.
 func (f *Filter) IncludeRemote(remote string) bool {
-	for _, rule := range f.fileRules.rules {
-		if rule.Match(remote) {
-			return rule.Include
-		}
+	// filesFrom takes precedence
+	if f.files != nil {
+		_, include := f.files[remote]
+		return include
 	}
-	return true
+	return f.fileRules.include(remote)
 }
 
 // ListContainsExcludeFile checks if exclude file is present in the list.
@@ -423,13 +307,7 @@ func (f *Filter) IncludeDirectory(ctx context.Context, fs fs.Fs) func(string) (b
 			return include, nil
 		}
 		remote += "/"
-		for _, rule := range f.dirRules.rules {
-			if rule.Match(remote) {
-				return rule.Include, nil
-			}
-		}
-
-		return true, nil
+		return f.dirRules.include(remote), nil
 	}
 }
 
@@ -453,7 +331,7 @@ func (f *Filter) DirContainsExcludeFile(ctx context.Context, fremote fs.Fs, remo
 
 // Include returns whether this object should be included into the
 // sync or not
-func (f *Filter) Include(remote string, size int64, modTime time.Time) bool {
+func (f *Filter) Include(remote string, size int64, modTime time.Time, metadata fs.Metadata) bool {
 	// filesFrom takes precedence
 	if f.files != nil {
 		_, include := f.files[remote]
@@ -471,6 +349,20 @@ func (f *Filter) Include(remote string, size int64, modTime time.Time) bool {
 	if f.Opt.MaxSize >= 0 && size > int64(f.Opt.MaxSize) {
 		return false
 	}
+	if f.metaRules.len() > 0 {
+		metadatas := make([]string, 0, len(metadata)+1)
+		for key, value := range metadata {
+			metadatas = append(metadatas, fmt.Sprintf("%s=%s", key, value))
+		}
+		if len(metadata) == 0 {
+			// If there is no metadata, add a null one
+			// otherwise the default action isn't taken
+			metadatas = append(metadatas, "\x00=\x00")
+		}
+		if !f.metaRules.includeMany(metadatas) {
+			return false
+		}
+	}
 	return f.IncludeRemote(remote)
 }
 
@@ -485,39 +377,17 @@ func (f *Filter) IncludeObject(ctx context.Context, o fs.Object) bool {
 	} else {
 		modTime = time.Unix(0, 0)
 	}
-
-	return f.Include(o.Remote(), o.Size(), modTime)
-}
-
-// forEachLine calls fn on every line in the file pointed to by path
-//
-// It ignores empty lines and lines starting with '#' or ';' if raw is false
-func forEachLine(path string, raw bool, fn func(string) error) (err error) {
-	var scanner *bufio.Scanner
-	if path == "-" {
-		scanner = bufio.NewScanner(os.Stdin)
-	} else {
-		in, err := os.Open(path)
+	var metadata fs.Metadata
+	if f.metaRules.len() > 0 {
+		var err error
+		metadata, err = fs.GetMetadata(ctx, o)
 		if err != nil {
-			return err
+			fs.Errorf(o, "Failed to read metadata: %v", err)
+			metadata = nil
 		}
-		scanner = bufio.NewScanner(in)
-		defer fs.CheckClose(in, &err)
+
 	}
-	for scanner.Scan() {
-		line := scanner.Text()
-		if !raw {
-			line = strings.TrimSpace(line)
-			if len(line) == 0 || line[0] == '#' || line[0] == ';' {
-				continue
-			}
-		}
-		err := fn(line)
-		if err != nil {
-			return err
-		}
-	}
-	return scanner.Err()
+	return f.Include(o.Remote(), o.Size(), modTime, metadata)
 }
 
 // DumpFilters dumps the filters in textual form, 1 per line
@@ -536,6 +406,12 @@ func (f *Filter) DumpFilters() string {
 	rules = append(rules, "--- Directory filter rules ---")
 	for _, dirRule := range f.dirRules.rules {
 		rules = append(rules, dirRule.String())
+	}
+	if f.metaRules.len() > 0 {
+		rules = append(rules, "--- Metadata filter rules ---")
+		for _, metaRule := range f.metaRules.rules {
+			rules = append(rules, metaRule.String())
+		}
 	}
 	return strings.Join(rules, "\n")
 }

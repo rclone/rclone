@@ -268,7 +268,7 @@ default based on the batch_mode in use.
 			Advanced: true,
 		}, {
 			Name:     "batch_commit_timeout",
-			Help:     `Max time to wait for a batch to finish comitting`,
+			Help:     `Max time to wait for a batch to finish committing`,
 			Default:  fs.Duration(10 * time.Minute),
 			Advanced: true,
 		}, {
@@ -925,7 +925,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 
 // Put the object
 //
-// Copy the reader in to the new object which is returned
+// Copy the reader in to the new object which is returned.
 //
 // The new object may have been created if an error is returned
 func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
@@ -1044,9 +1044,9 @@ func (f *Fs) Precision() time.Duration {
 
 // Copy src to this remote using server-side copy operations.
 //
-// This is stored with the remote path given
+// This is stored with the remote path given.
 //
-// It returns the destination Object and a possible error
+// It returns the destination Object and a possible error.
 //
 // Will only be called if src.Fs().Name() == f.Name()
 //
@@ -1105,9 +1105,9 @@ func (f *Fs) Purge(ctx context.Context, dir string) (err error) {
 
 // Move src to this remote using server-side move operations.
 //
-// This is stored with the remote path given
+// This is stored with the remote path given.
 //
-// It returns the destination Object and a possible error
+// It returns the destination Object and a possible error.
 //
 // Will only be called if src.Fs().Name() == f.Name()
 //
@@ -1435,7 +1435,7 @@ func (f *Fs) changeNotifyRunner(ctx context.Context, notifyFunc func(string, fs.
 			}
 
 			if entryPath != "" {
-				notifyFunc(entryPath, entryType)
+				notifyFunc(f.opt.Enc.ToStandardPath(entryPath), entryType)
 			}
 		}
 		if !changeList.HasMore {
@@ -1669,7 +1669,7 @@ func (o *Object) uploadChunked(ctx context.Context, in0 io.Reader, commitInfo *f
 						correctOffset := uErr.EndpointError.IncorrectOffset.CorrectOffset
 						delta := int64(correctOffset) - int64(cursor.Offset)
 						skip += delta
-						what := fmt.Sprintf("incorrect offset error receved: sent %d, need %d, skip %d", cursor.Offset, correctOffset, skip)
+						what := fmt.Sprintf("incorrect offset error received: sent %d, need %d, skip %d", cursor.Offset, correctOffset, skip)
 						if skip < 0 {
 							return false, fmt.Errorf("can't seek backwards to correct offset: %s", what)
 						} else if skip == chunkSize {
@@ -1697,6 +1697,9 @@ func (o *Object) uploadChunked(ctx context.Context, in0 io.Reader, commitInfo *f
 		if size > 0 {
 			// if size is known, check if next chunk is final
 			appendArg.Close = uint64(size)-in.BytesRead() <= uint64(chunkSize)
+			if in.BytesRead() > uint64(size) {
+				return nil, fmt.Errorf("expected %d bytes in input, but have read %d so far", size, in.BytesRead())
+			}
 		} else {
 			// if size is unknown, upload as long as we can read full chunks from the reader
 			appendArg.Close = in.BytesRead()-cursor.Offset < uint64(chunkSize)
@@ -1760,7 +1763,7 @@ func checkPathLength(name string) (err error) {
 
 // Update the already existing object
 //
-// Copy the reader into the object updating modTime and size
+// Copy the reader into the object updating modTime and size.
 //
 // The new object may have been created if an error is returned
 func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {

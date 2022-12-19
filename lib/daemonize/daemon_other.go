@@ -1,8 +1,7 @@
-// Daemonization stub for non-Unix platforms (implementation)
-
 //go:build windows || plan9 || js
 // +build windows plan9 js
 
+// Package daemonize provides daemonization stub for non-Unix platforms.
 package daemonize
 
 import (

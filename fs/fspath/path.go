@@ -13,14 +13,13 @@ import (
 )
 
 const (
-	configNameRe = `[\w_. -]+`
-	remoteNameRe = `^(:?` + configNameRe + `)`
+	configNameRe              = `[\w\p{L}\p{N}.]+(?:[ -]+[\w\p{L}\p{N}.-]+)*` // May contain Unicode numbers and letters, as well as `_`, `-`, `.` and space, but not start with `-` (it complicates usage, see #4261) or space, and not end with space
+	illegalPartOfConfigNameRe = `^[ -]+|[^\w\p{L}\p{N}. -]+|[ ]+$`
 )
 
 var (
-	errInvalidCharacters = errors.New("config name contains invalid characters - may only contain `0-9`, `A-Z`, `a-z`, `_`, `-`, `.` and space")
+	errInvalidCharacters = errors.New("config name contains invalid characters - may only contain numbers, letters, `_`, `-`, `.` and space, while not start with `-` or space, and not end with space")
 	errCantBeEmpty       = errors.New("can't use empty string as a path")
-	errCantStartWithDash = errors.New("config name starts with `-`")
 	errBadConfigParam    = errors.New("config parameters may only contain `0-9`, `A-Z`, `a-z` and `_`")
 	errEmptyConfigParam  = errors.New("config parameters can't be empty")
 	errConfigNameEmpty   = errors.New("config name can't be empty")
@@ -34,8 +33,11 @@ var (
 	// configNameMatcher is a pattern to match an rclone config name
 	configNameMatcher = regexp.MustCompile(`^` + configNameRe + `$`)
 
+	// illegalPartOfConfigNameMatcher is a pattern to match a sequence of characters not allowed in an rclone config name
+	illegalPartOfConfigNameMatcher = regexp.MustCompile(illegalPartOfConfigNameRe)
+
 	// remoteNameMatcher is a pattern to match an rclone remote name at the start of a config
-	remoteNameMatcher = regexp.MustCompile(`^` + remoteNameRe + `(:$|,)`)
+	remoteNameMatcher = regexp.MustCompile(`^:?` + configNameRe + `(?::$|,)`)
 )
 
 // CheckConfigName returns an error if configName is invalid
@@ -43,11 +45,22 @@ func CheckConfigName(configName string) error {
 	if !configNameMatcher.MatchString(configName) {
 		return errInvalidCharacters
 	}
-	// Reject configName, if it starts with -, complicates usage. (#4261)
-	if strings.HasPrefix(configName, "-") {
-		return errCantStartWithDash
-	}
 	return nil
+}
+
+// MakeConfigName makes an input into something legal to be used as a config name.
+// Returns a string where any sequences of illegal characters are replaced with
+// a single underscore. If the input is already valid as a config name, it is
+// returned unchanged. If the input is an empty string, a single underscore is
+// returned.
+func MakeConfigName(name string) string {
+	if name == "" {
+		return "_"
+	}
+	if configNameMatcher.MatchString(name) {
+		return name
+	}
+	return illegalPartOfConfigNameMatcher.ReplaceAllString(name, "_")
 }
 
 // checkRemoteName returns an error if remoteName is invalid

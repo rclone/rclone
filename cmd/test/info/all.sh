@@ -15,5 +15,3 @@ exec rclone --check-normalization=true --check-control=true --check-length=true 
 	TestSwift:testInfo \
 	TestYandex:testInfo \
 	TestFTP:testInfo
-
-#	TestHubic:testInfo \

@@ -40,7 +40,7 @@ const (
 	minSleep                   = 10 * time.Millisecond // In case of error, start at 10ms sleep.
 )
 
-// SharedOptions are shared between swift and hubic
+// SharedOptions are shared between swift and backends which depend on swift
 var SharedOptions = []fs.Option{{
 	Name: "chunk_size",
 	Help: `Above this size files will be chunked into a _segments container.
@@ -61,6 +61,32 @@ files are easier to deal with and have an MD5SUM.
 
 Rclone will still chunk files bigger than chunk_size when doing normal
 copy operations.`,
+	Default:  false,
+	Advanced: true,
+}, {
+	Name: "no_large_objects",
+	Help: strings.ReplaceAll(`Disable support for static and dynamic large objects
+
+Swift cannot transparently store files bigger than 5 GiB. There are
+two schemes for doing that, static or dynamic large objects, and the
+API does not allow rclone to determine whether a file is a static or
+dynamic large object without doing a HEAD on the object. Since these
+need to be treated differently, this means rclone has to issue HEAD
+requests for objects for example when reading checksums.
+
+When |no_large_objects| is set, rclone will assume that there are no
+static or dynamic large objects stored. This means it can stop doing
+the extra HEAD calls which in turn increases performance greatly
+especially when doing a swift to swift transfer with |--checksum| set.
+
+Setting this option implies |no_chunk| and also that no files will be
+uploaded in chunks, so files bigger than 5 GiB will just fail on
+upload.
+
+If you set this option and there *are* static or dynamic large objects,
+then this will give incorrect hashes for them. Downloads will succeed,
+but other operations such as Remove and Copy will fail.
+`, "|", "`"),
 	Default:  false,
 	Advanced: true,
 }, {
@@ -222,6 +248,7 @@ type Options struct {
 	EndpointType                string               `config:"endpoint_type"`
 	ChunkSize                   fs.SizeSuffix        `config:"chunk_size"`
 	NoChunk                     bool                 `config:"no_chunk"`
+	NoLargeObjects              bool                 `config:"no_large_objects"`
 	Enc                         encoder.MultiEncoder `config:"encoding"`
 }
 
@@ -790,7 +817,7 @@ func (f *Fs) About(ctx context.Context) (usage *fs.Usage, err error) {
 
 // Put the object into the container
 //
-// Copy the reader in to the new object which is returned
+// Copy the reader in to the new object which is returned.
 //
 // The new object may have been created if an error is returned
 func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
@@ -902,9 +929,9 @@ func (f *Fs) Purge(ctx context.Context, dir string) error {
 
 // Copy src to this remote using server-side copy operations.
 //
-// This is stored with the remote path given
+// This is stored with the remote path given.
 //
-// It returns the destination Object and a possible error
+// It returns the destination Object and a possible error.
 //
 // Will only be called if src.Fs().Name() == f.Name()
 //
@@ -1019,7 +1046,7 @@ func copyLargeObject(ctx context.Context, f *Fs, src *Object, dstContainer strin
 	return err
 }
 
-//remove copied segments when copy process failed
+// remove copied segments when copy process failed
 func handleCopyFail(ctx context.Context, f *Fs, segmentsContainer string, segments []string, err error) {
 	fs.Debugf(f, "handle copy segment fail")
 	if err == nil {
@@ -1100,15 +1127,24 @@ func (o *Object) hasHeader(ctx context.Context, header string) (bool, error) {
 
 // isDynamicLargeObject checks for X-Object-Manifest header
 func (o *Object) isDynamicLargeObject(ctx context.Context) (bool, error) {
+	if o.fs.opt.NoLargeObjects {
+		return false, nil
+	}
 	return o.hasHeader(ctx, "X-Object-Manifest")
 }
 
 // isStaticLargeObjectFile checks for the X-Static-Large-Object header
 func (o *Object) isStaticLargeObject(ctx context.Context) (bool, error) {
+	if o.fs.opt.NoLargeObjects {
+		return false, nil
+	}
 	return o.hasHeader(ctx, "X-Static-Large-Object")
 }
 
 func (o *Object) isLargeObject(ctx context.Context) (result bool, err error) {
+	if o.fs.opt.NoLargeObjects {
+		return false, nil
+	}
 	result, err = o.hasHeader(ctx, "X-Static-Large-Object")
 	if result {
 		return
@@ -1140,10 +1176,11 @@ func (o *Object) Size() int64 {
 // decodeMetaData sets the metadata in the object from a swift.Object
 //
 // Sets
-//  o.lastModified
-//  o.size
-//  o.md5
-//  o.contentType
+//
+//	o.lastModified
+//	o.size
+//	o.md5
+//	o.contentType
 func (o *Object) decodeMetaData(info *swift.Object) (err error) {
 	o.lastModified = info.LastModified
 	o.size = info.Bytes
@@ -1183,7 +1220,6 @@ func (o *Object) readMetaData(ctx context.Context) (err error) {
 }
 
 // ModTime returns the modification time of the object
-//
 //
 // It attempts to read the objects mtime and if that isn't present the
 // LastModified returned in the http headers
@@ -1464,7 +1500,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	headers := m.ObjectHeaders()
 	fs.OpenOptionAddHeaders(options, headers)
 
-	if size > int64(o.fs.opt.ChunkSize) || (size == -1 && !o.fs.opt.NoChunk) {
+	if (size > int64(o.fs.opt.ChunkSize) || (size == -1 && !o.fs.opt.NoChunk)) && !o.fs.opt.NoLargeObjects {
 		_, err = o.updateChunks(ctx, in, headers, size, contentType)
 		if err != nil {
 			return err

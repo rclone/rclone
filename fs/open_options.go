@@ -40,10 +40,10 @@ type OpenOption interface {
 //
 // Examples:
 //
-//     RangeOption{Start: 0, End: 99} - fetch the first 100 bytes
-//     RangeOption{Start: 100, End: 199} - fetch the second 100 bytes
-//     RangeOption{Start: 100, End: -1} - fetch bytes from offset 100 to the end
-//     RangeOption{Start: -1, End: 100} - fetch the last 100 bytes
+//	RangeOption{Start: 0, End: 99} - fetch the first 100 bytes
+//	RangeOption{Start: 100, End: 199} - fetch the second 100 bytes
+//	RangeOption{Start: 100, End: -1} - fetch bytes from offset 100 to the end
+//	RangeOption{Start: -1, End: 100} - fetch the last 100 bytes
 //
 // A RangeOption implements a single byte-range-spec from
 // https://tools.ietf.org/html/rfc7233#section-2.1

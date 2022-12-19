@@ -1,3 +1,4 @@
+// Package union implements a virtual provider to join existing remotes.
 package union
 
 import (
@@ -6,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"path"
 	"path/filepath"
 	"strings"
@@ -85,16 +85,16 @@ func (f *Fs) wrapEntries(entries ...upstream.Entry) (entry, error) {
 	if err != nil {
 		return nil, err
 	}
-	switch e.(type) {
+	switch e := e.(type) {
 	case *upstream.Object:
 		return &Object{
-			Object: e.(*upstream.Object),
+			Object: e,
 			fs:     f,
 			co:     entries,
 		}, nil
 	case *upstream.Directory:
 		return &Directory{
-			Directory: e.(*upstream.Directory),
+			Directory: e,
 			cd:        entries,
 		}, nil
 	default:
@@ -169,7 +169,11 @@ func (f *Fs) mkdir(ctx context.Context, dir string) ([]*upstream.Fs, error) {
 	if err != nil {
 		return nil, err
 	}
-	return upstreams, nil
+	// If created roots then choose one
+	if dir == "" {
+		upstreams, err = f.create(ctx, dir)
+	}
+	return upstreams, err
 }
 
 // Mkdir makes the root directory of the Fs object
@@ -209,9 +213,9 @@ func (f *Fs) Purge(ctx context.Context, dir string) error {
 
 // Copy src to this remote using server-side copy operations.
 //
-// This is stored with the remote path given
+// This is stored with the remote path given.
 //
-// It returns the destination Object and a possible error
+// It returns the destination Object and a possible error.
 //
 // Will only be called if src.Fs().Name() == f.Name()
 //
@@ -249,9 +253,9 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 
 // Move src to this remote using server-side move operations.
 //
-// This is stored with the remote path given
+// This is stored with the remote path given.
 //
-// It returns the destination Object and a possible error
+// It returns the destination Object and a possible error.
 //
 // Will only be called if src.Fs().Name() == f.Name()
 //
@@ -496,7 +500,7 @@ func (f *Fs) put(ctx context.Context, in io.Reader, src fs.ObjectInfo, stream bo
 			errs[i] = fmt.Errorf("%s: %w", u.Name(), err)
 			if len(upstreams) > 1 {
 				// Drain the input buffer to allow other uploads to continue
-				_, _ = io.Copy(ioutil.Discard, readers[i])
+				_, _ = io.Copy(io.Discard, readers[i])
 			}
 			return
 		}
@@ -834,6 +838,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		}
 	}
 
+	root = strings.Trim(root, "/")
 	upstreams := make([]*upstream.Fs, len(opt.Upstreams))
 	errs := Errors(make([]error, len(opt.Upstreams)))
 	multithread(len(opt.Upstreams), func(i int) {
@@ -888,17 +893,21 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		WriteMetadata:           true,
 		UserMetadata:            true,
 	}).Fill(ctx, f)
-	canMove := true
+	canMove, slowHash := true, false
 	for _, f := range upstreams {
 		features = features.Mask(ctx, f) // Mask all upstream fs
 		if !operations.CanServerSideMove(f) {
 			canMove = false
 		}
+		slowHash = slowHash || f.Features().SlowHash
 	}
 	// We can move if all remotes support Move or Copy
 	if canMove {
 		features.Move = f.Move
 	}
+
+	// If any of upstreams are SlowHash, propagate it
+	features.SlowHash = slowHash
 
 	// Enable ListR when upstreams either support ListR or is local
 	// But not when all upstreams are local

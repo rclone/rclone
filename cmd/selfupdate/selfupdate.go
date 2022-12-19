@@ -1,6 +1,7 @@
 //go:build !noselfupdate
 // +build !noselfupdate
 
+// Package selfupdate provides the selfupdate command.
 package selfupdate
 
 import (
@@ -13,7 +14,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -64,6 +64,9 @@ var cmdSelfUpdate = &cobra.Command{
 	Aliases: []string{"self-update"},
 	Short:   `Update the rclone binary.`,
 	Long:    strings.ReplaceAll(selfUpdateHelp, "|", "`"),
+	Annotations: map[string]string{
+		"versionIntroduced": "v1.55",
+	},
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(0, 0, command, args)
 		if Opt.Package == "" {
@@ -226,7 +229,7 @@ func InstallUpdate(ctx context.Context, opt *Options) error {
 }
 
 func installPackage(ctx context.Context, beta bool, version, siteURL, packageFormat string) error {
-	tempFile, err := ioutil.TempFile("", "rclone.*."+packageFormat)
+	tempFile, err := os.CreateTemp("", "rclone.*."+packageFormat)
 	if err != nil {
 		return fmt.Errorf("unable to write temporary package: %w", err)
 	}
@@ -356,7 +359,7 @@ func downloadUpdate(ctx context.Context, beta bool, version, siteURL, newFile, p
 	}
 
 	if packageFormat == "deb" || packageFormat == "rpm" {
-		if err := ioutil.WriteFile(newFile, archiveBuf, 0644); err != nil {
+		if err := os.WriteFile(newFile, archiveBuf, 0644); err != nil {
 			return fmt.Errorf("cannot write temporary .%s: %w", packageFormat, err)
 		}
 		return nil
@@ -470,5 +473,5 @@ func downloadFile(ctx context.Context, url string) ([]byte, error) {
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("failed with %s downloading %s", resp.Status, url)
 	}
-	return ioutil.ReadAll(resp.Body)
+	return io.ReadAll(resp.Body)
 }

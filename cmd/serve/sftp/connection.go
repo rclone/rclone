@@ -101,6 +101,9 @@ func (c *conn) execCommand(ctx context.Context, out io.Writer, command string) (
 		if binary == "sha1sum" {
 			ht = hash.SHA1
 		}
+		if !c.vfs.Fs().Hashes().Contains(ht) {
+			return fmt.Errorf("%v hash not supported", ht)
+		}
 		var hashSum string
 		if args == "" {
 			// empty hash for no input
@@ -132,7 +135,13 @@ func (c *conn) execCommand(ctx context.Context, out io.Writer, command string) (
 			return fmt.Errorf("send output failed: %w", err)
 		}
 	case "echo":
-		// special cases for rclone command detection
+		// Special cases for legacy rclone command detection.
+		// Before rclone v1.49.0 the sftp backend used "echo 'abc' | md5sum" when
+		// detecting hash support, but was then changed to instead just execute
+		// md5sum/sha1sum (without arguments), which is handled above. The following
+		// code is therefore only necessary to support rclone versions older than
+		// v1.49.0 using a sftp remote connected to a rclone serve sftp instance
+		// running a newer version of rclone (e.g. latest).
 		switch args {
 		case "'abc' | md5sum":
 			if c.vfs.Fs().Hashes().Contains(hash.MD5) {

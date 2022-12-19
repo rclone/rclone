@@ -12,7 +12,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"math/bits"
 	"os"
 	"path"
@@ -153,43 +152,11 @@ func retry(t *testing.T, what string, f func() error) {
 	require.NoError(t, err, what)
 }
 
-// An fs.ObjectInfo that can override mime type
-type objectInfoWithMimeType struct {
-	fs.ObjectInfo
-	mimeType string
-	metadata fs.Metadata
-}
-
-// Return a wrapped fs.ObjectInfo which returns the mime type given
-func overrideMimeType(o fs.ObjectInfo, mimeType string, metadata fs.Metadata) fs.ObjectInfo {
-	return &objectInfoWithMimeType{
-		ObjectInfo: o,
-		mimeType:   mimeType,
-		metadata:   metadata,
-	}
-}
-
-// MimeType that was overridden
-func (o *objectInfoWithMimeType) MimeType(ctx context.Context) string {
-	return o.mimeType
-}
-
-// Metadata that was overridden
-func (o *objectInfoWithMimeType) Metadata(ctx context.Context) (fs.Metadata, error) {
-	return o.metadata, nil
-}
-
-// check interfaces
-var (
-	_ fs.MimeTyper  = (*objectInfoWithMimeType)(nil)
-	_ fs.Metadataer = (*objectInfoWithMimeType)(nil)
-)
-
 // check interface
 
 // PutTestContentsMetadata puts file with given contents to the remote and checks it but unlike TestPutLarge doesn't remove
 //
-// It uploads the object with the mimeType and metadata passed in if set
+// It uploads the object with the mimeType and metadata passed in if set.
 //
 // It returns the object which will have been checked if check is set
 func PutTestContentsMetadata(ctx context.Context, t *testing.T, f fs.Fs, file *fstest.Item, contents string, check bool, mimeType string, metadata fs.Metadata) fs.Object {
@@ -215,7 +182,7 @@ func PutTestContentsMetadata(ctx context.Context, t *testing.T, f fs.Fs, file *f
 					ci.Metadata = previousMetadata
 				}()
 			}
-			obji = overrideMimeType(obji, mimeType, metadata)
+			obji.WithMetadata(metadata).WithMimeType(mimeType)
 		}
 		obj, err = f.Put(ctx, in, obji)
 		return err
@@ -294,8 +261,8 @@ func TestPutLarge(ctx context.Context, t *testing.T, f fs.Fs, file *fstest.Item)
 	require.NoError(t, obj.Remove(ctx))
 }
 
-// read the contents of an object as a string
-func readObject(ctx context.Context, t *testing.T, obj fs.Object, limit int64, options ...fs.OpenOption) string {
+// ReadObject reads the contents of an object as a string
+func ReadObject(ctx context.Context, t *testing.T, obj fs.Object, limit int64, options ...fs.OpenOption) string {
 	what := fmt.Sprintf("readObject(%q) limit=%d, options=%+v", obj, limit, options)
 	in, err := obj.Open(ctx, options...)
 	require.NoError(t, err, what)
@@ -303,7 +270,7 @@ func readObject(ctx context.Context, t *testing.T, obj fs.Object, limit int64, o
 	if limit >= 0 {
 		r = &io.LimitedReader{R: r, N: limit}
 	}
-	contents, err := ioutil.ReadAll(r)
+	contents, err := io.ReadAll(r)
 	require.NoError(t, err, what)
 	err = in.Close()
 	require.NoError(t, err, what)
@@ -361,6 +328,9 @@ func removeConfigID(s string) string {
 	}
 	return s
 }
+
+// InternalTestFiles is the state of the remote at the moment the internal tests are called
+var InternalTestFiles []fstest.Item
 
 // Run runs the basic integration tests for a remote using the options passed in.
 //
@@ -528,14 +498,14 @@ func Run(t *testing.T, opt *Opt) {
 		assert.True(t, len(fsInfo.CommandHelp) > 0, "Command is declared, must return some help in CommandHelp")
 	})
 
-	// TestFsRmdirNotFound tests deleting a non-existent directory
+	// TestFsRmdirNotFound tests deleting a nonexistent directory
 	t.Run("FsRmdirNotFound", func(t *testing.T) {
 		skipIfNotOk(t)
 		if isBucketBasedButNotRoot(f) {
 			t.Skip("Skipping test as non root bucket-based remote")
 		}
 		err := f.Rmdir(ctx, "")
-		assert.Error(t, err, "Expecting error on Rmdir non-existent")
+		assert.Error(t, err, "Expecting error on Rmdir nonexistent")
 	})
 
 	// Make the directory
@@ -726,7 +696,7 @@ func Run(t *testing.T, opt *Opt) {
 			o, err := f.NewObject(ctx, "potato")
 			assert.Nil(t, o)
 			assert.Equal(t, fs.ErrorObjectNotFound, err)
-			// Now try an object in a non existing directory
+			// Now try an object in a nonexistent directory
 			o, err = f.NewObject(ctx, "directory/not/found/potato")
 			assert.Nil(t, o)
 			assert.Equal(t, fs.ErrorObjectNotFound, err)
@@ -797,7 +767,7 @@ func Run(t *testing.T, opt *Opt) {
 			assert.NoError(t, out.Close())
 
 			obj := findObject(ctx, t, f, path)
-			assert.Equal(t, "abcdefghi", readObject(ctx, t, obj, -1), "contents of file differ")
+			assert.Equal(t, "abcdefghi", ReadObject(ctx, t, obj, -1), "contents of file differ")
 
 			assert.NoError(t, obj.Remove(ctx))
 			assert.NoError(t, f.Rmdir(ctx, "writer-at-subdir"))
@@ -1396,8 +1366,8 @@ func Run(t *testing.T, opt *Opt) {
 				obj := findObject(ctx, t, f, file1.Path)
 				do, objectHasMetadata := obj.(fs.Metadataer)
 				if objectHasMetadata || features.ReadMetadata || features.WriteMetadata || features.UserMetadata {
-					fsInfo, _, _, _, err := fs.ParseRemote(fs.ConfigString(f))
-					require.NoError(t, err)
+					fsInfo := fs.FindFromFs(f)
+					require.NotNil(t, fsInfo)
 					require.NotNil(t, fsInfo.MetadataInfo, "Object declares metadata support but no MetadataInfo in RegInfo")
 				}
 				if !objectHasMetadata {
@@ -1459,9 +1429,7 @@ func Run(t *testing.T, opt *Opt) {
 							assert.Equal(t, metaMimeType, gotMimeType)
 						}
 					})
-				} else {
-					// Have some metadata here we didn't write - can't really check it!
-				}
+				} // else: Have some metadata here we didn't write - can't really check it!
 			})
 
 			// TestObjectSetModTime tests that SetModTime works
@@ -1492,14 +1460,14 @@ func Run(t *testing.T, opt *Opt) {
 			t.Run("ObjectOpen", func(t *testing.T) {
 				skipIfNotOk(t)
 				obj := findObject(ctx, t, f, file1.Path)
-				assert.Equal(t, file1Contents, readObject(ctx, t, obj, -1), "contents of file1 differ")
+				assert.Equal(t, file1Contents, ReadObject(ctx, t, obj, -1), "contents of file1 differ")
 			})
 
 			// TestObjectOpenSeek tests that Open works with SeekOption
 			t.Run("ObjectOpenSeek", func(t *testing.T) {
 				skipIfNotOk(t)
 				obj := findObject(ctx, t, f, file1.Path)
-				assert.Equal(t, file1Contents[50:], readObject(ctx, t, obj, -1, &fs.SeekOption{Offset: 50}), "contents of file1 differ after seek")
+				assert.Equal(t, file1Contents[50:], ReadObject(ctx, t, obj, -1, &fs.SeekOption{Offset: 50}), "contents of file1 differ after seek")
 			})
 
 			// TestObjectOpenRange tests that Open works with RangeOption
@@ -1518,7 +1486,7 @@ func Run(t *testing.T, opt *Opt) {
 					{fs.RangeOption{Start: -1, End: 20}, 80, 100}, // if start is omitted this means get the final bytes
 					// {fs.RangeOption{Start: -1, End: -1}, 0, 100}, - this seems to work but the RFC doesn't define it
 				} {
-					got := readObject(ctx, t, obj, -1, &test.ro)
+					got := ReadObject(ctx, t, obj, -1, &test.ro)
 					foundAt := strings.Index(file1Contents, got)
 					help := fmt.Sprintf("%#v failed want [%d:%d] got [%d:%d]", test.ro, test.wantStart, test.wantEnd, foundAt, foundAt+len(got))
 					assert.Equal(t, file1Contents[test.wantStart:test.wantEnd], got, help)
@@ -1529,7 +1497,7 @@ func Run(t *testing.T, opt *Opt) {
 			t.Run("ObjectPartialRead", func(t *testing.T) {
 				skipIfNotOk(t)
 				obj := findObject(ctx, t, f, file1.Path)
-				assert.Equal(t, file1Contents[:50], readObject(ctx, t, obj, 50), "contents of file1 differ after limited read")
+				assert.Equal(t, file1Contents[:50], ReadObject(ctx, t, obj, 50), "contents of file1 differ after limited read")
 			})
 
 			// TestObjectUpdate tests that Update works
@@ -1555,7 +1523,7 @@ func Run(t *testing.T, opt *Opt) {
 				file1.Check(t, obj, f.Precision())
 
 				// check contents correct
-				assert.Equal(t, contents, readObject(ctx, t, obj, -1), "contents of updated file1 differ")
+				assert.Equal(t, contents, ReadObject(ctx, t, obj, -1), "contents of updated file1 differ")
 				file1Contents = contents
 			})
 
@@ -1631,7 +1599,7 @@ func Run(t *testing.T, opt *Opt) {
 					fstest.CheckListingWithRoot(t, rootRemote, configLeaf, []fstest.Item{file1Root, file2Root}, dirs, rootRemote.Precision())
 				})
 
-				// Check that that listing the entries is OK
+				// Check that listing the entries is OK
 				t.Run("ListEntries", func(t *testing.T) {
 					entries, err := rootRemote.List(context.Background(), configLeaf)
 					require.NoError(t, err)
@@ -1815,6 +1783,9 @@ func Run(t *testing.T, opt *Opt) {
 				}
 			})
 
+			// State of remote at the moment the internal tests are called
+			InternalTestFiles = []fstest.Item{file1, file2}
+
 			// TestObjectRemove tests Remove
 			t.Run("ObjectRemove", func(t *testing.T) {
 				skipIfNotOk(t)
@@ -1824,6 +1795,8 @@ func Run(t *testing.T, opt *Opt) {
 				require.NoError(t, err)
 				// check listing without modtime as TestPublicLink may change the modtime
 				fstest.CheckListingWithPrecision(t, f, []fstest.Item{file2}, nil, fs.ModTimeNotSupported)
+				// Show the internal tests file2 is gone
+				InternalTestFiles = []fstest.Item{file2}
 			})
 
 			// TestAbout tests the About optional interface
@@ -2062,7 +2035,7 @@ func Run(t *testing.T, opt *Opt) {
 
 		// TestFsRootCollapse tests if the root of an fs "collapses" to the
 		// absolute root. It creates a new fs of the same backend type with its
-		// root set to a *non-existent* folder, and attempts to read the info of
+		// root set to a *nonexistent* folder, and attempts to read the info of
 		// an object in that folder, whose name is taken from a directory that
 		// exists in the absolute root.
 		// This test is added after

@@ -34,9 +34,9 @@ func deriveFs(ctx context.Context, t *testing.T, f fs.Fs, opts settings) fs.Fs {
 // test that big file uploads do not cause network i/o timeout
 func (f *Fs) testUploadTimeout(t *testing.T) {
 	const (
-		fileSize    = 100000000             // 100 MiB
-		idleTimeout = 40 * time.Millisecond // small because test server is local
-		maxTime     = 10 * time.Second      // prevent test hangup
+		fileSize    = 100000000        // 100 MiB
+		idleTimeout = 1 * time.Second  // small because test server is local
+		maxTime     = 10 * time.Second // prevent test hangup
 	)
 
 	if testing.Short() {

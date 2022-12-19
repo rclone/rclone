@@ -1,10 +1,10 @@
+// Package webgui provides plugin functionality to the Web GUI.
 package webgui
 
 import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -111,7 +111,7 @@ func (p *Plugins) readFromFile() (err error) {
 	availablePluginsJSON := filepath.Join(pluginsConfigPath, p.fileName)
 	_, err = os.Stat(availablePluginsJSON)
 	if err == nil {
-		data, err := ioutil.ReadFile(availablePluginsJSON)
+		data, err := os.ReadFile(availablePluginsJSON)
 		if err != nil {
 			return err
 		}
@@ -133,7 +133,7 @@ func (p *Plugins) readFromFile() (err error) {
 func (p *Plugins) addPlugin(pluginName string, packageJSONPath string) (err error) {
 	p.mutex.Lock()
 	defer p.mutex.Unlock()
-	data, err := ioutil.ReadFile(packageJSONPath)
+	data, err := os.ReadFile(packageJSONPath)
 	if err != nil {
 		return err
 	}
@@ -186,7 +186,7 @@ func (p *Plugins) writeToFile() (err error) {
 	if err != nil {
 		fs.Logf(nil, "%s", err)
 	}
-	err = ioutil.WriteFile(availablePluginsJSON, file, 0755)
+	err = os.WriteFile(availablePluginsJSON, file, 0755)
 	if err != nil {
 		fs.Logf(nil, "%s", err)
 	}
@@ -226,14 +226,14 @@ func (p *Plugins) GetPluginByName(name string) (out *PackageJSON, err error) {
 
 }
 
-// getAuthorRepoBranchGithub gives author, repoName and branch from a github.com url
+// getAuthorRepoBranchGitHub gives author, repoName and branch from a github.com url
+//
 //	url examples:
 //	https://github.com/rclone/rclone-webui-react/
 //	http://github.com/rclone/rclone-webui-react
 //	https://github.com/rclone/rclone-webui-react/tree/caman-js
-// 	github.com/rclone/rclone-webui-react
-//
-func getAuthorRepoBranchGithub(url string) (author string, repoName string, branch string, err error) {
+//	github.com/rclone/rclone-webui-react
+func getAuthorRepoBranchGitHub(url string) (author string, repoName string, branch string, err error) {
 	repoURL := url
 	repoURL = strings.Replace(repoURL, "https://", "", 1)
 	repoURL = strings.Replace(repoURL, "http://", "", 1)

@@ -10,21 +10,20 @@
 // may be referred to as "".  However Stat strips slashes so you can
 // use paths with slashes in.
 //
-// It also includes directory caching
+// # It also includes directory caching
 //
 // The vfs package returns Error values to signal precisely which
 // error conditions have ocurred.  It may also return general errors
 // it receives.  It tries to use os Error values (e.g. os.ErrExist)
 // where possible.
-
+//
 //go:generate sh -c "go run make_open_tests.go | gofmt > open_test.go"
-
 package vfs
 
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"os"
 	"path"
 	"sort"
@@ -369,7 +368,6 @@ func (vfs *VFS) WaitForWriters(timeout time.Duration) {
 		tick.Reset(tickTime)
 		select {
 		case <-tick.C:
-			break
 		case <-deadline.C:
 			fs.Errorf(nil, "Exiting even though %d writers active and %d cache items in use after %v\n%s", writers, cacheInUse, timeout, vfs.cache.Dump())
 			return
@@ -605,6 +603,7 @@ func (vfs *VFS) Statfs() (total, used, free int64) {
 			return
 		}
 	}
+
 	if u := vfs.usage; u != nil {
 		if u.Total != nil {
 			total = *u.Total
@@ -616,6 +615,11 @@ func (vfs *VFS) Statfs() (total, used, free int64) {
 			used = *u.Used
 		}
 	}
+
+	if int64(vfs.Opt.DiskSpaceTotalSize) >= 0 {
+		total = int64(vfs.Opt.DiskSpaceTotalSize)
+	}
+
 	total, used, free = fillInMissingSizes(total, used, free, unknownFreeBytes)
 	return
 }
@@ -693,7 +697,7 @@ func (vfs *VFS) ReadFile(filename string) (b []byte, err error) {
 		return nil, err
 	}
 	defer fs.CheckClose(f, &err)
-	return ioutil.ReadAll(f)
+	return io.ReadAll(f)
 }
 
 // AddVirtual adds the object (file or dir) to the directory cache

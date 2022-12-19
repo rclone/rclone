@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"path"
 	"path/filepath"
@@ -22,6 +21,7 @@ import (
 	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/configstruct"
+	"github.com/rclone/rclone/fs/filter"
 	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/lib/encoder"
@@ -123,8 +123,8 @@ routine so this flag shouldn't normally be used.`,
 			Help: `Don't check to see if the files change during upload.
 
 Normally rclone checks the size and modification time of files as they
-are being uploaded and aborts with a message which starts "can't copy
-- source file is being updated" if the file changes during upload.
+are being uploaded and aborts with a message which starts "can't copy -
+source file is being updated" if the file changes during upload.
 
 However on some file systems this modification time check may fail (e.g.
 [Glusterfs #2206](https://github.com/rclone/rclone/issues/2206)) so this
@@ -234,15 +234,16 @@ type Options struct {
 
 // Fs represents a local filesystem rooted at root
 type Fs struct {
-	name        string              // the name of the remote
-	root        string              // The root directory (OS path)
-	opt         Options             // parsed config options
-	features    *fs.Features        // optional features
-	dev         uint64              // device number of root node
-	precisionOk sync.Once           // Whether we need to read the precision
-	precision   time.Duration       // precision of local filesystem
-	warnedMu    sync.Mutex          // used for locking access to 'warned'.
-	warned      map[string]struct{} // whether we have warned about this string
+	name           string              // the name of the remote
+	root           string              // The root directory (OS path)
+	opt            Options             // parsed config options
+	features       *fs.Features        // optional features
+	dev            uint64              // device number of root node
+	precisionOk    sync.Once           // Whether we need to read the precision
+	precision      time.Duration       // precision of local filesystem
+	warnedMu       sync.Mutex          // used for locking access to 'warned'.
+	warned         map[string]struct{} // whether we have warned about this string
+	xattrSupported int32               // whether xattrs are supported (atomic access)
 
 	// do os.Lstat or os.Stat
 	lstat        func(name string) (os.FileInfo, error)
@@ -286,6 +287,9 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		dev:    devUnset,
 		lstat:  os.Lstat,
 	}
+	if xattrSupported {
+		f.xattrSupported = 1
+	}
 	f.root = cleanRootPath(root, f.opt.NoUNC, f.opt.Enc)
 	f.features = (&fs.Features{
 		CaseInsensitive:         f.caseInsensitive(),
@@ -295,6 +299,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		ReadMetadata:            true,
 		WriteMetadata:           true,
 		UserMetadata:            xattrSupported, // can only R/W general purpose metadata if xattrs are supported
+		FilterAware:             true,
 	}).Fill(ctx, f)
 	if opt.FollowSymlinks {
 		f.lstat = os.Stat
@@ -439,6 +444,8 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 // This should return ErrDirNotFound if the directory isn't
 // found.
 func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err error) {
+	filter, useFilter := filter.GetConfig(ctx), filter.GetUseFilter(ctx)
+
 	fsDirPath := f.localPath(dir)
 	_, err = os.Stat(fsDirPath)
 	if err != nil {
@@ -489,6 +496,13 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 						continue
 					}
 					if fierr != nil {
+						// Don't report errors on any file names that are excluded
+						if useFilter {
+							newRemote := f.cleanRemote(dir, name)
+							if !filter.IncludeRemote(newRemote) {
+								continue
+							}
+						}
 						err = fmt.Errorf("failed to read directory %q: %w", namepath, err)
 						fs.Errorf(dir, "%v", fierr)
 						_ = accounting.Stats(ctx).Error(fserrors.NoRetryError(fierr)) // fail the sync
@@ -521,6 +535,11 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 					return nil, err
 				}
 				mode = fi.Mode()
+			}
+			// Don't include non directory if not included
+			// we leave directory filtering to the layer above
+			if useFilter && !fi.IsDir() && !filter.IncludeRemote(newRemote) {
+				continue
 			}
 			if fi.IsDir() {
 				// Ignore directories which are symlinks.  These are junction points under windows which
@@ -626,7 +645,7 @@ func (f *Fs) readPrecision() (precision time.Duration) {
 	precision = time.Second
 
 	// Create temporary file and test it
-	fd, err := ioutil.TempFile("", "rclone")
+	fd, err := os.CreateTemp("", "rclone")
 	if err != nil {
 		// If failed return 1s
 		// fmt.Println("Failed to create temp file", err)
@@ -695,9 +714,9 @@ func (f *Fs) Purge(ctx context.Context, dir string) error {
 
 // Move src to this remote using server-side move operations.
 //
-// This is stored with the remote path given
+// This is stored with the remote path given.
 //
-// It returns the destination Object and a possible error
+// It returns the destination Object and a possible error.
 //
 // Will only be called if src.Fs().Name() == f.Name()
 //
@@ -1053,7 +1072,7 @@ func (o *Object) openTranslatedLink(offset, limit int64) (lrc io.ReadCloser, err
 	if err != nil {
 		return nil, err
 	}
-	return readers.NewLimitedReadCloser(ioutil.NopCloser(strings.NewReader(linkdst[offset:])), limit), nil
+	return readers.NewLimitedReadCloser(io.NopCloser(strings.NewReader(linkdst[offset:])), limit), nil
 }
 
 // Open an object for read
@@ -1380,29 +1399,26 @@ func (o *Object) writeMetadata(metadata fs.Metadata) (err error) {
 }
 
 func cleanRootPath(s string, noUNC bool, enc encoder.MultiEncoder) string {
-	if runtime.GOOS == "windows" {
-		if !filepath.IsAbs(s) && !strings.HasPrefix(s, "\\") {
+	if runtime.GOOS != "windows" || !strings.HasPrefix(s, "\\") {
+		if !filepath.IsAbs(s) {
 			s2, err := filepath.Abs(s)
 			if err == nil {
 				s = s2
 			}
+		} else {
+			s = filepath.Clean(s)
 		}
+	}
+	if runtime.GOOS == "windows" {
 		s = filepath.ToSlash(s)
 		vol := filepath.VolumeName(s)
 		s = vol + enc.FromStandardPath(s[len(vol):])
 		s = filepath.FromSlash(s)
-
 		if !noUNC {
 			// Convert to UNC
 			s = file.UNCPath(s)
 		}
 		return s
-	}
-	if !filepath.IsAbs(s) {
-		s2, err := filepath.Abs(s)
-		if err == nil {
-			s = s2
-		}
 	}
 	s = enc.FromStandardPath(s)
 	return s

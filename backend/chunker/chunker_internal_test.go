@@ -5,7 +5,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"path"
 	"regexp"
 	"strings"
@@ -413,7 +413,7 @@ func testSmallFileInternals(t *testing.T, f *Fs) {
 		if r == nil {
 			return
 		}
-		data, err := ioutil.ReadAll(r)
+		data, err := io.ReadAll(r)
 		assert.NoError(t, err)
 		assert.Equal(t, contents, string(data))
 		_ = r.Close()
@@ -538,7 +538,7 @@ func testPreventCorruption(t *testing.T, f *Fs) {
 	assert.NoError(t, err)
 	var chunkContents []byte
 	assert.NotPanics(t, func() {
-		chunkContents, err = ioutil.ReadAll(r)
+		chunkContents, err = io.ReadAll(r)
 		_ = r.Close()
 	})
 	assert.NoError(t, err)
@@ -573,7 +573,7 @@ func testPreventCorruption(t *testing.T, f *Fs) {
 	r, err = willyChunk.Open(ctx)
 	assert.NoError(t, err)
 	assert.NotPanics(t, func() {
-		_, err = ioutil.ReadAll(r)
+		_, err = io.ReadAll(r)
 		_ = r.Close()
 	})
 	assert.NoError(t, err)
@@ -672,7 +672,7 @@ func testMetadataInput(t *testing.T, f *Fs) {
 		assert.NoError(t, err, "open "+description)
 		assert.NotNil(t, r, "open stream of "+description)
 		if err == nil && r != nil {
-			data, err := ioutil.ReadAll(r)
+			data, err := io.ReadAll(r)
 			assert.NoError(t, err, "read all of "+description)
 			assert.Equal(t, contents, string(data), description+" contents is ok")
 			_ = r.Close()
@@ -758,8 +758,8 @@ func testFutureProof(t *testing.T, f *Fs) {
 	assert.Error(t, err)
 
 	// Rcat must fail
-	in := ioutil.NopCloser(bytes.NewBufferString("abc"))
-	robj, err := operations.Rcat(ctx, f, file, in, modTime)
+	in := io.NopCloser(bytes.NewBufferString("abc"))
+	robj, err := operations.Rcat(ctx, f, file, in, modTime, nil)
 	assert.Nil(t, robj)
 	assert.NotNil(t, err)
 	if err != nil {
@@ -854,7 +854,7 @@ func testChunkerServerSideMove(t *testing.T, f *Fs) {
 	r, err := dstFile.Open(ctx)
 	assert.NoError(t, err)
 	assert.NotNil(t, r)
-	data, err := ioutil.ReadAll(r)
+	data, err := io.ReadAll(r)
 	assert.NoError(t, err)
 	assert.Equal(t, contents, string(data))
 	_ = r.Close()

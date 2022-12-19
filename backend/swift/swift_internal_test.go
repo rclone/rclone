@@ -16,8 +16,8 @@ func TestInternalUrlEncode(t *testing.T) {
 		want string
 	}{
 		{"", ""},
-		{"abcdefghijklmopqrstuvwxyz", "abcdefghijklmopqrstuvwxyz"},
-		{"ABCDEFGHIJKLMOPQRSTUVWXYZ", "ABCDEFGHIJKLMOPQRSTUVWXYZ"},
+		{"abcdefghijklmnopqrstuvwxyz", "abcdefghijklmnopqrstuvwxyz"},
+		{"ABCDEFGHIJKLMNOPQRSTUVWXYZ", "ABCDEFGHIJKLMNOPQRSTUVWXYZ"},
 		{"0123456789", "0123456789"},
 		{"abc/ABC/123", "abc/ABC/123"},
 		{"   ", "%20%20%20"},

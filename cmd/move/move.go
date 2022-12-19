@@ -1,3 +1,4 @@
+// Package move provides the move command.
 package move
 
 import (
@@ -59,6 +60,9 @@ can speed transfers up greatly.
 
 **Note**: Use the |-P|/|--progress| flag to view real-time transfer statistics.
 `, "|", "`"),
+	Annotations: map[string]string{
+		"versionIntroduced": "v1.19",
+	},
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(2, 2, command, args)
 		fsrc, srcFileName, fdst := cmd.NewFsSrcFileDst(args)

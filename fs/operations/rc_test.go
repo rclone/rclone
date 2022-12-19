@@ -35,7 +35,6 @@ func rcNewRun(t *testing.T, method string) (*fstest.Run, *rc.Call) {
 // operations/about: Return the space used on the remote
 func TestRcAbout(t *testing.T) {
 	r, call := rcNewRun(t, "operations/about")
-	defer r.Finalise()
 	r.Mkdir(context.Background(), r.Fremote)
 
 	// Will get an error if remote doesn't support About
@@ -58,7 +57,6 @@ func TestRcAbout(t *testing.T) {
 // operations/cleanup: Remove trashed files in the remote or path
 func TestRcCleanup(t *testing.T) {
 	r, call := rcNewRun(t, "operations/cleanup")
-	defer r.Finalise()
 
 	in := rc.Params{
 		"fs": r.LocalName,
@@ -72,7 +70,6 @@ func TestRcCleanup(t *testing.T) {
 // operations/copyfile: Copy a file from source remote to destination remote
 func TestRcCopyfile(t *testing.T) {
 	r, call := rcNewRun(t, "operations/copyfile")
-	defer r.Finalise()
 	file1 := r.WriteFile("file1", "file1 contents", t1)
 	r.Mkdir(context.Background(), r.Fremote)
 	r.CheckLocalItems(t, file1)
@@ -96,7 +93,6 @@ func TestRcCopyfile(t *testing.T) {
 // operations/copyurl: Copy the URL to the object
 func TestRcCopyurl(t *testing.T) {
 	r, call := rcNewRun(t, "operations/copyurl")
-	defer r.Finalise()
 	contents := "file1 contents\n"
 	file1 := r.WriteFile("file1", contents, t1)
 	r.Mkdir(context.Background(), r.Fremote)
@@ -159,7 +155,6 @@ func TestRcCopyurl(t *testing.T) {
 // operations/delete: Remove files in the path
 func TestRcDelete(t *testing.T) {
 	r, call := rcNewRun(t, "operations/delete")
-	defer r.Finalise()
 
 	file1 := r.WriteObject(context.Background(), "small", "1234567890", t2)                                                                                           // 10 bytes
 	file2 := r.WriteObject(context.Background(), "medium", "------------------------------------------------------------", t1)                                        // 60 bytes
@@ -179,7 +174,6 @@ func TestRcDelete(t *testing.T) {
 // operations/deletefile: Remove the single file pointed to
 func TestRcDeletefile(t *testing.T) {
 	r, call := rcNewRun(t, "operations/deletefile")
-	defer r.Finalise()
 
 	file1 := r.WriteObject(context.Background(), "small", "1234567890", t2)                                                    // 10 bytes
 	file2 := r.WriteObject(context.Background(), "medium", "------------------------------------------------------------", t1) // 60 bytes
@@ -199,7 +193,6 @@ func TestRcDeletefile(t *testing.T) {
 // operations/list: List the given remote and path in JSON format.
 func TestRcList(t *testing.T) {
 	r, call := rcNewRun(t, "operations/list")
-	defer r.Finalise()
 
 	file1 := r.WriteObject(context.Background(), "a", "a", t1)
 	file2 := r.WriteObject(context.Background(), "subdir/b", "bb", t2)
@@ -264,7 +257,6 @@ func TestRcList(t *testing.T) {
 // operations/stat: Stat the given remote and path in JSON format.
 func TestRcStat(t *testing.T) {
 	r, call := rcNewRun(t, "operations/stat")
-	defer r.Finalise()
 
 	file1 := r.WriteObject(context.Background(), "subdir/a", "a", t1)
 
@@ -318,7 +310,6 @@ func TestRcStat(t *testing.T) {
 func TestRcMkdir(t *testing.T) {
 	ctx := context.Background()
 	r, call := rcNewRun(t, "operations/mkdir")
-	defer r.Finalise()
 	r.Mkdir(context.Background(), r.Fremote)
 
 	fstest.CheckListingWithPrecision(t, r.Fremote, []fstest.Item{}, []string{}, fs.GetModifyWindow(ctx, r.Fremote))
@@ -337,7 +328,6 @@ func TestRcMkdir(t *testing.T) {
 // operations/movefile: Move a file from source remote to destination remote
 func TestRcMovefile(t *testing.T) {
 	r, call := rcNewRun(t, "operations/movefile")
-	defer r.Finalise()
 	file1 := r.WriteFile("file1", "file1 contents", t1)
 	r.Mkdir(context.Background(), r.Fremote)
 	r.CheckLocalItems(t, file1)
@@ -362,7 +352,6 @@ func TestRcMovefile(t *testing.T) {
 func TestRcPurge(t *testing.T) {
 	ctx := context.Background()
 	r, call := rcNewRun(t, "operations/purge")
-	defer r.Finalise()
 	file1 := r.WriteObject(context.Background(), "subdir/file1", "subdir/file1 contents", t1)
 
 	fstest.CheckListingWithPrecision(t, r.Fremote, []fstest.Item{file1}, []string{"subdir"}, fs.GetModifyWindow(ctx, r.Fremote))
@@ -382,7 +371,6 @@ func TestRcPurge(t *testing.T) {
 func TestRcRmdir(t *testing.T) {
 	ctx := context.Background()
 	r, call := rcNewRun(t, "operations/rmdir")
-	defer r.Finalise()
 	r.Mkdir(context.Background(), r.Fremote)
 	assert.NoError(t, r.Fremote.Mkdir(context.Background(), "subdir"))
 
@@ -403,7 +391,6 @@ func TestRcRmdir(t *testing.T) {
 func TestRcRmdirs(t *testing.T) {
 	ctx := context.Background()
 	r, call := rcNewRun(t, "operations/rmdirs")
-	defer r.Finalise()
 	r.Mkdir(context.Background(), r.Fremote)
 	assert.NoError(t, r.Fremote.Mkdir(context.Background(), "subdir"))
 	assert.NoError(t, r.Fremote.Mkdir(context.Background(), "subdir/subsubdir"))
@@ -439,7 +426,6 @@ func TestRcRmdirs(t *testing.T) {
 // operations/size: Count the number of bytes and files in remote
 func TestRcSize(t *testing.T) {
 	r, call := rcNewRun(t, "operations/size")
-	defer r.Finalise()
 	file1 := r.WriteObject(context.Background(), "small", "1234567890", t2)                                                           // 10 bytes
 	file2 := r.WriteObject(context.Background(), "subdir/medium", "------------------------------------------------------------", t1) // 60 bytes
 	file3 := r.WriteObject(context.Background(), "subdir/subsubdir/large", "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", t1)  // 50 bytes
@@ -460,7 +446,6 @@ func TestRcSize(t *testing.T) {
 // operations/publiclink: Create or retrieve a public link to the given file or folder.
 func TestRcPublicLink(t *testing.T) {
 	r, call := rcNewRun(t, "operations/publiclink")
-	defer r.Finalise()
 	in := rc.Params{
 		"fs":     r.FremoteName,
 		"remote": "",
@@ -475,7 +460,6 @@ func TestRcPublicLink(t *testing.T) {
 // operations/fsinfo: Return information about the remote
 func TestRcFsInfo(t *testing.T) {
 	r, call := rcNewRun(t, "operations/fsinfo")
-	defer r.Finalise()
 	in := rc.Params{
 		"fs": r.FremoteName,
 	}
@@ -499,11 +483,9 @@ func TestRcFsInfo(t *testing.T) {
 
 }
 
-//operations/uploadfile : Tests if upload file succeeds
-//
+// operations/uploadfile : Tests if upload file succeeds
 func TestUploadFile(t *testing.T) {
 	r, call := rcNewRun(t, "operations/uploadfile")
-	defer r.Finalise()
 	ctx := context.Background()
 
 	testFileName := "test.txt"
@@ -559,7 +541,6 @@ func TestUploadFile(t *testing.T) {
 // operations/command: Runs a backend command
 func TestRcCommand(t *testing.T) {
 	r, call := rcNewRun(t, "backend/command")
-	defer r.Finalise()
 	in := rc.Params{
 		"fs":      r.FremoteName,
 		"command": "noop",

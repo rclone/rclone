@@ -15,17 +15,17 @@ import (
 type WriteFileHandle struct {
 	baseHandle
 	mu          sync.Mutex
-	cond        *sync.Cond // cond lock for out of sequence writes
-	closed      bool       // set if handle has been closed
+	cond        sync.Cond // cond lock for out of sequence writes
 	remote      string
 	pipeWriter  *io.PipeWriter
 	o           fs.Object
 	result      chan error
 	file        *File
-	writeCalled bool // set the first time Write() is called
 	offset      int64
-	opened      bool
 	flags       int
+	closed      bool // set if handle has been closed
+	writeCalled bool // set the first time Write() is called
+	opened      bool
 	truncated   bool
 }
 
@@ -43,7 +43,7 @@ func newWriteFileHandle(d *Dir, f *File, remote string, flags int) (*WriteFileHa
 		result: make(chan error, 1),
 		file:   f,
 	}
-	fh.cond = sync.NewCond(&fh.mu)
+	fh.cond = sync.Cond{L: &fh.mu}
 	fh.file.addWriter(fh)
 	return fh, nil
 }
@@ -68,7 +68,7 @@ func (fh *WriteFileHandle) openPending() (err error) {
 	pipeReader, fh.pipeWriter = io.Pipe()
 	go func() {
 		// NB Rcat deals with Stats.Transferring, etc.
-		o, err := operations.Rcat(context.TODO(), fh.file.Fs(), fh.remote, pipeReader, time.Now())
+		o, err := operations.Rcat(context.TODO(), fh.file.Fs(), fh.remote, pipeReader, time.Now(), nil)
 		if err != nil {
 			fs.Errorf(fh.remote, "WriteFileHandle.New Rcat failed: %v", err)
 		}
@@ -130,7 +130,7 @@ func (fh *WriteFileHandle) writeAt(p []byte, off int64) (n int, err error) {
 		return 0, ECLOSED
 	}
 	if fh.offset != off {
-		waitSequential("write", fh.remote, fh.cond, fh.file.VFS().Opt.WriteWait, &fh.offset, off)
+		waitSequential("write", fh.remote, &fh.cond, fh.file.VFS().Opt.WriteWait, &fh.offset, off)
 	}
 	if fh.offset != off {
 		fs.Errorf(fh.remote, "WriteFileHandle.Write: can't seek in file without --vfs-cache-mode >= writes")

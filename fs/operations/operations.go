@@ -11,7 +11,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"mime"
 	"net/http"
 	"os"
@@ -44,7 +43,7 @@ import (
 // CheckHashes checks the two files to see if they have common
 // known hash types and compares them
 //
-// Returns
+// Returns.
 //
 // equal - which is equality of the hashes
 //
@@ -89,7 +88,7 @@ func checkHashes(ctx context.Context, src fs.ObjectInfo, dst fs.Object, ht hash.
 			return dstErr
 		}
 		if dstHash == "" {
-			fs.Debugf(src, "Dst hash empty - aborting Src hash check")
+			fs.Debugf(dst, "Dst hash empty - aborting Src hash check")
 			return errNoHash
 		}
 		return nil
@@ -100,11 +99,11 @@ func checkHashes(ctx context.Context, src fs.ObjectInfo, dst fs.Object, ht hash.
 	}
 	if srcErr != nil {
 		err = fs.CountError(srcErr)
-		fs.Errorf(dst, "Failed to calculate src hash: %v", err)
+		fs.Errorf(src, "Failed to calculate src hash: %v", err)
 	}
 	if dstErr != nil {
 		err = fs.CountError(dstErr)
-		fs.Errorf(src, "Failed to calculate dst hash: %v", err)
+		fs.Errorf(dst, "Failed to calculate dst hash: %v", err)
 	}
 	if err != nil {
 		return false, ht, srcHash, dstHash, err
@@ -298,74 +297,6 @@ func removeFailedCopy(ctx context.Context, dst fs.Object) bool {
 	return true
 }
 
-// OverrideRemote is a wrapper to override the Remote for an
-// ObjectInfo
-type OverrideRemote struct {
-	fs.ObjectInfo
-	remote string
-}
-
-// NewOverrideRemote returns an OverrideRemoteObject which will
-// return the remote specified
-func NewOverrideRemote(oi fs.ObjectInfo, remote string) *OverrideRemote {
-	return &OverrideRemote{
-		ObjectInfo: oi,
-		remote:     remote,
-	}
-}
-
-// Remote returns the overridden remote name
-func (o *OverrideRemote) Remote() string {
-	return o.remote
-}
-
-// MimeType returns the mime type of the underlying object or "" if it
-// can't be worked out
-func (o *OverrideRemote) MimeType(ctx context.Context) string {
-	if do, ok := o.ObjectInfo.(fs.MimeTyper); ok {
-		return do.MimeType(ctx)
-	}
-	return ""
-}
-
-// ID returns the ID of the Object if known, or "" if not
-func (o *OverrideRemote) ID() string {
-	if do, ok := o.ObjectInfo.(fs.IDer); ok {
-		return do.ID()
-	}
-	return ""
-}
-
-// UnWrap returns the Object that this Object is wrapping or nil if it
-// isn't wrapping anything
-func (o *OverrideRemote) UnWrap() fs.Object {
-	if o, ok := o.ObjectInfo.(fs.Object); ok {
-		return o
-	}
-	return nil
-}
-
-// GetTier returns storage tier or class of the Object
-func (o *OverrideRemote) GetTier() string {
-	if do, ok := o.ObjectInfo.(fs.GetTierer); ok {
-		return do.GetTier()
-	}
-	return ""
-}
-
-// Metadata returns metadata for an object
-//
-// It should return nil if there is no Metadata
-func (o *OverrideRemote) Metadata(ctx context.Context) (fs.Metadata, error) {
-	if do, ok := o.ObjectInfo.(fs.Metadataer); ok {
-		return do.Metadata(ctx)
-	}
-	return nil, nil
-}
-
-// Check all optional interfaces satisfied
-var _ fs.FullObjectInfo = (*OverrideRemote)(nil)
-
 // CommonHash returns a single hash.Type and a HashOption with that
 // type which is in common between the two fs.Fs.
 func CommonHash(ctx context.Context, fa, fb fs.Info) (hash.Type, *fs.HashesOption) {
@@ -424,7 +355,7 @@ func Copy(ctx context.Context, f fs.Fs, dst fs.Object, remote string, src fs.Obj
 				return nil, accounting.ErrorMaxTransferLimitReachedGraceful
 			}
 		}
-		if doCopy := f.Features().Copy; doCopy != nil && (SameConfig(src.Fs(), f) || (SameRemoteType(src.Fs(), f) && f.Features().ServerSideAcrossConfigs)) {
+		if doCopy := f.Features().Copy; doCopy != nil && (SameConfig(src.Fs(), f) || (SameRemoteType(src.Fs(), f) && (f.Features().ServerSideAcrossConfigs || ci.ServerSideAcrossConfigs))) {
 			in := tr.Account(ctx, nil) // account the transfer
 			in.ServerSideCopyStart()
 			newDst, err = doCopy(ctx, src, remote)
@@ -476,15 +407,23 @@ func Copy(ctx context.Context, f fs.Fs, dst fs.Object, remote string, src fs.Obj
 						} else {
 							actionTaken = "Copied (Rcat, new)"
 						}
+						// Make any metadata to pass to rcat
+						var meta fs.Metadata
+						if ci.Metadata {
+							meta, err = fs.GetMetadata(ctx, src)
+							if err != nil {
+								fs.Errorf(src, "Failed to read metadata: %v", err)
+							}
+						}
 						// NB Rcat closes in0
-						dst, err = Rcat(ctx, f, remote, in0, src.ModTime(ctx))
+						dst, err = Rcat(ctx, f, remote, in0, src.ModTime(ctx), meta)
 						newDst = dst
 					} else {
 						in := tr.Account(ctx, in0).WithBuffer() // account and buffer the transfer
 						var wrappedSrc fs.ObjectInfo = src
 						// We try to pass the original object if possible
 						if src.Remote() != remote {
-							wrappedSrc = NewOverrideRemote(src, remote)
+							wrappedSrc = fs.NewOverrideRemote(src, remote)
 						}
 						options := []fs.OpenOption{hashOption}
 						for _, option := range ci.UploadHeaders {
@@ -604,6 +543,7 @@ func SameObject(src, dst fs.Object) bool {
 // It returns the destination object if possible.  Note that this may
 // be nil.
 func Move(ctx context.Context, fdst fs.Fs, dst fs.Object, remote string, src fs.Object) (newDst fs.Object, err error) {
+	ci := fs.GetConfig(ctx)
 	tr := accounting.Stats(ctx).NewCheckingTransfer(src)
 	defer func() {
 		if err == nil {
@@ -618,7 +558,7 @@ func Move(ctx context.Context, fdst fs.Fs, dst fs.Object, remote string, src fs.
 		return newDst, nil
 	}
 	// See if we have Move available
-	if doMove := fdst.Features().Move; doMove != nil && (SameConfig(src.Fs(), fdst) || (SameRemoteType(src.Fs(), fdst) && fdst.Features().ServerSideAcrossConfigs)) {
+	if doMove := fdst.Features().Move; doMove != nil && (SameConfig(src.Fs(), fdst) || (SameRemoteType(src.Fs(), fdst) && (fdst.Features().ServerSideAcrossConfigs || ci.ServerSideAcrossConfigs))) {
 		// Delete destination if it exists and is not the same file as src (could be same file while seemingly different if the remote is case insensitive)
 		if dst != nil && !SameObject(src, dst) {
 			err = DeleteFile(ctx, dst)
@@ -814,17 +754,6 @@ func fixRoot(f fs.Info) string {
 	return s
 }
 
-// Overlapping returns true if fdst and fsrc point to the same
-// underlying Fs and they overlap.
-func Overlapping(fdst, fsrc fs.Info) bool {
-	if !SameConfig(fdst, fsrc) {
-		return false
-	}
-	fdstRoot := fixRoot(fdst)
-	fsrcRoot := fixRoot(fsrc)
-	return strings.HasPrefix(fdstRoot, fsrcRoot) || strings.HasPrefix(fsrcRoot, fdstRoot)
-}
-
 // OverlappingFilterCheck returns true if fdst and fsrc point to the same
 // underlying Fs and they overlap without fdst being excluded by any filter rule.
 func OverlappingFilterCheck(ctx context.Context, fdst fs.Fs, fsrc fs.Fs) bool {
@@ -921,7 +850,7 @@ var SyncPrintf = func(format string, a ...interface{}) {
 
 // Synchronized fmt.Fprintf
 //
-// Ignores errors from Fprintf
+// Ignores errors from Fprintf.
 //
 // Updated to print to terminal if no writer is defined
 // This special behavior is used to allow easier replacement of the print to terminal code by progress
@@ -991,7 +920,7 @@ func CountStringField(count int64, humanReadable bool, rawWidth int) string {
 
 // List the Fs to the supplied writer
 //
-// Shows size and path - obeys includes and excludes
+// Shows size and path - obeys includes and excludes.
 //
 // Lists in parallel which may get them out of order
 func List(ctx context.Context, f fs.Fs, w io.Writer) error {
@@ -1003,7 +932,7 @@ func List(ctx context.Context, f fs.Fs, w io.Writer) error {
 
 // ListLong lists the Fs to the supplied writer
 //
-// Shows size, mod time and path - obeys includes and excludes
+// Shows size, mod time and path - obeys includes and excludes.
 //
 // Lists in parallel which may get them out of order
 func ListLong(ctx context.Context, f fs.Fs, w io.Writer) error {
@@ -1358,7 +1287,7 @@ func Cat(ctx context.Context, f fs.Fs, w io.Writer, offset, count int64) error {
 }
 
 // Rcat reads data from the Reader until EOF and uploads it to a file on remote
-func Rcat(ctx context.Context, fdst fs.Fs, dstFileName string, in io.ReadCloser, modTime time.Time) (dst fs.Object, err error) {
+func Rcat(ctx context.Context, fdst fs.Fs, dstFileName string, in io.ReadCloser, modTime time.Time, meta fs.Metadata) (dst fs.Object, err error) {
 	ci := fs.GetConfig(ctx)
 	tr := accounting.Stats(ctx).NewTransferRemoteSize(dstFileName, -1)
 	defer func() {
@@ -1391,11 +1320,14 @@ func Rcat(ctx context.Context, fdst fs.Fs, dstFileName string, in io.ReadCloser,
 
 	compare := func(dst fs.Object) error {
 		var sums map[hash.Type]string
+		opt := defaultEqualOpt(ctx)
 		if hasher != nil {
+			// force --checksum on if we have hashes
+			opt.checkSum = true
 			sums = hasher.Sums()
 		}
-		src := object.NewStaticObjectInfo(dstFileName, modTime, int64(readCounter.BytesRead()), false, sums, fdst)
-		if !Equal(ctx, src, dst) {
+		src := object.NewStaticObjectInfo(dstFileName, modTime, int64(readCounter.BytesRead()), false, sums, fdst).WithMetadata(meta)
+		if !equal(ctx, src, dst, opt) {
 			err = fmt.Errorf("corrupted on transfer")
 			err = fs.CountError(err)
 			fs.Errorf(dst, "%v", err)
@@ -1408,7 +1340,7 @@ func Rcat(ctx context.Context, fdst fs.Fs, dstFileName string, in io.ReadCloser,
 	buf := make([]byte, ci.StreamingUploadCutoff)
 	if n, err := io.ReadFull(trackingIn, buf); err == io.EOF || err == io.ErrUnexpectedEOF {
 		fs.Debugf(fdst, "File to upload is small (%d bytes), uploading instead of streaming", n)
-		src := object.NewMemoryObject(dstFileName, modTime, buf[:n])
+		src := object.NewMemoryObject(dstFileName, modTime, buf[:n]).WithMetadata(meta)
 		return Copy(ctx, fdst, nil, dstFileName, src)
 	}
 
@@ -1437,11 +1369,11 @@ func Rcat(ctx context.Context, fdst fs.Fs, dstFileName string, in io.ReadCloser,
 
 	if SkipDestructive(ctx, dstFileName, "upload from pipe") {
 		// prevents "broken pipe" errors
-		_, err = io.Copy(ioutil.Discard, in)
+		_, err = io.Copy(io.Discard, in)
 		return nil, err
 	}
 
-	objInfo := object.NewStaticObjectInfo(dstFileName, modTime, -1, false, nil, nil)
+	objInfo := object.NewStaticObjectInfo(dstFileName, modTime, -1, false, nil, nil).WithMetadata(meta)
 	if dst, err = fStreamTo.Features().PutStream(ctx, in, objInfo, options...); err != nil {
 		return dst, err
 	}
@@ -1450,7 +1382,22 @@ func Rcat(ctx context.Context, fdst fs.Fs, dstFileName string, in io.ReadCloser,
 	}
 	if !canStream {
 		// copy dst (which is the local object we have just streamed to) to the remote
-		return Copy(ctx, fdst, nil, dstFileName, dst)
+		newCtx := ctx
+		if ci.Metadata && len(meta) != 0 {
+			// If we have metadata and we are setting it then use
+			// the --metadataset mechanism to supply it to Copy
+			var newCi *fs.ConfigInfo
+			newCtx, newCi = fs.AddConfig(ctx)
+			if len(newCi.MetadataSet) == 0 {
+				newCi.MetadataSet = meta
+			} else {
+				var newMeta fs.Metadata
+				newMeta.Merge(meta)
+				newMeta.Merge(newCi.MetadataSet) // --metadata-set takes priority
+				newCi.MetadataSet = newMeta
+			}
+		}
+		return Copy(newCtx, fdst, nil, dstFileName, dst)
 	}
 	return dst, nil
 }
@@ -1522,7 +1469,7 @@ func Rmdirs(ctx context.Context, f fs.Fs, dir string, leaveRoot bool) error {
 		dir := toDelete[i]
 		// If a filter matches the directory then that
 		// directory is a candidate for deletion
-		if !fi.Include(dir+"/", 0, time.Now()) {
+		if !fi.IncludeRemote(dir + "/") {
 			continue
 		}
 		err = TryRmdir(ctx, f, dir)
@@ -1732,7 +1679,7 @@ func NeedTransfer(ctx context.Context, dst, src fs.Object) bool {
 
 // RcatSize reads data from the Reader until EOF and uploads it to a file on remote.
 // Pass in size >=0 if known, <0 if not known
-func RcatSize(ctx context.Context, fdst fs.Fs, dstFileName string, in io.ReadCloser, size int64, modTime time.Time) (dst fs.Object, err error) {
+func RcatSize(ctx context.Context, fdst fs.Fs, dstFileName string, in io.ReadCloser, size int64, modTime time.Time, meta fs.Metadata) (dst fs.Object, err error) {
 	var obj fs.Object
 
 	if size >= 0 {
@@ -1742,16 +1689,16 @@ func RcatSize(ctx context.Context, fdst fs.Fs, dstFileName string, in io.ReadClo
 		defer func() {
 			tr.Done(ctx, err)
 		}()
-		body := ioutil.NopCloser(in) // we let the server close the body
-		in := tr.Account(ctx, body)  // account the transfer (no buffering)
+		body := io.NopCloser(in)    // we let the server close the body
+		in := tr.Account(ctx, body) // account the transfer (no buffering)
 
 		if SkipDestructive(ctx, dstFileName, "upload from pipe") {
 			// prevents "broken pipe" errors
-			_, err = io.Copy(ioutil.Discard, in)
+			_, err = io.Copy(io.Discard, in)
 			return nil, err
 		}
 
-		info := object.NewStaticObjectInfo(dstFileName, modTime, size, true, nil, fdst)
+		info := object.NewStaticObjectInfo(dstFileName, modTime, size, true, nil, fdst).WithMetadata(meta)
 		obj, err = fdst.Put(ctx, in, info)
 		if err != nil {
 			fs.Errorf(dstFileName, "Post request put error: %v", err)
@@ -1760,7 +1707,7 @@ func RcatSize(ctx context.Context, fdst fs.Fs, dstFileName string, in io.ReadClo
 		}
 	} else {
 		// Size unknown use Rcat
-		obj, err = Rcat(ctx, fdst, dstFileName, in, modTime)
+		obj, err = Rcat(ctx, fdst, dstFileName, in, modTime, meta)
 		if err != nil {
 			fs.Errorf(dstFileName, "Post request rcat error: %v", err)
 
@@ -1794,7 +1741,7 @@ func copyURLFn(ctx context.Context, dstFileName string, url string, autoFilename
 			_, params, err := mime.ParseMediaType(resp.Header.Get("Content-Disposition"))
 			headerFilename := path.Base(strings.Replace(params["filename"], "\\", "/", -1))
 			if err != nil || headerFilename == "" {
-				return fmt.Errorf("CopyURL failed: filename not found in the Content-Dispoition header")
+				return fmt.Errorf("CopyURL failed: filename not found in the Content-Disposition header")
 			}
 			fs.Debugf(headerFilename, "filename found in Content-Disposition header.")
 			return fn(ctx, headerFilename, resp.Body, resp.ContentLength, modTime)
@@ -1819,7 +1766,7 @@ func CopyURL(ctx context.Context, fdst fs.Fs, dstFileName string, url string, au
 				return errors.New("CopyURL failed: file already exist")
 			}
 		}
-		dst, err = RcatSize(ctx, fdst, dstFileName, in, size, modTime)
+		dst, err = RcatSize(ctx, fdst, dstFileName, in, size, modTime, nil)
 		return err
 	})
 	return dst, err
@@ -1845,10 +1792,10 @@ func BackupDir(ctx context.Context, fdst fs.Fs, fsrc fs.Fs, srcFileName string) 
 			return nil, fserrors.FatalError(errors.New("parameter to --backup-dir has to be on the same remote as destination"))
 		}
 		if srcFileName == "" {
-			if Overlapping(fdst, backupDir) {
+			if OverlappingFilterCheck(ctx, backupDir, fdst) {
 				return nil, fserrors.FatalError(errors.New("destination and parameter to --backup-dir mustn't overlap"))
 			}
-			if Overlapping(fsrc, backupDir) {
+			if OverlappingFilterCheck(ctx, backupDir, fsrc) {
 				return nil, fserrors.FatalError(errors.New("source and parameter to --backup-dir mustn't overlap"))
 			}
 		} else {
@@ -1959,11 +1906,17 @@ func moveOrCopyFile(ctx context.Context, fdst fs.Fs, fsrc fs.Fs, dstFileName str
 			return err
 		}
 	}
-	NoNeedTransfer, err := CompareOrCopyDest(ctx, fdst, dstObj, srcObj, copyDestDir, backupDir)
-	if err != nil {
-		return err
+	needTransfer := NeedTransfer(ctx, dstObj, srcObj)
+	if needTransfer {
+		NoNeedTransfer, err := CompareOrCopyDest(ctx, fdst, dstObj, srcObj, copyDestDir, backupDir)
+		if err != nil {
+			return err
+		}
+		if NoNeedTransfer {
+			needTransfer = false
+		}
 	}
-	if !NoNeedTransfer && NeedTransfer(ctx, dstObj, srcObj) {
+	if needTransfer {
 		// If destination already exists, then we must move it into --backup-dir if required
 		if dstObj != nil && backupDir != nil {
 			err = MoveBackupDir(ctx, backupDir, dstObj)

@@ -1,4 +1,4 @@
-// Package b2 provides an interface to the Backblaze B2 object storage system
+// Package b2 provides an interface to the Backblaze B2 object storage system.
 package b2
 
 // FIXME should we remove sha1 checks from here as rclone now supports
@@ -656,15 +656,15 @@ var errEndList = errors.New("end list")
 //
 // (bucket, directory) is the starting directory
 //
-// If prefix is set then it is removed from all file names
+// If prefix is set then it is removed from all file names.
 //
 // If addBucket is set then it adds the bucket to the start of the
-// remotes generated
+// remotes generated.
 //
-// If recurse is set the function will recursively list
+// If recurse is set the function will recursively list.
 //
 // If limit is > 0 then it limits to that many files (must be less
-// than 1000)
+// than 1000).
 //
 // If hidden is set then it will list the hidden (deleted) files too.
 //
@@ -1025,7 +1025,7 @@ func (f *Fs) clearBucketID(bucket string) {
 
 // Put the object into the bucket
 //
-// Copy the reader in to the new object which is returned
+// Copy the reader in to the new object which is returned.
 //
 // The new object may have been created if an error is returned
 func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
@@ -1334,9 +1334,9 @@ func (f *Fs) copy(ctx context.Context, dstObj *Object, srcObj *Object, newInfo *
 
 // Copy src to this remote using server-side copy operations.
 //
-// This is stored with the remote path given
+// This is stored with the remote path given.
 //
-// It returns the destination Object and a possible error
+// It returns the destination Object and a possible error.
 //
 // Will only be called if src.Fs().Name() == f.Name()
 //
@@ -1478,7 +1478,7 @@ func (o *Object) Size() int64 {
 
 // Clean the SHA1
 //
-// Make sure it is lower case
+// Make sure it is lower case.
 //
 // Remove unverified prefix - see https://www.backblaze.com/b2/docs/uploading.html
 // Some tools (e.g. Cyberduck) use this
@@ -1490,10 +1490,11 @@ func cleanSHA1(sha1 string) string {
 // decodeMetaDataRaw sets the metadata from the data passed in
 //
 // Sets
-//  o.id
-//  o.modTime
-//  o.size
-//  o.sha1
+//
+//	o.id
+//	o.modTime
+//	o.size
+//	o.sha1
 func (o *Object) decodeMetaDataRaw(ID, SHA1 string, Size int64, UploadTimestamp api.Timestamp, Info map[string]string, mimeType string) (err error) {
 	o.id = ID
 	o.sha1 = SHA1
@@ -1512,10 +1513,11 @@ func (o *Object) decodeMetaDataRaw(ID, SHA1 string, Size int64, UploadTimestamp 
 // decodeMetaData sets the metadata in the object from an api.File
 //
 // Sets
-//  o.id
-//  o.modTime
-//  o.size
-//  o.sha1
+//
+//	o.id
+//	o.modTime
+//	o.size
+//	o.sha1
 func (o *Object) decodeMetaData(info *api.File) (err error) {
 	return o.decodeMetaDataRaw(info.ID, info.SHA1, info.Size, info.UploadTimestamp, info.Info, info.ContentType)
 }
@@ -1523,10 +1525,11 @@ func (o *Object) decodeMetaData(info *api.File) (err error) {
 // decodeMetaDataFileInfo sets the metadata in the object from an api.FileInfo
 //
 // Sets
-//  o.id
-//  o.modTime
-//  o.size
-//  o.sha1
+//
+//	o.id
+//	o.modTime
+//	o.size
+//	o.sha1
 func (o *Object) decodeMetaDataFileInfo(info *api.FileInfo) (err error) {
 	return o.decodeMetaDataRaw(info.ID, info.SHA1, info.Size, info.UploadTimestamp, info.Info, info.ContentType)
 }
@@ -1584,10 +1587,11 @@ func (o *Object) getMetaData(ctx context.Context) (info *api.File, err error) {
 // readMetaData gets the metadata if it hasn't already been fetched
 //
 // Sets
-//  o.id
-//  o.modTime
-//  o.size
-//  o.sha1
+//
+//	o.id
+//	o.modTime
+//	o.size
+//	o.sha1
 func (o *Object) readMetaData(ctx context.Context) (err error) {
 	if o.id != "" {
 		return nil

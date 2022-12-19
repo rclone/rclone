@@ -1,3 +1,4 @@
+// Package seafile provides an interface to the Seafile storage system.
 package seafile
 
 import (
@@ -136,7 +137,7 @@ type Fs struct {
 	features            *fs.Features // optional features
 	endpoint            *url.URL     // URL of the host
 	endpointURL         string       // endpoint as a string
-	srv                 *rest.Client // the connection to the one drive server
+	srv                 *rest.Client // the connection to the server
 	pacer               *fs.Pacer    // pacer for API calls
 	authMu              sync.Mutex   // Mutex to protect library decryption
 	createDirMutex      sync.Mutex   // Protect creation of directories
@@ -671,9 +672,9 @@ func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) e
 
 // Copy src to this remote using server-side copy operations.
 //
-// This is stored with the remote path given
+// This is stored with the remote path given.
 //
-// It returns the destination Object and a possible error
+// It returns the destination Object and a possible error.
 //
 // If it isn't possible then return fs.ErrorCantCopy
 func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
@@ -722,9 +723,9 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 
 // Move src to this remote using server-side move operations.
 //
-// This is stored with the remote path given
+// This is stored with the remote path given.
 //
-// It returns the destination Object and a possible error
+// It returns the destination Object and a possible error.
 //
 // If it isn't possible then return fs.ErrorCantMove
 func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {

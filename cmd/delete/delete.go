@@ -1,3 +1,4 @@
+// Package delete provides the delete command.
 package delete
 
 import (
@@ -52,6 +53,9 @@ delete all files bigger than 100 MiB.
 **Important**: Since this can cause data loss, test first with the
 |--dry-run| or the |--interactive|/|-i| flag.
 `, "|", "`"),
+	Annotations: map[string]string{
+		"versionIntroduced": "v1.27",
+	},
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(1, 1, command, args)
 		fsrc := cmd.NewFsSrc(args)

@@ -118,7 +118,7 @@ type Fs struct {
 
 // Object describes a mega object
 //
-// Will definitely have info but maybe not meta
+// Will definitely have info but maybe not meta.
 //
 // Normally rclone would just store an ID here but go-mega and mega.nz
 // expect you to build an entire tree of all the objects in memory.
@@ -347,7 +347,7 @@ func (f *Fs) mkdir(ctx context.Context, rootNode *mega.Node, dir string) (node *
 		}
 	}
 	if err != nil {
-		return nil, fmt.Errorf("internal error: mkdir called with non-existent root node: %w", err)
+		return nil, fmt.Errorf("internal error: mkdir called with nonexistent root node: %w", err)
 	}
 	// i is number of directories to create (may be 0)
 	// node is directory to create them from
@@ -387,7 +387,7 @@ func (f *Fs) findRoot(ctx context.Context, create bool) (*mega.Node, error) {
 		return f._rootNode, nil
 	}
 
-	// Check for pre-existing root
+	// Check for preexisting root
 	absRoot := f.srv.FS.GetRoot()
 	node, err := f.findDir(absRoot, f.root)
 	//log.Printf("findRoot findDir %p %v", node, err)
@@ -536,7 +536,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 // Creates from the parameters passed in a half finished Object which
 // must have setMetaData called on it
 //
-// Returns the dirNode, object, leaf and error
+// Returns the dirNode, object, leaf and error.
 //
 // Used to create new objects
 func (f *Fs) createObject(ctx context.Context, remote string, modTime time.Time, size int64) (o *Object, dirNode *mega.Node, leaf string, err error) {
@@ -554,7 +554,7 @@ func (f *Fs) createObject(ctx context.Context, remote string, modTime time.Time,
 
 // Put the object
 //
-// Copy the reader in to the new object which is returned
+// Copy the reader in to the new object which is returned.
 //
 // The new object may have been created if an error is returned
 // PutUnchecked uploads the object
@@ -576,7 +576,7 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 
 // PutUnchecked the object
 //
-// Copy the reader in to the new object which is returned
+// Copy the reader in to the new object which is returned.
 //
 // The new object may have been created if an error is returned
 // PutUnchecked uploads the object
@@ -749,9 +749,9 @@ func (f *Fs) move(ctx context.Context, dstRemote string, srcFs *Fs, srcRemote st
 
 // Move src to this remote using server-side move operations.
 //
-// This is stored with the remote path given
+// This is stored with the remote path given.
 //
-// It returns the destination Object and a possible error
+// It returns the destination Object and a possible error.
 //
 // Will only be called if src.Fs().Name() == f.Name()
 //
@@ -979,7 +979,6 @@ func (o *Object) readMetaData(ctx context.Context) (err error) {
 
 // ModTime returns the modification time of the object
 //
-//
 // It attempts to read the objects mtime and if that isn't present the
 // LastModified returned in the http headers
 func (o *Object) ModTime(ctx context.Context) time.Time {
@@ -1115,7 +1114,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 
 // Update the object with the contents of the io.Reader, modTime and size
 //
-// If existing is set then it updates the object rather than creating a new one
+// If existing is set then it updates the object rather than creating a new one.
 //
 // The new object may have been created if an error is returned
 func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (err error) {

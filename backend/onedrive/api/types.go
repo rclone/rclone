@@ -1,5 +1,4 @@
-// Types passed and returned to and from the API
-
+// Package api provides types used by the OneDrive API.
 package api
 
 import (
@@ -14,7 +13,7 @@ const (
 	PackageTypeOneNote = "oneNote"
 )
 
-// Error is returned from one drive when things go wrong
+// Error is returned from OneDrive when things go wrong
 type Error struct {
 	ErrorInfo struct {
 		Code       string `json:"code"`
@@ -71,7 +70,7 @@ type Drive struct {
 	Quota     Quota       `json:"quota"`
 }
 
-// Timestamp represents represents date and time information for the
+// Timestamp represents date and time information for the
 // OneDrive API, by using ISO 8601 and is always in UTC time.
 type Timestamp time.Time
 
@@ -250,8 +249,8 @@ type MoveItemRequest struct {
 	FileSystemInfo  *FileSystemInfoFacet `json:"fileSystemInfo,omitempty"`  // File system information on client. Read-write.
 }
 
-//CreateShareLinkRequest is the request to create a sharing link
-//Always Type:view and Scope:anonymous for public sharing
+// CreateShareLinkRequest is the request to create a sharing link
+// Always Type:view and Scope:anonymous for public sharing
 type CreateShareLinkRequest struct {
 	Type     string     `json:"type"`                         // Link type in View, Edit or Embed
 	Scope    string     `json:"scope,omitempty"`              // Scope in anonymous, organization
@@ -259,7 +258,7 @@ type CreateShareLinkRequest struct {
 	Expiry   *time.Time `json:"expirationDateTime,omitempty"` // A String with format of yyyy-MM-ddTHH:mm:ssZ of DateTime indicates the expiration time of the permission.
 }
 
-//CreateShareLinkResponse is the response from CreateShareLinkRequest
+// CreateShareLinkResponse is the response from CreateShareLinkRequest
 type CreateShareLinkResponse struct {
 	ID    string   `json:"id"`
 	Roles []string `json:"roles"`

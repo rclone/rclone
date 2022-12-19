@@ -1,3 +1,4 @@
+// Package api provides types used by the Yandex API.
 package api
 
 import (
@@ -20,7 +21,7 @@ type ResourceInfoRequestOptions struct {
 	Fields   []string
 }
 
-//ResourceInfoResponse struct is returned by the API for metadata requests.
+// ResourceInfoResponse struct is returned by the API for metadata requests.
 type ResourceInfoResponse struct {
 	PublicKey        string                 `json:"public_key"`
 	Name             string                 `json:"name"`
@@ -61,7 +62,7 @@ type AsyncStatus struct {
 	Status string `json:"status"`
 }
 
-//CustomPropertyResponse struct we send and is returned by the API for CustomProperty request.
+// CustomPropertyResponse struct we send and is returned by the API for CustomProperty request.
 type CustomPropertyResponse struct {
 	CustomProperties map[string]interface{} `json:"custom_properties"`
 }

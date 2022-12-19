@@ -1,3 +1,4 @@
+// Package mockfs provides mock Fs for testing.
 package mockfs
 
 import (

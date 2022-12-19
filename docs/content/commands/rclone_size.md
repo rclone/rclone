@@ -9,6 +9,28 @@ url: /commands/rclone_size/
 
 Prints the total size and number of objects in remote:path.
 
+## Synopsis
+
+
+Counts objects in the path and calculates the total size. Prints the
+result to standard output.
+
+By default the output is in human-readable format, but shows values in
+both human-readable format as well as the raw numbers (global option
+`--human-readable` is not considered). Use option `--json`
+to format output as JSON instead.
+
+Recurses by default, use `--max-depth 1` to stop the
+recursion.
+
+Some backends do not always provide file sizes, see for example
+[Google Photos](/googlephotos/#size) and
+[Google Drive](/drive/#limitations-of-google-docs).
+Rclone will then show a notice in the log indicating how many such
+files were encountered, and count them in as empty files in the output
+of the size command.
+
+
 ```
 rclone size remote:path [flags]
 ```

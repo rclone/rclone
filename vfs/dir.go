@@ -186,7 +186,7 @@ func (d *Dir) ForgetAll() (hasVirtual bool) {
 			}
 		}
 	}
-	// Purge any unecessary virtual entries
+	// Purge any unnecessary virtual entries
 	d._purgeVirtual()
 
 	d.read = time.Time{}
@@ -555,7 +555,7 @@ func (d *Dir) _newManageVirtuals() manageVirtuals {
 
 // This should be called for every entry added to the directory
 //
-// It returns true if this entry should be skipped
+// It returns true if this entry should be skipped.
 //
 // must be called with the Dir lock held
 func (mv manageVirtuals) add(d *Dir, name string) bool {

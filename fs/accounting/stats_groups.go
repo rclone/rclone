@@ -2,6 +2,7 @@ package accounting
 
 import (
 	"context"
+	"fmt"
 	"sync"
 
 	"github.com/rclone/rclone/fs/rc"
@@ -190,6 +191,9 @@ func rcResetStats(ctx context.Context, in rc.Params) (rc.Params, error) {
 
 	if group != "" {
 		stats := groups.get(group)
+		if stats == nil {
+			return rc.Params{}, fmt.Errorf("group %q not found", group)
+		}
 		stats.ResetErrors()
 		stats.ResetCounters()
 	} else {

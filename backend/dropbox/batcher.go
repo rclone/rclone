@@ -304,9 +304,12 @@ outer:
 //
 // Can be called from atexit handler
 func (b *batcher) Shutdown() {
+	if !b.Batching() {
+		return
+	}
 	b.shutOnce.Do(func() {
 		atexit.Unregister(b.atexit)
-		fs.Infof(b.f, "Commiting uploads - please wait...")
+		fs.Infof(b.f, "Committing uploads - please wait...")
 		// show that batcher is shutting down
 		close(b.closed)
 		// quit the commitLoop by sending a quitRequest message

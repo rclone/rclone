@@ -3,7 +3,7 @@ package http
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -33,20 +33,21 @@ var (
 	lineEndSize = 1
 )
 
-// prepareServer the test server and return a function to tidy it up afterwards
-func prepareServer(t *testing.T) (configmap.Simple, func()) {
+// prepareServer prepares the test server and shuts it down automatically
+// when the test completes.
+func prepareServer(t *testing.T) configmap.Simple {
 	// file server for test/files
 	fileServer := http.FileServer(http.Dir(filesPath))
 
 	// verify the file path is correct, and also check which line endings
 	// are used to get sizes right ("\n" except on Windows, but even there
 	// we may have "\n" or "\r\n" depending on git crlf setting)
-	fileList, err := ioutil.ReadDir(filesPath)
+	fileList, err := os.ReadDir(filesPath)
 	require.NoError(t, err)
 	require.Greater(t, len(fileList), 0)
 	for _, file := range fileList {
 		if !file.IsDir() {
-			data, _ := ioutil.ReadFile(filepath.Join(filesPath, file.Name()))
+			data, _ := os.ReadFile(filepath.Join(filesPath, file.Name()))
 			if strings.HasSuffix(string(data), "\r\n") {
 				lineEndSize = 2
 			}
@@ -78,20 +79,21 @@ func prepareServer(t *testing.T) (configmap.Simple, func()) {
 		"url":     ts.URL,
 		"headers": strings.Join(headers, ","),
 	}
+	t.Cleanup(ts.Close)
 
-	// return a function to tidy up
-	return m, ts.Close
+	return m
 }
 
-// prepare the test server and return a function to tidy it up afterwards
-func prepare(t *testing.T) (fs.Fs, func()) {
-	m, tidy := prepareServer(t)
+// prepare prepares the test server and shuts it down automatically
+// when the test completes.
+func prepare(t *testing.T) fs.Fs {
+	m := prepareServer(t)
 
 	// Instantiate it
 	f, err := NewFs(context.Background(), remoteName, "", m)
 	require.NoError(t, err)
 
-	return f, tidy
+	return f
 }
 
 func testListRoot(t *testing.T, f fs.Fs, noSlash bool) {
@@ -134,22 +136,19 @@ func testListRoot(t *testing.T, f fs.Fs, noSlash bool) {
 }
 
 func TestListRoot(t *testing.T) {
-	f, tidy := prepare(t)
-	defer tidy()
+	f := prepare(t)
 	testListRoot(t, f, false)
 }
 
 func TestListRootNoSlash(t *testing.T) {
-	f, tidy := prepare(t)
+	f := prepare(t)
 	f.(*Fs).opt.NoSlash = true
-	defer tidy()
 
 	testListRoot(t, f, true)
 }
 
 func TestListSubDir(t *testing.T) {
-	f, tidy := prepare(t)
-	defer tidy()
+	f := prepare(t)
 
 	entries, err := f.List(context.Background(), "three")
 	require.NoError(t, err)
@@ -166,8 +165,7 @@ func TestListSubDir(t *testing.T) {
 }
 
 func TestNewObject(t *testing.T) {
-	f, tidy := prepare(t)
-	defer tidy()
+	f := prepare(t)
 
 	o, err := f.NewObject(context.Background(), "four/under four.txt")
 	require.NoError(t, err)
@@ -194,36 +192,69 @@ func TestNewObject(t *testing.T) {
 }
 
 func TestOpen(t *testing.T) {
-	f, tidy := prepare(t)
-	defer tidy()
+	m := prepareServer(t)
 
-	o, err := f.NewObject(context.Background(), "four/under four.txt")
-	require.NoError(t, err)
+	for _, head := range []bool{false, true} {
+		if !head {
+			m.Set("no_head", "true")
+		}
+		f, err := NewFs(context.Background(), remoteName, "", m)
+		require.NoError(t, err)
 
-	// Test normal read
-	fd, err := o.Open(context.Background())
-	require.NoError(t, err)
-	data, err := ioutil.ReadAll(fd)
-	require.NoError(t, err)
-	require.NoError(t, fd.Close())
-	if lineEndSize == 2 {
-		assert.Equal(t, "beetroot\r\n", string(data))
-	} else {
-		assert.Equal(t, "beetroot\n", string(data))
+		for _, rangeRead := range []bool{false, true} {
+			o, err := f.NewObject(context.Background(), "four/under four.txt")
+			require.NoError(t, err)
+
+			if !head {
+				// Test mod time is still indeterminate
+				tObj := o.ModTime(context.Background())
+				assert.Equal(t, time.Duration(0), time.Unix(0, 0).Sub(tObj))
+
+				// Test file size is still indeterminate
+				assert.Equal(t, int64(-1), o.Size())
+			}
+
+			var data []byte
+			if !rangeRead {
+				// Test normal read
+				fd, err := o.Open(context.Background())
+				require.NoError(t, err)
+				data, err = io.ReadAll(fd)
+				require.NoError(t, err)
+				require.NoError(t, fd.Close())
+				if lineEndSize == 2 {
+					assert.Equal(t, "beetroot\r\n", string(data))
+				} else {
+					assert.Equal(t, "beetroot\n", string(data))
+				}
+			} else {
+				// Test with range request
+				fd, err := o.Open(context.Background(), &fs.RangeOption{Start: 1, End: 5})
+				require.NoError(t, err)
+				data, err = io.ReadAll(fd)
+				require.NoError(t, err)
+				require.NoError(t, fd.Close())
+				assert.Equal(t, "eetro", string(data))
+			}
+
+			fi, err := os.Stat(filepath.Join(filesPath, "four", "under four.txt"))
+			require.NoError(t, err)
+			tFile := fi.ModTime()
+
+			// Test the time is always correct on the object after file open
+			tObj := o.ModTime(context.Background())
+			fstest.AssertTimeEqualWithPrecision(t, o.Remote(), tFile, tObj, time.Second)
+
+			if !rangeRead {
+				// Test the file size
+				assert.Equal(t, int64(len(data)), o.Size())
+			}
+		}
 	}
-
-	// Test with range request
-	fd, err = o.Open(context.Background(), &fs.RangeOption{Start: 1, End: 5})
-	require.NoError(t, err)
-	data, err = ioutil.ReadAll(fd)
-	require.NoError(t, err)
-	require.NoError(t, fd.Close())
-	assert.Equal(t, "eetro", string(data))
 }
 
 func TestMimeType(t *testing.T) {
-	f, tidy := prepare(t)
-	defer tidy()
+	f := prepare(t)
 
 	o, err := f.NewObject(context.Background(), "four/under four.txt")
 	require.NoError(t, err)
@@ -234,8 +265,7 @@ func TestMimeType(t *testing.T) {
 }
 
 func TestIsAFileRoot(t *testing.T) {
-	m, tidy := prepareServer(t)
-	defer tidy()
+	m := prepareServer(t)
 
 	f, err := NewFs(context.Background(), remoteName, "one%.txt", m)
 	assert.Equal(t, err, fs.ErrorIsFile)
@@ -244,8 +274,7 @@ func TestIsAFileRoot(t *testing.T) {
 }
 
 func TestIsAFileSubDir(t *testing.T) {
-	m, tidy := prepareServer(t)
-	defer tidy()
+	m := prepareServer(t)
 
 	f, err := NewFs(context.Background(), remoteName, "three/underthree.txt", m)
 	assert.Equal(t, err, fs.ErrorIsFile)

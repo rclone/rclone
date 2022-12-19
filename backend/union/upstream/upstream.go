@@ -1,3 +1,4 @@
+// Package upstream provides utility functionality to union.
 package upstream
 
 import (
@@ -24,6 +25,10 @@ var (
 
 // Fs is a wrap of any fs and its configs
 type Fs struct {
+	// In order to ensure memory alignment on 32-bit architectures
+	// when this field is accessed through sync/atomic functions,
+	// it must be the first entry in the struct
+	cacheExpiry int64 // usage cache expiry time
 	fs.Fs
 	RootFs      fs.Fs
 	RootPath    string
@@ -32,7 +37,6 @@ type Fs struct {
 	creatable   bool
 	usage       *fs.Usage     // Cache the usage
 	cacheTime   time.Duration // cache duration
-	cacheExpiry int64         // usage cache expiry time
 	cacheMutex  sync.RWMutex
 	cacheOnce   sync.Once
 	cacheUpdate bool // if the cache is updating
@@ -129,11 +133,11 @@ func (f *Fs) WrapObject(o fs.Object) *Object {
 // WrapEntry wraps an fs.DirEntry to include the info
 // of the upstream Fs
 func (f *Fs) WrapEntry(e fs.DirEntry) (Entry, error) {
-	switch e.(type) {
+	switch e := e.(type) {
 	case fs.Object:
-		return f.WrapObject(e.(fs.Object)), nil
+		return f.WrapObject(e), nil
 	case fs.Directory:
-		return f.WrapDirectory(e.(fs.Directory)), nil
+		return f.WrapDirectory(e), nil
 	default:
 		return nil, fmt.Errorf("unknown object type %T", e)
 	}
@@ -320,11 +324,7 @@ func (f *Fs) GetFreeSpace() (int64, error) {
 	if f.usage.Free == nil {
 		return math.MaxInt64 - 1, ErrUsageFieldNotSupported
 	}
-	free := *f.usage.Free
-	if free >= math.MaxInt64 {
-		free = math.MaxInt64 - 1
-	}
-	return free, nil
+	return *f.usage.Free, nil
 }
 
 // GetUsedSpace get the used space of the fs
@@ -342,11 +342,7 @@ func (f *Fs) GetUsedSpace() (int64, error) {
 	if f.usage.Used == nil {
 		return 0, ErrUsageFieldNotSupported
 	}
-	used := *f.usage.Used
-	if used >= math.MaxInt64 {
-		used = math.MaxInt64 - 1
-	}
-	return used, nil
+	return *f.usage.Used, nil
 }
 
 // GetNumObjects get the number of objects of the fs

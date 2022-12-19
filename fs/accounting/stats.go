@@ -278,7 +278,7 @@ type transferStats struct {
 	speed          float64
 }
 
-// calculateTransferStats calculates some addtional transfer stats not
+// calculateTransferStats calculates some additional transfer stats not
 // stored directly in StatsInfo
 func (s *StatsInfo) calculateTransferStats() (ts transferStats) {
 	// checking and transferring have their own locking so read
@@ -675,7 +675,7 @@ func (s *StatsInfo) RetryAfter() time.Time {
 }
 
 // NewCheckingTransfer adds a checking transfer to the stats, from the object.
-func (s *StatsInfo) NewCheckingTransfer(obj fs.Object) *Transfer {
+func (s *StatsInfo) NewCheckingTransfer(obj fs.DirEntry) *Transfer {
 	tr := newCheckingTransfer(s, obj)
 	s.checking.add(tr)
 	return tr
@@ -697,7 +697,7 @@ func (s *StatsInfo) GetTransfers() int64 {
 }
 
 // NewTransfer adds a transfer to the stats from the object.
-func (s *StatsInfo) NewTransfer(obj fs.Object) *Transfer {
+func (s *StatsInfo) NewTransfer(obj fs.DirEntry) *Transfer {
 	tr := newTransfer(s, obj)
 	s.transferring.add(tr)
 	s.startAverageLoop()

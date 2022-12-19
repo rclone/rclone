@@ -1,5 +1,4 @@
-// Define the Web GUI helpers
-
+// Package webgui defines the Web GUI helpers.
 package webgui
 
 import (
@@ -8,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -65,7 +63,7 @@ func CheckAndDownloadWebGUIRelease(checkUpdate bool, forceUpdate bool, fetchURL 
 	if err != nil {
 		return fmt.Errorf("error checking for web gui release update, skipping update: %w", err)
 	}
-	dat, err := ioutil.ReadFile(tagPath)
+	dat, err := os.ReadFile(tagPath)
 	tagsMatch := false
 	if err != nil {
 		fs.Errorf(nil, "Error reading tag file at %s ", tagPath)
@@ -130,7 +128,7 @@ func CheckAndDownloadWebGUIRelease(checkUpdate bool, forceUpdate bool, fetchURL 
 			fs.Logf(nil, "Downloaded ZIP cannot be deleted")
 		}
 
-		err = ioutil.WriteFile(tagPath, []byte(tag), 0644)
+		err = os.WriteFile(tagPath, []byte(tag), 0644)
 		if err != nil {
 			fs.Infof(nil, "Cannot write tag file. You may be required to redownload the binary next time.")
 		}
