@@ -36,6 +36,7 @@ Rclone *("rsync for cloud storage")* is a command-line program to sync files and
   * Digi Storage [:page_facing_up:](https://rclone.org/koofr/#digi-storage)
   * Dreamhost [:page_facing_up:](https://rclone.org/s3/#dreamhost)
   * Dropbox [:page_facing_up:](https://rclone.org/dropbox/)
+  * Estuary [:page_facing_up:](https://rclone.org/estuary/)
   * Enterprise File Fabric [:page_facing_up:](https://rclone.org/filefabric/)
   * FTP [:page_facing_up:](https://rclone.org/ftp/)
   * Google Cloud Storage [:page_facing_up:](https://rclone.org/googlecloudstorage/)
