@@ -1,7 +1,7 @@
 ---
 title: "Chunker"
 description: "Split-chunking overlay remote"
-versionIntroduced: "v1.50.0"
+versionIntroduced: "v1.50"
 status: Beta
 ---
 

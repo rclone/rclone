@@ -1,7 +1,7 @@
 ---
 title: "Sia"
 description: "Remote for Sia Decentralized Cloud"
-versionIntroduced: "v1.57.0"
+versionIntroduced: "v1.57"
 date: "2019-10-02"
 ---
 

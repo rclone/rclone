@@ -1,7 +1,7 @@
 ---
 title: "Storj"
 description: "Rclone docs for Storj"
-versionIntroduced: "v1.52.0"
+versionIntroduced: "v1.52"
 ---
 
 # {{< icon "fas fa-dove" >}} Storj
