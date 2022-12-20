@@ -616,6 +616,14 @@ See the [config providers](/commands/rclone_config_providers/) command for more 
 
 **Authentication is required for this call.**
 
+### config/setpath: Set the path of the config file {#config-setpath}
+
+Parameters:
+
+- path - path to the config file to use
+
+**Authentication is required for this call.**
+
 ### config/update: update the config for a remote. {#config-update}
 
 This takes the following parameters:
@@ -714,7 +722,7 @@ Returns:
 	"result": "<Raw command line output>"
 }
 
-OR 
+OR
 {
 	"error": true,
 	"result": "<Raw command line output>"
@@ -909,6 +917,22 @@ Parameters:
 
 - rate - int
 
+### debug/set-gc-percent: Call runtime/debug.SetGCPercent for setting the garbage collection target percentage. {#debug-set-gc-percent}
+
+SetGCPercent sets the garbage collection target percentage: a collection is triggered
+when the ratio of freshly allocated data to live data remaining after the previous collection
+reaches this percentage. SetGCPercent returns the previous setting. The initial setting is the
+value of the GOGC environment variable at startup, or 100 if the variable is not set.
+
+This setting may be effectively reduced in order to maintain a memory limit.
+A negative percentage effectively disables garbage collection, unless the memory limit is reached.
+
+See https://pkg.go.dev/runtime/debug#SetMemoryLimit for more details.
+
+Parameters:
+
+- gc-percent - int
+
 ### debug/set-mutex-profile-fraction: Set runtime.SetMutexProfileFraction for mutex profiling. {#debug-set-mutex-profile-fraction}
 
 SetMutexProfileFraction controls the fraction of mutex contention
@@ -929,6 +953,38 @@ Parameters:
 Results:
 
 - previousRate - int
+
+### debug/set-soft-memory-limit: Call runtime/debug.SetMemoryLimit for setting a soft memory limit for the runtime. {#debug-set-soft-memory-limit}
+
+SetMemoryLimit provides the runtime with a soft memory limit.
+
+The runtime undertakes several processes to try to respect this memory limit, including
+adjustments to the frequency of garbage collections and returning memory to the underlying
+system more aggressively. This limit will be respected even if GOGC=off (or, if SetGCPercent(-1) is executed).
+
+The input limit is provided as bytes, and includes all memory mapped, managed, and not
+released by the Go runtime. Notably, it does not account for space used by the Go binary
+and memory external to Go, such as memory managed by the underlying system on behalf of
+the process, or memory managed by non-Go code inside the same process.
+Examples of excluded memory sources include: OS kernel memory held on behalf of the process,
+memory allocated by C code, and memory mapped by syscall.Mmap (because it is not managed by the Go runtime).
+
+A zero limit or a limit that's lower than the amount of memory used by the Go runtime may cause
+the garbage collector to run nearly continuously. However, the application may still make progress.
+
+The memory limit is always respected by the Go runtime, so to effectively disable this behavior,
+set the limit very high. math.MaxInt64 is the canonical value for disabling the limit, but values
+much greater than the available memory on the underlying system work just as well.
+
+See https://go.dev/doc/gc-guide for a detailed guide explaining the soft memory limit in more detail,
+as well as a variety of common use-cases and scenarios.
+
+SetMemoryLimit returns the previously set memory limit. A negative input does not adjust the limit,
+and allows for retrieval of the currently set memory limit.
+
+Parameters:
+
+- mem-limit - int
 
 ### fscache/clear: Clear the Fs cache. {#fscache-clear}
 

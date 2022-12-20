@@ -191,6 +191,11 @@ Properties:
 
 Password.
 
+This must be an app password - rclone will not work with your normal
+password. See the Configuration section in the docs for how to make an
+app password.
+
+
 **NB** Input to this must be obscured - see [rclone obscure](/commands/rclone_obscure/).
 
 Properties:

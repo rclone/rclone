@@ -429,7 +429,7 @@ Properties:
 Don't check to see if the files change during upload.
 
 Normally rclone checks the size and modification time of files as they
-are being uploaded and aborts with a message which starts "can't copy - 
+are being uploaded and aborts with a message which starts "can't copy -
 source file is being updated" if the file changes during upload.
 
 However on some file systems this modification time check may fail (e.g.
