@@ -626,8 +626,8 @@ func (o *Object) readStats(ctx context.Context) error {
 		return err
 	}
 
-	o.estuaryID = strconv.FormatUint(uint64(result[0].Content.ID), 10)
-	o.size = result[0].Content.Size
+	o.estuaryID = strconv.FormatUint(uint64(result[0].ID), 10)
+	o.size = result[0].Size
 	return nil
 }
 
