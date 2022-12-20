@@ -1,7 +1,7 @@
 ---
 title: "Seafile"
 description: "Seafile"
-versionIntroduced: "v1.52.0"
+versionIntroduced: "v1.52"
 ---
 
 # {{< icon "fa fa-server" >}} Seafile
