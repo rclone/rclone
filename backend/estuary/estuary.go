@@ -1,3 +1,4 @@
+// Package estuary provides an interface to the Estuary service.
 package estuary
 
 import (
@@ -26,26 +27,22 @@ import (
 	"github.com/rclone/rclone/lib/dircache"
 	"github.com/rclone/rclone/lib/pacer"
 	"github.com/rclone/rclone/lib/rest"
-	//util "github.com/application-research/estuary/util"
 )
 
 var (
-	errorNotImpl                 = errors.New("not implemented for estuary remote")
-	errorMkdirOnlyCollections    = errors.New("mkdir only implemented for root collections")
-	errorRmdirOnlyCollections    = errors.New("rmdir only implemented for root collections")
-	errorFindLeafOnlyCollections = errors.New("find leaf only implemented for root collections")
-	errNoCID                     = errors.New("no CID for object")
-	errAllEndpointsFailed        = errors.New("All upload endpoints failed")
-	errNoRootFound               = errors.New("No root collection found")
-	minSleep                     = 10 * time.Millisecond
-	maxSleep                     = 2 * time.Second
-	decayConstant                = 2
+	errorNotImpl              = errors.New("not implemented for estuary remote")
+	errorMkdirOnlyCollections = errors.New("mkdir only implemented for root collections")
+	errAllEndpointsFailed     = errors.New("All upload endpoints failed")
+	errNoRootFound            = errors.New("No root collection found")
+	minSleep                  = 10 * time.Millisecond
+	maxSleep                  = 2 * time.Second
+	decayConstant             = 2
 )
 
 // config options for our backend
 type Options struct {
 	Token string `config:"token"`
-	Url   string `config:"url"`
+	URL   string `config:"url"`
 }
 
 type Fs struct {
@@ -58,7 +55,7 @@ type Fs struct {
 	client         *rest.Client
 	pacer          *fs.Pacer
 	dirCache       *dircache.DirCache
-	viewer         *ViewerResponse
+	viewer         *viewerResponse
 }
 
 type Object struct {
@@ -66,11 +63,11 @@ type Object struct {
 	remote    string // The remote path
 	size      int64  // size of the object
 	cid       string // CID of the object
-	estuaryId string // estuary ID of the object
+	estuaryID string // estuary ID of the object
 	modTime   time.Time
 }
 
-type ApiError struct {
+type APIError struct {
 	Message string `json:"error"`
 	Details string `json:"details"`
 }
@@ -91,7 +88,7 @@ type CollectionFsItem struct {
 	Size      int64     `json:"size"`
 	Cid       string    `json:"cid,omitempty"`
 	Dir       string    `json:"dir"`
-	ColUuid   string    `json:"coluuid"`
+	ColUUID   string    `json:"coluuid"`
 	UpdatedAt time.Time `json:"updatedAt"`
 }
 
@@ -132,7 +129,7 @@ func errorHandler(resp *http.Response) error {
 		return fmt.Errorf("error reading error out of body: %w", err)
 	}
 
-	var apiErr ApiError
+	var apiErr APIError
 	if err = json.Unmarshal(body, &apiErr); err != nil {
 		return fmt.Errorf("HTTP error %v (%v) returned body: %q", resp.StatusCode, resp.Status, body)
 	}
@@ -157,7 +154,7 @@ func contentAddingDisabled(response *http.Response, err error) bool {
 	if response == nil || err == nil {
 		return false
 	}
-	apiErr := err.(*ApiError)
+	apiErr := err.(*APIError)
 	if apiErr == nil {
 		return false
 	}
@@ -192,7 +189,7 @@ func NewFs(ctx context.Context, name string, root string, m configmap.Mapper) (i
 	}
 	f.setRoot(root)
 	f.client.
-		SetRoot(opt.Url).
+		SetRoot(opt.URL).
 		SetErrorHandler(errorHandler)
 
 	f.features = (&fs.Features{
@@ -205,7 +202,7 @@ func NewFs(ctx context.Context, name string, root string, m configmap.Mapper) (i
 		f.client.SetHeader("Authorization", "Bearer "+f.opt.Token)
 	}
 
-	var viewer ViewerResponse
+	var viewer viewerResponse
 
 	if viewer, err = f.fetchViewer(ctx); err != nil {
 		fs.Errorf(f, "Can't fetch viewer information for this user")
@@ -248,7 +245,7 @@ func NewFs(ctx context.Context, name string, root string, m configmap.Mapper) (i
 	return f, nil
 }
 
-func (err *ApiError) Error() string {
+func (err *APIError) Error() string {
 	return err.Message
 }
 
@@ -471,7 +468,7 @@ func (f *Fs) newObjectWithInfo(ctx context.Context, remote string, modTime time.
 	}
 	if content != nil {
 		// Set info
-		o.estuaryId = strconv.FormatUint(uint64(content.ID), 10)
+		o.estuaryID = strconv.FormatUint(uint64(content.ID), 10)
 		o.cid = content.Cid
 		o.size = content.Size
 		o.modTime = modTime
@@ -555,7 +552,7 @@ func (o *Object) Fs() fs.Info {
 
 // ID returns the CID of the Object if known, or "" if not
 func (o *Object) ID() string {
-	return o.estuaryId
+	return o.estuaryID
 }
 
 // Return a string version
@@ -609,7 +606,7 @@ func (o *Object) readStats(ctx context.Context) error {
 
 		for _, item := range items {
 			if strings.EqualFold(item.Name, file) {
-				o.estuaryId = strconv.FormatUint(uint64(item.ContentID), 10)
+				o.estuaryID = strconv.FormatUint(uint64(item.ContentID), 10)
 				o.size = item.Size
 				o.cid = item.Cid
 				pin, err := o.fs.getPin(ctx, item.ContentID)
@@ -629,7 +626,7 @@ func (o *Object) readStats(ctx context.Context) error {
 		return err
 	}
 
-	o.estuaryId = strconv.FormatUint(uint64(result[0].Content.ID), 10)
+	o.estuaryID = strconv.FormatUint(uint64(result[0].Content.ID), 10)
 	o.size = result[0].Content.Size
 	return nil
 }
@@ -706,7 +703,7 @@ func (o *Object) upload(ctx context.Context, in io.Reader, leaf, dirID string, s
 	}
 
 	o.cid = result.Cid
-	o.estuaryId = id
+	o.estuaryID = id
 	o.size = size
 	return nil
 }
@@ -725,9 +722,9 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 }
 
 func (o *Object) Remove(ctx context.Context) error {
-	rootCollectionId, ok := o.fs.dirCache.Get("")
+	rootCollectionID, ok := o.fs.dirCache.Get("")
 	if ok {
-		return o.removeContentFromCollection(ctx, rootCollectionId)
+		return o.removeContentFromCollection(ctx, rootCollectionID)
 	}
 	return errNoRootFound
 }
