@@ -1,7 +1,7 @@
 ---
 title: "Docker Volume Plugin"
 description: "Docker Volume Plugin"
-versionIntroduced: "v1.56.0"
+versionIntroduced: "v1.56"
 ---
 
 # Docker Volume Plugin

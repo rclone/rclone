@@ -1,7 +1,7 @@
 ---
 title: "premiumize.me"
 description: "Rclone docs for premiumize.me"
-versionIntroduced: "v1.49.0"
+versionIntroduced: "v1.49"
 ---
 
 # {{< icon "fa fa-user" >}} premiumize.me
