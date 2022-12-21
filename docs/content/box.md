@@ -464,6 +464,8 @@ Reverse Solidus).
 
 Box only supports filenames up to 255 characters in length.
 
+Box has [API rate limits](https://developer.box.com/guides/api-calls/permissions-and-errors/rate-limits/) that sometimes reduce the speed of rclone.
+
 `rclone about` is not supported by the Box backend. Backends without
 this capability cannot determine free space for an rclone mount or
 use policy `mfs` (most free space) as a member of an rclone union

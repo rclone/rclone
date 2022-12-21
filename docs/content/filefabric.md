@@ -1,7 +1,7 @@
 ---
 title: "Enterprise File Fabric"
 description: "Rclone docs for the Enterprise File Fabric backend"
-versionIntroduced: "v1.54.0"
+versionIntroduced: "v1.54"
 ---
 
 # {{< icon "fa fa-cloud" >}} Enterprise File Fabric

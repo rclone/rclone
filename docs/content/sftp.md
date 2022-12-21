@@ -528,6 +528,9 @@ This enables the use of the following insecure ciphers and key exchange methods:
 
 Those algorithms are insecure and may allow plaintext data to be recovered by an attacker.
 
+This must be false if you use either ciphers or key_exchange advanced options.
+
+
 Properties:
 
 - Config:      use_insecure_cipher
@@ -857,6 +860,64 @@ Properties:
 
 - Config:      set_env
 - Env Var:     RCLONE_SFTP_SET_ENV
+- Type:        SpaceSepList
+- Default:     
+
+#### --sftp-ciphers
+
+Space separated list of ciphers to be used for session encryption, ordered by preference.
+
+At least one must match with server configuration. This can be checked for example using ssh -Q cipher.
+
+This must not be set if use_insecure_cipher is true.
+
+Example:
+
+    aes128-ctr aes192-ctr aes256-ctr aes128-gcm@openssh.com aes256-gcm@openssh.com
+
+
+Properties:
+
+- Config:      ciphers
+- Env Var:     RCLONE_SFTP_CIPHERS
+- Type:        SpaceSepList
+- Default:     
+
+#### --sftp-key-exchange
+
+Space separated list of key exchange algorithms, ordered by preference.
+
+At least one must match with server configuration. This can be checked for example using ssh -Q kex.
+
+This must not be set if use_insecure_cipher is true.
+
+Example:
+
+    sntrup761x25519-sha512@openssh.com curve25519-sha256 curve25519-sha256@libssh.org ecdh-sha2-nistp256
+
+
+Properties:
+
+- Config:      key_exchange
+- Env Var:     RCLONE_SFTP_KEY_EXCHANGE
+- Type:        SpaceSepList
+- Default:     
+
+#### --sftp-macs
+
+Space separated list of MACs (message authentication code) algorithms, ordered by preference.
+
+At least one must match with server configuration. This can be checked for example using ssh -Q mac.
+
+Example:
+
+    umac-64-etm@openssh.com umac-128-etm@openssh.com hmac-sha2-256-etm@openssh.com
+
+
+Properties:
+
+- Config:      macs
+- Env Var:     RCLONE_SFTP_MACS
 - Type:        SpaceSepList
 - Default:     
 

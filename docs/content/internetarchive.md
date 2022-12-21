@@ -1,7 +1,7 @@
 ---
 title: "Internet Archive"
 description: "Rclone docs for Internet Archive"
-versionIntroduced: "v1.59.0"
+versionIntroduced: "v1.59"
 ---
 
 # {{< icon "fa fa-archive" >}} Internet Archive

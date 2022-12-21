@@ -1,7 +1,7 @@
 ---
 title: "Uptobox"
 description: "Rclone docs for Uptobox"
-versionIntroduced: "v1.56.0"
+versionIntroduced: "v1.56"
 ---
 
 # {{< icon "fa fa-archive" >}} Uptobox

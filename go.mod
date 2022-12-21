@@ -16,6 +16,7 @@ require (
 	github.com/aalpar/deheap v0.0.0-20210914013432-0cc84d79dec3
 	github.com/abbot/go-http-auth v0.4.0
 	github.com/anacrolix/dms v1.5.0
+	github.com/anacrolix/log v0.13.1
 	github.com/artyom/mtab v1.0.0
 	github.com/atotto/clipboard v0.1.4
 	github.com/aws/aws-sdk-go v1.44.145
@@ -50,6 +51,7 @@ require (
 	github.com/putdotio/go-putio/putio v0.0.0-20200123120452-16d982cac2b8
 	github.com/rclone/ftp v0.0.0-20221014110213-e44dedbc76c6
 	github.com/rfjakob/eme v1.1.2
+	github.com/rivo/uniseg v0.2.0
 	github.com/shirou/gopsutil/v3 v3.22.10
 	github.com/sirupsen/logrus v1.9.0
 	github.com/skratchdot/open-golang v0.0.0-20200116055534-eef842397966
@@ -80,7 +82,6 @@ require (
 	cloud.google.com/go/compute/metadata v0.2.1 // indirect
 	github.com/Azure/azure-sdk-for-go/sdk/internal v1.0.1 // indirect
 	github.com/AzureAD/microsoft-authentication-library-for-go v0.7.0 // indirect
-	github.com/anacrolix/log v0.13.1
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/calebcase/tmpfile v1.0.3 // indirect
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
@@ -121,7 +122,6 @@ require (
 	github.com/prometheus/client_model v0.3.0 // indirect
 	github.com/prometheus/common v0.37.0 // indirect
 	github.com/prometheus/procfs v0.8.0 // indirect
-	github.com/rivo/uniseg v0.2.0
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/smartystreets/assertions v1.0.1 // indirect
 	github.com/smartystreets/goconvey v1.6.4 // indirect

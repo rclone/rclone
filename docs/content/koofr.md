@@ -1,7 +1,7 @@
 ---
 title: "Koofr"
 description: "Rclone docs for Koofr"
-versionIntroduced: "v1.47.0"
+versionIntroduced: "v1.47"
 ---
 
 # {{< icon "fa fa-suitcase" >}} Koofr
