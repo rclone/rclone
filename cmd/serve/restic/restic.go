@@ -173,6 +173,7 @@ with a path of ` + "`/<username>/`" + `.
 				httpSrv.ServeConn(conn, opts)
 				return nil
 			}
+			s.Wait()
 			return nil
 		})
 	},
