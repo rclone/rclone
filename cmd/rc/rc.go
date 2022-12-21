@@ -156,6 +156,15 @@ func ParseOptions(options []string) (opt map[string]string) {
 func setAlternateFlag(flagName string, output *string) {
 	if rcFlag := pflag.Lookup(flagName); rcFlag != nil && rcFlag.Changed {
 		*output = rcFlag.Value.String()
+		if sliceValue, ok := rcFlag.Value.(pflag.SliceValue); ok {
+			stringSlice := sliceValue.GetSlice()
+			for _, value := range stringSlice {
+				if value != "" {
+					*output = value
+					break
+				}
+			}
+		}
 	}
 }
 
