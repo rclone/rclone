@@ -1,8 +1,9 @@
 package estuary_test
 
 import (
-	"github.com/rclone/rclone/backend/estuary"
 	"testing"
+
+	"github.com/rclone/rclone/backend/estuary"
 
 	"github.com/rclone/rclone/fstest/fstests"
 )

@@ -4,14 +4,15 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/rclone/rclone/fs"
-	"github.com/rclone/rclone/lib/rest"
 	"net/http"
 	"net/url"
+
+	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/lib/rest"
 )
 
 const (
-	colUuid = "coluuid"
+	colUUID = "coluuid"
 	colDir  = "dir"
 )
 
@@ -62,12 +63,12 @@ func (f *Fs) listCollections(ctx context.Context) ([]collection, error) {
 	return collections, nil
 }
 
-func (f *Fs) getCollectionContents(ctx context.Context, collectionID, path string) ([]CollectionFsItem, error) {
+func (f *Fs) getCollectionContents(ctx context.Context, collectionID, path string) ([]collectionFsItem, error) {
 
 	params := url.Values{}
 	params.Set(colDir, path)
 
-	var items []CollectionFsItem
+	var items []collectionFsItem
 	if err := f.pacer.Call(func() (bool, error) {
 		response, err := f.client.CallJSON(ctx, &rest.Opts{
 			Method:     "GET",
@@ -94,8 +95,8 @@ func (f *Fs) deleteCollection(ctx context.Context, collectionID string) error {
 	return err
 }
 
-func (f *Fs) getContentByCid(ctx context.Context, cid string) ([]Content, error) {
-	var result []Content
+func (f *Fs) getContentByCid(ctx context.Context, cid string) ([]content, error) {
+	var result []content
 	opts := rest.Opts{
 		Method: "GET",
 		Path:   "/content/by-cid/" + cid,

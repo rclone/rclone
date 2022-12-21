@@ -39,12 +39,13 @@ var (
 	decayConstant             = 2
 )
 
-// config options for our backend
+// Options config options for our backend
 type Options struct {
 	Token string `config:"token"`
 	URL   string `config:"url"`
 }
 
+// Fs represents a remote estuary server
 type Fs struct {
 	name           string
 	root           string
@@ -58,6 +59,7 @@ type Fs struct {
 	viewer         *viewerResponse
 }
 
+// Object describes an estuary object
 type Object struct {
 	fs        *Fs    // what this object is part of
 	remote    string // The remote path
@@ -67,12 +69,12 @@ type Object struct {
 	modTime   time.Time
 }
 
-type APIError struct {
+type apiError struct {
 	Message string `json:"error"`
 	Details string `json:"details"`
 }
 
-type Content struct {
+type content struct {
 	ID          uint   `json:"id"`
 	Cid         string `json:"cid"`
 	Name        string `json:"name"`
@@ -81,7 +83,7 @@ type Content struct {
 	Size        int64  `json:"size"`
 }
 
-type CollectionFsItem struct {
+type collectionFsItem struct {
 	ContentID uint      `json:"contId"`
 	Name      string    `json:"name"`
 	Type      string    `json:"type"`
@@ -129,7 +131,7 @@ func errorHandler(resp *http.Response) error {
 		return fmt.Errorf("error reading error out of body: %w", err)
 	}
 
-	var apiErr APIError
+	var apiErr apiError
 	if err = json.Unmarshal(body, &apiErr); err != nil {
 		return fmt.Errorf("HTTP error %v (%v) returned body: %q", resp.StatusCode, resp.Status, body)
 	}
@@ -154,7 +156,7 @@ func contentAddingDisabled(response *http.Response, err error) bool {
 	if response == nil || err == nil {
 		return false
 	}
-	apiErr := err.(*APIError)
+	apiErr := err.(*apiError)
 	if apiErr == nil {
 		return false
 	}
@@ -245,7 +247,7 @@ func NewFs(ctx context.Context, name string, root string, m configmap.Mapper) (i
 	return f, nil
 }
 
-func (err *APIError) Error() string {
+func (err *apiError) Error() string {
 	return err.Message
 }
 
@@ -381,7 +383,7 @@ func (f *Fs) FindLeaf(ctx context.Context, pathID, leaf string) (string, bool, e
 	}
 }
 
-func (item *CollectionFsItem) isDir() bool {
+func (item *collectionFsItem) isDir() bool {
 	return item.Type == "directory"
 }
 
@@ -439,7 +441,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 			if err != nil {
 				return nil, err
 			}
-			o, err := f.newObjectWithInfo(ctx, path.Join(dir, item.Name), parseTimeString(pin.Meta["modTime"].(string)), &Content{ID: item.ContentID, Cid: item.Cid, Size: item.Size})
+			o, err := f.newObjectWithInfo(ctx, path.Join(dir, item.Name), parseTimeString(pin.Meta["modTime"].(string)), &content{ID: item.ContentID, Cid: item.Cid, Size: item.Size})
 			if err != nil {
 				return nil, err
 			}
@@ -460,7 +462,7 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 	return f.newObjectWithInfo(ctx, remote, time.Time{}, nil)
 }
 
-func (f *Fs) newObjectWithInfo(ctx context.Context, remote string, modTime time.Time, content *Content) (fs.Object, error) {
+func (f *Fs) newObjectWithInfo(ctx context.Context, remote string, modTime time.Time, content *content) (fs.Object, error) {
 	fs.Debugf(f, "newObjectWithInfo %v", remote)
 	o := &Object{
 		fs:     f,
@@ -693,7 +695,7 @@ func (o *Object) upload(ctx context.Context, in io.Reader, leaf, dirID string, s
 		uuid, absPath = splitDir(dirID)
 		fs.Debugf(o, "uploading to collection %v at path %v", uuid, absPath)
 	}
-	params.Set(colUuid, uuid)
+	params.Set(colUUID, uuid)
 	params.Set(colDir, absPath)
 
 	contentIds := []uint{uint(integerId)}
