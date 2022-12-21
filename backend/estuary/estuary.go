@@ -106,7 +106,7 @@ func init() {
 	fs.Register(&fs.RegInfo{
 		Name:        "estuary",
 		Description: "Estuary based Filecoin/IPFS storage",
-		NewFs:       NewFs,
+		NewFs:       newFs,
 		CommandHelp: commandHelp,
 		Options: []fs.Option{{
 			Name:     "token",
@@ -174,7 +174,7 @@ func splitDir(dir string) (uuid string, path string) {
 	return
 }
 
-func NewFs(ctx context.Context, name string, root string, m configmap.Mapper) (i fs.Fs, e error) {
+func newFs(ctx context.Context, name string, root string, m configmap.Mapper) (i fs.Fs, e error) {
 	opt := new(Options)
 	err := configstruct.Set(m, opt)
 	if err != nil {
@@ -251,12 +251,12 @@ func (err *apiError) Error() string {
 	return err.Message
 }
 
-// Name of the remote (as passed into NewFs)
+// Name of the remote (as passed into newFs)
 func (f *Fs) Name() string {
 	return f.name
 }
 
-// Root of the remote (as passed into NewFs)
+// Root of the remote (as passed into newFs)
 func (f *Fs) Root() string {
 	return f.root
 }
@@ -271,7 +271,7 @@ func (f *Fs) Precision() time.Duration {
 	return time.Second
 }
 
-// Returns the supported hash types of the filesystem
+// Hashes returns the supported hash types of the filesystem
 func (f *Fs) Hashes() hash.Set {
 	return hash.Set(hash.None)
 }
@@ -349,6 +349,7 @@ func (f *Fs) CreateDir(ctx context.Context, pathID, leaf string) (newID string, 
 	return f.createCollection(ctx, leaf)
 }
 
+// FindLeaf finds a directory of name leaf in the folder with ID pathID
 func (f *Fs) FindLeaf(ctx context.Context, pathID, leaf string) (string, bool, error) {
 	fs.Debugf(f, "FindLeaf pathID=%v, leaf=%v, rootCollection=%v, rootDirectory=%v", pathID, leaf, f.rootCollection, f.rootDirectory)
 	if pathID == "" { // root dir, check collections
@@ -363,24 +364,23 @@ func (f *Fs) FindLeaf(ctx context.Context, pathID, leaf string) (string, bool, e
 			}
 		}
 		return "", false, nil
-	} else { // subdir, these are lazy created and we construct a path out of the collection ID + root path in the collection
-		uuid, directoryPath := splitDir(pathID)
-		items, err := f.getCollectionContents(ctx, uuid, directoryPath)
-		if err != nil {
-			return "", false, err
-		}
-
-		for _, item := range items {
-			if item.Name == leaf {
-				if item.isDir() {
-					return path.Join(pathID, leaf), true, nil
-				} else {
-					return "", false, nil
-				}
-			}
-		}
-		return path.Join(pathID, leaf), true, nil
 	}
+	// subdir, these are lazy created and we construct a path out of the collection ID + root path in the collection
+	uuid, directoryPath := splitDir(pathID)
+	items, err := f.getCollectionContents(ctx, uuid, directoryPath)
+	if err != nil {
+		return "", false, err
+	}
+
+	for _, item := range items {
+		if item.Name == leaf {
+			if item.isDir() {
+				return path.Join(pathID, leaf), true, nil
+			}
+			return "", false, nil
+		}
+	}
+	return path.Join(pathID, leaf), true, nil
 }
 
 func (item *collectionFsItem) isDir() bool {
@@ -575,14 +575,18 @@ func (o *Object) Hash(ctx context.Context, t hash.Type) (string, error) {
 	return "", errorNotImpl
 }
 
+// Size returns the size of the file
 func (o *Object) Size() int64 {
 	return o.size
 }
 
+// ModTime returns the modification date of the file
+// It should return a best guess if one isn't available
 func (o *Object) ModTime(ctx context.Context) time.Time {
 	return o.modTime
 }
 
+// SetModTime sets the metadata on the object to set the modification date
 func (o *Object) SetModTime(ctx context.Context, modTime time.Time) error {
 	return errorNotImpl
 }
@@ -633,6 +637,7 @@ func (o *Object) readStats(ctx context.Context) error {
 	return nil
 }
 
+// Open opens the file for read.  Call Close() on the returned io.ReadCloser
 func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.ReadCloser, err error) {
 	if o.cid == "" {
 		return nil, errors.New("can't download - no CID")
@@ -683,7 +688,7 @@ func (o *Object) upload(ctx context.Context, in io.Reader, leaf, dirID string, s
 		return err
 	}
 
-	integerId, err := strconv.Atoi(id)
+	integerID, err := strconv.Atoi(id)
 	if err != nil {
 		return err
 	}
@@ -698,7 +703,7 @@ func (o *Object) upload(ctx context.Context, in io.Reader, leaf, dirID string, s
 	params.Set(colUUID, uuid)
 	params.Set(colDir, absPath)
 
-	contentIds := []uint{uint(integerId)}
+	contentIds := []uint{uint(integerID)}
 	err = o.fs.addContentsToCollection(ctx, uuid, absPath, contentIds)
 	if err != nil {
 		return err
@@ -710,6 +715,11 @@ func (o *Object) upload(ctx context.Context, in io.Reader, leaf, dirID string, s
 	return nil
 }
 
+// Update in to the object with the modTime given of the given size
+//
+// When called from outside an Fs by rclone, src.Size() will always be >= 0.
+// But for unknown-sized objects (indicated by src.Size() == -1), Upload should either
+// return an error or update the object properly (rather than e.g. calling panic).
 func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (err error) {
 	size := src.Size()
 	remote := src.Remote()
@@ -723,6 +733,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	return err
 }
 
+// Remove removes this object
 func (o *Object) Remove(ctx context.Context) error {
 	rootCollectionID, ok := o.fs.dirCache.Get("")
 	if ok {
@@ -731,6 +742,7 @@ func (o *Object) Remove(ctx context.Context) error {
 	return errNoRootFound
 }
 
+// Storable says whether this object can be stored
 func (o *Object) Storable() bool {
 	return true
 }
