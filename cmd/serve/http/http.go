@@ -11,14 +11,12 @@ import (
 	"path"
 	"strconv"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/rclone/rclone/cmd"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/accounting"
-	"github.com/rclone/rclone/lib/atexit"
 	libhttp "github.com/rclone/rclone/lib/http"
 	"github.com/rclone/rclone/lib/http/serve"
 	"github.com/rclone/rclone/vfs"
@@ -81,17 +79,6 @@ control the stats printing.
 			if err != nil {
 				log.Fatal(err)
 			}
-
-			var finaliseOnce sync.Once
-			finalise := func() {
-				finaliseOnce.Do(func() {
-					if err := s.server.Shutdown(); err != nil {
-						log.Printf("error shutting down server: %v", err)
-					}
-				})
-			}
-			fnHandle := atexit.Register(finalise)
-			defer atexit.Unregister(fnHandle)
 
 			s.server.Wait()
 			return nil
