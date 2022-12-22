@@ -155,7 +155,6 @@ with a path of ` + "`/<username>/`" + `.
 			if err != nil {
 				return err
 			}
-			fs.Logf(s.f, "Serving restic REST API on %s", s.URLs())
 			if s.opt.Stdio {
 				if terminal.IsTerminal(int(os.Stdout.Fd())) {
 					return errors.New("refusing to run HTTP2 server directly on a terminal, please let restic start rclone")
@@ -173,6 +172,7 @@ with a path of ` + "`/<username>/`" + `.
 				httpSrv.ServeConn(conn, opts)
 				return nil
 			}
+			fs.Logf(s.f, "Serving restic REST API on %s", s.URLs())
 			s.Wait()
 			return nil
 		})
@@ -241,6 +241,10 @@ func newServer(ctx context.Context, f fs.Fs, opt *Options) (s *server, err error
 		f:     f,
 		cache: newCache(opt.CacheObjects),
 		opt:   *opt,
+	}
+	// Don't bind any HTTP listeners if running with --stdio
+	if opt.Stdio {
+		opt.HTTP.ListenAddr = nil
 	}
 	s.Server, err = libhttp.NewServer(ctx,
 		libhttp.WithConfig(opt.HTTP),
