@@ -1735,6 +1735,11 @@ func Run(t *testing.T, opt *Opt) {
 					buf := bytes.NewBufferString("somecontent")
 					obji := object.NewStaticObjectInfo("somefile", time.Now(), int64(buf.Len()), true, nil, nil)
 					_, err = subRemote.Put(ctx, buf, obji)
+					if fserrors.IsRetryError(err) {
+						// Some backends may return a retry error if the bucket has not existed yet.
+						// Give it one more try before failing.
+						_, err = subRemote.Put(ctx, buf, obji)
+					}
 					require.NoError(t, err)
 
 					link4, err := wrapPublicLinkFunc(subRemote.Features().PublicLink)(ctx, "", expiry, false)
