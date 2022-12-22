@@ -936,17 +936,11 @@ func init() {
 			}},
 		}, {
 			Name:     "endpoint",
-			Help:     "Endpoint of the Shared Gateway.",
+			Help:     "Endpoint for Storj Gateway.",
 			Provider: "Storj",
 			Examples: []fs.OptionExample{{
-				Value: "gateway.eu1.storjshare.io",
-				Help:  "EU1 Shared Gateway",
-			}, {
-				Value: "gateway.us1.storjshare.io",
-				Help:  "US1 Shared Gateway",
-			}, {
-				Value: "gateway.ap1.storjshare.io",
-				Help:  "Asia-Pacific Shared Gateway",
+				Value: "gateway.storjshare.io",
+				Help:  "Global Hosted Gateway",
 			}},
 		}, {
 			// cos endpoints: https://intl.cloud.tencent.com/document/product/436/6224
