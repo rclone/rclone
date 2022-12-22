@@ -19,6 +19,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/rclone/rclone/fs/config/flags"
+	"github.com/rclone/rclone/lib/atexit"
 	"github.com/spf13/pflag"
 )
 
@@ -145,6 +146,7 @@ type Server struct {
 	template     *TemplateConfig
 	htmlTemplate *template.Template
 	usingAuth    bool // set if we are using auth middleware
+	atexitHandle atexit.FnHandle
 }
 
 // Option allows customizing the server
@@ -390,6 +392,8 @@ func (s *Server) Serve() {
 		// log.Printf("listening on %s", ii.url)
 		go ii.serve(&s.wg)
 	}
+	// Install an atexit handler to shutdown gracefully
+	s.atexitHandle = atexit.Register(func() { _ = s.Shutdown() })
 }
 
 // Wait blocks while the server is serving requests
@@ -402,14 +406,23 @@ func (s *Server) Router() chi.Router {
 	return s.mux
 }
 
+// Time to wait to Shutdown an HTTP server
+const gracefulShutdownTime = 10 * time.Second
+
 // Shutdown gracefully shuts down the server
 func (s *Server) Shutdown() error {
-	ctx := context.Background()
+	// Stop the atexit handler
+	if s.atexitHandle != nil {
+		atexit.Unregister(s.atexitHandle)
+		s.atexitHandle = nil
+	}
 	for _, ii := range s.instances {
+		expiry := time.Now().Add(gracefulShutdownTime)
+		ctx, cancel := context.WithDeadline(context.Background(), expiry)
 		if err := ii.httpServer.Shutdown(ctx); err != nil {
 			log.Printf("error shutting down server: %s", err)
-			continue
 		}
+		cancel()
 	}
 	s.wg.Wait()
 	return nil
