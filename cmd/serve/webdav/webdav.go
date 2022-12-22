@@ -199,8 +199,6 @@ func newWebDAV(ctx context.Context, f fs.Fs, opt *Options) (w *WebDAV, err error
 		router.Method(method, "/*", w)
 	}
 
-	w.Server.Serve()
-
 	return w, nil
 }
 
