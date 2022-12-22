@@ -237,6 +237,9 @@ func (w *WebDAV) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		w.serveDir(rw, r, remote)
 		return
 	}
+	// Add URL Prefix back to path since webdavhandler needs to
+	// return absolute references.
+	r.URL.Path = w.opt.HTTP.BaseURL + r.URL.Path
 	w.webdavhandler.ServeHTTP(rw, r)
 }
 

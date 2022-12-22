@@ -51,6 +51,7 @@ func TestWebDav(t *testing.T) {
 	start := func(f fs.Fs) (configmap.Simple, func()) {
 		opt := DefaultOpt
 		opt.HTTP.ListenAddr = []string{testBindAddress}
+		opt.HTTP.BaseURL = "/prefix"
 		opt.Auth.BasicUser = testUser
 		opt.Auth.BasicPass = testPass
 		opt.Template.Path = testTemplate
