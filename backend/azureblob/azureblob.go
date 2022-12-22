@@ -1363,14 +1363,15 @@ func (f *Fs) makeContainer(ctx context.Context, container string) error {
 			return nil
 		}
 		opt := service.CreateContainerOptions{
-			// Specifies whether data in the container may be accessed publicly and the level of access
-			Access: &f.publicAccess,
-
 			// Optional. Specifies a user-defined name-value pair associated with the blob.
 			//Metadata map[string]string
 
 			// Optional. Specifies the encryption scope settings to set on the container.
 			//CpkScopeInfo *CpkScopeInfo
+		}
+		if f.publicAccess != "" {
+			// Specifies whether data in the container may be accessed publicly and the level of access
+			opt.Access = &f.publicAccess
 		}
 		// now try to create the container
 		return f.pacer.Call(func() (bool, error) {
