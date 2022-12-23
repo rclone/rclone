@@ -1,6 +1,6 @@
 rclone(1) User Manual
 Nick Craig-Wood
-Dec 20, 2022
+Dec 23, 2022
 
 Rclone syncs your files to cloud storage
 
@@ -14284,7 +14284,7 @@ These flags are available for every command.
           --use-json-log                         Use json log format
           --use-mmap                             Use mmap allocator (see docs)
           --use-server-modtime                   Use server modified time instead of object metadata
-          --user-agent string                    Set the user-agent to a specified string (default "rclone/v1.61.0")
+          --user-agent string                    Set the user-agent to a specified string (default "rclone/v1.61.1")
       -v, --verbose count                        Print lots more stuff (repeat for more)
 
 Backend Flags
@@ -18527,7 +18527,7 @@ Properties:
 
 --s3-endpoint
 
-Endpoint of the Shared Gateway.
+Endpoint for Storj Gateway.
 
 Properties:
 
@@ -18537,12 +18537,8 @@ Properties:
 -   Type: string
 -   Required: false
 -   Examples:
-    -   "gateway.eu1.storjshare.io"
-        -   EU1 Shared Gateway
-    -   "gateway.us1.storjshare.io"
-        -   US1 Shared Gateway
-    -   "gateway.ap1.storjshare.io"
-        -   Asia-Pacific Shared Gateway
+    -   "gateway.storjshare.io"
+        -   Global Hosted Gateway
 
 --s3-endpoint
 
@@ -34767,24 +34763,11 @@ Shared with me files is not supported by rclone currently, but there is
 a workaround:
 
 1.  Visit https://onedrive.live.com
-
 2.  Right click a item in Shared, then click Add shortcut to My files in
-    the context
-
-    Screenshot (Shared with me)
-
-    [make_shortcut]
-
+    the context [make_shortcut]
 3.  The shortcut will appear in My files, you can access it with rclone,
-    it behaves like a normal folder/file.
+    it behaves like a normal folder/file. [in_my_files] [rclone_mount]
 
-    Screenshot (My Files)
-
-    [in_my_files]
-
-Screenshot (rclone mount)
-
-[rclone_mount]
 OpenDrive
 
 Paths are specified as remote:path
@@ -41357,6 +41340,33 @@ Options:
 -   "error": return an error based on option value
 
 Changelog
+
+v1.61.1 - 2022-12-23
+
+See commits
+
+-   Bug Fixes
+    -   docs:
+        -   Show only significant parts of version number in version
+            introduced label (albertony)
+        -   Fix unescaped HTML (Nick Craig-Wood)
+    -   lib/http: Shutdown all servers on exit to remove unix socket
+        (Nick Craig-Wood)
+    -   rc: Fix --rc-addr flag (which is an alternate for --url) (Anagh
+        Kumar Baranwal)
+    -   serve restic
+        -   Don't serve via http if serving via --stdio (Nick
+            Craig-Wood)
+        -   Fix immediate exit when not using stdio (Nick Craig-Wood)
+    -   serve webdav
+        -   Fix --baseurl handling after lib/http refactor (Nick
+            Craig-Wood)
+        -   Fix running duplicate Serve call (Nick Craig-Wood)
+-   Azure Blob
+    -   Fix "409 Public access is not permitted on this storage account"
+        (Nick Craig-Wood)
+-   S3
+    -   storj: Update endpoints (Kaloyan Raev)
 
 v1.61.0 - 2022-12-20
 

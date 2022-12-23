@@ -19,7 +19,7 @@
 <header id="title-block-header">
 <h1 class="title">rclone(1) User Manual</h1>
 <p class="author">Nick Craig-Wood</p>
-<p class="date">Dec 20, 2022</p>
+<p class="date">Dec 23, 2022</p>
 </header>
 <h1 id="rclone-syncs-your-files-to-cloud-storage">Rclone syncs your files to cloud storage</h1>
 <p><img width="50%" src="https://rclone.org/img/logo_on_light__horizontal_color.svg" alt="rclone logo" style="float:right; padding: 5px;" ></p>
@@ -8574,7 +8574,7 @@ Showing nodes accounting for 1537.03kB, 100% of 1537.03kB total
       --use-json-log                         Use json log format
       --use-mmap                             Use mmap allocator (see docs)
       --use-server-modtime                   Use server modified time instead of object metadata
-      --user-agent string                    Set the user-agent to a specified string (default &quot;rclone/v1.61.0&quot;)
+      --user-agent string                    Set the user-agent to a specified string (default &quot;rclone/v1.61.1&quot;)
   -v, --verbose count                        Print lots more stuff (repeat for more)</code></pre>
 <h2 id="backend-flags">Backend Flags</h2>
 <p>These flags are available for every command. They control the backends and may be set in the config file.</p>
@@ -12167,7 +12167,7 @@ $ rclone -q --s3-versions ls s3:cleanup-test
 </ul></li>
 </ul>
 <h4 id="s3-endpoint-10">--s3-endpoint</h4>
-<p>Endpoint of the Shared Gateway.</p>
+<p>Endpoint for Storj Gateway.</p>
 <p>Properties:</p>
 <ul>
 <li>Config: endpoint</li>
@@ -12177,17 +12177,9 @@ $ rclone -q --s3-versions ls s3:cleanup-test
 <li>Required: false</li>
 <li>Examples:
 <ul>
-<li>"gateway.eu1.storjshare.io"
+<li>"gateway.storjshare.io"
 <ul>
-<li>EU1 Shared Gateway</li>
-</ul></li>
-<li>"gateway.us1.storjshare.io"
-<ul>
-<li>US1 Shared Gateway</li>
-</ul></li>
-<li>"gateway.ap1.storjshare.io"
-<ul>
-<li>Asia-Pacific Shared Gateway</li>
+<li>Global Hosted Gateway</li>
 </ul></li>
 </ul></li>
 </ul>
@@ -24607,26 +24599,10 @@ Description: Due to a configuration change made by your administrator, or becaus
 <h3 id="can-not-access-shared-with-me-files">Can not access <code>Shared</code> with me files</h3>
 <p>Shared with me files is not supported by rclone <a href="https://github.com/rclone/rclone/issues/4062">currently</a>, but there is a workaround:</p>
 <ol type="1">
-<li><p>Visit <a href="https://onedrive.live.com/">https://onedrive.live.com</a></p></li>
-<li><p>Right click a item in <code>Shared</code>, then click <code>Add shortcut to My files</code> in the context</p>
-<details>
-<p><summary>Screenshot (Shared with me)</summary></p>
-<figure>
-<img src="https://user-images.githubusercontent.com/60313789/206118040-7e762b3b-aa61-41a1-8649-cc18889f3572.png" alt="" /><figcaption>make_shortcut</figcaption>
-</figure>
-</details></li>
-<li><p>The shortcut will appear in <code>My files</code>, you can access it with rclone, it behaves like a normal folder/file.</p>
-<details>
-<p><summary>Screenshot (My Files)</summary></p>
-<figure>
-<img src="https://i.imgur.com/0S8H3li.png" alt="" /><figcaption>in_my_files</figcaption>
-</figure>
-</details></li>
+<li>Visit <a href="https://onedrive.live.com/">https://onedrive.live.com</a></li>
+<li>Right click a item in <code>Shared</code>, then click <code>Add shortcut to My files</code> in the context <img src="https://user-images.githubusercontent.com/60313789/206118040-7e762b3b-aa61-41a1-8649-cc18889f3572.png" title="Screenshot (Shared with me)" alt="make_shortcut" /></li>
+<li>The shortcut will appear in <code>My files</code>, you can access it with rclone, it behaves like a normal folder/file. <img src="https://i.imgur.com/0S8H3li.png" title="Screenshot (My Files)" alt="in_my_files" /> <img src="https://i.imgur.com/2Iq66sW.png" title="Screenshot (rclone mount)" alt="rclone_mount" /></li>
 </ol>
-<details>
-<p><summary>Screenshot (rclone mount)</summary></p>
-<img src="https://i.imgur.com/2Iq66sW.png" title="fig:" alt="rclone_mount" />
-</details>
 <h1 id="opendrive">OpenDrive</h1>
 <p>Paths are specified as <code>remote:path</code></p>
 <p>Paths may be as deep as required, e.g. <code>remote:directory/subdirectory</code>.</p>
@@ -29580,6 +29556,38 @@ $ tree /tmp/b
 <li>"error": return an error based on option value</li>
 </ul>
 <h1 id="changelog">Changelog</h1>
+<h2 id="v1.61.1---2022-12-23">v1.61.1 - 2022-12-23</h2>
+<p><a href="https://github.com/rclone/rclone/compare/v1.61.0...v1.61.1">See commits</a></p>
+<ul>
+<li>Bug Fixes
+<ul>
+<li>docs:
+<ul>
+<li>Show only significant parts of version number in version introduced label (albertony)</li>
+<li>Fix unescaped HTML (Nick Craig-Wood)</li>
+</ul></li>
+<li>lib/http: Shutdown all servers on exit to remove unix socket (Nick Craig-Wood)</li>
+<li>rc: Fix <code>--rc-addr</code> flag (which is an alternate for <code>--url</code>) (Anagh Kumar Baranwal)</li>
+<li>serve restic
+<ul>
+<li>Don't serve via http if serving via <code>--stdio</code> (Nick Craig-Wood)</li>
+<li>Fix immediate exit when not using stdio (Nick Craig-Wood)</li>
+</ul></li>
+<li>serve webdav
+<ul>
+<li>Fix <code>--baseurl</code> handling after <code>lib/http</code> refactor (Nick Craig-Wood)</li>
+<li>Fix running duplicate Serve call (Nick Craig-Wood)</li>
+</ul></li>
+</ul></li>
+<li>Azure Blob
+<ul>
+<li>Fix "409 Public access is not permitted on this storage account" (Nick Craig-Wood)</li>
+</ul></li>
+<li>S3
+<ul>
+<li>storj: Update endpoints (Kaloyan Raev)</li>
+</ul></li>
+</ul>
 <h2 id="v1.61.0---2022-12-20">v1.61.0 - 2022-12-20</h2>
 <p><a href="https://github.com/rclone/rclone/compare/v1.60.0...v1.61.0">See commits</a></p>
 <ul>

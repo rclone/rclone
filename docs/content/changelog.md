@@ -5,6 +5,27 @@ description: "Rclone Changelog"
 
 # Changelog
 
+## v1.61.1 - 2022-12-23
+
+[See commits](https://github.com/rclone/rclone/compare/v1.61.0...v1.61.1)
+
+* Bug Fixes
+    * docs:
+        * Show only significant parts of version number in version introduced label (albertony)
+        * Fix unescaped HTML (Nick Craig-Wood)
+    * lib/http: Shutdown all servers on exit to remove unix socket (Nick Craig-Wood)
+    * rc: Fix `--rc-addr` flag (which is an alternate for `--url`) (Anagh Kumar Baranwal)
+    * serve restic
+        * Don't serve via http if serving via `--stdio` (Nick Craig-Wood)
+        * Fix immediate exit when not using stdio (Nick Craig-Wood)
+    * serve webdav
+        * Fix `--baseurl` handling after `lib/http` refactor (Nick Craig-Wood)
+        * Fix running duplicate Serve call (Nick Craig-Wood)
+* Azure Blob
+    * Fix "409 Public access is not permitted on this storage account" (Nick Craig-Wood)
+* S3
+    * storj: Update endpoints (Kaloyan Raev)
+
 ## v1.61.0 - 2022-12-20
 
 [See commits](https://github.com/rclone/rclone/compare/v1.60.0...v1.61.0)

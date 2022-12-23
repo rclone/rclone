@@ -1,6 +1,6 @@
 % rclone(1) User Manual
 % Nick Craig-Wood
-% Dec 20, 2022
+% Dec 23, 2022
 
 # Rclone syncs your files to cloud storage
 
@@ -14729,7 +14729,7 @@ These flags are available for every command.
       --use-json-log                         Use json log format
       --use-mmap                             Use mmap allocator (see docs)
       --use-server-modtime                   Use server modified time instead of object metadata
-      --user-agent string                    Set the user-agent to a specified string (default "rclone/v1.61.0")
+      --user-agent string                    Set the user-agent to a specified string (default "rclone/v1.61.1")
   -v, --verbose count                        Print lots more stuff (repeat for more)
 ```
 
@@ -19025,7 +19025,7 @@ Properties:
 
 #### --s3-endpoint
 
-Endpoint of the Shared Gateway.
+Endpoint for Storj Gateway.
 
 Properties:
 
@@ -19035,12 +19035,8 @@ Properties:
 - Type:        string
 - Required:    false
 - Examples:
-    - "gateway.eu1.storjshare.io"
-        - EU1 Shared Gateway
-    - "gateway.us1.storjshare.io"
-        - US1 Shared Gateway
-    - "gateway.ap1.storjshare.io"
-        - Asia-Pacific Shared Gateway
+    - "gateway.storjshare.io"
+        - Global Hosted Gateway
 
 #### --s3-endpoint
 
@@ -35278,24 +35274,10 @@ Shared with me files is not supported by rclone [currently](https://github.com/r
 
 1. Visit [https://onedrive.live.com](https://onedrive.live.com/)
 2. Right click a item in `Shared`, then click `Add shortcut to My files` in the context
-<details>
-   <summary>Screenshot (Shared with me)</summary>
-
-   ![make_shortcut](https://user-images.githubusercontent.com/60313789/206118040-7e762b3b-aa61-41a1-8649-cc18889f3572.png)    
-</details> 
-     
+    ![make_shortcut](https://user-images.githubusercontent.com/60313789/206118040-7e762b3b-aa61-41a1-8649-cc18889f3572.png "Screenshot (Shared with me)")
 3. The shortcut will appear in `My files`, you can access it with rclone, it behaves like a normal folder/file.
-<details>
-   <summary>Screenshot (My Files)</summary>
-
-   ![in_my_files](https://i.imgur.com/0S8H3li.png)
-</details>
-
-<details>
-   <summary>Screenshot (rclone mount)</summary>
-
-   ![rclone_mount](https://i.imgur.com/2Iq66sW.png)
-</details>
+    ![in_my_files](https://i.imgur.com/0S8H3li.png "Screenshot (My Files)")
+    ![rclone_mount](https://i.imgur.com/2Iq66sW.png "Screenshot (rclone mount)")
 
 #  OpenDrive
 
@@ -41883,6 +41865,27 @@ Options:
 
 
 # Changelog
+
+## v1.61.1 - 2022-12-23
+
+[See commits](https://github.com/rclone/rclone/compare/v1.61.0...v1.61.1)
+
+* Bug Fixes
+    * docs:
+        * Show only significant parts of version number in version introduced label (albertony)
+        * Fix unescaped HTML (Nick Craig-Wood)
+    * lib/http: Shutdown all servers on exit to remove unix socket (Nick Craig-Wood)
+    * rc: Fix `--rc-addr` flag (which is an alternate for `--url`) (Anagh Kumar Baranwal)
+    * serve restic
+        * Don't serve via http if serving via `--stdio` (Nick Craig-Wood)
+        * Fix immediate exit when not using stdio (Nick Craig-Wood)
+    * serve webdav
+        * Fix `--baseurl` handling after `lib/http` refactor (Nick Craig-Wood)
+        * Fix running duplicate Serve call (Nick Craig-Wood)
+* Azure Blob
+    * Fix "409 Public access is not permitted on this storage account" (Nick Craig-Wood)
+* S3
+    * storj: Update endpoints (Kaloyan Raev)
 
 ## v1.61.0 - 2022-12-20
 
