@@ -721,21 +721,7 @@ Shared with me files is not supported by rclone [currently](https://github.com/r
 
 1. Visit [https://onedrive.live.com](https://onedrive.live.com/)
 2. Right click a item in `Shared`, then click `Add shortcut to My files` in the context
-<details>
-   <summary>Screenshot (Shared with me)</summary>
-
-   ![make_shortcut](https://user-images.githubusercontent.com/60313789/206118040-7e762b3b-aa61-41a1-8649-cc18889f3572.png)    
-</details> 
-     
+    ![make_shortcut](https://user-images.githubusercontent.com/60313789/206118040-7e762b3b-aa61-41a1-8649-cc18889f3572.png "Screenshot (Shared with me)")
 3. The shortcut will appear in `My files`, you can access it with rclone, it behaves like a normal folder/file.
-<details>
-   <summary>Screenshot (My Files)</summary>
-
-   ![in_my_files](https://i.imgur.com/0S8H3li.png)
-</details>
-
-<details>
-   <summary>Screenshot (rclone mount)</summary>
-
-   ![rclone_mount](https://i.imgur.com/2Iq66sW.png)
-</details>
+    ![in_my_files](https://i.imgur.com/0S8H3li.png "Screenshot (My Files)")
+    ![rclone_mount](https://i.imgur.com/2Iq66sW.png "Screenshot (rclone mount)")
