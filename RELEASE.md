@@ -74,8 +74,7 @@ Set vars
 First make the release branch.  If this is a second point release then
 this will be done already.
 
-  * git branch ${BASE_TAG} ${BASE_TAG}-stable
-  * git co ${BASE_TAG}-stable
+  * git co -b ${BASE_TAG}-stable ${BASE_TAG}.0
   * make startstable
 
 Now
