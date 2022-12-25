@@ -503,7 +503,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 								continue
 							}
 						}
-						err = fmt.Errorf("failed to read directory %q: %w", namepath, err)
+						err = fmt.Errorf("failed to read directory %q: %w", namepath, fierr)
 						fs.Errorf(dir, "%v", fierr)
 						_ = accounting.Stats(ctx).Error(fserrors.NoRetryError(fierr)) // fail the sync
 						continue
