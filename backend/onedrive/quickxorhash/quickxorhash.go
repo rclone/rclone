@@ -10,6 +10,20 @@ package quickxorhash
 // This code was ported from a fast C-implementation from
 // https://github.com/namazso/QuickXorHash
 // which has licenced as BSD Zero Clause License
+// BSD Zero Clause License
+//
+// Copyright (c) 2022 namazso <admin@namazso.eu>
+//
+// Permission to use, copy, modify, and/or distribute this software for any
+// purpose with or without fee is hereby granted.
+//
+// THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+// REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+// AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+// INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+// LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+// OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+// PERFORMANCE OF THIS SOFTWARE.
 
 import (
 	"hash"
@@ -22,11 +36,10 @@ const (
 	// BlockSize is the preferred size for hashing
 	BlockSize = 64
 	// Size of the output checksum
-	Size           = 20
-	bitsInLastCell = 32
-	shift          = 11
-	widthInBits    = 8 * Size
-	dataSize       = shift * widthInBits
+	Size        = 20
+	shift       = 11
+	widthInBits = 8 * Size
+	dataSize    = shift * widthInBits
 )
 
 type quickXorHash struct {
@@ -158,9 +171,10 @@ func (q *quickXorHash) BlockSize() int {
 }
 
 // Sum returns the quickXorHash checksum of the data.
-func Sum(data []byte) [Size]byte {
+func Sum(data []byte) (h [Size]byte) {
 	var d quickXorHash
 	_, _ = d.Write(data)
-	sum := d.checkSum()
-	return *(*[Size]byte)(unsafe.Pointer(&sum))
+	s := d.checkSum()
+	copy(h[:], s[:])
+	return h
 }
