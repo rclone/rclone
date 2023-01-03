@@ -13,6 +13,8 @@ package quickxorhash
 
 import (
 	"hash"
+
+	"reflect"
 	"unsafe"
 )
 
@@ -21,6 +23,7 @@ const (
 	BlockSize = 64
 	// Size of the output checksum
 	Size           = 20
+	bitsInLastCell = 32
 	shift          = 11
 	widthInBits    = 8 * Size
 	dataSize       = shift * widthInBits
@@ -36,10 +39,41 @@ func New() hash.Hash {
 	return &quickXorHash{}
 }
 
-func (q *quickXorHash) block(data []byte) {
-	for i := 0; i < dataSize; i++ {
-		q.data[i] ^= data[i]
+func bytes2U64(v []byte) (lv []uint64) {
+	bh := (*reflect.SliceHeader)(unsafe.Pointer(&v))
+	sh := (*reflect.SliceHeader)(unsafe.Pointer(&lv))
+	sh.Data = bh.Data
+	sh.Len = bh.Len / 8
+	sh.Cap = bh.Cap / 8
+	return
+}
+
+//go:nosplit
+func xor(v []byte, dst []byte) int {
+	l := len(dst)
+	if len(v) < l {
+		l = len(v)
 	}
+
+	bv := bytes2U64(v)
+	bdst := bytes2U64(dst)
+	bl := len(bdst)
+	if len(bv) < bl {
+		bl = len(bv)
+	}
+	if bl > 0 {
+		_ = bdst[bl-1]
+		_ = bv[bl-1]
+		for i := 0; i < bl; i++ {
+			bdst[i] ^= bv[i]
+		}
+	}
+
+	for i := l - (l % 8); i < l; i++ {
+		dst[i] ^= v[i]
+	}
+
+	return l
 }
 
 // Write (via the embedded io.Writer interface) adds more data to the running hash.
@@ -54,23 +88,21 @@ func (q *quickXorHash) block(data []byte) {
 // Implementations must not retain p.
 func (q *quickXorHash) Write(p []byte) (n int, err error) {
 	var i int
-	for q.size%dataSize != 0 && i < len(p) {
-		q.data[q.size%dataSize] ^= p[i]
-		q.size++
-		i++
+	// fill last remain
+	lastRemain := int(q.size) % dataSize
+	if lastRemain != 0 {
+		i += xor(p, q.data[lastRemain:])
 	}
+
 	if i != len(p) {
+		// xoring
 		for len(p)-i >= dataSize {
-			q.block(p[i:])
-			i += dataSize
-			q.size += dataSize
+			i += xor(p[i:], q.data[:])
 		}
-		for i < len(p) {
-			q.data[q.size%dataSize] ^= p[i]
-			q.size++
-			i++
-		}
+		xor(p[i:], q.data[:])
+
 	}
+	q.size += uint64(len(p))
 	return len(p), nil
 }
 
