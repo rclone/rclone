@@ -28,7 +28,8 @@ package quickxorhash
 import (
 	"hash"
 
-	"github.com/rclone/rclone/backend/onedrive/quickxorhash/subtle"
+	"reflect"
+	"unsafe"
 )
 
 const (
@@ -51,6 +52,43 @@ func New() hash.Hash {
 	return &quickXorHash{}
 }
 
+func bytes2U64(v []byte) (lv []uint64) {
+	bh := (*reflect.SliceHeader)(unsafe.Pointer(&v))
+	sh := (*reflect.SliceHeader)(unsafe.Pointer(&lv))
+	sh.Data = bh.Data
+	sh.Len = bh.Len / 8
+	sh.Cap = bh.Cap / 8
+	return
+}
+
+//go:nosplit
+func xor(v []byte, dst []byte) int {
+	l := len(dst)
+	if len(v) < l {
+		l = len(v)
+	}
+
+	bv := bytes2U64(v)
+	bdst := bytes2U64(dst)
+	bl := len(bdst)
+	if len(bv) < bl {
+		bl = len(bv)
+	}
+	if bl > 0 {
+		_ = bdst[bl-1]
+		_ = bv[bl-1]
+		for i := 0; i < bl; i++ {
+			bdst[i] ^= bv[i]
+		}
+	}
+
+	for i := l - (l % 8); i < l; i++ {
+		dst[i] ^= v[i]
+	}
+
+	return l
+}
+
 // Write (via the embedded io.Writer interface) adds more data to the running hash.
 // It never returns an error.
 //
@@ -63,18 +101,16 @@ func New() hash.Hash {
 // Implementations must not retain p.
 func (q *quickXorHash) Write(p []byte) (n int, err error) {
 	var i int
-	// fill last remain
 	lastRemain := int(q.size) % dataSize
 	if lastRemain != 0 {
-		i += subtle.XORBytes(q.data[lastRemain:], p, q.data[lastRemain:])
+		i += xor(p, q.data[lastRemain:])
 	}
 
 	if i != len(p) {
-		// xoring
 		for len(p)-i >= dataSize {
-			i += subtle.XORBytes(q.data[:], p[i:], q.data[:])
+			i += xor(p[i:], q.data[:])
 		}
-		subtle.XORBytes(q.data[:], p[i:], q.data[:])
+		xor(p[i:], q.data[:])
 	}
 	q.size += uint64(len(p))
 	return len(p), nil
