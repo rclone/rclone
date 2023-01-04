@@ -12,8 +12,8 @@ import (
 )
 
 const (
-	colUUID = "coluuid"
-	colDir  = "dir"
+	colDir    = "dir"
+	overwrite = "overwrite"
 )
 
 func (f *Fs) fetchViewer(ctx context.Context) (response viewerResponse, err error) {
@@ -129,6 +129,9 @@ func (o *Object) removeContentFromCollection(ctx context.Context, collectionID s
 
 func (o *Object) addContent(ctx context.Context, opts rest.Opts) (result contentAdd, err error) {
 	endpoints := o.fs.viewer.Settings.UploadEndpoints
+	params := url.Values{}
+	params.Set(overwrite, "true")
+	opts.Parameters = params
 
 	if len(endpoints) == 0 {
 		return contentAdd{}, errors.New("No upload endpoint for object")
@@ -189,6 +192,7 @@ func (f *Fs) replacePin(ctx context.Context, id uint, pin ipfsPin) (string, erro
 func (f *Fs) addContentsToCollection(ctx context.Context, coluuid, dir string, contentIds []uint) error {
 	params := url.Values{}
 	params.Set(colDir, dir)
+	params.Set(overwrite, "true")
 
 	opts := rest.Opts{
 		Method:     "POST",

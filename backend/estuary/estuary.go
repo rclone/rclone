@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"net/url"
 	"strconv"
 	"strings"
 
@@ -619,7 +618,12 @@ func (o *Object) readStats(ctx context.Context) error {
 				if err != nil { // do nothing
 					fs.Debugf(o, "couldn't get pin for id =%v", item.ContentID)
 				}
-				o.modTime = parseTimeString(pin.Meta["modTime"].(string))
+				modTime := pin.Meta["modTime"]
+				if modTime != nil {
+					o.modTime = parseTimeString(modTime.(string))
+				} else {
+					o.modTime = item.UpdatedAt
+				}
 				return nil
 			}
 		}
@@ -693,15 +697,12 @@ func (o *Object) upload(ctx context.Context, in io.Reader, leaf, dirID string, s
 		return err
 	}
 
-	params := url.Values{}
 	uuid := o.fs.root
 	absPath := "/"
 	if dirID != "" {
 		uuid, absPath = splitDir(dirID)
 		fs.Debugf(o, "uploading to collection %v at path %v", uuid, absPath)
 	}
-	params.Set(colUUID, uuid)
-	params.Set(colDir, absPath)
 
 	contentIds := []uint{uint(integerID)}
 	err = o.fs.addContentsToCollection(ctx, uuid, absPath, contentIds)
