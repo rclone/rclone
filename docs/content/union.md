@@ -252,7 +252,7 @@ Properties:
 - Config:      min_free_space
 - Env Var:     RCLONE_UNION_MIN_FREE_SPACE
 - Type:        SizeSuffix
-- Default:     1Gi
+- Default:     1GiB
 
 ### Metadata
 
