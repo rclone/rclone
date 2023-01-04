@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"hash"
+	"math/rand"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
