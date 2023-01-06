@@ -10,6 +10,7 @@ package quickxorhash
 // This code was ported from a fast C-implementation from
 // https://github.com/namazso/QuickXorHash
 // which has licenced as BSD Zero Clause License
+//
 // BSD Zero Clause License
 //
 // Copyright (c) 2022 namazso <admin@namazso.eu>
@@ -25,12 +26,7 @@ package quickxorhash
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-import (
-	"hash"
-
-	"reflect"
-	"unsafe"
-)
+import "hash"
 
 const (
 	// BlockSize is the preferred size for hashing
@@ -52,43 +48,6 @@ func New() hash.Hash {
 	return &quickXorHash{}
 }
 
-func bytes2U64(v []byte) (lv []uint64) {
-	bh := (*reflect.SliceHeader)(unsafe.Pointer(&v))
-	sh := (*reflect.SliceHeader)(unsafe.Pointer(&lv))
-	sh.Data = bh.Data
-	sh.Len = bh.Len / 8
-	sh.Cap = bh.Cap / 8
-	return
-}
-
-//go:nosplit
-func xor(v []byte, dst []byte) int {
-	l := len(dst)
-	if len(v) < l {
-		l = len(v)
-	}
-
-	bv := bytes2U64(v)
-	bdst := bytes2U64(dst)
-	bl := len(bdst)
-	if len(bv) < bl {
-		bl = len(bv)
-	}
-	if bl > 0 {
-		_ = bdst[bl-1]
-		_ = bv[bl-1]
-		for i := 0; i < bl; i++ {
-			bdst[i] ^= bv[i]
-		}
-	}
-
-	for i := l - (l % 8); i < l; i++ {
-		dst[i] ^= v[i]
-	}
-
-	return l
-}
-
 // Write (via the embedded io.Writer interface) adds more data to the running hash.
 // It never returns an error.
 //
@@ -101,16 +60,17 @@ func xor(v []byte, dst []byte) int {
 // Implementations must not retain p.
 func (q *quickXorHash) Write(p []byte) (n int, err error) {
 	var i int
+	// fill last remain
 	lastRemain := int(q.size) % dataSize
 	if lastRemain != 0 {
-		i += xor(p, q.data[lastRemain:])
+		i += xorBytes(q.data[lastRemain:], p)
 	}
 
 	if i != len(p) {
 		for len(p)-i >= dataSize {
-			i += xor(p[i:], q.data[:])
+			i += xorBytes(q.data[:], p[i:])
 		}
-		xor(p[i:], q.data[:])
+		xorBytes(q.data[:], p[i:])
 	}
 	q.size += uint64(len(p))
 	return len(p), nil
