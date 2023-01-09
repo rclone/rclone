@@ -66,7 +66,7 @@ import (
 func init() {
 	fs.Register(&fs.RegInfo{
 		Name:        "s3",
-		Description: "Amazon S3 Compliant Storage Providers including AWS, Alibaba, Ceph, China Mobile, Cloudflare, ArvanCloud, DigitalOcean, Dreamhost, Huawei OBS, IBM COS, IDrive e2, IONOS Cloud, Liara, Lyve Cloud, Minio, Netease, RackCorp, Scaleway, SeaweedFS, StackPath, Storj, Tencent COS, Qiniu and Wasabi",
+		Description: "Amazon S3 Compliant Storage Providers including AWS, Alibaba, Ceph, China Mobile, Cloudflare, GCS, ArvanCloud, DigitalOcean, Dreamhost, Huawei OBS, IBM COS, IDrive e2, IONOS Cloud, Liara, Lyve Cloud, Minio, Netease, RackCorp, Scaleway, SeaweedFS, StackPath, Storj, Tencent COS, Qiniu and Wasabi",
 		NewFs:       NewFs,
 		CommandHelp: commandHelp,
 		Config: func(ctx context.Context, name string, m configmap.Mapper, config fs.ConfigIn) (*fs.ConfigOut, error) {
@@ -109,6 +109,9 @@ func init() {
 			}, {
 				Value: "Dreamhost",
 				Help:  "Dreamhost DreamObjects",
+			}, {
+				Value: "GCS",
+				Help:  "Google Cloud Storage",
 			}, {
 				Value: "HuaweiOBS",
 				Help:  "Huawei Object Storage Service",
@@ -936,6 +939,14 @@ func init() {
 			}},
 		}, {
 			Name:     "endpoint",
+			Help:     "Endpoint for Google Cloud Storage.",
+			Provider: "GCS",
+			Examples: []fs.OptionExample{{
+				Value: "https://storage.googleapis.com",
+				Help:  "Google Cloud Storage endpoint",
+			}},
+		}, {
+			Name:     "endpoint",
 			Help:     "Endpoint for Storj Gateway.",
 			Provider: "Storj",
 			Examples: []fs.OptionExample{{
@@ -1098,7 +1109,7 @@ func init() {
 		}, {
 			Name:     "endpoint",
 			Help:     "Endpoint for S3 API.\n\nRequired when using an S3 clone.",
-			Provider: "!AWS,IBMCOS,IDrive,IONOS,TencentCOS,HuaweiOBS,Alibaba,ChinaMobile,Liara,ArvanCloud,Scaleway,StackPath,Storj,RackCorp,Qiniu",
+			Provider: "!AWS,IBMCOS,IDrive,IONOS,TencentCOS,HuaweiOBS,Alibaba,ChinaMobile,GCS,Liara,ArvanCloud,Scaleway,StackPath,Storj,RackCorp,Qiniu",
 			Examples: []fs.OptionExample{{
 				Value:    "objects-us-east-1.dream.io",
 				Help:     "Dream Objects endpoint",
@@ -2262,6 +2273,24 @@ rclone's choice here.
 			Default:  fs.Tristate{},
 			Advanced: true,
 		}, {
+			Name: "use_accept_encoding_gzip",
+			Help: strings.ReplaceAll(`Whether to send |Accept-Encoding: gzip| header.
+
+By default, rclone will append |Accept-Encoding: gzip| to the request to download
+compressed objects whenever possible.
+
+However some providers such as Google Cloud Storage may alter the HTTP headers, breaking
+the signature of the request.
+
+A symptom of this would be receiving errors like
+
+	SignatureDoesNotMatch: The request signature we calculated does not match the signature you provided.
+
+In this case, you might want to try disabling this option.
+`, "|", "`"),
+			Default:  fs.Tristate{},
+			Advanced: true,
+		}, {
 			Name:     "no_system_metadata",
 			Help:     `Suppress setting and reading of system metadata`,
 			Advanced: true,
@@ -2399,6 +2428,7 @@ type Options struct {
 	VersionAt             fs.Time              `config:"version_at"`
 	Decompress            bool                 `config:"decompress"`
 	MightGzip             fs.Tristate          `config:"might_gzip"`
+	UseAcceptEncodingGzip fs.Tristate          `config:"use_accept_encoding_gzip"`
 	NoSystemMetadata      bool                 `config:"no_system_metadata"`
 }
 
@@ -2791,11 +2821,12 @@ func setEndpointValueForIDriveE2(m configmap.Mapper) (err error) {
 // These should be differences from AWS S3
 func setQuirks(opt *Options) {
 	var (
-		listObjectsV2     = true
-		virtualHostStyle  = true
-		urlEncodeListings = true
-		useMultipartEtag  = true
-		mightGzip         = true // assume all providers might gzip until proven otherwise
+		listObjectsV2         = true
+		virtualHostStyle      = true
+		urlEncodeListings     = true
+		useMultipartEtag      = true
+		useAcceptEncodingGzip = true
+		mightGzip             = true // assume all providers might gzip until proven otherwise
 	)
 	switch opt.Provider {
 	case "AWS":
@@ -2880,6 +2911,10 @@ func setQuirks(opt *Options) {
 	case "Qiniu":
 		useMultipartEtag = false
 		urlEncodeListings = false
+	case "GCS":
+		// Google break request Signature by mutating accept-encoding HTTP header
+		// https://github.com/rclone/rclone/issues/6670
+		useAcceptEncodingGzip = false
 	case "Other":
 		listObjectsV2 = false
 		virtualHostStyle = false
@@ -2923,6 +2958,12 @@ func setQuirks(opt *Options) {
 	if !opt.MightGzip.Valid {
 		opt.MightGzip.Valid = true
 		opt.MightGzip.Value = mightGzip
+	}
+
+	// set UseAcceptEncodingGzip if not manually set
+	if !opt.UseAcceptEncodingGzip.Valid {
+		opt.UseAcceptEncodingGzip.Valid = true
+		opt.UseAcceptEncodingGzip.Value = useAcceptEncodingGzip
 	}
 }
 
@@ -4962,7 +5003,9 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 
 	// Override the automatic decompression in the transport to
 	// download compressed files as-is
-	httpReq.HTTPRequest.Header.Set("Accept-Encoding", "gzip")
+	if o.fs.opt.UseAcceptEncodingGzip.Value {
+		httpReq.HTTPRequest.Header.Set("Accept-Encoding", "gzip")
+	}
 
 	for _, option := range options {
 		switch option.(type) {
