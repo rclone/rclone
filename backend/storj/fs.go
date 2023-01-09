@@ -781,7 +781,7 @@ func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, 
 		return "", errors.New("path must be specified")
 	}
 
-	// Rclone requires that a link is only generated if the remote path exists.
+	// Rclone requires that a link is only generated if the remote path exists
 	if len(key) == 0 {
 		_, err := f.project.StatBucket(ctx, bucket)
 		if err != nil {
@@ -793,6 +793,7 @@ func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, 
 			if !errors.Is(err, uplink.ErrObjectNotFound) {
 				return "", err
 			}
+			// No object found, check if there is such a prefix
 			iter := f.project.ListObjects(ctx, bucket, &uplink.ListObjectsOptions{Prefix: key + "/"})
 			if iter.Err() != nil {
 				return "", iter.Err()
