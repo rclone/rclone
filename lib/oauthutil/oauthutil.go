@@ -219,6 +219,15 @@ func (ts *TokenSource) Token() (*oauth2.Token, error) {
 	)
 	const maxTries = 5
 
+	shouldRetry := func(err error) bool {
+		if rErr, ok := err.(*oauth2.RetrieveError); ok {
+			if rErr.Response.StatusCode == 400 || rErr.Response.StatusCode == 401 {
+				return false
+			}
+		}
+		return true
+	}
+
 	// Try getting the token a few times
 	for i := 1; i <= maxTries; i++ {
 		// Try reading the token from the config file in case it has
@@ -239,7 +248,7 @@ func (ts *TokenSource) Token() (*oauth2.Token, error) {
 		}
 
 		token, err = ts.tokenSource.Token()
-		if err == nil {
+		if err == nil || !shouldRetry(err) {
 			break
 		}
 		fs.Debugf(ts.name, "Token refresh failed try %d/%d: %v", i, maxTries, err)
