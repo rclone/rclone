@@ -1734,8 +1734,10 @@ func Run(t *testing.T, opt *Opt) {
 					// ensure sub remote isn't empty
 					buf := bytes.NewBufferString("somecontent")
 					obji := object.NewStaticObjectInfo("somefile", time.Now(), int64(buf.Len()), true, nil, nil)
-					_, err = subRemote.Put(ctx, buf, obji)
-					require.NoError(t, err)
+					retry(t, "Put", func() error {
+						_, err := subRemote.Put(ctx, buf, obji)
+						return err
+					})
 
 					link4, err := wrapPublicLinkFunc(subRemote.Features().PublicLink)(ctx, "", expiry, false)
 					require.NoError(t, err, "Sharing root in a sub-remote should work")

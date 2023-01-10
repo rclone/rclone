@@ -23,6 +23,7 @@ import (
 	"golang.org/x/text/unicode/norm"
 
 	"storj.io/uplink"
+	"storj.io/uplink/edge"
 )
 
 const (
@@ -156,11 +157,12 @@ type Fs struct {
 
 // Check the interfaces are satisfied.
 var (
-	_ fs.Fs          = &Fs{}
-	_ fs.ListRer     = &Fs{}
-	_ fs.PutStreamer = &Fs{}
-	_ fs.Mover       = &Fs{}
-	_ fs.Copier      = &Fs{}
+	_ fs.Fs           = &Fs{}
+	_ fs.ListRer      = &Fs{}
+	_ fs.PutStreamer  = &Fs{}
+	_ fs.Mover        = &Fs{}
+	_ fs.Copier       = &Fs{}
+	_ fs.PublicLinker = &Fs{}
 )
 
 // NewFs creates a filesystem backed by Storj.
@@ -545,7 +547,7 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 	defer func() {
 		if err != nil {
 			aerr := upload.Abort()
-			if aerr != nil {
+			if aerr != nil && !errors.Is(aerr, uplink.ErrUploadDone) {
 				fs.Errorf(f, "cp input ./%s %+v: %+v", src.Remote(), options, aerr)
 			}
 		}
@@ -560,6 +562,16 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 
 	_, err = io.Copy(upload, in)
 	if err != nil {
+		if errors.Is(err, uplink.ErrBucketNotFound) {
+			// Rclone assumes the backend will create the bucket if not existing yet.
+			// Here we create the bucket and return a retry error for rclone to retry the upload.
+			_, err = f.project.EnsureBucket(ctx, bucketName)
+			if err != nil {
+				return nil, err
+			}
+			return nil, fserrors.RetryError(errors.New("bucket was not available, now created, the upload must be retried"))
+		}
+
 		err = fserrors.RetryError(err)
 		fs.Errorf(f, "cp input ./%s %+v: %+v\n", src.Remote(), options, err)
 
@@ -760,4 +772,56 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 
 	// Return the new object
 	return newObjectFromUplink(f, remote, newObject), nil
+}
+
+// PublicLink generates a public link to the remote path (usually readable by anyone)
+func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, unlink bool) (string, error) {
+	bucket, key := f.absolute(remote)
+	if len(bucket) == 0 {
+		return "", errors.New("path must be specified")
+	}
+
+	// Rclone requires that a link is only generated if the remote path exists
+	if len(key) == 0 {
+		_, err := f.project.StatBucket(ctx, bucket)
+		if err != nil {
+			return "", err
+		}
+	} else {
+		_, err := f.project.StatObject(ctx, bucket, key)
+		if err != nil {
+			if !errors.Is(err, uplink.ErrObjectNotFound) {
+				return "", err
+			}
+			// No object found, check if there is such a prefix
+			iter := f.project.ListObjects(ctx, bucket, &uplink.ListObjectsOptions{Prefix: key + "/"})
+			if iter.Err() != nil {
+				return "", iter.Err()
+			}
+			if !iter.Next() {
+				return "", err
+			}
+		}
+	}
+
+	sharedPrefix := uplink.SharePrefix{Bucket: bucket, Prefix: key}
+
+	permission := uplink.ReadOnlyPermission()
+	if expire.IsSet() {
+		permission.NotAfter = time.Now().Add(time.Duration(expire))
+	}
+
+	sharedAccess, err := f.access.Share(permission, sharedPrefix)
+	if err != nil {
+		return "", fmt.Errorf("sharing access to object failed: %w", err)
+	}
+
+	creds, err := (&edge.Config{
+		AuthServiceAddress: "auth.storjshare.io:7777",
+	}).RegisterAccess(ctx, sharedAccess, &edge.RegisterAccessOptions{Public: true})
+	if err != nil {
+		return "", fmt.Errorf("creating public link failed: %w", err)
+	}
+
+	return edge.JoinShareURL("https://link.storjshare.io", creds.AccessKeyID, bucket, key, nil)
 }
