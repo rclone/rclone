@@ -2099,9 +2099,9 @@ these options.  For example this can be very useful with the HTTP or
 WebDAV backends. Rclone HTTP servers have their own set of
 configuration for SSL/TLS which you can find in their documentation.
 
-### --ca-cert string
+### --ca-cert stringArray
 
-This loads the PEM encoded certificate authority certificate and uses
+This loads the PEM encoded certificate authority certificates and uses
 it to verify the certificates of the servers rclone connects to.
 
 If you have generated certificates signed with a local CA then you
