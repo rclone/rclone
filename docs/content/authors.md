@@ -675,3 +675,4 @@ put them back in again.` >}}
   * Abdullah Saglam <abdullah.saglam@stonebranch.com>
   * Marks Polakovs <github@markspolakovs.me>
   * piyushgarg <piyushgarg80@gmail.com>
+  * Kaloyan Raev <kaloyan-raev@users.noreply.github.com>
