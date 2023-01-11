@@ -1,7 +1,7 @@
 version: '2.0'
 services:
   db:
-    image: mariadb:10.1
+    image: mariadb:10.5
     environment:
       - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
       - MYSQL_LOG_CONSOLE=true
@@ -9,7 +9,7 @@ services:
       - ${SEAFILE_TEST_DATA}/${NAME}/seafile-mysql/db:/var/lib/mysql
 
   memcached:
-    image: memcached:1.5.6
+    image: memcached:1.6.9
     entrypoint: memcached -m 256
 
   seafile:
