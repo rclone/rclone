@@ -8,6 +8,7 @@ import (
 	"io"
 	"os"
 	"path"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -567,6 +568,21 @@ func (fsys *FS) Listxattr(path string, fill func(name string) bool) (errc int) {
 	return -fuse.ENOSYS
 }
 
+// Getpath allows a case-insensitive file system to report the correct case of
+// a file path.
+func (fsys *FS) Getpath(path string, fh uint64) (errc int, normalisedPath string) {
+	defer log.Trace(path, "Getpath fh=%d", fh)("errc=%d, normalisedPath=%q", &errc, &normalisedPath)
+	node, _, errc := fsys.getNode(path, fh)
+	if errc != 0 {
+		return errc, ""
+	}
+	normalisedPath = node.Path()
+	if !strings.HasPrefix("/", normalisedPath) {
+		normalisedPath = "/" + normalisedPath
+	}
+	return 0, normalisedPath
+}
+
 // Translate errors from mountlib
 func translateError(err error) (errc int) {
 	if err == nil {
@@ -631,6 +647,7 @@ func translateOpenFlags(inFlags int) (outFlags int) {
 var (
 	_ fuse.FileSystemInterface = (*FS)(nil)
 	_ fuse.FileSystemOpenEx    = (*FS)(nil)
+	_ fuse.FileSystemGetpath   = (*FS)(nil)
 	//_ fuse.FileSystemChflags    = (*FS)(nil)
 	//_ fuse.FileSystemSetcrtime  = (*FS)(nil)
 	//_ fuse.FileSystemSetchgtime = (*FS)(nil)
