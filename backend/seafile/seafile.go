@@ -143,6 +143,7 @@ type Fs struct {
 	createDirMutex      sync.Mutex   // Protect creation of directories
 	useOldDirectoryAPI  bool         // Use the old API v2 if seafile < 7
 	moveDirNotAvailable bool         // Version < 7.0 don't have an API to move a directory
+	renew               *Renew       // Renew an encrypted library token
 }
 
 // ------------------------------------------------------------
@@ -268,6 +269,11 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 			}
 			// And remove the public link feature
 			f.features.PublicLink = nil
+
+			// renew the library password every 45 minutes
+			f.renew = NewRenew(45*time.Minute, func() error {
+				return f.authorizeLibrary(context.Background(), libraryID)
+			})
 		}
 	} else {
 		// Deactivate the cleaner feature since there's no library selected
@@ -381,6 +387,15 @@ func Config(ctx context.Context, name string, m configmap.Mapper, config fs.Conf
 		return nil, errors.New("2fa authentication failed")
 	}
 	return nil, fmt.Errorf("unknown state %q", config.State)
+}
+
+// Shutdown the Fs
+func (f *Fs) Shutdown(ctx context.Context) error {
+	if f.renew == nil {
+		return nil
+	}
+	f.renew.Shutdown()
+	return nil
 }
 
 // sets the AuthorizationToken up
@@ -1331,6 +1346,7 @@ var (
 	_ fs.PutStreamer  = &Fs{}
 	_ fs.PublicLinker = &Fs{}
 	_ fs.UserInfoer   = &Fs{}
+	_ fs.Shutdowner   = &Fs{}
 	_ fs.Object       = &Object{}
 	_ fs.IDer         = &Object{}
 )
