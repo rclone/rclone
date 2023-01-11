@@ -120,9 +120,9 @@ type ConfigInfo struct {
 	ProgressTerminalTitle   bool
 	Cookie                  bool
 	UseMmap                 bool
-	CaCert                  string // Client Side CA
-	ClientCert              string // Client Side Cert
-	ClientKey               string // Client Side Key
+	CaCert                  []string // Client Side CA
+	ClientCert              string   // Client Side Cert
+	ClientKey               string   // Client Side Key
 	MultiThreadCutoff       SizeSuffix
 	MultiThreadStreams      int
 	MultiThreadSet          bool   // whether MultiThreadStreams was set (set in fs/config/configflags)

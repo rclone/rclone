@@ -120,7 +120,7 @@ func AddFlags(ci *fs.ConfigInfo, flagSet *pflag.FlagSet) {
 	flags.BoolVarP(flagSet, &ci.ProgressTerminalTitle, "progress-terminal-title", "", ci.ProgressTerminalTitle, "Show progress on the terminal title (requires -P/--progress)")
 	flags.BoolVarP(flagSet, &ci.Cookie, "use-cookies", "", ci.Cookie, "Enable session cookiejar")
 	flags.BoolVarP(flagSet, &ci.UseMmap, "use-mmap", "", ci.UseMmap, "Use mmap allocator (see docs)")
-	flags.StringVarP(flagSet, &ci.CaCert, "ca-cert", "", ci.CaCert, "CA certificate used to verify servers")
+	flags.StringArrayVarP(flagSet, &ci.CaCert, "ca-cert", "", ci.CaCert, "CA certificate used to verify servers")
 	flags.StringVarP(flagSet, &ci.ClientCert, "client-cert", "", ci.ClientCert, "Client SSL certificate (PEM) for mutual TLS auth")
 	flags.StringVarP(flagSet, &ci.ClientKey, "client-key", "", ci.ClientKey, "Client SSL private key (PEM) for mutual TLS auth")
 	flags.FVarP(flagSet, &ci.MultiThreadCutoff, "multi-thread-cutoff", "", "Use multi-thread downloads for files above this size")

@@ -72,16 +72,20 @@ func NewTransportCustom(ctx context.Context, customize func(*http.Transport)) ht
 		t.TLSClientConfig.Certificates = []tls.Certificate{cert}
 	}
 
-	// Load CA cert
-	if ci.CaCert != "" {
-		caCert, err := os.ReadFile(ci.CaCert)
-		if err != nil {
-			log.Fatalf("Failed to read --ca-cert: %v", err)
-		}
+	// Load CA certs
+	if len(ci.CaCert) != 0 {
+
 		caCertPool := x509.NewCertPool()
-		ok := caCertPool.AppendCertsFromPEM(caCert)
-		if !ok {
-			log.Fatalf("Failed to add certificates from --ca-cert")
+
+		for _, cert := range ci.CaCert {
+			caCert, err := os.ReadFile(cert)
+			if err != nil {
+				log.Fatalf("Failed to read --ca-cert file %q : %v", cert, err)
+			}
+			ok := caCertPool.AppendCertsFromPEM(caCert)
+			if !ok {
+				log.Fatalf("Failed to add certificates from --ca-cert file %q", cert)
+			}
 		}
 		t.TLSClientConfig.RootCAs = caCertPool
 	}
