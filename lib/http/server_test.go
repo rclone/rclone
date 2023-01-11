@@ -442,3 +442,12 @@ func TestNewServerTLS(t *testing.T) {
 		})
 	}
 }
+
+func TestHelpPrefixServer(t *testing.T) {
+	// This test assumes template variables are placed correctly.
+	const testPrefix = "server-help-test"
+	helpMessage := Help(testPrefix)
+	if !strings.Contains(helpMessage, testPrefix) {
+		t.Fatal("flag prefix not found")
+	}
+}

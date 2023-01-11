@@ -48,10 +48,14 @@ var DefaultOpt = Options{
 // Opt is options set by command line flags
 var Opt = DefaultOpt
 
+// flagPrefix is the prefix used to uniquely identify command line flags.
+// It is intentionally empty for this package.
+const flagPrefix = ""
+
 func init() {
 	flagSet := Command.Flags()
-	libhttp.AddAuthFlagsPrefix(flagSet, "", &Opt.Auth)
-	libhttp.AddHTTPFlagsPrefix(flagSet, "", &Opt.HTTP)
+	libhttp.AddAuthFlagsPrefix(flagSet, flagPrefix, &Opt.Auth)
+	libhttp.AddHTTPFlagsPrefix(flagSet, flagPrefix, &Opt.HTTP)
 	libhttp.AddTemplateFlagsPrefix(flagSet, "", &Opt.Template)
 	vfsflags.AddFlags(flagSet)
 	proxyflags.AddFlags(flagSet)
@@ -103,7 +107,7 @@ Create a new DWORD BasicAuthLevel with value 2.
 
 https://learn.microsoft.com/en-us/office/troubleshoot/powerpoint/office-opens-blank-from-sharepoint
 
-` + libhttp.Help + libhttp.TemplateHelp + libhttp.AuthHelp + vfs.Help + proxy.Help,
+` + libhttp.Help(flagPrefix) + libhttp.TemplateHelp(flagPrefix) + libhttp.AuthHelp(flagPrefix) + vfs.Help + proxy.Help,
 	Annotations: map[string]string{
 		"versionIntroduced": "v1.39",
 	},
