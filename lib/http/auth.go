@@ -1,20 +1,25 @@
 package http
 
 import (
+	"bytes"
+	"html/template"
+	"log"
+
 	"github.com/rclone/rclone/fs/config/flags"
 	"github.com/spf13/pflag"
 )
 
-// AuthHelp contains text describing the http authentication to add to the command help.
-var AuthHelp = `
+// AuthHelp returns text describing the http authentication to add to the command help.
+func AuthHelp(prefix string) string {
+	help := `
 #### Authentication
 
 By default this will serve files without needing a login.
 
 You can either use an htpasswd file which can take lots of users, or
-set a single username and password with the ` + "`--user` and `--pass`" + ` flags.
+set a single username and password with the ` + "`--{{ .Prefix }}user` and `--{{ .Prefix }}pass`" + ` flags.
 
-Use ` + "`--htpasswd /path/to/htpasswd`" + ` to provide an htpasswd file.  This is
+Use ` + "`--{{ .Prefix }}htpasswd /path/to/htpasswd`" + ` to provide an htpasswd file.  This is
 in standard apache format and supports MD5, SHA1 and BCrypt for basic
 authentication.  Bcrypt is recommended.
 
@@ -26,10 +31,27 @@ To create an htpasswd file:
 
 The password file can be updated while rclone is running.
 
-Use ` + "`--realm`" + ` to set the authentication realm.
+Use ` + "`--{{ .Prefix }}realm`" + ` to set the authentication realm.
 
-Use ` + "`--salt`" + ` to change the password hashing salt from the default.
+Use ` + "`--{{ .Prefix }}salt`" + ` to change the password hashing salt from the default.
 `
+	tmpl, err := template.New("auth help").Parse(help)
+	if err != nil {
+		log.Fatal("Fatal error parsing template", err)
+	}
+
+	data := struct {
+		Prefix string
+	}{
+		Prefix: prefix,
+	}
+	buf := &bytes.Buffer{}
+	err = tmpl.Execute(buf, data)
+	if err != nil {
+		log.Fatal("Fatal error executing template", err)
+	}
+	return buf.String()
+}
 
 // CustomAuthFn if used will be used to authenticate user, pass. If an error
 // is returned then the user is not authenticated.

@@ -44,11 +44,15 @@ var DefaultOpt = Options{
 // Opt is options set by command line flags
 var Opt = DefaultOpt
 
+// flagPrefix is the prefix used to uniquely identify command line flags.
+// It is intentionally empty for this package.
+const flagPrefix = ""
+
 func init() {
 	flagSet := Command.Flags()
-	libhttp.AddAuthFlagsPrefix(flagSet, "", &Opt.Auth)
-	libhttp.AddHTTPFlagsPrefix(flagSet, "", &Opt.HTTP)
-	libhttp.AddTemplateFlagsPrefix(flagSet, "", &Opt.Template)
+	libhttp.AddAuthFlagsPrefix(flagSet, flagPrefix, &Opt.Auth)
+	libhttp.AddHTTPFlagsPrefix(flagSet, flagPrefix, &Opt.HTTP)
+	libhttp.AddTemplateFlagsPrefix(flagSet, flagPrefix, &Opt.Template)
 	vfsflags.AddFlags(flagSet)
 	proxyflags.AddFlags(flagSet)
 }
@@ -68,7 +72,7 @@ The server will log errors.  Use ` + "`-v`" + ` to see access logs.
 
 ` + "`--bwlimit`" + ` will be respected for file transfers.  Use ` + "`--stats`" + ` to
 control the stats printing.
-` + libhttp.Help + libhttp.TemplateHelp + libhttp.AuthHelp + vfs.Help + proxy.Help,
+` + libhttp.Help(flagPrefix) + libhttp.TemplateHelp(flagPrefix) + libhttp.AuthHelp(flagPrefix) + vfs.Help + proxy.Help,
 	Annotations: map[string]string{
 		"versionIntroduced": "v1.39",
 	},

@@ -47,10 +47,14 @@ var DefaultOpt = Options{
 // Opt is options set by command line flags
 var Opt = DefaultOpt
 
+// flagPrefix is the prefix used to uniquely identify command line flags.
+// It is intentionally empty for this package.
+const flagPrefix = ""
+
 func init() {
 	flagSet := Command.Flags()
-	libhttp.AddAuthFlagsPrefix(flagSet, "", &Opt.Auth)
-	libhttp.AddHTTPFlagsPrefix(flagSet, "", &Opt.HTTP)
+	libhttp.AddAuthFlagsPrefix(flagSet, flagPrefix, &Opt.Auth)
+	libhttp.AddHTTPFlagsPrefix(flagSet, flagPrefix, &Opt.HTTP)
 	flags.BoolVarP(flagSet, &Opt.Stdio, "stdio", "", false, "Run an HTTP2 server on stdin/stdout")
 	flags.BoolVarP(flagSet, &Opt.AppendOnly, "append-only", "", false, "Disallow deletion of repository data")
 	flags.BoolVarP(flagSet, &Opt.PrivateRepos, "private-repos", "", false, "Users can only access their private repo")
@@ -142,7 +146,7 @@ these **must** end with /.  Eg
 
 The` + "`--private-repos`" + ` flag can be used to limit users to repositories starting
 with a path of ` + "`/<username>/`" + `.
-` + libhttp.Help + libhttp.AuthHelp,
+` + libhttp.Help(flagPrefix) + libhttp.AuthHelp(flagPrefix),
 	Annotations: map[string]string{
 		"versionIntroduced": "v1.40",
 	},

@@ -2,6 +2,7 @@
 package http
 
 import (
+	"bytes"
 	"context"
 	"crypto/tls"
 	"crypto/x509"
@@ -23,56 +24,74 @@ import (
 	"github.com/spf13/pflag"
 )
 
-// Help contains text describing the http server to add to the command
+// Help returns text describing the http server to add to the command
 // help.
-var Help = `
+func Help(prefix string) string {
+	help := `
 ### Server options
 
-Use ` + "`--addr`" + ` to specify which IP address and port the server should
-listen on, eg ` + "`--addr 1.2.3.4:8000` or `--addr :8080`" + ` to listen to all
+Use ` + "`--{{ .Prefix }}addr`" + ` to specify which IP address and port the server should
+listen on, eg ` + "`--{{ .Prefix }}addr 1.2.3.4:8000` or `--{{ .Prefix }}addr :8080`" + ` to listen to all
 IPs.  By default it only listens on localhost.  You can use port
 :0 to let the OS choose an available port.
 
-If you set ` + "`--addr`" + ` to listen on a public or LAN accessible IP address
+If you set ` + "`--{{ .Prefix }}addr`" + ` to listen on a public or LAN accessible IP address
 then using Authentication is advised - see the next section for info.
 
 You can use a unix socket by setting the url to ` + "`unix:///path/to/socket`" + `
 or just by using an absolute path name. Note that unix sockets bypass the
 authentication - this is expected to be done with file system permissions.
 
-` + "`--addr`" + ` may be repeated to listen on multiple IPs/ports/sockets.
+` + "`--{{ .Prefix }}addr`" + ` may be repeated to listen on multiple IPs/ports/sockets.
 
-` + "`--server-read-timeout` and `--server-write-timeout`" + ` can be used to
+` + "`--{{ .Prefix }}server-read-timeout` and `--{{ .Prefix }}server-write-timeout`" + ` can be used to
 control the timeouts on the server.  Note that this is the total time
 for a transfer.
 
-` + "`--max-header-bytes`" + ` controls the maximum number of bytes the server will
+` + "`--{{ .Prefix }}max-header-bytes`" + ` controls the maximum number of bytes the server will
 accept in the HTTP header.
 
-` + "`--baseurl`" + ` controls the URL prefix that rclone serves from.  By default
-rclone will serve from the root.  If you used ` + "`--baseurl \"/rclone\"`" + ` then
+` + "`--{{ .Prefix }}baseurl`" + ` controls the URL prefix that rclone serves from.  By default
+rclone will serve from the root.  If you used ` + "`--{{ .Prefix }}baseurl \"/rclone\"`" + ` then
 rclone would serve from a URL starting with "/rclone/".  This is
 useful if you wish to proxy rclone serve.  Rclone automatically
-inserts leading and trailing "/" on ` + "`--baseurl`" + `, so ` + "`--baseurl \"rclone\"`" + `,
-` + "`--baseurl \"/rclone\"` and `--baseurl \"/rclone/\"`" + ` are all treated
+inserts leading and trailing "/" on ` + "`--{{ .Prefix }}baseurl`" + `, so ` + "`--{{ .Prefix }}baseurl \"rclone\"`" + `,
+` + "`--{{ .Prefix }}baseurl \"/rclone\"` and `--{{ .Prefix }}baseurl \"/rclone/\"`" + ` are all treated
 identically.
 
 #### TLS (SSL)
 
 By default this will serve over http.  If you want you can serve over
-https.  You will need to supply the ` + "`--cert` and `--key`" + ` flags.
+https.  You will need to supply the ` + "`--{{ .Prefix }}cert` and `--{{ .Prefix }}key`" + ` flags.
 If you wish to do client side certificate validation then you will need to
-supply ` + "`--client-ca`" + ` also.
+supply ` + "`--{{ .Prefix }}client-ca`" + ` also.
 
-` + "`--cert`" + ` should be a either a PEM encoded certificate or a concatenation
-of that with the CA certificate.  ` + "`--key`" + ` should be the PEM encoded
-private key and ` + "`--client-ca`" + ` should be the PEM encoded client
+` + "`--{{ .Prefix }}cert`" + ` should be a either a PEM encoded certificate or a concatenation
+of that with the CA certificate.  ` + "`--k{{ .Prefix }}ey`" + ` should be the PEM encoded
+private key and ` + "`--{{ .Prefix }}client-ca`" + ` should be the PEM encoded client
 certificate authority certificate.
 
---min-tls-version is minimum TLS version that is acceptable. Valid
+--{{ .Prefix }}min-tls-version is minimum TLS version that is acceptable. Valid
   values are "tls1.0", "tls1.1", "tls1.2" and "tls1.3" (default
   "tls1.0").
 `
+	tmpl, err := template.New("server help").Parse(help)
+	if err != nil {
+		log.Fatal("Fatal error parsing template", err)
+	}
+
+	data := struct {
+		Prefix string
+	}{
+		Prefix: prefix,
+	}
+	buf := &bytes.Buffer{}
+	err = tmpl.Execute(buf, data)
+	if err != nil {
+		log.Fatal("Fatal error executing template", err)
+	}
+	return buf.String()
+}
 
 // Middleware function signature required by chi.Router.Use()
 type Middleware func(http.Handler) http.Handler
