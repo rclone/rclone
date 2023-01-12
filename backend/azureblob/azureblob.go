@@ -4,32 +4,6 @@
 // Package azureblob provides an interface to the Microsoft Azure blob object storage system
 package azureblob
 
-/* FIXME
-
-Note these Azure SDK bugs which are affecting the backend
-
-azblob UploadStream produces panic: send on closed channel if input stream has error #19612
-https://github.com/Azure/azure-sdk-for-go/issues/19612
-   - FIXED by re-implementing UploadStream
-
-azblob: when using SharedKey credentials, can't reference some blob names with ? in #19613
-https://github.com/Azure/azure-sdk-for-go/issues/19613
-   - FIXED by url encoding getBlobSVC and getBlockBlobSVC
-
-Azure Blob Storage paths are not URL-escaped #19475
-https://github.com/Azure/azure-sdk-for-go/issues/19475
-   - FIXED by url encoding getBlobSVC and getBlockBlobSVC
-
-Controlling TransferManager #19579
-https://github.com/Azure/azure-sdk-for-go/issues/19579
-   - FIXED by re-implementing UploadStream
-
-azblob: blob.StartCopyFromURL doesn't work with UTF-8 characters in the source blob #19614
-https://github.com/Azure/azure-sdk-for-go/issues/19614
-   - FIXED by url encoding getBlobSVC and getBlockBlobSVC
-
-*/
-
 import (
 	"bytes"
 	"context"
@@ -959,18 +933,12 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 
 // getBlobSVC creates a blob client
 func (f *Fs) getBlobSVC(container, containerPath string) *blob.Client {
-	// FIXME the urlEncode here is a workaround for
-	// https://github.com/Azure/azure-sdk-for-go/issues/19613
-	// https://github.com/Azure/azure-sdk-for-go/issues/19475
-	return f.cntSVC(container).NewBlobClient(urlEncode(containerPath))
+	return f.cntSVC(container).NewBlobClient(containerPath)
 }
 
 // getBlockBlobSVC creates a block blob client
 func (f *Fs) getBlockBlobSVC(container, containerPath string) *blockblob.Client {
-	// FIXME the urlEncode here is a workaround for
-	// https://github.com/Azure/azure-sdk-for-go/issues/19613
-	// https://github.com/Azure/azure-sdk-for-go/issues/19475
-	return f.cntSVC(container).NewBlockBlobClient(urlEncode(containerPath))
+	return f.cntSVC(container).NewBlockBlobClient(containerPath)
 }
 
 // updateMetadataWithModTime adds the modTime passed in to o.meta.
@@ -1901,41 +1869,6 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 		return nil, fmt.Errorf("failed to decode metadata for download: %w", err)
 	}
 	return downloadResponse.Body, nil
-}
-
-// dontEncode is the characters that do not need percent-encoding
-//
-// The characters that do not need percent-encoding are a subset of
-// the printable ASCII characters: upper-case letters, lower-case
-// letters, digits, ".", "_", "-", "/", "~", "!", "$", "'", "(", ")",
-// "*", ";", "=", ":", and "@". All other byte values in a UTF-8 must
-// be replaced with "%" and the two-digit hex value of the byte.
-const dontEncode = (`abcdefghijklmnopqrstuvwxyz` +
-	`ABCDEFGHIJKLMNOPQRSTUVWXYZ` +
-	`0123456789` +
-	`._-/~!$'()*;=:@`)
-
-// noNeedToEncode is a bitmap of characters which don't need % encoding
-var noNeedToEncode [256]bool
-
-func init() {
-	for _, c := range dontEncode {
-		noNeedToEncode[c] = true
-	}
-}
-
-// urlEncode encodes in with % encoding
-func urlEncode(in string) string {
-	var out bytes.Buffer
-	for i := 0; i < len(in); i++ {
-		c := in[i]
-		if noNeedToEncode[c] {
-			_ = out.WriteByte(c)
-		} else {
-			_, _ = out.WriteString(fmt.Sprintf("%%%02X", c))
-		}
-	}
-	return out.String()
 }
 
 // poolWrapper wraps a pool.Pool as an azblob.TransferManager
