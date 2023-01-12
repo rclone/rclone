@@ -953,7 +953,7 @@ func (o *Object) updateMetadataWithModTime(modTime time.Time) {
 }
 
 // Returns whether file is a directory marker or not
-func isDirectoryMarker(size int64, metadata map[string]string, remote string) bool {
+func isDirectoryMarker(size int64, metadata map[string]*string, remote string) bool {
 	// Directory markers are 0 length
 	if size == 0 {
 		endsWithSlash := strings.HasSuffix(remote, "/")
@@ -964,7 +964,7 @@ func isDirectoryMarker(size int64, metadata map[string]string, remote string) bo
 		// defacto standard for marking blobs as directories.
 		// Note also that the metadata hasn't been normalised to lower case yet
 		for k, v := range metadata {
-			if strings.EqualFold(k, "hdi_isfolder") && v == "true" {
+			if v != nil && strings.EqualFold(k, "hdi_isfolder") && *v == "true" {
 				return true
 			}
 		}
@@ -1552,12 +1552,15 @@ func (o *Object) Size() int64 {
 	return o.size
 }
 
-func (o *Object) setMetadata(metadata map[string]string) {
+// Set o.metadata from metadata
+func (o *Object) setMetadata(metadata map[string]*string) {
 	if len(metadata) > 0 {
 		// Lower case the metadata
 		o.meta = make(map[string]string, len(metadata))
 		for k, v := range metadata {
-			o.meta[strings.ToLower(k)] = v
+			if v != nil {
+				o.meta[strings.ToLower(k)] = *v
+			}
 		}
 		// Set o.modTime from metadata if it exists and
 		// UseServerModTime isn't in use.
@@ -1573,20 +1576,16 @@ func (o *Object) setMetadata(metadata map[string]string) {
 	}
 }
 
-// Duplicte of setMetadata but taking pointers to strings
-func (o *Object) setMetadataP(metadata map[string]*string) {
-	if len(metadata) > 0 {
-		// Convert the format of the metadata
-		newMeta := make(map[string]string, len(metadata))
-		for k, v := range metadata {
-			if v != nil {
-				newMeta[k] = *v
-			}
-		}
-		o.setMetadata(newMeta)
-	} else {
-		o.meta = nil
+// Get metadata from o.meta
+func (o *Object) getMetadata() (metadata map[string]*string) {
+	if len(o.meta) == 0 {
+		return nil
 	}
+	metadata = make(map[string]*string, len(o.meta))
+	for k, v := range o.meta {
+		metadata[k] = &v
+	}
+	return metadata
 }
 
 // decodeMetaDataFromPropertiesResponse sets the metadata from the data passed in
@@ -1718,7 +1717,7 @@ func (o *Object) decodeMetaDataFromBlob(info *container.BlobItem) (err error) {
 	} else {
 		o.accessTier = *info.Properties.AccessTier
 	}
-	o.setMetadataP(metadata)
+	o.setMetadata(metadata)
 
 	return nil
 }
@@ -1800,7 +1799,7 @@ func (o *Object) SetModTime(ctx context.Context, modTime time.Time) error {
 	blb := o.getBlobSVC()
 	opt := blob.SetMetadataOptions{}
 	err := o.fs.pacer.Call(func() (bool, error) {
-		_, err := blb.SetMetadata(ctx, o.meta, &opt)
+		_, err := blb.SetMetadata(ctx, o.getMetadata(), &opt)
 		return o.fs.shouldRetry(ctx, err)
 	})
 	if err != nil {
@@ -2096,7 +2095,7 @@ func (o *Object) uploadMultipart(ctx context.Context, in io.Reader, size int64, 
 
 	tier := blob.AccessTier(o.fs.opt.AccessTier)
 	options := blockblob.CommitBlockListOptions{
-		Metadata:    o.meta,
+		Metadata:    o.getMetadata(),
 		Tier:        &tier,
 		HTTPHeaders: httpHeaders,
 	}
@@ -2143,7 +2142,7 @@ func (o *Object) uploadSinglepart(ctx context.Context, in io.Reader, size int64,
 
 	tier := blob.AccessTier(o.fs.opt.AccessTier)
 	options := blockblob.UploadOptions{
-		Metadata:    o.meta,
+		Metadata:    o.getMetadata(),
 		Tier:        &tier,
 		HTTPHeaders: httpHeaders,
 	}
