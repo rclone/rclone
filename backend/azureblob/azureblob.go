@@ -2139,7 +2139,7 @@ func (o *Object) uploadMultipart(ctx context.Context, in io.Reader, size int64, 
 				rs := readSeekCloser{wrappedReader, bufferReader}
 				options := blockblob.StageBlockOptions{
 					// Specify the transactional md5 for the body, to be validated by the service.
-					TransactionalContentMD5: transactionalMD5,
+					TransactionalValidation: blob.TransferValidationTypeMD5(transactionalMD5),
 				}
 				_, err = blb.StageBlock(ctx, blockID, &rs, &options)
 				return o.fs.shouldRetry(ctx, err)
