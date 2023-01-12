@@ -122,7 +122,7 @@ jobs:
           sudo modprobe fuse
           sudo chmod 666 /dev/fuse
           sudo chown root:$USER /etc/fuse.conf
-          sudo apt-get install fuse libfuse-dev rpm pkg-config
+          sudo apt-get install fuse3 libfuse-dev rpm pkg-config
         if: matrix.os == 'ubuntu-latest'
 
       - name: Install Libraries on macOS
