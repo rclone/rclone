@@ -290,6 +290,24 @@ Properties:
 
 Here are the Advanced options specific to oracleobjectstorage (Oracle Cloud Infrastructure Object Storage).
 
+#### --oos-storage-tier
+
+The storage class to use when storing new objects in storage. https://docs.oracle.com/en-us/iaas/Content/Object/Concepts/understandingstoragetiers.htm
+
+Properties:
+
+- Config:      storage_tier
+- Env Var:     RCLONE_OOS_STORAGE_TIER
+- Type:        string
+- Default:     "Standard"
+- Examples:
+    - "Standard"
+        - Standard storage tier, this is the default tier
+    - "InfrequentAccess"
+        - InfrequentAccess storage tier
+    - "Archive"
+        - Archive storage tier
+
 #### --oos-upload-cutoff
 
 Cutoff for switching to chunked upload.
