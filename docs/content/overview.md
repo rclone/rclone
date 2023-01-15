@@ -504,7 +504,7 @@ upon backend-specific capabilities.
 | Sia                          | No    | No   | No   | No      | No      | No    | Yes          | No           | No    | Yes      |
 | SMB                          | No    | No   | Yes  | Yes     | No      | No    | Yes          | No           | No    | Yes      |
 | SugarSync                    | Yes   | Yes  | Yes  | Yes     | No      | No    | Yes          | Yes          | No    | Yes      |
-| Storj                        | Yes † | Yes  | Yes  | No      | No      | Yes   | Yes          | Yes          | No    | No       |
+| Storj                        | Yes ☨ | Yes  | Yes  | No      | No      | Yes   | Yes          | Yes          | No    | No       |
 | Uptobox                      | No    | Yes  | Yes  | Yes     | No      | No    | No           | No           | No    | No       |
 | WebDAV                       | Yes   | Yes  | Yes  | Yes     | No      | No    | Yes ‡        | No           | Yes   | Yes      |
 | Yandex Disk                  | Yes   | Yes  | Yes  | Yes     | Yes     | No    | Yes          | Yes          | Yes   | Yes      |
@@ -516,9 +516,12 @@ upon backend-specific capabilities.
 This deletes a directory quicker than just deleting all the files in
 the directory.
 
-† Note Swift and Storj implement this in order to delete
-directory markers but they don't actually have a quicker way of deleting
-files other than deleting them individually.
+† Note Swift implements this in order to delete directory markers but
+they don't actually have a quicker way of deleting files other than
+deleting them individually.
+
+☨ Storj implements this efficiently only for entire buckets. If
+purging a directory inside a bucket, files are deleted individually.
 
 ‡ StreamUpload is not supported with Nextcloud
 

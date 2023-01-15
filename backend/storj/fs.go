@@ -162,6 +162,7 @@ var (
 	_ fs.PutStreamer  = &Fs{}
 	_ fs.Mover        = &Fs{}
 	_ fs.Copier       = &Fs{}
+	_ fs.Purger       = &Fs{}
 	_ fs.PublicLinker = &Fs{}
 )
 
@@ -774,15 +775,63 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	return newObjectFromUplink(f, remote, newObject), nil
 }
 
+// Purge all files in the directory specified
+//
+// Implement this if you have a way of deleting all the files
+// quicker than just running Remove() on the result of List()
+//
+// Return an error if it doesn't exist
+func (f *Fs) Purge(ctx context.Context, dir string) error {
+	bucket, directory := f.absolute(dir)
+	if bucket == "" {
+		return errors.New("can't purge from root")
+	}
+
+	if directory == "" {
+		_, err := f.project.DeleteBucketWithObjects(ctx, bucket)
+		if errors.Is(err, uplink.ErrBucketNotFound) {
+			return fs.ErrorDirNotFound
+		}
+		return err
+	}
+
+	fs.Infof(directory, "Quick delete is available only for entire bucket. Falling back to list and delete.")
+	objects := f.project.ListObjects(ctx, bucket,
+		&uplink.ListObjectsOptions{
+			Prefix:    directory + "/",
+			Recursive: true,
+		},
+	)
+	if err := objects.Err(); err != nil {
+		return err
+	}
+
+	empty := true
+	for objects.Next() {
+		empty = false
+		_, err := f.project.DeleteObject(ctx, bucket, objects.Item().Key)
+		if err != nil {
+			return err
+		}
+		fs.Infof(objects.Item().Key, "Deleted")
+	}
+
+	if empty {
+		return fs.ErrorDirNotFound
+	}
+
+	return nil
+}
+
 // PublicLink generates a public link to the remote path (usually readable by anyone)
 func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, unlink bool) (string, error) {
 	bucket, key := f.absolute(remote)
-	if len(bucket) == 0 {
+	if bucket == "" {
 		return "", errors.New("path must be specified")
 	}
 
 	// Rclone requires that a link is only generated if the remote path exists
-	if len(key) == 0 {
+	if key == "" {
 		_, err := f.project.StatBucket(ctx, bucket)
 		if err != nil {
 			return "", err
