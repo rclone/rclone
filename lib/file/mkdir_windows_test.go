@@ -77,23 +77,29 @@ func unusedDrive(t *testing.T) string {
 	return string(letter) + ":"
 }
 
-func checkMkdirAll(t *testing.T, path string, valid bool, errormsg string) {
+func checkMkdirAll(t *testing.T, path string, valid bool, errormsgs... string) {
 	if valid {
 		assert.NoError(t, MkdirAll(path, 0777))
 	} else {
 		err := MkdirAll(path, 0777)
 		assert.Error(t, err)
-		assert.Equal(t, errormsg, err.Error())
+		ok := false
+		for _, msg := range errormsgs {
+			if err.Error() == msg {
+				ok = true
+			}
+		}
+		assert.True(t, ok, err.Error())
 	}
 }
 
-func checkMkdirAllSubdirs(t *testing.T, path string, valid bool, errormsg string) {
-	checkMkdirAll(t, path, valid, errormsg)
-	checkMkdirAll(t, path+`\`, valid, errormsg)
-	checkMkdirAll(t, path+`\parent`, valid, errormsg)
-	checkMkdirAll(t, path+`\parent\`, valid, errormsg)
-	checkMkdirAll(t, path+`\parent\child`, valid, errormsg)
-	checkMkdirAll(t, path+`\parent\child\`, valid, errormsg)
+func checkMkdirAllSubdirs(t *testing.T, path string, valid bool, errormsgs... string) {
+	checkMkdirAll(t, path, valid, errormsgs...)
+	checkMkdirAll(t, path+`\`, valid, errormsgs...)
+	checkMkdirAll(t, path+`\parent`, valid, errormsgs...)
+	checkMkdirAll(t, path+`\parent\`, valid, errormsgs...)
+	checkMkdirAll(t, path+`\parent\child`, valid, errormsgs...)
+	checkMkdirAll(t, path+`\parent\child\`, valid, errormsgs...)
 }
 
 // Testing paths on existing drive
@@ -143,6 +149,9 @@ func TestMkdirAllOnUnusedNetworkHost(t *testing.T) {
 	errormsg := fmt.Sprintf("mkdir %s\\: The format of the specified network name is invalid.", path)
 	checkMkdirAllSubdirs(t, path, false, errormsg)
 	path = `\\?\UNC\0.0.0.0\share`
-	errormsg = `mkdir \\?\UNC\0.0.0.0: The specified path is invalid.`
-	checkMkdirAllSubdirs(t, path, false, errormsg)
+	checkMkdirAllSubdirs(t, path, false,
+		`mkdir \\?\UNC\0.0.0.0: The specified path is invalid.`, // pre go1.20
+		`mkdir \\?\UNC\0.0.0.0\share\: The format of the specified network name is invalid.`,
+	)
+
 }
