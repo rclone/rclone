@@ -137,6 +137,10 @@ specify path to volumes identified by their GUID, e.g.
 This is *not* supported in rclone, due to an [issue](https://github.com/golang/go/issues/39785)
 in go.
 
+Also note that when specifying paths at `parameters` with `remote` at the
+[remote control API](/rc/) using `\` as path separator must be escaped,
+i.e. `\\`. Alternatively you can also use `/` as path separator.
+
 #### Long paths ####
 
 Rclone handles long paths automatically, by converting all paths to
