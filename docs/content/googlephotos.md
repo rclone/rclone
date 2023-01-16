@@ -121,7 +121,7 @@ files in the album.
 
 ### Layout
 
-As Google Photos is not a general purpose cloud storage system the
+As Google Photos is not a general purpose cloud storage system, the
 backend is laid out to help you navigate it.
 
 The directories under `media` show different ways of categorizing the
