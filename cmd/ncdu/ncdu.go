@@ -82,7 +82,7 @@ the remote you can also use the [size](/commands/rclone_size/) command.
 		cmd.CheckArgs(1, 1, command, args)
 		fsrc := cmd.NewFsSrc(args)
 		cmd.Run(false, false, command, func() error {
-			return NewUI(fsrc).Show()
+			return NewUI(fsrc).Run()
 		})
 	},
 }
@@ -354,7 +354,7 @@ func (u *UI) hasEmptyDir() bool {
 }
 
 // Draw the current screen
-func (u *UI) Draw() error {
+func (u *UI) Draw() {
 	ctx := context.Background()
 	w, h := u.s.Size()
 	u.dirListHeight = h - 3
@@ -490,8 +490,6 @@ func (u *UI) Draw() error {
 	if u.showBox {
 		u.Box()
 	}
-	u.s.Show()
-	return nil
 }
 
 // Move the cursor this many spaces adjusting the viewport as necessary
@@ -901,8 +899,8 @@ func NewUI(f fs.Fs) *UI {
 	}
 }
 
-// Show shows the user interface
-func (u *UI) Show() error {
+// Run shows the user interface
+func (u *UI) Run() error {
 	var err error
 	u.s, err = tcell.NewScreen()
 	if err != nil {
@@ -947,10 +945,6 @@ func (u *UI) Show() error {
 	// Main loop, waiting for events and channels
 outer:
 	for {
-		err := u.Draw()
-		if err != nil {
-			return fmt.Errorf("draw failed: %w", err)
-		}
 		select {
 		case root := <-rootChan:
 			u.root = root
@@ -961,16 +955,14 @@ outer:
 			}
 			u.listing = false
 		case <-updated:
-			// redraw
 			// TODO: might want to limit updates per second
 			u.sortCurrentDir()
 		case ev := <-events:
 			switch ev := ev.(type) {
 			case *tcell.EventResize:
-				if u.root != nil {
-					u.sortCurrentDir() // redraw
-				}
+				u.Draw()
 				u.s.Sync()
+				continue // don't draw again
 			case *tcell.EventKey:
 				var c rune
 				if k := ev.Key(); k == tcell.KeyRune {
@@ -1049,11 +1041,15 @@ outer:
 				// Refresh the screen. Not obvious what key to map
 				// this onto, but ^L is a common choice.
 				case key(tcell.KeyCtrlL):
+					u.Draw()
 					u.s.Sync()
+					continue // don't draw again
 				}
 			}
 		}
-		// listen to key presses, etc.
+
+		u.Draw()
+		u.s.Show()
 	}
 	return nil
 }
