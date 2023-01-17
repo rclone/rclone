@@ -17,8 +17,10 @@ type WalkFunc func(error) bool
 // The next error in the chain is determined by the following rules:
 //
 //		the return value of this method is used.
-//	  - If the current error has a `Unwrap() error` method (golang.org/x/xerrors),
+//	  - If the current error has a `Unwrap() error` method
 //	    the return value of this method is used.
+//	  - If the current error has a `Unwrap() []error` method
+//	    the return values of this method is used.
 //	  - Common errors in the Go runtime that contain an Err field will use this value.
 func Walk(err error, f WalkFunc) {
 	for prev := err; err != nil; prev = err {
@@ -27,6 +29,11 @@ func Walk(err error, f WalkFunc) {
 		}
 
 		switch e := err.(type) {
+		case multiWrapper:
+			for _, err = range e.Unwrap() {
+				Walk(err, f)
+			}
+			return
 		case causer:
 			err = e.Cause()
 		case wrapper:
@@ -61,4 +68,7 @@ type causer interface {
 }
 type wrapper interface {
 	Unwrap() error
+}
+type multiWrapper interface {
+	Unwrap() []error
 }
