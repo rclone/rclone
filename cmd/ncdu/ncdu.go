@@ -19,6 +19,7 @@ import (
 	"github.com/rclone/rclone/cmd/ncdu/scan"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/fspath"
+	"github.com/rclone/rclone/fs/log"
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/rivo/uniseg"
 	"github.com/spf13/cobra"
@@ -911,6 +912,28 @@ func (u *UI) Show() error {
 	if err != nil {
 		return fmt.Errorf("screen init: %w", err)
 	}
+
+	// Hijack fs.LogPrint so that it doesn't corrupt the screen.
+	if logPrint := fs.LogPrint; !log.Redirected() {
+		type log struct {
+			text  string
+			level fs.LogLevel
+		}
+		var logs []log
+		fs.LogPrint = func(level fs.LogLevel, text string) {
+			if len(logs) > 100 {
+				logs = logs[len(logs)-100:]
+			}
+			logs = append(logs, log{level: level, text: text})
+		}
+		defer func() {
+			fs.LogPrint = logPrint
+			for i := range logs {
+				logPrint(logs[i].level, logs[i].text)
+			}
+		}()
+	}
+
 	defer u.s.Fini()
 
 	// scan the disk in the background
