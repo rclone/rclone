@@ -183,7 +183,7 @@ func TestNewRemoteName(t *testing.T) {
 	config.ReadLine = makeReadLine([]string{
 		"test",           // already exists
 		"",               // empty string not allowed
-		"bad@characters", // bad characters
+		"bad^characters", // bad characters
 		"newname",        // OK
 	})
 
