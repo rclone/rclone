@@ -2,6 +2,8 @@ package mountlib
 
 import (
 	"fmt"
+	"io"
+	"os"
 	"path/filepath"
 	"runtime"
 	"strings"
@@ -82,6 +84,26 @@ func (m *MountPoint) CheckAllowed() error {
 		return CheckMountEmpty(m.MountPoint)
 	}
 	return nil
+}
+
+// checkMountEmpty checks if mountpoint folder is empty by listing it.
+func checkMountEmpty(mountpoint string) error {
+	fp, err := os.Open(mountpoint)
+	if err != nil {
+		return fmt.Errorf("cannot open: %s: %w", mountpoint, err)
+	}
+	defer fs.CheckClose(fp, &err)
+
+	_, err = fp.Readdirnames(1)
+	if err == io.EOF {
+		return nil
+	}
+
+	const msg = "%q is not empty, use --allow-non-empty to mount anyway"
+	if err == nil {
+		return fmt.Errorf(msg, mountpoint)
+	}
+	return fmt.Errorf(msg+": %w", mountpoint, err)
 }
 
 // SetVolumeName with sensible default

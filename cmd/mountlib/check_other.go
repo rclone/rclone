@@ -4,33 +4,13 @@
 package mountlib
 
 import (
-	"fmt"
-	"io"
-	"os"
 	"time"
-
-	"github.com/rclone/rclone/fs"
 )
 
 // CheckMountEmpty checks if mountpoint folder is empty.
 // On non-Linux unixes we list directory to ensure that.
 func CheckMountEmpty(mountpoint string) error {
-	fp, err := os.Open(mountpoint)
-	if err != nil {
-		return fmt.Errorf("cannot open: %s: %w", mountpoint, err)
-	}
-	defer fs.CheckClose(fp, &err)
-
-	_, err = fp.Readdirnames(1)
-	if err == io.EOF {
-		return nil
-	}
-
-	const msg = "directory is not empty, use --allow-non-empty to mount anyway: %s"
-	if err == nil {
-		return fmt.Errorf(msg, mountpoint)
-	}
-	return fmt.Errorf(msg+": %w", mountpoint, err)
+	return checkMountEmpty(mountpoint)
 }
 
 // CheckMountReady should check if mountpoint is mounted by rclone.
