@@ -95,9 +95,6 @@ func mountOptions(fsys *FS, f fs.Fs, opt *mountlib.Options) (mountOpts *fuse.Mou
 	}
 	var opts []string
 	// FIXME doesn't work opts = append(opts, fmt.Sprintf("max_readahead=%d", maxReadAhead))
-	if fsys.opt.AllowNonEmpty {
-		opts = append(opts, "nonempty")
-	}
 	if fsys.opt.AllowOther {
 		opts = append(opts, "allow_other")
 	}

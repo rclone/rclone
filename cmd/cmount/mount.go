@@ -84,9 +84,6 @@ func mountOptions(VFS *vfs.VFS, device string, mountpoint string, opt *mountlib.
 		if opt.DaemonTimeout != 0 {
 			options = append(options, "-o", fmt.Sprintf("daemon_timeout=%d", int(opt.DaemonTimeout.Seconds())))
 		}
-		if opt.AllowNonEmpty {
-			options = append(options, "-o", "nonempty")
-		}
 		if opt.AllowOther {
 			options = append(options, "-o", "allow_other")
 		}

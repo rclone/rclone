@@ -34,9 +34,6 @@ func mountOptions(VFS *vfs.VFS, device string, opt *mountlib.Options) (options [
 	if opt.AsyncRead {
 		options = append(options, fuse.AsyncRead())
 	}
-	if opt.AllowNonEmpty {
-		options = append(options, fuse.AllowNonEmptyMount())
-	}
 	if opt.AllowOther {
 		options = append(options, fuse.AllowOther())
 	}
