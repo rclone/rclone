@@ -57,6 +57,7 @@ var DefaultOpt = Options{
 	NoAppleDouble: true,            // use noappledouble by default
 	NoAppleXattr:  false,           // do not use noapplexattr by default
 	AsyncRead:     true,            // do async reads by default
+	NetworkMode:   true,            // use network mode by default (Windows only)
 }
 
 type (

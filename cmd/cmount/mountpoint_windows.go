@@ -111,7 +111,7 @@ func handleLocalMountpath(f fs.Fs, mountpath string, opt *mountlib.Options) (str
 		// Drive letter string can be used as is, since we have already checked it does not exist,
 		// but directory path needs more checks.
 		if opt.NetworkMode {
-			fs.Errorf(nil, "Ignoring --network-mode as it is not supported with directory mountpoint")
+			fs.Debugf(nil, "Ignoring --network-mode as it is not supported with directory mountpoint")
 			opt.NetworkMode = false
 		}
 		var err error
