@@ -338,7 +338,7 @@ Will get their own names
 ### Valid remote names
 
 Remote names are case sensitive, and must adhere to the following rules:
- - May contain number, letter, `_`, `-`, `.` and space.
+ - May contain number, letter, `_`, `-`, `.`, `+`, `@` and space.
  - May not start with `-` or space.
  - May not end with space.
 

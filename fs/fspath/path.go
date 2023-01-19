@@ -13,12 +13,12 @@ import (
 )
 
 const (
-	configNameRe              = `[\w\p{L}\p{N}.]+(?:[ -]+[\w\p{L}\p{N}.-]+)*` // May contain Unicode numbers and letters, as well as `_`, `-`, `.` and space, but not start with `-` (it complicates usage, see #4261) or space, and not end with space
-	illegalPartOfConfigNameRe = `^[ -]+|[^\w\p{L}\p{N}. -]+|[ ]+$`
+	configNameRe              = `[\w\p{L}\p{N}.+@]+(?:[ -]+[\w\p{L}\p{N}.+@-]+)*` // May contain Unicode numbers and letters, as well as `_` (covered by \w), `-`, `.`, `+`, `@` and space, but not start with `-` (it complicates usage, see #4261) or space, and not end with space
+	illegalPartOfConfigNameRe = `^[ -]+|[^\w\p{L}\p{N}.+@ -]+|[ ]+$`
 )
 
 var (
-	errInvalidCharacters = errors.New("config name contains invalid characters - may only contain numbers, letters, `_`, `-`, `.` and space, while not start with `-` or space, and not end with space")
+	errInvalidCharacters = errors.New("config name contains invalid characters - may only contain numbers, letters, `_`, `-`, `.`, `+`, `@` and space, while not start with `-` or space, and not end with space")
 	errCantBeEmpty       = errors.New("can't use empty string as a path")
 	errBadConfigParam    = errors.New("config parameters may only contain `0-9`, `A-Z`, `a-z` and `_`")
 	errEmptyConfigParam  = errors.New("config parameters can't be empty")
