@@ -65,8 +65,8 @@ a bucket or with a bucket and path.
 	Long: `This command removes unfinished multipart uploads of age greater than
 max-age which defaults to 24 hours.
 
-Note that you can use -i/--dry-run with this command to see what it
-would do.
+Note that you can use --interactive/-i or --dry-run with this command to see what
+it would do.
 
     rclone backend cleanup oos:bucket/path/to/object
     rclone backend cleanup -o max-age=7w oos:bucket/path/to/object

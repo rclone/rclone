@@ -8,7 +8,7 @@ versionIntroduced: "v0.91"
 
 Local paths are specified as normal filesystem paths, e.g. `/path/to/wherever`, so
 
-    rclone sync -i /home/source /tmp/destination
+    rclone sync --interactive /home/source /tmp/destination
 
 Will sync `/home/source` to `/tmp/destination`.
 

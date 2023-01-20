@@ -389,7 +389,7 @@ Use the `size` command to print the total size of objects in a bucket or a folde
 Use the `sync` command to sync the source to the destination,
 changing the destination only, deleting any excess files.
 
-    rclone sync -i --progress /home/local/directory/ remote:bucket/path/to/dir/
+    rclone sync --interactive --progress /home/local/directory/ remote:bucket/path/to/dir/
 
 The `--progress` flag is for displaying progress information.
 Remove it if you don't need this information.
@@ -399,15 +399,15 @@ to see exactly what would be copied and deleted.
 
 The sync can be done also from Storj to the local file system.
 
-    rclone sync -i --progress remote:bucket/path/to/dir/ /home/local/directory/
+    rclone sync --interactive --progress remote:bucket/path/to/dir/ /home/local/directory/
 
 Or between two Storj buckets.
 
-    rclone sync -i --progress remote-us:bucket/path/to/dir/ remote-europe:bucket/path/to/dir/
+    rclone sync --interactive --progress remote-us:bucket/path/to/dir/ remote-europe:bucket/path/to/dir/
 
 Or even between another cloud storage and Storj.
 
-    rclone sync -i --progress s3:bucket/path/to/dir/ storj:bucket/path/to/dir/
+    rclone sync --interactive --progress s3:bucket/path/to/dir/ storj:bucket/path/to/dir/
 
 ## Limitations
 

@@ -109,7 +109,7 @@ List the contents of a directory
 Sync `/home/local/directory` to the remote directory, deleting any
 excess files in the directory.
 
-    rclone sync -i /home/local/directory remote:directory
+    rclone sync --interactive /home/local/directory remote:directory
 
 Mount the remote path `/srv/www-data/` to the local path
 `/mnt/www-data`
