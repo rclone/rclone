@@ -723,7 +723,7 @@ and `-v` first.
 In conjunction with `rclone sync`, `--delete-excluded` deletes any files
 on the destination which are excluded from the command.
 
-E.g. the scope of `rclone sync -i A: B:` can be restricted:
+E.g. the scope of `rclone sync --interactive A: B:` can be restricted:
 
     rclone --min-size 50k --delete-excluded sync A: B:
 

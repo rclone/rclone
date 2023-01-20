@@ -21,7 +21,7 @@ unless `--no-create` or `--recursive` is provided.
 
 If `--recursive` is used then recursively sets the modification
 time on all existing files that is found under the path. Filters are supported,
-and you can test with the `--dry-run` or the `--interactive` flag.
+and you can test with the `--dry-run` or the `--interactive`/`-i` flag.
 
 If `--timestamp` is used then sets the modification time to that
 time instead of the current time. Times may be specified as one of:

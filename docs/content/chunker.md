@@ -257,7 +257,7 @@ style or chunk naming scheme is to:
 - Create another directory (most probably on the same cloud storage)
   and configure a new remote with desired metadata format,
   hash type, chunk naming etc.
-- Now run `rclone sync -i oldchunks: newchunks:` and all your data
+- Now run `rclone sync --interactive oldchunks: newchunks:` and all your data
   will be transparently converted in transfer.
   This may take some time, yet chunker will try server-side
   copy if possible.

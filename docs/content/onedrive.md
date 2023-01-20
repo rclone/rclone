@@ -629,11 +629,11 @@ OneDrive supports `rclone cleanup` which causes rclone to look through
 every file under the path supplied and delete all version but the
 current version. Because this involves traversing all the files, then
 querying each file for versions it can be quite slow. Rclone does
-`--checkers` tests in parallel. The command also supports `-i` which
-is a great way to see what it would do.
+`--checkers` tests in parallel. The command also supports `--interactive`/`i`
+or `--dry-run` which is a great way to see what it would do.
 
-    rclone cleanup -i remote:path/subdir # interactively remove all old version for path/subdir
-    rclone cleanup remote:path/subdir    # unconditionally remove all old version for path/subdir
+    rclone cleanup --interactive remote:path/subdir # interactively remove all old version for path/subdir
+    rclone cleanup remote:path/subdir               # unconditionally remove all old version for path/subdir
 
 **NB** Onedrive personal can't currently delete versions
 

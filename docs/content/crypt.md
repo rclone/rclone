@@ -662,7 +662,7 @@ as `eremote:`.
 
 To sync the two remotes you would do
 
-    rclone sync -i remote:crypt remote2:crypt
+    rclone sync --interactive remote:crypt remote2:crypt
 
 And to check the integrity you would do
 

@@ -117,7 +117,7 @@ List the contents of an album
 Sync `/home/local/images` to the Google Photos, removing any excess
 files in the album.
 
-    rclone sync -i /home/local/image remote:album/newAlbum
+    rclone sync --interactive /home/local/image remote:album/newAlbum
 
 ### Layout
 

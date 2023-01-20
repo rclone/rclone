@@ -28,7 +28,7 @@ List the contents of a item
 Sync `/home/local/directory` to the remote item, deleting any excess
 files in the item.
 
-    rclone sync -i /home/local/directory remote:item
+    rclone sync --interactive /home/local/directory remote:item
 
 ## Notes
 Because of Internet Archive's architecture, it enqueues write operations (and extra post-processings) in a per-item queue. You can check item's queue at https://catalogd.archive.org/history/item-name-here . Because of that, all uploads/deletes will not show up immediately and takes some time to be available.

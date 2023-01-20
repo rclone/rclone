@@ -36,7 +36,7 @@ want to delete files from destination, use the
 **Important**: Since this can cause data loss, test first with the
 ` + "`--dry-run` or the `--interactive`/`-i`" + ` flag.
 
-    rclone sync -i SOURCE remote:DESTINATION
+    rclone sync --interactive SOURCE remote:DESTINATION
 
 Note that files in the destination won't be deleted if there were any
 errors at any point.  Duplicate objects (files with the same name, on

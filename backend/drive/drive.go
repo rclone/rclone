@@ -3322,9 +3322,9 @@ This takes an optional directory to trash which make this easier to
 use via the API.
 
     rclone backend untrash drive:directory
-    rclone backend -i untrash drive:directory subdir
+    rclone backend --interactive untrash drive:directory subdir
 
-Use the -i flag to see what would be restored before restoring it.
+Use the --interactive/-i or --dry-run flag to see what would be restored before restoring it.
 
 Result:
 
@@ -3354,7 +3354,7 @@ component will be used as the file name.
 If the destination is a drive backend then server-side copying will be
 attempted if possible.
 
-Use the -i flag to see what would be copied before copying.
+Use the --interactive/-i or --dry-run flag to see what would be copied before copying.
 `,
 }, {
 	Name:  "exportformats",
