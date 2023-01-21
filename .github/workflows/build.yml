@@ -15,12 +15,14 @@ on:
   workflow_dispatch:
     inputs:
       manual:
+        description: Manual run (bypass default conditions)
+        type: boolean
         required: true
         default: true
 
 jobs:
   build:
-    if: ${{ github.repository == 'rclone/rclone' || github.event.inputs.manual }}
+    if: ${{ github.repository == 'rclone/rclone' || github.event.inputs.manual == 'true' }}
     timeout-minutes: 60
     strategy:
       fail-fast: false
@@ -218,7 +220,7 @@ jobs:
         if: matrix.deploy && github.head_ref == '' && github.repository == 'rclone/rclone'
 
   lint:
-    if: ${{ github.repository == 'rclone/rclone' || github.event.inputs.manual }}
+    if: ${{ github.repository == 'rclone/rclone' || github.event.inputs.manual == 'true' }}
     timeout-minutes: 30
     name: "lint"
     runs-on: ubuntu-latest
@@ -247,7 +249,7 @@ jobs:
         run: govulncheck ./...
 
   android:
-    if: ${{ github.repository == 'rclone/rclone' || github.event.inputs.manual }}
+    if: ${{ github.repository == 'rclone/rclone' || github.event.inputs.manual == 'true' }}
     timeout-minutes: 30
     name: "android-all"
     runs-on: ubuntu-latest
