@@ -14,6 +14,7 @@ import (
 	"io"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/rclone/rclone/backend/b2/api"
 	"github.com/rclone/rclone/fs"
@@ -21,6 +22,7 @@ import (
 	"github.com/rclone/rclone/fs/chunksize"
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/lib/atexit"
+	"github.com/rclone/rclone/lib/pool"
 	"github.com/rclone/rclone/lib/rest"
 	"golang.org/x/sync/errgroup"
 )
@@ -428,18 +430,47 @@ func (up *largeUpload) Upload(ctx context.Context) (err error) {
 	defer atexit.OnError(&err, func() { _ = up.cancel(ctx) })()
 	fs.Debugf(up.o, "Starting %s of large file in %d chunks (id %q)", up.what, up.parts, up.id)
 	var (
-		g, gCtx   = errgroup.WithContext(ctx)
-		remaining = up.size
+		g, gCtx    = errgroup.WithContext(ctx)
+		remaining  = up.size
+		uploadPool *pool.Pool
+		ci         = fs.GetConfig(ctx)
 	)
+	// If using large chunk size then make a temporary pool
+	if up.chunkSize <= int64(up.f.opt.ChunkSize) {
+		uploadPool = up.f.pool
+	} else {
+		uploadPool = pool.New(
+			time.Duration(up.f.opt.MemoryPoolFlushTime),
+			int(up.chunkSize),
+			ci.Transfers,
+			up.f.opt.MemoryPoolUseMmap,
+		)
+		defer uploadPool.Flush()
+	}
+	// Get an upload token and a buffer
+	getBuf := func() (buf []byte) {
+		up.f.getBuf(true)
+		if !up.doCopy {
+			buf = uploadPool.Get()
+		}
+		return buf
+	}
+	// Put an upload token and a buffer
+	putBuf := func(buf []byte) {
+		if !up.doCopy {
+			uploadPool.Put(buf)
+		}
+		up.f.putBuf(nil, true)
+	}
 	g.Go(func() error {
 		for part := int64(1); part <= up.parts; part++ {
 			// Get a block of memory from the pool and token which limits concurrency.
-			buf := up.f.getBuf(up.doCopy)
+			buf := getBuf()
 
 			// Fail fast, in case an errgroup managed function returns an error
 			// gCtx is cancelled. There is no point in uploading all the other parts.
 			if gCtx.Err() != nil {
-				up.f.putBuf(buf, up.doCopy)
+				putBuf(buf)
 				return nil
 			}
 
@@ -453,14 +484,14 @@ func (up *largeUpload) Upload(ctx context.Context) (err error) {
 				buf = buf[:reqSize]
 				_, err = io.ReadFull(up.in, buf)
 				if err != nil {
-					up.f.putBuf(buf, up.doCopy)
+					putBuf(buf)
 					return err
 				}
 			}
 
 			part := part // for the closure
 			g.Go(func() (err error) {
-				defer up.f.putBuf(buf, up.doCopy)
+				defer putBuf(buf)
 				if !up.doCopy {
 					err = up.transferChunk(gCtx, part, buf)
 				} else {
