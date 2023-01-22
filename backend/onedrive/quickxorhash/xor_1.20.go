@@ -1,4 +1,4 @@
-//go:build 1.20 || 1.21 || 1.22
+//go:build go1.20
 
 package quickxorhash
 
