@@ -16,7 +16,7 @@ versionIntroduced: "v1.58"
 - For successive sync runs, leave off the `--resync` flag.
 - Consider using a [filters file](#filtering) for excluding
   unnecessary files and directories from the sync.
-- Consider setting up the [--check-access](#check-access-option) feature
+- Consider setting up the [--check-access](#check-access) feature
   for safety.
 - On Linux, consider setting up a [crontab entry](#cron). bisync can
   safely run in concurrent cron jobs thanks to lock files it maintains.
