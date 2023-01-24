@@ -40,8 +40,9 @@ var (
 
 // Options config options for our backend
 type Options struct {
-	Token string `config:"token"`
-	URL   string `config:"url"`
+	Token     string `config:"token"`
+	URL       string `config:"url"`
+	UploadUrl string `config:"uploadUrl"`
 }
 
 // Fs represents a remote estuary server
@@ -55,7 +56,6 @@ type Fs struct {
 	client         *rest.Client
 	pacer          *fs.Pacer
 	dirCache       *dircache.DirCache
-	viewer         *viewerResponse
 }
 
 // Object describes an estuary object
@@ -115,6 +115,10 @@ func init() {
 			Name:    "url",
 			Help:    "Estuary URL",
 			Default: "https://api.estuary.tech",
+		}, {
+			Name:    "uploadUrl",
+			Help:    "Estuary Upload URL",
+			Default: "https://upload.estuary.tech",
 		}},
 	})
 
@@ -203,14 +207,6 @@ func newFs(ctx context.Context, name string, root string, m configmap.Mapper) (i
 		f.client.SetHeader("Authorization", "Bearer "+f.opt.Token)
 	}
 
-	var viewer viewerResponse
-
-	if viewer, err = f.fetchViewer(ctx); err != nil {
-		fs.Errorf(f, "Can't fetch viewer information for this user")
-		return nil, err
-	}
-
-	f.viewer = &viewer
 	f.dirCache = dircache.New(root, "", f)
 
 	err = f.dirCache.FindRoot(ctx, false)
@@ -670,6 +666,8 @@ func (o *Object) upload(ctx context.Context, in io.Reader, leaf, dirID string, s
 
 	opts := rest.Opts{
 		Method:               "POST",
+		Path:                 "/content/add",
+		RootURL:              o.fs.opt.UploadUrl,
 		Body:                 in,
 		MultipartContentName: "data",
 		MultipartFileName:    leaf,

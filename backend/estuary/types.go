@@ -16,16 +16,6 @@ type userSettings struct {
 	Flags                 int           `json:"flags"`
 }
 
-type viewerResponse struct {
-	Username   string       `json:"username"`
-	Perms      int          `json:"perms"`
-	ID         uint         `json:"id"`
-	Address    string       `json:"address,omitempty"`
-	Miners     []string     `json:"miners,omitempty"`
-	AuthExpiry time.Time    `json:"auth_expiry,omitempty"`
-	Settings   userSettings `json:"settings"`
-}
-
 type collectionCreate struct {
 	Name        string `json:"name"`
 	Description string `json:"description"`
