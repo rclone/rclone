@@ -237,15 +237,14 @@ func NewMountCommand(commandName string, hidden bool, mount MountFn) *cobra.Comm
 
 // Mount the remote at mountpoint
 func (m *MountPoint) Mount() (daemon *os.Process, err error) {
-	if err = m.CheckOverlap(); err != nil {
-		return nil, err
-	}
 
-	if err = m.CheckAllowed(); err != nil {
-		return nil, err
+	// Ensure sensible defaults
+	if m.MountOpt.VolumeName == "" {
+		m.MountOpt.VolumeName = fs.ConfigString(m.Fs)
 	}
-	m.SetVolumeName(m.MountOpt.VolumeName)
-	m.SetDeviceName(m.MountOpt.DeviceName)
+	if m.MountOpt.DeviceName == "" {
+		m.MountOpt.DeviceName = fs.ConfigString(m.Fs)
+	}
 
 	// Start background task if --daemon is specified
 	if m.MountOpt.Daemon {

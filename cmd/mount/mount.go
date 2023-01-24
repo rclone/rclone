@@ -69,9 +69,17 @@ func mountOptions(VFS *vfs.VFS, device string, opt *mountlib.Options) (options [
 // returns an error, and an error channel for the serve process to
 // report an error when fusermount is called.
 func mount(VFS *vfs.VFS, mountpoint string, opt *mountlib.Options) (<-chan error, func() error, error) {
+	f := VFS.Fs()
 	if runtime.GOOS == "darwin" {
 		fs.Logf(nil, "macOS users: please try \"rclone cmount\" as it will be the default in v1.54")
 	}
+	if err := mountlib.CheckOverlap(f, mountpoint); err != nil {
+		return nil, nil, err
+	}
+	if err := mountlib.CheckAllowNonEmpty(mountpoint, opt); err != nil {
+		return nil, nil, err
+	}
+	fs.Debugf(f, "Mounting on %q", mountpoint)
 
 	if opt.DebugFUSE {
 		fuse.Debug = func(msg interface{}) {
@@ -79,8 +87,6 @@ func mount(VFS *vfs.VFS, mountpoint string, opt *mountlib.Options) (<-chan error
 		}
 	}
 
-	f := VFS.Fs()
-	fs.Debugf(f, "Mounting on %q", mountpoint)
 	c, err := fuse.Mount(mountpoint, mountOptions(VFS, opt.DeviceName, opt)...)
 	if err != nil {
 		return nil, nil, err
