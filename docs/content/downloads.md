@@ -24,6 +24,10 @@ See the [install](https://rclone.org/install/) documentation for more details.
 
 You can also find a [mirror of the downloads on GitHub](https://github.com/rclone/rclone/releases/tag/{{< version >}}).
 
+See also [Android builds](https://beta.rclone.org/{{% version %}}/testbuilds/).
+These are built as part of the official release, but haven't been
+adopted as first class builds yet.
+
 ## Script download and install ##
 
 To install rclone on Linux/macOS/BSD systems, run:
