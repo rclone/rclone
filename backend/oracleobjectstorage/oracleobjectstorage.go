@@ -64,14 +64,18 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	if err != nil {
 		return nil, err
 	}
-	p := pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant))
+	pc := fs.NewPacer(ctx, pacer.NewS3(pacer.MinSleep(minSleep)))
+	// Set pacer retries to 2 (1 try and 1 retry) because we are
+	// relying on SDK retry mechanism, but we allow 2 attempts to
+	// retry directory listings after XMLSyntaxError
+	pc.SetRetries(2)
 	f := &Fs{
 		name:  name,
 		opt:   *opt,
 		ci:    ci,
 		srv:   objectStorageClient,
 		cache: bucket.NewCache(),
-		pacer: fs.NewPacer(ctx, p),
+		pacer: pc,
 	}
 	f.setRoot(root)
 	f.features = (&fs.Features{

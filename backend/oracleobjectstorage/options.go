@@ -17,9 +17,7 @@ const (
 	defaultUploadCutoff        = fs.SizeSuffix(200 * 1024 * 1024)
 	defaultUploadConcurrency   = 10
 	maxUploadCutoff            = fs.SizeSuffix(5 * 1024 * 1024 * 1024)
-	minSleep                   = 100 * time.Millisecond
-	maxSleep                   = 5 * time.Minute
-	decayConstant              = 1 // bigger for slower decay, exponential
+	minSleep                   = 10 * time.Millisecond
 	defaultCopyTimeoutDuration = fs.Duration(time.Minute)
 )
 
