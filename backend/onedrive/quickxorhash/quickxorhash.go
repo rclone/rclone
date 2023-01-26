@@ -7,51 +7,40 @@
 // See: https://docs.microsoft.com/en-us/onedrive/developer/code-snippets/quickxorhash
 package quickxorhash
 
-// This code was ported from the code snippet linked from
-// https://docs.microsoft.com/en-us/onedrive/developer/code-snippets/quickxorhash
-// Which has the copyright
+// This code was ported from a fast C-implementation from
+// https://github.com/namazso/QuickXorHash
+// which has licenced as BSD Zero Clause License
+//
+// BSD Zero Clause License
+//
+// Copyright (c) 2022 namazso <admin@namazso.eu>
+//
+// Permission to use, copy, modify, and/or distribute this software for any
+// purpose with or without fee is hereby granted.
+//
+// THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+// REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+// AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+// INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+// LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+// OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+// PERFORMANCE OF THIS SOFTWARE.
 
-// ------------------------------------------------------------------------------
-//  Copyright (c) 2016 Microsoft Corporation
-//
-//  Permission is hereby granted, free of charge, to any person obtaining a copy
-//  of this software and associated documentation files (the "Software"), to deal
-//  in the Software without restriction, including without limitation the rights
-//  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-//  copies of the Software, and to permit persons to whom the Software is
-//  furnished to do so, subject to the following conditions:
-//
-//  The above copyright notice and this permission notice shall be included in
-//  all copies or substantial portions of the Software.
-//
-//  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-//  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-//  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-//  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-//  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-//  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-//  THE SOFTWARE.
-// ------------------------------------------------------------------------------
-
-import (
-	"hash"
-)
+import "hash"
 
 const (
 	// BlockSize is the preferred size for hashing
 	BlockSize = 64
 	// Size of the output checksum
-	Size           = 20
-	bitsInLastCell = 32
-	shift          = 11
-	widthInBits    = 8 * Size
-	dataSize       = (widthInBits-1)/64 + 1
+	Size        = 20
+	shift       = 11
+	widthInBits = 8 * Size
+	dataSize    = shift * widthInBits
 )
 
 type quickXorHash struct {
-	data        [dataSize]uint64
-	lengthSoFar uint64
-	shiftSoFar  int
+	data [dataSize]byte
+	size uint64
 }
 
 // New returns a new hash.Hash computing the quickXorHash checksum.
@@ -70,94 +59,37 @@ func New() hash.Hash {
 //
 // Implementations must not retain p.
 func (q *quickXorHash) Write(p []byte) (n int, err error) {
-	currentshift := q.shiftSoFar
-
-	// The bitvector where we'll start xoring
-	vectorArrayIndex := currentshift / 64
-
-	// The position within the bit vector at which we begin xoring
-	vectorOffset := currentshift % 64
-	iterations := len(p)
-	if iterations > widthInBits {
-		iterations = widthInBits
+	var i int
+	// fill last remain
+	lastRemain := int(q.size) % dataSize
+	if lastRemain != 0 {
+		i += xorBytes(q.data[lastRemain:], p)
 	}
 
-	for i := 0; i < iterations; i++ {
-		isLastCell := vectorArrayIndex == len(q.data)-1
-		var bitsInVectorCell int
-		if isLastCell {
-			bitsInVectorCell = bitsInLastCell
-		} else {
-			bitsInVectorCell = 64
+	if i != len(p) {
+		for len(p)-i >= dataSize {
+			i += xorBytes(q.data[:], p[i:])
 		}
-
-		// There's at least 2 bitvectors before we reach the end of the array
-		if vectorOffset <= bitsInVectorCell-8 {
-			for j := i; j < len(p); j += widthInBits {
-				q.data[vectorArrayIndex] ^= uint64(p[j]) << uint(vectorOffset)
-			}
-		} else {
-			index1 := vectorArrayIndex
-			var index2 int
-			if isLastCell {
-				index2 = 0
-			} else {
-				index2 = vectorArrayIndex + 1
-			}
-			low := byte(bitsInVectorCell - vectorOffset)
-
-			xoredByte := byte(0)
-			for j := i; j < len(p); j += widthInBits {
-				xoredByte ^= p[j]
-			}
-			q.data[index1] ^= uint64(xoredByte) << uint(vectorOffset)
-			q.data[index2] ^= uint64(xoredByte) >> low
-		}
-		vectorOffset += shift
-		for vectorOffset >= bitsInVectorCell {
-			if isLastCell {
-				vectorArrayIndex = 0
-			} else {
-				vectorArrayIndex = vectorArrayIndex + 1
-			}
-			vectorOffset -= bitsInVectorCell
-		}
+		xorBytes(q.data[:], p[i:])
 	}
-
-	// Update the starting position in a circular shift pattern
-	q.shiftSoFar = (q.shiftSoFar + shift*(len(p)%widthInBits)) % widthInBits
-
-	q.lengthSoFar += uint64(len(p))
-
+	q.size += uint64(len(p))
 	return len(p), nil
 }
 
 // Calculate the current checksum
-func (q *quickXorHash) checkSum() (h [Size]byte) {
-	// Output the data as little endian bytes
-	ph := 0
-	for i := 0; i < len(q.data)-1; i++ {
-		d := q.data[i]
-		_ = h[ph+7] // bounds check
-		h[ph+0] = byte(d >> (8 * 0))
-		h[ph+1] = byte(d >> (8 * 1))
-		h[ph+2] = byte(d >> (8 * 2))
-		h[ph+3] = byte(d >> (8 * 3))
-		h[ph+4] = byte(d >> (8 * 4))
-		h[ph+5] = byte(d >> (8 * 5))
-		h[ph+6] = byte(d >> (8 * 6))
-		h[ph+7] = byte(d >> (8 * 7))
-		ph += 8
+func (q *quickXorHash) checkSum() (h [Size + 1]byte) {
+	for i := 0; i < dataSize; i++ {
+		shift := (i * 11) % 160
+		shiftBytes := shift / 8
+		shiftBits := shift % 8
+		shifted := int(q.data[i]) << shiftBits
+		h[shiftBytes] ^= byte(shifted)
+		h[shiftBytes+1] ^= byte(shifted >> 8)
 	}
-	// remaining 32 bits
-	d := q.data[len(q.data)-1]
-	h[Size-4] = byte(d >> (8 * 0))
-	h[Size-3] = byte(d >> (8 * 1))
-	h[Size-2] = byte(d >> (8 * 2))
-	h[Size-1] = byte(d >> (8 * 3))
+	h[0] ^= h[20]
 
 	// XOR the file length with the least significant bits in little endian format
-	d = q.lengthSoFar
+	d := q.size
 	h[Size-8] ^= byte(d >> (8 * 0))
 	h[Size-7] ^= byte(d >> (8 * 1))
 	h[Size-6] ^= byte(d >> (8 * 2))
@@ -174,7 +106,7 @@ func (q *quickXorHash) checkSum() (h [Size]byte) {
 // It does not change the underlying hash state.
 func (q *quickXorHash) Sum(b []byte) []byte {
 	hash := q.checkSum()
-	return append(b, hash[:]...)
+	return append(b, hash[:Size]...)
 }
 
 // Reset resets the Hash to its initial state.
@@ -196,8 +128,10 @@ func (q *quickXorHash) BlockSize() int {
 }
 
 // Sum returns the quickXorHash checksum of the data.
-func Sum(data []byte) [Size]byte {
+func Sum(data []byte) (h [Size]byte) {
 	var d quickXorHash
 	_, _ = d.Write(data)
-	return d.checkSum()
+	s := d.checkSum()
+	copy(h[:], s[:])
+	return h
 }
