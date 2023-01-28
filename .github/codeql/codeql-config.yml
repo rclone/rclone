@@ -2,17 +2,16 @@ name: "Rclone config"
 
 query-filters:
   - exclude:
-      id: go/clear-text-logging
-  - exclude:
-      id: go/path-injection
-  - exclude:
-      id: go/unvalidated-url-redirection
-  - exclude:
-      id: go/xml/xpath-injection
+    - id: cs/log-forging
+    - id: go/clear-text-logging
+    - id: go/path-injection
+    - id: go/request-forgery
+    - id: go/unvalidated-url-redirection
+    - id: go/xml/xpath-injection
   #Uncomment to suppress more potential warnings
-        #- exclude: 
-        #tags contain: 
-        #- security
+  #- exclude: 
+  #    tags contain: 
+  #      - security
         #- exclude:
         #problem.severity:
         #- warning
