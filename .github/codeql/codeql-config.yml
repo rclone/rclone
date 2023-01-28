@@ -1,14 +1,18 @@
-name: "Rclone config"
+name: "Rclone CodeQL Config"
 
 query-filters:
   - exclude:
-    id: 
-      - cs/log-forging
-      - go/clear-text-logging
-      - go/path-injection
-      - go/request-forgery
-      - go/unvalidated-url-redirection
-      - go/xml/xpath-injection
+    id: cs/log-forging
+  - exclude:
+    id: go/clear-text-logging
+  - exclude:
+    id: go/path-injection
+  - exclude: 
+    id: go/request-forgery
+  - exclude:      
+    id: go/unvalidated-url-redirection
+  - exclude:  
+    id: go/xml/xpath-injection
   #Uncomment to suppress more potential warnings
   #- exclude: 
   #    tags contain: 
