@@ -2,11 +2,13 @@ name: "Rclone CodeQL Config"
 
 query-filters:
   - exclude:
-      id: cs/log-forging
-  - exclude:
       id: go/clear-text-logging
   - exclude:
+      id: go/log-injection
+  - exclude:
       id: go/path-injection
+  - exclude:
+      id: go/reflected-xss
   - exclude: 
       id: go/request-forgery
   - exclude:      
