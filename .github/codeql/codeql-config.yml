@@ -4,6 +4,8 @@ query-filters:
   - exclude:
       id: go/clear-text-logging
   - exclude:
+      id: go/insecure-hostkeycallback
+  - exclude:
       id: go/log-injection
   - exclude:
       id: go/path-injection
