@@ -18,7 +18,7 @@ func (x *FileMode) String() string {
 
 // Set a FileMode
 func (x *FileMode) Set(s string) error {
-	i, err := strconv.ParseInt(s, 8, 64)
+	i, err := strconv.ParseInt(s, 8, 32)
 	if err != nil {
 		return fmt.Errorf("bad FileMode - must be octal digits: %w", err)
 	}
