@@ -712,6 +712,7 @@ func (f *Fs) listAll(ctx context.Context, dir string, directoriesOnly bool, file
 			continue
 		}
 		subPath := u.Path[len(baseURL.Path):]
+		subPath = strings.TrimPrefix(subPath, "/") // ignore leading / here for davrods
 		if f.opt.Enc != encoder.EncodeZero {
 			subPath = f.opt.Enc.ToStandardPath(subPath)
 		}
