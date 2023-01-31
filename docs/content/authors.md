@@ -680,3 +680,4 @@ put them back in again.` >}}
   * alankrit <alankrit@google.com>
   * Bryan Kaplan <#@bryankaplan.com>
   * LXY <767763591@qq.com>
+  * Simmon Li (he/him) <li.simmon@gmail.com>
