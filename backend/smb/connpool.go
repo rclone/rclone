@@ -81,7 +81,7 @@ func (c *conn) closed() bool {
 		// list the shares
 		_, nopErr = c.smbSession.ListSharenames()
 	}
-	return nopErr == nil
+	return nopErr != nil
 }
 
 // Show that we are using a SMB session
