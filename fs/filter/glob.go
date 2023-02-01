@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"regexp"
 	"strings"
+
+	"github.com/rclone/rclone/fs"
 )
 
 // GlobToRegexp converts an rsync style glob to a regexp
@@ -175,6 +177,7 @@ var (
 func globToDirGlobs(glob string) (out []string) {
 	if tooHardRe.MatchString(glob) {
 		// Can't figure this one out so return any directory might match
+		fs.Infof(nil, "Can't figure out directory filters from %q: looking in all directories", glob)
 		out = append(out, "/**")
 		return out
 	}
