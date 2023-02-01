@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/lib/rest"
 )
 
@@ -123,12 +122,7 @@ func (o *Object) addContent(ctx context.Context, opts rest.Opts) (result content
 
 	var response *http.Response
 	err = o.fs.pacer.Call(func() (bool, error) {
-
 		response, err = o.fs.client.CallJSON(ctx, &opts, nil, &result)
-		if contentAddingDisabled(response, err) {
-			fs.Debugf(o, "failed upload, retrying")
-			return true, err
-		}
 
 		return shouldRetry(ctx, response, err)
 	})
