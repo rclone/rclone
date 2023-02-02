@@ -2989,6 +2989,15 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		GetTier:           true,
 		SlowModTime:       true,
 	}).Fill(ctx, f)
+	if opt.Provider == "Storj" {
+		f.features.SetTier = false
+		f.features.GetTier = false
+	}
+	if opt.Provider == "IDrive" {
+		f.features.SetTier = false
+	}
+	// f.listMultipartUploads()
+
 	if f.rootBucket != "" && f.rootDirectory != "" && !opt.NoHeadObject && !strings.HasSuffix(root, "/") {
 		// Check to see if the (bucket,directory) is actually an existing file
 		oldRoot := f.root
@@ -3003,14 +3012,6 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		// return an error with an fs which points to the parent
 		return f, fs.ErrorIsFile
 	}
-	if opt.Provider == "Storj" {
-		f.features.SetTier = false
-		f.features.GetTier = false
-	}
-	if opt.Provider == "IDrive" {
-		f.features.SetTier = false
-	}
-	// f.listMultipartUploads()
 	return f, nil
 }
 
