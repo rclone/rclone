@@ -1,11 +1,9 @@
 package estuary_test
 
 import (
-	"testing"
-
 	"github.com/rclone/rclone/backend/estuary"
-
 	"github.com/rclone/rclone/fstest/fstests"
+	"testing"
 )
 
 // TestIntegration runs integration tests against the remote
