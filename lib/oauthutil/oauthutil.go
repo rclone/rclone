@@ -13,7 +13,8 @@ import (
 	"strings"
 	"sync"
 	"time"
-
+	"os"
+	
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fs/config/configmap"
@@ -22,6 +23,11 @@ import (
 	"github.com/rclone/rclone/lib/random"
 	"github.com/skratchdot/open-golang/open"
 	"golang.org/x/oauth2"
+)
+
+var (
+	TemplatePath string
+	templateString string
 )
 
 const (
@@ -587,6 +593,19 @@ version recommended):
 		}
 		return fs.ConfigGoto(newState("*oauth-done"))
 	case "*oauth-do":
+		// Make sure we can read the HTML template file if it was specified.
+		if len(TemplatePath) > 0 {
+			dat, err := os.ReadFile(TemplatePath)
+
+			if err != nil {
+				return nil, fmt.Errorf("Failed to read template file: %w", err)
+			} else {
+				templateString = string(dat)
+			}
+		} else {
+			templateString = AuthResponseTemplate
+		}
+
 		code := in.Result
 		opt, err := getOAuth()
 		if err != nil {
@@ -755,7 +774,7 @@ func (s *authServer) handleAuth(w http.ResponseWriter, req *http.Request) {
 	reply := func(status int, res *AuthResult) {
 		w.WriteHeader(status)
 		w.Header().Set("Content-Type", "text/html")
-		var t = template.Must(template.New("authResponse").Parse(AuthResponseTemplate))
+		var t = template.Must(template.New("authResponse").Parse(templateString))
 		if err := t.Execute(w, res); err != nil {
 			fs.Debugf(nil, "Could not execute template for web response.")
 		}

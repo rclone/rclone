@@ -17,8 +17,12 @@ Remote authorization. Used to authorize a remote or headless
 rclone from a machine with a browser - use as instructed by
 rclone config.
 
-Use the --auth-no-open-browser to prevent rclone to open auth
+Use --auth-no-open-browser to prevent rclone to open auth
 link in default browser automatically.
+
+Use --template to generate HTML output via a custom Go
+template. If a blank string is provided as an argument to
+this flag, the default template is used.
 
 ```
 rclone authorize [flags]
@@ -29,6 +33,7 @@ rclone authorize [flags]
 ```
       --auth-no-open-browser   Do not automatically open auth link in default browser
   -h, --help                   help for authorize
+      --template string        Use a custom Go template for generating HTML responses
 ```
 
 See the [global flags page](/flags/) for global options not listed here.
