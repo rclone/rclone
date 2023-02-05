@@ -26,7 +26,10 @@ import (
 )
 
 var (
+	// TemplatePath is the path to a template file to use in the HTML output of
+	// things such as the `rclone authorize` command.
 	TemplatePath string
+
 	templateString string
 )
 
@@ -598,7 +601,7 @@ version recommended):
 			dat, err := os.ReadFile(TemplatePath)
 
 			if err != nil {
-				return nil, fmt.Errorf("Failed to read template file: %w", err)
+				return nil, fmt.Errorf("failed to read template file: %w", err)
 			} else {
 				templateString = string(dat)
 			}
