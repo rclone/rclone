@@ -652,7 +652,7 @@ and may be set in the config file.
       --storj-api-key string                           API key
       --storj-passphrase string                        Encryption passphrase
       --storj-provider string                          Choose an authentication method (default "existing")
-      --storj-satellite-address string                 Satellite address (default "us-central-1.storj.io")
+      --storj-satellite-address string                 Satellite address (default "us1.storj.io")
       --sugarsync-access-key-id string                 Sugarsync Access Key ID
       --sugarsync-app-id string                        Sugarsync App ID
       --sugarsync-authorization string                 Sugarsync authorization

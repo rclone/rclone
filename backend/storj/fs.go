@@ -32,9 +32,9 @@ const (
 )
 
 var satMap = map[string]string{
-	"us-central-1.storj.io":  "12EayRS2V1kEsWESU9QMRseFhdxYxKicsiFmxrsLZHeLUtdps3S@us-central-1.tardigrade.io:7777",
-	"europe-west-1.storj.io": "12L9ZFwhzVpuEKMUNUqkaTLGzwY9G24tbiigLiXpmZWKwmcNDDs@europe-west-1.tardigrade.io:7777",
-	"asia-east-1.storj.io":   "121RTSDpyNZVcEU84Ticf2L1ntiuUimbWgfATz21tuvgk3vzoA6@asia-east-1.tardigrade.io:7777",
+	"us1.storj.io": "12EayRS2V1kEsWESU9QMRseFhdxYxKicsiFmxrsLZHeLUtdps3S@us1.storj.io:7777",
+	"eu1.storj.io": "12L9ZFwhzVpuEKMUNUqkaTLGzwY9G24tbiigLiXpmZWKwmcNDDs@eu1.storj.io:7777",
+	"ap1.storj.io": "121RTSDpyNZVcEU84Ticf2L1ntiuUimbWgfATz21tuvgk3vzoA6@ap1.storj.io:7777",
 }
 
 // Register with Fs
@@ -106,16 +106,16 @@ func init() {
 				Name:     "satellite_address",
 				Help:     "Satellite address.\n\nCustom satellite address should match the format: `<nodeid>@<address>:<port>`.",
 				Provider: newProvider,
-				Default:  "us-central-1.storj.io",
+				Default:  "us1.storj.io",
 				Examples: []fs.OptionExample{{
-					Value: "us-central-1.storj.io",
-					Help:  "US Central 1",
+					Value: "us1.storj.io",
+					Help:  "US1",
 				}, {
-					Value: "europe-west-1.storj.io",
-					Help:  "Europe West 1",
+					Value: "eu1.storj.io",
+					Help:  "EU1",
 				}, {
-					Value: "asia-east-1.storj.io",
-					Help:  "Asia East 1",
+					Value: "ap1.storj.io",
+					Help:  "AP1",
 				},
 				},
 			},

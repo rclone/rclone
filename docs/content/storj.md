@@ -183,14 +183,14 @@ Choose a number from below, or type in your own value
    \ "new"
 provider> new
 Satellite Address. Custom satellite address should match the format: `<nodeid>@<address>:<port>`.
-Enter a string value. Press Enter for the default ("us-central-1.storj.io").
+Enter a string value. Press Enter for the default ("us1.storj.io").
 Choose a number from below, or type in your own value
- 1 / US Central 1
-   \ "us-central-1.storj.io"
- 2 / Europe West 1
-   \ "europe-west-1.storj.io"
- 3 / Asia East 1
-   \ "asia-east-1.storj.io"
+ 1 / US1
+   \ "us1.storj.io"
+ 2 / EU1
+   \ "eu1.storj.io"
+ 3 / AP1
+   \ "ap1.storj.io"
 satellite_address> 1
 API Key.
 Enter a string value. Press Enter for the default ("").
@@ -202,7 +202,7 @@ Remote config
 --------------------
 [remote]
 type = storj
-satellite_address = 12EayRS2V1kEsWESU9QMRseFhdxYxKicsiFmxrsLZHeLUtdps3S@us-central-1.tardigrade.io:7777
+satellite_address = 12EayRS2V1kEsWESU9QMRseFhdxYxKicsiFmxrsLZHeLUtdps3S@us1.storj.io:7777
 api_key = your-api-key-for-your-storj-project
 passphrase = your-human-readable-encryption-passphrase
 access_grant = the-access-grant-generated-from-the-api-key-and-passphrase
@@ -258,14 +258,14 @@ Properties:
 - Env Var:     RCLONE_STORJ_SATELLITE_ADDRESS
 - Provider:    new
 - Type:        string
-- Default:     "us-central-1.storj.io"
+- Default:     "us1.storj.io"
 - Examples:
-    - "us-central-1.storj.io"
-        - US Central 1
-    - "europe-west-1.storj.io"
-        - Europe West 1
-    - "asia-east-1.storj.io"
-        - Asia East 1
+    - "us1.storj.io"
+        - US1
+    - "eu1.storj.io"
+        - EU1
+    - "ap1.storj.io"
+        - AP1
 
 #### --storj-api-key
 
