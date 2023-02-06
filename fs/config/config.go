@@ -58,6 +58,12 @@ const (
 
 	// ConfigAuthNoBrowser indicates that we do not want to open browser
 	ConfigAuthNoBrowser = "config_auth_no_browser"
+
+	// ConfigTemplate is the template content to be used in the authorization webserver
+	ConfigTemplate = "config_template"
+
+	// ConfigTemplateFile is the path to a template file to read into the value of `ConfigTemplate` above
+	ConfigTemplateFile = "config_template_file"
 )
 
 // Storage defines an interface for loading and saving config to

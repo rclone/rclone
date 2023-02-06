@@ -26,10 +26,7 @@ import (
 )
 
 var (
-	// TemplatePath is the path to a template file to use in the HTML output of
-	// things such as the `rclone authorize` command.
-	TemplatePath string
-
+	// templateString is the template used in the authorization webserver
 	templateString string
 )
 
@@ -58,8 +55,8 @@ const (
 	// redirects to the local webserver
 	RedirectPublicSecureURL = "https://oauth.rclone.org/"
 
-	// AuthResponseTemplate is a template to handle the redirect URL for oauth requests
-	AuthResponseTemplate = `<!DOCTYPE html>
+	// DefaultAuthResponseTemplate is the default template used in the authorization webserver
+	DefaultAuthResponseTemplate = `<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
@@ -597,18 +594,22 @@ version recommended):
 		return fs.ConfigGoto(newState("*oauth-done"))
 	case "*oauth-do":
 		// Make sure we can read the HTML template file if it was specified.
-		if len(TemplatePath) > 0 {
-			dat, err := os.ReadFile(TemplatePath)
+		configTemplateFile, _ := m.Get("config_template_file")
+		configTemplateString, _ := m.Get("config_template")
+
+		if configTemplateFile != "" {
+			dat, err := os.ReadFile(configTemplateFile)
 
 			if err != nil {
 				return nil, fmt.Errorf("failed to read template file: %w", err)
-			} else {
-				templateString = string(dat)
 			}
-		} else {
-			templateString = AuthResponseTemplate
-		}
 
+			templateString = string(dat)
+		} else if configTemplateString != "" {
+			templateString = configTemplateString
+		} else {
+			templateString = DefaultAuthResponseTemplate
+		}
 		code := in.Result
 		opt, err := getOAuth()
 		if err != nil {

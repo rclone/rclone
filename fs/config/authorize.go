@@ -15,7 +15,7 @@ import (
 //	rclone authorize "fs name"
 //	rclone authorize "fs name" "base64 encoded JSON blob"
 //	rclone authorize "fs name" "client id" "client secret"
-func Authorize(ctx context.Context, args []string, noAutoBrowser bool) error {
+func Authorize(ctx context.Context, args []string, noAutoBrowser bool, templateFile string) error {
 	ctx = suppressConfirm(ctx)
 	ctx = fs.ConfigOAuthOnly(ctx)
 	switch len(args) {
@@ -39,6 +39,11 @@ func Authorize(ctx context.Context, args []string, noAutoBrowser bool) error {
 	inM[ConfigAuthorize] = "true"
 	if noAutoBrowser {
 		inM[ConfigAuthNoBrowser] = "true"
+	}
+
+	// Indicate if we specified a custom template via a file
+	if templateFile != "" {
+		inM[ConfigTemplateFile] = templateFile
 	}
 
 	// Add extra parameters if supplied

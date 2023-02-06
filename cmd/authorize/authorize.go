@@ -7,19 +7,19 @@ import (
 	"github.com/rclone/rclone/cmd"
 	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fs/config/flags"
-	"github.com/rclone/rclone/lib/oauthutil"
 	"github.com/spf13/cobra"
 )
 
 var (
 	noAutoBrowser bool
+	template string
 )
 
 func init() {
 	cmd.Root.AddCommand(commandDefinition)
 	cmdFlags := commandDefinition.Flags()
 	flags.BoolVarP(cmdFlags, &noAutoBrowser, "auth-no-open-browser", "", false, "Do not automatically open auth link in default browser")
-	flags.StringVarP(cmdFlags, &oauthutil.TemplatePath, "template", "", "", "Use a custom Go template for generating HTML responses")
+	flags.StringVarP(cmdFlags, &template, "template", "", "", "The path to a custom Go template for generating HTML responses")
 }
 
 var commandDefinition = &cobra.Command{
@@ -39,6 +39,6 @@ Use --template to generate HTML output via a custom Go template. If a blank stri
 	},
 	RunE: func(command *cobra.Command, args []string) error {
 		cmd.CheckArgs(1, 3, command, args)
-		return config.Authorize(context.Background(), args, noAutoBrowser)
+		return config.Authorize(context.Background(), args, noAutoBrowser, template)
 	},
 }
