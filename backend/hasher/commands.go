@@ -161,7 +161,7 @@ func (f *Fs) dbImport(ctx context.Context, hashName, sumRemote string, sticky bo
 			if err := o.putHashes(ctx, hashMap{hashType: hash}); err != nil {
 				fs.Errorf(nil, "%s: failed to import: %v", remote, err)
 			}
-			accounting.Stats(ctx).NewCheckingTransfer(obj).Done(ctx, err)
+			accounting.Stats(ctx).NewCheckingTransfer(obj, "importing").Done(ctx, err)
 			doneCount++
 		}
 	})

@@ -50,6 +50,7 @@ type Transfer struct {
 	size      int64
 	startedAt time.Time
 	checking  bool
+	what      string // what kind of transfer this is
 
 	// Protects all below
 	//
@@ -63,22 +64,23 @@ type Transfer struct {
 }
 
 // newCheckingTransfer instantiates new checking of the object.
-func newCheckingTransfer(stats *StatsInfo, obj fs.DirEntry) *Transfer {
-	return newTransferRemoteSize(stats, obj.Remote(), obj.Size(), true)
+func newCheckingTransfer(stats *StatsInfo, obj fs.DirEntry, what string) *Transfer {
+	return newTransferRemoteSize(stats, obj.Remote(), obj.Size(), true, what)
 }
 
 // newTransfer instantiates new transfer.
 func newTransfer(stats *StatsInfo, obj fs.DirEntry) *Transfer {
-	return newTransferRemoteSize(stats, obj.Remote(), obj.Size(), false)
+	return newTransferRemoteSize(stats, obj.Remote(), obj.Size(), false, "")
 }
 
-func newTransferRemoteSize(stats *StatsInfo, remote string, size int64, checking bool) *Transfer {
+func newTransferRemoteSize(stats *StatsInfo, remote string, size int64, checking bool, what string) *Transfer {
 	tr := &Transfer{
 		stats:     stats,
 		remote:    remote,
 		size:      size,
 		startedAt: time.Now(),
 		checking:  checking,
+		what:      what,
 	}
 	stats.AddTransfer(tr)
 	return tr

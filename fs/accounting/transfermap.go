@@ -110,10 +110,14 @@ func (tm *transferMap) String(ctx context.Context, progress *inProgress, exclude
 		if acc := progress.get(tr.remote); acc != nil {
 			out = acc.String()
 		} else {
+			what := tr.what
+			if what == "" {
+				what = tm.name
+			}
 			out = fmt.Sprintf("%*s: %s",
 				ci.StatsFileNameLength,
 				shortenName(tr.remote, ci.StatsFileNameLength),
-				tm.name,
+				what,
 			)
 		}
 		stringList = append(stringList, " * "+out)

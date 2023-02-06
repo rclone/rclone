@@ -120,7 +120,7 @@ func (c *checkMarch) SrcOnly(src fs.DirEntry) (recurse bool) {
 // check to see if two objects are identical using the check function
 func (c *checkMarch) checkIdentical(ctx context.Context, dst, src fs.Object) (differ bool, noHash bool, err error) {
 	ci := fs.GetConfig(ctx)
-	tr := accounting.Stats(ctx).NewCheckingTransfer(src)
+	tr := accounting.Stats(ctx).NewCheckingTransfer(src, "checking")
 	defer func() {
 		tr.Done(ctx, err)
 	}()
@@ -450,7 +450,7 @@ func (c *checkMarch) checkSum(ctx context.Context, obj fs.Object, download bool,
 	}
 
 	var err error
-	tr := accounting.Stats(ctx).NewCheckingTransfer(obj)
+	tr := accounting.Stats(ctx).NewCheckingTransfer(obj, "hashing")
 	defer tr.Done(ctx, err)
 
 	if !sumFound {

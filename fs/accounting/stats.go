@@ -689,8 +689,8 @@ func (s *StatsInfo) RetryAfter() time.Time {
 }
 
 // NewCheckingTransfer adds a checking transfer to the stats, from the object.
-func (s *StatsInfo) NewCheckingTransfer(obj fs.DirEntry) *Transfer {
-	tr := newCheckingTransfer(s, obj)
+func (s *StatsInfo) NewCheckingTransfer(obj fs.DirEntry, what string) *Transfer {
+	tr := newCheckingTransfer(s, obj, what)
 	s.checking.add(tr)
 	return tr
 }
@@ -720,7 +720,7 @@ func (s *StatsInfo) NewTransfer(obj fs.DirEntry) *Transfer {
 
 // NewTransferRemoteSize adds a transfer to the stats based on remote and size.
 func (s *StatsInfo) NewTransferRemoteSize(remote string, size int64) *Transfer {
-	tr := newTransferRemoteSize(s, remote, size, false)
+	tr := newTransferRemoteSize(s, remote, size, false, "")
 	s.transferring.add(tr)
 	s.startAverageLoop()
 	return tr

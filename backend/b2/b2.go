@@ -1221,7 +1221,7 @@ func (f *Fs) purge(ctx context.Context, dir string, oldOnly bool) error {
 					fs.Errorf(object.Name, "Can't create object %v", err)
 					continue
 				}
-				tr := accounting.Stats(ctx).NewCheckingTransfer(oi)
+				tr := accounting.Stats(ctx).NewCheckingTransfer(oi, "deleting")
 				err = f.deleteByID(ctx, object.ID, object.Name)
 				checkErr(err)
 				tr.Done(ctx, err)
@@ -1235,7 +1235,7 @@ func (f *Fs) purge(ctx context.Context, dir string, oldOnly bool) error {
 			if err != nil {
 				fs.Errorf(object, "Can't create object %+v", err)
 			}
-			tr := accounting.Stats(ctx).NewCheckingTransfer(oi)
+			tr := accounting.Stats(ctx).NewCheckingTransfer(oi, "checking")
 			if oldOnly && last != remote {
 				// Check current version of the file
 				if object.Action == "hide" {

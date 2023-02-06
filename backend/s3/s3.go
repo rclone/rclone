@@ -4542,7 +4542,7 @@ func (f *Fs) purge(ctx context.Context, dir string, oldOnly bool) error {
 			fs.Errorf(object, "Can't create object %+v", err)
 			return nil
 		}
-		tr := accounting.Stats(ctx).NewCheckingTransfer(oi)
+		tr := accounting.Stats(ctx).NewCheckingTransfer(oi, "checking")
 		// Work out whether the file is the current version or not
 		isCurrentVersion := !versioned || !version.Match(remote)
 		fs.Debugf(nil, "%q version %v", remote, version.Match(remote))

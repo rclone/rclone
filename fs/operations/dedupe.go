@@ -286,7 +286,7 @@ func dedupeFindDuplicateDirs(ctx context.Context, f fs.Fs) (duplicateDirs [][]*d
 	ci := fs.GetConfig(ctx)
 	err = walk.ListR(ctx, f, "", false, ci.MaxDepth, walk.ListAll, func(entries fs.DirEntries) error {
 		for _, entry := range entries {
-			tr := accounting.Stats(ctx).NewCheckingTransfer(entry)
+			tr := accounting.Stats(ctx).NewCheckingTransfer(entry, "merging")
 
 			remote := entry.Remote()
 			parentRemote := path.Dir(remote)
@@ -438,7 +438,7 @@ func Deduplicate(ctx context.Context, f fs.Fs, mode DeduplicateMode, byHash bool
 	files := map[string][]fs.Object{}
 	err := walk.ListR(ctx, f, "", false, ci.MaxDepth, walk.ListObjects, func(entries fs.DirEntries) error {
 		entries.ForObject(func(o fs.Object) {
-			tr := accounting.Stats(ctx).NewCheckingTransfer(o)
+			tr := accounting.Stats(ctx).NewCheckingTransfer(o, "checking")
 			defer tr.Done(ctx, nil)
 
 			var remote string

@@ -329,7 +329,7 @@ func (s *syncCopyMove) pairChecker(in *pipe, out *pipe, fraction int, wg *sync.W
 		}
 		src := pair.Src
 		var err error
-		tr := accounting.Stats(s.ctx).NewCheckingTransfer(src)
+		tr := accounting.Stats(s.ctx).NewCheckingTransfer(src, "checking")
 		// Check to see if can store this
 		if src.Storable() {
 			needTransfer := operations.NeedTransfer(s.ctx, pair.Dst, pair.Src)
@@ -779,7 +779,7 @@ func (s *syncCopyMove) makeRenameMap() {
 			for obj := range in {
 				// only create hash for dst fs.Object if its size could match
 				if _, found := possibleSizes[obj.Size()]; found {
-					tr := accounting.Stats(s.ctx).NewCheckingTransfer(obj)
+					tr := accounting.Stats(s.ctx).NewCheckingTransfer(obj, "renaming")
 					hash := s.renameID(obj, s.trackRenamesStrategy, s.modifyWindow)
 
 					if hash != "" {
