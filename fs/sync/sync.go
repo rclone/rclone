@@ -537,7 +537,7 @@ func (s *syncCopyMove) deleteFiles(checkSrcMap bool) error {
 	}
 
 	// Delete the spare files
-	toDelete := make(fs.ObjectsChan, s.ci.Transfers)
+	toDelete := make(fs.ObjectsChan, s.ci.Checkers)
 	go func() {
 	outer:
 		for remote, o := range s.dstFiles {
@@ -772,8 +772,8 @@ func (s *syncCopyMove) makeRenameMap() {
 	// now make a map of size,hash for all dstFiles
 	s.renameMap = make(map[string][]fs.Object)
 	var wg sync.WaitGroup
-	wg.Add(s.ci.Transfers)
-	for i := 0; i < s.ci.Transfers; i++ {
+	wg.Add(s.ci.Checkers)
+	for i := 0; i < s.ci.Checkers; i++ {
 		go func() {
 			defer wg.Done()
 			for obj := range in {

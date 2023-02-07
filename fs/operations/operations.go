@@ -678,11 +678,11 @@ func DeleteFile(ctx context.Context, dst fs.Object) (err error) {
 func DeleteFilesWithBackupDir(ctx context.Context, toBeDeleted fs.ObjectsChan, backupDir fs.Fs) error {
 	var wg sync.WaitGroup
 	ci := fs.GetConfig(ctx)
-	wg.Add(ci.Transfers)
+	wg.Add(ci.Checkers)
 	var errorCount int32
 	var fatalErrorCount int32
 
-	for i := 0; i < ci.Transfers; i++ {
+	for i := 0; i < ci.Checkers; i++ {
 		go func() {
 			defer wg.Done()
 			for dst := range toBeDeleted {
@@ -1022,7 +1022,12 @@ func hashSum(ctx context.Context, ht hash.Type, base64Encoded bool, downloadFlag
 // Updated to perform multiple hashes concurrently
 func HashLister(ctx context.Context, ht hash.Type, outputBase64 bool, downloadFlag bool, f fs.Fs, w io.Writer) error {
 	width := hash.Width(ht, outputBase64)
-	concurrencyControl := make(chan struct{}, fs.GetConfig(ctx).Transfers)
+	// Use --checkers concurrency unless downloading in which case use --transfers
+	concurrency := fs.GetConfig(ctx).Checkers
+	if downloadFlag {
+		concurrency = fs.GetConfig(ctx).Transfers
+	}
+	concurrencyControl := make(chan struct{}, concurrency)
 	var wg sync.WaitGroup
 	err := ListFn(ctx, f, func(o fs.Object) {
 		wg.Add(1)
@@ -1173,7 +1178,7 @@ func Purge(ctx context.Context, f fs.Fs, dir string) (err error) {
 // obeys includes and excludes.
 func Delete(ctx context.Context, f fs.Fs) error {
 	ci := fs.GetConfig(ctx)
-	delChan := make(fs.ObjectsChan, ci.Transfers)
+	delChan := make(fs.ObjectsChan, ci.Checkers)
 	delErr := make(chan error, 1)
 	go func() {
 		delErr <- DeleteFiles(ctx, delChan)
@@ -2187,9 +2192,9 @@ func DirMove(ctx context.Context, f fs.Fs, srcRemote, dstRemote string) (err err
 		o       fs.Object
 		newPath string
 	}
-	renames := make(chan rename, ci.Transfers)
+	renames := make(chan rename, ci.Checkers)
 	g, gCtx := errgroup.WithContext(context.Background())
-	for i := 0; i < ci.Transfers; i++ {
+	for i := 0; i < ci.Checkers; i++ {
 		g.Go(func() error {
 			for job := range renames {
 				dstOverwritten, _ := f.NewObject(gCtx, job.newPath)
