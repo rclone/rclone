@@ -16,11 +16,11 @@ jobs:
               with:
                 fetch-depth: 0
             - name: Build and publish image
-              uses: ilteoood/docker_buildx@1.1.0
+              uses: docker/dockerd@latest
               with:
                 tag: beta
                 imageName: rclone/rclone
-                platform: linux/amd64,linux/386,linux/arm64,linux/arm/v7,linux/arm/v6
+                platform: linux/amd64,linux/386
                 publish: true
                 dockerHubUser: ${{ secrets.DOCKER_HUB_USER }}
                 dockerHubPassword: ${{ secrets.DOCKER_HUB_PASSWORD }}
