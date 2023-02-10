@@ -401,9 +401,15 @@ func initConfig() {
 	// Start accounting
 	accounting.Start(ctx)
 
-	// Hide console window
+	// Configure console
 	if ci.NoConsole {
+		// Hide the console window
 		terminal.HideConsole()
+	} else {
+		// Enable color support on stdout if possible.
+		// This enables virtual terminal processing on Windows 10,
+		// adding native support for ANSI/VT100 escape sequences.
+		terminal.EnableColorsStdout()
 	}
 
 	// Load filters
