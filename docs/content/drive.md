@@ -1531,22 +1531,24 @@ then select "OAuth client ID".
    
    (If you selected "External" at Step 5 continue to Step 9. 
    If you chose "Internal" you don't need to publish and can skip straight to
-   Step 11.)
+   Step 10 but your destination drive must be part of the same Google Workspace.)
 
-9. Go to "Oauth consent screen" and confirm that your intended email is shown
-     as a test user, and that "Publishing status" is shown as "Testing".
+9. Go to "Oauth consent screen" and then click "PUBLISH APP" button and confirm.
+   You will also want to add yourself as a test user.
 
 10. Provide the noted client ID and client secret to rclone.
 
-Be aware that, due to the "enhanced security" introduced by Google, you are
-theoretically expected to "submit your app for verification" and then wait a
-few weeks(!) for their response; in practice, if you keep your app in testing,
-then you can go right ahead and use the client ID and client secret with rclone,
-the only issue will be a very scary confirmation screen shown when you connect
-via your browser for rclone to be able to get its token-id (but as this only
-happens during the remote configuration, it's not such a big deal). Because we
-anticipate that we will be the only user on this client-id, testing should be
-sufficient for most use cases.
+Be aware that, due to the "enhanced security" recently introduced by
+Google, you are theoretically expected to "submit your app for verification"
+and then wait a few weeks(!) for their response; in practice, you can go right
+ahead and use the client ID and client secret with rclone, the only issue will
+be a very scary confirmation screen shown when you connect via your browser 
+for rclone to be able to get its token-id (but as this only happens during 
+the remote configuration, it's not such a big deal). Keeping the application in
+"Testing" will work as well, but the limitation is that any grants will expire
+after a week, which can be annoying to refresh constantly. If, for whatever
+reason, a short grant time is not a problem, then keeping the application in
+testing mode would also be sufficient.
 
 (Thanks to @balazer on github for these instructions.)
 
