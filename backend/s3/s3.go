@@ -2791,6 +2791,7 @@ func setQuirks(opt *Options) {
 		useMultipartEtag = false // untested
 	case "IDrive":
 		virtualHostStyle = false
+		useMultipartEtag = false //Etag calculated by Idrive e2 for the encrypted bucket is different from the one calculated by rclone.
 	case "IONOS":
 		// listObjectsV2 supported - https://api.ionos.com/docs/s3/#Basic-Operations-get-Bucket-list-type-2
 		virtualHostStyle = false
