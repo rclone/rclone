@@ -129,9 +129,27 @@ func ParseDuration(age string) (time.Duration, error) {
 	return parseDurationFromNow(age, timeNowFunc)
 }
 
-// ReadableString parses d into a human-readable duration.
-// Based on https://github.com/hako/durafmt
+// ReadableString parses d into a human-readable duration with units.
+// Examples: "3s", "1d2h23m20s", "292y24w3d23h47m16s".
 func (d Duration) ReadableString() string {
+	return d.readableString(0)
+}
+
+// ShortReadableString parses d into a human-readable duration with units.
+// This method returns it in short format, including the 3 most significant
+// units only, sacrificing precision if necessary. E.g. returns "292y24w3d"
+// instead of "292y24w3d23h47m16s", and "3d23h47m" instead of "3d23h47m16s".
+func (d Duration) ShortReadableString() string {
+	return d.readableString(3)
+}
+
+// readableString parses d into a human-readable duration with units.
+// Parameter maxNumberOfUnits limits number of significant units to include,
+// sacrificing precision. E.g. with argument 3 it returns "292y24w3d" instead
+// of "292y24w3d23h47m16s", and "3d23h47m" instead of "3d23h47m16s". Zero or
+// negative argument means include all.
+// Based on https://github.com/hako/durafmt
+func (d Duration) readableString(maxNumberOfUnits int) string {
 	switch d {
 	case DurationOff:
 		return "off"
@@ -179,6 +197,7 @@ func (d Duration) ReadableString() string {
 	}
 
 	// Construct duration string.
+	numberOfUnits := 0
 	for _, u := range [...]string{"y", "w", "d", "h", "m", "s", "ms"} {
 		v := durationMap[u]
 		strval := strconv.FormatInt(v, 10)
@@ -186,6 +205,10 @@ func (d Duration) ReadableString() string {
 			continue
 		}
 		readableString += strval + u
+		numberOfUnits++
+		if maxNumberOfUnits > 0 && numberOfUnits >= maxNumberOfUnits {
+			break
+		}
 	}
 
 	return readableString

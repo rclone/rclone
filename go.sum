@@ -62,8 +62,8 @@ github.com/ProtonMail/go-crypto v0.0.0-20230109192245-7efeeb08f296/go.mod h1:UBY
 github.com/RoaringBitmap/roaring v0.4.7/go.mod h1:8khRDP4HmeXns4xIj9oGrKSz7XTQiJx2zgh7AcNke4w=
 github.com/Unknwon/goconfig v1.0.0 h1:9IAu/BYbSLQi8puFjUQApZTxIHqSwrj5d8vpP8vTq4A=
 github.com/Unknwon/goconfig v1.0.0/go.mod h1:wngxua9XCNjvHjDiTiV26DaKDT+0c63QR6H5hjVUUxw=
-github.com/a8m/tree v0.0.0-20210414114729-ce3525c5c2ef h1:CEImiMYHUtgFAgG8UMV6Mk4Ld+IgF39eBbhoehcjXEg=
-github.com/a8m/tree v0.0.0-20210414114729-ce3525c5c2ef/go.mod h1:FSdwKX97koS5efgm8WevNf7XS3PqtyFkKDDXrz778cg=
+github.com/a8m/tree v0.0.0-20230208161321-36ae24ddad15 h1:t3qDzTv8T15tVVhJHHgY7hX5jiIz67xE2SxWQ2ehjH4=
+github.com/a8m/tree v0.0.0-20230208161321-36ae24ddad15/go.mod h1:j5astEcUkZQX8lK+KKlQ3NRQ50f4EE8ZjyZpCz3mrH4=
 github.com/aalpar/deheap v0.0.0-20210914013432-0cc84d79dec3 h1:hhdWprfSpFbN7lz3W1gM40vOgvSh1WCSMxYD6gGB4Hs=
 github.com/aalpar/deheap v0.0.0-20210914013432-0cc84d79dec3/go.mod h1:XaUnRxSCYgL3kkgX0QHIV0D+znljPIDImxlv2kbGv0Y=
 github.com/abbot/go-http-auth v0.4.0 h1:QjmvZ5gSC7jm3Zg54DqWE/T5m1t2AfDu6QlXJT0EVT0=

@@ -10,7 +10,7 @@ require (
 	github.com/Azure/go-ntlmssp v0.0.0-20221128193559-754e69321358
 	github.com/Max-Sum/base32768 v0.0.0-20191205131208-7937843c71d5
 	github.com/Unknwon/goconfig v1.0.0
-	github.com/a8m/tree v0.0.0-20210414114729-ce3525c5c2ef
+	github.com/a8m/tree v0.0.0-20230208161321-36ae24ddad15
 	github.com/aalpar/deheap v0.0.0-20210914013432-0cc84d79dec3
 	github.com/abbot/go-http-auth v0.4.0
 	github.com/anacrolix/dms v1.5.0

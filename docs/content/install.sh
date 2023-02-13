@@ -109,6 +109,9 @@ case "$OS_type" in
   armv7*)
     OS_type='arm-v7'
     ;;
+  armv6*)
+    OS_type='arm-v6'
+    ;;
   arm*)
     OS_type='arm'
     ;;
