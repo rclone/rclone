@@ -24,7 +24,7 @@ func (f *Fs) requestDecompress(ctx context.Context, file *api.File, password str
 	req := &api.RequestDecompress{
 		Gcid:          file.Hash,
 		Password:      password,
-		FileId:        file.Id,
+		FileID:        file.ID,
 		Files:         []*api.FileInArchive{},
 		DefaultParent: true,
 	}

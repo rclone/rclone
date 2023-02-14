@@ -288,13 +288,12 @@ func parsePath(path string) (root string) {
 	return
 }
 
-// parentIdForRequest returns ParentId for api requests
-func parentIdForRequest(Id string) string {
-	if Id == "root" {
+// parentIDForRequest returns ParentId for api requests
+func parentIDForRequest(dirID string) string {
+	if dirID == "root" {
 		return ""
-	} else {
-		return Id
 	}
+	return dirID
 }
 
 // retryErrorCodes is a slice of error codes that we will retry
@@ -567,7 +566,7 @@ func (f *Fs) FindLeaf(ctx context.Context, pathID, leaf string) (pathIDOut strin
 	}
 	found, err = f.listAll(ctx, pathID, api.KindOfFolder, trashed, func(item *api.File) bool {
 		if item.Name == leaf {
-			pathIDOut = item.Id
+			pathIDOut = item.ID
 			return true
 		}
 		return false
@@ -592,8 +591,8 @@ func (f *Fs) listAll(ctx context.Context, dirID, kind, trashed string, fn listAl
 	params.Set("thumbnail_size", api.ThumbnailSizeM)
 	params.Set("limit", strconv.Itoa(api.ListLimit))
 	params.Set("with_audit", strconv.FormatBool(true))
-	if parentId := parentIdForRequest(dirID); parentId != "" {
-		params.Set("parent_id", parentId)
+	if parentID := parentIDForRequest(dirID); parentID != "" {
+		params.Set("parent_id", parentID)
 	}
 
 	// Construct filter string
@@ -653,12 +652,12 @@ func (f *Fs) itemToDirEntry(ctx context.Context, remote string, item *api.File) 
 	switch {
 	case item.Kind == api.KindOfFolder:
 		// cache the directory ID for later lookups
-		f.dirCache.Put(remote, item.Id)
-		d := fs.NewDir(remote, time.Time(item.ModifiedTime)).SetID(item.Id)
-		if item.ParentId == "" {
+		f.dirCache.Put(remote, item.ID)
+		d := fs.NewDir(remote, time.Time(item.ModifiedTime)).SetID(item.ID)
+		if item.ParentID == "" {
 			d.SetParentID("root")
 		} else {
-			d.SetParentID(item.ParentId)
+			d.SetParentID(item.ParentID)
 		}
 		return d, nil
 	case f.opt.TrashedOnly && !item.Trashed:
@@ -720,13 +719,13 @@ func (f *Fs) CreateDir(ctx context.Context, pathID, leaf string) (newID string, 
 	req := api.RequestNewFile{
 		Name:     f.opt.Enc.FromStandardName(leaf),
 		Kind:     api.KindOfFolder,
-		ParentId: parentIdForRequest(pathID),
+		ParentID: parentIDForRequest(pathID),
 	}
 	info, err := f.requestNewFile(ctx, &req)
 	if err != nil {
 		return "", err
 	}
-	return info.File.Id, nil
+	return info.File.ID, nil
 }
 
 // Mkdir creates the container if it doesn't exist
@@ -777,7 +776,7 @@ func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, 
 	if err != nil {
 		return "", err
 	}
-	return info.ShareUrl, err
+	return info.ShareURL, err
 }
 
 // delete a file or directory by ID w/o using trash
@@ -887,7 +886,7 @@ func (f *Fs) moveObjects(ctx context.Context, IDs []string, dirID string) (err e
 	}
 	req := api.RequestBatch{
 		Ids: IDs,
-		To:  &map[string]string{"parent_id": parentIdForRequest(dirID)},
+		To:  &map[string]string{"parent_id": parentIDForRequest(dirID)},
 	}
 	if err := f.requestBatchAction(ctx, "batchMove", &req); err != nil {
 		return fmt.Errorf("move object failed: %w", err)
@@ -1032,7 +1031,7 @@ func (f *Fs) copyObjects(ctx context.Context, IDs []string, dirID string) (err e
 	}
 	req := api.RequestBatch{
 		Ids: IDs,
-		To:  &map[string]string{"parent_id": parentIdForRequest(dirID)},
+		To:  &map[string]string{"parent_id": parentIDForRequest(dirID)},
 	}
 	if err := f.requestBatchAction(ctx, "batchCopy", &req); err != nil {
 		return fmt.Errorf("copy object failed: %w", err)
@@ -1117,14 +1116,13 @@ func (f *Fs) MergeDirs(ctx context.Context, dirs []fs.Directory) (err error) {
 		var IDs []string
 		_, err = f.listAll(ctx, srcDir.ID(), "", "false", func(item *api.File) bool {
 			fs.Infof(srcDir, "listing for merging %q", item.Name)
-			IDs = append(IDs, item.Id)
+			IDs = append(IDs, item.ID)
 			// API doesn't allow to move a large number of objects at once, so doing it in chunked
 			if len(IDs) >= api.ListLimit {
 				if err = f.moveObjects(ctx, IDs, dstDir.ID()); err != nil {
 					return true
-				} else {
-					IDs = nil
 				}
+				IDs = nil
 			}
 			return false
 		})
@@ -1146,9 +1144,8 @@ func (f *Fs) MergeDirs(ctx context.Context, dirs []fs.Directory) (err error) {
 		if len(IDs) >= api.ListLimit {
 			if err = f.deleteObjects(ctx, IDs, true); err != nil {
 				return err
-			} else {
-				IDs = nil
 			}
+			IDs = nil
 		}
 	}
 	if err := f.deleteObjects(ctx, IDs, true); err != nil {
@@ -1173,7 +1170,7 @@ func (f *Fs) uploadByForm(ctx context.Context, in io.Reader, name string, size i
 	contentLength := overhead + size
 	opts := rest.Opts{
 		Method:           form.Method,
-		RootURL:          form.Url,
+		RootURL:          form.URL,
 		Body:             formReader,
 		ContentType:      contentType,
 		ContentLength:    &contentLength,
@@ -1195,7 +1192,7 @@ func (f *Fs) uploadByResumable(ctx context.Context, in io.Reader, resumable *api
 	endpoint := strings.Join(strings.Split(p.Endpoint, ".")[1:], ".") // "mypikpak.com"
 
 	cfg := &aws.Config{
-		Credentials: credentials.NewStaticCredentials(p.AccessKeyId, p.AccessKeySecret, p.SecurityToken),
+		Credentials: credentials.NewStaticCredentials(p.AccessKeyID, p.AccessKeySecret, p.SecurityToken),
 		Region:      aws.String("pikpak"),
 		Endpoint:    &endpoint,
 	}
@@ -1245,7 +1242,7 @@ func (f *Fs) upload(ctx context.Context, in io.Reader, leaf, dirID string, size 
 	req := api.RequestNewFile{
 		Kind:       api.KindOfFile,
 		Name:       f.opt.Enc.FromStandardName(leaf),
-		ParentId:   parentIdForRequest(dirID),
+		ParentID:   parentIDForRequest(dirID),
 		FolderType: "NORMAL",
 		Size:       size,
 		Hash:       strings.ToUpper(sha1Str),
@@ -1277,7 +1274,7 @@ func (f *Fs) upload(ctx context.Context, in io.Reader, leaf, dirID string, size 
 		return nil, fmt.Errorf("failed to upload: %w", err)
 	}
 	// refresh uploaded file info
-	return f.getFile(ctx, newfile.File.Id)
+	return f.getFile(ctx, newfile.File.ID)
 }
 
 // PutUnchecked the object into the container
@@ -1357,17 +1354,17 @@ func (f *Fs) getID(ctx context.Context, path string) (id string, err error) {
 }
 
 // add offline download task for url
-func (f *Fs) addUrl(ctx context.Context, url, path string) (*api.Task, error) {
+func (f *Fs) addURL(ctx context.Context, url, path string) (*api.Task, error) {
 	req := api.RequestNewTask{
 		Kind:       api.KindOfFile,
 		UploadType: "UPLOAD_TYPE_URL",
-		Url: &api.Url{
-			Url: url,
+		URL: &api.URL{
+			URL: url,
 		},
 		FolderType: "DOWNLOAD",
 	}
-	if parentId, err := f.dirCache.FindDir(ctx, path, false); err == nil {
-		req.ParentId = parentIdForRequest(parentId)
+	if parentID, err := f.dirCache.FindDir(ctx, path, false); err == nil {
+		req.ParentID = parentIDForRequest(parentID)
 		req.FolderType = ""
 	}
 	return f.requestNewTask(ctx, &req)
@@ -1400,7 +1397,7 @@ func (f *Fs) decompressDir(ctx context.Context, filename, id, password string, s
 					r.Decompressed++
 					fs.Infof(f, "%q: %d files: %s", item.Name, res.FilesNum, res.Status)
 					if srcDelete {
-						derr := f.deleteObjects(ctx, []string{item.Id}, f.opt.UseTrash)
+						derr := f.deleteObjects(ctx, []string{item.ID}, f.opt.UseTrash)
 						if derr != nil {
 							derr = fmt.Errorf("failed to delete %q: %w", item.Name, derr)
 							r.Errors++
@@ -1495,7 +1492,7 @@ func (f *Fs) Command(ctx context.Context, name string, arg []string, opt map[str
 		if len(arg) != 1 {
 			return nil, errors.New("need exactly 1 argument")
 		}
-		return f.addUrl(ctx, arg[0], "")
+		return f.addURL(ctx, arg[0], "")
 	case "decompress":
 		filename := ""
 		if len(arg) > 0 {
@@ -1527,14 +1524,14 @@ func (o *Object) setMetaData(info *api.File) (err error) {
 		return fmt.Errorf("%q is %q: %w", o.remote, info.Kind, fs.ErrorNotAFile)
 	}
 	o.hasMetaData = true
-	o.id = info.Id
+	o.id = info.ID
 	o.size = info.Size
 	o.modTime = time.Time(info.ModifiedTime)
 	o.mimeType = info.MimeType
-	if info.ParentId == "" {
+	if info.ParentID == "" {
 		o.parent = "root"
 	} else {
-		o.parent = info.ParentId
+		o.parent = info.ParentID
 	}
 	o.md5sum = info.Md5Checksum
 	if info.Links != nil {
@@ -1690,7 +1687,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 		}
 		return nil, errors.New("can't download - no link to download")
 	}
-	return o.open(ctx, o.link.Url, options...)
+	return o.open(ctx, o.link.URL, options...)
 }
 
 // Update the object with the contents of the io.Reader, modTime and size
@@ -1721,7 +1718,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	}
 
 	// rename also updates metadata
-	if info, err = o.fs.renameObject(ctx, info.Id, leaf); err != nil {
+	if info, err = o.fs.renameObject(ctx, info.ID, leaf); err != nil {
 		return fmt.Errorf("failed to rename temp object: %w", err)
 	}
 	return o.setMetaData(info)
