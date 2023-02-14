@@ -64,6 +64,7 @@ docs = [
     "sia.md",
     "swift.md",
     "pcloud.md",
+    "pikpak.md",
     "premiumizeme.md",
     "putio.md",
     "seafile.md",
