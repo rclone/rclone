@@ -682,3 +682,4 @@ put them back in again.` >}}
   * LXY <767763591@qq.com>
   * Simmon Li (he/him) <li.simmon@gmail.com>
   * happyxhw <44490504+happyxhw@users.noreply.github.com>
+  * Simmon Li (he/him) <hello@crespire.dev>
