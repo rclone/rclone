@@ -43,7 +43,7 @@ require (
 	github.com/ncw/swift/v2 v2.0.1
 	github.com/oracle/oci-go-sdk/v65 v65.28.0
 	github.com/patrickmn/go-cache v2.1.0+incompatible
-	github.com/pkg/sftp v1.13.5
+	github.com/pkg/sftp v1.13.6-0.20230213180117-971c283182b6
 	github.com/pmezard/go-difflib v1.0.0
 	github.com/prometheus/client_golang v1.14.0
 	github.com/putdotio/go-putio/putio v0.0.0-20200123120452-16d982cac2b8
