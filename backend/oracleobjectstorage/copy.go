@@ -74,6 +74,7 @@ func (f *Fs) copy(ctx context.Context, dstObj *Object, srcObj *Object) (err erro
 		BucketName:        common.String(srcBucket),
 		CopyObjectDetails: copyObjectDetails,
 	}
+	useBYOKCopyObject(f, &req)
 	var resp objectstorage.CopyObjectResponse
 	err = f.pacer.Call(func() (bool, error) {
 		resp, err = f.srv.CopyObject(ctx, req)

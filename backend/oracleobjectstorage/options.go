@@ -45,23 +45,28 @@ https://docs.oracle.com/en-us/iaas/Content/Identity/Tasks/callingservicesfromins
 
 // Options defines the configuration for this backend
 type Options struct {
-	Provider          string               `config:"provider"`
-	Compartment       string               `config:"compartment"`
-	Namespace         string               `config:"namespace"`
-	Region            string               `config:"region"`
-	Endpoint          string               `config:"endpoint"`
-	Enc               encoder.MultiEncoder `config:"encoding"`
-	ConfigFile        string               `config:"config_file"`
-	ConfigProfile     string               `config:"config_profile"`
-	UploadCutoff      fs.SizeSuffix        `config:"upload_cutoff"`
-	ChunkSize         fs.SizeSuffix        `config:"chunk_size"`
-	UploadConcurrency int                  `config:"upload_concurrency"`
-	DisableChecksum   bool                 `config:"disable_checksum"`
-	CopyCutoff        fs.SizeSuffix        `config:"copy_cutoff"`
-	CopyTimeout       fs.Duration          `config:"copy_timeout"`
-	StorageTier       string               `config:"storage_tier"`
-	LeavePartsOnError bool                 `config:"leave_parts_on_error"`
-	NoCheckBucket     bool                 `config:"no_check_bucket"`
+	Provider             string               `config:"provider"`
+	Compartment          string               `config:"compartment"`
+	Namespace            string               `config:"namespace"`
+	Region               string               `config:"region"`
+	Endpoint             string               `config:"endpoint"`
+	Enc                  encoder.MultiEncoder `config:"encoding"`
+	ConfigFile           string               `config:"config_file"`
+	ConfigProfile        string               `config:"config_profile"`
+	UploadCutoff         fs.SizeSuffix        `config:"upload_cutoff"`
+	ChunkSize            fs.SizeSuffix        `config:"chunk_size"`
+	UploadConcurrency    int                  `config:"upload_concurrency"`
+	DisableChecksum      bool                 `config:"disable_checksum"`
+	CopyCutoff           fs.SizeSuffix        `config:"copy_cutoff"`
+	CopyTimeout          fs.Duration          `config:"copy_timeout"`
+	StorageTier          string               `config:"storage_tier"`
+	LeavePartsOnError    bool                 `config:"leave_parts_on_error"`
+	NoCheckBucket        bool                 `config:"no_check_bucket"`
+	SSEKMSKeyID          string               `config:"sse_kms_key_id"`
+	SSECustomerAlgorithm string               `config:"sse_customer_algorithm"`
+	SSECustomerKey       string               `config:"sse_customer_key"`
+	SSECustomerKeyFile   string               `config:"sse_customer_key_file"`
+	SSECustomerKeySha256 string               `config:"sse_customer_key_sha256"`
 }
 
 func newOptions() []fs.Option {
@@ -252,5 +257,59 @@ creation permissions.
 `,
 		Default:  false,
 		Advanced: true,
+	}, {
+		Name: "sse_customer_key_file",
+		Help: `To use SSE-C, a file containing the base64-encoded string of the AES-256 encryption key associated
+with the object. Please note only one of sse_customer_key_file|sse_customer_key|sse_kms_key_id is needed.'`,
+		Advanced: true,
+		Examples: []fs.OptionExample{{
+			Value: "",
+			Help:  "None",
+		}},
+	}, {
+		Name: "sse_customer_key",
+		Help: `To use SSE-C, the optional header that specifies the base64-encoded 256-bit encryption key to use to
+encrypt or  decrypt the data. Please note only one of sse_customer_key_file|sse_customer_key|sse_kms_key_id is
+needed. For more information, see Using Your Own Keys for Server-Side Encryption 
+(https://docs.cloud.oracle.com/Content/Object/Tasks/usingyourencryptionkeys.htm)`,
+		Advanced: true,
+		Examples: []fs.OptionExample{{
+			Value: "",
+			Help:  "None",
+		}},
+	}, {
+		Name: "sse_customer_key_sha256",
+		Help: `If using SSE-C, The optional header that specifies the base64-encoded SHA256 hash of the encryption
+key. This value is used to check the integrity of the encryption key. see Using Your Own Keys for 
+Server-Side Encryption (https://docs.cloud.oracle.com/Content/Object/Tasks/usingyourencryptionkeys.htm).`,
+		Advanced: true,
+		Examples: []fs.OptionExample{{
+			Value: "",
+			Help:  "None",
+		}},
+	}, {
+		Name: "sse_kms_key_id",
+		Help: `if using using your own master key in vault, this header specifies the 
+OCID (https://docs.cloud.oracle.com/Content/General/Concepts/identifiers.htm) of a master encryption key used to call
+the Key Management service to generate a data encryption key or to encrypt or decrypt a data encryption key.
+Please note only one of sse_customer_key_file|sse_customer_key|sse_kms_key_id is needed.`,
+		Advanced: true,
+		Examples: []fs.OptionExample{{
+			Value: "",
+			Help:  "None",
+		}},
+	}, {
+		Name: "sse_customer_algorithm",
+		Help: `If using SSE-C, the optional header that specifies "AES256" as the encryption algorithm.
+Object Storage supports "AES256" as the encryption algorithm. For more information, see
+Using Your Own Keys for Server-Side Encryption (https://docs.cloud.oracle.com/Content/Object/Tasks/usingyourencryptionkeys.htm).`,
+		Advanced: true,
+		Examples: []fs.OptionExample{{
+			Value: "",
+			Help:  "None",
+		}, {
+			Value: sseDefaultAlgorithm,
+			Help:  sseDefaultAlgorithm,
+		}},
 	}}
 }
