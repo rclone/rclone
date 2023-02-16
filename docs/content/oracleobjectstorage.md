@@ -561,6 +561,89 @@ Properties:
 - Type:        bool
 - Default:     false
 
+#### --oos-sse-customer-key-file
+
+To use SSE-C, a file containing the base64-encoded string of the AES-256 encryption key associated
+with the object. Please note only one of sse_customer_key_file|sse_customer_key|sse_kms_key_id is needed.'
+
+Properties:
+
+- Config:      sse_customer_key_file
+- Env Var:     RCLONE_OOS_SSE_CUSTOMER_KEY_FILE
+- Type:        string
+- Required:    false
+- Examples:
+    - ""
+        - None
+
+#### --oos-sse-customer-key
+
+To use SSE-C, the optional header that specifies the base64-encoded 256-bit encryption key to use to
+encrypt or  decrypt the data. Please note only one of sse_customer_key_file|sse_customer_key|sse_kms_key_id is
+needed. For more information, see Using Your Own Keys for Server-Side Encryption 
+(https://docs.cloud.oracle.com/Content/Object/Tasks/usingyourencryptionkeys.htm)
+
+Properties:
+
+- Config:      sse_customer_key
+- Env Var:     RCLONE_OOS_SSE_CUSTOMER_KEY
+- Type:        string
+- Required:    false
+- Examples:
+    - ""
+        - None
+
+#### --oos-sse-customer-key-sha256
+
+If using SSE-C, The optional header that specifies the base64-encoded SHA256 hash of the encryption
+key. This value is used to check the integrity of the encryption key. see Using Your Own Keys for 
+Server-Side Encryption (https://docs.cloud.oracle.com/Content/Object/Tasks/usingyourencryptionkeys.htm).
+
+Properties:
+
+- Config:      sse_customer_key_sha256
+- Env Var:     RCLONE_OOS_SSE_CUSTOMER_KEY_SHA256
+- Type:        string
+- Required:    false
+- Examples:
+    - ""
+        - None
+
+#### --oos-sse-kms-key-id
+
+if using using your own master key in vault, this header specifies the 
+OCID (https://docs.cloud.oracle.com/Content/General/Concepts/identifiers.htm) of a master encryption key used to call
+the Key Management service to generate a data encryption key or to encrypt or decrypt a data encryption key.
+Please note only one of sse_customer_key_file|sse_customer_key|sse_kms_key_id is needed.
+
+Properties:
+
+- Config:      sse_kms_key_id
+- Env Var:     RCLONE_OOS_SSE_KMS_KEY_ID
+- Type:        string
+- Required:    false
+- Examples:
+    - ""
+        - None
+
+#### --oos-sse-customer-algorithm
+
+If using SSE-C, the optional header that specifies "AES256" as the encryption algorithm.
+Object Storage supports "AES256" as the encryption algorithm. For more information, see
+Using Your Own Keys for Server-Side Encryption (https://docs.cloud.oracle.com/Content/Object/Tasks/usingyourencryptionkeys.htm).
+
+Properties:
+
+- Config:      sse_customer_algorithm
+- Env Var:     RCLONE_OOS_SSE_CUSTOMER_ALGORITHM
+- Type:        string
+- Required:    false
+- Examples:
+    - ""
+        - None
+    - "AES256"
+        - AES256
+
 ## Backend commands
 
 Here are the commands specific to the oracleobjectstorage backend.

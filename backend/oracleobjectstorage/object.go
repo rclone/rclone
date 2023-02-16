@@ -87,6 +87,7 @@ func (o *Object) headObject(ctx context.Context) (info *objectstorage.HeadObject
 		BucketName:    common.String(bucketName),
 		ObjectName:    common.String(objectPath),
 	}
+	useBYOKHeadObject(o.fs, &req)
 	var response objectstorage.HeadObjectResponse
 	err = o.fs.pacer.Call(func() (bool, error) {
 		var err error
@@ -99,6 +100,7 @@ func (o *Object) headObject(ctx context.Context) (info *objectstorage.HeadObject
 				return nil, fs.ErrorObjectNotFound
 			}
 		}
+		fs.Errorf(o, "Failed to head object: %v", err)
 		return nil, err
 	}
 	o.fs.cache.MarkOK(bucketName)
@@ -331,7 +333,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 		ObjectName:    common.String(bucketPath),
 	}
 	o.applyGetObjectOptions(&req, options...)
-
+	useBYOKGetObject(o.fs, &req)
 	var resp objectstorage.GetObjectResponse
 	err := o.fs.pacer.Call(func() (bool, error) {
 		var err error
@@ -433,6 +435,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 			uploadRequest.StorageTier = storageTier
 		}
 		o.applyMultiPutOptions(&uploadRequest, options...)
+		useBYOKUpload(o.fs, &uploadRequest)
 		uploadStreamRequest := transfer.UploadStreamRequest{
 			UploadRequest: uploadRequest,
 			StreamReader:  in,
@@ -506,8 +509,10 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 			req.StorageTier = storageTier
 		}
 		o.applyPutOptions(&req, options...)
+		useBYOKPutObject(o.fs, &req)
+		var resp objectstorage.PutObjectResponse
 		err = o.fs.pacer.Call(func() (bool, error) {
-			resp, err := o.fs.srv.PutObject(ctx, req)
+			resp, err = o.fs.srv.PutObject(ctx, req)
 			return shouldRetry(ctx, resp.HTTPResponse(), err)
 		})
 		if err != nil {
