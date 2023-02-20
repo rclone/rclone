@@ -214,7 +214,7 @@ func NewFs(ctx context.Context, name string, root string, config configmap.Mappe
 
 	client := fshttp.NewClient(ctx)
 	f.srv = rest.NewClient(client).SetRoot(apiBaseURL)
-	f.IDRegexp = regexp.MustCompile("https://uptobox.com/([a-zA-Z0-9]+)")
+	f.IDRegexp = regexp.MustCompile(`https://uptobox\.com/([a-zA-Z0-9]+)`)
 
 	_, err = f.readMetaDataForPath(ctx, f.dirPath(""), &api.MetadataRequestOptions{Limit: 10})
 	if err != nil {

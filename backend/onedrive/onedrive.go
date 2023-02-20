@@ -511,7 +511,7 @@ Example: "https://contoso.sharepoint.com/sites/mysite" or "mysite"
 `)
 	case "url_end":
 		siteURL := config.Result
-		re := regexp.MustCompile(`https://.*\.sharepoint.com/sites/(.*)`)
+		re := regexp.MustCompile(`https://.*\.sharepoint\.com/sites/(.*)`)
 		match := re.FindStringSubmatch(siteURL)
 		if len(match) == 2 {
 			return chooseDrive(ctx, name, m, srv, chooseDriveOpt{
