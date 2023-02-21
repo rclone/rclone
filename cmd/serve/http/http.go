@@ -93,8 +93,8 @@ control the stats printing.
 	},
 }
 
-// server contains everything to run the server
-type Http struct {
+// HTTP contains everything to run the server
+type HTTP struct {
 	f      fs.Fs
 	_vfs   *vfs.VFS // don't use directly, use getVFS
 	server *libhttp.Server
@@ -104,9 +104,9 @@ type Http struct {
 }
 
 // Gets the VFS in use for this request
-func (w *Http) getVFS(ctx context.Context) (VFS *vfs.VFS, err error) {
-	if w._vfs != nil {
-		return w._vfs, nil
+func (s *HTTP) getVFS(ctx context.Context) (VFS *vfs.VFS, err error) {
+	if s._vfs != nil {
+		return s._vfs, nil
 	}
 	value := libhttp.CtxGetAuth(ctx)
 	if value == nil {
@@ -120,16 +120,16 @@ func (w *Http) getVFS(ctx context.Context) (VFS *vfs.VFS, err error) {
 }
 
 // auth does proxy authorization
-func (w *Http) auth(user, pass string) (value interface{}, err error) {
-	VFS, _, err := w.proxy.Call(user, pass, false)
+func (s *HTTP) auth(user, pass string) (value interface{}, err error) {
+	VFS, _, err := s.proxy.Call(user, pass, false)
 	if err != nil {
 		return nil, err
 	}
 	return VFS, err
 }
 
-func run(ctx context.Context, f fs.Fs, opt Options) (s *Http, err error) {
-	s = &Http{
+func run(ctx context.Context, f fs.Fs, opt Options) (s *HTTP, err error) {
+	s = &HTTP{
 		f:   f,
 		ctx: ctx,
 		opt: opt,
@@ -166,7 +166,7 @@ func run(ctx context.Context, f fs.Fs, opt Options) (s *Http, err error) {
 }
 
 // handler reads incoming requests and dispatches them
-func (s *Http) handler(w http.ResponseWriter, r *http.Request) {
+func (s *HTTP) handler(w http.ResponseWriter, r *http.Request) {
 	isDir := strings.HasSuffix(r.URL.Path, "/")
 	remote := strings.Trim(r.URL.Path, "/")
 	if isDir {
@@ -177,7 +177,7 @@ func (s *Http) handler(w http.ResponseWriter, r *http.Request) {
 }
 
 // serveDir serves a directory index at dirRemote
-func (s *Http) serveDir(w http.ResponseWriter, r *http.Request, dirRemote string) {
+func (s *HTTP) serveDir(w http.ResponseWriter, r *http.Request, dirRemote string) {
 	VFS, err := s.getVFS(r.Context())
 	if err != nil {
 		http.Error(w, "Root directory not found", http.StatusNotFound)
@@ -225,7 +225,7 @@ func (s *Http) serveDir(w http.ResponseWriter, r *http.Request, dirRemote string
 }
 
 // serveFile serves a file object at remote
-func (s *Http) serveFile(w http.ResponseWriter, r *http.Request, remote string) {
+func (s *HTTP) serveFile(w http.ResponseWriter, r *http.Request, remote string) {
 	VFS, err := s.getVFS(r.Context())
 	if err != nil {
 		http.Error(w, "File not found", http.StatusNotFound)
