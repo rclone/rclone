@@ -21,7 +21,7 @@ import (
 
 var (
 	updateGolden = flag.Bool("updategolden", false, "update golden files for regression test")
-	sc           *serveCmd
+	sc           *HTTP
 	testURL      string
 )
 
