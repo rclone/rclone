@@ -12,7 +12,7 @@ import (
 
 var (
 	noAutoBrowser bool
-	template string
+	template      string
 )
 
 func init() {
