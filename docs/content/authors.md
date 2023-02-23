@@ -683,3 +683,4 @@ put them back in again.` >}}
   * Simmon Li (he/him) <li.simmon@gmail.com>
   * happyxhw <44490504+happyxhw@users.noreply.github.com>
   * Simmon Li (he/him) <hello@crespire.dev>
+  * Matthias Baur <baurmatt@users.noreply.github.com>

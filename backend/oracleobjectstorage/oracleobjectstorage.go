@@ -59,6 +59,10 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	if err != nil {
 		return nil, err
 	}
+	err = validateSSECustomerKeyOptions(opt)
+	if err != nil {
+		return nil, err
+	}
 	ci := fs.GetConfig(ctx)
 	objectStorageClient, err := newObjectStorageClient(ctx, opt)
 	if err != nil {

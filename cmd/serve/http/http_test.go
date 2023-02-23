@@ -6,13 +6,14 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
 
 	_ "github.com/rclone/rclone/backend/local"
+	"github.com/rclone/rclone/cmd/serve/proxy/proxyflags"
 	"github.com/rclone/rclone/fs"
-	"github.com/rclone/rclone/fs/config/configfile"
 	"github.com/rclone/rclone/fs/filter"
 	libhttp "github.com/rclone/rclone/lib/http"
 	"github.com/stretchr/testify/assert"
@@ -21,18 +22,16 @@ import (
 
 var (
 	updateGolden = flag.Bool("updategolden", false, "update golden files for regression test")
-	sc           *serveCmd
-	testURL      string
 )
 
 const (
 	testBindAddress = "localhost:0"
+	testUser        = "user"
+	testPass        = "pass"
 	testTemplate    = "testdata/golden/testindex.html"
 )
 
-func start(t *testing.T, f fs.Fs) {
-	ctx := context.Background()
-
+func start(ctx context.Context, t *testing.T, f fs.Fs) (s *HTTP, testURL string) {
 	opts := Options{
 		HTTP: libhttp.DefaultCfg(),
 		Template: libhttp.TemplateConfig{
@@ -40,10 +39,13 @@ func start(t *testing.T, f fs.Fs) {
 		},
 	}
 	opts.HTTP.ListenAddr = []string{testBindAddress}
+	if proxyflags.Opt.AuthProxy == "" {
+		opts.Auth.BasicUser = testUser
+		opts.Auth.BasicPass = testPass
+	}
 
 	s, err := run(ctx, f, opts)
 	require.NoError(t, err, "failed to start server")
-	sc = s
 
 	urls := s.server.URLs()
 	require.Len(t, urls, 1, "expected one URL")
@@ -63,37 +65,14 @@ func start(t *testing.T, f fs.Fs) {
 		pause *= 2
 	}
 	t.Fatal("couldn't connect to server")
+
+	return s, testURL
 }
 
 var (
 	datedObject  = "two.txt"
 	expectedTime = time.Date(2000, 1, 2, 3, 4, 5, 0, time.UTC)
 )
-
-func TestInit(t *testing.T) {
-	ctx := context.Background()
-	// Configure the remote
-	configfile.Install()
-	// fs.Config.LogLevel = fs.LogLevelDebug
-	// fs.Config.DumpHeaders = true
-	// fs.Config.DumpBodies = true
-
-	// exclude files called hidden.txt and directories called hidden
-	fi := filter.GetConfig(ctx)
-	require.NoError(t, fi.AddRule("- hidden.txt"))
-	require.NoError(t, fi.AddRule("- hidden/**"))
-
-	// Create a test Fs
-	f, err := fs.NewFs(context.Background(), "testdata/files")
-	require.NoError(t, err)
-
-	// set date of datedObject to expectedTime
-	obj, err := f.NewObject(context.Background(), datedObject)
-	require.NoError(t, err)
-	require.NoError(t, obj.SetModTime(context.Background(), expectedTime))
-
-	start(t, f)
-}
 
 // check body against the file, or re-write body if -updategolden is
 // set.
@@ -111,7 +90,49 @@ func checkGolden(t *testing.T, fileName string, got []byte) {
 	}
 }
 
-func TestGET(t *testing.T) {
+func testGET(t *testing.T, useProxy bool) {
+	ctx := context.Background()
+	// ci := fs.GetConfig(ctx)
+	// ci.LogLevel = fs.LogLevelDebug
+
+	// exclude files called hidden.txt and directories called hidden
+	fi := filter.GetConfig(ctx)
+	require.NoError(t, fi.AddRule("- hidden.txt"))
+	require.NoError(t, fi.AddRule("- hidden/**"))
+
+	var f fs.Fs
+	if useProxy {
+		// the backend config will be made by the proxy
+		prog, err := filepath.Abs("../servetest/proxy_code.go")
+		require.NoError(t, err)
+		files, err := filepath.Abs("testdata/files")
+		require.NoError(t, err)
+		cmd := "go run " + prog + " " + files
+
+		// FIXME this is untidy setting a global variable!
+		proxyflags.Opt.AuthProxy = cmd
+		defer func() {
+			proxyflags.Opt.AuthProxy = ""
+		}()
+
+		f = nil
+	} else {
+		// Create a test Fs
+		var err error
+		f, err = fs.NewFs(context.Background(), "testdata/files")
+		require.NoError(t, err)
+
+		// set date of datedObject to expectedTime
+		obj, err := f.NewObject(context.Background(), datedObject)
+		require.NoError(t, err)
+		require.NoError(t, obj.SetModTime(context.Background(), expectedTime))
+	}
+
+	s, testURL := start(ctx, t, f)
+	defer func() {
+		assert.NoError(t, s.server.Shutdown())
+	}()
+
 	for _, test := range []struct {
 		URL    string
 		Status int
@@ -216,6 +237,7 @@ func TestGET(t *testing.T) {
 		if test.Range != "" {
 			req.Header.Add("Range", test.Range)
 		}
+		req.SetBasicAuth(testUser, testPass)
 		resp, err := http.DefaultClient.Do(req)
 		require.NoError(t, err)
 		assert.Equal(t, test.Status, resp.StatusCode, test.Golden)
@@ -236,4 +258,12 @@ func TestGET(t *testing.T) {
 
 		checkGolden(t, test.Golden, body)
 	}
+}
+
+func TestGET(t *testing.T) {
+	testGET(t, false)
+}
+
+func TestAuthProxy(t *testing.T) {
+	testGET(t, true)
 }
