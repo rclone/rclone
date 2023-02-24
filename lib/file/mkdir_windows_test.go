@@ -77,7 +77,7 @@ func unusedDrive(t *testing.T) string {
 	return string(letter) + ":"
 }
 
-func checkMkdirAll(t *testing.T, path string, valid bool, errormsgs... string) {
+func checkMkdirAll(t *testing.T, path string, valid bool, errormsgs ...string) {
 	if valid {
 		assert.NoError(t, MkdirAll(path, 0777))
 	} else {
@@ -93,7 +93,7 @@ func checkMkdirAll(t *testing.T, path string, valid bool, errormsgs... string) {
 	}
 }
 
-func checkMkdirAllSubdirs(t *testing.T, path string, valid bool, errormsgs... string) {
+func checkMkdirAllSubdirs(t *testing.T, path string, valid bool, errormsgs ...string) {
 	checkMkdirAll(t, path, valid, errormsgs...)
 	checkMkdirAll(t, path+`\`, valid, errormsgs...)
 	checkMkdirAll(t, path+`\parent`, valid, errormsgs...)

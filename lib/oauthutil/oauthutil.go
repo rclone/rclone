@@ -10,6 +10,7 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"os"
 	"strings"
 	"sync"
 	"time"
@@ -22,6 +23,11 @@ import (
 	"github.com/rclone/rclone/lib/random"
 	"github.com/skratchdot/open-golang/open"
 	"golang.org/x/oauth2"
+)
+
+var (
+	// templateString is the template used in the authorization webserver
+	templateString string
 )
 
 const (
@@ -49,8 +55,8 @@ const (
 	// redirects to the local webserver
 	RedirectPublicSecureURL = "https://oauth.rclone.org/"
 
-	// AuthResponseTemplate is a template to handle the redirect URL for oauth requests
-	AuthResponseTemplate = `<!DOCTYPE html>
+	// DefaultAuthResponseTemplate is the default template used in the authorization webserver
+	DefaultAuthResponseTemplate = `<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
@@ -587,6 +593,23 @@ version recommended):
 		}
 		return fs.ConfigGoto(newState("*oauth-done"))
 	case "*oauth-do":
+		// Make sure we can read the HTML template file if it was specified.
+		configTemplateFile, _ := m.Get("config_template_file")
+		configTemplateString, _ := m.Get("config_template")
+
+		if configTemplateFile != "" {
+			dat, err := os.ReadFile(configTemplateFile)
+
+			if err != nil {
+				return nil, fmt.Errorf("failed to read template file: %w", err)
+			}
+
+			templateString = string(dat)
+		} else if configTemplateString != "" {
+			templateString = configTemplateString
+		} else {
+			templateString = DefaultAuthResponseTemplate
+		}
 		code := in.Result
 		opt, err := getOAuth()
 		if err != nil {
@@ -755,7 +778,7 @@ func (s *authServer) handleAuth(w http.ResponseWriter, req *http.Request) {
 	reply := func(status int, res *AuthResult) {
 		w.WriteHeader(status)
 		w.Header().Set("Content-Type", "text/html")
-		var t = template.Must(template.New("authResponse").Parse(AuthResponseTemplate))
+		var t = template.Must(template.New("authResponse").Parse(templateString))
 		if err := t.Execute(w, res); err != nil {
 			fs.Debugf(nil, "Could not execute template for web response.")
 		}
