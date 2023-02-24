@@ -62,7 +62,7 @@ require (
 	github.com/youmark/pkcs8 v0.0.0-20201027041543-1326539a0a0a
 	github.com/yunify/qingstor-sdk-go/v3 v3.2.0
 	go.etcd.io/bbolt v1.3.6
-	goftp.io/server v0.4.1
+	goftp.io/server v0.4.2-0.20210615155358-d07a820aac35
 	golang.org/x/crypto v0.5.0
 	golang.org/x/net v0.7.0
 	golang.org/x/oauth2 v0.4.0
