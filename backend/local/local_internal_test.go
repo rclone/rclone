@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/accounting"
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/filter"
 	"github.com/rclone/rclone/fs/hash"
@@ -394,4 +395,74 @@ func TestFilter(t *testing.T) {
 	require.NoError(t, err)
 	sort.Sort(entries)
 	require.Equal(t, "[included]", fmt.Sprint(entries))
+}
+
+func TestFilterSymlink(t *testing.T) {
+	ctx := context.Background()
+	r := fstest.NewRun(t)
+	defer r.Finalise()
+	when := time.Now()
+	f := r.Flocal.(*Fs)
+
+	// Create a file, a directory, a symlink to a file, a symlink to a directory and a dangling symlink
+	r.WriteFile("included.file", "included file", when)
+	r.WriteFile("included.dir/included.sub.file", "included sub file", when)
+	require.NoError(t, os.Symlink("included.file", filepath.Join(r.LocalName, "included.file.link")))
+	require.NoError(t, os.Symlink("included.dir", filepath.Join(r.LocalName, "included.dir.link")))
+	require.NoError(t, os.Symlink("dangling", filepath.Join(r.LocalName, "dangling.link")))
+
+	// Set fs into "-L" mode
+	f.opt.FollowSymlinks = true
+	f.opt.TranslateSymlinks = false
+	f.lstat = os.Stat
+
+	// Set fs into "-l" mode
+	// f.opt.FollowSymlinks = false
+	// f.opt.TranslateSymlinks = true
+	// f.lstat = os.Lstat
+
+	// Check set up for filtering
+	assert.True(t, f.Features().FilterAware)
+
+	// Reset global error count
+	accounting.Stats(ctx).ResetErrors()
+	assert.Equal(t, int64(0), accounting.Stats(ctx).GetErrors(), "global errors found")
+
+	// Add a filter
+	ctx, fi := filter.AddConfig(ctx)
+	require.NoError(t, fi.AddRule("+ included.file"))
+	require.NoError(t, fi.AddRule("+ included.file.link"))
+	require.NoError(t, fi.AddRule("+ included.dir/**"))
+	require.NoError(t, fi.AddRule("+ included.dir.link/**"))
+	require.NoError(t, fi.AddRule("- *"))
+
+	// Check listing without use filter flag
+	entries, err := f.List(ctx, "")
+	require.NoError(t, err)
+
+	// Check 1 global errors one for each dangling symlink
+	assert.Equal(t, int64(1), accounting.Stats(ctx).GetErrors(), "global errors found")
+	accounting.Stats(ctx).ResetErrors()
+
+	sort.Sort(entries)
+	require.Equal(t, "[included.dir included.dir.link included.file included.file.link]", fmt.Sprint(entries))
+
+	// Add user filter flag
+	ctx = filter.SetUseFilter(ctx, true)
+
+	// Check listing with use filter flag
+	entries, err = f.List(ctx, "")
+	require.NoError(t, err)
+	assert.Equal(t, int64(0), accounting.Stats(ctx).GetErrors(), "global errors found")
+
+	sort.Sort(entries)
+	require.Equal(t, "[included.dir included.dir.link included.file included.file.link]", fmt.Sprint(entries))
+
+	// Check listing through a symlink still works
+	entries, err = f.List(ctx, "included.dir")
+	require.NoError(t, err)
+	assert.Equal(t, int64(0), accounting.Stats(ctx).GetErrors(), "global errors found")
+
+	sort.Sort(entries)
+	require.Equal(t, "[included.dir/included.sub.file]", fmt.Sprint(entries))
 }

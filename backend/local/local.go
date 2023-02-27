@@ -524,6 +524,10 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 			if f.opt.FollowSymlinks && (mode&os.ModeSymlink) != 0 {
 				localPath := filepath.Join(fsDirPath, name)
 				fi, err = os.Stat(localPath)
+				// Quietly skip errors on excluded files and directories
+				if err != nil && useFilter && !filter.IncludeRemote(newRemote) {
+					continue
+				}
 				if os.IsNotExist(err) || isCircularSymlinkError(err) {
 					// Skip bad symlinks and circular symlinks
 					err = fserrors.NoRetryError(fmt.Errorf("symlink: %w", err))
