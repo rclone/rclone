@@ -5160,7 +5160,7 @@ func (o *Object) uploadMultipart(ctx context.Context, req *s3.PutObjectInput, si
 
 			// create checksum of buffer for integrity checking
 			md5sumBinary := md5.Sum(buf)
-			addMd5(&md5sumBinary, partNum-1)
+			//addMd5(&md5sumBinary, partNum-1)
 			md5sum := base64.StdEncoding.EncodeToString(md5sumBinary[:])
 
 			err = f.pacer.Call(func() (bool, error) {
@@ -5191,7 +5191,15 @@ func (o *Object) uploadMultipart(ctx context.Context, req *s3.PutObjectInput, si
 					ETag:       uout.ETag,
 				})
 				partsMu.Unlock()
-
+				if uout.ETag != nil {
+					etag := strings.Trim(strings.ToLower(*uout.ETag), `"`)
+					etagBinary, err := hex.DecodeString(etag)
+					if err != nil || len(etagBinary) != md5.Size {
+						fs.Errorf(o, "Failed to decode ETag %q: %v", etag, err)
+					} else {
+						addMd5((*[md5.Size]byte)(etagBinary), partNum-1)
+					}
+				}
 				return false, nil
 			})
 			if err != nil {
@@ -5586,7 +5594,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	o.setMetaData(head)
 
 	// Check multipart upload ETag if required
-	if o.fs.opt.UseMultipartEtag.Value && !o.fs.etagIsNotMD5 && wantETag != "" && head.ETag != nil && *head.ETag != "" {
+	if o.fs.opt.UseMultipartEtag.Value /*&& !o.fs.etagIsNotMD5*/ && wantETag != "" && head.ETag != nil && *head.ETag != "" {
 		gotETag := strings.Trim(strings.ToLower(*head.ETag), `"`)
 		if wantETag != gotETag {
 			return fmt.Errorf("multipart upload corrupted: Etag differ: expecting %s but got %s", wantETag, gotETag)
