@@ -3468,15 +3468,16 @@ var errEndList = errors.New("end list")
 
 // list options
 type listOpt struct {
-	bucket       string  // bucket to list
-	directory    string  // directory with bucket
-	prefix       string  // prefix to remove from listing
-	addBucket    bool    // if set, the bucket is added to the start of the remote
-	recurse      bool    // if set, recurse to read sub directories
-	withVersions bool    // if set, versions are produced
-	hidden       bool    // if set, return delete markers as objects with size == isDeleteMarker
-	findFile     bool    // if set, it will look for files called (bucket, directory)
-	versionAt    fs.Time // if set only show versions <= this time
+	bucket        string  // bucket to list
+	directory     string  // directory with bucket
+	prefix        string  // prefix to remove from listing
+	addBucket     bool    // if set, the bucket is added to the start of the remote
+	recurse       bool    // if set, recurse to read sub directories
+	withVersions  bool    // if set, versions are produced
+	hidden        bool    // if set, return delete markers as objects with size == isDeleteMarker
+	findFile      bool    // if set, it will look for files called (bucket, directory)
+	versionAt     fs.Time // if set only show versions <= this time
+	noSkipMarkers bool    // if set return dir marker objects
 }
 
 // list lists the objects into the function supplied with the opt
@@ -3621,7 +3622,7 @@ func (f *Fs) list(ctx context.Context, opt listOpt, fn listFn) error {
 				remote = bucket.Join(opt.bucket, remote)
 			}
 			// is this a directory marker?
-			if isDirectory && object.Size != nil && *object.Size == 0 {
+			if isDirectory && object.Size != nil && *object.Size == 0 && !opt.noSkipMarkers {
 				continue // skip directory marker
 			}
 			if versionIDs != nil {
@@ -4568,13 +4569,14 @@ func (f *Fs) purge(ctx context.Context, dir string, oldOnly bool) error {
 		delErr <- operations.DeleteFiles(ctx, delChan)
 	}()
 	checkErr(f.list(ctx, listOpt{
-		bucket:       bucket,
-		directory:    directory,
-		prefix:       f.rootDirectory,
-		addBucket:    f.rootBucket == "",
-		recurse:      true,
-		withVersions: versioned,
-		hidden:       true,
+		bucket:        bucket,
+		directory:     directory,
+		prefix:        f.rootDirectory,
+		addBucket:     f.rootBucket == "",
+		recurse:       true,
+		withVersions:  versioned,
+		hidden:        true,
+		noSkipMarkers: true,
 	}, func(remote string, object *s3.Object, versionID *string, isDirectory bool) error {
 		if isDirectory {
 			return nil
