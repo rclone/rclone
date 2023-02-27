@@ -98,6 +98,7 @@ func (tm *transferMap) String(ctx context.Context, progress *inProgress, exclude
 	ci := fs.GetConfig(ctx)
 	stringList := make([]string, 0, len(tm.items))
 	for _, tr := range tm._sortedSlice() {
+		var what = tr.what
 		if exclude != nil {
 			exclude.mu.RLock()
 			_, found := exclude.items[tr.remote]
@@ -109,8 +110,10 @@ func (tm *transferMap) String(ctx context.Context, progress *inProgress, exclude
 		var out string
 		if acc := progress.get(tr.remote); acc != nil {
 			out = acc.String()
+			if what != "" {
+				out += ", " + what
+			}
 		} else {
-			what := tr.what
 			if what == "" {
 				what = tm.name
 			}
