@@ -60,12 +60,14 @@ func (vol *Volume) applyOptions(volOpt VolOpts) error {
 		case "":
 			continue
 		case "remote", "fs":
-			p, err := fspath.Parse(str)
-			if err != nil || p.Name == ":" {
-				return fmt.Errorf("cannot parse path %q: %w", str, err)
+			if str != "" {
+				p, err := fspath.Parse(str)
+				if err != nil || p.Name == ":" {
+					return fmt.Errorf("cannot parse path %q: %w", str, err)
+				}
+				fsName, fsPath, fsOpt = p.Name, p.Path, p.Config
+				vol.Fs = str
 			}
-			fsName, fsPath, fsOpt = p.Name, p.Path, p.Config
-			vol.Fs = str
 		case "type":
 			fsType = str
 			vol.Type = str
