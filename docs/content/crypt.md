@@ -58,7 +58,7 @@ custom salt is effectively a second password that must be memorized.
 based on XSalsa20 cipher and Poly1305 for integrity.
 [Names](#name-encryption) (file- and directory names) are also encrypted
 by default, but this has some implications and is therefore
-possible to turned off.
+possible to be turned off.
 
 ## Configuration
 
