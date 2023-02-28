@@ -146,9 +146,9 @@ The base directories on the both Path1 and Path2 filesystems must exist
 or bisync will fail. This is required for safety - that bisync can verify
 that both paths are valid.
 
-When using `--resync` a newer version of a file on the Path2 filesystem
-will be overwritten by the Path1 filesystem version.
-Carefully evaluate deltas using [--dry-run](/flags/#non-backend-flags).
+When using `--resync`, a newer version of a file either on Path1 or Path2
+filesystem, will overwrite the file on the other path (only the last version
+will be kept). Carefully evaluate deltas using [--dry-run](/flags/#non-backend-flags).
 
 For a resync run, one of the paths may be empty (no files in the path tree).
 The resync run should result in files on both paths, else a normal non-resync
