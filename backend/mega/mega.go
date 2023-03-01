@@ -88,6 +88,7 @@ permanently delete objects instead.`,
 			Help: `Use HTTPS for transfers.
 
 Some ISPs throttle HTTP connections, this causes transfers to become very slow.
+Enabling this will force MEGA to use HTTPS for all transfers.
 HTTPS is normally not necesary since all data is already encrypted anyway.
 Enabling it will increase CPU usage and add network overhead.`,
 			Default:  false,
