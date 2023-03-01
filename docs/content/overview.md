@@ -39,7 +39,7 @@ Here is an overview of the major features of each cloud storage system.
 | Mega                         | -                | -       | No               | Yes             | -         | -        |
 | Memory                       | MD5              | R/W     | No               | No              | -         | -        |
 | Microsoft Azure Blob Storage | MD5              | R/W     | No               | No              | R/W       | -        |
-| Microsoft OneDrive           | SHA1 ⁵           | R/W     | Yes              | No              | R         | -        |
+| Microsoft OneDrive           | QuickXorHash ⁵   | R/W     | Yes              | No              | R         | -        |
 | OpenDrive                    | MD5              | R/W     | Yes              | Partial ⁸       | -         | -        |
 | OpenStack Swift              | MD5              | R/W     | No               | No              | R/W       | -        |
 | Oracle Object Storage        | MD5              | R/W     | No               | No              | R/W       | -        |
@@ -72,9 +72,7 @@ This is an SHA256 sum of all the 4 MiB block SHA256s.
 
 ⁴ WebDAV supports modtimes when used with Owncloud and Nextcloud only.
 
-⁵ Microsoft OneDrive Personal supports SHA1 hashes, whereas OneDrive
-for business and SharePoint server support Microsoft's own
-[QuickXorHash](https://docs.microsoft.com/en-us/onedrive/developer/code-snippets/quickxorhash).
+⁵ [QuickXorHash](https://docs.microsoft.com/en-us/onedrive/developer/code-snippets/quickxorhash) is Microsoft's own hash.
 
 ⁶ Mail.ru uses its own modified SHA1 hash
 
