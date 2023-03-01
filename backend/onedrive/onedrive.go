@@ -260,6 +260,41 @@ At the time of writing this only works with OneDrive personal paid accounts.
 `,
 			Advanced: true,
 		}, {
+			Name:    "hash_type",
+			Default: "auto",
+			Help: `Specify the hash in use for the backend.
+
+This specifies the hash type in use. If set to "auto" it will use the
+default hash which is is SHA1 for OneDrive Personal and QuickXorHash
+for OneDrive Business and Sharepoint.
+
+This can be set to "none" to not use any hashes.
+
+If the hash requested does not exist on the object, it will be
+returned as an empty string which is treated as a missing hash by
+rclone.
+`,
+			Examples: []fs.OptionExample{{
+				Value: "auto",
+				Help:  "Rclone chooses the best hash",
+			}, {
+				Value: "quickxor",
+				Help:  "QuickXor",
+			}, {
+				Value: "sha1",
+				Help:  "SHA1",
+			}, {
+				Value: "sha256",
+				Help:  "SHA256",
+			}, {
+				Value: "crc32",
+				Help:  "CRC32",
+			}, {
+				Value: "none",
+				Help:  "None - don't use any hashes",
+			}},
+			Advanced: true,
+		}, {
 			Name:     config.ConfigEncoding,
 			Help:     config.ConfigEncodingHelp,
 			Advanced: true,
@@ -597,6 +632,7 @@ type Options struct {
 	LinkScope               string               `config:"link_scope"`
 	LinkType                string               `config:"link_type"`
 	LinkPassword            string               `config:"link_password"`
+	HashType                string               `config:"hash_type"`
 	Enc                     encoder.MultiEncoder `config:"encoding"`
 }
 
@@ -613,6 +649,7 @@ type Fs struct {
 	tokenRenewer *oauthutil.Renew   // renew the token on expiry
 	driveID      string             // ID to use for querying Microsoft Graph
 	driveType    string             // https://developer.microsoft.com/en-us/graph/docs/api-reference/v1.0/resources/drive
+	hashType     hash.Type          // type of the hash we are using
 }
 
 // Object describes a OneDrive object
@@ -626,8 +663,7 @@ type Object struct {
 	size          int64     // size of the object
 	modTime       time.Time // modification time of the object
 	id            string    // ID of the object
-	sha1          string    // SHA-1 of the object content
-	quickxorhash  string    // QuickXorHash of the object content
+	hash          string    // Hash of the content, usually QuickXorHash but set as hash_type
 	mimeType      string    // Content-Type of object from server (may not be as uploaded)
 }
 
@@ -882,6 +918,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		driveType: opt.DriveType,
 		srv:       rest.NewClient(oAuthClient).SetRoot(rootURL),
 		pacer:     fs.NewPacer(ctx, pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant))),
+		hashType:  QuickXorHashType,
 	}
 	f.features = (&fs.Features{
 		CaseInsensitive:         true,
@@ -890,6 +927,19 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		ServerSideAcrossConfigs: opt.ServerSideAcrossConfigs,
 	}).Fill(ctx, f)
 	f.srv.SetErrorHandler(errorHandler)
+
+	// Set the user defined hash
+	if opt.HashType == "auto" || opt.HashType == "" {
+		if f.driveType == driveTypePersonal {
+			opt.HashType = hash.SHA1.String()
+		} else {
+			opt.HashType = QuickXorHashType.String()
+		}
+	}
+	err = f.hashType.Set(opt.HashType)
+	if err != nil {
+		return nil, err
+	}
 
 	// Disable change polling in China region
 	// See: https://github.com/rclone/rclone/issues/6444
@@ -1556,10 +1606,7 @@ func (f *Fs) About(ctx context.Context) (usage *fs.Usage, err error) {
 
 // Hashes returns the supported hash sets.
 func (f *Fs) Hashes() hash.Set {
-	if f.driveType == driveTypePersonal {
-		return hash.Set(hash.SHA1)
-	}
-	return hash.Set(QuickXorHashType)
+	return hash.Set(f.hashType)
 }
 
 // PublicLink returns a link for downloading without account.
@@ -1768,14 +1815,8 @@ func (o *Object) rootPath() string {
 
 // Hash returns the SHA-1 of an object returning a lowercase hex string
 func (o *Object) Hash(ctx context.Context, t hash.Type) (string, error) {
-	if o.fs.driveType == driveTypePersonal {
-		if t == hash.SHA1 {
-			return o.sha1, nil
-		}
-	} else {
-		if t == QuickXorHashType {
-			return o.quickxorhash, nil
-		}
+	if t == o.fs.hashType {
+		return o.hash, nil
 	}
 	return "", hash.ErrUnsupported
 }
@@ -1806,16 +1847,23 @@ func (o *Object) setMetaData(info *api.Item) (err error) {
 	file := info.GetFile()
 	if file != nil {
 		o.mimeType = file.MimeType
-		if file.Hashes.Sha1Hash != "" {
-			o.sha1 = strings.ToLower(file.Hashes.Sha1Hash)
-		}
-		if file.Hashes.QuickXorHash != "" {
-			h, err := base64.StdEncoding.DecodeString(file.Hashes.QuickXorHash)
-			if err != nil {
-				fs.Errorf(o, "Failed to decode QuickXorHash %q: %v", file.Hashes.QuickXorHash, err)
-			} else {
-				o.quickxorhash = hex.EncodeToString(h)
+		o.hash = ""
+		switch o.fs.hashType {
+		case QuickXorHashType:
+			if file.Hashes.QuickXorHash != "" {
+				h, err := base64.StdEncoding.DecodeString(file.Hashes.QuickXorHash)
+				if err != nil {
+					fs.Errorf(o, "Failed to decode QuickXorHash %q: %v", file.Hashes.QuickXorHash, err)
+				} else {
+					o.hash = hex.EncodeToString(h)
+				}
 			}
+		case hash.SHA1:
+			o.hash = strings.ToLower(file.Hashes.Sha1Hash)
+		case hash.SHA256:
+			o.hash = strings.ToLower(file.Hashes.Sha256Hash)
+		case hash.CRC32:
+			o.hash = strings.ToLower(file.Hashes.Crc32Hash)
 		}
 	}
 	fileSystemInfo := info.GetFileSystemInfo()
