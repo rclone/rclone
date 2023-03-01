@@ -18,6 +18,7 @@ import (
 	"github.com/rclone/rclone/fs/dirtree"
 	"github.com/rclone/rclone/fs/log"
 	"github.com/rclone/rclone/fs/walk"
+	"github.com/rclone/rclone/lib/terminal"
 	"github.com/spf13/cobra"
 )
 
@@ -100,22 +101,26 @@ For a more interactive navigation of the remote see the
 	RunE: func(command *cobra.Command, args []string) error {
 		cmd.CheckArgs(1, 1, command, args)
 		fsrc := cmd.NewFsSrc(args)
-		outFile := os.Stdout
+		ci := fs.GetConfig(context.Background())
+		var outFile io.Writer
 		if outFileName != "" {
 			var err error
 			outFile, err = os.Create(outFileName)
 			if err != nil {
 				return fmt.Errorf("failed to create output file: %w", err)
 			}
+			opts.Colorize = false
+		} else {
+			terminal.Start()
+			outFile = terminal.Out
+			opts.Colorize = true
 		}
 		opts.VerSort = opts.VerSort || sort == "version"
 		opts.ModSort = opts.ModSort || sort == "mtime"
 		opts.CTimeSort = opts.CTimeSort || sort == "ctime"
 		opts.NameSort = sort == "name"
 		opts.SizeSort = sort == "size"
-		ci := fs.GetConfig(context.Background())
 		opts.UnitSize = ci.HumanReadable
-		opts.Colorize = ci.TerminalColorMode != fs.TerminalColorModeNever
 		if opts.DeepLevel == 0 {
 			opts.DeepLevel = ci.MaxDepth
 		}
