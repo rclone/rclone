@@ -685,3 +685,4 @@ put them back in again.` >}}
   * Simmon Li (he/him) <hello@crespire.dev>
   * Matthias Baur <baurmatt@users.noreply.github.com>
   * Hunter Wittenborn <hunter@hunterwittenborn.com>
+  * logopk <peter@kreuser.name>
