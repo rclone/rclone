@@ -87,7 +87,8 @@ permanently delete objects instead.`,
 			Name: "use_https",
 			Help: `Use HTTPS for transfers.
 
-HTTPS is not necesary since all data is already encrypted before being stored or transfered anyway.
+Some ISPs throttle HTTP connections, this causes transfers to become very slow.
+HTTPS is normally not necesary since all data is already encrypted anyway.
 Enabling it will increase CPU usage and add network overhead.`,
 			Default:  false,
 			Advanced: true,
