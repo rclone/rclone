@@ -2560,6 +2560,30 @@ func getClient(ctx context.Context, opt *Options) *http.Client {
 	}
 }
 
+// Default name resolver
+var defaultResolver = endpoints.DefaultResolver()
+
+// resolve (service, region) to endpoint
+//
+// Used to set endpoint for s3 services and not for other services
+type resolver string
+
+// EndpointFor return the endpoint for s3 if set or the default if not
+func (endpoint resolver) EndpointFor(service, region string, opts ...func(*endpoints.Options)) (endpoints.ResolvedEndpoint, error) {
+	fs.Debugf(nil, "Resolving service %q region %q", service, region)
+	if service == "s3" {
+		url := string(endpoint)
+		if !strings.HasPrefix(url, "http") {
+			url = "https://" + url
+		}
+		return endpoints.ResolvedEndpoint{
+			URL:           url,
+			SigningRegion: region,
+		}, nil
+	}
+	return defaultResolver.EndpointFor(service, region, opts...)
+}
+
 // s3Connection makes a connection to s3
 func s3Connection(ctx context.Context, opt *Options, client *http.Client) (*s3.S3, *session.Session, error) {
 	ci := fs.GetConfig(ctx)
@@ -2639,7 +2663,8 @@ func s3Connection(ctx context.Context, opt *Options, client *http.Client) (*s3.S
 		awsConfig.WithRegion(opt.Region)
 	}
 	if opt.Endpoint != "" {
-		awsConfig.WithEndpoint(opt.Endpoint)
+		// If endpoint is set, only override the s3 service so we don't break sts
+		awsConfig.WithEndpointResolver(resolver(opt.Endpoint))
 	}
 
 	// awsConfig.WithLogLevel(aws.LogDebugWithSigning)
