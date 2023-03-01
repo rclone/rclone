@@ -686,3 +686,4 @@ put them back in again.` >}}
   * Matthias Baur <baurmatt@users.noreply.github.com>
   * Hunter Wittenborn <hunter@hunterwittenborn.com>
   * logopk <peter@kreuser.name>
+  * Gerard Bosch <30733556+gerardbosch@users.noreply.github.com>
