@@ -684,3 +684,4 @@ put them back in again.` >}}
   * happyxhw <44490504+happyxhw@users.noreply.github.com>
   * Simmon Li (he/him) <hello@crespire.dev>
   * Matthias Baur <baurmatt@users.noreply.github.com>
+  * Hunter Wittenborn <hunter@hunterwittenborn.com>
