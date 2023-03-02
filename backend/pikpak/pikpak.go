@@ -18,7 +18,6 @@ package pikpak
 // ------------------------------------------------------------
 
 // * List() with options starred-only
-// * PublicLink() with more user-configurable options
 // * uploadByResumable() with configurable chunk-size
 // * user-configurable list chunk
 // * Prefer api.Medias[].Link.Url for opening media
@@ -32,6 +31,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"math"
 	"net/http"
 	"net/url"
 	"path"
@@ -105,7 +105,10 @@ func pikpakOAuthOptions() []fs.Option {
 
 // pikpakAutorize retrieves OAuth token using user/pass and save it to rclone.conf
 func pikpakAuthorize(ctx context.Context, opt *Options, name string, m configmap.Mapper) error {
-	pass := obscure.MustReveal(opt.Password)
+	pass, err := obscure.Reveal(opt.Password)
+	if err != nil {
+		return fmt.Errorf("failed to decode password - did you obscure it?: %w", err)
+	}
 	t, err := oauthConfig.PasswordCredentialsToken(ctx, opt.Username, pass)
 	if err != nil {
 		return fmt.Errorf("failed to retrieve token using username/password: %w", err)
@@ -738,7 +741,7 @@ func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 func (f *Fs) About(ctx context.Context) (usage *fs.Usage, err error) {
 	info, err := f.getAbout(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get drive#quota: %w", err)
+		return nil, fmt.Errorf("failed to get drive quota: %w", err)
 	}
 	q := info.Quota
 	usage = &fs.Usage{
@@ -754,7 +757,6 @@ func (f *Fs) About(ctx context.Context) (usage *fs.Usage, err error) {
 
 // PublicLink adds a "readable by anyone with link" permission on the given file or folder.
 func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, unlink bool) (string, error) {
-	// TODO: can be improved further; expiration days, passcode, and ...
 	id, err := f.dirCache.FindDir(ctx, remote, false)
 	if err == nil {
 		fs.Debugf(f, "attempting to share directory '%s'", remote)
@@ -766,10 +768,14 @@ func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, 
 		}
 		id = o.(*Object).id
 	}
+	expiry := -1
+	if expire < fs.DurationOff {
+		expiry = int(math.Ceil(time.Duration(expire).Hours() / 24))
+	}
 	req := api.RequestShare{
 		FileIds:        []string{id},
 		ShareTo:        "publiclink",
-		ExpirationDays: -1,
+		ExpirationDays: expiry,
 		PassCodeOption: "NOT_REQUIRED",
 	}
 	info, err := f.requestShare(ctx, &req)
@@ -1339,20 +1345,6 @@ func (f *Fs) UserInfo(ctx context.Context) (userInfo map[string]string, err erro
 
 // ------------------------------------------------------------
 
-// get an id of file or directory
-func (f *Fs) getID(ctx context.Context, path string) (id string, err error) {
-	path = strings.Trim(path, "/")
-	id, err = f.dirCache.FindDir(ctx, path, false)
-	if err != nil {
-		o, err := f.NewObject(ctx, path)
-		if err != nil {
-			return "", err
-		}
-		id = o.(fs.IDer).ID()
-	}
-	return id, nil
-}
-
 // add offline download task for url
 func (f *Fs) addURL(ctx context.Context, url, path string) (*api.Task, error) {
 	req := api.RequestNewTask{
@@ -1423,18 +1415,6 @@ func (f *Fs) decompressDir(ctx context.Context, filename, id, password string, s
 }
 
 var commandHelp = []fs.CommandHelp{{
-	Name:  "getid",
-	Short: "Get an ID of a file or directory",
-	Long: `This command is to obtain an ID of a file or directory.
-
-Usage:
-
-    rclone backend getid pikpak:path {subpath}
-
-The 'path' should point to a directory not a file. Use an extra argument
-'subpath' to get an ID of a file located in 'pikpak:path'.
-`,
-}, {
 	Name:  "addurl",
 	Short: "Add offline download task for url",
 	Long: `This command adds offline download task for url.
@@ -1482,12 +1462,6 @@ Result:
 // otherwise it will be JSON encoded and shown to the user like that
 func (f *Fs) Command(ctx context.Context, name string, arg []string, opt map[string]string) (out interface{}, err error) {
 	switch name {
-	case "getid":
-		path := ""
-		if len(arg) > 0 {
-			path = arg[0]
-		}
-		return f.getID(ctx, path)
 	case "addurl":
 		if len(arg) != 1 {
 			return nil, errors.New("need exactly 1 argument")

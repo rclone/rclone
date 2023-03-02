@@ -249,22 +249,6 @@ info on how to pass options and arguments.
 These can be run on a running backend using the rc command
 [backend/command](/rc/#backend-command).
 
-### getid
-
-Get an ID of a file or directory
-
-    rclone backend getid remote: [options] [<arguments>+]
-
-This command is to obtain an ID of a file or directory.
-
-Usage:
-
-    rclone backend getid pikpak:path {subpath}
-
-The 'path' should point to a directory not a file. Use an extra argument
-'subpath' to get an ID of a file located in 'pikpak:path'.
-
-
 ### addurl
 
 Add offline download task for url

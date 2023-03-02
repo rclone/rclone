@@ -209,7 +209,7 @@ func readSHA1(in io.Reader, size, threshold int64) (sha1sum string, out io.Reade
 			_ = os.Remove(tempFile.Name()) // delete the cache file after we are done - may be deleted already
 		}
 
-		// copy the ENTIRE file to disc and calculate the MD5 in the process
+		// copy the ENTIRE file to disc and calculate the SHA1 in the process
 		if _, err = io.Copy(tempFile, teeReader); err != nil {
 			return
 		}
