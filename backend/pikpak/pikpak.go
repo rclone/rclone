@@ -381,6 +381,9 @@ func (f *Fs) shouldRetry(ctx context.Context, resp *http.Response, err error) (b
 		} else if apiErr.Reason == "task_daily_create_limit_vip" {
 			// "task_daily_create_limit_vip" (11): Sorry, you have submitted too many tasks and have exceeded the current processing capacity, please try again tomorrow
 			return false, fserrors.FatalError(err)
+		} else if apiErr.Reason == "file_space_not_enough" {
+			// "file_space_not_enough" (8): Storage space is not enough
+			return false, fserrors.FatalError(err)
 		}
 	}
 
