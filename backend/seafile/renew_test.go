@@ -1,7 +1,6 @@
 package seafile
 
 import (
-	"sync"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -17,19 +16,19 @@ func TestShouldAllowShutdownTwice(t *testing.T) {
 	renew.Shutdown()
 }
 
-func TestRenewal(t *testing.T) {
+func TestRenewalInTimeLimit(t *testing.T) {
 	var count int64
 
-	wg := sync.WaitGroup{}
-	wg.Add(2) // run the renewal twice
-	renew := NewRenew(time.Millisecond, func() error {
+	renew := NewRenew(100*time.Millisecond, func() error {
 		atomic.AddInt64(&count, 1)
-		wg.Done()
 		return nil
 	})
-	wg.Wait()
+	time.Sleep(time.Second)
 	renew.Shutdown()
 
-	// it is technically possible that a third renewal gets triggered between Wait() and Shutdown()
-	assert.GreaterOrEqual(t, atomic.LoadInt64(&count), int64(2))
+	// there's no guarantee the CI agent can handle a simple goroutine
+	renewCount := atomic.LoadInt64(&count)
+	t.Logf("renew count = %d", renewCount)
+	assert.Greater(t, renewCount, int64(0))
+	assert.Less(t, renewCount, int64(11))
 }
