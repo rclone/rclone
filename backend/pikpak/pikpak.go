@@ -603,10 +603,8 @@ func (f *Fs) listAll(ctx context.Context, dirID, kind, trashed string, fn listAl
 	filters.Set("Phase", "eq", api.PhaseTypeComplete)
 	filters.Set("Trashed", "eq", trashed)
 	filters.Set("Kind", "eq", kind)
-	if *filters != (api.Filters{}) {
-		if filterStr, err := json.Marshal(filters); err == nil {
-			params.Set("filters", string(filterStr))
-		}
+	if filterStr, err := json.Marshal(filters); err == nil {
+		params.Set("filters", string(filterStr))
 	}
 	// fs.Debugf(f, "list params: %v", params)
 
@@ -892,7 +890,7 @@ func (f *Fs) moveObjects(ctx context.Context, IDs []string, dirID string) (err e
 	}
 	req := api.RequestBatch{
 		Ids: IDs,
-		To:  &map[string]string{"parent_id": parentIDForRequest(dirID)},
+		To:  map[string]string{"parent_id": parentIDForRequest(dirID)},
 	}
 	if err := f.requestBatchAction(ctx, "batchMove", &req); err != nil {
 		return fmt.Errorf("move object failed: %w", err)
@@ -1037,7 +1035,7 @@ func (f *Fs) copyObjects(ctx context.Context, IDs []string, dirID string) (err e
 	}
 	req := api.RequestBatch{
 		Ids: IDs,
-		To:  &map[string]string{"parent_id": parentIDForRequest(dirID)},
+		To:  map[string]string{"parent_id": parentIDForRequest(dirID)},
 	}
 	if err := f.requestBatchAction(ctx, "batchCopy", &req); err != nil {
 		return fmt.Errorf("copy object failed: %w", err)
@@ -1255,7 +1253,7 @@ func (f *Fs) upload(ctx context.Context, in io.Reader, leaf, dirID string, size 
 		UploadType: uploadType,
 	}
 	if uploadType == api.UploadTypeResumable {
-		req.Resumable = &map[string]string{"provider": "PROVIDER_ALIYUN"}
+		req.Resumable = map[string]string{"provider": "PROVIDER_ALIYUN"}
 	}
 	newfile, err := f.requestNewFile(ctx, &req)
 	if err != nil {

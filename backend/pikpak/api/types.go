@@ -103,11 +103,11 @@ var _ error = (*Error)(nil)
 // * eq: "true" or "false"
 // * gt or lt: time format string, e.g. "2023-01-28T10:56:49.757+08:00"
 type Filters struct {
-	Phase        *map[string]string `json:"phase,omitempty"`         // "in" or "eq"
-	Trashed      *map[string]bool   `json:"trashed,omitempty"`       // "eq"
-	Kind         *map[string]string `json:"kind,omitempty"`          // "eq"
-	Starred      *map[string]bool   `json:"starred,omitempty"`       // "eq"
-	ModifiedTime *map[string]string `json:"modified_time,omitempty"` // "gt" or "lt"
+	Phase        map[string]string `json:"phase,omitempty"`         // "in" or "eq"
+	Trashed      map[string]bool   `json:"trashed,omitempty"`       // "eq"
+	Kind         map[string]string `json:"kind,omitempty"`          // "eq"
+	Starred      map[string]bool   `json:"starred,omitempty"`       // "eq"
+	ModifiedTime map[string]string `json:"modified_time,omitempty"` // "gt" or "lt"
 }
 
 // Set sets filter values using field name, operator and corresponding value
@@ -119,9 +119,9 @@ func (f *Filters) Set(field, operator, value string) {
 	r := reflect.ValueOf(f)
 	fd := reflect.Indirect(r).FieldByName(field)
 	if v, err := strconv.ParseBool(value); err == nil {
-		fd.Set(reflect.ValueOf(&map[string]bool{operator: v}))
+		fd.Set(reflect.ValueOf(map[string]bool{operator: v}))
 	} else {
-		fd.Set(reflect.ValueOf(&map[string]string{operator: value}))
+		fd.Set(reflect.ValueOf(map[string]string{operator: value}))
 	}
 }
 
@@ -449,8 +449,8 @@ type RequestShare struct {
 
 // RequestBatch is to request for batch actions
 type RequestBatch struct {
-	Ids []string           `json:"ids,omitempty"`
-	To  *map[string]string `json:"to,omitempty"`
+	Ids []string          `json:"ids,omitempty"`
+	To  map[string]string `json:"to,omitempty"`
 }
 
 // RequestNewFile is to request for creating a new `drive#folder` or `drive#file`
@@ -461,10 +461,10 @@ type RequestNewFile struct {
 	ParentID   string `json:"parent_id"`
 	FolderType string `json:"folder_type"`
 	// only when uploading a new file
-	Hash       string             `json:"hash,omitempty"`      // sha1sum
-	Resumable  *map[string]string `json:"resumable,omitempty"` // {"provider": "PROVIDER_ALIYUN"}
-	Size       int64              `json:"size,omitempty"`
-	UploadType string             `json:"upload_type,omitempty"` // "UPLOAD_TYPE_FORM" or "UPLOAD_TYPE_RESUMABLE"
+	Hash       string            `json:"hash,omitempty"`      // sha1sum
+	Resumable  map[string]string `json:"resumable,omitempty"` // {"provider": "PROVIDER_ALIYUN"}
+	Size       int64             `json:"size,omitempty"`
+	UploadType string            `json:"upload_type,omitempty"` // "UPLOAD_TYPE_FORM" or "UPLOAD_TYPE_RESUMABLE"
 }
 
 // RequestNewTask is to request for creating a new task like offline downloads
