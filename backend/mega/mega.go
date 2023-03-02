@@ -84,6 +84,17 @@ permanently delete objects instead.`,
 			Default:  false,
 			Advanced: true,
 		}, {
+			Name: "use_https",
+			Help: `Use HTTPS for transfers.
+
+MEGA uses plain text HTTP connections by default.
+Some ISPs throttle HTTP connections, this causes transfers to become very slow.
+Enabling this will force MEGA to use HTTPS for all transfers.
+HTTPS is normally not necesary since all data is already encrypted anyway.
+Enabling it will increase CPU usage and add network overhead.`,
+			Default:  false,
+			Advanced: true,
+		}, {
 			Name:     config.ConfigEncoding,
 			Help:     config.ConfigEncodingHelp,
 			Advanced: true,
@@ -100,6 +111,7 @@ type Options struct {
 	Pass       string               `config:"pass"`
 	Debug      bool                 `config:"debug"`
 	HardDelete bool                 `config:"hard_delete"`
+	UseHTTPS   bool                 `config:"use_https"`
 	Enc        encoder.MultiEncoder `config:"encoding"`
 }
 
@@ -204,6 +216,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	if srv == nil {
 		srv = mega.New().SetClient(fshttp.NewClient(ctx))
 		srv.SetRetries(ci.LowLevelRetries) // let mega do the low level retries
+		srv.SetHTTPS(opt.UseHTTPS)
 		srv.SetLogger(func(format string, v ...interface{}) {
 			fs.Infof("*go-mega*", format, v...)
 		})

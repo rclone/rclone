@@ -56,7 +56,7 @@ require (
 	github.com/spf13/cobra v1.6.1
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.8.1
-	github.com/t3rm1n4l/go-mega v0.0.0-20220725095014-c4e0c2b5debf
+	github.com/t3rm1n4l/go-mega v0.0.0-20230228171823-a01a2cda13ca
 	github.com/winfsp/cgofuse v1.5.1-0.20221118130120-84c0898ad2e0
 	github.com/xanzy/ssh-agent v0.3.3
 	github.com/youmark/pkcs8 v0.0.0-20201027041543-1326539a0a0a
