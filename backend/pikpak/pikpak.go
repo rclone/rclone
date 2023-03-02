@@ -1105,59 +1105,6 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	return dstObj, nil
 }
 
-// MergeDirs merges the contents of all the directories passed
-// in into the first one and rmdirs the other directories.
-func (f *Fs) MergeDirs(ctx context.Context, dirs []fs.Directory) (err error) {
-	if len(dirs) < 2 {
-		return nil
-	}
-	dstDir := dirs[0]
-	for _, srcDir := range dirs[1:] {
-		// list the objects that are NOT marked as trashed
-		//
-		// Moving objects in recycler throws following error:
-		// file_move_from_recycle_bin (9): "Moving in recycler is not allowed"
-		var IDs []string
-		_, err = f.listAll(ctx, srcDir.ID(), "", "false", func(item *api.File) bool {
-			fs.Infof(srcDir, "listing for merging %q", item.Name)
-			IDs = append(IDs, item.ID)
-			// API doesn't allow to move a large number of objects at once, so doing it in chunked
-			if len(IDs) >= api.ListLimit {
-				if err = f.moveObjects(ctx, IDs, dstDir.ID()); err != nil {
-					return true
-				}
-				IDs = nil
-			}
-			return false
-		})
-		if err != nil {
-			return fmt.Errorf("MergeDirs list failed on %v: %w", srcDir, err)
-		}
-		// move them into place
-		if err = f.moveObjects(ctx, IDs, dstDir.ID()); err != nil {
-			return fmt.Errorf("MergeDirs move failed in %v: %w", srcDir, err)
-		}
-	}
-
-	// rmdir (into trash) the now empty source directory
-	var IDs []string
-	for _, srcDir := range dirs[1:] {
-		fs.Infof(srcDir, "removing empty directory")
-		IDs = append(IDs, srcDir.ID())
-		// API doesn't allow to delete a large number of objects at once, so doing it in chunked
-		if len(IDs) >= api.ListLimit {
-			if err = f.deleteObjects(ctx, IDs, true); err != nil {
-				return err
-			}
-			IDs = nil
-		}
-	}
-	if err := f.deleteObjects(ctx, IDs, true); err != nil {
-		return fmt.Errorf("MergeDirs failed to rmdir: %w", err)
-	}
-	return nil
-}
-
 func (f *Fs) uploadByForm(ctx context.Context, in io.Reader, name string, size int64, form *api.Form, options ...fs.OpenOption) (err error) {
 	// struct to map. transferring values from MultParts to url parameter
 	params := url.Values{}
@@ -1711,7 +1658,6 @@ var (
 	_ fs.DirCacheFlusher = (*Fs)(nil)
 	_ fs.PutUncheckeder  = (*Fs)(nil)
 	_ fs.PublicLinker    = (*Fs)(nil)
-	_ fs.MergeDirser     = (*Fs)(nil)
 	_ fs.Abouter         = (*Fs)(nil)
 	_ fs.UserInfoer      = (*Fs)(nil)
 	_ fs.Object          = (*Object)(nil)
