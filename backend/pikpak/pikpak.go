@@ -191,14 +191,15 @@ Fill in for rclone to use a non root folder as its starting point.
 				encoder.EncodeDot |
 				encoder.EncodeBackSlash |
 				encoder.EncodeSlash |
-				encoder.EncodeWin |
+				encoder.EncodeDoubleQuote |
+				encoder.EncodeAsterisk |
+				encoder.EncodeColon |
+				encoder.EncodeLtGt |
+				encoder.EncodeQuestion |
+				encoder.EncodePipe |
 				encoder.EncodeLeftSpace |
-				encoder.EncodeLeftPeriod |
-				encoder.EncodeLeftTilde |
-				encoder.EncodeLeftCrLfHtVt |
 				encoder.EncodeRightSpace |
 				encoder.EncodeRightPeriod |
-				encoder.EncodeRightCrLfHtVt |
 				encoder.EncodeInvalidUtf8),
 		}}...),
 	})
