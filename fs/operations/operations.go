@@ -836,8 +836,8 @@ func ListFn(ctx context.Context, f fs.Fs, fn func(fs.Object)) error {
 	})
 }
 
-// mutex for synchronized output
-var outMutex sync.Mutex
+// StdoutMutex mutex for synchronized output on stdout
+var StdoutMutex sync.Mutex
 
 // SyncPrintf is a global var holding the Printf function used in syncFprintf so that it can be overridden
 // Note, despite name, does not provide sync and should not be called directly
@@ -853,8 +853,8 @@ var SyncPrintf = func(format string, a ...interface{}) {
 // Updated to print to terminal if no writer is defined
 // This special behavior is used to allow easier replacement of the print to terminal code by progress
 func syncFprintf(w io.Writer, format string, a ...interface{}) {
-	outMutex.Lock()
-	defer outMutex.Unlock()
+	StdoutMutex.Lock()
+	defer StdoutMutex.Unlock()
 	if w == nil || w == os.Stdout {
 		SyncPrintf(format, a...)
 	} else {
@@ -2282,7 +2282,7 @@ func GetFsInfo(f fs.Fs) *FsInfo {
 }
 
 var (
-	interactiveMu sync.Mutex
+	interactiveMu sync.Mutex // protects the following variables
 	skipped       = map[string]bool{}
 )
 
@@ -2290,14 +2290,22 @@ var (
 //
 // Call with interactiveMu held
 func skipDestructiveChoose(ctx context.Context, subject interface{}, action string) (skip bool) {
-	fmt.Printf("rclone: %s \"%v\"?\n", action, subject)
-	switch i := config.CommandDefault([]string{
+	// Lock the StdoutMutex - must not call fs.Log anything
+	// otherwise it will deadlock with --interactive --progress
+	StdoutMutex.Lock()
+
+	fmt.Printf("\nrclone: %s \"%v\"?\n", action, subject)
+	i := config.CommandDefault([]string{
 		"yYes, this is OK",
 		"nNo, skip this",
 		fmt.Sprintf("sSkip all %s operations with no more questions", action),
 		fmt.Sprintf("!Do all %s operations with no more questions", action),
 		"qExit rclone now.",
-	}, 0); i {
+	}, 0)
+
+	StdoutMutex.Unlock()
+
+	switch i {
 	case 'y':
 		skip = false
 	case 'n':

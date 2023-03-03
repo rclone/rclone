@@ -46,6 +46,9 @@ func ReadNonEmptyLine(prompt string) string {
 
 // CommandDefault - choose one.  If return is pressed then it will
 // chose the defaultIndex if it is >= 0
+//
+// Must not call fs.Log anything from here to avoid deadlock in
+// --interactive --progress
 func CommandDefault(commands []string, defaultIndex int) byte {
 	opts := []string{}
 	for i, text := range commands {
