@@ -212,7 +212,6 @@ type Options struct {
 	RootFolderID        string               `config:"root_folder_id"`
 	UseTrash            bool                 `config:"use_trash"`
 	TrashedOnly         bool                 `config:"trashed_only"`
-	StarredOnly         bool                 `config:"starred_only"`
 	HashMemoryThreshold fs.SizeSuffix        `config:"hash_memory_limit"`
 	Enc                 encoder.MultiEncoder `config:"encoding"`
 }
