@@ -296,6 +296,9 @@ func (f *File) activeWriters() int {
 // It should be called with the lock held
 func (f *File) _roundModTime(modTime time.Time) time.Time {
 	precision := f.d.f.Precision()
+	if precision == fs.ModTimeNotSupported {
+		return modTime
+	}
 	return modTime.Truncate(precision)
 }
 
