@@ -2534,7 +2534,7 @@ func parsePath(path string) (root string) {
 // split returns bucket and bucketPath from the rootRelativePath
 // relative to f.root
 func (f *Fs) split(rootRelativePath string) (bucketName, bucketPath string) {
-	bucketName, bucketPath = bucket.Split(path.Join(f.root, rootRelativePath))
+	bucketName, bucketPath = bucket.Split(bucket.Join(f.root, rootRelativePath))
 	return f.opt.Enc.FromStandardName(bucketName), f.opt.Enc.FromStandardPath(bucketPath)
 }
 
@@ -3589,7 +3589,7 @@ func (f *Fs) list(ctx context.Context, opt listOpt, fn listFn) error {
 				}
 				remote = remote[len(opt.prefix):]
 				if opt.addBucket {
-					remote = path.Join(opt.bucket, remote)
+					remote = bucket.Join(opt.bucket, remote)
 				}
 				remote = strings.TrimSuffix(remote, "/")
 				err = fn(remote, &s3.Object{Key: &remote}, nil, true)
@@ -3618,7 +3618,7 @@ func (f *Fs) list(ctx context.Context, opt listOpt, fn listFn) error {
 			remote = remote[len(opt.prefix):]
 			isDirectory := remote == "" || strings.HasSuffix(remote, "/")
 			if opt.addBucket {
-				remote = path.Join(opt.bucket, remote)
+				remote = bucket.Join(opt.bucket, remote)
 			}
 			// is this a directory marker?
 			if isDirectory && object.Size != nil && *object.Size == 0 {
@@ -3911,7 +3911,7 @@ func (f *Fs) copy(ctx context.Context, req *s3.CopyObjectInput, dstBucket, dstPa
 	req.Bucket = &dstBucket
 	req.ACL = stringPointerOrNil(f.opt.ACL)
 	req.Key = &dstPath
-	source := pathEscape(path.Join(srcBucket, srcPath))
+	source := pathEscape(bucket.Join(srcBucket, srcPath))
 	if src.versionID != nil {
 		source += fmt.Sprintf("?versionId=%s", *src.versionID)
 	}
