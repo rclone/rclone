@@ -29,6 +29,19 @@ func Split(absPath string) (bucket, bucketPath string) {
 	return absPath[:slash], absPath[slash+1:]
 }
 
+// Join path1 and path2
+//
+// Like path.Join but does not clean the path - useful to preserve trailing /
+func Join(path1, path2 string) string {
+	if path1 == "" {
+		return path2
+	}
+	if path2 == "" {
+		return path1
+	}
+	return strings.TrimSuffix(path1, "/") + "/" + strings.TrimPrefix(path2, "/")
+}
+
 // Cache stores whether buckets are available and their IDs
 type Cache struct {
 	mu       sync.Mutex      // mutex to protect created and deleted

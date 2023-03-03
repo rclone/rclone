@@ -2,6 +2,7 @@ package bucket
 
 import (
 	"errors"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -21,6 +22,26 @@ func TestSplit(t *testing.T) {
 		gotBucket, gotPath := Split(test.in)
 		assert.Equal(t, test.wantBucket, gotBucket, test.in)
 		assert.Equal(t, test.wantPath, gotPath, test.in)
+	}
+}
+
+func TestJoin(t *testing.T) {
+	for _, test := range []struct {
+		in1, in2 string
+		want     string
+	}{
+		{in1: "", in2: "", want: ""},
+		{in1: "in1", in2: "", want: "in1"},
+		{in1: "", in2: "in2", want: "in2"},
+		{in1: "in1", in2: "in2", want: "in1/in2"},
+		{in1: "in1/", in2: "in2", want: "in1/in2"},
+		{in1: "in1", in2: "/in2", want: "in1/in2"},
+		{in1: "in1", in2: "in2/", want: "in1/in2/"},
+		{in1: "/in1", in2: "/in2", want: "/in1/in2"},
+		{in1: "/in1", in2: "../in2", want: "/in1/../in2"},
+	} {
+		got := Join(test.in1, test.in2)
+		assert.Equal(t, test.want, got, fmt.Sprintf("in1=%q, in2=%q", test.in1, test.in2))
 	}
 }
 
