@@ -377,10 +377,10 @@ cloud storage provider.
 An experimental advanced option `filename_encoding` is now provided to
 address this problem to a certain degree.
 For cloud storage systems with case sensitive file names (e.g. Google Drive),
-`base64` can be used to reduce file name length. 
+`base64` can be used to reduce file name length.
 For cloud storage systems using UTF-16 to store file names internally
-(e.g. OneDrive), `base32768` can be used to drastically reduce
-file name length. 
+(e.g. OneDrive), `base32768` or case insensitive version `base32768ci`
+can be used to drastically reduce file name length.
 
 An alternative, future rclone file name encryption mode may tolerate
 backend provider path length limits.
@@ -585,8 +585,10 @@ Properties:
         - Encode using base64. Suitable for case sensitive remote.
     - "base32768"
         - Encode using base32768. Suitable if your remote counts UTF-16 or
-        - Unicode codepoint instead of UTF-8 byte length. (Eg. Onedrive)
-
+        - Unicode codepoint instead of UTF-8 byte length.
+    - "base32768ci"
+	- Encode using base32768 with case insensitive alphabet.
+	- Suitable eg. for Onedrive."
 ### Metadata
 
 Any metadata supported by the underlying remote is read and written.

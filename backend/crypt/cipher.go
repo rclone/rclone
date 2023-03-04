@@ -161,6 +161,8 @@ func NewNameEncoding(s string) (enc fileNameEncoding, err error) {
 		enc = base64.RawURLEncoding
 	case "base32768":
 		enc = base32768.SafeEncoding
+	case "base32768ci":
+		enc = base32768.SafeEncodingCI
 	default:
 		err = fmt.Errorf("unknown file name encoding mode %q", s)
 	}
