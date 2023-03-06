@@ -141,6 +141,13 @@ func (f *File) Node() Node {
 	return f
 }
 
+// renameDir - call when parent directory has been renamed
+func (f *File) renameDir(dPath string) {
+	f.mu.RLock()
+	f.dPath = dPath
+	f.mu.RUnlock()
+}
+
 // applyPendingRename runs a previously set rename operation if there are no
 // more remaining writers. Call without lock held.
 func (f *File) applyPendingRename() {
