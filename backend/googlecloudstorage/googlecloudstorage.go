@@ -337,7 +337,7 @@ can't check the size and hash but the file contents will be decompressed.
 			Default: false,
 			Examples: []fs.OptionExample{{
 				Value: "false",
-				Help:  "Enter AWS credentials in the next step.",
+				Help:  "Enter credentials in the next step.",
 			}, {
 				Value: "true",
 				Help:  "Get GCP IAM credentials from the environment (env vars or IAM).",
