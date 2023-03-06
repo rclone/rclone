@@ -1495,8 +1495,10 @@ func TestDecrypterRead(t *testing.T) {
 		case i == fileHeaderSize:
 			// This would normally produce an error *except* on the first block
 			expectedErr = nil
+		case i <= fileHeaderSize+blockHeaderSize:
+			expectedErr = ErrorEncryptedFileBadHeader
 		default:
-			expectedErr = io.ErrUnexpectedEOF
+			expectedErr = ErrorEncryptedBadBlock
 		}
 		if expectedErr != nil {
 			assert.EqualError(t, err, expectedErr.Error(), what)
