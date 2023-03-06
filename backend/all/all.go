@@ -5,6 +5,7 @@ import (
 	// Active file systems
 	_ "github.com/rclone/rclone/backend/alias"
 	_ "github.com/rclone/rclone/backend/amazonclouddrive"
+	_ "github.com/rclone/rclone/backend/asus"
 	_ "github.com/rclone/rclone/backend/azureblob"
 	_ "github.com/rclone/rclone/backend/b2"
 	_ "github.com/rclone/rclone/backend/box"

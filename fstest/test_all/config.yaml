@@ -279,6 +279,9 @@ backends:
      - "TestMultithreadCopy/{size:131072_streams:2}"
      - "TestMultithreadCopy/{size:131073_streams:2}"
    fastlist: false
+ - backend:  "asus"
+   remote:   "TestAsus:"
+   fastlist: false
  - backend:  "box"
    remote:   "TestBox:"
    fastlist: false
