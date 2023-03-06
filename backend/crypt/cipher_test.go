@@ -27,14 +27,14 @@ func TestNewNameEncryptionMode(t *testing.T) {
 		{"off", NameEncryptionOff, ""},
 		{"standard", NameEncryptionStandard, ""},
 		{"obfuscate", NameEncryptionObfuscated, ""},
-		{"potato", NameEncryptionOff, "Unknown file name encryption mode \"potato\""},
+		{"potato", NameEncryptionOff, "unknown file name encryption mode \"potato\""},
 	} {
 		actual, actualErr := NewNameEncryptionMode(test.in)
 		assert.Equal(t, actual, test.expected)
 		if test.expectedErr == "" {
 			assert.NoError(t, actualErr)
 		} else {
-			assert.Error(t, actualErr, test.expectedErr)
+			assert.EqualError(t, actualErr, test.expectedErr)
 		}
 	}
 }
@@ -726,7 +726,7 @@ func TestNonceFromReader(t *testing.T) {
 	assert.Equal(t, nonce{'1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o'}, x)
 	buf = bytes.NewBufferString("123456789abcdefghijklmn")
 	err = x.fromReader(buf)
-	assert.Error(t, err, "short read of nonce")
+	assert.EqualError(t, err, "short read of nonce: EOF")
 }
 
 func TestNonceFromBuf(t *testing.T) {
@@ -1050,7 +1050,7 @@ func TestRandomSource(t *testing.T) {
 	_, _ = source.Read(buf)
 	sink = newRandomSource(1e8)
 	_, err = io.Copy(sink, source)
-	assert.Error(t, err, "Error in stream")
+	assert.EqualError(t, err, "Error in stream at 1")
 }
 
 type zeroes struct{}
@@ -1173,7 +1173,7 @@ func TestNewEncrypter(t *testing.T) {
 	c.cryptoRand = bytes.NewBufferString("123456789abcdefghijklmn")
 	fh, err = c.newEncrypter(z, nil)
 	assert.Nil(t, fh)
-	assert.Error(t, err, "short read of nonce")
+	assert.EqualError(t, err, "short read of nonce: EOF")
 }
 
 // Test the stream returning 0, io.ErrUnexpectedEOF - this used to
@@ -1224,7 +1224,7 @@ func TestNewDecrypter(t *testing.T) {
 		cd := newCloseDetector(bytes.NewBuffer(file0[:i]))
 		fh, err = c.newDecrypter(cd)
 		assert.Nil(t, fh)
-		assert.Error(t, err, ErrorEncryptedFileTooShort.Error())
+		assert.EqualError(t, err, ErrorEncryptedFileTooShort.Error())
 		assert.Equal(t, 1, cd.closed)
 	}
 
@@ -1232,7 +1232,7 @@ func TestNewDecrypter(t *testing.T) {
 	cd = newCloseDetector(er)
 	fh, err = c.newDecrypter(cd)
 	assert.Nil(t, fh)
-	assert.Error(t, err, "potato")
+	assert.EqualError(t, err, "potato")
 	assert.Equal(t, 1, cd.closed)
 
 	// bad magic
@@ -1243,7 +1243,7 @@ func TestNewDecrypter(t *testing.T) {
 		cd := newCloseDetector(bytes.NewBuffer(file0copy))
 		fh, err := c.newDecrypter(cd)
 		assert.Nil(t, fh)
-		assert.Error(t, err, ErrorEncryptedBadMagic.Error())
+		assert.EqualError(t, err, ErrorEncryptedBadMagic.Error())
 		file0copy[i] ^= 0x1
 		assert.Equal(t, 1, cd.closed)
 	}
@@ -1514,7 +1514,7 @@ func TestDecrypterRead(t *testing.T) {
 	fh, err := c.newDecrypter(cd)
 	assert.NoError(t, err)
 	_, err = io.ReadAll(fh)
-	assert.Error(t, err, "potato")
+	assert.EqualError(t, err, "potato")
 	assert.Equal(t, 0, cd.closed)
 
 	// Test corrupting the input
@@ -1525,12 +1525,12 @@ func TestDecrypterRead(t *testing.T) {
 		file16copy[i] ^= 0xFF
 		fh, err := c.newDecrypter(io.NopCloser(bytes.NewBuffer(file16copy)))
 		if i < fileMagicSize {
-			assert.Error(t, err, ErrorEncryptedBadMagic.Error())
+			assert.EqualError(t, err, ErrorEncryptedBadMagic.Error())
 			assert.Nil(t, fh)
 		} else {
 			assert.NoError(t, err)
 			_, err = io.ReadAll(fh)
-			assert.Error(t, err, ErrorEncryptedFileBadHeader.Error())
+			assert.EqualError(t, err, ErrorEncryptedBadBlock.Error())
 		}
 		file16copy[i] ^= 0xFF
 	}
@@ -1554,7 +1554,7 @@ func TestDecrypterClose(t *testing.T) {
 
 	// double close
 	err = fh.Close()
-	assert.Error(t, err, ErrorFileClosed.Error())
+	assert.EqualError(t, err, ErrorFileClosed.Error())
 	assert.Equal(t, 1, cd.closed)
 
 	// try again reading the file this time
