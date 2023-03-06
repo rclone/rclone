@@ -120,6 +120,15 @@ names, or for debugging purposes.`,
 				},
 			},
 		}, {
+			Name: "pass_bad_blocks",
+			Help: `If set this will pass bad blocks through as all 0.
+
+This should not be set in normal operation, it should only be set if
+trying to recover a crypted file with errors and it is desired to
+recover as much of the file as possible.`,
+			Default:  false,
+			Advanced: true,
+		}, {
 			Name: "filename_encoding",
 			Help: `How to encode the encrypted filename to text string.
 
@@ -174,6 +183,7 @@ func newCipherForConfig(opt *Options) (*Cipher, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to make cipher: %w", err)
 	}
+	cipher.setPassBadBlocks(opt.PassBadBlocks)
 	return cipher, nil
 }
 
@@ -262,6 +272,7 @@ type Options struct {
 	Password2               string `config:"password2"`
 	ServerSideAcrossConfigs bool   `config:"server_side_across_configs"`
 	ShowMapping             bool   `config:"show_mapping"`
+	PassBadBlocks           bool   `config:"pass_bad_blocks"`
 	FilenameEncoding        string `config:"filename_encoding"`
 }
 

@@ -1536,6 +1536,17 @@ func TestDecrypterRead(t *testing.T) {
 		}
 		file16copy[i] ^= 0xFF
 	}
+
+	// Test that we can corrupt a byte and read zeroes if
+	// passBadBlocks is set
+	copy(file16copy, file16)
+	file16copy[len(file16copy)-1] ^= 0xFF
+	c.passBadBlocks = true
+	fh, err = c.newDecrypter(io.NopCloser(bytes.NewBuffer(file16copy)))
+	assert.NoError(t, err)
+	buf, err := io.ReadAll(fh)
+	assert.NoError(t, err)
+	assert.Equal(t, make([]byte, 16), buf)
 }
 
 func TestDecrypterClose(t *testing.T) {
