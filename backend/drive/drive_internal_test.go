@@ -243,6 +243,15 @@ func (f *Fs) InternalTestShouldRetry(t *testing.T) {
 	quotaExceededRetry, quotaExceededError := f.shouldRetry(ctx, &generic403)
 	assert.False(t, quotaExceededRetry)
 	assert.Equal(t, quotaExceededError, expectedQuotaError)
+
+	sqEItem := googleapi.ErrorItem{
+		Reason: "storageQuotaExceeded",
+	}
+	generic403.Errors[0] = sqEItem
+	expectedStorageQuotaError := fserrors.FatalError(&generic403)
+	storageQuotaExceededRetry, storageQuotaExceededError := f.shouldRetry(ctx, &generic403)
+	assert.False(t, storageQuotaExceededRetry)
+	assert.Equal(t, storageQuotaExceededError, expectedStorageQuotaError)
 }
 
 func (f *Fs) InternalTestDocumentImport(t *testing.T) {
