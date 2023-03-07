@@ -314,6 +314,9 @@ func StatJSON(ctx context.Context, fsrc fs.Fs, remote string, opt *ListJSONOpt) 
 		}
 	}
 	// Must be a directory here
+	//
+	// Remove trailing / as rclone listings won't have them
+	remote = strings.TrimRight(remote, "/")
 	parent := path.Dir(remote)
 	if parent == "." || parent == "/" {
 		parent = ""
