@@ -7,6 +7,7 @@ import (
 	"sort"
 	"testing"
 	"time"
+	"unsafe"
 
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/operations"
@@ -576,4 +577,8 @@ func TestDirRename(t *testing.T) {
 	vfs.Opt.ReadOnly = true
 	err = dir.Rename("potato", "tuba", dir)
 	assert.Equal(t, EROFS, err)
+}
+
+func TestDirStructSize(t *testing.T) {
+	t.Logf("Dir struct has size %d bytes", unsafe.Sizeof(Dir{}))
 }

@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"testing"
+	"unsafe"
 
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/operations"
@@ -410,4 +411,8 @@ func TestFileRename(t *testing.T) {
 			testFileRename(t, test.mode, test.inCache, test.forceCache)
 		})
 	}
+}
+
+func TestFileStructSize(t *testing.T) {
+	t.Logf("File struct has size %d bytes", unsafe.Sizeof(File{}))
 }
