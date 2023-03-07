@@ -692,3 +692,4 @@ put them back in again.` >}}
   * Peter Brunner <peter@lugoues.net>
   * Ninh Pham <dongian.rapclubkhtn@gmail.com>
   * Ryan Caezar Itang <sitiom@proton.me>
+  * Peter Brunner <peter@psykhe.com>
