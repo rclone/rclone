@@ -142,6 +142,14 @@ If you are planning to use the [rclone mount](/commands/rclone_mount/)
 feature then you will need to install the third party utility
 [WinFsp](https://winfsp.dev/) also.
 
+### Windows package manager (Winget) {#windows-chocolatey}
+
+[Winget](https://learn.microsoft.com/en-us/windows/package-manager/) comes pre-installed with the latest versions of Windows. If not, update the [App Installer](https://www.microsoft.com/p/app-installer/9nblggh4nns1) package from the Microsoft store.
+
+```
+winget install Rclone.Rclone
+```
+
 ### Chocolatey package manager {#windows-chocolatey}
 
 Make sure you have [Choco](https://chocolatey.org/) installed
