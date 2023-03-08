@@ -47,6 +47,7 @@ type File struct {
 	o                fs.Object                       // NB o may be nil if file is being written
 	leaf             string                          // leaf name of the object
 	writers          []Handle                        // writers for this file
+	virtualModTime   *time.Time                      // modtime for backends with Precision == fs.ModTimeNotSupported
 	pendingModTime   time.Time                       // will be applied once o becomes available, i.e. after file was written
 	pendingRenameFun func(ctx context.Context) error // will be run/renamed after all writers close
 	sys              atomic.Value                    // user defined info to be attached here
@@ -314,8 +315,19 @@ func (f *File) _roundModTime(modTime time.Time) time.Time {
 // if NoModTime is set then it returns the mod time of the directory
 func (f *File) ModTime() (modTime time.Time) {
 	f.mu.RLock()
-	d, o, pendingModTime := f.d, f.o, f.pendingModTime
+	d, o, pendingModTime, virtualModTime := f.d, f.o, f.pendingModTime, f.virtualModTime
 	f.mu.RUnlock()
+
+	// Set the virtual modtime up for backends which don't support setting modtime
+	//
+	// Note that we only cache modtime values that we have returned to the OS
+	// if we haven't returned a value to the OS then we can change it
+	defer func() {
+		if f.d.f.Precision() == fs.ModTimeNotSupported && (virtualModTime == nil || !virtualModTime.Equal(modTime)) {
+			f.virtualModTime = &modTime
+			fs.Debugf(f._path(), "Set virtual modtime to %v", f.virtualModTime)
+		}
+	}()
 
 	if d.vfs.Opt.NoModTime {
 		return d.ModTime()
@@ -333,6 +345,10 @@ func (f *File) ModTime() (modTime time.Time) {
 	}
 	if !pendingModTime.IsZero() {
 		return f._roundModTime(pendingModTime)
+	}
+	if virtualModTime != nil && !virtualModTime.IsZero() {
+		fs.Debugf(f._path(), "Returning virtual modtime %v", f.virtualModTime)
+		return f._roundModTime(*virtualModTime)
 	}
 	if o == nil {
 		return time.Now()
@@ -477,6 +493,8 @@ func (f *File) setObject(o fs.Object) {
 func (f *File) setObjectNoUpdate(o fs.Object) {
 	f.mu.Lock()
 	f.o = o
+	f.virtualModTime = nil
+	fs.Debugf(f._path(), "Reset virtual modtime")
 	f.mu.Unlock()
 }
 
