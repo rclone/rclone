@@ -42,11 +42,17 @@ func TestPipe(t *testing.T) {
 	obj1 := mockobject.New("potato").WithContent([]byte("hello"), mockobject.SeekModeNone)
 
 	pair1 := fs.ObjectPair{Src: obj1, Dst: nil}
+	pairD := fs.ObjectPair{Src: obj1, Dst: obj1} // this object should not count to the stats
 
 	// Put an object
 	ok := p.Put(ctx, pair1)
 	assert.Equal(t, true, ok)
 	checkStats(1, 5)
+
+	// Put an object to be deleted
+	ok = p.Put(ctx, pairD)
+	assert.Equal(t, true, ok)
+	checkStats(2, 5)
 
 	// Close the pipe showing reading on closed pipe is OK
 	p.Close()
@@ -54,6 +60,12 @@ func TestPipe(t *testing.T) {
 	// Read from pipe
 	pair2, ok := p.Get(ctx)
 	assert.Equal(t, pair1, pair2)
+	assert.Equal(t, true, ok)
+	checkStats(1, 0)
+
+	// Read from pipe
+	pair2, ok = p.Get(ctx)
+	assert.Equal(t, pairD, pair2)
 	assert.Equal(t, true, ok)
 	checkStats(0, 0)
 

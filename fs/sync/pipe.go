@@ -85,6 +85,8 @@ func (p *pipe) Pop() interface{} {
 // It returns ok = false if the context was cancelled
 //
 // It will panic if you call it after Close()
+//
+// Note that pairs where src==dst aren't counted for stats
 func (p *pipe) Put(ctx context.Context, pair fs.ObjectPair) (ok bool) {
 	if ctx.Err() != nil {
 		return false
@@ -97,7 +99,7 @@ func (p *pipe) Put(ctx context.Context, pair fs.ObjectPair) (ok bool) {
 		deheap.Push(p, pair)
 	}
 	size := pair.Src.Size()
-	if size > 0 {
+	if size > 0 && pair.Src != pair.Dst {
 		p.totalSize += size
 	}
 	p.stats(len(p.queue), p.totalSize)
@@ -141,7 +143,7 @@ func (p *pipe) GetMax(ctx context.Context, fraction int) (pair fs.ObjectPair, ok
 		pair = deheap.PopMax(p).(fs.ObjectPair)
 	}
 	size := pair.Src.Size()
-	if size > 0 {
+	if size > 0 && pair.Src != pair.Dst {
 		p.totalSize -= size
 	}
 	if p.totalSize < 0 {
