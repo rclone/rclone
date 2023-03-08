@@ -391,6 +391,7 @@ and may be set in the config file.
       --gcs-no-check-bucket                            If set, don't attempt to check the bucket exists or create it
       --gcs-object-acl string                          Access Control List for new objects
       --gcs-project-number string                      Project number
+      --gcs-user-project string                        Enables requester pays option when interacting with GCS bucket
       --gcs-service-account-file string                Service Account Credentials JSON file path
       --gcs-storage-class string                       The storage class to use when storing objects in Google Cloud Storage
       --gcs-token string                               OAuth Access Token as a JSON blob

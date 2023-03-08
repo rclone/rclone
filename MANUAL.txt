@@ -14503,6 +14503,7 @@ and may be set in the config file.
           --gcs-no-check-bucket                            If set, don't attempt to check the bucket exists or create it
           --gcs-object-acl string                          Access Control List for new objects
           --gcs-project-number string                      Project number
+          --gcs-user-project string                        User project to enable requester pays for GCS
           --gcs-service-account-file string                Service Account Credentials JSON file path
           --gcs-storage-class string                       The storage class to use when storing objects in Google Cloud Storage
           --gcs-token string                               OAuth Access Token as a JSON blob
@@ -27161,6 +27162,9 @@ This will guide you through an interactive setup process:
     client_secret>
     Project number optional - needed only for list/create/delete buckets - see your developer console.
     project_number> 12345678
+    Optional - needed only for requester pays.
+    Enter a value. Press Enter to leave empty.
+    user_project> 12345678
     Service Account Credentials JSON file path - needed only if you want use SA instead of interactive login.
     service_account_file>
     Access Control List for new objects.
@@ -43105,6 +43109,7 @@ See commits
     -   Fix
         Entry doesn't belong in directory "" (same as directory) - ignoring
         (Nick Craig-Wood)
+    -   Add requester pays (Chris Merry)
 -   Googlephotos
     -   New flag --gphotos-include-archived to show archived photos as
         well (Nicolas Rueff)

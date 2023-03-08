@@ -320,6 +320,19 @@ Properties:
 - Type:        string
 - Required:    false
 
+#### --gcs-user-project
+
+User project.
+
+Optional - needed only for enabling requester pays GCS buckets.
+
+Properties:
+
+- Config:      user_project
+- Env Var:     RCLONE_GCS_USER_PROJECT
+- Type:        string
+- Required:    false
+
 #### --gcs-service-account-file
 
 Service Account Credentials JSON file path.
