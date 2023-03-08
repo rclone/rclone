@@ -1223,7 +1223,7 @@ func (item *Item) setModTime(modTime time.Time) {
 	item.mu.Unlock()
 }
 
-// GetModTime of the cache file
+// GetModTime of the cache item
 func (item *Item) GetModTime() (modTime time.Time, err error) {
 	// defer log.Trace(item.name, "modTime=%v", modTime)("")
 	item.mu.Lock()
@@ -1231,6 +1231,9 @@ func (item *Item) GetModTime() (modTime time.Time, err error) {
 	fi, err := item._stat()
 	if err == nil {
 		modTime = fi.ModTime()
+		item.info.ModTime = modTime
+	} else {
+		modTime = item.info.ModTime
 	}
 	return modTime, nil
 }
