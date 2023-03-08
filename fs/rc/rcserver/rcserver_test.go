@@ -587,7 +587,9 @@ func TestMetrics(t *testing.T) {
 
 	// Test changing a couple options
 	stats.Bytes(500)
-	stats.Deletes(30)
+	for i := 0; i < 30; i++ {
+		require.NoError(t, stats.DeleteFile(context.Background(), 0))
+	}
 	stats.Errors(2)
 	stats.Bytes(324)
 
@@ -619,7 +621,7 @@ func makeMetricsTestCases(stats *accounting.StatsInfo) (tests []testRun) {
 		URL:      "/metrics",
 		Method:   "GET",
 		Status:   http.StatusOK,
-		Contains: regexp.MustCompile(fmt.Sprintf("rclone_files_deleted_total %d", stats.Deletes(0))),
+		Contains: regexp.MustCompile(fmt.Sprintf("rclone_files_deleted_total %d", stats.GetDeletes())),
 	}, {
 		Name:     "Files Transferred Metric",
 		URL:      "/metrics",

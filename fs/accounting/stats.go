@@ -3,6 +3,7 @@ package accounting
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"sort"
 	"strings"
@@ -591,20 +592,38 @@ func (s *StatsInfo) HadRetryError() bool {
 	return s.retryError
 }
 
-// Deletes updates the stats for deletes
-func (s *StatsInfo) Deletes(deletes int64) int64 {
+var (
+	errMaxDelete     = fserrors.FatalError(errors.New("--max-delete threshold reached"))
+	errMaxDeleteSize = fserrors.FatalError(errors.New("--max-delete-size threshold reached"))
+)
+
+// DeleteFile updates the stats for deleting a file
+//
+// It may return fatal errors if the threshold for --max-delete or
+// --max-delete-size have been reached.
+func (s *StatsInfo) DeleteFile(ctx context.Context, size int64) error {
+	ci := fs.GetConfig(ctx)
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	s.deletes += deletes
-	return s.deletes
+	if size < 0 {
+		size = 0
+	}
+	if ci.MaxDelete >= 0 && s.deletes+1 > ci.MaxDelete {
+		return errMaxDelete
+	}
+	if ci.MaxDeleteSize >= 0 && s.deletesSize+size > int64(ci.MaxDeleteSize) {
+		return errMaxDeleteSize
+	}
+	s.deletes++
+	s.deletesSize += size
+	return nil
 }
 
-// DeletesSize updates the stats for deletes size
-func (s *StatsInfo) DeletesSize(deletesSize int64) int64 {
+// GetDeletes returns the number of deletes
+func (s *StatsInfo) GetDeletes() int64 {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	s.deletesSize += deletesSize
-	return s.deletesSize
+	return s.deletes
 }
 
 // DeletedDirs updates the stats for deletedDirs
