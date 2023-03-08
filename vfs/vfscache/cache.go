@@ -294,14 +294,22 @@ func (c *Cache) put(name string, item *Item) (oldItem *Item) {
 	return oldItem
 }
 
+// ItemOrNil returns the Item if it exists in the cache otherwise it
+// returns nil.
+//
+// name should be a remote path not an osPath
+func (c *Cache) ItemOrNil(name string) (item *Item) {
+	name = clean(name)
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	return c.item[name]
+}
+
 // InUse returns whether the name is in use in the cache
 //
 // name should be a remote path not an osPath
 func (c *Cache) InUse(name string) bool {
-	name = clean(name)
-	c.mu.Lock()
-	item := c.item[name]
-	c.mu.Unlock()
+	item := c.ItemOrNil(name)
 	if item == nil {
 		return false
 	}
@@ -313,10 +321,7 @@ func (c *Cache) InUse(name string) bool {
 //
 // name should be a remote path not an osPath
 func (c *Cache) DirtyItem(name string) (item *Item) {
-	name = clean(name)
-	c.mu.Lock()
-	defer c.mu.Unlock()
-	item = c.item[name]
+	item = c.ItemOrNil(name)
 	if item != nil && !item.IsDirty() {
 		item = nil
 	}
