@@ -34,7 +34,7 @@ require (
 	github.com/jcmturner/gokrb5/v8 v8.4.3
 	github.com/jlaffaye/ftp v0.1.1-0.20230214004652-d84bf4be2b6e
 	github.com/jzelinskie/whirlpool v0.0.0-20201016144138-0675e54bb004
-	github.com/klauspost/compress v1.15.14
+	github.com/klauspost/compress v1.16.0
 	github.com/koofr/go-httpclient v0.0.0-20221124135700-2eb26cff5dd8
 	github.com/koofr/go-koofrclient v0.0.0-20221207135200-cbd7fc9ad6a6
 	github.com/mattn/go-colorable v0.1.13
