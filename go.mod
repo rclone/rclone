@@ -24,7 +24,7 @@ require (
 	github.com/coreos/go-systemd v0.0.0-20191104093116-d3cd4ed1dbcf
 	github.com/dop251/scsu v0.0.0-20220106150536-84ac88021d00
 	github.com/dropbox/dropbox-sdk-go-unofficial/v6 v6.0.5
-	github.com/gabriel-vasile/mimetype v1.4.1
+	github.com/gabriel-vasile/mimetype v1.4.2
 	github.com/gdamore/tcell/v2 v2.6.0
 	github.com/go-chi/chi/v5 v5.0.8
 	github.com/google/uuid v1.3.0
@@ -64,11 +64,11 @@ require (
 	go.etcd.io/bbolt v1.3.6
 	goftp.io/server v0.4.2-0.20210615155358-d07a820aac35
 	golang.org/x/crypto v0.6.0
-	golang.org/x/net v0.7.0
+	golang.org/x/net v0.8.0
 	golang.org/x/oauth2 v0.4.0
 	golang.org/x/sync v0.1.0
 	golang.org/x/sys v0.6.0
-	golang.org/x/text v0.7.0
+	golang.org/x/text v0.8.0
 	golang.org/x/time v0.3.0
 	google.golang.org/api v0.106.0
 	gopkg.in/yaml.v2 v2.4.0
