@@ -693,3 +693,4 @@ put them back in again.` >}}
   * Ninh Pham <dongian.rapclubkhtn@gmail.com>
   * Ryan Caezar Itang <sitiom@proton.me>
   * Peter Brunner <peter@psykhe.com>
+  * Leandro Sacchet <leandro.sacchet@animati.com.br>
