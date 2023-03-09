@@ -1170,22 +1170,7 @@ func (f *Fs) uploadByResumable(ctx context.Context, in io.Reader, resumable *api
 	return
 }
 
-func (f *Fs) upload(ctx context.Context, in io.Reader, leaf, dirID string, size int64, options ...fs.OpenOption) (*api.File, error) {
-	// Calculate sha1sum; grabbed from package jottacloud
-	//
-	// unwrap the accounting from the input, we use wrap to put it
-	// back on after the buffering
-	var wrap accounting.WrapFn
-	in, wrap = accounting.UnWrap(in)
-	var cleanup func()
-	sha1Str, in, cleanup, err := readSHA1(in, size, int64(f.opt.HashMemoryThreshold))
-	defer cleanup()
-	if err != nil {
-		return nil, fmt.Errorf("failed to calculate SHA1: %w", err)
-	}
-	// Wrap the accounting back onto the stream
-	in = wrap(in)
-
+func (f *Fs) upload(ctx context.Context, in io.Reader, leaf, dirID, sha1Str string, size int64, options ...fs.OpenOption) (*api.File, error) {
 	// determine upload type
 	uploadType := api.UploadTypeResumable
 	if size >= 0 && size < int64(5*fs.Mebi) {
@@ -1231,30 +1216,6 @@ func (f *Fs) upload(ctx context.Context, in io.Reader, leaf, dirID string, size 
 	return f.getFile(ctx, newfile.File.ID)
 }
 
-// PutUnchecked the object into the container
-//
-// This will produce an error if the object already exists.
-//
-// Copy the reader in to the new object which is returned.
-//
-// The new object may have been created if an error is returned
-func (f *Fs) PutUnchecked(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
-	remote := src.Remote()
-	size := src.Size()
-
-	// Create the directory for the object if it doesn't exist
-	leaf, dirID, err := f.dirCache.FindPath(ctx, remote, true)
-	if err != nil {
-		return nil, err
-	}
-
-	info, err := f.upload(ctx, in, leaf, dirID, size, options...)
-	if err != nil {
-		return nil, err
-	}
-	return f.newObjectWithInfo(ctx, remote, info)
-}
-
 // Put the object
 //
 // Copy the reader in to the new object which is returned.
@@ -1267,7 +1228,11 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 		return existingObj, existingObj.Update(ctx, in, src, options...)
 	case fs.ErrorObjectNotFound:
 		// Not found so create it
-		return f.PutUnchecked(ctx, in, src)
+		newObj := &Object{
+			fs:     f,
+			remote: src.Remote(),
+		}
+		return newObj, newObj.upload(ctx, in, src, false, options...)
 	default:
 		return nil, err
 	}
@@ -1618,6 +1583,11 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 //
 // The new object may have been created if an error is returned
 func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (err error) {
+	return o.upload(ctx, in, src, true, options...)
+}
+
+// upload uploads the object with or without using a temporary file name
+func (o *Object) upload(ctx context.Context, in io.Reader, src fs.ObjectInfo, withTemp bool, options ...fs.OpenOption) (err error) {
 	size := src.Size()
 	remote := o.Remote()
 
@@ -1627,9 +1597,34 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		return err
 	}
 
+	// Calculate sha1sum; grabbed from package jottacloud
+	hashStr, err := src.Hash(ctx, hash.SHA1)
+	if err != nil || hashStr == "" {
+		// unwrap the accounting from the input, we use wrap to put it
+		// back on after the buffering
+		var wrap accounting.WrapFn
+		in, wrap = accounting.UnWrap(in)
+		var cleanup func()
+		hashStr, in, cleanup, err = readSHA1(in, size, int64(o.fs.opt.HashMemoryThreshold))
+		defer cleanup()
+		if err != nil {
+			return fmt.Errorf("failed to calculate SHA1: %w", err)
+		}
+		// Wrap the accounting back onto the stream
+		in = wrap(in)
+	}
+
+	if !withTemp {
+		info, err := o.fs.upload(ctx, in, leaf, dirID, hashStr, size, options...)
+		if err != nil {
+			return err
+		}
+		return o.setMetaData(info)
+	}
+
 	// We have to fall back to upload + rename
 	tempName := "rcloneTemp" + random.String(8)
-	info, err := o.fs.upload(ctx, in, tempName, dirID, size, options...)
+	info, err := o.fs.upload(ctx, in, tempName, dirID, hashStr, size, options...)
 	if err != nil {
 		return err
 	}
@@ -1659,7 +1654,6 @@ var (
 	_ fs.DirMover        = (*Fs)(nil)
 	_ fs.Commander       = (*Fs)(nil)
 	_ fs.DirCacheFlusher = (*Fs)(nil)
-	_ fs.PutUncheckeder  = (*Fs)(nil)
 	_ fs.PublicLinker    = (*Fs)(nil)
 	_ fs.Abouter         = (*Fs)(nil)
 	_ fs.UserInfoer      = (*Fs)(nil)
