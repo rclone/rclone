@@ -261,8 +261,8 @@ github.com/hirochachacha/go-smb2 v1.1.0 h1:b6hs9qKIql9eVXAiN0M2wSFY5xnhbHAQoCwRK
 github.com/hirochachacha/go-smb2 v1.1.0/go.mod h1:8F1A4d5EZzrGu5R7PU163UcMRDJQl4FtcxjBfsY8TZE=
 github.com/huandu/xstrings v1.0.0/go.mod h1:4qWG/gcEcfX4z/mBDHJ++3ReCw9ibxbsNJbcucJdbSo=
 github.com/ianlancetaylor/demangle v0.0.0-20181102032728-5e5cf60278f6/go.mod h1:aSSvb/t6k1mPoxDqO4vJh6VOCGPwU4O0C2/Eqndh1Sc=
-github.com/iguanesolutions/go-systemd/v5 v5.1.0 h1:UWprhbpxjLM0vvwu4MxaBR+/KzSxgvnKpM9Q3MBhTAc=
-github.com/iguanesolutions/go-systemd/v5 v5.1.0/go.mod h1:XprNDEZ9zdPzEg1WrmpV1BnGorgP0WP40AGurMxeQOY=
+github.com/iguanesolutions/go-systemd/v5 v5.1.1 h1:Hs0Z16knPGCBFnKECrICPh+RQ89Sgy0xyzcalrHMKdw=
+github.com/iguanesolutions/go-systemd/v5 v5.1.1/go.mod h1:Quv57scs6S7T0rC6qyLfW20KU/P4p9hrbLPF+ILYrXY=
 github.com/inconshreveable/mousetrap v1.0.1 h1:U3uMjPSQEBMNp1lFxmllqCPM6P5u/Xq7Pgzkat/bFNc=
 github.com/inconshreveable/mousetrap v1.0.1/go.mod h1:vpF70FUmC8bwa3OWnCshd2FqLfsEA9PFc4w1p2J65bw=
 github.com/jcmturner/aescts/v2 v2.0.0 h1:9YKLH6ey7H4eDBXW8khjYslgyqG2xZikXP0EQFKrle8=
