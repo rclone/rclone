@@ -694,3 +694,4 @@ put them back in again.` >}}
   * Ryan Caezar Itang <sitiom@proton.me>
   * Peter Brunner <peter@psykhe.com>
   * Leandro Sacchet <leandro.sacchet@animati.com.br>
+  * dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>
