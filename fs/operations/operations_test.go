@@ -419,6 +419,16 @@ func TestDelete(t *testing.T) {
 	r.CheckRemoteItems(t, file3)
 }
 
+func isChunker(f fs.Fs) bool {
+	return strings.HasPrefix(f.Name(), "TestChunker")
+}
+
+func skipIfChunker(t *testing.T, f fs.Fs) {
+	if isChunker(f) {
+		t.Skip("Skipping test on chunker backend")
+	}
+}
+
 func TestMaxDelete(t *testing.T) {
 	ctx := context.Background()
 	ctx, ci := fs.AddConfig(ctx)
@@ -426,6 +436,7 @@ func TestMaxDelete(t *testing.T) {
 	accounting.GlobalStats().ResetCounters()
 	ci.MaxDelete = 2
 	defer r.Finalise()
+	skipIfChunker(t, r.Fremote)                                                                                                                      // chunker does copy/delete on s3
 	file1 := r.WriteObject(ctx, "small", "1234567890", t2)                                                                                           // 10 bytes
 	file2 := r.WriteObject(ctx, "medium", "------------------------------------------------------------", t1)                                        // 60 bytes
 	file3 := r.WriteObject(ctx, "large", "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", t1) // 100 bytes
@@ -446,6 +457,7 @@ func TestMaxDeleteSizeLargeFile(t *testing.T) {
 	accounting.GlobalStats().ResetCounters()
 	ci.MaxDeleteSize = 70
 	defer r.Finalise()
+	skipIfChunker(t, r.Fremote)                                                                                                                      // chunker does copy/delete on s3
 	file1 := r.WriteObject(ctx, "small", "1234567890", t2)                                                                                           // 10 bytes
 	file2 := r.WriteObject(ctx, "medium", "------------------------------------------------------------", t1)                                        // 60 bytes
 	file3 := r.WriteObject(ctx, "large", "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", t1) // 100 bytes
@@ -463,6 +475,7 @@ func TestMaxDeleteSize(t *testing.T) {
 	accounting.GlobalStats().ResetCounters()
 	ci.MaxDeleteSize = 160
 	defer r.Finalise()
+	skipIfChunker(t, r.Fremote)                                                                                                                      // chunker does copy/delete on s3
 	file1 := r.WriteObject(ctx, "small", "1234567890", t2)                                                                                           // 10 bytes
 	file2 := r.WriteObject(ctx, "medium", "------------------------------------------------------------", t1)                                        // 60 bytes
 	file3 := r.WriteObject(ctx, "large", "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", t1) // 100 bytes
@@ -1825,7 +1838,7 @@ func TestCopyFileMaxTransfer(t *testing.T) {
 	r.CheckLocalItems(t, file1, file2, file3, file4)
 	r.CheckRemoteItems(t, file1)
 
-	if strings.HasPrefix(r.Fremote.Name(), "TestChunker") {
+	if isChunker(r.Fremote) {
 		t.Log("skipping remainder of test for chunker as it involves multiple transfers")
 		return
 	}
