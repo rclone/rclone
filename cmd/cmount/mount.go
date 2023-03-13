@@ -160,7 +160,11 @@ func mount(VFS *vfs.VFS, mountPath string, opt *mountlib.Options) (<-chan error,
 	fsys := NewFS(VFS)
 	host := fuse.NewFileSystemHost(fsys)
 	host.SetCapReaddirPlus(true) // only works on Windows
-	host.SetCapCaseInsensitive(f.Features().CaseInsensitive)
+	if opt.CaseInsensitive.Valid {
+		host.SetCapCaseInsensitive(opt.CaseInsensitive.Value)
+	} else {
+		host.SetCapCaseInsensitive(f.Features().CaseInsensitive)
+	}
 
 	// Create options
 	options := mountOptions(VFS, opt.DeviceName, mountpoint, opt)
