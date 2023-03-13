@@ -76,6 +76,9 @@ func init() {
 			Name: "vendor",
 			Help: "Name of the WebDAV site/service/software you are using.",
 			Examples: []fs.OptionExample{{
+				Value: "fastmail",
+				Help:  "Fastmail Files",
+			}, {
 				Value: "nextcloud",
 				Help:  "Nextcloud",
 			}, {
@@ -155,8 +158,9 @@ type Fs struct {
 	useOCMtime         bool          // set if can use X-OC-Mtime
 	retryWithZeroDepth bool          // some vendors (sharepoint) won't list files when Depth is 1 (our default)
 	checkBeforePurge   bool          // enables extra check that directory to purge really exists
-	hasMD5             bool          // set if can use owncloud style checksums for MD5
-	hasSHA1            bool          // set if can use owncloud style checksums for SHA1
+	hasOCMD5           bool          // set if can use owncloud style checksums for MD5
+	hasOCSHA1          bool          // set if can use owncloud style checksums for SHA1
+	hasMESHA1          bool          // set if can use fastmail style checksums for SHA1
 	ntlmAuthMu         sync.Mutex    // mutex to serialize NTLM auth roundtrips
 }
 
@@ -278,7 +282,7 @@ func (f *Fs) readMetaDataForPath(ctx context.Context, path string, depth string)
 		},
 		NoRedirect: true,
 	}
-	if f.hasMD5 || f.hasSHA1 {
+	if f.hasOCMD5 || f.hasOCSHA1 {
 		opts.Body = bytes.NewBuffer(owncloudProps)
 	}
 	var result api.Multistatus
@@ -546,16 +550,21 @@ func (f *Fs) fetchAndSetBearerToken() error {
 // setQuirks adjusts the Fs for the vendor passed in
 func (f *Fs) setQuirks(ctx context.Context, vendor string) error {
 	switch vendor {
+	case "fastmail":
+		f.canStream = true
+		f.precision = time.Second
+		f.useOCMtime = true
+		f.hasMESHA1 = true
 	case "owncloud":
 		f.canStream = true
 		f.precision = time.Second
 		f.useOCMtime = true
-		f.hasMD5 = true
-		f.hasSHA1 = true
+		f.hasOCMD5 = true
+		f.hasOCSHA1 = true
 	case "nextcloud":
 		f.precision = time.Second
 		f.useOCMtime = true
-		f.hasSHA1 = true
+		f.hasOCSHA1 = true
 	case "sharepoint":
 		// To mount sharepoint, two Cookies are required
 		// They have to be set instead of BasicAuth
@@ -667,7 +676,7 @@ func (f *Fs) listAll(ctx context.Context, dir string, directoriesOnly bool, file
 			"Depth": depth,
 		},
 	}
-	if f.hasMD5 || f.hasSHA1 {
+	if f.hasOCMD5 || f.hasOCSHA1 {
 		opts.Body = bytes.NewBuffer(owncloudProps)
 	}
 	var result api.Multistatus
@@ -1126,10 +1135,10 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 // Hashes returns the supported hash sets.
 func (f *Fs) Hashes() hash.Set {
 	hashes := hash.Set(hash.None)
-	if f.hasMD5 {
+	if f.hasOCMD5 {
 		hashes.Add(hash.MD5)
 	}
-	if f.hasSHA1 {
+	if f.hasOCSHA1 || f.hasMESHA1 {
 		hashes.Add(hash.SHA1)
 	}
 	return hashes
@@ -1197,10 +1206,10 @@ func (o *Object) Remote() string {
 
 // Hash returns the SHA1 or MD5 of an object returning a lowercase hex string
 func (o *Object) Hash(ctx context.Context, t hash.Type) (string, error) {
-	if t == hash.MD5 && o.fs.hasMD5 {
+	if t == hash.MD5 && o.fs.hasOCMD5 {
 		return o.md5, nil
 	}
-	if t == hash.SHA1 && o.fs.hasSHA1 {
+	if t == hash.SHA1 && (o.fs.hasOCSHA1 || o.fs.hasMESHA1) {
 		return o.sha1, nil
 	}
 	return "", hash.ErrUnsupported
@@ -1222,12 +1231,12 @@ func (o *Object) setMetaData(info *api.Prop) (err error) {
 	o.hasMetaData = true
 	o.size = info.Size
 	o.modTime = time.Time(info.Modified)
-	if o.fs.hasMD5 || o.fs.hasSHA1 {
+	if o.fs.hasOCMD5 || o.fs.hasOCSHA1 || o.fs.hasMESHA1 {
 		hashes := info.Hashes()
-		if o.fs.hasSHA1 {
+		if o.fs.hasOCSHA1 || o.fs.hasMESHA1 {
 			o.sha1 = hashes[hash.SHA1]
 		}
-		if o.fs.hasMD5 {
+		if o.fs.hasOCMD5 {
 			o.md5 = hashes[hash.MD5]
 		}
 	}
@@ -1315,7 +1324,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		ContentType:   fs.MimeType(ctx, src),
 		Options:       options,
 	}
-	if o.fs.useOCMtime || o.fs.hasMD5 || o.fs.hasSHA1 {
+	if o.fs.useOCMtime || o.fs.hasOCMD5 || o.fs.hasOCSHA1 {
 		opts.ExtraHeaders = map[string]string{}
 		if o.fs.useOCMtime {
 			opts.ExtraHeaders["X-OC-Mtime"] = fmt.Sprintf("%d", src.ModTime(ctx).Unix())
@@ -1323,12 +1332,12 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		// Set one upload checksum
 		// Owncloud uses one checksum only to check the upload and stores its own SHA1 and MD5
 		// Nextcloud stores the checksum you supply (SHA1 or MD5) but only stores one
-		if o.fs.hasSHA1 {
+		if o.fs.hasOCSHA1 {
 			if sha1, _ := src.Hash(ctx, hash.SHA1); sha1 != "" {
 				opts.ExtraHeaders["OC-Checksum"] = "SHA1:" + sha1
 			}
 		}
-		if o.fs.hasMD5 && opts.ExtraHeaders["OC-Checksum"] == "" {
+		if o.fs.hasOCMD5 && opts.ExtraHeaders["OC-Checksum"] == "" {
 			if md5, _ := src.Hash(ctx, hash.MD5); md5 != "" {
 				opts.ExtraHeaders["OC-Checksum"] = "MD5:" + md5
 			}

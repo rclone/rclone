@@ -43,17 +43,19 @@ Choose a number from below, or type in your own value
 url> https://example.com/remote.php/webdav/
 Name of the WebDAV site/service/software you are using
 Choose a number from below, or type in your own value
- 1 / Nextcloud
-   \ "nextcloud"
- 2 / Owncloud
-   \ "owncloud"
- 3 / Sharepoint Online, authenticated by Microsoft account.
-   \ "sharepoint"
- 4 / Sharepoint with NTLM authentication. Usually self-hosted or on-premises.
-   \ "sharepoint-ntlm"
- 5 / Other site/service or software
-   \ "other"
-vendor> 1
+ 1 / Fastmail Files
+   \ (fastmail)
+ 2 / Nextcloud
+   \ (nextcloud)
+ 3 / Owncloud
+   \ (owncloud)
+ 4 / Sharepoint Online, authenticated by Microsoft account
+   \ (sharepoint)
+ 5 / Sharepoint with NTLM authentication, usually self-hosted or on-premises
+   \ (sharepoint-ntlm)
+ 6 / Other site/service or software
+   \ (other)
+vendor> 2
 User name
 user> user
 Password.
@@ -100,10 +102,10 @@ To copy a local directory to an WebDAV directory called backup
 ### Modified time and hashes ###
 
 Plain WebDAV does not support modified times.  However when used with
-Owncloud or Nextcloud rclone will support modified times.
+Fastmail Files, Owncloud or Nextcloud rclone will support modified times.
 
 Likewise plain WebDAV does not support hashes, however when used with
-Owncloud or Nextcloud rclone will support SHA1 and MD5 hashes.
+Fastmail Files, Owncloud or Nextcloud rclone will support SHA1 and MD5 hashes.
 Depending on the exact version of Owncloud or Nextcloud hashes may
 appear on all objects, or only on objects which had a hash uploaded
 with them.
@@ -241,6 +243,16 @@ Properties:
 ## Provider notes
 
 See below for notes on specific providers.
+
+## Fastmail Files
+
+Use `https://webdav.fastmail.com/` or a subdirectory as the URL,
+and your Fastmail email `username@domain.tld` as the username.
+Follow [this documentation](https://www.fastmail.help/hc/en-us/articles/360058752854-App-passwords)
+to create an app password with access to `Files (WebDAV)` and use
+this as the password.
+
+Fastmail supports modified times using the `X-OC-Mtime` header.
 
 ### Owncloud
 
