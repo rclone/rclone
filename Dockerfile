@@ -11,7 +11,7 @@ RUN ./rclone version
 # Begin final image
 FROM alpine:latest
 
-RUN apk --no-cache add ca-certificates fuse tzdata && \
+RUN apk --no-cache add ca-certificates fuse3 tzdata && \
   echo "user_allow_other" >> /etc/fuse.conf
 
 COPY --from=builder /go/src/github.com/rclone/rclone/rclone /usr/local/bin/
