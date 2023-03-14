@@ -20,7 +20,7 @@ These flags are available for every command.
       --buffer-size SizeSuffix               In memory buffer size when reading files for each --transfer (default 16Mi)
       --bwlimit BwTimetable                  Bandwidth limit in KiB/s, or use suffix B|K|M|G|T|P or a full timetable
       --bwlimit-file BwTimetable             Bandwidth limit per file in KiB/s, or use suffix B|K|M|G|T|P or a full timetable
-      --ca-cert string                       CA certificate used to verify servers
+      --ca-cert stringArray                  CA certificate used to verify servers
       --cache-dir string                     Directory rclone will use for caching (default "$HOME/.cache/rclone")
       --check-first                          Do all the checks before starting transfers
       --checkers int                         Number of checkers to run in parallel (default 8)
@@ -82,6 +82,7 @@ These flags are available for every command.
       --max-age Duration                     Only transfer files younger than this in s or suffix ms|s|m|h|d|w|M|y (default off)
       --max-backlog int                      Maximum number of objects in sync or check backlog (default 10000)
       --max-delete int                       When synchronizing, limit the number of deletes (default -1)
+      --max-delete-size SizeSuffix           When synchronizing, limit the total size of deletes (default off)
       --max-depth int                        If set limits the recursion depth to this (default -1)
       --max-duration Duration                Maximum duration rclone will transfer data for (default 0s)
       --max-size SizeSuffix                  Only transfer files smaller than this in KiB or suffix B|K|M|G|T|P (default off)
@@ -170,7 +171,7 @@ These flags are available for every command.
       --use-json-log                         Use json log format
       --use-mmap                             Use mmap allocator (see docs)
       --use-server-modtime                   Use server modified time instead of object metadata
-      --user-agent string                    Set the user-agent to a specified string (default "rclone/v1.61.0")
+      --user-agent string                    Set the user-agent to a specified string (default "rclone/v1.62.0")
   -v, --verbose count                        Print lots more stuff (repeat for more)
 ```
 
@@ -387,6 +388,7 @@ and may be set in the config file.
       --gcs-decompress                                 If set this will decompress gzip encoded objects
       --gcs-encoding MultiEncoder                      The encoding for the backend (default Slash,CrLf,InvalidUtf8,Dot)
       --gcs-endpoint string                            Endpoint for the service
+      --gcs-env-auth                                   Get GCP IAM credentials from runtime (environment variables or instance meta data if no env vars)
       --gcs-location string                            Location for the newly created buckets
       --gcs-no-check-bucket                            If set, don't attempt to check the bucket exists or create it
       --gcs-object-acl string                          Access Control List for new objects
@@ -475,6 +477,7 @@ and may be set in the config file.
       --mega-encoding MultiEncoder                     The encoding for the backend (default Slash,InvalidUtf8,Dot)
       --mega-hard-delete                               Delete files permanently rather than putting them into the trash
       --mega-pass string                               Password (obscured)
+      --mega-use-https                                 Use HTTPS for transfers
       --mega-user string                               User name
       --netstorage-account string                      Set the NetStorage account name
       --netstorage-host string                         Domain+path of NetStorage host to connect to
@@ -490,6 +493,7 @@ and may be set in the config file.
       --onedrive-drive-type string                     The type of the drive (personal | business | documentLibrary)
       --onedrive-encoding MultiEncoder                 The encoding for the backend (default Slash,LtGt,DoubleQuote,Colon,Question,Asterisk,Pipe,BackSlash,Del,Ctl,LeftSpace,LeftTilde,RightSpace,RightPeriod,InvalidUtf8,Dot)
       --onedrive-expose-onenote-files                  Set to make OneNote files show up in directory listings
+      --onedrive-hash-type string                      Specify the hash in use for the backend (default "auto")
       --onedrive-link-password string                  Set the password for links created by the link command
       --onedrive-link-scope string                     Set the scope of the links created by the link command (default "anonymous")
       --onedrive-link-type string                      Set the type of the links created by the link command (default "view")
@@ -514,6 +518,12 @@ and may be set in the config file.
       --oos-no-check-bucket                            If set, don't attempt to check the bucket exists or create it
       --oos-provider string                            Choose your Auth Provider (default "env_auth")
       --oos-region string                              Object storage Region
+      --oos-sse-customer-algorithm string              If using SSE-C, the optional header that specifies "AES256" as the encryption algorithm
+      --oos-sse-customer-key string                    To use SSE-C, the optional header that specifies the base64-encoded 256-bit encryption key to use to
+      --oos-sse-customer-key-file string               To use SSE-C, a file containing the base64-encoded string of the AES-256 encryption key associated
+      --oos-sse-customer-key-sha256 string             If using SSE-C, The optional header that specifies the base64-encoded SHA256 hash of the encryption
+      --oos-sse-kms-key-id string                      if using using your own master key in vault, this header specifies the
+      --oos-storage-tier string                        The storage class to use when storing new objects in storage. https://docs.oracle.com/en-us/iaas/Content/Object/Concepts/understandingstoragetiers.htm (default "Standard")
       --oos-upload-concurrency int                     Concurrency for multipart uploads (default 10)
       --oos-upload-cutoff SizeSuffix                   Cutoff for switching to chunked upload (default 200Mi)
       --opendrive-chunk-size SizeSuffix                Files will be uploaded in chunks this size (default 10Mi)
@@ -582,6 +592,7 @@ and may be set in the config file.
       --s3-sse-customer-key-md5 string                 If using SSE-C you may provide the secret encryption key MD5 checksum (optional)
       --s3-sse-kms-key-id string                       If using KMS ID you must provide the ARN of Key
       --s3-storage-class string                        The storage class to use when storing new objects in S3
+      --s3-sts-endpoint string                         Endpoint for STS
       --s3-upload-concurrency int                      Concurrency for multipart uploads (default 4)
       --s3-upload-cutoff SizeSuffix                    Cutoff for switching to chunked upload (default 200Mi)
       --s3-use-accelerate-endpoint                     If true use the AWS S3 accelerated endpoint
@@ -647,6 +658,7 @@ and may be set in the config file.
       --smb-idle-timeout Duration                      Max time before closing idle connections (default 1m0s)
       --smb-pass string                                SMB password (obscured)
       --smb-port int                                   SMB port number (default 445)
+      --smb-spn string                                 Service principal name
       --smb-user string                                SMB username (default "$USER")
       --storj-access-grant string                      Access grant
       --storj-api-key string                           API key

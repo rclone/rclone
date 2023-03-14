@@ -1458,6 +1458,8 @@ This takes the following parameters:
 - remote - a path within that remote e.g. "dir"
 - each part in body represents a file to be uploaded
 
+See the [uploadfile](/commands/rclone_uploadfile/) command for more information on the above.
+
 **Authentication is required for this call.**
 
 ### options/blocks: List all the option blocks {#options-blocks}

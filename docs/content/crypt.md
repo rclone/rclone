@@ -455,7 +455,6 @@ Properties:
     - "off"
         - Don't encrypt the file names.
         - Adds a ".bin" extension only.
-        - May cause problems on [case insensitive](/overview/#case-insensitive) [storage systems](/overview/#features) like OneDrive, Dropbox, Windows, OSX and SMB.
 
 #### --crypt-directory-name-encryption
 
@@ -474,7 +473,6 @@ Properties:
         - Encrypt directory names.
     - "false"
         - Don't encrypt directory names, leave them intact.
-        - May cause problems on [case insensitive](/overview/#case-insensitive) [storage systems](/overview/#features) like OneDrive, Dropbox, Windows, OSX and SMB.
 
 #### --crypt-password
 

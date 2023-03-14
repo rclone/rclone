@@ -552,6 +552,24 @@ Properties:
     - "DURABLE_REDUCED_AVAILABILITY"
         - Durable reduced availability storage class
 
+#### --gcs-env-auth
+
+Get GCP IAM credentials from runtime (environment variables or instance meta data if no env vars).
+
+Only applies if service_account_file and service_account_credentials is blank.
+
+Properties:
+
+- Config:      env_auth
+- Env Var:     RCLONE_GCS_ENV_AUTH
+- Type:        bool
+- Default:     false
+- Examples:
+    - "false"
+        - Enter credentials in the next step.
+    - "true"
+        - Get GCP IAM credentials from the environment (env vars or IAM).
+
 ### Advanced options
 
 Here are the Advanced options specific to google cloud storage (Google Cloud Storage (this is not Google Drive)).

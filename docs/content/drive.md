@@ -988,6 +988,10 @@ as malware or spam and cannot be downloaded" with the error code
 indicate you acknowledge the risks of downloading the file and rclone
 will download it anyway.
 
+Note that if you are using service account it will need Manager
+permission (not Content Manager) to for this flag to work. If the SA
+does not have the right permission, Google will just ignore the flag.
+
 Properties:
 
 - Config:      acknowledge_abuse
@@ -1362,9 +1366,9 @@ This takes an optional directory to trash which make this easier to
 use via the API.
 
     rclone backend untrash drive:directory
-    rclone backend -i untrash drive:directory subdir
+    rclone backend --interactive untrash drive:directory subdir
 
-Use the -i flag to see what would be restored before restoring it.
+Use the --interactive/-i or --dry-run flag to see what would be restored before restoring it.
 
 Result:
 
@@ -1398,7 +1402,7 @@ component will be used as the file name.
 If the destination is a drive backend then server-side copying will be
 attempted if possible.
 
-Use the -i flag to see what would be copied before copying.
+Use the --interactive/-i or --dry-run flag to see what would be copied before copying.
 
 
 ### exportformats

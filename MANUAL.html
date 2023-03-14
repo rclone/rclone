@@ -19,7 +19,7 @@
 <header id="title-block-header">
 <h1 class="title">rclone(1) User Manual</h1>
 <p class="author">Nick Craig-Wood</p>
-<p class="date">Dec 20, 2022</p>
+<p class="date">Mar 14, 2023</p>
 </header>
 <h1 id="rclone-syncs-your-files-to-cloud-storage">Rclone syncs your files to cloud storage</h1>
 <p><img width="50%" src="https://rclone.org/img/logo_on_light__horizontal_color.svg" alt="rclone logo" style="float:right; padding: 5px;" ></p>
@@ -239,6 +239,9 @@ macOS cannot verify that this app is free from malware.</code></pre>
 <li>Optionally configure <a href="#autostart">automatic execution</a>.</li>
 </ul>
 <p>If you are planning to use the <a href="https://rclone.org/commands/rclone_mount/">rclone mount</a> feature then you will need to install the third party utility <a href="https://winfsp.dev/">WinFsp</a> also.</p>
+<h3 id="windows-chocolatey">Windows package manager (Winget)</h3>
+<p><a href="https://learn.microsoft.com/en-us/windows/package-manager/">Winget</a> comes pre-installed with the latest versions of Windows. If not, update the <a href="https://www.microsoft.com/p/app-installer/9nblggh4nns1">App Installer</a> package from the Microsoft store.</p>
+<pre><code>winget install Rclone.Rclone</code></pre>
 <h3 id="windows-chocolatey">Chocolatey package manager</h3>
 <p>Make sure you have <a href="https://chocolatey.org/">Choco</a> installed</p>
 <pre><code>choco search rclone
@@ -248,6 +251,11 @@ choco install rclone</code></pre>
 <p>will install that too.</p>
 <p>Note that this is a third party installer not controlled by the rclone developers so it may be out of date. Its current version is as below.</p>
 <p><a href="https://repology.org/project/rclone/versions"><img src="https://repology.org/badge/version-for-repo/chocolatey/rclone.svg" alt="Chocolatey package" /></a></p>
+<h3 id="windows-scoop">Scoop package manager</h3>
+<p>Make sure you have <a href="https://scoop.sh/">Scoop</a> installed</p>
+<pre><code>scoop install rclone</code></pre>
+<p>Note that this is a third party installer not controlled by the rclone developers so it may be out of date. Its current version is as below.</p>
+<p><a href="https://repology.org/project/rclone/versions"><img src="https://repology.org/badge/version-for-repo/scoop/rclone.svg" alt="Scoop package" /></a></p>
 <h2 id="package-manager">Package manager installation</h2>
 <p>Many Linux, Windows, macOS and other OS distributions package and distribute rclone.</p>
 <p>The distributed versions of rclone are often quite out of date and for this reason we recommend one of the other installation methods if possible.</p>
@@ -435,12 +443,12 @@ go build</code></pre>
 <pre><code>Syntax: [options] subcommand &lt;parameters&gt; &lt;parameters...&gt;</code></pre>
 <p>Source and destination paths are specified by the name you gave the storage system in the config file then the sub path, e.g. "drive:myfolder" to look at "myfolder" in Google drive.</p>
 <p>You can define as many storage paths as you like in the config file.</p>
-<p>Please use the <a href="#interactive"><code>-i</code> / <code>--interactive</code></a> flag while learning rclone to avoid accidental data loss.</p>
+<p>Please use the <a href="#interactive"><code>--interactive</code>/<code>-i</code></a> flag while learning rclone to avoid accidental data loss.</p>
 <h2 id="subcommands">Subcommands</h2>
 <p>rclone uses a system of subcommands. For example</p>
 <pre><code>rclone ls remote:path # lists a remote
 rclone copy /local/path remote:path # copies /local/path to the remote
-rclone sync -i /local/path remote:path # syncs /local/path to the remote</code></pre>
+rclone sync --interactive /local/path remote:path # syncs /local/path to the remote</code></pre>
 <h1 id="rclone-config">rclone config</h1>
 <p>Enter an interactive configuration session.</p>
 <h2 id="synopsis">Synopsis</h2>
@@ -504,7 +512,7 @@ destpath/sourcepath/two.txt</code></pre>
 <h2 id="synopsis-2">Synopsis</h2>
 <p>Sync the source to the destination, changing the destination only. Doesn't transfer files that are identical on source and destination, testing by size and modification time or MD5SUM. Destination is updated to match source, including deleting files if necessary (except duplicate objects, see below). If you don't want to delete files from destination, use the <a href="https://rclone.org/commands/rclone_copy/">copy</a> command instead.</p>
 <p><strong>Important</strong>: Since this can cause data loss, test first with the <code>--dry-run</code> or the <code>--interactive</code>/<code>-i</code> flag.</p>
-<pre><code>rclone sync -i SOURCE remote:DESTINATION</code></pre>
+<pre><code>rclone sync --interactive SOURCE remote:DESTINATION</code></pre>
 <p>Note that files in the destination won't be deleted if there were any errors at any point. Duplicate objects (files with the same name, on those providers that support it) are also not yet handled.</p>
 <p>It is always the contents of the directory that is synced, not the directory itself. So when source:path is a directory, it's the contents of source:path that are copied, not the directory name and contents. See extended explanation in the <a href="https://rclone.org/commands/rclone_copy/">copy</a> command if unsure.</p>
 <p>If dest:path doesn't exist, it is created and the source:path contents go there.</p>
@@ -964,11 +972,13 @@ Other:   8849156022</code></pre>
 <p>Remote authorization.</p>
 <h2 id="synopsis-18">Synopsis</h2>
 <p>Remote authorization. Used to authorize a remote or headless rclone from a machine with a browser - use as instructed by rclone config.</p>
-<p>Use the --auth-no-open-browser to prevent rclone to open auth link in default browser automatically.</p>
+<p>Use --auth-no-open-browser to prevent rclone to open auth link in default browser automatically.</p>
+<p>Use --template to generate HTML output via a custom Go template. If a blank string is provided as an argument to this flag, the default template is used.</p>
 <pre><code>rclone authorize [flags]</code></pre>
 <h2 id="options-19">Options</h2>
 <pre><code>      --auth-no-open-browser   Do not automatically open auth link in default browser
-  -h, --help                   help for authorize</code></pre>
+  -h, --help                   help for authorize
+      --template string        The path to a custom Go template for generating HTML responses</code></pre>
 <p>See the <a href="https://rclone.org/flags/">global flags page</a> for global options not listed here.</p>
 <h2 id="see-also-19">SEE ALSO</h2>
 <ul>
@@ -1920,17 +1930,33 @@ rclone mount remote:path/to/files * --volname \\cloud\remote</code></pre>
 <p>See also <a href="#limitations">Limitations</a> section below.</p>
 <h3 id="windows-filesystem-permissions">Windows filesystem permissions</h3>
 <p>The FUSE emulation layer on Windows must convert between the POSIX-based permission model used in FUSE, and the permission model used in Windows, based on access-control lists (ACL).</p>
-<p>The mounted filesystem will normally get three entries in its access-control list (ACL), representing permissions for the POSIX permission scopes: Owner, group and others. By default, the owner and group will be taken from the current user, and the built-in group "Everyone" will be used to represent others. The user/group can be customized with FUSE options "UserName" and "GroupName", e.g. <code>-o UserName=user123 -o GroupName="Authenticated Users"</code>. The permissions on each entry will be set according to <a href="#options">options</a> <code>--dir-perms</code> and <code>--file-perms</code>, which takes a value in traditional <a href="https://en.wikipedia.org/wiki/File-system_permissions#Numeric_notation">numeric notation</a>.</p>
-<p>The default permissions corresponds to <code>--file-perms 0666 --dir-perms 0777</code>, i.e. read and write permissions to everyone. This means you will not be able to start any programs from the mount. To be able to do that you must add execute permissions, e.g. <code>--file-perms 0777 --dir-perms 0777</code> to add it to everyone. If the program needs to write files, chances are you will have to enable <a href="#vfs-file-caching">VFS File Caching</a> as well (see also <a href="#limitations">limitations</a>).</p>
-<p>Note that the mapping of permissions is not always trivial, and the result you see in Windows Explorer may not be exactly like you expected. For example, when setting a value that includes write access, this will be mapped to individual permissions "write attributes", "write data" and "append data", but not "write extended attributes". Windows will then show this as basic permission "Special" instead of "Write", because "Write" includes the "write extended attributes" permission.</p>
-<p>If you set POSIX permissions for only allowing access to the owner, using <code>--file-perms 0600 --dir-perms 0700</code>, the user group and the built-in "Everyone" group will still be given some special permissions, such as "read attributes" and "read permissions", in Windows. This is done for compatibility reasons, e.g. to allow users without additional permissions to be able to read basic metadata about files like in UNIX. One case that may arise is that other programs (incorrectly) interprets this as the file being accessible by everyone. For example an SSH client may warn about "unprotected private key file".</p>
-<p>WinFsp 2021 (version 1.9) introduces a new FUSE option "FileSecurity", that allows the complete specification of file security descriptors using <a href="https://docs.microsoft.com/en-us/windows/win32/secauthz/security-descriptor-string-format">SDDL</a>. With this you can work around issues such as the mentioned "unprotected private key file" by specifying <code>-o FileSecurity="D:P(A;;FA;;;OW)"</code>, for file all access (FA) to the owner (OW).</p>
+<p>The mounted filesystem will normally get three entries in its access-control list (ACL), representing permissions for the POSIX permission scopes: Owner, group and others. By default, the owner and group will be taken from the current user, and the built-in group "Everyone" will be used to represent others. The user/group can be customized with FUSE options "UserName" and "GroupName", e.g. <code>-o UserName=user123 -o GroupName="Authenticated Users"</code>. The permissions on each entry will be set according to <a href="#options">options</a> <code>--dir-perms</code> and <code>--file-perms</code>, which takes a value in traditional Unix <a href="https://en.wikipedia.org/wiki/File-system_permissions#Numeric_notation">numeric notation</a>.</p>
+<p>The default permissions corresponds to <code>--file-perms 0666 --dir-perms 0777</code>, i.e. read and write permissions to everyone. This means you will not be able to start any programs from the mount. To be able to do that you must add execute permissions, e.g. <code>--file-perms 0777 --dir-perms 0777</code> to add it to everyone. If the program needs to write files, chances are you will have to enable <a href="#vfs-file-caching">VFS File Caching</a> as well (see also <a href="#limitations">limitations</a>). Note that the default write permission have some restrictions for accounts other than the owner, specifically it lacks the "write extended attributes", as explained next.</p>
+<p>The mapping of permissions is not always trivial, and the result you see in Windows Explorer may not be exactly like you expected. For example, when setting a value that includes write access for the group or others scope, this will be mapped to individual permissions "write attributes", "write data" and "append data", but not "write extended attributes". Windows will then show this as basic permission "Special" instead of "Write", because "Write" also covers the "write extended attributes" permission. When setting digit 0 for group or others, to indicate no permissions, they will still get individual permissions "read attributes", "read extended attributes" and "read permissions". This is done for compatibility reasons, e.g. to allow users without additional permissions to be able to read basic metadata about files like in Unix.</p>
+<p>WinFsp 2021 (version 1.9) introduced a new FUSE option "FileSecurity", that allows the complete specification of file security descriptors using <a href="https://docs.microsoft.com/en-us/windows/win32/secauthz/security-descriptor-string-format">SDDL</a>. With this you get detailed control of the resulting permissions, compared to use of the POSIX permissions described above, and no additional permissions will be added automatically for compatibility with Unix. Some example use cases will following.</p>
+<p>If you set POSIX permissions for only allowing access to the owner, using <code>--file-perms 0600 --dir-perms 0700</code>, the user group and the built-in "Everyone" group will still be given some special permissions, as described above. Some programs may then (incorrectly) interpret this as the file being accessible by everyone, for example an SSH client may warn about "unprotected private key file". You can work around this by specifying <code>-o FileSecurity="D:P(A;;FA;;;OW)"</code>, which sets file all access (FA) to the owner (OW), and nothing else.</p>
+<p>When setting write permissions then, except for the owner, this does not include the "write extended attributes" permission, as mentioned above. This may prevent applications from writing to files, giving permission denied error instead. To set working write permissions for the built-in "Everyone" group, similar to what it gets by default but with the addition of the "write extended attributes", you can specify <code>-o FileSecurity="D:P(A;;FRFW;;;WD)"</code>, which sets file read (FR) and file write (FW) to everyone (WD). If file execute (FX) is also needed, then change to <code>-o FileSecurity="D:P(A;;FRFWFX;;;WD)"</code>, or set file all access (FA) to get full access permissions, including delete, with <code>-o FileSecurity="D:P(A;;FA;;;WD)"</code>.</p>
 <h3 id="windows-caveats">Windows caveats</h3>
 <p>Drives created as Administrator are not visible to other accounts, not even an account that was elevated to Administrator with the User Account Control (UAC) feature. A result of this is that if you mount to a drive letter from a Command Prompt run as Administrator, and then try to access the same drive from Windows Explorer (which does not run as Administrator), you will not be able to see the mounted drive.</p>
 <p>If you don't need to access the drive from applications running with administrative privileges, the easiest way around this is to always create the mount from a non-elevated command prompt.</p>
 <p>To make mapped drives available to the user account that created them regardless if elevated or not, there is a special Windows setting called <a href="https://docs.microsoft.com/en-us/troubleshoot/windows-client/networking/mapped-drives-not-available-from-elevated-command#detail-to-configure-the-enablelinkedconnections-registry-entry">linked connections</a> that can be enabled.</p>
-<p>It is also possible to make a drive mount available to everyone on the system, by running the process creating it as the built-in SYSTEM account. There are several ways to do this: One is to use the command-line utility <a href="https://docs.microsoft.com/en-us/sysinternals/downloads/psexec">PsExec</a>, from Microsoft's Sysinternals suite, which has option <code>-s</code> to start processes as the SYSTEM account. Another alternative is to run the mount command from a Windows Scheduled Task, or a Windows Service, configured to run as the SYSTEM account. A third alternative is to use the <a href="https://github.com/winfsp/winfsp/wiki/WinFsp-Service-Architecture">WinFsp.Launcher infrastructure</a>). Note that when running rclone as another user, it will not use the configuration file from your profile unless you tell it to with the <a href="https://rclone.org/docs/#config-config-file"><code>--config</code></a> option. Read more in the <a href="https://rclone.org/install/">install documentation</a>.</p>
+<p>It is also possible to make a drive mount available to everyone on the system, by running the process creating it as the built-in SYSTEM account. There are several ways to do this: One is to use the command-line utility <a href="https://docs.microsoft.com/en-us/sysinternals/downloads/psexec">PsExec</a>, from Microsoft's Sysinternals suite, which has option <code>-s</code> to start processes as the SYSTEM account. Another alternative is to run the mount command from a Windows Scheduled Task, or a Windows Service, configured to run as the SYSTEM account. A third alternative is to use the <a href="https://github.com/winfsp/winfsp/wiki/WinFsp-Service-Architecture">WinFsp.Launcher infrastructure</a>). Read more in the <a href="https://rclone.org/install/">install documentation</a>. Note that when running rclone as another user, it will not use the configuration file from your profile unless you tell it to with the <a href="https://rclone.org/docs/#config-config-file"><code>--config</code></a> option. Note also that it is now the SYSTEM account that will have the owner permissions, and other accounts will have permissions according to the group or others scopes. As mentioned above, these will then not get the "write extended attributes" permission, and this may prevent writing to files. You can work around this with the FileSecurity option, see example above.</p>
 <p>Note that mapping to a directory path, instead of a drive letter, does not suffer from the same limitations.</p>
+<h2 id="mounting-on-macos">Mounting on macOS</h2>
+<p>Mounting on macOS can be done either via <a href="https://osxfuse.github.io/">macFUSE</a> (also known as osxfuse) or <a href="https://www.fuse-t.org/">FUSE-T</a>. macFUSE is a traditional FUSE driver utilizing a macOS kernel extension (kext). FUSE-T is an alternative FUSE system which "mounts" via an NFSv4 local server.</p>
+<h3 id="fuse-t-limitations-caveats-and-notes">FUSE-T Limitations, Caveats, and Notes</h3>
+<p>There are some limitations, caveats, and notes about how it works. These are current as of FUSE-T version 1.0.14.</p>
+<h4 id="modtime-update-on-read">ModTime update on read</h4>
+<p>As per the <a href="https://github.com/macos-fuse-t/fuse-t/wiki#caveats">FUSE-T wiki</a>:</p>
+<blockquote>
+<p>File access and modification times cannot be set separately as it seems to be an issue with the NFS client which always modifies both. Can be reproduced with 'touch -m' and 'touch -a' commands</p>
+</blockquote>
+<p>This means that viewing files with various tools, notably macOS Finder, will cause rlcone to update the modification time of the file. This may make rclone upload a full new copy of the file.</p>
+<h4 id="unicode-normalization">Unicode Normalization</h4>
+<p>Rclone includes flags for unicode normalization with macFUSE that should be updated for FUSE-T. See <a href="https://forum.rclone.org/t/some-unicode-forms-break-mount-on-macos-with-fuse-t/36403">this forum post</a> and <a href="https://github.com/macos-fuse-t/fuse-t/issues/16">FUSE-T issue #16</a>. The following flag should be added to the <code>rclone mount</code> command.</p>
+<pre><code>-o modules=iconv,from_code=UTF-8,to_code=UTF-8</code></pre>
+<h4 id="read-only-mounts">Read Only mounts</h4>
+<p>When mounting with <code>--read-only</code>, attempts to write to files will fail <em>silently</em> as opposed to with a clear warning as in macFUSE.</p>
 <h2 id="limitations">Limitations</h2>
 <p>Without the use of <code>--vfs-cache-mode</code> this can only write files sequentially, it can only seek when reading. This means that many applications won't work with their files on an rclone mount without <code>--vfs-cache-mode writes</code> or <code>--vfs-cache-mode full</code>. See the <a href="#vfs-file-caching">VFS File Caching</a> section for more info.</p>
 <p>The bucket-based remotes (e.g. Swift, S3, Google Compute Storage, B2) do not support the concept of empty directories, so empty directories will have a tendency to disappear once they fall out of the directory cache.</p>
@@ -3243,9 +3269,40 @@ htpasswd -B htpasswd anotherUser</code></pre>
 <h2 id="alternate-report-of-used-bytes-4">Alternate report of used bytes</h2>
 <p>Some backends, most notably S3, do not report the amount of bytes used. If you need this information to be available when running <code>df</code> on the filesystem, then pass the flag <code>--vfs-used-is-size</code> to rclone. With this flag set, instead of relying on the backend to report this information, rclone will scan the whole remote similar to <code>rclone size</code> and compute the total used space itself.</p>
 <p><em>WARNING.</em> Contrary to <code>rclone size</code>, this flag ignores filters so that the result is accurate. However, this is very inefficient and may cost lots of API calls resulting in extra charges. Use it as a last resort and only with caching.</p>
+<h2 id="auth-proxy-1">Auth Proxy</h2>
+<p>If you supply the parameter <code>--auth-proxy /path/to/program</code> then rclone will use that program to generate backends on the fly which then are used to authenticate incoming requests. This uses a simple JSON based protocol with input on STDIN and output on STDOUT.</p>
+<p><strong>PLEASE NOTE:</strong> <code>--auth-proxy</code> and <code>--authorized-keys</code> cannot be used together, if <code>--auth-proxy</code> is set the authorized keys option will be ignored.</p>
+<p>There is an example program <a href="https://github.com/rclone/rclone/blob/master/test_proxy.py">bin/test_proxy.py</a> in the rclone source code.</p>
+<p>The program's job is to take a <code>user</code> and <code>pass</code> on the input and turn those into the config for a backend on STDOUT in JSON format. This config will have any default parameters for the backend added, but it won't use configuration from environment variables or command line options - it is the job of the proxy program to make a complete config.</p>
+<p>This config generated must have this extra parameter - <code>_root</code> - root to use for the backend</p>
+<p>And it may have this parameter - <code>_obscure</code> - comma separated strings for parameters to obscure</p>
+<p>If password authentication was used by the client, input to the proxy process (on STDIN) would look similar to this:</p>
+<pre><code>{
+    &quot;user&quot;: &quot;me&quot;,
+    &quot;pass&quot;: &quot;mypassword&quot;
+}</code></pre>
+<p>If public-key authentication was used by the client, input to the proxy process (on STDIN) would look similar to this:</p>
+<pre><code>{
+    &quot;user&quot;: &quot;me&quot;,
+    &quot;public_key&quot;: &quot;AAAAB3NzaC1yc2EAAAADAQABAAABAQDuwESFdAe14hVS6omeyX7edc...JQdf&quot;
+}</code></pre>
+<p>And as an example return this on STDOUT</p>
+<pre><code>{
+    &quot;type&quot;: &quot;sftp&quot;,
+    &quot;_root&quot;: &quot;&quot;,
+    &quot;_obscure&quot;: &quot;pass&quot;,
+    &quot;user&quot;: &quot;me&quot;,
+    &quot;pass&quot;: &quot;mypassword&quot;,
+    &quot;host&quot;: &quot;sftp.example.com&quot;
+}</code></pre>
+<p>This would mean that an SFTP backend would be created on the fly for the <code>user</code> and <code>pass</code>/<code>public_key</code> returned in the output to the host given. Note that since <code>_obscure</code> is set to <code>pass</code>, rclone will obscure the <code>pass</code> parameter before creating the backend (which is required for sftp backends).</p>
+<p>The program can manipulate the supplied <code>user</code> in any way, for example to make proxy to many different sftp backends, you could make the <code>user</code> be <code>user@example.com</code> and then set the <code>host</code> to <code>example.com</code> in the output and the user to <code>user</code>. For security you'd probably want to restrict the <code>host</code> to a limited list.</p>
+<p>Note that an internal cache is keyed on <code>user</code> so only use that for configuration, don't use <code>pass</code> or <code>public_key</code>. This also means that if a user's password or public-key is changed the cache will need to expire (which takes 5 mins) before it takes effect.</p>
+<p>This can be used to build general purpose proxies to any kind of backend that rclone supports.</p>
 <pre><code>rclone serve http remote:path [flags]</code></pre>
 <h2 id="options-71">Options</h2>
 <pre><code>      --addr stringArray                       IPaddress:Port or :Port to bind server to (default [127.0.0.1:8080])
+      --auth-proxy string                      A program to use to create the backend from the auth
       --baseurl string                         Prefix for URLs - leave blank for root
       --cert string                            TLS PEM key (concatenation of certificate and CA certificate)
       --client-ca string                       Client certificate authority to verify clients with
@@ -3515,7 +3572,7 @@ htpasswd -B htpasswd anotherUser</code></pre>
 <h2 id="alternate-report-of-used-bytes-5">Alternate report of used bytes</h2>
 <p>Some backends, most notably S3, do not report the amount of bytes used. If you need this information to be available when running <code>df</code> on the filesystem, then pass the flag <code>--vfs-used-is-size</code> to rclone. With this flag set, instead of relying on the backend to report this information, rclone will scan the whole remote similar to <code>rclone size</code> and compute the total used space itself.</p>
 <p><em>WARNING.</em> Contrary to <code>rclone size</code>, this flag ignores filters so that the result is accurate. However, this is very inefficient and may cost lots of API calls resulting in extra charges. Use it as a last resort and only with caching.</p>
-<h2 id="auth-proxy-1">Auth Proxy</h2>
+<h2 id="auth-proxy-2">Auth Proxy</h2>
 <p>If you supply the parameter <code>--auth-proxy /path/to/program</code> then rclone will use that program to generate backends on the fly which then are used to authenticate incoming requests. This uses a simple JSON based protocol with input on STDIN and output on STDOUT.</p>
 <p><strong>PLEASE NOTE:</strong> <code>--auth-proxy</code> and <code>--authorized-keys</code> cannot be used together, if <code>--auth-proxy</code> is set the authorized keys option will be ignored.</p>
 <p>There is an example program <a href="https://github.com/rclone/rclone/blob/master/test_proxy.py">bin/test_proxy.py</a> in the rclone source code.</p>
@@ -3594,6 +3651,11 @@ htpasswd -B htpasswd anotherUser</code></pre>
 <h3 id="etag-hash">--etag-hash</h3>
 <p>This controls the ETag header. Without this flag the ETag will be based on the ModTime and Size of the object.</p>
 <p>If this flag is set to "auto" then rclone will choose the first supported hash on the backend or you can use a named hash such as "MD5" or "SHA-1". Use the <a href="https://rclone.org/commands/rclone_hashsum/">hashsum</a> command to see the full list.</p>
+<h2 id="access-webdav-on-windows">Access WebDAV on Windows</h2>
+<p>WebDAV shared folder can be mapped as a drive on Windows, however the default settings prevent it. Windows will fail to connect to the server using insecure Basic authentication. It will not even display any login dialog. Windows requires SSL / HTTPS connection to be used with Basic. If you try to connect via Add Network Location Wizard you will get the following error: "The folder you entered does not appear to be valid. Please choose another". However, you still can connect if you set the following registry key on a client machine: HKEY_LOCAL_MACHINEto 2. The BasicAuthLevel can be set to the following values: 0 - Basic authentication disabled 1 - Basic authentication enabled for SSL connections only 2 - Basic authentication enabled for SSL connections and for non-SSL connections If required, increase the FileSizeLimitInBytes to a higher value. Navigate to the Services interface, then restart the WebClient service.</p>
+<h2 id="access-office-applications-on-webdav">Access Office applications on WebDAV</h2>
+<p>Navigate to following registry HKEY_CURRENT_USER[14.0/15.0/16.0] Create a new DWORD BasicAuthLevel with value 2. 0 - Basic authentication disabled 1 - Basic authentication enabled for SSL connections only 2 - Basic authentication enabled for SSL and for non-SSL connections</p>
+<p>https://learn.microsoft.com/en-us/office/troubleshoot/powerpoint/office-opens-blank-from-sharepoint</p>
 <h2 id="server-options-5">Server options</h2>
 <p>Use <code>--addr</code> to specify which IP address and port the server should listen on, eg <code>--addr 1.2.3.4:8000</code> or <code>--addr :8080</code> to listen to all IPs. By default it only listens on localhost. You can use port :0 to let the OS choose an available port.</p>
 <p>If you set <code>--addr</code> to listen on a public or LAN accessible IP address then using Authentication is advised - see the next section for info.</p>
@@ -3812,7 +3874,7 @@ htpasswd -B htpasswd anotherUser</code></pre>
 <h2 id="alternate-report-of-used-bytes-6">Alternate report of used bytes</h2>
 <p>Some backends, most notably S3, do not report the amount of bytes used. If you need this information to be available when running <code>df</code> on the filesystem, then pass the flag <code>--vfs-used-is-size</code> to rclone. With this flag set, instead of relying on the backend to report this information, rclone will scan the whole remote similar to <code>rclone size</code> and compute the total used space itself.</p>
 <p><em>WARNING.</em> Contrary to <code>rclone size</code>, this flag ignores filters so that the result is accurate. However, this is very inefficient and may cost lots of API calls resulting in extra charges. Use it as a last resort and only with caching.</p>
-<h2 id="auth-proxy-2">Auth Proxy</h2>
+<h2 id="auth-proxy-3">Auth Proxy</h2>
 <p>If you supply the parameter <code>--auth-proxy /path/to/program</code> then rclone will use that program to generate backends on the fly which then are used to authenticate incoming requests. This uses a simple JSON based protocol with input on STDIN and output on STDOUT.</p>
 <p><strong>PLEASE NOTE:</strong> <code>--auth-proxy</code> and <code>--authorized-keys</code> cannot be used together, if <code>--auth-proxy</code> is set the authorized keys option will be ignored.</p>
 <p>There is an example program <a href="https://github.com/rclone/rclone/blob/master/test_proxy.py">bin/test_proxy.py</a> in the rclone source code.</p>
@@ -4031,7 +4093,7 @@ htpasswd -B htpasswd anotherUser</code></pre>
 <h2 id="synopsis-71">Synopsis</h2>
 <p>Set the modification time on file(s) as specified by remote:path to have the current time.</p>
 <p>If remote:path does not exist then a zero sized file will be created, unless <code>--no-create</code> or <code>--recursive</code> is provided.</p>
-<p>If <code>--recursive</code> is used then recursively sets the modification time on all existing files that is found under the path. Filters are supported, and you can test with the <code>--dry-run</code> or the <code>--interactive</code> flag.</p>
+<p>If <code>--recursive</code> is used then recursively sets the modification time on all existing files that is found under the path. Filters are supported, and you can test with the <code>--dry-run</code> or the <code>--interactive</code>/<code>-i</code> flag.</p>
 <p>If <code>--timestamp</code> is used then sets the modification time to that time instead of the current time. Times may be specified as one of:</p>
 <ul>
 <li>'YYMMDD' - e.g. 17.10.30</li>
@@ -4170,7 +4232,7 @@ rclone copy :sftp,host=example.com:path/to/dir /tmp/dir</code></pre>
 <p>Will get their own names</p>
 <pre><code>DEBUG : :s3: detected overridden config - adding &quot;{YTu53}&quot; suffix to name</code></pre>
 <h3 id="valid-remote-names">Valid remote names</h3>
-<p>Remote names are case sensitive, and must adhere to the following rules: - May contain number, letter, <code>_</code>, <code>-</code>, <code>.</code> and space. - May not start with <code>-</code> or space. - May not end with space.</p>
+<p>Remote names are case sensitive, and must adhere to the following rules: - May contain number, letter, <code>_</code>, <code>-</code>, <code>.</code>, <code>+</code>, <code>@</code> and space. - May not start with <code>-</code> or space. - May not end with space.</p>
 <p>Starting with rclone version 1.61, any Unicode numbers and letters are allowed, while in older versions it was limited to plain ASCII (0-9, A-Z, a-z). If you use the same rclone configuration from different shells, which may be configured with different character encoding, you must be cautious to use characters that are possible to write in all of them. This is mostly a problem on Windows, where the console traditionally uses a non-Unicode character set - defined by the so-called "code page".</p>
 <h2 id="quoting-and-the-shell">Quoting and the shell</h2>
 <p>When you are typing commands to your computer you are using something called the command line shell. This interprets various characters in an OS specific way.</p>
@@ -4189,9 +4251,9 @@ rclone copy :sftp,host=example.com:path/to/dir /tmp/dir</code></pre>
 <h2 id="copying-files-or-directories-with-in-the-names">Copying files or directories with <code>:</code> in the names</h2>
 <p>rclone uses <code>:</code> to mark a remote name. This is, however, a valid filename component in non-Windows OSes. The remote name parser will only search for a <code>:</code> up to the first <code>/</code> so if you need to act on a file or directory like this then use the full path starting with a <code>/</code>, or use <code>./</code> as a current directory prefix.</p>
 <p>So to sync a directory called <code>sync:me</code> to a remote called <code>remote:</code> use</p>
-<pre><code>rclone sync -i ./sync:me remote:path</code></pre>
+<pre><code>rclone sync --interactive ./sync:me remote:path</code></pre>
 <p>or</p>
-<pre><code>rclone sync -i /full/path/to/sync:me remote:path</code></pre>
+<pre><code>rclone sync --interactive /full/path/to/sync:me remote:path</code></pre>
 <h2 id="server-side-copy">Server Side Copy</h2>
 <p>Most remotes (but not all - see <a href="https://rclone.org/overview/#optional-features">the overview</a>) support server-side copy.</p>
 <p>This means if you want to copy one folder to another then rclone won't download all the files and re-upload them; it will instruct the server to copy them in place.</p>
@@ -4202,8 +4264,8 @@ rclone copy :sftp,host=example.com:path/to/dir /tmp/dir</code></pre>
 <p>Server side copies are used with <code>sync</code> and <code>copy</code> and will be identified in the log when using the <code>-v</code> flag. The <code>move</code> command may also use them if remote doesn't support server-side move directly. This is done by issuing a server-side copy then a delete which is much quicker than a download and re-upload.</p>
 <p>Server side copies will only be attempted if the remote names are the same.</p>
 <p>This can be used when scripting to make aged backups efficiently, e.g.</p>
-<pre><code>rclone sync -i remote:current-backup remote:previous-backup
-rclone sync -i /path/to/files remote:current-backup</code></pre>
+<pre><code>rclone sync --interactive remote:current-backup remote:previous-backup
+rclone sync --interactive /path/to/files remote:current-backup</code></pre>
 <h2 id="metadata">Metadata support</h2>
 <p>Metadata is data about a file which isn't the contents of the file. Normally rclone only preserves the modification time and the content (MIME) type where possible.</p>
 <p>Rclone supports preserving all the available metadata on files (not directories) when using the <code>--metadata</code> or <code>-M</code> flag.</p>
@@ -4346,7 +4408,7 @@ rclone sync -i /path/to/files remote:current-backup</code></pre>
 <p>If <code>--suffix</code> is set, then the moved files will have the suffix added to them. If there is a file with the same path (after the suffix has been added) in DIR, then it will be overwritten.</p>
 <p>The remote in use must support server-side move or copy and you must use the same remote as the destination of the sync. The backup directory must not overlap the destination directory without it being excluded by a filter rule.</p>
 <p>For example</p>
-<pre><code>rclone sync -i /path/to/local remote:current --backup-dir remote:old</code></pre>
+<pre><code>rclone sync --interactive /path/to/local remote:current --backup-dir remote:old</code></pre>
 <p>will sync <code>/path/to/local</code> to <code>remote:current</code>, but for any files which would have been updated or deleted will be stored in <code>remote:old</code>.</p>
 <p>If running rclone from a script you might want to use today's date as the directory name passed to <code>--backup-dir</code> to store the old files, or you might want to pass <code>--suffix</code> with today's date.</p>
 <p>See <code>--compare-dest</code> and <code>--copy-dest</code>.</p>
@@ -4404,6 +4466,7 @@ rclone sync -i /path/to/files remote:current-backup</code></pre>
 <p>If this flag is set then in a <code>sync</code>, <code>copy</code> or <code>move</code>, rclone will do all the checks to see whether files need to be transferred before doing any of the transfers. Normally rclone would start running transfers as soon as possible.</p>
 <p>This flag can be useful on IO limited systems where transfers interfere with checking.</p>
 <p>It can also be useful to ensure perfect ordering when using <code>--order-by</code>.</p>
+<p>If both <code>--check-first</code> and <code>--order-by</code> are set when doing <code>rclone move</code> then rclone will use the transfer thread to delete source files which don't need transferring. This will enable perfect ordering of the transfers and deletes but will cause the transfer stats to have more items in than expected.</p>
 <p>Using this flag can use more memory as it effectively sets <code>--max-backlog</code> to infinite. This means that all the info on the objects to transfer is held in memory before the transfers start.</p>
 <h3 id="checkersn">--checkers=N</h3>
 <p>Originally controlling just the number of file checkers to run in parallel, e.g. by <code>rclone copy</code>. Now a fairly universal parallelism control used by <code>rclone</code> in several places.</p>
@@ -4512,11 +4575,11 @@ See the dedupe command for more information as to what these options mean.</p>
 <pre><code>rclone ls remote:test --header &quot;X-Rclone: Foo&quot; --header &quot;X-LetMeIn: Yes&quot;</code></pre>
 <h3 id="header-download">--header-download</h3>
 <p>Add an HTTP header for all download transactions. The flag can be repeated to add multiple headers.</p>
-<pre><code>rclone sync -i s3:test/src ~/dst --header-download &quot;X-Amz-Meta-Test: Foo&quot; --header-download &quot;X-Amz-Meta-Test2: Bar&quot;</code></pre>
+<pre><code>rclone sync --interactive s3:test/src ~/dst --header-download &quot;X-Amz-Meta-Test: Foo&quot; --header-download &quot;X-Amz-Meta-Test2: Bar&quot;</code></pre>
 <p>See the GitHub issue <a href="https://github.com/rclone/rclone/issues/59">here</a> for currently supported backends.</p>
 <h3 id="header-upload">--header-upload</h3>
 <p>Add an HTTP header for all upload transactions. The flag can be repeated to add multiple headers.</p>
-<pre><code>rclone sync -i ~/src s3:test/dst --header-upload &quot;Content-Disposition: attachment; filename=&#39;cool.html&#39;&quot; --header-upload &quot;X-Amz-Meta-Test: FooBar&quot;</code></pre>
+<pre><code>rclone sync --interactive ~/src s3:test/dst --header-upload &quot;Content-Disposition: attachment; filename=&#39;cool.html&#39;&quot; --header-upload &quot;X-Amz-Meta-Test: FooBar&quot;</code></pre>
 <p>See the GitHub issue <a href="https://github.com/rclone/rclone/issues/59">here</a> for currently supported backends.</p>
 <h3 id="human-readable">--human-readable</h3>
 <p>Rclone commands output values for sizes (e.g. number of bytes) and counts (e.g. number of files) either as <em>raw</em> numbers, or in <em>human-readable</em> format.</p>
@@ -4547,11 +4610,11 @@ See the dedupe command for more information as to what these options mean.</p>
 <p>With this option set, files will be created and deleted as requested, but existing files will never be updated. If an existing file does not match between the source and destination, rclone will give the error <code>Source and destination exist but do not match: immutable file modified</code>.</p>
 <p>Note that only commands which transfer files (e.g. <code>sync</code>, <code>copy</code>, <code>move</code>) are affected by this behavior, and only modification is disallowed. Files may still be deleted explicitly (e.g. <code>delete</code>, <code>purge</code>) or implicitly (e.g. <code>sync</code>, <code>move</code>). Use <code>copy --immutable</code> if it is desired to avoid deletion as well as modification.</p>
 <p>This can be useful as an additional layer of protection for immutable or append-only data sets (notably backup archives), where modification implies corruption and should not be propagated.</p>
-<h3 id="interactive">-i / --interactive</h3>
+<h3 id="interactive">-i, --interactive</h3>
 <p>This flag can be used to tell rclone that you wish a manual confirmation before destructive operations.</p>
 <p>It is <strong>recommended</strong> that you use this flag while learning rclone especially with <code>rclone sync</code>.</p>
 <p>For example</p>
-<pre><code>$ rclone delete -i /tmp/dir
+<pre><code>$ rclone delete --interactive /tmp/dir
 rclone: delete &quot;important-file.txt&quot;?
 y) Yes, this is OK (default)
 n) No, skip this
@@ -4596,6 +4659,9 @@ y/n/s/!/q&gt; n</code></pre>
 <p>Setting this to a negative number will make the backlog as large as possible.</p>
 <h3 id="max-deleten">--max-delete=N</h3>
 <p>This tells rclone not to delete more than N files. If that limit is exceeded then a fatal error will be generated and rclone will stop the operation in progress.</p>
+<h3 id="max-delete-sizesize">--max-delete-size=SIZE</h3>
+<p>Rclone will stop deleting files when the total size of deletions has reached the size specified. It defaults to off.</p>
+<p>If that limit is exceeded then a fatal error will be generated and rclone will stop the operation in progress.</p>
 <h3 id="max-depthn">--max-depth=N</h3>
 <p>This modifies the recursion depth for all the commands except purge.</p>
 <p>So if you do <code>rclone --max-depth 1 ls remote:path</code> you will see only the files in the top level directory. Using <code>--max-depth 2</code> means you will see all the files in first two directory levels and so on.</p>
@@ -4611,7 +4677,7 @@ y/n/s/!/q&gt; n</code></pre>
 <p>Rclone will stop transferring when it has reached the size specified. Defaults to off.</p>
 <p>When the limit is reached all transfers will stop immediately.</p>
 <p>Rclone will exit with exit code 8 if the transfer limit is reached.</p>
-<h2 id="metadata--m">--metadata / -M</h2>
+<h2 id="m---metadata">-M, --metadata</h2>
 <p>Setting this flag enables rclone to copy the metadata from the source to the destination. For local backends this is ownership, permissions, xattr etc. See the <a href="metadata%20section">#metadata</a> for more info.</p>
 <h3 id="metadata-set-keyvalue">--metadata-set key=value</h3>
 <p>Add metadata <code>key</code> = <code>value</code> when uploading. This can be repeated as many times as required. See the <a href="metadata%20section">#metadata</a> for more info.</p>
@@ -4770,10 +4836,10 @@ y/n/s/!/q&gt; n</code></pre>
 <p>The remote in use must support server-side move or copy and you must use the same remote as the destination of the sync.</p>
 <p>This is for use with files to add the suffix in the current directory or with <code>--backup-dir</code>. See <code>--backup-dir</code> for more info.</p>
 <p>For example</p>
-<pre><code>rclone copy -i /path/to/local/file remote:current --suffix .bak</code></pre>
+<pre><code>rclone copy --interactive /path/to/local/file remote:current --suffix .bak</code></pre>
 <p>will copy <code>/path/to/local</code> to <code>remote:current</code>, but for any files which would have been updated or deleted have .bak added.</p>
 <p>If using <code>rclone sync</code> with <code>--suffix</code> and without <code>--backup-dir</code> then it is recommended to put a filter rule in excluding the suffix otherwise the <code>sync</code> will delete the backup files.</p>
-<pre><code>rclone sync -i /path/to/local/file remote:current --suffix .bak --exclude &quot;*.bak&quot;</code></pre>
+<pre><code>rclone sync --interactive /path/to/local/file remote:current --suffix .bak --exclude &quot;*.bak&quot;</code></pre>
 <h3 id="suffix-keep-extension">--suffix-keep-extension</h3>
 <p>When using <code>--suffix</code>, setting this causes rclone put the SUFFIX before the extension of the files that it backs up rather than after.</p>
 <p>So let's say we had <code>--suffix -2019-01-01</code>, without the flag <code>file.txt</code> would be backed up to <code>file.txt-2019-01-01</code> and with the flag it would be backed up to <code>file-2019-01-01.txt</code>. This can be helpful to make sure the suffixed files can still be opened.</p>
@@ -4870,8 +4936,8 @@ y/n/s/!/q&gt; n</code></pre>
 <p>Prints the version number</p>
 <h2 id="ssltls-options">SSL/TLS options</h2>
 <p>The outgoing SSL/TLS connections rclone makes can be controlled with these options. For example this can be very useful with the HTTP or WebDAV backends. Rclone HTTP servers have their own set of configuration for SSL/TLS which you can find in their documentation.</p>
-<h3 id="ca-cert-string">--ca-cert string</h3>
-<p>This loads the PEM encoded certificate authority certificate and uses it to verify the certificates of the servers rclone connects to.</p>
+<h3 id="ca-cert-stringarray">--ca-cert stringArray</h3>
+<p>This loads the PEM encoded certificate authority certificates and uses it to verify the certificates of the servers rclone connects to.</p>
 <p>If you have generated certificates signed with a local CA then you will need this flag to connect to servers using those certificates.</p>
 <h3 id="client-cert-string">--client-cert string</h3>
 <p>This loads the PEM encoded client side certificate.</p>
@@ -5575,7 +5641,7 @@ user2/prefect</code></pre>
 <h3 id="delete-excluded---delete-files-on-dest-excluded-from-sync"><code>--delete-excluded</code> - Delete files on dest excluded from sync</h3>
 <p><strong>Important</strong> this flag is dangerous to your data - use with <code>--dry-run</code> and <code>-v</code> first.</p>
 <p>In conjunction with <code>rclone sync</code>, <code>--delete-excluded</code> deletes any files on the destination which are excluded from the command.</p>
-<p>E.g. the scope of <code>rclone sync -i A: B:</code> can be restricted:</p>
+<p>E.g. the scope of <code>rclone sync --interactive A: B:</code> can be restricted:</p>
 <pre><code>rclone --min-size 50k --delete-excluded sync A: B:</code></pre>
 <p>All files on <code>B:</code> which are less than 50 KiB are deleted because they are excluded from the rclone sync command.</p>
 <h3 id="dump-filters---dump-the-filters-to-the-output"><code>--dump filters</code> - dump the filters to the output</h3>
@@ -7182,7 +7248,7 @@ Showing nodes accounting for 1537.03kB, 100% of 1537.03kB total
 </tr>
 <tr class="even">
 <td>Microsoft OneDrive</td>
-<td style="text-align: center;">SHA1 ⁵</td>
+<td style="text-align: center;">QuickXorHash ⁵</td>
 <td style="text-align: center;">R/W</td>
 <td style="text-align: center;">Yes</td>
 <td style="text-align: center;">No</td>
@@ -7358,7 +7424,7 @@ Showing nodes accounting for 1537.03kB, 100% of 1537.03kB total
 <p>² SFTP supports checksums if the same login has shell access and <code>md5sum</code> or <code>sha1sum</code> as well as <code>echo</code> are in the remote's PATH.</p>
 <p>³ WebDAV supports hashes when used with Owncloud and Nextcloud only.</p>
 <p>⁴ WebDAV supports modtimes when used with Owncloud and Nextcloud only.</p>
-<p>⁵ Microsoft OneDrive Personal supports SHA1 hashes, whereas OneDrive for business and SharePoint server support Microsoft's own <a href="https://docs.microsoft.com/en-us/onedrive/developer/code-snippets/quickxorhash">QuickXorHash</a>.</p>
+<p>⁵ <a href="https://docs.microsoft.com/en-us/onedrive/developer/code-snippets/quickxorhash">QuickXorHash</a> is Microsoft's own hash.</p>
 <p>⁶ Mail.ru uses its own modified SHA1 hash</p>
 <p>⁷ pCloud only supports SHA1 (not MD5) in its EU region</p>
 <p>⁸ Opendrive does not support creation of duplicate files using their web client interface or other stock clients, but the underlying storage platform has been determined to allow duplicate files, and it is possible to create them with <code>rclone</code>. It may be that this is a mistake or an unsupported feature.</p>
@@ -8306,14 +8372,14 @@ Showing nodes accounting for 1537.03kB, 100% of 1537.03kB total
 </tr>
 <tr class="odd">
 <td>Storj</td>
-<td style="text-align: center;">Yes †</td>
+<td style="text-align: center;">Yes ☨</td>
 <td style="text-align: center;">Yes</td>
 <td style="text-align: center;">Yes</td>
 <td style="text-align: center;">No</td>
 <td style="text-align: center;">No</td>
 <td style="text-align: center;">Yes</td>
 <td style="text-align: center;">Yes</td>
-<td style="text-align: center;">No</td>
+<td style="text-align: center;">Yes</td>
 <td style="text-align: center;">No</td>
 <td style="text-align: center;">No</td>
 </tr>
@@ -8386,7 +8452,8 @@ Showing nodes accounting for 1537.03kB, 100% of 1537.03kB total
 </table>
 <h3 id="purge">Purge</h3>
 <p>This deletes a directory quicker than just deleting all the files in the directory.</p>
-<p>† Note Swift and Storj implement this in order to delete directory markers but they don't actually have a quicker way of deleting files other than deleting them individually.</p>
+<p>† Note Swift implements this in order to delete directory markers but they don't actually have a quicker way of deleting files other than deleting them individually.</p>
+<p>☨ Storj implements this efficiently only for entire buckets. If purging a directory inside a bucket, files are deleted individually.</p>
 <p>‡ StreamUpload is not supported with Nextcloud</p>
 <h3 id="copy">Copy</h3>
 <p>Used when copying an object to and from the same remote. This known as a server-side copy so you can copy a file without downloading it and uploading it again. It is used if you use <code>rclone copy</code> or <code>rclone move</code> if the remote doesn't support <code>Move</code> directly.</p>
@@ -8424,7 +8491,7 @@ Showing nodes accounting for 1537.03kB, 100% of 1537.03kB total
       --buffer-size SizeSuffix               In memory buffer size when reading files for each --transfer (default 16Mi)
       --bwlimit BwTimetable                  Bandwidth limit in KiB/s, or use suffix B|K|M|G|T|P or a full timetable
       --bwlimit-file BwTimetable             Bandwidth limit per file in KiB/s, or use suffix B|K|M|G|T|P or a full timetable
-      --ca-cert string                       CA certificate used to verify servers
+      --ca-cert stringArray                  CA certificate used to verify servers
       --cache-dir string                     Directory rclone will use for caching (default &quot;$HOME/.cache/rclone&quot;)
       --check-first                          Do all the checks before starting transfers
       --checkers int                         Number of checkers to run in parallel (default 8)
@@ -8486,6 +8553,7 @@ Showing nodes accounting for 1537.03kB, 100% of 1537.03kB total
       --max-age Duration                     Only transfer files younger than this in s or suffix ms|s|m|h|d|w|M|y (default off)
       --max-backlog int                      Maximum number of objects in sync or check backlog (default 10000)
       --max-delete int                       When synchronizing, limit the number of deletes (default -1)
+      --max-delete-size SizeSuffix           When synchronizing, limit the total size of deletes (default off)
       --max-depth int                        If set limits the recursion depth to this (default -1)
       --max-duration Duration                Maximum duration rclone will transfer data for (default 0s)
       --max-size SizeSuffix                  Only transfer files smaller than this in KiB or suffix B|K|M|G|T|P (default off)
@@ -8574,7 +8642,7 @@ Showing nodes accounting for 1537.03kB, 100% of 1537.03kB total
       --use-json-log                         Use json log format
       --use-mmap                             Use mmap allocator (see docs)
       --use-server-modtime                   Use server modified time instead of object metadata
-      --user-agent string                    Set the user-agent to a specified string (default &quot;rclone/v1.61.0&quot;)
+      --user-agent string                    Set the user-agent to a specified string (default &quot;rclone/v1.62.0&quot;)
   -v, --verbose count                        Print lots more stuff (repeat for more)</code></pre>
 <h2 id="backend-flags">Backend Flags</h2>
 <p>These flags are available for every command. They control the backends and may be set in the config file.</p>
@@ -8785,6 +8853,7 @@ Showing nodes accounting for 1537.03kB, 100% of 1537.03kB total
       --gcs-decompress                                 If set this will decompress gzip encoded objects
       --gcs-encoding MultiEncoder                      The encoding for the backend (default Slash,CrLf,InvalidUtf8,Dot)
       --gcs-endpoint string                            Endpoint for the service
+      --gcs-env-auth                                   Get GCP IAM credentials from runtime (environment variables or instance meta data if no env vars)
       --gcs-location string                            Location for the newly created buckets
       --gcs-no-check-bucket                            If set, don&#39;t attempt to check the bucket exists or create it
       --gcs-object-acl string                          Access Control List for new objects
@@ -8873,6 +8942,7 @@ Showing nodes accounting for 1537.03kB, 100% of 1537.03kB total
       --mega-encoding MultiEncoder                     The encoding for the backend (default Slash,InvalidUtf8,Dot)
       --mega-hard-delete                               Delete files permanently rather than putting them into the trash
       --mega-pass string                               Password (obscured)
+      --mega-use-https                                 Use HTTPS for transfers
       --mega-user string                               User name
       --netstorage-account string                      Set the NetStorage account name
       --netstorage-host string                         Domain+path of NetStorage host to connect to
@@ -8888,6 +8958,7 @@ Showing nodes accounting for 1537.03kB, 100% of 1537.03kB total
       --onedrive-drive-type string                     The type of the drive (personal | business | documentLibrary)
       --onedrive-encoding MultiEncoder                 The encoding for the backend (default Slash,LtGt,DoubleQuote,Colon,Question,Asterisk,Pipe,BackSlash,Del,Ctl,LeftSpace,LeftTilde,RightSpace,RightPeriod,InvalidUtf8,Dot)
       --onedrive-expose-onenote-files                  Set to make OneNote files show up in directory listings
+      --onedrive-hash-type string                      Specify the hash in use for the backend (default &quot;auto&quot;)
       --onedrive-link-password string                  Set the password for links created by the link command
       --onedrive-link-scope string                     Set the scope of the links created by the link command (default &quot;anonymous&quot;)
       --onedrive-link-type string                      Set the type of the links created by the link command (default &quot;view&quot;)
@@ -8912,6 +8983,12 @@ Showing nodes accounting for 1537.03kB, 100% of 1537.03kB total
       --oos-no-check-bucket                            If set, don&#39;t attempt to check the bucket exists or create it
       --oos-provider string                            Choose your Auth Provider (default &quot;env_auth&quot;)
       --oos-region string                              Object storage Region
+      --oos-sse-customer-algorithm string              If using SSE-C, the optional header that specifies &quot;AES256&quot; as the encryption algorithm
+      --oos-sse-customer-key string                    To use SSE-C, the optional header that specifies the base64-encoded 256-bit encryption key to use to
+      --oos-sse-customer-key-file string               To use SSE-C, a file containing the base64-encoded string of the AES-256 encryption key associated
+      --oos-sse-customer-key-sha256 string             If using SSE-C, The optional header that specifies the base64-encoded SHA256 hash of the encryption
+      --oos-sse-kms-key-id string                      if using using your own master key in vault, this header specifies the
+      --oos-storage-tier string                        The storage class to use when storing new objects in storage. https://docs.oracle.com/en-us/iaas/Content/Object/Concepts/understandingstoragetiers.htm (default &quot;Standard&quot;)
       --oos-upload-concurrency int                     Concurrency for multipart uploads (default 10)
       --oos-upload-cutoff SizeSuffix                   Cutoff for switching to chunked upload (default 200Mi)
       --opendrive-chunk-size SizeSuffix                Files will be uploaded in chunks this size (default 10Mi)
@@ -8980,6 +9057,7 @@ Showing nodes accounting for 1537.03kB, 100% of 1537.03kB total
       --s3-sse-customer-key-md5 string                 If using SSE-C you may provide the secret encryption key MD5 checksum (optional)
       --s3-sse-kms-key-id string                       If using KMS ID you must provide the ARN of Key
       --s3-storage-class string                        The storage class to use when storing new objects in S3
+      --s3-sts-endpoint string                         Endpoint for STS
       --s3-upload-concurrency int                      Concurrency for multipart uploads (default 4)
       --s3-upload-cutoff SizeSuffix                    Cutoff for switching to chunked upload (default 200Mi)
       --s3-use-accelerate-endpoint                     If true use the AWS S3 accelerated endpoint
@@ -9045,12 +9123,13 @@ Showing nodes accounting for 1537.03kB, 100% of 1537.03kB total
       --smb-idle-timeout Duration                      Max time before closing idle connections (default 1m0s)
       --smb-pass string                                SMB password (obscured)
       --smb-port int                                   SMB port number (default 445)
+      --smb-spn string                                 Service principal name
       --smb-user string                                SMB username (default &quot;$USER&quot;)
       --storj-access-grant string                      Access grant
       --storj-api-key string                           API key
       --storj-passphrase string                        Encryption passphrase
       --storj-provider string                          Choose an authentication method (default &quot;existing&quot;)
-      --storj-satellite-address string                 Satellite address (default &quot;us-central-1.storj.io&quot;)
+      --storj-satellite-address string                 Satellite address (default &quot;us1.storj.io&quot;)
       --sugarsync-access-key-id string                 Sugarsync Access Key ID
       --sugarsync-app-id string                        Sugarsync App ID
       --sugarsync-authorization string                 Sugarsync authorization
@@ -9303,7 +9382,7 @@ docker volume inspect my_vol</code></pre>
 <li>Run bisync with the <code>--resync</code> flag, specifying the paths to the local and remote sync directory roots.</li>
 <li>For successive sync runs, leave off the <code>--resync</code> flag.</li>
 <li>Consider using a <a href="#filtering">filters file</a> for excluding unnecessary files and directories from the sync.</li>
-<li>Consider setting up the <a href="#check-access-option">--check-access</a> feature for safety.</li>
+<li>Consider setting up the <a href="#check-access">--check-access</a> feature for safety.</li>
 <li>On Linux, consider setting up a <a href="#cron">crontab entry</a>. bisync can safely run in concurrent cron jobs thanks to lock files it maintains.</li>
 </ul>
 <p>Here is a typical run log (with timestamps removed for clarity):</p>
@@ -9392,11 +9471,13 @@ Optional Flags:
 <h4 id="resync">--resync</h4>
 <p>This will effectively make both Path1 and Path2 filesystems contain a matching superset of all files. Path2 files that do not exist in Path1 will be copied to Path1, and the process will then sync the Path1 tree to Path2.</p>
 <p>The base directories on the both Path1 and Path2 filesystems must exist or bisync will fail. This is required for safety - that bisync can verify that both paths are valid.</p>
-<p>When using <code>--resync</code> a newer version of a file on the Path2 filesystem will be overwritten by the Path1 filesystem version. Carefully evaluate deltas using <a href="https://rclone.org/flags/#non-backend-flags">--dry-run</a>.</p>
+<p>When using <code>--resync</code>, a newer version of a file either on Path1 or Path2 filesystem, will overwrite the file on the other path (only the last version will be kept). Carefully evaluate deltas using <a href="https://rclone.org/flags/#non-backend-flags">--dry-run</a>.</p>
 <p>For a resync run, one of the paths may be empty (no files in the path tree). The resync run should result in files on both paths, else a normal non-resync run will fail.</p>
 <p>For a non-resync run, either path being empty (no files in the tree) fails with <code>Empty current PathN listing. Cannot sync to an empty directory: X.pathN.lst</code> This is a safety check that an unexpected empty path does not result in deleting <strong>everything</strong> in the other path.</p>
 <h4 id="check-access">--check-access</h4>
-<p>Access check files are an additional safety measure against data loss. bisync will ensure it can find matching <code>RCLONE_TEST</code> files in the same places in the Path1 and Path2 filesystems. Time stamps and file contents are not important, just the names and locations. Place one or more <code>RCLONE_TEST</code> files in the Path1 or Path2 filesystem and then do either a run without <code>--check-access</code> or a <code>--resync</code> to set matching files on both filesystems. If you have symbolic links in your sync tree it is recommended to place <code>RCLONE_TEST</code> files in the linked-to directory tree to protect against bisync assuming a bunch of deleted files if the linked-to tree should not be accessible. Also see the <code>--check-filename</code> flag.</p>
+<p>Access check files are an additional safety measure against data loss. bisync will ensure it can find matching <code>RCLONE_TEST</code> files in the same places in the Path1 and Path2 filesystems. <code>RCLONE_TEST</code> files are not generated automatically. For <code>--check-access</code>to succeed, you must first either: <strong>A)</strong> Place one or more <code>RCLONE_TEST</code> files in the Path1 or Path2 filesystem and then do either a run without <code>--check-access</code> or a <a href="#resync">--resync</a> to set matching files on both filesystems, or <strong>B)</strong> Set <code>--check-filename</code> to a filename already in use in various locations throughout your sync'd fileset. Time stamps and file contents are not important, just the names and locations. If you have symbolic links in your sync tree it is recommended to place <code>RCLONE_TEST</code> files in the linked-to directory tree to protect against bisync assuming a bunch of deleted files if the linked-to tree should not be accessible. See also the <a href="--check-filename">--check-filename</a> flag.</p>
+<h4 id="check-filename">--check-filename</h4>
+<p>Name of the file(s) used in access health validation. The default <code>--check-filename</code> is <code>RCLONE_TEST</code>. One or more files having this filename must exist, synchronized between your source and destination filesets, in order for <code>--check-access</code> to succeed. See <a href="#check-access">--check-access</a> for additional details.</p>
 <h4 id="max-delete">--max-delete</h4>
 <p>As a safety check, if greater than the <code>--max-delete</code> percent of files were deleted on either the Path1 or Path2 filesystem, then bisync will abort with a warning message, without making any changes. The default <code>--max-delete</code> is <code>50%</code>. One way to trigger this limit is to rename a directory that contains more than half of your files. This will appear to bisync as a bunch of deleted files and a bunch of new files. This safety check is intended to block bisync from deleting all of the files on both filesystems due to a temporary network access issue, or if the user had inadvertently deleted the files on one side or the other. To force the sync either set a different delete percentage limit, e.g. <code>--max-delete 75</code> (allows up to 75% deletion), or use <code>--force</code> to bypass the check.</p>
 <p>Also see the <a href="#all-files-changed">all files changed</a> check.</p>
@@ -10431,7 +10512,7 @@ y/e/d&gt; y</code></pre>
 <p>List the contents of a bucket</p>
 <pre><code>rclone ls remote:bucket</code></pre>
 <p>Sync <code>/home/local/directory</code> to the remote bucket, deleting any excess files in the bucket.</p>
-<pre><code>rclone sync -i /home/local/directory remote:bucket</code></pre>
+<pre><code>rclone sync --interactive /home/local/directory remote:bucket</code></pre>
 <h2 id="configuration-3">Configuration</h2>
 <p>Here is an example of making an s3 configuration for the AWS S3 provider. Most applies to the other providers as well, any differences are described <a href="#providers">below</a>.</p>
 <p>First run</p>
@@ -10717,7 +10798,7 @@ $ rclone -q ls s3:cleanup-test
 $ rclone -q --s3-versions ls s3:cleanup-test
         9 one.txt</code></pre>
 <h3 id="cleanup-1">Cleanup</h3>
-<p>If you run <code>rclone cleanup s3:bucket</code> then it will remove all pending multipart uploads older than 24 hours. You can use the <code>-i</code> flag to see exactly what it will do. If you want more control over the expiry date then run <code>rclone backend cleanup s3:bucket -o max-age=1h</code> to expire all uploads older than one hour. You can use <code>rclone backend list-multipart-uploads s3:bucket</code> to see the pending multipart uploads.</p>
+<p>If you run <code>rclone cleanup s3:bucket</code> then it will remove all pending multipart uploads older than 24 hours. You can use the <code>--interactive</code>/<code>i</code> or <code>--dry-run</code> flag to see exactly what it will do. If you want more control over the expiry date then run <code>rclone backend cleanup s3:bucket -o max-age=1h</code> to expire all uploads older than one hour. You can use <code>rclone backend list-multipart-uploads s3:bucket</code> to see the pending multipart uploads.</p>
 <h3 id="restricted-filename-characters-2">Restricted filename characters</h3>
 <p>S3 allows any valid UTF-8 string as a key.</p>
 <p>Invalid UTF-8 bytes will be <a href="https://rclone.org/overview/#invalid-utf8">replaced</a>, as they can't be used in XML.</p>
@@ -12167,7 +12248,7 @@ $ rclone -q --s3-versions ls s3:cleanup-test
 </ul></li>
 </ul>
 <h4 id="s3-endpoint-10">--s3-endpoint</h4>
-<p>Endpoint of the Shared Gateway.</p>
+<p>Endpoint for Storj Gateway.</p>
 <p>Properties:</p>
 <ul>
 <li>Config: endpoint</li>
@@ -12177,17 +12258,9 @@ $ rclone -q --s3-versions ls s3:cleanup-test
 <li>Required: false</li>
 <li>Examples:
 <ul>
-<li>"gateway.eu1.storjshare.io"
+<li>"gateway.storjshare.io"
 <ul>
-<li>EU1 Shared Gateway</li>
-</ul></li>
-<li>"gateway.us1.storjshare.io"
-<ul>
-<li>US1 Shared Gateway</li>
-</ul></li>
-<li>"gateway.ap1.storjshare.io"
-<ul>
-<li>Asia-Pacific Shared Gateway</li>
+<li>Global Hosted Gateway</li>
 </ul></li>
 </ul></li>
 </ul>
@@ -13905,6 +13978,17 @@ Windows:   &quot;%USERPROFILE%\.aws\credentials&quot;</code></pre>
 <li>Type: bool</li>
 <li>Default: false</li>
 </ul>
+<h4 id="s3-sts-endpoint">--s3-sts-endpoint</h4>
+<p>Endpoint for STS.</p>
+<p>Leave blank if using AWS to use the default endpoint for the region.</p>
+<p>Properties:</p>
+<ul>
+<li>Config: sts_endpoint</li>
+<li>Env Var: RCLONE_S3_STS_ENDPOINT</li>
+<li>Provider: AWS</li>
+<li>Type: string</li>
+<li>Required: false</li>
+</ul>
 <h3 id="metadata-2">Metadata</h3>
 <p>User metadata is stored as x-amz-meta- keys. S3 metadata keys are case insensitive and are always returned in lower case.</p>
 <p>Here are the possible system metadata items for the s3 backend.</p>
@@ -14000,8 +14084,8 @@ Windows:   &quot;%USERPROFILE%\.aws\credentials&quot;</code></pre>
 <pre><code>rclone backend restore s3:bucket/path/to/object [-o priority=PRIORITY] [-o lifetime=DAYS]
 rclone backend restore s3:bucket/path/to/directory [-o priority=PRIORITY] [-o lifetime=DAYS]
 rclone backend restore s3:bucket [-o priority=PRIORITY] [-o lifetime=DAYS]</code></pre>
-<p>This flag also obeys the filters. Test first with -i/--interactive or --dry-run flags</p>
-<pre><code>rclone -i backend restore --include &quot;*.txt&quot; s3:bucket/path -o priority=Standard</code></pre>
+<p>This flag also obeys the filters. Test first with --interactive/-i or --dry-run flags</p>
+<pre><code>rclone --interactive backend restore --include &quot;*.txt&quot; s3:bucket/path -o priority=Standard</code></pre>
 <p>All the objects shown will be marked for restore, then</p>
 <pre><code>rclone backend restore --include &quot;*.txt&quot; s3:bucket/path -o priority=Standard</code></pre>
 <p>It returns a list of status dictionaries with Remote and Status keys. The Status will be OK if it was successful or an error message if not.</p>
@@ -14052,7 +14136,7 @@ rclone backend restore s3:bucket [-o priority=PRIORITY] [-o lifetime=DAYS]</code
 <p>Remove unfinished multipart uploads.</p>
 <pre><code>rclone backend cleanup remote: [options] [&lt;arguments&gt;+]</code></pre>
 <p>This command removes unfinished multipart uploads of age greater than max-age which defaults to 24 hours.</p>
-<p>Note that you can use -i/--dry-run with this command to see what it would do.</p>
+<p>Note that you can use --interactive/-i or --dry-run with this command to see what it would do.</p>
 <pre><code>rclone backend cleanup s3:bucket/path/to/object
 rclone backend cleanup -o max-age=7w s3:bucket/path/to/object</code></pre>
 <p>Durations are parsed as per the rest of rclone, 2h, 7d, 7w etc.</p>
@@ -14064,7 +14148,7 @@ rclone backend cleanup -o max-age=7w s3:bucket/path/to/object</code></pre>
 <p>Remove old versions of files.</p>
 <pre><code>rclone backend cleanup-hidden remote: [options] [&lt;arguments&gt;+]</code></pre>
 <p>This command removes any old hidden versions of files on a versions enabled bucket.</p>
-<p>Note that you can use -i/--dry-run with this command to see what it would do.</p>
+<p>Note that you can use --interactive/-i or --dry-run with this command to see what it would do.</p>
 <pre><code>rclone backend cleanup-hidden s3:bucket/path/to/dir</code></pre>
 <h3 id="versioning">versioning</h3>
 <p>Set/get versioning support for a bucket.</p>
@@ -16014,7 +16098,7 @@ y/e/d&gt; y</code></pre>
 <p>List the contents of a bucket</p>
 <pre><code>rclone ls remote:bucket</code></pre>
 <p>Sync <code>/home/local/directory</code> to the remote bucket, deleting any excess files in the bucket.</p>
-<pre><code>rclone sync -i /home/local/directory remote:bucket</code></pre>
+<pre><code>rclone sync --interactive /home/local/directory remote:bucket</code></pre>
 <h3 id="application-keys">Application Keys</h3>
 <p>B2 supports multiple <a href="https://www.backblaze.com/b2/docs/application_keys.html">Application Keys for different access permission to B2 Buckets</a>.</p>
 <p>You can use these with rclone too; you will need to use rclone version 1.43 or later.</p>
@@ -17190,7 +17274,7 @@ y/e/d&gt; y</code></pre>
 <ul>
 <li>Collect all your chunked files under a directory and have your chunker remote point to it.</li>
 <li>Create another directory (most probably on the same cloud storage) and configure a new remote with desired metadata format, hash type, chunk naming etc.</li>
-<li>Now run <code>rclone sync -i oldchunks: newchunks:</code> and all your data will be transparently converted in transfer. This may take some time, yet chunker will try server-side copy if possible.</li>
+<li>Now run <code>rclone sync --interactive oldchunks: newchunks:</code> and all your data will be transparently converted in transfer. This may take some time, yet chunker will try server-side copy if possible.</li>
 <li>After checking data integrity you may remove configuration section of the old remote.</li>
 </ul>
 <p>If rclone gets killed during a long operation on a big composite file, hidden temporary chunks may stay in the directory. They will not be shown by the <code>list</code> command but will eat up your account quota. Please note that the <code>deletefile</code> command deletes only active chunks of a file. As a workaround, you can use remote of the wrapped file system to see them. An easy way to get rid of hidden garbage is to copy littered directory somewhere using the chunker remote and purge the original directory. The <code>copy</code> command will copy only active chunks while the <code>purge</code> will remove everything including garbage.</p>
@@ -17607,7 +17691,7 @@ y/e/d&gt; y</code></pre>
 <p>Accessing a storage system through a crypt remote realizes client-side encryption, which makes it safe to keep your data in a location you do not trust will not get compromised. When working against the <code>crypt</code> remote, rclone will automatically encrypt (before uploading) and decrypt (after downloading) on your local system as needed on the fly, leaving the data encrypted at rest in the wrapped remote. If you access the storage system using an application other than rclone, or access the wrapped remote directly using rclone, there will not be any encryption/decryption: Downloading existing content will just give you the encrypted (scrambled) format, and anything you upload will <em>not</em> become encrypted.</p>
 <p>The encryption is a secret-key encryption (also called symmetric key encryption) algorithm, where a password (or pass phrase) is used to generate real encryption key. The password can be supplied by user, or you may chose to let rclone generate one. It will be stored in the configuration file, in a lightly obscured form. If you are in an environment where you are not able to keep your configuration secured, you should add <a href="https://rclone.org/docs/#configuration-encryption">configuration encryption</a> as protection. As long as you have this configuration file, you will be able to decrypt your data. Without the configuration file, as long as you remember the password (or keep it in a safe place), you can re-create the configuration and gain access to the existing data. You may also configure a corresponding remote in a different installation to access the same data. See below for guidance to <a href="#changing-password">changing password</a>.</p>
 <p>Encryption uses <a href="https://en.wikipedia.org/wiki/Salt_(cryptography)">cryptographic salt</a>, to permute the encryption key so that the same string may be encrypted in different ways. When configuring the crypt remote it is optional to enter a salt, or to let rclone generate a unique salt. If omitted, rclone uses a built-in unique string. Normally in cryptography, the salt is stored together with the encrypted content, and do not have to be memorized by the user. This is not the case in rclone, because rclone does not store any additional information on the remotes. Use of custom salt is effectively a second password that must be memorized.</p>
-<p><a href="#file-encryption">File content</a> encryption is performed using <a href="https://godoc.org/golang.org/x/crypto/nacl/secretbox">NaCl SecretBox</a>, based on XSalsa20 cipher and Poly1305 for integrity. <a href="#name-encryption">Names</a> (file- and directory names) are also encrypted by default, but this has some implications and is therefore possible to turned off.</p>
+<p><a href="#file-encryption">File content</a> encryption is performed using <a href="https://godoc.org/golang.org/x/crypto/nacl/secretbox">NaCl SecretBox</a>, based on XSalsa20 cipher and Poly1305 for integrity. <a href="#name-encryption">Names</a> (file- and directory names) are also encrypted by default, but this has some implications and is therefore possible to be turned off.</p>
 <h2 id="configuration-9">Configuration</h2>
 <p>Here is an example of how to make a remote called <code>secret</code>.</p>
 <p>To use <code>crypt</code>, first set up the underlying remote. Follow the <code>rclone config</code> instructions for the specific backend.</p>
@@ -17982,7 +18066,7 @@ rclone rc backend/command command=decode fs=crypt: encryptedfile1 [encryptedfile
 </ul>
 <p>For example, let's say you have your original remote at <code>remote:</code> with the encrypted version at <code>eremote:</code> with path <code>remote:crypt</code>. You would then set up the new remote <code>remote2:</code> and then the encrypted version <code>eremote2:</code> with path <code>remote2:crypt</code> using the same passwords as <code>eremote:</code>.</p>
 <p>To sync the two remotes you would do</p>
-<pre><code>rclone sync -i remote:crypt remote2:crypt</code></pre>
+<pre><code>rclone sync --interactive remote:crypt remote2:crypt</code></pre>
 <p>And to check the integrity you would do</p>
 <pre><code>rclone check remote:crypt remote2:crypt</code></pre>
 <h2 id="file-formats">File formats</h2>
@@ -18821,7 +18905,7 @@ y/e/d&gt; y</code></pre>
 <p>List the contents of a directory</p>
 <pre><code>rclone ls remote:path/to/directory</code></pre>
 <p>Sync <code>/home/local/directory</code> to the remote directory, deleting any excess files in the directory.</p>
-<pre><code>rclone sync -i /home/local/directory remote:directory</code></pre>
+<pre><code>rclone sync --interactive /home/local/directory remote:directory</code></pre>
 <h3 id="anonymous-ftp">Anonymous FTP</h3>
 <p>When connecting to a FTP server that allows anonymous login, you can use the special "anonymous" username. Traditionally, this user account accepts any string as a password, although it is common to use either the password "anonymous" or "guest". Some servers require the use of a valid e-mail address as password.</p>
 <p>Using <a href="#backend-path-to-dir">on-the-fly</a> or <a href="https://rclone.org/docs/#connection-strings">connection string</a> remotes makes it easy to access such servers, without requiring any configuration in advance. The following are examples of that:</p>
@@ -19234,7 +19318,7 @@ y/e/d&gt; y</code></pre>
 <p>List the contents of a bucket</p>
 <pre><code>rclone ls remote:bucket</code></pre>
 <p>Sync <code>/home/local/directory</code> to the remote bucket, deleting any excess files in the bucket.</p>
-<pre><code>rclone sync -i /home/local/directory remote:bucket</code></pre>
+<pre><code>rclone sync --interactive /home/local/directory remote:bucket</code></pre>
 <h3 id="service-account-support">Service Account support</h3>
 <p>You can set up rclone with Google Cloud Storage in an unattended mode, i.e. not tied to a specific end-user Google account. This is useful when you want to synchronise files onto machines that don't have actively logged-in users, for example build machines.</p>
 <p>To get credentials for Google Cloud Platform <a href="https://cloud.google.com/iam/docs/service-accounts">IAM Service Accounts</a>, please head to the <a href="https://console.cloud.google.com/permissions/serviceaccounts">Service Account</a> section of the Google Developer Console. Service Accounts behave just like normal <code>User</code> permissions in <a href="https://cloud.google.com/storage/docs/access-control">Google Cloud Storage ACLs</a>, so you can limit their access (e.g. make them read only). After creating an account, a JSON file containing the Service Account's credentials will be downloaded onto your machines. These credentials are what rclone will use for authentication.</p>
@@ -19647,6 +19731,27 @@ y/e/d&gt; y</code></pre>
 <li>"DURABLE_REDUCED_AVAILABILITY"
 <ul>
 <li>Durable reduced availability storage class</li>
+</ul></li>
+</ul></li>
+</ul>
+<h4 id="gcs-env-auth">--gcs-env-auth</h4>
+<p>Get GCP IAM credentials from runtime (environment variables or instance meta data if no env vars).</p>
+<p>Only applies if service_account_file and service_account_credentials is blank.</p>
+<p>Properties:</p>
+<ul>
+<li>Config: env_auth</li>
+<li>Env Var: RCLONE_GCS_ENV_AUTH</li>
+<li>Type: bool</li>
+<li>Default: false</li>
+<li>Examples:
+<ul>
+<li>"false"
+<ul>
+<li>Enter credentials in the next step.</li>
+</ul></li>
+<li>"true"
+<ul>
+<li>Get GCP IAM credentials from the environment (env vars or IAM).</li>
 </ul></li>
 </ul></li>
 </ul>
@@ -20545,6 +20650,7 @@ trashed=false and &#39;c&#39; in parents</code></pre>
 <h4 id="drive-acknowledge-abuse">--drive-acknowledge-abuse</h4>
 <p>Set to allow files which return cannotDownloadAbusiveFile to be downloaded.</p>
 <p>If downloading a file returns the error "This file has been identified as malware or spam and cannot be downloaded" with the error code "cannotDownloadAbusiveFile" then supply this flag to rclone to indicate you acknowledge the risks of downloading the file and rclone will download it anyway.</p>
+<p>Note that if you are using service account it will need Manager permission (not Content Manager) to for this flag to work. If the SA does not have the right permission, Google will just ignore the flag.</p>
 <p>Properties:</p>
 <ul>
 <li>Config: acknowledge_abuse</li>
@@ -20773,8 +20879,8 @@ upstreams = &quot;My Drive=My Drive:&quot; &quot;Test Drive=Test Drive:&quot;</c
 <p>Usage:</p>
 <p>This takes an optional directory to trash which make this easier to use via the API.</p>
 <pre><code>rclone backend untrash drive:directory
-rclone backend -i untrash drive:directory subdir</code></pre>
-<p>Use the -i flag to see what would be restored before restoring it.</p>
+rclone backend --interactive untrash drive:directory subdir</code></pre>
+<p>Use the --interactive/-i or --dry-run flag to see what would be restored before restoring it.</p>
 <p>Result:</p>
 <pre><code>{
     &quot;Untrashed&quot;: 17,
@@ -20790,7 +20896,7 @@ rclone backend copyid drive: ID1 path1 ID2 path2</code></pre>
 <p>It copies the drive file with ID given to the path (an rclone path which will be passed internally to rclone copyto). The ID and path pairs can be repeated.</p>
 <p>The path should end with a / to indicate copy the file as named to this directory. If it doesn't end with a / then the last path component will be used as the file name.</p>
 <p>If the destination is a drive backend then server-side copying will be attempted if possible.</p>
-<p>Use the -i flag to see what would be copied before copying.</p>
+<p>Use the --interactive/-i or --dry-run flag to see what would be copied before copying.</p>
 <h3 id="exportformats">exportformats</h3>
 <p>Dump the export formats for debug purposes</p>
 <pre><code>rclone backend exportformats remote: [options] [&lt;arguments&gt;+]</code></pre>
@@ -20823,17 +20929,16 @@ rclone backend copyid drive: ID1 path1 ID2 path2</code></pre>
 <li><p>Select a project or create a new project.</p></li>
 <li><p>Under "ENABLE APIS AND SERVICES" search for "Drive", and enable the "Google Drive API".</p></li>
 <li><p>Click "Credentials" in the left-side panel (not "Create credentials", which opens the wizard), then "Create credentials"</p></li>
-<li><p>If you already configured an "Oauth Consent Screen", then skip to the next step; if not, click on "CONFIGURE CONSENT SCREEN" button (near the top right corner of the right panel), then select "External" and click on "CREATE"; on the next screen, enter an "Application name" ("rclone" is OK); enter "User Support Email" (your own email is OK); enter "Developer Contact Email" (your own email is OK); then click on "Save" (all other data is optional). Click again on "Credentials" on the left panel to go back to the "Credentials" screen.</p>
+<li><p>If you already configured an "Oauth Consent Screen", then skip to the next step; if not, click on "CONFIGURE CONSENT SCREEN" button (near the top right corner of the right panel), then select "External" and click on "CREATE"; on the next screen, enter an "Application name" ("rclone" is OK); enter "User Support Email" (your own email is OK); enter "Developer Contact Email" (your own email is OK); then click on "Save" (all other data is optional). You will also have to add some scopes, including <code>.../auth/docs</code> and <code>.../auth/drive</code> in order to be able to edit, create and delete files with RClone. You may also want to include the <code>../auth/drive.metadata.readonly</code> scope. After adding scopes, click "Save and continue" to add test users. Be sure to add your own account to the test users. Once you've added yourself as a test user and saved the changes, click again on "Credentials" on the left panel to go back to the "Credentials" screen.</p>
 <p>(PS: if you are a GSuite user, you could also select "Internal" instead of "External" above, but this will restrict API use to Google Workspace users in your organisation).</p></li>
 <li><p>Click on the "+ CREATE CREDENTIALS" button at the top of the screen, then select "OAuth client ID".</p></li>
 <li><p>Choose an application type of "Desktop app" and click "Create". (the default name is fine)</p></li>
 <li><p>It will show you a client ID and client secret. Make a note of these.</p>
-<p>(If you selected "External" at Step 5 continue to "Publish App" in the Steps 9 and 10. If you chose "Internal" you don't need to publish and can skip straight to Step 11.)</p></li>
-<li><p>Go to "Oauth consent screen" and press "Publish App"</p></li>
-<li><p>Click "OAuth consent screen", then click "PUBLISH APP" button and confirm, or add your account under "Test users".</p></li>
+<p>(If you selected "External" at Step 5 continue to Step 9. If you chose "Internal" you don't need to publish and can skip straight to Step 10 but your destination drive must be part of the same Google Workspace.)</p></li>
+<li><p>Go to "Oauth consent screen" and then click "PUBLISH APP" button and confirm. You will also want to add yourself as a test user.</p></li>
 <li><p>Provide the noted client ID and client secret to rclone.</p></li>
 </ol>
-<p>Be aware that, due to the "enhanced security" recently introduced by Google, you are theoretically expected to "submit your app for verification" and then wait a few weeks(!) for their response; in practice, you can go right ahead and use the client ID and client secret with rclone, the only issue will be a very scary confirmation screen shown when you connect via your browser for rclone to be able to get its token-id (but as this only happens during the remote configuration, it's not such a big deal).</p>
+<p>Be aware that, due to the "enhanced security" recently introduced by Google, you are theoretically expected to "submit your app for verification" and then wait a few weeks(!) for their response; in practice, you can go right ahead and use the client ID and client secret with rclone, the only issue will be a very scary confirmation screen shown when you connect via your browser for rclone to be able to get its token-id (but as this only happens during the remote configuration, it's not such a big deal). Keeping the application in "Testing" will work as well, but the limitation is that any grants will expire after a week, which can be annoying to refresh constantly. If, for whatever reason, a short grant time is not a problem, then keeping the application in testing mode would also be sufficient.</p>
 <p>(Thanks to <span class="citation" data-cites="balazer">@balazer</span> on github for these instructions.)</p>
 <p>Sometimes, creation of an OAuth consent in Google API Console fails due to an error message “The request failed because changes to one of the field of the resource is not supported”. As a convenient workaround, the necessary Google Drive API key can be created on the <a href="https://developers.google.com/drive/api/v3/quickstart/python">Python Quickstart</a> page. Just push the Enable the Drive API button to receive the Client ID and Secret. Note that it will automatically create a new project in the API Console.</p>
 <h1 id="google-photos">Google Photos</h1>
@@ -20914,9 +21019,9 @@ y/e/d&gt; y</code></pre>
 <p>List the contents of an album</p>
 <pre><code>rclone ls remote:album/newAlbum</code></pre>
 <p>Sync <code>/home/local/images</code> to the Google Photos, removing any excess files in the album.</p>
-<pre><code>rclone sync -i /home/local/image remote:album/newAlbum</code></pre>
+<pre><code>rclone sync --interactive /home/local/image remote:album/newAlbum</code></pre>
 <h3 id="layout">Layout</h3>
-<p>As Google Photos is not a general purpose cloud storage system the backend is laid out to help you navigate it.</p>
+<p>As Google Photos is not a general purpose cloud storage system, the backend is laid out to help you navigate it.</p>
 <p>The directories under <code>media</code> show different ways of categorizing the media. Each file will appear multiple times. So if you want to make a backup of your google photos you might choose to backup <code>remote:media/by-month</code>. (<strong>NB</strong> <code>remote:media/by-day</code> is rather slow at the moment so avoid for syncing.)</p>
 <p>Note that all your photos and videos will appear somewhere under <code>media</code>, but they may not appear under <code>album</code> unless you've put them into albums.</p>
 <pre><code>/
@@ -21372,7 +21477,7 @@ e/n/d/r/c/s/q&gt; q</code></pre>
 <p>List the contents of a directory</p>
 <pre><code>rclone ls remote:directory</code></pre>
 <p>Sync the remote <code>directory</code> to <code>/home/local/directory</code>, deleting any excess files.</p>
-<pre><code>rclone sync -i remote:directory /home/local/directory</code></pre>
+<pre><code>rclone sync --interactive remote:directory /home/local/directory</code></pre>
 <h3 id="setting-up-your-own-hdfs-instance-for-testing">Setting up your own HDFS instance for testing</h3>
 <p>You may start with a <a href="https://hadoop.apache.org/docs/stable/hadoop-project-dist/hadoop-common/SingleCluster.html">manual setup</a> or use the docker image from the tests:</p>
 <p>If you want to build the docker image</p>
@@ -21841,7 +21946,7 @@ e/n/d/r/c/s/q&gt; q</code></pre>
 <p>List the contents of a directory</p>
 <pre><code>rclone ls remote:directory</code></pre>
 <p>Sync the remote <code>directory</code> to <code>/home/local/directory</code>, deleting any excess files.</p>
-<pre><code>rclone sync -i remote:directory /home/local/directory</code></pre>
+<pre><code>rclone sync --interactive remote:directory /home/local/directory</code></pre>
 <h3 id="read-only">Read only</h3>
 <p>This remote is read only - you can't upload files to an HTTP server.</p>
 <h3 id="modified-time-7">Modified time</h3>
@@ -21922,7 +22027,7 @@ e/n/d/r/c/s/q&gt; q</code></pre>
 <p>List the contents of a item</p>
 <pre><code>rclone ls remote:item</code></pre>
 <p>Sync <code>/home/local/directory</code> to the remote item, deleting any excess files in the item.</p>
-<pre><code>rclone sync -i /home/local/directory remote:item</code></pre>
+<pre><code>rclone sync --interactive /home/local/directory remote:item</code></pre>
 <h2 id="notes-1">Notes</h2>
 <p>Because of Internet Archive's architecture, it enqueues write operations (and extra post-processings) in a per-item queue. You can check item's queue at https://catalogd.archive.org/history/item-name-here . Because of that, all uploads/deletes will not show up immediately and takes some time to be available. The per-item queue is enqueued to an another queue, Item Deriver Queue. <a href="https://catalogd.archive.org/catalog.php?whereami=1">You can check the status of Item Deriver Queue here.</a> This queue has a limit, and it may block you from uploading, or even deleting. You should avoid uploading a lot of small files for better behavior.</p>
 <p>You can optionally wait for the server's processing to finish, by setting non-zero value to <code>wait_archive</code> key. By making it wait, rclone can do normal file comparison. Make sure to set a large enough value (e.g. <code>30m0s</code> for smaller files) as it can take a long time depending on server's queue.</p>
@@ -22868,7 +22973,7 @@ y/e/d&gt; y</code></pre>
 <p>List the contents of a directory</p>
 <pre><code>rclone ls remote:directory</code></pre>
 <p>Sync <code>/home/local/directory</code> to the remote path, deleting any excess files in the path.</p>
-<pre><code>rclone sync -i /home/local/directory remote:directory</code></pre>
+<pre><code>rclone sync --interactive /home/local/directory remote:directory</code></pre>
 <h3 id="modified-time-8">Modified time</h3>
 <p>Files support a modification time attribute with up to 1 second precision. Directories do not have a modification time, which is shown as "Jan 1 1970".</p>
 <h3 id="hash-checksums">Hash checksums</h3>
@@ -23256,6 +23361,16 @@ me@example.com:/$ </code></pre>
 <li>Type: bool</li>
 <li>Default: false</li>
 </ul>
+<h4 id="mega-use-https">--mega-use-https</h4>
+<p>Use HTTPS for transfers.</p>
+<p>MEGA uses plain text HTTP connections by default. Some ISPs throttle HTTP connections, this causes transfers to become very slow. Enabling this will force MEGA to use HTTPS for all transfers. HTTPS is normally not necesary since all data is already encrypted anyway. Enabling it will increase CPU usage and add network overhead.</p>
+<p>Properties:</p>
+<ul>
+<li>Config: use_https</li>
+<li>Env Var: RCLONE_MEGA_USE_HTTPS</li>
+<li>Type: bool</li>
+<li>Default: false</li>
+</ul>
 <h4 id="mega-encoding">--mega-encoding</h4>
 <p>The encoding for the backend.</p>
 <p>See the <a href="https://rclone.org/overview/#encoding">encoding section in the overview</a> for more info.</p>
@@ -23533,7 +23648,7 @@ y/e/d&gt; y</code></pre>
 <p>List the contents of a container</p>
 <pre><code>rclone ls remote:container</code></pre>
 <p>Sync <code>/home/local/directory</code> to the remote container, deleting any excess files in the container.</p>
-<pre><code>rclone sync -i /home/local/directory remote:container</code></pre>
+<pre><code>rclone sync --interactive /home/local/directory remote:container</code></pre>
 <h3 id="fast-list-5">--fast-list</h3>
 <p>This remote supports <code>--fast-list</code> which allows you to use fewer transactions in exchange for more memory. See the <a href="https://rclone.org/docs/#fast-list">rclone docs</a> for more details.</p>
 <h3 id="modified-time-9">Modified time</h3>
@@ -24169,7 +24284,9 @@ y/e/d&gt; y</code></pre>
 <p>Note: If you have a special region, you may need a different host in step 4 and 5. Here are <a href="https://github.com/rclone/rclone/blob/bc23bf11db1c78c6ebbf8ea538fbebf7058b4176/backend/onedrive/onedrive.go#L86">some hints</a>.</p>
 <h3 id="modification-time-and-hashes">Modification time and hashes</h3>
 <p>OneDrive allows modification times to be set on objects accurate to 1 second. These will be used to detect whether objects need syncing or not.</p>
-<p>OneDrive personal supports SHA1 type hashes. OneDrive for business and Sharepoint Server support <a href="https://docs.microsoft.com/en-us/onedrive/developer/code-snippets/quickxorhash">QuickXorHash</a>.</p>
+<p>OneDrive Personal, OneDrive for Business and Sharepoint Server support <a href="https://docs.microsoft.com/en-us/onedrive/developer/code-snippets/quickxorhash">QuickXorHash</a>.</p>
+<p>Before rclone 1.62 the default hash for Onedrive Personal was <code>SHA1</code>. For rclone 1.62 and above the default for all Onedrive backends is <code>QuickXorHash</code>.</p>
+<p>Starting from July 2023 <code>SHA1</code> support is being phased out in Onedrive Personal in favour of <code>QuickXorHash</code>. If necessary the <code>--onedrive-hash-type</code> flag (or <code>hash_type</code> config option) can be used to select <code>SHA1</code> during the transition period if this is important your workflow.</p>
 <p>For all types of OneDrive you can use the <code>--checksum</code> flag.</p>
 <h3 id="restricted-filename-characters-19">Restricted filename characters</h3>
 <p>In addition to the <a href="https://rclone.org/overview/#restricted-characters">default restricted characters set</a> the following characters are also replaced:</p>
@@ -24525,6 +24642,47 @@ y/e/d&gt; y</code></pre>
 <li>Type: string</li>
 <li>Required: false</li>
 </ul>
+<h4 id="onedrive-hash-type">--onedrive-hash-type</h4>
+<p>Specify the hash in use for the backend.</p>
+<p>This specifies the hash type in use. If set to "auto" it will use the default hash which is is QuickXorHash.</p>
+<p>Before rclone 1.62 an SHA1 hash was used by default for Onedrive Personal. For 1.62 and later the default is to use a QuickXorHash for all onedrive types. If an SHA1 hash is desired then set this option accordingly.</p>
+<p>From July 2023 QuickXorHash will be the only available hash for both OneDrive for Business and OneDriver Personal.</p>
+<p>This can be set to "none" to not use any hashes.</p>
+<p>If the hash requested does not exist on the object, it will be returned as an empty string which is treated as a missing hash by rclone.</p>
+<p>Properties:</p>
+<ul>
+<li>Config: hash_type</li>
+<li>Env Var: RCLONE_ONEDRIVE_HASH_TYPE</li>
+<li>Type: string</li>
+<li>Default: "auto"</li>
+<li>Examples:
+<ul>
+<li>"auto"
+<ul>
+<li>Rclone chooses the best hash</li>
+</ul></li>
+<li>"quickxor"
+<ul>
+<li>QuickXor</li>
+</ul></li>
+<li>"sha1"
+<ul>
+<li>SHA1</li>
+</ul></li>
+<li>"sha256"
+<ul>
+<li>SHA256</li>
+</ul></li>
+<li>"crc32"
+<ul>
+<li>CRC32</li>
+</ul></li>
+<li>"none"
+<ul>
+<li>None - don't use any hashes</li>
+</ul></li>
+</ul></li>
+</ul>
 <h4 id="onedrive-encoding">--onedrive-encoding</h4>
 <p>The encoding for the backend.</p>
 <p>See the <a href="https://rclone.org/overview/#encoding">encoding section in the overview</a> for more info.</p>
@@ -24576,9 +24734,9 @@ y/e/d&gt; y</code></pre>
 <li>Restore the versioning settings after using rclone. (Optional)</li>
 </ol>
 <h2 id="cleanup-3">Cleanup</h2>
-<p>OneDrive supports <code>rclone cleanup</code> which causes rclone to look through every file under the path supplied and delete all version but the current version. Because this involves traversing all the files, then querying each file for versions it can be quite slow. Rclone does <code>--checkers</code> tests in parallel. The command also supports <code>-i</code> which is a great way to see what it would do.</p>
-<pre><code>rclone cleanup -i remote:path/subdir # interactively remove all old version for path/subdir
-rclone cleanup remote:path/subdir    # unconditionally remove all old version for path/subdir</code></pre>
+<p>OneDrive supports <code>rclone cleanup</code> which causes rclone to look through every file under the path supplied and delete all version but the current version. Because this involves traversing all the files, then querying each file for versions it can be quite slow. Rclone does <code>--checkers</code> tests in parallel. The command also supports <code>--interactive</code>/<code>i</code> or <code>--dry-run</code> which is a great way to see what it would do.</p>
+<pre><code>rclone cleanup --interactive remote:path/subdir # interactively remove all old version for path/subdir
+rclone cleanup remote:path/subdir               # unconditionally remove all old version for path/subdir</code></pre>
 <p><strong>NB</strong> Onedrive personal can't currently delete versions</p>
 <h2 id="troubleshooting-2">Troubleshooting</h2>
 <h3 id="excessive-throttling-or-blocked-on-sharepoint">Excessive throttling or blocked on SharePoint</h3>
@@ -24607,26 +24765,26 @@ Description: Due to a configuration change made by your administrator, or becaus
 <h3 id="can-not-access-shared-with-me-files">Can not access <code>Shared</code> with me files</h3>
 <p>Shared with me files is not supported by rclone <a href="https://github.com/rclone/rclone/issues/4062">currently</a>, but there is a workaround:</p>
 <ol type="1">
-<li><p>Visit <a href="https://onedrive.live.com/">https://onedrive.live.com</a></p></li>
-<li><p>Right click a item in <code>Shared</code>, then click <code>Add shortcut to My files</code> in the context</p>
-<details>
-<p><summary>Screenshot (Shared with me)</summary></p>
-<figure>
-<img src="https://user-images.githubusercontent.com/60313789/206118040-7e762b3b-aa61-41a1-8649-cc18889f3572.png" alt="" /><figcaption>make_shortcut</figcaption>
-</figure>
-</details></li>
-<li><p>The shortcut will appear in <code>My files</code>, you can access it with rclone, it behaves like a normal folder/file.</p>
-<details>
-<p><summary>Screenshot (My Files)</summary></p>
-<figure>
-<img src="https://i.imgur.com/0S8H3li.png" alt="" /><figcaption>in_my_files</figcaption>
-</figure>
-</details></li>
+<li>Visit <a href="https://onedrive.live.com/">https://onedrive.live.com</a></li>
+<li>Right click a item in <code>Shared</code>, then click <code>Add shortcut to My files</code> in the context <img src="https://user-images.githubusercontent.com/60313789/206118040-7e762b3b-aa61-41a1-8649-cc18889f3572.png" title="Screenshot (Shared with me)" alt="make_shortcut" /></li>
+<li>The shortcut will appear in <code>My files</code>, you can access it with rclone, it behaves like a normal folder/file. <img src="https://i.imgur.com/0S8H3li.png" title="Screenshot (My Files)" alt="in_my_files" /> <img src="https://i.imgur.com/2Iq66sW.png" title="Screenshot (rclone mount)" alt="rclone_mount" /></li>
 </ol>
-<details>
-<p><summary>Screenshot (rclone mount)</summary></p>
-<img src="https://i.imgur.com/2Iq66sW.png" title="fig:" alt="rclone_mount" />
-</details>
+<h3 id="live-photos-uploaded-from-ios-small-video-clips-in-.heic-files">Live Photos uploaded from iOS (small video clips in .heic files)</h3>
+<p>The iOS OneDrive app introduced <a href="https://techcommunity.microsoft.com/t5/microsoft-onedrive-blog/live-photos-come-to-onedrive/ba-p/1953452">upload and storage</a> of <a href="https://support.apple.com/en-gb/HT207310">Live Photos</a> in 2020. The usage and download of these uploaded Live Photos is unfortunately still work-in-progress and this introduces several issues when copying, synchronising and mounting – both in rclone and in the native OneDrive client on Windows.</p>
+<p>The root cause can easily be seen if you locate one of your Live Photos in the OneDrive web interface. Then download the photo from the web interface. You will then see that the size of downloaded .heic file is smaller than the size displayed in the web interface. The downloaded file is smaller because it only contains a single frame (still photo) extracted from the Live Photo (movie) stored in OneDrive.</p>
+<p>The different sizes will cause <code>rclone copy/sync</code> to repeatedly recopy unmodified photos something like this:</p>
+<pre><code>DEBUG : 20230203_123826234_iOS.heic: Sizes differ (src 4470314 vs dst 1298667)
+DEBUG : 20230203_123826234_iOS.heic: sha1 = fc2edde7863b7a7c93ca6771498ac797f8460750 OK
+INFO  : 20230203_123826234_iOS.heic: Copied (replaced existing)</code></pre>
+<p>These recopies can be worked around by adding <code>--ignore-size</code>. Please note that this workaround only syncs the still-picture not the movie clip, and relies on modification dates being correctly updated on all files in all situations.</p>
+<p>The different sizes will also cause <code>rclone check</code> to report size errors something like this:</p>
+<pre><code>ERROR : 20230203_123826234_iOS.heic: sizes differ</code></pre>
+<p>These check errors can be suppressed by adding <code>--ignore-size</code>.</p>
+<p>The different sizes will also cause <code>rclone mount</code> to fail downloading with an error something like this:</p>
+<pre><code>ERROR : 20230203_123826234_iOS.heic: ReadFileHandle.Read error: low level retry 1/10: unexpected EOF</code></pre>
+<p>or like this when using <code>--cache-mode=full</code>:</p>
+<pre><code>INFO  : 20230203_123826234_iOS.heic: vfs cache: downloader: error count now 1: vfs reader: failed to write to cache file: 416 Requested Range Not Satisfiable:
+ERROR : 20230203_123826234_iOS.heic: vfs cache: failed to download: vfs reader: failed to write to cache file: 416 Requested Range Not Satisfiable:</code></pre>
 <h1 id="opendrive">OpenDrive</h1>
 <p>Paths are specified as <code>remote:path</code></p>
 <p>Paths may be as deep as required, e.g. <code>remote:directory/subdirectory</code>.</p>
@@ -24891,7 +25049,7 @@ Enter a value. Press Enter to leave empty.
 endpoint&gt; 
 
 Option config_file.
-Path to OCI config file
+Full Path to OCI config file
 Choose a number from below, or type in your own string value.
 Press Enter for the default (~/.oci/config).
  1 / oci configuration file location
@@ -24932,6 +25090,69 @@ y/e/d&gt; y</code></pre>
 <p>List the contents of a bucket</p>
 <pre><code>rclone ls remote:bucket
 rclone ls remote:bucket --max-depth 1</code></pre>
+<h3 id="oci-authentication-provider">OCI Authentication Provider</h3>
+<p>OCI has various authentication methods. To learn more about authentication methods please refer <a href="https://docs.oracle.com/en-us/iaas/Content/API/Concepts/sdk_authentication_methods.htm">oci authentication methods</a> These choices can be specified in the rclone config file.</p>
+<p>Rclone supports the following OCI authentication provider.</p>
+<pre><code>User Principal
+Instance Principal
+Resource Principal
+No authentication</code></pre>
+<h4 id="authentication-provider-choice-user-principal">Authentication provider choice: User Principal</h4>
+<p>Sample rclone config file for Authentication Provider User Principal:</p>
+<pre><code>[oos]
+type = oracleobjectstorage
+namespace = id&lt;redacted&gt;34
+compartment = ocid1.compartment.oc1..aa&lt;redacted&gt;ba
+region = us-ashburn-1
+provider = user_principal_auth
+config_file = /home/opc/.oci/config
+config_profile = Default</code></pre>
+<p>Advantages: - One can use this method from any server within OCI or on-premises or from other cloud provider.</p>
+<p>Considerations: - you need to configure user’s privileges / policy to allow access to object storage - Overhead of managing users and keys. - If the user is deleted, the config file will no longer work and may cause automation regressions that use the user's credentials.</p>
+<h4 id="authentication-provider-choice-instance-principal">Authentication provider choice: Instance Principal</h4>
+<p>An OCI compute instance can be authorized to use rclone by using it's identity and certificates as an instance principal. With this approach no credentials have to be stored and managed.</p>
+<p>Sample rclone configuration file for Authentication Provider Instance Principal:</p>
+<pre><code>[opc@rclone ~]$ cat ~/.config/rclone/rclone.conf
+[oos]
+type = oracleobjectstorage
+namespace = id&lt;redacted&gt;fn
+compartment = ocid1.compartment.oc1..aa&lt;redacted&gt;k7a
+region = us-ashburn-1
+provider = instance_principal_auth</code></pre>
+<p>Advantages:</p>
+<ul>
+<li>With instance principals, you don't need to configure user credentials and transfer/ save it to disk in your compute instances or rotate the credentials.</li>
+<li>You don’t need to deal with users and keys.</li>
+<li>Greatly helps in automation as you don't have to manage access keys, user private keys, storing them in vault, using kms etc.</li>
+</ul>
+<p>Considerations:</p>
+<ul>
+<li>You need to configure a dynamic group having this instance as member and add policy to read object storage to that dynamic group.</li>
+<li>Everyone who has access to this machine can execute the CLI commands.</li>
+<li>It is applicable for oci compute instances only. It cannot be used on external instance or resources.</li>
+</ul>
+<h4 id="authentication-provider-choice-resource-principal">Authentication provider choice: Resource Principal</h4>
+<p>Resource principal auth is very similar to instance principal auth but used for resources that are not compute instances such as <a href="https://docs.oracle.com/en-us/iaas/Content/Functions/Concepts/functionsoverview.htm">serverless functions</a>. To use resource principal ensure Rclone process is started with these environment variables set in its process.</p>
+<pre><code>export OCI_RESOURCE_PRINCIPAL_VERSION=2.2
+export OCI_RESOURCE_PRINCIPAL_REGION=us-ashburn-1
+export OCI_RESOURCE_PRINCIPAL_PRIVATE_PEM=/usr/share/model-server/key.pem
+export OCI_RESOURCE_PRINCIPAL_RPST=/usr/share/model-server/security_token</code></pre>
+<p>Sample rclone configuration file for Authentication Provider Resource Principal:</p>
+<pre><code>[oos]
+type = oracleobjectstorage
+namespace = id&lt;redacted&gt;34
+compartment = ocid1.compartment.oc1..aa&lt;redacted&gt;ba
+region = us-ashburn-1
+provider = resource_principal_auth</code></pre>
+<h4 id="authentication-provider-choice-no-authentication">Authentication provider choice: No authentication</h4>
+<p>Public buckets do not require any authentication mechanism to read objects. Sample rclone configuration file for No authentication:</p>
+<pre><code>[oos]
+type = oracleobjectstorage
+namespace = id&lt;redacted&gt;34
+compartment = ocid1.compartment.oc1..aa&lt;redacted&gt;ba
+region = us-ashburn-1
+provider = no_auth</code></pre>
+<h2 id="options-87">Options</h2>
 <h3 id="modified-time-10">Modified time</h3>
 <p>The modified time is stored as metadata on the object as <code>opc-meta-mtime</code> as floating point since the epoch, accurate to 1 ns.</p>
 <p>If the modification time needs to be updated rclone will attempt to perform a server side copy to update the modification if the object can be copied in a single part. In the case the object is larger than 5Gb, the object will be uploaded rather than copied.</p>
@@ -25056,6 +25277,30 @@ rclone ls remote:bucket --max-depth 1</code></pre>
 </ul>
 <h3 id="advanced-options-29">Advanced options</h3>
 <p>Here are the Advanced options specific to oracleobjectstorage (Oracle Cloud Infrastructure Object Storage).</p>
+<h4 id="oos-storage-tier">--oos-storage-tier</h4>
+<p>The storage class to use when storing new objects in storage. https://docs.oracle.com/en-us/iaas/Content/Object/Concepts/understandingstoragetiers.htm</p>
+<p>Properties:</p>
+<ul>
+<li>Config: storage_tier</li>
+<li>Env Var: RCLONE_OOS_STORAGE_TIER</li>
+<li>Type: string</li>
+<li>Default: "Standard"</li>
+<li>Examples:
+<ul>
+<li>"Standard"
+<ul>
+<li>Standard storage tier, this is the default tier</li>
+</ul></li>
+<li>"InfrequentAccess"
+<ul>
+<li>InfrequentAccess storage tier</li>
+</ul></li>
+<li>"Archive"
+<ul>
+<li>Archive storage tier</li>
+</ul></li>
+</ul></li>
+</ul>
 <h4 id="oos-upload-cutoff">--oos-upload-cutoff</h4>
 <p>Cutoff for switching to chunked upload.</p>
 <p>Any files larger than this will be uploaded in chunks of chunk_size. The minimum is 0 and the maximum is 5 GiB.</p>
@@ -25155,6 +25400,90 @@ rclone ls remote:bucket --max-depth 1</code></pre>
 <li>Type: bool</li>
 <li>Default: false</li>
 </ul>
+<h4 id="oos-sse-customer-key-file">--oos-sse-customer-key-file</h4>
+<p>To use SSE-C, a file containing the base64-encoded string of the AES-256 encryption key associated with the object. Please note only one of sse_customer_key_file|sse_customer_key|sse_kms_key_id is needed.'</p>
+<p>Properties:</p>
+<ul>
+<li>Config: sse_customer_key_file</li>
+<li>Env Var: RCLONE_OOS_SSE_CUSTOMER_KEY_FILE</li>
+<li>Type: string</li>
+<li>Required: false</li>
+<li>Examples:
+<ul>
+<li>""
+<ul>
+<li>None</li>
+</ul></li>
+</ul></li>
+</ul>
+<h4 id="oos-sse-customer-key">--oos-sse-customer-key</h4>
+<p>To use SSE-C, the optional header that specifies the base64-encoded 256-bit encryption key to use to encrypt or decrypt the data. Please note only one of sse_customer_key_file|sse_customer_key|sse_kms_key_id is needed. For more information, see Using Your Own Keys for Server-Side Encryption (https://docs.cloud.oracle.com/Content/Object/Tasks/usingyourencryptionkeys.htm)</p>
+<p>Properties:</p>
+<ul>
+<li>Config: sse_customer_key</li>
+<li>Env Var: RCLONE_OOS_SSE_CUSTOMER_KEY</li>
+<li>Type: string</li>
+<li>Required: false</li>
+<li>Examples:
+<ul>
+<li>""
+<ul>
+<li>None</li>
+</ul></li>
+</ul></li>
+</ul>
+<h4 id="oos-sse-customer-key-sha256">--oos-sse-customer-key-sha256</h4>
+<p>If using SSE-C, The optional header that specifies the base64-encoded SHA256 hash of the encryption key. This value is used to check the integrity of the encryption key. see Using Your Own Keys for Server-Side Encryption (https://docs.cloud.oracle.com/Content/Object/Tasks/usingyourencryptionkeys.htm).</p>
+<p>Properties:</p>
+<ul>
+<li>Config: sse_customer_key_sha256</li>
+<li>Env Var: RCLONE_OOS_SSE_CUSTOMER_KEY_SHA256</li>
+<li>Type: string</li>
+<li>Required: false</li>
+<li>Examples:
+<ul>
+<li>""
+<ul>
+<li>None</li>
+</ul></li>
+</ul></li>
+</ul>
+<h4 id="oos-sse-kms-key-id">--oos-sse-kms-key-id</h4>
+<p>if using using your own master key in vault, this header specifies the OCID (https://docs.cloud.oracle.com/Content/General/Concepts/identifiers.htm) of a master encryption key used to call the Key Management service to generate a data encryption key or to encrypt or decrypt a data encryption key. Please note only one of sse_customer_key_file|sse_customer_key|sse_kms_key_id is needed.</p>
+<p>Properties:</p>
+<ul>
+<li>Config: sse_kms_key_id</li>
+<li>Env Var: RCLONE_OOS_SSE_KMS_KEY_ID</li>
+<li>Type: string</li>
+<li>Required: false</li>
+<li>Examples:
+<ul>
+<li>""
+<ul>
+<li>None</li>
+</ul></li>
+</ul></li>
+</ul>
+<h4 id="oos-sse-customer-algorithm">--oos-sse-customer-algorithm</h4>
+<p>If using SSE-C, the optional header that specifies "AES256" as the encryption algorithm. Object Storage supports "AES256" as the encryption algorithm. For more information, see Using Your Own Keys for Server-Side Encryption (https://docs.cloud.oracle.com/Content/Object/Tasks/usingyourencryptionkeys.htm).</p>
+<p>Properties:</p>
+<ul>
+<li>Config: sse_customer_algorithm</li>
+<li>Env Var: RCLONE_OOS_SSE_CUSTOMER_ALGORITHM</li>
+<li>Type: string</li>
+<li>Required: false</li>
+<li>Examples:
+<ul>
+<li>""
+<ul>
+<li>None</li>
+</ul></li>
+<li>"AES256"
+<ul>
+<li>AES256</li>
+</ul></li>
+</ul></li>
+</ul>
 <h2 id="backend-commands-6">Backend commands</h2>
 <p>Here are the commands specific to the oracleobjectstorage backend.</p>
 <p>Run them with</p>
@@ -25190,7 +25519,7 @@ rclone ls remote:bucket --max-depth 1</code></pre>
 <p>Remove unfinished multipart uploads.</p>
 <pre><code>rclone backend cleanup remote: [options] [&lt;arguments&gt;+]</code></pre>
 <p>This command removes unfinished multipart uploads of age greater than max-age which defaults to 24 hours.</p>
-<p>Note that you can use -i/--dry-run with this command to see what it would do.</p>
+<p>Note that you can use --interactive/-i or --dry-run with this command to see what it would do.</p>
 <pre><code>rclone backend cleanup oos:bucket/path/to/object
 rclone backend cleanup -o max-age=7w oos:bucket/path/to/object</code></pre>
 <p>Durations are parsed as per the rest of rclone, 2h, 7d, 7w etc.</p>
@@ -25267,7 +25596,7 @@ y/e/d&gt; y</code></pre>
 <p>List the contents of a bucket</p>
 <pre><code>rclone ls remote:bucket</code></pre>
 <p>Sync <code>/home/local/directory</code> to the remote bucket, deleting any excess files in the bucket.</p>
-<pre><code>rclone sync -i /home/local/directory remote:bucket</code></pre>
+<pre><code>rclone sync --interactive /home/local/directory remote:bucket</code></pre>
 <h3 id="fast-list-6">--fast-list</h3>
 <p>This remote supports <code>--fast-list</code> which allows you to use fewer transactions in exchange for more memory. See the <a href="https://rclone.org/docs/#fast-list">rclone docs</a> for more details.</p>
 <h3 id="multipart-uploads-2">Multipart uploads</h3>
@@ -25664,7 +25993,7 @@ y/e/d&gt; y</code></pre>
 <p>List the contents of a container</p>
 <pre><code>rclone ls remote:container</code></pre>
 <p>Sync <code>/home/local/directory</code> to the remote container, deleting any excess files in the container.</p>
-<pre><code>rclone sync -i /home/local/directory remote:container</code></pre>
+<pre><code>rclone sync --interactive /home/local/directory remote:container</code></pre>
 <h3 id="configuration-from-an-openstack-credentials-file">Configuration from an OpenStack credentials file</h3>
 <p>An OpenStack credentials file typically looks something something like this (without the comments)</p>
 <pre><code>export OS_AUTH_URL=https://a.provider.net/v2.0
@@ -26447,7 +26776,7 @@ e/n/d/r/c/s/q&gt; q</code></pre>
 <p>put.io has rate limiting. When you hit a limit, rclone automatically retries after waiting the amount of time requested by the server.</p>
 <p>If you want to avoid ever hitting these limits, you may use the <code>--tpslimit</code> flag with a low number. Note that the imposed limits may be different for different operations, and may change over time.</p>
 <h1 id="seafile">Seafile</h1>
-<p>This is a backend for the <a href="https://www.seafile.com/">Seafile</a> storage service: - It works with both the free community edition or the professional edition. - Seafile versions 6.x and 7.x are all supported. - Encrypted libraries are also supported. - It supports 2FA enabled users</p>
+<p>This is a backend for the <a href="https://www.seafile.com/">Seafile</a> storage service: - It works with both the free community edition or the professional edition. - Seafile versions 6.x, 7.x, 8.x and 9.x are all supported. - Encrypted libraries are also supported. - It supports 2FA enabled users - Using a Library API Token is <strong>not</strong> supported</p>
 <h2 id="configuration-38">Configuration</h2>
 <p>There are two distinct modes you can setup your remote: - you point your remote to the <strong>root of the server</strong>, meaning you don't specify a library during the configuration: Paths are specified as <code>remote:library</code>. You may put subdirectories in too, e.g. <code>remote:library/path/to/dir</code>. - you point your remote to a specific library during the configuration: Paths are specified as <code>remote:path/to/dir</code>. <strong>This is the recommended mode when using encrypted libraries</strong>. (<em>This mode is possibly slightly faster than the root mode</em>)</p>
 <h3 id="configuration-in-root-mode">Configuration in root mode</h3>
@@ -26525,7 +26854,7 @@ y/e/d&gt; y</code></pre>
 <p>List the contents of a library</p>
 <pre><code>rclone ls seafile:library</code></pre>
 <p>Sync <code>/home/local/directory</code> to the remote library, deleting any excess files in the library.</p>
-<pre><code>rclone sync -i /home/local/directory seafile:library</code></pre>
+<pre><code>rclone sync --interactive /home/local/directory seafile:library</code></pre>
 <h3 id="configuration-in-library-mode">Configuration in library mode</h3>
 <p>Here's an example of a configuration in library mode with a user that has the two-factor authentication enabled. Your 2FA code will be asked at the end of the configuration, and will attempt to authenticate you:</p>
 <pre><code>No remotes found, make a new one?
@@ -26604,7 +26933,7 @@ y/e/d&gt; y</code></pre>
 <p>List the contents of a directory</p>
 <pre><code>rclone ls seafile:directory</code></pre>
 <p>Sync <code>/home/local/directory</code> to the remote library, deleting any excess files in the library.</p>
-<pre><code>rclone sync -i /home/local/directory seafile:</code></pre>
+<pre><code>rclone sync --interactive /home/local/directory seafile:</code></pre>
 <h3 id="fast-list-8">--fast-list</h3>
 <p>Seafile version 7+ supports <code>--fast-list</code> which allows you to use fewer transactions in exchange for more memory. See the <a href="https://rclone.org/docs/#fast-list">rclone docs</a> for more details. Please note this is not supported on seafile server version 6.x</p>
 <h3 id="restricted-filename-characters-26">Restricted filename characters</h3>
@@ -26646,8 +26975,9 @@ http://my.seafile.server/f/fdcd8a2f93f84b8b90f4/
 http://my.seafile.server/d/9ea2455f6f55478bbb0d/</code></pre>
 <p>Please note a share link is unique for each file or directory. If you run a link command on a file/dir that has already been shared, you will get the exact same link.</p>
 <h3 id="compatibility">Compatibility</h3>
-<p>It has been actively tested using the <a href="https://github.com/haiwen/seafile-docker">seafile docker image</a> of these versions: - 6.3.4 community edition - 7.0.5 community edition - 7.1.3 community edition</p>
+<p>It has been actively developed using the <a href="https://github.com/haiwen/seafile-docker">seafile docker image</a> of these versions: - 6.3.4 community edition - 7.0.5 community edition - 7.1.3 community edition - 9.0.10 community edition</p>
 <p>Versions below 6.0 are not supported. Versions between 6.0 and 6.3 haven't been tested and might not work properly.</p>
+<p>Each new version of <code>rclone</code> is automatically tested against the <a href="https://hub.docker.com/r/seafileltd/seafile-mc/">latest docker image</a> of the seafile community server.</p>
 <h3 id="standard-options-36">Standard options</h3>
 <p>Here are the Standard options specific to seafile (seafile).</p>
 <h4 id="seafile-url">--seafile-url</h4>
@@ -26814,7 +27144,7 @@ y/e/d&gt; y</code></pre>
 <p>List the contents of a directory</p>
 <pre><code>rclone ls remote:path/to/directory</code></pre>
 <p>Sync <code>/home/local/directory</code> to the remote directory, deleting any excess files in the directory.</p>
-<pre><code>rclone sync -i /home/local/directory remote:directory</code></pre>
+<pre><code>rclone sync --interactive /home/local/directory remote:directory</code></pre>
 <p>Mount the remote path <code>/srv/www-data/</code> to the local path <code>/mnt/www-data</code></p>
 <pre><code>rclone mount remote:/srv/www-data/ /mnt/www-data</code></pre>
 <h3 id="ssh-authentication">SSH Authentication</h3>
@@ -27430,6 +27760,18 @@ y/e/d&gt; d</code></pre>
 <li>Type: string</li>
 <li>Default: "WORKGROUP"</li>
 </ul>
+<h4 id="smb-spn">--smb-spn</h4>
+<p>Service principal name.</p>
+<p>Rclone presents this name to the server. Some servers use this as further authentication, and it often needs to be set for clusters. For example:</p>
+<pre><code>cifs/remotehost:1020</code></pre>
+<p>Leave blank if not sure.</p>
+<p>Properties:</p>
+<ul>
+<li>Config: spn</li>
+<li>Env Var: RCLONE_SMB_SPN</li>
+<li>Type: string</li>
+<li>Required: false</li>
+</ul>
 <h3 id="advanced-options-38">Advanced options</h3>
 <p>Here are the Advanced options specific to smb (SMB / CIFS).</p>
 <h4 id="smb-idle-timeout">--smb-idle-timeout</h4>
@@ -27600,14 +27942,14 @@ Choose a number from below, or type in your own value
    \ &quot;new&quot;
 provider&gt; new
 Satellite Address. Custom satellite address should match the format: `&lt;nodeid&gt;@&lt;address&gt;:&lt;port&gt;`.
-Enter a string value. Press Enter for the default (&quot;us-central-1.storj.io&quot;).
+Enter a string value. Press Enter for the default (&quot;us1.storj.io&quot;).
 Choose a number from below, or type in your own value
- 1 / US Central 1
-   \ &quot;us-central-1.storj.io&quot;
- 2 / Europe West 1
-   \ &quot;europe-west-1.storj.io&quot;
- 3 / Asia East 1
-   \ &quot;asia-east-1.storj.io&quot;
+ 1 / US1
+   \ &quot;us1.storj.io&quot;
+ 2 / EU1
+   \ &quot;eu1.storj.io&quot;
+ 3 / AP1
+   \ &quot;ap1.storj.io&quot;
 satellite_address&gt; 1
 API Key.
 Enter a string value. Press Enter for the default (&quot;&quot;).
@@ -27619,7 +27961,7 @@ Remote config
 --------------------
 [remote]
 type = storj
-satellite_address = 12EayRS2V1kEsWESU9QMRseFhdxYxKicsiFmxrsLZHeLUtdps3S@us-central-1.tardigrade.io:7777
+satellite_address = 12EayRS2V1kEsWESU9QMRseFhdxYxKicsiFmxrsLZHeLUtdps3S@us1.storj.io:7777
 api_key = your-api-key-for-your-storj-project
 passphrase = your-human-readable-encryption-passphrase
 access_grant = the-access-grant-generated-from-the-api-key-and-passphrase
@@ -27669,20 +28011,20 @@ y/e/d&gt; y</code></pre>
 <li>Env Var: RCLONE_STORJ_SATELLITE_ADDRESS</li>
 <li>Provider: new</li>
 <li>Type: string</li>
-<li>Default: "us-central-1.storj.io"</li>
+<li>Default: "us1.storj.io"</li>
 <li>Examples:
 <ul>
-<li>"us-central-1.storj.io"
+<li>"us1.storj.io"
 <ul>
-<li>US Central 1</li>
+<li>US1</li>
 </ul></li>
-<li>"europe-west-1.storj.io"
+<li>"eu1.storj.io"
 <ul>
-<li>Europe West 1</li>
+<li>EU1</li>
 </ul></li>
-<li>"asia-east-1.storj.io"
+<li>"ap1.storj.io"
 <ul>
-<li>Asia East 1</li>
+<li>AP1</li>
 </ul></li>
 </ul></li>
 </ul>
@@ -27752,15 +28094,15 @@ y/e/d&gt; y</code></pre>
 <pre><code>rclone size remote:bucket/path/to/dir/</code></pre>
 <h3 id="sync-two-locations">Sync two Locations</h3>
 <p>Use the <code>sync</code> command to sync the source to the destination, changing the destination only, deleting any excess files.</p>
-<pre><code>rclone sync -i --progress /home/local/directory/ remote:bucket/path/to/dir/</code></pre>
+<pre><code>rclone sync --interactive --progress /home/local/directory/ remote:bucket/path/to/dir/</code></pre>
 <p>The <code>--progress</code> flag is for displaying progress information. Remove it if you don't need this information.</p>
 <p>Since this can cause data loss, test first with the <code>--dry-run</code> flag to see exactly what would be copied and deleted.</p>
 <p>The sync can be done also from Storj to the local file system.</p>
-<pre><code>rclone sync -i --progress remote:bucket/path/to/dir/ /home/local/directory/</code></pre>
+<pre><code>rclone sync --interactive --progress remote:bucket/path/to/dir/ /home/local/directory/</code></pre>
 <p>Or between two Storj buckets.</p>
-<pre><code>rclone sync -i --progress remote-us:bucket/path/to/dir/ remote-europe:bucket/path/to/dir/</code></pre>
+<pre><code>rclone sync --interactive --progress remote-us:bucket/path/to/dir/ remote-europe:bucket/path/to/dir/</code></pre>
 <p>Or even between another cloud storage and Storj.</p>
-<pre><code>rclone sync -i --progress s3:bucket/path/to/dir/ storj:bucket/path/to/dir/</code></pre>
+<pre><code>rclone sync --interactive --progress s3:bucket/path/to/dir/ storj:bucket/path/to/dir/</code></pre>
 <h2 id="limitations-30">Limitations</h2>
 <p><code>rclone about</code> is not supported by the rclone Storj backend. Backends without this capability cannot determine free space for an rclone mount or use policy <code>mfs</code> (most free space) as a member of an rclone union remote.</p>
 <p>See <a href="https://rclone.org/overview/#optional-features">List of backends that do not support rclone about</a> and <a href="https://rclone.org/commands/rclone_about/">rclone about</a></p>
@@ -28671,7 +29013,7 @@ y/e/d&gt; y</code></pre>
 <p>List the contents of a directory</p>
 <pre><code>rclone ls remote:directory</code></pre>
 <p>Sync <code>/home/local/directory</code> to the remote path, deleting any excess files in the path.</p>
-<pre><code>rclone sync -i /home/local/directory remote:directory</code></pre>
+<pre><code>rclone sync --interactive /home/local/directory remote:directory</code></pre>
 <p>Yandex paths may be as deep as required, e.g. <code>remote:directory/subdirectory</code>.</p>
 <h3 id="modified-time-13">Modified time</h3>
 <p>Modified times are supported and are stored accurate to 1 ns in custom metadata called <code>rclone_modified</code> in RFC3339 with nanoseconds format.</p>
@@ -28833,7 +29175,7 @@ y/e/d&gt; </code></pre>
 <p>List the contents of a directory</p>
 <pre><code>rclone ls remote:directory</code></pre>
 <p>Sync <code>/home/local/directory</code> to the remote path, deleting any excess files in the path.</p>
-<pre><code>rclone sync -i /home/local/directory remote:directory</code></pre>
+<pre><code>rclone sync --interactive /home/local/directory remote:directory</code></pre>
 <p>Zoho paths may be as deep as required, eg <code>remote:directory/subdirectory</code>.</p>
 <h3 id="modified-time-14">Modified time</h3>
 <p>Modified times are currently not supported for Zoho Workdrive</p>
@@ -28953,7 +29295,7 @@ y/e/d&gt; </code></pre>
 <p>The client id and client secret can now be used with rclone.</p>
 <h1 id="local-filesystem">Local Filesystem</h1>
 <p>Local paths are specified as normal filesystem paths, e.g. <code>/path/to/wherever</code>, so</p>
-<pre><code>rclone sync -i /home/source /tmp/destination</code></pre>
+<pre><code>rclone sync --interactive /home/source /tmp/destination</code></pre>
 <p>Will sync <code>/home/source</code> to <code>/tmp/destination</code>.</p>
 <h2 id="configuration-48">Configuration</h2>
 <p>For consistencies sake one can also configure a remote of type <code>local</code> in the config file, and access the local filesystem using rclone remote paths, e.g. <code>remote:path/to/wherever</code>, but it is probably easier not to.</p>
@@ -29580,6 +29922,193 @@ $ tree /tmp/b
 <li>"error": return an error based on option value</li>
 </ul>
 <h1 id="changelog">Changelog</h1>
+<h2 id="v1.62.0---2023-03-14">v1.62.0 - 2023-03-14</h2>
+<p><a href="https://github.com/rclone/rclone/compare/v1.61.0...v1.62.0">See commits</a></p>
+<ul>
+<li>New Features
+<ul>
+<li>accounting: Make checkers show what they are doing (Nick Craig-Wood)</li>
+<li>authorize: Add support for custom templates (Hunter Wittenborn)</li>
+<li>build
+<ul>
+<li>Update to go1.20 (Nick Craig-Wood, Anagh Kumar Baranwal)</li>
+<li>Add winget releaser workflow (Ryan Caezar Itang)</li>
+<li>Add dependabot (Ryan Caezar Itang)</li>
+</ul></li>
+<li>doc updates (albertony, Bryan Kaplan, Gerard Bosch, IMTheNachoMan, Justin Winokur, Manoj Ghosh, Nick Craig-Wood, Ole Frost, Peter Brunner, piyushgarg, Ryan Caezar Itang, Simmon Li, ToBeFree)</li>
+<li>filter: Emit INFO message when can't work out directory filters (Nick Craig-Wood)</li>
+<li>fs
+<ul>
+<li>Added multiple ca certificate support. (alankrit)</li>
+<li>Add <code>--max-delete-size</code> a delete size threshold (Leandro Sacchet)</li>
+</ul></li>
+<li>fspath: Allow the symbols <code>@</code> and <code>+</code> in remote names (albertony)</li>
+<li>lib/terminal: Enable windows console virtual terminal sequences processing (ANSI/VT100 colors) (albertony)</li>
+<li>move: If <code>--check-first</code> and <code>--order-by</code> are set then delete with perfect ordering (Nick Craig-Wood)</li>
+<li>serve http: Support <code>--auth-proxy</code> (Matthias Baur)</li>
+</ul></li>
+<li>Bug Fixes
+<ul>
+<li>accounting
+<ul>
+<li>Avoid negative ETA values for very slow speeds (albertony)</li>
+<li>Limit length of ETA string (albertony)</li>
+<li>Show human readable elapsed time when longer than a day (albertony)</li>
+</ul></li>
+<li>all: Apply codeql fixes (Aaron Gokaslan)</li>
+<li>build
+<ul>
+<li>Fix condition for manual workflow run (albertony)</li>
+<li>Fix building for ARMv5 and ARMv6 (albertony)
+<ul>
+<li>selfupdate: Consider ARM version</li>
+<li>install.sh: fix ARMv6 download</li>
+<li>version: Report ARM version</li>
+</ul></li>
+</ul></li>
+<li>deletefile: Return error code 4 if file does not exist (Nick Craig-Wood)</li>
+<li>docker: Fix volume plugin does not remount volume on docker restart (logopk)</li>
+<li>fs: Fix race conditions in <code>--max-delete</code> and <code>--max-delete-size</code> (Nick Craig-Wood)</li>
+<li>lib/oauthutil: Handle fatal errors better (Alex Chen)</li>
+<li>mount2: Fix <code>--allow-non-empty</code> (Nick Craig-Wood)</li>
+<li>operations: Fix concurrency: use <code>--checkers</code> unless transferring files (Nick Craig-Wood)</li>
+<li>serve ftp: Fix timestamps older than 1 year in listings (Nick Craig-Wood)</li>
+<li>sync: Fix concurrency: use <code>--checkers</code> unless transferring files (Nick Craig-Wood)</li>
+<li>tree
+<ul>
+<li>Fix nil pointer exception on stat failure (Nick Craig-Wood)</li>
+<li>Fix colored output on windows (albertony)</li>
+<li>Fix display of files with illegal Windows file system names (Nick Craig-Wood)</li>
+</ul></li>
+</ul></li>
+<li>Mount
+<ul>
+<li>Fix creating and renaming files on case insensitive backends (Nick Craig-Wood)</li>
+<li>Do not treat <code>\\?\</code> prefixed paths as network share paths on windows (albertony)</li>
+<li>Fix check for empty mount point on Linux (Nick Craig-Wood)</li>
+<li>Fix <code>--allow-non-empty</code> (Nick Craig-Wood)</li>
+<li>Avoid incorrect or premature overlap check on windows (albertony)</li>
+<li>Update to fuse3 after bazil.org/fuse update (Nick Craig-Wood)</li>
+</ul></li>
+<li>VFS
+<ul>
+<li>Make uploaded files retain modtime with non-modtime backends (Nick Craig-Wood)</li>
+<li>Fix incorrect modtime on fs which don't support setting modtime (Nick Craig-Wood)</li>
+<li>Fix rename of directory containing files to be uploaded (Nick Craig-Wood)</li>
+</ul></li>
+<li>Local
+<ul>
+<li>Fix <code>%!w(&lt;nil&gt;)</code> in "failed to read directory" error (Marks Polakovs)</li>
+<li>Fix exclusion of dangling symlinks with -L/--copy-links (Nick Craig-Wood)</li>
+</ul></li>
+<li>Crypt
+<ul>
+<li>Obey <code>--ignore-checksum</code> (Nick Craig-Wood)</li>
+<li>Fix for unencrypted directory names on case insensitive remotes (Ole Frost)</li>
+</ul></li>
+<li>Azure Blob
+<ul>
+<li>Remove workarounds for SDK bugs after v0.6.1 update (Nick Craig-Wood)</li>
+</ul></li>
+<li>B2
+<ul>
+<li>Fix uploading files bigger than 1TiB (Nick Craig-Wood)</li>
+</ul></li>
+<li>Drive
+<ul>
+<li>Note that <code>--drive-acknowledge-abuse</code> needs SA Manager permission (Nick Craig-Wood)</li>
+<li>Make <code>--drive-stop-on-upload-limit</code> to respond to storageQuotaExceeded (Ninh Pham)</li>
+</ul></li>
+<li>FTP
+<ul>
+<li>Retry 426 errors (Nick Craig-Wood)</li>
+<li>Retry errors when initiating downloads (Nick Craig-Wood)</li>
+<li>Revert to upstream <code>github.com/jlaffaye/ftp</code> now fix is merged (Nick Craig-Wood)</li>
+</ul></li>
+<li>Google Cloud Storage
+<ul>
+<li>Add <code>--gcs-env-auth</code> to pick up IAM credentials from env/instance (Peter Brunner)</li>
+</ul></li>
+<li>Mega
+<ul>
+<li>Add <code>--mega-use-https</code> flag (NodudeWasTaken)</li>
+</ul></li>
+<li>Onedrive
+<ul>
+<li>Default onedrive personal to QuickXorHash as Microsoft is removing SHA1 (Nick Craig-Wood)</li>
+<li>Add <code>--onedrive-hash-type</code> to change the hash in use (Nick Craig-Wood)</li>
+<li>Improve speed of QuickXorHash (LXY)</li>
+</ul></li>
+<li>Oracle Object Storage
+<ul>
+<li>Speed up operations by using S3 pacer and setting minsleep to 10ms (Manoj Ghosh)</li>
+<li>Expose the <code>storage_tier</code> option in config (Manoj Ghosh)</li>
+<li>Bring your own encryption keys (Manoj Ghosh)</li>
+</ul></li>
+<li>S3
+<ul>
+<li>Check multipart upload ETag when <code>--s3-no-head</code> is in use (Nick Craig-Wood)</li>
+<li>Add <code>--s3-sts-endpoint</code> to specify STS endpoint (Nick Craig-Wood)</li>
+<li>Fix incorrect tier support for StorJ and IDrive when pointing at a file (Ole Frost)</li>
+<li>Fix AWS STS failing if <code>--s3-endpoint</code> is set (Nick Craig-Wood)</li>
+<li>Make purge remove directory markers too (Nick Craig-Wood)</li>
+</ul></li>
+<li>Seafile
+<ul>
+<li>Renew library password (Fred)</li>
+</ul></li>
+<li>SFTP
+<ul>
+<li>Fix uploads being 65% slower than they should be with crypt (Nick Craig-Wood)</li>
+</ul></li>
+<li>Smb
+<ul>
+<li>Allow SPN (service principal name) to be configured (Nick Craig-Wood)</li>
+<li>Check smb connection is closed (happyxhw)</li>
+</ul></li>
+<li>Storj
+<ul>
+<li>Implement <code>rclone link</code> (Kaloyan Raev)</li>
+<li>Implement <code>rclone purge</code> (Kaloyan Raev)</li>
+<li>Update satellite urls and labels (Kaloyan Raev)</li>
+</ul></li>
+<li>WebDAV
+<ul>
+<li>Fix interop with davrods server (Nick Craig-Wood)</li>
+</ul></li>
+</ul>
+<h2 id="v1.61.1---2022-12-23">v1.61.1 - 2022-12-23</h2>
+<p><a href="https://github.com/rclone/rclone/compare/v1.61.0...v1.61.1">See commits</a></p>
+<ul>
+<li>Bug Fixes
+<ul>
+<li>docs:
+<ul>
+<li>Show only significant parts of version number in version introduced label (albertony)</li>
+<li>Fix unescaped HTML (Nick Craig-Wood)</li>
+</ul></li>
+<li>lib/http: Shutdown all servers on exit to remove unix socket (Nick Craig-Wood)</li>
+<li>rc: Fix <code>--rc-addr</code> flag (which is an alternate for <code>--url</code>) (Anagh Kumar Baranwal)</li>
+<li>serve restic
+<ul>
+<li>Don't serve via http if serving via <code>--stdio</code> (Nick Craig-Wood)</li>
+<li>Fix immediate exit when not using stdio (Nick Craig-Wood)</li>
+</ul></li>
+<li>serve webdav
+<ul>
+<li>Fix <code>--baseurl</code> handling after <code>lib/http</code> refactor (Nick Craig-Wood)</li>
+<li>Fix running duplicate Serve call (Nick Craig-Wood)</li>
+</ul></li>
+</ul></li>
+<li>Azure Blob
+<ul>
+<li>Fix "409 Public access is not permitted on this storage account" (Nick Craig-Wood)</li>
+</ul></li>
+<li>S3
+<ul>
+<li>storj: Update endpoints (Kaloyan Raev)</li>
+</ul></li>
+</ul>
 <h2 id="v1.61.0---2022-12-20">v1.61.0 - 2022-12-20</h2>
 <p><a href="https://github.com/rclone/rclone/compare/v1.60.0...v1.61.0">See commits</a></p>
 <ul>
@@ -35955,11 +36484,11 @@ $ tree /tmp/b
 <p>Note that it effectively downloads the file and uploads it again, so the node running rclone would need to have lots of bandwidth.</p>
 <p>The syncs would be incremental (on a file by file basis).</p>
 <p>e.g.</p>
-<pre><code>rclone sync -i drive:Folder s3:bucket</code></pre>
+<pre><code>rclone sync --interactive drive:Folder s3:bucket</code></pre>
 <h3 id="using-rclone-from-multiple-locations-at-the-same-time">Using rclone from multiple locations at the same time</h3>
 <p>You can use rclone from multiple places at the same time if you choose different subdirectory for the output, e.g.</p>
-<pre><code>Server A&gt; rclone sync -i /tmp/whatever remote:ServerA
-Server B&gt; rclone sync -i /tmp/whatever remote:ServerB</code></pre>
+<pre><code>Server A&gt; rclone sync --interactive /tmp/whatever remote:ServerA
+Server B&gt; rclone sync --interactive /tmp/whatever remote:ServerB</code></pre>
 <p>If you sync to the same directory then you should use rclone copy otherwise the two instances of rclone may delete each other's files, e.g.</p>
 <pre><code>Server A&gt; rclone copy /tmp/whatever remote:Backup
 Server B&gt; rclone copy /tmp/whatever remote:Backup</code></pre>
@@ -36710,6 +37239,28 @@ THE SOFTWARE.</code></pre>
 <li>vanplus <a href="mailto:60313789+vanplus@users.noreply.github.com" class="email">60313789+vanplus@users.noreply.github.com</a></li>
 <li>Jack <a href="mailto:16779171+jkpe@users.noreply.github.com" class="email">16779171+jkpe@users.noreply.github.com</a></li>
 <li>Abdullah Saglam <a href="mailto:abdullah.saglam@stonebranch.com" class="email">abdullah.saglam@stonebranch.com</a></li>
+<li>Marks Polakovs <a href="mailto:github@markspolakovs.me" class="email">github@markspolakovs.me</a></li>
+<li>piyushgarg <a href="mailto:piyushgarg80@gmail.com" class="email">piyushgarg80@gmail.com</a></li>
+<li>Kaloyan Raev <a href="mailto:kaloyan-raev@users.noreply.github.com" class="email">kaloyan-raev@users.noreply.github.com</a></li>
+<li>IMTheNachoMan <a href="mailto:imthenachoman@gmail.com" class="email">imthenachoman@gmail.com</a></li>
+<li>alankrit <a href="mailto:alankrit@google.com" class="email">alankrit@google.com</a></li>
+<li>Bryan Kaplan &lt;#<span class="citation" data-cites="bryankaplan.com">@bryankaplan.com</span>&gt;</li>
+<li>LXY <a href="mailto:767763591@qq.com" class="email">767763591@qq.com</a></li>
+<li>Simmon Li (he/him) <a href="mailto:li.simmon@gmail.com" class="email">li.simmon@gmail.com</a></li>
+<li>happyxhw <a href="mailto:44490504+happyxhw@users.noreply.github.com" class="email">44490504+happyxhw@users.noreply.github.com</a></li>
+<li>Simmon Li (he/him) <a href="mailto:hello@crespire.dev" class="email">hello@crespire.dev</a></li>
+<li>Matthias Baur <a href="mailto:baurmatt@users.noreply.github.com" class="email">baurmatt@users.noreply.github.com</a></li>
+<li>Hunter Wittenborn <a href="mailto:hunter@hunterwittenborn.com" class="email">hunter@hunterwittenborn.com</a></li>
+<li>logopk <a href="mailto:peter@kreuser.name" class="email">peter@kreuser.name</a></li>
+<li>Gerard Bosch <a href="mailto:30733556+gerardbosch@users.noreply.github.com" class="email">30733556+gerardbosch@users.noreply.github.com</a></li>
+<li>ToBeFree <a href="mailto:github@tfrei.de" class="email">github@tfrei.de</a></li>
+<li>NodudeWasTaken <a href="mailto:75137537+NodudeWasTaken@users.noreply.github.com" class="email">75137537+NodudeWasTaken@users.noreply.github.com</a></li>
+<li>Peter Brunner <a href="mailto:peter@lugoues.net" class="email">peter@lugoues.net</a></li>
+<li>Ninh Pham <a href="mailto:dongian.rapclubkhtn@gmail.com" class="email">dongian.rapclubkhtn@gmail.com</a></li>
+<li>Ryan Caezar Itang <a href="mailto:sitiom@proton.me" class="email">sitiom@proton.me</a></li>
+<li>Peter Brunner <a href="mailto:peter@psykhe.com" class="email">peter@psykhe.com</a></li>
+<li>Leandro Sacchet <a href="mailto:leandro.sacchet@animati.com.br" class="email">leandro.sacchet@animati.com.br</a></li>
+<li>dependabot[bot] &lt;49699333+dependabot[bot]<span class="citation" data-cites="users.noreply.github.com">@users.noreply.github.com</span>&gt;</li>
 </ul>
 <h1 id="contact-the-rclone-project">Contact the rclone project</h1>
 <h2 id="forum">Forum</h2>
