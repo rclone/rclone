@@ -172,6 +172,12 @@ type Features struct {
 // Disable nil's out the named feature.  If it isn't found then it
 // will log a message.
 func (ft *Features) Disable(name string) *Features {
+	// Prefix boolean values with ! to set the feature
+	invert := false
+	if strings.HasPrefix(name, "!") {
+		name = name[1:]
+		invert = true
+	}
 	v := reflect.ValueOf(ft).Elem()
 	vType := v.Type()
 	for i := 0; i < v.NumField(); i++ {
@@ -181,9 +187,18 @@ func (ft *Features) Disable(name string) *Features {
 			if !field.CanSet() {
 				Errorf(nil, "Can't set Feature %q", name)
 			} else {
-				zero := reflect.Zero(field.Type())
-				field.Set(zero)
-				Debugf(nil, "Reset feature %q", name)
+				if invert {
+					if field.Type().Kind() == reflect.Bool {
+						field.Set(reflect.ValueOf(true))
+						Debugf(nil, "Set feature %q", name)
+					} else {
+						Errorf(nil, "Can't set Feature %q to true", name)
+					}
+				} else {
+					zero := reflect.Zero(field.Type())
+					field.Set(zero)
+					Debugf(nil, "Reset feature %q", name)
+				}
 			}
 		}
 	}

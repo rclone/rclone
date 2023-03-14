@@ -1002,9 +1002,23 @@ To see a list of which features can be disabled use:
 
     --disable help
 
+The features a remote has can be seen in JSON format with:
+
+    rclone backend features remote:
+
 See the overview [features](/overview/#features) and
 [optional features](/overview/#optional-features) to get an idea of
 which feature does what.
+
+Note that some features can be set to `true` if they are `true`/`false`
+feature flag features by prefixing them with `!`. For example the
+`CaseInsensitive` feature can be forced to `false` with `--disable CaseInsensitive`
+and forced to `true` with `--disable '!CaseInsensitive'`. In general
+it isn't a good idea doing this but it may be useful in extremis.
+
+(Note that `!` is a shell command which you will
+need to escape with single quotes or a backslash on unix like
+platforms.)
 
 This flag can be useful for debugging and in exceptional circumstances
 (e.g. Google Drive limiting the total volume of Server Side Copies to
