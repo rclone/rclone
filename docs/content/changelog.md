@@ -5,6 +5,15 @@ description: "Rclone Changelog"
 
 # Changelog
 
+## v1.62.1 - 2023-03-15
+
+[See commits](https://github.com/rclone/rclone/compare/v1.62.0...v1.62.1)
+
+* Bug Fixes
+    * docker: Add missing fuse3 dependency (cycneuramus)
+    * build: Update release docs to be more careful with the tag (Nick Craig-Wood)
+    * build: Set Github release to draft while uploading binaries (Nick Craig-Wood)
+
 ## v1.62.0 - 2023-03-14
 
 [See commits](https://github.com/rclone/rclone/compare/v1.61.0...v1.62.0)
