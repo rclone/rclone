@@ -1,6 +1,6 @@
 % rclone(1) User Manual
 % Nick Craig-Wood
-% Mar 14, 2023
+% Mar 15, 2023
 
 # Rclone syncs your files to cloud storage
 
@@ -14940,7 +14940,7 @@ These flags are available for every command.
       --use-json-log                         Use json log format
       --use-mmap                             Use mmap allocator (see docs)
       --use-server-modtime                   Use server modified time instead of object metadata
-      --user-agent string                    Set the user-agent to a specified string (default "rclone/v1.62.0")
+      --user-agent string                    Set the user-agent to a specified string (default "rclone/v1.62.1")
   -v, --verbose count                        Print lots more stuff (repeat for more)
 ```
 
@@ -42463,6 +42463,15 @@ Options:
 
 
 # Changelog
+
+## v1.62.1 - 2023-03-15
+
+[See commits](https://github.com/rclone/rclone/compare/v1.62.0...v1.62.1)
+
+* Bug Fixes
+    * docker: Add missing fuse3 dependency (cycneuramus)
+    * build: Update release docs to be more careful with the tag (Nick Craig-Wood)
+    * build: Set Github release to draft while uploading binaries (Nick Craig-Wood)
 
 ## v1.62.0 - 2023-03-14
 
