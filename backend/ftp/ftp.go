@@ -315,10 +315,17 @@ func (dl *debugLog) Write(p []byte) (n int, err error) {
 	return len(p), nil
 }
 
+// Return a *textproto.Error if err contains one or nil otherwise
+func textprotoError(err error) (errX *textproto.Error) {
+	if errors.As(err, &errX) {
+		return errX
+	}
+	return nil
+}
+
 // returns true if this FTP error should be retried
 func isRetriableFtpError(err error) bool {
-	switch errX := err.(type) {
-	case *textproto.Error:
+	if errX := textprotoError(err); errX != nil {
 		switch errX.Code {
 		case ftp.StatusNotAvailable, ftp.StatusTransfertAborted:
 			return true
@@ -471,8 +478,7 @@ func (f *Fs) putFtpConnection(pc **ftp.ServerConn, err error) {
 	*pc = nil
 	if err != nil {
 		// If not a regular FTP error code then check the connection
-		var tpErr *textproto.Error
-		if !errors.As(err, &tpErr) {
+		if tpErr := textprotoError(err); tpErr != nil {
 			nopErr := c.NoOp()
 			if nopErr != nil {
 				fs.Debugf(f, "Connection failed, closing: %v", nopErr)
@@ -621,8 +627,7 @@ func (f *Fs) Shutdown(ctx context.Context) error {
 
 // translateErrorFile turns FTP errors into rclone errors if possible for a file
 func translateErrorFile(err error) error {
-	switch errX := err.(type) {
-	case *textproto.Error:
+	if errX := textprotoError(err); errX != nil {
 		switch errX.Code {
 		case ftp.StatusFileUnavailable, ftp.StatusFileActionIgnored:
 			err = fs.ErrorObjectNotFound
@@ -633,8 +638,7 @@ func translateErrorFile(err error) error {
 
 // translateErrorDir turns FTP errors into rclone errors if possible for a directory
 func translateErrorDir(err error) error {
-	switch errX := err.(type) {
-	case *textproto.Error:
+	if errX := textprotoError(err); errX != nil {
 		switch errX.Code {
 		case ftp.StatusFileUnavailable, ftp.StatusFileActionIgnored:
 			err = fs.ErrorDirNotFound
@@ -925,8 +929,7 @@ func (f *Fs) mkdir(ctx context.Context, abspath string) error {
 	}
 	err = c.MakeDir(f.dirFromStandardPath(abspath))
 	f.putFtpConnection(&c, err)
-	switch errX := err.(type) {
-	case *textproto.Error:
+	if errX := textprotoError(err); errX != nil {
 		switch errX.Code {
 		case ftp.StatusFileUnavailable: // dir already exists: see issue #2181
 			err = nil
@@ -1167,8 +1170,7 @@ func (f *ftpReadCloser) Close() error {
 	// mask the error if it was caused by a premature close
 	// NB StatusAboutToSend is to work around a bug in pureftpd
 	// See: https://github.com/rclone/rclone/issues/3445#issuecomment-521654257
-	switch errX := err.(type) {
-	case *textproto.Error:
+	if errX := textprotoError(err); errX != nil {
 		switch errX.Code {
 		case ftp.StatusTransfertAborted, ftp.StatusFileUnavailable, ftp.StatusAboutToSend:
 			err = nil
@@ -1246,13 +1248,10 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	}
 	err = c.Stor(o.fs.opt.Enc.FromStandardPath(path), in)
 	// Ignore error 250 here - send by some servers
-	if err != nil {
-		switch errX := err.(type) {
-		case *textproto.Error:
-			switch errX.Code {
-			case ftp.StatusRequestedFileActionOK:
-				err = nil
-			}
+	if errX := textprotoError(err); errX != nil {
+		switch errX.Code {
+		case ftp.StatusRequestedFileActionOK:
+			err = nil
 		}
 	}
 	if err != nil {
