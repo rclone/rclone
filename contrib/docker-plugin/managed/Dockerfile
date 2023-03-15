@@ -8,7 +8,7 @@ FROM alpine:latest
 COPY --from=binaries /usr/local/bin/rclone /usr/bin/rclone
 
 RUN mkdir -p /data/config /data/cache /mnt \
- && apk --no-cache add ca-certificates fuse tzdata \
+ && apk --no-cache add ca-certificates fuse3 tzdata \
  && echo "user_allow_other" >> /etc/fuse.conf \
  && rclone version
 
