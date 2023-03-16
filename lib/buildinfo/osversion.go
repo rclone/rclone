@@ -1,5 +1,5 @@
-//go:build !windows
-// +build !windows
+//go:build !windows && !ios
+// +build !windows,!ios
 
 package buildinfo
 

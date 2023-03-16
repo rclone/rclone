@@ -353,3 +353,31 @@ jobs:
           RCLONE_CONFIG_PASS: ${{ secrets.RCLONE_CONFIG_PASS }}
         # Upload artifacts if not a PR && not a fork
         if: github.head_ref == '' && github.repository == 'rclone/rclone'
+
+  ios:
+    if: ${{ github.repository == 'rclone/rclone' || github.event.inputs.manual }}
+    timeout-minutes: 30
+    name: "ios-simulator"
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: Set up Go 1.16
+        uses: actions/setup-go@v1
+        with:
+          go-version: 1.16
+
+      - name: install gomobile
+        run: |
+          go get golang.org/x/mobile/cmd/gobind
+          go get golang.org/x/mobile/cmd/gomobile
+          env PATH=$PATH:~/go/bin gomobile init
+
+      - name: ios build
+        shell: bash
+        run: |
+          env PATH=$PATH:~/go/bin gomobile bind -v -target=iossimulator ./librclone/gomobile
