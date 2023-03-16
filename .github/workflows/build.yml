@@ -8,9 +8,9 @@ name: build
 on:
   push:
     branches:
-      - '*'
+      - '**'
     tags:
-      - '*'
+      - '**'
   pull_request:
   workflow_dispatch:
     inputs:
