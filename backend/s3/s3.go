@@ -1912,6 +1912,9 @@ size (e.g. from "rclone rcat" or uploaded with "rclone mount" or google
 photos or google docs) they will be uploaded as multipart uploads
 using this chunk size.
 
+Files with no source MD5 will also be uploaded with multipart uploads
+as will all files if --s3-disable-checksum is set.
+
 Note that "--s3-upload-concurrency" chunks of this size are buffered
 in memory per transfer.
 
@@ -1967,7 +1970,11 @@ The minimum is 0 and the maximum is 5 GiB.`,
 Normally rclone will calculate the MD5 checksum of the input before
 uploading it so it can add it to metadata on the object. This is great
 for data integrity checking but can cause long delays for large files
-to start uploading.`,
+to start uploading.
+
+Note that setting this flag forces all uploads to be multipart uploads
+as we can't protect the body of the transfer unless we have an MD5.
+`,
 			Default:  false,
 			Advanced: true,
 		}, {
@@ -5499,6 +5506,12 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 				}
 			}
 		}
+	}
+	// If source MD5SUM not available then do multipart upload
+	// otherwise uploads are not hash protected and locked buckets
+	// will complain #6846
+	if !multipart && md5sumHex == "" {
+		multipart = true
 	}
 
 	// Set the content type it it isn't set already
