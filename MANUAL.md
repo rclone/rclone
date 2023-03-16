@@ -1,6 +1,6 @@
 % rclone(1) User Manual
 % Nick Craig-Wood
-% Mar 15, 2023
+% Mar 16, 2023
 
 # Rclone syncs your files to cloud storage
 
@@ -1593,7 +1593,7 @@ recursion.
 
 Some backends do not always provide file sizes, see for example
 [Google Photos](https://rclone.org/googlephotos/#size) and
-[Google Drive](https://rclone.org/drive/#limitations-of-google-docs).
+[Google Docs](https://rclone.org/drive/#limitations-of-google-docs).
 Rclone will then show a notice in the log indicating how many such
 files were encountered, and count them in as empty files in the output
 of the size command.
@@ -14940,7 +14940,7 @@ These flags are available for every command.
       --use-json-log                         Use json log format
       --use-mmap                             Use mmap allocator (see docs)
       --use-server-modtime                   Use server modified time instead of object metadata
-      --user-agent string                    Set the user-agent to a specified string (default "rclone/v1.62.1")
+      --user-agent string                    Set the user-agent to a specified string (default "rclone/v1.62.2")
   -v, --verbose count                        Print lots more stuff (repeat for more)
 ```
 
@@ -42463,6 +42463,16 @@ Options:
 
 
 # Changelog
+
+## v1.62.2 - 2023-03-16
+
+[See commits](https://github.com/rclone/rclone/compare/v1.62.1...v1.62.2)
+
+* Bug Fixes
+    * docker volume plugin: Add missing fuse3 dependency (Nick Craig-Wood)
+    * docs: Fix size documentation (asdffdsazqqq)
+* FTP
+    * Fix 426 errors on downloads with vsftpd (Lesmiscore)
 
 ## v1.62.1 - 2023-03-15
 

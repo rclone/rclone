@@ -5,6 +5,16 @@ description: "Rclone Changelog"
 
 # Changelog
 
+## v1.62.2 - 2023-03-16
+
+[See commits](https://github.com/rclone/rclone/compare/v1.62.1...v1.62.2)
+
+* Bug Fixes
+    * docker volume plugin: Add missing fuse3 dependency (Nick Craig-Wood)
+    * docs: Fix size documentation (asdffdsazqqq)
+* FTP
+    * Fix 426 errors on downloads with vsftpd (Lesmiscore)
+
 ## v1.62.1 - 2023-03-15
 
 [See commits](https://github.com/rclone/rclone/compare/v1.62.0...v1.62.1)
