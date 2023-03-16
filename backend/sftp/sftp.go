@@ -800,11 +800,10 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 			pubBytes, err := os.ReadFile(keyFile + ".pub")
 			if err != nil {
 				if errors.Is(err, iofs.ErrNotExist) && opt.KeyUseAgent {
-					pubBytes_, err := os.ReadFile(keyFile)
+					pubBytes, err = os.ReadFile(keyFile)
 					if err != nil {
 						return nil, fmt.Errorf("failed to read public key file: %w", err)
 					}
-					pubBytes = pubBytes_
 				} else {
 					return nil, fmt.Errorf("failed to read public key file: %w", err)
 				}
