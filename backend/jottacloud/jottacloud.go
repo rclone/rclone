@@ -1838,12 +1838,12 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		if err == nil {
 			// if the object exists delete it
 			err = o.remove(ctx, true)
-			if err != nil {
+			if err != nil && err != fs.ErrorObjectNotFound {
+				// if delete failed then report that, unless it was because the file did not exist after all
 				return fmt.Errorf("failed to remove old object: %w", err)
 			}
-		}
-		// if the object does not exist we can just continue but if the error is something different we should report that
-		if err != fs.ErrorObjectNotFound {
+		} else if err != fs.ErrorObjectNotFound {
+			// if the object does not exist we can just continue but if the error is something different we should report that
 			return err
 		}
 	}
@@ -1951,10 +1951,17 @@ func (o *Object) remove(ctx context.Context, hard bool) error {
 		opts.Parameters.Set("dl", "true")
 	}
 
-	return o.fs.pacer.Call(func() (bool, error) {
+	err := o.fs.pacer.Call(func() (bool, error) {
 		resp, err := o.fs.jfsSrv.CallXML(ctx, &opts, nil, nil)
 		return shouldRetry(ctx, resp, err)
 	})
+	if apiErr, ok := err.(*api.Error); ok {
+		// attempting to hard delete will fail if path does not exist, but standard delete will succeed
+		if apiErr.StatusCode == http.StatusNotFound {
+			return fs.ErrorObjectNotFound
+		}
+	}
+	return err
 }
 
 // Remove an object
