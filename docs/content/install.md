@@ -146,8 +146,13 @@ feature then you will need to install the third party utility
 
 [Winget](https://learn.microsoft.com/en-us/windows/package-manager/) comes pre-installed with the latest versions of Windows. If not, update the [App Installer](https://www.microsoft.com/p/app-installer/9nblggh4nns1) package from the Microsoft store.
 
+To install rclone
 ```
 winget install Rclone.Rclone
+```
+To uninstall rclone
+```
+winget uninstall Rclone.Rclone --force
 ```
 
 ### Chocolatey package manager {#windows-chocolatey}
