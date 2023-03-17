@@ -696,3 +696,4 @@ put them back in again.` >}}
   * Leandro Sacchet <leandro.sacchet@animati.com.br>
   * dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>
   * cycneuramus <56681631+cycneuramus@users.noreply.github.com>
+  * Arnavion <me@arnavion.dev>
