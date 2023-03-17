@@ -352,4 +352,4 @@ jobs:
         env:
           RCLONE_CONFIG_PASS: ${{ secrets.RCLONE_CONFIG_PASS }}
         # Upload artifacts if not a PR && not a fork
-        if: github.head_ref == '' && github.repository == 'rclone/rclone'
+        if: env.RCLONE_CONFIG_PASS != '' && github.head_ref == '' && github.repository == 'rclone/rclone'
