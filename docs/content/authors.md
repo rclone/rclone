@@ -699,3 +699,4 @@ put them back in again.` >}}
   * cycneuramus <56681631+cycneuramus@users.noreply.github.com>
   * Arnavion <me@arnavion.dev>
   * Christopher Merry <christopher.merry@mlb.com>
+  * Thibault Coupin <thibault.coupin@gmail.com>
