@@ -4,8 +4,6 @@ on:
     push:
       branches:
         - master
-    workflow_dispatch:
-
 jobs:
     build:
         if: github.repository == 'rclone/rclone'
@@ -48,7 +46,7 @@ jobs:
             - name: Build and publish image
               uses: docker/build-push-action@v3
               with:
-                file: Dockerfile-alpine
+                file: Dockerfile
                 context: .
                 push: true # push the image to ghcr
                 tags: |
