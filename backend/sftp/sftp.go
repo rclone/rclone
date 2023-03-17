@@ -10,6 +10,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	iofs "io/fs"
 	"os"
 	"path"
 	"regexp"
@@ -782,10 +783,32 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 			return nil, fmt.Errorf("couldn't read ssh agent signers: %w", err)
 		}
 		if keyFile != "" {
+			// If `opt.KeyUseAgent` is false, then it's expected that `opt.KeyFile` contains the private key
+			// and `${opt.KeyFile}.pub` contains the public key.
+			//
+			// If `opt.KeyUseAgent` is true, then it's expected that `opt.KeyFile` contains the public key.
+			// This is how it works with openssh; the `IdentityFile` in openssh config points to the public key.
+			// It's not necessary to specify the public key explicitly when using ssh-agent, since openssh and rclone
+			// will try all the keys they find in the ssh-agent until they find one that works. But just like
+			// `IdentityFile` is used in openssh config to limit the search to one specific key, so does
+			// `opt.KeyFile` in rclone config limit the search to that specific key.
+			//
+			// However, previous versions of rclone would always expect to find the public key in
+			// `${opt.KeyFile}.pub` even if `opt.KeyUseAgent` was true. So for the sake of backward compatibility
+			// we still first attempt to read the public key from `${opt.KeyFile}.pub`. But if it fails with
+			// an `fs.ErrNotExist` then we also try to read the public key from `opt.KeyFile`.
 			pubBytes, err := os.ReadFile(keyFile + ".pub")
 			if err != nil {
-				return nil, fmt.Errorf("failed to read public key file: %w", err)
+				if errors.Is(err, iofs.ErrNotExist) && opt.KeyUseAgent {
+					pubBytes, err = os.ReadFile(keyFile)
+					if err != nil {
+						return nil, fmt.Errorf("failed to read public key file: %w", err)
+					}
+				} else {
+					return nil, fmt.Errorf("failed to read public key file: %w", err)
+				}
 			}
+
 			pub, _, _, _, err := ssh.ParseAuthorizedKey(pubBytes)
 			if err != nil {
 				return nil, fmt.Errorf("failed to parse public key file: %w", err)
@@ -807,8 +830,8 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		}
 	}
 
-	// Load key file if specified
-	if keyFile != "" || opt.KeyPem != "" {
+	// Load key file as a private key, if specified. This is only needed when not using an ssh agent.
+	if (keyFile != "" && !opt.KeyUseAgent) || opt.KeyPem != "" {
 		var key []byte
 		if opt.KeyPem == "" {
 			key, err = os.ReadFile(keyFile)
