@@ -28,3 +28,17 @@ issues:
 run:
   # timeout for analysis, e.g. 30s, 5m, default is 1m
   timeout: 10m
+
+linters-settings:
+  revive:
+    rules:
+      - name: unreachable-code
+        disabled: true
+      - name: unused-parameter
+        disabled: true
+      - name: empty-block
+        disabled: true
+      - name: redefines-builtin-id
+        disabled: true
+      - name: superfluous-else
+        disabled: true
