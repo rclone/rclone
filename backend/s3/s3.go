@@ -3119,6 +3119,7 @@ func (f *Fs) getMetaDataListing(ctx context.Context, wantRemote string) (info *s
 	err = f.list(ctx, listOpt{
 		bucket:       bucket,
 		directory:    bucketPath,
+		prefix:       f.rootDirectory,
 		recurse:      true,
 		withVersions: f.opt.Versions,
 		findFile:     true,
@@ -3524,10 +3525,10 @@ type listOpt struct {
 // list lists the objects into the function supplied with the opt
 // supplied.
 func (f *Fs) list(ctx context.Context, opt listOpt, fn listFn) error {
+	if opt.prefix != "" {
+		opt.prefix += "/"
+	}
 	if !opt.findFile {
-		if opt.prefix != "" {
-			opt.prefix += "/"
-		}
 		if opt.directory != "" {
 			opt.directory += "/"
 		}
