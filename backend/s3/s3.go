@@ -5122,7 +5122,9 @@ func (o *Object) uploadMultipart(ctx context.Context, req *s3.PutObjectInput, si
 	}
 	uid := cout.UploadId
 
+	uploadCtx, cancel := context.WithCancel(ctx)
 	defer atexit.OnError(&err, func() {
+		cancel()
 		if o.fs.opt.LeavePartsOnError {
 			return
 		}
@@ -5142,7 +5144,7 @@ func (o *Object) uploadMultipart(ctx context.Context, req *s3.PutObjectInput, si
 	})()
 
 	var (
-		g, gCtx  = errgroup.WithContext(ctx)
+		g, gCtx  = errgroup.WithContext(uploadCtx)
 		finished = false
 		partsMu  sync.Mutex // to protect parts
 		parts    []*s3.CompletedPart
@@ -5224,7 +5226,7 @@ func (o *Object) uploadMultipart(ctx context.Context, req *s3.PutObjectInput, si
 				uout, err := f.c.UploadPartWithContext(gCtx, uploadPartReq)
 				if err != nil {
 					if partNum <= int64(concurrency) {
-						return f.shouldRetry(ctx, err)
+						return f.shouldRetry(gCtx, err)
 					}
 					// retry all chunks once have done the first batch
 					return true, err
@@ -5256,7 +5258,7 @@ func (o *Object) uploadMultipart(ctx context.Context, req *s3.PutObjectInput, si
 
 	var resp *s3.CompleteMultipartUploadOutput
 	err = f.pacer.Call(func() (bool, error) {
-		resp, err = f.c.CompleteMultipartUploadWithContext(ctx, &s3.CompleteMultipartUploadInput{
+		resp, err = f.c.CompleteMultipartUploadWithContext(uploadCtx, &s3.CompleteMultipartUploadInput{
 			Bucket: req.Bucket,
 			Key:    req.Key,
 			MultipartUpload: &s3.CompletedMultipartUpload{
@@ -5265,7 +5267,7 @@ func (o *Object) uploadMultipart(ctx context.Context, req *s3.PutObjectInput, si
 			RequestPayer: req.RequestPayer,
 			UploadId:     uid,
 		})
-		return f.shouldRetry(ctx, err)
+		return f.shouldRetry(uploadCtx, err)
 	})
 	if err != nil {
 		return wantETag, gotETag, nil, fmt.Errorf("multipart upload failed to finalise: %w", err)
