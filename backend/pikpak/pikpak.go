@@ -372,12 +372,12 @@ func (f *Fs) shouldRetry(ctx context.Context, resp *http.Response, err error) (b
 			// "file_rename_uncompleted" (9): Renaming uncompleted file or folder is not supported
 			// This error occurs when you attempt to rename objects
 			// right after some server-side changes, e.g. DirMove, Move, Copy
-			return true, nil
+			return true, err
 		} else if apiErr.Reason == "file_duplicated_name" {
 			// "file_duplicated_name" (3): File name cannot be repeated
 			// This error may occur when attempting to rename temp object (newly uploaded)
 			// right after the old one is removed.
-			return true, nil
+			return true, err
 		} else if apiErr.Reason == "task_daily_create_limit_vip" {
 			// "task_daily_create_limit_vip" (11): Sorry, you have submitted too many tasks and have exceeded the current processing capacity, please try again tomorrow
 			return false, fserrors.FatalError(err)

@@ -5,6 +5,7 @@ import (
 	"context"
 	"crypto/sha1"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -125,7 +126,7 @@ func (f *Fs) getFile(ctx context.Context, ID string) (info *api.File, err error)
 		resp, err = f.srv.CallJSON(ctx, &opts, nil, &info)
 		if err == nil && info.Phase != api.PhaseTypeComplete {
 			// could be pending right after file is created/uploaded.
-			return true, nil
+			return true, errors.New("not PHASE_TYPE_COMPLETE")
 		}
 		return f.shouldRetry(ctx, resp, err)
 	})
