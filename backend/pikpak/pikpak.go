@@ -235,14 +235,13 @@ type Fs struct {
 type Object struct {
 	fs          *Fs       // what this object is part of
 	remote      string    // The remote path
+	hasMetaData bool      // whether info below has been set
 	id          string    // ID of the object
 	size        int64     // size of the object
 	modTime     time.Time // modification time of the object
 	mimeType    string    // The object MIME type
 	parent      string    // ID of the parent directories
 	md5sum      string    // md5sum of the object
-	hasMetaData bool      // whether info below has been set
-	link        *api.Link // download links
 }
 
 // ------------------------------------------------------------
@@ -1213,6 +1212,8 @@ func (f *Fs) upload(ctx context.Context, in io.Reader, leaf, dirID, sha1Str stri
 		return nil, fmt.Errorf("failed to upload: %w", err)
 	}
 	// refresh uploaded file info
+	// Compared to `newfile.File` this upgrades several feilds...
+	// audit, links, modified_time, phase, revision, and web_content_link
 	return f.getFile(ctx, newfile.File.ID)
 }
 
@@ -1421,9 +1422,6 @@ func (o *Object) setMetaData(info *api.File) (err error) {
 		o.parent = info.ParentID
 	}
 	o.md5sum = info.Md5Checksum
-	if info.Links != nil {
-		o.link = info.Links.ApplicationOctetStream
-	}
 	return nil
 }
 
@@ -1560,21 +1558,25 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 	if o.id == "" {
 		return nil, errors.New("can't download - no id")
 	}
-	info, err := o.fs.getFile(ctx, o.id)
-	if err != nil {
-		return nil, fmt.Errorf("can't fetch download link: %w", err)
+	if o.size == 0 {
+		// zero-byte objects may have no download link
+		return io.NopCloser(bytes.NewBuffer([]byte(nil))), nil
 	}
-	if err = o.setMetaData(info); err != nil {
-		return nil, err
-	}
-	if o.link == nil {
-		if o.size == 0 {
-			// zero-byte objects may have no download link
-			return io.NopCloser(bytes.NewBuffer([]byte(nil))), nil
+	// 1 initial attempt and 2 retries are reasonable base on empirical analysis
+	retries := 2
+	for i := 0; i < retries+1; i++ {
+		info, err := o.fs.getFile(ctx, o.id)
+		if err != nil {
+			return nil, fmt.Errorf("can't fetch download link: %w", err)
 		}
-		return nil, errors.New("can't download - no link to download")
+		if info.WebContentLink != "" {
+			return o.open(ctx, info.WebContentLink, options...)
+		}
+		if i != retries {
+			time.Sleep(200 * time.Millisecond)
+		}
 	}
-	return o.open(ctx, o.link.URL, options...)
+	return nil, errors.New("can't download - no link to download")
 }
 
 // Update the object with the contents of the io.Reader, modTime and size
