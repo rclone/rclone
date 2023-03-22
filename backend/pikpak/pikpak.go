@@ -320,13 +320,8 @@ func (f *Fs) doAuthorize(ctx context.Context) (err error) {
 		return fmt.Errorf("failed to create oauth client: %w", err)
 	}
 	f.srv = rest.NewClient(f.client).SetRoot(rootURL).SetErrorHandler(errorHandler)
-	if err != nil {
-		return fmt.Errorf("couldn't create rest client: %w", err)
-	}
-	if err == nil {
-		f.pacer = fs.NewPacer(ctx, pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant)))
-	}
-	return err
+	f.pacer = fs.NewPacer(ctx, pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant)))
+	return nil
 }
 
 // shouldRetry returns a boolean as to whether this resp and err
