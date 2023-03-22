@@ -58,6 +58,23 @@ func (f *Fs) getUserInfo(ctx context.Context) (info *api.User, err error) {
 	return
 }
 
+// getVIPInfo gets VIPInfo from API
+func (f *Fs) getVIPInfo(ctx context.Context) (info *api.VIP, err error) {
+	opts := rest.Opts{
+		Method:  "GET",
+		RootURL: "https://api-drive.mypikpak.com/drive/v1/privilege/vip",
+	}
+	var resp *http.Response
+	err = f.pacer.Call(func() (bool, error) {
+		resp, err = f.srv.CallJSON(ctx, &opts, nil, &info)
+		return f.shouldRetry(ctx, resp, err)
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to get vip info: %w", err)
+	}
+	return
+}
+
 // requestBatchAction requests batch actions to API
 //
 // action can be one of batch{Copy,Delete,Trash,Untrash}

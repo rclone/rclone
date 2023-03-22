@@ -1240,7 +1240,7 @@ func (f *Fs) UserInfo(ctx context.Context) (userInfo map[string]string, err erro
 	if err != nil {
 		return nil, err
 	}
-	return map[string]string{
+	userInfo = map[string]string{
 		"Id":                user.Sub,
 		"Username":          user.Name,
 		"Email":             user.Email,
@@ -1249,7 +1249,13 @@ func (f *Fs) UserInfo(ctx context.Context) (userInfo map[string]string, err erro
 		"Status":            user.Status,
 		"CreatedAt":         time.Time(user.CreatedAt).String(),
 		"PasswordUpdatedAt": time.Time(user.PasswordUpdatedAt).String(),
-	}, nil
+	}
+	if vip, err := f.getVIPInfo(ctx); err == nil && vip.Result == "ACCEPTED" {
+		userInfo["VIPExpiresAt"] = time.Time(vip.Data.Expire).String()
+		userInfo["VIPStatus"] = vip.Data.Status
+		userInfo["VIPType"] = vip.Data.Type
+	}
+	return userInfo, nil
 }
 
 // ------------------------------------------------------------

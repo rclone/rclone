@@ -428,6 +428,21 @@ type UserProvider struct {
 	Name           string `json:"name,omitempty"` // username
 }
 
+// VIP includes subscription details about premium account
+//
+// GET https://api-drive.mypikpak.com/drive/v1/privilege/vip
+type VIP struct {
+	Result      string `json:"result,omitempty"` // "ACCEPTED"
+	Message     string `json:"message,omitempty"`
+	RedirectURI string `json:"redirect_uri,omitempty"`
+	Data        struct {
+		Expire Time   `json:"expire,omitempty"`
+		Status string `json:"status,omitempty"`  // "invalid" or "ok"
+		Type   string `json:"type,omitempty"`    // "novip" or "platinum"
+		UserID string `json:"user_id,omitempty"` // same as User.Sub
+	} `json:"data,omitempty"`
+}
+
 // DecompressResult is a response to RequestDecompress
 type DecompressResult struct {
 	Status       string `json:"status,omitempty"` // "OK"
@@ -491,21 +506,6 @@ type RequestDecompress struct {
 // ------------------------------------------------------------
 
 // NOT implemented YET
-
-// VIP includes subscription details about premium account
-//
-// GET https://api-drive.mypikpak.com/drive/v1/privilege/vip
-type VIP struct {
-	Result      string `json:"result,omitempty"` // "ACCEPTED"
-	Message     string `json:"message,omitempty"`
-	RedirectURI string `json:"redirect_uri,omitempty"`
-	Data        struct {
-		Expire Time   `json:"expire,omitempty"`
-		Status string `json:"status,omitempty"`  // "invalid"
-		Type   string `json:"type,omitempty"`    // "novip"
-		UserID string `json:"user_id,omitempty"` // same as User.Sub
-	} `json:"data,omitempty"`
-}
 
 // RequestArchiveFileList is to request for a list of files in archive
 //
