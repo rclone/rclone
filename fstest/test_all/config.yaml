@@ -305,7 +305,6 @@ backends:
  - backend:  "pikpak"
    remote:   "TestPikPak:"
    fastlist: false
-   oneonly:  true
    ignore:
     #  fs/operations
      - TestCheckSum
