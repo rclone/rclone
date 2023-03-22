@@ -57,14 +57,17 @@ jobs:
               with:
                 file: Dockerfile
                 context: .
-                push: true # push the image to ghcr
+                push: true
                 tags: |
                   ghcr.io/rclone/rclone:latest
-                  ghcr.io/rclone/rclone:${{ steps.actual_patch_version.outputs.ACTUAL_PATCH_VERSION }},${{ steps.actual_minor_version.outputs.ACTUAL_MINOR_VERSION }},${{ steps.actual_major_version.outputs.ACTUAL_MAJOR_VERSION }}
+                  ghcr.io/rclone/rclone:${{ steps.actual_patch_version.outputs.ACTUAL_PATCH_VERSION }}
+                  ghcr.io/rclone/rclone:${{ steps.actual_minor_version.outputs.ACTUAL_MINOR_VERSION }}
+                  ghcr.io/rclone/rclone:${{ steps.actual_major_version.outputs.ACTUAL_MAJOR_VERSION }}
                   rclone/rclone:latest
-                  rclone/rclone:${{ steps.actual_patch_version.outputs.ACTUAL_PATCH_VERSION }},${{ steps.actual_minor_version.outputs.ACTUAL_MINOR_VERSION }},${{ steps.actual_major_version.outputs.ACTUAL_MAJOR_VERSION }}
+                  rclone/rclone:${{ steps.actual_patch_version.outputs.ACTUAL_PATCH_VERSION }}
+                  rclone/rclone:${{ steps.actual_minor_version.outputs.ACTUAL_MINOR_VERSION }}
+                  rclone/rclone:${{ steps.actual_major_version.outputs.ACTUAL_MAJOR_VERSION }}
                 labels: ${{ steps.meta.outputs.labels }}
                 platforms: linux/amd64,linux/386,linux/arm64,linux/arm/v7,linux/arm/v6
                 cache-from: type=gha
                 cache-to: type=gha,mode=max
-                provenance: false
