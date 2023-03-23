@@ -7,13 +7,16 @@ import (
 	"github.com/spf13/pflag"
 )
 
+// FlagPrefix is the prefix used to uniquely identify command line flags.
+const FlagPrefix = "rc-"
+
 // Options set by command line flags
 var (
 	Opt = rc.DefaultOpt
 )
 
 // AddFlags adds the remote control flags to the flagSet
-func AddFlags(flagSet *pflag.FlagSet, commonFlagPrefix string) {
+func AddFlags(flagSet *pflag.FlagSet) {
 	rc.AddOption("rc", &Opt)
 	flags.BoolVarP(flagSet, &Opt.Enabled, "rc", "", false, "Enable the remote control server")
 	flags.StringVarP(flagSet, &Opt.Files, "rc-files", "", "", "Path to local files to serve on the HTTP server")
@@ -28,7 +31,7 @@ func AddFlags(flagSet *pflag.FlagSet, commonFlagPrefix string) {
 	flags.BoolVarP(flagSet, &Opt.EnableMetrics, "rc-enable-metrics", "", false, "Enable prometheus metrics on /metrics")
 	flags.DurationVarP(flagSet, &Opt.JobExpireDuration, "rc-job-expire-duration", "", Opt.JobExpireDuration, "Expire finished async jobs older than this value")
 	flags.DurationVarP(flagSet, &Opt.JobExpireInterval, "rc-job-expire-interval", "", Opt.JobExpireInterval, "Interval to check for expired async jobs")
-	Opt.HTTP.AddFlagsPrefix(flagSet, commonFlagPrefix)
-	Opt.Auth.AddFlagsPrefix(flagSet, commonFlagPrefix)
-	Opt.Template.AddFlagsPrefix(flagSet, commonFlagPrefix)
+	Opt.HTTP.AddFlagsPrefix(flagSet, FlagPrefix)
+	Opt.Auth.AddFlagsPrefix(flagSet, FlagPrefix)
+	Opt.Template.AddFlagsPrefix(flagSet, FlagPrefix)
 }

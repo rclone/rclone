@@ -13,6 +13,7 @@ import (
 	"github.com/rclone/rclone/fs/config/configflags"
 	"github.com/rclone/rclone/fs/filter/filterflags"
 	"github.com/rclone/rclone/fs/log/logflags"
+	"github.com/rclone/rclone/fs/rc/rcflags"
 	"github.com/rclone/rclone/lib/atexit"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
@@ -173,6 +174,7 @@ func setupRootCommand(rootCmd *cobra.Command) {
 	// Add global flags
 	configflags.AddFlags(ci, pflag.CommandLine)
 	filterflags.AddFlags(pflag.CommandLine)
+	rcflags.AddFlags(pflag.CommandLine)
 	logflags.AddFlags(pflag.CommandLine)
 
 	Root.Run = runRoot

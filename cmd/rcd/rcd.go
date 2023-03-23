@@ -15,11 +15,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// flagPrefix is the prefix used to uniquely identify command line flags.
-const flagPrefix = "rc-"
-
 func init() {
-	rcflags.AddFlags(cmd.Root.Flags(), flagPrefix)
 	cmd.Root.AddCommand(commandDefinition)
 }
 
@@ -36,7 +32,7 @@ for GET requests on the URL passed in.  It will also open the URL in
 the browser when rclone is run.
 
 See the [rc documentation](/rc/) for more info on the rc flags.
-` + libhttp.Help(flagPrefix) + libhttp.TemplateHelp(flagPrefix) + libhttp.AuthHelp(flagPrefix),
+` + libhttp.Help(rcflags.FlagPrefix) + libhttp.TemplateHelp(rcflags.FlagPrefix) + libhttp.AuthHelp(rcflags.FlagPrefix),
 	Annotations: map[string]string{
 		"versionIntroduced": "v1.45",
 	},
