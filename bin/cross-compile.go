@@ -225,7 +225,7 @@ func buildWindowsResourceSyso(goarch string, versionTag string) string {
 		"StringFileInfo": M{
 			"CompanyName":      "https://rclone.org",
 			"ProductName":      "Rclone",
-			"FileDescription":  "Rsync for cloud storage",
+			"FileDescription":  "Rclone",
 			"InternalName":     "rclone",
 			"OriginalFilename": "rclone.exe",
 			"LegalCopyright":   "The Rclone Authors",
