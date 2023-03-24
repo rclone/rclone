@@ -315,13 +315,7 @@ func (f *Fs) doAuthorize(ctx context.Context) (err error) {
 	if err := pikpakAuthorize(ctx, &f.opt, f.name, f.m); err != nil {
 		return err
 	}
-	f.client, _, err = oauthutil.NewClient(ctx, f.name, f.m, oauthConfig)
-	if err != nil {
-		return fmt.Errorf("failed to create oauth client: %w", err)
-	}
-	f.srv = rest.NewClient(f.client).SetRoot(rootURL).SetErrorHandler(errorHandler)
-	f.pacer = fs.NewPacer(ctx, pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant)))
-	return nil
+	return f.newClientWithPacer(ctx)
 }
 
 // shouldRetry returns a boolean as to whether this resp and err
@@ -401,6 +395,17 @@ func errorHandler(resp *http.Response) error {
 	return errResponse
 }
 
+// newClientWithPacer sets a new http/rest client with a pacer to Fs
+func (f *Fs) newClientWithPacer(ctx context.Context) (err error) {
+	f.client, _, err = oauthutil.NewClient(ctx, f.name, f.m, oauthConfig)
+	if err != nil {
+		return fmt.Errorf("failed to create oauth client: %w", err)
+	}
+	f.srv = rest.NewClient(f.client).SetRoot(rootURL).SetErrorHandler(errorHandler)
+	f.pacer = fs.NewPacer(ctx, pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant)))
+	return nil
+}
+
 // newFs partially constructs Fs from the path
 //
 // It constructs a valid Fs but doesn't attempt to figure out whether
@@ -414,25 +419,21 @@ func newFs(ctx context.Context, name, path string, m configmap.Mapper) (*Fs, err
 
 	root := parsePath(path)
 
-	client, _, err := oauthutil.NewClient(ctx, name, m, oauthConfig)
-	if err != nil {
-		return nil, fmt.Errorf("pikpak: failed when making oauth client: %w", err)
-	}
-
 	f := &Fs{
 		name:    name,
 		root:    root,
 		opt:     *opt,
 		m:       m,
 		tokenMu: new(sync.Mutex),
-		client:  client,
-		srv:     rest.NewClient(client).SetRoot(rootURL).SetErrorHandler(errorHandler),
-		pacer:   fs.NewPacer(ctx, pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant))),
 	}
 	f.features = (&fs.Features{
 		ReadMimeType:            true, // can read the mime type of objects
 		CanHaveEmptyDirectories: true, // can have empty directories
 	}).Fill(ctx, f)
+
+	if err := f.newClientWithPacer(ctx); err != nil {
+		return nil, err
+	}
 
 	// Check if current token is valid and re-authorize if necessary.
 	// It is somehow redundant since it is covered in shouldRetry().
