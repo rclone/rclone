@@ -1,6 +1,6 @@
 ---
 title: "rclone cryptcheck"
-description: "Cryptcheck checks the integrity of a crypted remote."
+description: "Cryptcheck checks the integrity of an encrypted remote."
 slug: rclone_cryptcheck
 url: /commands/rclone_cryptcheck/
 versionIntroduced: v1.36
@@ -8,21 +8,21 @@ versionIntroduced: v1.36
 ---
 # rclone cryptcheck
 
-Cryptcheck checks the integrity of a crypted remote.
+Cryptcheck checks the integrity of an encrypted remote.
 
 ## Synopsis
 
 
-rclone cryptcheck checks a remote against a [crypted](/crypt/) remote.
+rclone cryptcheck checks a remote against an [encrypted](/crypt/) remote.
 This is the equivalent of running rclone [check](/commands/rclone_check/),
-but able to check the checksums of the crypted remote.
+but able to check the checksums of the encrypted remote.
 
-For it to work the underlying remote of the cryptedremote must support
+For it to work the underlying remote of the encryptedremote must support
 some kind of checksum.
 
-It works by reading the nonce from each file on the cryptedremote: and
+It works by reading the nonce from each file on the encryptedremote: and
 using that to encrypt each file on the remote:.  It then checks the
-checksum of the underlying file on the cryptedremote: against the
+checksum of the underlying file on the ercryptedremote: against the
 checksum of the file it has just encrypted.
 
 Use it like this
@@ -61,7 +61,7 @@ The default number of parallel checks is N=8. See the [--checkers=N](/docs/#chec
 for more information.
 
 ```
-rclone cryptcheck remote:path cryptedremote:path [flags]
+rclone cryptcheck remote:path encryptedremote:path [flags]
 ```
 
 ## Options

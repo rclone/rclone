@@ -16,7 +16,7 @@ command.)  You may put subdirectories in too, e.g. `remote:item/path/to/dir`.
 ## Notes
 
 The first path segment must be the name of the share, which you entered when you started to share on Windows. On smbd, it's the section title in `smb.conf` (usually in `/etc/samba/`) file.
-You can find shares by quering the root if you're unsure (e.g. `rclone lsd remote:`).
+You can find shares by querying the root if you're unsure (e.g. `rclone lsd remote:`).
 
 You can't access to the shared printers from rclone, obviously.
 
