@@ -105,6 +105,13 @@ func pikpakOAuthOptions() []fs.Option {
 
 // pikpakAutorize retrieves OAuth token using user/pass and save it to rclone.conf
 func pikpakAuthorize(ctx context.Context, opt *Options, name string, m configmap.Mapper) error {
+	// override default client id/secret
+	if id, ok := m.Get("client_id"); ok && id != "" {
+		oauthConfig.ClientID = id
+	}
+	if secret, ok := m.Get("client_secret"); ok && secret != "" {
+		oauthConfig.ClientSecret = secret
+	}
 	pass, err := obscure.Reveal(opt.Password)
 	if err != nil {
 		return fmt.Errorf("failed to decode password - did you obscure it?: %w", err)
