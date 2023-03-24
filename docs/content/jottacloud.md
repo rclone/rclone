@@ -244,7 +244,7 @@ Small files will be cached in memory - see the
 [--jottacloud-md5-memory-limit](#jottacloud-md5-memory-limit) flag.
 When uploading from local disk the source checksum is always available,
 so this does not apply. Starting with rclone version 1.52 the same is
-true for crypted remotes (in older versions the crypt backend would not
+true for encrypted remotes (in older versions the crypt backend would not
 calculate hashes for uploads from local disk, so the Jottacloud
 backend had to do it as described above).
 

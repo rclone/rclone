@@ -18,7 +18,7 @@ match.  It doesn't alter the source or destination.
 
 For the [crypt](/crypt/) remote there is a dedicated command,
 [cryptcheck](/commands/rclone_cryptcheck/), that are able to check
-the checksums of the crypted files.
+the checksums of the encrypted files.
 
 If you supply the `--size-only` flag, it will only compare the sizes not
 the hashes as well.  Use this for a quick check.

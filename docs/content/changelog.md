@@ -2020,8 +2020,8 @@ all the docs and Edward Barker for helping re-write the front page.
     * Use proper import path go.etcd.io/bbolt (Robert-André Mauchin)
 * Crypt
     * Calculate hashes for uploads from local disk (Nick Craig-Wood)
-        * This allows crypted Jottacloud uploads without using local disk
-        * This means crypted s3/b2 uploads will now have hashes
+        * This allows encrypted Jottacloud uploads without using local disk
+        * This means encrypted s3/b2 uploads will now have hashes
     * Added `rclone backend decode`/`encode` commands to replicate functionality of `cryptdecode` (Anagh Kumar Baranwal)
     * Get rid of the unused Cipher interface as it obfuscated the code (Nick Craig-Wood)
 * Azure Blob
@@ -3231,7 +3231,7 @@ Point release to fix hubic and azureblob backends.
     * Fix panic when running without plex configs (Remus Bunduc)
     * Fix root folder caching (Remus Bunduc)
 * Crypt
-    * Check the crypted hash of files when uploading for extra data security
+    * Check the encrypted hash of files when uploading for extra data security
 * Dropbox
     * Make Dropbox for business folders accessible using an initial `/` in the path
 * Google Cloud Storage
@@ -3586,7 +3586,7 @@ Point release to fix hubic and azureblob backends.
 * New commands
     * `rcat` - read from standard input and stream upload
     * `tree` - shows a nicely formatted recursive listing
-    * `cryptdecode` - decode crypted file names (thanks ishuah)
+    * `cryptdecode` - decode encrypted file names (thanks ishuah)
     * `config show` - print the config file
     * `config file` - print the config file location
 * New Features
@@ -3890,7 +3890,7 @@ Point release to fix hubic and azureblob backends.
     * Fix `rclone move` command
         * Delete src files which already existed in dst
         * Fix deletion of src file when dst file older
-    * Fix `rclone check` on crypted file systems
+    * Fix `rclone check` on encrypted file systems
     * Make failed uploads not count as "Transferred"
     * Make sure high level retries show with `-q`
     * Use a vendor directory with godep for repeatable builds

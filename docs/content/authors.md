@@ -13,7 +13,7 @@ Authors
 Contributors
 ------------
 
-{{< rem `email addresses removed from here need to be addeed to
+{{< rem `email addresses removed from here need to be added to
 bin/.ignore-emails to make sure update-authors.py doesn't immediately
 put them back in again.` >}}
 
