@@ -263,10 +263,16 @@ Here are some commands tested on an Ubuntu 18.04.3 host:
 # config on host at ~/.config/rclone/rclone.conf
 # data on host at ~/data
 
+# add a remote interactively
+docker run --rm -it \
+    --volume ~/.config/rclone:/config/rclone \
+    --user $(id -u):$(id -g) \
+    rclone/rclone \
+    config
+
 # make sure the config is ok by listing the remotes
 docker run --rm \
     --volume ~/.config/rclone:/config/rclone \
-    --volume ~/data:/data:shared \
     --user $(id -u):$(id -g) \
     rclone/rclone \
     listremotes
