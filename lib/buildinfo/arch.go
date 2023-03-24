@@ -26,7 +26,7 @@ import (
 func GetSupportedGOARM() int {
 	if runtime.GOARCH == "arm" && cpu.Initialized {
 		// This CPU is an ARM (32-bit), and cpu.Initialized true means its
-		// features could be retrived on current GOOS so that we can check
+		// features could be retrieved on current GOOS so that we can check
 		// for floating point hardware support.
 		if cpu.ARM.HasVFPv3 {
 			// This CPU has VFPv3 floating point hardware, which means it can
