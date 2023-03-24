@@ -65,8 +65,8 @@ import (
 
 // Constants
 const (
-	rcloneClientID              = "YcrttD06T9PIkqAY"
-	rcloneEncryptedClientSecret = "LWuiaQ-Ddj0aOK7V11pCaemYcR65sHJTDRew16OfiSYEUl0DG3g"
+	rcloneClientID              = "YNxT9w7GMdWvEOKa"
+	rcloneEncryptedClientSecret = "aqrmB6M1YJ1DWCBxVxFSjFo7wzWEky494YMmkqgAl1do1WKOe2E"
 	minSleep                    = 10 * time.Millisecond
 	maxSleep                    = 2 * time.Second
 	decayConstant               = 2 // bigger for slower decay, exponential
