@@ -690,7 +690,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		}
 		cred, err = azidentity.NewDefaultAzureCredential(&options)
 		if err != nil {
-			return nil, fmt.Errorf("create azure enviroment credential failed: %w", err)
+			return nil, fmt.Errorf("create azure environment credential failed: %w", err)
 		}
 	case opt.UseEmulator:
 		if opt.Account == "" {
