@@ -91,7 +91,7 @@ func readMetadataFromFileFstatat(o *Object, m *fs.Metadata) (err error) {
 		// The types of t.Sec and t.Nsec vary from int32 to int64 on
 		// different Linux architectures so we need to cast them to
 		// int64 here and hence need to quiet the linter about
-		// unecessary casts.
+		// unnecessary casts.
 		//
 		// nolint: unconvert
 		m.Set(key, time.Unix(int64(t.Sec), int64(t.Nsec)).Format(metadataTimeFormat))
