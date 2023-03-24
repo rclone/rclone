@@ -35,7 +35,7 @@ func (f *Fs) requestDecompress(ctx context.Context, file *api.File, password str
 	}
 	var resp *http.Response
 	err = f.pacer.Call(func() (bool, error) {
-		resp, err = f.srv.CallJSON(ctx, &opts, &req, &info)
+		resp, err = f.rst.CallJSON(ctx, &opts, &req, &info)
 		return f.shouldRetry(ctx, resp, err)
 	})
 	return
@@ -49,7 +49,7 @@ func (f *Fs) getUserInfo(ctx context.Context) (info *api.User, err error) {
 	}
 	var resp *http.Response
 	err = f.pacer.Call(func() (bool, error) {
-		resp, err = f.srv.CallJSON(ctx, &opts, nil, &info)
+		resp, err = f.rst.CallJSON(ctx, &opts, nil, &info)
 		return f.shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
@@ -66,7 +66,7 @@ func (f *Fs) getVIPInfo(ctx context.Context) (info *api.VIP, err error) {
 	}
 	var resp *http.Response
 	err = f.pacer.Call(func() (bool, error) {
-		resp, err = f.srv.CallJSON(ctx, &opts, nil, &info)
+		resp, err = f.rst.CallJSON(ctx, &opts, nil, &info)
 		return f.shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
@@ -86,7 +86,7 @@ func (f *Fs) requestBatchAction(ctx context.Context, action string, req *api.Req
 	}
 	var resp *http.Response
 	err = f.pacer.Call(func() (bool, error) {
-		resp, err = f.srv.CallJSON(ctx, &opts, &req, nil)
+		resp, err = f.rst.CallJSON(ctx, &opts, &req, nil)
 		return f.shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
@@ -104,7 +104,7 @@ func (f *Fs) requestNewTask(ctx context.Context, req *api.RequestNewTask) (info 
 	var newTask api.NewTask
 	var resp *http.Response
 	err = f.pacer.Call(func() (bool, error) {
-		resp, err = f.srv.CallJSON(ctx, &opts, &req, &newTask)
+		resp, err = f.rst.CallJSON(ctx, &opts, &req, &newTask)
 		return f.shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
@@ -121,7 +121,7 @@ func (f *Fs) requestNewFile(ctx context.Context, req *api.RequestNewFile) (info 
 	}
 	var resp *http.Response
 	err = f.pacer.Call(func() (bool, error) {
-		resp, err = f.srv.CallJSON(ctx, &opts, &req, &info)
+		resp, err = f.rst.CallJSON(ctx, &opts, &req, &info)
 		return f.shouldRetry(ctx, resp, err)
 	})
 	return
@@ -140,7 +140,7 @@ func (f *Fs) getFile(ctx context.Context, ID string) (info *api.File, err error)
 	}
 	var resp *http.Response
 	err = f.pacer.Call(func() (bool, error) {
-		resp, err = f.srv.CallJSON(ctx, &opts, nil, &info)
+		resp, err = f.rst.CallJSON(ctx, &opts, nil, &info)
 		if err == nil && info.Phase != api.PhaseTypeComplete {
 			// could be pending right after file is created/uploaded.
 			return true, errors.New("not PHASE_TYPE_COMPLETE")
@@ -161,7 +161,7 @@ func (f *Fs) patchFile(ctx context.Context, ID string, req *api.File) (info *api
 	}
 	var resp *http.Response
 	err = f.pacer.Call(func() (bool, error) {
-		resp, err = f.srv.CallJSON(ctx, &opts, &req, &info)
+		resp, err = f.rst.CallJSON(ctx, &opts, &req, &info)
 		return f.shouldRetry(ctx, resp, err)
 	})
 	return
@@ -175,7 +175,7 @@ func (f *Fs) getAbout(ctx context.Context) (info *api.About, err error) {
 	}
 	var resp *http.Response
 	err = f.pacer.Call(func() (bool, error) {
-		resp, err = f.srv.CallJSON(ctx, &opts, nil, &info)
+		resp, err = f.rst.CallJSON(ctx, &opts, nil, &info)
 		return f.shouldRetry(ctx, resp, err)
 	})
 	return
@@ -189,7 +189,7 @@ func (f *Fs) requestShare(ctx context.Context, req *api.RequestShare) (info *api
 	}
 	var resp *http.Response
 	err = f.pacer.Call(func() (bool, error) {
-		resp, err = f.srv.CallJSON(ctx, &opts, &req, &info)
+		resp, err = f.rst.CallJSON(ctx, &opts, &req, &info)
 		return f.shouldRetry(ctx, resp, err)
 	})
 	return

@@ -229,7 +229,7 @@ type Fs struct {
 	root         string             // the path we are working on
 	opt          Options            // parsed options
 	features     *fs.Features       // optional features
-	srv          *rest.Client       // the connection to the server
+	rst          *rest.Client       // the connection to the server
 	dirCache     *dircache.DirCache // Map of directory path to directory id
 	pacer        *fs.Pacer          // pacer for API calls
 	rootFolderID string             // the id of the root folder
@@ -315,7 +315,8 @@ var retryErrorCodes = []int{
 	509, // Bandwidth Limit Exceeded
 }
 
-func (f *Fs) doAuthorize(ctx context.Context) (err error) {
+// reAuthorize re-authorize oAuth token during runtime
+func (f *Fs) reAuthorize(ctx context.Context) (err error) {
 	f.tokenMu.Lock()
 	defer f.tokenMu.Unlock()
 
@@ -354,7 +355,7 @@ func (f *Fs) shouldRetry(ctx context.Context, resp *http.Response, err error) (b
 				// "invalid_grant" (4126): The refresh token is incorrect or expired				//
 				// Invalid refresh token. It may have been refreshed by another process.
 				fs.Debugf(nil, "Invalid grant: Re-Authorizing...")
-				if err := f.doAuthorize(ctx); err != nil {
+				if err := f.reAuthorize(ctx); err != nil {
 					return false, fserrors.FatalError(err)
 				}
 				return true, nil
@@ -409,7 +410,7 @@ func (f *Fs) newClientWithPacer(ctx context.Context) (err error) {
 	if err != nil {
 		return fmt.Errorf("failed to create oauth client: %w", err)
 	}
-	f.srv = rest.NewClient(f.client).SetRoot(rootURL).SetErrorHandler(errorHandler)
+	f.rst = rest.NewClient(f.client).SetRoot(rootURL).SetErrorHandler(errorHandler)
 	f.pacer = fs.NewPacer(ctx, pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant)))
 	return nil
 }
@@ -628,7 +629,7 @@ OUTER:
 		var info api.FileList
 		var resp *http.Response
 		err = f.pacer.Call(func() (bool, error) {
-			resp, err = f.srv.CallJSON(ctx, &opts, nil, &info)
+			resp, err = f.rst.CallJSON(ctx, &opts, nil, &info)
 			return f.shouldRetry(ctx, resp, err)
 		})
 		if err != nil {
@@ -880,7 +881,7 @@ func (f *Fs) CleanUp(ctx context.Context) (err error) {
 	}
 	var resp *http.Response
 	err = f.pacer.Call(func() (bool, error) {
-		resp, err = f.srv.Call(ctx, &opts)
+		resp, err = f.rst.Call(ctx, &opts)
 		return f.shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
@@ -1138,7 +1139,7 @@ func (f *Fs) uploadByForm(ctx context.Context, in io.Reader, name string, size i
 
 	var resp *http.Response
 	err = f.pacer.CallNoRetry(func() (bool, error) {
-		resp, err = f.srv.Call(ctx, &opts)
+		resp, err = f.rst.Call(ctx, &opts)
 		return f.shouldRetry(ctx, resp, err)
 	})
 	return
