@@ -338,14 +338,15 @@ func (f *Fs) shouldRetry(ctx context.Context, resp *http.Response, err error) (b
 	}
 
 	// traceback to possible api.Error wrapped in err, and re-authorize if necessary
-	// "unauthenticated" (16): when access_token is invalid
-	// "invalid_grant" (4126): when refresh_token is invalid
+	// "unauthenticated" (16): when access_token is invalid, but should be handled by oauthutil
 	var terr *oauth2.RetrieveError
 	if errors.As(err, &terr) {
 		apiErr := new(api.Error)
 		if err := json.Unmarshal(terr.Body, apiErr); err == nil {
 			if apiErr.Reason == "invalid_grant" {
-				fs.Debugf(f, "Token is invalid. Trying to get a new one using username/password...")
+				// "invalid_grant" (4126): The refresh token is incorrect or expired				//
+				// Invalid refresh token. It may have been refreshed by another process.
+				fs.Debugf(nil, "Invalid grant: Re-Authorizing...")
 				if err := f.doAuthorize(ctx); err != nil {
 					return false, fserrors.FatalError(err)
 				}
@@ -439,8 +440,8 @@ func newFs(ctx context.Context, name, path string, m configmap.Mapper) (*Fs, err
 	// It is somehow redundant since it is covered in shouldRetry().
 	// However it is a preemptive measure to avoid possible retries while validating a token.
 	if token, err := oauthutil.GetToken(name, m); err == nil && !token.Valid() {
-		fs.Debugf(f, "Token is invalid. Trying to get a new one using username/password...")
-		if err := f.doAuthorize(ctx); err != nil {
+		fs.Debugf(nil, "Invalid token: Re-Authorizing...")
+		if err := pikpakAuthorize(ctx, opt, name, m); err != nil {
 			return nil, fserrors.FatalError(err)
 		}
 	}
