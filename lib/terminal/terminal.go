@@ -116,7 +116,7 @@ func Write(out []byte) {
 // This enables virtual terminal processing on Windows 10 console,
 // adding native support for VT100 escape codes. When this terminal
 // package is used for output, the result is that the colorable library
-// don't have to decode the escapes and explicitely write text with color
+// don't have to decode the escapes and explicitly write text with color
 // formatting to the console using Windows API functions, but can simply
 // relay everything to stdout.
 func EnableColorsStdout() {
