@@ -43,7 +43,7 @@ const rcloneTestMain = "RCLONE_TEST_MAIN"
 
 // rcloneExecMain calls rclone with the given environment and arguments.
 // The environment variables are in a single string separated by ;
-// The terminal output is retuned as a string.
+// The terminal output is returned as a string.
 func rcloneExecMain(env string, args ...string) (string, error) {
 	_, found := os.LookupEnv(rcloneTestMain)
 	if !found {
@@ -62,7 +62,7 @@ func rcloneExecMain(env string, args ...string) (string, error) {
 // rcloneEnv calls rclone with the given environment and arguments.
 // The environment variables are in a single string separated by ;
 // The test config file is automatically configured in RCLONE_CONFIG.
-// The terminal output is retuned as a string.
+// The terminal output is returned as a string.
 func rcloneEnv(env string, args ...string) (string, error) {
 	envConfig := env
 	if testConfig != "" {
@@ -76,7 +76,7 @@ func rcloneEnv(env string, args ...string) (string, error) {
 
 // rclone calls rclone with the given arguments, E.g. "version","--help".
 // The test config file is automatically configured in RCLONE_CONFIG.
-// The terminal output is retuned as a string.
+// The terminal output is returned as a string.
 func rclone(args ...string) (string, error) {
 	return rcloneEnv("", args...)
 }
