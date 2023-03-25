@@ -1724,6 +1724,10 @@ func (f *Fs) CleanUp(ctx context.Context) error {
 	token := make(chan struct{}, f.ci.Checkers)
 	var wg sync.WaitGroup
 	err := walk.Walk(ctx, f, "", true, -1, func(path string, entries fs.DirEntries, err error) error {
+		if err != nil {
+			fs.Errorf(f, "Failed to list %q: %v", path, err)
+			return nil
+		}
 		err = entries.ForObjectError(func(obj fs.Object) error {
 			o, ok := obj.(*Object)
 			if !ok {

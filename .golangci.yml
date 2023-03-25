@@ -46,20 +46,6 @@ issues:
 
     # TODO: Investigate if this is a real issue. If not, i.e. it is a false
     # positive, consider instead excluding this check using a code comment!
-    - path: ^backend[\\/]onedrive[\\/]onedrive\.go$
-      linters:
-      - staticcheck
-      text: 'SA4009: argument err is overwritten before first use'
-
-    # TODO: Investigate if this is a real issue. If not, i.e. it is a false
-    # positive, consider instead excluding this check using a code comment!
-    - path: ^backend[\\/]onedrive[\\/]onedrive\.go$
-      linters:
-      - staticcheck
-      text: 'SA4009\(related information\): assignment to err'
-
-    # TODO: Investigate if this is a real issue. If not, i.e. it is a false
-    # positive, consider instead excluding this check using a code comment!
     - path: ^fs[\\/]pacer\.go$
       linters:
       - staticcheck
