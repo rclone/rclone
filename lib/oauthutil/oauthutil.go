@@ -229,7 +229,7 @@ func maybeWrapOAuthError(err error, remoteName string) (newErr error) {
 			var suggestion string
 			switch resp.Error {
 			case "invalid_client", "unauthorized_client", "unsupported_grant_type", "invalid_scope":
-				suggestion = fmt.Sprintf("if you're using your own client id/secret, make sure they're properly set up following the docs")
+				suggestion = "if you're using your own client id/secret, make sure they're properly set up following the docs"
 			case "invalid_grant":
 				fallthrough
 			default:
