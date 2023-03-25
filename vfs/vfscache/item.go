@@ -618,7 +618,7 @@ func (item *Item) _store(ctx context.Context, storeFn StoreFn) (err error) {
 		item.mu.Lock()
 	}
 
-	// Show item is clean and is elegible for cache removal
+	// Show item is clean and is eligible for cache removal
 	item.info.Dirty = false
 	err = item._save()
 	if err != nil {
@@ -966,7 +966,7 @@ func (item *Item) Reset() (rr ResetResult, spaceFreed int64, err error) {
 	}
 
 	/* Do not need to reset an empty cache file unless it was being reset and the reset failed.
-	   Some thread(s) may be waiting on the reset's succesful completion in that case. */
+	   Some thread(s) may be waiting on the reset's successful completion in that case. */
 	if item.info.Rs.Size() == 0 && !item.beingReset {
 		return SkippedEmpty, 0, nil
 	}
