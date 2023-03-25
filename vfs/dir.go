@@ -75,6 +75,9 @@ func (d *Dir) String() string {
 }
 
 // Dumps the directory tree to the string builder with the given indent
+//
+//lint:ignore U1000 false positive when running staticcheck,
+//nolint:unused // Don't include unused when running golangci-lint
 func (d *Dir) dumpIndent(out *strings.Builder, indent string) {
 	if d == nil {
 		fmt.Fprintf(out, "%s<nil *Dir>\n", indent)
@@ -109,6 +112,9 @@ func (d *Dir) dumpIndent(out *strings.Builder, indent string) {
 }
 
 // Dumps a nicely formatted directory tree to a string
+//
+//lint:ignore U1000 false positive when running staticcheck,
+//nolint:unused // Don't include unused when running golangci-lint
 func (d *Dir) dump() string {
 	var out strings.Builder
 	d.dumpIndent(&out, "")
