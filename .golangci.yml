@@ -39,17 +39,11 @@ issues:
 
     # TODO: Investigate if this is a real issue. If not, i.e. it is a false
     # positive, consider instead excluding this check using a code comment!
-    - path: ^backend[\\/]crypt[\\/]cipher\.go$
-      linters:
-      - staticcheck
-      text: 'SA6002: argument should be pointer-like to avoid allocations'
-
-    # TODO: Investigate if this is a real issue. If not, i.e. it is a false
-    # positive, consider instead excluding this check using a code comment!
     - path: ^fs[\\/]pacer\.go$
       linters:
       - staticcheck
       text: 'SA5007: infinite recursive call'
+
 
 run:
   # timeout for analysis, e.g. 30s, 5m, default is 1m
