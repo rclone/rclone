@@ -756,14 +756,6 @@ func (f *Fs) create(ctx context.Context, path string) ([]*upstream.Fs, error) {
 	return f.createPolicy.Create(ctx, f.upstreams, path)
 }
 
-func (f *Fs) createEntries(entries ...upstream.Entry) ([]upstream.Entry, error) {
-	return f.createPolicy.CreateEntries(entries...)
-}
-
-func (f *Fs) search(ctx context.Context, path string) (*upstream.Fs, error) {
-	return f.searchPolicy.Search(ctx, f.upstreams, path)
-}
-
 func (f *Fs) searchEntries(entries ...upstream.Entry) (upstream.Entry, error) {
 	return f.searchPolicy.SearchEntries(entries...)
 }
