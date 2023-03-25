@@ -953,11 +953,9 @@ func (f *Fs) emptyLibraryTrash(ctx context.Context, libraryID string) error {
 	return nil
 }
 
-// === API v2 from the official documentation, but that have been replaced by the much better v2.1 (undocumented as of Apr 2020)
-// === getDirectoryEntriesAPIv2 is needed to keep compatibility with seafile v6,
-// === the others can probably be removed after the API v2.1 is documented
-
 func (f *Fs) getDirectoryEntriesAPIv2(ctx context.Context, libraryID, dirPath string) ([]api.DirEntry, error) {
+	// API v2 from the official documentation, but that have been replaced by the much better v2.1 (undocumented as of Apr 2020)
+	// getDirectoryEntriesAPIv2 is needed to keep compatibility with seafile v6.
 	// API Documentation
 	// https://download.seafile.com/published/web-api/v2.1/directories.md#user-content-List%20Items%20in%20Directory
 	if libraryID == "" {
@@ -1000,96 +998,4 @@ func (f *Fs) getDirectoryEntriesAPIv2(ctx context.Context, libraryID, dirPath st
 		result[index] = fileInfo
 	}
 	return result, nil
-}
-
-func (f *Fs) copyFileAPIv2(ctx context.Context, srcLibraryID, srcPath, dstLibraryID, dstPath string) (*api.FileInfo, error) {
-	// API Documentation
-	// https://download.seafile.com/published/web-api/v2.1/file.md#user-content-Copy%20File
-	if srcLibraryID == "" || dstLibraryID == "" {
-		return nil, errors.New("libraryID and/or file path argument(s) missing")
-	}
-	srcPath = path.Join("/", srcPath)
-	dstPath = path.Join("/", dstPath)
-
-	// Older API does not seem to accept JSON input here either
-	postParameters := url.Values{
-		"operation": {"copy"},
-		"dst_repo":  {dstLibraryID},
-		"dst_dir":   {f.opt.Enc.FromStandardPath(dstPath)},
-	}
-	opts := rest.Opts{
-		Method:      "POST",
-		Path:        APIv20 + srcLibraryID + "/file/",
-		Parameters:  url.Values{"p": {f.opt.Enc.FromStandardPath(srcPath)}},
-		ContentType: "application/x-www-form-urlencoded",
-		Body:        bytes.NewBuffer([]byte(postParameters.Encode())),
-	}
-	result := &api.FileInfo{}
-	var resp *http.Response
-	var err error
-	err = f.pacer.Call(func() (bool, error) {
-		resp, err = f.srv.Call(ctx, &opts)
-		return f.shouldRetry(ctx, resp, err)
-	})
-	if err != nil {
-		if resp != nil {
-			if resp.StatusCode == 401 || resp.StatusCode == 403 {
-				return nil, fs.ErrorPermissionDenied
-			}
-		}
-		return nil, fmt.Errorf("failed to copy file %s:'%s' to %s:'%s': %w", srcLibraryID, srcPath, dstLibraryID, dstPath, err)
-	}
-	err = rest.DecodeJSON(resp, &result)
-	if err != nil {
-		return nil, err
-	}
-	return f.decodeFileInfo(result), nil
-}
-
-func (f *Fs) renameFileAPIv2(ctx context.Context, libraryID, filePath, newname string) error {
-	// API Documentation
-	// https://download.seafile.com/published/web-api/v2.1/file.md#user-content-Rename%20File
-	if libraryID == "" || newname == "" {
-		return errors.New("libraryID and/or file path argument(s) missing")
-	}
-	filePath = path.Join("/", filePath)
-
-	// No luck with JSON input with the older api2
-	postParameters := url.Values{
-		"operation": {"rename"},
-		"reloaddir": {"true"}, // This is an undocumented trick to avoid an http code 301 response (found in https://github.com/haiwen/seahub/blob/master/seahub/api2/views.py)
-		"newname":   {f.opt.Enc.FromStandardName(newname)},
-	}
-
-	opts := rest.Opts{
-		Method:      "POST",
-		Path:        APIv20 + libraryID + "/file/",
-		Parameters:  url.Values{"p": {f.opt.Enc.FromStandardPath(filePath)}},
-		ContentType: "application/x-www-form-urlencoded",
-		Body:        bytes.NewBuffer([]byte(postParameters.Encode())),
-		NoRedirect:  true,
-		NoResponse:  true,
-	}
-	var resp *http.Response
-	var err error
-	err = f.pacer.Call(func() (bool, error) {
-		resp, err = f.srv.Call(ctx, &opts)
-		return f.shouldRetry(ctx, resp, err)
-	})
-	if err != nil {
-		if resp != nil {
-			if resp.StatusCode == 301 {
-				// This is the normal response from the server
-				return nil
-			}
-			if resp.StatusCode == 401 || resp.StatusCode == 403 {
-				return fs.ErrorPermissionDenied
-			}
-			if resp.StatusCode == 404 {
-				return fs.ErrorObjectNotFound
-			}
-		}
-		return fmt.Errorf("failed to rename file: %w", err)
-	}
-	return nil
 }
