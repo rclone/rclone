@@ -82,11 +82,11 @@ func translateError(err error) error {
 	case vfs.OK:
 		return nil
 	case vfs.ENOENT, fs.ErrorDirNotFound, fs.ErrorObjectNotFound:
-		return fuse.ENOENT
+		return fuse.Errno(syscall.ENOENT)
 	case vfs.EEXIST, fs.ErrorDirExists:
-		return fuse.EEXIST
+		return fuse.Errno(syscall.EEXIST)
 	case vfs.EPERM, fs.ErrorPermissionDenied:
-		return fuse.EPERM
+		return fuse.Errno(syscall.EPERM)
 	case vfs.ECLOSED:
 		return fuse.Errno(syscall.EBADF)
 	case vfs.ENOTEMPTY:
