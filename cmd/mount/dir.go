@@ -250,7 +250,7 @@ func (d *Dir) Mknod(ctx context.Context, req *fuse.MknodRequest) (node fusefs.No
 	defer log.Trace(d, "name=%v, mode=%d, rdev=%d", req.Name, req.Mode, req.Rdev)("node=%v, err=%v", &node, &err)
 	if req.Rdev != 0 {
 		fs.Errorf(d, "Can't create device node %q", req.Name)
-		return nil, fuse.EIO
+		return nil, fuse.Errno(syscall.EIO)
 	}
 	var cReq = fuse.CreateRequest{
 		Name:  req.Name,
