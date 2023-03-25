@@ -265,7 +265,7 @@ At the time of writing this only works with OneDrive personal paid accounts.
 			Help: `Specify the hash in use for the backend.
 
 This specifies the hash type in use. If set to "auto" it will use the
-default hash which is is QuickXorHash.
+default hash which is QuickXorHash.
 
 Before rclone 1.62 an SHA1 hash was used by default for Onedrive
 Personal. For 1.62 and later the default is to use a QuickXorHash for
