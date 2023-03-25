@@ -589,12 +589,7 @@ func (f *Fs) cleanUpBucket(ctx context.Context, bucket string, maxAge time.Durat
 				if operations.SkipDestructive(ctx, what, "remove pending upload") {
 					continue
 				}
-				ignoreErr := f.abortMultiPartUpload(ctx, *upload.Bucket, *upload.Object, *upload.UploadId)
-				if ignoreErr != nil {
-					// fs.Debugf(f, "ignoring error %s", ignoreErr)
-				}
-			} else {
-				// fs.Debugf(f, "ignoring %s", what)
+				_ = f.abortMultiPartUpload(ctx, *upload.Bucket, *upload.Object, *upload.UploadId)
 			}
 		} else {
 			fs.Infof(f, "MultipartUpload doesn't have sufficient details to abort.")
