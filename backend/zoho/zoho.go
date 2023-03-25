@@ -331,15 +331,6 @@ func parsePath(path string) (root string) {
 	return
 }
 
-func (f *Fs) splitPath(remote string) (directory, leaf string) {
-	directory, leaf = dircache.SplitPath(remote)
-	if f.root != "" {
-		// Adds the root folder to the path to get a full path
-		directory = path.Join(f.root, directory)
-	}
-	return
-}
-
 // readMetaDataForPath reads the metadata from the path
 func (f *Fs) readMetaDataForPath(ctx context.Context, path string) (info *api.Item, err error) {
 	// defer fs.Trace(f, "path=%q", path)("info=%+v, err=%v", &info, &err)
