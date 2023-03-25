@@ -324,7 +324,7 @@ Pass multiple variables space separated, eg
 
     VAR1=value VAR2=value
 
-and pass variables with spaces in in quotes, eg
+and pass variables with spaces in quotes, eg
 
     "VAR3=value with space" "VAR4=value with space" VAR5=nospacehere
 
