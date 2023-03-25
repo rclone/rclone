@@ -191,7 +191,7 @@ func newCipher(mode NameEncryptionMode, password, salt string, dirNameEncrypt bo
 		dirNameEncrypt: dirNameEncrypt,
 	}
 	c.buffers.New = func() interface{} {
-		return make([]byte, blockSize)
+		return new([blockSize]byte)
 	}
 	err := c.Key(password, salt)
 	if err != nil {
@@ -237,15 +237,12 @@ func (c *Cipher) Key(password, salt string) (err error) {
 }
 
 // getBlock gets a block from the pool of size blockSize
-func (c *Cipher) getBlock() []byte {
-	return c.buffers.Get().([]byte)
+func (c *Cipher) getBlock() *[blockSize]byte {
+	return c.buffers.Get().(*[blockSize]byte)
 }
 
 // putBlock returns a block to the pool of size blockSize
-func (c *Cipher) putBlock(buf []byte) {
-	if len(buf) != blockSize {
-		panic("bad blocksize returned to pool")
-	}
+func (c *Cipher) putBlock(buf *[blockSize]byte) {
 	c.buffers.Put(buf)
 }
 
@@ -671,8 +668,8 @@ type encrypter struct {
 	in       io.Reader
 	c        *Cipher
 	nonce    nonce
-	buf      []byte
-	readBuf  []byte
+	buf      *[blockSize]byte
+	readBuf  *[blockSize]byte
 	bufIndex int
 	bufSize  int
 	err      error
@@ -697,9 +694,9 @@ func (c *Cipher) newEncrypter(in io.Reader, nonce *nonce) (*encrypter, error) {
 		}
 	}
 	// Copy magic into buffer
-	copy(fh.buf, fileMagicBytes)
+	copy((*fh.buf)[:], fileMagicBytes)
 	// Copy nonce into buffer
-	copy(fh.buf[fileMagicSize:], fh.nonce[:])
+	copy((*fh.buf)[fileMagicSize:], fh.nonce[:])
 	return fh, nil
 }
 
@@ -714,7 +711,7 @@ func (fh *encrypter) Read(p []byte) (n int, err error) {
 	if fh.bufIndex >= fh.bufSize {
 		// Read data
 		// FIXME should overlap the reads with a go-routine and 2 buffers?
-		readBuf := fh.readBuf[:blockDataSize]
+		readBuf := (*fh.readBuf)[:blockDataSize]
 		n, err = readers.ReadFill(fh.in, readBuf)
 		if n == 0 {
 			return fh.finish(err)
@@ -722,12 +719,12 @@ func (fh *encrypter) Read(p []byte) (n int, err error) {
 		// possibly err != nil here, but we will process the
 		// data and the next call to ReadFill will return 0, err
 		// Encrypt the block using the nonce
-		secretbox.Seal(fh.buf[:0], readBuf[:n], fh.nonce.pointer(), &fh.c.dataKey)
+		secretbox.Seal((*fh.buf)[:0], readBuf[:n], fh.nonce.pointer(), &fh.c.dataKey)
 		fh.bufIndex = 0
 		fh.bufSize = blockHeaderSize + n
 		fh.nonce.increment()
 	}
-	n = copy(p, fh.buf[fh.bufIndex:fh.bufSize])
+	n = copy(p, (*fh.buf)[fh.bufIndex:fh.bufSize])
 	fh.bufIndex += n
 	return n, nil
 }
@@ -768,8 +765,8 @@ type decrypter struct {
 	nonce        nonce
 	initialNonce nonce
 	c            *Cipher
-	buf          []byte
-	readBuf      []byte
+	buf          *[blockSize]byte
+	readBuf      *[blockSize]byte
 	bufIndex     int
 	bufSize      int
 	err          error
@@ -787,7 +784,7 @@ func (c *Cipher) newDecrypter(rc io.ReadCloser) (*decrypter, error) {
 		limit:   -1,
 	}
 	// Read file header (magic + nonce)
-	readBuf := fh.readBuf[:fileHeaderSize]
+	readBuf := (*fh.readBuf)[:fileHeaderSize]
 	n, err := readers.ReadFill(fh.rc, readBuf)
 	if n < fileHeaderSize && err == io.EOF {
 		// This read from 0..fileHeaderSize-1 bytes
@@ -850,7 +847,7 @@ func (c *Cipher) newDecrypterSeek(ctx context.Context, open OpenRangeSeek, offse
 func (fh *decrypter) fillBuffer() (err error) {
 	// FIXME should overlap the reads with a go-routine and 2 buffers?
 	readBuf := fh.readBuf
-	n, err := readers.ReadFill(fh.rc, readBuf)
+	n, err := readers.ReadFill(fh.rc, (*readBuf)[:])
 	if n == 0 {
 		return err
 	}
@@ -865,7 +862,7 @@ func (fh *decrypter) fillBuffer() (err error) {
 		return ErrorEncryptedFileBadHeader
 	}
 	// Decrypt the block using the nonce
-	_, ok := secretbox.Open(fh.buf[:0], readBuf[:n], fh.nonce.pointer(), &fh.c.dataKey)
+	_, ok := secretbox.Open((*fh.buf)[:0], (*readBuf)[:n], fh.nonce.pointer(), &fh.c.dataKey)
 	if !ok {
 		if err != nil && err != io.EOF {
 			return err // return pending error as it is likely more accurate
@@ -875,8 +872,8 @@ func (fh *decrypter) fillBuffer() (err error) {
 		}
 		fs.Errorf(nil, "crypt: ignoring: %v", ErrorEncryptedBadBlock)
 		// Zero out the bad block and continue
-		for i := range fh.buf[:n] {
-			fh.buf[i] = 0
+		for i := range (*fh.buf)[:n] {
+			(*fh.buf)[i] = 0
 		}
 	}
 	fh.bufIndex = 0
@@ -903,7 +900,7 @@ func (fh *decrypter) Read(p []byte) (n int, err error) {
 	if fh.limit >= 0 && fh.limit < int64(toCopy) {
 		toCopy = int(fh.limit)
 	}
-	n = copy(p, fh.buf[fh.bufIndex:fh.bufIndex+toCopy])
+	n = copy(p, (*fh.buf)[fh.bufIndex:fh.bufIndex+toCopy])
 	fh.bufIndex += n
 	if fh.limit >= 0 {
 		fh.limit -= int64(n)
