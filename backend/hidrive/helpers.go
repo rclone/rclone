@@ -294,15 +294,6 @@ func (f *Fs) copyOrMove(ctx context.Context, isDirectory bool, operationType Cop
 	return &result, nil
 }
 
-// copyDirectory moves the directory at the source-path to the destination-path and
-// returns the resulting api-object if successful.
-//
-// The operation will only be successful
-// if the parent-directory of the destination-path exists.
-func (f *Fs) copyDirectory(ctx context.Context, source string, destination string, onExist OnExistAction) (*api.HiDriveObject, error) {
-	return f.copyOrMove(ctx, true, CopyOriginalPreserveModTime, source, destination, onExist)
-}
-
 // moveDirectory moves the directory at the source-path to the destination-path and
 // returns the resulting api-object if successful.
 //
