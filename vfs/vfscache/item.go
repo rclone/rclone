@@ -172,13 +172,6 @@ func (item *Item) inUse() bool {
 	return item.opens != 0 || item.info.Dirty
 }
 
-// getATime returns the ATime of the item
-func (item *Item) getATime() time.Time {
-	item.mu.Lock()
-	defer item.mu.Unlock()
-	return item.info.ATime
-}
-
 // getDiskSize returns the size on disk (approximately) of the item
 //
 // We return the sizes of the chunks we have fetched, however there is
