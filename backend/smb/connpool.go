@@ -106,9 +106,9 @@ func (f *Fs) getSessions() int32 {
 func (f *Fs) newConnection(ctx context.Context, share string) (c *conn, err error) {
 	// As we are pooling these connections we need to decouple
 	// them from the current context
-	ctx = context.Background()
+	bgCtx := context.Background()
 
-	c, err = f.dial(ctx, "tcp", f.opt.Host+":"+f.opt.Port)
+	c, err = f.dial(bgCtx, "tcp", f.opt.Host+":"+f.opt.Port)
 	if err != nil {
 		return nil, fmt.Errorf("couldn't connect SMB: %w", err)
 	}
@@ -119,7 +119,7 @@ func (f *Fs) newConnection(ctx context.Context, share string) (c *conn, err erro
 			_ = c.smbSession.Logoff()
 			return nil, fmt.Errorf("couldn't initialize SMB: %w", err)
 		}
-		c.smbShare = c.smbShare.WithContext(ctx)
+		c.smbShare = c.smbShare.WithContext(bgCtx)
 	}
 	return c, nil
 }
