@@ -789,7 +789,7 @@ func TestCopyURL(t *testing.T) {
 	headerFilename := "headerfilename.txt"
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if status != 0 {
-			http.Error(w, "an error ocurred", status)
+			http.Error(w, "an error occurred", status)
 		}
 		if nameHeader {
 			w.Header().Set("Content-Disposition", `attachment; filename="folder\`+headerFilename+`"`)
@@ -863,7 +863,7 @@ func TestCopyURLToWriter(t *testing.T) {
 	status := 0
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if status != 0 {
-			http.Error(w, "an error ocurred", status)
+			http.Error(w, "an error occurred", status)
 			return
 		}
 		_, err := w.Write([]byte(contents))
@@ -1694,7 +1694,7 @@ func TestRcatMetadata(t *testing.T) {
 		gotMeta, err := fs.GetMetadata(ctx, o)
 		require.NoError(t, err)
 		// Check the specific user data we set is set
-		// Likey there will be other values
+		// Likely there will be other values
 		assert.Equal(t, "value", gotMeta["key"])
 		assert.Equal(t, "potato", gotMeta["sausage"])
 
@@ -1781,7 +1781,7 @@ func TestRcatSizeMetadata(t *testing.T) {
 		gotMeta, err := fs.GetMetadata(ctx, o)
 		require.NoError(t, err)
 		// Check the specific user data we set is set
-		// Likey there will be other values
+		// Likely there will be other values
 		assert.Equal(t, "value", gotMeta["key"])
 		assert.Equal(t, "potato", gotMeta["sausage"])
 	}

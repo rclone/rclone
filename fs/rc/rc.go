@@ -1,7 +1,7 @@
 // Package rc implements a remote control server and registry for rclone
 //
 // To register your internal calls, call rc.Add(path, function).  Your
-// function should take ane return a Param.  It can also return an
+// function should take and return a Param.  It can also return an
 // error.  Use rc.NewError to wrap an existing error along with an
 // http response type if another response other than 500 internal
 // error is required on error.

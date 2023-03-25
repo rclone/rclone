@@ -376,7 +376,7 @@ func configAll(ctx context.Context, name string, m configmap.Mapper, ri *RegInfo
 	//
 	//     *all-ACTION,NUMBER,ADVANCED
 	//
-	// Where NUMBER is the curent state, ADVANCED is a flag true or false
+	// Where NUMBER is the current state, ADVANCED is a flag true or false
 	// to say whether we are asking about advanced config and
 	// ACTION is what the state should be doing next.
 	stateParams, state := StatePop(in.State)
