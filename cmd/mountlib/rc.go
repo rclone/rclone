@@ -98,7 +98,7 @@ func mountRc(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 	}
 
 	if mountOpt.Daemon {
-		return nil, errors.New("Daemon Option not supported over the API")
+		return nil, errors.New("daemon option not supported over the API")
 	}
 
 	mountType, err := in.GetString("mountType")
@@ -111,7 +111,7 @@ func mountRc(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 	}
 	mountType, mountFn := ResolveMountMethod(mountType)
 	if mountFn == nil {
-		return nil, errors.New("Mount Option specified is not registered, or is invalid")
+		return nil, errors.New("mount option specified is not registered, or is invalid")
 	}
 
 	// Get Fs.fs to be mounted from fs parameter in the params
