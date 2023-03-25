@@ -192,7 +192,7 @@ func (tr *Transfer) Snapshot() TransferSnapshot {
 // rcStats returns stats for the transfer suitable for the rc
 func (tr *Transfer) rcStats() rc.Params {
 	return rc.Params{
-		"name": tr.remote, // no locking needed to access thess
+		"name": tr.remote, // no locking needed to access this
 		"size": tr.size,
 	}
 }
