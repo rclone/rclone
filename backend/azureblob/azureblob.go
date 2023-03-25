@@ -1728,12 +1728,6 @@ func (o *Object) getBlobSVC() *blob.Client {
 	return o.fs.getBlobSVC(container, directory)
 }
 
-// getBlockBlobSVC creates a block blob client
-func (o *Object) getBlockBlobSVC() *blockblob.Client {
-	container, directory := o.split()
-	return o.fs.getBlockBlobSVC(container, directory)
-}
-
 // clearMetaData clears enough metadata so readMetaData will re-read it
 func (o *Object) clearMetaData() {
 	o.modTime = time.Time{}
@@ -1868,48 +1862,6 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 		return nil, fmt.Errorf("failed to decode metadata for download: %w", err)
 	}
 	return downloadResponse.Body, nil
-}
-
-// poolWrapper wraps a pool.Pool as an azblob.TransferManager
-type poolWrapper struct {
-	pool     *pool.Pool
-	bufToken chan struct{}
-	runToken chan struct{}
-}
-
-// newPoolWrapper creates an azblob.TransferManager that will use a
-// pool.Pool with maximum concurrency as specified.
-func (f *Fs) newPoolWrapper(concurrency int) *poolWrapper {
-	return &poolWrapper{
-		pool:     f.pool,
-		bufToken: make(chan struct{}, concurrency),
-		runToken: make(chan struct{}, concurrency),
-	}
-}
-
-// Get implements TransferManager.Get().
-func (pw *poolWrapper) Get() []byte {
-	pw.bufToken <- struct{}{}
-	return pw.pool.Get()
-}
-
-// Put implements TransferManager.Put().
-func (pw *poolWrapper) Put(b []byte) {
-	pw.pool.Put(b)
-	<-pw.bufToken
-}
-
-// Run implements TransferManager.Run().
-func (pw *poolWrapper) Run(f func()) {
-	pw.runToken <- struct{}{}
-	go func() {
-		f()
-		<-pw.runToken
-	}()
-}
-
-// Close implements TransferManager.Close().
-func (pw *poolWrapper) Close() {
 }
 
 // Converts a string into a pointer to a string
