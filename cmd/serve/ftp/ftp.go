@@ -469,7 +469,7 @@ func (d *Driver) PutFile(path string, data io.Reader, appendData bool) (n int64,
 	}
 	defer closeIO(path, of)
 
-	_, err = of.Seek(0, os.SEEK_END)
+	_, err = of.Seek(0, io.SeekEnd)
 	if err != nil {
 		return 0, err
 	}
