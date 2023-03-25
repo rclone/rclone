@@ -65,7 +65,7 @@ var DefaultOpt = Options{
 	DiskSpaceTotalSize: -1,
 }
 
-// Init the options, making sure everything is withing range
+// Init the options, making sure everything is within range
 func (opt *Options) Init() {
 	// Mask the permissions with the umask
 	opt.DirPerms &= ^os.FileMode(opt.Umask)

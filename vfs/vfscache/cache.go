@@ -645,7 +645,7 @@ func (c *Cache) purgeClean(quota int64) {
 		}
 	}
 
-	// Resest outOfSpace without checking whether we have reduced cache space below the quota.
+	// Reset outOfSpace without checking whether we have reduced cache space below the quota.
 	// This allows some files to reduce their pendingAccesses count to allow them to be reset
 	// in the next iteration of the purge cleaner loop.
 
@@ -755,7 +755,7 @@ func (c *Cache) clean(kicked bool) {
 	// Was kicked?
 	if kicked {
 		c.kickerMu.Lock() // Make sure this is called with cache mutex unlocked
-		// Reenable io threads to kick me
+		// Re-enable io threads to kick me
 		c.cleanerKicked = false
 		c.kickerMu.Unlock()
 	}
