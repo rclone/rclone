@@ -8,7 +8,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"net/url"
 	"path"
 	"strconv"
 	"strings"
@@ -1326,23 +1325,6 @@ func (o *Object) removeSegmentsLargeObject(ctx context.Context, containerSegment
 		}
 	}
 	return nil
-}
-
-func (o *Object) getSegmentsDlo(ctx context.Context) (segmentsContainer string, prefix string, err error) {
-	if err = o.readMetaData(ctx); err != nil {
-		return
-	}
-	dirManifest := o.headers["X-Object-Manifest"]
-	dirManifest, err = url.PathUnescape(dirManifest)
-	if err != nil {
-		return
-	}
-	delimiter := strings.Index(dirManifest, "/")
-	if len(dirManifest) == 0 || delimiter < 0 {
-		err = errors.New("missing or wrong structure of manifest of Dynamic large object")
-		return
-	}
-	return dirManifest[:delimiter], dirManifest[delimiter+1:], nil
 }
 
 // urlEncode encodes a string so that it is a valid URL
