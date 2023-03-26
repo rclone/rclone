@@ -1840,6 +1840,12 @@ would be backed up to `file.txt-2019-01-01` and with the flag it would
 be backed up to `file-2019-01-01.txt`.  This can be helpful to make
 sure the suffixed files can still be opened.
 
+If a file has two (or more) extensions and the second (or subsequent)
+extension is recognised as a valid mime type, then the suffix will go
+before that extension. So `file.tar.gz` would be backed up to
+`file-2019-01-01.tar.gz` whereas `file.badextension.gz` would be
+backed up to `file.badextension-2019-01-01.gz`.
+
 ### --syslog ###
 
 On capable OSes (not Windows or Plan9) send all log output to syslog.

@@ -618,9 +618,24 @@ func SuffixName(ctx context.Context, remote string) string {
 		return remote
 	}
 	if ci.SuffixKeepExtension {
-		ext := path.Ext(remote)
-		base := remote[:len(remote)-len(ext)]
-		return base + ci.Suffix + ext
+		var (
+			base  = remote
+			exts  = ""
+			first = true
+			ext   = path.Ext(remote)
+		)
+		for ext != "" {
+			// Look second and subsequent extensions in mime types.
+			// If they aren't found then don't keep it as an extension.
+			if !first && mime.TypeByExtension(ext) == "" {
+				break
+			}
+			base = base[:len(base)-len(ext)]
+			exts = ext + exts
+			first = false
+			ext = path.Ext(base)
+		}
+		return base + ci.Suffix + exts
 	}
 	return remote + ci.Suffix
 }

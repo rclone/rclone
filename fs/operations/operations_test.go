@@ -371,9 +371,14 @@ func TestSuffixName(t *testing.T) {
 		{"test.txt", "-suffix", false, "test.txt-suffix"},
 		{"test.txt", "-suffix", true, "test-suffix.txt"},
 		{"test.txt.csv", "-suffix", false, "test.txt.csv-suffix"},
-		{"test.txt.csv", "-suffix", true, "test.txt-suffix.csv"},
+		{"test.txt.csv", "-suffix", true, "test-suffix.txt.csv"},
 		{"test", "-suffix", false, "test-suffix"},
 		{"test", "-suffix", true, "test-suffix"},
+		{"test.html", "-suffix", true, "test-suffix.html"},
+		{"test.html.txt", "-suffix", true, "test-suffix.html.txt"},
+		{"test.csv.html.txt", "-suffix", true, "test-suffix.csv.html.txt"},
+		{"test.badext.csv.html.txt", "-suffix", true, "test.badext-suffix.csv.html.txt"},
+		{"test.badext", "-suffix", true, "test-suffix.badext"},
 	} {
 		ci.Suffix = test.suffix
 		ci.SuffixKeepExtension = test.keepExt
