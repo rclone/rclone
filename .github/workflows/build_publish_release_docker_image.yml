@@ -96,6 +96,7 @@ jobs:
                 make docker-plugin PLUGIN_ARCH=amd64 PLUGIN_TAG=latest
                 make docker-plugin PLUGIN_ARCH=amd64 PLUGIN_TAG=${VER#v}
             - name: Build and publish docker plugin to ghcr
+              # Using the fact that the parameter "user" could actually be a registry
               shell: bash
               run: |
                 VER=${GITHUB_REF#refs/tags/}
