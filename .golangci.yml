@@ -37,14 +37,6 @@ issues:
       - staticcheck
       text: 'SA1019: "golang.org/x/oauth2/jws" is deprecated'
 
-    # TODO: Investigate if this is a real issue. If not, i.e. it is a false
-    # positive, consider instead excluding this check using a code comment!
-    - path: ^fs[\\/]pacer\.go$
-      linters:
-      - staticcheck
-      text: 'SA5007: infinite recursive call'
-
-
 run:
   # timeout for analysis, e.g. 30s, 5m, default is 1m
   timeout: 10m
