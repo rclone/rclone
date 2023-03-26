@@ -43,7 +43,7 @@ import (
 )
 
 const (
-	minSleep      = 10 * time.Millisecond
+	minSleep      = fs.Duration(10 * time.Millisecond)
 	maxSleep      = 2 * time.Second
 	decayConstant = 2   // bigger for slower decay, exponential
 	defaultDepth  = "1" // depth for PROPFIND
@@ -129,6 +129,11 @@ You can set multiple headers, e.g. '"Cookie","name=value","Authorization","xxx"'
 			Default:  fs.CommaSepList{},
 			Advanced: true,
 		}, {
+			Name:     "pacer_min_sleep",
+			Help:     "Minimum time to sleep between API calls.",
+			Default:  minSleep,
+			Advanced: true,
+		}, {
 			Name: "nextcloud_chunk_size",
 			Help: `Nextcloud upload chunk size.
 
@@ -153,6 +158,7 @@ type Options struct {
 	BearerTokenCommand string               `config:"bearer_token_command"`
 	Enc                encoder.MultiEncoder `config:"encoding"`
 	Headers            fs.CommaSepList      `config:"headers"`
+	PacerMinSleep      fs.Duration          `config:"pacer_min_sleep"`
 	ChunkSize          fs.SizeSuffix        `config:"nextcloud_chunk_size"`
 }
 
@@ -430,7 +436,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		opt:         *opt,
 		endpoint:    u,
 		endpointURL: u.String(),
-		pacer:       fs.NewPacer(ctx, pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant))),
+		pacer:       fs.NewPacer(ctx, pacer.NewDefault(pacer.MinSleep(opt.PacerMinSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant))),
 		precision:   fs.ModTimeNotSupported,
 	}
 
