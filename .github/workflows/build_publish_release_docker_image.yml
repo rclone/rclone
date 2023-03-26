@@ -81,13 +81,25 @@ jobs:
               uses: actions/checkout@v2
               with:
                 fetch-depth: 0
-            - name: Build and publish docker plugin
+            - name: Build and publish docker plugin to dockerhub
               shell: bash
               run: |
                 VER=${GITHUB_REF#refs/tags/}
                 PLUGIN_USER=rclone
                 docker login --username ${{ secrets.DOCKER_HUB_USER }} \
                              --password-stdin <<< "${{ secrets.DOCKER_HUB_PASSWORD }}"
+                for PLUGIN_ARCH in amd64 arm64 arm/v7 arm/v6 ;do
+                    export PLUGIN_USER PLUGIN_ARCH
+                    make docker-plugin PLUGIN_TAG=${PLUGIN_ARCH/\//-}
+                    make docker-plugin PLUGIN_TAG=${PLUGIN_ARCH/\//-}-${VER#v}
+                done
+                make docker-plugin PLUGIN_ARCH=amd64 PLUGIN_TAG=latest
+                make docker-plugin PLUGIN_ARCH=amd64 PLUGIN_TAG=${VER#v}
+            - name: Build and publish docker plugin to ghcr
+              shell: bash
+              run: |
+                VER=${GITHUB_REF#refs/tags/}
+                PLUGIN_USER="ghcr.io/rclone"
                 for PLUGIN_ARCH in amd64 arm64 arm/v7 arm/v6 ;do
                     export PLUGIN_USER PLUGIN_ARCH
                     make docker-plugin PLUGIN_TAG=${PLUGIN_ARCH/\//-}
