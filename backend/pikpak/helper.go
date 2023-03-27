@@ -128,7 +128,7 @@ func (f *Fs) requestNewFile(ctx context.Context, req *api.RequestNewFile) (info 
 }
 
 // getFile gets api.File from API for the ID passed
-// and returns rich infomation containing additional fields below
+// and returns rich information containing additional fields below
 // * web_content_link
 // * thumbnail_link
 // * links
