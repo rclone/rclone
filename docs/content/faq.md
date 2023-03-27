@@ -190,9 +190,14 @@ If you are using `systemd-resolved` (default on Arch Linux), ensure it
 is at version 233 or higher. Previous releases contain a bug which
 causes not all domains to be resolved properly.
 
-Additionally with the `GODEBUG=netdns=` environment variable the Go
-resolver decision can be influenced. This also allows to resolve certain
-issues with DNS resolution. See the [name resolution section in the go docs](https://golang.org/pkg/net/#hdr-Name_Resolution).
+The Go resolver decision can be influenced with the `GODEBUG=netdns=...`
+environment variable. This also allows to resolve certain issues with
+DNS resolution. On Windows or MacOS systems, try forcing use of the
+internal Go resolver by setting `GODEBUG=netdns=go` at runtime. On
+other systems (Linux, \*BSD, etc) try forcing use of the system
+name resolver by setting `GODEBUG=netdns=cgo` (and recompile rclone
+from source with CGO enabled if necessary). See the
+[name resolution section in the go docs](https://golang.org/pkg/net/#hdr-Name_Resolution).
 
 ### The total size reported in the stats for a sync is wrong and keeps changing
 
