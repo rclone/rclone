@@ -693,6 +693,12 @@ func (f *Fs) findItem(ctx context.Context, remote string) (entry *ftp.Entry, err
 			if err == fs.ErrorObjectNotFound {
 				return nil, nil
 			}
+			if errX := textprotoError(err); errX != nil {
+				switch errX.Code {
+				case ftp.StatusBadArguments:
+					err = nil
+				}
+			}
 			return nil, err
 		}
 		if entry != nil {
