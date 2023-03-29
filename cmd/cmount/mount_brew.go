@@ -28,7 +28,7 @@ func init() {
 // returns an error, and an error channel for the serve process to
 // report an error when fusermount is called.
 func mount(_ *vfs.VFS, _ string, _ *mountlib.Options) (<-chan error, func() error, error) {
-	return nil, nil, errors.New("mount is not supported on MacOS when installed via Homebrew. " +
-		"Please install the binaries available at https://rclone." +
-		"org/downloads/ instead if you want to use the mount command")
+	return nil, nil, errors.New("rclone mount is not supported on MacOS when rclone is installed via Homebrew. " +
+		"Please install the rclone binaries available at https://rclone.org/downloads/ " +
+		"instead if you want to use the rclone mount command")
 }
