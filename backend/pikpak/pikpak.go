@@ -190,6 +190,11 @@ Fill in for rclone to use a non root folder as its starting point.
 			Default:  fs.SizeSuffix(10 * 1024 * 1024),
 			Advanced: true,
 		}, {
+			Name:     "multi_thread_streams",
+			Help:     "Max number of streams to use for multi-thread downloads.\n\nThis will override global flag `--multi-thread-streams` and defaults to 1 to avoid rate limiting.",
+			Default:  1,
+			Advanced: true,
+		}, {
 			Name:     config.ConfigEncoding,
 			Help:     config.ConfigEncodingHelp,
 			Advanced: true,
@@ -219,6 +224,7 @@ type Options struct {
 	UseTrash            bool                 `config:"use_trash"`
 	TrashedOnly         bool                 `config:"trashed_only"`
 	HashMemoryThreshold fs.SizeSuffix        `config:"hash_memory_limit"`
+	MultiThreadStreams  int                  `config:"multi_thread_streams"`
 	Enc                 encoder.MultiEncoder `config:"encoding"`
 }
 
@@ -428,6 +434,10 @@ func newFs(ctx context.Context, name, path string, m configmap.Mapper) (*Fs, err
 	}
 
 	root := parsePath(path)
+
+	// overrides global `--multi-thread-streams` by local one
+	ci := fs.GetConfig(ctx)
+	ci.MultiThreadStreams = opt.MultiThreadStreams
 
 	f := &Fs{
 		name:    name,
