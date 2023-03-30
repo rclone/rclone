@@ -20,7 +20,6 @@ package pikpak
 // * List() with options starred-only
 // * uploadByResumable() with configurable chunk-size
 // * user-configurable list chunk
-// * Prefer api.Medias[].Link.Url for opening media
 // * backend command: untrash, iscached
 // * api(event,task)
 
@@ -249,6 +248,8 @@ type Object struct {
 	mimeType    string    // The object MIME type
 	parent      string    // ID of the parent directories
 	md5sum      string    // md5sum of the object
+	link        *api.Link // link to download the object
+	linkMu      *sync.Mutex
 }
 
 // ------------------------------------------------------------
@@ -547,6 +548,7 @@ func (f *Fs) newObjectWithInfo(ctx context.Context, remote string, info *api.Fil
 	o := &Object{
 		fs:     f,
 		remote: remote,
+		linkMu: new(sync.Mutex),
 	}
 	var err error
 	if info != nil {
@@ -975,6 +977,7 @@ func (f *Fs) createObject(ctx context.Context, remote string, modTime time.Time,
 		remote:  remote,
 		size:    size,
 		modTime: modTime,
+		linkMu:  new(sync.Mutex),
 	}
 	return o, leaf, dirID, nil
 }
@@ -1237,6 +1240,7 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 		newObj := &Object{
 			fs:     f,
 			remote: src.Remote(),
+			linkMu: new(sync.Mutex),
 		}
 		return newObj, newObj.upload(ctx, in, src, false, options...)
 	default:
@@ -1433,7 +1437,42 @@ func (o *Object) setMetaData(info *api.File) (err error) {
 		o.parent = info.ParentID
 	}
 	o.md5sum = info.Md5Checksum
+	if info.Links.ApplicationOctetStream != nil {
+		o.link = info.Links.ApplicationOctetStream
+	}
+	if len(info.Medias) > 0 && info.Medias[0].Link != nil {
+		fs.Debugf(o, "Using a media link")
+		o.link = info.Medias[0].Link
+	}
 	return nil
+}
+
+// setMetaDataWithLink ensures a link for opening an object
+func (o *Object) setMetaDataWithLink(ctx context.Context) error {
+	o.linkMu.Lock()
+	defer o.linkMu.Unlock()
+
+	// check if the current link is valid
+	if o.link.Valid() {
+		return nil
+	}
+
+	// fetch download link with retry scheme
+	// 1 initial attempt and 2 retries are reasonable based on empirical analysis
+	retries := 2
+	for i := 1; i <= retries+1; i++ {
+		info, err := o.fs.getFile(ctx, o.id)
+		if err != nil {
+			return fmt.Errorf("can't fetch download link: %w", err)
+		}
+		if err = o.setMetaData(info); err == nil && o.link.Valid() {
+			return nil
+		}
+		if i <= retries {
+			time.Sleep(time.Duration(200*i) * time.Millisecond)
+		}
+	}
+	return errors.New("can't download - no link to download")
 }
 
 // readMetaData gets the metadata if it hasn't already been fetched
@@ -1573,21 +1612,10 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 		// zero-byte objects may have no download link
 		return io.NopCloser(bytes.NewBuffer([]byte(nil))), nil
 	}
-	// 1 initial attempt and 2 retries are reasonable base on empirical analysis
-	retries := 2
-	for i := 0; i < retries+1; i++ {
-		info, err := o.fs.getFile(ctx, o.id)
-		if err != nil {
-			return nil, fmt.Errorf("can't fetch download link: %w", err)
-		}
-		if info.WebContentLink != "" {
-			return o.open(ctx, info.WebContentLink, options...)
-		}
-		if i != retries {
-			time.Sleep(200 * time.Millisecond)
-		}
+	if err = o.setMetaDataWithLink(ctx); err != nil {
+		return nil, err
 	}
-	return nil, errors.New("can't download - no link to download")
+	return o.open(ctx, o.link.URL, options...)
 }
 
 // Update the object with the contents of the io.Reader, modTime and size
