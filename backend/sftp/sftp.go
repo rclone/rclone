@@ -370,6 +370,20 @@ Example:
     umac-64-etm@openssh.com umac-128-etm@openssh.com hmac-sha2-256-etm@openssh.com
 `,
 			Advanced: true,
+		}, {
+			Name:    "host_key_algorithms",
+			Default: fs.SpaceSepList{},
+			Help: `Space separated list of host key algorithms, ordered by preference.
+
+At least one must match with server configuration. This can be checked for example using ssh -Q HostKeyAlgorithms.
+
+Note: This can affect the outcome of key negotiation with the server even if server host key validation is not enabled.
+
+Example:
+
+    ssh-ed25519 ssh-rsa ssh-dss
+`,
+			Advanced: true,
 		}},
 	}
 	fs.Register(fsi)
@@ -408,6 +422,7 @@ type Options struct {
 	Ciphers                 fs.SpaceSepList `config:"ciphers"`
 	KeyExchange             fs.SpaceSepList `config:"key_exchange"`
 	MACs                    fs.SpaceSepList `config:"macs"`
+	HostKeyAlgorithms       fs.SpaceSepList `config:"host_key_algorithms"`
 }
 
 // Fs stores the interface to the remote SFTP files
@@ -738,6 +753,10 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
 		Timeout:         f.ci.ConnectTimeout,
 		ClientVersion:   "SSH-2.0-" + f.ci.UserAgent,
+	}
+
+	if len(opt.HostKeyAlgorithms) != 0 {
+		sshConfig.HostKeyAlgorithms = []string(opt.HostKeyAlgorithms)
 	}
 
 	if opt.KnownHostsFile != "" {
