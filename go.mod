@@ -50,7 +50,7 @@ require (
 	github.com/putdotio/go-putio/putio v0.0.0-20200123120452-16d982cac2b8
 	github.com/rfjakob/eme v1.1.2
 	github.com/rivo/uniseg v0.4.4
-	github.com/shirou/gopsutil/v3 v3.23.2
+	github.com/shirou/gopsutil/v3 v3.23.3
 	github.com/sirupsen/logrus v1.9.0
 	github.com/skratchdot/open-golang v0.0.0-20200116055534-eef842397966
 	github.com/spf13/cobra v1.6.1
@@ -119,6 +119,7 @@ require (
 	github.com/prometheus/common v0.37.0 // indirect
 	github.com/prometheus/procfs v0.8.0 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
+	github.com/shoenig/go-m1cpu v0.1.4 // indirect
 	github.com/sony/gobreaker v0.5.0 // indirect
 	github.com/spacemonkeygo/monkit/v3 v3.0.19 // indirect
 	github.com/tklauser/go-sysconf v0.3.11 // indirect
