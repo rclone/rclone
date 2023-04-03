@@ -397,7 +397,7 @@ func TestFilter(t *testing.T) {
 	require.Equal(t, "[included]", fmt.Sprint(entries))
 }
 
-func TestFilterSymlink(t *testing.T) {
+func testFilterSymlink(t *testing.T, copyLinks bool) {
 	ctx := context.Background()
 	r := fstest.NewRun(t)
 	defer r.Finalise()
@@ -411,15 +411,23 @@ func TestFilterSymlink(t *testing.T) {
 	require.NoError(t, os.Symlink("included.dir", filepath.Join(r.LocalName, "included.dir.link")))
 	require.NoError(t, os.Symlink("dangling", filepath.Join(r.LocalName, "dangling.link")))
 
-	// Set fs into "-L" mode
-	f.opt.FollowSymlinks = true
-	f.opt.TranslateSymlinks = false
-	f.lstat = os.Stat
-
-	// Set fs into "-l" mode
-	// f.opt.FollowSymlinks = false
-	// f.opt.TranslateSymlinks = true
-	// f.lstat = os.Lstat
+	defer func() {
+		// Reset -L/-l mode
+		f.opt.FollowSymlinks = false
+		f.opt.TranslateSymlinks = false
+		f.lstat = os.Lstat
+	}()
+	if copyLinks {
+		// Set fs into "-L" mode
+		f.opt.FollowSymlinks = true
+		f.opt.TranslateSymlinks = false
+		f.lstat = os.Stat
+	} else {
+		// Set fs into "-l" mode
+		f.opt.FollowSymlinks = false
+		f.opt.TranslateSymlinks = true
+		f.lstat = os.Lstat
+	}
 
 	// Check set up for filtering
 	assert.True(t, f.Features().FilterAware)
@@ -431,21 +439,35 @@ func TestFilterSymlink(t *testing.T) {
 	// Add a filter
 	ctx, fi := filter.AddConfig(ctx)
 	require.NoError(t, fi.AddRule("+ included.file"))
-	require.NoError(t, fi.AddRule("+ included.file.link"))
 	require.NoError(t, fi.AddRule("+ included.dir/**"))
-	require.NoError(t, fi.AddRule("+ included.dir.link/**"))
+	if copyLinks {
+		require.NoError(t, fi.AddRule("+ included.file.link"))
+		require.NoError(t, fi.AddRule("+ included.dir.link/**"))
+	} else {
+		require.NoError(t, fi.AddRule("+ included.file.link.rclonelink"))
+		require.NoError(t, fi.AddRule("+ included.dir.link.rclonelink"))
+	}
 	require.NoError(t, fi.AddRule("- *"))
 
 	// Check listing without use filter flag
 	entries, err := f.List(ctx, "")
 	require.NoError(t, err)
 
-	// Check 1 global errors one for each dangling symlink
-	assert.Equal(t, int64(1), accounting.Stats(ctx).GetErrors(), "global errors found")
+	if copyLinks {
+		// Check 1 global errors one for each dangling symlink
+		assert.Equal(t, int64(1), accounting.Stats(ctx).GetErrors(), "global errors found")
+	} else {
+		// Check 0 global errors as dangling symlink copied properly
+		assert.Equal(t, int64(0), accounting.Stats(ctx).GetErrors(), "global errors found")
+	}
 	accounting.Stats(ctx).ResetErrors()
 
 	sort.Sort(entries)
-	require.Equal(t, "[included.dir included.dir.link included.file included.file.link]", fmt.Sprint(entries))
+	if copyLinks {
+		require.Equal(t, "[included.dir included.dir.link included.file included.file.link]", fmt.Sprint(entries))
+	} else {
+		require.Equal(t, "[dangling.link.rclonelink included.dir included.dir.link.rclonelink included.file included.file.link.rclonelink]", fmt.Sprint(entries))
+	}
 
 	// Add user filter flag
 	ctx = filter.SetUseFilter(ctx, true)
@@ -456,7 +478,11 @@ func TestFilterSymlink(t *testing.T) {
 	assert.Equal(t, int64(0), accounting.Stats(ctx).GetErrors(), "global errors found")
 
 	sort.Sort(entries)
-	require.Equal(t, "[included.dir included.dir.link included.file included.file.link]", fmt.Sprint(entries))
+	if copyLinks {
+		require.Equal(t, "[included.dir included.dir.link included.file included.file.link]", fmt.Sprint(entries))
+	} else {
+		require.Equal(t, "[included.dir included.dir.link.rclonelink included.file included.file.link.rclonelink]", fmt.Sprint(entries))
+	}
 
 	// Check listing through a symlink still works
 	entries, err = f.List(ctx, "included.dir")
@@ -465,4 +491,12 @@ func TestFilterSymlink(t *testing.T) {
 
 	sort.Sort(entries)
 	require.Equal(t, "[included.dir/included.sub.file]", fmt.Sprint(entries))
+}
+
+func TestFilterSymlinkCopyLinks(t *testing.T) {
+	testFilterSymlink(t, true)
+}
+
+func TestFilterSymlinkLinks(t *testing.T) {
+	testFilterSymlink(t, false)
 }
