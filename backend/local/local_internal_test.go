@@ -146,6 +146,20 @@ func TestSymlink(t *testing.T) {
 	_, err = r.Flocal.NewObject(ctx, "symlink2.txt")
 	require.Equal(t, fs.ErrorObjectNotFound, err)
 
+	// Check that NewFs works with the suffixed version and --links
+	f2, err := NewFs(ctx, "local", filepath.Join(dir, "symlink2.txt"+linkSuffix), configmap.Simple{
+		"links": "true",
+	})
+	require.Equal(t, fs.ErrorIsFile, err)
+	require.Equal(t, dir, f2.(*Fs).root)
+
+	// Check that NewFs doesn't see the non suffixed version with --links
+	f2, err = NewFs(ctx, "local", filepath.Join(dir, "symlink2.txt"), configmap.Simple{
+		"links": "true",
+	})
+	require.Equal(t, errLinksNeedsSuffix, err)
+	require.Nil(t, f2)
+
 	// Check reading the object
 	in, err := o.Open(ctx)
 	require.NoError(t, err)
