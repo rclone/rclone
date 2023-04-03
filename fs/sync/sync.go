@@ -407,6 +407,7 @@ func (s *syncCopyMove) pairRenamer(in *pipe, out *pipe, fraction int, wg *sync.W
 		src := pair.Src
 		if !s.tryRename(src) {
 			// pass on if not renamed
+			fs.Debugf(src, "Need to transfer - No matching file found at Destination")
 			ok = out.Put(s.ctx, pair)
 			if !ok {
 				return
@@ -1026,6 +1027,7 @@ func (s *syncCopyMove) SrcOnly(src fs.DirEntry) (recurse bool) {
 			}
 			if !NoNeedTransfer {
 				// No need to check since doesn't exist
+				fs.Debugf(src, "Need to transfer - File not found at Destination")
 				ok := s.toBeUploaded.Put(s.ctx, fs.ObjectPair{Src: x, Dst: nil})
 				if !ok {
 					return
