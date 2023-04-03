@@ -347,11 +347,6 @@ func (f *Fs) shouldRetry(ctx context.Context, resp *http.Response, err error) (b
 	}
 	authRetry := false
 
-	if resp != nil && resp.StatusCode == 401 && len(resp.Header["Www-Authenticate"]) == 1 && strings.Contains(resp.Header["Www-Authenticate"][0], "expired_token") {
-		authRetry = true
-		fs.Debugf(nil, "Should retry: %v", err)
-	}
-
 	// traceback to possible api.Error wrapped in err, and re-authorize if necessary
 	// "unauthenticated" (16): when access_token is invalid, but should be handled by oauthutil
 	var terr *oauth2.RetrieveError
@@ -361,12 +356,19 @@ func (f *Fs) shouldRetry(ctx context.Context, resp *http.Response, err error) (b
 			if apiErr.Reason == "invalid_grant" {
 				// "invalid_grant" (4126): The refresh token is incorrect or expired				//
 				// Invalid refresh token. It may have been refreshed by another process.
-				fs.Debugf(nil, "Invalid grant: Re-Authorizing...")
-				if err := f.reAuthorize(ctx); err != nil {
-					return false, fserrors.FatalError(err)
-				}
-				return true, nil
+				authRetry = true
 			}
+		}
+	}
+	// Once err was processed by maybeWrapOAuthError() in lib/oauthutil,
+	// the above code is no longer sufficient to handle the 'invalid_grant' error.
+	if strings.Contains(err.Error(), "invalid_grant") {
+		authRetry = true
+	}
+
+	if authRetry {
+		if authErr := f.reAuthorize(ctx); authErr != nil {
+			return false, fserrors.FatalError(authErr)
 		}
 	}
 
@@ -453,16 +455,6 @@ func newFs(ctx context.Context, name, path string, m configmap.Mapper) (*Fs, err
 
 	if err := f.newClientWithPacer(ctx); err != nil {
 		return nil, err
-	}
-
-	// Check if current token is valid and re-authorize if necessary.
-	// It is somehow redundant since it is covered in shouldRetry().
-	// However it is a preemptive measure to avoid possible retries while validating a token.
-	if token, err := oauthutil.GetToken(name, m); err == nil && !token.Valid() {
-		fs.Debugf(nil, "Invalid token: Re-Authorizing...")
-		if err := pikpakAuthorize(ctx, opt, name, m); err != nil {
-			return nil, fserrors.FatalError(err)
-		}
 	}
 
 	return f, nil
