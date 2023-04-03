@@ -34,7 +34,7 @@ func rcBisync(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 		if maxDelete < 0 || maxDelete > 100 {
 			return nil, rc.NewErrParamInvalid(errors.New("maxDelete must be a percentage between 0 and 100"))
 		}
-		ci.MaxDelete = maxDelete
+		opt.MaxDelete = int(maxDelete)
 	} else if rc.NotErrParamNotFound(err) {
 		return nil, err
 	}

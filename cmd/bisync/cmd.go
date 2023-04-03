@@ -128,7 +128,6 @@ var commandDefinition = &cobra.Command{
 		ctx := context.Background()
 		opt := Opt
 		opt.applyContext(ctx)
-
 		if tzLocal {
 			TZ = time.Local
 		}
