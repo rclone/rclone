@@ -303,6 +303,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		WriteMetadata:           true,
 		UserMetadata:            xattrSupported, // can only R/W general purpose metadata if xattrs are supported
 		FilterAware:             true,
+		PartialUploads:          true,
 	}).Fill(ctx, f)
 	if opt.FollowSymlinks {
 		f.lstat = os.Stat

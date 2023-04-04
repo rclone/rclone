@@ -580,6 +580,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (ff fs.Fs
 	}
 	f.features = (&fs.Features{
 		CanHaveEmptyDirectories: true,
+		PartialUploads:          true,
 	}).Fill(ctx, f)
 	// set the pool drainer timer going
 	if f.opt.IdleTimeout > 0 {
