@@ -1228,6 +1228,64 @@ func TestCopyFileCopyDest(t *testing.T) {
 	r.CheckRemoteItems(t, file2, file2dst, file3, file4, file4dst, file6, file7dst)
 }
 
+func TestCopyInplace(t *testing.T) {
+	ctx := context.Background()
+	ctx, ci := fs.AddConfig(ctx)
+	r := fstest.NewRun(t)
+
+	ci.Inplace = true
+
+	file1 := r.WriteFile("file1", "file1 contents", t1)
+	r.CheckLocalItems(t, file1)
+
+	file2 := file1
+	file2.Path = "sub/file2"
+
+	err := operations.CopyFile(ctx, r.Fremote, r.Flocal, file2.Path, file1.Path)
+	require.NoError(t, err)
+	r.CheckLocalItems(t, file1)
+	r.CheckRemoteItems(t, file2)
+
+	err = operations.CopyFile(ctx, r.Fremote, r.Flocal, file2.Path, file1.Path)
+	require.NoError(t, err)
+	r.CheckLocalItems(t, file1)
+	r.CheckRemoteItems(t, file2)
+
+	err = operations.CopyFile(ctx, r.Fremote, r.Fremote, file2.Path, file2.Path)
+	require.NoError(t, err)
+	r.CheckLocalItems(t, file1)
+	r.CheckRemoteItems(t, file2)
+}
+
+func TestCopyLongFileName(t *testing.T) {
+	ctx := context.Background()
+	ctx, ci := fs.AddConfig(ctx)
+	r := fstest.NewRun(t)
+
+	ci.Inplace = false // the default
+
+	file1 := r.WriteFile("file1", "file1 contents", t1)
+	r.CheckLocalItems(t, file1)
+
+	file2 := file1
+	file2.Path = "sub/" + strings.Repeat("file2", 30)
+
+	err := operations.CopyFile(ctx, r.Fremote, r.Flocal, file2.Path, file1.Path)
+	require.NoError(t, err)
+	r.CheckLocalItems(t, file1)
+	r.CheckRemoteItems(t, file2)
+
+	err = operations.CopyFile(ctx, r.Fremote, r.Flocal, file2.Path, file1.Path)
+	require.NoError(t, err)
+	r.CheckLocalItems(t, file1)
+	r.CheckRemoteItems(t, file2)
+
+	err = operations.CopyFile(ctx, r.Fremote, r.Fremote, file2.Path, file2.Path)
+	require.NoError(t, err)
+	r.CheckLocalItems(t, file1)
+	r.CheckRemoteItems(t, file2)
+}
+
 // testFsInfo is for unit testing fs.Info
 type testFsInfo struct {
 	name      string

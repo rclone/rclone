@@ -145,6 +145,7 @@ type ConfigInfo struct {
 	ServerSideAcrossConfigs bool
 	TerminalColorMode       TerminalColorMode
 	DefaultTime             Time // time that directories with no time should display
+	Inplace                 bool // Download directly to destination file instead of atomic download to temp/rename
 }
 
 // NewConfig creates a new config with everything set to the default

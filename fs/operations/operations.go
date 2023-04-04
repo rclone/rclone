@@ -336,6 +336,27 @@ func Copy(ctx context.Context, f fs.Fs, dst fs.Object, remote string, src fs.Obj
 	doUpdate := dst != nil
 	hashType, hashOption := CommonHash(ctx, f, src.Fs())
 
+	if dst != nil {
+		remote = dst.Remote()
+	}
+
+	var (
+		inplace       = true
+		remotePartial = remote
+	)
+	if !ci.Inplace && f.Features().Move != nil && f.Features().PartialUploads {
+		// Avoid making the leaf name longer if it's already lengthy to avoid
+		// trouble with file name length limits.
+		suffix := "." + random.String(8) + ".partial"
+		base := path.Base(remotePartial)
+		if len(base) > 100 {
+			remotePartial = remotePartial[:len(remotePartial)-len(suffix)] + suffix
+		} else {
+			remotePartial += suffix
+		}
+		inplace = false
+	}
+
 	var actionTaken string
 	for {
 		// Try server-side copy first - if has optional interface and
@@ -363,6 +384,7 @@ func Copy(ctx context.Context, f fs.Fs, dst fs.Object, remote string, src fs.Obj
 				dst = newDst
 				in.ServerSideCopyEnd(dst.Size()) // account the bytes for the server-side transfer
 				_ = in.Close()
+				inplace = true
 			} else {
 				_ = in.Close()
 			}
@@ -384,7 +406,10 @@ func Copy(ctx context.Context, f fs.Fs, dst fs.Object, remote string, src fs.Obj
 				if streams < 2 {
 					streams = 2
 				}
-				dst, err = multiThreadCopy(ctx, f, remote, src, int(streams), tr)
+				dst, err = multiThreadCopy(ctx, f, remotePartial, src, int(streams), tr)
+				if err == nil {
+					newDst = dst
+				}
 				if doUpdate {
 					actionTaken = "Multi-thread Copied (replaced existing)"
 				} else {
@@ -416,14 +441,14 @@ func Copy(ctx context.Context, f fs.Fs, dst fs.Object, remote string, src fs.Obj
 							}
 						}
 						// NB Rcat closes in0
-						dst, err = Rcat(ctx, f, remote, in0, src.ModTime(ctx), meta)
+						dst, err = Rcat(ctx, f, remotePartial, in0, src.ModTime(ctx), meta)
 						newDst = dst
 					} else {
 						in := tr.Account(ctx, in0).WithBuffer() // account and buffer the transfer
 						var wrappedSrc fs.ObjectInfo = src
 						// We try to pass the original object if possible
-						if src.Remote() != remote {
-							wrappedSrc = fs.NewOverrideRemote(src, remote)
+						if src.Remote() != remotePartial {
+							wrappedSrc = fs.NewOverrideRemote(src, remotePartial)
 						}
 						options := []fs.OpenOption{hashOption}
 						for _, option := range ci.UploadHeaders {
@@ -432,12 +457,15 @@ func Copy(ctx context.Context, f fs.Fs, dst fs.Object, remote string, src fs.Obj
 						if ci.MetadataSet != nil {
 							options = append(options, fs.MetadataOption(ci.MetadataSet))
 						}
-						if doUpdate {
-							actionTaken = "Copied (replaced existing)"
+						if doUpdate && inplace {
 							err = dst.Update(ctx, in, wrappedSrc, options...)
 						} else {
-							actionTaken = "Copied (new)"
 							dst, err = f.Put(ctx, in, wrappedSrc, options...)
+						}
+						if doUpdate {
+							actionTaken = "Copied (replaced existing)"
+						} else {
+							actionTaken = "Copied (new)"
 						}
 						closeErr := in.Close()
 						if err == nil {
@@ -499,6 +527,21 @@ func Copy(ctx context.Context, f fs.Fs, dst fs.Object, remote string, src fs.Obj
 			return newDst, err
 		}
 	}
+
+	// Move the copied file to its real destination.
+	if err == nil && !inplace && remotePartial != remote {
+		dst, err = f.Features().Move(ctx, newDst, remote)
+		if err == nil {
+			fs.Debugf(newDst, "renamed to: %s", remote)
+			newDst = dst
+		} else {
+			fs.Errorf(newDst, "partial file rename failed: %v", err)
+			err = fs.CountError(err)
+			removeFailedCopy(ctx, newDst)
+			return newDst, err
+		}
+	}
+
 	if newDst != nil && src.String() != newDst.String() {
 		actionTaken = fmt.Sprintf("%s to: %s", actionTaken, newDst.String())
 	}
