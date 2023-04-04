@@ -30,6 +30,7 @@ type Features struct {
 	WriteMetadata           bool // can write metadata to objects
 	UserMetadata            bool // can read/write general purpose metadata
 	FilterAware             bool // can make use of filters if provided for listing
+	PartialUploads          bool // uploaded file can appear incomplete on the fs while it's being uploaded
 
 	// Purge all files in the directory specified
 	//
