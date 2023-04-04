@@ -1471,9 +1471,8 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	srcBlobSVC := srcObj.getBlobSVC()
 	srcURL := srcBlobSVC.URL()
 
-	tier := blob.AccessTier(f.opt.AccessTier)
 	options := blob.StartCopyFromURLOptions{
-		Tier: &tier,
+		Tier: parseTier(f.opt.AccessTier),
 	}
 	var startCopy blob.StartCopyFromURLResponse
 	err = f.pacer.Call(func() (bool, error) {
@@ -2045,10 +2044,9 @@ func (o *Object) uploadMultipart(ctx context.Context, in io.Reader, size int64, 
 		return err
 	}
 
-	tier := blob.AccessTier(o.fs.opt.AccessTier)
 	options := blockblob.CommitBlockListOptions{
 		Metadata:    o.getMetadata(),
-		Tier:        &tier,
+		Tier:        parseTier(o.fs.opt.AccessTier),
 		HTTPHeaders: httpHeaders,
 	}
 
@@ -2092,10 +2090,9 @@ func (o *Object) uploadSinglepart(ctx context.Context, in io.Reader, size int64,
 	b := bytes.NewReader(buf[:n])
 	rs := &readSeekCloser{Reader: b, Seeker: b}
 
-	tier := blob.AccessTier(o.fs.opt.AccessTier)
 	options := blockblob.UploadOptions{
 		Metadata:    o.getMetadata(),
-		Tier:        &tier,
+		Tier:        parseTier(o.fs.opt.AccessTier),
 		HTTPHeaders: httpHeaders,
 	}
 
@@ -2263,6 +2260,14 @@ func (o *Object) SetTier(tier string) error {
 // GetTier returns object tier in azure as string
 func (o *Object) GetTier() string {
 	return string(o.accessTier)
+}
+
+func parseTier(tier string) *blob.AccessTier {
+	if tier == "" {
+		return nil
+	}
+	msTier := blob.AccessTier(tier)
+	return &msTier
 }
 
 // Check the interfaces are satisfied
