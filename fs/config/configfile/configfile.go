@@ -106,7 +106,6 @@ func (s *Storage) Save() error {
 	if configPath == "" {
 		return fmt.Errorf("failed to save config file, path is empty")
 	}
-
 	dir, name := filepath.Split(configPath)
 	err := file.MkdirAll(dir, os.ModePerm)
 	if err != nil {
@@ -119,7 +118,7 @@ func (s *Storage) Save() error {
 	defer func() {
 		_ = f.Close()
 		if err := os.Remove(f.Name()); err != nil && !os.IsNotExist(err) {
-			fs.Errorf(nil, "failed to remove temp config file: %v", err)
+			fs.Errorf(nil, "Failed to remove temp file for new config: %v", err)
 		}
 	}()
 
@@ -154,15 +153,33 @@ func (s *Storage) Save() error {
 		fs.Errorf(nil, "Failed to set permissions on config file: %v", err)
 	}
 
-	if err = os.Rename(configPath, configPath+".old"); err != nil && !os.IsNotExist(err) {
-		return fmt.Errorf("failed to move previous config to backup location: %w", err)
+	fbackup, err := os.CreateTemp(dir, name+".old")
+	if err != nil {
+		return fmt.Errorf("failed to create temp file for old config backup: %w", err)
+	}
+	err = fbackup.Close()
+	if err != nil {
+		return fmt.Errorf("failed to close temp file for old config backup: %w", err)
+	}
+	keepBackup := true
+	defer func() {
+		if !keepBackup {
+			if err := os.Remove(fbackup.Name()); err != nil && !os.IsNotExist(err) {
+				fs.Errorf(nil, "Failed to remove temp file for old config backup: %v", err)
+			}
+		}
+	}()
+
+	if err = os.Rename(configPath, fbackup.Name()); err != nil {
+		if !os.IsNotExist(err) {
+			return fmt.Errorf("failed to move previous config to backup location: %w", err)
+		}
+		keepBackup = false // no existing file, no need to keep backup even if writing of new file fails
 	}
 	if err = os.Rename(f.Name(), configPath); err != nil {
 		return fmt.Errorf("failed to move newly written config from %s to final location: %v", f.Name(), err)
 	}
-	if err := os.Remove(configPath + ".old"); err != nil && !os.IsNotExist(err) {
-		fs.Errorf(nil, "Failed to remove backup config file: %v", err)
-	}
+	keepBackup = false // new file was written, no need to keep backup
 
 	// Update s.fi with the newly written file
 	s.fi, _ = os.Stat(configPath)
