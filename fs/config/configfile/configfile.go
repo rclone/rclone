@@ -106,12 +106,30 @@ func (s *Storage) Save() error {
 	if configPath == "" {
 		return fmt.Errorf("failed to save config file, path is empty")
 	}
-	dir, name := filepath.Split(configPath)
-	err := file.MkdirAll(dir, os.ModePerm)
+	configDir, configName := filepath.Split(configPath)
+
+	info, err := os.Lstat(configPath)
+	if err != nil {
+		if !os.IsNotExist(err) {
+			return fmt.Errorf("failed to resolve config file path: %w", err)
+		}
+	} else {
+		if info.Mode()&os.ModeSymlink != 0 {
+			configPath, err = os.Readlink(configPath)
+			if err != nil {
+				return fmt.Errorf("failed to resolve config file symbolic link: %w", err)
+			}
+			if !filepath.IsAbs(configPath) {
+				configPath = filepath.Join(configDir, configPath)
+			}
+			configDir = filepath.Dir(configPath)
+		}
+	}
+	err = file.MkdirAll(configDir, os.ModePerm)
 	if err != nil {
 		return fmt.Errorf("failed to create config directory: %w", err)
 	}
-	f, err := os.CreateTemp(dir, name)
+	f, err := os.CreateTemp(configDir, configName)
 	if err != nil {
 		return fmt.Errorf("failed to create temp file for new config: %w", err)
 	}
@@ -138,7 +156,7 @@ func (s *Storage) Save() error {
 	}
 
 	var fileMode os.FileMode = 0600
-	info, err := os.Stat(configPath)
+	info, err = os.Stat(configPath)
 	if err != nil {
 		fs.Debugf(nil, "Using default permissions for config file: %v", fileMode)
 	} else if info.Mode() != fileMode {
@@ -153,7 +171,7 @@ func (s *Storage) Save() error {
 		fs.Errorf(nil, "Failed to set permissions on config file: %v", err)
 	}
 
-	fbackup, err := os.CreateTemp(dir, name+".old")
+	fbackup, err := os.CreateTemp(configDir, configName+".old")
 	if err != nil {
 		return fmt.Errorf("failed to create temp file for old config backup: %w", err)
 	}
