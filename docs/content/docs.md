@@ -956,6 +956,14 @@ the new file. Then it will rename the existing file to a temporary
 name as backup. Next, rclone will rename the new file to the correct name,
 before finally cleaning up by deleting the backup file.
 
+If the configuration file path used by rclone is a symbolic link, then
+this will be evaluated and rclone will write to the resolved path, instead
+of overwriting the symbolic link. Temporary files used in the process
+(described above) will be written to the same parent directory as that
+of the resolved configuration file, but if this directory is also a
+symbolic link it will not be resolved and the temporary files will be
+written to the location of the directory symbolic link.
+
 ### --contimeout=TIME ###
 
 Set the connection timeout. This should be in go time format which
