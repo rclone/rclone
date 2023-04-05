@@ -147,7 +147,7 @@ length and if it's case sensitive.`,
 				},
 				{
 					Value: "base32768",
-					Help:  "Encode using base32768. Suitable if your remote counts UTF-16 or\nUnicode codepoint instead of UTF-8 byte length. (Eg. Onedrive)",
+					Help:  "Encode using base32768. Suitable if your remote counts UTF-16 or\nUnicode codepoint instead of UTF-8 byte length. (Eg. Onedrive, Dropbox)",
 				},
 			},
 			Advanced: true,
