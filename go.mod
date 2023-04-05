@@ -70,7 +70,7 @@ require (
 	golang.org/x/sys v0.6.0
 	golang.org/x/text v0.8.0
 	golang.org/x/time v0.3.0
-	google.golang.org/api v0.115.0
+	google.golang.org/api v0.116.0
 	gopkg.in/yaml.v2 v2.4.0
 	storj.io/uplink v1.10.0
 )
