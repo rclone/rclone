@@ -1,8 +1,11 @@
 [codespell]
 skip = .git,*.pdf,*.svg,rclone.1,MANUAL.*,testdata
 # bunch of little false positives from here and there
-# Medias, nEast, Deriver, twoO, inBraces, failRe, allEdges, nNeeded - variables etc
+# Medias, nEast, Deriver, twoO, inBraces, failRe, allEdges, nNeeded,aAdded - variables and "shortcutted" text
 # Damon, Parth, Buda - names
 # \ndoes - bad detection in codespell
 # crate - Go lingua
-ignore-words-list = als,bu,hel,ket,nd,nin,ois,ot,sav,te,ue,medias,damon,neast,deriver,twoo,inbraces,parth,failre,alledges,nneeded,ddelete,buda,ndoes,crate,bbefore
+# Unknwon - name of the project used
+# crashers - it is what it is
+# goup - css clas
+ignore-words-list = als,bu,hel,ket,nd,nin,ois,ot,sav,te,ue,medias,damon,neast,deriver,twoo,inbraces,parth,failre,alledges,nneeded,ddelete,buda,ndoes,crate,bbefore,unknwon,aadd,crashers,goup
