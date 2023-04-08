@@ -3,6 +3,7 @@ package configfile
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"runtime"
 	"strings"
 	"testing"
@@ -240,5 +241,123 @@ func TestConfigFileNoConfig(t *testing.T) {
 	})
 	t.Run("NotFound", func(t *testing.T) {
 		testConfigFileNoConfig(t, "/notfound")
+	})
+}
+
+func TestConfigFileSave(t *testing.T) {
+	testDir := t.TempDir()
+	configPath := filepath.Join(testDir, "a", "b", "c", "configfile")
+
+	assert.NoError(t, config.SetConfigPath(configPath))
+	data := &Storage{}
+	require.Error(t, data.Load(), config.ErrorConfigFileNotFound)
+
+	t.Run("CreatesDirsAndFile", func(t *testing.T) {
+		err := data.Save()
+		require.NoError(t, err)
+		info, err := os.Stat(configPath)
+		require.NoError(t, err)
+		assert.False(t, info.IsDir())
+	})
+	t.Run("KeepsFileMode", func(t *testing.T) {
+		if runtime.GOOS != "linux" {
+			t.Skip("this is a Linux only test")
+		}
+		assert.NoError(t, os.Chmod(configPath, 0400)) // -r--------
+		defer func() {
+			_ = os.Chmod(configPath, 0644) // -rw-r--r--
+		}()
+		err := data.Save()
+		require.NoError(t, err)
+		info, err := os.Stat(configPath)
+		require.NoError(t, err)
+		assert.Equal(t, os.FileMode(0400), info.Mode().Perm())
+	})
+	t.Run("SucceedsEvenIfReadOnlyFile", func(t *testing.T) {
+		// Save succeeds even if file is read-only since it does not write directly to the file.
+		assert.NoError(t, os.Chmod(configPath, 0400)) // -r--------
+		defer func() {
+			_ = os.Chmod(configPath, 0644) // -rw-r--r--
+		}()
+		err := data.Save()
+		assert.NoError(t, err)
+	})
+	t.Run("FailsIfNotAccessToDir", func(t *testing.T) {
+		// Save fails if no access to the directory.
+		if runtime.GOOS != "linux" {
+			// On Windows the os.Chmod only affects the read-only attribute of files)
+			t.Skip("this is a Linux only test")
+		}
+		configDir := filepath.Dir(configPath)
+		assert.NoError(t, os.Chmod(configDir, 0400)) // -r--------
+		defer func() {
+			_ = os.Chmod(configDir, 0755) // -rwxr-xr-x
+		}()
+		err := data.Save()
+		require.Error(t, err)
+		assert.True(t, strings.HasPrefix(err.Error(), "failed to resolve config file path"))
+	})
+	t.Run("FailsIfNotAllowedToCreateNewFiles", func(t *testing.T) {
+		// Save fails if read-only access to the directory, since it needs to create temporary files in there.
+		if runtime.GOOS != "linux" {
+			// On Windows the os.Chmod only affects the read-only attribute of files)
+			t.Skip("this is a Linux only test")
+		}
+		configDir := filepath.Dir(configPath)
+		assert.NoError(t, os.Chmod(configDir, 0544)) // -r-xr--r--
+		defer func() {
+			_ = os.Chmod(configDir, 0755) // -rwxr-xr-x
+		}()
+		err := data.Save()
+		require.Error(t, err)
+		assert.True(t, strings.HasPrefix(err.Error(), "failed to create temp file for new config"))
+	})
+}
+
+func TestConfigFileSaveSymlinkAbsolute(t *testing.T) {
+	if runtime.GOOS != "linux" {
+		// Symlinks may require admin privileges on Windows and os.Symlink will then
+		// fail with "A required privilege is not held by the client."
+		t.Skip("this is a Linux only test")
+	}
+	testDir := t.TempDir()
+	linkDir := filepath.Join(testDir, "a")
+	err := os.Mkdir(linkDir, os.ModePerm)
+	require.NoError(t, err)
+
+	testSymlink := func(t *testing.T, link string, target string, resolvedTarget string) {
+		err = os.Symlink(target, link)
+		require.NoError(t, err)
+		defer func() {
+			_ = os.Remove(link)
+		}()
+
+		assert.NoError(t, config.SetConfigPath(link))
+		data := &Storage{}
+		require.Error(t, data.Load(), config.ErrorConfigFileNotFound)
+
+		err = data.Save()
+		require.NoError(t, err)
+
+		info, err := os.Lstat(link)
+		require.NoError(t, err)
+		assert.True(t, info.Mode()&os.ModeSymlink != 0)
+		assert.False(t, info.IsDir())
+
+		info, err = os.Lstat(resolvedTarget)
+		require.NoError(t, err)
+		assert.False(t, info.IsDir())
+	}
+
+	t.Run("Absolute", func(t *testing.T) {
+		link := filepath.Join(linkDir, "configfilelink")
+		target := filepath.Join(testDir, "b", "configfiletarget")
+		testSymlink(t, link, target, target)
+	})
+	t.Run("Relative", func(t *testing.T) {
+		link := filepath.Join(linkDir, "configfilelink")
+		target := filepath.Join("b", "c", "configfiletarget")
+		resolvedTarget := filepath.Join(filepath.Dir(link), target)
+		testSymlink(t, link, target, resolvedTarget)
 	})
 }
