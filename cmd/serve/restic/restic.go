@@ -13,6 +13,8 @@ import (
 	"strings"
 	"time"
 
+	sysdnotify "github.com/iguanesolutions/go-systemd/v5/notify"
+
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/rclone/rclone/cmd"
@@ -177,7 +179,17 @@ with a path of ` + "`/<username>/`" + `.
 				return nil
 			}
 			fs.Logf(s.f, "Serving restic REST API on %s", s.URLs())
+
+			if err := sysdnotify.Ready(); err != nil {
+				fs.Logf(s.f, "failed to notify ready to systemd: %v", err)
+			}
+
 			s.Wait()
+
+			if err := sysdnotify.Stopping(); err != nil {
+				fs.Logf(s.f, "failed to notify stopping to systemd: %v", err)
+			}
+
 			return nil
 		})
 	},
