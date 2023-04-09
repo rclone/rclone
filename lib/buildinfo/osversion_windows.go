@@ -1,7 +1,6 @@
 package buildinfo
 
 import (
-	"fmt"
 	"regexp"
 	"strings"
 	"unsafe"
@@ -32,10 +31,10 @@ func GetOSVersion() (osVersion, osKernel string) {
 			}
 		}
 
-		// Simplify kernel output: `RELEASE.BUILD Build BUILD` -> `RELEASE.BUILD`
-		match := regexp.MustCompile(`^([\d\.]+?\.)(\d+) Build (\d+)$`).FindStringSubmatch(osKernel)
+		// Simplify kernel output: `MAJOR.MINOR.BUILD.REVISION Build BUILD.REVISION` -> `MAJOR.MINOR.BUILD.REVISION`
+		match := regexp.MustCompile(`^(\d+\.\d+\.(\d+\.\d+)) Build (\d+\.\d+)$`).FindStringSubmatch(osKernel)
 		if len(match) == 4 && match[2] == match[3] {
-			osKernel = match[1] + match[2]
+			osKernel = match[1]
 		}
 	}
 
@@ -51,11 +50,6 @@ func GetOSVersion() (osVersion, osKernel string) {
 		if friendlyName != "" {
 			osVersion += " " + friendlyName
 		}
-	}
-
-	updateRevision := getRegistryVersionInt("UBR")
-	if osKernel != "" && updateRevision != 0 {
-		osKernel += fmt.Sprintf(".%d", updateRevision)
 	}
 
 	if arch, err := host.KernelArch(); err == nil && arch != "" {
