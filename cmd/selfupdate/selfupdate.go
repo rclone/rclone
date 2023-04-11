@@ -68,13 +68,14 @@ var cmdSelfUpdate = &cobra.Command{
 		"versionIntroduced": "v1.55",
 	},
 	Run: func(command *cobra.Command, args []string) {
+		ctx := context.Background()
 		cmd.CheckArgs(0, 0, command, args)
 		if Opt.Package == "" {
 			Opt.Package = "zip"
 		}
 		gotActionFlags := Opt.Stable || Opt.Beta || Opt.Output != "" || Opt.Version != "" || Opt.Package != "zip"
 		if Opt.Check && !gotActionFlags {
-			versionCmd.CheckVersion()
+			versionCmd.CheckVersion(ctx)
 			return
 		}
 		if Opt.Package != "zip" {
@@ -108,7 +109,7 @@ func GetVersion(ctx context.Context, beta bool, version string) (newVersion, sit
 
 	if version == "" {
 		// Request the latest release number from the download site
-		_, newVersion, _, err = versionCmd.GetVersion(siteURL + "/version.txt")
+		_, newVersion, _, err = versionCmd.GetVersion(ctx, siteURL+"/version.txt")
 		return
 	}
 

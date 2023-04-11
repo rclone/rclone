@@ -2,6 +2,7 @@
 package version
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -13,6 +14,7 @@ import (
 	"github.com/rclone/rclone/cmd"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config/flags"
+	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/spf13/cobra"
 )
 
@@ -71,9 +73,10 @@ Or
 		"versionIntroduced": "v1.33",
 	},
 	Run: func(command *cobra.Command, args []string) {
+		ctx := context.Background()
 		cmd.CheckArgs(0, 0, command, args)
 		if check {
-			CheckVersion()
+			CheckVersion(ctx)
 		} else {
 			cmd.ShowVersion()
 		}
@@ -89,8 +92,8 @@ func stripV(s string) string {
 }
 
 // GetVersion gets the version available for download
-func GetVersion(url string) (v *semver.Version, vs string, date time.Time, err error) {
-	resp, err := http.Get(url)
+func GetVersion(ctx context.Context, url string) (v *semver.Version, vs string, date time.Time, err error) {
+	resp, err := fshttp.NewClient(ctx).Get(url)
 	if err != nil {
 		return v, vs, date, err
 	}
@@ -114,7 +117,7 @@ func GetVersion(url string) (v *semver.Version, vs string, date time.Time, err e
 }
 
 // CheckVersion checks the installed version against available downloads
-func CheckVersion() {
+func CheckVersion(ctx context.Context) {
 	vCurrent, err := semver.NewVersion(stripV(fs.Version))
 	if err != nil {
 		fs.Errorf(nil, "Failed to parse version: %v", err)
@@ -122,7 +125,7 @@ func CheckVersion() {
 	const timeFormat = "2006-01-02"
 
 	printVersion := func(what, url string) {
-		v, vs, t, err := GetVersion(url + "version.txt")
+		v, vs, t, err := GetVersion(ctx, url+"version.txt")
 		if err != nil {
 			fs.Errorf(nil, "Failed to get rclone %s version: %v", what, err)
 			return
