@@ -654,18 +654,54 @@ func (vfs *VFS) Chtimes(name string, atime time.Time, mtime time.Time) error {
 	return nil
 }
 
+// mkdir creates a new directory with the specified name and permission bits
+// (before umask) returning the new directory node.
+func (vfs *VFS) mkdir(name string, perm os.FileMode) (*Dir, error) {
+	dir, leaf, err := vfs.StatParent(name)
+	if err != nil {
+		return nil, err
+	}
+	return dir.Mkdir(leaf)
+}
+
 // Mkdir creates a new directory with the specified name and permission bits
 // (before umask).
 func (vfs *VFS) Mkdir(name string, perm os.FileMode) error {
-	dir, leaf, err := vfs.StatParent(name)
-	if err != nil {
-		return err
+	_, err := vfs.mkdir(name, perm)
+	return err
+}
+
+// mkdirAll creates a new directory with the specified name and
+// permission bits (before umask) and all of its parent directories up
+// to the root.
+func (vfs *VFS) mkdirAll(name string, perm os.FileMode) (dir *Dir, err error) {
+	name = strings.Trim(name, "/")
+	// the root directory node already exists even if the directory isn't created yet
+	if name == "" {
+		return vfs.root, nil
 	}
-	_, err = dir.Mkdir(leaf)
-	if err != nil {
-		return err
+	var parent, leaf string
+	dir, leaf, err = vfs.StatParent(name)
+	if err == ENOENT {
+		parent, leaf = path.Split(name)
+		dir, err = vfs.mkdirAll(parent, perm)
 	}
-	return nil
+	if err != nil {
+		return nil, err
+	}
+	dir, err = dir.Mkdir(leaf)
+	if err != nil {
+		return nil, err
+	}
+	return dir, nil
+}
+
+// MkdirAll creates a new directory with the specified name and
+// permission bits (before umask) and all of its parent directories up
+// to the root.
+func (vfs *VFS) MkdirAll(name string, perm os.FileMode) error {
+	_, err := vfs.mkdirAll(name, perm)
+	return err
 }
 
 // ReadDir reads the directory named by dirname and returns
