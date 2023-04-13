@@ -20,6 +20,7 @@ type DownloadRequest struct {
 	URL    string `json:"url"`
 	Single int    `json:"single"`
 	Pass   string `json:"pass,omitempty"`
+	CDN    int    `json:"cdn,omitempty"`
 }
 
 // RemoveFolderRequest is the request structure of the corresponding request

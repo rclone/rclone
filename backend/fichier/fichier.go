@@ -55,6 +55,11 @@ func init() {
 			Advanced:   true,
 			IsPassword: true,
 		}, {
+			Help:     "Set if you wish to use CDN download links.",
+			Name:     "cdn",
+			Default:  false,
+			Advanced: true,
+		}, {
 			Name:     config.ConfigEncoding,
 			Help:     config.ConfigEncodingHelp,
 			Advanced: true,
@@ -89,6 +94,7 @@ type Options struct {
 	SharedFolder   string               `config:"shared_folder"`
 	FilePassword   string               `config:"file_password"`
 	FolderPassword string               `config:"folder_password"`
+	CDN            bool                 `config:"cdn"`
 	Enc            encoder.MultiEncoder `config:"encoding"`
 }
 
