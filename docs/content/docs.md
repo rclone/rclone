@@ -39,6 +39,7 @@ See the following for detailed instructions for
   * [Compress](/compress/)
   * [Combine](/combine/)
   * [Crypt](/crypt/) - to encrypt other remotes
+  * [Cryptomator](/cryptomator/) - encrypt other remotes with cryptomator
   * [DigitalOcean Spaces](/s3/#digitalocean-spaces)
   * [Digi Storage](/koofr/#digi-storage)
   * [Dropbox](/dropbox/)
