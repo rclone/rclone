@@ -15,6 +15,7 @@ import (
 	"github.com/rclone/rclone/fs/dirtree"
 	"github.com/rclone/rclone/fs/filter"
 	"github.com/rclone/rclone/fs/list"
+	"golang.org/x/sync/errgroup"
 )
 
 // ErrorSkipDir is used as a return value from Walk to indicate that the
@@ -294,6 +295,27 @@ func listR(ctx context.Context, f fs.Fs, path string, includeAll bool, listType 
 	if synthesizeDirs {
 		dm = newDirMap(path)
 	}
+	// nil the entry out if not included
+	filterEntry := func(ctx context.Context, entry *fs.DirEntry) (err error) {
+		var include bool
+		switch x := (*entry).(type) {
+		case fs.Object:
+			include = fi.IncludeObject(ctx, x)
+		case fs.Directory:
+			include, err = includeDirectory(x.Remote())
+			if err != nil {
+				return err
+			}
+		default:
+			return fmt.Errorf("unknown object type %T", entry)
+		}
+		if !include {
+			fs.Debugf(entry, "Excluded from sync (and deletion)")
+			*entry = nil
+		}
+		return nil
+	}
+	ci := fs.GetConfig(ctx)
 	var mu sync.Mutex
 	err := doListR(ctx, path, func(entries fs.DirEntries) (err error) {
 		if synthesizeDirs {
@@ -304,24 +326,22 @@ func listR(ctx context.Context, f fs.Fs, path string, includeAll bool, listType 
 		}
 		listType.Filter(&entries)
 		if !includeAll {
+			g, gCtx := errgroup.WithContext(ctx)
+			g.SetLimit(ci.Checkers)
+			for i := range entries {
+				entry := &entries[i]
+				g.Go(func() error {
+					return filterEntry(gCtx, entry)
+				})
+			}
+			err = g.Wait()
+			if err != nil {
+				return err
+			}
 			filteredEntries := entries[:0]
 			for _, entry := range entries {
-				var include bool
-				switch x := entry.(type) {
-				case fs.Object:
-					include = fi.IncludeObject(ctx, x)
-				case fs.Directory:
-					include, err = includeDirectory(x.Remote())
-					if err != nil {
-						return err
-					}
-				default:
-					return fmt.Errorf("unknown object type %T", entry)
-				}
-				if include {
+				if entry != nil {
 					filteredEntries = append(filteredEntries, entry)
-				} else {
-					fs.Debugf(entry, "Excluded from sync (and deletion)")
 				}
 			}
 			entries = filteredEntries
