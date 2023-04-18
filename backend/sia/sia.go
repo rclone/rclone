@@ -4,7 +4,6 @@ package sia
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -37,26 +36,25 @@ const (
 func init() {
 	fs.Register(&fs.RegInfo{
 		Name:        "sia",
-		Description: "Sia Decentralized Cloud",
+		Description: "Sia Decentralized Cloud (renterd)",
 		NewFs:       NewFs,
 		Options: []fs.Option{{
 			Name: "api_url",
-			Help: `Sia daemon API URL, like http://sia.daemon.host:9980.
+			Help: `renterd API URL, like http://renterd.host:9980.
 
-Note that siad must run with --disable-api-security to open API port for other hosts (not recommended).
-Keep default if Sia daemon runs on localhost.`,
+Keep default if renterd runs on localhost.`,
 			Default: "http://127.0.0.1:9980",
 		}, {
 			Name: "api_password",
-			Help: `Sia Daemon API Password.
+			Help: `renterd API password.
 
 Can be found in the apipassword file located in HOME/.sia/ or in the daemon directory.`,
 			IsPassword: true,
 		}, {
 			Name: "user_agent",
-			Help: `Siad User Agent
+			Help: `renterd User Agent
 
-Sia daemon requires the 'Sia-Agent' user agent by default for security`,
+renterd requires the 'Sia-Agent' user agent by default for security`,
 			Default:  "Sia-Agent",
 			Advanced: true,
 		}, {
@@ -159,7 +157,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 	var resp *http.Response
 	opts := rest.Opts{
 		Method:  "GET",
-		Path:    path.Join("/renter/stream/", o.fs.root, o.fs.opt.Enc.FromStandardPath(o.remote)),
+		Path:    path.Join("/api/worker/objects/", o.fs.root, o.fs.opt.Enc.FromStandardPath(o.remote)),
 		Options: optionsFixed,
 	}
 	err = o.fs.pacer.Call(func() (bool, error) {
@@ -177,13 +175,12 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	size := src.Size()
 	var resp *http.Response
 	opts := rest.Opts{
-		Method:        "POST",
-		Path:          path.Join("/renter/uploadstream/", o.fs.opt.Enc.FromStandardPath(path.Join(o.fs.root, o.remote))),
+		Method:        "PUT",
+		Path:          path.Join("/api/worker/objects/", o.fs.opt.Enc.FromStandardPath(path.Join(o.fs.root, o.remote))),
 		Body:          in,
 		ContentLength: &size,
 		Parameters:    url.Values{},
 	}
-	opts.Parameters.Set("force", "true")
 
 	err = o.fs.pacer.Call(func() (bool, error) {
 		resp, err = o.fs.srv.Call(ctx, &opts)
@@ -201,8 +198,8 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 func (o *Object) Remove(ctx context.Context) (err error) {
 	var resp *http.Response
 	opts := rest.Opts{
-		Method: "POST",
-		Path:   path.Join("/renter/delete/", o.fs.opt.Enc.FromStandardPath(path.Join(o.fs.root, o.remote))),
+		Method: "DELETE",
+		Path:   path.Join("/api/bus/objects/", o.fs.opt.Enc.FromStandardPath(path.Join(o.fs.root, o.remote))),
 	}
 	err = o.fs.pacer.Call(func() (bool, error) {
 		resp, err = o.fs.srv.Call(ctx, &opts)
@@ -216,10 +213,10 @@ func (o *Object) Remove(ctx context.Context) (err error) {
 func (o *Object) readMetaData(ctx context.Context) (err error) {
 	opts := rest.Opts{
 		Method: "GET",
-		Path:   path.Join("/renter/file/", o.fs.opt.Enc.FromStandardPath(path.Join(o.fs.root, o.remote))),
+		Path:   path.Join("/api/bus/objects/", o.fs.opt.Enc.FromStandardPath(path.Join(o.fs.root, o.remote))),
 	}
 
-	var result api.FileResponse
+	var result api.ObjectResponse
 	var resp *http.Response
 	err = o.fs.pacer.Call(func() (bool, error) {
 		resp, err = o.fs.srv.CallJSON(ctx, &opts, nil, &result)
@@ -230,8 +227,7 @@ func (o *Object) readMetaData(ctx context.Context) (err error) {
 		return err
 	}
 
-	o.size = int64(result.File.Filesize)
-	o.modTime = result.File.ModTime
+	o.size = int64(result.Object.Slabs[0].Length)
 
 	return nil
 }
@@ -268,13 +264,22 @@ func (f *Fs) Features() *fs.Features {
 
 // List files and directories in a directory
 func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err error) {
-	dirPrefix := f.opt.Enc.FromStandardPath(path.Join(f.root, dir)) + "/"
+	dirPrefix := "/" + f.opt.Enc.FromStandardPath(path.Join(f.root, dir)) + "/"
 
-	var result api.DirectoriesResponse
+	if dirPrefix == "//" {
+		dirPrefix = "/"
+	}
+
+	rootDirPrefix := "/" + f.root + "/"
+	if rootDirPrefix == "//" {
+		rootDirPrefix = "/"
+	}
+
+	var result []string
 	var resp *http.Response
 	opts := rest.Opts{
 		Method: "GET",
-		Path:   path.Join("/renter/dir/", dirPrefix) + "/",
+		Path:   path.Join("/api/worker/objects/", dirPrefix) + "/",
 	}
 
 	err = f.pacer.Call(func() (bool, error) {
@@ -286,21 +291,25 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 		return nil, err
 	}
 
-	for _, directory := range result.Directories {
-		if directory.SiaPath+"/" == dirPrefix {
+	for _, object := range result {
+		if object == "/" {
 			continue
 		}
+		if object == dirPrefix {
+			continue
+		}
+		if strings.HasSuffix(object, "/") {
+			d := fs.NewDir(f.opt.Enc.ToStandardPath(strings.TrimSuffix(strings.TrimPrefix(object, rootDirPrefix), "/")), time.Time{})
+			entries = append(entries, d)
+		} else {
+			o := &Object{fs: f,
+				remote: f.opt.Enc.ToStandardPath(strings.TrimPrefix(object, rootDirPrefix)),
+				// TODO file size missing
+				// size: int64(0),
+			}
+			entries = append(entries, o)
+		}
 
-		d := fs.NewDir(f.opt.Enc.ToStandardPath(strings.TrimPrefix(directory.SiaPath, f.opt.Enc.FromStandardPath(f.root)+"/")), directory.MostRecentModTime)
-		entries = append(entries, d)
-	}
-
-	for _, file := range result.Files {
-		o := &Object{fs: f,
-			remote:  f.opt.Enc.ToStandardPath(strings.TrimPrefix(file.SiaPath, f.opt.Enc.FromStandardPath(f.root)+"/")),
-			modTime: file.ModTime,
-			size:    int64(file.Filesize)}
-		entries = append(entries, o)
 	}
 
 	return entries, nil
@@ -362,11 +371,10 @@ func (f *Fs) PutStream(ctx context.Context, in io.Reader, src fs.ObjectInfo, opt
 func (f *Fs) Mkdir(ctx context.Context, dir string) (err error) {
 	var resp *http.Response
 	opts := rest.Opts{
-		Method:     "POST",
-		Path:       path.Join("/renter/dir/", f.opt.Enc.FromStandardPath(path.Join(f.root, dir))),
+		Method:     "PUT",
+		Path:       path.Join("/api/worker/objects/", f.opt.Enc.FromStandardPath(path.Join(f.root, dir))) + "/",
 		Parameters: url.Values{},
 	}
-	opts.Parameters.Set("action", "create")
 
 	err = f.pacer.Call(func() (bool, error) {
 		resp, err = f.srv.Call(ctx, &opts)
@@ -385,27 +393,26 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) (err error) {
 	var resp *http.Response
 	opts := rest.Opts{
 		Method: "GET",
-		Path:   path.Join("/renter/dir/", f.opt.Enc.FromStandardPath(path.Join(f.root, dir))),
+		Path:   path.Join("/api/worker/objects/", f.opt.Enc.FromStandardPath(path.Join(f.root, dir))) + "/",
 	}
 
-	var result api.DirectoriesResponse
+	var result []string
 	err = f.pacer.Call(func() (bool, error) {
 		resp, err = f.srv.CallJSON(ctx, &opts, nil, &result)
 		return f.shouldRetry(resp, err)
 	})
 
-	if len(result.Directories) == 0 {
+	if len(result) == 0 {
 		return fs.ErrorDirNotFound
-	} else if len(result.Files) > 0 || len(result.Directories) > 1 {
+	} else if len(result) > 1 {
 		return fs.ErrorDirectoryNotEmpty
 	}
 
 	opts = rest.Opts{
-		Method:     "POST",
-		Path:       path.Join("/renter/dir/", f.opt.Enc.FromStandardPath(path.Join(f.root, dir))),
+		Method:     "DELETE",
+		Path:       path.Join("/api/bus/objects/", f.opt.Enc.FromStandardPath(path.Join(f.root, dir))) + "/",
 		Parameters: url.Values{},
 	}
-	opts.Parameters.Set("action", "delete")
 
 	err = f.pacer.Call(func() (bool, error) {
 		resp, err = f.srv.Call(ctx, &opts)
@@ -464,7 +471,8 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	}
 
 	if root != "" && !rootIsDir {
-		// Check to see if the root actually an existing file
+		// TODO Check if root is file
+		/* // Check to see if the root actually an existing file
 		remote := path.Base(root)
 		f.root = path.Dir(root)
 		if f.root == "." {
@@ -480,7 +488,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 			return nil, err
 		}
 		// return an error with an fs which points to the parent
-		return f, fs.ErrorIsFile
+		return f, fs.ErrorIsFile */
 	}
 
 	return f, nil

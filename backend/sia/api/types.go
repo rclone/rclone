@@ -18,8 +18,16 @@ type FilesResponse struct {
 }
 
 // FileResponse is the response for https://sia.tech/docs/#renter-file-siapath-get
-type FileResponse struct {
-	File FileInfo `json:"file"`
+type ObjectResponse struct {
+	Object ObjectInfo `json:"object"`
+}
+
+type ObjectInfo struct {
+	Slabs []Slab `json:"Slabs"`
+}
+
+type Slab struct {
+	Length uint64 `json:"Length"`
 }
 
 // FileInfo is used in https://sia.tech/docs/#renter-files-get
