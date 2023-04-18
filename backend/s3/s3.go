@@ -1863,7 +1863,7 @@ If you leave it blank, this is calculated automatically from the sse_customer_ke
 				Help:  "Infrequent access storage mode",
 			}},
 		}, {
-			// Mapping from here: https://www.scaleway.com/en/docs/object-storage-glacier/#-Scaleway-Storage-Classes
+			// Mapping from here: https://www.scaleway.com/en/docs/storage/object/quickstart/
 			Name:     "storage_class",
 			Help:     "The storage class to use when storing new objects in S3.",
 			Provider: "Scaleway",
@@ -1872,10 +1872,13 @@ If you leave it blank, this is calculated automatically from the sse_customer_ke
 				Help:  "Default.",
 			}, {
 				Value: "STANDARD",
-				Help:  "The Standard class for any upload.\nSuitable for on-demand content like streaming or CDN.",
+				Help:  "The Standard class for any upload.\nSuitable for on-demand content like streaming or CDN.\nAvailable in all regions.",
 			}, {
 				Value: "GLACIER",
-				Help:  "Archived storage.\nPrices are lower, but it needs to be restored first to be accessed.",
+				Help:  "Archived storage.\nPrices are lower, but it needs to be restored first to be accessed.\nAvailable in FR-PAR and NL-AMS regions.",
+			}, {
+				Value: "ONEZONE_IA",
+				Help:  "One Zone - Infrequent Access.\nA good choice for storing secondary backup copies or easily re-creatable data.\nAvailable in the FR-PAR region only.",
 			}},
 		}, {
 			// Mapping from here: https://developer.qiniu.com/kodo/5906/storage-type
