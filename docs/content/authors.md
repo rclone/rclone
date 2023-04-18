@@ -715,3 +715,4 @@ put them back in again.` >}}
   * Shyim <github@shyim.de>
   * Rintze Zelle <78232505+rzelle-lallemand@users.noreply.github.com>
   * Damo <damoclark@users.noreply.github.com>
+  * WeidiDeng <weidi_deng@icloud.com>
