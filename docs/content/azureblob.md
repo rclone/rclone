@@ -189,7 +189,7 @@ Then you could access rclone resources like this:
 
 Or
 
-    rclone lsf --azureblob-env-auth --azureblob-acccount=ACCOUNT :azureblob:CONTAINER
+    rclone lsf --azureblob-env-auth --azureblob-account=ACCOUNT :azureblob:CONTAINER
 
 Which is analogous to using the `az` tool:
 
