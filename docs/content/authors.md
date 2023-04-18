@@ -713,3 +713,4 @@ put them back in again.` >}}
   * wiserain <mail275@gmail.com>
   * Roel Arents <roel.arents@kadaster.nl>
   * Shyim <github@shyim.de>
+  * Rintze Zelle <78232505+rzelle-lallemand@users.noreply.github.com>
