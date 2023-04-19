@@ -48,7 +48,7 @@ func init() {
 					Help:  "Very simple filename obfuscation.",
 				}, {
 					Value: "off",
-					Help:  "Don't encrypt the file names.\nAdds a \".bin\", or \"custom_extension\" extension only.",
+					Help:  "Don't encrypt the file names.\nAdds a \".bin\", or \"suffix\" extension only.",
 				},
 			},
 		}, {
@@ -152,11 +152,11 @@ length and if it's case sensitive.`,
 			},
 			Advanced: true,
 		}, {
-			Name: "custom_suffix",
+			Name: "suffix",
 			Help: `If this is set it will override the default suffix of ".bin".
 
-If you leave blank, or do not set to a valid extension, e.g. "jpg" instead of ".jpg", 
-then the suffix will be empty. This may be useful when the path length is critical.`,
+Setting suffix to "none" will result in an empty suffix. This may be useful 
+when the path length is critical.`,
 			Default:  ".bin",
 			Advanced: true,
 		}},
@@ -191,7 +191,7 @@ func newCipherForConfig(opt *Options) (*Cipher, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to make cipher: %w", err)
 	}
-	cipher.setEncryptedSuffix(opt.CustomSuffix)
+	cipher.setEncryptedSuffix(opt.Suffix)
 	cipher.setPassBadBlocks(opt.PassBadBlocks)
 	return cipher, nil
 }
@@ -283,7 +283,7 @@ type Options struct {
 	ShowMapping             bool   `config:"show_mapping"`
 	PassBadBlocks           bool   `config:"pass_bad_blocks"`
 	FilenameEncoding        string `config:"filename_encoding"`
-	CustomSuffix            string `config:"custom_suffix"`
+	Suffix                  string `config:"suffix"`
 }
 
 // Fs represents a wrapped fs.Fs

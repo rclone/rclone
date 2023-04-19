@@ -203,7 +203,7 @@ func newCipher(mode NameEncryptionMode, password, salt string, dirNameEncrypt bo
 
 // setEncryptedSuffix set suffix, or an empty string
 func (c *Cipher) setEncryptedSuffix(suffix string) {
-	if !strings.Contains(suffix, ".") {
+	if strings.EqualFold(suffix, "none") {
 		c.encryptedSuffix = ""
 		return
 	}

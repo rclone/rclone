@@ -410,7 +410,7 @@ func TestNonStandardEncryptFileName(t *testing.T) {
 	c.setEncryptedSuffix(".jpg")
 	assert.Equal(t, "1/12/123.jpg", c.EncryptFileName("1/12/123"))
 	// Off mode with empty suffix
-	c.setEncryptedSuffix("<empty>")
+	c.setEncryptedSuffix("none")
 	assert.Equal(t, "1/12/123", c.EncryptFileName("1/12/123"))
 	// Obfuscation mode
 	c, _ = newCipher(NameEncryptionObfuscated, "", "", true, nil)
@@ -499,7 +499,7 @@ func TestNonStandardDecryptFileName(t *testing.T) {
 			{NameEncryptionOff, true, "1/12/123-v1970-01-01-010101-123-v2001-02-03-040506-123.bin", "1/12/123-v1970-01-01-010101-123-v2001-02-03-040506-123", nil, ""},
 			{NameEncryptionOff, true, "1/12/123-v1970-01-01-010101-123-v2001-02-03-040506-123.txt.bin", "1/12/123-v1970-01-01-010101-123-v2001-02-03-040506-123.txt", nil, ""},
 			{NameEncryptionOff, true, "1/12/123.jpg", "1/12/123", nil, ".jpg"},
-			{NameEncryptionOff, true, "1/12/123", "1/12/123", nil, "<empty>"},
+			{NameEncryptionOff, true, "1/12/123", "1/12/123", nil, "none"},
 			{NameEncryptionObfuscated, true, "!.hello", "hello", nil, ""},
 			{NameEncryptionObfuscated, true, "hello", "", ErrorNotAnEncryptedFile, ""},
 			{NameEncryptionObfuscated, true, "161.\u00e4", "\u00a1", nil, ""},
