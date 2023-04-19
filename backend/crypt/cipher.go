@@ -55,6 +55,7 @@ var (
 	ErrorFileClosed              = errors.New("file already closed")
 	ErrorNotAnEncryptedFile      = errors.New("not an encrypted file - does not match suffix")
 	ErrorBadSeek                 = errors.New("Seek beyond end of file")
+	ErrorSuffixMissingDot        = errors.New("suffix config setting should include a '.'")
 	defaultSalt                  = []byte{0xA8, 0x0D, 0xF4, 0x3A, 0x8F, 0xBD, 0x03, 0x08, 0xA7, 0xCA, 0xB8, 0x3E, 0x58, 0x1F, 0x86, 0xB1}
 	obfuscQuoteRune              = '!'
 )
@@ -206,6 +207,10 @@ func (c *Cipher) setEncryptedSuffix(suffix string) {
 	if strings.EqualFold(suffix, "none") {
 		c.encryptedSuffix = ""
 		return
+	}
+	if !strings.HasPrefix(suffix, ".") {
+		fs.Errorf(nil, "crypt: bad suffix: %v", ErrorSuffixMissingDot)
+		suffix = "." + suffix
 	}
 	c.encryptedSuffix = suffix
 }
