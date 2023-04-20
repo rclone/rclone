@@ -7,6 +7,7 @@ import (
 	"io"
 	"os"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/rclone/rclone/fs"
@@ -222,7 +223,7 @@ func waitSequential(what string, remote string, cond *sync.Cond, maxWait time.Du
 	var (
 		timeout = time.NewTimer(maxWait)
 		done    = make(chan struct{})
-		abort   = false
+		abort   = int32(0)
 	)
 	go func() {
 		select {
@@ -231,14 +232,14 @@ func waitSequential(what string, remote string, cond *sync.Cond, maxWait time.Du
 			// cond.Broadcast. NB cond.L == mu
 			cond.L.Lock()
 			// set abort flag and give all the waiting goroutines a kick on timeout
-			abort = true
+			atomic.StoreInt32(&abort, 1)
 			fs.Debugf(remote, "aborting in-sequence %s wait, off=%d", what, off)
 			cond.Broadcast()
 			cond.L.Unlock()
 		case <-done:
 		}
 	}()
-	for *poff != off && !abort {
+	for *poff != off && atomic.LoadInt32(&abort) == 0 {
 		fs.Debugf(remote, "waiting for in-sequence %s to %d for %v", what, off, maxWait)
 		cond.Wait()
 	}
