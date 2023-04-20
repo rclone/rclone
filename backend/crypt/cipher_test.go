@@ -405,6 +405,13 @@ func TestNonStandardEncryptFileName(t *testing.T) {
 	// Off mode
 	c, _ := newCipher(NameEncryptionOff, "", "", true, nil)
 	assert.Equal(t, "1/12/123.bin", c.EncryptFileName("1/12/123"))
+	// Off mode with custom suffix
+	c, _ = newCipher(NameEncryptionOff, "", "", true, nil)
+	c.setEncryptedSuffix(".jpg")
+	assert.Equal(t, "1/12/123.jpg", c.EncryptFileName("1/12/123"))
+	// Off mode with empty suffix
+	c.setEncryptedSuffix("none")
+	assert.Equal(t, "1/12/123", c.EncryptFileName("1/12/123"))
 	// Obfuscation mode
 	c, _ = newCipher(NameEncryptionObfuscated, "", "", true, nil)
 	assert.Equal(t, "49.6/99.23/150.890/53.!!lipps", c.EncryptFileName("1/12/123/!hello"))
@@ -483,21 +490,27 @@ func TestNonStandardDecryptFileName(t *testing.T) {
 			in             string
 			expected       string
 			expectedErr    error
+			customSuffix   string
 		}{
-			{NameEncryptionOff, true, "1/12/123.bin", "1/12/123", nil},
-			{NameEncryptionOff, true, "1/12/123.bix", "", ErrorNotAnEncryptedFile},
-			{NameEncryptionOff, true, ".bin", "", ErrorNotAnEncryptedFile},
-			{NameEncryptionOff, true, "1/12/123-v2001-02-03-040506-123.bin", "1/12/123-v2001-02-03-040506-123", nil},
-			{NameEncryptionOff, true, "1/12/123-v1970-01-01-010101-123-v2001-02-03-040506-123.bin", "1/12/123-v1970-01-01-010101-123-v2001-02-03-040506-123", nil},
-			{NameEncryptionOff, true, "1/12/123-v1970-01-01-010101-123-v2001-02-03-040506-123.txt.bin", "1/12/123-v1970-01-01-010101-123-v2001-02-03-040506-123.txt", nil},
-			{NameEncryptionObfuscated, true, "!.hello", "hello", nil},
-			{NameEncryptionObfuscated, true, "hello", "", ErrorNotAnEncryptedFile},
-			{NameEncryptionObfuscated, true, "161.\u00e4", "\u00a1", nil},
-			{NameEncryptionObfuscated, true, "160.\u03c2", "\u03a0", nil},
-			{NameEncryptionObfuscated, false, "1/12/123/53.!!lipps", "1/12/123/!hello", nil},
-			{NameEncryptionObfuscated, false, "1/12/123/53-v2001-02-03-040506-123.!!lipps", "1/12/123/!hello-v2001-02-03-040506-123", nil},
+			{NameEncryptionOff, true, "1/12/123.bin", "1/12/123", nil, ""},
+			{NameEncryptionOff, true, "1/12/123.bix", "", ErrorNotAnEncryptedFile, ""},
+			{NameEncryptionOff, true, ".bin", "", ErrorNotAnEncryptedFile, ""},
+			{NameEncryptionOff, true, "1/12/123-v2001-02-03-040506-123.bin", "1/12/123-v2001-02-03-040506-123", nil, ""},
+			{NameEncryptionOff, true, "1/12/123-v1970-01-01-010101-123-v2001-02-03-040506-123.bin", "1/12/123-v1970-01-01-010101-123-v2001-02-03-040506-123", nil, ""},
+			{NameEncryptionOff, true, "1/12/123-v1970-01-01-010101-123-v2001-02-03-040506-123.txt.bin", "1/12/123-v1970-01-01-010101-123-v2001-02-03-040506-123.txt", nil, ""},
+			{NameEncryptionOff, true, "1/12/123.jpg", "1/12/123", nil, ".jpg"},
+			{NameEncryptionOff, true, "1/12/123", "1/12/123", nil, "none"},
+			{NameEncryptionObfuscated, true, "!.hello", "hello", nil, ""},
+			{NameEncryptionObfuscated, true, "hello", "", ErrorNotAnEncryptedFile, ""},
+			{NameEncryptionObfuscated, true, "161.\u00e4", "\u00a1", nil, ""},
+			{NameEncryptionObfuscated, true, "160.\u03c2", "\u03a0", nil, ""},
+			{NameEncryptionObfuscated, false, "1/12/123/53.!!lipps", "1/12/123/!hello", nil, ""},
+			{NameEncryptionObfuscated, false, "1/12/123/53-v2001-02-03-040506-123.!!lipps", "1/12/123/!hello-v2001-02-03-040506-123", nil, ""},
 		} {
 			c, _ := newCipher(test.mode, "", "", test.dirNameEncrypt, enc)
+			if test.customSuffix != "" {
+				c.setEncryptedSuffix(test.customSuffix)
+			}
 			actual, actualErr := c.DecryptFileName(test.in)
 			what := fmt.Sprintf("Testing %q (mode=%v)", test.in, test.mode)
 			assert.Equal(t, test.expected, actual, what)

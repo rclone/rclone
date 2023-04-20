@@ -38,7 +38,6 @@ const (
 	blockHeaderSize     = secretbox.Overhead
 	blockDataSize       = 64 * 1024
 	blockSize           = blockHeaderSize + blockDataSize
-	encryptedSuffix     = ".bin" // when file name encryption is off we add this suffix to make sure the cloud provider doesn't process the file
 )
 
 // Errors returned by cipher
@@ -54,8 +53,9 @@ var (
 	ErrorEncryptedBadBlock       = errors.New("failed to authenticate decrypted block - bad password?")
 	ErrorBadBase32Encoding       = errors.New("bad base32 filename encoding")
 	ErrorFileClosed              = errors.New("file already closed")
-	ErrorNotAnEncryptedFile      = errors.New("not an encrypted file - no \"" + encryptedSuffix + "\" suffix")
+	ErrorNotAnEncryptedFile      = errors.New("not an encrypted file - does not match suffix")
 	ErrorBadSeek                 = errors.New("Seek beyond end of file")
+	ErrorSuffixMissingDot        = errors.New("suffix config setting should include a '.'")
 	defaultSalt                  = []byte{0xA8, 0x0D, 0xF4, 0x3A, 0x8F, 0xBD, 0x03, 0x08, 0xA7, 0xCA, 0xB8, 0x3E, 0x58, 0x1F, 0x86, 0xB1}
 	obfuscQuoteRune              = '!'
 )
@@ -170,25 +170,27 @@ func NewNameEncoding(s string) (enc fileNameEncoding, err error) {
 
 // Cipher defines an encoding and decoding cipher for the crypt backend
 type Cipher struct {
-	dataKey        [32]byte                  // Key for secretbox
-	nameKey        [32]byte                  // 16,24 or 32 bytes
-	nameTweak      [nameCipherBlockSize]byte // used to tweak the name crypto
-	block          gocipher.Block
-	mode           NameEncryptionMode
-	fileNameEnc    fileNameEncoding
-	buffers        sync.Pool // encrypt/decrypt buffers
-	cryptoRand     io.Reader // read crypto random numbers from here
-	dirNameEncrypt bool
-	passBadBlocks  bool // if set passed bad blocks as zeroed blocks
+	dataKey         [32]byte                  // Key for secretbox
+	nameKey         [32]byte                  // 16,24 or 32 bytes
+	nameTweak       [nameCipherBlockSize]byte // used to tweak the name crypto
+	block           gocipher.Block
+	mode            NameEncryptionMode
+	fileNameEnc     fileNameEncoding
+	buffers         sync.Pool // encrypt/decrypt buffers
+	cryptoRand      io.Reader // read crypto random numbers from here
+	dirNameEncrypt  bool
+	passBadBlocks   bool // if set passed bad blocks as zeroed blocks
+	encryptedSuffix string
 }
 
 // newCipher initialises the cipher.  If salt is "" then it uses a built in salt val
 func newCipher(mode NameEncryptionMode, password, salt string, dirNameEncrypt bool, enc fileNameEncoding) (*Cipher, error) {
 	c := &Cipher{
-		mode:           mode,
-		fileNameEnc:    enc,
-		cryptoRand:     rand.Reader,
-		dirNameEncrypt: dirNameEncrypt,
+		mode:            mode,
+		fileNameEnc:     enc,
+		cryptoRand:      rand.Reader,
+		dirNameEncrypt:  dirNameEncrypt,
+		encryptedSuffix: ".bin",
 	}
 	c.buffers.New = func() interface{} {
 		return new([blockSize]byte)
@@ -198,6 +200,19 @@ func newCipher(mode NameEncryptionMode, password, salt string, dirNameEncrypt bo
 		return nil, err
 	}
 	return c, nil
+}
+
+// setEncryptedSuffix set suffix, or an empty string
+func (c *Cipher) setEncryptedSuffix(suffix string) {
+	if strings.EqualFold(suffix, "none") {
+		c.encryptedSuffix = ""
+		return
+	}
+	if !strings.HasPrefix(suffix, ".") {
+		fs.Errorf(nil, "crypt: bad suffix: %v", ErrorSuffixMissingDot)
+		suffix = "." + suffix
+	}
+	c.encryptedSuffix = suffix
 }
 
 // Call to set bad block pass through
@@ -512,7 +527,7 @@ func (c *Cipher) encryptFileName(in string) string {
 // EncryptFileName encrypts a file path
 func (c *Cipher) EncryptFileName(in string) string {
 	if c.mode == NameEncryptionOff {
-		return in + encryptedSuffix
+		return in + c.encryptedSuffix
 	}
 	return c.encryptFileName(in)
 }
@@ -572,8 +587,8 @@ func (c *Cipher) decryptFileName(in string) (string, error) {
 // DecryptFileName decrypts a file path
 func (c *Cipher) DecryptFileName(in string) (string, error) {
 	if c.mode == NameEncryptionOff {
-		remainingLength := len(in) - len(encryptedSuffix)
-		if remainingLength == 0 || !strings.HasSuffix(in, encryptedSuffix) {
+		remainingLength := len(in) - len(c.encryptedSuffix)
+		if remainingLength == 0 || !strings.HasSuffix(in, c.encryptedSuffix) {
 			return "", ErrorNotAnEncryptedFile
 		}
 		decrypted := in[:remainingLength]
