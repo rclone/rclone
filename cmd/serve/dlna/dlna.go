@@ -303,7 +303,7 @@ func (s *server) Serve() (err error) {
 	go func() {
 		fs.Logf(s.f, "Serving HTTP on %s", s.HTTPConn.Addr().String())
 
-		err = s.serveHTTP()
+		err := s.serveHTTP()
 		if err != nil {
 			fs.Logf(s.f, "Error on serving HTTP server: %v", err)
 		}
