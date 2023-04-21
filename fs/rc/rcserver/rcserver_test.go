@@ -170,6 +170,7 @@ func TestFileServing(t *testing.T) {
 		URL:    "",
 		Status: http.StatusOK,
 		Expected: `<pre>
+<a href="%5Btest%5D/">[test]/</a>
 <a href="dir/">dir/</a>
 <a href="file.txt">file.txt</a>
 </pre>
@@ -242,6 +243,7 @@ func TestRemoteServing(t *testing.T) {
 </head>
 <body>
 <h1>Directory listing of /</h1>
+<a href="%5Btest%5D/">[test]/</a><br />
 <a href="dir/">dir/</a><br />
 <a href="file.txt">file.txt</a><br />
 </body>
@@ -301,6 +303,14 @@ func TestRemoteServing(t *testing.T) {
 			URL:      remoteURL + "file.txt",
 			Status:   http.StatusOK,
 			Expected: "this is file1.txt\n",
+			Headers: map[string]string{
+				"Content-Length": "18",
+			},
+		}, {
+			Name:     "file",
+			URL:      "[testdata/files/[test]]/file3.txt",
+			Status:   http.StatusOK,
+			Expected: "this is file3.txt\n",
 			Headers: map[string]string{
 				"Content-Length": "18",
 			},
