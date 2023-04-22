@@ -824,8 +824,9 @@ func touchFiles(ctx context.Context, dateStr string, f fs.Fs, dir, glob string) 
 			err = nil
 			buf := new(bytes.Buffer)
 			size := obj.Size()
+			separator := ""
 			if size > 0 {
-				err = operations.Cat(ctx, f, buf, 0, size)
+				err = operations.Cat(ctx, f, buf, 0, size, []byte(separator))
 			}
 			info := object.NewStaticObjectInfo(remote, date, size, true, nil, f)
 			if err == nil {

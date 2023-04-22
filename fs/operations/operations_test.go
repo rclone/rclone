@@ -529,23 +529,25 @@ func TestCat(t *testing.T) {
 	r.CheckRemoteItems(t, file1, file2)
 
 	for _, test := range []struct {
-		offset int64
-		count  int64
-		a      string
-		b      string
+		offset    int64
+		count     int64
+		separator string
+		a         string
+		b         string
 	}{
-		{0, -1, "ABCDEFGHIJ", "012345678"},
-		{0, 5, "ABCDE", "01234"},
-		{-3, -1, "HIJ", "678"},
-		{1, 3, "BCD", "123"},
+		{0, -1, "", "ABCDEFGHIJ", "012345678"},
+		{0, 5, "", "ABCDE", "01234"},
+		{-3, -1, "", "HIJ", "678"},
+		{1, 3, "", "BCD", "123"},
+		{0, -1, "\n", "ABCDEFGHIJ", "012345678"},
 	} {
 		var buf bytes.Buffer
-		err := operations.Cat(ctx, r.Fremote, &buf, test.offset, test.count)
+		err := operations.Cat(ctx, r.Fremote, &buf, test.offset, test.count, []byte(test.separator))
 		require.NoError(t, err)
 		res := buf.String()
 
-		if res != test.a+test.b && res != test.b+test.a {
-			t.Errorf("Incorrect output from Cat(%d,%d): %q", test.offset, test.count, res)
+		if res != test.a+test.separator+test.b+test.separator && res != test.b+test.separator+test.a+test.separator {
+			t.Errorf("Incorrect output from Cat(%d,%d,%s): %q", test.offset, test.count, test.separator, res)
 		}
 	}
 }
