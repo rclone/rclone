@@ -16,11 +16,12 @@ import (
 
 // Globals
 var (
-	head    = int64(0)
-	tail    = int64(0)
-	offset  = int64(0)
-	count   = int64(-1)
-	discard = false
+	head      = int64(0)
+	tail      = int64(0)
+	offset    = int64(0)
+	count     = int64(-1)
+	discard   = false
+	separator = string("")
 )
 
 func init() {
@@ -31,6 +32,7 @@ func init() {
 	flags.Int64VarP(cmdFlags, &offset, "offset", "", offset, "Start printing at offset N (or from end if -ve)")
 	flags.Int64VarP(cmdFlags, &count, "count", "", count, "Only print N characters")
 	flags.BoolVarP(cmdFlags, &discard, "discard", "", discard, "Discard the output instead of printing")
+	flags.StringVarP(cmdFlags, &separator, "separator", "", separator, "Separator to use between objects when printing multiple files")
 }
 
 var commandDefinition = &cobra.Command{
@@ -82,7 +84,7 @@ Note that if offset is negative it will count from the end, so
 			w = io.Discard
 		}
 		cmd.Run(false, false, command, func() error {
-			return operations.Cat(context.Background(), fsrc, w, offset, count)
+			return operations.Cat(context.Background(), fsrc, w, offset, count, []byte(separator))
 		})
 	},
 }
