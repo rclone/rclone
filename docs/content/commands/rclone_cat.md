@@ -32,6 +32,18 @@ the end and `--offset` and `--count` to print a section in the middle.
 Note that if offset is negative it will count from the end, so
 `--offset -1 --count 1` is equivalent to `--tail 1`.
 
+Use the `--separator` flag to print a separator value between files. Be sure to
+shell-escape special characters. For example, to print a newline between
+files, use:
+
+* bash:
+
+      rclone --include "*.txt" --separator $'\n' cat remote:path/to/dir
+
+* powershell:
+
+      rclone --include "*.txt" --separator "`n" cat remote:path/to/dir
+
 
 ```
 rclone cat remote:path [flags]
@@ -40,12 +52,13 @@ rclone cat remote:path [flags]
 ## Options
 
 ```
-      --count int    Only print N characters (default -1)
-      --discard      Discard the output instead of printing
-      --head int     Only print the first N characters
-  -h, --help         help for cat
-      --offset int   Start printing at offset N (or from end if -ve)
-      --tail int     Only print the last N characters
+      --count int          Only print N characters (default -1)
+      --discard            Discard the output instead of printing
+      --head int           Only print the first N characters
+  -h, --help               help for cat
+      --offset int         Start printing at offset N (or from end if -ve)
+      --separator string   Separator to use between objects when printing multiple files
+      --tail int           Only print the last N characters
 ```
 
 See the [global flags page](/flags/) for global options not listed here.

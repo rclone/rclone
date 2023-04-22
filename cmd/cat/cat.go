@@ -58,6 +58,18 @@ Use the |--head| flag to print characters only at the start, |--tail| for
 the end and |--offset| and |--count| to print a section in the middle.
 Note that if offset is negative it will count from the end, so
 |--offset -1 --count 1| is equivalent to |--tail 1|.
+
+Use the |--separator| flag to print a separator value between files. Be sure to
+shell-escape special characters. For example, to print a newline between
+files, use:
+
+* bash:
+
+      rclone --include "*.txt" --separator $'\n' cat remote:path/to/dir
+
+* powershell:
+
+      rclone --include "*.txt" --separator "|n" cat remote:path/to/dir
 `, "|", "`"),
 	Annotations: map[string]string{
 		"versionIntroduced": "v1.33",
