@@ -7279,7 +7279,7 @@ which can lead to "corrupted on transfer" errors. This is the case because
 the client chooses indiscriminately which server to send commands to while
 the servers all have different views of the state of the filing system.
 
-The "restrict" in authorized_keys prevents SHA1SUMs and MD5SUMs from beeing
+The "restrict" in authorized_keys prevents SHA1SUMs and MD5SUMs from being
 used. Omitting "restrict" and using  `--sftp-path-override` to enable
 checksumming is possible but less secure and you could use the SFTP server
 provided by OpenSSH in this case.
@@ -8389,7 +8389,7 @@ Run a test command
 
 Rclone test is used to run test commands.
 
-Select which test comand you want with the subcommand, eg
+Select which test command you want with the subcommand, eg
 
     rclone test memory remote:
 
@@ -9399,7 +9399,7 @@ they are incorrect as it would normally.
 
 ### --color WHEN ###
 
-Specifiy when colors (and other ANSI codes) should be added to the output.
+Specify when colors (and other ANSI codes) should be added to the output.
 
 `AUTO` (default) only allows ANSI codes when the output is a terminal
 
@@ -16648,7 +16648,7 @@ quashed by adding `--quiet` to the bisync command line.
 # NOTICE: If you make changes to this file you MUST do a --resync run.
 #         Run with --dry-run to see what changes will be made.
 
-# Dropbox wont sync some files so filter them away here.
+# Dropbox won't sync some files so filter them away here.
 # See https://help.dropbox.com/installs-integrations/sync-uploads/files-not-syncing
 - .dropbox.attr
 - ~*.tmp
@@ -17060,7 +17060,7 @@ Your normal workflow might be as follows:
   Delete a single file.
 - `delete-glob <dir> <pattern>`
   Delete a group of files located one level deep in the given directory
-  with names maching a given glob pattern.
+  with names matching a given glob pattern.
 - `touch-glob YYYY-MM-DD <dir> <pattern>`
   Change modification time on a group of files.
 - `touch-copy YYYY-MM-DD <source-file> <dest-dir>`
@@ -33630,7 +33630,7 @@ Use HTTPS for transfers.
 MEGA uses plain text HTTP connections by default.
 Some ISPs throttle HTTP connections, this causes transfers to become very slow.
 Enabling this will force MEGA to use HTTPS for all transfers.
-HTTPS is normally not necesary since all data is already encrypted anyway.
+HTTPS is normally not necessary since all data is already encrypted anyway.
 Enabling it will increase CPU usage and add network overhead.
 
 Properties:
@@ -39623,7 +39623,7 @@ command.)  You may put subdirectories in too, e.g. `remote:item/path/to/dir`.
 ## Notes
 
 The first path segment must be the name of the share, which you entered when you started to share on Windows. On smbd, it's the section title in `smb.conf` (usually in `/etc/samba/`) file.
-You can find shares by quering the root if you're unsure (e.g. `rclone lsd remote:`).
+You can find shares by querying the root if you're unsure (e.g. `rclone lsd remote:`).
 
 You can't access to the shared printers from rclone, obviously.
 
@@ -47191,7 +47191,7 @@ Authors
 Contributors
 ------------
 
-{{< rem `email addresses removed from here need to be addeed to
+{{< rem `email addresses removed from here need to be added to
 bin/.ignore-emails to make sure update-authors.py doesn't immediately
 put them back in again.` >}}
 
