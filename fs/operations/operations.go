@@ -1259,7 +1259,7 @@ type readCloser struct {
 //
 // if count < 0 then it will be ignored
 // if count >= 0 then only that many characters will be output
-func Cat(ctx context.Context, f fs.Fs, w io.Writer, offset, count int64) error {
+func Cat(ctx context.Context, f fs.Fs, w io.Writer, offset, count int64, sep []byte) error {
 	var mu sync.Mutex
 	ci := fs.GetConfig(ctx)
 	return ListFn(ctx, f, func(o fs.Object) {
@@ -1300,6 +1300,13 @@ func Cat(ctx context.Context, f fs.Fs, w io.Writer, offset, count int64) error {
 		if err != nil {
 			err = fs.CountError(err)
 			fs.Errorf(o, "Failed to send to output: %v", err)
+		}
+		if len(sep) >= 0 {
+			_, err = w.Write(sep)
+			if err != nil {
+				err = fs.CountError(err)
+				fs.Errorf(o, "Failed to send separator to output: %v", err)
+			}
 		}
 	})
 }
