@@ -804,7 +804,7 @@ func (c *Cipher) newDecrypter(rc io.ReadCloser) (*decrypter, error) {
 	if n < fileHeaderSize && err == io.EOF {
 		// This read from 0..fileHeaderSize-1 bytes
 		return nil, fh.finishAndClose(ErrorEncryptedFileTooShort)
-	} else if err != nil {
+	} else if err != io.EOF && err != nil {
 		return nil, fh.finishAndClose(err)
 	}
 	// check the magic
