@@ -718,3 +718,4 @@ put them back in again.` >}}
   * WeidiDeng <weidi_deng@icloud.com>
   * Brian Starkey <stark3y@gmail.com>
   * jladbrook <jhladbrook@gmail.com>
+  * Loren Gordon <lorengordon@users.noreply.github.com>
