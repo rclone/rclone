@@ -1047,7 +1047,7 @@ func (f *Fs) copyOrMove(ctx context.Context, src fs.Object, remote string, metho
 		NoResponse: true,
 		ExtraHeaders: map[string]string{
 			"Destination": destinationURL.String(),
-			"Overwrite":   "F",
+			"Overwrite":   "T",
 		},
 	}
 	if f.useOCMtime {
@@ -1147,7 +1147,7 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 		NoResponse: true,
 		ExtraHeaders: map[string]string{
 			"Destination": addSlash(destinationURL.String()),
-			"Overwrite":   "F",
+			"Overwrite":   "T",
 		},
 	}
 	// Direct the MOVE/COPY to the source server
