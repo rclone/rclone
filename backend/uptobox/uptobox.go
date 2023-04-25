@@ -46,6 +46,11 @@ func init() {
 			Help: "Your access token.\n\nGet it from https://uptobox.com/my_account.",
 			Name: "access_token",
 		}, {
+			Help:     "Set to make uploaded files private",
+			Name:     "private",
+			Advanced: true,
+			Default:  false,
+		}, {
 			Name:     config.ConfigEncoding,
 			Help:     config.ConfigEncodingHelp,
 			Advanced: true,
@@ -63,6 +68,7 @@ func init() {
 // Options defines the configuration for this backend
 type Options struct {
 	AccessToken string               `config:"access_token"`
+	Private     bool                 `config:"private"`
 	Enc         encoder.MultiEncoder `config:"encoding"`
 }
 
@@ -75,6 +81,7 @@ type Fs struct {
 	srv      *rest.Client
 	pacer    *fs.Pacer
 	IDRegexp *regexp.Regexp
+	public   string // "0" to make objects private
 }
 
 // Object represents an Uptobox object
@@ -211,6 +218,9 @@ func NewFs(ctx context.Context, name string, root string, config configmap.Mappe
 		CanHaveEmptyDirectories: true,
 		ReadMimeType:            false,
 	}).Fill(ctx, f)
+	if f.opt.Private {
+		f.public = "0"
+	}
 
 	client := fshttp.NewClient(ctx)
 	f.srv = rest.NewClient(client).SetRoot(apiBaseURL)
@@ -531,7 +541,12 @@ func (f *Fs) putUnchecked(ctx context.Context, in io.Reader, remote string, size
 	}
 
 	// rename file to final name
-	err = f.updateFileInformation(ctx, &api.UpdateFileInformation{Token: f.opt.AccessToken, FileCode: match[1], NewName: f.opt.Enc.FromStandardName(leaf)})
+	err = f.updateFileInformation(ctx, &api.UpdateFileInformation{
+		Token:    f.opt.AccessToken,
+		FileCode: match[1],
+		NewName:  f.opt.Enc.FromStandardName(leaf),
+		Public:   f.public,
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -696,7 +711,12 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 
 	// rename to final name if we need to
 	if needRename {
-		err := f.updateFileInformation(ctx, &api.UpdateFileInformation{Token: f.opt.AccessToken, FileCode: srcObj.code, NewName: f.opt.Enc.FromStandardName(dstLeaf)})
+		err := f.updateFileInformation(ctx, &api.UpdateFileInformation{
+			Token:    f.opt.AccessToken,
+			FileCode: srcObj.code,
+			NewName:  f.opt.Enc.FromStandardName(dstLeaf),
+			Public:   f.public,
+		})
 		if err != nil {
 			return nil, fmt.Errorf("move: failed final rename: %w", err)
 		}
@@ -888,7 +908,12 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	}
 
 	if needRename {
-		err := f.updateFileInformation(ctx, &api.UpdateFileInformation{Token: f.opt.AccessToken, FileCode: newObj.(*Object).code, NewName: f.opt.Enc.FromStandardName(dstLeaf)})
+		err := f.updateFileInformation(ctx, &api.UpdateFileInformation{
+			Token:    f.opt.AccessToken,
+			FileCode: newObj.(*Object).code,
+			NewName:  f.opt.Enc.FromStandardName(dstLeaf),
+			Public:   f.public,
+		})
 		if err != nil {
 			return nil, fmt.Errorf("copy: failed final rename: %w", err)
 		}
