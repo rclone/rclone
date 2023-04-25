@@ -1321,7 +1321,7 @@ func (o *Object) SetModTime(ctx context.Context, modTime time.Time) error {
 			Method:     "PROPPATCH",
 			Path:       o.filePath(),
 			NoRedirect: true,
-			Body:       bytes.NewBuffer(fmt.Appendf(nil, owncloudPropset, modTime.Unix())),
+			Body:       strings.NewReader(fmt.Sprintf(owncloudPropset, modTime.Unix())),
 		}
 		var result api.Multistatus
 		var resp *http.Response
