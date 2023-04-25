@@ -719,3 +719,4 @@ put them back in again.` >}}
   * Brian Starkey <stark3y@gmail.com>
   * jladbrook <jhladbrook@gmail.com>
   * Loren Gordon <lorengordon@users.noreply.github.com>
+  * dlitster <davidlitster@gmail.com>
