@@ -1098,7 +1098,7 @@ func (o *Object) ModTime(ctx context.Context) time.Time {
 // SetModTime sets the modification time of the object
 func (o *Object) SetModTime(ctx context.Context, modTime time.Time) error {
 	if !o.fs.fSetTime {
-		fs.Errorf(o.fs, "SetModTime is not supported")
+		fs.Debugf(o.fs, "SetModTime is not supported")
 		return nil
 	}
 	c, err := o.fs.getFtpConnection(ctx)
