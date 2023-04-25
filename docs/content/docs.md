@@ -1576,6 +1576,11 @@ files if they are incorrect as it would normally.
 This can be used if the remote is being synced with another tool also
 (e.g. the Google Drive client).
 
+Currently only implemented for Openstack Swift, Oracle Object Storage,
+Amazon S3, and Microsoft Azure Blob Storage. If specified with other
+backends - even those that [support ModTime](/overview/) -
+the flag is silently ignored.
+
 ### --order-by string ###
 
 The `--order-by` flag controls the order in which files in the backlog
