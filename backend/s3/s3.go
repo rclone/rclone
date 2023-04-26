@@ -2764,7 +2764,6 @@ func s3Connection(ctx context.Context, opt *Options, client *http.Client) (*s3.S
 		awsConfig.WithEndpointResolver(r)
 	}
 
-	awsConfig.WithLogLevel(aws.LogDebug)
 	// awsConfig.WithLogLevel(aws.LogDebugWithSigning)
 	awsSessionOpts := session.Options{
 		Config: *awsConfig,
