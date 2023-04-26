@@ -26,13 +26,13 @@ func init() {
 // man mount.fuse for more info and note the -o flag for other options
 func mountOptions(fsys *FS, f fs.Fs, opt *mountlib.Options) (mountOpts *fuse.MountOptions) {
 	mountOpts = &fuse.MountOptions{
-		AllowOther:    fsys.opt.AllowOther,
-		FsName:        opt.DeviceName,
-		Name:          "rclone",
-		DisableXAttrs: true,
-		Debug:         fsys.opt.DebugFUSE,
-		MaxReadAhead:  int(fsys.opt.MaxReadAhead),
-		MaxWrite:      1024 * 1024, // Linux v4.20+ caps requests at 1 MiB
+		AllowOther:         fsys.opt.AllowOther,
+		FsName:             opt.DeviceName,
+		Name:               "rclone",
+		DisableXAttrs:      true,
+		Debug:              fsys.opt.DebugFUSE,
+		MaxReadAhead:       int(fsys.opt.MaxReadAhead),
+		MaxWrite:           1024 * 1024, // Linux v4.20+ caps requests at 1 MiB
 		DisableReadDirPlus: true,
 
 		// RememberInodes: true,
@@ -218,8 +218,8 @@ func mount(VFS *vfs.VFS, mountpoint string, opt *mountlib.Options) (<-chan error
 		MountOptions: *mountOpts,
 		EntryTimeout: &opt.AttrTimeout,
 		AttrTimeout:  &opt.AttrTimeout,
-		// UID
-		// GID
+		GID:          VFS.Opt.GID,
+		UID:          VFS.Opt.UID,
 	}
 
 	root, err := fsys.Root()
