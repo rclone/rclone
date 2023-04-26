@@ -129,6 +129,9 @@ backends:
  - backend:  "googlecloudstorage"
    remote:   "TestGoogleCloudStorage:"
    fastlist: true
+ - backend:  "googlecloudstorage"
+   remote:   "TestGoogleCloudStorage,directory_markers:"
+   fastlist: true
  - backend:  "googlephotos"
    remote:   "TestGooglePhotos:"
    tests:
