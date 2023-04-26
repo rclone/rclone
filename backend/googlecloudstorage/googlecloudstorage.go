@@ -305,10 +305,10 @@ Docs: https://cloud.google.com/storage/docs/bucket-policy-only
 			Name:     "directory_markers",
 			Default:  false,
 			Advanced: true,
-			Help: `Upload an empty object with a trailing slash in name when new directory is created
+			Help: `Upload an empty object with a trailing slash when a new directory is created
 
-Empty folders are unsupported for bucket based remotes, this option creates an empty 
-object named "/", to persist the folder.
+Empty folders are unsupported for bucket based remotes, this option creates an empty
+object ending with "/", to persist the folder.
 `,
 		}, {
 			Name: "no_check_bucket",
@@ -557,6 +557,9 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		BucketBased:       true,
 		BucketBasedRootOK: true,
 	}).Fill(ctx, f)
+	if opt.DirectoryMarkers {
+		f.features.CanHaveEmptyDirectories = true
+	}
 
 	// Create a new authorized Drive client.
 	f.client = oAuthClient
@@ -643,6 +646,7 @@ func (f *Fs) list(ctx context.Context, bucket, directory, prefix string, addBuck
 	if !recurse {
 		list = list.Delimiter("/")
 	}
+	foundItems := 0
 	for {
 		var objects *storage.Objects
 		err = f.pacer.Call(func() (bool, error) {
@@ -658,6 +662,7 @@ func (f *Fs) list(ctx context.Context, bucket, directory, prefix string, addBuck
 			return err
 		}
 		if !recurse {
+			foundItems += len(objects.Prefixes)
 			var object storage.Object
 			for _, remote := range objects.Prefixes {
 				if !strings.HasSuffix(remote, "/") {
@@ -678,6 +683,7 @@ func (f *Fs) list(ctx context.Context, bucket, directory, prefix string, addBuck
 				}
 			}
 		}
+		foundItems += len(objects.Items)
 		for _, object := range objects.Items {
 			remote := f.opt.Enc.ToStandardPath(object.Name)
 			if !strings.HasPrefix(remote, prefix) {
@@ -691,9 +697,15 @@ func (f *Fs) list(ctx context.Context, bucket, directory, prefix string, addBuck
 			}
 			// is this a directory marker?
 			if isDirectory {
-				continue // skip directory marker
+				// Don't insert the root directory
+				if remote == directory {
+					continue
+				}
+				// process directory markers as directories
+				remote = strings.TrimRight(remote, "/")
 			}
-			err = fn(remote, object, false)
+
+			err = fn(remote, object, isDirectory)
 			if err != nil {
 				return err
 			}
@@ -703,6 +715,17 @@ func (f *Fs) list(ctx context.Context, bucket, directory, prefix string, addBuck
 		}
 		list.PageToken(objects.NextPageToken)
 	}
+	if f.opt.DirectoryMarkers && foundItems == 0 && directory != "" {
+		// Determine whether the directory exists or not by whether it has a marker
+		_, err := f.readObjectInfo(ctx, bucket, directory)
+		if err != nil {
+			if err == fs.ErrorObjectNotFound {
+				return fs.ErrorDirNotFound
+			}
+			return err
+		}
+	}
+
 	return nil
 }
 
@@ -866,27 +889,68 @@ func (f *Fs) PutStream(ctx context.Context, in io.Reader, src fs.ObjectInfo, opt
 	return f.Put(ctx, in, src, options...)
 }
 
+// Create directory marker file and parents
+func (f *Fs) createDirectoryMarker(ctx context.Context, bucket, dir string) error {
+	if !f.opt.DirectoryMarkers || bucket == "" {
+		return nil
+	}
+
+	// Object to be uploaded
+	o := &Object{
+		fs: f,
+	}
+
+	for {
+		_, bucketPath := f.split(dir)
+		// Don't create the directory marker if it is the bucket or at the very root
+		if bucketPath == "" {
+			break
+		}
+		o.remote = dir + "/"
+
+		// Check to see if object already exists
+		_, err := o.readObjectInfo(ctx)
+		if err == nil {
+			return nil
+		}
+
+		// Upload it if not
+		fs.Debugf(o, "Creating directory marker")
+		content := io.Reader(strings.NewReader(""))
+		_, err = f.Put(ctx, content, o)
+		if err != nil {
+			return fmt.Errorf("creating directory marker failed: %w", err)
+		}
+
+		// Now check parent directory exists
+		dir = path.Dir(dir)
+		if dir == "/" || dir == "." {
+			break
+		}
+	}
+
+	return nil
+}
+
 // Mkdir creates the bucket if it doesn't exist
 func (f *Fs) Mkdir(ctx context.Context, dir string) (err error) {
 	bucket, _ := f.split(dir)
-	e := f.makeBucket(ctx, bucket)
+	e := f.checkBucket(ctx, bucket)
 	if e != nil {
 		return e
 	}
-	// Create directory marker file
-	if f.opt.DirectoryMarkers && bucket != "" && dir != "" {
-		markerFilePath := fmt.Sprintf("%s/", dir)
-		markerFileContent := io.Reader(strings.NewReader(""))
-		markerFileObject := &Object{
-			fs:     f,
-			remote: markerFilePath,
-		}
-		_, e := f.Put(ctx, markerFileContent, markerFileObject)
-		if e != nil {
-			return e
-		}
+	return f.createDirectoryMarker(ctx, bucket, dir)
+
+}
+
+// mkdirParent creates the parent bucket/directory if it doesn't exist
+func (f *Fs) mkdirParent(ctx context.Context, remote string) error {
+	remote = strings.TrimRight(remote, "/")
+	dir := path.Dir(remote)
+	if dir == "/" || dir == "." {
+		dir = ""
 	}
-	return nil
+	return f.Mkdir(ctx, dir)
 }
 
 // makeBucket creates the bucket if it doesn't exist
@@ -960,12 +1024,15 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) (err error) {
 	bucket, directory := f.split(dir)
 	// Remove directory marker file
 	if f.opt.DirectoryMarkers && bucket != "" && dir != "" {
-		markerFilePath := fmt.Sprintf("%s/", dir)
-		markerFileObject := &Object{
+		o := &Object{
 			fs:     f,
-			remote: markerFilePath,
+			remote: dir + "/",
 		}
-		_ = markerFileObject.Remove(ctx)
+		fs.Debugf(o, "Removing directory marker")
+		err := o.Remove(ctx)
+		if err != nil {
+			return fmt.Errorf("removing directory marker failed: %w", err)
+		}
 	}
 	if bucket == "" || directory != "" {
 		return nil
@@ -998,7 +1065,7 @@ func (f *Fs) Precision() time.Duration {
 // If it isn't possible then return fs.ErrorCantCopy
 func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
 	dstBucket, dstPath := f.split(remote)
-	err := f.checkBucket(ctx, dstBucket)
+	err := f.mkdirParent(ctx, remote)
 	if err != nil {
 		return nil, err
 	}
@@ -1136,10 +1203,15 @@ func (o *Object) setMetaData(info *storage.Object) {
 // readObjectInfo reads the definition for an object
 func (o *Object) readObjectInfo(ctx context.Context) (object *storage.Object, err error) {
 	bucket, bucketPath := o.split()
-	err = o.fs.pacer.Call(func() (bool, error) {
-		get := o.fs.svc.Objects.Get(bucket, bucketPath).Context(ctx)
-		if o.fs.opt.UserProject != "" {
-			get = get.UserProject(o.fs.opt.UserProject)
+	return o.fs.readObjectInfo(ctx, bucket, bucketPath)
+}
+
+// readObjectInfo reads the definition for an object
+func (f *Fs) readObjectInfo(ctx context.Context, bucket, bucketPath string) (object *storage.Object, err error) {
+	err = f.pacer.Call(func() (bool, error) {
+		get := f.svc.Objects.Get(bucket, bucketPath).Context(ctx)
+		if f.opt.UserProject != "" {
+			get = get.UserProject(f.opt.UserProject)
 		}
 		object, err = get.Do()
 		return shouldRetry(ctx, err)
@@ -1280,11 +1352,14 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 // Update the object with the contents of the io.Reader, modTime and size
 //
 // The new object may have been created if an error is returned
-func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {
+func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (err error) {
 	bucket, bucketPath := o.split()
-	err := o.fs.checkBucket(ctx, bucket)
-	if err != nil {
-		return err
+	// Create parent dir/bucket if not saving directory marker
+	if !strings.HasSuffix(o.remote, "/") {
+		err = o.fs.mkdirParent(ctx, o.remote)
+		if err != nil {
+			return err
+		}
 	}
 	modTime := src.ModTime(ctx)
 
