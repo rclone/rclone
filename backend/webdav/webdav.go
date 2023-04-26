@@ -589,6 +589,7 @@ func (f *Fs) setQuirks(ctx context.Context, vendor string) error {
 	case "nextcloud":
 		f.precision = time.Second
 		f.useOCMtime = true
+		f.propsetMtime = true
 		f.hasOCSHA1 = true
 		f.canChunk = true
 		if err := f.verifyChunkConfig(); err != nil {
