@@ -1342,6 +1342,8 @@ func (o *Object) SetModTime(ctx context.Context, modTime time.Time) error {
 		}
 		// FIXME check if response is valid
 		if len(result.Responses) == 1 && result.Responses[0].Props.StatusOK() {
+			// update cached modtime
+			o.modTime = modTime
 			return nil
 		}
 		// fallback
