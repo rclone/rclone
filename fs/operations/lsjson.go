@@ -291,7 +291,7 @@ func StatJSON(ctx context.Context, fsrc fs.Fs, remote string, opt *ListJSONOpt) 
 	}
 
 	// Could be a file or a directory here
-	if lj.files {
+	if lj.files && !strings.HasSuffix(remote, "/") {
 		// NewObject can return the sentinel errors ErrorObjectNotFound or ErrorIsDir
 		// ErrorObjectNotFound can mean the source is a directory or not found
 		obj, err := fsrc.NewObject(ctx, remote)
