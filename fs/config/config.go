@@ -475,6 +475,9 @@ func updateRemote(ctx context.Context, name string, keyValues rc.Params, opt Upd
 	// Set the config
 	for k, v := range keyValues {
 		vStr := fmt.Sprint(v)
+		if strings.ContainsAny(k, "\n\r") || strings.ContainsAny(vStr, "\n\r") {
+			return nil, fmt.Errorf("update remote: invalid key or value contains \\n or \\r")
+		}
 		// Obscure parameter if necessary
 		if _, ok := needsObscure[k]; ok {
 			_, err := obscure.Reveal(vStr)
@@ -483,7 +486,7 @@ func updateRemote(ctx context.Context, name string, keyValues rc.Params, opt Upd
 				// or we are forced to obscure
 				vStr, err = obscure.Obscure(vStr)
 				if err != nil {
-					return nil, fmt.Errorf("UpdateRemote: obscure failed: %w", err)
+					return nil, fmt.Errorf("update remote: obscure failed: %w", err)
 				}
 			}
 		}
