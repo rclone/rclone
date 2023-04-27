@@ -5865,7 +5865,7 @@ func (o *Object) Metadata(ctx context.Context) (metadata fs.Metadata, err error)
 	setMetadata("content-disposition", o.contentDisposition)
 	setMetadata("content-encoding", o.contentEncoding)
 	setMetadata("content-language", o.contentLanguage)
-	setMetadata("tier", o.storageClass)
+	metadata["tier"] = o.GetTier()
 
 	return metadata, nil
 }
