@@ -227,7 +227,10 @@ func (o *Object) readMetaData(ctx context.Context) (err error) {
 		return err
 	}
 
-	o.size = int64(result.Object.Slabs[0].Length)
+	o.size = 0
+	for _, slab := range result.Object.Slabs {
+		o.size += int64(slab.Length)
+	}
 
 	return nil
 }
@@ -275,7 +278,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 		rootDirPrefix = "/"
 	}
 
-	var result []string
+	var result []api.FileInfo
 	var resp *http.Response
 	opts := rest.Opts{
 		Method: "GET",
@@ -292,20 +295,19 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 	}
 
 	for _, object := range result {
-		if object == "/" {
+		if object.Name == "/" {
 			continue
 		}
-		if object == dirPrefix {
+		if object.Name == dirPrefix {
 			continue
 		}
-		if strings.HasSuffix(object, "/") {
-			d := fs.NewDir(f.opt.Enc.ToStandardPath(strings.TrimSuffix(strings.TrimPrefix(object, rootDirPrefix), "/")), time.Time{})
+		if strings.HasSuffix(object.Name, "/") {
+			d := fs.NewDir(f.opt.Enc.ToStandardPath(strings.TrimSuffix(strings.TrimPrefix(object.Name, rootDirPrefix), "/")), time.Time{})
 			entries = append(entries, d)
 		} else {
 			o := &Object{fs: f,
-				remote: f.opt.Enc.ToStandardPath(strings.TrimPrefix(object, rootDirPrefix)),
-				// TODO file size missing
-				// size: int64(0),
+				remote: f.opt.Enc.ToStandardPath(strings.TrimPrefix(object.Name, rootDirPrefix)),
+				size:   int64(object.Size),
 			}
 			entries = append(entries, o)
 		}
