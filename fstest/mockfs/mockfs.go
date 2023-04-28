@@ -10,8 +10,23 @@ import (
 	"time"
 
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/hash"
 )
+
+// Register with Fs
+func Register() {
+	fs.Register(&fs.RegInfo{
+		Name:        "mockfs",
+		Description: "Mock FS",
+		NewFs:       NewFs,
+		Options: []fs.Option{{
+			Name:     "potato",
+			Help:     "Does it have a potato?.",
+			Required: true,
+		}},
+	})
+}
 
 // Fs is a minimal mock Fs
 type Fs struct {
@@ -26,13 +41,13 @@ type Fs struct {
 var ErrNotImplemented = errors.New("not implemented")
 
 // NewFs returns a new mock Fs
-func NewFs(ctx context.Context, name, root string) *Fs {
+func NewFs(ctx context.Context, name string, root string, config configmap.Mapper) (fs.Fs, error) {
 	f := &Fs{
 		name: name,
 		root: root,
 	}
 	f.features = (&fs.Features{}).Fill(ctx, f)
-	return f
+	return f, nil
 }
 
 // AddObject adds an Object for List to return

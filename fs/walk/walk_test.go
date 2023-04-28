@@ -798,7 +798,8 @@ func TestListR(t *testing.T) {
 		mockobject.Object("dir/b"),
 		mockobject.Object("dir/c"),
 	}
-	f := mockfs.NewFs(ctx, "mock", "/")
+	f, err := mockfs.NewFs(ctx, "mock", "/", nil)
+	require.NoError(t, err)
 	var got []string
 	clearCallback := func() {
 		got = nil
