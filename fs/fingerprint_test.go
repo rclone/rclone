@@ -10,11 +10,14 @@ import (
 	"github.com/rclone/rclone/fstest/mockfs"
 	"github.com/rclone/rclone/fstest/mockobject"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestFingerprint(t *testing.T) {
 	ctx := context.Background()
-	f := mockfs.NewFs(ctx, "test", "root")
+	fMock, err := mockfs.NewFs(ctx, "test", "root", nil)
+	require.NoError(t, err)
+	f := fMock.(*mockfs.Fs)
 	f.SetHashes(hash.NewHashSet(hash.MD5))
 
 	for i, test := range []struct {

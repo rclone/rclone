@@ -193,7 +193,9 @@ func TestFileOpenReadUnknownSize(t *testing.T) {
 	assert.Equal(t, int64(-1), o.Size())
 
 	// add it to a mock fs
-	f := mockfs.NewFs(context.Background(), "test", "root")
+	fMock, err := mockfs.NewFs(context.Background(), "test", "root", nil)
+	require.NoError(t, err)
+	f := fMock.(*mockfs.Fs)
 	f.AddObject(o)
 	testObj, err := f.NewObject(ctx, remote)
 	require.NoError(t, err)
