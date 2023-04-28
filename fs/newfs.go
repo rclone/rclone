@@ -9,9 +9,16 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/fspath"
+)
+
+// Store the hashes of the overridden config
+var (
+	overriddenConfigMu sync.Mutex
+	overriddenConfig   = make(map[string]string)
 )
 
 // NewFs makes a new Fs object from the path
@@ -37,18 +44,25 @@ func NewFs(ctx context.Context, path string) (Fs, error) {
 		extraConfig := overridden.String()
 		//Debugf(nil, "detected overridden config %q", extraConfig)
 		md5sumBinary := md5.Sum([]byte(extraConfig))
-		suffix := base64.RawURLEncoding.EncodeToString(md5sumBinary[:])
+		configHash := base64.RawURLEncoding.EncodeToString(md5sumBinary[:])
 		// 5 characters length is 5*6 = 30 bits of base64
-		const maxLength = 5
-		if len(suffix) > maxLength {
-			suffix = suffix[:maxLength]
+		overriddenConfigMu.Lock()
+		var suffix string
+		for maxLength := 5; ; maxLength++ {
+			suffix = "{" + configHash[:maxLength] + "}"
+			existingExtraConfig, ok := overriddenConfig[suffix]
+			if !ok || existingExtraConfig == extraConfig {
+				break
+			}
 		}
-		suffix = "{" + suffix + "}"
 		Debugf(configName, "detected overridden config - adding %q suffix to name", suffix)
 		// Add the suffix to the config name
 		//
 		// These need to work as filesystem names as the VFS cache will use them
 		configName += suffix
+		// Store the config suffixes for reversing in ConfigString
+		overriddenConfig[suffix] = extraConfig
+		overriddenConfigMu.Unlock()
 	}
 	f, err := fsInfo.NewFs(ctx, configName, fsPath, config)
 	if f != nil && (err == nil || err == ErrorIsFile) {
@@ -105,6 +119,17 @@ func ParseRemote(path string) (fsInfo *RegInfo, configName, fsPath string, conne
 // to configure the Fs as passed to fs.NewFs
 func ConfigString(f Fs) string {
 	name := f.Name()
+	if open := strings.IndexRune(name, '{'); open >= 0 && strings.HasSuffix(name, "}") {
+		suffix := name[open:]
+		overriddenConfigMu.Lock()
+		config, ok := overriddenConfig[suffix]
+		overriddenConfigMu.Unlock()
+		if ok {
+			name = name[:open] + "," + config
+		} else {
+			Errorf(f, "Failed to find config for suffix %q", suffix)
+		}
+	}
 	root := f.Root()
 	if name == "local" && f.Features().IsLocal {
 		return root
