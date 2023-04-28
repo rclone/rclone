@@ -175,6 +175,7 @@ type Fs struct {
 	precision          time.Duration // mod time precision
 	canStream          bool          // set if can stream
 	useOCMtime         bool          // set if can use X-OC-Mtime
+	propsetMtime       bool          // set if can use propset
 	retryWithZeroDepth bool          // some vendors (sharepoint) won't list files when Depth is 1 (our default)
 	checkBeforePurge   bool          // enables extra check that directory to purge really exists
 	hasOCMD5           bool          // set if can use owncloud style checksums for MD5
@@ -582,11 +583,13 @@ func (f *Fs) setQuirks(ctx context.Context, vendor string) error {
 		f.canStream = true
 		f.precision = time.Second
 		f.useOCMtime = true
+		f.propsetMtime = true
 		f.hasOCMD5 = true
 		f.hasOCSHA1 = true
 	case "nextcloud":
 		f.precision = time.Second
 		f.useOCMtime = true
+		f.propsetMtime = true
 		f.hasOCSHA1 = true
 		f.canChunk = true
 		if err := f.verifyChunkConfig(); err != nil {
@@ -1299,8 +1302,53 @@ func (o *Object) ModTime(ctx context.Context) time.Time {
 	return o.modTime
 }
 
+// Set modified time using propset
+//
+// <d:multistatus xmlns:d="DAV:" xmlns:s="http://sabredav.org/ns"><d:response><d:href>/ocm/remote.php/webdav/office/wir.jpg</d:href><d:propstat><d:prop><d:lastmodified/></d:prop><d:status>HTTP/1.1 200 OK</d:status></d:propstat></d:response></d:multistatus>
+var owncloudPropset = `<?xml version="1.0" encoding="utf-8" ?>
+<D:propertyupdate xmlns:D="DAV:">
+ <D:set>
+  <D:prop>
+   <lastmodified xmlns="DAV:">%d</lastmodified>
+  </D:prop>
+ </D:set>
+</D:propertyupdate>
+`
+
 // SetModTime sets the modification time of the local fs object
 func (o *Object) SetModTime(ctx context.Context, modTime time.Time) error {
+	if o.fs.propsetMtime {
+		opts := rest.Opts{
+			Method:     "PROPPATCH",
+			Path:       o.filePath(),
+			NoRedirect: true,
+			Body:       strings.NewReader(fmt.Sprintf(owncloudPropset, modTime.Unix())),
+		}
+		var result api.Multistatus
+		var resp *http.Response
+		var err error
+		err = o.fs.pacer.Call(func() (bool, error) {
+			resp, err = o.fs.srv.CallXML(ctx, &opts, nil, &result)
+			return o.fs.shouldRetry(ctx, resp, err)
+		})
+		if err != nil {
+			if apiErr, ok := err.(*api.Error); ok {
+				// does not exist
+				if apiErr.StatusCode == http.StatusNotFound {
+					return fs.ErrorObjectNotFound
+				}
+			}
+			return fmt.Errorf("couldn't set modified time: %w", err)
+		}
+		// FIXME check if response is valid
+		if len(result.Responses) == 1 && result.Responses[0].Props.StatusOK() {
+			// update cached modtime
+			o.modTime = modTime
+			return nil
+		}
+		// fallback
+		return fs.ErrorCantSetModTime
+	}
 	return fs.ErrorCantSetModTime
 }
 
