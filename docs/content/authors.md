@@ -720,3 +720,4 @@ put them back in again.` >}}
   * jladbrook <jhladbrook@gmail.com>
   * Loren Gordon <lorengordon@users.noreply.github.com>
   * dlitster <davidlitster@gmail.com>
+  * Tobias Gion <tobias@gion.io>
