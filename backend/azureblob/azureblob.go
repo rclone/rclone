@@ -1582,6 +1582,7 @@ func (o *Object) getMetadata() (metadata map[string]*string) {
 	}
 	metadata = make(map[string]*string, len(o.meta))
 	for k, v := range o.meta {
+		v := v
 		metadata[k] = &v
 	}
 	return metadata
