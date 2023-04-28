@@ -526,23 +526,33 @@ func Run(t *testing.T, opt *Opt) {
 	t.Run("FsName", func(t *testing.T) {
 		skipIfNotOk(t)
 		got := removeConfigID(f.Name())
-		want := remoteName[:strings.LastIndex(remoteName, ":")+1]
+		var want string
 		if isLocalRemote {
-			want = "local:"
+			want = "local"
+		} else {
+			want = remoteName[:strings.LastIndex(remoteName, ":")]
+			comma := strings.IndexRune(remoteName, ',')
+			if comma >= 0 {
+				want = want[:comma]
+			}
 		}
-		require.Equal(t, want, got+":")
+		require.Equal(t, want, got)
 	})
 
 	// TestFsRoot tests the Root method
 	t.Run("FsRoot", func(t *testing.T) {
 		skipIfNotOk(t)
-		name := removeConfigID(f.Name()) + ":"
-		root := f.Root()
+		got := f.Root()
+		want := subRemoteName
+		colon := strings.LastIndex(want, ":")
+		if colon >= 0 {
+			want = want[colon+1:]
+		}
 		if isLocalRemote {
 			// only check last path element on local
-			require.Equal(t, filepath.Base(subRemoteName), filepath.Base(root))
+			require.Equal(t, filepath.Base(subRemoteName), filepath.Base(got))
 		} else {
-			require.Equal(t, subRemoteName, name+root)
+			require.Equal(t, want, got)
 		}
 	})
 
