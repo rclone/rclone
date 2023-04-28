@@ -3996,7 +3996,7 @@ func (f *Fs) createDirectoryMarker(ctx context.Context, bucket, dir string) erro
 		// Upload it if not
 		fs.Debugf(o, "Creating directory marker")
 		content := io.Reader(strings.NewReader(""))
-		_, err = f.Put(ctx, content, o)
+		err = o.Update(ctx, content, o)
 		if err != nil {
 			return fmt.Errorf("creating directory marker failed: %w", err)
 		}
