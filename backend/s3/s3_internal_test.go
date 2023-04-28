@@ -322,7 +322,8 @@ func (f *Fs) InternalTestVersions(t *testing.T) {
 			confPath := strings.Replace(newPath, ":", ",versions:", 1)
 			fNew, err := cache.Get(ctx, confPath)
 			// This should return pointing to a file
-			assert.Equal(t, fs.ErrorIsFile, err)
+			require.Equal(t, fs.ErrorIsFile, err)
+			require.NotNil(t, fNew)
 			// With the directory the directory above
 			assert.Equal(t, dirName, path.Base(fs.ConfigString(fNew)))
 		})
