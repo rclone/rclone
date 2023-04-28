@@ -305,6 +305,9 @@ backends:
  - backend:  "azureblob"
    remote:   "TestAzureBlob:"
    fastlist: true
+ - backend:  "azureblob"
+   remote:   "TestAzureBlob,directory_markers:"
+   fastlist: true
  - backend:  "pcloud"
    remote:   "TestPcloud:"
    fastlist: true
