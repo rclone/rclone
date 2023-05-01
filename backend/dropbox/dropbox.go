@@ -260,8 +260,8 @@ uploaded.
 The default for this is 0 which means rclone will choose a sensible
 default based on the batch_mode in use.
 
-- batch_mode: async - default batch_timeout is 500ms
-- batch_mode: sync - default batch_timeout is 10s
+- batch_mode: async - default batch_timeout is 10s
+- batch_mode: sync - default batch_timeout is 500ms
 - batch_mode: off - not in use
 `,
 			Default:  fs.Duration(0),
