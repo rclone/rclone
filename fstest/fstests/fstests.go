@@ -1522,9 +1522,12 @@ func Run(t *testing.T, opt *Opt) {
 
 				file1.Size = int64(buf.Len())
 				obj := findObject(ctx, t, f, file1.Path)
-				obji := object.NewStaticObjectInfo(file1.Path, file1.ModTime, int64(len(contents)), true, nil, obj.Fs())
+				remoteBefore := obj.Remote()
+				obji := object.NewStaticObjectInfo(file1.Path+"-should-be-ignored.bin", file1.ModTime, int64(len(contents)), true, nil, obj.Fs())
 				err := obj.Update(ctx, in, obji)
 				require.NoError(t, err)
+				remoteAfter := obj.Remote()
+				assert.Equal(t, remoteBefore, remoteAfter, "Remote should not change")
 				file1.Hashes = hash.Sums()
 
 				// check the object has been updated
