@@ -376,7 +376,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 	for i, file := range files {
 		remote := path.Join(dir, f.opt.Enc.ToStandardName(file.Name))
 		if file.Type == "dir" {
-			entries[i] = fs.NewDir(remote, time.Unix(0, 0))
+			entries[i] = fs.NewDir(remote, time.Time{})
 		} else {
 			entries[i] = &Object{
 				fs:     f,
