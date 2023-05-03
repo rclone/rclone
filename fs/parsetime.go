@@ -81,6 +81,11 @@ func (t *Time) UnmarshalJSON(in []byte) error {
 	return t.Set(s)
 }
 
+// MarshalJSON marshals as a time.Time value
+func (t Time) MarshalJSON() ([]byte, error) {
+	return json.Marshal(time.Time(t))
+}
+
 // Scan implements the fmt.Scanner interface
 func (t *Time) Scan(s fmt.ScanState, ch rune) error {
 	token, err := s.Token(true, func(rune) bool { return true })
