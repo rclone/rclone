@@ -495,7 +495,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 					add(file)
 				case fs.ErrorNotAFile:
 					// ...found a directory not a file
-					add(fs.NewDir(remote, timeUnset))
+					add(fs.NewDir(remote, time.Time{}))
 				default:
 					fs.Debugf(remote, "skipping because of error: %v", err)
 				}
@@ -507,7 +507,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 		name = strings.TrimRight(name, "/")
 		remote := path.Join(dir, name)
 		if isDir {
-			add(fs.NewDir(remote, timeUnset))
+			add(fs.NewDir(remote, time.Time{}))
 		} else {
 			in <- remote
 		}
