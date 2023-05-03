@@ -722,3 +722,4 @@ put them back in again.` >}}
   * dlitster <davidlitster@gmail.com>
   * Tobias Gion <tobias@gion.io>
   * Jānis Bebrītis <janis.bebritis@wunder.io>
+  * Adam K <github.com@ak.tidy.email>
