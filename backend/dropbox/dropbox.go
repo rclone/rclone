@@ -719,7 +719,7 @@ func (f *Fs) listSharedFolders(ctx context.Context) (entries fs.DirEntries, err 
 		}
 		for _, entry := range res.Entries {
 			leaf := f.opt.Enc.ToStandardName(entry.Name)
-			d := fs.NewDir(leaf, time.Now()).SetID(entry.SharedFolderId)
+			d := fs.NewDir(leaf, time.Time{}).SetID(entry.SharedFolderId)
 			entries = append(entries, d)
 			if err != nil {
 				return nil, err
@@ -906,7 +906,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 			leaf := f.opt.Enc.ToStandardName(path.Base(entryPath))
 			remote := path.Join(dir, leaf)
 			if folderInfo != nil {
-				d := fs.NewDir(remote, time.Now()).SetID(folderInfo.Id)
+				d := fs.NewDir(remote, time.Time{}).SetID(folderInfo.Id)
 				entries = append(entries, d)
 			} else if fileInfo != nil {
 				o, err := f.newObjectWithInfo(ctx, remote, fileInfo)
