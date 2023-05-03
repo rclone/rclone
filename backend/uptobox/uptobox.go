@@ -923,7 +923,8 @@ func (o *Object) Remote() string {
 // It attempts to read the objects mtime and if that isn't present the
 // LastModified returned in the http headers
 func (o *Object) ModTime(ctx context.Context) time.Time {
-	return time.Now()
+	ci := fs.GetConfig(ctx)
+	return time.Time(ci.DefaultTime)
 }
 
 // Size returns the size of an object in bytes
