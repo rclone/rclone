@@ -302,6 +302,24 @@ rclone.
 			}},
 			Advanced: true,
 		}, {
+			Name:    "av_override",
+			Default: false,
+			Help: `Allows download of files the server thinks has a virus.
+
+The onedrive/sharepoint server may check files uploaded with an Anti
+Virus checker. If it detects any potential viruses or malware it will
+block download of the file.
+
+In this case you will see a message like this
+
+    server reports this file is infected with a virus - use --onedrive-av-override to download anyway: Infected (name of virus): 403 Forbidden: 
+
+If you are 100% sure you want to download this file anyway then use
+the --onedrive-av-override flag, or av_override = true in the config
+file.
+`,
+			Advanced: true,
+		}, {
 			Name:     config.ConfigEncoding,
 			Help:     config.ConfigEncodingHelp,
 			Advanced: true,
@@ -640,6 +658,7 @@ type Options struct {
 	LinkType                string               `config:"link_type"`
 	LinkPassword            string               `config:"link_password"`
 	HashType                string               `config:"hash_type"`
+	AVOverride              bool                 `config:"av_override"`
 	Enc                     encoder.MultiEncoder `config:"encoding"`
 }
 
@@ -1966,12 +1985,20 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 	var resp *http.Response
 	opts := o.fs.newOptsCall(o.id, "GET", "/content")
 	opts.Options = options
+	if o.fs.opt.AVOverride {
+		opts.Parameters = url.Values{"AVOverride": {"1"}}
+	}
 
 	err = o.fs.pacer.Call(func() (bool, error) {
 		resp, err = o.fs.srv.Call(ctx, &opts)
 		return shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
+		if resp != nil {
+			if virus := resp.Header.Get("X-Virus-Infected"); virus != "" {
+				err = fmt.Errorf("server reports this file is infected with a virus - use --onedrive-av-override to download anyway: %s: %w", virus, err)
+			}
+		}
 		return nil, err
 	}
 
