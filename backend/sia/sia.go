@@ -51,13 +51,6 @@ Keep default if renterd runs on localhost.`,
 Can be found in the apipassword file located in HOME/.sia/ or in the daemon directory.`,
 			IsPassword: true,
 		}, {
-			Name: "user_agent",
-			Help: `renterd User Agent
-
-renterd requires the 'Sia-Agent' user agent by default for security`,
-			Default:  "Sia-Agent",
-			Advanced: true,
-		}, {
 			Name:     config.ConfigEncoding,
 			Help:     config.ConfigEncodingHelp,
 			Advanced: true,
@@ -76,7 +69,6 @@ renterd requires the 'Sia-Agent' user agent by default for security`,
 type Options struct {
 	APIURL      string               `config:"api_url"`
 	APIPassword string               `config:"api_password"`
-	UserAgent   string               `config:"user_agent"`
 	Enc         encoder.MultiEncoder `config:"encoding"`
 }
 
@@ -227,10 +219,7 @@ func (o *Object) readMetaData(ctx context.Context) (err error) {
 		return err
 	}
 
-	o.size = 0
-	for _, slab := range result.Object.Slabs {
-		o.size += int64(slab.Length)
-	}
+	o.size = result.Object.Size()
 
 	return nil
 }
@@ -267,11 +256,7 @@ func (f *Fs) Features() *fs.Features {
 
 // List files and directories in a directory
 func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err error) {
-	dirPrefix := "/" + f.opt.Enc.FromStandardPath(path.Join(f.root, dir)) + "/"
-
-	if dirPrefix == "//" {
-		dirPrefix = "/"
-	}
+	dirPrefix := f.opt.Enc.FromStandardPath(path.Join(f.root, dir))
 
 	rootDirPrefix := "/" + f.root + "/"
 	if rootDirPrefix == "//" {
@@ -294,19 +279,22 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 		return nil, err
 	}
 
+	dirPath := "/" + dirPrefix + "/"
+
 	for _, object := range result {
 		if object.Name == "/" {
 			continue
 		}
-		if object.Name == dirPrefix {
+		if object.Name == dirPath {
 			continue
 		}
+		name := strings.TrimPrefix(object.Name, rootDirPrefix)
 		if strings.HasSuffix(object.Name, "/") {
-			d := fs.NewDir(f.opt.Enc.ToStandardPath(strings.TrimSuffix(strings.TrimPrefix(object.Name, rootDirPrefix), "/")), time.Time{})
+			d := fs.NewDir(f.opt.Enc.ToStandardPath(strings.TrimSuffix(name, "/")), time.Time{})
 			entries = append(entries, d)
 		} else {
 			o := &Object{fs: f,
-				remote: f.opt.Enc.ToStandardPath(strings.TrimPrefix(object.Name, rootDirPrefix)),
+				remote: f.opt.Enc.ToStandardPath(name),
 				size:   int64(object.Size),
 			}
 			entries = append(entries, o)
@@ -456,10 +444,8 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	}).Fill(ctx, f)
 
 	// Adjust client config and pass it attached to context
-	cliCtx, cliCfg := fs.AddConfig(ctx)
-	if opt.UserAgent != "" {
-		cliCfg.UserAgent = opt.UserAgent
-	}
+	cliCtx, _ := fs.AddConfig(ctx)
+
 	f.srv = rest.NewClient(fshttp.NewClient(cliCtx))
 	f.srv.SetRoot(u.String())
 	f.srv.SetErrorHandler(errorHandler)
