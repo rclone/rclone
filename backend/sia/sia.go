@@ -458,27 +458,6 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		f.srv.SetUserPass("", opt.APIPassword)
 	}
 
-	if root != "" && !rootIsDir {
-		// TODO Check if root is file
-		/* // Check to see if the root actually an existing file
-		remote := path.Base(root)
-		f.root = path.Dir(root)
-		if f.root == "." {
-			f.root = ""
-		}
-		_, err := f.NewObject(ctx, remote)
-		if err != nil {
-			if errors.Is(err, fs.ErrorObjectNotFound) || errors.Is(err, fs.ErrorNotAFile) {
-				// File doesn't exist so return old f
-				f.root = root
-				return f, nil
-			}
-			return nil, err
-		}
-		// return an error with an fs which points to the parent
-		return f, fs.ErrorIsFile */
-	}
-
 	return f, nil
 }
 
