@@ -429,7 +429,6 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		return nil, err
 	}
 
-	rootIsDir := strings.HasSuffix(root, "/")
 	root = strings.Trim(root, "/")
 
 	f := &Fs{
