@@ -67,6 +67,7 @@ Rclone *("rsync for cloud storage")* is a command-line program to sync files and
   * Oracle Object Storage [:page_facing_up:](https://rclone.org/oracleobjectstorage/)
   * ownCloud [:page_facing_up:](https://rclone.org/webdav/#owncloud)
   * pCloud [:page_facing_up:](https://rclone.org/pcloud/)
+  * Petabox [:page_facing_up:](https://rclone.org/s3/#petabox)
   * PikPak [:page_facing_up:](https://rclone.org/pikpak/)
   * premiumize.me [:page_facing_up:](https://rclone.org/premiumizeme/)
   * put.io [:page_facing_up:](https://rclone.org/putio/)
