@@ -23,6 +23,11 @@ func (o *OverrideRemote) Remote() string {
 	return o.remote
 }
 
+// String returns the overridden remote name
+func (o *OverrideRemote) String() string {
+	return o.remote
+}
+
 // MimeType returns the mime type of the underlying object or "" if it
 // can't be worked out
 func (o *OverrideRemote) MimeType(ctx context.Context) string {
