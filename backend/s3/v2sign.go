@@ -14,6 +14,7 @@ import (
 
 // URL parameters that need to be added to the signature
 var s3ParamsToSign = map[string]struct{}{
+	"delete":                       {},
 	"acl":                          {},
 	"location":                     {},
 	"logging":                      {},
