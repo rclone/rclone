@@ -723,3 +723,4 @@ put them back in again.` >}}
   * Tobias Gion <tobias@gion.io>
   * Jānis Bebrītis <janis.bebritis@wunder.io>
   * Adam K <github.com@ak.tidy.email>
+  * Andrei Smirnov <smirnov.captain@gmail.com>
