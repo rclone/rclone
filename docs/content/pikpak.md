@@ -220,19 +220,6 @@ Properties:
 - Type:        SizeSuffix
 - Default:     10Mi
 
-#### --pikpak-multi-thread-streams
-
-Max number of streams to use for multi-thread downloads.
-
-This will override global flag `--multi-thread-streams` and defaults to 1 to avoid rate limiting.
-
-Properties:
-
-- Config:      multi_thread_streams
-- Env Var:     RCLONE_PIKPAK_MULTI_THREAD_STREAMS
-- Type:        int
-- Default:     1
-
 #### --pikpak-encoding
 
 The encoding for the backend.
