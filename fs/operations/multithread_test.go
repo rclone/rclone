@@ -79,6 +79,11 @@ func TestDoMultiThreadCopy(t *testing.T) {
 	assert.True(t, doMultiThreadCopy(ctx, f, src))
 	srcFs.Features().IsLocal = false
 	assert.True(t, doMultiThreadCopy(ctx, f, src))
+
+	srcFs.Features().NoMultiThreading = true
+	assert.False(t, doMultiThreadCopy(ctx, f, src))
+	srcFs.Features().NoMultiThreading = false
+	assert.True(t, doMultiThreadCopy(ctx, f, src))
 }
 
 func TestMultithreadCalculateChunks(t *testing.T) {

@@ -28,11 +28,15 @@ func doMultiThreadCopy(ctx context.Context, f fs.Fs, src fs.Object) bool {
 	if ci.MultiThreadStreams <= 1 {
 		return false
 	}
+	// ...if the source doesn't support it
+	if src.Fs().Features().NoMultiThreading {
+		return false
+	}
 	// ...size of object is less than cutoff
 	if src.Size() < int64(ci.MultiThreadCutoff) {
 		return false
 	}
-	// ...source doesn't support it
+	// ...destination doesn't support it
 	dstFeatures := f.Features()
 	if dstFeatures.OpenWriterAt == nil {
 		return false
