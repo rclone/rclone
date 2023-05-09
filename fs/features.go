@@ -31,6 +31,7 @@ type Features struct {
 	UserMetadata            bool // can read/write general purpose metadata
 	FilterAware             bool // can make use of filters if provided for listing
 	PartialUploads          bool // uploaded file can appear incomplete on the fs while it's being uploaded
+	NoMultiThreading        bool // set if can't have multiplethreads on one download open
 
 	// Purge all files in the directory specified
 	//
