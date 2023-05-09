@@ -1329,10 +1329,17 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	if err != nil {
 		return nil, fmt.Errorf("Move: %w", err)
 	}
-	err = c.sftpClient.Rename(
-		srcObj.path(),
-		path.Join(f.absRoot, remote),
-	)
+	srcPath, dstPath := srcObj.path(), path.Join(f.absRoot, remote)
+	if _, ok := c.sftpClient.HasExtension("posix-rename@openssh.com"); ok {
+		err = c.sftpClient.PosixRename(srcPath, dstPath)
+	} else {
+		// If haven't got PosixRename then remove source first before renaming
+		err = c.sftpClient.Remove(dstPath)
+		if err != nil && !errors.Is(err, iofs.ErrNotExist) {
+			fs.Errorf(f, "Move: Failed to remove existing file %q: %v", dstPath, err)
+		}
+		err = c.sftpClient.Rename(srcPath, dstPath)
+	}
 	f.putSftpConnection(&c, err)
 	if err != nil {
 		return nil, fmt.Errorf("Move Rename failed: %w", err)
