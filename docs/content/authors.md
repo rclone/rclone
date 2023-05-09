@@ -724,3 +724,4 @@ put them back in again.` >}}
   * Jānis Bebrītis <janis.bebritis@wunder.io>
   * Adam K <github.com@ak.tidy.email>
   * Andrei Smirnov <smirnov.captain@gmail.com>
+  * Janne Hellsten <jjhellst@gmail.com>
