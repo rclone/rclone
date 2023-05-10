@@ -1066,7 +1066,7 @@ func NewFsWithConnection(ctx context.Context, f *Fs, name string, root string, m
 		}
 	}
 	f.putSftpConnection(&c, err)
-	if root != "" {
+	if root != "" && !strings.HasSuffix(root, "/") {
 		// Check to see if the root is actually an existing file,
 		// and if so change the filesystem root to its parent directory.
 		oldAbsRoot := f.absRoot
