@@ -1411,6 +1411,16 @@ func (f *Fs) Command(ctx context.Context, name string, arg []string, opt map[str
 
 // ------------------------------------------------------------
 
+// parseFileID gets fid parameter from url query
+func parseFileID(s string) string {
+	if u, err := url.Parse(s); err == nil {
+		if q, err := url.ParseQuery(u.RawQuery); err == nil {
+			return q.Get("fid")
+		}
+	}
+	return ""
+}
+
 // setMetaData sets the metadata from info
 func (o *Object) setMetaData(info *api.File) (err error) {
 	if info.Kind == api.KindOfFolder {
@@ -1432,10 +1442,18 @@ func (o *Object) setMetaData(info *api.File) (err error) {
 	o.md5sum = info.Md5Checksum
 	if info.Links.ApplicationOctetStream != nil {
 		o.link = info.Links.ApplicationOctetStream
-	}
-	if len(info.Medias) > 0 && info.Medias[0].Link != nil {
-		fs.Debugf(o, "Using a media link")
-		o.link = info.Medias[0].Link
+		if fid := parseFileID(o.link.URL); fid != "" {
+			for mid, media := range info.Medias {
+				if media.Link == nil {
+					continue
+				}
+				if mfid := parseFileID(media.Link.URL); fid == mfid {
+					fs.Debugf(o, "Using a media link from Medias[%d]", mid)
+					o.link = media.Link
+					break
+				}
+			}
+		}
 	}
 	return nil
 }
