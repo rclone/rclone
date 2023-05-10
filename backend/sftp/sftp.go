@@ -1169,13 +1169,6 @@ func (f *Fs) dirExists(ctx context.Context, dir string) (bool, error) {
 // found.
 func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err error) {
 	root := path.Join(f.absRoot, dir)
-	ok, err := f.dirExists(ctx, root)
-	if err != nil {
-		return nil, fmt.Errorf("List failed: %w", err)
-	}
-	if !ok {
-		return nil, fs.ErrorDirNotFound
-	}
 	sftpDir := root
 	if sftpDir == "" {
 		sftpDir = "."
@@ -1187,6 +1180,9 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 	infos, err := c.sftpClient.ReadDir(sftpDir)
 	f.putSftpConnection(&c, err)
 	if err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			return nil, fs.ErrorDirNotFound
+		}
 		return nil, fmt.Errorf("error listing %q: %w", dir, err)
 	}
 	for _, info := range infos {
