@@ -58,7 +58,7 @@ import (
 const (
 	rcloneClientID              = "5jcck7diasz0rqy"
 	rcloneEncryptedClientSecret = "fRS5vVLr2v6FbyXYnIgjwBuUAt0osq_QZTXAEcmZ7g"
-	minSleep                    = 10 * time.Millisecond
+	defaultMinSleep             = fs.Duration(10 * time.Millisecond)
 	maxSleep                    = 2 * time.Second
 	decayConstant               = 2 // bigger for slower decay, exponential
 	// Upload chunk size - setting too small makes uploads slow.
@@ -272,6 +272,11 @@ default based on the batch_mode in use.
 			Default:  fs.Duration(10 * time.Minute),
 			Advanced: true,
 		}, {
+			Name:     "pacer_min_sleep",
+			Default:  defaultMinSleep,
+			Help:     "Minimum time to sleep between API calls.",
+			Advanced: true,
+		}, {
 			Name:     config.ConfigEncoding,
 			Help:     config.ConfigEncodingHelp,
 			Advanced: true,
@@ -299,6 +304,7 @@ type Options struct {
 	BatchTimeout       fs.Duration          `config:"batch_timeout"`
 	BatchCommitTimeout fs.Duration          `config:"batch_commit_timeout"`
 	AsyncBatch         bool                 `config:"async_batch"`
+	PacerMinSleep      fs.Duration          `config:"pacer_min_sleep"`
 	Enc                encoder.MultiEncoder `config:"encoding"`
 }
 
@@ -442,7 +448,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		name:  name,
 		opt:   *opt,
 		ci:    ci,
-		pacer: fs.NewPacer(ctx, pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant))),
+		pacer: fs.NewPacer(ctx, pacer.NewDefault(pacer.MinSleep(opt.PacerMinSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant))),
 	}
 	f.batcher, err = newBatcher(ctx, f, f.opt.BatchMode, f.opt.BatchSize, time.Duration(f.opt.BatchTimeout))
 	if err != nil {
