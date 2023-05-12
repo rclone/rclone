@@ -299,6 +299,9 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (outFs fs
 		}
 	}
 
+	// show that we wrap other backends
+	features.Overlay = true
+
 	f.features = features
 
 	// Get common intersection of hashes
