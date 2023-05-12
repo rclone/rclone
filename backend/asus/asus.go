@@ -41,20 +41,8 @@ func init() {
 		}, {
 			Name:       "password",
 			Help:       "Password",
-			Default:    "",
-			Required:   false,
+			Required:   true,
 			IsPassword: true,
-		}, {
-			Name:       "symmetrypwd",
-			Help:       "Symmetric Password (used in official clients, generated from Password+Sid)",
-			Default:    "",
-			Advanced:   true,
-			IsPassword: true,
-		}, {
-			Name:     "sid",
-			Help:     "Sid (random number for represent client installation id)",
-			Default:  "1",
-			Required: false,
 		}, {
 			Name:     "root_folder_id",
 			Help:     "Root folder ID",
@@ -68,8 +56,6 @@ func init() {
 type Options struct {
 	Userid       string `config:"userid"`
 	Password     string `config:"password"`
-	SymmetryPwd  string `config:"symmetrypwd"`
-	Sid          int    `config:"sid"`
 	RootFolderId string `config:"root_folder_id"`
 }
 
@@ -144,7 +130,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	}
 
 	var srv api.AsusAPI
-	srv, err = api.NewAsusAPI(ctx, opt.Userid, opt.Password, opt.SymmetryPwd, opt.Sid, f.pacer)
+	srv, err = api.NewAsusAPI(ctx, opt.Userid, opt.Password, f.pacer)
 	if err != nil {
 		fmt.Println(err)
 		return f, err
@@ -613,8 +599,8 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 		case *fs.RangeOption:
 			if x.Start >= 0 {
 				start = x.Start
-				if x.End > 0 && x.End < o.size {
-					end = x.End + 1
+				if x.End > 0 && x.End <= o.size {
+					end = x.End
 				}
 			} else {
 				start = o.size - x.End

@@ -3,6 +3,7 @@ package api
 import (
 	"bytes"
 	"context"
+	"crypto/des"
 	"crypto/md5"
 	"encoding/base64"
 	"encoding/hex"
@@ -27,6 +28,24 @@ func getAsusHashedPassword(password string) string {
 	return hashedPassword
 }
 
+func getAsusSymmetryPassword(password string, key string) string {
+	c, _ := des.NewTripleDESCipher([]byte(key[:24]))
+
+	input := []byte(password)
+	padding := des.BlockSize - len(input)%des.BlockSize
+	for i := 0; i < padding; i++ {
+		input = append(input, byte(padding))
+	}
+
+	// Split plaintext into blocks and encrypt each block using ECB mode
+	ciphertext := make([]byte, len(input))
+	for i := 0; i < len(input); i += des.BlockSize {
+		c.Encrypt(ciphertext[i:i+des.BlockSize], input[i:i+des.BlockSize])
+	}
+
+	return base64.StdEncoding.EncodeToString(ciphertext)
+}
+
 type AsusAPI struct {
 	srv            *rest.Client
 	userid         string
@@ -39,13 +58,17 @@ type AsusAPI struct {
 	cookie         string
 }
 
-func NewAsusAPI(ctx context.Context, userid string, password string, symmetrypwd string, sid int, pacer *fs.Pacer) (AsusAPI, error) {
+func NewAsusAPI(ctx context.Context, userid string, password string, pacer *fs.Pacer) (AsusAPI, error) {
+	// instead generating unique sid and calculate key for it, official linux client uses next hard-coded values
+	sid := 86408316
+	key := "C9B01DCA7CB144FBAD58AE1222FA1334"
+
 	client := fshttp.NewClient(ctx)
 	api := AsusAPI{
 		srv:         rest.NewClient(client),
 		userid:      userid,
 		password:    password,
-		symmetrypwd: symmetrypwd,
+		symmetrypwd: getAsusSymmetryPassword(password, key),
 		sid:         sid,
 		pacer:       pacer,
 	}
@@ -53,12 +76,12 @@ func NewAsusAPI(ctx context.Context, userid string, password string, symmetrypwd
 	api.cookie = fmt.Sprintf("sid=%v", api.sid)
 	// api.cookie = fmt.Sprintf("sid=%v;c=0;v=1.0.0.3_1001;EEE_MANU=;EEE_PROD=;OS_VER=", api.sid)
 
-	_, err := api.RequestServiceGateway(ctx, userid, password)
+	_, err := api.RequestServiceGateway(ctx)
 	if err != nil {
 		return api, err
 	}
 
-	_, err = api.RequestToken(ctx, userid, password, symmetrypwd)
+	_, err = api.RequestToken(ctx)
 	if err != nil {
 		return api, err
 	}
@@ -135,10 +158,10 @@ type RequestServiceGatewayResponse struct {
 	Time             int64    `xml:"time"`
 }
 
-func (a *AsusAPI) RequestServiceGateway(ctx context.Context, userid string, password string) (RequestServiceGatewayResponse, error) {
+func (a *AsusAPI) RequestServiceGateway(ctx context.Context) (RequestServiceGatewayResponse, error) {
 	req := RequestServiceGatewayRequest{
-		UserId:   userid,
-		Password: getAsusHashedPassword(password),
+		UserId:   a.userid,
+		Password: getAsusHashedPassword(a.password),
 		Language: "zh_TW",
 		Service:  1,
 	}
@@ -215,15 +238,15 @@ type AsusPackage struct {
 	PackageAttrs string `xml:"packageattrs"`
 }
 
-func (a *AsusAPI) RequestToken(ctx context.Context, userid string, password string, symmetrypwd string) (RequestTokenResponse, error) {
+func (a *AsusAPI) RequestToken(ctx context.Context) (RequestTokenResponse, error) {
 	req := RequestTokenRequest{
 		UserId: a.userid,
 	}
 
-	if symmetrypwd != "" {
-		req.SymmetryPwd = symmetrypwd
+	if a.symmetrypwd != "" {
+		req.SymmetryPwd = a.symmetrypwd
 	} else {
-		req.Password = getAsusHashedPassword(password)
+		req.Password = getAsusHashedPassword(a.password)
 	}
 
 	var resp RequestTokenResponse
