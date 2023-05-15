@@ -343,9 +343,12 @@ func TestDirOpen(t *testing.T) {
 func TestDirCreate(t *testing.T) {
 	_, vfs, dir, _ := dirCreate(t)
 
+	origModTime := dir.ModTime()
+	time.Sleep(100 * time.Millisecond) // for low rez Windows timers
 	file, err := dir.Create("potato", os.O_WRONLY|os.O_CREATE)
 	require.NoError(t, err)
 	assert.Equal(t, int64(0), file.Size())
+	assert.True(t, dir.ModTime().After(origModTime))
 
 	fd, err := file.Open(os.O_WRONLY | os.O_CREATE)
 	require.NoError(t, err)
@@ -385,8 +388,11 @@ func TestDirMkdir(t *testing.T) {
 	_, err := dir.Mkdir("file1")
 	assert.Error(t, err)
 
+	origModTime := dir.ModTime()
+	time.Sleep(100 * time.Millisecond) // for low rez Windows timers
 	sub, err := dir.Mkdir("sub")
 	assert.NoError(t, err)
+	assert.True(t, dir.ModTime().After(origModTime))
 
 	// check the vfs
 	checkListing(t, dir, []string{"file1,14,false", "sub,0,true"})
@@ -488,8 +494,11 @@ func TestDirRemoveAll(t *testing.T) {
 func TestDirRemoveName(t *testing.T) {
 	r, vfs, dir, _ := dirCreate(t)
 
+	origModTime := dir.ModTime()
+	time.Sleep(100 * time.Millisecond) // for low rez Windows timers
 	err := dir.RemoveName("file1")
 	require.NoError(t, err)
+	assert.True(t, dir.ModTime().After(origModTime))
 	checkListing(t, dir, []string(nil))
 	root, err := vfs.Root()
 	require.NoError(t, err)
@@ -538,8 +547,11 @@ func TestDirRename(t *testing.T) {
 	dir = node.(*Dir)
 
 	// Rename a file
+	origModTime := dir.ModTime()
+	time.Sleep(100 * time.Millisecond) // for low rez Windows timers
 	err = dir.Rename("file1", "file2", root)
 	assert.NoError(t, err)
+	assert.True(t, dir.ModTime().After(origModTime))
 	checkListing(t, root, []string{"dir2,0,true", "file2,14,false"})
 	checkListing(t, dir, []string{"file3,15,false"})
 
