@@ -923,6 +923,10 @@ func (d *Dir) Create(name string, flags int) (*File, error) {
 	if d.vfs.Opt.ReadOnly {
 		return nil, EROFS
 	}
+	if err = d.SetModTime(time.Now()); err != nil {
+		fs.Errorf(d, "Dir.Create failed to set modtime on parent dir: %v", err)
+		return nil, err
+	}
 	// This gets added to the directory when the file is opened for write
 	return newFile(d, d.Path(), nil, name), nil
 }
@@ -957,6 +961,10 @@ func (d *Dir) Mkdir(name string) (*Dir, error) {
 	fsDir := fs.NewDir(path, time.Now())
 	dir := newDir(d.vfs, d.f, d, fsDir)
 	d.addObject(dir)
+	if err = d.SetModTime(time.Now()); err != nil {
+		fs.Errorf(d, "Dir.Mkdir failed to set modtime on parent dir: %v", err)
+		return nil, err
+	}
 	// fs.Debugf(path, "Dir.Mkdir OK")
 	return dir, nil
 }
@@ -1026,6 +1034,10 @@ func (d *Dir) RemoveName(name string) error {
 	node, err := d.stat(name)
 	if err != nil {
 		fs.Errorf(d, "Dir.Remove error: %v", err)
+		return err
+	}
+	if err = d.SetModTime(time.Now()); err != nil {
+		fs.Errorf(d, "Dir.Remove failed to set modtime on parent dir: %v", err)
 		return err
 	}
 	return node.Remove()
@@ -1098,6 +1110,10 @@ func (d *Dir) Rename(oldName, newName string, destDir *Dir) error {
 	// Show moved - delete from old dir and add to new
 	d.delObject(oldName)
 	destDir.addObject(oldNode)
+	if err = d.SetModTime(time.Now()); err != nil {
+		fs.Errorf(d, "Dir.Rename failed to set modtime on parent dir: %v", err)
+		return err
+	}
 
 	// fs.Debugf(newPath, "Dir.Rename renamed from %q", oldPath)
 	// fs.Debugf(d, "AFTER\n%s", d.dump())
