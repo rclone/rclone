@@ -1233,6 +1233,10 @@ func TestCopyInplace(t *testing.T) {
 	ctx, ci := fs.AddConfig(ctx)
 	r := fstest.NewRun(t)
 
+	if !r.Fremote.Features().PartialUploads {
+		t.Skip("Partial uploads not supported")
+	}
+
 	ci.Inplace = true
 
 	file1 := r.WriteFile("file1", "file1 contents", t1)
@@ -1261,6 +1265,10 @@ func TestCopyLongFileName(t *testing.T) {
 	ctx := context.Background()
 	ctx, ci := fs.AddConfig(ctx)
 	r := fstest.NewRun(t)
+
+	if !r.Fremote.Features().PartialUploads {
+		t.Skip("Partial uploads not supported")
+	}
 
 	ci.Inplace = false // the default
 
