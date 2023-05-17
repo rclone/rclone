@@ -218,7 +218,7 @@ guarantee given hash for all files. If wrapped remote doesn't support it,
 chunker will then add metadata to all files, even small. However, this can
 double the amount of small files in storage and incur additional service charges.
 You can even use chunker to force md5/sha1 support in any other remote
-at expense of sidecar meta objects by setting e.g. `chunk_type=sha1all`
+at expense of sidecar meta objects by setting e.g. `hash_type=sha1all`
 to force hashsums and `chunk_size=1P` to effectively disable chunking.
 
 Normally, when a file is copied to chunker controlled remote, chunker
