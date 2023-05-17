@@ -86,7 +86,6 @@ func init() {
 				}
 				authSrv = rest.NewClient(oAuthClient).SetRoot(accountsURL)
 				apiSrv = rest.NewClient(oAuthClient).SetRoot(rootURL)
-				//downloadapiSrv = rest.NewClient(oAuthClient).SetRoot(downloadURL)
 				return authSrv, apiSrv, nil
 			}
 
