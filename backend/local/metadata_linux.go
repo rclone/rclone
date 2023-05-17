@@ -5,6 +5,7 @@ package local
 
 import (
 	"fmt"
+	"runtime"
 	"sync"
 	"time"
 
@@ -23,7 +24,7 @@ func (o *Object) readMetadataFromFile(m *fs.Metadata) (err error) {
 		// Check statx() is available as it was only introduced in kernel 4.11
 		// If not, fall back to fstatat() which was introduced in 2.6.16 which is guaranteed for all Go versions
 		var stat unix.Statx_t
-		if unix.Statx(unix.AT_FDCWD, ".", 0, unix.STATX_ALL, &stat) != unix.ENOSYS {
+		if runtime.GOOS != "android" && unix.Statx(unix.AT_FDCWD, ".", 0, unix.STATX_ALL, &stat) != unix.ENOSYS {
 			readMetadataFromFileFn = readMetadataFromFileStatx
 		} else {
 			readMetadataFromFileFn = readMetadataFromFileFstatat
