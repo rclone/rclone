@@ -2977,6 +2977,7 @@ func setQuirks(opt *Options) {
 	case "Qiniu":
 		useMultipartEtag = false
 		urlEncodeListings = false
+		virtualHostStyle = false
 	case "GCS":
 		// Google break request Signature by mutating accept-encoding HTTP header
 		// https://github.com/rclone/rclone/issues/6670
