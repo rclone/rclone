@@ -61,6 +61,7 @@ Rclone *("rsync for cloud storage")* is a command-line program to sync files and
   * Minio [:page_facing_up:](https://rclone.org/s3/#minio)
   * Nextcloud [:page_facing_up:](https://rclone.org/webdav/#nextcloud)
   * OVH [:page_facing_up:](https://rclone.org/swift/)
+  * Blomp Cloud Storage [:page_facing_up:](https://rclone.org/swift/)
   * OpenDrive [:page_facing_up:](https://rclone.org/opendrive/)
   * OpenStack Swift [:page_facing_up:](https://rclone.org/swift/)
   * Oracle Cloud Storage [:page_facing_up:](https://rclone.org/swift/)
