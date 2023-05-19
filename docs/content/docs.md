@@ -59,7 +59,7 @@ See the following for detailed instructions for
   * [Memory](/memory/)
   * [Microsoft Azure Blob Storage](/azureblob/)
   * [Microsoft OneDrive](/onedrive/)
-  * [OpenStack Swift / Rackspace Cloudfiles / Memset Memstore](/swift/)
+  * [OpenStack Swift / Rackspace Cloudfiles / Blomp Cloud Storage / Memset Memstore](/swift/)
   * [OpenDrive](/opendrive/)
   * [Oracle Object Storage](/oracleobjectstorage/)
   * [Pcloud](/pcloud/)
