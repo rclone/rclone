@@ -216,6 +216,11 @@ It should be set to true for resuming uploads across different sessions.`,
 			Default:  false,
 			Advanced: true,
 		}, {
+			Name:     "directory_markers",
+			Default:  false,
+			Advanced: true,
+			Help:     `If true, create directory markers with the content type application/directory for Mkdir requests.`,
+		}, {
 			Name: "storage_policy",
 			Help: `The storage policy to use when creating a new container.
 
@@ -263,6 +268,7 @@ type Options struct {
 	NoChunk                     bool                 `config:"no_chunk"`
 	NoLargeObjects              bool                 `config:"no_large_objects"`
 	Enc                         encoder.MultiEncoder `config:"encoding"`
+	DirectoryMarkers            bool                 `config:"directory_markers"`
 }
 
 // Fs represents a remote swift server
@@ -384,7 +390,7 @@ func parsePath(path string) (root string) {
 // split returns container and containerPath from the rootRelativePath
 // relative to f.root
 func (f *Fs) split(rootRelativePath string) (container, containerPath string) {
-	container, containerPath = bucket.Split(path.Join(f.root, rootRelativePath))
+	container, containerPath = bucket.Split(bucket.Join(f.root, rootRelativePath))
 	return f.opt.Enc.FromStandardName(container), f.opt.Enc.FromStandardPath(containerPath)
 }
 
@@ -506,6 +512,9 @@ func NewFsWithConnection(ctx context.Context, opt *Options, name, root string, c
 		BucketBasedRootOK: true,
 		SlowModTime:       true,
 	}).Fill(ctx, f)
+	if opt.DirectoryMarkers {
+		f.features.CanHaveEmptyDirectories = true
+	}
 	if f.rootContainer != "" && f.rootDirectory != "" {
 		// Check to see if the object exists - ignoring directory markers
 		var info swift.Object
@@ -624,13 +633,13 @@ func (f *Fs) listContainerRoot(ctx context.Context, container, directory, prefix
 			objects, err = f.c.Objects(ctx, container, opts)
 			return shouldRetry(ctx, err)
 		})
+
+		dirs := make(map[string]bool)
+
 		if err == nil {
 			for i := range objects {
 				object := &objects[i]
-				isDirectory := false
-				if !recurse {
-					isDirectory = strings.HasSuffix(object.Name, "/")
-				}
+				isDirectory := strings.HasSuffix(object.Name, "/") || object.ContentType == directoryMarkerContentType
 				remote := f.opt.Enc.ToStandardPath(object.Name)
 				if !strings.HasPrefix(remote, prefix) {
 					fs.Logf(f, "Odd name received %q", remote)
@@ -646,6 +655,16 @@ func (f *Fs) listContainerRoot(ctx context.Context, container, directory, prefix
 				if addContainer {
 					remote = path.Join(container, remote)
 				}
+
+				if isDirectory {
+					// Swift returns duplicate directories when a directory marker exists, hence dedupe is required
+					remoteTrimmed := strings.TrimRight(remote, "/")
+					if _, found := dirs[remoteTrimmed]; found {
+						continue
+					}
+					dirs[remoteTrimmed] = true
+				}
+
 				err = fn(remote, object, isDirectory)
 				if err != nil {
 					break
@@ -660,6 +679,7 @@ type addEntryFn func(fs.DirEntry) error
 
 // list the objects into the function supplied
 func (f *Fs) list(ctx context.Context, container, directory, prefix string, addContainer bool, recurse bool, includeDirMarkers bool, fn addEntryFn) error {
+	foundItems := 0
 	err := f.listContainerRoot(ctx, container, directory, prefix, addContainer, recurse, includeDirMarkers, func(remote string, object *swift.Object, isDirectory bool) (err error) {
 		if isDirectory {
 			remote = strings.TrimRight(remote, "/")
@@ -676,11 +696,25 @@ func (f *Fs) list(ctx context.Context, container, directory, prefix string, addC
 				err = fn(o)
 			}
 		}
+
+		foundItems++
 		return err
 	})
 	if err == swift.ContainerNotFound {
-		err = fs.ErrorDirNotFound
+		return fs.ErrorDirNotFound
 	}
+	if f.opt.DirectoryMarkers && foundItems == 0 && directory != "" {
+		// Determine whether the directory exists or not by whether it has a marker
+		dir := directory[len(prefix):]
+		_, err := f.newObjectWithInfo(ctx, dir, nil)
+
+		if err == fs.ErrorObjectNotFound {
+			return fs.ErrorDirNotFound
+		}
+
+		return err
+	}
+
 	return err
 }
 
@@ -851,7 +885,66 @@ func (f *Fs) PutStream(ctx context.Context, in io.Reader, src fs.ObjectInfo, opt
 // Mkdir creates the container if it doesn't exist
 func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 	container, _ := f.split(dir)
-	return f.makeContainer(ctx, container)
+
+	err := f.makeContainer(ctx, container)
+	if err != nil {
+		return err
+	}
+
+	return f.createDirectoryMarker(ctx, container, dir)
+}
+
+// createDirectoryMarker creates an empty directory marker object with the content type set to directoryMarkerContentType.
+func (f *Fs) createDirectoryMarker(ctx context.Context, container string, dir string) error {
+	if !f.opt.DirectoryMarkers || container == "" {
+		return nil
+	}
+
+	// Object to be uploaded
+	o := &Object{
+		fs:           f,
+		remote:       dir,
+		contentType:  directoryMarkerContentType,
+		lastModified: time.Now(),
+	}
+
+	// Swift treats objects with different numbers of trailing slashes as separate objects. e.g. `foo/` and `foo//` are
+	// considered two different objects by Swift. Additionally, Swift doesn't require a trailing slash for directory
+	// markers. So we are trimming all trailing slashes here to prevent creation of duplicated directory markers.
+	for {
+		_, containerPath := f.split(dir)
+
+		// Don't create the directory marker if it is the container or at the very root
+		if containerPath == "" {
+			break
+		}
+
+		o.remote = strings.TrimRight(dir, "/")
+		o.headers = nil // reset headers to force re-reading metadata
+
+		// check to see if object already exists
+		err := o.readMetaData(ctx)
+		if err == nil {
+			return nil
+		}
+
+		// Upload it if not
+		fs.Debugf(o, "Creating directory marker")
+		content := io.Reader(strings.NewReader(""))
+		err = o.Update(ctx, content, o)
+		if err != nil {
+			return fmt.Errorf("failed to create directory marker: %w", err)
+		}
+
+		// Now check parent directory exists
+		dir = path.Dir(dir)
+
+		if dir == "." || dir == "/" {
+			break
+		}
+	}
+
+	return nil
 }
 
 // makeContainer creates the container if it doesn't exist
@@ -888,9 +981,27 @@ func (f *Fs) makeContainer(ctx context.Context, container string) error {
 // Returns an error if it isn't empty
 func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 	container, directory := f.split(dir)
+
+	// Remove directory marker file
+	if f.opt.DirectoryMarkers && container != "" && directory != "" {
+		// check if the directory marker exists
+		o := &Object{
+			fs:     f,
+			remote: strings.TrimRight(dir, "/"),
+		}
+
+		fs.Debugf(o, "Removing directory marker")
+		// delete the directory marker
+		err := o.Remove(ctx)
+		if err != nil {
+			return fmt.Errorf("failed to remove directory marker: %w", err)
+		}
+	}
+
 	if container == "" || directory != "" {
 		return nil
 	}
+
 	err := f.cache.Remove(container, func() error {
 		err := f.pacer.Call(func() (bool, error) {
 			err := f.c.ContainerDelete(ctx, container)
