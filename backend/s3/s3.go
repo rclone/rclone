@@ -66,7 +66,7 @@ import (
 func init() {
 	fs.Register(&fs.RegInfo{
 		Name:        "s3",
-		Description: "Amazon S3 Compliant Storage Providers including AWS, Alibaba, ArvanCloud, Ceph, China Mobile, Cloudflare, GCS, DigitalOcean, Dreamhost, Huawei OBS, IBM COS, IDrive e2, IONOS Cloud, Liara, Lyve Cloud, Minio, Netease, Petabox, RackCorp, Scaleway, SeaweedFS, StackPath, Storj, Tencent COS, Qiniu and Wasabi",
+		Description: "Amazon S3 Compliant Storage Providers including AWS, Alibaba, ArvanCloud, Ceph, China Mobile, Cloudflare, GCS, DigitalOcean, Dreamhost, Huawei OBS, IBM COS, IDrive e2, IONOS Cloud, Liara, Lyve Cloud, Minio, Netease, Petabox, RackCorp, Scaleway, SeaweedFS, StackPath, Storj, Synology, Tencent COS, Qiniu and Wasabi",
 		NewFs:       NewFs,
 		CommandHelp: commandHelp,
 		Config: func(ctx context.Context, name string, m configmap.Mapper, config fs.ConfigIn) (*fs.ConfigOut, error) {
@@ -154,6 +154,9 @@ func init() {
 			}, {
 				Value: "Storj",
 				Help:  "Storj (S3 Compatible Gateway)",
+			}, {
+				Value: "Synology",
+				Help:  "Synology C2 Object Storage",
 			}, {
 				Value: "TencentCOS",
 				Help:  "Tencent Cloud Object Storage (COS)",
@@ -465,8 +468,28 @@ func init() {
 			}},
 		}, {
 			Name:     "region",
+			Help:     "Region where your data stored.\n",
+			Provider: "Synology",
+			Examples: []fs.OptionExample{{
+				Value: "eu-001",
+				Help:  "Europe Region 1",
+			}, {
+				Value: "eu-002",
+				Help:  "Europe Region 2",
+			}, {
+				Value: "us-001",
+				Help:  "US Region 1",
+			}, {
+				Value: "us-002",
+				Help:  "US Region 2",
+			}, {
+				Value: "tw-001",
+				Help:  "Asia (Taiwan)",
+			}},
+		}, {
+			Name:     "region",
 			Help:     "Region to connect to.\n\nLeave blank if you are using an S3 clone and you don't have a region.",
-			Provider: "!AWS,Alibaba,ArvanCloud,ChinaMobile,Cloudflare,IONOS,Petabox,Liara,Qiniu,RackCorp,Scaleway,Storj,TencentCOS,HuaweiOBS,IDrive",
+			Provider: "!AWS,Alibaba,ArvanCloud,ChinaMobile,Cloudflare,IONOS,Petabox,Liara,Qiniu,RackCorp,Scaleway,Storj,Synology,TencentCOS,HuaweiOBS,IDrive",
 			Examples: []fs.OptionExample{{
 				Value: "",
 				Help:  "Use this if unsure.\nWill use v4 signatures and an empty region.",
@@ -1001,6 +1024,26 @@ func init() {
 				Help:  "Global Hosted Gateway",
 			}},
 		}, {
+			Name:     "endpoint",
+			Help:     "Endpoint for Synology C2 Object Storage API.",
+			Provider: "Synology",
+			Examples: []fs.OptionExample{{
+				Value: "eu-001.s3.synologyc2.net",
+				Help:  "EU Endpoint 1",
+			}, {
+				Value: "eu-002.s3.synologyc2.net",
+				Help:  "EU Endpoint 2",
+			}, {
+				Value: "us-001.s3.synologyc2.net",
+				Help:  "US Endpoint 1",
+			}, {
+				Value: "us-002.s3.synologyc2.net",
+				Help:  "US Endpoint 2",
+			}, {
+				Value: "tw-001.s3.synologyc2.net",
+				Help:  "TW Endpoint 1",
+			}},
+		}, {
 			// cos endpoints: https://intl.cloud.tencent.com/document/product/436/6224
 			Name:     "endpoint",
 			Help:     "Endpoint for Tencent COS API.",
@@ -1156,7 +1199,7 @@ func init() {
 		}, {
 			Name:     "endpoint",
 			Help:     "Endpoint for S3 API.\n\nRequired when using an S3 clone.",
-			Provider: "!AWS,ArvanCloud,IBMCOS,IDrive,IONOS,TencentCOS,HuaweiOBS,Alibaba,ChinaMobile,GCS,Liara,Scaleway,StackPath,Storj,RackCorp,Qiniu,Petabox",
+			Provider: "!AWS,ArvanCloud,IBMCOS,IDrive,IONOS,TencentCOS,HuaweiOBS,Alibaba,ChinaMobile,GCS,Liara,Scaleway,StackPath,Storj,Synology,RackCorp,Qiniu,Petabox",
 			Examples: []fs.OptionExample{{
 				Value:    "objects-us-east-1.dream.io",
 				Help:     "Dream Objects endpoint",
@@ -1659,7 +1702,7 @@ doesn't copy the ACL from the source but rather writes a fresh one.
 If the acl is an empty string then no X-Amz-Acl: header is added and
 the default (private) will be used.
 `,
-			Provider: "!Storj,Cloudflare",
+			Provider: "!Storj,Synology,Cloudflare",
 			Examples: []fs.OptionExample{{
 				Value:    "default",
 				Help:     "Owner gets Full_CONTROL.\nNo one else has access rights (default).",
@@ -2969,6 +3012,8 @@ func setQuirks(opt *Options) {
 		if opt.ChunkSize < 64*fs.Mebi {
 			opt.ChunkSize = 64 * fs.Mebi
 		}
+	case "Synology":
+		useMultipartEtag = false
 	case "TencentCOS":
 		listObjectsV2 = false    // untested
 		useMultipartEtag = false // untested
