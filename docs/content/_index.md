@@ -170,6 +170,7 @@ WebDAV or S3, that work out of the box.)
 {{< provider name="SMB / CIFS" home="https://en.wikipedia.org/wiki/Server_Message_Block" config="/smb/" >}}
 {{< provider name="StackPath" home="https://www.stackpath.com/products/object-storage/" config="/s3/#stackpath" >}}
 {{< provider name="Storj" home="https://storj.io/" config="/storj/" >}}
+{{< provider name="Synology" home="https://c2.synology.com/en-global/object-storage/overview" config="/s3/#synology-c2" >}}
 {{< provider name="SugarSync" home="https://sugarsync.com/" config="/sugarsync/" >}}
 {{< provider name="Tencent Cloud Object Storage (COS)" home="https://intl.cloud.tencent.com/product/cos" config="/s3/#tencent-cos" >}}
 {{< provider name="Uptobox" home="https://uptobox.com" config="/uptobox/" >}}
