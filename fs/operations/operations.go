@@ -297,6 +297,20 @@ func removeFailedCopy(ctx context.Context, dst fs.Object) bool {
 	return true
 }
 
+// Used to remove a failed partial copy
+//
+// Returns whether the file was successfully removed or not
+func removeFailedPartialCopy(ctx context.Context, f fs.Fs, remotePartial string) bool {
+	o, err := f.NewObject(ctx, remotePartial)
+	if errors.Is(err, fs.ErrorObjectNotFound) {
+		return true
+	} else if err != nil {
+		fs.Infof(remotePartial, "Failed to remove failed partial copy: %s", err)
+		return false
+	}
+	return removeFailedCopy(ctx, o)
+}
+
 // CommonHash returns a single hash.Type and a HashOption with that
 // type which is in common between the two fs.Fs.
 func CommonHash(ctx context.Context, fa, fb fs.Info) (hash.Type, *fs.HashesOption) {
@@ -396,6 +410,14 @@ func Copy(ctx context.Context, f fs.Fs, dst fs.Object, remote string, src fs.Obj
 		}
 		// If can't server-side copy, do it manually
 		if errors.Is(err, fs.ErrorCantCopy) {
+			// Remove partial files on premature exit
+			var atexitRemovePartial atexit.FnHandle
+			if !inplace {
+				atexitRemovePartial = atexit.Register(func() {
+					ctx := context.Background()
+					removeFailedPartialCopy(ctx, f, remotePartial)
+				})
+			}
 			if doMultiThreadCopy(ctx, f, src) {
 				// Number of streams proportional to size
 				streams := src.Size() / int64(ci.MultiThreadCutoff)
@@ -475,6 +497,10 @@ func Copy(ctx context.Context, f fs.Fs, dst fs.Object, remote string, src fs.Obj
 					}
 				}
 			}
+			if !inplace {
+				atexit.Unregister(atexitRemovePartial)
+			}
+
 		}
 		tries++
 		if tries >= maxTries {
