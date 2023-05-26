@@ -226,8 +226,6 @@ func NewServer(ctx context.Context, options ...Option) (*Server, error) {
 		s.mux.Use(MiddlewareStripPrefix(s.cfg.BaseURL))
 	}
 
-	s.initAuth()
-
 	err := s.initTemplate()
 	if err != nil {
 		return nil, err
@@ -237,6 +235,8 @@ func NewServer(ctx context.Context, options ...Option) (*Server, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	s.initAuth()
 
 	for _, addr := range s.cfg.ListenAddr {
 		var url string
@@ -293,9 +293,17 @@ func NewServer(ctx context.Context, options ...Option) (*Server, error) {
 }
 
 func (s *Server) initAuth() {
+	s.usingAuth = false
+
+	authCertificateUserEnabled := s.tlsConfig != nil && s.tlsConfig.ClientAuth != tls.NoClientCert && s.auth.HtPasswd == "" && s.auth.BasicUser == ""
+	if authCertificateUserEnabled {
+		s.usingAuth = true
+		s.mux.Use(MiddlewareAuthCertificateUser())
+	}
+
 	if s.auth.CustomAuthFn != nil {
 		s.usingAuth = true
-		s.mux.Use(MiddlewareAuthCustom(s.auth.CustomAuthFn, s.auth.Realm))
+		s.mux.Use(MiddlewareAuthCustom(s.auth.CustomAuthFn, s.auth.Realm, authCertificateUserEnabled))
 		return
 	}
 
@@ -310,7 +318,6 @@ func (s *Server) initAuth() {
 		s.mux.Use(MiddlewareAuthBasic(s.auth.BasicUser, s.auth.BasicPass, s.auth.Realm, s.auth.Salt))
 		return
 	}
-	s.usingAuth = false
 }
 
 func (s *Server) initTemplate() error {

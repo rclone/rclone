@@ -2,6 +2,7 @@ package http
 
 import (
 	"context"
+	"crypto/tls"
 	"errors"
 	"fmt"
 	"net/http"
@@ -157,6 +158,167 @@ func TestMiddlewareAuth(t *testing.T) {
 			})
 		})
 	}
+}
+
+func TestMiddlewareAuthCertificateUser(t *testing.T) {
+	serverCertBytes := testReadTestdataFile(t, "local.crt")
+	serverKeyBytes := testReadTestdataFile(t, "local.key")
+	clientCertBytes := testReadTestdataFile(t, "client.crt")
+	clientKeyBytes := testReadTestdataFile(t, "client.key")
+	clientCert, err := tls.X509KeyPair(clientCertBytes, clientKeyBytes)
+	require.NoError(t, err)
+	emptyCertBytes := testReadTestdataFile(t, "emptyclient.crt")
+	emptyKeyBytes := testReadTestdataFile(t, "emptyclient.key")
+	emptyCert, err := tls.X509KeyPair(emptyCertBytes, emptyKeyBytes)
+	require.NoError(t, err)
+	invalidCert, err := tls.X509KeyPair(serverCertBytes, serverKeyBytes)
+	require.NoError(t, err)
+
+	servers := []struct {
+		name        string
+		wantErr     bool
+		status      int
+		result      string
+		http        Config
+		auth        AuthConfig
+		clientCerts []tls.Certificate
+	}{
+		{
+			name:    "Missing",
+			wantErr: true,
+			http: Config{
+				ListenAddr:    []string{"127.0.0.1:0"},
+				TLSCertBody:   serverCertBytes,
+				TLSKeyBody:    serverKeyBytes,
+				MinTLSVersion: "tls1.0",
+				ClientCA:      "./testdata/client-ca.crt",
+			},
+		},
+		{
+			name:        "Invalid",
+			wantErr:     true,
+			clientCerts: []tls.Certificate{invalidCert},
+			http: Config{
+				ListenAddr:    []string{"127.0.0.1:0"},
+				TLSCertBody:   serverCertBytes,
+				TLSKeyBody:    serverKeyBytes,
+				MinTLSVersion: "tls1.0",
+				ClientCA:      "./testdata/client-ca.crt",
+			},
+		},
+		{
+			name:        "EmptyCommonName",
+			status:      http.StatusUnauthorized,
+			result:      fmt.Sprintf("%s\n", http.StatusText(http.StatusUnauthorized)),
+			clientCerts: []tls.Certificate{emptyCert},
+			http: Config{
+				ListenAddr:    []string{"127.0.0.1:0"},
+				TLSCertBody:   serverCertBytes,
+				TLSKeyBody:    serverKeyBytes,
+				MinTLSVersion: "tls1.0",
+				ClientCA:      "./testdata/client-ca.crt",
+			},
+		},
+		{
+			name:        "Valid",
+			status:      http.StatusOK,
+			result:      "rclone-dev-client",
+			clientCerts: []tls.Certificate{clientCert},
+			http: Config{
+				ListenAddr:    []string{"127.0.0.1:0"},
+				TLSCertBody:   serverCertBytes,
+				TLSKeyBody:    serverKeyBytes,
+				MinTLSVersion: "tls1.0",
+				ClientCA:      "./testdata/client-ca.crt",
+			},
+		},
+		{
+			name:        "CustomAuth/Invalid",
+			status:      http.StatusUnauthorized,
+			result:      fmt.Sprintf("%d %s\n", http.StatusUnauthorized, http.StatusText(http.StatusUnauthorized)),
+			clientCerts: []tls.Certificate{clientCert},
+			http: Config{
+				ListenAddr:    []string{"127.0.0.1:0"},
+				TLSCertBody:   serverCertBytes,
+				TLSKeyBody:    serverKeyBytes,
+				MinTLSVersion: "tls1.0",
+				ClientCA:      "./testdata/client-ca.crt",
+			},
+			auth: AuthConfig{
+				Realm: "test",
+				CustomAuthFn: func(user, pass string) (value interface{}, err error) {
+					if user == "custom" && pass == "custom" {
+						return true, nil
+					}
+					return nil, errors.New("invalid credentials")
+				},
+			},
+		},
+		{
+			name:        "CustomAuth/Valid",
+			status:      http.StatusOK,
+			result:      "rclone-dev-client",
+			clientCerts: []tls.Certificate{clientCert},
+			http: Config{
+				ListenAddr:    []string{"127.0.0.1:0"},
+				TLSCertBody:   serverCertBytes,
+				TLSKeyBody:    serverKeyBytes,
+				MinTLSVersion: "tls1.0",
+				ClientCA:      "./testdata/client-ca.crt",
+			},
+			auth: AuthConfig{
+				Realm: "test",
+				CustomAuthFn: func(user, pass string) (value interface{}, err error) {
+					fmt.Println("CUSTOMAUTH", user, pass)
+					if user == "rclone-dev-client" && pass == "" {
+						return true, nil
+					}
+					return nil, errors.New("invalid credentials")
+				},
+			},
+		},
+	}
+
+	for _, ss := range servers {
+		t.Run(ss.name, func(t *testing.T) {
+			s, err := NewServer(context.Background(), WithConfig(ss.http), WithAuth(ss.auth))
+			require.NoError(t, err)
+			defer func() {
+				require.NoError(t, s.Shutdown())
+			}()
+
+			s.Router().Mount("/", testAuthUserHandler())
+			s.Serve()
+
+			url := testGetServerURL(t, s)
+			client := &http.Client{
+				Transport: &http.Transport{
+					TLSClientConfig: &tls.Config{
+						Certificates:       ss.clientCerts,
+						InsecureSkipVerify: true,
+					},
+				},
+			}
+			req, err := http.NewRequest("GET", url, nil)
+			require.NoError(t, err)
+
+			resp, err := client.Do(req)
+			if ss.wantErr {
+				require.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+
+			defer func() {
+				_ = resp.Body.Close()
+			}()
+
+			require.Equal(t, ss.status, resp.StatusCode, fmt.Sprintf("should return status %d", ss.status))
+
+			testExpectRespBody(t, resp, []byte(ss.result))
+		})
+	}
+
 }
 
 var _testCORSHeaderKeys = []string{

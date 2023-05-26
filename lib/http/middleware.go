@@ -74,6 +74,24 @@ func basicAuth(authenticator *LoggedBasicAuth) func(next http.Handler) http.Hand
 	}
 }
 
+// MiddlewareAuthCertificateUser instantiates middleware that extracts the authenticated user via client certificate common name
+func MiddlewareAuthCertificateUser() Middleware {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			for _, cert := range r.TLS.PeerCertificates {
+				if cert.Subject.CommonName != "" {
+					r = r.WithContext(context.WithValue(r.Context(), ctxKeyUser, cert.Subject.CommonName))
+					next.ServeHTTP(w, r)
+					return
+				}
+			}
+			code := http.StatusUnauthorized
+			w.Header().Set("Content-Type", "text/plain")
+			http.Error(w, http.StatusText(code), code)
+		})
+	}
+}
+
 // MiddlewareAuthHtpasswd instantiates middleware that authenticates against the passed htpasswd file
 func MiddlewareAuthHtpasswd(path, realm string) Middleware {
 	fs.Infof(nil, "Using %q as htpasswd storage", path)
@@ -97,7 +115,7 @@ func MiddlewareAuthBasic(user, pass, realm, salt string) Middleware {
 }
 
 // MiddlewareAuthCustom instantiates middleware that authenticates using a custom function
-func MiddlewareAuthCustom(fn CustomAuthFn, realm string) Middleware {
+func MiddlewareAuthCustom(fn CustomAuthFn, realm string, userFromContext bool) Middleware {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			// skip auth for unix socket
@@ -107,6 +125,10 @@ func MiddlewareAuthCustom(fn CustomAuthFn, realm string) Middleware {
 			}
 
 			user, pass, ok := parseAuthorization(r)
+			if !ok && userFromContext {
+				user, ok = CtxGetUser(r.Context())
+			}
+
 			if !ok {
 				code := http.StatusUnauthorized
 				w.Header().Set("Content-Type", "text/plain")
