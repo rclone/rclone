@@ -624,6 +624,14 @@ Parameters:
 
 **Authentication is required for this call.**
 
+### config/setpassword: Set the password of the config file {#config-setpassword}
+
+Parameters:
+
+- password - password of the config file to use
+
+**Authentication is required for this call.**
+
 ### config/update: update the config for a remote. {#config-update}
 
 This takes the following parameters:

@@ -171,3 +171,29 @@ func TestRcSetPath(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, oldPath, config.GetConfigPath())
 }
+
+func TestRcSetPassword(t *testing.T) {
+	encryptedConfigPath := "./testdata/encrypted.conf"
+	oldConfigPath := config.GetConfigPath()
+	call := rc.Calls.Get("config/setpath")
+	assert.NotNil(t, call)
+	in := rc.Params{
+		"path": encryptedConfigPath,
+	}
+	_, err := call.Fn(context.Background(), in)
+	require.NoError(t, err)
+	defer func() {
+		assert.NoError(t, config.SetConfigPath(oldConfigPath))
+		config.ClearConfigPassword()
+	}()
+
+	call = rc.Calls.Get("config/setpassword")
+	assert.NotNil(t, call)
+	in = rc.Params{
+		"password": "asdf",
+	}
+	_, err = call.Fn(context.Background(), in)
+	require.NoError(t, err)
+
+	testLoadingEncryptedConfig(t)
+}

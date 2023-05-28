@@ -14,6 +14,18 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func testLoadingEncryptedConfig(t *testing.T) {
+	err := config.Data().Load()
+	require.NoError(t, err)
+	sections := config.Data().GetSectionList()
+	var expect = []string{"nounc", "unc"}
+	assert.Equal(t, expect, sections)
+
+	keys := config.Data().GetKeyList("nounc")
+	expect = []string{"type", "nounc"}
+	assert.Equal(t, expect, keys)
+}
+
 func TestConfigLoadEncrypted(t *testing.T) {
 	var err error
 	oldConfigPath := config.GetConfigPath()
@@ -26,15 +38,7 @@ func TestConfigLoadEncrypted(t *testing.T) {
 	// Set correct password
 	err = config.SetConfigPassword("asdf")
 	require.NoError(t, err)
-	err = config.Data().Load()
-	require.NoError(t, err)
-	sections := config.Data().GetSectionList()
-	var expect = []string{"nounc", "unc"}
-	assert.Equal(t, expect, sections)
-
-	keys := config.Data().GetKeyList("nounc")
-	expect = []string{"type", "nounc"}
-	assert.Equal(t, expect, keys)
+	testLoadingEncryptedConfig(t)
 }
 
 func TestConfigLoadEncryptedWithValidPassCommand(t *testing.T) {
