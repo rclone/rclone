@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"path"
-	"path/filepath"
 	"strings"
 	"time"
 
@@ -554,7 +553,7 @@ func (f *Fs) Shutdown(ctx context.Context) error {
 type putFn func(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error)
 
 func (f *Fs) put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options []fs.OpenOption, put putFn) (obj fs.Object, err error) {
-	if err = f.Mkdir(ctx, filepath.Dir(src.Remote())); err != nil {
+	if err = f.Mkdir(ctx, path.Dir(src.Remote())); err != nil {
 		return
 	}
 
