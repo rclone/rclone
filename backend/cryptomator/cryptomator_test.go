@@ -1,3 +1,6 @@
+//go:build !js
+// +build !js
+
 // Test Cryptomator filesystem interface
 package cryptomator_test
 

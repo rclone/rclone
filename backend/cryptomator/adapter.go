@@ -1,3 +1,6 @@
+//go:build !js
+// +build !js
+
 package cryptomator
 
 import (
