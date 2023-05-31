@@ -575,7 +575,7 @@ func (f *Fs) put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options [
 		return nil, err
 	}
 
-	obj, err = f.Fs.Put(ctx, encReader, info, options...)
+	obj, err = put(ctx, encReader, info, options...)
 	if err != nil {
 		return obj, err
 	}
@@ -956,7 +956,6 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 // return an error or update the object properly (rather than e.g. calling panic).
 func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {
 	o.size = src.Size()
-	o.remote = src.Remote()
 
 	update := func(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
 		return o.Object, o.Object.Update(ctx, in, src, options...)
