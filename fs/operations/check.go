@@ -335,7 +335,7 @@ func CheckIdenticalDownload(ctx context.Context, dst, src fs.Object) (differ boo
 
 // Does the work for CheckIdenticalDownload
 func checkIdenticalDownload(ctx context.Context, dst, src fs.Object) (differ bool, err error) {
-	in1, err := dst.Open(ctx)
+	in1, err := Open(ctx, dst)
 	if err != nil {
 		return true, fmt.Errorf("failed to open %q: %w", dst, err)
 	}
@@ -345,7 +345,7 @@ func checkIdenticalDownload(ctx context.Context, dst, src fs.Object) (differ boo
 	}()
 	in1 = tr1.Account(ctx, in1).WithBuffer() // account and buffer the transfer
 
-	in2, err := src.Open(ctx)
+	in2, err := Open(ctx, src)
 	if err != nil {
 		return true, fmt.Errorf("failed to open %q: %w", src, err)
 	}
@@ -483,7 +483,7 @@ func (c *checkMarch) checkSum(ctx context.Context, obj fs.Object, download bool,
 			<-c.tokens // get the token back to free up a slot
 			c.wg.Done()
 		}()
-		if in, err = obj.Open(ctx); err != nil {
+		if in, err = Open(ctx, obj); err != nil {
 			return
 		}
 		tr := accounting.Stats(ctx).NewTransfer(obj)
@@ -538,7 +538,7 @@ type HashSums map[string]string
 
 // ParseSumFile parses a hash SUM file and returns hashes as a map
 func ParseSumFile(ctx context.Context, sumFile fs.Object) (HashSums, error) {
-	rd, err := sumFile.Open(ctx)
+	rd, err := Open(ctx, sumFile)
 	if err != nil {
 		return nil, err
 	}

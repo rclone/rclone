@@ -62,7 +62,6 @@ type multiThreadCopyState struct {
 
 // Copy a single stream into place
 func (mc *multiThreadCopyState) copyStream(ctx context.Context, stream int) (err error) {
-	ci := fs.GetConfig(ctx)
 	defer func() {
 		if err != nil {
 			fs.Debugf(mc.src, "multi-thread copy: stream %d/%d failed: %v", stream+1, mc.streams, err)
@@ -79,7 +78,7 @@ func (mc *multiThreadCopyState) copyStream(ctx context.Context, stream int) (err
 
 	fs.Debugf(mc.src, "multi-thread copy: stream %d/%d (%d-%d) size %v starting", stream+1, mc.streams, start, end, fs.SizeSuffix(end-start))
 
-	rc, err := NewReOpen(ctx, mc.src, ci.LowLevelRetries, &fs.RangeOption{Start: start, End: end - 1})
+	rc, err := Open(ctx, mc.src, &fs.RangeOption{Start: start, End: end - 1})
 	if err != nil {
 		return fmt.Errorf("multipart copy: failed to open source: %w", err)
 	}

@@ -421,7 +421,7 @@ func Copy(ctx context.Context, f fs.Fs, dst fs.Object, remote string, src fs.Obj
 				for _, option := range ci.DownloadHeaders {
 					options = append(options, option)
 				}
-				in0, err = NewReOpen(ctx, src, ci.LowLevelRetries, options...)
+				in0, err = Open(ctx, src, options...)
 				if err != nil {
 					err = fmt.Errorf("failed to open source object: %w", err)
 				} else {
@@ -1026,7 +1026,7 @@ func hashSum(ctx context.Context, ht hash.Type, base64Encoded bool, downloadFlag
 		for _, option := range fs.GetConfig(ctx).DownloadHeaders {
 			options = append(options, option)
 		}
-		in, err := NewReOpen(ctx, o, fs.GetConfig(ctx).LowLevelRetries, options...)
+		in, err := Open(ctx, o, options...)
 		if err != nil {
 			return "ERROR", fmt.Errorf("failed to open file %v: %w", o, err)
 		}
@@ -1326,7 +1326,7 @@ func Cat(ctx context.Context, f fs.Fs, w io.Writer, offset, count int64, sep []b
 		for _, option := range ci.DownloadHeaders {
 			options = append(options, option)
 		}
-		in, err := o.Open(ctx, options...)
+		in, err := Open(ctx, o, options...)
 		if err != nil {
 			err = fs.CountError(err)
 			fs.Errorf(o, "Failed to open: %v", err)

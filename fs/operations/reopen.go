@@ -29,12 +29,14 @@ var (
 	errorTooManyTries = errors.New("failed to reopen: too many retries")
 )
 
-// NewReOpen makes a handle which will reopen itself and seek to where it was on errors
+// NewReOpen makes a handle which will reopen itself and seek to where
+// it was on errors up to maxTries times.
 //
-// If hashOption is set this will be applied when reading from the start.
+// If an fs.HashesOption is set this will be applied when reading from
+// the start.
 //
-// If rangeOption is set then this will applied when reading from the
-// start, and updated on retries.
+// If an fs.RangeOption is set then this will applied when reading from
+// the start, and updated on retries.
 func NewReOpen(ctx context.Context, src fs.Object, maxTries int, options ...fs.OpenOption) (rc io.ReadCloser, err error) {
 	h := &ReOpen{
 		ctx:      ctx,
@@ -49,6 +51,24 @@ func NewReOpen(ctx context.Context, src fs.Object, maxTries int, options ...fs.O
 		return nil, err
 	}
 	return h, nil
+}
+
+// Open makes a handle which will reopen itself and seek to where it
+// was on errors.
+//
+// If an fs.HashesOption is set this will be applied when reading from
+// the start.
+//
+// If an fs.RangeOption is set then this will applied when reading from
+// the start, and updated on retries.
+//
+// It will obey LowLevelRetries in the ctx as the maximum number of
+// tries.
+//
+// Use this instead of calling the Open method on fs.Objects
+func Open(ctx context.Context, src fs.Object, options ...fs.OpenOption) (rc io.ReadCloser, err error) {
+	maxTries := fs.GetConfig(ctx).LowLevelRetries
+	return NewReOpen(ctx, src, maxTries, options...)
 }
 
 // open the underlying handle - call with lock held
