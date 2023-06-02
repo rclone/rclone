@@ -51,101 +51,102 @@ var (
 
 // ConfigInfo is filesystem config options
 type ConfigInfo struct {
-	LogLevel                LogLevel
-	StatsLogLevel           LogLevel
-	UseJSONLog              bool
-	DryRun                  bool
-	Interactive             bool
-	CheckSum                bool
-	SizeOnly                bool
-	IgnoreTimes             bool
-	IgnoreExisting          bool
-	IgnoreErrors            bool
-	ModifyWindow            time.Duration
-	Checkers                int
-	Transfers               int
-	ConnectTimeout          time.Duration // Connect timeout
-	Timeout                 time.Duration // Data channel timeout
-	ExpectContinueTimeout   time.Duration
-	Dump                    DumpFlags
-	InsecureSkipVerify      bool // Skip server certificate verification
-	DeleteMode              DeleteMode
-	MaxDelete               int64
-	MaxDeleteSize           SizeSuffix
-	TrackRenames            bool   // Track file renames.
-	TrackRenamesStrategy    string // Comma separated list of strategies used to track renames
-	LowLevelRetries         int
-	UpdateOlder             bool // Skip files that are newer on the destination
-	NoGzip                  bool // Disable compression
-	MaxDepth                int
-	IgnoreSize              bool
-	IgnoreChecksum          bool
-	IgnoreCaseSync          bool
-	NoTraverse              bool
-	CheckFirst              bool
-	NoCheckDest             bool
-	NoUnicodeNormalization  bool
-	NoUpdateModTime         bool
-	DataRateUnit            string
-	CompareDest             []string
-	CopyDest                []string
-	BackupDir               string
-	Suffix                  string
-	SuffixKeepExtension     bool
-	UseListR                bool
-	BufferSize              SizeSuffix
-	BwLimit                 BwTimetable
-	BwLimitFile             BwTimetable
-	TPSLimit                float64
-	TPSLimitBurst           int
-	BindAddr                net.IP
-	DisableFeatures         []string
-	UserAgent               string
-	Immutable               bool
-	AutoConfirm             bool
-	StreamingUploadCutoff   SizeSuffix
-	StatsFileNameLength     int
-	AskPassword             bool
-	PasswordCommand         SpaceSepList
-	UseServerModTime        bool
-	MaxTransfer             SizeSuffix
-	MaxDuration             time.Duration
-	CutoffMode              CutoffMode
-	MaxBacklog              int
-	MaxStatsGroups          int
-	StatsOneLine            bool
-	StatsOneLineDate        bool   // If we want a date prefix at all
-	StatsOneLineDateFormat  string // If we want to customize the prefix
-	ErrorOnNoTransfer       bool   // Set appropriate exit code if no files transferred
-	Progress                bool
-	ProgressTerminalTitle   bool
-	Cookie                  bool
-	UseMmap                 bool
-	CaCert                  []string // Client Side CA
-	ClientCert              string   // Client Side Cert
-	ClientKey               string   // Client Side Key
-	MultiThreadCutoff       SizeSuffix
-	MultiThreadStreams      int
-	MultiThreadSet          bool   // whether MultiThreadStreams was set (set in fs/config/configflags)
-	OrderBy                 string // instructions on how to order the transfer
-	UploadHeaders           []*HTTPOption
-	DownloadHeaders         []*HTTPOption
-	Headers                 []*HTTPOption
-	MetadataSet             Metadata // extra metadata to write when uploading
-	RefreshTimes            bool
-	NoConsole               bool
-	TrafficClass            uint8
-	FsCacheExpireDuration   time.Duration
-	FsCacheExpireInterval   time.Duration
-	DisableHTTP2            bool
-	HumanReadable           bool
-	KvLockTime              time.Duration // maximum time to keep key-value database locked by process
-	DisableHTTPKeepAlives   bool
-	Metadata                bool
-	ServerSideAcrossConfigs bool
-	TerminalColorMode       TerminalColorMode
-	DefaultTime             Time // time that directories with no time should display
-	Inplace                 bool // Download directly to destination file instead of atomic download to temp/rename
+	LogLevel                   LogLevel
+	StatsLogLevel              LogLevel
+	UseJSONLog                 bool
+	DryRun                     bool
+	Interactive                bool
+	CheckSum                   bool
+	SizeOnly                   bool
+	IgnoreTimes                bool
+	IgnoreExisting             bool
+	IgnoreErrors               bool
+	ModifyWindow               time.Duration
+	Checkers                   int
+	Transfers                  int
+	ConnectTimeout             time.Duration // Connect timeout
+	Timeout                    time.Duration // Data channel timeout
+	ExpectContinueTimeout      time.Duration
+	Dump                       DumpFlags
+	InsecureSkipVerify         bool // Skip server certificate verification
+	DeleteMode                 DeleteMode
+	MaxDelete                  int64
+	MaxDeleteSize              SizeSuffix
+	TrackRenames               bool   // Track file renames.
+	TrackRenamesStrategy       string // Comma separated list of strategies used to track renames
+	LowLevelRetries            int
+	UpdateOlder                bool // Skip files that are newer on the destination
+	NoGzip                     bool // Disable compression
+	MaxDepth                   int
+	IgnoreSize                 bool
+	IgnoreChecksum             bool
+	IgnoreCaseSync             bool
+	NoTraverse                 bool
+	CheckFirst                 bool
+	NoCheckDest                bool
+	NoUnicodeNormalization     bool
+	NoUpdateModTime            bool
+	DataRateUnit               string
+	CompareDest                []string
+	CopyDest                   []string
+	BackupDir                  string
+	Suffix                     string
+	SuffixKeepExtension        bool
+	UseListR                   bool
+	BufferSize                 SizeSuffix
+	MultiThreadWriteBufferSize SizeSuffix
+	BwLimit                    BwTimetable
+	BwLimitFile                BwTimetable
+	TPSLimit                   float64
+	TPSLimitBurst              int
+	BindAddr                   net.IP
+	DisableFeatures            []string
+	UserAgent                  string
+	Immutable                  bool
+	AutoConfirm                bool
+	StreamingUploadCutoff      SizeSuffix
+	StatsFileNameLength        int
+	AskPassword                bool
+	PasswordCommand            SpaceSepList
+	UseServerModTime           bool
+	MaxTransfer                SizeSuffix
+	MaxDuration                time.Duration
+	CutoffMode                 CutoffMode
+	MaxBacklog                 int
+	MaxStatsGroups             int
+	StatsOneLine               bool
+	StatsOneLineDate           bool   // If we want a date prefix at all
+	StatsOneLineDateFormat     string // If we want to customize the prefix
+	ErrorOnNoTransfer          bool   // Set appropriate exit code if no files transferred
+	Progress                   bool
+	ProgressTerminalTitle      bool
+	Cookie                     bool
+	UseMmap                    bool
+	CaCert                     []string // Client Side CA
+	ClientCert                 string   // Client Side Cert
+	ClientKey                  string   // Client Side Key
+	MultiThreadCutoff          SizeSuffix
+	MultiThreadStreams         int
+	MultiThreadSet             bool   // whether MultiThreadStreams was set (set in fs/config/configflags)
+	OrderBy                    string // instructions on how to order the transfer
+	UploadHeaders              []*HTTPOption
+	DownloadHeaders            []*HTTPOption
+	Headers                    []*HTTPOption
+	MetadataSet                Metadata // extra metadata to write when uploading
+	RefreshTimes               bool
+	NoConsole                  bool
+	TrafficClass               uint8
+	FsCacheExpireDuration      time.Duration
+	FsCacheExpireInterval      time.Duration
+	DisableHTTP2               bool
+	HumanReadable              bool
+	KvLockTime                 time.Duration // maximum time to keep key-value database locked by process
+	DisableHTTPKeepAlives      bool
+	Metadata                   bool
+	ServerSideAcrossConfigs    bool
+	TerminalColorMode          TerminalColorMode
+	DefaultTime                Time // time that directories with no time should display
+	Inplace                    bool // Download directly to destination file instead of atomic download to temp/rename
 }
 
 // NewConfig creates a new config with everything set to the default
@@ -170,6 +171,7 @@ func NewConfig() *ConfigInfo {
 	c.MaxDepth = -1
 	c.DataRateUnit = "bytes"
 	c.BufferSize = SizeSuffix(16 << 20)
+	c.MultiThreadWriteBufferSize = SizeSuffix(128 * 1024)
 	c.UserAgent = "rclone/" + Version
 	c.StreamingUploadCutoff = SizeSuffix(100 * 1024)
 	c.MaxStatsGroups = 1000
