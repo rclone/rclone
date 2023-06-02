@@ -433,7 +433,7 @@ func (f *Filter) MakeListR(ctx context.Context, NewObject func(ctx context.Conte
 		var (
 			checkers = ci.Checkers
 			remotes  = make(chan string, checkers)
-			g        errgroup.Group
+			g, gCtx  = errgroup.WithContext(ctx)
 		)
 		for i := 0; i < checkers; i++ {
 			g.Go(func() (err error) {
@@ -454,10 +454,17 @@ func (f *Filter) MakeListR(ctx context.Context, NewObject func(ctx context.Conte
 				return nil
 			})
 		}
-		for remote := range f.files {
-			remotes <- remote
-		}
-		close(remotes)
+		go func() {
+			defer close(remotes)
+			for remote := range f.files {
+				select {
+				case remotes <- remote:
+					continue
+				case <-gCtx.Done():
+					return
+				}
+			}
+		}()
 		return g.Wait()
 	}
 }
