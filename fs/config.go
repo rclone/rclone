@@ -94,6 +94,9 @@ type ConfigInfo struct {
 	SuffixKeepExtension     bool
 	UseListR                bool
 	BufferSize              SizeSuffix
+	ChunkSize               SizeSuffix
+	ChunkConcurrency        int
+	ChunkCutoff             SizeSuffix
 	BwLimit                 BwTimetable
 	BwLimitFile             BwTimetable
 	TPSLimit                float64
@@ -170,6 +173,9 @@ func NewConfig() *ConfigInfo {
 	c.MaxDepth = -1
 	c.DataRateUnit = "bytes"
 	c.BufferSize = SizeSuffix(16 << 20)
+	c.ChunkConcurrency = 8
+	c.ChunkSize = SizeSuffix(10 * 1024 * 1024)
+	c.ChunkCutoff = SizeSuffix(250 * 1024 * 1024)
 	c.UserAgent = "rclone/" + Version
 	c.StreamingUploadCutoff = SizeSuffix(100 * 1024)
 	c.MaxStatsGroups = 1000
