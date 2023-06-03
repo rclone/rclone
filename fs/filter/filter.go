@@ -439,7 +439,7 @@ func (f *Filter) MakeListR(ctx context.Context, NewObject func(ctx context.Conte
 			g.Go(func() (err error) {
 				var entries = make(fs.DirEntries, 1)
 				for remote := range remotes {
-					entries[0], err = NewObject(ctx, remote)
+					entries[0], err = NewObject(gCtx, remote)
 					if err == fs.ErrorObjectNotFound {
 						// Skip files that are not found
 					} else if err != nil {
@@ -454,17 +454,15 @@ func (f *Filter) MakeListR(ctx context.Context, NewObject func(ctx context.Conte
 				return nil
 			})
 		}
-		go func() {
-			defer close(remotes)
-			for remote := range f.files {
-				select {
-				case remotes <- remote:
-					continue
-				case <-gCtx.Done():
-					return
-				}
+	outer:
+		for remote := range f.files {
+			select {
+			case remotes <- remote:
+			case <-gCtx.Done():
+				break outer
 			}
-		}()
+		}
+		close(remotes)
 		return g.Wait()
 	}
 }
