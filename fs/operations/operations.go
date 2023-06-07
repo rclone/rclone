@@ -254,11 +254,11 @@ func equal(ctx context.Context, src fs.ObjectInfo, dst fs.Object, opt equalOpt) 
 			}
 			// Update the mtime of the dst object here
 			err := dst.SetModTime(ctx, srcModTime)
-			if err == fs.ErrorCantSetModTime {
+			if errors.Is(err, fs.ErrorCantSetModTime) {
 				logModTimeUpload(dst)
 				fs.Infof(dst, "src and dst identical but can't set mod time without re-uploading")
 				return false
-			} else if err == fs.ErrorCantSetModTimeWithoutDelete {
+			} else if errors.Is(err, fs.ErrorCantSetModTimeWithoutDelete) {
 				logModTimeUpload(dst)
 				fs.Infof(dst, "src and dst identical but can't set mod time without deleting and re-uploading")
 				// Remove the file if BackupDir isn't set.  If BackupDir is set we would rather have the old file
@@ -388,14 +388,14 @@ func Copy(ctx context.Context, f fs.Fs, dst fs.Object, remote string, src fs.Obj
 			} else {
 				_ = in.Close()
 			}
-			if err == fs.ErrorCantCopy {
+			if errors.Is(err, fs.ErrorCantCopy) {
 				tr.Reset(ctx) // skip incomplete accounting - will be overwritten by the manual copy below
 			}
 		} else {
 			err = fs.ErrorCantCopy
 		}
 		// If can't server-side copy, do it manually
-		if err == fs.ErrorCantCopy {
+		if errors.Is(err, fs.ErrorCantCopy) {
 			if doMultiThreadCopy(ctx, f, src) {
 				// Number of streams proportional to size
 				streams := src.Size() / int64(ci.MultiThreadCutoff)
@@ -1211,7 +1211,7 @@ func Purge(ctx context.Context, f fs.Fs, dir string) (err error) {
 			return nil
 		}
 		err = doPurge(ctx, dir)
-		if err == fs.ErrorCantPurge {
+		if errors.Is(err, fs.ErrorCantPurge) {
 			doFallbackPurge = true
 		}
 	}
@@ -1922,7 +1922,7 @@ func moveOrCopyFile(ctx context.Context, fdst fs.Fs, fsrc fs.Fs, dstFileName str
 	var dstObj fs.Object
 	if !ci.NoCheckDest {
 		dstObj, err = fdst.NewObject(ctx, dstFileName)
-		if err == fs.ErrorObjectNotFound {
+		if errors.Is(err, fs.ErrorObjectNotFound) {
 			dstObj = nil
 		} else if err != nil {
 			return err
