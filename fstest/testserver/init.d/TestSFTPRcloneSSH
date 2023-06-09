@@ -1,0 +1,19 @@
+#!/bin/bash
+
+set -e
+
+# No password to make working with ssh binary easy
+
+NAME=rclone-serve-sftp-ssh
+IP=127.0.0.1
+PORT=28623
+
+start() {
+    run rclone serve sftp --addr ${IP}:${PORT} ${DATADIR}
+    
+    echo type=sftp
+    echo ssh=ssh -o StrictHostKeyChecking=no -p ${PORT} user@${IP}
+    echo _connect=${IP}:${PORT}
+}
+
+. $(dirname "$0")/rclone-serve.bash

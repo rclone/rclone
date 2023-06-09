@@ -27,7 +27,6 @@ import (
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/configstruct"
 	"github.com/rclone/rclone/fs/config/obscure"
-	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/lib/env"
 	"github.com/rclone/rclone/lib/pacer"
@@ -388,6 +387,36 @@ Example:
     ssh-ed25519 ssh-rsa ssh-dss
 `,
 			Advanced: true,
+		}, {
+			Name:    "ssh",
+			Default: fs.SpaceSepList{},
+			Help: `Path and arguments to external ssh binary.
+
+Normally rclone will use its internal ssh library to connect to the
+SFTP server. However it does not implement all possible ssh options so
+it may be desirable to use an external ssh binary.
+
+Rclone ignores all the internal config if you use this option and
+expects you to configure the ssh binary with the user/host/port and
+any other options you need.
+
+**Important** The ssh command must log in without asking for a
+password so needs to be configured with keys or certificates.
+
+Rclone will run the command supplied either with the additional
+arguments "-s sftp" to access the SFTP subsystem or with commands such
+as "md5sum /path/to/file" appended to read checksums.
+
+Any arguments with spaces in should be surrounded by "double quotes".
+
+An example setting might be:
+
+    ssh -o ServerAliveInterval=20 user@example.com
+
+Note that when using an external ssh binary rclone makes a new ssh
+connection for every hash it calculates.
+`,
+			Advanced: true,
 		}},
 	}
 	fs.Register(fsi)
@@ -427,6 +456,7 @@ type Options struct {
 	KeyExchange             fs.SpaceSepList `config:"key_exchange"`
 	MACs                    fs.SpaceSepList `config:"macs"`
 	HostKeyAlgorithms       fs.SpaceSepList `config:"host_key_algorithms"`
+	SSH                     fs.SpaceSepList `config:"ssh"`
 }
 
 // Fs stores the interface to the remote SFTP files
@@ -463,41 +493,16 @@ type Object struct {
 	sha1sum *string     // Cached SHA1 checksum
 }
 
-// dial starts a client connection to the given SSH server. It is a
-// convenience function that connects to the given network address,
-// initiates the SSH handshake, and then sets up a Client.
-func (f *Fs) dial(ctx context.Context, network, addr string, sshConfig *ssh.ClientConfig) (*ssh.Client, error) {
-	dialer := fshttp.NewDialer(ctx)
-	conn, err := dialer.Dial(network, addr)
-	if err != nil {
-		return nil, err
-	}
-	c, chans, reqs, err := ssh.NewClientConn(conn, addr, sshConfig)
-	if err != nil {
-		return nil, err
-	}
-	fs.Debugf(f, "New connection %s->%s to %q", c.LocalAddr(), c.RemoteAddr(), c.ServerVersion())
-	return ssh.NewClient(c, chans, reqs), nil
-}
-
 // conn encapsulates an ssh client and corresponding sftp client
 type conn struct {
-	sshClient  *ssh.Client
+	sshClient  sshClient
 	sftpClient *sftp.Client
 	err        chan error
 }
 
 // Wait for connection to close
 func (c *conn) wait() {
-	c.err <- c.sshClient.Conn.Wait()
-}
-
-// Send a keepalive over the ssh connection
-func (c *conn) sendKeepAlive() {
-	_, _, err := c.sshClient.SendRequest("keepalive@openssh.com", true, nil)
-	if err != nil {
-		fs.Debugf(nil, "Failed to send keep alive: %v", err)
-	}
+	c.err <- c.sshClient.Wait()
 }
 
 // Send keepalives every interval over the ssh connection until done is closed
@@ -509,7 +514,7 @@ func (c *conn) sendKeepAlives(interval time.Duration) (done chan struct{}) {
 		for {
 			select {
 			case <-t.C:
-				c.sendKeepAlive()
+				c.sshClient.SendKeepAlive()
 			case <-done:
 				return
 			}
@@ -561,7 +566,11 @@ func (f *Fs) sftpConnection(ctx context.Context) (c *conn, err error) {
 	c = &conn{
 		err: make(chan error, 1),
 	}
-	c.sshClient, err = f.dial(ctx, "tcp", f.opt.Host+":"+f.opt.Port, f.config)
+	if len(f.opt.SSH) == 0 {
+		c.sshClient, err = f.newSSHClientInternal(ctx, "tcp", f.opt.Host+":"+f.opt.Port, f.config)
+	} else {
+		c.sshClient, err = f.newSSHClientExternal()
+	}
 	if err != nil {
 		return nil, fmt.Errorf("couldn't connect SSH: %w", err)
 	}
@@ -575,7 +584,7 @@ func (f *Fs) sftpConnection(ctx context.Context) (c *conn, err error) {
 }
 
 // Set any environment variables on the ssh.Session
-func (f *Fs) setEnv(s *ssh.Session) error {
+func (f *Fs) setEnv(s sshSession) error {
 	for _, env := range f.opt.SetEnv {
 		equal := strings.IndexRune(env, '=')
 		if equal < 0 {
@@ -592,8 +601,8 @@ func (f *Fs) setEnv(s *ssh.Session) error {
 
 // Creates a new SFTP client on conn, using the specified subsystem
 // or sftp server, and zero or more option functions
-func (f *Fs) newSftpClient(conn *ssh.Client, opts ...sftp.ClientOption) (*sftp.Client, error) {
-	s, err := conn.NewSession()
+func (f *Fs) newSftpClient(client sshClient, opts ...sftp.ClientOption) (*sftp.Client, error) {
+	s, err := client.NewSession()
 	if err != nil {
 		return nil, err
 	}
@@ -666,6 +675,9 @@ func (f *Fs) getSftpConnection(ctx context.Context) (c *conn, err error) {
 // Getwd request
 func (f *Fs) putSftpConnection(pc **conn, err error) {
 	c := *pc
+	if !c.sshClient.CanReuse() {
+		return
+	}
 	*pc = nil
 	if err != nil {
 		// work out if this is an expected error
@@ -744,6 +756,10 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	if err != nil {
 		return nil, err
 	}
+	if len(opt.SSH) != 0 && (opt.User != "" || opt.Host != "" || opt.Port != "") {
+		fs.Logf(name, "--sftp-ssh is in use - ignoring user/host/port from config - set in the parameters to --sftp-ssh (remove them from the config to silence this warning)")
+	}
+
 	if opt.User == "" {
 		opt.User = currentUser
 	}
@@ -1016,8 +1032,8 @@ func NewFsWithConnection(ctx context.Context, f *Fs, name string, root string, m
 			fs.Debugf(f, "Failed to get shell session for shell type detection command: %v", err)
 		} else {
 			var stdout, stderr bytes.Buffer
-			session.Stdout = &stdout
-			session.Stderr = &stderr
+			session.SetStdout(&stdout)
+			session.SetStderr(&stderr)
 			shellCmd := "echo ${ShellId}%ComSpec%"
 			fs.Debugf(f, "Running shell type detection remote command: %s", shellCmd)
 			err = session.Run(shellCmd)
@@ -1427,8 +1443,8 @@ func (f *Fs) run(ctx context.Context, cmd string) ([]byte, error) {
 	}()
 
 	var stdout, stderr bytes.Buffer
-	session.Stdout = &stdout
-	session.Stderr = &stderr
+	session.SetStdout(&stdout)
+	session.SetStderr(&stderr)
 
 	fs.Debugf(f, "Running remote command: %s", cmd)
 	err = session.Run(cmd)

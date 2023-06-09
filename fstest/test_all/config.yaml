@@ -239,6 +239,9 @@ backends:
    remote:   "TestSFTPRclone:"
    fastlist: false
  - backend:  "sftp"
+   remote:   "TestSFTPRcloneSSH:"
+   fastlist: false
+ - backend:  "sftp"
    remote:   "TestSFTPRsyncNet:"
    fastlist: false
    ignore:
