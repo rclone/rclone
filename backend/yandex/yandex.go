@@ -1100,7 +1100,7 @@ func (o *Object) upload(ctx context.Context, in io.Reader, overwrite bool, mimeT
 		NoResponse:  true,
 	}
 
-	err = o.fs.pacer.Call(func() (bool, error) {
+	err = o.fs.pacer.CallNoRetry(func() (bool, error) {
 		resp, err = o.fs.srv.Call(ctx, &opts)
 		return shouldRetry(ctx, resp, err)
 	})
