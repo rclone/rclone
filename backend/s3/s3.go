@@ -3727,11 +3727,7 @@ func (f *Fs) list(ctx context.Context, opt listOpt, fn listFn) error {
 				fs.Logf(f, "Odd name received %q", remote)
 				continue
 			}
-			remote = remote[len(opt.prefix):]
 			isDirectory := (remote == "" || strings.HasSuffix(remote, "/")) && object.Size != nil && *object.Size == 0
-			if opt.addBucket {
-				remote = bucket.Join(opt.bucket, remote)
-			}
 			// is this a directory marker?
 			if isDirectory {
 				if opt.noSkipMarkers {
@@ -3745,6 +3741,10 @@ func (f *Fs) list(ctx context.Context, opt listOpt, fn listFn) error {
 					// process directory markers as directories
 					remote = strings.TrimRight(remote, "/")
 				}
+			}
+			remote = remote[len(opt.prefix):]
+			if opt.addBucket {
+				remote = bucket.Join(opt.bucket, remote)
 			}
 			if versionIDs != nil {
 				err = fn(remote, object, versionIDs[i], isDirectory)
