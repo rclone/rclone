@@ -1063,11 +1063,7 @@ func (f *Fs) list(ctx context.Context, containerName, directory, prefix string, 
 				fs.Debugf(f, "Odd name received %q", remote)
 				continue
 			}
-			remote = remote[len(prefix):]
 			isDirectory := isDirectoryMarker(*file.Properties.ContentLength, file.Metadata, remote)
-			if addContainer {
-				remote = path.Join(containerName, remote)
-			}
 			if isDirectory {
 				// Don't insert the root directory
 				if remote == directory {
@@ -1075,6 +1071,10 @@ func (f *Fs) list(ctx context.Context, containerName, directory, prefix string, 
 				}
 				// process directory markers as directories
 				remote = strings.TrimRight(remote, "/")
+			}
+			remote = remote[len(prefix):]
+			if addContainer {
+				remote = path.Join(containerName, remote)
 			}
 			// Send object
 			err = fn(remote, file, isDirectory)
