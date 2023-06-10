@@ -690,11 +690,7 @@ func (f *Fs) list(ctx context.Context, bucket, directory, prefix string, addBuck
 				fs.Logf(f, "Odd name received %q", object.Name)
 				continue
 			}
-			remote = remote[len(prefix):]
 			isDirectory := remote == "" || strings.HasSuffix(remote, "/")
-			if addBucket {
-				remote = path.Join(bucket, remote)
-			}
 			// is this a directory marker?
 			if isDirectory {
 				// Don't insert the root directory
@@ -703,6 +699,10 @@ func (f *Fs) list(ctx context.Context, bucket, directory, prefix string, addBuck
 				}
 				// process directory markers as directories
 				remote = strings.TrimRight(remote, "/")
+			}
+			remote = remote[len(prefix):]
+			if addBucket {
+				remote = path.Join(bucket, remote)
 			}
 
 			err = fn(remote, object, isDirectory)
