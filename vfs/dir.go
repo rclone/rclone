@@ -1159,12 +1159,18 @@ func (d *Dir) Rename(oldName, newName string, destDir *Dir) error {
 			rnewName += fs.LinkSuffix
 		}
 
-		_, err = destDir.stat(rnewName)
+		statFile, err := destDir.stat(rnewName)
 
 		switch err {
 		case ENOENT:
 			// not found, carry on
 		case nil:
+			// Special case for windows / winfsp symlinks, it create a file early that is never deleted, leading to clash.
+			if d.vfs.Opt.Links && isLink && strings.HasPrefix(oldName, ".fuse_hidden") {
+				statFile.(*File).winfspPendingSymlink = true
+				break
+			}
+
 			return EEXIST
 		default:
 			// a different error - report
