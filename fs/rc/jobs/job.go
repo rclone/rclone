@@ -12,9 +12,16 @@ import (
 
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/accounting"
+	"github.com/rclone/rclone/fs/cache"
 	"github.com/rclone/rclone/fs/filter"
 	"github.com/rclone/rclone/fs/rc"
 )
+
+// Fill in these to avoid circular dependencies
+func init() {
+	cache.JobOnFinish = OnFinish
+	cache.JobGetJobID = GetJobID
+}
 
 // Job describes an asynchronous task started via the rc package
 type Job struct {
