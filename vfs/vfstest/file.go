@@ -78,10 +78,6 @@ func TestFileModTimeWithOpenWriters(t *testing.T) {
 func TestSymlinks(t *testing.T) {
 	run.skipIfNoFUSE(t)
 
-	if runtime.GOOS == "windows" {
-		t.Skip("Skipping test on Windows")
-	}
-
 	{
 		// VFS only implements os.Stat, which return information to target for symlinks, getting symlink information would require os.Lstat implementation.
 		// We will not bother to add Lstat implemented, but in the test we can just call os.Lstat which return the information needed when !useVFS

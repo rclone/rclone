@@ -21,3 +21,5 @@ __pycache__
 resource_windows_*.syso
 .devcontainer
 *.kate-swp
+*debug*bin*
+.vscode/
