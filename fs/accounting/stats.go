@@ -135,13 +135,7 @@ func (s *StatsInfo) RemoteStats() (out rc.Params, err error) {
 //
 // Call with lock held
 func (s *StatsInfo) speed() float64 {
-	dt := s.totalDuration()
-	dtSeconds := dt.Seconds()
-	speed := 0.0
-	if dt > 0 {
-		speed = float64(s.bytes) / dtSeconds
-	}
-	return speed
+	return s.average.speed
 }
 
 // timeRange is a start and end time of a transfer
