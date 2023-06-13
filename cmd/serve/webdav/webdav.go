@@ -3,10 +3,12 @@ package webdav
 
 import (
 	"context"
+	"encoding/xml"
 	"errors"
 	"fmt"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -255,6 +257,52 @@ func (w *WebDAV) auth(user, pass string) (value interface{}, err error) {
 	return VFS, err
 }
 
+type webdavRW struct {
+	http.ResponseWriter
+	status int
+}
+
+func (rw *webdavRW) WriteHeader(statusCode int) {
+	rw.status = statusCode
+	rw.ResponseWriter.WriteHeader(statusCode)
+}
+
+func (rw *webdavRW) isSuccessfull() bool {
+	return rw.status == 0 || (rw.status >= 200 && rw.status <= 299)
+}
+
+func (w *WebDAV) postprocess(r *http.Request, remote string) {
+	// set modtime from requests, don't write to client because status is already written
+	switch r.Method {
+	case "COPY", "MOVE", "PUT":
+		VFS, err := w.getVFS(r.Context())
+		if err != nil {
+			fs.Errorf(nil, "Failed to get VFS: %v", err)
+			return
+		}
+
+		// Get the node
+		node, err := VFS.Stat(remote)
+		if err != nil {
+			fs.Errorf(nil, "Failed to stat node: %v", err)
+			return
+		}
+
+		mh := r.Header.Get("X-OC-Mtime")
+		if mh != "" {
+			modtimeUnix, err := strconv.ParseInt(mh, 10, 64)
+			if err == nil {
+				err = node.SetModTime(time.Unix(modtimeUnix, 0))
+				if err != nil {
+					fs.Errorf(nil, "Failed to set modtime: %v", err)
+				}
+			} else {
+				fs.Errorf(nil, "Failed to parse modtime: %v", err)
+			}
+		}
+	}
+}
+
 func (w *WebDAV) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	urlPath := r.URL.Path
 	isDir := strings.HasSuffix(urlPath, "/")
@@ -266,7 +314,12 @@ func (w *WebDAV) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	// Add URL Prefix back to path since webdavhandler needs to
 	// return absolute references.
 	r.URL.Path = w.opt.HTTP.BaseURL + r.URL.Path
-	w.webdavhandler.ServeHTTP(rw, r)
+	wrw := &webdavRW{ResponseWriter: rw}
+	w.webdavhandler.ServeHTTP(wrw, r)
+
+	if wrw.isSuccessfull() {
+		w.postprocess(r, remote)
+	}
 }
 
 // serveDir serves a directory index at dirRemote
@@ -356,7 +409,7 @@ func (w *WebDAV) OpenFile(ctx context.Context, name string, flags int, perm os.F
 	if err != nil {
 		return nil, err
 	}
-	return Handle{Handle: f, w: w}, nil
+	return Handle{Handle: f, w: w, ctx: ctx}, nil
 }
 
 // RemoveAll removes a file or a directory and its contents
@@ -404,7 +457,8 @@ func (w *WebDAV) Stat(ctx context.Context, name string) (fi os.FileInfo, err err
 // Handle represents an open file
 type Handle struct {
 	vfs.Handle
-	w *WebDAV
+	w   *WebDAV
+	ctx context.Context
 }
 
 // Readdir reads directory entries from the handle
@@ -427,6 +481,65 @@ func (h Handle) Stat() (fi os.FileInfo, err error) {
 		return nil, err
 	}
 	return FileInfo{FileInfo: fi, w: h.w}, nil
+}
+
+// DeadProps returns extra properties about the handle
+func (h Handle) DeadProps() (map[xml.Name]webdav.Property, error) {
+	var (
+		xmlName    xml.Name
+		property   webdav.Property
+		properties = make(map[xml.Name]webdav.Property)
+	)
+	if h.w.opt.HashType != hash.None {
+		entry := h.Handle.Node().DirEntry()
+		if o, ok := entry.(fs.Object); ok {
+			hash, err := o.Hash(h.ctx, h.w.opt.HashType)
+			if err == nil {
+				xmlName.Space = "http://owncloud.org/ns"
+				xmlName.Local = "checksums"
+				property.XMLName = xmlName
+				property.InnerXML = append(property.InnerXML, "<checksum xmlns=\"http://owncloud.org/ns\">"...)
+				property.InnerXML = append(property.InnerXML, strings.ToUpper(h.w.opt.HashType.String())...)
+				property.InnerXML = append(property.InnerXML, ':')
+				property.InnerXML = append(property.InnerXML, hash...)
+				property.InnerXML = append(property.InnerXML, "</checksum>"...)
+				properties[xmlName] = property
+			} else {
+				fs.Errorf(nil, "failed to calculate hash: %v", err)
+			}
+		}
+	}
+
+	xmlName.Space = "DAV:"
+	xmlName.Local = "lastmodified"
+	property.XMLName = xmlName
+	property.InnerXML = strconv.AppendInt(nil, h.Handle.Node().ModTime().Unix(), 10)
+	properties[xmlName] = property
+
+	return properties, nil
+}
+
+// Patch changes modtime of the underlying resources, it returns ok for all properties, the error is from setModtime if any
+// FIXME does not check for invalid property and SetModTime error
+func (h Handle) Patch(proppatches []webdav.Proppatch) ([]webdav.Propstat, error) {
+	var (
+		stat webdav.Propstat
+		err  error
+	)
+	stat.Status = http.StatusOK
+	for _, patch := range proppatches {
+		for _, prop := range patch.Props {
+			stat.Props = append(stat.Props, webdav.Property{XMLName: prop.XMLName})
+			if prop.XMLName.Space == "DAV:" && prop.XMLName.Local == "lastmodified" {
+				var modtimeUnix int64
+				modtimeUnix, err = strconv.ParseInt(string(prop.InnerXML), 10, 64)
+				if err == nil {
+					err = h.Handle.Node().SetModTime(time.Unix(modtimeUnix, 0))
+				}
+			}
+		}
+	}
+	return []webdav.Propstat{stat}, err
 }
 
 // FileInfo represents info about a file satisfying os.FileInfo and

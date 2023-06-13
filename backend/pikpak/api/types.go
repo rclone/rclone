@@ -227,9 +227,10 @@ type Media struct {
 		Duration   int64  `json:"duration,omitempty"`
 		BitRate    int    `json:"bit_rate,omitempty"`
 		FrameRate  int    `json:"frame_rate,omitempty"`
-		VideoCodec string `json:"video_codec,omitempty"`
-		AudioCodec string `json:"audio_codec,omitempty"`
-		VideoType  string `json:"video_type,omitempty"`
+		VideoCodec string `json:"video_codec,omitempty"` // "h264", "hevc"
+		AudioCodec string `json:"audio_codec,omitempty"` // "pcm_bluray", "aac"
+		VideoType  string `json:"video_type,omitempty"`  // "mpegts"
+		HdrType    string `json:"hdr_type,omitempty"`
 	} `json:"video,omitempty"`
 	Link           *Link         `json:"link,omitempty"`
 	NeedMoreQuota  bool          `json:"need_more_quota,omitempty"`

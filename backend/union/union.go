@@ -801,6 +801,24 @@ func (f *Fs) Shutdown(ctx context.Context) error {
 	return errs.Err()
 }
 
+// CleanUp the trash in the Fs
+//
+// Implement this if you have a way of emptying the trash or
+// otherwise cleaning up old versions of files.
+func (f *Fs) CleanUp(ctx context.Context) error {
+	errs := Errors(make([]error, len(f.upstreams)))
+	multithread(len(f.upstreams), func(i int) {
+		u := f.upstreams[i]
+		if do := u.Features().CleanUp; do != nil {
+			err := do(ctx)
+			if err != nil {
+				errs[i] = fmt.Errorf("%s: %w", u.Name(), err)
+			}
+		}
+	})
+	return errs.Err()
+}
+
 // NewFs constructs an Fs from the path.
 //
 // The returned Fs is the actual Fs, referenced by remote in the config
@@ -914,6 +932,9 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		}
 	}
 
+	// show that we wrap other backends
+	features.Overlay = true
+
 	f.features = features
 
 	// Get common intersection of hashes
@@ -960,4 +981,5 @@ var (
 	_ fs.Abouter         = (*Fs)(nil)
 	_ fs.ListRer         = (*Fs)(nil)
 	_ fs.Shutdowner      = (*Fs)(nil)
+	_ fs.CleanUpper      = (*Fs)(nil)
 )

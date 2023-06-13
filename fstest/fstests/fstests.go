@@ -460,7 +460,7 @@ func Run(t *testing.T, opt *Opt) {
 			t.Skip("Skipping FsCheckWrap on this Fs")
 		}
 		ft := new(fs.Features).Fill(ctx, f)
-		if ft.UnWrap == nil {
+		if ft.UnWrap == nil && !f.Features().Overlay {
 			t.Skip("Not a wrapping Fs")
 		}
 		v := reflect.ValueOf(ft).Elem()

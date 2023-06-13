@@ -49,8 +49,7 @@ func (e Errors) Error() string {
 
 	if len(e) == 0 {
 		buf.WriteString("no error")
-	}
-	if len(e) == 1 {
+	} else if len(e) == 1 {
 		buf.WriteString("1 error: ")
 	} else {
 		fmt.Fprintf(&buf, "%d errors: ", len(e))
@@ -61,8 +60,17 @@ func (e Errors) Error() string {
 			buf.WriteString("; ")
 		}
 
-		buf.WriteString(err.Error())
+		if err != nil {
+			buf.WriteString(err.Error())
+		} else {
+			buf.WriteString("nil error")
+		}
 	}
 
 	return buf.String()
+}
+
+// Unwrap returns the wrapped errors
+func (e Errors) Unwrap() []error {
+	return e
 }

@@ -360,6 +360,15 @@ func TestNewFilterMakeListR(t *testing.T) {
 	require.NoError(t, f.AddFile("error"))
 	err = listR(context.Background(), "", listRcallback)
 	require.EqualError(t, err, assert.AnError.Error())
+
+	// The checker will exit by the error above
+	ci := fs.GetConfig(context.Background())
+	ci.Checkers = 1
+
+	// Now check an error is returned from NewObject
+	require.NoError(t, f.AddFile("error"))
+	err = listR(context.Background(), "", listRcallback)
+	require.EqualError(t, err, assert.AnError.Error())
 }
 
 func TestNewFilterMinSize(t *testing.T) {

@@ -254,11 +254,11 @@ func equal(ctx context.Context, src fs.ObjectInfo, dst fs.Object, opt equalOpt) 
 			}
 			// Update the mtime of the dst object here
 			err := dst.SetModTime(ctx, srcModTime)
-			if err == fs.ErrorCantSetModTime {
+			if errors.Is(err, fs.ErrorCantSetModTime) {
 				logModTimeUpload(dst)
 				fs.Infof(dst, "src and dst identical but can't set mod time without re-uploading")
 				return false
-			} else if err == fs.ErrorCantSetModTimeWithoutDelete {
+			} else if errors.Is(err, fs.ErrorCantSetModTimeWithoutDelete) {
 				logModTimeUpload(dst)
 				fs.Infof(dst, "src and dst identical but can't set mod time without deleting and re-uploading")
 				// Remove the file if BackupDir isn't set.  If BackupDir is set we would rather have the old file
@@ -295,6 +295,20 @@ func removeFailedCopy(ctx context.Context, dst fs.Object) bool {
 		return false
 	}
 	return true
+}
+
+// Used to remove a failed partial copy
+//
+// Returns whether the file was successfully removed or not
+func removeFailedPartialCopy(ctx context.Context, f fs.Fs, remotePartial string) bool {
+	o, err := f.NewObject(ctx, remotePartial)
+	if errors.Is(err, fs.ErrorObjectNotFound) {
+		return true
+	} else if err != nil {
+		fs.Infof(remotePartial, "Failed to remove failed partial copy: %s", err)
+		return false
+	}
+	return removeFailedCopy(ctx, o)
 }
 
 // CommonHash returns a single hash.Type and a HashOption with that
@@ -388,14 +402,22 @@ func Copy(ctx context.Context, f fs.Fs, dst fs.Object, remote string, src fs.Obj
 			} else {
 				_ = in.Close()
 			}
-			if err == fs.ErrorCantCopy {
+			if errors.Is(err, fs.ErrorCantCopy) {
 				tr.Reset(ctx) // skip incomplete accounting - will be overwritten by the manual copy below
 			}
 		} else {
 			err = fs.ErrorCantCopy
 		}
 		// If can't server-side copy, do it manually
-		if err == fs.ErrorCantCopy {
+		if errors.Is(err, fs.ErrorCantCopy) {
+			// Remove partial files on premature exit
+			var atexitRemovePartial atexit.FnHandle
+			if !inplace {
+				atexitRemovePartial = atexit.Register(func() {
+					ctx := context.Background()
+					removeFailedPartialCopy(ctx, f, remotePartial)
+				})
+			}
 			if doMultiThreadCopy(ctx, f, src) {
 				// Number of streams proportional to size
 				streams := src.Size() / int64(ci.MultiThreadCutoff)
@@ -421,7 +443,7 @@ func Copy(ctx context.Context, f fs.Fs, dst fs.Object, remote string, src fs.Obj
 				for _, option := range ci.DownloadHeaders {
 					options = append(options, option)
 				}
-				in0, err = NewReOpen(ctx, src, ci.LowLevelRetries, options...)
+				in0, err = Open(ctx, src, options...)
 				if err != nil {
 					err = fmt.Errorf("failed to open source object: %w", err)
 				} else {
@@ -475,6 +497,10 @@ func Copy(ctx context.Context, f fs.Fs, dst fs.Object, remote string, src fs.Obj
 					}
 				}
 			}
+			if !inplace {
+				atexit.Unregister(atexitRemovePartial)
+			}
+
 		}
 		tries++
 		if tries >= maxTries {
@@ -1026,7 +1052,7 @@ func hashSum(ctx context.Context, ht hash.Type, base64Encoded bool, downloadFlag
 		for _, option := range fs.GetConfig(ctx).DownloadHeaders {
 			options = append(options, option)
 		}
-		in, err := NewReOpen(ctx, o, fs.GetConfig(ctx).LowLevelRetries, options...)
+		in, err := Open(ctx, o, options...)
 		if err != nil {
 			return "ERROR", fmt.Errorf("failed to open file %v: %w", o, err)
 		}
@@ -1211,7 +1237,7 @@ func Purge(ctx context.Context, f fs.Fs, dir string) (err error) {
 			return nil
 		}
 		err = doPurge(ctx, dir)
-		if err == fs.ErrorCantPurge {
+		if errors.Is(err, fs.ErrorCantPurge) {
 			doFallbackPurge = true
 		}
 	}
@@ -1326,7 +1352,7 @@ func Cat(ctx context.Context, f fs.Fs, w io.Writer, offset, count int64, sep []b
 		for _, option := range ci.DownloadHeaders {
 			options = append(options, option)
 		}
-		in, err := o.Open(ctx, options...)
+		in, err := Open(ctx, o, options...)
 		if err != nil {
 			err = fs.CountError(err)
 			fs.Errorf(o, "Failed to open: %v", err)
@@ -1922,7 +1948,7 @@ func moveOrCopyFile(ctx context.Context, fdst fs.Fs, fsrc fs.Fs, dstFileName str
 	var dstObj fs.Object
 	if !ci.NoCheckDest {
 		dstObj, err = fdst.NewObject(ctx, dstFileName)
-		if err == fs.ErrorObjectNotFound {
+		if errors.Is(err, fs.ErrorObjectNotFound) {
 			dstObj = nil
 		} else if err != nil {
 			return err

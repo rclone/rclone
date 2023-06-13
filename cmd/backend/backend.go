@@ -98,8 +98,14 @@ Note to run these commands on a running backend then see
 				out, err = doCommand(context.Background(), name, arg, opt)
 			}
 			if err != nil {
+				if err == fs.ErrorCommandNotFound {
+					extra := ""
+					if f.Features().Overlay {
+						extra = " (try the underlying remote)"
+					}
+					return fmt.Errorf("%q %w%s", name, err, extra)
+				}
 				return fmt.Errorf("command %q failed: %w", name, err)
-
 			}
 			// Output the result
 			writeJSON := false

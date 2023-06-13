@@ -227,12 +227,13 @@ func New(f fs.Fs, opt *vfscommon.Options) *VFS {
 		fs.Logf(f, "--vfs-cache-mode writes or full is recommended for this remote as it can't stream")
 	}
 
-	vfs.SetCacheMode(vfs.Opt.CacheMode)
-
 	// Pin the Fs into the cache so that when we use cache.NewFs
 	// with the same remote string we get this one. The Pin is
 	// removed when the vfs is finalized
 	cache.PinUntilFinalized(f, vfs)
+
+	// This can take some time so do it after the Pin
+	vfs.SetCacheMode(vfs.Opt.CacheMode)
 
 	return vfs
 }

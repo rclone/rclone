@@ -32,6 +32,7 @@ type Features struct {
 	FilterAware             bool // can make use of filters if provided for listing
 	PartialUploads          bool // uploaded file can appear incomplete on the fs while it's being uploaded
 	NoMultiThreading        bool // set if can't have multiplethreads on one download open
+	Overlay                 bool // this wraps one or more backends to add functionality
 
 	// Purge all files in the directory specified
 	//
@@ -271,6 +272,7 @@ func (ft *Features) Fill(ctx context.Context, f Fs) *Features {
 	if do, ok := f.(Wrapper); ok {
 		ft.WrapFs = do.WrapFs
 		ft.SetWrapper = do.SetWrapper
+		ft.Overlay = true // if implement UnWrap then must be an Overlay
 	}
 	if do, ok := f.(DirCacheFlusher); ok {
 		ft.DirCacheFlush = do.DirCacheFlush
@@ -339,6 +341,9 @@ func (ft *Features) Mask(ctx context.Context, f Fs) *Features {
 	ft.SlowModTime = ft.SlowModTime && mask.SlowModTime
 	ft.SlowHash = ft.SlowHash && mask.SlowHash
 	ft.FilterAware = ft.FilterAware && mask.FilterAware
+	ft.PartialUploads = ft.PartialUploads && mask.PartialUploads
+	ft.NoMultiThreading = ft.NoMultiThreading && mask.NoMultiThreading
+	// ft.Overlay = ft.Overlay && mask.Overlay don't propagate Overlay
 
 	if mask.Purge == nil {
 		ft.Purge = nil
