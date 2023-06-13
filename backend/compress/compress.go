@@ -186,6 +186,7 @@ func NewFs(ctx context.Context, name, rpath string, m configmap.Mapper) (fs.Fs, 
 		ReadMetadata:            true,
 		WriteMetadata:           true,
 		UserMetadata:            true,
+		PartialUploads:          true,
 	}).Fill(ctx, f).Mask(ctx, wrappedFs).WrapsFs(f, wrappedFs)
 	// We support reading MIME types no matter the wrapped fs
 	f.features.ReadMimeType = true

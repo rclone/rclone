@@ -902,6 +902,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		ReadMetadata:            true,
 		WriteMetadata:           true,
 		UserMetadata:            true,
+		PartialUploads:          true,
 	}).Fill(ctx, f)
 	canMove, slowHash := true, false
 	for _, f := range upstreams {

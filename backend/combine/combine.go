@@ -233,6 +233,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (outFs fs
 		ReadMetadata:            true,
 		WriteMetadata:           true,
 		UserMetadata:            true,
+		PartialUploads:          true,
 	}).Fill(ctx, f)
 	canMove := true
 	for _, u := range f.upstreams {

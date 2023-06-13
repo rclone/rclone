@@ -166,6 +166,7 @@ func NewFs(ctx context.Context, fsname, rpath string, cmap configmap.Mapper) (fs
 		ReadMetadata:            true,
 		WriteMetadata:           true,
 		UserMetadata:            true,
+		PartialUploads:          true,
 	}
 	f.features = stubFeatures.Fill(ctx, f).Mask(ctx, f.Fs).WrapsFs(f, f.Fs)
 
