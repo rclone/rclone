@@ -38,6 +38,7 @@ import (
 	_ "github.com/rclone/rclone/backend/pcloud"
 	_ "github.com/rclone/rclone/backend/pikpak"
 	_ "github.com/rclone/rclone/backend/premiumizeme"
+	_ "github.com/rclone/rclone/backend/protondrive"
 	_ "github.com/rclone/rclone/backend/putio"
 	_ "github.com/rclone/rclone/backend/qingstor"
 	_ "github.com/rclone/rclone/backend/s3"

@@ -363,6 +363,9 @@ backends:
  - backend:  "premiumizeme"
    remote:   "TestPremiumizeMe:"
    fastlist: false
+ - backend:  "protondrive"
+   remote:   "TestProtonDrive:"
+   fastlist: false
  - backend:  "putio"
    remote:   "TestPutio:"
    fastlist: false
