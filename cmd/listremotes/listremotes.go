@@ -24,7 +24,7 @@ func init() {
 
 var commandDefinition = &cobra.Command{
 	Use:   "listremotes",
-	Short: `List all the remotes in the config file.`,
+	Short: `List all the remotes in the config file and defined in environment variables.`,
 	Long: `
 rclone listremotes lists all the available remotes from the config file.
 
