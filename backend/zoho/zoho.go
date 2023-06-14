@@ -1206,7 +1206,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 	if err != nil {
 		return nil, err
 	}
-	if partialContent && resp.StatusCode == 200 {
+	if partialContent && resp.StatusCode == 200 && resp.Header.Get("Content-Range") == "" {
 		if start > 0 {
 			// We need to read and discard the beginning of the data...
 			_, err = io.CopyN(io.Discard, resp.Body, start)
