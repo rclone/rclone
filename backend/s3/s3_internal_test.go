@@ -18,6 +18,7 @@ import (
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/fstest"
 	"github.com/rclone/rclone/fstest/fstests"
+	"github.com/rclone/rclone/lib/bucket"
 	"github.com/rclone/rclone/lib/random"
 	"github.com/rclone/rclone/lib/version"
 	"github.com/stretchr/testify/assert"
@@ -317,10 +318,14 @@ func (f *Fs) InternalTestVersions(t *testing.T) {
 
 		// Check we can make a NewFs from that object with a version suffix
 		t.Run("NewFs", func(t *testing.T) {
-			newPath := path.Join(fs.ConfigString(f), fileNameVersion)
+			newPath := bucket.Join(fs.ConfigString(f), fileNameVersion)
 			// Make sure --s3-versions is set in the config of the new remote
-			confPath := strings.Replace(newPath, ":", ",versions:", 1)
-			fNew, err := cache.Get(ctx, confPath)
+			fs.Debugf(nil, "oldPath = %q", newPath)
+			lastColon := strings.LastIndex(newPath, ":")
+			require.True(t, lastColon >= 0)
+			newPath = newPath[:lastColon] + ",versions" + newPath[lastColon:]
+			fs.Debugf(nil, "newPath = %q", newPath)
+			fNew, err := cache.Get(ctx, newPath)
 			// This should return pointing to a file
 			require.Equal(t, fs.ErrorIsFile, err)
 			require.NotNil(t, fNew)

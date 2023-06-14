@@ -3051,6 +3051,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	if err != nil {
 		return nil, err
 	}
+	fs.Debugf(nil, "name = %q, root = %q, opt = %#v", name, root, opt)
 	err = checkUploadChunkSize(opt.ChunkSize)
 	if err != nil {
 		return nil, fmt.Errorf("s3: chunk size: %w", err)
