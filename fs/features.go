@@ -169,7 +169,8 @@ type Features struct {
 
 	// Shutdown the backend, closing any background tasks and any
 	// cached connections.
-	Shutdown func(ctx context.Context) error
+	Shutdown        func(ctx context.Context) error
+	OpenChunkWriter func(ctx context.Context, remote string, chunkSize int64, fileSize int64) (ChunkWriter, error)
 }
 
 // Disable nil's out the named feature.  If it isn't found then it
@@ -300,6 +301,9 @@ func (ft *Features) Fill(ctx context.Context, f Fs) *Features {
 	}
 	if do, ok := f.(OpenWriterAter); ok {
 		ft.OpenWriterAt = do.OpenWriterAt
+	}
+	if do, ok := f.(OpenChunkWriter); ok {
+		ft.OpenChunkWriter = do.OpenChunkWriter
 	}
 	if do, ok := f.(UserInfoer); ok {
 		ft.UserInfo = do.UserInfo
@@ -621,6 +625,28 @@ type OpenWriterAter interface {
 	//
 	// It truncates any existing object
 	OpenWriterAt(ctx context.Context, remote string, size int64) (WriterAtCloser, error)
+}
+
+type OpenChunkWriter interface {
+	// OpenChunkWriter returns a ChunkWriter
+	//
+	// Pass in the remote desired and the chunk size
+	//
+	OpenChunkWriter(ctx context.Context, remote string, chunkSize int64, fileSize int64) (ChunkWriter, error)
+}
+
+type ChunkWriter interface {
+	// some backends require us to explicitly start a chuncked upload, if it doesnt this can just be a NOP
+	StartChunkWrite() error
+
+	// the reader should correspond to the chunk number
+	WriteChunk(chunkNumber int, reader io.Reader) error
+
+	// complete chunked writer
+	CompleteChunkWrite() error
+
+	// abort chunk write
+	AbortChunkWrite() error
 }
 
 // UserInfoer is an optional interface for Fs

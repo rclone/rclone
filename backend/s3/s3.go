@@ -14,6 +14,9 @@ import (
 	"encoding/xml"
 	"errors"
 	"fmt"
+	awsSdk2Config "github.com/aws/aws-sdk-go-v2/config"
+	awsSdk2S3 "github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 	"io"
 	"net/http"
 	"net/url"
@@ -2513,6 +2516,116 @@ type Fs struct {
 	versioningMu   sync.Mutex
 	versioning     fs.Tristate // if set bucket is using versions
 	warnCompressed sync.Once   // warn once about compressed files
+}
+
+func (f *Fs) OpenChunkWriter(ctx context.Context, remote string, chunkSize int64, fileSize int64) (fs.ChunkWriter, error) {
+	parts := calculateParts(chunkSize, fileSize)
+	chunkWriter := &s3ChunkedUploader{
+		ctx:            ctx,
+		partSize:       chunkSize,
+		size:           fileSize,
+		totalParts:     parts,
+		bucket:         f.Root(),
+		key:            remote,
+		completedParts: make([]types.CompletedPart, parts),
+	}
+
+	return chunkWriter, nil
+}
+
+type s3ChunkedUploader struct {
+	ctx            context.Context
+	client         *awsSdk2S3.Client
+	partSize       int64
+	size           int64
+	totalParts     int
+	bucket         string
+	key            string
+	completedParts []types.CompletedPart
+	createdResp    *awsSdk2S3.CreateMultipartUploadOutput
+}
+
+func calculateParts(partSize int64, size int64) int {
+	// calculate number of streams
+	parts := int(size / partSize)
+	// round streams up so partSize * streams >= size
+	if (size % partSize) != 0 {
+		parts++
+	}
+	return parts
+}
+func (s *s3ChunkedUploader) StartChunkWrite() error {
+	cfg, err := awsSdk2Config.LoadDefaultConfig(s.ctx)
+	if err != nil {
+		return err
+	}
+
+	s.client = awsSdk2S3.NewFromConfig(cfg)
+	expiryDate := time.Now().AddDate(0, 0, 1)
+	s.createdResp, err = s.client.CreateMultipartUpload(s.ctx, &awsSdk2S3.CreateMultipartUploadInput{
+		Bucket:            aws.String(s.bucket),
+		Key:               aws.String(s.key),
+		Expires:           &expiryDate,
+		ChecksumAlgorithm: types.ChecksumAlgorithmSha256,
+	})
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *s3ChunkedUploader) WriteChunk(chunkNumber int, reader io.Reader) error {
+	contentLength := s.partSize
+	if chunkNumber == s.totalParts {
+		if s.size%s.partSize != 0 {
+			// last part, smaller content
+			contentLength = s.size % s.partSize
+		}
+	}
+
+	uploadRes, err := s.client.UploadPart(s.ctx, &awsSdk2S3.UploadPartInput{
+		Body:              reader,
+		Bucket:            s.createdResp.Bucket,
+		Key:               s.createdResp.Key,
+		PartNumber:        int32(chunkNumber),
+		UploadId:          s.createdResp.UploadId,
+		ContentLength:     contentLength,
+		ChecksumAlgorithm: types.ChecksumAlgorithmSha256,
+	})
+	if err != nil {
+		return err
+	}
+	fs.Debugf("", "uploaded part %v", chunkNumber)
+	completedPart := types.CompletedPart{
+		PartNumber:     int32(chunkNumber),
+		ETag:           uploadRes.ETag,
+		ChecksumSHA256: uploadRes.ChecksumSHA256,
+	}
+	s.completedParts[chunkNumber-1] = completedPart
+
+	return nil
+}
+
+func (s *s3ChunkedUploader) CompleteChunkWrite() error {
+	multiPartUpload := types.CompletedMultipartUpload{Parts: s.completedParts}
+	_, err := s.client.CompleteMultipartUpload(s.ctx, &awsSdk2S3.CompleteMultipartUploadInput{
+		Bucket:          s.createdResp.Bucket,
+		Key:             s.createdResp.Key,
+		UploadId:        s.createdResp.UploadId,
+		MultipartUpload: &multiPartUpload,
+	})
+	if err != nil {
+		return err
+	}
+	fs.Debugf("", "Completed multipart upload")
+	return nil
+}
+
+func (s *s3ChunkedUploader) AbortChunkWrite() error {
+	//TODO implement me
+	panic("implement me")
 }
 
 // Object describes a s3 object

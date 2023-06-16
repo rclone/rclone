@@ -4,17 +4,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/config"
-	"github.com/aws/aws-sdk-go-v2/service/s3"
-	"github.com/aws/aws-sdk-go-v2/service/s3/types"
-	"golang.org/x/sync/semaphore"
-	"io"
-	"time"
-
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/accounting"
 	"golang.org/x/sync/errgroup"
+	"golang.org/x/sync/semaphore"
+	"io"
 )
 
 const (
@@ -79,14 +73,12 @@ func doMultiThreadCopy(ctx context.Context, f fs.Fs, src fs.Object) bool {
 
 // state for a multi-thread copy
 type multiThreadCopyState struct {
-	ctx            context.Context
-	partSize       int64
-	size           int64
-	wc             fs.WriterAtCloser
-	src            fs.Object
-	acc            *accounting.Account
-	streams        int
-	completedParts []types.CompletedPart
+	ctx      context.Context
+	partSize int64
+	size     int64
+	src      fs.Object
+	acc      *accounting.Account
+	streams  int
 }
 
 type readerAccounter struct {
@@ -101,7 +93,7 @@ func (r readerAccounter) Read(p []byte) (n int, err error) {
 }
 
 // Copy a single stream into place
-func (mc *multiThreadCopyState) copyStream(ctx context.Context, stream int, resp *s3.CreateMultipartUploadOutput, client *s3.Client) (err error) {
+func (mc *multiThreadCopyState) copyStream(ctx context.Context, stream int, writer fs.ChunkWriter) (err error) {
 	//ci := fs.GetConfig(ctx)
 	defer func() {
 		if err != nil {
@@ -130,43 +122,35 @@ func (mc *multiThreadCopyState) copyStream(ctx context.Context, stream int, resp
 		acc:    mc.acc,
 	}
 
-	uploadRes, err := client.UploadPart(ctx, &s3.UploadPartInput{
-		Body:              accR,
-		Bucket:            resp.Bucket,
-		Key:               resp.Key,
-		PartNumber:        int32(stream + 1),
-		UploadId:          resp.UploadId,
-		ContentLength:     end - start,
-		ChecksumAlgorithm: types.ChecksumAlgorithmSha256,
-	})
+	err = writer.WriteChunk(stream+1, accR)
 	if err != nil {
-		panic(err)
+		return nil
 	}
-	fs.Debugf(mc.src, "uploaded part %v", stream+1)
-	completedPart := types.CompletedPart{
-		PartNumber:     int32(stream + 1),
-		ETag:           uploadRes.ETag,
-		ChecksumSHA256: uploadRes.ChecksumSHA256,
-	}
-	mc.completedParts[stream] = completedPart
 
 	fs.Debugf(mc.src, "multi-thread copy: stream %d/%d (%d-%d) size %v finished", stream+1, mc.streams, start, end, fs.SizeSuffix(end-start))
 	return nil
 }
 
 // Calculate the chunk sizes and updated number of streams
-func (mc *multiThreadCopyState) calculateStreams() {
+func calculateParts(partSize int64, size int64) int {
 	// calculate number of streams
-	mc.streams = int(mc.size / mc.partSize)
+	parts := int(size / partSize)
 	// round streams up so partSize * streams >= size
-	if (mc.size % mc.partSize) != 0 {
-		mc.streams++
+	if (size % partSize) != 0 {
+		parts++
 	}
+	return parts
 }
 
 // Copy src to (f, remote) using streams download threads and the OpenWriterAt feature
 func multiThreadCopy(ctx context.Context, f fs.Fs, remote string, src fs.Object, streams int, tr *accounting.Transfer) (newDst fs.Object, err error) {
 	ci := fs.GetConfig(ctx)
+
+	openChunkWriter := f.Features().OpenChunkWriter
+	if openChunkWriter == nil {
+		return nil, errors.New("multi-part copy: OpenChunkWriter not supported")
+	}
+
 	if src.Size() < 0 {
 		return nil, errors.New("multi-thread copy: can't copy unknown sized file")
 	}
@@ -174,26 +158,7 @@ func multiThreadCopy(ctx context.Context, f fs.Fs, remote string, src fs.Object,
 		return nil, errors.New("multi-thread copy: can't copy zero sized file")
 	}
 
-	cfg, err := config.LoadDefaultConfig(context.TODO())
-	if err != nil {
-		panic(err)
-	}
-
 	fs.Debugf(src, "name %v, %v", f.Name(), f.Root())
-
-	client := s3.NewFromConfig(cfg)
-	expiryDate := time.Now().AddDate(0, 0, 1)
-	createdResp, err := client.CreateMultipartUpload(ctx, &s3.CreateMultipartUploadInput{
-		Bucket:            aws.String(f.Root()),
-		Key:               aws.String(remote),
-		Expires:           &expiryDate,
-		ChecksumAlgorithm: types.ChecksumAlgorithmSha256,
-	})
-
-	if err != nil {
-		fmt.Print(err)
-		return
-	}
 
 	g, gCtx := errgroup.WithContext(ctx)
 
@@ -202,9 +167,18 @@ func multiThreadCopy(ctx context.Context, f fs.Fs, remote string, src fs.Object,
 		size:     src.Size(),
 		src:      src,
 		partSize: int64(ci.ChunkSize),
+		streams:  calculateParts(int64(ci.ChunkSize), src.Size()),
 	}
-	mc.calculateStreams()
-	mc.completedParts = make([]types.CompletedPart, mc.streams)
+
+	chunkedWriter, err := openChunkWriter(ctx, remote, int64(ci.ChunkSize), src.Size())
+
+	if err != nil {
+		return nil, err
+	}
+	err = chunkedWriter.StartChunkWrite()
+	if err != nil {
+		return nil, err
+	}
 
 	// Make accounting
 	mc.acc = tr.Account(ctx, nil)
@@ -221,7 +195,7 @@ func multiThreadCopy(ctx context.Context, f fs.Fs, remote string, src fs.Object,
 		}
 		g.Go(func() (err error) {
 			defer sem.Release(1)
-			return mc.copyStream(gCtx, stream, createdResp, client)
+			return mc.copyStream(gCtx, stream, chunkedWriter)
 		})
 	}
 	err = g.Wait()
@@ -229,17 +203,10 @@ func multiThreadCopy(ctx context.Context, f fs.Fs, remote string, src fs.Object,
 		return nil, err
 	}
 
-	multiPartUpload := types.CompletedMultipartUpload{Parts: mc.completedParts}
-	_, err = client.CompleteMultipartUpload(ctx, &s3.CompleteMultipartUploadInput{
-		Bucket:          createdResp.Bucket,
-		Key:             createdResp.Key,
-		UploadId:        createdResp.UploadId,
-		MultipartUpload: &multiPartUpload,
-	})
+	err = chunkedWriter.CompleteChunkWrite()
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
-	fs.Debugf(src, "Completed multipart upload")
 
 	obj, err := f.NewObject(ctx, remote)
 	if err != nil {
