@@ -1,6 +1,7 @@
 package operations
 
 import (
+	"bufio"
 	"context"
 	"errors"
 	"fmt"
@@ -124,7 +125,7 @@ func (mc *multiThreadCopyState) copyStream(ctx context.Context, stream int, writ
 
 	err = writer.WriteChunk(stream+1, accR)
 	if err != nil {
-		return nil
+		return err
 	}
 
 	fs.Debugf(mc.src, "multi-thread copy: stream %d/%d (%d-%d) size %v finished", stream+1, mc.streams, start, end, fs.SizeSuffix(end-start))
@@ -148,7 +149,11 @@ func multiThreadCopy(ctx context.Context, f fs.Fs, remote string, src fs.Object,
 
 	openChunkWriter := f.Features().OpenChunkWriter
 	if openChunkWriter == nil {
-		return nil, errors.New("multi-part copy: OpenChunkWriter not supported")
+		openWriterAt := f.Features().OpenWriterAt
+		if openWriterAt == nil {
+			return nil, errors.New("multi-part copy: neither OpenChunkWriter nor OpenWriterAt supported")
+		}
+		openChunkWriter = openChunkWriterFromOpenWriterAt(openWriterAt, 128*1024)
 	}
 
 	if src.Size() < 0 {
@@ -187,7 +192,6 @@ func multiThreadCopy(ctx context.Context, f fs.Fs, remote string, src fs.Object,
 	maxWorkers := ci.ChunkConcurrency
 	sem := semaphore.NewWeighted(int64(maxWorkers))
 	for stream := 0; stream < mc.streams; stream++ {
-		stream := stream
 		fs.Debugf(src, "Acquiring semaphore...")
 		if err := sem.Acquire(ctx, 1); err != nil {
 			fs.Errorf(src, "Failed to acquire semaphore: %v", err)
@@ -227,4 +231,80 @@ func multiThreadCopy(ctx context.Context, f fs.Fs, remote string, src fs.Object,
 
 	fs.Debugf(src, "Finished multi-thread copy with %d parts of size %v", mc.streams, fs.SizeSuffix(mc.partSize))
 	return obj, nil
+}
+
+type writerAtChunkWriter struct {
+	ctx             context.Context
+	remote          string
+	size            int64
+	writerAt        fs.WriterAtCloser
+	chunkSize       int64
+	chunks          int
+	writeBufferSize int64
+}
+
+func (w writerAtChunkWriter) StartChunkWrite() error {
+	return nil // NOP
+}
+
+func (w writerAtChunkWriter) WriteChunk(chunkNumber int, reader io.Reader) error {
+	fs.Debugf("", "Writing chunk...")
+
+	bytesToWrite := w.chunkSize
+	if chunkNumber == w.chunks && w.size%w.chunkSize != 0 {
+		bytesToWrite = w.size % w.chunkSize
+	}
+
+	var writer io.Writer = newOffsetWriter(w.writerAt, int64(chunkNumber-1)*w.chunkSize)
+	if w.writeBufferSize > 0 {
+		writer = bufio.NewWriterSize(writer, int(w.writeBufferSize))
+		fs.Debugf("", "multi-thread copy: write buffer set to %v", w.writeBufferSize)
+	}
+	n, err := io.Copy(writer, reader)
+	if err != nil {
+		return err
+	}
+	if n != bytesToWrite {
+		return fmt.Errorf("Expected to write %v bytes for chunk %v, but wrote %v bytes", bytesToWrite, chunkNumber, n)
+	}
+	// if we were buffering, flush do disk
+	switch w := writer.(type) {
+	case *bufio.Writer:
+		er2 := w.Flush()
+		if er2 != nil {
+			return fmt.Errorf("multipart copy: flush failed: %w", err)
+		}
+	}
+	return nil
+}
+
+func (w writerAtChunkWriter) CompleteChunkWrite() error {
+	return nil // NOP
+}
+
+func (w writerAtChunkWriter) AbortChunkWrite() error {
+	//TODO implement me
+	panic("implement me")
+}
+
+// creates an OpenChunkWriter function based on OpenWriterAt
+func openChunkWriterFromOpenWriterAt(openWriterAt func(ctx context.Context, remote string, size int64) (fs.WriterAtCloser, error), writeBufferSize int64) func(ctx context.Context, remote string, chunkSize int64, fileSize int64) (fs.ChunkWriter, error) {
+	return func(ctx context.Context, remote string, chunkSize int64, fileSize int64) (fs.ChunkWriter, error) {
+		writerAt, err := openWriterAt(ctx, remote, fileSize)
+		if err != nil {
+			return nil, err
+		}
+
+		chunkWriter := &writerAtChunkWriter{
+			ctx:             ctx,
+			remote:          remote,
+			size:            fileSize,
+			chunkSize:       chunkSize,
+			chunks:          calculateParts(chunkSize, fileSize),
+			writerAt:        writerAt,
+			writeBufferSize: writeBufferSize,
+		}
+
+		return chunkWriter, nil
+	}
 }
