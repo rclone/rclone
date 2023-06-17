@@ -105,11 +105,11 @@ func (tb *tokenBucket) StartTokenBucket(ctx context.Context) {
 	if tb.currLimit.Bandwidth.IsSet() {
 		tb.curr = newTokenBucket(tb.currLimit.Bandwidth)
 		fs.Infof(nil, "Starting bandwidth limiter at %v Byte/s", &tb.currLimit.Bandwidth)
-
-		// Start the SIGUSR2 signal handler to toggle bandwidth.
-		// This function does nothing in windows systems.
-		tb.startSignalHandler()
 	}
+
+	// Start the SIGUSR2 signal handler to toggle bandwidth.
+	// This function does nothing in windows systems.
+	tb.startSignalHandler()
 }
 
 // StartTokenTicker creates a ticker to update the bandwidth limiter every minute.
