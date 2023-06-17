@@ -30,12 +30,11 @@ type buckets [TokenBucketSlots]*rate.Limiter
 
 // tokenBucket holds info about the rate limiters in use
 type tokenBucket struct {
-	mu          sync.RWMutex // protects the token bucket variables
-	curr        buckets
-	prev        buckets
-	toggledOff  bool
-	currLimitMu sync.Mutex // protects changes to the timeslot
-	currLimit   fs.BwTimeSlot
+	mu         sync.RWMutex // protects the token bucket variables
+	curr       buckets
+	prev       buckets
+	toggledOff bool
+	currLimit  fs.BwTimeSlot
 }
 
 // Return true if limit is disabled
@@ -126,11 +125,9 @@ func (tb *tokenBucket) StartTokenTicker(ctx context.Context) {
 	go func() {
 		for range ticker.C {
 			limitNow := ci.BwLimit.LimitAt(time.Now())
-			tb.currLimitMu.Lock()
+			tb.mu.Lock()
 
 			if tb.currLimit.Bandwidth != limitNow.Bandwidth {
-				tb.mu.Lock()
-
 				// If bwlimit is toggled off, the change should only
 				// become active on the next toggle, which causes
 				// an exchange of tb.curr <-> tb.prev
@@ -156,9 +153,9 @@ func (tb *tokenBucket) StartTokenTicker(ctx context.Context) {
 				}
 
 				tb.currLimit = limitNow
-				tb.mu.Unlock()
 			}
-			tb.currLimitMu.Unlock()
+
+			tb.mu.Unlock()
 		}
 	}()
 }
