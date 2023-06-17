@@ -66,7 +66,7 @@ import (
 func init() {
 	fs.Register(&fs.RegInfo{
 		Name:        "s3",
-		Description: "Amazon S3 Compliant Storage Providers including AWS, Alibaba, Ceph, China Mobile, Cloudflare, GCS, ArvanCloud, DigitalOcean, Dreamhost, Huawei OBS, IBM COS, IDrive e2, IONOS Cloud, Liara, Lyve Cloud, Minio, Netease, Petabox, RackCorp, Scaleway, SeaweedFS, StackPath, Storj, Tencent COS, Qiniu and Wasabi",
+		Description: "Amazon S3 Compliant Storage Providers including AWS, Alibaba, ArvanCloud, Ceph, China Mobile, Cloudflare, GCS, DigitalOcean, Dreamhost, Huawei OBS, IBM COS, IDrive e2, IONOS Cloud, Liara, Lyve Cloud, Minio, Netease, Petabox, RackCorp, Scaleway, SeaweedFS, StackPath, Storj, Tencent COS, Qiniu and Wasabi",
 		NewFs:       NewFs,
 		CommandHelp: commandHelp,
 		Config: func(ctx context.Context, name string, m configmap.Mapper, config fs.ConfigIn) (*fs.ConfigOut, error) {
@@ -92,6 +92,9 @@ func init() {
 				Value: "Alibaba",
 				Help:  "Alibaba Cloud Object Storage System (OSS) formerly Aliyun",
 			}, {
+				Value: "ArvanCloud",
+				Help:  "Arvan Cloud Object Storage (AOS)",
+			}, {
 				Value: "Ceph",
 				Help:  "Ceph Object Storage",
 			}, {
@@ -100,9 +103,6 @@ func init() {
 			}, {
 				Value: "Cloudflare",
 				Help:  "Cloudflare R2 Storage",
-			}, {
-				Value: "ArvanCloud",
-				Help:  "Arvan Cloud Object Storage (AOS)",
 			}, {
 				Value: "DigitalOcean",
 				Help:  "DigitalOcean Spaces",
@@ -466,7 +466,7 @@ func init() {
 		}, {
 			Name:     "region",
 			Help:     "Region to connect to.\n\nLeave blank if you are using an S3 clone and you don't have a region.",
-			Provider: "!AWS,Alibaba,ChinaMobile,Cloudflare,IONOS,Petabox,ArvanCloud,Liara,Qiniu,RackCorp,Scaleway,Storj,TencentCOS,HuaweiOBS,IDrive",
+			Provider: "!AWS,Alibaba,ArvanCloud,ChinaMobile,Cloudflare,IONOS,Petabox,Liara,Qiniu,RackCorp,Scaleway,Storj,TencentCOS,HuaweiOBS,IDrive",
 			Examples: []fs.OptionExample{{
 				Value: "",
 				Help:  "Use this if unsure.\nWill use v4 signatures and an empty region.",
@@ -575,15 +575,15 @@ func init() {
 				Help:  "Anhui China (Huainan)",
 			}},
 		}, {
-			// ArvanCloud endpoints: https://www.arvancloud.com/en/products/cloud-storage
+			// ArvanCloud endpoints: https://www.arvancloud.ir/en/products/cloud-storage
 			Name:     "endpoint",
 			Help:     "Endpoint for Arvan Cloud Object Storage (AOS) API.",
 			Provider: "ArvanCloud",
 			Examples: []fs.OptionExample{{
-				Value: "s3.ir-thr-at1.arvanstorage.com",
-				Help:  "The default endpoint - a good choice if you are unsure.\nTehran Iran (Asiatech)",
+				Value: "s3.ir-thr-at1.arvanstorage.ir",
+				Help:  "The default endpoint - a good choice if you are unsure.\nTehran Iran (Simin)",
 			}, {
-				Value: "s3.ir-tbz-sh1.arvanstorage.com",
+				Value: "s3.ir-tbz-sh1.arvanstorage.ir",
 				Help:  "Tabriz Iran (Shahriar)",
 			}},
 		}, {
@@ -1156,7 +1156,7 @@ func init() {
 		}, {
 			Name:     "endpoint",
 			Help:     "Endpoint for S3 API.\n\nRequired when using an S3 clone.",
-			Provider: "!AWS,IBMCOS,IDrive,IONOS,TencentCOS,HuaweiOBS,Alibaba,ChinaMobile,GCS,Liara,ArvanCloud,Scaleway,StackPath,Storj,RackCorp,Qiniu,Petabox",
+			Provider: "!AWS,ArvanCloud,IBMCOS,IDrive,IONOS,TencentCOS,HuaweiOBS,Alibaba,ChinaMobile,GCS,Liara,Scaleway,StackPath,Storj,RackCorp,Qiniu,Petabox",
 			Examples: []fs.OptionExample{{
 				Value:    "objects-us-east-1.dream.io",
 				Help:     "Dream Objects endpoint",
@@ -1258,8 +1258,12 @@ func init() {
 				Help:     "Liara Iran endpoint",
 				Provider: "Liara",
 			}, {
-				Value:    "s3.ir-thr-at1.arvanstorage.com",
-				Help:     "ArvanCloud Tehran Iran (Asiatech) endpoint",
+				Value:    "s3.ir-thr-at1.arvanstorage.ir",
+				Help:     "ArvanCloud Tehran Iran (Simin) endpoint",
+				Provider: "ArvanCloud",
+			}, {
+				Value:    "s3.ir-tbz-sh1.arvanstorage.ir",
+				Help:     "ArvanCloud Tabriz Iran (Shahriar) endpoint",
 				Provider: "ArvanCloud",
 			}},
 		}, {
@@ -1443,7 +1447,7 @@ func init() {
 			Provider: "ArvanCloud",
 			Examples: []fs.OptionExample{{
 				Value: "ir-thr-at1",
-				Help:  "Tehran Iran (Asiatech)",
+				Help:  "Tehran Iran (Simin)",
 			}, {
 				Value: "ir-tbz-sh1",
 				Help:  "Tabriz Iran (Shahriar)",
@@ -1640,7 +1644,7 @@ func init() {
 		}, {
 			Name:     "location_constraint",
 			Help:     "Location constraint - must be set to match the Region.\n\nLeave blank if not sure. Used when creating buckets only.",
-			Provider: "!AWS,Alibaba,HuaweiOBS,ChinaMobile,Cloudflare,IBMCOS,IDrive,IONOS,Liara,ArvanCloud,Qiniu,RackCorp,Scaleway,StackPath,Storj,TencentCOS,Petabox",
+			Provider: "!AWS,Alibaba,ArvanCloud,HuaweiOBS,ChinaMobile,Cloudflare,IBMCOS,IDrive,IONOS,Liara,Qiniu,RackCorp,Scaleway,StackPath,Storj,TencentCOS,Petabox",
 		}, {
 			Name: "acl",
 			Help: `Canned ACL used when creating buckets and storing or copying objects.
@@ -1883,7 +1887,7 @@ If you leave it blank, this is calculated automatically from the sse_customer_ke
 				Help:  "Standard storage class",
 			}},
 		}, {
-			// Mapping from here: https://www.arvancloud.com/en/products/cloud-storage
+			// Mapping from here: https://www.arvancloud.ir/en/products/cloud-storage
 			Name:     "storage_class",
 			Help:     "The storage class to use when storing new objects in ArvanCloud.",
 			Provider: "ArvanCloud",
