@@ -954,7 +954,7 @@ func (f *Fs) MergeDirs(ctx context.Context, dirs []fs.Directory) error {
 		if u == nil {
 			u = uNew
 		} else if u != uNew {
-			return fmt.Errorf("can't merge dirctories from different upstreams")
+			return fmt.Errorf("can't merge directories from different upstreams")
 		}
 		uDirs = append(uDirs, fs.NewOverrideDirectory(dir, uDir))
 	}
