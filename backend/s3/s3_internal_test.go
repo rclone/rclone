@@ -318,7 +318,7 @@ func (f *Fs) InternalTestVersions(t *testing.T) {
 
 		// Check we can make a NewFs from that object with a version suffix
 		t.Run("NewFs", func(t *testing.T) {
-			newPath := bucket.Join(fs.ConfigString(f), fileNameVersion)
+			newPath := bucket.Join(fs.ConfigStringFull(f), fileNameVersion)
 			// Make sure --s3-versions is set in the config of the new remote
 			fs.Debugf(nil, "oldPath = %q", newPath)
 			lastColon := strings.LastIndex(newPath, ":")
@@ -330,7 +330,7 @@ func (f *Fs) InternalTestVersions(t *testing.T) {
 			require.Equal(t, fs.ErrorIsFile, err)
 			require.NotNil(t, fNew)
 			// With the directory the directory above
-			assert.Equal(t, dirName, path.Base(fs.ConfigString(fNew)))
+			assert.Equal(t, dirName, path.Base(fs.ConfigStringFull(fNew)))
 		})
 	})
 

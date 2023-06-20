@@ -115,11 +115,11 @@ func ParseRemote(path string) (fsInfo *RegInfo, configName, fsPath string, conne
 	return fsInfo, configName, fsPath, parsed.Config, err
 }
 
-// ConfigString returns a canonical version of the config string used
+// configString returns a canonical version of the config string used
 // to configure the Fs as passed to fs.NewFs
-func ConfigString(f Fs) string {
+func configString(f Fs, full bool) string {
 	name := f.Name()
-	if open := strings.IndexRune(name, '{'); open >= 0 && strings.HasSuffix(name, "}") {
+	if open := strings.IndexRune(name, '{'); full && open >= 0 && strings.HasSuffix(name, "}") {
 		suffix := name[open:]
 		overriddenConfigMu.Lock()
 		config, ok := overriddenConfig[suffix]
@@ -135,6 +135,21 @@ func ConfigString(f Fs) string {
 		return root
 	}
 	return name + ":" + root
+}
+
+// ConfigString returns a canonical version of the config string used
+// to configure the Fs as passed to fs.NewFs. For Fs with extra
+// parameters this will include a canonical {hexstring} suffix.
+func ConfigString(f Fs) string {
+	return configString(f, false)
+}
+
+// ConfigStringFull returns a canonical version of the config string
+// used to configure the Fs as passed to fs.NewFs. This string can be
+// used to re-instantiate the Fs exactly so includes all the extra
+// parameters passed in.
+func ConfigStringFull(f Fs) string {
+	return configString(f, true)
 }
 
 // TemporaryLocalFs creates a local FS in the OS's temporary directory.
