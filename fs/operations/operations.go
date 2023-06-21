@@ -529,6 +529,9 @@ func Copy(ctx context.Context, f fs.Fs, dst fs.Object, remote string, src fs.Obj
 	if err != nil {
 		err = fs.CountError(err)
 		fs.Errorf(src, "Failed to copy: %v", err)
+		if !inplace {
+			removeFailedPartialCopy(ctx, f, remotePartial)
+		}
 		return newDst, err
 	}
 
