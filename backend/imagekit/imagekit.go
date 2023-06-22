@@ -183,7 +183,7 @@ func NewFs(ctx context.Context, name string, root string, m configmap.Mapper) (f
 		SlowHash:                true,
 		ReadMetadata:            true,
 		WriteMetadata:           false,
-		UserMetadata:            true,
+		UserMetadata:            false,
 		FilterAware:             true,
 		PartialUploads:          false,
 		NoMultiThreading:        false,
@@ -472,6 +472,9 @@ func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, 
 		Src:           file.Url,
 		Signed:        *file.IsPrivateFile || f.opt.OnlySigned,
 		ExpireSeconds: int64(expireSeconds),
+		QueryParameters: map[string]string{
+			"updatedAt": file.UpdatedAt.String(),
+		},
 	})
 
 	if err != nil {
@@ -554,6 +557,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 		Signed: *o.file.IsPrivateFile || o.fs.opt.OnlySigned,
 		QueryParameters: map[string]string{
 			"tr": "orig-true",
+			"updatedAt": o.file.UpdatedAt.String(),
 		},
 	})
 
