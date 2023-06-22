@@ -407,8 +407,6 @@ mount sftp1:subdir /mnt/data -t rclone -o vfs_cache_mode=writes,sftp_key_file=/p
 or create systemd mount units:
 ```
 # /etc/systemd/system/mnt-data.mount
-[Unit]
-After=network-online.target
 [Mount]
 Type=rclone
 What=sftp1:subdir
@@ -420,7 +418,6 @@ optionally accompanied by systemd automount unit
 ```
 # /etc/systemd/system/mnt-data.automount
 [Unit]
-After=network-online.target
 Before=remote-fs.target
 [Automount]
 Where=/mnt/data
