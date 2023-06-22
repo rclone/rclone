@@ -40,7 +40,8 @@ See the following for detailed instructions for
   * [Combine](/combine/)
   * [Crypt](/crypt/) - to encrypt other remotes
   * [DigitalOcean Spaces](/s3/#digitalocean-spaces)
-  * [Digi Storage](/koofr/#digi-storage)
+  * [Digi Storage España](/koofr/#digi-storage-españa)
+  * [Digi Storage România](/koofr/#digi-storage-românia)
   * [Dropbox](/dropbox/)
   * [Enterprise File Fabric](/filefabric/)
   * [FTP](/ftp/)

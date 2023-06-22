@@ -44,9 +44,11 @@ Choose a number from below, or type in your own value.
 Press Enter to leave empty.
  1 / Koofr, https://app.koofr.net/
    \ (koofr)
- 2 / Digi Storage, https://storage.rcs-rds.ro/
-   \ (digistorage)
- 3 / Any other Koofr API compatible storage service
+ 2 / Digi Storage Romania, https://storage.rcs-rds.ro/
+   \ (digistoragero)
+ 3 / Digi Storage Spain, https://digistorage.es/
+   \ (digistoragees)
+ 4 / Any other Koofr API compatible storage service
    \ (other)
 provider> 1    
 Option user.
@@ -129,8 +131,10 @@ Properties:
 - Examples:
     - "koofr"
         - Koofr, https://app.koofr.net/
-    - "digistorage"
-        - Digi Storage, https://storage.rcs-rds.ro/
+    - "digistoragero"
+        - Digi Storage Romania, https://storage.rcs-rds.ro/
+    - "digistoragees"
+        - Digi Storage Spain, https://digistorage.es/
     - "other"
         - Any other Koofr API compatible storage service
 
@@ -181,7 +185,21 @@ Properties:
 
 - Config:      password
 - Env Var:     RCLONE_KOOFR_PASSWORD
-- Provider:    digistorage
+- Provider:    digistoragero
+- Type:        string
+- Required:    true
+
+#### --koofr-password
+
+Your password for rclone (generate one at https://digistorage.es/app/admin/preferences/password).
+
+**NB** Input to this must be obscured - see [rclone obscure](/commands/rclone_obscure/).
+
+Properties:
+
+- Config:      password
+- Env Var:     RCLONE_KOOFR_PASSWORD
+- Provider:    digistoragees
 - Type:        string
 - Required:    true
 
@@ -255,9 +273,9 @@ Note that Koofr is case insensitive so you can't have a file called
 
 This is the original [Koofr](https://koofr.eu) storage provider used as main example and described in the [configuration](#configuration) section above.
 
-### Digi Storage 
+### Digi Storage România
 
-[Digi Storage](https://www.digi.ro/servicii/online/digi-storage) is a cloud storage service run by [Digi.ro](https://www.digi.ro/) that
+[Digi Storage România](https://www.digi.ro/servicii/online/digi-storage) is a cloud storage service run by [Digi.ro](https://www.digi.ro/) that
 provides a Koofr API.
 
 Here is an example of how to make a remote called `ds`.  First run:
@@ -287,9 +305,11 @@ Choose a number from below, or type in your own value.
 Press Enter to leave empty.
  1 / Koofr, https://app.koofr.net/
    \ (koofr)
- 2 / Digi Storage, https://storage.rcs-rds.ro/
-   \ (digistorage)
- 3 / Any other Koofr API compatible storage service
+ 2 / Digi Storage Romania, https://storage.rcs-rds.ro/
+   \ (digistoragero)
+ 3 / Digi Storage Spain, https://digistorage.es/
+   \ (digistoragero)
+ 4 / Any other Koofr API compatible storage service
    \ (other)
 provider> 2
 Option user.
@@ -313,7 +333,7 @@ y/n> n
 --------------------
 [ds]
 type = koofr
-provider = digistorage
+provider = digistoragero
 user = USERNAME
 password = *** ENCRYPTED ***
 --------------------
@@ -322,7 +342,75 @@ e) Edit this remote
 d) Delete this remote
 y/e/d> y
 ```
+### Digi Storage España
 
+[DIGI Storage España](https://www.digimobil.es/DIGIstorage) is a cloud storage service run by [DIGI España](https://www.digimobil.es/) that
+provides a Koofr API.
+
+Here is an example of how to make a remote called `ds`.  First run:
+
+     rclone config
+
+This will guide you through an interactive setup process:
+
+```
+No remotes found, make a new one?
+n) New remote
+s) Set configuration password
+q) Quit config
+n/s/q> n
+name> ds
+Option Storage.
+Type of storage to configure.
+Choose a number from below, or type in your own value.
+[snip]
+22 / Koofr, Digi Storage and other Koofr-compatible storage providers
+   \ (koofr)
+[snip]
+Storage> koofr
+Option provider.
+Choose your storage provider.
+Choose a number from below, or type in your own value.
+Press Enter to leave empty.
+ 1 / Koofr, https://app.koofr.net/
+   \ (koofr)
+ 2 / Digi Storage Romania, https://storage.rcs-rds.ro/
+   \ (digistoragero)
+ 3 / Digi Storage Spain, https://digistorage.es/
+   \ (digistoragero)
+ 4 / Any other Koofr API compatible storage service
+   \ (other)
+provider> 3
+Option user.
+Your user name.
+Enter a value.
+user> USERNAME
+Option password.
+Your password for rclone (generate one at https://digistorage.es/app/admin/preferences/password).
+Choose an alternative below.
+y) Yes, type in my own password
+g) Generate random password
+y/g> y
+Enter the password:
+password:
+Confirm the password:
+password:
+Edit advanced config?
+y) Yes
+n) No (default)
+y/n> n
+--------------------
+[ds]
+type = koofr
+provider = digistoragees
+user = USERNAME
+password = *** ENCRYPTED ***
+--------------------
+y) Yes this is OK (default)
+e) Edit this remote
+d) Delete this remote
+y/e/d> y
+```
 ### Other
 
 You may also want to use another, public or private storage provider that runs a Koofr API compatible service, by simply providing the base URL to connect to.
@@ -354,11 +442,13 @@ Choose a number from below, or type in your own value.
 Press Enter to leave empty.
  1 / Koofr, https://app.koofr.net/
    \ (koofr)
- 2 / Digi Storage, https://storage.rcs-rds.ro/
-   \ (digistorage)
- 3 / Any other Koofr API compatible storage service
+ 2 / Digi Storage Romania, https://storage.rcs-rds.ro/
+   \ (digistoragero)
+ 2 / Digi Storage Spain, https://digistorage.es/
+   \ (digistoragees)
+ 4 / Any other Koofr API compatible storage service
    \ (other)
-provider> 3
+provider> 4
 Option endpoint.
 The Koofr API endpoint to use.
 Enter a value.
