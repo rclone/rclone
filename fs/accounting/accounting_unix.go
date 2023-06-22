@@ -23,15 +23,26 @@ func (tb *tokenBucket) startSignalHandler() {
 		// This runs forever, but blocks until the signal is received.
 		for {
 			<-signals
-			tb.mu.Lock()
-			tb.toggledOff = !tb.toggledOff
-			tb.curr, tb.prev = tb.prev, tb.curr
-			s := "disabled"
-			if !tb.curr._isOff() {
-				s = "enabled"
-			}
-			tb.mu.Unlock()
-			fs.Logf(nil, "Bandwidth limit %s by user", s)
+
+			func() {
+				tb.mu.Lock()
+				defer tb.mu.Unlock()
+
+				// if there's no bandwidth limit configured now, do nothing
+				if !tb.currLimit.Bandwidth.IsSet() {
+					fs.Debugf(nil, "SIGUSR2 received but no bandwidth limit configured right now, ignoring")
+					return
+				}
+
+				tb.toggledOff = !tb.toggledOff
+				tb.curr, tb.prev = tb.prev, tb.curr
+				s := "disabled"
+				if !tb.curr._isOff() {
+					s = "enabled"
+				}
+
+				fs.Logf(nil, "Bandwidth limit %s by user", s)
+			}()
 		}
 	}()
 }
