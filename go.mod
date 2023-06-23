@@ -9,7 +9,7 @@ require (
 	github.com/Azure/azure-sdk-for-go/sdk/storage/azblob v1.2.0
 	github.com/Azure/go-ntlmssp v0.0.0-20221128193559-754e69321358
 	github.com/Max-Sum/base32768 v0.0.0-20230304063302-18e6ce5945fd
-	github.com/Mikubill/gofakes3 v0.0.3-0.20221030004050-725f2cf2bf5e
+	github.com/Mikubill/gofakes3 v0.0.3-0.20230622102024-284c0f988700
 	github.com/Unknwon/goconfig v1.0.0
 	github.com/a8m/tree v0.0.0-20230208161321-36ae24ddad15
 	github.com/aalpar/deheap v0.0.0-20210914013432-0cc84d79dec3
@@ -43,6 +43,7 @@ require (
 	github.com/koofr/go-koofrclient v0.0.0-20221207135200-cbd7fc9ad6a6
 	github.com/mattn/go-colorable v0.1.13
 	github.com/mattn/go-runewidth v0.0.15
+	github.com/minio/minio-go/v7 v7.0.57
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/moby/sys/mountinfo v0.6.2
 	github.com/ncw/go-acd v0.0.0-20201019170801-fe55f33415b1
@@ -103,6 +104,7 @@ require (
 	github.com/cpuguy83/go-md2man/v2 v2.0.3 // indirect
 	github.com/cronokirby/saferith v0.33.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
+	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/emersion/go-message v0.17.0 // indirect
 	github.com/emersion/go-textwrapper v0.0.0-20200911093747-65d896831594 // indirect
 	github.com/emersion/go-vcard v0.0.0-20230815062825-8fda7d206ec9 // indirect
@@ -147,6 +149,7 @@ require (
 	github.com/prometheus/procfs v0.12.0 // indirect
 	github.com/rasky/go-xdr v0.0.0-20170124162913-1a41d1a06c93 // indirect
 	github.com/relvacode/iso8601 v1.3.0 // indirect
+	github.com/rs/xid v1.5.0 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/ryszard/goskiplist v0.0.0-20150312221310-2dfbae5fcf46 // indirect
 	github.com/shabbyrobe/gocovmerge v0.0.0-20190829150210-3e036491d500 // indirect
@@ -168,6 +171,7 @@ require (
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20231016165738-49dd2c1f3d0b // indirect
 	google.golang.org/grpc v1.59.0 // indirect
 	google.golang.org/protobuf v1.31.0 // indirect
+	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	storj.io/common v0.0.0-20231027080355-b4cb1b0d728e // indirect
 	storj.io/drpc v0.0.33 // indirect
