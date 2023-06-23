@@ -5,7 +5,7 @@ versionIntroduced: "v1.63"
 
 ---
 # {{< icon "fa fa-cloud" >}} ImageKit
-This is a backend for the [ImageKit.io](https://imagekit.io/) storage service
+This is a backend for the [ImageKit.io](https://imagekit.io/) storage service.
 
 #### About ImageKit
 [ImageKit.io](https://imagekit.io/)  provides real-time image and video optimizations, transformations, and CDN delivery. Over 1,000 businesses and 70,000 developers trust ImageKit with their images and videos on the web.
