@@ -11,7 +11,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"mime/multipart"
 	"net/http"
 	"net/url"
@@ -163,7 +162,7 @@ const drainLimit = 10 * 1024 * 1024
 // drainAndClose discards up to drainLimit bytes from r and closes
 // it. Any errors from the Read or Close are returned.
 func drainAndClose(r io.ReadCloser) (err error) {
-	_, readErr := io.CopyN(ioutil.Discard, r, drainLimit)
+	_, readErr := io.CopyN(io.Discard, r, drainLimit)
 	if readErr == io.EOF {
 		readErr = nil
 	}

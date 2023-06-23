@@ -1,6 +1,6 @@
 module github.com/rclone/rclone
 
-go 1.18
+go 1.19
 
 require (
 	bazil.org/fuse v0.0.0-20221209211307-2abb8038c751
