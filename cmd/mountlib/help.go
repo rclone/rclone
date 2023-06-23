@@ -407,18 +407,20 @@ mount sftp1:subdir /mnt/data -t rclone -o vfs_cache_mode=writes,sftp_key_file=/p
 or create systemd mount units:
 |||
 # /etc/systemd/system/mnt-data.mount
+[Unit]
+Description=Mount for /mnt/data
 [Mount]
 Type=rclone
 What=sftp1:subdir
 Where=/mnt/data
-Options=rw,allow_other,args2env,vfs-cache-mode=writes,config=/etc/rclone.conf,cache-dir=/var/rclone
+Options=rw,_netdev,allow_other,args2env,vfs-cache-mode=writes,config=/etc/rclone.conf,cache-dir=/var/rclone
 |||
 
 optionally accompanied by systemd automount unit
 |||
 # /etc/systemd/system/mnt-data.automount
 [Unit]
-Before=remote-fs.target
+Description=AutoMount for /mnt/data
 [Automount]
 Where=/mnt/data
 TimeoutIdleSec=600
