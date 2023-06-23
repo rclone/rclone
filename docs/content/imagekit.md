@@ -1,6 +1,6 @@
 ---
 title: "ImageKit"
-description: "Rclone docs for ImageKit backend"
+description: "Rclone docs for ImageKit backend."
 versionIntroduced: "v1.63"
 
 ---
@@ -8,32 +8,18 @@ versionIntroduced: "v1.63"
 This is a backend for the [ImageKit.io](https://imagekit.io/) storage service
 
 #### About ImageKit
+[ImageKit.io](https://imagekit.io/)  provides real-time image and video optimizations, transformations, and CDN delivery. Over 1,000 businesses and 70,000 developers trust ImageKit with their images and videos on the web.
 
-[ImageKit.io](https://imagekit.io/) empowers you to simplify your image workflow through real-time image transformation, automatic optimization, easy management, and super fast delivery using a global CDN. This means that you consistently deliver a superb visual experience for your store visitors by displaying high-quality product visuals that load blazingly fast on every device.
 
 #### Accounts & Pricing
 
 To use this backend, you need to [create an account](https://imagekit.io/registration/) on ImageKit. Start with a free plan with generous usage limits. Then, as your requirements grow, upgrade to a plan that best fits your needs. See [the pricing details](https://imagekit.io/plans).
 
-#### Features
-
--  **Deliver compressed images in a suitable format:** Get automatically optimized product images on the same URLs without compromising their visual quality. Automate conversion into new-gen WebP and AVIF formats based on users’ browser support and ensure a visually rich shopping experience.
-
--  **Manipulate images in real-time:** Use URL parameters to resize, crop, rotate, watermark, and create multiple image variations from a single high-res image that can be used across your storefront, product pages, and marketing channels.
-
-Manage your creative assets in central storage: Leverage integrated digital assets management via ImageKit Media Library with its easy-to-adopt interface for importing/exporting, searching, tagging, and managing assets - all, in turn, improving collaboration between your teams and consistency in your communications.
-
--  **Advanced image editing at your fingertips:** Modify creatives right inside the Media Library using resize, crop, text overlays, and advanced visual effects features and eliminate dependencies on the design team for editing your marketing assets.
-
--  **CDN-powered delivery across the globe:** Boost conversions using the highly available, in-built AWS CloudFront for guaranteed fast delivery, processing, and uptime or integrate your existing CDN.
-
-Monitoring simplified: Use the simple in-build dashboard to monitor performance metrics, usage patterns, bandwidth consumptions, and error rates.
-
 ## Configuration
 
-Here is an example of making a imagekit configuration.
+Here is an example of making an imagekit configuration.
 
-Firstly create a [ImageKit.io](https://imagekit.io/) Account and choose a plan.
+Firstly create a [ImageKit.io](https://imagekit.io/) account and choose a plan.
 
 You will need to log in and get the `publicKey` and `privateKey` for your account from the developer section.
 
@@ -51,7 +37,7 @@ s) Set configuration password
 q) Quit config
 n/s/q> n
 
-Enter name for new remote.
+Enter the name for the new remote.
 name> imagekit-media-library
 
 Option Storage.
@@ -96,15 +82,15 @@ e) Edit this remote
 d) Delete this remote
 y/e/d> y
 ```
-List directories in top level of your Media Library
+List directories in the top level of your Media Library
 ```
 rclone lsd imagekit-media-library:
 ```
-Make a new directory
+Make a new directory.
 ```
 rclone mkdir imagekit-media-library:directory
 ```
-List the contents of a directory
+List the contents of a directory.
 ```
 rclone ls imagekit-media-library:directory
 ```
