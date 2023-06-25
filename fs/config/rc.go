@@ -59,7 +59,7 @@ func init() {
 	rc.Add(rc.Call{
 		Path:         "config/listremotes",
 		Fn:           rcListRemotes,
-		Title:        "Lists the remotes in the config file.",
+		Title:        "Lists the remotes in the config file and defined in environment variables.",
 		AuthRequired: true,
 		Help: `
 Returns
@@ -71,8 +71,9 @@ See the [listremotes](/commands/rclone_listremotes/) command for more informatio
 }
 
 // Return the a list of remotes in the config file
+// including any defined by environment variables.
 func rcListRemotes(ctx context.Context, in rc.Params) (out rc.Params, err error) {
-	remotes := LoadedData().GetSectionList()
+	remotes := FileSections()
 	out = rc.Params{
 		"remotes": remotes,
 	}
