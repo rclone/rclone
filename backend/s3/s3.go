@@ -2501,24 +2501,24 @@ type Options struct {
 
 // Fs represents a remote s3 server
 type Fs struct {
-	name           string           // the name of the remote
-	root           string           // root of the bucket - ignore all objects above this
-	opt            Options          // parsed options
-	ci             *fs.ConfigInfo   // global config
-	ctx            context.Context  // global context for reading config
-	features       *fs.Features     // optional features
-	c              *s3.S3           // the connection to the s3 server
-	ses            *session.Session // the s3 session
-	rootBucket     string           // bucket part of root (if any)
-	rootDirectory  string           // directory part of root (if any)
-	cache          *bucket.Cache    // cache for bucket creation status
-	pacer          *fs.Pacer        // To pace the API calls
-	srv            *http.Client     // a plain http client
-	srvRest        *rest.Client     // the rest connection to the server
-	encryptClient  *s3crypto.EncryptionClientV2
-	decryptClient  *s3crypto.DecryptionClientV2
-	pool           *pool.Pool // memory pool
-	etagIsNotMD5   bool       // if set ETags are not MD5s
+	name           string                       // the name of the remote
+	root           string                       // root of the bucket - ignore all objects above this
+	opt            Options                      // parsed options
+	ci             *fs.ConfigInfo               // global config
+	ctx            context.Context              // global context for reading config
+	features       *fs.Features                 // optional features
+	c              *s3.S3                       // the connection to the s3 server
+	ses            *session.Session             // the s3 session
+	rootBucket     string                       // bucket part of root (if any)
+	rootDirectory  string                       // directory part of root (if any)
+	cache          *bucket.Cache                // cache for bucket creation status
+	pacer          *fs.Pacer                    // To pace the API calls
+	srv            *http.Client                 // a plain http client
+	srvRest        *rest.Client                 // the rest connection to the server
+	encryptClient  *s3crypto.EncryptionClientV2 // is an S3 crypto client
+	decryptClient  *s3crypto.DecryptionClientV2 // is an S3 crypto client
+	pool           *pool.Pool                   // memory pool
+	etagIsNotMD5   bool                         // if set ETags are not MD5s
 	versioningMu   sync.Mutex
 	versioning     fs.Tristate // if set bucket is using versions
 	warnCompressed sync.Once   // warn once about compressed files
@@ -4984,6 +4984,14 @@ func (o *Object) readMetaData(ctx context.Context) (err error) {
 	return nil
 }
 
+func (o *Object) putObjectRequest(params *s3.PutObjectInput) (putObj *request.Request, resp *s3.PutObjectOutput) {
+	if o.fs.encryptClient == nil {
+		return o.fs.c.PutObjectRequest(params)
+	} else {
+		return o.fs.encryptClient.PutObjectRequest(params)
+	}
+}
+
 // Convert S3 metadata with pointers into a map[string]string
 // while lowercasing the keys
 func s3MetadataToMap(s3Meta map[string]*string) map[string]string {
@@ -5538,13 +5546,7 @@ func unWrapAwsError(err error) (found bool, outErr error) {
 
 // Upload a single part using PutObject
 func (o *Object) uploadSinglepartPutObject(ctx context.Context, req *s3.PutObjectInput, size int64, in io.Reader) (etag string, lastModified time.Time, versionID *string, err error) {
-	var r *request.Request
-	var resp *s3.PutObjectOutput
-	if o.fs.encryptClient == nil {
-		r, resp = o.fs.c.PutObjectRequest(req)
-	} else {
-		r, resp = o.fs.encryptClient.PutObjectRequest(req)
-	}
+	r, resp := o.putObjectRequest(req)
 	if req.ContentLength != nil && *req.ContentLength == 0 {
 		// Can't upload zero length files like this for some reason
 		r.Body = bytes.NewReader([]byte{})
@@ -5583,12 +5585,7 @@ func (o *Object) uploadSinglepartPutObject(ctx context.Context, req *s3.PutObjec
 // Upload a single part using a presigned request
 func (o *Object) uploadSinglepartPresignedRequest(ctx context.Context, req *s3.PutObjectInput, size int64, in io.Reader) (etag string, lastModified time.Time, versionID *string, err error) {
 	// Create the request
-	var putObj *request.Request
-	if o.fs.encryptClient == nil {
-		putObj, _ = o.fs.c.PutObjectRequest(req)
-	} else {
-		putObj, _ = o.fs.c.PutObjectRequest(req)
-	}
+	putObj, _ := o.putObjectRequest(req)
 	// Sign it so we can upload using a presigned request.
 	//
 	// Note the SDK didn't used to support streaming to
