@@ -734,3 +734,4 @@ put them back in again.` >}}
   * Stanislav Gromov <kullfar@gmail.com>
   * Paulo Schreiner <paulo.schreiner@delivion.de>
   * Mariusz Suchodolski <mariusz@suchodol.ski>
+  * danielkrajnik <dan94kra@gmail.com>
