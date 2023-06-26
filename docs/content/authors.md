@@ -733,3 +733,4 @@ put them back in again.` >}}
   * URenko <18209292+URenko@users.noreply.github.com>
   * Stanislav Gromov <kullfar@gmail.com>
   * Paulo Schreiner <paulo.schreiner@delivion.de>
+  * Mariusz Suchodolski <mariusz@suchodol.ski>
