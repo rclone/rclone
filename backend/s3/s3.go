@@ -14,6 +14,8 @@ import (
 	"encoding/xml"
 	"errors"
 	"fmt"
+	"github.com/aws/aws-sdk-go/service/kms"
+	"github.com/aws/aws-sdk-go/service/s3/s3crypto"
 	"io"
 	"net/http"
 	"net/url"
@@ -2460,6 +2462,7 @@ type Options struct {
 	SSECustomerKey        string               `config:"sse_customer_key"`
 	SSECustomerKeyBase64  string               `config:"sse_customer_key_base64"`
 	SSECustomerKeyMD5     string               `config:"sse_customer_key_md5"`
+	CSEClientMasterKeyID  string               `config:"cse_client_master_key_id"`
 	StorageClass          string               `config:"storage_class"`
 	UploadCutoff          fs.SizeSuffix        `config:"upload_cutoff"`
 	CopyCutoff            fs.SizeSuffix        `config:"copy_cutoff"`
@@ -2512,8 +2515,10 @@ type Fs struct {
 	pacer          *fs.Pacer        // To pace the API calls
 	srv            *http.Client     // a plain http client
 	srvRest        *rest.Client     // the rest connection to the server
-	pool           *pool.Pool       // memory pool
-	etagIsNotMD5   bool             // if set ETags are not MD5s
+	encryptClient  *s3crypto.EncryptionClientV2
+	decryptClient  *s3crypto.DecryptionClientV2
+	pool           *pool.Pool // memory pool
+	etagIsNotMD5   bool       // if set ETags are not MD5s
 	versioningMu   sync.Mutex
 	versioning     fs.Tristate // if set bucket is using versions
 	warnCompressed sync.Once   // warn once about compressed files
@@ -3090,7 +3095,6 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	if err != nil {
 		return nil, err
 	}
-
 	ci := fs.GetConfig(ctx)
 	pc := fs.NewPacer(ctx, pacer.NewS3(pacer.MinSleep(minSleep)))
 	// Set pacer retries to 2 (1 try and 1 retry) because we are
@@ -3125,6 +3129,24 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		// Objects encrypted by SSE-C or SSE-KMS have ETags that are not an
 		// MD5 digest of their object data.
 		f.etagIsNotMD5 = true
+	} else if opt.CSEClientMasterKeyID != "" {
+		var matdesc s3crypto.MaterialDescription
+		kmsClient := kms.New(ses)
+		contentCipherBuilder := s3crypto.AESGCMContentCipherBuilderV2(
+			s3crypto.NewKMSContextKeyGenerator(kmsClient, opt.CSEClientMasterKeyID, matdesc))
+		if f.encryptClient, err = s3crypto.NewEncryptionClientV2(ses, contentCipherBuilder); err != nil {
+			return nil, err
+		}
+		cr := s3crypto.NewCryptoRegistry()
+		if err = s3crypto.RegisterAESGCMContentCipher(cr); err != nil {
+			return nil, err
+		}
+		if err = s3crypto.RegisterKMSContextWrapWithAnyCMK(cr, kmsClient); err != nil {
+			return nil, err
+		}
+		if f.decryptClient, err = s3crypto.NewDecryptionClientV2(ses, cr); err != nil {
+			return nil, err
+		}
 	}
 	f.setRoot(root)
 	f.features = (&fs.Features{
@@ -5174,7 +5196,13 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 	if o.fs.opt.SSECustomerKeyMD5 != "" {
 		req.SSECustomerKeyMD5 = &o.fs.opt.SSECustomerKeyMD5
 	}
-	httpReq, resp := o.fs.c.GetObjectRequest(&req)
+	var httpReq *request.Request
+	var resp *s3.GetObjectOutput
+	if o.fs.decryptClient == nil {
+		httpReq, resp = o.fs.c.GetObjectRequest(&req)
+	} else {
+		httpReq, resp = o.fs.decryptClient.GetObjectRequest(&req)
+	}
 	fs.FixRangeOption(options, o.bytes)
 
 	// Override the automatic decompression in the transport to
@@ -5248,6 +5276,14 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 }
 
 var warnStreamUpload sync.Once
+
+func appendMultipartParams(uploadPartInput *s3.UploadPartInput) request.Option {
+	return func(r *request.Request) {
+		r.Handlers.Validate.PushFront(func(req *request.Request) {
+			req.Params = uploadPartInput
+		})
+	}
+}
 
 func (o *Object) uploadMultipart(ctx context.Context, req *s3.PutObjectInput, size int64, in io.Reader) (wantETag, gotETag string, versionID *string, err error) {
 	f := o.fs
@@ -5398,7 +5434,26 @@ func (o *Object) uploadMultipart(ctx context.Context, req *s3.PutObjectInput, si
 					SSECustomerKey:       req.SSECustomerKey,
 					SSECustomerKeyMD5:    req.SSECustomerKeyMD5,
 				}
-				uout, err := f.c.UploadPartWithContext(gCtx, uploadPartReq)
+				var uoutETag *string
+				var err error
+				if f.encryptClient == nil {
+					var uout *s3.UploadPartOutput
+					if uout, err = f.c.UploadPartWithContext(gCtx, uploadPartReq); uout != nil {
+						uoutETag = uout.ETag
+					}
+
+				} else {
+					uploadReq := &s3.PutObjectInput{
+						Body:   bytes.NewReader(buf),
+						Bucket: req.Bucket,
+						Key:    req.Key,
+					}
+					var uout *s3.PutObjectOutput
+					if uout, err = f.encryptClient.PutObjectWithContext(gCtx, uploadReq,
+						appendMultipartParams(uploadPartReq)); uout != nil {
+						uoutETag = uout.ETag
+					}
+				}
 				if err != nil {
 					if partNum <= int64(concurrency) {
 						return f.shouldRetry(gCtx, err)
@@ -5409,7 +5464,7 @@ func (o *Object) uploadMultipart(ctx context.Context, req *s3.PutObjectInput, si
 				partsMu.Lock()
 				parts = append(parts, &s3.CompletedPart{
 					PartNumber: &partNum,
-					ETag:       uout.ETag,
+					ETag:       uoutETag,
 				})
 				partsMu.Unlock()
 
@@ -5483,7 +5538,13 @@ func unWrapAwsError(err error) (found bool, outErr error) {
 
 // Upload a single part using PutObject
 func (o *Object) uploadSinglepartPutObject(ctx context.Context, req *s3.PutObjectInput, size int64, in io.Reader) (etag string, lastModified time.Time, versionID *string, err error) {
-	r, resp := o.fs.c.PutObjectRequest(req)
+	var r *request.Request
+	var resp *s3.PutObjectOutput
+	if o.fs.encryptClient == nil {
+		r, resp = o.fs.c.PutObjectRequest(req)
+	} else {
+		r, resp = o.fs.encryptClient.PutObjectRequest(req)
+	}
 	if req.ContentLength != nil && *req.ContentLength == 0 {
 		// Can't upload zero length files like this for some reason
 		r.Body = bytes.NewReader([]byte{})
@@ -5522,8 +5583,12 @@ func (o *Object) uploadSinglepartPutObject(ctx context.Context, req *s3.PutObjec
 // Upload a single part using a presigned request
 func (o *Object) uploadSinglepartPresignedRequest(ctx context.Context, req *s3.PutObjectInput, size int64, in io.Reader) (etag string, lastModified time.Time, versionID *string, err error) {
 	// Create the request
-	putObj, _ := o.fs.c.PutObjectRequest(req)
-
+	var putObj *request.Request
+	if o.fs.encryptClient == nil {
+		putObj, _ = o.fs.c.PutObjectRequest(req)
+	} else {
+		putObj, _ = o.fs.c.PutObjectRequest(req)
+	}
 	// Sign it so we can upload using a presigned request.
 	//
 	// Note the SDK didn't used to support streaming to
