@@ -333,10 +333,6 @@ backends:
    ignore:
      - TestIntegration/FsMkdir/FsEncoding/punctuation
      - TestIntegration/FsMkdir/FsEncoding/invalid_UTF-8
-     - TestIntegration/FsMkdir/FsPutFiles/FsCopy
-     - TestCopyFileCopyDest
-     - TestServerSideCopy
-     - TestSyncCopyDest
    fastlist: false
  - backend:  "webdav"
    remote:   "TestWebdavRclone:"

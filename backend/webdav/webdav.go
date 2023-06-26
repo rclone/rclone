@@ -1068,6 +1068,13 @@ func (f *Fs) copyOrMove(ctx context.Context, src fs.Object, remote string, metho
 	if err != nil {
 		return nil, fmt.Errorf("copy NewObject failed: %w", err)
 	}
+	if f.useOCMtime && resp.Header.Get("X-OC-Mtime") != "accepted" && f.propsetMtime {
+		fs.Debugf(dstObj, "Setting modtime after copy to %v", src.ModTime(ctx))
+		err = dstObj.SetModTime(ctx, src.ModTime(ctx))
+		if err != nil {
+			return nil, fmt.Errorf("failed to set modtime: %w", err)
+		}
+	}
 	return dstObj, nil
 }
 
