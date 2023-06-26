@@ -735,3 +735,4 @@ put them back in again.` >}}
   * Paulo Schreiner <paulo.schreiner@delivion.de>
   * Mariusz Suchodolski <mariusz@suchodol.ski>
   * danielkrajnik <dan94kra@gmail.com>
+  * Peter Fern <github@0xc0dedbad.com>
