@@ -528,7 +528,11 @@ func (f *Fs) NewObject(ctx context.Context, relative string) (_ fs.Object, err e
 // May create the object even if it returns an error - if so will return the
 // object and the error, otherwise will return nil and the error
 func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (_ fs.Object, err error) {
-	fs.Debugf(f, "cp input ./%s # %+v %d", src.Remote(), options, src.Size())
+	return f.put(ctx, in, src, src.Remote(), options...)
+}
+
+func (f *Fs) put(ctx context.Context, in io.Reader, src fs.ObjectInfo, remote string, options ...fs.OpenOption) (_ fs.Object, err error) {
+	fs.Debugf(f, "cp input ./%s # %+v %d", remote, options, src.Size())
 
 	// Reject options we don't support.
 	for _, option := range options {
@@ -539,7 +543,7 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 		}
 	}
 
-	bucketName, bucketPath := f.absolute(src.Remote())
+	bucketName, bucketPath := f.absolute(remote)
 
 	upload, err := f.project.UploadObject(ctx, bucketName, bucketPath, nil)
 	if err != nil {
@@ -549,7 +553,7 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 		if err != nil {
 			aerr := upload.Abort()
 			if aerr != nil && !errors.Is(aerr, uplink.ErrUploadDone) {
-				fs.Errorf(f, "cp input ./%s %+v: %+v", src.Remote(), options, aerr)
+				fs.Errorf(f, "cp input ./%s %+v: %+v", remote, options, aerr)
 			}
 		}
 	}()
@@ -574,7 +578,7 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 		}
 
 		err = fserrors.RetryError(err)
-		fs.Errorf(f, "cp input ./%s %+v: %+v\n", src.Remote(), options, err)
+		fs.Errorf(f, "cp input ./%s %+v: %+v\n", remote, options, err)
 
 		return nil, err
 	}
@@ -601,7 +605,7 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 		return nil, err
 	}
 
-	return newObjectFromUplink(f, src.Remote(), upload.Info()), nil
+	return newObjectFromUplink(f, remote, upload.Info()), nil
 }
 
 // PutStream uploads to the remote path with the modTime given of indeterminate
