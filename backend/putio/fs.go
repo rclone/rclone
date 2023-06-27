@@ -252,9 +252,12 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 // This will create a duplicate if we upload a new file without
 // checking to see if there is one already - use Put() for that.
 func (f *Fs) PutUnchecked(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (o fs.Object, err error) {
+	return f.putUnchecked(ctx, in, src, src.Remote(), options...)
+}
+
+func (f *Fs) putUnchecked(ctx context.Context, in io.Reader, src fs.ObjectInfo, remote string, options ...fs.OpenOption) (o fs.Object, err error) {
 	// defer log.Trace(f, "src=%+v", src)("o=%+v, err=%v", &o, &err)
 	size := src.Size()
-	remote := src.Remote()
 	leaf, directoryID, err := f.dirCache.FindPath(ctx, remote, true)
 	if err != nil {
 		return nil, err
