@@ -1812,6 +1812,14 @@ If you leave it blank, this is calculated automatically from the sse_customer_ke
 				Help:  "None",
 			}},
 		}, {
+			Name:     "cse_kms_master_key_id",
+			Help:     "The client-side encryption with using KMS master key ID",
+			Provider: "AWS,Ceph,Minio",
+			Examples: []fs.OptionExample{{
+				Value: "",
+				Help:  "None",
+			}},
+		}, {
 			Name:     "storage_class",
 			Help:     "The storage class to use when storing new objects in S3.",
 			Provider: "AWS",
@@ -2462,7 +2470,7 @@ type Options struct {
 	SSECustomerKey        string               `config:"sse_customer_key"`
 	SSECustomerKeyBase64  string               `config:"sse_customer_key_base64"`
 	SSECustomerKeyMD5     string               `config:"sse_customer_key_md5"`
-	CSEClientMasterKeyID  string               `config:"cse_client_master_key_id"`
+	CSEKMSMasterKeyID     string               `config:"cse_kms_master_key_id"`
 	StorageClass          string               `config:"storage_class"`
 	UploadCutoff          fs.SizeSuffix        `config:"upload_cutoff"`
 	CopyCutoff            fs.SizeSuffix        `config:"copy_cutoff"`
@@ -2635,6 +2643,14 @@ func parsePath(path string) (root string) {
 func (f *Fs) split(rootRelativePath string) (bucketName, bucketPath string) {
 	bucketName, bucketPath = bucket.Split(bucket.Join(f.root, rootRelativePath))
 	return f.opt.Enc.FromStandardName(bucketName), f.opt.Enc.FromStandardPath(bucketPath)
+}
+
+func (f *Fs) putObjectRequest(params *s3.PutObjectInput) (putObj *request.Request, resp *s3.PutObjectOutput) {
+	if f.encryptClient == nil {
+		return f.c.PutObjectRequest(params)
+	} else {
+		return f.encryptClient.PutObjectRequest(params)
+	}
 }
 
 // split returns bucket and bucketPath from the object
@@ -3095,6 +3111,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	if err != nil {
 		return nil, err
 	}
+
 	ci := fs.GetConfig(ctx)
 	pc := fs.NewPacer(ctx, pacer.NewS3(pacer.MinSleep(minSleep)))
 	// Set pacer retries to 2 (1 try and 1 retry) because we are
@@ -3129,11 +3146,11 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		// Objects encrypted by SSE-C or SSE-KMS have ETags that are not an
 		// MD5 digest of their object data.
 		f.etagIsNotMD5 = true
-	} else if opt.CSEClientMasterKeyID != "" {
+	} else if opt.CSEKMSMasterKeyID != "" {
 		var matdesc s3crypto.MaterialDescription
 		kmsClient := kms.New(ses)
 		contentCipherBuilder := s3crypto.AESGCMContentCipherBuilderV2(
-			s3crypto.NewKMSContextKeyGenerator(kmsClient, opt.CSEClientMasterKeyID, matdesc))
+			s3crypto.NewKMSContextKeyGenerator(kmsClient, opt.CSEKMSMasterKeyID, matdesc))
 		if f.encryptClient, err = s3crypto.NewEncryptionClientV2(ses, contentCipherBuilder); err != nil {
 			return nil, err
 		}
@@ -4984,14 +5001,6 @@ func (o *Object) readMetaData(ctx context.Context) (err error) {
 	return nil
 }
 
-func (o *Object) putObjectRequest(params *s3.PutObjectInput) (putObj *request.Request, resp *s3.PutObjectOutput) {
-	if o.fs.encryptClient == nil {
-		return o.fs.c.PutObjectRequest(params)
-	} else {
-		return o.fs.encryptClient.PutObjectRequest(params)
-	}
-}
-
 // Convert S3 metadata with pointers into a map[string]string
 // while lowercasing the keys
 func s3MetadataToMap(s3Meta map[string]*string) map[string]string {
@@ -5546,11 +5555,14 @@ func unWrapAwsError(err error) (found bool, outErr error) {
 
 // Upload a single part using PutObject
 func (o *Object) uploadSinglepartPutObject(ctx context.Context, req *s3.PutObjectInput, size int64, in io.Reader) (etag string, lastModified time.Time, versionID *string, err error) {
-	r, resp := o.putObjectRequest(req)
+	if o.fs.encryptClient != nil {
+		req.Body = aws.ReadSeekCloser(io.NopCloser(in))
+	}
+	r, resp := o.fs.putObjectRequest(req)
 	if req.ContentLength != nil && *req.ContentLength == 0 {
 		// Can't upload zero length files like this for some reason
 		r.Body = bytes.NewReader([]byte{})
-	} else {
+	} else if o.fs.encryptClient == nil {
 		r.SetStreamingBody(io.NopCloser(in))
 	}
 	r.SetContext(ctx)
@@ -5585,7 +5597,7 @@ func (o *Object) uploadSinglepartPutObject(ctx context.Context, req *s3.PutObjec
 // Upload a single part using a presigned request
 func (o *Object) uploadSinglepartPresignedRequest(ctx context.Context, req *s3.PutObjectInput, size int64, in io.Reader) (etag string, lastModified time.Time, versionID *string, err error) {
 	// Create the request
-	putObj, _ := o.putObjectRequest(req)
+	putObj, _ := o.fs.c.PutObjectRequest(req)
 	// Sign it so we can upload using a presigned request.
 	//
 	// Note the SDK didn't used to support streaming to
