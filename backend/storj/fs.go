@@ -589,6 +589,14 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 				return nil, err
 			}
 			err = fserrors.RetryError(errors.New("bucket was not available, now created, the upload must be retried"))
+		} else if errors.Is(err, uplink.ErrTooManyRequests) {
+			// Storj has a rate limit of 1 per second of uploading to the same file.
+			// This produces ErrTooManyRequests here, so we wait 1 second and retry.
+			//
+			// See: https://github.com/storj/uplink/issues/149
+			fs.Debugf(f, "uploading too fast - sleeping for 1 second: %v", err)
+			time.Sleep(time.Second)
+			err = fserrors.RetryError(err)
 		}
 		return nil, err
 	}
