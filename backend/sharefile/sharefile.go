@@ -775,8 +775,13 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 	}
 }
 
-// PutStream uploads to the remote path with the modTime given of indeterminate size
-func (f *Fs) PutStream(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
+// FIXMEPutStream uploads to the remote path with the modTime given of indeterminate size
+//
+// PutStream no longer appears to work - the streamed uploads need the
+// size specified at the start otherwise we get this error:
+//
+//	upload failed: file size does not match (-2)
+func (f *Fs) FIXMEPutStream(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
 	return f.Put(ctx, in, src, options...)
 }
 
@@ -1453,12 +1458,12 @@ func (o *Object) ID() string {
 
 // Check the interfaces are satisfied
 var (
-	_ fs.Fs              = (*Fs)(nil)
-	_ fs.Purger          = (*Fs)(nil)
-	_ fs.Mover           = (*Fs)(nil)
-	_ fs.DirMover        = (*Fs)(nil)
-	_ fs.Copier          = (*Fs)(nil)
-	_ fs.PutStreamer     = (*Fs)(nil)
+	_ fs.Fs       = (*Fs)(nil)
+	_ fs.Purger   = (*Fs)(nil)
+	_ fs.Mover    = (*Fs)(nil)
+	_ fs.DirMover = (*Fs)(nil)
+	_ fs.Copier   = (*Fs)(nil)
+	// _ fs.PutStreamer     = (*Fs)(nil)
 	_ fs.DirCacheFlusher = (*Fs)(nil)
 	_ fs.Object          = (*Object)(nil)
 	_ fs.IDer            = (*Object)(nil)
