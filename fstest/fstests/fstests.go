@@ -1516,19 +1516,21 @@ func Run(t *testing.T, opt *Opt) {
 			t.Run("ObjectUpdate", func(t *testing.T) {
 				skipIfNotOk(t)
 				contents := random.String(200)
-				buf := bytes.NewBufferString(contents)
-				hash := hash.NewMultiHasher()
-				in := io.TeeReader(buf, hash)
+				var h *hash.MultiHasher
 
-				file1.Size = int64(buf.Len())
+				file1.Size = int64(len(contents))
 				obj := findObject(ctx, t, f, file1.Path)
 				remoteBefore := obj.Remote()
 				obji := object.NewStaticObjectInfo(file1.Path+"-should-be-ignored.bin", file1.ModTime, int64(len(contents)), true, nil, obj.Fs())
-				err := obj.Update(ctx, in, obji)
-				require.NoError(t, err)
+				retry(t, "Update object", func() error {
+					buf := bytes.NewBufferString(contents)
+					h = hash.NewMultiHasher()
+					in := io.TeeReader(buf, h)
+					return obj.Update(ctx, in, obji)
+				})
 				remoteAfter := obj.Remote()
 				assert.Equal(t, remoteBefore, remoteAfter, "Remote should not change")
-				file1.Hashes = hash.Sums()
+				file1.Hashes = h.Sums()
 
 				// check the object has been updated
 				file1.Check(t, obj, f.Precision())
