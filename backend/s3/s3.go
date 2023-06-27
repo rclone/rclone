@@ -1813,8 +1813,8 @@ If you leave it blank, this is calculated automatically from the sse_customer_ke
 			}},
 		}, {
 			Name:     "cse_kms_master_key_id",
-			Help:     "The client-side encryption with using KMS master key ID",
-			Provider: "AWS,Ceph,Minio",
+			Help:     "The client-side encryption with using KMS master key ID you must provide the ARN of Key.",
+			Provider: "AWS",
 			Examples: []fs.OptionExample{{
 				Value: "",
 				Help:  "None",
