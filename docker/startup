@@ -1,0 +1,14 @@
+#!/bin/sh
+
+RCLONE_CONFIG=/config/rclone/rclone.conf
+
+mkdir -p "$(dirname "$RCLONE_CONFIG")"
+
+cat <<EOF >"$RCLONE_CONFIG"
+[$REMOTE_NAME]
+type = $REMOTE_TYPE
+url = $REMOTE_URL
+vendor = $REMOTE_VENDOR
+EOF
+
+rclone serve s3 "$REMOTE_NAME": --addr :"$PROXY_PORT"

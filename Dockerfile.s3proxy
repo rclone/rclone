@@ -1,0 +1,40 @@
+FROM golang AS builder
+
+COPY . /rclone/
+WORKDIR /rclone/
+
+RUN \
+  CGO_ENABLED=0 \
+  make
+RUN ./rclone version
+
+
+# Begin final image
+FROM alpine:latest
+
+RUN sed -i 's/https/http/' /etc/apk/repositories
+
+RUN apk update && \
+  apk --no-cache add ca-certificates fuse3 tzdata && \
+  echo "user_allow_other" >> /etc/fuse.conf
+
+COPY --from=builder /rclone/rclone /usr/local/bin/
+
+RUN addgroup -g 1009 rclone && adduser -u 1009 -Ds /bin/sh -G rclone rclone
+
+WORKDIR /data
+ENV XDG_CONFIG_HOME=/config
+
+COPY ["./docker/startup", "/startup"]
+
+RUN chmod +x /startup
+
+ENV REMOTE_NAME=\
+  REMOTE_TYPE=\
+  REMOTE_URL=\
+  REMOTE_VENDOR=
+
+ENTRYPOINT [ "/startup" ]
+
+ENV PROXY_PORT=8080
+EXPOSE ${PROXY_PORT}
