@@ -23,6 +23,7 @@ import (
 	"github.com/rclone/rclone/lib/dircache"
 	"github.com/rclone/rclone/lib/oauthutil"
 	"github.com/rclone/rclone/lib/pacer"
+	"github.com/rclone/rclone/lib/random"
 	"github.com/rclone/rclone/lib/readers"
 )
 
@@ -544,11 +545,20 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (o fs.Objec
 		return nil, err
 	}
 	modTime := src.ModTime(ctx)
+	var resp struct {
+		File putio.File `json:"file"`
+	}
+	// For some unknown reason the API sometimes returns the name
+	// already exists unless we upload to a temporary name and
+	// rename
+	//
+	// {"error_id":null,"error_message":"Name already exist","error_type":"NAME_ALREADY_EXIST","error_uri":"http://api.put.io/v2/docs","extra":{},"status":"ERROR","status_code":400}
+	suffix := "." + random.String(8)
 	err = f.pacer.Call(func() (bool, error) {
 		params := url.Values{}
 		params.Set("file_id", strconv.FormatInt(srcObj.file.ID, 10))
 		params.Set("parent_id", directoryID)
-		params.Set("name", f.opt.Enc.FromStandardName(leaf))
+		params.Set("name", f.opt.Enc.FromStandardName(leaf+suffix))
 
 		req, err := f.client.NewRequest(ctx, "POST", "/v2/files/copy", strings.NewReader(params.Encode()))
 		if err != nil {
@@ -556,13 +566,29 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (o fs.Objec
 		}
 		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 		// fs.Debugf(f, "copying file (%d) to parent_id: %s", srcObj.file.ID, directoryID)
-		_, err = f.client.Do(req, nil)
+		_, err = f.client.Do(req, &resp)
 		return shouldRetry(ctx, err)
 	})
 	if err != nil {
 		return nil, err
 	}
-	o, err = f.NewObject(ctx, remote)
+	err = f.pacer.Call(func() (bool, error) {
+		params := url.Values{}
+		params.Set("file_id", strconv.FormatInt(resp.File.ID, 10))
+		params.Set("name", f.opt.Enc.FromStandardName(leaf))
+
+		req, err := f.client.NewRequest(ctx, "POST", "/v2/files/rename", strings.NewReader(params.Encode()))
+		if err != nil {
+			return false, err
+		}
+		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+		_, err = f.client.Do(req, &resp)
+		return shouldRetry(ctx, err)
+	})
+	if err != nil {
+		return nil, err
+	}
+	o, err = f.newObjectWithInfo(ctx, remote, resp.File)
 	if err != nil {
 		return nil, err
 	}
