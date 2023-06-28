@@ -181,6 +181,13 @@ func MiddlewareCORS(allowOrigin string) Middleware {
 			w.Header().Add("Access-Control-Request-Method", "POST, OPTIONS, GET, HEAD")
 			w.Header().Add("Access-Control-Allow-Headers", "authorization, Content-Type")
 
+			if r.Method == "OPTIONS" {
+				w.WriteHeader(http.StatusOK)
+				return
+				// Because CORS preflight OPTIONS requests are not authenticated,
+				// and require a 200 OK response, we will return early here.
+			}
+
 			next.ServeHTTP(w, r)
 		})
 	}
