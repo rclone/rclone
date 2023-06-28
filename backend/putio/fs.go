@@ -543,11 +543,13 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (o fs.Objec
 	if err != nil {
 		return nil, err
 	}
+	modTime := src.ModTime(ctx)
 	err = f.pacer.Call(func() (bool, error) {
 		params := url.Values{}
 		params.Set("file_id", strconv.FormatInt(srcObj.file.ID, 10))
 		params.Set("parent_id", directoryID)
 		params.Set("name", f.opt.Enc.FromStandardName(leaf))
+
 		req, err := f.client.NewRequest(ctx, "POST", "/v2/files/copy", strings.NewReader(params.Encode()))
 		if err != nil {
 			return false, err
@@ -560,7 +562,15 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (o fs.Objec
 	if err != nil {
 		return nil, err
 	}
-	return f.NewObject(ctx, remote)
+	o, err = f.NewObject(ctx, remote)
+	if err != nil {
+		return nil, err
+	}
+	err = o.SetModTime(ctx, modTime)
+	if err != nil {
+		return nil, err
+	}
+	return o, nil
 }
 
 // Move src to this remote using server-side move operations.
@@ -582,6 +592,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (o fs.Objec
 	if err != nil {
 		return nil, err
 	}
+	modTime := src.ModTime(ctx)
 	err = f.pacer.Call(func() (bool, error) {
 		params := url.Values{}
 		params.Set("file_id", strconv.FormatInt(srcObj.file.ID, 10))
@@ -599,7 +610,15 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (o fs.Objec
 	if err != nil {
 		return nil, err
 	}
-	return f.NewObject(ctx, remote)
+	o, err = f.NewObject(ctx, remote)
+	if err != nil {
+		return nil, err
+	}
+	err = o.SetModTime(ctx, modTime)
+	if err != nil {
+		return nil, err
+	}
+	return o, nil
 }
 
 // DirMove moves src, srcRemote to this remote at dstRemote
