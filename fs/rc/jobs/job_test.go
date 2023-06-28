@@ -374,10 +374,24 @@ func TestRcJobList(t *testing.T) {
 	call := rc.Calls.Get("job/list")
 	assert.NotNil(t, call)
 	in := rc.Params{}
-	out, err := call.Fn(context.Background(), in)
+	out1, err := call.Fn(context.Background(), in)
 	require.NoError(t, err)
-	require.NotNil(t, out)
-	assert.Equal(t, rc.Params{"jobids": []int64{1}}, out)
+	require.NotNil(t, out1)
+	assert.Equal(t, []int64{1}, out1["jobids"], "should have job listed")
+
+	_, _, err = NewJob(ctx, longFn, rc.Params{"_async": true})
+	assert.NoError(t, err)
+
+	call = rc.Calls.Get("job/list")
+	assert.NotNil(t, call)
+	in = rc.Params{}
+	out2, err := call.Fn(context.Background(), in)
+	require.NoError(t, err)
+	require.NotNil(t, out2)
+	assert.Equal(t, 2, len(out2["jobids"].([]int64)), "should have all jobs listed")
+
+	require.NotNil(t, out1["executeId"], "should have executeId")
+	assert.Equal(t, out1["executeId"], out2["executeId"], "executeId should be the same")
 }
 
 func TestRcAsyncJobStop(t *testing.T) {

@@ -10,6 +10,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/accounting"
 	"github.com/rclone/rclone/fs/cache"
@@ -120,8 +121,9 @@ type Jobs struct {
 }
 
 var (
-	running = newJobs()
-	jobID   = int64(0)
+	running   = newJobs()
+	jobID     = int64(0)
+	executeID = uuid.New().String()
 )
 
 // newJobs makes a new Jobs structure
@@ -403,7 +405,8 @@ func init() {
 
 Results:
 
-- jobids - array of integer job ids.
+- executeId - string id of rclone executing (change after restart)
+- jobids - array of integer job ids (starting at 1 on each restart)
 `,
 	})
 }
@@ -412,6 +415,7 @@ Results:
 func rcJobList(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 	out = make(rc.Params)
 	out["jobids"] = running.IDs()
+	out["executeId"] = executeID
 	return out, nil
 }
 
