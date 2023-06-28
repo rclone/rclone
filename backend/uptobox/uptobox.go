@@ -678,7 +678,7 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 	if err != nil {
 		return err
 	}
-	if info.Data.CurrentFolder.FileCount > 0 {
+	if len(info.Data.Folders) > 0 || len(info.Data.Files) > 0 {
 		return fs.ErrorDirectoryNotEmpty
 	}
 
