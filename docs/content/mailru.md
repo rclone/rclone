@@ -8,8 +8,6 @@ versionIntroduced: "v1.50"
 
 [Mail.ru Cloud](https://cloud.mail.ru/) is a cloud storage provided by a Russian internet company [Mail.Ru Group](https://mail.ru). The official desktop client is [Disk-O:](https://disk-o.cloud/en), available on Windows and Mac OS.
 
-Currently it is recommended to disable 2FA on Mail.ru accounts intended for rclone until it gets eventually implemented.
-
 ## Features highlights
 
 - Paths may be as deep as required, e.g. `remote:directory/subdirectory`
