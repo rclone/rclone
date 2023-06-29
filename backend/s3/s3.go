@@ -16,6 +16,7 @@ import (
 	"fmt"
 	"github.com/aws/aws-sdk-go/service/kms"
 	"github.com/aws/aws-sdk-go/service/s3/s3crypto"
+	"github.com/aws/aws-sdk-go/service/sts"
 	"io"
 	"net/http"
 	"net/url"
@@ -2373,6 +2374,11 @@ In this case, you might want to try disabling this option.
 			Help:     "Endpoint for STS.\n\nLeave blank if using AWS to use the default endpoint for the region.",
 			Provider: "AWS",
 			Advanced: true,
+		}, {
+			Name:     "kms_endpoint",
+			Help:     "Endpoint for KMS.\n\nLeave blank if using AWS to use the default endpoint for the region.",
+			Provider: "AWS",
+			Advanced: true,
 		},
 		}})
 }
@@ -2460,6 +2466,7 @@ type Options struct {
 	Region                string               `config:"region"`
 	Endpoint              string               `config:"endpoint"`
 	STSEndpoint           string               `config:"sts_endpoint"`
+	KMSEndpoint           string               `config:"kms_endpoint"`
 	LocationConstraint    string               `config:"location_constraint"`
 	ACL                   string               `config:"acl"`
 	BucketACL             string               `config:"bucket_acl"`
@@ -2645,11 +2652,19 @@ func (f *Fs) split(rootRelativePath string) (bucketName, bucketPath string) {
 	return f.opt.Enc.FromStandardName(bucketName), f.opt.Enc.FromStandardPath(bucketPath)
 }
 
-func (f *Fs) putObjectRequest(params *s3.PutObjectInput) (putObj *request.Request, resp *s3.PutObjectOutput) {
-	if f.encryptClient == nil {
-		return f.c.PutObjectRequest(params)
+func (f *Fs) putObjectRequest(req *s3.PutObjectInput) (*request.Request, *s3.PutObjectOutput) {
+	if f.encryptClient == nil || req.Body == nil {
+		return f.c.PutObjectRequest(req)
 	} else {
-		return f.encryptClient.PutObjectRequest(params)
+		return f.encryptClient.PutObjectRequest(req)
+	}
+}
+
+func (f *Fs) GetObjectRequest(req *s3.GetObjectInput) (*request.Request, *s3.GetObjectOutput) {
+	if f.decryptClient == nil {
+		return f.c.GetObjectRequest(req)
+	} else {
+		return f.decryptClient.GetObjectRequest(req)
 	}
 }
 
@@ -2791,11 +2806,12 @@ func s3Connection(ctx context.Context, opt *Options, client *http.Client) (*s3.S
 	if opt.Region != "" {
 		awsConfig.WithRegion(opt.Region)
 	}
-	if opt.Endpoint != "" || opt.STSEndpoint != "" {
+	if opt.Endpoint != "" || opt.STSEndpoint != "" || opt.KMSEndpoint != "" {
 		// If endpoints are set, override the relevant services only
 		r := make(resolver)
-		r.addService("s3", opt.Endpoint)
-		r.addService("sts", opt.STSEndpoint)
+		r.addService(s3.ServiceName, opt.Endpoint)
+		r.addService(kms.ServiceName, opt.KMSEndpoint)
+		r.addService(sts.ServiceName, opt.STSEndpoint)
 		awsConfig.WithEndpointResolver(r)
 	}
 
@@ -5215,11 +5231,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 	}
 	var httpReq *request.Request
 	var resp *s3.GetObjectOutput
-	if o.fs.decryptClient == nil {
-		httpReq, resp = o.fs.c.GetObjectRequest(&req)
-	} else {
-		httpReq, resp = o.fs.decryptClient.GetObjectRequest(&req)
-	}
+	httpReq, resp = o.fs.GetObjectRequest(&req)
 	fs.FixRangeOption(options, o.bytes)
 
 	// Override the automatic decompression in the transport to
@@ -5556,7 +5568,7 @@ func unWrapAwsError(err error) (found bool, outErr error) {
 // Upload a single part using PutObject
 func (o *Object) uploadSinglepartPutObject(ctx context.Context, req *s3.PutObjectInput, size int64, in io.Reader) (etag string, lastModified time.Time, versionID *string, err error) {
 	if o.fs.encryptClient != nil {
-		req.Body = aws.ReadSeekCloser(io.NopCloser(in))
+		req.Body = aws.ReadSeekCloser(in)
 	}
 	r, resp := o.fs.putObjectRequest(req)
 	if req.ContentLength != nil && *req.ContentLength == 0 {
