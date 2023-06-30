@@ -29,7 +29,7 @@ import (
 
 const (
 	minSleep      = 10 * time.Millisecond
-	maxSleep      = 2 * time.Second
+	maxSleep      = 60 * time.Second
 	decayConstant = 2
 )
 
@@ -86,13 +86,17 @@ func init() {
 				Advanced: true,
 				Default: (encoder.EncodeZero |
 					encoder.EncodeSlash |
+					encoder.EncodeQuestion |
+					encoder.EncodeHashPercent |
 					encoder.EncodeCtl |
 					encoder.EncodeDel |
 					encoder.EncodeDot |
 					encoder.EncodeDoubleQuote |
 					encoder.EncodePercent |
 					encoder.EncodeBackSlash |
+					encoder.EncodeDollar |
 					encoder.EncodeLtGt |
+					encoder.EncodeSquareBracket |
 					encoder.EncodeInvalidUtf8),
 			},
 		},

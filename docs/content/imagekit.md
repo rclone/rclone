@@ -178,4 +178,4 @@ Properties:
 - Config:      encoding
 - Env Var:     RCLONE_IMAGEKIT_ENCODING
 - Type:        MultiEncoder
-- Default:     Slash,LtGt,DoubleQuote,Percent,BackSlash,Del,Ctl,InvalidUtf8,Dot
+- Default:     Slash,LtGt,DoubleQuote,Dollar,Question,Hash,Percent,BackSlash,Del,Ctl,InvalidUtf8,Dot,SquareBracket
