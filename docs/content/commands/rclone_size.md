@@ -26,7 +26,7 @@ recursion.
 
 Some backends do not always provide file sizes, see for example
 [Google Photos](/googlephotos/#size) and
-[Google Drive](/drive/#limitations-of-google-docs).
+[Google Docs](/drive/#limitations-of-google-docs).
 Rclone will then show a notice in the log indicating how many such
 files were encountered, and count them in as empty files in the output
 of the size command.

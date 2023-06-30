@@ -9,7 +9,7 @@ url: /commands/rclone_completion_powershell/
 
 Generate the autocompletion script for powershell
 
-## Synopsis
+# Synopsis
 
 Generate the autocompletion script for powershell.
 
@@ -25,7 +25,7 @@ to your powershell profile.
 rclone completion powershell [flags]
 ```
 
-## Options
+# Options
 
 ```
   -h, --help              help for powershell
@@ -34,7 +34,7 @@ rclone completion powershell [flags]
 
 See the [global flags page](/flags/) for global options not listed here.
 
-## SEE ALSO
+# SEE ALSO
 
 * [rclone completion](/commands/rclone_completion/)	 - Generate the autocompletion script for the specified shell
 

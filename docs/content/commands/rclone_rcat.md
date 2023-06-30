@@ -38,10 +38,11 @@ and actually stream it, even if remote backend doesn't support streaming.
 size of the stream is different in length to the `--size` passed in
 then the transfer will likely fail.
 
-Note that the upload can also not be retried because the data is
-not kept around until the upload succeeds. If you need to transfer
-a lot of data, you're better off caching locally and then
-`rclone move` it to the destination.
+Note that the upload cannot be retried because the data is not stored.
+If the backend supports multipart uploading then individual chunks can
+be retried. If you need to transfer a lot of data, you may be better
+off caching it locally and then `rclone move` it to the
+destination which can use retries.
 
 ```
 rclone rcat remote:path [flags]

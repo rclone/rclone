@@ -315,6 +315,7 @@ Properties:
         - OVH
     - "https://authenticate.ain.net"
         - Blomp Cloud Storage
+
 #### --swift-user-id
 
 User ID to log in - optional - most swift systems use user and leave this blank (v3 auth) (OS_USER_ID).
@@ -490,7 +491,7 @@ Properties:
 
 ### Advanced options
 
-Here are the Advanced options specific to swift (OpenStack Swift (Rackspace Cloud Files, Blomp Cloud Storage , Memset Memstore, OVH)).
+Here are the Advanced options specific to swift (OpenStack Swift (Rackspace Cloud Files, Blomp Cloud Storage, Memset Memstore, OVH)).
 
 #### --swift-leave-parts-on-error
 

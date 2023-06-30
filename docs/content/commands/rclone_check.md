@@ -52,8 +52,9 @@ you what happened to it. These are reminiscent of diff files.
 - `* path` means path was present in source and destination but different.
 - `! path` means there was an error reading or hashing the source or dest.
 
-The default number of parallel checks is N=8. See the [--checkers=N](/docs/#checkers-n) option
-for more information.
+The default number of parallel checks is 8. See the [--checkers=N](/docs/#checkers-n)
+option for more information.
+
 
 ```
 rclone check source:path dest:path [flags]

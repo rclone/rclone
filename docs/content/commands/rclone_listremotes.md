@@ -8,7 +8,7 @@ versionIntroduced: v1.34
 ---
 # rclone listremotes
 
-List all the remotes in the config file.
+List all the remotes in the config file and defined in environment variables.
 
 ## Synopsis
 

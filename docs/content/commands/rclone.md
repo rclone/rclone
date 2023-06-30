@@ -42,7 +42,7 @@ See the [global flags page](/flags/) for global options not listed here.
 * [rclone check](/commands/rclone_check/)	 - Checks the files in the source and destination match.
 * [rclone checksum](/commands/rclone_checksum/)	 - Checks the files in the source against a SUM file.
 * [rclone cleanup](/commands/rclone_cleanup/)	 - Clean up the remote if possible.
-* [rclone completion](/commands/rclone_completion/)	 - Generate the autocompletion script for the specified shell
+* [rclone completion](/commands/rclone_completion/)	 - Output completion script for a given shell.
 * [rclone config](/commands/rclone_config/)	 - Enter an interactive configuration session.
 * [rclone copy](/commands/rclone_copy/)	 - Copy files from source to dest, skipping identical files.
 * [rclone copyto](/commands/rclone_copyto/)	 - Copy files from source to dest, skipping identical files.
@@ -52,11 +52,10 @@ See the [global flags page](/flags/) for global options not listed here.
 * [rclone dedupe](/commands/rclone_dedupe/)	 - Interactively find duplicate filenames and delete/rename them.
 * [rclone delete](/commands/rclone_delete/)	 - Remove the files in path.
 * [rclone deletefile](/commands/rclone_deletefile/)	 - Remove a single file from remote.
-* [rclone genautocomplete](/commands/rclone_genautocomplete/)	 - Output completion script for a given shell.
 * [rclone gendocs](/commands/rclone_gendocs/)	 - Output markdown docs for rclone to the directory supplied.
 * [rclone hashsum](/commands/rclone_hashsum/)	 - Produces a hashsum file for all the objects in the path.
 * [rclone link](/commands/rclone_link/)	 - Generate public link to file/folder.
-* [rclone listremotes](/commands/rclone_listremotes/)	 - List all the remotes in the config file.
+* [rclone listremotes](/commands/rclone_listremotes/)	 - List all the remotes in the config file and defined in environment variables.
 * [rclone ls](/commands/rclone_ls/)	 - List the objects in the path with size and path.
 * [rclone lsd](/commands/rclone_lsd/)	 - List all directories/containers/buckets in the path.
 * [rclone lsf](/commands/rclone_lsf/)	 - List directories and objects in remote:path formatted for parsing.

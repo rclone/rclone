@@ -611,7 +611,7 @@ Properties:
 
 #### --oos-sse-kms-key-id
 
-if using using your own master key in vault, this header specifies the 
+if using your own master key in vault, this header specifies the
 OCID (https://docs.cloud.oracle.com/Content/General/Concepts/identifiers.htm) of a master encryption key used to call
 the Key Management service to generate a data encryption key or to encrypt or decrypt a data encryption key.
 Please note only one of sse_customer_key_file|sse_customer_key|sse_kms_key_id is needed.
