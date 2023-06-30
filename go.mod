@@ -50,12 +50,12 @@ require (
 	github.com/rclone/ftp v0.0.0-20230327202000-dadc1f64e87d
 	github.com/rfjakob/eme v1.1.2
 	github.com/rivo/uniseg v0.4.4
-	github.com/shirou/gopsutil/v3 v3.23.3
+	github.com/shirou/gopsutil/v3 v3.23.5
 	github.com/sirupsen/logrus v1.9.0
 	github.com/skratchdot/open-golang v0.0.0-20200116055534-eef842397966
 	github.com/spf13/cobra v1.7.0
 	github.com/spf13/pflag v1.0.5
-	github.com/stretchr/testify v1.8.2
+	github.com/stretchr/testify v1.8.3
 	github.com/t3rm1n4l/go-mega v0.0.0-20230228171823-a01a2cda13ca
 	github.com/winfsp/cgofuse v1.5.1-0.20221118130120-84c0898ad2e0
 	github.com/xanzy/ssh-agent v0.3.3
@@ -67,7 +67,7 @@ require (
 	golang.org/x/net v0.8.0
 	golang.org/x/oauth2 v0.6.0
 	golang.org/x/sync v0.1.0
-	golang.org/x/sys v0.7.0
+	golang.org/x/sys v0.8.0
 	golang.org/x/text v0.8.0
 	golang.org/x/time v0.3.0
 	google.golang.org/api v0.115.0
@@ -120,13 +120,13 @@ require (
 	github.com/prometheus/common v0.37.0 // indirect
 	github.com/prometheus/procfs v0.8.0 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
-	github.com/shoenig/go-m1cpu v0.1.4 // indirect
+	github.com/shoenig/go-m1cpu v0.1.6 // indirect
 	github.com/sony/gobreaker v0.5.0 // indirect
 	github.com/spacemonkeygo/monkit/v3 v3.0.19 // indirect
 	github.com/tklauser/go-sysconf v0.3.11 // indirect
 	github.com/tklauser/numcpus v0.6.0 // indirect
 	github.com/vivint/infectious v0.0.0-20200605153912-25a574ae18a3 // indirect
-	github.com/yusufpapurcu/wmi v1.2.2 // indirect
+	github.com/yusufpapurcu/wmi v1.2.3 // indirect
 	github.com/zeebo/blake3 v0.2.3 // indirect
 	github.com/zeebo/errs v1.3.0 // indirect
 	go.opencensus.io v0.24.0 // indirect
