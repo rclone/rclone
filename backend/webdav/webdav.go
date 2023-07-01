@@ -569,7 +569,7 @@ func (f *Fs) fetchAndSetBearerToken() error {
 	return nil
 }
 
-var validateNextCloudChunkedURL = regexp.MustCompile(`^.*/dav/files/[^/]+/?$`)
+var validateNextCloudChunkedURL = regexp.MustCompile(`^.*/dav/files/`)
 
 // setQuirks adjusts the Fs for the vendor passed in
 func (f *Fs) setQuirks(ctx context.Context, vendor string) error {
