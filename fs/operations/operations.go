@@ -926,10 +926,15 @@ func ListFn(ctx context.Context, f fs.Fs, fn func(fs.Object)) error {
 // StdoutMutex mutex for synchronized output on stdout
 var StdoutMutex sync.Mutex
 
-// SyncPrintf is a global var holding the Printf function used in syncFprintf so that it can be overridden
-// Note, despite name, does not provide sync and should not be called directly
-// Call syncFprintf, which provides sync
+// SyncPrintf is a global var holding the Printf function so that it
+// can be overridden.
+//
+// This writes to stdout holding the StdoutMutex. If you are going to
+// override it and write to os.Stdout then you should hold the
+// StdoutMutex too.
 var SyncPrintf = func(format string, a ...interface{}) {
+	StdoutMutex.Lock()
+	defer StdoutMutex.Unlock()
 	fmt.Printf(format, a...)
 }
 
@@ -937,14 +942,13 @@ var SyncPrintf = func(format string, a ...interface{}) {
 //
 // Ignores errors from Fprintf.
 //
-// Updated to print to terminal if no writer is defined
-// This special behavior is used to allow easier replacement of the print to terminal code by progress
+// Prints to stdout if w is nil
 func syncFprintf(w io.Writer, format string, a ...interface{}) {
-	StdoutMutex.Lock()
-	defer StdoutMutex.Unlock()
 	if w == nil || w == os.Stdout {
 		SyncPrintf(format, a...)
 	} else {
+		StdoutMutex.Lock()
+		defer StdoutMutex.Unlock()
 		_, _ = fmt.Fprintf(w, format, a...)
 	}
 }
