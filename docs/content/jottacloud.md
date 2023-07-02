@@ -14,6 +14,8 @@ it also provides white-label solutions to different companies, such as:
   * Telia Sky (sky.telia.no)
 * Tele2
   * Tele2 Cloud (mittcloud.tele2.se)
+* Onlime
+  * Onlime Cloud Storage (onlime.dk)
 * Elkjøp (with subsidiaries):
   * Elkjøp Cloud (cloud.elkjop.no)
   * Elgiganten Sweden (cloud.elgiganten.se)
@@ -84,6 +86,18 @@ Tele2 Cloud customers as no support for creating a CLI token exists, and additio
 authentication flow where the username is generated internally. To setup rclone to use Tele2 Cloud,
 choose Tele2 Cloud authentication in the setup. The rest of the setup is identical to the default setup.
 
+### Onlime Cloud Storage authentication
+
+Onlime has sold access to Jottacloud proper, while providing localized support to Danish Customers, but
+have recently set up their own hosting, transferring their customers from Jottacloud servers to their
+own ones.
+
+This, of course, necessitates using their servers for authentication, but otherwise functionality and
+architecture seems equivalent to Jottacloud.
+
+To setup rclone to use Onlime Cloud Storage, choose Onlime Cloud authentication in the setup. The rest
+of the setup is identical to the default setup.
+
 ## Configuration
 
 Here is an example of how to make a remote called `remote` with the default setup.  First run:
@@ -127,6 +141,9 @@ Press Enter for the default (standard).
    / Tele2 Cloud authentication.
  4 | Use this if you are using Tele2 Cloud.
    \ (tele2)
+   / Onlime Cloud authentication.
+ 5 | Use this if you are using Onlime Cloud.
+   \ (onlime)
 config_type> 1
 Personal login token.
 Generate here: https://www.jottacloud.com/web/secure
