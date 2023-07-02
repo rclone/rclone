@@ -14,7 +14,6 @@ import (
 	"io"
 	"net/http"
 	"path"
-	"strings"
 
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/lib/readers"
@@ -41,10 +40,6 @@ func (f *Fs) setUploadChunkSize(cs fs.SizeSuffix) (old fs.SizeSuffix, err error)
 	return
 }
 
-func (f *Fs) getChunksUploadURL() string {
-	return strings.Replace(f.endpointURL, "/dav/files/", "/dav/uploads/", 1)
-}
-
 func (o *Object) getChunksUploadDir() (string, error) {
 	hasher := md5.New()
 	_, err := hasher.Write([]byte(o.filePath()))
@@ -55,12 +50,16 @@ func (o *Object) getChunksUploadDir() (string, error) {
 	return uploadDir, nil
 }
 
-func (f *Fs) verifyChunkConfig() error {
-	if f.opt.ChunkSize != 0 && !validateNextCloudChunkedURL.MatchString(f.endpointURL) {
-		return errors.New("chunked upload with nextcloud must use /dav/files/USER endpoint not /webdav")
+func (f *Fs) getChunksUploadURL() (string, error) {
+	submatch := nextCloudURLRegex.FindStringSubmatch(f.endpointURL)
+	if submatch == nil {
+		return "", errors.New("the remote url looks incorrect. Note that nextcloud chunked uploads require you to use the /dav/files/USER endpoint instead of /webdav")
 	}
 
-	return nil
+	baseURL, user := submatch[1], submatch[2]
+	chunksUploadURL := fmt.Sprintf("%s/dav/uploads/%s/", baseURL, user)
+
+	return chunksUploadURL, nil
 }
 
 func (o *Object) shouldUseChunkedUpload(src fs.ObjectInfo) bool {
