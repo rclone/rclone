@@ -569,7 +569,8 @@ func (f *Fs) fetchAndSetBearerToken() error {
 	return nil
 }
 
-var validateNextCloudChunkedURL = regexp.MustCompile(`^.*/dav/files/[^/]+/?$`)
+// The WebDAV url can optionally be suffixed with a path. This suffix needs to be ignored for determining the temporary upload directory of chunks.
+var nextCloudURLRegex = regexp.MustCompile(`^(.*)/dav/files/([^/]+)`)
 
 // setQuirks adjusts the Fs for the vendor passed in
 func (f *Fs) setQuirks(ctx context.Context, vendor string) error {
@@ -592,11 +593,18 @@ func (f *Fs) setQuirks(ctx context.Context, vendor string) error {
 		f.propsetMtime = true
 		f.hasOCSHA1 = true
 		f.canChunk = true
-		if err := f.verifyChunkConfig(); err != nil {
-			return err
+
+		if f.opt.ChunkSize == 0 {
+			fs.Logf(nil, "Chunked uploads are disabled because nextcloud_chunk_size is set to 0")
+		} else {
+			chunksUploadURL, err := f.getChunksUploadURL()
+			if err != nil {
+				return err
+			}
+
+			f.chunksUploadURL = chunksUploadURL
+			fs.Logf(nil, "Chunks temporary upload directory: %s", f.chunksUploadURL)
 		}
-		f.chunksUploadURL = f.getChunksUploadURL()
-		fs.Logf(nil, "Chunks temporary upload directory: %s", f.chunksUploadURL)
 	case "sharepoint":
 		// To mount sharepoint, two Cookies are required
 		// They have to be set instead of BasicAuth
