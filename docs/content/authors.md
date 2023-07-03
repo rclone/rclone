@@ -738,3 +738,4 @@ put them back in again.` >}}
   * Peter Fern <github@0xc0dedbad.com>
   * zzq <i@zhangzqs.cn>
   * mac-15 <usman.ilamdin@phpstudios.com>
+  * Sawada Tsunayoshi <34431649+TsunayoshiSawada@users.noreply.github.com>
