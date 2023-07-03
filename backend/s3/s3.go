@@ -3180,6 +3180,8 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		if f.decryptClient, err = s3crypto.NewDecryptionClientV2(ses, cr); err != nil {
 			return nil, err
 		}
+		f.etagIsNotMD5 = true
+		f.ci.IgnoreSize = true
 	}
 	f.setRoot(root)
 	f.features = (&fs.Features{
@@ -5772,10 +5774,10 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	if req.ContentType == nil {
 		req.ContentType = aws.String(fs.MimeType(ctx, src))
 	}
-	if size >= 0 {
+	if size >= 0 && o.fs.encryptClient == nil {
 		req.ContentLength = &size
 	}
-	if md5sumBase64 != "" {
+	if md5sumBase64 != "" && o.fs.encryptClient == nil {
 		req.ContentMD5 = &md5sumBase64
 	}
 	if o.fs.opt.RequesterPays {
