@@ -77,7 +77,7 @@ var (
 )
 
 type boxCustomClaims struct {
-	jwt.RegisteredClaims
+	jwt.StandardClaims
 	BoxSubType string `json:"box_sub_type,omitempty"`
 }
 
@@ -206,12 +206,14 @@ func getClaims(boxConfig *api.ConfigJSON, boxSubType string) (claims *boxCustomC
 	}
 
 	claims = &boxCustomClaims{
-		RegisteredClaims: jwt.RegisteredClaims{
-			ID:        val,
+		//lint:ignore SA1019 since we need to use jwt.StandardClaims even if deprecated in jwt-go v4 until a more permanent solution is ready in time before jwt-go v5 where it is removed entirely
+		//nolint:staticcheck // Don't include staticcheck when running golangci-lint to avoid SA1019
+		StandardClaims: jwt.StandardClaims{
+			Id:        val,
 			Issuer:    boxConfig.BoxAppSettings.ClientID,
 			Subject:   boxConfig.EnterpriseID,
-			Audience:  jwt.ClaimStrings{tokenURL},
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Second * 45)),
+			Audience:  tokenURL,
+			ExpiresAt: time.Now().Add(time.Second * 45).Unix(),
 		},
 		BoxSubType: boxSubType,
 	}
