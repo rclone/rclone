@@ -447,7 +447,8 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 func (f *Fs) About(ctx context.Context) (_ *fs.Usage, err error) {
 	share, dir := f.split("/")
 	if share == "" {
-		return nil, fs.ErrorListBucketRequired
+		// Just return empty info rather than an error if called on the root
+		return &fs.Usage{}, nil
 	}
 	dir = f.toSambaPath(dir)
 
