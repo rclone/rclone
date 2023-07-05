@@ -130,8 +130,12 @@ jobs:
       - name: Install Libraries on macOS
         shell: bash
         run: |
+          brew untap homebrew/core homebrew/cask
+          brew config
           brew update
           brew install --cask macfuse
+        env:
+          HOMEBREW_NO_INSTALL_FROM_API: # No value, so brew doesn't rely on homebrew-core / homebrew-cask
         if: matrix.os == 'macos-11'
 
       - name: Install Libraries on Windows
