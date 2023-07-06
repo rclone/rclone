@@ -1522,7 +1522,7 @@ be the same account as the Google Drive you want to access)
 "Google Drive API".
 
 4. Click "Credentials" in the left-side panel (not "Create
-credentials", which opens the wizard), then "Create credentials"
+credentials", which opens the wizard).
 
 5. If you already configured an "Oauth Consent Screen", then skip
 to the next step; if not, click on "CONFIGURE CONSENT SCREEN" button 
