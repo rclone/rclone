@@ -91,18 +91,21 @@ func init() {
 			})
 		},
 		Options: append(oauthutil.SharedOptions, []fs.Option{{
-			Name: "project_number",
-			Help: "Project number.\n\nOptional - needed only for list/create/delete buckets - see your developer console.",
+			Name:      "project_number",
+			Help:      "Project number.\n\nOptional - needed only for list/create/delete buckets - see your developer console.",
+			Sensitive: true,
 		}, {
-			Name: "user_project",
-			Help: "User project.\n\nOptional - needed only for requester pays.",
+			Name:      "user_project",
+			Help:      "User project.\n\nOptional - needed only for requester pays.",
+			Sensitive: true,
 		}, {
 			Name: "service_account_file",
 			Help: "Service Account Credentials JSON file path.\n\nLeave blank normally.\nNeeded only if you want use SA instead of interactive login." + env.ShellExpandHelp,
 		}, {
-			Name: "service_account_credentials",
-			Help: "Service Account Credentials JSON blob.\n\nLeave blank normally.\nNeeded only if you want use SA instead of interactive login.",
-			Hide: fs.OptionHideBoth,
+			Name:      "service_account_credentials",
+			Help:      "Service Account Credentials JSON blob.\n\nLeave blank normally.\nNeeded only if you want use SA instead of interactive login.",
+			Hide:      fs.OptionHideBoth,
+			Sensitive: true,
 		}, {
 			Name:    "anonymous",
 			Help:    "Access public buckets and objects without credentials.\n\nSet to 'true' if you just want to download files and don't configure credentials.",

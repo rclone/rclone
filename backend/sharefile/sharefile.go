@@ -155,7 +155,7 @@ func init() {
 				CheckAuth:    checkAuth,
 			})
 		},
-		Options: []fs.Option{{
+		Options: append(oauthutil.SharedOptions, []fs.Option{{
 			Name:     "upload_cutoff",
 			Help:     "Cutoff for switching to multipart upload.",
 			Default:  defaultUploadCutoff,
@@ -182,6 +182,7 @@ standard values here or any folder ID (long hex number ID).`,
 				Value: "top",
 				Help:  "Access the home, favorites, and shared folders as well as the connectors.",
 			}},
+			Sensitive: true,
 		}, {
 			Name:    "chunk_size",
 			Default: defaultChunkSize,
@@ -216,7 +217,7 @@ be set manually to something like: https://XXX.sharefile.com
 				encoder.EncodeLeftSpace |
 				encoder.EncodeLeftPeriod |
 				encoder.EncodeInvalidUtf8),
-		}},
+		}}...),
 	})
 }
 

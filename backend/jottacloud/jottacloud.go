@@ -88,7 +88,7 @@ func init() {
 		Description: "Jottacloud",
 		NewFs:       NewFs,
 		Config:      Config,
-		Options: []fs.Option{{
+		Options: append(oauthutil.SharedOptions, []fs.Option{{
 			Name:     "md5_memory_limit",
 			Help:     "Files bigger than this will be cached on disk to calculate the MD5 if required.",
 			Default:  fs.SizeSuffix(10 * 1024 * 1024),
@@ -123,7 +123,7 @@ func init() {
 			Default: (encoder.Display |
 				encoder.EncodeWin | // :?"*<>|
 				encoder.EncodeInvalidUtf8),
-		}},
+		}}...),
 	})
 }
 

@@ -277,20 +277,23 @@ Leave blank normally.
 Fill in to access "Computers" folders (see docs), or for rclone to use
 a non root folder as its starting point.
 `,
-			Advanced: true,
+			Advanced:  true,
+			Sensitive: true,
 		}, {
 			Name: "service_account_file",
 			Help: "Service Account Credentials JSON file path.\n\nLeave blank normally.\nNeeded only if you want use SA instead of interactive login." + env.ShellExpandHelp,
 		}, {
-			Name:     "service_account_credentials",
-			Help:     "Service Account Credentials JSON blob.\n\nLeave blank normally.\nNeeded only if you want use SA instead of interactive login.",
-			Hide:     fs.OptionHideConfigurator,
-			Advanced: true,
+			Name:      "service_account_credentials",
+			Help:      "Service Account Credentials JSON blob.\n\nLeave blank normally.\nNeeded only if you want use SA instead of interactive login.",
+			Hide:      fs.OptionHideConfigurator,
+			Advanced:  true,
+			Sensitive: true,
 		}, {
-			Name:     "team_drive",
-			Help:     "ID of the Shared Drive (Team Drive).",
-			Hide:     fs.OptionHideConfigurator,
-			Advanced: true,
+			Name:      "team_drive",
+			Help:      "ID of the Shared Drive (Team Drive).",
+			Hide:      fs.OptionHideConfigurator,
+			Advanced:  true,
+			Sensitive: true,
 		}, {
 			Name:     "auth_owner_only",
 			Default:  false,
@@ -416,10 +419,11 @@ date is used.`,
 			Help:     "Size of listing chunk 100-1000, 0 to disable.",
 			Advanced: true,
 		}, {
-			Name:     "impersonate",
-			Default:  "",
-			Help:     `Impersonate this user when using a service account.`,
-			Advanced: true,
+			Name:      "impersonate",
+			Default:   "",
+			Help:      `Impersonate this user when using a service account.`,
+			Advanced:  true,
+			Sensitive: true,
 		}, {
 			Name:    "alternate_export",
 			Default: false,
@@ -592,7 +596,8 @@ Note also that opening the folder once in the web interface (with the
 user you've authenticated rclone with) seems to be enough so that the
 resource key is no needed.
 `,
-			Advanced: true,
+			Advanced:  true,
+			Sensitive: true,
 		}, {
 			Name:     config.ConfigEncoding,
 			Help:     config.ConfigEncodingHelp,

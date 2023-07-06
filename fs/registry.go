@@ -154,6 +154,7 @@ type Option struct {
 	NoPrefix   bool             // set if the option for this should not use the backend prefix
 	Advanced   bool             // set if this is an advanced config option
 	Exclusive  bool             // set if the answer can only be one of the examples (empty string allowed unless Required or Default is set)
+	Sensitive  bool             // set if this option should be redacted when using rclone config redacted
 }
 
 // BaseOption is an alias for Option used internally

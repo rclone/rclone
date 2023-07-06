@@ -107,16 +107,18 @@ func init() {
 			return nil, nil
 		},
 		Options: append(oauthutil.SharedOptions, []fs.Option{{
-			Name:     "root_folder_id",
-			Help:     "Fill in for rclone to use a non root folder as its starting point.",
-			Default:  "0",
-			Advanced: true,
+			Name:      "root_folder_id",
+			Help:      "Fill in for rclone to use a non root folder as its starting point.",
+			Default:   "0",
+			Advanced:  true,
+			Sensitive: true,
 		}, {
 			Name: "box_config_file",
 			Help: "Box App config.json location\n\nLeave blank normally." + env.ShellExpandHelp,
 		}, {
-			Name: "access_token",
-			Help: "Box App Primary Access Token\n\nLeave blank normally.",
+			Name:      "access_token",
+			Help:      "Box App Primary Access Token\n\nLeave blank normally.",
+			Sensitive: true,
 		}, {
 			Name:    "box_sub_type",
 			Default: "user",

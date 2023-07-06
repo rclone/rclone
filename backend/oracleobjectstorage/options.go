@@ -92,14 +92,16 @@ func newOptions() []fs.Option {
 			Help:  noAuthHelpText,
 		}},
 	}, {
-		Name:     "namespace",
-		Help:     "Object storage namespace",
-		Required: true,
+		Name:      "namespace",
+		Help:      "Object storage namespace",
+		Required:  true,
+		Sensitive: true,
 	}, {
-		Name:     "compartment",
-		Help:     "Object storage compartment OCID",
-		Provider: "!no_auth",
-		Required: true,
+		Name:      "compartment",
+		Help:      "Object storage compartment OCID",
+		Provider:  "!no_auth",
+		Required:  true,
+		Sensitive: true,
 	}, {
 		Name:     "region",
 		Help:     "Object storage Region",

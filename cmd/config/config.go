@@ -26,6 +26,7 @@ func init() {
 	configCommand.AddCommand(configTouchCommand)
 	configCommand.AddCommand(configPathsCommand)
 	configCommand.AddCommand(configShowCommand)
+	configCommand.AddCommand(configRedactedCommand)
 	configCommand.AddCommand(configDumpCommand)
 	configCommand.AddCommand(configProvidersCommand)
 	configCommand.AddCommand(configCreateCommand)
@@ -115,6 +116,35 @@ var configShowCommand = &cobra.Command{
 			name := strings.TrimRight(args[0], ":")
 			config.ShowRemote(name)
 		}
+	},
+}
+
+var configRedactedCommand = &cobra.Command{
+	Use:   "redacted [<remote>]",
+	Short: `Print redacted (decrypted) config file, or the redacted config for a single remote.`,
+	Long: `This prints a redacted copy of the config file, either the
+whole config file or for a given remote.
+
+The config file will be redacted by replacing all passwords and other
+sensitive info with XXX.
+
+This makes the config file suitable for posting online for support.
+
+It should be double checked before posting as the redaction may not be perfect.
+
+`,
+	Annotations: map[string]string{
+		"versionIntroduced": "v1.64",
+	},
+	Run: func(command *cobra.Command, args []string) {
+		cmd.CheckArgs(0, 1, command, args)
+		if len(args) == 0 {
+			config.ShowRedactedConfig()
+		} else {
+			name := strings.TrimRight(args[0], ":")
+			config.ShowRedactedRemote(name)
+		}
+		fmt.Println("### Double check the config for sensitive info before posting publicly")
 	},
 }
 

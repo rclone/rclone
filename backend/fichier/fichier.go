@@ -38,8 +38,9 @@ func init() {
 		Description: "1Fichier",
 		NewFs:       NewFs,
 		Options: []fs.Option{{
-			Help: "Your API Key, get it from https://1fichier.com/console/params.pl.",
-			Name: "api_key",
+			Help:      "Your API Key, get it from https://1fichier.com/console/params.pl.",
+			Name:      "api_key",
+			Sensitive: true,
 		}, {
 			Help:     "If you want to download a shared folder, add this parameter.",
 			Name:     "shared_folder",

@@ -41,13 +41,15 @@ func init() {
 		NewFs:       NewFs,
 
 		Options: []fs.Option{{
-			Name:     "host",
-			Help:     "SMB server hostname to connect to.\n\nE.g. \"example.com\".",
-			Required: true,
+			Name:      "host",
+			Help:      "SMB server hostname to connect to.\n\nE.g. \"example.com\".",
+			Required:  true,
+			Sensitive: true,
 		}, {
-			Name:    "user",
-			Help:    "SMB username.",
-			Default: currentUser,
+			Name:      "user",
+			Help:      "SMB username.",
+			Default:   currentUser,
+			Sensitive: true,
 		}, {
 			Name:    "port",
 			Help:    "SMB port number.",
@@ -57,9 +59,10 @@ func init() {
 			Help:       "SMB password.",
 			IsPassword: true,
 		}, {
-			Name:    "domain",
-			Help:    "Domain name for NTLM authentication.",
-			Default: "WORKGROUP",
+			Name:      "domain",
+			Help:      "Domain name for NTLM authentication.",
+			Default:   "WORKGROUP",
+			Sensitive: true,
 		}, {
 			Name: "spn",
 			Help: `Service principal name.
@@ -71,6 +74,7 @@ authentication, and it often needs to be set for clusters. For example:
 
 Leave blank if not sure.
 `,
+			Sensitive: true,
 		}, {
 			Name:    "idle_timeout",
 			Default: fs.Duration(60 * time.Second),

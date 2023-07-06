@@ -61,9 +61,10 @@ func init() {
 			Default:  true,
 			Advanced: true,
 		}, {
-			Name:     "user",
-			Help:     "Your user name.",
-			Required: true,
+			Name:      "user",
+			Help:      "Your user name.",
+			Required:  true,
+			Sensitive: true,
 		}, {
 			Name:       "password",
 			Help:       "Your password for rclone (generate one at https://app.koofr.net/app/admin/preferences/password).",

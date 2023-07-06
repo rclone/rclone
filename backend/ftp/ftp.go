@@ -48,13 +48,15 @@ func init() {
 		Description: "FTP",
 		NewFs:       NewFs,
 		Options: []fs.Option{{
-			Name:     "host",
-			Help:     "FTP host to connect to.\n\nE.g. \"ftp.example.com\".",
-			Required: true,
+			Name:      "host",
+			Help:      "FTP host to connect to.\n\nE.g. \"ftp.example.com\".",
+			Required:  true,
+			Sensitive: true,
 		}, {
-			Name:    "user",
-			Help:    "FTP username.",
-			Default: currentUser,
+			Name:      "user",
+			Help:      "FTP username.",
+			Default:   currentUser,
+			Sensitive: true,
 		}, {
 			Name:    "port",
 			Help:    "FTP port number.",

@@ -75,13 +75,15 @@ func init() {
 		Description: "Backblaze B2",
 		NewFs:       NewFs,
 		Options: []fs.Option{{
-			Name:     "account",
-			Help:     "Account ID or Application Key ID.",
-			Required: true,
+			Name:      "account",
+			Help:      "Account ID or Application Key ID.",
+			Required:  true,
+			Sensitive: true,
 		}, {
-			Name:     "key",
-			Help:     "Application Key.",
-			Required: true,
+			Name:      "key",
+			Help:      "Application Key.",
+			Required:  true,
+			Sensitive: true,
 		}, {
 			Name:     "endpoint",
 			Help:     "Endpoint for the service.\n\nLeave blank normally.",

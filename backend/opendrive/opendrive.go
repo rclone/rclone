@@ -42,9 +42,10 @@ func init() {
 		Description: "OpenDrive",
 		NewFs:       NewFs,
 		Options: []fs.Option{{
-			Name:     "username",
-			Help:     "Username.",
-			Required: true,
+			Name:      "username",
+			Help:      "Username.",
+			Required:  true,
+			Sensitive: true,
 		}, {
 			Name:       "password",
 			Help:       "Password.",

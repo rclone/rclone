@@ -95,6 +95,7 @@ Leave blank to use SAS URL or Emulator, otherwise it needs to be set.
 If this is blank and if env_auth is set it will be read from the
 environment variable ` + "`AZURE_STORAGE_ACCOUNT_NAME`" + ` if possible.
 `,
+			Sensitive: true,
 		}, {
 			Name: "env_auth",
 			Help: `Read credentials from runtime (environment variables, CLI or MSI).
@@ -106,11 +107,13 @@ See the [authentication docs](/azureblob#authentication) for full info.`,
 			Help: `Storage Account Shared Key.
 
 Leave blank to use SAS URL or Emulator.`,
+			Sensitive: true,
 		}, {
 			Name: "sas_url",
 			Help: `SAS URL for container level access only.
 
 Leave blank if using account/key or Emulator.`,
+			Sensitive: true,
 		}, {
 			Name: "tenant",
 			Help: `ID of the service principal's tenant. Also called its directory ID.
@@ -120,6 +123,7 @@ Set this if using
 - Service principal with certificate
 - User with username and password
 `,
+			Sensitive: true,
 		}, {
 			Name: "client_id",
 			Help: `The ID of the client in use.
@@ -129,6 +133,7 @@ Set this if using
 - Service principal with certificate
 - User with username and password
 `,
+			Sensitive: true,
 		}, {
 			Name: "client_secret",
 			Help: `One of the service principal's client secrets
@@ -136,6 +141,7 @@ Set this if using
 Set this if using
 - Service principal with client secret
 `,
+			Sensitive: true,
 		}, {
 			Name: "client_certificate_path",
 			Help: `Path to a PEM or PKCS12 certificate file including the private key.
@@ -173,7 +179,8 @@ Optionally set this if using
 Set this if using
 - User with username and password
 `,
-			Advanced: true,
+			Advanced:  true,
+			Sensitive: true,
 		}, {
 			Name: "password",
 			Help: `The user's password
@@ -216,17 +223,20 @@ msi_client_id, or msi_mi_res_id parameters.`,
 			Default:  false,
 			Advanced: true,
 		}, {
-			Name:     "msi_object_id",
-			Help:     "Object ID of the user-assigned MSI to use, if any.\n\nLeave blank if msi_client_id or msi_mi_res_id specified.",
-			Advanced: true,
+			Name:      "msi_object_id",
+			Help:      "Object ID of the user-assigned MSI to use, if any.\n\nLeave blank if msi_client_id or msi_mi_res_id specified.",
+			Advanced:  true,
+			Sensitive: true,
 		}, {
-			Name:     "msi_client_id",
-			Help:     "Object ID of the user-assigned MSI to use, if any.\n\nLeave blank if msi_object_id or msi_mi_res_id specified.",
-			Advanced: true,
+			Name:      "msi_client_id",
+			Help:      "Object ID of the user-assigned MSI to use, if any.\n\nLeave blank if msi_object_id or msi_mi_res_id specified.",
+			Advanced:  true,
+			Sensitive: true,
 		}, {
-			Name:     "msi_mi_res_id",
-			Help:     "Azure resource ID of the user-assigned MSI to use, if any.\n\nLeave blank if msi_client_id or msi_object_id specified.",
-			Advanced: true,
+			Name:      "msi_mi_res_id",
+			Help:      "Azure resource ID of the user-assigned MSI to use, if any.\n\nLeave blank if msi_client_id or msi_object_id specified.",
+			Advanced:  true,
+			Sensitive: true,
 		}, {
 			Name:     "use_emulator",
 			Help:     "Uses local storage emulator if provided as 'true'.\n\nLeave blank if using real azure storage endpoint.",

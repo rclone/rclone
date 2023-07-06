@@ -59,13 +59,15 @@ func init() {
 		Description: "SSH/SFTP",
 		NewFs:       NewFs,
 		Options: []fs.Option{{
-			Name:     "host",
-			Help:     "SSH host to connect to.\n\nE.g. \"example.com\".",
-			Required: true,
+			Name:      "host",
+			Help:      "SSH host to connect to.\n\nE.g. \"example.com\".",
+			Required:  true,
+			Sensitive: true,
 		}, {
-			Name:    "user",
-			Help:    "SSH username.",
-			Default: currentUser,
+			Name:      "user",
+			Help:      "SSH username.",
+			Default:   currentUser,
+			Sensitive: true,
 		}, {
 			Name:    "port",
 			Help:    "SSH port number.",
@@ -75,8 +77,9 @@ func init() {
 			Help:       "SSH password, leave blank to use ssh-agent.",
 			IsPassword: true,
 		}, {
-			Name: "key_pem",
-			Help: "Raw PEM-encoded private key.\n\nIf specified, will override key_file parameter.",
+			Name:      "key_pem",
+			Help:      "Raw PEM-encoded private key.\n\nIf specified, will override key_file parameter.",
+			Sensitive: true,
 		}, {
 			Name: "key_file",
 			Help: "Path to PEM-encoded private key file.\n\nLeave blank or set key-use-agent to use ssh-agent." + env.ShellExpandHelp,
@@ -87,6 +90,7 @@ func init() {
 Only PEM encrypted key files (old OpenSSH format) are supported. Encrypted keys
 in the new OpenSSH format can't be used.`,
 			IsPassword: true,
+			Sensitive:  true,
 		}, {
 			Name: "pubkey_file",
 			Help: `Optional path to public key file.

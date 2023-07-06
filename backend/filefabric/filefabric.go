@@ -84,6 +84,7 @@ Leave blank normally.
 
 Fill in to make rclone start with directory of a given ID.
 `,
+			Sensitive: true,
 		}, {
 			Name: "permanent_token",
 			Help: `Permanent Authentication Token.
@@ -97,6 +98,7 @@ These tokens are normally valid for several years.
 
 For more info see: https://docs.storagemadeeasy.com/organisationcloud/api-tokens
 `,
+			Sensitive: true,
 		}, {
 			Name: "token",
 			Help: `Session Token.
@@ -106,7 +108,8 @@ usually valid for 1 hour.
 
 Don't set this value - rclone will set it automatically.
 `,
-			Advanced: true,
+			Advanced:  true,
+			Sensitive: true,
 		}, {
 			Name: "token_expiry",
 			Help: `Token expiry time.
