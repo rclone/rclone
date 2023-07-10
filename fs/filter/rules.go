@@ -130,6 +130,11 @@ func forEachLine(path string, raw bool, fn func(string) error) (err error) {
 		scanner = bufio.NewScanner(in)
 		defer fs.CheckClose(in, &err)
 	}
+
+	size := bufio.MaxScanTokenSize
+	buffer := make([]byte, size)
+	scanner.Buffer(buffer, size)
+
 	for scanner.Scan() {
 		line := scanner.Text()
 		if !raw {
