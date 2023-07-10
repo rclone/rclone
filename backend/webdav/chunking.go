@@ -53,7 +53,7 @@ func (o *Object) getChunksUploadDir() (string, error) {
 func (f *Fs) getChunksUploadURL() (string, error) {
 	submatch := nextCloudURLRegex.FindStringSubmatch(f.endpointURL)
 	if submatch == nil {
-		return "", errors.New("the remote url looks incorrect. Note that nextcloud chunked uploads require you to use the /dav/files/USER endpoint instead of /webdav")
+		return "", errors.New("the remote url looks incorrect. Note that nextcloud chunked uploads require you to use the /dav/files/USER endpoint instead of /webdav. Please check 'rclone config show remotename' to verify that the url field ends in /dav/files/USERNAME")
 	}
 
 	baseURL, user := submatch[1], submatch[2]
