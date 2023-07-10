@@ -20,8 +20,8 @@ var (
 func init() {
 	cmd.Root.AddCommand(commandDefinition)
 	cmdFlags := commandDefinition.Flags()
-	flags.FVarP(cmdFlags, &expire, "expire", "", "The amount of time that the link will be valid")
-	flags.BoolVarP(cmdFlags, &unlink, "unlink", "", unlink, "Remove existing public link to file/folder")
+	flags.FVarP(cmdFlags, &expire, "expire", "", "The amount of time that the link will be valid", "")
+	flags.BoolVarP(cmdFlags, &unlink, "unlink", "", unlink, "Remove existing public link to file/folder", "")
 }
 
 var commandDefinition = &cobra.Command{

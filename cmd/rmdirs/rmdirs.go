@@ -40,6 +40,7 @@ command.
 `,
 	Annotations: map[string]string{
 		"versionIntroduced": "v1.35",
+		"groups":            "Important",
 	},
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(1, 1, command, args)

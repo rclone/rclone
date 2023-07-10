@@ -63,8 +63,8 @@ func init() {
 	libhttp.AddTemplateFlagsPrefix(flagSet, "", &Opt.Template)
 	vfsflags.AddFlags(flagSet)
 	proxyflags.AddFlags(flagSet)
-	flags.StringVarP(flagSet, &Opt.HashName, "etag-hash", "", "", "Which hash to use for the ETag, or auto or blank for off")
-	flags.BoolVarP(flagSet, &Opt.DisableGETDir, "disable-dir-list", "", false, "Disable HTML directory list on GET request for a directory")
+	flags.StringVarP(flagSet, &Opt.HashName, "etag-hash", "", "", "Which hash to use for the ETag, or auto or blank for off", "")
+	flags.BoolVarP(flagSet, &Opt.DisableGETDir, "disable-dir-list", "", false, "Disable HTML directory list on GET request for a directory", "")
 }
 
 // Command definition for cobra
@@ -114,6 +114,7 @@ https://learn.microsoft.com/en-us/office/troubleshoot/powerpoint/office-opens-bl
 ` + libhttp.Help(flagPrefix) + libhttp.TemplateHelp(flagPrefix) + libhttp.AuthHelp(flagPrefix) + vfs.Help + proxy.Help,
 	Annotations: map[string]string{
 		"versionIntroduced": "v1.39",
+		"groups":            "Filter",
 	},
 	RunE: func(command *cobra.Command, args []string) error {
 		var f fs.Fs

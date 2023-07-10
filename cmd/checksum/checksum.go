@@ -19,7 +19,7 @@ var download = false
 func init() {
 	cmd.Root.AddCommand(commandDefinition)
 	cmdFlags := commandDefinition.Flags()
-	flags.BoolVarP(cmdFlags, &download, "download", "", download, "Check by hashing the contents")
+	flags.BoolVarP(cmdFlags, &download, "download", "", download, "Check by hashing the contents", "")
 	check.AddFlags(cmdFlags)
 }
 
@@ -39,6 +39,7 @@ Note that hash values in the SUM file are treated as case insensitive.
 `, "|", "`") + check.FlagsHelp,
 	Annotations: map[string]string{
 		"versionIntroduced": "v1.56",
+		"groups":            "Filter,Listing",
 	},
 	RunE: func(command *cobra.Command, args []string) error {
 		cmd.CheckArgs(3, 3, command, args)

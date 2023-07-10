@@ -49,25 +49,25 @@ var (
 func init() {
 	test.Command.AddCommand(makefilesCmd)
 	makefilesFlags := makefilesCmd.Flags()
-	flags.IntVarP(makefilesFlags, &numberOfFiles, "files", "", numberOfFiles, "Number of files to create")
-	flags.IntVarP(makefilesFlags, &averageFilesPerDirectory, "files-per-directory", "", averageFilesPerDirectory, "Average number of files per directory")
-	flags.IntVarP(makefilesFlags, &maxDepth, "max-depth", "", maxDepth, "Maximum depth of directory hierarchy")
-	flags.FVarP(makefilesFlags, &minFileSize, "min-file-size", "", "Minimum size of file to create")
-	flags.FVarP(makefilesFlags, &maxFileSize, "max-file-size", "", "Maximum size of files to create")
-	flags.IntVarP(makefilesFlags, &minFileNameLength, "min-name-length", "", minFileNameLength, "Minimum size of file names")
-	flags.IntVarP(makefilesFlags, &maxFileNameLength, "max-name-length", "", maxFileNameLength, "Maximum size of file names")
+	flags.IntVarP(makefilesFlags, &numberOfFiles, "files", "", numberOfFiles, "Number of files to create", "")
+	flags.IntVarP(makefilesFlags, &averageFilesPerDirectory, "files-per-directory", "", averageFilesPerDirectory, "Average number of files per directory", "")
+	flags.IntVarP(makefilesFlags, &maxDepth, "max-depth", "", maxDepth, "Maximum depth of directory hierarchy", "")
+	flags.FVarP(makefilesFlags, &minFileSize, "min-file-size", "", "Minimum size of file to create", "")
+	flags.FVarP(makefilesFlags, &maxFileSize, "max-file-size", "", "Maximum size of files to create", "")
+	flags.IntVarP(makefilesFlags, &minFileNameLength, "min-name-length", "", minFileNameLength, "Minimum size of file names", "")
+	flags.IntVarP(makefilesFlags, &maxFileNameLength, "max-name-length", "", maxFileNameLength, "Maximum size of file names", "")
 
 	test.Command.AddCommand(makefileCmd)
 	makefileFlags := makefileCmd.Flags()
 
 	// Common flags to makefiles and makefile
 	for _, f := range []*pflag.FlagSet{makefilesFlags, makefileFlags} {
-		flags.Int64VarP(f, &seed, "seed", "", seed, "Seed for the random number generator (0 for random)")
-		flags.BoolVarP(f, &zero, "zero", "", zero, "Fill files with ASCII 0x00")
-		flags.BoolVarP(f, &sparse, "sparse", "", sparse, "Make the files sparse (appear to be filled with ASCII 0x00)")
-		flags.BoolVarP(f, &ascii, "ascii", "", ascii, "Fill files with random ASCII printable bytes only")
-		flags.BoolVarP(f, &pattern, "pattern", "", pattern, "Fill files with a periodic pattern")
-		flags.BoolVarP(f, &chargen, "chargen", "", chargen, "Fill files with a ASCII chargen pattern")
+		flags.Int64VarP(f, &seed, "seed", "", seed, "Seed for the random number generator (0 for random)", "")
+		flags.BoolVarP(f, &zero, "zero", "", zero, "Fill files with ASCII 0x00", "")
+		flags.BoolVarP(f, &sparse, "sparse", "", sparse, "Make the files sparse (appear to be filled with ASCII 0x00)", "")
+		flags.BoolVarP(f, &ascii, "ascii", "", ascii, "Fill files with random ASCII printable bytes only", "")
+		flags.BoolVarP(f, &pattern, "pattern", "", pattern, "Fill files with a periodic pattern", "")
+		flags.BoolVarP(f, &chargen, "chargen", "", chargen, "Fill files with a ASCII chargen pattern", "")
 	}
 }
 

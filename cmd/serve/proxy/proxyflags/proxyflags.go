@@ -14,5 +14,5 @@ var (
 
 // AddFlags adds the non filing system specific flags to the command
 func AddFlags(flagSet *pflag.FlagSet) {
-	flags.StringVarP(flagSet, &Opt.AuthProxy, "auth-proxy", "", Opt.AuthProxy, "A program to use to create the backend from the auth")
+	flags.StringVarP(flagSet, &Opt.AuthProxy, "auth-proxy", "", Opt.AuthProxy, "A program to use to create the backend from the auth", "")
 }

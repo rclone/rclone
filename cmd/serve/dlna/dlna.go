@@ -50,6 +50,7 @@ files that they are not able to play back correctly.
 ` + dlnaflags.Help + vfs.Help,
 	Annotations: map[string]string{
 		"versionIntroduced": "v1.46",
+		"groups":            "Filter",
 	},
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(1, 1, command, args)

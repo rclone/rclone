@@ -24,6 +24,9 @@ with option ` + "`--rmdirs`" + `) to do that.
 
 To delete a path and any objects in it, use [purge](/commands/rclone_purge/) command.
 `,
+	Annotations: map[string]string{
+		"groups": "Important",
+	},
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(1, 1, command, args)
 		fdst := cmd.NewFsDir(args)

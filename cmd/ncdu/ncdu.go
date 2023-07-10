@@ -77,6 +77,7 @@ the remote you can also use the [size](/commands/rclone_size/) command.
 `,
 	Annotations: map[string]string{
 		"versionIntroduced": "v1.37",
+		"groups":            "Filter,Listing",
 	},
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(1, 1, command, args)

@@ -47,13 +47,13 @@ var (
 func init() {
 	test.Command.AddCommand(commandDefinition)
 	cmdFlags := commandDefinition.Flags()
-	flags.StringVarP(cmdFlags, &writeJSON, "write-json", "", "", "Write results to file")
-	flags.BoolVarP(cmdFlags, &checkNormalization, "check-normalization", "", false, "Check UTF-8 Normalization")
-	flags.BoolVarP(cmdFlags, &checkControl, "check-control", "", false, "Check control characters")
-	flags.DurationVarP(cmdFlags, &uploadWait, "upload-wait", "", 0, "Wait after writing a file")
-	flags.BoolVarP(cmdFlags, &checkLength, "check-length", "", false, "Check max filename length")
-	flags.BoolVarP(cmdFlags, &checkStreaming, "check-streaming", "", false, "Check uploads with indeterminate file size")
-	flags.BoolVarP(cmdFlags, &all, "all", "", false, "Run all tests")
+	flags.StringVarP(cmdFlags, &writeJSON, "write-json", "", "", "Write results to file", "")
+	flags.BoolVarP(cmdFlags, &checkNormalization, "check-normalization", "", false, "Check UTF-8 Normalization", "")
+	flags.BoolVarP(cmdFlags, &checkControl, "check-control", "", false, "Check control characters", "")
+	flags.DurationVarP(cmdFlags, &uploadWait, "upload-wait", "", 0, "Wait after writing a file", "")
+	flags.BoolVarP(cmdFlags, &checkLength, "check-length", "", false, "Check max filename length", "")
+	flags.BoolVarP(cmdFlags, &checkStreaming, "check-streaming", "", false, "Check uploads with indeterminate file size", "")
+	flags.BoolVarP(cmdFlags, &all, "all", "", false, "Run all tests", "")
 }
 
 var commandDefinition = &cobra.Command{

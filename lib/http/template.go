@@ -67,7 +67,7 @@ type TemplateConfig struct {
 
 // AddFlagsPrefix for the templating functionality
 func (cfg *TemplateConfig) AddFlagsPrefix(flagSet *pflag.FlagSet, prefix string) {
-	flags.StringVarP(flagSet, &cfg.Path, prefix+"template", "", cfg.Path, "User-specified template")
+	flags.StringVarP(flagSet, &cfg.Path, prefix+"template", "", cfg.Path, "User-specified template", prefix)
 }
 
 // AddTemplateFlagsPrefix for the templating functionality
