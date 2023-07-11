@@ -97,6 +97,8 @@ Optional Flags:
                                 Consider using `--verbose` or `--dry-run` first.
       --ignore-listing-checksum Do not use checksums for listings 
                                   (add --ignore-checksum to additionally skip post-copy checksum checks)
+      --resilient               Allow future runs to retry after certain less-serious errors, 
+                                  instead of requiring --resync. Use at your own risk!
       --localtime               Use local time in listings (default: UTC)
       --no-cleanup              Retain working files (useful for troubleshooting and testing).
       --workdir PATH            Use custom working directory (useful for testing).
@@ -285,6 +287,30 @@ were generated on a run using `--ignore-listing-checksum`. For a more robust int
 consider using [`check`](commands/rclone_check/) 
 (or [`cryptcheck`](/commands/rclone_cryptcheck/), if at least one path is a `crypt` remote.)
 
+#### --resilient
+
+***Caution: this is an experimental feature. Use at your own risk!***
+
+By default, most errors or interruptions will cause bisync to abort and 
+require [`--resync`](#resync) to recover. This is a safety feature, 
+to prevent bisync from running again until a user checks things out. 
+However, in some cases, bisync can go too far and enforce a lockout when one isn't actually necessary, 
+like for certain less-serious errors that might resolve themselves on the next run. 
+When `--resilient` is specified, bisync tries its best to recover and self-correct, 
+and only requires `--resync` as a last resort when a human's involvement is absolutely necessary. 
+The intended use case is for running bisync as a background process (such as via scheduled [cron](#cron)).
+
+When using `--resilient` mode, bisync will still report the error and abort, 
+however it will not lock out future runs -- allowing the possibility of retrying at the next normally scheduled time, 
+without requiring a `--resync` first. Examples of such retryable errors include 
+access test failures, missing listing files, and filter change detections. 
+These safety features will still prevent the *current* run from proceeding -- 
+the difference is that if conditions have improved by the time of the *next* run, 
+that next run will be allowed to proceed. 
+Certain more serious errors will still enforce a `--resync` lockout, even in `--resilient` mode, to prevent data loss.
+
+Behavior of `--resilient` may change in a future version.
+
 ## Operation
 
 ### Runtime flow details
@@ -393,6 +419,8 @@ typically at `${HOME}/.cache/rclone/bisync/` on Linux.
 
 Some errors are considered temporary and re-running the bisync is not blocked.
 The _critical return_ blocks further bisync runs.
+
+See also: [`--resilient`](#resilient)
 
 ### Lock file
 
@@ -1164,5 +1192,6 @@ causing dry runs to inadvertently commit filter changes
 causing bisync to consider more files than necessary due to overbroad filters during delete operations
 * [Improved detection of false positive change conflicts](https://forum.rclone.org/t/bisync-bugs-and-feature-requests/37636#:~:text=1.%20Identical%20files%20should%20be%20left%20alone%2C%20even%20if%20new/newer/changed%20on%20both%20sides) 
 (identical files are now left alone instead of renamed)
+* Added experimental `--resilient` mode to allow [recovery from self-correctable errors](https://forum.rclone.org/t/bisync-bugs-and-feature-requests/37636#:~:text=2.%20Bisync%20should%20be%20more%20resilient%20to%20self%2Dcorrectable%20errors)
 * Added [new `--ignore-listing-checksum` flag](https://forum.rclone.org/t/bisync-bugs-and-feature-requests/37636#:~:text=6.%20%2D%2Dignore%2Dchecksum%20should%20be%20split%20into%20two%20flags%20for%20separate%20purposes) 
 to distinguish from `--ignore-checksum`
