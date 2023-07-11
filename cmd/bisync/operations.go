@@ -341,6 +341,38 @@ func (b *bisyncRun) resync(octx, fctx context.Context, listing1, listing2 string
 		return err
 	}
 
+	// Check access health on the Path1 and Path2 filesystems
+	// enforce even though this is --resync
+	if b.opt.CheckAccess {
+		fs.Infof(nil, "Checking access health")
+
+		ds1 := &deltaSet{
+			checkFiles: bilib.Names{},
+		}
+
+		ds2 := &deltaSet{
+			checkFiles: bilib.Names{},
+		}
+
+		for _, file := range filesNow1.list {
+			if filepath.Base(file) == b.opt.CheckFilename {
+				ds1.checkFiles.Add(file)
+			}
+		}
+
+		for _, file := range filesNow2.list {
+			if filepath.Base(file) == b.opt.CheckFilename {
+				ds2.checkFiles.Add(file)
+			}
+		}
+
+		err = b.checkAccess(ds1.checkFiles, ds2.checkFiles)
+		if err != nil {
+			b.critical = true
+			return err
+		}
+	}
+
 	copy2to1 := []string{}
 	for _, file := range filesNow2.list {
 		if !filesNow1.has(file) {

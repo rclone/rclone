@@ -165,13 +165,23 @@ Access check files are an additional safety measure against data loss.
 bisync will ensure it can find matching `RCLONE_TEST` files in the same places
 in the Path1 and Path2 filesystems.
 `RCLONE_TEST` files are not generated automatically.
-For `--check-access`to succeed, you must first either:
-**A)** Place one or more `RCLONE_TEST` files in the Path1 or Path2 filesystem
-and then do either a run without `--check-access` or a [--resync](#resync) to
-set matching files on both filesystems, or
+For `--check-access` to succeed, you must first either:
+**A)** Place one or more `RCLONE_TEST` files in both systems, or
 **B)** Set `--check-filename` to a filename already in use in various locations
-throughout your sync'd fileset.
-Time stamps and file contents are not important, just the names and locations.
+throughout your sync'd fileset. Recommended methods for **A)** include:
+* `rclone touch Path1/RCLONE_TEST` (create a new file)
+* `rclone copyto Path1/RCLONE_TEST Path2/RCLONE_TEST` (copy an existing file)
+* `rclone copy Path1/RCLONE_TEST Path2/RCLONE_TEST  --include "RCLONE_TEST"` (copy multiple files at once, recursively)
+* create the files manually (outside of rclone)
+* run `bisync` once *without* `--check-access` to set matching files on both filesystems
+will also work, but is not preferred, due to potential for user error 
+(you are temporarily disabling the safety feature).
+
+Note that `--check-access` is still enforced on `--resync`, so `bisync --resync --check-access` 
+will not work as a method of initially setting the files (this is to ensure that bisync can't 
+[inadvertently circumvent its own safety switch](https://forum.rclone.org/t/bisync-bugs-and-feature-requests/37636#:~:text=3.%20%2D%2Dcheck%2Daccess%20doesn%27t%20always%20fail%20when%20it%20should).)
+
+Time stamps and file contents for `RCLONE_TEST` files are not important, just the names and locations.
 If you have symbolic links in your sync tree it is recommended to place
 `RCLONE_TEST` files in the linked-to directory tree to protect against
 bisync assuming a bunch of deleted files if the linked-to tree should not be
@@ -1108,3 +1118,4 @@ about _Unison_ and synchronization in general.
 ### `v1.64`
 * Fixed an [issue](https://forum.rclone.org/t/bisync-bugs-and-feature-requests/37636#:~:text=1.%20Dry%20runs%20are%20not%20completely%20dry) 
 causing dry runs to inadvertently commit filter changes
+* `--check-access` is now enforced during `--resync`, preventing data loss in [certain user error scenarios](https://forum.rclone.org/t/bisync-bugs-and-feature-requests/37636#:~:text=%2D%2Dcheck%2Daccess%20doesn%27t%20always%20fail%20when%20it%20should)

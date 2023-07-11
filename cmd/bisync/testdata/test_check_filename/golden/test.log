@@ -39,10 +39,12 @@ Bisync error: bisync aborted
 (10)  : move-listings path2-missing
 
 (11)  : test 3. put the remote subdir .chk_file back, run resync.
-(12)  : copy-file {path1/}subdir/.chk_file {path2/}
+(12)  : copy-file {path1/}subdir/.chk_file {path2/}subdir/
 (13)  : bisync check-access resync check-filename=.chk_file
 INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
 INFO  : Copying unique Path2 files to Path1
+INFO  : Checking access health
+INFO  : Found 2 matching ".chk_file" files on both paths
 INFO  : Resynching Path1 to Path2
 INFO  : Resync updating listings
 INFO  : Bisync successful
