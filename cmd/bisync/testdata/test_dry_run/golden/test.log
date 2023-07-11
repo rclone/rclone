@@ -54,13 +54,10 @@ NOTICE: file4.txt: Skipped copy as --dry-run is set (size 0)
 NOTICE: file6.txt: Skipped copy as --dry-run is set (size 19)
 INFO  : Resynching Path1 to Path2
 NOTICE: file1.txt: Skipped copy as --dry-run is set (size 0)
-NOTICE: file10.txt: Skipped delete as --dry-run is set (size 19)
 NOTICE: file11.txt: Skipped copy as --dry-run is set (size 19)
 NOTICE: file2.txt: Skipped copy as --dry-run is set (size 13)
 NOTICE: file3.txt: Skipped copy as --dry-run is set (size 0)
-NOTICE: file4.txt: Skipped delete as --dry-run is set (size 0)
 NOTICE: file5.txt: Skipped copy (or update modification time) as --dry-run is set (size 39)
-NOTICE: file6.txt: Skipped delete as --dry-run is set (size 19)
 NOTICE: file7.txt: Skipped copy as --dry-run is set (size 19)
 INFO  : Resync updating listings
 INFO  : Bisync successful

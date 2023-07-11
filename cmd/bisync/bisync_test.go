@@ -614,6 +614,8 @@ func (b *bisyncTest) runBisync(ctx context.Context, args []string) (err error) {
 			opt.DryRun = true
 		case "force":
 			opt.Force = true
+		case "create-empty-src-dirs":
+			opt.CreateEmptySrcDirs = true
 		case "remove-empty-dirs":
 			opt.RemoveEmptyDirs = true
 		case "check-sync-only":

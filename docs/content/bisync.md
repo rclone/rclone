@@ -91,6 +91,8 @@ Optional Flags:
                                 If exceeded, the bisync run will abort. (default: 50%)
       --force                   Bypass `--max-delete` safety check and run the sync.
                                 Consider using with `--verbose`
+      --create-empty-src-dirs   Sync creation and deletion of empty directories. 
+                                  (Not compatible with --remove-empty-dirs)
       --remove-empty-dirs       Remove empty directories at the final cleanup step.
   -1, --resync                  Performs the resync run.
                                 Warning: Path1 files may overwrite Path2 versions.
@@ -125,7 +127,7 @@ Cloud references are distinguished by having a `:` in the argument
 (see [Windows support](#windows) below).
 
 Path1 and Path2 are treated equally, in that neither has priority for
-file changes, and access efficiency does not change whether a remote
+file changes (except during [`--resync`](#resync)), and access efficiency does not change whether a remote
 is on Path1 or Path2.
 
 The listings in bisync working directory (default: `~/.cache/rclone/bisync`)
@@ -134,8 +136,8 @@ to individual directories within the tree may be set up, e.g.:
 `path_to_local_tree..dropbox_subdir.lst`.
 
 Any empty directories after the sync on both the Path1 and Path2
-filesystems are not deleted by default. If the `--remove-empty-dirs`
-flag is specified, then both paths will have any empty directories purged
+filesystems are not deleted by default, unless `--create-empty-src-dirs` is specified. 
+If the `--remove-empty-dirs` flag is specified, then both paths will have ALL empty directories purged
 as the last step in the process.
 
 ## Command-line flags
@@ -144,15 +146,31 @@ as the last step in the process.
 
 This will effectively make both Path1 and Path2 filesystems contain a
 matching superset of all files. Path2 files that do not exist in Path1 will
-be copied to Path1, and the process will then sync the Path1 tree to Path2.
+be copied to Path1, and the process will then copy the Path1 tree to Path2.
 
-The base directories on the both Path1 and Path2 filesystems must exist
+The `--resync` sequence is roughly equivalent to:
+```
+rclone copy Path2 Path1 --ignore-existing
+rclone copy Path1 Path2
+```
+Or, if using `--create-empty-src-dirs`:
+```
+rclone copy Path2 Path1 --ignore-existing
+rclone copy Path1 Path2 --create-empty-src-dirs
+rclone copy Path2 Path1 --create-empty-src-dirs
+```
+
+The base directories on both Path1 and Path2 filesystems must exist
 or bisync will fail. This is required for safety - that bisync can verify
 that both paths are valid.
 
-When using `--resync`, a newer version of a file either on Path1 or Path2
-filesystem, will overwrite the file on the other path (only the last version
-will be kept). Carefully evaluate deltas using [--dry-run](/flags/#non-backend-flags).
+When using `--resync`, a newer version of a file on the Path2 filesystem
+will be overwritten by the Path1 filesystem version. 
+(Note that this is [NOT entirely symmetrical](https://github.com/rclone/rclone/issues/5681#issuecomment-938761815).)
+Carefully evaluate deltas using [--dry-run](/flags/#non-backend-flags).
+
+[//]: # (I reverted a recent change in the above paragraph, as it was incorrect.
+https://github.com/rclone/rclone/commit/dd72aff98a46c6e20848ac7ae5f7b19d45802493 )
 
 For a resync run, one of the paths may be empty (no files in the path tree).
 The resync run should result in files on both paths, else a normal non-resync
@@ -492,6 +510,22 @@ rclone bisync PATH1 PATH2
 rclone copy PATH1 PATH2 --filter "+ */" --filter "- **" --create-empty-src-dirs
 rclone copy PATH2 PATH2 --filter "+ */" --filter "- **" --create-empty-src-dirs
 ```
+
+### Empty directories
+
+By default, new/deleted empty directories on one path are _not_ propagated to the other side.
+This is because bisync (and rclone) natively works on files, not directories.
+However, this can be changed with the `--create-empty-src-dirs` flag, which works in
+much the same way as in [`sync`](/commands/rclone_sync/) and [`copy`](/commands/rclone_copy/).
+When used, empty directories created or deleted on one side will also be created or deleted on the other side.
+The following should be noted:
+* `--create-empty-src-dirs` is not compatible with `--remove-empty-dirs`. Use only one or the other (or neither).
+* It is not recommended to switch back and forth between `--create-empty-src-dirs` 
+and the default (no `--create-empty-src-dirs`) without running `--resync`. 
+This is because it may appear as though all directories (not just the empty ones) were created/deleted,
+when actually you've just toggled between making them visible/invisible to bisync. 
+It looks scarier than it is, but it's still probably best to stick to one or the other, 
+and use `--resync` when you need to switch.
 
 ### Renamed directories
 
@@ -1187,11 +1221,15 @@ about _Unison_ and synchronization in general.
 ### `v1.64`
 * Fixed an [issue](https://forum.rclone.org/t/bisync-bugs-and-feature-requests/37636#:~:text=1.%20Dry%20runs%20are%20not%20completely%20dry) 
 causing dry runs to inadvertently commit filter changes
+* Fixed an [issue](https://forum.rclone.org/t/bisync-bugs-and-feature-requests/37636#:~:text=2.%20%2D%2Dresync%20deletes%20data%2C%20contrary%20to%20docs) 
+causing `--resync` to erroneously delete empty folders and duplicate files unique to Path2
 * `--check-access` is now enforced during `--resync`, preventing data loss in [certain user error scenarios](https://forum.rclone.org/t/bisync-bugs-and-feature-requests/37636#:~:text=%2D%2Dcheck%2Daccess%20doesn%27t%20always%20fail%20when%20it%20should)
 * Fixed an [issue](https://forum.rclone.org/t/bisync-bugs-and-feature-requests/37636#:~:text=5.%20Bisync%20reads%20files%20in%20excluded%20directories%20during%20delete%20operations) 
 causing bisync to consider more files than necessary due to overbroad filters during delete operations
 * [Improved detection of false positive change conflicts](https://forum.rclone.org/t/bisync-bugs-and-feature-requests/37636#:~:text=1.%20Identical%20files%20should%20be%20left%20alone%2C%20even%20if%20new/newer/changed%20on%20both%20sides) 
 (identical files are now left alone instead of renamed)
+* Added [support for `--create-empty-src-dirs`](https://forum.rclone.org/t/bisync-bugs-and-feature-requests/37636#:~:text=3.%20Bisync%20should%20create/delete%20empty%20directories%20as%20sync%20does%2C%20when%20%2D%2Dcreate%2Dempty%2Dsrc%2Ddirs%20is%20passed)
 * Added experimental `--resilient` mode to allow [recovery from self-correctable errors](https://forum.rclone.org/t/bisync-bugs-and-feature-requests/37636#:~:text=2.%20Bisync%20should%20be%20more%20resilient%20to%20self%2Dcorrectable%20errors)
 * Added [new `--ignore-listing-checksum` flag](https://forum.rclone.org/t/bisync-bugs-and-feature-requests/37636#:~:text=6.%20%2D%2Dignore%2Dchecksum%20should%20be%20split%20into%20two%20flags%20for%20separate%20purposes) 
 to distinguish from `--ignore-checksum`
+* [Performance improvements](https://forum.rclone.org/t/bisync-bugs-and-feature-requests/37636#:~:text=6.%20Deletes%20take%20several%20times%20longer%20than%20copies) for large remotes
