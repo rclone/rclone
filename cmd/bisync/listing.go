@@ -301,5 +301,6 @@ func (b *bisyncRun) checkListing(ls *fileList, listing, msg string) error {
 	}
 	fs.Errorf(nil, "Empty %s listing. Cannot sync to an empty directory: %s", msg, listing)
 	b.critical = true
+	b.retryable = true
 	return fmt.Errorf("empty %s listing: %s", msg, listing)
 }

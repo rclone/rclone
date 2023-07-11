@@ -40,6 +40,7 @@ type Options struct {
 	NoCleanup             bool
 	SaveQueues            bool // save extra debugging files (test only flag)
 	IgnoreListingChecksum bool
+	Resilient             bool
 }
 
 // Default values
@@ -110,6 +111,7 @@ func init() {
 	flags.BoolVarP(cmdFlags, &tzLocal, "localtime", "", tzLocal, "Use local time in listings (default: UTC)", "")
 	flags.BoolVarP(cmdFlags, &Opt.NoCleanup, "no-cleanup", "", Opt.NoCleanup, "Retain working files (useful for troubleshooting and testing).", "")
 	flags.BoolVarP(cmdFlags, &Opt.IgnoreListingChecksum, "ignore-listing-checksum", "", Opt.IgnoreListingChecksum, "Do not use checksums for listings (add --ignore-checksum to additionally skip post-copy checksum checks)", "")
+	flags.BoolVarP(cmdFlags, &Opt.Resilient, "resilient", "", Opt.Resilient, "Allow future runs to retry after certain less-serious errors, instead of requiring --resync. Use at your own risk!", "")
 }
 
 // bisync command definition

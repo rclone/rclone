@@ -104,6 +104,7 @@ func (b *bisyncRun) checkconflicts(ctxCheck context.Context, filterCheck *filter
 		opt, close, checkopterr := check.GetCheckOpt(b.fs1, b.fs2)
 		if checkopterr != nil {
 			b.critical = true
+			b.retryable = true
 			fs.Debugf(nil, "GetCheckOpt error: %v", checkopterr)
 			return matches, checkopterr
 		}
