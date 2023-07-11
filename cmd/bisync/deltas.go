@@ -229,6 +229,24 @@ func (b *bisyncRun) applyDeltas(ctx context.Context, ds1, ds2 *deltaSet) (change
 
 	ctxMove := b.opt.setDryRun(ctx)
 
+	// efficient isDir check
+	// we load the listing just once and store only the dirs
+	dirs1, dirs1Err := b.listDirsOnly(1)
+	if dirs1Err != nil {
+		b.critical = true
+		b.retryable = true
+		fs.Debugf(nil, "Error generating dirsonly list for path1: %v", dirs1Err)
+		return
+	}
+
+	dirs2, dirs2Err := b.listDirsOnly(2)
+	if dirs2Err != nil {
+		b.critical = true
+		b.retryable = true
+		fs.Debugf(nil, "Error generating dirsonly list for path2: %v", dirs2Err)
+		return
+	}
+
 	// build a list of only the "deltaOther"s so we don't have to check more files than necessary
 	// this is essentially the same as running rclone check with a --files-from filter, then exempting the --match results from being renamed
 	// we therefore avoid having to list the same directory more than once.
@@ -275,28 +293,32 @@ func (b *bisyncRun) applyDeltas(ctx context.Context, ds1, ds2 *deltaSet) (change
 				b.indent("!WARNING", file, "New or changed in both paths")
 
 				//if files are identical, leave them alone instead of renaming
+				if dirs1.has(file) && dirs2.has(file) {
+					fs.Debugf(nil, "This is a directory, not a file. Skipping equality check and will not rename: %s", file)
+				} else {
 					equal := matches.Has(file)
 					if equal {
 						fs.Infof(nil, "Files are equal! Skipping: %s", file)
 					} else {
 						fs.Debugf(nil, "Files are NOT equal: %s", file)
-				b.indent("!Path1", p1+"..path1", "Renaming Path1 copy")
-				if err = operations.MoveFile(ctxMove, b.fs1, b.fs1, file+"..path1", file); err != nil {
-					err = fmt.Errorf("path1 rename failed for %s: %w", p1, err)
-					b.critical = true
-					return
-				}
-				b.indent("!Path1", p2+"..path1", "Queue copy to Path2")
-				copy1to2.Add(file + "..path1")
+						b.indent("!Path1", p1+"..path1", "Renaming Path1 copy")
+						if err = operations.MoveFile(ctxMove, b.fs1, b.fs1, file+"..path1", file); err != nil {
+							err = fmt.Errorf("path1 rename failed for %s: %w", p1, err)
+							b.critical = true
+							return
+						}
+						b.indent("!Path1", p2+"..path1", "Queue copy to Path2")
+						copy1to2.Add(file + "..path1")
 
-				b.indent("!Path2", p2+"..path2", "Renaming Path2 copy")
-				if err = operations.MoveFile(ctxMove, b.fs2, b.fs2, file+"..path2", file); err != nil {
-					err = fmt.Errorf("path2 rename failed for %s: %w", file, err)
-					return
-				}
-				b.indent("!Path2", p1+"..path2", "Queue copy to Path1")
-				copy2to1.Add(file + "..path2")
+						b.indent("!Path2", p2+"..path2", "Renaming Path2 copy")
+						if err = operations.MoveFile(ctxMove, b.fs2, b.fs2, file+"..path2", file); err != nil {
+							err = fmt.Errorf("path2 rename failed for %s: %w", file, err)
+							return
+						}
+						b.indent("!Path2", p1+"..path2", "Queue copy to Path1")
+						copy2to1.Add(file + "..path2")
 					}
+				}
 				handled.Add(file)
 			}
 		} else {
@@ -340,6 +362,9 @@ func (b *bisyncRun) applyDeltas(ctx context.Context, ds1, ds2 *deltaSet) (change
 		if err != nil {
 			return
 		}
+
+		//copy empty dirs from path2 to path1 (if --create-empty-src-dirs)
+		b.syncEmptyDirs(ctx, b.fs1, copy2to1, dirs2, "make")
 	}
 
 	if copy1to2.NotEmpty() {
@@ -349,6 +374,9 @@ func (b *bisyncRun) applyDeltas(ctx context.Context, ds1, ds2 *deltaSet) (change
 		if err != nil {
 			return
 		}
+
+		//copy empty dirs from path1 to path2 (if --create-empty-src-dirs)
+		b.syncEmptyDirs(ctx, b.fs2, copy1to2, dirs1, "make")
 	}
 
 	if delete1.NotEmpty() {
@@ -358,6 +386,9 @@ func (b *bisyncRun) applyDeltas(ctx context.Context, ds1, ds2 *deltaSet) (change
 		if err != nil {
 			return
 		}
+
+		//propagate deletions of empty dirs from path2 to path1 (if --create-empty-src-dirs)
+		b.syncEmptyDirs(ctx, b.fs1, delete1, dirs1, "remove")
 	}
 
 	if delete2.NotEmpty() {
@@ -367,6 +398,9 @@ func (b *bisyncRun) applyDeltas(ctx context.Context, ds1, ds2 *deltaSet) (change
 		if err != nil {
 			return
 		}
+
+		//propagate deletions of empty dirs from path1 to path2 (if --create-empty-src-dirs)
+		b.syncEmptyDirs(ctx, b.fs2, delete2, dirs2, "remove")
 	}
 
 	return

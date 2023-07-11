@@ -31,6 +31,7 @@ type Options struct {
 	CheckAccess           bool
 	CheckFilename         string
 	CheckSync             CheckSyncMode
+	CreateEmptySrcDirs    bool
 	RemoveEmptyDirs       bool
 	MaxDelete             int // percentage from 0 to 100
 	Force                 bool
@@ -105,7 +106,8 @@ func init() {
 	flags.StringVarP(cmdFlags, &Opt.CheckFilename, "check-filename", "", Opt.CheckFilename, makeHelp("Filename for --check-access (default: {CHECKFILE})"), "")
 	flags.BoolVarP(cmdFlags, &Opt.Force, "force", "", Opt.Force, "Bypass --max-delete safety check and run the sync. Consider using with --verbose", "")
 	flags.FVarP(cmdFlags, &Opt.CheckSync, "check-sync", "", "Controls comparison of final listings: true|false|only (default: true)", "")
-	flags.BoolVarP(cmdFlags, &Opt.RemoveEmptyDirs, "remove-empty-dirs", "", Opt.RemoveEmptyDirs, "Remove empty directories at the final cleanup step.", "")
+	flags.BoolVarP(cmdFlags, &Opt.CreateEmptySrcDirs, "create-empty-src-dirs", "", Opt.CreateEmptySrcDirs, "Sync creation and deletion of empty directories. (Not compatible with --remove-empty-dirs)", "")
+	flags.BoolVarP(cmdFlags, &Opt.RemoveEmptyDirs, "remove-empty-dirs", "", Opt.RemoveEmptyDirs, "Remove ALL empty directories at the final cleanup step.", "")
 	flags.StringVarP(cmdFlags, &Opt.FiltersFile, "filters-file", "", Opt.FiltersFile, "Read filtering patterns from a file", "")
 	flags.StringVarP(cmdFlags, &Opt.Workdir, "workdir", "", Opt.Workdir, makeHelp("Use custom working dir - useful for testing. (default: {WORKDIR})"), "")
 	flags.BoolVarP(cmdFlags, &tzLocal, "localtime", "", tzLocal, "Use local time in listings (default: UTC)", "")

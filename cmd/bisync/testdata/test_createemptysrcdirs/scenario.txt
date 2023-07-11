@@ -1,0 +1,87 @@
+test createemptysrcdirs
+# Test the --create-empty-src-dirs logic.
+# Should behave the same way as rclone sync.
+# Without this flag, empty directories created/deleted on one side are NOT created/deleted on the other side
+# With this flag, empty directories created/deleted on one side are created/deleted on the other side; the result should be an exact mirror.
+#
+# Placeholders are necessary to ensure that git does not lose our empty folders
+# After the initial setup sync:
+#  1. Create an empty dir on Path1 by creating subdir/placeholder.txt and then deleting the placeholder
+#  2. Run bisync without --create-empty-src-dirs
+#  3. Confirm the subdir exists only on Path1 and not Path2
+#  4. Run bisync WITH --create-empty-src-dirs
+#  5. Confirm the subdir exists on both paths
+#  6. Delete the empty dir on Path1 using purge-children (and also add files so the path isn't empty)
+#  7. Run bisync without --create-empty-src-dirs
+#  8. Confirm the subdir exists only on Path2 and not Path1
+#  9. Reset, do the delete again, and run bisync WITH --create-empty-src-dirs
+#  10. Confirm the subdir has been removed on both paths
+
+test initial bisync
+touch-glob 2001-01-02 {datadir/} placeholder.txt
+copy-as {datadir/}placeholder.txt {path1/} file1.txt
+copy-as {datadir/}placeholder.txt {path1/} file1.copy1.txt
+copy-as {datadir/}placeholder.txt {path1/} file1.copy2.txt
+copy-as {datadir/}placeholder.txt {path1/} file1.copy3.txt
+copy-as {datadir/}placeholder.txt {path1/} file1.copy4.txt
+copy-as {datadir/}placeholder.txt {path1/} file1.copy5.txt
+bisync resync
+
+test 1. Create an empty dir on Path1 by creating subdir/placeholder.txt and then deleting the placeholder
+copy-as {datadir/}placeholder.txt {path1/} subdir/placeholder.txt
+touch-glob 2001-01-02 {path1/} subdir
+delete-file {path1/}subdir/placeholder.txt
+
+test 2. Run bisync without --create-empty-src-dirs
+bisync
+
+test 3. Confirm the subdir exists only on Path1 and not Path2
+list-dirs {path1/}
+list-dirs {path2/}
+
+test 4.Run bisync WITH --create-empty-src-dirs
+bisync create-empty-src-dirs
+
+test 5. Confirm the subdir exists on both paths
+list-dirs {path1/}
+list-dirs {path2/}
+
+test 6. Delete the empty dir on Path1 using purge-children (and also add files so the path isn't empty)
+purge-children {path1/}
+copy-as {datadir/}placeholder.txt {path1/} file1.txt
+copy-as {datadir/}placeholder.txt {path1/} file1.copy1.txt
+copy-as {datadir/}placeholder.txt {path1/} file1.copy2.txt
+copy-as {datadir/}placeholder.txt {path1/} file1.copy3.txt
+copy-as {datadir/}placeholder.txt {path1/} file1.copy4.txt
+copy-as {datadir/}placeholder.txt {path1/} file1.copy5.txt
+
+test 7. Run bisync without --create-empty-src-dirs
+bisync
+
+test 8. Confirm the subdir exists only on Path2 and not Path1
+list-dirs {path1/}
+list-dirs {path2/}
+
+test 9. Reset, do the delete again, and run bisync WITH --create-empty-src-dirs
+bisync resync create-empty-src-dirs
+list-dirs {path1/}
+list-dirs {path2/}
+
+purge-children {path1/}
+copy-as {datadir/}placeholder.txt {path1/} file1.txt
+copy-as {datadir/}placeholder.txt {path1/} file1.copy1.txt
+copy-as {datadir/}placeholder.txt {path1/} file1.copy2.txt
+copy-as {datadir/}placeholder.txt {path1/} file1.copy3.txt
+copy-as {datadir/}placeholder.txt {path1/} file1.copy4.txt
+copy-as {datadir/}placeholder.txt {path1/} file1.copy5.txt
+list-dirs {path1/}
+list-dirs {path2/}
+
+bisync create-empty-src-dirs
+
+test 10. Confirm the subdir has been removed on both paths
+list-dirs {path1/}
+list-dirs {path2/}
+
+test 11. bisync again (because if we leave subdir in listings, test will fail due to mismatched modtime)
+bisync create-empty-src-dirs
