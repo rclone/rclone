@@ -27,18 +27,19 @@ import (
 
 // Options keep bisync options
 type Options struct {
-	Resync          bool
-	CheckAccess     bool
-	CheckFilename   string
-	CheckSync       CheckSyncMode
-	RemoveEmptyDirs bool
-	MaxDelete       int // percentage from 0 to 100
-	Force           bool
-	FiltersFile     string
-	Workdir         string
-	DryRun          bool
-	NoCleanup       bool
-	SaveQueues      bool // save extra debugging files (test only flag)
+	Resync                bool
+	CheckAccess           bool
+	CheckFilename         string
+	CheckSync             CheckSyncMode
+	RemoveEmptyDirs       bool
+	MaxDelete             int // percentage from 0 to 100
+	Force                 bool
+	FiltersFile           string
+	Workdir               string
+	DryRun                bool
+	NoCleanup             bool
+	SaveQueues            bool // save extra debugging files (test only flag)
+	IgnoreListingChecksum bool
 }
 
 // Default values
@@ -108,6 +109,7 @@ func init() {
 	flags.StringVarP(cmdFlags, &Opt.Workdir, "workdir", "", Opt.Workdir, makeHelp("Use custom working dir - useful for testing. (default: {WORKDIR})"), "")
 	flags.BoolVarP(cmdFlags, &tzLocal, "localtime", "", tzLocal, "Use local time in listings (default: UTC)", "")
 	flags.BoolVarP(cmdFlags, &Opt.NoCleanup, "no-cleanup", "", Opt.NoCleanup, "Retain working files (useful for troubleshooting and testing).", "")
+	flags.BoolVarP(cmdFlags, &Opt.IgnoreListingChecksum, "ignore-listing-checksum", "", Opt.IgnoreListingChecksum, "Do not use checksums for listings (add --ignore-checksum to additionally skip post-copy checksum checks)", "")
 }
 
 // bisync command definition
@@ -213,9 +215,9 @@ func (opt *Options) applyFilters(ctx context.Context) (context.Context, error) {
 		if opt.DryRun {
 			fs.Infof(nil, "Skipped storing filters file hash to %s as --dry-run is set", hashFile)
 		} else {
-		fs.Infof(nil, "Storing filters file hash to %s", hashFile)
-		if err := os.WriteFile(hashFile, []byte(gotHash), bilib.PermSecure); err != nil {
-			return ctx, err
+			fs.Infof(nil, "Storing filters file hash to %s", hashFile)
+			if err := os.WriteFile(hashFile, []byte(gotHash), bilib.PermSecure); err != nil {
+				return ctx, err
 			}
 		}
 	}
