@@ -210,9 +210,13 @@ func (opt *Options) applyFilters(ctx context.Context) (context.Context, error) {
 	}
 
 	if opt.Resync {
+		if opt.DryRun {
+			fs.Infof(nil, "Skipped storing filters file hash to %s as --dry-run is set", hashFile)
+		} else {
 		fs.Infof(nil, "Storing filters file hash to %s", hashFile)
 		if err := os.WriteFile(hashFile, []byte(gotHash), bilib.PermSecure); err != nil {
 			return ctx, err
+			}
 		}
 	}
 
