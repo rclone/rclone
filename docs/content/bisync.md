@@ -1102,3 +1102,9 @@ See the _Dual Shadow Method_ section in the
 Also note a number of academic publications by
 [Benjamin Pierce](http://www.cis.upenn.edu/%7Ebcpierce/papers/index.shtml#File%20Synchronization)
 about _Unison_ and synchronization in general.
+
+## Changelog
+
+### `v1.64`
+* Fixed an [issue](https://forum.rclone.org/t/bisync-bugs-and-feature-requests/37636#:~:text=1.%20Dry%20runs%20are%20not%20completely%20dry) 
+causing dry runs to inadvertently commit filter changes
