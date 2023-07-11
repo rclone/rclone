@@ -253,8 +253,9 @@ func (b *bisyncRun) makeListing(ctx context.Context, f fs.Fs, listing string) (l
 	ci := fs.GetConfig(ctx)
 	depth := ci.MaxDepth
 	hashType := hash.None
-	if !ci.IgnoreChecksum {
-		// Currently bisync just honors --ignore-checksum
+	if !b.opt.IgnoreListingChecksum {
+		// Currently bisync just honors --ignore-listing-checksum
+		// (note that this is different from --ignore-checksum)
 		// TODO add full support for checksums and related flags
 		hashType = f.Hashes().GetOne()
 	}

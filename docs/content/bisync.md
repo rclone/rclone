@@ -95,6 +95,8 @@ Optional Flags:
   -1, --resync                  Performs the resync run.
                                 Warning: Path1 files may overwrite Path2 versions.
                                 Consider using `--verbose` or `--dry-run` first.
+      --ignore-listing-checksum Do not use checksums for listings 
+                                  (add --ignore-checksum to additionally skip post-copy checksum checks)
       --localtime               Use local time in listings (default: UTC)
       --no-cleanup              Retain working files (useful for troubleshooting and testing).
       --workdir PATH            Use custom working directory (useful for testing).
@@ -254,6 +256,34 @@ sync run times for very large numbers of files.
 
 The check may be run manually with `--check-sync=only`. It runs only the
 integrity check and terminates without actually synching.
+
+
+#### --ignore-listing-checksum
+
+By default, bisync will retrieve (or generate) checksums (for backends that support them) 
+when creating the listings for both paths, and store the checksums in the listing files. 
+`--ignore-listing-checksum` will disable this behavior, which may speed things up considerably, 
+especially on backends (such as [local](/local/)) where hashes must be computed on the fly instead of retrieved. 
+Please note the following:
+
+* While checksums are (by default) generated and stored in the listing files, 
+they are NOT currently used for determining diffs (deltas). 
+It is anticipated that full checksum support will be added in a future version.
+* `--ignore-listing-checksum` is NOT the same as [`--ignore-checksum`](/docs/#ignore-checksum), 
+and you may wish to use one or the other, or both. In a nutshell: 
+`--ignore-listing-checksum` controls whether checksums are considered when scanning for diffs, 
+while `--ignore-checksum` controls whether checksums are considered during the copy/sync operations that follow, 
+if there ARE diffs.
+* Unless `--ignore-listing-checksum` is passed, bisync currently computes hashes for one path 
+*even when there's no common hash with the other path* 
+(for example, a [crypt](/crypt/#modified-time-and-hashes) remote.)
+* If both paths support checksums and have a common hash, 
+AND `--ignore-listing-checksum` was not specified when creating the listings, 
+`--check-sync=only` can be used to compare Path1 vs. Path2 checksums (as of the time the previous listings were created.) 
+However, `--check-sync=only` will NOT include checksums if the previous listings 
+were generated on a run using `--ignore-listing-checksum`. For a more robust integrity check of the current state, 
+consider using [`check`](commands/rclone_check/) 
+(or [`cryptcheck`](/commands/rclone_cryptcheck/), if at least one path is a `crypt` remote.)
 
 ## Operation
 
@@ -1134,3 +1164,5 @@ causing dry runs to inadvertently commit filter changes
 causing bisync to consider more files than necessary due to overbroad filters during delete operations
 * [Improved detection of false positive change conflicts](https://forum.rclone.org/t/bisync-bugs-and-feature-requests/37636#:~:text=1.%20Identical%20files%20should%20be%20left%20alone%2C%20even%20if%20new/newer/changed%20on%20both%20sides) 
 (identical files are now left alone instead of renamed)
+* Added [new `--ignore-listing-checksum` flag](https://forum.rclone.org/t/bisync-bugs-and-feature-requests/37636#:~:text=6.%20%2D%2Dignore%2Dchecksum%20should%20be%20split%20into%20two%20flags%20for%20separate%20purposes) 
+to distinguish from `--ignore-checksum`
