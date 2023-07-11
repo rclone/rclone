@@ -298,11 +298,22 @@ Path1 deleted | File no longer exists on Path1                | File is deleted 
 
  Type                           | Description                           | Result                             | Implementation
 --------------------------------|---------------------------------------|------------------------------------|-----------------------
-Path1 new AND Path2 new         | File is new on Path1 AND new on Path2 | Files renamed to _Path1 and _Path2 | `rclone copy` _Path2 file to Path1, `rclone copy` _Path1 file to Path2
-Path2 newer AND Path1 changed   | File is newer on Path2 AND also changed (newer/older/size) on Path1 | Files renamed to _Path1 and _Path2 | `rclone copy` _Path2 file to Path1, `rclone copy` _Path1 file to Path2
+Path1 new/changed AND Path2 new/changed AND Path1 == Path2       | File is new/changed on Path1 AND new/changed on Path2 AND Path1 version is currently identical to Path2 | No change | None
+Path1 new AND Path2 new         | File is new on Path1 AND new on Path2 (and Path1 version is NOT identical to Path2) | Files renamed to _Path1 and _Path2 | `rclone copy` _Path2 file to Path1, `rclone copy` _Path1 file to Path2
+Path2 newer AND Path1 changed   | File is newer on Path2 AND also changed (newer/older/size) on Path1 (and Path1 version is NOT identical to Path2) | Files renamed to _Path1 and _Path2 | `rclone copy` _Path2 file to Path1, `rclone copy` _Path1 file to Path2
 Path2 newer AND Path1 deleted   | File is newer on Path2 AND also deleted on Path1 | Path2 version survives  | `rclone copy` Path2 to Path1
 Path2 deleted AND Path1 changed | File is deleted on Path2 AND changed (newer/older/size) on Path1 | Path1 version survives |`rclone copy` Path1 to Path2
 Path1 deleted AND Path2 changed | File is deleted on Path1 AND changed (newer/older/size) on Path2 | Path2 version survives  | `rclone copy` Path2 to Path1
+
+As of `rclone v1.64`, bisync is now better at detecting *false positive* sync conflicts, 
+which would previously have resulted in unnecessary renames and duplicates. 
+Now, when bisync comes to a file that it wants to rename (because it is new/changed on both sides), 
+it first checks whether the Path1 and Path2 versions are currently *identical* 
+(using the same underlying function as [`check`](commands/rclone_check/).) 
+If bisync concludes that the files are identical, it will skip them and move on. 
+Otherwise, it will create renamed `..Path1` and `..Path2` duplicates, as before. 
+This behavior also [improves the experience of renaming directories](https://forum.rclone.org/t/bisync-bugs-and-feature-requests/37636#:~:text=Renamed%20directories), 
+as a `--resync` is no longer required, so long as the same change has been made on both sides.
 
 ### All files changed check {#all-files-changed}
 
@@ -426,14 +437,14 @@ rclone copy PATH2 PATH2 --filter "+ */" --filter "- **" --create-empty-src-dirs
 
 ### Renamed directories
 
-Renaming a folder on the Path1 side results is deleting all files on
+Renaming a folder on the Path1 side results in deleting all files on
 the Path2 side and then copying all files again from Path1 to Path2.
 Bisync sees this as all files in the old directory name as deleted and all
-files in the new directory name as new. Similarly, renaming a directory on
-both sides to the same name will result in creating `..path1` and `..path2`
-files on both sides.
-Currently the most effective and efficient method of renaming a directory
-is to rename it on both sides, then do a `--resync`.
+files in the new directory name as new. 
+Currently, the most effective and efficient method of renaming a directory
+is to rename it to the same name on both sides. (As of `rclone v1.64`, 
+a `--resync` is no longer required after doing so, as bisync will automatically
+detect that Path1 and Path2 are in agreement.)
 
 ### Case sensitivity
 
@@ -1121,3 +1132,5 @@ causing dry runs to inadvertently commit filter changes
 * `--check-access` is now enforced during `--resync`, preventing data loss in [certain user error scenarios](https://forum.rclone.org/t/bisync-bugs-and-feature-requests/37636#:~:text=%2D%2Dcheck%2Daccess%20doesn%27t%20always%20fail%20when%20it%20should)
 * Fixed an [issue](https://forum.rclone.org/t/bisync-bugs-and-feature-requests/37636#:~:text=5.%20Bisync%20reads%20files%20in%20excluded%20directories%20during%20delete%20operations) 
 causing bisync to consider more files than necessary due to overbroad filters during delete operations
+* [Improved detection of false positive change conflicts](https://forum.rclone.org/t/bisync-bugs-and-feature-requests/37636#:~:text=1.%20Identical%20files%20should%20be%20left%20alone%2C%20even%20if%20new/newer/changed%20on%20both%20sides) 
+(identical files are now left alone instead of renamed)
