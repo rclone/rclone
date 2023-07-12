@@ -5310,8 +5310,11 @@ var warnStreamUpload sync.Once
 
 func appendMultipartParams(uploadPartInput *s3.UploadPartInput) request.Option {
 	return func(r *request.Request) {
-		r.Handlers.Validate.PushFront(func(req *request.Request) {
-			req.Params = uploadPartInput
+		r.Handlers.Build.PushBack(func(req *request.Request) {
+			r.HTTPRequest.URL.RawQuery = url.Values{
+				"partNumber": []string{strconv.FormatInt(*uploadPartInput.PartNumber, 10)},
+				"uploadId":   []string{*uploadPartInput.UploadId},
+			}.Encode()
 		})
 	}
 }
@@ -5353,6 +5356,29 @@ func (o *Object) uploadMultipart(ctx context.Context, req *s3.PutObjectInput, si
 	var mReq s3.CreateMultipartUploadInput
 	//structs.SetFrom(&mReq, req)
 	setFrom_s3CreateMultipartUploadInput_s3PutObjectInput(&mReq, req)
+	// Encrypt
+	if f.encryptClient != nil {
+		req.Body = aws.ReadSeekCloser(in)
+		r, _ := f.encryptClient.PutObjectRequest(req)
+		_ = r.Build()
+		in = req.Body
+		length := r.HTTPRequest.Header.Get("X-Amz-Meta-X-Amz-Unencrypted-Content-Length")
+		env := s3crypto.Envelope{
+			IV:        r.HTTPRequest.Header.Get("X-Amz-Meta-X-Amz-Iv"),
+			CipherKey: r.HTTPRequest.Header.Get("X-Amz-Meta-X-Amz-Key-V2"),
+			MatDesc:   r.HTTPRequest.Header.Get("X-Amz-Meta-X-Amz-Matdesc"),
+			WrapAlg:   r.HTTPRequest.Header.Get("X-Amz-Meta-X-Amz-Wrap-Alg"),
+			CEKAlg:    r.HTTPRequest.Header.Get("X-Amz-Meta-X-Amz-Cek-Alg"),
+			TagLen:    r.HTTPRequest.Header.Get("X-Amz-Meta-X-Amz-Tag-Len"),
+		}
+		mReq.Metadata["X-Amz-Encrypted-Content-Length"] = &length
+		mReq.Metadata["X-Amz-Iv"] = &env.IV
+		mReq.Metadata["X-Amz-Key-V2"] = &env.CipherKey
+		mReq.Metadata["X-Amz-Matdesc"] = &env.MatDesc
+		mReq.Metadata["X-Amz-Key-Wrap-Alg"] = &env.WrapAlg
+		mReq.Metadata["X-Amz-Key-Cek-Alg"] = &env.CEKAlg
+		mReq.Metadata["X-Amz-Key-Tag-Len"] = &env.TagLen
+	}
 	var cout *s3.CreateMultipartUploadOutput
 	err = f.pacer.Call(func() (bool, error) {
 		var err error
@@ -5423,7 +5449,6 @@ func (o *Object) uploadMultipart(ctx context.Context, req *s3.PutObjectInput, si
 			free()
 			break
 		}
-
 		// Read the chunk
 		var n int
 		n, err = readers.ReadFill(in, buf) // this can never return 0, nil
@@ -5465,27 +5490,8 @@ func (o *Object) uploadMultipart(ctx context.Context, req *s3.PutObjectInput, si
 					SSECustomerKey:       req.SSECustomerKey,
 					SSECustomerKeyMD5:    req.SSECustomerKeyMD5,
 				}
-				var uoutETag *string
-				var err error
-				if f.encryptClient == nil {
-					var uout *s3.UploadPartOutput
-					if uout, err = f.c.UploadPartWithContext(gCtx, uploadPartReq); uout != nil {
-						uoutETag = uout.ETag
-					}
-
-				} else {
-					uploadReq := &s3.PutObjectInput{
-						Body:   bytes.NewReader(buf),
-						Bucket: req.Bucket,
-						Key:    req.Key,
-					}
-					var uout *s3.PutObjectOutput
-					if uout, err = f.encryptClient.PutObjectWithContext(gCtx, uploadReq,
-						appendMultipartParams(uploadPartReq)); uout != nil {
-						uoutETag = uout.ETag
-					}
-				}
-				if err != nil {
+				var uout *s3.UploadPartOutput
+				if uout, err = f.c.UploadPartWithContext(gCtx, uploadPartReq); err != nil {
 					if partNum <= int64(concurrency) {
 						return f.shouldRetry(gCtx, err)
 					}
@@ -5495,7 +5501,7 @@ func (o *Object) uploadMultipart(ctx context.Context, req *s3.PutObjectInput, si
 				partsMu.Lock()
 				parts = append(parts, &s3.CompletedPart{
 					PartNumber: &partNum,
-					ETag:       uoutETag,
+					ETag:       uout.ETag,
 				})
 				partsMu.Unlock()
 
