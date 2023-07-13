@@ -394,9 +394,7 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) (err error) {
 		return f.shouldRetry(resp, err)
 	})
 
-	if len(result) == 0 {
-		return fs.ErrorDirNotFound
-	} else if len(result) > 1 {
+	if len(result) > 1 {
 		return fs.ErrorDirectoryNotEmpty
 	}
 
