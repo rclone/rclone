@@ -150,6 +150,13 @@ type Features struct {
 	// It truncates any existing object
 	OpenWriterAt func(ctx context.Context, remote string, size int64) (WriterAtCloser, error)
 
+	// OpenChunkWriter returns the chunk size and a ChunkWriter
+	//
+	// Pass in the remote and the src object
+	// You can also use options to hint at the desired chunk size
+	//
+	OpenChunkWriter func(ctx context.Context, remote string, src ObjectInfo, options ...OpenOption) (chunkSize int64, writer ChunkWriter, err error)
+
 	// UserInfo returns info about the connected user
 	UserInfo func(ctx context.Context) (map[string]string, error)
 
@@ -301,6 +308,9 @@ func (ft *Features) Fill(ctx context.Context, f Fs) *Features {
 	if do, ok := f.(OpenWriterAter); ok {
 		ft.OpenWriterAt = do.OpenWriterAt
 	}
+	if do, ok := f.(OpenChunkWriter); ok {
+		ft.OpenChunkWriter = do.OpenChunkWriter
+	}
 	if do, ok := f.(UserInfoer); ok {
 		ft.UserInfo = do.UserInfo
 	}
@@ -392,6 +402,9 @@ func (ft *Features) Mask(ctx context.Context, f Fs) *Features {
 	}
 	if mask.OpenWriterAt == nil {
 		ft.OpenWriterAt = nil
+	}
+	if mask.OpenChunkWriter == nil {
+		ft.OpenChunkWriter = nil
 	}
 	if mask.UserInfo == nil {
 		ft.UserInfo = nil
@@ -621,6 +634,25 @@ type OpenWriterAter interface {
 	//
 	// It truncates any existing object
 	OpenWriterAt(ctx context.Context, remote string, size int64) (WriterAtCloser, error)
+}
+
+type OpenChunkWriter interface {
+	// OpenChunkWriter returns the chunk size and a ChunkWriter
+	//
+	// Pass in the remote and the src object
+	// You can also use options to hint at the desired chunk size
+	OpenChunkWriter(ctx context.Context, remote string, src ObjectInfo, options ...OpenOption) (chunkSize int64, writer ChunkWriter, err error)
+}
+
+type ChunkWriter interface {
+	// WriteChunk will write chunk number with reader bytes, where chunk number >= 0
+	WriteChunk(chunkNumber int, reader io.ReadSeeker) (bytesWritten int64, err error)
+
+	// Close complete chunked writer
+	Close() error
+
+	// Abort chunk write
+	Abort() error
 }
 
 // UserInfoer is an optional interface for Fs

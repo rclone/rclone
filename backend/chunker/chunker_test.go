@@ -40,6 +40,7 @@ func TestIntegration(t *testing.T) {
 		UnimplementableFsMethods: []string{
 			"PublicLink",
 			"OpenWriterAt",
+			"OpenChunkWriter",
 			"MergeDirs",
 			"DirCacheFlush",
 			"UserInfo",

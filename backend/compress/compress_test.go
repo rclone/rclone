@@ -45,6 +45,7 @@ func TestRemoteGzip(t *testing.T) {
 		NilObject:  (*Object)(nil),
 		UnimplementableFsMethods: []string{
 			"OpenWriterAt",
+			"OpenChunkWriter",
 			"MergeDirs",
 			"DirCacheFlush",
 			"PutUnchecked",
