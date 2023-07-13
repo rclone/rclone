@@ -5231,9 +5231,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 	if o.fs.opt.SSECustomerKeyMD5 != "" {
 		req.SSECustomerKeyMD5 = &o.fs.opt.SSECustomerKeyMD5
 	}
-	var httpReq *request.Request
-	var resp *s3.GetObjectOutput
-	httpReq, resp = o.fs.GetObjectRequest(&req)
+	httpReq, resp := o.fs.GetObjectRequest(&req)
 	fs.FixRangeOption(options, o.bytes)
 
 	// Override the automatic decompression in the transport to
@@ -5449,6 +5447,7 @@ func (o *Object) uploadMultipart(ctx context.Context, req *s3.PutObjectInput, si
 			free()
 			break
 		}
+
 		// Read the chunk
 		var n int
 		n, err = readers.ReadFill(in, buf) // this can never return 0, nil
@@ -5490,8 +5489,8 @@ func (o *Object) uploadMultipart(ctx context.Context, req *s3.PutObjectInput, si
 					SSECustomerKey:       req.SSECustomerKey,
 					SSECustomerKeyMD5:    req.SSECustomerKeyMD5,
 				}
-				var uout *s3.UploadPartOutput
-				if uout, err = f.c.UploadPartWithContext(gCtx, uploadPartReq); err != nil {
+				uout, err := f.c.UploadPartWithContext(gCtx, uploadPartReq)
+				if err != nil {
 					if partNum <= int64(concurrency) {
 						return f.shouldRetry(gCtx, err)
 					}
@@ -5618,6 +5617,7 @@ func (o *Object) uploadSinglepartPutObject(ctx context.Context, req *s3.PutObjec
 func (o *Object) uploadSinglepartPresignedRequest(ctx context.Context, req *s3.PutObjectInput, size int64, in io.Reader) (etag string, lastModified time.Time, versionID *string, err error) {
 	// Create the request
 	putObj, _ := o.fs.c.PutObjectRequest(req)
+
 	// Sign it so we can upload using a presigned request.
 	//
 	// Note the SDK didn't used to support streaming to
