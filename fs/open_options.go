@@ -276,6 +276,22 @@ func (o MetadataOption) Mandatory() bool {
 	return false
 }
 
+type ChunkOption struct {
+	ChunkSize int64
+}
+
+func (o *ChunkOption) Header() (key string, value string) {
+	return "chunkSize", fmt.Sprintf("%v", o.ChunkSize)
+}
+
+func (o *ChunkOption) Mandatory() bool {
+	return false
+}
+
+func (o *ChunkOption) String() string {
+	return fmt.Sprintf("ChunkOption(%v)", o.ChunkSize)
+}
+
 // OpenOptionAddHeaders adds each header found in options to the
 // headers map provided the key was non empty.
 func OpenOptionAddHeaders(options []OpenOption, headers map[string]string) {
