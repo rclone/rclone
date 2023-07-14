@@ -42,8 +42,8 @@ won't re-download if not needed.
 Fetch and unpack
 
     curl -O https://downloads.rclone.org/rclone-current-linux-$(uname -m).zip
-    unzip rclone-current-linux-amd64.zip
-    cd rclone-*-linux-amd64
+    unzip rclone-current-linux-$(uname -m).zip
+    cd rclone-*-linux-$(uname -m)
 
 Copy binary file
 
@@ -88,7 +88,7 @@ Download the latest version of rclone.
 
 Unzip the download and cd to the extracted folder.
 
-    unzip -a rclone-current-osx-amd64.zip && cd rclone-*-osx-amd64
+    unzip -a rclone-current-osx-$(uname -m).zip && cd rclone-*-osx-$(uname -m)
 
 Move rclone to your $PATH. You will be prompted for your password.
 
@@ -99,7 +99,7 @@ Move rclone to your $PATH. You will be prompted for your password.
 
 Remove the leftover files.
 
-    cd .. && rm -rf rclone-*-osx-amd64 rclone-current-osx-amd64.zip
+    cd .. && rm -rf rclone-*-osx-$(uname -m) rclone-current-osx-$(uname -m).zip
 
 Run `rclone config` to setup. See [rclone config docs](/docs/) for more details.
 
