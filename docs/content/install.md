@@ -41,7 +41,7 @@ won't re-download if not needed.
 
 Fetch and unpack
 
-    curl -O https://downloads.rclone.org/rclone-current-linux-amd64.zip
+    curl -O https://downloads.rclone.org/rclone-current-linux-$(uname -m).zip
     unzip rclone-current-linux-amd64.zip
     cd rclone-*-linux-amd64
 
@@ -84,7 +84,7 @@ notarized it is enough to download with `curl`.
 
 Download the latest version of rclone.
 
-    cd && curl -O https://downloads.rclone.org/rclone-current-osx-amd64.zip
+    cd && curl -O https://downloads.rclone.org/rclone-current-osx-$(uname -m).zip
 
 Unzip the download and cd to the extracted folder.
 
