@@ -1418,11 +1418,13 @@ func TestOverlappingFilterCheckWithFilter(t *testing.T) {
 	ctx := context.Background()
 	fi, err := filter.NewFilter(nil)
 	require.NoError(t, err)
-	require.NoError(t, fi.Add(false, "*/exclude/"))
-	fi.Opt.ExcludeFile = []string{".ignore"}
+	require.NoError(t, fi.Add(false, "/exclude/"))
+	require.NoError(t, fi.Add(false, "/Exclude2/"))
+	require.NoError(t, fi.Add(true, "*"))
 	ctx = filter.ReplaceConfig(ctx, fi)
 
 	src := &testFs{testFsInfo{name: "name", root: "root"}}
+	src.features.CaseInsensitive = true
 	slash := string(os.PathSeparator) // native path separator
 	for _, test := range []struct {
 		name     string
@@ -1430,24 +1432,31 @@ func TestOverlappingFilterCheckWithFilter(t *testing.T) {
 		expected bool
 	}{
 		{"name", "root", true},
+		{"name", "ROOT", true}, // case insensitive is set
 		{"name", "/root", true},
 		{"name", "root/", true},
 		{"name", "root" + slash, true},
 		{"name", "root/exclude", false},
+		{"name", "root/Exclude2", false},
+		{"name", "root/include", true},
 		{"name", "root/exclude/", false},
+		{"name", "root/Exclude2/", false},
+		{"name", "root/exclude/sub", false},
+		{"name", "root/Exclude2/sub", false},
 		{"name", "/root/exclude/", false},
 		{"name", "root" + slash + "exclude", false},
 		{"name", "root" + slash + "exclude" + slash, false},
-		{"name", "root/.ignore", false},
-		{"name", "root" + slash + ".ignore", false},
 		{"namey", "root/include", false},
 		{"namey", "root/include/", false},
 		{"namey", "root" + slash + "include", false},
 		{"namey", "root" + slash + "include" + slash, false},
 	} {
 		dst := &testFs{testFsInfo{name: test.name, root: test.root}}
+		dst.features.CaseInsensitive = true
 		what := fmt.Sprintf("(%q,%q) vs (%q,%q)", src.name, src.root, dst.name, dst.root)
 		actual := operations.OverlappingFilterCheck(ctx, dst, src)
+		assert.Equal(t, test.expected, actual, what)
+		actual = operations.OverlappingFilterCheck(ctx, src, dst)
 		assert.Equal(t, test.expected, actual, what)
 	}
 }
