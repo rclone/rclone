@@ -3038,7 +3038,7 @@ func setQuirks(opt *Options) {
 		useMultipartEtag = false // untested
 	case "Wasabi":
 		// No quirks
-    case "Leviia":
+	case "Leviia":
 		// No quirks
 	case "Qiniu":
 		useMultipartEtag = false
