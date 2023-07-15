@@ -1454,14 +1454,14 @@ what will happen.
 
 ### --max-duration=TIME ###
 
-Rclone will stop scheduling new transfers when it has run for the
+Rclone will stop transferring when it has run for the
 duration specified.
-
 Defaults to off.
 
-When the limit is reached any existing transfers will complete.
+When the limit is reached all transfers will stop immediately.
+Use `--cutoff-mode` to modify this behaviour.
 
-Rclone won't exit with an error if the transfer limit is reached.
+Rclone will exit with exit code 10 if the duration limit is reached.
 
 ### --max-transfer=SIZE ###
 
@@ -1469,8 +1469,23 @@ Rclone will stop transferring when it has reached the size specified.
 Defaults to off.
 
 When the limit is reached all transfers will stop immediately.
+Use `--cutoff-mode` to modify this behaviour.
 
 Rclone will exit with exit code 8 if the transfer limit is reached.
+
+### --cutoff-mode=hard|soft|cautious ###
+
+This modifies the behavior of `--max-transfer` and `--max-duration`
+Defaults to `--cutoff-mode=hard`.
+
+Specifying `--cutoff-mode=hard` will stop transferring immediately
+when Rclone reaches the limit.
+
+Specifying `--cutoff-mode=soft` will stop starting new transfers
+when Rclone reaches the limit.
+
+Specifying `--cutoff-mode=cautious` will try to prevent Rclone
+from reaching the limit. Only applicable for `--max-transfer`
 
 ## -M, --metadata
 
@@ -1483,20 +1498,6 @@ xattr etc. See the [#metadata](metadata section) for more info.
 Add metadata `key` = `value` when uploading. This can be repeated as
 many times as required. See the [#metadata](metadata section) for more
 info.
-
-### --cutoff-mode=hard|soft|cautious ###
-
-This modifies the behavior of `--max-transfer`
-Defaults to `--cutoff-mode=hard`.
-
-Specifying `--cutoff-mode=hard` will stop transferring immediately
-when Rclone reaches the limit.
-
-Specifying `--cutoff-mode=soft` will stop starting new transfers
-when Rclone reaches the limit.
-
-Specifying `--cutoff-mode=cautious` will try to prevent Rclone
-from reaching the limit.
 
 ### --modify-window=TIME ###
 
@@ -2561,6 +2562,7 @@ it will log a high priority message if the retry was successful.
   * `7` - Fatal error (one that more retries won't fix, like account suspended) (Fatal errors)
   * `8` - Transfer exceeded - limit set by --max-transfer reached
   * `9` - Operation successful, but no files transferred
+  * `10` - Duration exceeded - limit set by --max-duration reached
 
 Environment Variables
 ---------------------

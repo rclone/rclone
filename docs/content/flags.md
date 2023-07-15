@@ -86,7 +86,7 @@ These flags are available for every command.
       --max-delete int                              When synchronizing, limit the number of deletes (default -1)
       --max-delete-size SizeSuffix                  When synchronizing, limit the total size of deletes (default off)
       --max-depth int                               If set limits the recursion depth to this (default -1)
-      --max-duration Duration                       Maximum duration rclone will transfer data for (default 0s)
+      --max-duration Duration                       Maximum duration rclone will transfer data for (default off)
       --max-size SizeSuffix                         Only transfer files smaller than this in KiB or suffix B|K|M|G|T|P (default off)
       --max-stats-groups int                        Maximum number of stats groups to keep in memory, on max oldest is discarded (default 1000)
       --max-transfer SizeSuffix                     Maximum size of data to transfer (default off)
