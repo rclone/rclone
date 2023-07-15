@@ -35,6 +35,7 @@ import (
 	fslog "github.com/rclone/rclone/fs/log"
 	"github.com/rclone/rclone/fs/rc/rcflags"
 	"github.com/rclone/rclone/fs/rc/rcserver"
+	fssync "github.com/rclone/rclone/fs/sync"
 	"github.com/rclone/rclone/lib/atexit"
 	"github.com/rclone/rclone/lib/buildinfo"
 	"github.com/rclone/rclone/lib/exitcode"
@@ -501,6 +502,8 @@ func resolveExitCode(err error) {
 		os.Exit(exitcode.UncategorizedError)
 	case errors.Is(err, accounting.ErrorMaxTransferLimitReached):
 		os.Exit(exitcode.TransferExceeded)
+	case errors.Is(err, fssync.ErrorMaxDurationReached):
+		os.Exit(exitcode.DurationExceeded)
 	case fserrors.ShouldRetry(err):
 		os.Exit(exitcode.RetryError)
 	case fserrors.IsNoRetryError(err), fserrors.IsNoLowLevelRetryError(err):

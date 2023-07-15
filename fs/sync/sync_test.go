@@ -996,7 +996,7 @@ func testSyncWithMaxDuration(t *testing.T, cutoffMode fs.CutoffMode) {
 	accounting.GlobalStats().ResetCounters()
 	startTime := time.Now()
 	err := Sync(ctx, r.Fremote, r.Flocal, false)
-	require.True(t, errors.Is(err, errorMaxDurationReached))
+	require.True(t, errors.Is(err, ErrorMaxDurationReached))
 
 	if cutoffMode == fs.CutoffModeHard {
 		r.CheckRemoteItems(t, file1)
