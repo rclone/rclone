@@ -66,7 +66,7 @@ import (
 func init() {
 	fs.Register(&fs.RegInfo{
 		Name:        "s3",
-		Description: "Amazon S3 Compliant Storage Providers including AWS, Alibaba, ArvanCloud, Ceph, China Mobile, Cloudflare, GCS, DigitalOcean, Dreamhost, Huawei OBS, IBM COS, IDrive e2, IONOS Cloud, Liara, Lyve Cloud, Minio, Netease, Petabox, RackCorp, Scaleway, SeaweedFS, StackPath, Storj, Synology, Tencent COS, Qiniu and Wasabi",
+		Description: "Amazon S3 Compliant Storage Providers including AWS, Alibaba, ArvanCloud, Ceph, China Mobile, Cloudflare, GCS, DigitalOcean, Dreamhost, Huawei OBS, IBM COS, IDrive e2, IONOS Cloud, Leviia, Liara, Lyve Cloud, Minio, Netease, Petabox, RackCorp, Scaleway, SeaweedFS, StackPath, Storj, Synology, Tencent COS, Qiniu and Wasabi",
 		NewFs:       NewFs,
 		CommandHelp: commandHelp,
 		Config: func(ctx context.Context, name string, m configmap.Mapper, config fs.ConfigIn) (*fs.ConfigOut, error) {
@@ -127,6 +127,9 @@ func init() {
 			}, {
 				Value: "LyveCloud",
 				Help:  "Seagate Lyve Cloud",
+			}, {
+				Value: "Leviia",
+				Help:  "Leviia Object Storage",
 			}, {
 				Value: "Liara",
 				Help:  "Liara Object Storage",
@@ -839,6 +842,15 @@ func init() {
 			}, {
 				Value: "s3.sa-east-1.petabox.io",
 				Help:  "South America (São Paulo)",
+			}},
+		}, {
+			// Leviia endpoints: https://www.leviia.com/object-storage/
+			Name:     "endpoint",
+			Help:     "Endpoint for Leviia Object Storage API.",
+			Provider: "Leviia",
+			Examples: []fs.OptionExample{{
+				Value: "s3.leviia.com",
+				Help:  "The default endpoint\nLeviia",
 			}},
 		}, {
 			// Liara endpoints: https://liara.ir/landing/object-storage
@@ -1689,7 +1701,7 @@ func init() {
 		}, {
 			Name:     "location_constraint",
 			Help:     "Location constraint - must be set to match the Region.\n\nLeave blank if not sure. Used when creating buckets only.",
-			Provider: "!AWS,Alibaba,ArvanCloud,HuaweiOBS,ChinaMobile,Cloudflare,IBMCOS,IDrive,IONOS,Liara,Qiniu,RackCorp,Scaleway,StackPath,Storj,TencentCOS,Petabox",
+			Provider: "!AWS,Alibaba,ArvanCloud,HuaweiOBS,ChinaMobile,Cloudflare,IBMCOS,IDrive,IONOS,Leviia,Liara,Qiniu,RackCorp,Scaleway,StackPath,Storj,TencentCOS,Petabox",
 		}, {
 			Name: "acl",
 			Help: `Canned ACL used when creating buckets and storing or copying objects.
@@ -3025,6 +3037,8 @@ func setQuirks(opt *Options) {
 		listObjectsV2 = false    // untested
 		useMultipartEtag = false // untested
 	case "Wasabi":
+		// No quirks
+	case "Leviia":
 		// No quirks
 	case "Qiniu":
 		useMultipartEtag = false
