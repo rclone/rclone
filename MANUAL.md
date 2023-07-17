@@ -1,6 +1,6 @@
 % rclone(1) User Manual
 % Nick Craig-Wood
-% Jun 30, 2023
+% Jul 17, 2023
 
 # Rclone syncs your files to cloud storage
 
@@ -18,7 +18,7 @@
 
 Rclone is a command-line program to manage files on cloud storage. It
 is a feature-rich alternative to cloud vendors' web storage
-interfaces. [Over 40 cloud storage products](#providers) support
+interfaces. [Over 70 cloud storage products](#providers) support
 rclone including S3 object stores, business & consumer file storage
 services, as well as standard transfer protocols.
 
@@ -2720,6 +2720,40 @@ rclone config reconnect remote: [flags]
 See the [global flags page](https://rclone.org/flags/) for global options not listed here.
 
 ## SEE ALSO
+
+* [rclone config](https://rclone.org/commands/rclone_config/)	 - Enter an interactive configuration session.
+
+# rclone config redacted
+
+Print redacted (decrypted) config file, or the redacted config for a single remote.
+
+# Synopsis
+
+This prints a redacted copy of the config file, either the
+whole config file or for a given remote.
+
+The config file will be redacted by replacing all passwords and other
+sensitive info with XXX.
+
+This makes the config file suitable for posting online for support.
+
+It should be double checked before posting as the redaction may not be perfect.
+
+
+
+```
+rclone config redacted [<remote>] [flags]
+```
+
+# Options
+
+```
+  -h, --help   help for redacted
+```
+
+See the [global flags page](https://rclone.org/flags/) for global options not listed here.
+
+# SEE ALSO
 
 * [rclone config](https://rclone.org/commands/rclone_config/)	 - Enter an interactive configuration session.
 
@@ -11852,7 +11886,7 @@ all files on `remote:` excluding those in root directory `dir` and sub
 directories.
 
 E.g. on Microsoft Windows `rclone ls remote: --exclude "*\[{JP,KR,HK}\]*"`
-lists the files in `remote:` with `[JP]` or `[KR]` or `[HK]` in
+lists the files in `remote:` without `[JP]` or `[KR]` or `[HK]` in
 their name. Quotes prevent the shell from interpreting the `\`
 characters.`\` characters escape the `[` and `]` so an rclone filter
 treats them literally rather than as a character-range. The `{` and `}`
@@ -15194,7 +15228,7 @@ These flags are available for every command.
       --use-json-log                                Use json log format
       --use-mmap                                    Use mmap allocator (see docs)
       --use-server-modtime                          Use server modified time instead of object metadata
-      --user-agent string                           Set the user-agent to a specified string (default "rclone/v1.63.0")
+      --user-agent string                           Set the user-agent to a specified string (default "rclone/v1.63.1")
   -v, --verbose count                               Print lots more stuff (repeat for more)
 ```
 
@@ -27890,7 +27924,7 @@ to be the same account as the Dropbox you want to access)
 
 6. Switch to the `Permissions` tab. Enable at least the following permissions: `account_info.read`, `files.metadata.write`, `files.content.write`, `files.content.read`, `sharing.write`. The `files.metadata.read` and `sharing.read` checkboxes will be marked too. Click `Submit`
 
-7. Switch to the `Settings` tab. Fill `OAuth2 - Redirect URIs` as `http://localhost:53682/`
+7. Switch to the `Settings` tab. Fill `OAuth2 - Redirect URIs` as `http://localhost:53682/` and click on `Add`
 
 8. Find the `App key` and `App secret` values on the `Settings` tab. Use these values in rclone config to add a new remote or edit an existing remote. The `App key` setting corresponds to `client_id` in rclone config, the `App secret` corresponds to `client_secret`
 
@@ -30874,7 +30908,7 @@ be the same account as the Google Drive you want to access)
 "Google Drive API".
 
 4. Click "Credentials" in the left-side panel (not "Create
-credentials", which opens the wizard), then "Create credentials"
+credentials", which opens the wizard).
 
 5. If you already configured an "Oauth Consent Screen", then skip
 to the next step; if not, click on "CONFIGURE CONSENT SCREEN" button 
@@ -33695,8 +33729,6 @@ y/e/d> y
 #  Mail.ru Cloud
 
 [Mail.ru Cloud](https://cloud.mail.ru/) is a cloud storage provided by a Russian internet company [Mail.Ru Group](https://mail.ru). The official desktop client is [Disk-O:](https://disk-o.cloud/en), available on Windows and Mac OS.
-
-Currently it is recommended to disable 2FA on Mail.ru accounts intended for rclone until it gets eventually implemented.
 
 ## Features highlights
 
@@ -43570,6 +43602,27 @@ Options:
 
 # Changelog
 
+## v1.63.1 - 2023-07-17
+
+[See commits](https://github.com/rclone/rclone/compare/v1.63.0...v1.63.1)
+
+* Bug Fixes
+    * build: Fix macos builds for versions < 12 (Anagh Kumar Baranwal)
+    * dirtree: Fix performance with large directories of directories and `--fast-list` (Nick Craig-Wood)
+    * operations
+        * Fix deadlock when using `lsd`/`ls` with `--progress` (Nick Craig-Wood)
+        * Fix `.rclonelink` files not being converted back to symlinks (Nick Craig-Wood)
+    * doc fixes (Dean Attali, Mahad, Nick Craig-Wood, Sawada Tsunayoshi, Vladislav Vorobev)
+* Local
+    * Fix partial directory read for corrupted filesystem (Nick Craig-Wood)
+* Box
+    * Fix reconnect failing with HTTP 400 Bad Request (albertony)
+* Smb
+    * Fix "Statfs failed: bucket or container name is needed" when mounting (Nick Craig-Wood)
+* WebDAV
+    * Nextcloud: fix must use /dav/files/USER endpoint not /webdav error (Paul)
+    * Nextcloud chunking: add more guidance for the user to check the config (darix)
+
 ## v1.63.0 - 2023-06-30
 
 [See commits](https://github.com/rclone/rclone/compare/v1.62.0...v1.63.0)
@@ -49233,32 +49286,43 @@ put them back in again.` >}}
   * zzq <i@zhangzqs.cn>
   * mac-15 <usman.ilamdin@phpstudios.com>
 
-# Contact the rclone project #
+# Contact the rclone project
 
-## Forum ##
+## Forum
 
 Forum for questions and general discussion:
 
-  * https://forum.rclone.org
+- https://forum.rclone.org
 
-## GitHub repository ##
+## Business support
+
+For business support or sponsorship enquiries please see:
+
+- https://rclone.com/
+- sponsorship@rclone.com
+
+## GitHub repository
 
 The project's repository is located at:
 
-  * https://github.com/rclone/rclone
+- https://github.com/rclone/rclone
 
 There you can file bug reports or contribute with pull requests.
 
-## Twitter ##
+## Twitter
 
-You can also follow me on twitter for rclone announcements:
+You can also follow Nick on twitter for rclone announcements:
 
-  * [@njcw](https://twitter.com/njcw)
+- [@njcw](https://twitter.com/njcw)
 
-## Email ##
+## Email
 
 Or if all else fails or you want to ask something private or
-confidential email [Nick Craig-Wood](mailto:nick@craig-wood.com).
-Please don't email me requests for help - those are better directed to
-the forum. Thanks!
+confidential
+
+- info@rclone.com
+
+Please don't email requests for help to this address - those are
+better directed to the forum unless you'd like to sign up for business
+support.
 

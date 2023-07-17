@@ -81,7 +81,7 @@
 <header id="title-block-header">
 <h1 class="title">rclone(1) User Manual</h1>
 <p class="author">Nick Craig-Wood</p>
-<p class="date">Jun 30, 2023</p>
+<p class="date">Jul 17, 2023</p>
 </header>
 <h1 id="rclone-syncs-your-files-to-cloud-storage">Rclone syncs your files to cloud storage</h1>
 <p><img width="50%" src="https://rclone.org/img/logo_on_light__horizontal_color.svg" alt="rclone logo" style="float:right; padding: 5px;" ></p>
@@ -95,7 +95,7 @@
 <li><a href="https://rclone.org/donate/">Donate.</a></li>
 </ul>
 <h2 id="about">About rclone</h2>
-<p>Rclone is a command-line program to manage files on cloud storage. It is a feature-rich alternative to cloud vendors' web storage interfaces. <a href="#providers">Over 40 cloud storage products</a> support rclone including S3 object stores, business &amp; consumer file storage services, as well as standard transfer protocols.</p>
+<p>Rclone is a command-line program to manage files on cloud storage. It is a feature-rich alternative to cloud vendors' web storage interfaces. <a href="#providers">Over 70 cloud storage products</a> support rclone including S3 object stores, business &amp; consumer file storage services, as well as standard transfer protocols.</p>
 <p>Rclone has powerful cloud equivalents to the unix commands rsync, cp, mv, mount, ls, ncdu, tree, rm, and cat. Rclone's familiar syntax includes shell pipeline support, and <code>--dry-run</code> protection. It is used at the command line, in scripts or via its <a href="/rc">API</a>.</p>
 <p>Users call rclone <em>"The Swiss army knife of cloud storage"</em>, and <em>"Technology indistinguishable from magic"</em>.</p>
 <p>Rclone really looks after your data. It preserves timestamps and verifies checksums at all times. Transfers over limited bandwidth; intermittent connections, or subject to quota can be restarted, from the last good file transferred. You can <a href="https://rclone.org/commands/rclone_check/">check</a> the integrity of your files. Where possible, rclone employs server-side transfers to minimise local bandwidth use and transfers from one provider to another without using local disk.</p>
@@ -1435,29 +1435,44 @@ rclone config password myremote fieldname=mypassword</code></pre>
 <ul>
 <li><a href="https://rclone.org/commands/rclone_config/">rclone config</a> - Enter an interactive configuration session.</li>
 </ul>
+<h1 id="rclone-config-redacted">rclone config redacted</h1>
+<p>Print redacted (decrypted) config file, or the redacted config for a single remote.</p>
+<h1 id="synopsis-33">Synopsis</h1>
+<p>This prints a redacted copy of the config file, either the whole config file or for a given remote.</p>
+<p>The config file will be redacted by replacing all passwords and other sensitive info with XXX.</p>
+<p>This makes the config file suitable for posting online for support.</p>
+<p>It should be double checked before posting as the redaction may not be perfect.</p>
+<pre><code>rclone config redacted [&lt;remote&gt;] [flags]</code></pre>
+<h1 id="options-39">Options</h1>
+<pre><code>  -h, --help   help for redacted</code></pre>
+<p>See the <a href="https://rclone.org/flags/">global flags page</a> for global options not listed here.</p>
+<h1 id="see-also-39">SEE ALSO</h1>
+<ul>
+<li><a href="https://rclone.org/commands/rclone_config/">rclone config</a> - Enter an interactive configuration session.</li>
+</ul>
 <h1 id="rclone-config-show">rclone config show</h1>
 <p>Print (decrypted) config file, or the config for a single remote.</p>
 <pre><code>rclone config show [&lt;remote&gt;] [flags]</code></pre>
-<h2 id="options-39">Options</h2>
+<h2 id="options-40">Options</h2>
 <pre><code>  -h, --help   help for show</code></pre>
 <p>See the <a href="https://rclone.org/flags/">global flags page</a> for global options not listed here.</p>
-<h2 id="see-also-39">SEE ALSO</h2>
+<h2 id="see-also-40">SEE ALSO</h2>
 <ul>
 <li><a href="https://rclone.org/commands/rclone_config/">rclone config</a> - Enter an interactive configuration session.</li>
 </ul>
 <h1 id="rclone-config-touch">rclone config touch</h1>
 <p>Ensure configuration file exists.</p>
 <pre><code>rclone config touch [flags]</code></pre>
-<h2 id="options-40">Options</h2>
+<h2 id="options-41">Options</h2>
 <pre><code>  -h, --help   help for touch</code></pre>
 <p>See the <a href="https://rclone.org/flags/">global flags page</a> for global options not listed here.</p>
-<h2 id="see-also-40">SEE ALSO</h2>
+<h2 id="see-also-41">SEE ALSO</h2>
 <ul>
 <li><a href="https://rclone.org/commands/rclone_config/">rclone config</a> - Enter an interactive configuration session.</li>
 </ul>
 <h1 id="rclone-config-update">rclone config update</h1>
 <p>Update options in an existing remote.</p>
-<h2 id="synopsis-33">Synopsis</h2>
+<h2 id="synopsis-34">Synopsis</h2>
 <p>Update an existing remote's options. The options should be passed in pairs of <code>key</code> <code>value</code> or as <code>key=value</code>.</p>
 <p>For example, to update the env_auth field of a remote of name myremote you would do:</p>
 <pre><code>rclone config update myremote env_auth true
@@ -1512,7 +1527,7 @@ rclone config update myremote env_auth=true</code></pre>
 <p>If <code>--all</code> is passed then rclone will ask all the config questions, not just the post config questions. Any parameters are used as defaults for questions as usual.</p>
 <p>Note that <code>bin/config.py</code> in the rclone source implements this protocol as a readable demonstration.</p>
 <pre><code>rclone config update name [key value]+ [flags]</code></pre>
-<h2 id="options-41">Options</h2>
+<h2 id="options-42">Options</h2>
 <pre><code>      --all               Ask the full set of config questions
       --continue          Continue the configuration process with an answer
   -h, --help              help for update
@@ -1522,26 +1537,26 @@ rclone config update myremote env_auth=true</code></pre>
       --result string     Result - use with --continue
       --state string      State - use with --continue</code></pre>
 <p>See the <a href="https://rclone.org/flags/">global flags page</a> for global options not listed here.</p>
-<h2 id="see-also-41">SEE ALSO</h2>
+<h2 id="see-also-42">SEE ALSO</h2>
 <ul>
 <li><a href="https://rclone.org/commands/rclone_config/">rclone config</a> - Enter an interactive configuration session.</li>
 </ul>
 <h1 id="rclone-config-userinfo">rclone config userinfo</h1>
 <p>Prints info about logged in user of remote.</p>
-<h2 id="synopsis-34">Synopsis</h2>
+<h2 id="synopsis-35">Synopsis</h2>
 <p>This prints the details of the person logged in to the cloud storage system.</p>
 <pre><code>rclone config userinfo remote: [flags]</code></pre>
-<h2 id="options-42">Options</h2>
+<h2 id="options-43">Options</h2>
 <pre><code>  -h, --help   help for userinfo
       --json   Format output as JSON</code></pre>
 <p>See the <a href="https://rclone.org/flags/">global flags page</a> for global options not listed here.</p>
-<h2 id="see-also-42">SEE ALSO</h2>
+<h2 id="see-also-43">SEE ALSO</h2>
 <ul>
 <li><a href="https://rclone.org/commands/rclone_config/">rclone config</a> - Enter an interactive configuration session.</li>
 </ul>
 <h1 id="rclone-copyto">rclone copyto</h1>
 <p>Copy files from source to dest, skipping identical files.</p>
-<h2 id="synopsis-35">Synopsis</h2>
+<h2 id="synopsis-36">Synopsis</h2>
 <p>If source:path is a file or directory then it copies it to a file or directory named dest:path.</p>
 <p>This can be used to upload single files to other than their current name. If the source is a directory then it acts exactly like the <a href="https://rclone.org/commands/rclone_copy/">copy</a> command.</p>
 <p>So</p>
@@ -1556,22 +1571,22 @@ if src is directory
 <p>This doesn't transfer files that are identical on src and dst, testing by size and modification time or MD5SUM. It doesn't delete files from the destination.</p>
 <p><strong>Note</strong>: Use the <code>-P</code>/<code>--progress</code> flag to view real-time transfer statistics</p>
 <pre><code>rclone copyto source:path dest:path [flags]</code></pre>
-<h2 id="options-43">Options</h2>
+<h2 id="options-44">Options</h2>
 <pre><code>  -h, --help   help for copyto</code></pre>
 <p>See the <a href="https://rclone.org/flags/">global flags page</a> for global options not listed here.</p>
-<h2 id="see-also-43">SEE ALSO</h2>
+<h2 id="see-also-44">SEE ALSO</h2>
 <ul>
 <li><a href="https://rclone.org/commands/rclone/">rclone</a> - Show help for rclone commands, flags and backends.</li>
 </ul>
 <h1 id="rclone-copyurl">rclone copyurl</h1>
 <p>Copy url content to dest.</p>
-<h2 id="synopsis-36">Synopsis</h2>
+<h2 id="synopsis-37">Synopsis</h2>
 <p>Download a URL's content and copy it to the destination without saving it in temporary storage.</p>
 <p>Setting <code>--auto-filename</code> will attempt to automatically determine the filename from the URL (after any redirections) and used in the destination path. With <code>--auto-filename-header</code> in addition, if a specific filename is set in HTTP headers, it will be used instead of the name from the URL. With <code>--print-filename</code> in addition, the resulting file name will be printed.</p>
 <p>Setting <code>--no-clobber</code> will prevent overwriting file on the destination if there is one with the same name.</p>
 <p>Setting <code>--stdout</code> or making the output file name <code>-</code> will cause the output to be written to standard output.</p>
 <pre><code>rclone copyurl https://example.com dest:path [flags]</code></pre>
-<h2 id="options-44">Options</h2>
+<h2 id="options-45">Options</h2>
 <pre><code>  -a, --auto-filename     Get the file name from the URL and use it for destination file path
       --header-filename   Get the file name from the Content-Disposition header
   -h, --help              help for copyurl
@@ -1579,13 +1594,13 @@ if src is directory
   -p, --print-filename    Print the resulting name from --auto-filename
       --stdout            Write the output to stdout rather than a file</code></pre>
 <p>See the <a href="https://rclone.org/flags/">global flags page</a> for global options not listed here.</p>
-<h2 id="see-also-44">SEE ALSO</h2>
+<h2 id="see-also-45">SEE ALSO</h2>
 <ul>
 <li><a href="https://rclone.org/commands/rclone/">rclone</a> - Show help for rclone commands, flags and backends.</li>
 </ul>
 <h1 id="rclone-cryptcheck">rclone cryptcheck</h1>
 <p>Cryptcheck checks the integrity of an encrypted remote.</p>
-<h2 id="synopsis-37">Synopsis</h2>
+<h2 id="synopsis-38">Synopsis</h2>
 <p>rclone cryptcheck checks a remote against a <a href="https://rclone.org/crypt/">crypted</a> remote. This is the equivalent of running rclone <a href="https://rclone.org/commands/rclone_check/">check</a>, but able to check the checksums of the encrypted remote.</p>
 <p>For it to work the underlying remote of the cryptedremote must support some kind of checksum.</p>
 <p>It works by reading the nonce from each file on the cryptedremote: and using that to encrypt each file on the remote:. It then checks the checksum of the underlying file on the cryptedremote: against the checksum of the file it has just encrypted.</p>
@@ -1606,7 +1621,7 @@ if src is directory
 </ul>
 <p>The default number of parallel checks is 8. See the <a href="https://rclone.org/docs/#checkers-n">--checkers=N</a> option for more information.</p>
 <pre><code>rclone cryptcheck remote:path cryptedremote:path [flags]</code></pre>
-<h2 id="options-45">Options</h2>
+<h2 id="options-46">Options</h2>
 <pre><code>      --combined string         Make a combined report of changes to this file
       --differ string           Report all non-matching files to this file
       --error string            Report all files with errors (hashing or reading) to this file
@@ -1616,13 +1631,13 @@ if src is directory
       --missing-on-src string   Report all files missing from the source to this file
       --one-way                 Check one way only, source files must exist on remote</code></pre>
 <p>See the <a href="https://rclone.org/flags/">global flags page</a> for global options not listed here.</p>
-<h2 id="see-also-45">SEE ALSO</h2>
+<h2 id="see-also-46">SEE ALSO</h2>
 <ul>
 <li><a href="https://rclone.org/commands/rclone/">rclone</a> - Show help for rclone commands, flags and backends.</li>
 </ul>
 <h1 id="rclone-cryptdecode">rclone cryptdecode</h1>
 <p>Cryptdecode returns unencrypted file names.</p>
-<h2 id="synopsis-38">Synopsis</h2>
+<h2 id="synopsis-39">Synopsis</h2>
 <p>rclone cryptdecode returns unencrypted file names when provided with a list of encrypted file names. List limit is 10 items.</p>
 <p>If you supply the <code>--reverse</code> flag, it will return encrypted file names.</p>
 <p>use it like this</p>
@@ -1631,34 +1646,34 @@ if src is directory
 rclone cryptdecode --reverse encryptedremote: filename1 filename2</code></pre>
 <p>Another way to accomplish this is by using the <code>rclone backend encode</code> (or <code>decode</code>) command. See the documentation on the <a href="https://rclone.org/crypt/">crypt</a> overlay for more info.</p>
 <pre><code>rclone cryptdecode encryptedremote: encryptedfilename [flags]</code></pre>
-<h2 id="options-46">Options</h2>
+<h2 id="options-47">Options</h2>
 <pre><code>  -h, --help      help for cryptdecode
       --reverse   Reverse cryptdecode, encrypts filenames</code></pre>
-<p>See the <a href="https://rclone.org/flags/">global flags page</a> for global options not listed here.</p>
-<h2 id="see-also-46">SEE ALSO</h2>
-<ul>
-<li><a href="https://rclone.org/commands/rclone/">rclone</a> - Show help for rclone commands, flags and backends.</li>
-</ul>
-<h1 id="rclone-deletefile">rclone deletefile</h1>
-<p>Remove a single file from remote.</p>
-<h2 id="synopsis-39">Synopsis</h2>
-<p>Remove a single file from remote. Unlike <code>delete</code> it cannot be used to remove a directory and it doesn't obey include/exclude filters - if the specified file exists, it will always be removed.</p>
-<pre><code>rclone deletefile remote:path [flags]</code></pre>
-<h2 id="options-47">Options</h2>
-<pre><code>  -h, --help   help for deletefile</code></pre>
 <p>See the <a href="https://rclone.org/flags/">global flags page</a> for global options not listed here.</p>
 <h2 id="see-also-47">SEE ALSO</h2>
 <ul>
 <li><a href="https://rclone.org/commands/rclone/">rclone</a> - Show help for rclone commands, flags and backends.</li>
 </ul>
+<h1 id="rclone-deletefile">rclone deletefile</h1>
+<p>Remove a single file from remote.</p>
+<h2 id="synopsis-40">Synopsis</h2>
+<p>Remove a single file from remote. Unlike <code>delete</code> it cannot be used to remove a directory and it doesn't obey include/exclude filters - if the specified file exists, it will always be removed.</p>
+<pre><code>rclone deletefile remote:path [flags]</code></pre>
+<h2 id="options-48">Options</h2>
+<pre><code>  -h, --help   help for deletefile</code></pre>
+<p>See the <a href="https://rclone.org/flags/">global flags page</a> for global options not listed here.</p>
+<h2 id="see-also-48">SEE ALSO</h2>
+<ul>
+<li><a href="https://rclone.org/commands/rclone/">rclone</a> - Show help for rclone commands, flags and backends.</li>
+</ul>
 <h1 id="rclone-genautocomplete">rclone genautocomplete</h1>
 <p>Output completion script for a given shell.</p>
-<h1 id="synopsis-40">Synopsis</h1>
+<h1 id="synopsis-41">Synopsis</h1>
 <p>Generates a shell completion script for rclone. Run with <code>--help</code> to list the supported shells.</p>
-<h1 id="options-48">Options</h1>
+<h1 id="options-49">Options</h1>
 <pre><code>  -h, --help   help for genautocomplete</code></pre>
 <p>See the <a href="https://rclone.org/flags/">global flags page</a> for global options not listed here.</p>
-<h1 id="see-also-48">SEE ALSO</h1>
+<h1 id="see-also-49">SEE ALSO</h1>
 <ul>
 <li><a href="https://rclone.org/commands/rclone/">rclone</a> - Show help for rclone commands, flags and backends.</li>
 <li><a href="https://rclone.org/commands/rclone_genautocomplete_bash/">rclone genautocomplete bash</a> - Output bash completion script for rclone.</li>
@@ -1667,7 +1682,7 @@ rclone cryptdecode --reverse encryptedremote: filename1 filename2</code></pre>
 </ul>
 <h1 id="rclone-genautocomplete-bash">rclone genautocomplete bash</h1>
 <p>Output bash completion script for rclone.</p>
-<h1 id="synopsis-41">Synopsis</h1>
+<h1 id="synopsis-42">Synopsis</h1>
 <p>Generates a bash shell autocompletion script for rclone.</p>
 <p>This writes to /etc/bash_completion.d/rclone by default so will probably need to be run with sudo or as root, e.g.</p>
 <pre><code>sudo rclone genautocomplete bash</code></pre>
@@ -1676,16 +1691,16 @@ rclone cryptdecode --reverse encryptedremote: filename1 filename2</code></pre>
 <p>If you supply a command line argument the script will be written there.</p>
 <p>If output_file is "-", then the output will be written to stdout.</p>
 <pre><code>rclone genautocomplete bash [output_file] [flags]</code></pre>
-<h1 id="options-49">Options</h1>
+<h1 id="options-50">Options</h1>
 <pre><code>  -h, --help   help for bash</code></pre>
 <p>See the <a href="https://rclone.org/flags/">global flags page</a> for global options not listed here.</p>
-<h1 id="see-also-49">SEE ALSO</h1>
+<h1 id="see-also-50">SEE ALSO</h1>
 <ul>
 <li><a href="https://rclone.org/commands/rclone_genautocomplete/">rclone genautocomplete</a> - Output completion script for a given shell.</li>
 </ul>
 <h1 id="rclone-genautocomplete-fish">rclone genautocomplete fish</h1>
 <p>Output fish completion script for rclone.</p>
-<h1 id="synopsis-42">Synopsis</h1>
+<h1 id="synopsis-43">Synopsis</h1>
 <p>Generates a fish autocompletion script for rclone.</p>
 <p>This writes to /etc/fish/completions/rclone.fish by default so will probably need to be run with sudo or as root, e.g.</p>
 <pre><code>sudo rclone genautocomplete fish</code></pre>
@@ -1694,16 +1709,16 @@ rclone cryptdecode --reverse encryptedremote: filename1 filename2</code></pre>
 <p>If you supply a command line argument the script will be written there.</p>
 <p>If output_file is "-", then the output will be written to stdout.</p>
 <pre><code>rclone genautocomplete fish [output_file] [flags]</code></pre>
-<h1 id="options-50">Options</h1>
+<h1 id="options-51">Options</h1>
 <pre><code>  -h, --help   help for fish</code></pre>
 <p>See the <a href="https://rclone.org/flags/">global flags page</a> for global options not listed here.</p>
-<h1 id="see-also-50">SEE ALSO</h1>
+<h1 id="see-also-51">SEE ALSO</h1>
 <ul>
 <li><a href="https://rclone.org/commands/rclone_genautocomplete/">rclone genautocomplete</a> - Output completion script for a given shell.</li>
 </ul>
 <h1 id="rclone-genautocomplete-zsh">rclone genautocomplete zsh</h1>
 <p>Output zsh completion script for rclone.</p>
-<h1 id="synopsis-43">Synopsis</h1>
+<h1 id="synopsis-44">Synopsis</h1>
 <p>Generates a zsh autocompletion script for rclone.</p>
 <p>This writes to /usr/share/zsh/vendor-completions/_rclone by default so will probably need to be run with sudo or as root, e.g.</p>
 <pre><code>sudo rclone genautocomplete zsh</code></pre>
@@ -1712,28 +1727,28 @@ rclone cryptdecode --reverse encryptedremote: filename1 filename2</code></pre>
 <p>If you supply a command line argument the script will be written there.</p>
 <p>If output_file is "-", then the output will be written to stdout.</p>
 <pre><code>rclone genautocomplete zsh [output_file] [flags]</code></pre>
-<h1 id="options-51">Options</h1>
+<h1 id="options-52">Options</h1>
 <pre><code>  -h, --help   help for zsh</code></pre>
 <p>See the <a href="https://rclone.org/flags/">global flags page</a> for global options not listed here.</p>
-<h1 id="see-also-51">SEE ALSO</h1>
+<h1 id="see-also-52">SEE ALSO</h1>
 <ul>
 <li><a href="https://rclone.org/commands/rclone_genautocomplete/">rclone genautocomplete</a> - Output completion script for a given shell.</li>
 </ul>
 <h1 id="rclone-gendocs">rclone gendocs</h1>
 <p>Output markdown docs for rclone to the directory supplied.</p>
-<h2 id="synopsis-44">Synopsis</h2>
+<h2 id="synopsis-45">Synopsis</h2>
 <p>This produces markdown docs for the rclone commands to the directory supplied. These are in a format suitable for hugo to render into the rclone.org website.</p>
 <pre><code>rclone gendocs output_directory [flags]</code></pre>
-<h2 id="options-52">Options</h2>
+<h2 id="options-53">Options</h2>
 <pre><code>  -h, --help   help for gendocs</code></pre>
 <p>See the <a href="https://rclone.org/flags/">global flags page</a> for global options not listed here.</p>
-<h2 id="see-also-52">SEE ALSO</h2>
+<h2 id="see-also-53">SEE ALSO</h2>
 <ul>
 <li><a href="https://rclone.org/commands/rclone/">rclone</a> - Show help for rclone commands, flags and backends.</li>
 </ul>
 <h1 id="rclone-hashsum">rclone hashsum</h1>
 <p>Produces a hashsum file for all the objects in the path.</p>
-<h2 id="synopsis-45">Synopsis</h2>
+<h2 id="synopsis-46">Synopsis</h2>
 <p>Produces a hash file for all the objects in the path using the hash named. The output is in the same format as the standard md5sum/sha1sum tool.</p>
 <p>By default, the hash is requested from the remote. If the hash is not supported by the remote, no hash will be returned. With the download flag, the file will be downloaded from the remote and hashed locally enabling any hash for any remote.</p>
 <p>For the MD5 and SHA1 algorithms there are also dedicated commands, <a href="https://rclone.org/commands/rclone_md5sum/">md5sum</a> and <a href="https://rclone.org/commands/rclone_sha1sum/">sha1sum</a>.</p>
@@ -1754,20 +1769,20 @@ Supported hashes are:
 <pre><code>$ rclone hashsum MD5 remote:path</code></pre>
 <p>Note that hash names are case insensitive and values are output in lower case.</p>
 <pre><code>rclone hashsum &lt;hash&gt; remote:path [flags]</code></pre>
-<h2 id="options-53">Options</h2>
+<h2 id="options-54">Options</h2>
 <pre><code>      --base64               Output base64 encoded hashsum
   -C, --checkfile string     Validate hashes against a given SUM file instead of printing them
       --download             Download the file and hash it locally; if this flag is not specified, the hash is requested from the remote
   -h, --help                 help for hashsum
       --output-file string   Output hashsums to a file rather than the terminal</code></pre>
 <p>See the <a href="https://rclone.org/flags/">global flags page</a> for global options not listed here.</p>
-<h2 id="see-also-53">SEE ALSO</h2>
+<h2 id="see-also-54">SEE ALSO</h2>
 <ul>
 <li><a href="https://rclone.org/commands/rclone/">rclone</a> - Show help for rclone commands, flags and backends.</li>
 </ul>
 <h1 id="rclone-link">rclone link</h1>
 <p>Generate public link to file/folder.</p>
-<h2 id="synopsis-46">Synopsis</h2>
+<h2 id="synopsis-47">Synopsis</h2>
 <p>rclone link will create, retrieve or remove a public link to the given file or folder.</p>
 <pre><code>rclone link remote:path/to/file
 rclone link remote:path/to/folder/
@@ -1777,32 +1792,32 @@ rclone link --expire 1d remote:path/to/file</code></pre>
 <p>Use the --unlink flag to remove existing public links to the file or folder. <strong>Note</strong> not all backends support "--unlink" flag - those that don't will just ignore it.</p>
 <p>If successful, the last line of the output will contain the link. Exact capabilities depend on the remote, but the link will always by default be created with the least constraints – e.g. no expiry, no password protection, accessible without account.</p>
 <pre><code>rclone link remote:path [flags]</code></pre>
-<h2 id="options-54">Options</h2>
+<h2 id="options-55">Options</h2>
 <pre><code>      --expire Duration   The amount of time that the link will be valid (default off)
   -h, --help              help for link
       --unlink            Remove existing public link to file/folder</code></pre>
-<p>See the <a href="https://rclone.org/flags/">global flags page</a> for global options not listed here.</p>
-<h2 id="see-also-54">SEE ALSO</h2>
-<ul>
-<li><a href="https://rclone.org/commands/rclone/">rclone</a> - Show help for rclone commands, flags and backends.</li>
-</ul>
-<h1 id="rclone-listremotes">rclone listremotes</h1>
-<p>List all the remotes in the config file and defined in environment variables.</p>
-<h2 id="synopsis-47">Synopsis</h2>
-<p>rclone listremotes lists all the available remotes from the config file.</p>
-<p>When used with the <code>--long</code> flag it lists the types too.</p>
-<pre><code>rclone listremotes [flags]</code></pre>
-<h2 id="options-55">Options</h2>
-<pre><code>  -h, --help   help for listremotes
-      --long   Show the type as well as names</code></pre>
 <p>See the <a href="https://rclone.org/flags/">global flags page</a> for global options not listed here.</p>
 <h2 id="see-also-55">SEE ALSO</h2>
 <ul>
 <li><a href="https://rclone.org/commands/rclone/">rclone</a> - Show help for rclone commands, flags and backends.</li>
 </ul>
+<h1 id="rclone-listremotes">rclone listremotes</h1>
+<p>List all the remotes in the config file and defined in environment variables.</p>
+<h2 id="synopsis-48">Synopsis</h2>
+<p>rclone listremotes lists all the available remotes from the config file.</p>
+<p>When used with the <code>--long</code> flag it lists the types too.</p>
+<pre><code>rclone listremotes [flags]</code></pre>
+<h2 id="options-56">Options</h2>
+<pre><code>  -h, --help   help for listremotes
+      --long   Show the type as well as names</code></pre>
+<p>See the <a href="https://rclone.org/flags/">global flags page</a> for global options not listed here.</p>
+<h2 id="see-also-56">SEE ALSO</h2>
+<ul>
+<li><a href="https://rclone.org/commands/rclone/">rclone</a> - Show help for rclone commands, flags and backends.</li>
+</ul>
 <h1 id="rclone-lsf">rclone lsf</h1>
 <p>List directories and objects in remote:path formatted for parsing.</p>
-<h2 id="synopsis-48">Synopsis</h2>
+<h2 id="synopsis-49">Synopsis</h2>
 <p>List the contents of the source path (directories and objects) to standard output in a form which is easy to parse by scripts. By default this will just be the names of the objects and directories, one per line. The directories will have a / suffix.</p>
 <p>Eg</p>
 <pre><code>$ rclone lsf swift:bucket
@@ -1873,7 +1888,7 @@ rclone copy --files-from-raw new_files /path/to/local remote:path</code></pre>
 <p>The other list commands <code>lsd</code>,<code>lsf</code>,<code>lsjson</code> do not recurse by default - use <code>-R</code> to make them recurse.</p>
 <p>Listing a nonexistent directory will produce an error except for remotes which can't have empty directories (e.g. s3, swift, or gcs - the bucket-based remotes).</p>
 <pre><code>rclone lsf remote:path [flags]</code></pre>
-<h2 id="options-56">Options</h2>
+<h2 id="options-57">Options</h2>
 <pre><code>      --absolute           Put a leading / in front of path names
       --csv                Output in CSV format
   -d, --dir-slash          Append a slash to directory names (default true)
@@ -1885,13 +1900,13 @@ rclone copy --files-from-raw new_files /path/to/local remote:path</code></pre>
   -R, --recursive          Recurse into the listing
   -s, --separator string   Separator for the items in the format (default &quot;;&quot;)</code></pre>
 <p>See the <a href="https://rclone.org/flags/">global flags page</a> for global options not listed here.</p>
-<h2 id="see-also-56">SEE ALSO</h2>
+<h2 id="see-also-57">SEE ALSO</h2>
 <ul>
 <li><a href="https://rclone.org/commands/rclone/">rclone</a> - Show help for rclone commands, flags and backends.</li>
 </ul>
 <h1 id="rclone-lsjson">rclone lsjson</h1>
 <p>List directories and objects in the path in JSON format.</p>
-<h2 id="synopsis-49">Synopsis</h2>
+<h2 id="synopsis-50">Synopsis</h2>
 <p>List directories and objects in the path in JSON format.</p>
 <p>The output is an array of Items, where each Item looks like this</p>
 <pre><code>{
@@ -1939,7 +1954,7 @@ rclone copy --files-from-raw new_files /path/to/local remote:path</code></pre>
 <p>The other list commands <code>lsd</code>,<code>lsf</code>,<code>lsjson</code> do not recurse by default - use <code>-R</code> to make them recurse.</p>
 <p>Listing a nonexistent directory will produce an error except for remotes which can't have empty directories (e.g. s3, swift, or gcs - the bucket-based remotes).</p>
 <pre><code>rclone lsjson remote:path [flags]</code></pre>
-<h2 id="options-57">Options</h2>
+<h2 id="options-58">Options</h2>
 <pre><code>      --dirs-only               Show only directories in the listing
       --encrypted               Show the encrypted names
       --files-only              Show only files in the listing
@@ -1953,13 +1968,13 @@ rclone copy --files-from-raw new_files /path/to/local remote:path</code></pre>
   -R, --recursive               Recurse into the listing
       --stat                    Just return the info for the pointed to file</code></pre>
 <p>See the <a href="https://rclone.org/flags/">global flags page</a> for global options not listed here.</p>
-<h2 id="see-also-57">SEE ALSO</h2>
+<h2 id="see-also-58">SEE ALSO</h2>
 <ul>
 <li><a href="https://rclone.org/commands/rclone/">rclone</a> - Show help for rclone commands, flags and backends.</li>
 </ul>
 <h1 id="rclone-mount">rclone mount</h1>
 <p>Mount the remote as file system on a mountpoint.</p>
-<h2 id="synopsis-50">Synopsis</h2>
+<h2 id="synopsis-51">Synopsis</h2>
 <p>rclone mount allows Linux, FreeBSD, macOS and Windows to mount any of Rclone's cloud storage systems as a file system with FUSE.</p>
 <p>First set up your remote using <code>rclone config</code>. Check it works with <code>rclone ls</code> etc.</p>
 <p>On Linux and macOS, you can run mount in either foreground or background (aka daemon) mode. Mount runs in foreground mode by default. Use the <code>--daemon</code> flag to force background mode. On Windows you can run mount in foreground only, the flag is ignored.</p>
@@ -2211,7 +2226,7 @@ WantedBy=multi-user.target</code></pre>
 <p>Some backends, most notably S3, do not report the amount of bytes used. If you need this information to be available when running <code>df</code> on the filesystem, then pass the flag <code>--vfs-used-is-size</code> to rclone. With this flag set, instead of relying on the backend to report this information, rclone will scan the whole remote similar to <code>rclone size</code> and compute the total used space itself.</p>
 <p><em>WARNING.</em> Contrary to <code>rclone size</code>, this flag ignores filters so that the result is accurate. However, this is very inefficient and may cost lots of API calls resulting in extra charges. Use it as a last resort and only with caching.</p>
 <pre><code>rclone mount remote:path /path/to/mountpoint [flags]</code></pre>
-<h2 id="options-58">Options</h2>
+<h2 id="options-59">Options</h2>
 <pre><code>      --allow-non-empty                        Allow mounting over a non-empty directory (not supported on Windows)
       --allow-other                            Allow access to other users (not supported on Windows)
       --allow-root                             Allow access to root user (not supported on Windows)
@@ -2259,13 +2274,13 @@ WantedBy=multi-user.target</code></pre>
       --volname string                         Set the volume name (supported on Windows and OSX only)
       --write-back-cache                       Makes kernel buffer writes before sending them to rclone (without this, writethrough caching is used) (not supported on Windows)</code></pre>
 <p>See the <a href="https://rclone.org/flags/">global flags page</a> for global options not listed here.</p>
-<h2 id="see-also-58">SEE ALSO</h2>
+<h2 id="see-also-59">SEE ALSO</h2>
 <ul>
 <li><a href="https://rclone.org/commands/rclone/">rclone</a> - Show help for rclone commands, flags and backends.</li>
 </ul>
 <h1 id="rclone-moveto">rclone moveto</h1>
 <p>Move file or directory from source to dest.</p>
-<h2 id="synopsis-51">Synopsis</h2>
+<h2 id="synopsis-52">Synopsis</h2>
 <p>If source:path is a file or directory then it moves it to a file or directory named dest:path.</p>
 <p>This can be used to rename files or upload single files to other than their existing name. If the source is a directory then it acts exactly like the <a href="https://rclone.org/commands/rclone_move/">move</a> command.</p>
 <p>So</p>
@@ -2281,16 +2296,16 @@ if src is directory
 <p><strong>Important</strong>: Since this can cause data loss, test first with the <code>--dry-run</code> or the <code>--interactive</code>/<code>-i</code> flag.</p>
 <p><strong>Note</strong>: Use the <code>-P</code>/<code>--progress</code> flag to view real-time transfer statistics.</p>
 <pre><code>rclone moveto source:path dest:path [flags]</code></pre>
-<h2 id="options-59">Options</h2>
+<h2 id="options-60">Options</h2>
 <pre><code>  -h, --help   help for moveto</code></pre>
 <p>See the <a href="https://rclone.org/flags/">global flags page</a> for global options not listed here.</p>
-<h2 id="see-also-59">SEE ALSO</h2>
+<h2 id="see-also-60">SEE ALSO</h2>
 <ul>
 <li><a href="https://rclone.org/commands/rclone/">rclone</a> - Show help for rclone commands, flags and backends.</li>
 </ul>
 <h1 id="rclone-ncdu">rclone ncdu</h1>
 <p>Explore a remote with a text based user interface.</p>
-<h2 id="synopsis-52">Synopsis</h2>
+<h2 id="synopsis-53">Synopsis</h2>
 <p>This displays a text based user interface allowing the navigation of a remote. It is most useful for answering the question - "What is using all my disk space?".</p>
 <p>To make the user interface it first scans the entire remote given and builds an in memory representation. rclone ncdu can be used during this scanning phase and you will see it building up the directory structure as it goes along.</p>
 <p>You can interact with the user interface using key presses, press '?' to toggle the help on and off. The supported keys are:</p>
@@ -2327,16 +2342,16 @@ if src is directory
 <p>Note that it might take some time to delete big files/directories. The UI won't respond in the meantime since the deletion is done synchronously.</p>
 <p>For a non-interactive listing of the remote, see the <a href="https://rclone.org/commands/rclone_tree/">tree</a> command. To just get the total size of the remote you can also use the <a href="https://rclone.org/commands/rclone_size/">size</a> command.</p>
 <pre><code>rclone ncdu remote:path [flags]</code></pre>
-<h2 id="options-60">Options</h2>
+<h2 id="options-61">Options</h2>
 <pre><code>  -h, --help   help for ncdu</code></pre>
 <p>See the <a href="https://rclone.org/flags/">global flags page</a> for global options not listed here.</p>
-<h2 id="see-also-60">SEE ALSO</h2>
+<h2 id="see-also-61">SEE ALSO</h2>
 <ul>
 <li><a href="https://rclone.org/commands/rclone/">rclone</a> - Show help for rclone commands, flags and backends.</li>
 </ul>
 <h1 id="rclone-obscure">rclone obscure</h1>
 <p>Obscure password for use in the rclone config file.</p>
-<h2 id="synopsis-53">Synopsis</h2>
+<h2 id="synopsis-54">Synopsis</h2>
 <p>In the rclone config file, human-readable passwords are obscured. Obscuring them is done by encrypting them and writing them out in base64. This is <strong>not</strong> a secure way of encrypting these passwords as rclone can decrypt them - it is to prevent "eyedropping" - namely someone seeing a password in the rclone config file by accident.</p>
 <p>Many equally important things (like access tokens) are not obscured in the config file. However it is very hard to shoulder surf a 64 character hex token.</p>
 <p>This command can also accept a password through STDIN instead of an argument by passing a hyphen as an argument. This will use the first line of STDIN as the password not including the trailing newline.</p>
@@ -2344,16 +2359,16 @@ if src is directory
 <p>If there is no data on STDIN to read, rclone obscure will default to obfuscating the hyphen itself.</p>
 <p>If you want to encrypt the config file then please use config file encryption - see <a href="https://rclone.org/commands/rclone_config/">rclone config</a> for more info.</p>
 <pre><code>rclone obscure password [flags]</code></pre>
-<h2 id="options-61">Options</h2>
+<h2 id="options-62">Options</h2>
 <pre><code>  -h, --help   help for obscure</code></pre>
 <p>See the <a href="https://rclone.org/flags/">global flags page</a> for global options not listed here.</p>
-<h2 id="see-also-61">SEE ALSO</h2>
+<h2 id="see-also-62">SEE ALSO</h2>
 <ul>
 <li><a href="https://rclone.org/commands/rclone/">rclone</a> - Show help for rclone commands, flags and backends.</li>
 </ul>
 <h1 id="rclone-rc">rclone rc</h1>
 <p>Run a command against a running rclone.</p>
-<h2 id="synopsis-54">Synopsis</h2>
+<h2 id="synopsis-55">Synopsis</h2>
 <p>This runs a command against a running rclone. Use the <code>--url</code> flag to specify an non default URL to connect on. This can be either a ":port" which is taken to mean "http://localhost:port" or a "host:port" which is taken to mean "http://host:port"</p>
 <p>A username and password can be passed in with <code>--user</code> and <code>--pass</code>.</p>
 <p>Note that <code>--rc-addr</code>, <code>--rc-user</code>, <code>--rc-pass</code> will be read also for <code>--url</code>, <code>--user</code>, <code>--pass</code>.</p>
@@ -2372,7 +2387,7 @@ if src is directory
 <pre><code>rclone rc --loopback operations/about fs=/</code></pre>
 <p>Use <code>rclone rc</code> to see a list of all possible commands.</p>
 <pre><code>rclone rc commands parameter [flags]</code></pre>
-<h2 id="options-62">Options</h2>
+<h2 id="options-63">Options</h2>
 <pre><code>  -a, --arg stringArray   Argument placed in the &quot;arg&quot; array
   -h, --help              help for rc
       --json string       Input JSON - use instead of key=value args
@@ -2383,13 +2398,13 @@ if src is directory
       --url string        URL to connect to rclone remote control (default &quot;http://localhost:5572/&quot;)
       --user string       Username to use to rclone remote control</code></pre>
 <p>See the <a href="https://rclone.org/flags/">global flags page</a> for global options not listed here.</p>
-<h2 id="see-also-62">SEE ALSO</h2>
+<h2 id="see-also-63">SEE ALSO</h2>
 <ul>
 <li><a href="https://rclone.org/commands/rclone/">rclone</a> - Show help for rclone commands, flags and backends.</li>
 </ul>
 <h1 id="rclone-rcat">rclone rcat</h1>
 <p>Copies standard input to file on remote.</p>
-<h2 id="synopsis-55">Synopsis</h2>
+<h2 id="synopsis-56">Synopsis</h2>
 <p>rclone rcat reads from standard input (stdin) and copies it to a single remote file.</p>
 <pre><code>echo &quot;hello world&quot; | rclone rcat remote:path/to/file
 ffmpeg - | rclone rcat remote:path/to/file</code></pre>
@@ -2399,17 +2414,17 @@ ffmpeg - | rclone rcat remote:path/to/file</code></pre>
 <p><code>--size</code> should be the exact size of the input stream in bytes. If the size of the stream is different in length to the <code>--size</code> passed in then the transfer will likely fail.</p>
 <p>Note that the upload cannot be retried because the data is not stored. If the backend supports multipart uploading then individual chunks can be retried. If you need to transfer a lot of data, you may be better off caching it locally and then <code>rclone move</code> it to the destination which can use retries.</p>
 <pre><code>rclone rcat remote:path [flags]</code></pre>
-<h2 id="options-63">Options</h2>
+<h2 id="options-64">Options</h2>
 <pre><code>  -h, --help       help for rcat
       --size int   File size hint to preallocate (default -1)</code></pre>
 <p>See the <a href="https://rclone.org/flags/">global flags page</a> for global options not listed here.</p>
-<h2 id="see-also-63">SEE ALSO</h2>
+<h2 id="see-also-64">SEE ALSO</h2>
 <ul>
 <li><a href="https://rclone.org/commands/rclone/">rclone</a> - Show help for rclone commands, flags and backends.</li>
 </ul>
 <h1 id="rclone-rcd">rclone rcd</h1>
 <p>Run rclone listening to remote control commands only.</p>
-<h2 id="synopsis-56">Synopsis</h2>
+<h2 id="synopsis-57">Synopsis</h2>
 <p>This runs rclone so that it only listens to remote control commands.</p>
 <p>This is useful if you are controlling rclone via the rc API.</p>
 <p>If you pass in a path to a directory, rclone will serve that directory for GET requests on the URL passed in. It will also open the URL in the browser when rclone is run.</p>
@@ -2519,32 +2534,32 @@ htpasswd -B htpasswd anotherUser</code></pre>
 <p>Use <code>--rc-realm</code> to set the authentication realm.</p>
 <p>Use <code>--rc-salt</code> to change the password hashing salt from the default.</p>
 <pre><code>rclone rcd &lt;path to files to serve&gt;* [flags]</code></pre>
-<h2 id="options-64">Options</h2>
-<pre><code>  -h, --help   help for rcd</code></pre>
-<p>See the <a href="https://rclone.org/flags/">global flags page</a> for global options not listed here.</p>
-<h2 id="see-also-64">SEE ALSO</h2>
-<ul>
-<li><a href="https://rclone.org/commands/rclone/">rclone</a> - Show help for rclone commands, flags and backends.</li>
-</ul>
-<h1 id="rclone-rmdirs">rclone rmdirs</h1>
-<p>Remove empty directories under the path.</p>
-<h2 id="synopsis-57">Synopsis</h2>
-<p>This recursively removes any empty directories (including directories that only contain empty directories), that it finds under the path. The root path itself will also be removed if it is empty, unless you supply the <code>--leave-root</code> flag.</p>
-<p>Use command <a href="https://rclone.org/commands/rclone_rmdir/">rmdir</a> to delete just the empty directory given by path, not recurse.</p>
-<p>This is useful for tidying up remotes that rclone has left a lot of empty directories in. For example the <a href="https://rclone.org/commands/rclone_delete/">delete</a> command will delete files but leave the directory structure (unless used with option <code>--rmdirs</code>).</p>
-<p>To delete a path and any objects in it, use <a href="https://rclone.org/commands/rclone_purge/">purge</a> command.</p>
-<pre><code>rclone rmdirs remote:path [flags]</code></pre>
 <h2 id="options-65">Options</h2>
-<pre><code>  -h, --help         help for rmdirs
-      --leave-root   Do not remove root directory if empty</code></pre>
+<pre><code>  -h, --help   help for rcd</code></pre>
 <p>See the <a href="https://rclone.org/flags/">global flags page</a> for global options not listed here.</p>
 <h2 id="see-also-65">SEE ALSO</h2>
 <ul>
 <li><a href="https://rclone.org/commands/rclone/">rclone</a> - Show help for rclone commands, flags and backends.</li>
 </ul>
+<h1 id="rclone-rmdirs">rclone rmdirs</h1>
+<p>Remove empty directories under the path.</p>
+<h2 id="synopsis-58">Synopsis</h2>
+<p>This recursively removes any empty directories (including directories that only contain empty directories), that it finds under the path. The root path itself will also be removed if it is empty, unless you supply the <code>--leave-root</code> flag.</p>
+<p>Use command <a href="https://rclone.org/commands/rclone_rmdir/">rmdir</a> to delete just the empty directory given by path, not recurse.</p>
+<p>This is useful for tidying up remotes that rclone has left a lot of empty directories in. For example the <a href="https://rclone.org/commands/rclone_delete/">delete</a> command will delete files but leave the directory structure (unless used with option <code>--rmdirs</code>).</p>
+<p>To delete a path and any objects in it, use <a href="https://rclone.org/commands/rclone_purge/">purge</a> command.</p>
+<pre><code>rclone rmdirs remote:path [flags]</code></pre>
+<h2 id="options-66">Options</h2>
+<pre><code>  -h, --help         help for rmdirs
+      --leave-root   Do not remove root directory if empty</code></pre>
+<p>See the <a href="https://rclone.org/flags/">global flags page</a> for global options not listed here.</p>
+<h2 id="see-also-66">SEE ALSO</h2>
+<ul>
+<li><a href="https://rclone.org/commands/rclone/">rclone</a> - Show help for rclone commands, flags and backends.</li>
+</ul>
 <h1 id="rclone-selfupdate">rclone selfupdate</h1>
 <p>Update the rclone binary.</p>
-<h2 id="synopsis-58">Synopsis</h2>
+<h2 id="synopsis-59">Synopsis</h2>
 <p>This command downloads the latest release of rclone and replaces the currently running binary. The download is verified with a hashsum and cryptographically signed signature.</p>
 <p>If used without flags (or with implied <code>--stable</code> flag), this command will install the latest stable release. However, some issues may be fixed (or features added) only in the latest beta release. In such cases you should run the command with the <code>--beta</code> flag, i.e. <code>rclone selfupdate --beta</code>. You can check in advance what version would be installed by adding the <code>--check</code> flag, then repeat the command without it when you are satisfied.</p>
 <p>Sometimes the rclone team may recommend you a concrete beta or stable rclone release to troubleshoot your issue or add a bleeding edge feature. The <code>--version VER</code> flag, if given, will update to the concrete version instead of the latest one. If you omit micro version from <code>VER</code> (for example <code>1.53</code>), the latest matching micro version will be used.</p>
@@ -2554,7 +2569,7 @@ htpasswd -B htpasswd anotherUser</code></pre>
 <p>Note: Windows forbids deletion of a currently running executable so this command will rename the old executable to 'rclone.old.exe' upon success.</p>
 <p>Please note that this command was not available before rclone version 1.55. If it fails for you with the message <code>unknown command "selfupdate"</code> then you will need to update manually following the install instructions located at https://rclone.org/install/</p>
 <pre><code>rclone selfupdate [flags]</code></pre>
-<h2 id="options-66">Options</h2>
+<h2 id="options-67">Options</h2>
 <pre><code>      --beta             Install beta release
       --check            Check for latest release, do not download
   -h, --help             help for selfupdate
@@ -2563,21 +2578,21 @@ htpasswd -B htpasswd anotherUser</code></pre>
       --stable           Install stable release (this is the default)
       --version string   Install the given rclone version (default: latest)</code></pre>
 <p>See the <a href="https://rclone.org/flags/">global flags page</a> for global options not listed here.</p>
-<h2 id="see-also-66">SEE ALSO</h2>
+<h2 id="see-also-67">SEE ALSO</h2>
 <ul>
 <li><a href="https://rclone.org/commands/rclone/">rclone</a> - Show help for rclone commands, flags and backends.</li>
 </ul>
 <h1 id="rclone-serve">rclone serve</h1>
 <p>Serve a remote over a protocol.</p>
-<h2 id="synopsis-59">Synopsis</h2>
+<h2 id="synopsis-60">Synopsis</h2>
 <p>Serve a remote over a given protocol. Requires the use of a subcommand to specify the protocol, e.g.</p>
 <pre><code>rclone serve http remote:</code></pre>
 <p>Each subcommand has its own options which you can see in their help.</p>
 <pre><code>rclone serve &lt;protocol&gt; [opts] &lt;remote&gt; [flags]</code></pre>
-<h2 id="options-67">Options</h2>
+<h2 id="options-68">Options</h2>
 <pre><code>  -h, --help   help for serve</code></pre>
 <p>See the <a href="https://rclone.org/flags/">global flags page</a> for global options not listed here.</p>
-<h2 id="see-also-67">SEE ALSO</h2>
+<h2 id="see-also-68">SEE ALSO</h2>
 <ul>
 <li><a href="https://rclone.org/commands/rclone/">rclone</a> - Show help for rclone commands, flags and backends.</li>
 <li><a href="https://rclone.org/commands/rclone_serve_dlna/">rclone serve dlna</a> - Serve remote:path over DLNA</li>
@@ -2590,7 +2605,7 @@ htpasswd -B htpasswd anotherUser</code></pre>
 </ul>
 <h1 id="rclone-serve-dlna">rclone serve dlna</h1>
 <p>Serve remote:path over DLNA</p>
-<h2 id="synopsis-60">Synopsis</h2>
+<h2 id="synopsis-61">Synopsis</h2>
 <p>Run a DLNA media server for media stored in an rclone remote. Many devices, such as the Xbox and PlayStation, can automatically discover this server in the LAN and play audio/video from it. VLC is also supported. Service discovery uses UDP multicast packets (SSDP) and will thus only work on LANs.</p>
 <p>Rclone will list all files present in the remote, without filtering based on media formats or file extensions. Additionally, there is no media transcoding support. This means that some players might show files that they are not able to play back correctly.</p>
 <h2 id="server-options-1">Server options</h2>
@@ -2714,7 +2729,7 @@ htpasswd -B htpasswd anotherUser</code></pre>
 <p>Some backends, most notably S3, do not report the amount of bytes used. If you need this information to be available when running <code>df</code> on the filesystem, then pass the flag <code>--vfs-used-is-size</code> to rclone. With this flag set, instead of relying on the backend to report this information, rclone will scan the whole remote similar to <code>rclone size</code> and compute the total used space itself.</p>
 <p><em>WARNING.</em> Contrary to <code>rclone size</code>, this flag ignores filters so that the result is accurate. However, this is very inefficient and may cost lots of API calls resulting in extra charges. Use it as a last resort and only with caching.</p>
 <pre><code>rclone serve dlna remote:path [flags]</code></pre>
-<h2 id="options-68">Options</h2>
+<h2 id="options-69">Options</h2>
 <pre><code>      --addr string                            The ip:port or :port to bind the DLNA http server to (default &quot;:7879&quot;)
       --announce-interval Duration             The interval between SSDP announcements (default 12m0s)
       --dir-cache-time Duration                Time to cache directory entries for (default 5m0s)
@@ -2747,13 +2762,13 @@ htpasswd -B htpasswd anotherUser</code></pre>
       --vfs-write-back Duration                Time to writeback files after last use when using cache (default 5s)
       --vfs-write-wait Duration                Time to wait for in-sequence write before giving error (default 1s)</code></pre>
 <p>See the <a href="https://rclone.org/flags/">global flags page</a> for global options not listed here.</p>
-<h2 id="see-also-68">SEE ALSO</h2>
+<h2 id="see-also-69">SEE ALSO</h2>
 <ul>
 <li><a href="https://rclone.org/commands/rclone_serve/">rclone serve</a> - Serve a remote over a protocol.</li>
 </ul>
 <h1 id="rclone-serve-docker">rclone serve docker</h1>
 <p>Serve any remote on docker's volume plugin API.</p>
-<h2 id="synopsis-61">Synopsis</h2>
+<h2 id="synopsis-62">Synopsis</h2>
 <p>This command implements the Docker volume plugin API allowing docker to use rclone as a data storage mechanism for various cloud providers. rclone provides <a href="/docker">docker volume plugin</a> based on it.</p>
 <p>To create a docker plugin, one must create a Unix or TCP socket that Docker will look for when you use the plugin and then it listens for commands from docker daemon and runs the corresponding code when necessary. Docker plugins can run as a managed plugin under control of the docker daemon or as an independent native service. For testing, you can just run it directly from the command line, for example:</p>
 <pre><code>sudo rclone serve docker --base-dir /tmp/rclone-volumes --socket-addr localhost:8787 -vv</code></pre>
@@ -2878,7 +2893,7 @@ htpasswd -B htpasswd anotherUser</code></pre>
 <p>Some backends, most notably S3, do not report the amount of bytes used. If you need this information to be available when running <code>df</code> on the filesystem, then pass the flag <code>--vfs-used-is-size</code> to rclone. With this flag set, instead of relying on the backend to report this information, rclone will scan the whole remote similar to <code>rclone size</code> and compute the total used space itself.</p>
 <p><em>WARNING.</em> Contrary to <code>rclone size</code>, this flag ignores filters so that the result is accurate. However, this is very inefficient and may cost lots of API calls resulting in extra charges. Use it as a last resort and only with caching.</p>
 <pre><code>rclone serve docker [flags]</code></pre>
-<h2 id="options-69">Options</h2>
+<h2 id="options-70">Options</h2>
 <pre><code>      --allow-non-empty                        Allow mounting over a non-empty directory (not supported on Windows)
       --allow-other                            Allow access to other users (not supported on Windows)
       --allow-root                             Allow access to root user (not supported on Windows)
@@ -2931,13 +2946,13 @@ htpasswd -B htpasswd anotherUser</code></pre>
       --volname string                         Set the volume name (supported on Windows and OSX only)
       --write-back-cache                       Makes kernel buffer writes before sending them to rclone (without this, writethrough caching is used) (not supported on Windows)</code></pre>
 <p>See the <a href="https://rclone.org/flags/">global flags page</a> for global options not listed here.</p>
-<h2 id="see-also-69">SEE ALSO</h2>
+<h2 id="see-also-70">SEE ALSO</h2>
 <ul>
 <li><a href="https://rclone.org/commands/rclone_serve/">rclone serve</a> - Serve a remote over a protocol.</li>
 </ul>
 <h1 id="rclone-serve-ftp">rclone serve ftp</h1>
 <p>Serve remote:path over FTP.</p>
-<h2 id="synopsis-62">Synopsis</h2>
+<h2 id="synopsis-63">Synopsis</h2>
 <p>Run a basic FTP server to serve a remote over FTP protocol. This can be viewed with a FTP client or you can make a remote of type FTP to read and write it.</p>
 <h2 id="server-options-2">Server options</h2>
 <p>Use --addr to specify which IP address and port the server should listen on, e.g. --addr 1.2.3.4:8000 or --addr :8080 to listen to all IPs. By default it only listens on localhost. You can use port :0 to let the OS choose an available port.</p>
@@ -3092,7 +3107,7 @@ htpasswd -B htpasswd anotherUser</code></pre>
 <p>Note that an internal cache is keyed on <code>user</code> so only use that for configuration, don't use <code>pass</code> or <code>public_key</code>. This also means that if a user's password or public-key is changed the cache will need to expire (which takes 5 mins) before it takes effect.</p>
 <p>This can be used to build general purpose proxies to any kind of backend that rclone supports.</p>
 <pre><code>rclone serve ftp remote:path [flags]</code></pre>
-<h2 id="options-70">Options</h2>
+<h2 id="options-71">Options</h2>
 <pre><code>      --addr string                            IPaddress:Port or :Port to bind server to (default &quot;localhost:2121&quot;)
       --auth-proxy string                      A program to use to create the backend from the auth
       --cert string                            TLS PEM key (concatenation of certificate and CA certificate)
@@ -3128,13 +3143,13 @@ htpasswd -B htpasswd anotherUser</code></pre>
       --vfs-write-back Duration                Time to writeback files after last use when using cache (default 5s)
       --vfs-write-wait Duration                Time to wait for in-sequence write before giving error (default 1s)</code></pre>
 <p>See the <a href="https://rclone.org/flags/">global flags page</a> for global options not listed here.</p>
-<h2 id="see-also-70">SEE ALSO</h2>
+<h2 id="see-also-71">SEE ALSO</h2>
 <ul>
 <li><a href="https://rclone.org/commands/rclone_serve/">rclone serve</a> - Serve a remote over a protocol.</li>
 </ul>
 <h1 id="rclone-serve-http">rclone serve http</h1>
 <p>Serve the remote over HTTP.</p>
-<h2 id="synopsis-63">Synopsis</h2>
+<h2 id="synopsis-64">Synopsis</h2>
 <p>Run a basic web server to serve a remote over HTTP. This can be viewed in a web browser or you can make a remote of type http read from it.</p>
 <p>You can use the filter flags (e.g. <code>--include</code>, <code>--exclude</code>) to control what is served.</p>
 <p>The server will log errors. Use <code>-v</code> to see access logs.</p>
@@ -3390,7 +3405,7 @@ htpasswd -B htpasswd anotherUser</code></pre>
 <p>Note that an internal cache is keyed on <code>user</code> so only use that for configuration, don't use <code>pass</code> or <code>public_key</code>. This also means that if a user's password or public-key is changed the cache will need to expire (which takes 5 mins) before it takes effect.</p>
 <p>This can be used to build general purpose proxies to any kind of backend that rclone supports.</p>
 <pre><code>rclone serve http remote:path [flags]</code></pre>
-<h2 id="options-71">Options</h2>
+<h2 id="options-72">Options</h2>
 <pre><code>      --addr stringArray                       IPaddress:Port or :Port to bind server to (default [127.0.0.1:8080])
       --auth-proxy string                      A program to use to create the backend from the auth
       --baseurl string                         Prefix for URLs - leave blank for root
@@ -3434,13 +3449,13 @@ htpasswd -B htpasswd anotherUser</code></pre>
       --vfs-write-back Duration                Time to writeback files after last use when using cache (default 5s)
       --vfs-write-wait Duration                Time to wait for in-sequence write before giving error (default 1s)</code></pre>
 <p>See the <a href="https://rclone.org/flags/">global flags page</a> for global options not listed here.</p>
-<h2 id="see-also-71">SEE ALSO</h2>
+<h2 id="see-also-72">SEE ALSO</h2>
 <ul>
 <li><a href="https://rclone.org/commands/rclone_serve/">rclone serve</a> - Serve a remote over a protocol.</li>
 </ul>
 <h1 id="rclone-serve-restic">rclone serve restic</h1>
 <p>Serve the remote for restic's REST API.</p>
-<h2 id="synopsis-64">Synopsis</h2>
+<h2 id="synopsis-65">Synopsis</h2>
 <p>Run a basic web server to serve a remote over restic's REST backend API over HTTP. This allows restic to use rclone as a data storage mechanism for cloud providers that restic does not support directly.</p>
 <p><a href="https://restic.net/">Restic</a> is a command-line program for doing backups.</p>
 <p>The server will log errors. Use -v to see access logs.</p>
@@ -3506,7 +3521,7 @@ htpasswd -B htpasswd anotherUser</code></pre>
 <p>Use <code>--realm</code> to set the authentication realm.</p>
 <p>Use <code>--salt</code> to change the password hashing salt from the default.</p>
 <pre><code>rclone serve restic remote:path [flags]</code></pre>
-<h2 id="options-72">Options</h2>
+<h2 id="options-73">Options</h2>
 <pre><code>      --addr stringArray                IPaddress:Port or :Port to bind server to (default [127.0.0.1:8080])
       --append-only                     Disallow deletion of repository data
       --baseurl string                  Prefix for URLs - leave blank for root
@@ -3527,13 +3542,13 @@ htpasswd -B htpasswd anotherUser</code></pre>
       --stdio                           Run an HTTP2 server on stdin/stdout
       --user string                     User name for authentication</code></pre>
 <p>See the <a href="https://rclone.org/flags/">global flags page</a> for global options not listed here.</p>
-<h2 id="see-also-72">SEE ALSO</h2>
+<h2 id="see-also-73">SEE ALSO</h2>
 <ul>
 <li><a href="https://rclone.org/commands/rclone_serve/">rclone serve</a> - Serve a remote over a protocol.</li>
 </ul>
 <h1 id="rclone-serve-sftp">rclone serve sftp</h1>
 <p>Serve the remote over SFTP.</p>
-<h2 id="synopsis-65">Synopsis</h2>
+<h2 id="synopsis-66">Synopsis</h2>
 <p>Run an SFTP server to serve a remote over SFTP. This can be used with an SFTP client or you can make a remote of type <a href="/sftp">sftp</a> to use with it.</p>
 <p>You can use the <a href="/filtering">filter</a> flags (e.g. <code>--include</code>, <code>--exclude</code>) to control what is served.</p>
 <p>The server will respond to a small number of shell commands, mainly md5sum, sha1sum and df, which enable it to provide support for checksums and the about feature when accessed from an sftp remote.</p>
@@ -3695,7 +3710,7 @@ htpasswd -B htpasswd anotherUser</code></pre>
 <p>Note that an internal cache is keyed on <code>user</code> so only use that for configuration, don't use <code>pass</code> or <code>public_key</code>. This also means that if a user's password or public-key is changed the cache will need to expire (which takes 5 mins) before it takes effect.</p>
 <p>This can be used to build general purpose proxies to any kind of backend that rclone supports.</p>
 <pre><code>rclone serve sftp remote:path [flags]</code></pre>
-<h2 id="options-73">Options</h2>
+<h2 id="options-74">Options</h2>
 <pre><code>      --addr string                            IPaddress:Port or :Port to bind server to (default &quot;localhost:2022&quot;)
       --auth-proxy string                      A program to use to create the backend from the auth
       --authorized-keys string                 Authorized keys file (default &quot;~/.ssh/authorized_keys&quot;)
@@ -3731,13 +3746,13 @@ htpasswd -B htpasswd anotherUser</code></pre>
       --vfs-write-back Duration                Time to writeback files after last use when using cache (default 5s)
       --vfs-write-wait Duration                Time to wait for in-sequence write before giving error (default 1s)</code></pre>
 <p>See the <a href="https://rclone.org/flags/">global flags page</a> for global options not listed here.</p>
-<h2 id="see-also-73">SEE ALSO</h2>
+<h2 id="see-also-74">SEE ALSO</h2>
 <ul>
 <li><a href="https://rclone.org/commands/rclone_serve/">rclone serve</a> - Serve a remote over a protocol.</li>
 </ul>
 <h1 id="rclone-serve-webdav">rclone serve webdav</h1>
 <p>Serve remote:path over WebDAV.</p>
-<h2 id="synopsis-66">Synopsis</h2>
+<h2 id="synopsis-67">Synopsis</h2>
 <p>Run a basic WebDAV server to serve a remote over HTTP via the WebDAV protocol. This can be viewed with a WebDAV client, through a web browser, or you can make a remote of type WebDAV to read and write it.</p>
 <h2 id="webdav-options">WebDAV options</h2>
 <h3 id="etag-hash">--etag-hash</h3>
@@ -3999,7 +4014,7 @@ htpasswd -B htpasswd anotherUser</code></pre>
 <p>Note that an internal cache is keyed on <code>user</code> so only use that for configuration, don't use <code>pass</code> or <code>public_key</code>. This also means that if a user's password or public-key is changed the cache will need to expire (which takes 5 mins) before it takes effect.</p>
 <p>This can be used to build general purpose proxies to any kind of backend that rclone supports.</p>
 <pre><code>rclone serve webdav remote:path [flags]</code></pre>
-<h2 id="options-74">Options</h2>
+<h2 id="options-75">Options</h2>
 <pre><code>      --addr stringArray                       IPaddress:Port or :Port to bind server to (default [127.0.0.1:8080])
       --auth-proxy string                      A program to use to create the backend from the auth
       --baseurl string                         Prefix for URLs - leave blank for root
@@ -4045,13 +4060,13 @@ htpasswd -B htpasswd anotherUser</code></pre>
       --vfs-write-back Duration                Time to writeback files after last use when using cache (default 5s)
       --vfs-write-wait Duration                Time to wait for in-sequence write before giving error (default 1s)</code></pre>
 <p>See the <a href="https://rclone.org/flags/">global flags page</a> for global options not listed here.</p>
-<h2 id="see-also-74">SEE ALSO</h2>
+<h2 id="see-also-75">SEE ALSO</h2>
 <ul>
 <li><a href="https://rclone.org/commands/rclone_serve/">rclone serve</a> - Serve a remote over a protocol.</li>
 </ul>
 <h1 id="rclone-settier">rclone settier</h1>
 <p>Changes storage class/tier of objects in remote.</p>
-<h2 id="synopsis-67">Synopsis</h2>
+<h2 id="synopsis-68">Synopsis</h2>
 <p>rclone settier changes storage tier or class at remote if supported. Few cloud storage services provides different storage classes on objects, for example AWS S3 and Glacier, Azure Blob storage - Hot, Cool and Archive, Google Cloud Storage, Regional Storage, Nearline, Coldline etc.</p>
 <p>Note that, certain tier changes make objects not available to access immediately. For example tiering to archive in azure blob storage makes objects in frozen state, user can restore by setting tier to Hot/Cool, similarly S3 to Glacier makes object inaccessible.true</p>
 <p>You can use it to tier single object</p>
@@ -4061,25 +4076,25 @@ htpasswd -B htpasswd anotherUser</code></pre>
 <p>Or just provide remote directory and all files in directory will be tiered</p>
 <pre><code>rclone settier tier remote:path/dir</code></pre>
 <pre><code>rclone settier tier remote:path [flags]</code></pre>
-<h2 id="options-75">Options</h2>
+<h2 id="options-76">Options</h2>
 <pre><code>  -h, --help   help for settier</code></pre>
 <p>See the <a href="https://rclone.org/flags/">global flags page</a> for global options not listed here.</p>
-<h2 id="see-also-75">SEE ALSO</h2>
+<h2 id="see-also-76">SEE ALSO</h2>
 <ul>
 <li><a href="https://rclone.org/commands/rclone/">rclone</a> - Show help for rclone commands, flags and backends.</li>
 </ul>
 <h1 id="rclone-test">rclone test</h1>
 <p>Run a test command</p>
-<h2 id="synopsis-68">Synopsis</h2>
+<h2 id="synopsis-69">Synopsis</h2>
 <p>Rclone test is used to run test commands.</p>
 <p>Select which test command you want with the subcommand, eg</p>
 <pre><code>rclone test memory remote:</code></pre>
 <p>Each subcommand has its own options which you can see in their help.</p>
 <p><strong>NB</strong> Be careful running these commands, they may do strange things so reading their documentation first is recommended.</p>
-<h2 id="options-76">Options</h2>
+<h2 id="options-77">Options</h2>
 <pre><code>  -h, --help   help for test</code></pre>
 <p>See the <a href="https://rclone.org/flags/">global flags page</a> for global options not listed here.</p>
-<h2 id="see-also-76">SEE ALSO</h2>
+<h2 id="see-also-77">SEE ALSO</h2>
 <ul>
 <li><a href="https://rclone.org/commands/rclone/">rclone</a> - Show help for rclone commands, flags and backends.</li>
 <li><a href="https://rclone.org/commands/rclone_test_changenotify/">rclone test changenotify</a> - Log any change notify requests for the remote passed in.</li>
@@ -4092,34 +4107,34 @@ htpasswd -B htpasswd anotherUser</code></pre>
 <h1 id="rclone-test-changenotify">rclone test changenotify</h1>
 <p>Log any change notify requests for the remote passed in.</p>
 <pre><code>rclone test changenotify remote: [flags]</code></pre>
-<h2 id="options-77">Options</h2>
+<h2 id="options-78">Options</h2>
 <pre><code>  -h, --help                     help for changenotify
       --poll-interval Duration   Time to wait between polling for changes (default 10s)</code></pre>
-<p>See the <a href="https://rclone.org/flags/">global flags page</a> for global options not listed here.</p>
-<h2 id="see-also-77">SEE ALSO</h2>
-<ul>
-<li><a href="https://rclone.org/commands/rclone_test/">rclone test</a> - Run a test command</li>
-</ul>
-<h1 id="rclone-test-histogram">rclone test histogram</h1>
-<p>Makes a histogram of file name characters.</p>
-<h2 id="synopsis-69">Synopsis</h2>
-<p>This command outputs JSON which shows the histogram of characters used in filenames in the remote:path specified.</p>
-<p>The data doesn't contain any identifying information but is useful for the rclone developers when developing filename compression.</p>
-<pre><code>rclone test histogram [remote:path] [flags]</code></pre>
-<h2 id="options-78">Options</h2>
-<pre><code>  -h, --help   help for histogram</code></pre>
 <p>See the <a href="https://rclone.org/flags/">global flags page</a> for global options not listed here.</p>
 <h2 id="see-also-78">SEE ALSO</h2>
 <ul>
 <li><a href="https://rclone.org/commands/rclone_test/">rclone test</a> - Run a test command</li>
 </ul>
+<h1 id="rclone-test-histogram">rclone test histogram</h1>
+<p>Makes a histogram of file name characters.</p>
+<h2 id="synopsis-70">Synopsis</h2>
+<p>This command outputs JSON which shows the histogram of characters used in filenames in the remote:path specified.</p>
+<p>The data doesn't contain any identifying information but is useful for the rclone developers when developing filename compression.</p>
+<pre><code>rclone test histogram [remote:path] [flags]</code></pre>
+<h2 id="options-79">Options</h2>
+<pre><code>  -h, --help   help for histogram</code></pre>
+<p>See the <a href="https://rclone.org/flags/">global flags page</a> for global options not listed here.</p>
+<h2 id="see-also-79">SEE ALSO</h2>
+<ul>
+<li><a href="https://rclone.org/commands/rclone_test/">rclone test</a> - Run a test command</li>
+</ul>
 <h1 id="rclone-test-info">rclone test info</h1>
 <p>Discovers file name or other limitations for paths.</p>
-<h2 id="synopsis-70">Synopsis</h2>
+<h2 id="synopsis-71">Synopsis</h2>
 <p>rclone info discovers what filenames and upload methods are possible to write to the paths passed in and how long they can be. It can take some time. It will write test files into the remote:path passed in. It outputs a bit of go code for each one.</p>
 <p><strong>NB</strong> this can create undeletable files and other hazards - use with care</p>
 <pre><code>rclone test info [remote:path]+ [flags]</code></pre>
-<h2 id="options-79">Options</h2>
+<h2 id="options-80">Options</h2>
 <pre><code>      --all                    Run all tests
       --check-control          Check control characters
       --check-length           Check max filename length
@@ -4129,14 +4144,14 @@ htpasswd -B htpasswd anotherUser</code></pre>
       --upload-wait Duration   Wait after writing a file (default 0s)
       --write-json string      Write results to file</code></pre>
 <p>See the <a href="https://rclone.org/flags/">global flags page</a> for global options not listed here.</p>
-<h2 id="see-also-79">SEE ALSO</h2>
+<h2 id="see-also-80">SEE ALSO</h2>
 <ul>
 <li><a href="https://rclone.org/commands/rclone_test/">rclone test</a> - Run a test command</li>
 </ul>
 <h1 id="rclone-test-makefile">rclone test makefile</h1>
 <p>Make files with random contents of the size given</p>
 <pre><code>rclone test makefile &lt;size&gt; [&lt;file&gt;]+ [flags]</code></pre>
-<h2 id="options-80">Options</h2>
+<h2 id="options-81">Options</h2>
 <pre><code>      --ascii      Fill files with random ASCII printable bytes only
       --chargen    Fill files with a ASCII chargen pattern
   -h, --help       help for makefile
@@ -4145,14 +4160,14 @@ htpasswd -B htpasswd anotherUser</code></pre>
       --sparse     Make the files sparse (appear to be filled with ASCII 0x00)
       --zero       Fill files with ASCII 0x00</code></pre>
 <p>See the <a href="https://rclone.org/flags/">global flags page</a> for global options not listed here.</p>
-<h2 id="see-also-80">SEE ALSO</h2>
+<h2 id="see-also-81">SEE ALSO</h2>
 <ul>
 <li><a href="https://rclone.org/commands/rclone_test/">rclone test</a> - Run a test command</li>
 </ul>
 <h1 id="rclone-test-makefiles">rclone test makefiles</h1>
 <p>Make a random file hierarchy in a directory</p>
 <pre><code>rclone test makefiles &lt;dir&gt; [flags]</code></pre>
-<h2 id="options-81">Options</h2>
+<h2 id="options-82">Options</h2>
 <pre><code>      --ascii                      Fill files with random ASCII printable bytes only
       --chargen                    Fill files with a ASCII chargen pattern
       --files int                  Number of files to create (default 1000)
@@ -4168,23 +4183,23 @@ htpasswd -B htpasswd anotherUser</code></pre>
       --sparse                     Make the files sparse (appear to be filled with ASCII 0x00)
       --zero                       Fill files with ASCII 0x00</code></pre>
 <p>See the <a href="https://rclone.org/flags/">global flags page</a> for global options not listed here.</p>
-<h2 id="see-also-81">SEE ALSO</h2>
+<h2 id="see-also-82">SEE ALSO</h2>
 <ul>
 <li><a href="https://rclone.org/commands/rclone_test/">rclone test</a> - Run a test command</li>
 </ul>
 <h1 id="rclone-test-memory">rclone test memory</h1>
 <p>Load all the objects at remote:path into memory and report memory stats.</p>
 <pre><code>rclone test memory remote:path [flags]</code></pre>
-<h2 id="options-82">Options</h2>
+<h2 id="options-83">Options</h2>
 <pre><code>  -h, --help   help for memory</code></pre>
 <p>See the <a href="https://rclone.org/flags/">global flags page</a> for global options not listed here.</p>
-<h2 id="see-also-82">SEE ALSO</h2>
+<h2 id="see-also-83">SEE ALSO</h2>
 <ul>
 <li><a href="https://rclone.org/commands/rclone_test/">rclone test</a> - Run a test command</li>
 </ul>
 <h1 id="rclone-touch">rclone touch</h1>
 <p>Create new file or change file modification time.</p>
-<h2 id="synopsis-71">Synopsis</h2>
+<h2 id="synopsis-72">Synopsis</h2>
 <p>Set the modification time on file(s) as specified by remote:path to have the current time.</p>
 <p>If remote:path does not exist then a zero sized file will be created, unless <code>--no-create</code> or <code>--recursive</code> is provided.</p>
 <p>If <code>--recursive</code> is used then recursively sets the modification time on all existing files that is found under the path. Filters are supported, and you can test with the <code>--dry-run</code> or the <code>--interactive</code>/<code>-i</code> flag.</p>
@@ -4196,20 +4211,20 @@ htpasswd -B htpasswd anotherUser</code></pre>
 </ul>
 <p>Note that value of <code>--timestamp</code> is in UTC. If you want local time then add the <code>--localtime</code> flag.</p>
 <pre><code>rclone touch remote:path [flags]</code></pre>
-<h2 id="options-83">Options</h2>
+<h2 id="options-84">Options</h2>
 <pre><code>  -h, --help               help for touch
       --localtime          Use localtime for timestamp, not UTC
   -C, --no-create          Do not create the file if it does not exist (implied with --recursive)
   -R, --recursive          Recursively touch all files
   -t, --timestamp string   Use specified time instead of the current time of day</code></pre>
 <p>See the <a href="https://rclone.org/flags/">global flags page</a> for global options not listed here.</p>
-<h2 id="see-also-83">SEE ALSO</h2>
+<h2 id="see-also-84">SEE ALSO</h2>
 <ul>
 <li><a href="https://rclone.org/commands/rclone/">rclone</a> - Show help for rclone commands, flags and backends.</li>
 </ul>
 <h1 id="rclone-tree">rclone tree</h1>
 <p>List the contents of the remote in a tree like fashion.</p>
-<h2 id="synopsis-72">Synopsis</h2>
+<h2 id="synopsis-73">Synopsis</h2>
 <p>rclone tree lists the contents of a remote in a similar way to the unix tree command.</p>
 <p>For example</p>
 <pre><code>$ rclone tree remote:path
@@ -4226,7 +4241,7 @@ htpasswd -B htpasswd anotherUser</code></pre>
 <p>The tree command has many options for controlling the listing which are compatible with the tree command, for example you can include file sizes with <code>--size</code>. Note that not all of them have short options as they conflict with rclone's short options.</p>
 <p>For a more interactive navigation of the remote see the <a href="https://rclone.org/commands/rclone_ncdu/">ncdu</a> command.</p>
 <pre><code>rclone tree remote:path [flags]</code></pre>
-<h2 id="options-84">Options</h2>
+<h2 id="options-85">Options</h2>
 <pre><code>  -a, --all             All files are listed (list . files too)
   -d, --dirs-only       List directories only
       --dirsfirst       List directories before files (-U disables)
@@ -4247,7 +4262,7 @@ htpasswd -B htpasswd anotherUser</code></pre>
   -U, --unsorted        Leave files unsorted
       --version         Sort files alphanumerically by version</code></pre>
 <p>See the <a href="https://rclone.org/flags/">global flags page</a> for global options not listed here.</p>
-<h2 id="see-also-84">SEE ALSO</h2>
+<h2 id="see-also-85">SEE ALSO</h2>
 <ul>
 <li><a href="https://rclone.org/commands/rclone/">rclone</a> - Show help for rclone commands, flags and backends.</li>
 </ul>
@@ -4472,7 +4487,7 @@ rclone sync --interactive /path/to/files remote:current-backup</code></pre>
 </table>
 <p>The metadata keys <code>mtime</code> and <code>content-type</code> will take precedence if supplied in the metadata over reading the <code>Content-Type</code> or modification time of the source object.</p>
 <p>Hashes are not included in system metadata as there is a well defined way of reading those already.</p>
-<h2 id="options-85">Options</h2>
+<h2 id="options-86">Options</h2>
 <p>Rclone has a number of options to control its behaviour.</p>
 <p>Options that take parameters can have the values passed in two ways, <code>--option=value</code> or <code>--option value</code>. However boolean (true/false) options behave slightly differently to the other options in that <code>--boolean</code> sets the option to <code>true</code> and the absence of the flag sets it to <code>false</code>. It is also possible to specify <code>--boolean=false</code> or <code>--boolean=true</code>. Note that <code>--boolean false</code> is not valid - this is parsed as <code>--boolean</code> and the <code>false</code> is parsed as an extra command line argument for rclone.</p>
 <h3 id="time-option">Time or duration options</h3>
@@ -5213,7 +5228,7 @@ export RCLONE_CONFIG_PASS</code></pre>
 </ul>
 <h2 id="environment-variables">Environment Variables</h2>
 <p>Rclone can be configured entirely using environment variables. These can be used to set defaults for options or config file entries.</p>
-<h3 id="options-86">Options</h3>
+<h3 id="options-87">Options</h3>
 <p>Every option in rclone can have its default set by environment variable.</p>
 <p>To find the name of the environment variable, first, take the long option name, strip the leading <code>--</code>, change <code>-</code> to <code>_</code>, make upper case and prepend <code>RCLONE_</code>.</p>
 <p>For example, to always set <code>--stats 5s</code>, set the environment variable <code>RCLONE_STATS=5s</code>. If you set stats on the command line this will override the environment variable setting.</p>
@@ -5616,7 +5631,7 @@ ASCII character classes (e.g. [[:alnum:]], [[:alpha:]], [[:punct:]], [[:xdigit:]
 <p><code>--exclude</code> has no effect when combined with <code>--files-from</code> or <code>--files-from-raw</code> flags.</p>
 <p>E.g. <code>rclone ls remote: --exclude *.bak</code> excludes all .bak files from listing.</p>
 <p>E.g. <code>rclone size remote: "--exclude /dir/**"</code> returns the total size of all files on <code>remote:</code> excluding those in root directory <code>dir</code> and sub directories.</p>
-<p>E.g. on Microsoft Windows <code>rclone ls remote: --exclude "*\[{JP,KR,HK}\]*"</code> lists the files in <code>remote:</code> with <code>[JP]</code> or <code>[KR]</code> or <code>[HK]</code> in their name. Quotes prevent the shell from interpreting the <code>\</code> characters.<code>\</code> characters escape the <code>[</code> and <code>]</code> so an rclone filter treats them literally rather than as a character-range. The <code>{</code> and <code>}</code> define an rclone pattern list. For other operating systems single quotes are required ie <code>rclone ls remote: --exclude '*\[{JP,KR,HK}\]*'</code></p>
+<p>E.g. on Microsoft Windows <code>rclone ls remote: --exclude "*\[{JP,KR,HK}\]*"</code> lists the files in <code>remote:</code> without <code>[JP]</code> or <code>[KR]</code> or <code>[HK]</code> in their name. Quotes prevent the shell from interpreting the <code>\</code> characters.<code>\</code> characters escape the <code>[</code> and <code>]</code> so an rclone filter treats them literally rather than as a character-range. The <code>{</code> and <code>}</code> define an rclone pattern list. For other operating systems single quotes are required ie <code>rclone ls remote: --exclude '*\[{JP,KR,HK}\]*'</code></p>
 <h3 id="exclude-from---read-exclude-patterns-from-file"><code>--exclude-from</code> - Read exclude patterns from file</h3>
 <p>Excludes path/file names from an rclone command based on rules in a named file. The file contains a list of remarks and pattern rules.</p>
 <p>For an example <code>exclude-file.txt</code>:</p>
@@ -8793,7 +8808,7 @@ Showing nodes accounting for 1537.03kB, 100% of 1537.03kB total
       --use-json-log                                Use json log format
       --use-mmap                                    Use mmap allocator (see docs)
       --use-server-modtime                          Use server modified time instead of object metadata
-      --user-agent string                           Set the user-agent to a specified string (default &quot;rclone/v1.63.0&quot;)
+      --user-agent string                           Set the user-agent to a specified string (default &quot;rclone/v1.63.1&quot;)
   -v, --verbose count                               Print lots more stuff (repeat for more)</code></pre>
 <h2 id="backend-flags">Backend Flags</h2>
 <p>These flags are available for every command. They control the backends and may be set in the config file.</p>
@@ -16318,7 +16333,7 @@ cos                  s3</code></pre>
 <p>For Netease NOS configure as per the configurator <code>rclone config</code> setting the provider <code>Netease</code>. This will automatically set <code>force_path_style = false</code> which is necessary for it to run properly.</p>
 <h3 id="petabox">Petabox</h3>
 <p>Here is an example of making a <a href="https://petabox.io/">Petabox</a> configuration. First run:</p>
-<div class="sourceCode" id="cb754"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb754-1"><a href="#cb754-1" aria-hidden="true"></a><span class="ex">rclone</span> config</span></code></pre></div>
+<div class="sourceCode" id="cb756"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb756-1"><a href="#cb756-1" aria-hidden="true"></a><span class="ex">rclone</span> config</span></code></pre></div>
 <p>This will guide you through an interactive setup process.</p>
 <pre><code>No remotes found, make a new one?
 n) New remote
@@ -18619,7 +18634,7 @@ rclone rc backend/command command=decode fs=crypt: encryptedfile1 [encryptedfile
 <h3 id="key-derivation">Key derivation</h3>
 <p>Rclone uses <code>scrypt</code> with parameters <code>N=16384, r=8, p=1</code> with an optional user supplied salt (password2) to derive the 32+32+16 = 80 bytes of key material required. If the user doesn't supply a salt then rclone uses an internal one.</p>
 <p><code>scrypt</code> makes it impractical to mount a dictionary attack on rclone encrypted data. For full protection against this you should always use a salt.</p>
-<h2 id="see-also-85">SEE ALSO</h2>
+<h2 id="see-also-86">SEE ALSO</h2>
 <ul>
 <li><a href="https://rclone.org/commands/rclone_cryptdecode/">rclone cryptdecode</a> - Show forward/reverse mapping of encrypted filenames</li>
 </ul>
@@ -19152,7 +19167,7 @@ y/e/d&gt; y</code></pre>
 <li><p>Name your App. The app name is global, so you can't use <code>rclone</code> for example</p></li>
 <li><p>Click the button <code>Create App</code></p></li>
 <li><p>Switch to the <code>Permissions</code> tab. Enable at least the following permissions: <code>account_info.read</code>, <code>files.metadata.write</code>, <code>files.content.write</code>, <code>files.content.read</code>, <code>sharing.write</code>. The <code>files.metadata.read</code> and <code>sharing.read</code> checkboxes will be marked too. Click <code>Submit</code></p></li>
-<li><p>Switch to the <code>Settings</code> tab. Fill <code>OAuth2 - Redirect URIs</code> as <code>http://localhost:53682/</code></p></li>
+<li><p>Switch to the <code>Settings</code> tab. Fill <code>OAuth2 - Redirect URIs</code> as <code>http://localhost:53682/</code> and click on <code>Add</code></p></li>
 <li><p>Find the <code>App key</code> and <code>App secret</code> values on the <code>Settings</code> tab. Use these values in rclone config to add a new remote or edit an existing remote. The <code>App key</code> setting corresponds to <code>client_id</code> in rclone config, the <code>App secret</code> corresponds to <code>client_secret</code></p></li>
 </ol>
 <h1 id="enterprise-file-fabric">Enterprise File Fabric</h1>
@@ -21477,7 +21492,7 @@ rclone backend copyid drive: ID1 path1 ID2 path2</code></pre>
 <li><p>Log into the <a href="https://console.developers.google.com/">Google API Console</a> with your Google account. It doesn't matter what Google account you use. (It need not be the same account as the Google Drive you want to access)</p></li>
 <li><p>Select a project or create a new project.</p></li>
 <li><p>Under "ENABLE APIS AND SERVICES" search for "Drive", and enable the "Google Drive API".</p></li>
-<li><p>Click "Credentials" in the left-side panel (not "Create credentials", which opens the wizard), then "Create credentials"</p></li>
+<li><p>Click "Credentials" in the left-side panel (not "Create credentials", which opens the wizard).</p></li>
 <li><p>If you already configured an "Oauth Consent Screen", then skip to the next step; if not, click on "CONFIGURE CONSENT SCREEN" button (near the top right corner of the right panel), then select "External" and click on "CREATE"; on the next screen, enter an "Application name" ("rclone" is OK); enter "User Support Email" (your own email is OK); enter "Developer Contact Email" (your own email is OK); then click on "Save" (all other data is optional). You will also have to add some scopes, including <code>.../auth/docs</code> and <code>.../auth/drive</code> in order to be able to edit, create and delete files with RClone. You may also want to include the <code>../auth/drive.metadata.readonly</code> scope. After adding scopes, click "Save and continue" to add test users. Be sure to add your own account to the test users. Once you've added yourself as a test user and saved the changes, click again on "Credentials" on the left panel to go back to the "Credentials" screen.</p>
 <p>(PS: if you are a GSuite user, you could also select "Internal" instead of "External" above, but this will restrict API use to Google Workspace users in your organisation).</p></li>
 <li><p>Click on the "+ CREATE CREDENTIALS" button at the top of the screen, then select "OAuth client ID".</p></li>
@@ -23431,7 +23446,6 @@ d) Delete this remote
 y/e/d&gt; y</code></pre>
 <h1 id="mail.ru-cloud">Mail.ru Cloud</h1>
 <p><a href="https://cloud.mail.ru/">Mail.ru Cloud</a> is a cloud storage provided by a Russian internet company <a href="https://mail.ru">Mail.Ru Group</a>. The official desktop client is <a href="https://disk-o.cloud/en">Disk-O:</a>, available on Windows and Mac OS.</p>
-<p>Currently it is recommended to disable 2FA on Mail.ru accounts intended for rclone until it gets eventually implemented.</p>
 <h2 id="features-highlights">Features highlights</h2>
 <ul>
 <li>Paths may be as deep as required, e.g. <code>remote:directory/subdirectory</code></li>
@@ -25733,7 +25747,7 @@ namespace = id&lt;redacted&gt;34
 compartment = ocid1.compartment.oc1..aa&lt;redacted&gt;ba
 region = us-ashburn-1
 provider = no_auth</code></pre>
-<h2 id="options-87">Options</h2>
+<h2 id="options-88">Options</h2>
 <h3 id="modified-time-10">Modified time</h3>
 <p>The modified time is stored as metadata on the object as <code>opc-meta-mtime</code> as floating point since the epoch, accurate to 1 ns.</p>
 <p>If the modification time needs to be updated rclone will attempt to perform a server side copy to update the modification if the object can be copied in a single part. In the case the object is larger than 5Gb, the object will be uploaded rather than copied.</p>
@@ -30771,6 +30785,38 @@ $ tree /tmp/b
 <li>"error": return an error based on option value</li>
 </ul>
 <h1 id="changelog">Changelog</h1>
+<h2 id="v1.63.1---2023-07-17">v1.63.1 - 2023-07-17</h2>
+<p><a href="https://github.com/rclone/rclone/compare/v1.63.0...v1.63.1">See commits</a></p>
+<ul>
+<li>Bug Fixes
+<ul>
+<li>build: Fix macos builds for versions &lt; 12 (Anagh Kumar Baranwal)</li>
+<li>dirtree: Fix performance with large directories of directories and <code>--fast-list</code> (Nick Craig-Wood)</li>
+<li>operations
+<ul>
+<li>Fix deadlock when using <code>lsd</code>/<code>ls</code> with <code>--progress</code> (Nick Craig-Wood)</li>
+<li>Fix <code>.rclonelink</code> files not being converted back to symlinks (Nick Craig-Wood)</li>
+</ul></li>
+<li>doc fixes (Dean Attali, Mahad, Nick Craig-Wood, Sawada Tsunayoshi, Vladislav Vorobev)</li>
+</ul></li>
+<li>Local
+<ul>
+<li>Fix partial directory read for corrupted filesystem (Nick Craig-Wood)</li>
+</ul></li>
+<li>Box
+<ul>
+<li>Fix reconnect failing with HTTP 400 Bad Request (albertony)</li>
+</ul></li>
+<li>Smb
+<ul>
+<li>Fix "Statfs failed: bucket or container name is needed" when mounting (Nick Craig-Wood)</li>
+</ul></li>
+<li>WebDAV
+<ul>
+<li>Nextcloud: fix must use /dav/files/USER endpoint not /webdav error (Paul)</li>
+<li>Nextcloud chunking: add more guidance for the user to check the config (darix)</li>
+</ul></li>
+</ul>
 <h2 id="v1.63.0---2023-06-30">v1.63.0 - 2023-06-30</h2>
 <p><a href="https://github.com/rclone/rclone/compare/v1.62.0...v1.63.0">See commits</a></p>
 <ul>
@@ -38446,6 +38492,12 @@ THE SOFTWARE.</code></pre>
 <ul>
 <li>https://forum.rclone.org</li>
 </ul>
+<h2 id="business-support">Business support</h2>
+<p>For business support or sponsorship enquiries please see:</p>
+<ul>
+<li>https://rclone.com/</li>
+<li>sponsorship@rclone.com</li>
+</ul>
 <h2 id="github-repository">GitHub repository</h2>
 <p>The project's repository is located at:</p>
 <ul>
@@ -38453,11 +38505,15 @@ THE SOFTWARE.</code></pre>
 </ul>
 <p>There you can file bug reports or contribute with pull requests.</p>
 <h2 id="twitter">Twitter</h2>
-<p>You can also follow me on twitter for rclone announcements:</p>
+<p>You can also follow Nick on twitter for rclone announcements:</p>
 <ul>
 <li><span class="citation" data-cites="njcw">[@njcw]</span>(https://twitter.com/njcw)</li>
 </ul>
 <h2 id="email">Email</h2>
-<p>Or if all else fails or you want to ask something private or confidential email <a href="mailto:nick@craig-wood.com">Nick Craig-Wood</a>. Please don't email me requests for help - those are better directed to the forum. Thanks!</p>
+<p>Or if all else fails or you want to ask something private or confidential</p>
+<ul>
+<li>info@rclone.com</li>
+</ul>
+<p>Please don't email requests for help to this address - those are better directed to the forum unless you'd like to sign up for business support.</p>
 </body>
 </html>
