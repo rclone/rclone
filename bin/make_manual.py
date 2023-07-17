@@ -114,7 +114,7 @@ commands_order = [
 ignore_docs = [
     "downloads.md",
     "privacy.md",
-    "donate.md",
+    "sponsor.md",
 ]
 
 def read_doc(doc):
