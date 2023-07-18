@@ -379,7 +379,7 @@ address this problem to a certain degree.
 For cloud storage systems with case sensitive file names (e.g. Google Drive),
 `base64` can be used to reduce file name length. 
 For cloud storage systems using UTF-16 to store file names internally
-(e.g. OneDrive, Dropbox), `base32768` can be used to drastically reduce
+(e.g. OneDrive, Dropbox, Box), `base32768` can be used to drastically reduce
 file name length. 
 
 An alternative, future rclone file name encryption mode may tolerate
@@ -600,7 +600,7 @@ Properties:
         - Encode using base64. Suitable for case sensitive remote.
     - "base32768"
         - Encode using base32768. Suitable if your remote counts UTF-16 or
-        - Unicode codepoint instead of UTF-8 byte length. (Eg. Onedrive, Dropbox)
+        - Unicode codepoint instead of UTF-8 byte length. (Eg. Onedrive, Dropbox, Box)
 
 #### --crypt-suffix
 
