@@ -103,6 +103,15 @@ Proton Drive can not have two files with exactly the same name and path. If the
 conflict occurs, depending on the advanced config, the file might or might not 
 be overwritten.
 
+### Caching
+
+The cache is currently built for the case when the rclone is the only instance 
+performing operations to the mount point. The event system, which is the proton
+API system that provides visibility of what has changed on the drive, is yet 
+to be implemented, so updates from other clients won’t be reflected in the 
+cache. Thus, if there are concurrent clients accessing the same mount point, 
+then we might have a problem with caching the stale data.
+
 ## Limitations
 
 This backend uses the 

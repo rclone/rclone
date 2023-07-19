@@ -122,14 +122,14 @@ API request.
 Looks like using [OS]-drive (e.g. windows-drive) prefix will spare us from 
 getting aggressive human verification blocking.`,
 			Advanced: true,
-			Default:  getAPIOS() + "-drive@1.0.0",
+			Default:  getAPIOS() + "-drive@1.0.0-alpha.1+rclone",
 		}, {
 			Name: "replace_existing_draft",
 			Help: `Create a new revision when filename conflict is detected
 
-When a file upload is cancelled or failed before completion, a draft will be created 
-and the subsequent upload of the same file to the same location will be reported 
-as a conflict.
+When a file upload is cancelled or failed before completion, a draft will be 
+created and the subsequent upload of the same file to the same location will be 
+reported as a conflict.
 
 If the option is set to true, the draft will be replaced and then the upload 
 operation will restart. If there are other clients also uploading at the same 
@@ -144,8 +144,15 @@ will be returned, and no upload will happen.`,
 			Name: "enable_caching",
 			Help: `Caches the files and folders metadata to reduce API calls
 
-The files and folders on ProtonDrive are represented as links with keyrings, which 
-can be cached to improve performance and be friendly to the API server.`,
+The files and folders on ProtonDrive are represented as links with keyrings, 
+which can be cached to improve performance and be friendly to the API server.
+
+The cache is currently built for the case when the rclone is the only instance 
+performing operations to the mount point. The event system, which is the proton
+API system that provides visibility of what has changed on the drive, is yet 
+to be implemented, so updates from other clients won’t be reflected in the 
+cache. Thus, if there are concurrent clients accessing the same mount point, 
+then we might have a problem with caching the stale data.`,
 			Advanced: true,
 			Default:  true,
 		}},
