@@ -494,7 +494,7 @@ to be the same account as the Dropbox you want to access)
 
 2. Choose an API => Usually this should be `Dropbox API`
 
-3. Choose the type of access you want to use => `Full Dropbox` or `App Folder`
+3. Choose the type of access you want to use => `Full Dropbox` or `App Folder`. If you want to use Team Folders, `Full Dropbox` is required ([see here](https://www.dropboxforum.com/t5/Dropbox-API-Support-Feedback/How-to-create-team-folder-inside-my-app-s-folder/m-p/601005/highlight/true#M27911)).
 
 4. Name your App. The app name is global, so you can't use `rclone` for example
 
