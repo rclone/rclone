@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"io"
 	iofs "io/fs"
+	"net"
 	"os"
 	"path"
 	"regexp"
@@ -27,6 +28,7 @@ import (
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/configstruct"
 	"github.com/rclone/rclone/fs/config/obscure"
+	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/lib/env"
 	"github.com/rclone/rclone/lib/pacer"
@@ -34,6 +36,7 @@ import (
 	sshagent "github.com/xanzy/ssh-agent"
 	"golang.org/x/crypto/ssh"
 	"golang.org/x/crypto/ssh/knownhosts"
+	"golang.org/x/net/proxy"
 )
 
 const (
@@ -416,6 +419,17 @@ An example setting might be:
 Note that when using an external ssh binary rclone makes a new ssh
 connection for every hash it calculates.
 `,
+		}, {
+			Name:    "socks_proxy",
+			Default: "",
+			Help: `Socks 5 proxy host for both SSH and SFTP connections.
+	
+Supports the format user:pass@host:port, user@host:port, host:port.
+
+Example:
+
+	myUser:myPass@localhost:9005
+	`,
 			Advanced: true,
 		}},
 	}
@@ -457,6 +471,7 @@ type Options struct {
 	MACs                    fs.SpaceSepList `config:"macs"`
 	HostKeyAlgorithms       fs.SpaceSepList `config:"host_key_algorithms"`
 	SSH                     fs.SpaceSepList `config:"ssh"`
+	SocksProxy              string          `config:"socks_proxy"`
 }
 
 // Fs stores the interface to the remote SFTP files
@@ -491,6 +506,51 @@ type Object struct {
 	mode    os.FileMode // mode bits from the file
 	md5sum  *string     // Cached MD5 checksum
 	sha1sum *string     // Cached SHA1 checksum
+}
+
+// dial starts a client connection to the given SSH server. It is a
+// convenience function that connects to the given network address,
+// initiates the SSH handshake, and then sets up a Client.
+func (f *Fs) dial(ctx context.Context, network, addr string, sshConfig *ssh.ClientConfig) (*ssh.Client, error) {
+	var (
+		conn net.Conn
+		err  error
+	)
+	baseDialer := fshttp.NewDialer(ctx)
+	if f.opt.SocksProxy != "" {
+		var (
+			proxyAddress string
+			proxyAuth    *proxy.Auth
+		)
+		if credsAndHost := strings.SplitN(f.opt.SocksProxy, "@", 2); len(credsAndHost) == 2 {
+			proxyCreds := strings.SplitN(credsAndHost[0], ":", 2)
+			proxyAuth = &proxy.Auth{
+				User: proxyCreds[0],
+			}
+			if len(proxyCreds) == 2 {
+				proxyAuth.Password = proxyCreds[1]
+			}
+			proxyAddress = credsAndHost[1]
+		} else {
+			proxyAddress = credsAndHost[0]
+		}
+		// Build the proxy dialer
+		proxyDialer, _ := proxy.SOCKS5("tcp", proxyAddress, proxyAuth, baseDialer)
+		conn, err = proxyDialer.Dial(network, addr)
+
+	} else {
+		conn, err = baseDialer.Dial(network, addr)
+	}
+
+	if err != nil {
+		return nil, err
+	}
+	c, chans, reqs, err := ssh.NewClientConn(conn, addr, sshConfig)
+	if err != nil {
+		return nil, err
+	}
+	fs.Debugf(f, "New connection %s->%s to %q", c.LocalAddr(), c.RemoteAddr(), c.ServerVersion())
+	return ssh.NewClient(c, chans, reqs), nil
 }
 
 // conn encapsulates an ssh client and corresponding sftp client

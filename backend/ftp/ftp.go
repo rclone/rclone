@@ -29,6 +29,7 @@ import (
 	"github.com/rclone/rclone/lib/env"
 	"github.com/rclone/rclone/lib/pacer"
 	"github.com/rclone/rclone/lib/readers"
+	"golang.org/x/net/proxy"
 )
 
 var (
@@ -175,6 +176,18 @@ If this is set and no password is supplied then rclone will ask for a password
 `,
 			Advanced: true,
 		}, {
+			Name:    "socks_proxy",
+			Default: "",
+			Help: `Socks 5 proxy host for both SSH and SFTP connections.
+		
+		Supports the format user:pass@host:port, user@host:port, host:port.
+		
+		Example:
+		
+			myUser:myPass@localhost:9005
+		`,
+			Advanced: true,
+		}, {
 			Name:     config.ConfigEncoding,
 			Help:     config.ConfigEncodingHelp,
 			Advanced: true,
@@ -218,6 +231,7 @@ type Options struct {
 	ShutTimeout       fs.Duration          `config:"shut_timeout"`
 	AskPassword       bool                 `config:"ask_password"`
 	Enc               encoder.MultiEncoder `config:"encoding"`
+	SocksProxy        string               `config:"socks_proxy"`
 }
 
 // Fs represents a remote FTP server
@@ -359,7 +373,31 @@ func (f *Fs) ftpConnection(ctx context.Context) (c *ftp.ServerConn, err error) {
 		defer func() {
 			fs.Debugf(f, "> dial: conn=%T, err=%v", conn, err)
 		}()
-		conn, err = fshttp.NewDialer(ctx).Dial(network, address)
+		baseDialer := fshttp.NewDialer(ctx)
+		if f.opt.SocksProxy != "" {
+			var (
+				proxyAddress string
+				proxyAuth    *proxy.Auth
+			)
+			if credsAndHost := strings.SplitN(f.opt.SocksProxy, "@", 2); len(credsAndHost) == 2 {
+				proxyCreds := strings.SplitN(credsAndHost[0], ":", 2)
+				proxyAuth = &proxy.Auth{
+					User: proxyCreds[0],
+				}
+				if len(proxyCreds) == 2 {
+					proxyAuth.Password = proxyCreds[1]
+				}
+				proxyAddress = credsAndHost[1]
+			} else {
+				proxyAddress = credsAndHost[0]
+			}
+			// Build the proxy dialer
+			proxyDialer, _ := proxy.SOCKS5("tcp", proxyAddress, proxyAuth, baseDialer)
+			conn, err = proxyDialer.Dial(network, address)
+
+		} else {
+			conn, err = baseDialer.Dial(network, address)
+		}
 		if err != nil {
 			return nil, err
 		}
