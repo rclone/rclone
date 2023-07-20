@@ -135,7 +135,7 @@ This will result in unnecessary API calls and can severely restrict throughput
 when handling transfers primarily composed of small files on some backends (e.g. Box).
 A workaround to this issue is to use chunker only for files above the chunk threshold
 via `--min-size` and then perform a separate call without chunker on the remaining
-files.
+files. 
 
 
 #### Chunk names
