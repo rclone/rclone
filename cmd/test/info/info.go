@@ -72,7 +72,7 @@ a bit of go code for each one.
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(1, 1e6, command, args)
 		if !checkNormalization && !checkControl && !checkLength && !checkStreaming && !all {
-			log.Fatalf("no tests selected - select a test or use -all")
+			log.Fatalf("no tests selected - select a test or use --all")
 		}
 		if all {
 			checkNormalization = true
