@@ -5087,6 +5087,14 @@ func (o *Object) setMetaData(resp *s3.HeadObjectOutput) {
 		o.bytes = -1
 		o.md5 = ""
 	}
+	// If client-side encryption then size are unencrypted
+	if o.fs.opt.CSEKMSMasterKeyID != "" {
+		if length, ok := resp.Metadata["X-Amz-Unencrypted-Content-Length"]; ok {
+			if lengthBytes, err := strconv.ParseInt(*length, 10, 64); err == nil {
+				o.bytes = lengthBytes
+			}
+		}
+	}
 }
 
 // ModTime returns the modification time of the object
@@ -5369,7 +5377,7 @@ func (o *Object) uploadMultipart(ctx context.Context, req *s3.PutObjectInput, si
 			CEKAlg:    r.HTTPRequest.Header.Get("X-Amz-Meta-X-Amz-Cek-Alg"),
 			TagLen:    r.HTTPRequest.Header.Get("X-Amz-Meta-X-Amz-Tag-Len"),
 		}
-		mReq.Metadata["X-Amz-Encrypted-Content-Length"] = &length
+		mReq.Metadata["X-Amz-Unencrypted-Content-Length"] = &length
 		mReq.Metadata["X-Amz-Iv"] = &env.IV
 		mReq.Metadata["X-Amz-Key-V2"] = &env.CipherKey
 		mReq.Metadata["X-Amz-Matdesc"] = &env.MatDesc
