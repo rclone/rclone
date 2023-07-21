@@ -1815,7 +1815,7 @@ If you leave it blank, this is calculated automatically from the sse_customer_ke
 		}, {
 			Name:     "cse_kms_master_key_id",
 			Help:     "The client-side encryption with using KMS master key ID you must provide the ARN of Key.",
-			Provider: "AWS",
+			Provider: "AWS,Ceph,Minio,SeaweedFS,Other",
 			Examples: []fs.OptionExample{{
 				Value: "",
 				Help:  "None",
@@ -2376,7 +2376,7 @@ In this case, you might want to try disabling this option.
 			Advanced: true,
 		}, {
 			Name:     "kms_endpoint",
-			Help:     "Endpoint for KMS.\n\nLeave blank if using AWS to use the default endpoint for the region.",
+			Help:     "Endpoint for KMS API.\n\nLeave blank if using AWS to use the default endpoint for the region.",
 			Provider: "AWS",
 			Advanced: true,
 		},
