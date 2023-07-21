@@ -475,6 +475,44 @@ func (f *Fs) About(ctx context.Context) (_ *fs.Usage, err error) {
 	return usage, nil
 }
 
+func (f *Fs) OpenWriterAt(ctx context.Context, remote string, size int64) (fs.WriterAtCloser, error) {
+	var err error
+	o := &Object{
+		fs:     f,
+		remote: remote,
+	}
+	share, filename := o.split()
+	if share == "" || filename == "" {
+		return nil, fs.ErrorIsDir
+	}
+
+	err = o.fs.ensureDirectory(ctx, share, filename)
+	if err != nil {
+		return nil, fmt.Errorf("failed to make parent directories: %w", err)
+	}
+
+	filename = o.fs.toSambaPath(filename)
+
+	o.fs.addSession() // Show session in use
+	defer o.fs.removeSession()
+
+	cn, err := o.fs.getConnection(ctx, share)
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		o.statResult, _ = cn.smbShare.Stat(filename)
+		o.fs.putConnection(&cn)
+	}()
+
+	fl, err := cn.smbShare.OpenFile(filename, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0o644)
+	if err != nil {
+		return nil, fmt.Errorf("failed to open: %w", err)
+	}
+
+	return fl, nil
+}
+
 // Shutdown the backend, closing any background tasks and any
 // cached connections.
 func (f *Fs) Shutdown(ctx context.Context) error {
