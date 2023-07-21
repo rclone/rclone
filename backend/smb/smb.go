@@ -500,10 +500,6 @@ func (f *Fs) OpenWriterAt(ctx context.Context, remote string, size int64) (fs.Wr
 	if err != nil {
 		return nil, err
 	}
-	defer func() {
-		o.statResult, _ = cn.smbShare.Stat(filename)
-		o.fs.putConnection(&cn)
-	}()
 
 	fl, err := cn.smbShare.OpenFile(filename, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0o644)
 	if err != nil {
