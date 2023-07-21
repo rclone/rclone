@@ -475,6 +475,11 @@ func (f *Fs) About(ctx context.Context) (_ *fs.Usage, err error) {
 	return usage, nil
 }
 
+// OpenWriterAt opens with a handle for random access writes
+//
+// Pass in the remote desired and the size if known.
+//
+// It truncates any existing object
 func (f *Fs) OpenWriterAt(ctx context.Context, remote string, size int64) (fs.WriterAtCloser, error) {
 	var err error
 	o := &Object{
