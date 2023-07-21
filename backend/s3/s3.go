@@ -3181,7 +3181,6 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 			return nil, err
 		}
 		f.etagIsNotMD5 = true
-		f.ci.IgnoreSize = true
 	}
 	f.setRoot(root)
 	f.features = (&fs.Features{
