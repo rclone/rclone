@@ -419,7 +419,7 @@ remote or an fs.
 
 Research
 
-  * Look at the interfaces defined in `fs/fs.go`
+  * Look at the interfaces defined in `fs/types.go`
   * Study one or more of the existing remotes
 
 Getting going

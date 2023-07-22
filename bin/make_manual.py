@@ -66,6 +66,7 @@ docs = [
     "pcloud.md",
     "pikpak.md",
     "premiumizeme.md",
+    "protondrive.md",
     "putio.md",
     "seafile.md",
     "sftp.md",
