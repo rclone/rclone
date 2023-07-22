@@ -17,8 +17,9 @@ import (
 // This is a wrapped object which returns the Union Fs as its parent
 type Object struct {
 	*upstream.Object
-	fs *Fs // what this object is part of
-	co []upstream.Entry
+	fs          *Fs // what this object is part of
+	co          []upstream.Entry
+	writebackMu sync.Mutex
 }
 
 // Directory describes a union Directory
@@ -32,6 +33,13 @@ type Directory struct {
 type entry interface {
 	upstream.Entry
 	candidates() []upstream.Entry
+}
+
+// Update o with the contents of newO excluding the lock
+func (o *Object) update(newO *Object) {
+	o.Object = newO.Object
+	o.fs = newO.fs
+	o.co = newO.co
 }
 
 // UnWrapUpstream returns the upstream Object that this Object is wrapping
@@ -67,7 +75,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 			return err
 		}
 		// Update current object
-		*o = *newO.(*Object)
+		o.update(newO.(*Object))
 		return nil
 	} else if err != nil {
 		return err
@@ -173,6 +181,25 @@ func (o *Object) SetTier(tier string) error {
 		return errors.New("underlying remote does not support SetTier")
 	}
 	return do.SetTier(tier)
+}
+
+// Open opens the file for read.  Call Close() on the returned io.ReadCloser
+func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadCloser, error) {
+	// Need some sort of locking to prevent multiple downloads
+	o.writebackMu.Lock()
+	defer o.writebackMu.Unlock()
+
+	// FIXME what if correct object is already in o.co
+
+	newObj, err := o.Object.Writeback(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if newObj != nil {
+		o.Object = newObj
+		o.co = append(o.co, newObj) // FIXME should this append or overwrite or update?
+	}
+	return o.Object.Object.Open(ctx, options...)
 }
 
 // ModTime returns the modification date of the directory

@@ -16,6 +16,7 @@ import (
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/cache"
 	"github.com/rclone/rclone/fs/fspath"
+	"github.com/rclone/rclone/fs/operations"
 )
 
 var (
@@ -37,6 +38,8 @@ type Fs struct {
 	cacheMutex  sync.RWMutex
 	cacheOnce   sync.Once
 	cacheUpdate bool // if the cache is updating
+	writeback   bool // writeback to this upstream
+	writebackFs *Fs  // if non zero, writeback to this upstream
 }
 
 // Directory describes a wrapped Directory
@@ -86,6 +89,9 @@ func New(ctx context.Context, remote, root string, opt *common.Options) (*Fs, er
 		f.writable = true
 		f.creatable = false
 		fsPath = fsPath[0 : len(fsPath)-3]
+	} else if strings.HasSuffix(fsPath, ":writeback") {
+		f.writeback = true
+		fsPath = fsPath[0 : len(fsPath)-len(":writeback")]
 	}
 	remote = configName + fsPath
 	rFs, err := cache.Get(ctx, remote)
@@ -101,6 +107,29 @@ func New(ctx context.Context, remote, root string, opt *common.Options) (*Fs, er
 	f.Fs = myFs
 	cache.PinUntilFinalized(f.Fs, f)
 	return f, err
+}
+
+// Prepare the configured upstreams as a group
+func Prepare(fses []*Fs) error {
+	writebacks := 0
+	var writebackFs *Fs
+	for _, f := range fses {
+		if f.writeback {
+			writebackFs = f
+			writebacks++
+		}
+	}
+	if writebacks == 0 {
+		return nil
+	} else if writebacks > 1 {
+		return fmt.Errorf("can only have 1 :writeback not %d", writebacks)
+	}
+	for _, f := range fses {
+		if !f.writeback {
+			f.writebackFs = writebackFs
+		}
+	}
+	return nil
 }
 
 // WrapDirectory wraps an fs.Directory to include the info
@@ -291,6 +320,28 @@ func (o *Object) Metadata(ctx context.Context) (fs.Metadata, error) {
 		return nil, nil
 	}
 	return do.Metadata(ctx)
+}
+
+// Writeback writes the object back and returns a new object
+//
+// If it returns nil, nil then the original object is OK
+func (o *Object) Writeback(ctx context.Context) (*Object, error) {
+	if o.f.writebackFs == nil {
+		return nil, nil
+	}
+	newObj, err := operations.Copy(ctx, o.f.writebackFs.Fs, nil, o.Object.Remote(), o.Object)
+	if err != nil {
+		return nil, err
+	}
+	// newObj could be nil here
+	if newObj == nil {
+		fs.Errorf(o, "nil Object returned from operations.Copy")
+		return nil, nil
+	}
+	return &Object{
+		Object: newObj,
+		f:      o.f,
+	}, err
 }
 
 // About gets quota information from the Fs
