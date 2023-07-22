@@ -5313,17 +5313,6 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 
 var warnStreamUpload sync.Once
 
-func appendMultipartParams(uploadPartInput *s3.UploadPartInput) request.Option {
-	return func(r *request.Request) {
-		r.Handlers.Build.PushBack(func(req *request.Request) {
-			r.HTTPRequest.URL.RawQuery = url.Values{
-				"partNumber": []string{strconv.FormatInt(*uploadPartInput.PartNumber, 10)},
-				"uploadId":   []string{*uploadPartInput.UploadId},
-			}.Encode()
-		})
-	}
-}
-
 func (o *Object) uploadMultipart(ctx context.Context, req *s3.PutObjectInput, size int64, in io.Reader) (wantETag, gotETag string, versionID *string, err error) {
 	f := o.fs
 
