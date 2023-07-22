@@ -15,7 +15,6 @@ require (
 	github.com/abbot/go-http-auth v0.4.0
 	github.com/anacrolix/dms v1.5.0
 	github.com/anacrolix/log v0.13.1
-	github.com/artyom/mtab v1.0.0
 	github.com/atotto/clipboard v0.1.4
 	github.com/aws/aws-sdk-go v1.44.246
 	github.com/buengese/sgzip v0.1.1
@@ -41,6 +40,7 @@ require (
 	github.com/mattn/go-colorable v0.1.13
 	github.com/mattn/go-runewidth v0.0.14
 	github.com/mitchellh/go-homedir v1.1.0
+	github.com/moby/sys/mountinfo v0.6.2
 	github.com/ncw/go-acd v0.0.0-20201019170801-fe55f33415b1
 	github.com/ncw/swift/v2 v2.0.1
 	github.com/oracle/oci-go-sdk/v65 v65.34.0
