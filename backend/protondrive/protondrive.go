@@ -7,7 +7,6 @@ import (
 	"io"
 	"log"
 	"path"
-	"runtime"
 	"strings"
 	"time"
 
@@ -48,28 +47,11 @@ const (
 var (
 	ErrCanNotUploadFileWithUnknownSize = errors.New("proton Drive can't upload files with unknown size")
 	ErrCanNotPurgeRootDirectory        = errors.New("can't purge root directory")
-	ErrFileSHA1Missing                 = errors.New("file sha1 digest not found")
 
 	// for the auth/deauth handler
 	_mapper        configmap.Mapper
 	_saltedKeyPass string
 )
-
-func getAPIOS() string {
-	switch runtime.GOOS {
-	case "darwin":
-		return "macos"
-
-	case "linux":
-		return "linux"
-
-	case "windows":
-		return "windows"
-
-	default:
-		return "linux"
-	}
-}
 
 // Register with Fs
 func init() {
@@ -117,12 +99,9 @@ size, will fail to operate properly`,
 
 The app version string indicates the client that is currently performing 
 the API request. This information is required and will be sent with every 
-API request.
-
-Looks like using [OS]-drive (e.g. windows-drive) prefix will spare us from 
-getting aggressive human verification blocking.`,
+API request.`,
 			Advanced: true,
-			Default:  getAPIOS() + "-drive@1.0.0-alpha.1+rclone",
+			Default:  "macos-drive@1.0.0-alpha.1+rclone",
 		}, {
 			Name: "replace_existing_draft",
 			Help: `Create a new revision when filename conflict is detected
@@ -810,7 +789,8 @@ func (o *Object) Hash(ctx context.Context, t hash.Type) (string, error) {
 	}
 
 	if fileSystemAttrs == nil || fileSystemAttrs.Digests == "" {
-		return "", ErrFileSHA1Missing
+		fs.Debugf(o, "file sha1 digest missing")
+		return "", nil
 	}
 	return fileSystemAttrs.Digests, nil
 }
