@@ -18,6 +18,7 @@ Current active maintainers of rclone are:
 | Caleb Case       | @calebcase        | storj backend                |
 | wiserain         | @wiserain         | pikpak backend               |
 | albertony        | @albertony        |                              |
+| Chun-Hung Tseng  | @henrybear327     | Proton Drive Backend         |
 
 **This is a work in progress Draft**
 
