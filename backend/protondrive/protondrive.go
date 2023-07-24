@@ -902,11 +902,18 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		return err
 	}
 
+	var sha1Hash string
+	if val, ok := fileSystemAttrs.Digests["SHA1"]; ok {
+		sha1Hash = val
+	} else {
+		sha1Hash = ""
+	}
+
 	o.id = linkID
 	o.originalSize = &fileSystemAttrs.Size
 	o.modTime = modTime
 	o.blockSizes = fileSystemAttrs.BlockSizes
-	o.digests = &fileSystemAttrs.Digests
+	o.digests = &sha1Hash
 
 	return nil
 }
