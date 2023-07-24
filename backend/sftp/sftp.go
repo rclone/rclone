@@ -1992,9 +1992,10 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	if err != nil {
 		return fmt.Errorf("Update: %w", err)
 	}
+	// Hang on to the connection for the whole upload so it doesn't get re-used while we are uploading
 	file, err := c.sftpClient.OpenFile(o.path(), os.O_WRONLY|os.O_CREATE|os.O_TRUNC)
-	o.fs.putSftpConnection(&c, err)
 	if err != nil {
+		o.fs.putSftpConnection(&c, err)
 		return fmt.Errorf("Update Create failed: %w", err)
 	}
 	// remove the file if upload failed
@@ -2014,14 +2015,18 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	}
 	_, err = file.ReadFrom(&sizeReader{Reader: in, size: src.Size()})
 	if err != nil {
+		o.fs.putSftpConnection(&c, err)
 		remove()
 		return fmt.Errorf("Update ReadFrom failed: %w", err)
 	}
 	err = file.Close()
 	if err != nil {
+		o.fs.putSftpConnection(&c, err)
 		remove()
 		return fmt.Errorf("Update Close failed: %w", err)
 	}
+	// Release connection only when upload has finished so we don't upload multiple files on the same connection
+	o.fs.putSftpConnection(&c, err)
 
 	// Set the mod time - this stats the object if o.fs.opt.SetModTime == true
 	err = o.SetModTime(ctx, src.ModTime(ctx))
