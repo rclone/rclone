@@ -3,6 +3,7 @@ package media
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/url"
 
@@ -32,9 +33,22 @@ type JobIdResponse struct {
 	JobId string `json:"jobId"`
 }
 
-//FolderResponse respresents struct for response to move folder api.
+// FolderResponse respresents struct for response to move folder api.
 type FolderResponse struct {
 	Data JobIdResponse
+	api.Response
+}
+
+// JobStatus represents response Data to job status api
+type JobStatus struct {
+	JobId  string `json:"jobId"`
+	Type   string `json:"type"`
+	Status string `json:"status"`
+}
+
+// JobStatusResponse represents response to job status api
+type JobStatusResponse struct {
+	Data JobStatus
 	api.Response
 }
 
@@ -92,7 +106,7 @@ func (m *API) CreateFolder(ctx context.Context, param CreateFolderParam) (*api.R
 		return response, err
 	}
 
-	if resp.StatusCode != 201 {
+	if resp.StatusCode != 200 {
 		err = response.ParseError()
 	}
 
@@ -116,6 +130,51 @@ func (m *API) DeleteFolder(ctx context.Context, param DeleteFolderParam) (*api.R
 
 	if resp.StatusCode != 204 {
 		err = response.ParseError()
+	}
+	return response, err
+}
+
+// MoveFolder moves given folder to new aath in media library
+func (m *API) MoveFolder(ctx context.Context, param MoveFolderParam) (*FolderResponse, error) {
+	var err error
+	var response = &FolderResponse{}
+
+	if err = validator.Validate(&param); err != nil {
+		return nil, err
+	}
+
+	resp, err := m.post(ctx, "bulkJobs/moveFolder", &param, response)
+
+	if err != nil {
+		return response, err
+	}
+
+	if resp.StatusCode != 200 {
+		err = response.ParseError()
+	} else {
+		err = json.Unmarshal(response.Body(), &response.Data)
+	}
+	return response, err
+}
+
+func (m *API) BulkJobStatus(ctx context.Context, jobId string) (*JobStatusResponse, error) {
+	var err error
+	var response = &JobStatusResponse{}
+
+	if jobId == "" {
+		return nil, errors.New("jobId can not be blank")
+	}
+
+	resp, err := m.get(ctx, "bulkJobs/"+jobId, response)
+
+	if err != nil {
+		return response, err
+	}
+
+	if resp.StatusCode != 200 {
+		err = response.ParseError()
+	} else {
+		err = json.Unmarshal(response.Body(), &response.Data)
 	}
 	return response, err
 }

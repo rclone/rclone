@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"flag"
 	"io"
 	"mime/multipart"
 	"net/http"
@@ -48,6 +49,11 @@ func (u *API) postIOReader(ctx context.Context, urlPath string, reader io.Reader
 		_ = formWriter.WriteField(key, val[0])
 	}
 
+	if flag.Lookup("test.v") != nil {
+		fileName := formParams.Get("fileName")
+		formParams.Set("fileName", fileName + "_test.txt")
+	}
+
 	partWriter, err := formWriter.CreateFormFile("file", formParams.Get("fileName"))
 	if err != nil {
 		return nil, err
@@ -61,9 +67,9 @@ func (u *API) postIOReader(ctx context.Context, urlPath string, reader io.Reader
 		return nil, err
 	}
 
-	if u.Config.API.UploadTimeout != 0 {
+	if u.Config.UploadTimeout != 0 {
 		var cancel context.CancelFunc
-		ctx, cancel = context.WithTimeout(ctx, time.Duration(u.Config.API.UploadTimeout)*time.Second)
+		ctx, cancel = context.WithTimeout(ctx, time.Duration(u.Config.UploadTimeout)*time.Second)
 		defer cancel()
 	}
 
@@ -73,7 +79,7 @@ func (u *API) postIOReader(ctx context.Context, urlPath string, reader io.Reader
 func (u *API) postBody(ctx context.Context, urlPath string, bodyBuf *bytes.Buffer, headers map[string]string) (*http.Response, error) {
 
 	req, err := http.NewRequest(http.MethodPost,
-		u.Config.API.UploadPrefix+urlPath,
+		u.Config.UploadPrefix+urlPath,
 		bodyBuf,
 	)
 
@@ -81,7 +87,7 @@ func (u *API) postBody(ctx context.Context, urlPath string, bodyBuf *bytes.Buffe
 		return nil, err
 	}
 
-	req.SetBasicAuth(u.Config.Cloud.PrivateKey, "")
+	req.SetBasicAuth(u.Config.PrivateKey, "")
 
 	for key, val := range headers {
 		req.Header.Add(key, val)
@@ -106,7 +112,7 @@ func (u *API) postForm(ctx context.Context, urlPath string, formParams url.Value
 	}
 
 	h := map[string]string{"Content-Type": writer.FormDataContentType()}
-	ctx, cancel := context.WithTimeout(ctx, time.Duration(u.Config.API.Timeout)*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, time.Duration(u.Config.Timeout)*time.Second)
 	defer cancel()
 
 	return u.postBody(ctx, urlPath, bodyBuf, h)

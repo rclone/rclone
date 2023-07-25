@@ -18,7 +18,7 @@ type API struct {
 }
 
 func (m *API) post(ctx context.Context, url string, data interface{}, ms api.MetaSetter) (*http.Response, error) {
-	url = api.BuildPath(m.Config.API.Prefix, url)
+	url = api.BuildPath(m.Config.Prefix, url)
 	var err error
 	var body []byte
 
@@ -35,7 +35,7 @@ func (m *API) post(ctx context.Context, url string, data interface{}, ms api.Met
 	}
 
 	req.Header.Set("Content-Type", "application/json")
-	req.SetBasicAuth(m.Config.Cloud.PrivateKey, "")
+	req.SetBasicAuth(m.Config.PrivateKey, "")
 
 	resp, err := m.Config.HttpClient.Do(req.WithContext(ctx))
 	defer api.DeferredBodyClose(resp)
@@ -48,14 +48,14 @@ func (m *API) post(ctx context.Context, url string, data interface{}, ms api.Met
 }
 
 func (m *API) get(ctx context.Context, url string, ms api.MetaSetter) (*http.Response, error) {
-	url = api.BuildPath(m.Config.API.Prefix, url)
+	url = api.BuildPath(m.Config.Prefix, url)
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 
 	if err != nil {
 		return nil, err
 	}
 
-	req.SetBasicAuth(m.Config.Cloud.PrivateKey, "")
+	req.SetBasicAuth(m.Config.PrivateKey, "")
 
 	resp, err := m.HttpClient.Do(req.WithContext(ctx))
 	defer api.DeferredBodyClose(resp)
@@ -67,7 +67,7 @@ func (m *API) get(ctx context.Context, url string, ms api.MetaSetter) (*http.Res
 
 func (m *API) delete(ctx context.Context, url string, data interface{}, ms api.MetaSetter) (*http.Response, error) {
 	var err error
-	url = api.BuildPath(m.Config.API.Prefix, url)
+	url = api.BuildPath(m.Config.Prefix, url)
 	var body []byte
 
 	if data != nil {
@@ -84,61 +84,7 @@ func (m *API) delete(ctx context.Context, url string, data interface{}, ms api.M
 		return nil, err
 	}
 
-	req.SetBasicAuth(m.Config.Cloud.PrivateKey, "")
-
-	resp, err := m.HttpClient.Do(req.WithContext(ctx))
-	defer api.DeferredBodyClose(resp)
-
-	api.SetResponseMeta(resp, ms)
-
-	return resp, err
-}
-
-func (m *API) patch(ctx context.Context, url string, data interface{}, ms api.MetaSetter) (*http.Response, error) {
-	url = api.BuildPath(m.Config.API.Prefix, url)
-	var err error
-	var body []byte
-
-	if data != nil {
-		if body, err = json.Marshal(data); err != nil {
-			return nil, err
-		}
-	}
-	req, err := http.NewRequest(http.MethodPatch, url, bytes.NewBuffer(body))
-
-	if err != nil {
-		return nil, err
-	}
-
-	req.Header.Set("Content-Type", "application/json")
-	req.SetBasicAuth(m.Config.Cloud.PrivateKey, "")
-
-	resp, err := m.HttpClient.Do(req.WithContext(ctx))
-	defer api.DeferredBodyClose(resp)
-
-	api.SetResponseMeta(resp, ms)
-
-	return resp, err
-}
-
-func (m *API) put(ctx context.Context, url string, data interface{}, ms api.MetaSetter) (*http.Response, error) {
-	url = api.BuildPath(m.Config.API.Prefix, url)
-	var err error
-	var body []byte
-
-	if data != nil {
-		if body, err = json.Marshal(data); err != nil {
-			return nil, err
-		}
-	}
-	req, err := http.NewRequest(http.MethodPut, url, bytes.NewBuffer(body))
-
-	if err != nil {
-		return nil, err
-	}
-
-	req.Header.Set("Content-Type", "application/json")
-	req.SetBasicAuth(m.Config.Cloud.PrivateKey, "")
+	req.SetBasicAuth(m.Config.PrivateKey, "")
 
 	resp, err := m.HttpClient.Do(req.WithContext(ctx))
 	defer api.DeferredBodyClose(resp)

@@ -3,6 +3,7 @@ package imagekit
 import (
 	"context"
 	"fmt"
+	"log"
 	"strconv"
 	"time"
 
@@ -125,6 +126,48 @@ func (f *Fs) getFolderByName(ctx context.Context, path string, name string) (fol
 	}
 
 	return folder
+}
+
+func (f *Fs) moveFolder(ctx context.Context, sourceFolderPath string, destinationPath string) (err error) {
+
+	var jobId string
+
+	err = f.pacer.Call(func() (bool, error) {
+		res, err := f.ik.Media.MoveFolder(ctx, media.MoveFolderParam{
+			SourceFolderPath: sourceFolderPath,
+			DestinationPath:  destinationPath,
+		})
+
+		jobId = res.Data.JobId
+
+		return f.shouldRetry(ctx, &res.Response, err)
+	})
+
+	if err != nil {
+		return err
+	}
+
+	err = f.pacer.Call(func() (bool, error) {
+		res, err := f.ik.Media.BulkJobStatus(ctx, jobId)
+
+		log.Println(res.Data)
+
+		if res.Data.Status == "Pending" {
+			return true, nil
+		}
+
+		if res.Data.Status == "Completed" {
+			return false, nil
+		}
+
+		return f.shouldRetry(ctx, &res.Response, err)
+	})
+
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // retryErrorCodes is a slice of error codes that we will retry

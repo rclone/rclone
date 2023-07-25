@@ -2,7 +2,6 @@ package client
 
 import (
 	"github.com/rclone/rclone/backend/imagekit/client/api/media"
-	"github.com/rclone/rclone/backend/imagekit/client/api/metadata"
 	"github.com/rclone/rclone/backend/imagekit/client/api/uploader"
 	"github.com/rclone/rclone/backend/imagekit/client/config"
 )
@@ -11,7 +10,6 @@ import (
 type ImageKit struct {
 	Config   config.Configuration
 	Media    *media.API
-	Metadata *metadata.API
 	Uploader *uploader.API
 }
 
@@ -33,24 +31,16 @@ func New(params NewParams) (*ImageKit, error) {
 	if err != nil {
 		return nil, err
 	}
-	return NewFromConfiguration(cfg), nil
-}
 
-// NewFromConfiguration returns new ImageKit object from configuration object
-func NewFromConfiguration(cfg *config.Configuration) *ImageKit {
 	return &ImageKit{
 		Config: *cfg,
 		Media: &media.API{
 			Config:     *cfg,
 			HttpClient: cfg.HttpClient,
 		},
-		Metadata: &metadata.API{
-			Config: *cfg,
-			Client: cfg.HttpClient,
-		},
 		Uploader: &uploader.API{
 			Config:     *cfg,
 			HttpClient: cfg.HttpClient,
 		},
-	}
+	}, nil
 }

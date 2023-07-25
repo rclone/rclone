@@ -9,19 +9,105 @@ import (
 	"strconv"
 	"strings"
 	"time"
-
-	ikurl "github.com/rclone/rclone/backend/imagekit/client/url"
 )
 
+type trpos string
+
+const (
+	PATH  trpos = "path"
+	QUERY trpos = "query"
+)
+
+type UrlParam struct {
+	Path                string
+	Src                 string
+	UrlEndpoint         string
+	Transformations     []map[string]any
+	NamedTransformation string // n-trname
+
+	Signed                 bool
+	ExpireSeconds          int64
+	TransformationPosition trpos
+	QueryParameters        map[string]string
+	UnixTime               func() int64
+}
+
+
+// TransformationCode represents mapping between parameter and url prefix code
+var TransformationCode = map[string]string{
+	"height":                    "h",
+	"width":                     "w",
+	"aspectRatio":               "ar",
+	"quality":                   "q",
+	"crop":                      "c",
+	"cropMode":                  "cm",
+	"x":                         "x",
+	"y":                         "y",
+	"xc":                        "xc",
+	"yc":                        "yc",
+	"focus":                     "fo",
+	"format":                    "f",
+	"radius":                    "r",
+	"background":                "bg",
+	"border":                    "b",
+	"rotation":                  "rt",
+	"blur":                      "bl",
+	"named":                     "n",
+	"overlayX":                  "ox",
+	"overlayY":                  "oy",
+	"overlayFocus":              "ofo",
+	"overlayHeight":             "oh",
+	"overlayWidth":              "ow",
+	"overlayImage":              "oi",
+	"overlayImageX":             "oix",
+	"overlayImageY":             "oiy",
+	"overlayImageXc":            "oixc",
+	"overlayImageYc":            "oiyc",
+	"overlayImageAspectRatio":   "oiar",
+	"overlayImageBackground":    "oibg",
+	"overlayImageBorder":        "oib",
+	"overlayImageDPR":           "oidpr",
+	"overlayImageQuality":       "oiq",
+	"overlayImageCropping":      "oic",
+	"overlayImageFocus":         "oifo",
+	"overlayImageTrim":          "oit",
+	"overlayText":               "ot",
+	"overlayTextFontSize":       "ots",
+	"overlayTextFontFamily":     "otf",
+	"overlayTextColor":          "otc",
+	"overlayTextTransparency":   "oa",
+	"overlayAlpha":              "oa",
+	"overlayTextTypography":     "ott",
+	"overlayBackground":         "obg",
+	"overlayTextEncoded":        "ote",
+	"overlayTextWidth":          "otw",
+	"overlayTextBackground":     "otbg",
+	"overlayTextPadding":        "otp",
+	"overlayTextInnerAlignment": "otia",
+	"overlayRadius":             "or",
+	"progressive":               "pr",
+	"lossless":                  "lo",
+	"trim":                      "t",
+	"metadata":                  "md",
+	"colorProfile":              "cp",
+	"defaultImage":              "di",
+	"dpr":                       "dpr",
+	"effectSharpen":             "e-sharpen",
+	"effectUSM":                 "e-usm",
+	"effectContrast":            "e-contrast",
+	"effectGray":                "e-grayscale",
+	"original":                  "orig",
+}
+
 // Url generates url from UrlParam
-func (ik *ImageKit) Url(params ikurl.UrlParam) (string, error) {
+func (ik *ImageKit) Url(params UrlParam) (string, error) {
 	var resultUrl string
 	var url *neturl.URL
 	var err error
 	var endpoint = params.UrlEndpoint
 
 	if endpoint == "" {
-		endpoint = ik.Config.Cloud.UrlEndpoint
+		endpoint = ik.Config.UrlEndpoint
 	}
 
 	endpoint = strings.TrimRight(endpoint, "/") + "/"
@@ -40,7 +126,7 @@ func (ik *ImageKit) Url(params ikurl.UrlParam) (string, error) {
 				return "", err
 			}
 		} else {
-			if params.TransformationPosition == ikurl.QUERY {
+			if params.TransformationPosition == QUERY {
 				params.QueryParameters["tr"] = joinTransformations(params.Transformations...)
 				url, err = neturl.Parse(endpoint + params.Path)
 
@@ -85,11 +171,11 @@ func (ik *ImageKit) Url(params ikurl.UrlParam) (string, error) {
 		var path = strings.Replace(resultUrl, endpoint, "", 1)
 
 		path = path + expires
-		mac := hmac.New(sha1.New, []byte(ik.Config.Cloud.PrivateKey))
+		mac := hmac.New(sha1.New, []byte(ik.Config.PrivateKey))
 		mac.Write([]byte(path))
 		signature := hex.EncodeToString(mac.Sum(nil))
 
-		if strings.Index(resultUrl, "?") > -1 {
+		if strings.Contains(resultUrl, "?") {
 			resultUrl = resultUrl + "&" + fmt.Sprintf("ik-t=%s&ik-s=%s", expires, signature)
 		} else {
 			resultUrl = resultUrl + "?" + fmt.Sprintf("ik-t=%s&ik-s=%s", expires, signature)
@@ -118,7 +204,7 @@ func transform(tr map[string]any) string {
 			parts = append(parts, value)
 			continue
 		}
-		prefix, ok := ikurl.TransformationCode[k]
+		prefix, ok := TransformationCode[k]
 
 		if !ok {
 			parts = append(parts, value)

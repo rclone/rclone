@@ -15,7 +15,6 @@ import (
 	"github.com/rclone/rclone/backend/imagekit/client"
 	"github.com/rclone/rclone/backend/imagekit/client/api/media"
 	"github.com/rclone/rclone/backend/imagekit/client/api/uploader"
-	ikUrl "github.com/rclone/rclone/backend/imagekit/client/url"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fs/config/configmap"
@@ -28,7 +27,7 @@ import (
 )
 
 const (
-	minSleep      = 10 * time.Millisecond
+	minSleep      = 1 * time.Second
 	maxSleep      = 60 * time.Second
 	decayConstant = 2
 )
@@ -141,6 +140,7 @@ var (
 	_ fs.Purger       = &Fs{}
 	_ fs.PublicLinker = &Fs{}
 	_ fs.Object       = &Object{}
+	_ fs.Copier        = &Fs{}
 )
 
 func NewFs(ctx context.Context, name string, root string, m configmap.Mapper) (fs.Fs, error) {
@@ -368,7 +368,7 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 // will return the object and the error, otherwise will return
 // nil and the error
 func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
-	return uploadFile(ctx, f, in, src, options...)
+	return uploadFile(ctx, f, in, src.Remote(), options...)
 }
 
 // Mkdir makes the directory (container, bucket)
@@ -472,7 +472,7 @@ func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, 
 		return "", fs.ErrorObjectNotFound
 	}
 
-	url, err := f.ik.Url(ikUrl.UrlParam{
+	url, err := f.ik.Url(client.UrlParam{
 		Src:           file.Url,
 		Signed:        *file.IsPrivateFile || f.opt.OnlySigned,
 		ExpireSeconds: int64(expireSeconds),
@@ -556,11 +556,11 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 		}
 	}
 
-	url, err := o.fs.ik.Url(ikUrl.UrlParam{
+	url, err := o.fs.ik.Url(client.UrlParam{
 		Src:    o.file.Url,
 		Signed: *o.file.IsPrivateFile || o.fs.opt.OnlySigned,
 		QueryParameters: map[string]string{
-			"tr": "orig-true",
+			"tr":        "orig-true",
 			"updatedAt": o.file.UpdatedAt.String(),
 		},
 	})
@@ -660,11 +660,9 @@ func (o *Object) SetModTime(ctx context.Context, t time.Time) error {
 	return fs.ErrorCantSetModTime
 }
 
-func uploadFile(ctx context.Context, f *Fs, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
+func uploadFile(ctx context.Context, f *Fs, in io.Reader, srcRemote string, options ...fs.OpenOption) (fs.Object, error) {
 
-	fs.Debugf(src, "Uploading file")
-
-	srcRemote := src.Remote()
+	fs.Debugf(srcRemote, "Uploading file")
 
 	remote := path.Join(f.root, srcRemote)
 	folderPath := f.EncodePath(remote[:strings.LastIndex(remote, "/")+1])
@@ -772,4 +770,29 @@ func (o *Object) Metadata(ctx context.Context) (metadata fs.Metadata, err error)
 	}
 
 	return metadata, nil
+}
+
+// Move src to this remote using server-side move operations.
+//
+// This is stored with the remote path given.
+//
+// It returns the destination Object and a possible error.
+//
+// Will only be called if src.Fs().Name() == f.Name()
+//
+// If it isn't possible then return fs.ErrorCantMove
+func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
+	srcObj, ok := src.(*Object)
+	if !ok {
+		fs.Debugf(src, "Can't copy - not same remote type")
+		return nil, fs.ErrorCantMove
+	}
+
+	file, err := srcObj.Open(ctx)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return uploadFile(ctx, f, file, remote)
 }
