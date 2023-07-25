@@ -750,3 +750,4 @@ put them back in again.` >}}
   * Ricardo D'O. Albanus <rdalbanus@users.noreply.github.com>
   * gabriel-suela <gscsuela@gmail.com>
   * Tiago Boeing <contato@tiagoboeing.com>
+  * Edwin Mackenzie-Owen <edwin.mowen@gmail.com>
