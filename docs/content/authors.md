@@ -749,3 +749,4 @@ put them back in again.` >}}
   * Chun-Hung Tseng <henrybear327@users.noreply.github.com>
   * Ricardo D'O. Albanus <rdalbanus@users.noreply.github.com>
   * gabriel-suela <gscsuela@gmail.com>
+  * Tiago Boeing <contato@tiagoboeing.com>
