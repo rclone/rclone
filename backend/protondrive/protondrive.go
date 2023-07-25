@@ -737,8 +737,8 @@ func (f *Fs) About(ctx context.Context) (*fs.Usage, error) {
 		return nil, err
 	}
 
-	total := int64(user.MaxSpace)
-	used := int64(user.UsedSpace)
+	total := user.MaxSpace
+	used := user.UsedSpace
 	free := total - used
 
 	usage := &fs.Usage{
