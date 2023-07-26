@@ -82,8 +82,6 @@ func TestNewServerUnix(t *testing.T) {
 
 	require.Empty(t, s.URLs(), "unix socket should not appear in URLs")
 
-	s.Router().Use(MiddlewareCORS(""))
-
 	expected := []byte("hello world")
 	s.Router().Mount("/", testEchoHandler(expected))
 	s.Serve()
