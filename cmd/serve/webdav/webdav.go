@@ -6,8 +6,10 @@ import (
 	"encoding/xml"
 	"errors"
 	"fmt"
+	"mime"
 	"net/http"
 	"os"
+	"path"
 	"strconv"
 	"strings"
 	"time"
@@ -580,12 +582,14 @@ func (fi FileInfo) ContentType(ctx context.Context) (contentType string, err err
 		fs.Errorf(fi, "Expecting vfs.Node, got %T", fi.FileInfo)
 		return "application/octet-stream", nil
 	}
-	entry := node.DirEntry()
+	entry := node.DirEntry() // can be nil
 	switch x := entry.(type) {
 	case fs.Object:
 		return fs.MimeType(ctx, x), nil
 	case fs.Directory:
 		return "inode/directory", nil
+	case nil:
+		return mime.TypeByExtension(path.Ext(node.Name())), nil
 	}
 	fs.Errorf(fi, "Expecting fs.Object or fs.Directory, got %T", entry)
 	return "application/octet-stream", nil
