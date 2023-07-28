@@ -11,7 +11,6 @@ import (
 	"fmt"
 	"io"
 	iofs "io/fs"
-	"net"
 	"os"
 	"path"
 	"regexp"
@@ -28,11 +27,9 @@ import (
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/configstruct"
 	"github.com/rclone/rclone/fs/config/obscure"
-	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/lib/env"
 	"github.com/rclone/rclone/lib/pacer"
-	"github.com/rclone/rclone/lib/proxy"
 	"github.com/rclone/rclone/lib/readers"
 	sshagent "github.com/xanzy/ssh-agent"
 	"golang.org/x/crypto/ssh"
@@ -506,31 +503,6 @@ type Object struct {
 	mode    os.FileMode // mode bits from the file
 	md5sum  *string     // Cached MD5 checksum
 	sha1sum *string     // Cached SHA1 checksum
-}
-
-// dial starts a client connection to the given SSH server. It is a
-// convenience function that connects to the given network address,
-// initiates the SSH handshake, and then sets up a Client.
-func (f *Fs) dial(ctx context.Context, network, addr string, sshConfig *ssh.ClientConfig) (*ssh.Client, error) {
-	var (
-		conn net.Conn
-		err  error
-	)
-	baseDialer := fshttp.NewDialer(ctx)
-	if f.opt.SocksProxy != "" {
-		conn, err = proxy.SOCKS5Dial(network, addr, f.opt.SocksProxy, baseDialer)
-	} else {
-		conn, err = baseDialer.Dial(network, addr)
-	}
-	if err != nil {
-		return nil, err
-	}
-	c, chans, reqs, err := ssh.NewClientConn(conn, addr, sshConfig)
-	if err != nil {
-		return nil, err
-	}
-	fs.Debugf(f, "New connection %s->%s to %q", c.LocalAddr(), c.RemoteAddr(), c.ServerVersion())
-	return ssh.NewClient(c, chans, reqs), nil
 }
 
 // conn encapsulates an ssh client and corresponding sftp client

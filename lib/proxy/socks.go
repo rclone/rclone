@@ -11,7 +11,7 @@ import (
 // SOCKS5Dial dials a net.Conn using a SOCKS5 proxy server.
 // The socks5Proxy address can be in the form of [user:password@]host:port, [user@]host:port or just host:port if no auth is required.
 // It will optionally take a proxyDialer to dial the SOCKS5 proxy server. If nil is passed, it will use the default net.Dialer.
-func SOCKS5Dial(socks5Proxy, network, addr string, proxyDialer proxy.Dialer) (net.Conn, error) {
+func SOCKS5Dial(network, addr, socks5Proxy string, proxyDialer proxy.Dialer) (net.Conn, error) {
 
 	if proxyDialer == nil {
 		proxyDialer = &net.Dialer{}
