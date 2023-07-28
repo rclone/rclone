@@ -378,6 +378,7 @@ func (f *Fs) ftpConnection(ctx context.Context) (c *ftp.ServerConn, err error) {
 			var (
 				proxyAddress string
 				proxyAuth    *proxy.Auth
+				proxyDialer  proxy.Dialer
 			)
 			if credsAndHost := strings.SplitN(f.opt.SocksProxy, "@", 2); len(credsAndHost) == 2 {
 				proxyCreds := strings.SplitN(credsAndHost[0], ":", 2)
@@ -392,7 +393,10 @@ func (f *Fs) ftpConnection(ctx context.Context) (c *ftp.ServerConn, err error) {
 				proxyAddress = credsAndHost[0]
 			}
 			// Build the proxy dialer
-			proxyDialer, _ := proxy.SOCKS5("tcp", proxyAddress, proxyAuth, baseDialer)
+			proxyDialer, err = proxy.SOCKS5("tcp", proxyAddress, proxyAuth, baseDialer)
+			if err != nil {
+				return nil, fmt.Errorf("failed to create proxy dialer: %w", err)
+			}
 			conn, err = proxyDialer.Dial(network, address)
 
 		} else {
