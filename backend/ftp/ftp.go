@@ -28,8 +28,8 @@ import (
 	"github.com/rclone/rclone/lib/encoder"
 	"github.com/rclone/rclone/lib/env"
 	"github.com/rclone/rclone/lib/pacer"
+	"github.com/rclone/rclone/lib/proxy"
 	"github.com/rclone/rclone/lib/readers"
-	"golang.org/x/net/proxy"
 )
 
 var (
@@ -375,30 +375,7 @@ func (f *Fs) ftpConnection(ctx context.Context) (c *ftp.ServerConn, err error) {
 		}()
 		baseDialer := fshttp.NewDialer(ctx)
 		if f.opt.SocksProxy != "" {
-			var (
-				proxyAddress string
-				proxyAuth    *proxy.Auth
-				proxyDialer  proxy.Dialer
-			)
-			if credsAndHost := strings.SplitN(f.opt.SocksProxy, "@", 2); len(credsAndHost) == 2 {
-				proxyCreds := strings.SplitN(credsAndHost[0], ":", 2)
-				proxyAuth = &proxy.Auth{
-					User: proxyCreds[0],
-				}
-				if len(proxyCreds) == 2 {
-					proxyAuth.Password = proxyCreds[1]
-				}
-				proxyAddress = credsAndHost[1]
-			} else {
-				proxyAddress = credsAndHost[0]
-			}
-			// Build the proxy dialer
-			proxyDialer, err = proxy.SOCKS5("tcp", proxyAddress, proxyAuth, baseDialer)
-			if err != nil {
-				return nil, fmt.Errorf("failed to create proxy dialer: %w", err)
-			}
-			conn, err = proxyDialer.Dial(network, address)
-
+			conn, err = proxy.SOCKS5Dial(network, address, f.opt.SocksProxy, baseDialer)
 		} else {
 			conn, err = baseDialer.Dial(network, address)
 		}

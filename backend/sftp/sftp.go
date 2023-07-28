@@ -32,11 +32,11 @@ import (
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/lib/env"
 	"github.com/rclone/rclone/lib/pacer"
+	"github.com/rclone/rclone/lib/proxy"
 	"github.com/rclone/rclone/lib/readers"
 	sshagent "github.com/xanzy/ssh-agent"
 	"golang.org/x/crypto/ssh"
 	"golang.org/x/crypto/ssh/knownhosts"
-	"golang.org/x/net/proxy"
 )
 
 const (
@@ -518,29 +518,7 @@ func (f *Fs) dial(ctx context.Context, network, addr string, sshConfig *ssh.Clie
 	)
 	baseDialer := fshttp.NewDialer(ctx)
 	if f.opt.SocksProxy != "" {
-		var (
-			proxyAddress string
-			proxyAuth    *proxy.Auth
-			proxyDialer  proxy.Dialer
-		)
-		if credsAndHost := strings.SplitN(f.opt.SocksProxy, "@", 2); len(credsAndHost) == 2 {
-			proxyCreds := strings.SplitN(credsAndHost[0], ":", 2)
-			proxyAuth = &proxy.Auth{
-				User: proxyCreds[0],
-			}
-			if len(proxyCreds) == 2 {
-				proxyAuth.Password = proxyCreds[1]
-			}
-			proxyAddress = credsAndHost[1]
-		} else {
-			proxyAddress = credsAndHost[0]
-		}
-		// Build the proxy dialer
-		proxyDialer, err = proxy.SOCKS5("tcp", proxyAddress, proxyAuth, baseDialer)
-		if err != nil {
-			return nil, fmt.Errorf("failed to create proxy dialer: %w", err)
-		}
-		conn, err = proxyDialer.Dial(network, addr)
+		conn, err = proxy.SOCKS5Dial(network, addr, f.opt.SocksProxy, baseDialer)
 	} else {
 		conn, err = baseDialer.Dial(network, addr)
 	}
