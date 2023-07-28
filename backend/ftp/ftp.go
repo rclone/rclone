@@ -178,7 +178,7 @@ If this is set and no password is supplied then rclone will ask for a password
 		}, {
 			Name:    "socks_proxy",
 			Default: "",
-			Help: `Socks 5 proxy host for both SSH and SFTP connections.
+			Help: `Socks 5 proxy host.
 		
 		Supports the format user:pass@host:port, user@host:port, host:port.
 		

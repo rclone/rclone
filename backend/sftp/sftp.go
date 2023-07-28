@@ -422,7 +422,7 @@ connection for every hash it calculates.
 		}, {
 			Name:    "socks_proxy",
 			Default: "",
-			Help: `Socks 5 proxy host for both SSH and SFTP connections.
+			Help: `Socks 5 proxy host.
 	
 Supports the format user:pass@host:port, user@host:port, host:port.
 
