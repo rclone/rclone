@@ -751,3 +751,4 @@ put them back in again.` >}}
   * gabriel-suela <gscsuela@gmail.com>
   * Tiago Boeing <contato@tiagoboeing.com>
   * Edwin Mackenzie-Owen <edwin.mowen@gmail.com>
+  * Niklas Hambüchen <mail@nh2.me>
