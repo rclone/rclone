@@ -35,6 +35,7 @@ func (m *API) post(ctx context.Context, url string, data interface{}, ms api.Met
 	}
 
 	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("User-Agent", "rclone/imagekit")
 	req.SetBasicAuth(m.Config.PrivateKey, "")
 
 	resp, err := m.Config.HttpClient.Do(req.WithContext(ctx))
@@ -55,6 +56,7 @@ func (m *API) get(ctx context.Context, url string, ms api.MetaSetter) (*http.Res
 		return nil, err
 	}
 
+	req.Header.Set("User-Agent", "rclone/imagekit")
 	req.SetBasicAuth(m.Config.PrivateKey, "")
 
 	resp, err := m.HttpClient.Do(req.WithContext(ctx))
@@ -76,6 +78,7 @@ func (m *API) delete(ctx context.Context, url string, data interface{}, ms api.M
 		}
 	}
 	req, err := http.NewRequest(http.MethodDelete, url, bytes.NewBuffer(body))
+	req.Header.Set("User-Agent", "rclone/imagekit")
 	if data != nil {
 		req.Header.Set("Content-Type", "application/json")
 	}

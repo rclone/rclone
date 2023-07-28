@@ -93,6 +93,8 @@ func (u *API) postBody(ctx context.Context, urlPath string, bodyBuf *bytes.Buffe
 		req.Header.Add(key, val)
 	}
 
+	req.Header.Set("User-Agent", "rclone/imagekit")
+
 	req = req.WithContext(ctx)
 
 	return u.HttpClient.Do(req)
