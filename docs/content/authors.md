@@ -752,3 +752,4 @@ put them back in again.` >}}
   * Tiago Boeing <contato@tiagoboeing.com>
   * Edwin Mackenzie-Owen <edwin.mowen@gmail.com>
   * Niklas Hambüchen <mail@nh2.me>
+  * yuudi <yuudi@users.noreply.github.com>
