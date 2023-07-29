@@ -333,13 +333,6 @@ func TestMiddlewareCORS(t *testing.T) {
 		http Config
 	}{
 		{
-			name: "EmptyOrigin",
-			http: Config{
-				ListenAddr:  []string{"127.0.0.1:0"},
-				AllowOrigin: "",
-			},
-		},
-		{
 			name: "CustomOrigin",
 			http: Config{
 				ListenAddr:  []string{"127.0.0.1:0"},
@@ -385,6 +378,55 @@ func TestMiddlewareCORS(t *testing.T) {
 				expectedOrigin = ss.http.AllowOrigin
 			}
 			require.Equal(t, expectedOrigin, resp.Header.Get("Access-Control-Allow-Origin"), "allow origin should match")
+		})
+	}
+}
+
+func TestMiddlewareCORSEmptyOrigin(t *testing.T) {
+	servers := []struct {
+		name string
+		http Config
+	}{
+		{
+			name: "EmptyOrigin",
+			http: Config{
+				ListenAddr:  []string{"127.0.0.1:0"},
+				AllowOrigin: "",
+			},
+		},
+	}
+
+	for _, ss := range servers {
+		t.Run(ss.name, func(t *testing.T) {
+			s, err := NewServer(context.Background(), WithConfig(ss.http))
+			require.NoError(t, err)
+			defer func() {
+				require.NoError(t, s.Shutdown())
+			}()
+
+			expected := []byte("data")
+			s.Router().Mount("/", testEchoHandler(expected))
+			s.Serve()
+
+			url := testGetServerURL(t, s)
+
+			client := &http.Client{}
+			req, err := http.NewRequest("GET", url, nil)
+			require.NoError(t, err)
+
+			resp, err := client.Do(req)
+			require.NoError(t, err)
+			defer func() {
+				_ = resp.Body.Close()
+			}()
+
+			require.Equal(t, http.StatusOK, resp.StatusCode, "should return ok")
+
+			testExpectRespBody(t, resp, expected)
+
+			for _, key := range _testCORSHeaderKeys {
+				require.NotContains(t, resp.Header, key, "CORS headers should not be sent")
+			}
 		})
 	}
 }
