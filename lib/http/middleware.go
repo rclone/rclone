@@ -173,13 +173,9 @@ func MiddlewareCORS(allowOrigin string) Middleware {
 
 			if allowOrigin != "" {
 				w.Header().Add("Access-Control-Allow-Origin", allowOrigin)
-			} else {
-				w.Header().Add("Access-Control-Allow-Origin", PublicURL(r))
+				w.Header().Add("Access-Control-Request-Method", "POST, OPTIONS, GET, HEAD")
+				w.Header().Add("Access-Control-Allow-Headers", "authorization, Content-Type")
 			}
-
-			// echo back access control headers client needs
-			w.Header().Add("Access-Control-Request-Method", "POST, OPTIONS, GET, HEAD")
-			w.Header().Add("Access-Control-Allow-Headers", "authorization, Content-Type")
 
 			if r.Method == "OPTIONS" {
 				w.WriteHeader(http.StatusOK)

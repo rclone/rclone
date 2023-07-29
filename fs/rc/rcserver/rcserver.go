@@ -212,11 +212,6 @@ func writeError(path string, in rc.Params, w http.ResponseWriter, err error, sta
 func (s *Server) handler(w http.ResponseWriter, r *http.Request) {
 	path := strings.TrimLeft(r.URL.Path, "/")
 
-	// echo back access control headers client needs
-	//reqAccessHeaders := r.Header.Get("Access-Control-Request-Headers")
-	w.Header().Add("Access-Control-Request-Method", "POST, OPTIONS, GET, HEAD")
-	w.Header().Add("Access-Control-Allow-Headers", "authorization, Content-Type")
-
 	switch r.Method {
 	case "POST":
 		s.handlePost(w, r, path)
