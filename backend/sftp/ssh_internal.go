@@ -6,9 +6,11 @@ package sftp
 import (
 	"context"
 	"io"
+	"net"
 
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/fshttp"
+	"github.com/rclone/rclone/lib/proxy"
 	"golang.org/x/crypto/ssh"
 )
 
@@ -22,8 +24,17 @@ type sshClientInternal struct {
 // convenience function that connects to the given network address,
 // initiates the SSH handshake, and then sets up a Client.
 func (f *Fs) newSSHClientInternal(ctx context.Context, network, addr string, sshConfig *ssh.ClientConfig) (sshClient, error) {
-	dialer := fshttp.NewDialer(ctx)
-	conn, err := dialer.Dial(network, addr)
+
+	baseDialer := fshttp.NewDialer(ctx)
+	var (
+		conn net.Conn
+		err  error
+	)
+	if f.opt.SocksProxy != "" {
+		conn, err = proxy.SOCKS5Dial(network, addr, f.opt.SocksProxy, baseDialer)
+	} else {
+		conn, err = baseDialer.Dial(network, addr)
+	}
 	if err != nil {
 		return nil, err
 	}

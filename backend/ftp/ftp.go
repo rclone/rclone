@@ -28,6 +28,7 @@ import (
 	"github.com/rclone/rclone/lib/encoder"
 	"github.com/rclone/rclone/lib/env"
 	"github.com/rclone/rclone/lib/pacer"
+	"github.com/rclone/rclone/lib/proxy"
 	"github.com/rclone/rclone/lib/readers"
 )
 
@@ -175,6 +176,18 @@ If this is set and no password is supplied then rclone will ask for a password
 `,
 			Advanced: true,
 		}, {
+			Name:    "socks_proxy",
+			Default: "",
+			Help: `Socks 5 proxy host.
+		
+		Supports the format user:pass@host:port, user@host:port, host:port.
+		
+		Example:
+		
+			myUser:myPass@localhost:9005
+		`,
+			Advanced: true,
+		}, {
 			Name:     config.ConfigEncoding,
 			Help:     config.ConfigEncodingHelp,
 			Advanced: true,
@@ -218,6 +231,7 @@ type Options struct {
 	ShutTimeout       fs.Duration          `config:"shut_timeout"`
 	AskPassword       bool                 `config:"ask_password"`
 	Enc               encoder.MultiEncoder `config:"encoding"`
+	SocksProxy        string               `config:"socks_proxy"`
 }
 
 // Fs represents a remote FTP server
@@ -359,7 +373,12 @@ func (f *Fs) ftpConnection(ctx context.Context) (c *ftp.ServerConn, err error) {
 		defer func() {
 			fs.Debugf(f, "> dial: conn=%T, err=%v", conn, err)
 		}()
-		conn, err = fshttp.NewDialer(ctx).Dial(network, address)
+		baseDialer := fshttp.NewDialer(ctx)
+		if f.opt.SocksProxy != "" {
+			conn, err = proxy.SOCKS5Dial(network, address, f.opt.SocksProxy, baseDialer)
+		} else {
+			conn, err = baseDialer.Dial(network, address)
+		}
 		if err != nil {
 			return nil, err
 		}

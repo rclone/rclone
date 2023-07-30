@@ -416,6 +416,17 @@ An example setting might be:
 Note that when using an external ssh binary rclone makes a new ssh
 connection for every hash it calculates.
 `,
+		}, {
+			Name:    "socks_proxy",
+			Default: "",
+			Help: `Socks 5 proxy host.
+	
+Supports the format user:pass@host:port, user@host:port, host:port.
+
+Example:
+
+	myUser:myPass@localhost:9005
+	`,
 			Advanced: true,
 		}},
 	}
@@ -457,6 +468,7 @@ type Options struct {
 	MACs                    fs.SpaceSepList `config:"macs"`
 	HostKeyAlgorithms       fs.SpaceSepList `config:"host_key_algorithms"`
 	SSH                     fs.SpaceSepList `config:"ssh"`
+	SocksProxy              string          `config:"socks_proxy"`
 }
 
 // Fs stores the interface to the remote SFTP files
