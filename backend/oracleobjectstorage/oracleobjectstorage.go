@@ -23,6 +23,7 @@ import (
 	"github.com/rclone/rclone/fs/walk"
 	"github.com/rclone/rclone/lib/bucket"
 	"github.com/rclone/rclone/lib/pacer"
+	"github.com/rclone/rclone/lib/pool"
 )
 
 // Register with Fs
@@ -49,6 +50,7 @@ type Fs struct {
 	rootDirectory string                             // directory part of root (if any)
 	cache         *bucket.Cache                      // cache for bucket creation status
 	pacer         *fs.Pacer                          // To pace the API calls
+	pool          *pool.Pool                         // memory pool
 }
 
 // NewFs Initialize backend
@@ -80,6 +82,12 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		srv:   objectStorageClient,
 		cache: bucket.NewCache(),
 		pacer: pc,
+		pool: pool.New(
+			time.Duration(opt.MemoryPoolFlushTime),
+			int(opt.ChunkSize),
+			opt.UploadConcurrency*ci.Transfers,
+			opt.MemoryPoolUseMmap,
+		),
 	}
 	f.setRoot(root)
 	f.features = (&fs.Features{
@@ -177,6 +185,19 @@ func (f *Fs) Precision() time.Duration {
 // Hashes returns the supported hash sets.
 func (f *Fs) Hashes() hash.Set {
 	return hash.Set(hash.MD5)
+}
+
+func (f *Fs) getMemoryPool(size int64) *pool.Pool {
+	if size == int64(f.opt.ChunkSize) {
+		return f.pool
+	}
+
+	return pool.New(
+		time.Duration(f.opt.MemoryPoolFlushTime),
+		int(size),
+		f.opt.UploadConcurrency*f.ci.Transfers,
+		f.opt.MemoryPoolUseMmap,
+	)
 }
 
 // setRoot changes the root of the Fs
