@@ -19,6 +19,7 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config/flags"
 	"github.com/rclone/rclone/lib/atexit"
 	"github.com/spf13/pflag"
@@ -239,6 +240,13 @@ func NewServer(ctx context.Context, options ...Option) (*Server, error) {
 	}
 
 	s.mux.Use(MiddlewareCORS(s.cfg.AllowOrigin))
+
+	// Put this one last for dumping requests / responses
+	ci := fs.GetConfig(context.Background())
+	dump := ci.Dump
+	if dump != 0 {
+		s.mux.Use(MiddlewareDump(dump))
+	}
 
 	s.initAuth()
 

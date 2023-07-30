@@ -2,7 +2,6 @@
 package fshttp
 
 import (
-	"bytes"
 	"context"
 	"crypto/tls"
 	"crypto/x509"
@@ -10,27 +9,21 @@ import (
 	"net"
 	"net/http"
 	"net/http/cookiejar"
-	"net/http/httputil"
 	"os"
 	"sync"
 	"time"
 
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/accounting"
+	"github.com/rclone/rclone/fs/fshttp/fshttpdump"
 	"github.com/rclone/rclone/lib/structs"
 	"golang.org/x/net/publicsuffix"
-)
-
-const (
-	separatorReq  = ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
-	separatorResp = "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<"
 )
 
 var (
 	transport    http.RoundTripper
 	noTransport  = new(sync.Once)
 	cookieJar, _ = cookiejar.New(&cookiejar.Options{PublicSuffixList: publicsuffix.List})
-	logMutex     sync.Mutex
 )
 
 // ResetTransport resets the existing transport, allowing it to take new settings.
@@ -204,49 +197,6 @@ func checkServerTime(req *http.Request, resp *http.Response) {
 	checkedHostMu.Unlock()
 }
 
-// cleanAuth gets rid of one authBuf header within the first 4k
-func cleanAuth(buf, authBuf []byte) []byte {
-	// Find how much buffer to check
-	n := 4096
-	if len(buf) < n {
-		n = len(buf)
-	}
-	// See if there is an Authorization: header
-	i := bytes.Index(buf[:n], authBuf)
-	if i < 0 {
-		return buf
-	}
-	i += len(authBuf)
-	// Overwrite the next 4 chars with 'X'
-	for j := 0; i < len(buf) && j < 4; j++ {
-		if buf[i] == '\n' {
-			break
-		}
-		buf[i] = 'X'
-		i++
-	}
-	// Snip out to the next '\n'
-	j := bytes.IndexByte(buf[i:], '\n')
-	if j < 0 {
-		return buf[:i]
-	}
-	n = copy(buf[i:], buf[i+j:])
-	return buf[:i+n]
-}
-
-var authBufs = [][]byte{
-	[]byte("Authorization: "),
-	[]byte("X-Auth-Token: "),
-}
-
-// cleanAuths gets rid of all the possible Auth headers
-func cleanAuths(buf []byte) []byte {
-	for _, authBuf := range authBufs {
-		buf = cleanAuth(buf, authBuf)
-	}
-	return buf
-}
-
 // RoundTrip implements the RoundTripper interface.
 func (t *Transport) RoundTrip(req *http.Request) (resp *http.Response, err error) {
 	// Limit transactions per second if required
@@ -262,34 +212,11 @@ func (t *Transport) RoundTrip(req *http.Request) (resp *http.Response, err error
 		t.filterRequest(req)
 	}
 	// Logf request
-	if t.dump&(fs.DumpHeaders|fs.DumpBodies|fs.DumpAuth|fs.DumpRequests|fs.DumpResponses) != 0 {
-		buf, _ := httputil.DumpRequestOut(req, t.dump&(fs.DumpBodies|fs.DumpRequests) != 0)
-		if t.dump&fs.DumpAuth == 0 {
-			buf = cleanAuths(buf)
-		}
-		logMutex.Lock()
-		fs.Debugf(nil, "%s", separatorReq)
-		fs.Debugf(nil, "%s (req %p)", "HTTP REQUEST", req)
-		fs.Debugf(nil, "%s", string(buf))
-		fs.Debugf(nil, "%s", separatorReq)
-		logMutex.Unlock()
-	}
+	fshttpdump.DumpRequest(req, t.dump, true)
 	// Do round trip
 	resp, err = t.Transport.RoundTrip(req)
 	// Logf response
-	if t.dump&(fs.DumpHeaders|fs.DumpBodies|fs.DumpAuth|fs.DumpRequests|fs.DumpResponses) != 0 {
-		logMutex.Lock()
-		fs.Debugf(nil, "%s", separatorResp)
-		fs.Debugf(nil, "%s (req %p)", "HTTP RESPONSE", req)
-		if err != nil {
-			fs.Debugf(nil, "Error: %v", err)
-		} else {
-			buf, _ := httputil.DumpResponse(resp, t.dump&(fs.DumpBodies|fs.DumpResponses) != 0)
-			fs.Debugf(nil, "%s", string(buf))
-		}
-		fs.Debugf(nil, "%s", separatorResp)
-		logMutex.Unlock()
-	}
+	fshttpdump.DumpResponse(resp, req, err, t.dump)
 	// Update metrics
 	t.metrics.onResponse(req, resp)
 

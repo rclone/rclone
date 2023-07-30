@@ -1,15 +1,18 @@
 package http
 
 import (
+	"bytes"
 	"context"
 	"encoding/base64"
 	"fmt"
+	"io"
 	"net/http"
 	"strings"
 	"sync"
 
 	goauth "github.com/abbot/go-http-auth"
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/fshttp/fshttpdump"
 )
 
 // parseAuthorization parses the Authorization header into user, pass
@@ -193,5 +196,81 @@ func MiddlewareCORS(allowOrigin string) Middleware {
 func MiddlewareStripPrefix(prefix string) Middleware {
 	return func(next http.Handler) http.Handler {
 		return http.StripPrefix(prefix, next)
+	}
+}
+
+type dumpWriter struct {
+	w        http.ResponseWriter
+	resp     http.Response
+	buf      bytes.Buffer
+	out      io.Writer
+	dump     fs.DumpFlags
+	dumpBody bool
+}
+
+func newDumpWriter(w http.ResponseWriter, req *http.Request, dump fs.DumpFlags) *dumpWriter {
+	d := &dumpWriter{
+		w: w,
+		resp: http.Response{
+			Status:     "200 probably OK",
+			StatusCode: 200,
+			Proto:      req.Proto,
+			ProtoMajor: req.ProtoMajor,
+			ProtoMinor: req.ProtoMinor,
+		},
+		dump:     dump,
+		dumpBody: dump&(fs.DumpBodies|fs.DumpResponses) != 0,
+	}
+	if d.dumpBody {
+		d.out = io.MultiWriter(w, &d.buf)
+	}
+	return d
+}
+
+// Header returns the header map that will be sent by WriteHeader.
+func (d *dumpWriter) Header() http.Header {
+	return d.w.Header()
+}
+
+// Write writes the data to the connection as part of an HTTP reply.
+func (d *dumpWriter) Write(buf []byte) (int, error) {
+	if d.dumpBody {
+		return d.out.Write(buf)
+	}
+	return d.w.Write(buf)
+}
+
+// WriteHeader sends an HTTP response header with the provided status
+// code.
+func (d *dumpWriter) WriteHeader(statusCode int) {
+	d.resp.StatusCode = statusCode
+	d.w.WriteHeader(statusCode)
+}
+
+// dump the recorded contents.
+func (d *dumpWriter) dumpResponse(req *http.Request) {
+	d.resp.Header = d.w.Header()
+	if d.dumpBody {
+		d.resp.Body = io.NopCloser(bytes.NewBuffer(d.buf.Bytes()))
+	}
+	fshttpdump.DumpResponse(&d.resp, req, nil, d.dump)
+}
+
+// MiddlewareDump dumps requests and responses to the log
+func MiddlewareDump(dump fs.DumpFlags) Middleware {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			// First dump the incoming request
+			fshttpdump.DumpRequest(r, dump, false)
+
+			// Now intercept the body write
+			d := newDumpWriter(w, r, dump)
+
+			// Do the request
+			next.ServeHTTP(d, r)
+
+			// Now dump the contents
+			d.dumpResponse(r)
+		})
 	}
 }

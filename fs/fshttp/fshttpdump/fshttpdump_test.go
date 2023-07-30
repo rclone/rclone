@@ -1,4 +1,4 @@
-package fshttp
+package fshttpdump
 
 import (
 	"testing"
