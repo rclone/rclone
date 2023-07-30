@@ -562,7 +562,7 @@ Properties:
 - Config:      encoding
 - Env Var:     RCLONE_LOCAL_ENCODING
 - Type:        MultiEncoder
-- Default:     Slash,Dot
+- Default:     Slash,InvalidUtf8,Dot
 
 ### Metadata
 
