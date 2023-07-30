@@ -459,8 +459,7 @@ func TestMiddlewareCORSWithAuth(t *testing.T) {
 				require.NoError(t, s.Shutdown())
 			}()
 
-			expected := []byte("data")
-			s.Router().Mount("/", testEchoHandler(expected))
+			s.Router().Mount("/", testEmptyHandler())
 			s.Serve()
 
 			url := testGetServerURL(t, s)
