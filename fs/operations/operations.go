@@ -392,7 +392,7 @@ func Copy(ctx context.Context, f fs.Fs, dst fs.Object, remote string, src fs.Obj
 		}
 		if doCopy := f.Features().Copy; doCopy != nil && (SameConfig(src.Fs(), f) || (SameRemoteType(src.Fs(), f) && (f.Features().ServerSideAcrossConfigs || ci.ServerSideAcrossConfigs))) {
 			in := tr.Account(ctx, nil) // account the transfer
-			in.ServerSideCopyStart()
+			in.ServerSideTransferStart()
 			newDst, err = doCopy(ctx, src, remote)
 			if err == nil {
 				dst = newDst
@@ -639,7 +639,7 @@ func Move(ctx context.Context, fdst fs.Fs, dst fs.Object, remote string, src fs.
 		}
 		// Move dst <- src
 		in := tr.Account(ctx, nil) // account the transfer
-		in.ServerSideCopyStart()
+		in.ServerSideTransferStart()
 		newDst, err = doMove(ctx, src, remote)
 		switch err {
 		case nil:
@@ -648,7 +648,7 @@ func Move(ctx context.Context, fdst fs.Fs, dst fs.Object, remote string, src fs.
 			} else {
 				fs.Infof(src, "Moved (server-side)")
 			}
-			in.ServerSideCopyEnd(newDst.Size()) // account the bytes for the server-side transfer
+			in.ServerSideMoveEnd(newDst.Size()) // account the bytes for the server-side transfer
 			_ = in.Close()
 			return newDst, nil
 		case fs.ErrorCantMove:
