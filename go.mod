@@ -44,6 +44,7 @@ require (
 	github.com/ncw/go-acd v0.0.0-20201019170801-fe55f33415b1
 	github.com/ncw/swift/v2 v2.0.2
 	github.com/oracle/oci-go-sdk/v65 v65.45.0
+	github.com/panjf2000/ants/v2 v2.8.1
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/pkg/sftp v1.13.6-0.20230213180117-971c283182b6
 	github.com/pmezard/go-difflib v1.0.0

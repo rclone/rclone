@@ -16,6 +16,7 @@ import (
 	"time"
 	"unicode/utf8"
 
+	"github.com/panjf2000/ants/v2"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/accounting"
 	"github.com/rclone/rclone/fs/config"
@@ -199,9 +200,9 @@ cause disk fragmentation and can be slow to work with.`,
 			Help: `Disable setting modtime.
 
 Normally rclone updates modification time of files after they are done
-uploading. This can cause permissions issues on Linux platforms when 
+uploading. This can cause permissions issues on Linux platforms when
 the user rclone is running as does not own the file uploaded, such as
-when copying to a CIFS mount owned by another user. If this option is 
+when copying to a CIFS mount owned by another user. If this option is
 enabled, rclone will no longer update the modtime after copying a file.`,
 			Default:  false,
 			Advanced: true,
@@ -246,8 +247,9 @@ type Fs struct {
 	xattrSupported int32               // whether xattrs are supported (atomic access)
 
 	// do os.Lstat or os.Stat
-	lstat        func(name string) (os.FileInfo, error)
-	objectMetaMu sync.RWMutex // global lock for Object metadata
+	lstat           func(name string) (os.FileInfo, error)
+	objectMetaMu    sync.RWMutex // global lock for Object metadata
+	lstatWorkerPool *ants.PoolWithFunc
 }
 
 // Object represents a local filesystem object
@@ -307,6 +309,14 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	}).Fill(ctx, f)
 	if opt.FollowSymlinks {
 		f.lstat = os.Stat
+	}
+
+	if !useReadDir {
+		f.lstatWorkerPool, err = ants.NewPoolWithFunc(fs.GetConfig(ctx).Checkers,
+			f.doSingleStat, ants.WithPreAlloc(true), ants.WithDisablePurge(true))
+		if err != nil {
+			return nil, fmt.Errorf("failed to create lstat worker pool: %w", err)
+		}
 	}
 
 	// Check to see if this points to a file
@@ -488,41 +498,20 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 		if useReadDir {
 			// Windows and Plan9 read the directory entries with the stat information in which
 			// shouldn't fail because of unreadable entries.
-			fis, err = fd.Readdir(1024)
+			fis, err = fd.Readdir(dirListingBatchSize)
 			if err == io.EOF && len(fis) == 0 {
 				break
 			}
 		} else {
 			// For other OSes we read the names only (which shouldn't fail) then stat the
-			// individual ourselves so we can log errors but not fail the directory read.
+			// individual ourselves, so we can log errors but not fail the directory read.
 			var names []string
-			names, err = fd.Readdirnames(1024)
+			names, err = fd.Readdirnames(dirListingBatchSize)
 			if err == io.EOF && len(names) == 0 {
 				break
 			}
 			if err == nil {
-				for _, name := range names {
-					namepath := filepath.Join(fsDirPath, name)
-					fi, fierr := os.Lstat(namepath)
-					if os.IsNotExist(fierr) {
-						// skip entry removed by a concurrent goroutine
-						continue
-					}
-					if fierr != nil {
-						// Don't report errors on any file names that are excluded
-						if useFilter {
-							newRemote := f.cleanRemote(dir, name)
-							if !filter.IncludeRemote(newRemote) {
-								continue
-							}
-						}
-						fierr = fmt.Errorf("failed to get info about directory entry %q: %w", namepath, fierr)
-						fs.Errorf(dir, "%v", fierr)
-						_ = accounting.Stats(ctx).Error(fserrors.NoRetryError(fierr)) // fail the sync
-						continue
-					}
-					fis = append(fis, fi)
-				}
+				fis = append(fis, f.doParallelStat(ctx, dir, filter, useFilter, names)...)
 			}
 		}
 		if err != nil {
