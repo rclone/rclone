@@ -121,7 +121,7 @@ func (o *Object) uploadChunks(ctx context.Context, in0 io.Reader, size int64, pa
 
 		getBody := func() (io.ReadCloser, error) {
 			// RepeatableReader{} plays well with accounting so rewinding doesn't make the progress buggy
-			if _, err := in.Seek(0, io.SeekStart); err == nil {
+			if _, err := in.Seek(0, io.SeekStart); err != nil {
 				return nil, err
 			}
 
@@ -203,7 +203,7 @@ func (o *Object) purgeUploadedChunks(ctx context.Context, uploadDir string) erro
 		resp, err := o.fs.srv.CallXML(ctx, &opts, nil, nil)
 
 		// directory doesn't exist, no need to purge
-		if resp.StatusCode == http.StatusNotFound {
+		if resp != nil && resp.StatusCode == http.StatusNotFound {
 			return false, nil
 		}
 
