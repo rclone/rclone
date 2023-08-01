@@ -488,7 +488,7 @@ automation to avoid having to fill out anything else. Click `Next`.
 3. In the second screen of the creation screen, select
 `User Authentication (OAuth 2.0)`. Then click `Create App`.
 
-4. You should now be on the `Configuration` tab of your new app.If not,
+4. You should now be on the `Configuration` tab of your new app. If not,
 click on it at the top of the webpage. Copy down `Client ID`
 and `Client Secret`, you'll need those for rclone.
 
