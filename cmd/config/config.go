@@ -61,7 +61,10 @@ var configEditCommand = &cobra.Command{
 	Annotations: map[string]string{
 		"versionIntroduced": "v1.39",
 	},
-	Run: configCommand.Run,
+	RunE: func(command *cobra.Command, args []string) error {
+		cmd.CheckArgs(0, 0, command, args)
+		return config.EditConfig(context.Background())
+	},
 }
 
 var configFileCommand = &cobra.Command{
