@@ -23,12 +23,14 @@ Run with `--help` to list the supported shells.
   -h, --help   help for completion
 ```
 
+
 See the [global flags page](/flags/) for global options not listed here.
 
-## SEE ALSO
+# SEE ALSO
 
 * [rclone](/commands/rclone/)	 - Show help for rclone commands, flags and backends.
 * [rclone completion bash](/commands/rclone_completion_bash/)	 - Output bash completion script for rclone.
 * [rclone completion fish](/commands/rclone_completion_fish/)	 - Output fish completion script for rclone.
+* [rclone completion powershell](/commands/rclone_completion_powershell/)	 - Output powershell completion script for rclone.
 * [rclone completion zsh](/commands/rclone_completion_zsh/)	 - Output zsh completion script for rclone.
 

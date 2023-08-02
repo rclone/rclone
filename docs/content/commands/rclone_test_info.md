@@ -37,9 +37,10 @@ rclone test info [remote:path]+ [flags]
       --write-json string      Write results to file
 ```
 
+
 See the [global flags page](/flags/) for global options not listed here.
 
-## SEE ALSO
+# SEE ALSO
 
 * [rclone test](/commands/rclone_test/)	 - Run a test command
 

@@ -26,9 +26,10 @@ rclone test makefile <size> [<file>]+ [flags]
       --zero       Fill files with ASCII 0x00
 ```
 
+
 See the [global flags page](/flags/) for global options not listed here.
 
-## SEE ALSO
+# SEE ALSO
 
 * [rclone test](/commands/rclone_test/)	 - Run a test command
 
