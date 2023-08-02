@@ -561,7 +561,7 @@ func (f *Fs) newObjectWithInfo(ctx context.Context, remote string, info *swift.O
 	// returned as 0 bytes in the listing.  Correct this here by
 	// making sure we read the full metadata for all 0 byte files.
 	// We don't read the metadata for directory marker objects.
-	if info != nil && info.Bytes == 0 && info.ContentType != "application/directory" {
+	if info != nil && info.Bytes == 0 && info.ContentType != "application/directory" && !o.fs.opt.NoLargeObjects {
 		err := o.readMetaData(ctx) // reads info and headers, returning an error
 		if err == fs.ErrorObjectNotFound {
 			// We have a dangling large object here so just return the original metadata
