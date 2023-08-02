@@ -134,6 +134,19 @@ cache. Thus, if there are concurrent clients accessing the same mount point,
 then we might have a problem with caching the stale data.`,
 			Advanced: true,
 			Default:  true,
+		}, {
+			Name: "skip_signature_verifications",
+			Help: `Skip signature verifications during decryption operations
+
+During development and beta testing phase, signature verification is a big 
+source of problem which affects the normal usage. 
+
+Before a proper signature-related failure report-only mode is properly 
+implemented, we currently offer this feature flag to disable verifying 
+signatures during decryption operations. 
+`,
+			Advanced: true,
+			Default:  false,
 		}},
 	})
 }
@@ -145,11 +158,12 @@ type Options struct {
 	TwoFA    string `config:"2fa"`
 
 	// advanced
-	Enc                  encoder.MultiEncoder `config:"encoding"`
-	ReportOriginalSize   bool                 `config:"original_file_size"`
-	AppVersion           string               `config:"app_version"`
-	ReplaceExistingDraft bool                 `config:"replace_existing_draft"`
-	EnableCaching        bool                 `config:"enable_caching"`
+	Enc                        encoder.MultiEncoder `config:"encoding"`
+	ReportOriginalSize         bool                 `config:"original_file_size"`
+	AppVersion                 string               `config:"app_version"`
+	ReplaceExistingDraft       bool                 `config:"replace_existing_draft"`
+	EnableCaching              bool                 `config:"enable_caching"`
+	SkipSignatureVerifications bool                 `config:"skip_signature_verifications"`
 }
 
 // Fs represents a remote proton drive
@@ -270,6 +284,7 @@ func newProtonDrive(ctx context.Context, f *Fs, opt *Options, m configmap.Mapper
 
 	config.ReplaceExistingDraft = opt.ReplaceExistingDraft
 	config.EnableCaching = opt.EnableCaching
+	config.SkipSignatureVerifications = opt.SkipSignatureVerifications
 
 	// let's see if we have the cached access credential
 	uid, accessToken, refreshToken, saltedKeyPass, hasUseReusableLoginCredentials := getConfigMap(m)
