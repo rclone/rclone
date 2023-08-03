@@ -69,7 +69,7 @@ This is an SHA256 sum of all the 4 MiB block SHA256s.
 ² SFTP supports checksums if the same login has shell access and
 `md5sum` or `sha1sum` as well as `echo` are in the remote's PATH.
 
-³ WebDAV supports hashes when used with Fastmail Files. Owncloud and Nextcloud only.
+³ WebDAV supports hashes when used with Fastmail Files, Owncloud and Nextcloud only.
 
 ⁴ WebDAV supports modtimes when used with Fastmail Files, Owncloud and Nextcloud only.
 
