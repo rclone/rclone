@@ -32,7 +32,7 @@ jobs:
         include:
           - job_name: linux
             os: ubuntu-latest
-            go: '1.21.0-rc.3'
+            go: '1.21.0-rc.4'
             gotags: cmount
             build_flags: '-include "^linux/"'
             check: true
@@ -43,14 +43,14 @@ jobs:
 
           - job_name: linux_386
             os: ubuntu-latest
-            go: '1.21.0-rc.3'
+            go: '1.21.0-rc.4'
             goarch: 386
             gotags: cmount
             quicktest: true
 
           - job_name: mac_amd64
             os: macos-11
-            go: '1.21.0-rc.3'
+            go: '1.21.0-rc.4'
             gotags: 'cmount'
             build_flags: '-include "^darwin/amd64" -cgo'
             quicktest: true
@@ -59,14 +59,14 @@ jobs:
 
           - job_name: mac_arm64
             os: macos-11
-            go: '1.21.0-rc.3'
+            go: '1.21.0-rc.4'
             gotags: 'cmount'
             build_flags: '-include "^darwin/arm64" -cgo -macos-arch arm64 -cgo-cflags=-I/usr/local/include -cgo-ldflags=-L/usr/local/lib'
             deploy: true
 
           - job_name: windows
             os: windows-latest
-            go: '1.21.0-rc.3'
+            go: '1.21.0-rc.4'
             gotags: cmount
             cgo: '0'
             build_flags: '-include "^windows/"'
@@ -76,7 +76,7 @@ jobs:
 
           - job_name: other_os
             os: ubuntu-latest
-            go: '1.21.0-rc.3'
+            go: '1.21.0-rc.4'
             build_flags: '-exclude "^(windows/|darwin/|linux/)"'
             compile_all: true
             deploy: true
@@ -244,7 +244,7 @@ jobs:
       - name: Install Go
         uses: actions/setup-go@v4
         with:
-          go-version: '1.21.0-rc.3'
+          go-version: '1.21.0-rc.4'
           check-latest: true
 
       - name: Install govulncheck
@@ -269,7 +269,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v4
         with:
-          go-version: '1.21.0-rc.3'
+          go-version: '1.21.0-rc.4'
 
       - name: Go module cache
         uses: actions/cache@v3
