@@ -473,3 +473,27 @@ remote.
 
 See [List of backends that do not support rclone about](https://rclone.org/overview/#optional-features) and [rclone about](https://rclone.org/commands/rclone_about/)
 
+## Get your own Box App ID
+
+Here is how to create your own Box App ID for rclone:
+
+1. Go to the [Box Developer Console](https://app.box.com/developers/console)
+and login, then click `My Apps` on the sidebar. Click `Create New App`
+and select `Custom App`.
+
+2. In the first screen on the box that pops up, you can pretty much enter
+whatever you want. The `App Name` can be whatever. For `Purpose` choose
+automation to avoid having to fill out anything else. Click `Next`.
+
+3. In the second screen of the creation screen, select
+`User Authentication (OAuth 2.0)`. Then click `Create App`.
+
+4. You should now be on the `Configuration` tab of your new app. If not,
+click on it at the top of the webpage. Copy down `Client ID`
+and `Client Secret`, you'll need those for rclone.
+
+5. Under "OAuth 2.0 Redirect URI", add `http://127.0.0.1:53682/`
+
+6. For `Application Scopes`, select `Read all files and folders stored in Box`
+and `Write all files and folders stored in box` (assuming you want to do both).
+Leave others unchecked. Click `Save Changes` at the top right.
