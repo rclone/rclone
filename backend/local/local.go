@@ -247,16 +247,16 @@ type Fs struct {
 	xattrSupported atomic.Int32        // whether xattrs are supported
 
 	// do os.Lstat or os.Stat
-	lstat        func(name string) (os.FileInfo, error)
-	objectMetaMu sync.RWMutex // global lock for Object metadata
+	lstat func(name string) (os.FileInfo, error)
 }
 
 // Object represents a local filesystem object
 type Object struct {
-	fs     *Fs    // The Fs this object is part of
-	remote string // The remote path (encoded path)
-	path   string // The local path (OS path)
-	// When using these items the fs.objectMetaMu must be held
+	fs     *Fs          // The Fs this object is part of
+	remote string       // The remote path (encoded path)
+	path   string       // The local path (OS path)
+	metaMu sync.RWMutex // lock for metadata
+	// When using these items the metaMu must be held
 	size    int64 // file metadata - always present
 	mode    os.FileMode
 	modTime time.Time
@@ -777,9 +777,9 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 
 	// Temporary Object under construction
 	dstObj := f.newObject(remote)
-	dstObj.fs.objectMetaMu.RLock()
+	dstObj.metaMu.RLock()
 	dstObjMode := dstObj.mode
-	dstObj.fs.objectMetaMu.RUnlock()
+	dstObj.metaMu.RUnlock()
 
 	// Check it is a file if it exists
 	err := dstObj.lstat()
@@ -941,10 +941,10 @@ func (o *Object) Remote() string {
 // Hash returns the requested hash of a file as a lowercase hex string
 func (o *Object) Hash(ctx context.Context, r hash.Type) (string, error) {
 	// Check that the underlying file hasn't changed
-	o.fs.objectMetaMu.RLock()
+	o.metaMu.RLock()
 	oldtime := o.modTime
 	oldsize := o.size
-	o.fs.objectMetaMu.RUnlock()
+	o.metaMu.RUnlock()
 	err := o.lstat()
 	var changed bool
 	if err != nil {
@@ -956,14 +956,14 @@ func (o *Object) Hash(ctx context.Context, r hash.Type) (string, error) {
 			return "", fmt.Errorf("hash: failed to stat: %w", err)
 		}
 	} else {
-		o.fs.objectMetaMu.RLock()
+		o.metaMu.RLock()
 		changed = !o.modTime.Equal(oldtime) || oldsize != o.size
-		o.fs.objectMetaMu.RUnlock()
+		o.metaMu.RUnlock()
 	}
 
-	o.fs.objectMetaMu.RLock()
+	o.metaMu.RLock()
 	hashValue, hashFound := o.hashes[r]
-	o.fs.objectMetaMu.RUnlock()
+	o.metaMu.RUnlock()
 
 	if changed || !hashFound {
 		var in io.ReadCloser
@@ -994,28 +994,28 @@ func (o *Object) Hash(ctx context.Context, r hash.Type) (string, error) {
 			return "", fmt.Errorf("hash: failed to close: %w", closeErr)
 		}
 		hashValue = hashes[r]
-		o.fs.objectMetaMu.Lock()
+		o.metaMu.Lock()
 		if o.hashes == nil {
 			o.hashes = hashes
 		} else {
 			o.hashes[r] = hashValue
 		}
-		o.fs.objectMetaMu.Unlock()
+		o.metaMu.Unlock()
 	}
 	return hashValue, nil
 }
 
 // Size returns the size of an object in bytes
 func (o *Object) Size() int64 {
-	o.fs.objectMetaMu.RLock()
-	defer o.fs.objectMetaMu.RUnlock()
+	o.metaMu.RLock()
+	defer o.metaMu.RUnlock()
 	return o.size
 }
 
 // ModTime returns the modification time of the object
 func (o *Object) ModTime(ctx context.Context) time.Time {
-	o.fs.objectMetaMu.RLock()
-	defer o.fs.objectMetaMu.RUnlock()
+	o.metaMu.RLock()
+	defer o.metaMu.RUnlock()
 	return o.modTime
 }
 
@@ -1044,9 +1044,9 @@ func (o *Object) SetModTime(ctx context.Context, modTime time.Time) error {
 
 // Storable returns a boolean showing if this object is storable
 func (o *Object) Storable() bool {
-	o.fs.objectMetaMu.RLock()
+	o.metaMu.RLock()
 	mode := o.mode
-	o.fs.objectMetaMu.RUnlock()
+	o.metaMu.RUnlock()
 	if mode&os.ModeSymlink != 0 && !o.fs.opt.TranslateSymlinks {
 		if !o.fs.opt.SkipSymlinks {
 			fs.Logf(o, "Can't follow symlink without -L/--copy-links")
@@ -1079,10 +1079,10 @@ func (file *localOpenFile) Read(p []byte) (n int, err error) {
 		if err != nil {
 			return 0, fmt.Errorf("can't read status of source file while transferring: %w", err)
 		}
-		file.o.fs.objectMetaMu.RLock()
+		file.o.metaMu.RLock()
 		oldtime := file.o.modTime
 		oldsize := file.o.size
-		file.o.fs.objectMetaMu.RUnlock()
+		file.o.metaMu.RUnlock()
 		if oldsize != fi.Size() {
 			return 0, fserrors.NoLowLevelRetryError(fmt.Errorf("can't copy - source file is being updated (size changed from %d to %d)", oldsize, fi.Size()))
 		}
@@ -1104,9 +1104,9 @@ func (file *localOpenFile) Close() (err error) {
 	err = file.in.Close()
 	if err == nil {
 		if file.hash.Size() == file.o.Size() {
-			file.o.fs.objectMetaMu.Lock()
+			file.o.metaMu.Lock()
 			file.o.hashes = file.hash.Sums()
-			file.o.fs.objectMetaMu.Unlock()
+			file.o.metaMu.Unlock()
 		}
 	}
 	return err
@@ -1298,9 +1298,9 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 
 	// All successful so update the hashes
 	if hasher != nil {
-		o.fs.objectMetaMu.Lock()
+		o.metaMu.Lock()
 		o.hashes = hasher.Sums()
-		o.fs.objectMetaMu.Unlock()
+		o.metaMu.Unlock()
 	}
 
 	// Set the mtime
@@ -1374,11 +1374,11 @@ func (o *Object) setMetadata(info os.FileInfo) {
 	if o.fs.opt.NoCheckUpdated && !o.modTime.IsZero() {
 		return
 	}
-	o.fs.objectMetaMu.Lock()
+	o.metaMu.Lock()
 	o.size = info.Size()
 	o.modTime = info.ModTime()
 	o.mode = info.Mode()
-	o.fs.objectMetaMu.Unlock()
+	o.metaMu.Unlock()
 	// Read the size of the link.
 	//
 	// The value in info.Size() is not always correct
@@ -1397,9 +1397,9 @@ func (o *Object) setMetadata(info os.FileInfo) {
 
 // clearHashCache wipes any cached hashes for the object
 func (o *Object) clearHashCache() {
-	o.fs.objectMetaMu.Lock()
+	o.metaMu.Lock()
 	o.hashes = nil
-	o.fs.objectMetaMu.Unlock()
+	o.metaMu.Unlock()
 }
 
 // Stat an Object into info
