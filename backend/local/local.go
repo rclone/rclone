@@ -33,9 +33,8 @@ import (
 )
 
 // Constants
-const devUnset = 0xdeadbeefcafebabe                                       // a device id meaning it is unset
-const linkSuffix = ".rclonelink"                                          // The suffix added to a translated symbolic link
-const useReadDir = (runtime.GOOS == "windows" || runtime.GOOS == "plan9") // these OSes read FileInfos directly
+const devUnset = 0xdeadbeefcafebabe // a device id meaning it is unset
+const linkSuffix = ".rclonelink"    // The suffix added to a translated symbolic link
 
 // Register with Fs
 func init() {
@@ -486,91 +485,68 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 	}()
 
 	for {
-		var fis []os.FileInfo
+		var des []os.DirEntry
 
-		if useReadDir {
-			// Windows and Plan9 read the directory entries with the stat information in which
-			// shouldn't fail because of unreadable entries.
-			fis, err = fd.Readdir(1024)
-			if err == io.EOF && len(fis) == 0 {
-				break
-			}
-		} else {
-			// For other OSes we read the names only (which shouldn't fail) then stat the
-			// individual ourselves, so we can log errors but not fail the directory read.
-			var names []string
-			names, err = fd.Readdirnames(1024)
-			if err == io.EOF && len(names) == 0 {
-				break
-			}
-
-			fis = make([]os.FileInfo, len(names))
-
-			g, gCtx := errgroup.WithContext(ctx)
-			g.SetLimit(fs.GetConfig(ctx).Checkers)
-			if err == nil {
-				for i, name := range names {
-					i, name := i, name // https://golang.org/doc/faq#closures_and_goroutines
-					g.Go(func() error {
-						// No point in continuing if context has been cancelled
-						if gCtx.Err() != nil {
-							return nil
-						}
-
-						var err error
-						namepath := filepath.Join(fsDirPath, name)
-						fi, fierr := os.Lstat(namepath)
-						if os.IsNotExist(fierr) {
-							// skip entry removed by a concurrent goroutine
-							return nil
-						}
-						if fierr != nil {
-							if useFilter {
-								newRemote := f.cleanRemote(dir, name)
-								if !filter.IncludeRemote(newRemote) {
-									return nil
-								}
-							}
-							err = fmt.Errorf("failed to get info about directory entry %q: %w", namepath, fierr)
-							fs.Errorf(dir, "%v", err)
-							_ = accounting.Stats(gCtx).Error(fserrors.NoRetryError(err)) // fail the sync
-							return nil
-						}
-						fis[i] = fi
-						return nil
-					})
-				}
-			}
-			err = g.Wait()
+		des, err = fd.ReadDir(1024)
+		if err == io.EOF && len(des) == 0 {
+			break
 		}
 		if err != nil {
 			return nil, fmt.Errorf("failed to read directory entry: %w", err)
 		}
 
-		loopEntries := make(fs.DirEntries, len(fis))
+		loopEntries := make(fs.DirEntries, len(des))
 
 		g, gCtx := errgroup.WithContext(ctx)
 		g.SetLimit(fs.GetConfig(ctx).Checkers)
-		for i, fi := range fis {
-			if fi == nil {
-				continue
-			}
-			i, fi := i, fi // https://golang.org/doc/faq#closures_and_goroutines
+		for i, de := range des {
+			i, de := i, de // https://golang.org/doc/faq#closures_and_goroutines
 			g.Go(func() error {
 				// No point in continuing if context has been cancelled
 				if gCtx.Err() != nil {
 					return nil
 				}
 
-				var err error
-				name := fi.Name()
-				mode := fi.Mode()
+				var (
+					err error
+					fi  os.FileInfo
+				)
+				name := de.Name()
+				mode := de.Type()
+				namepath := filepath.Join(fsDirPath, name)
 				newRemote := f.cleanRemote(dir, name)
+
+				if de.IsDir() {
+					// Ignore directories which are symlinks. These are junction points under windows which
+					// are kind of a souped up symlink. Unix doesn't have directories which are symlinks.
+					if (mode & os.ModeSymlink) != 0 {
+						return nil
+					}
+				}
+
+				fi, err = de.Info()
+				if err != nil {
+					if os.IsNotExist(err) {
+						// skip entry removed by a concurrent goroutine
+						return nil
+					}
+					if useFilter && !filter.IncludeRemote(newRemote) {
+						return nil
+					}
+					err = fmt.Errorf("failed to get info about directory entry %q: %w", namepath, err)
+					fs.Errorf(dir, "%v", err)
+					_ = accounting.Stats(gCtx).Error(fserrors.NoRetryError(err)) // fail the sync
+					return nil
+				}
+
+				name = fi.Name()
+				mode = fi.Mode()
+				namepath = filepath.Join(fsDirPath, name)
+				newRemote = f.cleanRemote(dir, name)
 
 				// Follow symlinks if required
 				if f.opt.FollowSymlinks && (mode&os.ModeSymlink) != 0 {
-					localPath := filepath.Join(fsDirPath, name)
-					fi, err = os.Stat(localPath)
+					fi, err = os.Stat(namepath)
 					if err != nil {
 						// Quietly skip errors on excluded files and directories
 						if useFilter && !filter.IncludeRemote(newRemote) {
@@ -594,16 +570,14 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 				}
 
 				if fi.IsDir() {
-					// Ignore directories which are symlinks.  These are junction points under windows which
-					// are kind of a souped up symlink. Unix doesn't have directories which are symlinks.
-					if (mode&os.ModeSymlink) == 0 && f.dev == readDevice(fi, f.opt.OneFileSystem) {
+					if f.dev == readDevice(fi, f.opt.OneFileSystem) {
 						d := fs.NewDir(newRemote, fi.ModTime())
 						loopEntries[i] = d
 						return nil
 					}
 				} else {
 					// Check whether this link should be translated
-					if f.opt.TranslateSymlinks && fi.Mode()&os.ModeSymlink != 0 {
+					if f.opt.TranslateSymlinks && mode&os.ModeSymlink != 0 {
 						newRemote += linkSuffix
 					}
 					// Don't include non directory if not included
