@@ -264,6 +264,13 @@ func AddConfig(ctx context.Context) (context.Context, *ConfigInfo) {
 	return newCtx, cCopy
 }
 
+// ReplaceConfig replaces the gloabel config in the ctx with the one
+// passed in and returns a new context with that added to it.
+func ReplaceConfig(ctx context.Context, f *ConfigInfo) context.Context {
+	newCtx := context.WithValue(ctx, configContextKey, f)
+	return newCtx
+}
+
 // ConfigToEnv converts a config section and name, e.g. ("my-remote",
 // "ignore-size") into an environment name
 // "RCLONE_CONFIG_MY-REMOTE_IGNORE_SIZE"
