@@ -594,7 +594,7 @@ This resource key requirement only applies to a subset of old files.
 
 Note also that opening the folder once in the web interface (with the
 user you've authenticated rclone with) seems to be enough so that the
-resource key is no needed.
+resource key is not needed.
 `,
 			Advanced:  true,
 			Sensitive: true,
