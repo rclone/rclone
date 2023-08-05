@@ -428,13 +428,18 @@ Getting going
     * box is a good one to start from if you have a directory-based remote
     * b2 is a good one to start from if you have a bucket-based remote
   * Add your remote to the imports in `backend/all/all.go`
-  * HTTP based remotes are easiest to maintain if they use rclone's rest module, but if there is a really good go SDK then use that instead.
+  * HTTP based remotes are easiest to maintain if they use rclone's [lib/rest](https://pkg.go.dev/github.com/rclone/rclone/lib/rest) module, but if there is a really good go SDK then use that instead.
   * Try to implement as many optional methods as possible as it makes the remote more usable.
-  * Use lib/encoder to make sure we can encode any path name and `rclone info` to help determine the encodings needed
+  * Use [lib/encoder](https://pkg.go.dev/github.com/rclone/rclone/lib/encoder) to make sure we can encode any path name and `rclone info` to help determine the encodings needed
     * `rclone purge -v TestRemote:rclone-info`
     * `rclone test info --all --remote-encoding None -vv --write-json remote.json TestRemote:rclone-info`
     * `go run cmd/test/info/internal/build_csv/main.go -o remote.csv remote.json`
     * open `remote.csv` in a spreadsheet and examine
+
+Important:
+
+  * Please use [lib/rest](https://pkg.go.dev/github.com/rclone/rclone/lib/rest) if you are implementing a REST like backend and parsing XML/JSON in the backend. It makes maintenance much easier.
+  * If your backend is HTTP based then please use rclone's Client or Transport from [fs/fshttp](https://pkg.go.dev/github.com/rclone/rclone/fs/fshttp) - this adds features like `--dump bodies`, `--tpslimit`, `--user-agent` without you having to code anything!
 
 Unit tests
 
