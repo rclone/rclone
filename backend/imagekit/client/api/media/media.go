@@ -13,7 +13,7 @@ import (
 
 // API is the main struct for media
 type API struct {
-	Config config.Configuration
+	Config     config.Configuration
 	HttpClient *http.Client
 }
 

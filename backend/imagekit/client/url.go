@@ -32,7 +32,6 @@ type UrlParam struct {
 	UnixTime               func() int64
 }
 
-
 // TransformationCode represents mapping between parameter and url prefix code
 var TransformationCode = map[string]string{
 	"height":                    "h",
@@ -167,7 +166,7 @@ func (ik *ImageKit) Url(params UrlParam) (string, error) {
 			now = params.UnixTime()
 		}
 
-		var expires = strconv.FormatInt(now+int64(params.ExpireSeconds), 10)
+		var expires = strconv.FormatInt(now+params.ExpireSeconds, 10)
 		var path = strings.Replace(resultUrl, endpoint, "", 1)
 
 		path = path + expires

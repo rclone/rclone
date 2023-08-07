@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"net/url"
 	"reflect"
-	"regexp"
 	"strconv"
 	"strings"
 )
@@ -105,9 +104,6 @@ type MetaSetter interface {
 	ParseError() error
 	SetMeta(ResponseMetaData)
 }
-
-// base64DataRegex is the regular expression for detecting base64 encoded strings.
-var base64DataRegex = regexp.MustCompile("^data:([\\w-]+/[\\w\\-+.]+)?(;[\\w-]+=[\\w-]+)*;base64,([a-zA-Z0-9/+\\n=]+)$")
 
 // StructToParams serializes struct to url.Values, which can be further sent to the http client.
 func StructToParams(inputStruct interface{}) (url.Values, error) {

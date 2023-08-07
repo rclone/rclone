@@ -17,7 +17,7 @@ import (
 
 // API is the upload feature main struct
 type API struct {
-	Config config.Configuration
+	Config     config.Configuration
 	HttpClient *http.Client
 }
 
@@ -51,7 +51,7 @@ func (u *API) postIOReader(ctx context.Context, urlPath string, reader io.Reader
 
 	if flag.Lookup("test.v") != nil {
 		fileName := formParams.Get("fileName")
-		formParams.Set("fileName", fileName + "_test.txt")
+		formParams.Set("fileName", fileName+"_test.txt")
 	}
 
 	partWriter, err := formWriter.CreateFormFile("file", formParams.Get("fileName"))
@@ -105,8 +105,11 @@ func (u *API) postForm(ctx context.Context, urlPath string, formParams url.Value
 	bodyBuf := new(bytes.Buffer)
 	writer := multipart.NewWriter(bodyBuf)
 
-	for k, _ := range formParams {
-		writer.WriteField(k, formParams.Get(k))
+	for k := range formParams {
+		err := writer.WriteField(k, formParams.Get(k))
+		if err != nil {
+			return nil, err
+		}
 	}
 	err := writer.Close()
 	if err != nil {

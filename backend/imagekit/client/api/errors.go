@@ -2,10 +2,10 @@ package api
 
 import "errors"
 
-var ErrBadRequest = errors.New("Bad Request")
-var ErrForbidden = errors.New("Forbidden")
-var ErrUnauthorized = errors.New("Unauthorized")
-var ErrTooManyRequests = errors.New("Too Many Requests")
-var ErrServer = errors.New("Server Error")
-var ErrNotFound = errors.New("Not Found")
-var ErrUndefined = errors.New("Undefined Error")
+var ErrBadRequest = errors.New("bad request")
+var ErrForbidden = errors.New("forbidden")
+var ErrUnauthorized = errors.New("unauthorized")
+var ErrTooManyRequests = errors.New("too many requests")
+var ErrServer = errors.New("server error")
+var ErrNotFound = errors.New("not found")
+var ErrUndefined = errors.New("undefined error")
