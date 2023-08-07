@@ -145,8 +145,9 @@ type ConfigInfo struct {
 	Metadata                   bool
 	ServerSideAcrossConfigs    bool
 	TerminalColorMode          TerminalColorMode
-	DefaultTime                Time // time that directories with no time should display
-	Inplace                    bool // Download directly to destination file instead of atomic download to temp/rename
+	DefaultTime                Time       // time that directories with no time should display
+	Inplace                    bool       // Download directly to destination file instead of atomic download to temp/rename
+	MultiThreadChunkSize       SizeSuffix // Chunk size for multi-thread downloads / uploads, if not set by filesystem
 }
 
 // NewConfig creates a new config with everything set to the default
@@ -184,6 +185,7 @@ func NewConfig() *ConfigInfo {
 	//	c.StatsOneLineDateFormat = "2006/01/02 15:04:05 - "
 	c.MultiThreadCutoff = SizeSuffix(250 * 1024 * 1024)
 	c.MultiThreadStreams = 4
+	c.MultiThreadChunkSize = SizeSuffix(50 * 1024 * 1024)
 
 	c.TrackRenamesStrategy = "hash"
 	c.FsCacheExpireDuration = 300 * time.Second
