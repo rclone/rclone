@@ -275,10 +275,8 @@ func (api *Client) Call(ctx context.Context, opts *Opts) (resp *http.Response, e
 		req.Close = true
 	}
 	// Set any extra headers
-	if opts.ExtraHeaders != nil {
-		for k, v := range opts.ExtraHeaders {
-			headers[k] = v
-		}
+	for k, v := range opts.ExtraHeaders {
+		headers[k] = v
 	}
 	// add any options to the headers
 	fs.OpenOptionAddHeaders(opts.Options, headers)
