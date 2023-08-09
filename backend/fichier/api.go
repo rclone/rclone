@@ -28,14 +28,14 @@ var retryErrorCodes = []int{
 	509, // Bandwidth Limit Exceeded
 }
 
-var errorRegex = regexp.MustCompile(`#\d{1,3}`)
+var errorRegex = regexp.MustCompile(`#(\d{1,3})`)
 
 func parseFichierError(err error) int {
 	matches := errorRegex.FindStringSubmatch(err.Error())
 	if len(matches) == 0 {
 		return 0
 	}
-	code, err := strconv.Atoi(matches[0])
+	code, err := strconv.Atoi(matches[1])
 	if err != nil {
 		fs.Debugf(nil, "failed parsing fichier error: %v", err)
 		return 0
