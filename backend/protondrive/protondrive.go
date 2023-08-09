@@ -123,6 +123,10 @@ will be returned, and no upload will happen.`,
 			Name: "enable_caching",
 			Help: `Caches the files and folders metadata to reduce API calls
 
+Notice: If you are mounting ProtonDrive as a VFS, please disable this feature, 
+as the current implementation doesn't update or clear the cache when there are 
+external changes. 
+
 The files and folders on ProtonDrive are represented as links with keyrings, 
 which can be cached to improve performance and be friendly to the API server.
 
