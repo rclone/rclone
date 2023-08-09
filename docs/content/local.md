@@ -387,7 +387,7 @@ Assume the Stat size of links is zero (and read them instead) (deprecated).
 Rclone used to use the Stat size of links as the link size, but this fails in quite a few places:
 
 - Windows
-- On some virtual filesystems (such ash LucidLink)
+- On some virtual filesystems (such as LucidLink)
 - Android
 
 So rclone now always reads the link.
