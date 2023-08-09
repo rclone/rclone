@@ -2604,6 +2604,9 @@ for each backend.
 To find the name of the environment variable, you need to set, take
 `RCLONE_CONFIG_` + name of remote + `_` + name of config file option
 and make it all uppercase.
+Note one implication here is the remote's name must be
+convertible into a valid environment variable name,
+so it can only contain letters, digits, or the `_` (underscore) character.
 
 For example, to configure an S3 remote named `mys3:` without a config
 file (using unix ways of setting environment variables):
