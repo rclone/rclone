@@ -1,24 +1,28 @@
-FROM golang AS builder
+ARG ALPINE_VERSION=3.18
+ARG GO_VERSION=1.19
+ARG XCPUTRANSLATE_VERSION=v0.6.0
+ARG BUILDPLATFORM=linux/amd64
 
-COPY . /go/src/github.com/rclone/rclone/
-WORKDIR /go/src/github.com/rclone/rclone/
+FROM --platform=${BUILDPLATFORM} qmcgaw/xcputranslate:${XCPUTRANSLATE_VERSION} AS xcputranslate
 
-RUN \
-  CGO_ENABLED=0 \
-  make
-RUN ./rclone version
+FROM --platform=${BUILDPLATFORM} golang:${GO_VERSION}-alpine${ALPINE_VERSION} AS builder
+COPY --from=xcputranslate /xcputranslate /usr/local/bin/xcputranslate
+RUN apk --update add git make bash
+ENV CGO_ENABLED=0
+WORKDIR /tmp/gobuild
+COPY go.mod go.sum ./
+RUN go mod download
+COPY . .
+ARG TARGETPLATFORM
+RUN GOARCH="$(xcputranslate translate -field arch -targetplatform ${TARGETPLATFORM})" \
+  GOARM="$(xcputranslate translate -field arm -targetplatform ${TARGETPLATFORM})" \
+  make rclone
 
-# Begin final image
-FROM alpine:latest
-
+FROM alpine:${ALPINE_VERSION}
 RUN apk --no-cache add ca-certificates fuse3 tzdata && \
   echo "user_allow_other" >> /etc/fuse.conf
-
-COPY --from=builder /go/src/github.com/rclone/rclone/rclone /usr/local/bin/
-
 RUN addgroup -g 1009 rclone && adduser -u 1009 -Ds /bin/sh -G rclone rclone
-
-ENTRYPOINT [ "rclone" ]
-
-WORKDIR /data
 ENV XDG_CONFIG_HOME=/config
+WORKDIR /data
+ENTRYPOINT [ "rclone" ]
+COPY --from=builder /tmp/gobuild/rclone /usr/local/bin/
