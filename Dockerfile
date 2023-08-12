@@ -24,5 +24,5 @@ RUN apk --no-cache add ca-certificates fuse3 tzdata && \
 RUN addgroup -g 1009 rclone && adduser -u 1009 -Ds /bin/sh -G rclone rclone
 ENV XDG_CONFIG_HOME=/config
 WORKDIR /data
-ENTRYPOINT [ "rclone" ]
-COPY --from=builder /tmp/gobuild/rclone /usr/local/bin/
+ENTRYPOINT /usr/local/bin/rclone
+COPY --from=builder /tmp/gobuild/rclone /usr/local/bin/rclone
