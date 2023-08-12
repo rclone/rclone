@@ -290,6 +290,23 @@ docker run --rm \
 ls ~/data/mount
 kill %1
 ```
+## Snap installation {#snap}
+
+[![Get it from the Snap Store](https://snapcraft.io/static/images/badges/en/snap-store-black.svg)](https://snapcraft.io/rclone)
+
+Make sure you have [Snapd installed](https://snapcraft.io/docs/installing-snapd)
+
+```bash
+$ sudo snap install rclone
+```
+
+Due to the strict confinement of Snap, some features may `not` work.
+
+- Default config directory:
+    - /home/$USER/snap/rclone/current/.config/rclone
+- Mountpoint can only exist in snap-specific writable directories:
+    - SNAP_USER_{DATA,COMMON}: /home/$USER/snap/rclone/{common,current}
+    - SNAP_{DATA,COMMON}: /var/snap/rclone/{common,current}
 
 ## Source installation {#source}
 
