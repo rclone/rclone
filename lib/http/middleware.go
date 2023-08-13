@@ -198,3 +198,14 @@ func MiddlewareStripPrefix(prefix string) Middleware {
 		return http.StripPrefix(prefix, next)
 	}
 }
+
+func MiddlewareCustomResponseHeaders(headers []*fs.HTTPOption) Middleware {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			for _, header := range headers {
+				w.Header().Add(header.Key, header.Value)
+			}
+			next.ServeHTTP(w, r)
+		})
+	}
+}
