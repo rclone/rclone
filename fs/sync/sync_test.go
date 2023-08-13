@@ -1471,7 +1471,8 @@ func TestSyncOverlapWithFilter(t *testing.T) {
 
 	checkNoErr(Sync(filterCtx, FremoteSync3, r.Fremote, false))
 	checkErr(Sync(ctx, FremoteSync3, r.Fremote, false))
-	checkNoErr(Sync(filterCtx, r.Fremote, FremoteSync3, false))
+	// Destination is excluded so this test makes no sense
+	// checkNoErr(Sync(filterCtx, r.Fremote, FremoteSync3, false))
 	checkErr(Sync(ctx, r.Fremote, FremoteSync3, false))
 	checkErr(Sync(filterCtx, FremoteSync3, FremoteSync3, false))
 	checkErr(Sync(ctx, FremoteSync3, FremoteSync3, false))
