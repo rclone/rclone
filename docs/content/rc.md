@@ -103,14 +103,6 @@ Set this flag to serve the default web gui on the same port as rclone.
 
 Default Off.
 
-### --rc-allow-origin
-
-Set the allowed Access-Control-Allow-Origin for rc requests.
-
-Can be used with --rc-web-gui if the rclone is running on different IP than the web-gui.
-
-Default is IP address on which rc is running.
-
 ### --rc-web-fetch-url
 
 Set the URL to fetch the rclone-web-gui files from.

@@ -59,6 +59,8 @@ inserts leading and trailing "/" on ` + "`--{{ .Prefix }}baseurl`" + `, so ` + "
 ` + "`--{{ .Prefix }}baseurl \"/rclone\"` and `--{{ .Prefix }}baseurl \"/rclone/\"`" + ` are all treated
 identically.
 
+` + "`--{{ .Prefix }}allow-origin`" + ` sets the origin which cross-domain request (CORS) can be executed from.
+
 #### TLS (SSL)
 
 By default this will serve over http.  If you want you can serve over
