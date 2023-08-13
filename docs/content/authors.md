@@ -763,3 +763,4 @@ put them back in again.` >}}
   * antoinetran <antoinetran@users.noreply.github.com>
   * alexia <me@alexia.lol>
   * nielash <nielronash@gmail.com>
+  * Vitor Gomes <vitor.gomes@delivion.de> <mail@vitorgomes.com>
