@@ -636,6 +636,9 @@ type OpenWriterAter interface {
 	OpenWriterAt(ctx context.Context, remote string, size int64) (WriterAtCloser, error)
 }
 
+// OpenWriterAtFn describes the OpenWriterAt function pointer
+type OpenWriterAtFn func(ctx context.Context, remote string, size int64) (WriterAtCloser, error)
+
 type OpenChunkWriter interface {
 	// OpenChunkWriter returns the chunk size and a ChunkWriter
 	//
@@ -643,6 +646,9 @@ type OpenChunkWriter interface {
 	// You can also use options to hint at the desired chunk size
 	OpenChunkWriter(ctx context.Context, remote string, src ObjectInfo, options ...OpenOption) (chunkSize int64, writer ChunkWriter, err error)
 }
+
+// OpenChunkWriterFn describes the OpenChunkWriter function pointer
+type OpenChunkWriterFn func(ctx context.Context, remote string, src ObjectInfo, options ...OpenOption) (chunkSize int64, writer ChunkWriter, err error)
 
 type ChunkWriter interface {
 	// WriteChunk will write chunk number with reader bytes, where chunk number >= 0
