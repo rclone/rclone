@@ -106,7 +106,7 @@ func (ik *ImageKit) Url(params UrlParam) (string, error) {
 	var endpoint = params.UrlEndpoint
 
 	if endpoint == "" {
-		endpoint = ik.Config.UrlEndpoint
+		endpoint = ik.UrlEndpoint
 	}
 
 	endpoint = strings.TrimRight(endpoint, "/") + "/"
@@ -170,7 +170,7 @@ func (ik *ImageKit) Url(params UrlParam) (string, error) {
 		var path = strings.Replace(resultUrl, endpoint, "", 1)
 
 		path = path + expires
-		mac := hmac.New(sha1.New, []byte(ik.Config.PrivateKey))
+		mac := hmac.New(sha1.New, []byte(ik.PrivateKey))
 		mac.Write([]byte(path))
 		signature := hex.EncodeToString(mac.Sum(nil))
 

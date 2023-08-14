@@ -1,11 +1,13 @@
-package uploader
+package client
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
+	"fmt"
+	"io"
+	"net/http"
 
-	"github.com/rclone/rclone/backend/imagekit/client/api"
+	"github.com/rclone/rclone/lib/rest"
 )
 
 // UploadParam defines upload parameters
@@ -38,11 +40,6 @@ type UploadResult struct {
 	VersionInfo  map[string]string `json:"versionInfo"`
 }
 
-type UploadResponse struct {
-	Data UploadResult
-	api.Response
-}
-
 // Upload uploads an asset to a imagekit account.
 //
 // The asset can be:
@@ -51,34 +48,44 @@ type UploadResponse struct {
 //   - the remote FTP, HTTP or HTTPS URL address of an existing file
 //
 // https://docs.imagekit.io/api-reference/upload-file-api/server-side-file-upload
-func (u *API) Upload(ctx context.Context, file interface{}, param UploadParam) (*UploadResponse, error) {
+func (ik *ImageKit) Upload(ctx context.Context, file io.Reader, param UploadParam) (*http.Response, *UploadResult, error) {
 	var err error
 
 	if param.FileName == "" {
-		return nil, errors.New("Upload: Filename is required")
+		return nil, nil, errors.New("Upload: Filename is required")
 	}
 
-	formParams, err := api.StructToParams(param)
+	formParams, err := StructToParams(param)
 
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	response := &UploadResponse{}
+	response := &UploadResult{}
 
-	resp, err := u.postFile(ctx, file, formParams)
-	defer api.DeferredBodyClose(resp)
-
-	api.SetResponseMeta(resp, response)
+	formReader, contentType, _, err := rest.MultipartUpload(ctx, file, formParams, "file", param.FileName)
 
 	if err != nil {
-		return response, err
+		return nil, nil, fmt.Errorf("failed to make multipart upload: %w", err)
+	}
+
+	opts := rest.Opts{
+		Method:      "POST",
+		Path:        "/files/upload",
+		RootURL:     ik.UploadPrefix,
+		Body:        formReader,
+		ContentType: contentType,
+	}
+
+	resp, err := ik.HttpClient.CallJSON(ctx, &opts, nil, response)
+
+	if err != nil {
+		return resp, response, err
 	}
 
 	if resp.StatusCode != 200 {
-		err = response.ParseError()
-	} else {
-		err = json.Unmarshal(response.Body(), &response.Data)
+		err = ParseError(resp)
 	}
-	return response, err
+
+	return resp, response, err
 }

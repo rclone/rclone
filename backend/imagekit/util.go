@@ -3,96 +3,98 @@ package imagekit
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"strconv"
 	"time"
 
-	"github.com/rclone/rclone/backend/imagekit/client/api"
-	"github.com/rclone/rclone/backend/imagekit/client/api/media"
+	"github.com/rclone/rclone/backend/imagekit/client"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/lib/pacer"
 )
 
-func (f *Fs) getFiles(ctx context.Context, path string, includeVersions bool) (files []media.File, err error) {
+func (f *Fs) getFiles(ctx context.Context, path string, includeVersions bool) (files []client.File, err error) {
 
-	files = make([]media.File, 0)
+	files = make([]client.File, 0)
 
 	var hasMore = true
 
 	for hasMore {
 		err = f.pacer.Call(func() (bool, error) {
-			var res *media.FilesResponse
-			res, err = f.ik.Media.Files(ctx, media.FilesOrFolderParam{
+			var data *[]client.File
+			var res *http.Response
+			res, data, err = f.ik.Files(ctx, client.FilesOrFolderParam{
 				Skip:  len(files),
 				Limit: 100,
 				Path:  path,
 			}, includeVersions)
 
-			if len(res.Data) == 0 && len(res.Data) < 100 {
+			if len(*data) == 0 && len(*data) < 100 {
 				hasMore = false
 			} else {
-				files = append(files, res.Data...)
+				files = append(files, *data...)
 			}
 
-			return f.shouldRetry(ctx, &res.Response, err)
+			return f.shouldRetry(ctx, res, err)
 		})
 	}
 
 	if err != nil {
-		return make([]media.File, 0), err
+		return make([]client.File, 0), err
 	}
 
 	return files, nil
 }
 
-func (f *Fs) getFolders(ctx context.Context, path string) (folders []media.Folder, err error) {
+func (f *Fs) getFolders(ctx context.Context, path string) (folders []client.Folder, err error) {
 
-	folders = make([]media.Folder, 0)
+	folders = make([]client.Folder, 0)
 
 	var hasMore = true
 
 	for hasMore {
 		err = f.pacer.Call(func() (bool, error) {
-			var res *media.FoldersResponse
-			res, err = f.ik.Media.Folders(ctx, media.FilesOrFolderParam{
+			var data *[]client.Folder
+			var res *http.Response
+			res, data, err = f.ik.Folders(ctx, client.FilesOrFolderParam{
 				Skip:  len(folders),
 				Limit: 10,
 				Path:  path,
 			})
 
-			if len(res.Data) == 0 && len(res.Data) < 100 {
+			if len(*data) == 0 && len(*data) < 100 {
 				hasMore = false
 			} else {
-				folders = append(folders, res.Data...)
+				folders = append(folders, *data...)
 			}
 
-			return f.shouldRetry(ctx, &res.Response, err)
+			return f.shouldRetry(ctx, res, err)
 		})
 	}
 
 	if err != nil {
-		return make([]media.Folder, 0), err
+		return make([]client.Folder, 0), err
 	}
 
 	return folders, nil
 }
 
-func (f *Fs) getFileByName(ctx context.Context, path string, name string) (file *media.File) {
+func (f *Fs) getFileByName(ctx context.Context, path string, name string) (file *client.File) {
 
 	err := f.pacer.Call(func() (bool, error) {
-		res, err := f.ik.Media.Files(ctx, media.FilesOrFolderParam{
+		res, data, err := f.ik.Files(ctx, client.FilesOrFolderParam{
 			Limit:       1,
 			Path:        path,
 			SearchQuery: fmt.Sprintf(`type = "file" AND name = %s`, strconv.Quote(name)),
 		}, false)
 
-		if len(res.Data) == 0 {
+		if len(*data) == 0 {
 			file = nil
 		} else {
-			file = &res.Data[0]
+			file = &(*data)[0]
 		}
 
-		return f.shouldRetry(ctx, &res.Response, err)
+		return f.shouldRetry(ctx, res, err)
 	})
 
 	if err != nil {
@@ -102,22 +104,21 @@ func (f *Fs) getFileByName(ctx context.Context, path string, name string) (file 
 	return file
 }
 
-func (f *Fs) getFolderByName(ctx context.Context, path string, name string) (folder *media.Folder) {
-
+func (f *Fs) getFolderByName(ctx context.Context, path string, name string) (folder *client.Folder) {
 	err := f.pacer.Call(func() (bool, error) {
-		res, err := f.ik.Media.Folders(ctx, media.FilesOrFolderParam{
+		res, data, err := f.ik.Folders(ctx, client.FilesOrFolderParam{
 			Limit:       1,
 			Path:        path,
 			SearchQuery: fmt.Sprintf(`type = "folder" AND name = %s`, strconv.Quote(name)),
 		})
 
-		if len(res.Data) == 0 {
+		if len(*data) == 0 {
 			folder = nil
 		} else {
-			folder = &res.Data[0]
+			folder = &(*data)[0]
 		}
 
-		return f.shouldRetry(ctx, &res.Response, err)
+		return f.shouldRetry(ctx, res, err)
 	})
 
 	if err != nil {
@@ -137,7 +138,7 @@ var retryErrorCodes = []int{
 	504, // Gateway Time-out
 }
 
-func ShouldRetryHTTP(resp *api.Response, retryErrorCodes []int) bool {
+func ShouldRetryHTTP(resp *http.Response, retryErrorCodes []int) bool {
 	if resp == nil {
 		return false
 	}
@@ -149,7 +150,7 @@ func ShouldRetryHTTP(resp *api.Response, retryErrorCodes []int) bool {
 	return false
 }
 
-func (f *Fs) shouldRetry(ctx context.Context, resp *api.Response, err error) (bool, error) {
+func (f *Fs) shouldRetry(ctx context.Context, resp *http.Response, err error) (bool, error) {
 	if fserrors.ContextError(ctx, &err) {
 		return false, err
 	}

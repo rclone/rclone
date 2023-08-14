@@ -13,8 +13,6 @@ import (
 	"time"
 
 	"github.com/rclone/rclone/backend/imagekit/client"
-	"github.com/rclone/rclone/backend/imagekit/client/api/media"
-	"github.com/rclone/rclone/backend/imagekit/client/api/uploader"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fs/config/configmap"
@@ -129,18 +127,18 @@ type Object struct {
 	filePath    string            // The path to the file
 	contentType string            // The content type of the object if known - may be ""
 	timestamp   time.Time         // The timestamp of the object if known - may be zero
-	file        media.File        // The media file if known - may be nil
+	file        client.File       // The media file if known - may be nil
 	versionID   string            // If present this points to an object version
 	meta        map[string]string // The object metadata if known - may be nil - with lower case keys
 }
 
 // Check the interfaces are satisfied.
 var (
-	_ fs.Fs           = &Fs{}
-	_ fs.Purger       = &Fs{}
-	_ fs.PublicLinker = &Fs{}
-	_ fs.Object       = &Object{}
-	_ fs.Copier       = &Fs{}
+	_ fs.Fs = &Fs{}
+	// _ fs.Purger       = &Fs{}
+	// _ fs.PublicLinker = &Fs{}
+	_ fs.Object = &Object{}
+	// _ fs.Copier       = &Fs{}
 )
 
 func NewFs(ctx context.Context, name string, root string, m configmap.Mapper) (fs.Fs, error) {
@@ -151,7 +149,7 @@ func NewFs(ctx context.Context, name string, root string, m configmap.Mapper) (f
 		return nil, err
 	}
 
-	ik, err := client.New(client.NewParams{
+	ik, err := client.New(ctx, client.NewParams{
 		UrlEndpoint: opt.Endpoint,
 		PublicKey:   opt.PublicKey,
 		PrivateKey:  opt.PrivateKey,
@@ -297,7 +295,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 	return res, nil
 }
 
-func (f *Fs) newObject(ctx context.Context, remote string, file media.File) *Object {
+func (f *Fs) newObject(ctx context.Context, remote string, file client.File) *Object {
 	remoteFile := strings.TrimLeft(strings.Replace(file.FilePath, f.EncodePath(f.root), "", 1), "/")
 
 	folderPath := f.DecodePath(remoteFile[:strings.LastIndex(remoteFile, "/")+1])
@@ -375,7 +373,6 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 //
 // Shouldn't return an error if it already exists
 func (f *Fs) Mkdir(ctx context.Context, dir string) error {
-
 	remote := path.Join(f.root, dir)
 
 	fs.Debugf(remote, "Creating directory")
@@ -383,7 +380,7 @@ func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 	parentFolderPath := f.EncodePath(remote[:strings.LastIndex(remote, "/")+1])
 	folderName := f.EncodePath(remote[strings.LastIndex(remote, "/")+1:])
 
-	_, e := f.ik.Media.CreateFolder(ctx, media.CreateFolderParam{
+	_, e := f.ik.CreateFolder(ctx, client.CreateFolderParam{
 		ParentFolderPath: parentFolderPath,
 		FolderName:       folderName,
 	})
@@ -399,7 +396,6 @@ func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 //
 // Return an error if it doesn't exist or isn't empty
 func (f *Fs) Rmdir(ctx context.Context, dir string) error {
-
 	fs.Debugf(dir, "Removing directory")
 
 	entries, err := f.List(ctx, dir)
@@ -412,7 +408,7 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 		return errors.New("directory is not empty")
 	}
 
-	res, e := f.ik.Media.DeleteFolder(ctx, media.DeleteFolderParam{
+	res, e := f.ik.DeleteFolder(ctx, client.DeleteFolderParam{
 		FolderPath: f.EncodePath(path.Join(f.root, dir)),
 	})
 
@@ -437,7 +433,7 @@ func (f *Fs) Purge(ctx context.Context, dir string) error {
 
 	remote := path.Join(f.root, dir)
 
-	res, e := f.ik.Media.DeleteFolder(ctx, media.DeleteFolderParam{
+	res, e := f.ik.DeleteFolder(ctx, client.DeleteFolderParam{
 		FolderPath: f.EncodePath(remote),
 	})
 
@@ -618,7 +614,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	UseUniqueFileName := new(bool)
 	*UseUniqueFileName = false
 
-	res, err := o.fs.ik.Uploader.Upload(ctx, in, uploader.UploadParam{
+	_, res, err := o.fs.ik.Upload(ctx, in, client.UploadParam{
 		FileName:          fileName,
 		Folder:            folderPath,
 		UseUniqueFileName: UseUniqueFileName,
@@ -628,15 +624,15 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		return err
 	}
 
-	fileId := res.Data.FileId
+	fileId := res.FileId
 
-	resp, err := o.fs.ik.Media.File(ctx, fileId)
+	_, file, err := o.fs.ik.File(ctx, fileId)
 
 	if err != nil {
 		return err
 	}
 
-	o.file = resp.Data
+	o.file = *file
 
 	return nil
 }
@@ -646,7 +642,7 @@ func (o *Object) Remove(ctx context.Context) error {
 
 	fs.Debugf(o.remote, "Removing file: %s", o.file.FileId)
 
-	_, e := o.fs.ik.Media.DeleteFile(ctx, o.file.FileId)
+	_, e := o.fs.ik.DeleteFile(ctx, o.file.FileId)
 
 	if e != nil {
 		return e
@@ -671,7 +667,7 @@ func uploadFile(ctx context.Context, f *Fs, in io.Reader, srcRemote string, opti
 	UseUniqueFileName := new(bool)
 	*UseUniqueFileName = false
 
-	_, err := f.ik.Uploader.Upload(ctx, in, uploader.UploadParam{
+	_, _, err := f.ik.Upload(ctx, in, client.UploadParam{
 		FileName:          fileName,
 		Folder:            folderPath,
 		UseUniqueFileName: UseUniqueFileName,
