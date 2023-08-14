@@ -221,7 +221,7 @@ func (o *Object) readMetaData(ctx context.Context) (err error) {
 		return err
 	}
 
-	o.size = result.Object.Size()
+	o.size = result.Object.Size
 
 	return nil
 }
