@@ -18,7 +18,6 @@ import (
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fs/config/configmap"
-	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/lib/random"
 	"github.com/skratchdot/open-golang/open"
@@ -267,9 +266,10 @@ func (ts *TokenSource) Token() (*oauth2.Token, error) {
 			if ts.reReadToken() {
 				changed = true
 			} else if ts.token.RefreshToken == "" {
-				return nil, fserrors.FatalError(
-					fmt.Errorf("token expired and there's no refresh token - manually refresh with \"rclone config reconnect %s:\"", ts.name),
-				)
+				//Box authentication OAuth2.0 with JWT does not provide refresh tokens
+				//return nil, fserrors.FatalError(
+				//	fmt.Errorf("token expired and there's no refresh token - manually refresh with \"rclone config reconnect %s:\"", ts.name),
+				//)
 			}
 		}
 
