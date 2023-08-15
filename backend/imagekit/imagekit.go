@@ -134,11 +134,11 @@ type Object struct {
 
 // Check the interfaces are satisfied.
 var (
-	_ fs.Fs = &Fs{}
-	// _ fs.Purger       = &Fs{}
-	// _ fs.PublicLinker = &Fs{}
-	_ fs.Object = &Object{}
-	// _ fs.Copier       = &Fs{}
+	_ fs.Fs           = &Fs{}
+	_ fs.Purger       = &Fs{}
+	_ fs.PublicLinker = &Fs{}
+	_ fs.Object       = &Object{}
+	_ fs.Copier       = &Fs{}
 )
 
 func NewFs(ctx context.Context, name string, root string, m configmap.Mapper) (fs.Fs, error) {
