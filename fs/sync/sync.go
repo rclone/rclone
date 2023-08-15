@@ -365,13 +365,13 @@ func (s *syncCopyMove) pairChecker(in *pipe, out *pipe, fraction int, wg *sync.W
 						} else {
 							// If successful zero out the dst as it is no longer there and copy the file
 							pair.Dst = nil
-							ok = out.Put(s.ctx, pair)
+							ok = out.Put(s.inCtx, pair)
 							if !ok {
 								return
 							}
 						}
 					} else {
-						ok = out.Put(s.ctx, pair)
+						ok = out.Put(s.inCtx, pair)
 						if !ok {
 							return
 						}
@@ -389,7 +389,7 @@ func (s *syncCopyMove) pairChecker(in *pipe, out *pipe, fraction int, wg *sync.W
 						// If we want perfect ordering then use the transfers to delete the file
 						//
 						// We send src == dst, to say we want the src deleted
-						ok = out.Put(s.ctx, fs.ObjectPair{Src: src, Dst: src})
+						ok = out.Put(s.inCtx, fs.ObjectPair{Src: src, Dst: src})
 						if !ok {
 							return
 						}
@@ -416,7 +416,7 @@ func (s *syncCopyMove) pairRenamer(in *pipe, out *pipe, fraction int, wg *sync.W
 		if !s.tryRename(src) {
 			// pass on if not renamed
 			fs.Debugf(src, "Need to transfer - No matching file found at Destination")
-			ok = out.Put(s.ctx, pair)
+			ok = out.Put(s.inCtx, pair)
 			if !ok {
 				return
 			}
@@ -897,7 +897,7 @@ func (s *syncCopyMove) run() error {
 		s.makeRenameMap()
 		// Attempt renames for all the files which don't have a matching dst
 		for _, src := range s.renameCheck {
-			ok := s.toBeRenamed.Put(s.ctx, fs.ObjectPair{Src: src, Dst: nil})
+			ok := s.toBeRenamed.Put(s.inCtx, fs.ObjectPair{Src: src, Dst: nil})
 			if !ok {
 				break
 			}
@@ -1032,7 +1032,7 @@ func (s *syncCopyMove) SrcOnly(src fs.DirEntry) (recurse bool) {
 			if !NoNeedTransfer {
 				// No need to check since doesn't exist
 				fs.Debugf(src, "Need to transfer - File not found at Destination")
-				ok := s.toBeUploaded.Put(s.ctx, fs.ObjectPair{Src: x, Dst: nil})
+				ok := s.toBeUploaded.Put(s.inCtx, fs.ObjectPair{Src: x, Dst: nil})
 				if !ok {
 					return
 				}
@@ -1065,7 +1065,7 @@ func (s *syncCopyMove) Match(ctx context.Context, dst, src fs.DirEntry) (recurse
 		}
 		dstX, ok := dst.(fs.Object)
 		if ok {
-			ok = s.toBeChecked.Put(s.ctx, fs.ObjectPair{Src: srcX, Dst: dstX})
+			ok = s.toBeChecked.Put(s.inCtx, fs.ObjectPair{Src: srcX, Dst: dstX})
 			if !ok {
 				return false
 			}
