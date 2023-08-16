@@ -299,14 +299,19 @@ Make sure you have [Snapd installed](https://snapcraft.io/docs/installing-snapd)
 ```bash
 $ sudo snap install rclone
 ```
-
-Due to the strict confinement of Snap, some features may `not` work.
+Due to the strict confinement of Snap, rclone snap cannot acess real /home/$USER/.config/rclone direcotry, default config path is as below.
 
 - Default config directory:
     - /home/$USER/snap/rclone/current/.config/rclone
-- Mountpoint can only exist in snap-specific writable directories:
-    - SNAP_USER_{DATA,COMMON}: /home/$USER/snap/rclone/{common,current}
-    - SNAP_{DATA,COMMON}: /var/snap/rclone/{common,current}
+
+Note: Due to the strict confinement of Snap, `rclone mount` feature is `not` supported.
+
+If mounting is wanted, either install a precompiled binary or enable the relevant option when [installing from source](https://github.com/boukendesho/rclone/blob/master/docs/content/install.md#install-from-source).
+
+Note that this is controlled by [community maintainer](https://github.com/boukendesho/rclone-snap) not the rclone developers so it may be out of date. Its current version is as below.
+
+[![rclone](https://snapcraft.io/rclone/badge.svg)](https://snapcraft.io/rclone)
+
 
 ## Source installation {#source}
 
