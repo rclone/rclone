@@ -777,7 +777,7 @@ func (s *StatsInfo) DoneTransferring(remote string, ok bool) {
 		s.transfers++
 		s.mu.Unlock()
 	}
-	if s.transferring.empty() {
+	if s.transferring.empty() && s.checking.empty() {
 		time.AfterFunc(averageStopAfter, s.stopAverageLoop)
 	}
 }
