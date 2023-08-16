@@ -274,7 +274,7 @@ machines.`)
 				Scopes:      []string{"openid", "jotta-default", "offline_access"},
 				RedirectURL: oauthutil.RedirectLocalhostURL,
 			},
-		})		
+		})
 	case "tele2": // tele2 cloud config
 		m.Set("configVersion", fmt.Sprint(configVersion))
 		m.Set(configClientID, tele2CloudClientID)
