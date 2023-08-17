@@ -1551,27 +1551,68 @@ func Rmdirs(ctx context.Context, f fs.Fs, dir string, leaveRoot bool) error {
 	if err != nil {
 		return fmt.Errorf("failed to rmdirs: %w", err)
 	}
-	// Now delete the empty directories, starting from the longest path
-	var toDelete []string
+
+	// Group directories to delete by level
+	var toDelete [][]string
 	for dir, empty := range dirEmpty {
 		if empty {
-			toDelete = append(toDelete, dir)
+			// If a filter matches the directory then that
+			// directory is a candidate for deletion
+			if fi.IncludeRemote(dir + "/") {
+				level := strings.Count(dir, "/") + 1
+				// The root directory "" is at the top level
+				if dir == "" {
+					level = 0
+				}
+				if len(toDelete) < level+1 {
+					toDelete = append(toDelete, make([][]string, level+1-len(toDelete))...)
+				}
+				toDelete[level] = append(toDelete[level], dir)
+			}
 		}
 	}
-	sort.Strings(toDelete)
-	for i := len(toDelete) - 1; i >= 0; i-- {
-		dir := toDelete[i]
-		// If a filter matches the directory then that
-		// directory is a candidate for deletion
-		if !fi.IncludeRemote(dir + "/") {
+
+	var (
+		errMu     sync.Mutex
+		errCount  int
+		lastError error
+	)
+	// Delete all directories at the same level in parallel
+	for level := len(toDelete) - 1; level >= 0; level-- {
+		dirs := toDelete[level]
+		if len(dirs) == 0 {
 			continue
 		}
-		err = TryRmdir(ctx, f, dir)
+		fs.Debugf(nil, "removing %d level %d directories", len(dirs), level)
+		sort.Strings(dirs)
+		g, gCtx := errgroup.WithContext(ctx)
+		g.SetLimit(ci.Checkers)
+		for _, dir := range dirs {
+			// End early if error
+			if gCtx.Err() != nil {
+				break
+			}
+			dir := dir
+			g.Go(func() error {
+				err := TryRmdir(gCtx, f, dir)
+				if err != nil {
+					err = fs.CountError(err)
+					fs.Errorf(dir, "Failed to rmdir: %v", err)
+					errMu.Lock()
+					lastError = err
+					errCount += 1
+					errMu.Unlock()
+				}
+				return nil // don't return errors, just count them
+			})
+		}
+		err := g.Wait()
 		if err != nil {
-			err = fs.CountError(err)
-			fs.Errorf(dir, "Failed to rmdir: %v", err)
 			return err
 		}
+	}
+	if lastError != nil {
+		return fmt.Errorf("failed to remove %d directories: last error: %w", errCount, lastError)
 	}
 	return nil
 }

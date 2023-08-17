@@ -702,6 +702,22 @@ func TestRmdirsNoLeaveRoot(t *testing.T) {
 		fs.GetModifyWindow(ctx, r.Fremote),
 	)
 
+	// Delete the files so we can remove everything including the root
+	for _, file := range []fstest.Item{file1, file2} {
+		o, err := r.Fremote.NewObject(ctx, file.Path)
+		require.NoError(t, err)
+		require.NoError(t, o.Remove(ctx))
+	}
+
+	require.NoError(t, operations.Rmdirs(ctx, r.Fremote, "", false))
+
+	fstest.CheckListingWithPrecision(
+		t,
+		r.Fremote,
+		[]fstest.Item{},
+		[]string{},
+		fs.GetModifyWindow(ctx, r.Fremote),
+	)
 }
 
 func TestRmdirsLeaveRoot(t *testing.T) {
