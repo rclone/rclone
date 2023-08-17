@@ -33,6 +33,7 @@ require (
 	github.com/hirochachacha/go-smb2 v1.1.0
 	github.com/iguanesolutions/go-systemd/v5 v5.1.1
 	github.com/jcmturner/gokrb5/v8 v8.4.4
+	github.com/jlaffaye/ftp v0.2.0
 	github.com/jzelinskie/whirlpool v0.0.0-20201016144138-0675e54bb004
 	github.com/klauspost/compress v1.16.7
 	github.com/koofr/go-httpclient v0.0.0-20230225102643-5d51a2e9dea6
@@ -49,7 +50,6 @@ require (
 	github.com/pmezard/go-difflib v1.0.0
 	github.com/prometheus/client_golang v1.15.1
 	github.com/putdotio/go-putio/putio v0.0.0-20200123120452-16d982cac2b8
-	github.com/rclone/ftp v0.0.0-20230327202000-dadc1f64e87d
 	github.com/rfjakob/eme v1.1.2
 	github.com/rivo/uniseg v0.4.4
 	github.com/shirou/gopsutil/v3 v3.23.6
@@ -121,7 +121,6 @@ require (
 	github.com/jcmturner/gofork v1.7.6 // indirect
 	github.com/jcmturner/goidentity/v6 v6.0.1 // indirect
 	github.com/jcmturner/rpc/v2 v2.0.3 // indirect
-	github.com/jlaffaye/ftp v0.1.1-0.20230214004652-d84bf4be2b6e // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/jtolio/eventkit v0.0.0-20221004135224-074cf276595b // indirect
 	github.com/jtolio/noiseconn v0.0.0-20230111204749-d7ec1a08b0b8 // indirect

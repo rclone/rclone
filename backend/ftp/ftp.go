@@ -15,7 +15,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/rclone/ftp"
+	"github.com/jlaffaye/ftp"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/accounting"
 	"github.com/rclone/rclone/fs/config"
@@ -249,7 +249,6 @@ type Fs struct {
 	pool     []*ftp.ServerConn
 	drain    *time.Timer // used to drain the pool when we stop using the connections
 	tokens   *pacer.TokenDispenser
-	tlsConf  *tls.Config
 	pacer    *fs.Pacer // pacer for FTP connections
 	fGetTime bool      // true if the ftp library accepts GetTime
 	fSetTime bool      // true if the ftp library accepts SetTime
@@ -362,9 +361,35 @@ func shouldRetry(ctx context.Context, err error) (bool, error) {
 	return fserrors.ShouldRetry(err), err
 }
 
+// Get a TLS config with a unique session cache.
+//
+// We can't share session caches between connections.
+//
+// See: https://github.com/rclone/rclone/issues/7234
+func (f *Fs) tlsConfig() *tls.Config {
+	var tlsConfig *tls.Config
+	if f.opt.TLS || f.opt.ExplicitTLS {
+		tlsConfig = &tls.Config{
+			ServerName:         f.opt.Host,
+			InsecureSkipVerify: f.opt.SkipVerifyTLSCert,
+		}
+		if f.opt.TLSCacheSize > 0 {
+			tlsConfig.ClientSessionCache = tls.NewLRUClientSessionCache(f.opt.TLSCacheSize)
+		}
+		if f.opt.DisableTLS13 {
+			tlsConfig.MaxVersion = tls.VersionTLS12
+		}
+	}
+	return tlsConfig
+}
+
 // Open a new connection to the FTP server.
 func (f *Fs) ftpConnection(ctx context.Context) (c *ftp.ServerConn, err error) {
 	fs.Debugf(f, "Connecting to FTP server")
+
+	// tls.Config for this connection only. Will be used for data
+	// and control connections.
+	tlsConfig := f.tlsConfig()
 
 	// Make ftp library dial with fshttp dialer optionally using TLS
 	initialConnection := true
@@ -383,7 +408,7 @@ func (f *Fs) ftpConnection(ctx context.Context) (c *ftp.ServerConn, err error) {
 			return nil, err
 		}
 		// Connect using cleartext only for non TLS
-		if f.tlsConf == nil {
+		if tlsConfig == nil {
 			return conn, nil
 		}
 		// Initial connection only needs to be cleartext for explicit TLS
@@ -392,7 +417,7 @@ func (f *Fs) ftpConnection(ctx context.Context) (c *ftp.ServerConn, err error) {
 			return conn, nil
 		}
 		// Upgrade connection to TLS
-		tlsConn := tls.Client(conn, f.tlsConf)
+		tlsConn := tls.Client(conn, tlsConfig)
 		// Do the initial handshake - tls.Client doesn't do it for us
 		// If we do this then connections to proftpd/pureftpd lock up
 		// See: https://github.com/rclone/rclone/issues/6426
@@ -414,9 +439,9 @@ func (f *Fs) ftpConnection(ctx context.Context) (c *ftp.ServerConn, err error) {
 	if f.opt.TLS {
 		// Our dialer takes care of TLS but ftp library also needs tlsConf
 		// as a trigger for sending PSBZ and PROT options to server.
-		ftpConfig = append(ftpConfig, ftp.DialWithTLS(f.tlsConf))
+		ftpConfig = append(ftpConfig, ftp.DialWithTLS(tlsConfig))
 	} else if f.opt.ExplicitTLS {
-		ftpConfig = append(ftpConfig, ftp.DialWithExplicitTLS(f.tlsConf))
+		ftpConfig = append(ftpConfig, ftp.DialWithExplicitTLS(tlsConfig))
 	}
 	if f.opt.DisableEPSV {
 		ftpConfig = append(ftpConfig, ftp.DialWithDisabledEPSV(true))
@@ -571,19 +596,6 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (ff fs.Fs
 	if opt.TLS && opt.ExplicitTLS {
 		return nil, errors.New("implicit TLS and explicit TLS are mutually incompatible, please revise your config")
 	}
-	var tlsConfig *tls.Config
-	if opt.TLS || opt.ExplicitTLS {
-		tlsConfig = &tls.Config{
-			ServerName:         opt.Host,
-			InsecureSkipVerify: opt.SkipVerifyTLSCert,
-		}
-		if opt.TLSCacheSize > 0 {
-			tlsConfig.ClientSessionCache = tls.NewLRUClientSessionCache(opt.TLSCacheSize)
-		}
-		if opt.DisableTLS13 {
-			tlsConfig.MaxVersion = tls.VersionTLS12
-		}
-	}
 	u := protocol + path.Join(dialAddr+"/", root)
 	ci := fs.GetConfig(ctx)
 	f := &Fs{
@@ -596,7 +608,6 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (ff fs.Fs
 		pass:     pass,
 		dialAddr: dialAddr,
 		tokens:   pacer.NewTokenDispenser(opt.Concurrency),
-		tlsConf:  tlsConfig,
 		pacer:    fs.NewPacer(ctx, pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant))),
 	}
 	f.features = (&fs.Features{
