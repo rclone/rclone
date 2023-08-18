@@ -764,8 +764,8 @@ func DeleteFilesWithBackupDir(ctx context.Context, toBeDeleted fs.ObjectsChan, b
 	var wg sync.WaitGroup
 	ci := fs.GetConfig(ctx)
 	wg.Add(ci.Checkers)
-	var errorCount int32
-	var fatalErrorCount int32
+	var errorCount atomic.Int32
+	var fatalErrorCount atomic.Int32
 
 	for i := 0; i < ci.Checkers; i++ {
 		go func() {
@@ -773,10 +773,10 @@ func DeleteFilesWithBackupDir(ctx context.Context, toBeDeleted fs.ObjectsChan, b
 			for dst := range toBeDeleted {
 				err := DeleteFileWithBackupDir(ctx, dst, backupDir)
 				if err != nil {
-					atomic.AddInt32(&errorCount, 1)
+					errorCount.Add(1)
 					if fserrors.IsFatalError(err) {
 						fs.Errorf(nil, "Got fatal error on delete: %s", err)
-						atomic.AddInt32(&fatalErrorCount, 1)
+						fatalErrorCount.Add(1)
 						return
 					}
 				}
@@ -785,9 +785,9 @@ func DeleteFilesWithBackupDir(ctx context.Context, toBeDeleted fs.ObjectsChan, b
 	}
 	fs.Debugf(nil, "Waiting for deletions to finish")
 	wg.Wait()
-	if errorCount > 0 {
-		err := fmt.Errorf("failed to delete %d files", errorCount)
-		if fatalErrorCount > 0 {
+	if errorCount.Load() > 0 {
+		err := fmt.Errorf("failed to delete %d files", errorCount.Load())
+		if fatalErrorCount.Load() > 0 {
 			return fserrors.FatalError(err)
 		}
 		return err
