@@ -1121,7 +1121,7 @@ func (f *Fs) deletePermanently(ctx context.Context, itemType, id string) error {
 // CleanUp empties the trash
 func (f *Fs) CleanUp(ctx context.Context) (err error) {
 	var (
-		deleteErrors       = int64(0)
+		deleteErrors       atomic.Uint64
 		concurrencyControl = make(chan struct{}, fs.GetConfig(ctx).Checkers)
 		wg                 sync.WaitGroup
 	)
@@ -1137,7 +1137,7 @@ func (f *Fs) CleanUp(ctx context.Context) (err error) {
 				err := f.deletePermanently(ctx, item.Type, item.ID)
 				if err != nil {
 					fs.Errorf(f, "failed to delete trash item %q (%q): %v", item.Name, item.ID, err)
-					atomic.AddInt64(&deleteErrors, 1)
+					deleteErrors.Add(1)
 				}
 			}()
 		} else {
@@ -1146,8 +1146,8 @@ func (f *Fs) CleanUp(ctx context.Context) (err error) {
 		return false
 	})
 	wg.Wait()
-	if deleteErrors != 0 {
-		return fmt.Errorf("failed to delete %d trash items", deleteErrors)
+	if deleteErrors.Load() != 0 {
+		return fmt.Errorf("failed to delete %d trash items", deleteErrors.Load())
 	}
 	return err
 }
