@@ -503,7 +503,7 @@ type Fs struct {
 	drain        *time.Timer // used to drain the pool when we stop using the connections
 	pacer        *fs.Pacer   // pacer for operations
 	savedpswd    string
-	sessions     int32 // count in use sessions
+	sessions     atomic.Int32 // count in use sessions
 }
 
 // Object is a remote SFTP file that has been stat'd (so it exists, but is not necessarily open for reading)
@@ -571,17 +571,17 @@ func (c *conn) closed() error {
 //
 // Call removeSession() when done
 func (f *Fs) addSession() {
-	atomic.AddInt32(&f.sessions, 1)
+	f.sessions.Add(1)
 }
 
 // Show the ssh session is no longer in use
 func (f *Fs) removeSession() {
-	atomic.AddInt32(&f.sessions, -1)
+	f.sessions.Add(-1)
 }
 
 // getSessions shows whether there are any sessions in use
 func (f *Fs) getSessions() int32 {
-	return atomic.LoadInt32(&f.sessions)
+	return f.sessions.Load()
 }
 
 // Open a new connection to the SFTP server.
