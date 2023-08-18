@@ -765,3 +765,4 @@ put them back in again.` >}}
   * nielash <nielronash@gmail.com>
   * Vitor Gomes <vitor.gomes@delivion.de> <mail@vitorgomes.com>
   * Jacob Hands <jacob@gogit.io>
+  * hideo aoyama <100831251+boukendesho@users.noreply.github.com>
