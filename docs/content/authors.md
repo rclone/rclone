@@ -764,3 +764,4 @@ put them back in again.` >}}
   * alexia <me@alexia.lol>
   * nielash <nielronash@gmail.com>
   * Vitor Gomes <vitor.gomes@delivion.de> <mail@vitorgomes.com>
+  * Jacob Hands <jacob@gogit.io>
