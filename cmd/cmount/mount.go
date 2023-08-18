@@ -13,7 +13,6 @@ import (
 	"os"
 	"runtime"
 	"strings"
-	"sync/atomic"
 	"time"
 
 	"github.com/rclone/rclone/cmd/mountlib"
@@ -192,7 +191,7 @@ func mount(VFS *vfs.VFS, mountPath string, opt *mountlib.Options) (<-chan error,
 		// Shutdown the VFS
 		fsys.VFS.Shutdown()
 		var umountOK bool
-		if atomic.LoadInt32(&fsys.destroyed) != 0 {
+		if fsys.destroyed.Load() != 0 {
 			fs.Debugf(nil, "Not calling host.Unmount as mount already Destroyed")
 			umountOK = true
 		} else if atexit.Signalled() {
