@@ -10,7 +10,7 @@ import (
 type Renew struct {
 	name    string       // name to use in logs
 	ts      *TokenSource // token source that needs renewing
-	uploads int32        // number of uploads in progress - atomic access required
+	uploads atomic.Int32 // number of uploads in progress
 	run     func() error // a transaction to run to renew the token on
 }
 
@@ -37,7 +37,7 @@ func (r *Renew) renewOnExpiry() {
 	expiry := r.ts.OnExpiry()
 	for {
 		<-expiry
-		uploads := atomic.LoadInt32(&r.uploads)
+		uploads := r.uploads.Load()
 		if uploads != 0 {
 			fs.Debugf(r.name, "Token expired - %d uploads in progress - refreshing", uploads)
 			// Do a transaction
@@ -55,12 +55,12 @@ func (r *Renew) renewOnExpiry() {
 
 // Start should be called before starting an upload
 func (r *Renew) Start() {
-	atomic.AddInt32(&r.uploads, 1)
+	r.uploads.Add(1)
 }
 
 // Stop should be called after finishing an upload
 func (r *Renew) Stop() {
-	atomic.AddInt32(&r.uploads, -1)
+	r.uploads.Add(-1)
 }
 
 // Invalidate invalidates the token source

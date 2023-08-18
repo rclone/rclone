@@ -19,8 +19,8 @@ var (
 	exitChan     chan os.Signal
 	exitOnce     sync.Once
 	registerOnce sync.Once
-	signalled    int32
-	runCalled    int32
+	signalled    atomic.Int32
+	runCalled    atomic.Int32
 )
 
 // FnHandle is the type of the handle returned by function `Register`
@@ -47,7 +47,7 @@ func Register(fn func()) FnHandle {
 				return
 			}
 			signal.Stop(exitChan)
-			atomic.StoreInt32(&signalled, 1)
+			signalled.Store(1)
 			fs.Infof(nil, "Signal received: %s", sig)
 			Run()
 			fs.Infof(nil, "Exiting...")
@@ -60,12 +60,12 @@ func Register(fn func()) FnHandle {
 
 // Signalled returns true if an exit signal has been received
 func Signalled() bool {
-	return atomic.LoadInt32(&signalled) != 0
+	return signalled.Load() != 0
 }
 
 // running returns true if run has been called
 func running() bool {
-	return atomic.LoadInt32(&runCalled) != 0
+	return runCalled.Load() != 0
 }
 
 // Unregister a function using the handle returned by `Register`
@@ -93,7 +93,7 @@ func IgnoreSignals() {
 
 // Run all the at exit functions if they haven't been run already
 func Run() {
-	atomic.StoreInt32(&runCalled, 1)
+	runCalled.Store(1)
 	// Take the lock here (not inside the exitOnce) so we wait
 	// until the exit handlers have run before any calls to Run()
 	// return.
