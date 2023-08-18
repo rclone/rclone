@@ -158,9 +158,9 @@ type Fs struct {
 	tokenMu         sync.Mutex         // hold when reading the token
 	token           string             // current access token
 	tokenExpiry     time.Time          // time the current token expires
-	tokenExpired    int32              // read and written with atomic
-	canCopyWithName bool               // set if detected that can use fi_name in copy
-	precision       time.Duration      // precision reported
+	tokenExpired    atomic.Int32
+	canCopyWithName bool          // set if detected that can use fi_name in copy
+	precision       time.Duration // precision reported
 }
 
 // Object describes a filefabric object
@@ -243,7 +243,7 @@ func (f *Fs) shouldRetry(ctx context.Context, resp *http.Response, err error, st
 		err = status // return the error from the RPC
 		code := status.GetCode()
 		if code == "login_token_expired" {
-			atomic.AddInt32(&f.tokenExpired, 1)
+			f.tokenExpired.Add(1)
 		} else {
 			for _, retryCode := range retryStatusCodes {
 				if code == retryCode.code {
@@ -323,12 +323,12 @@ func (f *Fs) getToken(ctx context.Context) (token string, err error) {
 	var refreshed = false
 	defer func() {
 		if refreshed {
-			atomic.StoreInt32(&f.tokenExpired, 0)
+			f.tokenExpired.Store(0)
 		}
 		f.tokenMu.Unlock()
 	}()
 
-	expired := atomic.LoadInt32(&f.tokenExpired) != 0
+	expired := f.tokenExpired.Load() != 0
 	if expired {
 		fs.Debugf(f, "Token invalid - refreshing")
 	}
