@@ -290,6 +290,28 @@ docker run --rm \
 ls ~/data/mount
 kill %1
 ```
+## Snap installation {#snap}
+
+[![Get it from the Snap Store](https://snapcraft.io/static/images/badges/en/snap-store-black.svg)](https://snapcraft.io/rclone)
+
+Make sure you have [Snapd installed](https://snapcraft.io/docs/installing-snapd)
+
+```bash
+$ sudo snap install rclone
+```
+Due to the strict confinement of Snap, rclone snap cannot acess real /home/$USER/.config/rclone directory, default config path is as below.
+
+- Default config directory:
+    - /home/$USER/snap/rclone/current/.config/rclone
+
+Note: Due to the strict confinement of Snap, `rclone mount` feature is `not` supported.
+
+If mounting is wanted, either install a precompiled binary or enable the relevant option when [installing from source](#source).
+
+Note that this is controlled by [community maintainer](https://github.com/boukendesho/rclone-snap) not the rclone developers so it may be out of date. Its current version is as below.
+
+[![rclone](https://snapcraft.io/rclone/badge.svg)](https://snapcraft.io/rclone)
+
 
 ## Source installation {#source}
 
