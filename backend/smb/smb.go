@@ -9,6 +9,7 @@ import (
 	"path"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/rclone/rclone/fs"
@@ -140,7 +141,7 @@ type Fs struct {
 	features *fs.Features // optional features
 	pacer    *fs.Pacer    // pacer for operations
 
-	sessions int32
+	sessions atomic.Int32
 	poolMu   sync.Mutex
 	pool     []*conn
 	drain    *time.Timer // used to drain the pool when we stop using the connections
