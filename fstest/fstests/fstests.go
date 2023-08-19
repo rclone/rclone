@@ -809,17 +809,17 @@ func Run(t *testing.T, opt *Opt) {
 			require.NoError(t, err)
 
 			var n int64
-			n, err = out.WriteChunk(1, strings.NewReader(contents2))
+			n, err = out.WriteChunk(ctx, 1, strings.NewReader(contents2))
 			assert.NoError(t, err)
 			assert.Equal(t, int64(size5MBs), n)
-			n, err = out.WriteChunk(2, strings.NewReader(contents3))
+			n, err = out.WriteChunk(ctx, 2, strings.NewReader(contents3))
 			assert.NoError(t, err)
 			assert.Equal(t, int64(size1MB), n)
-			n, err = out.WriteChunk(0, strings.NewReader(contents1))
+			n, err = out.WriteChunk(ctx, 0, strings.NewReader(contents1))
 			assert.NoError(t, err)
 			assert.Equal(t, int64(size5MBs), n)
 
-			assert.NoError(t, out.Close())
+			assert.NoError(t, out.Close(ctx))
 
 			obj := findObject(ctx, t, f, path)
 			originalContents := contents1 + contents2 + contents3

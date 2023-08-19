@@ -86,7 +86,7 @@ func (mc *multiThreadCopyState) copyStream(ctx context.Context, stream int, writ
 
 	// FIXME NewRepeatableReader is allocating - need to be more careful with the memory allocations
 	// Also allocating for copy to local which doesn't need it
-	bytesWritten, err := writer.WriteChunk(stream, readers.NewRepeatableReader(rc))
+	bytesWritten, err := writer.WriteChunk(ctx, stream, readers.NewRepeatableReader(rc))
 	if err != nil {
 		return err
 	}
@@ -175,7 +175,7 @@ func multiThreadCopy(ctx context.Context, f fs.Fs, remote string, src fs.Object,
 	}
 
 	err = g.Wait()
-	closeErr := chunkWriter.Close()
+	closeErr := chunkWriter.Close(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -224,7 +224,6 @@ func (o *offsetWriter) Write(p []byte) (n int, err error) {
 
 // writerAtChunkWriter converts a WriterAtCloser into a ChunkWriter
 type writerAtChunkWriter struct {
-	ctx             context.Context
 	remote          string
 	size            int64
 	writerAt        fs.WriterAtCloser
@@ -235,7 +234,7 @@ type writerAtChunkWriter struct {
 }
 
 // WriteChunk writes chunkNumber from reader
-func (w writerAtChunkWriter) WriteChunk(chunkNumber int, reader io.ReadSeeker) (int64, error) {
+func (w writerAtChunkWriter) WriteChunk(ctx context.Context, chunkNumber int, reader io.ReadSeeker) (int64, error) {
 	fs.Debugf(w.remote, "writing chunk %v", chunkNumber)
 
 	bytesToWrite := w.chunkSize
@@ -266,17 +265,17 @@ func (w writerAtChunkWriter) WriteChunk(chunkNumber int, reader io.ReadSeeker) (
 }
 
 // Close the chunk writing
-func (w writerAtChunkWriter) Close() error {
+func (w writerAtChunkWriter) Close(ctx context.Context) error {
 	return w.writerAt.Close()
 }
 
 // Abort the chunk writing
-func (w writerAtChunkWriter) Abort() error {
-	obj, err := w.f.NewObject(w.ctx, w.remote)
+func (w writerAtChunkWriter) Abort(ctx context.Context) error {
+	obj, err := w.f.NewObject(ctx, w.remote)
 	if err != nil {
 		return fmt.Errorf("multi-thread copy: failed to find temp file when aborting chunk writer: %w", err)
 	}
-	return obj.Remove(w.ctx)
+	return obj.Remove(ctx)
 }
 
 // openChunkWriterFromOpenWriterAt adapts an OpenWriterAtFn into an OpenChunkWriterFn using chunkSize and writeBufferSize
@@ -292,7 +291,6 @@ func openChunkWriterFromOpenWriterAt(openWriterAt fs.OpenWriterAtFn, chunkSize i
 		}
 
 		chunkWriter := &writerAtChunkWriter{
-			ctx:             ctx,
 			remote:          remote,
 			size:            src.Size(),
 			chunkSize:       chunkSize,

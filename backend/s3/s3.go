@@ -5426,7 +5426,7 @@ func (w *s3ChunkWriter) addMd5(md5binary *[]byte, chunkNumber int64) {
 }
 
 // WriteChunk will write chunk number with reader bytes, where chunk number >= 0
-func (w *s3ChunkWriter) WriteChunk(chunkNumber int, reader io.ReadSeeker) (int64, error) {
+func (w *s3ChunkWriter) WriteChunk(ctx context.Context, chunkNumber int, reader io.ReadSeeker) (int64, error) {
 	if chunkNumber < 0 {
 		err := fmt.Errorf("invalid chunk number provided: %v", chunkNumber)
 		return -1, err
@@ -5488,7 +5488,7 @@ func (w *s3ChunkWriter) WriteChunk(chunkNumber int, reader io.ReadSeeker) (int64
 }
 
 // Abort the multpart upload
-func (w *s3ChunkWriter) Abort() error {
+func (w *s3ChunkWriter) Abort(ctx context.Context) error {
 	err := w.f.pacer.Call(func() (bool, error) {
 		_, err := w.f.c.AbortMultipartUploadWithContext(context.Background(), &s3.AbortMultipartUploadInput{
 			Bucket:       w.bucket,
@@ -5506,7 +5506,7 @@ func (w *s3ChunkWriter) Abort() error {
 }
 
 // Close and finalise the multipart upload
-func (w *s3ChunkWriter) Close() (err error) {
+func (w *s3ChunkWriter) Close(ctx context.Context) (err error) {
 	// sort the completed parts by part number
 	sort.Slice(w.completedParts, func(i, j int) bool {
 		return *w.completedParts[i].PartNumber < *w.completedParts[j].PartNumber
@@ -5561,7 +5561,7 @@ func (o *Object) uploadMultipart(ctx context.Context, src fs.ObjectInfo, in io.R
 			return
 		}
 		fs.Debugf(o, "Cancelling multipart upload")
-		errCancel := chunkWriter.Abort()
+		errCancel := chunkWriter.Abort(ctx)
 		if errCancel != nil {
 			fs.Debugf(o, "Failed to cancel multipart upload: %v", errCancel)
 		}
@@ -5611,7 +5611,7 @@ func (o *Object) uploadMultipart(ctx context.Context, src fs.ObjectInfo, in io.R
 		off += int64(n)
 		g.Go(func() (err error) {
 			defer free()
-			_, err = chunkWriter.WriteChunk(int(partNum), bytes.NewReader(buf))
+			_, err = chunkWriter.WriteChunk(gCtx, int(partNum), bytes.NewReader(buf))
 			return err
 		})
 	}
@@ -5620,7 +5620,7 @@ func (o *Object) uploadMultipart(ctx context.Context, src fs.ObjectInfo, in io.R
 		return wantETag, gotETag, nil, err
 	}
 
-	err = chunkWriter.Close()
+	err = chunkWriter.Close(ctx)
 	if err != nil {
 		return wantETag, gotETag, nil, fmt.Errorf("multipart upload failed to finalise: %w", err)
 	}
