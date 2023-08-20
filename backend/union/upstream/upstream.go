@@ -25,10 +25,6 @@ var (
 
 // Fs is a wrap of any fs and its configs
 type Fs struct {
-	// In order to ensure memory alignment on 32-bit architectures
-	// when this field is accessed through sync/atomic functions,
-	// it must be the first entry in the struct
-	cacheExpiry int64 // usage cache expiry time
 	fs.Fs
 	RootFs      fs.Fs
 	RootPath    string
@@ -37,6 +33,7 @@ type Fs struct {
 	creatable   bool
 	usage       *fs.Usage     // Cache the usage
 	cacheTime   time.Duration // cache duration
+	cacheExpiry atomic.Int64  // usage cache expiry time
 	cacheMutex  sync.RWMutex
 	cacheOnce   sync.Once
 	cacheUpdate bool // if the cache is updating
@@ -73,14 +70,14 @@ func New(ctx context.Context, remote, root string, opt *common.Options) (*Fs, er
 		return nil, err
 	}
 	f := &Fs{
-		RootPath:    strings.TrimRight(root, "/"),
-		Opt:         opt,
-		writable:    true,
-		creatable:   true,
-		cacheExpiry: time.Now().Unix(),
-		cacheTime:   time.Duration(opt.CacheTime) * time.Second,
-		usage:       &fs.Usage{},
+		RootPath:  strings.TrimRight(root, "/"),
+		Opt:       opt,
+		writable:  true,
+		creatable: true,
+		cacheTime: time.Duration(opt.CacheTime) * time.Second,
+		usage:     &fs.Usage{},
 	}
+	f.cacheExpiry.Store(time.Now().Unix())
 	if strings.HasSuffix(fsPath, ":ro") {
 		f.writable = false
 		f.creatable = false
@@ -298,7 +295,7 @@ func (o *Object) Metadata(ctx context.Context) (fs.Metadata, error) {
 
 // About gets quota information from the Fs
 func (f *Fs) About(ctx context.Context) (*fs.Usage, error) {
-	if atomic.LoadInt64(&f.cacheExpiry) <= time.Now().Unix() {
+	if f.cacheExpiry.Load() <= time.Now().Unix() {
 		err := f.updateUsage()
 		if err != nil {
 			return nil, ErrUsageFieldNotSupported
@@ -313,7 +310,7 @@ func (f *Fs) About(ctx context.Context) (*fs.Usage, error) {
 //
 // This is returned as 0..math.MaxInt64-1 leaving math.MaxInt64 as a sentinel
 func (f *Fs) GetFreeSpace() (int64, error) {
-	if atomic.LoadInt64(&f.cacheExpiry) <= time.Now().Unix() {
+	if f.cacheExpiry.Load() <= time.Now().Unix() {
 		err := f.updateUsage()
 		if err != nil {
 			return math.MaxInt64 - 1, ErrUsageFieldNotSupported
@@ -331,7 +328,7 @@ func (f *Fs) GetFreeSpace() (int64, error) {
 //
 // This is returned as 0..math.MaxInt64-1 leaving math.MaxInt64 as a sentinel
 func (f *Fs) GetUsedSpace() (int64, error) {
-	if atomic.LoadInt64(&f.cacheExpiry) <= time.Now().Unix() {
+	if f.cacheExpiry.Load() <= time.Now().Unix() {
 		err := f.updateUsage()
 		if err != nil {
 			return 0, ErrUsageFieldNotSupported
@@ -347,7 +344,7 @@ func (f *Fs) GetUsedSpace() (int64, error) {
 
 // GetNumObjects get the number of objects of the fs
 func (f *Fs) GetNumObjects() (int64, error) {
-	if atomic.LoadInt64(&f.cacheExpiry) <= time.Now().Unix() {
+	if f.cacheExpiry.Load() <= time.Now().Unix() {
 		err := f.updateUsage()
 		if err != nil {
 			return 0, ErrUsageFieldNotSupported
@@ -402,7 +399,7 @@ func (f *Fs) updateUsageCore(lock bool) error {
 		defer f.cacheMutex.Unlock()
 	}
 	// Store usage
-	atomic.StoreInt64(&f.cacheExpiry, time.Now().Add(f.cacheTime).Unix())
+	f.cacheExpiry.Store(time.Now().Add(f.cacheTime).Unix())
 	f.usage = usage
 	return nil
 }
