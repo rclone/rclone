@@ -1531,36 +1531,51 @@ As a final hint, size is not the only factor: block size (or similar
 concept) can have an impact. In one case, we observed that exact
 multiples of 16k performed much better than other values.
 
+### --multi-thread-chunk-size=SizeSuffix ###
+
+Normally the chunk size for multi thread copies is set by the backend.
+However some backends such as `local` and `smb` (which implement
+`OpenWriterAt` but not `OpenChunkWriter`) don't have a natural chunk
+size.
+
+In this case the value of this option is used (default 64Mi).
+
 ### --multi-thread-cutoff=SIZE ###
 
-When downloading files to the local backend above this size, rclone
-will use multiple threads to download the file (default 250M).
+When transferring files to capable backends above this size, rclone
+will use multiple threads to download the file (default 256M).
 
-Rclone preallocates the file (using `fallocate(FALLOC_FL_KEEP_SIZE)`
-on unix or `NTSetInformationFile` on Windows both of which takes no
-time) then each thread writes directly into the file at the correct
-place.  This means that rclone won't create fragmented or sparse files
-and there won't be any assembly time at the end of the transfer.
+Capable backends are marked in the
+[overview](/overview/#optional-features) as `MultithreadUpload`. (They
+need to implement either `OpenWriterAt` or `OpenChunkedWriter`). These
+include include, `local`, `s3`, `azureblob`, `b2` and `smb`.
 
-The number of threads used to download is controlled by
+On the local disk, rclone preallocates the file (using
+`fallocate(FALLOC_FL_KEEP_SIZE)` on unix or `NTSetInformationFile` on
+Windows both of which takes no time) then each thread writes directly
+into the file at the correct place. This means that rclone won't
+create fragmented or sparse files and there won't be any assembly time
+at the end of the transfer.
+
+The number of threads used to transfer is controlled by
 `--multi-thread-streams`.
 
 Use `-vv` if you wish to see info about the threads.
 
 This will work with the `sync`/`copy`/`move` commands and friends
-`copyto`/`moveto`.  Multi thread downloads will be used with `rclone
+`copyto`/`moveto`. Multi thread transfers will be used with `rclone
 mount` and `rclone serve` if `--vfs-cache-mode` is set to `writes` or
 above.
 
-**NB** that this **only** works for a local destination but will work
-with any source.
+**NB** that this **only** works supported backends as the destination
+but will work with any backend as the source.
 
-**NB** that multi thread copies are disabled for local to local copies
+**NB** that multi-thread copies are disabled for local to local copies
 as they are faster without unless `--multi-thread-streams` is set
 explicitly.
 
-**NB** on Windows using multi-thread downloads will cause the
-resulting files to be [sparse](https://en.wikipedia.org/wiki/Sparse_file).
+**NB** on Windows using multi-thread transfers to the local disk will
+cause the resulting files to be [sparse](https://en.wikipedia.org/wiki/Sparse_file).
 Use `--local-no-sparse` to disable sparse files (which may cause long
 delays at the start of downloads) or disable multi-thread downloads
 with `--multi-thread-streams 0`
@@ -1568,21 +1583,8 @@ with `--multi-thread-streams 0`
 ### --multi-thread-streams=N ###
 
 When using multi thread downloads (see above `--multi-thread-cutoff`)
-this sets the maximum number of streams to use.  Set to `0` to disable
-multi thread downloads (Default 4).
-
-Exactly how many streams rclone uses for the download depends on the
-size of the file. To calculate the number of download streams Rclone
-divides the size of the file by the `--multi-thread-cutoff` and rounds
-up, up to the maximum set with `--multi-thread-streams`.
-
-So if `--multi-thread-cutoff 250M` and `--multi-thread-streams 4` are
-in effect (the defaults):
-
-- 0..250 MiB files will be downloaded with 1 stream
-- 250..500 MiB files will be downloaded with 2 streams
-- 500..750 MiB files will be downloaded with 3 streams
-- 750+ MiB files will be downloaded with 4 streams
+this sets the number of streams to use. Set to `0` to disable multi
+thread downloads (Default 4).
 
 ### --no-check-dest ###
 

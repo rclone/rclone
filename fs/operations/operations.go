@@ -419,16 +419,7 @@ func Copy(ctx context.Context, f fs.Fs, dst fs.Object, remote string, src fs.Obj
 				})
 			}
 			if doMultiThreadCopy(ctx, f, src) {
-				// Number of streams proportional to size
-				streams := src.Size() / int64(ci.MultiThreadCutoff)
-				// With maximum
-				if streams > int64(ci.MultiThreadStreams) {
-					streams = int64(ci.MultiThreadStreams)
-				}
-				if streams < 2 {
-					streams = 2
-				}
-				dst, err = multiThreadCopy(ctx, f, remotePartial, src, int(streams), tr)
+				dst, err = multiThreadCopy(ctx, f, remotePartial, src, ci.MultiThreadStreams, tr)
 				if err == nil {
 					newDst = dst
 				}

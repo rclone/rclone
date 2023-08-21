@@ -465,51 +465,51 @@ See [the metadata docs](/docs/#metadata) for more info.
 All rclone remotes support a base command set. Other features depend
 upon backend-specific capabilities.
 
-| Name                         | Purge | Copy | Move | DirMove | CleanUp | ListR | StreamUpload | LinkSharing  | About | EmptyDir |
-| ---------------------------- |:-----:|:----:|:----:|:-------:|:-------:|:-----:|:------------:|:------------:|:-----:|:--------:|
-| 1Fichier                     | No    | Yes  | Yes  | No      | No      | No    | No           | Yes          | No    | Yes      |
-| Akamai Netstorage            | Yes   | No   | No   | No      | No      | Yes   | Yes          | No           | No    | Yes      |
-| Amazon Drive                 | Yes   | No   | Yes  | Yes     | No      | No    | No           | No           | No    | Yes      |
-| Amazon S3 (or S3 compatible) | No    | Yes  | No   | No      | Yes     | Yes   | Yes          | Yes          | No    | No       |
-| Backblaze B2                 | No    | Yes  | No   | No      | Yes     | Yes   | Yes          | Yes          | No    | No       |
-| Box                          | Yes   | Yes  | Yes  | Yes     | Yes ‡‡  | No    | Yes          | Yes          | Yes   | Yes      |
-| Citrix ShareFile             | Yes   | Yes  | Yes  | Yes     | No      | No    | No           | No           | No    | Yes      |
-| Dropbox                      | Yes   | Yes  | Yes  | Yes     | No      | No    | Yes          | Yes          | Yes   | Yes      |
-| Enterprise File Fabric       | Yes   | Yes  | Yes  | Yes     | Yes     | No    | No           | No           | No    | Yes      |
-| FTP                          | No    | No   | Yes  | Yes     | No      | No    | Yes          | No           | No    | Yes      |
-| Google Cloud Storage         | Yes   | Yes  | No   | No      | No      | Yes   | Yes          | No           | No    | No       |
-| Google Drive                 | Yes   | Yes  | Yes  | Yes     | Yes     | Yes   | Yes          | Yes          | Yes   | Yes      |
-| Google Photos                | No    | No   | No   | No      | No      | No    | No           | No           | No    | No       |
-| HDFS                         | Yes   | No   | Yes  | Yes     | No      | No    | Yes          | No           | Yes   | Yes      |
-| HiDrive                      | Yes   | Yes  | Yes  | Yes     | No      | No    | Yes          | No           | No    | Yes      |
-| HTTP                         | No    | No   | No   | No      | No      | No    | No           | No           | No    | Yes      |
-| Internet Archive             | No    | Yes  | No   | No      | Yes     | Yes   | No           | Yes          | Yes   | No       |
-| Jottacloud                   | Yes   | Yes  | Yes  | Yes     | Yes     | Yes   | No           | Yes          | Yes   | Yes      |
-| Koofr                        | Yes   | Yes  | Yes  | Yes     | No      | No    | Yes          | Yes          | Yes   | Yes      |
-| Mail.ru Cloud                | Yes   | Yes  | Yes  | Yes     | Yes     | No    | No           | Yes          | Yes   | Yes      |
-| Mega                         | Yes   | No   | Yes  | Yes     | Yes     | No    | No           | Yes          | Yes   | Yes      |
-| Memory                       | No    | Yes  | No   | No      | No      | Yes   | Yes          | No           | No    | No       |
-| Microsoft Azure Blob Storage | Yes   | Yes  | No   | No      | No      | Yes   | Yes          | No           | No    | No       |
-| Microsoft OneDrive           | Yes   | Yes  | Yes  | Yes     | Yes     | No    | No           | Yes          | Yes   | Yes      |
-| OpenDrive                    | Yes   | Yes  | Yes  | Yes     | No      | No    | No           | No           | No    | Yes      |
-| OpenStack Swift              | Yes † | Yes  | No   | No      | No      | Yes   | Yes          | No           | Yes   | No       |
-| Oracle Object Storage        | No    | Yes  | No   | No      | Yes     | Yes   | Yes          | No           | No    | No       |
-| pCloud                       | Yes   | Yes  | Yes  | Yes     | Yes     | No    | No           | Yes          | Yes   | Yes      |
-| PikPak                       | Yes   | Yes  | Yes  | Yes     | Yes     | No    | No           | Yes          | Yes   | Yes      |
-| premiumize.me                | Yes   | No   | Yes  | Yes     | No      | No    | No           | Yes          | Yes   | Yes      |
-| put.io                       | Yes   | No   | Yes  | Yes     | Yes     | No    | Yes          | No           | Yes   | Yes      |
-| QingStor                     | No    | Yes  | No   | No      | Yes     | Yes   | No           | No           | No    | No       |
-| Seafile                      | Yes   | Yes  | Yes  | Yes     | Yes     | Yes   | Yes          | Yes          | Yes   | Yes      |
-| SFTP                         | No    | No   | Yes  | Yes     | No      | No    | Yes          | No           | Yes   | Yes      |
-| Sia                          | No    | No   | No   | No      | No      | No    | Yes          | No           | No    | Yes      |
-| SMB                          | No    | No   | Yes  | Yes     | No      | No    | Yes          | No           | No    | Yes      |
-| SugarSync                    | Yes   | Yes  | Yes  | Yes     | No      | No    | Yes          | Yes          | No    | Yes      |
-| Storj                        | Yes ☨ | Yes  | Yes  | No      | No      | Yes   | Yes          | Yes          | No    | No       |
-| Uptobox                      | No    | Yes  | Yes  | Yes     | No      | No    | No           | No           | No    | No       |
-| WebDAV                       | Yes   | Yes  | Yes  | Yes     | No      | No    | Yes ‡        | No           | Yes   | Yes      |
-| Yandex Disk                  | Yes   | Yes  | Yes  | Yes     | Yes     | No    | Yes          | Yes          | Yes   | Yes      |
-| Zoho WorkDrive               | Yes   | Yes  | Yes  | Yes     | No      | No    | No           | No           | Yes   | Yes      |
-| The local filesystem         | Yes   | No   | Yes  | Yes     | No      | No    | Yes          | No           | Yes   | Yes      |
+| Name                         | Purge | Copy | Move | DirMove | CleanUp | ListR | StreamUpload | MultithreadUpload | LinkSharing  | About | EmptyDir |
+| ---------------------------- |:-----:|:----:|:----:|:-------:|:-------:|:-----:|:------------:|:------------------|:------------:|:-----:|:--------:|
+| 1Fichier                     | No    | Yes  | Yes  | No      | No      | No    | No           | No  | Yes          | No    | Yes      |
+| Akamai Netstorage            | Yes   | No   | No   | No      | No      | Yes   | Yes          | No  | No           | No    | Yes      |
+| Amazon Drive                 | Yes   | No   | Yes  | Yes     | No      | No    | No           | No  | No           | No    | Yes      |
+| Amazon S3 (or S3 compatible) | No    | Yes  | No   | No      | Yes     | Yes   | Yes          | Yes | Yes          | No    | No       |
+| Backblaze B2                 | No    | Yes  | No   | No      | Yes     | Yes   | Yes          | Yes | Yes          | No    | No       |
+| Box                          | Yes   | Yes  | Yes  | Yes     | Yes ‡‡  | No    | Yes          | No  | Yes          | Yes   | Yes      |
+| Citrix ShareFile             | Yes   | Yes  | Yes  | Yes     | No      | No    | No           | No  | No           | No    | Yes      |
+| Dropbox                      | Yes   | Yes  | Yes  | Yes     | No      | No    | Yes          | No  | Yes          | Yes   | Yes      |
+| Enterprise File Fabric       | Yes   | Yes  | Yes  | Yes     | Yes     | No    | No           | No  | No           | No    | Yes      |
+| FTP                          | No    | No   | Yes  | Yes     | No      | No    | Yes          | No  | No           | No    | Yes      |
+| Google Cloud Storage         | Yes   | Yes  | No   | No      | No      | Yes   | Yes          | No  | No           | No    | No       |
+| Google Drive                 | Yes   | Yes  | Yes  | Yes     | Yes     | Yes   | Yes          | No  | Yes          | Yes   | Yes      |
+| Google Photos                | No    | No   | No   | No      | No      | No    | No           | No  | No           | No    | No       |
+| HDFS                         | Yes   | No   | Yes  | Yes     | No      | No    | Yes          | No  | No           | Yes   | Yes      |
+| HiDrive                      | Yes   | Yes  | Yes  | Yes     | No      | No    | Yes          | No  | No           | No    | Yes      |
+| HTTP                         | No    | No   | No   | No      | No      | No    | No           | No  | No           | No    | Yes      |
+| Internet Archive             | No    | Yes  | No   | No      | Yes     | Yes   | No           | No  | Yes          | Yes   | No       |
+| Jottacloud                   | Yes   | Yes  | Yes  | Yes     | Yes     | Yes   | No           | No  | Yes          | Yes   | Yes      |
+| Koofr                        | Yes   | Yes  | Yes  | Yes     | No      | No    | Yes          | No  | Yes          | Yes   | Yes      |
+| Mail.ru Cloud                | Yes   | Yes  | Yes  | Yes     | Yes     | No    | No           | No  | Yes          | Yes   | Yes      |
+| Mega                         | Yes   | No   | Yes  | Yes     | Yes     | No    | No           | No  | Yes          | Yes   | Yes      |
+| Memory                       | No    | Yes  | No   | No      | No      | Yes   | Yes          | No  | No           | No    | No       |
+| Microsoft Azure Blob Storage | Yes   | Yes  | No   | No      | No      | Yes   | Yes          | Yes | No           | No    | No       |
+| Microsoft OneDrive           | Yes   | Yes  | Yes  | Yes     | Yes     | No    | No           | No  | Yes          | Yes   | Yes      |
+| OpenDrive                    | Yes   | Yes  | Yes  | Yes     | No      | No    | No           | No  | No           | No    | Yes      |
+| OpenStack Swift              | Yes † | Yes  | No   | No      | No      | Yes   | Yes          | No  | No           | Yes   | No       |
+| Oracle Object Storage        | No    | Yes  | No   | No      | Yes     | Yes   | Yes          | No  | No           | No    | No       |
+| pCloud                       | Yes   | Yes  | Yes  | Yes     | Yes     | No    | No           | No  | Yes          | Yes   | Yes      |
+| PikPak                       | Yes   | Yes  | Yes  | Yes     | Yes     | No    | No           | No  | Yes          | Yes   | Yes      |
+| premiumize.me                | Yes   | No   | Yes  | Yes     | No      | No    | No           | No  | Yes          | Yes   | Yes      |
+| put.io                       | Yes   | No   | Yes  | Yes     | Yes     | No    | Yes          | No  | No           | Yes   | Yes      |
+| QingStor                     | No    | Yes  | No   | No      | Yes     | Yes   | No           | No  | No           | No    | No       |
+| Seafile                      | Yes   | Yes  | Yes  | Yes     | Yes     | Yes   | Yes          | No  | Yes          | Yes   | Yes      |
+| SFTP                         | No    | No   | Yes  | Yes     | No      | No    | Yes          | No  | No           | Yes   | Yes      |
+| Sia                          | No    | No   | No   | No      | No      | No    | Yes          | No  | No           | No    | Yes      |
+| SMB                          | No    | No   | Yes  | Yes     | No      | No    | Yes          | Yes | No           | No    | Yes      |
+| SugarSync                    | Yes   | Yes  | Yes  | Yes     | No      | No    | Yes          | No  | Yes          | No    | Yes      |
+| Storj                        | Yes ☨ | Yes  | Yes  | No      | No      | Yes   | Yes          | No  | Yes          | No    | No       |
+| Uptobox                      | No    | Yes  | Yes  | Yes     | No      | No    | No           | No  | No           | No    | No       |
+| WebDAV                       | Yes   | Yes  | Yes  | Yes     | No      | No    | Yes ‡        | No  | No           | Yes   | Yes      |
+| Yandex Disk                  | Yes   | Yes  | Yes  | Yes     | Yes     | No    | Yes          | No  | Yes          | Yes   | Yes      |
+| Zoho WorkDrive               | Yes   | Yes  | Yes  | Yes     | No      | No    | No           | No  | No           | Yes   | Yes      |
+| The local filesystem         | Yes   | No   | Yes  | Yes     | No      | No    | Yes          | Yes | No           | Yes   | Yes      |
 
 ### Purge ###
 
@@ -572,6 +572,12 @@ See the [rclone docs](/docs/#fast-list) for more details.
 Some remotes allow files to be uploaded without knowing the file size
 in advance. This allows certain operations to work without spooling the
 file to local disk first, e.g. `rclone rcat`.
+
+### MultithreadUpload ###
+
+Some remotes allow transfers to the remote to be sent as chunks in
+parallel. If this is supported then rclone will use multi-thread
+copying to transfer files much faster.
 
 ### LinkSharing ###
 
