@@ -9,6 +9,7 @@ import (
 
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/accounting"
+	"github.com/rclone/rclone/lib/atexit"
 	"github.com/rclone/rclone/lib/multipart"
 	"github.com/rclone/rclone/lib/readers"
 	"golang.org/x/sync/errgroup"
@@ -156,6 +157,14 @@ func multiThreadCopy(ctx context.Context, f fs.Fs, remote string, src fs.Object,
 	if err != nil {
 		return nil, fmt.Errorf("multi-thread copy: failed to open chunk writer: %w", err)
 	}
+
+	defer atexit.OnError(&err, func() {
+		fs.Debugf(src, "multi-thread copy: aborting transfer on exit")
+		abortErr := chunkWriter.Abort(ctx)
+		if abortErr != nil {
+			fs.Debugf(src, "multi-thread copy: abort failed: %v", abortErr)
+		}
+	})()
 
 	if chunkSize > src.Size() {
 		fs.Debugf(src, "multi-thread copy: chunk size %v was bigger than source file size %v", fs.SizeSuffix(chunkSize), fs.SizeSuffix(src.Size()))
