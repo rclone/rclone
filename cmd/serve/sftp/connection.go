@@ -123,11 +123,28 @@ func (c *conn) execCommand(ctx context.Context, out io.Writer, command string) (
 			}
 			o, ok := node.DirEntry().(fs.ObjectInfo)
 			if !ok {
-				return errors.New("unexpected non file")
-			}
-			hashSum, err = o.Hash(ctx, ht)
-			if err != nil {
-				return fmt.Errorf("hash failed: %w", err)
+				fs.Debugf(args, "File uploading - reading hash from VFS cache")
+				in, err := node.Open(os.O_RDONLY)
+				if err != nil {
+					return fmt.Errorf("hash vfs open failed: %w", err)
+				}
+				defer func() {
+					_ = in.Close()
+				}()
+				h, err := hash.NewMultiHasherTypes(hash.NewHashSet(ht))
+				if err != nil {
+					return fmt.Errorf("hash vfs create multi-hasher failed: %w", err)
+				}
+				_, err = io.Copy(h, in)
+				if err != nil {
+					return fmt.Errorf("hash vfs copy failed: %w", err)
+				}
+				hashSum = h.Sums()[ht]
+			} else {
+				hashSum, err = o.Hash(ctx, ht)
+				if err != nil {
+					return fmt.Errorf("hash failed: %w", err)
+				}
 			}
 		}
 		_, err = fmt.Fprintf(out, "%s  %s\n", hashSum, args)
