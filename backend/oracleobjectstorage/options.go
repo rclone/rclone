@@ -20,8 +20,6 @@ const (
 	maxUploadCutoff            = fs.SizeSuffix(5 * 1024 * 1024 * 1024)
 	minSleep                   = 10 * time.Millisecond
 	defaultCopyTimeoutDuration = fs.Duration(time.Minute)
-	memoryPoolFlushTime        = fs.Duration(time.Minute) // flush the cached buffers after this long
-	memoryPoolUseMmap          = false
 )
 
 const (
@@ -61,8 +59,6 @@ type Options struct {
 	MaxUploadParts       int                  `config:"max_upload_parts"`
 	UploadConcurrency    int                  `config:"upload_concurrency"`
 	DisableChecksum      bool                 `config:"disable_checksum"`
-	MemoryPoolFlushTime  fs.Duration          `config:"memory_pool_flush_time"`
-	MemoryPoolUseMmap    bool                 `config:"memory_pool_use_mmap"`
 	CopyCutoff           fs.SizeSuffix        `config:"copy_cutoff"`
 	CopyTimeout          fs.Duration          `config:"copy_timeout"`
 	StorageTier          string               `config:"storage_tier"`
@@ -223,19 +219,6 @@ copied in chunks of this size.
 The minimum is 0 and the maximum is 5 GiB.`,
 		Default:  fs.SizeSuffix(maxSizeForCopy),
 		Advanced: true,
-	}, {
-		Name:     "memory_pool_flush_time",
-		Default:  memoryPoolFlushTime,
-		Advanced: true,
-		Help: `How often internal memory buffer pools will be flushed.
-
-Uploads which requires additional buffers (f.e multipart) will use memory pool for allocations.
-This option controls how often unused buffers will be removed from the pool.`,
-	}, {
-		Name:     "memory_pool_use_mmap",
-		Default:  memoryPoolUseMmap,
-		Advanced: true,
-		Help:     `Whether to use mmap buffers in internal memory pool.`,
 	}, {
 		Name: "copy_timeout",
 		Help: `Timeout for copy.

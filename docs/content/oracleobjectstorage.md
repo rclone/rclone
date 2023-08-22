@@ -507,31 +507,6 @@ Properties:
 - Type:        SizeSuffix
 - Default:     4.656Gi
 
-#### --oos-memory-pool-flush-time
-
-How often internal memory buffer pools will be flushed.
-
-Uploads which requires additional buffers (f.e multipart) will use memory pool for allocations.
-This option controls how often unused buffers will be removed from the pool.
-
-Properties:
-
-- Config:      memory_pool_flush_time
-- Env Var:     RCLONE_OOS_MEMORY_POOL_FLUSH_TIME
-- Type:        Duration
-- Default:     1m0s
-
-#### --oos-memory-pool-use-mmap
-
-Whether to use mmap buffers in internal memory pool.
-
-Properties:
-
-- Config:      memory_pool_use_mmap
-- Env Var:     RCLONE_OOS_MEMORY_POOL_USE_MMAP
-- Type:        bool
-- Default:     false
-
 #### --oos-copy-timeout
 
 Timeout for copy.
