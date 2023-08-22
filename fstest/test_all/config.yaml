@@ -428,3 +428,4 @@ backends:
      - TestIntegration/FsMkdir/FsEncoding/trailing_CR
      - TestIntegration/FsMkdir/FsEncoding/trailing_LF
      - TestIntegration/FsMkdir/FsEncoding/leading_HT
+     - TestIntegration/FsMkdir/FsPutFiles/FsPutStream/0

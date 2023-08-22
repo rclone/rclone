@@ -23,7 +23,6 @@ import (
 	"github.com/rclone/rclone/fs/walk"
 	"github.com/rclone/rclone/lib/bucket"
 	"github.com/rclone/rclone/lib/pacer"
-	"github.com/rclone/rclone/lib/pool"
 )
 
 // Register with Fs
@@ -50,7 +49,6 @@ type Fs struct {
 	rootDirectory string                             // directory part of root (if any)
 	cache         *bucket.Cache                      // cache for bucket creation status
 	pacer         *fs.Pacer                          // To pace the API calls
-	pool          *pool.Pool                         // memory pool
 }
 
 // NewFs Initialize backend
@@ -82,12 +80,6 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		srv:   objectStorageClient,
 		cache: bucket.NewCache(),
 		pacer: pc,
-		pool: pool.New(
-			time.Duration(opt.MemoryPoolFlushTime),
-			int(opt.ChunkSize),
-			opt.UploadConcurrency*ci.Transfers,
-			opt.MemoryPoolUseMmap,
-		),
 	}
 	f.setRoot(root)
 	f.features = (&fs.Features{
@@ -185,19 +177,6 @@ func (f *Fs) Precision() time.Duration {
 // Hashes returns the supported hash sets.
 func (f *Fs) Hashes() hash.Set {
 	return hash.Set(hash.MD5)
-}
-
-func (f *Fs) getMemoryPool(size int64) *pool.Pool {
-	if size == int64(f.opt.ChunkSize) {
-		return f.pool
-	}
-
-	return pool.New(
-		time.Duration(f.opt.MemoryPoolFlushTime),
-		int(size),
-		f.opt.UploadConcurrency*f.ci.Transfers,
-		f.opt.MemoryPoolUseMmap,
-	)
 }
 
 // setRoot changes the root of the Fs
@@ -339,7 +318,6 @@ func (f *Fs) list(ctx context.Context, bucket, directory, prefix string, addBuck
 			remote := *object.Name
 			remote = f.opt.Enc.ToStandardPath(remote)
 			if !strings.HasPrefix(remote, prefix) {
-				// fs.Debugf(f, "Odd name received %v", object.Name)
 				continue
 			}
 			remote = remote[len(prefix):]
@@ -579,15 +557,15 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 	})
 }
 
-func (f *Fs) abortMultiPartUpload(ctx context.Context, bucketName, bucketPath, uploadID string) (err error) {
-	if uploadID == "" {
+func (f *Fs) abortMultiPartUpload(ctx context.Context, bucketName, bucketPath, uploadID *string) (err error) {
+	if uploadID == nil || *uploadID == "" {
 		return nil
 	}
 	request := objectstorage.AbortMultipartUploadRequest{
 		NamespaceName: common.String(f.opt.Namespace),
-		BucketName:    common.String(bucketName),
-		ObjectName:    common.String(bucketPath),
-		UploadId:      common.String(uploadID),
+		BucketName:    bucketName,
+		ObjectName:    bucketPath,
+		UploadId:      uploadID,
 	}
 	err = f.pacer.Call(func() (bool, error) {
 		resp, err := f.srv.AbortMultipartUpload(ctx, request)
@@ -610,7 +588,7 @@ func (f *Fs) cleanUpBucket(ctx context.Context, bucket string, maxAge time.Durat
 				if operations.SkipDestructive(ctx, what, "remove pending upload") {
 					continue
 				}
-				_ = f.abortMultiPartUpload(ctx, *upload.Bucket, *upload.Object, *upload.UploadId)
+				_ = f.abortMultiPartUpload(ctx, upload.Bucket, upload.Object, upload.UploadId)
 			}
 		} else {
 			fs.Infof(f, "MultipartUpload doesn't have sufficient details to abort.")
@@ -705,12 +683,13 @@ func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (
 
 // Check the interfaces are satisfied
 var (
-	_ fs.Fs          = &Fs{}
-	_ fs.Copier      = &Fs{}
-	_ fs.PutStreamer = &Fs{}
-	_ fs.ListRer     = &Fs{}
-	_ fs.Commander   = &Fs{}
-	_ fs.CleanUpper  = &Fs{}
+	_ fs.Fs              = &Fs{}
+	_ fs.Copier          = &Fs{}
+	_ fs.PutStreamer     = &Fs{}
+	_ fs.ListRer         = &Fs{}
+	_ fs.Commander       = &Fs{}
+	_ fs.CleanUpper      = &Fs{}
+	_ fs.OpenChunkWriter = &Fs{}
 
 	_ fs.Object    = &Object{}
 	_ fs.MimeTyper = &Object{}

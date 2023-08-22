@@ -17,8 +17,6 @@ import (
 	"strings"
 	"time"
 
-	"golang.org/x/net/http/httpguts"
-
 	"github.com/ncw/swift/v2"
 	"github.com/oracle/oci-go-sdk/v65/common"
 	"github.com/oracle/oci-go-sdk/v65/objectstorage"
@@ -390,7 +388,7 @@ func isZeroLength(streamReader io.Reader) bool {
 
 // Update an object if it has changed
 func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (err error) {
-	bucketName, bucketPath := o.split()
+	bucketName, _ := o.split()
 	err = o.fs.makeBucket(ctx, bucketName)
 	if err != nil {
 		return err
@@ -398,129 +396,24 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 
 	// determine if we like upload single or multipart.
 	size := src.Size()
-	multipart := size >= int64(o.fs.opt.UploadCutoff)
-
+	multipart := size < 0 || size >= int64(o.fs.opt.UploadCutoff)
 	if isZeroLength(in) {
 		multipart = false
 	}
-
-	req := objectstorage.PutObjectRequest{
-		NamespaceName: common.String(o.fs.opt.Namespace),
-		BucketName:    common.String(bucketName),
-		ObjectName:    common.String(bucketPath),
-	}
-
-	// Set the mtime in the metadata
-	modTime := src.ModTime(ctx)
-	// Fetch metadata if --metadata is in use
-	meta, err := fs.GetMetadataOptions(ctx, src, options)
-	if err != nil {
-		return fmt.Errorf("failed to read metadata from source object: %w", err)
-	}
-	req.OpcMeta = make(map[string]string, len(meta)+2)
-	// merge metadata into request and user metadata
-	for k, v := range meta {
-		pv := common.String(v)
-		k = strings.ToLower(k)
-		switch k {
-		case "cache-control":
-			req.CacheControl = pv
-		case "content-disposition":
-			req.ContentDisposition = pv
-		case "content-encoding":
-			req.ContentEncoding = pv
-		case "content-language":
-			req.ContentLanguage = pv
-		case "content-type":
-			req.ContentType = pv
-		case "tier":
-			// ignore
-		case "mtime":
-			// mtime in meta overrides source ModTime
-			metaModTime, err := time.Parse(time.RFC3339Nano, v)
-			if err != nil {
-				fs.Debugf(o, "failed to parse metadata %s: %q: %v", k, v, err)
-			} else {
-				modTime = metaModTime
-			}
-		case "btime":
-			// write as metadata since we can't set it
-			req.OpcMeta[k] = v
-		default:
-			req.OpcMeta[k] = v
-		}
-	}
-
-	// Set the mtime in the metadata
-	req.OpcMeta[metaMtime] = swift.TimeToFloatString(modTime)
-
-	// read the md5sum if available
-	// - for non-multipart
-	//    - so we can add a ContentMD5
-	//    - so we can add the md5sum in the metadata as metaMD5Hash if using SSE/SSE-C
-	// - for multipart provided checksums aren't disabled
-	//    - so we can add the md5sum in the metadata as metaMD5Hash
-	var md5sumBase64 string
-	var md5sumHex string
-	if !multipart || !o.fs.opt.DisableChecksum {
-		md5sumHex, err = src.Hash(ctx, hash.MD5)
-		if err == nil && matchMd5.MatchString(md5sumHex) {
-			hashBytes, err := hex.DecodeString(md5sumHex)
-			if err == nil {
-				md5sumBase64 = base64.StdEncoding.EncodeToString(hashBytes)
-				if multipart && !o.fs.opt.DisableChecksum {
-					// Set the md5sum as metadata on the object if
-					// - a multipart upload
-					// - the ETag is not an MD5, e.g. when using SSE/SSE-C
-					// provided checksums aren't disabled
-					req.OpcMeta[metaMD5Hash] = md5sumBase64
-				}
-			}
-		}
-	}
-	// Set the content type if it isn't set already
-	if req.ContentType == nil {
-		req.ContentType = common.String(fs.MimeType(ctx, src))
-	}
-	if size >= 0 {
-		req.ContentLength = common.Int64(size)
-	}
-	if md5sumBase64 != "" {
-		req.ContentMD5 = &md5sumBase64
-	}
-	o.applyPutOptions(&req, options...)
-	useBYOKPutObject(o.fs, &req)
-	if o.fs.opt.StorageTier != "" {
-		storageTier, ok := objectstorage.GetMappingPutObjectStorageTierEnum(o.fs.opt.StorageTier)
-		if !ok {
-			return fmt.Errorf("not a valid storage tier: %v", o.fs.opt.StorageTier)
-		}
-		req.StorageTier = storageTier
-	}
-	// Check metadata keys and values are valid
-	for key, value := range req.OpcMeta {
-		if !httpguts.ValidHeaderFieldName(key) {
-			fs.Errorf(o, "Dropping invalid metadata key %q", key)
-			delete(req.OpcMeta, key)
-		} else if value == "" {
-			fs.Errorf(o, "Dropping nil metadata value for key %q", key)
-			delete(req.OpcMeta, key)
-		} else if !httpguts.ValidHeaderFieldValue(value) {
-			fs.Errorf(o, "Dropping invalid metadata value %q for key %q", value, key)
-			delete(req.OpcMeta, key)
-		}
-	}
-
 	if multipart {
-		err = o.uploadMultipart(ctx, &req, in, src)
+		err = o.uploadMultipart(ctx, src, in)
 		if err != nil {
 			return err
 		}
 	} else {
+		ui, err := o.prepareUpload(ctx, src, options)
+		if err != nil {
+			return fmt.Errorf("failed to prepare upload: %w", err)
+		}
 		var resp objectstorage.PutObjectResponse
 		err = o.fs.pacer.CallNoRetry(func() (bool, error) {
-			req.PutObjectBody = io.NopCloser(in)
-			resp, err = o.fs.srv.PutObject(ctx, req)
+			ui.req.PutObjectBody = io.NopCloser(in)
+			resp, err = o.fs.srv.PutObject(ctx, *ui.req)
 			return shouldRetry(ctx, resp.HTTPResponse(), err)
 		})
 		if err != nil {
