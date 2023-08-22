@@ -766,3 +766,4 @@ put them back in again.` >}}
   * Vitor Gomes <vitor.gomes@delivion.de> <mail@vitorgomes.com>
   * Jacob Hands <jacob@gogit.io>
   * hideo aoyama <100831251+boukendesho@users.noreply.github.com>
+  * Roberto Ricci <io@r-ricci.it>
