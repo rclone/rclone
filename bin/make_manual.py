@@ -61,6 +61,7 @@ docs = [
     "opendrive.md",
     "oracleobjectstorage.md",
     "qingstor.md",
+    "quatrix.md",
     "sia.md",
     "swift.md",
     "pcloud.md",

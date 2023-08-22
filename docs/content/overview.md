@@ -48,6 +48,7 @@ Here is an overview of the major features of each cloud storage system.
 | premiumize.me                | -                | -       | Yes              | No              | R         | -        |
 | put.io                       | CRC-32           | R/W     | No               | Yes             | R         | -        |
 | QingStor                     | MD5              | - ⁹     | No               | No              | R/W       | -        |
+| Quatrix by Maytech           | -                | R/W     | No               | No              | -         | -        |
 | Seafile                      | -                | -       | No               | No              | -         | -        |
 | SFTP                         | MD5, SHA1 ²      | R/W     | Depends          | No              | -         | -        |
 | Sia                          | -                | -       | No               | No              | -         | -        |
@@ -499,6 +500,7 @@ upon backend-specific capabilities.
 | premiumize.me                | Yes   | No   | Yes  | Yes     | No      | No    | No           | No  | Yes          | Yes   | Yes      |
 | put.io                       | Yes   | No   | Yes  | Yes     | Yes     | No    | Yes          | No  | No           | Yes   | Yes      |
 | QingStor                     | No    | Yes  | No   | No      | Yes     | Yes   | No           | No  | No           | No    | No       |
+| Quatrix by Maytech           | Yes   | Yes  | Yes  | Yes     | No      | No    | No           | No  | No           | Yes   | Yes      |
 | Seafile                      | Yes   | Yes  | Yes  | Yes     | Yes     | Yes   | Yes          | No  | Yes          | Yes   | Yes      |
 | SFTP                         | No    | No   | Yes  | Yes     | No      | No    | Yes          | No  | No           | Yes   | Yes      |
 | Sia                          | No    | No   | No   | No      | No      | No    | Yes          | No  | No           | No    | Yes      |
