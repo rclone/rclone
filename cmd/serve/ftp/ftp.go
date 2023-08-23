@@ -24,6 +24,7 @@ import (
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/accounting"
 	"github.com/rclone/rclone/fs/config/flags"
+	"github.com/rclone/rclone/fs/config/obscure"
 	"github.com/rclone/rclone/fs/log"
 	"github.com/rclone/rclone/fs/rc"
 	"github.com/rclone/rclone/vfs"
@@ -124,14 +125,15 @@ You can set a single username and password with the --user and --pass flags.
 
 // driver contains everything to run the driver for the FTP server
 type driver struct {
-	f      fs.Fs
-	srv    *ftp.Server
-	ctx    context.Context // for global config
-	opt    Options
-	vfs    *vfs.VFS
-	proxy  *proxy.Proxy
-	useTLS bool
-	lock   sync.Mutex
+	f          fs.Fs
+	srv        *ftp.Server
+	ctx        context.Context // for global config
+	opt        Options
+	globalVFS  *vfs.VFS     // the VFS if not using auth proxy
+	proxy      *proxy.Proxy // may be nil if not in use
+	useTLS     bool
+	userPassMu sync.Mutex        // to protect userPass
+	userPass   map[string]string // cache of username => password when using vfs proxy
 }
 
 var passivePortsRe = regexp.MustCompile(`^\s*\d+\s*-\s*\d+\s*$`)
@@ -154,8 +156,9 @@ func newServer(ctx context.Context, f fs.Fs, opt *Options) (*driver, error) {
 	}
 	if proxyflags.Opt.AuthProxy != "" {
 		d.proxy = proxy.New(ctx, &proxyflags.Opt)
+		d.userPass = make(map[string]string, 16)
 	} else {
-		d.vfs = vfs.New(f, &vfsflags.Opt)
+		d.globalVFS = vfs.New(f, &vfsflags.Opt)
 	}
 	d.useTLS = d.opt.TLSKey != ""
 
@@ -231,13 +234,22 @@ func (l *Logger) PrintResponse(sessionID string, code int, message string) {
 // CheckPasswd handle auth based on configuration
 func (d *driver) CheckPasswd(sctx *ftp.Context, user, pass string) (ok bool, err error) {
 	if d.proxy != nil {
-		var VFS *vfs.VFS
-		VFS, _, err = d.proxy.Call(user, pass, false)
+		_, _, err = d.proxy.Call(user, pass, false)
 		if err != nil {
 			fs.Infof(nil, "proxy login failed: %v", err)
 			return false, nil
 		}
-		d.vfs = VFS
+		// Cache obscured password for later lookup.
+		//
+		// We don't cache the VFS directly in the driver as we want them
+		// to be expired and the auth proxy does that for us.
+		oPass, err := obscure.Obscure(pass)
+		if err != nil {
+			return false, err
+		}
+		d.userPassMu.Lock()
+		d.userPass[user] = oPass
+		d.userPassMu.Unlock()
 	} else {
 		ok = d.opt.BasicUser == user && (d.opt.BasicPass == "" || d.opt.BasicPass == pass)
 		if !ok {
@@ -248,22 +260,52 @@ func (d *driver) CheckPasswd(sctx *ftp.Context, user, pass string) (ok bool, err
 	return true, nil
 }
 
-// Stat get information on file or folder
-func (d *driver) Stat(sctx *ftp.Context, path string) (fi iofs.FileInfo, err error) {
-	defer log.Trace(path, "")("fi=%+v, err = %v", &fi, &err)
-	n, err := d.vfs.Stat(path)
+// Get the VFS for this connection
+func (d *driver) getVFS(sctx *ftp.Context) (VFS *vfs.VFS, err error) {
+	if d.proxy == nil {
+		// If no proxy always use the same VFS
+		return d.globalVFS, nil
+	}
+	user := sctx.Sess.LoginUser()
+	d.userPassMu.Lock()
+	oPass, ok := d.userPass[user]
+	d.userPassMu.Unlock()
+	if !ok {
+		return nil, fmt.Errorf("proxy user not logged in")
+	}
+	pass, err := obscure.Reveal(oPass)
 	if err != nil {
 		return nil, err
 	}
-	return &FileInfo{n, n.Mode(), d.vfs.Opt.UID, d.vfs.Opt.GID}, err
+	VFS, _, err = d.proxy.Call(user, pass, false)
+	if err != nil {
+		return nil, fmt.Errorf("proxy login failed: %w", err)
+	}
+	return VFS, nil
+}
+
+// Stat get information on file or folder
+func (d *driver) Stat(sctx *ftp.Context, path string) (fi iofs.FileInfo, err error) {
+	defer log.Trace(path, "")("fi=%+v, err = %v", &fi, &err)
+	VFS, err := d.getVFS(sctx)
+	if err != nil {
+		return nil, err
+	}
+	n, err := VFS.Stat(path)
+	if err != nil {
+		return nil, err
+	}
+	return &FileInfo{n, n.Mode(), VFS.Opt.UID, VFS.Opt.GID}, err
 }
 
 // ChangeDir move current folder
 func (d *driver) ChangeDir(sctx *ftp.Context, path string) (err error) {
-	d.lock.Lock()
-	defer d.lock.Unlock()
 	defer log.Trace(path, "")("err = %v", &err)
-	n, err := d.vfs.Stat(path)
+	VFS, err := d.getVFS(sctx)
+	if err != nil {
+		return err
+	}
+	n, err := VFS.Stat(path)
 	if err != nil {
 		return err
 	}
@@ -275,10 +317,12 @@ func (d *driver) ChangeDir(sctx *ftp.Context, path string) (err error) {
 
 // ListDir list content of a folder
 func (d *driver) ListDir(sctx *ftp.Context, path string, callback func(iofs.FileInfo) error) (err error) {
-	d.lock.Lock()
-	defer d.lock.Unlock()
 	defer log.Trace(path, "")("err = %v", &err)
-	node, err := d.vfs.Stat(path)
+	VFS, err := d.getVFS(sctx)
+	if err != nil {
+		return err
+	}
+	node, err := VFS.Stat(path)
 	if err == vfs.ENOENT {
 		return errors.New("directory not found")
 	} else if err != nil {
@@ -301,7 +345,7 @@ func (d *driver) ListDir(sctx *ftp.Context, path string, callback func(iofs.File
 	}()
 
 	for _, file := range dirEntries {
-		err = callback(&FileInfo{file, file.Mode(), d.vfs.Opt.UID, d.vfs.Opt.GID})
+		err = callback(&FileInfo{file, file.Mode(), VFS.Opt.UID, VFS.Opt.GID})
 		if err != nil {
 			return err
 		}
@@ -311,10 +355,12 @@ func (d *driver) ListDir(sctx *ftp.Context, path string, callback func(iofs.File
 
 // DeleteDir delete a folder and his content
 func (d *driver) DeleteDir(sctx *ftp.Context, path string) (err error) {
-	d.lock.Lock()
-	defer d.lock.Unlock()
 	defer log.Trace(path, "")("err = %v", &err)
-	node, err := d.vfs.Stat(path)
+	VFS, err := d.getVFS(sctx)
+	if err != nil {
+		return err
+	}
+	node, err := VFS.Stat(path)
 	if err != nil {
 		return err
 	}
@@ -330,10 +376,12 @@ func (d *driver) DeleteDir(sctx *ftp.Context, path string) (err error) {
 
 // DeleteFile delete a file
 func (d *driver) DeleteFile(sctx *ftp.Context, path string) (err error) {
-	d.lock.Lock()
-	defer d.lock.Unlock()
 	defer log.Trace(path, "")("err = %v", &err)
-	node, err := d.vfs.Stat(path)
+	VFS, err := d.getVFS(sctx)
+	if err != nil {
+		return err
+	}
+	node, err := VFS.Stat(path)
 	if err != nil {
 		return err
 	}
@@ -349,18 +397,22 @@ func (d *driver) DeleteFile(sctx *ftp.Context, path string) (err error) {
 
 // Rename rename a file or folder
 func (d *driver) Rename(sctx *ftp.Context, oldName, newName string) (err error) {
-	d.lock.Lock()
-	defer d.lock.Unlock()
 	defer log.Trace(oldName, "newName=%q", newName)("err = %v", &err)
-	return d.vfs.Rename(oldName, newName)
+	VFS, err := d.getVFS(sctx)
+	if err != nil {
+		return err
+	}
+	return VFS.Rename(oldName, newName)
 }
 
 // MakeDir create a folder
 func (d *driver) MakeDir(sctx *ftp.Context, path string) (err error) {
-	d.lock.Lock()
-	defer d.lock.Unlock()
 	defer log.Trace(path, "")("err = %v", &err)
-	dir, leaf, err := d.vfs.StatParent(path)
+	VFS, err := d.getVFS(sctx)
+	if err != nil {
+		return err
+	}
+	dir, leaf, err := VFS.StatParent(path)
 	if err != nil {
 		return err
 	}
@@ -370,10 +422,12 @@ func (d *driver) MakeDir(sctx *ftp.Context, path string) (err error) {
 
 // GetFile download a file
 func (d *driver) GetFile(sctx *ftp.Context, path string, offset int64) (size int64, fr io.ReadCloser, err error) {
-	d.lock.Lock()
-	defer d.lock.Unlock()
 	defer log.Trace(path, "offset=%v", offset)("err = %v", &err)
-	node, err := d.vfs.Stat(path)
+	VFS, err := d.getVFS(sctx)
+	if err != nil {
+		return 0, nil, err
+	}
+	node, err := VFS.Stat(path)
 	if err == vfs.ENOENT {
 		fs.Infof(path, "File not found")
 		return 0, nil, errors.New("file not found")
@@ -402,12 +456,14 @@ func (d *driver) GetFile(sctx *ftp.Context, path string, offset int64) (size int
 
 // PutFile upload a file
 func (d *driver) PutFile(sctx *ftp.Context, path string, data io.Reader, offset int64) (n int64, err error) {
-	d.lock.Lock()
-	defer d.lock.Unlock()
 	defer log.Trace(path, "offset=%d", offset)("err = %v", &err)
 
 	var isExist bool
-	fi, err := d.vfs.Stat(path)
+	VFS, err := d.getVFS(sctx)
+	if err != nil {
+		return 0, err
+	}
+	fi, err := VFS.Stat(path)
 	if err == nil {
 		isExist = true
 		if fi.IsDir() {
@@ -429,12 +485,12 @@ func (d *driver) PutFile(sctx *ftp.Context, path string, data io.Reader, offset 
 
 	if offset == -1 {
 		if isExist {
-			err = d.vfs.Remove(path)
+			err = VFS.Remove(path)
 			if err != nil {
 				return 0, err
 			}
 		}
-		f, err = d.vfs.Create(path)
+		f, err = VFS.Create(path)
 		if err != nil {
 			return 0, err
 		}
@@ -446,7 +502,7 @@ func (d *driver) PutFile(sctx *ftp.Context, path string, data io.Reader, offset 
 		return n, nil
 	}
 
-	f, err = d.vfs.OpenFile(path, os.O_APPEND|os.O_RDWR, 0660)
+	f, err = VFS.OpenFile(path, os.O_APPEND|os.O_RDWR, 0660)
 	if err != nil {
 		return 0, err
 	}
