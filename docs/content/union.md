@@ -14,7 +14,7 @@ e.g. `remote:directory/subdirectory` or `/directory/subdirectory`.
 During the initial setup with `rclone config` you will specify the upstream
 remotes as a space separated list. The upstream remotes can either be a local paths or other remotes.
 
-Attribute `:ro` and `:nc` can be attach to the end of path to tag the remote as **read only** or **no create**,
+Attribute `:ro` and `:nc` can be attach to the end of path to tag the remote as **read-only** or **no-create**,
 e.g. `remote:directory/subdirectory:ro` or `remote:directory/subdirectory:nc`.
 
 Subfolders can be used in upstream remotes. Assume a union remote named `backup`
