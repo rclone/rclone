@@ -883,23 +883,62 @@ files are generating complaints. If the error is
 consider using the flag
 [--drive-acknowledge-abuse](/drive/#drive-acknowledge-abuse).
 
-### Google Doc files
+### Google Docs (and other files of unknown size) {#gdocs}
 
-Google docs exist as virtual files on Google Drive and cannot be transferred
-to other filesystems natively. While it is possible to export a Google doc to
-a normal file (with `.xlsx` extension, for example), it is not possible
-to import a normal file back into a Google document.
+As of `v1.65`, [Google Docs](/drive/#import-export-of-google-documents)
+(including Google Sheets, Slides, etc.) are now supported in bisync, subject to
+the same options, defaults, and limitations as in `rclone sync`. When bisyncing
+drive with non-drive backends, the drive -> non-drive direction is controlled
+by [`--drive-export-formats`](/drive/#drive-export-formats) (default
+`"docx,xlsx,pptx,svg"`) and the non-drive -> drive direction is controlled by
+[`--drive-import-formats`](/drive/#drive-import-formats) (default none.) 
 
-Bisync's handling of Google Doc files is to flag them in the run log output
-for user's attention and ignore them for any file transfers, deletes, or syncs.
-They will show up with a length of `-1` in the listings.
-This bisync run is otherwise successful:
+For example, with the default export/import formats, a Google Sheet on the
+drive side will be synced to an `.xlsx` file on the non-drive side. In the
+reverse direction, `.xlsx` files with filenames that match an existing Google
+Sheet will be synced to that Google Sheet, while `.xlsx` files that do NOT
+match an existing Google Sheet will be copied to drive as normal `.xlsx` files
+(without conversion to Sheets, although the Google Drive web browser UI may
+still give you the option to open it as one.)
 
-```
-2021/05/11 08:23:15 INFO  : Synching Path1 "/path/to/local/tree/base/" with Path2 "GDrive:"
-2021/05/11 08:23:15 INFO  : ...path2.lst-new: Ignoring incorrect line: "- -1 - - 2018-07-29T08:49:30.136000000+0000 GoogleDoc.docx"
-2021/05/11 08:23:15 INFO  : Bisync successful
-```
+If `--drive-import-formats` is set (it's not, by default), then all of the
+specified formats will be converted to Google Docs, if there is no existing
+Google Doc with a matching name. Caution: such conversion can be quite lossy,
+and in most cases it's probably not what you want!
+
+To bisync Google Docs as URL shortcut links (in a manner similar to "Drive for
+Desktop"), use: `--drive-export-formats url` (or
+[alternatives](https://rclone.org/drive/#exportformats:~:text=available%20Google%20Documents.-,Extension,macOS,-Standard%20options).)
+
+Note that these link files cannot be edited on the non-drive side -- you will
+get errors if you try to sync an edited link file back to drive. They CAN be
+deleted (it will result in deleting the corresponding Google Doc.) If you
+create a `.url` file on the non-drive side that does not match an existing
+Google Doc, bisyncing it will just result in copying the literal `.url` file
+over to drive (no Google Doc will be created.) So, as a general rule of thumb,
+think of them as read-only placeholders on the non-drive side, and make all
+your changes on the drive side.
+
+Likewise, even with other export-formats, it is best to only move/rename Google
+Docs on the drive side. This is because otherwise, bisync will interpret this
+as a file deleted and another created, and accordingly, it will delete the
+Google Doc and create a new file at the new path. (Whether or not that new file
+is a Google Doc depends on `--drive-import-formats`.)
+
+Lastly, take note that all Google Docs on the drive side have a size of `-1`
+and no checksum. Therefore, they cannot be reliably synced with the
+`--checksum` or `--size-only` flags. (To be exact: they will still get
+created/deleted, and bisync's delta engine will notice changes and queue them
+for syncing, but the underlying sync function will consider them identical and
+skip them.) To work around this, use the default (modtime and size) instead of
+`--checksum` or `--size-only`.
+
+To ignore Google Docs entirely, use
+[`--drive-skip-gdocs`](/drive/#drive-skip-gdocs).
+
+(Note that all flags starting with `--drive` are backend-specific, and
+therefore will cause the behavior explained in [Overridden
+Configs](/#overridden-configs).)
 
 ## Usage examples
 
@@ -1289,6 +1328,7 @@ about _Unison_ and synchronization in general.
 for performance improvements and less [risk of error](https://forum.rclone.org/t/bisync-bugs-and-feature-requests/37636#:~:text=4.%20Listings%20should%20alternate%20between%20paths%20to%20minimize%20errors).
 * Fixed handling of unicode normalization and case insensitivity, support for [`--fix-case`](/docs/#fix-case), [`--ignore-case-sync`](/docs/#ignore-case-sync), [`--no-unicode-normalization`](/docs/#no-unicode-normalization)
 * `--resync` is now much more efficient (especially for users of `--create-empty-src-dirs`)
+* Google Docs (and other files of unknown size) are now supported (with the same options as in `sync`)
 
 ### `v1.64`
 * Fixed an [issue](https://forum.rclone.org/t/bisync-bugs-and-feature-requests/37636#:~:text=1.%20Dry%20runs%20are%20not%20completely%20dry) 

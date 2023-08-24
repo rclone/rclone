@@ -36,7 +36,7 @@ const ListingHeader = "# bisync listing v1 from"
 // id: "-" (reserved)
 const lineFormat = "%s %8d %s %s %s %q\n"
 
-var lineRegex = regexp.MustCompile(`^(\S) +(\d+) (\S+) (\S+) (\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d\.\d{9}[+-]\d{4}) (".+")$`)
+var lineRegex = regexp.MustCompile(`^(\S) +(-?\d+) (\S+) (\S+) (\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d\.\d{9}[+-]\d{4}) (".+")$`)
 
 // timeFormat defines time format used in listings
 const timeFormat = "2006-01-02T15:04:05.000000000-0700"
@@ -237,7 +237,6 @@ func (ls *fileList) save(ctx context.Context, listing string) error {
 
 // loadListing will load listing from a file.
 // The key is the path to the file relative to the Path1/Path2 base.
-// File size of -1, as for Google Docs, prints a warning and won't be loaded.
 func (b *bisyncRun) loadListing(listing string) (*fileList, error) {
 	file, err := os.Open(listing)
 	if err != nil {

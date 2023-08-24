@@ -38,7 +38,9 @@ type Results struct {
 
 var logger = operations.NewLoggerOpt()
 var lock mutex.Mutex
+var once mutex.Once
 var ignoreListingChecksum bool
+var ci *fs.ConfigInfo
 
 // FsPathIfAny handles type assertions and returns a formatted bilib.FsPath if valid, otherwise ""
 func FsPathIfAny(x fs.DirEntry) string {
@@ -121,7 +123,13 @@ func WriteResults(ctx context.Context, sigil operations.Sigil, src, dst fs.DirEn
 				result.Name = dst.Remote()
 			}
 			result.Flags = "d"
-			result.Size = 0
+			result.Size = -1
+		}
+
+		if result.Size < 0 && result.Flags != "d" && (ci.CheckSum || ci.SizeOnly) {
+			once.Do(func() {
+				fs.Logf(result.Name, Color(terminal.YellowFg, "Files of unknown size (such as Google Docs) do not sync reliably with --checksum or --size-only. Consider using modtime instead (the default) or --drive-skip-gdocs"))
+			})
 		}
 
 		fs.Debugf(nil, "writing result: %v", result)
@@ -166,6 +174,7 @@ func (b *bisyncRun) fastCopy(ctx context.Context, fsrc, fdst fs.Fs, files bilib.
 	}
 
 	ignoreListingChecksum = b.opt.IgnoreListingChecksum
+	ci = fs.GetConfig(ctx)
 	logger.LoggerFn = WriteResults
 	ctxCopyLogger := operations.WithSyncLogger(ctxCopy, logger)
 	b.testFn()
@@ -194,6 +203,7 @@ func (b *bisyncRun) retryFastCopy(ctx context.Context, fsrc, fdst fs.Fs, files b
 }
 
 func (b *bisyncRun) resyncDir(ctx context.Context, fsrc, fdst fs.Fs) ([]Results, error) {
+	ci = fs.GetConfig(ctx)
 	ignoreListingChecksum = b.opt.IgnoreListingChecksum
 	logger.LoggerFn = WriteResults
 	ctxCopyLogger := operations.WithSyncLogger(ctx, logger)
