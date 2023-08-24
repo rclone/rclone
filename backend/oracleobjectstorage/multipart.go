@@ -16,6 +16,7 @@ import (
 
 	"github.com/ncw/swift/v2"
 	"github.com/rclone/rclone/lib/multipart"
+	"github.com/rclone/rclone/lib/pool"
 	"golang.org/x/net/http/httpguts"
 
 	"github.com/oracle/oci-go-sdk/v65/common"
@@ -127,6 +128,12 @@ func (w *objectChunkWriter) WriteChunk(ctx context.Context, chunkNumber int, rea
 	if chunkNumber < 0 {
 		err := fmt.Errorf("invalid chunk number provided: %v", chunkNumber)
 		return -1, err
+	}
+	// Only account after the checksum reads have been done
+	if do, ok := reader.(pool.DelayAccountinger); ok {
+		// To figure out this number, do a transfer and if the accounted size is 0 or a
+		// multiple of what it should be, increase or decrease this number.
+		do.DelayAccounting(2)
 	}
 	m := md5.New()
 	currentChunkSize, err := io.Copy(m, reader)
