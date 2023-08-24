@@ -63,14 +63,14 @@ type multiThreadCopyState struct {
 	noSeek    bool // set if sure the receiving fs won't seek the input
 }
 
-// Copy a single stream into place
-func (mc *multiThreadCopyState) copyStream(ctx context.Context, stream int, writer fs.ChunkWriter) (err error) {
+// Copy a single chunk into place
+func (mc *multiThreadCopyState) copyChunk(ctx context.Context, chunk int, writer fs.ChunkWriter) (err error) {
 	defer func() {
 		if err != nil {
-			fs.Debugf(mc.src, "multi-thread copy: stream %d/%d failed: %v", stream+1, mc.numChunks, err)
+			fs.Debugf(mc.src, "multi-thread copy: chunk %d/%d failed: %v", chunk+1, mc.numChunks, err)
 		}
 	}()
-	start := int64(stream) * mc.partSize
+	start := int64(chunk) * mc.partSize
 	if start >= mc.size {
 		return nil
 	}
@@ -80,7 +80,7 @@ func (mc *multiThreadCopyState) copyStream(ctx context.Context, stream int, writ
 	}
 	size := end - start
 
-	fs.Debugf(mc.src, "multi-thread copy: stream %d/%d (%d-%d) size %v starting", stream+1, mc.numChunks, start, end, fs.SizeSuffix(size))
+	fs.Debugf(mc.src, "multi-thread copy: chunk %d/%d (%d-%d) size %v starting", chunk+1, mc.numChunks, start, end, fs.SizeSuffix(size))
 
 	rc, err := Open(ctx, mc.src, &fs.RangeOption{Start: start, End: end - 1})
 	if err != nil {
@@ -107,12 +107,12 @@ func (mc *multiThreadCopyState) copyStream(ctx context.Context, stream int, writ
 	}
 
 	// Write the chunk
-	bytesWritten, err := writer.WriteChunk(ctx, stream, rs)
+	bytesWritten, err := writer.WriteChunk(ctx, chunk, rs)
 	if err != nil {
 		return fmt.Errorf("multi-thread copy: failed to write chunk: %w", err)
 	}
 
-	fs.Debugf(mc.src, "multi-thread copy: stream %d/%d (%d-%d) size %v finished", stream+1, mc.numChunks, start, end, fs.SizeSuffix(bytesWritten))
+	fs.Debugf(mc.src, "multi-thread copy: chunk %d/%d (%d-%d) size %v finished", chunk+1, mc.numChunks, start, end, fs.SizeSuffix(bytesWritten))
 	return nil
 }
 
@@ -172,7 +172,7 @@ func multiThreadCopy(ctx context.Context, f fs.Fs, remote string, src fs.Object,
 
 	numChunks := calculateNumChunks(src.Size(), chunkSize)
 	if streams > numChunks {
-		fs.Debugf(src, "multi-thread copy: number of streams '%d' was bigger than number of chunks '%d'", streams, numChunks)
+		fs.Debugf(src, "multi-thread copy: number of streams %d was bigger than number of chunks %d", streams, numChunks)
 		streams = numChunks
 	}
 
@@ -189,7 +189,7 @@ func multiThreadCopy(ctx context.Context, f fs.Fs, remote string, src fs.Object,
 	// Make accounting
 	mc.acc = tr.Account(ctx, nil)
 
-	fs.Debugf(src, "Starting multi-thread copy with %d parts of size %v with %v parallel streams", mc.numChunks, fs.SizeSuffix(mc.partSize), mc.streams)
+	fs.Debugf(src, "Starting multi-thread copy with %d chunks of size %v with %v parallel streams", mc.numChunks, fs.SizeSuffix(mc.partSize), mc.streams)
 	for chunk := 0; chunk < mc.numChunks; chunk++ {
 		// Fail fast, in case an errgroup managed function returns an error
 		if gCtx.Err() != nil {
@@ -197,7 +197,7 @@ func multiThreadCopy(ctx context.Context, f fs.Fs, remote string, src fs.Object,
 		}
 		chunk := chunk
 		g.Go(func() error {
-			return mc.copyStream(gCtx, chunk, chunkWriter)
+			return mc.copyChunk(gCtx, chunk, chunkWriter)
 		})
 	}
 
