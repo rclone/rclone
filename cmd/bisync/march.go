@@ -168,8 +168,7 @@ func (b *bisyncRun) ForDir(o fs.Directory, isPath1 bool) {
 	id := ""     // TODO
 	flags := "d" // "-" for a file and "d" for a directory
 	marchLsLock.Lock()
-	//record size as 0 instead of -1, so bisync doesn't think it's a google doc
-	ls.put(o.Remote(), 0, time, "", id, flags)
+	ls.put(o.Remote(), -1, time, "", id, flags)
 	marchLsLock.Unlock()
 }
 

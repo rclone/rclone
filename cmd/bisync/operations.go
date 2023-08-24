@@ -441,8 +441,7 @@ func (b *bisyncRun) resync(octx, fctx context.Context) error {
 	// fctx has our extra filters added!
 	ctxSync, filterSync := filter.AddConfig(ctxRun)
 	if filterSync.Opt.MinSize == -1 {
-		// prevent overwriting Google Doc files (their size is -1)
-		filterSync.Opt.MinSize = 0
+		fs.Debugf(nil, "filterSync.Opt.MinSize: %v", filterSync.Opt.MinSize)
 	}
 	ci := fs.GetConfig(ctxSync)
 	ci.IgnoreExisting = true
