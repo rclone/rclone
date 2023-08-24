@@ -5,13 +5,20 @@ import (
 	"io"
 )
 
+// RWAccount is a function which will be called after every read
+// from the RW.
+//
+// It may return an error which will be passed back to the user.
+type RWAccount func(n int) error
+
 // RW contains the state for the read/writer
 type RW struct {
-	pool       *Pool    // pool to get pages from
-	pages      [][]byte // backing store
-	size       int      // size written
-	out        int      // offset we are reading from
-	lastOffset int      // size in last page
+	pool       *Pool     // pool to get pages from
+	pages      [][]byte  // backing store
+	size       int       // size written
+	out        int       // offset we are reading from
+	lastOffset int       // size in last page
+	account    RWAccount // account for a read
 }
 
 var (
@@ -34,6 +41,15 @@ func NewRW(pool *Pool) *RW {
 	}
 }
 
+// SetAccounting should be provided with a function which will be
+// called after every read from the RW.
+//
+// It may return an error which will be passed back to the user.
+func (rw *RW) SetAccounting(account RWAccount) *RW {
+	rw.account = account
+	return rw
+}
+
 // Returns the page and offset of i for reading.
 //
 // Ensure there are pages before calling this.
@@ -46,6 +62,14 @@ func (rw *RW) readPage(i int) (page []byte) {
 		page = page[:rw.lastOffset]
 	}
 	return page[offset:]
+}
+
+// account for n bytes being read
+func (rw *RW) accountRead(n int) error {
+	if rw.account == nil {
+		return nil
+	}
+	return rw.account(n)
 }
 
 // Read reads up to len(p) bytes into p. It returns the number of
@@ -66,6 +90,10 @@ func (rw *RW) Read(p []byte) (n int, err error) {
 		p = p[nn:]
 		n += nn
 		rw.out += nn
+		err = rw.accountRead(nn)
+		if err != nil {
+			return n, err
+		}
 	}
 	return n, nil
 }
@@ -86,6 +114,10 @@ func (rw *RW) WriteTo(w io.Writer) (n int64, err error) {
 		nn, err = w.Write(page)
 		n += int64(nn)
 		rw.out += nn
+		if err != nil {
+			return n, err
+		}
+		err = rw.accountRead(nn)
 		if err != nil {
 			return n, err
 		}

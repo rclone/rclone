@@ -177,6 +177,74 @@ func TestRW(t *testing.T) {
 		assert.Equal(t, 3, n)
 		assert.Equal(t, testData[7:10], dst)
 	})
+
+	errBoom := errors.New("accounting error")
+
+	t.Run("AccountRead", func(t *testing.T) {
+		// Test accounting errors
+		rw := newRW()
+		defer close(rw)
+
+		var total int
+		rw.SetAccounting(func(n int) error {
+			total += n
+			return nil
+		})
+
+		dst = make([]byte, 3)
+		n, err = rw.Read(dst)
+		assert.Equal(t, 3, n)
+		assert.NoError(t, err)
+		assert.Equal(t, 3, total)
+	})
+
+	t.Run("AccountWriteTo", func(t *testing.T) {
+		rw := newRW()
+		defer close(rw)
+		var b bytes.Buffer
+
+		var total int
+		rw.SetAccounting(func(n int) error {
+			total += n
+			return nil
+		})
+
+		n, err := rw.WriteTo(&b)
+		assert.NoError(t, err)
+		assert.Equal(t, 10, total)
+		assert.Equal(t, int64(10), n)
+		assert.Equal(t, testData, b.Bytes())
+	})
+
+	t.Run("AccountReadError", func(t *testing.T) {
+		// Test accounting errors
+		rw := newRW()
+		defer close(rw)
+
+		rw.SetAccounting(func(n int) error {
+			return errBoom
+		})
+
+		dst = make([]byte, 3)
+		n, err = rw.Read(dst)
+		assert.Equal(t, 3, n)
+		assert.Equal(t, errBoom, err)
+	})
+
+	t.Run("AccountWriteToError", func(t *testing.T) {
+		rw := newRW()
+		defer close(rw)
+		rw.SetAccounting(func(n int) error {
+			return errBoom
+		})
+		var b bytes.Buffer
+
+		n, err := rw.WriteTo(&b)
+		assert.Equal(t, errBoom, err)
+		assert.Equal(t, int64(10), n)
+		assert.Equal(t, testData, b.Bytes())
+	})
+
 }
 
 // A reader to read in chunkSize chunks
@@ -220,6 +288,12 @@ func (w *testWriter) Write(p []byte) (n int, err error) {
 }
 
 func TestRWBoundaryConditions(t *testing.T) {
+	var accounted int
+	account := func(n int) error {
+		accounted += n
+		return nil
+	}
+
 	maxSize := 3 * blockSize
 	buf := []byte(random.String(maxSize))
 
@@ -298,10 +372,15 @@ func TestRWBoundaryConditions(t *testing.T) {
 					//t.Logf("Testing size=%d chunkSize=%d", useWrite, size, chunkSize)
 					rw := NewRW(rwPool)
 					assert.Equal(t, int64(0), rw.Size())
+					accounted = 0
+					rw.SetAccounting(account)
+					assert.Equal(t, 0, accounted)
 					writeFn(rw, data, chunkSize)
 					assert.Equal(t, int64(size), rw.Size())
+					assert.Equal(t, 0, accounted)
 					readFn(rw, data, chunkSize)
 					assert.NoError(t, rw.Close())
+					assert.Equal(t, size, accounted)
 				}
 			}
 		}
