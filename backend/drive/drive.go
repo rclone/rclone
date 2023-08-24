@@ -1819,6 +1819,11 @@ func (f *Fs) listRRunner(ctx context.Context, wg *sync.WaitGroup, in chan listRE
 	var paths []string
 	var grouping int32
 
+	usingQueryFilter := false
+	if fi, use := filter.GetConfig(ctx), filter.GetUseFilter(ctx); fi != nil && use {
+		usingQueryFilter = true
+	}
+
 	for dir := range in {
 		dirs = append(dirs[:0], dir.id)
 		paths = append(paths[:0], dir.path)
@@ -1891,7 +1896,8 @@ func (f *Fs) listRRunner(ctx context.Context, wg *sync.WaitGroup, in chan listRE
 		// drive where (A in parents) or (B in parents) returns nothing
 		// sometimes. See #3114, #4289 and
 		// https://issuetracker.google.com/issues/149522397
-		if len(dirs) > 1 && !foundItems {
+		// However, empty result is legitimate if query filter was applied.
+		if len(dirs) > 1 && !foundItems && !usingQueryFilter {
 			if atomic.SwapInt32(&f.grouping, 1) != 1 {
 				fs.Debugf(f, "Disabling ListR to work around bug in drive as multi listing (%d) returned no entries", len(dirs))
 			}
@@ -1909,7 +1915,8 @@ func (f *Fs) listRRunner(ctx context.Context, wg *sync.WaitGroup, in chan listRE
 		}
 		// If using a grouping of 1 and dir was empty then check to see if it
 		// is part of the group that caused grouping to be disabled.
-		if grouping == 1 && len(dirs) == 1 && !foundItems {
+		// However, empty result is legitimate if query filter was applied.
+		if grouping == 1 && len(dirs) == 1 && !foundItems && !usingQueryFilter {
 			f.listRmu.Lock()
 			if _, found := f.listRempties[dirs[0]]; found {
 				// Remove the ID
