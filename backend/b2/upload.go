@@ -212,6 +212,13 @@ func (up *largeUpload) addSha1(chunkNumber int, sha1 string) {
 
 // WriteChunk will write chunk number with reader bytes, where chunk number >= 0
 func (up *largeUpload) WriteChunk(ctx context.Context, chunkNumber int, reader io.ReadSeeker) (size int64, err error) {
+	// Only account after the checksum reads have been done
+	if do, ok := reader.(pool.DelayAccountinger); ok {
+		// To figure out this number, do a transfer and if the accounted size is 0 or a
+		// multiple of what it should be, increase or decrease this number.
+		do.DelayAccounting(1)
+	}
+
 	err = up.f.pacer.Call(func() (bool, error) {
 		// Discover the size by seeking to the end
 		size, err = reader.Seek(0, io.SeekEnd)
