@@ -19,6 +19,8 @@ type RW struct {
 	out        int       // offset we are reading from
 	lastOffset int       // size in last page
 	account    RWAccount // account for a read
+	reads      int       // count how many times the data has been read
+	accountOn  int       // only account on or after this read
 }
 
 var (
@@ -50,10 +52,40 @@ func (rw *RW) SetAccounting(account RWAccount) *RW {
 	return rw
 }
 
+// DelayAccountinger enables an accounting delay
+type DelayAccountinger interface {
+	// DelayAccounting makes sure the accounting function only
+	// gets called on the i-th or later read of the data from this
+	// point (counting from 1).
+	//
+	// This is useful so that we don't account initial reads of
+	// the data e.g. when calculating hashes.
+	//
+	// Set this to 0 to account everything.
+	DelayAccounting(i int)
+}
+
+// DelayAccounting makes sure the accounting function only gets called
+// on the i-th or later read of the data from this point (counting
+// from 1).
+//
+// This is useful so that we don't account initial reads of the data
+// e.g. when calculating hashes.
+//
+// Set this to 0 to account everything.
+func (rw *RW) DelayAccounting(i int) {
+	rw.accountOn = i
+	rw.reads = 0
+}
+
 // Returns the page and offset of i for reading.
 //
 // Ensure there are pages before calling this.
 func (rw *RW) readPage(i int) (page []byte) {
+	// Count a read of the data if we read the first page
+	if i == 0 {
+		rw.reads++
+	}
 	pageNumber := i / rw.pool.bufferSize
 	offset := i % rw.pool.bufferSize
 	page = rw.pages[pageNumber]
@@ -69,7 +101,14 @@ func (rw *RW) accountRead(n int) error {
 	if rw.account == nil {
 		return nil
 	}
-	return rw.account(n)
+	// Don't start accounting until we've reached this many reads
+	//
+	// rw.reads will be 1 the first time this is called
+	// rw.accountOn 2 means start accounting on the 2nd read through
+	if rw.reads >= rw.accountOn {
+		return rw.account(n)
+	}
+	return nil
 }
 
 // Read reads up to len(p) bytes into p. It returns the number of
@@ -227,10 +266,11 @@ func (rw *RW) Size() int64 {
 
 // Check interfaces
 var (
-	_ io.Reader     = (*RW)(nil)
-	_ io.ReaderFrom = (*RW)(nil)
-	_ io.Writer     = (*RW)(nil)
-	_ io.WriterTo   = (*RW)(nil)
-	_ io.Seeker     = (*RW)(nil)
-	_ io.Closer     = (*RW)(nil)
+	_ io.Reader         = (*RW)(nil)
+	_ io.ReaderFrom     = (*RW)(nil)
+	_ io.Writer         = (*RW)(nil)
+	_ io.WriterTo       = (*RW)(nil)
+	_ io.Seeker         = (*RW)(nil)
+	_ io.Closer         = (*RW)(nil)
+	_ DelayAccountinger = (*RW)(nil)
 )

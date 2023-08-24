@@ -9,6 +9,7 @@ import (
 
 	"github.com/rclone/rclone/lib/random"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 const blockSize = 4096
@@ -178,71 +179,164 @@ func TestRW(t *testing.T) {
 		assert.Equal(t, testData[7:10], dst)
 	})
 
-	errBoom := errors.New("accounting error")
+	t.Run("Account", func(t *testing.T) {
+		errBoom := errors.New("accounting error")
 
-	t.Run("AccountRead", func(t *testing.T) {
-		// Test accounting errors
-		rw := newRW()
-		defer close(rw)
+		t.Run("Read", func(t *testing.T) {
+			rw := newRW()
+			defer close(rw)
 
-		var total int
-		rw.SetAccounting(func(n int) error {
-			total += n
-			return nil
+			var total int
+			rw.SetAccounting(func(n int) error {
+				total += n
+				return nil
+			})
+
+			dst = make([]byte, 3)
+			n, err = rw.Read(dst)
+			assert.Equal(t, 3, n)
+			assert.NoError(t, err)
+			assert.Equal(t, 3, total)
 		})
 
-		dst = make([]byte, 3)
-		n, err = rw.Read(dst)
-		assert.Equal(t, 3, n)
-		assert.NoError(t, err)
-		assert.Equal(t, 3, total)
-	})
+		t.Run("WriteTo", func(t *testing.T) {
+			rw := newRW()
+			defer close(rw)
+			var b bytes.Buffer
 
-	t.Run("AccountWriteTo", func(t *testing.T) {
-		rw := newRW()
-		defer close(rw)
-		var b bytes.Buffer
+			var total int
+			rw.SetAccounting(func(n int) error {
+				total += n
+				return nil
+			})
 
-		var total int
-		rw.SetAccounting(func(n int) error {
-			total += n
-			return nil
+			n, err := rw.WriteTo(&b)
+			assert.NoError(t, err)
+			assert.Equal(t, 10, total)
+			assert.Equal(t, int64(10), n)
+			assert.Equal(t, testData, b.Bytes())
 		})
 
-		n, err := rw.WriteTo(&b)
-		assert.NoError(t, err)
-		assert.Equal(t, 10, total)
-		assert.Equal(t, int64(10), n)
-		assert.Equal(t, testData, b.Bytes())
-	})
+		t.Run("ReadDelay", func(t *testing.T) {
+			rw := newRW()
+			defer close(rw)
 
-	t.Run("AccountReadError", func(t *testing.T) {
-		// Test accounting errors
-		rw := newRW()
-		defer close(rw)
+			var total int
+			rw.SetAccounting(func(n int) error {
+				total += n
+				return nil
+			})
 
-		rw.SetAccounting(func(n int) error {
-			return errBoom
+			rewind := func() {
+				_, err := rw.Seek(0, io.SeekStart)
+				require.NoError(t, err)
+			}
+
+			rw.DelayAccounting(3)
+
+			dst = make([]byte, 16)
+
+			n, err = rw.Read(dst)
+			assert.Equal(t, 10, n)
+			assert.Equal(t, io.EOF, err)
+			assert.Equal(t, 0, total)
+			rewind()
+
+			n, err = rw.Read(dst)
+			assert.Equal(t, 10, n)
+			assert.Equal(t, io.EOF, err)
+			assert.Equal(t, 0, total)
+			rewind()
+
+			n, err = rw.Read(dst)
+			assert.Equal(t, 10, n)
+			assert.Equal(t, io.EOF, err)
+			assert.Equal(t, 10, total)
+			rewind()
+
+			n, err = rw.Read(dst)
+			assert.Equal(t, 10, n)
+			assert.Equal(t, io.EOF, err)
+			assert.Equal(t, 20, total)
+			rewind()
 		})
 
-		dst = make([]byte, 3)
-		n, err = rw.Read(dst)
-		assert.Equal(t, 3, n)
-		assert.Equal(t, errBoom, err)
-	})
+		t.Run("WriteToDelay", func(t *testing.T) {
+			rw := newRW()
+			defer close(rw)
+			var b bytes.Buffer
 
-	t.Run("AccountWriteToError", func(t *testing.T) {
-		rw := newRW()
-		defer close(rw)
-		rw.SetAccounting(func(n int) error {
-			return errBoom
+			var total int
+			rw.SetAccounting(func(n int) error {
+				total += n
+				return nil
+			})
+
+			rw.DelayAccounting(3)
+
+			rewind := func() {
+				_, err := rw.Seek(0, io.SeekStart)
+				require.NoError(t, err)
+				b.Reset()
+			}
+
+			n, err := rw.WriteTo(&b)
+			assert.NoError(t, err)
+			assert.Equal(t, 0, total)
+			assert.Equal(t, int64(10), n)
+			assert.Equal(t, testData, b.Bytes())
+			rewind()
+
+			n, err = rw.WriteTo(&b)
+			assert.NoError(t, err)
+			assert.Equal(t, 0, total)
+			assert.Equal(t, int64(10), n)
+			assert.Equal(t, testData, b.Bytes())
+			rewind()
+
+			n, err = rw.WriteTo(&b)
+			assert.NoError(t, err)
+			assert.Equal(t, 10, total)
+			assert.Equal(t, int64(10), n)
+			assert.Equal(t, testData, b.Bytes())
+			rewind()
+
+			n, err = rw.WriteTo(&b)
+			assert.NoError(t, err)
+			assert.Equal(t, 20, total)
+			assert.Equal(t, int64(10), n)
+			assert.Equal(t, testData, b.Bytes())
+			rewind()
 		})
-		var b bytes.Buffer
 
-		n, err := rw.WriteTo(&b)
-		assert.Equal(t, errBoom, err)
-		assert.Equal(t, int64(10), n)
-		assert.Equal(t, testData, b.Bytes())
+		t.Run("ReadError", func(t *testing.T) {
+			// Test accounting errors
+			rw := newRW()
+			defer close(rw)
+
+			rw.SetAccounting(func(n int) error {
+				return errBoom
+			})
+
+			dst = make([]byte, 3)
+			n, err = rw.Read(dst)
+			assert.Equal(t, 3, n)
+			assert.Equal(t, errBoom, err)
+		})
+
+		t.Run("WriteToError", func(t *testing.T) {
+			rw := newRW()
+			defer close(rw)
+			rw.SetAccounting(func(n int) error {
+				return errBoom
+			})
+			var b bytes.Buffer
+
+			n, err := rw.WriteTo(&b)
+			assert.Equal(t, errBoom, err)
+			assert.Equal(t, int64(10), n)
+			assert.Equal(t, testData, b.Bytes())
+		})
 	})
 
 }
@@ -363,26 +457,35 @@ func TestRWBoundaryConditions(t *testing.T) {
 		assert.Equal(t, int64(len(data)), nn)
 	}
 
+	type test struct {
+		name string
+		fn   func(*RW, []byte, int)
+	}
+
 	// Read and Write the data with a range of block sizes and functions
-	for _, writeFn := range []func(*RW, []byte, int){write, readFrom} {
-		for _, readFn := range []func(*RW, []byte, int){read, writeTo} {
-			for _, size := range sizes {
-				data := buf[:size]
-				for _, chunkSize := range sizes {
-					//t.Logf("Testing size=%d chunkSize=%d", useWrite, size, chunkSize)
-					rw := NewRW(rwPool)
-					assert.Equal(t, int64(0), rw.Size())
-					accounted = 0
-					rw.SetAccounting(account)
-					assert.Equal(t, 0, accounted)
-					writeFn(rw, data, chunkSize)
-					assert.Equal(t, int64(size), rw.Size())
-					assert.Equal(t, 0, accounted)
-					readFn(rw, data, chunkSize)
-					assert.NoError(t, rw.Close())
-					assert.Equal(t, size, accounted)
-				}
+	for _, write := range []test{{"Write", write}, {"ReadFrom", readFrom}} {
+		t.Run(write.name, func(t *testing.T) {
+			for _, read := range []test{{"Read", read}, {"WriteTo", writeTo}} {
+				t.Run(read.name, func(t *testing.T) {
+					for _, size := range sizes {
+						data := buf[:size]
+						for _, chunkSize := range sizes {
+							//t.Logf("Testing size=%d chunkSize=%d", useWrite, size, chunkSize)
+							rw := NewRW(rwPool)
+							assert.Equal(t, int64(0), rw.Size())
+							accounted = 0
+							rw.SetAccounting(account)
+							assert.Equal(t, 0, accounted)
+							write.fn(rw, data, chunkSize)
+							assert.Equal(t, int64(size), rw.Size())
+							assert.Equal(t, 0, accounted)
+							read.fn(rw, data, chunkSize)
+							assert.NoError(t, rw.Close())
+							assert.Equal(t, size, accounted)
+						}
+					}
+				})
 			}
-		}
+		})
 	}
 }
