@@ -135,12 +135,15 @@ func calculateNumChunks(size int64, chunkSize int64) int {
 func multiThreadCopy(ctx context.Context, f fs.Fs, remote string, src fs.Object, streams int, tr *accounting.Transfer) (newDst fs.Object, err error) {
 	openChunkWriter := f.Features().OpenChunkWriter
 	ci := fs.GetConfig(ctx)
+	noseek := false
 	if openChunkWriter == nil {
 		openWriterAt := f.Features().OpenWriterAt
 		if openWriterAt == nil {
 			return nil, errors.New("multi-thread copy: neither OpenChunkWriter nor OpenWriterAt supported")
 		}
 		openChunkWriter = openChunkWriterFromOpenWriterAt(openWriterAt, int64(ci.MultiThreadChunkSize), int64(ci.MultiThreadWriteBufferSize), f)
+		// We don't seek the chunks with OpenWriterAt
+		noseek = true
 	}
 
 	if src.Size() < 0 {
@@ -184,7 +187,7 @@ func multiThreadCopy(ctx context.Context, f fs.Fs, remote string, src fs.Object,
 		partSize:  chunkSize,
 		streams:   streams,
 		numChunks: numChunks,
-		noSeek:    f.Features().PartialUploads,
+		noSeek:    noseek,
 	}
 
 	// Make accounting
