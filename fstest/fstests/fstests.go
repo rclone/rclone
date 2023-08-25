@@ -1156,6 +1156,48 @@ func Run(t *testing.T, opt *Opt) {
 				}, fs.GetModifyWindow(ctx, f))
 			})
 
+			// TestFsPurge tests Purge on the Root
+			t.Run("FsPurgeRoot", func(t *testing.T) {
+				skipIfNotOk(t)
+
+				// Check have Purge
+				doPurge := f.Features().Purge
+				if doPurge == nil {
+					t.Skip("FS has no Purge interface")
+				}
+
+				// put up a file to purge
+				fileToPurge := fstest.Item{
+					ModTime: fstest.Time("2001-02-03T04:05:06.499999999Z"),
+					Path:    "dirToPurgeFromRoot/fileToPurgeFromRoot.txt",
+				}
+				_, _ = testPut(ctx, t, f, &fileToPurge)
+
+				fstest.CheckListingWithPrecision(t, f, []fstest.Item{file1, file2, fileToPurge}, []string{
+					"dirToPurgeFromRoot",
+					"hello? sausage",
+					"hello? sausage/êé",
+					"hello? sausage/êé/Hello, 世界",
+					"hello? sausage/êé/Hello, 世界/ \" ' @ < > & ? + ≠",
+				}, fs.GetModifyWindow(ctx, f))
+
+				// Create a new Fs pointing at the directory
+				remoteName := subRemoteName + "/" + "dirToPurgeFromRoot"
+				fPurge, err := fs.NewFs(context.Background(), remoteName)
+				require.NoError(t, err)
+
+				// Now purge it from the root
+				err = operations.Purge(ctx, fPurge, "")
+				require.NoError(t, err)
+
+				fstest.CheckListingWithPrecision(t, f, []fstest.Item{file1, file2}, []string{
+					"hello? sausage",
+					"hello? sausage/êé",
+					"hello? sausage/êé/Hello, 世界",
+					"hello? sausage/êé/Hello, 世界/ \" ' @ < > & ? + ≠",
+				}, fs.GetModifyWindow(ctx, f))
+			})
+
 			// TestFsCopy tests Copy
 			t.Run("FsCopy", func(t *testing.T) {
 				skipIfNotOk(t)
