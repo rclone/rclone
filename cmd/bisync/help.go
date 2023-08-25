@@ -27,11 +27,16 @@ var rcHelp = makeHelp(`This takes the following parameters
 - checkFilename - file name for checkAccess (default: {CHECKFILE})
 - maxDelete - abort sync if percentage of deleted files is above
   this threshold (default: {MAXDELETE})
-- force - maxDelete safety check and run the sync
+- force - Bypass maxDelete safety check and run the sync
 - checkSync - |true| by default, |false| disables comparison of final listings,
               |only| will skip sync, only compare listings from the last run
+- createEmptySrcDirs - Sync creation and deletion of empty directories. 
+			  (Not compatible with --remove-empty-dirs)
 - removeEmptyDirs - remove empty directories at the final cleanup step
 - filtersFile - read filtering patterns from a file
+- ignoreListingChecksum - Do not use checksums for listings
+- resilient - Allow future runs to retry after certain less-serious errors, instead of requiring resync. 
+            Use at your own risk!
 - workdir - server directory for history files (default: {WORKDIR})
 - noCleanup - retain working files
 
