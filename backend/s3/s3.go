@@ -4833,6 +4833,10 @@ func (f *Fs) purge(ctx context.Context, dir string, oldOnly bool) error {
 		if isDirectory {
 			return nil
 		}
+		// If the root is a dirmarker it will have lost its trailing /
+		if remote == "" {
+			remote = "/"
+		}
 		oi, err := f.newObjectWithInfo(ctx, remote, object, versionID)
 		if err != nil {
 			fs.Errorf(object, "Can't create object %+v", err)
