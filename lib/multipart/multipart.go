@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/accounting"
 	"github.com/rclone/rclone/lib/atexit"
 	"github.com/rclone/rclone/lib/pacer"
 	"github.com/rclone/rclone/lib/pool"
@@ -87,10 +88,16 @@ func UploadMultipart(ctx context.Context, src fs.ObjectInfo, in io.Reader, opt U
 		size     = src.Size()
 	)
 
+	// Do the accounting manually
+	in, acc := accounting.UnWrapAccounting(in)
+
 	for partNum := int64(0); !finished; partNum++ {
 		// Get a block of memory from the pool and token which limits concurrency.
 		tokens.Get()
 		rw := NewRW()
+		if acc != nil {
+			rw.SetAccounting(acc.AccountRead)
+		}
 
 		free := func() {
 			// return the memory and token

@@ -632,3 +632,15 @@ func UnWrap(in io.Reader) (unwrapped io.Reader, wrap WrapFn) {
 	}
 	return acc.OldStream(), acc.WrapStream
 }
+
+// UnWrapAccounting unwraps a reader returning unwrapped and acc a
+// pointer to the accounting.
+//
+// The caller is expected to manage the accounting at this point.
+func UnWrapAccounting(in io.Reader) (unwrapped io.Reader, acc *Account) {
+	a, ok := in.(*accountStream)
+	if !ok {
+		return in, nil
+	}
+	return a.in, a.acc
+}
