@@ -5301,7 +5301,7 @@ type s3ChunkWriter struct {
 	f                    *Fs
 	bucket               *string
 	key                  *string
-	uploadId             *string
+	uploadID             *string
 	multiPartUploadInput *s3.CreateMultipartUploadInput
 	completedPartsMu     sync.Mutex
 	completedParts       []*s3.CompletedPart
@@ -5370,7 +5370,7 @@ func (f *Fs) OpenChunkWriter(ctx context.Context, remote string, src fs.ObjectIn
 		f:                    f,
 		bucket:               mOut.Bucket,
 		key:                  mOut.Key,
-		uploadId:             mOut.UploadId,
+		uploadID:             mOut.UploadId,
 		multiPartUploadInput: &mReq,
 		completedParts:       make([]*s3.CompletedPart, 0),
 		ui:                   ui,
@@ -5438,7 +5438,7 @@ func (w *s3ChunkWriter) WriteChunk(ctx context.Context, chunkNumber int, reader 
 		Bucket:               w.bucket,
 		Key:                  w.key,
 		PartNumber:           s3PartNumber,
-		UploadId:             w.uploadId,
+		UploadId:             w.uploadID,
 		ContentMD5:           &md5sum,
 		ContentLength:        aws.Int64(currentChunkSize),
 		RequestPayer:         w.multiPartUploadInput.RequestPayer,
@@ -5479,15 +5479,15 @@ func (w *s3ChunkWriter) Abort(ctx context.Context) error {
 		_, err := w.f.c.AbortMultipartUploadWithContext(context.Background(), &s3.AbortMultipartUploadInput{
 			Bucket:       w.bucket,
 			Key:          w.key,
-			UploadId:     w.uploadId,
+			UploadId:     w.uploadID,
 			RequestPayer: w.multiPartUploadInput.RequestPayer,
 		})
 		return w.f.shouldRetry(ctx, err)
 	})
 	if err != nil {
-		return fmt.Errorf("failed to abort multipart upload %q: %w", *w.uploadId, err)
+		return fmt.Errorf("failed to abort multipart upload %q: %w", *w.uploadID, err)
 	}
-	fs.Debugf(w.o, "multipart upload %q aborted", *w.uploadId)
+	fs.Debugf(w.o, "multipart upload %q aborted", *w.uploadID)
 	return err
 }
 
@@ -5506,12 +5506,12 @@ func (w *s3ChunkWriter) Close(ctx context.Context) (err error) {
 				Parts: w.completedParts,
 			},
 			RequestPayer: w.multiPartUploadInput.RequestPayer,
-			UploadId:     w.uploadId,
+			UploadId:     w.uploadID,
 		})
 		return w.f.shouldRetry(ctx, err)
 	})
 	if err != nil {
-		return fmt.Errorf("failed to complete multipart upload %q: %w", *w.uploadId, err)
+		return fmt.Errorf("failed to complete multipart upload %q: %w", *w.uploadID, err)
 	}
 	if resp != nil {
 		if resp.ETag != nil {
@@ -5521,7 +5521,7 @@ func (w *s3ChunkWriter) Close(ctx context.Context) (err error) {
 			w.versionID = *resp.VersionId
 		}
 	}
-	fs.Debugf(w.o, "multipart upload %q finished", *w.uploadId)
+	fs.Debugf(w.o, "multipart upload %q finished", *w.uploadID)
 	return err
 }
 

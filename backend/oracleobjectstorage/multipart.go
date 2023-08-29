@@ -40,7 +40,7 @@ type objectChunkWriter struct {
 	f               *Fs
 	bucket          *string
 	key             *string
-	uploadId        *string
+	uploadID        *string
 	partsToCommit   []objectstorage.CommitMultipartUploadPartDetails
 	partsToCommitMu sync.Mutex
 	existingParts   map[int]objectstorage.MultipartUploadPartSummary
@@ -103,7 +103,7 @@ func (f *Fs) OpenChunkWriter(
 		chunkSize = chunksize.Calculator(src, size, uploadParts, chunkSize)
 	}
 
-	uploadId, existingParts, err := o.createMultipartUpload(ctx, ui.req)
+	uploadID, existingParts, err := o.createMultipartUpload(ctx, ui.req)
 	if err != nil {
 		return -1, nil, fmt.Errorf("create multipart upload request failed: %w", err)
 	}
@@ -114,12 +114,12 @@ func (f *Fs) OpenChunkWriter(
 		f:             f,
 		bucket:        &bucketName,
 		key:           &bucketPath,
-		uploadId:      &uploadId,
+		uploadID:      &uploadID,
 		existingParts: existingParts,
 		ui:            ui,
 		o:             o,
 	}
-	fs.Debugf(o, "open chunk writer: started multipart upload: %v", uploadId)
+	fs.Debugf(o, "open chunk writer: started multipart upload: %v", uploadID)
 	return int64(chunkSize), chunkWriter, err
 }
 
@@ -161,7 +161,7 @@ func (w *objectChunkWriter) WriteChunk(ctx context.Context, chunkNumber int, rea
 		NamespaceName: common.String(w.f.opt.Namespace),
 		BucketName:    w.bucket,
 		ObjectName:    w.key,
-		UploadId:      w.uploadId,
+		UploadId:      w.uploadID,
 		UploadPartNum: common.Int(ossPartNumber),
 		ContentLength: common.Int64(currentChunkSize),
 		ContentMD5:    common.String(md5sum),
@@ -210,7 +210,7 @@ func (w *objectChunkWriter) Close(ctx context.Context) (err error) {
 		NamespaceName: common.String(w.f.opt.Namespace),
 		BucketName:    w.bucket,
 		ObjectName:    w.key,
-		UploadId:      w.uploadId,
+		UploadId:      w.uploadID,
 	}
 	req.PartsToCommit = w.partsToCommit
 	var resp objectstorage.CommitMultipartUploadResponse
@@ -218,7 +218,7 @@ func (w *objectChunkWriter) Close(ctx context.Context) (err error) {
 		resp, err = w.f.srv.CommitMultipartUpload(ctx, req)
 		// if multipart is corrupted, we will abort the uploadId
 		if isMultiPartUploadCorrupted(err) {
-			fs.Debugf(w.o, "multipart uploadId %v is corrupted, aborting...", *w.uploadId)
+			fs.Debugf(w.o, "multipart uploadId %v is corrupted, aborting...", *w.uploadID)
 			_ = w.Abort(ctx)
 			return false, err
 		}
@@ -235,7 +235,7 @@ func (w *objectChunkWriter) Close(ctx context.Context) (err error) {
 		fs.Errorf(w.o, "multipart upload corrupted: multipart md5 differ: expecting %s but got %s", wantMultipartMd5, gotMultipartMd5)
 		return fmt.Errorf("multipart upload corrupted: md5 differ: expecting %s but got %s", wantMultipartMd5, gotMultipartMd5)
 	}
-	fs.Debugf(w.o, "multipart upload %v md5 matched: expecting %s and got %s", *w.uploadId, wantMultipartMd5, gotMultipartMd5)
+	fs.Debugf(w.o, "multipart upload %v md5 matched: expecting %s and got %s", *w.uploadID, wantMultipartMd5, gotMultipartMd5)
 	return nil
 }
 
@@ -259,11 +259,11 @@ func (w *objectChunkWriter) Abort(ctx context.Context) error {
 		ctx,
 		w.bucket,
 		w.key,
-		w.uploadId)
+		w.uploadID)
 	if err != nil {
 		fs.Debugf(w.o, "Failed to cancel multipart upload: %v", err)
 	} else {
-		fs.Debugf(w.o, "canceled and aborted multipart upload: %v", *w.uploadId)
+		fs.Debugf(w.o, "canceled and aborted multipart upload: %v", *w.uploadID)
 	}
 	return err
 }

@@ -47,7 +47,7 @@ func (s *sshClientExternal) Close() error {
 
 // NewSession makes a new external SSH connection
 func (s *sshClientExternal) NewSession() (sshSession, error) {
-	session := s.f.newSshSessionExternal()
+	session := s.f.newSSHSessionExternal()
 	if s.session == nil {
 		fs.Debugf(s.f, "ssh external: creating additional session")
 	}
@@ -77,7 +77,7 @@ type sshSessionExternal struct {
 	runningSFTP bool
 }
 
-func (f *Fs) newSshSessionExternal() *sshSessionExternal {
+func (f *Fs) newSSHSessionExternal() *sshSessionExternal {
 	s := &sshSessionExternal{
 		f: f,
 	}
