@@ -1,3 +1,4 @@
+// Package multipart implements generic multipart uploading.
 package multipart
 
 import (
@@ -37,7 +38,7 @@ func getPool() *pool.Pool {
 	return bufferPool
 }
 
-// Get a pool.RW using the multipart pool
+// NewRW gets a pool.RW using the multipart pool
 func NewRW() *pool.RW {
 	return pool.NewRW(getPool())
 }
@@ -50,7 +51,7 @@ type UploadMultipartOptions struct {
 	LeavePartsOnError bool               // if set don't delete parts uploaded so far on error
 }
 
-// Do a generic multipart upload from src using f as OpenChunkWriter.
+// UploadMultipart does a generic multipart upload from src using f as OpenChunkWriter.
 //
 // in is read seqentially and chunks from it are uploaded in parallel.
 //

@@ -1,3 +1,4 @@
+// Package proxy enables SOCKS5 proxy dialling
 package proxy
 
 import (

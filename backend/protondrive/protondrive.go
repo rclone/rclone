@@ -1,3 +1,4 @@
+// Package protondrive implements the Proton Drive backend
 package protondrive
 
 import (
@@ -45,8 +46,8 @@ const (
 )
 
 var (
-	ErrCanNotUploadFileWithUnknownSize = errors.New("proton Drive can't upload files with unknown size")
-	ErrCanNotPurgeRootDirectory        = errors.New("can't purge root directory")
+	errCanNotUploadFileWithUnknownSize = errors.New("proton Drive can't upload files with unknown size")
+	errCanNotPurgeRootDirectory        = errors.New("can't purge root directory")
 
 	// for the auth/deauth handler
 	_mapper        configmap.Mapper
@@ -569,12 +570,10 @@ func (f *Fs) List(ctx context.Context, dir string) (fs.DirEntries, error) {
 	return entries, nil
 }
 
-// DirCacher describes an interface for doing the low level directory work
+// FindLeaf finds a directory of name leaf in the folder with ID pathID
 //
 // This should be implemented by the backend and will be called by the
 // dircache package when appropriate.
-//
-// FindLeaf finds a directory of name leaf in the folder with ID pathID
 func (f *Fs) FindLeaf(ctx context.Context, pathID, leaf string) (string, bool, error) {
 	/* f.opt.Enc.FromStandardName(leaf) not required since the DirCache only process sanitized path */
 
@@ -593,12 +592,10 @@ func (f *Fs) FindLeaf(ctx context.Context, pathID, leaf string) (string, bool, e
 	return link.LinkID, true, nil
 }
 
-// DirCacher describes an interface for doing the low level directory work
+// CreateDir makes a directory with pathID as parent and name leaf
 //
 // This should be implemented by the backend and will be called by the
 // dircache package when appropriate.
-//
-// CreateDir makes a directory with pathID as parent and name leaf
 func (f *Fs) CreateDir(ctx context.Context, pathID, leaf string) (string, error) {
 	/* f.opt.Enc.FromStandardName(leaf) not required since the DirCache only process sanitized path */
 
@@ -626,7 +623,7 @@ func (f *Fs) CreateDir(ctx context.Context, pathID, leaf string) (string, error)
 func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
 	size := src.Size()
 	if size < 0 {
-		return nil, ErrCanNotUploadFileWithUnknownSize
+		return nil, errCanNotUploadFileWithUnknownSize
 	}
 
 	existingObj, err := f.NewObject(ctx, src.Remote())
@@ -725,7 +722,7 @@ func (f *Fs) DirCacheFlush() {
 	f.protonDrive.ClearCache()
 }
 
-// Returns the supported hash types of the filesystem
+// Hashes returns the supported hash types of the filesystem
 func (f *Fs) Hashes() hash.Set {
 	return hash.Set(hash.SHA1)
 }
@@ -887,7 +884,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {
 	size := src.Size()
 	if size < 0 {
-		return ErrCanNotUploadFileWithUnknownSize
+		return errCanNotUploadFileWithUnknownSize
 	}
 
 	remote := o.Remote()
@@ -945,7 +942,7 @@ func (f *Fs) Purge(ctx context.Context, dir string) error {
 	root := path.Join(f.root, dir)
 	if root == "" {
 		// we can't remove the root directory, but we can list the directory and delete every folder and file in here
-		return ErrCanNotPurgeRootDirectory
+		return errCanNotPurgeRootDirectory
 	}
 
 	folderLinkID, err := f.dirCache.FindDir(ctx, f.sanitizePath(dir), false)
