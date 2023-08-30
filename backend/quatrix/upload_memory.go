@@ -18,9 +18,9 @@ type uploadMemoryManager struct {
 
 // NewUploadMemoryManager is a constructor for upload memory management
 //
-// memory manager dynamically calculates every chunk size for the transfer and encreases or decreases it
+// memory manager dynamically calculates every chunk size for the transfer and increases or decreases it
 // depending on the upload speed. This makes general upload time smaller, because transfers that are faster
-// does not have to wait for the slower ones untill they finish upload.
+// does not have to wait for the slower ones until they finish upload.
 func NewUploadMemoryManager(ci *fs.ConfigInfo, opt *Options) *uploadMemoryManager {
 	useDynamicSize := true
 
