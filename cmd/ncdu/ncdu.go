@@ -906,6 +906,7 @@ func (u *UI) scan() (chan *scan.Dir, chan error, chan struct{}) {
 	if cancel := u.cancel; cancel != nil {
 		cancel()
 	}
+	u.listing = true
 	ctx := context.Background()
 	ctx, u.cancel = context.WithCancel(ctx)
 	return scan.Scan(ctx, u.f)
