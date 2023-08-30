@@ -641,6 +641,9 @@ IPv4 address (1.2.3.4), an IPv6 address (1234::789A) or host name.  If
 the host name doesn't resolve or resolves to more than one IP address
 it will give an error.
 
+You can use `--bind 0.0.0.0` to force rclone to use IPv4 addresses and
+`--bind ::0` to force rclone to use IPv6 addresses.
+
 ### --bwlimit=BANDWIDTH_SPEC ###
 
 This option controls the bandwidth limit. For example
