@@ -71,8 +71,8 @@ const (
 	teliaseCloudAuthURL  = "https://cloud-auth.telia.se/auth/realms/telia_se/protocol/openid-connect/auth"
 	teliaseCloudClientID = "desktop"
 
-	telianoCloudTokenURL = "https://sky-auth.telia.no/auth/realms/telia_no/protocol/openid-connect/token"
-	telianoCloudAuthURL  = "https://sky-auth.telia.no/auth/realms/telia_no/protocol/openid-connect/auth"
+	telianoCloudTokenURL = "https://sky-auth.telia.no/auth/realms/get/protocol/openid-connect/token"
+	telianoCloudAuthURL  = "https://sky-auth.telia.no/auth/realms/get/protocol/openid-connect/auth"
 	telianoCloudClientID = "desktop"
 
 	tele2CloudTokenURL = "https://mittcloud-auth.tele2.se/auth/realms/comhem/protocol/openid-connect/token"
