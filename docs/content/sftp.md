@@ -710,6 +710,17 @@ Properties:
 - Type:        string
 - Required:    false
 
+If adding `server_command` to the configuration file please note that 
+it should not be enclosed in quotes, since that will make rclone fail.
+
+A working example is:
+```` 
+[remote_name]
+type = sftp
+server_command = sudo /usr/libexec/openssh/sftp-server
+````
+
+
 #### --sftp-use-fstat
 
 If set use fstat instead of stat.
