@@ -346,6 +346,9 @@ func TestRWFileHandleWriteAt(t *testing.T) {
 		return n
 	}
 
+	// Name
+	assert.Equal(t, "file1", fh.Name())
+
 	// Preconditions
 	assert.Equal(t, int64(0), offset())
 	assert.True(t, fh.opened)
