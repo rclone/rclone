@@ -52,7 +52,7 @@ func (e *Error) Error() string {
 		out += ": " + e.Message
 	}
 	if e.ContextInfo != nil {
-		out += fmt.Sprintf(" (%+v)", e.ContextInfo)
+		out += fmt.Sprintf(" (%s)", string(e.ContextInfo))
 	}
 	return out
 }
