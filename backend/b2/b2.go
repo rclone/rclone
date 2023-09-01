@@ -1897,9 +1897,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	} else if size > int64(o.fs.opt.UploadCutoff) {
 		_, err := multipart.UploadMultipart(ctx, src, in, multipart.UploadMultipartOptions{
 			Open:        o.fs,
-			Concurrency: o.fs.opt.UploadConcurrency,
 			OpenOptions: options,
-			//LeavePartsOnError: o.fs.opt.LeavePartsOnError,
 		})
 		return err
 	}
@@ -2013,13 +2011,13 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 //
 // Pass in the remote and the src object
 // You can also use options to hint at the desired chunk size
-func (f *Fs) OpenChunkWriter(ctx context.Context, remote string, src fs.ObjectInfo, options ...fs.OpenOption) (chunkSizeResult int64, writer fs.ChunkWriter, err error) {
+func (f *Fs) OpenChunkWriter(ctx context.Context, remote string, src fs.ObjectInfo, options ...fs.OpenOption) (info fs.ChunkWriterInfo, writer fs.ChunkWriter, err error) {
 	// FIXME what if file is smaller than 1 chunk?
 	if f.opt.Versions {
-		return -1, nil, errNotWithVersions
+		return info, nil, errNotWithVersions
 	}
 	if f.opt.VersionAt.IsSet() {
-		return -1, nil, errNotWithVersionAt
+		return info, nil, errNotWithVersionAt
 	}
 	//size := src.Size()
 
@@ -2032,11 +2030,16 @@ func (f *Fs) OpenChunkWriter(ctx context.Context, remote string, src fs.ObjectIn
 	bucket, _ := o.split()
 	err = f.makeBucket(ctx, bucket)
 	if err != nil {
-		return -1, nil, err
+		return info, nil, err
 	}
 
+	info = fs.ChunkWriterInfo{
+		ChunkSize:   int64(f.opt.ChunkSize),
+		Concurrency: o.fs.opt.UploadConcurrency,
+		//LeavePartsOnError: o.fs.opt.LeavePartsOnError,
+	}
 	up, err := f.newLargeUpload(ctx, o, nil, src, f.opt.ChunkSize, false, nil)
-	return int64(f.opt.ChunkSize), up, err
+	return info, up, err
 }
 
 // Remove an object

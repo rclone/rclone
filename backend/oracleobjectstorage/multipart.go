@@ -53,10 +53,8 @@ type objectChunkWriter struct {
 
 func (o *Object) uploadMultipart(ctx context.Context, src fs.ObjectInfo, in io.Reader, options ...fs.OpenOption) error {
 	_, err := multipart.UploadMultipart(ctx, src, in, multipart.UploadMultipartOptions{
-		Open:              o.fs,
-		Concurrency:       o.fs.opt.UploadConcurrency,
-		LeavePartsOnError: o.fs.opt.LeavePartsOnError,
-		OpenOptions:       options,
+		Open:        o.fs,
+		OpenOptions: options,
 	})
 	return err
 }
@@ -69,7 +67,7 @@ func (f *Fs) OpenChunkWriter(
 	ctx context.Context,
 	remote string,
 	src fs.ObjectInfo,
-	options ...fs.OpenOption) (chunkSizeResult int64, writer fs.ChunkWriter, err error) {
+	options ...fs.OpenOption) (info fs.ChunkWriterInfo, writer fs.ChunkWriter, err error) {
 	// Temporary Object under construction
 	o := &Object{
 		fs:     f,
@@ -77,7 +75,7 @@ func (f *Fs) OpenChunkWriter(
 	}
 	ui, err := o.prepareUpload(ctx, src, options)
 	if err != nil {
-		return -1, nil, fmt.Errorf("failed to prepare upload: %w", err)
+		return info, nil, fmt.Errorf("failed to prepare upload: %w", err)
 	}
 
 	uploadParts := f.opt.MaxUploadParts
@@ -105,7 +103,7 @@ func (f *Fs) OpenChunkWriter(
 
 	uploadID, existingParts, err := o.createMultipartUpload(ctx, ui.req)
 	if err != nil {
-		return -1, nil, fmt.Errorf("create multipart upload request failed: %w", err)
+		return info, nil, fmt.Errorf("create multipart upload request failed: %w", err)
 	}
 	bucketName, bucketPath := o.split()
 	chunkWriter := &objectChunkWriter{
@@ -119,8 +117,13 @@ func (f *Fs) OpenChunkWriter(
 		ui:            ui,
 		o:             o,
 	}
+	info = fs.ChunkWriterInfo{
+		ChunkSize:         int64(chunkSize),
+		Concurrency:       o.fs.opt.UploadConcurrency,
+		LeavePartsOnError: o.fs.opt.LeavePartsOnError,
+	}
 	fs.Debugf(o, "open chunk writer: started multipart upload: %v", uploadID)
-	return int64(chunkSize), chunkWriter, err
+	return info, chunkWriter, err
 }
 
 // WriteChunk will write chunk number with reader bytes, where chunk number >= 0

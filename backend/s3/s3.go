@@ -3115,7 +3115,6 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	if err != nil {
 		return nil, err
 	}
-	fs.Debugf(nil, "name = %q, root = %q, opt = %#v", name, root, opt)
 	err = checkUploadChunkSize(opt.ChunkSize)
 	if err != nil {
 		return nil, fmt.Errorf("s3: chunk size: %w", err)
@@ -5317,7 +5316,7 @@ type s3ChunkWriter struct {
 //
 // Pass in the remote and the src object
 // You can also use options to hint at the desired chunk size
-func (f *Fs) OpenChunkWriter(ctx context.Context, remote string, src fs.ObjectInfo, options ...fs.OpenOption) (chunkSizeResult int64, writer fs.ChunkWriter, err error) {
+func (f *Fs) OpenChunkWriter(ctx context.Context, remote string, src fs.ObjectInfo, options ...fs.OpenOption) (info fs.ChunkWriterInfo, writer fs.ChunkWriter, err error) {
 	// Temporary Object under construction
 	o := &Object{
 		fs:     f,
@@ -5325,7 +5324,7 @@ func (f *Fs) OpenChunkWriter(ctx context.Context, remote string, src fs.ObjectIn
 	}
 	ui, err := o.prepareUpload(ctx, src, options)
 	if err != nil {
-		return -1, nil, fmt.Errorf("failed to prepare upload: %w", err)
+		return info, nil, fmt.Errorf("failed to prepare upload: %w", err)
 	}
 
 	//structs.SetFrom(&mReq, req)
@@ -5361,7 +5360,7 @@ func (f *Fs) OpenChunkWriter(ctx context.Context, remote string, src fs.ObjectIn
 		return f.shouldRetry(ctx, err)
 	})
 	if err != nil {
-		return -1, nil, fmt.Errorf("create multipart upload failed: %w", err)
+		return info, nil, fmt.Errorf("create multipart upload failed: %w", err)
 	}
 
 	chunkWriter := &s3ChunkWriter{
@@ -5376,8 +5375,13 @@ func (f *Fs) OpenChunkWriter(ctx context.Context, remote string, src fs.ObjectIn
 		ui:                   ui,
 		o:                    o,
 	}
+	info = fs.ChunkWriterInfo{
+		ChunkSize:         int64(chunkSize),
+		Concurrency:       o.fs.opt.UploadConcurrency,
+		LeavePartsOnError: o.fs.opt.LeavePartsOnError,
+	}
 	fs.Debugf(o, "open chunk writer: started multipart upload: %v", *mOut.UploadId)
-	return int64(chunkSize), chunkWriter, err
+	return info, chunkWriter, err
 }
 
 // add a part number and etag to the completed parts
@@ -5527,10 +5531,8 @@ func (w *s3ChunkWriter) Close(ctx context.Context) (err error) {
 
 func (o *Object) uploadMultipart(ctx context.Context, src fs.ObjectInfo, in io.Reader, options ...fs.OpenOption) (wantETag, gotETag string, versionID *string, ui uploadInfo, err error) {
 	chunkWriter, err := multipart.UploadMultipart(ctx, src, in, multipart.UploadMultipartOptions{
-		Open:              o.fs,
-		Concurrency:       o.fs.opt.UploadConcurrency,
-		LeavePartsOnError: o.fs.opt.LeavePartsOnError,
-		OpenOptions:       options,
+		Open:        o.fs,
+		OpenOptions: options,
 	})
 	if err != nil {
 		return wantETag, gotETag, versionID, ui, err

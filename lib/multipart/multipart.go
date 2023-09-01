@@ -45,10 +45,8 @@ func NewRW() *pool.RW {
 
 // UploadMultipartOptions options for the generic multipart upload
 type UploadMultipartOptions struct {
-	Open              fs.OpenChunkWriter // thing to call OpenChunkWriter on
-	OpenOptions       []fs.OpenOption    // options for OpenChunkWriter
-	Concurrency       int                // number of simultaneous uploads to do
-	LeavePartsOnError bool               // if set don't delete parts uploaded so far on error
+	Open        fs.OpenChunkWriter // thing to call OpenChunkWriter on
+	OpenOptions []fs.OpenOption    // options for OpenChunkWriter
 }
 
 // UploadMultipart does a generic multipart upload from src using f as OpenChunkWriter.
@@ -57,22 +55,23 @@ type UploadMultipartOptions struct {
 //
 // It returns the chunkWriter used in case the caller needs to extract any private info from it.
 func UploadMultipart(ctx context.Context, src fs.ObjectInfo, in io.Reader, opt UploadMultipartOptions) (chunkWriterOut fs.ChunkWriter, err error) {
-	chunkSize, chunkWriter, err := opt.Open.OpenChunkWriter(ctx, src.Remote(), src, opt.OpenOptions...)
+	info, chunkWriter, err := opt.Open.OpenChunkWriter(ctx, src.Remote(), src, opt.OpenOptions...)
 	if err != nil {
 		return nil, fmt.Errorf("multipart upload failed to initialise: %w", err)
 	}
 
 	// make concurrency machinery
-	concurrency := opt.Concurrency
+	concurrency := info.Concurrency
 	if concurrency < 1 {
 		concurrency = 1
 	}
 	tokens := pacer.NewTokenDispenser(concurrency)
 
 	uploadCtx, cancel := context.WithCancel(ctx)
+	defer cancel()
 	defer atexit.OnError(&err, func() {
 		cancel()
-		if opt.LeavePartsOnError {
+		if info.LeavePartsOnError {
 			return
 		}
 		fs.Debugf(src, "Cancelling multipart upload")
@@ -83,10 +82,11 @@ func UploadMultipart(ctx context.Context, src fs.ObjectInfo, in io.Reader, opt U
 	})()
 
 	var (
-		g, gCtx  = errgroup.WithContext(uploadCtx)
-		finished = false
-		off      int64
-		size     = src.Size()
+		g, gCtx   = errgroup.WithContext(uploadCtx)
+		finished  = false
+		off       int64
+		size      = src.Size()
+		chunkSize = info.ChunkSize
 	)
 
 	// Do the accounting manually

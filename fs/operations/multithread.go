@@ -58,7 +58,6 @@ type multiThreadCopyState struct {
 	size      int64
 	src       fs.Object
 	acc       *accounting.Account
-	streams   int
 	numChunks int
 	noSeek    bool // set if sure the receiving fs won't seek the input
 }
@@ -128,7 +127,7 @@ func calculateNumChunks(size int64, chunkSize int64) int {
 
 // Copy src to (f, remote) using streams download threads. It tries to use the OpenChunkWriter feature
 // and if that's not available it creates an adapter using OpenWriterAt
-func multiThreadCopy(ctx context.Context, f fs.Fs, remote string, src fs.Object, streams int, tr *accounting.Transfer) (newDst fs.Object, err error) {
+func multiThreadCopy(ctx context.Context, f fs.Fs, remote string, src fs.Object, concurrency int, tr *accounting.Transfer) (newDst fs.Object, err error) {
 	openChunkWriter := f.Features().OpenChunkWriter
 	ci := fs.GetConfig(ctx)
 	noseek := false
@@ -149,47 +148,61 @@ func multiThreadCopy(ctx context.Context, f fs.Fs, remote string, src fs.Object,
 		return nil, fmt.Errorf("multi-thread copy: can't copy zero sized file")
 	}
 
-	g, gCtx := errgroup.WithContext(ctx)
-	g.SetLimit(streams)
-
-	chunkSize, chunkWriter, err := openChunkWriter(ctx, remote, src)
+	info, chunkWriter, err := openChunkWriter(ctx, remote, src)
 	if err != nil {
 		return nil, fmt.Errorf("multi-thread copy: failed to open chunk writer: %w", err)
 	}
 
+	uploadCtx, cancel := context.WithCancel(ctx)
+	defer cancel()
 	defer atexit.OnError(&err, func() {
-		fs.Debugf(src, "multi-thread copy: aborting transfer on exit")
+		cancel()
+		if info.LeavePartsOnError {
+			return
+		}
+		fs.Debugf(src, "multi-thread copy: cancelling transfer on exit")
 		abortErr := chunkWriter.Abort(ctx)
 		if abortErr != nil {
 			fs.Debugf(src, "multi-thread copy: abort failed: %v", abortErr)
 		}
 	})()
 
-	if chunkSize > src.Size() {
-		fs.Debugf(src, "multi-thread copy: chunk size %v was bigger than source file size %v", fs.SizeSuffix(chunkSize), fs.SizeSuffix(src.Size()))
-		chunkSize = src.Size()
+	if info.ChunkSize > src.Size() {
+		fs.Debugf(src, "multi-thread copy: chunk size %v was bigger than source file size %v", fs.SizeSuffix(info.ChunkSize), fs.SizeSuffix(src.Size()))
+		info.ChunkSize = src.Size()
 	}
 
-	numChunks := calculateNumChunks(src.Size(), chunkSize)
-	if streams > numChunks {
-		fs.Debugf(src, "multi-thread copy: number of streams %d was bigger than number of chunks %d", streams, numChunks)
-		streams = numChunks
+	numChunks := calculateNumChunks(src.Size(), info.ChunkSize)
+	if concurrency > numChunks {
+		fs.Debugf(src, "multi-thread copy: number of streams %d was bigger than number of chunks %d", concurrency, numChunks)
+		concurrency = numChunks
 	}
+
+	// Use the backend concurrency if it is higher than --multi-thread-streams or if --multi-thread-streams wasn't set explicitly
+	if !ci.MultiThreadSet || info.Concurrency > concurrency {
+		fs.Debugf(src, "multi-thread copy: using backend concurrency of %d instead of --multi-thread-streams %d", info.Concurrency, concurrency)
+		concurrency = info.Concurrency
+	}
+	if concurrency < 1 {
+		concurrency = 1
+	}
+
+	g, gCtx := errgroup.WithContext(uploadCtx)
+	g.SetLimit(concurrency)
 
 	mc := &multiThreadCopyState{
 		ctx:       gCtx,
 		size:      src.Size(),
 		src:       src,
-		partSize:  chunkSize,
-		streams:   streams,
+		partSize:  info.ChunkSize,
 		numChunks: numChunks,
 		noSeek:    noseek,
 	}
 
 	// Make accounting
-	mc.acc = tr.Account(ctx, nil)
+	mc.acc = tr.Account(gCtx, nil)
 
-	fs.Debugf(src, "Starting multi-thread copy with %d chunks of size %v with %v parallel streams", mc.numChunks, fs.SizeSuffix(mc.partSize), mc.streams)
+	fs.Debugf(src, "Starting multi-thread copy with %d chunks of size %v with %v parallel streams", mc.numChunks, fs.SizeSuffix(mc.partSize), concurrency)
 	for chunk := 0; chunk < mc.numChunks; chunk++ {
 		// Fail fast, in case an errgroup managed function returns an error
 		if gCtx.Err() != nil {
@@ -307,10 +320,12 @@ func (w writerAtChunkWriter) Abort(ctx context.Context) error {
 
 // openChunkWriterFromOpenWriterAt adapts an OpenWriterAtFn into an OpenChunkWriterFn using chunkSize and writeBufferSize
 func openChunkWriterFromOpenWriterAt(openWriterAt fs.OpenWriterAtFn, chunkSize int64, writeBufferSize int64, f fs.Fs) fs.OpenChunkWriterFn {
-	return func(ctx context.Context, remote string, src fs.ObjectInfo, options ...fs.OpenOption) (chunkSizeResult int64, writer fs.ChunkWriter, err error) {
+	return func(ctx context.Context, remote string, src fs.ObjectInfo, options ...fs.OpenOption) (info fs.ChunkWriterInfo, writer fs.ChunkWriter, err error) {
+		ci := fs.GetConfig(ctx)
+
 		writerAt, err := openWriterAt(ctx, remote, src.Size())
 		if err != nil {
-			return -1, nil, err
+			return info, nil, err
 		}
 
 		if writeBufferSize > 0 {
@@ -326,7 +341,10 @@ func openChunkWriterFromOpenWriterAt(openWriterAt fs.OpenWriterAtFn, chunkSize i
 			writeBufferSize: writeBufferSize,
 			f:               f,
 		}
-
-		return chunkSize, chunkWriter, nil
+		info = fs.ChunkWriterInfo{
+			ChunkSize:   chunkSize,
+			Concurrency: ci.MultiThreadStreams,
+		}
+		return info, chunkWriter, nil
 	}
 }

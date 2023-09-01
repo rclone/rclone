@@ -1986,7 +1986,7 @@ type azChunkWriter struct {
 //
 // Pass in the remote and the src object
 // You can also use options to hint at the desired chunk size
-func (f *Fs) OpenChunkWriter(ctx context.Context, remote string, src fs.ObjectInfo, options ...fs.OpenOption) (chunkSizeResult int64, writer fs.ChunkWriter, err error) {
+func (f *Fs) OpenChunkWriter(ctx context.Context, remote string, src fs.ObjectInfo, options ...fs.OpenOption) (info fs.ChunkWriterInfo, writer fs.ChunkWriter, err error) {
 	// Temporary Object under construction
 	o := &Object{
 		fs:     f,
@@ -1994,7 +1994,7 @@ func (f *Fs) OpenChunkWriter(ctx context.Context, remote string, src fs.ObjectIn
 	}
 	ui, err := o.prepareUpload(ctx, src, options)
 	if err != nil {
-		return -1, nil, fmt.Errorf("failed to prepare upload: %w", err)
+		return info, nil, fmt.Errorf("failed to prepare upload: %w", err)
 	}
 
 	// Calculate correct partSize
@@ -2020,7 +2020,7 @@ func (f *Fs) OpenChunkWriter(ctx context.Context, remote string, src fs.ObjectIn
 	} else {
 		partSize = chunksize.Calculator(remote, size, blockblob.MaxBlocks, f.opt.ChunkSize)
 		if partSize > fs.SizeSuffix(blockblob.MaxStageBlockBytes) {
-			return -1, nil, fmt.Errorf("can't upload as it is too big %v - takes more than %d chunks of %v", fs.SizeSuffix(size), fs.SizeSuffix(blockblob.MaxBlocks), fs.SizeSuffix(blockblob.MaxStageBlockBytes))
+			return info, nil, fmt.Errorf("can't upload as it is too big %v - takes more than %d chunks of %v", fs.SizeSuffix(size), fs.SizeSuffix(blockblob.MaxBlocks), fs.SizeSuffix(blockblob.MaxStageBlockBytes))
 		}
 		totalParts = int(fs.SizeSuffix(size) / partSize)
 		if fs.SizeSuffix(size)%partSize != 0 {
@@ -2037,8 +2037,13 @@ func (f *Fs) OpenChunkWriter(ctx context.Context, remote string, src fs.ObjectIn
 		ui:        ui,
 		o:         o,
 	}
+	info = fs.ChunkWriterInfo{
+		ChunkSize:   int64(partSize),
+		Concurrency: o.fs.opt.UploadConcurrency,
+		//LeavePartsOnError: o.fs.opt.LeavePartsOnError,
+	}
 	fs.Debugf(o, "open chunk writer: started multipart upload")
-	return int64(partSize), chunkWriter, nil
+	return info, chunkWriter, nil
 }
 
 // WriteChunk will write chunk number with reader bytes, where chunk number >= 0
@@ -2165,9 +2170,7 @@ var warnStreamUpload sync.Once
 func (o *Object) uploadMultipart(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (ui uploadInfo, err error) {
 	chunkWriter, err := multipart.UploadMultipart(ctx, src, in, multipart.UploadMultipartOptions{
 		Open:        o.fs,
-		Concurrency: o.fs.opt.UploadConcurrency,
 		OpenOptions: options,
-		//LeavePartsOnError: o.fs.opt.LeavePartsOnError,
 	})
 	if err != nil {
 		return ui, err

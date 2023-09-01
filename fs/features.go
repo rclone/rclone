@@ -155,7 +155,7 @@ type Features struct {
 	// Pass in the remote and the src object
 	// You can also use options to hint at the desired chunk size
 	//
-	OpenChunkWriter func(ctx context.Context, remote string, src ObjectInfo, options ...OpenOption) (chunkSize int64, writer ChunkWriter, err error)
+	OpenChunkWriter func(ctx context.Context, remote string, src ObjectInfo, options ...OpenOption) (info ChunkWriterInfo, writer ChunkWriter, err error)
 
 	// UserInfo returns info about the connected user
 	UserInfo func(ctx context.Context) (map[string]string, error)
@@ -639,17 +639,24 @@ type OpenWriterAter interface {
 // OpenWriterAtFn describes the OpenWriterAt function pointer
 type OpenWriterAtFn func(ctx context.Context, remote string, size int64) (WriterAtCloser, error)
 
+// ChunkWriterInfo describes how a backend would like ChunkWriter called
+type ChunkWriterInfo struct {
+	ChunkSize         int64 // preferred chunk size
+	Concurrency       int   // how many chunks to write at once
+	LeavePartsOnError bool  // if set don't delete parts uploaded so far on error
+}
+
 // OpenChunkWriter is an option interface for Fs to implement chunked writing
 type OpenChunkWriter interface {
 	// OpenChunkWriter returns the chunk size and a ChunkWriter
 	//
 	// Pass in the remote and the src object
 	// You can also use options to hint at the desired chunk size
-	OpenChunkWriter(ctx context.Context, remote string, src ObjectInfo, options ...OpenOption) (chunkSize int64, writer ChunkWriter, err error)
+	OpenChunkWriter(ctx context.Context, remote string, src ObjectInfo, options ...OpenOption) (info ChunkWriterInfo, writer ChunkWriter, err error)
 }
 
 // OpenChunkWriterFn describes the OpenChunkWriter function pointer
-type OpenChunkWriterFn func(ctx context.Context, remote string, src ObjectInfo, options ...OpenOption) (chunkSize int64, writer ChunkWriter, err error)
+type OpenChunkWriterFn func(ctx context.Context, remote string, src ObjectInfo, options ...OpenOption) (info ChunkWriterInfo, writer ChunkWriter, err error)
 
 // ChunkWriter is returned by OpenChunkWriter to implement chunked writing
 type ChunkWriter interface {
