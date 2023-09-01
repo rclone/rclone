@@ -150,6 +150,23 @@ func init() {
 			Help:     "Only show items owned by the login (email address) passed in.",
 			Advanced: true,
 		}, {
+			Name:    "impersonate",
+			Default: "",
+			Help: `Impersonate this user ID when using a service account.
+
+Settng this flag allows rclone, when using a JWT service account, to
+act on behalf of another user by setting the as-user header.
+
+The user ID is the Box identifier for a user. User IDs can found for
+any user via the GET /users endpoint, which is only available to
+admins, or by calling the GET /users/me endpoint with an authenticated
+user session.
+
+See: https://developer.box.com/guides/authentication/jwt/as-user/
+`,
+			Advanced:  true,
+			Sensitive: true,
+		}, {
 			Name:     config.ConfigEncoding,
 			Help:     config.ConfigEncodingHelp,
 			Advanced: true,
@@ -262,6 +279,7 @@ type Options struct {
 	AccessToken   string               `config:"access_token"`
 	ListChunk     int                  `config:"list_chunk"`
 	OwnedBy       string               `config:"owned_by"`
+	Impersonate   string               `config:"impersonate"`
 }
 
 // ItemMeta defines metadata we cache for each Item ID
@@ -449,6 +467,11 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	// If using an accessToken, set the Authorization header
 	if f.opt.AccessToken != "" {
 		f.srv.SetHeader("Authorization", "Bearer "+f.opt.AccessToken)
+	}
+
+	// If using impersonate set an as-user header
+	if f.opt.Impersonate != "" {
+		f.srv.SetHeader("as-user", f.opt.Impersonate)
 	}
 
 	jsonFile, ok := m.Get("box_config_file")
