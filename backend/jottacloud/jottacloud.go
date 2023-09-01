@@ -67,9 +67,13 @@ const (
 	legacyEncryptedClientSecret = "Vp8eAv7eVElMnQwN-kgU9cbhgApNDaMqWdlDi5qFydlQoji4JBxrGMF2"
 	legacyConfigVersion         = 0
 
-	teliaCloudTokenURL = "https://cloud-auth.telia.se/auth/realms/telia_se/protocol/openid-connect/token"
-	teliaCloudAuthURL  = "https://cloud-auth.telia.se/auth/realms/telia_se/protocol/openid-connect/auth"
-	teliaCloudClientID = "desktop"
+	teliaseCloudTokenURL = "https://cloud-auth.telia.se/auth/realms/telia_se/protocol/openid-connect/token"
+	teliaseCloudAuthURL  = "https://cloud-auth.telia.se/auth/realms/telia_se/protocol/openid-connect/auth"
+	teliaseCloudClientID = "desktop"
+
+	telianoCloudTokenURL = "https://sky-auth.telia.no/auth/realms/get/protocol/openid-connect/token"
+	telianoCloudAuthURL  = "https://sky-auth.telia.no/auth/realms/get/protocol/openid-connect/auth"
+	telianoCloudClientID = "desktop"
 
 	tele2CloudTokenURL = "https://mittcloud-auth.tele2.se/auth/realms/comhem/protocol/openid-connect/token"
 	tele2CloudAuthURL  = "https://mittcloud-auth.tele2.se/auth/realms/comhem/protocol/openid-connect/auth"
@@ -138,8 +142,11 @@ func Config(ctx context.Context, name string, m configmap.Mapper, config fs.Conf
 			Value: "legacy",
 			Help:  "Legacy authentication.\nThis is only required for certain whitelabel versions of Jottacloud and not recommended for normal users.",
 		}, {
-			Value: "telia",
-			Help:  "Telia Cloud authentication.\nUse this if you are using Telia Cloud.",
+			Value: "telia_se",
+			Help:  "Telia Cloud authentication.\nUse this if you are using Telia Cloud (Sweden).",
+		}, {
+			Value: "telia_no",
+			Help:  "Telia Sky authentication.\nUse this if you are using Telia Sky (Norway).",
 		}, {
 			Value: "tele2",
 			Help:  "Tele2 Cloud authentication.\nUse this if you are using Tele2 Cloud.",
@@ -238,17 +245,32 @@ machines.`)
 			return nil, fmt.Errorf("error while saving token: %w", err)
 		}
 		return fs.ConfigGoto("choose_device")
-	case "telia": // telia cloud config
+	case "telia_se": // telia_se cloud config
 		m.Set("configVersion", fmt.Sprint(configVersion))
-		m.Set(configClientID, teliaCloudClientID)
-		m.Set(configTokenURL, teliaCloudTokenURL)
+		m.Set(configClientID, teliaseCloudClientID)
+		m.Set(configTokenURL, teliaseCloudTokenURL)
 		return oauthutil.ConfigOut("choose_device", &oauthutil.Options{
 			OAuth2Config: &oauth2.Config{
 				Endpoint: oauth2.Endpoint{
-					AuthURL:  teliaCloudAuthURL,
-					TokenURL: teliaCloudTokenURL,
+					AuthURL:  teliaseCloudAuthURL,
+					TokenURL: teliaseCloudTokenURL,
 				},
-				ClientID:    teliaCloudClientID,
+				ClientID:    teliaseCloudClientID,
+				Scopes:      []string{"openid", "jotta-default", "offline_access"},
+				RedirectURL: oauthutil.RedirectLocalhostURL,
+			},
+		})
+	case "telia_no": // telia_no cloud config
+		m.Set("configVersion", fmt.Sprint(configVersion))
+		m.Set(configClientID, telianoCloudClientID)
+		m.Set(configTokenURL, telianoCloudTokenURL)
+		return oauthutil.ConfigOut("choose_device", &oauthutil.Options{
+			OAuth2Config: &oauth2.Config{
+				Endpoint: oauth2.Endpoint{
+					AuthURL:  telianoCloudAuthURL,
+					TokenURL: telianoCloudTokenURL,
+				},
+				ClientID:    telianoCloudClientID,
 				Scopes:      []string{"openid", "jotta-default", "offline_access"},
 				RedirectURL: oauthutil.RedirectLocalhostURL,
 			},
