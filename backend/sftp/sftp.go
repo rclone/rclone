@@ -232,7 +232,16 @@ E.g. the second example above should be rewritten as:
 			Default: "",
 			Help: `Specifies the path or command to run a sftp server on the remote host.
 
-The subsystem option is ignored when server_command is defined.`,
+The subsystem option is ignored when server_command is defined.
+
+If adding server_command to the configuration file please note that 
+it should not be enclosed in quotes, since that will make rclone fail.
+
+A working example is:
+
+    [remote_name]
+    type = sftp
+    server_command = sudo /usr/libexec/openssh/sftp-server`,
 			Advanced: true,
 		}, {
 			Name:    "use_fstat",
