@@ -351,6 +351,10 @@ possible to write in all of them. This is mostly a problem on Windows, where
 the console traditionally uses a non-Unicode character set - defined
 by the so-called "code page".
 
+Do not use single character names on Windows as it creates ambiguity with Windows
+drives' names, e.g.: remote called `C` is indistinguishable from `C` drive. Rclone
+will always assume that single letter name refers to a drive.
+
 Quoting and the shell
 ---------------------
 
