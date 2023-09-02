@@ -1426,7 +1426,7 @@ func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, 
 	if err != nil {
 		return "", err
 	}
-	absPath := "/" + bucketPath
+	absPath := "/" + urlEncode(bucketPath)
 	link = RootURL + "/file/" + urlEncode(bucket) + absPath
 	bucketType, err := f.getbucketType(ctx, bucket)
 	if err != nil {
