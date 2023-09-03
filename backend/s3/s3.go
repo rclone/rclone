@@ -5427,8 +5427,8 @@ func (w *s3ChunkWriter) WriteChunk(ctx context.Context, chunkNumber int, reader 
 	if err != nil {
 		return -1, err
 	}
-	// If no data read, don't write the chunk
-	if currentChunkSize == 0 {
+	// If no data read and not the first chunk, don't write the chunk
+	if currentChunkSize == 0 && chunkNumber != 0 {
 		return 0, nil
 	}
 	md5sumBinary := m.Sum([]byte{})
