@@ -241,7 +241,7 @@ func (up *largeUpload) WriteChunk(ctx context.Context, chunkNumber int, reader i
 		}
 
 		in := newHashAppendingReader(reader, sha1.New())
-		size += int64(in.AdditionalLength())
+		sizeWithHash := size + int64(in.AdditionalLength())
 
 		// Authorization
 		//
@@ -274,7 +274,7 @@ func (up *largeUpload) WriteChunk(ctx context.Context, chunkNumber int, reader i
 				"X-Bz-Part-Number": fmt.Sprintf("%d", chunkNumber+1),
 				sha1Header:         "hex_digits_at_end",
 			},
-			ContentLength: &size,
+			ContentLength: &sizeWithHash,
 		}
 
 		var response api.UploadPartResponse
