@@ -2230,8 +2230,8 @@ func (o *Object) prepareUpload(ctx context.Context, src fs.ObjectInfo, options [
 		return ui, fmt.Errorf("can't upload to root - need a container")
 	}
 	// Create parent dir/bucket if not saving directory marker
-	_, isDirMarker := o.meta[dirMetaKey]
-	if !isDirMarker {
+	_, ui.isDirMarker = o.meta[dirMetaKey]
+	if !ui.isDirMarker {
 		err = o.fs.mkdirParent(ctx, o.remote)
 		if err != nil {
 			return ui, err
