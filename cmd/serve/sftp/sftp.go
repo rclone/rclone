@@ -13,6 +13,7 @@ import (
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config/flags"
 	"github.com/rclone/rclone/fs/rc"
+	"github.com/rclone/rclone/lib/systemd"
 	"github.com/rclone/rclone/vfs"
 	"github.com/rclone/rclone/vfs/vfsflags"
 	"github.com/spf13/cobra"
@@ -135,6 +136,7 @@ provided by OpenSSH in this case.
 			if err != nil {
 				return err
 			}
+			defer systemd.Notify()()
 			s.Wait()
 			return nil
 		})

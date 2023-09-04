@@ -24,6 +24,7 @@ import (
 	"github.com/rclone/rclone/fs/hash"
 	libhttp "github.com/rclone/rclone/lib/http"
 	"github.com/rclone/rclone/lib/http/serve"
+	"github.com/rclone/rclone/lib/systemd"
 	"github.com/rclone/rclone/vfs"
 	"github.com/rclone/rclone/vfs/vfsflags"
 	"github.com/spf13/cobra"
@@ -145,6 +146,7 @@ https://learn.microsoft.com/en-us/office/troubleshoot/powerpoint/office-opens-bl
 			if err != nil {
 				return err
 			}
+			defer systemd.Notify()()
 			s.Wait()
 			return nil
 		})
