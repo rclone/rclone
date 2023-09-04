@@ -111,7 +111,7 @@ type Fs struct {
 	srv                 *rest.Client // the connection to the quatrix server
 	pacer               *fs.Pacer    // pacer for API calls
 	dirCache            *dircache.DirCache
-	uploadMemoryManager *uploadMemoryManager
+	uploadMemoryManager *UploadMemoryManager
 }
 
 // Object describes a quatrix object

@@ -7,7 +7,10 @@ import (
 	"github.com/rclone/rclone/fs"
 )
 
-type uploadMemoryManager struct {
+// UploadMemoryManager dynamically calculates every chunk size for the transfer and increases or decreases it
+// depending on the upload speed. This makes general upload time smaller, because transfers that are faster
+// does not have to wait for the slower ones until they finish upload.
+type UploadMemoryManager struct {
 	m              sync.Mutex
 	useDynamicSize bool
 	shared         int64
@@ -16,12 +19,8 @@ type uploadMemoryManager struct {
 	fileUsage      map[string]int64
 }
 
-// NewUploadMemoryManager is a constructor for upload memory management
-//
-// memory manager dynamically calculates every chunk size for the transfer and increases or decreases it
-// depending on the upload speed. This makes general upload time smaller, because transfers that are faster
-// does not have to wait for the slower ones until they finish upload.
-func NewUploadMemoryManager(ci *fs.ConfigInfo, opt *Options) *uploadMemoryManager {
+// NewUploadMemoryManager is a constructor for UploadMemoryManager
+func NewUploadMemoryManager(ci *fs.ConfigInfo, opt *Options) *UploadMemoryManager {
 	useDynamicSize := true
 
 	sharedMemory := int64(opt.MaximalSummaryChunkSize) - int64(opt.MinimalChunkSize)*int64(ci.Transfers)
@@ -30,7 +29,7 @@ func NewUploadMemoryManager(ci *fs.ConfigInfo, opt *Options) *uploadMemoryManage
 		useDynamicSize = false
 	}
 
-	return &uploadMemoryManager{
+	return &UploadMemoryManager{
 		useDynamicSize: useDynamicSize,
 		shared:         sharedMemory,
 		reserved:       int64(opt.MinimalChunkSize),
@@ -40,7 +39,7 @@ func NewUploadMemoryManager(ci *fs.ConfigInfo, opt *Options) *uploadMemoryManage
 }
 
 // Consume -- decide amount of memory to consume
-func (u *uploadMemoryManager) Consume(fileID string, neededMemory int64, speed float64) int64 {
+func (u *UploadMemoryManager) Consume(fileID string, neededMemory int64, speed float64) int64 {
 	if !u.useDynamicSize {
 		if neededMemory < u.reserved {
 			return neededMemory
@@ -90,7 +89,7 @@ func (u *uploadMemoryManager) Consume(fileID string, neededMemory int64, speed f
 }
 
 // Return returns consumed memory for the previous chunk upload to the memory pool
-func (u *uploadMemoryManager) Return(fileID string) {
+func (u *UploadMemoryManager) Return(fileID string) {
 	if !u.useDynamicSize {
 		return
 	}
