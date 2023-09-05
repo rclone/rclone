@@ -26,6 +26,7 @@ func rcBisync(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 
 	if dryRun, err := in.GetBool("dryRun"); err == nil {
 		ci.DryRun = dryRun
+		opt.DryRun = dryRun
 	} else if rc.NotErrParamNotFound(err) {
 		return nil, err
 	}
