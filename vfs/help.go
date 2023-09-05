@@ -84,12 +84,13 @@ write simultaneously to a file.  See below for more details.
 Note that the VFS cache is separate from the cache backend and you may
 find that you need one or the other or both.
 
-    --cache-dir string                   Directory rclone will use for caching.
-    --vfs-cache-mode CacheMode           Cache mode off|minimal|writes|full (default off)
-    --vfs-cache-max-age duration         Max time since last access of objects in the cache (default 1h0m0s)
-    --vfs-cache-max-size SizeSuffix      Max total size of objects in the cache (default off)
-    --vfs-cache-poll-interval duration   Interval to poll the cache for stale objects (default 1m0s)
-    --vfs-write-back duration            Time to writeback files after last use when using cache (default 5s)
+    --cache-dir string                     Directory rclone will use for caching.
+    --vfs-cache-mode CacheMode             Cache mode off|minimal|writes|full (default off)
+    --vfs-cache-max-age duration           Max time since last access of objects in the cache (default 1h0m0s)
+    --vfs-cache-max-size SizeSuffix        Max total size of objects in the cache (default off)
+    --vfs-cache-min-free-space SizeSuffix  Target minimum free space on the disk containing the cache (default off)
+    --vfs-cache-poll-interval duration     Interval to poll the cache for stale objects (default 1m0s)
+    --vfs-write-back duration              Time to writeback files after last use when using cache (default 5s)
 
 If run with !-vv! rclone will print the location of the file cache.  The
 files are stored in the user cache file area which is OS dependent but
@@ -106,14 +107,15 @@ seconds. If rclone is quit or dies with files that haven't been
 uploaded, these will be uploaded next time rclone is run with the same
 flags.
 
-If using !--vfs-cache-max-size! note that the cache may exceed this size
-for two reasons.  Firstly because it is only checked every
-!--vfs-cache-poll-interval!.  Secondly because open files cannot be
-evicted from the cache. When !--vfs-cache-max-size!
-is exceeded, rclone will attempt to evict the least accessed files
-from the cache first. rclone will start with files that haven't
-been accessed for the longest. This cache flushing strategy is
-efficient and more relevant files are likely to remain cached.
+If using !--vfs-cache-max-size! or !--vfs-cache-min-free-size! note
+that the cache may exceed these quotas for two reasons. Firstly
+because it is only checked every !--vfs-cache-poll-interval!. Secondly
+because open files cannot be evicted from the cache. When
+!--vfs-cache-max-size! or !--vfs-cache-min-free-size! is exceeded,
+rclone will attempt to evict the least accessed files from the cache
+first. rclone will start with files that haven't been accessed for the
+longest. This cache flushing strategy is efficient and more relevant
+files are likely to remain cached.
 
 The !--vfs-cache-max-age! will evict files from the cache
 after the set time since last access has passed. The default value of

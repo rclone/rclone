@@ -28,6 +28,7 @@ func AddFlags(flagSet *pflag.FlagSet) {
 	flags.DurationVarP(flagSet, &Opt.CachePollInterval, "vfs-cache-poll-interval", "", Opt.CachePollInterval, "Interval to poll the cache for stale objects", "VFS")
 	flags.DurationVarP(flagSet, &Opt.CacheMaxAge, "vfs-cache-max-age", "", Opt.CacheMaxAge, "Max time since last access of objects in the cache", "VFS")
 	flags.FVarP(flagSet, &Opt.CacheMaxSize, "vfs-cache-max-size", "", "Max total size of objects in the cache", "VFS")
+	flags.FVarP(flagSet, &Opt.CacheMinFreeSpace, "vfs-cache-min-free-space", "", "Target minimum free space on the disk containing the cache", "VFS")
 	flags.FVarP(flagSet, &Opt.ChunkSize, "vfs-read-chunk-size", "", "Read the source objects in chunks", "VFS")
 	flags.FVarP(flagSet, &Opt.ChunkSizeLimit, "vfs-read-chunk-size-limit", "", "If greater than --vfs-read-chunk-size, double the chunk size after each chunk read, until the limit is reached ('off' is unlimited)", "VFS")
 	flags.FVarP(flagSet, DirPerms, "dir-perms", "", "Directory permissions", "VFS")
