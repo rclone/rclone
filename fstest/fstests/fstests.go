@@ -1794,7 +1794,7 @@ func Run(t *testing.T, opt *Opt) {
 					}
 				}
 
-				expiry := fs.Duration(60 * time.Second)
+				expiry := fs.Duration(120 * time.Second)
 				doPublicLink := wrapPublicLinkFunc(publicLinkFunc)
 
 				// if object not found
