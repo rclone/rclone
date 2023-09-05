@@ -15,6 +15,7 @@ import (
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/fs/rc"
 	"github.com/rclone/rclone/fstest"
+	"github.com/rclone/rclone/lib/diskusage"
 	"github.com/rclone/rclone/lib/rest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -576,4 +577,21 @@ func TestRcCommand(t *testing.T) {
 	_, err = call.Fn(context.Background(), in)
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), errTxt)
+}
+
+// operations/command: Runs a backend command
+func TestRcDu(t *testing.T) {
+	ctx := context.Background()
+	_, call := rcNewRun(t, "core/du")
+	in := rc.Params{}
+	out, err := call.Fn(ctx, in)
+	if err == diskusage.ErrUnsupported {
+		t.Skip(err)
+	}
+	assert.NotEqual(t, "", out["dir"])
+	info := out["info"].(diskusage.Info)
+	assert.True(t, info.Total != 0)
+	assert.True(t, info.Total > info.Free)
+	assert.True(t, info.Total > info.Available)
+	assert.True(t, info.Free >= info.Available)
 }
