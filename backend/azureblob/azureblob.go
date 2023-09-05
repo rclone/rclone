@@ -1486,7 +1486,7 @@ func (f *Fs) deleteContainer(ctx context.Context, containerName string) error {
 func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 	container, directory := f.split(dir)
 	// Remove directory marker file
-	if f.opt.DirectoryMarkers && container != "" && dir != "" {
+	if f.opt.DirectoryMarkers && container != "" && directory != "" {
 		o := &Object{
 			fs:     f,
 			remote: dir + "/",
@@ -1520,7 +1520,10 @@ func (f *Fs) Hashes() hash.Set {
 // Purge deletes all the files and directories including the old versions.
 func (f *Fs) Purge(ctx context.Context, dir string) error {
 	container, directory := f.split(dir)
-	if container == "" || directory != "" {
+	if container == "" {
+		return errors.New("can't purge from root")
+	}
+	if directory != "" {
 		// Delegate to caller if not root of a container
 		return fs.ErrorCantPurge
 	}
