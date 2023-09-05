@@ -211,6 +211,8 @@ func init() {
 		{name: "copyurl", title: "Copy the URL to the object", help: "- url - string, URL to read from\n - autoFilename - boolean, set to true to retrieve destination file name from url\n"},
 		{name: "uploadfile", title: "Upload file using multiform/form-data", help: "- each part in body represents a file to be uploaded\n", needsRequest: true},
 		{name: "cleanup", title: "Remove trashed files in the remote or path", noRemote: true},
+		{name: "settier", title: "Changes storage tier or class on all files in the path", noRemote: true},
+		{name: "settierfile", title: "Changes storage tier or class on the single file pointed to"},
 	} {
 		op := op
 		remote := "- remote - a path within that remote e.g. \"dir\"\n"
@@ -318,6 +320,28 @@ func rcSingleCommand(ctx context.Context, in rc.Params, name string, noRemote bo
 		return nil, nil
 	case "cleanup":
 		return nil, CleanUp(ctx, f)
+	case "settier":
+		if !f.Features().SetTier {
+			return nil, fmt.Errorf("remote %s does not support settier", f.Name())
+		}
+		tier, err := in.GetString("tier")
+		if err != nil {
+			return nil, err
+		}
+		return nil, SetTier(ctx, f, tier)
+	case "settierfile":
+		if !f.Features().SetTier {
+			return nil, fmt.Errorf("remote %s does not support settier", f.Name())
+		}
+		tier, err := in.GetString("tier")
+		if err != nil {
+			return nil, err
+		}
+		o, err := f.NewObject(ctx, remote)
+		if err != nil {
+			return nil, err
+		}
+		return nil, SetTierFile(ctx, o, tier)
 	}
 	panic("unknown rcSingleCommand type")
 }

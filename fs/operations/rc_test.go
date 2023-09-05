@@ -307,6 +307,61 @@ func TestRcStat(t *testing.T) {
 	})
 }
 
+// operations/settier: Set the storage tier of a fs
+func TestRcSetTier(t *testing.T) {
+	ctx := context.Background()
+	r, call := rcNewRun(t, "operations/settier")
+	if !r.Fremote.Features().SetTier {
+		t.Skip("settier not supported")
+	}
+	file1 := r.WriteObject(context.Background(), "file1", "file1 contents", t1)
+	r.CheckRemoteItems(t, file1)
+
+	// Because we don't know what the current tier options here are, let's
+	// just get the current tier, and re-use that
+	o, err := r.Fremote.NewObject(ctx, file1.Path)
+	require.NoError(t, err)
+	trr, ok := o.(fs.GetTierer)
+	require.True(t, ok)
+	ctier := trr.GetTier()
+	in := rc.Params{
+		"fs":   r.FremoteName,
+		"tier": ctier,
+	}
+	out, err := call.Fn(context.Background(), in)
+	require.NoError(t, err)
+	assert.Equal(t, rc.Params(nil), out)
+
+}
+
+// operations/settier: Set the storage tier of a file
+func TestRcSetTierFile(t *testing.T) {
+	ctx := context.Background()
+	r, call := rcNewRun(t, "operations/settierfile")
+	if !r.Fremote.Features().SetTier {
+		t.Skip("settier not supported")
+	}
+	file1 := r.WriteObject(context.Background(), "file1", "file1 contents", t1)
+	r.CheckRemoteItems(t, file1)
+
+	// Because we don't know what the current tier options here are, let's
+	// just get the current tier, and re-use that
+	o, err := r.Fremote.NewObject(ctx, file1.Path)
+	require.NoError(t, err)
+	trr, ok := o.(fs.GetTierer)
+	require.True(t, ok)
+	ctier := trr.GetTier()
+	in := rc.Params{
+		"fs":     r.FremoteName,
+		"remote": "file1",
+		"tier":   ctier,
+	}
+	out, err := call.Fn(context.Background(), in)
+	require.NoError(t, err)
+	assert.Equal(t, rc.Params(nil), out)
+
+}
+
 // operations/mkdir: Make a destination directory or container
 func TestRcMkdir(t *testing.T) {
 	ctx := context.Background()
