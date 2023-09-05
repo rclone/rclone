@@ -21,6 +21,11 @@ backends:
    remote:   "TestB2:"
    fastlist: true
    listretries: 5
+   ignore:
+     # This test fails because B2 versions make the empty bucket undeleteable.
+     # It isn't possible to turn off versions, and setting hard_delete doesn't stop
+     # versions being made on overwrite.
+     - TestRmdirsNoLeaveRoot
  - backend:  "crypt"
    remote:   "TestCryptDrive:"
    fastlist: true
