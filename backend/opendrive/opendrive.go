@@ -767,6 +767,17 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 		return f.shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
+		if apiError, ok := err.(*Error); ok {
+			// Work around a bug maybe in opendrive or maybe in rclone.
+			//
+			// We should know whether the folder exists or not by the call to
+			// FindDir above so exactly why it is not found here is a mystery.
+			//
+			// This manifests as a failure in fs/sync TestSyncOverlapWithFilter
+			if apiError.Info.Message == "Folder is already deleted" {
+				return fs.DirEntries{}, nil
+			}
+		}
 		return nil, fmt.Errorf("failed to get folder list: %w", err)
 	}
 
