@@ -642,7 +642,13 @@ func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 //
 // If it isn't empty it will return an error
 func (f *Fs) Rmdir(ctx context.Context, dir string) error {
-	return os.Remove(f.localPath(dir))
+	localPath := f.localPath(dir)
+	if fi, err := os.Stat(localPath); err != nil {
+		return err
+	} else if !fi.IsDir() {
+		return fs.ErrorIsFile
+	}
+	return os.Remove(localPath)
 }
 
 // Precision of the file system
