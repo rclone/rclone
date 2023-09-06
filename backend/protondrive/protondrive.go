@@ -72,6 +72,9 @@ func init() {
 		}, {
 			Name: "2fa",
 			Help: `The 2FA code
+
+The value can also be provided with --protondrive-2fa=000000
+
 The 2FA code of your proton drive account if the account is set up with 
 two-factor authentication`,
 			Required: false,
@@ -110,6 +113,8 @@ API request.`,
 When a file upload is cancelled or failed before completion, a draft will be 
 created and the subsequent upload of the same file to the same location will be 
 reported as a conflict.
+
+The value can also be set by --protondrive-replace-existing-draft=true
 
 If the option is set to true, the draft will be replaced and then the upload 
 operation will restart. If there are other clients also uploading at the same 
