@@ -3643,6 +3643,7 @@ type listOpt struct {
 	findFile      bool    // if set, it will look for files called (bucket, directory)
 	versionAt     fs.Time // if set only show versions <= this time
 	noSkipMarkers bool    // if set return dir marker objects
+	restoreStatus bool    // if set return restore status in listing too
 }
 
 // list lists the objects into the function supplied with the opt
@@ -3681,6 +3682,10 @@ func (f *Fs) list(ctx context.Context, opt listOpt, fn listFn) error {
 		Delimiter: &delimiter,
 		Prefix:    &opt.directory,
 		MaxKeys:   &f.opt.ListChunk,
+	}
+	if opt.restoreStatus {
+		restoreStatus := "RestoreStatus"
+		req.OptionalObjectAttributes = []*string{&restoreStatus}
 	}
 	if f.opt.RequesterPays {
 		req.RequestPayer = aws.String(s3.RequestPayerRequester)
@@ -4413,11 +4418,11 @@ if not.
     [
         {
             "Status": "OK",
-            "Path": "test.txt"
+            "Remote": "test.txt"
         },
         {
             "Status": "OK",
-            "Path": "test/file4.txt"
+            "Remote": "test/file4.txt"
         }
     ]
 
@@ -4426,6 +4431,46 @@ if not.
 		"priority":    "Priority of restore: Standard|Expedited|Bulk",
 		"lifetime":    "Lifetime of the active copy in days",
 		"description": "The optional description for the job.",
+	},
+}, {
+	Name:  "restore-status",
+	Short: "Show the restore status for objects being restored from GLACIER to normal storage",
+	Long: `This command can be used to show the status for objects being restored from GLACIER
+to normal storage.
+
+Usage Examples:
+
+    rclone backend restore-status s3:bucket/path/to/object
+    rclone backend restore-status s3:bucket/path/to/directory
+    rclone backend restore-status -o all s3:bucket/path/to/directory
+
+This command does not obey the filters.
+
+It returns a list of status dictionaries.
+
+    [
+        {
+            "Remote": "file.txt",
+            "VersionID": null,
+            "RestoreStatus": {
+                "IsRestoreInProgress": true,
+                "RestoreExpiryDate": "2023-09-06T12:29:19+01:00"
+            },
+            "StorageClass": "GLACIER"
+        },
+        {
+            "Remote": "test.pdf",
+            "VersionID": null,
+            "RestoreStatus": {
+                "IsRestoreInProgress": false,
+                "RestoreExpiryDate": "2023-09-06T12:29:19+01:00"
+            },
+            "StorageClass": "DEEP_ARCHIVE"
+        }
+    ]
+`,
+	Opts: map[string]string{
+		"all": "if set then show all objects, not just ones with restore status",
 	},
 }, {
 	Name:  "list-multipart-uploads",
@@ -4603,6 +4648,9 @@ func (f *Fs) Command(ctx context.Context, name string, arg []string, opt map[str
 			return out, err
 		}
 		return out, nil
+	case "restore-status":
+		_, all := opt["all"]
+		return f.restoreStatus(ctx, all)
 	case "list-multipart-uploads":
 		return f.listMultipartUploadsAll(ctx)
 	case "cleanup":
@@ -4640,6 +4688,53 @@ func (f *Fs) Command(ctx context.Context, name string, arg []string, opt map[str
 	default:
 		return nil, fs.ErrorCommandNotFound
 	}
+}
+
+// Returned from "restore-status"
+type restoreStatusOut struct {
+	Remote        string
+	VersionID     *string
+	RestoreStatus *s3.RestoreStatus
+	StorageClass  *string
+}
+
+// Recursively enumerate the current fs to find objects with a restore status
+func (f *Fs) restoreStatus(ctx context.Context, all bool) (out []restoreStatusOut, err error) {
+	fs.Debugf(f, "all = %v", all)
+	bucket, directory := f.split("")
+	out = []restoreStatusOut{}
+	err = f.list(ctx, listOpt{
+		bucket:        bucket,
+		directory:     directory,
+		prefix:        f.rootDirectory,
+		addBucket:     f.rootBucket == "",
+		recurse:       true,
+		withVersions:  f.opt.Versions,
+		versionAt:     f.opt.VersionAt,
+		restoreStatus: true,
+	}, func(remote string, object *s3.Object, versionID *string, isDirectory bool) error {
+		entry, err := f.itemToDirEntry(ctx, remote, object, versionID, isDirectory)
+		if err != nil {
+			return err
+		}
+		if entry != nil {
+			if o, ok := entry.(*Object); ok && (all || object.RestoreStatus != nil) {
+				out = append(out, restoreStatusOut{
+					Remote:        o.remote,
+					VersionID:     o.versionID,
+					RestoreStatus: object.RestoreStatus,
+					StorageClass:  object.StorageClass,
+				})
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	// bucket must be present if listing succeeded
+	f.cache.MarkOK(bucket)
+	return out, nil
 }
 
 // listMultipartUploads lists all outstanding multipart uploads for (bucket, key)
