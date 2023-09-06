@@ -90,7 +90,7 @@ To copy a local directory to an Proton Drive directory called backup
 
 ### Modified time
 
-Proton Drive Bridge does not support modification times yet.
+Proton Drive Bridge does not support updating modification times yet.
 
 ### Restricted filename characters
 
@@ -102,6 +102,10 @@ right spaces will be removed ([code reference](https://github.com/ProtonMail/Web
 Proton Drive can not have two files with exactly the same name and path. If the 
 conflict occurs, depending on the advanced config, the file might or might not 
 be overwritten.
+
+### [Mailbox password](https://proton.me/support/the-difference-between-the-mailbox-password-and-login-password)
+
+Please set your mailbox password in the advanced config section.
 
 ### Caching
 
