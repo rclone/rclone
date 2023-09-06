@@ -1,0 +1,56 @@
+# golangci-lint configuration options
+
+linters:
+  enable:
+    - errcheck
+    - goimports
+    - revive
+    - ineffassign
+    - govet
+    - unconvert
+    - staticcheck
+    - gosimple
+    - stylecheck
+    - unused
+    - misspell
+    #- prealloc
+    #- maligned
+  disable-all: true
+
+issues:
+  # Enable some lints excluded by default
+  exclude-use-default: false
+
+  # Maximum issues count per one linter. Set to 0 to disable. Default is 50.
+  max-issues-per-linter: 0
+
+  # Maximum count of issues with the same text. Set to 0 to disable. Default is 3.
+  max-same-issues: 0
+
+  exclude-rules:
+
+    - linters:
+      - staticcheck
+      text: 'SA1019: "github.com/rclone/rclone/cmd/serve/httplib" is deprecated'
+
+run:
+  # timeout for analysis, e.g. 30s, 5m, default is 1m
+  timeout: 10m
+
+linters-settings:
+  revive:
+    rules:
+      - name: unreachable-code
+        disabled: true
+      - name: unused-parameter
+        disabled: true
+      - name: empty-block
+        disabled: true
+      - name: redefines-builtin-id
+        disabled: true
+      - name: superfluous-else
+        disabled: true
+  stylecheck:
+    # Only enable the checks performed by the staticcheck stand-alone tool,
+    # as documented here: https://staticcheck.io/docs/configuration/options/#checks
+    checks: ["all", "-ST1000", "-ST1003", "-ST1016", "-ST1020", "-ST1021", "-ST1022", "-ST1023"]

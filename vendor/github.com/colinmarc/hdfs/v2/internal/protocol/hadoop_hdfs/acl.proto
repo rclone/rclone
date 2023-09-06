@@ -1,0 +1,114 @@
+/**
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+syntax="proto2";
+option java_package = "org.apache.hadoop.hdfs.protocol.proto";
+option java_outer_classname = "AclProtos";
+option java_generate_equals_and_hash = true;
+option go_package = "github.com/colinmarc/hdfs/v2/internal/protocol/hadoop_hdfs";
+package hadoop.hdfs;
+
+/**
+ * File or Directory permision - same spec as posix
+ */
+message FsPermissionProto {
+  required uint32 perm = 1;       // Actually a short - only 16bits used
+}
+
+message AclEntryProto {
+  enum AclEntryScopeProto {
+    ACCESS  = 0x0;
+    DEFAULT = 0x1;
+  }
+
+  enum AclEntryTypeProto {
+    USER  = 0x0;
+    GROUP = 0x1;
+    MASK  = 0x2;
+    OTHER = 0x3;
+  }
+
+  enum FsActionProto {
+    NONE          = 0x0;
+    EXECUTE       = 0x1;
+    WRITE         = 0x2;
+    WRITE_EXECUTE = 0x3;
+    READ          = 0x4;
+    READ_EXECUTE  = 0x5;
+    READ_WRITE    = 0x6;
+    PERM_ALL      = 0x7;
+  }
+
+  required AclEntryTypeProto type    = 1;
+  required AclEntryScopeProto scope  = 2;
+  required FsActionProto permissions = 3;
+  optional string name               = 4;
+}
+
+message AclStatusProto {
+  required string owner          = 1;
+  required string group          = 2;
+  required bool sticky           = 3;
+  repeated AclEntryProto entries = 4;
+  optional FsPermissionProto permission = 5;
+}
+
+message ModifyAclEntriesRequestProto {
+  required string src            = 1;
+  repeated AclEntryProto aclSpec = 2;
+}
+
+message ModifyAclEntriesResponseProto {
+}
+
+message RemoveAclRequestProto {
+  required string src = 1;
+}
+
+message RemoveAclResponseProto {
+}
+
+message RemoveAclEntriesRequestProto {
+  required string src            = 1;
+  repeated AclEntryProto aclSpec = 2;
+}
+
+message RemoveAclEntriesResponseProto {
+}
+
+message RemoveDefaultAclRequestProto {
+  required string src = 1;
+}
+
+message RemoveDefaultAclResponseProto {
+}
+
+message SetAclRequestProto {
+  required string src            = 1;
+  repeated AclEntryProto aclSpec = 2;
+}
+
+message SetAclResponseProto {
+}
+
+message GetAclStatusRequestProto {
+  required string src = 1;
+}
+
+message GetAclStatusResponseProto {
+  required AclStatusProto result = 1;
+}

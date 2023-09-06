@@ -1,0 +1,185 @@
+/**
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/**
+ * These .proto interfaces are private and stable.
+ * Please see http://wiki.apache.org/hadoop/Compatibility
+ * for what changes are allowed for a *stable* .proto interface.
+ */
+syntax = "proto2";
+option java_package = "org.apache.hadoop.ipc.protobuf";
+option java_outer_classname = "RpcHeaderProtos";
+option java_generate_equals_and_hash = true;
+option go_package = "github.com/colinmarc/hdfs/v2/internal/protocol/hadoop_common";
+package hadoop.common;
+
+/**
+ * This is the rpc request header. It is sent with every rpc call.
+ * 
+ * The format of RPC call is as follows:
+ * +--------------------------------------------------------------+
+ * | Rpc length in bytes (4 bytes int) sum of next two parts      |
+ * +--------------------------------------------------------------+
+ * | RpcRequestHeaderProto - serialized delimited ie has len      |
+ * +--------------------------------------------------------------+
+ * | RpcRequest The actual rpc request                            |
+ * | This request is serialized based on RpcKindProto             |
+ * +--------------------------------------------------------------+
+ *
+ */
+
+/**
+ * RpcKind determine the rpcEngine and the serialization of the rpc request
+ */
+enum RpcKindProto {
+  RPC_BUILTIN          = 0;  // Used for built in calls by tests
+  RPC_WRITABLE         = 1;  // Use WritableRpcEngine 
+  RPC_PROTOCOL_BUFFER  = 2;  // Use ProtobufRpcEngine
+}
+
+
+   
+/**
+ * Used to pass through the information necessary to continue
+ * a trace after an RPC is made. All we need is the traceid
+ * (so we know the overarching trace this message is a part of), and
+ * the id of the current span when this message was sent, so we know
+ * what span caused the new span we will create when this message is received.
+ */
+message RPCTraceInfoProto {
+    optional int64 traceId = 1; // parentIdHigh
+    optional int64 parentId = 2; // parentIdLow
+
+}
+
+/**
+ * Used to pass through the call context entry after an RPC is made.
+ */
+message RPCCallerContextProto {
+  required string context = 1;
+  optional bytes signature = 2;
+}
+
+message RpcRequestHeaderProto { // the header for the RpcRequest
+  enum OperationProto {
+    RPC_FINAL_PACKET        = 0; // The final RPC Packet
+    RPC_CONTINUATION_PACKET = 1; // not implemented yet
+    RPC_CLOSE_CONNECTION     = 2; // close the rpc connection
+  }
+
+  optional RpcKindProto rpcKind = 1;
+  optional OperationProto rpcOp = 2;
+  required sint32 callId = 3; // a sequence number that is sent back in response
+  required bytes clientId = 4; // Globally unique client ID
+  // clientId + callId uniquely identifies a request
+  // retry count, 1 means this is the first retry
+  optional sint32 retryCount = 5 [default = -1];
+  optional RPCTraceInfoProto traceInfo = 6; // tracing info
+  optional RPCCallerContextProto callerContext = 7; // call context
+  optional int64 stateId = 8; // The last seen Global State ID
+}
+
+
+
+/**
+ * Rpc Response Header
+ * +------------------------------------------------------------------+
+ * | Rpc total response length in bytes (4 bytes int)                 |
+ * |  (sum of next two parts)                                         |
+ * +------------------------------------------------------------------+
+ * | RpcResponseHeaderProto - serialized delimited ie has len         |
+ * +------------------------------------------------------------------+
+ * | if request is successful:                                        |
+ * |   - RpcResponse -  The actual rpc response  bytes follow         |
+ * |     the response header                                          |
+ * |     This response is serialized based on RpcKindProto            |
+ * | if request fails :                                               |
+ * |   The rpc response header contains the necessary info            |
+ * +------------------------------------------------------------------+
+ *
+ * Note that rpc response header is also used when connection setup fails. 
+ * Ie the response looks like a rpc response with a fake callId.
+ */
+message RpcResponseHeaderProto {
+  /**
+    * 
+    * RpcStastus - success or failure
+    * The reponseHeader's errDetail,  exceptionClassName and errMsg contains
+    * further details on the error
+    **/
+
+  enum RpcStatusProto {
+   SUCCESS = 0;  // RPC succeeded
+   ERROR = 1;    // RPC or error - connection left open for future calls
+   FATAL = 2;    // Fatal error - connection closed
+  }
+
+  enum RpcErrorCodeProto {
+
+   // Non-fatal Rpc error - connection left open for future rpc calls
+   ERROR_APPLICATION = 1;      // RPC Failed - rpc app threw exception
+   ERROR_NO_SUCH_METHOD = 2;   // Rpc error - no such method
+   ERROR_NO_SUCH_PROTOCOL = 3; // Rpc error - no such protocol
+   ERROR_RPC_SERVER  = 4;      // Rpc error on server side
+   ERROR_SERIALIZING_RESPONSE = 5; // error serializign response
+   ERROR_RPC_VERSION_MISMATCH = 6; // Rpc protocol version mismatch
+
+
+   // Fatal Server side Rpc error - connection closed
+   FATAL_UNKNOWN = 10;                   // unknown Fatal error
+   FATAL_UNSUPPORTED_SERIALIZATION = 11; // IPC layer serilization type invalid
+   FATAL_INVALID_RPC_HEADER = 12;        // fields of RpcHeader are invalid
+   FATAL_DESERIALIZING_REQUEST = 13;     // could not deserilize rpc request
+   FATAL_VERSION_MISMATCH = 14;          // Ipc Layer version mismatch
+   FATAL_UNAUTHORIZED = 15;              // Auth failed
+  }
+
+  required uint32 callId = 1; // callId used in Request
+  required RpcStatusProto status = 2;
+  optional uint32 serverIpcVersionNum = 3; // Sent if success or fail
+  optional string exceptionClassName = 4;  // if request fails
+  optional string errorMsg = 5;  // if request fails, often contains strack trace
+  optional RpcErrorCodeProto errorDetail = 6; // in case of error
+  optional bytes clientId = 7; // Globally unique client ID
+  optional sint32 retryCount = 8 [default = -1];
+  optional int64 stateId = 9; // The last written Global State ID
+}
+
+message RpcSaslProto {
+  enum SaslState {
+    SUCCESS   = 0;
+    NEGOTIATE = 1;
+    INITIATE  = 2;
+    CHALLENGE = 3;
+    RESPONSE  = 4;
+    WRAP = 5;
+  }
+  
+  message SaslAuth {
+    required string method    = 1;
+    required string mechanism = 2;
+    optional string protocol  = 3;
+    optional string serverId  = 4;
+    optional bytes  challenge = 5;
+  }
+
+  optional uint32 version  = 1;  
+  required SaslState state = 2;
+  optional bytes token     = 3;
+  repeated SaslAuth auths  = 4;
+}

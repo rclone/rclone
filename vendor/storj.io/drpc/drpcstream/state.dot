@@ -1,0 +1,21 @@
+digraph stream {
+    rankdir=LR
+    open -> "send-closed" [label="{CloseSend}",color=blue,fontcolor=blue];
+    open -> "recv-closed" [label="{RecvCloseSend}",color=green,fontcolor=green];
+    open -> terminated [label="{Close, SendError}",color=red,fontcolor=red];
+    open -> canceled [label="{Cancel}",color=orange,fontcolor=orange];
+    open -> open [label="{MsgSend, MsgRecv}"];
+
+    "send-closed" -> terminated [label="{Close, SendError}",color=red,fontcolor=red];
+    "send-closed" -> terminated [label="{RecvCloseSend}",color=green,fontcolor=green]
+    "send-closed" -> canceled [label="{Cancel}",color=orange,fontcolor=orange];
+    "send-closed" -> "send-closed" [label="{MsgRecv}"];
+
+    "recv-closed" -> terminated [label="{Close, SendError}",color=red,fontcolor=red];
+    "recv-closed" -> terminated [label="{CloseSend}",color=blue,fontcolor=blue]
+    "recv-closed" -> canceled [label="{Cancel}",color=orange,fontcolor=orange];
+    "recv-closed" -> "recv-closed" [label="{MsgSend}"];
+
+    canceled -> finished [label="{Quiescence}"];
+    terminated -> finished [label="{Quiescence}"];
+}

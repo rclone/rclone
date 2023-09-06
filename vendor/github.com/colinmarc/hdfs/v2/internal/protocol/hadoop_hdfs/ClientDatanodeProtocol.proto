@@ -1,0 +1,309 @@
+/**
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/**
+ * These .proto interfaces are private and stable.
+ * Please see http://wiki.apache.org/hadoop/Compatibility
+ * for what changes are allowed for a *stable* .proto interface.
+ */
+syntax="proto2";
+// This file contains protocol buffers that are used throughout HDFS -- i.e.
+// by the client, server, and data transfer protocols.
+
+option java_package = "org.apache.hadoop.hdfs.protocol.proto";
+option java_outer_classname = "ClientDatanodeProtocolProtos";
+option java_generic_services = true;
+option java_generate_equals_and_hash = true;
+option go_package = "github.com/colinmarc/hdfs/v2/internal/protocol/hadoop_hdfs";
+package hadoop.hdfs;
+
+import "Security.proto";
+import "hdfs.proto";
+import "ReconfigurationProtocol.proto";
+
+/**
+ * block - block for which visible length is requested
+ */
+message GetReplicaVisibleLengthRequestProto {
+  required ExtendedBlockProto block = 1;
+}
+
+/**
+ * length - visible length of the block
+ */
+message GetReplicaVisibleLengthResponseProto {
+  required uint64 length = 1;
+}
+
+/**
+ * void request
+ */
+message RefreshNamenodesRequestProto {
+}
+
+/**
+ * void response
+ */
+message RefreshNamenodesResponseProto {
+}
+
+/**
+ * blockPool - block pool to be deleted
+ * force - if false, delete the block pool only if it is empty.
+ *         if true, delete the block pool even if it has blocks.
+ */
+message DeleteBlockPoolRequestProto {
+  required string blockPool = 1;
+  required bool force = 2;
+}
+
+/**
+ * void response
+ */
+message DeleteBlockPoolResponseProto {
+}
+
+/**
+ * Gets the file information where block and its metadata is stored
+ * block - block for which path information is being requested
+ * token - block token
+ *
+ * This message is deprecated in favor of file descriptor passing.
+ */
+message GetBlockLocalPathInfoRequestProto {
+  required ExtendedBlockProto block = 1;
+  required hadoop.common.TokenProto token = 2;
+}
+
+/**
+ * block - block for which file path information is being returned
+ * localPath - file path where the block data is stored
+ * localMetaPath - file path where the block meta data is stored
+ *
+ * This message is deprecated in favor of file descriptor passing.
+ */
+message GetBlockLocalPathInfoResponseProto {
+  required ExtendedBlockProto block = 1;
+  required string localPath = 2;
+  required string localMetaPath = 3;
+}
+
+/**
+ * forUpgrade - if true, clients are advised to wait for restart and quick
+ *              upgrade restart is instrumented. Otherwise, datanode does
+ *              the regular shutdown.
+ */
+message ShutdownDatanodeRequestProto {
+  required bool forUpgrade = 1;
+}
+
+message ShutdownDatanodeResponseProto {
+}
+
+/** Tell datanode to evict active clients that are writing */
+message EvictWritersRequestProto {
+}
+
+message EvictWritersResponseProto {
+}
+
+/**
+ * Ping datanode for liveness and quick info
+ */
+message GetDatanodeInfoRequestProto {
+}
+
+message GetDatanodeInfoResponseProto {
+  required DatanodeLocalInfoProto localInfo = 1;
+}
+
+message GetVolumeReportRequestProto {
+}
+
+message GetVolumeReportResponseProto {
+  repeated DatanodeVolumeInfoProto volumeInfo = 1;
+}
+
+message TriggerBlockReportRequestProto {
+  required bool incremental = 1;
+  optional string nnAddress = 2;
+}
+
+message TriggerBlockReportResponseProto {
+}
+
+message GetBalancerBandwidthRequestProto {
+}
+
+/**
+ * bandwidth - balancer bandwidth value of the datanode.
+ */
+message GetBalancerBandwidthResponseProto {
+  required uint64 bandwidth = 1;
+}
+
+/**
+ * This message allows a client to submit a disk
+ * balancer plan to a data node.
+ */
+message SubmitDiskBalancerPlanRequestProto {
+  required string planID = 1;         // A hash of the plan like SHA-1
+  required string plan = 2;           // Plan file data in Json format
+  optional uint64 planVersion = 3;    // Plan version number
+  optional bool ignoreDateCheck = 4;  // Ignore date checks on this plan.
+  required string planFile = 5;       // Plan file path
+}
+
+/**
+ * Response from the DataNode on Plan Submit request
+ */
+message SubmitDiskBalancerPlanResponseProto {
+}
+
+/**
+ * This message describes a request to cancel an
+ * outstanding disk balancer plan
+ */
+message CancelPlanRequestProto {
+  required string planID = 1;
+}
+
+/**
+ * This is the response for the cancellation request
+ */
+message CancelPlanResponseProto {
+}
+
+
+/**
+ * This message allows a client to query data node to see
+ * if a disk balancer plan is executing and if so what is
+ * the status.
+ */
+message QueryPlanStatusRequestProto {
+}
+
+/**
+ * This message describes a plan if it is in progress
+ */
+message QueryPlanStatusResponseProto {
+  optional uint32 result = 1;
+  optional string planID = 2;
+  optional string currentStatus = 3;
+  optional string planFile = 4;
+}
+
+/**
+  * This message sends a request to data node get a specific setting
+  * that is used by disk balancer.
+  */
+message DiskBalancerSettingRequestProto {
+  required string key = 1;
+}
+
+/**
+ * Response that describes the value of requested disk balancer setting.
+ */
+message DiskBalancerSettingResponseProto {
+  required string value = 1;
+}
+
+/**
+ * Protocol used from client to the Datanode.
+ * See the request and response for details of rpc call.
+ */
+service ClientDatanodeProtocolService {
+  /**
+   * Returns the visible length of the replica
+   */
+  rpc getReplicaVisibleLength(GetReplicaVisibleLengthRequestProto)
+      returns(GetReplicaVisibleLengthResponseProto);
+
+  /**
+   * Refresh the list of federated namenodes from updated configuration.
+   * Adds new namenodes and stops the deleted namenodes.
+   */
+  rpc refreshNamenodes(RefreshNamenodesRequestProto)
+      returns(RefreshNamenodesResponseProto);
+
+  /**
+   * Delete the block pool from the datanode.
+   */
+  rpc deleteBlockPool(DeleteBlockPoolRequestProto)
+      returns(DeleteBlockPoolResponseProto);
+
+  /**
+   * Retrieves the path names of the block file and metadata file stored on the
+   * local file system.
+   */
+  rpc getBlockLocalPathInfo(GetBlockLocalPathInfoRequestProto)
+      returns(GetBlockLocalPathInfoResponseProto);
+
+  rpc shutdownDatanode(ShutdownDatanodeRequestProto)
+      returns(ShutdownDatanodeResponseProto);
+
+  rpc evictWriters(EvictWritersRequestProto)
+      returns(EvictWritersResponseProto);
+
+  rpc getDatanodeInfo(GetDatanodeInfoRequestProto)
+      returns(GetDatanodeInfoResponseProto);
+
+  rpc getVolumeReport(GetVolumeReportRequestProto)
+      returns(GetVolumeReportResponseProto);
+
+  rpc getReconfigurationStatus(GetReconfigurationStatusRequestProto)
+      returns(GetReconfigurationStatusResponseProto);
+
+  rpc startReconfiguration(StartReconfigurationRequestProto)
+      returns(StartReconfigurationResponseProto);
+
+  rpc listReconfigurableProperties(
+      ListReconfigurablePropertiesRequestProto)
+      returns(ListReconfigurablePropertiesResponseProto);
+
+  rpc triggerBlockReport(TriggerBlockReportRequestProto)
+      returns(TriggerBlockReportResponseProto);
+
+  /**
+   * Returns the balancer bandwidth value of datanode.
+   */
+  rpc getBalancerBandwidth(GetBalancerBandwidthRequestProto)
+      returns(GetBalancerBandwidthResponseProto);
+
+  /**
+   * Submit a disk balancer plan for execution
+   */
+  rpc submitDiskBalancerPlan(SubmitDiskBalancerPlanRequestProto)
+      returns (SubmitDiskBalancerPlanResponseProto);
+  /**
+   * Cancel an executing plan
+   */
+  rpc cancelDiskBalancerPlan(CancelPlanRequestProto)
+      returns (CancelPlanResponseProto);
+
+  /**
+   * Gets the status of an executing Plan
+   */
+  rpc queryDiskBalancerPlan(QueryPlanStatusRequestProto)
+      returns (QueryPlanStatusResponseProto);
+  /**
+   *  Gets run-time settings of Disk Balancer.
+   */
+  rpc getDiskBalancerSetting(DiskBalancerSettingRequestProto)
+      returns(DiskBalancerSettingResponseProto);
+}

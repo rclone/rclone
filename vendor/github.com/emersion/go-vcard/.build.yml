@@ -1,0 +1,17 @@
+image: alpine/edge
+packages:
+  - go
+sources:
+  - https://github.com/emersion/go-vcard
+artifacts:
+  - coverage.html
+tasks:
+  - build: |
+      cd go-vcard
+      go build -race -v ./...
+  - test: |
+      cd go-vcard
+      go test -coverprofile=coverage.txt -covermode=atomic ./...
+  - coverage: |
+      cd go-vcard
+      go tool cover -html=coverage.txt -o ~/coverage.html

@@ -1,0 +1,16 @@
+# editor temporary files
+*.sublime-*
+.DS_Store
+*.swp
+#*.*#
+tags
+
+# direnv config
+.env*
+
+# test binaries
+*.test
+
+# coverage and profilte outputs
+*.out
+

@@ -1,0 +1,29 @@
+# enable container-based infrastructure by setting sudo to false
+sudo: false
+
+arch:
+ - amd64
+ - ppc64le
+
+language: go
+
+go:
+  - 1.4
+  - tip
+
+matrix:
+  allow_failures:
+    - go: tip
+  exclude:
+    - arch: ppc64le
+      go: 1.4
+
+branches:
+  only:
+    - master
+
+install:
+  - wget -qO- https://raw.githubusercontent.com/pote/gpm/v1.3.2/bin/gpm | bash
+
+script:
+  - make test testrace

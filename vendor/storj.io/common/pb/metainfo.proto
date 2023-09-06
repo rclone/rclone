@@ -1,0 +1,869 @@
+// Copyright (C) 2019 Storj Labs, Inc.
+// See LICENSE for copying information.
+
+syntax = "proto3";
+option go_package = "storj.io/common/pb";
+
+package metainfo;
+
+import "encryption.proto";
+import "gogo.proto";
+import "google/protobuf/timestamp.proto";
+import "node.proto";
+import "pointerdb.proto";
+import "orders.proto";
+
+// NOTE!!!
+//
+//   All messages must be added to BatchRequest.
+//   The message must also be added to Batch method in satellite/metainfo/batch.go.
+//
+//   When stream_id or segment_id is added to existing message,
+//   then Batch method in satellite/metainfo/batch.go must be updated.
+
+// Metainfo it's a satellite RPC service.
+service Metainfo {
+    // Bucket
+    rpc CreateBucket(CreateBucketRequest) returns (CreateBucketResponse);
+    rpc GetBucket(GetBucketRequest) returns (GetBucketResponse);
+    rpc DeleteBucket(DeleteBucketRequest) returns (DeleteBucketResponse);
+    rpc ListBuckets(ListBucketsRequest) returns (ListBucketsResponse);
+
+    // Object
+    rpc BeginObject(BeginObjectRequest) returns (BeginObjectResponse);
+    rpc CommitObject(CommitObjectRequest) returns (CommitObjectResponse);
+    rpc GetObject(GetObjectRequest) returns (GetObjectResponse);
+    rpc ListObjects(ListObjectsRequest) returns (ListObjectsResponse);
+    rpc BeginDeleteObject(BeginDeleteObjectRequest) returns (BeginDeleteObjectResponse);
+    rpc FinishDeleteObject(FinishDeleteObjectRequest) returns (FinishDeleteObjectResponse);
+    rpc GetObjectIPs(GetObjectIPsRequest) returns (GetObjectIPsResponse);
+    rpc ListPendingObjectStreams(ListPendingObjectStreamsRequest) returns (ListPendingObjectStreamsResponse);
+    rpc DownloadObject(DownloadObjectRequest) returns (DownloadObjectResponse);
+    rpc UpdateObjectMetadata(UpdateObjectMetadataRequest) returns (UpdateObjectMetadataResponse);
+
+    rpc BeginSegment(BeginSegmentRequest) returns (BeginSegmentResponse);
+    rpc RetryBeginSegmentPieces(RetryBeginSegmentPiecesRequest) returns (RetryBeginSegmentPiecesResponse);
+    rpc CommitSegment(CommitSegmentRequest) returns (CommitSegmentResponse);
+    rpc MakeInlineSegment(MakeInlineSegmentRequest) returns (MakeInlineSegmentResponse);
+    rpc BeginDeleteSegment(BeginDeleteSegmentRequest) returns (BeginDeleteSegmentResponse);
+    rpc FinishDeleteSegment(FinishDeleteSegmentRequest) returns (FinishDeleteSegmentResponse);
+    rpc ListSegments(ListSegmentsRequest) returns (ListSegmentsResponse);
+    rpc DownloadSegment(DownloadSegmentRequest) returns (DownloadSegmentResponse);
+
+    rpc DeletePart(DeletePartRequest) returns (DeletePartResponse);
+
+    rpc Batch(BatchRequest) returns (BatchResponse);
+
+    rpc ProjectInfo(ProjectInfoRequest) returns (ProjectInfoResponse);
+    rpc RevokeAPIKey(RevokeAPIKeyRequest) returns (RevokeAPIKeyResponse);
+
+    // Server side move.
+    rpc BeginMoveObject(BeginMoveObjectRequest) returns (BeginMoveObjectResponse);
+    rpc FinishMoveObject(FinishMoveObjectRequest) returns (FinishMoveObjectResponse);
+
+    // Server side copy.
+    rpc BeginCopyObject(BeginCopyObjectRequest) returns (BeginCopyObjectResponse);
+    rpc FinishCopyObject(FinishCopyObjectRequest) returns (FinishCopyObjectResponse);
+}
+
+message RequestHeader {
+    bytes api_key = 1;
+    bytes user_agent = 2;
+}
+
+message Bucket {
+    bytes                  name = 1;
+    encryption.CipherSuite path_cipher = 2;
+
+    google.protobuf.Timestamp created_at = 3 [(gogoproto.stdtime) = true, (gogoproto.nullable) = false];
+
+    int64                           default_segment_size = 4;
+    pointerdb.RedundancyScheme      default_redundancy_scheme = 5;
+    encryption.EncryptionParameters default_encryption_parameters = 6;
+    bytes                           partner_id = 7;
+}
+
+message BucketListItem {
+    bytes             name = 1;
+    bytes             user_agent = 3;
+
+    google.protobuf.Timestamp created_at = 2 [(gogoproto.stdtime) = true, (gogoproto.nullable) = false];
+}
+
+message CreateBucketRequest {
+    RequestHeader header = 15;
+
+    bytes                  name = 1;
+    encryption.CipherSuite path_cipher = 2;
+
+    int64                           default_segment_size = 3;
+    pointerdb.RedundancyScheme      default_redundancy_scheme = 4;
+    encryption.EncryptionParameters default_encryption_parameters = 5;
+    bytes                           partner_id = 6;
+}
+
+message CreateBucketResponse {
+    Bucket bucket = 1;
+}
+
+message GetBucketRequest {
+    RequestHeader header = 15;
+
+    bytes name = 1;
+}
+
+message GetBucketResponse {
+    Bucket bucket = 1;
+}
+
+message DeleteBucketRequest {
+    RequestHeader header = 15;
+
+    bytes name = 1;
+    bool  delete_all = 2;
+}
+
+message DeleteBucketResponse {
+    Bucket bucket = 1;
+
+    int64 deleted_objects_count = 2;
+}
+
+message ListBucketsRequest {
+    RequestHeader header = 15;
+
+    bytes cursor = 1;
+    int32 limit = 2;
+    ListDirection direction = 3;
+}
+
+enum ListDirection {
+    UNSET = 0;
+    // Before = -2 lists backwards from cursor, without cursor. Deprecated.
+    // Backward = -1 lists backwards from cursor, including cursor. Deprecated.
+    // reserved -2, -1; // protolock doesn't like this, so let's not define it.
+
+    // Forward lists forwards from cursor, including cursor.
+    FORWARD = 1;
+    // After lists forwards from cursor, without cursor.
+    AFTER = 2;
+}
+
+message ListBucketsResponse {
+  repeated BucketListItem items = 1;
+  bool                    more = 2;
+}
+
+message BucketSetAttributionRequest {
+    RequestHeader header = 15;
+
+    bytes name = 1;
+    bytes partner_id = 2;
+}
+
+message BucketSetAttributionResponse {
+}
+
+message AddressedOrderLimit {
+    orders.OrderLimit limit = 1;
+    node.NodeAddress storage_node_address = 2;
+}
+
+message ProjectInfoRequest {
+    RequestHeader header = 15;
+}
+
+message ProjectInfoResponse {
+    bytes project_salt = 1;
+    bytes project_public_id = 2;
+}
+
+//---------------------------
+// Object
+//---------------------------
+
+message Object {
+    enum Status {
+        INVALID    = 0;
+        UPLOADING  = 1;
+        COMMITTING = 2;
+        COMMITTED  = 3;
+        DELETING   = 4;
+    }
+
+    bytes  bucket         = 1;
+    bytes  encrypted_object_key = 2;
+    int32  version        = 3;
+    Status status         = 4;
+
+    bytes  stream_id = 5 [(gogoproto.customtype) = "StreamID", (gogoproto.nullable) = false];
+
+    google.protobuf.Timestamp created_at = 6 [(gogoproto.stdtime) = true, (gogoproto.nullable) = false];
+    google.protobuf.Timestamp status_at  = 7 [(gogoproto.stdtime) = true, (gogoproto.nullable) = false];
+    google.protobuf.Timestamp expires_at = 8 [(gogoproto.stdtime) = true, (gogoproto.nullable) = false];
+
+    bytes encrypted_metadata_nonce         = 9 [(gogoproto.customtype) = "Nonce", (gogoproto.nullable) = false];
+    bytes encrypted_metadata               = 10;
+    bytes encrypted_metadata_encrypted_key = 17;
+
+    // fixed_segment_size is 0 for migrated objects.
+    int64                           fixed_segment_size    = 11;
+    pointerdb.RedundancyScheme      redundancy_scheme     = 12;
+    encryption.EncryptionParameters encryption_parameters = 13;
+
+    // total_size of object.
+    int64 total_size  = 14;
+    // size of inline part of object.
+    int64 inline_size = 15;
+    // size of remote part of object.
+    int64 remote_size = 16;
+    // plain_size is 0 for migrated objects.
+    int64 plain_size  = 18;
+}
+
+message BeginObjectRequest {
+    RequestHeader header = 15;
+
+    bytes  bucket = 1;
+    bytes  encrypted_object_key = 2;
+    int32  version = 3;
+
+    google.protobuf.Timestamp expires_at = 4 [(gogoproto.stdtime) = true, (gogoproto.nullable) = false];
+
+    pointerdb.RedundancyScheme      redundancy_scheme = 7; // can be zero
+    encryption.EncryptionParameters encryption_parameters = 8; // can be zero
+
+    bytes encrypted_metadata_nonce = 9 [(gogoproto.customtype) = "Nonce", (gogoproto.nullable) = false];
+    bytes encrypted_metadata = 10;
+    bytes encrypted_metadata_encrypted_key = 11;
+}
+
+message BeginObjectResponse {
+    bytes  bucket = 1;
+    bytes  encrypted_object_key = 2;
+    int32  version = 3;
+
+    bytes  stream_id = 4 [(gogoproto.customtype) = "StreamID", (gogoproto.nullable) = false];
+
+    pointerdb.RedundancyScheme      redundancy_scheme = 5;
+    encryption.EncryptionParameters encryption_parameters = 6;
+}
+
+message CommitObjectRequest {
+    RequestHeader header = 15;
+
+    bytes stream_id = 1 [(gogoproto.customtype) = "StreamID", (gogoproto.nullable) = false];
+
+    // skip_override_encrypted_metadata is used to control if we want to override metadata on commit
+    // message which can lead to overriding existing metadata. We need to have flag where default (false)
+    // value will be backward compatible with old uplinks, default false means metadata will be always
+    // set by older uplinks.
+    bool  skip_override_encrypted_metadata = 5;
+    bytes encrypted_metadata_nonce = 2 [(gogoproto.customtype) = "Nonce", (gogoproto.nullable) = false];
+    bytes encrypted_metadata = 3; // TODO: set maximum size limit
+    bytes encrypted_metadata_encrypted_key = 4;
+}
+
+message CommitObjectResponse {
+}
+
+message ListPendingObjectStreamsRequest {
+    RequestHeader header = 15;
+    bytes  bucket = 1;
+    bytes  encrypted_object_key = 2;
+    bytes  stream_id_cursor = 3;
+    int32  limit = 4;
+}
+
+message ListPendingObjectStreamsResponse {
+    repeated ObjectListItem items = 1;
+    bool more = 2;
+}
+
+message DownloadObjectRequest {
+    RequestHeader header = 15;
+
+    bytes  bucket = 1;
+    bytes  encrypted_object_key = 2;
+
+    // limit specifies the maximum number of segments to return.
+    int32 limit = 4;
+    // range of the object to download.
+    Range range = 3;
+
+    // Number of nodes requested to download from. This is a hint for satellite to request nodes more than the optimal number,
+    // calculated by the satellite. Satellite may or may not return with more nodes as requested.
+    //
+    // If you are not sure, use 0. In this case satellite will calculate the optimal number.
+    //
+    // In some specific cases it can be useful to request more nodes, downloading from more nodes can be faster, but also
+    // more expensive.
+    int32 desired_nodes = 5;
+}
+
+message Range {
+    oneof Range {
+        RangeStartLimit start_limit = 1;
+        RangeStart start = 2;
+        RangeSuffix suffix = 3;
+    }
+}
+
+// RangeStartLimit is used to specify a range where the plain start and limit bytes
+// are known and explicitly specified by the client. [start:limit)
+message RangeStartLimit {
+    // plain_start is the byte index where the client wishes to begin reading
+    // the data.
+    int64 plain_start = 1;
+
+    // plain_limit is the limit whereto the client wishes to read.
+    int64 plain_limit = 2;
+}
+
+// RangeStart is used to specify a range where the client provides the first
+// byte and wishes to read until the end of the blob.
+message RangeStart {
+    int64 plain_start = 1;
+}
+
+// RangeSuffix is used to specify a range where the client specifies how many
+// bytes from the end of the blob to read. For example, a value of 500 means
+// "the last 500 bytes."
+message RangeSuffix {
+    int64 plain_suffix = 1;
+}
+
+message DownloadObjectResponse {
+    Object object = 1;
+    // segment_list is populated if the Object does not contain the necessary
+    // information for the client to derive segment information. It only
+    // contains segments within the range specified in the
+    // DownloadObjectRequest.
+    //
+    // If the `more` value in the response is true, additional request(s) to
+    // ListSegments, with range and cursor position set, may be necessary to
+    // fetch all the segment list items for this download.
+    ListSegmentsResponse segment_list = 2;
+    // segment_download will contain segment information for at least the first
+    // segment within the requested range so that no additional calls to the
+    // server are required before downloading data.
+    repeated DownloadSegmentResponse segment_download = 3;
+}
+
+message GetObjectRequest {
+    RequestHeader header = 15;
+
+    bytes  bucket = 1;
+    bytes  encrypted_object_key = 2;
+    int32  version = 3;
+
+    // Feature flag used by satellite to determine if uplink is
+    // using RS per object or RS per segment. If flag is set to false
+    // satellite will try to get RS from one of existing segments
+    // (e.g. first). If flag is set to true satellite won't return RS
+    // value in response for this request.
+    //
+    // Redundancy scheme on object level is a legacy feature:
+    // it is always determined per segment.
+    // Therefor, this flag should always be set to true.
+    bool redundancy_scheme_per_segment = 4;
+}
+
+message GetObjectResponse {
+    Object object = 1;
+}
+
+message ListObjectsRequest {
+    RequestHeader header = 15;
+
+    bytes  bucket           = 1;
+    bytes  encrypted_prefix = 2;
+    bytes  encrypted_cursor = 3;
+    bool   recursive        = 4;
+    int32  limit            = 5;
+    Object.Status status    = 7;
+
+    ObjectListItemIncludes object_includes = 6;
+    // because uplink was not setting object_includes correctly
+    // (object_includes.Metadata was always false) we need a way
+    // to give satellite know that should be using object_includes,
+    // otherwise old uplinks can break. Newer uplinks should 
+    // set this value always to true.
+    bool use_object_includes = 8;
+}
+
+message ListObjectsResponse {
+    repeated ObjectListItem items = 1;
+    bool more = 2;
+}
+
+message ObjectListItem {
+    bytes  encrypted_object_key = 1;
+    int32  version        = 2;
+    Object.Status status  = 3;
+
+    google.protobuf.Timestamp created_at = 4 [(gogoproto.stdtime) = true, (gogoproto.nullable) = false];
+    google.protobuf.Timestamp status_at  = 5 [(gogoproto.stdtime) = true, (gogoproto.nullable) = false];
+    google.protobuf.Timestamp expires_at = 6 [(gogoproto.stdtime) = true, (gogoproto.nullable) = false];
+
+    bytes encrypted_metadata_nonce = 7 [(gogoproto.customtype) = "Nonce", (gogoproto.nullable) = false];
+    bytes encrypted_metadata_encrypted_key = 11;
+    bytes encrypted_metadata       = 8;
+
+    // plain_size is 0 for migrated objects.
+    int64 plain_size = 10;
+
+    bytes  stream_id = 9 [(gogoproto.customtype) = "StreamID"];
+}
+
+message ObjectListItemIncludes {
+    // rename to include_custom_metadata
+    bool metadata = 1;
+    // Because of compatibility with older clients
+    // we need to invert the boolean so it defaults to false.
+    bool exclude_system_metadata = 2;
+}
+
+message BeginDeleteObjectRequest {
+    RequestHeader header = 15;
+
+    bytes  bucket = 1;
+    bytes  encrypted_object_key = 2;
+    int32  version = 3;
+    int32  status = 4;
+    bytes  stream_id = 5 [(gogoproto.customtype) = "StreamID", (gogoproto.nullable) = true];
+}
+
+message BeginDeleteObjectResponse {
+    bytes  stream_id = 1 [(gogoproto.customtype) = "StreamID", (gogoproto.nullable) = false];
+    Object object = 2;
+}
+
+message FinishDeleteObjectRequest {
+    RequestHeader header = 15;
+
+    bytes  stream_id = 1 [(gogoproto.customtype) = "StreamID", (gogoproto.nullable) = false];
+}
+
+message FinishDeleteObjectResponse {
+}
+
+message GetObjectIPsRequest {
+    RequestHeader header = 15;
+
+    bytes  bucket = 1;
+    bytes  encrypted_object_key = 2;
+    int32  version = 3;
+}
+
+message GetObjectIPsResponse {
+    repeated bytes ips = 1;
+    int64 segment_count = 2;
+    int64 piece_count = 3;
+    int64 reliable_piece_count = 4;
+}
+
+message UpdateObjectMetadataRequest {
+    RequestHeader header = 15;
+
+    bytes  bucket = 1;
+    bytes  encrypted_object_key = 2;
+    int32  version = 3;
+
+    bytes stream_id = 7 [(gogoproto.customtype) = "StreamID", (gogoproto.nullable) = false];
+
+    bytes encrypted_metadata_nonce = 4 [(gogoproto.customtype) = "Nonce", (gogoproto.nullable) = false];
+    bytes encrypted_metadata = 5; // TODO: set maximum size limit
+    bytes encrypted_metadata_encrypted_key = 6;
+}
+
+message UpdateObjectMetadataResponse {
+}
+
+//
+// Only for satellite use
+//
+// TODO this needs to be removed BUT unfortunately libuplink is using it and
+// we need to keep this for backward compatibility
+message SatStreamID {
+    google.protobuf.Timestamp creation_date = 5  [(gogoproto.stdtime) = true, (gogoproto.nullable) = false];
+}
+
+//---------------------------
+// Segment
+//---------------------------
+
+message Segment {
+    bytes stream_id = 1 [(gogoproto.customtype) = "StreamID", (gogoproto.nullable) = false];
+    SegmentPosition position = 2;
+
+    bytes encrypted_key_nonce = 3 [(gogoproto.customtype) = "Nonce", (gogoproto.nullable) = false];
+    bytes encrypted_key = 4;
+
+    int64 size_encrypted_data = 5; // refers to segment size not piece size
+
+    bytes encrypted_inline_data = 6;
+    repeated Piece pieces = 7;
+}
+
+message Piece {
+    int32 piece_num = 1;
+    bytes node = 2[(gogoproto.customtype) = "NodeID", (gogoproto.nullable) = false];
+}
+
+message SegmentPosition {
+    int32 part_number = 1;
+    int32 index = 2;
+}
+
+message BeginSegmentRequest {
+    RequestHeader header = 15;
+
+    bytes           stream_id = 1 [(gogoproto.customtype) = "StreamID", (gogoproto.nullable) = false];
+    SegmentPosition position = 2;
+
+    int64 max_order_limit = 3;
+}
+
+message BeginSegmentResponse {
+    bytes                        segment_id = 1 [(gogoproto.customtype) = "SegmentID", (gogoproto.nullable) = false];
+    repeated AddressedOrderLimit addressed_limits = 2;
+    bytes                        private_key = 3 [(gogoproto.customtype) = "PiecePrivateKey", (gogoproto.nullable) = false];
+    pointerdb.RedundancyScheme   redundancy_scheme = 4;
+}
+
+message RetryBeginSegmentPiecesRequest {
+    RequestHeader header = 15;
+
+    bytes           segment_id = 1 [(gogoproto.customtype) = "SegmentID", (gogoproto.nullable) = false];
+    repeated int32  retry_piece_numbers = 2;
+}
+
+message RetryBeginSegmentPiecesResponse {
+    bytes                        segment_id = 1 [(gogoproto.customtype) = "SegmentID", (gogoproto.nullable) = false];
+    repeated AddressedOrderLimit addressed_limits = 2;
+}
+
+message CommitSegmentRequest {
+    RequestHeader header = 15;
+
+    bytes segment_id = 1 [(gogoproto.customtype) = "SegmentID", (gogoproto.nullable) = false];
+
+    bytes encrypted_key_nonce = 2 [(gogoproto.customtype) = "Nonce", (gogoproto.nullable) = false];
+    bytes encrypted_key = 3;
+
+    int64 size_encrypted_data = 4; // refers to segment size not piece size
+    int64 plain_size = 6;
+
+    bytes encrypted_e_tag = 7;
+
+    repeated SegmentPieceUploadResult upload_result = 5;
+}
+
+message SegmentPieceUploadResult {
+    int32               piece_num = 1;
+    bytes               node_id = 2 [(gogoproto.customtype) = "NodeID", (gogoproto.nullable) = false];
+    orders.PieceHash    hash = 3;
+}
+
+message CommitSegmentResponse {
+    int32 successful_pieces = 1;
+}
+
+message MakeInlineSegmentRequest {
+    RequestHeader header = 15;
+
+    bytes stream_id = 1 [(gogoproto.customtype) = "StreamID", (gogoproto.nullable) = false];
+    SegmentPosition position = 2;
+
+    bytes encrypted_key_nonce = 3 [(gogoproto.customtype) = "Nonce", (gogoproto.nullable) = false];
+    bytes encrypted_key = 4;
+
+    bytes encrypted_inline_data = 5;
+    int64 plain_size = 6;
+
+    bytes encrypted_e_tag = 7;
+}
+
+message MakeInlineSegmentResponse {}
+
+message BeginDeleteSegmentRequest {
+    RequestHeader header = 15;
+
+    bytes stream_id = 1 [(gogoproto.customtype) = "StreamID", (gogoproto.nullable) = false];
+    SegmentPosition position = 2;
+}
+
+message BeginDeleteSegmentResponse {
+    bytes                           segment_id = 1 [(gogoproto.customtype) = "SegmentID", (gogoproto.nullable) = false];
+    repeated AddressedOrderLimit    addressed_limits = 2;
+    bytes                           private_key = 3 [(gogoproto.customtype) = "PiecePrivateKey", (gogoproto.nullable) = false];
+}
+
+message FinishDeleteSegmentRequest {
+    RequestHeader header = 15;
+
+    bytes segment_id = 1 [(gogoproto.customtype) = "SegmentID", (gogoproto.nullable) = false];
+    repeated SegmentPieceDeleteResult results = 2;
+}
+
+message SegmentPieceDeleteResult {
+    int32               piece_num = 1;
+    bytes               node_id = 2 [(gogoproto.customtype) = "NodeID", (gogoproto.nullable) = false];
+    orders.PieceHash    hash = 3;
+}
+
+message FinishDeleteSegmentResponse {}
+
+message ListSegmentsRequest {
+    RequestHeader header = 15;
+
+    bytes stream_id                 = 1 [(gogoproto.customtype) = "StreamID", (gogoproto.nullable) = false];
+    SegmentPosition cursor_position = 2;
+    int32 limit                     = 3;
+    // If range is included in the request, the response will only include
+    // SegmentListItems within the range specified.
+    Range range                     = 4;
+}
+
+message ListSegmentsResponse {
+    repeated SegmentListItem items = 1;
+    bool more = 2;
+    encryption.EncryptionParameters encryption_parameters = 3;
+}
+
+message SegmentListItem {
+    SegmentPosition position = 1;
+    // plain_size is 0 for migrated objects.
+    int64 plain_size = 2;
+    // plain_offset is 0 for migrated objects.
+    int64 plain_offset = 4;
+    google.protobuf.Timestamp created_at = 3 [(gogoproto.stdtime) = true, (gogoproto.nullable) = false];
+    bytes encrypted_e_tag = 5;
+    bytes encrypted_key_nonce = 6 [(gogoproto.customtype) = "Nonce", (gogoproto.nullable) = false];
+    bytes encrypted_key = 7;
+}
+
+message DownloadSegmentRequest {
+    RequestHeader header = 15;
+
+    bytes stream_id = 1 [(gogoproto.customtype) = "StreamID", (gogoproto.nullable) = false];
+    SegmentPosition cursor_position = 2;
+
+    // see DownloadObjectRequest.desired_nodes for more explanation.
+    int32 desired_nodes = 3;
+}
+
+message DownloadSegmentResponse {
+    bytes segment_id = 1 [(gogoproto.customtype) = "SegmentID", (gogoproto.nullable) = false];
+
+    repeated AddressedOrderLimit addressed_limits = 2;
+    bytes                        private_key = 3 [(gogoproto.customtype) = "PiecePrivateKey", (gogoproto.nullable) = false];
+
+    bytes encrypted_inline_data = 4;
+    // plain_offset is 0 for migrated objects.
+    int64 plain_offset = 11;
+    // plain_size is 0 for migrated objects.
+    int64 plain_size = 12;
+    // segment_size is encrypted_size.
+    int64 segment_size = 5;
+    bytes encrypted_key_nonce = 6 [(gogoproto.customtype) = "Nonce", (gogoproto.nullable) = false];
+    bytes encrypted_key = 7;
+    pointerdb.RedundancyScheme redundancy_scheme = 9;
+
+    SegmentPosition next = 8; // can be nil
+    // Can be nil. This is the position of the requested segment.
+    SegmentPosition position = 10;
+}
+
+message DeletePartRequest {
+    RequestHeader header = 15;
+
+    bytes stream_id = 1 [(gogoproto.customtype) = "StreamID", (gogoproto.nullable) = false];
+    int32 part_number = 2;
+}
+
+message DeletePartResponse {
+}
+
+message BatchRequest {
+    RequestHeader header = 15; // the only header that matters in a batch.
+
+    // headers for specific BatchRequestItems are ignored entirely
+    repeated BatchRequestItem requests = 1;
+}
+
+message BatchRequestItem {
+    oneof Request {
+        CreateBucketRequest             bucket_create = 1;
+        GetBucketRequest                bucket_get = 2;
+        DeleteBucketRequest             bucket_delete = 3;
+        ListBucketsRequest              bucket_list = 4;
+
+        BeginObjectRequest              object_begin = 6;
+        CommitObjectRequest             object_commit = 7;
+        GetObjectRequest                object_get = 8;
+        ListObjectsRequest              object_list = 9;
+        BeginDeleteObjectRequest        object_begin_delete = 10;
+        FinishDeleteObjectRequest       object_finish_delete = 11;
+        GetObjectIPsRequest             object_get_ips = 20;
+        ListPendingObjectStreamsRequest object_list_pending_streams = 22;
+        DownloadObjectRequest           object_download = 23;
+        UpdateObjectMetadataRequest     object_update_metadata = 24;
+        BeginMoveObjectRequest          object_begin_move = 26;
+        FinishMoveObjectRequest         object_finish_move = 27;
+        BeginCopyObjectRequest          object_begin_copy = 28;
+        FinishCopyObjectRequest         object_finish_copy = 29;
+
+        BeginSegmentRequest      segment_begin = 12;
+        CommitSegmentRequest     segment_commit = 13;
+        MakeInlineSegmentRequest segment_make_inline = 14;
+
+        BeginDeleteSegmentRequest  segment_begin_delete = 15;
+        FinishDeleteSegmentRequest segment_finish_delete = 16;
+
+        ListSegmentsRequest    segment_list = 17;
+        DownloadSegmentRequest segment_download = 18;
+
+        DeletePartRequest part_delete = 25;
+
+        RevokeAPIKeyRequest revoke_api_key = 19;
+    }
+}
+
+message BatchResponse {
+    repeated BatchResponseItem responses = 1;
+}
+
+message BatchResponseItem {
+    oneof Response {
+        CreateBucketResponse             bucket_create = 1;
+        GetBucketResponse                bucket_get = 2;
+        DeleteBucketResponse             bucket_delete = 3;
+        ListBucketsResponse              bucket_list = 4;
+
+        BeginObjectResponse              object_begin = 6;
+        CommitObjectResponse             object_commit = 7;
+        GetObjectResponse                object_get = 8;
+        ListObjectsResponse              object_list = 9;
+        BeginDeleteObjectResponse        object_begin_delete = 10;
+        FinishDeleteObjectResponse       object_finish_delete = 11;
+        GetObjectIPsResponse             object_get_ips = 20;
+        ListPendingObjectStreamsResponse object_list_pending_streams = 22;
+        DownloadObjectResponse           object_download = 23;
+        UpdateObjectMetadataResponse     object_update_metadata = 24;
+        BeginMoveObjectResponse          object_begin_move = 26;
+        FinishMoveObjectResponse         object_finish_move = 27;
+        BeginCopyObjectResponse          object_begin_copy = 28;
+        FinishCopyObjectResponse         object_finish_copy = 29;
+
+        BeginSegmentResponse      segment_begin = 12;
+        CommitSegmentResponse     segment_commit = 13;
+        MakeInlineSegmentResponse segment_make_inline = 14;
+
+        BeginDeleteSegmentResponse  segment_begin_delete = 15;
+        FinishDeleteSegmentResponse segment_finish_delete = 16;
+
+        ListSegmentsResponse    segment_list = 17;
+        DownloadSegmentResponse segment_download = 18;
+
+        DeletePartResponse part_delete = 25;
+
+        RevokeAPIKeyResponse revoke_api_key = 19;
+    }
+}
+
+message RevokeAPIKeyRequest {
+    RequestHeader header = 15;
+
+    bytes api_key = 1;
+}
+
+message RevokeAPIKeyResponse { }
+
+// Server side move.
+// Has the same fields as copy.
+message BeginMoveObjectRequest {
+    RequestHeader header = 15;
+
+    bytes bucket = 1;
+    bytes encrypted_object_key = 2;
+   
+    bytes new_bucket = 3;
+    bytes new_encrypted_object_key = 4;
+}
+
+message BeginMoveObjectResponse {
+    bytes stream_id = 1 [(gogoproto.customtype) = "StreamID", (gogoproto.nullable) = false];
+
+    bytes encrypted_metadata_key_nonce = 2 [(gogoproto.customtype) = "Nonce", (gogoproto.nullable) = false];
+    bytes encrypted_metadata_key = 3;
+    repeated EncryptedKeyAndNonce segment_keys = 4;
+    encryption.EncryptionParameters encryption_parameters = 5;
+}
+
+message FinishMoveObjectRequest {
+    RequestHeader header = 15;
+
+    bytes stream_id = 1 [(gogoproto.customtype) = "StreamID", (gogoproto.nullable) = false];
+
+    bytes new_bucket = 6;
+    bytes new_encrypted_object_key = 2;
+    bytes new_encrypted_metadata_key_nonce = 3 [(gogoproto.customtype) = "Nonce", (gogoproto.nullable) = false];
+    bytes new_encrypted_metadata_key = 4;
+    repeated EncryptedKeyAndNonce new_segment_keys = 5;
+}
+
+message FinishMoveObjectResponse { }
+
+// Server side copy.
+// Has the same fields as move.
+message BeginCopyObjectRequest {
+    RequestHeader header = 15;
+
+    bytes bucket = 1;
+    bytes encrypted_object_key = 2;
+
+    bytes new_bucket = 3;
+    bytes new_encrypted_object_key = 4;
+}
+
+// The satellite returns metadata of the source object,
+// so that the client can re-encrypt it and re-submit it for the destination object.
+message BeginCopyObjectResponse {
+    bytes stream_id = 1 [(gogoproto.customtype) = "StreamID", (gogoproto.nullable) = false];
+
+    bytes encrypted_metadata_key_nonce = 2 [(gogoproto.customtype) = "Nonce", (gogoproto.nullable) = false];
+    bytes encrypted_metadata_key = 3;
+    repeated EncryptedKeyAndNonce segment_keys = 4;
+    encryption.EncryptionParameters encryption_parameters = 5;
+}
+
+// Uplink uploads the newly encrypted metadata fore the destination object,
+// so that the satellite can finish the copy.
+message FinishCopyObjectRequest {
+    RequestHeader header = 15;
+
+    // Stream ID of source object
+    bytes stream_id = 1 [(gogoproto.customtype) = "StreamID", (gogoproto.nullable) = false];
+
+    // Newly encrypted data of the copy destination
+    bytes new_bucket = 2;
+    bytes new_encrypted_object_key = 3;
+    // if false, keep existing metadata by ignoring 'new_encrypted_metadata'
+    bool override_metadata = 8;
+    bytes new_encrypted_metadata = 7;
+    bytes new_encrypted_metadata_key_nonce = 4 [(gogoproto.customtype) = "Nonce", (gogoproto.nullable) = false];
+    bytes new_encrypted_metadata_key = 5;
+    repeated EncryptedKeyAndNonce new_segment_keys = 6;
+}
+
+message FinishCopyObjectResponse {
+    Object object = 1;
+}
+
+message EncryptedKeyAndNonce {
+    SegmentPosition position = 1;
+    bytes encrypted_key_nonce = 2 [(gogoproto.customtype) = "Nonce", (gogoproto.nullable) = false];
+    bytes encrypted_key = 3;
+}

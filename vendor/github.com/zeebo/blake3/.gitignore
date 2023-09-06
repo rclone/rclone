@@ -1,0 +1,6 @@
+*.pprof
+*.test
+*.txt
+*.out
+
+/upstream

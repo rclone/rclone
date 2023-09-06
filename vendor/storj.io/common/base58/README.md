@@ -1,0 +1,1 @@
+This package is vendored from github.com/btcsuite/btcd/btcutil/base58.

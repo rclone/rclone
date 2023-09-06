@@ -1,0 +1,17 @@
+image: alpine/edge
+packages:
+  - go
+sources:
+  - https://github.com/emersion/go-message
+artifacts:
+  - coverage.html
+tasks:
+  - build: |
+      cd go-message
+      go build -v ./...
+  - test: |
+      cd go-message
+      go test -coverprofile=coverage.txt -covermode=atomic ./...
+  - coverage: |
+      cd go-message
+      go tool cover -html=coverage.txt -o ~/coverage.html

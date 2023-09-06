@@ -1,0 +1,175 @@
+run:
+  deadline: 10m
+  issues-exit-code: 1
+  tests: true
+
+  skip-files:
+    - ".*\\.pb\\.go$"
+    - ".*\\.dbx\\.go$"
+
+
+linters:
+  enable:
+    - bodyclose               # find unclosed http response bodies
+    - dogsled                 # checks for too many ignored arguments
+    - durationcheck           # verifies whether durations are multiplied, usually a mistake
+    - errcheck                # find unchecked errors
+    - errorlint               # finds misuses of errors
+    - exportloopref           # check for exported loop vars
+    - gocritic                # checks for style, performance issues, and common programming errors
+    - godot                   # dots for everything
+    - goerr113                # check error expressions
+    - gofmt                   # sanity check formatting
+    - goprintffuncname        # checks that printf-like functions are named with `f` at the end [fast: true, auto-fix: false]
+    - govet                   # check standard vet rules
+    - importas                # verify that imports are consistent
+    - ineffassign             # find ineffective assignments
+    - makezero                # verifies that slices use defaults
+    - misspell                # check spelling
+    - nakedret                # check for naked returns
+    - nilerr                  # checks for misuses of `if err != nil { return nil }`
+    - noctx                   # finds locations that should use context
+    - nolintlint              # checks that nolint directives are correct
+    - revive                  # check standard linting rules
+    - unconvert               # remove unnecessary conversions
+    - wastedassign
+    #TODO#- forcetypeassert   # needs work to replace unchecked interface type assertion
+    #TODO#- gochecknoglobals  # needs work to remove globals
+    #TODO#- gochecknoinits    # needs work to remove init()
+    #TODO#- gofumpt           # not sure whether it's useful
+    #TODO#- nestif            # looks useful, however needs work
+    #TODO#- prealloc          # easy optimizations
+    #TODO#- unparam           # check for unused parameters
+    #TODO#- whitespace        # checks for leading/trailing newlines
+  disable:
+    - asciicheck       # non-ascii is allowed
+    - cyclop           # this complexity is not a good metric
+    - depguard         # unused
+    - dupl             # slow
+    - exhaustive       # doesn't handle default case
+    - exhaustivestruct # false positivies
+    - forbidigo        # not useful
+    - funlen           # no limit on func length
+    - gci              # we have custom import checking
+    - gocognit         # this complexity is not a good metric
+    - goconst          # check for things that could be replaced by constants
+    - gocyclo          # this complexity is not a good metric
+    - godox            # too many false positivies
+    - goheader         # separate tool
+    - goimports        # disabled, because it's slow, using scripts/check-imports.go instead.
+    - gomnd            # false positives
+    - gomoddirectives  # not useful
+    - gomodguard       # not useful
+    - gosec            # needs tweaking
+    - gosimple         # part of staticcheck
+    - ifshort          # usefulness, depends on the context
+    - interfacer       # not that useful
+    - lll              # don't need this check
+    - nlreturn         # non-important code style
+    - paralleltest     # too many false positives
+    - predeclared      # kind of useful, but not critical
+    - promlinter       # not relevant
+    - rowserrcheck     # checks if sql.Rows.Err is checked correctly - Disabled  because it reports false positive with defer statements after Query call
+    - sqlclosecheck    # we have tagsql, which checks this better
+    - staticcheck      # we use the separate staticcheck binary already
+    - stylecheck       # has false positives
+    - tagliatelle      # not our style
+    - testpackage      # sometimes it's useful to have tests on private funcs
+    - thelper          # too many false positives
+    - tparallel        # false positivies
+    - unused           # part of staticcheck
+    - wrapcheck        # too much noise and false positives
+    - wsl              # too much noise
+  fast: false
+
+output:
+  format: colored-line-number
+  print-issued-lines: true
+  print-linter-name: true
+
+linters-settings:
+  errcheck:
+    # report about not checking of errors in type assetions: `a := b.(MyStruct)`;
+    # default is false: such cases aren't reported by default.
+    check-type-assertions: false
+
+    # report about assignment of errors to blank identifier: `num, _ := strconv.Atoi(numStr)`;
+    # default is false: such cases aren't reported by default.
+    check-blank: false
+  govet:
+    # report about shadowed variables
+    #TODO# check-shadowing: true
+
+    # Obtain type information from installed (to $GOPATH/pkg) package files:
+    # golangci-lint will execute `go install -i` and `go test -i` for analyzed packages
+    # before analyzing them.
+    # Enable this option only if all conditions are met:
+    #  1. you use only "fast" linters (--fast e.g.): no program loading occurs
+    #  2. you use go >= 1.10
+    #  3. you do repeated runs (false for CI) or cache $GOPATH/pkg or `go env GOCACHE` dir in CI.
+    use-installed-packages: false
+  gocritic:
+    disabled-checks:
+      - ifElseChain
+  goimports:
+    local: "storj.io"
+  golint:
+    min-confidence: 0.8
+  gofmt:
+    simplify: true
+  gocyclo:
+    min-complexity: 10
+  dupl:
+    threshold: 150
+  goconst:
+    min-len: 3
+    min-occurrences: 3
+  misspell:
+  lll:
+    line-length: 140
+    tab-width: 1
+  unused:
+    # treat code as a program (not a library) and report unused exported identifiers; default is false.
+    # XXX: if you enable this setting, unused will report a lot of false-positives in text editors:
+    # if it's called for subdir of a project it can't find funcs usages. All text editor integrations
+    # with golangci-lint call it on a directory with the changed file.
+    check-exported: false
+  unparam:
+    # call graph construction algorithm (cha, rta). In general, use cha for libraries,
+    # and rta for programs with main packages. Default is cha.
+    algo: cha
+
+    # Inspect exported functions, default is false. Set to true if no external program/library imports your code.
+    # XXX: if you enable this setting, unparam will report a lot of false-positives in text editors:
+    # if it's called for subdir of a project it can't find external interfaces. All text editor integrations
+    # with golangci-lint call it on a directory with the changed file.
+    check-exported: false
+  nakedret:
+    # make an issue if func has more lines of code than this setting and it has naked returns; default is 30
+    max-func-lines: 30
+  prealloc:
+    # Report preallocation suggestions only on simple loops that have no returns/breaks/continues/gotos in them.
+    # True by default.
+    simple: true
+    range-loops: true # Report preallocation suggestions on range loops, true by default
+    for-loops: false # Report preallocation suggestions on for loops, false by default
+
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0
+  new: false
+  exclude-use-default: false
+
+  exclude-rules:
+    - linters:
+        - goerr113
+      text: "do not define dynamic errors"
+    - linters:
+        - revive
+      text: "if-return"
+    - linters:
+        - revive
+      text: "unused-parameter" # too many false positives
+    - linters:
+        - revive
+      text: "redefines-builtin-id" # too many false positives

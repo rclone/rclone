@@ -1,0 +1,48 @@
+syntax = "proto3";
+package eventkit;
+
+option go_package = "github.com/jtolio/eventkit/pb";
+
+message Timestamp {
+    int64 seconds = 1;
+    int32 nanos = 2;
+}
+
+message Tag {
+    string key = 1;
+    oneof value {
+        string string = 2;
+        int64 int64 = 3;
+        double double = 4;
+        bytes bytes = 5;
+        bool bool = 6;
+        int64 duration_ns = 7;
+        Timestamp timestamp = 8;
+    }
+}
+
+message Event {
+    string name = 1;
+    repeated string scope = 2;
+    int64 timestamp_offset_ns = 3;
+    repeated Tag tags = 4;
+}
+
+message Packet {
+    string application = 1;
+    string application_version = 2;
+    string instance = 3;
+    Timestamp start_timestamp = 4;
+    int64 send_offset_ns = 5;
+    repeated Event events = 6;
+}
+
+message Record {
+    string application = 1;
+    string application_version = 2;
+    string instance = 3;
+    string source_addr = 4;
+    Timestamp timestamp = 5;
+    int64 timestamp_correction_ns = 6;
+    repeated Tag tags = 7;
+}

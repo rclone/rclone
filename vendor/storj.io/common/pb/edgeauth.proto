@@ -1,0 +1,37 @@
+// Copyright (C) 2021 Storj Labs, Inc.
+// See LICENSE for copying information.
+
+syntax = "proto3";
+option go_package = "storj.io/common/pb";
+
+// Service which stores credentials for Linksharing and the Multi-Tenant S3 Gateway.
+// Production location at auth.[eu1|us1|ap1].storjshare.io:443
+// The REST interface has additional functionality.
+service EdgeAuth {
+	// Request credentials for the Multi-Tenant S3 Gateway.
+	// Usually called through Uplink.
+	rpc RegisterAccess(EdgeRegisterAccessRequest) returns (EdgeRegisterAccessResponse);
+}
+
+message EdgeRegisterAccessRequest {
+	// Serialized access in the usual base58 format.
+	// Specifies the bucket, prefix, satellite and encryption key.
+	string access_grant = 1;
+
+	// Enable access without providing the secret.
+	bool public = 2;
+}
+
+// Credentials, compatible with S3 clients.
+message EdgeRegisterAccessResponse {
+	// Alphanumeric string.
+	// AWS specifies this should be between 16 and 128 characters.
+	// This is also used for linksharing in the url path.
+	string access_key_id = 1;
+
+	// Alphanumeric string.
+	string secret_key = 2;
+
+	// HTTP(S) URL to the Gateway.
+	string endpoint = 3;
+}

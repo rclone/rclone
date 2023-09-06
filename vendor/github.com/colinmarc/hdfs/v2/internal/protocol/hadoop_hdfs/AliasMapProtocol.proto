@@ -1,0 +1,69 @@
+/**
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+syntax = "proto2";
+option java_package = "org.apache.hadoop.hdfs.protocol.proto";
+option java_outer_classname = "AliasMapProtocolProtos";
+option java_generic_services = true;
+option java_generate_equals_and_hash = true;
+option go_package = "github.com/colinmarc/hdfs/v2/internal/protocol/hadoop_hdfs";
+package hadoop.hdfs;
+
+import "hdfs.proto";
+
+message KeyValueProto {
+  optional BlockProto key = 1;
+  optional ProvidedStorageLocationProto value = 2;
+}
+
+message WriteRequestProto {
+  required KeyValueProto keyValuePair = 1;
+}
+
+message WriteResponseProto {
+}
+
+message ReadRequestProto {
+  required BlockProto key = 1;
+}
+
+message ReadResponseProto {
+  optional ProvidedStorageLocationProto value = 1;
+}
+
+message ListRequestProto {
+  optional BlockProto marker = 1;
+}
+
+message ListResponseProto {
+  repeated KeyValueProto fileRegions = 1;
+  optional BlockProto nextMarker = 2;
+}
+
+message BlockPoolRequestProto {
+}
+
+message BlockPoolResponseProto {
+  required string blockPoolId = 1;
+}
+
+service AliasMapProtocolService {
+  rpc write(WriteRequestProto) returns(WriteResponseProto);
+  rpc read(ReadRequestProto) returns(ReadResponseProto);
+  rpc list(ListRequestProto) returns(ListResponseProto);
+  rpc getBlockPoolId(BlockPoolRequestProto) returns(BlockPoolResponseProto);
+}

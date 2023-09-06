@@ -1,0 +1,27 @@
+// Copyright (C) 2021 Storj Labs, Inc.
+// See LICENSE for copying information.
+
+syntax = "proto3";
+option go_package = "storj.io/picobuf;main";
+
+package pico;
+
+import "google/protobuf/descriptor.proto";
+
+message MessageOptions {
+  bool always_present = 1;
+}
+
+extend google.protobuf.MessageOptions {
+  MessageOptions message = 28980;
+}
+
+message FieldOptions {
+  bool   always_present = 1;
+  string custom_type = 2;
+  string custom_cast = 3;
+}
+
+extend google.protobuf.FieldOptions {
+  FieldOptions field = 28980;
+}

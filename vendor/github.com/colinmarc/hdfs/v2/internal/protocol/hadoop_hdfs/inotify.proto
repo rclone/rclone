@@ -1,0 +1,134 @@
+/**
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/**
+ * These .proto interfaces are private and stable.
+ * Please see http://wiki.apache.org/hadoop/Compatibility
+ * for what changes are allowed for a *stable* .proto interface.
+ */
+syntax="proto2";
+// This file contains protocol buffers used to communicate edits to clients
+// as part of the inotify system.
+
+option java_package = "org.apache.hadoop.hdfs.protocol.proto";
+option java_outer_classname = "InotifyProtos";
+option java_generate_equals_and_hash = true;
+option go_package = "github.com/colinmarc/hdfs/v2/internal/protocol/hadoop_hdfs";
+package hadoop.hdfs;
+
+import "acl.proto";
+import "xattr.proto";
+
+enum EventType {
+  EVENT_CREATE = 0x0;
+  EVENT_CLOSE = 0x1;
+  EVENT_APPEND = 0x2;
+  EVENT_RENAME = 0x3;
+  EVENT_METADATA = 0x4;
+  EVENT_UNLINK = 0x5;
+  EVENT_TRUNCATE = 0x6;
+}
+
+message EventProto {
+  required EventType type = 1;
+  required bytes contents = 2;
+}
+
+message EventBatchProto {
+  required int64 txid = 1;
+  repeated EventProto events = 2;
+}
+
+enum INodeType {
+  I_TYPE_FILE = 0x0;
+  I_TYPE_DIRECTORY = 0x1;
+  I_TYPE_SYMLINK = 0x2;
+}
+
+enum MetadataUpdateType {
+  META_TYPE_TIMES = 0x0;
+  META_TYPE_REPLICATION = 0x1;
+  META_TYPE_OWNER = 0x2;
+  META_TYPE_PERMS = 0x3;
+  META_TYPE_ACLS = 0x4;
+  META_TYPE_XATTRS = 0x5;
+}
+
+message CreateEventProto {
+  required INodeType type = 1;
+  required string path = 2;
+  required int64 ctime = 3;
+  required string ownerName = 4;
+  required string groupName = 5;
+  required FsPermissionProto perms = 6;
+  optional int32 replication = 7;
+  optional string symlinkTarget = 8;
+  optional bool overwrite = 9;
+  optional int64 defaultBlockSize = 10 [default=0];
+  optional bool erasureCoded = 11;
+}
+
+message CloseEventProto {
+  required string path = 1;
+  required int64 fileSize = 2;
+  required int64 timestamp = 3;
+}
+
+message TruncateEventProto {
+  required string path = 1;
+  required int64 fileSize = 2;
+  required int64 timestamp = 3;
+}
+
+message AppendEventProto {
+  required string path = 1;
+  optional bool newBlock = 2 [default = false];
+}
+
+message RenameEventProto {
+  required string srcPath = 1;
+  required string destPath = 2;
+  required int64 timestamp = 3;
+}
+
+message MetadataUpdateEventProto {
+  required string path = 1;
+  required MetadataUpdateType type = 2;
+  optional int64 mtime = 3;
+  optional int64 atime = 4;
+  optional int32 replication = 5;
+  optional string ownerName = 6;
+  optional string groupName = 7;
+  optional FsPermissionProto perms = 8;
+  repeated AclEntryProto acls = 9;
+  repeated XAttrProto xAttrs = 10;
+  optional bool xAttrsRemoved = 11;
+}
+
+message UnlinkEventProto {
+  required string path = 1;
+  required int64 timestamp = 2;
+}
+
+message EventsListProto {
+  repeated EventProto events = 1; // deprecated
+  required int64 firstTxid = 2;
+  required int64 lastTxid = 3;
+  required int64 syncTxid = 4;
+  repeated EventBatchProto batch = 5;
+}

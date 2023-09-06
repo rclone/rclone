@@ -1,0 +1,4 @@
+*.test
+.vscode
+vendor
+result

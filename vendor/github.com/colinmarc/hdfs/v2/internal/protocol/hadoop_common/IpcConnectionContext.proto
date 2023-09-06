@@ -1,0 +1,51 @@
+/**
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/**
+ * These .proto interfaces are private and stable.
+ * Please see http://wiki.apache.org/hadoop/Compatibility
+ * for what changes are allowed for a *stable* .proto interface.
+ */
+syntax = "proto2";
+option java_package = "org.apache.hadoop.ipc.protobuf";
+option java_outer_classname = "IpcConnectionContextProtos";
+option java_generate_equals_and_hash = true;
+option go_package = "github.com/colinmarc/hdfs/v2/internal/protocol/hadoop_common";
+package hadoop.common;
+
+/**
+ * Spec for UserInformationProto is specified in ProtoUtil#makeIpcConnectionContext
+ */
+message UserInformationProto {
+  optional string effectiveUser = 1;
+  optional string realUser = 2;
+}
+
+/**
+ * The connection context is sent as part of the connection establishment.
+ * It establishes the context for ALL Rpc calls within the connection.
+ */
+message IpcConnectionContextProto {
+  // UserInfo beyond what is determined as part of security handshake 
+  // at connection time (kerberos, tokens etc).
+  optional UserInformationProto userInfo = 2;
+
+  // Protocol name for next rpc layer.
+  // The client created a proxy with this protocol name
+  optional string protocol = 3;
+}

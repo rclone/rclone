@@ -1,0 +1,61 @@
+// Copyright (C) 2023 Storj Labs, Inc.
+// See LICENSE for copying information.
+
+syntax = "proto3";
+option go_package = "storj.io/common/pb";
+
+package noise;
+
+import "gogo.proto";
+import "google/protobuf/timestamp.proto";
+
+// NoiseProtocol represents the handshake pattern and cipher suite.
+enum NoiseProtocol {
+    NOISE_UNSET = 0;
+    NOISE_IK_25519_CHACHAPOLY_BLAKE2B = 1;
+    NOISE_IK_25519_AESGCM_BLAKE2B = 2;
+}
+
+// NoiseInfo represents the information an initiator needs to connect over Noise
+// to a specific peer.
+message NoiseInfo {
+    NoiseProtocol proto = 1;
+    bytes public_key = 2;
+}
+
+// NoiseKeyAttestation is a structure that shows the given Noise public key
+// belongs to a specific node id. The Noise public key (and signing timestamp)
+// are signed by the leaf key of the node's cert chain, where the node's cert
+// chain is validated to belong to the given node id.
+// Note that a NoiseSessionAttestation is preferred to a NoiseKeyAttestation
+// if possible, and required if you are interested in channel binding.
+// NoiseKeyAttestation, on the other hand, doubles as a more secure form of
+// NoiseInfo.
+message NoiseKeyAttestation {
+    bytes node_certchain = 2;
+    NoiseProtocol noise_proto = 3;
+
+    // these two values are part of the signature.
+    bytes noise_public_key = 4;
+    google.protobuf.Timestamp timestamp = 5 [(gogoproto.stdtime) = true, (gogoproto.nullable) = false];
+
+    bytes signature = 6;
+
+    // signers should fill this in, validators should ignore this field
+    // and just use the node id computed by the cert chain.
+    bytes deprecated_node_id = 1 [(gogoproto.customtype) = "NodeID", (gogoproto.nullable) = false];
+}
+
+// NoiseSessionAttestation is a structure that shows the given Noise session
+// handshake hash is in use by a specific node id. The handshake hash is signed
+// by the leaf key of the node's cert chain, where the node's cert chain is
+// validated to belong to the given node id.
+message NoiseSessionAttestation {
+    bytes node_certchain = 2;
+    bytes noise_handshake_hash = 3;
+    bytes signature = 4;
+
+    // signers should fill this in, validators should ignore this field
+    // and just use the node id computed by the cert chain.
+    bytes deprecated_node_id = 1 [(gogoproto.customtype) = "NodeID", (gogoproto.nullable) = false];
+}

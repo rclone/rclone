@@ -1,0 +1,48 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+load("@bazel_gazelle//:def.bzl", "gazelle")
+
+# gazelle:prefix github.com/go-resty/resty/v2
+# gazelle:go_naming_convention import_alias
+gazelle(name = "gazelle")
+
+go_library(
+    name = "resty",
+    srcs = [
+        "client.go",
+        "middleware.go",
+        "redirect.go",
+        "request.go",
+        "response.go",
+        "resty.go",
+        "retry.go",
+        "trace.go",
+        "transport.go",
+        "transport112.go",
+        "util.go",
+    ],
+    importpath = "github.com/go-resty/resty/v2",
+    visibility = ["//visibility:public"],
+    deps = ["@org_golang_x_net//publicsuffix:go_default_library"],
+)
+
+go_test(
+    name = "resty_test",
+    srcs = [
+        "client_test.go",
+        "context_test.go",
+        "example_test.go",
+        "request_test.go",
+        "resty_test.go",
+        "retry_test.go",
+        "util_test.go",
+    ],
+    data = glob([".testdata/*"]),
+    embed = [":resty"],
+    deps = ["@org_golang_x_net//proxy:go_default_library"],
+)
+
+alias(
+    name = "go_default_library",
+    actual = ":resty",
+    visibility = ["//visibility:public"],
+)

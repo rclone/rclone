@@ -1,0 +1,17 @@
+language: go
+
+go:
+- "1.8"
+- "1.9"
+- "1.10"
+- "1.11"
+- "1.12"
+- "1.13"
+- "1.14"
+
+install:
+- go get -d -t -v ./...
+
+script:
+- GOOS=linux GOARCH=amd64 go test -v .
+- GOOS=linux GOARCH=386 go test -v .

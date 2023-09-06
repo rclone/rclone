@@ -1,0 +1,155 @@
+/**
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/**
+ * These .proto interfaces are private and stable.
+ * Please see http://wiki.apache.org/hadoop/Compatibility
+ * for what changes are allowed for a *stable* .proto interface.
+ */
+syntax = "proto2";
+option java_package = "org.apache.hadoop.ha.proto";
+option java_outer_classname = "HAServiceProtocolProtos";
+option java_generic_services = true;
+option java_generate_equals_and_hash = true;
+option go_package = "github.com/colinmarc/hdfs/v2/internal/protocol/hadoop_common";
+package hadoop.common;
+
+enum HAServiceStateProto {
+  INITIALIZING = 0;
+  ACTIVE = 1;
+  STANDBY = 2;
+  OBSERVER = 3;
+}
+
+enum HARequestSource {
+  REQUEST_BY_USER = 0;
+  REQUEST_BY_USER_FORCED = 1;
+  REQUEST_BY_ZKFC = 2;
+}
+
+message HAStateChangeRequestInfoProto {
+  required HARequestSource reqSource = 1;
+}
+
+/**
+ * void request
+ */
+message MonitorHealthRequestProto { 
+}
+
+/**
+ * void response
+ */
+message MonitorHealthResponseProto { 
+}
+
+/**
+ * void request
+ */
+message TransitionToActiveRequestProto { 
+  required HAStateChangeRequestInfoProto reqInfo = 1;
+}
+
+/**
+ * void response
+ */
+message TransitionToActiveResponseProto { 
+}
+
+/**
+ * void request
+ */
+message TransitionToStandbyRequestProto { 
+  required HAStateChangeRequestInfoProto reqInfo = 1;
+}
+
+/**
+ * void response
+ */
+message TransitionToStandbyResponseProto { 
+}
+
+/**
+ * void request
+ */
+message TransitionToObserverRequestProto {
+  required HAStateChangeRequestInfoProto reqInfo = 1;
+}
+
+/**
+ * void response
+ */
+message TransitionToObserverResponseProto {
+}
+
+/**
+ * void request
+ */
+message GetServiceStatusRequestProto { 
+}
+
+/**
+ * Returns the state of the service
+ */
+message GetServiceStatusResponseProto { 
+  required HAServiceStateProto state = 1;
+
+  // If state is STANDBY, indicate whether it is
+  // ready to become active.
+  optional bool readyToBecomeActive = 2;
+  // If not ready to become active, a textual explanation of why not
+  optional string notReadyReason = 3;
+}
+
+/**
+ * Protocol interface provides High availability related 
+ * primitives to monitor and failover a service.
+ *
+ * For details see o.a.h.ha.HAServiceProtocol.
+ */
+service HAServiceProtocolService {
+  /**
+   * Monitor the health of a service.
+   */
+  rpc monitorHealth(MonitorHealthRequestProto)
+      returns(MonitorHealthResponseProto);
+
+  /**
+   * Request service to tranisition to active state.
+   */
+  rpc transitionToActive(TransitionToActiveRequestProto)
+      returns(TransitionToActiveResponseProto);
+
+  /**
+   * Request service to transition to standby state.
+   */
+  rpc transitionToStandby(TransitionToStandbyRequestProto)
+      returns(TransitionToStandbyResponseProto);
+
+  /**
+   * Request service to transition to observer state.
+   */
+  rpc transitionToObserver(TransitionToObserverRequestProto)
+      returns(TransitionToObserverResponseProto);
+
+  /**
+   * Get the current status of the service.
+   */
+  rpc getServiceStatus(GetServiceStatusRequestProto)
+      returns(GetServiceStatusResponseProto);
+}

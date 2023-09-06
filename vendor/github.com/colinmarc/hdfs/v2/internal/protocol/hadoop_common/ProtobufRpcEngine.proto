@@ -1,0 +1,68 @@
+/**
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/**
+ * These .proto interfaces are private and stable.
+ * Please see http://wiki.apache.org/hadoop/Compatibility
+ * for what changes are allowed for a *stable* .proto interface.
+ */
+syntax = "proto2";
+/**
+ * These are the messages used by Hadoop RPC for the Rpc Engine Protocol Buffer
+ * to marshal the request and response in the RPC layer.
+ * The messages are sent in addition to the normal RPC header as 
+ * defined in RpcHeader.proto
+ */
+option java_package = "org.apache.hadoop.ipc.protobuf";
+option java_outer_classname = "ProtobufRpcEngineProtos";
+option java_generate_equals_and_hash = true;
+option go_package = "github.com/colinmarc/hdfs/v2/internal/protocol/hadoop_common";
+package hadoop.common;
+
+/**
+ * This message is the header for the Protobuf Rpc Engine
+ * when sending a RPC request from  RPC client to the RPC server.
+ * The actual request (serialized as protobuf) follows this request.
+ *
+ * No special header is needed for the Rpc Response for Protobuf Rpc Engine.
+ * The normal RPC response header (see RpcHeader.proto) are sufficient. 
+ */
+message RequestHeaderProto {
+  /** Name of the RPC method */
+  required string methodName = 1;
+
+  /** 
+   * RPCs for a particular interface (ie protocol) are done using a
+   * IPC connection that is setup using rpcProxy.
+   * The rpcProxy's has a declared protocol name that is 
+   * sent form client to server at connection time. 
+   * 
+   * Each Rpc call also sends a protocol name 
+   * (called declaringClassprotocolName). This name is usually the same
+   * as the connection protocol name except in some cases. 
+   * For example metaProtocols such ProtocolInfoProto which get metainfo
+   * about the protocol reuse the connection but need to indicate that
+   * the actual protocol is different (i.e. the protocol is
+   * ProtocolInfoProto) since they reuse the connection; in this case
+   * the declaringClassProtocolName field is set to the ProtocolInfoProto
+   */
+  required string declaringClassProtocolName = 2;
+  
+  /** protocol version of class declaring the called method */
+  required uint64 clientProtocolVersion = 3;
+}

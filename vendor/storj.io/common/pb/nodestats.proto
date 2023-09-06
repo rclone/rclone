@@ -1,0 +1,82 @@
+// Copyright (C) 2019 Storj Labs, Inc.
+// See LICENSE for copying information.
+
+syntax = "proto3";
+option go_package = "storj.io/common/pb";
+
+package nodestats;
+
+import "gogo.proto";
+import "google/protobuf/timestamp.proto";
+
+service NodeStats {
+    rpc GetStats(GetStatsRequest) returns (GetStatsResponse);
+    rpc DailyStorageUsage(DailyStorageUsageRequest) returns (DailyStorageUsageResponse);
+    rpc PricingModel(PricingModelRequest) returns (PricingModelResponse);
+}
+
+message ReputationStats {
+    int64 total_count = 1;
+    int64 success_count = 2;
+    double reputation_alpha = 3;
+    double reputation_beta = 4;
+    double reputation_score = 5;
+    double unknown_reputation_alpha = 6;
+    double unknown_reputation_beta = 7;
+    double unknown_reputation_score = 8;
+}
+
+message GetStatsRequest {}
+
+message GetStatsResponse {
+    ReputationStats uptime_check = 1;
+    ReputationStats audit_check = 2;
+    google.protobuf.Timestamp disqualified = 3 [(gogoproto.stdtime) = true, (gogoproto.nullable) = true];
+    google.protobuf.Timestamp suspended = 4 [(gogoproto.stdtime) = true, (gogoproto.nullable) = true];
+    google.protobuf.Timestamp joined_at = 5 [(gogoproto.stdtime) = true, (gogoproto.nullable) = false];
+    google.protobuf.Timestamp offline_suspended = 6 [(gogoproto.stdtime) = true, (gogoproto.nullable) = true];
+    double online_score = 7;
+    google.protobuf.Timestamp offline_under_review = 8 [(gogoproto.stdtime) = true, (gogoproto.nullable) = true];
+    google.protobuf.Timestamp vetted_at = 10 [(gogoproto.stdtime) = true, (gogoproto.nullable) = true];
+    AuditHistory audit_history = 9;
+}
+
+message DailyStorageUsageRequest {
+    google.protobuf.Timestamp from = 1 [(gogoproto.stdtime) = true, (gogoproto.nullable) = false];
+    google.protobuf.Timestamp to = 2 [(gogoproto.stdtime) = true, (gogoproto.nullable) = false];
+}
+
+message DailyStorageUsageResponse {
+    message StorageUsage {
+        // at_rest_total is the sum of all at_rest_total per each metainfo loop for the day
+        double at_rest_total = 1;
+        // timestamp represents one tally day
+        google.protobuf.Timestamp timestamp = 2 [(gogoproto.stdtime) = true, (gogoproto.nullable) = false];
+        // interval_end_time represents the timestamp for the last tally run time
+        //  (i.e. last interval_end_time) for the day
+        google.protobuf.Timestamp interval_end_time = 3 [(gogoproto.stdtime) = true, (gogoproto.nullable) = false];
+    }
+
+    bytes node_id = 1 [(gogoproto.customtype) = "NodeID", (gogoproto.nullable) = false];
+    repeated StorageUsage daily_storage_usage = 2;
+}
+
+message PricingModelRequest {}
+
+message PricingModelResponse {
+    int64 egress_bandwidth_price = 1;
+    int64 repair_bandwidth_price = 2;
+    int64 disk_space_price = 3;
+    int64 audit_bandwidth_price = 4;
+}
+
+message AuditHistory {
+    repeated AuditWindow windows = 1;
+    double score = 2;
+}
+
+message AuditWindow {
+    google.protobuf.Timestamp window_start = 1 [(gogoproto.stdtime) = true, (gogoproto.nullable) = false];
+    int32 online_count = 2;
+    int32 total_count = 3;
+}

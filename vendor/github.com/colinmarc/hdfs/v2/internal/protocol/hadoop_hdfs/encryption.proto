@@ -1,0 +1,109 @@
+/**
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/**
+ * These .proto interfaces are private and stable.
+ * Please see http://wiki.apache.org/hadoop/Compatibility
+ * for what changes are allowed for a *stable* .proto interface.
+ */
+syntax="proto2";
+// This file contains protocol buffers that are used throughout HDFS -- i.e.
+// by the client, server, and data transfer protocols.
+
+
+option java_package = "org.apache.hadoop.hdfs.protocol.proto";
+option java_outer_classname = "EncryptionZonesProtos";
+option java_generate_equals_and_hash = true;
+option go_package = "github.com/colinmarc/hdfs/v2/internal/protocol/hadoop_hdfs";
+package hadoop.hdfs;
+
+import "hdfs.proto";
+
+message CreateEncryptionZoneRequestProto {
+  required string src = 1;
+  optional string keyName = 2;
+}
+
+message CreateEncryptionZoneResponseProto {
+}
+
+message ListEncryptionZonesRequestProto {
+  required int64 id = 1;
+}
+
+message EncryptionZoneProto {
+  required int64 id = 1;
+  required string path = 2;
+  required CipherSuiteProto suite = 3;
+  required CryptoProtocolVersionProto cryptoProtocolVersion = 4;
+  required string keyName = 5;
+}
+
+message ListEncryptionZonesResponseProto {
+  repeated EncryptionZoneProto zones = 1;
+  required bool hasMore = 2;
+}
+
+enum ReencryptActionProto {
+  CANCEL_REENCRYPT = 1;
+  START_REENCRYPT = 2;
+}
+
+message ReencryptEncryptionZoneRequestProto {
+  required ReencryptActionProto action = 1;
+  required string zone = 2;
+}
+
+message ReencryptEncryptionZoneResponseProto {
+}
+
+message ListReencryptionStatusRequestProto {
+  required int64 id = 1;
+}
+
+enum ReencryptionStateProto {
+  SUBMITTED = 1;
+  PROCESSING = 2;
+  COMPLETED = 3;
+}
+
+message ZoneReencryptionStatusProto {
+  required int64 id = 1;
+  required string path = 2;
+  required ReencryptionStateProto state = 3;
+  required string ezKeyVersionName = 4;
+  required int64 submissionTime = 5;
+  required bool canceled = 6;
+  required int64 numReencrypted = 7;
+  required int64 numFailures = 8;
+  optional int64 completionTime = 9;
+  optional string lastFile = 10;
+}
+
+message ListReencryptionStatusResponseProto {
+  repeated ZoneReencryptionStatusProto statuses = 1;
+  required bool hasMore = 2;
+}
+
+message GetEZForPathRequestProto {
+    required string src = 1;
+}
+
+message GetEZForPathResponseProto {
+    optional EncryptionZoneProto zone = 1;
+}

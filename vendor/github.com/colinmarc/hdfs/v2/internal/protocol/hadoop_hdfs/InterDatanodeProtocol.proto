@@ -1,0 +1,92 @@
+/**
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/**
+ * These .proto interfaces are private and stable.
+ * Please see http://wiki.apache.org/hadoop/Compatibility
+ * for what changes are allowed for a *stable* .proto interface.
+ */
+
+// This file contains protocol buffers that are used throughout HDFS -- i.e.
+// by the client, server, and data transfer protocols.
+syntax = "proto2";
+option java_package = "org.apache.hadoop.hdfs.protocol.proto";
+option java_outer_classname = "InterDatanodeProtocolProtos";
+option java_generic_services = true;
+option java_generate_equals_and_hash = true;
+option go_package = "github.com/colinmarc/hdfs/v2/internal/protocol/hadoop_hdfs";
+package hadoop.hdfs;
+
+import "hdfs.proto";
+import "HdfsServer.proto";
+
+/**
+ * Block with location information and new generation stamp
+ * to be used for recovery.
+ */
+message InitReplicaRecoveryRequestProto {
+  required RecoveringBlockProto block = 1;
+}
+
+/**
+ * Repica recovery information
+ */
+message InitReplicaRecoveryResponseProto {
+  required bool replicaFound = 1;
+
+  // The following entries are not set if there was no replica found.
+  optional ReplicaStateProto state = 2; // State of the replica
+  optional BlockProto block = 3;   // block information
+}
+
+/**
+ * Update replica with new generation stamp and length
+ */
+message UpdateReplicaUnderRecoveryRequestProto {
+  required ExtendedBlockProto block = 1; // Block identifier
+  required uint64 recoveryId = 2;        // New genstamp of the replica
+  required uint64 newLength = 3;         // New length of the replica
+  // New blockId for copy (truncate), default is 0.
+  optional uint64 newBlockId = 4 [default = 0];
+}
+
+/**
+ * Response returns updated block information
+ */
+message UpdateReplicaUnderRecoveryResponseProto {
+  optional string storageUuid = 1; // ID of the storage that stores replica
+}
+
+/**
+ * Protocol used between datanodes for block recovery.
+ *
+ * See the request and response for details of rpc call.
+ */
+service InterDatanodeProtocolService {
+  /**
+   * Initialize recovery of a replica
+   */
+  rpc initReplicaRecovery(InitReplicaRecoveryRequestProto)
+      returns(InitReplicaRecoveryResponseProto);
+
+  /**
+   * Update a replica with new generation stamp and length
+   */
+  rpc updateReplicaUnderRecovery(UpdateReplicaUnderRecoveryRequestProto)
+      returns(UpdateReplicaUnderRecoveryResponseProto);
+}
