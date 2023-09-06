@@ -8,7 +8,6 @@ package quatrix
 // “.” and “..”.
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -30,6 +29,7 @@ import (
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/lib/dircache"
 	"github.com/rclone/rclone/lib/encoder"
+	"github.com/rclone/rclone/lib/multipart"
 	"github.com/rclone/rclone/lib/pacer"
 	"github.com/rclone/rclone/lib/rest"
 )
@@ -51,9 +51,10 @@ func init() {
 		NewFs:       NewFs,
 		Options: fs.Options{
 			{
-				Name:     "api_key",
-				Help:     "API key for accessing Quatrix account",
-				Required: true,
+				Name:      "api_key",
+				Help:      "API key for accessing Quatrix account",
+				Required:  true,
+				Sensitive: true,
 			},
 			{
 				Name:     "host",
@@ -78,13 +79,19 @@ func init() {
 				Name:     "minimal_chunk_size",
 				Help:     "The minimal size for one chunk",
 				Advanced: true,
-				Default:  "10_000_000B",
+				Default:  fs.SizeSuffix(10_000_000),
 			},
 			{
 				Name:     "maximal_summary_chunk_size",
 				Help:     "The maximal summary for all chunks. It should not be less than 'transfers'*'minimal_chunk_size'",
 				Advanced: true,
-				Default:  "100_000_000B",
+				Default:  fs.SizeSuffix(100_000_000),
+			},
+			{
+				Name:     "hard_delete",
+				Help:     "Delete files permanently rather than putting them into the trash.",
+				Advanced: true,
+				Default:  false,
 			},
 		},
 	})
@@ -98,6 +105,7 @@ type Options struct {
 	EffectiveUploadTime     fs.Duration          `config:"effective_upload_time"`
 	MinimalChunkSize        fs.SizeSuffix        `config:"minimal_chunk_size"`
 	MaximalSummaryChunkSize fs.SizeSuffix        `config:"maximal_summary_chunk_size"`
+	HardDelete              bool                 `config:"hard_delete"`
 }
 
 // Fs represents remote Quatrix fs
@@ -401,7 +409,7 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 // Creates from the parameters passed in a half finished Object which
 // must have setMetaData called on it
 //
-// # Returns the object, leaf, directoryID and error
+// Returns the object, leaf, directoryID and error.
 //
 // Used to create new objects
 func (f *Fs) createObject(ctx context.Context, remote string) (o *Object, leaf string, directoryID string, err error) {
@@ -420,7 +428,7 @@ func (f *Fs) createObject(ctx context.Context, remote string) (o *Object, leaf s
 
 // Put the object into the container
 //
-// # Copy the reader in to the new object which is returned
+// Copy the reader in to the new object which is returned.
 //
 // The new object may have been created if an error is returned
 func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
@@ -572,7 +580,7 @@ func (f *Fs) setMTime(ctx context.Context, id string, t time.Time) (result *api.
 
 	params := &api.SetMTimeParams{
 		ID:    id,
-		MTime: (api.JSONTime)(t),
+		MTime: api.JSONTime(t),
 	}
 
 	result = &api.File{}
@@ -596,7 +604,7 @@ func (f *Fs) setMTime(ctx context.Context, id string, t time.Time) (result *api.
 func (f *Fs) deleteObject(ctx context.Context, id string) error {
 	payload := &api.DeleteParams{
 		IDs:               []string{id},
-		DeletePermanently: false,
+		DeletePermanently: f.opt.HardDelete,
 	}
 
 	result := &api.IDList{}
@@ -670,9 +678,9 @@ func (f *Fs) Purge(ctx context.Context, dir string) error {
 
 // Copy src to this remote using server-side copy operations.
 //
-// # This is stored with the remote path given
+// This is stored with the remote path given.
 //
-// # It returns the destination Object and a possible error
+// It returns the destination Object and a possible error.
 //
 // Will only be called if src.Fs().Name() == f.Name()
 //
@@ -749,9 +757,9 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 
 // Move src to this remote using server-side move operations.
 //
-// # This is stored with the remote path given
+// This is stored with the remote path given.
 //
-// # It returns the destination Object and a possible error
+// It returns the destination Object and a possible error.
 //
 // Will only be called if src.Fs().Name() == f.Name()
 //
@@ -1093,26 +1101,17 @@ func (o *Object) dynamicUpload(ctx context.Context, size int64, modTime time.Tim
 	for offset := int64(0); offset < size; offset += localChunk {
 		localChunk = o.fs.uploadMemoryManager.Consume(o.id, size-offset, speed)
 
-		buf := make([]byte, localChunk)
+		rw := multipart.NewRW()
 
-		_, err := io.ReadFull(in, buf)
+		_, err := io.CopyN(rw, in, localChunk)
 		if err != nil {
-			deleteErr := o.fs.deleteObject(ctx, o.id)
-			if deleteErr != nil {
-				fs.Logf(o.remote, "remove: %s", deleteErr)
-			}
-
 			return fmt.Errorf("read chunk with offset %d size %d: %w", offset, localChunk, err)
 		}
 
 		start := time.Now()
 
-		err = o.upload(ctx, uploadSession.UploadKey, buf, size, offset, localChunk, options...)
+		err = o.upload(ctx, uploadSession.UploadKey, rw, size, offset, localChunk, options...)
 		if err != nil {
-			deleteErr := o.fs.deleteObject(ctx, o.id)
-			if deleteErr != nil {
-				fs.Logf(o.remote, "remove: %s", deleteErr)
-			}
 			return fmt.Errorf("upload chunk with offset %d size %d: %w", offset, localChunk, err)
 		}
 
@@ -1195,11 +1194,11 @@ func (o *Object) uploadSession(ctx context.Context, parentID, name string) (uplo
 	return o.fs.uploadLink(ctx, parentID, encName)
 }
 
-func (o *Object) upload(ctx context.Context, uploadKey string, chunk []byte, fullSize int64, offset int64, chunkSize int64, options ...fs.OpenOption) (err error) {
+func (o *Object) upload(ctx context.Context, uploadKey string, chunk io.Reader, fullSize int64, offset int64, chunkSize int64, options ...fs.OpenOption) (err error) {
 	opts := rest.Opts{
 		Method:       "POST",
 		RootURL:      fmt.Sprintf(uploadURL, o.fs.opt.Host) + uploadKey,
-		Body:         bytes.NewReader(chunk),
+		Body:         chunk,
 		ContentRange: fmt.Sprintf("bytes %d-%d/%d", offset, offset+chunkSize, fullSize),
 		Options:      options,
 	}
