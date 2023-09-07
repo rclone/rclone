@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
 	"path"
 	"strings"
 	"time"
@@ -264,12 +263,12 @@ func clearConfigMap(m configmap.Mapper) {
 }
 
 func authHandler(auth proton.Auth) {
-	// log.Println("authHandler called")
+	// fs.Debugf("authHandler called")
 	setConfigMap(_mapper, auth.UID, auth.AccessToken, auth.RefreshToken, _saltedKeyPass)
 }
 
 func deAuthHandler() {
-	// log.Println("deAuthHandler called")
+	// fs.Debugf("deAuthHandler called")
 	clearConfigMap(_mapper)
 }
 
@@ -786,9 +785,7 @@ func (o *Object) Hash(ctx context.Context, t hash.Type) (string, error) {
 		return *o.digests, nil
 	}
 
-	// sha1 not cached
-	log.Println("sha1 not cached")
-	// we fetch and try to obtain the sha1 of the link
+	// sha1 not cached: we fetch and try to obtain the sha1 of the link
 	fileSystemAttrs, err := o.fs.protonDrive.GetActiveRevisionAttrsByID(ctx, o.ID())
 	if err != nil {
 		return "", err
@@ -810,7 +807,7 @@ func (o *Object) Size() int64 {
 			return *o.originalSize
 		}
 
-		fs.Errorf(o, "Original size should exist")
+		fs.Debugf(o, "Original file size missing")
 	}
 	return o.size
 }

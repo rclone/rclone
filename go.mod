@@ -28,8 +28,8 @@ require (
 	github.com/go-chi/chi/v5 v5.0.10
 	github.com/google/uuid v1.3.1
 	github.com/hanwen/go-fuse/v2 v2.3.0
-	github.com/henrybear327/Proton-API-Bridge v0.0.0-20230906013317-762502d1fb60
-	github.com/henrybear327/go-proton-api v0.0.0-20230905230058-67e3daa437a2
+	github.com/henrybear327/Proton-API-Bridge v0.0.0-20230908065933-5bfa15b567db
+	github.com/henrybear327/go-proton-api v0.0.0-20230907193451-e563407504ce
 	github.com/hirochachacha/go-smb2 v1.1.0
 	github.com/iguanesolutions/go-systemd/v5 v5.1.1
 	github.com/jcmturner/gokrb5/v8 v8.4.4
