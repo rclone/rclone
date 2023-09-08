@@ -106,7 +106,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 
 // Update object
 func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {
-	realpath := o.fs.realpath(src.Remote())
+	realpath := o.fs.realpath(o.remote)
 	dirname := path.Dir(realpath)
 	fs.Debugf(o.fs, "update [%s]", realpath)
 
