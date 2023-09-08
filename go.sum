@@ -296,10 +296,10 @@ github.com/hashicorp/go-uuid v1.0.3 h1:2gKiV6YVmrJ1i2CKKa9obLvRieoRGviZFL26PcT/C
 github.com/hashicorp/go-uuid v1.0.3/go.mod h1:6SBZvOh/SIDV7/2o3Jml5SYk/TvGqwFJ/bN7x4byOro=
 github.com/hashicorp/golang-lru v0.5.0/go.mod h1:/m3WP610KZHVQ1SGc6re/UDhFvYD7pJ4Ao+sR/qLZy8=
 github.com/hashicorp/golang-lru v0.5.1/go.mod h1:/m3WP610KZHVQ1SGc6re/UDhFvYD7pJ4Ao+sR/qLZy8=
-github.com/henrybear327/Proton-API-Bridge v0.0.0-20230906013317-762502d1fb60 h1:EqMPJXqpoFGqkMd2RFMPpo/hRBYI9j2nGoAHXaC932Q=
-github.com/henrybear327/Proton-API-Bridge v0.0.0-20230906013317-762502d1fb60/go.mod h1:79lPvh2duLpDDfXN5XThz6QBa3cfKljDChWDpNSC1jY=
-github.com/henrybear327/go-proton-api v0.0.0-20230905230058-67e3daa437a2 h1:6qH4QnxEDNwWrKG/qqikGGg5SzUJezYSJyB36Glu3No=
-github.com/henrybear327/go-proton-api v0.0.0-20230905230058-67e3daa437a2/go.mod h1:w63MZuzufKcIZ93pwRgiOtxMXYafI8H74D77AxytOBc=
+github.com/henrybear327/Proton-API-Bridge v0.0.0-20230908065933-5bfa15b567db h1:EpttN0oeR6BvUPis9+4iSyxIacMHXlaHrD/+IvyKPlc=
+github.com/henrybear327/Proton-API-Bridge v0.0.0-20230908065933-5bfa15b567db/go.mod h1:gunH16hf6U74W2b9CGDaWRadiLICsoJ6KRkSt53zLts=
+github.com/henrybear327/go-proton-api v0.0.0-20230907193451-e563407504ce h1:n1URi7VYiwX/3akX51keQXi6Huy4lJdVc4biJHYk3iw=
+github.com/henrybear327/go-proton-api v0.0.0-20230907193451-e563407504ce/go.mod h1:w63MZuzufKcIZ93pwRgiOtxMXYafI8H74D77AxytOBc=
 github.com/hirochachacha/go-smb2 v1.1.0 h1:b6hs9qKIql9eVXAiN0M2wSFY5xnhbHAQoCwRKbaRTZI=
 github.com/hirochachacha/go-smb2 v1.1.0/go.mod h1:8F1A4d5EZzrGu5R7PU163UcMRDJQl4FtcxjBfsY8TZE=
 github.com/huandu/xstrings v1.0.0/go.mod h1:4qWG/gcEcfX4z/mBDHJ++3ReCw9ibxbsNJbcucJdbSo=
