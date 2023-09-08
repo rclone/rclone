@@ -232,10 +232,24 @@ func New(f fs.Fs, opt *vfscommon.Options) *VFS {
 	// removed when the vfs is finalized
 	cache.PinUntilFinalized(f, vfs)
 
+	// Refresh the dircache if required
+	if vfs.Opt.Refresh {
+		go vfs.refresh()
+	}
+
 	// This can take some time so do it after the Pin
 	vfs.SetCacheMode(vfs.Opt.CacheMode)
 
 	return vfs
+}
+
+// refresh the directory cache for all directories
+func (vfs *VFS) refresh() {
+	fs.Debugf(vfs.f, "Refreshing VFS directory cache")
+	err := vfs.root.readDirTree()
+	if err != nil {
+		fs.Errorf(vfs.f, "Error refreshing VFS directory cache: %v", err)
+	}
 }
 
 // Stats returns info about the VFS
