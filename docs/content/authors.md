@@ -769,3 +769,5 @@ put them back in again.` >}}
   * Bjørn Smith <bjornsmith@gmail.com>
   * Alishan Ladhani <8869764+aladh@users.noreply.github.com>
   * zjx20 <zhoujianxiong2@gmail.com>
+  * Oksana <142890647+oks-maytech@users.noreply.github.com>
+  * Volodymyr Kit <v.kit@maytech.net>
