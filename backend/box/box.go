@@ -380,7 +380,7 @@ func shouldRetry(ctx context.Context, resp *http.Response, err error) (bool, err
 
 // readMetaDataForPath reads the metadata from the path
 func (f *Fs) readMetaDataForPath(ctx context.Context, path string) (info *api.Item, err error) {
-	// defer fs.Trace(f, "path=%q", path)("info=%+v, err=%v", &info, &err)
+	// defer log.Trace(f, "path=%q", path)("info=%+v, err=%v", &info, &err)
 	leaf, directoryID, err := f.dirCache.FindPath(ctx, path, false)
 	if err != nil {
 		if err == fs.ErrorDirNotFound {
@@ -389,20 +389,30 @@ func (f *Fs) readMetaDataForPath(ctx context.Context, path string) (info *api.It
 		return nil, err
 	}
 
-	found, err := f.listAll(ctx, directoryID, false, true, true, func(item *api.Item) bool {
-		if strings.EqualFold(item.Name, leaf) {
-			info = item
-			return true
-		}
-		return false
+	// Use preupload to find the ID
+	itemMini, err := f.preUploadCheck(ctx, leaf, directoryID, -1)
+	if err != nil {
+		return nil, err
+	}
+	if itemMini == nil {
+		return nil, fs.ErrorObjectNotFound
+	}
+
+	// Now we have the ID we can look up the object proper
+	opts := rest.Opts{
+		Method:     "GET",
+		Path:       "/files/" + itemMini.ID,
+		Parameters: fieldsValue(),
+	}
+	var item api.Item
+	err = f.pacer.Call(func() (bool, error) {
+		resp, err := f.srv.CallJSON(ctx, &opts, nil, &item)
+		return shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
 		return nil, err
 	}
-	if !found {
-		return nil, fs.ErrorObjectNotFound
-	}
-	return info, nil
+	return &item, nil
 }
 
 // errorHandler parses a non 2xx error response into an error
@@ -762,7 +772,7 @@ func (f *Fs) createObject(ctx context.Context, remote string, modTime time.Time,
 //
 // It returns "", nil if the file is good to go
 // It returns "ID", nil if the file must be updated
-func (f *Fs) preUploadCheck(ctx context.Context, leaf, directoryID string, size int64) (ID string, err error) {
+func (f *Fs) preUploadCheck(ctx context.Context, leaf, directoryID string, size int64) (item *api.ItemMini, err error) {
 	check := api.PreUploadCheck{
 		Name: f.opt.Enc.FromStandardName(leaf),
 		Parent: api.Parent{
@@ -787,16 +797,16 @@ func (f *Fs) preUploadCheck(ctx context.Context, leaf, directoryID string, size 
 			var conflict api.PreUploadCheckConflict
 			err = json.Unmarshal(apiErr.ContextInfo, &conflict)
 			if err != nil {
-				return "", fmt.Errorf("pre-upload check: JSON decode failed: %w", err)
+				return nil, fmt.Errorf("pre-upload check: JSON decode failed: %w", err)
 			}
 			if conflict.Conflicts.Type != api.ItemTypeFile {
-				return "", fmt.Errorf("pre-upload check: can't overwrite non file with file: %w", err)
+				return nil, fs.ErrorIsDir
 			}
-			return conflict.Conflicts.ID, nil
+			return &conflict.Conflicts, nil
 		}
-		return "", fmt.Errorf("pre-upload check: %w", err)
+		return nil, fmt.Errorf("pre-upload check: %w", err)
 	}
-	return "", nil
+	return nil, nil
 }
 
 // Put the object
@@ -817,11 +827,11 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 
 	// Preflight check the upload, which returns the ID if the
 	// object already exists
-	ID, err := f.preUploadCheck(ctx, leaf, directoryID, src.Size())
+	item, err := f.preUploadCheck(ctx, leaf, directoryID, src.Size())
 	if err != nil {
 		return nil, err
 	}
-	if ID == "" {
+	if item == nil {
 		return f.PutUnchecked(ctx, in, src, options...)
 	}
 
@@ -829,7 +839,7 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 	o := &Object{
 		fs:     f,
 		remote: remote,
-		id:     ID,
+		id:     item.ID,
 	}
 	return o, o.Update(ctx, in, src, options...)
 }

@@ -167,19 +167,7 @@ type PreUploadCheckResponse struct {
 // PreUploadCheckConflict is returned in the ContextInfo error field
 // from PreUploadCheck when the error code is "item_name_in_use"
 type PreUploadCheckConflict struct {
-	Conflicts struct {
-		Type        string `json:"type"`
-		ID          string `json:"id"`
-		FileVersion struct {
-			Type string `json:"type"`
-			ID   string `json:"id"`
-			Sha1 string `json:"sha1"`
-		} `json:"file_version"`
-		SequenceID string `json:"sequence_id"`
-		Etag       string `json:"etag"`
-		Sha1       string `json:"sha1"`
-		Name       string `json:"name"`
-	} `json:"conflicts"`
+	Conflicts ItemMini `json:"conflicts"`
 }
 
 // UpdateFileModTime is used in Update File Info
