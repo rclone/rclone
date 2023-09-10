@@ -69,6 +69,7 @@ docs = [
     "premiumizeme.md",
     "protondrive.md",
     "putio.md",
+    "protondrive.md",
     "seafile.md",
     "sftp.md",
     "smb.md",

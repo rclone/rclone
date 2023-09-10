@@ -73,6 +73,7 @@ Rclone *("rsync for cloud storage")* is a command-line program to sync files and
   * PikPak [:page_facing_up:](https://rclone.org/pikpak/)
   * premiumize.me [:page_facing_up:](https://rclone.org/premiumizeme/)
   * put.io [:page_facing_up:](https://rclone.org/putio/)
+  * Proton Drive [:page_facing_up:](https://rclone.org/protondrive/)
   * QingStor [:page_facing_up:](https://rclone.org/qingstor/)
   * Qiniu Cloud Object Storage (Kodo) [:page_facing_up:](https://rclone.org/s3/#qiniu)
   * Quatrix [:page_facing_up:](https://rclone.org/quatrix/)

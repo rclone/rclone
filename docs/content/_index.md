@@ -158,6 +158,7 @@ WebDAV or S3, that work out of the box.)
 {{< provider name="PikPak" home="https://mypikpak.com/" config="/pikpak/" >}}
 {{< provider name="premiumize.me" home="https://premiumize.me/" config="/premiumizeme/" >}}
 {{< provider name="put.io" home="https://put.io/" config="/putio/" >}}
+{{< provider name="Proton Drive" home="https://proton.me/drive" config="/protondrive/" >}}
 {{< provider name="QingStor" home="https://www.qingcloud.com/products/storage" config="/qingstor/" >}}
 {{< provider name="Qiniu Cloud Object Storage (Kodo)" home="https://www.qiniu.com/en/products/kodo" config="/s3/#qiniu" >}}
 {{< provider name="Quatrix by Maytech" home="https://www.maytech.net/products/quatrix-business" config="/quatrix/" >}}

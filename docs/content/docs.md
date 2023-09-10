@@ -66,6 +66,7 @@ See the following for detailed instructions for
   * [PikPak](/pikpak/)
   * [premiumize.me](/premiumizeme/)
   * [put.io](/putio/)
+  * [Proton Drive](/protondrive/)
   * [QingStor](/qingstor/)
   * [Quatrix by Maytech](/quatrix/)
   * [Seafile](/seafile/)
