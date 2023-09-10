@@ -3,13 +3,16 @@ package protondrive
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
+	"net/http"
 	"path"
 	"strings"
 	"time"
 
+	"github.com/coreos/go-semver/semver"
 	protonDriveAPI "github.com/henrybear327/Proton-API-Bridge"
 	"github.com/henrybear327/go-proton-api"
 
@@ -18,6 +21,7 @@ import (
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/configstruct"
 	"github.com/rclone/rclone/fs/config/obscure"
+	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/lib/dircache"
 	"github.com/rclone/rclone/lib/encoder"
@@ -283,7 +287,73 @@ func deAuthHandler() {
 	clearConfigMap(_mapper)
 }
 
+func satisfyMinVersionRequirement(ctx context.Context, f *Fs, url string) (bool, error) {
+	fs.Debugf(f, "Checking if the Proton API Bridge version is allowed to be used")
+
+	// get min_proton_api_bridge_version from API (which is hosted on a Github Static Page)
+	resp, err := fshttp.NewClient(ctx).Get(url)
+	if err != nil {
+		return false, err
+	}
+	defer fs.CheckClose(resp.Body, &err)
+
+	// if API failed to be obtained, we consider this as a no-go
+	// we would rather be safe than sorry
+	if resp.StatusCode != http.StatusOK {
+		return false, errors.New(resp.Status)
+	}
+
+	// parse API response
+	bodyBytes, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return false, err
+	}
+
+	type ConfigResponse struct {
+		MinProtonAPIBridgeVersion string
+	}
+
+	var configResponse ConfigResponse
+	err = json.Unmarshal(bodyBytes, &configResponse)
+	if err != nil {
+		return false, err
+	}
+
+	// prase version using semver
+	bridgeVersion, err := semver.NewVersion(protonDriveAPI.LIB_VERSION)
+	if err != nil {
+		return false, err
+	}
+
+	minSupportedVersion, err := semver.NewVersion(configResponse.MinProtonAPIBridgeVersion)
+	if err != nil {
+		return false, err
+	}
+
+	// check constraint
+	// ok if minSupportedVersion <= bridgeVersion
+	return !bridgeVersion.LessThan(*minSupportedVersion), nil
+}
+
 func newProtonDrive(ctx context.Context, f *Fs, opt *Options, m configmap.Mapper) (*protonDriveAPI.ProtonDrive, error) {
+	/*
+		We will perform a minimum Proton API Bridge version check here.
+		By accessing an API endpoint https://henrybear327.github.io/Proton-API-Bridge-Config/config.json,
+		we can obtain the minimum version supported / allowed, as we are reverse engineering the API,
+		we would like to use this mechanism as a kill-switch, in the case where we found out that we
+		need to disable certain versions of the library from sending further, say, invalid data.
+	*/
+
+	if ok, err := satisfyMinVersionRequirement(ctx, f, "https://henrybear327.github.io/Proton-API-Bridge-Config/config.json"); err != nil {
+		return nil, fmt.Errorf("allowed Proton API Bridge version check error: %v", err)
+	} else {
+		if ok {
+			fs.Debugf(f, "allowed Proton API Bridge version check passed")
+		} else {
+			return nil, fmt.Errorf("the current rclone version is using a disallowed version of the Proton Bridge API library. Please upgrade your rclone version")
+		}
+	}
+
 	config := protonDriveAPI.NewDefaultConfig()
 	config.AppVersion = opt.AppVersion
 	config.UserAgent = f.ci.UserAgent // opt.UserAgent
