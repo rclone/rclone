@@ -2,8 +2,10 @@
 package sia
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -219,7 +221,7 @@ func (o *Object) readMetaData(ctx context.Context) (err error) {
 		return err
 	}
 
-	o.size = result.Object.Size()
+	o.size = result.Object.Size
 
 	return nil
 }
@@ -392,9 +394,7 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) (err error) {
 		return f.shouldRetry(resp, err)
 	})
 
-	if len(result) == 0 {
-		return fs.ErrorDirNotFound
-	} else if len(result) > 1 {
+	if len(result) > 1 {
 		return fs.ErrorDirectoryNotEmpty
 	}
 
@@ -410,6 +410,46 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) (err error) {
 	})
 
 	return err
+}
+
+// Move renames a remote file object
+func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (o fs.Object, err error) {
+	var resp *http.Response
+
+	data := map[string]string{
+		"from": path.Join("/", src.String()),
+		"to":   path.Join("/", remote),
+		"mode": "single",
+	}
+
+	body, err := json.Marshal(data)
+	if err != nil {
+		return nil, errors.New("Could not marshal json data")
+	}
+
+	opts := rest.Opts{
+		Method: "POST",
+		Path:   "/api/bus/objects/rename",
+		Body:   bytes.NewReader(body),
+	}
+
+	err = f.pacer.Call(func() (bool, error) {
+		resp, err = f.srv.Call(ctx, &opts)
+		return f.shouldRetry(resp, err)
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	o = &Object{
+		fs:      f,
+		remote:  remote,
+		modTime: src.ModTime(ctx),
+		size:    src.Size(),
+	}
+
+	return o, nil
 }
 
 // NewFs constructs an Fs from the path

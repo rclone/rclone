@@ -13,15 +13,8 @@ type ObjectResponse struct {
 }
 
 type ObjectInfo struct {
-	Slabs []Slab `json:"Slabs"`
-}
-
-func (o *ObjectInfo) Size() int64 {
-	size := int64(0)
-	for _, slab := range o.Slabs {
-		size += int64(slab.Length)
-	}
-	return size
+	Slabs []Slab `json:"slabs"`
+	Size  int64  `json:"size"`
 }
 
 type Slab struct {
