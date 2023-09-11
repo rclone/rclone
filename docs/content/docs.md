@@ -1548,7 +1548,7 @@ but not `OpenChunkWriter`) don't have a natural chunk size.
 
 In this case the value of this option is used (default 64Mi).
 
-### --multi-thread-cutoff=SIZE ###
+### --multi-thread-cutoff=SIZE {#multi-thread-cutoff}
 
 When transferring files above SIZE to capable backends, rclone will
 use multiple threads to transfer the file (default 256M).

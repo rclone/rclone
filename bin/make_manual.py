@@ -25,6 +25,7 @@ docs = [
     "flags.md",
     "docker.md",
     "bisync.md",
+    "release_signing.md",
 
     # Keep these alphabetical by full name
     "fichier.md",

@@ -130,7 +130,7 @@ Here are the Standard options specific to protondrive (Proton Drive).
 
 #### --protondrive-username
 
-The username of your proton drive account
+The username of your proton account
 
 Properties:
 
@@ -141,7 +141,7 @@ Properties:
 
 #### --protondrive-password
 
-The password of your proton drive account.
+The password of your proton account.
 
 **NB** Input to this must be obscured - see [rclone obscure](/commands/rclone_obscure/).
 
@@ -171,6 +171,68 @@ Properties:
 ### Advanced options
 
 Here are the Advanced options specific to protondrive (Proton Drive).
+
+#### --protondrive-mailbox-password
+
+The mailbox password of your two-password proton account.
+
+For more information regarding the mailbox password, please check the 
+following official knowledge base article: 
+https://proton.me/support/the-difference-between-the-mailbox-password-and-login-password
+
+
+**NB** Input to this must be obscured - see [rclone obscure](/commands/rclone_obscure/).
+
+Properties:
+
+- Config:      mailbox_password
+- Env Var:     RCLONE_PROTONDRIVE_MAILBOX_PASSWORD
+- Type:        string
+- Required:    false
+
+#### --protondrive-client-uid
+
+Client uid key (internal use only)
+
+Properties:
+
+- Config:      client_uid
+- Env Var:     RCLONE_PROTONDRIVE_CLIENT_UID
+- Type:        string
+- Required:    false
+
+#### --protondrive-client-access-token
+
+Client access token key (internal use only)
+
+Properties:
+
+- Config:      client_access_token
+- Env Var:     RCLONE_PROTONDRIVE_CLIENT_ACCESS_TOKEN
+- Type:        string
+- Required:    false
+
+#### --protondrive-client-refresh-token
+
+Client refresh token key (internal use only)
+
+Properties:
+
+- Config:      client_refresh_token
+- Env Var:     RCLONE_PROTONDRIVE_CLIENT_REFRESH_TOKEN
+- Type:        string
+- Required:    false
+
+#### --protondrive-client-salted-key-pass
+
+Client salted key pass key (internal use only)
+
+Properties:
+
+- Config:      client_salted_key_pass
+- Env Var:     RCLONE_PROTONDRIVE_CLIENT_SALTED_KEY_PASS
+- Type:        string
+- Required:    false
 
 #### --protondrive-encoding
 

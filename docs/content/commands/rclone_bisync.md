@@ -33,17 +33,20 @@ rclone bisync remote1:path1 remote2:path2 [flags]
 ## Options
 
 ```
-      --check-access            Ensure expected RCLONE_TEST files are found on both Path1 and Path2 filesystems, else abort.
-      --check-filename string   Filename for --check-access (default: RCLONE_TEST)
-      --check-sync string       Controls comparison of final listings: true|false|only (default: true) (default "true")
-      --filters-file string     Read filtering patterns from a file
-      --force                   Bypass --max-delete safety check and run the sync. Consider using with --verbose
-  -h, --help                    help for bisync
-      --localtime               Use local time in listings (default: UTC)
-      --no-cleanup              Retain working files (useful for troubleshooting and testing).
-      --remove-empty-dirs       Remove empty directories at the final cleanup step.
-  -1, --resync                  Performs the resync run. Path1 files may overwrite Path2 versions. Consider using --verbose or --dry-run first.
-      --workdir string          Use custom working dir - useful for testing. (default: $HOME/.cache/rclone/bisync)
+      --check-access              Ensure expected RCLONE_TEST files are found on both Path1 and Path2 filesystems, else abort.
+      --check-filename string     Filename for --check-access (default: RCLONE_TEST)
+      --check-sync string         Controls comparison of final listings: true|false|only (default: true) (default "true")
+      --create-empty-src-dirs     Sync creation and deletion of empty directories. (Not compatible with --remove-empty-dirs)
+      --filters-file string       Read filtering patterns from a file
+      --force                     Bypass --max-delete safety check and run the sync. Consider using with --verbose
+  -h, --help                      help for bisync
+      --ignore-listing-checksum   Do not use checksums for listings (add --ignore-checksum to additionally skip post-copy checksum checks)
+      --localtime                 Use local time in listings (default: UTC)
+      --no-cleanup                Retain working files (useful for troubleshooting and testing).
+      --remove-empty-dirs         Remove ALL empty directories at the final cleanup step.
+      --resilient                 Allow future runs to retry after certain less-serious errors, instead of requiring --resync. Use at your own risk!
+  -1, --resync                    Performs the resync run. Path1 files may overwrite Path2 versions. Consider using --verbose or --dry-run first.
+      --workdir string            Use custom working dir - useful for testing. (default: $HOME/.cache/rclone/bisync)
 ```
 
 
@@ -53,7 +56,7 @@ Flags for anything which can Copy a file.
 
 ```
       --check-first                                 Do all the checks before starting transfers
-  -c, --checksum                                    Skip based on checksum (if available) & size, not mod-time & size
+  -c, --checksum                                    Check for changes with size & checksum (if available, or fallback to size only).
       --compare-dest stringArray                    Include additional comma separated server-side paths during comparison
       --copy-dest stringArray                       Implies --compare-dest but also copies files from paths into destination
       --cutoff-mode string                          Mode to stop transfers when reaching the max transfer limit HARD|SOFT|CAUTIOUS (default "HARD")
@@ -69,8 +72,9 @@ Flags for anything which can Copy a file.
       --max-transfer SizeSuffix                     Maximum size of data to transfer (default off)
   -M, --metadata                                    If set, preserve metadata when copying objects
       --modify-window Duration                      Max time diff to be considered the same (default 1ns)
-      --multi-thread-cutoff SizeSuffix              Use multi-thread downloads for files above this size (default 250Mi)
-      --multi-thread-streams int                    Max number of streams to use for multi-thread downloads (default 4)
+      --multi-thread-chunk-size SizeSuffix          Chunk size for multi-thread downloads / uploads, if not set by filesystem (default 64Mi)
+      --multi-thread-cutoff SizeSuffix              Use multi-thread downloads for files above this size (default 256Mi)
+      --multi-thread-streams int                    Number of streams to use for multi-thread downloads (default 4)
       --multi-thread-write-buffer-size SizeSuffix   In memory buffer size for writing when in multi-thread mode (default 128Ki)
       --no-check-dest                               Don't check the destination, copy regardless
       --no-traverse                                 Don't traverse destination file system on copy

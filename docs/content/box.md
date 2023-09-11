@@ -438,6 +438,28 @@ Properties:
 - Type:        string
 - Required:    false
 
+#### --box-impersonate
+
+Impersonate this user ID when using a service account.
+
+Settng this flag allows rclone, when using a JWT service account, to
+act on behalf of another user by setting the as-user header.
+
+The user ID is the Box identifier for a user. User IDs can found for
+any user via the GET /users endpoint, which is only available to
+admins, or by calling the GET /users/me endpoint with an authenticated
+user session.
+
+See: https://developer.box.com/guides/authentication/jwt/as-user/
+
+
+Properties:
+
+- Config:      impersonate
+- Env Var:     RCLONE_BOX_IMPERSONATE
+- Type:        string
+- Required:    false
+
 #### --box-encoding
 
 The encoding for the backend.

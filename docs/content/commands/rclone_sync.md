@@ -67,7 +67,7 @@ Flags for anything which can Copy a file.
 
 ```
       --check-first                                 Do all the checks before starting transfers
-  -c, --checksum                                    Skip based on checksum (if available) & size, not mod-time & size
+  -c, --checksum                                    Check for changes with size & checksum (if available, or fallback to size only).
       --compare-dest stringArray                    Include additional comma separated server-side paths during comparison
       --copy-dest stringArray                       Implies --compare-dest but also copies files from paths into destination
       --cutoff-mode string                          Mode to stop transfers when reaching the max transfer limit HARD|SOFT|CAUTIOUS (default "HARD")
@@ -83,8 +83,9 @@ Flags for anything which can Copy a file.
       --max-transfer SizeSuffix                     Maximum size of data to transfer (default off)
   -M, --metadata                                    If set, preserve metadata when copying objects
       --modify-window Duration                      Max time diff to be considered the same (default 1ns)
-      --multi-thread-cutoff SizeSuffix              Use multi-thread downloads for files above this size (default 250Mi)
-      --multi-thread-streams int                    Max number of streams to use for multi-thread downloads (default 4)
+      --multi-thread-chunk-size SizeSuffix          Chunk size for multi-thread downloads / uploads, if not set by filesystem (default 64Mi)
+      --multi-thread-cutoff SizeSuffix              Use multi-thread downloads for files above this size (default 256Mi)
+      --multi-thread-streams int                    Number of streams to use for multi-thread downloads (default 4)
       --multi-thread-write-buffer-size SizeSuffix   In memory buffer size for writing when in multi-thread mode (default 128Ki)
       --no-check-dest                               Don't check the destination, copy regardless
       --no-traverse                                 Don't traverse destination file system on copy

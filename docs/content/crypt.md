@@ -600,7 +600,7 @@ Properties:
         - Encode using base64. Suitable for case sensitive remote.
     - "base32768"
         - Encode using base32768. Suitable if your remote counts UTF-16 or
-        - Unicode codepoint instead of UTF-8 byte length. (Eg. Onedrive, Dropbox, Box)
+        - Unicode codepoint instead of UTF-8 byte length. (Eg. Onedrive, Dropbox)
 
 #### --crypt-suffix
 

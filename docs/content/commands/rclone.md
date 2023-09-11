@@ -54,8 +54,6 @@ rclone [flags]
       --azureblob-env-auth                                  Read credentials from runtime (environment variables, CLI or MSI)
       --azureblob-key string                                Storage Account Shared Key
       --azureblob-list-chunk int                            Size of blob list (default 5000)
-      --azureblob-memory-pool-flush-time Duration           How often internal memory buffer pools will be flushed (default 1m0s)
-      --azureblob-memory-pool-use-mmap                      Whether to use mmap buffers in internal memory pool
       --azureblob-msi-client-id string                      Object ID of the user-assigned MSI to use, if any
       --azureblob-msi-mi-res-id string                      Azure resource ID of the user-assigned MSI to use, if any
       --azureblob-msi-object-id string                      Object ID of the user-assigned MSI to use, if any
@@ -81,9 +79,8 @@ rclone [flags]
       --b2-endpoint string                                  Endpoint for the service
       --b2-hard-delete                                      Permanently delete files on remote removal, otherwise hide files
       --b2-key string                                       Application Key
-      --b2-memory-pool-flush-time Duration                  How often internal memory buffer pools will be flushed (default 1m0s)
-      --b2-memory-pool-use-mmap                             Whether to use mmap buffers in internal memory pool
       --b2-test-mode string                                 A flag string for X-Bz-Test-Mode header for debugging
+      --b2-upload-concurrency int                           Concurrency for multipart uploads (default 16)
       --b2-upload-cutoff SizeSuffix                         Cutoff for switching to chunked upload (default 200Mi)
       --b2-version-at Time                                  Show file versions as they were at the specified time (default off)
       --b2-versions                                         Include old versions in directory listings
@@ -97,6 +94,7 @@ rclone [flags]
       --box-client-secret string                            OAuth Client Secret
       --box-commit-retries int                              Max number of times to try committing a multipart file (default 100)
       --box-encoding MultiEncoder                           The encoding for the backend (default Slash,BackSlash,Del,Ctl,RightSpace,InvalidUtf8,Dot)
+      --box-impersonate string                              Impersonate this user ID when using a service account
       --box-list-chunk int                                  Size of listing chunk 1-1000 (default 1000)
       --box-owned-by string                                 Only show items owned by the login (email address) passed in
       --box-root-folder-id string                           Fill in for rclone to use a non root folder as its starting point
@@ -130,7 +128,7 @@ rclone [flags]
       --cache-writes                                        Cache file data on writes through the FS
       --check-first                                         Do all the checks before starting transfers
       --checkers int                                        Number of checkers to run in parallel (default 8)
-  -c, --checksum                                            Skip based on checksum (if available) & size, not mod-time & size
+  -c, --checksum                                            Check for changes with size & checksum (if available, or fallback to size only).
       --chunker-chunk-size SizeSuffix                       Files larger than chunk size will be split in chunks (default 2Gi)
       --chunker-fail-hard                                   Choose how chunker should handle files with missing or invalid chunks
       --chunker-hash-type string                            Choose how chunker handles hash sums (default "md5")
@@ -181,6 +179,7 @@ rclone [flags]
       --drive-encoding MultiEncoder                         The encoding for the backend (default InvalidUtf8)
       --drive-env-auth                                      Get IAM credentials from runtime (environment variables or instance meta data if no env vars)
       --drive-export-formats string                         Comma separated list of preferred formats for downloading Google docs (default "docx,xlsx,pptx,svg")
+      --drive-fast-list-bug-fix                             Work around a bug in Google Drive listing (default true)
       --drive-formats string                                Deprecated: See export_formats
       --drive-impersonate string                            Impersonate this user when using a service account
       --drive-import-formats string                         Comma separated list of preferred formats for uploading Google docs
@@ -434,8 +433,9 @@ rclone [flags]
       --min-age Duration                                    Only transfer files older than this in s or suffix ms|s|m|h|d|w|M|y (default off)
       --min-size SizeSuffix                                 Only transfer files bigger than this in KiB or suffix B|K|M|G|T|P (default off)
       --modify-window Duration                              Max time diff to be considered the same (default 1ns)
-      --multi-thread-cutoff SizeSuffix                      Use multi-thread downloads for files above this size (default 250Mi)
-      --multi-thread-streams int                            Max number of streams to use for multi-thread downloads (default 4)
+      --multi-thread-chunk-size SizeSuffix                  Chunk size for multi-thread downloads / uploads, if not set by filesystem (default 64Mi)
+      --multi-thread-cutoff SizeSuffix                      Use multi-thread downloads for files above this size (default 256Mi)
+      --multi-thread-streams int                            Number of streams to use for multi-thread downloads (default 4)
       --multi-thread-write-buffer-size SizeSuffix           In memory buffer size for writing when in multi-thread mode (default 128Ki)
       --netstorage-account string                           Set the NetStorage account name
       --netstorage-host string                              Domain+path of NetStorage host to connect to
@@ -470,6 +470,7 @@ rclone [flags]
       --onedrive-server-side-across-configs                 Deprecated: use --server-side-across-configs instead
       --onedrive-token string                               OAuth Access Token as a JSON blob
       --onedrive-token-url string                           Token server url
+      --oos-attempt-resume-upload                           If true attempt to resume previously started multipart upload for the object
       --oos-chunk-size SizeSuffix                           Chunk size to use for uploading (default 5Mi)
       --oos-compartment string                              Object storage compartment OCID
       --oos-config-file string                              Path to OCI config file (default "~/.oci/config")
@@ -479,7 +480,8 @@ rclone [flags]
       --oos-disable-checksum                                Don't store MD5 checksum with object metadata
       --oos-encoding MultiEncoder                           The encoding for the backend (default Slash,InvalidUtf8,Dot)
       --oos-endpoint string                                 Endpoint for Object storage API
-      --oos-leave-parts-on-error                            If true avoid calling abort upload on a failure, leaving all successfully uploaded parts on S3 for manual recovery
+      --oos-leave-parts-on-error                            If true avoid calling abort upload on a failure, leaving all successfully uploaded parts for manual recovery
+      --oos-max-upload-parts int                            Maximum number of parts in a multipart upload (default 10000)
       --oos-namespace string                                Object storage namespace
       --oos-no-check-bucket                                 If set, don't attempt to check the bucket exists or create it
       --oos-provider string                                 Choose your Auth Provider (default "env_auth")
@@ -532,10 +534,11 @@ rclone [flags]
       --protondrive-app-version string                      The app version string (default "macos-drive@1.0.0-alpha.1+rclone")
       --protondrive-enable-caching                          Caches the files and folders metadata to reduce API calls (default true)
       --protondrive-encoding MultiEncoder                   The encoding for the backend (default Slash,LeftSpace,RightSpace,InvalidUtf8,Dot)
+      --protondrive-mailbox-password string                 The mailbox password of your two-password proton account (obscured)
       --protondrive-original-file-size                      Return the file size before encryption (default true)
-      --protondrive-password string                         The password of your proton drive account (obscured)
+      --protondrive-password string                         The password of your proton account (obscured)
       --protondrive-replace-existing-draft                  Create a new revision when filename conflict is detected
-      --protondrive-username string                         The username of your proton drive account
+      --protondrive-username string                         The username of your proton account
       --putio-auth-url string                               Auth server URL
       --putio-client-id string                              OAuth Client Id
       --putio-client-secret string                          OAuth Client Secret
@@ -552,6 +555,13 @@ rclone [flags]
       --qingstor-upload-concurrency int                     Concurrency for multipart uploads (default 1)
       --qingstor-upload-cutoff SizeSuffix                   Cutoff for switching to chunked upload (default 200Mi)
       --qingstor-zone string                                Zone to connect to
+      --quatrix-api-key string                              API key for accessing Quatrix account
+      --quatrix-effective-upload-time string                Wanted upload time for one chunk (default "4s")
+      --quatrix-encoding MultiEncoder                       The encoding for the backend (default Slash,BackSlash,Del,Ctl,InvalidUtf8,Dot)
+      --quatrix-hard-delete                                 Delete files permanently rather than putting them into the trash
+      --quatrix-host string                                 Host name of Quatrix account
+      --quatrix-maximal-summary-chunk-size SizeSuffix       The maximal summary for all chunks. It should not be less than 'transfers'*'minimal_chunk_size' (default 95.367Mi)
+      --quatrix-minimal-chunk-size SizeSuffix               The minimal size for one chunk (default 9.537Mi)
   -q, --quiet                                               Print as little stuff as possible
       --rc                                                  Enable the remote control server
       --rc-addr stringArray                                 IPaddress:Port or :Port to bind server to (default [localhost:5572])
@@ -604,8 +614,6 @@ rclone [flags]
       --s3-list-version int                                 Version of ListObjects to use: 1,2 or 0 for auto
       --s3-location-constraint string                       Location constraint - must be set to match the Region
       --s3-max-upload-parts int                             Maximum number of parts in a multipart upload (default 10000)
-      --s3-memory-pool-flush-time Duration                  How often internal memory buffer pools will be flushed (default 1m0s)
-      --s3-memory-pool-use-mmap                             Whether to use mmap buffers in internal memory pool
       --s3-might-gzip Tristate                              Set this if the backend might gzip objects (default unset)
       --s3-no-check-bucket                                  If set, don't attempt to check the bucket exists or create it
       --s3-no-head                                          If set, don't HEAD uploaded objects to check integrity
@@ -776,7 +784,7 @@ rclone [flags]
       --use-json-log                                        Use json log format
       --use-mmap                                            Use mmap allocator (see docs)
       --use-server-modtime                                  Use server modified time instead of object metadata
-      --user-agent string                                   Set the user-agent to a specified string (default "rclone/v1.64.0-beta.7196.08e40f21b.fix-flag-groups")
+      --user-agent string                                   Set the user-agent to a specified string (default "rclone/v1.64.0")
   -v, --verbose count                                       Print lots more stuff (repeat for more)
   -V, --version                                             Print the version number
       --webdav-bearer-token string                          Bearer token instead of user/pass (e.g. a Macaroon)
