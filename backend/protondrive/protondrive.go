@@ -38,10 +38,10 @@ const (
 	maxSleep      = 2 * time.Second
 	decayConstant = 2 // bigger for slower decay, exponential
 
-	clientUIDKey           = "clientUID"
-	clientAccessTokenKey   = "clientAccessToken"
-	clientRefreshTokenKey  = "clientRefreshToken"
-	clientSaltedKeyPassKey = "clientSaltedKeyPass"
+	clientUIDKey           = "client_uid"
+	clientAccessTokenKey   = "client_access_token"
+	clientRefreshTokenKey  = "client_refresh_token"
+	clientSaltedKeyPassKey = "client_salted_key_pass"
 )
 
 var (
@@ -69,7 +69,7 @@ func init() {
 			Required:   true,
 			IsPassword: true,
 		}, {
-			Name: "mailboxPassword",
+			Name: "mailbox_password",
 			Help: `The mailbox password of your two-password proton account.
 
 For more information regarding the mailbox password, please check the 
@@ -87,6 +87,34 @@ The value can also be provided with --protondrive-2fa=000000
 The 2FA code of your proton drive account if the account is set up with 
 two-factor authentication`,
 			Required: false,
+		}, {
+			Name:      clientUIDKey,
+			Help:      "Client uid key (internal use only)",
+			Required:  false,
+			Advanced:  true,
+			Sensitive: true,
+			Hide:      fs.OptionHideBoth,
+		}, {
+			Name:      clientAccessTokenKey,
+			Help:      "Client access token key (internal use only)",
+			Required:  false,
+			Advanced:  true,
+			Sensitive: true,
+			Hide:      fs.OptionHideBoth,
+		}, {
+			Name:      clientRefreshTokenKey,
+			Help:      "Client refresh token key (internal use only)",
+			Required:  false,
+			Advanced:  true,
+			Sensitive: true,
+			Hide:      fs.OptionHideBoth,
+		}, {
+			Name:      clientSaltedKeyPassKey,
+			Help:      "Client salted key pass key (internal use only)",
+			Required:  false,
+			Advanced:  true,
+			Sensitive: true,
+			Hide:      fs.OptionHideBoth,
 		}, {
 			Name:     config.ConfigEncoding,
 			Help:     config.ConfigEncodingHelp,
@@ -161,7 +189,7 @@ then we might have a problem with caching the stale data.`,
 type Options struct {
 	Username        string `config:"username"`
 	Password        string `config:"password"`
-	MailboxPassword string `config:"mailboxPassword"`
+	MailboxPassword string `config:"mailbox_password"`
 	TwoFA           string `config:"2fa"`
 
 	// advanced
