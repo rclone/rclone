@@ -6,10 +6,8 @@ package s3
 import (
 	"bytes"
 	"context"
-	"encoding/hex"
 	"fmt"
 	"io"
-	"math/rand"
 	"net/url"
 	"os"
 	"os/exec"
@@ -29,6 +27,7 @@ import (
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/fstest"
 	httplib "github.com/rclone/rclone/lib/http"
+	"github.com/rclone/rclone/lib/random"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -39,8 +38,8 @@ const (
 
 // Configure and serve the server
 func serveS3(f fs.Fs) (testURL string, keyid string, keysec string) {
-	keyid = RandString(16)
-	keysec = RandString(16)
+	keyid = random.String(16)
+	keysec = random.String(16)
 	serveropt := &Options{
 		HTTP:           httplib.DefaultCfg(),
 		pathBucketMode: true,
@@ -58,17 +57,6 @@ func serveS3(f fs.Fs) (testURL string, keyid string, keysec string) {
 	testURL = w.Server.URLs()[0]
 
 	return
-}
-
-func RandString(n int) string {
-	src := rand.New(rand.NewSource(time.Now().UnixNano()))
-	b := make([]byte, (n+1)/2)
-
-	if _, err := src.Read(b); err != nil {
-		panic(err)
-	}
-
-	return hex.EncodeToString(b)[:n]
 }
 
 // TestS3 runs the s3 server then runs the unit tests for the

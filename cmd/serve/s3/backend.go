@@ -3,7 +3,6 @@ package s3
 
 import (
 	"context"
-	"crypto/md5"
 	"encoding/hex"
 	"io"
 	"log"
@@ -306,8 +305,7 @@ func (db *s3Backend) PutObject(
 		return result, err
 	}
 
-	hasher := md5.New()
-	w := io.MultiWriter(f, hasher)
+	w := io.MultiWriter(f)
 	if _, err := io.Copy(w, input); err != nil {
 		// remove file when i/o error occurred (FsPutErr)
 		_ = f.Close()
