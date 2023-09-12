@@ -70,3 +70,9 @@ func newServer(ctx context.Context, f fs.Fs, opt *Options) (s *Server, err error
 func (w *Server) Bind(router chi.Router) {
 	router.Handle("/*", w.handler)
 }
+
+func (w *Server) serve() error {
+	w.Serve()
+	fs.Logf(w.f, "Starting s3 server on %s", w.URLs())
+	return nil
+}
