@@ -8,6 +8,7 @@ import (
 	"io"
 	"math/rand"
 	"os"
+	"sort"
 	"sync"
 	"testing"
 	"time"
@@ -118,6 +119,29 @@ func TestItemDirty(t *testing.T) {
 	checkObject(t, r, "potato", "hello")
 }
 
+func TestItemsSort(t *testing.T) {
+	_, c := newItemTestCache(t)
+	item, _ := c.get("potato")
+	item2, _ := c.get("potato2")
+
+	items := Items{item, item2}
+
+	item.score = 1
+	item2.score = 0
+
+	// Sort by descending score
+	sort.Sort(items)
+
+	assert.Equal(t, items[0], item)
+
+	item.score = 0
+	item2.score = 1
+
+	sort.Sort(items)
+
+	assert.Equal(t, items[0], item2)
+}
+
 func TestItemSync(t *testing.T) {
 	_, c := newItemTestCache(t)
 	item, _ := c.get("potato")
@@ -175,6 +199,115 @@ func TestItemTruncateExisting(t *testing.T) {
 	require.NoError(t, item.Close(nil))
 
 	checkObject(t, r, "existing", contents[:40]+zeroes[:20])
+}
+
+func TestItemUpdateScoreLRU(t *testing.T) {
+	_, c := newItemTestCache(t)
+	item, _ := c.get("potato")
+
+	// Check LRU is default
+	assert.Equal(t, c.opt.CacheStrategy, vfscommon.CacheStrategyLRU)
+
+	now := time.Now()
+	item.info.ATime = now
+
+	item.updateScore(now.Add(time.Second * 1))
+
+	// Check score equals time since last access
+	assert.Equal(t, item.score, float64(1))
+}
+
+func TestItemUpdateScoreLFU(t *testing.T) {
+	_, c := newItemTestCache(t)
+	item, _ := c.get("potato")
+
+	c.opt.CacheStrategy = vfscommon.CacheStrategyLFU
+
+	item.info.Opens = 2
+
+	item.updateScore(time.Now())
+
+	// Check score equals 1 / number of opens
+	assert.Equal(t, item.score, 0.5)
+}
+
+func TestItemUpdateScoreNoOpensLFU(t *testing.T) {
+	_, c := newItemTestCache(t)
+	item, _ := c.get("potato")
+
+	c.opt.CacheStrategy = vfscommon.CacheStrategyLFU
+
+	item.updateScore(time.Now())
+
+	// Check score equals 1 / number of opens
+	// min opens is 1
+	assert.Equal(t, item.score, float64(1))
+}
+
+func TestItemUpdateScoreLFF(t *testing.T) {
+	_, c := newItemTestCache(t)
+	item, _ := c.get("potato")
+
+	require.NoError(t, item.Open(nil))
+	require.NoError(t, item.Truncate(4096))
+	require.NoError(t, item.Close(nil))
+
+	c.opt.CacheStrategy = vfscommon.CacheStrategyLFF
+
+	item.updateScore(time.Now())
+
+	// Check score equals size
+	assert.Equal(t, item.score, float64(4096))
+}
+
+func TestItemUpdateScoreEmptyLFF(t *testing.T) {
+	_, c := newItemTestCache(t)
+	item, _ := c.get("potato")
+
+	c.opt.CacheStrategy = vfscommon.CacheStrategyLFF
+
+	item.updateScore(time.Now())
+
+	// Check score equals size
+	// min size is 4096
+	assert.Equal(t, item.score, float64(4096))
+}
+
+func TestItemUpdateScoreLRUSP(t *testing.T) {
+	_, c := newItemTestCache(t)
+	item, _ := c.get("potato")
+
+	require.NoError(t, item.Open(nil))
+	require.NoError(t, item.Truncate(4096))
+	require.NoError(t, item.Close(nil))
+
+	c.opt.CacheStrategy = vfscommon.CacheStrategyLRUSP
+
+	now := time.Now()
+	item.info.ATime = now
+
+	item.info.Opens = 2
+
+	item.updateScore(now.Add(time.Second * 1))
+
+	// Check score equals size * time since last access / number of opens
+	assert.Equal(t, item.score, float64(2048))
+}
+
+func TestItemUpdateScoreEmptyNoOpensLRUSP(t *testing.T) {
+	_, c := newItemTestCache(t)
+	item, _ := c.get("potato")
+
+	c.opt.CacheStrategy = vfscommon.CacheStrategyLRUSP
+
+	now := time.Now()
+	item.info.ATime = now
+
+	item.updateScore(now.Add(time.Second * 1))
+
+	// Check score equals size * time since last access / number of opens
+	// min size is 4096 and min opens is 1
+	assert.Equal(t, item.score, float64(4096))
 }
 
 func TestItemReadAt(t *testing.T) {

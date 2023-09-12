@@ -26,6 +26,7 @@ func AddFlags(flagSet *pflag.FlagSet) {
 	flags.DurationVarP(flagSet, &Opt.PollInterval, "poll-interval", "", Opt.PollInterval, "Time to wait between polling for changes, must be smaller than dir-cache-time and only on supported remotes (set 0 to disable)", "VFS")
 	flags.BoolVarP(flagSet, &Opt.ReadOnly, "read-only", "", Opt.ReadOnly, "Only allow read-only access", "VFS")
 	flags.FVarP(flagSet, &Opt.CacheMode, "vfs-cache-mode", "", "Cache mode off|minimal|writes|full", "VFS")
+	flags.FVarP(flagSet, &Opt.CacheStrategy, "vfs-cache-strategy", "", "Cache strategy lru|lfu|lff|lru-sp", "VFS")
 	flags.DurationVarP(flagSet, &Opt.CachePollInterval, "vfs-cache-poll-interval", "", Opt.CachePollInterval, "Interval to poll the cache for stale objects", "VFS")
 	flags.DurationVarP(flagSet, &Opt.CacheMaxAge, "vfs-cache-max-age", "", Opt.CacheMaxAge, "Max time since last access of objects in the cache", "VFS")
 	flags.FVarP(flagSet, &Opt.CacheMaxSize, "vfs-cache-max-size", "", "Max total size of objects in the cache", "VFS")

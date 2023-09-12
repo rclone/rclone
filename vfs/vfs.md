@@ -74,6 +74,7 @@ find that you need one or the other or both.
 
     --cache-dir string                     Directory rclone will use for caching.
     --vfs-cache-mode CacheMode             Cache mode off|minimal|writes|full (default off)
+    --vfs-cache-strategy CacheStrategy     Cache strategy lru|lfu|lff|lru-sp (default lru)
     --vfs-cache-max-age duration           Max time since last access of objects in the cache (default 1h0m0s)
     --vfs-cache-max-size SizeSuffix        Max total size of objects in the cache (default off)
     --vfs-cache-min-free-space SizeSuffix  Target minimum free space on the disk containing the cache (default off)
@@ -100,10 +101,14 @@ that the cache may exceed these quotas for two reasons. Firstly
 because it is only checked every `--vfs-cache-poll-interval`. Secondly
 because open files cannot be evicted from the cache. When
 `--vfs-cache-max-size` or `--vfs-cache-min-free-size` is exceeded,
-rclone will attempt to evict the least accessed files from the cache
-first. rclone will start with files that haven't been accessed for the
-longest. This cache flushing strategy is efficient and more relevant
-files are likely to remain cached.
+rclone will attempt to evict the files based on the `--vfs-cache-strategy`.
+
+The `--vfs-cache-strategy` determines the strategy rclone will use to remove
+files from the cache. The default value of lru will start evicting the least
+accessed files from the cache first. This cache flushing strategy is
+efficient, and more relevant files are likely to remain cached. However,
+it may not be well-suited for every workload, so rclone provides several
+additional options to choose from.
 
 The `--vfs-cache-max-age` will evict files from the cache
 after the set time since last access has passed. The default value of
@@ -185,6 +190,33 @@ too large and `--vfs-read-ahead` is set large if required.
 FAT/exFAT do not. Rclone will perform very badly if the cache
 directory is on a filesystem which doesn't support sparse files and it
 will log an ERROR message if one is detected.
+
+#### --vfs-cache-strategy lru
+
+With the LRU (Least Recently Used) strategy (the default), rclone will evict
+files from the cache based on the last time they were accessed. Files that
+have not been accessed as recently will be evicted first.
+
+#### --vfs-cache-strategy lfu
+
+With the LFU (Least Frequently Used) strategy, rclone will evict files from
+the cache based on the number of times they have been opened. Files that
+have not been opened as frequently will be evicted first.
+
+#### --vfs-cache-strategy lff
+
+With the LFF (Largest File First) strategy, rclone will evict files from the
+cache based on their size. Files with larger sizes will be evicted first.
+
+#### --vfs-cache-strategy lru-sp
+
+With the LRU-SP (Size-Adjusted and Popularity-Aware LRU) strategy, rclone
+will evict files from the cache based on the following formula:
+
+size * time since last access / number of opens
+
+Larger files will be evicted before newer and smaller files, and files with
+fewer references will be evicted before files with many references.
 
 #### Fingerprinting
 
