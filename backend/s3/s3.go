@@ -5037,7 +5037,7 @@ func (o *Object) Remote() string {
 	return o.remote
 }
 
-var matchMd5 = regexp.MustCompile(`^[0-9a-f]{32}$`)
+var matchMd5 = regexp.MustCompile(`^[0-9a-f]{32}(-[0-9]+)?$`)
 
 // Set the MD5 from the etag
 func (o *Object) setMD5FromEtag(etag string) {

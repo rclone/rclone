@@ -408,6 +408,27 @@ func (f *Fs) InternalTestVersions(t *testing.T) {
 	// Purge gets tested later
 }
 
+func TestSetMD5FromETag(t *testing.T) {
+	makeMD5Test := func(eTag string) func(*testing.T) {
+		return func(t *testing.T) {
+			o := &Object{
+				fs: new(Fs),
+			}
+			o.setMD5FromEtag(eTag)
+			if o.md5 == "" {
+				t.Errorf("setMD5FromEtag failed for %s\n", eTag)
+			}
+		}
+	}
+	for _, testHash := range []string{
+		"\"2af8106f012e78e6bca8547cd06da912\"",
+		"\"2af8106f012e78e6bca8547cd06da912-1\"",
+		"\"2af8106f012e78e6bca8547cd06da912-15\"",
+	} {
+		t.Run(fmt.Sprintf("MD5 %s", testHash), makeMD5Test(testHash))
+	}
+}
+
 func (f *Fs) InternalTest(t *testing.T) {
 	t.Run("Metadata", f.InternalTestMetadata)
 	t.Run("NoHead", f.InternalTestNoHead)
