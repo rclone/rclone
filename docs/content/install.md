@@ -319,7 +319,7 @@ Note that this is controlled by [community maintainer](https://github.com/bouken
 ## Source installation {#source}
 
 Make sure you have git and [Go](https://golang.org/) installed.
-Go version 1.17 or newer is required, latest release is recommended.
+Go version 1.18 or newer is required, the latest release is recommended.
 You can get it from your package manager, or download it from
 [golang.org/dl](https://golang.org/dl/). Then you can run the following:
 
@@ -397,18 +397,8 @@ operation, as a regular Go package. The source will be stored it in the Go
 module cache, and the resulting executable will be in your GOPATH bin folder
 (`$(go env GOPATH)/bin`, which corresponds to `~/go/bin/rclone` by default).
 
-With Go version 1.17 or newer:
-
 ```
 go install github.com/rclone/rclone@latest
-```
-
-With Go versions older than 1.17 (do **not** use the `-u` flag, it causes Go to
-try to update the dependencies that rclone uses and sometimes these don't work
-with the current version):
-
-```
-go get github.com/rclone/rclone
 ```
 
 ## Ansible installation {#ansible}
