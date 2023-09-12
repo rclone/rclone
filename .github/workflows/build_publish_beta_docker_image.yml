@@ -44,7 +44,7 @@ jobs:
                 password: ${{ secrets.GITHUB_TOKEN }}
 
             - name: Build and publish image
-              uses: docker/build-push-action@v4
+              uses: docker/build-push-action@v5
               with:
                 file: Dockerfile
                 context: .
