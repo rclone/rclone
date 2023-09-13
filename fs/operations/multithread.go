@@ -172,17 +172,18 @@ func multiThreadCopy(ctx context.Context, f fs.Fs, remote string, src fs.Object,
 		info.ChunkSize = src.Size()
 	}
 
+	// Use the backend concurrency if it is higher than --multi-thread-streams or if --multi-thread-streams wasn't set explicitly
+	if !ci.MultiThreadSet || info.Concurrency > concurrency {
+		fs.Debugf(src, "multi-thread copy: using backend concurrency of %d instead of --multi-thread-streams %d", info.Concurrency, concurrency)
+		concurrency = info.Concurrency
+	}
+
 	numChunks := calculateNumChunks(src.Size(), info.ChunkSize)
 	if concurrency > numChunks {
 		fs.Debugf(src, "multi-thread copy: number of streams %d was bigger than number of chunks %d", concurrency, numChunks)
 		concurrency = numChunks
 	}
 
-	// Use the backend concurrency if it is higher than --multi-thread-streams or if --multi-thread-streams wasn't set explicitly
-	if !ci.MultiThreadSet || info.Concurrency > concurrency {
-		fs.Debugf(src, "multi-thread copy: using backend concurrency of %d instead of --multi-thread-streams %d", info.Concurrency, concurrency)
-		concurrency = info.Concurrency
-	}
 	if concurrency < 1 {
 		concurrency = 1
 	}
