@@ -80,6 +80,19 @@ developers so it may be out of date. Its current version is as below.
 
 [![Homebrew package](https://repology.org/badge/version-for-repo/homebrew/rclone.svg)](https://repology.org/project/rclone/versions)
 
+### Installation with MacPorts (#macos-macports)
+
+On macOS, rclone can also be installed via [MacPorts](https://www.macports.org):
+
+    sudo port install rclone
+
+Note that this is a third party installer not controlled by the rclone
+developers so it may be out of date. Its current version is as below.
+
+[![MacPorts port](https://repology.org/badge/version-for-repo/macports/rclone.svg)](https://repology.org/project/rclone/versions)
+
+More information [here](https://ports.macports.org/port/rclone/).
+
 ### Precompiled binary, using curl {#macos-precompiled}
 
 To avoid problems with macOS gatekeeper enforcing the binary to be signed and
