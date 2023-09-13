@@ -90,6 +90,28 @@ Now
   * git commit -a -v -m "Changelog updates from Version ${NEW_TAG}"
   * git push
 
+## Update the website between releases
+
+Create an update website branch based off the last release
+
+    git co -b update-website
+
+If the branch already exists, double check there are no commits that need saving.
+
+Now reset the branch to the last release
+
+    git reset --hard v1.64.0
+
+Create the changes, check them in, test with `make serve` then
+
+    make upload_test_website
+
+Check out https://test.rclone.org and when happy
+
+    make upload_website
+
+Cherry pick any changes back to master and the stable branch if it is active.
+
 ## Making a manual build of docker
 
 The rclone docker image should autobuild on via GitHub actions.  If it doesn't
