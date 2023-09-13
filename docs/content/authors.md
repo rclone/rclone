@@ -774,3 +774,4 @@ put them back in again.` >}}
   * David Pedersen <limero@me.com>
   * Drew Stinnett <drew@drewlink.com>
   * Pat Patterson <pat@backblaze.com>
+  * Herby Gillot <herby.gillot@gmail.com>
