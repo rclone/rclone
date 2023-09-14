@@ -1211,6 +1211,10 @@ func (f *Fs) ChangeNotify(ctx context.Context, notifyFunc func(string, fs.EntryT
 			fs.Infof(f, "Failed to get StreamPosition: %s", err)
 		}
 
+		// box can send duplicate Event IDs. Use this map to track and filter
+		// the ones we've alread processed.
+		processedEventIDs := make(map[string]time.Time)
+
 		var ticker *time.Ticker
 		var tickerC <-chan time.Time
 		for {
@@ -1238,7 +1242,15 @@ func (f *Fs) ChangeNotify(ctx context.Context, notifyFunc func(string, fs.EntryT
 						continue
 					}
 				}
-				streamPosition, err = f.changeNotifyRunner(ctx, notifyFunc, streamPosition)
+
+				// Garbage collect EventIDs older than 1 minute
+				for eventID, timestamp := range processedEventIDs {
+					if time.Since(timestamp) > time.Minute {
+						delete(processedEventIDs, eventID)
+					}
+				}
+
+				streamPosition, err = f.changeNotifyRunner(ctx, notifyFunc, streamPosition, processedEventIDs)
 				if err != nil {
 					fs.Infof(f, "Change notify listener failure: %s", err)
 				}
@@ -1291,11 +1303,8 @@ func (f *Fs) getFullPath(parentID string, childName string) (fullPath string) {
 	return fullPath
 }
 
-func (f *Fs) changeNotifyRunner(ctx context.Context, notifyFunc func(string, fs.EntryType), streamPosition string) (nextStreamPosition string, err error) {
+func (f *Fs) changeNotifyRunner(ctx context.Context, notifyFunc func(string, fs.EntryType), streamPosition string, processedEventIDs map[string]time.Time) (nextStreamPosition string, err error) {
 	nextStreamPosition = streamPosition
-
-	// box can send duplicate Event IDs; filter any in a single notify run
-	processedEventIDs := make(map[string]bool)
 
 	for {
 		limit := f.opt.ListChunk
@@ -1344,7 +1353,7 @@ func (f *Fs) changeNotifyRunner(ctx context.Context, notifyFunc func(string, fs.
 			if entry.EventID == "" || processedEventIDs[entry.EventID] { // missing Event ID, or already saw this one
 				continue
 			}
-			processedEventIDs[entry.EventID] = true
+			processedEventIDs[entry.EventID] = time.Now()
 			newEventIDs++
 
 			if entry.Source.ID == "" { // missing File or Folder ID
