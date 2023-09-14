@@ -1350,21 +1350,32 @@ func (f *Fs) changeNotifyRunner(ctx context.Context, notifyFunc func(string, fs.
 		var pathsToClear []pathToClear
 		newEventIDs := 0
 		for _, entry := range result.Entries {
-			if entry.EventID == "" || processedEventIDs[entry.EventID] { // missing Event ID, or already saw this one
+			eventDetails := fmt.Sprintf("[%q(%d)|%s|%s|%s|%s]", entry.Source.Name, entry.Source.SequenceID,
+				entry.Source.Type, entry.EventType, entry.Source.ID, entry.EventID)
+
+			if entry.EventID == "" {
+				fs.Debugf(f, "%s ignored due to missing EventID", eventDetails)
+				continue
+			}
+			if _, ok := processedEventIDs[entry.EventID]; ok {
+				fs.Debugf(f, "%s ignored due to duplicate EventID", eventDetails)
 				continue
 			}
 			processedEventIDs[entry.EventID] = time.Now()
 			newEventIDs++
 
 			if entry.Source.ID == "" { // missing File or Folder ID
+				fs.Debugf(f, "%s ignored due to missing SourceID", eventDetails)
 				continue
 			}
 			if entry.Source.Type != api.ItemTypeFile && entry.Source.Type != api.ItemTypeFolder { // event is not for a file or folder
+				fs.Debugf(f, "%s ignored due to unsupported SourceType", eventDetails)
 				continue
 			}
 
 			// Only interested in event types that result in a file tree change
 			if _, found := api.FileTreeChangeEventTypes[entry.EventType]; !found {
+				fs.Debugf(f, "%s ignored due to unsupported EventType", eventDetails)
 				continue
 			}
 
@@ -1375,6 +1386,7 @@ func (f *Fs) changeNotifyRunner(ctx context.Context, notifyFunc func(string, fs.
 					// Item in the cache has the same or newer SequenceID than
 					// this event. Ignore this event, it must be old.
 					f.itemMetaCacheMu.Unlock()
+					fs.Debugf(f, "%s ignored due to old SequenceID (%q)", eventDetails, itemMeta.SequenceID)
 					continue
 				}
 
@@ -1396,7 +1408,10 @@ func (f *Fs) changeNotifyRunner(ctx context.Context, notifyFunc func(string, fs.
 			if cachedItemMetaFound {
 				path := f.getFullPath(itemMeta.ParentID, itemMeta.Name)
 				if path != "" {
+					fs.Debugf(f, "%s added old path (%q) for notify", eventDetails, path)
 					pathsToClear = append(pathsToClear, pathToClear{path: path, entryType: entryType})
+				} else {
+					fs.Debugf(f, "%s old parent not cached", eventDetails)
 				}
 
 				// If this is a directory, also delete it from the dir cache.
@@ -1420,7 +1435,10 @@ func (f *Fs) changeNotifyRunner(ctx context.Context, notifyFunc func(string, fs.
 			if entry.Source.ItemStatus == api.ItemStatusActive {
 				path := f.getFullPath(entry.Source.Parent.ID, entry.Source.Name)
 				if path != "" {
+					fs.Debugf(f, "%s added new path (%q) for notify", eventDetails, path)
 					pathsToClear = append(pathsToClear, pathToClear{path: path, entryType: entryType})
+				} else {
+					fs.Debugf(f, "%s new parent not found", eventDetails)
 				}
 			}
 		}
