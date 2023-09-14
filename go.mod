@@ -74,7 +74,7 @@ require (
 	golang.org/x/time v0.3.0
 	google.golang.org/api v0.134.0
 	gopkg.in/yaml.v2 v2.4.0
-	storj.io/uplink v1.11.0
+	storj.io/uplink v1.12.0
 )
 
 require (
@@ -156,9 +156,9 @@ require (
 	google.golang.org/grpc v1.56.2 // indirect
 	google.golang.org/protobuf v1.31.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	storj.io/common v0.0.0-20230602145716-d6ea82d58b3d // indirect
+	storj.io/common v0.0.0-20230907123639-5fd0608fd947 // indirect
 	storj.io/drpc v0.0.33 // indirect
-	storj.io/picobuf v0.0.1 // indirect
+	storj.io/picobuf v0.0.2-0.20230906122608-c4ba17033c6c // indirect
 )
 
 require (
