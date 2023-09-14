@@ -24,7 +24,6 @@ import (
 
 	"storj.io/uplink"
 	"storj.io/uplink/edge"
-	"storj.io/uplink/private/testuplink"
 )
 
 const (
@@ -276,8 +275,6 @@ func (f *Fs) connect(ctx context.Context) (project *uplink.Project, err error) {
 	cfg := uplink.Config{
 		UserAgent: "rclone",
 	}
-
-	ctx = testuplink.WithConcurrentSegmentUploadsDefaultConfig(ctx)
 
 	project, err = cfg.OpenProject(ctx, f.access)
 	if err != nil {
