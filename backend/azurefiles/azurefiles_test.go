@@ -4,13 +4,12 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"io"
 	"math/rand"
-	"path/filepath"
 	"strings"
 	"testing"
 	"time"
 
-	"github.com/Azure/azure-sdk-for-go/sdk/storage/azfile/file"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fstest"
 	"github.com/rclone/rclone/fstest/fstests"
@@ -28,120 +27,6 @@ func TestIntegration(t *testing.T) {
 var pre_existing_file_name = "preexistingfile.txt"
 var pre_existing_dir = "pre_existing_dir"
 var file_in_pre_existing_dir = "lorem.txt"
-
-func testNewObjectErrorOnObjectNotExisting(t *testing.T, c *Client) {
-	_, err := c.NewObject(context.TODO(), "somefilethatdoesnotexist.txt")
-	assert.Error(t, err)
-}
-
-func testNewObjectNoErrorIfObjectExists(t *testing.T, c *Client) {
-	_, err := c.NewObject(context.TODO(), pre_existing_file_name)
-	assert.NoError(t, err)
-}
-
-func testSetModTimeNoError(t *testing.T, c *Client) {
-	obj, err := c.NewObject(context.TODO(), pre_existing_file_name)
-	assert.NoError(t, err)
-	randomTime := time.Date(1990+rand.Intn(20), time.December, rand.Intn(31), 0, 0, 0, 0, time.UTC)
-	setModTimeErr := obj.SetModTime(context.TODO(), randomTime)
-	assert.NoError(t, setModTimeErr)
-}
-
-func testSetModTimeStepWise(t *testing.T, c *Client) {
-	fc := c.RootDirClient.NewFileClient(pre_existing_file_name)
-	metaData := make(map[string]*string)
-	someString := "1_" + randomString(10)
-	metaData["a"] = &someString
-	metaDataOptions := file.SetMetadataOptions{
-		Metadata: metaData,
-	}
-	setMetadataResp, err := fc.SetMetadata(context.TODO(), &metaDataOptions)
-	assert.NoError(t, err)
-	t.Logf("%v", setMetadataResp)
-}
-
-// TODO: test put object in an inner directory
-func testPutObject(t *testing.T, c *Client) {
-	var fileSize int64 = 20
-	fileName := randomString(10) + ".txt"
-	fileContent := randomString(int(fileSize))
-	r := bytes.NewReader([]byte(fileContent))
-	metaData := make(map[string]*string)
-	modTime := time.Now().Truncate(time.Second)
-	nowStr := fmt.Sprintf("%d", modTime.Unix())
-	metaData[modTimeKey] = &nowStr
-	obj, err := c.Put(context.TODO(), r, &Object{
-		remote:        fileName,
-		metaData:      metaData,
-		contentLength: &fileSize,
-	})
-	assert.NoError(t, err)
-	assert.Equal(t, obj.ModTime(context.TODO()), modTime)
-}
-
-func dirEntriesBases(des fs.DirEntries) []string {
-	bases := []string{}
-	for _, de := range des {
-		bases = append(bases, filepath.Base(de.Remote()))
-	}
-	return bases
-}
-
-func testListDir(t *testing.T, c *Client) {
-	des, err := c.List(context.TODO(), "")
-	assert.NoError(t, err)
-
-	t.Run("list contains pre existing files", func(t *testing.T) {
-		assert.Contains(t, dirEntriesBases(des), pre_existing_file_name)
-	})
-
-	t.Run("subdir contents", func(t *testing.T) {
-		des, err := c.List(context.TODO(), pre_existing_dir)
-		assert.NoError(t, err)
-		assert.Contains(t, dirEntriesBases(des), file_in_pre_existing_dir)
-	})
-
-	// TODO: listing contents of dir that does not exist
-
-}
-
-func testMkDir(t *testing.T, c *Client) {
-	dirName := "mkDirTest_" + randomString(10)
-	err := c.Mkdir(context.TODO(), dirName)
-	assert.NoError(t, err)
-
-	t.Run("dir shows up in listDir", func(t *testing.T) {
-		des, err := c.List(context.TODO(), "")
-		assert.NoError(t, err)
-		assert.Contains(t, dirEntriesBases(des), dirName)
-	})
-
-	t.Run("creating a directory inside existing subdir", func(t *testing.T) {
-		dirName := "mkDirTest_" + randomString(10)
-		path := filepath.Join(pre_existing_dir, dirName)
-		err := c.Mkdir(context.TODO(), path)
-		assert.NoError(t, err)
-
-		des, err := c.List(context.TODO(), pre_existing_dir)
-		assert.NoError(t, err)
-		assert.Contains(t, dirEntriesBases(des), dirName)
-	})
-
-	t.Run("no error when directory already exists", func(t *testing.T) {
-		err := c.Mkdir(context.TODO(), pre_existing_dir)
-		assert.NoError(t, err)
-	})
-
-	// TODO: what happens if parent path does not exist
-}
-
-func testRmDir(t *testing.T, c *Client) {
-	dirToBeRemoved := "rmdirTest_" + randomString(10)
-	err := c.Mkdir(context.TODO(), dirToBeRemoved)
-	assert.NoError(t, err)
-	err = c.Rmdir(context.Background(), dirToBeRemoved)
-	assert.NoError(t, err)
-}
 
 func TestAll(t *testing.T) {
 	fstest.Initialise()
@@ -249,4 +134,19 @@ func randomString(charCount int) string {
 		bs[i] = byte(97 + rand.Intn(26))
 	}
 	return string(bs)
+}
+
+func randomPuttableObject(remote string) (io.Reader, fs.ObjectInfo) {
+	var fileSize int64 = 20
+	fileContent := randomString(int(fileSize))
+	r := bytes.NewReader([]byte(fileContent))
+	metaData := make(map[string]*string)
+	modTime := time.Now().Truncate(time.Second)
+	nowStr := fmt.Sprintf("%d", modTime.Unix())
+	metaData[modTimeKey] = &nowStr
+	return r, &Object{
+		remote:        remote,
+		metaData:      metaData,
+		contentLength: &fileSize,
+	}
 }
