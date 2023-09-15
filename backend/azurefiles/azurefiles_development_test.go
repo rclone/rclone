@@ -12,6 +12,9 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+// TODO: new object dir cases
+// TODO: set modtime on directories
+
 func testNewObjectErrorOnObjectNotExisting(t *testing.T, c *Client) {
 	_, err := c.NewObject(context.TODO(), "somefilethatdoesnotexist.txt")
 	assert.Error(t, err)
@@ -133,6 +136,45 @@ func testRmDir(t *testing.T, c *Client) {
 		err = c.Rmdir(context.TODO(), filePath)
 		assert.Error(t, err)
 	})
+
+}
+
+func testRemove(t *testing.T, c *Client) {
+	fileName := "testRemove_" + randomString(10) + ".txt"
+	in, src := randomPuttableObject(fileName)
+	obj, err := c.Put(context.TODO(), in, src, nil)
+	assert.NoError(t, err)
+	err = obj.Remove(context.TODO())
+	assert.NoError(t, err)
+	des, err := c.List(context.TODO(), "")
+	assert.NoError(t, err)
+	assert.NotContains(t, dirEntriesBases(des), fileName)
+
+	t.Run("works on files inside subdirectory", func(t *testing.T) {
+		fileName := "testRemove_" + randomString(10) + ".txt"
+		filePath := filepath.Join(pre_existing_dir, fileName)
+		in, src := randomPuttableObject(filePath)
+		obj, err := c.Put(context.TODO(), in, src, nil)
+		assert.NoError(t, err)
+		err = obj.Remove(context.TODO())
+		assert.NoError(t, err)
+		des, err := c.List(context.TODO(), pre_existing_dir)
+		assert.NoError(t, err)
+		assert.NotContains(t, dirEntriesBases(des), fileName)
+	})
+
+	t.Run("fails when file does not exist", func(t *testing.T) {
+		fileName := "testRemove_" + randomString(10) + ".txt"
+		obj := &Object{
+			c:      c,
+			remote: fileName,
+		}
+		err := obj.Remove(context.TODO())
+		assert.Error(t, err)
+	})
+
+	// TODO: what happens of path does not exist
+	// TODO: what happens if object is directory
 
 }
 

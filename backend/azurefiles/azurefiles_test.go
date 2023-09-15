@@ -50,6 +50,7 @@ func TestAll(t *testing.T) {
 		t.Run("mkDir", wrapAndPassC(testMkDir))
 
 		t.Run("rmDir", wrapAndPassC(testRmDir))
+		t.Run("remove", wrapAndPassC(testRemove))
 	} else {
 		t.Fatal("could not convert f to Client pointer")
 	}

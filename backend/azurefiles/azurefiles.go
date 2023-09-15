@@ -376,3 +376,7 @@ func ensureInterfacesAreSatisfied() {
 // 	// o.modTime = modTime
 // 	// return nil
 // }
+
+// TODO: implement MimeTyper
+// TODO: what heppens when update is called on Directory
+// TODO: what happens when remove is called on Directory
