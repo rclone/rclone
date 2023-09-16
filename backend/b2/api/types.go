@@ -214,9 +214,10 @@ type FileInfo struct {
 
 // CreateBucketRequest is used to create a bucket
 type CreateBucketRequest struct {
-	AccountID string `json:"accountId"`
-	Name      string `json:"bucketName"`
-	Type      string `json:"bucketType"`
+	AccountID      string          `json:"accountId"`
+	Name           string          `json:"bucketName"`
+	Type           string          `json:"bucketType"`
+	LifecycleRules []LifecycleRule `json:"lifecycleRules,omitempty"`
 }
 
 // DeleteBucketRequest is used to create a bucket

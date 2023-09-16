@@ -211,6 +211,31 @@ The minimum value is 1 second. The maximum value is one week.`,
 			Hide:     fs.OptionHideBoth,
 			Help:     `Whether to use mmap buffers in internal memory pool. (no longer used)`,
 		}, {
+			Name: "lifecycle",
+			Help: `Set the number of days deleted files should be kept when creating a bucket.
+
+On bucket creation, this parameter is used to create a lifecycle rule
+for the entire bucket.
+
+If lifecycle is 0 (the default) it does not create a lifecycle rule so
+the default B2 behaviour applies. This is to create versions of files
+on delete and overwrite and to keep them indefinitely.
+
+If lifecycle is >0 then it creates a single rule setting the number of
+days before a file that is deleted or overwritten is deleted
+permanently. This is known as daysFromHidingToDeleting in the b2 docs.
+
+The minimum value for this parameter is 1 day.
+
+You can also enable hard_delete in the config also which will mean
+deletions won't cause versions but overwrites will still cause
+versions to be made.
+
+See: [rclone backend lifecycle](#lifecycle) for setting lifecycles after bucket creation.
+`,
+			Default:  0,
+			Advanced: true,
+		}, {
 			Name:     config.ConfigEncoding,
 			Help:     config.ConfigEncodingHelp,
 			Advanced: true,
@@ -240,6 +265,7 @@ type Options struct {
 	DisableCheckSum               bool                 `config:"disable_checksum"`
 	DownloadURL                   string               `config:"download_url"`
 	DownloadAuthorizationDuration fs.Duration          `config:"download_auth_duration"`
+	Lifecycle                     int                  `config:"lifecycle"`
 	Enc                           encoder.MultiEncoder `config:"encoding"`
 }
 
@@ -1069,6 +1095,11 @@ func (f *Fs) makeBucket(ctx context.Context, bucket string) error {
 			AccountID: f.info.AccountID,
 			Name:      f.opt.Enc.FromStandardName(bucket),
 			Type:      "allPrivate",
+		}
+		if f.opt.Lifecycle > 0 {
+			request.LifecycleRules = []api.LifecycleRule{{
+				DaysFromHidingToDeleting: &f.opt.Lifecycle,
+			}}
 		}
 		var response api.Bucket
 		err := f.pacer.Call(func() (bool, error) {
