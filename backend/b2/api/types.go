@@ -33,10 +33,18 @@ var _ fserrors.Fataler = (*Error)(nil)
 
 // Bucket describes a B2 bucket
 type Bucket struct {
-	ID        string `json:"bucketId"`
-	AccountID string `json:"accountId"`
-	Name      string `json:"bucketName"`
-	Type      string `json:"bucketType"`
+	ID             string          `json:"bucketId"`
+	AccountID      string          `json:"accountId"`
+	Name           string          `json:"bucketName"`
+	Type           string          `json:"bucketType"`
+	LifecycleRules []LifecycleRule `json:"lifecycleRules,omitempty"`
+}
+
+// LifecycleRule is a single lifecycle rule
+type LifecycleRule struct {
+	DaysFromHidingToDeleting  *int   `json:"daysFromHidingToDeleting"`
+	DaysFromUploadingToHiding *int   `json:"daysFromUploadingToHiding"`
+	FileNamePrefix            string `json:"fileNamePrefix"`
 }
 
 // Timestamp is a UTC time when this file was uploaded. It is a base
@@ -330,4 +338,12 @@ type CopyPartRequest struct {
 	LargeFileID string `json:"largeFileId"`     // The ID of the large file the part will belong to, as returned by b2_start_large_file.
 	PartNumber  int64  `json:"partNumber"`      // Which part this is (starting from 1)
 	Range       string `json:"range,omitempty"` // The range of bytes to copy. If not provided, the whole source file will be copied.
+}
+
+// UpdateBucketRequest describes a request to modify a B2 bucket
+type UpdateBucketRequest struct {
+	ID             string          `json:"bucketId"`
+	AccountID      string          `json:"accountId"`
+	Type           string          `json:"bucketType,omitempty"`
+	LifecycleRules []LifecycleRule `json:"lifecycleRules,omitempty"`
 }

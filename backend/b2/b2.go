@@ -73,6 +73,7 @@ func init() {
 		Name:        "b2",
 		Description: "Backblaze B2",
 		NewFs:       NewFs,
+		CommandHelp: commandHelp,
 		Options: []fs.Option{{
 			Name:      "account",
 			Help:      "Account ID or Application Key ID.",
@@ -2070,6 +2071,137 @@ func (o *Object) ID() string {
 	return o.id
 }
 
+var lifecycleHelp = fs.CommandHelp{
+	Name:  "lifecycle",
+	Short: "Read or set the lifecycle for a bucket",
+	Long: `This command can be used to read or set the lifecycle for a bucket.
+
+Usage Examples:
+
+To show the current lifecycle rules:
+
+    rclone backend lifecycle b2:bucket
+
+This will dump something like this showing the lifecycle rules.
+
+    [
+        {
+            "daysFromHidingToDeleting": 1,
+            "daysFromUploadingToHiding": null,
+            "fileNamePrefix": ""
+        }
+    ]
+
+If there are no lifecycle rules (the default) then it will just return [].
+
+To reset the current lifecycle rules:
+
+    rclone backend lifecycle b2:bucket -o daysFromHidingToDeleting=30
+    rclone backend lifecycle b2:bucket -o daysFromUploadingToHiding=5 -o daysFromHidingToDeleting=1
+
+This will run and then print the new lifecycle rules as above.
+
+Rclone only lets you set lifecycles for the whole bucket with the
+fileNamePrefix = "".
+
+You can't disable versioning with B2. The best you can do is to set
+the daysFromHidingToDeleting to 1 day. You can enable hard_delete in
+the config also which will mean deletions won't cause versions but
+overwrites will still cause versions to be made.
+
+    rclone backend lifecycle b2:bucket -o daysFromHidingToDeleting=1
+
+See: https://www.backblaze.com/docs/cloud-storage-lifecycle-rules
+`,
+	Opts: map[string]string{
+		"daysFromHidingToDeleting":  "After a file has been hidden for this many days it is deleted. 0 is off.",
+		"daysFromUploadingToHiding": "This many days after uploading a file is hidden",
+	},
+}
+
+func (f *Fs) lifecycleCommand(ctx context.Context, name string, arg []string, opt map[string]string) (out interface{}, err error) {
+	var newRule api.LifecycleRule
+	if daysStr := opt["daysFromHidingToDeleting"]; daysStr != "" {
+		days, err := strconv.Atoi(daysStr)
+		if err != nil {
+			return nil, fmt.Errorf("bad daysFromHidingToDeleting: %w", err)
+		}
+		newRule.DaysFromHidingToDeleting = &days
+	}
+	if daysStr := opt["daysFromUploadingToHiding"]; daysStr != "" {
+		days, err := strconv.Atoi(daysStr)
+		if err != nil {
+			return nil, fmt.Errorf("bad daysFromUploadingToHiding: %w", err)
+		}
+		newRule.DaysFromUploadingToHiding = &days
+	}
+	bucketName, _ := f.split("")
+	if bucketName == "" {
+		return nil, errors.New("bucket required")
+
+	}
+
+	var bucket *api.Bucket
+	if newRule.DaysFromHidingToDeleting != nil || newRule.DaysFromUploadingToHiding != nil {
+		bucketID, err := f.getBucketID(ctx, bucketName)
+		if err != nil {
+			return nil, err
+		}
+		opts := rest.Opts{
+			Method: "POST",
+			Path:   "/b2_update_bucket",
+		}
+		var request = api.UpdateBucketRequest{
+			ID:             bucketID,
+			AccountID:      f.info.AccountID,
+			LifecycleRules: []api.LifecycleRule{newRule},
+		}
+		var response api.Bucket
+		err = f.pacer.Call(func() (bool, error) {
+			resp, err := f.srv.CallJSON(ctx, &opts, &request, &response)
+			return f.shouldRetry(ctx, resp, err)
+		})
+		if err != nil {
+			return nil, err
+		}
+		bucket = &response
+	} else {
+		err = f.listBucketsToFn(ctx, bucketName, func(b *api.Bucket) error {
+			bucket = b
+			return nil
+		})
+		if err != nil {
+			return nil, err
+		}
+	}
+	if bucket == nil {
+		return nil, fs.ErrorDirNotFound
+	}
+	return bucket.LifecycleRules, nil
+}
+
+var commandHelp = []fs.CommandHelp{
+	lifecycleHelp,
+}
+
+// Command the backend to run a named command
+//
+// The command run is name
+// args may be used to read arguments from
+// opts may be used to read optional arguments from
+//
+// The result should be capable of being JSON encoded
+// If it is a string or a []string it will be shown to the user
+// otherwise it will be JSON encoded and shown to the user like that
+func (f *Fs) Command(ctx context.Context, name string, arg []string, opt map[string]string) (out interface{}, err error) {
+	switch name {
+	case "lifecycle":
+		return f.lifecycleCommand(ctx, name, arg, opt)
+	default:
+		return nil, fs.ErrorCommandNotFound
+	}
+}
+
 // Check the interfaces are satisfied
 var (
 	_ fs.Fs              = &Fs{}
@@ -2080,6 +2212,7 @@ var (
 	_ fs.ListRer         = &Fs{}
 	_ fs.PublicLinker    = &Fs{}
 	_ fs.OpenChunkWriter = &Fs{}
+	_ fs.Commander       = &Fs{}
 	_ fs.Object          = &Object{}
 	_ fs.MimeTyper       = &Object{}
 	_ fs.IDer            = &Object{}
