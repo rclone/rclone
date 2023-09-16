@@ -824,7 +824,7 @@ func (f *Fs) listDir(ctx context.Context, bucket, directory, prefix string, addB
 
 // listBuckets returns all the buckets to out
 func (f *Fs) listBuckets(ctx context.Context) (entries fs.DirEntries, err error) {
-	err = f.listBucketsToFn(ctx, func(bucket *api.Bucket) error {
+	err = f.listBucketsToFn(ctx, "", func(bucket *api.Bucket) error {
 		d := fs.NewDir(bucket.Name, time.Time{})
 		entries = append(entries, d)
 		return nil
@@ -917,10 +917,13 @@ func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (
 type listBucketFn func(*api.Bucket) error
 
 // listBucketsToFn lists the buckets to the function supplied
-func (f *Fs) listBucketsToFn(ctx context.Context, fn listBucketFn) error {
+func (f *Fs) listBucketsToFn(ctx context.Context, bucketName string, fn listBucketFn) error {
 	var account = api.ListBucketsRequest{
 		AccountID: f.info.AccountID,
 		BucketID:  f.info.Allowed.BucketID,
+	}
+	if bucketName != "" && account.BucketID == "" {
+		account.BucketName = f.opt.Enc.FromStandardName(bucketName)
 	}
 
 	var response api.ListBucketsResponse
@@ -967,7 +970,7 @@ func (f *Fs) getbucketType(ctx context.Context, bucket string) (bucketType strin
 	if bucketType != "" {
 		return bucketType, nil
 	}
-	err = f.listBucketsToFn(ctx, func(bucket *api.Bucket) error {
+	err = f.listBucketsToFn(ctx, bucket, func(bucket *api.Bucket) error {
 		// listBucketsToFn reads bucket Types
 		return nil
 	})
@@ -1002,7 +1005,7 @@ func (f *Fs) getBucketID(ctx context.Context, bucket string) (bucketID string, e
 	if bucketID != "" {
 		return bucketID, nil
 	}
-	err = f.listBucketsToFn(ctx, func(bucket *api.Bucket) error {
+	err = f.listBucketsToFn(ctx, bucket, func(bucket *api.Bucket) error {
 		// listBucketsToFn sets IDs
 		return nil
 	})
