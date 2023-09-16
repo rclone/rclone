@@ -6,14 +6,12 @@ import (
 	"fmt"
 	"io"
 	"math/rand"
-	"strings"
 	"testing"
 	"time"
 
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fstest"
 	"github.com/rclone/rclone/fstest/fstests"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestIntegration(t *testing.T) {
@@ -27,8 +25,10 @@ func TestIntegration(t *testing.T) {
 var pre_existing_file_name = "preexistingfile.txt"
 var pre_existing_dir = "pre_existing_dir"
 var file_in_pre_existing_dir = "lorem.txt"
+var pre_existing_file_contents = "This pre existing file has some content"
 
 func TestAll(t *testing.T) {
+	t.Skip("Skipping because we are working with integration tests from rclone")
 	fstest.Initialise()
 	f, err := fs.NewFs(context.Background(), "TestAzureFiles:")
 	if err != nil {
@@ -51,83 +51,86 @@ func TestAll(t *testing.T) {
 
 		t.Run("rmDir", wrapAndPassC(testRmDir))
 		t.Run("remove", wrapAndPassC(testRemove))
+		t.Run("open", wrapAndPassC(testOpen))
+		t.Run("update", wrapAndPassC(testUpdate))
+		// t.Run("walkAll", wrapAndPassC(testWalkAll))
 	} else {
 		t.Fatal("could not convert f to Client pointer")
 	}
 
 }
 
-func TestPut(t *testing.T) {
-	t.Skip("skipping because setModTime appears to be incorrect")
-	fstest.Initialise()
-	f, err := fs.NewFs(context.Background(), "TestAzureFiles:")
-	if err != nil {
-		t.Fatal("unable to create new FileSystem: %w", err)
-	}
-	r := bytes.NewReader([]byte("This is some data from TestPut"))
-	oi := Object{
-		remote: randomString(10) + ".txt",
-	}
-	_, err = f.Put(context.Background(), r, &oi)
-	if err != nil {
-		t.Fatalf("error in putting %s:  %v", oi.remote, err)
-	}
+// func TestPut(t *testing.T) {
+// 	t.Skip("skipping because setModTime appears to be incorrect")
+// 	fstest.Initialise()
+// 	f, err := fs.NewFs(context.Background(), "TestAzureFiles:")
+// 	if err != nil {
+// 		t.Fatal("unable to create new FileSystem: %w", err)
+// 	}
+// 	r := bytes.NewReader([]byte("This is some data from TestPut"))
+// 	oi := Object{
+// 		remote: randomString(10) + ".txt",
+// 	}
+// 	_, err = f.Put(context.Background(), r, &oi)
+// 	if err != nil {
+// 		t.Fatalf("error in putting %s:  %v", oi.remote, err)
+// 	}
 
-	des, err := f.List(context.Background(), "")
-	if err != nil {
-		t.Fatalf("error in listing contents:  %v", err)
-	}
-	for _, de := range des {
-		if strings.HasSuffix(de.Remote(), oi.remote) {
-			return
-		}
-	}
-	t.Fatalf("could not create file %s", oi.remote)
+// 	des, err := f.List(context.Background(), "")
+// 	if err != nil {
+// 		t.Fatalf("error in listing contents:  %v", err)
+// 	}
+// 	for _, de := range des {
+// 		if strings.HasSuffix(de.Remote(), oi.remote) {
+// 			return
+// 		}
+// 	}
+// 	t.Fatalf("could not create file %s", oi.remote)
 
-}
+// }
 
-func TestSetModTime(t *testing.T) {
-	t.Skip("skipping beacuse the problem does not appear to not be only in setModTime ")
-	fstest.Initialise()
-	f, err := fs.NewFs(context.Background(), "TestAzureFiles:")
-	assert.NoError(t, err, "unable to create new FileSystem")
+// func TestSetModTime(t *testing.T) {
+// 	t.Skip("skipping beacuse the problem does not appear to not be only in setModTime ")
+// 	fstest.Initialise()
+// 	f, err := fs.NewFs(context.Background(), "TestAzureFiles:")
+// 	assert.NoError(t, err, "unable to create new FileSystem")
 
-	des, err := f.List(context.Background(), "")
-	assert.NoError(t, err, "unable to list")
+// 	des, err := f.List(context.Background(), "")
+// 	assert.NoError(t, err, "unable to list")
 
-	names := []string{}
-	for _, de := range des {
-		names = append(names, de.Remote())
-	}
-	sample_xml_filename := "sample_response_azure_files_list.xml"
-	assert.Contains(t, names, sample_xml_filename)
+// 	names := []string{}
+// 	for _, de := range des {
+// 		names = append(names, de.Remote())
+// 	}
+// 	sample_xml_filename := "sample_response_azure_files_list.xml"
+// 	assert.Contains(t, names, sample_xml_filename)
 
-	obj, err := f.NewObject(context.Background(), sample_xml_filename)
-	assert.NoError(t, err, "creating new object from fs")
+// 	obj, err := f.NewObject(context.Background(), sample_xml_filename)
+// 	assert.NoError(t, err, "creating new object from fs")
 
-	t.Run("set mod time to some time in past", func(t *testing.T) {
-		past := time.UnixMilli(919881000000) // UTC time: Wed Feb 24 1999 18:30:00
-		err = obj.SetModTime(context.Background(), past)
-		assert.NoError(t, err, "setting mod time")
+// 	t.Run("set mod time to some time in past", func(t *testing.T) {
+// 		past := time.UnixMilli(919881000000) // UTC time: Wed Feb 24 1999 18:30:00
+// 		err = obj.SetModTime(context.Background(), past)
+// 		assert.NoError(t, err, "setting mod time")
 
-		obj, err := f.NewObject(context.Background(), sample_xml_filename)
-		assert.NoError(t, err, "getting object from fs")
-		assert.Equal(t, obj.ModTime(context.Background()).Year(), past.Year())
-		assert.Equal(t, obj.ModTime(context.Background()).Month(), past.Month())
-		assert.Equal(t, obj.ModTime(context.Background()).Day(), past.Day())
-	})
+// 		obj, err := f.NewObject(context.Background(), sample_xml_filename)
+// 		assert.NoError(t, err, "getting object from fs")
+// 		assert.Equal(t, obj.ModTime(context.Background()).Year(), past.Year())
+// 		assert.Equal(t, obj.ModTime(context.Background()).Month(), past.Month())
+// 		assert.Equal(t, obj.ModTime(context.Background()).Day(), past.Day())
+// 	})
 
-	t.Run("set mod time to some time to now", func(t *testing.T) {
-		now := time.Now()
-		err = obj.SetModTime(context.Background(), time.Now()) // UTC time: Wed Feb 24 1999 18:30:00
-		assert.NoError(t, err, "setting mod time")
+// 	t.Run("set mod time to some time to now", func(t *testing.T) {
+// 		now := time.Now()
+// 		err = obj.SetModTime(context.Background(), time.Now()) // UTC time: Wed Feb 24 1999 18:30:00
+// 		assert.NoError(t, err, "setting mod time")
 
-		obj, err := f.NewObject(context.Background(), sample_xml_filename)
-		assert.NoError(t, err, "getting object from fs")
-		assert.Equal(t, obj.ModTime(context.Background()).Year(), now.Year())
-	})
+// 		obj, err := f.NewObject(context.Background(), sample_xml_filename)
+// 		assert.NoError(t, err, "getting object from fs")
+// 		assert.Equal(t, obj.ModTime(context.Background()).Year(), now.Year())
+// 	})
 
-}
+// }
 
 func randomString(charCount int) string {
 	bs := make([]byte, charCount)
@@ -145,9 +148,9 @@ func randomPuttableObject(remote string) (io.Reader, fs.ObjectInfo) {
 	modTime := time.Now().Truncate(time.Second)
 	nowStr := fmt.Sprintf("%d", modTime.Unix())
 	metaData[modTimeKey] = &nowStr
-	return r, &Object{
-		remote:        remote,
-		metaData:      metaData,
-		contentLength: &fileSize,
-	}
+	return r, &Object{common{
+		remote:     remote,
+		metaData:   metaData,
+		properties: properties{contentLength: &fileSize},
+	}}
 }

@@ -1,9 +1,13 @@
 package azurefiles
 
 import (
+	"bytes"
 	"context"
+	"crypto/md5"
+	"io"
 	"math/rand"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -84,16 +88,42 @@ func testMkDir(t *testing.T, c *Client) {
 		assert.Contains(t, dirEntriesBases(des), dirName)
 	})
 
-	t.Run("creating a directory inside existing subdir", func(t *testing.T) {
-		dirName := "mkDirTest_" + randomString(10)
-		path := filepath.Join(pre_existing_dir, dirName)
-		err := c.Mkdir(context.TODO(), path)
+	t.Run("nested dir where parent does not exist", func(t *testing.T) {
+		parent := "mkDirTest_" + randomString(10)
+		child := "mkDirTest_" + randomString(10)
+		fullPath := strings.Join([]string{parent, child}, pathSeparator)
+		err := c.Mkdir(context.TODO(), fullPath)
+		assert.NoError(t, err)
+		rootDes, rootListErr := c.List(context.TODO(), "")
+		assert.NoError(t, rootListErr)
+		assert.Contains(t, dirEntriesBases(rootDes), parent, "presence of parent directory in root")
+
+		parentDes, parentListErr := c.List(context.TODO(), parent)
+		assert.NoError(t, parentListErr)
+		assert.Contains(t, dirEntriesBases(parentDes), child, "presence of child directory in parent")
+	})
+
+	t.Run("subdir where parent exists", func(t *testing.T) {
+		subdirName := "mkDirTest_" + randomString(10)
+		fullPath := strings.Join([]string{dirName, subdirName}, pathSeparator)
+		err := c.Mkdir(context.TODO(), fullPath)
 		assert.NoError(t, err)
 
-		des, err := c.List(context.TODO(), pre_existing_dir)
+		des, err := c.List(context.TODO(), dirName)
 		assert.NoError(t, err)
-		assert.Contains(t, dirEntriesBases(des), dirName)
+		assert.Contains(t, dirEntriesBases(des), subdirName, "presence of subDir in dirName")
 	})
+
+	// t.Run("creating a directory inside existing subdir", func(t *testing.T) {
+	// 	dirName := "mkDirTest_" + randomString(10)
+	// 	path := filepath.Join(pre_existing_dir, dirName)
+	// 	err := c.Mkdir(context.TODO(), path)
+	// 	assert.NoError(t, err)
+
+	// 	des, err := c.List(context.TODO(), pre_existing_dir)
+	// 	assert.NoError(t, err)
+	// 	assert.Contains(t, dirEntriesBases(des), dirName)
+	// })
 
 	t.Run("no error when directory already exists", func(t *testing.T) {
 		err := c.Mkdir(context.TODO(), pre_existing_dir)
@@ -165,16 +195,57 @@ func testRemove(t *testing.T, c *Client) {
 
 	t.Run("fails when file does not exist", func(t *testing.T) {
 		fileName := "testRemove_" + randomString(10) + ".txt"
-		obj := &Object{
+		obj := &Object{common{
 			c:      c,
 			remote: fileName,
-		}
+		}}
 		err := obj.Remove(context.TODO())
 		assert.Error(t, err)
 	})
 
-	// TODO: what happens of path does not exist
 	// TODO: what happens if object is directory
+
+}
+
+func testOpen(t *testing.T, c *Client) {
+	obj, err := c.NewObject(context.TODO(), pre_existing_file_name)
+	assert.NoError(t, err)
+	r, err := obj.Open(context.TODO(), nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer r.Close()
+	bs, err := io.ReadAll(r)
+	assert.NoError(t, err)
+	assert.Equal(t, pre_existing_file_contents, string(bs))
+
+}
+
+func testUpdate(t *testing.T, c *Client) {
+	fileName := "testUpdate_" + randomString(10) + ".txt"
+	r, src := randomPuttableObject(fileName)
+	obj, err := c.Put(context.TODO(), r, src, nil)
+	assert.NoError(t, err, "was there an error while putting file to create initial test file")
+	updateContent, _ := randomPuttableObject(fileName)
+	updatedBytes, _ := io.ReadAll(updateContent)
+	err = obj.Update(context.TODO(), bytes.NewReader(updatedBytes), src, nil)
+	assert.NoError(t, err, "was there an error while updating file")
+	actualContentReader, err := obj.Open(context.TODO(), nil)
+	assert.NoError(t, err, "was there an error while opening updated file")
+	actualBytes, err := io.ReadAll(actualContentReader)
+	assert.NoError(t, err, "was there an error while reading contents of opened file")
+	assert.Equal(t, actualBytes, updatedBytes)
+
+	t.Run("is md5 correctly updated", func(t *testing.T) {
+		expectedMd5 := md5.Sum(updatedBytes)
+		expectedMd5Slice := expectedMd5[:]
+		o, err := c.NewObject(context.TODO(), fileName)
+		assert.NoError(t, err, "creating object for update file to fetch hash")
+		obj := o.(*Object)
+		resp, err := obj.fileClient().GetProperties(context.TODO(), nil)
+		assert.NoError(t, err, "getting properties")
+		assert.Equal(t, expectedMd5Slice, resp.ContentMD5)
+	})
 
 }
 
@@ -185,3 +256,11 @@ func dirEntriesBases(des fs.DirEntries) []string {
 	}
 	return bases
 }
+
+// func testWalkAll(t *testing.T, c *Client) {
+// 	objs, dirs, err := walk.GetAll(context.TODO(), c, "", true, -1)
+// 	// walk.Walk()
+// 	assert.NoError(t, err)
+// 	assert.Len(t, objs, 0)
+// 	assert.Len(t, dirs, 1)
+// }
