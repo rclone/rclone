@@ -12,6 +12,7 @@ import (
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fstest"
 	"github.com/rclone/rclone/fstest/fstests"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestIntegration(t *testing.T) {
@@ -27,8 +28,8 @@ var pre_existing_dir = "pre_existing_dir"
 var file_in_pre_existing_dir = "lorem.txt"
 var pre_existing_file_contents = "This pre existing file has some content"
 
-func TestAll(t *testing.T) {
-	t.Skip("Skipping because we are working with integration tests from rclone")
+func TestNonCommonIntegration(t *testing.T) {
+	// t.Skip("Skipping because we are working with integration tests from rclone")
 	fstest.Initialise()
 	f, err := fs.NewFs(context.Background(), "TestAzureFiles:")
 	if err != nil {
@@ -53,10 +54,18 @@ func TestAll(t *testing.T) {
 		t.Run("remove", wrapAndPassC(testRemove))
 		t.Run("open", wrapAndPassC(testOpen))
 		t.Run("update", wrapAndPassC(testUpdate))
-		// t.Run("walkAll", wrapAndPassC(testWalkAll))
+		t.Run("walkAll", wrapAndPassC(testWalkAll))
 	} else {
 		t.Fatal("could not convert f to Client pointer")
 	}
+}
+
+func TestJoinPaths(t *testing.T) {
+	segments := []string{"parent", "child"}
+	assert.Equal(t, "parent/child", joinPaths(segments...))
+
+	segments = []string{"", "folder"}
+	assert.Equal(t, "folder", joinPaths(segments...))
 
 }
 

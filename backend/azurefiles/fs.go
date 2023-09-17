@@ -170,7 +170,7 @@ func (dc *Client) List(ctx context.Context, dirPath string) (fs.DirEntries, erro
 		for _, dir := range resp.Segment.Directories {
 			de := &Directory{
 				common{c: dc,
-					remote: filepath.Join(dirPath, *dir.Name),
+					remote: joinPaths(dirPath, *dir.Name),
 					properties: properties{
 						changeTime: dir.Properties.ChangeTime,
 					}},
@@ -181,7 +181,7 @@ func (dc *Client) List(ctx context.Context, dirPath string) (fs.DirEntries, erro
 		for _, f := range resp.Segment.Files {
 			de := &Object{
 				common{c: dc,
-					remote: filepath.Join(dirPath, *f.Name),
+					remote: joinPaths(dirPath, *f.Name),
 					properties: properties{
 						changeTime:    f.Properties.ChangeTime,
 						contentLength: f.Properties.ContentLength,
@@ -193,4 +193,8 @@ func (dc *Client) List(ctx context.Context, dirPath string) (fs.DirEntries, erro
 
 	return entries, nil
 
+}
+
+func joinPaths(s ...string) string {
+	return filepath.ToSlash(filepath.Join(s...))
 }
