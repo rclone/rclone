@@ -1,7 +1,6 @@
 package common
 
 import (
-	"log"
 	"os"
 	"runtime"
 )
@@ -30,9 +29,10 @@ type Config struct {
 }
 
 type FirstLoginCredentialData struct {
-	Username string
-	Password string
-	TwoFA    string
+	Username        string
+	Password        string
+	MailboxPassword string
+	TwoFA           string
 }
 
 type ReusableCredentialData struct {
@@ -43,16 +43,15 @@ type ReusableCredentialData struct {
 }
 
 func NewConfigWithDefaultValues() *Config {
-	log.Println("Number of CPUs", runtime.GOMAXPROCS(0))
-
 	return &Config{
 		AppVersion: "",
 		UserAgent:  "",
 
 		FirstLoginCredential: &FirstLoginCredentialData{
-			Username: "",
-			Password: "",
-			TwoFA:    "",
+			Username:        "",
+			Password:        "",
+			MailboxPassword: "",
+			TwoFA:           "",
 		},
 		ReusableCredential: &ReusableCredentialData{
 			UID:           "",
@@ -75,8 +74,6 @@ func NewConfigWithDefaultValues() *Config {
 }
 
 func NewConfigForIntegrationTests() *Config {
-	log.Println("Number of CPUs", runtime.GOMAXPROCS(0))
-
 	appVersion := os.Getenv("PROTON_API_BRIDGE_APP_VERSION")
 	userAgent := os.Getenv("PROTON_API_BRIDGE_USER_AGENT")
 
@@ -100,9 +97,10 @@ func NewConfigForIntegrationTests() *Config {
 		UserAgent:  userAgent,
 
 		FirstLoginCredential: &FirstLoginCredentialData{
-			Username: username,
-			Password: password,
-			TwoFA:    twoFA,
+			Username:        username,
+			Password:        password,
+			MailboxPassword: "",
+			TwoFA:           twoFA,
 		},
 		ReusableCredential: &ReusableCredentialData{
 			UID:           uid,

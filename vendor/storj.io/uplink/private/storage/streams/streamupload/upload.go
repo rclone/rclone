@@ -10,6 +10,7 @@ import (
 	"github.com/zeebo/errs"
 
 	"storj.io/common/context2"
+	"storj.io/common/errs2"
 	"storj.io/common/pb"
 	"storj.io/common/storj"
 	"storj.io/uplink/private/metaclient"
@@ -100,12 +101,23 @@ func uploadSegments(ctx context.Context, segmentSource SegmentSource, segmentUpl
 		}
 	}()
 
+	uploadCtx := ctx
 	ctx, cg := newCancelGroup(ctx)
 	defer cg.Close()
 
 	for {
 		segment, err := segmentSource.Next(ctx)
 		if err != nil {
+			// If next returns "canceled" it is because either:
+			// 1) the upload itself is being canceled
+			// 2) a goroutine run by the "cancel group" returned an error
+			//
+			// Check to see if the upload context is cancelled, and if not
+			// assume a goroutine failed and return the error from the cancel
+			// group.
+			if errs2.IsCanceled(err) && uploadCtx.Err() == nil {
+				err = cg.Wait()
+			}
 			testuplink.Log(ctx, "Next segment err:", err)
 			return Info{}, err
 		} else if segment == nil {

@@ -35,7 +35,7 @@ type Share struct {
 	PassphraseSignature string // The signature of the passphrase
 }
 
-func (s Share) GetKeyRing(addrKR *crypto.KeyRing, skipSignatureVerification bool) (*crypto.KeyRing, error) {
+func (s Share) GetKeyRing(addrKR *crypto.KeyRing) (*crypto.KeyRing, error) {
 	enc, err := crypto.NewPGPMessageFromArmored(s.Passphrase)
 	if err != nil {
 		return nil, err
@@ -51,10 +51,8 @@ func (s Share) GetKeyRing(addrKR *crypto.KeyRing, skipSignatureVerification bool
 		return nil, err
 	}
 
-	if !skipSignatureVerification {
-		if err := addrKR.VerifyDetached(dec, sig, crypto.GetUnixTime()); err != nil {
-			return nil, err
-		}
+	if err := addrKR.VerifyDetached(dec, sig, crypto.GetUnixTime()); err != nil {
+		return nil, err
 	}
 
 	lockedKey, err := crypto.NewKeyFromArmored(s.Key)

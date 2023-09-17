@@ -406,8 +406,10 @@ func limitToNodeURL(limit *pb.AddressedOrderLimit) storj.NodeURL {
 	}).NodeURL()
 }
 
+var monLazyPieceRangerDialTask = mon.Task()
+
 func (lr *lazyPieceRanger) dial(ctx context.Context, offset, length int64) (_ *piecestore.Client, _ *piecestore.Download, err error) {
-	defer mon.Task()(&ctx)(&err)
+	defer monLazyPieceRangerDialTask(&ctx)(&err)
 
 	ps, err := lr.dialPiecestore(ctx, limitToNodeURL(lr.limit))
 	if err != nil {

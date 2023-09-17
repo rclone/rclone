@@ -91,7 +91,15 @@ func Encode(b []byte) string {
 
 	// maximum length of output is log58(2^(8*len(b))) == len(b) * 8 / log(58)
 	maxlen := int(float64(len(b))*1.365658237309761) + 1
-	answer := make([]byte, 0, maxlen)
+
+	var answer []byte
+	if maxlen <= 64 {
+		var buf [64]byte
+		answer = buf[:0]
+	} else {
+		answer = make([]byte, 0, maxlen)
+	}
+
 	mod := new(big.Int)
 	for x.Sign() > 0 {
 		// Calculating with big.Int is slow for each iteration.

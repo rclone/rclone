@@ -26,7 +26,16 @@ func checksum(input []byte) (cksum [4]byte) {
 
 // CheckEncode prepends a version byte and appends a four byte checksum.
 func CheckEncode(input []byte, version byte) string {
-	b := make([]byte, 0, 1+len(input)+4)
+	var b []byte
+
+	// special case for node ID and noise public key
+	if len(input) <= 32 {
+		var buf [1 + 32 + 4]byte
+		b = buf[:0]
+	} else {
+		b = make([]byte, 0, 1+len(input)+4)
+	}
+
 	b = append(b, version)
 	b = append(b, input...)
 	cksum := checksum(b)

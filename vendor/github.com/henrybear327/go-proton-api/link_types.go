@@ -18,12 +18,13 @@ type Link struct {
 	LinkID       string // Encrypted file/folder ID
 	ParentLinkID string // Encrypted parent folder ID (LinkID). Root link has null ParentLinkID.
 
-	Type     LinkType
-	Name     string // Encrypted file name
-	Hash     string // HMAC of name encrypted with parent hash key
-	Size     int64
-	State    LinkState
-	MIMEType string
+	Type               LinkType
+	Name               string // Encrypted file name
+	NameSignatureEmail string // Signature email for link name
+	Hash               string // HMAC of name encrypted with parent hash key
+	Size               int64
+	State              LinkState
+	MIMEType           string
 
 	CreateTime     int64 // Link creation time
 	ModifyTime     int64 // Link modification time (on API, real modify date is stored in XAttr)
@@ -32,6 +33,7 @@ type Link struct {
 	NodeKey                 string // The private NodeKey, used to decrypt any file/folder content.
 	NodePassphrase          string // The passphrase used to unlock the NodeKey, encrypted by the owning Link/Share keyring.
 	NodePassphraseSignature string
+	SignatureEmail          string // Signature email for the NodePassphraseSignature
 
 	FileProperties   *FileProperties
 	FolderProperties *FolderProperties
@@ -47,29 +49,21 @@ const (
 	LinkStateRestoring
 )
 
-func (l Link) GetName(parentNodeKR, addrKR *crypto.KeyRing, skipSignatureVerification bool) (string, error) {
+func (l Link) GetName(parentNodeKR, addrKR *crypto.KeyRing) (string, error) {
 	encName, err := crypto.NewPGPMessageFromArmored(l.Name)
 	if err != nil {
 		return "", err
 	}
 
-	var decName *crypto.PlainMessage
-	if skipSignatureVerification {
-		decName, err = parentNodeKR.Decrypt(encName, nil, crypto.GetUnixTime())
-		if err != nil {
-			return "", err
-		}
-	} else {
-		decName, err = parentNodeKR.Decrypt(encName, addrKR, crypto.GetUnixTime())
-		if err != nil {
-			return "", err
-		}
+	decName, err := parentNodeKR.Decrypt(encName, addrKR, crypto.GetUnixTime())
+	if err != nil {
+		return "", err
 	}
 
 	return decName.GetString(), nil
 }
 
-func (l Link) GetKeyRing(parentNodeKR, addrKR *crypto.KeyRing, skipSignatureVerification bool) (*crypto.KeyRing, error) {
+func (l Link) GetKeyRing(parentNodeKR, addrKR *crypto.KeyRing) (*crypto.KeyRing, error) {
 	enc, err := crypto.NewPGPMessageFromArmored(l.NodePassphrase)
 	if err != nil {
 		return nil, err
@@ -85,10 +79,8 @@ func (l Link) GetKeyRing(parentNodeKR, addrKR *crypto.KeyRing, skipSignatureVeri
 		return nil, err
 	}
 
-	if !skipSignatureVerification {
-		if err := addrKR.VerifyDetached(dec, sig, crypto.GetUnixTime()); err != nil {
-			return nil, err
-		}
+	if err := addrKR.VerifyDetached(dec, sig, crypto.GetUnixTime()); err != nil {
+		return nil, err
 	}
 
 	lockedKey, err := crypto.NewKeyFromArmored(l.NodeKey)
@@ -104,7 +96,7 @@ func (l Link) GetKeyRing(parentNodeKR, addrKR *crypto.KeyRing, skipSignatureVeri
 	return crypto.NewKeyRing(unlockedKey)
 }
 
-func (l Link) GetHashKey(parentNodeKey *crypto.KeyRing, skipSignatureVerification bool) ([]byte, error) {
+func (l Link) GetHashKey(parentNodeKey, addrKRs *crypto.KeyRing) ([]byte, error) {
 	if l.Type != LinkTypeFolder {
 		return nil, errors.New("link is not a folder")
 	}
@@ -114,14 +106,15 @@ func (l Link) GetHashKey(parentNodeKey *crypto.KeyRing, skipSignatureVerificatio
 		return nil, err
 	}
 
+	_, ok := enc.GetSignatureKeyIDs()
 	var dec *crypto.PlainMessage
-	if skipSignatureVerification {
-		dec, err = parentNodeKey.Decrypt(enc, nil, crypto.GetUnixTime())
+	if ok {
+		dec, err = parentNodeKey.Decrypt(enc, addrKRs, crypto.GetUnixTime())
 		if err != nil {
 			return nil, err
 		}
 	} else {
-		dec, err = parentNodeKey.Decrypt(enc, parentNodeKey, crypto.GetUnixTime())
+		dec, err = parentNodeKey.Decrypt(enc, nil, 0)
 		if err != nil {
 			return nil, err
 		}

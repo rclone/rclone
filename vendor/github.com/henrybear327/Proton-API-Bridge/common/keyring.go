@@ -19,7 +19,7 @@ The address keyrings are encrypted with the primary user keyring at the time.
 
 The primary address key is used to create (encrypt) and retrieve (decrypt) data, e.g. shares
 */
-func getAccountKRs(ctx context.Context, c *proton.Client, keyPass, saltedKeyPass []byte) (*crypto.KeyRing, map[string]*crypto.KeyRing, []proton.Address, []byte, error) {
+func getAccountKRs(ctx context.Context, c *proton.Client, keyPass, saltedKeyPass []byte) (*crypto.KeyRing, map[string]*crypto.KeyRing, map[string]proton.Address, []byte, error) {
 	/* Code taken and modified from proton-bridge */
 
 	user, err := c.GetUser(ctx)
@@ -28,7 +28,7 @@ func getAccountKRs(ctx context.Context, c *proton.Client, keyPass, saltedKeyPass
 	}
 	// log.Printf("user %#v", user)
 
-	addr, err := c.GetAddresses(ctx)
+	addrsArr, err := c.GetAddresses(ctx)
 	if err != nil {
 		return nil, nil, nil, nil, err
 	}
@@ -56,7 +56,7 @@ func getAccountKRs(ctx context.Context, c *proton.Client, keyPass, saltedKeyPass
 		// log.Printf("saltedKeyPass ok")
 	}
 
-	userKR, addrKRs, err := proton.Unlock(user, addr, saltedKeyPass, nil)
+	userKR, addrKRs, err := proton.Unlock(user, addrsArr, saltedKeyPass, nil)
 	if err != nil {
 		return nil, nil, nil, nil, err
 
@@ -66,5 +66,10 @@ func getAccountKRs(ctx context.Context, c *proton.Client, keyPass, saltedKeyPass
 		}
 	}
 
-	return userKR, addrKRs, addr, saltedKeyPass, nil
+	addrs := make(map[string]proton.Address)
+	for _, addr := range addrsArr {
+		addrs[addr.Email] = addr
+	}
+
+	return userKR, addrKRs, addrs, saltedKeyPass, nil
 }

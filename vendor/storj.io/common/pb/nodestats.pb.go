@@ -348,8 +348,7 @@ type DailyStorageUsageResponse_StorageUsage struct {
 	// timestamp represents one tally day
 	Timestamp time.Time `protobuf:"bytes,2,opt,name=timestamp,proto3,stdtime" json:"timestamp"`
 	// interval_end_time represents the timestamp for the last tally run time
-	//
-	//	(i.e. last interval_end_time) for the day
+	//  (i.e. last interval_end_time) for the day
 	IntervalEndTime      time.Time `protobuf:"bytes,3,opt,name=interval_end_time,json=intervalEndTime,proto3,stdtime" json:"interval_end_time"`
 	XXX_NoUnkeyedLiteral struct{}  `json:"-"`
 	XXX_unrecognized     []byte    `json:"-"`

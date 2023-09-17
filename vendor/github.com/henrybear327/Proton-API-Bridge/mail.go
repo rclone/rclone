@@ -79,7 +79,7 @@ func (protonDrive *ProtonDrive) createDraft(ctx context.Context, config *MailSen
 		},
 	}
 
-	createDraftResp, err := protonDrive.c.CreateDraft(ctx, protonDrive.AddrKR, createDraftReq)
+	createDraftResp, err := protonDrive.c.CreateDraft(ctx, protonDrive.DefaultAddrKR, createDraftReq)
 	if err != nil {
 		return nil, err
 	}
@@ -96,7 +96,7 @@ func (protonDrive *ProtonDrive) getAttachmentSessionKeyMap(attachments []*proton
 			return nil, err
 		}
 
-		key, err := protonDrive.AddrKR.DecryptSessionKey(keyPacket)
+		key, err := protonDrive.DefaultAddrKR.DecryptSessionKey(keyPacket)
 		if err != nil {
 			return nil, err
 		}
@@ -127,7 +127,7 @@ func (protonDrive *ProtonDrive) uploadAttachments(ctx context.Context, createDra
 			Body: fileByteArray,
 		}
 
-		uploadAttachmentResp, err := protonDrive.c.UploadAttachment(ctx, protonDrive.AddrKR, req)
+		uploadAttachmentResp, err := protonDrive.c.UploadAttachment(ctx, protonDrive.DefaultAddrKR, req)
 		if err != nil {
 			return nil, err
 		}
@@ -172,7 +172,7 @@ func (protonDrive *ProtonDrive) sendDraft(ctx context.Context, messageID string,
 	}
 
 	// for each of the recipient, we encrypt body for them
-	if err = sendReq.AddTextPackage(protonDrive.AddrKR,
+	if err = sendReq.AddTextPackage(protonDrive.DefaultAddrKR,
 		string(htmlTemplate),
 		rfc822.TextHTML,
 		map[string]proton.SendPreferences{config.RecipientEmailAddress: {

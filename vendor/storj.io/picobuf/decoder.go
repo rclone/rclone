@@ -145,6 +145,16 @@ func (dec *Decoder) PresentMessage(field FieldNumber, fn func(*Decoder)) {
 	dec.nextField(n)
 }
 
+// UnrecognizedFields decodes fields that are not in the provided set.
+func (dec *Decoder) UnrecognizedFields(exclude uint64, out *[]byte) {
+	for dec.pendingField >= 0 && (dec.pendingField >= 64 || exclude&(1<<uint64(dec.pendingField)) == 0) {
+		n := protowire.ConsumeFieldValue(protowire.Number(dec.pendingField), dec.pendingWire, dec.buffer)
+		*out = protowire.AppendTag(*out, protowire.Number(dec.pendingField), dec.pendingWire)
+		*out = append(*out, dec.buffer[:n]...)
+		dec.nextField(n)
+	}
+}
+
 // Loop loops fields until all messages have been processed.
 func (dec *Decoder) Loop(fn func(*Decoder)) {
 	if !dec.init {

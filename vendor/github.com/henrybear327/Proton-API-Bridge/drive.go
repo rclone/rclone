@@ -15,8 +15,8 @@ type ProtonDrive struct {
 	MainShare *proton.Share
 	RootLink  *proton.Link
 
-	MainShareKR *crypto.KeyRing
-	AddrKR      *crypto.KeyRing
+	MainShareKR   *crypto.KeyRing
+	DefaultAddrKR *crypto.KeyRing
 
 	Config *common.Config
 
@@ -24,7 +24,7 @@ type ProtonDrive struct {
 	m                *proton.Manager
 	userKR           *crypto.KeyRing
 	addrKRs          map[string]*crypto.KeyRing
-	addrData         []proton.Address
+	addrData         map[string]proton.Address
 	signatureAddress string
 
 	cache                *cache
@@ -121,10 +121,10 @@ func NewProtonDrive(ctx context.Context, config *common.Config, authHandler prot
 	// log.Printf("rootLink %#v", rootLink)
 
 	// log.Printf("addrKRs %#v", addrKRs)=
-	addrKR := addrKRs[mainShare.AddressID]
+	mainShareAddrKR := addrKRs[mainShare.AddressID]
 	// log.Println("addrKR CountDecryptionEntities", addrKR.CountDecryptionEntities())
 
-	mainShareKR, err := mainShare.GetKeyRing(addrKR)
+	mainShareKR, err := mainShare.GetKeyRing(mainShareAddrKR)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -134,8 +134,8 @@ func NewProtonDrive(ctx context.Context, config *common.Config, authHandler prot
 		MainShare: mainShare,
 		RootLink:  &rootLink,
 
-		MainShareKR: mainShareKR,
-		AddrKR:      addrKR,
+		MainShareKR:   mainShareKR,
+		DefaultAddrKR: mainShareAddrKR,
 
 		Config: config,
 
@@ -167,4 +167,41 @@ func (protonDrive *ProtonDrive) About(ctx context.Context) (*proton.User, error)
 
 func (protonDrive *ProtonDrive) GetLink(ctx context.Context, linkID string) (*proton.Link, error) {
 	return protonDrive.getLink(ctx, linkID)
+}
+
+func addKeysFromKR(kr *crypto.KeyRing, newKRs ...*crypto.KeyRing) error {
+	for i := range newKRs {
+		for _, key := range newKRs[i].GetKeys() {
+			err := kr.AddKey(key)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
+func (protonDrive *ProtonDrive) getSignatureVerificationKeyring(emailAddresses []string, verificationAddrKRs ...*crypto.KeyRing) (*crypto.KeyRing, error) {
+	ret, err := crypto.NewKeyRing(nil)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, emailAddress := range emailAddresses {
+		if addr, ok := protonDrive.addrData[emailAddress]; ok {
+			if err := addKeysFromKR(ret, protonDrive.addrKRs[addr.ID]); err != nil {
+				return nil, err
+			}
+		}
+	}
+
+	if err := addKeysFromKR(ret, verificationAddrKRs...); err != nil {
+		return nil, err
+	}
+
+	if ret.CountEntities() == 0 {
+		return nil, ErrNoKeyringForSignatureVerification
+	}
+	return ret, nil
 }

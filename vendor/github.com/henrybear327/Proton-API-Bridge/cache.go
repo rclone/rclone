@@ -157,7 +157,11 @@ func (protonDrive *ProtonDrive) _getLinkKRByID(ctx context.Context, linkID strin
 /* The original non-caching version, which resolves the keyring recursively */
 func (protonDrive *ProtonDrive) _getLinkKR(ctx context.Context, link *proton.Link) (*crypto.KeyRing, error) {
 	if link.ParentLinkID == "" { // link is rootLink
-		nodeKR, err := link.GetKeyRing(protonDrive.MainShareKR, protonDrive.AddrKR)
+		signatureVerificationKR, err := protonDrive.getSignatureVerificationKeyring([]string{link.SignatureEmail})
+		if err != nil {
+			return nil, err
+		}
+		nodeKR, err := link.GetKeyRing(protonDrive.MainShareKR, signatureVerificationKR)
 		if err != nil {
 			return nil, err
 		}
@@ -176,7 +180,11 @@ func (protonDrive *ProtonDrive) _getLinkKR(ctx context.Context, link *proton.Lin
 		return nil, err
 	}
 
-	nodeKR, err := link.GetKeyRing(parentNodeKR, protonDrive.AddrKR)
+	signatureVerificationKR, err := protonDrive.getSignatureVerificationKeyring([]string{link.SignatureEmail})
+	if err != nil {
+		return nil, err
+	}
+	nodeKR, err := link.GetKeyRing(parentNodeKR, signatureVerificationKR)
 	if err != nil {
 		return nil, err
 	}
@@ -228,7 +236,11 @@ func (protonDrive *ProtonDrive) getLinkKR(ctx context.Context, link *proton.Link
 			return nil, err
 		}
 
-		kr, err := data.link.GetKeyRing(parentNodeKR, protonDrive.AddrKR)
+		signatureVerificationKR, err := protonDrive.getSignatureVerificationKeyring([]string{data.link.SignatureEmail})
+		if err != nil {
+			return nil, err
+		}
+		kr, err := data.link.GetKeyRing(parentNodeKR, signatureVerificationKR)
 		if err != nil {
 			return nil, err
 		}

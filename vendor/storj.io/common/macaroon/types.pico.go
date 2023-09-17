@@ -2,8 +2,8 @@
 // source: types.proto
 //
 // versions:
-//     protoc-gen-pico: (devel)
-//     protoc:          v3.21.12
+//     protoc-gen-pico: v0.0.1
+//     protoc:          v3.12.4
 
 package macaroon
 
@@ -22,6 +22,7 @@ type Caveat struct {
 	AllowedPaths    []*Caveat_Path `json:"allowed_paths,omitempty"`
 	NotAfter        *time.Time     `json:"not_after,omitempty"`
 	NotBefore       *time.Time     `json:"not_before,omitempty"`
+	MaxObjectTtl    *time.Duration `json:"max_object_ttl,omitempty"`
 	Nonce           []byte         `json:"nonce,omitempty"`
 }
 
@@ -38,6 +39,7 @@ func (m *Caveat) Encode(c *picobuf.Encoder) bool {
 	}
 	(*picoconv.Timestamp)(m.NotAfter).PicoEncode(c, 20)
 	(*picoconv.Timestamp)(m.NotBefore).PicoEncode(c, 21)
+	(*picoconv.Duration)(m.MaxObjectTtl).PicoEncode(c, 22)
 	c.Bytes(30, &m.Nonce)
 	return true
 }
@@ -66,6 +68,12 @@ func (m *Caveat) Decode(c *picobuf.Decoder) {
 			m.NotBefore = new(time.Time)
 		}
 		(*picoconv.Timestamp)(m.NotBefore).PicoDecode(c, 21)
+	}
+	if c.PendingField() == 22 {
+		if m.MaxObjectTtl == nil {
+			m.MaxObjectTtl = new(time.Duration)
+		}
+		(*picoconv.Duration)(m.MaxObjectTtl).PicoDecode(c, 22)
 	}
 	c.Bytes(30, &m.Nonce)
 }

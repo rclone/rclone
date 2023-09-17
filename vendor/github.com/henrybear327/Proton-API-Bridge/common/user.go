@@ -47,12 +47,12 @@ Log in methods
 Keyring decryption
 The password will be salted, and then used to decrypt the keyring. The salted password needs to be and can be cached, so the keyring can be re-decrypted when needed
 */
-func Login(ctx context.Context, config *Config, authHandler proton.AuthHandler, deAuthHandler proton.Handler) (*proton.Manager, *proton.Client, *ProtonDriveCredential, *crypto.KeyRing, map[string]*crypto.KeyRing, []proton.Address, error) {
+func Login(ctx context.Context, config *Config, authHandler proton.AuthHandler, deAuthHandler proton.Handler) (*proton.Manager, *proton.Client, *ProtonDriveCredential, *crypto.KeyRing, map[string]*crypto.KeyRing, map[string]proton.Address, error) {
 	var c *proton.Client
 	var auth proton.Auth
 	var userKR *crypto.KeyRing
 	var addrKRs map[string]*crypto.KeyRing
-	var addr []proton.Address
+	var addrs map[string]proton.Address
 
 	// get manager
 	m := getProtonManager(config.AppVersion, config.UserAgent)
@@ -71,12 +71,12 @@ func Login(ctx context.Context, config *Config, authHandler proton.AuthHandler, 
 		if err != nil {
 			return nil, nil, nil, nil, nil, nil, err
 		}
-		userKR, addrKRs, addr, _, err = getAccountKRs(ctx, c, nil, SaltedKeyPassByteArr)
+		userKR, addrKRs, addrs, _, err = getAccountKRs(ctx, c, nil, SaltedKeyPassByteArr)
 		if err != nil {
 			return nil, nil, nil, nil, nil, nil, err
 		}
 
-		return m, c, nil, userKR, addrKRs, addr, nil
+		return m, c, nil, userKR, addrKRs, addrs, nil
 	} else {
 		username := config.FirstLoginCredential.Username
 		password := config.FirstLoginCredential.Password
@@ -106,9 +106,20 @@ func Login(ctx context.Context, config *Config, authHandler proton.AuthHandler, 
 			}
 		}
 
+		var keyPass []byte
+		if auth.PasswordMode == proton.TwoPasswordMode {
+			if config.FirstLoginCredential.MailboxPassword != "" {
+				keyPass = []byte(config.FirstLoginCredential.MailboxPassword)
+			} else {
+				return nil, nil, nil, nil, nil, nil, ErrMailboxPasswordRequired
+			}
+		} else {
+			keyPass = []byte(config.FirstLoginCredential.Password)
+		}
+
 		// decrypt keyring
 		var saltedKeyPassByteArr []byte
-		userKR, addrKRs, addr, saltedKeyPassByteArr, err = getAccountKRs(ctx, c, []byte(password), nil)
+		userKR, addrKRs, addrs, saltedKeyPassByteArr, err = getAccountKRs(ctx, c, keyPass, nil)
 		if err != nil {
 			return nil, nil, nil, nil, nil, nil, err
 		}
@@ -129,7 +140,7 @@ func Login(ctx context.Context, config *Config, authHandler proton.AuthHandler, 
 			AccessToken:   auth.AccessToken,
 			RefreshToken:  auth.RefreshToken,
 			SaltedKeyPass: saltedKeyPass,
-		}, userKR, addrKRs, addr, nil
+		}, userKR, addrKRs, addrs, nil
 	}
 }
 

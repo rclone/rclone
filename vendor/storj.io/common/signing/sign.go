@@ -25,10 +25,12 @@ type Signer interface {
 	VerifyHMACSHA256(ctx context.Context, data, signature []byte) error
 }
 
+var monSignOrderLimitTask = mon.Task()
+
 // SignOrderLimit signs the order limit using the specified signer.
 // Signer is a satellite.
 func SignOrderLimit(ctx context.Context, satellite Signer, unsigned *pb.OrderLimit) (_ *pb.OrderLimit, err error) {
-	defer mon.Task()(&ctx)(&err)
+	defer monSignOrderLimitTask(&ctx)(&err)
 	bytes, err := EncodeOrderLimit(ctx, unsigned)
 	if err != nil {
 		return nil, Error.Wrap(err)
@@ -43,11 +45,13 @@ func SignOrderLimit(ctx context.Context, satellite Signer, unsigned *pb.OrderLim
 	return &signed, nil
 }
 
+var monSignUplinkOrderTask = mon.Task()
+
 // SignUplinkOrder signs the order using the specified signer.
 // Signer is an uplink.
 func SignUplinkOrder(ctx context.Context, privateKey storj.PiecePrivateKey, unsigned *pb.Order) (_ *pb.Order, err error) {
 	ctx = tracing.WithoutDistributedTracing(ctx)
-	defer mon.Task()(&ctx)(&err)
+	defer monSignUplinkOrderTask(&ctx)(&err)
 
 	bytes, err := EncodeOrder(ctx, unsigned)
 	if err != nil {

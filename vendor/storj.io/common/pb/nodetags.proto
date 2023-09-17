@@ -1,0 +1,41 @@
+// Copyright (C) 2019 Storj Labs, Inc.
+// See LICENSE for copying information.
+
+syntax = "proto3";
+option go_package = "storj.io/common/pb";
+
+package node;
+
+// Tag represents single key, value.
+message Tag {
+  string name = 1;
+  bytes value = 2; // optional, representation dependent on name.
+}
+
+// NodeTagSet
+message NodeTagSet {
+  // must always be set. this is the node the signer is signing for.
+  bytes node_id = 1;
+  repeated Tag tags = 2;
+  // must always be set. this makes sure the signature is signing the
+  // timestamp inside.
+  int64 signed_at = 3;
+}
+
+// SignedNodeTagSet is a tag set with additional signature.
+message SignedNodeTagSet {
+  // this is the serialized form of TagSet, serialized so that
+  // the signature process has something stable to work with.
+  bytes serialized_tag = 1;
+  // this is who signed (could be self signed, could be well known)
+  // public key supposed to be available on satellite side based on this id.
+  bytes signer_node_id = 3;
+
+  // the signature of serialized_tag.
+  bytes signature = 4;
+}
+
+// SignedNodeTagSets
+message SignedNodeTagSets {
+  repeated SignedNodeTagSet tags = 1;
+}

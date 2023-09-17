@@ -22,6 +22,8 @@ type listLimitKey struct{}
 
 type concurrentSegmentUploadsConfigKey struct{}
 
+type disableConcurrentSegmentUploadsKey struct{}
+
 type (
 	logWriterKey        struct{}
 	logWriterContextKey struct{}
@@ -111,14 +113,25 @@ func WithConcurrentSegmentUploadsConfig(ctx context.Context, config ConcurrentSe
 	return context.WithValue(ctx, concurrentSegmentUploadsConfigKey{}, config)
 }
 
+// DisableConcurrentSegmentUploads creates a context that disables the new
+// concurrent segment upload codepath.
+func DisableConcurrentSegmentUploads(ctx context.Context) context.Context {
+	return context.WithValue(ctx, disableConcurrentSegmentUploadsKey{}, struct{}{})
+}
+
 // GetConcurrentSegmentUploadsConfig returns the scheduler options to
-// use with the new concurrent segment upload codepath, or nil if no scheduler
-// options have been set.
+// use with the new concurrent segment upload codepath, if no scheduler
+// options have been set it will return default configuration. Concurrent
+// segment upload code path can be disabled with DisableConcurrentSegmentUploads.
 func GetConcurrentSegmentUploadsConfig(ctx context.Context) *ConcurrentSegmentUploadsConfig {
+	if value := ctx.Value(disableConcurrentSegmentUploadsKey{}); value != nil {
+		return nil
+	}
 	if config, ok := ctx.Value(concurrentSegmentUploadsConfigKey{}).(ConcurrentSegmentUploadsConfig); ok {
 		return &config
 	}
-	return nil
+	config := DefaultConcurrentSegmentUploadsConfig()
+	return &config
 }
 
 // WithLogWriter creates context with information about upload log file.

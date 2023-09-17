@@ -103,7 +103,7 @@ func RandomString(n int) string {
 func createFolderExpectError(t *testing.T, ctx context.Context, protonDrive *ProtonDrive, parent, name string, expectedError error) {
 	parentLink := protonDrive.RootLink
 	if parent != "" {
-		targetFolderLink, err := protonDrive.SearchByNameRecursivelyFromRoot(ctx, parent, true, false)
+		targetFolderLink, err := protonDrive.searchByNameRecursivelyFromRoot(ctx, parent, true, false)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -129,7 +129,7 @@ func createFolder(t *testing.T, ctx context.Context, protonDrive *ProtonDrive, p
 func uploadFileByReader(t *testing.T, ctx context.Context, protonDrive *ProtonDrive, parent, name string, in io.Reader, testParam int) {
 	parentLink := protonDrive.RootLink
 	if parent != "" {
-		targetFolderLink, err := protonDrive.SearchByNameRecursivelyFromRoot(ctx, parent, true, false)
+		targetFolderLink, err := protonDrive.searchByNameRecursivelyFromRoot(ctx, parent, true, false)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -151,7 +151,7 @@ func uploadFileByReader(t *testing.T, ctx context.Context, protonDrive *ProtonDr
 func uploadFileByFilepathWithError(t *testing.T, ctx context.Context, protonDrive *ProtonDrive, parent, name string, filepath string, testParam int, expectedError error) {
 	parentLink := protonDrive.RootLink
 	if parent != "" {
-		targetFolderLink, err := protonDrive.SearchByNameRecursivelyFromRoot(ctx, parent, true, false)
+		targetFolderLink, err := protonDrive.searchByNameRecursivelyFromRoot(ctx, parent, true, false)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -194,7 +194,7 @@ func downloadFile(t *testing.T, ctx context.Context, protonDrive *ProtonDrive, p
 func downloadFileWithOffset(t *testing.T, ctx context.Context, protonDrive *ProtonDrive, parent, name string, filepath string, data string, offset int64) {
 	parentLink := protonDrive.RootLink
 	if parent != "" {
-		targetFolderLink, err := protonDrive.SearchByNameRecursivelyFromRoot(ctx, parent, true, false)
+		targetFolderLink, err := protonDrive.searchByNameRecursivelyFromRoot(ctx, parent, true, false)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -208,7 +208,7 @@ func downloadFileWithOffset(t *testing.T, ctx context.Context, protonDrive *Prot
 		t.Fatalf("parentLink is not of folder type")
 	}
 
-	targetFileLink, err := protonDrive.SearchByNameRecursivelyFromRoot(ctx, name, false, false)
+	targetFileLink, err := protonDrive.searchByNameRecursivelyFromRoot(ctx, name, false, false)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -258,7 +258,7 @@ func downloadFileWithOffset(t *testing.T, ctx context.Context, protonDrive *Prot
 }
 
 func checkRevisions(protonDrive *ProtonDrive, ctx context.Context, t *testing.T, name string, totalRevisions, activeRevisions, draftRevisions, obseleteRevisions int) {
-	targetFileLink, err := protonDrive.SearchByNameRecursivelyFromRoot(ctx, name, false, true)
+	targetFileLink, err := protonDrive.searchByNameRecursivelyFromRoot(ctx, name, false, true)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -293,7 +293,7 @@ func checkRevisions(protonDrive *ProtonDrive, ctx context.Context, t *testing.T,
 
 // During the integration test, the name much be unique since the link is returned by recursively search for the name from root
 func deleteBySearchingFromRoot(t *testing.T, ctx context.Context, protonDrive *ProtonDrive, name string, isFolder bool, listAllActiveOrDraftFiles bool) {
-	targetLink, err := protonDrive.SearchByNameRecursivelyFromRoot(ctx, name, isFolder, listAllActiveOrDraftFiles)
+	targetLink, err := protonDrive.searchByNameRecursivelyFromRoot(ctx, name, isFolder, listAllActiveOrDraftFiles)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -317,7 +317,7 @@ func deleteBySearchingFromRoot(t *testing.T, ctx context.Context, protonDrive *P
 func checkActiveFileListing(t *testing.T, ctx context.Context, protonDrive *ProtonDrive, expectedPaths []string) {
 	{
 		paths := make([]string, 0)
-		err := protonDrive.ListDirectoriesRecursively(ctx, protonDrive.MainShareKR, protonDrive.RootLink, false, -1, 0, true, "", &paths)
+		err := protonDrive.listDirectoriesRecursively(ctx, protonDrive.MainShareKR, protonDrive.RootLink, false, -1, 0, true, "", &paths)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -335,7 +335,7 @@ func checkActiveFileListing(t *testing.T, ctx context.Context, protonDrive *Prot
 
 	{
 		paths := make([]string, 0)
-		err := protonDrive.ListDirectoriesRecursively(ctx, protonDrive.MainShareKR, protonDrive.RootLink, false, -1, 0, false, "", &paths)
+		err := protonDrive.listDirectoriesRecursively(ctx, protonDrive.MainShareKR, protonDrive.RootLink, false, -1, 0, false, "", &paths)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -360,11 +360,11 @@ func checkActiveFileListing(t *testing.T, ctx context.Context, protonDrive *Prot
 }
 
 func moveFolder(t *testing.T, ctx context.Context, protonDrive *ProtonDrive, srcFolderName, dstParentFolderName string) {
-	targetSrcFolderLink, err := protonDrive.SearchByNameRecursivelyFromRoot(ctx, srcFolderName, true, false)
+	targetSrcFolderLink, err := protonDrive.searchByNameRecursivelyFromRoot(ctx, srcFolderName, true, false)
 	if err != nil {
 		t.Fatal(err)
 	}
-	targetDestFolderLink, err := protonDrive.SearchByNameRecursivelyFromRoot(ctx, dstParentFolderName, true, false)
+	targetDestFolderLink, err := protonDrive.searchByNameRecursivelyFromRoot(ctx, dstParentFolderName, true, false)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -379,11 +379,11 @@ func moveFolder(t *testing.T, ctx context.Context, protonDrive *ProtonDrive, src
 }
 
 func moveFile(t *testing.T, ctx context.Context, protonDrive *ProtonDrive, srcFileName, dstParentFolderName string) {
-	targetSrcFileLink, err := protonDrive.SearchByNameRecursivelyFromRoot(ctx, srcFileName, false, false)
+	targetSrcFileLink, err := protonDrive.searchByNameRecursivelyFromRoot(ctx, srcFileName, false, false)
 	if err != nil {
 		t.Fatal(err)
 	}
-	targetDestFolderLink, err := protonDrive.SearchByNameRecursivelyFromRoot(ctx, dstParentFolderName, true, false)
+	targetDestFolderLink, err := protonDrive.searchByNameRecursivelyFromRoot(ctx, dstParentFolderName, true, false)
 	if err != nil {
 		t.Fatal(err)
 	}

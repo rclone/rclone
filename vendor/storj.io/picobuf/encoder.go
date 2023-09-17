@@ -130,3 +130,8 @@ func (enc *Encoder) alwaysAnyBytes(field FieldNumber, fn func()) bool {
 	enc.buffer = enc.buffer[:lengthStart+bytesForSize+messageLength]
 	return true
 }
+
+// UnrecognizedFields encodes fields that are not in the provided set.
+func (enc *Encoder) UnrecognizedFields(out []byte) {
+	enc.buffer = append(enc.buffer, out...)
+}

@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"crypto/sha256"
 	"encoding/base64"
+	"golang.org/x/exp/maps"
+	"golang.org/x/exp/slices"
 	"strings"
 
 	"github.com/sirupsen/logrus"
@@ -72,7 +74,10 @@ func GetMessageHash(b []byte) (string, error) {
 				return err
 			}
 
-			for k, v := range values {
+			keys := maps.Keys(values)
+			slices.Sort(keys)
+
+			for _, k := range keys {
 				if strings.EqualFold(k, "boundary") {
 					continue
 				}
@@ -81,7 +86,7 @@ func GetMessageHash(b []byte) (string, error) {
 					return err
 				}
 
-				if _, err := h.Write([]byte(v)); err != nil {
+				if _, err := h.Write([]byte(values[k])); err != nil {
 					return err
 				}
 			}

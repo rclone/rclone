@@ -57,9 +57,11 @@ type downloadStream interface {
 	Recv() (*pb.PieceDownloadResponse, error)
 }
 
+var monClientDownloadTask = mon.Task()
+
 // Download starts a new download using the specified order limit at the specified offset and size.
 func (client *Client) Download(ctx context.Context, limit *pb.OrderLimit, piecePrivateKey storj.PiecePrivateKey, offset, size int64) (_ *Download, err error) {
-	defer mon.Task()(&ctx)(&err)
+	defer monClientDownloadTask(&ctx)(&err)
 
 	ctx, cancel := context2.WithCustomCancel(ctx)
 

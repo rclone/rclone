@@ -16,6 +16,7 @@ type QueuedChannel[T any] struct {
 	cond   *sync.Cond
 	closed atomicBool // Should use atomic.Bool once we use Go 1.19!
 	name   string     // for debugging
+	wg     sync.WaitGroup
 }
 
 func NewQueuedChannel[T any](chanBufferSize, queueCapacity int, panicHandler PanicHandler, name string) *QueuedChannel[T] {
@@ -30,9 +31,12 @@ func NewQueuedChannel[T any](chanBufferSize, queueCapacity int, panicHandler Pan
 	// The queue is initially not closed.
 	queue.closed.store(false)
 
+	queue.wg.Add(1)
+
 	// Start the queue consumer.
 	GoAnnotated(context.Background(), panicHandler, func(ctx context.Context) {
 		defer close(queue.ch)
+		defer queue.wg.Done()
 
 		for {
 			item, ok := queue.pop()
@@ -85,6 +89,10 @@ func (q *QueuedChannel[T]) Close() {
 func (q *QueuedChannel[T]) CloseAndDiscardQueued() {
 	close(q.stopCh)
 	q.Close()
+}
+
+func (q *QueuedChannel[T]) Wait() {
+	q.wg.Wait()
 }
 
 func (q *QueuedChannel[T]) pop() (T, bool) {

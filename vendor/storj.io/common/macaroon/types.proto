@@ -7,6 +7,7 @@ package macaroon;
 option go_package = "storj.io/common/macaroon";
 
 import "pico.proto";
+import "google/protobuf/duration.proto";
 import "google/protobuf/timestamp.proto";
 
 message Caveat {
@@ -27,6 +28,9 @@ message Caveat {
   // if set, the validity time window
   google.protobuf.Timestamp not_after = 20  [(pico.field).custom_type = "time.Time", (pico.field).custom_cast = "storj.io/picobuf/picoconv.Timestamp"];
   google.protobuf.Timestamp not_before = 21 [(pico.field).custom_type = "time.Time", (pico.field).custom_cast = "storj.io/picobuf/picoconv.Timestamp"];
+
+  // if set, sets expiration time for new objects
+  google.protobuf.Duration max_object_ttl = 22 [(pico.field).custom_type = "time.Duration", (pico.field).custom_cast = "storj.io/picobuf/picoconv.Duration"];
 
   // nonce is set to some random bytes so that you can make arbitrarily
   // many restricted macaroons with the same (or no) restrictions.

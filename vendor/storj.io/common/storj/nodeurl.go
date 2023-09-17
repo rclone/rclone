@@ -4,7 +4,6 @@
 package storj
 
 import (
-	"fmt"
 	"net/url"
 	"strconv"
 	"strings"
@@ -112,22 +111,60 @@ func (u NodeURL) IsZero() bool {
 
 // String converts NodeURL to a string.
 func (u NodeURL) String() string {
-	vals := url.Values{}
+	hasSuffix := u.DebounceLimit > 0 || u.Features > 0 || !u.NoiseInfo.IsZero()
+	if !hasSuffix {
+		if u.ID.IsZero() {
+			return u.Address
+		}
+		return u.ID.String() + "@" + u.Address
+	}
+
+	var s strings.Builder
+	s.Grow(160)
+	if !u.ID.IsZero() {
+		s.WriteString(u.ID.String())
+		s.WriteString("@")
+	}
+	s.WriteString(u.Address)
+
+	const maxIntBytes = 22
+	writeInt := func(v int64, base int) {
+		var buf [maxIntBytes]byte
+		s.Write(strconv.AppendInt(buf[:0], v, base))
+	}
+	writeUint := func(v uint64, base int) {
+		var buf [maxIntBytes]byte
+		s.Write(strconv.AppendUint(buf[:0], v, base))
+	}
+
+	delim := byte('?')
+	writeKey := func(key string) {
+		s.WriteByte(delim)
+		delim = '&'
+		s.WriteString(key)
+	}
+
 	if u.DebounceLimit > 0 {
-		vals.Set("debounce", fmt.Sprint(u.DebounceLimit))
+		writeKey("debounce=")
+		writeInt(int64(u.DebounceLimit), 10)
 	}
 	if u.Features > 0 {
-		vals.Set("f", strconv.FormatUint(u.Features, 16))
+		writeKey("f=")
+		writeUint(u.Features, 16)
 	}
-	u.NoiseInfo.WriteTo(vals)
-	suffix := ""
-	if len(vals) > 0 {
-		suffix = "?" + vals.Encode()
+
+	info := &u.NoiseInfo
+	if info.Proto != NoiseProto_Unset {
+		writeKey("noise_proto=")
+		writeInt(int64(info.Proto), 10)
 	}
-	if u.ID.IsZero() {
-		return u.Address + suffix
+	if info.PublicKey != "" {
+		writeKey("noise_pub=")
+		// base58 is URL safe
+		s.WriteString(base58.CheckEncode([]byte(info.PublicKey), 0))
 	}
-	return u.ID.String() + "@" + u.Address + suffix
+
+	return s.String()
 }
 
 // Set implements flag.Value interface.

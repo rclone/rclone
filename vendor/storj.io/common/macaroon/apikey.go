@@ -211,6 +211,24 @@ func (a *APIKey) GetAllowedBuckets(ctx context.Context, action Action) (allowed 
 	return allowed, err
 }
 
+// GetMaxObjectTTL returns the shortest MaxObjectTTL period conifgured in the APIKey's caveats.
+func (a *APIKey) GetMaxObjectTTL(ctx context.Context) (ttl *time.Duration, err error) {
+	defer mon.Task()(&ctx)(&err)
+
+	caveats := a.mac.Caveats()
+	for _, cavbuf := range caveats {
+		var cav Caveat
+		if err := cav.UnmarshalBinary(cavbuf); err != nil {
+			return nil, ErrFormat.New("invalid caveat format")
+		}
+		if cav.MaxObjectTtl != nil && (ttl == nil || *(cav.MaxObjectTtl) < *ttl) {
+			ttl = cav.MaxObjectTtl
+		}
+	}
+
+	return ttl, nil
+}
+
 // Restrict generates a new APIKey with the provided Caveat attached.
 func (a *APIKey) Restrict(caveat Caveat) (*APIKey, error) {
 	buf, err := picobuf.Marshal(&caveat)

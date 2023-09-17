@@ -89,6 +89,12 @@ type Permission struct {
 	// believes the time is after NotAfter.
 	// If set, this value should always be after NotBefore.
 	NotAfter time.Time
+	// MaxObjectTTL restricts the maximum time-to-live of objects.
+	// If set, new objects are uploaded with an expiration time that reflects
+	// the MaxObjectTTL period.
+	// If objects are uploaded with an explicit expiration time, the upload
+	// will be successful only if it is shorter than the MaxObjectTTL period.
+	MaxObjectTTL *time.Duration
 }
 
 // ParseAccess parses a serialized access grant string.
@@ -241,7 +247,18 @@ func (access *Access) Share(permission Permission, prefixes ...SharePrefix) (*Ac
 	for _, prefix := range prefixes {
 		internalPrefixes = append(internalPrefixes, grant.SharePrefix(prefix))
 	}
-	rv, err := access.toInternal().Restrict(grant.Permission(permission), internalPrefixes...)
+	rv, err := access.toInternal().Restrict(
+		grant.Permission{
+			AllowDownload: permission.AllowDownload,
+			AllowUpload:   permission.AllowUpload,
+			AllowList:     permission.AllowList,
+			AllowDelete:   permission.AllowDelete,
+			NotBefore:     permission.NotBefore,
+			NotAfter:      permission.NotAfter,
+			MaxObjectTTL:  permission.MaxObjectTTL,
+		},
+		internalPrefixes...,
+	)
 	if err != nil {
 		return nil, err
 	}

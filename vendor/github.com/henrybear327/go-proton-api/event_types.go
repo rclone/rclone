@@ -14,6 +14,8 @@ type Event struct {
 
 	User *User
 
+	UserSettings *UserSettings
+
 	MailSettings *MailSettings
 
 	Messages []MessageEvent

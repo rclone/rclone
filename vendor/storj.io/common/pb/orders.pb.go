@@ -625,11 +625,10 @@ func (m *PieceHashSigning) GetHashAlgorithm() PieceHashAlgorithm {
 }
 
 // Expected order of messages from storagenode:
-//
-//	go repeated
-//	   SettlementRequest -> (async)
-//	go repeated
-//	   <- SettlementResponse
+//   go repeated
+//      SettlementRequest -> (async)
+//   go repeated
+//      <- SettlementResponse
 type SettlementRequest struct {
 	Limit                *OrderLimit `protobuf:"bytes,1,opt,name=limit,proto3" json:"limit,omitempty"`
 	Order                *Order      `protobuf:"bytes,2,opt,name=order,proto3" json:"order,omitempty"`

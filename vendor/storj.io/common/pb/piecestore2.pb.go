@@ -50,12 +50,12 @@ func (PieceHeader_FormatVersion) EnumDescriptor() ([]byte, []int) {
 
 // Expected order of messages from uplink:
 //
-//	OrderLimit ->
-//	repeated
-//	   Order ->
-//	   Chunk ->
-//	PieceHash signed by uplink ->
-//	   <- PieceHash signed by storage node
+//   OrderLimit ->
+//   repeated
+//      Order ->
+//      Chunk ->
+//   PieceHash signed by uplink ->
+//      <- PieceHash signed by storage node
 type PieceUploadRequest struct {
 	// first message to show that we are allowed to upload
 	Limit *OrderLimit `protobuf:"bytes,1,opt,name=limit,proto3" json:"limit,omitempty"`
@@ -229,11 +229,11 @@ func (m *PieceUploadResponse) GetNodeCertchain() []byte {
 
 // Expected order of messages from uplink:
 //
-//	{OrderLimit, Chunk} ->
-//	go repeated
-//	   Order -> (async)
-//	go repeated
-//	   <- PieceDownloadResponse.Chunk
+//   {OrderLimit, Chunk} ->
+//   go repeated
+//      Order -> (async)
+//   go repeated
+//      <- PieceDownloadResponse.Chunk
 type PieceDownloadRequest struct {
 	// first message to show that we are allowed to upload
 	Limit *OrderLimit `protobuf:"bytes,1,opt,name=limit,proto3" json:"limit,omitempty"`

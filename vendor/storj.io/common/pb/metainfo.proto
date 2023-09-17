@@ -26,6 +26,7 @@ service Metainfo {
     // Bucket
     rpc CreateBucket(CreateBucketRequest) returns (CreateBucketResponse);
     rpc GetBucket(GetBucketRequest) returns (GetBucketResponse);
+    rpc GetBucketLocation(GetBucketLocationRequest) returns (GetBucketLocationResponse);
     rpc DeleteBucket(DeleteBucketRequest) returns (DeleteBucketResponse);
     rpc ListBuckets(ListBucketsRequest) returns (ListBucketsResponse);
 
@@ -114,6 +115,16 @@ message GetBucketRequest {
 
 message GetBucketResponse {
     Bucket bucket = 1;
+}
+
+message GetBucketLocationRequest {
+    RequestHeader header = 15;
+
+    bytes name = 1;
+}
+
+message GetBucketLocationResponse {
+    bytes location = 1;
 }
 
 message DeleteBucketRequest {
@@ -387,7 +398,7 @@ message ListObjectsRequest {
     // because uplink was not setting object_includes correctly
     // (object_includes.Metadata was always false) we need a way
     // to give satellite know that should be using object_includes,
-    // otherwise old uplinks can break. Newer uplinks should 
+    // otherwise old uplinks can break. Newer uplinks should
     // set this value always to true.
     bool use_object_includes = 8;
 }
@@ -697,6 +708,7 @@ message BatchRequestItem {
     oneof Request {
         CreateBucketRequest             bucket_create = 1;
         GetBucketRequest                bucket_get = 2;
+        GetBucketLocationRequest        bucket_get_location = 30;
         DeleteBucketRequest             bucket_delete = 3;
         ListBucketsRequest              bucket_list = 4;
 
@@ -739,6 +751,7 @@ message BatchResponseItem {
     oneof Response {
         CreateBucketResponse             bucket_create = 1;
         GetBucketResponse                bucket_get = 2;
+        GetBucketLocationResponse        bucket_get_location = 30;
         DeleteBucketResponse             bucket_delete = 3;
         ListBucketsResponse              bucket_list = 4;
 
@@ -788,7 +801,7 @@ message BeginMoveObjectRequest {
 
     bytes bucket = 1;
     bytes encrypted_object_key = 2;
-   
+
     bytes new_bucket = 3;
     bytes new_encrypted_object_key = 4;
 }

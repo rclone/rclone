@@ -119,9 +119,11 @@ type DialOptions struct {
 	ForceTCPFastOpenMultidialSupport bool
 }
 
+var monDialNodeTask = mon.Task()
+
 // DialNode dials to the specified node url using the provided options and asserts it has the given node id.
 func (d Dialer) DialNode(ctx context.Context, nodeURL storj.NodeURL, opts DialOptions) (_ *Conn, err error) {
-	defer mon.Task()(&ctx, "node: "+nodeURL.String())(&err)
+	defer monDialNodeTask(&ctx, "node: "+nodeURL.String())(&err)
 
 	setCtx := func(ctx context.Context) context.Context {
 		ctx = setQUICRollout(ctx, nodeURL)
@@ -234,10 +236,12 @@ func (d Dialer) DialAddressUnencrypted(ctx context.Context, address string) (_ *
 // dialing helper functions
 //
 
+var monDialPoolTask = mon.Task()
+
 // dialPool dials through the connection pool, reusing a connection if possible based on the
 // key and calling the dialer if necessary.
 func (d Dialer) dialPool(ctx context.Context, key string, dialer rpcpool.Dialer) (_ *Conn, err error) {
-	defer mon.Task()(&ctx)(&err)
+	defer monDialPoolTask(&ctx)(&err)
 
 	// include the timeout here so that it includes all aspects of the dial
 	if d.DialTimeout > 0 {

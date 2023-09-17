@@ -111,9 +111,11 @@ func (p *Pool) put(pk poolKey, pv *poolValue) {
 	}
 }
 
+var monPoolgetTask = mon.Task()
+
 // get returns a drpc connection from the cache if possible, dialing if necessary.
 func (p *Pool) get(ctx context.Context, pk poolKey, dial Dialer) (pv *poolValue, err error) {
-	defer mon.Task()(&ctx)(&err)
+	defer monPoolgetTask(&ctx)(&err)
 
 	var tags []monkit.SeriesTag
 	if p != nil && p.name != "" {
@@ -139,11 +141,13 @@ func (p *Pool) get(ctx context.Context, pk poolKey, dial Dialer) (pv *poolValue,
 	}, nil
 }
 
+var monPoolGetTask = mon.Task()
+
 // Get looks up a connection with the same key and TLS options and returns it if it
 // exists. If it does not exist, it calls the dial function to create one. It is safe
 // to call on a nil receiver, and if so, always returns a dialed connection.
 func (p *Pool) Get(ctx context.Context, key string, tlsOptions *tlsopts.Options, dial Dialer) (conn Conn, err error) {
-	defer mon.Task()(&ctx)(&err)
+	defer monPoolGetTask(&ctx)(&err)
 
 	pk := poolKey{
 		key:        key,

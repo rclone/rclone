@@ -4,9 +4,10 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"io"
+
 	"github.com/ProtonMail/gopenpgp/v2/crypto"
 	"github.com/go-resty/resty/v2"
-	"io"
 )
 
 func (c *Client) GetAttachment(ctx context.Context, attachmentID string) ([]byte, error) {
@@ -79,8 +80,9 @@ func (c *Client) UploadAttachment(ctx context.Context, addrKR *crypto.KeyRing, r
 }
 
 func (c *Client) getAttachment(ctx context.Context, attachmentID string, reader io.ReaderFrom) error {
-	res, err := c.doRes(ctx, func(r *resty.Request) (*resty.Response, error) {
-		return r.SetDoNotParseResponse(true).Get("/mail/v4/attachments/" + attachmentID)
+	res, err := c.doRes(ctx, func(req *resty.Request) (*resty.Response, error) {
+		res, err := req.SetDoNotParseResponse(true).Get("/mail/v4/attachments/" + attachmentID)
+		return parseResponse(res, err)
 	})
 	if err != nil {
 		return fmt.Errorf("failed to request attachment: %w", err)

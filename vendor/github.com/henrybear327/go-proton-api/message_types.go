@@ -54,6 +54,8 @@ type MessageFilter struct {
 	AddressID  string `json:",omitempty"`
 	ExternalID string `json:",omitempty"`
 	LabelID    string `json:",omitempty"`
+	EndID      string `json:",omitempty"`
+	Desc       Bool
 }
 
 type Message struct {
@@ -217,4 +219,10 @@ func (res LabelMessagesRes) ok() (bool, string) {
 type LabelMessageRes struct {
 	ID       string
 	Response APIError
+}
+
+type MessageGroupCount struct {
+	LabelID string
+	Total   int
+	Unread  int
 }

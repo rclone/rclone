@@ -24,10 +24,10 @@ type SymmetricallyEncrypted struct {
 	prefix []byte
 
 	// Specific to version 2
-	cipher        CipherFunction
-	mode          AEADMode
-	chunkSizeByte byte
-	salt          [aeadSaltSize]byte
+	Cipher        CipherFunction
+	Mode          AEADMode
+	ChunkSizeByte byte
+	Salt          [aeadSaltSize]byte
 }
 
 const (

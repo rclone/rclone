@@ -162,7 +162,7 @@ func (client *Client) CreateBucket(ctx context.Context, params CreateBucketParam
 	return respBucket, nil
 }
 
-// GetBucketParams parmaters for GetBucketParams method.
+// GetBucketParams parameters for GetBucketParams method.
 type GetBucketParams struct {
 	Name []byte
 }
@@ -222,7 +222,51 @@ func (client *Client) GetBucket(ctx context.Context, params GetBucketParams) (re
 	return respBucket, nil
 }
 
-// DeleteBucketParams parmaters for DeleteBucket method.
+// GetBucketLocationParams parameters for GetBucketLocation method.
+type GetBucketLocationParams struct {
+	Name []byte
+}
+
+func (params *GetBucketLocationParams) toRequest(header *pb.RequestHeader) *pb.GetBucketLocationRequest {
+	return &pb.GetBucketLocationRequest{
+		Header: header,
+		Name:   params.Name,
+	}
+}
+
+// BatchItem returns single item for batch request.
+func (params *GetBucketLocationParams) BatchItem() *pb.BatchRequestItem {
+	return &pb.BatchRequestItem{
+		Request: &pb.BatchRequestItem_BucketGetLocation{
+			BucketGetLocation: params.toRequest(nil),
+		},
+	}
+}
+
+// GetBucketLocationResponse response for GetBucketLocation request.
+type GetBucketLocationResponse struct {
+	Location []byte
+}
+
+// GetBucketLocation returns a bucket location.
+func (client *Client) GetBucketLocation(ctx context.Context, params GetBucketLocationParams) (_ GetBucketLocationResponse, err error) {
+	defer mon.Task()(&ctx)(&err)
+
+	var response *pb.GetBucketLocationResponse
+	err = WithRetry(ctx, func(ctx context.Context) error {
+		response, err = client.client.GetBucketLocation(ctx, params.toRequest(client.header()))
+		return err
+	})
+	if err != nil {
+		return GetBucketLocationResponse{}, Error.Wrap(err)
+	}
+
+	return GetBucketLocationResponse{
+		Location: response.Location,
+	}, nil
+}
+
+// DeleteBucketParams parameters for DeleteBucket method.
 type DeleteBucketParams struct {
 	Name      []byte
 	DeleteAll bool
@@ -269,7 +313,7 @@ func (client *Client) DeleteBucket(ctx context.Context, params DeleteBucketParam
 	return respBucket, nil
 }
 
-// ListBucketsParams parmaters for ListBucketsParams method.
+// ListBucketsParams parameters for ListBucketsParams method.
 type ListBucketsParams struct {
 	ListOpts BucketListOptions
 }
@@ -427,7 +471,7 @@ func (client *Client) BeginObject(ctx context.Context, params BeginObjectParams)
 	return newBeginObjectResponse(response), nil
 }
 
-// CommitObjectParams parmaters for CommitObject method.
+// CommitObjectParams parameters for CommitObject method.
 type CommitObjectParams struct {
 	StreamID storj.StreamID
 

@@ -10,6 +10,7 @@ import "google/protobuf/descriptor.proto";
 
 message MessageOptions {
   bool always_present = 1;
+  bool capture_unrecognized_fields = 2;
 }
 
 extend google.protobuf.MessageOptions {

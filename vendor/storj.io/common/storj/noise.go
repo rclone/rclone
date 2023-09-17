@@ -29,6 +29,11 @@ type NoiseInfo struct {
 	PublicKey string // byte representation
 }
 
+// IsZero returns whether it contains any information.
+func (info *NoiseInfo) IsZero() bool {
+	return info.Proto == NoiseProto_Unset && info.PublicKey == ""
+}
+
 // WriteTo assists in serializing a NoiseInfo to a NodeURL.
 func (info *NoiseInfo) WriteTo(values url.Values) {
 	if info.Proto != NoiseProto_Unset {

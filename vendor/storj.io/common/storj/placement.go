@@ -7,71 +7,43 @@ import (
 	"database/sql/driver"
 
 	"github.com/zeebo/errs"
-
-	"storj.io/common/storj/location"
 )
 
 // PlacementConstraint is the ID of the placement/geofencing rule.
 type PlacementConstraint uint16
 
 const (
+	// DefaultPlacement placement is used, when no specific placement rule is defined.
+	DefaultPlacement PlacementConstraint = 0
 
 	// EveryCountry includes all countries.
+	// Deprecated: use DefaultPlacement, which may exclude some nodes based on placement configuration.
 	EveryCountry PlacementConstraint = 0
 
 	// EU includes only the 27 members of European Union.
+	// Deprecated: placement definitions depend on the configuration.
 	EU PlacementConstraint = 1
 
 	// EEA defines the European Economic Area (EU + 3 countries), the area where GDPR is valid.
+	// Deprecated: placement definitions depend on the configuration.
 	EEA PlacementConstraint = 2
 
 	// US filters nodes only from the United States.
+	// Deprecated: placement definitions depend on the configuration.
 	US PlacementConstraint = 3
 
 	// DE placement uses nodes only from Germany.
+	// Deprecated: placement definitions depend on the configuration.
 	DE PlacementConstraint = 4
 
 	// InvalidPlacement is used when there is no information about the stored placement.
+	// Deprecated: placement definitions depend on the configuration.
 	InvalidPlacement PlacementConstraint = 5
 
 	// NR placement uses nodes that are not in RU or other countries sanctioned because of the RU/UA War.
+	// Deprecated: placement definitions depend on the configuration.
 	NR PlacementConstraint = 6
 )
-
-// AllowedCountry checks if country is allowed by the placement policy.
-func (p PlacementConstraint) AllowedCountry(isoCountryCode location.CountryCode) bool {
-	if p == EveryCountry {
-		return true
-	}
-	switch p {
-	case EEA:
-		for _, c := range location.EuCountries {
-			if c == isoCountryCode {
-				return true
-			}
-		}
-		for _, c := range location.EeaNonEuCountries {
-			if c == isoCountryCode {
-				return true
-			}
-		}
-	case EU:
-		for _, c := range location.EuCountries {
-			if c == isoCountryCode {
-				return true
-			}
-		}
-	case US:
-		return isoCountryCode.Equal(location.UnitedStates)
-	case DE:
-		return isoCountryCode.Equal(location.Germany)
-	case NR:
-		return !isoCountryCode.Equal(location.Russia) && !isoCountryCode.Equal(location.Belarus)
-	default:
-		return false
-	}
-	return false
-}
 
 // Value implements the driver.Valuer interface.
 func (p PlacementConstraint) Value() (driver.Value, error) {
@@ -81,7 +53,7 @@ func (p PlacementConstraint) Value() (driver.Value, error) {
 // Scan implements the sql.Scanner interface.
 func (p *PlacementConstraint) Scan(value interface{}) error {
 	if value == nil {
-		*p = EveryCountry
+		*p = DefaultPlacement
 		return nil
 	}
 
@@ -95,5 +67,4 @@ func (p *PlacementConstraint) Scan(value interface{}) error {
 	}
 	*p = PlacementConstraint(uint16(code.(int64)))
 	return nil
-
 }

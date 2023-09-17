@@ -46,18 +46,21 @@ func (c *Client) CreateFile(ctx context.Context, shareID string, req CreateFileR
 		return r.SetResult(&res).SetBody(req).Post("/drive/shares/" + shareID + "/files")
 	})
 	if err != nil { // if the status code is not 200~299, it's considered an error
-		if resp.StatusCode() == http.StatusUnprocessableEntity {
-			// log.Println(resp.String())
+
+		// handle the file or folder name exists error
+		if resp.StatusCode() == http.StatusUnprocessableEntity /* 422 */ {
 			var apiError APIError
 			err := json.Unmarshal(resp.Body(), &apiError)
 			if err != nil {
 				return CreateFileRes{}, err
 			}
 			if apiError.Code == AFileOrFolderNameExist {
-				return CreateFileRes{}, ErrFileNameExist
+				return CreateFileRes{}, ErrFileNameExist // since we are in CreateFile, so we return this error
 			}
 		}
-		if resp.StatusCode() == http.StatusConflict {
+
+		// handle draft exists error
+		if resp.StatusCode() == http.StatusConflict /* 409 */ {
 			var apiError APIError
 			err := json.Unmarshal(resp.Body(), &apiError)
 			if err != nil {
@@ -83,7 +86,9 @@ func (c *Client) CreateFolder(ctx context.Context, shareID string, req CreateFol
 		return r.SetResult(&res).SetBody(req).Post("/drive/shares/" + shareID + "/folders")
 	})
 	if err != nil { // if the status code is not 200~299, it's considered an error
-		if resp.StatusCode() == http.StatusUnprocessableEntity {
+
+		// handle the file or folder name exists error
+		if resp.StatusCode() == http.StatusUnprocessableEntity /* 422 */ {
 			// log.Println(resp.String())
 			var apiError APIError
 			err := json.Unmarshal(resp.Body(), &apiError)
@@ -91,7 +96,7 @@ func (c *Client) CreateFolder(ctx context.Context, shareID string, req CreateFol
 				return CreateFolderRes{}, err
 			}
 			if apiError.Code == AFileOrFolderNameExist {
-				return CreateFolderRes{}, ErrFolderNameExist
+				return CreateFolderRes{}, ErrFolderNameExist // since we are in CreateFolder, so we return this error
 			}
 		}
 
