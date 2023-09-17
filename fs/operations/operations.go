@@ -23,6 +23,8 @@ import (
 	"sync/atomic"
 	"time"
 
+	"golang.org/x/sync/errgroup"
+
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/accounting"
 	"github.com/rclone/rclone/fs/cache"
@@ -37,7 +39,6 @@ import (
 	"github.com/rclone/rclone/lib/pacer"
 	"github.com/rclone/rclone/lib/random"
 	"github.com/rclone/rclone/lib/readers"
-	"golang.org/x/sync/errgroup"
 )
 
 // CheckHashes checks the two files to see if they have common

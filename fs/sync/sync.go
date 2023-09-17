@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
 	"path"
 	"sort"
 	"strings"
@@ -443,7 +444,9 @@ func (s *syncCopyMove) pairCopyOrMove(ctx context.Context, in *pipe, fdst fs.Fs,
 				err = operations.DeleteFile(ctx, src)
 			}
 		} else {
-			_, err = operations.Copy(ctx, fdst, dst, src.Remote(), src)
+			if _, merr := operations.Copy(ctx, fdst, dst, src.Remote(), src); merr != nil && !os.IsNotExist(err) {
+				err = merr
+			}
 		}
 		s.processError(err)
 	}
