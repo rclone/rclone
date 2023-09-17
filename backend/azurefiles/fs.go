@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"log"
 	"path/filepath"
 	"strings"
 	"time"
@@ -15,15 +16,17 @@ import (
 
 // Inspired by azureblob store, this initiates a network request and returns an error if objec is not found
 // TODO: when does the interface expect this function to return an interface
-func (c *Client) NewObject(ctx context.Context, remote string) (fs.Object, error) {
-	fileClient := c.RootDirClient.NewFileClient(remote)
+func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
+	fileClient := f.RootDirClient.NewFileClient(remote)
 	resp, err := fileClient.GetProperties(ctx, nil)
-	if fileerror.HasCode(err, fileerror.ResourceNotFound) {
+	if fileerror.HasCode(err, fileerror.ResourceNotFound, fileerror.ParentNotFound) {
 		return nil, fs.ErrorObjectNotFound
+	} else if err != nil {
+		return nil, err
 	}
 
 	ob := Object{common{
-		c:        c,
+		c:        f,
 		remote:   remote,
 		metaData: resp.Metadata,
 		properties: properties{
@@ -36,8 +39,8 @@ func (c *Client) NewObject(ctx context.Context, remote string) (fs.Object, error
 
 // Mkdir creates nested directories as indicated by test FsMkdirRmdirSubdir
 // TODO: write custom test case where parent directories are created
-func (dc *Client) Mkdir(ctx context.Context, dirPath string) error {
-	return dc.makeDir(ctx, dirPath)
+func (f *Fs) Mkdir(ctx context.Context, dirPath string) error {
+	return f.makeDir(ctx, dirPath)
 }
 
 func parent(p string) string {
@@ -45,14 +48,14 @@ func parent(p string) string {
 	return strings.Join(parts[:len(parts)-1], pathSeparator)
 }
 
-func (dc *Client) makeDir(ctx context.Context, dirPath string) error {
+func (f *Fs) makeDir(ctx context.Context, dirPath string) error {
 	if dirPath == "" {
 		return nil
 	}
-	dirClient := dc.RootDirClient.NewSubdirectoryClient(dirPath)
+	dirClient := f.RootDirClient.NewSubdirectoryClient(dirPath)
 	_, err := dirClient.Create(ctx, nil)
 	if fileerror.HasCode(err, fileerror.ParentNotFound) {
-		err := dc.makeDir(ctx, parent(dirPath))
+		err := f.makeDir(ctx, parent(dirPath))
 		if err != nil {
 			return fmt.Errorf("could not make parent of %s : %w", dirPath, err)
 		}
@@ -69,17 +72,27 @@ func (dc *Client) makeDir(ctx context.Context, dirPath string) error {
 }
 
 // should return error if the directory is not empty or does not exist
-func (c *Client) Rmdir(ctx context.Context, dirPath string) error {
+func (f *Fs) Rmdir(ctx context.Context, dirPath string) error {
+	log.Printf("rmdir called on %s", dirPath)
 
 	// Following if statement is added to pass test 'FsRmdirEmpty'
 	if dirPath == "" {
-		return nil
+		// Checking whether root directory is empty
+		des, err := f.List(ctx, dirPath)
+		if err != nil {
+			return fmt.Errorf("could not determine whether root directory is emtpy :%w ", err)
+		}
+		if len(des) > 0 {
+			return fs.ErrorDirectoryNotEmpty
+		}
+		//FIXME- this error wraps fs.ErrorDirNotFound to pass TestIntegration/FsMkdir/FsNewObjectNotFound
+		return fmt.Errorf("cannot delete root dir. it is empty :%w", fs.ErrorDirNotFound)
 	}
-	dirClient := c.RootDirClient.NewSubdirectoryClient(dirPath)
+	dirClient := f.RootDirClient.NewSubdirectoryClient(dirPath)
 	_, err := dirClient.Delete(ctx, nil)
 	if err != nil {
 		if fileerror.HasCode(err, fileerror.DirectoryNotEmpty) {
-			return fmt.Errorf("cannot rmdir dir=\"%s\" is not empty : %w", dirPath, err)
+			return fs.ErrorDirectoryNotEmpty
 		} else if fileerror.HasCode(err, fileerror.ResourceNotFound) {
 			return fmt.Errorf("cannot rmdir dir=\"%s\" not found : %w", dirPath, err)
 		}
@@ -93,14 +106,14 @@ func (c *Client) Rmdir(ctx context.Context, dirPath string) error {
 // TODO: file system options
 // TODO: when file.CLient.Creat is being used, provide HTTP headesr such as content type and content MD5
 // TODO: maybe replace PUT with NewObject + Update
-func (c *Client) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
+func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
 	// size and modtime are important, what about md5 hashes
 	fileSize := maxFileSize
 	if src.Size() >= 0 {
 		fileSize = src.Size()
 	}
 
-	fc := c.RootDirClient.NewFileClient(src.Remote())
+	fc := f.RootDirClient.NewFileClient(src.Remote())
 
 	_, err := fc.Create(ctx, fileSize, nil)
 	if err != nil {
@@ -110,7 +123,7 @@ func (c *Client) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, optio
 		return nil, fmt.Errorf("azurefiles: error uploading as stream : %w", err)
 	}
 
-	obj, err := c.NewObject(ctx, src.Remote())
+	obj, err := f.NewObject(ctx, src.Remote())
 	if err != nil {
 		return nil, fmt.Errorf("uanble to get NewObject so that modTime can be set : %w", err)
 	}
@@ -121,32 +134,32 @@ func (c *Client) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, optio
 	return obj, nil
 }
 
-func (c *Client) Name() string {
-	return c.name
+func (f *Fs) Name() string {
+	return f.name
 }
 
-func (c *Client) Root() string {
-	return c.root
+func (f *Fs) Root() string {
+	return f.root
 }
 
-func (c *Client) String() string {
-	return fmt.Sprintf("azurefiles root '%s'", c.root)
+func (f *Fs) String() string {
+	return fmt.Sprintf("azurefiles root '%s'", f.root)
 }
 
 // One second. FileREST API times are in RFC1123 which in the example shows a precision of seconds
 // Source: https://learn.microsoft.com/en-us/rest/api/storageservices/representation-of-date-time-values-in-headers
-func (c *Client) Precision() time.Duration {
+func (f *Fs) Precision() time.Duration {
 	return time.Second
 }
 
 // MD5: since it is listed as header in the response for file properties
 // Source: https://learn.microsoft.com/en-us/rest/api/storageservices/get-file-properties
-func (c *Client) Hashes() hash.Set {
+func (f *Fs) Hashes() hash.Set {
 	return hash.NewHashSet(hash.MD5)
 }
 
 // TODO: what are features. implement them
-func (c *Client) Features() *fs.Features {
+func (f *Fs) Features() *fs.Features {
 	return &fs.Features{
 		CanHaveEmptyDirectories: true,
 	}
@@ -154,9 +167,9 @@ func (c *Client) Features() *fs.Features {
 
 // TODO: return ErrDirNotFound if dir not found
 // TODO: handle case regariding "" and "/". I remember reading about them somewhere
-func (dc *Client) List(ctx context.Context, dirPath string) (fs.DirEntries, error) {
+func (f *Fs) List(ctx context.Context, dirPath string) (fs.DirEntries, error) {
 	var entries fs.DirEntries
-	subDirClient := dc.RootDirClient.NewSubdirectoryClient(dirPath)
+	subDirClient := f.RootDirClient.NewSubdirectoryClient(dirPath)
 	_, err := subDirClient.GetProperties(ctx, nil)
 	if err != nil {
 		return fs.DirEntries(entries), fs.ErrorDirNotFound
@@ -169,7 +182,7 @@ func (dc *Client) List(ctx context.Context, dirPath string) (fs.DirEntries, erro
 		}
 		for _, dir := range resp.Segment.Directories {
 			de := &Directory{
-				common{c: dc,
+				common{c: f,
 					remote: joinPaths(dirPath, *dir.Name),
 					properties: properties{
 						changeTime: dir.Properties.ChangeTime,
@@ -178,13 +191,13 @@ func (dc *Client) List(ctx context.Context, dirPath string) (fs.DirEntries, erro
 			entries = append(entries, de)
 		}
 
-		for _, f := range resp.Segment.Files {
+		for _, file := range resp.Segment.Files {
 			de := &Object{
-				common{c: dc,
-					remote: joinPaths(dirPath, *f.Name),
+				common{c: f,
+					remote: joinPaths(dirPath, *file.Name),
 					properties: properties{
-						changeTime:    f.Properties.ChangeTime,
-						contentLength: f.Properties.ContentLength,
+						changeTime:    file.Properties.ChangeTime,
+						contentLength: file.Properties.ContentLength,
 					}},
 			}
 			entries = append(entries, de)
