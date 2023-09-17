@@ -136,7 +136,7 @@ func (c *Client) String() string {
 // One second. FileREST API times are in RFC1123 which in the example shows a precision of seconds
 // Source: https://learn.microsoft.com/en-us/rest/api/storageservices/representation-of-date-time-values-in-headers
 func (c *Client) Precision() time.Duration {
-	return 1
+	return time.Second
 }
 
 // MD5: since it is listed as header in the response for file properties
