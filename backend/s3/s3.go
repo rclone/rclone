@@ -5994,10 +5994,10 @@ func (o *Object) prepareUpload(ctx context.Context, src fs.ObjectInfo, options [
 	if ui.req.ContentType == nil {
 		ui.req.ContentType = aws.String(fs.MimeType(ctx, src))
 	}
-	if size >= 0 {
+	if size >= 0 && o.fs.encryptClient == nil {
 		ui.req.ContentLength = &size
 	}
-	if md5sumBase64 != "" {
+	if md5sumBase64 != "" && o.fs.encryptClient == nil {
 		ui.req.ContentMD5 = &md5sumBase64
 	}
 	if o.fs.opt.RequesterPays {
