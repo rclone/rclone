@@ -85,6 +85,7 @@ type largeUpload struct {
 	uploads   []*api.GetUploadPartURLResponse // result of get upload URL calls
 	chunkSize int64                           // chunk size to use
 	src       *Object                         // if copying, object we are reading from
+	info      *api.FileInfo                   // final response with info about the object
 }
 
 // newLargeUpload starts an upload of object o from in with metadata in src
@@ -352,7 +353,8 @@ func (up *largeUpload) Close(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	return up.o.decodeMetaDataFileInfo(&response)
+	up.info = &response
+	return nil
 }
 
 // Abort aborts the large upload
