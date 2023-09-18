@@ -41,5 +41,6 @@ func AddFlags(flagSet *pflag.FlagSet) {
 	flags.BoolVarP(flagSet, &Opt.UsedIsSize, "vfs-used-is-size", "", Opt.UsedIsSize, "Use the `rclone size` algorithm for Used size", "VFS")
 	flags.BoolVarP(flagSet, &Opt.FastFingerprint, "vfs-fast-fingerprint", "", Opt.FastFingerprint, "Use fast (less accurate) fingerprints for change detection", "VFS")
 	flags.FVarP(flagSet, &Opt.DiskSpaceTotalSize, "vfs-disk-space-total-size", "", "Specify the total space of disk", "VFS")
+	flags.StringArrayVarP(flagSet, &Opt.VfsUploadExclude, "vfs-upload-exclude", "", nil, "Exclude from upload to VFS cache files matching pattern", "VFS")
 	platformFlags(flagSet)
 }

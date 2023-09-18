@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"regexp"
 	"sync"
 	"time"
 
@@ -629,6 +630,15 @@ func (item *Item) store(ctx context.Context, storeFn StoreFn) (err error) {
 	return item._store(ctx, storeFn)
 }
 
+func matches_exclusion_patterns(filename string, vfsExcludeRegex []*regexp.Regexp) bool {
+	for _, regexPattern := range vfsExcludeRegex {
+		if regexPattern.MatchString(filename) {
+			return true
+		}
+	}
+	return false
+}
+
 // Close the cache file
 func (item *Item) Close(storeFn StoreFn) (err error) {
 	// defer log.Trace(item.o, "Item.Close")("err=%v", &err)
@@ -715,6 +725,10 @@ func (item *Item) Close(storeFn StoreFn) (err error) {
 
 	// upload the file to backing store if changed
 	if item.info.Dirty {
+		if matches_exclusion_patterns(item.name, item.c.opt.VfsExcludeRegex) {
+			fs.Infof(item.name, "vfs cache: skipping writeback due to exclusion pattern match")
+			return
+		}
 		fs.Infof(item.name, "vfs cache: queuing for upload in %v", item.c.opt.WriteBack)
 		if syncWriteBack {
 			// do synchronous writeback
