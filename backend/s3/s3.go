@@ -5753,9 +5753,11 @@ func (o *Object) uploadMultipart(ctx context.Context, src fs.ObjectInfo, in io.R
 	if err != nil {
 		return wantETag, gotETag, versionID, ui, err
 	}
+
 	var s3cw *s3ChunkWriter = chunkWriter.(*s3ChunkWriter)
 	gotETag = s3cw.eTag
 	versionID = aws.String(s3cw.versionID)
+
 	hashOfHashes := md5.Sum(s3cw.md5s)
 	wantETag = fmt.Sprintf("%s-%d", hex.EncodeToString(hashOfHashes[:]), len(s3cw.completedParts))
 
