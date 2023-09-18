@@ -150,6 +150,13 @@ type Features struct {
 	// It truncates any existing object
 	OpenWriterAt func(ctx context.Context, remote string, size int64) (WriterAtCloser, error)
 
+	// OpenChunkWriter returns the chunk size and a ChunkWriter
+	//
+	// Pass in the remote and the src object
+	// You can also use options to hint at the desired chunk size
+	//
+	OpenChunkWriter func(ctx context.Context, remote string, src ObjectInfo, options ...OpenOption) (info ChunkWriterInfo, writer ChunkWriter, err error)
+
 	// UserInfo returns info about the connected user
 	UserInfo func(ctx context.Context) (map[string]string, error)
 
@@ -301,6 +308,9 @@ func (ft *Features) Fill(ctx context.Context, f Fs) *Features {
 	if do, ok := f.(OpenWriterAter); ok {
 		ft.OpenWriterAt = do.OpenWriterAt
 	}
+	if do, ok := f.(OpenChunkWriter); ok {
+		ft.OpenChunkWriter = do.OpenChunkWriter
+	}
 	if do, ok := f.(UserInfoer); ok {
 		ft.UserInfo = do.UserInfo
 	}
@@ -392,6 +402,9 @@ func (ft *Features) Mask(ctx context.Context, f Fs) *Features {
 	}
 	if mask.OpenWriterAt == nil {
 		ft.OpenWriterAt = nil
+	}
+	if mask.OpenChunkWriter == nil {
+		ft.OpenChunkWriter = nil
 	}
 	if mask.UserInfo == nil {
 		ft.UserInfo = nil
@@ -621,6 +634,40 @@ type OpenWriterAter interface {
 	//
 	// It truncates any existing object
 	OpenWriterAt(ctx context.Context, remote string, size int64) (WriterAtCloser, error)
+}
+
+// OpenWriterAtFn describes the OpenWriterAt function pointer
+type OpenWriterAtFn func(ctx context.Context, remote string, size int64) (WriterAtCloser, error)
+
+// ChunkWriterInfo describes how a backend would like ChunkWriter called
+type ChunkWriterInfo struct {
+	ChunkSize         int64 // preferred chunk size
+	Concurrency       int   // how many chunks to write at once
+	LeavePartsOnError bool  // if set don't delete parts uploaded so far on error
+}
+
+// OpenChunkWriter is an option interface for Fs to implement chunked writing
+type OpenChunkWriter interface {
+	// OpenChunkWriter returns the chunk size and a ChunkWriter
+	//
+	// Pass in the remote and the src object
+	// You can also use options to hint at the desired chunk size
+	OpenChunkWriter(ctx context.Context, remote string, src ObjectInfo, options ...OpenOption) (info ChunkWriterInfo, writer ChunkWriter, err error)
+}
+
+// OpenChunkWriterFn describes the OpenChunkWriter function pointer
+type OpenChunkWriterFn func(ctx context.Context, remote string, src ObjectInfo, options ...OpenOption) (info ChunkWriterInfo, writer ChunkWriter, err error)
+
+// ChunkWriter is returned by OpenChunkWriter to implement chunked writing
+type ChunkWriter interface {
+	// WriteChunk will write chunk number with reader bytes, where chunk number >= 0
+	WriteChunk(ctx context.Context, chunkNumber int, reader io.ReadSeeker) (bytesWritten int64, err error)
+
+	// Close complete chunked writer
+	Close(ctx context.Context) error
+
+	// Abort chunk write
+	Abort(ctx context.Context) error
 }
 
 // UserInfoer is an optional interface for Fs

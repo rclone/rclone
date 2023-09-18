@@ -59,14 +59,16 @@ See the following for detailed instructions for
   * [Memory](/memory/)
   * [Microsoft Azure Blob Storage](/azureblob/)
   * [Microsoft OneDrive](/onedrive/)
-  * [OpenStack Swift / Rackspace Cloudfiles / Memset Memstore](/swift/)
+  * [OpenStack Swift / Rackspace Cloudfiles / Blomp Cloud Storage / Memset Memstore](/swift/)
   * [OpenDrive](/opendrive/)
   * [Oracle Object Storage](/oracleobjectstorage/)
   * [Pcloud](/pcloud/)
   * [PikPak](/pikpak/)
   * [premiumize.me](/premiumizeme/)
   * [put.io](/putio/)
+  * [Proton Drive](/protondrive/)
   * [QingStor](/qingstor/)
+  * [Quatrix by Maytech](/quatrix/)
   * [Seafile](/seafile/)
   * [SFTP](/sftp/)
   * [Sia](/sia/)
@@ -350,6 +352,10 @@ different character encoding, you must be cautious to use characters that are
 possible to write in all of them. This is mostly a problem on Windows, where
 the console traditionally uses a non-Unicode character set - defined
 by the so-called "code page".
+
+Do not use single character names on Windows as it creates ambiguity with Windows
+drives' names, e.g.: remote called `C` is indistinguishable from `C` drive. Rclone
+will always assume that single letter name refers to a drive.
 
 Quoting and the shell
 ---------------------
@@ -640,6 +646,9 @@ Local address to bind to for outgoing connections.  This can be an
 IPv4 address (1.2.3.4), an IPv6 address (1234::789A) or host name.  If
 the host name doesn't resolve or resolves to more than one IP address
 it will give an error.
+
+You can use `--bind 0.0.0.0` to force rclone to use IPv4 addresses and
+`--bind ::0` to force rclone to use IPv6 addresses.
 
 ### --bwlimit=BANDWIDTH_SPEC ###
 
@@ -1454,14 +1463,14 @@ what will happen.
 
 ### --max-duration=TIME ###
 
-Rclone will stop scheduling new transfers when it has run for the
+Rclone will stop transferring when it has run for the
 duration specified.
-
 Defaults to off.
 
-When the limit is reached any existing transfers will complete.
+When the limit is reached all transfers will stop immediately.
+Use `--cutoff-mode` to modify this behaviour.
 
-Rclone won't exit with an error if the transfer limit is reached.
+Rclone will exit with exit code 10 if the duration limit is reached.
 
 ### --max-transfer=SIZE ###
 
@@ -1469,8 +1478,23 @@ Rclone will stop transferring when it has reached the size specified.
 Defaults to off.
 
 When the limit is reached all transfers will stop immediately.
+Use `--cutoff-mode` to modify this behaviour.
 
 Rclone will exit with exit code 8 if the transfer limit is reached.
+
+### --cutoff-mode=hard|soft|cautious ###
+
+This modifies the behavior of `--max-transfer` and `--max-duration`
+Defaults to `--cutoff-mode=hard`.
+
+Specifying `--cutoff-mode=hard` will stop transferring immediately
+when Rclone reaches the limit.
+
+Specifying `--cutoff-mode=soft` will stop starting new transfers
+when Rclone reaches the limit.
+
+Specifying `--cutoff-mode=cautious` will try to prevent Rclone
+from reaching the limit. Only applicable for `--max-transfer`
 
 ## -M, --metadata
 
@@ -1483,20 +1507,6 @@ xattr etc. See the [#metadata](metadata section) for more info.
 Add metadata `key` = `value` when uploading. This can be repeated as
 many times as required. See the [#metadata](metadata section) for more
 info.
-
-### --cutoff-mode=hard|soft|cautious ###
-
-This modifies the behavior of `--max-transfer`
-Defaults to `--cutoff-mode=hard`.
-
-Specifying `--cutoff-mode=hard` will stop transferring immediately
-when Rclone reaches the limit.
-
-Specifying `--cutoff-mode=soft` will stop starting new transfers
-when Rclone reaches the limit.
-
-Specifying `--cutoff-mode=cautious` will try to prevent Rclone
-from reaching the limit.
 
 ### --modify-window=TIME ###
 
@@ -1513,12 +1523,12 @@ This command line flag allows you to override that computed default.
 
 ### --multi-thread-write-buffer-size=SIZE ###
 
-When downloading with multiple threads, rclone will buffer SIZE bytes in
-memory before writing to disk for each thread.
+When transferring with multiple threads, rclone will buffer SIZE bytes
+in memory before writing to disk for each thread.
 
 This can improve performance if the underlying filesystem does not deal
 well with a lot of small writes in different positions of the file, so
-if you see downloads being limited by disk write speed, you might want
+if you see transfers being limited by disk write speed, you might want
 to experiment with different values. Specially for magnetic drives and
 remote file systems a higher value can be useful.
 
@@ -1530,58 +1540,66 @@ As a final hint, size is not the only factor: block size (or similar
 concept) can have an impact. In one case, we observed that exact
 multiples of 16k performed much better than other values.
 
-### --multi-thread-cutoff=SIZE ###
+### --multi-thread-chunk-size=SizeSuffix ###
 
-When downloading files to the local backend above this size, rclone
-will use multiple threads to download the file (default 250M).
+Normally the chunk size for multi thread transfers is set by the backend.
+However some backends such as `local` and `smb` (which implement `OpenWriterAt`
+but not `OpenChunkWriter`) don't have a natural chunk size.
 
-Rclone preallocates the file (using `fallocate(FALLOC_FL_KEEP_SIZE)`
-on unix or `NTSetInformationFile` on Windows both of which takes no
-time) then each thread writes directly into the file at the correct
-place.  This means that rclone won't create fragmented or sparse files
-and there won't be any assembly time at the end of the transfer.
+In this case the value of this option is used (default 64Mi).
 
-The number of threads used to download is controlled by
+### --multi-thread-cutoff=SIZE {#multi-thread-cutoff}
+
+When transferring files above SIZE to capable backends, rclone will
+use multiple threads to transfer the file (default 256M).
+
+Capable backends are marked in the
+[overview](/overview/#optional-features) as `MultithreadUpload`. (They
+need to implement either the `OpenWriterAt` or `OpenChunkedWriter`
+internal interfaces). These include include, `local`, `s3`,
+`azureblob`, `b2`, `oracleobjectstorage` and `smb` at the time of
+writing.
+
+On the local disk, rclone preallocates the file (using
+`fallocate(FALLOC_FL_KEEP_SIZE)` on unix or `NTSetInformationFile` on
+Windows both of which takes no time) then each thread writes directly
+into the file at the correct place. This means that rclone won't
+create fragmented or sparse files and there won't be any assembly time
+at the end of the transfer.
+
+The number of threads used to transfer is controlled by
 `--multi-thread-streams`.
 
 Use `-vv` if you wish to see info about the threads.
 
 This will work with the `sync`/`copy`/`move` commands and friends
-`copyto`/`moveto`.  Multi thread downloads will be used with `rclone
+`copyto`/`moveto`. Multi thread transfers will be used with `rclone
 mount` and `rclone serve` if `--vfs-cache-mode` is set to `writes` or
 above.
 
-**NB** that this **only** works for a local destination but will work
-with any source.
+**NB** that this **only** works with supported backends as the
+destination but will work with any backend as the source.
 
-**NB** that multi thread copies are disabled for local to local copies
+**NB** that multi-thread copies are disabled for local to local copies
 as they are faster without unless `--multi-thread-streams` is set
 explicitly.
 
-**NB** on Windows using multi-thread downloads will cause the
-resulting files to be [sparse](https://en.wikipedia.org/wiki/Sparse_file).
+**NB** on Windows using multi-thread transfers to the local disk will
+cause the resulting files to be [sparse](https://en.wikipedia.org/wiki/Sparse_file).
 Use `--local-no-sparse` to disable sparse files (which may cause long
-delays at the start of downloads) or disable multi-thread downloads
+delays at the start of transfers) or disable multi-thread transfers
 with `--multi-thread-streams 0`
 
 ### --multi-thread-streams=N ###
 
-When using multi thread downloads (see above `--multi-thread-cutoff`)
-this sets the maximum number of streams to use.  Set to `0` to disable
-multi thread downloads (Default 4).
+When using multi thread transfers (see above `--multi-thread-cutoff`)
+this sets the number of streams to use. Set to `0` to disable multi
+thread transfers (Default 4).
 
-Exactly how many streams rclone uses for the download depends on the
-size of the file. To calculate the number of download streams Rclone
-divides the size of the file by the `--multi-thread-cutoff` and rounds
-up, up to the maximum set with `--multi-thread-streams`.
-
-So if `--multi-thread-cutoff 250M` and `--multi-thread-streams 4` are
-in effect (the defaults):
-
-- 0..250 MiB files will be downloaded with 1 stream
-- 250..500 MiB files will be downloaded with 2 streams
-- 500..750 MiB files will be downloaded with 3 streams
-- 750+ MiB files will be downloaded with 4 streams
+If the backend has a `--backend-upload-concurrency` setting (eg
+`--s3-upload-concurrency`) then this setting will be used as the
+number of transfers instead if it is larger than the value of
+`--multi-thread-streams` or `--multi-thread-streams` isn't set.
 
 ### --no-check-dest ###
 
@@ -2561,6 +2579,7 @@ it will log a high priority message if the retry was successful.
   * `7` - Fatal error (one that more retries won't fix, like account suspended) (Fatal errors)
   * `8` - Transfer exceeded - limit set by --max-transfer reached
   * `9` - Operation successful, but no files transferred
+  * `10` - Duration exceeded - limit set by --max-duration reached
 
 Environment Variables
 ---------------------
@@ -2602,6 +2621,9 @@ for each backend.
 To find the name of the environment variable, you need to set, take
 `RCLONE_CONFIG_` + name of remote + `_` + name of config file option
 and make it all uppercase.
+Note one implication here is the remote's name must be
+convertible into a valid environment variable name,
+so it can only contain letters, digits, or the `_` (underscore) character.
 
 For example, to configure an S3 remote named `mys3:` without a config
 file (using unix ways of setting environment variables):

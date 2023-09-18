@@ -40,6 +40,7 @@ as a relative path).
 `,
 	Annotations: map[string]string{
 		"versionIntroduced": "v1.02",
+		"groups":            "Filter,Listing",
 	},
 	RunE: func(command *cobra.Command, args []string) error {
 		cmd.CheckArgs(0, 1, command, args)

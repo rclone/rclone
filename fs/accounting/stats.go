@@ -28,36 +28,40 @@ var MaxCompletedTransfers = 100
 // N.B.: if this struct is modified, please remember to also update sum() function in stats_groups
 // to correctly count the updated fields
 type StatsInfo struct {
-	mu                sync.RWMutex
-	ctx               context.Context
-	ci                *fs.ConfigInfo
-	bytes             int64
-	errors            int64
-	lastError         error
-	fatalError        bool
-	retryError        bool
-	retryAfter        time.Time
-	checks            int64
-	checking          *transferMap
-	checkQueue        int
-	checkQueueSize    int64
-	transfers         int64
-	transferring      *transferMap
-	transferQueue     int
-	transferQueueSize int64
-	renames           int64
-	renameQueue       int
-	renameQueueSize   int64
-	deletes           int64
-	deletesSize       int64
-	deletedDirs       int64
-	inProgress        *inProgress
-	startedTransfers  []*Transfer   // currently active transfers
-	oldTimeRanges     timeRanges    // a merged list of time ranges for the transfers
-	oldDuration       time.Duration // duration of transfers we have culled
-	group             string
-	startTime         time.Time // the moment these stats were initialized or reset
-	average           averageValues
+	mu                  sync.RWMutex
+	ctx                 context.Context
+	ci                  *fs.ConfigInfo
+	bytes               int64
+	errors              int64
+	lastError           error
+	fatalError          bool
+	retryError          bool
+	retryAfter          time.Time
+	checks              int64
+	checking            *transferMap
+	checkQueue          int
+	checkQueueSize      int64
+	transfers           int64
+	transferring        *transferMap
+	transferQueue       int
+	transferQueueSize   int64
+	renames             int64
+	renameQueue         int
+	renameQueueSize     int64
+	deletes             int64
+	deletesSize         int64
+	deletedDirs         int64
+	inProgress          *inProgress
+	startedTransfers    []*Transfer   // currently active transfers
+	oldTimeRanges       timeRanges    // a merged list of time ranges for the transfers
+	oldDuration         time.Duration // duration of transfers we have culled
+	group               string
+	startTime           time.Time // the moment these stats were initialized or reset
+	average             averageValues
+	serverSideCopies    int64
+	serverSideCopyBytes int64
+	serverSideMoves     int64
+	serverSideMoveBytes int64
 }
 
 type averageValues struct {
@@ -110,6 +114,10 @@ func (s *StatsInfo) RemoteStats() (out rc.Params, err error) {
 	out["deletedDirs"] = s.deletedDirs
 	out["renames"] = s.renames
 	out["elapsedTime"] = time.Since(s.startTime).Seconds()
+	out["serverSideCopies"] = s.serverSideCopies
+	out["serverSideCopyBytes"] = s.serverSideCopyBytes
+	out["serverSideMoves"] = s.serverSideMoves
+	out["serverSideMoveBytes"] = s.serverSideMoveBytes
 	eta, etaOK := eta(s.bytes, ts.totalBytes, ts.speed)
 	if etaOK {
 		out["eta"] = eta.Seconds()
@@ -305,6 +313,8 @@ func (s *StatsInfo) calculateTransferStats() (ts transferStats) {
 	// we take it off here to avoid double counting
 	ts.totalBytes = s.transferQueueSize + s.bytes + transferringBytesTotal - transferringBytesDone
 	ts.speed = s.average.speed
+	dt := s.totalDuration()
+	ts.transferTime = dt.Seconds()
 
 	return ts
 }
@@ -448,6 +458,16 @@ func (s *StatsInfo) String() string {
 		if s.transfers != 0 || ts.totalTransfers != 0 {
 			_, _ = fmt.Fprintf(buf, "Transferred:   %10d / %d, %s\n",
 				s.transfers, ts.totalTransfers, percent(s.transfers, ts.totalTransfers))
+		}
+		if s.serverSideCopies != 0 || s.serverSideCopyBytes != 0 {
+			_, _ = fmt.Fprintf(buf, "Server Side Copies:%6d @ %s\n",
+				s.serverSideCopies, fs.SizeSuffix(s.serverSideCopyBytes).ByteUnit(),
+			)
+		}
+		if s.serverSideMoves != 0 || s.serverSideMoveBytes != 0 {
+			_, _ = fmt.Fprintf(buf, "Server Side Moves:%7d @ %s\n",
+				s.serverSideMoves, fs.SizeSuffix(s.serverSideMoveBytes).ByteUnit(),
+			)
 		}
 		_, _ = fmt.Fprintf(buf, "Elapsed time:  %10ss\n", strings.TrimRight(fs.Duration(elapsedTime.Truncate(time.Minute)).ReadableString(), "0s")+fmt.Sprintf("%.1f", elapsedTimeSecondsOnly.Seconds()))
 	}
@@ -759,7 +779,7 @@ func (s *StatsInfo) DoneTransferring(remote string, ok bool) {
 		s.transfers++
 		s.mu.Unlock()
 	}
-	if s.transferring.empty() {
+	if s.transferring.empty() && s.checking.empty() {
 		time.AfterFunc(averageStopAfter, s.stopAverageLoop)
 	}
 }
@@ -854,5 +874,21 @@ func (s *StatsInfo) PruneTransfers() {
 			}
 		}
 	}
+	s.mu.Unlock()
+}
+
+// AddServerSideMove counts a server side move
+func (s *StatsInfo) AddServerSideMove(n int64) {
+	s.mu.Lock()
+	s.serverSideMoves += 1
+	s.serverSideMoveBytes += n
+	s.mu.Unlock()
+}
+
+// AddServerSideCopy counts a server side copy
+func (s *StatsInfo) AddServerSideCopy(n int64) {
+	s.mu.Lock()
+	s.serverSideCopies += 1
+	s.serverSideCopyBytes += n
 	s.mu.Unlock()
 }

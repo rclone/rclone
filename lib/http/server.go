@@ -109,19 +109,21 @@ type Config struct {
 	TLSKeyBody         []byte        // TLS PEM Private key body, ignores TLSKey
 	ClientCA           string        // Client certificate authority to verify clients with
 	MinTLSVersion      string        // MinTLSVersion contains the minimum TLS version that is acceptable.
+	AllowOrigin        string        // AllowOrigin sets the Access-Control-Allow-Origin header
 }
 
 // AddFlagsPrefix adds flags for the httplib
 func (cfg *Config) AddFlagsPrefix(flagSet *pflag.FlagSet, prefix string) {
-	flags.StringArrayVarP(flagSet, &cfg.ListenAddr, prefix+"addr", "", cfg.ListenAddr, "IPaddress:Port or :Port to bind server to")
-	flags.DurationVarP(flagSet, &cfg.ServerReadTimeout, prefix+"server-read-timeout", "", cfg.ServerReadTimeout, "Timeout for server reading data")
-	flags.DurationVarP(flagSet, &cfg.ServerWriteTimeout, prefix+"server-write-timeout", "", cfg.ServerWriteTimeout, "Timeout for server writing data")
-	flags.IntVarP(flagSet, &cfg.MaxHeaderBytes, prefix+"max-header-bytes", "", cfg.MaxHeaderBytes, "Maximum size of request header")
-	flags.StringVarP(flagSet, &cfg.TLSCert, prefix+"cert", "", cfg.TLSCert, "TLS PEM key (concatenation of certificate and CA certificate)")
-	flags.StringVarP(flagSet, &cfg.TLSKey, prefix+"key", "", cfg.TLSKey, "TLS PEM Private key")
-	flags.StringVarP(flagSet, &cfg.ClientCA, prefix+"client-ca", "", cfg.ClientCA, "Client certificate authority to verify clients with")
-	flags.StringVarP(flagSet, &cfg.BaseURL, prefix+"baseurl", "", cfg.BaseURL, "Prefix for URLs - leave blank for root")
-	flags.StringVarP(flagSet, &cfg.MinTLSVersion, prefix+"min-tls-version", "", cfg.MinTLSVersion, "Minimum TLS version that is acceptable")
+	flags.StringArrayVarP(flagSet, &cfg.ListenAddr, prefix+"addr", "", cfg.ListenAddr, "IPaddress:Port or :Port to bind server to", prefix)
+	flags.DurationVarP(flagSet, &cfg.ServerReadTimeout, prefix+"server-read-timeout", "", cfg.ServerReadTimeout, "Timeout for server reading data", prefix)
+	flags.DurationVarP(flagSet, &cfg.ServerWriteTimeout, prefix+"server-write-timeout", "", cfg.ServerWriteTimeout, "Timeout for server writing data", prefix)
+	flags.IntVarP(flagSet, &cfg.MaxHeaderBytes, prefix+"max-header-bytes", "", cfg.MaxHeaderBytes, "Maximum size of request header", prefix)
+	flags.StringVarP(flagSet, &cfg.TLSCert, prefix+"cert", "", cfg.TLSCert, "TLS PEM key (concatenation of certificate and CA certificate)", prefix)
+	flags.StringVarP(flagSet, &cfg.TLSKey, prefix+"key", "", cfg.TLSKey, "TLS PEM Private key", prefix)
+	flags.StringVarP(flagSet, &cfg.ClientCA, prefix+"client-ca", "", cfg.ClientCA, "Client certificate authority to verify clients with", prefix)
+	flags.StringVarP(flagSet, &cfg.BaseURL, prefix+"baseurl", "", cfg.BaseURL, "Prefix for URLs - leave blank for root", prefix)
+	flags.StringVarP(flagSet, &cfg.MinTLSVersion, prefix+"min-tls-version", "", cfg.MinTLSVersion, "Minimum TLS version that is acceptable", prefix)
+	flags.StringVarP(flagSet, &cfg.AllowOrigin, prefix+"allow-origin", "", cfg.AllowOrigin, "Origin which cross-domain request (CORS) can be executed from", prefix)
 }
 
 // AddHTTPFlagsPrefix adds flags for the httplib
@@ -226,8 +228,6 @@ func NewServer(ctx context.Context, options ...Option) (*Server, error) {
 		s.mux.Use(MiddlewareStripPrefix(s.cfg.BaseURL))
 	}
 
-	s.initAuth()
-
 	err := s.initTemplate()
 	if err != nil {
 		return nil, err
@@ -237,6 +237,10 @@ func NewServer(ctx context.Context, options ...Option) (*Server, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	s.mux.Use(MiddlewareCORS(s.cfg.AllowOrigin))
+
+	s.initAuth()
 
 	for _, addr := range s.cfg.ListenAddr {
 		var url string
@@ -293,9 +297,17 @@ func NewServer(ctx context.Context, options ...Option) (*Server, error) {
 }
 
 func (s *Server) initAuth() {
+	s.usingAuth = false
+
+	authCertificateUserEnabled := s.tlsConfig != nil && s.tlsConfig.ClientAuth != tls.NoClientCert && s.auth.HtPasswd == "" && s.auth.BasicUser == ""
+	if authCertificateUserEnabled {
+		s.usingAuth = true
+		s.mux.Use(MiddlewareAuthCertificateUser())
+	}
+
 	if s.auth.CustomAuthFn != nil {
 		s.usingAuth = true
-		s.mux.Use(MiddlewareAuthCustom(s.auth.CustomAuthFn, s.auth.Realm))
+		s.mux.Use(MiddlewareAuthCustom(s.auth.CustomAuthFn, s.auth.Realm, authCertificateUserEnabled))
 		return
 	}
 
@@ -310,7 +322,6 @@ func (s *Server) initAuth() {
 		s.mux.Use(MiddlewareAuthBasic(s.auth.BasicUser, s.auth.BasicPass, s.auth.Realm, s.auth.Salt))
 		return
 	}
-	s.usingAuth = false
 }
 
 func (s *Server) initTemplate() error {

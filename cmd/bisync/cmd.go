@@ -27,18 +27,21 @@ import (
 
 // Options keep bisync options
 type Options struct {
-	Resync          bool
-	CheckAccess     bool
-	CheckFilename   string
-	CheckSync       CheckSyncMode
-	RemoveEmptyDirs bool
-	MaxDelete       int // percentage from 0 to 100
-	Force           bool
-	FiltersFile     string
-	Workdir         string
-	DryRun          bool
-	NoCleanup       bool
-	SaveQueues      bool // save extra debugging files (test only flag)
+	Resync                bool
+	CheckAccess           bool
+	CheckFilename         string
+	CheckSync             CheckSyncMode
+	CreateEmptySrcDirs    bool
+	RemoveEmptyDirs       bool
+	MaxDelete             int // percentage from 0 to 100
+	Force                 bool
+	FiltersFile           string
+	Workdir               string
+	DryRun                bool
+	NoCleanup             bool
+	SaveQueues            bool // save extra debugging files (test only flag)
+	IgnoreListingChecksum bool
+	Resilient             bool
 }
 
 // Default values
@@ -98,16 +101,19 @@ var Opt Options
 func init() {
 	cmd.Root.AddCommand(commandDefinition)
 	cmdFlags := commandDefinition.Flags()
-	flags.BoolVarP(cmdFlags, &Opt.Resync, "resync", "1", Opt.Resync, "Performs the resync run. Path1 files may overwrite Path2 versions. Consider using --verbose or --dry-run first.")
-	flags.BoolVarP(cmdFlags, &Opt.CheckAccess, "check-access", "", Opt.CheckAccess, makeHelp("Ensure expected {CHECKFILE} files are found on both Path1 and Path2 filesystems, else abort."))
-	flags.StringVarP(cmdFlags, &Opt.CheckFilename, "check-filename", "", Opt.CheckFilename, makeHelp("Filename for --check-access (default: {CHECKFILE})"))
-	flags.BoolVarP(cmdFlags, &Opt.Force, "force", "", Opt.Force, "Bypass --max-delete safety check and run the sync. Consider using with --verbose")
-	flags.FVarP(cmdFlags, &Opt.CheckSync, "check-sync", "", "Controls comparison of final listings: true|false|only (default: true)")
-	flags.BoolVarP(cmdFlags, &Opt.RemoveEmptyDirs, "remove-empty-dirs", "", Opt.RemoveEmptyDirs, "Remove empty directories at the final cleanup step.")
-	flags.StringVarP(cmdFlags, &Opt.FiltersFile, "filters-file", "", Opt.FiltersFile, "Read filtering patterns from a file")
-	flags.StringVarP(cmdFlags, &Opt.Workdir, "workdir", "", Opt.Workdir, makeHelp("Use custom working dir - useful for testing. (default: {WORKDIR})"))
-	flags.BoolVarP(cmdFlags, &tzLocal, "localtime", "", tzLocal, "Use local time in listings (default: UTC)")
-	flags.BoolVarP(cmdFlags, &Opt.NoCleanup, "no-cleanup", "", Opt.NoCleanup, "Retain working files (useful for troubleshooting and testing).")
+	flags.BoolVarP(cmdFlags, &Opt.Resync, "resync", "1", Opt.Resync, "Performs the resync run. Path1 files may overwrite Path2 versions. Consider using --verbose or --dry-run first.", "")
+	flags.BoolVarP(cmdFlags, &Opt.CheckAccess, "check-access", "", Opt.CheckAccess, makeHelp("Ensure expected {CHECKFILE} files are found on both Path1 and Path2 filesystems, else abort."), "")
+	flags.StringVarP(cmdFlags, &Opt.CheckFilename, "check-filename", "", Opt.CheckFilename, makeHelp("Filename for --check-access (default: {CHECKFILE})"), "")
+	flags.BoolVarP(cmdFlags, &Opt.Force, "force", "", Opt.Force, "Bypass --max-delete safety check and run the sync. Consider using with --verbose", "")
+	flags.FVarP(cmdFlags, &Opt.CheckSync, "check-sync", "", "Controls comparison of final listings: true|false|only (default: true)", "")
+	flags.BoolVarP(cmdFlags, &Opt.CreateEmptySrcDirs, "create-empty-src-dirs", "", Opt.CreateEmptySrcDirs, "Sync creation and deletion of empty directories. (Not compatible with --remove-empty-dirs)", "")
+	flags.BoolVarP(cmdFlags, &Opt.RemoveEmptyDirs, "remove-empty-dirs", "", Opt.RemoveEmptyDirs, "Remove ALL empty directories at the final cleanup step.", "")
+	flags.StringVarP(cmdFlags, &Opt.FiltersFile, "filters-file", "", Opt.FiltersFile, "Read filtering patterns from a file", "")
+	flags.StringVarP(cmdFlags, &Opt.Workdir, "workdir", "", Opt.Workdir, makeHelp("Use custom working dir - useful for testing. (default: {WORKDIR})"), "")
+	flags.BoolVarP(cmdFlags, &tzLocal, "localtime", "", tzLocal, "Use local time in listings (default: UTC)", "")
+	flags.BoolVarP(cmdFlags, &Opt.NoCleanup, "no-cleanup", "", Opt.NoCleanup, "Retain working files (useful for troubleshooting and testing).", "")
+	flags.BoolVarP(cmdFlags, &Opt.IgnoreListingChecksum, "ignore-listing-checksum", "", Opt.IgnoreListingChecksum, "Do not use checksums for listings (add --ignore-checksum to additionally skip post-copy checksum checks)", "")
+	flags.BoolVarP(cmdFlags, &Opt.Resilient, "resilient", "", Opt.Resilient, "Allow future runs to retry after certain less-serious errors, instead of requiring --resync. Use at your own risk!", "")
 }
 
 // bisync command definition
@@ -117,6 +123,7 @@ var commandDefinition = &cobra.Command{
 	Long:  longHelp,
 	Annotations: map[string]string{
 		"versionIntroduced": "v1.58",
+		"groups":            "Filter,Copy,Important",
 	},
 	RunE: func(command *cobra.Command, args []string) error {
 		cmd.CheckArgs(2, 2, command, args)
@@ -209,9 +216,13 @@ func (opt *Options) applyFilters(ctx context.Context) (context.Context, error) {
 	}
 
 	if opt.Resync {
-		fs.Infof(nil, "Storing filters file hash to %s", hashFile)
-		if err := os.WriteFile(hashFile, []byte(gotHash), bilib.PermSecure); err != nil {
-			return ctx, err
+		if opt.DryRun {
+			fs.Infof(nil, "Skipped storing filters file hash to %s as --dry-run is set", hashFile)
+		} else {
+			fs.Infof(nil, "Storing filters file hash to %s", hashFile)
+			if err := os.WriteFile(hashFile, []byte(gotHash), bilib.PermSecure); err != nil {
+				return ctx, err
+			}
 		}
 	}
 

@@ -31,15 +31,15 @@ var (
 func init() {
 	cmd.Root.AddCommand(commandDefinition)
 	cmdFlags := commandDefinition.Flags()
-	flags.StringVarP(cmdFlags, &format, "format", "F", "p", "Output format - see  help for details")
-	flags.StringVarP(cmdFlags, &separator, "separator", "s", ";", "Separator for the items in the format")
-	flags.BoolVarP(cmdFlags, &dirSlash, "dir-slash", "d", true, "Append a slash to directory names")
-	flags.FVarP(cmdFlags, &hashType, "hash", "", "Use this hash when `h` is used in the format MD5|SHA-1|DropboxHash")
-	flags.BoolVarP(cmdFlags, &filesOnly, "files-only", "", false, "Only list files")
-	flags.BoolVarP(cmdFlags, &dirsOnly, "dirs-only", "", false, "Only list directories")
-	flags.BoolVarP(cmdFlags, &csv, "csv", "", false, "Output in CSV format")
-	flags.BoolVarP(cmdFlags, &absolute, "absolute", "", false, "Put a leading / in front of path names")
-	flags.BoolVarP(cmdFlags, &recurse, "recursive", "R", false, "Recurse into the listing")
+	flags.StringVarP(cmdFlags, &format, "format", "F", "p", "Output format - see  help for details", "")
+	flags.StringVarP(cmdFlags, &separator, "separator", "s", ";", "Separator for the items in the format", "")
+	flags.BoolVarP(cmdFlags, &dirSlash, "dir-slash", "d", true, "Append a slash to directory names", "")
+	flags.FVarP(cmdFlags, &hashType, "hash", "", "Use this hash when `h` is used in the format MD5|SHA-1|DropboxHash", "")
+	flags.BoolVarP(cmdFlags, &filesOnly, "files-only", "", false, "Only list files", "")
+	flags.BoolVarP(cmdFlags, &dirsOnly, "dirs-only", "", false, "Only list directories", "")
+	flags.BoolVarP(cmdFlags, &csv, "csv", "", false, "Output in CSV format", "")
+	flags.BoolVarP(cmdFlags, &absolute, "absolute", "", false, "Put a leading / in front of path names", "")
+	flags.BoolVarP(cmdFlags, &recurse, "recursive", "R", false, "Recurse into the listing", "")
 }
 
 var commandDefinition = &cobra.Command{
@@ -144,6 +144,7 @@ those only (without traversing the whole directory structure):
 ` + lshelp.Help,
 	Annotations: map[string]string{
 		"versionIntroduced": "v1.40",
+		"groups":            "Filter,Listing",
 	},
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(1, 1, command, args)

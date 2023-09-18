@@ -21,7 +21,7 @@ notoc: true
 
 Rclone is a command-line program to manage files on cloud storage. It
 is a feature-rich alternative to cloud vendors' web storage
-interfaces. [Over 40 cloud storage products](#providers) support
+interfaces. [Over 70 cloud storage products](#providers) support
 rclone including S3 object stores, business & consumer file storage
 services, as well as standard transfer protocols.
 
@@ -136,6 +136,7 @@ WebDAV or S3, that work out of the box.)
 {{< provider name="IDrive e2" home="https://www.idrive.com/e2/?refer=rclone" config="/s3/#idrive-e2" >}}
 {{< provider name="IONOS Cloud" home="https://cloud.ionos.com/storage/object-storage" config="/s3/#ionos" >}}
 {{< provider name="Koofr" home="https://koofr.eu/" config="/koofr/" >}}
+{{< provider name="Leviia Object Storage" home="https://www.leviia.com/object-storage" config="/s3/#leviia" >}}
 {{< provider name="Liara Object Storage" home="https://liara.ir/landing/object-storage" config="/s3/#liara-object-storage" >}}
 {{< provider name="Mail.ru Cloud" home="https://cloud.mail.ru/" config="/mailru/" >}}
 {{< provider name="Memset Memstore" home="https://www.memset.com/cloud/storage/" config="/swift/" >}}
@@ -146,6 +147,7 @@ WebDAV or S3, that work out of the box.)
 {{< provider name="Minio" home="https://www.minio.io/" config="/s3/#minio" >}}
 {{< provider name="Nextcloud" home="https://nextcloud.com/" config="/webdav/#nextcloud" >}}
 {{< provider name="OVH" home="https://www.ovh.co.uk/public-cloud/storage/object-storage/" config="/swift/" >}}
+{{< provider name="Blomp Cloud Storage" home="https://rclone.org/swift/" config="/swift/" >}}
 {{< provider name="OpenDrive" home="https://www.opendrive.com/" config="/opendrive/" >}}
 {{< provider name="OpenStack Swift" home="https://docs.openstack.org/swift/latest/" config="/swift/" >}}
 {{< provider name="Oracle Cloud Storage Swift" home="https://docs.oracle.com/en-us/iaas/integration/doc/configure-object-storage.html" config="/swift/" >}}
@@ -156,8 +158,10 @@ WebDAV or S3, that work out of the box.)
 {{< provider name="PikPak" home="https://mypikpak.com/" config="/pikpak/" >}}
 {{< provider name="premiumize.me" home="https://premiumize.me/" config="/premiumizeme/" >}}
 {{< provider name="put.io" home="https://put.io/" config="/putio/" >}}
+{{< provider name="Proton Drive" home="https://proton.me/drive" config="/protondrive/" >}}
 {{< provider name="QingStor" home="https://www.qingcloud.com/products/storage" config="/qingstor/" >}}
 {{< provider name="Qiniu Cloud Object Storage (Kodo)" home="https://www.qiniu.com/en/products/kodo" config="/s3/#qiniu" >}}
+{{< provider name="Quatrix by Maytech" home="https://www.maytech.net/products/quatrix-business" config="/quatrix/" >}}
 {{< provider name="Rackspace Cloud Files" home="https://www.rackspace.com/cloud/files" config="/swift/" >}}
 {{< provider name="rsync.net" home="https://rsync.net/products/rclone.html" config="/sftp/#rsync-net" >}}
 {{< provider name="Scaleway" home="https://www.scaleway.com/object-storage/" config="/s3/#scaleway" >}}
@@ -169,6 +173,7 @@ WebDAV or S3, that work out of the box.)
 {{< provider name="SMB / CIFS" home="https://en.wikipedia.org/wiki/Server_Message_Block" config="/smb/" >}}
 {{< provider name="StackPath" home="https://www.stackpath.com/products/object-storage/" config="/s3/#stackpath" >}}
 {{< provider name="Storj" home="https://storj.io/" config="/storj/" >}}
+{{< provider name="Synology" home="https://c2.synology.com/en-global/object-storage/overview" config="/s3/#synology-c2" >}}
 {{< provider name="SugarSync" home="https://sugarsync.com/" config="/sugarsync/" >}}
 {{< provider name="Tencent Cloud Object Storage (COS)" home="https://intl.cloud.tencent.com/product/cos" config="/s3/#tencent-cos" >}}
 {{< provider name="Uptobox" home="https://uptobox.com" config="/uptobox/" >}}

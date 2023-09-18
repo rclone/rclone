@@ -428,6 +428,8 @@ Properties:
 
 #### --onedrive-server-side-across-configs
 
+Deprecated: use --server-side-across-configs instead.
+
 Allow server-side operations (e.g. copy) to work across different onedrive configs.
 
 This will only work if you are copying between two OneDrive *Personal* drives AND
@@ -531,7 +533,7 @@ Properties:
 Specify the hash in use for the backend.
 
 This specifies the hash type in use. If set to "auto" it will use the
-default hash which is is QuickXorHash.
+default hash which is QuickXorHash.
 
 Before rclone 1.62 an SHA1 hash was used by default for Onedrive
 Personal. For 1.62 and later the default is to use a QuickXorHash for
@@ -567,6 +569,30 @@ Properties:
         - CRC32
     - "none"
         - None - don't use any hashes
+
+#### --onedrive-av-override
+
+Allows download of files the server thinks has a virus.
+
+The onedrive/sharepoint server may check files uploaded with an Anti
+Virus checker. If it detects any potential viruses or malware it will
+block download of the file.
+
+In this case you will see a message like this
+
+    server reports this file is infected with a virus - use --onedrive-av-override to download anyway: Infected (name of virus): 403 Forbidden: 
+
+If you are 100% sure you want to download this file anyway then use
+the --onedrive-av-override flag, or av_override = true in the config
+file.
+
+
+Properties:
+
+- Config:      av_override
+- Env Var:     RCLONE_ONEDRIVE_AV_OVERRIDE
+- Type:        bool
+- Default:     false
 
 #### --onedrive-encoding
 

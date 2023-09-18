@@ -158,9 +158,10 @@ func init() {
 			return nil, fmt.Errorf("unknown state %q", config.State)
 		},
 		Options: append(pikpakOAuthOptions(), []fs.Option{{
-			Name:     "user",
-			Help:     "Pikpak username.",
-			Required: true,
+			Name:      "user",
+			Help:      "Pikpak username.",
+			Required:  true,
+			Sensitive: true,
 		}, {
 			Name:       "pass",
 			Help:       "Pikpak password.",
@@ -173,7 +174,8 @@ Leave blank normally.
 
 Fill in for rclone to use a non root folder as its starting point.
 `,
-			Advanced: true,
+			Advanced:  true,
+			Sensitive: true,
 		}, {
 			Name:     "use_trash",
 			Default:  true,

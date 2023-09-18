@@ -20,7 +20,7 @@ bisync check-access check-filename=.chk_file
 move-listings path2-missing
 
 test 3. put the remote subdir .chk_file back, run resync.
-copy-file {path1/}subdir/.chk_file {path2/}
+copy-file {path1/}subdir/.chk_file {path2/}subdir/
 bisync check-access resync check-filename=.chk_file
 
 test 4. run sync with check-access. should pass.

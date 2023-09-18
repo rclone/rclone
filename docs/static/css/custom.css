@@ -171,6 +171,17 @@ a.badge-primary.focus, a.badge-primary:focus {
     outline: 0;
     box-shadow: 0 0 0 0.2rem rgba(112,202,242,.5);
 }
+.bizbutton {
+    background-color:#fb7a20;
+    border-radius: 15px;
+    padding: 5px;
+}
+.bizbutton:hover {
+    /* background-color:#f29870; */
+    /* border-color:#f29870; */
+    background-color: #70caf2;
+    border-color: #70caf2;
+}
 nav#TableOfContents ul {
     list-style-type: none;
     padding: 0.0rem;

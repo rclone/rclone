@@ -77,6 +77,7 @@ the remote you can also use the [size](/commands/rclone_size/) command.
 `,
 	Annotations: map[string]string{
 		"versionIntroduced": "v1.37",
+		"groups":            "Filter,Listing",
 	},
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(1, 1, command, args)
@@ -111,6 +112,7 @@ func helpText() (tr []string) {
 	tr = append(tr, []string{
 		" Y display current path",
 		" ^L refresh screen (fix screen corruption)",
+		" r recalculate file sizes",
 		" ? to toggle help on and off",
 		" q/ESC/^c to quit",
 	}...)
@@ -121,6 +123,7 @@ func helpText() (tr []string) {
 type UI struct {
 	s                  tcell.Screen
 	f                  fs.Fs     // fs being displayed
+	cancel             func()    // cancel the current scanning process
 	fsName             string    // human name of Fs
 	root               *scan.Dir // root directory
 	d                  *scan.Dir // current directory being displayed
@@ -899,6 +902,16 @@ func NewUI(f fs.Fs) *UI {
 	}
 }
 
+func (u *UI) scan() (chan *scan.Dir, chan error, chan struct{}) {
+	if cancel := u.cancel; cancel != nil {
+		cancel()
+	}
+	u.listing = true
+	ctx := context.Background()
+	ctx, u.cancel = context.WithCancel(ctx)
+	return scan.Scan(ctx, u.f)
+}
+
 // Run shows the user interface
 func (u *UI) Run() error {
 	var err error
@@ -935,8 +948,7 @@ func (u *UI) Run() error {
 	defer u.s.Fini()
 
 	// scan the disk in the background
-	u.listing = true
-	rootChan, errChan, updated := scan.Scan(context.Background(), u.f)
+	rootChan, errChan, updated := u.scan()
 
 	// Poll the events into a channel
 	events := make(chan tcell.Event)
@@ -1037,6 +1049,9 @@ outer:
 					u.deleteSelected()
 				case '?':
 					u.togglePopupBox(helpText())
+				case 'r':
+					// restart scan
+					rootChan, errChan, updated = u.scan()
 
 				// Refresh the screen. Not obvious what key to map
 				// this onto, but ^L is a common choice.

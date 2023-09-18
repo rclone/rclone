@@ -29,6 +29,9 @@ See also [Android builds](https://beta.rclone.org/{{% version %}}/testbuilds/).
 These are built as part of the official release, but haven't been
 adopted as first class builds yet.
 
+See [the release signing docs](/release_signing/) for how to verify
+signatures on the release.
+
 ## Script download and install ##
 
 To install rclone on Linux/macOS/BSD systems, run:

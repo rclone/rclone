@@ -176,9 +176,9 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (_ io.ReadC
 // But for unknown-sized objects (indicated by src.Size() == -1), Upload should either
 // return an error or update the object properly (rather than e.g. calling panic).
 func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (err error) {
-	fs.Debugf(o, "cp input ./%s %+v", src.Remote(), options)
+	fs.Debugf(o, "cp input ./%s %+v", o.Remote(), options)
 
-	oNew, err := o.fs.Put(ctx, in, src, options...)
+	oNew, err := o.fs.put(ctx, in, src, o.Remote(), options...)
 
 	if err == nil {
 		*o = *(oNew.(*Object))

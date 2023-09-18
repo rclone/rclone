@@ -96,15 +96,17 @@ func init() {
 				Help:  "Other site/service or software",
 			}},
 		}, {
-			Name: "user",
-			Help: "User name.\n\nIn case NTLM authentication is used, the username should be in the format 'Domain\\User'.",
+			Name:      "user",
+			Help:      "User name.\n\nIn case NTLM authentication is used, the username should be in the format 'Domain\\User'.",
+			Sensitive: true,
 		}, {
 			Name:       "pass",
 			Help:       "Password.",
 			IsPassword: true,
 		}, {
-			Name: "bearer_token",
-			Help: "Bearer token instead of user/pass (e.g. a Macaroon).",
+			Name:      "bearer_token",
+			Help:      "Bearer token instead of user/pass (e.g. a Macaroon).",
+			Sensitive: true,
 		}, {
 			Name:     "bearer_token_command",
 			Help:     "Command to run to get a bearer token.",
@@ -569,7 +571,8 @@ func (f *Fs) fetchAndSetBearerToken() error {
 	return nil
 }
 
-var validateNextCloudChunkedURL = regexp.MustCompile(`^.*/dav/files/[^/]+/?$`)
+// The WebDAV url can optionally be suffixed with a path. This suffix needs to be ignored for determining the temporary upload directory of chunks.
+var nextCloudURLRegex = regexp.MustCompile(`^(.*)/dav/files/([^/]+)`)
 
 // setQuirks adjusts the Fs for the vendor passed in
 func (f *Fs) setQuirks(ctx context.Context, vendor string) error {
@@ -592,11 +595,18 @@ func (f *Fs) setQuirks(ctx context.Context, vendor string) error {
 		f.propsetMtime = true
 		f.hasOCSHA1 = true
 		f.canChunk = true
-		if err := f.verifyChunkConfig(); err != nil {
-			return err
+
+		if f.opt.ChunkSize == 0 {
+			fs.Logf(nil, "Chunked uploads are disabled because nextcloud_chunk_size is set to 0")
+		} else {
+			chunksUploadURL, err := f.getChunksUploadURL()
+			if err != nil {
+				return err
+			}
+
+			f.chunksUploadURL = chunksUploadURL
+			fs.Logf(nil, "Chunks temporary upload directory: %s", f.chunksUploadURL)
 		}
-		f.chunksUploadURL = f.getChunksUploadURL()
-		fs.Logf(nil, "Chunks temporary upload directory: %s", f.chunksUploadURL)
 	case "sharepoint":
 		// To mount sharepoint, two Cookies are required
 		// They have to be set instead of BasicAuth
@@ -1067,6 +1077,13 @@ func (f *Fs) copyOrMove(ctx context.Context, src fs.Object, remote string, metho
 	dstObj, err := f.NewObject(ctx, remote)
 	if err != nil {
 		return nil, fmt.Errorf("copy NewObject failed: %w", err)
+	}
+	if f.useOCMtime && resp.Header.Get("X-OC-Mtime") != "accepted" && f.propsetMtime {
+		fs.Debugf(dstObj, "Setting modtime after copy to %v", src.ModTime(ctx))
+		err = dstObj.SetModTime(ctx, src.ModTime(ctx))
+		if err != nil {
+			return nil, fmt.Errorf("failed to set modtime: %w", err)
+		}
 	}
 	return dstObj, nil
 }

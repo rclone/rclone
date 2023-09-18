@@ -68,6 +68,11 @@ INFO  : - Path2    File was deleted                    - file7.txt
 INFO  : - Path2    File was deleted                    - file8.txt
 INFO  : Path2:    7 changes:    1 new,    3 newer,    0 older,    3 deleted
 INFO  : Applying changes
+INFO  : Checking potential conflicts...
+ERROR : file5.txt: md5 differ
+NOTICE: Local file system at {path2}: 1 differences found
+NOTICE: Local file system at {path2}: 1 errors while checking
+INFO  : Finished checking the potential conflicts. 1 differences found
 INFO  : - Path1    Queue copy to Path2                 - {path2/}file11.txt
 INFO  : - Path1    Queue copy to Path2                 - {path2/}file2.txt
 INFO  : - Path2    Queue delete                        - {path2/}file4.txt

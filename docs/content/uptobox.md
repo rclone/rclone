@@ -122,6 +122,17 @@ Properties:
 
 Here are the Advanced options specific to uptobox (Uptobox).
 
+#### --uptobox-private
+
+Set to make uploaded files private
+
+Properties:
+
+- Config:      private
+- Env Var:     RCLONE_UPTOBOX_PRIVATE
+- Type:        bool
+- Default:     false
+
 #### --uptobox-encoding
 
 The encoding for the backend.

@@ -223,7 +223,7 @@ func waitSequential(what string, remote string, cond *sync.Cond, maxWait time.Du
 	var (
 		timeout = time.NewTimer(maxWait)
 		done    = make(chan struct{})
-		abort   = int32(0)
+		abort   atomic.Int32
 	)
 	go func() {
 		select {
@@ -232,14 +232,14 @@ func waitSequential(what string, remote string, cond *sync.Cond, maxWait time.Du
 			// cond.Broadcast. NB cond.L == mu
 			cond.L.Lock()
 			// set abort flag and give all the waiting goroutines a kick on timeout
-			atomic.StoreInt32(&abort, 1)
+			abort.Store(1)
 			fs.Debugf(remote, "aborting in-sequence %s wait, off=%d", what, off)
 			cond.Broadcast()
 			cond.L.Unlock()
 		case <-done:
 		}
 	}()
-	for *poff != off && atomic.LoadInt32(&abort) == 0 {
+	for *poff != off && abort.Load() == 0 {
 		fs.Debugf(remote, "waiting for in-sequence %s to %d for %v", what, off, maxWait)
 		cond.Wait()
 	}

@@ -11,25 +11,25 @@ jobs:
         name: Build image job
         steps:
             - name: Checkout master
-              uses: actions/checkout@v3
+              uses: actions/checkout@v4
               with:
                 fetch-depth: 0
             - name: Login to Docker Hub
-              uses: docker/login-action@v2
+              uses: docker/login-action@v3
               with:
                 username: ${{ secrets.DOCKERHUB_USERNAME }}
                 password: ${{ secrets.DOCKERHUB_TOKEN }}
             - name: Extract metadata (tags, labels) for Docker
               id: meta
-              uses: docker/metadata-action@v4
+              uses: docker/metadata-action@v5
               with:
                 images: ghcr.io/${{ github.repository }}
             - name: Set up QEMU
-              uses: docker/setup-qemu-action@v2
+              uses: docker/setup-qemu-action@v3
             - name: Set up Docker Buildx
-              uses: docker/setup-buildx-action@v2
+              uses: docker/setup-buildx-action@v3
             - name: Login to GitHub Container Registry
-              uses: docker/login-action@v2
+              uses: docker/login-action@v3
               with:
                 registry: ghcr.io
                 # This is the user that triggered the Workflow. In this case, it will
@@ -44,7 +44,7 @@ jobs:
                 password: ${{ secrets.GITHUB_TOKEN }}
 
             - name: Build and publish image
-              uses: docker/build-push-action@v4
+              uses: docker/build-push-action@v5
               with:
                 file: Dockerfile
                 context: .

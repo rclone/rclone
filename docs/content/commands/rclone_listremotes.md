@@ -8,7 +8,7 @@ versionIntroduced: v1.34
 ---
 # rclone listremotes
 
-List all the remotes in the config file.
+List all the remotes in the config file and defined in environment variables.
 
 ## Synopsis
 
@@ -29,9 +29,10 @@ rclone listremotes [flags]
       --long   Show the type as well as names
 ```
 
+
 See the [global flags page](/flags/) for global options not listed here.
 
-## SEE ALSO
+# SEE ALSO
 
 * [rclone](/commands/rclone/)	 - Show help for rclone commands, flags and backends.
 

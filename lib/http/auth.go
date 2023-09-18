@@ -19,6 +19,10 @@ By default this will serve files without needing a login.
 You can either use an htpasswd file which can take lots of users, or
 set a single username and password with the ` + "`--{{ .Prefix }}user` and `--{{ .Prefix }}pass`" + ` flags.
 
+If no static users are configured by either of the above methods, and client
+certificates are required by the ` + "`--client-ca`" + ` flag passed to the server, the
+client certificate common name will be considered as the username.
+
 Use ` + "`--{{ .Prefix }}htpasswd /path/to/htpasswd`" + ` to provide an htpasswd file.  This is
 in standard apache format and supports MD5, SHA1 and BCrypt for basic
 authentication.  Bcrypt is recommended.
@@ -71,11 +75,11 @@ type AuthConfig struct {
 
 // AddFlagsPrefix adds flags to the flag set for AuthConfig
 func (cfg *AuthConfig) AddFlagsPrefix(flagSet *pflag.FlagSet, prefix string) {
-	flags.StringVarP(flagSet, &cfg.HtPasswd, prefix+"htpasswd", "", cfg.HtPasswd, "A htpasswd file - if not provided no authentication is done")
-	flags.StringVarP(flagSet, &cfg.Realm, prefix+"realm", "", cfg.Realm, "Realm for authentication")
-	flags.StringVarP(flagSet, &cfg.BasicUser, prefix+"user", "", cfg.BasicUser, "User name for authentication")
-	flags.StringVarP(flagSet, &cfg.BasicPass, prefix+"pass", "", cfg.BasicPass, "Password for authentication")
-	flags.StringVarP(flagSet, &cfg.Salt, prefix+"salt", "", cfg.Salt, "Password hashing salt")
+	flags.StringVarP(flagSet, &cfg.HtPasswd, prefix+"htpasswd", "", cfg.HtPasswd, "A htpasswd file - if not provided no authentication is done", prefix)
+	flags.StringVarP(flagSet, &cfg.Realm, prefix+"realm", "", cfg.Realm, "Realm for authentication", prefix)
+	flags.StringVarP(flagSet, &cfg.BasicUser, prefix+"user", "", cfg.BasicUser, "User name for authentication", prefix)
+	flags.StringVarP(flagSet, &cfg.BasicPass, prefix+"pass", "", cfg.BasicPass, "Password for authentication", prefix)
+	flags.StringVarP(flagSet, &cfg.Salt, prefix+"salt", "", cfg.Salt, "Password hashing salt", prefix)
 }
 
 // AddAuthFlagsPrefix adds flags to the flag set for AuthConfig

@@ -8,8 +8,6 @@ versionIntroduced: "v1.50"
 
 [Mail.ru Cloud](https://cloud.mail.ru/) is a cloud storage provided by a Russian internet company [Mail.Ru Group](https://mail.ru). The official desktop client is [Disk-O:](https://disk-o.cloud/en), available on Windows and Mac OS.
 
-Currently it is recommended to disable 2FA on Mail.ru accounts intended for rclone until it gets eventually implemented.
-
 ## Features highlights
 
 - Paths may be as deep as required, e.g. `remote:directory/subdirectory`
@@ -176,6 +174,32 @@ as they can't be used in JSON strings.
 
 Here are the Standard options specific to mailru (Mail.ru Cloud).
 
+#### --mailru-client-id
+
+OAuth Client Id.
+
+Leave blank normally.
+
+Properties:
+
+- Config:      client_id
+- Env Var:     RCLONE_MAILRU_CLIENT_ID
+- Type:        string
+- Required:    false
+
+#### --mailru-client-secret
+
+OAuth Client Secret.
+
+Leave blank normally.
+
+Properties:
+
+- Config:      client_secret
+- Env Var:     RCLONE_MAILRU_CLIENT_SECRET
+- Type:        string
+- Required:    false
+
 #### --mailru-user
 
 User name (usually email).
@@ -233,6 +257,43 @@ Properties:
 ### Advanced options
 
 Here are the Advanced options specific to mailru (Mail.ru Cloud).
+
+#### --mailru-token
+
+OAuth Access Token as a JSON blob.
+
+Properties:
+
+- Config:      token
+- Env Var:     RCLONE_MAILRU_TOKEN
+- Type:        string
+- Required:    false
+
+#### --mailru-auth-url
+
+Auth server URL.
+
+Leave blank to use the provider defaults.
+
+Properties:
+
+- Config:      auth_url
+- Env Var:     RCLONE_MAILRU_AUTH_URL
+- Type:        string
+- Required:    false
+
+#### --mailru-token-url
+
+Token server url.
+
+Leave blank to use the provider defaults.
+
+Properties:
+
+- Config:      token_url
+- Env Var:     RCLONE_MAILRU_TOKEN_URL
+- Type:        string
+- Required:    false
 
 #### --mailru-speedup-file-patterns
 

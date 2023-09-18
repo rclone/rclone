@@ -205,9 +205,9 @@ Properties:
 Kerberos data transfer protection: authentication|integrity|privacy.
 
 Specifies whether or not authentication, data signature integrity
-checks, and wire encryption is required when communicating the the
-datanodes. Possible values are 'authentication', 'integrity' and
-'privacy'. Used only with KERBEROS enabled.
+checks, and wire encryption are required when communicating with
+the datanodes. Possible values are 'authentication', 'integrity'
+and 'privacy'. Used only with KERBEROS enabled.
 
 Properties:
 

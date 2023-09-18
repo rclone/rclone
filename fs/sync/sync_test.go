@@ -996,7 +996,7 @@ func testSyncWithMaxDuration(t *testing.T, cutoffMode fs.CutoffMode) {
 	accounting.GlobalStats().ResetCounters()
 	startTime := time.Now()
 	err := Sync(ctx, r.Fremote, r.Flocal, false)
-	require.True(t, errors.Is(err, errorMaxDurationReached))
+	require.True(t, errors.Is(err, ErrorMaxDurationReached))
 
 	if cutoffMode == fs.CutoffModeHard {
 		r.CheckRemoteItems(t, file1)
@@ -1423,7 +1423,7 @@ func TestSyncOverlapWithFilter(t *testing.T) {
 	require.NoError(t, fi.Add(false, "/rclone-sync-test/"))
 	require.NoError(t, fi.Add(false, "*/layer2/"))
 	fi.Opt.ExcludeFile = []string{".ignore"}
-	ctx = filter.ReplaceConfig(ctx, fi)
+	filterCtx := filter.ReplaceConfig(ctx, fi)
 
 	subRemoteName := r.FremoteName + "/rclone-sync-test"
 	FremoteSync, err := fs.NewFs(ctx, subRemoteName)
@@ -1453,19 +1453,28 @@ func TestSyncOverlapWithFilter(t *testing.T) {
 	}
 
 	accounting.GlobalStats().ResetCounters()
-	checkNoErr(Sync(ctx, FremoteSync, r.Fremote, false))
+	checkNoErr(Sync(filterCtx, FremoteSync, r.Fremote, false))
+	checkErr(Sync(ctx, FremoteSync, r.Fremote, false))
+	checkNoErr(Sync(filterCtx, r.Fremote, FremoteSync, false))
 	checkErr(Sync(ctx, r.Fremote, FremoteSync, false))
+	checkErr(Sync(filterCtx, r.Fremote, r.Fremote, false))
 	checkErr(Sync(ctx, r.Fremote, r.Fremote, false))
+	checkErr(Sync(filterCtx, FremoteSync, FremoteSync, false))
 	checkErr(Sync(ctx, FremoteSync, FremoteSync, false))
 
-	checkNoErr(Sync(ctx, FremoteSync2, r.Fremote, false))
+	checkNoErr(Sync(filterCtx, FremoteSync2, r.Fremote, false))
+	checkErr(Sync(ctx, FremoteSync2, r.Fremote, false))
+	checkNoErr(Sync(filterCtx, r.Fremote, FremoteSync2, false))
 	checkErr(Sync(ctx, r.Fremote, FremoteSync2, false))
-	checkErr(Sync(ctx, r.Fremote, r.Fremote, false))
+	checkErr(Sync(filterCtx, FremoteSync2, FremoteSync2, false))
 	checkErr(Sync(ctx, FremoteSync2, FremoteSync2, false))
 
-	checkNoErr(Sync(ctx, FremoteSync3, r.Fremote, false))
+	checkNoErr(Sync(filterCtx, FremoteSync3, r.Fremote, false))
+	checkErr(Sync(ctx, FremoteSync3, r.Fremote, false))
+	// Destination is excluded so this test makes no sense
+	// checkNoErr(Sync(filterCtx, r.Fremote, FremoteSync3, false))
 	checkErr(Sync(ctx, r.Fremote, FremoteSync3, false))
-	checkErr(Sync(ctx, r.Fremote, r.Fremote, false))
+	checkErr(Sync(filterCtx, FremoteSync3, FremoteSync3, false))
 	checkErr(Sync(ctx, FremoteSync3, FremoteSync3, false))
 }
 

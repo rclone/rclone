@@ -19,7 +19,7 @@ var jsonOutput bool
 func init() {
 	cmd.Root.AddCommand(commandDefinition)
 	cmdFlags := commandDefinition.Flags()
-	flags.BoolVarP(cmdFlags, &jsonOutput, "json", "", false, "Format output as JSON")
+	flags.BoolVarP(cmdFlags, &jsonOutput, "json", "", false, "Format output as JSON", "")
 }
 
 var commandDefinition = &cobra.Command{
@@ -46,6 +46,7 @@ of the size command.
 `,
 	Annotations: map[string]string{
 		"versionIntroduced": "v1.23",
+		"groups":            "Filter,Listing",
 	},
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(1, 1, command, args)

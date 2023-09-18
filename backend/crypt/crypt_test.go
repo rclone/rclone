@@ -24,7 +24,7 @@ func TestIntegration(t *testing.T) {
 	fstests.Run(t, &fstests.Opt{
 		RemoteName:                   *fstest.RemoteName,
 		NilObject:                    (*crypt.Object)(nil),
-		UnimplementableFsMethods:     []string{"OpenWriterAt"},
+		UnimplementableFsMethods:     []string{"OpenWriterAt", "OpenChunkWriter"},
 		UnimplementableObjectMethods: []string{"MimeType"},
 	})
 }
@@ -45,7 +45,7 @@ func TestStandardBase32(t *testing.T) {
 			{Name: name, Key: "password", Value: obscure.MustObscure("potato")},
 			{Name: name, Key: "filename_encryption", Value: "standard"},
 		},
-		UnimplementableFsMethods:     []string{"OpenWriterAt"},
+		UnimplementableFsMethods:     []string{"OpenWriterAt", "OpenChunkWriter"},
 		UnimplementableObjectMethods: []string{"MimeType"},
 		QuickTestOK:                  true,
 	})
@@ -67,7 +67,7 @@ func TestStandardBase64(t *testing.T) {
 			{Name: name, Key: "filename_encryption", Value: "standard"},
 			{Name: name, Key: "filename_encoding", Value: "base64"},
 		},
-		UnimplementableFsMethods:     []string{"OpenWriterAt"},
+		UnimplementableFsMethods:     []string{"OpenWriterAt", "OpenChunkWriter"},
 		UnimplementableObjectMethods: []string{"MimeType"},
 		QuickTestOK:                  true,
 	})
@@ -89,7 +89,7 @@ func TestStandardBase32768(t *testing.T) {
 			{Name: name, Key: "filename_encryption", Value: "standard"},
 			{Name: name, Key: "filename_encoding", Value: "base32768"},
 		},
-		UnimplementableFsMethods:     []string{"OpenWriterAt"},
+		UnimplementableFsMethods:     []string{"OpenWriterAt", "OpenChunkWriter"},
 		UnimplementableObjectMethods: []string{"MimeType"},
 		QuickTestOK:                  true,
 	})
@@ -111,7 +111,7 @@ func TestOff(t *testing.T) {
 			{Name: name, Key: "password", Value: obscure.MustObscure("potato2")},
 			{Name: name, Key: "filename_encryption", Value: "off"},
 		},
-		UnimplementableFsMethods:     []string{"OpenWriterAt"},
+		UnimplementableFsMethods:     []string{"OpenWriterAt", "OpenChunkWriter"},
 		UnimplementableObjectMethods: []string{"MimeType"},
 		QuickTestOK:                  true,
 	})
@@ -137,7 +137,7 @@ func TestObfuscate(t *testing.T) {
 			{Name: name, Key: "filename_encryption", Value: "obfuscate"},
 		},
 		SkipBadWindowsCharacters:     true,
-		UnimplementableFsMethods:     []string{"OpenWriterAt"},
+		UnimplementableFsMethods:     []string{"OpenWriterAt", "OpenChunkWriter"},
 		UnimplementableObjectMethods: []string{"MimeType"},
 		QuickTestOK:                  true,
 	})
@@ -164,7 +164,7 @@ func TestNoDataObfuscate(t *testing.T) {
 			{Name: name, Key: "no_data_encryption", Value: "true"},
 		},
 		SkipBadWindowsCharacters:     true,
-		UnimplementableFsMethods:     []string{"OpenWriterAt"},
+		UnimplementableFsMethods:     []string{"OpenWriterAt", "OpenChunkWriter"},
 		UnimplementableObjectMethods: []string{"MimeType"},
 		QuickTestOK:                  true,
 	})

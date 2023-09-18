@@ -27,12 +27,12 @@ var (
 func init() {
 	cmd.Root.AddCommand(commandDefinition)
 	cmdFlags := commandDefinition.Flags()
-	flags.Int64VarP(cmdFlags, &head, "head", "", head, "Only print the first N characters")
-	flags.Int64VarP(cmdFlags, &tail, "tail", "", tail, "Only print the last N characters")
-	flags.Int64VarP(cmdFlags, &offset, "offset", "", offset, "Start printing at offset N (or from end if -ve)")
-	flags.Int64VarP(cmdFlags, &count, "count", "", count, "Only print N characters")
-	flags.BoolVarP(cmdFlags, &discard, "discard", "", discard, "Discard the output instead of printing")
-	flags.StringVarP(cmdFlags, &separator, "separator", "", separator, "Separator to use between objects when printing multiple files")
+	flags.Int64VarP(cmdFlags, &head, "head", "", head, "Only print the first N characters", "")
+	flags.Int64VarP(cmdFlags, &tail, "tail", "", tail, "Only print the last N characters", "")
+	flags.Int64VarP(cmdFlags, &offset, "offset", "", offset, "Start printing at offset N (or from end if -ve)", "")
+	flags.Int64VarP(cmdFlags, &count, "count", "", count, "Only print N characters", "")
+	flags.BoolVarP(cmdFlags, &discard, "discard", "", discard, "Discard the output instead of printing", "")
+	flags.StringVarP(cmdFlags, &separator, "separator", "", separator, "Separator to use between objects when printing multiple files", "")
 }
 
 var commandDefinition = &cobra.Command{
@@ -73,6 +73,7 @@ files, use:
 `, "|", "`"),
 	Annotations: map[string]string{
 		"versionIntroduced": "v1.33",
+		"groups":            "Filter,Listing",
 	},
 	Run: func(command *cobra.Command, args []string) {
 		usedOffset := offset != 0 || count >= 0

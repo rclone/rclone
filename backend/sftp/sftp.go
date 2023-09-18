@@ -27,7 +27,6 @@ import (
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/configstruct"
 	"github.com/rclone/rclone/fs/config/obscure"
-	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/lib/env"
 	"github.com/rclone/rclone/lib/pacer"
@@ -59,13 +58,15 @@ func init() {
 		Description: "SSH/SFTP",
 		NewFs:       NewFs,
 		Options: []fs.Option{{
-			Name:     "host",
-			Help:     "SSH host to connect to.\n\nE.g. \"example.com\".",
-			Required: true,
+			Name:      "host",
+			Help:      "SSH host to connect to.\n\nE.g. \"example.com\".",
+			Required:  true,
+			Sensitive: true,
 		}, {
-			Name:    "user",
-			Help:    "SSH username.",
-			Default: currentUser,
+			Name:      "user",
+			Help:      "SSH username.",
+			Default:   currentUser,
+			Sensitive: true,
 		}, {
 			Name:    "port",
 			Help:    "SSH port number.",
@@ -75,8 +76,9 @@ func init() {
 			Help:       "SSH password, leave blank to use ssh-agent.",
 			IsPassword: true,
 		}, {
-			Name: "key_pem",
-			Help: "Raw PEM-encoded private key.\n\nIf specified, will override key_file parameter.",
+			Name:      "key_pem",
+			Help:      "Raw PEM-encoded private key.\n\nIf specified, will override key_file parameter.",
+			Sensitive: true,
 		}, {
 			Name: "key_file",
 			Help: "Path to PEM-encoded private key file.\n\nLeave blank or set key-use-agent to use ssh-agent." + env.ShellExpandHelp,
@@ -87,6 +89,7 @@ func init() {
 Only PEM encrypted key files (old OpenSSH format) are supported. Encrypted keys
 in the new OpenSSH format can't be used.`,
 			IsPassword: true,
+			Sensitive:  true,
 		}, {
 			Name: "pubkey_file",
 			Help: `Optional path to public key file.
@@ -165,7 +168,19 @@ E.g. if shared folders can be found in directories representing volumes:
 
 E.g. if home directory can be found in a shared folder called "home":
 
-    rclone sync /home/local/directory remote:/home/directory --sftp-path-override /volume1/homes/USER/directory`,
+    rclone sync /home/local/directory remote:/home/directory --sftp-path-override /volume1/homes/USER/directory
+	
+To specify only the path to the SFTP remote's root, and allow rclone to add any relative subpaths automatically (including unwrapping/decrypting remotes as necessary), add the '@' character to the beginning of the path.
+
+E.g. the first example above could be rewritten as:
+
+	rclone sync /home/local/directory remote:/directory --sftp-path-override @/volume2
+	
+Note that when using this method with Synology "home" folders, the full "/homes/USER" path should be specified instead of "/home".
+
+E.g. the second example above should be rewritten as:
+
+	rclone sync /home/local/directory remote:/homes/USER/directory --sftp-path-override @/volume1`,
 			Advanced: true,
 		}, {
 			Name:     "set_modtime",
@@ -217,7 +232,16 @@ E.g. if home directory can be found in a shared folder called "home":
 			Default: "",
 			Help: `Specifies the path or command to run a sftp server on the remote host.
 
-The subsystem option is ignored when server_command is defined.`,
+The subsystem option is ignored when server_command is defined.
+
+If adding server_command to the configuration file please note that 
+it should not be enclosed in quotes, since that will make rclone fail.
+
+A working example is:
+
+    [remote_name]
+    type = sftp
+    server_command = sudo /usr/libexec/openssh/sftp-server`,
 			Advanced: true,
 		}, {
 			Name:    "use_fstat",
@@ -384,6 +408,47 @@ Example:
     ssh-ed25519 ssh-rsa ssh-dss
 `,
 			Advanced: true,
+		}, {
+			Name:    "ssh",
+			Default: fs.SpaceSepList{},
+			Help: `Path and arguments to external ssh binary.
+
+Normally rclone will use its internal ssh library to connect to the
+SFTP server. However it does not implement all possible ssh options so
+it may be desirable to use an external ssh binary.
+
+Rclone ignores all the internal config if you use this option and
+expects you to configure the ssh binary with the user/host/port and
+any other options you need.
+
+**Important** The ssh command must log in without asking for a
+password so needs to be configured with keys or certificates.
+
+Rclone will run the command supplied either with the additional
+arguments "-s sftp" to access the SFTP subsystem or with commands such
+as "md5sum /path/to/file" appended to read checksums.
+
+Any arguments with spaces in should be surrounded by "double quotes".
+
+An example setting might be:
+
+    ssh -o ServerAliveInterval=20 user@example.com
+
+Note that when using an external ssh binary rclone makes a new ssh
+connection for every hash it calculates.
+`,
+		}, {
+			Name:    "socks_proxy",
+			Default: "",
+			Help: `Socks 5 proxy host.
+	
+Supports the format user:pass@host:port, user@host:port, host:port.
+
+Example:
+
+	myUser:myPass@localhost:9005
+	`,
+			Advanced: true,
 		}},
 	}
 	fs.Register(fsi)
@@ -423,6 +488,8 @@ type Options struct {
 	KeyExchange             fs.SpaceSepList `config:"key_exchange"`
 	MACs                    fs.SpaceSepList `config:"macs"`
 	HostKeyAlgorithms       fs.SpaceSepList `config:"host_key_algorithms"`
+	SSH                     fs.SpaceSepList `config:"ssh"`
+	SocksProxy              string          `config:"socks_proxy"`
 }
 
 // Fs stores the interface to the remote SFTP files
@@ -445,7 +512,7 @@ type Fs struct {
 	drain        *time.Timer // used to drain the pool when we stop using the connections
 	pacer        *fs.Pacer   // pacer for operations
 	savedpswd    string
-	sessions     int32 // count in use sessions
+	sessions     atomic.Int32 // count in use sessions
 }
 
 // Object is a remote SFTP file that has been stat'd (so it exists, but is not necessarily open for reading)
@@ -459,41 +526,16 @@ type Object struct {
 	sha1sum *string     // Cached SHA1 checksum
 }
 
-// dial starts a client connection to the given SSH server. It is a
-// convenience function that connects to the given network address,
-// initiates the SSH handshake, and then sets up a Client.
-func (f *Fs) dial(ctx context.Context, network, addr string, sshConfig *ssh.ClientConfig) (*ssh.Client, error) {
-	dialer := fshttp.NewDialer(ctx)
-	conn, err := dialer.Dial(network, addr)
-	if err != nil {
-		return nil, err
-	}
-	c, chans, reqs, err := ssh.NewClientConn(conn, addr, sshConfig)
-	if err != nil {
-		return nil, err
-	}
-	fs.Debugf(f, "New connection %s->%s to %q", c.LocalAddr(), c.RemoteAddr(), c.ServerVersion())
-	return ssh.NewClient(c, chans, reqs), nil
-}
-
 // conn encapsulates an ssh client and corresponding sftp client
 type conn struct {
-	sshClient  *ssh.Client
+	sshClient  sshClient
 	sftpClient *sftp.Client
 	err        chan error
 }
 
 // Wait for connection to close
 func (c *conn) wait() {
-	c.err <- c.sshClient.Conn.Wait()
-}
-
-// Send a keepalive over the ssh connection
-func (c *conn) sendKeepAlive() {
-	_, _, err := c.sshClient.SendRequest("keepalive@openssh.com", true, nil)
-	if err != nil {
-		fs.Debugf(nil, "Failed to send keep alive: %v", err)
-	}
+	c.err <- c.sshClient.Wait()
 }
 
 // Send keepalives every interval over the ssh connection until done is closed
@@ -505,7 +547,7 @@ func (c *conn) sendKeepAlives(interval time.Duration) (done chan struct{}) {
 		for {
 			select {
 			case <-t.C:
-				c.sendKeepAlive()
+				c.sshClient.SendKeepAlive()
 			case <-done:
 				return
 			}
@@ -538,17 +580,17 @@ func (c *conn) closed() error {
 //
 // Call removeSession() when done
 func (f *Fs) addSession() {
-	atomic.AddInt32(&f.sessions, 1)
+	f.sessions.Add(1)
 }
 
 // Show the ssh session is no longer in use
 func (f *Fs) removeSession() {
-	atomic.AddInt32(&f.sessions, -1)
+	f.sessions.Add(-1)
 }
 
 // getSessions shows whether there are any sessions in use
 func (f *Fs) getSessions() int32 {
-	return atomic.LoadInt32(&f.sessions)
+	return f.sessions.Load()
 }
 
 // Open a new connection to the SFTP server.
@@ -557,7 +599,11 @@ func (f *Fs) sftpConnection(ctx context.Context) (c *conn, err error) {
 	c = &conn{
 		err: make(chan error, 1),
 	}
-	c.sshClient, err = f.dial(ctx, "tcp", f.opt.Host+":"+f.opt.Port, f.config)
+	if len(f.opt.SSH) == 0 {
+		c.sshClient, err = f.newSSHClientInternal(ctx, "tcp", f.opt.Host+":"+f.opt.Port, f.config)
+	} else {
+		c.sshClient, err = f.newSSHClientExternal()
+	}
 	if err != nil {
 		return nil, fmt.Errorf("couldn't connect SSH: %w", err)
 	}
@@ -571,7 +617,7 @@ func (f *Fs) sftpConnection(ctx context.Context) (c *conn, err error) {
 }
 
 // Set any environment variables on the ssh.Session
-func (f *Fs) setEnv(s *ssh.Session) error {
+func (f *Fs) setEnv(s sshSession) error {
 	for _, env := range f.opt.SetEnv {
 		equal := strings.IndexRune(env, '=')
 		if equal < 0 {
@@ -588,8 +634,8 @@ func (f *Fs) setEnv(s *ssh.Session) error {
 
 // Creates a new SFTP client on conn, using the specified subsystem
 // or sftp server, and zero or more option functions
-func (f *Fs) newSftpClient(conn *ssh.Client, opts ...sftp.ClientOption) (*sftp.Client, error) {
-	s, err := conn.NewSession()
+func (f *Fs) newSftpClient(client sshClient, opts ...sftp.ClientOption) (*sftp.Client, error) {
+	s, err := client.NewSession()
 	if err != nil {
 		return nil, err
 	}
@@ -662,6 +708,9 @@ func (f *Fs) getSftpConnection(ctx context.Context) (c *conn, err error) {
 // Getwd request
 func (f *Fs) putSftpConnection(pc **conn, err error) {
 	c := *pc
+	if !c.sshClient.CanReuse() {
+		return
+	}
 	*pc = nil
 	if err != nil {
 		// work out if this is an expected error
@@ -740,6 +789,10 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	if err != nil {
 		return nil, err
 	}
+	if len(opt.SSH) != 0 && ((opt.User != currentUser && opt.User != "") || opt.Host != "" || (opt.Port != "22" && opt.Port != "")) {
+		fs.Logf(name, "--sftp-ssh is in use - ignoring user/host/port from config - set in the parameters to --sftp-ssh (remove them from the config to silence this warning)")
+	}
+
 	if opt.User == "" {
 		opt.User = currentUser
 	}
@@ -792,7 +845,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	pubkeyFile := env.ShellExpand(opt.PubKeyFile)
 	//keyPem := env.ShellExpand(opt.KeyPem)
 	// Add ssh agent-auth if no password or file or key PEM specified
-	if (opt.Pass == "" && keyFile == "" && !opt.AskPassword && opt.KeyPem == "") || opt.KeyUseAgent {
+	if (len(opt.SSH) == 0 && opt.Pass == "" && keyFile == "" && !opt.AskPassword && opt.KeyPem == "") || opt.KeyUseAgent {
 		sshAgentClient, _, err := sshagent.New()
 		if err != nil {
 			return nil, fmt.Errorf("couldn't connect to ssh-agent: %w", err)
@@ -1012,8 +1065,8 @@ func NewFsWithConnection(ctx context.Context, f *Fs, name string, root string, m
 			fs.Debugf(f, "Failed to get shell session for shell type detection command: %v", err)
 		} else {
 			var stdout, stderr bytes.Buffer
-			session.Stdout = &stdout
-			session.Stderr = &stderr
+			session.SetStdout(&stdout)
+			session.SetStderr(&stderr)
 			shellCmd := "echo ${ShellId}%ComSpec%"
 			fs.Debugf(f, "Running shell type detection remote command: %s", shellCmd)
 			err = session.Run(shellCmd)
@@ -1423,8 +1476,8 @@ func (f *Fs) run(ctx context.Context, cmd string) ([]byte, error) {
 	}()
 
 	var stdout, stderr bytes.Buffer
-	session.Stdout = &stdout
-	session.Stderr = &stderr
+	session.SetStdout(&stdout)
+	session.SetStderr(&stderr)
 
 	fs.Debugf(f, "Running remote command: %s", cmd)
 	err = session.Run(cmd)
@@ -1731,6 +1784,9 @@ func (f *Fs) remotePath(remote string) string {
 func (f *Fs) remoteShellPath(remote string) string {
 	if f.opt.PathOverride != "" {
 		shellPath := path.Join(f.opt.PathOverride, remote)
+		if f.opt.PathOverride[0] == '@' {
+			shellPath = path.Join(strings.TrimPrefix(f.opt.PathOverride, "@"), f.absRoot, remote)
+		}
 		fs.Debugf(f, "Shell path redirected to %q with option path_override", shellPath)
 		return shellPath
 	}
@@ -1988,9 +2044,10 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	if err != nil {
 		return fmt.Errorf("Update: %w", err)
 	}
+	// Hang on to the connection for the whole upload so it doesn't get re-used while we are uploading
 	file, err := c.sftpClient.OpenFile(o.path(), os.O_WRONLY|os.O_CREATE|os.O_TRUNC)
-	o.fs.putSftpConnection(&c, err)
 	if err != nil {
+		o.fs.putSftpConnection(&c, err)
 		return fmt.Errorf("Update Create failed: %w", err)
 	}
 	// remove the file if upload failed
@@ -2010,14 +2067,18 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	}
 	_, err = file.ReadFrom(&sizeReader{Reader: in, size: src.Size()})
 	if err != nil {
+		o.fs.putSftpConnection(&c, err)
 		remove()
 		return fmt.Errorf("Update ReadFrom failed: %w", err)
 	}
 	err = file.Close()
 	if err != nil {
+		o.fs.putSftpConnection(&c, err)
 		remove()
 		return fmt.Errorf("Update Close failed: %w", err)
 	}
+	// Release connection only when upload has finished so we don't upload multiple files on the same connection
+	o.fs.putSftpConnection(&c, err)
 
 	// Set the mod time - this stats the object if o.fs.opt.SetModTime == true
 	err = o.SetModTime(ctx, src.ModTime(ctx))

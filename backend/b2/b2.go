@@ -32,6 +32,7 @@ import (
 	"github.com/rclone/rclone/fs/walk"
 	"github.com/rclone/rclone/lib/bucket"
 	"github.com/rclone/rclone/lib/encoder"
+	"github.com/rclone/rclone/lib/multipart"
 	"github.com/rclone/rclone/lib/pacer"
 	"github.com/rclone/rclone/lib/pool"
 	"github.com/rclone/rclone/lib/rest"
@@ -57,9 +58,7 @@ const (
 	minChunkSize        = 5 * fs.Mebi
 	defaultChunkSize    = 96 * fs.Mebi
 	defaultUploadCutoff = 200 * fs.Mebi
-	largeFileCopyCutoff = 4 * fs.Gibi              // 5E9 is the max
-	memoryPoolFlushTime = fs.Duration(time.Minute) // flush the cached buffers after this long
-	memoryPoolUseMmap   = false
+	largeFileCopyCutoff = 4 * fs.Gibi // 5E9 is the max
 )
 
 // Globals
@@ -75,13 +74,15 @@ func init() {
 		Description: "Backblaze B2",
 		NewFs:       NewFs,
 		Options: []fs.Option{{
-			Name:     "account",
-			Help:     "Account ID or Application Key ID.",
-			Required: true,
+			Name:      "account",
+			Help:      "Account ID or Application Key ID.",
+			Required:  true,
+			Sensitive: true,
 		}, {
-			Name:     "key",
-			Help:     "Application Key.",
-			Required: true,
+			Name:      "key",
+			Help:      "Application Key.",
+			Required:  true,
+			Sensitive: true,
 		}, {
 			Name:     "endpoint",
 			Help:     "Endpoint for the service.\n\nLeave blank normally.",
@@ -148,6 +149,18 @@ might a maximum of "--transfers" chunks in progress at once.
 			Default:  defaultChunkSize,
 			Advanced: true,
 		}, {
+			Name: "upload_concurrency",
+			Help: `Concurrency for multipart uploads.
+
+This is the number of chunks of the same file that are uploaded
+concurrently.
+
+Note that chunks are stored in memory and there may be up to
+"--transfers" * "--b2-upload-concurrency" chunks stored at once
+in memory.`,
+			Default:  16,
+			Advanced: true,
+		}, {
 			Name: "disable_checksum",
 			Help: `Disable checksums for large (> upload cutoff) files.
 
@@ -186,16 +199,16 @@ The minimum value is 1 second. The maximum value is one week.`,
 			Advanced: true,
 		}, {
 			Name:     "memory_pool_flush_time",
-			Default:  memoryPoolFlushTime,
+			Default:  fs.Duration(time.Minute),
 			Advanced: true,
-			Help: `How often internal memory buffer pools will be flushed.
-Uploads which requires additional buffers (f.e multipart) will use memory pool for allocations.
-This option controls how often unused buffers will be removed from the pool.`,
+			Hide:     fs.OptionHideBoth,
+			Help:     `How often internal memory buffer pools will be flushed. (no longer used)`,
 		}, {
 			Name:     "memory_pool_use_mmap",
-			Default:  memoryPoolUseMmap,
+			Default:  false,
 			Advanced: true,
-			Help:     `Whether to use mmap buffers in internal memory pool.`,
+			Hide:     fs.OptionHideBoth,
+			Help:     `Whether to use mmap buffers in internal memory pool. (no longer used)`,
 		}, {
 			Name:     config.ConfigEncoding,
 			Help:     config.ConfigEncodingHelp,
@@ -222,11 +235,10 @@ type Options struct {
 	UploadCutoff                  fs.SizeSuffix        `config:"upload_cutoff"`
 	CopyCutoff                    fs.SizeSuffix        `config:"copy_cutoff"`
 	ChunkSize                     fs.SizeSuffix        `config:"chunk_size"`
+	UploadConcurrency             int                  `config:"upload_concurrency"`
 	DisableCheckSum               bool                 `config:"disable_checksum"`
 	DownloadURL                   string               `config:"download_url"`
 	DownloadAuthorizationDuration fs.Duration          `config:"download_auth_duration"`
-	MemoryPoolFlushTime           fs.Duration          `config:"memory_pool_flush_time"`
-	MemoryPoolUseMmap             bool                 `config:"memory_pool_use_mmap"`
 	Enc                           encoder.MultiEncoder `config:"encoding"`
 }
 
@@ -251,7 +263,6 @@ type Fs struct {
 	authMu          sync.Mutex                             // lock for authorizing the account
 	pacer           *fs.Pacer                              // To pace and retry the API calls
 	uploadToken     *pacer.TokenDispenser                  // control concurrency
-	pool            *pool.Pool                             // memory pool
 }
 
 // Object describes a b2 object
@@ -456,12 +467,6 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		uploads:     make(map[string][]*api.GetUploadURLResponse),
 		pacer:       fs.NewPacer(ctx, pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant))),
 		uploadToken: pacer.NewTokenDispenser(ci.Transfers),
-		pool: pool.New(
-			time.Duration(opt.MemoryPoolFlushTime),
-			int(opt.ChunkSize),
-			ci.Transfers,
-			opt.MemoryPoolUseMmap,
-		),
 	}
 	f.setRoot(root)
 	f.features = (&fs.Features{
@@ -595,23 +600,24 @@ func (f *Fs) clearUploadURL(bucketID string) {
 	f.uploadMu.Unlock()
 }
 
-// getBuf gets a buffer of f.opt.ChunkSize and an upload token
+// getRW gets a RW buffer and an upload token
 //
 // If noBuf is set then it just gets an upload token
-func (f *Fs) getBuf(noBuf bool) (buf []byte) {
+func (f *Fs) getRW(noBuf bool) (rw *pool.RW) {
 	f.uploadToken.Get()
 	if !noBuf {
-		buf = f.pool.Get()
+		rw = multipart.NewRW()
 	}
-	return buf
+	return rw
 }
 
-// putBuf returns a buffer to the memory pool and an upload token
+// putRW returns a RW buffer to the memory pool and returns an upload
+// token
 //
-// If noBuf is set then it just returns the upload token
-func (f *Fs) putBuf(buf []byte, noBuf bool) {
-	if !noBuf {
-		f.pool.Put(buf)
+// If buf is nil then it just returns the upload token
+func (f *Fs) putRW(rw *pool.RW) {
+	if rw != nil {
+		_ = rw.Close()
 	}
 	f.uploadToken.Put()
 }
@@ -1291,7 +1297,7 @@ func (f *Fs) copy(ctx context.Context, dstObj *Object, srcObj *Object, newInfo *
 		if err != nil {
 			return err
 		}
-		return up.Upload(ctx)
+		return up.Copy(ctx)
 	}
 
 	dstBucket, dstPath := dstObj.split()
@@ -1420,7 +1426,7 @@ func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, 
 	if err != nil {
 		return "", err
 	}
-	absPath := "/" + bucketPath
+	absPath := "/" + urlEncode(bucketPath)
 	link = RootURL + "/file/" + urlEncode(bucket) + absPath
 	bucketType, err := f.getbucketType(ctx, bucket)
 	if err != nil {
@@ -1859,11 +1865,11 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	if err != nil {
 		return err
 	}
-	if size == -1 {
+	if size < 0 {
 		// Check if the file is large enough for a chunked upload (needs to be at least two chunks)
-		buf := o.fs.getBuf(false)
+		rw := o.fs.getRW(false)
 
-		n, err := io.ReadFull(in, buf)
+		n, err := io.CopyN(rw, in, int64(o.fs.opt.ChunkSize))
 		if err == nil {
 			bufReader := bufio.NewReader(in)
 			in = bufReader
@@ -1874,26 +1880,26 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 			fs.Debugf(o, "File is big enough for chunked streaming")
 			up, err := o.fs.newLargeUpload(ctx, o, in, src, o.fs.opt.ChunkSize, false, nil)
 			if err != nil {
-				o.fs.putBuf(buf, false)
+				o.fs.putRW(rw)
 				return err
 			}
 			// NB Stream returns the buffer and token
-			return up.Stream(ctx, buf)
-		} else if err == io.EOF || err == io.ErrUnexpectedEOF {
+			return up.Stream(ctx, rw)
+		} else if err == io.EOF {
 			fs.Debugf(o, "File has %d bytes, which makes only one chunk. Using direct upload.", n)
-			defer o.fs.putBuf(buf, false)
-			size = int64(n)
-			in = bytes.NewReader(buf[:n])
+			defer o.fs.putRW(rw)
+			size = n
+			in = rw
 		} else {
-			o.fs.putBuf(buf, false)
+			o.fs.putRW(rw)
 			return err
 		}
 	} else if size > int64(o.fs.opt.UploadCutoff) {
-		up, err := o.fs.newLargeUpload(ctx, o, in, src, o.fs.opt.ChunkSize, false, nil)
-		if err != nil {
-			return err
-		}
-		return up.Upload(ctx)
+		_, err := multipart.UploadMultipart(ctx, src, in, multipart.UploadMultipartOptions{
+			Open:        o.fs,
+			OpenOptions: options,
+		})
+		return err
 	}
 
 	modTime := src.ModTime(ctx)
@@ -2001,6 +2007,41 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	return o.decodeMetaDataFileInfo(&response)
 }
 
+// OpenChunkWriter returns the chunk size and a ChunkWriter
+//
+// Pass in the remote and the src object
+// You can also use options to hint at the desired chunk size
+func (f *Fs) OpenChunkWriter(ctx context.Context, remote string, src fs.ObjectInfo, options ...fs.OpenOption) (info fs.ChunkWriterInfo, writer fs.ChunkWriter, err error) {
+	// FIXME what if file is smaller than 1 chunk?
+	if f.opt.Versions {
+		return info, nil, errNotWithVersions
+	}
+	if f.opt.VersionAt.IsSet() {
+		return info, nil, errNotWithVersionAt
+	}
+	//size := src.Size()
+
+	// Temporary Object under construction
+	o := &Object{
+		fs:     f,
+		remote: src.Remote(),
+	}
+
+	bucket, _ := o.split()
+	err = f.makeBucket(ctx, bucket)
+	if err != nil {
+		return info, nil, err
+	}
+
+	info = fs.ChunkWriterInfo{
+		ChunkSize:   int64(f.opt.ChunkSize),
+		Concurrency: o.fs.opt.UploadConcurrency,
+		//LeavePartsOnError: o.fs.opt.LeavePartsOnError,
+	}
+	up, err := f.newLargeUpload(ctx, o, nil, src, f.opt.ChunkSize, false, nil)
+	return info, up, err
+}
+
 // Remove an object
 func (o *Object) Remove(ctx context.Context) error {
 	bucket, bucketPath := o.split()
@@ -2028,14 +2069,15 @@ func (o *Object) ID() string {
 
 // Check the interfaces are satisfied
 var (
-	_ fs.Fs           = &Fs{}
-	_ fs.Purger       = &Fs{}
-	_ fs.Copier       = &Fs{}
-	_ fs.PutStreamer  = &Fs{}
-	_ fs.CleanUpper   = &Fs{}
-	_ fs.ListRer      = &Fs{}
-	_ fs.PublicLinker = &Fs{}
-	_ fs.Object       = &Object{}
-	_ fs.MimeTyper    = &Object{}
-	_ fs.IDer         = &Object{}
+	_ fs.Fs              = &Fs{}
+	_ fs.Purger          = &Fs{}
+	_ fs.Copier          = &Fs{}
+	_ fs.PutStreamer     = &Fs{}
+	_ fs.CleanUpper      = &Fs{}
+	_ fs.ListRer         = &Fs{}
+	_ fs.PublicLinker    = &Fs{}
+	_ fs.OpenChunkWriter = &Fs{}
+	_ fs.Object          = &Object{}
+	_ fs.MimeTyper       = &Object{}
+	_ fs.IDer            = &Object{}
 )

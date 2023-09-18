@@ -58,9 +58,10 @@ func init() {
 		Description: "Mega",
 		NewFs:       NewFs,
 		Options: []fs.Option{{
-			Name:     "user",
-			Help:     "User name.",
-			Required: true,
+			Name:      "user",
+			Help:      "User name.",
+			Required:  true,
+			Sensitive: true,
 		}, {
 			Name:       "pass",
 			Help:       "Password.",

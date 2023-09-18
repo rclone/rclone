@@ -3,6 +3,7 @@ package gendocs
 
 import (
 	"bytes"
+	"fmt"
 	"log"
 	"os"
 	"path"
@@ -13,10 +14,10 @@ import (
 	"time"
 
 	"github.com/rclone/rclone/cmd"
+	"github.com/rclone/rclone/fs/config/flags"
 	"github.com/rclone/rclone/lib/file"
 	"github.com/spf13/cobra"
 	"github.com/spf13/cobra/doc"
-	"github.com/spf13/pflag"
 )
 
 func init() {
@@ -88,6 +89,7 @@ rclone.org website.`,
 			Annotations map[string]string
 		}
 		var commands = map[string]commandDetails{}
+		var aliases []string
 		var addCommandDetails func(root *cobra.Command)
 		addCommandDetails = func(root *cobra.Command) {
 			name := strings.ReplaceAll(root.CommandPath(), " ", "_") + ".md"
@@ -95,6 +97,7 @@ rclone.org website.`,
 				Short:       root.Short,
 				Annotations: root.Annotations,
 			}
+			aliases = append(aliases, root.Aliases...)
 			for _, c := range root.Commands() {
 				addCommandDetails(c)
 			}
@@ -126,10 +129,6 @@ rclone.org website.`,
 			return "/commands/" + strings.ToLower(base) + "/"
 		}
 
-		// Hide all of the root entries flags
-		cmd.Root.Flags().VisitAll(func(flag *pflag.Flag) {
-			flag.Hidden = true
-		})
 		err = doc.GenMarkdownTreeCustom(cmd.Root, out, prepender, linkHandler)
 		if err != nil {
 			return err
@@ -143,15 +142,50 @@ rclone.org website.`,
 				return err
 			}
 			if !info.IsDir() {
+				name := filepath.Base(path)
+				cmd, ok := commands[name]
+				if !ok {
+					// Avoid man pages which are for aliases. This is a bit messy!
+					for _, alias := range aliases {
+						if strings.Contains(name, alias) {
+							return nil
+						}
+					}
+					return fmt.Errorf("didn't find command for %q", name)
+				}
 				b, err := os.ReadFile(path)
 				if err != nil {
 					return err
 				}
 				doc := string(b)
-				doc = strings.Replace(doc, "\n### SEE ALSO", `
+
+				var out strings.Builder
+				if groupsString := cmd.Annotations["groups"]; groupsString != "" {
+					groups := flags.All.Include(groupsString)
+					for _, group := range groups.Groups {
+						if group.Flags.HasFlags() {
+							_, _ = fmt.Fprintf(&out, "\n### %s Options\n\n", group.Name)
+							_, _ = fmt.Fprintf(&out, "%s\n\n", group.Help)
+							_, _ = fmt.Fprintln(&out, "```")
+							_, _ = out.WriteString(group.Flags.FlagUsages())
+							_, _ = fmt.Fprintln(&out, "```")
+						}
+					}
+				}
+				_, _ = out.WriteString(`
 See the [global flags page](/flags/) for global options not listed here.
 
-### SEE ALSO`, 1)
+`)
+
+				startCut := strings.Index(doc, `### Options inherited from parent commands`)
+				endCut := strings.Index(doc, `## SEE ALSO`)
+				if startCut < 0 || endCut < 0 {
+					if name == "rclone.md" {
+						return nil
+					}
+					return fmt.Errorf("internal error: failed to find cut points: startCut = %d, endCut = %d", startCut, endCut)
+				}
+				doc = doc[:startCut] + out.String() + doc[endCut:]
 				// outdent all the titles by one
 				doc = outdentTitle.ReplaceAllString(doc, `$1`)
 				err = os.WriteFile(path, []byte(doc), 0777)

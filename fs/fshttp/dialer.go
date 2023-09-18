@@ -52,6 +52,17 @@ var warnDSCPFail, warnDSCPWindows sync.Once
 
 // DialContext connects to the network address using the provided context.
 func (d *Dialer) DialContext(ctx context.Context, network, address string) (net.Conn, error) {
+	// If local address is 0.0.0.0 or ::0 force IPv4 or IPv6
+	// This works around https://github.com/golang/go/issues/48723
+	// Which means 0.0.0.0 and ::0 both bind to both IPv4 and IPv6
+	if ip, ok := d.Dialer.LocalAddr.(*net.TCPAddr); ok && ip.IP.IsUnspecified() && (network == "tcp" || network == "udp") {
+		if ip.IP.To4() != nil {
+			network += "4" // IPv4 address
+		} else {
+			network += "6" // IPv6 address
+		}
+	}
+
 	c, err := d.Dialer.DialContext(ctx, network, address)
 	if err != nil {
 		return c, err

@@ -22,9 +22,10 @@ import (
 
 // Dir represents a directory entry
 type Dir struct {
-	vfs   *VFS   // read only
-	inode uint64 // read only: inode number
-	f     fs.Fs  // read only
+	vfs          *VFS        // read only
+	inode        uint64      // read only: inode number
+	f            fs.Fs       // read only
+	cleanupTimer *time.Timer // read only: timer to call cacheCleanup
 
 	mu      sync.RWMutex // protects the following
 	parent  *Dir         // parent, nil for root
@@ -37,6 +38,8 @@ type Dir struct {
 
 	modTimeMu sync.Mutex // protects the following
 	modTime   time.Time
+
+	_hasVirtual atomic.Bool // shows if the directory has virtual entries
 }
 
 //go:generate stringer -type=vState
@@ -52,7 +55,7 @@ const (
 )
 
 func newDir(vfs *VFS, f fs.Fs, parent *Dir, fsDir fs.Directory) *Dir {
-	return &Dir{
+	d := &Dir{
 		vfs:     vfs,
 		f:       f,
 		parent:  parent,
@@ -61,6 +64,26 @@ func newDir(vfs *VFS, f fs.Fs, parent *Dir, fsDir fs.Directory) *Dir {
 		modTime: fsDir.ModTime(context.TODO()),
 		inode:   newInode(),
 		items:   make(map[string]Node),
+	}
+	d.cleanupTimer = time.AfterFunc(vfs.Opt.DirCacheTime*2, d.cacheCleanup)
+	d.setHasVirtual(false)
+	return d
+}
+
+func (d *Dir) cacheCleanup() {
+	defer func() {
+		// We should never panic here
+		_ = recover()
+	}()
+
+	when := time.Now()
+
+	d.mu.Lock()
+	_, stale := d._age(when)
+	d.mu.Unlock()
+
+	if stale {
+		d.ForgetAll()
 	}
 }
 
@@ -174,6 +197,16 @@ func (d *Dir) Node() Node {
 	return d
 }
 
+// hasVirtual returns whether the directory has virtual entries
+func (d *Dir) hasVirtual() bool {
+	return d._hasVirtual.Load()
+}
+
+// setHasVirtual sets the hasVirtual flag for the directory
+func (d *Dir) setHasVirtual(hasVirtual bool) {
+	d._hasVirtual.Store(hasVirtual)
+}
+
 // ForgetAll forgets directory entries for this directory and any children.
 //
 // It does not invalidate or clear the cache of the parent directory.
@@ -182,30 +215,40 @@ func (d *Dir) Node() Node {
 // so could not be forgotten. Children which didn't have virtual entries and
 // children with virtual entries will be forgotten even if true is returned.
 func (d *Dir) ForgetAll() (hasVirtual bool) {
-	d.mu.Lock()
-	defer d.mu.Unlock()
+	d.mu.RLock()
+
 	fs.Debugf(d.path, "forgetting directory cache")
 	for _, node := range d.items {
 		if dir, ok := node.(*Dir); ok {
 			if dir.ForgetAll() {
-				hasVirtual = true
+				d.setHasVirtual(true)
 			}
 		}
 	}
+
+	d.mu.RUnlock()
+
+	d.mu.Lock()
+	defer d.mu.Unlock()
+
 	// Purge any unnecessary virtual entries
 	d._purgeVirtual()
 
 	d.read = time.Time{}
+
 	// Check if this dir has virtual entries
 	if len(d.virtual) != 0 {
-		hasVirtual = true
+		d.setHasVirtual(true)
 	}
+
 	// Don't clear directory entries if there are virtual entries in this
 	// directory or any children
-	if !hasVirtual {
+	if !d.hasVirtual() {
 		d.items = make(map[string]Node)
+		d.cleanupTimer.Stop()
 	}
-	return hasVirtual
+
+	return d.hasVirtual()
 }
 
 // forgetDirPath clears the cache for itself and all subdirectories if
@@ -392,6 +435,7 @@ func (d *Dir) addObject(node Node) {
 		vAdd = vAddDir
 	}
 	d.virtual[leaf] = vAdd
+	d.setHasVirtual(true)
 	fs.Debugf(d.path, "Added virtual directory entry %v: %q", vAdd, leaf)
 	d.mu.Unlock()
 }
@@ -436,6 +480,7 @@ func (d *Dir) delObject(leaf string) {
 		d.virtual = make(map[string]vState)
 	}
 	d.virtual[leaf] = vDel
+	d.setHasVirtual(true)
 	fs.Debugf(d.path, "Added virtual directory entry %v: %q", vDel, leaf)
 	d.mu.Unlock()
 }
@@ -475,6 +520,8 @@ func (d *Dir) _readDir() error {
 	}
 
 	d.read = when
+	d.cleanupTimer.Reset(d.vfs.Opt.DirCacheTime * 2)
+
 	return nil
 }
 
@@ -493,6 +540,7 @@ func (d *Dir) _deleteVirtual(name string) {
 	delete(d.virtual, name)
 	if len(d.virtual) == 0 {
 		d.virtual = nil
+		d.setHasVirtual(false)
 	}
 	fs.Debugf(d.path, "Removed virtual directory entry %v: %q", virtualState, name)
 }
@@ -654,6 +702,7 @@ func (d *Dir) _readDirFromEntries(entries fs.DirEntries, dirTree dirtree.DirTree
 					dir.read = time.Time{}
 				} else {
 					dir.read = when
+					dir.cleanupTimer.Reset(d.vfs.Opt.DirCacheTime * 2)
 				}
 				dir.mu.Unlock()
 				if err != nil {
@@ -691,6 +740,7 @@ func (d *Dir) readDirTree() error {
 	}
 	fs.Debugf(d.path, "Reading directory tree done in %s", time.Since(when))
 	d.read = when
+	d.cleanupTimer.Reset(d.vfs.Opt.DirCacheTime * 2)
 	return nil
 }
 
@@ -873,6 +923,10 @@ func (d *Dir) Create(name string, flags int) (*File, error) {
 	if d.vfs.Opt.ReadOnly {
 		return nil, EROFS
 	}
+	if err = d.SetModTime(time.Now()); err != nil {
+		fs.Errorf(d, "Dir.Create failed to set modtime on parent dir: %v", err)
+		return nil, err
+	}
 	// This gets added to the directory when the file is opened for write
 	return newFile(d, d.Path(), nil, name), nil
 }
@@ -907,6 +961,10 @@ func (d *Dir) Mkdir(name string) (*Dir, error) {
 	fsDir := fs.NewDir(path, time.Now())
 	dir := newDir(d.vfs, d.f, d, fsDir)
 	d.addObject(dir)
+	if err = d.SetModTime(time.Now()); err != nil {
+		fs.Errorf(d, "Dir.Mkdir failed to set modtime on parent dir: %v", err)
+		return nil, err
+	}
 	// fs.Debugf(path, "Dir.Mkdir OK")
 	return dir, nil
 }
@@ -976,6 +1034,10 @@ func (d *Dir) RemoveName(name string) error {
 	node, err := d.stat(name)
 	if err != nil {
 		fs.Errorf(d, "Dir.Remove error: %v", err)
+		return err
+	}
+	if err = d.SetModTime(time.Now()); err != nil {
+		fs.Errorf(d, "Dir.Remove failed to set modtime on parent dir: %v", err)
 		return err
 	}
 	return node.Remove()
@@ -1048,6 +1110,10 @@ func (d *Dir) Rename(oldName, newName string, destDir *Dir) error {
 	// Show moved - delete from old dir and add to new
 	d.delObject(oldName)
 	destDir.addObject(oldNode)
+	if err = d.SetModTime(time.Now()); err != nil {
+		fs.Errorf(d, "Dir.Rename failed to set modtime on parent dir: %v", err)
+		return err
+	}
 
 	// fs.Debugf(newPath, "Dir.Rename renamed from %q", oldPath)
 	// fs.Debugf(d, "AFTER\n%s", d.dump())

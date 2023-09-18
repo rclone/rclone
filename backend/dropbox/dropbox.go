@@ -182,8 +182,9 @@ client_secret) to use this option as currently rclone's default set of
 permissions doesn't include "members.read". This can be added once
 v1.55 or later is in use everywhere.
 `,
-			Default:  "",
-			Advanced: true,
+			Default:   "",
+			Advanced:  true,
+			Sensitive: true,
 		}, {
 			Name: "shared_files",
 			Help: `Instructs rclone to work on individual shared files.

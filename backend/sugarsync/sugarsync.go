@@ -132,42 +132,50 @@ func init() {
 			}
 			return nil, fmt.Errorf("unknown state %q", config.State)
 		}, Options: []fs.Option{{
-			Name: "app_id",
-			Help: "Sugarsync App ID.\n\nLeave blank to use rclone's.",
+			Name:      "app_id",
+			Help:      "Sugarsync App ID.\n\nLeave blank to use rclone's.",
+			Sensitive: true,
 		}, {
-			Name: "access_key_id",
-			Help: "Sugarsync Access Key ID.\n\nLeave blank to use rclone's.",
+			Name:      "access_key_id",
+			Help:      "Sugarsync Access Key ID.\n\nLeave blank to use rclone's.",
+			Sensitive: true,
 		}, {
-			Name: "private_access_key",
-			Help: "Sugarsync Private Access Key.\n\nLeave blank to use rclone's.",
+			Name:      "private_access_key",
+			Help:      "Sugarsync Private Access Key.\n\nLeave blank to use rclone's.",
+			Sensitive: true,
 		}, {
 			Name:    "hard_delete",
 			Help:    "Permanently delete files if true\notherwise put them in the deleted files.",
 			Default: false,
 		}, {
-			Name:     "refresh_token",
-			Help:     "Sugarsync refresh token.\n\nLeave blank normally, will be auto configured by rclone.",
-			Advanced: true,
+			Name:      "refresh_token",
+			Help:      "Sugarsync refresh token.\n\nLeave blank normally, will be auto configured by rclone.",
+			Advanced:  true,
+			Sensitive: true,
 		}, {
-			Name:     "authorization",
-			Help:     "Sugarsync authorization.\n\nLeave blank normally, will be auto configured by rclone.",
-			Advanced: true,
+			Name:      "authorization",
+			Help:      "Sugarsync authorization.\n\nLeave blank normally, will be auto configured by rclone.",
+			Advanced:  true,
+			Sensitive: true,
 		}, {
 			Name:     "authorization_expiry",
 			Help:     "Sugarsync authorization expiry.\n\nLeave blank normally, will be auto configured by rclone.",
 			Advanced: true,
 		}, {
-			Name:     "user",
-			Help:     "Sugarsync user.\n\nLeave blank normally, will be auto configured by rclone.",
-			Advanced: true,
+			Name:      "user",
+			Help:      "Sugarsync user.\n\nLeave blank normally, will be auto configured by rclone.",
+			Advanced:  true,
+			Sensitive: true,
 		}, {
-			Name:     "root_id",
-			Help:     "Sugarsync root id.\n\nLeave blank normally, will be auto configured by rclone.",
-			Advanced: true,
+			Name:      "root_id",
+			Help:      "Sugarsync root id.\n\nLeave blank normally, will be auto configured by rclone.",
+			Advanced:  true,
+			Sensitive: true,
 		}, {
-			Name:     "deleted_id",
-			Help:     "Sugarsync deleted folder id.\n\nLeave blank normally, will be auto configured by rclone.",
-			Advanced: true,
+			Name:      "deleted_id",
+			Help:      "Sugarsync deleted folder id.\n\nLeave blank normally, will be auto configured by rclone.",
+			Advanced:  true,
+			Sensitive: true,
 		}, {
 			Name:     config.ConfigEncoding,
 			Help:     config.ConfigEncodingHelp,

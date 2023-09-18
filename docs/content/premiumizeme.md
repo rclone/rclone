@@ -108,6 +108,32 @@ as they can't be used in JSON strings.
 
 Here are the Standard options specific to premiumizeme (premiumize.me).
 
+#### --premiumizeme-client-id
+
+OAuth Client Id.
+
+Leave blank normally.
+
+Properties:
+
+- Config:      client_id
+- Env Var:     RCLONE_PREMIUMIZEME_CLIENT_ID
+- Type:        string
+- Required:    false
+
+#### --premiumizeme-client-secret
+
+OAuth Client Secret.
+
+Leave blank normally.
+
+Properties:
+
+- Config:      client_secret
+- Env Var:     RCLONE_PREMIUMIZEME_CLIENT_SECRET
+- Type:        string
+- Required:    false
+
 #### --premiumizeme-api-key
 
 API Key.
@@ -125,6 +151,43 @@ Properties:
 ### Advanced options
 
 Here are the Advanced options specific to premiumizeme (premiumize.me).
+
+#### --premiumizeme-token
+
+OAuth Access Token as a JSON blob.
+
+Properties:
+
+- Config:      token
+- Env Var:     RCLONE_PREMIUMIZEME_TOKEN
+- Type:        string
+- Required:    false
+
+#### --premiumizeme-auth-url
+
+Auth server URL.
+
+Leave blank to use the provider defaults.
+
+Properties:
+
+- Config:      auth_url
+- Env Var:     RCLONE_PREMIUMIZEME_AUTH_URL
+- Type:        string
+- Required:    false
+
+#### --premiumizeme-token-url
+
+Token server url.
+
+Leave blank to use the provider defaults.
+
+Properties:
+
+- Config:      token_url
+- Env Var:     RCLONE_PREMIUMIZEME_TOKEN_URL
+- Type:        string
+- Required:    false
 
 #### --premiumizeme-encoding
 

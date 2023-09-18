@@ -28,14 +28,14 @@ var retryErrorCodes = []int{
 	509, // Bandwidth Limit Exceeded
 }
 
-var errorRegex = regexp.MustCompile(`#\d{1,3}`)
+var errorRegex = regexp.MustCompile(`#(\d{1,3})`)
 
 func parseFichierError(err error) int {
 	matches := errorRegex.FindStringSubmatch(err.Error())
 	if len(matches) == 0 {
 		return 0
 	}
-	code, err := strconv.Atoi(matches[0])
+	code, err := strconv.Atoi(matches[1])
 	if err != nil {
 		fs.Debugf(nil, "failed parsing fichier error: %v", err)
 		return 0
@@ -403,6 +403,32 @@ func (f *Fs) moveFile(ctx context.Context, url string, folderID int, rename stri
 
 	if err != nil {
 		return nil, fmt.Errorf("couldn't copy file: %w", err)
+	}
+
+	return response, nil
+}
+
+func (f *Fs) moveDir(ctx context.Context, folderID int, newLeaf string, destinationFolderID int) (response *MoveDirResponse, err error) {
+	request := &MoveDirRequest{
+		FolderID:            folderID,
+		DestinationFolderID: destinationFolderID,
+		Rename:              newLeaf,
+		// DestinationUser:     destinationUser,
+	}
+
+	opts := rest.Opts{
+		Method: "POST",
+		Path:   "/folder/mv.cgi",
+	}
+
+	response = &MoveDirResponse{}
+	err = f.pacer.Call(func() (bool, error) {
+		resp, err := f.rest.CallJSON(ctx, &opts, request, response)
+		return shouldRetry(ctx, resp, err)
+	})
+
+	if err != nil {
+		return nil, fmt.Errorf("couldn't move dir: %w", err)
 	}
 
 	return response, nil

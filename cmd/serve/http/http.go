@@ -22,6 +22,7 @@ import (
 	"github.com/rclone/rclone/fs/accounting"
 	libhttp "github.com/rclone/rclone/lib/http"
 	"github.com/rclone/rclone/lib/http/serve"
+	"github.com/rclone/rclone/lib/systemd"
 	"github.com/rclone/rclone/vfs"
 	"github.com/rclone/rclone/vfs/vfsflags"
 	"github.com/spf13/cobra"
@@ -75,6 +76,7 @@ control the stats printing.
 ` + libhttp.Help(flagPrefix) + libhttp.TemplateHelp(flagPrefix) + libhttp.AuthHelp(flagPrefix) + vfs.Help + proxy.Help,
 	Annotations: map[string]string{
 		"versionIntroduced": "v1.39",
+		"groups":            "Filter",
 	},
 	Run: func(command *cobra.Command, args []string) {
 		var f fs.Fs
@@ -91,6 +93,7 @@ control the stats printing.
 				log.Fatal(err)
 			}
 
+			defer systemd.Notify()()
 			s.server.Wait()
 			return nil
 		})

@@ -1,0 +1,22 @@
+test equal
+# Check that changed files on both sides are renamed ONLY if not-identical
+# See: https://forum.rclone.org/t/bisync-bugs-and-feature-requests/37636#:~:text=1.%20Identical%20files%20should%20be%20left%20alone%2C%20even%20if%20new/newer/changed%20on%20both%20sides
+# - Changed on Path2 and on Path1, and NOT identical       file1 (file1r, file1l)
+# - Changed on Path2 and on Path1, and identical           file2
+
+test initial bisync
+bisync resync
+
+test changed on both paths and NOT identical - file1 (file1R, file1L)
+touch-glob 2001-01-02 {datadir/} file1R.txt
+copy-as {datadir/}file1R.txt {path2/} file1.txt
+touch-glob 2001-03-04 {datadir/} file1L.txt
+copy-as {datadir/}file1L.txt {path1/} file1.txt
+
+test changed on both paths and identical - file2
+touch-glob 2001-01-02 {datadir/} file2.txt
+copy-as {datadir/}file2.txt {path1/} file2.txt
+copy-as {datadir/}file2.txt {path2/} file2.txt
+
+test bisync run
+bisync

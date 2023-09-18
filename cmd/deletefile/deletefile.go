@@ -25,6 +25,7 @@ it will always be removed.
 `,
 	Annotations: map[string]string{
 		"versionIntroduced": "v1.42",
+		"groups":            "Important",
 	},
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(1, 1, command, args)

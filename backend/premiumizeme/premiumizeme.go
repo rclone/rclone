@@ -82,14 +82,15 @@ func init() {
 				OAuth2Config: oauthConfig,
 			})
 		},
-		Options: []fs.Option{{
+		Options: append(oauthutil.SharedOptions, []fs.Option{{
 			Name: "api_key",
 			Help: `API Key.
 
 This is not normally used - use oauth instead.
 `,
-			Hide:    fs.OptionHideBoth,
-			Default: "",
+			Hide:      fs.OptionHideBoth,
+			Default:   "",
+			Sensitive: true,
 		}, {
 			Name:     config.ConfigEncoding,
 			Help:     config.ConfigEncodingHelp,
@@ -99,7 +100,7 @@ This is not normally used - use oauth instead.
 				encoder.EncodeBackSlash |
 				encoder.EncodeDoubleQuote |
 				encoder.EncodeInvalidUtf8),
-		}},
+		}}...),
 	})
 }
 

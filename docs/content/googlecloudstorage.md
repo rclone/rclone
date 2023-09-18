@@ -320,6 +320,19 @@ Properties:
 - Type:        string
 - Required:    false
 
+#### --gcs-user-project
+
+User project.
+
+Optional - needed only for requester pays.
+
+Properties:
+
+- Config:      user_project
+- Env Var:     RCLONE_GCS_USER_PROJECT
+- Type:        string
+- Required:    false
+
 #### --gcs-service-account-file
 
 Service Account Credentials JSON file path.
@@ -610,6 +623,21 @@ Properties:
 - Env Var:     RCLONE_GCS_TOKEN_URL
 - Type:        string
 - Required:    false
+
+#### --gcs-directory-markers
+
+Upload an empty object with a trailing slash when a new directory is created
+
+Empty folders are unsupported for bucket based remotes, this option creates an empty
+object ending with "/", to persist the folder.
+
+
+Properties:
+
+- Config:      directory_markers
+- Env Var:     RCLONE_GCS_DIRECTORY_MARKERS
+- Type:        bool
+- Default:     false
 
 #### --gcs-no-check-bucket
 

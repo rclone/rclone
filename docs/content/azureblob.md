@@ -737,10 +737,7 @@ Properties:
 
 #### --azureblob-memory-pool-flush-time
 
-How often internal memory buffer pools will be flushed.
-
-Uploads which requires additional buffers (f.e multipart) will use memory pool for allocations.
-This option controls how often unused buffers will be removed from the pool.
+How often internal memory buffer pools will be flushed. (no longer used)
 
 Properties:
 
@@ -751,7 +748,7 @@ Properties:
 
 #### --azureblob-memory-pool-use-mmap
 
-Whether to use mmap buffers in internal memory pool.
+Whether to use mmap buffers in internal memory pool. (no longer used)
 
 Properties:
 
@@ -791,6 +788,24 @@ Properties:
         - Blob data within this container can be read via anonymous request.
     - "container"
         - Allow full public read access for container and blob data.
+
+#### --azureblob-directory-markers
+
+Upload an empty object with a trailing slash when a new directory is created
+
+Empty folders are unsupported for bucket based remotes, this option
+creates an empty object ending with "/", to persist the folder.
+
+This object also has the metadata "hdi_isfolder = true" to conform to
+the Microsoft standard.
+ 
+
+Properties:
+
+- Config:      directory_markers
+- Env Var:     RCLONE_AZUREBLOB_DIRECTORY_MARKERS
+- Type:        bool
+- Default:     false
 
 #### --azureblob-no-check-container
 

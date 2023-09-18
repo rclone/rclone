@@ -19,9 +19,10 @@ func init() {
 		Description: "Hadoop distributed file system",
 		NewFs:       NewFs,
 		Options: []fs.Option{{
-			Name:     "namenode",
-			Help:     "Hadoop name node and port.\n\nE.g. \"namenode:8020\" to connect to host namenode at port 8020.",
-			Required: true,
+			Name:      "namenode",
+			Help:      "Hadoop name node and port.\n\nE.g. \"namenode:8020\" to connect to host namenode at port 8020.",
+			Required:  true,
+			Sensitive: true,
 		}, {
 			Name: "username",
 			Help: "Hadoop user name.",
@@ -29,6 +30,7 @@ func init() {
 				Value: "root",
 				Help:  "Connect to hdfs as root.",
 			}},
+			Sensitive: true,
 		}, {
 			Name: "service_principal_name",
 			Help: `Kerberos service principal name for the namenode.
@@ -36,7 +38,8 @@ func init() {
 Enables KERBEROS authentication. Specifies the Service Principal Name
 (SERVICE/FQDN) for the namenode. E.g. \"hdfs/namenode.hadoop.docker\"
 for namenode running as service 'hdfs' with FQDN 'namenode.hadoop.docker'.`,
-			Advanced: true,
+			Advanced:  true,
+			Sensitive: true,
 		}, {
 			Name: "data_transfer_protection",
 			Help: `Kerberos data transfer protection: authentication|integrity|privacy.

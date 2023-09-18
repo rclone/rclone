@@ -18,7 +18,7 @@ var (
 func init() {
 	cmd.Root.AddCommand(commandDefinition)
 	cmdFlags := commandDefinition.Flags()
-	flags.BoolVarP(cmdFlags, &createEmptySrcDirs, "create-empty-src-dirs", "", createEmptySrcDirs, "Create empty source dirs on destination after sync")
+	flags.BoolVarP(cmdFlags, &createEmptySrcDirs, "create-empty-src-dirs", "", createEmptySrcDirs, "Create empty source dirs on destination after sync", "")
 }
 
 var commandDefinition = &cobra.Command{
@@ -60,6 +60,9 @@ destination that is inside the source directory.
 **Note**: Use the ` + "`rclone dedupe`" + ` command to deal with "Duplicate object/directory found in source/destination - ignoring" errors.
 See [this forum post](https://forum.rclone.org/t/sync-not-clearing-duplicates/14372) for more info.
 `,
+	Annotations: map[string]string{
+		"groups": "Sync,Copy,Filter,Listing,Important",
+	},
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(2, 2, command, args)
 		fsrc, srcFileName, fdst := cmd.NewFsSrcFileDst(args)

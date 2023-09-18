@@ -33,23 +33,67 @@ issues:
       - staticcheck
       text: 'SA1019: "github.com/rclone/rclone/cmd/serve/httplib" is deprecated'
 
+  # don't disable the revive messages about comments on exported functions
+  include:
+    - EXC0012
+    - EXC0013
+    - EXC0014
+    - EXC0015
+
 run:
   # timeout for analysis, e.g. 30s, 5m, default is 1m
   timeout: 10m
 
 linters-settings:
   revive:
+    # setting rules seems to disable all the rules, so re-enable them here
     rules:
-      - name: unreachable-code
-        disabled: true
-      - name: unused-parameter
-        disabled: true
+      - name: blank-imports
+        disabled: false
+      - name: context-as-argument
+        disabled: false
+      - name: context-keys-type
+        disabled: false
+      - name: dot-imports
+        disabled: false
       - name: empty-block
         disabled: true
+      - name: error-naming
+        disabled: false
+      - name: error-return
+        disabled: false
+      - name: error-strings
+        disabled: false
+      - name: errorf
+        disabled: false
+      - name: exported
+        disabled: false
+      - name: increment-decrement
+        disabled: true
+      - name: indent-error-flow
+        disabled: false
+      - name: package-comments
+        disabled: false
+      - name: range
+        disabled: false
+      - name: receiver-naming
+        disabled: false
       - name: redefines-builtin-id
         disabled: true
       - name: superfluous-else
         disabled: true
+      - name: time-naming
+        disabled: false
+      - name: unexported-return
+        disabled: false
+      - name: unreachable-code
+        disabled: true
+      - name: unused-parameter
+        disabled: true
+      - name: var-declaration
+        disabled: false
+      - name: var-naming
+        disabled: false
   stylecheck:
     # Only enable the checks performed by the staticcheck stand-alone tool,
     # as documented here: https://staticcheck.io/docs/configuration/options/#checks

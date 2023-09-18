@@ -60,6 +60,11 @@ func (cds *contentDirectoryService) cdsObjectToUpnpavObject(cdsObject object, fi
 	var mimeType string
 	if o, ok := fileInfo.DirEntry().(fs.Object); ok {
 		mimeType = fs.MimeType(context.TODO(), o)
+		// If backend doesn't know what the mime type is then
+		// try getting it from the file name
+		if mimeType == "application/octet-stream" {
+			mimeType = fs.MimeTypeFromName(fileInfo.Name())
+		}
 	} else {
 		mimeType = fs.MimeTypeFromName(fileInfo.Name())
 	}

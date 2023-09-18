@@ -154,6 +154,32 @@ as they can't be used in JSON strings.
 
 Here are the Standard options specific to sharefile (Citrix Sharefile).
 
+#### --sharefile-client-id
+
+OAuth Client Id.
+
+Leave blank normally.
+
+Properties:
+
+- Config:      client_id
+- Env Var:     RCLONE_SHAREFILE_CLIENT_ID
+- Type:        string
+- Required:    false
+
+#### --sharefile-client-secret
+
+OAuth Client Secret.
+
+Leave blank normally.
+
+Properties:
+
+- Config:      client_secret
+- Env Var:     RCLONE_SHAREFILE_CLIENT_SECRET
+- Type:        string
+- Required:    false
+
 #### --sharefile-root-folder-id
 
 ID of the root folder.
@@ -182,6 +208,43 @@ Properties:
 ### Advanced options
 
 Here are the Advanced options specific to sharefile (Citrix Sharefile).
+
+#### --sharefile-token
+
+OAuth Access Token as a JSON blob.
+
+Properties:
+
+- Config:      token
+- Env Var:     RCLONE_SHAREFILE_TOKEN
+- Type:        string
+- Required:    false
+
+#### --sharefile-auth-url
+
+Auth server URL.
+
+Leave blank to use the provider defaults.
+
+Properties:
+
+- Config:      auth_url
+- Env Var:     RCLONE_SHAREFILE_AUTH_URL
+- Type:        string
+- Required:    false
+
+#### --sharefile-token-url
+
+Token server url.
+
+Leave blank to use the provider defaults.
+
+Properties:
+
+- Config:      token_url
+- Env Var:     RCLONE_SHAREFILE_TOKEN_URL
+- Type:        string
+- Required:    false
 
 #### --sharefile-upload-cutoff
 

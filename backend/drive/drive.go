@@ -277,20 +277,23 @@ Leave blank normally.
 Fill in to access "Computers" folders (see docs), or for rclone to use
 a non root folder as its starting point.
 `,
-			Advanced: true,
+			Advanced:  true,
+			Sensitive: true,
 		}, {
 			Name: "service_account_file",
 			Help: "Service Account Credentials JSON file path.\n\nLeave blank normally.\nNeeded only if you want use SA instead of interactive login." + env.ShellExpandHelp,
 		}, {
-			Name:     "service_account_credentials",
-			Help:     "Service Account Credentials JSON blob.\n\nLeave blank normally.\nNeeded only if you want use SA instead of interactive login.",
-			Hide:     fs.OptionHideConfigurator,
-			Advanced: true,
+			Name:      "service_account_credentials",
+			Help:      "Service Account Credentials JSON blob.\n\nLeave blank normally.\nNeeded only if you want use SA instead of interactive login.",
+			Hide:      fs.OptionHideConfigurator,
+			Advanced:  true,
+			Sensitive: true,
 		}, {
-			Name:     "team_drive",
-			Help:     "ID of the Shared Drive (Team Drive).",
-			Hide:     fs.OptionHideConfigurator,
-			Advanced: true,
+			Name:      "team_drive",
+			Help:      "ID of the Shared Drive (Team Drive).",
+			Hide:      fs.OptionHideConfigurator,
+			Advanced:  true,
+			Sensitive: true,
 		}, {
 			Name:     "auth_owner_only",
 			Default:  false,
@@ -416,10 +419,11 @@ date is used.`,
 			Help:     "Size of listing chunk 100-1000, 0 to disable.",
 			Advanced: true,
 		}, {
-			Name:     "impersonate",
-			Default:  "",
-			Help:     `Impersonate this user when using a service account.`,
-			Advanced: true,
+			Name:      "impersonate",
+			Default:   "",
+			Help:      `Impersonate this user when using a service account.`,
+			Advanced:  true,
+			Sensitive: true,
 		}, {
 			Name:    "alternate_export",
 			Default: false,
@@ -590,9 +594,32 @@ This resource key requirement only applies to a subset of old files.
 
 Note also that opening the folder once in the web interface (with the
 user you've authenticated rclone with) seems to be enough so that the
-resource key is no needed.
+resource key is not needed.
+`,
+			Advanced:  true,
+			Sensitive: true,
+		}, {
+			Name: "fast_list_bug_fix",
+			Help: `Work around a bug in Google Drive listing.
+
+Normally rclone will work around a bug in Google Drive when using
+--fast-list (ListR) where the search "(A in parents) or (B in
+parents)" returns nothing sometimes. See #3114, #4289 and
+https://issuetracker.google.com/issues/149522397
+
+Rclone detects this by finding no items in more than one directory
+when listing and retries them as lists of individual directories.
+
+This means that if you have a lot of empty directories rclone will end
+up listing them all individually and this can take many more API
+calls.
+
+This flag allows the work-around to be disabled. This is **not**
+recommended in normal use - only if you have a particular case you are
+having trouble with like many empty directories.
 `,
 			Advanced: true,
+			Default:  true,
 		}, {
 			Name:     config.ConfigEncoding,
 			Help:     config.ConfigEncodingHelp,
@@ -667,6 +694,7 @@ type Options struct {
 	SkipShortcuts             bool                 `config:"skip_shortcuts"`
 	SkipDanglingShortcuts     bool                 `config:"skip_dangling_shortcuts"`
 	ResourceKey               string               `config:"resource_key"`
+	FastListBugFix            bool                 `config:"fast_list_bug_fix"`
 	Enc                       encoder.MultiEncoder `config:"encoding"`
 	EnvAuth                   bool                 `config:"env_auth"`
 }
@@ -1886,7 +1914,7 @@ func (f *Fs) listRRunner(ctx context.Context, wg *sync.WaitGroup, in chan listRE
 		// drive where (A in parents) or (B in parents) returns nothing
 		// sometimes. See #3114, #4289 and
 		// https://issuetracker.google.com/issues/149522397
-		if len(dirs) > 1 && !foundItems {
+		if f.opt.FastListBugFix && len(dirs) > 1 && !foundItems {
 			if atomic.SwapInt32(&f.grouping, 1) != 1 {
 				fs.Debugf(f, "Disabling ListR to work around bug in drive as multi listing (%d) returned no entries", len(dirs))
 			}

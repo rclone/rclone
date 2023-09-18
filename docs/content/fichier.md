@@ -171,6 +171,17 @@ Properties:
 - Type:        string
 - Required:    false
 
+#### --fichier-cdn
+
+Set if you wish to use CDN download links.
+
+Properties:
+
+- Config:      cdn
+- Env Var:     RCLONE_FICHIER_CDN
+- Type:        bool
+- Default:     false
+
 #### --fichier-encoding
 
 The encoding for the backend.

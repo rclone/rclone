@@ -251,6 +251,28 @@ func TestStatsTotalDuration(t *testing.T) {
 	})
 }
 
+func TestRemoteStats(t *testing.T) {
+	ctx := context.Background()
+	startTime := time.Now()
+	time1 := startTime.Add(-40 * time.Second)
+	time2 := time1.Add(10 * time.Second)
+
+	t.Run("Single completed transfer", func(t *testing.T) {
+		s := NewStats(ctx)
+		tr1 := &Transfer{
+			startedAt:   time1,
+			completedAt: time2,
+		}
+		s.AddTransfer(tr1)
+		time.Sleep(time.Millisecond)
+		rs, err := s.RemoteStats()
+
+		require.NoError(t, err)
+		assert.Equal(t, float64(10), rs["transferTime"])
+		assert.Greater(t, rs["elapsedTime"], float64(0))
+	})
+}
+
 // make time ranges from string description for testing
 func makeTimeRanges(t *testing.T, in []string) timeRanges {
 	trs := make(timeRanges, len(in))

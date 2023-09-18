@@ -11,7 +11,7 @@ jobs:
         name: Build image job
         steps:
             - name: Checkout master
-              uses: actions/checkout@v3
+              uses: actions/checkout@v4
               with:
                 fetch-depth: 0
             - name: Get actual patch version
@@ -40,7 +40,7 @@ jobs:
         name: Build docker plugin job
         steps:
             - name: Checkout master
-              uses: actions/checkout@v3
+              uses: actions/checkout@v4
               with:
                 fetch-depth: 0
             - name: Build and publish docker plugin

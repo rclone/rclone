@@ -54,13 +54,10 @@ NOTICE: file4.txt: Skipped copy as --dry-run is set (size 0)
 NOTICE: file6.txt: Skipped copy as --dry-run is set (size 19)
 INFO  : Resynching Path1 to Path2
 NOTICE: file1.txt: Skipped copy as --dry-run is set (size 0)
-NOTICE: file10.txt: Skipped delete as --dry-run is set (size 19)
 NOTICE: file11.txt: Skipped copy as --dry-run is set (size 19)
 NOTICE: file2.txt: Skipped copy as --dry-run is set (size 13)
 NOTICE: file3.txt: Skipped copy as --dry-run is set (size 0)
-NOTICE: file4.txt: Skipped delete as --dry-run is set (size 0)
-NOTICE: file5.txt: Skipped copy (or update modification time) as --dry-run is set (size 19)
-NOTICE: file6.txt: Skipped delete as --dry-run is set (size 19)
+NOTICE: file5.txt: Skipped copy (or update modification time) as --dry-run is set (size 39)
 NOTICE: file7.txt: Skipped copy as --dry-run is set (size 19)
 INFO  : Resync updating listings
 INFO  : Bisync successful
@@ -86,15 +83,20 @@ INFO  : - Path2    File was deleted                    - file3.txt
 INFO  : - Path2    File was deleted                    - file7.txt
 INFO  : Path2:    6 changes:    1 new,    3 newer,    0 older,    2 deleted
 INFO  : Applying changes
+INFO  : Checking potential conflicts...
+ERROR : file5.txt: md5 differ
+NOTICE: Local file system at {path2}: 1 differences found
+NOTICE: Local file system at {path2}: 1 errors while checking
+INFO  : Finished checking the potential conflicts. 1 differences found
 INFO  : - Path1    Queue copy to Path2                 - {path2/}file11.txt
 INFO  : - Path1    Queue copy to Path2                 - {path2/}file2.txt
 INFO  : - Path2    Queue delete                        - {path2/}file4.txt
 NOTICE: - WARNING  New or changed in both paths        - file5.txt
 NOTICE: - Path1    Renaming Path1 copy                 - {path1/}file5.txt..path1
-NOTICE: file5.txt: Skipped move as --dry-run is set (size 19)
+NOTICE: file5.txt: Skipped move as --dry-run is set (size 39)
 NOTICE: - Path1    Queue copy to Path2                 - {path2/}file5.txt..path1
 NOTICE: - Path2    Renaming Path2 copy                 - {path2/}file5.txt..path2
-NOTICE: file5.txt: Skipped move as --dry-run is set (size 19)
+NOTICE: file5.txt: Skipped move as --dry-run is set (size 39)
 NOTICE: - Path2    Queue copy to Path1                 - {path1/}file5.txt..path2
 INFO  : - Path2    Queue copy to Path1                 - {path1/}file6.txt
 INFO  : - Path1    Queue copy to Path2                 - {path2/}file7.txt
@@ -137,6 +139,11 @@ INFO  : - Path2    File was deleted                    - file3.txt
 INFO  : - Path2    File was deleted                    - file7.txt
 INFO  : Path2:    6 changes:    1 new,    3 newer,    0 older,    2 deleted
 INFO  : Applying changes
+INFO  : Checking potential conflicts...
+ERROR : file5.txt: md5 differ
+NOTICE: Local file system at {path2}: 1 differences found
+NOTICE: Local file system at {path2}: 1 errors while checking
+INFO  : Finished checking the potential conflicts. 1 differences found
 INFO  : - Path1    Queue copy to Path2                 - {path2/}file11.txt
 INFO  : - Path1    Queue copy to Path2                 - {path2/}file2.txt
 INFO  : - Path2    Queue delete                        - {path2/}file4.txt

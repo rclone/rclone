@@ -91,10 +91,16 @@ Optional Flags:
                                 If exceeded, the bisync run will abort. (default: 50%)
       --force                   Bypass `--max-delete` safety check and run the sync.
                                 Consider using with `--verbose`
+      --create-empty-src-dirs   Sync creation and deletion of empty directories. 
+                                  (Not compatible with --remove-empty-dirs)
       --remove-empty-dirs       Remove empty directories at the final cleanup step.
   -1, --resync                  Performs the resync run.
                                 Warning: Path1 files may overwrite Path2 versions.
                                 Consider using `--verbose` or `--dry-run` first.
+      --ignore-listing-checksum Do not use checksums for listings 
+                                  (add --ignore-checksum to additionally skip post-copy checksum checks)
+      --resilient               Allow future runs to retry after certain less-serious errors, 
+                                  instead of requiring --resync. Use at your own risk!
       --localtime               Use local time in listings (default: UTC)
       --no-cleanup              Retain working files (useful for troubleshooting and testing).
       --workdir PATH            Use custom working directory (useful for testing).
@@ -121,7 +127,7 @@ Cloud references are distinguished by having a `:` in the argument
 (see [Windows support](#windows) below).
 
 Path1 and Path2 are treated equally, in that neither has priority for
-file changes, and access efficiency does not change whether a remote
+file changes (except during [`--resync`](#resync)), and access efficiency does not change whether a remote
 is on Path1 or Path2.
 
 The listings in bisync working directory (default: `~/.cache/rclone/bisync`)
@@ -130,8 +136,8 @@ to individual directories within the tree may be set up, e.g.:
 `path_to_local_tree..dropbox_subdir.lst`.
 
 Any empty directories after the sync on both the Path1 and Path2
-filesystems are not deleted by default. If the `--remove-empty-dirs`
-flag is specified, then both paths will have any empty directories purged
+filesystems are not deleted by default, unless `--create-empty-src-dirs` is specified. 
+If the `--remove-empty-dirs` flag is specified, then both paths will have ALL empty directories purged
 as the last step in the process.
 
 ## Command-line flags
@@ -140,15 +146,31 @@ as the last step in the process.
 
 This will effectively make both Path1 and Path2 filesystems contain a
 matching superset of all files. Path2 files that do not exist in Path1 will
-be copied to Path1, and the process will then sync the Path1 tree to Path2.
+be copied to Path1, and the process will then copy the Path1 tree to Path2.
 
-The base directories on the both Path1 and Path2 filesystems must exist
+The `--resync` sequence is roughly equivalent to:
+```
+rclone copy Path2 Path1 --ignore-existing
+rclone copy Path1 Path2
+```
+Or, if using `--create-empty-src-dirs`:
+```
+rclone copy Path2 Path1 --ignore-existing
+rclone copy Path1 Path2 --create-empty-src-dirs
+rclone copy Path2 Path1 --create-empty-src-dirs
+```
+
+The base directories on both Path1 and Path2 filesystems must exist
 or bisync will fail. This is required for safety - that bisync can verify
 that both paths are valid.
 
-When using `--resync`, a newer version of a file either on Path1 or Path2
-filesystem, will overwrite the file on the other path (only the last version
-will be kept). Carefully evaluate deltas using [--dry-run](/flags/#non-backend-flags).
+When using `--resync`, a newer version of a file on the Path2 filesystem
+will be overwritten by the Path1 filesystem version. 
+(Note that this is [NOT entirely symmetrical](https://github.com/rclone/rclone/issues/5681#issuecomment-938761815).)
+Carefully evaluate deltas using [--dry-run](/flags/#non-backend-flags).
+
+[//]: # (I reverted a recent change in the above paragraph, as it was incorrect.
+https://github.com/rclone/rclone/commit/dd72aff98a46c6e20848ac7ae5f7b19d45802493 )
 
 For a resync run, one of the paths may be empty (no files in the path tree).
 The resync run should result in files on both paths, else a normal non-resync
@@ -165,13 +187,23 @@ Access check files are an additional safety measure against data loss.
 bisync will ensure it can find matching `RCLONE_TEST` files in the same places
 in the Path1 and Path2 filesystems.
 `RCLONE_TEST` files are not generated automatically.
-For `--check-access`to succeed, you must first either:
-**A)** Place one or more `RCLONE_TEST` files in the Path1 or Path2 filesystem
-and then do either a run without `--check-access` or a [--resync](#resync) to
-set matching files on both filesystems, or
+For `--check-access` to succeed, you must first either:
+**A)** Place one or more `RCLONE_TEST` files in both systems, or
 **B)** Set `--check-filename` to a filename already in use in various locations
-throughout your sync'd fileset.
-Time stamps and file contents are not important, just the names and locations.
+throughout your sync'd fileset. Recommended methods for **A)** include:
+* `rclone touch Path1/RCLONE_TEST` (create a new file)
+* `rclone copyto Path1/RCLONE_TEST Path2/RCLONE_TEST` (copy an existing file)
+* `rclone copy Path1/RCLONE_TEST Path2/RCLONE_TEST  --include "RCLONE_TEST"` (copy multiple files at once, recursively)
+* create the files manually (outside of rclone)
+* run `bisync` once *without* `--check-access` to set matching files on both filesystems
+will also work, but is not preferred, due to potential for user error 
+(you are temporarily disabling the safety feature).
+
+Note that `--check-access` is still enforced on `--resync`, so `bisync --resync --check-access` 
+will not work as a method of initially setting the files (this is to ensure that bisync can't 
+[inadvertently circumvent its own safety switch](https://forum.rclone.org/t/bisync-bugs-and-feature-requests/37636#:~:text=3.%20%2D%2Dcheck%2Daccess%20doesn%27t%20always%20fail%20when%20it%20should).)
+
+Time stamps and file contents for `RCLONE_TEST` files are not important, just the names and locations.
 If you have symbolic links in your sync tree it is recommended to place
 `RCLONE_TEST` files in the linked-to directory tree to protect against
 bisync assuming a bunch of deleted files if the linked-to tree should not be
@@ -198,7 +230,7 @@ files and a bunch of new files.
 This safety check is intended to block bisync from deleting all of the
 files on both filesystems due to a temporary network access issue, or if
 the user had inadvertently deleted the files on one side or the other.
-To force the sync either set a different delete percentage limit,
+To force the sync, either set a different delete percentage limit,
 e.g. `--max-delete 75` (allows up to 75% deletion), or use `--force`
 to bypass the check.
 
@@ -215,17 +247,17 @@ An [example filters file](#example-filters-file) contains filters for
 non-allowed files for synching with Dropbox.
 
 If you make changes to your filters file then bisync requires a run
-with `--resync`. This is a safety feature, which avoids existing files
+with `--resync`. This is a safety feature, which prevents existing files
 on the Path1 and/or Path2 side from seeming to disappear from view
 (since they are excluded in the new listings), which would fool bisync
 into seeing them as deleted (as compared to the prior run listings),
 and then bisync would proceed to delete them for real.
 
-To block this from happening bisync calculates an MD5 hash of the filters file
+To block this from happening, bisync calculates an MD5 hash of the filters file
 and stores the hash in a `.md5` file in the same place as your filters file.
-On the next runs with `--filters-file` set, bisync re-calculates the MD5 hash
-of the current filters file and compares it to the hash stored in `.md5` file.
-If they don't match the run aborts with a critical error and thus forces you
+On the next run with `--filters-file` set, bisync re-calculates the MD5 hash
+of the current filters file and compares it to the hash stored in the `.md5` file.
+If they don't match, the run aborts with a critical error and thus forces you
 to do a `--resync`, likely avoiding a disaster.
 
 #### --check-sync
@@ -244,6 +276,60 @@ sync run times for very large numbers of files.
 
 The check may be run manually with `--check-sync=only`. It runs only the
 integrity check and terminates without actually synching.
+
+See also: [Concurrent modifications](#concurrent-modifications)
+
+
+#### --ignore-listing-checksum
+
+By default, bisync will retrieve (or generate) checksums (for backends that support them) 
+when creating the listings for both paths, and store the checksums in the listing files. 
+`--ignore-listing-checksum` will disable this behavior, which may speed things up considerably, 
+especially on backends (such as [local](/local/)) where hashes must be computed on the fly instead of retrieved. 
+Please note the following:
+
+* While checksums are (by default) generated and stored in the listing files, 
+they are NOT currently used for determining diffs (deltas). 
+It is anticipated that full checksum support will be added in a future version.
+* `--ignore-listing-checksum` is NOT the same as [`--ignore-checksum`](/docs/#ignore-checksum), 
+and you may wish to use one or the other, or both. In a nutshell: 
+`--ignore-listing-checksum` controls whether checksums are considered when scanning for diffs, 
+while `--ignore-checksum` controls whether checksums are considered during the copy/sync operations that follow, 
+if there ARE diffs.
+* Unless `--ignore-listing-checksum` is passed, bisync currently computes hashes for one path 
+*even when there's no common hash with the other path* 
+(for example, a [crypt](/crypt/#modified-time-and-hashes) remote.)
+* If both paths support checksums and have a common hash, 
+AND `--ignore-listing-checksum` was not specified when creating the listings, 
+`--check-sync=only` can be used to compare Path1 vs. Path2 checksums (as of the time the previous listings were created.) 
+However, `--check-sync=only` will NOT include checksums if the previous listings 
+were generated on a run using `--ignore-listing-checksum`. For a more robust integrity check of the current state, 
+consider using [`check`](commands/rclone_check/) 
+(or [`cryptcheck`](/commands/rclone_cryptcheck/), if at least one path is a `crypt` remote.)
+
+#### --resilient
+
+***Caution: this is an experimental feature. Use at your own risk!***
+
+By default, most errors or interruptions will cause bisync to abort and 
+require [`--resync`](#resync) to recover. This is a safety feature, 
+to prevent bisync from running again until a user checks things out. 
+However, in some cases, bisync can go too far and enforce a lockout when one isn't actually necessary, 
+like for certain less-serious errors that might resolve themselves on the next run. 
+When `--resilient` is specified, bisync tries its best to recover and self-correct, 
+and only requires `--resync` as a last resort when a human's involvement is absolutely necessary. 
+The intended use case is for running bisync as a background process (such as via scheduled [cron](#cron)).
+
+When using `--resilient` mode, bisync will still report the error and abort, 
+however it will not lock out future runs -- allowing the possibility of retrying at the next normally scheduled time, 
+without requiring a `--resync` first. Examples of such retryable errors include 
+access test failures, missing listing files, and filter change detections. 
+These safety features will still prevent the *current* run from proceeding -- 
+the difference is that if conditions have improved by the time of the *next* run, 
+that next run will be allowed to proceed. 
+Certain more serious errors will still enforce a `--resync` lockout, even in `--resilient` mode, to prevent data loss.
+
+Behavior of `--resilient` may change in a future version.
 
 ## Operation
 
@@ -288,15 +374,26 @@ Path1 deleted | File no longer exists on Path1                | File is deleted 
 
  Type                           | Description                           | Result                             | Implementation
 --------------------------------|---------------------------------------|------------------------------------|-----------------------
-Path1 new AND Path2 new         | File is new on Path1 AND new on Path2 | Files renamed to _Path1 and _Path2 | `rclone copy` _Path2 file to Path1, `rclone copy` _Path1 file to Path2
-Path2 newer AND Path1 changed   | File is newer on Path2 AND also changed (newer/older/size) on Path1 | Files renamed to _Path1 and _Path2 | `rclone copy` _Path2 file to Path1, `rclone copy` _Path1 file to Path2
+Path1 new/changed AND Path2 new/changed AND Path1 == Path2       | File is new/changed on Path1 AND new/changed on Path2 AND Path1 version is currently identical to Path2 | No change | None
+Path1 new AND Path2 new         | File is new on Path1 AND new on Path2 (and Path1 version is NOT identical to Path2) | Files renamed to _Path1 and _Path2 | `rclone copy` _Path2 file to Path1, `rclone copy` _Path1 file to Path2
+Path2 newer AND Path1 changed   | File is newer on Path2 AND also changed (newer/older/size) on Path1 (and Path1 version is NOT identical to Path2) | Files renamed to _Path1 and _Path2 | `rclone copy` _Path2 file to Path1, `rclone copy` _Path1 file to Path2
 Path2 newer AND Path1 deleted   | File is newer on Path2 AND also deleted on Path1 | Path2 version survives  | `rclone copy` Path2 to Path1
 Path2 deleted AND Path1 changed | File is deleted on Path2 AND changed (newer/older/size) on Path1 | Path1 version survives |`rclone copy` Path1 to Path2
 Path1 deleted AND Path2 changed | File is deleted on Path1 AND changed (newer/older/size) on Path2 | Path2 version survives  | `rclone copy` Path2 to Path1
 
+As of `rclone v1.64`, bisync is now better at detecting *false positive* sync conflicts, 
+which would previously have resulted in unnecessary renames and duplicates. 
+Now, when bisync comes to a file that it wants to rename (because it is new/changed on both sides), 
+it first checks whether the Path1 and Path2 versions are currently *identical* 
+(using the same underlying function as [`check`](commands/rclone_check/).) 
+If bisync concludes that the files are identical, it will skip them and move on. 
+Otherwise, it will create renamed `..Path1` and `..Path2` duplicates, as before. 
+This behavior also [improves the experience of renaming directories](https://forum.rclone.org/t/bisync-bugs-and-feature-requests/37636#:~:text=Renamed%20directories), 
+as a `--resync` is no longer required, so long as the same change has been made on both sides.
+
 ### All files changed check {#all-files-changed}
 
-if _all_ prior existing files on either of the filesystems have changed
+If _all_ prior existing files on either of the filesystems have changed
 (e.g. timestamps have changed due to changing the system's timezone)
 then bisync will abort without making any changes.
 Any new files are not considered for this check. You could use `--force`
@@ -333,7 +430,7 @@ It is recommended to use `--resync --dry-run --verbose` initially and
 _carefully_ review what changes will be made before running the `--resync`
 without `--dry-run`.
 
-Most of these events come up due to a error status from an internal call.
+Most of these events come up due to an error status from an internal call.
 On such a critical error the `{...}.path1.lst` and `{...}.path2.lst`
 listing files are renamed to extension `.lst-err`, which blocks any future
 bisync runs (since the normal `.lst` files are not found).
@@ -342,6 +439,8 @@ typically at `${HOME}/.cache/rclone/bisync/` on Linux.
 
 Some errors are considered temporary and re-running the bisync is not blocked.
 The _critical return_ blocks further bisync runs.
+
+See also: [`--resilient`](#resilient)
 
 ### Lock file
 
@@ -383,7 +482,7 @@ It has not been fully tested with other services yet.
 If it works, or sorta works, please let us know and we'll update the list.
 Run the test suite to check for proper operation as described below.
 
-First release of `rclone bisync` requires that underlying backend supported
+First release of `rclone bisync` requires that underlying backend supports
 the modification time feature and will refuse to run otherwise.
 This limitation will be lifted in a future `rclone bisync` release.
 
@@ -398,38 +497,97 @@ This will be solved in a future release, there is no workaround at the moment.
 Files that **change during** a bisync run may result in data loss.
 This has been seen in a highly dynamic environment, where the filesystem
 is getting hammered by running processes during the sync.
-The solution is to sync at quiet times or [filter out](#filtering)
+The currently recommended solution is to sync at quiet times or [filter out](#filtering)
 unnecessary directories and files.
+
+As an [alternative approach](https://forum.rclone.org/t/bisync-bugs-and-feature-requests/37636#:~:text=scans%2C%20to%20avoid-,errors%20if%20files%20changed%20during%20sync,-Given%20the%20number), 
+consider using `--check-sync=false` (and possibly `--resilient`) to make bisync more forgiving
+of filesystems that change during the sync. 
+Be advised that this may cause bisync to miss events that occur during a bisync run, 
+so it is a good idea to supplement this with a periodic independent integrity check, 
+and corrective sync if diffs are found. For example, a possible sequence could look like this:
+
+1. Normally scheduled bisync run:
+
+```
+rclone bisync Path1 Path2 -MPc --check-access --max-delete 10 --filters-file /path/to/filters.txt -v --check-sync=false --no-cleanup --ignore-listing-checksum --disable ListR --checkers=16 --drive-pacer-min-sleep=10ms --create-empty-src-dirs --resilient
+```
+
+2. Periodic independent integrity check (perhaps scheduled nightly or weekly):
+
+```
+rclone check -MvPc Path1 Path2 --filter-from /path/to/filters.txt
+```
+
+3. If diffs are found, you have some choices to correct them. 
+If one side is more up-to-date and you want to make the other side match it, you could run:
+
+```
+rclone sync Path1 Path2 --filter-from /path/to/filters.txt --create-empty-src-dirs -MPc -v  
+```
+(or switch Path1 and Path2 to make Path2 the source-of-truth)
+
+Or, if neither side is totally up-to-date, you could run a `--resync` to bring them back into agreement 
+(but remember that this could cause deleted files to re-appear.)
+
+*Note also that `rclone check` does not currently include empty directories, 
+so if you want to know if any empty directories are out of sync, 
+consider alternatively running the above `rclone sync` command with `--dry-run` added.
 
 ### Empty directories
 
-New empty directories on one path are _not_ propagated to the other side.
-This is because bisync (and rclone) natively works on files not directories.
-The following sequence is a workaround but will not propagate the delete
-of an empty directory to the other side:
-
-```
-rclone bisync PATH1 PATH2
-rclone copy PATH1 PATH2 --filter "+ */" --filter "- **" --create-empty-src-dirs
-rclone copy PATH2 PATH2 --filter "+ */" --filter "- **" --create-empty-src-dirs
-```
+By default, new/deleted empty directories on one path are _not_ propagated to the other side.
+This is because bisync (and rclone) natively works on files, not directories.
+However, this can be changed with the `--create-empty-src-dirs` flag, which works in
+much the same way as in [`sync`](/commands/rclone_sync/) and [`copy`](/commands/rclone_copy/).
+When used, empty directories created or deleted on one side will also be created or deleted on the other side.
+The following should be noted:
+* `--create-empty-src-dirs` is not compatible with `--remove-empty-dirs`. Use only one or the other (or neither).
+* It is not recommended to switch back and forth between `--create-empty-src-dirs` 
+and the default (no `--create-empty-src-dirs`) without running `--resync`. 
+This is because it may appear as though all directories (not just the empty ones) were created/deleted,
+when actually you've just toggled between making them visible/invisible to bisync. 
+It looks scarier than it is, but it's still probably best to stick to one or the other, 
+and use `--resync` when you need to switch.
 
 ### Renamed directories
 
-Renaming a folder on the Path1 side results is deleting all files on
+Renaming a folder on the Path1 side results in deleting all files on
 the Path2 side and then copying all files again from Path1 to Path2.
 Bisync sees this as all files in the old directory name as deleted and all
-files in the new directory name as new. Similarly, renaming a directory on
-both sides to the same name will result in creating `..path1` and `..path2`
-files on both sides.
-Currently the most effective and efficient method of renaming a directory
-is to rename it on both sides, then do a `--resync`.
+files in the new directory name as new. 
+Currently, the most effective and efficient method of renaming a directory
+is to rename it to the same name on both sides. (As of `rclone v1.64`, 
+a `--resync` is no longer required after doing so, as bisync will automatically
+detect that Path1 and Path2 are in agreement.)
+
+### `--fast-list` used by default
+
+Unlike most other rclone commands, bisync uses [`--fast-list`](/docs/#fast-list) by default, 
+for backends that support it. In many cases this is desirable, however, 
+there are some scenarios in which bisync could be faster *without* `--fast-list`, 
+and there is also a [known issue concerning Google Drive users with many empty directories](https://github.com/rclone/rclone/commit/cbf3d4356135814921382dd3285d859d15d0aa77). 
+For now, the recommended way to avoid using `--fast-list` is to add `--disable ListR` 
+to all bisync commands. The default behavior may change in a future version.
+
+### Overridden Configs
+
+When rclone detects an overridden config, it adds a suffix like `{ABCDE}` on the fly 
+to the internal name of the remote. Bisync follows suit by including this suffix in its listing filenames. 
+However, this suffix does not necessarily persist from run to run, especially if different flags are provided. 
+So if next time the suffix assigned is `{FGHIJ}`, bisync will get confused, 
+because it's looking for a listing file with `{FGHIJ}`, when the file it wants has `{ABCDE}`. 
+As a result, it throws 
+`Bisync critical error: cannot find prior Path1 or Path2 listings, likely due to critical error on prior run` 
+and refuses to run again until the user runs a `--resync` (unless using `--resilient`). 
+The best workaround at the moment is to set any backend-specific flags in the [config file](/commands/rclone_config/) 
+instead of specifying them with command flags. (You can still override them as needed for other rclone commands.)
 
 ### Case sensitivity
 
 Synching with **case-insensitive** filesystems, such as Windows or `Box`,
 can result in file name conflicts. This will be fixed in a future release.
-The near term workaround is to make sure that files on both sides
+The near-term workaround is to make sure that files on both sides
 don't have spelling case differences (`Smile.jpg` vs. `smile.jpg`).
 
 ## Windows support {#windows}
@@ -492,7 +650,7 @@ below.
     - Excluding such dirs first will make rclone operations (much) faster.
     - Specific files may also be excluded, as with the Dropbox exclusions
       example below.
-2. Decide if its easier (or cleaner) to:
+2. Decide if it's easier (or cleaner) to:
     - Include select directories and therefore _exclude everything else_ -- or --
     - Exclude select directories and therefore _include everything else_
 3. Include select directories:
@@ -511,7 +669,7 @@ below.
       For example: `-/Desktop/tempfiles/`, or `- /testdir/`.
       Again, a `**` on the end is not necessary.
     - Do _not_ add a `- **` in the file. Without this line, everything
-      will be included that has not be explicitly excluded.
+      will be included that has not been explicitly excluded.
     - Disregard step 3.
 
 A few rules for the syntax of a filter file expanding on
@@ -655,7 +813,7 @@ The second has no deltas between local and remote.
 The `--dry-run` messages may indicate that it would try to delete some files.
 For example, if a file is new on Path2 and does not exist on Path1 then
 it would normally be copied to Path1, but with `--dry-run` enabled those
-copies don't happen, which leads to the attempted delete on the Path2,
+copies don't happen, which leads to the attempted delete on Path2,
 blocked again by --dry-run: `... Not deleting as --dry-run`.
 
 This whole confusing situation is an artifact of the `--dry-run` flag.
@@ -664,14 +822,14 @@ copied to Path1 then the threatened deletes on Path2 may be disregarded.
 
 ### Retries
 
-Rclone has built in retries. If you run with `--verbose` you'll see
+Rclone has built-in retries. If you run with `--verbose` you'll see
 error and retry messages such as shown below. This is usually not a bug.
-If at the end of the run you see `Bisync successful` and not
+If at the end of the run, you see `Bisync successful` and not
 `Bisync critical error` or `Bisync aborted` then the run was successful,
 and you can ignore the error messages.
 
 The following run shows an intermittent fail. Lines _5_ and _6- are
-low level messages. Line _6_ is a bubbled-up _warning_ message, conveying
+low-level messages. Line _6_ is a bubbled-up _warning_ message, conveying
 the error. Rclone normally retries failing commands, so there may be
 numerous such messages in the log.
 
@@ -751,7 +909,7 @@ and an OwnCloud server, with output logged to a runlog file:
   */5  *    *    *    *   /path/to/rclone bisync /local/files MyCloud: --check-access --filters-file /path/to/bysync-filters.txt --log-file /path/to//bisync.log
 ```
 
-See [crontab syntax](https://www.man7.org/linux/man-pages/man1/crontab.1p.html#INPUT_FILES)).
+See [crontab syntax](https://www.man7.org/linux/man-pages/man1/crontab.1p.html#INPUT_FILES)
 for the details of crontab time interval expressions.
 
 If you run `rclone bisync` as a cron job, redirect stdout/stderr to a file.
@@ -943,7 +1101,7 @@ test command flags can be equally prefixed by a single `-` or double dash.
   synched tree even if there are check file mismatches in the test tree.
 - Some Dropbox tests can fail, notably printing the following message:
   `src and dst identical but can't set mod time without deleting and re-uploading`
-  This is expected and happens due a way Dropbox handles modification times.
+  This is expected and happens due to the way Dropbox handles modification times.
   You should use the `-refresh-times` test flag to make up for this.
 - If Dropbox tests hit request limit for you and print error message
   `too_many_requests/...: Too many requests or write operations.`
@@ -1096,9 +1254,28 @@ with [@cjnaz](https://github.com/cjnaz)'s full support and encouragement.
 
 Bisync adopts the differential synchronization technique, which is
 based on keeping history of changes performed by both synchronizing sides.
-See the _Dual Shadow Method_ section in the
+See the _Dual Shadow Method_ section in
 [Neil Fraser's article](https://neil.fraser.name/writing/sync/).
 
 Also note a number of academic publications by
 [Benjamin Pierce](http://www.cis.upenn.edu/%7Ebcpierce/papers/index.shtml#File%20Synchronization)
 about _Unison_ and synchronization in general.
+
+## Changelog
+
+### `v1.64`
+* Fixed an [issue](https://forum.rclone.org/t/bisync-bugs-and-feature-requests/37636#:~:text=1.%20Dry%20runs%20are%20not%20completely%20dry) 
+causing dry runs to inadvertently commit filter changes
+* Fixed an [issue](https://forum.rclone.org/t/bisync-bugs-and-feature-requests/37636#:~:text=2.%20%2D%2Dresync%20deletes%20data%2C%20contrary%20to%20docs) 
+causing `--resync` to erroneously delete empty folders and duplicate files unique to Path2
+* `--check-access` is now enforced during `--resync`, preventing data loss in [certain user error scenarios](https://forum.rclone.org/t/bisync-bugs-and-feature-requests/37636#:~:text=%2D%2Dcheck%2Daccess%20doesn%27t%20always%20fail%20when%20it%20should)
+* Fixed an [issue](https://forum.rclone.org/t/bisync-bugs-and-feature-requests/37636#:~:text=5.%20Bisync%20reads%20files%20in%20excluded%20directories%20during%20delete%20operations) 
+causing bisync to consider more files than necessary due to overbroad filters during delete operations
+* [Improved detection of false positive change conflicts](https://forum.rclone.org/t/bisync-bugs-and-feature-requests/37636#:~:text=1.%20Identical%20files%20should%20be%20left%20alone%2C%20even%20if%20new/newer/changed%20on%20both%20sides) 
+(identical files are now left alone instead of renamed)
+* Added [support for `--create-empty-src-dirs`](https://forum.rclone.org/t/bisync-bugs-and-feature-requests/37636#:~:text=3.%20Bisync%20should%20create/delete%20empty%20directories%20as%20sync%20does%2C%20when%20%2D%2Dcreate%2Dempty%2Dsrc%2Ddirs%20is%20passed)
+* Added experimental `--resilient` mode to allow [recovery from self-correctable errors](https://forum.rclone.org/t/bisync-bugs-and-feature-requests/37636#:~:text=2.%20Bisync%20should%20be%20more%20resilient%20to%20self%2Dcorrectable%20errors)
+* Added [new `--ignore-listing-checksum` flag](https://forum.rclone.org/t/bisync-bugs-and-feature-requests/37636#:~:text=6.%20%2D%2Dignore%2Dchecksum%20should%20be%20split%20into%20two%20flags%20for%20separate%20purposes) 
+to distinguish from `--ignore-checksum`
+* [Performance improvements](https://forum.rclone.org/t/bisync-bugs-and-feature-requests/37636#:~:text=6.%20Deletes%20take%20several%20times%20longer%20than%20copies) for large remotes
+* Documentation and testing improvements

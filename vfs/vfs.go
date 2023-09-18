@@ -167,7 +167,7 @@ type VFS struct {
 	usageTime   time.Time
 	usage       *fs.Usage
 	pollChan    chan time.Duration
-	inUse       int32 // count of number of opens accessed with atomic
+	inUse       atomic.Int32 // count of number of opens
 }
 
 // Keep track of active VFS keyed on fs.ConfigString(f)
@@ -181,9 +181,9 @@ var (
 func New(f fs.Fs, opt *vfscommon.Options) *VFS {
 	fsDir := fs.NewDir("", time.Now())
 	vfs := &VFS{
-		f:     f,
-		inUse: int32(1),
+		f: f,
 	}
+	vfs.inUse.Store(1)
 
 	// Make a copy of the options
 	if opt != nil {
@@ -202,7 +202,7 @@ func New(f fs.Fs, opt *vfscommon.Options) *VFS {
 	for _, activeVFS := range active[configName] {
 		if vfs.Opt == activeVFS.Opt {
 			fs.Debugf(f, "Re-using VFS from active cache")
-			atomic.AddInt32(&activeVFS.inUse, 1)
+			activeVFS.inUse.Add(1)
 			return activeVFS
 		}
 	}
@@ -243,7 +243,7 @@ func (vfs *VFS) Stats() (out rc.Params) {
 	out = make(rc.Params)
 	out["fs"] = fs.ConfigString(vfs.f)
 	out["opt"] = vfs.Opt
-	out["inUse"] = atomic.LoadInt32(&vfs.inUse)
+	out["inUse"] = vfs.inUse.Load()
 
 	var (
 		dirs  int
@@ -313,7 +313,7 @@ func (vfs *VFS) shutdownCache() {
 // Shutdown stops any background go-routines and removes the VFS from
 // the active ache.
 func (vfs *VFS) Shutdown() {
-	if atomic.AddInt32(&vfs.inUse, -1) > 0 {
+	if vfs.inUse.Add(-1) > 0 {
 		return
 	}
 
@@ -386,11 +386,11 @@ func (vfs *VFS) Root() (*Dir, error) {
 	return vfs.root, nil
 }
 
-var inodeCount uint64
+var inodeCount atomic.Uint64
 
 // newInode creates a new unique inode number
 func newInode() (inode uint64) {
-	return atomic.AddUint64(&inodeCount, 1)
+	return inodeCount.Add(1)
 }
 
 // Stat finds the Node by path starting from the root

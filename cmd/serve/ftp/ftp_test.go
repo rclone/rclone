@@ -18,7 +18,7 @@ import (
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/obscure"
 	"github.com/stretchr/testify/assert"
-	ftp "goftp.io/server/core"
+	ftp "goftp.io/server/v2"
 )
 
 const (

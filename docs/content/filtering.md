@@ -27,7 +27,7 @@ E.g. `rclone copy "remote:dir*.jpg" /path/to/dir` does not have a filter effect.
 `rclone copy remote:dir /path/to/dir --include "*.jpg"` does.
 
 **Important** Avoid mixing any two of `--include...`, `--exclude...` or
-`--filter...` flags in an rclone command. The results may not be what
+`--filter...` flags in an rclone command. The results might not be what
 you expect. Instead use a `--filter...` flag.
 
 ## Patterns for matching path/file names
@@ -88,7 +88,7 @@ separator or the beginning of the path/file.
                - doesn't match "afile.jpg"
                - doesn't match "directory/file.jpg"
 
-The top level of the remote may not be the top level of the drive.
+The top level of the remote might not be the top level of the drive.
 
 E.g. for a Microsoft Windows local directory structure
 
@@ -367,7 +367,7 @@ all files on `remote:` excluding those in root directory `dir` and sub
 directories.
 
 E.g. on Microsoft Windows `rclone ls remote: --exclude "*\[{JP,KR,HK}\]*"`
-lists the files in `remote:` with `[JP]` or `[KR]` or `[HK]` in
+lists the files in `remote:` without `[JP]` or `[KR]` or `[HK]` in
 their name. Quotes prevent the shell from interpreting the `\`
 characters.`\` characters escape the `[` and `]` so an rclone filter
 treats them literally rather than as a character-range. The `{` and `}`

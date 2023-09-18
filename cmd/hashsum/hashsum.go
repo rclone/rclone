@@ -31,10 +31,10 @@ func init() {
 
 // AddHashsumFlags is a convenience function to add the command flags OutputBase64 and DownloadFlag to hashsum, md5sum, sha1sum
 func AddHashsumFlags(cmdFlags *pflag.FlagSet) {
-	flags.BoolVarP(cmdFlags, &OutputBase64, "base64", "", OutputBase64, "Output base64 encoded hashsum")
-	flags.StringVarP(cmdFlags, &HashsumOutfile, "output-file", "", HashsumOutfile, "Output hashsums to a file rather than the terminal")
-	flags.StringVarP(cmdFlags, &ChecksumFile, "checkfile", "C", ChecksumFile, "Validate hashes against a given SUM file instead of printing them")
-	flags.BoolVarP(cmdFlags, &DownloadFlag, "download", "", DownloadFlag, "Download the file and hash it locally; if this flag is not specified, the hash is requested from the remote")
+	flags.BoolVarP(cmdFlags, &OutputBase64, "base64", "", OutputBase64, "Output base64 encoded hashsum", "")
+	flags.StringVarP(cmdFlags, &HashsumOutfile, "output-file", "", HashsumOutfile, "Output hashsums to a file rather than the terminal", "")
+	flags.StringVarP(cmdFlags, &ChecksumFile, "checkfile", "C", ChecksumFile, "Validate hashes against a given SUM file instead of printing them", "")
+	flags.BoolVarP(cmdFlags, &DownloadFlag, "download", "", DownloadFlag, "Download the file and hash it locally; if this flag is not specified, the hash is requested from the remote", "")
 }
 
 // GetHashsumOutput opens and closes the output file when using the output-file flag
@@ -114,6 +114,7 @@ Note that hash names are case insensitive and values are output in lower case.
 `,
 	Annotations: map[string]string{
 		"versionIntroduced": "v1.41",
+		"groups":            "Filter,Listing",
 	},
 	RunE: func(command *cobra.Command, args []string) error {
 		cmd.CheckArgs(0, 2, command, args)

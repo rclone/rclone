@@ -26,6 +26,7 @@ func rcBisync(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 
 	if dryRun, err := in.GetBool("dryRun"); err == nil {
 		ci.DryRun = dryRun
+		opt.DryRun = dryRun
 	} else if rc.NotErrParamNotFound(err) {
 		return nil, err
 	}
@@ -48,10 +49,19 @@ func rcBisync(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 	if opt.Force, err = in.GetBool("force"); rc.NotErrParamNotFound(err) {
 		return
 	}
+	if opt.CreateEmptySrcDirs, err = in.GetBool("createEmptySrcDirs"); rc.NotErrParamNotFound(err) {
+		return
+	}
 	if opt.RemoveEmptyDirs, err = in.GetBool("removeEmptyDirs"); rc.NotErrParamNotFound(err) {
 		return
 	}
 	if opt.NoCleanup, err = in.GetBool("noCleanup"); rc.NotErrParamNotFound(err) {
+		return
+	}
+	if opt.IgnoreListingChecksum, err = in.GetBool("ignoreListingChecksum"); rc.NotErrParamNotFound(err) {
+		return
+	}
+	if opt.Resilient, err = in.GetBool("resilient"); rc.NotErrParamNotFound(err) {
 		return
 	}
 
@@ -68,6 +78,9 @@ func rcBisync(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 	checkSync, err := in.GetString("checkSync")
 	if rc.NotErrParamNotFound(err) {
 		return nil, err
+	}
+	if checkSync == "" {
+		checkSync = "true"
 	}
 	if err := opt.CheckSync.Set(checkSync); err != nil {
 		return nil, err

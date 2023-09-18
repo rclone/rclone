@@ -25,7 +25,7 @@ var (
 func init() {
 	cmd.Root.AddCommand(commandDefinition)
 	cmdFlags := commandDefinition.Flags()
-	flags.BoolVarP(cmdFlags, &check, "check", "", false, "Check for new version")
+	flags.BoolVarP(cmdFlags, &check, "check", "", false, "Check for new version", "")
 }
 
 var commandDefinition = &cobra.Command{

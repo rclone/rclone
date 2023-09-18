@@ -17,7 +17,6 @@ import (
 	"github.com/rclone/rclone/lib/encoder"
 	"github.com/rclone/rclone/lib/pacer"
 	"github.com/rclone/rclone/lib/random"
-	"github.com/rclone/rclone/lib/readers"
 
 	"github.com/rclone/rclone/backend/zoho/api"
 	"github.com/rclone/rclone/fs"
@@ -1169,31 +1168,8 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 	if o.id == "" {
 		return nil, errors.New("can't download - no id")
 	}
-	var start, end int64 = 0, o.size
-	partialContent := false
-	for _, option := range options {
-		switch x := option.(type) {
-		case *fs.SeekOption:
-			start = x.Offset
-			partialContent = true
-		case *fs.RangeOption:
-			if x.Start >= 0 {
-				start = x.Start
-				if x.End > 0 && x.End < o.size {
-					end = x.End + 1
-				}
-			} else {
-				// {-1, 20} should load the last 20 characters [len-20:len]
-				start = o.size - x.End
-			}
-			partialContent = true
-		default:
-			if option.Mandatory() {
-				fs.Logf(nil, "Unsupported mandatory option: %v", option)
-			}
-		}
-	}
 	var resp *http.Response
+	fs.FixRangeOption(options, o.size)
 	opts := rest.Opts{
 		Method:  "GET",
 		Path:    "/download/" + o.id,
@@ -1205,20 +1181,6 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 	})
 	if err != nil {
 		return nil, err
-	}
-	if partialContent && resp.StatusCode == 200 && resp.Header.Get("Content-Range") == "" {
-		if start > 0 {
-			// We need to read and discard the beginning of the data...
-			_, err = io.CopyN(io.Discard, resp.Body, start)
-			if err != nil {
-				if resp != nil {
-					_ = resp.Body.Close()
-				}
-				return nil, err
-			}
-		}
-		// ... and return a limited reader for the remaining of the data
-		return readers.NewLimitedReadCloser(resp.Body, end-start), nil
 	}
 	return resp.Body, nil
 }

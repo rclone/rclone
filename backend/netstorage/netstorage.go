@@ -65,11 +65,13 @@ HTTP is provided primarily for debugging purposes.`,
 			Help: `Domain+path of NetStorage host to connect to.
 
 Format should be ` + "`<domain>/<internal folders>`",
-			Required: true,
+			Required:  true,
+			Sensitive: true,
 		}, {
-			Name:     "account",
-			Help:     "Set the NetStorage account name",
-			Required: true,
+			Name:      "account",
+			Help:      "Set the NetStorage account name",
+			Required:  true,
+			Sensitive: true,
 		}, {
 			Name: "secret",
 			Help: `Set the NetStorage account secret/G2O key for authentication.

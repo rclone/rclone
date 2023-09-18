@@ -5,6 +5,332 @@ description: "Rclone Changelog"
 
 # Changelog
 
+## v1.64.0 - 2023-09-11
+
+[See commits](https://github.com/rclone/rclone/compare/v1.63.0...v1.64.0)
+
+* New backends
+    * [Proton Drive](/protondrive/) (Chun-Hung Tseng)
+    * [Quatrix](/quatrix/) (Oksana, Volodymyr Kit)
+    * New S3 providers
+        * [Synology C2](/s3/#synology-c2) (BakaWang)
+        * [Leviia](/s3/#leviia) (Benjamin)
+    * New Jottacloud providers
+        * [Onlime](/jottacloud/) (Fjodor42)
+        * [Telia Sky](/jottacloud/) (NoLooseEnds)
+* Major changes
+    * Multi-thread transfers (Vitor Gomes, Nick Craig-Wood, Manoj Ghosh, Edwin Mackenzie-Owen)
+        * Multi-thread transfers are now available when transferring to:
+            * `local`, `s3`, `azureblob`, `b2`, `oracleobjectstorage` and `smb`
+        * This greatly improves transfer speed between two network sources.
+        * In memory buffering has been unified between all backends and should share memory better.
+        * See [--multi-thread docs](/docs/#multi-thread-cutoff) for more info
+* New commands
+    * `rclone config redacted` support mechanism for showing redacted config (Nick Craig-Wood)
+* New Features
+    * accounting
+        * Show server side stats in own lines and not as bytes transferred (Nick Craig-Wood)
+    * bisync
+        * Add new `--ignore-listing-checksum` flag to distinguish from `--ignore-checksum` (nielash)
+        * Add experimental `--resilient` mode to allow recovery from self-correctable errors (nielash)
+        * Add support for `--create-empty-src-dirs` (nielash)
+        * Dry runs no longer commit filter changes (nielash)
+        * Enforce `--check-access` during `--resync` (nielash)
+        * Apply filters correctly during deletes (nielash)
+        * Equality check before renaming (leave identical files alone) (nielash)
+        * Fix `dryRun` rc parameter being ignored (nielash)
+    * build
+        * Update to `go1.21` and make `go1.19` the minimum required version (Anagh Kumar Baranwal, Nick Craig-Wood)
+        * Update dependencies (Nick Craig-Wood)
+        * Add snap installation (hideo aoyama)
+        * Change Winget Releaser job to `ubuntu-latest` (sitiom)
+    * cmd: Refactor and use sysdnotify in more commands (eNV25)
+    * config: Add `--multi-thread-chunk-size` flag (Vitor Gomes)
+    * doc updates (antoinetran, Benjamin, Bjørn Smith, Dean Attali, gabriel-suela, James Braza, Justin Hellings, kapitainsky, Mahad, Masamune3210, Nick Craig-Wood, Nihaal Sangha, Niklas Hambüchen, Raymond Berger, r-ricci, Sawada Tsunayoshi, Tiago Boeing, Vladislav Vorobev)
+    * fs
+        * Use atomic types everywhere (Roberto Ricci)
+        * When `--max-transfer` limit is reached exit with code (10) (kapitainsky)
+        * Add rclone completion powershell - basic implementation only (Nick Craig-Wood)
+    * http servers: Allow CORS to be set with `--allow-origin` flag (yuudi)
+    * lib/rest: Remove unnecessary `nil` check (Eng Zer Jun)
+    * ncdu: Add keybinding to rescan filesystem (eNV25)
+    * rc
+        * Add `executeId` to job listings (yuudi)
+        * Add `core/du` to measure local disk usage (Nick Craig-Wood)
+        * Add `operations/settier` to API (Drew Stinnett)
+    * rclone test info: Add `--check-base32768` flag to check can store all base32768 characters (Nick Craig-Wood)
+    * rmdirs: Remove directories concurrently controlled by `--checkers` (Nick Craig-Wood)
+* Bug Fixes
+    * accounting: Don't stop calculating average transfer speed until the operation is complete (Jacob Hands)
+    * fs: Fix `transferTime` not being set in JSON logs (Jacob Hands)
+    * fshttp: Fix `--bind 0.0.0.0` allowing IPv6 and `--bind ::0` allowing IPv4 (Nick Craig-Wood)
+    * operations: Fix overlapping check on case insensitive file systems (Nick Craig-Wood)
+    * serve dlna: Fix MIME type if backend can't identify it (Nick Craig-Wood)
+    * serve ftp: Fix race condition when using the auth proxy (Nick Craig-Wood)
+    * serve sftp: Fix hash calculations with `--vfs-cache-mode full` (Nick Craig-Wood)
+    * serve webdav: Fix error: Expecting fs.Object or fs.Directory, got `nil` (Nick Craig-Wood)
+    * sync: Fix lockup with `--cutoff-mode=soft` and `--max-duration` (Nick Craig-Wood)
+* Mount
+    * fix: Mount parsing for linux (Anagh Kumar Baranwal)
+* VFS
+    * Add `--vfs-cache-min-free-space` to control minimum free space on the disk containing the cache (Nick Craig-Wood)
+    * Added cache cleaner for directories to reduce memory usage (Anagh Kumar Baranwal)
+    * Update parent directory modtimes on vfs actions (David Pedersen)
+    * Keep virtual directory status accurate and reduce deadlock potential (Anagh Kumar Baranwal)
+    * Make sure struct field is aligned for atomic access (Roberto Ricci)
+* Local
+    * Rmdir return an error if the path is not a dir (zjx20)
+* Azure Blob
+    * Implement `OpenChunkWriter` and multi-thread uploads (Nick Craig-Wood)
+    * Fix creation of directory markers (Nick Craig-Wood)
+    * Fix purging with directory markers (Nick Craig-Wood)
+* B2
+    * Implement `OpenChunkWriter` and multi-thread uploads (Nick Craig-Wood)
+    * Fix rclone link when object path contains special characters (Alishan Ladhani)
+* Box
+    * Add polling support (David Sze)
+    * Add `--box-impersonate` to impersonate a user ID (Nick Craig-Wood)
+    * Fix unhelpful decoding of error messages into decimal numbers (Nick Craig-Wood)
+* Chunker
+    * Update documentation to mention issue with small files (Ricardo D'O. Albanus)
+* Compress
+    * Fix ChangeNotify (Nick Craig-Wood)
+* Drive
+    * Add `--drive-fast-list-bug-fix` to control ListR bug workaround (Nick Craig-Wood)
+* Fichier
+    * Implement `DirMove` (Nick Craig-Wood)
+    * Fix error code parsing (alexia)
+* FTP
+    * Add socks_proxy support for SOCKS5 proxies (Zach)
+    * Fix 425 "TLS session of data connection not resumed" errors (Nick Craig-Wood)
+* Hdfs
+    * Retry "replication in progress" errors when uploading (Nick Craig-Wood)
+    * Fix uploading to the wrong object on Update with overriden remote name (Nick Craig-Wood)
+* HTTP
+    * CORS should not be sent if not set (yuudi)
+    * Fix webdav OPTIONS response (yuudi)
+* Opendrive
+    * Fix List on a just deleted and remade directory (Nick Craig-Wood)
+* Oracleobjectstorage
+    * Use rclone's rate limiter in mutipart transfers (Manoj Ghosh)
+    * Implement `OpenChunkWriter` and multi-thread uploads (Manoj Ghosh)
+* S3
+    * Refactor multipart upload to use `OpenChunkWriter` and `ChunkWriter` (Vitor Gomes)
+    * Factor generic multipart upload into `lib/multipart` (Nick Craig-Wood)
+    * Fix purging of root directory with `--s3-directory-markers` (Nick Craig-Wood)
+    * Add `rclone backend set` command to update the running config (Nick Craig-Wood)
+    * Add `rclone backend restore-status` command (Nick Craig-Wood)
+* SFTP
+    * Stop uploads re-using the same ssh connection to improve performance (Nick Craig-Wood)
+    * Add `--sftp-ssh` to specify an external ssh binary to use (Nick Craig-Wood)
+    * Add socks_proxy support for SOCKS5 proxies (Zach)
+    * Support dynamic `--sftp-path-override` (nielash)
+    * Fix spurious warning when using `--sftp-ssh` (Nick Craig-Wood)
+* Smb
+    * Implement multi-threaded writes for copies to smb (Edwin Mackenzie-Owen)
+* Storj
+    * Performance improvement for large file uploads (Kaloyan Raev)
+* Swift
+    * Fix HEADing 0-length objects when `--swift-no-large-objects` set (Julian Lepinski)
+* Union
+    * Add `:writback` to act as a simple cache (Nick Craig-Wood)
+* WebDAV
+    * Nextcloud: fix segment violation in low-level retry (Paul)
+* Zoho
+    * Remove Range requests workarounds to fix integration tests (Nick Craig-Wood)
+
+## v1.63.1 - 2023-07-17
+
+[See commits](https://github.com/rclone/rclone/compare/v1.63.0...v1.63.1)
+
+* Bug Fixes
+    * build: Fix macos builds for versions < 12 (Anagh Kumar Baranwal)
+    * dirtree: Fix performance with large directories of directories and `--fast-list` (Nick Craig-Wood)
+    * operations
+        * Fix deadlock when using `lsd`/`ls` with `--progress` (Nick Craig-Wood)
+        * Fix `.rclonelink` files not being converted back to symlinks (Nick Craig-Wood)
+    * doc fixes (Dean Attali, Mahad, Nick Craig-Wood, Sawada Tsunayoshi, Vladislav Vorobev)
+* Local
+    * Fix partial directory read for corrupted filesystem (Nick Craig-Wood)
+* Box
+    * Fix reconnect failing with HTTP 400 Bad Request (albertony)
+* Smb
+    * Fix "Statfs failed: bucket or container name is needed" when mounting (Nick Craig-Wood)
+* WebDAV
+    * Nextcloud: fix must use /dav/files/USER endpoint not /webdav error (Paul)
+    * Nextcloud chunking: add more guidance for the user to check the config (darix)
+
+## v1.63.0 - 2023-06-30
+
+[See commits](https://github.com/rclone/rclone/compare/v1.62.0...v1.63.0)
+
+* New backends
+    * [Pikpak](/pikpak/) (wiserain)
+    * New S3 providers
+        * [petabox.io](/s3/#petabox) (Andrei Smirnov)
+        * [Google Cloud Storage](/s3/#google-cloud-storage) (Anthony Pessy)
+    * New WebDAV providers
+        * [Fastmail](/webdav/#fastmail-files) (Arnavion)
+* Major changes
+    * Files will be copied to a temporary name ending in `.partial` when copying to `local`,`ftp`,`sftp` then renamed at the end of the transfer. (Janne Hellsten, Nick Craig-Wood)
+        * This helps with data integrity as we don't delete the existing file until the new one is complete.
+        * It can be disabled with the [--inplace](/docs/#inplace) flag.
+        * This behaviour will also happen if the backend is wrapped, for example `sftp` wrapped with `crypt`.
+    * The [s3](/s3/#s3-directory-markers), [azureblob](/azureblob/#azureblob-directory-markers) and [gcs](/googlecloudstorage/#gcs-directory-markers) backends now support directory markers so empty directories are supported (Jānis Bebrītis, Nick Craig-Wood)
+    * The [--default-time](/docs/#default-time-time) flag now controls the unknown modification time of files/dirs (Nick Craig-Wood)
+        * If a file or directory does not have a modification time rclone can read then rclone will display this fixed time instead.
+        * For the old behaviour use `--default-time 0s` which will set this time to the time rclone started up.
+* New Features
+    * build
+        * Modernise linters in use and fixup all affected code (albertony)
+        * Push docker beta to GHCR (GitHub container registry) (Richard Tweed)
+    * cat: Add `--separator` option to cat command (Loren Gordon)
+    * config
+        * Do not remove/overwrite other files during config file save (albertony)
+        * Do not overwrite config file symbolic link (albertony)
+        * Stop `config create` making invalid config files (Nick Craig-Wood)
+    * doc updates (Adam K, Aditya Basu, albertony, asdffdsazqqq, Damo, danielkrajnik, Dimitri Papadopoulos, dlitster, Drew Parsons, jumbi77, kapitainsky, mac-15, Mariusz Suchodolski, Nick Craig-Wood, NickIAm, Rintze Zelle, Stanislav Gromov, Tareq Sharafy, URenko, yuudi, Zach Kipp)
+    * fs
+        * Add `size` to JSON logs when moving or copying an object (Nick Craig-Wood)
+        * Allow boolean features to be enabled with `--disable !Feature` (Nick Craig-Wood)
+    * genautocomplete: Rename to `completion` with alias to the old name (Nick Craig-Wood)
+    * librclone: Added example on using `librclone` with Go (alankrit)
+    * lsjson: Make `--stat` more efficient (Nick Craig-Wood)
+    * operations
+        * Implement `--multi-thread-write-buffer-size` for speed improvements on downloads (Paulo Schreiner)
+        * Reopen downloads on error when using `check --download` and `cat` (Nick Craig-Wood)
+    * rc: `config/listremotes` includes remotes defined with environment variables (kapitainsky)
+    * selfupdate: Obey `--no-check-certificate` flag (Nick Craig-Wood)
+    * serve restic: Trigger systemd notify (Shyim)
+    * serve webdav: Implement owncloud checksum and modtime extensions (WeidiDeng)
+    * sync: `--suffix-keep-extension` preserve 2 part extensions like .tar.gz (Nick Craig-Wood)
+* Bug Fixes
+    * accounting
+        * Fix Prometheus metrics to be the same as `core/stats` (Nick Craig-Wood)
+        * Bwlimit signal handler should always start (Sam Lai)
+    * bisync: Fix `maxDelete` parameter being ignored via the rc (Nick Craig-Wood)
+    * cmd/ncdu: Fix screen corruption when logging (eNV25)
+    * filter: Fix deadlock with errors on `--files-from` (douchen)
+    * fs
+        * Fix interaction between `--progress` and `--interactive` (Nick Craig-Wood)
+        * Fix infinite recursive call in pacer ModifyCalculator (fixes issue reported by the staticcheck linter) (albertony)
+    * lib/atexit: Ensure OnError only calls cancel function once (Nick Craig-Wood)
+    * lib/rest: Fix problems re-using HTTP connections (Nick Craig-Wood)
+    * rc
+        * Fix `operations/stat` with trailing `/` (Nick Craig-Wood)
+        * Fix missing `--rc` flags (Nick Craig-Wood)
+        * Fix output of Time values in `options/get` (Nick Craig-Wood)
+    * serve dlna: Fix potential data race (Nick Craig-Wood)
+    * version: Fix reported os/kernel version for windows (albertony)
+* Mount
+    * Add `--mount-case-insensitive` to force the mount to be case insensitive (Nick Craig-Wood)
+    * Removed unnecessary byte slice allocation for reads (Anagh Kumar Baranwal)
+    * Clarify rclone mount error when installed via homebrew (Nick Craig-Wood)
+    * Added _netdev to the example mount so it gets treated as a remote-fs rather than local-fs (Anagh Kumar Baranwal)
+* Mount2
+    * Updated go-fuse version (Anagh Kumar Baranwal)
+    * Fixed statfs (Anagh Kumar Baranwal)
+    * Disable xattrs (Anagh Kumar Baranwal)
+* VFS
+    * Add MkdirAll function to make a directory and all beneath (Nick Craig-Wood)
+    * Fix reload: failed to add virtual dir entry: file does not exist (Nick Craig-Wood)
+    * Fix writing to a read only directory creating spurious directory entries (WeidiDeng)
+    * Fix potential data race (Nick Craig-Wood)
+    * Fix backends being Shutdown too early when startup takes a long time (Nick Craig-Wood)
+* Local
+    * Fix filtering of symlinks with `-l`/`--links` flag (Nick Craig-Wood)
+    * Fix /path/to/file.rclonelink when `-l`/`--links` is in use (Nick Craig-Wood)
+    * Fix crash with `--metadata` on Android (Nick Craig-Wood)
+* Cache
+    * Fix backends shutting down when in use when used via the rc (Nick Craig-Wood)
+* Crypt
+    * Add `--crypt-suffix` option to set a custom suffix for encrypted files (jladbrook)
+    * Add `--crypt-pass-bad-blocks` to allow corrupted file output (Nick Craig-Wood)
+    * Fix reading 0 length files (Nick Craig-Wood)
+    * Try not to return "unexpected EOF" error (Nick Craig-Wood)
+    * Reduce allocations (albertony)
+    * Recommend Dropbox for `base32768` encoding (Nick Craig-Wood)
+* Azure Blob
+    * Empty directory markers (Nick Craig-Wood)
+    * Support azure workload identities (Tareq Sharafy)
+    * Fix azure blob uploads with multiple bits of metadata (Nick Craig-Wood)
+    * Fix azurite compatibility by sending nil tier if set to empty string (Roel Arents)
+* Combine
+    * Implement missing methods (Nick Craig-Wood)
+    * Fix goroutine stack overflow on bad object (Nick Craig-Wood)
+* Drive
+    * Add `--drive-env-auth` to get IAM credentials from runtime (Peter Brunner)
+    * Update drive service account guide (Juang, Yi-Lin)
+    * Fix change notify picking up files outside the root (Nick Craig-Wood)
+    * Fix trailing slash mis-identificaton of folder as file (Nick Craig-Wood)
+    * Fix incorrect remote after Update on object (Nick Craig-Wood)
+* Dropbox
+    * Implement `--dropbox-pacer-min-sleep` flag (Nick Craig-Wood)
+    * Fix the dropbox batcher stalling (Misty)
+* Fichier
+    * Add `--ficicher-cdn` option to use the CDN for download (Nick Craig-Wood)
+* FTP
+    * Lower log message priority when `SetModTime` is not supported to debug (Tobias Gion)
+    * Fix "unsupported LIST line" errors on startup (Nick Craig-Wood)
+    * Fix "501 Not a valid pathname." errors when creating directories (Nick Craig-Wood)
+* Google Cloud Storage
+    * Empty directory markers (Jānis Bebrītis, Nick Craig-Wood)
+    * Added `--gcs-user-project` needed for requester pays (Christopher Merry)
+* HTTP
+    * Add client certificate user auth middleware. This can auth `serve restic` from the username in the client cert. (Peter Fern)
+* Jottacloud
+    * Fix vfs writeback stuck in a failed upload loop with file versioning disabled (albertony)
+* Onedrive
+    * Add `--onedrive-av-override` flag to download files flagged as virus (Nick Craig-Wood)
+    * Fix quickxorhash on 32 bit architectures (Nick Craig-Wood)
+    * Report any list errors during `rclone cleanup` (albertony)
+* Putio
+    * Fix uploading to the wrong object on Update with overriden remote name (Nick Craig-Wood)
+    * Fix modification times not being preserved for server side copy and move (Nick Craig-Wood)
+    * Fix server side copy failures (400 errors) (Nick Craig-Wood)
+* S3
+    * Empty directory markers (Jānis Bebrītis, Nick Craig-Wood)
+    * Update Scaleway storage classes (Brian Starkey)
+    * Fix `--s3-versions` on individual objects (Nick Craig-Wood)
+    * Fix hang on aborting multpart upload with iDrive e2 (Nick Craig-Wood)
+    * Fix missing "tier" metadata (Nick Craig-Wood)
+    * Fix V3sign: add missing subresource delete (cc)
+    * Fix Arvancloud Domain and region changes and alphabetise the provider (Ehsan Tadayon)
+    * Fix Qiniu KODO quirks virtualHostStyle is false (zzq)
+* SFTP
+    * Add `--sftp-host-key-algorithms ` to allow specifying SSH host key algorithms (Joel)
+    * Fix using `--sftp-key-use-agent` and `--sftp-key-file` together needing private key file (Arnav Singh)
+    * Fix move to allow overwriting existing files (Nick Craig-Wood)
+    * Don't stat directories before listing them (Nick Craig-Wood)
+    * Don't check remote points to a file if it ends with / (Nick Craig-Wood)
+* Sharefile
+    * Disable streamed transfers as they no longer work (Nick Craig-Wood)
+* Smb
+    * Code cleanup to avoid overwriting ctx before first use (fixes issue reported by the staticcheck linter) (albertony)
+* Storj
+    * Fix "uplink: too many requests" errors when uploading to the same file (Nick Craig-Wood)
+    * Fix uploading to the wrong object on Update with overriden remote name (Nick Craig-Wood)
+* Swift
+    * Ignore 404 error when deleting an object (Nick Craig-Wood)
+* Union
+    * Implement missing methods (Nick Craig-Wood)
+    * Allow errors to be unwrapped for inspection (Nick Craig-Wood)
+* Uptobox
+    * Add `--uptobox-private` flag to make all uploaded files private (Nick Craig-Wood)
+    * Fix improper regex (Aaron Gokaslan)
+    * Fix Update returning the wrong object (Nick Craig-Wood)
+    * Fix rmdir declaring that directories weren't empty (Nick Craig-Wood)
+* WebDAV
+    * nextcloud: Add support for chunked uploads (Paul)
+    * Set modtime using propset for owncloud and nextcloud (WeidiDeng)
+    * Make pacer minSleep configurable with `--webdav-pacer-min-sleep` (ed)
+    * Fix server side copy/move not overwriting (WeidiDeng)
+    * Fix modtime on server side copy for owncloud and nextcloud (Nick Craig-Wood)
+* Yandex
+    * Fix 400 Bad Request on transfer failure (Nick Craig-Wood)
+* Zoho
+    * Fix downloads with `Range:` header returning the wrong data (Nick Craig-Wood)
+
 ## v1.62.2 - 2023-03-16
 
 [See commits](https://github.com/rclone/rclone/compare/v1.62.1...v1.62.2)

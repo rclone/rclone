@@ -877,6 +877,10 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		opt:       *opt,
 		upstreams: usedUpstreams,
 	}
+	err = upstream.Prepare(f.upstreams)
+	if err != nil {
+		return nil, err
+	}
 	f.actionPolicy, err = policy.Get(opt.ActionPolicy)
 	if err != nil {
 		return nil, err
