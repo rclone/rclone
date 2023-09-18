@@ -5729,6 +5729,23 @@ func (w *s3ChunkWriter) Close(ctx context.Context) (err error) {
 }
 
 func (o *Object) uploadMultipart(ctx context.Context, src fs.ObjectInfo, in io.Reader, options ...fs.OpenOption) (wantETag, gotETag string, versionID *string, ui uploadInfo, err error) {
+	if o.fs.encryptClient != nil {
+		ui, err = o.prepareUpload(ctx, src, options)
+		if err != nil {
+			return wantETag, gotETag, versionID, ui, fmt.Errorf("failed to prepare upload: %w", err)
+		}
+		ui.req.Body = aws.ReadSeekCloser(in)
+		req, _ := o.fs.encryptClient.PutObjectRequest(ui.req)
+		_ = req.Build()
+		in = ui.req.Body
+		keys := []string{"Unencrypted-Content-Length", "Iv", "Key-V2", "Matdesc", "Wrap-Alg", "Cek-Alg", "Tag-Len"}
+		for _, key := range keys {
+			options = append(options, &fs.HTTPOption{
+				Key:   "X-Amz-Meta-X-Amz-" + key,
+				Value: req.HTTPRequest.Header.Get("X-Amz-Meta-X-Amz-" + key),
+			})
+		}
+	}
 	chunkWriter, err := multipart.UploadMultipart(ctx, src, in, multipart.UploadMultipartOptions{
 		Open:        o.fs,
 		OpenOptions: options,
@@ -5739,28 +5756,6 @@ func (o *Object) uploadMultipart(ctx context.Context, src fs.ObjectInfo, in io.R
 	var s3cw *s3ChunkWriter = chunkWriter.(*s3ChunkWriter)
 	gotETag = s3cw.eTag
 	versionID = aws.String(s3cw.versionID)
-	if o.fs.encryptClient != nil && ui.req != nil {
-		ui.req.Body = aws.ReadSeekCloser(in)
-		r, _ := o.fs.encryptClient.PutObjectRequest(ui.req)
-		_ = r.Build()
-		in = ui.req.Body
-		length := r.HTTPRequest.Header.Get("X-Amz-Meta-X-Amz-Unencrypted-Content-Length")
-		env := s3crypto.Envelope{
-			IV:        r.HTTPRequest.Header.Get("X-Amz-Meta-X-Amz-Iv"),
-			CipherKey: r.HTTPRequest.Header.Get("X-Amz-Meta-X-Amz-Key-V2"),
-			MatDesc:   r.HTTPRequest.Header.Get("X-Amz-Meta-X-Amz-Matdesc"),
-			WrapAlg:   r.HTTPRequest.Header.Get("X-Amz-Meta-X-Amz-Wrap-Alg"),
-			CEKAlg:    r.HTTPRequest.Header.Get("X-Amz-Meta-X-Amz-Cek-Alg"),
-			TagLen:    r.HTTPRequest.Header.Get("X-Amz-Meta-X-Amz-Tag-Len"),
-		}
-		s3cw.multiPartUploadInput.Metadata["X-Amz-Unencrypted-Content-Length"] = &length
-		s3cw.multiPartUploadInput.Metadata["X-Amz-Iv"] = &env.IV
-		s3cw.multiPartUploadInput.Metadata["X-Amz-Key-V2"] = &env.CipherKey
-		s3cw.multiPartUploadInput.Metadata["X-Amz-Matdesc"] = &env.MatDesc
-		s3cw.multiPartUploadInput.Metadata["X-Amz-Key-Wrap-Alg"] = &env.WrapAlg
-		s3cw.multiPartUploadInput.Metadata["X-Amz-Key-Cek-Alg"] = &env.CEKAlg
-		s3cw.multiPartUploadInput.Metadata["X-Amz-Key-Tag-Len"] = &env.TagLen
-	}
 	hashOfHashes := md5.Sum(s3cw.md5s)
 	wantETag = fmt.Sprintf("%s-%d", hex.EncodeToString(hashOfHashes[:]), len(s3cw.completedParts))
 
@@ -5999,10 +5994,10 @@ func (o *Object) prepareUpload(ctx context.Context, src fs.ObjectInfo, options [
 	if ui.req.ContentType == nil {
 		ui.req.ContentType = aws.String(fs.MimeType(ctx, src))
 	}
-	if size >= 0 && o.fs.encryptClient == nil {
+	if size >= 0 {
 		ui.req.ContentLength = &size
 	}
-	if md5sumBase64 != "" && o.fs.encryptClient == nil {
+	if md5sumBase64 != "" {
 		ui.req.ContentMD5 = &md5sumBase64
 	}
 	if o.fs.opt.RequesterPays {
