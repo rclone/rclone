@@ -2573,23 +2573,23 @@ type Options struct {
 
 // Fs represents a remote s3 server
 type Fs struct {
-	name           string           // the name of the remote
-	root           string           // root of the bucket - ignore all objects above this
-	opt            Options          // parsed options
-	ci             *fs.ConfigInfo   // global config
-	ctx            context.Context  // global context for reading config
-	features       *fs.Features     // optional features
-	c              *s3.S3           // the connection to the s3 server
-	ses            *session.Session // the s3 session
-	rootBucket     string           // bucket part of root (if any)
-	rootDirectory  string           // directory part of root (if any)
-	cache          *bucket.Cache    // cache for bucket creation status
-	pacer          *fs.Pacer        // To pace the API calls
-	srv            *http.Client     // a plain http client
-	srvRest        *rest.Client     // the rest connection to the server
+	name           string                       // the name of the remote
+	root           string                       // root of the bucket - ignore all objects above this
+	opt            Options                      // parsed options
+	ci             *fs.ConfigInfo               // global config
+	ctx            context.Context              // global context for reading config
+	features       *fs.Features                 // optional features
+	c              *s3.S3                       // the connection to the s3 server
+	ses            *session.Session             // the s3 session
+	rootBucket     string                       // bucket part of root (if any)
+	rootDirectory  string                       // directory part of root (if any)
+	cache          *bucket.Cache                // cache for bucket creation status
+	pacer          *fs.Pacer                    // To pace the API calls
+	srv            *http.Client                 // a plain http client
+	srvRest        *rest.Client                 // the rest connection to the server
 	encryptClient  *s3crypto.EncryptionClientV2 // is an S3 crypto client
 	decryptClient  *s3crypto.DecryptionClientV2 // is an S3 crypto client
-	etagIsNotMD5   bool             // if set ETags are not MD5s
+	etagIsNotMD5   bool                         // if set ETags are not MD5s
 	versioningMu   sync.Mutex
 	versioning     fs.Tristate // if set bucket is using versions
 	warnCompressed sync.Once   // warn once about compressed files
@@ -5561,28 +5561,6 @@ func (f *Fs) OpenChunkWriter(ctx context.Context, remote string, src fs.ObjectIn
 	if err != nil {
 		return info, nil, fmt.Errorf("create multipart upload failed: %w", err)
 	}
-	if f.encryptClient != nil {
-		ui.req.Body = aws.ReadSeekCloser(in)
-		r, _ := f.encryptClient.PutObjectRequest(ui.req)
-		_ = r.Build()
-		in = ui.req.Body
-		length := r.HTTPRequest.Header.Get("X-Amz-Meta-X-Amz-Unencrypted-Content-Length")
-		env := s3crypto.Envelope{
-			IV:        r.HTTPRequest.Header.Get("X-Amz-Meta-X-Amz-Iv"),
-			CipherKey: r.HTTPRequest.Header.Get("X-Amz-Meta-X-Amz-Key-V2"),
-			MatDesc:   r.HTTPRequest.Header.Get("X-Amz-Meta-X-Amz-Matdesc"),
-			WrapAlg:   r.HTTPRequest.Header.Get("X-Amz-Meta-X-Amz-Wrap-Alg"),
-			CEKAlg:    r.HTTPRequest.Header.Get("X-Amz-Meta-X-Amz-Cek-Alg"),
-			TagLen:    r.HTTPRequest.Header.Get("X-Amz-Meta-X-Amz-Tag-Len"),
-		}
-		mReq.Metadata["X-Amz-Unencrypted-Content-Length"] = &length
-		mReq.Metadata["X-Amz-Iv"] = &env.IV
-		mReq.Metadata["X-Amz-Key-V2"] = &env.CipherKey
-		mReq.Metadata["X-Amz-Matdesc"] = &env.MatDesc
-		mReq.Metadata["X-Amz-Key-Wrap-Alg"] = &env.WrapAlg
-		mReq.Metadata["X-Amz-Key-Cek-Alg"] = &env.CEKAlg
-		mReq.Metadata["X-Amz-Key-Tag-Len"] = &env.TagLen
-	}
 
 	chunkWriter := &s3ChunkWriter{
 		chunkSize:            int64(chunkSize),
@@ -5758,11 +5736,31 @@ func (o *Object) uploadMultipart(ctx context.Context, src fs.ObjectInfo, in io.R
 	if err != nil {
 		return wantETag, gotETag, versionID, ui, err
 	}
-
 	var s3cw *s3ChunkWriter = chunkWriter.(*s3ChunkWriter)
 	gotETag = s3cw.eTag
 	versionID = aws.String(s3cw.versionID)
-
+	if o.fs.encryptClient != nil && ui.req != nil {
+		ui.req.Body = aws.ReadSeekCloser(in)
+		r, _ := o.fs.encryptClient.PutObjectRequest(ui.req)
+		_ = r.Build()
+		in = ui.req.Body
+		length := r.HTTPRequest.Header.Get("X-Amz-Meta-X-Amz-Unencrypted-Content-Length")
+		env := s3crypto.Envelope{
+			IV:        r.HTTPRequest.Header.Get("X-Amz-Meta-X-Amz-Iv"),
+			CipherKey: r.HTTPRequest.Header.Get("X-Amz-Meta-X-Amz-Key-V2"),
+			MatDesc:   r.HTTPRequest.Header.Get("X-Amz-Meta-X-Amz-Matdesc"),
+			WrapAlg:   r.HTTPRequest.Header.Get("X-Amz-Meta-X-Amz-Wrap-Alg"),
+			CEKAlg:    r.HTTPRequest.Header.Get("X-Amz-Meta-X-Amz-Cek-Alg"),
+			TagLen:    r.HTTPRequest.Header.Get("X-Amz-Meta-X-Amz-Tag-Len"),
+		}
+		s3cw.multiPartUploadInput.Metadata["X-Amz-Unencrypted-Content-Length"] = &length
+		s3cw.multiPartUploadInput.Metadata["X-Amz-Iv"] = &env.IV
+		s3cw.multiPartUploadInput.Metadata["X-Amz-Key-V2"] = &env.CipherKey
+		s3cw.multiPartUploadInput.Metadata["X-Amz-Matdesc"] = &env.MatDesc
+		s3cw.multiPartUploadInput.Metadata["X-Amz-Key-Wrap-Alg"] = &env.WrapAlg
+		s3cw.multiPartUploadInput.Metadata["X-Amz-Key-Cek-Alg"] = &env.CEKAlg
+		s3cw.multiPartUploadInput.Metadata["X-Amz-Key-Tag-Len"] = &env.TagLen
+	}
 	hashOfHashes := md5.Sum(s3cw.md5s)
 	wantETag = fmt.Sprintf("%s-%d", hex.EncodeToString(hashOfHashes[:]), len(s3cw.completedParts))
 
