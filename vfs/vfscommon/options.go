@@ -71,14 +71,13 @@ var DefaultOpt = Options{
 	DiskSpaceTotalSize: -1,
 }
 
-func initializeExclusionPatterns() {
-	for _, pattern := range DefaultOpt.VfsUploadExclude {
+func initializeExclusionPatterns(opt *Options) {
+	for _, pattern := range opt.VfsUploadExclude {
 		regexPattern, err := filter.GlobToRegexp(pattern, true)
 		if err != nil {
-			// Handle error (e.g., log it)
 			continue
 		}
-		DefaultOpt.VfsExcludeRegex = append(DefaultOpt.VfsExcludeRegex, regexPattern)
+		opt.VfsExcludeRegex = append(opt.VfsExcludeRegex, regexPattern)
 	}
 }
 
@@ -90,6 +89,5 @@ func (opt *Options) Init() {
 
 	// Make sure directories are returned as directories
 	opt.DirPerms |= os.ModeDir
-
-	initializeExclusionPatterns()
+	initializeExclusionPatterns(opt)
 }
