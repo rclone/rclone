@@ -492,7 +492,7 @@ upon backend-specific capabilities.
 | Mega                         | Yes   | No   | Yes  | Yes     | Yes     | No    | No           | No  | Yes          | Yes   | Yes      |
 | Memory                       | No    | Yes  | No   | No      | No      | Yes   | Yes          | No  | No           | No    | No       |
 | Microsoft Azure Blob Storage | Yes   | Yes  | No   | No      | No      | Yes   | Yes          | Yes | No           | No    | No       |
-| Microsoft OneDrive           | Yes   | Yes  | Yes  | Yes     | Yes     | No    | No           | No  | Yes          | Yes   | Yes      |
+| Microsoft OneDrive           | Yes   | Yes  | Yes  | Yes     | Yes     | Yes   | No           | No  | Yes          | Yes   | Yes      |
 | OpenDrive                    | Yes   | Yes  | Yes  | Yes     | No      | No    | No           | No  | No           | No    | Yes      |
 | OpenStack Swift              | Yes † | Yes  | No   | No      | No      | Yes   | Yes          | No  | No           | Yes   | No       |
 | Oracle Object Storage        | No    | Yes  | No   | No      | Yes     | Yes   | Yes          | Yes | No           | No    | No       |

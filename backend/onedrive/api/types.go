@@ -99,6 +99,16 @@ type ItemReference struct {
 	DriveType string `json:"driveType"` // Type of the drive,	Read-Only
 }
 
+// GetID returns a normalized ID of the item
+// If DriveID is known it will be prefixed to the ID with # separator
+// Can be parsed using onedrive.parseNormalizedID(normalizedID)
+func (i *ItemReference) GetID() string {
+	if !strings.Contains(i.ID, "#") {
+		return i.DriveID + "#" + i.ID
+	}
+	return i.ID
+}
+
 // RemoteItemFacet groups data needed to reference a OneDrive remote item
 type RemoteItemFacet struct {
 	ID                   string               `json:"id"`                   // The unique identifier of the item within the remote Drive. Read-only.
