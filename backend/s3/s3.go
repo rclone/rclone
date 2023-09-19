@@ -2711,17 +2711,15 @@ func (f *Fs) split(rootRelativePath string) (bucketName, bucketPath string) {
 func (f *Fs) putObjectRequest(req *s3.PutObjectInput) (*request.Request, *s3.PutObjectOutput) {
 	if f.encryptClient == nil || req.Body == nil {
 		return f.c.PutObjectRequest(req)
-	} else {
-		return f.encryptClient.PutObjectRequest(req)
 	}
+	return f.encryptClient.PutObjectRequest(req)
 }
 
 func (f *Fs) GetObjectRequest(req *s3.GetObjectInput) (*request.Request, *s3.GetObjectOutput) {
 	if f.decryptClient == nil {
 		return f.c.GetObjectRequest(req)
-	} else {
-		return f.decryptClient.GetObjectRequest(req)
 	}
+	return f.decryptClient.GetObjectRequest(req)
 }
 
 // split returns bucket and bucketPath from the object
