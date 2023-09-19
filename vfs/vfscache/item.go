@@ -630,7 +630,7 @@ func (item *Item) store(ctx context.Context, storeFn StoreFn) (err error) {
 	return item._store(ctx, storeFn)
 }
 
-func matches_exclusion_patterns(filename string, vfsExcludeRegex []*regexp.Regexp) bool {
+func matchesExclusionPatterns(filename string, vfsExcludeRegex []*regexp.Regexp) bool {
 	for _, regexPattern := range vfsExcludeRegex {
 		if regexPattern.MatchString(filename) {
 			return true
@@ -725,7 +725,7 @@ func (item *Item) Close(storeFn StoreFn) (err error) {
 
 	// upload the file to backing store if changed
 	if item.info.Dirty {
-		if matches_exclusion_patterns(item.name, item.c.opt.VfsExcludeRegex) {
+		if matchesExclusionPatterns(item.name, item.c.opt.VfsExcludeRegex) {
 			fs.Infof(item.name, "vfs cache: skipping writeback due to exclusion pattern match")
 			return
 		}

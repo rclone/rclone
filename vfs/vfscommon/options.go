@@ -75,6 +75,7 @@ func initializeExclusionPatterns(opt *Options) {
 	for _, pattern := range opt.VfsUploadExclude {
 		regexPattern, err := filter.GlobToRegexp(pattern, true)
 		if err != nil {
+			fs.Errorf(pattern, "Could not generate regex from glob for VFS cache exclusion: %v", err)
 			continue
 		}
 		opt.VfsExcludeRegex = append(opt.VfsExcludeRegex, regexPattern)
