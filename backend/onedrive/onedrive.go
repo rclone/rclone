@@ -371,28 +371,6 @@ file.
 	})
 }
 
-type driveResource struct {
-	DriveID   string `json:"id"`
-	DriveName string `json:"name"`
-	DriveType string `json:"driveType"`
-}
-type drivesResponse struct {
-	Drives []driveResource `json:"value"`
-}
-
-type siteResource struct {
-	SiteID   string `json:"id"`
-	SiteName string `json:"displayName"`
-	SiteURL  string `json:"webUrl"`
-}
-type siteResponse struct {
-	Sites []siteResource `json:"value"`
-}
-type deltaResponse struct {
-	DeltaLink string     `json:"@odata.deltaLink"`
-	Value     []api.Item `json:"value"`
-}
-
 // Get the region and graphURL from the config
 func getRegionURL(m configmap.Mapper) (region, graphURL string) {
 	region, _ = m.Get("region")
@@ -419,7 +397,7 @@ func chooseDrive(ctx context.Context, name string, m configmap.Mapper, srv *rest
 			RootURL: graphURL,
 			Path:    "/sites/root:" + opt.relativePath,
 		}
-		site := siteResource{}
+		site := api.SiteResource{}
 		_, err := srv.CallJSON(ctx, &opt.opts, nil, &site)
 		if err != nil {
 			return fs.ConfigError("choose_type", fmt.Sprintf("Failed to query available site by relative path: %v", err))
@@ -436,7 +414,7 @@ func chooseDrive(ctx context.Context, name string, m configmap.Mapper, srv *rest
 		}
 	}
 
-	drives := drivesResponse{}
+	drives := api.DrivesResponse{}
 
 	// We don't have the final ID yet?
 	// query Microsoft Graph
@@ -449,7 +427,7 @@ func chooseDrive(ctx context.Context, name string, m configmap.Mapper, srv *rest
 		// Also call /me/drive as sometimes /me/drives doesn't return it #4068
 		if opt.opts.Path == "/me/drives" {
 			opt.opts.Path = "/me/drive"
-			meDrive := driveResource{}
+			meDrive := api.DriveResource{}
 			_, err := srv.CallJSON(ctx, &opt.opts, nil, &meDrive)
 			if err != nil {
 				return fs.ConfigError("choose_type", fmt.Sprintf("Failed to query available drives: %v", err))
@@ -468,7 +446,7 @@ func chooseDrive(ctx context.Context, name string, m configmap.Mapper, srv *rest
 			}
 		}
 	} else {
-		drives.Drives = append(drives.Drives, driveResource{
+		drives.Drives = append(drives.Drives, api.DriveResource{
 			DriveID:   opt.finalDriveID,
 			DriveName: "Chosen Drive ID",
 			DriveType: "drive",
@@ -605,7 +583,7 @@ Examples:
 			Path:    "/sites?search=" + searchTerm,
 		}
 
-		sites := siteResponse{}
+		sites := api.SiteResponse{}
 		_, err := srv.CallJSON(ctx, &opts, nil, &sites)
 		if err != nil {
 			return fs.ConfigError("choose_type", fmt.Sprintf("Failed to query available sites: %v", err))
@@ -2481,7 +2459,7 @@ func (f *Fs) changeNotifyStartPageToken(ctx context.Context) (nextDeltaToken str
 	return
 }
 
-func (f *Fs) changeNotifyNextChange(ctx context.Context, token string) (delta deltaResponse, err error) {
+func (f *Fs) changeNotifyNextChange(ctx context.Context, token string) (delta api.DeltaResponse, err error) {
 	opts := f.buildDriveDeltaOpts(token)
 
 	_, err = f.srv.CallJSON(ctx, &opts, nil, &delta)
