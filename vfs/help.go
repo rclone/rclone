@@ -109,7 +109,7 @@ uploaded, these will be uploaded next time rclone is run with the same
 flags.
 
 If !--vfs-upload-exclude! is set, files matching the glob pattern will
-never be uploaded to the remote. See [Filtering Patterns](https://rclone.org/filtering/#patterns) for more.
+never be uploaded to the remote. See [Filtering Patterns](/filtering/#patterns) for more.
 
 If using !--vfs-cache-max-size! or !--vfs-cache-min-free-size! note
 that the cache may exceed these quotas for two reasons. Firstly
