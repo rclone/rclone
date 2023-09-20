@@ -83,7 +83,7 @@ func mountOptions(fsys *FS, f fs.Fs, opt *mountlib.Options) (mountOpts *fuse.Mou
 			// (128 kiB on Linux) and cannot be larger than MaxWrite.
 			//
 			// MaxReadAhead only affects buffered reads (=non-direct-io), but even then, the
-			// kernel can and does send larger reads to satisfy read reqests from applications
+			// kernel can and does send larger reads to satisfy read requests from applications
 			// (up to MaxWrite or VM_READAHEAD_PAGES=128 kiB, whichever is less).
 			MaxReadAhead int
 

@@ -105,14 +105,14 @@ description: "Rclone Changelog"
     * Fix 425 "TLS session of data connection not resumed" errors (Nick Craig-Wood)
 * Hdfs
     * Retry "replication in progress" errors when uploading (Nick Craig-Wood)
-    * Fix uploading to the wrong object on Update with overriden remote name (Nick Craig-Wood)
+    * Fix uploading to the wrong object on Update with overridden remote name (Nick Craig-Wood)
 * HTTP
     * CORS should not be sent if not set (yuudi)
     * Fix webdav OPTIONS response (yuudi)
 * Opendrive
     * Fix List on a just deleted and remade directory (Nick Craig-Wood)
 * Oracleobjectstorage
-    * Use rclone's rate limiter in mutipart transfers (Manoj Ghosh)
+    * Use rclone's rate limiter in multipart transfers (Manoj Ghosh)
     * Implement `OpenChunkWriter` and multi-thread uploads (Manoj Ghosh)
 * S3
     * Refactor multipart upload to use `OpenChunkWriter` and `ChunkWriter` (Vitor Gomes)
@@ -285,14 +285,14 @@ description: "Rclone Changelog"
     * Fix quickxorhash on 32 bit architectures (Nick Craig-Wood)
     * Report any list errors during `rclone cleanup` (albertony)
 * Putio
-    * Fix uploading to the wrong object on Update with overriden remote name (Nick Craig-Wood)
+    * Fix uploading to the wrong object on Update with overridden remote name (Nick Craig-Wood)
     * Fix modification times not being preserved for server side copy and move (Nick Craig-Wood)
     * Fix server side copy failures (400 errors) (Nick Craig-Wood)
 * S3
     * Empty directory markers (Jānis Bebrītis, Nick Craig-Wood)
     * Update Scaleway storage classes (Brian Starkey)
     * Fix `--s3-versions` on individual objects (Nick Craig-Wood)
-    * Fix hang on aborting multpart upload with iDrive e2 (Nick Craig-Wood)
+    * Fix hang on aborting multipart upload with iDrive e2 (Nick Craig-Wood)
     * Fix missing "tier" metadata (Nick Craig-Wood)
     * Fix V3sign: add missing subresource delete (cc)
     * Fix Arvancloud Domain and region changes and alphabetise the provider (Ehsan Tadayon)
@@ -309,7 +309,7 @@ description: "Rclone Changelog"
     * Code cleanup to avoid overwriting ctx before first use (fixes issue reported by the staticcheck linter) (albertony)
 * Storj
     * Fix "uplink: too many requests" errors when uploading to the same file (Nick Craig-Wood)
-    * Fix uploading to the wrong object on Update with overriden remote name (Nick Craig-Wood)
+    * Fix uploading to the wrong object on Update with overridden remote name (Nick Craig-Wood)
 * Swift
     * Ignore 404 error when deleting an object (Nick Craig-Wood)
 * Union
@@ -3938,7 +3938,7 @@ Point release to fix hubic and azureblob backends.
     * Revert to copy when moving file across file system boundaries
     * `--skip-links` to suppress symlink warnings (thanks Zhiming Wang)
 * Mount
-    * Re-use `rcat` internals to support uploads from all remotes
+    * Reuse `rcat` internals to support uploads from all remotes
 * Dropbox
     * Fix "entry doesn't belong in directory" error
     * Stop using deprecated API methods

@@ -2119,7 +2119,7 @@ func (w *azChunkWriter) WriteChunk(ctx context.Context, chunkNumber int, reader 
 	return currentChunkSize, err
 }
 
-// Abort the multpart upload.
+// Abort the multipart upload.
 //
 // FIXME it would be nice to delete uncommitted blocks.
 //
