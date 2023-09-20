@@ -170,6 +170,9 @@ func TestItemExcludedDirty(t *testing.T) {
 	assert.Equal(t, true, excluded_item_1.IsDirty())
 	assert.Equal(t, true, excluded_item_2.IsDirty())
 
+	excluded_item_1.rename("exclude_folder/potato", "unexclude_folder/carrot", nil)
+	assert.Equal(t, false, excluded_item_1.IsDirty())
+
 	item.Dirty()
 
 	assert.Equal(t, true, item.IsDirty())
