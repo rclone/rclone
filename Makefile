@@ -66,6 +66,10 @@ btest:
 	@echo "[$(TAG)]($(BETA_URL)) on branch [$(BRANCH)](https://github.com/rclone/rclone/tree/$(BRANCH)) (uploaded in 15-30 mins)" | xclip -r -sel clip
 	@echo "Copied markdown of beta release to clip board"
 
+btesth:
+	@echo "<a href="$(BETA_URL)">$(TAG)</a> on branch <a href="https://github.com/rclone/rclone/tree/$(BRANCH)">$(BRANCH)</a> (uploaded in 15-30 mins)" | xclip -r -sel clip -t text/html
+	@echo "Copied beta release in HTML to clip board"
+
 version:
 	@echo '$(TAG)'
 
