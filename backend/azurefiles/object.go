@@ -100,7 +100,39 @@ func (o *Object) Remove(ctx context.Context) error {
 
 // TODO: implement options. understand purpose of options
 func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadCloser, error) {
-	resp, err := o.fileClient().DownloadStream(ctx, nil)
+	downloadStreamOptions := file.DownloadStreamOptions{}
+	for _, opt := range options {
+		switch v := opt.(type) {
+		case *fs.SeekOption:
+			httpRange := file.HTTPRange{
+				Offset: v.Offset,
+			}
+			downloadStreamOptions.Range = httpRange
+			// seekOpt = opt.(*fs.SeekOption)
+		case *fs.RangeOption:
+			var start *int64
+			var end *int64
+			if v.Start >= 0 {
+				start = &v.Start
+			}
+			if v.End >= 0 {
+				end = &v.End
+			}
+
+			fhr := file.HTTPRange{}
+			if start != nil && end != nil {
+				fhr.Offset = *start
+				fhr.Count = *end - *start + 1
+			} else if start != nil && end == nil {
+				fhr.Offset = *start
+			} else if start == nil && end != nil {
+				fhr.Offset = *o.contentLength - *end
+			}
+
+			downloadStreamOptions.Range = fhr
+		}
+	}
+	resp, err := o.fileClient().DownloadStream(ctx, &downloadStreamOptions)
 	if err != nil {
 		return nil, fmt.Errorf("could not open remote=\"%s\" : %w", o.remote, err)
 	}
