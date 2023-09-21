@@ -62,11 +62,126 @@ import (
 	"golang.org/x/net/http/httpguts"
 )
 
+// The S3 providers
+//
+// Please keep these in alphabetical order, but with AWS first and
+// Other last.
+//
+// NB if you add a new provider here, then add it in the setQuirks
+// function and set the correct quirks. Test the quirks are correct by
+// running the integration tests "go test -v -remote NewS3Provider:".
+var providerOption = fs.Option{
+	Name: fs.ConfigProvider,
+	Help: "Choose your S3 provider.",
+	Examples: []fs.OptionExample{{
+		Value: "AWS",
+		Help:  "Amazon Web Services (AWS) S3",
+	}, {
+		Value: "Alibaba",
+		Help:  "Alibaba Cloud Object Storage System (OSS) formerly Aliyun",
+	}, {
+		Value: "ArvanCloud",
+		Help:  "Arvan Cloud Object Storage (AOS)",
+	}, {
+		Value: "Ceph",
+		Help:  "Ceph Object Storage",
+	}, {
+		Value: "ChinaMobile",
+		Help:  "China Mobile Ecloud Elastic Object Storage (EOS)",
+	}, {
+		Value: "Cloudflare",
+		Help:  "Cloudflare R2 Storage",
+	}, {
+		Value: "DigitalOcean",
+		Help:  "DigitalOcean Spaces",
+	}, {
+		Value: "Dreamhost",
+		Help:  "Dreamhost DreamObjects",
+	}, {
+		Value: "GCS",
+		Help:  "Google Cloud Storage",
+	}, {
+		Value: "HuaweiOBS",
+		Help:  "Huawei Object Storage Service",
+	}, {
+		Value: "IBMCOS",
+		Help:  "IBM COS S3",
+	}, {
+		Value: "IDrive",
+		Help:  "IDrive e2",
+	}, {
+		Value: "IONOS",
+		Help:  "IONOS Cloud",
+	}, {
+		Value: "LyveCloud",
+		Help:  "Seagate Lyve Cloud",
+	}, {
+		Value: "Leviia",
+		Help:  "Leviia Object Storage",
+	}, {
+		Value: "Liara",
+		Help:  "Liara Object Storage",
+	}, {
+		Value: "Minio",
+		Help:  "Minio Object Storage",
+	}, {
+		Value: "Netease",
+		Help:  "Netease Object Storage (NOS)",
+	}, {
+		Value: "Petabox",
+		Help:  "Petabox Object Storage",
+	}, {
+		Value: "RackCorp",
+		Help:  "RackCorp Object Storage",
+	}, {
+		Value: "Scaleway",
+		Help:  "Scaleway Object Storage",
+	}, {
+		Value: "SeaweedFS",
+		Help:  "SeaweedFS S3",
+	}, {
+		Value: "StackPath",
+		Help:  "StackPath Object Storage",
+	}, {
+		Value: "Storj",
+		Help:  "Storj (S3 Compatible Gateway)",
+	}, {
+		Value: "Synology",
+		Help:  "Synology C2 Object Storage",
+	}, {
+		Value: "TencentCOS",
+		Help:  "Tencent Cloud Object Storage (COS)",
+	}, {
+		Value: "Wasabi",
+		Help:  "Wasabi Object Storage",
+	}, {
+		Value: "Qiniu",
+		Help:  "Qiniu Object Storage (Kodo)",
+	}, {
+		Value: "Other",
+		Help:  "Any other S3 compatible provider",
+	}},
+}
+
+var providersList string
+
 // Register with Fs
 func init() {
+	var s strings.Builder
+	for i, provider := range providerOption.Examples {
+		if provider.Value == "Other" {
+			_, _ = s.WriteString(" and others")
+		} else {
+			if i != 0 {
+				_, _ = s.WriteString(", ")
+			}
+			_, _ = s.WriteString(provider.Value)
+		}
+	}
+	providersList = s.String()
 	fs.Register(&fs.RegInfo{
 		Name:        "s3",
-		Description: "Amazon S3 Compliant Storage Providers including AWS, Alibaba, ArvanCloud, Ceph, China Mobile, Cloudflare, GCS, DigitalOcean, Dreamhost, Huawei OBS, IBM COS, IDrive e2, IONOS Cloud, Leviia, Liara, Lyve Cloud, Minio, Netease, Petabox, RackCorp, Scaleway, SeaweedFS, StackPath, Storj, Synology, Tencent COS, Qiniu and Wasabi",
+		Description: "Amazon S3 Compliant Storage Providers including " + providersList,
 		NewFs:       NewFs,
 		CommandHelp: commandHelp,
 		Config: func(ctx context.Context, name string, m configmap.Mapper, config fs.ConfigIn) (*fs.ConfigOut, error) {
@@ -80,100 +195,7 @@ func init() {
 			System: systemMetadataInfo,
 			Help:   `User metadata is stored as x-amz-meta- keys. S3 metadata keys are case insensitive and are always returned in lower case.`,
 		},
-		Options: []fs.Option{{
-			Name: fs.ConfigProvider,
-			Help: "Choose your S3 provider.",
-			// NB if you add a new provider here, then add it in the
-			// setQuirks function and set the correct quirks
-			Examples: []fs.OptionExample{{
-				Value: "AWS",
-				Help:  "Amazon Web Services (AWS) S3",
-			}, {
-				Value: "Alibaba",
-				Help:  "Alibaba Cloud Object Storage System (OSS) formerly Aliyun",
-			}, {
-				Value: "ArvanCloud",
-				Help:  "Arvan Cloud Object Storage (AOS)",
-			}, {
-				Value: "Ceph",
-				Help:  "Ceph Object Storage",
-			}, {
-				Value: "ChinaMobile",
-				Help:  "China Mobile Ecloud Elastic Object Storage (EOS)",
-			}, {
-				Value: "Cloudflare",
-				Help:  "Cloudflare R2 Storage",
-			}, {
-				Value: "DigitalOcean",
-				Help:  "DigitalOcean Spaces",
-			}, {
-				Value: "Dreamhost",
-				Help:  "Dreamhost DreamObjects",
-			}, {
-				Value: "GCS",
-				Help:  "Google Cloud Storage",
-			}, {
-				Value: "HuaweiOBS",
-				Help:  "Huawei Object Storage Service",
-			}, {
-				Value: "IBMCOS",
-				Help:  "IBM COS S3",
-			}, {
-				Value: "IDrive",
-				Help:  "IDrive e2",
-			}, {
-				Value: "IONOS",
-				Help:  "IONOS Cloud",
-			}, {
-				Value: "LyveCloud",
-				Help:  "Seagate Lyve Cloud",
-			}, {
-				Value: "Leviia",
-				Help:  "Leviia Object Storage",
-			}, {
-				Value: "Liara",
-				Help:  "Liara Object Storage",
-			}, {
-				Value: "Minio",
-				Help:  "Minio Object Storage",
-			}, {
-				Value: "Netease",
-				Help:  "Netease Object Storage (NOS)",
-			}, {
-				Value: "Petabox",
-				Help:  "Petabox Object Storage",
-			}, {
-				Value: "RackCorp",
-				Help:  "RackCorp Object Storage",
-			}, {
-				Value: "Scaleway",
-				Help:  "Scaleway Object Storage",
-			}, {
-				Value: "SeaweedFS",
-				Help:  "SeaweedFS S3",
-			}, {
-				Value: "StackPath",
-				Help:  "StackPath Object Storage",
-			}, {
-				Value: "Storj",
-				Help:  "Storj (S3 Compatible Gateway)",
-			}, {
-				Value: "Synology",
-				Help:  "Synology C2 Object Storage",
-			}, {
-				Value: "TencentCOS",
-				Help:  "Tencent Cloud Object Storage (COS)",
-			}, {
-				Value: "Wasabi",
-				Help:  "Wasabi Object Storage",
-			}, {
-				Value: "Qiniu",
-				Help:  "Qiniu Object Storage (Kodo)",
-			}, {
-				Value: "Other",
-				Help:  "Any other S3 compatible provider",
-			}},
-		}, {
+		Options: []fs.Option{providerOption, {
 			Name:    "env_auth",
 			Help:    "Get AWS credentials from runtime (environment variables or EC2/ECS meta data if no env vars).\n\nOnly applies if access_key_id and secret_access_key is blank.",
 			Default: false,
