@@ -125,6 +125,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	}); err != nil {
 		return err
 	}
+	o.contentLength = &fileSize
 
 	if err := o.uploadStreamSetMd5(ctx, in, options...); err != nil {
 		return err
