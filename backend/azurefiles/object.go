@@ -79,7 +79,7 @@ func (o *Object) SetModTime(ctx context.Context, t time.Time) error {
 		o.metaData = make(map[string]*string)
 	}
 
-	o.metaData[modTimeKey] = &tStr
+	setMetaDataValue(o.metaData, modTimeKey, tStr)
 	metaDataOptions := file.SetMetadataOptions{
 		Metadata: o.metaData,
 	}

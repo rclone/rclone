@@ -154,3 +154,18 @@ func getMetaDataValue(md map[string]*string, key string) (*string, error) {
 	}
 	return nil, fmt.Errorf("did not find a value for the key=%s", key)
 }
+
+func setMetaDataValue(md map[string]*string, key string, value string) {
+	keysToBeDeleted := []string{}
+	for k := range md {
+		if strings.EqualFold(k, key) {
+			keysToBeDeleted = append(keysToBeDeleted, k)
+		}
+	}
+
+	for _, k := range keysToBeDeleted {
+		delete(md, k)
+	}
+
+	md[key] = &value
+}
