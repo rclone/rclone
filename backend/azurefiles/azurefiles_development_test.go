@@ -198,23 +198,42 @@ func testUpdate(t *testing.T, c *Fs) {
 	updatedBytes, _ := io.ReadAll(updateContent)
 	err = obj.Update(context.TODO(), bytes.NewReader(updatedBytes), src, nil)
 	assert.NoError(t, err, "was there an error while updating file")
-	actualContentReader, err := obj.Open(context.TODO(), nil)
-	assert.NoError(t, err, "was there an error while opening updated file")
-	actualBytes, err := io.ReadAll(actualContentReader)
-	assert.NoError(t, err, "was there an error while reading contents of opened file")
-	assert.Equal(t, actualBytes, updatedBytes)
-
-	t.Run("is md5 correctly updated", func(t *testing.T) {
-		expectedMd5 := md5.Sum(updatedBytes)
-		expectedMd5Slice := expectedMd5[:]
+	t.Run("content md5 modtime size", func(t *testing.T) {
 		o, err := c.NewObject(context.TODO(), fileName)
 		assert.NoError(t, err, "creating object for update file to fetch hash")
 		obj := o.(*Object)
-		resp, err := obj.fileClient().GetProperties(context.TODO(), nil)
-		assert.NoError(t, err, "getting properties")
-		assert.Equal(t, expectedMd5Slice, resp.ContentMD5)
-	})
 
+		t.Run("content", func(t *testing.T) {
+			actualContentReader, err := obj.Open(context.TODO(), nil)
+			assert.NoError(t, err, "was there an error while opening updated file")
+			actualBytes, err := io.ReadAll(actualContentReader)
+			assert.NoError(t, err, "was there an error while reading contents of opened file")
+			assert.Equal(t, actualBytes, updatedBytes, "comparing bytes")
+		})
+
+		t.Run("md5", func(t *testing.T) {
+			expectedMd5 := md5.Sum(updatedBytes)
+
+			resp, err := obj.fileClient().GetProperties(context.TODO(), nil)
+			assert.NoError(t, err, "getting properties")
+
+			assert.Equal(t, expectedMd5[:], resp.ContentMD5)
+		})
+
+		t.Run("modtime", func(t *testing.T) {
+			gotModTime := obj.ModTime(context.TODO())
+			tUnixStrPtr, ok := getCaseInvariantMetaDataValue(src.metaData, modTimeKey)
+			assert.True(t, ok)
+			tUnix, errParseInt := strconv.ParseInt(*tUnixStrPtr, 10, 64)
+			expectedTime := time.Unix(tUnix, 0)
+			assert.NoError(t, errParseInt)
+			assert.Equal(t, expectedTime, gotModTime)
+		})
+
+		t.Run("size", func(t *testing.T) {
+			assert.EqualValues(t, obj.Size(), len(updatedBytes))
+		})
+	})
 }
 
 func dirEntriesBases(des fs.DirEntries) []string {
