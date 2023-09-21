@@ -70,6 +70,9 @@ import (
 // NB if you add a new provider here, then add it in the setQuirks
 // function and set the correct quirks. Test the quirks are correct by
 // running the integration tests "go test -v -remote NewS3Provider:".
+//
+// See https://github.com/rclone/rclone/blob/master/CONTRIBUTING.md#adding-a-new-s3-provider
+// for full information about how to add a new s3 provider.
 var providerOption = fs.Option{
 	Name: fs.ConfigProvider,
 	Help: "Choose your S3 provider.",
@@ -2998,15 +3001,17 @@ func setEndpointValueForIDriveE2(m configmap.Mapper) (err error) {
 // There should be no testing against opt.Provider anywhere in the
 // code except in here to localise the setting of the quirks.
 //
-// These should be differences from AWS S3
+// Run the integration tests to check you have the quirks correct.
+//
+//	go test -v -remote NewS3Provider:
 func setQuirks(opt *Options) {
 	var (
-		listObjectsV2         = true
-		virtualHostStyle      = true
-		urlEncodeListings     = true
-		useMultipartEtag      = true
-		useAcceptEncodingGzip = true
-		mightGzip             = true // assume all providers might gzip until proven otherwise
+		listObjectsV2         = true // Always use ListObjectsV2 instead of ListObjects
+		virtualHostStyle      = true // Use bucket.provider.com instead of putting the bucket in the URL
+		urlEncodeListings     = true // URL encode the listings to help with control characters
+		useMultipartEtag      = true // Set if Etags for multpart uploads are compatible with AWS
+		useAcceptEncodingGzip = true // Set Accept-Encoding: gzip
+		mightGzip             = true // assume all providers might use content encoding gzip until proven otherwise
 	)
 	switch opt.Provider {
 	case "AWS":
