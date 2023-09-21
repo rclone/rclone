@@ -5,13 +5,10 @@ import (
 	"context"
 	"crypto/md5"
 	"io"
-	"math/rand"
 	"path/filepath"
 	"strings"
 	"testing"
-	"time"
 
-	"github.com/Azure/azure-sdk-for-go/sdk/storage/azfile/file"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/walk"
 	"github.com/stretchr/testify/assert"
@@ -28,36 +25,6 @@ func testNewObjectErrorOnObjectNotExisting(t *testing.T, c *Fs) {
 func testNewObjectNoErrorIfObjectExists(t *testing.T, c *Fs) {
 	_, err := c.NewObject(context.TODO(), pre_existing_file_name)
 	assert.NoError(t, err)
-}
-
-func testSetModTimeNoError(t *testing.T, c *Fs) {
-	obj, err := c.NewObject(context.TODO(), pre_existing_file_name)
-	assert.NoError(t, err)
-	randomTime := time.Date(1990+rand.Intn(20), time.December, rand.Intn(31), 0, 0, 0, 0, time.UTC)
-	setModTimeErr := obj.SetModTime(context.TODO(), randomTime)
-	assert.NoError(t, setModTimeErr)
-}
-
-func testSetModTimeStepWise(t *testing.T, c *Fs) {
-	fc := c.RootDirClient.NewFileClient(pre_existing_file_name)
-	metaData := make(map[string]*string)
-	someString := "1_" + randomString(10)
-	metaData["a"] = &someString
-	metaDataOptions := file.SetMetadataOptions{
-		Metadata: metaData,
-	}
-	setMetadataResp, err := fc.SetMetadata(context.TODO(), &metaDataOptions)
-	assert.NoError(t, err)
-	t.Logf("%v", setMetadataResp)
-}
-
-// TODO: test put object in an inner directory
-func testPutObject(t *testing.T, c *Fs) {
-
-	in, src := randomPuttableObject(randomString(10) + ".txt")
-	obj, err := c.Put(context.TODO(), in, src)
-	assert.NoError(t, err)
-	assert.Equal(t, obj.ModTime(context.TODO()), src.ModTime(context.TODO()))
 }
 
 func testListDir(t *testing.T, c *Fs) {
@@ -114,6 +81,17 @@ func testMkDir(t *testing.T, c *Fs) {
 		assert.NoError(t, err)
 		assert.Contains(t, dirEntriesBases(des), subdirName, "presence of subDir in dirName")
 	})
+
+	// t.Run("creating a directory inside existing subdir", func(t *testing.T) {
+	// 	dirName := "mkDirTest_" + randomString(10)
+	// 	path := filepath.Join(pre_existing_dir, dirName)
+	// 	err := c.Mkdir(context.TODO(), path)
+	// 	assert.NoError(t, err)
+
+	// 	des, err := c.List(context.TODO(), pre_existing_dir)
+	// 	assert.NoError(t, err)
+	// 	assert.Contains(t, dirEntriesBases(des), dirName)
+	// })
 
 	t.Run("no error when directory already exists", func(t *testing.T) {
 		err := c.Mkdir(context.TODO(), pre_existing_dir)

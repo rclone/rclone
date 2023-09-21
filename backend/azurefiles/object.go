@@ -24,7 +24,11 @@ func (o *Object) ModTime(ctx context.Context) time.Time {
 		}
 		o.metaData = resp.Metadata
 	}
-	return modTimeFromMetadata(o.metaData)
+	t, err := modTimeFromMetadata(o.metaData)
+	if err != nil {
+		return time.Now()
+	}
+	return t
 }
 
 func (o *Object) Size() int64 {
@@ -68,6 +72,7 @@ func (o *Object) fileClient() *file.Client {
 }
 
 // TODO: change the modTime property on the local object as well
+// FIX modTime on local objhect should change only if the modTime is successfully modified on the remote object
 func (o *Object) SetModTime(ctx context.Context, t time.Time) error {
 	tStr := fmt.Sprintf("%d", t.Unix())
 	if o.metaData == nil {
@@ -121,7 +126,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		return err
 	}
 
-	if err := uploadStreamSetMd5(ctx, o.fileClient(), in, options...); err != nil {
+	if err := o.uploadStreamSetMd5(ctx, in, options...); err != nil {
 		return err
 	}
 	// Set the mtime. copied from all/local.go rclone backend
@@ -132,11 +137,11 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	return nil
 }
 
-func uploadStreamSetMd5(ctx context.Context, fc *file.Client, in io.Reader, options ...fs.OpenOption) error {
+func (o *Object) uploadStreamSetMd5(ctx context.Context, in io.Reader, options ...fs.OpenOption) error {
 	hasher := md5.New()
 	byteCounter := ByteCounter{}
 	teedReader := io.TeeReader(in, io.MultiWriter(hasher, &byteCounter))
-	if err := fc.UploadStream(ctx, teedReader, nil); err != nil {
+	if err := o.fileClient().UploadStream(ctx, teedReader, nil); err != nil {
 		return fmt.Errorf("unable to upload. cannot upload stream : %w", err)
 	}
 
@@ -144,7 +149,7 @@ func uploadStreamSetMd5(ctx context.Context, fc *file.Client, in io.Reader, opti
 	bytesWritten := byteCounter.count
 
 	// TODO: add size
-	_, err := fc.SetHTTPHeaders(ctx, &file.SetHTTPHeadersOptions{
+	_, err := o.fileClient().SetHTTPHeaders(ctx, &file.SetHTTPHeadersOptions{
 		FileContentLength: &bytesWritten,
 		HTTPHeaders: &file.HTTPHeaders{
 			ContentMD5: md5Hash,

@@ -115,20 +115,24 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 		fileSize = src.Size()
 	}
 
-	fc := f.RootDirClient.NewFileClient(src.Remote())
-
-	_, err := fc.Create(ctx, fileSize, nil)
+	_, err := f.RootDirClient.NewFileClient(src.Remote()).Create(ctx, fileSize, nil)
 	if err != nil {
 		return nil, fmt.Errorf("unable to create file : %w", err)
 	}
-	if err := uploadStreamSetMd5(ctx, fc, in, options...); err != nil {
+	fsObj, err := f.NewObject(ctx, src.Remote())
+	if err != nil {
+		return nil, fmt.Errorf("unable to get NewObject so that modTime can be set : %w", err)
+	}
+
+	obj, ok := fsObj.(*Object)
+	if !ok {
+		log.Panic("should be able to convert fs.Object to ptr of azurefiles.Object")
+	}
+
+	if err := obj.uploadStreamSetMd5(ctx, in, options...); err != nil {
 		return nil, err
 	}
 
-	obj, err := f.NewObject(ctx, src.Remote())
-	if err != nil {
-		return nil, fmt.Errorf("uanble to get NewObject so that modTime can be set : %w", err)
-	}
 	if err := obj.SetModTime(ctx, src.ModTime(ctx)); err != nil {
 		return nil, fmt.Errorf("unable to set modTime : %w", err)
 	}

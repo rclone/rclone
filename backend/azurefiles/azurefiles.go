@@ -2,8 +2,10 @@ package azurefiles
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/storage/azfile/directory"
@@ -123,18 +125,17 @@ func ensureInterfacesAreSatisfied() {
 // TODO: what heppens when update is called on Directory
 // TODO: what happens when remove is called on Directory
 
-func modTimeFromMetadata(md map[string]*string) time.Time {
-	if md[modTimeKey] == nil {
-		return time.Now() // TODO: what should this be if modTime does not exist
+func modTimeFromMetadata(md map[string]*string) (time.Time, error) {
+	tStr, err := getMetaDataValue(md, modTimeKey)
+	if err != nil {
+		return time.Now(), err
 	}
-	tStr := md[modTimeKey]
 	i, err := strconv.ParseInt(*tStr, 10, 64)
 	if err != nil {
-		log.Println("could not parse timestamp to determine modTime")
-		return time.Now()
+		return time.Now(), err
 	}
 	tm := time.Unix(i, 0)
-	return tm
+	return tm, nil
 }
 
 type common struct {
@@ -142,4 +143,14 @@ type common struct {
 	remote   string
 	metaData map[string]*string
 	properties
+}
+
+// returns metadata values corresponding to case independent keys
+func getMetaDataValue(md map[string]*string, key string) (*string, error) {
+	for k, v := range md {
+		if strings.EqualFold(k, key) {
+			return v, nil
+		}
+	}
+	return nil, fmt.Errorf("did not find a value for the key=%s", key)
 }
