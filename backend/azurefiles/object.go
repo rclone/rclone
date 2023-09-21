@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"io"
+	"log"
 	"log/slog"
 	"time"
 
@@ -62,20 +63,12 @@ type properties struct {
 	// lastAccessTime *time.Time
 }
 
-// func (o *Object) fetchMetadata() error {
-
-// 	return o.fileClient().GetProperties()
-// }
-
 func (o *Object) fileClient() *file.Client {
 	return o.c.RootDirClient.NewFileClient(o.remote)
 }
 
 // TODO: change the modTime property on the local object as well
 func (o *Object) SetModTime(ctx context.Context, t time.Time) error {
-	// if o.isDir {
-	// 	return fmt.Errorf("cannot set ModTime on directory %s", o.remote)
-	// }
 	tStr := fmt.Sprintf("%d", t.Unix())
 	if o.metaData == nil {
 		o.metaData = make(map[string]*string)
@@ -110,15 +103,30 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 }
 
 // TODO: implement options. understand purpose of options. what is the purpose of src objectInfo.
-// TODO: set metadata options from src. Hint at the local backend
+// TODO: set metadata options from src. Hint look at the local backend
 func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {
 	// TODO: File upload options should be included. Atleast two options is important:= Concurrency, Chunksize
-	// TODO: content MD5 not set
+
+	if src.Size() > maxFileSize {
+		return fmt.Errorf("max supported file size is 4TB. provided size is %d", src.Size())
+	}
+	fileSize := maxFileSize / 2
+	if src.Size() >= 0 {
+		fileSize = src.Size()
+	}
+
+	if _, err := o.fileClient().SetHTTPHeaders(ctx, &file.SetHTTPHeadersOptions{
+		FileContentLength: &fileSize,
+	}); err != nil {
+		return err
+	}
+
 	if err := uploadStreamSetMd5(ctx, o.fileClient(), in, options...); err != nil {
 		return err
 	}
 	// Set the mtime. copied from all/local.go rclone backend
-	if err := o.SetModTime(ctx, src.ModTime(ctx)); err != nil {
+	updatedModTime := src.ModTime(ctx)
+	if err := o.SetModTime(ctx, updatedModTime); err != nil {
 		return fmt.Errorf("unable to upload. cannot setModTime on remote=\"%s\" : %w", o.remote, err)
 	}
 	return nil
@@ -126,20 +134,38 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 
 func uploadStreamSetMd5(ctx context.Context, fc *file.Client, in io.Reader, options ...fs.OpenOption) error {
 	hasher := md5.New()
-	teedReader := io.TeeReader(in, hasher)
+	byteCounter := ByteCounter{}
+	teedReader := io.TeeReader(in, io.MultiWriter(hasher, &byteCounter))
 	if err := fc.UploadStream(ctx, teedReader, nil); err != nil {
 		return fmt.Errorf("unable to upload. cannot upload stream : %w", err)
 	}
 
 	md5Hash := hasher.Sum(nil)
+	bytesWritten := byteCounter.count
 
-	fc.SetHTTPHeaders(ctx, &file.SetHTTPHeadersOptions{
+	// TODO: add size
+	_, err := fc.SetHTTPHeaders(ctx, &file.SetHTTPHeadersOptions{
+		FileContentLength: &bytesWritten,
 		HTTPHeaders: &file.HTTPHeaders{
 			ContentMD5: md5Hash,
 		},
 	})
+	if err != nil {
+		log.Print(err)
+		return err
+	}
 
 	return nil
+}
+
+type ByteCounter struct {
+	count int64
+}
+
+func (bc *ByteCounter) Write(p []byte) (n int, err error) {
+	lenP := len(p)
+	bc.count += int64(lenP)
+	return lenP, nil
 }
 
 // TODO: implment the hash function. First implement and test on Update function, then on the Put function

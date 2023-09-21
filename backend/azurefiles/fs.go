@@ -17,17 +17,18 @@ import (
 // Inspired by azureblob store, this initiates a network request and returns an error if objec is not found
 // TODO: when does the interface expect this function to return an interface
 func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
-	fileClient := f.RootDirClient.NewFileClient(remote)
+	encodedRemote := f.opt.Enc.FromStandardPath(remote)
+	fileClient := f.RootDirClient.NewFileClient(encodedRemote)
 	resp, err := fileClient.GetProperties(ctx, nil)
 	if fileerror.HasCode(err, fileerror.ResourceNotFound, fileerror.ParentNotFound) {
 		return nil, fs.ErrorObjectNotFound
 	} else if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("unable to create object remote=%s : %w", remote, err)
 	}
 
 	ob := Object{common{
 		c:        f,
-		remote:   remote,
+		remote:   encodedRemote,
 		metaData: resp.Metadata,
 		properties: properties{
 			changeTime:    resp.FileChangeTime,
@@ -40,22 +41,14 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 // Mkdir creates nested directories as indicated by test FsMkdirRmdirSubdir
 // TODO: write custom test case where parent directories are created
 func (f *Fs) Mkdir(ctx context.Context, dirPath string) error {
-	return f.makeDir(ctx, dirPath)
-}
-
-func parent(p string) string {
-	parts := strings.Split(p, pathSeparator)
-	return strings.Join(parts[:len(parts)-1], pathSeparator)
-}
-
-func (f *Fs) makeDir(ctx context.Context, dirPath string) error {
 	if dirPath == "" {
 		return nil
 	}
-	dirClient := f.RootDirClient.NewSubdirectoryClient(dirPath)
+	encodedDirPath := f.opt.Enc.FromStandardPath(dirPath)
+	dirClient := f.RootDirClient.NewSubdirectoryClient(encodedDirPath)
 	_, err := dirClient.Create(ctx, nil)
 	if fileerror.HasCode(err, fileerror.ParentNotFound) {
-		err := f.makeDir(ctx, parent(dirPath))
+		err := f.Mkdir(ctx, parent(dirPath))
 		if err != nil {
 			return fmt.Errorf("could not make parent of %s : %w", dirPath, err)
 		}
@@ -69,6 +62,11 @@ func (f *Fs) makeDir(ctx context.Context, dirPath string) error {
 		return fmt.Errorf("unable to MkDir: %w", err)
 	}
 	return nil
+}
+
+func parent(p string) string {
+	parts := strings.Split(p, pathSeparator)
+	return strings.Join(parts[:len(parts)-1], pathSeparator)
 }
 
 // should return error if the directory is not empty or does not exist
@@ -106,8 +104,12 @@ func (f *Fs) Rmdir(ctx context.Context, dirPath string) error {
 // TODO: file system options
 // TODO: when file.CLient.Creat is being used, provide HTTP headesr such as content type and content MD5
 // TODO: maybe replace PUT with NewObject + Update
+// TODO: in case file is created but there is a problem on upload, what happens
 func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
 	// size and modtime are important, what about md5 hashes
+	if src.Size() > maxFileSize {
+		return nil, fmt.Errorf("max supported file size is 4TB. provided size is %d", src.Size())
+	}
 	fileSize := maxFileSize
 	if src.Size() >= 0 {
 		fileSize = src.Size()
@@ -119,8 +121,8 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 	if err != nil {
 		return nil, fmt.Errorf("unable to create file : %w", err)
 	}
-	if err := fc.UploadStream(ctx, in, nil); err != nil {
-		return nil, fmt.Errorf("azurefiles: error uploading as stream : %w", err)
+	if err := uploadStreamSetMd5(ctx, fc, in, options...); err != nil {
+		return nil, err
 	}
 
 	obj, err := f.NewObject(ctx, src.Remote())
@@ -128,7 +130,7 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 		return nil, fmt.Errorf("uanble to get NewObject so that modTime can be set : %w", err)
 	}
 	if err := obj.SetModTime(ctx, src.ModTime(ctx)); err != nil {
-		return nil, fmt.Errorf("uanble to get modTime : %w", err)
+		return nil, fmt.Errorf("unable to set modTime : %w", err)
 	}
 
 	return obj, nil

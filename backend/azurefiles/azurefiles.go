@@ -9,8 +9,10 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/storage/azfile/directory"
 	"github.com/Azure/azure-sdk-for-go/sdk/storage/azfile/service"
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/configstruct"
+	"github.com/rclone/rclone/lib/encoder"
 )
 
 const (
@@ -23,6 +25,21 @@ const (
 	pathSeparator string = "/"
 )
 
+// TODO: enable x-ms-allow-trailing-do
+// TODO: length
+// EncodeCtl | EncodeDel because del is defined as a CTL characater in section 2.2 of RFC 2616.
+var defaultEncoder = (encoder.EncodeDoubleQuote |
+	encoder.EncodeBackSlash |
+	encoder.EncodeSlash |
+	encoder.EncodeColon |
+	encoder.EncodePipe |
+	encoder.EncodeLtGt |
+	encoder.EncodeAsterisk |
+	encoder.EncodeQuestion |
+	encoder.EncodeInvalidUtf8 |
+	encoder.EncodeCtl | encoder.EncodeDel |
+	encoder.EncodeDot | encoder.EncodeRightPeriod)
+
 func init() {
 	fs.Register(&fs.RegInfo{
 		Name:        "azurefiles",
@@ -34,6 +51,11 @@ func init() {
 		}, {
 			Name: "share_name",
 			Help: `Azure Files Share Name.`,
+		}, {
+			Name:     config.ConfigEncoding,
+			Help:     config.ConfigEncodingHelp,
+			Advanced: true,
+			Default:  defaultEncoder,
 		}},
 	})
 }
@@ -41,6 +63,7 @@ func init() {
 type Options struct {
 	ConnectionString string
 	ShareName        string
+	Enc              encoder.MultiEncoder `config:"encoding"`
 }
 
 func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, error) {
@@ -55,10 +78,11 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	}
 	shareClient := serviceClient.NewShareClient(opt.ShareName)
 	rootDirClient := shareClient.NewRootDirectoryClient()
-	c := Client{
+	c := Fs{
 		RootDirClient: rootDirClient,
 		name:          name,
 		root:          root,
+		opt:           opt,
 	}
 	return &c, nil
 }
@@ -69,10 +93,11 @@ var listFilesAndDirectoriesOptions = &directory.ListFilesAndDirectoriesOptions{
 	},
 }
 
-type Client struct {
+type Fs struct {
 	RootDirClient *directory.Client
 	name          string
 	root          string
+	opt           *Options
 }
 
 // type ObjectInfo struct {
@@ -89,7 +114,7 @@ func (c *common) Remote() string {
 }
 
 func ensureInterfacesAreSatisfied() {
-	var _ fs.Fs = (*Client)(nil)
+	var _ fs.Fs = (*Fs)(nil)
 	var _ fs.Object = (*Object)(nil)
 	var _ fs.Directory = (*Directory)(nil)
 }
@@ -113,7 +138,7 @@ func modTimeFromMetadata(md map[string]*string) time.Time {
 }
 
 type common struct {
-	c        *Client
+	c        *Fs
 	remote   string
 	metaData map[string]*string
 	properties
