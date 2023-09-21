@@ -9,6 +9,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Azure/azure-sdk-for-go/sdk/storage/azfile/directory"
+	"github.com/Azure/azure-sdk-for-go/sdk/storage/azfile/file"
 	"github.com/Azure/azure-sdk-for-go/sdk/storage/azfile/fileerror"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/hash"
@@ -17,8 +19,7 @@ import (
 // Inspired by azureblob store, this initiates a network request and returns an error if objec is not found
 // TODO: when does the interface expect this function to return an interface
 func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
-	encodedRemote := f.opt.Enc.FromStandardPath(remote)
-	fileClient := f.RootDirClient.NewFileClient(encodedRemote)
+	fileClient := f.NewFileClient(f.encodePath(remote))
 	resp, err := fileClient.GetProperties(ctx, nil)
 	if fileerror.HasCode(err, fileerror.ResourceNotFound, fileerror.ParentNotFound) {
 		return nil, fs.ErrorObjectNotFound
@@ -27,8 +28,8 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 	}
 
 	ob := Object{common{
-		c:        f,
-		remote:   encodedRemote,
+		f:        f,
+		remote:   remote,
 		metaData: resp.Metadata,
 		properties: properties{
 			changeTime:    resp.FileChangeTime,
@@ -44,8 +45,7 @@ func (f *Fs) Mkdir(ctx context.Context, dirPath string) error {
 	if dirPath == "" {
 		return nil
 	}
-	encodedDirPath := f.opt.Enc.FromStandardPath(dirPath)
-	dirClient := f.RootDirClient.NewSubdirectoryClient(encodedDirPath)
+	dirClient := f.NewSubdirectoryClient(f.encodePath(dirPath))
 	_, err := dirClient.Create(ctx, nil)
 	if fileerror.HasCode(err, fileerror.ParentNotFound) {
 		err := f.Mkdir(ctx, parent(dirPath))
@@ -71,7 +71,7 @@ func parent(p string) string {
 
 // should return error if the directory is not empty or does not exist
 func (f *Fs) Rmdir(ctx context.Context, dirPath string) error {
-	log.Printf("rmdir called on %s", dirPath)
+	log.Printf("rmdir called on dirPath=%s", dirPath)
 
 	// Following if statement is added to pass test 'FsRmdirEmpty'
 	if dirPath == "" {
@@ -86,7 +86,7 @@ func (f *Fs) Rmdir(ctx context.Context, dirPath string) error {
 		//FIXME- this error wraps fs.ErrorDirNotFound to pass TestIntegration/FsMkdir/FsNewObjectNotFound
 		return fmt.Errorf("cannot delete root dir. it is empty :%w", fs.ErrorDirNotFound)
 	}
-	dirClient := f.RootDirClient.NewSubdirectoryClient(dirPath)
+	dirClient := f.NewSubdirectoryClient(f.encodePath(dirPath))
 	_, err := dirClient.Delete(ctx, nil)
 	if err != nil {
 		if fileerror.HasCode(err, fileerror.DirectoryNotEmpty) {
@@ -114,14 +114,23 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 	if src.Size() >= 0 {
 		fileSize = src.Size()
 	}
-
-	_, err := f.RootDirClient.NewFileClient(src.Remote()).Create(ctx, fileSize, nil)
-	if err != nil {
-		return nil, fmt.Errorf("unable to create file : %w", err)
+	for i := 0; i < 2; i++ {
+		_, createErr := f.NewFileClient(f.encodePath(src.Remote())).Create(ctx, fileSize, nil)
+		if fileerror.HasCode(createErr, fileerror.ParentNotFound) {
+			parentDir := parent(src.Remote())
+			if mkDirErr := f.Mkdir(ctx, parentDir); mkDirErr != nil {
+				return nil, fmt.Errorf("unable to make parent directories : %w", mkDirErr)
+			}
+		} else if createErr != nil {
+			return nil, fmt.Errorf("unable to create file : %w", createErr)
+		} else if createErr == nil {
+			break
+		}
 	}
+
 	fsObj, err := f.NewObject(ctx, src.Remote())
 	if err != nil {
-		return nil, fmt.Errorf("unable to get NewObject so that modTime can be set : %w", err)
+		return nil, fmt.Errorf("unable to get NewObject : %w", err)
 	}
 
 	obj, ok := fsObj.(*Object)
@@ -175,7 +184,7 @@ func (f *Fs) Features() *fs.Features {
 // TODO: handle case regariding "" and "/". I remember reading about them somewhere
 func (f *Fs) List(ctx context.Context, dirPath string) (fs.DirEntries, error) {
 	var entries fs.DirEntries
-	subDirClient := f.RootDirClient.NewSubdirectoryClient(dirPath)
+	subDirClient := f.NewSubdirectoryClient(f.encodePath(dirPath))
 	_, err := subDirClient.GetProperties(ctx, nil)
 	if err != nil {
 		return fs.DirEntries(entries), fs.ErrorDirNotFound
@@ -188,8 +197,8 @@ func (f *Fs) List(ctx context.Context, dirPath string) (fs.DirEntries, error) {
 		}
 		for _, dir := range resp.Segment.Directories {
 			de := &Directory{
-				common{c: f,
-					remote: joinPaths(dirPath, *dir.Name),
+				common{f: f,
+					remote: joinPaths(dirPath, f.decodePath(*dir.Name)),
 					properties: properties{
 						changeTime: dir.Properties.ChangeTime,
 					}},
@@ -199,8 +208,8 @@ func (f *Fs) List(ctx context.Context, dirPath string) (fs.DirEntries, error) {
 
 		for _, file := range resp.Segment.Files {
 			de := &Object{
-				common{c: f,
-					remote: joinPaths(dirPath, *file.Name),
+				common{f: f,
+					remote: joinPaths(dirPath, f.decodePath(*file.Name)),
 					properties: properties{
 						changeTime:    file.Properties.ChangeTime,
 						contentLength: file.Properties.ContentLength,
@@ -216,4 +225,22 @@ func (f *Fs) List(ctx context.Context, dirPath string) (fs.DirEntries, error) {
 
 func joinPaths(s ...string) string {
 	return filepath.ToSlash(filepath.Join(s...))
+}
+
+type encodedPath string
+
+func (f *Fs) NewSubdirectoryClient(p encodedPath) *directory.Client {
+	return f.rootDirClient.NewSubdirectoryClient(string(p))
+}
+
+func (f *Fs) NewFileClient(p encodedPath) *file.Client {
+	return f.rootDirClient.NewFileClient(string(p))
+}
+
+func (f *Fs) encodePath(p string) encodedPath {
+	return encodedPath(f.opt.Enc.FromStandardPath(p))
+}
+
+func (f *Fs) decodePath(p string) string {
+	return f.opt.Enc.ToStandardPath(p)
 }
