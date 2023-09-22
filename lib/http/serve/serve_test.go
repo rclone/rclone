@@ -1,10 +1,12 @@
 package serve
 
 import (
+	"context"
 	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/rclone/rclone/fstest/mockobject"
 	"github.com/stretchr/testify/assert"
@@ -25,11 +27,13 @@ func TestObjectHEAD(t *testing.T) {
 	w := httptest.NewRecorder()
 	r := httptest.NewRequest("HEAD", "http://example.com/aFile", nil)
 	o := mockobject.New("aFile").WithContent([]byte("hello"), mockobject.SeekModeNone)
+	_ = o.SetModTime(context.Background(), time.Date(2023, 9, 20, 12, 11, 15, 0, time.FixedZone("", 4*60*60))) // UTC+4
 	Object(w, r, o)
 	resp := w.Result()
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
 	assert.Equal(t, "5", resp.Header.Get("Content-Length"))
 	assert.Equal(t, "bytes", resp.Header.Get("Accept-Ranges"))
+	assert.Equal(t, "Wed, 20 Sep 2023 08:11:15 GMT", resp.Header.Get("Last-Modified"))
 	body, _ := io.ReadAll(resp.Body)
 	assert.Equal(t, "", string(body))
 }
@@ -38,11 +42,13 @@ func TestObjectGET(t *testing.T) {
 	w := httptest.NewRecorder()
 	r := httptest.NewRequest("GET", "http://example.com/aFile", nil)
 	o := mockobject.New("aFile").WithContent([]byte("hello"), mockobject.SeekModeNone)
+	_ = o.SetModTime(context.Background(), time.Date(2023, 9, 20, 12, 11, 15, 0, time.FixedZone("", 2*60*60))) // UTC+2
 	Object(w, r, o)
 	resp := w.Result()
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
 	assert.Equal(t, "5", resp.Header.Get("Content-Length"))
 	assert.Equal(t, "bytes", resp.Header.Get("Accept-Ranges"))
+	assert.Equal(t, "Wed, 20 Sep 2023 10:11:15 GMT", resp.Header.Get("Last-Modified"))
 	body, _ := io.ReadAll(resp.Body)
 	assert.Equal(t, "hello", string(body))
 }
