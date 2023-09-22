@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"path"
 	"path/filepath"
 	"strings"
 	"time"
@@ -19,7 +20,7 @@ import (
 // Inspired by azureblob store, this initiates a network request and returns an error if objec is not found
 // TODO: when does the interface expect this function to return an interface
 func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
-	fileClient := f.NewFileClient(f.encodePath(remote))
+	fileClient := f.NewFileClientFromEncodedPath(f.encodePath(path.Join(f.root, remote)))
 	resp, err := fileClient.GetProperties(ctx, nil)
 	if fileerror.HasCode(err, fileerror.ResourceNotFound, fileerror.ParentNotFound) {
 		return nil, fs.ErrorObjectNotFound
@@ -41,32 +42,26 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 
 // Mkdir creates nested directories as indicated by test FsMkdirRmdirSubdir
 // TODO: write custom test case where parent directories are created
-func (f *Fs) Mkdir(ctx context.Context, dirPath string) error {
-	if dirPath == "" {
+func (f *Fs) Mkdir(ctx context.Context, remote string) error {
+	// TODO: what to do when dirPath is "" but root is not ""
+	if f.DecodedFullPath(remote) == "" {
 		return nil
 	}
-	dirClient := f.NewSubdirectoryClient(f.encodePath(dirPath))
+	dirClient := f.NewSubdirectoryClient(remote)
+
 	_, err := dirClient.Create(ctx, nil)
 	if fileerror.HasCode(err, fileerror.ParentNotFound) {
-		err := f.Mkdir(ctx, parent(dirPath))
+		err := f.Mkdir(ctx, parent(remote))
 		if err != nil {
-			return fmt.Errorf("could not make parent of %s : %w", dirPath, err)
+			return fmt.Errorf("could not make parent of %s : %w", remote, err)
 		}
-		_, err = dirClient.Create(ctx, nil)
-		if err != nil {
-			return fmt.Errorf("made parent but cannot make %s : %w", dirPath, err)
-		}
+		return f.Mkdir(ctx, remote)
 	} else if fileerror.HasCode(err, fileerror.ResourceAlreadyExists) {
 		return nil
 	} else if err != nil {
 		return fmt.Errorf("unable to MkDir: %w", err)
 	}
 	return nil
-}
-
-func parent(p string) string {
-	parts := strings.Split(p, pathSeparator)
-	return strings.Join(parts[:len(parts)-1], pathSeparator)
 }
 
 // should return error if the directory is not empty or does not exist
@@ -86,7 +81,7 @@ func (f *Fs) Rmdir(ctx context.Context, dirPath string) error {
 		//FIXME- this error wraps fs.ErrorDirNotFound to pass TestIntegration/FsMkdir/FsNewObjectNotFound
 		return fmt.Errorf("cannot delete root dir. it is empty :%w", fs.ErrorDirNotFound)
 	}
-	dirClient := f.NewSubdirectoryClient(f.encodePath(dirPath))
+	dirClient := f.NewSubdirectoryClientFromEncodedPath(f.encodePath(path.Join(f.root, dirPath)))
 	_, err := dirClient.Delete(ctx, nil)
 	if err != nil {
 		if fileerror.HasCode(err, fileerror.DirectoryNotEmpty) {
@@ -115,7 +110,7 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 		fileSize = src.Size()
 	}
 	for i := 0; i < 2; i++ {
-		_, createErr := f.NewFileClient(f.encodePath(src.Remote())).Create(ctx, fileSize, nil)
+		_, createErr := f.NewFileClientFromEncodedPath(f.encodePath(path.Join(f.root, src.Remote()))).Create(ctx, fileSize, nil)
 		if fileerror.HasCode(createErr, fileerror.ParentNotFound) {
 			parentDir := parent(src.Remote())
 			if mkDirErr := f.Mkdir(ctx, parentDir); mkDirErr != nil {
@@ -184,7 +179,7 @@ func (f *Fs) Features() *fs.Features {
 // TODO: handle case regariding "" and "/". I remember reading about them somewhere
 func (f *Fs) List(ctx context.Context, dirPath string) (fs.DirEntries, error) {
 	var entries fs.DirEntries
-	subDirClient := f.NewSubdirectoryClient(f.encodePath(dirPath))
+	subDirClient := f.NewSubdirectoryClientFromEncodedPath(f.encodePath(path.Join(f.root, dirPath)))
 	_, err := subDirClient.GetProperties(ctx, nil)
 	if err != nil {
 		return fs.DirEntries(entries), fs.ErrorDirNotFound
@@ -227,13 +222,28 @@ func joinPaths(s ...string) string {
 	return filepath.ToSlash(filepath.Join(s...))
 }
 
+func parent(p string) string {
+	parts := strings.Split(p, pathSeparator)
+	return strings.Join(parts[:len(parts)-1], pathSeparator)
+}
+
 type encodedPath string
 
-func (f *Fs) NewSubdirectoryClient(p encodedPath) *directory.Client {
+func (f *Fs) DecodedFullPath(decodedRemote string) string {
+	return path.Join(f.root, decodedRemote)
+}
+
+func (f *Fs) NewSubdirectoryClient(decodedRemote string) *directory.Client {
+	fullPathDecoded := f.DecodedFullPath(decodedRemote)
+	fullPathEncoded := f.encodePath(fullPathDecoded)
+	return f.NewSubdirectoryClientFromEncodedPath(fullPathEncoded)
+}
+
+func (f *Fs) NewSubdirectoryClientFromEncodedPath(p encodedPath) *directory.Client {
 	return f.rootDirClient.NewSubdirectoryClient(string(p))
 }
 
-func (f *Fs) NewFileClient(p encodedPath) *file.Client {
+func (f *Fs) NewFileClientFromEncodedPath(p encodedPath) *file.Client {
 	return f.rootDirClient.NewFileClient(string(p))
 }
 
