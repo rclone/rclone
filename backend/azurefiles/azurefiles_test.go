@@ -245,9 +245,7 @@ func TestCaseInvariantSetMetaDataValue(t *testing.T) {
 // TODO: root should not be a file
 func newTests(t *testing.T) {
 	f, err := fs.NewFs(context.Background(), "TestAzureFiles:subdirAsRoot"+RandomString(10))
-	if err != nil {
-		t.Fatal(err)
-	}
+	assert.NoError(t, err)
 	// entries, err := f.List(context.TODO(), "")
 	// assert.NoError(t, err)
 	// assert.Equal(t, 0, len(entries))
@@ -403,6 +401,22 @@ func newTests(t *testing.T) {
 			r, src := RandomPuttableObject(name)
 			_, errPut := f.Put(context.TODO(), r, src)
 			assert.Error(t, errPut)
+		})
+	})
+
+	t.Run("newfs", func(t *testing.T) {
+		// Setup: creatinf file to test whether newFs returns error when a file is located at root
+		parent := RandomString(5)
+		fileName := RandomString(5)
+		filePath := path.Join(parent, fileName)
+		r, src := RandomPuttableObject(filePath)
+		_, putErr := f.Put(context.TODO(), r, src, nil)
+		assert.NoError(t, putErr)
+		t.Run("ErrWhenFileExistsAtRoot", func(t *testing.T) {
+			oldRoot := f.Root()
+			newRoot := path.Join(oldRoot, filePath)
+			_, newFsErr := fs.NewFs(context.Background(), "TestAzureFiles:"+newRoot)
+			assert.Error(t, newFsErr)
 		})
 	})
 

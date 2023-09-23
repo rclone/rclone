@@ -87,7 +87,8 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		root:          root,
 		opt:           opt,
 	}
-	_, propsErr := rootDirClient.NewFileClient(f.opt.Enc.Encode(root)).GetProperties(ctx, nil)
+	// How to check whether a file exists at this location
+	_, propsErr := rootDirClient.NewFileClient(f.opt.Enc.FromStandardPath(root)).GetProperties(ctx, nil)
 	if propsErr == nil {
 		f.root = parent(root)
 		return &f, fs.ErrorIsFile
