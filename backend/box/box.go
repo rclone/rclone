@@ -154,7 +154,7 @@ func init() {
 			Default: "",
 			Help: `Impersonate this user ID when using a service account.
 
-Settng this flag allows rclone, when using a JWT service account, to
+Setting this flag allows rclone, when using a JWT service account, to
 act on behalf of another user by setting the as-user header.
 
 The user ID is the Box identifier for a user. User IDs can found for
@@ -1212,7 +1212,7 @@ func (f *Fs) ChangeNotify(ctx context.Context, notifyFunc func(string, fs.EntryT
 		}
 
 		// box can send duplicate Event IDs. Use this map to track and filter
-		// the ones we've alread processed.
+		// the ones we've already processed.
 		processedEventIDs := make(map[string]time.Time)
 
 		var ticker *time.Ticker

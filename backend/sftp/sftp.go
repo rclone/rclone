@@ -1014,7 +1014,7 @@ func (f *Fs) keyboardInteractiveReponse(user, instruction string, questions []st
 // save it so on reconnection we give back the previous string.
 // This removes the ability to let the user correct a mistaken entry,
 // but means that reconnects are transparent.
-// We'll re-use config.Pass for this, 'cos we know it's not been
+// We'll reuse config.Pass for this, 'cos we know it's not been
 // specified.
 func (f *Fs) getPass() (string, error) {
 	for f.savedpswd == "" {
@@ -1602,7 +1602,7 @@ func (f *Fs) About(ctx context.Context) (*fs.Usage, error) {
 		fs.Debugf(f, "About path %q", aboutPath)
 		vfsStats, err = c.sftpClient.StatVFS(aboutPath)
 	}
-	f.putSftpConnection(&c, err) // Return to pool asap, if running shell command below it will be re-used
+	f.putSftpConnection(&c, err) // Return to pool asap, if running shell command below it will be reused
 	if vfsStats != nil {
 		total := vfsStats.TotalSpace()
 		free := vfsStats.FreeSpace()
@@ -2044,7 +2044,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	if err != nil {
 		return fmt.Errorf("Update: %w", err)
 	}
-	// Hang on to the connection for the whole upload so it doesn't get re-used while we are uploading
+	// Hang on to the connection for the whole upload so it doesn't get reused while we are uploading
 	file, err := c.sftpClient.OpenFile(o.path(), os.O_WRONLY|os.O_CREATE|os.O_TRUNC)
 	if err != nil {
 		o.fs.putSftpConnection(&c, err)
