@@ -2,6 +2,7 @@ package azurefiles
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -124,6 +125,9 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 	}
 
 	if err := uploadStreamSetMd5(ctx, fc, in, options...); err != nil {
+		if _, delErr := fc.Delete(ctx, nil); delErr != nil {
+			return nil, errors.Join(delErr, err)
+		}
 		return nil, err
 	}
 
