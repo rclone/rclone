@@ -318,7 +318,7 @@ func TestRcSetTier(t *testing.T) {
 	r.CheckRemoteItems(t, file1)
 
 	// Because we don't know what the current tier options here are, let's
-	// just get the current tier, and re-use that
+	// just get the current tier, and reuse that
 	o, err := r.Fremote.NewObject(ctx, file1.Path)
 	require.NoError(t, err)
 	trr, ok := o.(fs.GetTierer)
@@ -345,7 +345,7 @@ func TestRcSetTierFile(t *testing.T) {
 	r.CheckRemoteItems(t, file1)
 
 	// Because we don't know what the current tier options here are, let's
-	// just get the current tier, and re-use that
+	// just get the current tier, and reuse that
 	o, err := r.Fremote.NewObject(ctx, file1.Path)
 	require.NoError(t, err)
 	trr, ok := o.(fs.GetTierer)

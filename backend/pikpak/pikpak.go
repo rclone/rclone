@@ -1215,7 +1215,7 @@ func (f *Fs) upload(ctx context.Context, in io.Reader, leaf, dirID, sha1Str stri
 		return nil, fmt.Errorf("failed to upload: %w", err)
 	}
 	// refresh uploaded file info
-	// Compared to `newfile.File` this upgrades several feilds...
+	// Compared to `newfile.File` this upgrades several fields...
 	// audit, links, modified_time, phase, revision, and web_content_link
 	return f.getFile(ctx, newfile.File.ID)
 }
