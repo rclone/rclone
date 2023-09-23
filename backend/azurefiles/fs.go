@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"log"
-	"log/slog"
 	"path"
 	"time"
 
@@ -42,26 +41,15 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 // Mkdir creates nested directories as indicated by test FsMkdirRmdirSubdir
 // TODO: write custom test case where parent directories are created
 func (f *Fs) Mkdir(ctx context.Context, remote string) error {
-	log.Printf("Mkdir: remote=%s root=%s", remote, f.root)
-	// log.Printf("Mkdir: sleeping for 3 second to slow down recursion")
-	// time.Sleep(3 * time.Second)
-	// TODO: what to do when dirPath is "" but root is not ""
-	// if remote == "." {
-	// 	return nil
-	// }
 	fp := f.DecodedFullPath(remote)
-	log.Printf("Mkdir: fullpath=%s", fp)
 	if fp == "" {
 		return nil
 	}
 	dirClient := f.NewSubdirectoryClient(remote)
-	log.Printf("Mkdir: dirClientURL=%s", dirClient.URL())
 
 	_, createDirErr := dirClient.Create(ctx, nil)
 	if fileerror.HasCode(createDirErr, fileerror.ParentNotFound) {
-		log.Printf("Mkdir: parent not found error")
 		parentDir := parent(remote)
-		log.Printf("Mkdir: about to create parentDir=%s for remote=%s and fp=%s", parentDir, remote, fp)
 		makeParentErr := f.Mkdir(ctx, parentDir)
 		if makeParentErr != nil {
 			return fmt.Errorf("could not make parent of %s : %w", remote, makeParentErr)
@@ -70,12 +58,10 @@ func (f *Fs) Mkdir(ctx context.Context, remote string) error {
 		time.Sleep(time.Millisecond * 500)
 		return f.Mkdir(ctx, remote)
 	} else if fileerror.HasCode(createDirErr, fileerror.ResourceAlreadyExists) {
-		log.Printf("Mkdir: dir already exists fp=%s remote=%s", fp, remote)
 		return nil
 	} else if createDirErr != nil {
 		return fmt.Errorf("unable to MkDir: %w", createDirErr)
 	}
-	log.Printf("Mkdir: dir created fp=%s remote=%s", fp, remote)
 	return nil
 }
 
@@ -115,8 +101,6 @@ func (f *Fs) Rmdir(ctx context.Context, remote string) error {
 // TODO: in case file is created but there is a problem on upload, what happens
 func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
 	// size and modtime are important, what about md5 hashes
-	logger := slog.Default()
-	logger = logger.With("method", "Put", "remote", src.Remote())
 	if src.Size() > maxFileSize {
 		return nil, fmt.Errorf("max supported file size is 4TB. provided size is %d", src.Size())
 	}
@@ -127,13 +111,12 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 	fc := f.NewFileClient(src.Remote())
 	parentDir := parent(src.Remote())
 	_, createErr := fc.Create(ctx, fileSize, nil)
-	logger.Info("created with", "err", createErr)
 	if fileerror.HasCode(createErr, fileerror.ParentNotFound) {
 
 		if mkDirErr := f.Mkdir(ctx, parentDir); mkDirErr != nil {
 			return nil, fmt.Errorf("unable to make parent directories : %w", mkDirErr)
 		}
-		log.Printf("PutDir: waiting for half a second after making parent=%s", parentDir)
+		log.Printf("Put: waiting for half a second after making parent=%s", parentDir)
 		time.Sleep(time.Millisecond * 500)
 		return f.Put(ctx, in, src, options...)
 	} else if createErr != nil {
@@ -143,36 +126,12 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 	if err := uploadStreamSetMd5(ctx, fc, in, options...); err != nil {
 		return nil, err
 	}
-	logger.Info("uploaded without error")
-
-	// ONLY for debugging. to be removed
-	{
-		entries, listErr := f.List(ctx, parentDir)
-		if listErr != nil {
-			logger.Error("could not list", "parentDir", parentDir)
-		}
-		for idx, de := range entries {
-			logger.Info("listEntries in parent", "idx", idx, "de", de.Remote())
-		}
-
-		rootEntries, rootListErr := f.List(ctx, "")
-		if rootListErr != nil {
-			logger.Error("could not list", "dir", "")
-		}
-		for idx, de := range rootEntries {
-			logger.Info("listEntries in root", "idx", idx, "de", de.Remote())
-		}
-	}
 
 	fsObj, err := f.NewObject(ctx, src.Remote())
 	if err != nil {
 		return nil, fmt.Errorf("unable to get NewObject : %w", err)
 	}
 	obj := fsObj.(*Object)
-	logger.Info("got new object ", "new_obj_remote", obj.remote)
-	if obj.remote != src.Remote() {
-		logger.Error("src remote and obj remote are not equal")
-	}
 
 	if err := obj.SetModTime(ctx, src.ModTime(ctx)); err != nil {
 		return nil, fmt.Errorf("unable to set modTime : %w", err)
@@ -259,16 +218,12 @@ func (f *Fs) List(ctx context.Context, remote string) (fs.DirEntries, error) {
 
 }
 
-// TODO: maybe convert this to path.Join
 func joinPaths(s ...string) string {
 	return path.Join(s...)
-	// return filepath.ToSlash(filepath.Join(s...))
 }
 
 func parent(p string) string {
 	return path.Dir(p)
-	// parts := strings.Split(p, pathSeparator)
-	// return strings.Join(parts[:len(parts)-1], pathSeparator)
 }
 
 type encodedPath string

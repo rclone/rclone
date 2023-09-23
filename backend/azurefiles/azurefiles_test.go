@@ -15,7 +15,6 @@ import (
 	"github.com/rclone/rclone/fs/walk"
 	"github.com/rclone/rclone/fstest"
 	"github.com/rclone/rclone/fstest/fstests"
-	"github.com/rclone/rclone/lib/encoder"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -64,71 +63,6 @@ func TestNonCommonIntegration(t *testing.T) {
 		t.Run("encoding", wrapAndPassC(testEncoding))
 		t.Run("walkGetAll", wrapAndPassC(testWalkGetAll))
 
-		t.Run("SpecificWalkGetAll", func(t *testing.T) {
-			root := "rclone-test-vodazup3vixijin4mosajif2"
-			f, err := fs.NewFs(context.Background(), "TestAzureFiles:"+root)
-			assert.NoError(t, err)
-			objs, dirs, walkErr := walk.GetAll(context.TODO(), f, "", true, -1)
-			assert.NoError(t, walkErr)
-			fmt.Println(objs)
-			fmt.Println(dirs)
-
-		})
-
-		t.Run("punctuation", func(t *testing.T) {
-			root := "rclone-test-" + RandomString(10)
-			f, err := fs.NewFs(context.Background(), "TestAzureFiles:"+root)
-			assert.NoError(t, err)
-			puncs := "!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~"
-			encPuncs := encoder.Standard.Encode(puncs)
-
-			// t.Run("mkdir regular name", func(t *testing.T) {
-			// 	assert.NoError(t, f.Mkdir(context.TODO(), "regularDirName"))
-			// })
-
-			// t.Run("mkdir unencoded punctuation", func(t *testing.T) {
-			// 	assert.NoError(t, f.Mkdir(context.TODO(), puncs))
-			// })
-
-			t.Run("encoded punctuation", func(t *testing.T) {
-				assert.NoError(t, f.Mkdir(context.TODO(), encPuncs))
-			})
-
-			// entries, err := f.List(context.TODO(), "")
-			// assert.Len(t, entries, 2)
-			// dirNameBuilder := strings.Builder{}
-
-			t.Run("to check IRL to URL conversion", func(t *testing.T) {
-				dirName := "parent/child"
-				encodedDirName := encoder.Standard.Encode(dirName)
-				assert.NoError(t, f.Mkdir(context.TODO(), encodedDirName))
-			})
-			// for pos, r := range puncs {
-			// 	dirNameBuilder.WriteRune(r)
-			// 	t.Run(fmt.Sprintf("pos=%d", pos), func(t *testing.T) {
-			// 		dirName := dirNameBuilder.String()
-			// 		encodedDirName := encoder.Standard.Encode(dirName)
-			// 		err := f.Mkdir(context.TODO(), dirName)
-			// 		assert.NoError(t, err)
-
-			// 		err = f.Mkdir(context.TODO(), encodedDirName)
-			// 		assert.NoError(t, err)
-			// 	})
-			// }
-
-			// dirNameBuilder.Reset()
-			// for pos, r := range encPuncs {
-			// 	dirNameBuilder.WriteRune(r)
-			// 	if pos < 20 {
-			// 		continue
-			// 	}
-			// 	t.Run(fmt.Sprintf("encoded pos=%d", pos), func(t *testing.T) {
-			// 		dirName := dirNameBuilder.String()
-			// 		err := f.Mkdir(context.TODO(), dirName)
-			// 		assert.NoError(t, err)
-			// 	})
-			// }
-		})
 	} else {
 		t.Fatal("could not convert f to Client pointer")
 	}
