@@ -1,27 +1,30 @@
 package azurefiles
 
 import (
-	"bytes"
 	"context"
 	"fmt"
-	"io"
-	"math/rand"
+	"log"
+	"path"
 	"strconv"
+	"strings"
 	"testing"
 	"time"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/storage/azfile/file"
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/walk"
 	"github.com/rclone/rclone/fstest"
 	"github.com/rclone/rclone/fstest/fstests"
+	"github.com/rclone/rclone/lib/encoder"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestIntegration(t *testing.T) {
 	// t.Skip("skipping because uploading files and setting time beind tested")
+	var objPtr *Object
 	fstests.Run(t, &fstests.Opt{
 		RemoteName: "TestAzureFiles:",
-		NilObject:  (*Object)(nil),
+		NilObject:  objPtr,
 	})
 }
 
@@ -34,9 +37,9 @@ func TestNonCommonIntegration(t *testing.T) {
 	// t.Skip("Skipping because we are working with integration tests from rclone")
 	fstest.Initialise()
 	f, err := fs.NewFs(context.Background(), "TestAzureFiles:")
-	if err != nil {
-		t.Fatal("unable to create new FileSystem: %w", err)
-	}
+	assert.NoError(t, err)
+
+	t.Run("new", newTests)
 
 	if c, ok := f.(*Fs); ok {
 		wrapAndPassC := func(fc func(*testing.T, *Fs)) func(*testing.T) {
@@ -47,6 +50,7 @@ func TestNonCommonIntegration(t *testing.T) {
 		t.Run("NewObject Return error if object not found", wrapAndPassC(testNewObjectErrorOnObjectNotExisting))
 		t.Run("NewObject does not return an error if file is found", wrapAndPassC(testNewObjectNoErrorIfObjectExists))
 		t.Run("setModTime", wrapAndPassC(testSetModTime))
+		t.Run("modTime", wrapAndPassC(testModTime))
 		t.Run("put", wrapAndPassC(testPutObject))
 		t.Run("list dir", wrapAndPassC(testListDir))
 		t.Run("mkDir", wrapAndPassC(testMkDir))
@@ -58,6 +62,73 @@ func TestNonCommonIntegration(t *testing.T) {
 		t.Run("set properties", wrapAndPassC(testSettingMetaDataWorks))
 
 		t.Run("encoding", wrapAndPassC(testEncoding))
+		t.Run("walkGetAll", wrapAndPassC(testWalkGetAll))
+
+		t.Run("SpecificWalkGetAll", func(t *testing.T) {
+			root := "rclone-test-vodazup3vixijin4mosajif2"
+			f, err := fs.NewFs(context.Background(), "TestAzureFiles:"+root)
+			assert.NoError(t, err)
+			objs, dirs, walkErr := walk.GetAll(context.TODO(), f, "", true, -1)
+			assert.NoError(t, walkErr)
+			fmt.Println(objs)
+			fmt.Println(dirs)
+
+		})
+
+		t.Run("punctuation", func(t *testing.T) {
+			root := "rclone-test-" + RandomString(10)
+			f, err := fs.NewFs(context.Background(), "TestAzureFiles:"+root)
+			assert.NoError(t, err)
+			puncs := "!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~"
+			encPuncs := encoder.Standard.Encode(puncs)
+
+			// t.Run("mkdir regular name", func(t *testing.T) {
+			// 	assert.NoError(t, f.Mkdir(context.TODO(), "regularDirName"))
+			// })
+
+			// t.Run("mkdir unencoded punctuation", func(t *testing.T) {
+			// 	assert.NoError(t, f.Mkdir(context.TODO(), puncs))
+			// })
+
+			t.Run("encoded punctuation", func(t *testing.T) {
+				assert.NoError(t, f.Mkdir(context.TODO(), encPuncs))
+			})
+
+			// entries, err := f.List(context.TODO(), "")
+			// assert.Len(t, entries, 2)
+			// dirNameBuilder := strings.Builder{}
+
+			t.Run("to check IRL to URL conversion", func(t *testing.T) {
+				dirName := "parent/child"
+				encodedDirName := encoder.Standard.Encode(dirName)
+				assert.NoError(t, f.Mkdir(context.TODO(), encodedDirName))
+			})
+			// for pos, r := range puncs {
+			// 	dirNameBuilder.WriteRune(r)
+			// 	t.Run(fmt.Sprintf("pos=%d", pos), func(t *testing.T) {
+			// 		dirName := dirNameBuilder.String()
+			// 		encodedDirName := encoder.Standard.Encode(dirName)
+			// 		err := f.Mkdir(context.TODO(), dirName)
+			// 		assert.NoError(t, err)
+
+			// 		err = f.Mkdir(context.TODO(), encodedDirName)
+			// 		assert.NoError(t, err)
+			// 	})
+			// }
+
+			// dirNameBuilder.Reset()
+			// for pos, r := range encPuncs {
+			// 	dirNameBuilder.WriteRune(r)
+			// 	if pos < 20 {
+			// 		continue
+			// 	}
+			// 	t.Run(fmt.Sprintf("encoded pos=%d", pos), func(t *testing.T) {
+			// 		dirName := dirNameBuilder.String()
+			// 		err := f.Mkdir(context.TODO(), dirName)
+			// 		assert.NoError(t, err)
+			// 	})
+			// }
+		})
 	} else {
 		t.Fatal("could not convert f to Client pointer")
 	}
@@ -72,40 +143,13 @@ func TestJoinPaths(t *testing.T) {
 
 }
 
-func randomString(charCount int) string {
-	bs := make([]byte, charCount)
-	for i := 0; i < charCount; i++ {
-		bs[i] = byte(97 + rand.Intn(26))
-	}
-	return string(bs)
-}
-
-func randomTime() time.Time {
-	return time.Unix(int64(rand.Int31()), 0)
-}
-
-func randomPuttableObject(remote string) (io.Reader, *Object) {
-	var fileSize int64 = int64(10 + rand.Intn(50))
-	fileContent := randomString(int(fileSize))
-	r := bytes.NewReader([]byte(fileContent))
-	metaData := make(map[string]*string)
-	modTime := randomTime().Truncate(time.Second)
-	nowStr := fmt.Sprintf("%d", modTime.Unix())
-	metaData[modTimeKey] = &nowStr
-	return r, &Object{common{
-		remote:     remote,
-		metaData:   metaData,
-		properties: properties{contentLength: &fileSize},
-	}}
-}
-
 // TODO: test put object in an inner directory
 func testPutObject(t *testing.T, f *Fs) {
 
 	// TODO: correct hash is set
 
-	name := randomString(10) + ".txt"
-	in, src := randomPuttableObject(name)
+	name := RandomString(10) + ".txt"
+	in, src := RandomPuttableObject(name)
 	_, putErr := f.Put(context.TODO(), in, src)
 	assert.NoError(t, putErr)
 	obj, newObjErr := f.NewObject(context.TODO(), name)
@@ -123,7 +167,7 @@ func testPutObject(t *testing.T, f *Fs) {
 }
 
 func testSettingMetaDataWorks(t *testing.T, c *Fs) {
-	fcSetting := c.RootDirClient.NewFileClient(pre_existing_file_name)
+	fcSetting := c.rootDirClient.NewFileClient(pre_existing_file_name)
 	metaData := make(map[string]*string)
 	someString := "1_isgreat"
 	metaData["a"] = &someString
@@ -136,11 +180,11 @@ func testSettingMetaDataWorks(t *testing.T, c *Fs) {
 
 	// Now checking whether the metadata was actually set
 
-	fcGetting := c.RootDirClient.NewFileClient(pre_existing_file_name)
+	fcGetting := c.rootDirClient.NewFileClient(pre_existing_file_name)
 	getResp, getErr := fcGetting.GetProperties(context.TODO(), nil)
 	assert.NoError(t, getErr)
-	actualPtr, getValueErr := getMetaDataValue(getResp.Metadata, "a")
-	assert.NoError(t, getValueErr)
+	actualPtr, ok := getCaseInvariantMetaDataValue(getResp.Metadata, "a")
+	assert.True(t, ok)
 	assert.Equal(t, someString, *actualPtr)
 
 }
@@ -152,11 +196,11 @@ func testSetModTime(t *testing.T, f *Fs) {
 	setModTimeErr := obj.SetModTime(context.TODO(), timeBeingSet)
 	assert.NoError(t, setModTimeErr)
 
-	fc := f.RootDirClient.NewFileClient(pre_existing_file_name)
+	fc := f.rootDirClient.NewFileClient(pre_existing_file_name)
 	res, getPropErr := fc.GetProperties(context.TODO(), nil)
 	assert.NoError(t, getPropErr)
-	gotTimeStr, getValueErr := getMetaDataValue(res.Metadata, modTimeKey)
-	assert.NoError(t, getValueErr)
+	gotTimeStr, ok := getCaseInvariantMetaDataValue(res.Metadata, modTimeKey)
+	assert.True(t, ok)
 	gotTimeInt, err := strconv.ParseInt(*gotTimeStr, 10, 64)
 	assert.NoError(t, err)
 	gotTime := time.Unix(gotTimeInt, 0)
@@ -165,5 +209,273 @@ func testSetModTime(t *testing.T, f *Fs) {
 }
 
 func testEncoding(t *testing.T, f *Fs) {
+	t.Run("leading space", func(t *testing.T) {
+		dirName := " " + RandomString(10)
+		err := f.Mkdir(context.TODO(), dirName)
+		assert.NoError(t, err)
+	})
 
+	t.Run("punctuation", func(t *testing.T) {
+		testingPunctionList := "!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~"
+		assert.NoError(t, f.Mkdir(context.TODO(), testingPunctionList))
+		assert.NoError(t, f.Rmdir(context.TODO(), testingPunctionList))
+		for idx, r := range testingPunctionList {
+			t.Run(fmt.Sprintf("punctuation idx=%d", idx), func(t *testing.T) {
+				nameBuilder := strings.Builder{}
+				nameBuilder.WriteString("prefix_")
+				nameBuilder.WriteRune(r)
+				nameBuilder.WriteString(RandomString(5))
+				nameBuilder.WriteRune(r)
+				dirName := nameBuilder.String()
+				assert.NoError(t, f.Mkdir(context.TODO(), dirName))
+				assert.NoError(t, f.Rmdir(context.TODO(), dirName))
+			})
+		}
+
+	})
+}
+
+func testWalkGetAll(t *testing.T, f *Fs) {
+	objs, dirs, err := walk.GetAll(context.TODO(), f, "", true, -1)
+	assert.NoError(t, err)
+	log.Println(objs)
+	log.Println(dirs)
+
+	entries, err := f.List(context.TODO(), "")
+	assert.NoError(t, err)
+	log.Println(entries)
+	assert.Equal(t, len(entries), 1)
+
+	cbEntries := fs.DirEntries{}
+	errors := []error{}
+	walk.Walk(context.TODO(), f, "", true, -1, func(path string, entries fs.DirEntries, err error) error {
+		cbEntries = append(cbEntries, entries...)
+		errors = append(errors, err)
+		return err
+	})
+
+	fmt.Println(errors)
+
+	assert.Equal(t, 0, len(errors))
+	assert.Equal(t, 1, len(cbEntries))
+}
+
+func testModTime(t *testing.T, f *Fs) {
+	obj, err := f.NewObject(context.TODO(), pre_existing_file_name)
+	assert.NoError(t, err)
+	timeBeingSet := randomTime()
+
+	sleepDuration := time.Second * 3
+	t.Logf("sleeping for %s", sleepDuration)
+	time.Sleep(sleepDuration)
+
+	setModTimeErr := obj.SetModTime(context.TODO(), timeBeingSet)
+	assert.NoError(t, setModTimeErr)
+
+	t.Logf("sleeping for %s", sleepDuration)
+	time.Sleep(sleepDuration)
+
+	gotModTime := obj.ModTime(context.TODO())
+	assert.Equal(t, timeBeingSet, gotModTime)
+}
+
+func TestCaseInvariantGetMetaDataValue(t *testing.T) {
+
+	t.Run("returns the correct value for case invariant key", func(t *testing.T) {
+		md := make(map[string]*string)
+		expectedValue := RandomString(10)
+		md["key"] = &expectedValue
+		gotValue, ok := getCaseInvariantMetaDataValue(md, "KEY")
+		assert.True(t, ok)
+		assert.Equal(t, expectedValue, *gotValue)
+	})
+
+	t.Run("return false if key does not exist in map", func(t *testing.T) {
+		md := make(map[string]*string)
+		_, ok := getCaseInvariantMetaDataValue(md, "KEY")
+		assert.False(t, ok)
+	})
+
+}
+
+func TestCaseInvariantSetMetaDataValue(t *testing.T) {
+	md := make(map[string]*string)
+	setCaseInvariantMetaDataValue(md, "key", "lowercase")
+	setCaseInvariantMetaDataValue(md, "KEY", "uppercase")
+
+	gotValue, ok := getCaseInvariantMetaDataValue(md, "key")
+	assert.True(t, ok)
+	assert.Equal(t, "uppercase", *gotValue)
+}
+
+// TODO: root should not be a file
+func newTests(t *testing.T) {
+	f, err := fs.NewFs(context.Background(), "TestAzureFiles:subdirAsRoot"+RandomString(10))
+	if err != nil {
+		t.Fatal(err)
+	}
+	// entries, err := f.List(context.TODO(), "")
+	// assert.NoError(t, err)
+	// assert.Equal(t, 0, len(entries))
+
+	// TODO: what happens if the directory already exists
+	// TODO: what happens if file exists and a directory is being created
+	t.Run("mkdir", func(t *testing.T) {
+		assert.NotEmpty(t, f.Root())
+		t.Run("no error when creating dir inside root", func(t *testing.T) {
+			dirName := RandomString(10)
+			assert.NoError(t, f.Mkdir(context.Background(), dirName))
+		})
+
+		t.Run("no error when creating multilevel dir where parent does not exist", func(t *testing.T) {
+			dirPath := path.Join(RandomString(5), RandomString(5))
+			assert.NoError(t, f.Mkdir(context.Background(), dirPath))
+		})
+
+		t.Run("no error when creating multilevel dir where parent exists", func(t *testing.T) {
+			// Setup: creating parent
+			parent := RandomString(5)
+			assert.NoError(t, f.Mkdir(context.Background(), parent))
+
+			dirPath := path.Join(parent, RandomString(5))
+			assert.NoError(t, f.Mkdir(context.Background(), dirPath))
+		})
+
+		t.Run("no error when directory already exists", func(t *testing.T) {
+			// Setup: creating dir once
+			dirPath := RandomString(5)
+			assert.NoError(t, f.Mkdir(context.Background(), dirPath))
+
+			// creating directory second time
+			assert.NoError(t, f.Mkdir(context.Background(), dirPath))
+		})
+	})
+
+	t.Run("listdir", func(t *testing.T) {
+		t.Run("dir does not exist", func(t *testing.T) {
+			dirName := RandomString(10)
+			_, err := f.List(context.Background(), dirName)
+			assert.Equal(t, fs.ErrorDirNotFound, err)
+		})
+		t.Run("both parent and dir dont exist", func(t *testing.T) {
+			dirPath := path.Join(RandomString(10), RandomString(10))
+			_, err := f.List(context.Background(), dirPath)
+			assert.Equal(t, fs.ErrorDirNotFound, err)
+		})
+		t.Run("listdir works after mkdir in root", func(t *testing.T) {
+			dirName := RandomString(10)
+			assert.NoError(t, f.Mkdir(context.Background(), dirName))
+			entries, err := f.List(context.Background(), "")
+			assert.NoError(t, err)
+			assert.Contains(t, dirEntriesBases(entries), dirName)
+		})
+
+		t.Run("listdir works after mkdir on subdir where subdir's parent does not exist", func(t *testing.T) {
+			parent := RandomString(10)
+			dirName := RandomString(10)
+			dirPath := path.Join(parent, dirName)
+			assert.NoError(t, f.Mkdir(context.Background(), dirPath))
+			entries, err := f.List(context.Background(), parent)
+			assert.NoError(t, err)
+			assert.Contains(t, dirEntriesBases(entries), dirName)
+		})
+	})
+
+	t.Run("rmdir", func(t *testing.T) {
+		t.Run("error when directory does not exist", func(t *testing.T) {
+			dirName := RandomString(10)
+			assert.Error(t, f.Rmdir(context.TODO(), dirName))
+		})
+
+		t.Run("no error when directory exists", func(t *testing.T) {
+			dirName := RandomString(10)
+			assert.NoError(t, f.Mkdir(context.TODO(), dirName))
+			assert.NoError(t, f.Rmdir(context.TODO(), dirName))
+
+			assert.Error(t, f.Rmdir(context.TODO(), dirName), "confirming that there is an error when directory does not exist")
+		})
+
+		t.Run("error when directory is not empty", func(t *testing.T) {
+			parent := RandomString(10)
+			dirName := RandomString(10)
+			dirPath := path.Join(parent, dirName)
+			assert.NoError(t, f.Mkdir(context.TODO(), dirPath))
+			assert.Equal(t, fs.ErrorDirectoryNotEmpty, f.Rmdir(context.TODO(), parent))
+		})
+
+		t.Run("file is located at remote path not directory", func(t *testing.T) {
+			assert.Equal(t, 1, 2)
+		})
+	})
+
+	t.Run("put", func(t *testing.T) {
+		t.Run("no errors when putting in root", func(t *testing.T) {
+			filename := RandomString(10)
+			r, src := RandomPuttableObject(filename)
+			_, err := f.Put(context.TODO(), r, src)
+			assert.NoError(t, err)
+
+			assertListDirEntriesContainsName(t, f, "", filename)
+		})
+
+		t.Run("no errors when putting in existant subdir", func(t *testing.T) {
+			// Setup: creating the parent directory that exists before put
+			parent := RandomString(10)
+			assert.NoError(t, f.Mkdir(context.TODO(), parent))
+
+			fileName := RandomString(10)
+			filePath := path.Join(parent, fileName)
+			r, src := RandomPuttableObject(filePath)
+			_, err := f.Put(context.TODO(), r, src)
+			assert.NoError(t, err)
+
+			assertListDirEntriesContainsName(t, f, parent, fileName)
+
+		})
+
+		t.Run("no errors when putting in non existant subdir", func(t *testing.T) {
+			parent := RandomString(10)
+			fileName := RandomString(10)
+			filePath := path.Join(parent, fileName)
+			r, src := RandomPuttableObject(filePath)
+			_, err := f.Put(context.TODO(), r, src)
+			assert.NoError(t, err)
+
+			assertListDirEntriesContainsName(t, f, parent, fileName)
+
+		})
+
+		// overwriting existing allowed as per meaning of HTTP PUT verb,
+		// also because SFTP: backed allow overwritting
+		t.Run("overwritesExistingFile", func(t *testing.T) {
+			// Setup: putting a file
+			filename := RandomString(10)
+			r, src := RandomPuttableObject(filename)
+			_, err := f.Put(context.TODO(), r, src)
+			assert.NoError(t, err)
+
+			// Overwritting the previously put file
+			newR, newSrc := RandomPuttableObject(filename)
+			_, newPutErr := f.Put(context.TODO(), newR, newSrc)
+			assert.NoError(t, newPutErr)
+		})
+
+		// SFTP: also returns an error when a file is put when a directory already exists
+		t.Run("error when dir exists at that location", func(t *testing.T) {
+			name := RandomString(10)
+			assert.NoError(t, f.Mkdir(context.TODO(), name))
+
+			// now putting a file at the same location
+			r, src := RandomPuttableObject(name)
+			_, errPut := f.Put(context.TODO(), r, src)
+			assert.Error(t, errPut)
+		})
+	})
+
+}
+
+func assertListDirEntriesContainsName(t *testing.T, f fs.Fs, dir string, name string) {
+	entries, listErr := f.List(context.TODO(), dir)
+	assert.NoError(t, listErr)
+	assert.Contains(t, dirEntriesBases(entries), name)
 }

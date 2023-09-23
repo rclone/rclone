@@ -8,6 +8,7 @@ import (
 	"io"
 	"log"
 	"log/slog"
+	"path"
 	"time"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/storage/azfile/file"
@@ -31,13 +32,14 @@ func (o *Object) ModTime(ctx context.Context) time.Time {
 	return t
 }
 
+// What happens of content length is empty
 func (o *Object) Size() int64 {
 	return *o.properties.contentLength
 }
 
 // TODO: make this readonly
 func (o *Object) Fs() fs.Info {
-	return o.c
+	return o.f
 }
 
 // TODO: returning hex encoded string because rclone/hash/multihasher uses hex encoding
@@ -68,7 +70,7 @@ type properties struct {
 }
 
 func (o *Object) fileClient() *file.Client {
-	return o.c.RootDirClient.NewFileClient(o.remote)
+	return o.f.NewFileClientFromEncodedPath(o.f.encodePath(path.Join(o.f.root, o.remote)))
 }
 
 // TODO: change the modTime property on the local object as well
@@ -79,7 +81,7 @@ func (o *Object) SetModTime(ctx context.Context, t time.Time) error {
 		o.metaData = make(map[string]*string)
 	}
 
-	setMetaDataValue(o.metaData, modTimeKey, tStr)
+	setCaseInvariantMetaDataValue(o.metaData, modTimeKey, tStr)
 	metaDataOptions := file.SetMetadataOptions{
 		Metadata: o.metaData,
 	}
@@ -98,7 +100,7 @@ func (o *Object) Remove(ctx context.Context) error {
 	return nil
 }
 
-// TODO: implement options. understand purpose of options
+// TODO: check for mandatory options and the other options
 func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadCloser, error) {
 	downloadStreamOptions := file.DownloadStreamOptions{}
 	for _, opt := range options {
@@ -108,7 +110,6 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 				Offset: v.Offset,
 			}
 			downloadStreamOptions.Range = httpRange
-			// seekOpt = opt.(*fs.SeekOption)
 		case *fs.RangeOption:
 			var start *int64
 			var end *int64
@@ -147,19 +148,19 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	if src.Size() > maxFileSize {
 		return fmt.Errorf("max supported file size is 4TB. provided size is %d", src.Size())
 	}
-	fileSize := maxFileSize / 2
+	fileSize := maxFileSize / 2 // FIXME: remove this d reduction in maxFileSize
 	if src.Size() >= 0 {
 		fileSize = src.Size()
 	}
-
-	if _, err := o.fileClient().SetHTTPHeaders(ctx, &file.SetHTTPHeadersOptions{
+	fc := o.fileClient()
+	if _, err := fc.SetHTTPHeaders(ctx, &file.SetHTTPHeadersOptions{
 		FileContentLength: &fileSize,
 	}); err != nil {
 		return err
 	}
 	o.contentLength = &fileSize
 
-	if err := o.uploadStreamSetMd5(ctx, in, options...); err != nil {
+	if err := uploadStreamSetMd5(ctx, fc, in, options...); err != nil {
 		return err
 	}
 	// Set the mtime. copied from all/local.go rclone backend
@@ -170,11 +171,11 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	return nil
 }
 
-func (o *Object) uploadStreamSetMd5(ctx context.Context, in io.Reader, options ...fs.OpenOption) error {
+func uploadStreamSetMd5(ctx context.Context, fc *file.Client, in io.Reader, options ...fs.OpenOption) error {
 	hasher := md5.New()
 	byteCounter := ByteCounter{}
 	teedReader := io.TeeReader(in, io.MultiWriter(hasher, &byteCounter))
-	if err := o.fileClient().UploadStream(ctx, teedReader, nil); err != nil {
+	if err := fc.UploadStream(ctx, teedReader, nil); err != nil {
 		return fmt.Errorf("unable to upload. cannot upload stream : %w", err)
 	}
 
@@ -182,7 +183,7 @@ func (o *Object) uploadStreamSetMd5(ctx context.Context, in io.Reader, options .
 	bytesWritten := byteCounter.count
 
 	// TODO: add size
-	_, err := o.fileClient().SetHTTPHeaders(ctx, &file.SetHTTPHeadersOptions{
+	_, err := fc.SetHTTPHeaders(ctx, &file.SetHTTPHeadersOptions{
 		FileContentLength: &bytesWritten,
 		HTTPHeaders: &file.HTTPHeaders{
 			ContentMD5: md5Hash,
@@ -194,6 +195,13 @@ func (o *Object) uploadStreamSetMd5(ctx context.Context, in io.Reader, options .
 	}
 
 	return nil
+}
+
+func (o *Object) String() string {
+	if o == nil {
+		return "<nil>"
+	}
+	return o.common.String()
 }
 
 type ByteCounter struct {

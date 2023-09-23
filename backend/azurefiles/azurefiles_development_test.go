@@ -6,8 +6,10 @@ import (
 	"crypto/md5"
 	"io"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/walk"
@@ -46,7 +48,7 @@ func testListDir(t *testing.T, c *Fs) {
 }
 
 func testMkDir(t *testing.T, c *Fs) {
-	dirName := "mkDirTest_" + randomString(10)
+	dirName := "mkDirTest_" + RandomString(10)
 	err := c.Mkdir(context.TODO(), dirName)
 	assert.NoError(t, err)
 
@@ -57,8 +59,8 @@ func testMkDir(t *testing.T, c *Fs) {
 	})
 
 	t.Run("nested dir where parent does not exist", func(t *testing.T) {
-		parent := "mkDirTest_" + randomString(10)
-		child := "mkDirTest_" + randomString(10)
+		parent := "mkDirTest_" + RandomString(10)
+		child := "mkDirTest_" + RandomString(10)
 		fullPath := strings.Join([]string{parent, child}, pathSeparator)
 		err := c.Mkdir(context.TODO(), fullPath)
 		assert.NoError(t, err)
@@ -72,7 +74,7 @@ func testMkDir(t *testing.T, c *Fs) {
 	})
 
 	t.Run("subdir where parent exists", func(t *testing.T) {
-		subdirName := "mkDirTest_" + randomString(10)
+		subdirName := "mkDirTest_" + RandomString(10)
 		fullPath := strings.Join([]string{dirName, subdirName}, pathSeparator)
 		err := c.Mkdir(context.TODO(), fullPath)
 		assert.NoError(t, err)
@@ -102,7 +104,7 @@ func testMkDir(t *testing.T, c *Fs) {
 }
 
 func testRmDir(t *testing.T, c *Fs) {
-	dirToBeRemoved := "rmdirTest_" + randomString(10)
+	dirToBeRemoved := "rmdirTest_" + RandomString(10)
 	err := c.Mkdir(context.TODO(), dirToBeRemoved)
 	assert.NoError(t, err)
 	err = c.Rmdir(context.Background(), dirToBeRemoved)
@@ -113,7 +115,7 @@ func testRmDir(t *testing.T, c *Fs) {
 
 	t.Run("remove subdir", func(t *testing.T) {
 		parentDir := pre_existing_dir
-		tempDirName := "rmdirTest_" + randomString(10)
+		tempDirName := "rmdirTest_" + RandomString(10)
 		dirToBeRemoved := joinPaths(parentDir, tempDirName)
 		err := c.Mkdir(context.TODO(), dirToBeRemoved)
 		assert.NoError(t, err)
@@ -123,12 +125,12 @@ func testRmDir(t *testing.T, c *Fs) {
 
 	// TODO: assert the exact error returned when rmdir fails
 	t.Run("rmdir must fail if directory has contents", func(t *testing.T) {
-		tempDir := "rmdirTest_" + randomString(10)
+		tempDir := "rmdirTest_" + RandomString(10)
 		err := c.Mkdir(context.TODO(), tempDir)
 		assert.NoError(t, err)
-		fileName := randomString(10) + ".txt"
+		fileName := RandomString(10) + ".txt"
 		filePath := joinPaths(tempDir, fileName)
-		in, src := randomPuttableObject(filePath)
+		in, src := RandomPuttableObject(filePath)
 		_, err = c.Put(context.TODO(), in, src, nil)
 		assert.NoError(t, err)
 		err = c.Rmdir(context.TODO(), filePath)
@@ -138,8 +140,8 @@ func testRmDir(t *testing.T, c *Fs) {
 }
 
 func testRemove(t *testing.T, c *Fs) {
-	fileName := "testRemove_" + randomString(10) + ".txt"
-	in, src := randomPuttableObject(fileName)
+	fileName := "testRemove_" + RandomString(10) + ".txt"
+	in, src := RandomPuttableObject(fileName)
 	obj, err := c.Put(context.TODO(), in, src, nil)
 	assert.NoError(t, err)
 	err = obj.Remove(context.TODO())
@@ -149,9 +151,9 @@ func testRemove(t *testing.T, c *Fs) {
 	assert.NotContains(t, dirEntriesBases(des), fileName)
 
 	t.Run("works on files inside subdirectory", func(t *testing.T) {
-		fileName := "testRemove_" + randomString(10) + ".txt"
+		fileName := "testRemove_" + RandomString(10) + ".txt"
 		filePath := joinPaths(pre_existing_dir, fileName)
-		in, src := randomPuttableObject(filePath)
+		in, src := RandomPuttableObject(filePath)
 		obj, err := c.Put(context.TODO(), in, src, nil)
 		assert.NoError(t, err)
 		err = obj.Remove(context.TODO())
@@ -162,9 +164,9 @@ func testRemove(t *testing.T, c *Fs) {
 	})
 
 	t.Run("fails when file does not exist", func(t *testing.T) {
-		fileName := "testRemove_" + randomString(10) + ".txt"
+		fileName := "testRemove_" + RandomString(10) + ".txt"
 		obj := &Object{common{
-			c:      c,
+			f:      c,
 			remote: fileName,
 		}}
 		err := obj.Remove(context.TODO())
@@ -190,14 +192,25 @@ func testOpen(t *testing.T, c *Fs) {
 }
 
 func testUpdate(t *testing.T, c *Fs) {
-	fileName := "testUpdate_" + randomString(10) + ".txt"
-	r, src := randomPuttableObject(fileName)
+	// Setup: creating file that will be updated
+	fileName := "testUpdate_" + RandomString(10) + ".txt"
+	r, src := RandomPuttableObject(fileName)
 	obj, err := c.Put(context.TODO(), r, src, nil)
 	assert.NoError(t, err, "was there an error while putting file to create initial test file")
-	updateContent, _ := randomPuttableObject(fileName)
+
+	sleepSeconds := 3
+	t.Log("sleeping for 3 seconds to create time difference between the creating of file and updation of file")
+	for i := 0; i < sleepSeconds; i++ {
+		t.Logf("about to sleep for %dth out of %d seconds", i+1, sleepSeconds)
+		time.Sleep(time.Second)
+	}
+
+	// Setup: creating ojbects that will result in update
+	updateContent, _ := RandomPuttableObject(fileName)
 	updatedBytes, _ := io.ReadAll(updateContent)
 	err = obj.Update(context.TODO(), bytes.NewReader(updatedBytes), src, nil)
 	assert.NoError(t, err, "was there an error while updating file")
+
 	t.Run("content md5 modtime size", func(t *testing.T) {
 		o, err := c.NewObject(context.TODO(), fileName)
 		assert.NoError(t, err, "creating object for update file to fetch hash")

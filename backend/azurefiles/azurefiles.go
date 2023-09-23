@@ -68,6 +68,7 @@ type Options struct {
 	Enc              encoder.MultiEncoder `config:"encoding"`
 }
 
+// TODO: what happens when root is a file
 func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, error) {
 	opt := new(Options)
 	err := configstruct.Set(m, opt)
@@ -80,13 +81,20 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	}
 	shareClient := serviceClient.NewShareClient(opt.ShareName)
 	rootDirClient := shareClient.NewRootDirectoryClient()
-	c := Fs{
-		RootDirClient: rootDirClient,
+	f := Fs{
+		rootDirClient: rootDirClient,
 		name:          name,
 		root:          root,
 		opt:           opt,
 	}
-	return &c, nil
+	_, propsErr := rootDirClient.NewFileClient(f.opt.Enc.Encode(root)).GetProperties(ctx, nil)
+	if propsErr == nil {
+		f.root = parent(root)
+		return &f, fs.ErrorIsFile
+	}
+	log.Print(propsErr)
+
+	return &f, nil
 }
 
 var listFilesAndDirectoriesOptions = &directory.ListFilesAndDirectoriesOptions{
@@ -96,7 +104,7 @@ var listFilesAndDirectoriesOptions = &directory.ListFilesAndDirectoriesOptions{
 }
 
 type Fs struct {
-	RootDirClient *directory.Client
+	rootDirClient *directory.Client
 	name          string
 	root          string
 	opt           *Options
@@ -126,9 +134,9 @@ func ensureInterfacesAreSatisfied() {
 // TODO: what happens when remove is called on Directory
 
 func modTimeFromMetadata(md map[string]*string) (time.Time, error) {
-	tStr, err := getMetaDataValue(md, modTimeKey)
-	if err != nil {
-		return time.Now(), err
+	tStr, ok := getCaseInvariantMetaDataValue(md, modTimeKey)
+	if !ok {
+		return time.Now(), fmt.Errorf("could not find key=%s in metadata", modTimeKey)
 	}
 	i, err := strconv.ParseInt(*tStr, 10, 64)
 	if err != nil {
@@ -139,23 +147,23 @@ func modTimeFromMetadata(md map[string]*string) (time.Time, error) {
 }
 
 type common struct {
-	c        *Fs
+	f        *Fs
 	remote   string
 	metaData map[string]*string
 	properties
 }
 
 // returns metadata values corresponding to case independent keys
-func getMetaDataValue(md map[string]*string, key string) (*string, error) {
+func getCaseInvariantMetaDataValue(md map[string]*string, key string) (*string, bool) {
 	for k, v := range md {
 		if strings.EqualFold(k, key) {
-			return v, nil
+			return v, true
 		}
 	}
-	return nil, fmt.Errorf("did not find a value for the key=%s", key)
+	return nil, false
 }
 
-func setMetaDataValue(md map[string]*string, key string, value string) {
+func setCaseInvariantMetaDataValue(md map[string]*string, key string, value string) {
 	keysToBeDeleted := []string{}
 	for k := range md {
 		if strings.EqualFold(k, key) {
