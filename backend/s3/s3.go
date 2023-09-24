@@ -3800,11 +3800,13 @@ func (f *Fs) list(ctx context.Context, opt listOpt, fn listFn) error {
 					if remote == opt.directory {
 						continue
 					}
-					// process directory markers as directories
-					remote = strings.TrimRight(remote, "/")
 				}
 			}
 			remote = remote[len(opt.prefix):]
+			if isDirectory {
+				// process directory markers as directories
+				remote = strings.TrimRight(remote, "/")
+			}
 			if opt.addBucket {
 				remote = bucket.Join(opt.bucket, remote)
 			}
