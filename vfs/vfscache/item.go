@@ -1442,7 +1442,10 @@ func (item *Item) rename(name string, newName string, newObj fs.Object) (err err
 	item.c.writeback.Rename(id, newName)
 	if matchesExclusionPatterns(name, item.c.opt.VfsExcludeRegex) {
 		fs.Infof(item.name, "vfs cache: performing writeback due to file rename")
-		item.reload(context.Background())
+		err3 := item.reload(context.Background())
+		if err3 != nil {
+			err = err3
+		}
 	}
 	return err
 }

@@ -133,7 +133,7 @@ func TestItemDirty(t *testing.T) {
 
 func TestItemExcludedDirty(t *testing.T) {
 	customOptions := &vfscommon.Options{
-		VfsUploadExclude: []string{"exclude_folder/**", "**.json"}, // Replace with your actual patterns
+		VfsUploadExclude: []string{"exclude_folder/**", "*.json"}, // Replace with your actual patterns
 	}
 	r, c := newItemTestCache(t, customOptions)
 	excluded_item_1, _ := c.get("exclude_folder/potato")
@@ -170,7 +170,7 @@ func TestItemExcludedDirty(t *testing.T) {
 	assert.Equal(t, true, excluded_item_1.IsDirty())
 	assert.Equal(t, true, excluded_item_2.IsDirty())
 
-	excluded_item_1.rename("exclude_folder/potato", "unexclude_folder/carrot", nil)
+	require.NoError(t, excluded_item_1.rename("exclude_folder/potato", "unexclude_folder/carrot", nil))
 	assert.Equal(t, false, excluded_item_1.IsDirty())
 
 	item.Dirty()
