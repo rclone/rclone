@@ -136,42 +136,42 @@ func TestItemExcludedDirty(t *testing.T) {
 		VfsUploadExclude: []string{"exclude_folder/**", "*.json"}, // Replace with your actual patterns
 	}
 	r, c := newItemTestCache(t, customOptions)
-	excluded_item_1, _ := c.get("exclude_folder/potato")
-	excluded_item_2, _ := c.get("potato.json")
+	excludedItem1, _ := c.get("exclude_folder/potato")
+	excludedItem2, _ := c.get("potato.json")
 	item, _ := c.get("potato")
 	require.NoError(t, item.Open(nil))
-	require.NoError(t, excluded_item_1.Open(nil))
-	require.NoError(t, excluded_item_2.Open(nil))
+	require.NoError(t, excludedItem1.Open(nil))
+	require.NoError(t, excludedItem2.Open(nil))
 
 	assert.Equal(t, false, item.IsDirty())
-	assert.Equal(t, false, excluded_item_1.IsDirty())
-	assert.Equal(t, false, excluded_item_2.IsDirty())
+	assert.Equal(t, false, excludedItem1.IsDirty())
+	assert.Equal(t, false, excludedItem2.IsDirty())
 
 	n, err := item.WriteAt([]byte("hello"), 0)
 	require.NoError(t, err)
 	assert.Equal(t, 5, n)
-	n1, err1 := excluded_item_1.WriteAt([]byte("hello"), 0)
+	n1, err1 := excludedItem1.WriteAt([]byte("hello"), 0)
 	require.NoError(t, err1)
 	assert.Equal(t, 5, n1)
-	n2, err2 := excluded_item_2.WriteAt([]byte("hello"), 0)
+	n2, err2 := excludedItem2.WriteAt([]byte("hello"), 0)
 	require.NoError(t, err2)
 	assert.Equal(t, 5, n2)
 
 	assert.Equal(t, true, item.IsDirty())
-	assert.Equal(t, true, excluded_item_1.IsDirty())
-	assert.Equal(t, true, excluded_item_2.IsDirty())
+	assert.Equal(t, true, excludedItem1.IsDirty())
+	assert.Equal(t, true, excludedItem2.IsDirty())
 
 	require.NoError(t, item.Close(nil))
-	require.NoError(t, excluded_item_1.Close(nil))
-	require.NoError(t, excluded_item_2.Close(nil))
+	require.NoError(t, excludedItem1.Close(nil))
+	require.NoError(t, excludedItem2.Close(nil))
 
 	// Sync writeback so expect clean here
 	assert.Equal(t, false, item.IsDirty())
-	assert.Equal(t, true, excluded_item_1.IsDirty())
-	assert.Equal(t, true, excluded_item_2.IsDirty())
+	assert.Equal(t, true, excludedItem1.IsDirty())
+	assert.Equal(t, true, excludedItem2.IsDirty())
 
-	require.NoError(t, excluded_item_1.rename("exclude_folder/potato", "unexclude_folder/carrot", nil))
-	assert.Equal(t, false, excluded_item_1.IsDirty())
+	require.NoError(t, excludedItem1.rename("exclude_folder/potato", "unexclude_folder/carrot", nil))
+	assert.Equal(t, false, excludedItem1.IsDirty())
 
 	item.Dirty()
 
