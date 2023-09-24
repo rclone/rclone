@@ -694,9 +694,10 @@ func (d *Dir) _readDirFromEntries(entries fs.DirEntries, dirTree dirtree.DirTree
 			if node == nil || !node.IsDir() {
 				node = newDir(d.vfs, d.f, d, item)
 			}
+			dir := node.(*Dir)
+			dir.mu.Lock()
+			dir.modTime = item.ModTime(context.TODO())
 			if dirTree != nil {
-				dir := node.(*Dir)
-				dir.mu.Lock()
 				err = dir._readDirFromDirTree(dirTree, when)
 				if err != nil {
 					dir.read = time.Time{}
@@ -704,10 +705,10 @@ func (d *Dir) _readDirFromEntries(entries fs.DirEntries, dirTree dirtree.DirTree
 					dir.read = when
 					dir.cleanupTimer.Reset(d.vfs.Opt.DirCacheTime * 2)
 				}
-				dir.mu.Unlock()
-				if err != nil {
-					return err
-				}
+			}
+			dir.mu.Unlock()
+			if err != nil {
+				return err
 			}
 		default:
 			err = fmt.Errorf("unknown type %T", item)
