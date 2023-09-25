@@ -69,9 +69,8 @@ func getFileHash(node interface{}) string {
 				return ""
 			}
 			return h.Sums()[Opt.hashType]
-		} else {
-			o = fsObj
 		}
+		o = fsObj
 	case fs.Object:
 		o = b
 	}
