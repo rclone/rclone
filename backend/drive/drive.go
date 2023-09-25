@@ -321,6 +321,25 @@ rather than shortcuts themselves when doing server side copies.`,
 			Help:     "Skip google documents in all listings.\n\nIf given, gdocs practically become invisible to rclone.",
 			Advanced: true,
 		}, {
+			Name:    "show_all_gdocs",
+			Default: false,
+			Help: `Show all Google Docs including non-exportable ones in listings.
+
+If you try a server side copy on a Google Form without this flag, you
+will get this error:
+
+    No export formats found for "application/vnd.google-apps.form"
+
+However adding this flag will allow the form to be server side copied.
+
+Note that rclone doesn't add extensions to the Google Docs file names
+in this mode.
+
+Do **not** use this flag when trying to download Google Docs - rclone
+will fail to download them.
+`,
+			Advanced: true,
+		}, {
 			Name:    "skip_checksum_gphotos",
 			Default: false,
 			Help: `Skip checksums on Google photos and videos only.
@@ -667,6 +686,7 @@ type Options struct {
 	UseTrash                  bool                 `config:"use_trash"`
 	CopyShortcutContent       bool                 `config:"copy_shortcut_content"`
 	SkipGdocs                 bool                 `config:"skip_gdocs"`
+	ShowAllGdocs              bool                 `config:"show_all_gdocs"`
 	SkipChecksumGphotos       bool                 `config:"skip_checksum_gphotos"`
 	SharedWithMe              bool                 `config:"shared_with_me"`
 	TrashedOnly               bool                 `config:"trashed_only"`
@@ -1528,6 +1548,8 @@ func (f *Fs) newObjectWithExportInfo(
 	case f.opt.SkipGdocs:
 		fs.Debugf(remote, "Skipping google document type %q", info.MimeType)
 		return nil, fs.ErrorObjectNotFound
+	case f.opt.ShowAllGdocs:
+		return f.newDocumentObject(remote, info, "", info.MimeType)
 	default:
 		// If item MimeType is in the ExportFormats then it is a google doc
 		if !isDocument {
