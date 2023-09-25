@@ -169,24 +169,26 @@ func (f *Fs) newLargeUpload(ctx context.Context, o *Object, in io.Reader, src fs
 // This should be returned with returnUploadURL when finished
 func (up *largeUpload) getUploadURL(ctx context.Context) (upload *api.GetUploadPartURLResponse, err error) {
 	up.uploadMu.Lock()
-	defer up.uploadMu.Unlock()
-	if len(up.uploads) == 0 {
-		opts := rest.Opts{
-			Method: "POST",
-			Path:   "/b2_get_upload_part_url",
-		}
-		var request = api.GetUploadPartURLRequest{
-			ID: up.id,
-		}
-		err := up.f.pacer.Call(func() (bool, error) {
-			resp, err := up.f.srv.CallJSON(ctx, &opts, &request, &upload)
-			return up.f.shouldRetry(ctx, resp, err)
-		})
-		if err != nil {
-			return nil, fmt.Errorf("failed to get upload URL: %w", err)
-		}
-	} else {
+	if len(up.uploads) > 0 {
 		upload, up.uploads = up.uploads[0], up.uploads[1:]
+		up.uploadMu.Unlock()
+		return upload, nil
+	}
+	up.uploadMu.Unlock()
+
+	opts := rest.Opts{
+		Method: "POST",
+		Path:   "/b2_get_upload_part_url",
+	}
+	var request = api.GetUploadPartURLRequest{
+		ID: up.id,
+	}
+	err = up.f.pacer.Call(func() (bool, error) {
+		resp, err := up.f.srv.CallJSON(ctx, &opts, &request, &upload)
+		return up.f.shouldRetry(ctx, resp, err)
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to get upload URL: %w", err)
 	}
 	return upload, nil
 }
