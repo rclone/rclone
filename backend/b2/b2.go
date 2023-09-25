@@ -159,7 +159,7 @@ concurrently.
 Note that chunks are stored in memory and there may be up to
 "--transfers" * "--b2-upload-concurrency" chunks stored at once
 in memory.`,
-			Default:  16,
+			Default:  4,
 			Advanced: true,
 		}, {
 			Name: "disable_checksum",
