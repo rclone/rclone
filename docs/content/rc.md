@@ -77,6 +77,12 @@ remotes using this syntax http://127.0.0.1:5572/[remote:path]/path/to/object
 
 Default Off.
 
+### --rc-serve-no-modtime
+
+Set this flag to skip reading the modification time (can speed things up).
+
+Default Off.
+
 ### --rc-files /path/to/directory
 
 Path to local files to serve on the HTTP server.
