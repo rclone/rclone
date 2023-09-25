@@ -29,7 +29,7 @@ func NewPacer(ctx context.Context, c pacer.Calculator) *Pacer {
 	p := &Pacer{
 		Pacer: pacer.New(
 			pacer.InvokerOption(pacerInvoker),
-			pacer.MaxConnectionsOption(ci.Checkers+ci.Transfers),
+			// pacer.MaxConnectionsOption(ci.Checkers+ci.Transfers),
 			pacer.RetriesOption(retries),
 			pacer.CalculatorOption(c),
 		),
