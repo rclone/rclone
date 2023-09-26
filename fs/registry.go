@@ -60,6 +60,15 @@ func (os Options) setValues() {
 		if o.Default == nil {
 			o.Default = ""
 		}
+		// Create options for Enums
+		if do, ok := o.Default.(Choices); ok && len(o.Examples) == 0 {
+			o.Exclusive = true
+			o.Required = true
+			o.Examples = make(OptionExamples, len(do.Choices()))
+			for i, choice := range do.Choices() {
+				o.Examples[i].Value = choice
+			}
+		}
 	}
 }
 
