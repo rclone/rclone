@@ -1,5 +1,5 @@
-// Package gomobile exports shims for gomobile use
-package gomobile
+// Package librclonemobile exports shims for gomobile use
+package librclonemobile
 
 import (
 	"github.com/rclone/rclone/librclone/librclone"

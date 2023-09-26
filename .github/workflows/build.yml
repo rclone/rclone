@@ -27,7 +27,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        job_name: ['linux', 'linux_386', 'mac_amd64', 'mac_arm64', 'windows', 'other_os', 'go1.19', 'go1.20']
+        job_name: [ 'linux', 'linux_386', 'mac_amd64', 'mac_arm64', 'windows', 'other_os', 'go1.19', 'go1.20' ]
 
         include:
           - job_name: linux
@@ -258,6 +258,11 @@ jobs:
     timeout-minutes: 30
     name: "android-all"
     runs-on: ubuntu-latest
+    env:
+      GO_VERSION: 1.21.1
+      NDK_VERSION: r25c
+      RCLONE_NDK_VERSION: 21
+
 
     steps:
       - name: Checkout
@@ -265,11 +270,46 @@ jobs:
         with:
           fetch-depth: 0
 
-      # Upgrade together with NDK version
-      - name: Set up Go
+      - name: Install Go
         uses: actions/setup-go@v4
         with:
-          go-version: '1.21'
+          go-version: ${{ env.GO_VERSION }}
+
+
+      - name: Set rclone version
+        shell: bash
+        run: |
+          echo "VERSION=$(make version)" >> $GITHUB_ENV
+
+      - name: Setup Android NDK
+        uses: nttld/setup-ndk@v1
+        with:
+          ndk-version: ${{ env.NDK_VERSION }}
+          add-to-path: false
+
+      - name: Set ANDROID_NDK_HOME
+        run: echo "ANDROID_NDK_HOME=${{ steps.setup-ndk.outputs.ndk-path }}" >> $GITHUB_ENV
+
+      - name: Install gomobile
+        run: |
+          go install golang.org/x/mobile/cmd/gobind@latest
+          go install golang.org/x/mobile/cmd/gomobile@latest
+          gomobile init
+
+      - name: Gomobile bind for Android
+        run: |
+          cd ./librclone/gomobile
+          gomobile bind -v -target=android -javapkg="org.rclone" -ldflags '-s -X github.com/rclone/rclone/fs.Version=${{ env.VERSION }}' 
+
+
+      - name: Upload librclone gomobile-android as an artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: librclone-gomobile-android
+          path: |
+            ./librclone/gomobile/librclonemobile.aar
+            ./librclone/gomobile/librclonemobile-sources.jar
+
 
       - name: Go module cache
         uses: actions/cache@v3
@@ -279,24 +319,10 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-go-
 
-      - name: Set global environment variables
-        shell: bash
-        run: |
-          echo "VERSION=$(make version)" >> $GITHUB_ENV
-
-      - name: build native rclone
+      - name: Build native rclone
         run: |
           make
 
-      - name: install gomobile
-        run: |
-          go install golang.org/x/mobile/cmd/gobind@latest
-          go install golang.org/x/mobile/cmd/gomobile@latest
-          env PATH=$PATH:~/go/bin gomobile init
-          echo "RCLONE_NDK_VERSION=21" >> $GITHUB_ENV
-
-      - name: arm-v7a gomobile build
-        run: env PATH=$PATH:~/go/bin gomobile bind -androidapi ${RCLONE_NDK_VERSION} -v -target=android/arm -javapkg=org.rclone -ldflags '-s -X github.com/rclone/rclone/fs.Version='${VERSION} github.com/rclone/rclone/librclone/gomobile
 
       - name: arm-v7a Set environment variables
         shell: bash
