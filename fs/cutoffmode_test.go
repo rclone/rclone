@@ -22,7 +22,7 @@ func TestCutoffModeString(t *testing.T) {
 	}{
 		{CutoffModeHard, "HARD"},
 		{CutoffModeSoft, "SOFT"},
-		{99, "CutoffMode(99)"},
+		{99, "Unknown(99)"},
 	} {
 		cm := test.in
 		got := cm.String()

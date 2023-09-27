@@ -39,7 +39,7 @@ func TestLogLevelString(t *testing.T) {
 	}{
 		{LogLevelEmergency, "EMERGENCY"},
 		{LogLevelDebug, "DEBUG"},
-		{99, "LogLevel(99)"},
+		{99, "Unknown(99)"},
 	} {
 		logLevel := test.in
 		got := logLevel.String()

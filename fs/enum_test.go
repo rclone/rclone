@@ -107,16 +107,20 @@ func TestEnumUnmarshalJSON(t *testing.T) {
 	for _, test := range []struct {
 		in   string
 		want choice
-		err  bool
+		err  string
 	}{
-		{`"A"`, choiceA, false},
-		{`"B"`, choiceB, false},
-		{`"D"`, choice(0), true},
+		{`"A"`, choiceA, ""},
+		{`"B"`, choiceB, ""},
+		{`0`, choiceA, ""},
+		{`1`, choiceB, ""},
+		{`"D"`, choice(0), `invalid choice "D" from: A, B, C`},
+		{`100`, choice(0), `100 is out of range: must be 0..3`},
 	} {
 		var got choice
 		err := json.Unmarshal([]byte(test.in), &got)
-		if test.err {
+		if test.err != "" {
 			require.Error(t, err, test.in)
+			assert.ErrorContains(t, err, test.err)
 		} else {
 			require.NoError(t, err, test.in)
 		}

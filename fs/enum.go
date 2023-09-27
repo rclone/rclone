@@ -91,14 +91,17 @@ func (e *Enum[C]) Scan(s fmt.ScanState, ch rune) error {
 	return e.Set(string(token))
 }
 
-// UnmarshalJSON parses it as a string
+// UnmarshalJSON parses it as a string or an integer
 func (e *Enum[C]) UnmarshalJSON(in []byte) error {
-	var choice string
-	err := json.Unmarshal(in, &choice)
-	if err != nil {
-		return err
-	}
-	return e.Set(choice)
+	choices := e.Choices()
+	return UnmarshalJSONFlag(in, e, func(i int64) error {
+		if i < 0 || i >= int64(len(choices)) {
+			return fmt.Errorf("%d is out of range: must be 0..%d", i, len(choices))
+		}
+		*e = Enum[C](i)
+		return nil
+	})
+
 }
 
 // MarshalJSON encodes it as string
