@@ -8,8 +8,11 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-// Check it satisfies the interface
-var _ flagger = (*DumpFlags)(nil)
+// Check it satisfies the interfaces
+var (
+	_ flagger   = (*DumpFlags)(nil)
+	_ flaggerNP = DumpFlags(0)
+)
 
 func TestDumpFlagsString(t *testing.T) {
 	assert.Equal(t, "", DumpFlags(0).String())

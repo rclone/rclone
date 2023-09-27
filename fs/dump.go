@@ -86,7 +86,7 @@ func (f *DumpFlags) Set(s string) error {
 }
 
 // Type of the value
-func (f *DumpFlags) Type() string {
+func (f DumpFlags) Type() string {
 	return "DumpFlags"
 }
 

@@ -42,7 +42,7 @@ func (m *CutoffMode) Set(s string) error {
 }
 
 // Type of the value
-func (m *CutoffMode) Type() string {
+func (m CutoffMode) Type() string {
 	return "string"
 }
 

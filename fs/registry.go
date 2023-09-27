@@ -207,9 +207,20 @@ func (o *Option) Set(s string) (err error) {
 	return nil
 }
 
+type typer interface {
+	Type() string
+}
+
 // Type of the value
 func (o *Option) Type() string {
-	return reflect.TypeOf(o.GetValue()).Name()
+	v := o.GetValue()
+
+	// Try to call Type method on non-pointer
+	if do, ok := v.(typer); ok {
+		return do.Type()
+	}
+
+	return reflect.TypeOf(v).Name()
 }
 
 // FlagName for the option

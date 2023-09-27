@@ -65,8 +65,8 @@ func (l *LogLevel) Set(s string) error {
 }
 
 // Type of the value
-func (l *LogLevel) Type() string {
-	return "string"
+func (l LogLevel) Type() string {
+	return "LogLevel"
 }
 
 // UnmarshalJSON makes sure the value can be parsed as a string or integer in JSON
