@@ -18,7 +18,7 @@ var _ json.Unmarshaler = (*CacheMode)(nil)
 func TestCacheModeString(t *testing.T) {
 	assert.Equal(t, "off", CacheModeOff.String())
 	assert.Equal(t, "full", CacheModeFull.String())
-	assert.Equal(t, "CacheMode(17)", CacheMode(17).String())
+	assert.Equal(t, "Unknown(17)", CacheMode(17).String())
 }
 
 func TestCacheModeSet(t *testing.T) {
