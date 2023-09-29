@@ -315,7 +315,7 @@ Make sure you have [Snapd installed](https://snapcraft.io/docs/installing-snapd)
 ```bash
 $ sudo snap install rclone
 ```
-Due to the strict confinement of Snap, rclone snap cannot acess real /home/$USER/.config/rclone directory, default config path is as below.
+Due to the strict confinement of Snap, rclone snap cannot access real /home/$USER/.config/rclone directory, default config path is as below.
 
 - Default config directory:
     - /home/$USER/snap/rclone/current/.config/rclone
@@ -575,7 +575,7 @@ It requires .NET Framework, but it is preinstalled on newer versions of Windows,
 also provides alternative standalone distributions which includes necessary runtime (.NET 5).
 WinSW is a command-line only utility, where you have to manually create an XML file with
 service configuration. This may be a drawback for some, but it can also be an advantage
-as it is easy to back up and re-use the configuration
+as it is easy to back up and reuse the configuration
 settings, without having go through manual steps in a GUI. One thing to note is that
 by default it does not restart the service on error, one have to explicit enable this
 in the configuration file (via the "onfailure" parameter).

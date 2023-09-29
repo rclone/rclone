@@ -712,7 +712,7 @@ has a header and is divided into chunks.
 The initial nonce is generated from the operating systems crypto
 strong random number generator.  The nonce is incremented for each
 chunk read making sure each nonce is unique for each block written.
-The chance of a nonce being re-used is minuscule.  If you wrote an
+The chance of a nonce being reused is minuscule.  If you wrote an
 exabyte of data (10¹⁸ bytes) you would have a probability of
 approximately 2×10⁻³² of re-using a nonce.
 

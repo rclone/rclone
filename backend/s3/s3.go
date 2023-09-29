@@ -62,11 +62,132 @@ import (
 	"golang.org/x/net/http/httpguts"
 )
 
+// The S3 providers
+//
+// Please keep these in alphabetical order, but with AWS first and
+// Other last.
+//
+// NB if you add a new provider here, then add it in the setQuirks
+// function and set the correct quirks. Test the quirks are correct by
+// running the integration tests "go test -v -remote NewS3Provider:".
+//
+// See https://github.com/rclone/rclone/blob/master/CONTRIBUTING.md#adding-a-new-s3-provider
+// for full information about how to add a new s3 provider.
+var providerOption = fs.Option{
+	Name: fs.ConfigProvider,
+	Help: "Choose your S3 provider.",
+	Examples: []fs.OptionExample{{
+		Value: "AWS",
+		Help:  "Amazon Web Services (AWS) S3",
+	}, {
+		Value: "Alibaba",
+		Help:  "Alibaba Cloud Object Storage System (OSS) formerly Aliyun",
+	}, {
+		Value: "ArvanCloud",
+		Help:  "Arvan Cloud Object Storage (AOS)",
+	}, {
+		Value: "Ceph",
+		Help:  "Ceph Object Storage",
+	}, {
+		Value: "ChinaMobile",
+		Help:  "China Mobile Ecloud Elastic Object Storage (EOS)",
+	}, {
+		Value: "Cloudflare",
+		Help:  "Cloudflare R2 Storage",
+	}, {
+		Value: "DigitalOcean",
+		Help:  "DigitalOcean Spaces",
+	}, {
+		Value: "Dreamhost",
+		Help:  "Dreamhost DreamObjects",
+	}, {
+		Value: "GCS",
+		Help:  "Google Cloud Storage",
+	}, {
+		Value: "HuaweiOBS",
+		Help:  "Huawei Object Storage Service",
+	}, {
+		Value: "IBMCOS",
+		Help:  "IBM COS S3",
+	}, {
+		Value: "IDrive",
+		Help:  "IDrive e2",
+	}, {
+		Value: "IONOS",
+		Help:  "IONOS Cloud",
+	}, {
+		Value: "LyveCloud",
+		Help:  "Seagate Lyve Cloud",
+	}, {
+		Value: "Leviia",
+		Help:  "Leviia Object Storage",
+	}, {
+		Value: "Liara",
+		Help:  "Liara Object Storage",
+	}, {
+		Value: "Linode",
+		Help:  "Linode Object Storage",
+	}, {
+		Value: "Minio",
+		Help:  "Minio Object Storage",
+	}, {
+		Value: "Netease",
+		Help:  "Netease Object Storage (NOS)",
+	}, {
+		Value: "Petabox",
+		Help:  "Petabox Object Storage",
+	}, {
+		Value: "RackCorp",
+		Help:  "RackCorp Object Storage",
+	}, {
+		Value: "Scaleway",
+		Help:  "Scaleway Object Storage",
+	}, {
+		Value: "SeaweedFS",
+		Help:  "SeaweedFS S3",
+	}, {
+		Value: "StackPath",
+		Help:  "StackPath Object Storage",
+	}, {
+		Value: "Storj",
+		Help:  "Storj (S3 Compatible Gateway)",
+	}, {
+		Value: "Synology",
+		Help:  "Synology C2 Object Storage",
+	}, {
+		Value: "TencentCOS",
+		Help:  "Tencent Cloud Object Storage (COS)",
+	}, {
+		Value: "Wasabi",
+		Help:  "Wasabi Object Storage",
+	}, {
+		Value: "Qiniu",
+		Help:  "Qiniu Object Storage (Kodo)",
+	}, {
+		Value: "Other",
+		Help:  "Any other S3 compatible provider",
+	}},
+}
+
+var providersList string
+
 // Register with Fs
 func init() {
+	var s strings.Builder
+	for i, provider := range providerOption.Examples {
+		if provider.Value == "Other" {
+			_, _ = s.WriteString(" and others")
+		} else {
+			if i != 0 {
+				_, _ = s.WriteString(", ")
+			}
+			_, _ = s.WriteString(provider.Value)
+		}
+	}
+	providersList = s.String()
 	fs.Register(&fs.RegInfo{
 		Name:        "s3",
-		Description: "Amazon S3 Compliant Storage Providers including AWS, Alibaba, ArvanCloud, Ceph, China Mobile, Cloudflare, GCS, DigitalOcean, Dreamhost, Huawei OBS, IBM COS, IDrive e2, IONOS Cloud, Leviia, Liara, Lyve Cloud, Minio, Netease, Petabox, RackCorp, Scaleway, SeaweedFS, StackPath, Storj, Synology, Tencent COS, Qiniu and Wasabi",
+		Description: "Amazon S3 Compliant Storage Providers including " + providersList,
 		NewFs:       NewFs,
 		CommandHelp: commandHelp,
 		Config: func(ctx context.Context, name string, m configmap.Mapper, config fs.ConfigIn) (*fs.ConfigOut, error) {
@@ -80,100 +201,7 @@ func init() {
 			System: systemMetadataInfo,
 			Help:   `User metadata is stored as x-amz-meta- keys. S3 metadata keys are case insensitive and are always returned in lower case.`,
 		},
-		Options: []fs.Option{{
-			Name: fs.ConfigProvider,
-			Help: "Choose your S3 provider.",
-			// NB if you add a new provider here, then add it in the
-			// setQuirks function and set the correct quirks
-			Examples: []fs.OptionExample{{
-				Value: "AWS",
-				Help:  "Amazon Web Services (AWS) S3",
-			}, {
-				Value: "Alibaba",
-				Help:  "Alibaba Cloud Object Storage System (OSS) formerly Aliyun",
-			}, {
-				Value: "ArvanCloud",
-				Help:  "Arvan Cloud Object Storage (AOS)",
-			}, {
-				Value: "Ceph",
-				Help:  "Ceph Object Storage",
-			}, {
-				Value: "ChinaMobile",
-				Help:  "China Mobile Ecloud Elastic Object Storage (EOS)",
-			}, {
-				Value: "Cloudflare",
-				Help:  "Cloudflare R2 Storage",
-			}, {
-				Value: "DigitalOcean",
-				Help:  "DigitalOcean Spaces",
-			}, {
-				Value: "Dreamhost",
-				Help:  "Dreamhost DreamObjects",
-			}, {
-				Value: "GCS",
-				Help:  "Google Cloud Storage",
-			}, {
-				Value: "HuaweiOBS",
-				Help:  "Huawei Object Storage Service",
-			}, {
-				Value: "IBMCOS",
-				Help:  "IBM COS S3",
-			}, {
-				Value: "IDrive",
-				Help:  "IDrive e2",
-			}, {
-				Value: "IONOS",
-				Help:  "IONOS Cloud",
-			}, {
-				Value: "LyveCloud",
-				Help:  "Seagate Lyve Cloud",
-			}, {
-				Value: "Leviia",
-				Help:  "Leviia Object Storage",
-			}, {
-				Value: "Liara",
-				Help:  "Liara Object Storage",
-			}, {
-				Value: "Minio",
-				Help:  "Minio Object Storage",
-			}, {
-				Value: "Netease",
-				Help:  "Netease Object Storage (NOS)",
-			}, {
-				Value: "Petabox",
-				Help:  "Petabox Object Storage",
-			}, {
-				Value: "RackCorp",
-				Help:  "RackCorp Object Storage",
-			}, {
-				Value: "Scaleway",
-				Help:  "Scaleway Object Storage",
-			}, {
-				Value: "SeaweedFS",
-				Help:  "SeaweedFS S3",
-			}, {
-				Value: "StackPath",
-				Help:  "StackPath Object Storage",
-			}, {
-				Value: "Storj",
-				Help:  "Storj (S3 Compatible Gateway)",
-			}, {
-				Value: "Synology",
-				Help:  "Synology C2 Object Storage",
-			}, {
-				Value: "TencentCOS",
-				Help:  "Tencent Cloud Object Storage (COS)",
-			}, {
-				Value: "Wasabi",
-				Help:  "Wasabi Object Storage",
-			}, {
-				Value: "Qiniu",
-				Help:  "Qiniu Object Storage (Kodo)",
-			}, {
-				Value: "Other",
-				Help:  "Any other S3 compatible provider",
-			}},
-		}, {
+		Options: []fs.Option{providerOption, {
 			Name:    "env_auth",
 			Help:    "Get AWS credentials from runtime (environment variables or EC2/ECS meta data if no env vars).\n\nOnly applies if access_key_id and secret_access_key is blank.",
 			Default: false,
@@ -494,7 +522,7 @@ func init() {
 		}, {
 			Name:     "region",
 			Help:     "Region to connect to.\n\nLeave blank if you are using an S3 clone and you don't have a region.",
-			Provider: "!AWS,Alibaba,ArvanCloud,ChinaMobile,Cloudflare,IONOS,Petabox,Liara,Qiniu,RackCorp,Scaleway,Storj,Synology,TencentCOS,HuaweiOBS,IDrive",
+			Provider: "!AWS,Alibaba,ArvanCloud,ChinaMobile,Cloudflare,IONOS,Petabox,Liara,Linode,Qiniu,RackCorp,Scaleway,Storj,Synology,TencentCOS,HuaweiOBS,IDrive",
 			Examples: []fs.OptionExample{{
 				Value: "",
 				Help:  "Use this if unsure.\nWill use v4 signatures and an empty region.",
@@ -862,6 +890,42 @@ func init() {
 				Help:  "The default endpoint\nIran",
 			}},
 		}, {
+			// Linode endpoints: https://www.linode.com/docs/products/storage/object-storage/guides/urls/#cluster-url-s3-endpoint
+			Name:     "endpoint",
+			Help:     "Endpoint for Linode Object Storage API.",
+			Provider: "Linode",
+			Examples: []fs.OptionExample{{
+				Value: "us-southeast-1.linodeobjects.com",
+				Help:  "Atlanta, GA (USA), us-southeast-1",
+			}, {
+				Value: "us-ord-1.linodeobjects.com",
+				Help:  "Chicago, IL (USA), us-ord-1",
+			}, {
+				Value: "eu-central-1.linodeobjects.com",
+				Help:  "Frankfurt (Germany), eu-central-1",
+			}, {
+				Value: "it-mil-1.linodeobjects.com",
+				Help:  "Milan (Italy), it-mil-1",
+			}, {
+				Value: "us-east-1.linodeobjects.com",
+				Help:  "Newark, NJ (USA), us-east-1",
+			}, {
+				Value: "fr-par-1.linodeobjects.com",
+				Help:  "Paris (France), fr-par-1",
+			}, {
+				Value: "us-sea-1.linodeobjects.com",
+				Help:  "Seattle, WA (USA), us-sea-1",
+			}, {
+				Value: "ap-south-1.linodeobjects.com",
+				Help:  "Singapore ap-south-1",
+			}, {
+				Value: "se-sto-1.linodeobjects.com",
+				Help:  "Stockholm (Sweden), se-sto-1",
+			}, {
+				Value: "us-iad-1.linodeobjects.com",
+				Help:  "Washington, DC, (USA), us-iad-1",
+			}},
+		}, {
 			// oss endpoints: https://help.aliyun.com/document_detail/31837.html
 			Name:     "endpoint",
 			Help:     "Endpoint for OSS API.",
@@ -1213,7 +1277,7 @@ func init() {
 		}, {
 			Name:     "endpoint",
 			Help:     "Endpoint for S3 API.\n\nRequired when using an S3 clone.",
-			Provider: "!AWS,ArvanCloud,IBMCOS,IDrive,IONOS,TencentCOS,HuaweiOBS,Alibaba,ChinaMobile,GCS,Liara,Scaleway,StackPath,Storj,Synology,RackCorp,Qiniu,Petabox",
+			Provider: "!AWS,ArvanCloud,IBMCOS,IDrive,IONOS,TencentCOS,HuaweiOBS,Alibaba,ChinaMobile,GCS,Liara,Linode,Scaleway,StackPath,Storj,Synology,RackCorp,Qiniu,Petabox",
 			Examples: []fs.OptionExample{{
 				Value:    "objects-us-east-1.dream.io",
 				Help:     "Dream Objects endpoint",
@@ -1701,7 +1765,7 @@ func init() {
 		}, {
 			Name:     "location_constraint",
 			Help:     "Location constraint - must be set to match the Region.\n\nLeave blank if not sure. Used when creating buckets only.",
-			Provider: "!AWS,Alibaba,ArvanCloud,HuaweiOBS,ChinaMobile,Cloudflare,IBMCOS,IDrive,IONOS,Leviia,Liara,Qiniu,RackCorp,Scaleway,StackPath,Storj,TencentCOS,Petabox",
+			Provider: "!AWS,Alibaba,ArvanCloud,HuaweiOBS,ChinaMobile,Cloudflare,IBMCOS,IDrive,IONOS,Leviia,Liara,Linode,Qiniu,RackCorp,Scaleway,StackPath,Storj,TencentCOS,Petabox",
 		}, {
 			Name: "acl",
 			Help: `Canned ACL used when creating buckets and storing or copying objects.
@@ -2937,15 +3001,17 @@ func setEndpointValueForIDriveE2(m configmap.Mapper) (err error) {
 // There should be no testing against opt.Provider anywhere in the
 // code except in here to localise the setting of the quirks.
 //
-// These should be differences from AWS S3
+// Run the integration tests to check you have the quirks correct.
+//
+//	go test -v -remote NewS3Provider:
 func setQuirks(opt *Options) {
 	var (
-		listObjectsV2         = true
-		virtualHostStyle      = true
-		urlEncodeListings     = true
-		useMultipartEtag      = true
-		useAcceptEncodingGzip = true
-		mightGzip             = true // assume all providers might gzip until proven otherwise
+		listObjectsV2         = true // Always use ListObjectsV2 instead of ListObjects
+		virtualHostStyle      = true // Use bucket.provider.com instead of putting the bucket in the URL
+		urlEncodeListings     = true // URL encode the listings to help with control characters
+		useMultipartEtag      = true // Set if Etags for multpart uploads are compatible with AWS
+		useAcceptEncodingGzip = true // Set Accept-Encoding: gzip
+		mightGzip             = true // assume all providers might use content encoding gzip until proven otherwise
 	)
 	switch opt.Provider {
 	case "AWS":
@@ -2993,6 +3059,8 @@ func setQuirks(opt *Options) {
 		virtualHostStyle = false
 		urlEncodeListings = false
 		useMultipartEtag = false
+	case "Linode":
+		// No quirks
 	case "LyveCloud":
 		useMultipartEtag = false // LyveCloud seems to calculate multipart Etags differently from AWS
 	case "Minio":
@@ -3800,11 +3868,13 @@ func (f *Fs) list(ctx context.Context, opt listOpt, fn listFn) error {
 					if remote == opt.directory {
 						continue
 					}
-					// process directory markers as directories
-					remote = strings.TrimRight(remote, "/")
 				}
 			}
 			remote = remote[len(opt.prefix):]
+			if isDirectory {
+				// process directory markers as directories
+				remote = strings.TrimRight(remote, "/")
+			}
 			if opt.addBucket {
 				remote = bucket.Join(opt.bucket, remote)
 			}
@@ -5611,7 +5681,7 @@ func (w *s3ChunkWriter) WriteChunk(ctx context.Context, chunkNumber int, reader 
 	return currentChunkSize, err
 }
 
-// Abort the multpart upload
+// Abort the multipart upload
 func (w *s3ChunkWriter) Abort(ctx context.Context) error {
 	err := w.f.pacer.Call(func() (bool, error) {
 		_, err := w.f.c.AbortMultipartUploadWithContext(context.Background(), &s3.AbortMultipartUploadInput{

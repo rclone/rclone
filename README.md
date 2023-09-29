@@ -53,6 +53,7 @@ Rclone *("rsync for cloud storage")* is a command-line program to sync files and
   * Koofr [:page_facing_up:](https://rclone.org/koofr/)
   * Leviia Object Storage [:page_facing_up:](https://rclone.org/s3/#leviia)
   * Liara Object Storage [:page_facing_up:](https://rclone.org/s3/#liara-object-storage)
+  * Linode Object Storage [:page_facing_up:](https://rclone.org/s3/#linode)
   * Mail.ru Cloud [:page_facing_up:](https://rclone.org/mailru/)
   * Memset Memstore [:page_facing_up:](https://rclone.org/swift/)
   * Mega [:page_facing_up:](https://rclone.org/mega/)

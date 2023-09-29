@@ -1930,11 +1930,15 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 			return err
 		}
 	} else if size > int64(o.fs.opt.UploadCutoff) {
-		_, err := multipart.UploadMultipart(ctx, src, in, multipart.UploadMultipartOptions{
+		chunkWriter, err := multipart.UploadMultipart(ctx, src, in, multipart.UploadMultipartOptions{
 			Open:        o.fs,
 			OpenOptions: options,
 		})
-		return err
+		if err != nil {
+			return err
+		}
+		up := chunkWriter.(*largeUpload)
+		return o.decodeMetaDataFileInfo(up.info)
 	}
 
 	modTime := src.ModTime(ctx)

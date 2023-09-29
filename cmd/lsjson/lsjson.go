@@ -117,6 +117,12 @@ can be processed line by line as each item is written one to a line.
 		"groups":            "Filter,Listing",
 	},
 	RunE: func(command *cobra.Command, args []string) error {
+		// Make sure we set the global Metadata flag too as it
+		// isn't parsed by cobra. We need to do this first
+		// before any backends are created.
+		ci := fs.GetConfig(context.Background())
+		ci.Metadata = opt.Metadata
+
 		cmd.CheckArgs(1, 1, command, args)
 		var fsrc fs.Fs
 		var remote string

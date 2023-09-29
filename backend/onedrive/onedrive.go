@@ -572,15 +572,18 @@ func Config(ctx context.Context, name string, m configmap.Mapper, config fs.Conf
 	case "url":
 		return fs.ConfigInput("url_end", "config_site_url", `Site URL
 
-Example: "https://contoso.sharepoint.com/sites/mysite" or "mysite"
+Examples:
+- "mysite"
+- "https://XXX.sharepoint.com/sites/mysite"
+- "https://XXX.sharepoint.com/teams/ID"
 `)
 	case "url_end":
 		siteURL := config.Result
-		re := regexp.MustCompile(`https://.*\.sharepoint\.com/sites/(.*)`)
+		re := regexp.MustCompile(`https://.*\.sharepoint\.com(/.*)`)
 		match := re.FindStringSubmatch(siteURL)
 		if len(match) == 2 {
 			return chooseDrive(ctx, name, m, srv, chooseDriveOpt{
-				relativePath: "/sites/" + match[1],
+				relativePath: match[1],
 			})
 		}
 		return chooseDrive(ctx, name, m, srv, chooseDriveOpt{

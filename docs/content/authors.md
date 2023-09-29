@@ -775,3 +775,5 @@ put them back in again.` >}}
   * Drew Stinnett <drew@drewlink.com>
   * Pat Patterson <pat@backblaze.com>
   * Herby Gillot <herby.gillot@gmail.com>
+  * Nikita Shoshin <shoshin_nikita@fastmail.com>
+  * rinsuki <428rinsuki+git@gmail.com>
