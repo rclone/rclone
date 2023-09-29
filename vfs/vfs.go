@@ -766,6 +766,21 @@ func (vfs *VFS) ReadFile(filename string) (b []byte, err error) {
 	return io.ReadAll(f)
 }
 
+// WriteFile writes data to the named file, creating it if necessary.
+// If the file does not exist, WriteFile creates it with permissions perm (before umask);
+// otherwise WriteFile truncates it before writing, without changing permissions.
+// Since Writefile requires multiple system calls to complete, a failure mid-operation
+// can leave the file in a partially written state.
+func (vfs *VFS) WriteFile(name string, data []byte, perm os.FileMode) (err error) {
+	f, err := vfs.OpenFile(name, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, perm)
+	if err != nil {
+		return err
+	}
+	defer fs.CheckClose(f, &err)
+	_, err = f.Write(data)
+	return err
+}
+
 // AddVirtual adds the object (file or dir) to the directory cache
 func (vfs *VFS) AddVirtual(remote string, size int64, isDir bool) (err error) {
 	remote = strings.TrimRight(remote, "/")
