@@ -9,6 +9,7 @@ import (
 	"github.com/rclone/rclone/cmd/serve/docker"
 	"github.com/rclone/rclone/cmd/serve/ftp"
 	"github.com/rclone/rclone/cmd/serve/http"
+	"github.com/rclone/rclone/cmd/serve/nbd"
 	"github.com/rclone/rclone/cmd/serve/nfs"
 	"github.com/rclone/rclone/cmd/serve/restic"
 	"github.com/rclone/rclone/cmd/serve/s3"
@@ -42,6 +43,9 @@ func init() {
 	}
 	if s3.Command != nil {
 		Command.AddCommand(s3.Command)
+	}
+	if nbd.Command != nil {
+		Command.AddCommand(nbd.Command)
 	}
 	cmd.Root.AddCommand(Command)
 }

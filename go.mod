@@ -2,6 +2,8 @@ module github.com/rclone/rclone
 
 go 1.21
 
+//replace github.com/rclone/gonbdserver => /home/ncw/go/src/github.com/rclone/gonbdserver
+
 require (
 	bazil.org/fuse v0.0.0-20230120002735-62a210ff1fd5
 	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.13.0
@@ -53,6 +55,7 @@ require (
 	github.com/prometheus/client_golang v1.19.1
 	github.com/putdotio/go-putio/putio v0.0.0-20200123120452-16d982cac2b8
 	github.com/rclone/gofakes3 v0.0.3-0.20240716093803-d6abc178be56
+	github.com/rclone/gonbdserver v0.0.0-20230928185136-7adb4642e1cb
 	github.com/rfjakob/eme v1.1.2
 	github.com/rivo/uniseg v0.4.7
 	github.com/rogpeppe/go-internal v1.12.0
