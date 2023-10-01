@@ -9,14 +9,18 @@ import (
 	"io"
 	"os"
 	"regexp"
+	"sort"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
 
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/filter"
 	"github.com/rclone/rclone/fs/hash"
+	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/fs/walk"
+	"golang.org/x/exp/slices"
 )
 
 // ListingHeader defines first line of a listing
@@ -70,11 +74,29 @@ func (ls *fileList) empty() bool {
 
 func (ls *fileList) has(file string) bool {
 	_, found := ls.info[file]
+	if !found {
+		//try unquoting
+		file, _ = strconv.Unquote(`"` + file + `"`)
+		_, found = ls.info[file]
+	}
 	return found
 }
 
 func (ls *fileList) get(file string) *fileInfo {
-	return ls.info[file]
+	info, found := ls.info[file]
+	if !found {
+		//try unquoting
+		file, _ = strconv.Unquote(`"` + file + `"`)
+		info = ls.info[fmt.Sprint(file)]
+	}
+	return info
+}
+
+func (ls *fileList) remove(file string) {
+	if ls.has(file) {
+		ls.list = slices.Delete(ls.list, slices.Index(ls.list, file), slices.Index(ls.list, file)+1)
+		delete(ls.info, file)
+	}
 }
 
 func (ls *fileList) put(file string, size int64, time time.Time, hash, id string, flags string) {
@@ -82,6 +104,9 @@ func (ls *fileList) put(file string, size int64, time time.Time, hash, id string
 	if fi != nil {
 		fi.size = size
 		fi.time = time
+		fi.hash = hash
+		fi.id = id
+		fi.flags = flags
 	} else {
 		fi = &fileInfo{
 			size:  size,
@@ -120,12 +145,20 @@ func (ls *fileList) afterTime(file string, time time.Time) bool {
 	return fi.time.After(time)
 }
 
+// sort by path name
+func (ls *fileList) sort() {
+	sort.SliceStable(ls.list, func(i, j int) bool {
+		return ls.list[i] < ls.list[j]
+	})
+}
+
 // save will save listing to a file.
 func (ls *fileList) save(ctx context.Context, listing string) error {
 	file, err := os.Create(listing)
 	if err != nil {
 		return err
 	}
+	ls.sort()
 
 	hashName := ""
 	if ls.hash != hash.None {
@@ -375,4 +408,222 @@ func (b *bisyncRun) listDirsOnly(listingNum int) (*fileList, error) {
 	}
 
 	return dirsonly, err
+}
+
+// ConvertPrecision returns the Modtime rounded to Dest's precision if lower, otherwise unchanged
+// Need to use the other fs's precision (if lower) when copying
+// Note: we need to use Truncate rather than Round so that After() is reliable.
+// (2023-11-02 20:22:45.552679442 +0000 < UTC 2023-11-02 20:22:45.553 +0000 UTC)
+func ConvertPrecision(Modtime time.Time, dst fs.Fs) time.Time {
+	DestPrecision := dst.Precision()
+
+	// In case it's wrapping an Fs with lower precision, try unwrapping and use the lowest.
+	if Modtime.Truncate(DestPrecision).After(Modtime.Truncate(fs.UnWrapFs(dst).Precision())) {
+		DestPrecision = fs.UnWrapFs(dst).Precision()
+	}
+
+	if Modtime.After(Modtime.Truncate(DestPrecision)) {
+		return Modtime.Truncate(DestPrecision)
+	}
+	return Modtime
+}
+
+// modifyListing will modify the listing based on the results of the sync
+func (b *bisyncRun) modifyListing(ctx context.Context, src fs.Fs, dst fs.Fs, srcListing string, dstListing string, results []Results, queues queues, is1to2 bool) (err error) {
+	queue := queues.copy2to1
+	renames := queues.renamed2
+	direction := "2to1"
+	if is1to2 {
+		queue = queues.copy1to2
+		renames = queues.renamed1
+		direction = "1to2"
+	}
+
+	fs.Debugf(nil, "updating %s", direction)
+	fs.Debugf(nil, "RESULTS: %v", results)
+	fs.Debugf(nil, "QUEUE: %v", queue)
+
+	srcList, err := b.loadListing(srcListing)
+	if err != nil {
+		return fmt.Errorf("cannot read prior listing: %w", err)
+	}
+	dstList, err := b.loadListing(dstListing)
+	if err != nil {
+		return fmt.Errorf("cannot read prior listing: %w", err)
+	}
+	// set list hash type
+	if b.opt.Resync && !b.opt.IgnoreListingChecksum {
+		srcList.hash = src.Hashes().GetOne()
+		dstList.hash = dst.Hashes().GetOne()
+	}
+
+	srcWinners := newFileList()
+	dstWinners := newFileList()
+	errors := newFileList()
+	ctxRecheck, filterRecheck := filter.AddConfig(ctx)
+
+	for _, result := range results {
+		if result.Name == "" {
+			continue
+		}
+
+		if result.Flags == "d" && !b.opt.CreateEmptySrcDirs {
+			continue
+		}
+
+		// build src winners list
+		if result.IsSrc && result.Src != "" && (result.Winner.Err == nil || result.Flags == "d") {
+			srcWinners.put(result.Name, result.Size, ConvertPrecision(result.Modtime, src), result.Hash, "-", result.Flags)
+			fs.Debugf(nil, "winner: copy to src: %v", result)
+		}
+
+		// build dst winners list
+		if result.IsWinner && result.Winner.Side != "none" && (result.Winner.Err == nil || result.Flags == "d") {
+			dstWinners.put(result.Name, result.Size, ConvertPrecision(result.Modtime, dst), result.Hash, "-", result.Flags)
+			fs.Debugf(nil, "winner: copy to dst: %v", result)
+		}
+
+		// build errors list
+		if result.Err != nil || result.Winner.Err != nil {
+			errors.put(result.Name, result.Size, result.Modtime, result.Hash, "-", result.Flags)
+			if err := filterRecheck.AddFile(result.Name); err != nil {
+				fs.Debugf(result.Name, "error adding file to recheck filter: %v", err)
+			}
+		}
+	}
+
+	updateLists := func(side string, winners, list *fileList) {
+		// removals from side
+		for _, oldFile := range queue.ToList() {
+			if !winners.has(oldFile) && list.has(oldFile) && !errors.has(oldFile) {
+				list.remove(oldFile)
+				fs.Debugf(nil, "decision: removed from %s: %v", side, oldFile)
+			} else if winners.has(oldFile) {
+				// copies to side
+				new := winners.get(oldFile)
+				list.put(oldFile, new.size, new.time, new.hash, new.id, new.flags)
+				fs.Debugf(nil, "decision: copied to %s: %v", side, oldFile)
+			} else {
+				fs.Debugf(oldFile, "file in queue but missing from %s transfers", side)
+				if err := filterRecheck.AddFile(oldFile); err != nil {
+					fs.Debugf(oldFile, "error adding file to recheck filter: %v", err)
+				}
+			}
+		}
+	}
+	updateLists("src", srcWinners, srcList)
+	updateLists("dst", dstWinners, dstList)
+
+	// TODO: rollback on error
+
+	// account for "deltaOthers" we handled separately
+	if queues.deletedonboth.NotEmpty() {
+		for file := range queues.deletedonboth {
+			srcList.remove(file)
+			dstList.remove(file)
+		}
+	}
+	if renames.NotEmpty() && !b.opt.DryRun {
+		// renamed on src and copied to dst
+		renamesList := renames.ToList()
+		for _, file := range renamesList {
+			// we'll handle the other side when we go the other direction
+			newName := file + "..path2"
+			oppositeName := file + "..path1"
+			if is1to2 {
+				newName = file + "..path1"
+				oppositeName = file + "..path2"
+			}
+			var new *fileInfo
+			// we prefer to get the info from the ..path1 / ..path2 versions
+			// since they were actually copied as opposed to operations.MoveFile()'d.
+			// the size/time/hash info is therefore fresher on the renames
+			// but we'll settle for the original if we have to.
+			if srcList.has(newName) {
+				new = srcList.get(newName)
+			} else if srcList.has(oppositeName) {
+				new = srcList.get(oppositeName)
+			} else if srcList.has(file) {
+				new = srcList.get(file)
+			} else {
+				if err := filterRecheck.AddFile(file); err != nil {
+					fs.Debugf(file, "error adding file to recheck filter: %v", err)
+				}
+			}
+			srcList.put(newName, new.size, new.time, new.hash, new.id, new.flags)
+			dstList.put(newName, new.size, ConvertPrecision(new.time, src), new.hash, new.id, new.flags)
+			srcList.remove(file)
+			dstList.remove(file)
+		}
+	}
+
+	// recheck the ones we skipped because they were equal
+	// we never got their info because they were never synced.
+	// TODO: add flag to skip this for people who don't care and would rather avoid?
+	if queues.renameSkipped.NotEmpty() {
+		skippedList := queues.renameSkipped.ToList()
+		for _, file := range skippedList {
+			if err := filterRecheck.AddFile(file); err != nil {
+				fs.Debugf(file, "error adding file to recheck filter: %v", err)
+			}
+		}
+	}
+
+	if filterRecheck.HaveFilesFrom() {
+		b.recheck(ctxRecheck, src, dst, srcList, dstList)
+	}
+
+	// update files
+	err = srcList.save(ctx, srcListing)
+	if err != nil {
+		b.abort = true
+	}
+	err = dstList.save(ctx, dstListing)
+	if err != nil {
+		b.abort = true
+	}
+
+	return err
+}
+
+// recheck the ones we're not sure about
+func (b *bisyncRun) recheck(ctxRecheck context.Context, src, dst fs.Fs, srcList, dstList *fileList) {
+	var srcObjs []fs.Object
+	var dstObjs []fs.Object
+
+	if err := operations.ListFn(ctxRecheck, src, func(obj fs.Object) {
+		srcObjs = append(srcObjs, obj)
+	}); err != nil {
+		fs.Debugf(src, "error recchecking src obj: %v", err)
+	}
+	if err := operations.ListFn(ctxRecheck, dst, func(obj fs.Object) {
+		dstObjs = append(dstObjs, obj)
+	}); err != nil {
+		fs.Debugf(dst, "error recchecking dst obj: %v", err)
+	}
+
+	putObj := func(obj fs.Object, f fs.Fs, list *fileList) {
+		hashVal := ""
+		if !b.opt.IgnoreListingChecksum {
+			hashType := f.Hashes().GetOne()
+			if hashType != hash.None {
+				hashVal, _ = obj.Hash(ctxRecheck, hashType)
+			}
+		}
+		list.put(obj.Remote(), obj.Size(), obj.ModTime(ctxRecheck), hashVal, "-", "-")
+	}
+
+	for _, srcObj := range srcObjs {
+		fs.Debugf(srcObj, "rechecking")
+		for _, dstObj := range dstObjs {
+			if srcObj.Remote() == dstObj.Remote() {
+				if operations.Equal(ctxRecheck, srcObj, dstObj) || b.opt.DryRun {
+					putObj(srcObj, src, srcList)
+					putObj(dstObj, dst, dstList)
+				} else {
+					fs.Infof(srcObj, "files not equal on recheck: %v %v", srcObj, dstObj)
+				}
+			}
+		}
+	}
 }

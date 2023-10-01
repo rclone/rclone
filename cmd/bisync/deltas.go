@@ -176,9 +176,11 @@ func (b *bisyncRun) findDeltas(fctx context.Context, f fs.Fs, oldListing, newLis
 		} else {
 			if old.getTime(file) != now.getTime(file) {
 				if old.beforeOther(now, file) {
+					fs.Debugf(file, "(old: %v current: %v", old.getTime(file), now.getTime(file))
 					b.indent(msg, file, "File is newer")
 					d |= deltaNewer
 				} else { // Current version is older than prior sync.
+					fs.Debugf(file, "(old: %v current: %v", old.getTime(file), now.getTime(file))
 					b.indent(msg, file, "File is OLDER")
 					d |= deltaOlder
 				}
@@ -217,7 +219,7 @@ func (b *bisyncRun) findDeltas(fctx context.Context, f fs.Fs, oldListing, newLis
 }
 
 // applyDeltas
-func (b *bisyncRun) applyDeltas(ctx context.Context, ds1, ds2 *deltaSet) (changes1, changes2 bool, err error) {
+func (b *bisyncRun) applyDeltas(ctx context.Context, ds1, ds2 *deltaSet) (changes1, changes2 bool, results2to1, results1to2 []Results, queues queues, err error) {
 	path1 := bilib.FsPath(b.fs1)
 	path2 := bilib.FsPath(b.fs2)
 
@@ -226,6 +228,10 @@ func (b *bisyncRun) applyDeltas(ctx context.Context, ds1, ds2 *deltaSet) (change
 	delete1 := bilib.Names{}
 	delete2 := bilib.Names{}
 	handled := bilib.Names{}
+	renamed1 := bilib.Names{}
+	renamed2 := bilib.Names{}
+	renameSkipped := bilib.Names{}
+	deletedonboth := bilib.Names{}
 
 	ctxMove := b.opt.setDryRun(ctx)
 
@@ -299,6 +305,7 @@ func (b *bisyncRun) applyDeltas(ctx context.Context, ds1, ds2 *deltaSet) (change
 					equal := matches.Has(file)
 					if equal {
 						fs.Infof(nil, "Files are equal! Skipping: %s", file)
+						renameSkipped.Add(file)
 					} else {
 						fs.Debugf(nil, "Files are NOT equal: %s", file)
 						b.indent("!Path1", p1+"..path1", "Renaming Path1 copy")
@@ -307,6 +314,11 @@ func (b *bisyncRun) applyDeltas(ctx context.Context, ds1, ds2 *deltaSet) (change
 							b.critical = true
 							return
 						}
+						if b.opt.DryRun {
+							renameSkipped.Add(file)
+						} else {
+							renamed1.Add(file)
+						}
 						b.indent("!Path1", p2+"..path1", "Queue copy to Path2")
 						copy1to2.Add(file + "..path1")
 
@@ -314,6 +326,11 @@ func (b *bisyncRun) applyDeltas(ctx context.Context, ds1, ds2 *deltaSet) (change
 						if err = operations.MoveFile(ctxMove, b.fs2, b.fs2, file+"..path2", file); err != nil {
 							err = fmt.Errorf("path2 rename failed for %s: %w", file, err)
 							return
+						}
+						if b.opt.DryRun {
+							renameSkipped.Add(file)
+						} else {
+							renamed2.Add(file)
 						}
 						b.indent("!Path2", p1+"..path2", "Queue copy to Path1")
 						copy2to1.Add(file + "..path2")
@@ -334,6 +351,7 @@ func (b *bisyncRun) applyDeltas(ctx context.Context, ds1, ds2 *deltaSet) (change
 				handled.Add(file)
 			} else if d2.is(deltaDeleted) {
 				handled.Add(file)
+				deletedonboth.Add(file)
 			}
 		}
 	}
@@ -360,25 +378,25 @@ func (b *bisyncRun) applyDeltas(ctx context.Context, ds1, ds2 *deltaSet) (change
 	if copy2to1.NotEmpty() {
 		changes1 = true
 		b.indent("Path2", "Path1", "Do queued copies to")
-		err = b.fastCopy(ctx, b.fs2, b.fs1, copy2to1, "copy2to1")
+		results2to1, err = b.fastCopy(ctx, b.fs2, b.fs1, copy2to1, "copy2to1")
 		if err != nil {
 			return
 		}
 
 		//copy empty dirs from path2 to path1 (if --create-empty-src-dirs)
-		b.syncEmptyDirs(ctx, b.fs1, copy2to1, dirs2, "make")
+		b.syncEmptyDirs(ctx, b.fs1, copy2to1, dirs2, &results2to1, "make")
 	}
 
 	if copy1to2.NotEmpty() {
 		changes2 = true
 		b.indent("Path1", "Path2", "Do queued copies to")
-		err = b.fastCopy(ctx, b.fs1, b.fs2, copy1to2, "copy1to2")
+		results1to2, err = b.fastCopy(ctx, b.fs1, b.fs2, copy1to2, "copy1to2")
 		if err != nil {
 			return
 		}
 
 		//copy empty dirs from path1 to path2 (if --create-empty-src-dirs)
-		b.syncEmptyDirs(ctx, b.fs2, copy1to2, dirs1, "make")
+		b.syncEmptyDirs(ctx, b.fs2, copy1to2, dirs1, &results1to2, "make")
 	}
 
 	if delete1.NotEmpty() {
@@ -386,7 +404,7 @@ func (b *bisyncRun) applyDeltas(ctx context.Context, ds1, ds2 *deltaSet) (change
 			return
 		}
 		//propagate deletions of empty dirs from path2 to path1 (if --create-empty-src-dirs)
-		b.syncEmptyDirs(ctx, b.fs1, delete1, dirs1, "remove")
+		b.syncEmptyDirs(ctx, b.fs1, delete1, dirs1, &results2to1, "remove")
 	}
 
 	if delete2.NotEmpty() {
@@ -394,8 +412,15 @@ func (b *bisyncRun) applyDeltas(ctx context.Context, ds1, ds2 *deltaSet) (change
 			return
 		}
 		//propagate deletions of empty dirs from path1 to path2 (if --create-empty-src-dirs)
-		b.syncEmptyDirs(ctx, b.fs2, delete2, dirs2, "remove")
+		b.syncEmptyDirs(ctx, b.fs2, delete2, dirs2, &results1to2, "remove")
 	}
+
+	queues.copy1to2 = copy1to2
+	queues.copy2to1 = copy2to1
+	queues.renamed1 = renamed1
+	queues.renamed2 = renamed2
+	queues.renameSkipped = renameSkipped
+	queues.deletedonboth = deletedonboth
 
 	return
 }

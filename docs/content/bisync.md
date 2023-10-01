@@ -277,7 +277,39 @@ sync run times for very large numbers of files.
 The check may be run manually with `--check-sync=only`. It runs only the
 integrity check and terminates without actually synching.
 
-See also: [Concurrent modifications](#concurrent-modifications)
+Note that currently, `--check-sync` **only checks filenames and NOT modtime, size, or hash.**
+For a more robust integrity check of the current state, consider using [`check`](commands/rclone_check/)
+(or [`cryptcheck`](/commands/rclone_cryptcheck/), if at least one path is a `crypt` remote.)
+For example, a possible sequence could look like this:
+
+1. Normally scheduled bisync run:
+
+```
+rclone bisync Path1 Path2 -MPc --check-access --max-delete 10 --filters-file /path/to/filters.txt -v --no-cleanup --ignore-listing-checksum --disable ListR --checkers=16 --drive-pacer-min-sleep=10ms --create-empty-src-dirs --resilient
+```
+
+2. Periodic independent integrity check (perhaps scheduled nightly or weekly):
+
+```
+rclone check -MvPc Path1 Path2 --filter-from /path/to/filters.txt
+```
+
+3. If diffs are found, you have some choices to correct them.
+If one side is more up-to-date and you want to make the other side match it, you could run:
+
+```
+rclone sync Path1 Path2 --filter-from /path/to/filters.txt --create-empty-src-dirs -MPc -v
+```
+(or switch Path1 and Path2 to make Path2 the source-of-truth)
+
+Or, if neither side is totally up-to-date, you could run a `--resync` to bring them back into agreement
+(but remember that this could cause deleted files to re-appear.)
+
+*Note also that `rclone check` does not currently include empty directories,
+so if you want to know if any empty directories are out of sync,
+consider alternatively running the above `rclone sync` command with `--dry-run` added.
+
+See also: [Concurrent modifications](#concurrent-modifications), [`--resilient`](#resilient)
 
 
 #### --ignore-listing-checksum
@@ -299,13 +331,6 @@ if there ARE diffs.
 * Unless `--ignore-listing-checksum` is passed, bisync currently computes hashes for one path 
 *even when there's no common hash with the other path* 
 (for example, a [crypt](/crypt/#modification-times-and-hashes) remote.)
-* If both paths support checksums and have a common hash, 
-AND `--ignore-listing-checksum` was not specified when creating the listings, 
-`--check-sync=only` can be used to compare Path1 vs. Path2 checksums (as of the time the previous listings were created.) 
-However, `--check-sync=only` will NOT include checksums if the previous listings 
-were generated on a run using `--ignore-listing-checksum`. For a more robust integrity check of the current state, 
-consider using [`check`](commands/rclone_check/) 
-(or [`cryptcheck`](/commands/rclone_cryptcheck/), if at least one path is a `crypt` remote.)
 
 #### --resilient
 
@@ -495,44 +520,18 @@ original path on the next sync, resulting in data loss.
 It is therefore recommended to _omit_ `--inplace`.
 
 Files that **change during** a bisync run may result in data loss.
-This has been seen in a highly dynamic environment, where the filesystem
-is getting hammered by running processes during the sync.
-The currently recommended solution is to sync at quiet times or [filter out](#filtering)
-unnecessary directories and files.
-
-As an [alternative approach](https://forum.rclone.org/t/bisync-bugs-and-feature-requests/37636#:~:text=scans%2C%20to%20avoid-,errors%20if%20files%20changed%20during%20sync,-Given%20the%20number), 
-consider using `--check-sync=false` (and possibly `--resilient`) to make bisync more forgiving
-of filesystems that change during the sync. 
-Be advised that this may cause bisync to miss events that occur during a bisync run, 
-so it is a good idea to supplement this with a periodic independent integrity check, 
-and corrective sync if diffs are found. For example, a possible sequence could look like this:
-
-1. Normally scheduled bisync run:
-
-```
-rclone bisync Path1 Path2 -MPc --check-access --max-delete 10 --filters-file /path/to/filters.txt -v --check-sync=false --no-cleanup --ignore-listing-checksum --disable ListR --checkers=16 --drive-pacer-min-sleep=10ms --create-empty-src-dirs --resilient
-```
-
-2. Periodic independent integrity check (perhaps scheduled nightly or weekly):
-
-```
-rclone check -MvPc Path1 Path2 --filter-from /path/to/filters.txt
-```
-
-3. If diffs are found, you have some choices to correct them. 
-If one side is more up-to-date and you want to make the other side match it, you could run:
-
-```
-rclone sync Path1 Path2 --filter-from /path/to/filters.txt --create-empty-src-dirs -MPc -v  
-```
-(or switch Path1 and Path2 to make Path2 the source-of-truth)
-
-Or, if neither side is totally up-to-date, you could run a `--resync` to bring them back into agreement 
-(but remember that this could cause deleted files to re-appear.)
-
-*Note also that `rclone check` does not currently include empty directories, 
-so if you want to know if any empty directories are out of sync, 
-consider alternatively running the above `rclone sync` command with `--dry-run` added.
+Prior to `rclone v1.65`, this was commonly seen in highly dynamic environments, where the filesystem
+was getting hammered by running processes during the sync.
+As of `rclone v1.65`, bisync was redesigned to use a "snapshot" model,
+greatly reducing the risks from changes during a sync.
+Changes that are not detected during the current sync will now be detected during the following sync,
+and will no longer cause the entire run to throw a critical error.
+There is additionally a mechanism to mark files as needing to be internally rechecked next time, for added safety.
+It should therefore no longer be necessary to sync only at quiet times --
+however, note that an error can still occur if a file happens to change at the exact moment it's
+being read/written by bisync (same as would happen in `rclone sync`.)
+(See also: [`--ignore-checksum`](https://rclone.org/docs/#ignore-checksum),
+[`--local-no-check-updated`](https://rclone.org/local/#local-no-check-updated))
 
 ### Empty directories
 
@@ -1273,6 +1272,8 @@ about _Unison_ and synchronization in general.
 * Copies and deletes are now handled in one operation instead of two
 * `--track-renames` and `--backup-dir` are now supported
 * Partial uploads known issue on `local`/`ftp`/`sftp` has been resolved (unless using `--inplace`)
+* Final listings are now generated from sync results, to avoid needing to re-list
+* Bisync is now much more resilient to changes that happen during a bisync run, and far less prone to critical errors / undetected changes
 
 ### `v1.64`
 * Fixed an [issue](https://forum.rclone.org/t/bisync-bugs-and-feature-requests/37636#:~:text=1.%20Dry%20runs%20are%20not%20completely%20dry) 
