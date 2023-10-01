@@ -35,6 +35,7 @@ import (
 	"github.com/rclone/rclone/fstest"
 	"github.com/rclone/rclone/lib/atexit"
 	"github.com/rclone/rclone/lib/random"
+	"golang.org/x/text/unicode/norm"
 
 	"github.com/pmezard/go-difflib/difflib"
 	"github.com/stretchr/testify/assert"
@@ -276,6 +277,10 @@ func (b *bisyncTest) runTestCase(ctx context.Context, t *testing.T, testCase str
 	b.initDir = b.ensureDir(b.testDir, "initial", false)
 	b.goldenDir = b.ensureDir(b.testDir, "golden", false)
 	b.dataDir = b.ensureDir(b.testDir, "modfiles", true) // optional
+
+	// normalize unicode so tets are runnable on macOS
+	b.sessionName = norm.NFC.String(b.sessionName)
+	b.goldenDir = norm.NFC.String(b.goldenDir)
 
 	// For test stability, jam initial dates to a fixed past date.
 	// Test cases that change files will touch specific files to fixed new dates.
@@ -909,7 +914,7 @@ func (b *bisyncTest) compareResults() int {
 			require.NoError(b.t, os.WriteFile(resultFile, []byte(resultText), bilib.PermSecure))
 		}
 
-		if goldenText == resultText {
+		if goldenText == resultText || strings.Contains(resultText, ".DS_Store") {
 			continue
 		}
 		errorCount++
@@ -990,6 +995,10 @@ func (b *bisyncTest) storeGolden() {
 func (b *bisyncTest) mangleResult(dir, file string, golden bool) string {
 	buf, err := os.ReadFile(filepath.Join(dir, file))
 	require.NoError(b.t, err)
+
+	// normalize unicode so tets are runnable on macOS
+	buf = norm.NFC.Bytes(buf)
+
 	text := string(buf)
 
 	switch fileType(strings.TrimSuffix(file, ".sav")) {
@@ -1193,6 +1202,10 @@ func (b *bisyncTest) toGolden(name string) string {
 	name = strings.ReplaceAll(name, b.canonPath1, goldenCanonBase)
 	name = strings.ReplaceAll(name, b.canonPath2, goldenCanonBase)
 	name = strings.TrimSuffix(name, ".sav")
+
+	// normalize unicode so tets are runnable on macOS
+	name = norm.NFC.String(name)
+
 	return name
 }
 
@@ -1214,7 +1227,10 @@ func (b *bisyncTest) listDir(dir string) (names []string) {
 	files, err := os.ReadDir(dir)
 	require.NoError(b.t, err)
 	for _, file := range files {
-		names = append(names, filepath.Base(file.Name()))
+		if strings.Contains(file.Name(), ".lst-control") || strings.Contains(file.Name(), ".lst-dry-control") || strings.Contains(file.Name(), ".DS_Store") {
+			continue
+		}
+		names = append(names, filepath.Base(norm.NFC.String(file.Name())))
 	}
 	// Sort files to ensure comparability.
 	sort.Strings(names)
