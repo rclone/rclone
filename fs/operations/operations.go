@@ -180,12 +180,15 @@ func logModTimeUpload(dst fs.Object) {
 
 func equal(ctx context.Context, src fs.ObjectInfo, dst fs.Object, opt equalOpt) bool {
 	ci := fs.GetConfig(ctx)
+	logger, _ := GetLogger(ctx)
 	if sizeDiffers(ctx, src, dst) {
 		fs.Debugf(src, "Sizes differ (src %d vs dst %d)", src.Size(), dst.Size())
+		logger(ctx, Differ, src, dst, nil)
 		return false
 	}
 	if opt.sizeOnly {
 		fs.Debugf(src, "Sizes identical")
+		logger(ctx, Match, src, dst, nil)
 		return true
 	}
 
@@ -197,6 +200,7 @@ func equal(ctx context.Context, src fs.ObjectInfo, dst fs.Object, opt equalOpt) 
 		same, ht, _ := CheckHashes(ctx, src, dst)
 		if !same {
 			fs.Debugf(src, "%v differ", ht)
+			logger(ctx, Differ, src, dst, nil)
 			return false
 		}
 		if ht == hash.None {
@@ -210,6 +214,7 @@ func equal(ctx context.Context, src fs.ObjectInfo, dst fs.Object, opt equalOpt) 
 		} else {
 			fs.Debugf(src, "Size and %v of src and dst objects identical", ht)
 		}
+		logger(ctx, Match, src, dst, nil)
 		return true
 	}
 
@@ -219,12 +224,14 @@ func equal(ctx context.Context, src fs.ObjectInfo, dst fs.Object, opt equalOpt) 
 		modifyWindow := fs.GetModifyWindow(ctx, src.Fs(), dst.Fs())
 		if modifyWindow == fs.ModTimeNotSupported {
 			fs.Debugf(src, "Sizes identical")
+			logger(ctx, Match, src, dst, nil)
 			return true
 		}
 		dstModTime := dst.ModTime(ctx)
 		dt := dstModTime.Sub(srcModTime)
 		if dt < modifyWindow && dt > -modifyWindow {
 			fs.Debugf(src, "Size and modification time the same (differ by %s, within tolerance %s)", dt, modifyWindow)
+			logger(ctx, Match, src, dst, nil)
 			return true
 		}
 
@@ -235,10 +242,12 @@ func equal(ctx context.Context, src fs.ObjectInfo, dst fs.Object, opt equalOpt) 
 	same, ht, _ := CheckHashes(ctx, src, dst)
 	if !same {
 		fs.Debugf(src, "%v differ", ht)
+		logger(ctx, Differ, src, dst, nil)
 		return false
 	}
 	if ht == hash.None && !ci.RefreshTimes {
 		// if couldn't check hash, return that they differ
+		logger(ctx, Differ, src, dst, nil)
 		return false
 	}
 
@@ -249,6 +258,7 @@ func equal(ctx context.Context, src fs.ObjectInfo, dst fs.Object, opt equalOpt) 
 			// Error if objects are treated as immutable
 			if ci.Immutable {
 				fs.Errorf(dst, "Timestamp mismatch between immutable objects")
+				logger(ctx, Differ, src, dst, nil)
 				return false
 			}
 			// Update the mtime of the dst object here
@@ -256,6 +266,7 @@ func equal(ctx context.Context, src fs.ObjectInfo, dst fs.Object, opt equalOpt) 
 			if errors.Is(err, fs.ErrorCantSetModTime) {
 				logModTimeUpload(dst)
 				fs.Infof(dst, "src and dst identical but can't set mod time without re-uploading")
+				logger(ctx, Differ, src, dst, nil)
 				return false
 			} else if errors.Is(err, fs.ErrorCantSetModTimeWithoutDelete) {
 				logModTimeUpload(dst)
@@ -268,6 +279,7 @@ func equal(ctx context.Context, src fs.ObjectInfo, dst fs.Object, opt equalOpt) 
 						fs.Errorf(dst, "failed to delete before re-upload: %v", err)
 					}
 				}
+				logger(ctx, Differ, src, dst, nil)
 				return false
 			} else if err != nil {
 				err = fs.CountError(err)
@@ -277,6 +289,7 @@ func equal(ctx context.Context, src fs.ObjectInfo, dst fs.Object, opt equalOpt) 
 			}
 		}
 	}
+	logger(ctx, Match, src, dst, nil)
 	return true
 }
 
@@ -513,6 +526,8 @@ func DeleteFilesWithBackupDir(ctx context.Context, toBeDeleted fs.ObjectsChan, b
 				err := DeleteFileWithBackupDir(ctx, dst, backupDir)
 				if err != nil {
 					errorCount.Add(1)
+					logger, _ := GetLogger(ctx)
+					logger(ctx, TransferError, nil, dst, err)
 					if fserrors.IsFatalError(err) {
 						fs.Errorf(dst, "Got fatal error on delete: %s", err)
 						fatalErrorCount.Add(1)
@@ -670,12 +685,12 @@ var SyncPrintf = func(format string, a ...interface{}) {
 	fmt.Printf(format, a...)
 }
 
-// Synchronized fmt.Fprintf
+// SyncFprintf - Synchronized fmt.Fprintf
 //
 // Ignores errors from Fprintf.
 //
 // Prints to stdout if w is nil
-func syncFprintf(w io.Writer, format string, a ...interface{}) {
+func SyncFprintf(w io.Writer, format string, a ...interface{}) {
 	if w == nil || w == os.Stdout {
 		SyncPrintf(format, a...)
 	} else {
@@ -747,7 +762,7 @@ func CountStringField(count int64, humanReadable bool, rawWidth int) string {
 func List(ctx context.Context, f fs.Fs, w io.Writer) error {
 	ci := fs.GetConfig(ctx)
 	return ListFn(ctx, f, func(o fs.Object) {
-		syncFprintf(w, "%s %s\n", SizeStringField(o.Size(), ci.HumanReadable, 9), o.Remote())
+		SyncFprintf(w, "%s %s\n", SizeStringField(o.Size(), ci.HumanReadable, 9), o.Remote())
 	})
 }
 
@@ -764,7 +779,7 @@ func ListLong(ctx context.Context, f fs.Fs, w io.Writer) error {
 			tr.Done(ctx, nil)
 		}()
 		modTime := o.ModTime(ctx)
-		syncFprintf(w, "%s %s %s\n", SizeStringField(o.Size(), ci.HumanReadable, 9), modTime.Local().Format("2006-01-02 15:04:05.000000000"), o.Remote())
+		SyncFprintf(w, "%s %s %s\n", SizeStringField(o.Size(), ci.HumanReadable, 9), modTime.Local().Format("2006-01-02 15:04:05.000000000"), o.Remote())
 	})
 }
 
@@ -864,7 +879,7 @@ func HashLister(ctx context.Context, ht hash.Type, outputBase64 bool, downloadFl
 				fs.Errorf(o, "%v", fs.CountError(err))
 				return
 			}
-			syncFprintf(w, "%*s  %s\n", width, sum, o.Remote())
+			SyncFprintf(w, "%*s  %s\n", width, sum, o.Remote())
 		}()
 	})
 	wg.Wait()
@@ -889,7 +904,7 @@ func HashSumStream(ht hash.Type, outputBase64 bool, in io.ReadCloser, w io.Write
 		return fmt.Errorf("hasher returned an error: %w", err)
 	}
 	width := hash.Width(ht, outputBase64)
-	syncFprintf(w, "%*s  -\n", width, sum)
+	SyncFprintf(w, "%*s  -\n", width, sum)
 	return nil
 }
 
@@ -925,7 +940,7 @@ func ListDir(ctx context.Context, f fs.Fs, w io.Writer) error {
 	return walk.ListR(ctx, f, "", false, ConfigMaxDepth(ctx, false), walk.ListDirs, func(entries fs.DirEntries) error {
 		entries.ForDir(func(dir fs.Directory) {
 			if dir != nil {
-				syncFprintf(w, "%s %13s %s %s\n", SizeStringField(dir.Size(), ci.HumanReadable, 12), dir.ModTime(ctx).Local().Format("2006-01-02 15:04:05"), CountStringField(dir.Items(), ci.HumanReadable, 9), dir.Remote())
+				SyncFprintf(w, "%s %13s %s %s\n", SizeStringField(dir.Size(), ci.HumanReadable, 12), dir.ModTime(ctx).Local().Format("2006-01-02 15:04:05"), CountStringField(dir.Items(), ci.HumanReadable, 9), dir.Remote())
 			}
 		})
 		return nil
@@ -1494,18 +1509,22 @@ func CompareOrCopyDest(ctx context.Context, fdst fs.Fs, dst, src fs.Object, Comp
 // transferred or not.
 func NeedTransfer(ctx context.Context, dst, src fs.Object) bool {
 	ci := fs.GetConfig(ctx)
+	logger, _ := GetLogger(ctx)
 	if dst == nil {
 		fs.Debugf(src, "Need to transfer - File not found at Destination")
+		logger(ctx, MissingOnDst, src, nil, nil)
 		return true
 	}
 	// If we should ignore existing files, don't transfer
 	if ci.IgnoreExisting {
 		fs.Debugf(src, "Destination exists, skipping")
+		logger(ctx, Match, src, dst, nil)
 		return false
 	}
 	// If we should upload unconditionally
 	if ci.IgnoreTimes {
 		fs.Debugf(src, "Transferring unconditionally as --ignore-times is in use")
+		logger(ctx, Differ, src, dst, nil)
 		return true
 	}
 	// If UpdateOlder is in effect, skip if dst is newer than src
@@ -1524,6 +1543,7 @@ func NeedTransfer(ctx context.Context, dst, src fs.Object) bool {
 		switch {
 		case dt >= modifyWindow:
 			fs.Debugf(src, "Destination is newer than source, skipping")
+			logger(ctx, Match, src, dst, nil)
 			return false
 		case dt <= -modifyWindow:
 			// force --checksum on for the check and do update modtimes by default
@@ -1707,10 +1727,16 @@ func MoveBackupDir(ctx context.Context, backupDir fs.Fs, dst fs.Object) (err err
 // moveOrCopyFile moves or copies a single file possibly to a new name
 func moveOrCopyFile(ctx context.Context, fdst fs.Fs, fsrc fs.Fs, dstFileName string, srcFileName string, cp bool) (err error) {
 	ci := fs.GetConfig(ctx)
+	logger, usingLogger := GetLogger(ctx)
 	dstFilePath := path.Join(fdst.Root(), dstFileName)
 	srcFilePath := path.Join(fsrc.Root(), srcFileName)
 	if fdst.Name() == fsrc.Name() && dstFilePath == srcFilePath {
 		fs.Debugf(fdst, "don't need to copy/move %s, it is already at target location", dstFileName)
+		if usingLogger {
+			srcObj, _ := fsrc.NewObject(ctx, srcFileName)
+			dstObj, _ := fsrc.NewObject(ctx, dstFileName)
+			logger(ctx, Match, srcObj, dstObj, nil)
+		}
 		return nil
 	}
 
@@ -1723,6 +1749,7 @@ func moveOrCopyFile(ctx context.Context, fdst fs.Fs, fsrc fs.Fs, dstFileName str
 	// Find src object
 	srcObj, err := fsrc.NewObject(ctx, srcFileName)
 	if err != nil {
+		logger(ctx, TransferError, srcObj, nil, err)
 		return err
 	}
 
@@ -1733,6 +1760,7 @@ func moveOrCopyFile(ctx context.Context, fdst fs.Fs, fsrc fs.Fs, dstFileName str
 		if errors.Is(err, fs.ErrorObjectNotFound) {
 			dstObj = nil
 		} else if err != nil {
+			logger(ctx, TransferError, nil, dstObj, err)
 			return err
 		}
 	}
@@ -1744,11 +1772,13 @@ func moveOrCopyFile(ctx context.Context, fdst fs.Fs, fsrc fs.Fs, dstFileName str
 	if !cp && fdst.Name() == fsrc.Name() && fdst.Features().CaseInsensitive && dstFileName != srcFileName && strings.EqualFold(dstFilePath, srcFilePath) {
 		// Create random name to temporarily move file to
 		tmpObjName := dstFileName + "-rclone-move-" + random.String(8)
-		_, err := fdst.NewObject(ctx, tmpObjName)
+		tmpObjFail, err := fdst.NewObject(ctx, tmpObjName)
 		if err != fs.ErrorObjectNotFound {
 			if err == nil {
+				logger(ctx, TransferError, nil, tmpObjFail, err)
 				return errors.New("found an already existing file with a randomly generated name. Try the operation again")
 			}
+			logger(ctx, TransferError, nil, tmpObjFail, err)
 			return fmt.Errorf("error while attempting to move file to a temporary location: %w", err)
 		}
 		tr := accounting.Stats(ctx).NewTransfer(srcObj)
@@ -1757,9 +1787,11 @@ func moveOrCopyFile(ctx context.Context, fdst fs.Fs, fsrc fs.Fs, dstFileName str
 		}()
 		tmpObj, err := Op(ctx, fdst, nil, tmpObjName, srcObj)
 		if err != nil {
+			logger(ctx, TransferError, srcObj, tmpObj, err)
 			return fmt.Errorf("error while moving file to temporary location: %w", err)
 		}
 		_, err = Op(ctx, fdst, nil, dstFileName, tmpObj)
+		logger(ctx, MissingOnDst, tmpObj, nil, err)
 		return err
 	}
 
@@ -1797,9 +1829,11 @@ func moveOrCopyFile(ctx context.Context, fdst fs.Fs, fsrc fs.Fs, dstFileName str
 		if dstObj != nil && backupDir != nil {
 			err = MoveBackupDir(ctx, backupDir, dstObj)
 			if err != nil {
+				logger(ctx, TransferError, dstObj, nil, err)
 				return fmt.Errorf("moving to --backup-dir failed: %w", err)
 			}
 			// If successful zero out the dstObj as it is no longer there
+			logger(ctx, MissingOnDst, dstObj, nil, nil)
 			dstObj = nil
 		}
 
@@ -1808,8 +1842,10 @@ func moveOrCopyFile(ctx context.Context, fdst fs.Fs, fsrc fs.Fs, dstFileName str
 		if !cp {
 			if ci.IgnoreExisting {
 				fs.Debugf(srcObj, "Not removing source file as destination file exists and --ignore-existing is set")
+				logger(ctx, Match, srcObj, dstObj, nil)
 			} else {
 				err = DeleteFile(ctx, srcObj)
+				logger(ctx, Differ, srcObj, dstObj, nil)
 			}
 		}
 	}

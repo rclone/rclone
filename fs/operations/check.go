@@ -67,10 +67,10 @@ func (c *checkMarch) report(o fs.DirEntry, out io.Writer, sigil rune) {
 
 func (c *checkMarch) reportFilename(filename string, out io.Writer, sigil rune) {
 	if out != nil {
-		syncFprintf(out, "%s\n", filename)
+		SyncFprintf(out, "%s\n", filename)
 	}
 	if c.opt.Combined != nil {
-		syncFprintf(c.opt.Combined, "%c %s\n", sigil, filename)
+		SyncFprintf(c.opt.Combined, "%c %s\n", sigil, filename)
 	}
 }
 
