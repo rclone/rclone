@@ -24,39 +24,11 @@ func (b *bisyncRun) fastCopy(ctx context.Context, fsrc, fdst fs.Fs, files bilib.
 		}
 	}
 
-	return sync.CopyDir(ctxCopy, fdst, fsrc, b.opt.CreateEmptySrcDirs)
-}
-
-func (b *bisyncRun) fastDelete(ctx context.Context, f fs.Fs, files bilib.Names, queueName string) error {
-	if err := b.saveQueue(files, queueName); err != nil {
-		return err
-	}
-
-	transfers := fs.GetConfig(ctx).Transfers
-
-	ctxRun, filterDelete := filter.AddConfig(b.opt.setDryRun(ctx))
-
-	for _, file := range files.ToList() {
-		if err := filterDelete.AddFile(file); err != nil {
-			return err
-		}
-	}
-
-	objChan := make(fs.ObjectsChan, transfers)
-	errChan := make(chan error, 1)
-	go func() {
-		errChan <- operations.DeleteFiles(ctxRun, objChan)
-	}()
-	err := operations.ListFn(ctxRun, f, func(obj fs.Object) {
-		remote := obj.Remote()
-		if files.Has(remote) {
-			objChan <- obj
-		}
-	})
-	close(objChan)
-	opErr := <-errChan
-	if err == nil {
-		err = opErr
+	var err error
+	if b.opt.Resync {
+		err = sync.CopyDir(ctxCopy, fdst, fsrc, b.opt.CreateEmptySrcDirs)
+	} else {
+		err = sync.Sync(ctxCopy, fdst, fsrc, b.opt.CreateEmptySrcDirs)
 	}
 	return err
 }
@@ -75,8 +47,9 @@ func (b *bisyncRun) syncEmptyDirs(ctx context.Context, dst fs.Fs, candidates bil
 			var direrr error
 			if dirsList.has(s) { //make sure it's a dir, not a file
 				if operation == "remove" {
-					//note: we need to use Rmdirs instead of Rmdir because directories will fail to delete if they have other empty dirs inside of them.
-					direrr = operations.Rmdirs(ctx, dst, s, false)
+					// directories made empty by the sync will have already been deleted during the sync
+					// this just catches the already-empty ones (excluded from sync by --files-from filter)
+					direrr = operations.TryRmdir(ctx, dst, s)
 				} else if operation == "make" {
 					direrr = operations.Mkdir(ctx, dst, s)
 				} else {

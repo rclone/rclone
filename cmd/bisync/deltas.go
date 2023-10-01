@@ -327,6 +327,7 @@ func (b *bisyncRun) applyDeltas(ctx context.Context, ds1, ds2 *deltaSet) (change
 			if !in2 {
 				b.indent("Path2", p2, "Queue delete")
 				delete2.Add(file)
+				copy1to2.Add(file)
 			} else if d2.is(deltaOther) {
 				b.indent("Path2", p1, "Queue copy to Path1")
 				copy2to1.Add(file)
@@ -351,6 +352,7 @@ func (b *bisyncRun) applyDeltas(ctx context.Context, ds1, ds2 *deltaSet) (change
 			// Deleted
 			b.indent("Path1", p1, "Queue delete")
 			delete1.Add(file)
+			copy2to1.Add(file)
 		}
 	}
 
@@ -380,25 +382,17 @@ func (b *bisyncRun) applyDeltas(ctx context.Context, ds1, ds2 *deltaSet) (change
 	}
 
 	if delete1.NotEmpty() {
-		changes1 = true
-		b.indent("", "Path1", "Do queued deletes on")
-		err = b.fastDelete(ctx, b.fs1, delete1, "delete1")
-		if err != nil {
+		if err = b.saveQueue(delete1, "delete1"); err != nil {
 			return
 		}
-
 		//propagate deletions of empty dirs from path2 to path1 (if --create-empty-src-dirs)
 		b.syncEmptyDirs(ctx, b.fs1, delete1, dirs1, "remove")
 	}
 
 	if delete2.NotEmpty() {
-		changes2 = true
-		b.indent("", "Path2", "Do queued deletes on")
-		err = b.fastDelete(ctx, b.fs2, delete2, "delete2")
-		if err != nil {
+		if err = b.saveQueue(delete2, "delete2"); err != nil {
 			return
 		}
-
 		//propagate deletions of empty dirs from path1 to path2 (if --create-empty-src-dirs)
 		b.syncEmptyDirs(ctx, b.fs2, delete2, dirs2, "remove")
 	}
