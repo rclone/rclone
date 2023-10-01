@@ -641,6 +641,8 @@ func (b *bisyncTest) runBisync(ctx context.Context, args []string) (err error) {
 		case "subdir":
 			fs1 = addSubdir(b.path1, val)
 			fs2 = addSubdir(b.path2, val)
+		case "ignore-listing-checksum":
+			opt.IgnoreListingChecksum = true
 		default:
 			return fmt.Errorf("invalid bisync option %q", arg)
 		}

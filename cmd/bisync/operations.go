@@ -16,7 +16,6 @@ import (
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/filter"
 	"github.com/rclone/rclone/fs/operations"
-	"github.com/rclone/rclone/fs/sync"
 	"github.com/rclone/rclone/lib/atexit"
 )
 
@@ -33,6 +32,15 @@ type bisyncRun struct {
 	basePath  string
 	workDir   string
 	opt       *Options
+}
+
+type queues struct {
+	copy1to2      bilib.Names
+	copy2to1      bilib.Names
+	renamed1      bilib.Names // renamed on 1 and copied to 2
+	renamed2      bilib.Names // renamed on 2 and copied to 1
+	renameSkipped bilib.Names // not renamed because it was equal
+	deletedonboth bilib.Names
 }
 
 // Bisync handles lock file, performs bisync run and checks exit status
@@ -256,13 +264,18 @@ func (b *bisyncRun) runLocked(octx context.Context, listing1, listing2 string) (
 
 	// Determine and apply changes to Path1 and Path2
 	noChanges := ds1.empty() && ds2.empty()
-	changes1 := false
-	changes2 := false
+	changes1 := false // 2to1
+	changes2 := false // 1to2
+	results2to1 := []Results{}
+	results1to2 := []Results{}
+
+	queues := queues{}
+
 	if noChanges {
 		fs.Infof(nil, "No changes found")
 	} else {
 		fs.Infof(nil, "Applying changes")
-		changes1, changes2, err = b.applyDeltas(octx, ds1, ds2)
+		changes1, changes2, results2to1, results1to2, queues, err = b.applyDeltas(octx, ds1, ds2)
 		if err != nil {
 			b.critical = true
 			// b.retryable = true // not sure about this one
@@ -277,13 +290,13 @@ func (b *bisyncRun) runLocked(octx context.Context, listing1, listing2 string) (
 		err1 = bilib.CopyFileIfExists(newListing1, listing1)
 		err2 = bilib.CopyFileIfExists(newListing2, listing2)
 	} else {
-		if changes1 {
-			_, err1 = b.makeListing(fctx, b.fs1, listing1)
+		if changes1 { // 2to1
+			err1 = b.modifyListing(fctx, b.fs2, b.fs1, listing2, listing1, results2to1, queues, false)
 		} else {
 			err1 = bilib.CopyFileIfExists(newListing1, listing1)
 		}
-		if changes2 {
-			_, err2 = b.makeListing(fctx, b.fs2, listing2)
+		if changes2 { // 1to2
+			err2 = b.modifyListing(fctx, b.fs1, b.fs2, listing1, listing2, results1to2, queues, true)
 		} else {
 			err2 = bilib.CopyFileIfExists(newListing2, listing2)
 		}
@@ -394,11 +407,15 @@ func (b *bisyncRun) resync(octx, fctx context.Context, listing1, listing2 string
 			copy2to1 = append(copy2to1, file)
 		}
 	}
+	var results2to1 []Results
+	var results1to2 []Results
+	var results2to1Dirs []Results
+	queues := queues{}
 
 	if len(copy2to1) > 0 {
 		b.indent("Path2", "Path1", "Resync is doing queued copies to")
 		// octx does not have extra filters!
-		err = b.fastCopy(octx, b.fs2, b.fs1, bilib.ToNames(copy2to1), "resync-copy2to1")
+		results2to1, err = b.fastCopy(octx, b.fs2, b.fs1, bilib.ToNames(copy2to1), "resync-copy2to1")
 		if err != nil {
 			b.critical = true
 			return err
@@ -413,7 +430,7 @@ func (b *bisyncRun) resync(octx, fctx context.Context, listing1, listing2 string
 		// prevent overwriting Google Doc files (their size is -1)
 		filterSync.Opt.MinSize = 0
 	}
-	if err = sync.CopyDir(ctxSync, b.fs2, b.fs1, b.opt.CreateEmptySrcDirs); err != nil {
+	if results1to2, err = b.resyncDir(ctxSync, b.fs1, b.fs2); err != nil {
 		b.critical = true
 		return err
 	}
@@ -434,20 +451,39 @@ func (b *bisyncRun) resync(octx, fctx context.Context, listing1, listing2 string
 
 		fs.Infof(nil, "Resynching Path2 to Path1 (for empty dirs)")
 
-		//note copy (not sync) and dst comes before src
-		if err = sync.CopyDir(ctxSync, b.fs1, b.fs2, b.opt.CreateEmptySrcDirs); err != nil {
+		// note copy (not sync) and dst comes before src
+		if results2to1Dirs, err = b.resyncDir(ctxSync, b.fs2, b.fs1); err != nil {
 			b.critical = true
 			return err
 		}
 	}
 
 	fs.Infof(nil, "Resync updating listings")
-	if _, err = b.makeListing(fctx, b.fs1, listing1); err != nil {
+	if err := bilib.CopyFileIfExists(newListing1, listing1); err != nil {
+		return err
+	}
+	if err := bilib.CopyFileIfExists(newListing2, listing2); err != nil {
+		return err
+	}
+
+	// resync 2to1
+	queues.copy2to1 = bilib.ToNames(copy2to1)
+	if err = b.modifyListing(fctx, b.fs2, b.fs1, listing2, listing1, results2to1, queues, false); err != nil {
 		b.critical = true
 		return err
 	}
 
-	if _, err = b.makeListing(fctx, b.fs2, listing2); err != nil {
+	// resync 1to2
+	queues.copy1to2 = bilib.ToNames(filesNow1.list)
+	if err = b.modifyListing(fctx, b.fs1, b.fs2, listing1, listing2, results1to2, queues, true); err != nil {
+		b.critical = true
+		return err
+	}
+
+	// resync 2to1 (dirs)
+	dirs2, _ := b.listDirsOnly(2)
+	queues.copy2to1 = bilib.ToNames(dirs2.list)
+	if err = b.modifyListing(fctx, b.fs2, b.fs1, listing2, listing1, results2to1Dirs, queues, false); err != nil {
 		b.critical = true
 		return err
 	}

@@ -11,7 +11,7 @@ import (
 )
 
 // FsPath converts Fs to a suitable rclone argument
-func FsPath(f fs.Fs) string {
+func FsPath(f fs.Info) string {
 	name, path, slash := f.Name(), f.Root(), "/"
 	if name == "local" {
 		slash = string(os.PathSeparator)
