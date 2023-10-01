@@ -552,11 +552,17 @@ and use `--resync` when you need to switch.
 
 ### Renamed directories
 
-Renaming a folder on the Path1 side results in deleting all files on
+By default, renaming a folder on the Path1 side results in deleting all files on
 the Path2 side and then copying all files again from Path1 to Path2.
 Bisync sees this as all files in the old directory name as deleted and all
 files in the new directory name as new. 
-Currently, the most effective and efficient method of renaming a directory
+
+A recommended solution is to use [`--track-renames`](/docs/#track-renames),
+which is now supported in bisync as of `rclone v1.65`.
+Note that `--track-renames` is not available during `--resync`,
+as `--resync` does not delete anything (`--track-renames` only supports `sync`, not `copy`.)
+
+Otherwise, the most effective and efficient method of renaming a directory
 is to rename it to the same name on both sides. (As of `rclone v1.64`, 
 a `--resync` is no longer required after doing so, as bisync will automatically
 detect that Path1 and Path2 are in agreement.)
@@ -1262,6 +1268,10 @@ Also note a number of academic publications by
 about _Unison_ and synchronization in general.
 
 ## Changelog
+
+### `v1.65`
+* Copies and deletes are now handled in one operation instead of two
+* `--track-renames` and `--backup-dir` are now supported
 
 ### `v1.64`
 * Fixed an [issue](https://forum.rclone.org/t/bisync-bugs-and-feature-requests/37636#:~:text=1.%20Dry%20runs%20are%20not%20completely%20dry) 

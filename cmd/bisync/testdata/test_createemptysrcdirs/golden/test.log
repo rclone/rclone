@@ -77,7 +77,7 @@ INFO  : - Path2    File was deleted                    - subdir
 INFO  : Path2:    1 changes:    0 new,    0 newer,    0 older,    1 deleted
 INFO  : Applying changes
 INFO  : - Path2    Queue delete                        - {path2/}RCLONE_TEST
-INFO  : -          Do queued deletes on                - Path2
+INFO  : - Path1    Do queued copies to                 - Path2
 INFO  : Updating listings
 INFO  : Validating listings for Path1 "{path1/}" vs Path2 "{path2/}"
 INFO  : Bisync successful
@@ -121,7 +121,7 @@ INFO  : Path1:    1 changes:    0 new,    0 newer,    0 older,    1 deleted
 INFO  : Path2 checking for diffs
 INFO  : Applying changes
 INFO  : - Path2    Queue delete                        - {path2/}subdir
-INFO  : -          Do queued deletes on                - Path2
+INFO  : - Path1    Do queued copies to                 - Path2
 INFO  : subdir: Removing directory
 INFO  : Updating listings
 INFO  : Validating listings for Path1 "{path1/}" vs Path2 "{path2/}"

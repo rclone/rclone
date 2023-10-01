@@ -49,7 +49,7 @@ INFO  : - Path2    Queue delete                        - {path2/}file2.txt
 INFO  : - Path2    Queue delete                        - {path2/}file3.txt
 INFO  : - Path2    Queue delete                        - {path2/}file4.txt
 INFO  : - Path2    Queue delete                        - {path2/}file5.txt
-INFO  : -          Do queued deletes on                - Path2
+INFO  : - Path1    Do queued copies to                 - Path2
 INFO  : Updating listings
 INFO  : Validating listings for Path1 "{path1/}" vs Path2 "{path2/}"
 INFO  : Bisync successful
