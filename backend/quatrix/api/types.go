@@ -6,8 +6,8 @@ import (
 	"time"
 )
 
-// OverwriteOnCopyMode is a conflict resolve mode during copy. Files with conflicting names will be overwritten
-const OverwriteOnCopyMode = "overwrite"
+// OverwriteMode is a conflict resolve mode during copy or move. Files with conflicting names will be overwritten
+const OverwriteMode = "overwrite"
 
 // ProfileInfo is a profile info about quota
 type ProfileInfo struct {
