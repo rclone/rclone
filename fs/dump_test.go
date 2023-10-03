@@ -33,9 +33,9 @@ func TestDumpFlagsSet(t *testing.T) {
 		{"bodies,headers,auth", DumpBodies | DumpHeaders | DumpAuth, ""},
 		{"bodies,headers,auth", DumpBodies | DumpHeaders | DumpAuth, ""},
 		{"headers,bodies,requests,responses,auth,filters", DumpHeaders | DumpBodies | DumpRequests | DumpResponses | DumpAuth | DumpFilters, ""},
-		{"headers,bodies,unknown,auth", 0, "unknown dump flag \"unknown\""},
+		{"headers,bodies,unknown,auth", 0, "invalid choice \"unknown\""},
 	} {
-		f := DumpFlags(-1)
+		f := DumpFlags(0xffffffffffffffff)
 		initial := f
 		err := f.Set(test.in)
 		if err != nil {
@@ -72,12 +72,12 @@ func TestDumpFlagsUnmarshallJSON(t *testing.T) {
 		{`"bodies,headers,auth"`, DumpBodies | DumpHeaders | DumpAuth, ""},
 		{`"bodies,headers,auth"`, DumpBodies | DumpHeaders | DumpAuth, ""},
 		{`"headers,bodies,requests,responses,auth,filters"`, DumpHeaders | DumpBodies | DumpRequests | DumpResponses | DumpAuth | DumpFilters, ""},
-		{`"headers,bodies,unknown,auth"`, 0, "unknown dump flag \"unknown\""},
+		{`"headers,bodies,unknown,auth"`, 0, "invalid choice \"unknown\""},
 		{`0`, DumpFlags(0), ""},
 		{strconv.Itoa(int(DumpBodies)), DumpBodies, ""},
 		{strconv.Itoa(int(DumpBodies | DumpHeaders | DumpAuth)), DumpBodies | DumpHeaders | DumpAuth, ""},
 	} {
-		f := DumpFlags(-1)
+		f := DumpFlags(0xffffffffffffffff)
 		initial := f
 		err := json.Unmarshal([]byte(test.in), &f)
 		if err != nil {
