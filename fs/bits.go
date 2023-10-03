@@ -114,6 +114,11 @@ func (b *Bits[C]) Set(s string) error {
 	return nil
 }
 
+// IsSet returns true all the bits in mask are set in b.
+func (b Bits[C]) IsSet(mask Bits[C]) bool {
+	return (b & mask) == mask
+}
+
 // Type of the value.
 //
 // If C has a Type() string method then it will be used instead.
