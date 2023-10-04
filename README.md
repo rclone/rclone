@@ -1,3 +1,4 @@
+<<<<<<< Updated upstream
 [<img src="https://rclone.org/img/logo_on_light__horizontal_color.svg" width="50%" alt="rclone logo">](https://rclone.org/#gh-light-mode-only)
 [<img src="https://rclone.org/img/logo_on_dark__horizontal_color.svg" width="50%" alt="rclone logo">](https://rclone.org/#gh-dark-mode-only)
 
@@ -148,3 +149,6 @@ License
 
 This is free software under the terms of the MIT license (check the
 [COPYING file](/COPYING) included in this package).
+=======
+Rclone fork for azurefiles development
+>>>>>>> Stashed changes
