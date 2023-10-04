@@ -16,15 +16,20 @@ import (
 	"github.com/rclone/rclone/fs/hash"
 )
 
-// Inspired by azureblob store, this initiates a network request and returns an error if objec is not found
-// TODO: what happens if remote is a directory and not an interface
+// Inspired by azureblob store, this initiates a network request and returns an error if object is not found
+// Returns ErrorIsDir when a directory exists instead of file.
 func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 	fileClient := f.NewFileClient(remote)
 	resp, err := fileClient.GetProperties(ctx, nil)
-	if fileerror.HasCode(err, fileerror.ResourceNotFound, fileerror.ParentNotFound) {
+	if fileerror.HasCode(err, fileerror.ParentNotFound) {
+		return nil, fs.ErrorObjectNotFound
+	} else if fileerror.HasCode(err, fileerror.ResourceNotFound) {
+		if isDir, _ := f.isDirectory(ctx, remote); isDir {
+			return nil, fs.ErrorIsDir
+		}
 		return nil, fs.ErrorObjectNotFound
 	} else if err != nil {
-		return nil, fmt.Errorf("unable to create object remote=%s : %w", remote, err)
+		return nil, fmt.Errorf("unable to find object remote=%s : %w", remote, err)
 	}
 
 	ob := Object{common{
@@ -37,6 +42,18 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 		}},
 	}
 	return &ob, nil
+}
+
+// Checks whether path is a directory
+// Only confirms whether a path is a directory. A false result does not mean
+// that the remote is a file.
+func (f *Fs) isDirectory(ctx context.Context, remote string) (bool, error) {
+	dirClient := f.NewSubdirectoryClient(remote)
+	_, err := dirClient.GetProperties(ctx, nil)
+	if err != nil {
+		return false, fmt.Errorf("isDirectory remote=%s : %w", remote, err)
+	}
+	return true, nil
 }
 
 // Mkdir creates nested directories as indicated by test FsMkdirRmdirSubdir

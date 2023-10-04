@@ -218,6 +218,8 @@ func TestCaseInvariantSetMetaDataValue(t *testing.T) {
 func newTests(t *testing.T) {
 	f, err := fs.NewFs(context.Background(), "TestAzureFiles:subdirAsRoot"+RandomString(10))
 	assert.NoError(t, err)
+
+	azf := f.(*Fs)
 	// entries, err := f.List(context.TODO(), "")
 	// assert.NoError(t, err)
 	// assert.Equal(t, 0, len(entries))
@@ -389,6 +391,39 @@ func newTests(t *testing.T) {
 			newRoot := path.Join(oldRoot, filePath)
 			_, newFsErr := fs.NewFs(context.Background(), "TestAzureFiles:"+newRoot)
 			assert.Error(t, newFsErr)
+		})
+	})
+
+	t.Run("NewObject", func(t *testing.T) {
+		t.Run("returns ErrorIsDir if directory found", func(t *testing.T) {
+			randomDir := RandomString(10)
+			assert.NoError(t, f.Mkdir(context.TODO(), randomDir))
+			_, err := f.NewObject(context.TODO(), randomDir)
+			assert.ErrorIs(t, err, fs.ErrorIsDir)
+
+		})
+	})
+
+	t.Run("isDirectory", func(t *testing.T) {
+		t.Run("DirExists", func(t *testing.T) {
+			randomPath := RandomString(10)
+			assert.NoError(t, f.Mkdir(context.TODO(), randomPath))
+			isDir, isDirErr := azf.isDirectory(context.TODO(), randomPath)
+			assert.NoError(t, isDirErr)
+			assert.True(t, isDir)
+		})
+		t.Run("FileExists", func(t *testing.T) {
+			randomPath := RandomString(10)
+			r, obj := RandomPuttableObject(randomPath)
+			_, putErr := f.Put(context.TODO(), r, obj, nil)
+			assert.NoError(t, putErr)
+			_, isDirErr := azf.isDirectory(context.TODO(), randomPath)
+			assert.Error(t, isDirErr)
+		})
+		t.Run("PathDoesNotExist", func(t *testing.T) {
+			randomPath := RandomString(10)
+			_, isDirErr := azf.isDirectory(context.TODO(), randomPath)
+			assert.Error(t, isDirErr)
 		})
 	})
 
