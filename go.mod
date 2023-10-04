@@ -7,6 +7,7 @@ require (
 	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.6.0
 	github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.3.0
 	github.com/Azure/azure-sdk-for-go/sdk/storage/azblob v1.0.0
+	github.com/Azure/azure-sdk-for-go/sdk/storage/azfile v1.0.0
 	github.com/Azure/go-ntlmssp v0.0.0-20221128193559-754e69321358
 	github.com/Max-Sum/base32768 v0.0.0-20230304063302-18e6ce5945fd
 	github.com/Unknwon/goconfig v1.0.0
@@ -68,7 +69,7 @@ require (
 	golang.org/x/oauth2 v0.6.0
 	golang.org/x/sync v0.1.0
 	golang.org/x/sys v0.8.0
-	golang.org/x/text v0.8.0
+	golang.org/x/text v0.9.0
 	golang.org/x/time v0.3.0
 	google.golang.org/api v0.115.0
 	gopkg.in/yaml.v2 v2.4.0
