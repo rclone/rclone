@@ -65,15 +65,6 @@ func TestNonCommonIntegration(t *testing.T) {
 	}
 }
 
-func TestJoinPaths(t *testing.T) {
-	segments := []string{"parent", "child"}
-	assert.Equal(t, "parent/child", joinPaths(segments...))
-
-	segments = []string{"", "folder"}
-	assert.Equal(t, "folder", joinPaths(segments...))
-
-}
-
 // TODO: test put object in an inner directory
 func testPutObject(t *testing.T, f *Fs) {
 

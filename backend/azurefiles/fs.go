@@ -214,7 +214,7 @@ func (f *Fs) List(ctx context.Context, remote string) (fs.DirEntries, error) {
 		for _, dir := range resp.Segment.Directories {
 			de := &Directory{
 				common{f: f,
-					remote: joinPaths(remote, f.decodePath(*dir.Name)),
+					remote: path.Join(remote, f.decodePath(*dir.Name)),
 					properties: properties{
 						changeTime: dir.Properties.ChangeTime,
 					}},
@@ -225,7 +225,7 @@ func (f *Fs) List(ctx context.Context, remote string) (fs.DirEntries, error) {
 		for _, file := range resp.Segment.Files {
 			de := &Object{
 				common{f: f,
-					remote: joinPaths(remote, f.decodePath(*file.Name)),
+					remote: path.Join(remote, f.decodePath(*file.Name)),
 					properties: properties{
 						changeTime:    file.Properties.ChangeTime,
 						contentLength: file.Properties.ContentLength,
@@ -237,10 +237,6 @@ func (f *Fs) List(ctx context.Context, remote string) (fs.DirEntries, error) {
 
 	return entries, nil
 
-}
-
-func joinPaths(s ...string) string {
-	return path.Join(s...)
 }
 
 type encodedPath string

@@ -5,6 +5,7 @@ import (
 	"context"
 	"crypto/md5"
 	"io"
+	"path"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -116,7 +117,7 @@ func testRmDir(t *testing.T, c *Fs) {
 	t.Run("remove subdir", func(t *testing.T) {
 		parentDir := pre_existing_dir
 		tempDirName := "rmdirTest_" + RandomString(10)
-		dirToBeRemoved := joinPaths(parentDir, tempDirName)
+		dirToBeRemoved := path.Join(parentDir, tempDirName)
 		err := c.Mkdir(context.TODO(), dirToBeRemoved)
 		assert.NoError(t, err)
 		err = c.Rmdir(context.Background(), dirToBeRemoved)
@@ -129,7 +130,7 @@ func testRmDir(t *testing.T, c *Fs) {
 		err := c.Mkdir(context.TODO(), tempDir)
 		assert.NoError(t, err)
 		fileName := RandomString(10) + ".txt"
-		filePath := joinPaths(tempDir, fileName)
+		filePath := path.Join(tempDir, fileName)
 		in, src := RandomPuttableObject(filePath)
 		_, err = c.Put(context.TODO(), in, src, nil)
 		assert.NoError(t, err)
@@ -152,7 +153,7 @@ func testRemove(t *testing.T, c *Fs) {
 
 	t.Run("works on files inside subdirectory", func(t *testing.T) {
 		fileName := "testRemove_" + RandomString(10) + ".txt"
-		filePath := joinPaths(pre_existing_dir, fileName)
+		filePath := path.Join(pre_existing_dir, fileName)
 		in, src := RandomPuttableObject(filePath)
 		obj, err := c.Put(context.TODO(), in, src, nil)
 		assert.NoError(t, err)
