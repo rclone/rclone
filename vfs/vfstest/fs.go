@@ -42,7 +42,7 @@ const (
 //
 // If useVFS is not set then it runs the mount in a subprocess in
 // order to avoid kernel deadlocks.
-func RunTests(t *testing.T, useVFS bool, mountFn mountlib.MountFn) {
+func RunTests(t *testing.T, useVFS bool, minimumRequiredCacheMode vfscommon.CacheMode, enableCacheTests bool, mountFn mountlib.MountFn) {
 	flag.Parse()
 	if isSubProcess() {
 		startMount(mountFn, useVFS, *runMount)
@@ -59,6 +59,9 @@ func RunTests(t *testing.T, useVFS bool, mountFn mountlib.MountFn) {
 		{cacheMode: vfscommon.CacheModeFull, writeBack: 100 * time.Millisecond},
 	}
 	for _, test := range tests {
+		if test.cacheMode < minimumRequiredCacheMode {
+			continue
+		}
 		vfsOpt := vfsflags.Opt
 		vfsOpt.CacheMode = test.cacheMode
 		vfsOpt.WriteBack = test.writeBack
@@ -78,7 +81,9 @@ func RunTests(t *testing.T, useVFS bool, mountFn mountlib.MountFn) {
 			t.Run("TestDirRenameEmptyDir", TestDirRenameEmptyDir)
 			t.Run("TestDirRenameFullDir", TestDirRenameFullDir)
 			t.Run("TestDirModTime", TestDirModTime)
-			t.Run("TestDirCacheFlush", TestDirCacheFlush)
+			if enableCacheTests {
+				t.Run("TestDirCacheFlush", TestDirCacheFlush)
+			}
 			t.Run("TestDirCacheFlushOnDirRename", TestDirCacheFlushOnDirRename)
 			t.Run("TestFileModTime", TestFileModTime)
 			t.Run("TestFileModTimeWithOpenWriters", TestFileModTimeWithOpenWriters)
@@ -310,7 +315,7 @@ func writeFile(filename string, data []byte, perm os.FileMode) error {
 
 func (r *Run) createFile(t *testing.T, filepath string, contents string) {
 	filepath = r.path(filepath)
-	err := writeFile(filepath, []byte(contents), 0600)
+	err := writeFile(filepath, []byte(contents), 0644)
 	require.NoError(t, err)
 	r.waitForWriters()
 }
@@ -324,7 +329,7 @@ func (r *Run) readFile(t *testing.T, filepath string) string {
 
 func (r *Run) mkdir(t *testing.T, filepath string) {
 	filepath = r.path(filepath)
-	err := r.os.Mkdir(filepath, 0700)
+	err := r.os.Mkdir(filepath, 0755)
 	require.NoError(t, err)
 }
 
