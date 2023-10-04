@@ -98,7 +98,7 @@ func testPutObject(t *testing.T, f *Fs) {
 }
 
 func testSettingMetaDataWorks(t *testing.T, c *Fs) {
-	fcSetting := c.rootDirClient.NewFileClient(pre_existing_file_name)
+	fcSetting := c.shareRootDirClient.NewFileClient(pre_existing_file_name)
 	metaData := make(map[string]*string)
 	someString := "1_isgreat"
 	metaData["a"] = &someString
@@ -111,7 +111,7 @@ func testSettingMetaDataWorks(t *testing.T, c *Fs) {
 
 	// Now checking whether the metadata was actually set
 
-	fcGetting := c.rootDirClient.NewFileClient(pre_existing_file_name)
+	fcGetting := c.shareRootDirClient.NewFileClient(pre_existing_file_name)
 	getResp, getErr := fcGetting.GetProperties(context.TODO(), nil)
 	assert.NoError(t, getErr)
 	actualPtr, ok := getCaseInvariantMetaDataValue(getResp.Metadata, "a")
@@ -127,7 +127,7 @@ func testSetModTime(t *testing.T, f *Fs) {
 	setModTimeErr := obj.SetModTime(context.TODO(), timeBeingSet)
 	assert.NoError(t, setModTimeErr)
 
-	fc := f.rootDirClient.NewFileClient(pre_existing_file_name)
+	fc := f.shareRootDirClient.NewFileClient(pre_existing_file_name)
 	res, getPropErr := fc.GetProperties(context.TODO(), nil)
 	assert.NoError(t, getPropErr)
 	gotTimeStr, ok := getCaseInvariantMetaDataValue(res.Metadata, modTimeKey)

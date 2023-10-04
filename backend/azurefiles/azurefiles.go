@@ -80,15 +80,15 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		log.Fatal("could not create service client: %w", err)
 	}
 	shareClient := serviceClient.NewShareClient(opt.ShareName)
-	rootDirClient := shareClient.NewRootDirectoryClient()
+	shareRootDirClient := shareClient.NewRootDirectoryClient()
 	f := Fs{
-		rootDirClient: rootDirClient,
-		name:          name,
-		root:          root,
-		opt:           opt,
+		shareRootDirClient: shareRootDirClient,
+		name:               name,
+		root:               root,
+		opt:                opt,
 	}
 	// How to check whether a file exists at this location
-	_, propsErr := rootDirClient.NewFileClient(f.opt.Enc.FromStandardPath(root)).GetProperties(ctx, nil)
+	_, propsErr := shareRootDirClient.NewFileClient(f.opt.Enc.FromStandardPath(root)).GetProperties(ctx, nil)
 	if propsErr == nil {
 		f.root = parent(root)
 		return &f, fs.ErrorIsFile
@@ -105,16 +105,11 @@ var listFilesAndDirectoriesOptions = &directory.ListFilesAndDirectoriesOptions{
 }
 
 type Fs struct {
-	rootDirClient *directory.Client
-	name          string
-	root          string
-	opt           *Options
+	shareRootDirClient *directory.Client
+	name               string
+	root               string
+	opt                *Options
 }
-
-// type ObjectInfo struct {
-// 	DirEntry
-// 	c *Client
-// }
 
 func (c *common) String() string {
 	return c.remote

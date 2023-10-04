@@ -243,7 +243,7 @@ func (f *Fs) NewSubdirectoryClient(decodedRemote string) *directory.Client {
 }
 
 func (f *Fs) NewSubdirectoryClientFromEncodedPath(p encodedPath) *directory.Client {
-	return f.rootDirClient.NewSubdirectoryClient(string(p))
+	return f.shareRootDirClient.NewSubdirectoryClient(string(p))
 }
 
 func (f *Fs) NewFileClient(decodedRemote string) *file.Client {
@@ -253,7 +253,7 @@ func (f *Fs) NewFileClient(decodedRemote string) *file.Client {
 }
 
 func (f *Fs) NewFileClientFromEncodedPath(p encodedPath) *file.Client {
-	return f.rootDirClient.NewFileClient(string(p))
+	return f.shareRootDirClient.NewFileClient(string(p))
 }
 
 func (f *Fs) encodePath(p string) encodedPath {
