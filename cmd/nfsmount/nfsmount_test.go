@@ -1,7 +1,7 @@
-//go:build linux || freebsd
-// +build linux freebsd
+//go:build darwin && !cmount
+// +build darwin,!cmount
 
-package mount
+package nfsmount
 
 import (
 	"testing"
@@ -11,5 +11,5 @@ import (
 )
 
 func TestMount(t *testing.T) {
-	vfstest.RunTests(t, false, vfscommon.CacheModeOff, true, mount)
+	vfstest.RunTests(t, false, vfscommon.CacheModeMinimal, false, mount)
 }

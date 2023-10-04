@@ -15,6 +15,7 @@ import (
 	"testing"
 
 	"github.com/rclone/rclone/fstest/testy"
+	"github.com/rclone/rclone/vfs/vfscommon"
 	"github.com/rclone/rclone/vfs/vfstest"
 )
 
@@ -23,5 +24,5 @@ func TestMount(t *testing.T) {
 	if runtime.GOOS == "darwin" {
 		testy.SkipUnreliable(t)
 	}
-	vfstest.RunTests(t, false, mount)
+	vfstest.RunTests(t, false, vfscommon.CacheModeOff, true, mount)
 }
