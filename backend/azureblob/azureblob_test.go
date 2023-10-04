@@ -1,7 +1,7 @@
 // Test AzureBlob filesystem interface
 
-//go:build !plan9 && !solaris && !js && go1.18
-// +build !plan9,!solaris,!js,go1.18
+//go:build !plan9 && !solaris && !js
+// +build !plan9,!solaris,!js
 
 package azureblob
 
@@ -31,9 +31,9 @@ func TestIntegration2(t *testing.T) {
 	if *fstest.RemoteName != "" {
 		t.Skip("Skipping as -remote set")
 	}
-	name := "TestAzureBlob:"
+	name := "TestAzureBlob"
 	fstests.Run(t, &fstests.Opt{
-		RemoteName:  name,
+		RemoteName:  name + ":",
 		NilObject:   (*Object)(nil),
 		TiersToTest: []string{"Hot", "Cool"},
 		ChunkedUpload: fstests.ChunkedUploadConfig{

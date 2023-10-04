@@ -13,8 +13,6 @@ import (
 	"strings"
 	"time"
 
-	sysdnotify "github.com/iguanesolutions/go-systemd/v5/notify"
-
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/rclone/rclone/cmd"
@@ -25,6 +23,7 @@ import (
 	"github.com/rclone/rclone/fs/walk"
 	libhttp "github.com/rclone/rclone/lib/http"
 	"github.com/rclone/rclone/lib/http/serve"
+	"github.com/rclone/rclone/lib/systemd"
 	"github.com/rclone/rclone/lib/terminal"
 	"github.com/spf13/cobra"
 	"golang.org/x/net/http2"
@@ -57,10 +56,10 @@ func init() {
 	flagSet := Command.Flags()
 	libhttp.AddAuthFlagsPrefix(flagSet, flagPrefix, &Opt.Auth)
 	libhttp.AddHTTPFlagsPrefix(flagSet, flagPrefix, &Opt.HTTP)
-	flags.BoolVarP(flagSet, &Opt.Stdio, "stdio", "", false, "Run an HTTP2 server on stdin/stdout")
-	flags.BoolVarP(flagSet, &Opt.AppendOnly, "append-only", "", false, "Disallow deletion of repository data")
-	flags.BoolVarP(flagSet, &Opt.PrivateRepos, "private-repos", "", false, "Users can only access their private repo")
-	flags.BoolVarP(flagSet, &Opt.CacheObjects, "cache-objects", "", true, "Cache listed objects")
+	flags.BoolVarP(flagSet, &Opt.Stdio, "stdio", "", false, "Run an HTTP2 server on stdin/stdout", "")
+	flags.BoolVarP(flagSet, &Opt.AppendOnly, "append-only", "", false, "Disallow deletion of repository data", "")
+	flags.BoolVarP(flagSet, &Opt.PrivateRepos, "private-repos", "", false, "Users can only access their private repo", "")
+	flags.BoolVarP(flagSet, &Opt.CacheObjects, "cache-objects", "", true, "Cache listed objects", "")
 }
 
 // Command definition for cobra
@@ -180,15 +179,8 @@ with a path of ` + "`/<username>/`" + `.
 			}
 			fs.Logf(s.f, "Serving restic REST API on %s", s.URLs())
 
-			if err := sysdnotify.Ready(); err != nil {
-				fs.Logf(s.f, "failed to notify ready to systemd: %v", err)
-			}
-
+			defer systemd.Notify()()
 			s.Wait()
-
-			if err := sysdnotify.Stopping(); err != nil {
-				fs.Logf(s.f, "failed to notify stopping to systemd: %v", err)
-			}
 
 			return nil
 		})

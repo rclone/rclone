@@ -13,6 +13,7 @@ import (
 	"runtime"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 	"unicode/utf8"
 
@@ -243,7 +244,7 @@ type Fs struct {
 	precision      time.Duration       // precision of local filesystem
 	warnedMu       sync.Mutex          // used for locking access to 'warned'.
 	warned         map[string]struct{} // whether we have warned about this string
-	xattrSupported int32               // whether xattrs are supported (atomic access)
+	xattrSupported atomic.Int32        // whether xattrs are supported
 
 	// do os.Lstat or os.Stat
 	lstat        func(name string) (os.FileInfo, error)
@@ -291,7 +292,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		lstat:  os.Lstat,
 	}
 	if xattrSupported {
-		f.xattrSupported = 1
+		f.xattrSupported.Store(1)
 	}
 	f.root = cleanRootPath(root, f.opt.NoUNC, f.opt.Enc)
 	f.features = (&fs.Features{
@@ -641,7 +642,13 @@ func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 //
 // If it isn't empty it will return an error
 func (f *Fs) Rmdir(ctx context.Context, dir string) error {
-	return os.Remove(f.localPath(dir))
+	localPath := f.localPath(dir)
+	if fi, err := os.Stat(localPath); err != nil {
+		return err
+	} else if !fi.IsDir() {
+		return fs.ErrorIsFile
+	}
+	return os.Remove(localPath)
 }
 
 // Precision of the file system

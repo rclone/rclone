@@ -914,7 +914,7 @@ func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, 
 	return do(ctx, uRemote, expire, unlink)
 }
 
-// Put in to the remote path with the modTime given of the given size
+// PutUnchecked in to the remote path with the modTime given of the given size
 //
 // May create the object even if it returns an error - if so
 // will return the object and the error, otherwise will return

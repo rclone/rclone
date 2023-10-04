@@ -785,6 +785,52 @@ func Run(t *testing.T, opt *Opt) {
 			assert.NoError(t, f.Rmdir(ctx, "writer-at-subdir"))
 		})
 
+		// TestFsOpenChunkWriter tests writing in chunks to fs
+		// then reads back the contents and check if they match
+		// go test -v -run 'TestIntegration/FsMkdir/FsOpenChunkWriter'
+		t.Run("FsOpenChunkWriter", func(t *testing.T) {
+			skipIfNotOk(t)
+			openChunkWriter := f.Features().OpenChunkWriter
+			if openChunkWriter == nil {
+				t.Skip("FS has no OpenChunkWriter interface")
+			}
+			size5MBs := 5 * 1024 * 1024
+			contents1 := random.String(size5MBs)
+			contents2 := random.String(size5MBs)
+
+			size1MB := 1 * 1024 * 1024
+			contents3 := random.String(size1MB)
+
+			path := "writer-at-subdir/writer-at-file"
+			objSrc := object.NewStaticObjectInfo(path, file1.ModTime, -1, true, nil, nil)
+			_, out, err := openChunkWriter(ctx, objSrc.Remote(), objSrc, &fs.ChunkOption{
+				ChunkSize: int64(size5MBs),
+			})
+			require.NoError(t, err)
+
+			var n int64
+			n, err = out.WriteChunk(ctx, 1, strings.NewReader(contents2))
+			assert.NoError(t, err)
+			assert.Equal(t, int64(size5MBs), n)
+			n, err = out.WriteChunk(ctx, 2, strings.NewReader(contents3))
+			assert.NoError(t, err)
+			assert.Equal(t, int64(size1MB), n)
+			n, err = out.WriteChunk(ctx, 0, strings.NewReader(contents1))
+			assert.NoError(t, err)
+			assert.Equal(t, int64(size5MBs), n)
+
+			assert.NoError(t, out.Close(ctx))
+
+			obj := findObject(ctx, t, f, path)
+			originalContents := contents1 + contents2 + contents3
+			fileContents := ReadObject(ctx, t, obj, -1)
+			isEqual := originalContents == fileContents
+			assert.True(t, isEqual, "contents of file differ")
+
+			assert.NoError(t, obj.Remove(ctx))
+			assert.NoError(t, f.Rmdir(ctx, "writer-at-subdir"))
+		})
+
 		// TestFsChangeNotify tests that changes are properly
 		// propagated
 		//
@@ -1100,6 +1146,48 @@ func Run(t *testing.T, opt *Opt) {
 
 				// Now purge it
 				err = operations.Purge(ctx, f, "dirToPurge")
+				require.NoError(t, err)
+
+				fstest.CheckListingWithPrecision(t, f, []fstest.Item{file1, file2}, []string{
+					"hello? sausage",
+					"hello? sausage/êé",
+					"hello? sausage/êé/Hello, 世界",
+					"hello? sausage/êé/Hello, 世界/ \" ' @ < > & ? + ≠",
+				}, fs.GetModifyWindow(ctx, f))
+			})
+
+			// TestFsPurge tests Purge on the Root
+			t.Run("FsPurgeRoot", func(t *testing.T) {
+				skipIfNotOk(t)
+
+				// Check have Purge
+				doPurge := f.Features().Purge
+				if doPurge == nil {
+					t.Skip("FS has no Purge interface")
+				}
+
+				// put up a file to purge
+				fileToPurge := fstest.Item{
+					ModTime: fstest.Time("2001-02-03T04:05:06.499999999Z"),
+					Path:    "dirToPurgeFromRoot/fileToPurgeFromRoot.txt",
+				}
+				_, _ = testPut(ctx, t, f, &fileToPurge)
+
+				fstest.CheckListingWithPrecision(t, f, []fstest.Item{file1, file2, fileToPurge}, []string{
+					"dirToPurgeFromRoot",
+					"hello? sausage",
+					"hello? sausage/êé",
+					"hello? sausage/êé/Hello, 世界",
+					"hello? sausage/êé/Hello, 世界/ \" ' @ < > & ? + ≠",
+				}, fs.GetModifyWindow(ctx, f))
+
+				// Create a new Fs pointing at the directory
+				remoteName := subRemoteName + "/" + "dirToPurgeFromRoot"
+				fPurge, err := fs.NewFs(context.Background(), remoteName)
+				require.NoError(t, err)
+
+				// Now purge it from the root
+				err = operations.Purge(ctx, fPurge, "")
 				require.NoError(t, err)
 
 				fstest.CheckListingWithPrecision(t, f, []fstest.Item{file1, file2}, []string{
@@ -1706,7 +1794,7 @@ func Run(t *testing.T, opt *Opt) {
 					}
 				}
 
-				expiry := fs.Duration(60 * time.Second)
+				expiry := fs.Duration(120 * time.Second)
 				doPublicLink := wrapPublicLinkFunc(publicLinkFunc)
 
 				// if object not found

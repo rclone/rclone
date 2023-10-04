@@ -110,10 +110,11 @@ func init() {
 				encoder.EncodeBackSlash |
 				encoder.EncodeInvalidUtf8),
 		}, {
-			Name:     "root_folder_id",
-			Help:     "Fill in for rclone to use a non root folder as its starting point.",
-			Default:  "d0",
-			Advanced: true,
+			Name:      "root_folder_id",
+			Help:      "Fill in for rclone to use a non root folder as its starting point.",
+			Default:   "d0",
+			Advanced:  true,
+			Sensitive: true,
 		}, {
 			Name: "hostname",
 			Help: `Hostname to connect to.
@@ -138,7 +139,8 @@ with rclone authorize.
 This is only required when you want to use the cleanup command. Due to a bug
 in the pcloud API the required API does not support OAuth authentication so
 we have to rely on user password authentication for it.`,
-			Advanced: true,
+			Advanced:  true,
+			Sensitive: true,
 		}, {
 			Name:       "password",
 			Help:       "Your pcloud password.",

@@ -38,7 +38,6 @@ import (
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/accounting"
 	"github.com/rclone/rclone/fs/filter"
-	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/fs/operations"
@@ -702,6 +701,22 @@ func TestRmdirsNoLeaveRoot(t *testing.T) {
 		fs.GetModifyWindow(ctx, r.Fremote),
 	)
 
+	// Delete the files so we can remove everything including the root
+	for _, file := range []fstest.Item{file1, file2} {
+		o, err := r.Fremote.NewObject(ctx, file.Path)
+		require.NoError(t, err)
+		require.NoError(t, o.Remove(ctx))
+	}
+
+	require.NoError(t, operations.Rmdirs(ctx, r.Fremote, "", false))
+
+	fstest.CheckListingWithPrecision(
+		t,
+		r.Fremote,
+		[]fstest.Item{},
+		[]string{},
+		fs.GetModifyWindow(ctx, r.Fremote),
+	)
 }
 
 func TestRmdirsLeaveRoot(t *testing.T) {
@@ -1418,11 +1433,13 @@ func TestOverlappingFilterCheckWithFilter(t *testing.T) {
 	ctx := context.Background()
 	fi, err := filter.NewFilter(nil)
 	require.NoError(t, err)
-	require.NoError(t, fi.Add(false, "*/exclude/"))
-	fi.Opt.ExcludeFile = []string{".ignore"}
+	require.NoError(t, fi.Add(false, "/exclude/"))
+	require.NoError(t, fi.Add(false, "/Exclude2/"))
+	require.NoError(t, fi.Add(true, "*"))
 	ctx = filter.ReplaceConfig(ctx, fi)
 
 	src := &testFs{testFsInfo{name: "name", root: "root"}}
+	src.features.CaseInsensitive = true
 	slash := string(os.PathSeparator) // native path separator
 	for _, test := range []struct {
 		name     string
@@ -1430,24 +1447,31 @@ func TestOverlappingFilterCheckWithFilter(t *testing.T) {
 		expected bool
 	}{
 		{"name", "root", true},
+		{"name", "ROOT", true}, // case insensitive is set
 		{"name", "/root", true},
 		{"name", "root/", true},
 		{"name", "root" + slash, true},
 		{"name", "root/exclude", false},
+		{"name", "root/Exclude2", false},
+		{"name", "root/include", true},
 		{"name", "root/exclude/", false},
+		{"name", "root/Exclude2/", false},
+		{"name", "root/exclude/sub", false},
+		{"name", "root/Exclude2/sub", false},
 		{"name", "/root/exclude/", false},
 		{"name", "root" + slash + "exclude", false},
 		{"name", "root" + slash + "exclude" + slash, false},
-		{"name", "root/.ignore", false},
-		{"name", "root" + slash + ".ignore", false},
 		{"namey", "root/include", false},
 		{"namey", "root/include/", false},
 		{"namey", "root" + slash + "include", false},
 		{"namey", "root" + slash + "include" + slash, false},
 	} {
 		dst := &testFs{testFsInfo{name: test.name, root: test.root}}
+		dst.features.CaseInsensitive = true
 		what := fmt.Sprintf("(%q,%q) vs (%q,%q)", src.name, src.root, dst.name, dst.root)
 		actual := operations.OverlappingFilterCheck(ctx, dst, src)
+		assert.Equal(t, test.expected, actual, what)
+		actual = operations.OverlappingFilterCheck(ctx, src, dst)
 		assert.Equal(t, test.expected, actual, what)
 	}
 }
@@ -1894,8 +1918,13 @@ func TestCopyFileMaxTransfer(t *testing.T) {
 	accounting.Stats(ctx).ResetCounters()
 	err = operations.CopyFile(ctx, r.Fremote, r.Flocal, file2.Path, file2.Path)
 	require.NotNil(t, err, "Did not get expected max transfer limit error")
-	assert.Contains(t, err.Error(), "max transfer limit reached")
-	assert.True(t, fserrors.IsFatalError(err), fmt.Sprintf("Not fatal error: %v: %#v:", err, err))
+	if !errors.Is(err, accounting.ErrorMaxTransferLimitReachedFatal) {
+		t.Log("Expecting error to contain accounting.ErrorMaxTransferLimitReachedFatal")
+		// Sometimes the backends or their SDKs don't pass the
+		// error through properly, so check that it at least
+		// has the text we expect in.
+		assert.Contains(t, err.Error(), "max transfer limit reached")
+	}
 	r.CheckLocalItems(t, file1, file2, file3, file4)
 	r.CheckRemoteItems(t, file1)
 
@@ -1906,8 +1935,7 @@ func TestCopyFileMaxTransfer(t *testing.T) {
 	accounting.Stats(ctx).ResetCounters()
 	err = operations.CopyFile(ctx, r.Fremote, r.Flocal, file3.Path, file3.Path)
 	require.NotNil(t, err)
-	assert.Contains(t, err.Error(), "max transfer limit reached")
-	assert.True(t, fserrors.IsNoRetryError(err))
+	assert.True(t, errors.Is(err, accounting.ErrorMaxTransferLimitReachedGraceful))
 	r.CheckLocalItems(t, file1, file2, file3, file4)
 	r.CheckRemoteItems(t, file1)
 

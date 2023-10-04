@@ -14,6 +14,10 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func testEmptyHandler() http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
+}
+
 func testEchoHandler(data []byte) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		_, _ = w.Write(data)
@@ -81,8 +85,6 @@ func TestNewServerUnix(t *testing.T) {
 	}()
 
 	require.Empty(t, s.URLs(), "unix socket should not appear in URLs")
-
-	s.Router().Use(MiddlewareCORS(""))
 
 	expected := []byte("hello world")
 	s.Router().Mount("/", testEchoHandler(expected))

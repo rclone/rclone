@@ -4,22 +4,20 @@
 package mountlib
 
 import (
-	"errors"
 	"fmt"
 	"path/filepath"
 	"strings"
 	"time"
 
-	"github.com/artyom/mtab"
+	"github.com/moby/sys/mountinfo"
 )
 
 const (
-	mtabPath     = "/proc/mounts"
 	pollInterval = 100 * time.Millisecond
 )
 
 // CheckMountEmpty checks if folder is not already a mountpoint.
-// On Linux we use the OS-specific /proc/mount API so the check won't access the path.
+// On Linux we use the OS-specific /proc/self/mountinfo API so the check won't access the path.
 // Directories marked as "mounted" by autofs are considered not mounted.
 func CheckMountEmpty(mountpoint string) error {
 	const msg = "directory already mounted, use --allow-non-empty to mount anyway: %s"
@@ -29,43 +27,48 @@ func CheckMountEmpty(mountpoint string) error {
 		return fmt.Errorf("cannot get absolute path: %s: %w", mountpoint, err)
 	}
 
-	entries, err := mtab.Entries(mtabPath)
+	infos, err := mountinfo.GetMounts(mountinfo.SingleEntryFilter(mountpointAbs))
 	if err != nil {
-		return fmt.Errorf("cannot read %s: %w", mtabPath, err)
+		return fmt.Errorf("cannot get mounts: %w", err)
 	}
+
 	foundAutofs := false
-	for _, entry := range entries {
-		if entry.Dir == mountpointAbs {
-			if entry.Type != "autofs" {
-				return fmt.Errorf(msg, mountpointAbs)
-			}
-			foundAutofs = true
+	for _, info := range infos {
+		if info.FSType != "autofs" {
+			return fmt.Errorf(msg, mountpointAbs)
 		}
+		foundAutofs = true
 	}
 	// It isn't safe to list an autofs in the middle of mounting
 	if foundAutofs {
 		return nil
 	}
+
 	return checkMountEmpty(mountpoint)
 }
 
 // CheckMountReady checks whether mountpoint is mounted by rclone.
 // Only mounts with type "rclone" or "fuse.rclone" count.
 func CheckMountReady(mountpoint string) error {
+	const msg = "mount not ready: %s"
+
 	mountpointAbs, err := filepath.Abs(mountpoint)
 	if err != nil {
 		return fmt.Errorf("cannot get absolute path: %s: %w", mountpoint, err)
 	}
-	entries, err := mtab.Entries(mtabPath)
+
+	infos, err := mountinfo.GetMounts(mountinfo.SingleEntryFilter(mountpointAbs))
 	if err != nil {
-		return fmt.Errorf("cannot read %s: %w", mtabPath, err)
+		return fmt.Errorf("cannot get mounts: %w", err)
 	}
-	for _, entry := range entries {
-		if entry.Dir == mountpointAbs && strings.Contains(entry.Type, "rclone") {
+
+	for _, info := range infos {
+		if strings.Contains(info.FSType, "rclone") {
 			return nil
 		}
 	}
-	return errors.New("mount not ready")
+
+	return fmt.Errorf(msg, mountpointAbs)
 }
 
 // WaitMountReady waits until mountpoint is mounted by rclone.

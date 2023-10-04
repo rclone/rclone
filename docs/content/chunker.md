@@ -97,7 +97,7 @@ will put files in a directory called `name` in the current directory.
 
 When rclone starts a file upload, chunker checks the file size. If it
 doesn't exceed the configured chunk size, chunker will just pass the file
-to the wrapped remote. If a file is large, chunker will transparently cut
+to the wrapped remote (however, see caveat below). If a file is large, chunker will transparently cut
 data in pieces with temporary names and stream them one by one, on the fly.
 Each data chunk will contain the specified number of bytes, except for the
 last one which may have less data. If file size is unknown in advance
@@ -128,6 +128,14 @@ by default print warning, skip the whole incomplete group of chunks but
 proceed with current command.
 You can set the `--chunker-fail-hard` flag to have commands abort with
 error message in such cases.
+
+**Caveat**: As it is now, chunker will always create a temporary file in the 
+backend and then rename it, even if the file is below the chunk threshold.
+This will result in unnecessary API calls and can severely restrict throughput
+when handling transfers primarily composed of small files on some backends (e.g. Box).
+A workaround to this issue is to use chunker only for files above the chunk threshold
+via `--min-size` and then perform a separate call without chunker on the remaining
+files. 
 
 
 #### Chunk names

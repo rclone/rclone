@@ -73,7 +73,7 @@ func main() {
 	configfile.Install()
 
 	// Seed the random number generator
-	rand.Seed(time.Now().UTC().UnixNano())
+	randInstance := rand.New(rand.NewSource(time.Now().UTC().UnixNano()))
 
 	// Filter selection
 	if *testRemotes != "" {
@@ -103,7 +103,7 @@ func main() {
 
 	// Runs we will do for this test in random order
 	runs := conf.MakeRuns()
-	rand.Shuffle(len(runs), runs.Swap)
+	randInstance.Shuffle(len(runs), runs.Swap)
 
 	// Create Report
 	report := NewReport()

@@ -58,9 +58,10 @@ func init() {
 		Description: "Mega",
 		NewFs:       NewFs,
 		Options: []fs.Option{{
-			Name:     "user",
-			Help:     "User name.",
-			Required: true,
+			Name:      "user",
+			Help:      "User name.",
+			Required:  true,
+			Sensitive: true,
 		}, {
 			Name:       "pass",
 			Help:       "Password.",
@@ -205,7 +206,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	}
 	ci := fs.GetConfig(ctx)
 
-	// cache *mega.Mega on username so we can re-use and share
+	// cache *mega.Mega on username so we can reuse and share
 	// them between remotes.  They are expensive to make as they
 	// contain all the objects and sharing the objects makes the
 	// move code easier as we don't have to worry about mixing

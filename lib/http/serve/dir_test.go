@@ -10,14 +10,13 @@ import (
 	"testing"
 	"time"
 
+	libhttp "github.com/rclone/rclone/lib/http"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	"github.com/rclone/rclone/cmd/serve/http/data"
 )
 
 func GetTemplate(t *testing.T) *template.Template {
-	htmlTemplate, err := data.GetTemplate("../../../cmd/serve/http/testdata/golden/testindex.html")
+	htmlTemplate, err := libhttp.GetTemplate("../../../cmd/serve/http/testdata/golden/testindex.html")
 	require.NoError(t, err)
 	return htmlTemplate
 }

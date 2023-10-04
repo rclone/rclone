@@ -29,9 +29,10 @@ rclone test histogram [remote:path] [flags]
   -h, --help   help for histogram
 ```
 
+
 See the [global flags page](/flags/) for global options not listed here.
 
-## SEE ALSO
+# SEE ALSO
 
 * [rclone test](/commands/rclone_test/)	 - Run a test command
 

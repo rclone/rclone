@@ -304,7 +304,7 @@ parameter, you would pass this parameter in your JSON blob.
 
 If using `rclone rc` this could be passed as
 
-    rclone rc operations/sync ... _config='{"CheckSum": true}'
+    rclone rc sync/sync ... _config='{"CheckSum": true}'
 
 Any config parameters you don't set will inherit the global defaults
 which were set with command line flags or environment variables.
@@ -732,6 +732,28 @@ OR
 
 **Authentication is required for this call.**
 
+### core/du: Returns disk usage of a locally attached disk. {#core-du}
+
+This returns the disk usage for the local directory passed in as dir.
+
+If the directory is not passed in, it defaults to the directory
+pointed to by --cache-dir.
+
+- dir - string (optional)
+
+Returns:
+
+```
+{
+	"dir": "/",
+	"info": {
+		"Available": 361769115648,
+		"Free": 361785892864,
+		"Total": 982141468672
+	}
+}
+```
+
 ### core/gc: Runs a garbage collection. {#core-gc}
 
 This tells the go runtime to do a garbage collection run.  It isn't
@@ -811,6 +833,10 @@ Returns the following values:
 	"lastError": last error string,
 	"renames" : number of files renamed,
 	"retryError": boolean showing whether there has been at least one non-NoRetryError,
+        "serverSideCopies": number of server side copies done,
+        "serverSideCopyBytes": number bytes server side copied,
+        "serverSideMoves": number of server side moves done,
+        "serverSideMoveBytes": number bytes server side moved,
 	"speed": average speed in bytes per second since start of the group,
 	"totalBytes": total number of bytes in the group,
 	"totalChecks": total number of checks in the group,
@@ -1012,7 +1038,8 @@ Parameters: None.
 
 Results:
 
-- jobids - array of integer job ids.
+- executeId - string id of rclone executing (change after restart)
+- jobids - array of integer job ids (starting at 1 on each restart)
 
 ### job/status: Reads the status of the job ID {#job-status}
 
@@ -1415,6 +1442,27 @@ See the [rmdirs](/commands/rclone_rmdirs/) command for more information on the a
 
 **Authentication is required for this call.**
 
+### operations/settier: Changes storage tier or class on all files in the path {#operations-settier}
+
+This takes the following parameters:
+
+- fs - a remote name string e.g. "drive:"
+
+See the [settier](/commands/rclone_settier/) command for more information on the above.
+
+**Authentication is required for this call.**
+
+### operations/settierfile: Changes storage tier or class on the single file pointed to {#operations-settierfile}
+
+This takes the following parameters:
+
+- fs - a remote name string e.g. "drive:"
+- remote - a path within that remote e.g. "dir"
+
+See the [settierfile](/commands/rclone_settierfile/) command for more information on the above.
+
+**Authentication is required for this call.**
+
 ### operations/size: Count the number of bytes and files in remote {#operations-size}
 
 This takes the following parameters:
@@ -1650,11 +1698,16 @@ This takes the following parameters
 - checkFilename - file name for checkAccess (default: RCLONE_TEST)
 - maxDelete - abort sync if percentage of deleted files is above
   this threshold (default: 50)
-- force - maxDelete safety check and run the sync
+- force - Bypass maxDelete safety check and run the sync
 - checkSync - `true` by default, `false` disables comparison of final listings,
               `only` will skip sync, only compare listings from the last run
+- createEmptySrcDirs - Sync creation and deletion of empty directories. 
+			  (Not compatible with --remove-empty-dirs)
 - removeEmptyDirs - remove empty directories at the final cleanup step
 - filtersFile - read filtering patterns from a file
+- ignoreListingChecksum - Do not use checksums for listings
+- resilient - Allow future runs to retry after certain less-serious errors, instead of requiring resync. 
+            Use at your own risk!
 - workdir - server directory for history files (default: /home/ncw/.cache/rclone/bisync)
 - noCleanup - retain working files
 

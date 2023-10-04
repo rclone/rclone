@@ -22,6 +22,7 @@ import (
 	"github.com/rclone/rclone/cmd/serve/dlna/data"
 	"github.com/rclone/rclone/cmd/serve/dlna/dlnaflags"
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/lib/systemd"
 	"github.com/rclone/rclone/vfs"
 	"github.com/rclone/rclone/vfs/vfsflags"
 	"github.com/spf13/cobra"
@@ -50,6 +51,7 @@ files that they are not able to play back correctly.
 ` + dlnaflags.Help + vfs.Help,
 	Annotations: map[string]string{
 		"versionIntroduced": "v1.46",
+		"groups":            "Filter",
 	},
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(1, 1, command, args)
@@ -63,6 +65,7 @@ files that they are not able to play back correctly.
 			if err := s.Serve(); err != nil {
 				return err
 			}
+			defer systemd.Notify()()
 			s.Wait()
 			return nil
 		})

@@ -43,10 +43,11 @@ var tzLocal = false
 
 // fileInfo describes a file
 type fileInfo struct {
-	size int64
-	time time.Time
-	hash string
-	id   string
+	size  int64
+	time  time.Time
+	hash  string
+	id    string
+	flags string
 }
 
 // fileList represents a listing
@@ -76,17 +77,18 @@ func (ls *fileList) get(file string) *fileInfo {
 	return ls.info[file]
 }
 
-func (ls *fileList) put(file string, size int64, time time.Time, hash, id string) {
+func (ls *fileList) put(file string, size int64, time time.Time, hash, id string, flags string) {
 	fi := ls.get(file)
 	if fi != nil {
 		fi.size = size
 		fi.time = time
 	} else {
 		fi = &fileInfo{
-			size: size,
-			time: time,
-			hash: hash,
-			id:   id,
+			size:  size,
+			time:  time,
+			hash:  hash,
+			id:    id,
+			flags: flags,
 		}
 		ls.info[file] = fi
 		ls.list = append(ls.list, file)
@@ -152,7 +154,11 @@ func (ls *fileList) save(ctx context.Context, listing string) error {
 			id = "-"
 		}
 
-		flags := "-"
+		flags := fi.flags
+		if flags == "" {
+			flags = "-"
+		}
+
 		_, err = fmt.Fprintf(file, lineFormat, flags, fi.size, hash, id, time, remote)
 		if err != nil {
 			_ = file.Close()
@@ -217,7 +223,7 @@ func (b *bisyncRun) loadListing(listing string) (*fileList, error) {
 			}
 		}
 
-		if flags != "-" || id != "-" || sizeErr != nil || timeErr != nil || hashErr != nil || nameErr != nil {
+		if (flags != "-" && flags != "d") || id != "-" || sizeErr != nil || timeErr != nil || hashErr != nil || nameErr != nil {
 			fs.Logf(listing, "Ignoring incorrect line: %q", line)
 			continue
 		}
@@ -229,7 +235,7 @@ func (b *bisyncRun) loadListing(listing string) (*fileList, error) {
 			}
 		}
 
-		ls.put(nameVal, sizeVal, timeVal.In(TZ), hashVal, id)
+		ls.put(nameVal, sizeVal, timeVal.In(TZ), hashVal, id, flags)
 	}
 
 	return ls, nil
@@ -253,15 +259,20 @@ func (b *bisyncRun) makeListing(ctx context.Context, f fs.Fs, listing string) (l
 	ci := fs.GetConfig(ctx)
 	depth := ci.MaxDepth
 	hashType := hash.None
-	if !ci.IgnoreChecksum {
-		// Currently bisync just honors --ignore-checksum
+	if !b.opt.IgnoreListingChecksum {
+		// Currently bisync just honors --ignore-listing-checksum
+		// (note that this is different from --ignore-checksum)
 		// TODO add full support for checksums and related flags
 		hashType = f.Hashes().GetOne()
 	}
 	ls = newFileList()
 	ls.hash = hashType
 	var lock sync.Mutex
-	err = walk.ListR(ctx, f, "", false, depth, walk.ListObjects, func(entries fs.DirEntries) error {
+	listType := walk.ListObjects
+	if b.opt.CreateEmptySrcDirs {
+		listType = walk.ListAll
+	}
+	err = walk.ListR(ctx, f, "", false, depth, listType, func(entries fs.DirEntries) error {
 		var firstErr error
 		entries.ForObject(func(o fs.Object) {
 			//tr := accounting.Stats(ctx).NewCheckingTransfer(o) // TODO
@@ -276,12 +287,27 @@ func (b *bisyncRun) makeListing(ctx context.Context, f fs.Fs, listing string) (l
 				}
 			}
 			time := o.ModTime(ctx).In(TZ)
-			id := "" // TODO
+			id := ""     // TODO
+			flags := "-" // "-" for a file and "d" for a directory
 			lock.Lock()
-			ls.put(o.Remote(), o.Size(), time, hashVal, id)
+			ls.put(o.Remote(), o.Size(), time, hashVal, id, flags)
 			lock.Unlock()
 			//tr.Done(ctx, nil) // TODO
 		})
+		if b.opt.CreateEmptySrcDirs {
+			entries.ForDir(func(o fs.Directory) {
+				var (
+					hashVal string
+				)
+				time := o.ModTime(ctx).In(TZ)
+				id := ""     // TODO
+				flags := "d" // "-" for a file and "d" for a directory
+				lock.Lock()
+				//record size as 0 instead of -1, so bisync doesn't think it's a google doc
+				ls.put(o.Remote(), 0, time, hashVal, id, flags)
+				lock.Unlock()
+			})
+		}
 		return firstErr
 	})
 	if err == nil {
@@ -300,5 +326,53 @@ func (b *bisyncRun) checkListing(ls *fileList, listing, msg string) error {
 	}
 	fs.Errorf(nil, "Empty %s listing. Cannot sync to an empty directory: %s", msg, listing)
 	b.critical = true
+	b.retryable = true
 	return fmt.Errorf("empty %s listing: %s", msg, listing)
+}
+
+// listingNum should be 1 for path1 or 2 for path2
+func (b *bisyncRun) loadListingNum(listingNum int) (*fileList, error) {
+	listingpath := b.basePath + ".path1.lst-new"
+	if listingNum == 2 {
+		listingpath = b.basePath + ".path2.lst-new"
+	}
+
+	if b.opt.DryRun {
+		listingpath = strings.Replace(listingpath, ".lst-", ".lst-dry-", 1)
+	}
+
+	fs.Debugf(nil, "loading listing for path %d at: %s", listingNum, listingpath)
+	return b.loadListing(listingpath)
+}
+
+func (b *bisyncRun) listDirsOnly(listingNum int) (*fileList, error) {
+	var fulllisting *fileList
+	var dirsonly = newFileList()
+	var err error
+
+	if !b.opt.CreateEmptySrcDirs {
+		return dirsonly, err
+	}
+
+	fulllisting, err = b.loadListingNum(listingNum)
+
+	if err != nil {
+		b.critical = true
+		b.retryable = true
+		fs.Debugf(nil, "Error loading listing to generate dirsonly list: %v", err)
+		return dirsonly, err
+	}
+
+	for _, obj := range fulllisting.list {
+		info := fulllisting.get(obj)
+
+		if info.flags == "d" {
+			fs.Debugf(nil, "found a dir: %s", obj)
+			dirsonly.put(obj, info.size, info.time, info.hash, info.id, info.flags)
+		} else {
+			fs.Debugf(nil, "not a dir: %s", obj)
+		}
+	}
+
+	return dirsonly, err
 }

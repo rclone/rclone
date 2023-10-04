@@ -1,16 +1,21 @@
 ---
 title: "Oracle Object Storage"
 description: "Rclone docs for Oracle Object Storage"
+type: page
 versionIntroduced: "v1.60"
 ---
 
 # {{< icon "fa fa-cloud" >}} Oracle Object Storage
-[Oracle Object Storage Overview](https://docs.oracle.com/en-us/iaas/Content/Object/Concepts/objectstorageoverview.htm)
-
-[Oracle Object Storage FAQ](https://www.oracle.com/cloud/storage/object-storage/faq/)
+- [Oracle Object Storage Overview](https://docs.oracle.com/en-us/iaas/Content/Object/Concepts/objectstorageoverview.htm)
+- [Oracle Object Storage FAQ](https://www.oracle.com/cloud/storage/object-storage/faq/)
+- [Oracle Object Storage Limits](https://docs.oracle.com/en-us/iaas/Content/Resources/Assets/whitepapers/oci-object-storage-best-practices.pdf)
 
 Paths are specified as `remote:bucket` (or `remote:` for the `lsd` command.)  You may put subdirectories in 
 too, e.g. `remote:bucket/path/to/dir`.
+
+Sample command to transfer local artifacts to remote:bucket in oracle object storage:
+
+`rclone -vvv  --progress --stats-one-line --max-stats-groups 10 --log-format date,time,UTC,longfile --fast-list --buffer-size 256Mi --oos-no-check-bucket --oos-upload-cutoff 10Mi --multi-thread-cutoff 16Mi --multi-thread-streams 3000 --transfers 3000 --checkers 64  --retries 2  --oos-chunk-size 10Mi --oos-upload-concurrency 10000  --oos-attempt-resume-upload --oos-leave-parts-on-error sync ./artifacts  remote:bucket -vv`
 
 ## Configuration
 
@@ -135,7 +140,7 @@ List the contents of a bucket
     rclone ls remote:bucket
     rclone ls remote:bucket --max-depth 1
 
-### OCI Authentication Provider 
+## Authentication Providers 
 
 OCI has various authentication methods. To learn more about authentication methods please refer [oci authentication 
 methods](https://docs.oracle.com/en-us/iaas/Content/API/Concepts/sdk_authentication_methods.htm) 
@@ -148,7 +153,7 @@ Rclone supports the following OCI authentication provider.
     Resource Principal
     No authentication
 
-#### Authentication provider choice: User Principal
+### User Principal
 Sample rclone config file for Authentication Provider User Principal:
 
     [oos]
@@ -168,7 +173,7 @@ Considerations:
 - Overhead of managing users and keys.
 - If the user is deleted, the config file will no longer work and may cause automation regressions that use the user's credentials.
 
-####  Authentication provider choice: Instance Principal
+###  Instance Principal
 An OCI compute instance can be authorized to use rclone by using it's identity and certificates as an instance principal. 
 With this approach no credentials have to be stored and managed.
 
@@ -197,7 +202,7 @@ Considerations:
 - Everyone who has access to this machine can execute the CLI commands.
 - It is applicable for oci compute instances only. It cannot be used on external instance or resources.
 
-#### Authentication provider choice: Resource Principal
+### Resource Principal
 Resource principal auth is very similar to instance principal auth but used for resources that are not 
 compute instances such as [serverless functions](https://docs.oracle.com/en-us/iaas/Content/Functions/Concepts/functionsoverview.htm). 
 To use resource principal ensure Rclone process is started with these environment variables set in its process.
@@ -216,7 +221,7 @@ Sample rclone configuration file for Authentication Provider Resource Principal:
     region = us-ashburn-1
     provider = resource_principal_auth
 
-#### Authentication provider choice: No authentication
+### No authentication
 Public buckets do not require any authentication mechanism to read objects.
 Sample rclone configuration file for No authentication:
     
@@ -419,9 +424,8 @@ Properties:
 Chunk size to use for uploading.
 
 When uploading files larger than upload_cutoff or files with unknown
-size (e.g. from "rclone rcat" or uploaded with "rclone mount" or google
-photos or google docs) they will be uploaded as multipart uploads
-using this chunk size.
+size (e.g. from "rclone rcat" or uploaded with "rclone mount" they will be uploaded 
+as multipart uploads using this chunk size.
 
 Note that "upload_concurrency" chunks of this size are buffered
 in memory per transfer.
@@ -448,6 +452,26 @@ Properties:
 - Env Var:     RCLONE_OOS_CHUNK_SIZE
 - Type:        SizeSuffix
 - Default:     5Mi
+
+#### --oos-max-upload-parts
+
+Maximum number of parts in a multipart upload.
+
+This option defines the maximum number of multipart chunks to use
+when doing a multipart upload.
+
+OCI has max parts limit of 10,000 chunks.
+
+Rclone will automatically increase the chunk size when uploading a
+large file of a known size to stay below this number of chunks limit.
+
+
+Properties:
+
+- Config:      max_upload_parts
+- Env Var:     RCLONE_OOS_MAX_UPLOAD_PARTS
+- Type:        int
+- Default:     10000
 
 #### --oos-upload-concurrency
 
@@ -528,7 +552,7 @@ Properties:
 
 #### --oos-leave-parts-on-error
 
-If true avoid calling abort upload on a failure, leaving all successfully uploaded parts on S3 for manual recovery.
+If true avoid calling abort upload on a failure, leaving all successfully uploaded parts for manual recovery.
 
 It should be set to true for resuming uploads across different sessions.
 
@@ -540,6 +564,24 @@ Properties:
 
 - Config:      leave_parts_on_error
 - Env Var:     RCLONE_OOS_LEAVE_PARTS_ON_ERROR
+- Type:        bool
+- Default:     false
+
+#### --oos-attempt-resume-upload
+
+If true attempt to resume previously started multipart upload for the object.
+This will be helpful to speed up multipart transfers by resuming uploads from past session.
+
+WARNING: If chunk size differs in resumed session from past incomplete session, then the resumed multipart upload is 
+aborted and a new multipart upload is started with the new chunk size.
+
+The flag leave_parts_on_error must be true to resume and optimize to skip parts that were already uploaded successfully.
+
+
+Properties:
+
+- Config:      attempt_resume_upload
+- Env Var:     RCLONE_OOS_ATTEMPT_RESUME_UPLOAD
 - Type:        bool
 - Default:     false
 
@@ -725,3 +767,6 @@ Options:
 - "max-age": Max age of upload to delete
 
 {{< rem autogenerated options stop >}}
+
+## Tutorials
+### [Mounting Buckets](/oracleobjectstorage/tutorial_mount/)

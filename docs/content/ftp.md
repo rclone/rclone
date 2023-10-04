@@ -415,6 +415,24 @@ Properties:
 - Type:        bool
 - Default:     false
 
+#### --ftp-socks-proxy
+
+Socks 5 proxy host.
+		
+		Supports the format user:pass@host:port, user@host:port, host:port.
+		
+		Example:
+		
+			myUser:myPass@localhost:9005
+		
+
+Properties:
+
+- Config:      socks_proxy
+- Env Var:     RCLONE_FTP_SOCKS_PROXY
+- Type:        string
+- Required:    false
+
 #### --ftp-encoding
 
 The encoding for the backend.

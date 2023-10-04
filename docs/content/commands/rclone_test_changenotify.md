@@ -21,9 +21,10 @@ rclone test changenotify remote: [flags]
       --poll-interval Duration   Time to wait between polling for changes (default 10s)
 ```
 
+
 See the [global flags page](/flags/) for global options not listed here.
 
-## SEE ALSO
+# SEE ALSO
 
 * [rclone test](/commands/rclone_test/)	 - Run a test command
 

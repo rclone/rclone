@@ -10,7 +10,10 @@ import (
 	"time"
 
 	_ "github.com/rclone/rclone/backend/local" // import the local backend
+	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fstest"
+	"github.com/rclone/rclone/lib/diskusage"
 	"github.com/rclone/rclone/vfs/vfscommon"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -354,7 +357,8 @@ func TestCachePurgeOverQuota(t *testing.T) {
 	}, itemAsString(c))
 
 	// Check nothing removed
-	c.purgeOverQuota(1)
+	c.opt.CacheMaxSize = 1
+	c.purgeOverQuota()
 
 	// Close the files
 	require.NoError(t, potato.Close(nil))
@@ -373,7 +377,8 @@ func TestCachePurgeOverQuota(t *testing.T) {
 	potato2.info.ATime = t1
 
 	// Check only potato removed to get below quota
-	c.purgeOverQuota(10)
+	c.opt.CacheMaxSize = 10
+	c.purgeOverQuota()
 	assert.Equal(t, int64(6), c.used)
 
 	assert.Equal(t, []string{
@@ -399,7 +404,8 @@ func TestCachePurgeOverQuota(t *testing.T) {
 	potato.info.ATime = t2
 
 	// Check only potato2 removed to get below quota
-	c.purgeOverQuota(10)
+	c.opt.CacheMaxSize = 10
+	c.purgeOverQuota()
 	assert.Equal(t, int64(5), c.used)
 	c.purgeEmptyDirs("", true)
 
@@ -408,7 +414,8 @@ func TestCachePurgeOverQuota(t *testing.T) {
 	}, itemAsString(c))
 
 	// Now purge everything
-	c.purgeOverQuota(1)
+	c.opt.CacheMaxSize = 1
+	c.purgeOverQuota()
 	assert.Equal(t, int64(0), c.used)
 	c.purgeEmptyDirs("", true)
 
@@ -418,6 +425,26 @@ func TestCachePurgeOverQuota(t *testing.T) {
 	c.clean(false)
 	assert.Equal(t, int64(0), c.used)
 	assert.Equal(t, []string(nil), itemAsString(c))
+}
+
+func TestCachePurgeMinFreeSpace(t *testing.T) {
+	du, err := diskusage.New(config.GetCacheDir())
+	if err == diskusage.ErrUnsupported {
+		t.Skip(err)
+	}
+	// We've tested the quota mechanism already, so just test the
+	// min free space quota is working.
+	_, c := newTestCache(t)
+
+	// First set free space quota very small and check it is OK
+	c.opt.CacheMinFreeSpace = 1
+	assert.True(t, c.minFreeSpaceQuotaOK())
+	assert.True(t, c.quotasOK())
+
+	// Now set it a bit larger than the current disk available and check it is BAD
+	c.opt.CacheMinFreeSpace = fs.SizeSuffix(du.Available) + fs.Gibi
+	assert.False(t, c.minFreeSpaceQuotaOK())
+	assert.False(t, c.quotasOK())
 }
 
 // test reset clean files
@@ -453,7 +480,8 @@ func TestCachePurgeClean(t *testing.T) {
 	require.NoError(t, potato3.Truncate(6))
 
 	c.updateUsed()
-	c.purgeClean(1)
+	c.opt.CacheMaxSize = 1
+	c.purgeClean()
 	assert.Equal(t, []string{
 		`name="existing" opens=2 size=100 space=0`,
 		`name="sub/dir/potato2" opens=1 size=5 space=5`,
@@ -462,7 +490,8 @@ func TestCachePurgeClean(t *testing.T) {
 	assert.Equal(t, int64(11), c.used)
 
 	require.NoError(t, potato2.Close(nil))
-	c.purgeClean(1)
+	c.opt.CacheMaxSize = 1
+	c.purgeClean()
 	assert.Equal(t, []string{
 		`name="existing" opens=2 size=100 space=0`,
 		`name="sub/dir/potato3" opens=1 size=6 space=6`,
@@ -476,7 +505,8 @@ func TestCachePurgeClean(t *testing.T) {
 	// Remove all files now.  The are all not in use.
 	// purgeClean does not remove empty cache files. purgeOverQuota does.
 	// So we use purgeOverQuota here for the cleanup.
-	c.purgeOverQuota(1)
+	c.opt.CacheMaxSize = 1
+	c.purgeOverQuota()
 
 	c.purgeEmptyDirs("", true)
 

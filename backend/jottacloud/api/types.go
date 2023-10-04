@@ -395,7 +395,7 @@ type JottaFile struct {
 	State           string    `xml:"currentRevision>state"`
 	CreatedAt       JottaTime `xml:"currentRevision>created"`
 	ModifiedAt      JottaTime `xml:"currentRevision>modified"`
-	Updated         JottaTime `xml:"currentRevision>updated"`
+	UpdatedAt       JottaTime `xml:"currentRevision>updated"`
 	Size            int64     `xml:"currentRevision>size"`
 	MimeType        string    `xml:"currentRevision>mime"`
 	MD5             string    `xml:"currentRevision>md5"`

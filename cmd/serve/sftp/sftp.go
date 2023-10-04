@@ -13,6 +13,7 @@ import (
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config/flags"
 	"github.com/rclone/rclone/fs/rc"
+	"github.com/rclone/rclone/lib/systemd"
 	"github.com/rclone/rclone/vfs"
 	"github.com/rclone/rclone/vfs/vfsflags"
 	"github.com/spf13/cobra"
@@ -42,13 +43,13 @@ var Opt = DefaultOpt
 // AddFlags adds flags for the sftp
 func AddFlags(flagSet *pflag.FlagSet, Opt *Options) {
 	rc.AddOption("sftp", &Opt)
-	flags.StringVarP(flagSet, &Opt.ListenAddr, "addr", "", Opt.ListenAddr, "IPaddress:Port or :Port to bind server to")
-	flags.StringArrayVarP(flagSet, &Opt.HostKeys, "key", "", Opt.HostKeys, "SSH private host key file (Can be multi-valued, leave blank to auto generate)")
-	flags.StringVarP(flagSet, &Opt.AuthorizedKeys, "authorized-keys", "", Opt.AuthorizedKeys, "Authorized keys file")
-	flags.StringVarP(flagSet, &Opt.User, "user", "", Opt.User, "User name for authentication")
-	flags.StringVarP(flagSet, &Opt.Pass, "pass", "", Opt.Pass, "Password for authentication")
-	flags.BoolVarP(flagSet, &Opt.NoAuth, "no-auth", "", Opt.NoAuth, "Allow connections with no authentication if set")
-	flags.BoolVarP(flagSet, &Opt.Stdio, "stdio", "", Opt.Stdio, "Run an sftp server on stdin/stdout")
+	flags.StringVarP(flagSet, &Opt.ListenAddr, "addr", "", Opt.ListenAddr, "IPaddress:Port or :Port to bind server to", "")
+	flags.StringArrayVarP(flagSet, &Opt.HostKeys, "key", "", Opt.HostKeys, "SSH private host key file (Can be multi-valued, leave blank to auto generate)", "")
+	flags.StringVarP(flagSet, &Opt.AuthorizedKeys, "authorized-keys", "", Opt.AuthorizedKeys, "Authorized keys file", "")
+	flags.StringVarP(flagSet, &Opt.User, "user", "", Opt.User, "User name for authentication", "")
+	flags.StringVarP(flagSet, &Opt.Pass, "pass", "", Opt.Pass, "Password for authentication", "")
+	flags.BoolVarP(flagSet, &Opt.NoAuth, "no-auth", "", Opt.NoAuth, "Allow connections with no authentication if set", "")
+	flags.BoolVarP(flagSet, &Opt.Stdio, "stdio", "", Opt.Stdio, "Run an sftp server on stdin/stdout", "")
 }
 
 func init() {
@@ -116,6 +117,7 @@ provided by OpenSSH in this case.
 ` + vfs.Help + proxy.Help,
 	Annotations: map[string]string{
 		"versionIntroduced": "v1.48",
+		"groups":            "Filter",
 	},
 	Run: func(command *cobra.Command, args []string) {
 		var f fs.Fs
@@ -134,6 +136,7 @@ provided by OpenSSH in this case.
 			if err != nil {
 				return err
 			}
+			defer systemd.Notify()()
 			s.Wait()
 			return nil
 		})

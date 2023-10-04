@@ -43,8 +43,9 @@ func init() {
 		Description: "Uptobox",
 		NewFs:       NewFs,
 		Options: []fs.Option{{
-			Help: "Your access token.\n\nGet it from https://uptobox.com/my_account.",
-			Name: "access_token",
+			Help:      "Your access token.\n\nGet it from https://uptobox.com/my_account.",
+			Name:      "access_token",
+			Sensitive: true,
 		}, {
 			Help:     "Set to make uploaded files private",
 			Name:     "private",

@@ -20,7 +20,7 @@ var (
 func init() {
 	test.Command.AddCommand(commandDefinition)
 	cmdFlags := commandDefinition.Flags()
-	flags.DurationVarP(cmdFlags, &pollInterval, "poll-interval", "", pollInterval, "Time to wait between polling for changes")
+	flags.DurationVarP(cmdFlags, &pollInterval, "poll-interval", "", pollInterval, "Time to wait between polling for changes", "")
 }
 
 var commandDefinition = &cobra.Command{

@@ -1,0 +1,142 @@
+(01)  : test createemptysrcdirs
+
+
+(02)  : test initial bisync
+(03)  : touch-glob 2001-01-02 {datadir/} placeholder.txt
+(04)  : copy-as {datadir/}placeholder.txt {path1/} file1.txt
+(05)  : copy-as {datadir/}placeholder.txt {path1/} file1.copy1.txt
+(06)  : copy-as {datadir/}placeholder.txt {path1/} file1.copy2.txt
+(07)  : copy-as {datadir/}placeholder.txt {path1/} file1.copy3.txt
+(08)  : copy-as {datadir/}placeholder.txt {path1/} file1.copy4.txt
+(09)  : copy-as {datadir/}placeholder.txt {path1/} file1.copy5.txt
+(10)  : bisync resync
+INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Copying unique Path2 files to Path1
+INFO  : Resynching Path1 to Path2
+INFO  : Resync updating listings
+INFO  : Bisync successful
+
+(11)  : test 1. Create an empty dir on Path1 by creating subdir/placeholder.txt and then deleting the placeholder
+(12)  : copy-as {datadir/}placeholder.txt {path1/} subdir/placeholder.txt
+(13)  : touch-glob 2001-01-02 {path1/} subdir
+(14)  : delete-file {path1/}subdir/placeholder.txt
+
+(15)  : test 2. Run bisync without --create-empty-src-dirs
+(16)  : bisync
+INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Path1 checking for diffs
+INFO  : Path2 checking for diffs
+INFO  : No changes found
+INFO  : Updating listings
+INFO  : Validating listings for Path1 "{path1/}" vs Path2 "{path2/}"
+INFO  : Bisync successful
+
+(17)  : test 3. Confirm the subdir exists only on Path1 and not Path2
+(18)  : list-dirs {path1/}
+subdir/
+(19)  : list-dirs {path2/}
+
+(20)  : test 4.Run bisync WITH --create-empty-src-dirs
+(21)  : bisync create-empty-src-dirs
+INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Path1 checking for diffs
+INFO  : - Path1    File is new                         - subdir
+INFO  : Path1:    1 changes:    1 new,    0 newer,    0 older,    0 deleted
+INFO  : Path2 checking for diffs
+INFO  : Applying changes
+INFO  : - Path1    Queue copy to Path2                 - {path2/}subdir
+INFO  : - Path1    Do queued copies to                 - Path2
+INFO  : Updating listings
+INFO  : Validating listings for Path1 "{path1/}" vs Path2 "{path2/}"
+INFO  : Bisync successful
+
+(22)  : test 5. Confirm the subdir exists on both paths
+(23)  : list-dirs {path1/}
+subdir/
+(24)  : list-dirs {path2/}
+subdir/
+
+(25)  : test 6. Delete the empty dir on Path1 using purge-children (and also add files so the path isn't empty)
+(26)  : purge-children {path1/}
+(27)  : copy-as {datadir/}placeholder.txt {path1/} file1.txt
+(28)  : copy-as {datadir/}placeholder.txt {path1/} file1.copy1.txt
+(29)  : copy-as {datadir/}placeholder.txt {path1/} file1.copy2.txt
+(30)  : copy-as {datadir/}placeholder.txt {path1/} file1.copy3.txt
+(31)  : copy-as {datadir/}placeholder.txt {path1/} file1.copy4.txt
+(32)  : copy-as {datadir/}placeholder.txt {path1/} file1.copy5.txt
+
+(33)  : test 7. Run bisync without --create-empty-src-dirs
+(34)  : bisync
+INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Path1 checking for diffs
+INFO  : - Path1    File was deleted                    - RCLONE_TEST
+INFO  : - Path1    File was deleted                    - subdir
+INFO  : Path1:    2 changes:    0 new,    0 newer,    0 older,    2 deleted
+INFO  : Path2 checking for diffs
+INFO  : - Path2    File was deleted                    - subdir
+INFO  : Path2:    1 changes:    0 new,    0 newer,    0 older,    1 deleted
+INFO  : Applying changes
+INFO  : - Path2    Queue delete                        - {path2/}RCLONE_TEST
+INFO  : -          Do queued deletes on                - Path2
+INFO  : Updating listings
+INFO  : Validating listings for Path1 "{path1/}" vs Path2 "{path2/}"
+INFO  : Bisync successful
+
+(35)  : test 8. Confirm the subdir exists only on Path2 and not Path1
+(36)  : list-dirs {path1/}
+(37)  : list-dirs {path2/}
+subdir/
+
+(38)  : test 9. Reset, do the delete again, and run bisync WITH --create-empty-src-dirs
+(39)  : bisync resync create-empty-src-dirs
+INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Copying unique Path2 files to Path1
+INFO  : - Path2    Resync will copy to Path1           - subdir
+INFO  : - Path2    Resync is doing queued copies to    - Path1
+INFO  : Resynching Path1 to Path2
+INFO  : Resynching Path2 to Path1 (for empty dirs)
+INFO  : Resync updating listings
+INFO  : Bisync successful
+(40)  : list-dirs {path1/}
+subdir/
+(41)  : list-dirs {path2/}
+subdir/
+
+(42)  : purge-children {path1/}
+(43)  : copy-as {datadir/}placeholder.txt {path1/} file1.txt
+(44)  : copy-as {datadir/}placeholder.txt {path1/} file1.copy1.txt
+(45)  : copy-as {datadir/}placeholder.txt {path1/} file1.copy2.txt
+(46)  : copy-as {datadir/}placeholder.txt {path1/} file1.copy3.txt
+(47)  : copy-as {datadir/}placeholder.txt {path1/} file1.copy4.txt
+(48)  : copy-as {datadir/}placeholder.txt {path1/} file1.copy5.txt
+(49)  : list-dirs {path1/}
+(50)  : list-dirs {path2/}
+subdir/
+
+(51)  : bisync create-empty-src-dirs
+INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Path1 checking for diffs
+INFO  : - Path1    File was deleted                    - subdir
+INFO  : Path1:    1 changes:    0 new,    0 newer,    0 older,    1 deleted
+INFO  : Path2 checking for diffs
+INFO  : Applying changes
+INFO  : - Path2    Queue delete                        - {path2/}subdir
+INFO  : -          Do queued deletes on                - Path2
+INFO  : subdir: Removing directory
+INFO  : Updating listings
+INFO  : Validating listings for Path1 "{path1/}" vs Path2 "{path2/}"
+INFO  : Bisync successful
+
+(52)  : test 10. Confirm the subdir has been removed on both paths
+(53)  : list-dirs {path1/}
+(54)  : list-dirs {path2/}
+
+(55)  : test 11. bisync again (because if we leave subdir in listings, test will fail due to mismatched modtime)
+(56)  : bisync create-empty-src-dirs
+INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Path1 checking for diffs
+INFO  : Path2 checking for diffs
+INFO  : No changes found
+INFO  : Updating listings
+INFO  : Validating listings for Path1 "{path1/}" vs Path2 "{path2/}"
+INFO  : Bisync successful

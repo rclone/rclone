@@ -177,6 +177,7 @@ rclone serve restic remote:path [flags]
 
 ```
       --addr stringArray                IPaddress:Port or :Port to bind server to (default [127.0.0.1:8080])
+      --allow-origin string             Origin which cross-domain request (CORS) can be executed from
       --append-only                     Disallow deletion of repository data
       --baseurl string                  Prefix for URLs - leave blank for root
       --cache-objects                   Cache listed objects (default true)
@@ -197,9 +198,10 @@ rclone serve restic remote:path [flags]
       --user string                     User name for authentication
 ```
 
+
 See the [global flags page](/flags/) for global options not listed here.
 
-## SEE ALSO
+# SEE ALSO
 
 * [rclone serve](/commands/rclone_serve/)	 - Serve a remote over a protocol.
 

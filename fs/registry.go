@@ -60,6 +60,15 @@ func (os Options) setValues() {
 		if o.Default == nil {
 			o.Default = ""
 		}
+		// Create options for Enums
+		if do, ok := o.Default.(Choices); ok && len(o.Examples) == 0 {
+			o.Exclusive = true
+			o.Required = true
+			o.Examples = make(OptionExamples, len(do.Choices()))
+			for i, choice := range do.Choices() {
+				o.Examples[i].Value = choice
+			}
+		}
 	}
 }
 
@@ -154,6 +163,7 @@ type Option struct {
 	NoPrefix   bool             // set if the option for this should not use the backend prefix
 	Advanced   bool             // set if this is an advanced config option
 	Exclusive  bool             // set if the answer can only be one of the examples (empty string allowed unless Required or Default is set)
+	Sensitive  bool             // set if this option should be redacted when using rclone config redacted
 }
 
 // BaseOption is an alias for Option used internally
@@ -206,9 +216,20 @@ func (o *Option) Set(s string) (err error) {
 	return nil
 }
 
+type typer interface {
+	Type() string
+}
+
 // Type of the value
 func (o *Option) Type() string {
-	return reflect.TypeOf(o.GetValue()).Name()
+	v := o.GetValue()
+
+	// Try to call Type method on non-pointer
+	if do, ok := v.(typer); ok {
+		return do.Type()
+	}
+
+	return reflect.TypeOf(v).Name()
 }
 
 // FlagName for the option

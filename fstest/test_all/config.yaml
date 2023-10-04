@@ -21,6 +21,11 @@ backends:
    remote:   "TestB2:"
    fastlist: true
    listretries: 5
+   ignore:
+     # This test fails because B2 versions make the empty bucket undeleteable.
+     # It isn't possible to turn off versions, and setting hard_delete doesn't stop
+     # versions being made on overwrite.
+     - TestRmdirsNoLeaveRoot
  - backend:  "crypt"
    remote:   "TestCryptDrive:"
    fastlist: true
@@ -122,10 +127,10 @@ backends:
      # This test doesn't work on a standard dropbox account because it
      # tries to set the expiry of the link
      - TestIntegration/FsMkdir/FsPutFiles/PublicLink
- - backend:  "filefabric"
-   remote:   "TestFileFabric:"
-   fastlist: false
-   extratime: 2.0
+ # - backend:  "filefabric"
+ #   remote:   "TestFileFabric:"
+ #   fastlist: false
+ #   extratime: 2.0
  - backend:  "googlecloudstorage"
    remote:   "TestGoogleCloudStorage:"
    fastlist: true
@@ -237,6 +242,9 @@ backends:
    fastlist: false
  - backend:  "sftp"
    remote:   "TestSFTPRclone:"
+   fastlist: false
+ - backend:  "sftp"
+   remote:   "TestSFTPRcloneSSH:"
    fastlist: false
  - backend:  "sftp"
    remote:   "TestSFTPRsyncNet:"
@@ -363,6 +371,9 @@ backends:
  - backend:  "premiumizeme"
    remote:   "TestPremiumizeMe:"
    fastlist: false
+ - backend:  "protondrive"
+   remote:   "TestProtonDrive:"
+   fastlist: false
  - backend:  "putio"
    remote:   "TestPutio:"
    fastlist: false
@@ -422,3 +433,7 @@ backends:
      - TestIntegration/FsMkdir/FsEncoding/trailing_CR
      - TestIntegration/FsMkdir/FsEncoding/trailing_LF
      - TestIntegration/FsMkdir/FsEncoding/leading_HT
+     - TestIntegration/FsMkdir/FsPutFiles/FsPutStream/0
+ - backend:  "quatrix"
+   remote:   "TestQuatrix:"
+   fastlist: false

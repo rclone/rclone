@@ -183,6 +183,29 @@ your workflow.
 
 For all types of OneDrive you can use the `--checksum` flag.
 
+### --fast-list
+
+This remote supports `--fast-list` which allows you to use fewer
+transactions in exchange for more memory. See the [rclone
+docs](/docs/#fast-list) for more details.
+
+It does this by using the delta listing facilities of OneDrive which
+returns all the files in the remote very efficiently. This is much
+more efficient than listing directories recursively and is Microsoft's
+recommended way of reading all the file information from a drive.
+
+This can be useful with `rclone mount` and [rclone rc vfs/refresh
+recursive=true](/rc/#vfs-refresh)) to very quickly fill the mount with
+information about all the files.
+
+The API used for the recursive listing (`ListR`) only supports listing
+from the root of the drive. This will become increasingly inefficient
+the further away you get from the root as rclone will have to discard
+files outside of the directory you are using.
+
+Some commands (like `rclone lsf -R`) will use `ListR` by default - you
+can turn this off with `--disable ListR` if you need to.
+
 ### Restricted filename characters
 
 In addition to the [default restricted characters set](/overview/#restricted-characters)

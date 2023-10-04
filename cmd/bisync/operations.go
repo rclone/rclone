@@ -25,13 +25,14 @@ var ErrBisyncAborted = errors.New("bisync aborted")
 
 // bisyncRun keeps bisync runtime state
 type bisyncRun struct {
-	fs1      fs.Fs
-	fs2      fs.Fs
-	abort    bool
-	critical bool
-	basePath string
-	workDir  string
-	opt      *Options
+	fs1       fs.Fs
+	fs2       fs.Fs
+	abort     bool
+	critical  bool
+	retryable bool
+	basePath  string
+	workDir   string
+	opt       *Options
 }
 
 // Bisync handles lock file, performs bisync run and checks exit status
@@ -123,14 +124,19 @@ func Bisync(ctx context.Context, fs1, fs2 fs.Fs, optArg *Options) (err error) {
 	}
 
 	if b.critical {
-		if bilib.FileExists(listing1) {
-			_ = os.Rename(listing1, listing1+"-err")
+		if b.retryable && b.opt.Resilient {
+			fs.Errorf(nil, "Bisync critical error: %v", err)
+			fs.Errorf(nil, "Bisync aborted. Error is retryable without --resync due to --resilient mode.")
+		} else {
+			if bilib.FileExists(listing1) {
+				_ = os.Rename(listing1, listing1+"-err")
+			}
+			if bilib.FileExists(listing2) {
+				_ = os.Rename(listing2, listing2+"-err")
+			}
+			fs.Errorf(nil, "Bisync critical error: %v", err)
+			fs.Errorf(nil, "Bisync aborted. Must run --resync to recover.")
 		}
-		if bilib.FileExists(listing2) {
-			_ = os.Rename(listing2, listing2+"-err")
-		}
-		fs.Errorf(nil, "Bisync critical error: %v", err)
-		fs.Errorf(nil, "Bisync aborted. Must run --resync to recover.")
 		return ErrBisyncAborted
 	}
 	if b.abort {
@@ -152,6 +158,7 @@ func (b *bisyncRun) runLocked(octx context.Context, listing1, listing2 string) (
 		fs.Infof(nil, "Validating listings for Path1 %s vs Path2 %s", quotePath(path1), quotePath(path2))
 		if err = b.checkSync(listing1, listing2); err != nil {
 			b.critical = true
+			b.retryable = true
 		}
 		return err
 	}
@@ -176,6 +183,7 @@ func (b *bisyncRun) runLocked(octx context.Context, listing1, listing2 string) (
 	var fctx context.Context
 	if fctx, err = b.opt.applyFilters(octx); err != nil {
 		b.critical = true
+		b.retryable = true
 		return
 	}
 
@@ -188,6 +196,7 @@ func (b *bisyncRun) runLocked(octx context.Context, listing1, listing2 string) (
 	if !bilib.FileExists(listing1) || !bilib.FileExists(listing2) {
 		// On prior critical error abort, the prior listings are renamed to .lst-err to lock out further runs
 		b.critical = true
+		b.retryable = true
 		return errors.New("cannot find prior Path1 or Path2 listings, likely due to critical error on prior run")
 	}
 
@@ -215,6 +224,7 @@ func (b *bisyncRun) runLocked(octx context.Context, listing1, listing2 string) (
 		err = b.checkAccess(ds1.checkFiles, ds2.checkFiles)
 		if err != nil {
 			b.critical = true
+			b.retryable = true
 			return
 		}
 	}
@@ -255,6 +265,7 @@ func (b *bisyncRun) runLocked(octx context.Context, listing1, listing2 string) (
 		changes1, changes2, err = b.applyDeltas(octx, ds1, ds2)
 		if err != nil {
 			b.critical = true
+			// b.retryable = true // not sure about this one
 			return err
 		}
 	}
@@ -283,6 +294,7 @@ func (b *bisyncRun) runLocked(octx context.Context, listing1, listing2 string) (
 	}
 	if err != nil {
 		b.critical = true
+		b.retryable = true
 		return err
 	}
 
@@ -310,6 +322,7 @@ func (b *bisyncRun) runLocked(octx context.Context, listing1, listing2 string) (
 		}
 		if err != nil {
 			b.critical = true
+			b.retryable = true
 			return err
 		}
 	}
@@ -341,6 +354,39 @@ func (b *bisyncRun) resync(octx, fctx context.Context, listing1, listing2 string
 		return err
 	}
 
+	// Check access health on the Path1 and Path2 filesystems
+	// enforce even though this is --resync
+	if b.opt.CheckAccess {
+		fs.Infof(nil, "Checking access health")
+
+		ds1 := &deltaSet{
+			checkFiles: bilib.Names{},
+		}
+
+		ds2 := &deltaSet{
+			checkFiles: bilib.Names{},
+		}
+
+		for _, file := range filesNow1.list {
+			if filepath.Base(file) == b.opt.CheckFilename {
+				ds1.checkFiles.Add(file)
+			}
+		}
+
+		for _, file := range filesNow2.list {
+			if filepath.Base(file) == b.opt.CheckFilename {
+				ds2.checkFiles.Add(file)
+			}
+		}
+
+		err = b.checkAccess(ds1.checkFiles, ds2.checkFiles)
+		if err != nil {
+			b.critical = true
+			b.retryable = true
+			return err
+		}
+	}
+
 	copy2to1 := []string{}
 	for _, file := range filesNow2.list {
 		if !filesNow1.has(file) {
@@ -367,9 +413,32 @@ func (b *bisyncRun) resync(octx, fctx context.Context, listing1, listing2 string
 		// prevent overwriting Google Doc files (their size is -1)
 		filterSync.Opt.MinSize = 0
 	}
-	if err = sync.Sync(ctxSync, b.fs2, b.fs1, false); err != nil {
+	if err = sync.CopyDir(ctxSync, b.fs2, b.fs1, b.opt.CreateEmptySrcDirs); err != nil {
 		b.critical = true
 		return err
+	}
+
+	if b.opt.CreateEmptySrcDirs {
+		// copy Path2 back to Path1, for empty dirs
+		// the fastCopy above cannot include directories, because it relies on --files-from for filtering,
+		// so instead we'll copy them here, relying on fctx for our filtering.
+
+		// This preserves the original resync order for backward compatibility. It is essentially:
+		// rclone copy Path2 Path1 --ignore-existing
+		// rclone copy Path1 Path2 --create-empty-src-dirs
+		// rclone copy Path2 Path1 --create-empty-src-dirs
+
+		// although if we were starting from scratch, it might be cleaner and faster to just do:
+		// rclone copy Path2 Path1 --create-empty-src-dirs
+		// rclone copy Path1 Path2 --create-empty-src-dirs
+
+		fs.Infof(nil, "Resynching Path2 to Path1 (for empty dirs)")
+
+		//note copy (not sync) and dst comes before src
+		if err = sync.CopyDir(ctxSync, b.fs1, b.fs2, b.opt.CreateEmptySrcDirs); err != nil {
+			b.critical = true
+			return err
+		}
 	}
 
 	fs.Infof(nil, "Resync updating listings")

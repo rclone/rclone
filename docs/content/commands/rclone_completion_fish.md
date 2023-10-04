@@ -40,9 +40,10 @@ rclone completion fish [output_file] [flags]
   -h, --help   help for fish
 ```
 
+
 See the [global flags page](/flags/) for global options not listed here.
 
-## SEE ALSO
+# SEE ALSO
 
 * [rclone completion](/commands/rclone_completion/)	 - Output completion script for a given shell.
 

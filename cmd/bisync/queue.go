@@ -3,6 +3,7 @@ package bisync
 import (
 	"context"
 	"fmt"
+	"sort"
 
 	"github.com/rclone/rclone/cmd/bisync/bilib"
 	"github.com/rclone/rclone/fs"
@@ -23,7 +24,7 @@ func (b *bisyncRun) fastCopy(ctx context.Context, fsrc, fdst fs.Fs, files bilib.
 		}
 	}
 
-	return sync.CopyDir(ctxCopy, fdst, fsrc, false)
+	return sync.CopyDir(ctxCopy, fdst, fsrc, b.opt.CreateEmptySrcDirs)
 }
 
 func (b *bisyncRun) fastDelete(ctx context.Context, f fs.Fs, files bilib.Names, queueName string) error {
@@ -32,7 +33,14 @@ func (b *bisyncRun) fastDelete(ctx context.Context, f fs.Fs, files bilib.Names, 
 	}
 
 	transfers := fs.GetConfig(ctx).Transfers
-	ctxRun := b.opt.setDryRun(ctx)
+
+	ctxRun, filterDelete := filter.AddConfig(b.opt.setDryRun(ctx))
+
+	for _, file := range files.ToList() {
+		if err := filterDelete.AddFile(file); err != nil {
+			return err
+		}
+	}
 
 	objChan := make(fs.ObjectsChan, transfers)
 	errChan := make(chan error, 1)
@@ -51,6 +59,36 @@ func (b *bisyncRun) fastDelete(ctx context.Context, f fs.Fs, files bilib.Names, 
 		err = opErr
 	}
 	return err
+}
+
+// operation should be "make" or "remove"
+func (b *bisyncRun) syncEmptyDirs(ctx context.Context, dst fs.Fs, candidates bilib.Names, dirsList *fileList, operation string) {
+	if b.opt.CreateEmptySrcDirs && (!b.opt.Resync || operation == "make") {
+
+		candidatesList := candidates.ToList()
+		if operation == "remove" {
+			// reverse the sort order to ensure we remove subdirs before parent dirs
+			sort.Sort(sort.Reverse(sort.StringSlice(candidatesList)))
+		}
+
+		for _, s := range candidatesList {
+			var direrr error
+			if dirsList.has(s) { //make sure it's a dir, not a file
+				if operation == "remove" {
+					//note: we need to use Rmdirs instead of Rmdir because directories will fail to delete if they have other empty dirs inside of them.
+					direrr = operations.Rmdirs(ctx, dst, s, false)
+				} else if operation == "make" {
+					direrr = operations.Mkdir(ctx, dst, s)
+				} else {
+					direrr = fmt.Errorf("invalid operation. Expected 'make' or 'remove', received '%q'", operation)
+				}
+
+				if direrr != nil {
+					fs.Debugf(nil, "Error syncing directory: %v", direrr)
+				}
+			}
+		}
+	}
 }
 
 func (b *bisyncRun) saveQueue(files bilib.Names, jobName string) error {

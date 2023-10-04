@@ -12,7 +12,7 @@
 -       19 md5:7fe98ed88552b828777d8630900346b8 - 2001-01-02T00:00:00.000000000+0000 "subdir_rawchars_␙_\x81_\xfe/file3_␙_\x81_\xfe"
 -       19 md5:7fe98ed88552b828777d8630900346b8 - 2001-01-02T00:00:00.000000000+0000 "subdir_with_ࢺ_/file_with_測試_.txt"
 -       19 md5:7fe98ed88552b828777d8630900346b8 - 2001-01-03T00:00:00.000000000+0000 "subdir_with_ࢺ_/filechangedbothpaths_ࢺ_.txt..path1"
--       19 md5:7fe98ed88552b828777d8630900346b8 - 2001-01-02T00:00:00.000000000+0000 "subdir_with_ࢺ_/filechangedbothpaths_ࢺ_.txt..path2"
+-       42 md5:40b811fb5009223b6da573f169619d8e - 2001-01-02T00:00:00.000000000+0000 "subdir_with_ࢺ_/filechangedbothpaths_ࢺ_.txt..path2"
 -      272 md5:0033328434f9662a7dae0d1aee7768b6 - 2000-01-01T00:00:00.000000000+0000 "subdir_with_ࢺ_/filename_contains_ࢺ_.txt"
 -       19 md5:7fe98ed88552b828777d8630900346b8 - 2001-01-02T00:00:00.000000000+0000 "subdir_with_ࢺ_/filename_contains_ࢺ_p2s.txt"
 -       19 md5:7fe98ed88552b828777d8630900346b8 - 2001-01-02T00:00:00.000000000+0000 "subdir_with_ࢺ_/mañana_funcionará.txt"

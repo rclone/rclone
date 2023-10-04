@@ -12,7 +12,9 @@ import (
 	"time"
 
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fs/rc"
+	"github.com/rclone/rclone/lib/diskusage"
 )
 
 func init() {
@@ -209,6 +211,8 @@ func init() {
 		{name: "copyurl", title: "Copy the URL to the object", help: "- url - string, URL to read from\n - autoFilename - boolean, set to true to retrieve destination file name from url\n"},
 		{name: "uploadfile", title: "Upload file using multiform/form-data", help: "- each part in body represents a file to be uploaded\n", needsRequest: true},
 		{name: "cleanup", title: "Remove trashed files in the remote or path", noRemote: true},
+		{name: "settier", title: "Changes storage tier or class on all files in the path", noRemote: true},
+		{name: "settierfile", title: "Changes storage tier or class on the single file pointed to"},
 	} {
 		op := op
 		remote := "- remote - a path within that remote e.g. \"dir\"\n"
@@ -316,6 +320,28 @@ func rcSingleCommand(ctx context.Context, in rc.Params, name string, noRemote bo
 		return nil, nil
 	case "cleanup":
 		return nil, CleanUp(ctx, f)
+	case "settier":
+		if !f.Features().SetTier {
+			return nil, fmt.Errorf("remote %s does not support settier", f.Name())
+		}
+		tier, err := in.GetString("tier")
+		if err != nil {
+			return nil, err
+		}
+		return nil, SetTier(ctx, f, tier)
+	case "settierfile":
+		if !f.Features().SetTier {
+			return nil, fmt.Errorf("remote %s does not support settier", f.Name())
+		}
+		tier, err := in.GetString("tier")
+		if err != nil {
+			return nil, err
+		}
+		o, err := f.NewObject(ctx, remote)
+		if err != nil {
+			return nil, err
+		}
+		return nil, SetTierFile(ctx, o, tier)
 	}
 	panic("unknown rcSingleCommand type")
 }
@@ -618,5 +644,56 @@ func rcBackend(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 	}
 	out = make(rc.Params)
 	out["result"] = result
+	return out, nil
+}
+
+// This should really be in fs/rc/internal.go but can't go there due
+// to a circular dependency on config.
+func init() {
+	rc.Add(rc.Call{
+		Path:  "core/du",
+		Fn:    rcDu,
+		Title: "Returns disk usage of a locally attached disk.",
+		Help: `
+This returns the disk usage for the local directory passed in as dir.
+
+If the directory is not passed in, it defaults to the directory
+pointed to by --cache-dir.
+
+- dir - string (optional)
+
+Returns:
+
+` + "```" + `
+{
+	"dir": "/",
+	"info": {
+		"Available": 361769115648,
+		"Free": 361785892864,
+		"Total": 982141468672
+	}
+}
+` + "```" + `
+`,
+	})
+}
+
+// Terminates app
+func rcDu(ctx context.Context, in rc.Params) (out rc.Params, err error) {
+	dir, err := in.GetString("dir")
+	if rc.IsErrParamNotFound(err) {
+		dir = config.GetCacheDir()
+
+	} else if err != nil {
+		return nil, err
+	}
+	info, err := diskusage.New(dir)
+	if err != nil {
+		return nil, err
+	}
+	out = rc.Params{
+		"dir":  dir,
+		"info": info,
+	}
 	return out, nil
 }

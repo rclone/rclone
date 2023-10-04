@@ -276,6 +276,26 @@ func (o MetadataOption) Mandatory() bool {
 	return false
 }
 
+// ChunkOption defines an Option which returns a preferred chunk size
+type ChunkOption struct {
+	ChunkSize int64
+}
+
+// Header formats the option as an http header
+func (o *ChunkOption) Header() (key string, value string) {
+	return "chunkSize", fmt.Sprintf("%v", o.ChunkSize)
+}
+
+// Mandatory returns whether the option must be parsed or can be ignored
+func (o *ChunkOption) Mandatory() bool {
+	return false
+}
+
+// String formats the option into human-readable form
+func (o *ChunkOption) String() string {
+	return fmt.Sprintf("ChunkOption(%v)", o.ChunkSize)
+}
+
 // OpenOptionAddHeaders adds each header found in options to the
 // headers map provided the key was non empty.
 func OpenOptionAddHeaders(options []OpenOption, headers map[string]string) {

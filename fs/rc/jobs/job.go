@@ -10,6 +10,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/accounting"
 	"github.com/rclone/rclone/fs/cache"
@@ -120,8 +121,9 @@ type Jobs struct {
 }
 
 var (
-	running = newJobs()
-	jobID   = int64(0)
+	running   = newJobs()
+	jobID     atomic.Int64
+	executeID = uuid.New().String()
 )
 
 // newJobs makes a new Jobs structure
@@ -139,7 +141,7 @@ func SetOpt(opt *rc.Options) {
 
 // SetInitialJobID allows for setting jobID before starting any jobs.
 func SetInitialJobID(id int64) {
-	if !atomic.CompareAndSwapInt64(&jobID, 0, id) {
+	if !jobID.CompareAndSwap(0, id) {
 		panic("Setting jobID is only possible before starting any jobs")
 	}
 }
@@ -262,7 +264,7 @@ var jobKey = jobKeyType{}
 
 // NewJob creates a Job and executes it, possibly in the background if _async is set
 func (jobs *Jobs) NewJob(ctx context.Context, fn rc.Func, in rc.Params) (job *Job, out rc.Params, err error) {
-	id := atomic.AddInt64(&jobID, 1)
+	id := jobID.Add(1)
 	in = in.Copy() // copy input so we can change it
 
 	ctx, isAsync, err := getAsync(ctx, in)
@@ -403,7 +405,8 @@ func init() {
 
 Results:
 
-- jobids - array of integer job ids.
+- executeId - string id of rclone executing (change after restart)
+- jobids - array of integer job ids (starting at 1 on each restart)
 `,
 	})
 }
@@ -412,6 +415,7 @@ Results:
 func rcJobList(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 	out = make(rc.Params)
 	out["jobids"] = running.IDs()
+	out["executeId"] = executeID
 	return out, nil
 }
 

@@ -26,7 +26,7 @@ var (
 	number     = flag.Int("n", 4, "Number of tests to run simultaneously")
 	iterations = flag.Int("i", 100, "Iterations of the test")
 	timeout    = flag.Duration("timeout", 10*time.Second, "Inactivity time to detect a deadlock")
-	testNumber int32
+	testNumber atomic.Int32
 )
 
 // Seed the random number generator
@@ -55,7 +55,7 @@ func NewTest(Dir string) *Test {
 		dir:    Dir,
 		name:   random.String(*nameLength),
 		isDir:  rand.Intn(2) == 0,
-		number: atomic.AddInt32(&testNumber, 1),
+		number: testNumber.Add(1),
 		timer:  time.NewTimer(*timeout),
 	}
 	width := int(math.Floor(math.Log10(float64(*number)))) + 1

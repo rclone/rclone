@@ -26,6 +26,7 @@ type Options struct {
 	CacheMode          CacheMode
 	CacheMaxAge        time.Duration
 	CacheMaxSize       fs.SizeSuffix
+	CacheMinFreeSpace  fs.SizeSuffix
 	CachePollInterval  time.Duration
 	CaseInsensitive    bool
 	WriteWait          time.Duration // time to wait for in-sequence write
@@ -56,6 +57,7 @@ var DefaultOpt = Options{
 	ChunkSize:          128 * fs.Mebi,
 	ChunkSizeLimit:     -1,
 	CacheMaxSize:       -1,
+	CacheMinFreeSpace:  -1,
 	CaseInsensitive:    runtime.GOOS == "windows" || runtime.GOOS == "darwin", // default to true on Windows and Mac, false otherwise
 	WriteWait:          1000 * time.Millisecond,
 	ReadWait:           20 * time.Millisecond,

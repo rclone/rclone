@@ -133,11 +133,13 @@ Owner is able to add custom keys. Metadata feature grabs all the keys including 
 		},
 
 		Options: []fs.Option{{
-			Name: "access_key_id",
-			Help: "IAS3 Access Key.\n\nLeave blank for anonymous access.\nYou can find one here: https://archive.org/account/s3.php",
+			Name:      "access_key_id",
+			Help:      "IAS3 Access Key.\n\nLeave blank for anonymous access.\nYou can find one here: https://archive.org/account/s3.php",
+			Sensitive: true,
 		}, {
-			Name: "secret_access_key",
-			Help: "IAS3 Secret Key (password).\n\nLeave blank for anonymous access.",
+			Name:      "secret_access_key",
+			Help:      "IAS3 Secret Key (password).\n\nLeave blank for anonymous access.",
+			Sensitive: true,
 		}, {
 			// their official client (https://github.com/jjjake/internetarchive) hardcodes following the two
 			Name:     "endpoint",

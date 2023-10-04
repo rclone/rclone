@@ -86,27 +86,24 @@ func TestDoMultiThreadCopy(t *testing.T) {
 	assert.True(t, doMultiThreadCopy(ctx, f, src))
 }
 
-func TestMultithreadCalculateChunks(t *testing.T) {
+func TestMultithreadCalculateNumChunks(t *testing.T) {
 	for _, test := range []struct {
-		size         int64
-		streams      int
-		wantPartSize int64
-		wantStreams  int
+		size          int64
+		chunkSize     int64
+		wantNumChunks int
 	}{
-		{size: 1, streams: 10, wantPartSize: multithreadChunkSize, wantStreams: 1},
-		{size: 1 << 20, streams: 1, wantPartSize: 1 << 20, wantStreams: 1},
-		{size: 1 << 20, streams: 2, wantPartSize: 1 << 19, wantStreams: 2},
-		{size: (1 << 20) + 1, streams: 2, wantPartSize: (1 << 19) + multithreadChunkSize, wantStreams: 2},
-		{size: (1 << 20) - 1, streams: 2, wantPartSize: (1 << 19), wantStreams: 2},
+		{size: 1, chunkSize: multithreadChunkSize, wantNumChunks: 1},
+		{size: 1 << 20, chunkSize: 1, wantNumChunks: 1 << 20},
+		{size: 1 << 20, chunkSize: 2, wantNumChunks: 1 << 19},
+		{size: (1 << 20) + 1, chunkSize: 2, wantNumChunks: (1 << 19) + 1},
+		{size: (1 << 20) - 1, chunkSize: 2, wantNumChunks: 1 << 19},
 	} {
 		t.Run(fmt.Sprintf("%+v", test), func(t *testing.T) {
 			mc := &multiThreadCopyState{
-				size:    test.size,
-				streams: test.streams,
+				size: test.size,
 			}
-			mc.calculateChunks()
-			assert.Equal(t, test.wantPartSize, mc.partSize)
-			assert.Equal(t, test.wantStreams, mc.streams)
+			mc.numChunks = calculateNumChunks(test.size, test.chunkSize)
+			assert.Equal(t, test.wantNumChunks, mc.numChunks)
 		})
 	}
 }

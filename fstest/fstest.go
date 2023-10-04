@@ -281,8 +281,8 @@ func CheckListingWithRoot(t *testing.T, f fs.Fs, dir string, items []Item, expec
 		if err != nil && err != fs.ErrorDirNotFound {
 			t.Fatalf("Error listing: %v", err)
 		}
-
 		gotListing = makeListingFromObjects(objs)
+
 		listingOK = wantListing == gotListing
 		if listingOK && (expectedDirs == nil || len(dirs) == len(expectedDirs)) {
 			// Put an extra sleep in if we did any retries just to make sure it really

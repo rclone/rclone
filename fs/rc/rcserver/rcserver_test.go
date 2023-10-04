@@ -552,32 +552,6 @@ Unknown command
 	testServer(t, tests, &opt)
 }
 
-func TestMethods(t *testing.T) {
-	tests := []testRun{{
-		Name:     "options",
-		URL:      "",
-		Method:   "OPTIONS",
-		Status:   http.StatusOK,
-		Expected: "",
-		Headers: map[string]string{
-			"Access-Control-Allow-Origin":   "testURL",
-			"Access-Control-Request-Method": "POST, OPTIONS, GET, HEAD",
-			"Access-Control-Allow-Headers":  "authorization, Content-Type",
-		},
-	}, {
-		Name:   "bad",
-		URL:    "",
-		Method: "POTATO",
-		Status: http.StatusMethodNotAllowed,
-		Expected: `Method Not Allowed
-`,
-	}}
-	opt := newTestOpt()
-	opt.Serve = true
-	opt.Files = testFs
-	testServer(t, tests, &opt)
-}
-
 func TestMetrics(t *testing.T) {
 	stats := accounting.GlobalStats()
 	tests := makeMetricsTestCases(stats)

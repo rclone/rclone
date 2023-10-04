@@ -243,6 +243,7 @@ func TestOptionMarshalJSON(t *testing.T) {
 "NoPrefix": false,
 "Advanced": true,
 "Exclusive": false,
+"Sensitive": false,
 "DefaultStr": "false",
 "ValueStr": "true",
 "Type": "bool"

@@ -272,10 +272,10 @@ func (acc *Account) checkReadAfter(bytesUntilLimit int64, n int, err error) (out
 	return n, err
 }
 
-// ServerSideCopyStart should be called at the start of a server-side copy
+// ServerSideTransferStart should be called at the start of a server-side transfer
 //
 // This pretends a transfer has started
-func (acc *Account) ServerSideCopyStart() {
+func (acc *Account) ServerSideTransferStart() {
 	acc.values.mu.Lock()
 	// Set start time.
 	if acc.values.start.IsZero() {
@@ -284,8 +284,9 @@ func (acc *Account) ServerSideCopyStart() {
 	acc.values.mu.Unlock()
 }
 
-// ServerSideCopyEnd accounts for a read of n bytes in a sever side copy
-func (acc *Account) ServerSideCopyEnd(n int64) {
+// ServerSideTransferEnd accounts for a read of n bytes in a sever
+// side transfer to be treated as a normal transfer.
+func (acc *Account) ServerSideTransferEnd(n int64) {
 	// Update Stats
 	acc.values.mu.Lock()
 	acc.values.bytes += n
@@ -294,10 +295,20 @@ func (acc *Account) ServerSideCopyEnd(n int64) {
 	acc.stats.Bytes(n)
 }
 
+// ServerSideCopyEnd accounts for a read of n bytes in a sever side copy
+func (acc *Account) ServerSideCopyEnd(n int64) {
+	acc.stats.AddServerSideCopy(n)
+}
+
+// ServerSideMoveEnd accounts for a read of n bytes in a sever side move
+func (acc *Account) ServerSideMoveEnd(n int64) {
+	acc.stats.AddServerSideMove(n)
+}
+
 // DryRun accounts for statistics without running the operation
 func (acc *Account) DryRun(n int64) {
-	acc.ServerSideCopyStart()
-	acc.ServerSideCopyEnd(n)
+	acc.ServerSideTransferStart()
+	acc.ServerSideTransferEnd(n)
 }
 
 // Account for n bytes from the current file bandwidth limit (if any)
@@ -620,4 +631,16 @@ func UnWrap(in io.Reader) (unwrapped io.Reader, wrap WrapFn) {
 		return in, func(r io.Reader) io.Reader { return r }
 	}
 	return acc.OldStream(), acc.WrapStream
+}
+
+// UnWrapAccounting unwraps a reader returning unwrapped and acc a
+// pointer to the accounting.
+//
+// The caller is expected to manage the accounting at this point.
+func UnWrapAccounting(in io.Reader) (unwrapped io.Reader, acc *Account) {
+	a, ok := in.(*accountStream)
+	if !ok {
+		return in, nil
+	}
+	return a.in, a.acc
 }

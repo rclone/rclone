@@ -737,10 +737,7 @@ Properties:
 
 #### --azureblob-memory-pool-flush-time
 
-How often internal memory buffer pools will be flushed.
-
-Uploads which requires additional buffers (f.e multipart) will use memory pool for allocations.
-This option controls how often unused buffers will be removed from the pool.
+How often internal memory buffer pools will be flushed. (no longer used)
 
 Properties:
 
@@ -751,7 +748,7 @@ Properties:
 
 #### --azureblob-memory-pool-use-mmap
 
-Whether to use mmap buffers in internal memory pool.
+Whether to use mmap buffers in internal memory pool. (no longer used)
 
 Properties:
 

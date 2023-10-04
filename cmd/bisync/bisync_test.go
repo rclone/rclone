@@ -614,6 +614,8 @@ func (b *bisyncTest) runBisync(ctx context.Context, args []string) (err error) {
 			opt.DryRun = true
 		case "force":
 			opt.Force = true
+		case "create-empty-src-dirs":
+			opt.CreateEmptySrcDirs = true
 		case "remove-empty-dirs":
 			opt.RemoveEmptyDirs = true
 		case "check-sync-only":
@@ -1163,6 +1165,10 @@ func (b *bisyncTest) newReplacer(mangle bool) *strings.Replacer {
 		b.workDir + slash, "{workdir/}",
 		b.path1, "{path1/}",
 		b.path2, "{path2/}",
+		"//?/" + strings.TrimSuffix(strings.Replace(b.path1, slash, "/", -1), "/"), "{path1}", // fix windows-specific issue
+		"//?/" + strings.TrimSuffix(strings.Replace(b.path2, slash, "/", -1), "/"), "{path2}",
+		strings.TrimSuffix(b.path1, slash), "{path1}", // ensure it's still recognized without trailing slash
+		strings.TrimSuffix(b.path2, slash), "{path2}",
 		b.sessionName, "{session}",
 	}
 	if fixSlash {

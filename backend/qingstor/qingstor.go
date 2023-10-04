@@ -49,11 +49,13 @@ func init() {
 				Help:  "Get QingStor credentials from the environment (env vars or IAM).",
 			}},
 		}, {
-			Name: "access_key_id",
-			Help: "QingStor Access Key ID.\n\nLeave blank for anonymous access or runtime credentials.",
+			Name:      "access_key_id",
+			Help:      "QingStor Access Key ID.\n\nLeave blank for anonymous access or runtime credentials.",
+			Sensitive: true,
 		}, {
-			Name: "secret_access_key",
-			Help: "QingStor Secret Access Key (password).\n\nLeave blank for anonymous access or runtime credentials.",
+			Name:      "secret_access_key",
+			Help:      "QingStor Secret Access Key (password).\n\nLeave blank for anonymous access or runtime credentials.",
+			Sensitive: true,
 		}, {
 			Name: "endpoint",
 			Help: "Enter an endpoint URL to connection QingStor API.\n\nLeave blank will use the default value \"https://qingstor.com:443\".",

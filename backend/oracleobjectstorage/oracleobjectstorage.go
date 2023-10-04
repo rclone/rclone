@@ -318,7 +318,6 @@ func (f *Fs) list(ctx context.Context, bucket, directory, prefix string, addBuck
 			remote := *object.Name
 			remote = f.opt.Enc.ToStandardPath(remote)
 			if !strings.HasPrefix(remote, prefix) {
-				// fs.Debugf(f, "Odd name received %v", object.Name)
 				continue
 			}
 			remote = remote[len(prefix):]
@@ -558,15 +557,15 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 	})
 }
 
-func (f *Fs) abortMultiPartUpload(ctx context.Context, bucketName, bucketPath, uploadID string) (err error) {
-	if uploadID == "" {
+func (f *Fs) abortMultiPartUpload(ctx context.Context, bucketName, bucketPath, uploadID *string) (err error) {
+	if uploadID == nil || *uploadID == "" {
 		return nil
 	}
 	request := objectstorage.AbortMultipartUploadRequest{
 		NamespaceName: common.String(f.opt.Namespace),
-		BucketName:    common.String(bucketName),
-		ObjectName:    common.String(bucketPath),
-		UploadId:      common.String(uploadID),
+		BucketName:    bucketName,
+		ObjectName:    bucketPath,
+		UploadId:      uploadID,
 	}
 	err = f.pacer.Call(func() (bool, error) {
 		resp, err := f.srv.AbortMultipartUpload(ctx, request)
@@ -589,7 +588,7 @@ func (f *Fs) cleanUpBucket(ctx context.Context, bucket string, maxAge time.Durat
 				if operations.SkipDestructive(ctx, what, "remove pending upload") {
 					continue
 				}
-				_ = f.abortMultiPartUpload(ctx, *upload.Bucket, *upload.Object, *upload.UploadId)
+				_ = f.abortMultiPartUpload(ctx, upload.Bucket, upload.Object, upload.UploadId)
 			}
 		} else {
 			fs.Infof(f, "MultipartUpload doesn't have sufficient details to abort.")
@@ -684,12 +683,13 @@ func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (
 
 // Check the interfaces are satisfied
 var (
-	_ fs.Fs          = &Fs{}
-	_ fs.Copier      = &Fs{}
-	_ fs.PutStreamer = &Fs{}
-	_ fs.ListRer     = &Fs{}
-	_ fs.Commander   = &Fs{}
-	_ fs.CleanUpper  = &Fs{}
+	_ fs.Fs              = &Fs{}
+	_ fs.Copier          = &Fs{}
+	_ fs.PutStreamer     = &Fs{}
+	_ fs.ListRer         = &Fs{}
+	_ fs.Commander       = &Fs{}
+	_ fs.CleanUpper      = &Fs{}
+	_ fs.OpenChunkWriter = &Fs{}
 
 	_ fs.Object    = &Object{}
 	_ fs.MimeTyper = &Object{}

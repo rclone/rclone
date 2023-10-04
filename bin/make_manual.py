@@ -25,6 +25,7 @@ docs = [
     "flags.md",
     "docker.md",
     "bisync.md",
+    "release_signing.md",
 
     # Keep these alphabetical by full name
     "fichier.md",
@@ -61,12 +62,15 @@ docs = [
     "opendrive.md",
     "oracleobjectstorage.md",
     "qingstor.md",
+    "quatrix.md",
     "sia.md",
     "swift.md",
     "pcloud.md",
     "pikpak.md",
     "premiumizeme.md",
+    "protondrive.md",
     "putio.md",
+    "protondrive.md",
     "seafile.md",
     "sftp.md",
     "smb.md",

@@ -49,6 +49,7 @@ After it has run it will log the status of the encryptedremote:.
 ` + check.FlagsHelp,
 	Annotations: map[string]string{
 		"versionIntroduced": "v1.36",
+		"groups":            "Filter,Listing,Check",
 	},
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(2, 2, command, args)

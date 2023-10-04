@@ -1,6 +1,6 @@
 // Package cmd implements the rclone command
 //
-// It is in a sub package so it's internals can be re-used elsewhere
+// It is in a sub package so it's internals can be reused elsewhere
 package cmd
 
 // FIXME only attach the remote flags when using a remote???
@@ -35,6 +35,7 @@ import (
 	fslog "github.com/rclone/rclone/fs/log"
 	"github.com/rclone/rclone/fs/rc/rcflags"
 	"github.com/rclone/rclone/fs/rc/rcserver"
+	fssync "github.com/rclone/rclone/fs/sync"
 	"github.com/rclone/rclone/lib/atexit"
 	"github.com/rclone/rclone/lib/buildinfo"
 	"github.com/rclone/rclone/lib/exitcode"
@@ -47,13 +48,13 @@ import (
 // Globals
 var (
 	// Flags
-	cpuProfile      = flags.StringP("cpuprofile", "", "", "Write cpu profile to file")
-	memProfile      = flags.StringP("memprofile", "", "", "Write memory profile to file")
-	statsInterval   = flags.DurationP("stats", "", time.Minute*1, "Interval between printing stats, e.g. 500ms, 60s, 5m (0 to disable)")
-	dataRateUnit    = flags.StringP("stats-unit", "", "bytes", "Show data rate in stats as either 'bits' or 'bytes' per second")
+	cpuProfile      = flags.StringP("cpuprofile", "", "", "Write cpu profile to file", "Debugging")
+	memProfile      = flags.StringP("memprofile", "", "", "Write memory profile to file", "Debugging")
+	statsInterval   = flags.DurationP("stats", "", time.Minute*1, "Interval between printing stats, e.g. 500ms, 60s, 5m (0 to disable)", "Logging")
+	dataRateUnit    = flags.StringP("stats-unit", "", "bytes", "Show data rate in stats as either 'bits' or 'bytes' per second", "Logging")
 	version         bool
-	retries         = flags.IntP("retries", "", 3, "Retry operations this many times if they fail")
-	retriesInterval = flags.DurationP("retries-sleep", "", 0, "Interval between retrying operations if they fail, e.g. 500ms, 60s, 5m (0 to disable)")
+	retries         = flags.IntP("retries", "", 3, "Retry operations this many times if they fail", "Config")
+	retriesInterval = flags.DurationP("retries-sleep", "", 0, "Interval between retrying operations if they fail, e.g. 500ms, 60s, 5m (0 to disable)", "Config")
 	// Errors
 	errorCommandNotFound    = errors.New("command not found")
 	errorUncategorized      = errors.New("uncategorized error")
@@ -501,6 +502,8 @@ func resolveExitCode(err error) {
 		os.Exit(exitcode.UncategorizedError)
 	case errors.Is(err, accounting.ErrorMaxTransferLimitReached):
 		os.Exit(exitcode.TransferExceeded)
+	case errors.Is(err, fssync.ErrorMaxDurationReached):
+		os.Exit(exitcode.DurationExceeded)
 	case fserrors.ShouldRetry(err):
 		os.Exit(exitcode.RetryError)
 	case fserrors.IsNoRetryError(err), fserrors.IsNoLowLevelRetryError(err):

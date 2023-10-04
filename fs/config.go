@@ -94,7 +94,6 @@ type ConfigInfo struct {
 	SuffixKeepExtension        bool
 	UseListR                   bool
 	BufferSize                 SizeSuffix
-	MultiThreadWriteBufferSize SizeSuffix
 	BwLimit                    BwTimetable
 	BwLimitFile                BwTimetable
 	TPSLimit                   float64
@@ -127,7 +126,9 @@ type ConfigInfo struct {
 	ClientKey                  string   // Client Side Key
 	MultiThreadCutoff          SizeSuffix
 	MultiThreadStreams         int
-	MultiThreadSet             bool   // whether MultiThreadStreams was set (set in fs/config/configflags)
+	MultiThreadSet             bool       // whether MultiThreadStreams was set (set in fs/config/configflags)
+	MultiThreadChunkSize       SizeSuffix // Chunk size for multi-thread downloads / uploads, if not set by filesystem
+	MultiThreadWriteBufferSize SizeSuffix
 	OrderBy                    string // instructions on how to order the transfer
 	UploadHeaders              []*HTTPOption
 	DownloadHeaders            []*HTTPOption
@@ -171,7 +172,6 @@ func NewConfig() *ConfigInfo {
 	c.MaxDepth = -1
 	c.DataRateUnit = "bytes"
 	c.BufferSize = SizeSuffix(16 << 20)
-	c.MultiThreadWriteBufferSize = SizeSuffix(128 * 1024)
 	c.UserAgent = "rclone/" + Version
 	c.StreamingUploadCutoff = SizeSuffix(100 * 1024)
 	c.MaxStatsGroups = 1000
@@ -182,8 +182,10 @@ func NewConfig() *ConfigInfo {
 	c.MaxBacklog = 10000
 	// We do not want to set the default here. We use this variable being empty as part of the fall-through of options.
 	//	c.StatsOneLineDateFormat = "2006/01/02 15:04:05 - "
-	c.MultiThreadCutoff = SizeSuffix(250 * 1024 * 1024)
+	c.MultiThreadCutoff = SizeSuffix(256 * 1024 * 1024)
 	c.MultiThreadStreams = 4
+	c.MultiThreadChunkSize = SizeSuffix(64 * 1024 * 1024)
+	c.MultiThreadWriteBufferSize = SizeSuffix(128 * 1024)
 
 	c.TrackRenamesStrategy = "hash"
 	c.FsCacheExpireDuration = 300 * time.Second

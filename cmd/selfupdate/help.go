@@ -5,9 +5,10 @@ package selfupdate
 
 // Note: "|" will be replaced by backticks in the help string below
 var selfUpdateHelp = `
-This command downloads the latest release of rclone and replaces
-the currently running binary. The download is verified with a hashsum
-and cryptographically signed signature.
+This command downloads the latest release of rclone and replaces the
+currently running binary. The download is verified with a hashsum and
+cryptographically signed signature; see [the release signing
+docs](/release_signing/) for details.
 
 If used without flags (or with implied |--stable| flag), this command
 will install the latest stable release. However, some issues may be fixed
@@ -40,7 +41,7 @@ your OS) to update these too. This command with the default |--package zip|
 will update only the rclone executable so the local manual may become
 inaccurate after it.
 
-The |rclone mount| command (https://rclone.org/commands/rclone_mount/) may
+The [rclone mount](/commands/rclone_mount/) command may
 or may not support extended FUSE options depending on the build and OS.
 |selfupdate| will refuse to update if the capability would be discarded.
 

@@ -379,7 +379,7 @@ address this problem to a certain degree.
 For cloud storage systems with case sensitive file names (e.g. Google Drive),
 `base64` can be used to reduce file name length. 
 For cloud storage systems using UTF-16 to store file names internally
-(e.g. OneDrive, Dropbox), `base32768` can be used to drastically reduce
+(e.g. OneDrive, Dropbox, Box), `base32768` can be used to drastically reduce
 file name length. 
 
 An alternative, future rclone file name encryption mode may tolerate
@@ -712,7 +712,7 @@ has a header and is divided into chunks.
 The initial nonce is generated from the operating systems crypto
 strong random number generator.  The nonce is incremented for each
 chunk read making sure each nonce is unique for each block written.
-The chance of a nonce being re-used is minuscule.  If you wrote an
+The chance of a nonce being reused is minuscule.  If you wrote an
 exabyte of data (10¹⁸ bytes) you would have a probability of
 approximately 2×10⁻³² of re-using a nonce.
 
