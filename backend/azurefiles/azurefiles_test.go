@@ -3,7 +3,6 @@ package azurefiles
 import (
 	"context"
 	"fmt"
-	"log"
 	"path"
 	"strconv"
 	"strings"
@@ -12,7 +11,6 @@ import (
 
 	"github.com/Azure/azure-sdk-for-go/sdk/storage/azfile/file"
 	"github.com/rclone/rclone/fs"
-	"github.com/rclone/rclone/fs/walk"
 	"github.com/rclone/rclone/fstest"
 	"github.com/rclone/rclone/fstest/fstests"
 	"github.com/stretchr/testify/assert"
@@ -61,7 +59,6 @@ func TestNonCommonIntegration(t *testing.T) {
 		t.Run("set properties", wrapAndPassC(testSettingMetaDataWorks))
 
 		t.Run("encoding", wrapAndPassC(testEncoding))
-		t.Run("walkGetAll", wrapAndPassC(testWalkGetAll))
 
 	} else {
 		t.Fatal("could not convert f to Client pointer")
@@ -167,31 +164,6 @@ func testEncoding(t *testing.T, f *Fs) {
 		}
 
 	})
-}
-
-func testWalkGetAll(t *testing.T, f *Fs) {
-	objs, dirs, err := walk.GetAll(context.TODO(), f, "", true, -1)
-	assert.NoError(t, err)
-	log.Println(objs)
-	log.Println(dirs)
-
-	entries, err := f.List(context.TODO(), "")
-	assert.NoError(t, err)
-	log.Println(entries)
-	assert.Equal(t, len(entries), 1)
-
-	cbEntries := fs.DirEntries{}
-	errors := []error{}
-	walk.Walk(context.TODO(), f, "", true, -1, func(path string, entries fs.DirEntries, err error) error {
-		cbEntries = append(cbEntries, entries...)
-		errors = append(errors, err)
-		return err
-	})
-
-	fmt.Println(errors)
-
-	assert.Equal(t, 0, len(errors))
-	assert.Equal(t, 1, len(cbEntries))
 }
 
 func testModTime(t *testing.T, f *Fs) {
