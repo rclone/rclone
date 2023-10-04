@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"path"
 	"strconv"
 	"strings"
 	"time"
@@ -90,7 +91,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	// How to check whether a file exists at this location
 	_, propsErr := shareRootDirClient.NewFileClient(f.opt.Enc.FromStandardPath(root)).GetProperties(ctx, nil)
 	if propsErr == nil {
-		f.root = parent(root)
+		f.root = path.Dir(root)
 		return &f, fs.ErrorIsFile
 	}
 	log.Print(propsErr)

@@ -67,7 +67,7 @@ func (f *Fs) Mkdir(ctx context.Context, remote string) error {
 
 	_, createDirErr := dirClient.Create(ctx, nil)
 	if fileerror.HasCode(createDirErr, fileerror.ParentNotFound) {
-		parentDir := parent(remote)
+		parentDir := path.Dir(remote)
 		makeParentErr := f.Mkdir(ctx, parentDir)
 		if makeParentErr != nil {
 			return fmt.Errorf("could not make parent of %s : %w", remote, makeParentErr)
@@ -127,7 +127,7 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 		fileSize = src.Size()
 	}
 	fc := f.NewFileClient(src.Remote())
-	parentDir := parent(src.Remote())
+	parentDir := path.Dir(src.Remote())
 	_, createErr := fc.Create(ctx, fileSize, nil)
 	if fileerror.HasCode(createErr, fileerror.ParentNotFound) {
 
@@ -241,10 +241,6 @@ func (f *Fs) List(ctx context.Context, remote string) (fs.DirEntries, error) {
 
 func joinPaths(s ...string) string {
 	return path.Join(s...)
-}
-
-func parent(p string) string {
-	return path.Dir(p)
 }
 
 type encodedPath string
