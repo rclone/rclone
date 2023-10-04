@@ -256,10 +256,16 @@ does not suffer from the same limitations.
 
 ### Mounting on macOS
 
-Mounting on macOS can be done either via [macFUSE](https://osxfuse.github.io/) 
+Mounting on macOS can be done either via [built-in NFS server](/commands/rclone_serve_nfs/), [macFUSE](https://osxfuse.github.io/) 
 (also known as osxfuse) or [FUSE-T](https://www.fuse-t.org/). macFUSE is a traditional
 FUSE driver utilizing a macOS kernel extension (kext). FUSE-T is an alternative FUSE system
 which "mounts" via an NFSv4 local server.
+
+## NFS mount
+
+This method spins up an NFS server using [serve nfs](/commands/rclone_serve_nfs/) command and mounts
+it to the specified mountpoint. If you run this in background mode using |--daemon|, you will need to
+send SIGTERM signal to the rclone process using |kill| command to stop the mount.
 
 #### macFUSE Notes
 
@@ -310,6 +316,8 @@ sequentially, it can only seek when reading.  This means that many
 applications won't work with their files on an rclone mount without
 |--vfs-cache-mode writes| or |--vfs-cache-mode full|.
 See the [VFS File Caching](#vfs-file-caching) section for more info.
+When using NFS mount on macOS, if you don't specify |--vfs-cache-mode|
+the mount point will be read-only.
 
 The bucket-based remotes (e.g. Swift, S3, Google Compute Storage, B2)
 do not support the concept of empty directories, so empty
