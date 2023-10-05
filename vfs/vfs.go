@@ -22,6 +22,7 @@ package vfs
 
 import (
 	"context"
+	_ "embed"
 	"fmt"
 	"io"
 	"os"
@@ -41,6 +42,11 @@ import (
 	"github.com/rclone/rclone/vfs/vfscache"
 	"github.com/rclone/rclone/vfs/vfscommon"
 )
+
+// Help for the VFS.
+//
+//go:embed vfs.md
+var Help string
 
 // Node represents either a directory (*Dir) or a file (*File)
 type Node interface {

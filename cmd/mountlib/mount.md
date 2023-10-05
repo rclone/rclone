@@ -1,15 +1,11 @@
-package mountlib
-
-// "@" will be replaced by the command name, "|" will be replaced by backticks
-var mountHelp = `
 rclone @ allows Linux, FreeBSD, macOS and Windows to
 mount any of Rclone's cloud storage systems as a file system with
 FUSE.
 
-First set up your remote using |rclone config|.  Check it works with |rclone ls| etc.
+First set up your remote using `rclone config`.  Check it works with `rclone ls` etc.
 
 On Linux and macOS, you can run mount in either foreground or background (aka
-daemon) mode. Mount runs in foreground mode by default. Use the |--daemon| flag
+daemon) mode. Mount runs in foreground mode by default. Use the `--daemon` flag
 to force background mode. On Windows you can run mount in foreground only,
 the flag is ignored.
 
@@ -18,7 +14,7 @@ program starts, spawns background rclone process to setup and maintain the
 mount, waits until success or timeout and exits with appropriate code
 (killing the child process if it fails).
 
-On Linux/macOS/FreeBSD start the mount like this, where |/path/to/local/mount|
+On Linux/macOS/FreeBSD start the mount like this, where `/path/to/local/mount`
 is an **empty** **existing** directory:
 
     rclone @ remote:path/to/files /path/to/local/mount
@@ -29,10 +25,10 @@ rclone will serve the mount and occupy the console so another window should be
 used to work with the mount until rclone is interrupted e.g. by pressing Ctrl-C.
 
 The following examples will mount to an automatically assigned drive,
-to specific drive letter |X:|, to path |C:\path\parent\mount|
+to specific drive letter `X:`, to path `C:\path\parent\mount`
 (where parent directory or drive must exist, and mount must **not** exist,
 and is not supported when [mounting as a network drive](#mounting-modes-on-windows)), and
-the last example will mount as network share |\\cloud\remote| and map it to an
+the last example will mount as network share `\\cloud\remote` and map it to an
 automatically assigned drive:
 
     rclone @ remote:path/to/files *
@@ -89,7 +85,7 @@ as a network drive instead.
 
 When mounting as a fixed disk drive you can either mount to an unused drive letter,
 or to a path representing a **nonexistent** subdirectory of an **existing** parent
-directory or drive. Using the special value |*| will tell rclone to
+directory or drive. Using the special value `*` will tell rclone to
 automatically assign the next available drive letter, starting with Z: and moving backward.
 Examples:
 
@@ -98,45 +94,45 @@ Examples:
     rclone @ remote:path/to/files C:\path\parent\mount
     rclone @ remote:path/to/files X:
 
-Option |--volname| can be used to set a custom volume name for the mounted
+Option `--volname` can be used to set a custom volume name for the mounted
 file system. The default is to use the remote name and path.
 
-To mount as network drive, you can add option |--network-mode|
+To mount as network drive, you can add option `--network-mode`
 to your @ command. Mounting to a directory path is not supported in
 this mode, it is a limitation Windows imposes on junctions, so the remote must always
 be mounted to a drive letter.
 
     rclone @ remote:path/to/files X: --network-mode
 
-A volume name specified with |--volname| will be used to create the network share path.
-A complete UNC path, such as |\\cloud\remote|, optionally with path
-|\\cloud\remote\madeup\path|, will be used as is. Any other
-string will be used as the share part, after a default prefix |\\server\|.
-If no volume name is specified then |\\server\share| will be used.
+A volume name specified with `--volname` will be used to create the network share path.
+A complete UNC path, such as `\\cloud\remote`, optionally with path
+`\\cloud\remote\madeup\path`, will be used as is. Any other
+string will be used as the share part, after a default prefix `\\server\`.
+If no volume name is specified then `\\server\share` will be used.
 You must make sure the volume name is unique when you are mounting more than one drive,
 or else the mount command will fail. The share name will treated as the volume label for
 the mapped drive, shown in Windows Explorer etc, while the complete
-|\\server\share| will be reported as the remote UNC path by
-|net use| etc, just like a normal network drive mapping.
+`\\server\share` will be reported as the remote UNC path by
+`net use` etc, just like a normal network drive mapping.
 
-If you specify a full network share UNC path with |--volname|, this will implicitly
-set the |--network-mode| option, so the following two examples have same result:
+If you specify a full network share UNC path with `--volname`, this will implicitly
+set the `--network-mode` option, so the following two examples have same result:
 
     rclone @ remote:path/to/files X: --network-mode
     rclone @ remote:path/to/files X: --volname \\server\share
 
 You may also specify the network share UNC path as the mountpoint itself. Then rclone
-will automatically assign a drive letter, same as with |*| and use that as
+will automatically assign a drive letter, same as with `*` and use that as
 mountpoint, and instead use the UNC path specified as the volume name, as if it were
-specified with the |--volname| option. This will also implicitly set
-the |--network-mode| option. This means the following two examples have same result:
+specified with the `--volname` option. This will also implicitly set
+the `--network-mode` option. This means the following two examples have same result:
 
     rclone @ remote:path/to/files \\cloud\remote
     rclone @ remote:path/to/files * --volname \\cloud\remote
 
 There is yet another way to enable network mode, and to set the share path,
 and that is to pass the "native" libfuse/WinFsp option directly:
-|--fuse-flag --VolumePrefix=\server\share|. Note that the path
+`--fuse-flag --VolumePrefix=\server\share`. Note that the path
 must be with just a single backslash prefix in this case.
 
 
@@ -157,15 +153,15 @@ representing permissions for the POSIX permission scopes: Owner, group and other
 By default, the owner and group will be taken from the current user, and the built-in
 group "Everyone" will be used to represent others. The user/group can be customized
 with FUSE options "UserName" and "GroupName",
-e.g. |-o UserName=user123 -o GroupName="Authenticated Users"|.
+e.g. `-o UserName=user123 -o GroupName="Authenticated Users"`.
 The permissions on each entry will be set according to [options](#options)
-|--dir-perms| and |--file-perms|, which takes a value in traditional Unix
+`--dir-perms` and `--file-perms`, which takes a value in traditional Unix
 [numeric notation](https://en.wikipedia.org/wiki/File-system_permissions#Numeric_notation).
 
-The default permissions corresponds to |--file-perms 0666 --dir-perms 0777|,
+The default permissions corresponds to `--file-perms 0666 --dir-perms 0777`,
 i.e. read and write permissions to everyone. This means you will not be able
 to start any programs from the mount. To be able to do that you must add
-execute permissions, e.g. |--file-perms 0777 --dir-perms 0777| to add it
+execute permissions, e.g. `--file-perms 0777 --dir-perms 0777` to add it
 to everyone. If the program needs to write files, chances are you will
 have to enable [VFS File Caching](#vfs-file-caching) as well (see also
 [limitations](#limitations)). Note that the default write permission have
@@ -193,12 +189,12 @@ will be added automatically for compatibility with Unix. Some example use
 cases will following.
 
 If you set POSIX permissions for only allowing access to the owner,
-using |--file-perms 0600 --dir-perms 0700|, the user group and the built-in
+using `--file-perms 0600 --dir-perms 0700`, the user group and the built-in
 "Everyone" group will still be given some special permissions, as described
 above. Some programs may then (incorrectly) interpret this as the file being
 accessible by everyone, for example an SSH client may warn about "unprotected
 private key file". You can work around this by specifying
-|-o FileSecurity="D:P(A;;FA;;;OW)"|, which sets file all access (FA) to the
+`-o FileSecurity="D:P(A;;FA;;;OW)"`, which sets file all access (FA) to the
 owner (OW), and nothing else.
 
 When setting write permissions then, except for the owner, this does not
@@ -207,11 +203,11 @@ This may prevent applications from writing to files, giving permission denied
 error instead. To set working write permissions for the built-in "Everyone"
 group, similar to what it gets by default but with the addition of the
 "write extended attributes", you can specify
-|-o FileSecurity="D:P(A;;FRFW;;;WD)"|, which sets file read (FR) and file
+`-o FileSecurity="D:P(A;;FRFW;;;WD)"`, which sets file read (FR) and file
 write (FW) to everyone (WD). If file execute (FX) is also needed, then change
-to |-o FileSecurity="D:P(A;;FRFWFX;;;WD)"|, or set file all access (FA) to
+to `-o FileSecurity="D:P(A;;FRFWFX;;;WD)"`, or set file all access (FA) to
 get full access permissions, including delete, with
-|-o FileSecurity="D:P(A;;FA;;;WD)"|.
+`-o FileSecurity="D:P(A;;FA;;;WD)"`.
 
 #### Windows caveats
 
@@ -235,7 +231,7 @@ It is also possible to make a drive mount available to everyone on the system,
 by running the process creating it as the built-in SYSTEM account.
 There are several ways to do this: One is to use the command-line
 utility [PsExec](https://docs.microsoft.com/en-us/sysinternals/downloads/psexec),
-from Microsoft's Sysinternals suite, which has option |-s| to start
+from Microsoft's Sysinternals suite, which has option `-s` to start
 processes as the SYSTEM account. Another alternative is to run the mount
 command from a Windows Scheduled Task, or a Windows Service, configured
 to run as the SYSTEM account. A third alternative is to use the
@@ -243,7 +239,7 @@ to run as the SYSTEM account. A third alternative is to use the
 Read more in the [install documentation](https://rclone.org/install/).
 Note that when running rclone as another user, it will not use
 the configuration file from your profile unless you tell it to
-with the [|--config|](https://rclone.org/docs/#config-config-file) option.
+with the [`--config`](https://rclone.org/docs/#config-config-file) option.
 Note also that it is now the SYSTEM account that will have the owner
 permissions, and other accounts will have permissions according to the
 group or others scopes. As mentioned above, these will then not get the
@@ -300,21 +296,21 @@ of the file.
 Rclone includes flags for unicode normalization with macFUSE that should be updated
 for FUSE-T. See [this forum post](https://forum.rclone.org/t/some-unicode-forms-break-mount-on-macos-with-fuse-t/36403)
 and [FUSE-T issue #16](https://github.com/macos-fuse-t/fuse-t/issues/16). The following
-flag should be added to the |rclone mount| command.
+flag should be added to the `rclone mount` command.
 
     -o modules=iconv,from_code=UTF-8,to_code=UTF-8
     
 ##### Read Only mounts
 
-When mounting with |--read-only|, attempts to write to files will fail *silently* as
+When mounting with `--read-only`, attempts to write to files will fail *silently* as
 opposed to with a clear warning as in macFUSE.
 
 ### Limitations
 
-Without the use of |--vfs-cache-mode| this can only write files
+Without the use of `--vfs-cache-mode` this can only write files
 sequentially, it can only seek when reading.  This means that many
 applications won't work with their files on an rclone mount without
-|--vfs-cache-mode writes| or |--vfs-cache-mode full|.
+`--vfs-cache-mode writes` or `--vfs-cache-mode full`.
 See the [VFS File Caching](#vfs-file-caching) section for more info.
 When using NFS mount on macOS, if you don't specify |--vfs-cache-mode|
 the mount point will be read-only.
@@ -324,9 +320,9 @@ do not support the concept of empty directories, so empty
 directories will have a tendency to disappear once they fall out of
 the directory cache.
 
-When |rclone mount| is invoked on Unix with |--daemon| flag, the main rclone
+When `rclone mount` is invoked on Unix with `--daemon` flag, the main rclone
 program will wait for the background mount to become ready or until the timeout
-specified by the |--daemon-wait| flag. On Linux it can check mount status using
+specified by the `--daemon-wait` flag. On Linux it can check mount status using
 ProcFS so the flag in fact sets **maximum** time to wait, while the real wait
 can be less. On macOS / BSD the time to wait is constant and the check is
 performed only at the end. We advise you to set wait time on macOS reasonably.
@@ -344,10 +340,10 @@ for solutions to make @ more reliable.
 
 ### Attribute caching
 
-You can use the flag |--attr-timeout| to set the time the kernel caches
+You can use the flag `--attr-timeout` to set the time the kernel caches
 the attributes (size, modification time, etc.) for directory entries.
 
-The default is |1s| which caches files just long enough to avoid
+The default is `1s` which caches files just long enough to avoid
 too many callbacks to rclone from the kernel.
 
 In theory 0s should be the correct value for filesystems which can
@@ -358,14 +354,14 @@ few problems such as
 and [excessive time listing directories](https://github.com/rclone/rclone/issues/2095#issuecomment-371141147).
 
 The kernel can cache the info about a file for the time given by
-|--attr-timeout|. You may see corruption if the remote file changes
+`--attr-timeout`. You may see corruption if the remote file changes
 length during this window.  It will show up as either a truncated file
-or a file with garbage on the end.  With |--attr-timeout 1s| this is
-very unlikely but not impossible.  The higher you set |--attr-timeout|
+or a file with garbage on the end.  With `--attr-timeout 1s` this is
+very unlikely but not impossible.  The higher you set `--attr-timeout`
 the more likely it is.  The default setting of "1s" is the lowest
 setting which mitigates the problems above.
 
-If you set it higher (|10s| or |1m| say) then the kernel will call
+If you set it higher (`10s` or `1m` say) then the kernel will call
 back to rclone less often making it more efficient, however there is
 more chance of the corruption issue above.
 
@@ -388,32 +384,32 @@ Units having the rclone @ service specified as a requirement
 will see all files and folders immediately in this mode.
 
 Note that systemd runs mount units without any environment variables including
-|PATH| or |HOME|. This means that tilde (|~|) expansion will not work
-and you should provide |--config| and |--cache-dir| explicitly as absolute
+`PATH` or `HOME`. This means that tilde (`~`) expansion will not work
+and you should provide `--config` and `--cache-dir` explicitly as absolute
 paths via rclone arguments.
-Since mounting requires the |fusermount| program, rclone will use the fallback
-PATH of |/bin:/usr/bin| in this scenario. Please ensure that |fusermount|
+Since mounting requires the `fusermount` program, rclone will use the fallback
+PATH of `/bin:/usr/bin` in this scenario. Please ensure that `fusermount`
 is present on this PATH.
 
 ### Rclone as Unix mount helper
 
-The core Unix program |/bin/mount| normally takes the |-t FSTYPE| argument
-then runs the |/sbin/mount.FSTYPE| helper program passing it mount options
-as |-o key=val,...| or |--opt=...|. Automount (classic or systemd) behaves
+The core Unix program `/bin/mount` normally takes the `-t FSTYPE` argument
+then runs the `/sbin/mount.FSTYPE` helper program passing it mount options
+as `-o key=val,...` or `--opt=...`. Automount (classic or systemd) behaves
 in a similar way.
 
-rclone by default expects GNU-style flags |--key val|. To run it as a mount
-helper you should symlink rclone binary to |/sbin/mount.rclone| and optionally
-|/usr/bin/rclonefs|, e.g. |ln -s /usr/bin/rclone /sbin/mount.rclone|.
+rclone by default expects GNU-style flags `--key val`. To run it as a mount
+helper you should symlink rclone binary to `/sbin/mount.rclone` and optionally
+`/usr/bin/rclonefs`, e.g. `ln -s /usr/bin/rclone /sbin/mount.rclone`.
 rclone will detect it and translate command-line arguments appropriately.
 
 Now you can run classic mounts like this:
-|||
+```
 mount sftp1:subdir /mnt/data -t rclone -o vfs_cache_mode=writes,sftp_key_file=/path/to/pem
-|||
+```
 
 or create systemd mount units:
-|||
+```
 # /etc/systemd/system/mnt-data.mount
 [Unit]
 Description=Mount for /mnt/data
@@ -422,10 +418,10 @@ Type=rclone
 What=sftp1:subdir
 Where=/mnt/data
 Options=rw,_netdev,allow_other,args2env,vfs-cache-mode=writes,config=/etc/rclone.conf,cache-dir=/var/rclone
-|||
+```
 
 optionally accompanied by systemd automount unit
-|||
+```
 # /etc/systemd/system/mnt-data.automount
 [Unit]
 Description=AutoMount for /mnt/data
@@ -434,34 +430,33 @@ Where=/mnt/data
 TimeoutIdleSec=600
 [Install]
 WantedBy=multi-user.target
-|||
+```
 
-or add in |/etc/fstab| a line like
-|||
+or add in `/etc/fstab` a line like
+```
 sftp1:subdir /mnt/data rclone rw,noauto,nofail,_netdev,x-systemd.automount,args2env,vfs_cache_mode=writes,config=/etc/rclone.conf,cache_dir=/var/cache/rclone 0 0
-|||
+```
 
 or use classic Automountd.
-Remember to provide explicit |config=...,cache-dir=...| as a workaround for
-mount units being run without |HOME|.
+Remember to provide explicit `config=...,cache-dir=...` as a workaround for
+mount units being run without `HOME`.
 
-Rclone in the mount helper mode will split |-o| argument(s) by comma, replace |_|
-by |-| and prepend |--| to get the command-line flags. Options containing commas
+Rclone in the mount helper mode will split `-o` argument(s) by comma, replace `_`
+by `-` and prepend `--` to get the command-line flags. Options containing commas
 or spaces can be wrapped in single or double quotes. Any inner quotes inside outer
 quotes of the same type should be doubled.
 
 Mount option syntax includes a few extra options treated specially:
 
-- |env.NAME=VALUE| will set an environment variable for the mount process.
+- `env.NAME=VALUE` will set an environment variable for the mount process.
   This helps with Automountd and Systemd.mount which don't allow setting
   custom environment for mount helpers.
-  Typically you will use |env.HTTPS_PROXY=proxy.host:3128| or |env.HOME=/root|
-- |command=cmount| can be used to run |cmount| or any other rclone command
-  rather than the default |mount|.
-- |args2env| will pass mount options to the mount helper running in background
+  Typically you will use `env.HTTPS_PROXY=proxy.host:3128` or `env.HOME=/root`
+- `command=cmount` can be used to run `cmount` or any other rclone command
+  rather than the default `mount`.
+- `args2env` will pass mount options to the mount helper running in background
   via environment variables instead of command line arguments. This allows to
-  hide secrets from such commands as |ps| or |pgrep|.
-- |vv...| will be transformed into appropriate |--verbose=N|
-- standard mount options like |x-systemd.automount|, |_netdev|, |nosuid| and alike
+  hide secrets from such commands as `ps` or `pgrep`.
+- `vv...` will be transformed into appropriate `--verbose=N`
+- standard mount options like `x-systemd.automount`, `_netdev`, `nosuid` and alike
   are intended only for Automountd and ignored by rclone.
-`

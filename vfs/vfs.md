@@ -1,15 +1,3 @@
-package vfs
-
-import (
-	"strings"
-)
-
-// Help contains text describing file and directory caching to add to
-// the command help.
-// Warning: "!" (sic) will be replaced by backticks below,
-//
-//	but the pipe character "|" can be used as is.
-var Help = strings.ReplaceAll(`
 ### VFS - Virtual File System
 
 This command uses the VFS layer. This adapts the cloud storage objects
@@ -26,7 +14,7 @@ about files and directories (but not the data) in memory.
 
 ### VFS Directory Cache
 
-Using the !--dir-cache-time! flag, you can control how long a
+Using the `--dir-cache-time` flag, you can control how long a
 directory should be considered up to date and not refreshed from the
 backend. Changes made through the VFS will appear immediately or
 invalidate the cache.
@@ -40,7 +28,7 @@ the directory cache expires if the backend configured does not support
 polling for changes. If the backend supports polling, changes will be
 picked up within the polling interval.
 
-You can send a !SIGHUP! signal to rclone for it to flush all
+You can send a `SIGHUP` signal to rclone for it to flush all
 directory caches, regardless of how old they are.  Assuming only one
 rclone instance is running, you can reset the cache like this:
 
@@ -57,7 +45,7 @@ Or individual files or directories:
 
 ### VFS File Buffering
 
-The !--buffer-size! flag determines the amount of memory,
+The `--buffer-size` flag determines the amount of memory,
 that will be used to buffer data in advance.
 
 Each open file will try to keep the specified amount of data in memory
@@ -70,7 +58,7 @@ yet read. If the buffer is empty, only a small amount of memory will
 be used.
 
 The maximum memory used by rclone for buffering can be up to
-!--buffer-size * open files!.
+`--buffer-size * open files`.
 
 ### VFS File Caching
 
@@ -92,32 +80,32 @@ find that you need one or the other or both.
     --vfs-cache-poll-interval duration     Interval to poll the cache for stale objects (default 1m0s)
     --vfs-write-back duration              Time to writeback files after last use when using cache (default 5s)
 
-If run with !-vv! rclone will print the location of the file cache.  The
+If run with `-vv` rclone will print the location of the file cache.  The
 files are stored in the user cache file area which is OS dependent but
-can be controlled with !--cache-dir! or setting the appropriate
+can be controlled with `--cache-dir` or setting the appropriate
 environment variable.
 
-The cache has 4 different modes selected by !--vfs-cache-mode!.
+The cache has 4 different modes selected by `--vfs-cache-mode`.
 The higher the cache mode the more compatible rclone becomes at the
 cost of using disk space.
 
 Note that files are written back to the remote only when they are
-closed and if they haven't been accessed for !--vfs-write-back!
+closed and if they haven't been accessed for `--vfs-write-back`
 seconds. If rclone is quit or dies with files that haven't been
 uploaded, these will be uploaded next time rclone is run with the same
 flags.
 
-If using !--vfs-cache-max-size! or !--vfs-cache-min-free-size! note
+If using `--vfs-cache-max-size` or `--vfs-cache-min-free-size` note
 that the cache may exceed these quotas for two reasons. Firstly
-because it is only checked every !--vfs-cache-poll-interval!. Secondly
+because it is only checked every `--vfs-cache-poll-interval`. Secondly
 because open files cannot be evicted from the cache. When
-!--vfs-cache-max-size! or !--vfs-cache-min-free-size! is exceeded,
+`--vfs-cache-max-size` or `--vfs-cache-min-free-size` is exceeded,
 rclone will attempt to evict the least accessed files from the cache
 first. rclone will start with files that haven't been accessed for the
 longest. This cache flushing strategy is efficient and more relevant
 files are likely to remain cached.
 
-The !--vfs-cache-max-age! will evict files from the cache
+The `--vfs-cache-max-age` will evict files from the cache
 after the set time since last access has passed. The default value of
 1 hour will start evicting files from cache that haven't been accessed
 for 1 hour. When a cached file is accessed the 1 hour timer is reset to 0
@@ -125,10 +113,10 @@ and will wait for 1 more hour before evicting. Specify the time with
 standard notation, s, m, h, d, w .
 
 You **should not** run two copies of rclone using the same VFS cache
-with the same or overlapping remotes if using !--vfs-cache-mode > off!.
+with the same or overlapping remotes if using `--vfs-cache-mode > off`.
 This can potentially cause data corruption if you do. You can work
 around this by giving each rclone its own cache hierarchy with
-!--cache-dir!. You don't need to worry about this if the remotes in
+`--cache-dir`. You don't need to worry about this if the remotes in
 use don't overlap.
 
 #### --vfs-cache-mode off
@@ -184,14 +172,14 @@ their full size in the cache, but they will be sparse files with only
 the data that has been downloaded present in them.
 
 This mode should support all normal file system operations and is
-otherwise identical to !--vfs-cache-mode! writes.
+otherwise identical to `--vfs-cache-mode` writes.
 
-When reading a file rclone will read !--buffer-size! plus
-!--vfs-read-ahead! bytes ahead.  The !--buffer-size! is buffered in memory
-whereas the !--vfs-read-ahead! is buffered on disk.
+When reading a file rclone will read `--buffer-size` plus
+`--vfs-read-ahead` bytes ahead.  The `--buffer-size` is buffered in memory
+whereas the `--vfs-read-ahead` is buffered on disk.
 
-When using this mode it is recommended that !--buffer-size! is not set
-too large and !--vfs-read-ahead! is set large if required.
+When using this mode it is recommended that `--buffer-size` is not set
+too large and `--vfs-read-ahead` is set large if required.
 
 **IMPORTANT** not all file systems support sparse files. In particular
 FAT/exFAT do not. Rclone will perform very badly if the cache
@@ -213,17 +201,17 @@ where available on an object.
 On some backends some of these attributes are slow to read (they take
 an extra API call per object, or extra work per object).
 
-For example !hash! is slow with the !local! and !sftp! backends as
-they have to read the entire file and hash it, and !modtime! is slow
-with the !s3!, !swift!, !ftp! and !qinqstor! backends because they
+For example `hash` is slow with the `local` and `sftp` backends as
+they have to read the entire file and hash it, and `modtime` is slow
+with the `s3`, `swift`, `ftp` and `qinqstor` backends because they
 need to do an extra API call to fetch it.
 
-If you use the !--vfs-fast-fingerprint! flag then rclone will not
+If you use the `--vfs-fast-fingerprint` flag then rclone will not
 include the slow operations in the fingerprint. This makes the
 fingerprinting less accurate but much faster and will improve the
 opening time of cached files.
 
-If you are running a vfs cache over !local!, !s3! or !swift! backends
+If you are running a vfs cache over `local`, `s3` or `swift` backends
 then using this flag is recommended.
 
 Note that if you change the value of this flag, the fingerprints of
@@ -243,19 +231,19 @@ These flags control the chunking:
     --vfs-read-chunk-size SizeSuffix        Read the source objects in chunks (default 128M)
     --vfs-read-chunk-size-limit SizeSuffix  Max chunk doubling size (default off)
 
-Rclone will start reading a chunk of size !--vfs-read-chunk-size!,
-and then double the size for each read. When !--vfs-read-chunk-size-limit! is
-specified, and greater than !--vfs-read-chunk-size!, the chunk size for each
+Rclone will start reading a chunk of size `--vfs-read-chunk-size`,
+and then double the size for each read. When `--vfs-read-chunk-size-limit` is
+specified, and greater than `--vfs-read-chunk-size`, the chunk size for each
 open file will get doubled only until the specified value is reached. If the
 value is "off", which is the default, the limit is disabled and the chunk size
 will grow indefinitely.
 
-With !--vfs-read-chunk-size 100M! and !--vfs-read-chunk-size-limit 0!
+With `--vfs-read-chunk-size 100M` and `--vfs-read-chunk-size-limit 0`
 the following parts will be downloaded: 0-100M, 100M-200M, 200M-300M, 300M-400M and so on.
-When !--vfs-read-chunk-size-limit 500M! is specified, the result would be
+When `--vfs-read-chunk-size-limit 500M` is specified, the result would be
 0-100M, 100M-300M, 300M-700M, 700M-1200M, 1200M-1700M and so on.
 
-Setting !--vfs-read-chunk-size! to !0! or "off" disables chunked reading.
+Setting `--vfs-read-chunk-size` to `0` or "off" disables chunked reading.
 
 ### VFS Performance
 
@@ -263,8 +251,8 @@ These flags may be used to enable/disable features of the VFS for
 performance or other reasons. See also the [chunked reading](#vfs-chunked-reading)
 feature.
 
-In particular S3 and Swift benefit hugely from the !--no-modtime! flag
-(or use !--use-server-modtime! for a slightly different effect) as each
+In particular S3 and Swift benefit hugely from the `--no-modtime` flag
+(or use `--use-server-modtime` for a slightly different effect) as each
 read of the modification time takes a transaction.
 
     --no-checksum     Don't compare checksums on up/download.
@@ -280,9 +268,9 @@ on disk cache file.
     --vfs-read-wait duration   Time to wait for in-sequence read before seeking (default 20ms)
     --vfs-write-wait duration  Time to wait for in-sequence write before giving error (default 1s)
 
-When using VFS write caching (!--vfs-cache-mode! with value writes or full),
-the global flag !--transfers! can be set to adjust the number of parallel uploads of
-modified files from the cache (the related global flag !--checkers! has no effect on the VFS).
+When using VFS write caching (`--vfs-cache-mode` with value writes or full),
+the global flag `--transfers` can be set to adjust the number of parallel uploads of
+modified files from the cache (the related global flag `--checkers` has no effect on the VFS).
 
     --transfers int  Number of file transfers to run in parallel (default 4)
 
@@ -299,7 +287,7 @@ It is not allowed for two files in the same directory to differ only by case.
 Usually file systems on macOS are case-insensitive. It is possible to make macOS
 file systems case-sensitive but that is not the default.
 
-The !--vfs-case-insensitive! VFS flag controls how rclone handles these
+The `--vfs-case-insensitive` VFS flag controls how rclone handles these
 two cases. If its value is "false", rclone passes file names to the remote
 as-is. If the flag is "true" (or appears without a value on the
 command line), rclone may perform a "fixup" as explained below.
@@ -331,13 +319,12 @@ It can be useful when those statistics cannot be read correctly automatically.
 ### Alternate report of used bytes
 
 Some backends, most notably S3, do not report the amount of bytes used.
-If you need this information to be available when running !df! on the
-filesystem, then pass the flag !--vfs-used-is-size! to rclone.
+If you need this information to be available when running `df` on the
+filesystem, then pass the flag `--vfs-used-is-size` to rclone.
 With this flag set, instead of relying on the backend to report this
-information, rclone will scan the whole remote similar to !rclone size!
+information, rclone will scan the whole remote similar to `rclone size`
 and compute the total used space itself.
 
-_WARNING._ Contrary to !rclone size!, this flag ignores filters so that the
+_WARNING._ Contrary to `rclone size`, this flag ignores filters so that the
 result is accurate. However, this is very inefficient and may cost lots of API
 calls resulting in extra charges. Use it as a last resort and only with caching.
-`, "!", "`")
