@@ -1732,6 +1732,8 @@ transferring first before transferring any.
 When [--inplace](#inplace) is not used, it causes rclone to use
 the `--partial-upload-extension` as extension for temporary files.
 
+Extension length limit is 15 characters.
+
 The default is `partial`.
 
 ### --password-command SpaceSepList ###

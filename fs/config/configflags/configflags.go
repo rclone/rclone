@@ -21,23 +21,24 @@ import (
 
 var (
 	// these will get interpreted into fs.Config via SetFlags() below
-	verbose         int
-	quiet           bool
-	configPath      string
-	cacheDir        string
-	tempDir         string
-	dumpHeaders     bool
-	dumpBodies      bool
-	deleteBefore    bool
-	deleteDuring    bool
-	deleteAfter     bool
-	bindAddr        string
-	disableFeatures string
-	dscp            string
-	uploadHeaders   []string
-	downloadHeaders []string
-	headers         []string
-	metadataSet     []string
+	verbose                int
+	quiet                  bool
+	configPath             string
+	cacheDir               string
+	tempDir                string
+	dumpHeaders            bool
+	dumpBodies             bool
+	deleteBefore           bool
+	deleteDuring           bool
+	deleteAfter            bool
+	bindAddr               string
+	disableFeatures        string
+	dscp                   string
+	uploadHeaders          []string
+	downloadHeaders        []string
+	headers                []string
+	metadataSet            []string
+	partialUploadExtension string
 )
 
 // AddFlags adds the non filing system specific flags to the command
@@ -148,7 +149,7 @@ func AddFlags(ci *fs.ConfigInfo, flagSet *pflag.FlagSet) {
 	flags.FVarP(flagSet, &ci.TerminalColorMode, "color", "", "When to show colors (and other ANSI codes) AUTO|NEVER|ALWAYS", "Config")
 	flags.FVarP(flagSet, &ci.DefaultTime, "default-time", "", "Time to show if modtime is unknown for files and directories", "Config,Listing")
 	flags.BoolVarP(flagSet, &ci.Inplace, "inplace", "", ci.Inplace, "Download directly to destination file instead of atomic download to temp/rename", "Copy")
-	flags.StringVarP(flagSet, &ci.PartialUploadExtension, "partial-upload-extension", "", ci.PartialUploadExtension, "Add partial-upload-extension to temporary file name when --inplace is not used", "Copy")
+	flags.StringVarP(flagSet, &partialUploadExtension, "partial-upload-extension", "", ci.PartialUploadExtension, "Add partial-upload-extension to temporary file name when --inplace is not used", "Copy")
 }
 
 // ParseHeaders converts the strings passed in via the header flags into HTTPOptions
@@ -322,6 +323,12 @@ func SetFlags(ci *fs.ConfigInfo) {
 	// Set whether multi-thread-streams was set
 	multiThreadStreamsFlag := pflag.Lookup("multi-thread-streams")
 	ci.MultiThreadSet = multiThreadStreamsFlag != nil && multiThreadStreamsFlag.Changed
+
+	partialUploadExtension = strings.TrimSpace(partialUploadExtension)
+	if len(partialUploadExtension) < 1 || len(partialUploadExtension) > 15 {
+		log.Fatalf("--partial-upload-extension: Expecting extension length between %d and %d but got %d", 1, 15, len(partialUploadExtension))
+	}
+	ci.PartialUploadExtension = partialUploadExtension
 
 	// Make sure some values are > 0
 	nonZero := func(pi *int) {
