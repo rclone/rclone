@@ -1278,8 +1278,9 @@ flag set) such as:
 - sftp
 
 Without `--inplace` (the default) rclone will first upload to a
-temporary file with an extension like this where `XXXXXX` represents a
-random string.
+temporary file with an extension like this, where `XXXXXX` represents a
+random string and `partial` is [--partial-upload-extension](#partial-upload-extension) value
+(`partial` by default).
 
     original-file-name.XXXXXX.partial
 
@@ -1725,6 +1726,13 @@ being more of a best efforts flag rather than a perfect ordering.
 If you want perfect ordering then you will need to specify
 [--check-first](#check-first) which will find all the files which need
 transferring first before transferring any.
+
+### --partial-upload-extension {#partial-upload-extension}
+
+When [--inplace](#inplace) is not used, it causes rclone to use
+the `--partial-upload-extension` as extension for temporary files.
+
+The default is `partial`.
 
 ### --password-command SpaceSepList ###
 
