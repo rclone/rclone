@@ -166,6 +166,7 @@ type bisyncTest struct {
 	golden     bool
 	debug      bool
 	stopAt     int
+	TestFn     bisync.TestFunc
 }
 
 // TestBisync is a test engine for bisync test cases.
@@ -466,6 +467,21 @@ func (b *bisyncTest) runTestStep(ctx context.Context, line string) (err error) {
 		ci.LogLevel = fs.LogLevelDebug
 	}
 
+	testFunc := func() {
+		testname := "volatile"
+		path := "path1"
+		src := filepath.Join(b.tempDir, testname, path, "file7.txt")
+		dstBase1 := filepath.Join(b.tempDir, testname, "path1", "file")
+		dstBase2 := filepath.Join(b.tempDir, testname, "path2", "file")
+
+		for i := 0; i < 50; i++ {
+			dst := dstBase2 + fmt.Sprint(i) + ".txt"
+			_ = bilib.CopyFile(src, dst)
+			dst = dstBase1 + fmt.Sprint(100-i) + ".txt"
+			_ = bilib.CopyFile(src, dst)
+		}
+	}
+
 	args := splitLine(line)
 	switch args[0] {
 	case "test":
@@ -545,6 +561,9 @@ func (b *bisyncTest) runTestStep(ctx context.Context, line string) (err error) {
 		return b.listSubdirs(ctx, args[1])
 	case "bisync":
 		return b.runBisync(ctx, args[1:])
+	case "test-func":
+		b.TestFn = testFunc
+		return
 	default:
 		return fmt.Errorf("unknown command: %q", args[0])
 	}
@@ -594,6 +613,7 @@ func (b *bisyncTest) runBisync(ctx context.Context, args []string) (err error) {
 		MaxDelete:     bisync.DefaultMaxDelete,
 		CheckFilename: bisync.DefaultCheckFilename,
 		CheckSync:     bisync.CheckSyncTrue,
+		TestFn:        b.TestFn,
 	}
 	octx, ci := fs.AddConfig(ctx)
 	fs1, fs2 := b.fs1, b.fs2
@@ -1228,8 +1248,19 @@ func (b *bisyncTest) ensureDir(parent, dir string, optional bool) string {
 func (b *bisyncTest) listDir(dir string) (names []string) {
 	files, err := os.ReadDir(dir)
 	require.NoError(b.t, err)
+	ignoreIt := func(file string) bool {
+		ignoreList := []string{
+			// ".lst-control", ".lst-dry-control", ".lst-old", ".lst-dry-old",
+			".DS_Store"}
+		for _, s := range ignoreList {
+			if strings.Contains(file, s) {
+				return true
+			}
+		}
+		return false
+	}
 	for _, file := range files {
-		if strings.Contains(file.Name(), ".lst-control") || strings.Contains(file.Name(), ".lst-dry-control") || strings.Contains(file.Name(), ".DS_Store") {
+		if ignoreIt(file.Name()) {
 			continue
 		}
 		names = append(names, filepath.Base(norm.NFC.String(file.Name())))
@@ -1248,7 +1279,7 @@ func fileType(fileName string) string {
 		return "log"
 	}
 	switch filepath.Ext(fileName) {
-	case ".lst", ".lst-new", ".lst-err", ".lst-dry", ".lst-dry-new":
+	case ".lst", ".lst-new", ".lst-err", ".lst-dry", ".lst-dry-new", ".lst-old", ".lst-dry-old", ".lst-control", ".lst-dry-control":
 		return "listing"
 	case ".que":
 		return "queue"

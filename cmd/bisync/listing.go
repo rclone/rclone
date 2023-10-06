@@ -15,6 +15,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/rclone/rclone/cmd/bisync/bilib"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/filter"
 	"github.com/rclone/rclone/fs/hash"
@@ -90,6 +91,12 @@ func (ls *fileList) get(file string) *fileInfo {
 		info = ls.info[fmt.Sprint(file)]
 	}
 	return info
+}
+
+// copy file from ls to dest
+func (ls *fileList) getPut(file string, dest *fileList) {
+	f := ls.get(file)
+	dest.put(file, f.size, f.time, f.hash, f.id, f.flags)
 }
 
 func (ls *fileList) remove(file string) {
@@ -285,6 +292,15 @@ func (b *bisyncRun) loadListing(listing string) (*fileList, error) {
 	return ls, nil
 }
 
+func (b *bisyncRun) saveOldListings() {
+	if err := bilib.CopyFileIfExists(b.listing1, b.listing1+"-old"); err != nil {
+		fs.Debugf(b.listing1, "error saving old listing1: %v", err)
+	}
+	if err := bilib.CopyFileIfExists(b.listing2, b.listing2+"-old"); err != nil {
+		fs.Debugf(b.listing1, "error saving old listing2: %v", err)
+	}
+}
+
 func parseHash(str string) (string, string, error) {
 	if str == "-" {
 		return "", "", nil
@@ -440,7 +456,7 @@ func ConvertPrecision(Modtime time.Time, dst fs.Fs) time.Time {
 }
 
 // modifyListing will modify the listing based on the results of the sync
-func (b *bisyncRun) modifyListing(ctx context.Context, src fs.Fs, dst fs.Fs, srcListing string, dstListing string, results []Results, queues queues, is1to2 bool) (err error) {
+func (b *bisyncRun) modifyListing(ctx context.Context, src fs.Fs, dst fs.Fs, results []Results, queues queues, is1to2 bool) (err error) {
 	queue := queues.copy2to1
 	renames := queues.renamed2
 	direction := "2to1"
@@ -454,6 +470,7 @@ func (b *bisyncRun) modifyListing(ctx context.Context, src fs.Fs, dst fs.Fs, src
 	fs.Debugf(nil, "RESULTS: %v", results)
 	fs.Debugf(nil, "QUEUE: %v", queue)
 
+	srcListing, dstListing := b.getListingNames(is1to2)
 	srcList, err := b.loadListing(srcListing)
 	if err != nil {
 		return fmt.Errorf("cannot read prior listing: %w", err)
@@ -581,7 +598,7 @@ func (b *bisyncRun) modifyListing(ctx context.Context, src fs.Fs, dst fs.Fs, src
 	}
 
 	if filterRecheck.HaveFilesFrom() {
-		b.recheck(ctxRecheck, src, dst, srcList, dstList)
+		b.recheck(ctxRecheck, src, dst, srcList, dstList, is1to2)
 	}
 
 	// update files
@@ -598,9 +615,11 @@ func (b *bisyncRun) modifyListing(ctx context.Context, src fs.Fs, dst fs.Fs, src
 }
 
 // recheck the ones we're not sure about
-func (b *bisyncRun) recheck(ctxRecheck context.Context, src, dst fs.Fs, srcList, dstList *fileList) {
+func (b *bisyncRun) recheck(ctxRecheck context.Context, src, dst fs.Fs, srcList, dstList *fileList, is1to2 bool) {
 	var srcObjs []fs.Object
 	var dstObjs []fs.Object
+	var resolved []string
+	var toRollback []string
 
 	if err := operations.ListFn(ctxRecheck, src, func(obj fs.Object) {
 		srcObjs = append(srcObjs, obj)
@@ -631,10 +650,50 @@ func (b *bisyncRun) recheck(ctxRecheck context.Context, src, dst fs.Fs, srcList,
 				if operations.Equal(ctxRecheck, srcObj, dstObj) || b.opt.DryRun {
 					putObj(srcObj, src, srcList)
 					putObj(dstObj, dst, dstList)
+					resolved = append(resolved, srcObj.Remote())
 				} else {
 					fs.Infof(srcObj, "files not equal on recheck: %v %v", srcObj, dstObj)
 				}
 			}
 		}
+		// if srcObj not resolved by now (either because no dstObj match or files not equal),
+		// roll it back to old version, so it gets retried next time.
+		if !slices.Contains(resolved, srcObj.Remote()) && !b.opt.DryRun {
+			toRollback = append(toRollback, srcObj.Remote())
+		}
+	}
+	if len(toRollback) > 0 {
+		srcListing, dstListing := b.getListingNames(is1to2)
+		oldSrc, err := b.loadListing(srcListing + "-old")
+		handleErr(oldSrc, "error loading old src listing", err) // TODO: make this critical?
+		oldDst, err := b.loadListing(dstListing + "-old")
+		handleErr(oldDst, "error loading old dst listing", err) // TODO: make this critical?
+
+		for _, item := range toRollback {
+			rollback(item, oldSrc, srcList)
+			rollback(item, oldDst, dstList)
+		}
+	}
+}
+
+func (b *bisyncRun) getListingNames(is1to2 bool) (srcListing string, dstListing string) {
+	if is1to2 {
+		return b.listing1, b.listing2
+	}
+	return b.listing2, b.listing1
+}
+
+func handleErr(o interface{}, msg string, err error) {
+	// TODO: add option to make critical?
+	if err != nil {
+		fs.Debugf(o, "%s: %v", msg, err)
+	}
+}
+
+func rollback(item string, oldList, newList *fileList) {
+	if oldList.has(item) {
+		oldList.getPut(item, newList)
+	} else {
+		newList.remove(item)
 	}
 }

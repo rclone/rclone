@@ -1274,6 +1274,7 @@ about _Unison_ and synchronization in general.
 * Partial uploads known issue on `local`/`ftp`/`sftp` has been resolved (unless using `--inplace`)
 * Final listings are now generated from sync results, to avoid needing to re-list
 * Bisync is now much more resilient to changes that happen during a bisync run, and far less prone to critical errors / undetected changes
+* Bisync is now capable of rolling a file listing back in cases of uncertainty, essentially marking the file as needing to be rechecked next time.
 
 ### `v1.64`
 * Fixed an [issue](https://forum.rclone.org/t/bisync-bugs-and-feature-requests/37636#:~:text=1.%20Dry%20runs%20are%20not%20completely%20dry) 
