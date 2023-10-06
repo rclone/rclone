@@ -25,6 +25,9 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// TestFunc allows mocking errors during tests
+type TestFunc func()
+
 // Options keep bisync options
 type Options struct {
 	Resync                bool
@@ -42,6 +45,7 @@ type Options struct {
 	SaveQueues            bool // save extra debugging files (test only flag)
 	IgnoreListingChecksum bool
 	Resilient             bool
+	TestFn                TestFunc // test-only option, for mocking errors
 }
 
 // Default values

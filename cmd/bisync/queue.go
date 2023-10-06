@@ -153,6 +153,7 @@ func (b *bisyncRun) fastCopy(ctx context.Context, fsrc, fdst fs.Fs, files bilib.
 	if b.opt.Resync {
 		err = sync.CopyDir(ctxCopyLogger, fdst, fsrc, b.opt.CreateEmptySrcDirs)
 	} else {
+		b.testFn()
 		err = sync.Sync(ctxCopyLogger, fdst, fsrc, b.opt.CreateEmptySrcDirs)
 	}
 	fs.Debugf(nil, "logger is: %v", logger)

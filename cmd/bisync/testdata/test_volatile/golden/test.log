@@ -1,0 +1,292 @@
+(01)  : test volatile
+
+(02)  : test initial bisync
+(03)  : bisync resync
+INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Copying unique Path2 files to Path1
+INFO  : Resynching Path1 to Path2
+INFO  : Resync updating listings
+INFO  : Bisync successful
+
+(04)  : test changed on both paths - file5 (file5R, file5L)
+(05)  : touch-glob 2001-01-02 {datadir/} file5R.txt
+(06)  : copy-as {datadir/}file5R.txt {path2/} file5.txt
+(07)  : touch-glob 2001-03-04 {datadir/} file5L.txt
+(08)  : copy-as {datadir/}file5L.txt {path1/} file5.txt
+
+(09)  : test bisync with 50 files created during - should ignore new files
+(10)  : test-func
+(11)  : bisync
+INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Path1 checking for diffs
+INFO  : - Path1    File is newer                       - file5.txt
+INFO  : Path1:    1 changes:    0 new,    1 newer,    0 older,    0 deleted
+INFO  : Path2 checking for diffs
+INFO  : - Path2    File is newer                       - file5.txt
+INFO  : Path2:    1 changes:    0 new,    1 newer,    0 older,    0 deleted
+INFO  : Applying changes
+INFO  : Checking potential conflicts...
+ERROR : file5.txt: md5 differ
+NOTICE: Local file system at {path2}: 1 differences found
+NOTICE: Local file system at {path2}: 1 errors while checking
+INFO  : Finished checking the potential conflicts. 1 differences found
+NOTICE: - WARNING  New or changed in both paths        - file5.txt
+NOTICE: - Path1    Renaming Path1 copy                 - {path1/}file5.txt..path1
+NOTICE: - Path1    Queue copy to Path2                 - {path2/}file5.txt..path1
+NOTICE: - Path2    Renaming Path2 copy                 - {path2/}file5.txt..path2
+NOTICE: - Path2    Queue copy to Path1                 - {path1/}file5.txt..path2
+INFO  : - Path2    Do queued copies to                 - Path1
+INFO  : - Path1    Do queued copies to                 - Path2
+INFO  : Updating listings
+INFO  : Validating listings for Path1 "{path1/}" vs Path2 "{path2/}"
+INFO  : Bisync successful
+
+(12)  : test changed on both paths - file5 (file5R, file5L)
+(13)  : touch-glob 2001-01-02 {datadir/} file5R.txt
+(14)  : copy-as {datadir/}file5R.txt {path2/} file5.txt
+(15)  : touch-glob 2001-03-04 {datadir/} file5L.txt
+(16)  : copy-as {datadir/}file5L.txt {path1/} file5.txt
+
+(17)  : test next bisync - should now notice new files
+(18)  : test-func
+(19)  : bisync
+INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Path1 checking for diffs
+INFO  : - Path1    File is new                         - file100.txt
+INFO  : - Path1    File is new                         - file5.txt
+INFO  : - Path1    File is new                         - file51.txt
+INFO  : - Path1    File is new                         - file52.txt
+INFO  : - Path1    File is new                         - file53.txt
+INFO  : - Path1    File is new                         - file54.txt
+INFO  : - Path1    File is new                         - file55.txt
+INFO  : - Path1    File is new                         - file56.txt
+INFO  : - Path1    File is new                         - file57.txt
+INFO  : - Path1    File is new                         - file58.txt
+INFO  : - Path1    File is new                         - file59.txt
+INFO  : - Path1    File is new                         - file60.txt
+INFO  : - Path1    File is new                         - file61.txt
+INFO  : - Path1    File is new                         - file62.txt
+INFO  : - Path1    File is new                         - file63.txt
+INFO  : - Path1    File is new                         - file64.txt
+INFO  : - Path1    File is new                         - file65.txt
+INFO  : - Path1    File is new                         - file66.txt
+INFO  : - Path1    File is new                         - file67.txt
+INFO  : - Path1    File is new                         - file68.txt
+INFO  : - Path1    File is new                         - file69.txt
+INFO  : - Path1    File is new                         - file70.txt
+INFO  : - Path1    File is new                         - file71.txt
+INFO  : - Path1    File is new                         - file72.txt
+INFO  : - Path1    File is new                         - file73.txt
+INFO  : - Path1    File is new                         - file74.txt
+INFO  : - Path1    File is new                         - file75.txt
+INFO  : - Path1    File is new                         - file76.txt
+INFO  : - Path1    File is new                         - file77.txt
+INFO  : - Path1    File is new                         - file78.txt
+INFO  : - Path1    File is new                         - file79.txt
+INFO  : - Path1    File is new                         - file80.txt
+INFO  : - Path1    File is new                         - file81.txt
+INFO  : - Path1    File is new                         - file82.txt
+INFO  : - Path1    File is new                         - file83.txt
+INFO  : - Path1    File is new                         - file84.txt
+INFO  : - Path1    File is new                         - file85.txt
+INFO  : - Path1    File is new                         - file86.txt
+INFO  : - Path1    File is new                         - file87.txt
+INFO  : - Path1    File is new                         - file88.txt
+INFO  : - Path1    File is new                         - file89.txt
+INFO  : - Path1    File is new                         - file90.txt
+INFO  : - Path1    File is new                         - file91.txt
+INFO  : - Path1    File is new                         - file92.txt
+INFO  : - Path1    File is new                         - file93.txt
+INFO  : - Path1    File is new                         - file94.txt
+INFO  : - Path1    File is new                         - file95.txt
+INFO  : - Path1    File is new                         - file96.txt
+INFO  : - Path1    File is new                         - file97.txt
+INFO  : - Path1    File is new                         - file98.txt
+INFO  : - Path1    File is new                         - file99.txt
+INFO  : Path1:   51 changes:   51 new,    0 newer,    0 older,    0 deleted
+INFO  : Path2 checking for diffs
+INFO  : - Path2    File is new                         - file0.txt
+INFO  : - Path2    File is new                         - file10.txt
+INFO  : - Path2    File is new                         - file11.txt
+INFO  : - Path2    File is new                         - file12.txt
+INFO  : - Path2    File is new                         - file13.txt
+INFO  : - Path2    File is new                         - file14.txt
+INFO  : - Path2    File is new                         - file15.txt
+INFO  : - Path2    File is new                         - file16.txt
+INFO  : - Path2    File is new                         - file17.txt
+INFO  : - Path2    File is new                         - file18.txt
+INFO  : - Path2    File is new                         - file19.txt
+INFO  : - Path2    File is new                         - file20.txt
+INFO  : - Path2    File is new                         - file21.txt
+INFO  : - Path2    File is new                         - file22.txt
+INFO  : - Path2    File is new                         - file23.txt
+INFO  : - Path2    File is new                         - file24.txt
+INFO  : - Path2    File is new                         - file25.txt
+INFO  : - Path2    File is new                         - file26.txt
+INFO  : - Path2    File is new                         - file27.txt
+INFO  : - Path2    File is new                         - file28.txt
+INFO  : - Path2    File is new                         - file29.txt
+INFO  : - Path2    File is new                         - file30.txt
+INFO  : - Path2    File is new                         - file31.txt
+INFO  : - Path2    File is new                         - file32.txt
+INFO  : - Path2    File is new                         - file33.txt
+INFO  : - Path2    File is new                         - file34.txt
+INFO  : - Path2    File is new                         - file35.txt
+INFO  : - Path2    File is new                         - file36.txt
+INFO  : - Path2    File is new                         - file37.txt
+INFO  : - Path2    File is new                         - file38.txt
+INFO  : - Path2    File is new                         - file39.txt
+INFO  : - Path2    File is new                         - file40.txt
+INFO  : - Path2    File is new                         - file41.txt
+INFO  : - Path2    File is new                         - file42.txt
+INFO  : - Path2    File is new                         - file43.txt
+INFO  : - Path2    File is new                         - file44.txt
+INFO  : - Path2    File is new                         - file45.txt
+INFO  : - Path2    File is new                         - file46.txt
+INFO  : - Path2    File is new                         - file47.txt
+INFO  : - Path2    File is new                         - file48.txt
+INFO  : - Path2    File is new                         - file49.txt
+INFO  : - Path2    File is new                         - file5.txt
+INFO  : - Path2    File is new                         - file9.txt
+INFO  : Path2:   43 changes:   43 new,    0 newer,    0 older,    0 deleted
+INFO  : Applying changes
+INFO  : Checking potential conflicts...
+ERROR : file5.txt: md5 differ
+NOTICE: Local file system at {path2}: 1 differences found
+NOTICE: Local file system at {path2}: 1 errors while checking
+INFO  : Finished checking the potential conflicts. 1 differences found
+INFO  : - Path1    Queue copy to Path2                 - {path2/}file100.txt
+NOTICE: - WARNING  New or changed in both paths        - file5.txt
+NOTICE: - Path1    Renaming Path1 copy                 - {path1/}file5.txt..path1
+NOTICE: - Path1    Queue copy to Path2                 - {path2/}file5.txt..path1
+NOTICE: - Path2    Renaming Path2 copy                 - {path2/}file5.txt..path2
+NOTICE: - Path2    Queue copy to Path1                 - {path1/}file5.txt..path2
+INFO  : - Path1    Queue copy to Path2                 - {path2/}file51.txt
+INFO  : - Path1    Queue copy to Path2                 - {path2/}file52.txt
+INFO  : - Path1    Queue copy to Path2                 - {path2/}file53.txt
+INFO  : - Path1    Queue copy to Path2                 - {path2/}file54.txt
+INFO  : - Path1    Queue copy to Path2                 - {path2/}file55.txt
+INFO  : - Path1    Queue copy to Path2                 - {path2/}file56.txt
+INFO  : - Path1    Queue copy to Path2                 - {path2/}file57.txt
+INFO  : - Path1    Queue copy to Path2                 - {path2/}file58.txt
+INFO  : - Path1    Queue copy to Path2                 - {path2/}file59.txt
+INFO  : - Path1    Queue copy to Path2                 - {path2/}file60.txt
+INFO  : - Path1    Queue copy to Path2                 - {path2/}file61.txt
+INFO  : - Path1    Queue copy to Path2                 - {path2/}file62.txt
+INFO  : - Path1    Queue copy to Path2                 - {path2/}file63.txt
+INFO  : - Path1    Queue copy to Path2                 - {path2/}file64.txt
+INFO  : - Path1    Queue copy to Path2                 - {path2/}file65.txt
+INFO  : - Path1    Queue copy to Path2                 - {path2/}file66.txt
+INFO  : - Path1    Queue copy to Path2                 - {path2/}file67.txt
+INFO  : - Path1    Queue copy to Path2                 - {path2/}file68.txt
+INFO  : - Path1    Queue copy to Path2                 - {path2/}file69.txt
+INFO  : - Path1    Queue copy to Path2                 - {path2/}file70.txt
+INFO  : - Path1    Queue copy to Path2                 - {path2/}file71.txt
+INFO  : - Path1    Queue copy to Path2                 - {path2/}file72.txt
+INFO  : - Path1    Queue copy to Path2                 - {path2/}file73.txt
+INFO  : - Path1    Queue copy to Path2                 - {path2/}file74.txt
+INFO  : - Path1    Queue copy to Path2                 - {path2/}file75.txt
+INFO  : - Path1    Queue copy to Path2                 - {path2/}file76.txt
+INFO  : - Path1    Queue copy to Path2                 - {path2/}file77.txt
+INFO  : - Path1    Queue copy to Path2                 - {path2/}file78.txt
+INFO  : - Path1    Queue copy to Path2                 - {path2/}file79.txt
+INFO  : - Path1    Queue copy to Path2                 - {path2/}file80.txt
+INFO  : - Path1    Queue copy to Path2                 - {path2/}file81.txt
+INFO  : - Path1    Queue copy to Path2                 - {path2/}file82.txt
+INFO  : - Path1    Queue copy to Path2                 - {path2/}file83.txt
+INFO  : - Path1    Queue copy to Path2                 - {path2/}file84.txt
+INFO  : - Path1    Queue copy to Path2                 - {path2/}file85.txt
+INFO  : - Path1    Queue copy to Path2                 - {path2/}file86.txt
+INFO  : - Path1    Queue copy to Path2                 - {path2/}file87.txt
+INFO  : - Path1    Queue copy to Path2                 - {path2/}file88.txt
+INFO  : - Path1    Queue copy to Path2                 - {path2/}file89.txt
+INFO  : - Path1    Queue copy to Path2                 - {path2/}file90.txt
+INFO  : - Path1    Queue copy to Path2                 - {path2/}file91.txt
+INFO  : - Path1    Queue copy to Path2                 - {path2/}file92.txt
+INFO  : - Path1    Queue copy to Path2                 - {path2/}file93.txt
+INFO  : - Path1    Queue copy to Path2                 - {path2/}file94.txt
+INFO  : - Path1    Queue copy to Path2                 - {path2/}file95.txt
+INFO  : - Path1    Queue copy to Path2                 - {path2/}file96.txt
+INFO  : - Path1    Queue copy to Path2                 - {path2/}file97.txt
+INFO  : - Path1    Queue copy to Path2                 - {path2/}file98.txt
+INFO  : - Path1    Queue copy to Path2                 - {path2/}file99.txt
+INFO  : - Path2    Queue copy to Path1                 - {path1/}file0.txt
+INFO  : - Path2    Queue copy to Path1                 - {path1/}file10.txt
+INFO  : - Path2    Queue copy to Path1                 - {path1/}file11.txt
+INFO  : - Path2    Queue copy to Path1                 - {path1/}file12.txt
+INFO  : - Path2    Queue copy to Path1                 - {path1/}file13.txt
+INFO  : - Path2    Queue copy to Path1                 - {path1/}file14.txt
+INFO  : - Path2    Queue copy to Path1                 - {path1/}file15.txt
+INFO  : - Path2    Queue copy to Path1                 - {path1/}file16.txt
+INFO  : - Path2    Queue copy to Path1                 - {path1/}file17.txt
+INFO  : - Path2    Queue copy to Path1                 - {path1/}file18.txt
+INFO  : - Path2    Queue copy to Path1                 - {path1/}file19.txt
+INFO  : - Path2    Queue copy to Path1                 - {path1/}file20.txt
+INFO  : - Path2    Queue copy to Path1                 - {path1/}file21.txt
+INFO  : - Path2    Queue copy to Path1                 - {path1/}file22.txt
+INFO  : - Path2    Queue copy to Path1                 - {path1/}file23.txt
+INFO  : - Path2    Queue copy to Path1                 - {path1/}file24.txt
+INFO  : - Path2    Queue copy to Path1                 - {path1/}file25.txt
+INFO  : - Path2    Queue copy to Path1                 - {path1/}file26.txt
+INFO  : - Path2    Queue copy to Path1                 - {path1/}file27.txt
+INFO  : - Path2    Queue copy to Path1                 - {path1/}file28.txt
+INFO  : - Path2    Queue copy to Path1                 - {path1/}file29.txt
+INFO  : - Path2    Queue copy to Path1                 - {path1/}file30.txt
+INFO  : - Path2    Queue copy to Path1                 - {path1/}file31.txt
+INFO  : - Path2    Queue copy to Path1                 - {path1/}file32.txt
+INFO  : - Path2    Queue copy to Path1                 - {path1/}file33.txt
+INFO  : - Path2    Queue copy to Path1                 - {path1/}file34.txt
+INFO  : - Path2    Queue copy to Path1                 - {path1/}file35.txt
+INFO  : - Path2    Queue copy to Path1                 - {path1/}file36.txt
+INFO  : - Path2    Queue copy to Path1                 - {path1/}file37.txt
+INFO  : - Path2    Queue copy to Path1                 - {path1/}file38.txt
+INFO  : - Path2    Queue copy to Path1                 - {path1/}file39.txt
+INFO  : - Path2    Queue copy to Path1                 - {path1/}file40.txt
+INFO  : - Path2    Queue copy to Path1                 - {path1/}file41.txt
+INFO  : - Path2    Queue copy to Path1                 - {path1/}file42.txt
+INFO  : - Path2    Queue copy to Path1                 - {path1/}file43.txt
+INFO  : - Path2    Queue copy to Path1                 - {path1/}file44.txt
+INFO  : - Path2    Queue copy to Path1                 - {path1/}file45.txt
+INFO  : - Path2    Queue copy to Path1                 - {path1/}file46.txt
+INFO  : - Path2    Queue copy to Path1                 - {path1/}file47.txt
+INFO  : - Path2    Queue copy to Path1                 - {path1/}file48.txt
+INFO  : - Path2    Queue copy to Path1                 - {path1/}file49.txt
+INFO  : - Path2    Queue copy to Path1                 - {path1/}file9.txt
+INFO  : - Path2    Do queued copies to                 - Path1
+INFO  : - Path1    Do queued copies to                 - Path2
+INFO  : Updating listings
+INFO  : Validating listings for Path1 "{path1/}" vs Path2 "{path2/}"
+INFO  : Bisync successful
+
+(20)  : test changed on both paths - file5 (file5R, file5L)
+(21)  : touch-glob 2001-01-02 {datadir/} file5R.txt
+(22)  : copy-as {datadir/}file5R.txt {path2/} file5.txt
+(23)  : touch-glob 2001-03-04 {datadir/} file5L.txt
+(24)  : copy-as {datadir/}file5L.txt {path1/} file5.txt
+
+(25)  : test next bisync - should be no changes except dummy
+(26)  : test-func
+(27)  : bisync
+INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Path1 checking for diffs
+INFO  : - Path1    File is new                         - file5.txt
+INFO  : Path1:    1 changes:    1 new,    0 newer,    0 older,    0 deleted
+INFO  : Path2 checking for diffs
+INFO  : - Path2    File is new                         - file5.txt
+INFO  : Path2:    1 changes:    1 new,    0 newer,    0 older,    0 deleted
+INFO  : Applying changes
+INFO  : Checking potential conflicts...
+ERROR : file5.txt: md5 differ
+NOTICE: Local file system at {path2}: 1 differences found
+NOTICE: Local file system at {path2}: 1 errors while checking
+INFO  : Finished checking the potential conflicts. 1 differences found
+NOTICE: - WARNING  New or changed in both paths        - file5.txt
+NOTICE: - Path1    Renaming Path1 copy                 - {path1/}file5.txt..path1
+NOTICE: - Path1    Queue copy to Path2                 - {path2/}file5.txt..path1
+NOTICE: - Path2    Renaming Path2 copy                 - {path2/}file5.txt..path2
+NOTICE: - Path2    Queue copy to Path1                 - {path1/}file5.txt..path2
+INFO  : - Path2    Do queued copies to                 - Path1
+INFO  : - Path1    Do queued copies to                 - Path2
+INFO  : Updating listings
+INFO  : Validating listings for Path1 "{path1/}" vs Path2 "{path2/}"
+INFO  : Bisync successful
