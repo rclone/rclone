@@ -22,10 +22,10 @@ import (
 //
 //	func (bitsChoices) Choices() []BitsChoicesInfo {
 //		return []BitsChoicesInfo{
-//			{uint64(0), "OFF"}, // Optional Off value - "" if not defined
-//			{uint64(bitA), "A"},
-//			{uint64(bitB), "B"},
-//			{uint64(bitC), "C"},
+//			{Bit: uint64(0), Name: "OFF"}, // Optional Off value - "" if not defined
+//			{Bit: uint64(bitA), Name: "A"},
+//			{Bit: uint64(bitB), Name: "B"},
+//			{Bit: uint64(bitC), Name: "C"},
 //		}
 //	}
 type Bits[C BitsChoices] uint64
