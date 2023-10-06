@@ -5507,7 +5507,7 @@ func (w *s3ChunkWriter) Close() error {
 	return err
 }
 
-func (o *Object) uploadMultipart(ctx context.Context, src fs.ObjectInfo, in io.Reader) (wantETag, gotETag string, versionID *string, err error) {
+func (o *Object) uploadMultipart(ctx context.Context, src fs.ObjectInfo, in io.Reader, options []fs.OpenOption) (wantETag, gotETag string, versionID *string, err error) {
 	f := o.fs
 
 	// make concurrency machinery
@@ -5522,7 +5522,7 @@ func (o *Object) uploadMultipart(ctx context.Context, src fs.ObjectInfo, in io.R
 	var chunkSize int64
 	err = f.pacer.Call(func() (bool, error) {
 		var err error
-		chunkSize, chunkWriter, err = openChunkWriter(ctx, src.Remote(), src)
+		chunkSize, chunkWriter, err = openChunkWriter(ctx, src.Remote(), src, options...)
 		return f.shouldRetry(ctx, err)
 	})
 	if err != nil {
@@ -5941,7 +5941,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	var md5sumHex string
 	var req *s3.PutObjectInput
 	if multipart {
-		wantETag, gotETag, versionID, err = o.uploadMultipart(ctx, src, in)
+		wantETag, gotETag, versionID, err = o.uploadMultipart(ctx, src, in, options)
 	} else {
 		req, md5sumHex, err = o.buildS3Req(ctx, src, options)
 		if err != nil {
