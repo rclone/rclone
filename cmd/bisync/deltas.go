@@ -174,18 +174,21 @@ func (b *bisyncRun) findDeltas(fctx context.Context, f fs.Fs, oldListing, newLis
 			ds.deleted++
 			d |= deltaDeleted
 		} else {
-			if old.getTime(file) != now.getTime(file) {
-				if old.beforeOther(now, file) {
-					fs.Debugf(file, "(old: %v current: %v", old.getTime(file), now.getTime(file))
-					b.indent(msg, file, "File is newer")
-					d |= deltaNewer
-				} else { // Current version is older than prior sync.
-					fs.Debugf(file, "(old: %v current: %v", old.getTime(file), now.getTime(file))
-					b.indent(msg, file, "File is OLDER")
-					d |= deltaOlder
+			// skip dirs here, as we only care if they are new/deleted, not newer/older
+			if !now.isDir(file) {
+				if old.getTime(file) != now.getTime(file) {
+					if old.beforeOther(now, file) {
+						fs.Debugf(file, "(old: %v current: %v", old.getTime(file), now.getTime(file))
+						b.indent(msg, file, "File is newer")
+						d |= deltaNewer
+					} else { // Current version is older than prior sync.
+						fs.Debugf(file, "(old: %v current: %v", old.getTime(file), now.getTime(file))
+						b.indent(msg, file, "File is OLDER")
+						d |= deltaOlder
+					}
 				}
+				// TODO Compare sizes and hashes
 			}
-			// TODO Compare sizes and hashes
 		}
 
 		if d.is(deltaModified) {
