@@ -128,6 +128,17 @@ func (ls *fileList) getTime(file string) time.Time {
 	return fi.time
 }
 
+// also returns false if not found
+func (ls *fileList) isDir(file string) bool {
+	fi := ls.get(file)
+	if fi != nil {
+		if fi.flags == "d" {
+			return true
+		}
+	}
+	return false
+}
+
 func (ls *fileList) beforeOther(other *fileList, file string) bool {
 	thisTime := ls.getTime(file)
 	thatTime := other.getTime(file)
