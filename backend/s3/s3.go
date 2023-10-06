@@ -6070,7 +6070,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	var err error
 	var ui uploadInfo
 	if multipart {
-		wantETag, gotETag, versionID, ui, err = o.uploadMultipart(ctx, src, in)
+		wantETag, gotETag, versionID, ui, err = o.uploadMultipart(ctx, src, in, options...)
 	} else {
 		ui, err = o.prepareUpload(ctx, src, options)
 		if err != nil {
