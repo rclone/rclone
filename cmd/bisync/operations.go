@@ -45,6 +45,8 @@ type queues struct {
 	renamed1      bilib.Names // renamed on 1 and copied to 2
 	renamed2      bilib.Names // renamed on 2 and copied to 1
 	renameSkipped bilib.Names // not renamed because it was equal
+	skippedDirs1  *fileList
+	skippedDirs2  *fileList
 	deletedonboth bilib.Names
 }
 
@@ -217,10 +219,15 @@ func (b *bisyncRun) runLocked(octx context.Context) (err error) {
 		return errors.New("cannot find prior Path1 or Path2 listings, likely due to critical error on prior run")
 	}
 
+	fs.Infof(nil, "Building Path1 and Path2 listings")
+	ls1, ls2, err = b.makeMarchListing(fctx)
+	if err != nil {
+		return err
+	}
+
 	// Check for Path1 deltas relative to the prior sync
 	fs.Infof(nil, "Path1 checking for diffs")
-	newListing1 := b.listing1 + "-new"
-	ds1, err := b.findDeltas(fctx, b.fs1, b.listing1, newListing1, "Path1")
+	ds1, err := b.findDeltas(fctx, b.fs1, b.listing1, ls1, "Path1")
 	if err != nil {
 		return err
 	}
@@ -228,8 +235,7 @@ func (b *bisyncRun) runLocked(octx context.Context) (err error) {
 
 	// Check for Path2 deltas relative to the prior sync
 	fs.Infof(nil, "Path2 checking for diffs")
-	newListing2 := b.listing2 + "-new"
-	ds2, err := b.findDeltas(fctx, b.fs2, b.listing2, newListing2, "Path2")
+	ds2, err := b.findDeltas(fctx, b.fs2, b.listing2, ls2, "Path2")
 	if err != nil {
 		return err
 	}
@@ -298,8 +304,7 @@ func (b *bisyncRun) runLocked(octx context.Context) (err error) {
 	b.saveOldListings()
 	// save new listings
 	if noChanges {
-		err1 = bilib.CopyFileIfExists(newListing1, b.listing1)
-		err2 = bilib.CopyFileIfExists(newListing2, b.listing2)
+		b.replaceCurrentListings()
 	} else {
 		if changes1 { // 2to1
 			err1 = b.modifyListing(fctx, b.fs2, b.fs1, results2to1, queues, false)
@@ -360,7 +365,10 @@ func (b *bisyncRun) runLocked(octx context.Context) (err error) {
 func (b *bisyncRun) resync(octx, fctx context.Context) error {
 	fs.Infof(nil, "Copying unique Path2 files to Path1")
 
-	filesNow1, err := b.makeListing(fctx, b.fs1, b.newListing1)
+	// TODO: remove this listing eventually.
+	// Listing here is only really necessary for our --ignore-existing logic
+	// which would be more efficiently implemented by setting ci.IgnoreExisting
+	filesNow1, filesNow2, err := b.makeMarchListing(fctx)
 	if err == nil {
 		err = b.checkListing(filesNow1, b.newListing1, "current Path1")
 	}
@@ -368,10 +376,7 @@ func (b *bisyncRun) resync(octx, fctx context.Context) error {
 		return err
 	}
 
-	filesNow2, err := b.makeListing(fctx, b.fs2, b.newListing2)
-	if err == nil {
-		err = b.checkListing(filesNow2, b.newListing2, "current Path2")
-	}
+	err = b.checkListing(filesNow2, b.newListing2, "current Path2")
 	if err != nil {
 		return err
 	}
@@ -468,13 +473,8 @@ func (b *bisyncRun) resync(octx, fctx context.Context) error {
 	}
 
 	fs.Infof(nil, "Resync updating listings")
-	b.saveOldListings() // TODO: also make replaceCurrentListings?
-	if err := bilib.CopyFileIfExists(b.newListing1, b.listing1); err != nil {
-		return err
-	}
-	if err := bilib.CopyFileIfExists(b.newListing2, b.listing2); err != nil {
-		return err
-	}
+	b.saveOldListings()
+	b.replaceCurrentListings()
 
 	// resync 2to1
 	queues.copy2to1 = bilib.ToNames(copy2to1)
@@ -572,5 +572,19 @@ func (b *bisyncRun) checkAccess(checkFiles1, checkFiles2 bilib.Names) error {
 func (b *bisyncRun) testFn() {
 	if b.opt.TestFn != nil {
 		b.opt.TestFn()
+	}
+}
+
+func (b *bisyncRun) handleErr(o interface{}, msg string, err error, critical, retryable bool) {
+	if err != nil {
+		if retryable {
+			b.retryable = true
+		}
+		if critical {
+			b.critical = true
+			fs.Errorf(o, "%s: %v", msg, err)
+		} else {
+			fs.Debugf(o, "%s: %v", msg, err)
+		}
 	}
 }

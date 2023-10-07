@@ -137,8 +137,9 @@ func (b *bisyncRun) checkconflicts(ctxCheck context.Context, filterCheck *filter
 }
 
 // findDeltas
-func (b *bisyncRun) findDeltas(fctx context.Context, f fs.Fs, oldListing, newListing, msg string) (ds *deltaSet, err error) {
-	var old, now *fileList
+func (b *bisyncRun) findDeltas(fctx context.Context, f fs.Fs, oldListing string, now *fileList, msg string) (ds *deltaSet, err error) {
+	var old *fileList
+	newListing := oldListing + "-new"
 
 	old, err = b.loadListing(oldListing)
 	if err != nil {
@@ -150,7 +151,6 @@ func (b *bisyncRun) findDeltas(fctx context.Context, f fs.Fs, oldListing, newLis
 		return
 	}
 
-	now, err = b.makeListing(fctx, f, newListing)
 	if err == nil {
 		err = b.checkListing(now, newListing, "current "+msg)
 	}
@@ -235,6 +235,8 @@ func (b *bisyncRun) applyDeltas(ctx context.Context, ds1, ds2 *deltaSet) (change
 	renamed2 := bilib.Names{}
 	renameSkipped := bilib.Names{}
 	deletedonboth := bilib.Names{}
+	skippedDirs1 := newFileList()
+	skippedDirs2 := newFileList()
 
 	ctxMove := b.opt.setDryRun(ctx)
 
@@ -304,6 +306,8 @@ func (b *bisyncRun) applyDeltas(ctx context.Context, ds1, ds2 *deltaSet) (change
 				//if files are identical, leave them alone instead of renaming
 				if dirs1.has(file) && dirs2.has(file) {
 					fs.Debugf(nil, "This is a directory, not a file. Skipping equality check and will not rename: %s", file)
+					ls1.getPut(file, skippedDirs1)
+					ls2.getPut(file, skippedDirs2)
 				} else {
 					equal := matches.Has(file)
 					if equal {
@@ -424,6 +428,8 @@ func (b *bisyncRun) applyDeltas(ctx context.Context, ds1, ds2 *deltaSet) (change
 	queues.renamed2 = renamed2
 	queues.renameSkipped = renameSkipped
 	queues.deletedonboth = deletedonboth
+	queues.skippedDirs1 = skippedDirs1
+	queues.skippedDirs2 = skippedDirs2
 
 	return
 }

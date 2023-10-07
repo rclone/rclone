@@ -19,6 +19,7 @@ INFO  : [32mBisync successful[0m
 [36m(09)  :[0m [34mtest normal sync of subdirs with extended chars[0m
 [36m(10)  :[0m [34mbisync subdir=測試_Русский_{spc}_{spc}_ě_áñ[0m
 INFO  : Synching Path1 "{path1/}測試_Русский_ _ _ě_áñ/" with Path2 "{path2/}測試_Русский_ _ _ě_áñ/"
+INFO  : Building Path1 and Path2 listings
 INFO  : Path1 checking for diffs
 INFO  : - [34mPath1[0m    [35mFile is new[0m                        - [36m測試_file1p1[0m
 INFO  : Path1:    1 changes:    1 new,    0 newer,    0 older,    0 deleted
@@ -45,6 +46,7 @@ INFO  : [32mBisync successful[0m
 [36m(14)  :[0m [34mdelete-file {path1/}測試_Русский_{spc}_{spc}_ě_áñ/測試_check{spc}file[0m
 [36m(15)  :[0m [34mbisync check-access check-filename=測試_check{spc}file[0m
 INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Building Path1 and Path2 listings
 INFO  : Path1 checking for diffs
 INFO  : - [34mPath1[0m    [35mFile was deleted[0m                   - [36m測試_Русский_ _ _ě_áñ/測試_check file[0m
 INFO  : Path1:    1 changes:    0 new,    0 newer,    0 older,    1 deleted
@@ -68,6 +70,7 @@ INFO  : Resync updating listings
 INFO  : [32mBisync successful[0m
 [36m(19)  :[0m [34mbisync check-access check-filename=測試_check{spc}file[0m
 INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Building Path1 and Path2 listings
 INFO  : Path1 checking for diffs
 INFO  : Path2 checking for diffs
 INFO  : Checking access health
@@ -92,6 +95,7 @@ INFO  : [32mBisync successful[0m
 [36m(25)  :[0m [34mbisync filters-file={workdir/}測試_filtersfile.txt[0m
 INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
 INFO  : Using filters file {workdir/}測試_filtersfile.txt
+INFO  : Building Path1 and Path2 listings
 INFO  : Path1 checking for diffs
 INFO  : Path2 checking for diffs
 INFO  : No changes found

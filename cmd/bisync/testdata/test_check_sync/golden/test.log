@@ -51,6 +51,7 @@ INFO  : [32mBisync successful[0m
 [36m(20)  :[0m [34mtest 7. run normal sync with check-sync enabled (default)[0m
 [36m(21)  :[0m [34mbisync[0m
 INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Building Path1 and Path2 listings
 INFO  : Path1 checking for diffs
 INFO  : Path2 checking for diffs
 INFO  : No changes found
@@ -61,6 +62,7 @@ INFO  : [32mBisync successful[0m
 [36m(22)  :[0m [34mtest 8. run normal sync with no-check-sync[0m
 [36m(23)  :[0m [34mbisync no-check-sync[0m
 INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Building Path1 and Path2 listings
 INFO  : Path1 checking for diffs
 INFO  : Path2 checking for diffs
 INFO  : No changes found

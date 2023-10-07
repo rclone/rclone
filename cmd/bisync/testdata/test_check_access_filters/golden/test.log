@@ -18,6 +18,7 @@ INFO  : [32mBisync successful[0m
 [36m(07)  :[0m [34mbisync check-access filters-file={workdir/}exclude-other-filtersfile.txt[0m
 INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
 INFO  : Using filters file {workdir/}exclude-other-filtersfile.txt
+INFO  : Building Path1 and Path2 listings
 INFO  : Path1 checking for diffs
 INFO  : Path2 checking for diffs
 INFO  : Checking access health
@@ -38,6 +39,7 @@ INFO  : [32mBisync successful[0m
 [36m(15)  :[0m [34mbisync check-access filters-file={workdir/}exclude-other-filtersfile.txt[0m
 INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
 INFO  : Using filters file {workdir/}exclude-other-filtersfile.txt
+INFO  : Building Path1 and Path2 listings
 INFO  : Path1 checking for diffs
 INFO  : Path2 checking for diffs
 INFO  : Checking access health
@@ -56,6 +58,7 @@ INFO  : [32mBisync successful[0m
 [36m(21)  :[0m [34mbisync check-access filters-file={workdir/}exclude-other-filtersfile.txt[0m
 INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
 INFO  : Using filters file {workdir/}exclude-other-filtersfile.txt
+INFO  : Building Path1 and Path2 listings
 INFO  : Path1 checking for diffs
 INFO  : - [34mPath1[0m    [35mFile was deleted[0m                   - [36msubdir/RCLONE_TEST[0m
 INFO  : Path1:    1 changes:    0 new,    0 newer,    0 older,    1 deleted
@@ -88,6 +91,7 @@ INFO  : [32mBisync successful[0m
 [36m(30)  :[0m [34mbisync check-access filters-file={workdir/}include-other-filtersfile.txt[0m
 INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
 INFO  : Using filters file {workdir/}include-other-filtersfile.txt
+INFO  : Building Path1 and Path2 listings
 INFO  : Path1 checking for diffs
 INFO  : Path2 checking for diffs
 INFO  : Checking access health
@@ -107,6 +111,7 @@ INFO  : [32mBisync successful[0m
 [36m(37)  :[0m [34mbisync check-access filters-file={workdir/}include-other-filtersfile.txt[0m
 INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
 INFO  : Using filters file {workdir/}include-other-filtersfile.txt
+INFO  : Building Path1 and Path2 listings
 INFO  : Path1 checking for diffs
 INFO  : Path2 checking for diffs
 INFO  : Checking access health
@@ -126,6 +131,7 @@ INFO  : [32mBisync successful[0m
 [36m(44)  :[0m [34mbisync check-access filters-file={workdir/}include-other-filtersfile.txt[0m
 INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
 INFO  : Using filters file {workdir/}include-other-filtersfile.txt
+INFO  : Building Path1 and Path2 listings
 INFO  : Path1 checking for diffs
 INFO  : - [34mPath1[0m    [35mFile was deleted[0m                   - [36msubdir/RCLONE_TEST[0m
 INFO  : - [34mPath1[0m    [35mFile was deleted[0m                   - [36msubdirX/subdirX1/RCLONE_TEST[0m
@@ -136,8 +142,8 @@ INFO  : Path2:    1 changes:    0 new,    0 newer,    0 older,    1 deleted
 INFO  : Checking access health
 ERROR : Access test failed: Path1 count 3, Path2 count 4 - RCLONE_TEST
 ERROR : - [34m[0m         [35mAccess test failed: Path1 file not found in Path2[0m - [36mRCLONE_TEST[0m
-ERROR : - [34m[0m         [35mAccess test failed: Path2 file not found in Path1[0m - [36msubdirX/subdirX1/RCLONE_TEST[0m
 ERROR : - [34m[0m         [35mAccess test failed: Path2 file not found in Path1[0m - [36msubdir/RCLONE_TEST[0m
+ERROR : - [34m[0m         [35mAccess test failed: Path2 file not found in Path1[0m - [36msubdirX/subdirX1/RCLONE_TEST[0m
 ERROR : [31mBisync critical error: check file check failed[0m
 ERROR : [31mBisync aborted. Must run --resync to recover.[0m
 Bisync error: bisync aborted

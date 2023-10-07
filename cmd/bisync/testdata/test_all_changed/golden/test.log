@@ -16,6 +16,7 @@ INFO  : [32mBisync successful[0m
 [36m(07)  :[0m [34mtest sync should pass[0m
 [36m(08)  :[0m [34mbisync[0m
 INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Building Path1 and Path2 listings
 INFO  : Path1 checking for diffs
 INFO  : - [34mPath1[0m    [35mFile is newer[0m                      - [36mfile1.copy1.txt[0m
 INFO  : - [34mPath1[0m    [35mFile is newer[0m                      - [36mfile1.copy2.txt[0m
@@ -46,6 +47,7 @@ INFO  : [32mBisync successful[0m
 [36m(12)  :[0m [34mtest sync should fail[0m
 [36m(13)  :[0m [34mbisync[0m
 INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Building Path1 and Path2 listings
 INFO  : Path1 checking for diffs
 INFO  : - [34mPath1[0m    [35mFile is newer[0m                      - [36mRCLONE_TEST[0m
 INFO  : - [34mPath1[0m    [35mFile is OLDER[0m                      - [36mfile1.copy1.txt[0m
@@ -64,6 +66,7 @@ Bisync error: all files were changed
 [36m(14)  :[0m [34mtest sync with force should pass[0m
 [36m(15)  :[0m [34mbisync force[0m
 INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Building Path1 and Path2 listings
 INFO  : Path1 checking for diffs
 INFO  : - [34mPath1[0m    [35mFile is newer[0m                      - [36mRCLONE_TEST[0m
 INFO  : - [34mPath1[0m    [35mFile is OLDER[0m                      - [36mfile1.copy1.txt[0m
