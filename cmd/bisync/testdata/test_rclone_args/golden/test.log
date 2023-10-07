@@ -23,6 +23,7 @@ INFO  : [32mBisync successful[0m
 [36m(10)  :[0m [34mtest run bisync with custom options[0m
 [36m(11)  :[0m [34mbisync size-only[0m
 INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Building Path1 and Path2 listings
 INFO  : Path1 checking for diffs
 INFO  : - [34mPath1[0m    [35mFile is newer[0m                      - [36mfile1.txt[0m
 INFO  : - [34mPath1[0m    [35mFile is newer[0m                      - [36msubdir/file20.txt[0m

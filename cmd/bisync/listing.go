@@ -12,7 +12,6 @@ import (
 	"sort"
 	"strconv"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/rclone/rclone/cmd/bisync/bilib"
@@ -20,7 +19,6 @@ import (
 	"github.com/rclone/rclone/fs/filter"
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/fs/operations"
-	"github.com/rclone/rclone/fs/walk"
 	"golang.org/x/exp/slices"
 )
 
@@ -70,6 +68,9 @@ func newFileList() *fileList {
 }
 
 func (ls *fileList) empty() bool {
+	if ls == nil {
+		return true
+	}
 	return len(ls.list) == 0
 }
 
@@ -97,6 +98,12 @@ func (ls *fileList) get(file string) *fileInfo {
 func (ls *fileList) getPut(file string, dest *fileList) {
 	f := ls.get(file)
 	dest.put(file, f.size, f.time, f.hash, f.id, f.flags)
+}
+
+func (ls *fileList) getPutAll(dest *fileList) {
+	for file, f := range ls.info {
+		dest.put(file, f.size, f.time, f.hash, f.id, f.flags)
+	}
 }
 
 func (ls *fileList) remove(file string) {
@@ -292,13 +299,16 @@ func (b *bisyncRun) loadListing(listing string) (*fileList, error) {
 	return ls, nil
 }
 
+// saveOldListings saves the most recent successful listing, in case we need to rollback on error
 func (b *bisyncRun) saveOldListings() {
-	if err := bilib.CopyFileIfExists(b.listing1, b.listing1+"-old"); err != nil {
-		fs.Debugf(b.listing1, "error saving old listing1: %v", err)
-	}
-	if err := bilib.CopyFileIfExists(b.listing2, b.listing2+"-old"); err != nil {
-		fs.Debugf(b.listing1, "error saving old listing2: %v", err)
-	}
+	b.handleErr(b.listing1, "error saving old Path1 listing", bilib.CopyFileIfExists(b.listing1, b.listing1+"-old"), true, true)
+	b.handleErr(b.listing2, "error saving old Path2 listing", bilib.CopyFileIfExists(b.listing2, b.listing2+"-old"), true, true)
+}
+
+// replaceCurrentListings saves both ".lst-new" listings as ".lst"
+func (b *bisyncRun) replaceCurrentListings() {
+	b.handleErr(b.newListing1, "error replacing Path1 listing", bilib.CopyFileIfExists(b.newListing1, b.listing1), true, true)
+	b.handleErr(b.newListing2, "error replacing Path2 listing", bilib.CopyFileIfExists(b.newListing2, b.listing2), true, true)
 }
 
 func parseHash(str string) (string, string, error) {
@@ -312,71 +322,6 @@ func parseHash(str string) (string, string, error) {
 		}
 	}
 	return "", "", fmt.Errorf("invalid hash %q", str)
-}
-
-// makeListing will produce listing from directory tree and write it to a file
-func (b *bisyncRun) makeListing(ctx context.Context, f fs.Fs, listing string) (ls *fileList, err error) {
-	ci := fs.GetConfig(ctx)
-	depth := ci.MaxDepth
-	hashType := hash.None
-	if !b.opt.IgnoreListingChecksum {
-		// Currently bisync just honors --ignore-listing-checksum
-		// (note that this is different from --ignore-checksum)
-		// TODO add full support for checksums and related flags
-		hashType = f.Hashes().GetOne()
-	}
-	ls = newFileList()
-	ls.hash = hashType
-	var lock sync.Mutex
-	listType := walk.ListObjects
-	if b.opt.CreateEmptySrcDirs {
-		listType = walk.ListAll
-	}
-	err = walk.ListR(ctx, f, "", false, depth, listType, func(entries fs.DirEntries) error {
-		var firstErr error
-		entries.ForObject(func(o fs.Object) {
-			//tr := accounting.Stats(ctx).NewCheckingTransfer(o) // TODO
-			var (
-				hashVal string
-				hashErr error
-			)
-			if hashType != hash.None {
-				hashVal, hashErr = o.Hash(ctx, hashType)
-				if firstErr == nil {
-					firstErr = hashErr
-				}
-			}
-			time := o.ModTime(ctx).In(TZ)
-			id := ""     // TODO
-			flags := "-" // "-" for a file and "d" for a directory
-			lock.Lock()
-			ls.put(o.Remote(), o.Size(), time, hashVal, id, flags)
-			lock.Unlock()
-			//tr.Done(ctx, nil) // TODO
-		})
-		if b.opt.CreateEmptySrcDirs {
-			entries.ForDir(func(o fs.Directory) {
-				var (
-					hashVal string
-				)
-				time := o.ModTime(ctx).In(TZ)
-				id := ""     // TODO
-				flags := "d" // "-" for a file and "d" for a directory
-				lock.Lock()
-				//record size as 0 instead of -1, so bisync doesn't think it's a google doc
-				ls.put(o.Remote(), 0, time, hashVal, id, flags)
-				lock.Unlock()
-			})
-		}
-		return firstErr
-	})
-	if err == nil {
-		err = ls.save(ctx, listing)
-	}
-	if err != nil {
-		b.abort = true
-	}
-	return
 }
 
 // checkListing verifies that listing is not empty (unless resynching)
@@ -542,8 +487,6 @@ func (b *bisyncRun) modifyListing(ctx context.Context, src fs.Fs, dst fs.Fs, res
 	updateLists("src", srcWinners, srcList)
 	updateLists("dst", dstWinners, dstList)
 
-	// TODO: rollback on error
-
 	// account for "deltaOthers" we handled separately
 	if queues.deletedonboth.NotEmpty() {
 		for file := range queues.deletedonboth {
@@ -587,7 +530,7 @@ func (b *bisyncRun) modifyListing(ctx context.Context, src fs.Fs, dst fs.Fs, res
 
 	// recheck the ones we skipped because they were equal
 	// we never got their info because they were never synced.
-	// TODO: add flag to skip this for people who don't care and would rather avoid?
+	// TODO: add flag to skip this? (since it re-lists)
 	if queues.renameSkipped.NotEmpty() {
 		skippedList := queues.renameSkipped.ToList()
 		for _, file := range skippedList {
@@ -595,6 +538,20 @@ func (b *bisyncRun) modifyListing(ctx context.Context, src fs.Fs, dst fs.Fs, res
 				fs.Debugf(file, "error adding file to recheck filter: %v", err)
 			}
 		}
+	}
+	// skipped dirs -- nothing to recheck, just add them
+	// (they are not necessarily there already, if they are new)
+	path1List := srcList
+	path2List := dstList
+	if !is1to2 {
+		path1List = dstList
+		path2List = srcList
+	}
+	if !queues.skippedDirs1.empty() {
+		queues.skippedDirs1.getPutAll(path1List)
+	}
+	if !queues.skippedDirs2.empty() {
+		queues.skippedDirs2.getPutAll(path2List)
 	}
 
 	if filterRecheck.HaveFilesFrom() {
@@ -665,9 +622,9 @@ func (b *bisyncRun) recheck(ctxRecheck context.Context, src, dst fs.Fs, srcList,
 	if len(toRollback) > 0 {
 		srcListing, dstListing := b.getListingNames(is1to2)
 		oldSrc, err := b.loadListing(srcListing + "-old")
-		handleErr(oldSrc, "error loading old src listing", err) // TODO: make this critical?
+		b.handleErr(oldSrc, "error loading old src listing", err, true, true)
 		oldDst, err := b.loadListing(dstListing + "-old")
-		handleErr(oldDst, "error loading old dst listing", err) // TODO: make this critical?
+		b.handleErr(oldDst, "error loading old dst listing", err, true, true)
 
 		for _, item := range toRollback {
 			rollback(item, oldSrc, srcList)
@@ -681,13 +638,6 @@ func (b *bisyncRun) getListingNames(is1to2 bool) (srcListing string, dstListing 
 		return b.listing1, b.listing2
 	}
 	return b.listing2, b.listing1
-}
-
-func handleErr(o interface{}, msg string, err error) {
-	// TODO: add option to make critical?
-	if err != nil {
-		fs.Debugf(o, "%s: %v", msg, err)
-	}
 }
 
 func rollback(item string, oldList, newList *fileList) {

@@ -19,6 +19,7 @@ INFO  : [32mBisync successful[0m
 [36m(10)  :[0m [34mtest sync should fail due to too many local deletes[0m
 [36m(11)  :[0m [34mbisync[0m
 INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Building Path1 and Path2 listings
 INFO  : Path1 checking for diffs
 INFO  : - [34mPath1[0m    [35mFile was deleted[0m                   - [36mfile1.txt[0m
 INFO  : - [34mPath1[0m    [35mFile was deleted[0m                   - [36mfile2.txt[0m
@@ -35,6 +36,7 @@ Bisync error: too many deletes
 [36m(13)  :[0m [34mtest change max-delete limit to 60%. sync should run.[0m
 [36m(14)  :[0m [34mbisync max-delete=60[0m
 INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Building Path1 and Path2 listings
 INFO  : Path1 checking for diffs
 INFO  : - [34mPath1[0m    [35mFile was deleted[0m                   - [36mfile1.txt[0m
 INFO  : - [34mPath1[0m    [35mFile was deleted[0m                   - [36mfile2.txt[0m

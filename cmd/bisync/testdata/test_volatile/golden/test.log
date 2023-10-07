@@ -18,6 +18,7 @@ INFO  : [32mBisync successful[0m
 [36m(10)  :[0m [34mtest-func[0m
 [36m(11)  :[0m [34mbisync[0m
 INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Building Path1 and Path2 listings
 INFO  : Path1 checking for diffs
 INFO  : - [34mPath1[0m    [35mFile is newer[0m                      - [36mfile5.txt[0m
 INFO  : Path1:    1 changes:    0 new,    1 newer,    0 older,    0 deleted
@@ -51,6 +52,7 @@ INFO  : [32mBisync successful[0m
 [36m(18)  :[0m [34mtest-func[0m
 [36m(19)  :[0m [34mbisync[0m
 INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Building Path1 and Path2 listings
 INFO  : Path1 checking for diffs
 INFO  : - [34mPath1[0m    [35mFile is new[0m                        - [36mfile100.txt[0m
 INFO  : - [34mPath1[0m    [35mFile is new[0m                        - [36mfile5.txt[0m
@@ -268,6 +270,7 @@ INFO  : [32mBisync successful[0m
 [36m(26)  :[0m [34mtest-func[0m
 [36m(27)  :[0m [34mbisync[0m
 INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Building Path1 and Path2 listings
 INFO  : Path1 checking for diffs
 INFO  : - [34mPath1[0m    [35mFile is new[0m                        - [36mfile5.txt[0m
 INFO  : Path1:    1 changes:    1 new,    0 newer,    0 older,    0 deleted

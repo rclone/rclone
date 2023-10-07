@@ -49,6 +49,7 @@ INFO  : [32mBisync successful[0m
 [36m(31)  :[0m [34mtest bisync run[0m
 [36m(32)  :[0m [34mbisync[0m
 INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Building Path1 and Path2 listings
 INFO  : Path1 checking for diffs
 INFO  : - [34mPath1[0m    [35mFile is newer[0m                      - [36mfile2.txt[0m
 INFO  : - [34mPath1[0m    [35mFile was deleted[0m                   - [36mfile4.txt[0m

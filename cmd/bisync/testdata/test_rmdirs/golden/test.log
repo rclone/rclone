@@ -15,6 +15,7 @@ INFO  : [32mBisync successful[0m
 [36m(06)  :[0m [34mtest 2. run bisync without remove-empty-dirs[0m
 [36m(07)  :[0m [34mbisync[0m
 INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Building Path1 and Path2 listings
 INFO  : Path1 checking for diffs
 INFO  : - [34mPath1[0m    [35mFile was deleted[0m                   - [36msubdir/file20.txt[0m
 INFO  : Path1:    1 changes:    0 new,    0 newer,    0 older,    1 deleted
@@ -35,6 +36,7 @@ subdir/
 [36m(11)  :[0m [34mtest 4. run bisync with remove-empty-dirs[0m
 [36m(12)  :[0m [34mbisync remove-empty-dirs[0m
 INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Building Path1 and Path2 listings
 INFO  : Path1 checking for diffs
 INFO  : Path2 checking for diffs
 INFO  : No changes found
