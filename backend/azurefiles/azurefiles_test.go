@@ -11,6 +11,7 @@ import (
 
 	"github.com/Azure/azure-sdk-for-go/sdk/storage/azfile/file"
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/fstest"
 	"github.com/rclone/rclone/fstest/fstests"
 	"github.com/stretchr/testify/assert"
@@ -416,6 +417,22 @@ func newTests(t *testing.T) {
 			_, isDirErr := azf.isDirectory(context.TODO(), randomPath)
 			assert.Error(t, isDirErr)
 		})
+	})
+	t.Run("CopyFile", func(t *testing.T) {
+		randomName := RandomString(10)
+		data, srcForPutting := RandomPuttableObject(randomName)
+		srcObj, errPut := f.Put(context.TODO(), data, srcForPutting, nil)
+		assert.NoError(t, errPut)
+
+		destPath := path.Join(RandomString(10), RandomString(10))
+
+		destObj, errCopy := azf.CopyFile(context.TODO(), srcObj, destPath)
+		assert.NoError(t, errCopy)
+		srcHash, srcHashErr := srcObj.Hash(context.TODO(), hash.MD5)
+		assert.NoError(t, srcHashErr)
+		destHash, destHashErr := destObj.Hash(context.TODO(), hash.MD5)
+		assert.NoError(t, destHashErr)
+		assert.Equal(t, srcHash, destHash)
 	})
 
 }

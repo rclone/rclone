@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"log/slog"
 	"path"
 	"time"
 
@@ -189,7 +190,80 @@ func (f *Fs) Hashes() hash.Set {
 func (f *Fs) Features() *fs.Features {
 	return &fs.Features{
 		CanHaveEmptyDirectories: true,
+		Copy: func(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
+			return f.CopyFile(ctx, src, remote)
+		},
 	}
+}
+
+func (f *Fs) CopyFile(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
+	// TODO: add copyfile timeout
+	fc := f.NewFileClient(remote)
+	srcUrl := f.NewFileClient(src.Remote()).URL()
+	if len([]byte(srcUrl)) > 2048 {
+		return nil, fs.ErrorCantCopy
+	}
+	// TODO: return metadata
+	options := &file.StartCopyFromURLOptions{
+		// Metadata: src.ModTime(),
+	}
+	resp, err := fc.StartCopyFromURL(ctx, srcUrl, options)
+	if fileerror.HasCode(err, fileerror.ParentNotFound) {
+		if mkDirErr := f.Mkdir(ctx, path.Dir(remote)); mkDirErr != nil {
+			return nil, fmt.Errorf("parent was not found hence attempted to make parent but that too failed : %w", mkDirErr)
+		}
+		resp, err = fc.StartCopyFromURL(ctx, srcUrl, options)
+		if err != nil {
+			return nil, fmt.Errorf("StartCopyFromURL error despite making parent directory : %w", err)
+		}
+
+	} else if err != nil {
+		return nil, fmt.Errorf("could not StartCopyFromUrl : %w", err)
+	}
+	switch string(*resp.CopyStatus) {
+	case "success":
+		break
+	case "aborted", "failed":
+		return nil, errors.New("could not complete copy operation because of failure or abort")
+	case "pending":
+		if err := f.wasCopySuccessFul(ctx, remote); err != nil {
+			return nil, err
+		}
+	default:
+		errorMessage := fmt.Sprintf("could not complete copy operation because returned CopyStatus is %s", string(*resp.CopyStatus))
+		return nil, errors.New(errorMessage)
+	}
+
+	// TODO: return object with proper metaData and properties
+	return &Object{
+		common: common{
+			f:          f,
+			remote:     remote,
+			properties: properties{},
+		},
+	}, nil
+}
+
+func (f *Fs) wasCopySuccessFul(ctx context.Context, remote string) error {
+	fc := f.NewFileClient(remote)
+	var copyStatus string
+	totalSecondsSlept := 0
+	for i := 1; i < 10; i++ {
+		seconds := 1 << i
+		totalSecondsSlept += seconds
+		slog.Info(fmt.Sprintf("sleeping for %d seconds before checking file copy status", seconds))
+		time.Sleep(time.Second * time.Duration(seconds))
+		props, err := fc.GetProperties(ctx, nil)
+		copyStatus = string(*props.CopyStatus)
+		if err != nil {
+			return err
+		}
+		if copyStatus == "success" {
+			return nil
+		}
+	}
+	errorMessage := fmt.Sprintf("despite sleeping for %d copy did not succeed but failed with copyStatus:%s ", totalSecondsSlept, copyStatus)
+	return errors.New(errorMessage)
 }
 
 // TODO: handle case regariding "" and "/". I remember reading about them somewhere
