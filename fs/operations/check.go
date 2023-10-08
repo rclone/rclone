@@ -335,7 +335,8 @@ func CheckIdenticalDownload(ctx context.Context, dst, src fs.Object) (differ boo
 
 // Does the work for CheckIdenticalDownload
 func checkIdenticalDownload(ctx context.Context, dst, src fs.Object) (differ bool, err error) {
-	in1, err := Open(ctx, dst)
+	var in1, in2 io.ReadCloser
+	in1, err = Open(ctx, dst)
 	if err != nil {
 		return true, fmt.Errorf("failed to open %q: %w", dst, err)
 	}
@@ -345,7 +346,7 @@ func checkIdenticalDownload(ctx context.Context, dst, src fs.Object) (differ boo
 	}()
 	in1 = tr1.Account(ctx, in1).WithBuffer() // account and buffer the transfer
 
-	in2, err := Open(ctx, src)
+	in2, err = Open(ctx, src)
 	if err != nil {
 		return true, fmt.Errorf("failed to open %q: %w", src, err)
 	}

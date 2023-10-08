@@ -771,7 +771,8 @@ func hashSum(ctx context.Context, ht hash.Type, base64Encoded bool, downloadFlag
 		for _, option := range fs.GetConfig(ctx).DownloadHeaders {
 			options = append(options, option)
 		}
-		in, err := Open(ctx, o, options...)
+		var in io.ReadCloser
+		in, err = Open(ctx, o, options...)
 		if err != nil {
 			return "ERROR", fmt.Errorf("failed to open file %v: %w", o, err)
 		}
@@ -1071,7 +1072,8 @@ func Cat(ctx context.Context, f fs.Fs, w io.Writer, offset, count int64, sep []b
 		for _, option := range ci.DownloadHeaders {
 			options = append(options, option)
 		}
-		in, err := Open(ctx, o, options...)
+		var in io.ReadCloser
+		in, err = Open(ctx, o, options...)
 		if err != nil {
 			err = fs.CountError(err)
 			fs.Errorf(o, "Failed to open: %v", err)
