@@ -33,6 +33,7 @@ type Features struct {
 	PartialUploads          bool // uploaded file can appear incomplete on the fs while it's being uploaded
 	NoMultiThreading        bool // set if can't have multiplethreads on one download open
 	Overlay                 bool // this wraps one or more backends to add functionality
+	ChunkWriterDoesntSeek   bool // set if the chunk writer doesn't need to read the data more than once
 
 	// Purge all files in the directory specified
 	//

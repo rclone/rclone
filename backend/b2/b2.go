@@ -505,10 +505,11 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	}
 	f.setRoot(root)
 	f.features = (&fs.Features{
-		ReadMimeType:      true,
-		WriteMimeType:     true,
-		BucketBased:       true,
-		BucketBasedRootOK: true,
+		ReadMimeType:          true,
+		WriteMimeType:         true,
+		BucketBased:           true,
+		BucketBasedRootOK:     true,
+		ChunkWriterDoesntSeek: true,
 	}).Fill(ctx, f)
 	// Set the test flag if required
 	if opt.TestMode != "" {
