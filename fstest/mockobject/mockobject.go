@@ -119,7 +119,7 @@ func (o *ContentMockObject) SetFs(f fs.Fs) {
 
 // SetUnknownSize makes the mock object return -1 for size if true
 func (o *ContentMockObject) SetUnknownSize(unknownSize bool) {
-	o.unknownSize = true
+	o.unknownSize = unknownSize
 }
 
 // Fs returns read only access to the Fs that this object is part of
