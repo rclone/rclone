@@ -20,6 +20,7 @@ import (
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/fs/operations"
 	"golang.org/x/exp/slices"
+	"golang.org/x/text/unicode/norm"
 )
 
 // ListingHeader defines first line of a listing
@@ -400,6 +401,18 @@ func ConvertPrecision(Modtime time.Time, dst fs.Fs) time.Time {
 	return Modtime
 }
 
+// ApplyTransforms handles unicode and case normalization
+func ApplyTransforms(ctx context.Context, dst fs.Fs, s string) string {
+	ci := fs.GetConfig(ctx)
+	if !ci.NoUnicodeNormalization {
+		s = norm.NFC.String(s)
+	}
+	if ci.IgnoreCaseSync || dst.Features().CaseInsensitive {
+		s = strings.ToLower(s)
+	}
+	return s
+}
+
 // modifyListing will modify the listing based on the results of the sync
 func (b *bisyncRun) modifyListing(ctx context.Context, src fs.Fs, dst fs.Fs, results []Results, queues queues, is1to2 bool) (err error) {
 	queue := queues.copy2to1
@@ -428,6 +441,10 @@ func (b *bisyncRun) modifyListing(ctx context.Context, src fs.Fs, dst fs.Fs, res
 	if b.opt.Resync && !b.opt.IgnoreListingChecksum {
 		srcList.hash = src.Hashes().GetOne()
 		dstList.hash = dst.Hashes().GetOne()
+	}
+	dstListNew, err := b.loadListing(dstListing + "-new")
+	if err != nil {
+		return fmt.Errorf("cannot read new listing: %w", err)
 	}
 
 	srcWinners := newFileList()
@@ -466,20 +483,47 @@ func (b *bisyncRun) modifyListing(ctx context.Context, src fs.Fs, dst fs.Fs, res
 	}
 
 	updateLists := func(side string, winners, list *fileList) {
-		// removals from side
-		for _, oldFile := range queue.ToList() {
-			if !winners.has(oldFile) && list.has(oldFile) && !errors.has(oldFile) {
-				list.remove(oldFile)
-				fs.Debugf(nil, "decision: removed from %s: %v", side, oldFile)
-			} else if winners.has(oldFile) {
+		for _, queueFile := range queue.ToList() {
+			if !winners.has(queueFile) && list.has(queueFile) && !errors.has(queueFile) {
+				// removals from side
+				list.remove(queueFile)
+				fs.Debugf(nil, "decision: removed from %s: %v", side, queueFile)
+			} else if winners.has(queueFile) {
 				// copies to side
-				new := winners.get(oldFile)
-				list.put(oldFile, new.size, new.time, new.hash, new.id, new.flags)
-				fs.Debugf(nil, "decision: copied to %s: %v", side, oldFile)
+				new := winners.get(queueFile)
+
+				// handle normalization according to settings
+				ci := fs.GetConfig(ctx)
+				if side == "dst" && (!ci.NoUnicodeNormalization || ci.IgnoreCaseSync || dst.Features().CaseInsensitive) {
+					// search list for existing file that matches queueFile when normalized
+					normalizedName := ApplyTransforms(ctx, dst, queueFile)
+					matchFound := false
+					matchedName := ""
+					for _, filename := range dstListNew.list {
+						if ApplyTransforms(ctx, dst, filename) == normalizedName {
+							matchFound = true
+							matchedName = filename // original, not normalized
+							break
+						}
+					}
+					if matchFound && matchedName != queueFile {
+						// use the (non-identical) existing name, unless --fix-case
+						if ci.FixCase {
+							fs.Debugf(direction, "removing %s and adding %s as --fix-case was specified", matchedName, queueFile)
+							list.remove(matchedName)
+						} else {
+							fs.Debugf(direction, "casing/unicode difference detected. using %s instead of %s", matchedName, queueFile)
+							queueFile = matchedName
+						}
+					}
+				}
+
+				list.put(queueFile, new.size, new.time, new.hash, new.id, new.flags)
+				fs.Debugf(nil, "decision: copied to %s: %v", side, queueFile)
 			} else {
-				fs.Debugf(oldFile, "file in queue but missing from %s transfers", side)
-				if err := filterRecheck.AddFile(oldFile); err != nil {
-					fs.Debugf(oldFile, "error adding file to recheck filter: %v", err)
+				fs.Debugf(queueFile, "file in queue but missing from %s transfers", side)
+				if err := filterRecheck.AddFile(queueFile); err != nil {
+					fs.Debugf(queueFile, "error adding file to recheck filter: %v", err)
 				}
 			}
 		}

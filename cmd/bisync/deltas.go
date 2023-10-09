@@ -381,11 +381,17 @@ func (b *bisyncRun) applyDeltas(ctx context.Context, ds1, ds2 *deltaSet) (change
 		}
 	}
 
+	// find alternate names according to normalization settings
+	altNames1to2 := bilib.Names{}
+	altNames2to1 := bilib.Names{}
+	b.findAltNames(ctx, b.fs1, copy2to1, b.newListing1, altNames2to1)
+	b.findAltNames(ctx, b.fs2, copy1to2, b.newListing2, altNames1to2)
+
 	// Do the batch operation
 	if copy2to1.NotEmpty() {
 		changes1 = true
 		b.indent("Path2", "Path1", "Do queued copies to")
-		results2to1, err = b.fastCopy(ctx, b.fs2, b.fs1, copy2to1, "copy2to1")
+		results2to1, err = b.fastCopy(ctx, b.fs2, b.fs1, copy2to1, "copy2to1", altNames2to1)
 		if err != nil {
 			return
 		}
@@ -397,7 +403,7 @@ func (b *bisyncRun) applyDeltas(ctx context.Context, ds1, ds2 *deltaSet) (change
 	if copy1to2.NotEmpty() {
 		changes2 = true
 		b.indent("Path1", "Path2", "Do queued copies to")
-		results1to2, err = b.fastCopy(ctx, b.fs1, b.fs2, copy1to2, "copy1to2")
+		results1to2, err = b.fastCopy(ctx, b.fs1, b.fs2, copy1to2, "copy1to2", altNames1to2)
 		if err != nil {
 			return
 		}

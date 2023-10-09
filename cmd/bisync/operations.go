@@ -428,8 +428,11 @@ func (b *bisyncRun) resync(octx, fctx context.Context) error {
 
 	if len(copy2to1) > 0 {
 		b.indent("Path2", "Path1", "Resync is doing queued copies to")
+		resync2to1 := bilib.ToNames(copy2to1)
+		altNames2to1 := bilib.Names{}
+		b.findAltNames(octx, b.fs1, resync2to1, b.newListing1, altNames2to1)
 		// octx does not have extra filters!
-		results2to1, err = b.fastCopy(octx, b.fs2, b.fs1, bilib.ToNames(copy2to1), "resync-copy2to1")
+		results2to1, err = b.fastCopy(octx, b.fs2, b.fs1, resync2to1, "resync-copy2to1", altNames2to1)
 		if err != nil {
 			b.critical = true
 			return err
@@ -516,15 +519,27 @@ func (b *bisyncRun) checkSync(listing1, listing2 string) error {
 		return fmt.Errorf("cannot read prior listing of Path2: %w", err)
 	}
 
+	transformList := func(files *fileList, fs fs.Fs) *fileList {
+		transformed := newFileList()
+		for _, file := range files.list {
+			f := files.get(file)
+			transformed.put(ApplyTransforms(context.Background(), fs, file), f.size, f.time, f.hash, f.id, f.flags)
+		}
+		return transformed
+	}
+
+	files1Transformed := transformList(files1, b.fs1)
+	files2Transformed := transformList(files2, b.fs2)
+
 	ok := true
 	for _, file := range files1.list {
-		if !files2.has(file) {
+		if !files2.has(file) && !files2Transformed.has(ApplyTransforms(context.Background(), b.fs1, file)) {
 			b.indent("ERROR", file, "Path1 file not found in Path2")
 			ok = false
 		}
 	}
 	for _, file := range files2.list {
-		if !files1.has(file) {
+		if !files1.has(file) && !files1Transformed.has(ApplyTransforms(context.Background(), b.fs2, file)) {
 			b.indent("ERROR", file, "Path2 file not found in Path1")
 			ok = false
 		}

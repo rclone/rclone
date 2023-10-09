@@ -142,8 +142,8 @@ INFO  : Path2:    1 changes:    0 new,    0 newer,    0 older,    1 deleted
 INFO  : Checking access health
 ERROR : Access test failed: Path1 count 3, Path2 count 4 - RCLONE_TEST
 ERROR : - [34m[0m         [35mAccess test failed: Path1 file not found in Path2[0m - [36mRCLONE_TEST[0m
-ERROR : - [34m[0m         [35mAccess test failed: Path2 file not found in Path1[0m - [36msubdir/RCLONE_TEST[0m
 ERROR : - [34m[0m         [35mAccess test failed: Path2 file not found in Path1[0m - [36msubdirX/subdirX1/RCLONE_TEST[0m
+ERROR : - [34m[0m         [35mAccess test failed: Path2 file not found in Path1[0m - [36msubdir/RCLONE_TEST[0m
 ERROR : [31mBisync critical error: check file check failed[0m
 ERROR : [31mBisync aborted. Must run --resync to recover.[0m
 Bisync error: bisync aborted

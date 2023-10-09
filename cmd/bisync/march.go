@@ -183,7 +183,3 @@ func whichPath(isPath1 bool) string {
 	}
 	return s
 }
-
-// TODO:
-// equality check?
-// unicode stuff

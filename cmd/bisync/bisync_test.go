@@ -98,10 +98,13 @@ var logHoppers = []string{
 	// subdirectories. The order inconsistency initially showed up in the
 	// listings and triggered reordering of log messages, but the actual
 	// files will in fact match.
-	`ERROR : - +Access test failed: Path[12] file not found in Path[12] - .*`,
+	`.* +.....Access test failed: Path[12] file not found in Path[12].*`,
 
 	// Test case `resync` suffered from the order of queued copies.
 	`(?:INFO  |NOTICE): - Path2    Resync will copy to Path1 +- .*`,
+
+	// Test case `normalization` can have random order of fix-case files.
+	`(?:INFO  |NOTICE): .*: Fixed case by renaming to: .*`,
 }
 
 // Some log lines can contain Windows path separator that must be
@@ -546,6 +549,16 @@ func (b *bisyncTest) runTestStep(ctx context.Context, line string) (err error) {
 	case "copy-as":
 		b.checkArgs(args, 3, 3)
 		return b.copyFile(ctx, args[1], args[2], args[3])
+	case "copy-as-NFC":
+		b.checkArgs(args, 3, 3)
+		ci.NoUnicodeNormalization = true
+		ci.FixCase = true
+		return b.copyFile(ctx, args[1], norm.NFC.String(args[2]), norm.NFC.String(args[3]))
+	case "copy-as-NFD":
+		b.checkArgs(args, 3, 3)
+		ci.NoUnicodeNormalization = true
+		ci.FixCase = true
+		return b.copyFile(ctx, args[1], norm.NFD.String(args[2]), norm.NFD.String(args[3]))
 	case "copy-dir", "sync-dir":
 		b.checkArgs(args, 2, 2)
 		if fsrc, err = cache.Get(ctx, args[1]); err != nil {
@@ -565,6 +578,9 @@ func (b *bisyncTest) runTestStep(ctx context.Context, line string) (err error) {
 		b.checkArgs(args, 1, 1)
 		return b.listSubdirs(ctx, args[1])
 	case "bisync":
+		ci.NoUnicodeNormalization = false
+		ci.IgnoreCaseSync = false
+		// ci.FixCase = true
 		return b.runBisync(ctx, args[1:])
 	case "test-func":
 		b.TestFn = testFunc
@@ -668,6 +684,16 @@ func (b *bisyncTest) runBisync(ctx context.Context, args []string) (err error) {
 			fs2 = addSubdir(b.path2, val)
 		case "ignore-listing-checksum":
 			opt.IgnoreListingChecksum = true
+		case "no-norm":
+			ci.NoUnicodeNormalization = true
+			ci.IgnoreCaseSync = false
+		case "norm":
+			ci.NoUnicodeNormalization = false
+			ci.IgnoreCaseSync = true
+		case "fix-case":
+			ci.NoUnicodeNormalization = false
+			ci.IgnoreCaseSync = true
+			ci.FixCase = true
 		default:
 			return fmt.Errorf("invalid bisync option %q", arg)
 		}
