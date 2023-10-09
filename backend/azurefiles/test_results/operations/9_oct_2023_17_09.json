@@ -1,0 +1,858 @@
+{"Time":"2023-10-09T17:09:34.122718+05:30","Action":"start","Package":"github.com/rclone/rclone/fs/operations"}
+{"Time":"2023-10-09T17:09:34.6101108+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestDoMultiThreadCopy"}
+{"Time":"2023-10-09T17:09:34.6106737+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestDoMultiThreadCopy","Output":"=== RUN   TestDoMultiThreadCopy\n"}
+{"Time":"2023-10-09T17:09:34.6106737+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestDoMultiThreadCopy","Output":"--- PASS: TestDoMultiThreadCopy (0.00s)\n"}
+{"Time":"2023-10-09T17:09:34.6106737+05:30","Action":"pass","Package":"github.com/rclone/rclone/fs/operations","Test":"TestDoMultiThreadCopy","Elapsed":0}
+{"Time":"2023-10-09T17:09:34.6106737+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestMultithreadCalculateNumChunks"}
+{"Time":"2023-10-09T17:09:34.6106737+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestMultithreadCalculateNumChunks","Output":"=== RUN   TestMultithreadCalculateNumChunks\n"}
+{"Time":"2023-10-09T17:09:34.6106737+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestMultithreadCalculateNumChunks/{size:1_chunkSize:65536_wantNumChunks:1}"}
+{"Time":"2023-10-09T17:09:34.6106737+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestMultithreadCalculateNumChunks/{size:1_chunkSize:65536_wantNumChunks:1}","Output":"=== RUN   TestMultithreadCalculateNumChunks/{size:1_chunkSize:65536_wantNumChunks:1}\n"}
+{"Time":"2023-10-09T17:09:34.6106737+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestMultithreadCalculateNumChunks/{size:1048576_chunkSize:1_wantNumChunks:1048576}"}
+{"Time":"2023-10-09T17:09:34.6106737+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestMultithreadCalculateNumChunks/{size:1048576_chunkSize:1_wantNumChunks:1048576}","Output":"=== RUN   TestMultithreadCalculateNumChunks/{size:1048576_chunkSize:1_wantNumChunks:1048576}\n"}
+{"Time":"2023-10-09T17:09:34.6106737+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestMultithreadCalculateNumChunks/{size:1048576_chunkSize:2_wantNumChunks:524288}"}
+{"Time":"2023-10-09T17:09:34.6106737+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestMultithreadCalculateNumChunks/{size:1048576_chunkSize:2_wantNumChunks:524288}","Output":"=== RUN   TestMultithreadCalculateNumChunks/{size:1048576_chunkSize:2_wantNumChunks:524288}\n"}
+{"Time":"2023-10-09T17:09:34.6106737+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestMultithreadCalculateNumChunks/{size:1048577_chunkSize:2_wantNumChunks:524289}"}
+{"Time":"2023-10-09T17:09:34.6106737+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestMultithreadCalculateNumChunks/{size:1048577_chunkSize:2_wantNumChunks:524289}","Output":"=== RUN   TestMultithreadCalculateNumChunks/{size:1048577_chunkSize:2_wantNumChunks:524289}\n"}
+{"Time":"2023-10-09T17:09:34.6106737+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestMultithreadCalculateNumChunks/{size:1048575_chunkSize:2_wantNumChunks:524288}"}
+{"Time":"2023-10-09T17:09:34.6106737+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestMultithreadCalculateNumChunks/{size:1048575_chunkSize:2_wantNumChunks:524288}","Output":"=== RUN   TestMultithreadCalculateNumChunks/{size:1048575_chunkSize:2_wantNumChunks:524288}\n"}
+{"Time":"2023-10-09T17:09:34.6111841+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestMultithreadCalculateNumChunks","Output":"--- PASS: TestMultithreadCalculateNumChunks (0.00s)\n"}
+{"Time":"2023-10-09T17:09:34.6111841+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestMultithreadCalculateNumChunks/{size:1_chunkSize:65536_wantNumChunks:1}","Output":"    --- PASS: TestMultithreadCalculateNumChunks/{size:1_chunkSize:65536_wantNumChunks:1} (0.00s)\n"}
+{"Time":"2023-10-09T17:09:34.6112179+05:30","Action":"pass","Package":"github.com/rclone/rclone/fs/operations","Test":"TestMultithreadCalculateNumChunks/{size:1_chunkSize:65536_wantNumChunks:1}","Elapsed":0}
+{"Time":"2023-10-09T17:09:34.6112179+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestMultithreadCalculateNumChunks/{size:1048576_chunkSize:1_wantNumChunks:1048576}","Output":"    --- PASS: TestMultithreadCalculateNumChunks/{size:1048576_chunkSize:1_wantNumChunks:1048576} (0.00s)\n"}
+{"Time":"2023-10-09T17:09:34.6112179+05:30","Action":"pass","Package":"github.com/rclone/rclone/fs/operations","Test":"TestMultithreadCalculateNumChunks/{size:1048576_chunkSize:1_wantNumChunks:1048576}","Elapsed":0}
+{"Time":"2023-10-09T17:09:34.6112179+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestMultithreadCalculateNumChunks/{size:1048576_chunkSize:2_wantNumChunks:524288}","Output":"    --- PASS: TestMultithreadCalculateNumChunks/{size:1048576_chunkSize:2_wantNumChunks:524288} (0.00s)\n"}
+{"Time":"2023-10-09T17:09:34.6112179+05:30","Action":"pass","Package":"github.com/rclone/rclone/fs/operations","Test":"TestMultithreadCalculateNumChunks/{size:1048576_chunkSize:2_wantNumChunks:524288}","Elapsed":0}
+{"Time":"2023-10-09T17:09:34.6112179+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestMultithreadCalculateNumChunks/{size:1048577_chunkSize:2_wantNumChunks:524289}","Output":"    --- PASS: TestMultithreadCalculateNumChunks/{size:1048577_chunkSize:2_wantNumChunks:524289} (0.00s)\n"}
+{"Time":"2023-10-09T17:09:34.6112179+05:30","Action":"pass","Package":"github.com/rclone/rclone/fs/operations","Test":"TestMultithreadCalculateNumChunks/{size:1048577_chunkSize:2_wantNumChunks:524289}","Elapsed":0}
+{"Time":"2023-10-09T17:09:34.6112179+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestMultithreadCalculateNumChunks/{size:1048575_chunkSize:2_wantNumChunks:524288}","Output":"    --- PASS: TestMultithreadCalculateNumChunks/{size:1048575_chunkSize:2_wantNumChunks:524288} (0.00s)\n"}
+{"Time":"2023-10-09T17:09:34.6112179+05:30","Action":"pass","Package":"github.com/rclone/rclone/fs/operations","Test":"TestMultithreadCalculateNumChunks/{size:1048575_chunkSize:2_wantNumChunks:524288}","Elapsed":0}
+{"Time":"2023-10-09T17:09:34.6112179+05:30","Action":"pass","Package":"github.com/rclone/rclone/fs/operations","Test":"TestMultithreadCalculateNumChunks","Elapsed":0}
+{"Time":"2023-10-09T17:09:34.6112179+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestMultithreadCopy"}
+{"Time":"2023-10-09T17:09:34.6112179+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestMultithreadCopy","Output":"=== RUN   TestMultithreadCopy\n"}
+{"Time":"2023-10-09T17:09:34.6112179+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestMultithreadCopy","Output":"    run.go:180: Remote \"azurefiles root 'rclone-test-jovaxed6deqococ6kidunew8'\", Local \"Local file system at //?/C:/Users/HP/AppData/Local/Temp/rclone3935649188\", Modify Window \"1s\"\n"}
+{"Time":"2023-10-09T17:09:34.6112179+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestMultithreadCopy/{size:131071_streams:2}"}
+{"Time":"2023-10-09T17:09:34.6112179+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestMultithreadCopy/{size:131071_streams:2}","Output":"=== RUN   TestMultithreadCopy/{size:131071_streams:2}\n"}
+{"Time":"2023-10-09T17:09:35.7093373+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestMultithreadCopy/{size:131072_streams:2}"}
+{"Time":"2023-10-09T17:09:35.7093373+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestMultithreadCopy/{size:131072_streams:2}","Output":"=== RUN   TestMultithreadCopy/{size:131072_streams:2}\n"}
+{"Time":"2023-10-09T17:09:36.4806388+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestMultithreadCopy/{size:131073_streams:2}"}
+{"Time":"2023-10-09T17:09:36.4806691+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestMultithreadCopy/{size:131073_streams:2}","Output":"=== RUN   TestMultithreadCopy/{size:131073_streams:2}\n"}
+{"Time":"2023-10-09T17:09:37.3892152+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestMultithreadCopy","Output":"--- PASS: TestMultithreadCopy (2.78s)\n"}
+{"Time":"2023-10-09T17:09:37.3898398+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestMultithreadCopy/{size:131071_streams:2}","Output":"    --- PASS: TestMultithreadCopy/{size:131071_streams:2} (1.10s)\n"}
+{"Time":"2023-10-09T17:09:37.3898398+05:30","Action":"pass","Package":"github.com/rclone/rclone/fs/operations","Test":"TestMultithreadCopy/{size:131071_streams:2}","Elapsed":1.1}
+{"Time":"2023-10-09T17:09:37.3898398+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestMultithreadCopy/{size:131072_streams:2}","Output":"    --- PASS: TestMultithreadCopy/{size:131072_streams:2} (0.77s)\n"}
+{"Time":"2023-10-09T17:09:37.3898398+05:30","Action":"pass","Package":"github.com/rclone/rclone/fs/operations","Test":"TestMultithreadCopy/{size:131072_streams:2}","Elapsed":0.77}
+{"Time":"2023-10-09T17:09:37.3898398+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestMultithreadCopy/{size:131073_streams:2}","Output":"    --- PASS: TestMultithreadCopy/{size:131073_streams:2} (0.64s)\n"}
+{"Time":"2023-10-09T17:09:37.3898398+05:30","Action":"pass","Package":"github.com/rclone/rclone/fs/operations","Test":"TestMultithreadCopy/{size:131073_streams:2}","Elapsed":0.64}
+{"Time":"2023-10-09T17:09:37.3898398+05:30","Action":"pass","Package":"github.com/rclone/rclone/fs/operations","Test":"TestMultithreadCopy","Elapsed":2.78}
+{"Time":"2023-10-09T17:09:37.3898398+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestSizeDiffers"}
+{"Time":"2023-10-09T17:09:37.3898398+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestSizeDiffers","Output":"=== RUN   TestSizeDiffers\n"}
+{"Time":"2023-10-09T17:09:37.3898398+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestSizeDiffers","Output":"--- PASS: TestSizeDiffers (0.00s)\n"}
+{"Time":"2023-10-09T17:09:37.3898398+05:30","Action":"pass","Package":"github.com/rclone/rclone/fs/operations","Test":"TestSizeDiffers","Elapsed":0}
+{"Time":"2023-10-09T17:09:37.3898398+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestReOpen"}
+{"Time":"2023-10-09T17:09:37.3898398+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestReOpen","Output":"=== RUN   TestReOpen\n"}
+{"Time":"2023-10-09T17:09:37.3898398+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestReOpen/Seek"}
+{"Time":"2023-10-09T17:09:37.3898398+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestReOpen/Seek","Output":"=== RUN   TestReOpen/Seek\n"}
+{"Time":"2023-10-09T17:09:37.3898398+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestReOpen/Seek/Basics"}
+{"Time":"2023-10-09T17:09:37.3898398+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestReOpen/Seek/Basics","Output":"=== RUN   TestReOpen/Seek/Basics\n"}
+{"Time":"2023-10-09T17:09:37.3898398+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestReOpen/Seek/ErrorAtStart"}
+{"Time":"2023-10-09T17:09:37.3898398+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestReOpen/Seek/ErrorAtStart","Output":"=== RUN   TestReOpen/Seek/ErrorAtStart\n"}
+{"Time":"2023-10-09T17:09:37.3898398+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestReOpen/Seek/WithErrors"}
+{"Time":"2023-10-09T17:09:37.3898398+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestReOpen/Seek/WithErrors","Output":"=== RUN   TestReOpen/Seek/WithErrors\n"}
+{"Time":"2023-10-09T17:09:37.3898398+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestReOpen/Seek/TooManyErrors"}
+{"Time":"2023-10-09T17:09:37.3898398+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestReOpen/Seek/TooManyErrors","Output":"=== RUN   TestReOpen/Seek/TooManyErrors\n"}
+{"Time":"2023-10-09T17:09:37.3898398+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestReOpen/Range"}
+{"Time":"2023-10-09T17:09:37.3898398+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestReOpen/Range","Output":"=== RUN   TestReOpen/Range\n"}
+{"Time":"2023-10-09T17:09:37.3898398+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestReOpen/Range/Basics"}
+{"Time":"2023-10-09T17:09:37.3898398+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestReOpen/Range/Basics","Output":"=== RUN   TestReOpen/Range/Basics\n"}
+{"Time":"2023-10-09T17:09:37.3898398+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestReOpen/Range/ErrorAtStart"}
+{"Time":"2023-10-09T17:09:37.3898398+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestReOpen/Range/ErrorAtStart","Output":"=== RUN   TestReOpen/Range/ErrorAtStart\n"}
+{"Time":"2023-10-09T17:09:37.3898398+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestReOpen/Range/WithErrors"}
+{"Time":"2023-10-09T17:09:37.3898398+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestReOpen/Range/WithErrors","Output":"=== RUN   TestReOpen/Range/WithErrors\n"}
+{"Time":"2023-10-09T17:09:37.3898398+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestReOpen/Range/TooManyErrors"}
+{"Time":"2023-10-09T17:09:37.3898398+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestReOpen/Range/TooManyErrors","Output":"=== RUN   TestReOpen/Range/TooManyErrors\n"}
+{"Time":"2023-10-09T17:09:37.3898398+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestReOpen","Output":"--- PASS: TestReOpen (0.00s)\n"}
+{"Time":"2023-10-09T17:09:37.3898398+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestReOpen/Seek","Output":"    --- PASS: TestReOpen/Seek (0.00s)\n"}
+{"Time":"2023-10-09T17:09:37.3898398+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestReOpen/Seek/Basics","Output":"        --- PASS: TestReOpen/Seek/Basics (0.00s)\n"}
+{"Time":"2023-10-09T17:09:37.3898398+05:30","Action":"pass","Package":"github.com/rclone/rclone/fs/operations","Test":"TestReOpen/Seek/Basics","Elapsed":0}
+{"Time":"2023-10-09T17:09:37.3898398+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestReOpen/Seek/ErrorAtStart","Output":"        --- PASS: TestReOpen/Seek/ErrorAtStart (0.00s)\n"}
+{"Time":"2023-10-09T17:09:37.3898398+05:30","Action":"pass","Package":"github.com/rclone/rclone/fs/operations","Test":"TestReOpen/Seek/ErrorAtStart","Elapsed":0}
+{"Time":"2023-10-09T17:09:37.3898398+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestReOpen/Seek/WithErrors","Output":"        --- PASS: TestReOpen/Seek/WithErrors (0.00s)\n"}
+{"Time":"2023-10-09T17:09:37.3898398+05:30","Action":"pass","Package":"github.com/rclone/rclone/fs/operations","Test":"TestReOpen/Seek/WithErrors","Elapsed":0}
+{"Time":"2023-10-09T17:09:37.3898398+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestReOpen/Seek/TooManyErrors","Output":"        --- PASS: TestReOpen/Seek/TooManyErrors (0.00s)\n"}
+{"Time":"2023-10-09T17:09:37.3898398+05:30","Action":"pass","Package":"github.com/rclone/rclone/fs/operations","Test":"TestReOpen/Seek/TooManyErrors","Elapsed":0}
+{"Time":"2023-10-09T17:09:37.3898398+05:30","Action":"pass","Package":"github.com/rclone/rclone/fs/operations","Test":"TestReOpen/Seek","Elapsed":0}
+{"Time":"2023-10-09T17:09:37.3898398+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestReOpen/Range","Output":"    --- PASS: TestReOpen/Range (0.00s)\n"}
+{"Time":"2023-10-09T17:09:37.3898398+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestReOpen/Range/Basics","Output":"        --- PASS: TestReOpen/Range/Basics (0.00s)\n"}
+{"Time":"2023-10-09T17:09:37.3898398+05:30","Action":"pass","Package":"github.com/rclone/rclone/fs/operations","Test":"TestReOpen/Range/Basics","Elapsed":0}
+{"Time":"2023-10-09T17:09:37.3898398+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestReOpen/Range/ErrorAtStart","Output":"        --- PASS: TestReOpen/Range/ErrorAtStart (0.00s)\n"}
+{"Time":"2023-10-09T17:09:37.3898398+05:30","Action":"pass","Package":"github.com/rclone/rclone/fs/operations","Test":"TestReOpen/Range/ErrorAtStart","Elapsed":0}
+{"Time":"2023-10-09T17:09:37.3898398+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestReOpen/Range/WithErrors","Output":"        --- PASS: TestReOpen/Range/WithErrors (0.00s)\n"}
+{"Time":"2023-10-09T17:09:37.3898398+05:30","Action":"pass","Package":"github.com/rclone/rclone/fs/operations","Test":"TestReOpen/Range/WithErrors","Elapsed":0}
+{"Time":"2023-10-09T17:09:37.3898398+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestReOpen/Range/TooManyErrors","Output":"        --- PASS: TestReOpen/Range/TooManyErrors (0.00s)\n"}
+{"Time":"2023-10-09T17:09:37.3898398+05:30","Action":"pass","Package":"github.com/rclone/rclone/fs/operations","Test":"TestReOpen/Range/TooManyErrors","Elapsed":0}
+{"Time":"2023-10-09T17:09:37.3898398+05:30","Action":"pass","Package":"github.com/rclone/rclone/fs/operations","Test":"TestReOpen/Range","Elapsed":0}
+{"Time":"2023-10-09T17:09:37.3898398+05:30","Action":"pass","Package":"github.com/rclone/rclone/fs/operations","Test":"TestReOpen","Elapsed":0}
+{"Time":"2023-10-09T17:09:37.3898398+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheck"}
+{"Time":"2023-10-09T17:09:37.3898398+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheck","Output":"=== RUN   TestCheck\n"}
+{"Time":"2023-10-09T17:09:37.3903758+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheck","Output":"    run.go:180: Remote \"azurefiles root 'rclone-test-jovaxed6deqococ6kidunew8'\", Local \"Local file system at //?/C:/Users/HP/AppData/Local/Temp/rclone3935649188\", Modify Window \"1s\"\n"}
+{"Time":"2023-10-09T17:09:37.8141932+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheck/1"}
+{"Time":"2023-10-09T17:09:37.8147844+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheck/1","Output":"=== RUN   TestCheck/1\n"}
+{"Time":"2023-10-09T17:09:37.9693231+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheck/2"}
+{"Time":"2023-10-09T17:09:37.9693231+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheck/2","Output":"=== RUN   TestCheck/2\n"}
+{"Time":"2023-10-09T17:09:38.5616445+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheck/3"}
+{"Time":"2023-10-09T17:09:38.5617967+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheck/3","Output":"=== RUN   TestCheck/3\n"}
+{"Time":"2023-10-09T17:09:39.2390287+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheck/4"}
+{"Time":"2023-10-09T17:09:39.2392709+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheck/4","Output":"=== RUN   TestCheck/4\n"}
+{"Time":"2023-10-09T17:09:39.4250376+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheck/5"}
+{"Time":"2023-10-09T17:09:39.4255892+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheck/5","Output":"=== RUN   TestCheck/5\n"}
+{"Time":"2023-10-09T17:09:40.19711+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheck/6"}
+{"Time":"2023-10-09T17:09:40.1973656+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheck/6","Output":"=== RUN   TestCheck/6\n"}
+{"Time":"2023-10-09T17:09:40.3276329+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheck/7"}
+{"Time":"2023-10-09T17:09:40.3277057+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheck/7","Output":"=== RUN   TestCheck/7\n"}
+{"Time":"2023-10-09T17:09:40.7855743+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheck","Output":"--- PASS: TestCheck (3.40s)\n"}
+{"Time":"2023-10-09T17:09:40.7856682+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheck/1","Output":"    --- PASS: TestCheck/1 (0.13s)\n"}
+{"Time":"2023-10-09T17:09:40.7856682+05:30","Action":"pass","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheck/1","Elapsed":0.13}
+{"Time":"2023-10-09T17:09:40.7856682+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheck/2","Output":"    --- PASS: TestCheck/2 (0.13s)\n"}
+{"Time":"2023-10-09T17:09:40.7856682+05:30","Action":"pass","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheck/2","Elapsed":0.13}
+{"Time":"2023-10-09T17:09:40.7856682+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheck/3","Output":"    --- PASS: TestCheck/3 (0.12s)\n"}
+{"Time":"2023-10-09T17:09:40.7856682+05:30","Action":"pass","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheck/3","Elapsed":0.12}
+{"Time":"2023-10-09T17:09:40.7856682+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheck/4","Output":"    --- PASS: TestCheck/4 (0.18s)\n"}
+{"Time":"2023-10-09T17:09:40.7856682+05:30","Action":"pass","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheck/4","Elapsed":0.18}
+{"Time":"2023-10-09T17:09:40.7856682+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheck/5","Output":"    --- PASS: TestCheck/5 (0.13s)\n"}
+{"Time":"2023-10-09T17:09:40.7856682+05:30","Action":"pass","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheck/5","Elapsed":0.13}
+{"Time":"2023-10-09T17:09:40.7856682+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheck/6","Output":"    --- PASS: TestCheck/6 (0.13s)\n"}
+{"Time":"2023-10-09T17:09:40.7856682+05:30","Action":"pass","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheck/6","Elapsed":0.13}
+{"Time":"2023-10-09T17:09:40.7856682+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheck/7","Output":"    --- PASS: TestCheck/7 (0.12s)\n"}
+{"Time":"2023-10-09T17:09:40.7856682+05:30","Action":"pass","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheck/7","Elapsed":0.12}
+{"Time":"2023-10-09T17:09:40.7856682+05:30","Action":"pass","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheck","Elapsed":3.4}
+{"Time":"2023-10-09T17:09:40.7856682+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheckFsError"}
+{"Time":"2023-10-09T17:09:40.7856682+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheckFsError","Output":"=== RUN   TestCheckFsError\n"}
+{"Time":"2023-10-09T17:09:40.7878875+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheckFsError","Output":"2023/10/09 17:09:40 ERROR : Local file system at //?/C:/Users/HP/Documents/dev/rclone/fs/operations/nonexistent: error reading source root directory: directory not found\n"}
+{"Time":"2023-10-09T17:09:40.7878875+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheckFsError","Output":"2023/10/09 17:09:40 NOTICE: Local file system at //?/C:/Users/HP/Documents/dev/rclone/fs/operations/nonexistent: 2 differences found\n"}
+{"Time":"2023-10-09T17:09:40.7878875+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheckFsError","Output":"2023/10/09 17:09:40 NOTICE: Local file system at //?/C:/Users/HP/Documents/dev/rclone/fs/operations/nonexistent: 2 errors while checking\n"}
+{"Time":"2023-10-09T17:09:40.7878875+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheckFsError","Output":"--- PASS: TestCheckFsError (0.00s)\n"}
+{"Time":"2023-10-09T17:09:40.7878875+05:30","Action":"pass","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheckFsError","Elapsed":0}
+{"Time":"2023-10-09T17:09:40.7878875+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheckDownload"}
+{"Time":"2023-10-09T17:09:40.7878875+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheckDownload","Output":"=== RUN   TestCheckDownload\n"}
+{"Time":"2023-10-09T17:09:40.7878875+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheckDownload","Output":"    run.go:180: Remote \"azurefiles root 'rclone-test-jovaxed6deqococ6kidunew8'\", Local \"Local file system at //?/C:/Users/HP/AppData/Local/Temp/rclone3935649188\", Modify Window \"1s\"\n"}
+{"Time":"2023-10-09T17:09:41.1812866+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheckDownload/1"}
+{"Time":"2023-10-09T17:09:41.1812866+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheckDownload/1","Output":"=== RUN   TestCheckDownload/1\n"}
+{"Time":"2023-10-09T17:09:41.3303155+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheckDownload/2"}
+{"Time":"2023-10-09T17:09:41.3303155+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheckDownload/2","Output":"=== RUN   TestCheckDownload/2\n"}
+{"Time":"2023-10-09T17:09:41.9408138+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheckDownload/3"}
+{"Time":"2023-10-09T17:09:41.9410402+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheckDownload/3","Output":"=== RUN   TestCheckDownload/3\n"}
+{"Time":"2023-10-09T17:09:42.6170101+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheckDownload/4"}
+{"Time":"2023-10-09T17:09:42.6173561+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheckDownload/4","Output":"=== RUN   TestCheckDownload/4\n"}
+{"Time":"2023-10-09T17:09:42.759112+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheckDownload/5"}
+{"Time":"2023-10-09T17:09:42.759112+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheckDownload/5","Output":"=== RUN   TestCheckDownload/5\n"}
+{"Time":"2023-10-09T17:09:43.522535+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheckDownload/6"}
+{"Time":"2023-10-09T17:09:43.522535+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheckDownload/6","Output":"=== RUN   TestCheckDownload/6\n"}
+{"Time":"2023-10-09T17:09:43.6568683+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheckDownload/7"}
+{"Time":"2023-10-09T17:09:43.6569562+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheckDownload/7","Output":"=== RUN   TestCheckDownload/7\n"}
+{"Time":"2023-10-09T17:09:44.1297947+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheckDownload","Output":"--- PASS: TestCheckDownload (3.34s)\n"}
+{"Time":"2023-10-09T17:09:44.1300662+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheckDownload/1","Output":"    --- PASS: TestCheckDownload/1 (0.14s)\n"}
+{"Time":"2023-10-09T17:09:44.1300662+05:30","Action":"pass","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheckDownload/1","Elapsed":0.14}
+{"Time":"2023-10-09T17:09:44.1300662+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheckDownload/2","Output":"    --- PASS: TestCheckDownload/2 (0.14s)\n"}
+{"Time":"2023-10-09T17:09:44.1300662+05:30","Action":"pass","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheckDownload/2","Elapsed":0.14}
+{"Time":"2023-10-09T17:09:44.1300662+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheckDownload/3","Output":"    --- PASS: TestCheckDownload/3 (0.13s)\n"}
+{"Time":"2023-10-09T17:09:44.1300662+05:30","Action":"pass","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheckDownload/3","Elapsed":0.13}
+{"Time":"2023-10-09T17:09:44.1300662+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheckDownload/4","Output":"    --- PASS: TestCheckDownload/4 (0.13s)\n"}
+{"Time":"2023-10-09T17:09:44.1300662+05:30","Action":"pass","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheckDownload/4","Elapsed":0.13}
+{"Time":"2023-10-09T17:09:44.1300662+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheckDownload/5","Output":"    --- PASS: TestCheckDownload/5 (0.13s)\n"}
+{"Time":"2023-10-09T17:09:44.1300662+05:30","Action":"pass","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheckDownload/5","Elapsed":0.13}
+{"Time":"2023-10-09T17:09:44.1300662+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheckDownload/6","Output":"    --- PASS: TestCheckDownload/6 (0.13s)\n"}
+{"Time":"2023-10-09T17:09:44.1300662+05:30","Action":"pass","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheckDownload/6","Elapsed":0.13}
+{"Time":"2023-10-09T17:09:44.1300662+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheckDownload/7","Output":"    --- PASS: TestCheckDownload/7 (0.13s)\n"}
+{"Time":"2023-10-09T17:09:44.1300662+05:30","Action":"pass","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheckDownload/7","Elapsed":0.13}
+{"Time":"2023-10-09T17:09:44.1300662+05:30","Action":"pass","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheckDownload","Elapsed":3.34}
+{"Time":"2023-10-09T17:09:44.1300662+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheckSizeOnly"}
+{"Time":"2023-10-09T17:09:44.1300662+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheckSizeOnly","Output":"=== RUN   TestCheckSizeOnly\n"}
+{"Time":"2023-10-09T17:09:44.1300662+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheckSizeOnly","Output":"    run.go:180: Remote \"azurefiles root 'rclone-test-jovaxed6deqococ6kidunew8'\", Local \"Local file system at //?/C:/Users/HP/AppData/Local/Temp/rclone3935649188\", Modify Window \"1s\"\n"}
+{"Time":"2023-10-09T17:09:44.5088854+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheckSizeOnly/1"}
+{"Time":"2023-10-09T17:09:44.5094813+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheckSizeOnly/1","Output":"=== RUN   TestCheckSizeOnly/1\n"}
+{"Time":"2023-10-09T17:09:44.5975781+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheckSizeOnly/2"}
+{"Time":"2023-10-09T17:09:44.5975781+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheckSizeOnly/2","Output":"=== RUN   TestCheckSizeOnly/2\n"}
+{"Time":"2023-10-09T17:09:45.1468502+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheckSizeOnly/3"}
+{"Time":"2023-10-09T17:09:45.1472735+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheckSizeOnly/3","Output":"=== RUN   TestCheckSizeOnly/3\n"}
+{"Time":"2023-10-09T17:09:45.7724242+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheckSizeOnly/4"}
+{"Time":"2023-10-09T17:09:45.7726354+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheckSizeOnly/4","Output":"=== RUN   TestCheckSizeOnly/4\n"}
+{"Time":"2023-10-09T17:09:45.8755259+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheckSizeOnly/5"}
+{"Time":"2023-10-09T17:09:45.8755259+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheckSizeOnly/5","Output":"=== RUN   TestCheckSizeOnly/5\n"}
+{"Time":"2023-10-09T17:09:46.5897933+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheckSizeOnly/6"}
+{"Time":"2023-10-09T17:09:46.590289+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheckSizeOnly/6","Output":"=== RUN   TestCheckSizeOnly/6\n"}
+{"Time":"2023-10-09T17:09:46.6737777+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheckSizeOnly/7"}
+{"Time":"2023-10-09T17:09:46.6740293+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheckSizeOnly/7","Output":"=== RUN   TestCheckSizeOnly/7\n"}
+{"Time":"2023-10-09T17:09:47.0933712+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheckSizeOnly","Output":"--- PASS: TestCheckSizeOnly (2.96s)\n"}
+{"Time":"2023-10-09T17:09:47.0934968+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheckSizeOnly/1","Output":"    --- PASS: TestCheckSizeOnly/1 (0.08s)\n"}
+{"Time":"2023-10-09T17:09:47.0934968+05:30","Action":"pass","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheckSizeOnly/1","Elapsed":0.08}
+{"Time":"2023-10-09T17:09:47.0934968+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheckSizeOnly/2","Output":"    --- PASS: TestCheckSizeOnly/2 (0.08s)\n"}
+{"Time":"2023-10-09T17:09:47.0934968+05:30","Action":"pass","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheckSizeOnly/2","Elapsed":0.08}
+{"Time":"2023-10-09T17:09:47.0934968+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheckSizeOnly/3","Output":"    --- PASS: TestCheckSizeOnly/3 (0.08s)\n"}
+{"Time":"2023-10-09T17:09:47.0934968+05:30","Action":"pass","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheckSizeOnly/3","Elapsed":0.08}
+{"Time":"2023-10-09T17:09:47.0934968+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheckSizeOnly/4","Output":"    --- PASS: TestCheckSizeOnly/4 (0.09s)\n"}
+{"Time":"2023-10-09T17:09:47.0934968+05:30","Action":"pass","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheckSizeOnly/4","Elapsed":0.09}
+{"Time":"2023-10-09T17:09:47.0934968+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheckSizeOnly/5","Output":"    --- PASS: TestCheckSizeOnly/5 (0.08s)\n"}
+{"Time":"2023-10-09T17:09:47.0934968+05:30","Action":"pass","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheckSizeOnly/5","Elapsed":0.08}
+{"Time":"2023-10-09T17:09:47.0934968+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheckSizeOnly/6","Output":"    --- PASS: TestCheckSizeOnly/6 (0.08s)\n"}
+{"Time":"2023-10-09T17:09:47.0934968+05:30","Action":"pass","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheckSizeOnly/6","Elapsed":0.08}
+{"Time":"2023-10-09T17:09:47.0934968+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheckSizeOnly/7","Output":"    --- PASS: TestCheckSizeOnly/7 (0.08s)\n"}
+{"Time":"2023-10-09T17:09:47.0934968+05:30","Action":"pass","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheckSizeOnly/7","Elapsed":0.08}
+{"Time":"2023-10-09T17:09:47.0940221+05:30","Action":"pass","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheckSizeOnly","Elapsed":2.96}
+{"Time":"2023-10-09T17:09:47.0940221+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheckEqualReaders"}
+{"Time":"2023-10-09T17:09:47.0940221+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheckEqualReaders","Output":"=== RUN   TestCheckEqualReaders\n"}
+{"Time":"2023-10-09T17:09:47.0946037+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheckEqualReaders","Output":"--- PASS: TestCheckEqualReaders (0.00s)\n"}
+{"Time":"2023-10-09T17:09:47.0946037+05:30","Action":"pass","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheckEqualReaders","Elapsed":0}
+{"Time":"2023-10-09T17:09:47.0946037+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestParseSumFile"}
+{"Time":"2023-10-09T17:09:47.0946037+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestParseSumFile","Output":"=== RUN   TestParseSumFile\n"}
+{"Time":"2023-10-09T17:09:47.0946037+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestParseSumFile","Output":"    run.go:180: Remote \"azurefiles root 'rclone-test-jovaxed6deqococ6kidunew8'\", Local \"Local file system at //?/C:/Users/HP/AppData/Local/Temp/rclone3935649188\", Modify Window \"1s\"\n"}
+{"Time":"2023-10-09T17:09:47.3910989+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestParseSumFile","Output":"2023/10/09 17:09:47 NOTICE: test.sum: improperly formatted checksum line 4\n"}
+{"Time":"2023-10-09T17:09:47.3915166+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestParseSumFile","Output":"2023/10/09 17:09:47 NOTICE: test.sum: improperly formatted checksum line 5\n"}
+{"Time":"2023-10-09T17:09:47.3915166+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestParseSumFile","Output":"2023/10/09 17:09:47 NOTICE: test.sum: improperly formatted checksum line 6\n"}
+{"Time":"2023-10-09T17:09:47.3915166+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestParseSumFile","Output":"2023/10/09 17:09:47 NOTICE: test.sum: 2 warning(s) suppressed...\n"}
+{"Time":"2023-10-09T17:09:47.6900253+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestParseSumFile","Output":"2023/10/09 17:09:47 NOTICE: test.sum: improperly formatted checksum line 4\n"}
+{"Time":"2023-10-09T17:09:47.6900253+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestParseSumFile","Output":"2023/10/09 17:09:47 NOTICE: test.sum: improperly formatted checksum line 5\n"}
+{"Time":"2023-10-09T17:09:47.6900253+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestParseSumFile","Output":"2023/10/09 17:09:47 NOTICE: test.sum: improperly formatted checksum line 6\n"}
+{"Time":"2023-10-09T17:09:47.6900253+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestParseSumFile","Output":"2023/10/09 17:09:47 NOTICE: test.sum: 2 warning(s) suppressed...\n"}
+{"Time":"2023-10-09T17:09:47.8939935+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestParseSumFile","Output":"--- PASS: TestParseSumFile (0.80s)\n"}
+{"Time":"2023-10-09T17:09:47.8939935+05:30","Action":"pass","Package":"github.com/rclone/rclone/fs/operations","Test":"TestParseSumFile","Elapsed":0.8}
+{"Time":"2023-10-09T17:09:47.8939935+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheckSum"}
+{"Time":"2023-10-09T17:09:47.8939935+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheckSum","Output":"=== RUN   TestCheckSum\n"}
+{"Time":"2023-10-09T17:09:47.8939935+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheckSum","Output":"    run.go:180: Remote \"azurefiles root 'rclone-test-jovaxed6deqococ6kidunew8'\", Local \"Local file system at //?/C:/Users/HP/AppData/Local/Temp/rclone3935649188\", Modify Window \"1s\"\n"}
+{"Time":"2023-10-09T17:09:48.0480158+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheckSum","Output":"2023/10/09 17:09:48 Put: waiting for half a second after making parent=data\n"}
+{"Time":"2023-10-09T17:09:49.6061602+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheckSum/subtest1"}
+{"Time":"2023-10-09T17:09:49.6063203+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheckSum/subtest1","Output":"=== RUN   TestCheckSum/subtest1\n"}
+{"Time":"2023-10-09T17:09:50.6958972+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheckSum/subtest2"}
+{"Time":"2023-10-09T17:09:50.6960615+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheckSum/subtest2","Output":"=== RUN   TestCheckSum/subtest2\n"}
+{"Time":"2023-10-09T17:09:51.5460507+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheckSum/subtest3"}
+{"Time":"2023-10-09T17:09:51.5465875+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheckSum/subtest3","Output":"=== RUN   TestCheckSum/subtest3\n"}
+{"Time":"2023-10-09T17:09:52.4390375+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheckSum/subtest4"}
+{"Time":"2023-10-09T17:09:52.4393346+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheckSum/subtest4","Output":"=== RUN   TestCheckSum/subtest4\n"}
+{"Time":"2023-10-09T17:09:53.3215666+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheckSum/subtest5"}
+{"Time":"2023-10-09T17:09:53.321872+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheckSum/subtest5","Output":"=== RUN   TestCheckSum/subtest5\n"}
+{"Time":"2023-10-09T17:09:54.1947334+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheckSum/subtest6"}
+{"Time":"2023-10-09T17:09:54.1947334+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheckSum/subtest6","Output":"=== RUN   TestCheckSum/subtest6\n"}
+{"Time":"2023-10-09T17:09:55.5241131+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheckSum/subtest7"}
+{"Time":"2023-10-09T17:09:55.5241131+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheckSum/subtest7","Output":"=== RUN   TestCheckSum/subtest7\n"}
+{"Time":"2023-10-09T17:09:56.1896671+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheckSum","Output":"--- PASS: TestCheckSum (8.30s)\n"}
+{"Time":"2023-10-09T17:09:56.1899521+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheckSum/subtest1","Output":"    --- PASS: TestCheckSum/subtest1 (0.21s)\n"}
+{"Time":"2023-10-09T17:09:56.1900046+05:30","Action":"pass","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheckSum/subtest1","Elapsed":0.21}
+{"Time":"2023-10-09T17:09:56.190052+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheckSum/subtest2","Output":"    --- PASS: TestCheckSum/subtest2 (0.21s)\n"}
+{"Time":"2023-10-09T17:09:56.190052+05:30","Action":"pass","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheckSum/subtest2","Elapsed":0.21}
+{"Time":"2023-10-09T17:09:56.190052+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheckSum/subtest3","Output":"    --- PASS: TestCheckSum/subtest3 (0.25s)\n"}
+{"Time":"2023-10-09T17:09:56.190052+05:30","Action":"pass","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheckSum/subtest3","Elapsed":0.25}
+{"Time":"2023-10-09T17:09:56.190052+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheckSum/subtest4","Output":"    --- PASS: TestCheckSum/subtest4 (0.24s)\n"}
+{"Time":"2023-10-09T17:09:56.190052+05:30","Action":"pass","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheckSum/subtest4","Elapsed":0.24}
+{"Time":"2023-10-09T17:09:56.190052+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheckSum/subtest5","Output":"    --- PASS: TestCheckSum/subtest5 (0.25s)\n"}
+{"Time":"2023-10-09T17:09:56.190052+05:30","Action":"pass","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheckSum/subtest5","Elapsed":0.25}
+{"Time":"2023-10-09T17:09:56.190052+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheckSum/subtest6","Output":"    --- PASS: TestCheckSum/subtest6 (0.26s)\n"}
+{"Time":"2023-10-09T17:09:56.190052+05:30","Action":"pass","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheckSum/subtest6","Elapsed":0.26}
+{"Time":"2023-10-09T17:09:56.190052+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheckSum/subtest7","Output":"    --- PASS: TestCheckSum/subtest7 (0.25s)\n"}
+{"Time":"2023-10-09T17:09:56.190052+05:30","Action":"pass","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheckSum/subtest7","Elapsed":0.25}
+{"Time":"2023-10-09T17:09:56.190052+05:30","Action":"pass","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheckSum","Elapsed":8.3}
+{"Time":"2023-10-09T17:09:56.190052+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheckSumDownload"}
+{"Time":"2023-10-09T17:09:56.190052+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheckSumDownload","Output":"=== RUN   TestCheckSumDownload\n"}
+{"Time":"2023-10-09T17:09:56.190052+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheckSumDownload","Output":"    run.go:180: Remote \"azurefiles root 'rclone-test-jovaxed6deqococ6kidunew8'\", Local \"Local file system at //?/C:/Users/HP/AppData/Local/Temp/rclone3935649188\", Modify Window \"1s\"\n"}
+{"Time":"2023-10-09T17:09:56.321013+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheckSumDownload","Output":"2023/10/09 17:09:56 Put: waiting for half a second after making parent=data\n"}
+{"Time":"2023-10-09T17:09:57.6152083+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheckSumDownload/subtest1"}
+{"Time":"2023-10-09T17:09:57.6155563+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheckSumDownload/subtest1","Output":"=== RUN   TestCheckSumDownload/subtest1\n"}
+{"Time":"2023-10-09T17:09:58.9393611+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheckSumDownload/subtest2"}
+{"Time":"2023-10-09T17:09:58.9393611+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheckSumDownload/subtest2","Output":"=== RUN   TestCheckSumDownload/subtest2\n"}
+{"Time":"2023-10-09T17:09:59.7775713+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheckSumDownload/subtest3"}
+{"Time":"2023-10-09T17:09:59.7775713+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheckSumDownload/subtest3","Output":"=== RUN   TestCheckSumDownload/subtest3\n"}
+{"Time":"2023-10-09T17:10:00.6450316+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheckSumDownload/subtest4"}
+{"Time":"2023-10-09T17:10:00.6450316+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheckSumDownload/subtest4","Output":"=== RUN   TestCheckSumDownload/subtest4\n"}
+{"Time":"2023-10-09T17:10:01.4998946+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheckSumDownload/subtest5"}
+{"Time":"2023-10-09T17:10:01.4999793+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheckSumDownload/subtest5","Output":"=== RUN   TestCheckSumDownload/subtest5\n"}
+{"Time":"2023-10-09T17:10:02.3503949+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheckSumDownload/subtest6"}
+{"Time":"2023-10-09T17:10:02.350562+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheckSumDownload/subtest6","Output":"=== RUN   TestCheckSumDownload/subtest6\n"}
+{"Time":"2023-10-09T17:10:03.6199912+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheckSumDownload/subtest7"}
+{"Time":"2023-10-09T17:10:03.6202826+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheckSumDownload/subtest7","Output":"=== RUN   TestCheckSumDownload/subtest7\n"}
+{"Time":"2023-10-09T17:10:04.2409148+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheckSumDownload","Output":"--- PASS: TestCheckSumDownload (8.05s)\n"}
+{"Time":"2023-10-09T17:10:04.2411857+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheckSumDownload/subtest1","Output":"    --- PASS: TestCheckSumDownload/subtest1 (0.21s)\n"}
+{"Time":"2023-10-09T17:10:04.2413081+05:30","Action":"pass","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheckSumDownload/subtest1","Elapsed":0.21}
+{"Time":"2023-10-09T17:10:04.2413081+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheckSumDownload/subtest2","Output":"    --- PASS: TestCheckSumDownload/subtest2 (0.21s)\n"}
+{"Time":"2023-10-09T17:10:04.2413081+05:30","Action":"pass","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheckSumDownload/subtest2","Elapsed":0.21}
+{"Time":"2023-10-09T17:10:04.2413081+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheckSumDownload/subtest3","Output":"    --- PASS: TestCheckSumDownload/subtest3 (0.22s)\n"}
+{"Time":"2023-10-09T17:10:04.2413081+05:30","Action":"pass","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheckSumDownload/subtest3","Elapsed":0.22}
+{"Time":"2023-10-09T17:10:04.2413081+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheckSumDownload/subtest4","Output":"    --- PASS: TestCheckSumDownload/subtest4 (0.22s)\n"}
+{"Time":"2023-10-09T17:10:04.2413081+05:30","Action":"pass","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheckSumDownload/subtest4","Elapsed":0.22}
+{"Time":"2023-10-09T17:10:04.2413081+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheckSumDownload/subtest5","Output":"    --- PASS: TestCheckSumDownload/subtest5 (0.21s)\n"}
+{"Time":"2023-10-09T17:10:04.2413081+05:30","Action":"pass","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheckSumDownload/subtest5","Elapsed":0.21}
+{"Time":"2023-10-09T17:10:04.2413081+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheckSumDownload/subtest6","Output":"    --- PASS: TestCheckSumDownload/subtest6 (0.20s)\n"}
+{"Time":"2023-10-09T17:10:04.2413081+05:30","Action":"pass","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheckSumDownload/subtest6","Elapsed":0.2}
+{"Time":"2023-10-09T17:10:04.2413081+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheckSumDownload/subtest7","Output":"    --- PASS: TestCheckSumDownload/subtest7 (0.21s)\n"}
+{"Time":"2023-10-09T17:10:04.2413081+05:30","Action":"pass","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheckSumDownload/subtest7","Elapsed":0.21}
+{"Time":"2023-10-09T17:10:04.2413081+05:30","Action":"pass","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCheckSumDownload","Elapsed":8.05}
+{"Time":"2023-10-09T17:10:04.2413081+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestDeduplicateInteractive"}
+{"Time":"2023-10-09T17:10:04.2413081+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestDeduplicateInteractive","Output":"=== RUN   TestDeduplicateInteractive\n"}
+{"Time":"2023-10-09T17:10:04.2413081+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestDeduplicateInteractive","Output":"    run.go:180: Remote \"azurefiles root 'rclone-test-jovaxed6deqococ6kidunew8'\", Local \"Local file system at //?/C:/Users/HP/AppData/Local/Temp/rclone3935649188\", Modify Window \"1s\"\n"}
+{"Time":"2023-10-09T17:10:04.2413081+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestDeduplicateInteractive","Output":"    dedupe_test.go:24: Can't test deduplicate - no duplicate files possible\n"}
+{"Time":"2023-10-09T17:10:04.4032103+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestDeduplicateInteractive","Output":"--- SKIP: TestDeduplicateInteractive (0.16s)\n"}
+{"Time":"2023-10-09T17:10:04.4032589+05:30","Action":"skip","Package":"github.com/rclone/rclone/fs/operations","Test":"TestDeduplicateInteractive","Elapsed":0.16}
+{"Time":"2023-10-09T17:10:04.4032589+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestDeduplicateSkip"}
+{"Time":"2023-10-09T17:10:04.4032589+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestDeduplicateSkip","Output":"=== RUN   TestDeduplicateSkip\n"}
+{"Time":"2023-10-09T17:10:04.4032589+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestDeduplicateSkip","Output":"    run.go:180: Remote \"azurefiles root 'rclone-test-jovaxed6deqococ6kidunew8'\", Local \"Local file system at //?/C:/Users/HP/AppData/Local/Temp/rclone3935649188\", Modify Window \"1s\"\n"}
+{"Time":"2023-10-09T17:10:04.4032589+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestDeduplicateSkip","Output":"    dedupe_test.go:24: Can't test deduplicate - no duplicate files possible\n"}
+{"Time":"2023-10-09T17:10:04.5617513+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestDeduplicateSkip","Output":"--- SKIP: TestDeduplicateSkip (0.16s)\n"}
+{"Time":"2023-10-09T17:10:04.5620209+05:30","Action":"skip","Package":"github.com/rclone/rclone/fs/operations","Test":"TestDeduplicateSkip","Elapsed":0.16}
+{"Time":"2023-10-09T17:10:04.5620209+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestDeduplicateSizeOnly"}
+{"Time":"2023-10-09T17:10:04.5620209+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestDeduplicateSizeOnly","Output":"=== RUN   TestDeduplicateSizeOnly\n"}
+{"Time":"2023-10-09T17:10:04.5620209+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestDeduplicateSizeOnly","Output":"    run.go:180: Remote \"azurefiles root 'rclone-test-jovaxed6deqococ6kidunew8'\", Local \"Local file system at //?/C:/Users/HP/AppData/Local/Temp/rclone3935649188\", Modify Window \"1s\"\n"}
+{"Time":"2023-10-09T17:10:04.5620209+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestDeduplicateSizeOnly","Output":"    dedupe_test.go:24: Can't test deduplicate - no duplicate files possible\n"}
+{"Time":"2023-10-09T17:10:04.7265374+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestDeduplicateSizeOnly","Output":"--- SKIP: TestDeduplicateSizeOnly (0.16s)\n"}
+{"Time":"2023-10-09T17:10:04.7268228+05:30","Action":"skip","Package":"github.com/rclone/rclone/fs/operations","Test":"TestDeduplicateSizeOnly","Elapsed":0.16}
+{"Time":"2023-10-09T17:10:04.7268228+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestDeduplicateFirst"}
+{"Time":"2023-10-09T17:10:04.7269054+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestDeduplicateFirst","Output":"=== RUN   TestDeduplicateFirst\n"}
+{"Time":"2023-10-09T17:10:04.7269445+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestDeduplicateFirst","Output":"    run.go:180: Remote \"azurefiles root 'rclone-test-jovaxed6deqococ6kidunew8'\", Local \"Local file system at //?/C:/Users/HP/AppData/Local/Temp/rclone3935649188\", Modify Window \"1s\"\n"}
+{"Time":"2023-10-09T17:10:04.7269445+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestDeduplicateFirst","Output":"    dedupe_test.go:24: Can't test deduplicate - no duplicate files possible\n"}
+{"Time":"2023-10-09T17:10:04.8864679+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestDeduplicateFirst","Output":"--- SKIP: TestDeduplicateFirst (0.16s)\n"}
+{"Time":"2023-10-09T17:10:04.8868379+05:30","Action":"skip","Package":"github.com/rclone/rclone/fs/operations","Test":"TestDeduplicateFirst","Elapsed":0.16}
+{"Time":"2023-10-09T17:10:04.8868379+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestDeduplicateNewest"}
+{"Time":"2023-10-09T17:10:04.8868379+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestDeduplicateNewest","Output":"=== RUN   TestDeduplicateNewest\n"}
+{"Time":"2023-10-09T17:10:04.8868379+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestDeduplicateNewest","Output":"    run.go:180: Remote \"azurefiles root 'rclone-test-jovaxed6deqococ6kidunew8'\", Local \"Local file system at //?/C:/Users/HP/AppData/Local/Temp/rclone3935649188\", Modify Window \"1s\"\n"}
+{"Time":"2023-10-09T17:10:04.8868379+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestDeduplicateNewest","Output":"    dedupe_test.go:24: Can't test deduplicate - no duplicate files possible\n"}
+{"Time":"2023-10-09T17:10:05.0447738+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestDeduplicateNewest","Output":"--- SKIP: TestDeduplicateNewest (0.16s)\n"}
+{"Time":"2023-10-09T17:10:05.0447738+05:30","Action":"skip","Package":"github.com/rclone/rclone/fs/operations","Test":"TestDeduplicateNewest","Elapsed":0.16}
+{"Time":"2023-10-09T17:10:05.0447738+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestDeduplicateNewestByHash"}
+{"Time":"2023-10-09T17:10:05.0447738+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestDeduplicateNewestByHash","Output":"=== RUN   TestDeduplicateNewestByHash\n"}
+{"Time":"2023-10-09T17:10:05.0447738+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestDeduplicateNewestByHash","Output":"    run.go:180: Remote \"azurefiles root 'rclone-test-jovaxed6deqococ6kidunew8'\", Local \"Local file system at //?/C:/Users/HP/AppData/Local/Temp/rclone3935649188\", Modify Window \"1s\"\n"}
+{"Time":"2023-10-09T17:10:05.3507971+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestDeduplicateNewestByHash","Output":"2023/10/09 17:10:05 Put: waiting for half a second after making parent=also\n"}
+{"Time":"2023-10-09T17:10:07.329711+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestDeduplicateNewestByHash","Output":"2023/10/09 17:10:07 NOTICE: aca906148013c247927a56c0634c6e39: Found 3 files with duplicate md5 hashes\n"}
+{"Time":"2023-10-09T17:10:07.5346272+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestDeduplicateNewestByHash","Output":"2023/10/09 17:10:07 NOTICE: aca906148013c247927a56c0634c6e39: Deleted 2 extra copies\n"}
+{"Time":"2023-10-09T17:10:08.235991+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestDeduplicateNewestByHash","Output":"--- PASS: TestDeduplicateNewestByHash (3.19s)\n"}
+{"Time":"2023-10-09T17:10:08.235991+05:30","Action":"pass","Package":"github.com/rclone/rclone/fs/operations","Test":"TestDeduplicateNewestByHash","Elapsed":3.19}
+{"Time":"2023-10-09T17:10:08.235991+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestDeduplicateOldest"}
+{"Time":"2023-10-09T17:10:08.235991+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestDeduplicateOldest","Output":"=== RUN   TestDeduplicateOldest\n"}
+{"Time":"2023-10-09T17:10:08.235991+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestDeduplicateOldest","Output":"    run.go:180: Remote \"azurefiles root 'rclone-test-jovaxed6deqococ6kidunew8'\", Local \"Local file system at //?/C:/Users/HP/AppData/Local/Temp/rclone3935649188\", Modify Window \"1s\"\n"}
+{"Time":"2023-10-09T17:10:08.235991+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestDeduplicateOldest","Output":"    dedupe_test.go:24: Can't test deduplicate - no duplicate files possible\n"}
+{"Time":"2023-10-09T17:10:08.4003214+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestDeduplicateOldest","Output":"--- SKIP: TestDeduplicateOldest (0.16s)\n"}
+{"Time":"2023-10-09T17:10:08.4003214+05:30","Action":"skip","Package":"github.com/rclone/rclone/fs/operations","Test":"TestDeduplicateOldest","Elapsed":0.16}
+{"Time":"2023-10-09T17:10:08.4003214+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestDeduplicateLargest"}
+{"Time":"2023-10-09T17:10:08.4003214+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestDeduplicateLargest","Output":"=== RUN   TestDeduplicateLargest\n"}
+{"Time":"2023-10-09T17:10:08.4003214+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestDeduplicateLargest","Output":"    run.go:180: Remote \"azurefiles root 'rclone-test-jovaxed6deqococ6kidunew8'\", Local \"Local file system at //?/C:/Users/HP/AppData/Local/Temp/rclone3935649188\", Modify Window \"1s\"\n"}
+{"Time":"2023-10-09T17:10:08.4003214+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestDeduplicateLargest","Output":"    dedupe_test.go:24: Can't test deduplicate - no duplicate files possible\n"}
+{"Time":"2023-10-09T17:10:08.5609186+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestDeduplicateLargest","Output":"--- SKIP: TestDeduplicateLargest (0.16s)\n"}
+{"Time":"2023-10-09T17:10:08.5609186+05:30","Action":"skip","Package":"github.com/rclone/rclone/fs/operations","Test":"TestDeduplicateLargest","Elapsed":0.16}
+{"Time":"2023-10-09T17:10:08.5609186+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestDeduplicateSmallest"}
+{"Time":"2023-10-09T17:10:08.5609186+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestDeduplicateSmallest","Output":"=== RUN   TestDeduplicateSmallest\n"}
+{"Time":"2023-10-09T17:10:08.5609186+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestDeduplicateSmallest","Output":"    run.go:180: Remote \"azurefiles root 'rclone-test-jovaxed6deqococ6kidunew8'\", Local \"Local file system at //?/C:/Users/HP/AppData/Local/Temp/rclone3935649188\", Modify Window \"1s\"\n"}
+{"Time":"2023-10-09T17:10:08.5609186+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestDeduplicateSmallest","Output":"    dedupe_test.go:24: Can't test deduplicate - no duplicate files possible\n"}
+{"Time":"2023-10-09T17:10:08.7204214+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestDeduplicateSmallest","Output":"--- SKIP: TestDeduplicateSmallest (0.16s)\n"}
+{"Time":"2023-10-09T17:10:08.7204214+05:30","Action":"skip","Package":"github.com/rclone/rclone/fs/operations","Test":"TestDeduplicateSmallest","Elapsed":0.16}
+{"Time":"2023-10-09T17:10:08.7204214+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestDeduplicateRename"}
+{"Time":"2023-10-09T17:10:08.7204214+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestDeduplicateRename","Output":"=== RUN   TestDeduplicateRename\n"}
+{"Time":"2023-10-09T17:10:08.7204214+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestDeduplicateRename","Output":"    run.go:180: Remote \"azurefiles root 'rclone-test-jovaxed6deqococ6kidunew8'\", Local \"Local file system at //?/C:/Users/HP/AppData/Local/Temp/rclone3935649188\", Modify Window \"1s\"\n"}
+{"Time":"2023-10-09T17:10:08.7204214+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestDeduplicateRename","Output":"    dedupe_test.go:24: Can't test deduplicate - no duplicate files possible\n"}
+{"Time":"2023-10-09T17:10:08.8807047+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestDeduplicateRename","Output":"--- SKIP: TestDeduplicateRename (0.16s)\n"}
+{"Time":"2023-10-09T17:10:08.8808627+05:30","Action":"skip","Package":"github.com/rclone/rclone/fs/operations","Test":"TestDeduplicateRename","Elapsed":0.16}
+{"Time":"2023-10-09T17:10:08.8808627+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestMergeDirs"}
+{"Time":"2023-10-09T17:10:08.8808627+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestMergeDirs","Output":"=== RUN   TestMergeDirs\n"}
+{"Time":"2023-10-09T17:10:08.8808627+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestMergeDirs","Output":"    run.go:180: Remote \"azurefiles root 'rclone-test-jovaxed6deqococ6kidunew8'\", Local \"Local file system at //?/C:/Users/HP/AppData/Local/Temp/rclone3935649188\", Modify Window \"1s\"\n"}
+{"Time":"2023-10-09T17:10:08.8808627+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestMergeDirs","Output":"    dedupe_test.go:256: Can't merge directories\n"}
+{"Time":"2023-10-09T17:10:09.0402071+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestMergeDirs","Output":"--- SKIP: TestMergeDirs (0.16s)\n"}
+{"Time":"2023-10-09T17:10:09.0402071+05:30","Action":"skip","Package":"github.com/rclone/rclone/fs/operations","Test":"TestMergeDirs","Elapsed":0.16}
+{"Time":"2023-10-09T17:10:09.0402071+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestListDirSorted"}
+{"Time":"2023-10-09T17:10:09.040746+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestListDirSorted","Output":"=== RUN   TestListDirSorted\n"}
+{"Time":"2023-10-09T17:10:09.040746+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestListDirSorted","Output":"    run.go:180: Remote \"azurefiles root 'rclone-test-jovaxed6deqococ6kidunew8'\", Local \"Local file system at //?/C:/Users/HP/AppData/Local/Temp/rclone3935649188\", Modify Window \"1s\"\n"}
+{"Time":"2023-10-09T17:10:09.559132+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestListDirSorted","Output":"2023/10/09 17:10:09 Put: waiting for half a second after making parent=sub dir\n"}
+{"Time":"2023-10-09T17:10:10.6169259+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestListDirSorted","Output":"2023/10/09 17:10:10 Put: waiting for half a second after making parent=sub dir/ignore dir\n"}
+{"Time":"2023-10-09T17:10:11.6521931+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestListDirSorted","Output":"2023/10/09 17:10:11 Put: waiting for half a second after making parent=sub dir/sub sub dir\n"}
+{"Time":"2023-10-09T17:10:14.7815766+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestListDirSorted","Output":"--- PASS: TestListDirSorted (5.74s)\n"}
+{"Time":"2023-10-09T17:10:14.7815766+05:30","Action":"pass","Package":"github.com/rclone/rclone/fs/operations","Test":"TestListDirSorted","Elapsed":5.74}
+{"Time":"2023-10-09T17:10:14.7815766+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestListJSON"}
+{"Time":"2023-10-09T17:10:14.7815766+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestListJSON","Output":"=== RUN   TestListJSON\n"}
+{"Time":"2023-10-09T17:10:14.7815766+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestListJSON","Output":"    run.go:180: Remote \"azurefiles root 'rclone-test-jovaxed6deqococ6kidunew8'\", Local \"Local file system at //?/C:/Users/HP/AppData/Local/Temp/rclone3935649188\", Modify Window \"1s\"\n"}
+{"Time":"2023-10-09T17:10:15.0964809+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestListJSON","Output":"2023/10/09 17:10:15 Put: waiting for half a second after making parent=sub\n"}
+{"Time":"2023-10-09T17:10:16.1508041+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestListJSON/Default"}
+{"Time":"2023-10-09T17:10:16.1508862+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestListJSON/Default","Output":"=== RUN   TestListJSON/Default\n"}
+{"Time":"2023-10-09T17:10:16.2838628+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestListJSON/FilesOnly"}
+{"Time":"2023-10-09T17:10:16.2840837+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestListJSON/FilesOnly","Output":"=== RUN   TestListJSON/FilesOnly\n"}
+{"Time":"2023-10-09T17:10:16.4033699+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestListJSON/DirsOnly"}
+{"Time":"2023-10-09T17:10:16.4034452+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestListJSON/DirsOnly","Output":"=== RUN   TestListJSON/DirsOnly\n"}
+{"Time":"2023-10-09T17:10:16.4818813+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestListJSON/Recurse"}
+{"Time":"2023-10-09T17:10:16.4819752+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestListJSON/Recurse","Output":"=== RUN   TestListJSON/Recurse\n"}
+{"Time":"2023-10-09T17:10:16.7251752+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestListJSON/SubDir"}
+{"Time":"2023-10-09T17:10:16.7251752+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestListJSON/SubDir","Output":"=== RUN   TestListJSON/SubDir\n"}
+{"Time":"2023-10-09T17:10:16.8470999+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestListJSON/NoModTime"}
+{"Time":"2023-10-09T17:10:16.8474617+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestListJSON/NoModTime","Output":"=== RUN   TestListJSON/NoModTime\n"}
+{"Time":"2023-10-09T17:10:16.9318648+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestListJSON/NoMimeType"}
+{"Time":"2023-10-09T17:10:16.9321179+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestListJSON/NoMimeType","Output":"=== RUN   TestListJSON/NoMimeType\n"}
+{"Time":"2023-10-09T17:10:17.0555702+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestListJSON/ShowHash"}
+{"Time":"2023-10-09T17:10:17.0555702+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestListJSON/ShowHash","Output":"=== RUN   TestListJSON/ShowHash\n"}
+{"Time":"2023-10-09T17:10:17.2171338+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestListJSON/HashTypes"}
+{"Time":"2023-10-09T17:10:17.2171338+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestListJSON/HashTypes","Output":"=== RUN   TestListJSON/HashTypes\n"}
+{"Time":"2023-10-09T17:10:17.3778726+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestListJSON/Metadata"}
+{"Time":"2023-10-09T17:10:17.3779656+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestListJSON/Metadata","Output":"=== RUN   TestListJSON/Metadata\n"}
+{"Time":"2023-10-09T17:10:17.8870425+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestListJSON","Output":"--- PASS: TestListJSON (3.10s)\n"}
+{"Time":"2023-10-09T17:10:17.8872637+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestListJSON/Default","Output":"    --- PASS: TestListJSON/Default (0.13s)\n"}
+{"Time":"2023-10-09T17:10:17.8872637+05:30","Action":"pass","Package":"github.com/rclone/rclone/fs/operations","Test":"TestListJSON/Default","Elapsed":0.13}
+{"Time":"2023-10-09T17:10:17.8872637+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestListJSON/FilesOnly","Output":"    --- PASS: TestListJSON/FilesOnly (0.12s)\n"}
+{"Time":"2023-10-09T17:10:17.8872637+05:30","Action":"pass","Package":"github.com/rclone/rclone/fs/operations","Test":"TestListJSON/FilesOnly","Elapsed":0.12}
+{"Time":"2023-10-09T17:10:17.8872637+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestListJSON/DirsOnly","Output":"    --- PASS: TestListJSON/DirsOnly (0.08s)\n"}
+{"Time":"2023-10-09T17:10:17.8872637+05:30","Action":"pass","Package":"github.com/rclone/rclone/fs/operations","Test":"TestListJSON/DirsOnly","Elapsed":0.08}
+{"Time":"2023-10-09T17:10:17.8872637+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestListJSON/Recurse","Output":"    --- PASS: TestListJSON/Recurse (0.24s)\n"}
+{"Time":"2023-10-09T17:10:17.8872637+05:30","Action":"pass","Package":"github.com/rclone/rclone/fs/operations","Test":"TestListJSON/Recurse","Elapsed":0.24}
+{"Time":"2023-10-09T17:10:17.8872637+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestListJSON/SubDir","Output":"    --- PASS: TestListJSON/SubDir (0.12s)\n"}
+{"Time":"2023-10-09T17:10:17.8872637+05:30","Action":"pass","Package":"github.com/rclone/rclone/fs/operations","Test":"TestListJSON/SubDir","Elapsed":0.12}
+{"Time":"2023-10-09T17:10:17.8872637+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestListJSON/NoModTime","Output":"    --- PASS: TestListJSON/NoModTime (0.08s)\n"}
+{"Time":"2023-10-09T17:10:17.8872637+05:30","Action":"pass","Package":"github.com/rclone/rclone/fs/operations","Test":"TestListJSON/NoModTime","Elapsed":0.08}
+{"Time":"2023-10-09T17:10:17.8872637+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestListJSON/NoMimeType","Output":"    --- PASS: TestListJSON/NoMimeType (0.12s)\n"}
+{"Time":"2023-10-09T17:10:17.8872637+05:30","Action":"pass","Package":"github.com/rclone/rclone/fs/operations","Test":"TestListJSON/NoMimeType","Elapsed":0.12}
+{"Time":"2023-10-09T17:10:17.8872637+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestListJSON/ShowHash","Output":"    --- PASS: TestListJSON/ShowHash (0.16s)\n"}
+{"Time":"2023-10-09T17:10:17.8872637+05:30","Action":"pass","Package":"github.com/rclone/rclone/fs/operations","Test":"TestListJSON/ShowHash","Elapsed":0.16}
+{"Time":"2023-10-09T17:10:17.8872637+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestListJSON/HashTypes","Output":"    --- PASS: TestListJSON/HashTypes (0.16s)\n"}
+{"Time":"2023-10-09T17:10:17.8872637+05:30","Action":"pass","Package":"github.com/rclone/rclone/fs/operations","Test":"TestListJSON/HashTypes","Elapsed":0.16}
+{"Time":"2023-10-09T17:10:17.8872637+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestListJSON/Metadata","Output":"    --- PASS: TestListJSON/Metadata (0.12s)\n"}
+{"Time":"2023-10-09T17:10:17.8872637+05:30","Action":"pass","Package":"github.com/rclone/rclone/fs/operations","Test":"TestListJSON/Metadata","Elapsed":0.12}
+{"Time":"2023-10-09T17:10:17.8872637+05:30","Action":"pass","Package":"github.com/rclone/rclone/fs/operations","Test":"TestListJSON","Elapsed":3.1}
+{"Time":"2023-10-09T17:10:17.8872637+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestStatJSON"}
+{"Time":"2023-10-09T17:10:17.8872637+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestStatJSON","Output":"=== RUN   TestStatJSON\n"}
+{"Time":"2023-10-09T17:10:17.8872637+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestStatJSON","Output":"    run.go:180: Remote \"azurefiles root 'rclone-test-jovaxed6deqococ6kidunew8'\", Local \"Local file system at //?/C:/Users/HP/AppData/Local/Temp/rclone3935649188\", Modify Window \"1s\"\n"}
+{"Time":"2023-10-09T17:10:18.2013692+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestStatJSON","Output":"2023/10/09 17:10:18 Put: waiting for half a second after making parent=sub\n"}
+{"Time":"2023-10-09T17:10:19.2546571+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestStatJSON/Root"}
+{"Time":"2023-10-09T17:10:19.2546571+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestStatJSON/Root","Output":"=== RUN   TestStatJSON/Root\n"}
+{"Time":"2023-10-09T17:10:19.3339578+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestStatJSON/RootFilesOnly"}
+{"Time":"2023-10-09T17:10:19.3339578+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestStatJSON/RootFilesOnly","Output":"=== RUN   TestStatJSON/RootFilesOnly\n"}
+{"Time":"2023-10-09T17:10:19.3339578+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestStatJSON/RootDirsOnly"}
+{"Time":"2023-10-09T17:10:19.3339578+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestStatJSON/RootDirsOnly","Output":"=== RUN   TestStatJSON/RootDirsOnly\n"}
+{"Time":"2023-10-09T17:10:19.413418+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestStatJSON/Dir"}
+{"Time":"2023-10-09T17:10:19.4135079+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestStatJSON/Dir","Output":"=== RUN   TestStatJSON/Dir\n"}
+{"Time":"2023-10-09T17:10:19.5775651+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestStatJSON/DirWithTrailingSlash"}
+{"Time":"2023-10-09T17:10:19.5776554+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestStatJSON/DirWithTrailingSlash","Output":"=== RUN   TestStatJSON/DirWithTrailingSlash\n"}
+{"Time":"2023-10-09T17:10:19.6568776+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestStatJSON/File"}
+{"Time":"2023-10-09T17:10:19.6568776+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestStatJSON/File","Output":"=== RUN   TestStatJSON/File\n"}
+{"Time":"2023-10-09T17:10:19.6965673+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestStatJSON/NotFound"}
+{"Time":"2023-10-09T17:10:19.6965673+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestStatJSON/NotFound","Output":"=== RUN   TestStatJSON/NotFound\n"}
+{"Time":"2023-10-09T17:10:19.8580316+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestStatJSON/DirFilesOnly"}
+{"Time":"2023-10-09T17:10:19.8581228+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestStatJSON/DirFilesOnly","Output":"=== RUN   TestStatJSON/DirFilesOnly\n"}
+{"Time":"2023-10-09T17:10:19.9393936+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestStatJSON/FileFilesOnly"}
+{"Time":"2023-10-09T17:10:19.9395211+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestStatJSON/FileFilesOnly","Output":"=== RUN   TestStatJSON/FileFilesOnly\n"}
+{"Time":"2023-10-09T17:10:19.9787704+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestStatJSON/NotFoundFilesOnly"}
+{"Time":"2023-10-09T17:10:19.9787704+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestStatJSON/NotFoundFilesOnly","Output":"=== RUN   TestStatJSON/NotFoundFilesOnly\n"}
+{"Time":"2023-10-09T17:10:20.0569348+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestStatJSON/DirDirsOnly"}
+{"Time":"2023-10-09T17:10:20.0569348+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestStatJSON/DirDirsOnly","Output":"=== RUN   TestStatJSON/DirDirsOnly\n"}
+{"Time":"2023-10-09T17:10:20.1368419+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestStatJSON/FileDirsOnly"}
+{"Time":"2023-10-09T17:10:20.1372434+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestStatJSON/FileDirsOnly","Output":"=== RUN   TestStatJSON/FileDirsOnly\n"}
+{"Time":"2023-10-09T17:10:20.219301+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestStatJSON/NotFoundDirsOnly"}
+{"Time":"2023-10-09T17:10:20.2199068+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestStatJSON/NotFoundDirsOnly","Output":"=== RUN   TestStatJSON/NotFoundDirsOnly\n"}
+{"Time":"2023-10-09T17:10:20.3014986+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestStatJSON/RootNotFound"}
+{"Time":"2023-10-09T17:10:20.3022038+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestStatJSON/RootNotFound","Output":"=== RUN   TestStatJSON/RootNotFound\n"}
+{"Time":"2023-10-09T17:10:20.7603344+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestStatJSON","Output":"--- PASS: TestStatJSON (2.87s)\n"}
+{"Time":"2023-10-09T17:10:20.7603344+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestStatJSON/Root","Output":"    --- PASS: TestStatJSON/Root (0.08s)\n"}
+{"Time":"2023-10-09T17:10:20.7603344+05:30","Action":"pass","Package":"github.com/rclone/rclone/fs/operations","Test":"TestStatJSON/Root","Elapsed":0.08}
+{"Time":"2023-10-09T17:10:20.7603344+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestStatJSON/RootFilesOnly","Output":"    --- PASS: TestStatJSON/RootFilesOnly (0.00s)\n"}
+{"Time":"2023-10-09T17:10:20.7603344+05:30","Action":"pass","Package":"github.com/rclone/rclone/fs/operations","Test":"TestStatJSON/RootFilesOnly","Elapsed":0}
+{"Time":"2023-10-09T17:10:20.7603344+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestStatJSON/RootDirsOnly","Output":"    --- PASS: TestStatJSON/RootDirsOnly (0.08s)\n"}
+{"Time":"2023-10-09T17:10:20.7603344+05:30","Action":"pass","Package":"github.com/rclone/rclone/fs/operations","Test":"TestStatJSON/RootDirsOnly","Elapsed":0.08}
+{"Time":"2023-10-09T17:10:20.7603344+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestStatJSON/Dir","Output":"    --- PASS: TestStatJSON/Dir (0.16s)\n"}
+{"Time":"2023-10-09T17:10:20.7603344+05:30","Action":"pass","Package":"github.com/rclone/rclone/fs/operations","Test":"TestStatJSON/Dir","Elapsed":0.16}
+{"Time":"2023-10-09T17:10:20.7603344+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestStatJSON/DirWithTrailingSlash","Output":"    --- PASS: TestStatJSON/DirWithTrailingSlash (0.08s)\n"}
+{"Time":"2023-10-09T17:10:20.7608585+05:30","Action":"pass","Package":"github.com/rclone/rclone/fs/operations","Test":"TestStatJSON/DirWithTrailingSlash","Elapsed":0.08}
+{"Time":"2023-10-09T17:10:20.7608585+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestStatJSON/File","Output":"    --- PASS: TestStatJSON/File (0.04s)\n"}
+{"Time":"2023-10-09T17:10:20.7609351+05:30","Action":"pass","Package":"github.com/rclone/rclone/fs/operations","Test":"TestStatJSON/File","Elapsed":0.04}
+{"Time":"2023-10-09T17:10:20.7609351+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestStatJSON/NotFound","Output":"    --- PASS: TestStatJSON/NotFound (0.16s)\n"}
+{"Time":"2023-10-09T17:10:20.7609351+05:30","Action":"pass","Package":"github.com/rclone/rclone/fs/operations","Test":"TestStatJSON/NotFound","Elapsed":0.16}
+{"Time":"2023-10-09T17:10:20.7609351+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestStatJSON/DirFilesOnly","Output":"    --- PASS: TestStatJSON/DirFilesOnly (0.07s)\n"}
+{"Time":"2023-10-09T17:10:20.7609351+05:30","Action":"pass","Package":"github.com/rclone/rclone/fs/operations","Test":"TestStatJSON/DirFilesOnly","Elapsed":0.07}
+{"Time":"2023-10-09T17:10:20.7609351+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestStatJSON/FileFilesOnly","Output":"    --- PASS: TestStatJSON/FileFilesOnly (0.04s)\n"}
+{"Time":"2023-10-09T17:10:20.7609351+05:30","Action":"pass","Package":"github.com/rclone/rclone/fs/operations","Test":"TestStatJSON/FileFilesOnly","Elapsed":0.04}
+{"Time":"2023-10-09T17:10:20.7609351+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestStatJSON/NotFoundFilesOnly","Output":"    --- PASS: TestStatJSON/NotFoundFilesOnly (0.08s)\n"}
+{"Time":"2023-10-09T17:10:20.7609351+05:30","Action":"pass","Package":"github.com/rclone/rclone/fs/operations","Test":"TestStatJSON/NotFoundFilesOnly","Elapsed":0.08}
+{"Time":"2023-10-09T17:10:20.7609351+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestStatJSON/DirDirsOnly","Output":"    --- PASS: TestStatJSON/DirDirsOnly (0.08s)\n"}
+{"Time":"2023-10-09T17:10:20.7609351+05:30","Action":"pass","Package":"github.com/rclone/rclone/fs/operations","Test":"TestStatJSON/DirDirsOnly","Elapsed":0.08}
+{"Time":"2023-10-09T17:10:20.7609351+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestStatJSON/FileDirsOnly","Output":"    --- PASS: TestStatJSON/FileDirsOnly (0.08s)\n"}
+{"Time":"2023-10-09T17:10:20.7609351+05:30","Action":"pass","Package":"github.com/rclone/rclone/fs/operations","Test":"TestStatJSON/FileDirsOnly","Elapsed":0.08}
+{"Time":"2023-10-09T17:10:20.7609351+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestStatJSON/NotFoundDirsOnly","Output":"    --- PASS: TestStatJSON/NotFoundDirsOnly (0.08s)\n"}
+{"Time":"2023-10-09T17:10:20.7609351+05:30","Action":"pass","Package":"github.com/rclone/rclone/fs/operations","Test":"TestStatJSON/NotFoundDirsOnly","Elapsed":0.08}
+{"Time":"2023-10-09T17:10:20.7609351+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestStatJSON/RootNotFound","Output":"    --- PASS: TestStatJSON/RootNotFound (0.07s)\n"}
+{"Time":"2023-10-09T17:10:20.7609351+05:30","Action":"pass","Package":"github.com/rclone/rclone/fs/operations","Test":"TestStatJSON/RootNotFound","Elapsed":0.07}
+{"Time":"2023-10-09T17:10:20.7609351+05:30","Action":"pass","Package":"github.com/rclone/rclone/fs/operations","Test":"TestStatJSON","Elapsed":2.87}
+{"Time":"2023-10-09T17:10:20.7609351+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestMkdir"}
+{"Time":"2023-10-09T17:10:20.7609351+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestMkdir","Output":"=== RUN   TestMkdir\n"}
+{"Time":"2023-10-09T17:10:20.7609351+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestMkdir","Output":"    run.go:180: Remote \"azurefiles root 'rclone-test-jovaxed6deqococ6kidunew8'\", Local \"Local file system at //?/C:/Users/HP/AppData/Local/Temp/rclone3935649188\", Modify Window \"1s\"\n"}
+{"Time":"2023-10-09T17:10:21.0813543+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestMkdir","Output":"--- PASS: TestMkdir (0.32s)\n"}
+{"Time":"2023-10-09T17:10:21.0815746+05:30","Action":"pass","Package":"github.com/rclone/rclone/fs/operations","Test":"TestMkdir","Elapsed":0.32}
+{"Time":"2023-10-09T17:10:21.0816525+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestLsd"}
+{"Time":"2023-10-09T17:10:21.0816525+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestLsd","Output":"=== RUN   TestLsd\n"}
+{"Time":"2023-10-09T17:10:21.0816525+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestLsd","Output":"    run.go:180: Remote \"azurefiles root 'rclone-test-jovaxed6deqococ6kidunew8'\", Local \"Local file system at //?/C:/Users/HP/AppData/Local/Temp/rclone3935649188\", Modify Window \"1s\"\n"}
+{"Time":"2023-10-09T17:10:21.1634188+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestLsd","Output":"2023/10/09 17:10:21 Put: waiting for half a second after making parent=sub dir\n"}
+{"Time":"2023-10-09T17:10:22.5740024+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestLsd","Output":"--- PASS: TestLsd (1.49s)\n"}
+{"Time":"2023-10-09T17:10:22.5740024+05:30","Action":"pass","Package":"github.com/rclone/rclone/fs/operations","Test":"TestLsd","Elapsed":1.49}
+{"Time":"2023-10-09T17:10:22.5740024+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestLs"}
+{"Time":"2023-10-09T17:10:22.5740024+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestLs","Output":"=== RUN   TestLs\n"}
+{"Time":"2023-10-09T17:10:22.5740024+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestLs","Output":"    run.go:180: Remote \"azurefiles root 'rclone-test-jovaxed6deqococ6kidunew8'\", Local \"Local file system at //?/C:/Users/HP/AppData/Local/Temp/rclone3935649188\", Modify Window \"1s\"\n"}
+{"Time":"2023-10-09T17:10:23.6064546+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestLs","Output":"--- PASS: TestLs (1.03s)\n"}
+{"Time":"2023-10-09T17:10:23.6064546+05:30","Action":"pass","Package":"github.com/rclone/rclone/fs/operations","Test":"TestLs","Elapsed":1.03}
+{"Time":"2023-10-09T17:10:23.6064546+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestLsWithFilesFrom"}
+{"Time":"2023-10-09T17:10:23.6064546+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestLsWithFilesFrom","Output":"=== RUN   TestLsWithFilesFrom\n"}
+{"Time":"2023-10-09T17:10:23.6064546+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestLsWithFilesFrom","Output":"    run.go:180: Remote \"azurefiles root 'rclone-test-jovaxed6deqococ6kidunew8'\", Local \"Local file system at //?/C:/Users/HP/AppData/Local/Temp/rclone3935649188\", Modify Window \"1s\"\n"}
+{"Time":"2023-10-09T17:10:24.7166721+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestLsWithFilesFrom","Output":"--- PASS: TestLsWithFilesFrom (1.11s)\n"}
+{"Time":"2023-10-09T17:10:24.7166721+05:30","Action":"pass","Package":"github.com/rclone/rclone/fs/operations","Test":"TestLsWithFilesFrom","Elapsed":1.11}
+{"Time":"2023-10-09T17:10:24.7166721+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestLsLong"}
+{"Time":"2023-10-09T17:10:24.7166721+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestLsLong","Output":"=== RUN   TestLsLong\n"}
+{"Time":"2023-10-09T17:10:24.7166721+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestLsLong","Output":"    run.go:180: Remote \"azurefiles root 'rclone-test-jovaxed6deqococ6kidunew8'\", Local \"Local file system at //?/C:/Users/HP/AppData/Local/Temp/rclone3935649188\", Modify Window \"1s\"\n"}
+{"Time":"2023-10-09T17:10:25.7988963+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestLsLong","Output":"--- PASS: TestLsLong (1.08s)\n"}
+{"Time":"2023-10-09T17:10:25.7988963+05:30","Action":"pass","Package":"github.com/rclone/rclone/fs/operations","Test":"TestLsLong","Elapsed":1.08}
+{"Time":"2023-10-09T17:10:25.799417+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestHashSums"}
+{"Time":"2023-10-09T17:10:25.799417+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestHashSums","Output":"=== RUN   TestHashSums\n"}
+{"Time":"2023-10-09T17:10:25.799417+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestHashSums","Output":"    run.go:180: Remote \"azurefiles root 'rclone-test-jovaxed6deqococ6kidunew8'\", Local \"Local file system at //?/C:/Users/HP/AppData/Local/Temp/rclone3935649188\", Modify Window \"1s\"\n"}
+{"Time":"2023-10-09T17:10:26.7325828+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestHashSums/Md5"}
+{"Time":"2023-10-09T17:10:26.7327636+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestHashSums/Md5","Output":"=== RUN   TestHashSums/Md5\n"}
+{"Time":"2023-10-09T17:10:26.8635191+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestHashSums/Md5Download"}
+{"Time":"2023-10-09T17:10:26.8635799+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestHashSums/Md5Download","Output":"=== RUN   TestHashSums/Md5Download\n"}
+{"Time":"2023-10-09T17:10:27.2430671+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestHashSums","Output":"--- PASS: TestHashSums (1.44s)\n"}
+{"Time":"2023-10-09T17:10:27.2430671+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestHashSums/Md5","Output":"    --- PASS: TestHashSums/Md5 (0.13s)\n"}
+{"Time":"2023-10-09T17:10:27.2430671+05:30","Action":"pass","Package":"github.com/rclone/rclone/fs/operations","Test":"TestHashSums/Md5","Elapsed":0.13}
+{"Time":"2023-10-09T17:10:27.2430671+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestHashSums/Md5Download","Output":"    --- PASS: TestHashSums/Md5Download (0.13s)\n"}
+{"Time":"2023-10-09T17:10:27.2430671+05:30","Action":"pass","Package":"github.com/rclone/rclone/fs/operations","Test":"TestHashSums/Md5Download","Elapsed":0.13}
+{"Time":"2023-10-09T17:10:27.2430671+05:30","Action":"pass","Package":"github.com/rclone/rclone/fs/operations","Test":"TestHashSums","Elapsed":1.44}
+{"Time":"2023-10-09T17:10:27.2430671+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestHashSumsWithErrors"}
+{"Time":"2023-10-09T17:10:27.2430671+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestHashSumsWithErrors","Output":"=== RUN   TestHashSumsWithErrors\n"}
+{"Time":"2023-10-09T17:10:27.2452793+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestHashSumsWithErrors","Output":"2023/10/09 17:10:27 ERROR : file1: hash unsupported: hash type not supported\n"}
+{"Time":"2023-10-09T17:10:27.2454522+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestHashSumsWithErrors","Output":"--- PASS: TestHashSumsWithErrors (0.00s)\n"}
+{"Time":"2023-10-09T17:10:27.2454522+05:30","Action":"pass","Package":"github.com/rclone/rclone/fs/operations","Test":"TestHashSumsWithErrors","Elapsed":0}
+{"Time":"2023-10-09T17:10:27.2454522+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestHashStream"}
+{"Time":"2023-10-09T17:10:27.2454522+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestHashStream","Output":"=== RUN   TestHashStream\n"}
+{"Time":"2023-10-09T17:10:27.2454522+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestHashStream","Output":"--- PASS: TestHashStream (0.00s)\n"}
+{"Time":"2023-10-09T17:10:27.2454522+05:30","Action":"pass","Package":"github.com/rclone/rclone/fs/operations","Test":"TestHashStream","Elapsed":0}
+{"Time":"2023-10-09T17:10:27.2454522+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestSuffixName"}
+{"Time":"2023-10-09T17:10:27.2454522+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestSuffixName","Output":"=== RUN   TestSuffixName\n"}
+{"Time":"2023-10-09T17:10:27.2454522+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestSuffixName","Output":"--- PASS: TestSuffixName (0.00s)\n"}
+{"Time":"2023-10-09T17:10:27.2454522+05:30","Action":"pass","Package":"github.com/rclone/rclone/fs/operations","Test":"TestSuffixName","Elapsed":0}
+{"Time":"2023-10-09T17:10:27.2454522+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCount"}
+{"Time":"2023-10-09T17:10:27.2454522+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCount","Output":"=== RUN   TestCount\n"}
+{"Time":"2023-10-09T17:10:27.2454522+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCount","Output":"    run.go:180: Remote \"azurefiles root 'rclone-test-jovaxed6deqococ6kidunew8'\", Local \"Local file system at //?/C:/Users/HP/AppData/Local/Temp/rclone3935649188\", Modify Window \"1s\"\n"}
+{"Time":"2023-10-09T17:10:27.774879+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCount","Output":"2023/10/09 17:10:27 Put: waiting for half a second after making parent=sub dir\n"}
+{"Time":"2023-10-09T17:10:29.4315994+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCount","Output":"--- PASS: TestCount (2.19s)\n"}
+{"Time":"2023-10-09T17:10:29.4315994+05:30","Action":"pass","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCount","Elapsed":2.19}
+{"Time":"2023-10-09T17:10:29.4315994+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestDelete"}
+{"Time":"2023-10-09T17:10:29.4315994+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestDelete","Output":"=== RUN   TestDelete\n"}
+{"Time":"2023-10-09T17:10:29.4315994+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestDelete","Output":"    run.go:180: Remote \"azurefiles root 'rclone-test-jovaxed6deqococ6kidunew8'\", Local \"Local file system at //?/C:/Users/HP/AppData/Local/Temp/rclone3935649188\", Modify Window \"1s\"\n"}
+{"Time":"2023-10-09T17:10:30.9081853+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestDelete","Output":"--- PASS: TestDelete (1.48s)\n"}
+{"Time":"2023-10-09T17:10:30.9081853+05:30","Action":"pass","Package":"github.com/rclone/rclone/fs/operations","Test":"TestDelete","Elapsed":1.48}
+{"Time":"2023-10-09T17:10:30.9081853+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestMaxDelete"}
+{"Time":"2023-10-09T17:10:30.9081853+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestMaxDelete","Output":"=== RUN   TestMaxDelete\n"}
+{"Time":"2023-10-09T17:10:30.9081853+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestMaxDelete","Output":"    run.go:180: Remote \"azurefiles root 'rclone-test-jovaxed6deqococ6kidunew8'\", Local \"Local file system at //?/C:/Users/HP/AppData/Local/Temp/rclone3935649188\", Modify Window \"1s\"\n"}
+{"Time":"2023-10-09T17:10:31.9814254+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestMaxDelete","Output":"2023/10/09 17:10:31 ERROR : Got fatal error on delete: --max-delete threshold reached\n"}
+{"Time":"2023-10-09T17:10:32.4751168+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestMaxDelete","Output":"--- PASS: TestMaxDelete (1.57s)\n"}
+{"Time":"2023-10-09T17:10:32.4754767+05:30","Action":"pass","Package":"github.com/rclone/rclone/fs/operations","Test":"TestMaxDelete","Elapsed":1.57}
+{"Time":"2023-10-09T17:10:32.4754767+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestMaxDeleteSizeLargeFile"}
+{"Time":"2023-10-09T17:10:32.4754767+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestMaxDeleteSizeLargeFile","Output":"=== RUN   TestMaxDeleteSizeLargeFile\n"}
+{"Time":"2023-10-09T17:10:32.4754767+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestMaxDeleteSizeLargeFile","Output":"    run.go:180: Remote \"azurefiles root 'rclone-test-jovaxed6deqococ6kidunew8'\", Local \"Local file system at //?/C:/Users/HP/AppData/Local/Temp/rclone3935649188\", Modify Window \"1s\"\n"}
+{"Time":"2023-10-09T17:10:33.5579625+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestMaxDeleteSizeLargeFile","Output":"2023/10/09 17:10:33 ERROR : Got fatal error on delete: --max-delete-size threshold reached\n"}
+{"Time":"2023-10-09T17:10:34.1454372+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestMaxDeleteSizeLargeFile","Output":"--- PASS: TestMaxDeleteSizeLargeFile (1.67s)\n"}
+{"Time":"2023-10-09T17:10:34.1458736+05:30","Action":"pass","Package":"github.com/rclone/rclone/fs/operations","Test":"TestMaxDeleteSizeLargeFile","Elapsed":1.67}
+{"Time":"2023-10-09T17:10:34.1458736+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestMaxDeleteSize"}
+{"Time":"2023-10-09T17:10:34.1458736+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestMaxDeleteSize","Output":"=== RUN   TestMaxDeleteSize\n"}
+{"Time":"2023-10-09T17:10:34.1458736+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestMaxDeleteSize","Output":"    run.go:180: Remote \"azurefiles root 'rclone-test-jovaxed6deqococ6kidunew8'\", Local \"Local file system at //?/C:/Users/HP/AppData/Local/Temp/rclone3935649188\", Modify Window \"1s\"\n"}
+{"Time":"2023-10-09T17:10:35.2487378+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestMaxDeleteSize","Output":"2023/10/09 17:10:35 ERROR : Got fatal error on delete: --max-delete-size threshold reached\n"}
+{"Time":"2023-10-09T17:10:35.7411864+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestMaxDeleteSize","Output":"--- PASS: TestMaxDeleteSize (1.60s)\n"}
+{"Time":"2023-10-09T17:10:35.7414965+05:30","Action":"pass","Package":"github.com/rclone/rclone/fs/operations","Test":"TestMaxDeleteSize","Elapsed":1.6}
+{"Time":"2023-10-09T17:10:35.7416453+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRetry"}
+{"Time":"2023-10-09T17:10:35.7416453+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRetry","Output":"=== RUN   TestRetry\n"}
+{"Time":"2023-10-09T17:10:35.7416453+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRetry","Output":"--- PASS: TestRetry (0.00s)\n"}
+{"Time":"2023-10-09T17:10:35.7416453+05:30","Action":"pass","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRetry","Elapsed":0}
+{"Time":"2023-10-09T17:10:35.7416453+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCat"}
+{"Time":"2023-10-09T17:10:35.7416453+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCat","Output":"=== RUN   TestCat\n"}
+{"Time":"2023-10-09T17:10:35.7416453+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCat","Output":"    run.go:180: Remote \"azurefiles root 'rclone-test-jovaxed6deqococ6kidunew8'\", Local \"Local file system at //?/C:/Users/HP/AppData/Local/Temp/rclone3935649188\", Modify Window \"1s\"\n"}
+{"Time":"2023-10-09T17:10:37.516218+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCat","Output":"--- PASS: TestCat (1.77s)\n"}
+{"Time":"2023-10-09T17:10:37.5163863+05:30","Action":"pass","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCat","Elapsed":1.77}
+{"Time":"2023-10-09T17:10:37.5163863+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestPurge"}
+{"Time":"2023-10-09T17:10:37.5166544+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestPurge","Output":"=== RUN   TestPurge\n"}
+{"Time":"2023-10-09T17:10:37.558368+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestPurge","Output":"    run.go:180: Remote \"azurefiles root 'rclone-test-xujezut1bakenuz4malisoy8'\", Local \"Local file system at //?/C:/Users/HP/AppData/Local/Temp/rclone1063010102\", Modify Window \"1s\"\n"}
+{"Time":"2023-10-09T17:10:37.8148968+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestPurge","Output":"2023/10/09 17:10:37 Mkdir: waiting for half a second after making parent=rclone-test-xujezut1bakenuz4malisoy8/A1\n"}
+{"Time":"2023-10-09T17:10:38.375076+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestPurge","Output":"2023/10/09 17:10:38 Mkdir: waiting for half a second after making parent=rclone-test-xujezut1bakenuz4malisoy8/A1/B1\n"}
+{"Time":"2023-10-09T17:10:38.9214007+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestPurge","Output":"2023/10/09 17:10:38 Put: waiting for half a second after making parent=A1/B1/C1\n"}
+{"Time":"2023-10-09T17:10:42.8020137+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestPurge","Output":"2023/10/09 17:10:42 ERROR : : error listing: directory not found\n"}
+{"Time":"2023-10-09T17:10:42.8444639+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestPurge","Output":"2023/10/09 17:10:42 ERROR : : error listing: directory not found\n"}
+{"Time":"2023-10-09T17:10:42.8925095+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestPurge","Output":"2023/10/09 17:10:42 purge failed to rmdir \"\": directory not found\n"}
+{"Time":"2023-10-09T17:10:42.8929465+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestPurge","Output":"2023/10/09 17:10:42 purge failed: directory not found\n"}
+{"Time":"2023-10-09T17:10:42.893653+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestPurge","Output":"--- PASS: TestPurge (5.38s)\n"}
+{"Time":"2023-10-09T17:10:42.8937197+05:30","Action":"pass","Package":"github.com/rclone/rclone/fs/operations","Test":"TestPurge","Elapsed":5.38}
+{"Time":"2023-10-09T17:10:42.8937197+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRmdirsNoLeaveRoot"}
+{"Time":"2023-10-09T17:10:42.8937197+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRmdirsNoLeaveRoot","Output":"=== RUN   TestRmdirsNoLeaveRoot\n"}
+{"Time":"2023-10-09T17:10:42.8937197+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRmdirsNoLeaveRoot","Output":"    run.go:180: Remote \"azurefiles root 'rclone-test-jovaxed6deqococ6kidunew8'\", Local \"Local file system at //?/C:/Users/HP/AppData/Local/Temp/rclone3935649188\", Modify Window \"1s\"\n"}
+{"Time":"2023-10-09T17:10:43.1256752+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRmdirsNoLeaveRoot","Output":"2023/10/09 17:10:43 Mkdir: waiting for half a second after making parent=rclone-test-jovaxed6deqococ6kidunew8/A1\n"}
+{"Time":"2023-10-09T17:10:43.6875703+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRmdirsNoLeaveRoot","Output":"2023/10/09 17:10:43 Mkdir: waiting for half a second after making parent=rclone-test-jovaxed6deqococ6kidunew8/A1/B1\n"}
+{"Time":"2023-10-09T17:10:44.2333332+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRmdirsNoLeaveRoot","Output":"2023/10/09 17:10:44 Put: waiting for half a second after making parent=A1/B1/C1\n"}
+{"Time":"2023-10-09T17:10:49.9729644+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRmdirsNoLeaveRoot","Output":"2023/10/09 17:10:49 ERROR : : error listing: directory not found\n"}
+{"Time":"2023-10-09T17:10:50.0477814+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRmdirsNoLeaveRoot","Output":"2023/10/09 17:10:50 ERROR : : error listing: directory not found\n"}
+{"Time":"2023-10-09T17:10:50.0478549+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRmdirsNoLeaveRoot","Output":"--- PASS: TestRmdirsNoLeaveRoot (7.15s)\n"}
+{"Time":"2023-10-09T17:10:50.0478549+05:30","Action":"pass","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRmdirsNoLeaveRoot","Elapsed":7.15}
+{"Time":"2023-10-09T17:10:50.0478549+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRmdirsLeaveRoot"}
+{"Time":"2023-10-09T17:10:50.0478549+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRmdirsLeaveRoot","Output":"=== RUN   TestRmdirsLeaveRoot\n"}
+{"Time":"2023-10-09T17:10:50.0478549+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRmdirsLeaveRoot","Output":"    run.go:180: Remote \"azurefiles root 'rclone-test-jovaxed6deqococ6kidunew8'\", Local \"Local file system at //?/C:/Users/HP/AppData/Local/Temp/rclone3935649188\", Modify Window \"1s\"\n"}
+{"Time":"2023-10-09T17:10:52.5480612+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRmdirsLeaveRoot","Output":"--- PASS: TestRmdirsLeaveRoot (2.50s)\n"}
+{"Time":"2023-10-09T17:10:52.5483633+05:30","Action":"pass","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRmdirsLeaveRoot","Elapsed":2.5}
+{"Time":"2023-10-09T17:10:52.5484484+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRmdirsWithFilter"}
+{"Time":"2023-10-09T17:10:52.5484776+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRmdirsWithFilter","Output":"=== RUN   TestRmdirsWithFilter\n"}
+{"Time":"2023-10-09T17:10:52.5486521+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRmdirsWithFilter","Output":"    run.go:180: Remote \"azurefiles root 'rclone-test-jovaxed6deqococ6kidunew8'\", Local \"Local file system at //?/C:/Users/HP/AppData/Local/Temp/rclone3935649188\", Modify Window \"1s\"\n"}
+{"Time":"2023-10-09T17:10:55.1909198+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRmdirsWithFilter","Output":"--- PASS: TestRmdirsWithFilter (2.64s)\n"}
+{"Time":"2023-10-09T17:10:55.1909198+05:30","Action":"pass","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRmdirsWithFilter","Elapsed":2.64}
+{"Time":"2023-10-09T17:10:55.1909198+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCopyURL"}
+{"Time":"2023-10-09T17:10:55.1909198+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCopyURL","Output":"=== RUN   TestCopyURL\n"}
+{"Time":"2023-10-09T17:10:55.1909198+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCopyURL","Output":"    run.go:180: Remote \"azurefiles root 'rclone-test-jovaxed6deqococ6kidunew8'\", Local \"Local file system at //?/C:/Users/HP/AppData/Local/Temp/rclone3935649188\", Modify Window \"1s\"\n"}
+{"Time":"2023-10-09T17:10:58.8689607+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCopyURL","Output":"--- PASS: TestCopyURL (3.68s)\n"}
+{"Time":"2023-10-09T17:10:58.869057+05:30","Action":"pass","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCopyURL","Elapsed":3.68}
+{"Time":"2023-10-09T17:10:58.869194+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCopyURLToWriter"}
+{"Time":"2023-10-09T17:10:58.869194+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCopyURLToWriter","Output":"=== RUN   TestCopyURLToWriter\n"}
+{"Time":"2023-10-09T17:10:58.8714467+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCopyURLToWriter","Output":"--- PASS: TestCopyURLToWriter (0.00s)\n"}
+{"Time":"2023-10-09T17:10:58.8714467+05:30","Action":"pass","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCopyURLToWriter","Elapsed":0}
+{"Time":"2023-10-09T17:10:58.8714467+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestMoveFile"}
+{"Time":"2023-10-09T17:10:58.8714467+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestMoveFile","Output":"=== RUN   TestMoveFile\n"}
+{"Time":"2023-10-09T17:10:58.8714467+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestMoveFile","Output":"    run.go:180: Remote \"azurefiles root 'rclone-test-jovaxed6deqococ6kidunew8'\", Local \"Local file system at //?/C:/Users/HP/AppData/Local/Temp/rclone3935649188\", Modify Window \"1s\"\n"}
+{"Time":"2023-10-09T17:10:59.1113358+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestMoveFile","Output":"2023/10/09 17:10:59 Put: waiting for half a second after making parent=sub\n"}
+{"Time":"2023-10-09T17:11:02.2328713+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestMoveFile","Output":"--- PASS: TestMoveFile (3.36s)\n"}
+{"Time":"2023-10-09T17:11:02.2328713+05:30","Action":"pass","Package":"github.com/rclone/rclone/fs/operations","Test":"TestMoveFile","Elapsed":3.36}
+{"Time":"2023-10-09T17:11:02.2328713+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestMoveFileWithIgnoreExisting"}
+{"Time":"2023-10-09T17:11:02.2328713+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestMoveFileWithIgnoreExisting","Output":"=== RUN   TestMoveFileWithIgnoreExisting\n"}
+{"Time":"2023-10-09T17:11:02.2334569+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestMoveFileWithIgnoreExisting","Output":"    run.go:180: Remote \"azurefiles root 'rclone-test-jovaxed6deqococ6kidunew8'\", Local \"Local file system at //?/C:/Users/HP/AppData/Local/Temp/rclone3935649188\", Modify Window \"1s\"\n"}
+{"Time":"2023-10-09T17:11:03.9997508+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestMoveFileWithIgnoreExisting","Output":"--- PASS: TestMoveFileWithIgnoreExisting (1.77s)\n"}
+{"Time":"2023-10-09T17:11:04.0000572+05:30","Action":"pass","Package":"github.com/rclone/rclone/fs/operations","Test":"TestMoveFileWithIgnoreExisting","Elapsed":1.77}
+{"Time":"2023-10-09T17:11:04.0001471+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCaseInsensitiveMoveFile"}
+{"Time":"2023-10-09T17:11:04.0002088+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCaseInsensitiveMoveFile","Output":"=== RUN   TestCaseInsensitiveMoveFile\n"}
+{"Time":"2023-10-09T17:11:04.0002848+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCaseInsensitiveMoveFile","Output":"    run.go:180: Remote \"azurefiles root 'rclone-test-jovaxed6deqococ6kidunew8'\", Local \"Local file system at //?/C:/Users/HP/AppData/Local/Temp/rclone3935649188\", Modify Window \"1s\"\n"}
+{"Time":"2023-10-09T17:11:04.3081989+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCaseInsensitiveMoveFile","Output":"--- PASS: TestCaseInsensitiveMoveFile (0.31s)\n"}
+{"Time":"2023-10-09T17:11:04.308423+05:30","Action":"pass","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCaseInsensitiveMoveFile","Elapsed":0.31}
+{"Time":"2023-10-09T17:11:04.308423+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestMoveFileBackupDir"}
+{"Time":"2023-10-09T17:11:04.3084708+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestMoveFileBackupDir","Output":"=== RUN   TestMoveFileBackupDir\n"}
+{"Time":"2023-10-09T17:11:04.3084894+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestMoveFileBackupDir","Output":"    run.go:180: Remote \"azurefiles root 'rclone-test-jovaxed6deqococ6kidunew8'\", Local \"Local file system at //?/C:/Users/HP/AppData/Local/Temp/rclone3935649188\", Modify Window \"1s\"\n"}
+{"Time":"2023-10-09T17:11:04.4758487+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestMoveFileBackupDir","Output":"2023/10/09 17:11:04 Put: waiting for half a second after making parent=dst\n"}
+{"Time":"2023-10-09T17:11:06.812077+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestMoveFileBackupDir","Output":"2023/10/09 17:11:06 Mkdir: waiting for half a second after making parent=rclone-test-jovaxed6deqococ6kidunew8/backup\n"}
+{"Time":"2023-10-09T17:11:09.5963661+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestMoveFileBackupDir","Output":"--- PASS: TestMoveFileBackupDir (5.29s)\n"}
+{"Time":"2023-10-09T17:11:09.5966407+05:30","Action":"pass","Package":"github.com/rclone/rclone/fs/operations","Test":"TestMoveFileBackupDir","Elapsed":5.29}
+{"Time":"2023-10-09T17:11:09.5966407+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCopyFile"}
+{"Time":"2023-10-09T17:11:09.5966407+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCopyFile","Output":"=== RUN   TestCopyFile\n"}
+{"Time":"2023-10-09T17:11:09.5967436+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCopyFile","Output":"    run.go:180: Remote \"azurefiles root 'rclone-test-jovaxed6deqococ6kidunew8'\", Local \"Local file system at //?/C:/Users/HP/AppData/Local/Temp/rclone3935649188\", Modify Window \"1s\"\n"}
+{"Time":"2023-10-09T17:11:09.7902253+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCopyFile","Output":"2023/10/09 17:11:09 Put: waiting for half a second after making parent=sub\n"}
+{"Time":"2023-10-09T17:11:12.2985692+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCopyFile","Output":"--- PASS: TestCopyFile (2.70s)\n"}
+{"Time":"2023-10-09T17:11:12.2985692+05:30","Action":"pass","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCopyFile","Elapsed":2.7}
+{"Time":"2023-10-09T17:11:12.2985692+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCopyFileBackupDir"}
+{"Time":"2023-10-09T17:11:12.2985692+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCopyFileBackupDir","Output":"=== RUN   TestCopyFileBackupDir\n"}
+{"Time":"2023-10-09T17:11:12.2985692+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCopyFileBackupDir","Output":"    run.go:180: Remote \"azurefiles root 'rclone-test-jovaxed6deqococ6kidunew8'\", Local \"Local file system at //?/C:/Users/HP/AppData/Local/Temp/rclone3935649188\", Modify Window \"1s\"\n"}
+{"Time":"2023-10-09T17:11:12.4312255+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCopyFileBackupDir","Output":"2023/10/09 17:11:12 Put: waiting for half a second after making parent=dst\n"}
+{"Time":"2023-10-09T17:11:14.3050854+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCopyFileBackupDir","Output":"2023/10/09 17:11:14 Mkdir: waiting for half a second after making parent=rclone-test-jovaxed6deqococ6kidunew8/backup\n"}
+{"Time":"2023-10-09T17:11:17.0455029+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCopyFileBackupDir","Output":"--- PASS: TestCopyFileBackupDir (4.75s)\n"}
+{"Time":"2023-10-09T17:11:17.045727+05:30","Action":"pass","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCopyFileBackupDir","Elapsed":4.75}
+{"Time":"2023-10-09T17:11:17.045727+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCopyFileCompareDest"}
+{"Time":"2023-10-09T17:11:17.0458444+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCopyFileCompareDest","Output":"=== RUN   TestCopyFileCompareDest\n"}
+{"Time":"2023-10-09T17:11:17.0458444+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCopyFileCompareDest","Output":"    run.go:180: Remote \"azurefiles root 'rclone-test-jovaxed6deqococ6kidunew8'\", Local \"Local file system at //?/C:/Users/HP/AppData/Local/Temp/rclone3935649188\", Modify Window \"1s\"\n"}
+{"Time":"2023-10-09T17:11:17.405703+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCopyFileCompareDest","Output":"2023/10/09 17:11:17 Put: waiting for half a second after making parent=.\n"}
+{"Time":"2023-10-09T17:11:20.2509578+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCopyFileCompareDest","Output":"2023/10/09 17:11:20 Put: waiting for half a second after making parent=CompareDest\n"}
+{"Time":"2023-10-09T17:11:29.0122042+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCopyFileCompareDest","Output":"--- PASS: TestCopyFileCompareDest (11.97s)\n"}
+{"Time":"2023-10-09T17:11:29.0125066+05:30","Action":"pass","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCopyFileCompareDest","Elapsed":11.97}
+{"Time":"2023-10-09T17:11:29.0125066+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCopyFileCopyDest"}
+{"Time":"2023-10-09T17:11:29.0125066+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCopyFileCopyDest","Output":"=== RUN   TestCopyFileCopyDest\n"}
+{"Time":"2023-10-09T17:11:29.0125988+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCopyFileCopyDest","Output":"    run.go:180: Remote \"azurefiles root 'rclone-test-jovaxed6deqococ6kidunew8'\", Local \"Local file system at //?/C:/Users/HP/AppData/Local/Temp/rclone3935649188\", Modify Window \"1s\"\n"}
+{"Time":"2023-10-09T17:11:29.3591224+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCopyFileCopyDest","Output":"2023/10/09 17:11:29 Put: waiting for half a second after making parent=.\n"}
+{"Time":"2023-10-09T17:11:32.1351996+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCopyFileCopyDest","Output":"2023/10/09 17:11:32 Put: waiting for half a second after making parent=CopyDest\n"}
+{"Time":"2023-10-09T17:11:42.4451945+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCopyFileCopyDest","Output":"--- PASS: TestCopyFileCopyDest (13.43s)\n"}
+{"Time":"2023-10-09T17:11:42.4457288+05:30","Action":"pass","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCopyFileCopyDest","Elapsed":13.43}
+{"Time":"2023-10-09T17:11:42.4457288+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCopyInplace"}
+{"Time":"2023-10-09T17:11:42.4457288+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCopyInplace","Output":"=== RUN   TestCopyInplace\n"}
+{"Time":"2023-10-09T17:11:42.4457288+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCopyInplace","Output":"    run.go:180: Remote \"azurefiles root 'rclone-test-jovaxed6deqococ6kidunew8'\", Local \"Local file system at //?/C:/Users/HP/AppData/Local/Temp/rclone3935649188\", Modify Window \"1s\"\n"}
+{"Time":"2023-10-09T17:11:42.4457288+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCopyInplace","Output":"    operations_test.go:1252: Partial uploads not supported\n"}
+{"Time":"2023-10-09T17:11:42.6146035+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCopyInplace","Output":"--- SKIP: TestCopyInplace (0.17s)\n"}
+{"Time":"2023-10-09T17:11:42.6146035+05:30","Action":"skip","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCopyInplace","Elapsed":0.17}
+{"Time":"2023-10-09T17:11:42.6146035+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCopyLongFileName"}
+{"Time":"2023-10-09T17:11:42.6146035+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCopyLongFileName","Output":"=== RUN   TestCopyLongFileName\n"}
+{"Time":"2023-10-09T17:11:42.6146035+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCopyLongFileName","Output":"    run.go:180: Remote \"azurefiles root 'rclone-test-jovaxed6deqococ6kidunew8'\", Local \"Local file system at //?/C:/Users/HP/AppData/Local/Temp/rclone3935649188\", Modify Window \"1s\"\n"}
+{"Time":"2023-10-09T17:11:42.6146035+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCopyLongFileName","Output":"    operations_test.go:1285: Partial uploads not supported\n"}
+{"Time":"2023-10-09T17:11:42.7866476+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCopyLongFileName","Output":"--- SKIP: TestCopyLongFileName (0.17s)\n"}
+{"Time":"2023-10-09T17:11:42.7866476+05:30","Action":"skip","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCopyLongFileName","Elapsed":0.17}
+{"Time":"2023-10-09T17:11:42.7866476+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestSameConfig"}
+{"Time":"2023-10-09T17:11:42.7866476+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestSameConfig","Output":"=== RUN   TestSameConfig\n"}
+{"Time":"2023-10-09T17:11:42.7866476+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestSameConfig","Output":"--- PASS: TestSameConfig (0.00s)\n"}
+{"Time":"2023-10-09T17:11:42.7866476+05:30","Action":"pass","Package":"github.com/rclone/rclone/fs/operations","Test":"TestSameConfig","Elapsed":0}
+{"Time":"2023-10-09T17:11:42.7866476+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestSame"}
+{"Time":"2023-10-09T17:11:42.7866476+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestSame","Output":"=== RUN   TestSame\n"}
+{"Time":"2023-10-09T17:11:42.7866476+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestSame","Output":"--- PASS: TestSame (0.00s)\n"}
+{"Time":"2023-10-09T17:11:42.7866476+05:30","Action":"pass","Package":"github.com/rclone/rclone/fs/operations","Test":"TestSame","Elapsed":0}
+{"Time":"2023-10-09T17:11:42.7866476+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestOverlappingFilterCheckWithoutFilter"}
+{"Time":"2023-10-09T17:11:42.7866476+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestOverlappingFilterCheckWithoutFilter","Output":"=== RUN   TestOverlappingFilterCheckWithoutFilter\n"}
+{"Time":"2023-10-09T17:11:42.7866476+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestOverlappingFilterCheckWithoutFilter","Output":"--- PASS: TestOverlappingFilterCheckWithoutFilter (0.00s)\n"}
+{"Time":"2023-10-09T17:11:42.7866476+05:30","Action":"pass","Package":"github.com/rclone/rclone/fs/operations","Test":"TestOverlappingFilterCheckWithoutFilter","Elapsed":0}
+{"Time":"2023-10-09T17:11:42.7866476+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestOverlappingFilterCheckWithFilter"}
+{"Time":"2023-10-09T17:11:42.7866476+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestOverlappingFilterCheckWithFilter","Output":"=== RUN   TestOverlappingFilterCheckWithFilter\n"}
+{"Time":"2023-10-09T17:11:42.7871596+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestOverlappingFilterCheckWithFilter","Output":"--- PASS: TestOverlappingFilterCheckWithFilter (0.00s)\n"}
+{"Time":"2023-10-09T17:11:42.7871596+05:30","Action":"pass","Package":"github.com/rclone/rclone/fs/operations","Test":"TestOverlappingFilterCheckWithFilter","Elapsed":0}
+{"Time":"2023-10-09T17:11:42.7872254+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestListFormat"}
+{"Time":"2023-10-09T17:11:42.7872254+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestListFormat","Output":"=== RUN   TestListFormat\n"}
+{"Time":"2023-10-09T17:11:42.7872254+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestListFormat","Output":"--- PASS: TestListFormat (0.00s)\n"}
+{"Time":"2023-10-09T17:11:42.7872254+05:30","Action":"pass","Package":"github.com/rclone/rclone/fs/operations","Test":"TestListFormat","Elapsed":0}
+{"Time":"2023-10-09T17:11:42.7872254+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestDirMove"}
+{"Time":"2023-10-09T17:11:42.7872254+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestDirMove","Output":"=== RUN   TestDirMove\n"}
+{"Time":"2023-10-09T17:11:42.7872254+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestDirMove","Output":"    run.go:180: Remote \"azurefiles root 'rclone-test-jovaxed6deqococ6kidunew8'\", Local \"Local file system at //?/C:/Users/HP/AppData/Local/Temp/rclone3935649188\", Modify Window \"1s\"\n"}
+{"Time":"2023-10-09T17:11:42.9228675+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestDirMove","Output":"2023/10/09 17:11:42 Put: waiting for half a second after making parent=A1\n"}
+{"Time":"2023-10-09T17:11:43.9709387+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestDirMove","Output":"2023/10/09 17:11:43 Put: waiting for half a second after making parent=A1/B1\n"}
+{"Time":"2023-10-09T17:11:44.782358+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestDirMove","Output":"2023/10/09 17:11:44 Put: waiting for half a second after making parent=A1/B1/C1\n"}
+{"Time":"2023-10-09T17:11:45.6118569+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestDirMove","Output":"2023/10/09 17:11:45 Put: waiting for half a second after making parent=A1/B1/C2\n"}
+{"Time":"2023-10-09T17:11:53.6167489+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestDirMove","Output":"--- PASS: TestDirMove (10.83s)\n"}
+{"Time":"2023-10-09T17:11:53.6167489+05:30","Action":"pass","Package":"github.com/rclone/rclone/fs/operations","Test":"TestDirMove","Elapsed":10.83}
+{"Time":"2023-10-09T17:11:53.6167489+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestGetFsInfo"}
+{"Time":"2023-10-09T17:11:53.6167489+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestGetFsInfo","Output":"=== RUN   TestGetFsInfo\n"}
+{"Time":"2023-10-09T17:11:53.6167489+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestGetFsInfo","Output":"    run.go:180: Remote \"azurefiles root 'rclone-test-jovaxed6deqococ6kidunew8'\", Local \"Local file system at //?/C:/Users/HP/AppData/Local/Temp/rclone3935649188\", Modify Window \"1s\"\n"}
+{"Time":"2023-10-09T17:11:53.7872933+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestGetFsInfo","Output":"--- PASS: TestGetFsInfo (0.17s)\n"}
+{"Time":"2023-10-09T17:11:53.7872933+05:30","Action":"pass","Package":"github.com/rclone/rclone/fs/operations","Test":"TestGetFsInfo","Elapsed":0.17}
+{"Time":"2023-10-09T17:11:53.7872933+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRcat"}
+{"Time":"2023-10-09T17:11:53.7872933+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRcat","Output":"=== RUN   TestRcat\n"}
+{"Time":"2023-10-09T17:11:53.7872933+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRcat/withChecksum=false,ignoreChecksum=false"}
+{"Time":"2023-10-09T17:11:53.7872933+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRcat/withChecksum=false,ignoreChecksum=false","Output":"=== RUN   TestRcat/withChecksum=false,ignoreChecksum=false\n"}
+{"Time":"2023-10-09T17:11:53.7878093+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRcat/withChecksum=false,ignoreChecksum=false","Output":"    run.go:180: Remote \"azurefiles root 'rclone-test-jovaxed6deqococ6kidunew8'\", Local \"Local file system at //?/C:/Users/HP/AppData/Local/Temp/rclone3935649188\", Modify Window \"1s\"\n"}
+{"Time":"2023-10-09T17:11:55.0868323+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRcat/withChecksum=true,ignoreChecksum=false"}
+{"Time":"2023-10-09T17:11:55.0870136+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRcat/withChecksum=true,ignoreChecksum=false","Output":"=== RUN   TestRcat/withChecksum=true,ignoreChecksum=false\n"}
+{"Time":"2023-10-09T17:11:55.0870136+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRcat/withChecksum=true,ignoreChecksum=false","Output":"    run.go:180: Remote \"azurefiles root 'rclone-test-jovaxed6deqococ6kidunew8'\", Local \"Local file system at //?/C:/Users/HP/AppData/Local/Temp/rclone3935649188\", Modify Window \"1s\"\n"}
+{"Time":"2023-10-09T17:11:56.2603682+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRcat/withChecksum=false,ignoreChecksum=true"}
+{"Time":"2023-10-09T17:11:56.2603682+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRcat/withChecksum=false,ignoreChecksum=true","Output":"=== RUN   TestRcat/withChecksum=false,ignoreChecksum=true\n"}
+{"Time":"2023-10-09T17:11:56.2603682+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRcat/withChecksum=false,ignoreChecksum=true","Output":"    run.go:180: Remote \"azurefiles root 'rclone-test-jovaxed6deqococ6kidunew8'\", Local \"Local file system at //?/C:/Users/HP/AppData/Local/Temp/rclone3935649188\", Modify Window \"1s\"\n"}
+{"Time":"2023-10-09T17:11:57.349516+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRcat/withChecksum=true,ignoreChecksum=true"}
+{"Time":"2023-10-09T17:11:57.349516+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRcat/withChecksum=true,ignoreChecksum=true","Output":"=== RUN   TestRcat/withChecksum=true,ignoreChecksum=true\n"}
+{"Time":"2023-10-09T17:11:57.3496918+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRcat/withChecksum=true,ignoreChecksum=true","Output":"    run.go:180: Remote \"azurefiles root 'rclone-test-jovaxed6deqococ6kidunew8'\", Local \"Local file system at //?/C:/Users/HP/AppData/Local/Temp/rclone3935649188\", Modify Window \"1s\"\n"}
+{"Time":"2023-10-09T17:11:58.4685524+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRcat","Output":"--- PASS: TestRcat (4.68s)\n"}
+{"Time":"2023-10-09T17:11:58.4685524+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRcat/withChecksum=false,ignoreChecksum=false","Output":"    --- PASS: TestRcat/withChecksum=false,ignoreChecksum=false (1.30s)\n"}
+{"Time":"2023-10-09T17:11:58.4685524+05:30","Action":"pass","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRcat/withChecksum=false,ignoreChecksum=false","Elapsed":1.3}
+{"Time":"2023-10-09T17:11:58.4690666+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRcat/withChecksum=true,ignoreChecksum=false","Output":"    --- PASS: TestRcat/withChecksum=true,ignoreChecksum=false (1.17s)\n"}
+{"Time":"2023-10-09T17:11:58.4691091+05:30","Action":"pass","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRcat/withChecksum=true,ignoreChecksum=false","Elapsed":1.17}
+{"Time":"2023-10-09T17:11:58.4691091+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRcat/withChecksum=false,ignoreChecksum=true","Output":"    --- PASS: TestRcat/withChecksum=false,ignoreChecksum=true (1.09s)\n"}
+{"Time":"2023-10-09T17:11:58.4691091+05:30","Action":"pass","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRcat/withChecksum=false,ignoreChecksum=true","Elapsed":1.09}
+{"Time":"2023-10-09T17:11:58.4691091+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRcat/withChecksum=true,ignoreChecksum=true","Output":"    --- PASS: TestRcat/withChecksum=true,ignoreChecksum=true (1.12s)\n"}
+{"Time":"2023-10-09T17:11:58.4691091+05:30","Action":"pass","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRcat/withChecksum=true,ignoreChecksum=true","Elapsed":1.12}
+{"Time":"2023-10-09T17:11:58.4691091+05:30","Action":"pass","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRcat","Elapsed":4.68}
+{"Time":"2023-10-09T17:11:58.4691091+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRcatMetadata"}
+{"Time":"2023-10-09T17:11:58.4691091+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRcatMetadata","Output":"=== RUN   TestRcatMetadata\n"}
+{"Time":"2023-10-09T17:11:58.4691091+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRcatMetadata","Output":"    run.go:180: Remote \"azurefiles root 'rclone-test-jovaxed6deqococ6kidunew8'\", Local \"Local file system at //?/C:/Users/HP/AppData/Local/Temp/rclone3935649188\", Modify Window \"1s\"\n"}
+{"Time":"2023-10-09T17:11:58.4691091+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRcatMetadata","Output":"    operations_test.go:1759: Skipping as destination doesn't support user metadata\n"}
+{"Time":"2023-10-09T17:11:58.6355328+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRcatMetadata","Output":"--- SKIP: TestRcatMetadata (0.17s)\n"}
+{"Time":"2023-10-09T17:11:58.6355328+05:30","Action":"skip","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRcatMetadata","Elapsed":0.17}
+{"Time":"2023-10-09T17:11:58.6355328+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRcatSize"}
+{"Time":"2023-10-09T17:11:58.6360554+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRcatSize","Output":"=== RUN   TestRcatSize\n"}
+{"Time":"2023-10-09T17:11:58.6360959+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRcatSize","Output":"    run.go:180: Remote \"azurefiles root 'rclone-test-jovaxed6deqococ6kidunew8'\", Local \"Local file system at //?/C:/Users/HP/AppData/Local/Temp/rclone3935649188\", Modify Window \"1s\"\n"}
+{"Time":"2023-10-09T17:11:59.664864+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRcatSize","Output":"--- PASS: TestRcatSize (1.03s)\n"}
+{"Time":"2023-10-09T17:11:59.6648861+05:30","Action":"pass","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRcatSize","Elapsed":1.03}
+{"Time":"2023-10-09T17:11:59.6648861+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRcatSizeMetadata"}
+{"Time":"2023-10-09T17:11:59.6648861+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRcatSizeMetadata","Output":"=== RUN   TestRcatSizeMetadata\n"}
+{"Time":"2023-10-09T17:11:59.6648861+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRcatSizeMetadata","Output":"    run.go:180: Remote \"azurefiles root 'rclone-test-jovaxed6deqococ6kidunew8'\", Local \"Local file system at //?/C:/Users/HP/AppData/Local/Temp/rclone3935649188\", Modify Window \"1s\"\n"}
+{"Time":"2023-10-09T17:11:59.6648861+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRcatSizeMetadata","Output":"    operations_test.go:1840: Skipping as destination doesn't support user metadata\n"}
+{"Time":"2023-10-09T17:11:59.8358799+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRcatSizeMetadata","Output":"--- SKIP: TestRcatSizeMetadata (0.17s)\n"}
+{"Time":"2023-10-09T17:11:59.8359746+05:30","Action":"skip","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRcatSizeMetadata","Elapsed":0.17}
+{"Time":"2023-10-09T17:11:59.8359746+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCopyFileMaxTransfer"}
+{"Time":"2023-10-09T17:11:59.8359746+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCopyFileMaxTransfer","Output":"=== RUN   TestCopyFileMaxTransfer\n"}
+{"Time":"2023-10-09T17:11:59.8359746+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCopyFileMaxTransfer","Output":"    run.go:180: Remote \"azurefiles root 'rclone-test-jovaxed6deqococ6kidunew8'\", Local \"Local file system at //?/C:/Users/HP/AppData/Local/Temp/rclone3935649188\", Modify Window \"1s\"\n"}
+{"Time":"2023-10-09T17:12:00.0103716+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCopyFileMaxTransfer","Output":"2023/10/09 17:12:00 Put: waiting for half a second after making parent=TestCopyFileMaxTransfer\n"}
+{"Time":"2023-10-09T17:12:01.264658+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCopyFileMaxTransfer","Output":"2023/10/09 17:12:01 ERROR : TestCopyFileMaxTransfer/file2: Failed to copy: unable to upload. cannot upload stream : max transfer limit reached as set by --max-transfer\n"}
+{"Time":"2023-10-09T17:12:02.9905623+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCopyFileMaxTransfer","Output":"--- PASS: TestCopyFileMaxTransfer (3.15s)\n"}
+{"Time":"2023-10-09T17:12:02.9905623+05:30","Action":"pass","Package":"github.com/rclone/rclone/fs/operations","Test":"TestCopyFileMaxTransfer","Elapsed":3.15}
+{"Time":"2023-10-09T17:12:02.9905623+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestTouchDir"}
+{"Time":"2023-10-09T17:12:02.9905623+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestTouchDir","Output":"=== RUN   TestTouchDir\n"}
+{"Time":"2023-10-09T17:12:02.9905623+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestTouchDir","Output":"    run.go:180: Remote \"azurefiles root 'rclone-test-jovaxed6deqococ6kidunew8'\", Local \"Local file system at //?/C:/Users/HP/AppData/Local/Temp/rclone3935649188\", Modify Window \"1s\"\n"}
+{"Time":"2023-10-09T17:12:03.5442999+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestTouchDir","Output":"2023/10/09 17:12:03 Put: waiting for half a second after making parent=sub dir\n"}
+{"Time":"2023-10-09T17:12:05.9033599+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestTouchDir","Output":"--- PASS: TestTouchDir (2.91s)\n"}
+{"Time":"2023-10-09T17:12:05.9033599+05:30","Action":"pass","Package":"github.com/rclone/rclone/fs/operations","Test":"TestTouchDir","Elapsed":2.91}
+{"Time":"2023-10-09T17:12:05.9033599+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRcAbout"}
+{"Time":"2023-10-09T17:12:05.9033599+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRcAbout","Output":"=== RUN   TestRcAbout\n"}
+{"Time":"2023-10-09T17:12:05.9033599+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRcAbout","Output":"    rc_test.go:26: Skipping test on non local remote\n"}
+{"Time":"2023-10-09T17:12:05.9033599+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRcAbout","Output":"--- SKIP: TestRcAbout (0.00s)\n"}
+{"Time":"2023-10-09T17:12:05.9033599+05:30","Action":"skip","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRcAbout","Elapsed":0}
+{"Time":"2023-10-09T17:12:05.9033599+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRcCleanup"}
+{"Time":"2023-10-09T17:12:05.9033599+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRcCleanup","Output":"=== RUN   TestRcCleanup\n"}
+{"Time":"2023-10-09T17:12:05.9033599+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRcCleanup","Output":"    rc_test.go:26: Skipping test on non local remote\n"}
+{"Time":"2023-10-09T17:12:05.9033599+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRcCleanup","Output":"--- SKIP: TestRcCleanup (0.00s)\n"}
+{"Time":"2023-10-09T17:12:05.9033599+05:30","Action":"skip","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRcCleanup","Elapsed":0}
+{"Time":"2023-10-09T17:12:05.9033599+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRcCopyfile"}
+{"Time":"2023-10-09T17:12:05.9033599+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRcCopyfile","Output":"=== RUN   TestRcCopyfile\n"}
+{"Time":"2023-10-09T17:12:05.9033599+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRcCopyfile","Output":"    rc_test.go:26: Skipping test on non local remote\n"}
+{"Time":"2023-10-09T17:12:05.9033599+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRcCopyfile","Output":"--- SKIP: TestRcCopyfile (0.00s)\n"}
+{"Time":"2023-10-09T17:12:05.9033599+05:30","Action":"skip","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRcCopyfile","Elapsed":0}
+{"Time":"2023-10-09T17:12:05.9033599+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRcCopyurl"}
+{"Time":"2023-10-09T17:12:05.9033599+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRcCopyurl","Output":"=== RUN   TestRcCopyurl\n"}
+{"Time":"2023-10-09T17:12:05.9033599+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRcCopyurl","Output":"    rc_test.go:26: Skipping test on non local remote\n"}
+{"Time":"2023-10-09T17:12:05.9033599+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRcCopyurl","Output":"--- SKIP: TestRcCopyurl (0.00s)\n"}
+{"Time":"2023-10-09T17:12:05.9033599+05:30","Action":"skip","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRcCopyurl","Elapsed":0}
+{"Time":"2023-10-09T17:12:05.9033599+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRcDelete"}
+{"Time":"2023-10-09T17:12:05.9033599+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRcDelete","Output":"=== RUN   TestRcDelete\n"}
+{"Time":"2023-10-09T17:12:05.9033599+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRcDelete","Output":"    rc_test.go:26: Skipping test on non local remote\n"}
+{"Time":"2023-10-09T17:12:05.9033599+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRcDelete","Output":"--- SKIP: TestRcDelete (0.00s)\n"}
+{"Time":"2023-10-09T17:12:05.9033599+05:30","Action":"skip","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRcDelete","Elapsed":0}
+{"Time":"2023-10-09T17:12:05.9033599+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRcDeletefile"}
+{"Time":"2023-10-09T17:12:05.9033599+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRcDeletefile","Output":"=== RUN   TestRcDeletefile\n"}
+{"Time":"2023-10-09T17:12:05.9033599+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRcDeletefile","Output":"    rc_test.go:26: Skipping test on non local remote\n"}
+{"Time":"2023-10-09T17:12:05.9033599+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRcDeletefile","Output":"--- SKIP: TestRcDeletefile (0.00s)\n"}
+{"Time":"2023-10-09T17:12:05.9033599+05:30","Action":"skip","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRcDeletefile","Elapsed":0}
+{"Time":"2023-10-09T17:12:05.9033599+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRcList"}
+{"Time":"2023-10-09T17:12:05.9033599+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRcList","Output":"=== RUN   TestRcList\n"}
+{"Time":"2023-10-09T17:12:05.9033599+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRcList","Output":"    rc_test.go:26: Skipping test on non local remote\n"}
+{"Time":"2023-10-09T17:12:05.9033599+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRcList","Output":"--- SKIP: TestRcList (0.00s)\n"}
+{"Time":"2023-10-09T17:12:05.9033599+05:30","Action":"skip","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRcList","Elapsed":0}
+{"Time":"2023-10-09T17:12:05.9033599+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRcStat"}
+{"Time":"2023-10-09T17:12:05.9033599+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRcStat","Output":"=== RUN   TestRcStat\n"}
+{"Time":"2023-10-09T17:12:05.9033599+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRcStat","Output":"    rc_test.go:26: Skipping test on non local remote\n"}
+{"Time":"2023-10-09T17:12:05.9033599+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRcStat","Output":"--- SKIP: TestRcStat (0.00s)\n"}
+{"Time":"2023-10-09T17:12:05.9033599+05:30","Action":"skip","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRcStat","Elapsed":0}
+{"Time":"2023-10-09T17:12:05.9033599+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRcSetTier"}
+{"Time":"2023-10-09T17:12:05.9033599+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRcSetTier","Output":"=== RUN   TestRcSetTier\n"}
+{"Time":"2023-10-09T17:12:05.9038707+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRcSetTier","Output":"    rc_test.go:26: Skipping test on non local remote\n"}
+{"Time":"2023-10-09T17:12:05.9038707+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRcSetTier","Output":"--- SKIP: TestRcSetTier (0.00s)\n"}
+{"Time":"2023-10-09T17:12:05.903897+05:30","Action":"skip","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRcSetTier","Elapsed":0}
+{"Time":"2023-10-09T17:12:05.903897+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRcSetTierFile"}
+{"Time":"2023-10-09T17:12:05.903897+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRcSetTierFile","Output":"=== RUN   TestRcSetTierFile\n"}
+{"Time":"2023-10-09T17:12:05.903897+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRcSetTierFile","Output":"    rc_test.go:26: Skipping test on non local remote\n"}
+{"Time":"2023-10-09T17:12:05.903897+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRcSetTierFile","Output":"--- SKIP: TestRcSetTierFile (0.00s)\n"}
+{"Time":"2023-10-09T17:12:05.903897+05:30","Action":"skip","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRcSetTierFile","Elapsed":0}
+{"Time":"2023-10-09T17:12:05.903897+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRcMkdir"}
+{"Time":"2023-10-09T17:12:05.903897+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRcMkdir","Output":"=== RUN   TestRcMkdir\n"}
+{"Time":"2023-10-09T17:12:05.903897+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRcMkdir","Output":"    rc_test.go:26: Skipping test on non local remote\n"}
+{"Time":"2023-10-09T17:12:05.903897+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRcMkdir","Output":"--- SKIP: TestRcMkdir (0.00s)\n"}
+{"Time":"2023-10-09T17:12:05.903897+05:30","Action":"skip","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRcMkdir","Elapsed":0}
+{"Time":"2023-10-09T17:12:05.903897+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRcMovefile"}
+{"Time":"2023-10-09T17:12:05.903897+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRcMovefile","Output":"=== RUN   TestRcMovefile\n"}
+{"Time":"2023-10-09T17:12:05.903897+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRcMovefile","Output":"    rc_test.go:26: Skipping test on non local remote\n"}
+{"Time":"2023-10-09T17:12:05.903897+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRcMovefile","Output":"--- SKIP: TestRcMovefile (0.00s)\n"}
+{"Time":"2023-10-09T17:12:05.903897+05:30","Action":"skip","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRcMovefile","Elapsed":0}
+{"Time":"2023-10-09T17:12:05.903897+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRcPurge"}
+{"Time":"2023-10-09T17:12:05.903897+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRcPurge","Output":"=== RUN   TestRcPurge\n"}
+{"Time":"2023-10-09T17:12:05.903897+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRcPurge","Output":"    rc_test.go:26: Skipping test on non local remote\n"}
+{"Time":"2023-10-09T17:12:05.903897+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRcPurge","Output":"--- SKIP: TestRcPurge (0.00s)\n"}
+{"Time":"2023-10-09T17:12:05.903897+05:30","Action":"skip","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRcPurge","Elapsed":0}
+{"Time":"2023-10-09T17:12:05.903897+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRcRmdir"}
+{"Time":"2023-10-09T17:12:05.903897+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRcRmdir","Output":"=== RUN   TestRcRmdir\n"}
+{"Time":"2023-10-09T17:12:05.903897+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRcRmdir","Output":"    rc_test.go:26: Skipping test on non local remote\n"}
+{"Time":"2023-10-09T17:12:05.903897+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRcRmdir","Output":"--- SKIP: TestRcRmdir (0.00s)\n"}
+{"Time":"2023-10-09T17:12:05.903897+05:30","Action":"skip","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRcRmdir","Elapsed":0}
+{"Time":"2023-10-09T17:12:05.903897+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRcRmdirs"}
+{"Time":"2023-10-09T17:12:05.903897+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRcRmdirs","Output":"=== RUN   TestRcRmdirs\n"}
+{"Time":"2023-10-09T17:12:05.903897+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRcRmdirs","Output":"    rc_test.go:26: Skipping test on non local remote\n"}
+{"Time":"2023-10-09T17:12:05.903897+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRcRmdirs","Output":"--- SKIP: TestRcRmdirs (0.00s)\n"}
+{"Time":"2023-10-09T17:12:05.903897+05:30","Action":"skip","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRcRmdirs","Elapsed":0}
+{"Time":"2023-10-09T17:12:05.903897+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRcSize"}
+{"Time":"2023-10-09T17:12:05.903897+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRcSize","Output":"=== RUN   TestRcSize\n"}
+{"Time":"2023-10-09T17:12:05.903897+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRcSize","Output":"    rc_test.go:26: Skipping test on non local remote\n"}
+{"Time":"2023-10-09T17:12:05.903897+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRcSize","Output":"--- SKIP: TestRcSize (0.00s)\n"}
+{"Time":"2023-10-09T17:12:05.903897+05:30","Action":"skip","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRcSize","Elapsed":0}
+{"Time":"2023-10-09T17:12:05.903897+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRcPublicLink"}
+{"Time":"2023-10-09T17:12:05.903897+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRcPublicLink","Output":"=== RUN   TestRcPublicLink\n"}
+{"Time":"2023-10-09T17:12:05.903897+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRcPublicLink","Output":"    rc_test.go:26: Skipping test on non local remote\n"}
+{"Time":"2023-10-09T17:12:05.903897+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRcPublicLink","Output":"--- SKIP: TestRcPublicLink (0.00s)\n"}
+{"Time":"2023-10-09T17:12:05.903897+05:30","Action":"skip","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRcPublicLink","Elapsed":0}
+{"Time":"2023-10-09T17:12:05.903897+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRcFsInfo"}
+{"Time":"2023-10-09T17:12:05.903897+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRcFsInfo","Output":"=== RUN   TestRcFsInfo\n"}
+{"Time":"2023-10-09T17:12:05.903897+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRcFsInfo","Output":"    rc_test.go:26: Skipping test on non local remote\n"}
+{"Time":"2023-10-09T17:12:05.903897+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRcFsInfo","Output":"--- SKIP: TestRcFsInfo (0.00s)\n"}
+{"Time":"2023-10-09T17:12:05.903897+05:30","Action":"skip","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRcFsInfo","Elapsed":0}
+{"Time":"2023-10-09T17:12:05.903897+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestUploadFile"}
+{"Time":"2023-10-09T17:12:05.903897+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestUploadFile","Output":"=== RUN   TestUploadFile\n"}
+{"Time":"2023-10-09T17:12:05.903897+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestUploadFile","Output":"    rc_test.go:26: Skipping test on non local remote\n"}
+{"Time":"2023-10-09T17:12:05.903897+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestUploadFile","Output":"--- SKIP: TestUploadFile (0.00s)\n"}
+{"Time":"2023-10-09T17:12:05.903897+05:30","Action":"skip","Package":"github.com/rclone/rclone/fs/operations","Test":"TestUploadFile","Elapsed":0}
+{"Time":"2023-10-09T17:12:05.903897+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRcCommand"}
+{"Time":"2023-10-09T17:12:05.903897+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRcCommand","Output":"=== RUN   TestRcCommand\n"}
+{"Time":"2023-10-09T17:12:05.9044618+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRcCommand","Output":"    rc_test.go:26: Skipping test on non local remote\n"}
+{"Time":"2023-10-09T17:12:05.9044618+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRcCommand","Output":"--- SKIP: TestRcCommand (0.00s)\n"}
+{"Time":"2023-10-09T17:12:05.9044618+05:30","Action":"skip","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRcCommand","Elapsed":0}
+{"Time":"2023-10-09T17:12:05.9044618+05:30","Action":"run","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRcDu"}
+{"Time":"2023-10-09T17:12:05.9044618+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRcDu","Output":"=== RUN   TestRcDu\n"}
+{"Time":"2023-10-09T17:12:05.9044618+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRcDu","Output":"    rc_test.go:26: Skipping test on non local remote\n"}
+{"Time":"2023-10-09T17:12:05.9044618+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRcDu","Output":"--- SKIP: TestRcDu (0.00s)\n"}
+{"Time":"2023-10-09T17:12:05.9044618+05:30","Action":"skip","Package":"github.com/rclone/rclone/fs/operations","Test":"TestRcDu","Elapsed":0}
+{"Time":"2023-10-09T17:12:05.9044618+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Output":"PASS\n"}
+{"Time":"2023-10-09T17:12:06.0768525+05:30","Action":"output","Package":"github.com/rclone/rclone/fs/operations","Output":"ok  \tgithub.com/rclone/rclone/fs/operations\t151.954s\n"}
+{"Time":"2023-10-09T17:12:06.0768525+05:30","Action":"pass","Package":"github.com/rclone/rclone/fs/operations","Elapsed":151.954}

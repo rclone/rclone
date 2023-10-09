@@ -1,0 +1,512 @@
+=== RUN   TestDoMultiThreadCopy
+--- PASS: TestDoMultiThreadCopy (0.00s)
+=== RUN   TestMultithreadCalculateNumChunks
+=== RUN   TestMultithreadCalculateNumChunks/{size:1_chunkSize:65536_wantNumChunks:1}
+=== RUN   TestMultithreadCalculateNumChunks/{size:1048576_chunkSize:1_wantNumChunks:1048576}
+=== RUN   TestMultithreadCalculateNumChunks/{size:1048576_chunkSize:2_wantNumChunks:524288}
+=== RUN   TestMultithreadCalculateNumChunks/{size:1048577_chunkSize:2_wantNumChunks:524289}
+=== RUN   TestMultithreadCalculateNumChunks/{size:1048575_chunkSize:2_wantNumChunks:524288}
+--- PASS: TestMultithreadCalculateNumChunks (0.00s)
+    --- PASS: TestMultithreadCalculateNumChunks/{size:1_chunkSize:65536_wantNumChunks:1} (0.00s)
+    --- PASS: TestMultithreadCalculateNumChunks/{size:1048576_chunkSize:1_wantNumChunks:1048576} (0.00s)
+    --- PASS: TestMultithreadCalculateNumChunks/{size:1048576_chunkSize:2_wantNumChunks:524288} (0.00s)
+    --- PASS: TestMultithreadCalculateNumChunks/{size:1048577_chunkSize:2_wantNumChunks:524289} (0.00s)
+    --- PASS: TestMultithreadCalculateNumChunks/{size:1048575_chunkSize:2_wantNumChunks:524288} (0.00s)
+=== RUN   TestMultithreadCopy
+    run.go:180: Remote "azurefiles root 'rclone-test-fisahev9kofedib7zafaxep7'", Local "Local file system at //?/C:/Users/HP/AppData/Local/Temp/rclone2925251428", Modify Window "1s"
+=== RUN   TestMultithreadCopy/{size:131071_streams:2}
+=== RUN   TestMultithreadCopy/{size:131072_streams:2}
+=== RUN   TestMultithreadCopy/{size:131073_streams:2}
+--- PASS: TestMultithreadCopy (3.08s)
+    --- PASS: TestMultithreadCopy/{size:131071_streams:2} (1.08s)
+    --- PASS: TestMultithreadCopy/{size:131072_streams:2} (0.77s)
+    --- PASS: TestMultithreadCopy/{size:131073_streams:2} (0.95s)
+=== RUN   TestSizeDiffers
+--- PASS: TestSizeDiffers (0.00s)
+=== RUN   TestReOpen
+=== RUN   TestReOpen/Seek
+=== RUN   TestReOpen/Seek/Basics
+=== RUN   TestReOpen/Seek/ErrorAtStart
+=== RUN   TestReOpen/Seek/WithErrors
+=== RUN   TestReOpen/Seek/TooManyErrors
+=== RUN   TestReOpen/Range
+=== RUN   TestReOpen/Range/Basics
+=== RUN   TestReOpen/Range/ErrorAtStart
+=== RUN   TestReOpen/Range/WithErrors
+=== RUN   TestReOpen/Range/TooManyErrors
+--- PASS: TestReOpen (0.01s)
+    --- PASS: TestReOpen/Seek (0.00s)
+        --- PASS: TestReOpen/Seek/Basics (0.00s)
+        --- PASS: TestReOpen/Seek/ErrorAtStart (0.00s)
+        --- PASS: TestReOpen/Seek/WithErrors (0.00s)
+        --- PASS: TestReOpen/Seek/TooManyErrors (0.00s)
+    --- PASS: TestReOpen/Range (0.00s)
+        --- PASS: TestReOpen/Range/Basics (0.00s)
+        --- PASS: TestReOpen/Range/ErrorAtStart (0.00s)
+        --- PASS: TestReOpen/Range/WithErrors (0.00s)
+        --- PASS: TestReOpen/Range/TooManyErrors (0.00s)
+=== RUN   TestCheck
+    run.go:180: Remote "azurefiles root 'rclone-test-fisahev9kofedib7zafaxep7'", Local "Local file system at //?/C:/Users/HP/AppData/Local/Temp/rclone2925251428", Modify Window "1s"
+=== RUN   TestCheck/1
+=== RUN   TestCheck/2
+=== RUN   TestCheck/3
+=== RUN   TestCheck/4
+=== RUN   TestCheck/5
+=== RUN   TestCheck/6
+=== RUN   TestCheck/7
+--- PASS: TestCheck (4.33s)
+    --- PASS: TestCheck/1 (0.17s)
+    --- PASS: TestCheck/2 (0.17s)
+    --- PASS: TestCheck/3 (0.15s)
+    --- PASS: TestCheck/4 (0.21s)
+    --- PASS: TestCheck/5 (0.16s)
+    --- PASS: TestCheck/6 (0.16s)
+    --- PASS: TestCheck/7 (0.16s)
+=== RUN   TestCheckFsError
+2023/10/09 12:30:33 ERROR : Local file system at //?/C:/Users/HP/Documents/dev/rclone/fs/operations/nonexistent: error reading source root directory: directory not found
+2023/10/09 12:30:33 NOTICE: Local file system at //?/C:/Users/HP/Documents/dev/rclone/fs/operations/nonexistent: 2 differences found
+2023/10/09 12:30:33 NOTICE: Local file system at //?/C:/Users/HP/Documents/dev/rclone/fs/operations/nonexistent: 2 errors while checking
+--- PASS: TestCheckFsError (0.01s)
+=== RUN   TestCheckDownload
+    run.go:180: Remote "azurefiles root 'rclone-test-fisahev9kofedib7zafaxep7'", Local "Local file system at //?/C:/Users/HP/AppData/Local/Temp/rclone2925251428", Modify Window "1s"
+=== RUN   TestCheckDownload/1
+=== RUN   TestCheckDownload/2
+=== RUN   TestCheckDownload/3
+=== RUN   TestCheckDownload/4
+=== RUN   TestCheckDownload/5
+=== RUN   TestCheckDownload/6
+=== RUN   TestCheckDownload/7
+--- PASS: TestCheckDownload (4.12s)
+    --- PASS: TestCheckDownload/1 (0.15s)
+    --- PASS: TestCheckDownload/2 (0.15s)
+    --- PASS: TestCheckDownload/3 (0.16s)
+    --- PASS: TestCheckDownload/4 (0.16s)
+    --- PASS: TestCheckDownload/5 (0.17s)
+    --- PASS: TestCheckDownload/6 (0.16s)
+    --- PASS: TestCheckDownload/7 (0.16s)
+=== RUN   TestCheckSizeOnly
+    run.go:180: Remote "azurefiles root 'rclone-test-fisahev9kofedib7zafaxep7'", Local "Local file system at //?/C:/Users/HP/AppData/Local/Temp/rclone2925251428", Modify Window "1s"
+=== RUN   TestCheckSizeOnly/1
+=== RUN   TestCheckSizeOnly/2
+=== RUN   TestCheckSizeOnly/3
+=== RUN   TestCheckSizeOnly/4
+=== RUN   TestCheckSizeOnly/5
+=== RUN   TestCheckSizeOnly/6
+=== RUN   TestCheckSizeOnly/7
+--- PASS: TestCheckSizeOnly (4.03s)
+    --- PASS: TestCheckSizeOnly/1 (0.11s)
+    --- PASS: TestCheckSizeOnly/2 (0.10s)
+    --- PASS: TestCheckSizeOnly/3 (0.11s)
+    --- PASS: TestCheckSizeOnly/4 (0.11s)
+    --- PASS: TestCheckSizeOnly/5 (0.10s)
+    --- PASS: TestCheckSizeOnly/6 (0.11s)
+    --- PASS: TestCheckSizeOnly/7 (0.10s)
+=== RUN   TestCheckEqualReaders
+--- PASS: TestCheckEqualReaders (0.00s)
+=== RUN   TestParseSumFile
+    run.go:180: Remote "azurefiles root 'rclone-test-fisahev9kofedib7zafaxep7'", Local "Local file system at //?/C:/Users/HP/AppData/Local/Temp/rclone2925251428", Modify Window "1s"
+2023/10/09 12:30:41 NOTICE: test.sum: improperly formatted checksum line 4
+2023/10/09 12:30:41 NOTICE: test.sum: improperly formatted checksum line 5
+2023/10/09 12:30:41 NOTICE: test.sum: improperly formatted checksum line 6
+2023/10/09 12:30:41 NOTICE: test.sum: 2 warning(s) suppressed...
+2023/10/09 12:30:42 NOTICE: test.sum: improperly formatted checksum line 4
+2023/10/09 12:30:42 NOTICE: test.sum: improperly formatted checksum line 5
+2023/10/09 12:30:42 NOTICE: test.sum: improperly formatted checksum line 6
+2023/10/09 12:30:42 NOTICE: test.sum: 2 warning(s) suppressed...
+--- PASS: TestParseSumFile (1.02s)
+=== RUN   TestCheckSum
+    run.go:180: Remote "azurefiles root 'rclone-test-fisahev9kofedib7zafaxep7'", Local "Local file system at //?/C:/Users/HP/AppData/Local/Temp/rclone2925251428", Modify Window "1s"
+2023/10/09 12:30:42 Put: waiting for half a second after making parent=data
+=== RUN   TestCheckSum/subtest1
+=== RUN   TestCheckSum/subtest2
+=== RUN   TestCheckSum/subtest3
+=== RUN   TestCheckSum/subtest4
+=== RUN   TestCheckSum/subtest5
+=== RUN   TestCheckSum/subtest6
+=== RUN   TestCheckSum/subtest7
+--- PASS: TestCheckSum (9.95s)
+    --- PASS: TestCheckSum/subtest1 (0.25s)
+    --- PASS: TestCheckSum/subtest2 (0.26s)
+    --- PASS: TestCheckSum/subtest3 (0.32s)
+    --- PASS: TestCheckSum/subtest4 (0.31s)
+    --- PASS: TestCheckSum/subtest5 (0.31s)
+    --- PASS: TestCheckSum/subtest6 (0.32s)
+    --- PASS: TestCheckSum/subtest7 (0.31s)
+=== RUN   TestCheckSumDownload
+    run.go:180: Remote "azurefiles root 'rclone-test-fisahev9kofedib7zafaxep7'", Local "Local file system at //?/C:/Users/HP/AppData/Local/Temp/rclone2925251428", Modify Window "1s"
+2023/10/09 12:30:52 Put: waiting for half a second after making parent=data
+=== RUN   TestCheckSumDownload/subtest1
+=== RUN   TestCheckSumDownload/subtest2
+=== RUN   TestCheckSumDownload/subtest3
+=== RUN   TestCheckSumDownload/subtest4
+=== RUN   TestCheckSumDownload/subtest5
+=== RUN   TestCheckSumDownload/subtest6
+=== RUN   TestCheckSumDownload/subtest7
+--- PASS: TestCheckSumDownload (9.68s)
+    --- PASS: TestCheckSumDownload/subtest1 (0.26s)
+    --- PASS: TestCheckSumDownload/subtest2 (0.26s)
+    --- PASS: TestCheckSumDownload/subtest3 (0.27s)
+    --- PASS: TestCheckSumDownload/subtest4 (0.29s)
+    --- PASS: TestCheckSumDownload/subtest5 (0.26s)
+    --- PASS: TestCheckSumDownload/subtest6 (0.26s)
+    --- PASS: TestCheckSumDownload/subtest7 (0.26s)
+=== RUN   TestDeduplicateInteractive
+    run.go:180: Remote "azurefiles root 'rclone-test-fisahev9kofedib7zafaxep7'", Local "Local file system at //?/C:/Users/HP/AppData/Local/Temp/rclone2925251428", Modify Window "1s"
+    dedupe_test.go:24: Can't test deduplicate - no duplicate files possible
+--- SKIP: TestDeduplicateInteractive (0.19s)
+=== RUN   TestDeduplicateSkip
+    run.go:180: Remote "azurefiles root 'rclone-test-fisahev9kofedib7zafaxep7'", Local "Local file system at //?/C:/Users/HP/AppData/Local/Temp/rclone2925251428", Modify Window "1s"
+    dedupe_test.go:24: Can't test deduplicate - no duplicate files possible
+--- SKIP: TestDeduplicateSkip (0.20s)
+=== RUN   TestDeduplicateSizeOnly
+    run.go:180: Remote "azurefiles root 'rclone-test-fisahev9kofedib7zafaxep7'", Local "Local file system at //?/C:/Users/HP/AppData/Local/Temp/rclone2925251428", Modify Window "1s"
+    dedupe_test.go:24: Can't test deduplicate - no duplicate files possible
+--- SKIP: TestDeduplicateSizeOnly (0.20s)
+=== RUN   TestDeduplicateFirst
+    run.go:180: Remote "azurefiles root 'rclone-test-fisahev9kofedib7zafaxep7'", Local "Local file system at //?/C:/Users/HP/AppData/Local/Temp/rclone2925251428", Modify Window "1s"
+    dedupe_test.go:24: Can't test deduplicate - no duplicate files possible
+--- SKIP: TestDeduplicateFirst (0.20s)
+=== RUN   TestDeduplicateNewest
+    run.go:180: Remote "azurefiles root 'rclone-test-fisahev9kofedib7zafaxep7'", Local "Local file system at //?/C:/Users/HP/AppData/Local/Temp/rclone2925251428", Modify Window "1s"
+    dedupe_test.go:24: Can't test deduplicate - no duplicate files possible
+--- SKIP: TestDeduplicateNewest (0.21s)
+=== RUN   TestDeduplicateNewestByHash
+    run.go:180: Remote "azurefiles root 'rclone-test-fisahev9kofedib7zafaxep7'", Local "Local file system at //?/C:/Users/HP/AppData/Local/Temp/rclone2925251428", Modify Window "1s"
+2023/10/09 12:31:03 Put: waiting for half a second after making parent=also
+2023/10/09 12:31:05 NOTICE: 1f75b3dada33d2a7ba7c680efc0e5f3b: Found 3 files with duplicate md5 hashes
+2023/10/09 12:31:06 NOTICE: 1f75b3dada33d2a7ba7c680efc0e5f3b: Deleted 2 extra copies
+--- PASS: TestDeduplicateNewestByHash (3.93s)
+=== RUN   TestDeduplicateOldest
+    run.go:180: Remote "azurefiles root 'rclone-test-fisahev9kofedib7zafaxep7'", Local "Local file system at //?/C:/Users/HP/AppData/Local/Temp/rclone2925251428", Modify Window "1s"
+    dedupe_test.go:24: Can't test deduplicate - no duplicate files possible
+--- SKIP: TestDeduplicateOldest (0.20s)
+=== RUN   TestDeduplicateLargest
+    run.go:180: Remote "azurefiles root 'rclone-test-fisahev9kofedib7zafaxep7'", Local "Local file system at //?/C:/Users/HP/AppData/Local/Temp/rclone2925251428", Modify Window "1s"
+    dedupe_test.go:24: Can't test deduplicate - no duplicate files possible
+--- SKIP: TestDeduplicateLargest (0.21s)
+=== RUN   TestDeduplicateSmallest
+    run.go:180: Remote "azurefiles root 'rclone-test-fisahev9kofedib7zafaxep7'", Local "Local file system at //?/C:/Users/HP/AppData/Local/Temp/rclone2925251428", Modify Window "1s"
+    dedupe_test.go:24: Can't test deduplicate - no duplicate files possible
+--- SKIP: TestDeduplicateSmallest (0.20s)
+=== RUN   TestDeduplicateRename
+    run.go:180: Remote "azurefiles root 'rclone-test-fisahev9kofedib7zafaxep7'", Local "Local file system at //?/C:/Users/HP/AppData/Local/Temp/rclone2925251428", Modify Window "1s"
+    dedupe_test.go:24: Can't test deduplicate - no duplicate files possible
+--- SKIP: TestDeduplicateRename (0.21s)
+=== RUN   TestMergeDirs
+    run.go:180: Remote "azurefiles root 'rclone-test-fisahev9kofedib7zafaxep7'", Local "Local file system at //?/C:/Users/HP/AppData/Local/Temp/rclone2925251428", Modify Window "1s"
+    dedupe_test.go:256: Can't merge directories
+--- SKIP: TestMergeDirs (0.20s)
+=== RUN   TestListDirSorted
+    run.go:180: Remote "azurefiles root 'rclone-test-fisahev9kofedib7zafaxep7'", Local "Local file system at //?/C:/Users/HP/AppData/Local/Temp/rclone2925251428", Modify Window "1s"
+2023/10/09 12:31:08 Put: waiting for half a second after making parent=sub dir
+2023/10/09 12:31:09 Put: waiting for half a second after making parent=sub dir/ignore dir
+2023/10/09 12:31:11 Put: waiting for half a second after making parent=sub dir/sub sub dir
+--- PASS: TestListDirSorted (6.60s)
+=== RUN   TestListJSON
+    run.go:180: Remote "azurefiles root 'rclone-test-fisahev9kofedib7zafaxep7'", Local "Local file system at //?/C:/Users/HP/AppData/Local/Temp/rclone2925251428", Modify Window "1s"
+2023/10/09 12:31:15 Put: waiting for half a second after making parent=sub
+=== RUN   TestListJSON/Default
+=== RUN   TestListJSON/FilesOnly
+=== RUN   TestListJSON/DirsOnly
+=== RUN   TestListJSON/Recurse
+=== RUN   TestListJSON/SubDir
+=== RUN   TestListJSON/NoModTime
+=== RUN   TestListJSON/NoMimeType
+=== RUN   TestListJSON/ShowHash
+=== RUN   TestListJSON/HashTypes
+=== RUN   TestListJSON/Metadata
+--- PASS: TestListJSON (3.47s)
+    --- PASS: TestListJSON/Default (0.13s)
+    --- PASS: TestListJSON/FilesOnly (0.14s)
+    --- PASS: TestListJSON/DirsOnly (0.09s)
+    --- PASS: TestListJSON/Recurse (0.27s)
+    --- PASS: TestListJSON/SubDir (0.16s)
+    --- PASS: TestListJSON/NoModTime (0.12s)
+    --- PASS: TestListJSON/NoMimeType (0.13s)
+    --- PASS: TestListJSON/ShowHash (0.18s)
+    --- PASS: TestListJSON/HashTypes (0.19s)
+    --- PASS: TestListJSON/Metadata (0.13s)
+=== RUN   TestStatJSON
+    run.go:180: Remote "azurefiles root 'rclone-test-fisahev9kofedib7zafaxep7'", Local "Local file system at //?/C:/Users/HP/AppData/Local/Temp/rclone2925251428", Modify Window "1s"
+2023/10/09 12:31:18 Put: waiting for half a second after making parent=sub
+=== RUN   TestStatJSON/Root
+=== RUN   TestStatJSON/RootFilesOnly
+=== RUN   TestStatJSON/RootDirsOnly
+=== RUN   TestStatJSON/Dir
+=== RUN   TestStatJSON/DirWithTrailingSlash
+=== RUN   TestStatJSON/File
+=== RUN   TestStatJSON/NotFound
+=== RUN   TestStatJSON/DirFilesOnly
+=== RUN   TestStatJSON/FileFilesOnly
+=== RUN   TestStatJSON/NotFoundFilesOnly
+=== RUN   TestStatJSON/DirDirsOnly
+=== RUN   TestStatJSON/FileDirsOnly
+=== RUN   TestStatJSON/NotFoundDirsOnly
+=== RUN   TestStatJSON/RootNotFound
+--- PASS: TestStatJSON (3.17s)
+    --- PASS: TestStatJSON/Root (0.08s)
+    --- PASS: TestStatJSON/RootFilesOnly (0.00s)
+    --- PASS: TestStatJSON/RootDirsOnly (0.11s)
+    --- PASS: TestStatJSON/Dir (0.17s)
+    --- PASS: TestStatJSON/DirWithTrailingSlash (0.09s)
+    --- PASS: TestStatJSON/File (0.04s)
+    --- PASS: TestStatJSON/NotFound (0.18s)
+    --- PASS: TestStatJSON/DirFilesOnly (0.09s)
+    --- PASS: TestStatJSON/FileFilesOnly (0.05s)
+    --- PASS: TestStatJSON/NotFoundFilesOnly (0.09s)
+    --- PASS: TestStatJSON/DirDirsOnly (0.09s)
+    --- PASS: TestStatJSON/FileDirsOnly (0.09s)
+    --- PASS: TestStatJSON/NotFoundDirsOnly (0.09s)
+    --- PASS: TestStatJSON/RootNotFound (0.09s)
+=== RUN   TestMkdir
+    run.go:180: Remote "azurefiles root 'rclone-test-fisahev9kofedib7zafaxep7'", Local "Local file system at //?/C:/Users/HP/AppData/Local/Temp/rclone2925251428", Modify Window "1s"
+--- PASS: TestMkdir (0.34s)
+=== RUN   TestLsd
+    run.go:180: Remote "azurefiles root 'rclone-test-fisahev9kofedib7zafaxep7'", Local "Local file system at //?/C:/Users/HP/AppData/Local/Temp/rclone2925251428", Modify Window "1s"
+2023/10/09 12:31:21 Put: waiting for half a second after making parent=sub dir
+--- PASS: TestLsd (1.57s)
+=== RUN   TestLs
+    run.go:180: Remote "azurefiles root 'rclone-test-fisahev9kofedib7zafaxep7'", Local "Local file system at //?/C:/Users/HP/AppData/Local/Temp/rclone2925251428", Modify Window "1s"
+--- PASS: TestLs (1.17s)
+=== RUN   TestLsWithFilesFrom
+    run.go:180: Remote "azurefiles root 'rclone-test-fisahev9kofedib7zafaxep7'", Local "Local file system at //?/C:/Users/HP/AppData/Local/Temp/rclone2925251428", Modify Window "1s"
+--- PASS: TestLsWithFilesFrom (1.57s)
+=== RUN   TestLsLong
+    run.go:180: Remote "azurefiles root 'rclone-test-fisahev9kofedib7zafaxep7'", Local "Local file system at //?/C:/Users/HP/AppData/Local/Temp/rclone2925251428", Modify Window "1s"
+--- PASS: TestLsLong (1.20s)
+=== RUN   TestHashSums
+    run.go:180: Remote "azurefiles root 'rclone-test-fisahev9kofedib7zafaxep7'", Local "Local file system at //?/C:/Users/HP/AppData/Local/Temp/rclone2925251428", Modify Window "1s"
+=== RUN   TestHashSums/Md5
+=== RUN   TestHashSums/Md5Download
+--- PASS: TestHashSums (1.34s)
+    --- PASS: TestHashSums/Md5 (0.14s)
+    --- PASS: TestHashSums/Md5Download (0.16s)
+=== RUN   TestHashSumsWithErrors
+2023/10/09 12:31:28 ERROR : file1: hash unsupported: hash type not supported
+--- PASS: TestHashSumsWithErrors (0.00s)
+=== RUN   TestHashStream
+--- PASS: TestHashStream (0.00s)
+=== RUN   TestSuffixName
+--- PASS: TestSuffixName (0.00s)
+=== RUN   TestCount
+    run.go:180: Remote "azurefiles root 'rclone-test-fisahev9kofedib7zafaxep7'", Local "Local file system at //?/C:/Users/HP/AppData/Local/Temp/rclone2925251428", Modify Window "1s"
+2023/10/09 12:31:29 Put: waiting for half a second after making parent=sub dir
+--- PASS: TestCount (2.63s)
+=== RUN   TestDelete
+    run.go:180: Remote "azurefiles root 'rclone-test-fisahev9kofedib7zafaxep7'", Local "Local file system at //?/C:/Users/HP/AppData/Local/Temp/rclone2925251428", Modify Window "1s"
+--- PASS: TestDelete (1.86s)
+=== RUN   TestMaxDelete
+    run.go:180: Remote "azurefiles root 'rclone-test-fisahev9kofedib7zafaxep7'", Local "Local file system at //?/C:/Users/HP/AppData/Local/Temp/rclone2925251428", Modify Window "1s"
+2023/10/09 12:31:34 ERROR : Got fatal error on delete: --max-delete threshold reached
+--- PASS: TestMaxDelete (1.91s)
+=== RUN   TestMaxDeleteSizeLargeFile
+    run.go:180: Remote "azurefiles root 'rclone-test-fisahev9kofedib7zafaxep7'", Local "Local file system at //?/C:/Users/HP/AppData/Local/Temp/rclone2925251428", Modify Window "1s"
+2023/10/09 12:31:36 ERROR : Got fatal error on delete: --max-delete-size threshold reached
+--- PASS: TestMaxDeleteSizeLargeFile (2.04s)
+=== RUN   TestMaxDeleteSize
+    run.go:180: Remote "azurefiles root 'rclone-test-fisahev9kofedib7zafaxep7'", Local "Local file system at //?/C:/Users/HP/AppData/Local/Temp/rclone2925251428", Modify Window "1s"
+2023/10/09 12:31:38 ERROR : Got fatal error on delete: --max-delete-size threshold reached
+--- PASS: TestMaxDeleteSize (1.88s)
+=== RUN   TestRetry
+--- PASS: TestRetry (0.00s)
+=== RUN   TestCat
+    run.go:180: Remote "azurefiles root 'rclone-test-fisahev9kofedib7zafaxep7'", Local "Local file system at //?/C:/Users/HP/AppData/Local/Temp/rclone2925251428", Modify Window "1s"
+--- PASS: TestCat (1.93s)
+=== RUN   TestPurge
+    run.go:180: Remote "azurefiles root 'rclone-test-voxofah6benopih6qaheyij9'", Local "Local file system at //?/C:/Users/HP/AppData/Local/Temp/rclone606803030", Modify Window "1s"
+2023/10/09 12:31:41 Mkdir: waiting for half a second after making parent=A1
+2023/10/09 12:31:41 Mkdir: waiting for half a second after making parent=A1/B1
+2023/10/09 12:31:42 Put: waiting for half a second after making parent=A1/B1/C1
+2023/10/09 12:31:46 ERROR : : error listing: directory not found
+2023/10/09 12:31:46 ERROR : : error listing: directory not found
+2023/10/09 12:31:46 purge failed to rmdir "": directory not found
+2023/10/09 12:31:46 purge failed: directory not found
+--- PASS: TestPurge (6.21s)
+=== RUN   TestRmdirsNoLeaveRoot
+    run.go:180: Remote "azurefiles root 'rclone-test-fisahev9kofedib7zafaxep7'", Local "Local file system at //?/C:/Users/HP/AppData/Local/Temp/rclone2925251428", Modify Window "1s"
+2023/10/09 12:31:47 Mkdir: waiting for half a second after making parent=A1
+2023/10/09 12:31:47 Mkdir: waiting for half a second after making parent=A1/B1
+2023/10/09 12:31:48 Put: waiting for half a second after making parent=A1/B1/C1
+2023/10/09 12:31:53 ERROR : : error listing: directory not found
+2023/10/09 12:31:53 ERROR : : error listing: directory not found
+--- PASS: TestRmdirsNoLeaveRoot (6.80s)
+=== RUN   TestRmdirsLeaveRoot
+    run.go:180: Remote "azurefiles root 'rclone-test-fisahev9kofedib7zafaxep7'", Local "Local file system at //?/C:/Users/HP/AppData/Local/Temp/rclone2925251428", Modify Window "1s"
+--- PASS: TestRmdirsLeaveRoot (1.35s)
+=== RUN   TestRmdirsWithFilter
+    run.go:180: Remote "azurefiles root 'rclone-test-fisahev9kofedib7zafaxep7'", Local "Local file system at //?/C:/Users/HP/AppData/Local/Temp/rclone2925251428", Modify Window "1s"
+--- PASS: TestRmdirsWithFilter (1.37s)
+=== RUN   TestCopyURL
+    run.go:180: Remote "azurefiles root 'rclone-test-fisahev9kofedib7zafaxep7'", Local "Local file system at //?/C:/Users/HP/AppData/Local/Temp/rclone2925251428", Modify Window "1s"
+--- PASS: TestCopyURL (1.96s)
+=== RUN   TestCopyURLToWriter
+--- PASS: TestCopyURLToWriter (0.00s)
+=== RUN   TestMoveFile
+    run.go:180: Remote "azurefiles root 'rclone-test-fisahev9kofedib7zafaxep7'", Local "Local file system at //?/C:/Users/HP/AppData/Local/Temp/rclone2925251428", Modify Window "1s"
+2023/10/09 12:31:58 Put: waiting for half a second after making parent=sub
+--- PASS: TestMoveFile (2.05s)
+=== RUN   TestMoveFileWithIgnoreExisting
+    run.go:180: Remote "azurefiles root 'rclone-test-fisahev9kofedib7zafaxep7'", Local "Local file system at //?/C:/Users/HP/AppData/Local/Temp/rclone2925251428", Modify Window "1s"
+--- PASS: TestMoveFileWithIgnoreExisting (0.96s)
+=== RUN   TestCaseInsensitiveMoveFile
+    run.go:180: Remote "azurefiles root 'rclone-test-fisahev9kofedib7zafaxep7'", Local "Local file system at //?/C:/Users/HP/AppData/Local/Temp/rclone2925251428", Modify Window "1s"
+--- PASS: TestCaseInsensitiveMoveFile (0.16s)
+=== RUN   TestMoveFileBackupDir
+    run.go:180: Remote "azurefiles root 'rclone-test-fisahev9kofedib7zafaxep7'", Local "Local file system at //?/C:/Users/HP/AppData/Local/Temp/rclone2925251428", Modify Window "1s"
+2023/10/09 12:32:01 Put: waiting for half a second after making parent=dst
+2023/10/09 12:32:03 Mkdir: waiting for half a second after making parent=.
+2023/10/09 12:32:03 ERROR : dst/file1: Failed to copy: StartCopyFromURL error despite making parent directory : PUT https://testrcloneazurefiles.file.core.windows.net/test-rclone-sep-2023/rclone-test-fisahev9kofedib7zafaxep7/backup/dst/file1
+--------------------------------------------------------------------------------
+RESPONSE 404: 404 The specified resource does not exist.
+ERROR CODE: ResourceNotFound
+--------------------------------------------------------------------------------
+<?xml version="1.0" encoding="utf-8"?><Error><Code>ResourceNotFound</Code><Message>The specified resource does not exist.
+RequestId:5185155e-201a-00b5-217e-fa5824000000
+Time:2023-10-09T07:02:02.8695870Z</Message></Error>
+--------------------------------------------------------------------------------
+2023/10/09 12:32:03 ERROR : dst/file1: Not deleting source as copy failed: StartCopyFromURL error despite making parent directory : PUT https://testrcloneazurefiles.file.core.windows.net/test-rclone-sep-2023/rclone-test-fisahev9kofedib7zafaxep7/backup/dst/file1
+--------------------------------------------------------------------------------
+RESPONSE 404: 404 The specified resource does not exist.
+ERROR CODE: ResourceNotFound
+--------------------------------------------------------------------------------
+<?xml version="1.0" encoding="utf-8"?><Error><Code>ResourceNotFound</Code><Message>The specified resource does not exist.
+RequestId:5185155e-201a-00b5-217e-fa5824000000
+Time:2023-10-09T07:02:02.8695870Z</Message></Error>
+--------------------------------------------------------------------------------
+    operations_test.go:1018:
+                Error Trace:    C:/Users/HP/Documents/dev/rclone/fs/operations/operations_test.go:1018
+                Error:          Received unexpected error:
+                                moving to --backup-dir failed: StartCopyFromURL error despite making parent directory : PUT https://testrcloneazurefiles.file.core.windows.net/test-rclone-sep-2023/rclone-test-fisahev9kofedib7zafaxep7/backup/dst/file1
+                                --------------------------------------------------------------------------------
+                                RESPONSE 404: 404 The specified resource does not exist.
+                                ERROR CODE: ResourceNotFound
+                                --------------------------------------------------------------------------------
+                                <?xml version="1.0" encoding="utf-8"?><Error><Code>ResourceNotFound</Code><Message>The specified resource does not exist.
+                                RequestId:5185155e-201a-00b5-217e-fa5824000000
+                                Time:2023-10-09T07:02:02.8695870Z</Message></Error>
+                                --------------------------------------------------------------------------------
+                Test:           TestMoveFileBackupDir
+--- FAIL: TestMoveFileBackupDir (2.67s)
+=== RUN   TestCopyFile
+    run.go:180: Remote "azurefiles root 'rclone-test-fisahev9kofedib7zafaxep7'", Local "Local file system at //?/C:/Users/HP/AppData/Local/Temp/rclone2925251428", Modify Window "1s"
+2023/10/09 12:32:04 Put: waiting for half a second after making parent=sub
+--- PASS: TestCopyFile (2.23s)
+=== RUN   TestCopyFileBackupDir
+    run.go:180: Remote "azurefiles root 'rclone-test-fisahev9kofedib7zafaxep7'", Local "Local file system at //?/C:/Users/HP/AppData/Local/Temp/rclone2925251428", Modify Window "1s"
+2023/10/09 12:32:06 Put: waiting for half a second after making parent=dst
+2023/10/09 12:32:08 Mkdir: waiting for half a second after making parent=.
+2023/10/09 12:32:08 ERROR : dst/file1: Failed to copy: StartCopyFromURL error despite making parent directory : PUT https://testrcloneazurefiles.file.core.windows.net/test-rclone-sep-2023/rclone-test-fisahev9kofedib7zafaxep7/backup/dst/file1
+--------------------------------------------------------------------------------
+RESPONSE 404: 404 The specified resource does not exist.
+ERROR CODE: ResourceNotFound
+--------------------------------------------------------------------------------
+<?xml version="1.0" encoding="utf-8"?><Error><Code>ResourceNotFound</Code><Message>The specified resource does not exist.
+RequestId:960355c9-301a-0096-5a7e-fac2e7000000
+Time:2023-10-09T07:02:08.1016516Z</Message></Error>
+--------------------------------------------------------------------------------
+2023/10/09 12:32:08 ERROR : dst/file1: Not deleting source as copy failed: StartCopyFromURL error despite making parent directory : PUT https://testrcloneazurefiles.file.core.windows.net/test-rclone-sep-2023/rclone-test-fisahev9kofedib7zafaxep7/backup/dst/file1
+--------------------------------------------------------------------------------
+RESPONSE 404: 404 The specified resource does not exist.
+ERROR CODE: ResourceNotFound
+--------------------------------------------------------------------------------
+<?xml version="1.0" encoding="utf-8"?><Error><Code>ResourceNotFound</Code><Message>The specified resource does not exist.
+RequestId:960355c9-301a-0096-5a7e-fac2e7000000
+Time:2023-10-09T07:02:08.1016516Z</Message></Error>
+--------------------------------------------------------------------------------
+    operations_test.go:1067:
+                Error Trace:    C:/Users/HP/Documents/dev/rclone/fs/operations/operations_test.go:1067
+                Error:          Received unexpected error:
+                                moving to --backup-dir failed: StartCopyFromURL error despite making parent directory : PUT https://testrcloneazurefiles.file.core.windows.net/test-rclone-sep-2023/rclone-test-fisahev9kofedib7zafaxep7/backup/dst/file1
+                                --------------------------------------------------------------------------------
+                                RESPONSE 404: 404 The specified resource does not exist.
+                                ERROR CODE: ResourceNotFound
+                                --------------------------------------------------------------------------------
+                                <?xml version="1.0" encoding="utf-8"?><Error><Code>ResourceNotFound</Code><Message>The specified resource does not exist.
+                                RequestId:960355c9-301a-0096-5a7e-fac2e7000000
+                                Time:2023-10-09T07:02:08.1016516Z</Message></Error>
+                                --------------------------------------------------------------------------------
+                Test:           TestCopyFileBackupDir
+--- FAIL: TestCopyFileBackupDir (2.95s)
+=== RUN   TestCopyFileCompareDest
+    run.go:180: Remote "azurefiles root 'rclone-test-fisahev9kofedib7zafaxep7'", Local "Local file system at //?/C:/Users/HP/AppData/Local/Temp/rclone2925251428", Modify Window "1s"
+2023/10/09 12:32:09 Put: waiting for half a second after making parent=.
+2023/10/09 12:32:11 Put: waiting for half a second after making parent=CompareDest
+--- PASS: TestCopyFileCompareDest (7.69s)
+=== RUN   TestCopyFileCopyDest
+    run.go:180: Remote "azurefiles root 'rclone-test-fisahev9kofedib7zafaxep7'", Local "Local file system at //?/C:/Users/HP/AppData/Local/Temp/rclone2925251428", Modify Window "1s"
+2023/10/09 12:32:17 Put: waiting for half a second after making parent=.
+2023/10/09 12:32:19 Put: waiting for half a second after making parent=CopyDest
+2023/10/09 12:32:20 ERROR : one: Failed to copy: StartCopyFromURL error despite making parent directory : PUT https://testrcloneazurefiles.file.core.windows.net/test-rclone-sep-2023/rclone-test-fisahev9kofedib7zafaxep7/BackupDir/one
+--------------------------------------------------------------------------------
+RESPONSE 404: 404 The specified resource does not exist.
+ERROR CODE: ResourceNotFound
+--------------------------------------------------------------------------------
+<?xml version="1.0" encoding="utf-8"?><Error><Code>ResourceNotFound</Code><Message>The specified resource does not exist.
+RequestId:960356a8-301a-0096-2a7e-fac2e7000000
+Time:2023-10-09T07:02:20.0608338Z</Message></Error>
+--------------------------------------------------------------------------------
+2023/10/09 12:32:20 ERROR : one: Not deleting source as copy failed: StartCopyFromURL error despite making parent directory : PUT https://testrcloneazurefiles.file.core.windows.net/test-rclone-sep-2023/rclone-test-fisahev9kofedib7zafaxep7/BackupDir/one
+--------------------------------------------------------------------------------
+RESPONSE 404: 404 The specified resource does not exist.
+ERROR CODE: ResourceNotFound
+--------------------------------------------------------------------------------
+<?xml version="1.0" encoding="utf-8"?><Error><Code>ResourceNotFound</Code><Message>The specified resource does not exist.
+RequestId:960356a8-301a-0096-2a7e-fac2e7000000
+Time:2023-10-09T07:02:20.0608338Z</Message></Error>
+--------------------------------------------------------------------------------
+    operations_test.go:1202:
+                Error Trace:    C:/Users/HP/Documents/dev/rclone/fs/operations/operations_test.go:1202
+                Error:          Received unexpected error:
+                                moving to --backup-dir failed: StartCopyFromURL error despite making parent directory : PUT https://testrcloneazurefiles.file.core.windows.net/test-rclone-sep-2023/rclone-test-fisahev9kofedib7zafaxep7/BackupDir/one
+                                --------------------------------------------------------------------------------
+                                RESPONSE 404: 404 The specified resource does not exist.
+                                ERROR CODE: ResourceNotFound
+                                --------------------------------------------------------------------------------
+                                <?xml version="1.0" encoding="utf-8"?><Error><Code>ResourceNotFound</Code><Message>The specified resource does not exist.
+                                RequestId:960356a8-301a-0096-2a7e-fac2e7000000
+                                Time:2023-10-09T07:02:20.0608338Z</Message></Error>
+                                --------------------------------------------------------------------------------
+                Test:           TestCopyFileCopyDest
+--- FAIL: TestCopyFileCopyDest (4.40s)
+=== RUN   TestCopyInplace
+    run.go:180: Remote "azurefiles root 'rclone-test-fisahev9kofedib7zafaxep7'", Local "Local file system at //?/C:/Users/HP/AppData/Local/Temp/rclone2925251428", Modify Window "1s"
+    operations_test.go:1252: Partial uploads not supported
+--- SKIP: TestCopyInplace (0.27s)
+=== RUN   TestCopyLongFileName
+    run.go:180: Remote "azurefiles root 'rclone-test-fisahev9kofedib7zafaxep7'", Local "Local file system at //?/C:/Users/HP/AppData/Local/Temp/rclone2925251428", Modify Window "1s"
+    operations_test.go:1285: Partial uploads not supported
+--- SKIP: TestCopyLongFileName (0.26s)
+=== RUN   TestSameConfig
+--- PASS: TestSameConfig (0.00s)
+=== RUN   TestSame
+--- PASS: TestSame (0.00s)
+=== RUN   TestOverlappingFilterCheckWithoutFilter
+--- PASS: TestOverlappingFilterCheckWithoutFilter (0.00s)
+=== RUN   TestOverlappingFilterCheckWithFilter
+--- PASS: TestOverlappingFilterCheckWithFilter (0.00s)
+=== RUN   TestListFormat
+--- PASS: TestListFormat (0.00s)
+=== RUN   TestDirMove
+    run.go:180: Remote "azurefiles root 'rclone-test-fisahev9kofedib7zafaxep7'", Local "Local file system at //?/C:/Users/HP/AppData/Local/Temp/rclone2925251428", Modify Window "1s"
+2023/10/09 12:32:22 Put: waiting for half a second after making parent=A1
+2023/10/09 12:32:23 Put: waiting for half a second after making parent=A1/B1
+2023/10/09 12:32:24 Put: waiting for half a second after making parent=A1/B1/C1
+2023/10/09 12:32:25 Put: waiting for half a second after making parent=A1/B1/C2
+panic: runtime error: invalid memory address or nil pointer dereference
+[signal 0xc0000005 code=0x0 addr=0x0 pc=0x1281e04]
+
+goroutine 3502 [running]:
+github.com/rclone/rclone/backend/azurefiles.(*Object).Size(0x2c40140?)
+        C:/Users/HP/Documents/dev/rclone/backend/azurefiles/object.go:46 +0x4
+github.com/rclone/rclone/fs/operations.Copy({0x2c40140, 0xc0007ec500}, {0x2c50200, 0xc0005c8c90}, {0x0?, 0x0?}, {0xc000acf8b0, 0xb}, {0x2c50190, 0xc000d019e0})
+        C:/Users/HP/Documents/dev/rclone/fs/operations/operations.go:399 +0x9a9
+github.com/rclone/rclone/fs/operations.Move({0x2c40140, 0xc0007ec500}, {0x2c50200?, 0xc0005c8c90}, {0x0, 0x0}, {0xc000acf8b0, 0xb}, {0x2c50190, 0xc000d019e0})
+        C:/Users/HP/Documents/dev/rclone/fs/operations/operations.go:656 +0x7c5
+github.com/rclone/rclone/fs/operations.DirMove.func1()
+        C:/Users/HP/Documents/dev/rclone/fs/operations/operations.go:2336 +0x128
+golang.org/x/sync/errgroup.(*Group).Go.func1()
+        C:/Users/HP/go/pkg/mod/golang.org/x/sync@v0.3.0/errgroup/errgroup.go:75 +0x56
+created by golang.org/x/sync/errgroup.(*Group).Go in goroutine 3552
+        C:/Users/HP/go/pkg/mod/golang.org/x/sync@v0.3.0/errgroup/errgroup.go:72 +0x96
+exit status 2
+FAIL    github.com/rclone/rclone/fs/operations  124.174s
