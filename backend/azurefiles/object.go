@@ -16,6 +16,15 @@ import (
 	"github.com/rclone/rclone/fs/hash"
 )
 
+func objectInstance(f *Fs, remote string, md map[string]*string, props properties) Object {
+	return Object{common: common{
+		f:          f,
+		remote:     remote,
+		metaData:   md,
+		properties: props,
+	}}
+}
+
 func (o *Object) ModTime(ctx context.Context) time.Time {
 	if o.metaData == nil {
 		resp, err := o.fileClient().GetProperties(ctx, nil)

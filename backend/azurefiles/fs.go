@@ -33,15 +33,9 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 		return nil, fmt.Errorf("unable to find object remote=%s : %w", remote, err)
 	}
 
-	ob := Object{common{
-		f:        f,
-		remote:   remote,
-		metaData: resp.Metadata,
-		properties: properties{
+	ob := objectInstance(f, remote, resp.Metadata, properties{
 			changeTime:    resp.FileChangeTime,
-			contentLength: resp.ContentLength,
-		}},
-	}
+		contentLength: resp.ContentLength})
 	return &ob, nil
 }
 
@@ -242,15 +236,9 @@ func (f *Fs) CopyFile(ctx context.Context, src fs.Object, remote string) (fs.Obj
 		errorMessage := fmt.Sprintf("could not complete copy operation because returned CopyStatus is %s", string(*resp.CopyStatus))
 		return nil, errors.New(errorMessage)
 	}
-
+	destObj := objectInstance(f, remote, srcObj.metaData, srcObj.properties)
 	// TODO: return object with proper metaData and properties
-	return &Object{
-		common: common{
-			f:          f,
-			remote:     remote,
-			properties: properties{},
-		},
-	}, nil
+	return &destObj, nil
 }
 
 func (f *Fs) wasCopySuccessFul(ctx context.Context, remote string) error {
