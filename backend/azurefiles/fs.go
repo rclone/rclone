@@ -60,22 +60,31 @@ func (f *Fs) isDirectory(ctx context.Context, remote string) (bool, error) {
 // Mkdir creates nested directories as indicated by test FsMkdirRmdirSubdir
 // TODO: write custom test case where parent directories are created
 func (f *Fs) Mkdir(ctx context.Context, remote string) error {
-	fp := f.DecodedFullPath(remote)
-	if fp == "" {
+	return f.mkdirRelativeToRootOfShare(ctx, f.DecodedFullPath(remote))
+}
+
+// Had to create a mkdir function relative to root of share because there might be cases
+// where remote is specified as fs.root == A/B/ but but A does not exist in the remote filesystem.
+func (f *Fs) mkdirRelativeToRootOfShare(ctx context.Context, fullDecodedPathToRemoteDir string) error {
+	fp := fullDecodedPathToRemoteDir
+	if fp == "" || fp == "." {
 		return nil
 	}
-	dirClient := f.NewSubdirectoryClient(remote)
+	dirClient := f.NewSubdirectoryClientFromEncodedPath(f.encodePath(fp))
 
 	_, createDirErr := dirClient.Create(ctx, nil)
 	if fileerror.HasCode(createDirErr, fileerror.ParentNotFound) {
-		parentDir := path.Dir(remote)
-		makeParentErr := f.Mkdir(ctx, parentDir)
+		parentDir := path.Dir(fp)
+		if parentDir == fp {
+			log.Fatal("This will lead to infinite recursion since parent and remote are equal")
+		}
+		makeParentErr := f.mkdirRelativeToRootOfShare(ctx, parentDir)
 		if makeParentErr != nil {
-			return fmt.Errorf("could not make parent of %s : %w", remote, makeParentErr)
+			return fmt.Errorf("could not make parent of %s : %w", fp, makeParentErr)
 		}
 		log.Printf("Mkdir: waiting for half a second after making parent=%s", parentDir)
 		time.Sleep(time.Millisecond * 500)
-		return f.Mkdir(ctx, remote)
+		return f.mkdirRelativeToRootOfShare(ctx, fp)
 	} else if fileerror.HasCode(createDirErr, fileerror.ResourceAlreadyExists) {
 		return nil
 	} else if createDirErr != nil {

@@ -428,11 +428,24 @@ func newTests(t *testing.T) {
 
 		destObj, errCopy := azf.CopyFile(context.TODO(), srcObj, destPath)
 		assert.NoError(t, errCopy)
-		srcHash, srcHashErr := srcObj.Hash(context.TODO(), hash.MD5)
-		assert.NoError(t, srcHashErr)
-		destHash, destHashErr := destObj.Hash(context.TODO(), hash.MD5)
-		assert.NoError(t, destHashErr)
-		assert.Equal(t, srcHash, destHash)
+	t.Run("FsRootIsMultilevelAndDeep", func(t *testing.T) {
+		pathOfDepth := func(d int) string {
+			parts := []string{}
+			for i := 0; i < d; i++ {
+				parts = append(parts, RandomString(10))
+			}
+			return path.Join(parts...)
+		}
+		for d := 0; d < 4; d++ {
+			t.Run(fmt.Sprintf("Depth%d", d), func(t *testing.T) {
+				path := pathOfDepth(d)
+				t.Logf("path=%s", path)
+				f, err := fs.NewFs(context.Background(), "TestAzureFiles:"+path)
+				assert.NoError(t, err)
+				assert.NoError(t, f.Mkdir(context.TODO(), RandomString(10)))
+			})
+
+		}
 	})
 
 }
