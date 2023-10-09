@@ -2197,6 +2197,39 @@ func TestSyncIgnoreCase(t *testing.T) {
 	r.CheckRemoteItems(t, file2)
 }
 
+// Test --fix-case
+func TestFixCase(t *testing.T) {
+	ctx := context.Background()
+	ctx, ci := fs.AddConfig(ctx)
+	r := fstest.NewRun(t)
+
+	// Only test if remote is case insensitive
+	if !r.Fremote.Features().CaseInsensitive {
+		t.Skip("Skipping test as local or remote are case-sensitive")
+	}
+
+	ci.FixCase = true
+
+	// Create files with different filename casing
+	file1a := r.WriteFile("existing", "potato", t1)
+	file1b := r.WriteFile("existingbutdifferent", "donut", t1)
+	file1c := r.WriteFile("subdira/subdirb/subdirc/hello", "donut", t1)
+	file1d := r.WriteFile("subdira/subdirb/subdirc/subdird/filewithoutcasedifferences", "donut", t1)
+	r.CheckLocalItems(t, file1a, file1b, file1c, file1d)
+	file2a := r.WriteObject(ctx, "EXISTING", "potato", t1)
+	file2b := r.WriteObject(ctx, "EXISTINGBUTDIFFERENT", "lemonade", t1)
+	file2c := r.WriteObject(ctx, "SUBDIRA/subdirb/SUBDIRC/HELLO", "lemonade", t1)
+	file2d := r.WriteObject(ctx, "SUBDIRA/subdirb/SUBDIRC/subdird/filewithoutcasedifferences", "lemonade", t1)
+	r.CheckRemoteItems(t, file2a, file2b, file2c, file2d)
+
+	// Should force rename of dest file that is differently-cased
+	accounting.GlobalStats().ResetCounters()
+	err := Sync(ctx, r.Fremote, r.Flocal, false)
+	require.NoError(t, err)
+	r.CheckLocalItems(t, file1a, file1b, file1c, file1d)
+	r.CheckRemoteItems(t, file1a, file1b, file1c, file1d)
+}
+
 // Test that aborting on --max-transfer works
 func TestMaxTransfer(t *testing.T) {
 	ctx := context.Background()

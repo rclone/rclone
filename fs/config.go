@@ -81,6 +81,7 @@ type ConfigInfo struct {
 	IgnoreSize                 bool
 	IgnoreChecksum             bool
 	IgnoreCaseSync             bool
+	FixCase                    bool
 	NoTraverse                 bool
 	CheckFirst                 bool
 	NoCheckDest                bool

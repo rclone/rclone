@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"path"
+	"path/filepath"
 	"sort"
 	"strings"
 	"sync"
@@ -18,6 +19,7 @@ import (
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/fs/march"
 	"github.com/rclone/rclone/fs/operations"
+	"github.com/rclone/rclone/lib/random"
 )
 
 // ErrorMaxDurationReached defines error when transfer duration is reached
@@ -361,6 +363,16 @@ func (s *syncCopyMove) pairChecker(in *pipe, out *pipe, fraction int, wg *sync.W
 				}
 				if NoNeedTransfer {
 					needTransfer = false
+				}
+			}
+			// Fix case for case insensitive filesystems
+			if s.ci.FixCase && !s.ci.Immutable && src.Remote() != pair.Dst.Remote() {
+				if newDst, err := operations.Move(s.ctx, s.fdst, nil, src.Remote(), pair.Dst); err != nil {
+					fs.Errorf(pair.Dst, "Error while attempting to rename to %s: %v", src.Remote(), err)
+					s.processError(err)
+				} else {
+					fs.Infof(pair.Dst, "Fixed case by renaming to: %s", src.Remote())
+					pair.Dst = newDst
 				}
 			}
 			if needTransfer {
@@ -1135,6 +1147,30 @@ func (s *syncCopyMove) Match(ctx context.Context, dst, src fs.DirEntry) (recurse
 				s.srcParentDirCheck(src)
 				s.srcEmptyDirs[src.Remote()] = src
 				s.srcEmptyDirsMu.Unlock()
+			}
+			if s.ci.FixCase && !s.ci.Immutable && src.Remote() != dst.Remote() {
+				// Fix case for case insensitive filesystems
+				// Fix each dir before recursing into subdirs and files
+				oldDirFs, err := fs.NewFs(s.ctx, filepath.Join(s.fdst.Root(), dst.Remote()))
+				s.processError(err)
+				newDirPath := filepath.Join(s.fdst.Root(), filepath.Dir(dst.Remote()), filepath.Base(src.Remote()))
+				newDirFs, err := fs.NewFs(s.ctx, newDirPath)
+				s.processError(err)
+				// Create random name to temporarily move dir to
+				tmpDirName := newDirPath + "-rclone-move-" + random.String(8)
+				tmpDirFs, err := fs.NewFs(s.ctx, tmpDirName)
+				s.processError(err)
+				if err = MoveDir(s.ctx, tmpDirFs, oldDirFs, s.deleteEmptySrcDirs, s.copyEmptySrcDirs); err != nil {
+					fs.Errorf(dst, "Error while attempting to move dir to temporary location %s: %v", tmpDirName, err)
+					s.processError(err)
+				} else {
+					if err = MoveDir(s.ctx, newDirFs, tmpDirFs, s.deleteEmptySrcDirs, s.copyEmptySrcDirs); err != nil {
+						fs.Errorf(dst, "Error while attempting to rename to %s: %v", src.Remote(), err)
+						s.processError(err)
+					} else {
+						fs.Infof(dst, "Fixed case by renaming to: %s", src.Remote())
+					}
+				}
 			}
 
 			return true

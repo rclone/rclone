@@ -83,6 +83,7 @@ func AddFlags(ci *fs.ConfigInfo, flagSet *pflag.FlagSet) {
 	flags.BoolVarP(flagSet, &ci.IgnoreSize, "ignore-size", "", false, "Ignore size when skipping use modtime or checksum", "Copy")
 	flags.BoolVarP(flagSet, &ci.IgnoreChecksum, "ignore-checksum", "", ci.IgnoreChecksum, "Skip post copy check of checksums", "Copy")
 	flags.BoolVarP(flagSet, &ci.IgnoreCaseSync, "ignore-case-sync", "", ci.IgnoreCaseSync, "Ignore case when synchronizing", "Copy")
+	flags.BoolVarP(flagSet, &ci.FixCase, "fix-case", "", ci.FixCase, "Force rename of case insensitive dest to match source", "Sync")
 	flags.BoolVarP(flagSet, &ci.NoTraverse, "no-traverse", "", ci.NoTraverse, "Don't traverse destination file system on copy", "Copy")
 	flags.BoolVarP(flagSet, &ci.CheckFirst, "check-first", "", ci.CheckFirst, "Do all the checks before starting transfers", "Copy")
 	flags.BoolVarP(flagSet, &ci.NoCheckDest, "no-check-dest", "", ci.NoCheckDest, "Don't check the destination, copy regardless", "Copy")
