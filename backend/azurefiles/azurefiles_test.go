@@ -428,6 +428,35 @@ func newTests(t *testing.T) {
 
 		destObj, errCopy := azf.CopyFile(context.TODO(), srcObj, destPath)
 		assert.NoError(t, errCopy)
+
+		t.Run("SameContent", func(t *testing.T) {
+			objectBytes := func(obj fs.Object) ([]byte, error) {
+				reader, openErr := obj.Open(context.TODO(), nil)
+				if openErr != nil {
+					return []byte{}, fmt.Errorf("opening %s : %w", obj.Remote(), openErr)
+				}
+				defer reader.Close()
+				bs, readAllErr := io.ReadAll(reader)
+				if readAllErr != nil {
+					return []byte{}, fmt.Errorf("reading all from %s : %w", obj.Remote(), readAllErr)
+				}
+				return bs, nil
+			}
+			srcBytes, err := objectBytes(srcObj)
+			assert.NoError(t, err)
+			destBytes, err := objectBytes(destObj)
+			assert.NoError(t, err)
+			assert.Equal(t, srcBytes, destBytes)
+
+		})
+
+		t.Run("SameModTime", func(t *testing.T) {
+			destObjFreshlyFetched, err := f.NewObject(context.TODO(), destPath)
+			assert.NoError(t, err)
+			assert.Equal(t, srcObj.ModTime(context.TODO()), destObjFreshlyFetched.ModTime(context.TODO()))
+		})
+	})
+
 	t.Run("FsRootIsMultilevelAndDeep", func(t *testing.T) {
 		pathOfDepth := func(d int) string {
 			parts := []string{}
