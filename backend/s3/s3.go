@@ -14,6 +14,9 @@ import (
 	"encoding/xml"
 	"errors"
 	"fmt"
+	"github.com/aws/aws-sdk-go/service/kms"
+	"github.com/aws/aws-sdk-go/service/s3/s3crypto"
+	"github.com/aws/aws-sdk-go/service/sts"
 	"io"
 	"net/http"
 	"net/url"
@@ -1935,6 +1938,15 @@ If you leave it blank, this is calculated automatically from the sse_customer_ke
 			}},
 			Sensitive: true,
 		}, {
+			Name:     "cse_kms_master_key_id",
+			Help:     "The client-side encryption with using KMS master key ID you must provide the ARN of Key.",
+			Provider: "AWS,Ceph,Minio,SeaweedFS,Other",
+			Examples: []fs.OptionExample{{
+				Value: "",
+				Help:  "None",
+			}},
+			Sensitive: true,
+		}, {
 			Name:     "storage_class",
 			Help:     "The storage class to use when storing new objects in S3.",
 			Provider: "AWS",
@@ -2488,6 +2500,11 @@ In this case, you might want to try disabling this option.
 			Help:     "Endpoint for STS.\n\nLeave blank if using AWS to use the default endpoint for the region.",
 			Provider: "AWS",
 			Advanced: true,
+		}, {
+			Name:     "kms_endpoint",
+			Help:     "Endpoint for KMS API.\n\nLeave blank if using AWS to use the default endpoint for the region.",
+			Provider: "AWS",
+			Advanced: true,
 		},
 		}})
 }
@@ -2572,6 +2589,7 @@ type Options struct {
 	Region                string               `config:"region"`
 	Endpoint              string               `config:"endpoint"`
 	STSEndpoint           string               `config:"sts_endpoint"`
+	KMSEndpoint           string               `config:"kms_endpoint"`
 	LocationConstraint    string               `config:"location_constraint"`
 	ACL                   string               `config:"acl"`
 	BucketACL             string               `config:"bucket_acl"`
@@ -2582,6 +2600,7 @@ type Options struct {
 	SSECustomerKey        string               `config:"sse_customer_key"`
 	SSECustomerKeyBase64  string               `config:"sse_customer_key_base64"`
 	SSECustomerKeyMD5     string               `config:"sse_customer_key_md5"`
+	CSEKMSMasterKeyID     string               `config:"cse_kms_master_key_id"`
 	StorageClass          string               `config:"storage_class"`
 	UploadCutoff          fs.SizeSuffix        `config:"upload_cutoff"`
 	CopyCutoff            fs.SizeSuffix        `config:"copy_cutoff"`
@@ -2618,21 +2637,23 @@ type Options struct {
 
 // Fs represents a remote s3 server
 type Fs struct {
-	name           string           // the name of the remote
-	root           string           // root of the bucket - ignore all objects above this
-	opt            Options          // parsed options
-	ci             *fs.ConfigInfo   // global config
-	ctx            context.Context  // global context for reading config
-	features       *fs.Features     // optional features
-	c              *s3.S3           // the connection to the s3 server
-	ses            *session.Session // the s3 session
-	rootBucket     string           // bucket part of root (if any)
-	rootDirectory  string           // directory part of root (if any)
-	cache          *bucket.Cache    // cache for bucket creation status
-	pacer          *fs.Pacer        // To pace the API calls
-	srv            *http.Client     // a plain http client
-	srvRest        *rest.Client     // the rest connection to the server
-	etagIsNotMD5   bool             // if set ETags are not MD5s
+	name           string                       // the name of the remote
+	root           string                       // root of the bucket - ignore all objects above this
+	opt            Options                      // parsed options
+	ci             *fs.ConfigInfo               // global config
+	ctx            context.Context              // global context for reading config
+	features       *fs.Features                 // optional features
+	c              *s3.S3                       // the connection to the s3 server
+	ses            *session.Session             // the s3 session
+	rootBucket     string                       // bucket part of root (if any)
+	rootDirectory  string                       // directory part of root (if any)
+	cache          *bucket.Cache                // cache for bucket creation status
+	pacer          *fs.Pacer                    // To pace the API calls
+	srv            *http.Client                 // a plain http client
+	srvRest        *rest.Client                 // the rest connection to the server
+	encryptClient  *s3crypto.EncryptionClientV2 // is an S3 crypto client
+	decryptClient  *s3crypto.DecryptionClientV2 // is an S3 crypto client
+	etagIsNotMD5   bool                         // if set ETags are not MD5s
 	versioningMu   sync.Mutex
 	versioning     fs.Tristate // if set bucket is using versions
 	warnCompressed sync.Once   // warn once about compressed files
@@ -2749,6 +2770,20 @@ func parsePath(path string) (root string) {
 func (f *Fs) split(rootRelativePath string) (bucketName, bucketPath string) {
 	bucketName, bucketPath = bucket.Split(bucket.Join(f.root, rootRelativePath))
 	return f.opt.Enc.FromStandardName(bucketName), f.opt.Enc.FromStandardPath(bucketPath)
+}
+
+func (f *Fs) putObjectRequest(req *s3.PutObjectInput) (*request.Request, *s3.PutObjectOutput) {
+	if f.encryptClient == nil || req.Body == nil {
+		return f.c.PutObjectRequest(req)
+	}
+	return f.encryptClient.PutObjectRequest(req)
+}
+
+func (f *Fs) GetObjectRequest(req *s3.GetObjectInput) (*request.Request, *s3.GetObjectOutput) {
+	if f.decryptClient == nil {
+		return f.c.GetObjectRequest(req)
+	}
+	return f.decryptClient.GetObjectRequest(req)
 }
 
 // split returns bucket and bucketPath from the object
@@ -2889,11 +2924,12 @@ func s3Connection(ctx context.Context, opt *Options, client *http.Client) (*s3.S
 	if opt.Region != "" {
 		awsConfig.WithRegion(opt.Region)
 	}
-	if opt.Endpoint != "" || opt.STSEndpoint != "" {
+	if opt.Endpoint != "" || opt.STSEndpoint != "" || opt.KMSEndpoint != "" {
 		// If endpoints are set, override the relevant services only
 		r := make(resolver)
-		r.addService("s3", opt.Endpoint)
-		r.addService("sts", opt.STSEndpoint)
+		r.addService(s3.ServiceName, opt.Endpoint)
+		r.addService(kms.ServiceName, opt.KMSEndpoint)
+		r.addService(sts.ServiceName, opt.STSEndpoint)
 		awsConfig.WithEndpointResolver(r)
 	}
 
@@ -3245,6 +3281,25 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		//
 		// Objects encrypted by SSE-C or SSE-KMS have ETags that are not an
 		// MD5 digest of their object data.
+		f.etagIsNotMD5 = true
+	} else if opt.CSEKMSMasterKeyID != "" {
+		var matdesc s3crypto.MaterialDescription
+		kmsClient := kms.New(ses)
+		contentCipherBuilder := s3crypto.AESGCMContentCipherBuilderV2(
+			s3crypto.NewKMSContextKeyGenerator(kmsClient, opt.CSEKMSMasterKeyID, matdesc))
+		if f.encryptClient, err = s3crypto.NewEncryptionClientV2(ses, contentCipherBuilder); err != nil {
+			return nil, err
+		}
+		cr := s3crypto.NewCryptoRegistry()
+		if err = s3crypto.RegisterAESGCMContentCipher(cr); err != nil {
+			return nil, err
+		}
+		if err = s3crypto.RegisterKMSContextWrapWithAnyCMK(cr, kmsClient); err != nil {
+			return nil, err
+		}
+		if f.decryptClient, err = s3crypto.NewDecryptionClientV2(ses, cr); err != nil {
+			return nil, err
+		}
 		f.etagIsNotMD5 = true
 	}
 	f.setRoot(root)
@@ -5278,6 +5333,14 @@ func (o *Object) setMetaData(resp *s3.HeadObjectOutput) {
 		o.bytes = -1
 		o.md5 = ""
 	}
+	// If client-side encryption then size are unencrypted
+	if o.fs.opt.CSEKMSMasterKeyID != "" {
+		if length, ok := resp.Metadata["X-Amz-Unencrypted-Content-Length"]; ok {
+			if lengthBytes, err := strconv.ParseInt(*length, 10, 64); err == nil {
+				o.bytes = lengthBytes
+			}
+		}
+	}
 }
 
 // ModTime returns the modification time of the object
@@ -5422,7 +5485,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 	if o.fs.opt.SSECustomerKeyMD5 != "" {
 		req.SSECustomerKeyMD5 = &o.fs.opt.SSECustomerKeyMD5
 	}
-	httpReq, resp := o.fs.c.GetObjectRequest(&req)
+	httpReq, resp := o.fs.GetObjectRequest(&req)
 	fs.FixRangeOption(options, o.bytes)
 
 	// Override the automatic decompression in the transport to
@@ -5734,6 +5797,23 @@ func (w *s3ChunkWriter) Close(ctx context.Context) (err error) {
 }
 
 func (o *Object) uploadMultipart(ctx context.Context, src fs.ObjectInfo, in io.Reader, options ...fs.OpenOption) (wantETag, gotETag string, versionID *string, ui uploadInfo, err error) {
+	if o.fs.encryptClient != nil {
+		ui, err = o.prepareUpload(ctx, src, options)
+		if err != nil {
+			return wantETag, gotETag, versionID, ui, fmt.Errorf("failed to prepare upload: %w", err)
+		}
+		ui.req.Body = aws.ReadSeekCloser(in)
+		req, _ := o.fs.encryptClient.PutObjectRequest(ui.req)
+		_ = req.Build()
+		in = ui.req.Body
+		keys := []string{"Unencrypted-Content-Length", "Iv", "Key-V2", "Matdesc", "Wrap-Alg", "Cek-Alg", "Tag-Len"}
+		for _, key := range keys {
+			options = append(options, &fs.HTTPOption{
+				Key:   "X-Amz-Meta-X-Amz-" + key,
+				Value: req.HTTPRequest.Header.Get("X-Amz-Meta-X-Amz-" + key),
+			})
+		}
+	}
 	chunkWriter, err := multipart.UploadMultipart(ctx, src, in, multipart.UploadMultipartOptions{
 		Open:        o.fs,
 		OpenOptions: options,
@@ -5777,11 +5857,14 @@ func unWrapAwsError(err error) (found bool, outErr error) {
 
 // Upload a single part using PutObject
 func (o *Object) uploadSinglepartPutObject(ctx context.Context, req *s3.PutObjectInput, size int64, in io.Reader) (etag string, lastModified time.Time, versionID *string, err error) {
-	r, resp := o.fs.c.PutObjectRequest(req)
+	if o.fs.encryptClient != nil {
+		req.Body = aws.ReadSeekCloser(in)
+	}
+	r, resp := o.fs.putObjectRequest(req)
 	if req.ContentLength != nil && *req.ContentLength == 0 {
 		// Can't upload zero length files like this for some reason
 		r.Body = bytes.NewReader([]byte{})
-	} else {
+	} else if o.fs.encryptClient == nil {
 		r.SetStreamingBody(io.NopCloser(in))
 	}
 	r.SetContext(ctx)
@@ -5981,10 +6064,10 @@ func (o *Object) prepareUpload(ctx context.Context, src fs.ObjectInfo, options [
 	if ui.req.ContentType == nil {
 		ui.req.ContentType = aws.String(fs.MimeType(ctx, src))
 	}
-	if size >= 0 {
+	if size >= 0 && o.fs.encryptClient == nil {
 		ui.req.ContentLength = &size
 	}
-	if md5sumBase64 != "" {
+	if md5sumBase64 != "" && o.fs.encryptClient == nil {
 		ui.req.ContentMD5 = &md5sumBase64
 	}
 	if o.fs.opt.RequesterPays {
