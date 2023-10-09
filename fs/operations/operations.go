@@ -772,7 +772,7 @@ func DeleteFilesWithBackupDir(ctx context.Context, toBeDeleted fs.ObjectsChan, b
 				if err != nil {
 					errorCount.Add(1)
 					if fserrors.IsFatalError(err) {
-						fs.Errorf(nil, "Got fatal error on delete: %s", err)
+						fs.Errorf(dst, "Got fatal error on delete: %s", err)
 						fatalErrorCount.Add(1)
 						return
 					}
