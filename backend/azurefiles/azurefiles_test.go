@@ -3,6 +3,7 @@ package azurefiles
 import (
 	"context"
 	"fmt"
+	"io"
 	"path"
 	"strconv"
 	"strings"
@@ -11,7 +12,6 @@ import (
 
 	"github.com/Azure/azure-sdk-for-go/sdk/storage/azfile/file"
 	"github.com/rclone/rclone/fs"
-	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/fstest"
 	"github.com/rclone/rclone/fstest/fstests"
 	"github.com/stretchr/testify/assert"

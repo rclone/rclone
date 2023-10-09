@@ -34,7 +34,7 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 	}
 
 	ob := objectInstance(f, remote, resp.Metadata, properties{
-			changeTime:    resp.FileChangeTime,
+		changeTime:    resp.FileChangeTime,
 		contentLength: resp.ContentLength})
 	return &ob, nil
 }
