@@ -588,12 +588,25 @@ and refuses to run again until the user runs a `--resync` (unless using `--resil
 The best workaround at the moment is to set any backend-specific flags in the [config file](/commands/rclone_config/) 
 instead of specifying them with command flags. (You can still override them as needed for other rclone commands.)
 
-### Case sensitivity
+### Case (and unicode) sensitivity {#case-sensitivity}
 
 Synching with **case-insensitive** filesystems, such as Windows or `Box`,
-can result in file name conflicts. This will be fixed in a future release.
-The near-term workaround is to make sure that files on both sides
+can result in unusual behavior. As of `v1.65`, case and unicode form differences no longer cause critical errors,
+however they may cause unexpected delta outcomes, due to the delta engine still being case-sensitive.
+This will be fixed in a future release. The near-term workaround is to make sure that files on both sides
 don't have spelling case differences (`Smile.jpg` vs. `smile.jpg`).
+
+The same limitation applies to Unicode normalization forms.
+This [particularly applies to macOS](https://github.com/rclone/rclone/issues/7270),
+which prefers NFD and sometimes auto-converts filenames from the NFC form used by most other platforms.
+This should no longer cause bisync to fail entirely, but may cause surprising delta results, as explained above.
+
+See the following options (all of which are supported by bisync) to control this behavior more granularly:
+- [`--fix-case`](/docs/#fix-case)
+- [`--ignore-case-sync`](/docs/#ignore-case-sync)
+- [`--no-unicode-normalization`](/docs/#no-unicode-normalization)
+- [`--local-unicode-normalization`](/local/#local-unicode-normalization) and
+[`--local-case-sensitive`](/local/#local-case-sensitive) (caution: these are normally not what you want.)
 
 ## Windows support {#windows}
 
@@ -1278,6 +1291,7 @@ about _Unison_ and synchronization in general.
 * A few basic terminal colors are now supported, controllable with [`--color`](/docs/#color-when) (`AUTO`|`NEVER`|`ALWAYS`)
 * Initial listing snapshots of Path1 and Path2 are now generated concurrently, using the same "march" infrastructure as `check` and `sync`,
 for performance improvements and less [risk of error](https://forum.rclone.org/t/bisync-bugs-and-feature-requests/37636#:~:text=4.%20Listings%20should%20alternate%20between%20paths%20to%20minimize%20errors).
+* Better handling of unicode normalization and case insensitivity, support for [`--fix-case`](/docs/#fix-case), [`--ignore-case-sync`](/docs/#ignore-case-sync), [`--no-unicode-normalization`](/docs/#no-unicode-normalization)
 
 ### `v1.64`
 * Fixed an [issue](https://forum.rclone.org/t/bisync-bugs-and-feature-requests/37636#:~:text=1.%20Dry%20runs%20are%20not%20completely%20dry) 

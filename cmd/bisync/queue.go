@@ -14,7 +14,6 @@ import (
 	"github.com/rclone/rclone/fs/filter"
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/fs/sync"
-	"golang.org/x/text/unicode/norm"
 )
 
 // Results represents a pair of synced files, as reported by the LoggerFn
@@ -130,7 +129,7 @@ func ReadResults(results io.Reader) []Results {
 	return slice
 }
 
-func (b *bisyncRun) fastCopy(ctx context.Context, fsrc, fdst fs.Fs, files bilib.Names, queueName string) ([]Results, error) {
+func (b *bisyncRun) fastCopy(ctx context.Context, fsrc, fdst fs.Fs, files bilib.Names, queueName string, altNames bilib.Names) ([]Results, error) {
 	if err := b.saveQueue(files, queueName); err != nil {
 		return nil, err
 	}
@@ -140,9 +139,12 @@ func (b *bisyncRun) fastCopy(ctx context.Context, fsrc, fdst fs.Fs, files bilib.
 		if err := filterCopy.AddFile(file); err != nil {
 			return nil, err
 		}
-		// macOS
-		if err := filterCopy.AddFile(norm.NFD.String(file)); err != nil {
-			return nil, err
+	}
+	if altNames.NotEmpty() {
+		for _, file := range altNames.ToList() {
+			if err := filterCopy.AddFile(file); err != nil {
+				return nil, err
+			}
 		}
 	}
 
@@ -251,4 +253,23 @@ func (b *bisyncRun) saveQueue(files bilib.Names, jobName string) error {
 	}
 	queueFile := fmt.Sprintf("%s.%s.que", b.basePath, jobName)
 	return files.Save(queueFile)
+}
+
+func (b *bisyncRun) findAltNames(ctx context.Context, dst fs.Fs, queue bilib.Names, newListing string, altNames bilib.Names) {
+	ci := fs.GetConfig(ctx)
+	if queue.NotEmpty() && (!ci.NoUnicodeNormalization || ci.IgnoreCaseSync || b.fs1.Features().CaseInsensitive || b.fs2.Features().CaseInsensitive) {
+		// search list for existing file that matches queueFile when normalized
+		for _, queueFile := range queue.ToList() {
+			normalizedName := ApplyTransforms(ctx, dst, queueFile)
+			candidates, err := b.loadListing(newListing)
+			if err != nil {
+				fs.Errorf(candidates, "cannot read new listing: %v", err)
+			}
+			for _, filename := range candidates.list {
+				if ApplyTransforms(ctx, dst, filename) == normalizedName && filename != queueFile {
+					altNames.Add(filename) // original, not normalized
+				}
+			}
+		}
+	}
 }
