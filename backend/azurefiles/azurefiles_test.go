@@ -442,3 +442,14 @@ func assertListDirEntriesContainsName(t *testing.T, f fs.Fs, dir string, name st
 	assert.NoError(t, listErr)
 	assert.Contains(t, dirEntriesBases(entries), name)
 }
+
+func TestNewFsWithAccountAndKey(t *testing.T) {
+	opt := &Options{
+		ShareName: "test-rclone-sep-2023",
+	}
+	fs, err := newFsFromOptions(context.TODO(), "TestAzureFiles", "", opt)
+	assert.NoError(t, err)
+	dirName := RandomString(10)
+	assert.NoError(t, fs.Mkdir(context.TODO(), dirName))
+	assertListDirEntriesContainsName(t, fs, "", dirName)
+}

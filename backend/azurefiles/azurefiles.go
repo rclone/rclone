@@ -2,14 +2,15 @@ package azurefiles
 
 import (
 	"context"
+	"errors"
 	"fmt"
-	"log"
 	"path"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/storage/azfile/directory"
+	"github.com/Azure/azure-sdk-for-go/sdk/storage/azfile/file"
 	"github.com/Azure/azure-sdk-for-go/sdk/storage/azfile/service"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config"
@@ -49,11 +50,18 @@ func init() {
 		Description: "Microsoft Azure Files",
 		NewFs:       NewFs,
 		Options: []fs.Option{{
+			Name: "share_name",
+			Help: `Azure Files Share Name.`,
+		}, {
 			Name: "connection_string",
 			Help: `Azure Files Connection String.`,
 		}, {
-			Name: "share_name",
-			Help: `Azure Files Share Name.`,
+			Name: "account",
+			Help: `Storage Account Name.`,
+		}, {
+			Name:      "key",
+			Help:      `Storage Account Shared Key.`,
+			Sensitive: true,
 		}, {
 			Name:     config.ConfigEncoding,
 			Help:     config.ConfigEncodingHelp,
@@ -64,22 +72,54 @@ func init() {
 }
 
 type Options struct {
-	ConnectionString string
 	ShareName        string
+	ConnectionString string
+	Account          string
+	Key              string
 	Enc              encoder.MultiEncoder `config:"encoding"`
 }
 
-// TODO: what happens when root is a file
-func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, error) {
-	opt := new(Options)
-	err := configstruct.Set(m, opt)
+type authenticationScheme int
+
+const (
+	AccountAndKey authenticationScheme = iota
+	ConnectionString
+)
+
+func authenticationSchemeFromOptions(opt *Options) (authenticationScheme, error) {
+	if opt.ConnectionString != "" {
+		return ConnectionString, nil
+	} else if opt.Account != "" && opt.Key != "" {
+		return AccountAndKey, nil
+	}
+	return -1, errors.New("Could not determine authentication scheme from options")
+}
+
+// Factored out from NewFs so that it can be tested with opt *Options and without m configmap.Mapper
+func newFsFromOptions(ctx context.Context, name, root string, opt *Options) (fs.Fs, error) {
+	as, err := authenticationSchemeFromOptions(opt)
 	if err != nil {
 		return nil, err
 	}
-	serviceClient, err := service.NewClientFromConnectionString(opt.ConnectionString, nil)
-	if err != nil {
-		log.Fatal("could not create service client: %w", err)
+	var serviceClient *service.Client
+	switch as {
+	case ConnectionString:
+		serviceClient, err = service.NewClientFromConnectionString(opt.ConnectionString, nil)
+		if err != nil {
+			return nil, err
+		}
+	case AccountAndKey:
+		skc, err := file.NewSharedKeyCredential(opt.Account, opt.Key)
+		if err != nil {
+			return nil, err
+		}
+		fileURL := fmt.Sprintf("https://%s.file.core.windows.net/%s", opt.Account, opt.ShareName)
+		serviceClient, err = service.NewClientWithSharedKeyCredential(fileURL, skc, nil)
+		if err != nil {
+			return nil, err
+		}
 	}
+
 	shareClient := serviceClient.NewShareClient(opt.ShareName)
 	shareRootDirClient := shareClient.NewRootDirectoryClient()
 	f := Fs{
@@ -94,9 +134,18 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		f.root = path.Dir(root)
 		return &f, fs.ErrorIsFile
 	}
-	log.Print(propsErr)
 
 	return &f, nil
+}
+
+// TODO: what happens when root is a file
+func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, error) {
+	opt := new(Options)
+	err := configstruct.Set(m, opt)
+	if err != nil {
+		return nil, err
+	}
+	return newFsFromOptions(ctx, name, root, opt)
 }
 
 var listFilesAndDirectoriesOptions = &directory.ListFilesAndDirectoriesOptions{
