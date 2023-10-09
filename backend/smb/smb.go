@@ -12,6 +12,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	smb2 "github.com/hirochachacha/go-smb2"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fs/config/configmap"
@@ -476,6 +477,26 @@ func (f *Fs) About(ctx context.Context) (_ *fs.Usage, err error) {
 	return usage, nil
 }
 
+// Wrap a smb2.File with a custom Close method
+type closeSession struct {
+	*smb2.File
+	close  func() error
+	closed bool
+}
+
+// Close the handle and call the custom code
+func (c *closeSession) Close() error {
+	err := c.File.Close()
+	if !c.closed {
+		err2 := c.close()
+		if err == nil {
+			err = err2
+		}
+		c.closed = true
+	}
+	return err
+}
+
 // OpenWriterAt opens with a handle for random access writes
 //
 // Pass in the remote desired and the size if known.
@@ -509,10 +530,19 @@ func (f *Fs) OpenWriterAt(ctx context.Context, remote string, size int64) (fs.Wr
 
 	fl, err := cn.smbShare.OpenFile(filename, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0o644)
 	if err != nil {
+		o.fs.putConnection(&cn)
 		return nil, fmt.Errorf("failed to open: %w", err)
 	}
 
-	return fl, nil
+	// Connection is returned in the closeSession.Close method
+	c := &closeSession{
+		File: fl,
+		close: func() error {
+			o.fs.putConnection(&cn)
+			return nil
+		},
+	}
+	return c, nil
 }
 
 // Shutdown the backend, closing any background tasks and any
