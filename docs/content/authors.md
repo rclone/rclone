@@ -778,3 +778,4 @@ put them back in again.` >}}
   * Nikita Shoshin <shoshin_nikita@fastmail.com>
   * rinsuki <428rinsuki+git@gmail.com>
   * Beyond Meat <51850644+beyondmeat@users.noreply.github.com>
+  * Saleh Dindar <salh@fb.com>
