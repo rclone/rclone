@@ -127,7 +127,7 @@ func calculateNumChunks(size int64, chunkSize int64) int {
 
 // Copy src to (f, remote) using streams download threads. It tries to use the OpenChunkWriter feature
 // and if that's not available it creates an adapter using OpenWriterAt
-func multiThreadCopy(ctx context.Context, f fs.Fs, remote string, src fs.Object, concurrency int, tr *accounting.Transfer) (newDst fs.Object, err error) {
+func multiThreadCopy(ctx context.Context, f fs.Fs, remote string, src fs.Object, concurrency int, tr *accounting.Transfer, options ...fs.OpenOption) (newDst fs.Object, err error) {
 	openChunkWriter := f.Features().OpenChunkWriter
 	ci := fs.GetConfig(ctx)
 	noseek := false
@@ -148,7 +148,7 @@ func multiThreadCopy(ctx context.Context, f fs.Fs, remote string, src fs.Object,
 		return nil, fmt.Errorf("multi-thread copy: can't copy zero sized file")
 	}
 
-	info, chunkWriter, err := openChunkWriter(ctx, remote, src)
+	info, chunkWriter, err := openChunkWriter(ctx, remote, src, options...)
 	if err != nil {
 		return nil, fmt.Errorf("multi-thread copy: failed to open chunk writer: %w", err)
 	}
