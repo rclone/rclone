@@ -35,6 +35,7 @@ type March struct {
 	srcListDir listDirFn // function to call to list a directory in the src
 	dstListDir listDirFn // function to call to list a directory in the dst
 	transforms []matchTransformFn
+	limiter    chan struct{} // make sure we don't do too many operations at once
 }
 
 // Marcher is called on each match
@@ -69,6 +70,8 @@ func (m *March) init(ctx context.Context) {
 	if m.Fdst.Features().CaseInsensitive || ci.IgnoreCaseSync {
 		m.transforms = append(m.transforms, strings.ToLower)
 	}
+	// Limit parallelism for operations
+	m.limiter = make(chan struct{}, ci.Checkers)
 }
 
 // list a directory into entries, err
@@ -429,13 +432,11 @@ func (m *March) processJob(job listDirJob) ([]listDirJob, error) {
 
 	// If NoTraverse is set, then try to find a matching object
 	// for each item in the srcList to head dst object
-	ci := fs.GetConfig(m.Ctx)
-	limiter := make(chan struct{}, ci.Checkers)
 	if m.NoTraverse && !m.NoCheckDest {
 		for _, src := range srcList {
 			wg.Add(1)
-			limiter <- struct{}{}
-			go func(limiter chan struct{}, src fs.DirEntry) {
+			m.limiter <- struct{}{}
+			go func(src fs.DirEntry) {
 				defer wg.Done()
 				if srcObj, ok := src.(fs.Object); ok {
 					leaf := path.Base(srcObj.Remote())
@@ -446,8 +447,8 @@ func (m *March) processJob(job listDirJob) ([]listDirJob, error) {
 						mu.Unlock()
 					}
 				}
-				<-limiter
-			}(limiter, src)
+				<-m.limiter
+			}(src)
 		}
 		wg.Wait()
 	}
