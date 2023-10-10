@@ -359,9 +359,13 @@ func Copy(ctx context.Context, f fs.Fs, dst fs.Object, remote string, src fs.Obj
 		remotePartial = remote
 	)
 	if !ci.Inplace && f.Features().Move != nil && f.Features().PartialUploads && !strings.HasSuffix(remote, ".rclonelink") {
+		if len(ci.PartialSuffix) > 16 {
+			return nil, fmt.Errorf("expecting length of --partial-suffix to be not greater than %d but got %d", 16, len(ci.PartialSuffix))
+		}
+
 		// Avoid making the leaf name longer if it's already lengthy to avoid
 		// trouble with file name length limits.
-		suffix := "." + random.String(8) + ".partial"
+		suffix := "." + random.String(8) + ci.PartialSuffix
 		base := path.Base(remotePartial)
 		if len(base) > 100 {
 			remotePartial = remotePartial[:len(remotePartial)-len(suffix)] + suffix
