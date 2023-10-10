@@ -997,6 +997,23 @@ func TestCaseInsensitiveMoveFile(t *testing.T) {
 	r.CheckRemoteItems(t, file2Capitalized)
 }
 
+func TestCaseInsensitiveMoveFileDryRun(t *testing.T) {
+	ctx := context.Background()
+	ctx, ci := fs.AddConfig(ctx)
+	r := fstest.NewRun(t)
+	if !r.Fremote.Features().CaseInsensitive {
+		return
+	}
+
+	ci.DryRun = true
+	file1 := r.WriteObject(ctx, "hello", "world", t1)
+	r.CheckRemoteItems(t, file1)
+
+	err := operations.MoveFile(ctx, r.Fremote, r.Fremote, "HELLO", file1.Path)
+	require.NoError(t, err)
+	r.CheckRemoteItems(t, file1)
+}
+
 func TestMoveFileBackupDir(t *testing.T) {
 	ctx := context.Background()
 	ctx, ci := fs.AddConfig(ctx)
