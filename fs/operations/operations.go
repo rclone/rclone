@@ -422,8 +422,17 @@ func Copy(ctx context.Context, f fs.Fs, dst fs.Object, remote string, src fs.Obj
 					removeFailedPartialCopy(ctx, f, remotePartial)
 				})
 			}
+
+			uploadOptions := []fs.OpenOption{hashOption}
+			for _, option := range ci.UploadHeaders {
+				uploadOptions = append(uploadOptions, option)
+			}
+			if ci.MetadataSet != nil {
+				uploadOptions = append(uploadOptions, fs.MetadataOption(ci.MetadataSet))
+			}
+
 			if doMultiThreadCopy(ctx, f, src) {
-				dst, err = multiThreadCopy(ctx, f, remotePartial, src, ci.MultiThreadStreams, tr)
+				dst, err = multiThreadCopy(ctx, f, remotePartial, src, ci.MultiThreadStreams, tr, uploadOptions...)
 				if err == nil {
 					newDst = dst
 				}
@@ -467,17 +476,10 @@ func Copy(ctx context.Context, f fs.Fs, dst fs.Object, remote string, src fs.Obj
 						if src.Remote() != remotePartial {
 							wrappedSrc = fs.NewOverrideRemote(src, remotePartial)
 						}
-						options := []fs.OpenOption{hashOption}
-						for _, option := range ci.UploadHeaders {
-							options = append(options, option)
-						}
-						if ci.MetadataSet != nil {
-							options = append(options, fs.MetadataOption(ci.MetadataSet))
-						}
 						if doUpdate && inplace {
-							err = dst.Update(ctx, in, wrappedSrc, options...)
+							err = dst.Update(ctx, in, wrappedSrc, uploadOptions...)
 						} else {
-							dst, err = f.Put(ctx, in, wrappedSrc, options...)
+							dst, err = f.Put(ctx, in, wrappedSrc, uploadOptions...)
 						}
 						if doUpdate {
 							actionTaken = "Copied (replaced existing)"
