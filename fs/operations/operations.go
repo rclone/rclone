@@ -1750,6 +1750,10 @@ func moveOrCopyFile(ctx context.Context, fdst fs.Fs, fsrc fs.Fs, dstFileName str
 	// move it back to the intended destination. This is required
 	// to avoid issues with certain remotes and avoid file deletion.
 	if !cp && fdst.Name() == fsrc.Name() && fdst.Features().CaseInsensitive && dstFileName != srcFileName && strings.EqualFold(dstFilePath, srcFilePath) {
+		if SkipDestructive(ctx, srcFileName, "rename to "+dstFileName) {
+			// avoid fatalpanic on --dry-run (trying to access non-existent tmpObj)
+			return nil
+		}
 		// Create random name to temporarily move file to
 		tmpObjName := dstFileName + "-rclone-move-" + random.String(8)
 		tmpObjFail, err := fdst.NewObject(ctx, tmpObjName)
