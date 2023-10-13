@@ -442,7 +442,7 @@ Properties:
 
 Impersonate this user ID when using a service account.
 
-Settng this flag allows rclone, when using a JWT service account, to
+Setting this flag allows rclone, when using a JWT service account, to
 act on behalf of another user by setting the as-user header.
 
 The user ID is the Box identifier for a user. User IDs can found for

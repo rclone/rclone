@@ -484,6 +484,11 @@ func (fh *ReadFileHandle) Release() error {
 	return err
 }
 
+// Name returns the name of the file from the underlying Object.
+func (fh *ReadFileHandle) Name() string {
+	return fh.file.String()
+}
+
 // Size returns the size of the underlying file
 func (fh *ReadFileHandle) Size() int64 {
 	fh.mu.Lock()

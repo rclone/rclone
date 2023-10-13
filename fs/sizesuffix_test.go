@@ -17,8 +17,20 @@ type flagger interface {
 	json.Unmarshaler
 }
 
-// Check it satisfies the interface
-var _ flagger = (*SizeSuffix)(nil)
+// Interface which non-pointer flags must satisfy
+//
+// These are from pflag.Value and need to be non-pointer due the the
+// way the backend flags are inserted into the flags.
+type flaggerNP interface {
+	String() string
+	Type() string
+}
+
+// Check it satisfies the interfaces
+var (
+	_ flagger   = (*SizeSuffix)(nil)
+	_ flaggerNP = SizeSuffix(0)
+)
 
 func TestSizeSuffixString(t *testing.T) {
 	for _, test := range []struct {

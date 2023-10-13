@@ -371,28 +371,6 @@ file.
 	})
 }
 
-type driveResource struct {
-	DriveID   string `json:"id"`
-	DriveName string `json:"name"`
-	DriveType string `json:"driveType"`
-}
-type drivesResponse struct {
-	Drives []driveResource `json:"value"`
-}
-
-type siteResource struct {
-	SiteID   string `json:"id"`
-	SiteName string `json:"displayName"`
-	SiteURL  string `json:"webUrl"`
-}
-type siteResponse struct {
-	Sites []siteResource `json:"value"`
-}
-type deltaResponse struct {
-	DeltaLink string     `json:"@odata.deltaLink"`
-	Value     []api.Item `json:"value"`
-}
-
 // Get the region and graphURL from the config
 func getRegionURL(m configmap.Mapper) (region, graphURL string) {
 	region, _ = m.Get("region")
@@ -419,7 +397,7 @@ func chooseDrive(ctx context.Context, name string, m configmap.Mapper, srv *rest
 			RootURL: graphURL,
 			Path:    "/sites/root:" + opt.relativePath,
 		}
-		site := siteResource{}
+		site := api.SiteResource{}
 		_, err := srv.CallJSON(ctx, &opt.opts, nil, &site)
 		if err != nil {
 			return fs.ConfigError("choose_type", fmt.Sprintf("Failed to query available site by relative path: %v", err))
@@ -436,7 +414,7 @@ func chooseDrive(ctx context.Context, name string, m configmap.Mapper, srv *rest
 		}
 	}
 
-	drives := drivesResponse{}
+	drives := api.DrivesResponse{}
 
 	// We don't have the final ID yet?
 	// query Microsoft Graph
@@ -449,7 +427,7 @@ func chooseDrive(ctx context.Context, name string, m configmap.Mapper, srv *rest
 		// Also call /me/drive as sometimes /me/drives doesn't return it #4068
 		if opt.opts.Path == "/me/drives" {
 			opt.opts.Path = "/me/drive"
-			meDrive := driveResource{}
+			meDrive := api.DriveResource{}
 			_, err := srv.CallJSON(ctx, &opt.opts, nil, &meDrive)
 			if err != nil {
 				return fs.ConfigError("choose_type", fmt.Sprintf("Failed to query available drives: %v", err))
@@ -468,7 +446,7 @@ func chooseDrive(ctx context.Context, name string, m configmap.Mapper, srv *rest
 			}
 		}
 	} else {
-		drives.Drives = append(drives.Drives, driveResource{
+		drives.Drives = append(drives.Drives, api.DriveResource{
 			DriveID:   opt.finalDriveID,
 			DriveName: "Chosen Drive ID",
 			DriveType: "drive",
@@ -572,15 +550,18 @@ func Config(ctx context.Context, name string, m configmap.Mapper, config fs.Conf
 	case "url":
 		return fs.ConfigInput("url_end", "config_site_url", `Site URL
 
-Example: "https://contoso.sharepoint.com/sites/mysite" or "mysite"
+Examples:
+- "mysite"
+- "https://XXX.sharepoint.com/sites/mysite"
+- "https://XXX.sharepoint.com/teams/ID"
 `)
 	case "url_end":
 		siteURL := config.Result
-		re := regexp.MustCompile(`https://.*\.sharepoint\.com/sites/(.*)`)
+		re := regexp.MustCompile(`https://.*\.sharepoint\.com(/.*)`)
 		match := re.FindStringSubmatch(siteURL)
 		if len(match) == 2 {
 			return chooseDrive(ctx, name, m, srv, chooseDriveOpt{
-				relativePath: "/sites/" + match[1],
+				relativePath: match[1],
 			})
 		}
 		return chooseDrive(ctx, name, m, srv, chooseDriveOpt{
@@ -602,7 +583,7 @@ Example: "https://contoso.sharepoint.com/sites/mysite" or "mysite"
 			Path:    "/sites?search=" + searchTerm,
 		}
 
-		sites := siteResponse{}
+		sites := api.SiteResponse{}
 		_, err := srv.CallJSON(ctx, &opts, nil, &sites)
 		if err != nil {
 			return fs.ConfigError("choose_type", fmt.Sprintf("Failed to query available sites: %v", err))
@@ -1114,32 +1095,29 @@ func (f *Fs) CreateDir(ctx context.Context, dirID, leaf string) (newID string, e
 // If directories is set it only sends directories
 // User function to process a File item from listAll
 //
-// Should return true to finish processing
-type listAllFn func(*api.Item) bool
+// If an error is returned then processing stops
+type listAllFn func(*api.Item) error
 
 // Lists the directory required calling the user function on each item found
 //
 // If the user fn ever returns true then it early exits with found = true
-func (f *Fs) listAll(ctx context.Context, dirID string, directoriesOnly bool, filesOnly bool, fn listAllFn) (found bool, err error) {
-	// Top parameter asks for bigger pages of data
-	// https://dev.onedrive.com/odata/optional-query-parameters.htm
-	opts := f.newOptsCall(dirID, "GET", fmt.Sprintf("/children?$top=%d", f.opt.ListChunk))
-OUTER:
+//
+// This listing function works on both normal listings and delta listings
+func (f *Fs) _listAll(ctx context.Context, dirID string, directoriesOnly bool, filesOnly bool, fn listAllFn, opts *rest.Opts, result any, pValue *[]api.Item, pNextLink *string) (err error) {
 	for {
-		var result api.ListChildrenResponse
 		var resp *http.Response
 		err = f.pacer.Call(func() (bool, error) {
-			resp, err = f.srv.CallJSON(ctx, &opts, nil, &result)
+			resp, err = f.srv.CallJSON(ctx, opts, nil, result)
 			return shouldRetry(ctx, resp, err)
 		})
 		if err != nil {
-			return found, fmt.Errorf("couldn't list files: %w", err)
+			return fmt.Errorf("couldn't list files: %w", err)
 		}
-		if len(result.Value) == 0 {
+		if len(*pValue) == 0 {
 			break
 		}
-		for i := range result.Value {
-			item := &result.Value[i]
+		for i := range *pValue {
+			item := &(*pValue)[i]
 			isFolder := item.GetFolder() != nil
 			if isFolder {
 				if filesOnly {
@@ -1154,18 +1132,60 @@ OUTER:
 				continue
 			}
 			item.Name = f.opt.Enc.ToStandardName(item.GetName())
-			if fn(item) {
-				found = true
-				break OUTER
+			err = fn(item)
+			if err != nil {
+				return err
 			}
 		}
-		if result.NextLink == "" {
+		if *pNextLink == "" {
 			break
 		}
 		opts.Path = ""
-		opts.RootURL = result.NextLink
+		opts.Parameters = nil
+		opts.RootURL = *pNextLink
+		// reset results
+		*pNextLink = ""
+		*pValue = nil
 	}
-	return
+	return nil
+}
+
+// Lists the directory required calling the user function on each item found
+//
+// If the user fn ever returns true then it early exits with found = true
+func (f *Fs) listAll(ctx context.Context, dirID string, directoriesOnly bool, filesOnly bool, fn listAllFn) (err error) {
+	// Top parameter asks for bigger pages of data
+	// https://dev.onedrive.com/odata/optional-query-parameters.htm
+	opts := f.newOptsCall(dirID, "GET", fmt.Sprintf("/children?$top=%d", f.opt.ListChunk))
+	var result api.ListChildrenResponse
+	return f._listAll(ctx, dirID, directoriesOnly, filesOnly, fn, &opts, &result, &result.Value, &result.NextLink)
+}
+
+// Convert a list item into a DirEntry
+//
+// Can return nil for an item which should be skipped
+func (f *Fs) itemToDirEntry(ctx context.Context, dir string, info *api.Item) (entry fs.DirEntry, err error) {
+	if !f.opt.ExposeOneNoteFiles && info.GetPackageType() == api.PackageTypeOneNote {
+		fs.Debugf(info.Name, "OneNote file not shown in directory listing")
+		return nil, nil
+	}
+	remote := path.Join(dir, info.GetName())
+	folder := info.GetFolder()
+	if folder != nil {
+		// cache the directory ID for later lookups
+		id := info.GetID()
+		f.dirCache.Put(remote, id)
+		d := fs.NewDir(remote, time.Time(info.GetLastModifiedDateTime())).SetID(id)
+		d.SetItems(folder.ChildCount)
+		entry = d
+	} else {
+		o, err := f.newObjectWithInfo(ctx, remote, info)
+		if err != nil {
+			return nil, err
+		}
+		entry = o
+	}
+	return entry, nil
 }
 
 // List the objects and directories in dir into entries.  The
@@ -1182,39 +1202,135 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 	if err != nil {
 		return nil, err
 	}
-	var iErr error
-	_, err = f.listAll(ctx, directoryID, false, false, func(info *api.Item) bool {
-		if !f.opt.ExposeOneNoteFiles && info.GetPackageType() == api.PackageTypeOneNote {
-			fs.Debugf(info.Name, "OneNote file not shown in directory listing")
-			return false
+	err = f.listAll(ctx, directoryID, false, false, func(info *api.Item) error {
+		entry, err := f.itemToDirEntry(ctx, dir, info)
+		if err == nil {
+			entries = append(entries, entry)
 		}
-
-		remote := path.Join(dir, info.GetName())
-		folder := info.GetFolder()
-		if folder != nil {
-			// cache the directory ID for later lookups
-			id := info.GetID()
-			f.dirCache.Put(remote, id)
-			d := fs.NewDir(remote, time.Time(info.GetLastModifiedDateTime())).SetID(id)
-			d.SetItems(folder.ChildCount)
-			entries = append(entries, d)
-		} else {
-			o, err := f.newObjectWithInfo(ctx, remote, info)
-			if err != nil {
-				iErr = err
-				return true
-			}
-			entries = append(entries, o)
-		}
-		return false
+		return err
 	})
 	if err != nil {
 		return nil, err
 	}
-	if iErr != nil {
-		return nil, iErr
-	}
 	return entries, nil
+}
+
+// ListR lists the objects and directories of the Fs starting
+// from dir recursively into out.
+//
+// dir should be "" to start from the root, and should not
+// have trailing slashes.
+//
+// This should return ErrDirNotFound if the directory isn't
+// found.
+//
+// It should call callback for each tranche of entries read.
+// These need not be returned in any particular order.  If
+// callback returns an error then the listing will stop
+// immediately.
+//
+// Don't implement this unless you have a more efficient way
+// of listing recursively than doing a directory traversal.
+func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (err error) {
+	// Make sure this ID is in the directory cache
+	directoryID, err := f.dirCache.FindDir(ctx, dir, false)
+	if err != nil {
+		return err
+	}
+
+	// ListR only works at the root of a onedrive, not on a folder
+	// So we have to filter things outside of the root which is
+	// inefficient.
+
+	list := walk.NewListRHelper(callback)
+
+	// list a folder conventionally - used for shared folders
+	var listFolder func(dir string) error
+	listFolder = func(dir string) error {
+		entries, err := f.List(ctx, dir)
+		if err != nil {
+			return err
+		}
+		for _, entry := range entries {
+			err = list.Add(entry)
+			if err != nil {
+				return err
+			}
+			if _, isDir := entry.(fs.Directory); isDir {
+				err = listFolder(entry.Remote())
+				if err != nil {
+					return err
+				}
+			}
+		}
+		return nil
+	}
+
+	// This code relies on the fact that directories are sent before their children. This isn't
+	// mentioned in the docs though, so maybe it shouldn't be relied on.
+	seen := map[string]struct{}{}
+	fn := func(info *api.Item) error {
+		var parentPath string
+		var ok bool
+		id := info.GetID()
+		// The API can produce duplicates, so skip them
+		if _, found := seen[id]; found {
+			return nil
+		}
+		seen[id] = struct{}{}
+		// Skip the root directory
+		if id == directoryID {
+			return nil
+		}
+		// Skip deleted items
+		if info.Deleted != nil {
+			return nil
+		}
+		dirID := info.GetParentReference().GetID()
+		// Skip files that don't have their parent directory
+		// cached as they are outside the root.
+		parentPath, ok = f.dirCache.GetInv(dirID)
+		if !ok {
+			return nil
+		}
+		// Skip files not under the root directory
+		remote := path.Join(parentPath, info.GetName())
+		if dir != "" && !strings.HasPrefix(remote, dir+"/") {
+			return nil
+		}
+		entry, err := f.itemToDirEntry(ctx, parentPath, info)
+		if err != nil {
+			return err
+		}
+		err = list.Add(entry)
+		if err != nil {
+			return err
+		}
+		// If this is a shared folder, we'll need list it too
+		if info.RemoteItem != nil && info.RemoteItem.Folder != nil {
+			fs.Debugf(remote, "Listing shared directory")
+			return listFolder(remote)
+		}
+		return nil
+	}
+
+	opts := rest.Opts{
+		Method: "GET",
+		Path:   "/root/delta",
+		Parameters: map[string][]string{
+			// "token": {token},
+			"$top": {fmt.Sprintf("%d", f.opt.ListChunk)},
+		},
+	}
+
+	var result api.DeltaResponse
+	err = f._listAll(ctx, "", false, false, fn, &opts, &result, &result.Value, &result.NextLink)
+	if err != nil {
+		return err
+	}
+
+	return list.Flush()
+
 }
 
 // Creates from the parameters passed in a half finished Object which
@@ -1285,14 +1401,11 @@ func (f *Fs) purgeCheck(ctx context.Context, dir string, check bool) error {
 	}
 	if check {
 		// check to see if there are any items
-		found, err := f.listAll(ctx, rootID, false, false, func(item *api.Item) bool {
-			return true
+		err := f.listAll(ctx, rootID, false, false, func(item *api.Item) error {
+			return fs.ErrorDirectoryNotEmpty
 		})
 		if err != nil {
 			return err
-		}
-		if found {
-			return fs.ErrorDirectoryNotEmpty
 		}
 	}
 	err = f.deleteObject(ctx, rootID)
@@ -2478,7 +2591,7 @@ func (f *Fs) changeNotifyStartPageToken(ctx context.Context) (nextDeltaToken str
 	return
 }
 
-func (f *Fs) changeNotifyNextChange(ctx context.Context, token string) (delta deltaResponse, err error) {
+func (f *Fs) changeNotifyNextChange(ctx context.Context, token string) (delta api.DeltaResponse, err error) {
 	opts := f.buildDriveDeltaOpts(token)
 
 	_, err = f.srv.CallJSON(ctx, &opts, nil, &delta)
@@ -2597,6 +2710,7 @@ var (
 	_ fs.Abouter         = (*Fs)(nil)
 	_ fs.PublicLinker    = (*Fs)(nil)
 	_ fs.CleanUpper      = (*Fs)(nil)
+	_ fs.ListRer         = (*Fs)(nil)
 	_ fs.Object          = (*Object)(nil)
 	_ fs.MimeTyper       = &Object{}
 	_ fs.IDer            = &Object{}

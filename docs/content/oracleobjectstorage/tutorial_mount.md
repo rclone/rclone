@@ -209,7 +209,7 @@ rclone mount \
                                         # its exact meaning will depend on the backend. For HTTP based backends it is an HTTP PUT/GET/POST/etc and its response
     --cache-dir /tmp/rclone/cache       # Directory rclone will use for caching.
     --dir-cache-time 5m \               # Time to cache directory entries for (default 5m0s)
-    --vfs-cache-mode writes \           # Cache mode off|minimal|writes|full (default off), writes gives the maximum compatiblity like a local disk
+    --vfs-cache-mode writes \           # Cache mode off|minimal|writes|full (default off), writes gives the maximum compatibility like a local disk
     --vfs-cache-max-age 20m \           # Max age of objects in the cache (default 1h0m0s)
     --vfs-cache-max-size 10G \          # Max total size of objects in the cache (default off)
     --vfs-cache-poll-interval 1m \      # Interval to poll the cache for stale objects (default 1m0s)
@@ -372,7 +372,7 @@ Install NFS Utils
 sudo yum install -y nfs-utils
 ```
 
-Export the desired directory via NFS Server in the same machine where rclone has mounted to, ensure NFS serivce has
+Export the desired directory via NFS Server in the same machine where rclone has mounted to, ensure NFS service has
 desired permissions to read the directory. If it runs as root, then it will have permissions for sure, but if it runs
 as separate user then ensure that user has necessary desired privileges.
 ```shell

@@ -71,7 +71,7 @@ const (
 	// 1<<18 is the minimum size supported by the Google uploader, and there is no maximum.
 	minChunkSize     = fs.SizeSuffix(googleapi.MinUploadChunkSize)
 	defaultChunkSize = 8 * fs.Mebi
-	partialFields    = "id,name,size,md5Checksum,trashed,explicitlyTrashed,modifiedTime,createdTime,mimeType,parents,webViewLink,shortcutDetails,exportLinks,resourceKey"
+	partialFields    = "id,name,size,md5Checksum,sha1Checksum,sha256Checksum,trashed,explicitlyTrashed,modifiedTime,createdTime,mimeType,parents,webViewLink,shortcutDetails,exportLinks,resourceKey"
 	listRGrouping    = 50   // number of IDs to search at once when using ListR
 	listRInputBuffer = 1000 // size of input buffer when using ListR
 	defaultXDGIcon   = "text-html"
@@ -321,15 +321,34 @@ rather than shortcuts themselves when doing server side copies.`,
 			Help:     "Skip google documents in all listings.\n\nIf given, gdocs practically become invisible to rclone.",
 			Advanced: true,
 		}, {
+			Name:    "show_all_gdocs",
+			Default: false,
+			Help: `Show all Google Docs including non-exportable ones in listings.
+
+If you try a server side copy on a Google Form without this flag, you
+will get this error:
+
+    No export formats found for "application/vnd.google-apps.form"
+
+However adding this flag will allow the form to be server side copied.
+
+Note that rclone doesn't add extensions to the Google Docs file names
+in this mode.
+
+Do **not** use this flag when trying to download Google Docs - rclone
+will fail to download them.
+`,
+			Advanced: true,
+		}, {
 			Name:    "skip_checksum_gphotos",
 			Default: false,
-			Help: `Skip MD5 checksum on Google photos and videos only.
+			Help: `Skip checksums on Google photos and videos only.
 
 Use this if you get checksum errors when transferring Google photos or
 videos.
 
 Setting this flag will cause Google photos and videos to return a
-blank MD5 checksum.
+blank checksums.
 
 Google photos are identified by being in the "photos" space.
 
@@ -667,6 +686,7 @@ type Options struct {
 	UseTrash                  bool                 `config:"use_trash"`
 	CopyShortcutContent       bool                 `config:"copy_shortcut_content"`
 	SkipGdocs                 bool                 `config:"skip_gdocs"`
+	ShowAllGdocs              bool                 `config:"show_all_gdocs"`
 	SkipChecksumGphotos       bool                 `config:"skip_checksum_gphotos"`
 	SharedWithMe              bool                 `config:"shared_with_me"`
 	TrashedOnly               bool                 `config:"trashed_only"`
@@ -751,6 +771,8 @@ type Object struct {
 	baseObject
 	url        string // Download URL of this object
 	md5sum     string // md5sum of the object
+	sha1sum    string // sha1sum of the object
+	sha256sum  string // sha256sum of the object
 	v2Download bool   // generate v2 download link ondemand
 }
 
@@ -1414,6 +1436,8 @@ func (f *Fs) newRegularObject(remote string, info *drive.File) fs.Object {
 		for _, space := range info.Spaces {
 			if space == "photos" {
 				info.Md5Checksum = ""
+				info.Sha1Checksum = ""
+				info.Sha256Checksum = ""
 				break
 			}
 		}
@@ -1422,6 +1446,8 @@ func (f *Fs) newRegularObject(remote string, info *drive.File) fs.Object {
 		baseObject: f.newBaseObject(remote, info),
 		url:        fmt.Sprintf("%sfiles/%s?alt=media", f.svc.BasePath, actualID(info.Id)),
 		md5sum:     strings.ToLower(info.Md5Checksum),
+		sha1sum:    strings.ToLower(info.Sha1Checksum),
+		sha256sum:  strings.ToLower(info.Sha256Checksum),
 		v2Download: f.opt.V2DownloadMinSize != -1 && info.Size >= int64(f.opt.V2DownloadMinSize),
 	}
 	if info.ResourceKey != "" {
@@ -1522,6 +1548,8 @@ func (f *Fs) newObjectWithExportInfo(
 	case f.opt.SkipGdocs:
 		fs.Debugf(remote, "Skipping google document type %q", info.MimeType)
 		return nil, fs.ErrorObjectNotFound
+	case f.opt.ShowAllGdocs:
+		return f.newDocumentObject(remote, info, "", info.MimeType)
 	default:
 		// If item MimeType is in the ExportFormats then it is a google doc
 		if !isDocument {
@@ -3007,7 +3035,7 @@ func (f *Fs) DirCacheFlush() {
 
 // Hashes returns the supported hash sets.
 func (f *Fs) Hashes() hash.Set {
-	return hash.Set(hash.MD5)
+	return hash.NewHashSet(hash.MD5, hash.SHA1, hash.SHA256)
 }
 
 func (f *Fs) changeChunkSize(chunkSizeString string) (err error) {
@@ -3568,10 +3596,16 @@ func (o *baseObject) Remote() string {
 
 // Hash returns the Md5sum of an object returning a lowercase hex string
 func (o *Object) Hash(ctx context.Context, t hash.Type) (string, error) {
-	if t != hash.MD5 {
-		return "", hash.ErrUnsupported
+	if t == hash.MD5 {
+		return o.md5sum, nil
 	}
-	return o.md5sum, nil
+	if t == hash.SHA1 {
+		return o.sha1sum, nil
+	}
+	if t == hash.SHA256 {
+		return o.sha256sum, nil
+	}
+	return "", hash.ErrUnsupported
 }
 func (o *baseObject) Hash(ctx context.Context, t hash.Type) (string, error) {
 	if t != hash.MD5 {

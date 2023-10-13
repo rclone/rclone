@@ -62,11 +62,132 @@ import (
 	"golang.org/x/net/http/httpguts"
 )
 
+// The S3 providers
+//
+// Please keep these in alphabetical order, but with AWS first and
+// Other last.
+//
+// NB if you add a new provider here, then add it in the setQuirks
+// function and set the correct quirks. Test the quirks are correct by
+// running the integration tests "go test -v -remote NewS3Provider:".
+//
+// See https://github.com/rclone/rclone/blob/master/CONTRIBUTING.md#adding-a-new-s3-provider
+// for full information about how to add a new s3 provider.
+var providerOption = fs.Option{
+	Name: fs.ConfigProvider,
+	Help: "Choose your S3 provider.",
+	Examples: []fs.OptionExample{{
+		Value: "AWS",
+		Help:  "Amazon Web Services (AWS) S3",
+	}, {
+		Value: "Alibaba",
+		Help:  "Alibaba Cloud Object Storage System (OSS) formerly Aliyun",
+	}, {
+		Value: "ArvanCloud",
+		Help:  "Arvan Cloud Object Storage (AOS)",
+	}, {
+		Value: "Ceph",
+		Help:  "Ceph Object Storage",
+	}, {
+		Value: "ChinaMobile",
+		Help:  "China Mobile Ecloud Elastic Object Storage (EOS)",
+	}, {
+		Value: "Cloudflare",
+		Help:  "Cloudflare R2 Storage",
+	}, {
+		Value: "DigitalOcean",
+		Help:  "DigitalOcean Spaces",
+	}, {
+		Value: "Dreamhost",
+		Help:  "Dreamhost DreamObjects",
+	}, {
+		Value: "GCS",
+		Help:  "Google Cloud Storage",
+	}, {
+		Value: "HuaweiOBS",
+		Help:  "Huawei Object Storage Service",
+	}, {
+		Value: "IBMCOS",
+		Help:  "IBM COS S3",
+	}, {
+		Value: "IDrive",
+		Help:  "IDrive e2",
+	}, {
+		Value: "IONOS",
+		Help:  "IONOS Cloud",
+	}, {
+		Value: "LyveCloud",
+		Help:  "Seagate Lyve Cloud",
+	}, {
+		Value: "Leviia",
+		Help:  "Leviia Object Storage",
+	}, {
+		Value: "Liara",
+		Help:  "Liara Object Storage",
+	}, {
+		Value: "Linode",
+		Help:  "Linode Object Storage",
+	}, {
+		Value: "Minio",
+		Help:  "Minio Object Storage",
+	}, {
+		Value: "Netease",
+		Help:  "Netease Object Storage (NOS)",
+	}, {
+		Value: "Petabox",
+		Help:  "Petabox Object Storage",
+	}, {
+		Value: "RackCorp",
+		Help:  "RackCorp Object Storage",
+	}, {
+		Value: "Scaleway",
+		Help:  "Scaleway Object Storage",
+	}, {
+		Value: "SeaweedFS",
+		Help:  "SeaweedFS S3",
+	}, {
+		Value: "StackPath",
+		Help:  "StackPath Object Storage",
+	}, {
+		Value: "Storj",
+		Help:  "Storj (S3 Compatible Gateway)",
+	}, {
+		Value: "Synology",
+		Help:  "Synology C2 Object Storage",
+	}, {
+		Value: "TencentCOS",
+		Help:  "Tencent Cloud Object Storage (COS)",
+	}, {
+		Value: "Wasabi",
+		Help:  "Wasabi Object Storage",
+	}, {
+		Value: "Qiniu",
+		Help:  "Qiniu Object Storage (Kodo)",
+	}, {
+		Value: "Other",
+		Help:  "Any other S3 compatible provider",
+	}},
+}
+
+var providersList string
+
 // Register with Fs
 func init() {
+	var s strings.Builder
+	for i, provider := range providerOption.Examples {
+		if provider.Value == "Other" {
+			_, _ = s.WriteString(" and others")
+		} else {
+			if i != 0 {
+				_, _ = s.WriteString(", ")
+			}
+			_, _ = s.WriteString(provider.Value)
+		}
+	}
+	providersList = s.String()
 	fs.Register(&fs.RegInfo{
 		Name:        "s3",
-		Description: "Amazon S3 Compliant Storage Providers including AWS, Alibaba, ArvanCloud, Ceph, China Mobile, Cloudflare, GCS, DigitalOcean, Dreamhost, Huawei OBS, IBM COS, IDrive e2, IONOS Cloud, Leviia, Liara, Lyve Cloud, Minio, Netease, Petabox, RackCorp, Scaleway, SeaweedFS, StackPath, Storj, Synology, Tencent COS, Qiniu and Wasabi",
+		Description: "Amazon S3 Compliant Storage Providers including " + providersList,
 		NewFs:       NewFs,
 		CommandHelp: commandHelp,
 		Config: func(ctx context.Context, name string, m configmap.Mapper, config fs.ConfigIn) (*fs.ConfigOut, error) {
@@ -80,100 +201,7 @@ func init() {
 			System: systemMetadataInfo,
 			Help:   `User metadata is stored as x-amz-meta- keys. S3 metadata keys are case insensitive and are always returned in lower case.`,
 		},
-		Options: []fs.Option{{
-			Name: fs.ConfigProvider,
-			Help: "Choose your S3 provider.",
-			// NB if you add a new provider here, then add it in the
-			// setQuirks function and set the correct quirks
-			Examples: []fs.OptionExample{{
-				Value: "AWS",
-				Help:  "Amazon Web Services (AWS) S3",
-			}, {
-				Value: "Alibaba",
-				Help:  "Alibaba Cloud Object Storage System (OSS) formerly Aliyun",
-			}, {
-				Value: "ArvanCloud",
-				Help:  "Arvan Cloud Object Storage (AOS)",
-			}, {
-				Value: "Ceph",
-				Help:  "Ceph Object Storage",
-			}, {
-				Value: "ChinaMobile",
-				Help:  "China Mobile Ecloud Elastic Object Storage (EOS)",
-			}, {
-				Value: "Cloudflare",
-				Help:  "Cloudflare R2 Storage",
-			}, {
-				Value: "DigitalOcean",
-				Help:  "DigitalOcean Spaces",
-			}, {
-				Value: "Dreamhost",
-				Help:  "Dreamhost DreamObjects",
-			}, {
-				Value: "GCS",
-				Help:  "Google Cloud Storage",
-			}, {
-				Value: "HuaweiOBS",
-				Help:  "Huawei Object Storage Service",
-			}, {
-				Value: "IBMCOS",
-				Help:  "IBM COS S3",
-			}, {
-				Value: "IDrive",
-				Help:  "IDrive e2",
-			}, {
-				Value: "IONOS",
-				Help:  "IONOS Cloud",
-			}, {
-				Value: "LyveCloud",
-				Help:  "Seagate Lyve Cloud",
-			}, {
-				Value: "Leviia",
-				Help:  "Leviia Object Storage",
-			}, {
-				Value: "Liara",
-				Help:  "Liara Object Storage",
-			}, {
-				Value: "Minio",
-				Help:  "Minio Object Storage",
-			}, {
-				Value: "Netease",
-				Help:  "Netease Object Storage (NOS)",
-			}, {
-				Value: "Petabox",
-				Help:  "Petabox Object Storage",
-			}, {
-				Value: "RackCorp",
-				Help:  "RackCorp Object Storage",
-			}, {
-				Value: "Scaleway",
-				Help:  "Scaleway Object Storage",
-			}, {
-				Value: "SeaweedFS",
-				Help:  "SeaweedFS S3",
-			}, {
-				Value: "StackPath",
-				Help:  "StackPath Object Storage",
-			}, {
-				Value: "Storj",
-				Help:  "Storj (S3 Compatible Gateway)",
-			}, {
-				Value: "Synology",
-				Help:  "Synology C2 Object Storage",
-			}, {
-				Value: "TencentCOS",
-				Help:  "Tencent Cloud Object Storage (COS)",
-			}, {
-				Value: "Wasabi",
-				Help:  "Wasabi Object Storage",
-			}, {
-				Value: "Qiniu",
-				Help:  "Qiniu Object Storage (Kodo)",
-			}, {
-				Value: "Other",
-				Help:  "Any other S3 compatible provider",
-			}},
-		}, {
+		Options: []fs.Option{providerOption, {
 			Name:    "env_auth",
 			Help:    "Get AWS credentials from runtime (environment variables or EC2/ECS meta data if no env vars).\n\nOnly applies if access_key_id and secret_access_key is blank.",
 			Default: false,
@@ -494,7 +522,7 @@ func init() {
 		}, {
 			Name:     "region",
 			Help:     "Region to connect to.\n\nLeave blank if you are using an S3 clone and you don't have a region.",
-			Provider: "!AWS,Alibaba,ArvanCloud,ChinaMobile,Cloudflare,IONOS,Petabox,Liara,Qiniu,RackCorp,Scaleway,Storj,Synology,TencentCOS,HuaweiOBS,IDrive",
+			Provider: "!AWS,Alibaba,ArvanCloud,ChinaMobile,Cloudflare,IONOS,Petabox,Liara,Linode,Qiniu,RackCorp,Scaleway,Storj,Synology,TencentCOS,HuaweiOBS,IDrive",
 			Examples: []fs.OptionExample{{
 				Value: "",
 				Help:  "Use this if unsure.\nWill use v4 signatures and an empty region.",
@@ -862,6 +890,42 @@ func init() {
 				Help:  "The default endpoint\nIran",
 			}},
 		}, {
+			// Linode endpoints: https://www.linode.com/docs/products/storage/object-storage/guides/urls/#cluster-url-s3-endpoint
+			Name:     "endpoint",
+			Help:     "Endpoint for Linode Object Storage API.",
+			Provider: "Linode",
+			Examples: []fs.OptionExample{{
+				Value: "us-southeast-1.linodeobjects.com",
+				Help:  "Atlanta, GA (USA), us-southeast-1",
+			}, {
+				Value: "us-ord-1.linodeobjects.com",
+				Help:  "Chicago, IL (USA), us-ord-1",
+			}, {
+				Value: "eu-central-1.linodeobjects.com",
+				Help:  "Frankfurt (Germany), eu-central-1",
+			}, {
+				Value: "it-mil-1.linodeobjects.com",
+				Help:  "Milan (Italy), it-mil-1",
+			}, {
+				Value: "us-east-1.linodeobjects.com",
+				Help:  "Newark, NJ (USA), us-east-1",
+			}, {
+				Value: "fr-par-1.linodeobjects.com",
+				Help:  "Paris (France), fr-par-1",
+			}, {
+				Value: "us-sea-1.linodeobjects.com",
+				Help:  "Seattle, WA (USA), us-sea-1",
+			}, {
+				Value: "ap-south-1.linodeobjects.com",
+				Help:  "Singapore ap-south-1",
+			}, {
+				Value: "se-sto-1.linodeobjects.com",
+				Help:  "Stockholm (Sweden), se-sto-1",
+			}, {
+				Value: "us-iad-1.linodeobjects.com",
+				Help:  "Washington, DC, (USA), us-iad-1",
+			}},
+		}, {
 			// oss endpoints: https://help.aliyun.com/document_detail/31837.html
 			Name:     "endpoint",
 			Help:     "Endpoint for OSS API.",
@@ -1213,7 +1277,7 @@ func init() {
 		}, {
 			Name:     "endpoint",
 			Help:     "Endpoint for S3 API.\n\nRequired when using an S3 clone.",
-			Provider: "!AWS,ArvanCloud,IBMCOS,IDrive,IONOS,TencentCOS,HuaweiOBS,Alibaba,ChinaMobile,GCS,Liara,Scaleway,StackPath,Storj,Synology,RackCorp,Qiniu,Petabox",
+			Provider: "!AWS,ArvanCloud,IBMCOS,IDrive,IONOS,TencentCOS,HuaweiOBS,Alibaba,ChinaMobile,GCS,Liara,Linode,Scaleway,StackPath,Storj,Synology,RackCorp,Qiniu,Petabox",
 			Examples: []fs.OptionExample{{
 				Value:    "objects-us-east-1.dream.io",
 				Help:     "Dream Objects endpoint",
@@ -1701,7 +1765,7 @@ func init() {
 		}, {
 			Name:     "location_constraint",
 			Help:     "Location constraint - must be set to match the Region.\n\nLeave blank if not sure. Used when creating buckets only.",
-			Provider: "!AWS,Alibaba,ArvanCloud,HuaweiOBS,ChinaMobile,Cloudflare,IBMCOS,IDrive,IONOS,Leviia,Liara,Qiniu,RackCorp,Scaleway,StackPath,Storj,TencentCOS,Petabox",
+			Provider: "!AWS,Alibaba,ArvanCloud,HuaweiOBS,ChinaMobile,Cloudflare,IBMCOS,IDrive,IONOS,Leviia,Liara,Linode,Qiniu,RackCorp,Scaleway,StackPath,Storj,TencentCOS,Petabox",
 		}, {
 			Name: "acl",
 			Help: `Canned ACL used when creating buckets and storing or copying objects.
@@ -2424,6 +2488,33 @@ In this case, you might want to try disabling this option.
 			Help:     "Endpoint for STS.\n\nLeave blank if using AWS to use the default endpoint for the region.",
 			Provider: "AWS",
 			Advanced: true,
+		}, {
+			Name: "use_already_exists",
+			Help: strings.ReplaceAll(`Set if rclone should report BucketAlreadyExists errors on bucket creation.
+
+At some point during the evolution of the s3 protocol, AWS started
+returning an |AlreadyOwnedByYou| error when attempting to create a
+bucket that the user already owned, rather than a
+|BucketAlreadyExists| error.
+
+Unfortunately exactly what has been implemented by s3 clones is a
+little inconsistent, some return |AlreadyOwnedByYou|, some return
+|BucketAlreadyExists| and some return no error at all.
+
+This is important to rclone because it ensures the bucket exists by
+creating it on quite a lot of operations (unless
+|--s3-no-check-bucket| is used).
+
+If rclone knows the provider can return |AlreadyOwnedByYou| or returns
+no error then it can report |BucketAlreadyExists| errors when the user
+attempts to create a bucket not owned by them. Otherwise rclone
+ignores the |BucketAlreadyExists| error which can lead to confusion.
+
+This should be automatically set correctly for all providers rclone
+knows about - please make a bug report if not.
+`, "|", "`"),
+			Default:  fs.Tristate{},
+			Advanced: true,
 		},
 		}})
 }
@@ -2550,6 +2641,7 @@ type Options struct {
 	MightGzip             fs.Tristate          `config:"might_gzip"`
 	UseAcceptEncodingGzip fs.Tristate          `config:"use_accept_encoding_gzip"`
 	NoSystemMetadata      bool                 `config:"no_system_metadata"`
+	UseAlreadyExists      fs.Tristate          `config:"use_already_exists"`
 }
 
 // Fs represents a remote s3 server
@@ -2937,15 +3029,18 @@ func setEndpointValueForIDriveE2(m configmap.Mapper) (err error) {
 // There should be no testing against opt.Provider anywhere in the
 // code except in here to localise the setting of the quirks.
 //
-// These should be differences from AWS S3
+// Run the integration tests to check you have the quirks correct.
+//
+//	go test -v -remote NewS3Provider:
 func setQuirks(opt *Options) {
 	var (
-		listObjectsV2         = true
-		virtualHostStyle      = true
-		urlEncodeListings     = true
-		useMultipartEtag      = true
-		useAcceptEncodingGzip = true
-		mightGzip             = true // assume all providers might gzip until proven otherwise
+		listObjectsV2         = true // Always use ListObjectsV2 instead of ListObjects
+		virtualHostStyle      = true // Use bucket.provider.com instead of putting the bucket in the URL
+		urlEncodeListings     = true // URL encode the listings to help with control characters
+		useMultipartEtag      = true // Set if Etags for multpart uploads are compatible with AWS
+		useAcceptEncodingGzip = true // Set Accept-Encoding: gzip
+		mightGzip             = true // assume all providers might use content encoding gzip until proven otherwise
+		useAlreadyExists      = true // Set if provider returns AlreadyOwnedByYou or no error if you try to remake your own bucket
 	)
 	switch opt.Provider {
 	case "AWS":
@@ -2953,18 +3048,22 @@ func setQuirks(opt *Options) {
 		mightGzip = false // Never auto gzips objects
 	case "Alibaba":
 		useMultipartEtag = false // Alibaba seems to calculate multipart Etags differently from AWS
+		useAlreadyExists = true  // returns 200 OK
 	case "HuaweiOBS":
 		// Huawei OBS PFS is not support listObjectV2, and if turn on the urlEncodeListing, marker will not work and keep list same page forever.
 		urlEncodeListings = false
 		listObjectsV2 = false
+		useAlreadyExists = false // untested
 	case "Ceph":
 		listObjectsV2 = false
 		virtualHostStyle = false
 		urlEncodeListings = false
+		useAlreadyExists = false // untested
 	case "ChinaMobile":
 		listObjectsV2 = false
 		virtualHostStyle = false
 		urlEncodeListings = false
+		useAlreadyExists = false // untested
 	case "Cloudflare":
 		virtualHostStyle = false
 		useMultipartEtag = false // currently multipart Etags are random
@@ -2972,86 +3071,104 @@ func setQuirks(opt *Options) {
 		listObjectsV2 = false
 		virtualHostStyle = false
 		urlEncodeListings = false
+		useAlreadyExists = false // untested
 	case "DigitalOcean":
 		urlEncodeListings = false
+		useAlreadyExists = false // untested
 	case "Dreamhost":
 		urlEncodeListings = false
+		useAlreadyExists = false // untested
 	case "IBMCOS":
 		listObjectsV2 = false // untested
 		virtualHostStyle = false
 		urlEncodeListings = false
 		useMultipartEtag = false // untested
+		useAlreadyExists = false // returns BucketAlreadyExists
 	case "IDrive":
 		virtualHostStyle = false
+		useAlreadyExists = false // untested
 	case "IONOS":
 		// listObjectsV2 supported - https://api.ionos.com/docs/s3/#Basic-Operations-get-Bucket-list-type-2
 		virtualHostStyle = false
 		urlEncodeListings = false
+		useAlreadyExists = false // untested
 	case "Petabox":
-		// No quirks
+		useAlreadyExists = false // untested
 	case "Liara":
 		virtualHostStyle = false
 		urlEncodeListings = false
 		useMultipartEtag = false
+		useAlreadyExists = false // untested
+	case "Linode":
+		useAlreadyExists = true // returns 200 OK
 	case "LyveCloud":
 		useMultipartEtag = false // LyveCloud seems to calculate multipart Etags differently from AWS
+		useAlreadyExists = false // untested
 	case "Minio":
 		virtualHostStyle = false
 	case "Netease":
 		listObjectsV2 = false // untested
 		urlEncodeListings = false
 		useMultipartEtag = false // untested
+		useAlreadyExists = false // untested
 	case "RackCorp":
 		// No quirks
 		useMultipartEtag = false // untested
+		useAlreadyExists = false // untested
 	case "Scaleway":
 		// Scaleway can only have 1000 parts in an upload
 		if opt.MaxUploadParts > 1000 {
 			opt.MaxUploadParts = 1000
 		}
 		urlEncodeListings = false
+		useAlreadyExists = false // untested
 	case "SeaweedFS":
 		listObjectsV2 = false // untested
 		virtualHostStyle = false
 		urlEncodeListings = false
 		useMultipartEtag = false // untested
+		useAlreadyExists = false // untested
 	case "StackPath":
 		listObjectsV2 = false // untested
 		virtualHostStyle = false
 		urlEncodeListings = false
+		useAlreadyExists = false // untested
 	case "Storj":
 		// Force chunk size to >= 64 MiB
 		if opt.ChunkSize < 64*fs.Mebi {
 			opt.ChunkSize = 64 * fs.Mebi
 		}
+		useAlreadyExists = false // returns BucketAlreadyExists
 	case "Synology":
 		useMultipartEtag = false
+		useAlreadyExists = false // untested
 	case "TencentCOS":
 		listObjectsV2 = false    // untested
 		useMultipartEtag = false // untested
+		useAlreadyExists = false // untested
 	case "Wasabi":
-		// No quirks
+		useAlreadyExists = true // returns 200 OK
 	case "Leviia":
-		// No quirks
+		useAlreadyExists = false // untested
 	case "Qiniu":
 		useMultipartEtag = false
 		urlEncodeListings = false
 		virtualHostStyle = false
+		useAlreadyExists = false // untested
 	case "GCS":
 		// Google break request Signature by mutating accept-encoding HTTP header
 		// https://github.com/rclone/rclone/issues/6670
 		useAcceptEncodingGzip = false
+		useAlreadyExists = true // returns BucketNameUnavailable instead of BucketAlreadyExists but good enough!
+	default:
+		fs.Logf("s3", "s3 provider %q not known - please set correctly", opt.Provider)
+		fallthrough
 	case "Other":
 		listObjectsV2 = false
 		virtualHostStyle = false
 		urlEncodeListings = false
 		useMultipartEtag = false
-	default:
-		fs.Logf("s3", "s3 provider %q not known - please set correctly", opt.Provider)
-		listObjectsV2 = false
-		virtualHostStyle = false
-		urlEncodeListings = false
-		useMultipartEtag = false
+		useAlreadyExists = false
 	}
 
 	// Path Style vs Virtual Host style
@@ -3090,6 +3207,12 @@ func setQuirks(opt *Options) {
 	if !opt.UseAcceptEncodingGzip.Valid {
 		opt.UseAcceptEncodingGzip.Valid = true
 		opt.UseAcceptEncodingGzip.Value = useAcceptEncodingGzip
+	}
+
+	// Has the provider got AlreadyOwnedByYou error?
+	if !opt.UseAlreadyExists.Valid {
+		opt.UseAlreadyExists.Valid = true
+		opt.UseAlreadyExists.Value = useAlreadyExists
 	}
 }
 
@@ -3800,11 +3923,13 @@ func (f *Fs) list(ctx context.Context, opt listOpt, fn listFn) error {
 					if remote == opt.directory {
 						continue
 					}
-					// process directory markers as directories
-					remote = strings.TrimRight(remote, "/")
 				}
 			}
 			remote = remote[len(opt.prefix):]
+			if isDirectory {
+				// process directory markers as directories
+				remote = strings.TrimRight(remote, "/")
+			}
 			if opt.addBucket {
 				remote = bucket.Join(opt.bucket, remote)
 			}
@@ -4117,8 +4242,17 @@ func (f *Fs) makeBucket(ctx context.Context, bucket string) error {
 			fs.Infof(f, "Bucket %q created with ACL %q", bucket, f.opt.BucketACL)
 		}
 		if awsErr, ok := err.(awserr.Error); ok {
-			if code := awsErr.Code(); code == "BucketAlreadyOwnedByYou" || code == "BucketAlreadyExists" {
+			switch awsErr.Code() {
+			case "BucketAlreadyOwnedByYou":
 				err = nil
+			case "BucketAlreadyExists", "BucketNameUnavailable":
+				if f.opt.UseAlreadyExists.Value {
+					// We can trust BucketAlreadyExists to mean not owned by us, so make it non retriable
+					err = fserrors.NoRetryError(err)
+				} else {
+					// We can't trust BucketAlreadyExists to mean not owned by us, so ignore it
+					err = nil
+				}
 			}
 		}
 		return err
@@ -5611,7 +5745,7 @@ func (w *s3ChunkWriter) WriteChunk(ctx context.Context, chunkNumber int, reader 
 	return currentChunkSize, err
 }
 
-// Abort the multpart upload
+// Abort the multipart upload
 func (w *s3ChunkWriter) Abort(ctx context.Context) error {
 	err := w.f.pacer.Call(func() (bool, error) {
 		_, err := w.f.c.AbortMultipartUploadWithContext(context.Background(), &s3.AbortMultipartUploadInput{
@@ -6000,7 +6134,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	var err error
 	var ui uploadInfo
 	if multipart {
-		wantETag, gotETag, versionID, ui, err = o.uploadMultipart(ctx, src, in)
+		wantETag, gotETag, versionID, ui, err = o.uploadMultipart(ctx, src, in, options...)
 	} else {
 		ui, err = o.prepareUpload(ctx, src, options)
 		if err != nil {

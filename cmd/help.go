@@ -309,6 +309,7 @@ func showBackend(name string) {
 		if _, doneAlready := done[opt.Name]; doneAlready {
 			continue
 		}
+		done[opt.Name] = struct{}{}
 		if opt.Advanced {
 			advancedOptions = append(advancedOptions, opt)
 		} else {

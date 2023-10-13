@@ -10,9 +10,12 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// Check it satisfies the interface
-var _ flagger = (*LogLevel)(nil)
-var _ fmt.Stringer = LogValueItem{}
+// Check it satisfies the interfac(
+var (
+	_ flagger      = (*LogLevel)(nil)
+	_ flaggerNP    = LogLevel(0)
+	_ fmt.Stringer = LogValueItem{}
+)
 
 type withString struct{}
 
@@ -36,7 +39,7 @@ func TestLogLevelString(t *testing.T) {
 	}{
 		{LogLevelEmergency, "EMERGENCY"},
 		{LogLevelDebug, "DEBUG"},
-		{99, "LogLevel(99)"},
+		{99, "Unknown(99)"},
 	} {
 		logLevel := test.in
 		got := logLevel.String()

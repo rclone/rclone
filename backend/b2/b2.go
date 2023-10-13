@@ -73,6 +73,7 @@ func init() {
 		Name:        "b2",
 		Description: "Backblaze B2",
 		NewFs:       NewFs,
+		CommandHelp: commandHelp,
 		Options: []fs.Option{{
 			Name:      "account",
 			Help:      "Account ID or Application Key ID.",
@@ -158,7 +159,7 @@ concurrently.
 Note that chunks are stored in memory and there may be up to
 "--transfers" * "--b2-upload-concurrency" chunks stored at once
 in memory.`,
-			Default:  16,
+			Default:  4,
 			Advanced: true,
 		}, {
 			Name: "disable_checksum",
@@ -210,6 +211,31 @@ The minimum value is 1 second. The maximum value is one week.`,
 			Hide:     fs.OptionHideBoth,
 			Help:     `Whether to use mmap buffers in internal memory pool. (no longer used)`,
 		}, {
+			Name: "lifecycle",
+			Help: `Set the number of days deleted files should be kept when creating a bucket.
+
+On bucket creation, this parameter is used to create a lifecycle rule
+for the entire bucket.
+
+If lifecycle is 0 (the default) it does not create a lifecycle rule so
+the default B2 behaviour applies. This is to create versions of files
+on delete and overwrite and to keep them indefinitely.
+
+If lifecycle is >0 then it creates a single rule setting the number of
+days before a file that is deleted or overwritten is deleted
+permanently. This is known as daysFromHidingToDeleting in the b2 docs.
+
+The minimum value for this parameter is 1 day.
+
+You can also enable hard_delete in the config also which will mean
+deletions won't cause versions but overwrites will still cause
+versions to be made.
+
+See: [rclone backend lifecycle](#lifecycle) for setting lifecycles after bucket creation.
+`,
+			Default:  0,
+			Advanced: true,
+		}, {
 			Name:     config.ConfigEncoding,
 			Help:     config.ConfigEncodingHelp,
 			Advanced: true,
@@ -239,6 +265,7 @@ type Options struct {
 	DisableCheckSum               bool                 `config:"disable_checksum"`
 	DownloadURL                   string               `config:"download_url"`
 	DownloadAuthorizationDuration fs.Duration          `config:"download_auth_duration"`
+	Lifecycle                     int                  `config:"lifecycle"`
 	Enc                           encoder.MultiEncoder `config:"encoding"`
 }
 
@@ -824,7 +851,7 @@ func (f *Fs) listDir(ctx context.Context, bucket, directory, prefix string, addB
 
 // listBuckets returns all the buckets to out
 func (f *Fs) listBuckets(ctx context.Context) (entries fs.DirEntries, err error) {
-	err = f.listBucketsToFn(ctx, func(bucket *api.Bucket) error {
+	err = f.listBucketsToFn(ctx, "", func(bucket *api.Bucket) error {
 		d := fs.NewDir(bucket.Name, time.Time{})
 		entries = append(entries, d)
 		return nil
@@ -917,10 +944,13 @@ func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (
 type listBucketFn func(*api.Bucket) error
 
 // listBucketsToFn lists the buckets to the function supplied
-func (f *Fs) listBucketsToFn(ctx context.Context, fn listBucketFn) error {
+func (f *Fs) listBucketsToFn(ctx context.Context, bucketName string, fn listBucketFn) error {
 	var account = api.ListBucketsRequest{
 		AccountID: f.info.AccountID,
 		BucketID:  f.info.Allowed.BucketID,
+	}
+	if bucketName != "" && account.BucketID == "" {
+		account.BucketName = f.opt.Enc.FromStandardName(bucketName)
 	}
 
 	var response api.ListBucketsResponse
@@ -967,7 +997,7 @@ func (f *Fs) getbucketType(ctx context.Context, bucket string) (bucketType strin
 	if bucketType != "" {
 		return bucketType, nil
 	}
-	err = f.listBucketsToFn(ctx, func(bucket *api.Bucket) error {
+	err = f.listBucketsToFn(ctx, bucket, func(bucket *api.Bucket) error {
 		// listBucketsToFn reads bucket Types
 		return nil
 	})
@@ -1002,7 +1032,7 @@ func (f *Fs) getBucketID(ctx context.Context, bucket string) (bucketID string, e
 	if bucketID != "" {
 		return bucketID, nil
 	}
-	err = f.listBucketsToFn(ctx, func(bucket *api.Bucket) error {
+	err = f.listBucketsToFn(ctx, bucket, func(bucket *api.Bucket) error {
 		// listBucketsToFn sets IDs
 		return nil
 	})
@@ -1065,6 +1095,11 @@ func (f *Fs) makeBucket(ctx context.Context, bucket string) error {
 			AccountID: f.info.AccountID,
 			Name:      f.opt.Enc.FromStandardName(bucket),
 			Type:      "allPrivate",
+		}
+		if f.opt.Lifecycle > 0 {
+			request.LifecycleRules = []api.LifecycleRule{{
+				DaysFromHidingToDeleting: &f.opt.Lifecycle,
+			}}
 		}
 		var response api.Bucket
 		err := f.pacer.Call(func() (bool, error) {
@@ -1297,7 +1332,11 @@ func (f *Fs) copy(ctx context.Context, dstObj *Object, srcObj *Object, newInfo *
 		if err != nil {
 			return err
 		}
-		return up.Copy(ctx)
+		err = up.Copy(ctx)
+		if err != nil {
+			return err
+		}
+		return dstObj.decodeMetaDataFileInfo(up.info)
 	}
 
 	dstBucket, dstPath := dstObj.split()
@@ -1895,11 +1934,15 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 			return err
 		}
 	} else if size > int64(o.fs.opt.UploadCutoff) {
-		_, err := multipart.UploadMultipart(ctx, src, in, multipart.UploadMultipartOptions{
+		chunkWriter, err := multipart.UploadMultipart(ctx, src, in, multipart.UploadMultipartOptions{
 			Open:        o.fs,
 			OpenOptions: options,
 		})
-		return err
+		if err != nil {
+			return err
+		}
+		up := chunkWriter.(*largeUpload)
+		return o.decodeMetaDataFileInfo(up.info)
 	}
 
 	modTime := src.ModTime(ctx)
@@ -2067,6 +2110,137 @@ func (o *Object) ID() string {
 	return o.id
 }
 
+var lifecycleHelp = fs.CommandHelp{
+	Name:  "lifecycle",
+	Short: "Read or set the lifecycle for a bucket",
+	Long: `This command can be used to read or set the lifecycle for a bucket.
+
+Usage Examples:
+
+To show the current lifecycle rules:
+
+    rclone backend lifecycle b2:bucket
+
+This will dump something like this showing the lifecycle rules.
+
+    [
+        {
+            "daysFromHidingToDeleting": 1,
+            "daysFromUploadingToHiding": null,
+            "fileNamePrefix": ""
+        }
+    ]
+
+If there are no lifecycle rules (the default) then it will just return [].
+
+To reset the current lifecycle rules:
+
+    rclone backend lifecycle b2:bucket -o daysFromHidingToDeleting=30
+    rclone backend lifecycle b2:bucket -o daysFromUploadingToHiding=5 -o daysFromHidingToDeleting=1
+
+This will run and then print the new lifecycle rules as above.
+
+Rclone only lets you set lifecycles for the whole bucket with the
+fileNamePrefix = "".
+
+You can't disable versioning with B2. The best you can do is to set
+the daysFromHidingToDeleting to 1 day. You can enable hard_delete in
+the config also which will mean deletions won't cause versions but
+overwrites will still cause versions to be made.
+
+    rclone backend lifecycle b2:bucket -o daysFromHidingToDeleting=1
+
+See: https://www.backblaze.com/docs/cloud-storage-lifecycle-rules
+`,
+	Opts: map[string]string{
+		"daysFromHidingToDeleting":  "After a file has been hidden for this many days it is deleted. 0 is off.",
+		"daysFromUploadingToHiding": "This many days after uploading a file is hidden",
+	},
+}
+
+func (f *Fs) lifecycleCommand(ctx context.Context, name string, arg []string, opt map[string]string) (out interface{}, err error) {
+	var newRule api.LifecycleRule
+	if daysStr := opt["daysFromHidingToDeleting"]; daysStr != "" {
+		days, err := strconv.Atoi(daysStr)
+		if err != nil {
+			return nil, fmt.Errorf("bad daysFromHidingToDeleting: %w", err)
+		}
+		newRule.DaysFromHidingToDeleting = &days
+	}
+	if daysStr := opt["daysFromUploadingToHiding"]; daysStr != "" {
+		days, err := strconv.Atoi(daysStr)
+		if err != nil {
+			return nil, fmt.Errorf("bad daysFromUploadingToHiding: %w", err)
+		}
+		newRule.DaysFromUploadingToHiding = &days
+	}
+	bucketName, _ := f.split("")
+	if bucketName == "" {
+		return nil, errors.New("bucket required")
+
+	}
+
+	var bucket *api.Bucket
+	if newRule.DaysFromHidingToDeleting != nil || newRule.DaysFromUploadingToHiding != nil {
+		bucketID, err := f.getBucketID(ctx, bucketName)
+		if err != nil {
+			return nil, err
+		}
+		opts := rest.Opts{
+			Method: "POST",
+			Path:   "/b2_update_bucket",
+		}
+		var request = api.UpdateBucketRequest{
+			ID:             bucketID,
+			AccountID:      f.info.AccountID,
+			LifecycleRules: []api.LifecycleRule{newRule},
+		}
+		var response api.Bucket
+		err = f.pacer.Call(func() (bool, error) {
+			resp, err := f.srv.CallJSON(ctx, &opts, &request, &response)
+			return f.shouldRetry(ctx, resp, err)
+		})
+		if err != nil {
+			return nil, err
+		}
+		bucket = &response
+	} else {
+		err = f.listBucketsToFn(ctx, bucketName, func(b *api.Bucket) error {
+			bucket = b
+			return nil
+		})
+		if err != nil {
+			return nil, err
+		}
+	}
+	if bucket == nil {
+		return nil, fs.ErrorDirNotFound
+	}
+	return bucket.LifecycleRules, nil
+}
+
+var commandHelp = []fs.CommandHelp{
+	lifecycleHelp,
+}
+
+// Command the backend to run a named command
+//
+// The command run is name
+// args may be used to read arguments from
+// opts may be used to read optional arguments from
+//
+// The result should be capable of being JSON encoded
+// If it is a string or a []string it will be shown to the user
+// otherwise it will be JSON encoded and shown to the user like that
+func (f *Fs) Command(ctx context.Context, name string, arg []string, opt map[string]string) (out interface{}, err error) {
+	switch name {
+	case "lifecycle":
+		return f.lifecycleCommand(ctx, name, arg, opt)
+	default:
+		return nil, fs.ErrorCommandNotFound
+	}
+}
+
 // Check the interfaces are satisfied
 var (
 	_ fs.Fs              = &Fs{}
@@ -2077,6 +2251,7 @@ var (
 	_ fs.ListRer         = &Fs{}
 	_ fs.PublicLinker    = &Fs{}
 	_ fs.OpenChunkWriter = &Fs{}
+	_ fs.Commander       = &Fs{}
 	_ fs.Object          = &Object{}
 	_ fs.MimeTyper       = &Object{}
 	_ fs.IDer            = &Object{}

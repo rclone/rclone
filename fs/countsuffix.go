@@ -154,7 +154,7 @@ func (x *CountSuffix) Set(s string) error {
 }
 
 // Type of the value
-func (x *CountSuffix) Type() string {
+func (x CountSuffix) Type() string {
 	return "CountSuffix"
 }
 

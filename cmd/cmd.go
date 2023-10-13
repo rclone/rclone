@@ -1,6 +1,6 @@
 // Package cmd implements the rclone command
 //
-// It is in a sub package so it's internals can be re-used elsewhere
+// It is in a sub package so it's internals can be reused elsewhere
 package cmd
 
 // FIXME only attach the remote flags when using a remote???

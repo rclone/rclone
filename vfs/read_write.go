@@ -30,6 +30,16 @@ type RWFileHandle struct {
 	writeCalled bool // if any Write() methods have been called
 }
 
+// Lock performs Unix locking, not supported
+func (fh *RWFileHandle) Lock() error {
+	return os.ErrInvalid
+}
+
+// Unlock performs Unix unlocking, not supported
+func (fh *RWFileHandle) Unlock() error {
+	return os.ErrInvalid
+}
+
 func newRWFileHandle(d *Dir, f *File, flags int) (fh *RWFileHandle, err error) {
 	defer log.Trace(f.Path(), "")("err=%v", &err)
 	// get an item to represent this from the cache

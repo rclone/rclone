@@ -360,9 +360,13 @@ func Copy(ctx context.Context, f fs.Fs, dst fs.Object, remote string, src fs.Obj
 		remotePartial = remote
 	)
 	if !ci.Inplace && f.Features().Move != nil && f.Features().PartialUploads && !strings.HasSuffix(remote, ".rclonelink") {
+		if len(ci.PartialSuffix) > 16 {
+			return nil, fmt.Errorf("expecting length of --partial-suffix to be not greater than %d but got %d", 16, len(ci.PartialSuffix))
+		}
+
 		// Avoid making the leaf name longer if it's already lengthy to avoid
 		// trouble with file name length limits.
-		suffix := "." + random.String(8) + ".partial"
+		suffix := "." + random.String(8) + ci.PartialSuffix
 		base := path.Base(remotePartial)
 		if len(base) > 100 {
 			remotePartial = remotePartial[:len(remotePartial)-len(suffix)] + suffix
@@ -419,8 +423,17 @@ func Copy(ctx context.Context, f fs.Fs, dst fs.Object, remote string, src fs.Obj
 					removeFailedPartialCopy(ctx, f, remotePartial)
 				})
 			}
+
+			uploadOptions := []fs.OpenOption{hashOption}
+			for _, option := range ci.UploadHeaders {
+				uploadOptions = append(uploadOptions, option)
+			}
+			if ci.MetadataSet != nil {
+				uploadOptions = append(uploadOptions, fs.MetadataOption(ci.MetadataSet))
+			}
+
 			if doMultiThreadCopy(ctx, f, src) {
-				dst, err = multiThreadCopy(ctx, f, remotePartial, src, ci.MultiThreadStreams, tr)
+				dst, err = multiThreadCopy(ctx, f, remotePartial, src, ci.MultiThreadStreams, tr, uploadOptions...)
 				if err == nil {
 					newDst = dst
 				}
@@ -464,17 +477,10 @@ func Copy(ctx context.Context, f fs.Fs, dst fs.Object, remote string, src fs.Obj
 						if src.Remote() != remotePartial {
 							wrappedSrc = fs.NewOverrideRemote(src, remotePartial)
 						}
-						options := []fs.OpenOption{hashOption}
-						for _, option := range ci.UploadHeaders {
-							options = append(options, option)
-						}
-						if ci.MetadataSet != nil {
-							options = append(options, fs.MetadataOption(ci.MetadataSet))
-						}
 						if doUpdate && inplace {
-							err = dst.Update(ctx, in, wrappedSrc, options...)
+							err = dst.Update(ctx, in, wrappedSrc, uploadOptions...)
 						} else {
-							dst, err = f.Put(ctx, in, wrappedSrc, options...)
+							dst, err = f.Put(ctx, in, wrappedSrc, uploadOptions...)
 						}
 						if doUpdate {
 							actionTaken = "Copied (replaced existing)"
@@ -767,7 +773,7 @@ func DeleteFilesWithBackupDir(ctx context.Context, toBeDeleted fs.ObjectsChan, b
 				if err != nil {
 					errorCount.Add(1)
 					if fserrors.IsFatalError(err) {
-						fs.Errorf(nil, "Got fatal error on delete: %s", err)
+						fs.Errorf(dst, "Got fatal error on delete: %s", err)
 						fatalErrorCount.Add(1)
 						return
 					}

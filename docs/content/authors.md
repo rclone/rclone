@@ -775,3 +775,8 @@ put them back in again.` >}}
   * Drew Stinnett <drew@drewlink.com>
   * Pat Patterson <pat@backblaze.com>
   * Herby Gillot <herby.gillot@gmail.com>
+  * Nikita Shoshin <shoshin_nikita@fastmail.com>
+  * rinsuki <428rinsuki+git@gmail.com>
+  * Beyond Meat <51850644+beyondmeat@users.noreply.github.com>
+  * Saleh Dindar <salh@fb.com>
+  * Volodymyr <142890760+vkit-maytech@users.noreply.github.com>
