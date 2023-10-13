@@ -535,7 +535,7 @@ func Copy(ctx context.Context, f fs.Fs, dst fs.Object, remote string, src fs.Obj
 
 	// Verify sizes are the same after transfer
 	if sizeDiffers(ctx, src, dst) {
-		err = fmt.Errorf("corrupted on transfer: sizes differ %d vs %d", src.Size(), dst.Size())
+		err = fmt.Errorf("%w: sizes differ %d vs %d", fs.ErrorCorruptedTransfer, src.Size(), dst.Size())
 		fs.Errorf(dst, "%v", err)
 		err = fs.CountError(err)
 		removeFailedCopy(ctx, dst)
@@ -547,7 +547,7 @@ func Copy(ctx context.Context, f fs.Fs, dst fs.Object, remote string, src fs.Obj
 		// checkHashes has logged and counted errors
 		equal, _, srcSum, dstSum, _ := checkHashes(ctx, src, dst, hashType)
 		if !equal {
-			err = fmt.Errorf("corrupted on transfer: %v hash differ %q vs %q", hashType, srcSum, dstSum)
+			err = fmt.Errorf("%w: %v hash differ %q vs %q", fs.ErrorCorruptedTransfer, hashType, srcSum, dstSum)
 			fs.Errorf(dst, "%v", err)
 			err = fs.CountError(err)
 			removeFailedCopy(ctx, dst)

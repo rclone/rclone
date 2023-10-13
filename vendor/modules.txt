@@ -368,6 +368,9 @@ github.com/geoffgarside/ber
 ## explicit; go 1.14
 github.com/go-chi/chi/v5
 github.com/go-chi/chi/v5/middleware
+# github.com/go-git/go-billy/v5 v5.4.1
+## explicit; go 1.13
+github.com/go-git/go-billy/v5
 # github.com/go-ole/go-ole v1.2.6
 ## explicit; go 1.12
 github.com/go-ole/go-ole
@@ -453,6 +456,11 @@ github.com/hashicorp/go-multierror
 # github.com/hashicorp/go-uuid v1.0.3
 ## explicit
 github.com/hashicorp/go-uuid
+# github.com/hashicorp/golang-lru/v2 v2.0.5
+## explicit; go 1.18
+github.com/hashicorp/golang-lru/v2
+github.com/hashicorp/golang-lru/v2/internal
+github.com/hashicorp/golang-lru/v2/simplelru
 # github.com/henrybear327/Proton-API-Bridge v0.0.0-20230908065933-5bfa15b567db
 ## explicit; go 1.18
 github.com/henrybear327/Proton-API-Bridge
@@ -656,6 +664,9 @@ github.com/prometheus/procfs/internal/util
 # github.com/putdotio/go-putio/putio v0.0.0-20200123120452-16d982cac2b8
 ## explicit; go 1.13
 github.com/putdotio/go-putio/putio
+# github.com/rasky/go-xdr v0.0.0-20170124162913-1a41d1a06c93
+## explicit
+github.com/rasky/go-xdr/xdr2
 # github.com/relvacode/iso8601 v1.3.0
 ## explicit; go 1.13
 github.com/relvacode/iso8601
@@ -716,6 +727,16 @@ github.com/tklauser/numcpus
 # github.com/vivint/infectious v0.0.0-20200605153912-25a574ae18a3
 ## explicit; go 1.12
 github.com/vivint/infectious
+# github.com/willscott/go-nfs v0.0.0-20230823072803-2b8e63b4d81f
+## explicit; go 1.19
+github.com/willscott/go-nfs
+github.com/willscott/go-nfs/file
+github.com/willscott/go-nfs/helpers
+# github.com/willscott/go-nfs-client v0.0.0-20200605172546-271fa9065b33
+## explicit; go 1.13
+github.com/willscott/go-nfs-client/nfs/rpc
+github.com/willscott/go-nfs-client/nfs/util
+github.com/willscott/go-nfs-client/nfs/xdr
 # github.com/winfsp/cgofuse v1.5.1-0.20221118130120-84c0898ad2e0
 ## explicit; go 1.17
 github.com/winfsp/cgofuse/fuse
@@ -781,7 +802,7 @@ go.opencensus.io/trace/tracestate
 ## explicit; go 1.12
 goftp.io/server/v2
 goftp.io/server/v2/ratelimit
-# golang.org/x/crypto v0.13.0
+# golang.org/x/crypto v0.14.0
 ## explicit; go 1.17
 golang.org/x/crypto/argon2
 golang.org/x/crypto/bcrypt
@@ -819,7 +840,7 @@ golang.org/x/exp/slices
 # golang.org/x/mobile v0.0.0-20230531173138-3c911d8e3eda
 ## explicit; go 1.17
 golang.org/x/mobile/event/key
-# golang.org/x/net v0.15.0
+# golang.org/x/net v0.17.0
 ## explicit; go 1.17
 golang.org/x/net/bpf
 golang.org/x/net/context
@@ -854,15 +875,14 @@ golang.org/x/oauth2/jwt
 ## explicit; go 1.17
 golang.org/x/sync/errgroup
 golang.org/x/sync/semaphore
-# golang.org/x/sys v0.12.0
+# golang.org/x/sys v0.13.0
 ## explicit; go 1.17
 golang.org/x/sys/cpu
-golang.org/x/sys/internal/unsafeheader
 golang.org/x/sys/plan9
 golang.org/x/sys/unix
 golang.org/x/sys/windows
 golang.org/x/sys/windows/registry
-# golang.org/x/term v0.12.0
+# golang.org/x/term v0.13.0
 ## explicit; go 1.17
 golang.org/x/term
 # golang.org/x/text v0.13.0

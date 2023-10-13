@@ -281,15 +281,15 @@ func (s *syncCopyMove) processError(err error) {
 	if err == nil {
 		return
 	}
-	if err == context.DeadlineExceeded {
+	if errors.Is(err, context.DeadlineExceeded) {
 		err = fserrors.NoRetryError(err)
-	} else if err == accounting.ErrorMaxTransferLimitReachedGraceful {
+	} else if errors.Is(err, accounting.ErrorMaxTransferLimitReachedGraceful) {
 		if s.inCtx.Err() == nil {
 			fs.Logf(nil, "%v - stopping transfers", err)
 			// Cancel the march and stop the pipes
 			s.inCancel()
 		}
-	} else if err == context.Canceled && s.inCtx.Err() != nil {
+	} else if errors.Is(err, context.Canceled) && s.inCtx.Err() != nil {
 		// Ignore context Canceled if we have called s.inCancel()
 		return
 	}
@@ -444,8 +444,10 @@ func (s *syncCopyMove) pairCopyOrMove(ctx context.Context, in *pipe, fdst fs.Fs,
 				err = operations.DeleteFile(ctx, src)
 			}
 		} else {
-			if _, merr := operations.Copy(ctx, fdst, dst, src.Remote(), src); merr != nil && !os.IsNotExist(err) {
-				err = merr
+			if _, merr := operations.Copy(ctx, fdst, dst, src.Remote(), src); merr != nil {
+				if !os.IsNotExist(merr) && !errors.Is(err, fs.ErrorCorruptedTransfer) {
+					err = merr
+				}
 			}
 		}
 		s.processError(err)

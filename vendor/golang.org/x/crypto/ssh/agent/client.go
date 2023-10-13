@@ -16,6 +16,7 @@ import (
 	"bytes"
 	"crypto/dsa"
 	"crypto/ecdsa"
+	"crypto/ed25519"
 	"crypto/elliptic"
 	"crypto/rsa"
 	"encoding/base64"
@@ -26,7 +27,6 @@ import (
 	"math/big"
 	"sync"
 
-	"golang.org/x/crypto/ed25519"
 	"golang.org/x/crypto/ssh"
 )
 
