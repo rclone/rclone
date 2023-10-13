@@ -6,6 +6,7 @@ import (
 	"html/template"
 	"log"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/spf13/pflag"
@@ -105,6 +106,9 @@ func GetTemplate(tmpl string) (*template.Template, error) {
 
 	funcMap := template.FuncMap{
 		"afterEpoch": AfterEpoch,
+		"contains":   strings.Contains,
+		"hasPrefix":  strings.HasPrefix,
+		"hasSuffix":  strings.HasSuffix,
 	}
 
 	tpl, err := template.New("index").Funcs(funcMap).Parse(string(data))
