@@ -146,6 +146,11 @@ time we:
 - Only checksum the size that stat gave
 - Don't update the stat info for the file
 
+**NB** do not use this flag on a Windows Volume Shadow (VSS). For some
+unknown reason, files in a VSS sometimes show different sizes from the
+directory listing (where the initial stat value comes from on Windows)
+and when stat is called on them directly. Other copy tools always use
+the direct stat value and setting this flag will disable that.
 `,
 			Default:  false,
 			Advanced: true,
@@ -1121,6 +1126,12 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 				fs.Logf(o, "Unsupported mandatory option: %v", option)
 			}
 		}
+	}
+
+	// Update the file info before we start reading
+	err = o.lstat()
+	if err != nil {
+		return nil, err
 	}
 
 	// If not checking updated then limit to current size.  This means if
