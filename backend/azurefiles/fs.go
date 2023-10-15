@@ -34,6 +34,8 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 		return nil, fmt.Errorf("unable to find object remote=%s : %w", remote, err)
 	}
 
+	// resp.ID
+
 	ob := objectInstance(f, remote, resp.Metadata, resp.FileChangeTime, resp.ContentLength, resp.ContentType)
 	return &ob, nil
 }
@@ -175,7 +177,7 @@ func (f *Fs) Hashes() hash.Set {
 }
 
 // TODO: what are features. implement them
-// TODO: add features:- public link, ReadMimeType, WriteMimeType, CanHaveEmptyDirectories, SlowModTime, SlowHash,
+// TODO: add features:- public link, SlowModTime, SlowHash,
 // ReadMetadata, WriteMetadata,UserMetadata,PutUnchecked, PutStream
 // PartialUploads: Maybe????
 func (f *Fs) Features() *fs.Features {

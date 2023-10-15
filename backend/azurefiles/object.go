@@ -16,6 +16,8 @@ import (
 	"github.com/rclone/rclone/fs/hash"
 )
 
+const ONE_MB_IN_BYTES = 1048576
+
 func objectInstance(f *Fs, remote string, md map[string]*string, changeTime *time.Time, contentLength *int64, contentType *string) Object {
 	return Object{common: common{
 		f:        f,
@@ -192,7 +194,12 @@ func uploadStreamSetMd5(ctx context.Context, fc *file.Client, in io.Reader, src 
 	hasher := md5.New()
 	byteCounter := ByteCounter{}
 	teedReader := io.TeeReader(in, io.MultiWriter(hasher, &byteCounter))
-	if err := fc.UploadStream(ctx, teedReader, nil); err != nil {
+
+	uploadStreamOptions := file.UploadStreamOptions{
+		ChunkSize: chunkSize(options...),
+	}
+
+	if err := fc.UploadStream(ctx, teedReader, &uploadStreamOptions); err != nil {
 		return fmt.Errorf("unable to upload. cannot upload stream : %w", err)
 	}
 
@@ -248,4 +255,13 @@ func objectInfoMimeType(ctx context.Context, oi fs.ObjectInfo) string {
 		return mo.MimeType(ctx)
 	}
 	return ""
+}
+
+func chunkSize(options ...fs.OpenOption) int64 {
+	for _, option := range options {
+		if chunkOpt, ok := option.(*fs.ChunkOption); ok {
+			return chunkOpt.ChunkSize
+		}
+	}
+	return 1048576
 }
