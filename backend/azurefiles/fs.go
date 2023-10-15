@@ -17,17 +17,15 @@ import (
 	"github.com/rclone/rclone/fs/hash"
 )
 
-// Inspired by azureblob store, this initiates a network request and returns an error if object is not found
-// Returns ErrorIsDir when a directory exists instead of file.
+// Inspired by azureblob store, this initiates a network request and returns an error if object is not found.
+// NewObject finds the Object at remote.  If it can't be found
+// it returns the error fs.ErrorObjectNotFound.
+// Does not return ErrorIsDir when a directory exists instead of file. since the documentation
+// for [rclone.fs.Fs.NewObject] rqeuires no extra work to determine whether it is directory
 func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 	fileClient := f.NewFileClient(remote)
 	resp, err := fileClient.GetProperties(ctx, nil)
-	if fileerror.HasCode(err, fileerror.ParentNotFound) {
-		return nil, fs.ErrorObjectNotFound
-	} else if fileerror.HasCode(err, fileerror.ResourceNotFound) {
-		if isDir, _ := f.isDirectory(ctx, remote); isDir {
-			return nil, fs.ErrorIsDir
-		}
+	if fileerror.HasCode(err, fileerror.ParentNotFound, fileerror.ResourceNotFound) {
 		return nil, fs.ErrorObjectNotFound
 	} else if err != nil {
 		return nil, fmt.Errorf("unable to find object remote=%s : %w", remote, err)

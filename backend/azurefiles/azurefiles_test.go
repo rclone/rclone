@@ -387,12 +387,17 @@ func newTests(t *testing.T) {
 	})
 
 	t.Run("NewObject", func(t *testing.T) {
-		t.Run("returns ErrorIsDir if directory found", func(t *testing.T) {
+		t.Run("returns ErrorObjectNotFound if directory exists at location", func(t *testing.T) {
 			randomDir := RandomString(10)
 			assert.NoError(t, f.Mkdir(context.TODO(), randomDir))
 			_, err := f.NewObject(context.TODO(), randomDir)
-			assert.ErrorIs(t, err, fs.ErrorIsDir)
+			assert.ErrorIs(t, err, fs.ErrorObjectNotFound)
+		})
 
+		t.Run("ErrorObjectNotFound", func(t *testing.T) {
+			randomDir := RandomString(10)
+			_, err := f.NewObject(context.TODO(), randomDir)
+			assert.ErrorIs(t, err, fs.ErrorObjectNotFound)
 		})
 	})
 
