@@ -33,9 +33,7 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 		return nil, fmt.Errorf("unable to find object remote=%s : %w", remote, err)
 	}
 
-	ob := objectInstance(f, remote, resp.Metadata, properties{
-		changeTime:    resp.FileChangeTime,
-		contentLength: resp.ContentLength})
+	ob := objectInstance(f, remote, resp.Metadata, resp.FileChangeTime, resp.ContentLength, resp.ContentType)
 	return &ob, nil
 }
 
@@ -129,7 +127,7 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 		return nil, fmt.Errorf("unable to create file : %w", createErr)
 	}
 
-	if err := uploadStreamSetMd5(ctx, fc, in, options...); err != nil {
+	if err := uploadStreamSetMd5(ctx, fc, in, src, options...); err != nil {
 		if _, delErr := fc.Delete(ctx, nil); delErr != nil {
 			return nil, errors.Join(delErr, err)
 		}
@@ -180,6 +178,8 @@ func (f *Fs) Features() *fs.Features {
 		Copy: func(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
 			return f.CopyFile(ctx, src, remote)
 		},
+		ReadMimeType:  true,
+		WriteMimeType: true,
 	}
 }
 
@@ -225,7 +225,9 @@ func (f *Fs) CopyFile(ctx context.Context, src fs.Object, remote string) (fs.Obj
 		errorMessage := fmt.Sprintf("could not complete copy operation because returned CopyStatus is %s", string(*resp.CopyStatus))
 		return nil, errors.New(errorMessage)
 	}
-	destObj := objectInstance(f, remote, srcObj.metaData, srcObj.properties)
+	destObj := objectInstance(f, remote, srcObj.metaData,
+		srcObj.changeTime, srcObj.contentLength, srcObj.contentType,
+	)
 	// TODO: return object with proper metaData and properties
 	return &destObj, nil
 }

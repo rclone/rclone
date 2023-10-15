@@ -173,7 +173,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	}
 	o.contentLength = &fileSize
 
-	if err := uploadStreamSetMd5(ctx, fc, in, options...); err != nil {
+	if err := uploadStreamSetMd5(ctx, fc, in, src, options...); err != nil {
 		return err
 	}
 	// Set the mtime. copied from all/local.go rclone backend
@@ -184,7 +184,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	return nil
 }
 
-func uploadStreamSetMd5(ctx context.Context, fc *file.Client, in io.Reader, options ...fs.OpenOption) error {
+func uploadStreamSetMd5(ctx context.Context, fc *file.Client, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {
 	hasher := md5.New()
 	byteCounter := ByteCounter{}
 	teedReader := io.TeeReader(in, io.MultiWriter(hasher, &byteCounter))
@@ -194,12 +194,14 @@ func uploadStreamSetMd5(ctx context.Context, fc *file.Client, in io.Reader, opti
 
 	md5Hash := hasher.Sum(nil)
 	bytesWritten := byteCounter.count
+	contentType := objectInfoMimeType(ctx, src)
 
-	// TODO: add size
+	// TODO: test contentType
 	_, err := fc.SetHTTPHeaders(ctx, &file.SetHTTPHeadersOptions{
 		FileContentLength: &bytesWritten,
 		HTTPHeaders: &file.HTTPHeaders{
-			ContentMD5: md5Hash,
+			ContentMD5:  md5Hash,
+			ContentType: &contentType,
 		},
 	})
 	if err != nil {
@@ -229,3 +231,17 @@ func (bc *ByteCounter) Write(p []byte) (n int, err error) {
 
 // TODO: implment the hash function. First implement and test on Update function, then on the Put function
 // using base64.StdEncoding.DecodeString for hashse because that is what azureblob uses
+
+func (o *Object) MimeType(ctx context.Context) string {
+	if o.properties.contentType == nil {
+		return ""
+	}
+	return *o.properties.contentType
+}
+
+func objectInfoMimeType(ctx context.Context, oi fs.ObjectInfo) string {
+	if mo, ok := oi.(fs.MimeTyper); ok {
+		return mo.MimeType(ctx)
+	}
+	return ""
+}
