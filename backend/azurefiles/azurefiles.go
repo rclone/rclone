@@ -139,6 +139,7 @@ func newFsFromOptions(ctx context.Context, name, root string, opt *Options) (fs.
 }
 
 // TODO: what happens when root is a file
+// NewFs constructs an Fs from the path, container:path
 func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, error) {
 	opt := new(Options)
 	err := configstruct.Set(m, opt)
