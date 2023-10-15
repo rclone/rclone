@@ -37,18 +37,6 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 	return &ob, nil
 }
 
-// Checks whether path is a directory
-// Only confirms whether a path is a directory. A false result does not mean
-// that the remote is a file.
-func (f *Fs) isDirectory(ctx context.Context, remote string) (bool, error) {
-	dirClient := f.NewSubdirectoryClient(remote)
-	_, err := dirClient.GetProperties(ctx, nil)
-	if err != nil {
-		return false, fmt.Errorf("isDirectory remote=%s : %w", remote, err)
-	}
-	return true, nil
-}
-
 // Mkdir creates nested directories as indicated by test FsMkdirRmdirSubdir
 // TODO: write custom test case where parent directories are created
 func (f *Fs) Mkdir(ctx context.Context, remote string) error {
