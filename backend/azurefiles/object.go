@@ -16,12 +16,16 @@ import (
 	"github.com/rclone/rclone/fs/hash"
 )
 
-func objectInstance(f *Fs, remote string, md map[string]*string, props properties) Object {
+func objectInstance(f *Fs, remote string, md map[string]*string, changeTime *time.Time, contentLength *int64, contentType *string) Object {
 	return Object{common: common{
-		f:          f,
-		remote:     remote,
-		metaData:   md,
-		properties: props,
+		f:        f,
+		remote:   remote,
+		metaData: md,
+		properties: properties{
+			changeTime:    changeTime,
+			contentType:   contentType,
+			contentLength: contentLength,
+		},
 	}}
 }
 
