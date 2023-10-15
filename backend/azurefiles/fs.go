@@ -17,7 +17,8 @@ import (
 	"github.com/rclone/rclone/fs/hash"
 )
 
-const SLEEP_DURATION_BW_RECURSIVE_MKDIR_CALLS = time.Millisecond * 500
+const SLEEP_DURATION_BW_RECURSIVE_MKDIR_PUT_CALLS = time.Millisecond * 500
+const FOUR_TB_IN_BYTES = 4398046511104
 
 // Inspired by azureblob store, this initiates a network request and returns an error if object is not found.
 // NewObject finds the Object at remote.  If it can't be found
@@ -69,8 +70,8 @@ func (f *Fs) mkdirRelativeToRootOfShare(ctx context.Context, fullPathRelativeToS
 		if makeParentErr != nil {
 			return fmt.Errorf("could not make parent of %s : %w", fp, makeParentErr)
 		}
-		log.Printf("Mkdir: waiting for %s after making parent=%s", SLEEP_DURATION_BW_RECURSIVE_MKDIR_CALLS.String(), parentDir)
-		time.Sleep(SLEEP_DURATION_BW_RECURSIVE_MKDIR_CALLS)
+		log.Printf("Mkdir: waiting for %s after making parent=%s", SLEEP_DURATION_BW_RECURSIVE_MKDIR_PUT_CALLS.String(), parentDir)
+		time.Sleep(SLEEP_DURATION_BW_RECURSIVE_MKDIR_PUT_CALLS)
 		return f.mkdirRelativeToRootOfShare(ctx, fp)
 	} else if fileerror.HasCode(createDirErr, fileerror.ResourceAlreadyExists) {
 		return nil
@@ -103,25 +104,27 @@ func (f *Fs) Rmdir(ctx context.Context, remote string) error {
 // TODO: when file.CLient.Creat is being used, provide HTTP headesr such as content type and content MD5
 // TODO: maybe replace PUT with NewObject + Update
 // TODO: in case file is created but there is a problem on upload, what happens
+// TODO: what happens when file already exists at the location
+// Put the object
+//
+// Copy the reader in to the new object which is returned.
+//
+// The new object may have been created if an error is returned
 func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
 	// size and modtime are important, what about md5 hashes
 	if src.Size() > maxFileSize {
 		return nil, fmt.Errorf("max supported file size is 4TB. provided size is %d", src.Size())
 	}
-	fileSize := maxFileSize
-	if src.Size() >= 0 {
-		fileSize = src.Size()
-	}
 	fc := f.fileClient(src.Remote())
-	parentDir := path.Dir(src.Remote())
-	_, createErr := fc.Create(ctx, fileSize, nil)
-	if fileerror.HasCode(createErr, fileerror.ParentNotFound) {
 
+	_, createErr := fc.Create(ctx, FOUR_TB_IN_BYTES, nil)
+	if fileerror.HasCode(createErr, fileerror.ParentNotFound) {
+		parentDir := path.Dir(src.Remote())
 		if mkDirErr := f.Mkdir(ctx, parentDir); mkDirErr != nil {
 			return nil, fmt.Errorf("unable to make parent directories : %w", mkDirErr)
 		}
-		log.Printf("Put: waiting for half a second after making parent=%s", parentDir)
-		time.Sleep(time.Millisecond * 500)
+		log.Printf("Mkdir: waiting for %s after making parent=%s", SLEEP_DURATION_BW_RECURSIVE_MKDIR_PUT_CALLS.String(), parentDir)
+		time.Sleep(SLEEP_DURATION_BW_RECURSIVE_MKDIR_PUT_CALLS)
 		return f.Put(ctx, in, src, options...)
 	} else if createErr != nil {
 		return nil, fmt.Errorf("unable to create file : %w", createErr)
@@ -172,6 +175,9 @@ func (f *Fs) Hashes() hash.Set {
 }
 
 // TODO: what are features. implement them
+// TODO: add features:- public link, ReadMimeType, WriteMimeType, CanHaveEmptyDirectories, SlowModTime, SlowHash,
+// ReadMetadata, WriteMetadata,UserMetadata,PutUnchecked, PutStream
+// PartialUploads: Maybe????
 func (f *Fs) Features() *fs.Features {
 	return &fs.Features{
 		CanHaveEmptyDirectories: true,
