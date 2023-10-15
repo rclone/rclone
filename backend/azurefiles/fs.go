@@ -43,11 +43,17 @@ func (f *Fs) Mkdir(ctx context.Context, remote string) error {
 	return f.mkdirRelativeToRootOfShare(ctx, f.DecodedFullPath(remote))
 }
 
-// Had to create a mkdir function relative to root of share because there might be cases
-// where remote is specified as fs.root == A/B/ but but A does not exist in the remote filesystem.
-func (f *Fs) mkdirRelativeToRootOfShare(ctx context.Context, fullDecodedPathToRemoteDir string) error {
-	fp := fullDecodedPathToRemoteDir
-	if fp == "" || fp == "." {
+// rclone completes commands such as rclone copy localdir remote:parentcontainer/childcontainer
+// where localdir is a tree of files and directories. The above command is expected to complete even
+// when parentcontainer and childcontainer directors do not exist on the remote. The following
+// code with emphasis on fullPathRelativeToShareRoot is written to handle such cases by recursiely creating
+// parent directories all the way to the root of the share
+//
+// When path argument is an empty string, windows and linux return and error. However, this
+// implementation does not return an error
+func (f *Fs) mkdirRelativeToRootOfShare(ctx context.Context, fullPathRelativeToShareRoot string) error {
+	fp := fullPathRelativeToShareRoot
+	if fp == "" {
 		return nil
 	}
 	dirClient := f.NewSubdirectoryClientFromEncodedPath(f.encodePath(fp))
