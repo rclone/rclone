@@ -17,13 +17,15 @@ import (
 	"github.com/rclone/rclone/fs/hash"
 )
 
+const SLEEP_DURATION_BW_RECURSIVE_MKDIR_CALLS = time.Millisecond * 500
+
 // Inspired by azureblob store, this initiates a network request and returns an error if object is not found.
 // NewObject finds the Object at remote.  If it can't be found
 // it returns the error fs.ErrorObjectNotFound.
 // Does not return ErrorIsDir when a directory exists instead of file. since the documentation
 // for [rclone.fs.Fs.NewObject] rqeuires no extra work to determine whether it is directory
 func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
-	fileClient := f.NewFileClient(remote)
+	fileClient := f.fileClient(remote)
 	resp, err := fileClient.GetProperties(ctx, nil)
 	if fileerror.HasCode(err, fileerror.ParentNotFound, fileerror.ResourceNotFound) {
 		return nil, fs.ErrorObjectNotFound
@@ -39,8 +41,9 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 
 // Mkdir creates nested directories as indicated by test FsMkdirRmdirSubdir
 // TODO: write custom test case where parent directories are created
+// Mkdir creates the container if it doesn't exist
 func (f *Fs) Mkdir(ctx context.Context, remote string) error {
-	return f.mkdirRelativeToRootOfShare(ctx, f.DecodedFullPath(remote))
+	return f.mkdirRelativeToRootOfShare(ctx, f.decodedFullPath(remote))
 }
 
 // rclone completes commands such as rclone copy localdir remote:parentcontainer/childcontainer
@@ -56,7 +59,7 @@ func (f *Fs) mkdirRelativeToRootOfShare(ctx context.Context, fullPathRelativeToS
 	if fp == "" {
 		return nil
 	}
-	dirClient := f.NewSubdirectoryClientFromEncodedPath(f.encodePath(fp))
+	dirClient := f.newSubdirectoryClientFromEncodedPathRelativeToShareRoot(f.encodePath(fp))
 
 	_, createDirErr := dirClient.Create(ctx, nil)
 	if fileerror.HasCode(createDirErr, fileerror.ParentNotFound) {
@@ -68,8 +71,8 @@ func (f *Fs) mkdirRelativeToRootOfShare(ctx context.Context, fullPathRelativeToS
 		if makeParentErr != nil {
 			return fmt.Errorf("could not make parent of %s : %w", fp, makeParentErr)
 		}
-		log.Printf("Mkdir: waiting for half a second after making parent=%s", parentDir)
-		time.Sleep(time.Millisecond * 500)
+		log.Printf("Mkdir: waiting for %s after making parent=%s", SLEEP_DURATION_BW_RECURSIVE_MKDIR_CALLS.String(), parentDir)
+		time.Sleep(SLEEP_DURATION_BW_RECURSIVE_MKDIR_CALLS)
 		return f.mkdirRelativeToRootOfShare(ctx, fp)
 	} else if fileerror.HasCode(createDirErr, fileerror.ResourceAlreadyExists) {
 		return nil
@@ -111,7 +114,7 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 	if src.Size() >= 0 {
 		fileSize = src.Size()
 	}
-	fc := f.NewFileClient(src.Remote())
+	fc := f.fileClient(src.Remote())
 	parentDir := path.Dir(src.Remote())
 	_, createErr := fc.Create(ctx, fileSize, nil)
 	if fileerror.HasCode(createErr, fileerror.ParentNotFound) {
@@ -186,10 +189,10 @@ func (f *Fs) CopyFile(ctx context.Context, src fs.Object, remote string) (fs.Obj
 		fs.Debugf(src, "Can't copy - not same remote type")
 		return nil, fs.ErrorCantCopy
 	}
-	srcUrl := srcObj.f.NewFileClient(src.Remote()).URL()
+	srcUrl := srcObj.f.fileClient(src.Remote()).URL()
 
 	// TODO: add copyfile timeout
-	destFc := f.NewFileClient(remote)
+	destFc := f.fileClient(remote)
 	if len([]byte(srcUrl)) > 2048 {
 		return nil, fs.ErrorCantCopy
 	}
@@ -228,7 +231,7 @@ func (f *Fs) CopyFile(ctx context.Context, src fs.Object, remote string) (fs.Obj
 }
 
 func (f *Fs) wasCopySuccessFul(ctx context.Context, remote string) error {
-	fc := f.NewFileClient(remote)
+	fc := f.fileClient(remote)
 	var copyStatus string
 	totalSecondsSlept := 0
 	for i := 1; i < 10; i++ {
@@ -252,7 +255,7 @@ func (f *Fs) wasCopySuccessFul(ctx context.Context, remote string) error {
 // TODO: handle case regariding "" and "/". I remember reading about them somewhere
 func (f *Fs) List(ctx context.Context, remote string) (fs.DirEntries, error) {
 	var entries fs.DirEntries
-	subDirClient := f.NewSubdirectoryClient(remote)
+	subDirClient := f.dirClient(remote)
 
 	// Checking whether directory exists
 	_, err := subDirClient.GetProperties(ctx, nil)
@@ -298,27 +301,27 @@ func (f *Fs) List(ctx context.Context, remote string) (fs.DirEntries, error) {
 
 type encodedPath string
 
-func (f *Fs) DecodedFullPath(decodedRemote string) string {
+func (f *Fs) decodedFullPath(decodedRemote string) string {
 	return path.Join(f.root, decodedRemote)
 }
 
-func (f *Fs) NewSubdirectoryClient(decodedRemote string) *directory.Client {
-	fullPathDecoded := f.DecodedFullPath(decodedRemote)
+func (f *Fs) dirClient(decodedRemote string) *directory.Client {
+	fullPathDecoded := f.decodedFullPath(decodedRemote)
 	fullPathEncoded := f.encodePath(fullPathDecoded)
-	return f.NewSubdirectoryClientFromEncodedPath(fullPathEncoded)
+	return f.newSubdirectoryClientFromEncodedPathRelativeToShareRoot(fullPathEncoded)
 }
 
-func (f *Fs) NewSubdirectoryClientFromEncodedPath(p encodedPath) *directory.Client {
+func (f *Fs) newSubdirectoryClientFromEncodedPathRelativeToShareRoot(p encodedPath) *directory.Client {
 	return f.shareRootDirClient.NewSubdirectoryClient(string(p))
 }
 
-func (f *Fs) NewFileClient(decodedRemote string) *file.Client {
-	fullPathDecoded := f.DecodedFullPath(decodedRemote)
+func (f *Fs) fileClient(decodedRemote string) *file.Client {
+	fullPathDecoded := f.decodedFullPath(decodedRemote)
 	fullPathEncoded := f.encodePath(fullPathDecoded)
-	return f.NewFileClientFromEncodedPath(fullPathEncoded)
+	return f.fileClientFromEncodedPathRelativeToShareRoot(fullPathEncoded)
 }
 
-func (f *Fs) NewFileClientFromEncodedPath(p encodedPath) *file.Client {
+func (f *Fs) fileClientFromEncodedPathRelativeToShareRoot(p encodedPath) *file.Client {
 	return f.shareRootDirClient.NewFileClient(string(p))
 }
 

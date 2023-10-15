@@ -79,7 +79,7 @@ type properties struct {
 }
 
 func (o *Object) fileClient() *file.Client {
-	return o.f.NewFileClientFromEncodedPath(o.f.encodePath(path.Join(o.f.root, o.remote)))
+	return o.f.fileClientFromEncodedPathRelativeToShareRoot(o.f.encodePath(path.Join(o.f.root, o.remote)))
 }
 
 // TODO: change the modTime property on the local object as well
