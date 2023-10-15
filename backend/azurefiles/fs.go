@@ -73,22 +73,11 @@ func (f *Fs) mkdirRelativeToRootOfShare(ctx context.Context, fullDecodedPathToRe
 	return nil
 }
 
-// should return error if the directory is not empty or does not exist
+// Rmdir deletes the root folder
+//
+// Returns an error if it isn't empty
 func (f *Fs) Rmdir(ctx context.Context, remote string) error {
-	// Following if statement is added to pass test 'FsRmdirEmpty'
-	// if f.DecodedFullPath(remote) == "" {
-	// 	// Checking whether root directory is empty
-	// 	des, err := f.List(ctx, remote)
-	// 	if err != nil {
-	// 		return fmt.Errorf("could not determine whether root directory is emtpy :%w ", err)
-	// 	}
-	// 	if len(des) > 0 {
-	// 		return fs.ErrorDirectoryNotEmpty
-	// 	}
-	// 	//FIXME- this error wraps fs.ErrorDirNotFound to pass TestIntegration/FsMkdir/FsNewObjectNotFound
-	// 	return fmt.Errorf("cannot delete root dir. it is empty :%w", fs.ErrorDirNotFound)
-	// }
-	dirClient := f.NewSubdirectoryClient(remote)
+	dirClient := f.dirClient(remote)
 	_, err := dirClient.Delete(ctx, nil)
 	if err != nil {
 		if fileerror.HasCode(err, fileerror.DirectoryNotEmpty) {

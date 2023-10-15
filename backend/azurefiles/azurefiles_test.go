@@ -301,8 +301,12 @@ func newTests(t *testing.T) {
 			assert.Equal(t, fs.ErrorDirectoryNotEmpty, f.Rmdir(context.TODO(), parent))
 		})
 
-		t.Run("file is located at remote path not directory", func(t *testing.T) {
-			assert.Equal(t, 1, 2)
+		t.Run("error when file is located at remote path not directory", func(t *testing.T) {
+			filepath := RandomString(10)
+			r, obj := RandomPuttableObject(filepath)
+			_, errOnPut := f.Put(context.TODO(), r, obj, nil)
+			assert.NoError(t, errOnPut)
+			assert.Error(t, f.Rmdir(context.TODO(), filepath))
 		})
 	})
 
