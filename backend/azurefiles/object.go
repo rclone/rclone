@@ -79,6 +79,7 @@ type Object struct {
 type properties struct {
 	changeTime    *time.Time
 	contentLength *int64
+	contentType   *string
 	// lastAccessTime *time.Time
 }
 
@@ -161,6 +162,9 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	if src.Size() > maxFileSize {
 		return fmt.Errorf("max supported file size is 4TB. provided size is %d", src.Size())
 	}
+
+	// TODO: is this fileSize is required. in the put function fileSize was passed as an argumen to f.Create
+	// however f.Create required the largest file size and not the size of the file being uploaded
 	fileSize := maxFileSize / 2 // FIXME: remove this d reduction in maxFileSize
 	if src.Size() >= 0 {
 		fileSize = src.Size()
