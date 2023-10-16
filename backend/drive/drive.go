@@ -252,7 +252,7 @@ func init() {
 		},
 		Options: append(driveOAuthOptions(), []fs.Option{{
 			Name: "scope",
-			Help: "Scope that rclone should use when requesting access from drive.",
+			Help: "Comma separated list of scopes that rclone should use when requesting access from drive.",
 			Examples: []fs.OptionExample{{
 				Value: "drive",
 				Help:  "Full access all files, excluding Application Data Folder.",

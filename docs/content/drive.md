@@ -124,6 +124,8 @@ use.  This changes what type of token is granted to rclone.  [The
 scopes are defined
 here](https://developers.google.com/drive/v3/web/about-auth).
 
+A comma-separated list is allowed e.g. `drive.readonly,drive.file`.
+
 The scope are
 
 #### drive
@@ -582,7 +584,7 @@ Properties:
 
 #### --drive-scope
 
-Scope that rclone should use when requesting access from drive.
+Comma separated list of scopes that rclone should use when requesting access from drive.
 
 Properties:
 
