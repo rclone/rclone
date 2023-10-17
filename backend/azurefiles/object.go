@@ -30,22 +30,6 @@ func objectInstance(f *Fs, remote string, md map[string]*string, contentLength *
 	}}
 }
 
-func (o *Object) ModTime(ctx context.Context) time.Time {
-	if o.metaData == nil {
-		resp, err := o.fileClient().GetProperties(ctx, nil)
-		if err != nil {
-			slog.Warn("got an error while trying to fetch properties for %s : err", o.remote, err)
-			return time.Now()
-		}
-		o.metaData = resp.Metadata
-	}
-	t, err := modTimeFromMetadata(o.metaData)
-	if err != nil {
-		return time.Now()
-	}
-	return t
-}
-
 // What happens of content length is empty
 func (o *Object) Size() int64 {
 	return *o.properties.contentLength
@@ -80,7 +64,6 @@ type Object struct {
 type properties struct {
 	contentLength *int64
 	contentType   *string
-	// lastAccessTime *time.Time
 }
 
 func (o *Object) fileClient() *file.Client {
@@ -90,20 +73,27 @@ func (o *Object) fileClient() *file.Client {
 // TODO: change the modTime property on the local object as well
 // FIX modTime on local objhect should change only if the modTime is successfully modified on the remote object
 func (o *Object) SetModTime(ctx context.Context, t time.Time) error {
-	tStr := modTimeToString(t)
-	if o.metaData == nil {
-		o.metaData = make(map[string]*string)
+	smbProps := file.SMBProperties{
+		LastWriteTime: &t,
 	}
-
-	setCaseInvariantMetaDataValue(o.metaData, modTimeKey, tStr)
-	metaDataOptions := file.SetMetadataOptions{
-		Metadata: o.metaData,
+	setHeadersOptions := file.SetHTTPHeadersOptions{
+		SMBProperties: &smbProps,
 	}
-	_, err := o.fileClient().SetMetadata(ctx, &metaDataOptions)
+	_, err := o.fileClient().SetHTTPHeaders(ctx, &setHeadersOptions)
 	if err != nil {
-		return fmt.Errorf("unable to SetModTime on remote=\"%s\" : %w", o.remote, err)
+		return fmt.Errorf("unable to set modTime : %w", err)
 	}
 	return nil
+}
+
+// TODO: since modTime no longer depends on metadata, metadata needs to be removed
+func (o *Object) ModTime(ctx context.Context) time.Time {
+	resp, err := o.fileClient().GetProperties(ctx, nil)
+	if err != nil {
+		slog.Warn("got an error while trying to fetch properties for %s : err", o.remote, err)
+		return time.Now()
+	}
+	return *resp.FileLastWriteTime
 }
 
 func (o *Object) Remove(ctx context.Context) error {

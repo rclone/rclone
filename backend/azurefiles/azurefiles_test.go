@@ -47,7 +47,6 @@ func TestNonCommonIntegration(t *testing.T) {
 		}
 		t.Run("NewObject Return error if object not found", wrapAndPassC(testNewObjectErrorOnObjectNotExisting))
 		t.Run("NewObject does not return an error if file is found", wrapAndPassC(testNewObjectNoErrorIfObjectExists))
-		t.Run("setModTime", wrapAndPassC(testSetModTime))
 		t.Run("modTime", wrapAndPassC(testModTime))
 		t.Run("put", wrapAndPassC(testPutObject))
 		t.Run("list dir", wrapAndPassC(testListDir))
@@ -112,25 +111,6 @@ func testSettingMetaDataWorks(t *testing.T, c *Fs) {
 
 }
 
-func testSetModTime(t *testing.T, f *Fs) {
-	obj, err := f.NewObject(context.TODO(), pre_existing_file_name)
-	assert.NoError(t, err)
-	timeBeingSet := randomTime()
-	setModTimeErr := obj.SetModTime(context.TODO(), timeBeingSet)
-	assert.NoError(t, setModTimeErr)
-
-	fc := f.shareRootDirClient.NewFileClient(pre_existing_file_name)
-	res, getPropErr := fc.GetProperties(context.TODO(), nil)
-	assert.NoError(t, getPropErr)
-	gotTimeStr, ok := getCaseInvariantMetaDataValue(res.Metadata, modTimeKey)
-	assert.True(t, ok)
-	gotTimeInt, err := strconv.ParseInt(*gotTimeStr, 10, 64)
-	assert.NoError(t, err)
-	gotTime := time.Unix(gotTimeInt, 0)
-
-	assert.Equal(t, timeBeingSet, gotTime)
-}
-
 func testEncoding(t *testing.T, f *Fs) {
 	t.Run("leading space", func(t *testing.T) {
 		dirName := " " + RandomString(10)
@@ -163,18 +143,11 @@ func testModTime(t *testing.T, f *Fs) {
 	assert.NoError(t, err)
 	timeBeingSet := randomTime()
 
-	sleepDuration := time.Second * 3
-	t.Logf("sleeping for %s", sleepDuration)
-	time.Sleep(sleepDuration)
-
 	setModTimeErr := obj.SetModTime(context.TODO(), timeBeingSet)
 	assert.NoError(t, setModTimeErr)
 
-	t.Logf("sleeping for %s", sleepDuration)
-	time.Sleep(sleepDuration)
-
 	gotModTime := obj.ModTime(context.TODO())
-	assert.Equal(t, timeBeingSet, gotModTime)
+	assert.Equal(t, timeBeingSet.UTC(), gotModTime.UTC())
 }
 
 func TestCaseInvariantGetMetaDataValue(t *testing.T) {

@@ -21,7 +21,11 @@ func (d *Directory) Size() int64 {
 	return 0
 }
 
-// TODO: let this be something else
+// TODO: check whether this is relevant
 func (d *Directory) ModTime(ctx context.Context) time.Time {
-	return time.Now()
+	props, err := d.f.dirClient(d.remote).GetProperties(ctx, nil)
+	if err != nil {
+		return time.Now()
+	}
+	return *props.FileLastWriteTime
 }
