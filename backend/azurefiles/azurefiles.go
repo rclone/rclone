@@ -185,12 +185,20 @@ func modTimeFromMetadata(md map[string]*string) (time.Time, error) {
 	if !ok {
 		return time.Now(), fmt.Errorf("could not find key=%s in metadata", modTimeKey)
 	}
-	i, err := strconv.ParseInt(*tStr, 10, 64)
+	return modTimeFromString(*tStr)
+}
+
+func modTimeFromString(s string) (time.Time, error) {
+	i, err := strconv.ParseInt(s, 10, 64)
 	if err != nil {
 		return time.Now(), err
 	}
 	tm := time.Unix(i, 0)
 	return tm, nil
+}
+
+func modTimeToString(t time.Time) string {
+	return fmt.Sprintf("%d", t.Unix())
 }
 
 type common struct {

@@ -34,9 +34,7 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 		return nil, fmt.Errorf("unable to find object remote=%s : %w", remote, err)
 	}
 
-	// resp.ID
-
-	ob := objectInstance(f, remote, resp.Metadata, resp.FileChangeTime, resp.ContentLength, resp.ContentType)
+	ob := objectInstance(f, remote, resp.Metadata, resp.ContentLength, resp.ContentType)
 	return &ob, nil
 }
 
@@ -102,7 +100,6 @@ func (f *Fs) Rmdir(ctx context.Context, remote string) error {
 }
 
 // Copied mostly from local filesystem
-// TODO: file system options
 // TODO: when file.CLient.Creat is being used, provide HTTP headesr such as content type and content MD5
 // TODO: maybe replace PUT with NewObject + Update
 // TODO: in case file is created but there is a problem on upload, what happens
@@ -119,7 +116,15 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 	}
 	fc := f.fileClient(src.Remote())
 
-	_, createErr := fc.Create(ctx, FOUR_TB_IN_BYTES, nil)
+	// TODO: case where src already comes with metadata
+	metaData := make(map[string]*string)
+	setCaseInvariantMetaDataValue(metaData, modTimeKey, modTimeToString(src.ModTime(ctx)))
+	fileCreateOptions := file.CreateOptions{
+		HTTPHeaders: &file.HTTPHeaders{},
+		Metadata:    metaData,
+	}
+
+	_, createErr := fc.Create(ctx, FOUR_TB_IN_BYTES, &fileCreateOptions)
 	if fileerror.HasCode(createErr, fileerror.ParentNotFound) {
 		parentDir := path.Dir(src.Remote())
 		if mkDirErr := f.Mkdir(ctx, parentDir); mkDirErr != nil {
@@ -139,17 +144,11 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 		return nil, err
 	}
 
-	fsObj, err := f.NewObject(ctx, src.Remote())
-	if err != nil {
-		return nil, fmt.Errorf("unable to get NewObject : %w", err)
-	}
-	obj := fsObj.(*Object)
-
-	if err := obj.SetModTime(ctx, src.ModTime(ctx)); err != nil {
-		return nil, fmt.Errorf("unable to set modTime : %w", err)
-	}
-
-	return obj, nil
+	// TODO: I think the following requests can be turned into one request
+	mimeType := objectInfoMimeType(ctx, src)
+	contentLength := src.Size()
+	obj := objectInstance(f, src.Remote(), metaData, &contentLength, &mimeType)
+	return &obj, nil
 }
 
 func (f *Fs) Name() string {
@@ -191,6 +190,7 @@ func (f *Fs) Features() *fs.Features {
 	}
 }
 
+// TODO: maybe use rename instead??
 func (f *Fs) CopyFile(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
 	srcObj, ok := src.(*Object)
 	if !ok {
@@ -234,7 +234,7 @@ func (f *Fs) CopyFile(ctx context.Context, src fs.Object, remote string) (fs.Obj
 		return nil, errors.New(errorMessage)
 	}
 	destObj := objectInstance(f, remote, srcObj.metaData,
-		srcObj.changeTime, srcObj.contentLength, srcObj.contentType,
+		srcObj.contentLength, srcObj.contentType,
 	)
 	// TODO: return object with proper metaData and properties
 	return &destObj, nil
@@ -244,6 +244,7 @@ func (f *Fs) wasCopySuccessFul(ctx context.Context, remote string) error {
 	fc := f.fileClient(remote)
 	var copyStatus string
 	totalSecondsSlept := 0
+	// TODO: retrying process should be more sophisticated
 	for i := 1; i < 10; i++ {
 		seconds := 1 << i
 		slog.Info(fmt.Sprintf("sleeping for %d seconds before checking file copy status", seconds))
@@ -284,10 +285,8 @@ func (f *Fs) List(ctx context.Context, remote string) (fs.DirEntries, error) {
 		for _, dir := range resp.Segment.Directories {
 			de := &Directory{
 				common{f: f,
-					remote: path.Join(remote, f.decodePath(*dir.Name)),
-					properties: properties{
-						changeTime: dir.Properties.ChangeTime,
-					}},
+					remote:     path.Join(remote, f.decodePath(*dir.Name)),
+					properties: properties{}},
 			}
 			entries = append(entries, de)
 		}
@@ -297,7 +296,6 @@ func (f *Fs) List(ctx context.Context, remote string) (fs.DirEntries, error) {
 				common{f: f,
 					remote: path.Join(remote, f.decodePath(*file.Name)),
 					properties: properties{
-						changeTime:    file.Properties.ChangeTime,
 						contentLength: file.Properties.ContentLength,
 					}},
 			}

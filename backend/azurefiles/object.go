@@ -18,13 +18,12 @@ import (
 
 const ONE_MB_IN_BYTES = 1048576
 
-func objectInstance(f *Fs, remote string, md map[string]*string, changeTime *time.Time, contentLength *int64, contentType *string) Object {
+func objectInstance(f *Fs, remote string, md map[string]*string, contentLength *int64, contentType *string) Object {
 	return Object{common: common{
 		f:        f,
 		remote:   remote,
 		metaData: md,
 		properties: properties{
-			changeTime:    changeTime,
 			contentType:   contentType,
 			contentLength: contentLength,
 		},
@@ -79,7 +78,6 @@ type Object struct {
 }
 
 type properties struct {
-	changeTime    *time.Time
 	contentLength *int64
 	contentType   *string
 	// lastAccessTime *time.Time
@@ -92,7 +90,7 @@ func (o *Object) fileClient() *file.Client {
 // TODO: change the modTime property on the local object as well
 // FIX modTime on local objhect should change only if the modTime is successfully modified on the remote object
 func (o *Object) SetModTime(ctx context.Context, t time.Time) error {
-	tStr := fmt.Sprintf("%d", t.Unix())
+	tStr := modTimeToString(t)
 	if o.metaData == nil {
 		o.metaData = make(map[string]*string)
 	}
@@ -190,11 +188,13 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	return nil
 }
 
+// cannot set modTime header here because setHTTPHeaders does not allow setting metadata
 func uploadStreamSetMd5(ctx context.Context, fc *file.Client, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {
 	hasher := md5.New()
 	byteCounter := ByteCounter{}
 	teedReader := io.TeeReader(in, io.MultiWriter(hasher, &byteCounter))
 
+	// TODO: set concurrency level
 	uploadStreamOptions := file.UploadStreamOptions{
 		ChunkSize: chunkSize(options...),
 	}
