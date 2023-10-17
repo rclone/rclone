@@ -445,7 +445,7 @@ func (s *syncCopyMove) pairCopyOrMove(ctx context.Context, in *pipe, fdst fs.Fs,
 			}
 		} else {
 			if _, merr := operations.Copy(ctx, fdst, dst, src.Remote(), src); merr != nil {
-				if !os.IsNotExist(merr) && !errors.Is(err, fs.ErrorCorruptedTransfer) {
+				if !os.IsNotExist(merr) {
 					err = merr
 				}
 			}
