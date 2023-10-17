@@ -171,34 +171,6 @@ Properties:
 - Type:        string
 - Required:    true
 
-#### --koofr-password
-
-Your password for rclone (generate one at https://storage.rcs-rds.ro/app/admin/preferences/password).
-
-**NB** Input to this must be obscured - see [rclone obscure](/commands/rclone_obscure/).
-
-Properties:
-
-- Config:      password
-- Env Var:     RCLONE_KOOFR_PASSWORD
-- Provider:    digistorage
-- Type:        string
-- Required:    true
-
-#### --koofr-password
-
-Your password for rclone (generate one at your service's settings page).
-
-**NB** Input to this must be obscured - see [rclone obscure](/commands/rclone_obscure/).
-
-Properties:
-
-- Config:      password
-- Env Var:     RCLONE_KOOFR_PASSWORD
-- Provider:    other
-- Type:        string
-- Required:    true
-
 ### Advanced options
 
 Here are the Advanced options specific to koofr (Koofr, Digi Storage and other Koofr-compatible storage providers).

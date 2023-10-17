@@ -111,7 +111,7 @@ General networking and HTTP stuff.
       --tpslimit float                     Limit HTTP transactions per second to this
       --tpslimit-burst int                 Max burst of transactions for --tpslimit (default 1)
       --use-cookies                        Enable session cookiejar
-      --user-agent string                  Set the user-agent to a specified string (default "rclone/v1.64.0")
+      --user-agent string                  Set the user-agent to a specified string (default "rclone/v1.64.1")
 ```
 
 
@@ -345,7 +345,7 @@ Backend only flags. These can be set in the config file also.
       --b2-hard-delete                                      Permanently delete files on remote removal, otherwise hide files
       --b2-key string                                       Application Key
       --b2-test-mode string                                 A flag string for X-Bz-Test-Mode header for debugging
-      --b2-upload-concurrency int                           Concurrency for multipart uploads (default 16)
+      --b2-upload-concurrency int                           Concurrency for multipart uploads (default 4)
       --b2-upload-cutoff SizeSuffix                         Cutoff for switching to chunked upload (default 200Mi)
       --b2-version-at Time                                  Show file versions as they were at the specified time (default off)
       --b2-versions                                         Include old versions in directory listings

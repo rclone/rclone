@@ -80,7 +80,7 @@ rclone [flags]
       --b2-hard-delete                                      Permanently delete files on remote removal, otherwise hide files
       --b2-key string                                       Application Key
       --b2-test-mode string                                 A flag string for X-Bz-Test-Mode header for debugging
-      --b2-upload-concurrency int                           Concurrency for multipart uploads (default 16)
+      --b2-upload-concurrency int                           Concurrency for multipart uploads (default 4)
       --b2-upload-cutoff SizeSuffix                         Cutoff for switching to chunked upload (default 200Mi)
       --b2-version-at Time                                  Show file versions as they were at the specified time (default off)
       --b2-versions                                         Include old versions in directory listings
@@ -784,7 +784,7 @@ rclone [flags]
       --use-json-log                                        Use json log format
       --use-mmap                                            Use mmap allocator (see docs)
       --use-server-modtime                                  Use server modified time instead of object metadata
-      --user-agent string                                   Set the user-agent to a specified string (default "rclone/v1.64.0")
+      --user-agent string                                   Set the user-agent to a specified string (default "rclone/v1.64.1")
   -v, --verbose count                                       Print lots more stuff (repeat for more)
   -V, --version                                             Print the version number
       --webdav-bearer-token string                          Bearer token instead of user/pass (e.g. a Macaroon)
