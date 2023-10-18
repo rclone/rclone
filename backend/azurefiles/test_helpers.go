@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-func RandomString(charCount int) string {
+func randomString(charCount int) string {
 	bs := make([]byte, charCount)
 	for i := 0; i < charCount; i++ {
 		bs[i] = byte(97 + rand.Intn(26))
@@ -22,7 +22,7 @@ func randomTime() time.Time {
 }
 
 func randomPuttableObjectWithSize(f *Fs, remote string, fileSize int64) (io.Reader, *Object) {
-	fileContent := RandomString(int(fileSize))
+	fileContent := randomString(int(fileSize))
 	hasher := md5.New()
 	if _, err := hasher.Write([]byte(fileContent)); err != nil {
 		log.Fatal("randomPuttableObject: writing to hasher : %w", err)
@@ -40,7 +40,7 @@ func randomPuttableObjectWithSize(f *Fs, remote string, fileSize int64) (io.Read
 	}}
 }
 
-func RandomPuttableObject(f *Fs, remote string) (io.Reader, *Object) {
+func randomPuttableObject(f *Fs, remote string) (io.Reader, *Object) {
 	fileSize := 10 + rand.Int63n(100)
 	return randomPuttableObjectWithSize(f, remote, fileSize)
 }

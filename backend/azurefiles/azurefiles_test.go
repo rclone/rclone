@@ -69,8 +69,8 @@ func testPutObject(t *testing.T, f *Fs) {
 
 	// TODO: correct hash is set
 
-	name := RandomString(10) + ".txt"
-	in, src := RandomPuttableObject(f, name)
+	name := randomString(10) + ".txt"
+	in, src := randomPuttableObject(f, name)
 	_, putErr := f.Put(context.TODO(), in, src)
 	assert.NoError(t, putErr)
 	obj, newObjErr := f.NewObject(context.TODO(), name)
@@ -87,7 +87,7 @@ func testPutObject(t *testing.T, f *Fs) {
 
 func testEncoding(t *testing.T, f *Fs) {
 	t.Run("leading space", func(t *testing.T) {
-		dirName := " " + RandomString(10)
+		dirName := " " + randomString(10)
 		err := f.Mkdir(context.TODO(), dirName)
 		assert.NoError(t, err)
 	})
@@ -101,7 +101,7 @@ func testEncoding(t *testing.T, f *Fs) {
 				nameBuilder := strings.Builder{}
 				nameBuilder.WriteString("prefix_")
 				nameBuilder.WriteRune(r)
-				nameBuilder.WriteString(RandomString(5))
+				nameBuilder.WriteString(randomString(5))
 				nameBuilder.WriteRune(r)
 				dirName := nameBuilder.String()
 				assert.NoError(t, f.Mkdir(context.TODO(), dirName))
@@ -113,8 +113,8 @@ func testEncoding(t *testing.T, f *Fs) {
 }
 
 func testModTime(t *testing.T, f *Fs) {
-	name := RandomString(10)
-	rdr, src := RandomPuttableObject(f, name)
+	name := randomString(10)
+	rdr, src := randomPuttableObject(f, name)
 	_, err := f.Put(context.TODO(), rdr, src, nil)
 	assert.NoError(t, err)
 	obj, err := f.NewObject(context.TODO(), name)
@@ -140,7 +140,7 @@ func testModTime(t *testing.T, f *Fs) {
 
 // TODO: root should not be a file
 func newTests(t *testing.T) {
-	f, err := fs.NewFs(context.Background(), "TestAzureFiles:subdirAsRoot"+RandomString(10))
+	f, err := fs.NewFs(context.Background(), "TestAzureFiles:subdirAsRoot"+randomString(10))
 	assert.NoError(t, err)
 
 	azf := f.(*Fs)
@@ -153,27 +153,27 @@ func newTests(t *testing.T) {
 	t.Run("mkdir", func(t *testing.T) {
 		assert.NotEmpty(t, f.Root())
 		t.Run("no error when creating dir inside root", func(t *testing.T) {
-			dirName := RandomString(10)
+			dirName := randomString(10)
 			assert.NoError(t, f.Mkdir(context.Background(), dirName))
 		})
 
 		t.Run("no error when creating multilevel dir where parent does not exist", func(t *testing.T) {
-			dirPath := path.Join(RandomString(5), RandomString(5))
+			dirPath := path.Join(randomString(5), randomString(5))
 			assert.NoError(t, f.Mkdir(context.Background(), dirPath))
 		})
 
 		t.Run("no error when creating multilevel dir where parent exists", func(t *testing.T) {
 			// Setup: creating parent
-			parent := RandomString(5)
+			parent := randomString(5)
 			assert.NoError(t, f.Mkdir(context.Background(), parent))
 
-			dirPath := path.Join(parent, RandomString(5))
+			dirPath := path.Join(parent, randomString(5))
 			assert.NoError(t, f.Mkdir(context.Background(), dirPath))
 		})
 
 		t.Run("no error when directory already exists", func(t *testing.T) {
 			// Setup: creating dir once
-			dirPath := RandomString(5)
+			dirPath := randomString(5)
 			assert.NoError(t, f.Mkdir(context.Background(), dirPath))
 
 			// creating directory second time
@@ -183,17 +183,17 @@ func newTests(t *testing.T) {
 
 	t.Run("listdir", func(t *testing.T) {
 		t.Run("dir does not exist", func(t *testing.T) {
-			dirName := RandomString(10)
+			dirName := randomString(10)
 			_, err := f.List(context.Background(), dirName)
 			assert.Equal(t, fs.ErrorDirNotFound, err)
 		})
 		t.Run("both parent and dir dont exist", func(t *testing.T) {
-			dirPath := path.Join(RandomString(10), RandomString(10))
+			dirPath := path.Join(randomString(10), randomString(10))
 			_, err := f.List(context.Background(), dirPath)
 			assert.Equal(t, fs.ErrorDirNotFound, err)
 		})
 		t.Run("listdir works after mkdir in root", func(t *testing.T) {
-			dirName := RandomString(10)
+			dirName := randomString(10)
 			assert.NoError(t, f.Mkdir(context.Background(), dirName))
 			entries, err := f.List(context.Background(), "")
 			assert.NoError(t, err)
@@ -201,8 +201,8 @@ func newTests(t *testing.T) {
 		})
 
 		t.Run("listdir works after mkdir on subdir where subdir's parent does not exist", func(t *testing.T) {
-			parent := RandomString(10)
-			dirName := RandomString(10)
+			parent := randomString(10)
+			dirName := randomString(10)
 			dirPath := path.Join(parent, dirName)
 			assert.NoError(t, f.Mkdir(context.Background(), dirPath))
 			entries, err := f.List(context.Background(), parent)
@@ -213,12 +213,12 @@ func newTests(t *testing.T) {
 
 	t.Run("rmdir", func(t *testing.T) {
 		t.Run("error when directory does not exist", func(t *testing.T) {
-			dirName := RandomString(10)
+			dirName := randomString(10)
 			assert.Error(t, f.Rmdir(context.TODO(), dirName))
 		})
 
 		t.Run("no error when directory exists", func(t *testing.T) {
-			dirName := RandomString(10)
+			dirName := randomString(10)
 			assert.NoError(t, f.Mkdir(context.TODO(), dirName))
 			assert.NoError(t, f.Rmdir(context.TODO(), dirName))
 
@@ -226,16 +226,16 @@ func newTests(t *testing.T) {
 		})
 
 		t.Run("error when directory is not empty", func(t *testing.T) {
-			parent := RandomString(10)
-			dirName := RandomString(10)
+			parent := randomString(10)
+			dirName := randomString(10)
 			dirPath := path.Join(parent, dirName)
 			assert.NoError(t, f.Mkdir(context.TODO(), dirPath))
 			assert.Equal(t, fs.ErrorDirectoryNotEmpty, f.Rmdir(context.TODO(), parent))
 		})
 
 		t.Run("error when file is located at remote path not directory", func(t *testing.T) {
-			filepath := RandomString(10)
-			r, obj := RandomPuttableObject(azf, filepath)
+			filepath := randomString(10)
+			r, obj := randomPuttableObject(azf, filepath)
 			_, errOnPut := f.Put(context.TODO(), r, obj, nil)
 			assert.NoError(t, errOnPut)
 			assert.Error(t, f.Rmdir(context.TODO(), filepath))
@@ -245,8 +245,8 @@ func newTests(t *testing.T) {
 	t.Run("put", func(t *testing.T) {
 
 		t.Run("CorrectDataWritten", func(t *testing.T) {
-			filename := RandomString(10)
-			r, src := RandomPuttableObject(azf, filename)
+			filename := randomString(10)
+			r, src := randomPuttableObject(azf, filename)
 			writtenBytes := []byte{}
 			obj, putErr := f.Put(context.TODO(), io.TeeReader(r, bytes.NewBuffer(writtenBytes)), src)
 			assert.NoError(t, putErr)
@@ -259,8 +259,8 @@ func newTests(t *testing.T) {
 			assert.Equal(t, writtenBytes, readBytes)
 		})
 		t.Run("no errors when putting in root", func(t *testing.T) {
-			filename := RandomString(10)
-			r, src := RandomPuttableObject(azf, filename)
+			filename := randomString(10)
+			r, src := randomPuttableObject(azf, filename)
 			_, err := f.Put(context.TODO(), r, src)
 			assert.NoError(t, err)
 
@@ -269,12 +269,12 @@ func newTests(t *testing.T) {
 
 		t.Run("no errors when putting in existant subdir", func(t *testing.T) {
 			// Setup: creating the parent directory that exists before put
-			parent := RandomString(10)
+			parent := randomString(10)
 			assert.NoError(t, f.Mkdir(context.TODO(), parent))
 
-			fileName := RandomString(10)
+			fileName := randomString(10)
 			filePath := path.Join(parent, fileName)
-			r, src := RandomPuttableObject(azf, filePath)
+			r, src := randomPuttableObject(azf, filePath)
 			_, err := f.Put(context.TODO(), r, src)
 			assert.NoError(t, err)
 
@@ -283,10 +283,10 @@ func newTests(t *testing.T) {
 		})
 
 		t.Run("no errors when putting in non existant subdir", func(t *testing.T) {
-			parent := RandomString(10)
-			fileName := RandomString(10)
+			parent := randomString(10)
+			fileName := randomString(10)
 			filePath := path.Join(parent, fileName)
-			r, src := RandomPuttableObject(azf, filePath)
+			r, src := randomPuttableObject(azf, filePath)
 			_, err := f.Put(context.TODO(), r, src)
 			assert.NoError(t, err)
 
@@ -298,31 +298,31 @@ func newTests(t *testing.T) {
 		// also because SFTP: backed allow overwritting
 		t.Run("overwritesExistingFile", func(t *testing.T) {
 			// Setup: putting a file
-			filename := RandomString(10)
-			r, src := RandomPuttableObject(azf, filename)
+			filename := randomString(10)
+			r, src := randomPuttableObject(azf, filename)
 			_, err := f.Put(context.TODO(), r, src)
 			assert.NoError(t, err)
 
 			// Overwritting the previously put file
-			newR, newSrc := RandomPuttableObject(azf, filename)
+			newR, newSrc := randomPuttableObject(azf, filename)
 			_, newPutErr := f.Put(context.TODO(), newR, newSrc)
 			assert.NoError(t, newPutErr)
 		})
 
 		// SFTP: also returns an error when a file is put when a directory already exists
 		t.Run("error when dir exists at that location", func(t *testing.T) {
-			name := RandomString(10)
+			name := randomString(10)
 			assert.NoError(t, f.Mkdir(context.TODO(), name))
 
 			// now putting a file at the same location
-			r, src := RandomPuttableObject(azf, name)
+			r, src := randomPuttableObject(azf, name)
 			_, errPut := f.Put(context.TODO(), r, src)
 			assert.Error(t, errPut)
 		})
 
 		t.Run("SizeModTimeMd5Hash", func(t *testing.T) {
-			name := RandomString(10)
-			r, src := RandomPuttableObject(azf, name)
+			name := randomString(10)
+			r, src := randomPuttableObject(azf, name)
 			putRetVal, errPut := f.Put(context.TODO(), r, src)
 			assert.NoError(t, errPut)
 
@@ -346,10 +346,10 @@ func newTests(t *testing.T) {
 
 	t.Run("newfs", func(t *testing.T) {
 		// Setup: creatinf file to test whether newFs returns error when a file is located at root
-		parent := RandomString(5)
-		fileName := RandomString(5)
+		parent := randomString(5)
+		fileName := randomString(5)
 		filePath := path.Join(parent, fileName)
-		r, src := RandomPuttableObject(azf, filePath)
+		r, src := randomPuttableObject(azf, filePath)
 		_, putErr := f.Put(context.TODO(), r, src, nil)
 		assert.NoError(t, putErr)
 		t.Run("ErrWhenFileExistsAtRoot", func(t *testing.T) {
@@ -362,14 +362,14 @@ func newTests(t *testing.T) {
 
 	t.Run("NewObject", func(t *testing.T) {
 		t.Run("returns ErrorObjectNotFound if directory exists at location", func(t *testing.T) {
-			randomDir := RandomString(10)
+			randomDir := randomString(10)
 			assert.NoError(t, f.Mkdir(context.TODO(), randomDir))
 			_, err := f.NewObject(context.TODO(), randomDir)
 			assert.ErrorIs(t, err, fs.ErrorObjectNotFound)
 		})
 
 		t.Run("ErrorObjectNotFound", func(t *testing.T) {
-			randomDir := RandomString(10)
+			randomDir := randomString(10)
 			_, err := f.NewObject(context.TODO(), randomDir)
 			assert.ErrorIs(t, err, fs.ErrorObjectNotFound)
 		})
@@ -418,7 +418,7 @@ func newTests(t *testing.T) {
 		pathOfDepth := func(d int) string {
 			parts := []string{}
 			for i := 0; i < d; i++ {
-				parts = append(parts, RandomString(10))
+				parts = append(parts, randomString(10))
 			}
 			return path.Join(parts...)
 		}
@@ -428,15 +428,15 @@ func newTests(t *testing.T) {
 				t.Logf("path=%s", path)
 				f, err := fs.NewFs(context.Background(), "TestAzureFiles:"+path)
 				assert.NoError(t, err)
-				assert.NoError(t, f.Mkdir(context.TODO(), RandomString(10)))
+				assert.NoError(t, f.Mkdir(context.TODO(), randomString(10)))
 			})
 
 		}
 	})
 
 	t.Run("update", func(t *testing.T) {
-		name := RandomString(10)
-		rdr, src := RandomPuttableObject(azf, name)
+		name := randomString(10)
+		rdr, src := randomPuttableObject(azf, name)
 
 		obj, err := f.Put(context.TODO(), rdr, src, nil)
 		assert.NoError(t, err)
@@ -476,7 +476,7 @@ func TestNewFsWithAccountAndKey(t *testing.T) {
 	}
 	fs, err := newFsFromOptions(context.TODO(), "TestAzureFiles", "", opt)
 	assert.NoError(t, err)
-	dirName := RandomString(10)
+	dirName := randomString(10)
 	assert.NoError(t, fs.Mkdir(context.TODO(), dirName))
 	assertListDirEntriesContainsName(t, fs, "", dirName)
 }
