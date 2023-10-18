@@ -12,6 +12,8 @@ tests:
    localonly: true
  - path: cmd/serve/docker
    localonly: true
+ - path: cmd/selfupdate
+   localonly: true
 backends:
  # - backend:  "amazonclouddrive"
  #   remote:   "TestAmazonCloudDrive:"
