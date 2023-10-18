@@ -83,6 +83,7 @@ func (o *Object) SetModTime(ctx context.Context, t time.Time) error {
 	if err != nil {
 		return fmt.Errorf("unable to set modTime : %w", err)
 	}
+	o.lastWriteTime = t
 	return nil
 }
 

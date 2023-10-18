@@ -139,44 +139,29 @@ func testEncoding(t *testing.T, f *Fs) {
 }
 
 func testModTime(t *testing.T, f *Fs) {
-	obj, err := f.NewObject(context.TODO(), pre_existing_file_name)
+	name := randomString(10)
+	rdr, src := randomPuttableObject(f, name)
+	_, err := f.Put(context.TODO(), rdr, src, nil)
+	assert.NoError(t, err)
+	obj, err := f.NewObject(context.TODO(), name)
 	assert.NoError(t, err)
 	timeBeingSet := randomTime()
 
 	setModTimeErr := obj.SetModTime(context.TODO(), timeBeingSet)
 	assert.NoError(t, setModTimeErr)
 
+	t.Run("IsSetOnLocalObject", func(t *testing.T) {
 	gotModTime := obj.ModTime(context.TODO())
 	assert.Equal(t, timeBeingSet.UTC(), gotModTime.UTC())
-}
-
-func TestCaseInvariantGetMetaDataValue(t *testing.T) {
-
-	t.Run("returns the correct value for case invariant key", func(t *testing.T) {
-		md := make(map[string]*string)
-		expectedValue := RandomString(10)
-		md["key"] = &expectedValue
-		gotValue, ok := getCaseInvariantMetaDataValue(md, "KEY")
-		assert.True(t, ok)
-		assert.Equal(t, expectedValue, *gotValue)
 	})
 
-	t.Run("return false if key does not exist in map", func(t *testing.T) {
-		md := make(map[string]*string)
-		_, ok := getCaseInvariantMetaDataValue(md, "KEY")
-		assert.False(t, ok)
+	t.Run("IsSetInCloud", func(t *testing.T) {
+		newObj, newObjErr := f.NewObject(context.TODO(), name)
+		assert.NoError(t, newObjErr)
+		gotModTime := newObj.ModTime(context.TODO())
+		assert.Equal(t, timeBeingSet.UTC(), gotModTime.UTC())
 	})
 
-}
-
-func TestCaseInvariantSetMetaDataValue(t *testing.T) {
-	md := make(map[string]*string)
-	setCaseInvariantMetaDataValue(md, "key", "lowercase")
-	setCaseInvariantMetaDataValue(md, "KEY", "uppercase")
-
-	gotValue, ok := getCaseInvariantMetaDataValue(md, "key")
-	assert.True(t, ok)
-	assert.Equal(t, "uppercase", *gotValue)
 }
 
 // TODO: root should not be a file
