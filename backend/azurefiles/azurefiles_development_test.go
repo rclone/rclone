@@ -7,7 +7,6 @@ import (
 	"io"
 	"path"
 	"path/filepath"
-	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -62,7 +61,8 @@ func testMkDir(t *testing.T, c *Fs) {
 	t.Run("nested dir where parent does not exist", func(t *testing.T) {
 		parent := "mkDirTest_" + RandomString(10)
 		child := "mkDirTest_" + RandomString(10)
-		fullPath := strings.Join([]string{parent, child}, pathSeparator)
+		path.Join([]string{parent, child}...)
+		fullPath := path.Join([]string{parent, child}...)
 		err := c.Mkdir(context.TODO(), fullPath)
 		assert.NoError(t, err)
 		rootDes, rootListErr := c.List(context.TODO(), "")
@@ -76,7 +76,7 @@ func testMkDir(t *testing.T, c *Fs) {
 
 	t.Run("subdir where parent exists", func(t *testing.T) {
 		subdirName := "mkDirTest_" + RandomString(10)
-		fullPath := strings.Join([]string{dirName, subdirName}, pathSeparator)
+		fullPath := path.Join([]string{dirName, subdirName}...)
 		err := c.Mkdir(context.TODO(), fullPath)
 		assert.NoError(t, err)
 
@@ -131,7 +131,7 @@ func testRmDir(t *testing.T, c *Fs) {
 		assert.NoError(t, err)
 		fileName := RandomString(10) + ".txt"
 		filePath := path.Join(tempDir, fileName)
-		in, src := RandomPuttableObject(filePath)
+		in, src := RandomPuttableObject(c, filePath)
 		_, err = c.Put(context.TODO(), in, src, nil)
 		assert.NoError(t, err)
 		err = c.Rmdir(context.TODO(), filePath)
@@ -142,7 +142,7 @@ func testRmDir(t *testing.T, c *Fs) {
 
 func testRemove(t *testing.T, c *Fs) {
 	fileName := "testRemove_" + RandomString(10) + ".txt"
-	in, src := RandomPuttableObject(fileName)
+	in, src := RandomPuttableObject(c, fileName)
 	obj, err := c.Put(context.TODO(), in, src, nil)
 	assert.NoError(t, err)
 	err = obj.Remove(context.TODO())
@@ -154,7 +154,7 @@ func testRemove(t *testing.T, c *Fs) {
 	t.Run("works on files inside subdirectory", func(t *testing.T) {
 		fileName := "testRemove_" + RandomString(10) + ".txt"
 		filePath := path.Join(pre_existing_dir, fileName)
-		in, src := RandomPuttableObject(filePath)
+		in, src := RandomPuttableObject(c, filePath)
 		obj, err := c.Put(context.TODO(), in, src, nil)
 		assert.NoError(t, err)
 		err = obj.Remove(context.TODO())
@@ -195,7 +195,7 @@ func testOpen(t *testing.T, c *Fs) {
 func testUpdate(t *testing.T, c *Fs) {
 	// Setup: creating file that will be updated
 	fileName := "testUpdate_" + RandomString(10) + ".txt"
-	r, src := RandomPuttableObject(fileName)
+	r, src := RandomPuttableObject(c, fileName)
 	obj, err := c.Put(context.TODO(), r, src, nil)
 	assert.NoError(t, err, "was there an error while putting file to create initial test file")
 
@@ -207,7 +207,7 @@ func testUpdate(t *testing.T, c *Fs) {
 	}
 
 	// Setup: creating ojbects that will result in update
-	updateContent, _ := RandomPuttableObject(fileName)
+	updateContent, _ := RandomPuttableObject(c, fileName)
 	updatedBytes, _ := io.ReadAll(updateContent)
 	err = obj.Update(context.TODO(), bytes.NewReader(updatedBytes), src, nil)
 	assert.NoError(t, err, "was there an error while updating file")
@@ -235,13 +235,8 @@ func testUpdate(t *testing.T, c *Fs) {
 		})
 
 		t.Run("modtime", func(t *testing.T) {
-			gotModTime := obj.ModTime(context.TODO())
-			tUnixStrPtr, ok := getCaseInvariantMetaDataValue(src.metaData, modTimeKey)
-			assert.True(t, ok)
-			tUnix, errParseInt := strconv.ParseInt(*tUnixStrPtr, 10, 64)
-			expectedTime := time.Unix(tUnix, 0)
-			assert.NoError(t, errParseInt)
-			assert.Equal(t, expectedTime, gotModTime)
+			// TODO: check whether modTime is updated by update
+			assert.Equal(t, 1, 2)
 		})
 
 		t.Run("size", func(t *testing.T) {

@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"log"
-	"log/slog"
 	"path"
 	"time"
 
@@ -34,7 +33,7 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 		return nil, fmt.Errorf("unable to find object remote=%s : %w", remote, err)
 	}
 
-	ob := objectInstance(f, remote, resp.Metadata, resp.ContentLength, resp.ContentType)
+	ob := objectInstance(f, remote, *resp.ContentLength, resp.ContentMD5, *resp.FileLastWriteTime)
 	return &ob, nil
 }
 
@@ -59,6 +58,13 @@ func (f *Fs) mkdirRelativeToRootOfShare(ctx context.Context, fullPathRelativeToS
 		return nil
 	}
 	dirClient := f.newSubdirectoryClientFromEncodedPathRelativeToShareRoot(f.encodePath(fp))
+	// now := time.Now()
+	// smbProps := &file.SMBProperties{
+	// 	LastWriteTime: &now,
+	// }
+	// dirCreateOptions := &directory.CreateOptions{
+	// 	FileSMBProperties: smbProps,
+	// }
 
 	_, createDirErr := dirClient.Create(ctx, nil)
 	if fileerror.HasCode(createDirErr, fileerror.ParentNotFound) {
@@ -110,21 +116,15 @@ func (f *Fs) Rmdir(ctx context.Context, remote string) error {
 //
 // The new object may have been created if an error is returned
 func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
-	// size and modtime are important, what about md5 hashes
-	if src.Size() > maxFileSize {
+	if src.Size() > FOUR_TB_IN_BYTES {
 		return nil, fmt.Errorf("max supported file size is 4TB. provided size is %d", src.Size())
+	} else if src.Size() < 0 {
+		// TODO: what should happend when src.Size == 0
+		return nil, fmt.Errorf("src.Size is a required to be a whole number : %d", src.Size())
 	}
 	fc := f.fileClient(src.Remote())
 
-	// TODO: case where src already comes with metadata
-	metaData := make(map[string]*string)
-	setCaseInvariantMetaDataValue(metaData, modTimeKey, modTimeToString(src.ModTime(ctx)))
-	fileCreateOptions := file.CreateOptions{
-		HTTPHeaders: &file.HTTPHeaders{},
-		Metadata:    metaData,
-	}
-
-	_, createErr := fc.Create(ctx, FOUR_TB_IN_BYTES, &fileCreateOptions)
+	_, createErr := fc.Create(ctx, src.Size(), nil)
 	if fileerror.HasCode(createErr, fileerror.ParentNotFound) {
 		parentDir := path.Dir(src.Remote())
 		if mkDirErr := f.Mkdir(ctx, parentDir); mkDirErr != nil {
@@ -137,18 +137,21 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 		return nil, fmt.Errorf("unable to create file : %w", createErr)
 	}
 
-	if err := uploadStreamSetMd5(ctx, fc, in, src, options...); err != nil {
+	obj := &Object{
+		common: common{
+			f:      f,
+			remote: src.Remote(),
+		},
+	}
+	if updateErr := obj.upload(ctx, in, src, true, options...); updateErr != nil {
+		err := fmt.Errorf("while executing update after creating file as part of fs.Put : %w", updateErr)
 		if _, delErr := fc.Delete(ctx, nil); delErr != nil {
-			return nil, errors.Join(delErr, err)
+			return nil, errors.Join(delErr, updateErr)
 		}
-		return nil, err
+		return obj, err
 	}
 
-	// TODO: I think the following requests can be turned into one request
-	mimeType := objectInfoMimeType(ctx, src)
-	contentLength := src.Size()
-	obj := objectInstance(f, src.Remote(), metaData, &contentLength, &mimeType)
-	return &obj, nil
+	return obj, nil
 }
 
 func (f *Fs) Name() string {
@@ -179,89 +182,86 @@ func (f *Fs) Hashes() hash.Set {
 // TODO: add features:- public link, SlowModTime, SlowHash,
 // ReadMetadata, WriteMetadata,UserMetadata,PutUnchecked, PutStream
 // PartialUploads: Maybe????
+// FileID and DirectoryID can be implemented. They are atleast returned as part of listing response
 func (f *Fs) Features() *fs.Features {
 	return &fs.Features{
 		CanHaveEmptyDirectories: true,
-		Copy: func(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
-			return f.CopyFile(ctx, src, remote)
-		},
-		ReadMimeType:  true,
-		WriteMimeType: true,
+		// Copy: func(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
+		// 	return f.CopyFile(ctx, src, remote)
+		// },
 	}
 }
 
-// TODO: maybe use rename instead??
-func (f *Fs) CopyFile(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
-	srcObj, ok := src.(*Object)
-	if !ok {
-		fs.Debugf(src, "Can't copy - not same remote type")
-		return nil, fs.ErrorCantCopy
-	}
-	srcUrl := srcObj.f.fileClient(src.Remote()).URL()
+// // TODO: maybe use rename instead??
+// func (f *Fs) CopyFile(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
+// 	srcObj, ok := src.(*Object)
+// 	if !ok {
+// 		fs.Debugf(src, "Can't copy - not same remote type")
+// 		return nil, fs.ErrorCantCopy
+// 	}
+// 	srcUrl := srcObj.f.fileClient(src.Remote()).URL()
 
-	// TODO: add copyfile timeout
-	destFc := f.fileClient(remote)
-	if len([]byte(srcUrl)) > 2048 {
-		return nil, fs.ErrorCantCopy
-	}
-	options := &file.StartCopyFromURLOptions{
-		Metadata: srcObj.metaData,
-	}
-	resp, err := destFc.StartCopyFromURL(ctx, srcUrl, options)
-	if fileerror.HasCode(err, fileerror.ParentNotFound) {
-		if mkDirErr := f.Mkdir(ctx, path.Dir(remote)); mkDirErr != nil {
-			return nil, fmt.Errorf("parent was not found hence attempted to make parent but that too failed : %w", mkDirErr)
-		}
-		resp, err = destFc.StartCopyFromURL(ctx, srcUrl, options)
-		if err != nil {
-			return nil, fmt.Errorf("StartCopyFromURL error despite making parent directory remote=%s : %w", remote, err)
-		}
+// 	// TODO: add copyfile timeout
+// 	destFc := f.fileClient(remote)
+// 	if len([]byte(srcUrl)) > 2048 {
+// 		return nil, fs.ErrorCantCopy
+// 	}
+// 	options := &file.StartCopyFromURLOptions{
+// 		Metadata: srcObj.metaData,
+// 	}
+// 	resp, err := destFc.StartCopyFromURL(ctx, srcUrl, options)
+// 	if fileerror.HasCode(err, fileerror.ParentNotFound) {
+// 		if mkDirErr := f.Mkdir(ctx, path.Dir(remote)); mkDirErr != nil {
+// 			return nil, fmt.Errorf("parent was not found hence attempted to make parent but that too failed : %w", mkDirErr)
+// 		}
+// 		resp, err = destFc.StartCopyFromURL(ctx, srcUrl, options)
+// 		if err != nil {
+// 			return nil, fmt.Errorf("StartCopyFromURL error despite making parent directory remote=%s : %w", remote, err)
+// 		}
 
-	} else if err != nil {
-		return nil, fmt.Errorf("could not StartCopyFromUrl : %w", err)
-	}
-	switch string(*resp.CopyStatus) {
-	case "success":
-		break
-	case "aborted", "failed":
-		return nil, errors.New("could not complete copy operation because of failure or abort")
-	case "pending":
-		if err := f.wasCopySuccessFul(ctx, remote); err != nil {
-			return nil, err
-		}
-	default:
-		errorMessage := fmt.Sprintf("could not complete copy operation because returned CopyStatus is %s", string(*resp.CopyStatus))
-		return nil, errors.New(errorMessage)
-	}
-	destObj := objectInstance(f, remote, srcObj.metaData,
-		srcObj.contentLength, srcObj.contentType,
-	)
-	// TODO: return object with proper metaData and properties
-	return &destObj, nil
-}
+// 	} else if err != nil {
+// 		return nil, fmt.Errorf("could not StartCopyFromUrl : %w", err)
+// 	}
+// 	switch string(*resp.CopyStatus) {
+// 	case "success":
+// 		break
+// 	case "aborted", "failed":
+// 		return nil, errors.New("could not complete copy operation because of failure or abort")
+// 	case "pending":
+// 		if err := f.wasCopySuccessFul(ctx, remote); err != nil {
+// 			return nil, err
+// 		}
+// 	default:
+// 		errorMessage := fmt.Sprintf("could not complete copy operation because returned CopyStatus is %s", string(*resp.CopyStatus))
+// 		return nil, errors.New(errorMessage)
+// 	}
+// 	destObj := objectInstance(f, remote, srcObj.contentLength)
+// 	// TODO: return object with proper metaData and properties
+// 	return &destObj, nil
+// }
 
-func (f *Fs) wasCopySuccessFul(ctx context.Context, remote string) error {
-	fc := f.fileClient(remote)
-	var copyStatus string
-	totalSecondsSlept := 0
-	// TODO: retrying process should be more sophisticated
-	for i := 1; i < 10; i++ {
-		seconds := 1 << i
-		slog.Info(fmt.Sprintf("sleeping for %d seconds before checking file copy status", seconds))
-		time.Sleep(time.Second * time.Duration(seconds))
-		totalSecondsSlept += seconds
-		props, err := fc.GetProperties(ctx, nil)
-		copyStatus = string(*props.CopyStatus)
-		if err != nil {
-			return err
-		}
-		if copyStatus == "success" {
-			return nil
-		}
-	}
-	errorMessage := fmt.Sprintf("despite sleeping for %d copy did not succeed but failed with copyStatus:%s ", totalSecondsSlept, copyStatus)
-	return errors.New(errorMessage)
-}
+// func (f *Fs) wasCopySuccessFul(ctx context.Context, remote string) error {
+// 	fc := f.fileClient(remote)
+// 	var copyStatus string
+// 	totalSecondsSlept := 0
+// 	// TODO: retrying process should be more sophisticated
+// 	for i := 1; i < 10; i++ {
+// 		seconds := 1 << i
+// 		slog.Info(fmt.Sprintf("sleeping for %d seconds before checking file copy status", seconds))
+// 		time.Sleep(time.Second * time.Duration(seconds))
+// 		totalSecondsSlept += seconds
+// 		props, err := fc.GetProperties(ctx, nil)
+// 		copyStatus = string(*props.CopyStatus)
+// 		if err != nil {
+// 			return err
+// 		}
+// 		if copyStatus == "success" {
+// 			return nil
+// 		}
+// 	}
+// 	errorMessage := fmt.Sprintf("despite sleeping for %d copy did not succeed but failed with copyStatus:%s ", totalSecondsSlept, copyStatus)
+// 	return errors.New(errorMessage)
+// }
 
 // TODO: handle case regariding "" and "/". I remember reading about them somewhere
 func (f *Fs) List(ctx context.Context, remote string) (fs.DirEntries, error) {
@@ -285,8 +285,10 @@ func (f *Fs) List(ctx context.Context, remote string) (fs.DirEntries, error) {
 		for _, dir := range resp.Segment.Directories {
 			de := &Directory{
 				common{f: f,
-					remote:     path.Join(remote, f.decodePath(*dir.Name)),
-					properties: properties{}},
+					remote: path.Join(remote, f.decodePath(*dir.Name)),
+					properties: properties{
+						lastWriteTime: *dir.Properties.LastWriteTime,
+					}},
 			}
 			entries = append(entries, de)
 		}
@@ -296,7 +298,8 @@ func (f *Fs) List(ctx context.Context, remote string) (fs.DirEntries, error) {
 				common{f: f,
 					remote: path.Join(remote, f.decodePath(*file.Name)),
 					properties: properties{
-						contentLength: file.Properties.ContentLength,
+						contentLength: *file.Properties.ContentLength,
+						lastWriteTime: *file.Properties.LastWriteTime,
 					}},
 			}
 			entries = append(entries, de)
@@ -340,3 +343,5 @@ func (f *Fs) encodePath(p string) encodedPath {
 func (f *Fs) decodePath(p string) string {
 	return f.opt.Enc.ToStandardPath(p)
 }
+
+// on 20231019 at 1324 work to be continued at trying to fix  FAIL: TestIntegration/FsMkdir/FsPutFiles/FromRoot

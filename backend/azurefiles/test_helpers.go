@@ -2,8 +2,9 @@ package azurefiles
 
 import (
 	"bytes"
-	"fmt"
+	"crypto/md5"
 	"io"
+	"log"
 	"math/rand"
 	"time"
 )
@@ -20,17 +21,26 @@ func randomTime() time.Time {
 	return time.Unix(int64(rand.Int31()), 0)
 }
 
-func RandomPuttableObject(remote string) (io.Reader, *Object) {
-	var fileSize int64 = int64(10 + rand.Intn(50))
+func randomPuttableObjectWithSize(f *Fs, remote string, fileSize int64) (io.Reader, *Object) {
 	fileContent := RandomString(int(fileSize))
+	hasher := md5.New()
+	if _, err := hasher.Write([]byte(fileContent)); err != nil {
+		log.Fatal("randomPuttableObject: writing to hasher : %w", err)
+	}
 	r := bytes.NewReader([]byte(fileContent))
-	metaData := make(map[string]*string)
 	modTime := randomTime().Truncate(time.Second)
-	nowStr := fmt.Sprintf("%d", modTime.Unix())
-	metaData[modTimeKey] = &nowStr
 	return r, &Object{common{
-		remote:     remote,
-		metaData:   metaData,
-		properties: properties{contentLength: &fileSize},
+		f:      f,
+		remote: remote,
+		properties: properties{
+			contentLength: fileSize,
+			lastWriteTime: modTime,
+			md5Hash:       hasher.Sum(nil),
+		},
 	}}
+}
+
+func RandomPuttableObject(f *Fs, remote string) (io.Reader, *Object) {
+	fileSize := 10 + rand.Int63n(100)
+	return randomPuttableObjectWithSize(f, remote, fileSize)
 }

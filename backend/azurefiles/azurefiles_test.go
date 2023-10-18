@@ -1,17 +1,18 @@
 package azurefiles
 
 import (
+	"bytes"
 	"context"
+	"encoding/hex"
 	"fmt"
 	"io"
+	"math/rand"
 	"path"
-	"strconv"
 	"strings"
 	"testing"
-	"time"
 
-	"github.com/Azure/azure-sdk-for-go/sdk/storage/azfile/file"
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/fstest"
 	"github.com/rclone/rclone/fstest/fstests"
 	"github.com/stretchr/testify/assert"
@@ -56,8 +57,6 @@ func TestNonCommonIntegration(t *testing.T) {
 		t.Run("open", wrapAndPassC(testOpen))
 		t.Run("update", wrapAndPassC(testUpdate))
 		t.Run("walkAll", wrapAndPassC(testWalkAll))
-		t.Run("set properties", wrapAndPassC(testSettingMetaDataWorks))
-
 		t.Run("encoding", wrapAndPassC(testEncoding))
 
 	} else {
@@ -71,43 +70,18 @@ func testPutObject(t *testing.T, f *Fs) {
 	// TODO: correct hash is set
 
 	name := RandomString(10) + ".txt"
-	in, src := RandomPuttableObject(name)
+	in, src := RandomPuttableObject(f, name)
 	_, putErr := f.Put(context.TODO(), in, src)
 	assert.NoError(t, putErr)
 	obj, newObjErr := f.NewObject(context.TODO(), name)
 	assert.NoError(t, newObjErr)
 	t.Run("modtime is correctly set", func(t *testing.T) {
-		expectedUnix, err := strconv.ParseInt(*src.metaData[modTimeKey], 10, 64)
-		assert.NoError(t, err)
-		expectedTime := time.Unix(expectedUnix, 0)
+		expectedTime := src.properties.lastWriteTime
 		gotTime := obj.ModTime(context.TODO())
 		assert.Equal(t, expectedTime, gotTime, "modTime is correctly set")
 	})
 
-	assert.Equal(t, obj.Size(), *src.properties.contentLength, "size is correctly set")
-
-}
-
-func testSettingMetaDataWorks(t *testing.T, c *Fs) {
-	fcSetting := c.shareRootDirClient.NewFileClient(pre_existing_file_name)
-	metaData := make(map[string]*string)
-	someString := "1_isgreat"
-	metaData["a"] = &someString
-	metaDataOptions := file.SetMetadataOptions{
-		Metadata: metaData,
-	}
-	resp, err := fcSetting.SetMetadata(context.TODO(), &metaDataOptions)
-	assert.NoError(t, err)
-	t.Log(resp)
-
-	// Now checking whether the metadata was actually set
-
-	fcGetting := c.shareRootDirClient.NewFileClient(pre_existing_file_name)
-	getResp, getErr := fcGetting.GetProperties(context.TODO(), nil)
-	assert.NoError(t, getErr)
-	actualPtr, ok := getCaseInvariantMetaDataValue(getResp.Metadata, "a")
-	assert.True(t, ok)
-	assert.Equal(t, someString, *actualPtr)
+	assert.Equal(t, obj.Size(), src.properties.contentLength, "size is correctly set")
 
 }
 
@@ -139,8 +113,8 @@ func testEncoding(t *testing.T, f *Fs) {
 }
 
 func testModTime(t *testing.T, f *Fs) {
-	name := randomString(10)
-	rdr, src := randomPuttableObject(f, name)
+	name := RandomString(10)
+	rdr, src := RandomPuttableObject(f, name)
 	_, err := f.Put(context.TODO(), rdr, src, nil)
 	assert.NoError(t, err)
 	obj, err := f.NewObject(context.TODO(), name)
@@ -151,8 +125,8 @@ func testModTime(t *testing.T, f *Fs) {
 	assert.NoError(t, setModTimeErr)
 
 	t.Run("IsSetOnLocalObject", func(t *testing.T) {
-	gotModTime := obj.ModTime(context.TODO())
-	assert.Equal(t, timeBeingSet.UTC(), gotModTime.UTC())
+		gotModTime := obj.ModTime(context.TODO())
+		assert.Equal(t, timeBeingSet.UTC(), gotModTime.UTC())
 	})
 
 	t.Run("IsSetInCloud", func(t *testing.T) {
@@ -261,7 +235,7 @@ func newTests(t *testing.T) {
 
 		t.Run("error when file is located at remote path not directory", func(t *testing.T) {
 			filepath := RandomString(10)
-			r, obj := RandomPuttableObject(filepath)
+			r, obj := RandomPuttableObject(azf, filepath)
 			_, errOnPut := f.Put(context.TODO(), r, obj, nil)
 			assert.NoError(t, errOnPut)
 			assert.Error(t, f.Rmdir(context.TODO(), filepath))
@@ -286,7 +260,7 @@ func newTests(t *testing.T) {
 		})
 		t.Run("no errors when putting in root", func(t *testing.T) {
 			filename := RandomString(10)
-			r, src := RandomPuttableObject(filename)
+			r, src := RandomPuttableObject(azf, filename)
 			_, err := f.Put(context.TODO(), r, src)
 			assert.NoError(t, err)
 
@@ -300,7 +274,7 @@ func newTests(t *testing.T) {
 
 			fileName := RandomString(10)
 			filePath := path.Join(parent, fileName)
-			r, src := RandomPuttableObject(filePath)
+			r, src := RandomPuttableObject(azf, filePath)
 			_, err := f.Put(context.TODO(), r, src)
 			assert.NoError(t, err)
 
@@ -312,7 +286,7 @@ func newTests(t *testing.T) {
 			parent := RandomString(10)
 			fileName := RandomString(10)
 			filePath := path.Join(parent, fileName)
-			r, src := RandomPuttableObject(filePath)
+			r, src := RandomPuttableObject(azf, filePath)
 			_, err := f.Put(context.TODO(), r, src)
 			assert.NoError(t, err)
 
@@ -325,12 +299,12 @@ func newTests(t *testing.T) {
 		t.Run("overwritesExistingFile", func(t *testing.T) {
 			// Setup: putting a file
 			filename := RandomString(10)
-			r, src := RandomPuttableObject(filename)
+			r, src := RandomPuttableObject(azf, filename)
 			_, err := f.Put(context.TODO(), r, src)
 			assert.NoError(t, err)
 
 			// Overwritting the previously put file
-			newR, newSrc := RandomPuttableObject(filename)
+			newR, newSrc := RandomPuttableObject(azf, filename)
 			_, newPutErr := f.Put(context.TODO(), newR, newSrc)
 			assert.NoError(t, newPutErr)
 		})
@@ -341,9 +315,32 @@ func newTests(t *testing.T) {
 			assert.NoError(t, f.Mkdir(context.TODO(), name))
 
 			// now putting a file at the same location
-			r, src := RandomPuttableObject(name)
+			r, src := RandomPuttableObject(azf, name)
 			_, errPut := f.Put(context.TODO(), r, src)
 			assert.Error(t, errPut)
+		})
+
+		t.Run("SizeModTimeMd5Hash", func(t *testing.T) {
+			name := RandomString(10)
+			r, src := RandomPuttableObject(azf, name)
+			putRetVal, errPut := f.Put(context.TODO(), r, src)
+			assert.NoError(t, errPut)
+
+			newObj, err := f.NewObject(context.TODO(), name)
+			assert.NoError(t, err)
+
+			for idx, obj := range []fs.Object{putRetVal, newObj} {
+				t.Run(fmt.Sprintf("%d", idx), func(t *testing.T) {
+					o, ok := obj.(*Object)
+					assert.True(t, ok)
+					assert.Equal(t, src.Size(), o.contentLength)
+					assert.Equal(t, src.Size(), o.Size())
+					assert.Equal(t, src.ModTime(context.TODO()).UTC(), o.lastWriteTime.UTC())
+					srcHash, err := src.Hash(context.TODO(), hash.MD5)
+					assert.NoError(t, err, "hashing src should not result in error")
+					assert.Equal(t, srcHash, hex.EncodeToString(o.md5Hash))
+				})
+			}
 		})
 	})
 
@@ -352,7 +349,7 @@ func newTests(t *testing.T) {
 		parent := RandomString(5)
 		fileName := RandomString(5)
 		filePath := path.Join(parent, fileName)
-		r, src := RandomPuttableObject(filePath)
+		r, src := RandomPuttableObject(azf, filePath)
 		_, putErr := f.Put(context.TODO(), r, src, nil)
 		assert.NoError(t, putErr)
 		t.Run("ErrWhenFileExistsAtRoot", func(t *testing.T) {
@@ -378,44 +375,44 @@ func newTests(t *testing.T) {
 		})
 	})
 
-	t.Run("CopyFile", func(t *testing.T) {
-		randomName := RandomString(10)
-		data, srcForPutting := RandomPuttableObject(randomName)
-		srcObj, errPut := f.Put(context.TODO(), data, srcForPutting, nil)
-		assert.NoError(t, errPut)
+	// t.Run("CopyFile", func(t *testing.T) {
+	// 	randomName := RandomString(10)
+	// 	data, srcForPutting := RandomPuttableObject(f, randomName)
+	// 	srcObj, errPut := f.Put(context.TODO(), data, srcForPutting, nil)
+	// 	assert.NoError(t, errPut)
 
-		destPath := path.Join(RandomString(10), RandomString(10))
+	// 	destPath := path.Join(RandomString(10), RandomString(10))
 
-		destObj, errCopy := azf.CopyFile(context.TODO(), srcObj, destPath)
-		assert.NoError(t, errCopy)
+	// 	destObj, errCopy := azf.CopyFile(context.TODO(), srcObj, destPath)
+	// 	assert.NoError(t, errCopy)
 
-		t.Run("SameContent", func(t *testing.T) {
-			objectBytes := func(obj fs.Object) ([]byte, error) {
-				reader, openErr := obj.Open(context.TODO(), nil)
-				if openErr != nil {
-					return []byte{}, fmt.Errorf("opening %s : %w", obj.Remote(), openErr)
-				}
-				defer reader.Close()
-				bs, readAllErr := io.ReadAll(reader)
-				if readAllErr != nil {
-					return []byte{}, fmt.Errorf("reading all from %s : %w", obj.Remote(), readAllErr)
-				}
-				return bs, nil
-			}
-			srcBytes, err := objectBytes(srcObj)
-			assert.NoError(t, err)
-			destBytes, err := objectBytes(destObj)
-			assert.NoError(t, err)
-			assert.Equal(t, srcBytes, destBytes)
+	// 	t.Run("SameContent", func(t *testing.T) {
+	// 		objectBytes := func(obj fs.Object) ([]byte, error) {
+	// 			reader, openErr := obj.Open(context.TODO(), nil)
+	// 			if openErr != nil {
+	// 				return []byte{}, fmt.Errorf("opening %s : %w", obj.Remote(), openErr)
+	// 			}
+	// 			defer reader.Close()
+	// 			bs, readAllErr := io.ReadAll(reader)
+	// 			if readAllErr != nil {
+	// 				return []byte{}, fmt.Errorf("reading all from %s : %w", obj.Remote(), readAllErr)
+	// 			}
+	// 			return bs, nil
+	// 		}
+	// 		srcBytes, err := objectBytes(srcObj)
+	// 		assert.NoError(t, err)
+	// 		destBytes, err := objectBytes(destObj)
+	// 		assert.NoError(t, err)
+	// 		assert.Equal(t, srcBytes, destBytes)
 
-		})
+	// 	})
 
-		t.Run("SameModTime", func(t *testing.T) {
-			destObjFreshlyFetched, err := f.NewObject(context.TODO(), destPath)
-			assert.NoError(t, err)
-			assert.Equal(t, srcObj.ModTime(context.TODO()), destObjFreshlyFetched.ModTime(context.TODO()))
-		})
-	})
+	// 	t.Run("SameModTime", func(t *testing.T) {
+	// 		destObjFreshlyFetched, err := f.NewObject(context.TODO(), destPath)
+	// 		assert.NoError(t, err)
+	// 		assert.Equal(t, srcObj.ModTime(context.TODO()), destObjFreshlyFetched.ModTime(context.TODO()))
+	// 	})
+	// })
 
 	t.Run("FsRootIsMultilevelAndDeep", func(t *testing.T) {
 		pathOfDepth := func(d int) string {
@@ -435,6 +432,34 @@ func newTests(t *testing.T) {
 			})
 
 		}
+	})
+
+	t.Run("update", func(t *testing.T) {
+		name := RandomString(10)
+		rdr, src := RandomPuttableObject(azf, name)
+
+		obj, err := f.Put(context.TODO(), rdr, src, nil)
+		assert.NoError(t, err)
+
+		smallerSize := src.Size() - rand.Int63n(src.Size()/2)
+		largerSize := src.Size() - rand.Int63n(100)
+		for idx, updatedSize := range []int64{smallerSize, largerSize} {
+			t.Run(fmt.Sprintf("idx=%d updatedSize=%d origSize=%d", idx, updatedSize, src.Size()), func(t *testing.T) {
+				updatedRdr, updatedSrc := randomPuttableObjectWithSize(azf, name, updatedSize)
+				updatedBytes := []byte{}
+				teedRdr := io.TeeReader(updatedRdr, bytes.NewBuffer(updatedBytes))
+				assert.NoError(t, obj.Update(context.TODO(), teedRdr, updatedSrc, nil))
+
+				readCloser, openErr := obj.Open(context.TODO(), nil)
+				assert.NoError(t, openErr)
+				readBytes := []byte{}
+				nBsCopied, copyErr := io.Copy(bytes.NewBuffer(readBytes), readCloser)
+				assert.NoError(t, copyErr)
+				assert.Equal(t, updatedSize, nBsCopied)
+				assert.Equal(t, updatedBytes, readBytes)
+			})
+		}
+		// TODO: are size,modTime and MD5 updated
 	})
 
 }

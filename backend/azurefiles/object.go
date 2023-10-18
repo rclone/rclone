@@ -6,9 +6,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"io"
-	"log"
 	"log/slog"
-	"path"
 	"time"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/storage/azfile/file"
@@ -18,21 +16,21 @@ import (
 
 const ONE_MB_IN_BYTES = 1048576
 
-func objectInstance(f *Fs, remote string, md map[string]*string, contentLength *int64, contentType *string) Object {
+func objectInstance(f *Fs, remote string, contentLength int64, md5Hash []byte, lwt time.Time) Object {
 	return Object{common: common{
-		f:        f,
-		remote:   remote,
-		metaData: md,
+		f:      f,
+		remote: remote,
 		properties: properties{
-			contentType:   contentType,
 			contentLength: contentLength,
+			md5Hash:       md5Hash,
+			lastWriteTime: lwt,
 		},
 	}}
 }
 
 // What happens of content length is empty
 func (o *Object) Size() int64 {
-	return *o.properties.contentLength
+	return o.properties.contentLength
 }
 
 // TODO: make this readonly
@@ -40,16 +38,21 @@ func (o *Object) Fs() fs.Info {
 	return o.f
 }
 
-// TODO: returning hex encoded string because rclone/hash/multihasher uses hex encoding
+// Returning hex encoded string because rclone/hash/multihasher uses hex encoding
+// Network request has to be made becaue the listing directories and files does not
+// return MD5 hash
 func (o *Object) Hash(ctx context.Context, ty hash.Type) (string, error) {
 	if ty != hash.MD5 {
 		return "", hash.ErrUnsupported
 	}
-	resp, err := o.fileClient().GetProperties(context.TODO(), nil)
-	if err != nil {
-		return "", fmt.Errorf("while getting hash for remote=\"%s\" : %w", o.remote, err)
+	if len(o.common.properties.md5Hash) == 0 {
+		props, err := o.fileClient().GetProperties(ctx, nil)
+		if err != nil {
+			return "", fmt.Errorf("unable to fetch properties to determine hash")
+		}
+		o.common.properties.md5Hash = props.ContentMD5
 	}
-	return hex.EncodeToString(resp.ContentMD5), nil
+	return hex.EncodeToString(o.common.properties.md5Hash), nil
 }
 
 // TODO: what does this mean?
@@ -61,17 +64,21 @@ type Object struct {
 	common
 }
 
+// These fields have pointer types because it seems to
+// TODO: descide whether these could be pointer or not
 type properties struct {
-	contentLength *int64
-	contentType   *string
+	contentLength int64
+	md5Hash       []byte
+	lastWriteTime time.Time
 }
 
 func (o *Object) fileClient() *file.Client {
-	return o.f.fileClientFromEncodedPathRelativeToShareRoot(o.f.encodePath(path.Join(o.f.root, o.remote)))
+	decodedFullPath := o.f.decodedFullPath(o.remote)
+	fullEncodedPath := o.f.encodePath(decodedFullPath)
+	return o.f.fileClientFromEncodedPathRelativeToShareRoot(fullEncodedPath)
 }
 
-// TODO: change the modTime property on the local object as well
-// FIX modTime on local objhect should change only if the modTime is successfully modified on the remote object
+// SetModTime sets the modification time
 func (o *Object) SetModTime(ctx context.Context, t time.Time) error {
 	smbProps := file.SMBProperties{
 		LastWriteTime: &t,
@@ -89,12 +96,7 @@ func (o *Object) SetModTime(ctx context.Context, t time.Time) error {
 
 // TODO: since modTime no longer depends on metadata, metadata needs to be removed
 func (o *Object) ModTime(ctx context.Context) time.Time {
-	resp, err := o.fileClient().GetProperties(ctx, nil)
-	if err != nil {
-		slog.Warn("got an error while trying to fetch properties for %s : err", o.remote, err)
-		return time.Now()
-	}
-	return *resp.FileLastWriteTime
+	return o.lastWriteTime
 }
 
 func (o *Object) Remove(ctx context.Context) error {
@@ -132,7 +134,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 			} else if start != nil && end == nil {
 				fhr.Offset = *start
 			} else if start == nil && end != nil {
-				fhr.Offset = *o.contentLength - *end
+				fhr.Offset = o.contentLength - *end
 			}
 
 			downloadStreamOptions.Range = fhr
@@ -146,71 +148,103 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 }
 
 // TODO: implement options. understand purpose of options. what is the purpose of src objectInfo.
-// TODO: set metadata options from src. Hint look at the local backend
-func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {
-	// TODO: File upload options should be included. Atleast two options is important:= Concurrency, Chunksize
-
-	if src.Size() > maxFileSize {
+func (o *Object) upload(ctx context.Context, in io.Reader, src fs.ObjectInfo, isDestNewlyCreated bool, options ...fs.OpenOption) error {
+	if src.Size() > FOUR_TB_IN_BYTES {
 		return fmt.Errorf("max supported file size is 4TB. provided size is %d", src.Size())
+	} else if src.Size() < 0 {
+		return fmt.Errorf("files with unknown sizes are not supported")
 	}
 
-	// TODO: is this fileSize is required. in the put function fileSize was passed as an argumen to f.Create
-	// however f.Create required the largest file size and not the size of the file being uploaded
-	fileSize := maxFileSize / 2 // FIXME: remove this d reduction in maxFileSize
-	if src.Size() >= 0 {
-		fileSize = src.Size()
-	}
 	fc := o.fileClient()
-	if _, err := fc.SetHTTPHeaders(ctx, &file.SetHTTPHeadersOptions{
-		FileContentLength: &fileSize,
-	}); err != nil {
-		return err
-	}
-	o.contentLength = &fileSize
 
-	if err := uploadStreamSetMd5(ctx, fc, in, src, options...); err != nil {
+	if !isDestNewlyCreated {
+		if src.Size() != o.Size() {
+			if _, resizeErr := fc.Resize(ctx, src.Size(), nil); resizeErr != nil {
+				return fmt.Errorf("unable to resize while trying to update. %w ", resizeErr)
+			}
+		}
+	}
+
+	var md5Hash []byte
+	computeHash := false
+	hasher := md5.New()
+	if hashStr, err := src.Hash(ctx, hash.MD5); err != nil || hashStr == "" {
+		computeHash = true
+	} else {
+		var decodeErr error
+		md5Hash, decodeErr = hex.DecodeString(hashStr)
+		if decodeErr != nil {
+			computeHash = true
+			msg := fmt.Sprintf("should not happen. Error while decoding hex encoded md5 '%s'. Error is %s",
+				hashStr, decodeErr.Error())
+			slog.Error(msg)
+		}
+	}
+	if err := func() error {
+		if computeHash {
+			in = io.TeeReader(in, hasher)
+			defer func() {
+				md5Hash = hasher.Sum(nil)
+			}()
+		}
+		if err := uploadStream(ctx, fc, in, src, options...); err != nil {
+			return fmt.Errorf("while uploading %s : %w", src.Remote(), err)
+		}
+		return nil
+	}(); err != nil {
 		return err
 	}
-	// Set the mtime. copied from all/local.go rclone backend
-	updatedModTime := src.ModTime(ctx)
-	if err := o.SetModTime(ctx, updatedModTime); err != nil {
-		return fmt.Errorf("unable to upload. cannot setModTime on remote=\"%s\" : %w", o.remote, err)
+
+	modTime := src.ModTime(ctx)
+	if err := uploadSizeHashLWT(ctx, fc, src.Size(), md5Hash, modTime); err != nil {
+
+		return fmt.Errorf("while setting size hash and last write time for %s : %w", src.Remote(), err)
 	}
+	o.properties.contentLength = src.Size()
+	o.properties.md5Hash = md5Hash
+	o.properties.lastWriteTime = modTime
 	return nil
 }
 
-// cannot set modTime header here because setHTTPHeaders does not allow setting metadata
-func uploadStreamSetMd5(ctx context.Context, fc *file.Client, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {
-	hasher := md5.New()
-	byteCounter := ByteCounter{}
-	teedReader := io.TeeReader(in, io.MultiWriter(hasher, &byteCounter))
+// Update the object with the contents of the io.Reader, modTime and size
+//
+// If existing is set then it updates the object rather than creating a new one.
+//
+// The new object may have been created if an error is returned.
+func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {
+	return o.upload(ctx, in, src, false, options...)
+}
 
+// cannot set modTime header here because setHTTPHeaders does not allow setting metadata
+func uploadStream(ctx context.Context, fc *file.Client, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {
 	// TODO: set concurrency level
 	uploadStreamOptions := file.UploadStreamOptions{
 		ChunkSize: chunkSize(options...),
 	}
 
-	if err := fc.UploadStream(ctx, teedReader, &uploadStreamOptions); err != nil {
+	if err := fc.UploadStream(ctx, in, &uploadStreamOptions); err != nil {
 		return fmt.Errorf("unable to upload. cannot upload stream : %w", err)
 	}
+	return nil
+}
 
-	md5Hash := hasher.Sum(nil)
-	bytesWritten := byteCounter.count
-	contentType := objectInfoMimeType(ctx, src)
-
-	// TODO: test contentType
+// called upload since it indicates that things will be modified on the server
+// TODO: needs to be tested
+func uploadSizeHashLWT(ctx context.Context, fc *file.Client, size int64, hash []byte, lwt time.Time) error {
+	smbProps := file.SMBProperties{
+		LastWriteTime: &lwt,
+	}
+	httpHeaders := &file.HTTPHeaders{
+		ContentMD5: hash,
+	}
 	_, err := fc.SetHTTPHeaders(ctx, &file.SetHTTPHeadersOptions{
-		FileContentLength: &bytesWritten,
-		HTTPHeaders: &file.HTTPHeaders{
-			ContentMD5:  md5Hash,
-			ContentType: &contentType,
-		},
+		FileContentLength: &size,
+		SMBProperties:     &smbProps,
+		HTTPHeaders:       httpHeaders,
 	})
 	if err != nil {
-		log.Print(err)
-		return err
+		return fmt.Errorf("while setting size, hash, lastWriteTime : %w", err)
 	}
-
 	return nil
 }
 
@@ -229,23 +263,6 @@ func (bc *ByteCounter) Write(p []byte) (n int, err error) {
 	lenP := len(p)
 	bc.count += int64(lenP)
 	return lenP, nil
-}
-
-// TODO: implment the hash function. First implement and test on Update function, then on the Put function
-// using base64.StdEncoding.DecodeString for hashse because that is what azureblob uses
-
-func (o *Object) MimeType(ctx context.Context) string {
-	if o.properties.contentType == nil {
-		return ""
-	}
-	return *o.properties.contentType
-}
-
-func objectInfoMimeType(ctx context.Context, oi fs.ObjectInfo) string {
-	if mo, ok := oi.(fs.MimeTyper); ok {
-		return mo.MimeType(ctx)
-	}
-	return ""
 }
 
 func chunkSize(options ...fs.OpenOption) int64 {

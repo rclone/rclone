@@ -5,9 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"path"
-	"strconv"
-	"strings"
-	"time"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/storage/azfile/directory"
 	"github.com/Azure/azure-sdk-for-go/sdk/storage/azfile/file"
@@ -17,16 +14,6 @@ import (
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/configstruct"
 	"github.com/rclone/rclone/lib/encoder"
-)
-
-const (
-	modTimeKey    string = "mtime"
-	KB            int64  = 1024
-	MB            int64  = 1024 * KB
-	GB            int64  = 1024 * MB
-	TB            int64  = 1024 * GB
-	maxFileSize   int64  = 4 * TB
-	pathSeparator string = "/"
 )
 
 // TODO: enable x-ms-allow-trailing-do
@@ -178,57 +165,9 @@ func ensureInterfacesAreSatisfied() {
 
 // TODO: implement MimeTyper
 // TODO: what heppens when update is called on Directory
-// TODO: what happens when remove is called on Directory
-
-func modTimeFromMetadata(md map[string]*string) (time.Time, error) {
-	tStr, ok := getCaseInvariantMetaDataValue(md, modTimeKey)
-	if !ok {
-		return time.Now(), fmt.Errorf("could not find key=%s in metadata", modTimeKey)
-	}
-	return modTimeFromString(*tStr)
-}
-
-func modTimeFromString(s string) (time.Time, error) {
-	i, err := strconv.ParseInt(s, 10, 64)
-	if err != nil {
-		return time.Now(), err
-	}
-	tm := time.Unix(i, 0)
-	return tm, nil
-}
-
-func modTimeToString(t time.Time) string {
-	return fmt.Sprintf("%d", t.Unix())
-}
 
 type common struct {
-	f        *Fs
-	remote   string
-	metaData map[string]*string
+	f      *Fs
+	remote string
 	properties
-}
-
-// returns metadata values corresponding to case independent keys
-func getCaseInvariantMetaDataValue(md map[string]*string, key string) (*string, bool) {
-	for k, v := range md {
-		if strings.EqualFold(k, key) {
-			return v, true
-		}
-	}
-	return nil, false
-}
-
-func setCaseInvariantMetaDataValue(md map[string]*string, key string, value string) {
-	keysToBeDeleted := []string{}
-	for k := range md {
-		if strings.EqualFold(k, key) {
-			keysToBeDeleted = append(keysToBeDeleted, k)
-		}
-	}
-
-	for _, k := range keysToBeDeleted {
-		delete(md, k)
-	}
-
-	md[key] = &value
 }
