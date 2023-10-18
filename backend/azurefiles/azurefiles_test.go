@@ -269,6 +269,21 @@ func newTests(t *testing.T) {
 	})
 
 	t.Run("put", func(t *testing.T) {
+
+		t.Run("CorrectDataWritten", func(t *testing.T) {
+			filename := RandomString(10)
+			r, src := RandomPuttableObject(azf, filename)
+			writtenBytes := []byte{}
+			obj, putErr := f.Put(context.TODO(), io.TeeReader(r, bytes.NewBuffer(writtenBytes)), src)
+			assert.NoError(t, putErr)
+
+			readSeeker, openErr := obj.Open(context.TODO(), nil)
+			assert.NoError(t, openErr)
+			readBytes := []byte{}
+			_, copyErr := io.Copy(bytes.NewBuffer(readBytes), readSeeker)
+			assert.NoError(t, copyErr)
+			assert.Equal(t, writtenBytes, readBytes)
+		})
 		t.Run("no errors when putting in root", func(t *testing.T) {
 			filename := RandomString(10)
 			r, src := RandomPuttableObject(filename)
