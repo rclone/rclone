@@ -157,12 +157,6 @@ func (c *common) Remote() string {
 	return c.remote
 }
 
-func ensureInterfacesAreSatisfied() {
-	var _ fs.Fs = (*Fs)(nil)
-	var _ fs.Object = (*Object)(nil)
-	var _ fs.Directory = (*Directory)(nil)
-}
-
 // TODO: implement MimeTyper
 // TODO: what heppens when update is called on Directory
 
