@@ -10,6 +10,15 @@ jobs:
         runs-on: ubuntu-latest
         name: Build image job
         steps:
+            - name: Free some space
+              shell: bash
+              run: |
+                df -h .
+                # Remove android SDK
+                sudo rm -rf /usr/local/lib/android || true
+                # Remove .net runtime
+                sudo rm -rf /usr/share/dotnet || true
+                df -h .
             - name: Checkout master
               uses: actions/checkout@v4
               with:
@@ -39,6 +48,15 @@ jobs:
         runs-on: ubuntu-latest
         name: Build docker plugin job
         steps:
+            - name: Free some space
+              shell: bash
+              run: |
+                df -h .
+                # Remove android SDK
+                sudo rm -rf /usr/local/lib/android || true
+                # Remove .net runtime
+                sudo rm -rf /usr/share/dotnet || true
+                df -h .
             - name: Checkout master
               uses: actions/checkout@v4
               with:
