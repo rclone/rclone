@@ -10,6 +10,8 @@ tests:
  - path: vfs
  - path: cmd/serve/restic
    localonly: true
+ - path: cmd/selfupdate
+   localonly: true
 backends:
  # - backend:  "amazonclouddrive"
  #   remote:   "TestAmazonCloudDrive:"
