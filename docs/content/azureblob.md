@@ -675,10 +675,10 @@ Properties:
 
 #### --azureblob-access-tier
 
-Access tier of blob: hot, cool or archive.
+Access tier of blob: hot, cool, cold or archive.
 
-Archived blobs can be restored by setting access tier to hot or
-cool. Leave blank if you intend to use default access tier, which is
+Archived blobs can be restored by setting access tier to hot, cool or
+cold. Leave blank if you intend to use default access tier, which is
 set at account level
 
 If there is no "access tier" specified, rclone doesn't apply any tier.
@@ -686,7 +686,7 @@ rclone performs "Set Tier" operation on blobs while uploading, if objects
 are not modified, specifying "access tier" to new one will have no effect.
 If blobs are in "archive tier" at remote, trying to perform data transfer
 operations from remote will not be allowed. User should first restore by
-tiering blob to "Hot" or "Cool".
+tiering blob to "Hot", "Cool" or "Cold".
 
 Properties:
 
