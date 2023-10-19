@@ -79,7 +79,7 @@ func authenticationSchemeFromOptions(opt *Options) (authenticationScheme, error)
 	} else if opt.Account != "" && opt.Key != "" {
 		return AccountAndKey, nil
 	}
-	return -1, errors.New("Could not determine authentication scheme from options")
+	return -1, errors.New("could not determine authentication scheme from options")
 }
 
 // Factored out from NewFs so that it can be tested with opt *Options and without m configmap.Mapper
