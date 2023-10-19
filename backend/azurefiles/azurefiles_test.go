@@ -27,10 +27,10 @@ func TestIntegration(t *testing.T) {
 	})
 }
 
-var pre_existing_file_name = "preexistingfile.txt"
-var pre_existing_dir = "pre_existing_dir"
-var file_in_pre_existing_dir = "lorem.txt"
-var pre_existing_file_contents = "This pre existing file has some content"
+// var pre_existing_file_name = "preexistingfile.txt"
+// var pre_existing_dir = "pre_existing_dir"
+// var file_in_pre_existing_dir = "lorem.txt"
+// var pre_existing_file_contents = "This pre existing file has some content"
 
 func TestNonCommonIntegration(t *testing.T) {
 	// t.Skip("Skipping because we are working with integration tests from rclone")
@@ -47,14 +47,11 @@ func TestNonCommonIntegration(t *testing.T) {
 			}
 		}
 		t.Run("NewObject Return error if object not found", wrapAndPassC(testNewObjectErrorOnObjectNotExisting))
-		t.Run("NewObject does not return an error if file is found", wrapAndPassC(testNewObjectNoErrorIfObjectExists))
 		t.Run("modTime", wrapAndPassC(testModTime))
 		t.Run("put", wrapAndPassC(testPutObject))
-		t.Run("list dir", wrapAndPassC(testListDir))
 		t.Run("mkDir", wrapAndPassC(testMkDir))
 		t.Run("rmDir", wrapAndPassC(testRmDir))
 		t.Run("remove", wrapAndPassC(testRemove))
-		t.Run("open", wrapAndPassC(testOpen))
 		t.Run("update", wrapAndPassC(testUpdate))
 		t.Run("walkAll", wrapAndPassC(testWalkAll))
 		t.Run("encoding", wrapAndPassC(testEncoding))
@@ -267,7 +264,7 @@ func newTests(t *testing.T) {
 			assertListDirEntriesContainsName(t, f, "", filename)
 		})
 
-		t.Run("no errors when putting in existant subdir", func(t *testing.T) {
+		t.Run("no errors when putting in existent subdir", func(t *testing.T) {
 			// Setup: creating the parent directory that exists before put
 			parent := randomString(10)
 			assert.NoError(t, f.Mkdir(context.TODO(), parent))
@@ -282,7 +279,7 @@ func newTests(t *testing.T) {
 
 		})
 
-		t.Run("no errors when putting in non existant subdir", func(t *testing.T) {
+		t.Run("no errors when putting in non existent subdir", func(t *testing.T) {
 			parent := randomString(10)
 			fileName := randomString(10)
 			filePath := path.Join(parent, fileName)

@@ -16,8 +16,8 @@ import (
 	"github.com/rclone/rclone/fs/hash"
 )
 
-const SLEEP_DURATION_BW_RECURSIVE_MKDIR_PUT_CALLS = time.Millisecond * 500
-const FOUR_TB_IN_BYTES = 4398046511104
+const sleepDurationBetweenRecursiveMkdirPutCalls = time.Millisecond * 500
+const fourTbInBytes = 4398046511104
 
 // NewObject finds the Object at remote.  If it can't be found
 // it returns the error fs.ErrorObjectNotFound.
@@ -78,8 +78,8 @@ func (f *Fs) mkdirRelativeToRootOfShare(ctx context.Context, fullPathRelativeToS
 		if makeParentErr != nil {
 			return fmt.Errorf("could not make parent of %s : %w", fp, makeParentErr)
 		}
-		log.Printf("Mkdir: waiting for %s after making parent=%s", SLEEP_DURATION_BW_RECURSIVE_MKDIR_PUT_CALLS.String(), parentDir)
-		time.Sleep(SLEEP_DURATION_BW_RECURSIVE_MKDIR_PUT_CALLS)
+		log.Printf("Mkdir: waiting for %s after making parent=%s", sleepDurationBetweenRecursiveMkdirPutCalls.String(), parentDir)
+		time.Sleep(sleepDurationBetweenRecursiveMkdirPutCalls)
 		return f.mkdirRelativeToRootOfShare(ctx, fp)
 	} else if fileerror.HasCode(createDirErr, fileerror.ResourceAlreadyExists) {
 		return nil
@@ -107,21 +107,20 @@ func (f *Fs) Rmdir(ctx context.Context, remote string) error {
 
 }
 
-// Copied mostly from local filesystem
+// Put the object
+//
+// Copies the reader in to the new object. This new object is returned.
+//
+// The new object may have been created if an error is returned
 // TODO: when file.CLient.Creat is being used, provide HTTP headesr such as content type and content MD5
 // TODO: maybe replace PUT with NewObject + Update
 // TODO: in case file is created but there is a problem on upload, what happens
 // TODO: what happens when file already exists at the location
-// Put the object
-//
-// Copy the reader in to the new object which is returned.
-//
-// The new object may have been created if an error is returned
 func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
-	if src.Size() > FOUR_TB_IN_BYTES {
+	if src.Size() > fourTbInBytes {
 		return nil, fmt.Errorf("max supported file size is 4TB. provided size is %d", src.Size())
 	} else if src.Size() < 0 {
-		// TODO: what should happend when src.Size == 0
+		// TODO: what should happened when src.Size == 0
 		return nil, fmt.Errorf("src.Size is a required to be a whole number : %d", src.Size())
 	}
 	fc := f.fileClient(src.Remote())
@@ -132,8 +131,8 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 		if mkDirErr := f.Mkdir(ctx, parentDir); mkDirErr != nil {
 			return nil, fmt.Errorf("unable to make parent directories : %w", mkDirErr)
 		}
-		log.Printf("Mkdir: waiting for %s after making parent=%s", SLEEP_DURATION_BW_RECURSIVE_MKDIR_PUT_CALLS.String(), parentDir)
-		time.Sleep(SLEEP_DURATION_BW_RECURSIVE_MKDIR_PUT_CALLS)
+		log.Printf("Mkdir: waiting for %s after making parent=%s", sleepDurationBetweenRecursiveMkdirPutCalls.String(), parentDir)
+		time.Sleep(sleepDurationBetweenRecursiveMkdirPutCalls)
 		return f.Put(ctx, in, src, options...)
 	} else if createErr != nil {
 		return nil, fmt.Errorf("unable to create file : %w", createErr)
@@ -161,6 +160,7 @@ func (f *Fs) Name() string {
 	return f.name
 }
 
+// Root of the remote (as passed into NewFs)
 func (f *Fs) Root() string {
 	return f.root
 }

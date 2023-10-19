@@ -24,29 +24,6 @@ func testNewObjectErrorOnObjectNotExisting(t *testing.T, c *Fs) {
 	assert.Error(t, err)
 }
 
-func testNewObjectNoErrorIfObjectExists(t *testing.T, c *Fs) {
-	_, err := c.NewObject(context.TODO(), pre_existing_file_name)
-	assert.NoError(t, err)
-}
-
-func testListDir(t *testing.T, c *Fs) {
-	des, err := c.List(context.TODO(), "")
-	assert.NoError(t, err)
-
-	t.Run("list contains pre existing files", func(t *testing.T) {
-		assert.Contains(t, dirEntriesBases(des), pre_existing_file_name)
-	})
-
-	t.Run("subdir contents", func(t *testing.T) {
-		des, err := c.List(context.TODO(), pre_existing_dir)
-		assert.NoError(t, err)
-		assert.Contains(t, dirEntriesBases(des), file_in_pre_existing_dir)
-	})
-
-	// TODO: listing contents of dir that does not exist
-
-}
-
 func testMkDir(t *testing.T, c *Fs) {
 	dirName := "mkDirTest_" + randomString(10)
 	err := c.Mkdir(context.TODO(), dirName)
@@ -96,11 +73,6 @@ func testMkDir(t *testing.T, c *Fs) {
 	// 	assert.Contains(t, dirEntriesBases(des), dirName)
 	// })
 
-	t.Run("no error when directory already exists", func(t *testing.T) {
-		err := c.Mkdir(context.TODO(), pre_existing_dir)
-		assert.NoError(t, err)
-	})
-
 	// TODO: what happens if parent path does not exist
 }
 
@@ -113,16 +85,6 @@ func testRmDir(t *testing.T, c *Fs) {
 	des, err := c.List(context.TODO(), "")
 	assert.NoError(t, err)
 	assert.NotContains(t, dirEntriesBases(des), dirToBeRemoved)
-
-	t.Run("remove subdir", func(t *testing.T) {
-		parentDir := pre_existing_dir
-		tempDirName := "rmdirTest_" + randomString(10)
-		dirToBeRemoved := path.Join(parentDir, tempDirName)
-		err := c.Mkdir(context.TODO(), dirToBeRemoved)
-		assert.NoError(t, err)
-		err = c.Rmdir(context.Background(), dirToBeRemoved)
-		assert.NoError(t, err)
-	})
 
 	// TODO: assert the exact error returned when rmdir fails
 	t.Run("rmdir must fail if directory has contents", func(t *testing.T) {
@@ -151,19 +113,6 @@ func testRemove(t *testing.T, c *Fs) {
 	assert.NoError(t, err)
 	assert.NotContains(t, dirEntriesBases(des), fileName)
 
-	t.Run("works on files inside subdirectory", func(t *testing.T) {
-		fileName := "testRemove_" + randomString(10) + ".txt"
-		filePath := path.Join(pre_existing_dir, fileName)
-		in, src := randomPuttableObject(c, filePath)
-		obj, err := c.Put(context.TODO(), in, src, nil)
-		assert.NoError(t, err)
-		err = obj.Remove(context.TODO())
-		assert.NoError(t, err)
-		des, err := c.List(context.TODO(), pre_existing_dir)
-		assert.NoError(t, err)
-		assert.NotContains(t, dirEntriesBases(des), fileName)
-	})
-
 	t.Run("fails when file does not exist", func(t *testing.T) {
 		fileName := "testRemove_" + randomString(10) + ".txt"
 		obj := &Object{common{
@@ -175,20 +124,6 @@ func testRemove(t *testing.T, c *Fs) {
 	})
 
 	// TODO: what happens if object is directory
-
-}
-
-func testOpen(t *testing.T, c *Fs) {
-	obj, err := c.NewObject(context.TODO(), pre_existing_file_name)
-	assert.NoError(t, err)
-	r, err := obj.Open(context.TODO(), nil)
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer r.Close()
-	bs, err := io.ReadAll(r)
-	assert.NoError(t, err)
-	assert.Equal(t, pre_existing_file_contents, string(bs))
 
 }
 

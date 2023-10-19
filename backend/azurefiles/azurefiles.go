@@ -58,6 +58,7 @@ func init() {
 	})
 }
 
+// Options defines the configuration for this backend
 type Options struct {
 	ShareName        string
 	ConnectionString string
@@ -69,15 +70,15 @@ type Options struct {
 type authenticationScheme int
 
 const (
-	AccountAndKey authenticationScheme = iota
-	ConnectionString
+	accountAndKey authenticationScheme = iota
+	connectionString
 )
 
 func authenticationSchemeFromOptions(opt *Options) (authenticationScheme, error) {
 	if opt.ConnectionString != "" {
-		return ConnectionString, nil
+		return connectionString, nil
 	} else if opt.Account != "" && opt.Key != "" {
-		return AccountAndKey, nil
+		return accountAndKey, nil
 	}
 	return -1, errors.New("could not determine authentication scheme from options")
 }
@@ -90,12 +91,12 @@ func newFsFromOptions(ctx context.Context, name, root string, opt *Options) (fs.
 	}
 	var serviceClient *service.Client
 	switch as {
-	case ConnectionString:
+	case connectionString:
 		serviceClient, err = service.NewClientFromConnectionString(opt.ConnectionString, nil)
 		if err != nil {
 			return nil, err
 		}
-	case AccountAndKey:
+	case accountAndKey:
 		skc, err := file.NewSharedKeyCredential(opt.Account, opt.Key)
 		if err != nil {
 			return nil, err
@@ -143,6 +144,7 @@ var listFilesAndDirectoriesOptions = &directory.ListFilesAndDirectoriesOptions{
 	},
 }
 
+// Fs represents a root directory inside a share. The root directory can be ""
 type Fs struct {
 	shareRootDirClient *directory.Client
 	name               string

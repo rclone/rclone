@@ -14,8 +14,6 @@ import (
 	"github.com/rclone/rclone/fs/hash"
 )
 
-const ONE_MB_IN_BYTES = 1048576
-
 // TODO: maybe use this in the result of list. or replace all instances where object instances are created
 func objectInstance(f *Fs, remote string, contentLength int64, md5Hash []byte, lwt time.Time) Object {
 	return Object{common: common{
@@ -62,6 +60,7 @@ func (o *Object) Storable() bool {
 	return true
 }
 
+// Object describes a Azure File Share File not a Directory
 type Object struct {
 	common
 }
@@ -160,7 +159,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 }
 
 func (o *Object) upload(ctx context.Context, in io.Reader, src fs.ObjectInfo, isDestNewlyCreated bool, options ...fs.OpenOption) error {
-	if src.Size() > FOUR_TB_IN_BYTES {
+	if src.Size() > fourTbInBytes {
 		return fmt.Errorf("max supported file size is 4TB. provided size is %d", src.Size())
 	} else if src.Size() < 0 {
 		return fmt.Errorf("files with unknown sizes are not supported")
