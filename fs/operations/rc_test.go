@@ -7,6 +7,8 @@ import (
 	"net/url"
 	"os"
 	"path"
+	"sort"
+	"strings"
 	"testing"
 	"time"
 
@@ -544,7 +546,7 @@ func TestUploadFile(t *testing.T) {
 	r, call := rcNewRun(t, "operations/uploadfile")
 	ctx := context.Background()
 
-	testFileName := "test.txt"
+	testFileName := "uploadfile-test.txt"
 	testFileContent := "Hello World"
 	r.WriteFile(testFileName, testFileContent, t1)
 	testItem1 := fstest.NewItem(testFileName, testFileContent, t1)
@@ -552,6 +554,10 @@ func TestUploadFile(t *testing.T) {
 
 	currentFile, err := os.Open(path.Join(r.LocalName, testFileName))
 	require.NoError(t, err)
+
+	defer func() {
+		assert.NoError(t, currentFile.Close())
+	}()
 
 	formReader, contentType, _, err := rest.MultipartUpload(ctx, currentFile, url.Values{}, "file", testFileName)
 	require.NoError(t, err)
@@ -572,10 +578,14 @@ func TestUploadFile(t *testing.T) {
 
 	assert.NoError(t, r.Fremote.Mkdir(context.Background(), "subdir"))
 
-	currentFile, err = os.Open(path.Join(r.LocalName, testFileName))
+	currentFile2, err := os.Open(path.Join(r.LocalName, testFileName))
 	require.NoError(t, err)
 
-	formReader, contentType, _, err = rest.MultipartUpload(ctx, currentFile, url.Values{}, "file", testFileName)
+	defer func() {
+		assert.NoError(t, currentFile2.Close())
+	}()
+
+	formReader, contentType, _, err = rest.MultipartUpload(ctx, currentFile2, url.Values{}, "file", testFileName)
 	require.NoError(t, err)
 
 	httpReq = httptest.NewRequest("POST", "/", formReader)
@@ -649,4 +659,123 @@ func TestRcDu(t *testing.T) {
 	assert.True(t, info.Total > info.Free)
 	assert.True(t, info.Total > info.Available)
 	assert.True(t, info.Free >= info.Available)
+}
+
+// operations/check: check the source and destination are the same
+func TestRcCheck(t *testing.T) {
+	ctx := context.Background()
+	r, call := rcNewRun(t, "operations/check")
+	r.Mkdir(ctx, r.Fremote)
+
+	MD5SUMS := `
+0ef726ce9b1a7692357ff70dd321d595  file1
+deadbeefcafe00000000000000000000  subdir/file2
+0386a8b8fcf672c326845c00ba41b9e2  subdir/subsubdir/file4
+`
+
+	file1 := r.WriteBoth(ctx, "file1", "file1 contents", t1)
+	file2 := r.WriteFile("subdir/file2", MD5SUMS, t2)
+	file3 := r.WriteObject(ctx, "subdir/subsubdir/file3", "file3 contents", t3)
+	file4a := r.WriteFile("subdir/subsubdir/file4", "file4 contents", t3)
+	file4b := r.WriteObject(ctx, "subdir/subsubdir/file4", "file4 different contents", t3)
+	// operations.HashLister(ctx, hash.MD5, false, false, r.Fremote, os.Stdout)
+
+	r.CheckLocalItems(t, file1, file2, file4a)
+	r.CheckRemoteItems(t, file1, file3, file4b)
+
+	pstring := func(items ...fstest.Item) *[]string {
+		xs := make([]string, len(items))
+		for i, item := range items {
+			xs[i] = item.Path
+		}
+		return &xs
+	}
+
+	for _, testName := range []string{"Normal", "Download"} {
+		t.Run(testName, func(t *testing.T) {
+			in := rc.Params{
+				"srcFs":        r.LocalName,
+				"dstFs":        r.FremoteName,
+				"combined":     true,
+				"missingOnSrc": true,
+				"missingOnDst": true,
+				"match":        true,
+				"differ":       true,
+				"error":        true,
+			}
+			if testName == "Download" {
+				in["download"] = true
+			}
+			out, err := call.Fn(ctx, in)
+			require.NoError(t, err)
+
+			combined := []string{
+				"= " + file1.Path,
+				"+ " + file2.Path,
+				"- " + file3.Path,
+				"* " + file4a.Path,
+			}
+			sort.Strings(combined)
+			sort.Strings(*out["combined"].(*[]string))
+			want := rc.Params{
+				"missingOnSrc": pstring(file3),
+				"missingOnDst": pstring(file2),
+				"differ":       pstring(file4a),
+				"error":        pstring(),
+				"match":        pstring(file1),
+				"combined":     &combined,
+				"status":       "3 differences found",
+				"success":      false,
+			}
+			if testName == "Normal" {
+				want["hashType"] = "md5"
+			}
+
+			assert.Equal(t, want, out)
+		})
+	}
+
+	t.Run("CheckFile", func(t *testing.T) {
+		// The checksum file is treated as the source and srcFs is not used
+		in := rc.Params{
+			"dstFs":           r.FremoteName,
+			"combined":        true,
+			"missingOnSrc":    true,
+			"missingOnDst":    true,
+			"match":           true,
+			"differ":          true,
+			"error":           true,
+			"checkFileFs":     r.LocalName,
+			"checkFileRemote": file2.Path,
+			"checkFileHash":   "md5",
+		}
+		out, err := call.Fn(ctx, in)
+		require.NoError(t, err)
+
+		combined := []string{
+			"= " + file1.Path,
+			"+ " + file2.Path,
+			"- " + file3.Path,
+			"* " + file4a.Path,
+		}
+		sort.Strings(combined)
+		sort.Strings(*out["combined"].(*[]string))
+		if strings.HasPrefix(out["status"].(string), "file not in") {
+			out["status"] = "file not in"
+		}
+		want := rc.Params{
+			"missingOnSrc": pstring(file3),
+			"missingOnDst": pstring(file2),
+			"differ":       pstring(file4a),
+			"error":        pstring(),
+			"match":        pstring(file1),
+			"combined":     &combined,
+			"hashType":     "md5",
+			"status":       "file not in",
+			"success":      false,
+		}
+
+		assert.Equal(t, want, out)
+	})
+
 }

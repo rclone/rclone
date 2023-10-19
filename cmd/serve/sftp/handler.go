@@ -83,6 +83,10 @@ func (v vfsHandler) Filecmd(r *sftp.Request) error {
 		// link.symlink = r.Filepath
 		// v.files[r.Target] = link
 		return sftp.ErrSshFxOpUnsupported
+	case "Link":
+		return sftp.ErrSshFxOpUnsupported
+	default:
+		return sftp.ErrSshFxOpUnsupported
 	}
 	return nil
 }

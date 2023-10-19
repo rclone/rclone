@@ -39,6 +39,9 @@ func TestWriteFileHandleReadonly(t *testing.T) {
 	}
 	r, vfs, fh := writeHandleCreate(t)
 
+	// Name
+	assert.Equal(t, "file1", fh.Name())
+
 	// Write a file, so underlying remote will be created
 	_, err := fh.Write([]byte("hello"))
 	assert.NoError(t, err)
