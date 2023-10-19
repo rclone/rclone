@@ -50,6 +50,12 @@ func init() {
 			Help:      `Storage Account Shared Key.`,
 			Sensitive: true,
 		}, {
+			Name: "sas_url",
+			Help: `Shared Access Signature. 
+			
+Works after allowing access to service, Container and Object resouce types`,
+			Sensitive: true,
+		}, {
 			Name:     config.ConfigEncoding,
 			Help:     config.ConfigEncodingHelp,
 			Advanced: true,
@@ -64,6 +70,7 @@ type Options struct {
 	ConnectionString string
 	Account          string
 	Key              string
+	SASUrl           string               `config:"sas_url"`
 	Enc              encoder.MultiEncoder `config:"encoding"`
 }
 
@@ -72,6 +79,7 @@ type authenticationScheme int
 const (
 	accountAndKey authenticationScheme = iota
 	connectionString
+	sasUrl
 )
 
 func authenticationSchemeFromOptions(opt *Options) (authenticationScheme, error) {
@@ -79,6 +87,8 @@ func authenticationSchemeFromOptions(opt *Options) (authenticationScheme, error)
 		return connectionString, nil
 	} else if opt.Account != "" && opt.Key != "" {
 		return accountAndKey, nil
+	} else if opt.SASUrl != "" {
+		return sasUrl, nil
 	}
 	return -1, errors.New("could not determine authentication scheme from options")
 }
@@ -105,6 +115,14 @@ func newFsFromOptions(ctx context.Context, name, root string, opt *Options) (fs.
 		serviceClient, err = service.NewClientWithSharedKeyCredential(fileURL, skc, nil)
 		if err != nil {
 			return nil, err
+		}
+	case sasUrl:
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse SAS URL: %w", err)
+		}
+		serviceClient, err = service.NewClientWithNoCredential(opt.SASUrl, nil)
+		if err != nil {
+			return nil, fmt.Errorf("unable to create SAS URL client: %w", err)
 		}
 	}
 

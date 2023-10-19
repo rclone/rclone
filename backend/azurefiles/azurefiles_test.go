@@ -451,15 +451,44 @@ func assertListDirEntriesContainsName(t *testing.T, f fs.Fs, dir string, name st
 	assert.Contains(t, dirEntriesBases(entries), name)
 }
 
-func TestNewFsWithAccountAndKey(t *testing.T) {
-	opt := &Options{
-		ShareName: "test-rclone-sep-2023",
+func TestAuth(t *testing.T) {
+	t.Skip("skipping since this requires authentication credentials")
+	shareName := "test-rclone-oct-2023"
+	testCases := []struct {
+		name    string
+		options *Options
+	}{
+		{
+			name: "ConnectionString",
+			options: &Options{
+				ShareName:        shareName,
+				ConnectionString: "",
+			},
+		},
+		{
+			name: "AccountAndKey",
+			options: &Options{
+				ShareName: shareName,
+				Account:   "",
+				Key:       "",
+			}},
+		{
+			name: "SASUrl",
+			options: &Options{
+				ShareName: shareName,
+				SASUrl:    "",
+			}},
 	}
-	fs, err := newFsFromOptions(context.TODO(), "TestAzureFiles", "", opt)
-	assert.NoError(t, err)
-	dirName := randomString(10)
-	assert.NoError(t, fs.Mkdir(context.TODO(), dirName))
-	assertListDirEntriesContainsName(t, fs, "", dirName)
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			fs, err := newFsFromOptions(context.TODO(), "TestAzureFiles", "", tc.options)
+			assert.NoError(t, err)
+			dirName := randomString(10)
+			assert.NoError(t, fs.Mkdir(context.TODO(), dirName))
+			assertListDirEntriesContainsName(t, fs, "", dirName)
+		})
+	}
 }
 
 func assertEqualSizeHashModTime(t *testing.T, exp, got fs.Object) {
