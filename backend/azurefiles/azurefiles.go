@@ -1,3 +1,4 @@
+// Package azurefiles provides an interface to Microsoft Azure Files
 package azurefiles
 
 import (
