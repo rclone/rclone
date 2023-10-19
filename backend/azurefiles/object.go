@@ -147,7 +147,6 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 	return resp.Body, nil
 }
 
-// TODO: implement options. understand purpose of options. what is the purpose of src objectInfo.
 func (o *Object) upload(ctx context.Context, in io.Reader, src fs.ObjectInfo, isDestNewlyCreated bool, options ...fs.OpenOption) error {
 	if src.Size() > FOUR_TB_IN_BYTES {
 		return fmt.Errorf("max supported file size is 4TB. provided size is %d", src.Size())
@@ -166,33 +165,27 @@ func (o *Object) upload(ctx context.Context, in io.Reader, src fs.ObjectInfo, is
 	}
 
 	var md5Hash []byte
-	computeHash := false
-	hasher := md5.New()
+	hashToBeComputed := false
 	if hashStr, err := src.Hash(ctx, hash.MD5); err != nil || hashStr == "" {
-		computeHash = true
+		hashToBeComputed = true
 	} else {
 		var decodeErr error
 		md5Hash, decodeErr = hex.DecodeString(hashStr)
 		if decodeErr != nil {
-			computeHash = true
+			hashToBeComputed = true
 			msg := fmt.Sprintf("should not happen. Error while decoding hex encoded md5 '%s'. Error is %s",
 				hashStr, decodeErr.Error())
 			slog.Error(msg)
 		}
 	}
-	if err := func() error {
-		if computeHash {
-			in = io.TeeReader(in, hasher)
-			defer func() {
-				md5Hash = hasher.Sum(nil)
-			}()
-		}
-		if err := uploadStream(ctx, fc, in, src, options...); err != nil {
-			return fmt.Errorf("while uploading %s : %w", src.Remote(), err)
-		}
-		return nil
-	}(); err != nil {
-		return err
+	var uploadErr error
+	if hashToBeComputed {
+		md5Hash, uploadErr = uploadStreamAndComputeHash(ctx, fc, in, src, options...)
+	} else {
+		uploadErr = uploadStream(ctx, fc, in, src, options...)
+	}
+	if uploadErr != nil {
+		return fmt.Errorf("while uploading %s : %w", src.Remote(), uploadErr)
 	}
 
 	modTime := src.ModTime(ctx)
@@ -228,8 +221,16 @@ func uploadStream(ctx context.Context, fc *file.Client, in io.Reader, src fs.Obj
 	return nil
 }
 
-// called upload since it indicates that things will be modified on the server
-// TODO: needs to be tested
+func uploadStreamAndComputeHash(ctx context.Context, fc *file.Client, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) ([]byte, error) {
+	hasher := md5.New()
+	teeReader := io.TeeReader(in, hasher)
+	err := uploadStream(ctx, fc, teeReader, src, options...)
+	if err != nil {
+		return []byte{}, err
+	}
+	return hasher.Sum(nil), nil
+
+}
 func uploadSizeHashLWT(ctx context.Context, fc *file.Client, size int64, hash []byte, lwt time.Time) error {
 	smbProps := file.SMBProperties{
 		LastWriteTime: &lwt,
