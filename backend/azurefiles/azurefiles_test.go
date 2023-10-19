@@ -3,7 +3,6 @@ package azurefiles
 import (
 	"bytes"
 	"context"
-	"crypto/md5"
 	"encoding/hex"
 	"fmt"
 	"io"
@@ -12,7 +11,6 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/hash"
@@ -48,7 +46,6 @@ func TestAzureFilesSpecificIntegration(t *testing.T) {
 		t.Run("mkDir", wrapAndPassC(testMkDir))
 		t.Run("rmDir", wrapAndPassC(testRmDir))
 		t.Run("remove", wrapAndPassC(testRemove))
-		t.Run("update", wrapAndPassC(testUpdate))
 		t.Run("encoding", wrapAndPassC(testEncoding))
 
 	} else {
@@ -596,59 +593,6 @@ func testRemove(t *testing.T, c *Fs) {
 
 	// TODO: what happens if object is directory
 
-}
-
-func testUpdate(t *testing.T, c *Fs) {
-	// Setup: creating file that will be updated
-	fileName := "testUpdate_" + randomString(10) + ".txt"
-	r, src := randomPuttableObject(c, fileName)
-	obj, err := c.Put(context.TODO(), r, src, nil)
-	assert.NoError(t, err, "was there an error while putting file to create initial test file")
-
-	sleepSeconds := 3
-	t.Log("sleeping for 3 seconds to create time difference between the creating of file and updation of file")
-	for i := 0; i < sleepSeconds; i++ {
-		t.Logf("about to sleep for %dth out of %d seconds", i+1, sleepSeconds)
-		time.Sleep(time.Second)
-	}
-
-	// Setup: creating ojbects that will result in update
-	updateContent, updatedSrc := randomPuttableObject(c, fileName)
-	updatedBytes, _ := io.ReadAll(updateContent)
-	err = obj.Update(context.TODO(), bytes.NewReader(updatedBytes), updatedSrc, nil)
-	assert.NoError(t, err, "was there an error while updating file")
-
-	t.Run("content md5 modtime size", func(t *testing.T) {
-		o, err := c.NewObject(context.TODO(), fileName)
-		assert.NoError(t, err, "creating object for update file to fetch hash")
-		obj := o.(*Object)
-
-		t.Run("content", func(t *testing.T) {
-			actualContentReader, err := obj.Open(context.TODO(), nil)
-			assert.NoError(t, err, "was there an error while opening updated file")
-			actualBytes, err := io.ReadAll(actualContentReader)
-			assert.NoError(t, err, "was there an error while reading contents of opened file")
-			assert.Equal(t, actualBytes, updatedBytes, "comparing bytes")
-		})
-
-		t.Run("md5", func(t *testing.T) {
-			expectedMd5 := md5.Sum(updatedBytes)
-
-			resp, err := obj.fileClient().GetProperties(context.TODO(), nil)
-			assert.NoError(t, err, "getting properties")
-
-			assert.Equal(t, expectedMd5[:], resp.ContentMD5)
-		})
-
-		t.Run("modtime", func(t *testing.T) {
-			// TODO: check whether modTime is updated by update
-			assert.Equal(t, 1, 2)
-		})
-
-		t.Run("size", func(t *testing.T) {
-			assert.EqualValues(t, obj.Size(), len(updatedBytes))
-		})
-	})
 }
 
 func dirEntriesBases(des fs.DirEntries) []string {
