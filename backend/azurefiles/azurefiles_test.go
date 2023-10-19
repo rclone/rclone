@@ -74,7 +74,7 @@ func testPutObject(t *testing.T, f *Fs) {
 	t.Run("modtime is correctly set", func(t *testing.T) {
 		expectedTime := src.properties.lastWriteTime
 		gotTime := obj.ModTime(context.TODO())
-		assert.Equal(t, expectedTime, gotTime, "modTime is correctly set")
+		assert.Equal(t, expectedTime.UTC(), gotTime.UTC(), "modTime is correctly set")
 	})
 
 	assert.Equal(t, obj.Size(), src.properties.contentLength, "size is correctly set")
