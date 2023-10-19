@@ -150,7 +150,7 @@ backends:
    fastlist: false
  - backend:  "imagekit"
    remote:   "TestImageKit:"
-   fastlist: true
+   fastlist: false
  - backend:  "internetarchive"
    remote:   "TestIA:rclone-integration-test"
    fastlist: true

@@ -37,7 +37,7 @@ type AITag struct {
 
 // File represents media library File details.
 type File struct {
-	FileId            string            `json:"fileId"`
+	FileID            string            `json:"fileId"`
 	Name              string            `json:"name"`
 	FilePath          string            `json:"filePath"`
 	Type              string            `json:"type"`
@@ -128,7 +128,7 @@ type JobStatus struct {
 // File represents media library File details.
 func (ik *ImageKit) File(ctx context.Context, fileId string) (*http.Response, *File, error) {
 	data := &File{}
-	response, err := ik.HttpClient.CallJSON(ctx, &rest.Opts{
+	response, err := ik.HTTPClient.CallJSON(ctx, &rest.Opts{
 		Method:       "GET",
 		Path:         fmt.Sprintf("/files/%s/details", fileId),
 		RootURL:      ik.Prefix,
@@ -166,7 +166,7 @@ func (ik *ImageKit) Files(ctx context.Context, params FilesOrFolderParam, includ
 
 	data := &[]File{}
 
-	response, err := ik.HttpClient.CallJSON(ctx, &rest.Opts{
+	response, err := ik.HTTPClient.CallJSON(ctx, &rest.Opts{
 		Method:     "GET",
 		Path:       "/files",
 		RootURL:    ik.Prefix,
@@ -184,7 +184,7 @@ func (ik *ImageKit) Files(ctx context.Context, params FilesOrFolderParam, includ
 	return response, data, err
 }
 
-// DeleteFile removes file by FileId from media library
+// DeleteFile removes file by FileID from media library
 func (ik *ImageKit) DeleteFile(ctx context.Context, fileId string) (*http.Response, error) {
 	var err error
 
@@ -192,7 +192,7 @@ func (ik *ImageKit) DeleteFile(ctx context.Context, fileId string) (*http.Respon
 		return nil, errors.New("fileId can not be empty")
 	}
 
-	response, err := ik.HttpClient.CallJSON(ctx, &rest.Opts{
+	response, err := ik.HTTPClient.CallJSON(ctx, &rest.Opts{
 		Method:  "DELETE",
 		Path:    fmt.Sprintf("/files/%s", fileId),
 		RootURL: ik.Prefix,
@@ -226,7 +226,7 @@ func (ik *ImageKit) Folders(ctx context.Context, params FilesOrFolderParam) (*ht
 
 	data := &[]Folder{}
 
-	resp, err := ik.HttpClient.CallJSON(ctx, &rest.Opts{
+	resp, err := ik.HTTPClient.CallJSON(ctx, &rest.Opts{
 		Method:     "GET",
 		Path:       "/files",
 		RootURL:    ik.Prefix,
@@ -252,7 +252,7 @@ func (ik *ImageKit) CreateFolder(ctx context.Context, param CreateFolderParam) (
 		return nil, err
 	}
 
-	response, err := ik.HttpClient.CallJSON(ctx, &rest.Opts{
+	response, err := ik.HTTPClient.CallJSON(ctx, &rest.Opts{
 		Method:  "POST",
 		Path:    "/folder",
 		RootURL: ik.Prefix,
@@ -277,7 +277,7 @@ func (ik *ImageKit) DeleteFolder(ctx context.Context, param DeleteFolderParam) (
 		return nil, err
 	}
 
-	response, err := ik.HttpClient.CallJSON(ctx, &rest.Opts{
+	response, err := ik.HTTPClient.CallJSON(ctx, &rest.Opts{
 		Method:  "DELETE",
 		Path:    "/folder",
 		RootURL: ik.Prefix,
@@ -302,7 +302,7 @@ func (ik *ImageKit) MoveFolder(ctx context.Context, param MoveFolderParam) (*htt
 		return nil, nil, err
 	}
 
-	resp, err := ik.HttpClient.CallJSON(ctx, &rest.Opts{
+	resp, err := ik.HTTPClient.CallJSON(ctx, &rest.Opts{
 		Method:  "PUT",
 		Path:    "bulkJobs/moveFolder",
 		RootURL: ik.Prefix,
@@ -327,7 +327,7 @@ func (ik *ImageKit) BulkJobStatus(ctx context.Context, jobId string) (*http.Resp
 		return nil, nil, errors.New("jobId can not be blank")
 	}
 
-	resp, err := ik.HttpClient.CallJSON(ctx, &rest.Opts{
+	resp, err := ik.HTTPClient.CallJSON(ctx, &rest.Opts{
 		Method:  "GET",
 		Path:    "bulkJobs/" + jobId,
 		RootURL: ik.Prefix,

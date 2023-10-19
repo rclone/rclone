@@ -18,10 +18,10 @@ const (
 	QUERY trpos = "query"
 )
 
-type UrlParam struct {
+type URLParam struct {
 	Path                string
 	Src                 string
-	UrlEndpoint         string
+	URLEndpoint         string
 	Transformations     []map[string]any
 	NamedTransformation string // n-trname
 
@@ -98,15 +98,15 @@ var TransformationCode = map[string]string{
 	"original":                  "orig",
 }
 
-// Url generates url from UrlParam
-func (ik *ImageKit) Url(params UrlParam) (string, error) {
+// URL generates url from URLParam
+func (ik *ImageKit) URL(params URLParam) (string, error) {
 	var resultUrl string
 	var url *neturl.URL
 	var err error
-	var endpoint = params.UrlEndpoint
+	var endpoint = params.URLEndpoint
 
 	if endpoint == "" {
-		endpoint = ik.UrlEndpoint
+		endpoint = ik.URLEndpoint
 	}
 
 	endpoint = strings.TrimRight(endpoint, "/") + "/"

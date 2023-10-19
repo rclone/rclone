@@ -37,6 +37,61 @@ var systemMetadataInfo = map[string]fs.MetadataHelp{
 		Example:  "2006-01-02T15:04:05.999999999Z07:00",
 		ReadOnly: true,
 	},
+	"size": {
+		Help:     "Size of the object in bytes",
+		Type:     "int64",
+		ReadOnly: true,
+	},
+	"file-type": {
+		Help:     "Type of the file",
+		Type:     "string",
+		Example:  "image",
+		ReadOnly: true,
+	},
+	"height": {
+		Help:     "Height of the image or video in pixels",
+		Type:     "int",
+		ReadOnly: true,
+	},
+	"width": {
+		Help:     "Width of the image or video in pixels",
+		Type:     "int",
+		ReadOnly: true,
+	},
+	"has-alpha": {
+		Help:     "Whether the image has alpha channel or not",
+		Type:     "bool",
+		ReadOnly: true,
+	},
+	"tags": {
+		Help:     "Tags associated with the file",
+		Type:     "string",
+		Example:  "tag1,tag2",
+		ReadOnly: true,
+	},
+	"google-tags": {
+		Help:     "AI generated tags by Google Cloud Vision associated with the file",
+		Type:     "string",
+		Example:  "tag1,tag2",
+		ReadOnly: true,
+	},
+	"aws-tags": {
+		Help:     "AI generated tags by AWS Rekognition associated with the file",
+		Type:     "string",
+		Example:  "tag1,tag2",
+		ReadOnly: true,
+	},
+	"is-private-file": {
+		Help:     "Whether the file is private or not",
+		Type:     "bool",
+		ReadOnly: true,
+	},
+	"custom-coordinates": {
+		Help:     "Custom coordinates of the file",
+		Type:     "string",
+		Example:  "0,0,100,100",
+		ReadOnly: true,
+	},
 }
 
 // Register with Fs
@@ -56,14 +111,16 @@ func init() {
 				Required: true,
 			},
 			{
-				Name:     "public_key",
-				Help:     "You can find your ImageKit.io public key in your [dashboard](https://imagekit.io/dashboard/developer/api-keys)",
-				Required: true,
+				Name:      "public_key",
+				Help:      "You can find your ImageKit.io public key in your [dashboard](https://imagekit.io/dashboard/developer/api-keys)",
+				Required:  true,
+				Sensitive: true,
 			},
 			{
-				Name:     "private_key",
-				Help:     "You can find your ImageKit.io private key in your [dashboard](https://imagekit.io/dashboard/developer/api-keys)",
-				Required: true,
+				Name:      "private_key",
+				Help:      "You can find your ImageKit.io private key in your [dashboard](https://imagekit.io/dashboard/developer/api-keys)",
+				Required:  true,
+				Sensitive: true,
 			},
 			{
 				Name:     "only_signed",
@@ -114,7 +171,7 @@ type Options struct {
 type Fs struct {
 	name     string           // name of remote
 	root     string           // root path
-	opt      *Options         // parsed options
+	opt      Options          // parsed options
 	features *fs.Features     // optional features
 	ik       *client.ImageKit // ImageKit client
 	pacer    *fs.Pacer        // pacer for API calls
@@ -132,15 +189,6 @@ type Object struct {
 	meta        map[string]string // The object metadata if known - may be nil - with lower case keys
 }
 
-// Check the interfaces are satisfied.
-var (
-	_ fs.Fs           = &Fs{}
-	_ fs.Purger       = &Fs{}
-	_ fs.PublicLinker = &Fs{}
-	_ fs.Object       = &Object{}
-	_ fs.Copier       = &Fs{}
-)
-
 func NewFs(ctx context.Context, name string, root string, m configmap.Mapper) (fs.Fs, error) {
 	opt := new(Options)
 	err := configstruct.Set(m, opt)
@@ -150,28 +198,23 @@ func NewFs(ctx context.Context, name string, root string, m configmap.Mapper) (f
 	}
 
 	ik, err := client.New(ctx, client.NewParams{
-		UrlEndpoint: opt.Endpoint,
+		URLEndpoint: opt.Endpoint,
 		PublicKey:   opt.PublicKey,
 		PrivateKey:  opt.PrivateKey,
 	})
 
 	if err != nil {
-		fs.Debugf(err, "Failed to create ImageKit client")
 		return nil, err
 	}
 
-	fs.Debugf(ik, "ImageKit client created")
-
 	f := &Fs{
 		name:  name,
-		opt:   opt,
+		opt:   *opt,
 		ik:    ik,
 		pacer: fs.NewPacer(ctx, pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant))),
 	}
 
 	f.root = path.Join("/", root)
-
-	fs.Debugf("Root is %q", f.root)
 
 	f.features = (&fs.Features{
 		CaseInsensitive:         false,
@@ -255,8 +298,6 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 
 	remote = f.EncodePath(remote)
 
-	fs.Debugf(remote, "Listing directory")
-
 	if remote != "/" {
 
 		parentFolderPath := remote[:strings.LastIndex(remote, "/")+1]
@@ -336,8 +377,6 @@ func (f *Fs) newObject(ctx context.Context, remote string, file client.File) *Ob
 func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 	r := path.Join(f.root, remote)
 
-	fs.Debugf(r, "Getting object")
-
 	folderPath := f.EncodePath(r[:strings.LastIndex(r, "/")+1])
 	fileName := f.EncodeFileName(r[strings.LastIndex(r, "/")+1:])
 
@@ -375,28 +414,21 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 	remote := path.Join(f.root, dir)
 
-	fs.Debugf(remote, "Creating directory")
-
 	parentFolderPath := f.EncodePath(remote[:strings.LastIndex(remote, "/")+1])
 	folderName := f.EncodePath(remote[strings.LastIndex(remote, "/")+1:])
 
-	_, e := f.ik.CreateFolder(ctx, client.CreateFolderParam{
+	_, err := f.ik.CreateFolder(ctx, client.CreateFolderParam{
 		ParentFolderPath: parentFolderPath,
 		FolderName:       folderName,
 	})
 
-	if e != nil {
-		return e
-	}
-
-	return nil
+	return err
 }
 
 // Rmdir removes the directory (container, bucket) if empty
 //
 // Return an error if it doesn't exist or isn't empty
 func (f *Fs) Rmdir(ctx context.Context, dir string) error {
-	fs.Debugf(dir, "Removing directory")
 
 	entries, err := f.List(ctx, dir)
 
@@ -429,7 +461,6 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 // deleting all the files quicker than just running Remove() on the
 // result of List()
 func (f *Fs) Purge(ctx context.Context, dir string) error {
-	fs.Debugf(dir, "Purging directory")
 
 	remote := path.Join(f.root, dir)
 
@@ -457,8 +488,6 @@ func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, 
 
 	fileRemote := path.Join(f.root, remote)
 
-	fs.Debugf(fileRemote, "Getting object")
-
 	folderPath := f.EncodePath(fileRemote[:strings.LastIndex(fileRemote, "/")+1])
 	fileName := f.EncodeFileName(fileRemote[strings.LastIndex(fileRemote, "/")+1:])
 
@@ -468,7 +497,7 @@ func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, 
 		return "", fs.ErrorObjectNotFound
 	}
 
-	url, err := f.ik.Url(client.UrlParam{
+	url, err := f.ik.URL(client.URLParam{
 		Src:           file.Url,
 		Signed:        *file.IsPrivateFile || f.opt.OnlySigned,
 		ExpireSeconds: int64(expireSeconds),
@@ -552,7 +581,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 		}
 	}
 
-	url, err := o.fs.ik.Url(client.UrlParam{
+	url, err := o.fs.ik.URL(client.URLParam{
 		Src:    o.file.Url,
 		Signed: *o.file.IsPrivateFile || o.fs.opt.OnlySigned,
 		QueryParameters: map[string]string{
@@ -603,7 +632,6 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 // But for unknown-sized objects (indicated by src.Size() == -1), Upload should either
 // return an error or update the object properly (rather than e.g. calling panic).
 func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {
-	fs.Debugf(o.remote, "Updating file")
 
 	srcRemote := o.Remote()
 
@@ -624,7 +652,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		return err
 	}
 
-	fileId := res.FileId
+	fileId := res.FileID
 
 	_, file, err := o.fs.ik.File(ctx, fileId)
 
@@ -640,9 +668,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 // Removes this object
 func (o *Object) Remove(ctx context.Context) error {
 
-	fs.Debugf(o.remote, "Removing file: %s", o.file.FileId)
-
-	_, e := o.fs.ik.DeleteFile(ctx, o.file.FileId)
+	_, e := o.fs.ik.DeleteFile(ctx, o.file.FileID)
 
 	if e != nil {
 		return e
@@ -657,8 +683,6 @@ func (o *Object) SetModTime(ctx context.Context, t time.Time) error {
 }
 
 func uploadFile(ctx context.Context, f *Fs, in io.Reader, srcRemote string, options ...fs.OpenOption) (fs.Object, error) {
-
-	fs.Debugf(srcRemote, "Uploading file")
 
 	remote := path.Join(f.root, srcRemote)
 	folderPath := f.EncodePath(remote[:strings.LastIndex(remote, "/")+1])
@@ -680,46 +704,29 @@ func uploadFile(ctx context.Context, f *Fs, in io.Reader, srcRemote string, opti
 	return f.NewObject(ctx, srcRemote)
 }
 
-func (o *Object) readMetaData(ctx context.Context) error {
+func (o *Object) Metadata(ctx context.Context) (metadata fs.Metadata, err error) {
 
-	if o.meta != nil {
-		return nil
-	}
-
-	meta := make(map[string]string)
-
-	meta["btime"] = o.file.CreatedAt.Format(time.RFC3339)
-
-	meta["size"] = strconv.FormatUint(o.file.Size, 10)
-
-	meta["fileType"] = string(o.file.FileType)
-	meta["height"] = strconv.Itoa(o.file.Height)
-	meta["width"] = strconv.Itoa(o.file.Width)
-	meta["hasAlpha"] = strconv.FormatBool(o.file.HasAlpha)
+	metadata.Set("btime", o.file.CreatedAt.Format(time.RFC3339))
+	metadata.Set("size", strconv.FormatUint(o.file.Size, 10))
+	metadata.Set("file-type", string(o.file.FileType))
+	metadata.Set("height", strconv.Itoa(o.file.Height))
+	metadata.Set("width", strconv.Itoa(o.file.Width))
+	metadata.Set("has-alpha", strconv.FormatBool(o.file.HasAlpha))
 
 	for k, v := range o.file.EmbeddedMetadata {
-		switch v := v.(type) {
-		case string:
-			meta[k] = v
-		case float64:
-			meta[k] = strconv.FormatFloat(v, 'f', -1, 64)
-		case bool:
-			meta[k] = strconv.FormatBool(v)
-		default:
-			meta[k] = fmt.Sprintf("%v", v)
-		}
+		metadata.Set(k, fmt.Sprint(v))
 	}
 
 	if o.file.Tags != nil {
-		meta["tags"] = strings.Join(o.file.Tags, ",")
+		metadata.Set("tags", strings.Join(o.file.Tags, ","))
 	}
 
 	if o.file.CustomCoordinates != nil {
-		meta["customCoordinates"] = *o.file.CustomCoordinates
+		metadata.Set("custom-coordinates", *o.file.CustomCoordinates)
 	}
 
 	if o.file.IsPrivateFile != nil {
-		meta["isPrivateFile"] = strconv.FormatBool(*o.file.IsPrivateFile)
+		metadata.Set("is-private-file", strconv.FormatBool(*o.file.IsPrivateFile))
 	}
 
 	if o.file.AITags != nil {
@@ -735,40 +742,18 @@ func (o *Object) readMetaData(ctx context.Context) error {
 		}
 
 		if len(googleTags) > 0 {
-			meta["googleTags"] = strings.Join(googleTags, ",")
+			metadata.Set("google-tags", strings.Join(googleTags, ","))
 		}
 
 		if len(awsTags) > 0 {
-			meta["awsTags"] = strings.Join(awsTags, ",")
-		}
-	}
-
-	o.meta = meta
-
-	return nil
-
-}
-
-func (o *Object) Metadata(ctx context.Context) (metadata fs.Metadata, err error) {
-
-	err = o.readMetaData(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	metadata = make(fs.Metadata, len(o.meta))
-
-	for k, v := range o.meta {
-		switch k {
-		default:
-			metadata[k] = v
+			metadata.Set("aws-tags", strings.Join(awsTags, ","))
 		}
 	}
 
 	return metadata, nil
 }
 
-// Move src to this remote using server-side move operations.
+// Copy src to this remote using server-side move operations.
 //
 // This is stored with the remote path given.
 //
@@ -780,7 +765,6 @@ func (o *Object) Metadata(ctx context.Context) (metadata fs.Metadata, err error)
 func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
 	srcObj, ok := src.(*Object)
 	if !ok {
-		fs.Debugf(src, "Can't copy - not same remote type")
 		return nil, fs.ErrorCantMove
 	}
 
@@ -792,3 +776,12 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 
 	return uploadFile(ctx, f, file, remote)
 }
+
+// Check the interfaces are satisfied.
+var (
+	_ fs.Fs           = &Fs{}
+	_ fs.Purger       = &Fs{}
+	_ fs.PublicLinker = &Fs{}
+	_ fs.Object       = &Object{}
+	_ fs.Copier       = &Fs{}
+)

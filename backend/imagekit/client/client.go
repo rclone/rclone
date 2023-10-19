@@ -16,16 +16,16 @@ type ImageKit struct {
 	UploadTimeout int64
 	PrivateKey    string
 	PublicKey     string
-	UrlEndpoint   string
-	HttpClient    *rest.Client
-	ApiHeaders    map[string]string
+	URLEndpoint   string
+	HTTPClient    *rest.Client
+	APIHeaders    map[string]string
 }
 
 // NewParams is a struct to define parameters to imagekit
 type NewParams struct {
 	PrivateKey  string
 	PublicKey   string
-	UrlEndpoint string
+	URLEndpoint string
 }
 
 // New returns ImageKit object from environment variables
@@ -33,14 +33,14 @@ func New(ctx context.Context, params NewParams) (*ImageKit, error) {
 
 	privateKey := params.PrivateKey
 	publicKey := params.PublicKey
-	endpointUrl := params.UrlEndpoint
+	endpointURL := params.URLEndpoint
 
 	switch {
 	case privateKey == "":
 		return nil, fmt.Errorf("ImageKit.io URL endpoint is required")
 	case publicKey == "":
 		return nil, fmt.Errorf("ImageKit.io public key is required")
-	case endpointUrl == "":
+	case endpointURL == "":
 		return nil, fmt.Errorf("ImageKit.io private key is required")
 	}
 
@@ -58,9 +58,9 @@ func New(ctx context.Context, params NewParams) (*ImageKit, error) {
 		UploadTimeout: 3600,
 		PrivateKey:    params.PrivateKey,
 		PublicKey:     params.PublicKey,
-		UrlEndpoint:   params.UrlEndpoint,
-		HttpClient:    client,
-		ApiHeaders: map[string]string{
+		URLEndpoint:   params.URLEndpoint,
+		HTTPClient:    client,
+		APIHeaders: map[string]string{
 			"Accept":     "application/json",
 			"User-Agent": "rclone/imagekit",
 		},

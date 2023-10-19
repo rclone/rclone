@@ -19,7 +19,7 @@ type UploadParam struct {
 	IsPrivateFile           *bool          `json:"isPrivateFile,omitempty"` // default: false
 	CustomCoordinates       string         `json:"customCoordinates,omitempty"`
 	ResponseFields          string         `json:"responseFields,omitempty"`
-	WebhookUrl              string         `json:"webhookUrl,omitempty"`
+	WebhookURL              string         `json:"webhookUrl,omitempty"`
 	OverwriteFile           *bool          `json:"overwriteFile,omitempty"`
 	OverwriteAITags         *bool          `json:"overwriteAITags,omitempty"`
 	OverwriteTags           *bool          `json:"overwriteTags,omitempty"`
@@ -28,10 +28,10 @@ type UploadParam struct {
 }
 
 type UploadResult struct {
-	FileId       string            `json:"fileId"`
+	FileID       string            `json:"fileId"`
 	Name         string            `json:"name"`
-	Url          string            `json:"url"`
-	ThumbnailUrl string            `json:"thumbnailUrl"`
+	URL          string            `json:"url"`
+	ThumbnailURL string            `json:"thumbnailUrl"`
 	Height       int               `json:"height"`
 	Width        int               `json:"Width"`
 	Size         uint64            `json:"size"`
@@ -77,7 +77,7 @@ func (ik *ImageKit) Upload(ctx context.Context, file io.Reader, param UploadPara
 		ContentType: contentType,
 	}
 
-	resp, err := ik.HttpClient.CallJSON(ctx, &opts, nil, response)
+	resp, err := ik.HTTPClient.CallJSON(ctx, &opts, nil, response)
 
 	if err != nil {
 		return resp, response, err
