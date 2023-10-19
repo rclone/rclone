@@ -19,7 +19,7 @@ func (d *Directory) Items() int64 {
 	return -1
 }
 
-// returns "" can be implemented and should be implemented
+// ID returns empty string. Can be implemented as part of IDer
 func (d *Directory) ID() string {
 	return ""
 }

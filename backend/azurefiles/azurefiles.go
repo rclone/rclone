@@ -53,7 +53,7 @@ func init() {
 			Name: "sas_url",
 			Help: `Shared Access Signature. 
 			
-Works after allowing access to service, Container and Object resouce types`,
+Works after allowing access to service, Container and Object resource types`,
 			Sensitive: true,
 		}, {
 			Name:     config.ConfigEncoding,
@@ -79,7 +79,7 @@ type authenticationScheme int
 const (
 	accountAndKey authenticationScheme = iota
 	connectionString
-	sasUrl
+	sasURL
 )
 
 func authenticationSchemeFromOptions(opt *Options) (authenticationScheme, error) {
@@ -88,7 +88,7 @@ func authenticationSchemeFromOptions(opt *Options) (authenticationScheme, error)
 	} else if opt.Account != "" && opt.Key != "" {
 		return accountAndKey, nil
 	} else if opt.SASUrl != "" {
-		return sasUrl, nil
+		return sasURL, nil
 	}
 	return -1, errors.New("could not determine authentication scheme from options")
 }
@@ -116,7 +116,7 @@ func newFsFromOptions(ctx context.Context, name, root string, opt *Options) (fs.
 		if err != nil {
 			return nil, err
 		}
-	case sasUrl:
+	case sasURL:
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse SAS URL: %w", err)
 		}

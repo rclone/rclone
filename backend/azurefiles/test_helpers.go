@@ -16,7 +16,7 @@ func randomString(charCount int) string {
 	strBldr := strings.Builder{}
 	for i := 0; i < charCount; i++ {
 		randPos := rand.Int63n(52)
-		strBldr.WriteByte(byte(chars[randPos]))
+		strBldr.WriteByte(chars[randPos])
 	}
 	return strBldr.String()
 }
