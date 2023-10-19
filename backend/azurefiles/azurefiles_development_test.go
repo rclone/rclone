@@ -140,9 +140,9 @@ func testUpdate(t *testing.T, c *Fs) {
 	}
 
 	// Setup: creating ojbects that will result in update
-	updateContent, _ := randomPuttableObject(c, fileName)
+	updateContent, updatedSrc := randomPuttableObject(c, fileName)
 	updatedBytes, _ := io.ReadAll(updateContent)
-	err = obj.Update(context.TODO(), bytes.NewReader(updatedBytes), src, nil)
+	err = obj.Update(context.TODO(), bytes.NewReader(updatedBytes), updatedSrc, nil)
 	assert.NoError(t, err, "was there an error while updating file")
 
 	t.Run("content md5 modtime size", func(t *testing.T) {
