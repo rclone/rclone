@@ -2896,6 +2896,7 @@ func s3Connection(ctx context.Context, opt *Options, client *http.Client) (*s3.S
 	case v.AccessKeyID == "" && v.SecretAccessKey == "":
 		// if no access key/secret and iam is explicitly disabled then fall back to anon interaction
 		cred = credentials.AnonymousCredentials
+		fs.Debugf(nil, "Using anonymous credentials - did you mean to set env_auth=true?")
 	case v.AccessKeyID == "":
 		return nil, nil, errors.New("access_key_id not found")
 	case v.SecretAccessKey == "":
