@@ -16,6 +16,7 @@ import (
 
 const ONE_MB_IN_BYTES = 1048576
 
+// TODO: maybe use this in the result of list. or replace all instances where object instances are created
 func objectInstance(f *Fs, remote string, contentLength int64, md5Hash []byte, lwt time.Time) Object {
 	return Object{common: common{
 		f:      f,
@@ -28,19 +29,20 @@ func objectInstance(f *Fs, remote string, contentLength int64, md5Hash []byte, l
 	}}
 }
 
-// What happens of content length is empty
+// Size of object in bytes
 func (o *Object) Size() int64 {
 	return o.properties.contentLength
 }
 
-// TODO: make this readonly
+// Fs returns the parent Fs
 func (o *Object) Fs() fs.Info {
 	return o.f
 }
 
-// Returning hex encoded string because rclone/hash/multihasher uses hex encoding
-// Network request has to be made becaue the listing directories and files does not
-// return MD5 hash
+// Hash returns the MD5 of an object returning a lowercase hex string
+//
+// May make a network request becaue the [fs.List] method does not
+// return MD5 hashes for DirEntry
 func (o *Object) Hash(ctx context.Context, ty hash.Type) (string, error) {
 	if ty != hash.MD5 {
 		return "", hash.ErrUnsupported
@@ -55,7 +57,7 @@ func (o *Object) Hash(ctx context.Context, ty hash.Type) (string, error) {
 	return hex.EncodeToString(o.common.properties.md5Hash), nil
 }
 
-// TODO: what does this mean?
+// Storable returns a boolean showing whether this object storable
 func (o *Object) Storable() bool {
 	return true
 }
@@ -94,11 +96,19 @@ func (o *Object) SetModTime(ctx context.Context, t time.Time) error {
 	return nil
 }
 
-// TODO: since modTime no longer depends on metadata, metadata needs to be removed
+// ModTime returns the modification time of the object
+//
+// Returns time.Now() if not present
+// TODO: convert o.lastWriteTime to *time.Time so that one can know when it has
+// been explicitly set
 func (o *Object) ModTime(ctx context.Context) time.Time {
+	if o.lastWriteTime.Unix() <= 1 {
+		return time.Now()
+	}
 	return o.lastWriteTime
 }
 
+// Remove an object
 func (o *Object) Remove(ctx context.Context) error {
 	// TODO: should the options for delete not be nil. Depends on behaviour expected by consumers
 	if _, err := o.fileClient().Delete(ctx, nil); err != nil {
@@ -107,6 +117,8 @@ func (o *Object) Remove(ctx context.Context) error {
 	return nil
 }
 
+// Open an object for read
+//
 // TODO: check for mandatory options and the other options
 func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadCloser, error) {
 	downloadStreamOptions := file.DownloadStreamOptions{}
@@ -199,11 +211,10 @@ func (o *Object) upload(ctx context.Context, in io.Reader, src fs.ObjectInfo, is
 	return nil
 }
 
-// Update the object with the contents of the io.Reader, modTime and size
+// Update the object with the contents of the io.Reader, modTime, size and MD5 hash
+// Does not create a new object
 //
-// If existing is set then it updates the object rather than creating a new one.
-//
-// The new object may have been created if an error is returned.
+// TODO: implement options. understand purpose of options
 func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {
 	return o.upload(ctx, in, src, false, options...)
 }
@@ -231,6 +242,8 @@ func uploadStreamAndComputeHash(ctx context.Context, fc *file.Client, in io.Read
 	return hasher.Sum(nil), nil
 
 }
+
+// the function is named with prefix 'upload' since it indicates that things will be modified on the server
 func uploadSizeHashLWT(ctx context.Context, fc *file.Client, size int64, hash []byte, lwt time.Time) error {
 	smbProps := file.SMBProperties{
 		LastWriteTime: &lwt,
