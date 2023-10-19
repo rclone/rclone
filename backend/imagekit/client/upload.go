@@ -6,25 +6,17 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 
 	"github.com/rclone/rclone/lib/rest"
 )
 
 // UploadParam defines upload parameters
 type UploadParam struct {
-	FileName                string         `json:"fileName"`
-	UseUniqueFileName       *bool          `json:"useUniqueFileName,omitempty"`
-	Tags                    string         `json:"tags,omitempty"`
-	Folder                  string         `json:"folder,omitempty"`        // default value:  /
-	IsPrivateFile           *bool          `json:"isPrivateFile,omitempty"` // default: false
-	CustomCoordinates       string         `json:"customCoordinates,omitempty"`
-	ResponseFields          string         `json:"responseFields,omitempty"`
-	WebhookURL              string         `json:"webhookUrl,omitempty"`
-	OverwriteFile           *bool          `json:"overwriteFile,omitempty"`
-	OverwriteAITags         *bool          `json:"overwriteAITags,omitempty"`
-	OverwriteTags           *bool          `json:"overwriteTags,omitempty"`
-	OverwriteCustomMetadata *bool          `json:"overwriteCustomMetadata,omitempty"`
-	CustomMetadata          map[string]any `json:"customMetadata,omitempty"`
+	FileName      string `json:"fileName"`
+	Folder        string `json:"folder,omitempty"` // default value:  /
+	Tags          string `json:"tags,omitempty"`
+	IsPrivateFile *bool  `json:"isPrivateFile,omitempty"` // default: false
 }
 
 type UploadResult struct {
@@ -55,10 +47,26 @@ func (ik *ImageKit) Upload(ctx context.Context, file io.Reader, param UploadPara
 		return nil, nil, errors.New("Upload: Filename is required")
 	}
 
-	formParams, err := StructToParams(param)
+	// Initialize URL values
+	formParams := url.Values{}
 
-	if err != nil {
-		return nil, nil, err
+	formParams.Add("useUniqueFileName", fmt.Sprint(false))
+
+	// Add individual fields to URL values
+	if param.FileName != "" {
+		formParams.Add("fileName", param.FileName)
+	}
+
+	if param.Tags != "" {
+		formParams.Add("tags", param.Tags)
+	}
+
+	if param.Folder != "" {
+		formParams.Add("folder", param.Folder)
+	}
+
+	if param.IsPrivateFile != nil {
+		formParams.Add("isPrivateFile", fmt.Sprintf("%v", *param.IsPrivateFile))
 	}
 
 	response := &UploadResult{}

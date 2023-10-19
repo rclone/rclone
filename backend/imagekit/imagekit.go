@@ -1,3 +1,4 @@
+// Package imagekit provides an interface to the ImageKit.io media library.
 package imagekit
 
 import (
@@ -135,6 +136,12 @@ func init() {
 				Advanced: true,
 			},
 			{
+				Name:     "upload_tags",
+				Help:     "Tags to add to the uploaded files, e.g. \"tag1,tag2\".",
+				Default:  "",
+				Advanced: true,
+			},
+			{
 				Name:     config.ConfigEncoding,
 				Help:     config.ConfigEncodingHelp,
 				Advanced: true,
@@ -179,14 +186,13 @@ type Fs struct {
 
 // Object describes a ImageKit file
 type Object struct {
-	fs          *Fs               // The Fs this object is part of
-	remote      string            // The remote path
-	filePath    string            // The path to the file
-	contentType string            // The content type of the object if known - may be ""
-	timestamp   time.Time         // The timestamp of the object if known - may be zero
-	file        client.File       // The media file if known - may be nil
-	versionID   string            // If present this points to an object version
-	meta        map[string]string // The object metadata if known - may be nil - with lower case keys
+	fs          *Fs         // The Fs this object is part of
+	remote      string      // The remote path
+	filePath    string      // The path to the file
+	contentType string      // The content type of the object if known - may be ""
+	timestamp   time.Time   // The timestamp of the object if known - may be zero
+	file        client.File // The media file if known - may be nil
+	versionID   string      // If present this points to an object version
 }
 
 func NewFs(ctx context.Context, name string, root string, m configmap.Mapper) (fs.Fs, error) {
@@ -498,7 +504,7 @@ func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, 
 	}
 
 	url, err := f.ik.URL(client.URLParam{
-		Src:           file.Url,
+		Src:           file.URL,
 		Signed:        *file.IsPrivateFile || f.opt.OnlySigned,
 		ExpireSeconds: int64(expireSeconds),
 		QueryParameters: map[string]string{
@@ -582,7 +588,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 	}
 
 	url, err := o.fs.ik.URL(client.URLParam{
-		Src:    o.file.Url,
+		Src:    o.file.URL,
 		Signed: *o.file.IsPrivateFile || o.fs.opt.OnlySigned,
 		QueryParameters: map[string]string{
 			"tr":        "orig-true",
@@ -643,18 +649,18 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	*UseUniqueFileName = false
 
 	_, res, err := o.fs.ik.Upload(ctx, in, client.UploadParam{
-		FileName:          fileName,
-		Folder:            folderPath,
-		UseUniqueFileName: UseUniqueFileName,
+		FileName:      fileName,
+		Folder:        folderPath,
+		IsPrivateFile: o.file.IsPrivateFile,
 	})
 
 	if err != nil {
 		return err
 	}
 
-	fileId := res.FileID
+	fileID := res.FileID
 
-	_, file, err := o.fs.ik.File(ctx, fileId)
+	_, file, err := o.fs.ik.File(ctx, fileID)
 
 	if err != nil {
 		return err
@@ -665,7 +671,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	return nil
 }
 
-// Removes this object
+// Remove this object
 func (o *Object) Remove(ctx context.Context) error {
 
 	_, e := o.fs.ik.DeleteFile(ctx, o.file.FileID)
@@ -692,9 +698,9 @@ func uploadFile(ctx context.Context, f *Fs, in io.Reader, srcRemote string, opti
 	*UseUniqueFileName = false
 
 	_, _, err := f.ik.Upload(ctx, in, client.UploadParam{
-		FileName:          fileName,
-		Folder:            folderPath,
-		UseUniqueFileName: UseUniqueFileName,
+		FileName:      fileName,
+		Folder:        folderPath,
+		IsPrivateFile: &f.opt.OnlySigned,
 	})
 
 	if err != nil {
@@ -708,7 +714,7 @@ func (o *Object) Metadata(ctx context.Context) (metadata fs.Metadata, err error)
 
 	metadata.Set("btime", o.file.CreatedAt.Format(time.RFC3339))
 	metadata.Set("size", strconv.FormatUint(o.file.Size, 10))
-	metadata.Set("file-type", string(o.file.FileType))
+	metadata.Set("file-type", o.file.FileType)
 	metadata.Set("height", strconv.Itoa(o.file.Height))
 	metadata.Set("width", strconv.Itoa(o.file.Width))
 	metadata.Set("has-alpha", strconv.FormatBool(o.file.HasAlpha))

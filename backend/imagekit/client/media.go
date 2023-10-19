@@ -12,15 +12,6 @@ import (
 	"gopkg.in/validator.v2"
 )
 
-// FileType represents all, image or non-image etc type in request filter.
-type FileType string
-
-const (
-	All      FileType = "all"
-	Image    FileType = "image"
-	NonImage FileType = "non-image"
-)
-
 // FilesOrFolderParam struct is a parameter type to ListFiles() function to search / list media library files.
 type FilesOrFolderParam struct {
 	Path        string `json:"path,omitempty"`
@@ -44,9 +35,9 @@ type File struct {
 	VersionInfo       map[string]string `json:"versionInfo"`
 	IsPrivateFile     *bool             `json:"isPrivateFile"`
 	CustomCoordinates *string           `json:"customCoordinates"`
-	Url               string            `json:"url"`
+	URL               string            `json:"url"`
 	Thumbnail         string            `json:"thumbnail"`
-	FileType          FileType          `json:"fileType"`
+	FileType          string            `json:"fileType"`
 	Mime              string            `json:"mime"`
 	Height            int               `json:"height"`
 	Width             int               `json:"Width"`
@@ -101,20 +92,20 @@ type MoveFolderParam struct {
 	DestinationPath  string `validate:"nonzero" json:"destinationPath"`
 }
 
-// JobIdResponse respresents response struct with JobId for folder operations
-type JobIdResponse struct {
-	JobId string `json:"jobId"`
+// JobIDResponse respresents response struct with JobID for folder operations
+type JobIDResponse struct {
+	JobID string `json:"jobId"`
 }
 
 // // FolderResponse respresents struct for response to move folder api.
 // type FolderResponse struct {
-// 	Data JobIdResponse
+// 	Data JobIDResponse
 // 	Response
 // }
 
 // JobStatus represents response Data to job status api
 type JobStatus struct {
-	JobId  string `json:"jobId"`
+	JobID  string `json:"jobId"`
 	Type   string `json:"type"`
 	Status string `json:"status"`
 }
@@ -126,11 +117,11 @@ type JobStatus struct {
 // }
 
 // File represents media library File details.
-func (ik *ImageKit) File(ctx context.Context, fileId string) (*http.Response, *File, error) {
+func (ik *ImageKit) File(ctx context.Context, fileID string) (*http.Response, *File, error) {
 	data := &File{}
 	response, err := ik.HTTPClient.CallJSON(ctx, &rest.Opts{
 		Method:       "GET",
-		Path:         fmt.Sprintf("/files/%s/details", fileId),
+		Path:         fmt.Sprintf("/files/%s/details", fileID),
 		RootURL:      ik.Prefix,
 		IgnoreStatus: true,
 	}, nil, data)
@@ -148,7 +139,7 @@ func (ik *ImageKit) File(ctx context.Context, fileId string) (*http.Response, *F
 
 // Files retrieves media library files. Filter options can be supplied as FilesOrFolderParam.
 func (ik *ImageKit) Files(ctx context.Context, params FilesOrFolderParam, includeVersion bool) (*http.Response, *[]File, error) {
-	var SearchQuery string = `type = "file"`
+	var SearchQuery = `type = "file"`
 
 	if includeVersion {
 		SearchQuery = `type IN ["file", "file-version"]`
@@ -185,16 +176,16 @@ func (ik *ImageKit) Files(ctx context.Context, params FilesOrFolderParam, includ
 }
 
 // DeleteFile removes file by FileID from media library
-func (ik *ImageKit) DeleteFile(ctx context.Context, fileId string) (*http.Response, error) {
+func (ik *ImageKit) DeleteFile(ctx context.Context, fileID string) (*http.Response, error) {
 	var err error
 
-	if fileId == "" {
-		return nil, errors.New("fileId can not be empty")
+	if fileID == "" {
+		return nil, errors.New("fileID can not be empty")
 	}
 
 	response, err := ik.HTTPClient.CallJSON(ctx, &rest.Opts{
 		Method:  "DELETE",
-		Path:    fmt.Sprintf("/files/%s", fileId),
+		Path:    fmt.Sprintf("/files/%s", fileID),
 		RootURL: ik.Prefix,
 	}, nil, nil)
 
@@ -211,7 +202,7 @@ func (ik *ImageKit) DeleteFile(ctx context.Context, fileId string) (*http.Respon
 
 // Folders retrieves media library files. Filter options can be supplied as FilesOrFolderParam.
 func (ik *ImageKit) Folders(ctx context.Context, params FilesOrFolderParam) (*http.Response, *[]Folder, error) {
-	var SearchQuery string = `type = "folder"`
+	var SearchQuery = `type = "folder"`
 
 	if params.SearchQuery != "" {
 		SearchQuery = params.SearchQuery
@@ -294,9 +285,9 @@ func (ik *ImageKit) DeleteFolder(ctx context.Context, param DeleteFolderParam) (
 }
 
 // MoveFolder moves given folder to new aath in media library
-func (ik *ImageKit) MoveFolder(ctx context.Context, param MoveFolderParam) (*http.Response, *JobIdResponse, error) {
+func (ik *ImageKit) MoveFolder(ctx context.Context, param MoveFolderParam) (*http.Response, *JobIDResponse, error) {
 	var err error
-	var response = &JobIdResponse{}
+	var response = &JobIDResponse{}
 
 	if err = validator.Validate(&param); err != nil {
 		return nil, nil, err
