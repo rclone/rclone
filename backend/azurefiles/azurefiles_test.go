@@ -461,3 +461,14 @@ func TestNewFsWithAccountAndKey(t *testing.T) {
 	assert.NoError(t, fs.Mkdir(context.TODO(), dirName))
 	assertListDirEntriesContainsName(t, fs, "", dirName)
 }
+
+func assertEqualSizeHashModTime(t *testing.T, exp, got fs.Object) {
+	assert.Equal(t, exp.ModTime(context.TODO()).UTC(), got.ModTime(context.TODO()).UTC(), "modTime")
+	assert.Equal(t, exp.Size(), got.Size(), "size")
+
+	expHash, err := exp.Hash(context.TODO(), hash.MD5)
+	assert.NoError(t, err)
+	gotHash, err := got.Hash(context.TODO(), hash.MD5)
+	assert.NoError(t, err)
+	assert.Equal(t, expHash, gotHash, "hash")
+}
