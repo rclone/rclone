@@ -7,12 +7,10 @@ import (
 	"io"
 	"path"
 	"path/filepath"
-	"strings"
 	"testing"
 	"time"
 
 	"github.com/rclone/rclone/fs"
-	"github.com/rclone/rclone/fs/walk"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -186,21 +184,4 @@ func dirEntriesBases(des fs.DirEntries) []string {
 		bases = append(bases, filepath.Base(de.Remote()))
 	}
 	return bases
-}
-
-func testWalkAll(t *testing.T, c *Fs) {
-	// objs, dirs, err := walk.GetAll(context.TODO(), c, "", true, -1)
-	// assert.NoError(t, err)
-	// assert.Len(t, objs, 0)
-	// assert.Len(t, dirs, 1)
-	fn := func(path string, entries fs.DirEntries, err error) error {
-		names := []string{}
-		for _, en := range entries {
-			names = append(names, en.String())
-		}
-		t.Logf("walk fn args path=%s entries=%s err=%s", path, strings.Join(names, ", "), err)
-		return err
-	}
-	walk.Walk(context.TODO(), c, "", true, -1, fn)
-
 }
