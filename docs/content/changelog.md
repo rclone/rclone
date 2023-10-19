@@ -5,6 +5,14 @@ description: "Rclone Changelog"
 
 # Changelog
 
+## v1.64.2 - 2023-10-19
+
+[See commits](https://github.com/rclone/rclone/compare/v1.64.1...v1.64.2)
+
+* Bug Fixes
+    * selfupdate: Fix "invalid hashsum signature" error (Nick Craig-Wood)
+    * build: Fix docker build running out of space (Nick Craig-Wood)
+
 ## v1.64.1 - 2023-10-17
 
 [See commits](https://github.com/rclone/rclone/compare/v1.64.0...v1.64.1)

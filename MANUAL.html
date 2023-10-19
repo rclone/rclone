@@ -81,7 +81,7 @@
 <header id="title-block-header">
 <h1 class="title">rclone(1) User Manual</h1>
 <p class="author">Nick Craig-Wood</p>
-<p class="date">Oct 17, 2023</p>
+<p class="date">Oct 19, 2023</p>
 </header>
 <h1 id="rclone-syncs-your-files-to-cloud-storage">Rclone syncs your files to cloud storage</h1>
 <p><img width="50%" src="https://rclone.org/img/logo_on_light__horizontal_color.svg" alt="rclone logo" style="float:right; padding: 5px;" ></p>
@@ -10056,7 +10056,7 @@ Showing nodes accounting for 1537.03kB, 100% of 1537.03kB total
       --tpslimit float                     Limit HTTP transactions per second to this
       --tpslimit-burst int                 Max burst of transactions for --tpslimit (default 1)
       --use-cookies                        Enable session cookiejar
-      --user-agent string                  Set the user-agent to a specified string (default &quot;rclone/v1.64.1&quot;)</code></pre>
+      --user-agent string                  Set the user-agent to a specified string (default &quot;rclone/v1.64.2&quot;)</code></pre>
 <h2 id="performance">Performance</h2>
 <p>Flags helpful for increasing performance.</p>
 <pre><code>      --buffer-size SizeSuffix   In memory buffer size when reading files for each --transfer (default 16Mi)
@@ -34087,6 +34087,15 @@ $ tree /tmp/b
 <li>"error": return an error based on option value</li>
 </ul>
 <h1 id="changelog-1">Changelog</h1>
+<h2 id="v1.64.2---2023-10-19">v1.64.2 - 2023-10-19</h2>
+<p><a href="https://github.com/rclone/rclone/compare/v1.64.1...v1.64.2">See commits</a></p>
+<ul>
+<li>Bug Fixes
+<ul>
+<li>selfupdate: Fix "invalid hashsum signature" error (Nick Craig-Wood)</li>
+<li>build: Fix docker build running out of space (Nick Craig-Wood)</li>
+</ul></li>
+</ul>
 <h2 id="v1.64.1---2023-10-17">v1.64.1 - 2023-10-17</h2>
 <p><a href="https://github.com/rclone/rclone/compare/v1.64.0...v1.64.1">See commits</a></p>
 <ul>

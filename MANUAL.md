@@ -1,6 +1,6 @@
 % rclone(1) User Manual
 % Nick Craig-Wood
-% Oct 17, 2023
+% Oct 19, 2023
 
 # Rclone syncs your files to cloud storage
 
@@ -16951,7 +16951,7 @@ General networking and HTTP stuff.
       --tpslimit float                     Limit HTTP transactions per second to this
       --tpslimit-burst int                 Max burst of transactions for --tpslimit (default 1)
       --use-cookies                        Enable session cookiejar
-      --user-agent string                  Set the user-agent to a specified string (default "rclone/v1.64.1")
+      --user-agent string                  Set the user-agent to a specified string (default "rclone/v1.64.2")
 ```
 
 
@@ -46447,6 +46447,14 @@ Options:
 
 
 # Changelog
+
+## v1.64.2 - 2023-10-19
+
+[See commits](https://github.com/rclone/rclone/compare/v1.64.1...v1.64.2)
+
+* Bug Fixes
+    * selfupdate: Fix "invalid hashsum signature" error (Nick Craig-Wood)
+    * build: Fix docker build running out of space (Nick Craig-Wood)
 
 ## v1.64.1 - 2023-10-17
 
