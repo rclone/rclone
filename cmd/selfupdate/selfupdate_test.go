@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/rclone/rclone/fs"
+	_ "github.com/rclone/rclone/fstest" // needed to run under integration tests
 	"github.com/rclone/rclone/fstest/testy"
 	"github.com/stretchr/testify/assert"
 )

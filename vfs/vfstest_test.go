@@ -9,6 +9,7 @@ import (
 	"github.com/rclone/rclone/cmd/mountlib"
 	"github.com/rclone/rclone/fstest"
 	"github.com/rclone/rclone/vfs"
+	"github.com/rclone/rclone/vfs/vfscommon"
 	"github.com/rclone/rclone/vfs/vfstest"
 )
 
@@ -18,7 +19,7 @@ func TestFunctional(t *testing.T) {
 	if *fstest.RemoteName != "" {
 		t.Skip("Skip on non local")
 	}
-	vfstest.RunTests(t, true, func(VFS *vfs.VFS, mountpoint string, opt *mountlib.Options) (unmountResult <-chan error, unmount func() error, err error) {
+	vfstest.RunTests(t, true, vfscommon.CacheModeOff, true, func(VFS *vfs.VFS, mountpoint string, opt *mountlib.Options) (unmountResult <-chan error, unmount func() error, err error) {
 		unmountResultChan := make(chan (error), 1)
 		unmount = func() error {
 			unmountResultChan <- nil

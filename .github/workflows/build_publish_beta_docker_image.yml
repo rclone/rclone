@@ -10,6 +10,15 @@ jobs:
         runs-on: ubuntu-latest
         name: Build image job
         steps:
+            - name: Free some space
+              shell: bash
+              run: |
+                df -h .
+                # Remove android SDK
+                sudo rm -rf /usr/local/lib/android || true
+                # Remove .net runtime
+                sudo rm -rf /usr/share/dotnet || true
+                df -h .
             - name: Checkout master
               uses: actions/checkout@v4
               with:
@@ -42,7 +51,10 @@ jobs:
                 # See https://docs.github.com/en/actions/security-guides/automatic-token-authentication#about-the-github_token-secret
                 # for more detailed information.
                 password: ${{ secrets.GITHUB_TOKEN }}
-
+            - name: Show disk usage
+              shell: bash
+              run: |
+                df -h .
             - name: Build and publish image
               uses: docker/build-push-action@v5
               with:
@@ -54,8 +66,12 @@ jobs:
                   rclone/rclone:beta
                 labels: ${{ steps.meta.outputs.labels }}
                 platforms: linux/amd64,linux/386,linux/arm64,linux/arm/v7,linux/arm/v6
-                cache-from: type=gha
-                cache-to: type=gha,mode=max
+                cache-from: type=gha, scope=${{ github.workflow }}
+                cache-to: type=gha, mode=max, scope=${{ github.workflow }}
                 provenance: false
               # Eventually cache will need to be cleared if builds more frequent than once a week
               # https://github.com/docker/build-push-action/issues/252
+            - name: Show disk usage
+              shell: bash
+              run: |
+                df -h .

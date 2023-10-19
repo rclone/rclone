@@ -15,6 +15,7 @@ type Options struct {
 	ReadOnly           bool          // if set VFS is read only
 	NoModTime          bool          // don't read mod times for files
 	DirCacheTime       time.Duration // how long to consider directory listing cache valid
+	Refresh            bool          // refreshes the directory listing recursively on start
 	PollInterval       time.Duration
 	Umask              int
 	UID                uint32
@@ -44,6 +45,7 @@ var DefaultOpt = Options{
 	NoChecksum:         false,
 	NoSeek:             false,
 	DirCacheTime:       5 * 60 * time.Second,
+	Refresh:            false,
 	PollInterval:       time.Minute,
 	ReadOnly:           false,
 	Umask:              0,

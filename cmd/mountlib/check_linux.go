@@ -47,6 +47,15 @@ func CheckMountEmpty(mountpoint string) error {
 	return checkMountEmpty(mountpoint)
 }
 
+// singleEntryFilter looks for a specific entry.
+//
+// It may appear more than once and we return all of them if so.
+func singleEntryFilter(mp string) mountinfo.FilterFunc {
+	return func(m *mountinfo.Info) (skip, stop bool) {
+		return m.Mountpoint != mp, false
+	}
+}
+
 // CheckMountReady checks whether mountpoint is mounted by rclone.
 // Only mounts with type "rclone" or "fuse.rclone" count.
 func CheckMountReady(mountpoint string) error {
@@ -57,7 +66,7 @@ func CheckMountReady(mountpoint string) error {
 		return fmt.Errorf("cannot get absolute path: %s: %w", mountpoint, err)
 	}
 
-	infos, err := mountinfo.GetMounts(mountinfo.SingleEntryFilter(mountpointAbs))
+	infos, err := mountinfo.GetMounts(singleEntryFilter(mountpointAbs))
 	if err != nil {
 		return fmt.Errorf("cannot get mounts: %w", err)
 	}

@@ -322,3 +322,8 @@ func (fh *WriteFileHandle) ReadAt(p []byte, off int64) (n int, err error) {
 func (fh *WriteFileHandle) Sync() error {
 	return nil
 }
+
+// Name returns the name of the file from the underlying Object.
+func (fh *WriteFileHandle) Name() string {
+	return fh.file.String()
+}

@@ -38,6 +38,7 @@ var (
 	downloadHeaders []string
 	headers         []string
 	metadataSet     []string
+	partialSuffix   string
 )
 
 // AddFlags adds the non filing system specific flags to the command
@@ -148,6 +149,7 @@ func AddFlags(ci *fs.ConfigInfo, flagSet *pflag.FlagSet) {
 	flags.FVarP(flagSet, &ci.TerminalColorMode, "color", "", "When to show colors (and other ANSI codes) AUTO|NEVER|ALWAYS", "Config")
 	flags.FVarP(flagSet, &ci.DefaultTime, "default-time", "", "Time to show if modtime is unknown for files and directories", "Config,Listing")
 	flags.BoolVarP(flagSet, &ci.Inplace, "inplace", "", ci.Inplace, "Download directly to destination file instead of atomic download to temp/rename", "Copy")
+	flags.StringVarP(flagSet, &partialSuffix, "partial-suffix", "", ci.PartialSuffix, "Add partial-suffix to temporary file name when --inplace is not used", "Copy")
 }
 
 // ParseHeaders converts the strings passed in via the header flags into HTTPOptions
@@ -321,6 +323,11 @@ func SetFlags(ci *fs.ConfigInfo) {
 	// Set whether multi-thread-streams was set
 	multiThreadStreamsFlag := pflag.Lookup("multi-thread-streams")
 	ci.MultiThreadSet = multiThreadStreamsFlag != nil && multiThreadStreamsFlag.Changed
+
+	if len(partialSuffix) > 16 {
+		log.Fatalf("--partial-suffix: Expecting suffix length not greater than %d but got %d", 16, len(partialSuffix))
+	}
+	ci.PartialSuffix = partialSuffix
 
 	// Make sure some values are > 0
 	nonZero := func(pi *int) {

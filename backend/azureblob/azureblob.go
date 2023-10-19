@@ -295,10 +295,10 @@ avoid the time out.`,
 			Advanced: true,
 		}, {
 			Name: "access_tier",
-			Help: `Access tier of blob: hot, cool or archive.
+			Help: `Access tier of blob: hot, cool, cold or archive.
 
-Archived blobs can be restored by setting access tier to hot or
-cool. Leave blank if you intend to use default access tier, which is
+Archived blobs can be restored by setting access tier to hot, cool or
+cold. Leave blank if you intend to use default access tier, which is
 set at account level
 
 If there is no "access tier" specified, rclone doesn't apply any tier.
@@ -306,7 +306,7 @@ rclone performs "Set Tier" operation on blobs while uploading, if objects
 are not modified, specifying "access tier" to new one will have no effect.
 If blobs are in "archive tier" at remote, trying to perform data transfer
 operations from remote will not be allowed. User should first restore by
-tiering blob to "Hot" or "Cool".`,
+tiering blob to "Hot", "Cool" or "Cold".`,
 			Advanced: true,
 		}, {
 			Name:    "archive_tier_delete",
@@ -520,6 +520,7 @@ func (o *Object) split() (container, containerPath string) {
 func validateAccessTier(tier string) bool {
 	return strings.EqualFold(tier, string(blob.AccessTierHot)) ||
 		strings.EqualFold(tier, string(blob.AccessTierCool)) ||
+		strings.EqualFold(tier, string(blob.AccessTierCold)) ||
 		strings.EqualFold(tier, string(blob.AccessTierArchive))
 }
 
@@ -649,8 +650,8 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	if opt.AccessTier == "" {
 		opt.AccessTier = string(defaultAccessTier)
 	} else if !validateAccessTier(opt.AccessTier) {
-		return nil, fmt.Errorf("supported access tiers are %s, %s and %s",
-			string(blob.AccessTierHot), string(blob.AccessTierCool), string(blob.AccessTierArchive))
+		return nil, fmt.Errorf("supported access tiers are %s, %s, %s and %s",
+			string(blob.AccessTierHot), string(blob.AccessTierCool), string(blob.AccessTierCold), string(blob.AccessTierArchive))
 	}
 
 	if !validatePublicAccess((opt.PublicAccess)) {
@@ -1899,7 +1900,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 	var offset int64
 	var count int64
 	if o.AccessTier() == blob.AccessTierArchive {
-		return nil, fmt.Errorf("blob in archive tier, you need to set tier to hot or cool first")
+		return nil, fmt.Errorf("blob in archive tier, you need to set tier to hot, cool, cold first")
 	}
 	fs.FixRangeOption(options, o.size)
 	for _, option := range options {

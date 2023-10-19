@@ -44,6 +44,9 @@ func TestReadFileHandleMethods(t *testing.T) {
 	assert.Equal(t, "<nil *ReadFileHandle>", (*ReadFileHandle)(nil).String())
 	assert.Equal(t, "<nil *ReadFileHandle.file>", new(ReadFileHandle).String())
 
+	// Name
+	assert.Equal(t, "dir/file1", fh.Name())
+
 	// Node
 	node := fh.Node()
 	assert.Equal(t, "file1", node.Name())

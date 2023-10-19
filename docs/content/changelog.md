@@ -5,6 +5,51 @@ description: "Rclone Changelog"
 
 # Changelog
 
+## v1.64.2 - 2023-10-19
+
+[See commits](https://github.com/rclone/rclone/compare/v1.64.1...v1.64.2)
+
+* Bug Fixes
+    * selfupdate: Fix "invalid hashsum signature" error (Nick Craig-Wood)
+    * build: Fix docker build running out of space (Nick Craig-Wood)
+
+## v1.64.1 - 2023-10-17
+
+[See commits](https://github.com/rclone/rclone/compare/v1.64.0...v1.64.1)
+
+* Bug Fixes
+    * cmd: Make `--progress` output logs in the same format as without (Nick Craig-Wood)
+    * docs fixes (Dimitri Papadopoulos Orfanos, Herby Gillot, Manoj Ghosh, Nick Craig-Wood)
+    * lsjson: Make sure we set the global metadata flag too (Nick Craig-Wood)
+    * operations
+        * Ensure concurrency is no greater than the number of chunks (Pat Patterson)
+        * Fix OpenOptions ignored in copy if operation was a multiThreadCopy (Vitor Gomes)
+        * Fix error message on delete to have file name (Nick Craig-Wood)
+    * serve sftp: Return not supported error for not supported commands (Nick Craig-Wood)
+    * build: Upgrade golang.org/x/net to v0.17.0 to fix HTTP/2 rapid reset (Nick Craig-Wood)
+    * pacer: Fix b2 deadlock by defaulting max connections to unlimited (Nick Craig-Wood)
+* Mount
+    * Fix automount not detecting drive is ready (Nick Craig-Wood)
+* VFS
+    * Fix update dir modification time (Saleh Dindar)
+* Azure Blob
+    * Fix "fatal error: concurrent map writes" (Nick Craig-Wood)
+* B2
+    * Fix multipart upload: corrupted on transfer: sizes differ XXX vs 0 (Nick Craig-Wood)
+    * Fix locking window when getting mutipart upload URL (Nick Craig-Wood)
+    * Fix server side copies greater than 4GB (Nick Craig-Wood)
+    * Fix chunked streaming uploads (Nick Craig-Wood)
+    * Reduce default `--b2-upload-concurrency` to 4 to reduce memory usage (Nick Craig-Wood)
+* Onedrive
+    * Fix the configurator to allow `/teams/ID` in the config (Nick Craig-Wood)
+* Oracleobjectstorage
+    * Fix OpenOptions being ignored in uploadMultipart with chunkWriter (Nick Craig-Wood)
+* S3
+    * Fix slice bounds out of range error when listing (Nick Craig-Wood)
+    * Fix OpenOptions being ignored in uploadMultipart with chunkWriter (Vitor Gomes)
+* Storj
+    * Update storj.io/uplink to v1.12.0 (Kaloyan Raev)
+
 ## v1.64.0 - 2023-09-11
 
 [See commits](https://github.com/rclone/rclone/compare/v1.63.0...v1.64.0)
