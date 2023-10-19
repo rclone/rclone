@@ -6,15 +6,19 @@ import (
 	"io"
 	"log"
 	"math/rand"
+	"strings"
 	"time"
 )
 
+const chars = "abcdefghijklmnopqrstuvwzyxABCDEFGHIJKLMNOPQRSTUVWZYX"
+
 func randomString(charCount int) string {
-	bs := make([]byte, charCount)
+	strBldr := strings.Builder{}
 	for i := 0; i < charCount; i++ {
-		bs[i] = byte(97 + rand.Intn(26))
+		randPos := rand.Int63n(52)
+		strBldr.WriteByte(byte(chars[randPos]))
 	}
-	return string(bs)
+	return strBldr.String()
 }
 
 func randomTime() time.Time {

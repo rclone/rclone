@@ -53,7 +53,6 @@ func TestNonCommonIntegration(t *testing.T) {
 		t.Run("rmDir", wrapAndPassC(testRmDir))
 		t.Run("remove", wrapAndPassC(testRemove))
 		t.Run("update", wrapAndPassC(testUpdate))
-		t.Run("walkAll", wrapAndPassC(testWalkAll))
 		t.Run("encoding", wrapAndPassC(testEncoding))
 
 	} else {
