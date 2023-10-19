@@ -249,23 +249,6 @@ func uploadSizeHashLWT(ctx context.Context, fc *file.Client, size int64, hash []
 	return nil
 }
 
-func (o *Object) String() string {
-	if o == nil {
-		return "<nil>"
-	}
-	return o.common.String()
-}
-
-type ByteCounter struct {
-	count int64
-}
-
-func (bc *ByteCounter) Write(p []byte) (n int, err error) {
-	lenP := len(p)
-	bc.count += int64(lenP)
-	return lenP, nil
-}
-
 func chunkSize(options ...fs.OpenOption) int64 {
 	for _, option := range options {
 		if chunkOpt, ok := option.(*fs.ChunkOption); ok {
@@ -273,4 +256,12 @@ func chunkSize(options ...fs.OpenOption) int64 {
 		}
 	}
 	return 1048576
+}
+
+// Return a string version
+func (o *Object) String() string {
+	if o == nil {
+		return "<nil>"
+	}
+	return o.common.String()
 }
