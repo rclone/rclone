@@ -410,13 +410,29 @@ func newTests(t *testing.T) {
 				readCloser, openErr := obj.Open(context.TODO(), nil)
 				assert.NoError(t, openErr)
 				readBytes := []byte{}
-				nBsCopied, copyErr := io.Copy(bytes.NewBuffer(readBytes), readCloser)
+				numBytesCopied, copyErr := io.Copy(bytes.NewBuffer(readBytes), readCloser)
 				assert.NoError(t, copyErr)
-				assert.Equal(t, updatedSize, nBsCopied)
+				assert.Equal(t, sizeTc.size, numBytesCopied)
 				assert.Equal(t, updatedBytes, readBytes)
+
+				cloudObj, err := f.NewObject(context.TODO(), name)
+				assert.NoError(t, err)
+
+				testCases := []struct {
+					name string
+					o    fs.Object
+				}{
+					{"local", obj},
+					{"cloud", cloudObj},
+				}
+				for _, tc := range testCases {
+					t.Run(tc.name, func(t *testing.T) {
+						assertEqualSizeHashModTime(t, updatedSrc, tc.o)
+					})
+				}
 			})
+
 		}
-		// TODO: are size,modTime and MD5 updated
 	})
 
 }
