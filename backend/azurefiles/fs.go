@@ -19,11 +19,13 @@ import (
 const SLEEP_DURATION_BW_RECURSIVE_MKDIR_PUT_CALLS = time.Millisecond * 500
 const FOUR_TB_IN_BYTES = 4398046511104
 
-// Inspired by azureblob store, this initiates a network request and returns an error if object is not found.
 // NewObject finds the Object at remote.  If it can't be found
 // it returns the error fs.ErrorObjectNotFound.
+//
 // Does not return ErrorIsDir when a directory exists instead of file. since the documentation
 // for [rclone.fs.Fs.NewObject] rqeuires no extra work to determine whether it is directory
+//
+// Inspired by azureblob store, this initiates a network request and returns an error if object is not found.
 func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 	fileClient := f.fileClient(remote)
 	resp, err := fileClient.GetProperties(ctx, nil)
@@ -154,6 +156,7 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 	return obj, nil
 }
 
+// Name of the remote (as passed into NewFs)
 func (f *Fs) Name() string {
 	return f.name
 }
@@ -162,23 +165,29 @@ func (f *Fs) Root() string {
 	return f.root
 }
 
+// String converts this Fs to a string
 func (f *Fs) String() string {
 	return fmt.Sprintf("azurefiles root '%s'", f.root)
 }
 
+// Precision return the precision of this Fs
+//
 // One second. FileREST API times are in RFC1123 which in the example shows a precision of seconds
 // Source: https://learn.microsoft.com/en-us/rest/api/storageservices/representation-of-date-time-values-in-headers
 func (f *Fs) Precision() time.Duration {
 	return time.Second
 }
 
+// Hashes returns the supported hash sets.
+//
 // MD5: since it is listed as header in the response for file properties
 // Source: https://learn.microsoft.com/en-us/rest/api/storageservices/get-file-properties
 func (f *Fs) Hashes() hash.Set {
 	return hash.NewHashSet(hash.MD5)
 }
 
-// TODO: what are features. implement them
+// Features returns the optional features of this Fs
+//
 // TODO: add features:- public link, SlowModTime, SlowHash,
 // ReadMetadata, WriteMetadata,UserMetadata,PutUnchecked, PutStream
 // PartialUploads: Maybe????
@@ -192,6 +201,13 @@ func (f *Fs) Features() *fs.Features {
 	}
 }
 
+// List the objects and directories in dir into entries. The entries can be
+// returned in any order but should be for a complete directory.
+//
+// dir should be "" to list the root, and should not have trailing slashes.
+//
+// This should return ErrDirNotFound if the directory isn't found.
+//
 // TODO: handle case regariding "" and "/". I remember reading about them somewhere
 func (f *Fs) List(ctx context.Context, remote string) (fs.DirEntries, error) {
 	var entries fs.DirEntries
