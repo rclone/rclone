@@ -398,11 +398,19 @@ func newTests(t *testing.T) {
 		obj, err := f.Put(context.TODO(), rdr, src, nil)
 		assert.NoError(t, err)
 
-		smallerSize := src.Size() - rand.Int63n(src.Size()/2)
-		largerSize := src.Size() - rand.Int63n(100)
-		for idx, updatedSize := range []int64{smallerSize, largerSize} {
-			t.Run(fmt.Sprintf("idx=%d updatedSize=%d origSize=%d", idx, updatedSize, src.Size()), func(t *testing.T) {
-				updatedRdr, updatedSrc := randomPuttableObjectWithSize(azf, name, updatedSize)
+		// smallerSize := src.Size() - rand.Int63n(src.Size()/2)
+		// largerSize := src.Size() - rand.Int63n(100)
+
+		sizeBasedTestCases := []struct {
+			name string
+			size int64
+		}{
+			{name: "smaller", size: src.Size() - rand.Int63n(src.Size()/2)},
+			{name: "larger", size: src.Size() + rand.Int63n(100)},
+		}
+		for _, sizeTc := range sizeBasedTestCases {
+			t.Run(sizeTc.name, func(t *testing.T) {
+				updatedRdr, updatedSrc := randomPuttableObjectWithSize(azf, name, sizeTc.size)
 				updatedBytes := []byte{}
 				teedRdr := io.TeeReader(updatedRdr, bytes.NewBuffer(updatedBytes))
 				assert.NoError(t, obj.Update(context.TODO(), teedRdr, updatedSrc, nil))
