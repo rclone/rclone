@@ -21,8 +21,10 @@ func randomString(charCount int) string {
 	return strBldr.String()
 }
 
+// Time earlier than now
 func randomTime() time.Time {
-	return time.Unix(int64(rand.Int31()), 0)
+	now := time.Now()
+	return now.Add(-1 * time.Hour * time.Duration(rand.Int63n(365*24*10)))
 }
 
 func randomPuttableObjectWithSize(f *Fs, remote string, fileSize int64) (io.Reader, *Object) {
