@@ -2,6 +2,8 @@ package azurefiles
 
 import (
 	"context"
+	"math/rand"
+	"strings"
 	"testing"
 
 	"github.com/rclone/rclone/fstest/fstests"
@@ -51,4 +53,15 @@ func (f *Fs) InternalTestAuth(t *testing.T) {
 			assert.NoError(t, fs.Mkdir(context.TODO(), dirName))
 		})
 	}
+}
+
+const chars = "abcdefghijklmnopqrstuvwzyxABCDEFGHIJKLMNOPQRSTUVWZYX"
+
+func randomString(charCount int) string {
+	strBldr := strings.Builder{}
+	for i := 0; i < charCount; i++ {
+		randPos := rand.Int63n(52)
+		strBldr.WriteByte(chars[randPos])
+	}
+	return strBldr.String()
 }
