@@ -121,9 +121,8 @@ func (p *Prop) Hashes() (hashes map[hash.Type]string) {
 		hashes = make(map[hash.Type]string)
 		hashes[hash.SHA1] = *p.MESha1Hex
 		return hashes
-	} else {
-		return nil
 	}
+	return nil
 }
 
 // PropValue is a tagged name and value
