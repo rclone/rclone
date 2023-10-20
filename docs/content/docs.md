@@ -54,6 +54,7 @@ See the following for detailed instructions for
   * [Internet Archive](/internetarchive/)
   * [Jottacloud](/jottacloud/)
   * [Koofr](/koofr/)
+  * [Linkbox](/linkbox/)
   * [Mail.ru Cloud](/mailru/)
   * [Mega](/mega/)
   * [Memory](/memory/)
