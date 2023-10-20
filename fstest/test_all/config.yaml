@@ -374,6 +374,11 @@ backends:
  # - backend:  "koofr"
  #   remote:   "TestDigiStorage:"
  #   fastlist: false
+ - backend: "linkbox"
+   remote: "TestLinkbox:"
+   fastlist: false
+   ignore:
+     - TestIntegration/FsMkdir/FsEncoding/invalid_UTF-8
  - backend:  "premiumizeme"
    remote:   "TestPremiumizeMe:"
    fastlist: false

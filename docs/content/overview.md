@@ -35,6 +35,7 @@ Here is an overview of the major features of each cloud storage system.
 | Internet Archive             | MD5, SHA1, CRC32  | R/W ¹¹  | No               | No              | -         | RWU      |
 | Jottacloud                   | MD5               | R/W     | Yes              | No              | R         | RW       |
 | Koofr                        | MD5               | -       | Yes              | No              | -         | -        |
+| Linkbox                      | -                 | R       | No               | No              | -         | -        |
 | Mail.ru Cloud                | Mailru ⁶          | R/W     | Yes              | No              | -         | -        |
 | Mega                         | -                 | -       | No               | Yes             | -         | -        |
 | Memory                       | MD5               | R/W     | No               | No              | -         | -        |
