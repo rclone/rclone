@@ -12,7 +12,7 @@ During the initial setup with `rclone config` you will specify the upstream
 remotes as a space separated list. The upstream remotes can either be a local
 paths or other remotes.
 
-The attributes `:ro`, `:nc` and `:nc` can be attached to the end of the remote
+The attributes `:ro`, `:nc` and `:writeback` can be attached to the end of the remote
 to tag the remote as **read only**, **no create** or **writeback**, e.g.
 `remote:directory/subdirectory:ro` or `remote:directory/subdirectory:nc`.
 
