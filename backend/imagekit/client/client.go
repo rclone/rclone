@@ -1,3 +1,4 @@
+// Package client provides a client for interacting with the ImageKit API.
 package client
 
 import (
@@ -49,7 +50,6 @@ func New(ctx context.Context, params NewParams) (*ImageKit, error) {
 	client.SetUserPass(privateKey, "")
 	client.SetHeader("Accept", "application/json")
 	client.SetHeader("User-Agent", "rclone/imagekit")
-	client.SetErrorHandler(ParseError)
 
 	return &ImageKit{
 		Prefix:        "https://api.imagekit.io/v2",

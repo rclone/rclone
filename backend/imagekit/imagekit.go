@@ -26,8 +26,8 @@ import (
 )
 
 const (
-	minSleep      = 1 * time.Second
-	maxSleep      = 60 * time.Second
+	minSleep      = 1 * time.Millisecond
+	maxSleep      = 100 * time.Millisecond
 	decayConstant = 2
 )
 
@@ -71,13 +71,13 @@ var systemMetadataInfo = map[string]fs.MetadataHelp{
 		ReadOnly: true,
 	},
 	"google-tags": {
-		Help:     "AI generated tags by Google Cloud Vision associated with the file",
+		Help:     "AI generated tags by Google Cloud Vision associated with the image",
 		Type:     "string",
 		Example:  "tag1,tag2",
 		ReadOnly: true,
 	},
 	"aws-tags": {
-		Help:     "AI generated tags by AWS Rekognition associated with the file",
+		Help:     "AI generated tags by AWS Rekognition associated with the image",
 		Type:     "string",
 		Example:  "tag1,tag2",
 		ReadOnly: true,
@@ -195,6 +195,7 @@ type Object struct {
 	versionID   string      // If present this points to an object version
 }
 
+// NewFs constructs an Fs from the path, container:path
 func NewFs(ctx context.Context, name string, root string, m configmap.Mapper) (fs.Fs, error) {
 	opt := new(Options)
 	err := configstruct.Set(m, opt)
@@ -305,11 +306,12 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 	remote = f.EncodePath(remote)
 
 	if remote != "/" {
+		parentFolderPath, folderName := path.Split(remote)
+		folderExists, err := f.getFolderByName(ctx, parentFolderPath, folderName)
 
-		parentFolderPath := remote[:strings.LastIndex(remote, "/")+1]
-		folderName := remote[strings.LastIndex(remote, "/")+1:]
-
-		folderExists := f.getFolderByName(ctx, parentFolderPath, folderName)
+		if err != nil {
+			return make(fs.DirEntries, 0), err
+		}
 
 		if folderExists == nil {
 			return make(fs.DirEntries, 0), fs.ErrorDirNotFound
@@ -345,8 +347,10 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 func (f *Fs) newObject(ctx context.Context, remote string, file client.File) *Object {
 	remoteFile := strings.TrimLeft(strings.Replace(file.FilePath, f.EncodePath(f.root), "", 1), "/")
 
-	folderPath := f.DecodePath(remoteFile[:strings.LastIndex(remoteFile, "/")+1])
-	fileName := f.DecodeFileName(remoteFile[strings.LastIndex(remoteFile, "/")+1:])
+	folderPath, fileName := path.Split(remoteFile)
+
+	folderPath = f.DecodePath(folderPath)
+	fileName = f.DecodeFileName(fileName)
 
 	remoteFile = path.Join(folderPath, fileName)
 
@@ -383,10 +387,16 @@ func (f *Fs) newObject(ctx context.Context, remote string, file client.File) *Ob
 func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 	r := path.Join(f.root, remote)
 
-	folderPath := f.EncodePath(r[:strings.LastIndex(r, "/")+1])
-	fileName := f.EncodeFileName(r[strings.LastIndex(r, "/")+1:])
+	folderPath, fileName := path.Split(r)
 
-	isFolder := f.getFolderByName(ctx, folderPath, fileName)
+	folderPath = f.EncodePath(folderPath)
+	fileName = f.EncodeFileName(fileName)
+
+	isFolder, err := f.getFolderByName(ctx, folderPath, fileName)
+
+	if err != nil {
+		return nil, err
+	}
 
 	if isFolder != nil {
 		return nil, fs.ErrorIsDir
@@ -417,15 +427,18 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 // Mkdir makes the directory (container, bucket)
 //
 // Shouldn't return an error if it already exists
-func (f *Fs) Mkdir(ctx context.Context, dir string) error {
+func (f *Fs) Mkdir(ctx context.Context, dir string) (err error) {
 	remote := path.Join(f.root, dir)
+	parentFolderPath, folderName := path.Split(remote)
 
-	parentFolderPath := f.EncodePath(remote[:strings.LastIndex(remote, "/")+1])
-	folderName := f.EncodePath(remote[strings.LastIndex(remote, "/")+1:])
+	err = f.pacer.Call(func() (bool, error) {
+		var res *http.Response
+		res, err = f.ik.CreateFolder(ctx, client.CreateFolderParam{
+			ParentFolderPath: parentFolderPath,
+			FolderName:       folderName,
+		})
 
-	_, err := f.ik.CreateFolder(ctx, client.CreateFolderParam{
-		ParentFolderPath: parentFolderPath,
-		FolderName:       folderName,
+		return f.shouldRetry(ctx, res, err)
 	})
 
 	return err
@@ -434,7 +447,7 @@ func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 // Rmdir removes the directory (container, bucket) if empty
 //
 // Return an error if it doesn't exist or isn't empty
-func (f *Fs) Rmdir(ctx context.Context, dir string) error {
+func (f *Fs) Rmdir(ctx context.Context, dir string) (err error) {
 
 	entries, err := f.List(ctx, dir)
 
@@ -446,19 +459,20 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 		return errors.New("directory is not empty")
 	}
 
-	res, e := f.ik.DeleteFolder(ctx, client.DeleteFolderParam{
-		FolderPath: f.EncodePath(path.Join(f.root, dir)),
+	err = f.pacer.Call(func() (bool, error) {
+		var res *http.Response
+		res, err = f.ik.DeleteFolder(ctx, client.DeleteFolderParam{
+			FolderPath: f.EncodePath(path.Join(f.root, dir)),
+		})
+
+		if res.StatusCode == http.StatusNotFound {
+			return false, fs.ErrorDirNotFound
+		}
+
+		return f.shouldRetry(ctx, res, err)
 	})
 
-	if res.StatusCode == http.StatusNotFound {
-		return fs.ErrorDirNotFound
-	}
-
-	if e != nil {
-		return e
-	}
-
-	return nil
+	return err
 }
 
 // Purge deletes all the files and the container
@@ -466,23 +480,24 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 // Optional interface: Only implement this if you have a way of
 // deleting all the files quicker than just running Remove() on the
 // result of List()
-func (f *Fs) Purge(ctx context.Context, dir string) error {
+func (f *Fs) Purge(ctx context.Context, dir string) (err error) {
 
 	remote := path.Join(f.root, dir)
 
-	res, e := f.ik.DeleteFolder(ctx, client.DeleteFolderParam{
-		FolderPath: f.EncodePath(remote),
+	err = f.pacer.Call(func() (bool, error) {
+		var res *http.Response
+		res, err = f.ik.DeleteFolder(ctx, client.DeleteFolderParam{
+			FolderPath: f.EncodePath(remote),
+		})
+
+		if res.StatusCode == http.StatusNotFound {
+			return false, fs.ErrorDirNotFound
+		}
+
+		return f.shouldRetry(ctx, res, err)
 	})
 
-	if res.StatusCode == http.StatusNotFound {
-		return fs.ErrorDirNotFound
-	}
-
-	if e != nil {
-		return e
-	}
-
-	return nil
+	return err
 }
 
 // PublicLink generates a public link to the remote path (usually readable by anyone)
@@ -494,8 +509,9 @@ func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, 
 
 	fileRemote := path.Join(f.root, remote)
 
-	folderPath := f.EncodePath(fileRemote[:strings.LastIndex(fileRemote, "/")+1])
-	fileName := f.EncodeFileName(fileRemote[strings.LastIndex(fileRemote, "/")+1:])
+	folderPath, fileName := path.Split(fileRemote)
+	folderPath = f.EncodePath(folderPath)
+	fileName = f.EncodeFileName(fileName)
 
 	file := f.getFileByName(ctx, folderPath, fileName)
 
@@ -503,6 +519,7 @@ func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, 
 		return "", fs.ErrorObjectNotFound
 	}
 
+	// Pacer not needed as this doesn't use the API
 	url, err := f.ik.URL(client.URLParam{
 		Src:           file.URL,
 		Signed:        *file.IsPrivateFile || f.opt.OnlySigned,
@@ -587,6 +604,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 		}
 	}
 
+	// Pacer not needed as this doesn't use the API
 	url, err := o.fs.ik.URL(client.URLParam{
 		Src:    o.file.URL,
 		Signed: *o.file.IsPrivateFile || o.fs.opt.OnlySigned,
@@ -637,28 +655,34 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 // When called from outside an Fs by rclone, src.Size() will always be >= 0.
 // But for unknown-sized objects (indicated by src.Size() == -1), Upload should either
 // return an error or update the object properly (rather than e.g. calling panic).
-func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {
+func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (err error) {
 
 	srcRemote := o.Remote()
 
 	remote := path.Join(o.fs.root, srcRemote)
-	folderPath := o.fs.EncodePath(remote[:strings.LastIndex(remote, "/")+1])
-	fileName := o.fs.EncodeFileName(remote[strings.LastIndex(remote, "/")+1:])
+	folderPath, fileName := path.Split(remote)
 
 	UseUniqueFileName := new(bool)
 	*UseUniqueFileName = false
 
-	_, res, err := o.fs.ik.Upload(ctx, in, client.UploadParam{
-		FileName:      fileName,
-		Folder:        folderPath,
-		IsPrivateFile: o.file.IsPrivateFile,
+	var resp *client.UploadResult
+
+	err = o.fs.pacer.Call(func() (bool, error) {
+		var res *http.Response
+		res, resp, err = o.fs.ik.Upload(ctx, in, client.UploadParam{
+			FileName:      fileName,
+			Folder:        folderPath,
+			IsPrivateFile: o.file.IsPrivateFile,
+		})
+
+		return o.fs.shouldRetry(ctx, res, err)
 	})
 
 	if err != nil {
 		return err
 	}
 
-	fileID := res.FileID
+	fileID := resp.FileID
 
 	_, file, err := o.fs.ik.File(ctx, fileID)
 
@@ -672,15 +696,15 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 }
 
 // Remove this object
-func (o *Object) Remove(ctx context.Context) error {
+func (o *Object) Remove(ctx context.Context) (err error) {
+	err = o.fs.pacer.Call(func() (bool, error) {
+		var res *http.Response
+		res, err = o.fs.ik.DeleteFile(ctx, o.file.FileID)
 
-	_, e := o.fs.ik.DeleteFile(ctx, o.file.FileID)
+		return o.fs.shouldRetry(ctx, res, err)
+	})
 
-	if e != nil {
-		return e
-	}
-
-	return nil
+	return err
 }
 
 // SetModTime sets the metadata on the object to set the modification date
@@ -689,18 +713,22 @@ func (o *Object) SetModTime(ctx context.Context, t time.Time) error {
 }
 
 func uploadFile(ctx context.Context, f *Fs, in io.Reader, srcRemote string, options ...fs.OpenOption) (fs.Object, error) {
-
 	remote := path.Join(f.root, srcRemote)
-	folderPath := f.EncodePath(remote[:strings.LastIndex(remote, "/")+1])
-	fileName := f.EncodeFileName(remote[strings.LastIndex(remote, "/")+1:])
+	folderPath, fileName := path.Split(remote)
 
 	UseUniqueFileName := new(bool)
 	*UseUniqueFileName = false
 
-	_, _, err := f.ik.Upload(ctx, in, client.UploadParam{
-		FileName:      fileName,
-		Folder:        folderPath,
-		IsPrivateFile: &f.opt.OnlySigned,
+	err := f.pacer.Call(func() (bool, error) {
+		var res *http.Response
+		var err error
+		res, _, err = f.ik.Upload(ctx, in, client.UploadParam{
+			FileName:      fileName,
+			Folder:        folderPath,
+			IsPrivateFile: &f.opt.OnlySigned,
+		})
+
+		return f.shouldRetry(ctx, res, err)
 	})
 
 	if err != nil {
@@ -710,6 +738,7 @@ func uploadFile(ctx context.Context, f *Fs, in io.Reader, srcRemote string, opti
 	return f.NewObject(ctx, srcRemote)
 }
 
+// Metadata returns the metadata for the object
 func (o *Object) Metadata(ctx context.Context) (metadata fs.Metadata, err error) {
 
 	metadata.Set("btime", o.file.CreatedAt.Format(time.RFC3339))

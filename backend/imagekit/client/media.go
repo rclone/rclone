@@ -20,6 +20,7 @@ type FilesOrFolderParam struct {
 	SearchQuery string `json:"searchQuery,omitempty"`
 }
 
+// AITag represents an AI tag for a media library file.
 type AITag struct {
 	Name       string `json:"name"`
 	Confidence string `json:"confidence"`
@@ -51,29 +52,11 @@ type File struct {
 	AITags            []AITag           `json:"AITags"`
 }
 
-// // FileResponse represents response type of File().
-// type FileResponse struct {
-// 	Data File
-// 	Response
-// }
-
-// // FilesResponse represents response type of Files().
-// type FilesResponse struct {
-// 	Data []File
-// 	Response
-// }
-
 // Folder represents media library Folder details.
 type Folder struct {
 	*File
 	FolderPath string `json:"folderPath"`
 }
-
-// // FoldersResponse represents response type of Files() .
-// type FoldersResponse struct {
-// 	Data []Folder
-// 	Response
-// }
 
 // CreateFolderParam represents parameter to create folder api
 type CreateFolderParam struct {
@@ -97,24 +80,12 @@ type JobIDResponse struct {
 	JobID string `json:"jobId"`
 }
 
-// // FolderResponse respresents struct for response to move folder api.
-// type FolderResponse struct {
-// 	Data JobIDResponse
-// 	Response
-// }
-
 // JobStatus represents response Data to job status api
 type JobStatus struct {
 	JobID  string `json:"jobId"`
 	Type   string `json:"type"`
 	Status string `json:"status"`
 }
-
-// // JobStatusResponse represents response to job status api
-// type JobStatusResponse struct {
-// 	Data JobStatus
-// 	Response
-// }
 
 // File represents media library File details.
 func (ik *ImageKit) File(ctx context.Context, fileID string) (*http.Response, *File, error) {
@@ -125,14 +96,6 @@ func (ik *ImageKit) File(ctx context.Context, fileID string) (*http.Response, *F
 		RootURL:      ik.Prefix,
 		IgnoreStatus: true,
 	}, nil, data)
-
-	if err != nil {
-		return response, data, err
-	}
-
-	if response.StatusCode != 200 {
-		err = fmt.Errorf("http error %d: %v", response.StatusCode, response.Status)
-	}
 
 	return response, data, err
 }
@@ -164,14 +127,6 @@ func (ik *ImageKit) Files(ctx context.Context, params FilesOrFolderParam, includ
 		Parameters: parameters,
 	}, nil, data)
 
-	if err != nil {
-		return response, data, err
-	}
-
-	if response.StatusCode != 200 {
-		err = ParseError(response)
-	}
-
 	return response, data, err
 }
 
@@ -184,18 +139,11 @@ func (ik *ImageKit) DeleteFile(ctx context.Context, fileID string) (*http.Respon
 	}
 
 	response, err := ik.HTTPClient.CallJSON(ctx, &rest.Opts{
-		Method:  "DELETE",
-		Path:    fmt.Sprintf("/files/%s", fileID),
-		RootURL: ik.Prefix,
+		Method:     "DELETE",
+		Path:       fmt.Sprintf("/files/%s", fileID),
+		RootURL:    ik.Prefix,
+		NoResponse: true,
 	}, nil, nil)
-
-	if err != nil {
-		return response, err
-	}
-
-	if response.StatusCode != 204 {
-		err = ParseError(response)
-	}
 
 	return response, err
 }
@@ -228,10 +176,6 @@ func (ik *ImageKit) Folders(ctx context.Context, params FilesOrFolderParam) (*ht
 		return resp, data, err
 	}
 
-	if resp.StatusCode != 200 {
-		err = ParseError(resp)
-	}
-
 	return resp, data, err
 }
 
@@ -244,18 +188,11 @@ func (ik *ImageKit) CreateFolder(ctx context.Context, param CreateFolderParam) (
 	}
 
 	response, err := ik.HTTPClient.CallJSON(ctx, &rest.Opts{
-		Method:  "POST",
-		Path:    "/folder",
-		RootURL: ik.Prefix,
+		Method:     "POST",
+		Path:       "/folder",
+		RootURL:    ik.Prefix,
+		NoResponse: true,
 	}, param, nil)
-
-	if err != nil {
-		return response, err
-	}
-
-	if response.StatusCode != 200 {
-		err = ParseError(response)
-	}
 
 	return response, err
 }
@@ -269,22 +206,16 @@ func (ik *ImageKit) DeleteFolder(ctx context.Context, param DeleteFolderParam) (
 	}
 
 	response, err := ik.HTTPClient.CallJSON(ctx, &rest.Opts{
-		Method:  "DELETE",
-		Path:    "/folder",
-		RootURL: ik.Prefix,
+		Method:     "DELETE",
+		Path:       "/folder",
+		RootURL:    ik.Prefix,
+		NoResponse: true,
 	}, param, nil)
 
-	if err != nil {
-		return response, err
-	}
-
-	if response.StatusCode != 204 {
-		err = ParseError(response)
-	}
 	return response, err
 }
 
-// MoveFolder moves given folder to new aath in media library
+// MoveFolder moves given folder to new path in media library
 func (ik *ImageKit) MoveFolder(ctx context.Context, param MoveFolderParam) (*http.Response, *JobIDResponse, error) {
 	var err error
 	var response = &JobIDResponse{}
@@ -299,38 +230,23 @@ func (ik *ImageKit) MoveFolder(ctx context.Context, param MoveFolderParam) (*htt
 		RootURL: ik.Prefix,
 	}, param, response)
 
-	if err != nil {
-		return resp, response, err
-	}
-
-	if resp.StatusCode != 200 {
-		err = ParseError(resp)
-	}
-
 	return resp, response, err
 }
 
-func (ik *ImageKit) BulkJobStatus(ctx context.Context, jobId string) (*http.Response, *JobStatus, error) {
+// BulkJobStatus retrieves the status of a bulk job by job ID.
+func (ik *ImageKit) BulkJobStatus(ctx context.Context, jobID string) (*http.Response, *JobStatus, error) {
 	var err error
 	var response = &JobStatus{}
 
-	if jobId == "" {
+	if jobID == "" {
 		return nil, nil, errors.New("jobId can not be blank")
 	}
 
 	resp, err := ik.HTTPClient.CallJSON(ctx, &rest.Opts{
 		Method:  "GET",
-		Path:    "bulkJobs/" + jobId,
+		Path:    "bulkJobs/" + jobID,
 		RootURL: ik.Prefix,
 	}, nil, response)
-
-	if err != nil {
-		return resp, response, err
-	}
-
-	if resp.StatusCode != 200 {
-		err = ParseError(resp)
-	}
 
 	return resp, response, err
 }

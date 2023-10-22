@@ -104,8 +104,8 @@ func (f *Fs) getFileByName(ctx context.Context, path string, name string) (file 
 	return file
 }
 
-func (f *Fs) getFolderByName(ctx context.Context, path string, name string) (folder *client.Folder) {
-	err := f.pacer.Call(func() (bool, error) {
+func (f *Fs) getFolderByName(ctx context.Context, path string, name string) (folder *client.Folder, err error) {
+	err = f.pacer.Call(func() (bool, error) {
 		res, data, err := f.ik.Folders(ctx, client.FilesOrFolderParam{
 			Limit:       1,
 			Path:        path,
@@ -122,10 +122,10 @@ func (f *Fs) getFolderByName(ctx context.Context, path string, name string) (fol
 	})
 
 	if err != nil {
-		return nil
+		return nil, err
 	}
 
-	return folder
+	return folder, nil
 }
 
 // retryErrorCodes is a slice of error codes that we will retry
@@ -138,7 +138,7 @@ var retryErrorCodes = []int{
 	504, // Gateway Time-out
 }
 
-func ShouldRetryHTTP(resp *http.Response, retryErrorCodes []int) bool {
+func shouldRetryHTTP(resp *http.Response, retryErrorCodes []int) bool {
 	if resp == nil {
 		return false
 	}
@@ -169,7 +169,7 @@ func (f *Fs) shouldRetry(ctx context.Context, resp *http.Response, err error) (b
 		return true, pacer.RetryAfterError(err, time.Duration(retryAfter)*time.Millisecond)
 	}
 
-	return fserrors.ShouldRetry(err) || ShouldRetryHTTP(resp, retryErrorCodes), err
+	return fserrors.ShouldRetry(err) || shouldRetryHTTP(resp, retryErrorCodes), err
 }
 
 func (f *Fs) EncodePath(str string) string {

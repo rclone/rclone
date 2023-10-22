@@ -19,6 +19,7 @@ type UploadParam struct {
 	IsPrivateFile *bool  `json:"isPrivateFile,omitempty"` // default: false
 }
 
+// UploadResult defines the response structure for the upload API
 type UploadResult struct {
 	FileID       string            `json:"fileId"`
 	Name         string            `json:"name"`
@@ -89,10 +90,6 @@ func (ik *ImageKit) Upload(ctx context.Context, file io.Reader, param UploadPara
 
 	if err != nil {
 		return resp, response, err
-	}
-
-	if resp.StatusCode != 200 {
-		err = ParseError(resp)
 	}
 
 	return resp, response, err
