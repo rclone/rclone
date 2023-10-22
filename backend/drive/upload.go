@@ -71,6 +71,7 @@ func (f *Fs) Upload(ctx context.Context, in io.Reader, size int64, contentType, 
 	var res *http.Response
 	var err error
 	err = f.pacer.Call(func() (bool, error) {
+		_ = f.uploadsLimiter.Wait(ctx) // obey upslimit
 		var body io.Reader
 		body, err = googleapi.WithoutDataWrapper.JSONReader(info)
 		if err != nil {
