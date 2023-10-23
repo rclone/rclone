@@ -2507,7 +2507,7 @@ func SkipDestructive(ctx context.Context, subject interface{}, action string) (s
 			size = do.Size()
 		}
 		if size >= 0 {
-			fs.Logf(subject, "Skipped %s to %s as %s is set (size %v)", fs.LogValue("skipped", action), flag, subject.(fs.Object).Remote(), fs.LogValue("size", fs.SizeSuffix(size)))
+			fs.Logf(subject, "Skipped %s to %s as %s is set (size %v)", fs.LogValue("skipped", action), subject.(fs.Object).Remote(), flag, fs.LogValue("size", fs.SizeSuffix(size)))
 		} else {
 			fs.Logf(subject, "Skipped %s as %s is set", fs.LogValue("skipped", action), flag)
 		}
