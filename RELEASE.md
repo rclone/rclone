@@ -90,6 +90,13 @@ Now
   * git commit -a -v -m "Changelog updates from Version ${NEW_TAG}"
   * git push
 
+## Sponsor logos
+
+If updating the website note that the sponsor logos have been moved out of the main repository.
+
+You will need to checkout `/docs/static/img/logos` from https://github.com/rclone/third-party-logos
+which is a private repo containing artwork from sponsors.
+
 ## Update the website between releases
 
 Create an update website branch based off the last release
