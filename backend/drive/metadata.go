@@ -596,7 +596,7 @@ func (f *Fs) updateMetadata(ctx context.Context, updateInfo *drive.File, meta fs
 
 // Fetch metadata and update updateInfo if --metadata is in use
 func (f *Fs) fetchAndUpdateMetadata(ctx context.Context, src fs.ObjectInfo, options []fs.OpenOption, updateInfo *drive.File, update bool) (callback updateMetadataFn, err error) {
-	meta, err := fs.GetMetadataOptions(ctx, src, options)
+	meta, err := fs.GetMetadataOptions(ctx, f, src, options)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read metadata from source object: %w", err)
 	}

@@ -150,6 +150,7 @@ func AddFlags(ci *fs.ConfigInfo, flagSet *pflag.FlagSet) {
 	flags.FVarP(flagSet, &ci.DefaultTime, "default-time", "", "Time to show if modtime is unknown for files and directories", "Config,Listing")
 	flags.BoolVarP(flagSet, &ci.Inplace, "inplace", "", ci.Inplace, "Download directly to destination file instead of atomic download to temp/rename", "Copy")
 	flags.StringVarP(flagSet, &partialSuffix, "partial-suffix", "", ci.PartialSuffix, "Add partial-suffix to temporary file name when --inplace is not used", "Copy")
+	flags.FVarP(flagSet, &ci.MetadataMapper, "metadata-mapper", "", "Program to run to transforming metadata before upload", "Metadata")
 }
 
 // ParseHeaders converts the strings passed in via the header flags into HTTPOptions

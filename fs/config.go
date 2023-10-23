@@ -149,6 +149,7 @@ type ConfigInfo struct {
 	DefaultTime                Time // time that directories with no time should display
 	Inplace                    bool // Download directly to destination file instead of atomic download to temp/rename
 	PartialSuffix              string
+	MetadataMapper             SpaceSepList
 }
 
 // NewConfig creates a new config with everything set to the default

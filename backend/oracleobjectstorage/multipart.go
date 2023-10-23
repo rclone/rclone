@@ -295,7 +295,7 @@ func (o *Object) prepareUpload(ctx context.Context, src fs.ObjectInfo, options [
 	// Set the mtime in the metadata
 	modTime := src.ModTime(ctx)
 	// Fetch metadata if --metadata is in use
-	meta, err := fs.GetMetadataOptions(ctx, src, options)
+	meta, err := fs.GetMetadataOptions(ctx, o.fs, src, options)
 	if err != nil {
 		return ui, fmt.Errorf("failed to read metadata from source object: %w", err)
 	}

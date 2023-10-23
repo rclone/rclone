@@ -1944,7 +1944,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		in = wrap(in)
 	}
 	// Fetch metadata if --metadata is in use
-	meta, err := fs.GetMetadataOptions(ctx, src, options)
+	meta, err := fs.GetMetadataOptions(ctx, o.fs, src, options)
 	if err != nil {
 		return fmt.Errorf("failed to read metadata from source object: %w", err)
 	}
