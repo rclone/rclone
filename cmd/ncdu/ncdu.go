@@ -386,6 +386,12 @@ func (u *UI) Draw() {
 		}
 		showEmptyDir := u.hasEmptyDir()
 		dirPos := u.dirPosMap[u.path]
+		// Check to see if a rescan has invalidated the position
+		if dirPos.offset >= len(u.sortPerm) {
+			delete(u.dirPosMap, u.path)
+			dirPos.offset = 0
+			dirPos.entry = 0
+		}
 		for i, j := range u.sortPerm[dirPos.offset:] {
 			entry := u.entries[j]
 			n := i + dirPos.offset
