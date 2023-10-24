@@ -84,7 +84,7 @@ var dryrunReplacements = []string{
 var logHoppers = []string{
 	// Test case `dry-run` produced log mismatches due to non-deterministic
 	// order of captured dry-run info messages.
-	`NOTICE: \S+?: Skipped (?:copy|move|delete|copy \(or [^)]+\)|update modification time) as --dry-run is set \(size \d+\)`,
+	`NOTICE: \S+?: Skipped (?:copy|move|delete|copy \(or [^)]+\)|update modification time) to \S+? as --dry-run is set \(size \d+\)`,
 
 	// Test case `extended-filenames` detected difference in order of files
 	// with extended unicode names between Windows and Unix or GDrive,
