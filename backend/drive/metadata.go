@@ -27,7 +27,7 @@ var systemMetadataInfo = map[string]fs.MetadataHelp{
 		Example: "2006-01-02T15:04:05.999Z07:00",
 	},
 	"btime": {
-		Help:    "Time of file birth (creation) with mS accuracy.",
+		Help:    "Time of file birth (creation) with mS accuracy. Note that this is only writable on fresh uploads - it can't be written for updates.",
 		Type:    "RFC 3339",
 		Example: "2006-01-02T15:04:05.999Z07:00",
 	},
@@ -492,9 +492,13 @@ type updateMetadataFn func(context.Context, *drive.File) error
 
 // read the metadata from meta and write it into updateInfo
 //
+// update should be true if this is being used to create metadata for
+// an update/PATCH call as the rules on what can be updated are
+// slightly different there.
+//
 // It returns a callback which should be called to finish the updates
 // after the data is uploaded.
-func (f *Fs) updateMetadata(ctx context.Context, updateInfo *drive.File, meta fs.Metadata) (callback updateMetadataFn, err error) {
+func (f *Fs) updateMetadata(ctx context.Context, updateInfo *drive.File, meta fs.Metadata, update bool) (callback updateMetadataFn, err error) {
 	callbackFns := []updateMetadataFn{}
 	callback = func(ctx context.Context, info *drive.File) error {
 		for _, fn := range callbackFns {
@@ -573,7 +577,11 @@ func (f *Fs) updateMetadata(ctx context.Context, updateInfo *drive.File, meta fs
 				return nil, err
 			}
 		case "btime":
-			updateInfo.CreatedTime = v
+			if update {
+				fs.Debugf(f, "Skipping btime metadata as can't update it on an existing file: %v", v)
+			} else {
+				updateInfo.CreatedTime = v
+			}
 		case "mtime":
 			updateInfo.ModifiedTime = v
 		default:
@@ -587,12 +595,12 @@ func (f *Fs) updateMetadata(ctx context.Context, updateInfo *drive.File, meta fs
 }
 
 // Fetch metadata and update updateInfo if --metadata is in use
-func (f *Fs) fetchAndUpdateMetadata(ctx context.Context, src fs.ObjectInfo, options []fs.OpenOption, updateInfo *drive.File) (callback updateMetadataFn, err error) {
+func (f *Fs) fetchAndUpdateMetadata(ctx context.Context, src fs.ObjectInfo, options []fs.OpenOption, updateInfo *drive.File, update bool) (callback updateMetadataFn, err error) {
 	meta, err := fs.GetMetadataOptions(ctx, src, options)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read metadata from source object: %w", err)
 	}
-	callback, err = f.updateMetadata(ctx, updateInfo, meta)
+	callback, err = f.updateMetadata(ctx, updateInfo, meta, update)
 	if err != nil {
 		return nil, fmt.Errorf("failed to update metadata from source object: %w", err)
 	}

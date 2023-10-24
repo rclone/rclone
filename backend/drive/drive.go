@@ -2440,7 +2440,7 @@ func (f *Fs) PutUnchecked(ctx context.Context, in io.Reader, src fs.ObjectInfo, 
 	} else {
 		createInfo.MimeType = fs.MimeTypeFromName(remote)
 	}
-	updateMetadata, err := f.fetchAndUpdateMetadata(ctx, src, options, createInfo)
+	updateMetadata, err := f.fetchAndUpdateMetadata(ctx, src, options, createInfo, false)
 	if err != nil {
 		return nil, err
 	}
@@ -4070,7 +4070,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		ModifiedTime: src.ModTime(ctx).Format(timeFormatOut),
 	}
 
-	updateMetadata, err := o.fs.fetchAndUpdateMetadata(ctx, src, options, updateInfo)
+	updateMetadata, err := o.fs.fetchAndUpdateMetadata(ctx, src, options, updateInfo, true)
 	if err != nil {
 		return err
 	}
