@@ -163,6 +163,7 @@ func (b *bisyncRun) runLocked(octx context.Context, listing1, listing2 string) (
 		return err
 	}
 
+	fs.Infof(nil, "Synching Path1 %s with Path2 %s", quotePath(path1), quotePath(path2))
 	fs.Logf(nil, "Synching Path1 %s with Path2 %s", quotePath(path1), quotePath(path2))
 
 	if opt.DryRun {
