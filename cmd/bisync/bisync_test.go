@@ -75,7 +75,7 @@ var logReplacements = []string{
 
 // Some dry-run messages differ depending on the particular remote.
 var dryrunReplacements = []string{
-	`^(NOTICE: file5.txt: Skipped) (copy|update modification time) (as --dry-run is set [(]size \d+[)])$`,
+	`^(INFO: file5.txt: Skipped) (copy|update modification time) (as --dry-run is set [(]size \d+[)])$`,
 	`$1 copy (or update modification time) $3`,
 }
 
