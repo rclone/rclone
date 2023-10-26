@@ -242,7 +242,9 @@ func NewServer(ctx context.Context, options ...Option) (*Server, error) {
 
 	s.initAuth()
 
-	for _, addr := range s.cfg.ListenAddr {
+	sdListeners := getInheritedListeners()
+
+	for idx, addr := range s.cfg.ListenAddr {
 		var url string
 		var network = "tcp"
 		var tlsCfg *tls.Config
@@ -258,7 +260,13 @@ func NewServer(ctx context.Context, options ...Option) (*Server, error) {
 		}
 
 		var listener net.Listener
-		if tlsCfg == nil {
+		if idx < len(sdListeners) {
+			if tlsCfg == nil {
+				listener = sdListeners[idx]
+			} else {
+				listener = tls.NewListener(sdListeners[idx], tlsCfg)
+			}
+		} else if tlsCfg == nil {
 			listener, err = net.Listen(network, addr)
 		} else {
 			listener, err = tls.Listen(network, addr, tlsCfg)
