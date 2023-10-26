@@ -788,7 +788,7 @@ func DeleteFilesWithBackupDir(ctx context.Context, toBeDeleted fs.ObjectsChan, b
 		if fatalErrorCount.Load() > 0 {
 			return fserrors.FatalError(err)
 		}
-		return err
+		return fmt.Errorf("failed to delete file with backupdir: %w", err)
 	}
 	return nil
 }

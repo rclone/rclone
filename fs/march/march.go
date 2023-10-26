@@ -3,18 +3,20 @@ package march
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"path"
 	"sort"
 	"strings"
 	"sync"
 
+	"golang.org/x/text/unicode/norm"
+
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/dirtree"
 	"github.com/rclone/rclone/fs/filter"
 	"github.com/rclone/rclone/fs/list"
 	"github.com/rclone/rclone/fs/walk"
-	"golang.org/x/text/unicode/norm"
 )
 
 // March holds the data used to traverse two Fs simultaneously,
@@ -168,7 +170,7 @@ func (m *March) Run(ctx context.Context) error {
 						mu.Lock()
 						// Keep reference only to the first encountered error
 						if jobError == nil {
-							jobError = err
+							jobError = fmt.Errorf("failed to process job: %w", err)
 						}
 						errCount++
 						mu.Unlock()
@@ -413,9 +415,9 @@ func (m *March) processJob(job listDirJob) ([]listDirJob, error) {
 			fs.Errorf(m.Fsrc, "error reading source root directory: %v", srcListErr)
 		}
 		srcListErr = fs.CountError(srcListErr)
-		return nil, srcListErr
+		return nil, fmt.Errorf("failed to srcList: %w", srcListErr)
 	}
-	if dstListErr == fs.ErrorDirNotFound {
+	if errors.Is(dstListErr, fs.ErrorDirNotFound) {
 		// Copy the stuff anyway
 	} else if dstListErr != nil {
 		if job.dstRemote != "" {
@@ -424,7 +426,7 @@ func (m *March) processJob(job listDirJob) ([]listDirJob, error) {
 			fs.Errorf(m.Fdst, "error reading destination root directory: %v", dstListErr)
 		}
 		dstListErr = fs.CountError(dstListErr)
-		return nil, dstListErr
+		return nil, fmt.Errorf("failed to dstList: %w", dstListErr)
 	}
 
 	// If NoTraverse is set, then try to find a matching object
@@ -456,7 +458,7 @@ func (m *March) processJob(job listDirJob) ([]listDirJob, error) {
 	srcOnly, dstOnly, matches := matchListings(srcList, dstList, m.transforms)
 	for _, src := range srcOnly {
 		if m.aborting() {
-			return nil, m.Ctx.Err()
+			return nil, fmt.Errorf("failed to matchListings: %w", m.Ctx.Err())
 		}
 		recurse := m.Callback.SrcOnly(src)
 		if recurse && job.srcDepth > 0 {
@@ -471,7 +473,7 @@ func (m *March) processJob(job listDirJob) ([]listDirJob, error) {
 	}
 	for _, dst := range dstOnly {
 		if m.aborting() {
-			return nil, m.Ctx.Err()
+			return nil, fmt.Errorf("failed while loop dstOnly: %w", m.Ctx.Err())
 		}
 		recurse := m.Callback.DstOnly(dst)
 		if recurse && job.dstDepth > 0 {
@@ -485,7 +487,7 @@ func (m *March) processJob(job listDirJob) ([]listDirJob, error) {
 	}
 	for _, match := range matches {
 		if m.aborting() {
-			return nil, m.Ctx.Err()
+			return nil, fmt.Errorf("failed while loop matches: %w", m.Ctx.Err())
 		}
 		recurse := m.Callback.Match(m.Ctx, match.dst, match.src)
 		if recurse && job.srcDepth > 0 && job.dstDepth > 0 {

@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"runtime"
 	"sort"
 	"strings"
 	"sync"
@@ -281,6 +282,13 @@ func (s *syncCopyMove) processError(err error) {
 	if err == nil {
 		return
 	}
+
+	// get caller
+	pc, _, _, _ := runtime.Caller(1)
+	caller := runtime.FuncForPC(pc).Name()
+
+	fs.Errorf(nil, "Error %s: %v", caller, err)
+
 	if errors.Is(err, context.DeadlineExceeded) {
 		err = fserrors.NoRetryError(err)
 	} else if errors.Is(err, accounting.ErrorMaxTransferLimitReachedGraceful) {
@@ -540,7 +548,7 @@ func (s *syncCopyMove) startDeleters() {
 	go func() {
 		defer s.deletersWg.Done()
 		err := operations.DeleteFilesWithBackupDir(s.ctx, s.deleteFilesCh, s.backupDir)
-		s.processError(err)
+		s.processError(fmt.Errorf("failed to delete files: %w", err))
 	}()
 }
 
@@ -1032,7 +1040,7 @@ func (s *syncCopyMove) SrcOnly(src fs.DirEntry) (recurse bool) {
 			// Check CompareDest && CopyDest
 			NoNeedTransfer, err := operations.CompareOrCopyDest(s.ctx, s.fdst, nil, x, s.compareCopyDest, s.backupDir)
 			if err != nil {
-				s.processError(err)
+				s.processError(fmt.Errorf("failed when compare or copy dest: %w", err))
 			}
 			if !NoNeedTransfer {
 				// No need to check since doesn't exist
@@ -1125,18 +1133,18 @@ func runSyncCopyMove(ctx context.Context, fdst, fsrc fs.Fs, deleteMode fs.Delete
 		// only delete stuff during in this pass
 		do, err := newSyncCopyMove(ctx, fdst, fsrc, fs.DeleteModeOnly, false, deleteEmptySrcDirs, copyEmptySrcDirs)
 		if err != nil {
-			return err
+			return fmt.Errorf("fail to create sync context: %w", err)
 		}
 		err = do.run()
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to delete files: %w", err)
 		}
 		// Next pass does a copy only
 		deleteMode = fs.DeleteModeOff
 	}
 	do, err := newSyncCopyMove(ctx, fdst, fsrc, deleteMode, DoMove, deleteEmptySrcDirs, copyEmptySrcDirs)
 	if err != nil {
-		return err
+		return fmt.Errorf("fail to create sync context: %w", err)
 	}
 	return do.run()
 }
