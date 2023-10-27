@@ -2079,7 +2079,7 @@ func (f *Fs) OpenChunkWriter(ctx context.Context, remote string, src fs.ObjectIn
 	// Temporary Object under construction
 	o := &Object{
 		fs:     f,
-		remote: src.Remote(),
+		remote: remote,
 	}
 
 	bucket, _ := o.split()
