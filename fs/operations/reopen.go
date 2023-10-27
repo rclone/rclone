@@ -3,6 +3,7 @@ package operations
 import (
 	"context"
 	"errors"
+	"fmt"
 	"io"
 	"sync"
 
@@ -48,7 +49,7 @@ func NewReOpen(ctx context.Context, src fs.Object, maxTries int, options ...fs.O
 	defer h.mu.Unlock()
 	err = h.open()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to open: %w", err)
 	}
 	return h, nil
 }
@@ -75,7 +76,7 @@ func Open(ctx context.Context, src fs.Object, options ...fs.OpenOption) (rc io.R
 //
 // we don't retry here as the Open() call will itself have low level retries
 func (h *ReOpen) open() error {
-	opts := []fs.OpenOption{}
+	var opts []fs.OpenOption
 	var hashOption *fs.HashesOption
 	var rangeOption *fs.RangeOption
 	for _, option := range h.options {

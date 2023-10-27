@@ -1138,6 +1138,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 
 	fd, err := file.Open(o.path)
 	if err != nil {
+		err = fmt.Errorf("failed to open: %w", err)
 		return
 	}
 	wrappedFd := readers.NewLimitedReadCloser(newFadviseReadCloser(o, fd, offset, limit), limit)
@@ -1145,7 +1146,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 		// seek the object
 		_, err = fd.Seek(offset, io.SeekStart)
 		// don't attempt to make checksums
-		return wrappedFd, err
+		return wrappedFd, fmt.Errorf("can't seek in file: %w", err)
 	}
 	if hasher == nil {
 		// no need to wrap since we don't need checksums
