@@ -454,7 +454,7 @@ func (s *syncCopyMove) pairCopyOrMove(ctx context.Context, in *pipe, fdst fs.Fs,
 		} else {
 			if _, merr := operations.Copy(ctx, fdst, dst, src.Remote(), src); merr != nil {
 				if !os.IsNotExist(merr) {
-					err = merr
+					err = fmt.Errorf("error reading source file: %w", merr)
 				}
 			}
 		}
@@ -928,6 +928,7 @@ func (s *syncCopyMove) run() error {
 	s.stopDeleters()
 
 	if s.copyEmptySrcDirs {
+		fs.Infof(s.fdst, "Copying empty directories")
 		s.processError(copyEmptyDirectories(s.ctx, s.fdst, s.srcEmptyDirs))
 	}
 
@@ -936,6 +937,7 @@ func (s *syncCopyMove) run() error {
 		if s.currentError() != nil && !s.ci.IgnoreErrors {
 			fs.Errorf(s.fdst, "%v", fs.ErrorNotDeleting)
 		} else {
+			fs.Errorf(s.fdst, "Removing files from destination after failed copy: %v", s.currentError())
 			s.processError(s.deleteFiles(false))
 		}
 	}
@@ -945,6 +947,7 @@ func (s *syncCopyMove) run() error {
 		if s.currentError() != nil && !s.ci.IgnoreErrors {
 			fs.Errorf(s.fdst, "%v", fs.ErrorNotDeletingDirs)
 		} else {
+			fs.Infof(s.fdst, "Removing empty directories")
 			s.processError(s.deleteEmptyDirectories(s.ctx, s.fdst, s.dstEmptyDirs))
 		}
 	}
@@ -953,6 +956,7 @@ func (s *syncCopyMove) run() error {
 	// if DoMove and --delete-empty-src-dirs flag is set
 	if s.DoMove && s.deleteEmptySrcDirs {
 		// delete empty subdirectories that were part of the move
+		fs.Infof(s.fsrc, "Removing empty directories")
 		s.processError(s.deleteEmptyDirectories(s.ctx, s.fsrc, s.srcEmptyDirs))
 	}
 

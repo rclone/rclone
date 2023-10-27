@@ -1226,7 +1226,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 			err = file.PreAllocate(src.Size(), f)
 			if err != nil {
 				fs.Debugf(o, "Failed to pre-allocate: %v", err)
-				if err == file.ErrDiskFull {
+				if errors.Is(err, file.ErrDiskFull) {
 					_ = f.Close()
 					return err
 				}

@@ -406,6 +406,7 @@ func Copy(ctx context.Context, f fs.Fs, dst fs.Object, remote string, src fs.Obj
 				inplace = true
 			} else {
 				_ = in.Close()
+				err = fmt.Errorf("server side copy failed: %w", err)
 			}
 			if errors.Is(err, fs.ErrorCantCopy) {
 				tr.Reset(ctx) // skip incomplete accounting - will be overwritten by the manual copy below
@@ -436,7 +437,10 @@ func Copy(ctx context.Context, f fs.Fs, dst fs.Object, remote string, src fs.Obj
 				dst, err = multiThreadCopy(ctx, f, remotePartial, src, ci.MultiThreadStreams, tr, uploadOptions...)
 				if err == nil {
 					newDst = dst
+				} else {
+					err = fmt.Errorf("multi-thread copy failed: %w", err)
 				}
+
 				if doUpdate {
 					actionTaken = "Multi-thread Copied (replaced existing)"
 				} else {
@@ -478,8 +482,10 @@ func Copy(ctx context.Context, f fs.Fs, dst fs.Object, remote string, src fs.Obj
 							wrappedSrc = fs.NewOverrideRemote(src, remotePartial)
 						}
 						if doUpdate && inplace {
+							fs.Infof(src, "Copied (replaced existing)")
 							err = dst.Update(ctx, in, wrappedSrc, uploadOptions...)
 						} else {
+							fs.Infof(src, "Copied (replaced existing)")
 							dst, err = f.Put(ctx, in, wrappedSrc, uploadOptions...)
 						}
 						if doUpdate {
@@ -530,7 +536,7 @@ func Copy(ctx context.Context, f fs.Fs, dst fs.Object, remote string, src fs.Obj
 		if !inplace {
 			removeFailedPartialCopy(ctx, f, remotePartial)
 		}
-		return newDst, err
+		return newDst, fmt.Errorf("failed to copy: %w", err)
 	}
 
 	// Verify sizes are the same after transfer
@@ -539,7 +545,7 @@ func Copy(ctx context.Context, f fs.Fs, dst fs.Object, remote string, src fs.Obj
 		fs.Errorf(dst, "%v", err)
 		err = fs.CountError(err)
 		removeFailedCopy(ctx, dst)
-		return newDst, err
+		return newDst, fmt.Errorf("sizes differ: %w", err)
 	}
 
 	// Verify hashes are the same after transfer - ignoring blank hashes
@@ -551,7 +557,7 @@ func Copy(ctx context.Context, f fs.Fs, dst fs.Object, remote string, src fs.Obj
 			fs.Errorf(dst, "%v", err)
 			err = fs.CountError(err)
 			removeFailedCopy(ctx, dst)
-			return newDst, err
+			return newDst, fmt.Errorf("hashes differ: %w", err)
 		}
 	}
 
@@ -565,7 +571,7 @@ func Copy(ctx context.Context, f fs.Fs, dst fs.Object, remote string, src fs.Obj
 			fs.Errorf(newDst, "partial file rename failed: %v", err)
 			err = fs.CountError(err)
 			removeFailedCopy(ctx, newDst)
-			return newDst, err
+			return newDst, fmt.Errorf("partial file rename failed: %w", err)
 		}
 	}
 
@@ -632,15 +638,15 @@ func Move(ctx context.Context, fdst fs.Fs, dst fs.Object, remote string, src fs.
 		if dst != nil && !SameObject(src, dst) {
 			err = DeleteFile(ctx, dst)
 			if err != nil {
-				return newDst, err
+				return newDst, fmt.Errorf("DeleteFile failed: %w", err)
 			}
 		}
 		// Move dst <- src
 		in := tr.Account(ctx, nil) // account the transfer
 		in.ServerSideTransferStart()
 		newDst, err = doMove(ctx, src, remote)
-		switch err {
-		case nil:
+		switch {
+		case err == nil:
 			if newDst != nil && src.String() != newDst.String() {
 				fs.Infof(src, "Moved (server-side) to: %s", newDst.String())
 			} else {
@@ -649,21 +655,21 @@ func Move(ctx context.Context, fdst fs.Fs, dst fs.Object, remote string, src fs.
 			in.ServerSideMoveEnd(newDst.Size()) // account the bytes for the server-side transfer
 			_ = in.Close()
 			return newDst, nil
-		case fs.ErrorCantMove:
+		case errors.Is(err, fs.ErrorCantMove):
 			fs.Debugf(src, "Can't move, switching to copy")
 			_ = in.Close()
 		default:
 			err = fs.CountError(err)
 			fs.Errorf(src, "Couldn't move: %v", err)
 			_ = in.Close()
-			return newDst, err
+			return newDst, fmt.Errorf("couldn't move: %w", err)
 		}
 	}
 	// Move not found or didn't work so copy dst <- src
 	newDst, err = Copy(ctx, fdst, dst, remote, src)
 	if err != nil {
 		fs.Errorf(src, "Not deleting source as copy failed: %v", err)
-		return newDst, err
+		return newDst, fmt.Errorf("not deleting source as copy failed: %w", err)
 	}
 	// Delete src if no error on copy
 	return newDst, DeleteFile(ctx, src)
@@ -722,7 +728,7 @@ func DeleteFileWithBackupDir(ctx context.Context, dst fs.Object, backupDir fs.Fs
 	}()
 	err = accounting.Stats(ctx).DeleteFile(ctx, dst.Size())
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to delete file: %w", err)
 	}
 	action, actioned := "delete", "Deleted"
 	if backupDir != nil {
@@ -742,7 +748,7 @@ func DeleteFileWithBackupDir(ctx context.Context, dst fs.Object, backupDir fs.Fs
 	} else if !skip {
 		fs.Infof(dst, actioned)
 	}
-	return err
+	return fmt.Errorf("failed to delete file: %w", err)
 }
 
 // DeleteFile deletes a single file respecting --dry-run and accumulating stats and errors.

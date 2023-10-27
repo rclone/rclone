@@ -456,9 +456,9 @@ func (m *March) processJob(job listDirJob) ([]listDirJob, error) {
 
 	// Work out what to do and do it
 	srcOnly, dstOnly, matches := matchListings(srcList, dstList, m.transforms)
-	for _, src := range srcOnly {
+	for i, src := range srcOnly {
 		if m.aborting() {
-			return nil, fmt.Errorf("failed to matchListings: %w", m.Ctx.Err())
+			return nil, fmt.Errorf("failed to matchListings: %d %w", i, m.Ctx.Err())
 		}
 		recurse := m.Callback.SrcOnly(src)
 		if recurse && job.srcDepth > 0 {
