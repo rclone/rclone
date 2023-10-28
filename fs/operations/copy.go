@@ -12,6 +12,7 @@ import (
 	"path"
 	"strings"
 	"time"
+	"unicode/utf8"
 
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/accounting"
@@ -65,6 +66,26 @@ func (c *copy) removeFailedPartialCopy(ctx context.Context, f fs.Fs, remote stri
 	c.removeFailedCopy(ctx, o)
 }
 
+// TruncateString s to n bytes.
+//
+// If s is valid UTF-8 then this may truncate to fewer than n bytes to
+// make the returned string also valid UTF-8.
+func TruncateString(s string, n int) string {
+	truncated := s[:n]
+	if !utf8.ValidString(s) {
+		// If input string wasn't valid UTF-8 then just return the truncation
+		return truncated
+	}
+	for len(truncated) > 0 {
+		if utf8.ValidString(truncated) {
+			return truncated
+		}
+		// Remove 1 byte until valid
+		truncated = truncated[:len(truncated)-1]
+	}
+	return truncated
+}
+
 // Check to see if we should be using a partial name and return the name for the copy and the inplace flag
 func (c *copy) checkPartial() (remoteForCopy string, inplace bool, err error) {
 	remoteForCopy = c.remote
@@ -79,7 +100,7 @@ func (c *copy) checkPartial() (remoteForCopy string, inplace bool, err error) {
 	suffix := "." + random.String(8) + c.ci.PartialSuffix
 	base := path.Base(c.remoteForCopy)
 	if len(base) > 100 {
-		remoteForCopy = c.remoteForCopy[:len(c.remoteForCopy)-len(suffix)] + suffix
+		remoteForCopy = TruncateString(c.remoteForCopy, len(c.remoteForCopy)-len(suffix)) + suffix
 	} else {
 		remoteForCopy += suffix
 	}
