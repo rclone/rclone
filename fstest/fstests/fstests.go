@@ -802,8 +802,8 @@ func Run(t *testing.T, opt *Opt) {
 			contents3 := random.String(size1MB)
 
 			path := "writer-at-subdir/writer-at-file"
-			objSrc := object.NewStaticObjectInfo(path, file1.ModTime, -1, true, nil, nil)
-			_, out, err := openChunkWriter(ctx, objSrc.Remote(), objSrc, &fs.ChunkOption{
+			objSrc := object.NewStaticObjectInfo(path+"-WRONG-REMOTE", file1.ModTime, -1, true, nil, nil)
+			_, out, err := openChunkWriter(ctx, path, objSrc, &fs.ChunkOption{
 				ChunkSize: int64(size5MBs),
 			})
 			require.NoError(t, err)
