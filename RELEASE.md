@@ -41,12 +41,15 @@ Early in the next release cycle update the dependencies
 
   * Review any pinned packages in go.mod and remove if possible
   * make updatedirect
-  * make
+  * make GOTAGS=cmount
+  * make compiletest
   * git commit -a -v
   * make update
-  * make
+  * make GOTAGS=cmount
+  * make compiletest
   * roll back any updates which didn't compile
   * git commit -a -v --amend
+  * **NB** watch out for this changing the default go version in `go.mod`
 
 Note that `make update` updates all direct and indirect dependencies
 and there can occasionally be forwards compatibility problems with
