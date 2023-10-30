@@ -146,11 +146,8 @@ func (c *copy) serverSideCopy(ctx context.Context) (actionTaken string, newDst f
 	newDst, err = doCopy(ctx, c.src, c.remoteForCopy)
 	if err == nil {
 		in.ServerSideCopyEnd(newDst.Size()) // account the bytes for the server-side transfer
-		_ = in.Close()
-		c.inplace = true
-	} else {
-		_ = in.Close()
 	}
+	_ = in.Close()
 	if errors.Is(err, fs.ErrorCantCopy) {
 		c.tr.Reset(ctx) // skip incomplete accounting - will be overwritten by the manual copy
 	}
