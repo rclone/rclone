@@ -52,6 +52,8 @@ func getConfigurationProvider(opt *Options) (common.ConfigurationProvider, error
 	case noAuth:
 		fs.Infof("client", "using no auth provider")
 		return getNoAuthConfiguration()
+	case workloadIdentity:
+		return auth.OkeWorkloadIdentityConfigurationProvider()
 	default:
 	}
 	return common.DefaultConfigProvider(), nil
