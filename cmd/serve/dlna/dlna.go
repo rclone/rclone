@@ -129,11 +129,10 @@ func newServer(f fs.Fs, opt *dlnaflags.Options) (*server, error) {
 		FriendlyName:     friendlyName,
 		RootDeviceUUID:   makeDeviceUUID(friendlyName),
 		Interfaces:       interfaces,
-
-		httpListenAddr: opt.ListenAddr,
-
-		f:   f,
-		vfs: vfs.New(f, &vfsflags.Opt),
+		waitChan:         make(chan struct{}),
+		httpListenAddr:   opt.ListenAddr,
+		f:                f,
+		vfs:              vfs.New(f, &vfsflags.Opt),
 	}
 
 	s.services = map[string]UPnPService{
