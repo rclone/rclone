@@ -11,8 +11,9 @@ import (
 	"strings"
 
 	systemd "github.com/iguanesolutions/go-systemd/v5"
-	"github.com/rclone/rclone/fs"
 	"github.com/sirupsen/logrus"
+
+	"github.com/rclone/rclone/fs"
 )
 
 // Options contains options for controlling the logging
