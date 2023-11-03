@@ -1304,7 +1304,7 @@ func touchFiles(ctx context.Context, dateStr string, f fs.Fs, dir, glob string) 
 		return files, fmt.Errorf("invalid date %q: %w", dateStr, err)
 	}
 
-	matcher, firstErr := filter.GlobToRegexp(glob, false)
+	matcher, firstErr := filter.GlobPathToRegexp(glob, false)
 	if firstErr != nil {
 		return files, fmt.Errorf("invalid glob %q", glob)
 	}
