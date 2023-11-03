@@ -50,16 +50,17 @@ func (gs *Groups) NewGroup(name, help string) *Group {
 }
 
 // Filter makes a copy of groups filtered by flagsRe
-func (gs *Groups) Filter(flagsRe *regexp.Regexp) *Groups {
+func (gs *Groups) Filter(group string, filterRe *regexp.Regexp, filterNamesOnly bool) *Groups {
 	newGs := NewGroups()
 	for _, g := range gs.Groups {
-		newG := newGs.NewGroup(g.Name, g.Help)
-		g.Flags.VisitAll(func(f *pflag.Flag) {
-			matched := flagsRe == nil || flagsRe.MatchString(f.Name) || flagsRe.MatchString(f.Usage)
-			if matched {
-				newG.Flags.AddFlag(f)
-			}
-		})
+		if group == "" || strings.EqualFold(g.Name, group) {
+			newG := newGs.NewGroup(g.Name, g.Help)
+			g.Flags.VisitAll(func(f *pflag.Flag) {
+				if filterRe == nil || filterRe.MatchString(f.Name) || (!filterNamesOnly && filterRe.MatchString(f.Usage)) {
+					newG.Flags.AddFlag(f)
+				}
+			})
+		}
 	}
 	return newGs
 }
