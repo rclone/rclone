@@ -82,7 +82,7 @@ func CreateFromStdinArg(ht hash.Type, args []string, startArg int) (bool, error)
 }
 
 var commandDefinition = &cobra.Command{
-	Use:   "hashsum <hash> remote:path",
+	Use:   "hashsum [<hash> remote:path]",
 	Short: `Produces a hashsum file for all the objects in the path.`,
 	Long: `
 Produces a hash file for all the objects in the path using the hash
