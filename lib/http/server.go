@@ -74,6 +74,31 @@ certificate authority certificate.
 --{{ .Prefix }}min-tls-version is minimum TLS version that is acceptable. Valid
   values are "tls1.0", "tls1.1", "tls1.2" and "tls1.3" (default
   "tls1.0").
+
+#### Systemd socket-based activation support
+
+If the server runs under a Systemd .socket unit the server inherits sockets from it.
+
+In this case, for each inherited socket a ` + "`--{{ .Prefix }}addr`" + ` option must be still
+added to tell the server if TLS has to be started or not.
+
+This is an example to test Systemd socket-based activation:
+
+	systemd-socket-activate -l 10000 -l 10001 rclone serve webdav /srv \
+		--addr :0 --addr tls://:0 --addr :10003 \
+		--key service-key.pem --cert service.pem
+
+The ` + "`systemd-socket-activate`" + ` listens on TCP ports 10000 and 10001. When a client connects
+it starts the rclone webdav server, passing two sockets and special environment variables.
+
+Rclone looks at the environment, and applies the first two ` + "`--addr`" + ` options to the inherited
+sockets. Whilst the ` + "`address:port`" + ` suffix is ignored, the ` + "`tls://`" + ` prefix is still honored.
+
+In the example, when the server starts, it listens on 10000, 10001 (TLS) and 10003. The last one
+is not inherited from Systemd.
+
+Note that in Systemd .service units, the ` + "`systemd-socket-activate`" + ` wrapper is not required as
+the .socket and .service units already provide its behavior.
 `
 	tmpl, err := template.New("server help").Parse(help)
 	if err != nil {
