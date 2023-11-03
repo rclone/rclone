@@ -12,6 +12,7 @@ import (
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config/configflags"
 	"github.com/rclone/rclone/fs/config/flags"
+	"github.com/rclone/rclone/fs/filter"
 	"github.com/rclone/rclone/fs/filter/filterflags"
 	"github.com/rclone/rclone/fs/log/logflags"
 	"github.com/rclone/rclone/fs/rc/rcflags"
@@ -62,14 +63,15 @@ var flagsRe *regexp.Regexp
 
 // Show the flags
 var helpFlags = &cobra.Command{
-	Use:   "flags [<regexp to match>]",
+	Use:   "flags [<filter>]",
 	Short: "Show the global flags for rclone",
 	Run: func(command *cobra.Command, args []string) {
 		if len(args) > 0 {
-			re, err := regexp.Compile(`(?i)` + args[0])
+			re, err := filter.GlobStringToRegexp(args[0], false)
 			if err != nil {
 				log.Fatalf("Failed to compile flags regexp: %v", err)
 			}
+			fs.Debugf(nil, "Flags filter: %s", re.String())
 			flagsRe = re
 		}
 		if GeneratingDocs {
