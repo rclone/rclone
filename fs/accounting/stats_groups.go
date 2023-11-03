@@ -302,6 +302,10 @@ func NewStatsGroup(ctx context.Context, group string) *StatsInfo {
 	return stats
 }
 
+func CleanStatsGroup(group string) {
+	groups.delete(group)
+}
+
 // statsGroups holds a synchronized map of stats
 type statsGroups struct {
 	mu    sync.Mutex
