@@ -23,8 +23,8 @@ func prepare(t *testing.T, root string) {
 	configfile.Install()
 
 	// Configure the remote
-	config.FileSet(remoteName, "type", "alias")
-	config.FileSet(remoteName, "remote", root)
+	config.FileSetValue(remoteName, "type", "alias")
+	config.FileSetValue(remoteName, "remote", root)
 }
 
 func TestNewFS(t *testing.T) {
