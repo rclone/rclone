@@ -121,7 +121,7 @@ var (
 
 func init() {
 	// Set the function pointers up in fs
-	fs.ConfigFileGet = FileGetFlag
+	fs.ConfigFileGet = FileGetValue
 	fs.ConfigFileSet = SetValueAndSave
 	fs.ConfigFileHasSection = func(section string) bool {
 		return LoadedData().HasSection(section)
@@ -351,6 +351,9 @@ func Data() Storage {
 	return data
 }
 
+// ErrorConfigFileNotFound is returned when the config file is not found
+var ErrorConfigFileNotFound = errors.New("config file not found")
+
 // LoadedData ensures the config file storage is loaded and returns it
 func LoadedData() Storage {
 	if !dataLoaded {
@@ -375,9 +378,6 @@ func LoadedData() Storage {
 	return data
 }
 
-// ErrorConfigFileNotFound is returned when the config file is not found
-var ErrorConfigFileNotFound = errors.New("config file not found")
-
 // SaveConfig calling function which saves configuration file.
 // if SaveConfig returns error trying again after sleep.
 func SaveConfig() {
@@ -394,25 +394,103 @@ func SaveConfig() {
 	fs.Errorf(nil, "Failed to save config after %d tries: %v", ci.LowLevelRetries, err)
 }
 
+// FileSections returns the sections in the config file
+func FileSections() []string {
+	return LoadedData().GetSectionList()
+}
+
+// FileGetValue gets the config key under section returning the
+// the value and true if found and or ("", false) otherwise
+func FileGetValue(section, key string) (string, bool) {
+	return LoadedData().GetValue(section, key)
+}
+
+// FileSetValue sets the key in section to value.
+// It doesn't save the config file.
+func FileSetValue(section, key, value string) {
+	LoadedData().SetValue(section, key, value)
+}
+
+// FileDeleteKey deletes the config key in the config file.
+// It returns true if the key was deleted,
+// or returns false if the section or key didn't exist.
+func FileDeleteKey(section, key string) bool {
+	return LoadedData().DeleteKey(section, key)
+}
+
+// GetValue gets the value for a config key from environment
+// or config file under section returning the default if not set.
+//
+// Emulates the preference documented and normally used by rclone via
+// configmap, which means environment variables before config file.
+func GetValue(remote, key string) string {
+	envKey := fs.ConfigToEnv(remote, key)
+	value, found := os.LookupEnv(envKey)
+	if found {
+		return value
+	}
+	value, _ = LoadedData().GetValue(remote, key)
+	return value
+}
+
 // SetValueAndSave sets the key to the value and saves just that
 // value in the config file.  It loads the old config file in from
 // disk first and overwrites the given value only.
-func SetValueAndSave(name, key, value string) error {
+func SetValueAndSave(remote, key, value string) error {
 	// Set the value in config in case we fail to reload it
-	LoadedData().SetValue(name, key, value)
+	FileSetValue(remote, key, value)
 	// Save it again
 	SaveConfig()
 	return nil
 }
 
-// getWithDefault gets key out of section name returning defaultValue if not
-// found.
-func getWithDefault(name, key, defaultValue string) string {
-	value, found := LoadedData().GetValue(name, key)
-	if !found {
-		return defaultValue
+// Remote defines a remote with a name, type and source
+type Remote struct {
+	Name   string `json:"name"`
+	Type   string `json:"type"`
+	Source string `json:"source"`
+}
+
+var remoteEnvRe = regexp.MustCompile(`^RCLONE_CONFIG_(.+?)_TYPE=(.+)$`)
+
+// GetRemotes returns the list of remotes defined in environment and config file.
+//
+// Emulates the preference documented and normally used by rclone via
+// configmap, which means environment variables before config file.
+func GetRemotes() []Remote {
+	var remotes []Remote
+	for _, item := range os.Environ() {
+		matches := remoteEnvRe.FindStringSubmatch(item)
+		if len(matches) == 3 {
+			remotes = append(remotes, Remote{
+				Name:   strings.ToLower(matches[1]),
+				Type:   strings.ToLower(matches[2]),
+				Source: "environment",
+			})
+		}
 	}
-	return value
+	remoteExists := func(name string) bool {
+		for _, remote := range remotes {
+			if name == remote.Name {
+				return true
+			}
+		}
+		return false
+	}
+	sections := LoadedData().GetSectionList()
+	for _, section := range sections {
+		if !remoteExists(section) {
+			typeValue, found := LoadedData().GetValue(section, "type")
+			if found {
+				remotes = append(remotes, Remote{
+					Name:   section,
+					Type:   typeValue,
+					Source: "file",
+				})
+			}
+		}
+	}
+	return remotes
 }
 
 // GetRemoteNames returns the names of remotes defined in environment and config file.
@@ -459,7 +537,7 @@ func updateRemote(ctx context.Context, name string, keyValues rc.Params, opt Upd
 		ctx = suppressConfirm(ctx)
 	}
 
-	fsType := FileGet(name, "type")
+	fsType := GetValue(name, "type")
 	if fsType == "" {
 		return nil, errors.New("couldn't find type field in config")
 	}
@@ -611,101 +689,11 @@ func fsOption() *fs.Option {
 	return o
 }
 
-// FileGetFlag gets the config key under section returning the
-// the value and true if found and or ("", false) otherwise
-func FileGetFlag(section, key string) (string, bool) {
-	return LoadedData().GetValue(section, key)
-}
-
-// FileGet gets the config key under section returning the default if not set.
-//
-// It looks up defaults in the environment if they are present
-func FileGet(section, key string) string {
-	var defaultVal string
-	envKey := fs.ConfigToEnv(section, key)
-	newValue, found := os.LookupEnv(envKey)
-	if found {
-		defaultVal = newValue
-	}
-	return getWithDefault(section, key, defaultVal)
-}
-
-// FileSet sets the key in section to value.  It doesn't save
-// the config file.
-func FileSet(section, key, value string) {
-	if value != "" {
-		LoadedData().SetValue(section, key, value)
-	} else {
-		FileDeleteKey(section, key)
-	}
-}
-
-// FileDeleteKey deletes the config key in the config file.
-// It returns true if the key was deleted,
-// or returns false if the section or key didn't exist.
-func FileDeleteKey(section, key string) bool {
-	return LoadedData().DeleteKey(section, key)
-}
-
-// FileSections returns the sections in the config file
-func FileSections() []string {
-	return LoadedData().GetSectionList()
-}
-
-// Remote defines a remote with a name, type and source
-type Remote struct {
-	Name   string `json:"name"`
-	Type   string `json:"type"`
-	Source string `json:"source"`
-}
-
-var remoteEnvRe = regexp.MustCompile(`^RCLONE_CONFIG_(.+?)_TYPE=(.+)$`)
-
-// GetRemotes returns the list of remotes defined in environment and config file.
-//
-// Emulates the preference documented and normally used by rclone via configmap,
-// which means environment variables before config file.
-func GetRemotes() []Remote {
-	var remotes []Remote
-	for _, item := range os.Environ() {
-		matches := remoteEnvRe.FindStringSubmatch(item)
-		if len(matches) == 3 {
-			remotes = append(remotes, Remote{
-				Name:   strings.ToLower(matches[1]),
-				Type:   strings.ToLower(matches[2]),
-				Source: "environment",
-			})
-		}
-	}
-	remoteExists := func(name string) bool {
-		for _, remote := range remotes {
-			if name == remote.Name {
-				return true
-			}
-		}
-		return false
-	}
-	sections := LoadedData().GetSectionList()
-	for _, section := range sections {
-		if !remoteExists(section) {
-			typeValue, found := LoadedData().GetValue(section, "type")
-			if found {
-				remotes = append(remotes, Remote{
-					Name:   section,
-					Type:   typeValue,
-					Source: "file",
-				})
-			}
-		}
-	}
-	return remotes
-}
-
 // DumpRcRemote dumps the config for a single remote
 func DumpRcRemote(name string) (dump rc.Params) {
 	params := rc.Params{}
 	for _, key := range LoadedData().GetKeyList(name) {
-		params[key] = FileGet(name, key)
+		params[key] = GetValue(name, key)
 	}
 	return params
 }
