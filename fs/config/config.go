@@ -444,11 +444,12 @@ func SetValueAndSave(remote, key, value string) error {
 	return nil
 }
 
-// Remote defines a remote with a name, type and source
+// Remote defines a remote with a name, type, source and description
 type Remote struct {
-	Name   string `json:"name"`
-	Type   string `json:"type"`
-	Source string `json:"source"`
+	Name        string `json:"name"`
+	Type        string `json:"type"`
+	Source      string `json:"source"`
+	Description string `json:"description"`
 }
 
 var remoteEnvRe = regexp.MustCompile(`^RCLONE_CONFIG_(.+?)_TYPE=(.+)$`)
@@ -482,10 +483,12 @@ func GetRemotes() []Remote {
 		if !remoteExists(section) {
 			typeValue, found := LoadedData().GetValue(section, "type")
 			if found {
+				description, _ := LoadedData().GetValue(section, "description")
 				remotes = append(remotes, Remote{
-					Name:   section,
-					Type:   typeValue,
-					Source: "file",
+					Name:        section,
+					Type:        typeValue,
+					Source:      "file",
+					Description: description,
 				})
 			}
 		}
