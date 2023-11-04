@@ -637,7 +637,7 @@ func FileDeleteKey(section, key string) bool {
 	return LoadedData().DeleteKey(section, key)
 }
 
-var matchEnv = regexp.MustCompile(`^RCLONE_CONFIG_(.*?)_TYPE=.*$`)
+var matchEnv = regexp.MustCompile(`^RCLONE_CONFIG_(.+?)_TYPE=.*$`)
 
 // FileSections returns the sections in the config file
 // including any defined by environment variables.
