@@ -307,14 +307,14 @@ func (s *Server) handleOptions(w http.ResponseWriter, r *http.Request, path stri
 }
 
 func (s *Server) serveRoot(w http.ResponseWriter, r *http.Request) {
-	remotes := config.FileSections()
-	sort.Strings(remotes)
+	remoteNames := config.GetRemoteNames()
+	sort.Strings(remoteNames)
 	directory := serve.NewDirectory("", s.server.HTMLTemplate())
 	directory.Name = "List of all rclone remotes."
 	q := url.Values{}
-	for _, remote := range remotes {
-		q.Set("fs", remote)
-		directory.AddHTMLEntry("["+remote+":]", true, -1, time.Time{})
+	for _, remoteName := range remoteNames {
+		q.Set("fs", remoteName)
+		directory.AddHTMLEntry("["+remoteName+":]", true, -1, time.Time{})
 	}
 	sortParm := r.URL.Query().Get("sort")
 	orderParm := r.URL.Query().Get("order")

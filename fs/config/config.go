@@ -415,6 +415,16 @@ func getWithDefault(name, key, defaultValue string) string {
 	return value
 }
 
+// GetRemoteNames returns the names of remotes defined in environment and config file.
+func GetRemoteNames() []string {
+	remotes := GetRemotes()
+	var remoteNames []string
+	for _, remote := range remotes {
+		remoteNames = append(remoteNames, remote.Name)
+	}
+	return remoteNames
+}
+
 // UpdateRemoteOpt configures the remote update
 type UpdateRemoteOpt struct {
 	// Treat all passwords as plain that need obscuring
@@ -637,19 +647,58 @@ func FileDeleteKey(section, key string) bool {
 	return LoadedData().DeleteKey(section, key)
 }
 
-var matchEnv = regexp.MustCompile(`^RCLONE_CONFIG_(.+?)_TYPE=.*$`)
-
 // FileSections returns the sections in the config file
-// including any defined by environment variables.
 func FileSections() []string {
-	sections := LoadedData().GetSectionList()
+	return LoadedData().GetSectionList()
+}
+
+// Remote defines a remote with a name, type and source
+type Remote struct {
+	Name   string `json:"name"`
+	Type   string `json:"type"`
+	Source string `json:"source"`
+}
+
+var remoteEnvRe = regexp.MustCompile(`^RCLONE_CONFIG_(.+?)_TYPE=(.+)$`)
+
+// GetRemotes returns the list of remotes defined in environment and config file.
+//
+// Emulates the preference documented and normally used by rclone via configmap,
+// which means environment variables before config file.
+func GetRemotes() []Remote {
+	var remotes []Remote
 	for _, item := range os.Environ() {
-		matches := matchEnv.FindStringSubmatch(item)
-		if len(matches) == 2 {
-			sections = append(sections, strings.ToLower(matches[1]))
+		matches := remoteEnvRe.FindStringSubmatch(item)
+		if len(matches) == 3 {
+			remotes = append(remotes, Remote{
+				Name:   strings.ToLower(matches[1]),
+				Type:   strings.ToLower(matches[2]),
+				Source: "environment",
+			})
 		}
 	}
-	return sections
+	remoteExists := func(name string) bool {
+		for _, remote := range remotes {
+			if name == remote.Name {
+				return true
+			}
+		}
+		return false
+	}
+	sections := LoadedData().GetSectionList()
+	for _, section := range sections {
+		if !remoteExists(section) {
+			typeValue, found := LoadedData().GetValue(section, "type")
+			if found {
+				remotes = append(remotes, Remote{
+					Name:   section,
+					Type:   typeValue,
+					Source: "file",
+				})
+			}
+		}
+	}
+	return remotes
 }
 
 // DumpRcRemote dumps the config for a single remote

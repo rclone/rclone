@@ -850,8 +850,8 @@ func (r *run) encryptRemoteIfNeeded(t *testing.T, remote string) string {
 func (r *run) newCacheFs(t *testing.T, remote, id string, needRemote, purge bool, flags map[string]string) (fs.Fs, *cache.Persistent) {
 	fstest.Initialise()
 	remoteExists := false
-	for _, s := range config.FileSections() {
-		if s == remote {
+	for _, s := range config.GetRemotes() {
+		if s.Name == remote {
 			remoteExists = true
 		}
 	}
