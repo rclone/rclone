@@ -92,6 +92,9 @@ func init() {
 				Value: "sharepoint-ntlm",
 				Help:  "Sharepoint with NTLM authentication, usually self-hosted or on-premises",
 			}, {
+				Value: "rclone",
+				Help:  "rclone WebDAV server to serve a remote over HTTP via the WebDAV protocol",
+			}, {
 				Value: "other",
 				Help:  "Other site/service or software",
 			}},
@@ -644,6 +647,10 @@ func (f *Fs) setQuirks(ctx context.Context, vendor string) error {
 		// so we must perform an extra check to detect this
 		// condition and return a proper error code.
 		f.checkBeforePurge = true
+	case "rclone":
+		f.canStream = true
+		f.precision = time.Second
+		f.useOCMtime = true
 	case "other":
 	default:
 		fs.Debugf(f, "Unknown vendor %q", vendor)

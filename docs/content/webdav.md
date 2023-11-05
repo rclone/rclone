@@ -53,7 +53,9 @@ Choose a number from below, or type in your own value
    \ (sharepoint)
  5 / Sharepoint with NTLM authentication, usually self-hosted or on-premises
    \ (sharepoint-ntlm)
- 6 / Other site/service or software
+ 6 / rclone WebDAV server to serve a remote over HTTP via the WebDAV protocol
+   \ (rclone)
+ 7 / Other site/service or software
    \ (other)
 vendor> 2
 User name
@@ -149,6 +151,8 @@ Properties:
         - Sharepoint Online, authenticated by Microsoft account
     - "sharepoint-ntlm"
         - Sharepoint with NTLM authentication, usually self-hosted or on-premises
+    - "rclone",
+        - rclone WebDAV server to serve a remote over HTTP via the WebDAV protocol,
     - "other"
         - Other site/service or software
 
@@ -378,6 +382,14 @@ For Rclone calls copying files (especially Office files such as .docx, .xlsx, et
 ```
 --ignore-size --ignore-checksum --update
 ```
+
+## Rclone
+
+Use this option if you are hosting remotes over WebDAV provided by rclone.
+Read [rclone serve webdav](commands/rclone_serve_webdav/) for more details.
+
+rclone serve supports modified times using the `X-OC-Mtime` header.
+
 
 ### dCache
 
