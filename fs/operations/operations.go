@@ -335,12 +335,6 @@ func CommonHash(ctx context.Context, fa, fb fs.Info) (hash.Type, *fs.HashesOptio
 // It returns the destination object if possible.  Note that this may
 // be nil.
 func Copy(ctx context.Context, f fs.Fs, dst fs.Object, remote string, src fs.Object) (newDst fs.Object, err error) {
-	now := time.Now()
-
-	defer func() {
-		fs.Debugf(src, "Take %s to copy: %s", time.Since(now), src.String())
-	}()
-
 	ci := fs.GetConfig(ctx)
 	tr := accounting.Stats(ctx).NewTransfer(src)
 	defer func() {
