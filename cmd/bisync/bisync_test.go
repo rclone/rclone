@@ -35,6 +35,7 @@ import (
 	"github.com/rclone/rclone/fstest"
 	"github.com/rclone/rclone/lib/atexit"
 	"github.com/rclone/rclone/lib/random"
+	"github.com/rclone/rclone/lib/terminal"
 	"golang.org/x/text/unicode/norm"
 
 	"github.com/pmezard/go-difflib/difflib"
@@ -106,8 +107,8 @@ var logHoppers = []string{
 // Some log lines can contain Windows path separator that must be
 // converted to "/" in every matching token to match golden logs.
 var logLinesWithSlash = []string{
-	`\(\d\d\)  : (touch-glob|touch-copy|copy-file|copy-as|copy-dir|delete-file) `,
-	`INFO  : - Path[12] +Queue copy to Path[12] `,
+	`.*\(\d\d\)  :.*(touch-glob|touch-copy|copy-file|copy-as|copy-dir|delete-file) `,
+	`INFO  : - .*Path[12].* +.*Queue copy to Path[12].*`,
 	`INFO  : Synching Path1 .*? with Path2 `,
 	`INFO  : Validating listings for `,
 }
@@ -168,6 +169,10 @@ type bisyncTest struct {
 	stopAt     int
 	TestFn     bisync.TestFunc
 }
+
+const TerminalColorMode = fs.TerminalColorModeAlways
+
+var color = bisync.Color
 
 // TestBisync is a test engine for bisync test cases.
 func TestBisync(t *testing.T) {
@@ -379,16 +384,16 @@ func (b *bisyncTest) runTestCase(ctx context.Context, t *testing.T, testCase str
 	var passed bool
 	switch errorCount {
 	case 0:
-		msg = fmt.Sprintf("TEST %s PASSED", b.testCase)
+		msg = color(terminal.GreenFg, fmt.Sprintf("TEST %s PASSED", b.testCase))
 		passed = true
 	case -2:
-		msg = fmt.Sprintf("TEST %s SKIPPED", b.testCase)
+		msg = color(terminal.YellowFg, fmt.Sprintf("TEST %s SKIPPED", b.testCase))
 		passed = true
 	case -1:
-		msg = fmt.Sprintf("TEST %s FAILED - WRONG NUMBER OF FILES", b.testCase)
+		msg = color(terminal.RedFg, fmt.Sprintf("TEST %s FAILED - WRONG NUMBER OF FILES", b.testCase))
 		passed = false
 	default:
-		msg = fmt.Sprintf("TEST %s FAILED - %d MISCOMPARED FILES", b.testCase, errorCount)
+		msg = color(terminal.RedFg, fmt.Sprintf("TEST %s FAILED - %d MISCOMPARED FILES", b.testCase, errorCount))
 		buckets := b.fs1.Features().BucketBased || b.fs2.Features().BucketBased
 		passed = false
 		if b.testCase == "rmdirs" && buckets {
@@ -455,7 +460,7 @@ func (b *bisyncTest) cleanupCase(ctx context.Context) {
 func (b *bisyncTest) runTestStep(ctx context.Context, line string) (err error) {
 	var fsrc, fdst fs.Fs
 	accounting.Stats(ctx).ResetErrors()
-	b.logPrintf("%s %s", b.stepStr, line)
+	b.logPrintf("%s %s", color(terminal.CyanFg, b.stepStr), color(terminal.BlueFg, line))
 
 	ci := fs.GetConfig(ctx)
 	ciSave := *ci
@@ -900,7 +905,7 @@ func (b *bisyncTest) compareResults() int {
 
 	if goldenNum != resultNum {
 		log.Print(divider)
-		log.Printf("MISCOMPARE - Number of Golden and Results files do not match:")
+		log.Print(color(terminal.RedFg, "MISCOMPARE - Number of Golden and Results files do not match:"))
 		log.Printf("  Golden count: %d", goldenNum)
 		log.Printf("  Result count: %d", resultNum)
 		log.Printf("  Golden files: %s", strings.Join(goldenFiles, ", "))
@@ -950,7 +955,7 @@ func (b *bisyncTest) compareResults() int {
 		require.NoError(b.t, err, "diff failed")
 
 		log.Print(divider)
-		log.Printf("| MISCOMPARE  -Golden vs +Results for  %s", file)
+		log.Printf(color(terminal.RedFg, "| MISCOMPARE  -Golden vs +Results for  %s"), file)
 		for _, line := range strings.Split(strings.TrimSpace(text), "\n") {
 			log.Printf("| %s", strings.TrimSpace(line))
 		}

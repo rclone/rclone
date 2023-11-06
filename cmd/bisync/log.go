@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/lib/terminal"
 )
 
 func (b *bisyncRun) indentf(tag, file, format string, args ...interface{}) {
@@ -25,7 +26,11 @@ func (b *bisyncRun) indent(tag, file, msg string) {
 		tag = tag[1:]
 		logf = fs.Logf
 	}
-	logf(nil, "- %-9s%-35s - %s", tag, msg, escapePath(file, false))
+
+	tag = Color(terminal.BlueFg, tag)
+	msg = Color(terminal.MagentaFg, msg)
+	file = Color(terminal.CyanFg, escapePath(file, false))
+	logf(nil, "- %-18s%-43s - %s", tag, msg, file)
 }
 
 // escapePath will escape control characters in path.
@@ -46,4 +51,10 @@ func escapePath(path string, forceQuotes bool) string {
 
 func quotePath(path string) string {
 	return escapePath(path, true)
+}
+
+// Color handles terminal colors for bisync
+func Color(style string, s string) string {
+	terminal.Start()
+	return style + s + terminal.Reset
 }

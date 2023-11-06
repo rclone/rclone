@@ -1,39 +1,39 @@
-(01)  : test basic
+[36m(01)  :[0m [34mtest basic[0m
 
 
-(02)  : test initial bisync
-(03)  : bisync resync
+[36m(02)  :[0m [34mtest initial bisync[0m
+[36m(03)  :[0m [34mbisync resync[0m
 INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
 INFO  : Copying unique Path2 files to Path1
 INFO  : Resynching Path1 to Path2
 INFO  : Resync updating listings
-INFO  : Bisync successful
-(04)  : bisync resync ignore-listing-checksum
+INFO  : [32mBisync successful[0m
+[36m(04)  :[0m [34mbisync resync ignore-listing-checksum[0m
 INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
 INFO  : Copying unique Path2 files to Path1
 INFO  : Resynching Path1 to Path2
 INFO  : Resync updating listings
-INFO  : Bisync successful
+INFO  : [32mBisync successful[0m
 
-(05)  : test place newer files on both paths
+[36m(05)  :[0m [34mtest place newer files on both paths[0m
 
-(06)  : touch-copy 2001-01-02 {datadir/}file1.txt {path2/}
-(07)  : copy-as {datadir/}file1.txt {path1/}subdir file20.txt
+[36m(06)  :[0m [34mtouch-copy 2001-01-02 {datadir/}file1.txt {path2/}[0m
+[36m(07)  :[0m [34mcopy-as {datadir/}file1.txt {path1/}subdir file20.txt[0m
 
-(08)  : test bisync run
-(09)  : bisync ignore-listing-checksum
+[36m(08)  :[0m [34mtest bisync run[0m
+[36m(09)  :[0m [34mbisync ignore-listing-checksum[0m
 INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
 INFO  : Path1 checking for diffs
-INFO  : - Path1    File is newer                       - subdir/file20.txt
+INFO  : - [34mPath1[0m    [35mFile is newer[0m                      - [36msubdir/file20.txt[0m
 INFO  : Path1:    1 changes:    0 new,    1 newer,    0 older,    0 deleted
 INFO  : Path2 checking for diffs
-INFO  : - Path2    File is newer                       - file1.txt
+INFO  : - [34mPath2[0m    [35mFile is newer[0m                      - [36mfile1.txt[0m
 INFO  : Path2:    1 changes:    0 new,    1 newer,    0 older,    0 deleted
 INFO  : Applying changes
-INFO  : - Path1    Queue copy to Path2                 - {path2/}subdir/file20.txt
-INFO  : - Path2    Queue copy to Path1                 - {path1/}file1.txt
-INFO  : - Path2    Do queued copies to                 - Path1
-INFO  : - Path1    Do queued copies to                 - Path2
+INFO  : - [34mPath1[0m    [35mQueue copy to Path2[0m                - [36m{path2/}subdir/file20.txt[0m
+INFO  : - [34mPath2[0m    [35mQueue copy to Path1[0m                - [36m{path1/}file1.txt[0m
+INFO  : - [34mPath2[0m    [35mDo queued copies to[0m                - [36mPath1[0m
+INFO  : - [34mPath1[0m    [35mDo queued copies to[0m                - [36mPath2[0m
 INFO  : Updating listings
 INFO  : Validating listings for Path1 "{path1/}" vs Path2 "{path2/}"
-INFO  : Bisync successful
+INFO  : [32mBisync successful[0m
