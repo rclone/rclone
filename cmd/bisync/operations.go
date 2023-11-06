@@ -37,6 +37,8 @@ type bisyncRun struct {
 	newListing1 string
 	newListing2 string
 	opt         *Options
+	octx        context.Context
+	fctx        context.Context
 }
 
 type queues struct {
@@ -205,6 +207,8 @@ func (b *bisyncRun) runLocked(octx context.Context) (err error) {
 		b.retryable = true
 		return
 	}
+	b.octx = octx
+	b.fctx = fctx
 
 	// Generate Path1 and Path2 listings and copy any unique Path2 files to Path1
 	if opt.Resync {
@@ -365,26 +369,29 @@ func (b *bisyncRun) runLocked(octx context.Context) (err error) {
 func (b *bisyncRun) resync(octx, fctx context.Context) error {
 	fs.Infof(nil, "Copying unique Path2 files to Path1")
 
-	// TODO: remove this listing eventually.
-	// Listing here is only really necessary for our --ignore-existing logic
-	// which would be more efficiently implemented by setting ci.IgnoreExisting
-	filesNow1, filesNow2, err := b.makeMarchListing(fctx)
-	if err == nil {
-		err = b.checkListing(filesNow1, b.newListing1, "current Path1")
-	}
+	// Save blank filelists (will be filled from sync results)
+	var ls1 = newFileList()
+	var ls2 = newFileList()
+	err = ls1.save(fctx, b.newListing1)
 	if err != nil {
-		return err
+		b.abort = true
 	}
-
-	err = b.checkListing(filesNow2, b.newListing2, "current Path2")
+	err = ls2.save(fctx, b.newListing2)
 	if err != nil {
-		return err
+		b.abort = true
 	}
 
 	// Check access health on the Path1 and Path2 filesystems
 	// enforce even though this is --resync
 	if b.opt.CheckAccess {
 		fs.Infof(nil, "Checking access health")
+
+		filesNow1, filesNow2, err := b.findCheckFiles(fctx)
+		if err != nil {
+			b.critical = true
+			b.retryable = true
+			return err
+		}
 
 		ds1 := &deltaSet{
 			checkFiles: bilib.Names{},
@@ -414,32 +421,11 @@ func (b *bisyncRun) resync(octx, fctx context.Context) error {
 		}
 	}
 
-	copy2to1 := []string{}
-	for _, file := range filesNow2.list {
-		if !filesNow1.has(file) {
-			b.indent("Path2", file, "Resync will copy to Path1")
-			copy2to1 = append(copy2to1, file)
-		}
-	}
 	var results2to1 []Results
 	var results1to2 []Results
-	var results2to1Dirs []Results
 	queues := queues{}
 
-	if len(copy2to1) > 0 {
-		b.indent("Path2", "Path1", "Resync is doing queued copies to")
-		resync2to1 := bilib.ToNames(copy2to1)
-		altNames2to1 := bilib.Names{}
-		b.findAltNames(octx, b.fs1, resync2to1, b.newListing1, altNames2to1)
-		// octx does not have extra filters!
-		results2to1, err = b.fastCopy(octx, b.fs2, b.fs1, resync2to1, "resync-copy2to1", altNames2to1)
-		if err != nil {
-			b.critical = true
-			return err
-		}
-	}
-
-	fs.Infof(nil, "Resynching Path1 to Path2")
+	b.indent("Path2", "Path1", "Resync is copying UNIQUE files to")
 	ctxRun := b.opt.setDryRun(fctx)
 	// fctx has our extra filters added!
 	ctxSync, filterSync := filter.AddConfig(ctxRun)
@@ -447,56 +433,47 @@ func (b *bisyncRun) resync(octx, fctx context.Context) error {
 		// prevent overwriting Google Doc files (their size is -1)
 		filterSync.Opt.MinSize = 0
 	}
-	if results1to2, err = b.resyncDir(ctxSync, b.fs1, b.fs2); err != nil {
+	ci := fs.GetConfig(ctxSync)
+	ci.IgnoreExisting = true
+	if results2to1, err = b.resyncDir(ctxSync, b.fs2, b.fs1); err != nil {
 		b.critical = true
 		return err
 	}
 
-	if b.opt.CreateEmptySrcDirs {
-		// copy Path2 back to Path1, for empty dirs
-		// the fastCopy above cannot include directories, because it relies on --files-from for filtering,
-		// so instead we'll copy them here, relying on fctx for our filtering.
-
-		// This preserves the original resync order for backward compatibility. It is essentially:
-		// rclone copy Path2 Path1 --ignore-existing
-		// rclone copy Path1 Path2 --create-empty-src-dirs
-		// rclone copy Path2 Path1 --create-empty-src-dirs
-
-		// although if we were starting from scratch, it might be cleaner and faster to just do:
-		// rclone copy Path2 Path1 --create-empty-src-dirs
-		// rclone copy Path1 Path2 --create-empty-src-dirs
-
-		fs.Infof(nil, "Resynching Path2 to Path1 (for empty dirs)")
-
-		// note copy (not sync) and dst comes before src
-		if results2to1Dirs, err = b.resyncDir(ctxSync, b.fs2, b.fs1); err != nil {
-			b.critical = true
-			return err
-		}
+	b.indent("Path1", "Path2", "Resync is copying UNIQUE OR DIFFERING files to")
+	ci.IgnoreExisting = false
+	if results1to2, err = b.resyncDir(ctxSync, b.fs1, b.fs2); err != nil {
+		b.critical = true
+		return err
 	}
 
 	fs.Infof(nil, "Resync updating listings")
 	b.saveOldListings()
 	b.replaceCurrentListings()
 
+	resultsToQueue := func(results []Results) bilib.Names {
+		names := bilib.Names{}
+		for _, result := range results {
+			if result.Name != "" &&
+				(result.Flags != "d" || b.opt.CreateEmptySrcDirs) &&
+				result.IsSrc && result.Src != "" &&
+				(result.Winner.Err == nil || result.Flags == "d") {
+				names.Add(result.Name)
+			}
+		}
+		return names
+	}
+
 	// resync 2to1
-	queues.copy2to1 = bilib.ToNames(copy2to1)
+	queues.copy2to1 = resultsToQueue(results2to1)
 	if err = b.modifyListing(fctx, b.fs2, b.fs1, results2to1, queues, false); err != nil {
 		b.critical = true
 		return err
 	}
 
 	// resync 1to2
-	queues.copy1to2 = bilib.ToNames(filesNow1.list)
+	queues.copy1to2 = resultsToQueue(results1to2)
 	if err = b.modifyListing(fctx, b.fs1, b.fs2, results1to2, queues, true); err != nil {
-		b.critical = true
-		return err
-	}
-
-	// resync 2to1 (dirs)
-	dirs2, _ := b.listDirsOnly(2)
-	queues.copy2to1 = bilib.ToNames(dirs2.list)
-	if err = b.modifyListing(fctx, b.fs2, b.fs1, results2to1Dirs, queues, false); err != nil {
 		b.critical = true
 		return err
 	}
@@ -523,7 +500,7 @@ func (b *bisyncRun) checkSync(listing1, listing2 string) error {
 		transformed := newFileList()
 		for _, file := range files.list {
 			f := files.get(file)
-			transformed.put(ApplyTransforms(context.Background(), fs, file), f.size, f.time, f.hash, f.id, f.flags)
+			transformed.put(ApplyTransforms(b.fctx, fs, file), f.size, f.time, f.hash, f.id, f.flags)
 		}
 		return transformed
 	}
@@ -531,15 +508,19 @@ func (b *bisyncRun) checkSync(listing1, listing2 string) error {
 	files1Transformed := transformList(files1, b.fs1)
 	files2Transformed := transformList(files2, b.fs2)
 
+	// DEBUG
+	fs.Debugf(nil, "files1Transformed: %v", files1Transformed)
+	fs.Debugf(nil, "files2Transformed: %v", files2Transformed)
+
 	ok := true
 	for _, file := range files1.list {
-		if !files2.has(file) && !files2Transformed.has(ApplyTransforms(context.Background(), b.fs1, file)) {
+		if !files2.has(file) && !files2Transformed.has(ApplyTransforms(b.fctx, b.fs1, file)) {
 			b.indent("ERROR", file, "Path1 file not found in Path2")
 			ok = false
 		}
 	}
 	for _, file := range files2.list {
-		if !files1.has(file) && !files1Transformed.has(ApplyTransforms(context.Background(), b.fs2, file)) {
+		if !files1.has(file) && !files1Transformed.has(ApplyTransforms(b.fctx, b.fs2, file)) {
 			b.indent("ERROR", file, "Path2 file not found in Path1")
 			ok = false
 		}

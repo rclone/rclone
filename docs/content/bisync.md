@@ -13,7 +13,7 @@ versionIntroduced: "v1.58"
   Make sure that this location is writable.
 - Run bisync with the `--resync` flag, specifying the paths
   to the local and remote sync directory roots.
-- For successive sync runs, leave off the `--resync` flag.
+- For successive sync runs, leave off the `--resync` flag. (**Important!**)
 - Consider using a [filters file](#filtering) for excluding
   unnecessary files and directories from the sync.
 - Consider setting up the [--check-access](#check-access) feature
@@ -150,14 +150,8 @@ be copied to Path1, and the process will then copy the Path1 tree to Path2.
 
 The `--resync` sequence is roughly equivalent to:
 ```
-rclone copy Path2 Path1 --ignore-existing
-rclone copy Path1 Path2
-```
-Or, if using `--create-empty-src-dirs`:
-```
-rclone copy Path2 Path1 --ignore-existing
-rclone copy Path1 Path2 --create-empty-src-dirs
-rclone copy Path2 Path1 --create-empty-src-dirs
+rclone copy Path2 Path1 --ignore-existing [--create-empty-src-dirs]
+rclone copy Path1 Path2 [--create-empty-src-dirs]
 ```
 
 The base directories on both Path1 and Path2 filesystems must exist
@@ -169,9 +163,6 @@ will be overwritten by the Path1 filesystem version.
 (Note that this is [NOT entirely symmetrical](https://github.com/rclone/rclone/issues/5681#issuecomment-938761815).)
 Carefully evaluate deltas using [--dry-run](/flags/#non-backend-flags).
 
-[//]: # (I reverted a recent change in the above paragraph, as it was incorrect.
-https://github.com/rclone/rclone/commit/dd72aff98a46c6e20848ac7ae5f7b19d45802493 )
-
 For a resync run, one of the paths may be empty (no files in the path tree).
 The resync run should result in files on both paths, else a normal non-resync
 run will fail.
@@ -180,6 +171,16 @@ For a non-resync run, either path being empty (no files in the tree) fails with
 `Empty current PathN listing. Cannot sync to an empty directory: X.pathN.lst`
 This is a safety check that an unexpected empty path does not result in
 deleting **everything** in the other path.
+
+**Note:** `--resync` should only be used under three specific (rare) circumstances:
+1. It is your _first_ bisync run (between these two paths)
+2. You've just made changes to your bisync settings (such as editing the contents of your `--filters-file`)
+3. There was an error on the prior run, and as a result, bisync now requires `--resync` to recover
+
+The rest of the time, you should _omit_ `--resync`. The reason is because `--resync` will only _copy_ (not _sync_) each side to the other.
+Therefore, if you included `--resync` for every bisync run, it would never be possible to delete a file --
+the deleted file would always keep reappearing at the end of every run (because it's being copied from the other side where it still exists).
+Similarly, renaming a file would always result in a duplicate copy (both old and new name) on both sides.
 
 #### --check-access
 
@@ -1292,6 +1293,7 @@ about _Unison_ and synchronization in general.
 * Initial listing snapshots of Path1 and Path2 are now generated concurrently, using the same "march" infrastructure as `check` and `sync`,
 for performance improvements and less [risk of error](https://forum.rclone.org/t/bisync-bugs-and-feature-requests/37636#:~:text=4.%20Listings%20should%20alternate%20between%20paths%20to%20minimize%20errors).
 * Better handling of unicode normalization and case insensitivity, support for [`--fix-case`](/docs/#fix-case), [`--ignore-case-sync`](/docs/#ignore-case-sync), [`--no-unicode-normalization`](/docs/#no-unicode-normalization)
+* `--resync` is now much more efficient (especially for users of `--create-empty-src-dirs`)
 
 ### `v1.64`
 * Fixed an [issue](https://forum.rclone.org/t/bisync-bugs-and-feature-requests/37636#:~:text=1.%20Dry%20runs%20are%20not%20completely%20dry) 

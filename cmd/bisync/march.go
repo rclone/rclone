@@ -6,6 +6,7 @@ import (
 
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/accounting"
+	"github.com/rclone/rclone/fs/filter"
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/fs/march"
 )
@@ -182,4 +183,39 @@ func whichPath(isPath1 bool) string {
 		s = "Path2"
 	}
 	return s
+}
+
+func (b *bisyncRun) findCheckFiles(ctx context.Context) (*fileList, *fileList, error) {
+	ctxCheckFile, filterCheckFile := filter.AddConfig(ctx)
+	b.handleErr(b.opt.CheckFilename, "error adding CheckFilename to filter", filterCheckFile.Add(true, b.opt.CheckFilename), true, true)
+	b.handleErr(b.opt.CheckFilename, "error adding ** exclusion to filter", filterCheckFile.Add(false, "**"), true, true)
+	ci := fs.GetConfig(ctxCheckFile)
+	marchCtx = ctxCheckFile
+
+	b.setupListing()
+	fs.Debugf(b, "starting to march!")
+
+	// set up a march over fdst (Path2) and fsrc (Path1)
+	m := &march.March{
+		Ctx:                    ctxCheckFile,
+		Fdst:                   b.fs2,
+		Fsrc:                   b.fs1,
+		Dir:                    "",
+		NoTraverse:             false,
+		Callback:               b,
+		DstIncludeAll:          false,
+		NoCheckDest:            false,
+		NoUnicodeNormalization: ci.NoUnicodeNormalization,
+	}
+	err = m.Run(ctxCheckFile)
+
+	fs.Debugf(b, "march completed. err: %v", err)
+	if err == nil {
+		err = firstErr
+	}
+	if err != nil {
+		b.abort = true
+	}
+
+	return ls1, ls2, err
 }
