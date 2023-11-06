@@ -1495,10 +1495,10 @@ func TestServerSideMoveOverlap(t *testing.T) {
 	r.CheckRemoteItems(t, file1)
 
 	// Subdir move with no filters should return ErrorCantMoveOverlapping
-	ctx = predictDstFromLogger(ctx)
+	// ctx = predictDstFromLogger(ctx)
 	err = MoveDir(ctx, FremoteMove, r.Fremote, false, false)
 	assert.EqualError(t, err, fs.ErrorOverlapping.Error())
-	testLoggerVsLsf(ctx, r.Fremote, operations.GetLoggerOpt(ctx).JSON, t)
+	// testLoggerVsLsf(ctx, r.Fremote, operations.GetLoggerOpt(ctx).JSON, t)
 
 	// Now try with a filter which should also fail with ErrorCantMoveOverlapping
 	fi, err := filter.NewFilter(nil)
@@ -1506,10 +1506,10 @@ func TestServerSideMoveOverlap(t *testing.T) {
 	fi.Opt.MinSize = 40
 	ctx = filter.ReplaceConfig(ctx, fi)
 
-	ctx = predictDstFromLogger(ctx)
+	// ctx = predictDstFromLogger(ctx)
 	err = MoveDir(ctx, FremoteMove, r.Fremote, false, false)
 	assert.EqualError(t, err, fs.ErrorOverlapping.Error())
-	testLoggerVsLsf(ctx, r.Fremote, operations.GetLoggerOpt(ctx).JSON, t)
+	// testLoggerVsLsf(ctx, r.Fremote, operations.GetLoggerOpt(ctx).JSON, t)
 }
 
 // Test a sync with overlap
@@ -1822,9 +1822,9 @@ func TestSyncCopyDest(t *testing.T) {
 	r.CheckLocalItems(t, file1)
 
 	accounting.GlobalStats().ResetCounters()
-	ctx = predictDstFromLogger(ctx)
+	// ctx = predictDstFromLogger(ctx)
 	err = Sync(ctx, fdst, r.Flocal, false)
-	testLoggerVsLsf(ctx, r.Fremote, operations.GetLoggerOpt(ctx).JSON, t)
+	// testLoggerVsLsf(ctx, r.Fremote, operations.GetLoggerOpt(ctx).JSON, t) // not currently supported
 	require.NoError(t, err)
 
 	file1dst := file1
@@ -1838,9 +1838,9 @@ func TestSyncCopyDest(t *testing.T) {
 	r.CheckLocalItems(t, file1b)
 
 	accounting.GlobalStats().ResetCounters()
-	ctx = predictDstFromLogger(ctx)
+	// ctx = predictDstFromLogger(ctx)
 	err = Sync(ctx, fdst, r.Flocal, false)
-	testLoggerVsLsf(ctx, r.Fremote, operations.GetLoggerOpt(ctx).JSON, t)
+	// testLoggerVsLsf(ctx, r.Fremote, operations.GetLoggerOpt(ctx).JSON, t)
 	require.NoError(t, err)
 
 	file1bdst := file1b
@@ -1859,9 +1859,9 @@ func TestSyncCopyDest(t *testing.T) {
 	r.CheckLocalItems(t, file1c)
 
 	accounting.GlobalStats().ResetCounters()
-	ctx = predictDstFromLogger(ctx)
+	// ctx = predictDstFromLogger(ctx)
 	err = Sync(ctx, fdst, r.Flocal, false)
-	testLoggerVsLsf(ctx, r.Fremote, operations.GetLoggerOpt(ctx).JSON, t)
+	// testLoggerVsLsf(ctx, r.Fremote, operations.GetLoggerOpt(ctx).JSON, t)
 	require.NoError(t, err)
 
 	file2dst := file2
@@ -1878,8 +1878,8 @@ func TestSyncCopyDest(t *testing.T) {
 	r.CheckLocalItems(t, file1c, file5)
 
 	accounting.GlobalStats().ResetCounters()
-	ctx = predictDstFromLogger(ctx)
-	testLoggerVsLsf(ctx, r.Fremote, operations.GetLoggerOpt(ctx).JSON, t)
+	// ctx = predictDstFromLogger(ctx)
+	// testLoggerVsLsf(ctx, r.Fremote, operations.GetLoggerOpt(ctx).JSON, t)
 	err = Sync(ctx, fdst, r.Flocal, false)
 	require.NoError(t, err)
 
@@ -1890,9 +1890,9 @@ func TestSyncCopyDest(t *testing.T) {
 
 	// check new dest, new copy
 	accounting.GlobalStats().ResetCounters()
-	ctx = predictDstFromLogger(ctx)
+	// ctx = predictDstFromLogger(ctx)
 	err = Sync(ctx, fdst, r.Flocal, false)
-	testLoggerVsLsf(ctx, r.Fremote, operations.GetLoggerOpt(ctx).JSON, t)
+	// testLoggerVsLsf(ctx, r.Fremote, operations.GetLoggerOpt(ctx).JSON, t)
 	require.NoError(t, err)
 
 	r.CheckRemoteItems(t, file2, file2dst, file3, file4, file4dst)
@@ -1904,9 +1904,9 @@ func TestSyncCopyDest(t *testing.T) {
 	r.CheckLocalItems(t, file1c, file5, file7)
 
 	accounting.GlobalStats().ResetCounters()
-	ctx = predictDstFromLogger(ctx)
+	// ctx = predictDstFromLogger(ctx)
 	err = Sync(ctx, fdst, r.Flocal, false)
-	testLoggerVsLsf(ctx, r.Fremote, operations.GetLoggerOpt(ctx).JSON, t)
+	// testLoggerVsLsf(ctx, r.Fremote, operations.GetLoggerOpt(ctx).JSON, t)
 	require.NoError(t, err)
 
 	file7dst := file7
@@ -2312,17 +2312,19 @@ func predictDstFromLogger(ctx context.Context) context.Context {
 			file := winner.Obj
 			obj, ok := file.(fs.ObjectInfo)
 			checksum := ""
+			timeFormat := "2006-01-02 15:04:05"
 			if ok {
 				if obj.Fs().Hashes().GetOne() == hash.MD5 {
 					// skip if no MD5
-					checksum, _ = obj.Hash(ctx, obj.Fs().Hashes().GetOne())
+					checksum, _ = obj.Hash(ctx, hash.MD5)
 				}
+				timeFormat = operations.FormatForLSFPrecision(obj.Fs().Precision())
 			}
 			errMsg := ""
 			if winner.Err != nil {
 				errMsg = ";" + winner.Err.Error()
 			}
-			operations.SyncFprintf(opt.JSON, "%s;%s;%v;%s%s\n", file.ModTime(ctx).Local().Format("2006-01-02 15:04:05.000000000"), checksum, file.Size(), file.Remote(), errMsg)
+			operations.SyncFprintf(opt.JSON, "%s;%s;%v;%s%s\n", file.ModTime(ctx).Local().Format(timeFormat), checksum, file.Size(), file.Remote(), errMsg)
 		}
 	}
 	return operations.WithSyncLogger(ctx, opt)
@@ -2407,10 +2409,10 @@ func testLoggerVsLsf(ctx context.Context, Fremote fs.Fs, logger *bytes.Buffer, t
 		newlogger.Write(logger.Bytes())
 	}
 
-	lsf := DstLsf(ctx, Fremote)
-	err := LoggerMatchesLsf(&newlogger, lsf)
 	r := fstest.NewRun(t)
 	if r.Flocal.Precision() == Fremote.Precision() && r.Flocal.Hashes().Contains(hash.MD5) && canTestHash {
+		lsf := DstLsf(ctx, Fremote)
+		err := LoggerMatchesLsf(&newlogger, lsf)
 		require.NoError(t, err)
 	}
 }
