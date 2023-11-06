@@ -17,6 +17,7 @@ import (
 	"github.com/rclone/rclone/fs/filter"
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/lib/atexit"
+	"github.com/rclone/rclone/lib/terminal"
 )
 
 // ErrBisyncAborted signals that bisync is aborted and forces exit code 2
@@ -139,8 +140,8 @@ func Bisync(ctx context.Context, fs1, fs2 fs.Fs, optArg *Options) (err error) {
 
 	if b.critical {
 		if b.retryable && b.opt.Resilient {
-			fs.Errorf(nil, "Bisync critical error: %v", err)
-			fs.Errorf(nil, "Bisync aborted. Error is retryable without --resync due to --resilient mode.")
+			fs.Errorf(nil, Color(terminal.RedFg, "Bisync critical error: %v"), err)
+			fs.Errorf(nil, Color(terminal.YellowFg, "Bisync aborted. Error is retryable without --resync due to --resilient mode."))
 		} else {
 			if bilib.FileExists(b.listing1) {
 				_ = os.Rename(b.listing1, b.listing1+"-err")
@@ -148,16 +149,16 @@ func Bisync(ctx context.Context, fs1, fs2 fs.Fs, optArg *Options) (err error) {
 			if bilib.FileExists(b.listing2) {
 				_ = os.Rename(b.listing2, b.listing2+"-err")
 			}
-			fs.Errorf(nil, "Bisync critical error: %v", err)
-			fs.Errorf(nil, "Bisync aborted. Must run --resync to recover.")
+			fs.Errorf(nil, Color(terminal.RedFg, "Bisync critical error: %v"), err)
+			fs.Errorf(nil, Color(terminal.RedFg, "Bisync aborted. Must run --resync to recover."))
 		}
 		return ErrBisyncAborted
 	}
 	if b.abort {
-		fs.Logf(nil, "Bisync aborted. Please try again.")
+		fs.Logf(nil, Color(terminal.RedFg, "Bisync aborted. Please try again."))
 	}
 	if err == nil {
-		fs.Infof(nil, "Bisync successful")
+		fs.Infof(nil, Color(terminal.GreenFg, "Bisync successful"))
 	}
 	return err
 }
