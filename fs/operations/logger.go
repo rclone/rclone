@@ -8,7 +8,6 @@ import (
 	"io"
 
 	"github.com/rclone/rclone/fs"
-	"github.com/rclone/rclone/fs/config/flags"
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/spf13/pflag"
 )
@@ -105,28 +104,6 @@ type LoggerOpt struct {
 	DirsOnly  bool
 	Csv       bool
 	Absolute  bool
-}
-
-// AddLoggerFlags adds the logger flags to the cmdFlags command
-func AddLoggerFlags(cmdFlags *pflag.FlagSet, opt *LoggerOpt, combined, missingOnSrc, missingOnDst, match, differ, errFile, destAfter *string) {
-	flags.StringVarP(cmdFlags, combined, "combined", "", *combined, "Make a combined report of changes to this file", "Sync")
-	flags.StringVarP(cmdFlags, missingOnSrc, "missing-on-src", "", *missingOnSrc, "Report all files missing from the source to this file", "Sync")
-	flags.StringVarP(cmdFlags, missingOnDst, "missing-on-dst", "", *missingOnDst, "Report all files missing from the destination to this file", "Sync")
-	flags.StringVarP(cmdFlags, match, "match", "", *match, "Report all matching files to this file", "Sync")
-	flags.StringVarP(cmdFlags, differ, "differ", "", *differ, "Report all non-matching files to this file", "Sync")
-	flags.StringVarP(cmdFlags, errFile, "error", "", *errFile, "Report all files with errors (hashing or reading) to this file", "Sync")
-	flags.StringVarP(cmdFlags, destAfter, "dest-after", "", *destAfter, "Report all files that exist on the dest post-sync", "Sync")
-
-	// lsf flags for destAfter
-	flags.StringVarP(cmdFlags, &opt.Format, "format", "F", "p", "Output format - see lsf help for details", "Sync")
-	flags.StringVarP(cmdFlags, &opt.Separator, "separator", "s", ";", "Separator for the items in the format", "Sync")
-	flags.BoolVarP(cmdFlags, &opt.DirSlash, "dir-slash", "d", true, "Append a slash to directory names", "Sync")
-	flags.FVarP(cmdFlags, &opt.HashType, "hash", "", "Use this hash when `h` is used in the format MD5|SHA-1|DropboxHash", "Sync")
-	flags.BoolVarP(cmdFlags, &opt.FilesOnly, "files-only", "", true, "Only list files", "Sync")
-	flags.BoolVarP(cmdFlags, &opt.DirsOnly, "dirs-only", "", false, "Only list directories", "Sync")
-	flags.BoolVarP(cmdFlags, &opt.Csv, "csv", "", false, "Output in CSV format", "Sync")
-	flags.BoolVarP(cmdFlags, &opt.Absolute, "absolute", "", false, "Put a leading / in front of path names", "Sync")
-	// flags.BoolVarP(cmdFlags, &recurse, "recursive", "R", false, "Recurse into the listing", "")
 }
 
 // WithLogger stores logger in ctx and returns a copy of ctx in which loggerKey = logger

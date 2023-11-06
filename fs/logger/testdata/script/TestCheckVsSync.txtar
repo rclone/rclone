@@ -1,0 +1,48 @@
+# tests whether rclone check and rclone sync output exactly the same file lists.
+
+# Filling src and dst with makefiles:
+exec rclone test makefiles $SRC --seed 0
+exec rclone test makefiles $DST --seed 1
+exec rclone test makefiles $SRC --seed 2
+exec rclone test makefiles $DST --seed 2
+
+# running rclone check for baseline test:
+# error is expected here:
+! exec rclone check $SRC $DST --match $WORK/CHECKmatch.txt --combined $WORK/CHECKcombined.txt --missing-on-src $WORK/CHECKmissingonsrc.txt --missing-on-dst $WORK/CHECKmissingondst.txt --error $WORK/CHECKerr.txt --differ $WORK/CHECKdiffer.txt -q
+
+# running sync with output files:
+exec rclone sync $SRC $DST --match $WORK/SYNCmatch.txt --combined $WORK/SYNCcombined.txt --missing-on-src $WORK/SYNCmissingonsrc.txt --missing-on-dst $WORK/SYNCmissingondst.txt --error $WORK/SYNCerr.txt --differ $WORK/SYNCdiffer.txt
+
+# sorting them by line and diffing:
+exec sort $WORK/CHECKmatch.txt -o $WORK/CHECKmatch.txt
+exec sort $WORK/CHECKcombined.txt -o $WORK/CHECKcombined.txt
+exec sort $WORK/CHECKmissingonsrc.txt -o $WORK/CHECKmissingonsrc.txt
+exec sort $WORK/CHECKmissingondst.txt -o $WORK/CHECKmissingondst.txt
+exec sort $WORK/CHECKerr.txt -o $WORK/CHECKerr.txt
+exec sort $WORK/CHECKdiffer.txt -o $WORK/CHECKdiffer.txt
+
+exec sort $WORK/SYNCmatch.txt -o $WORK/SYNCmatch.txt
+exec sort $WORK/SYNCcombined.txt -o $WORK/SYNCcombined.txt
+exec sort $WORK/SYNCmissingonsrc.txt -o $WORK/SYNCmissingonsrc.txt
+exec sort $WORK/SYNCmissingondst.txt -o $WORK/SYNCmissingondst.txt
+exec sort $WORK/SYNCerr.txt -o $WORK/SYNCerr.txt
+exec sort $WORK/SYNCdiffer.txt -o $WORK/SYNCdiffer.txt
+
+# diff match check vs. sync:
+cmp $WORK/CHECKmatch.txt $WORK/SYNCmatch.txt
+# diff combined check vs. sync:
+cmp $WORK/CHECKcombined.txt $WORK/SYNCcombined.txt
+# diff missingonsrc check vs. sync:
+cmp $WORK/CHECKmissingonsrc.txt $WORK/SYNCmissingonsrc.txt
+# diff missingondst check vs. sync:
+cmp $WORK/CHECKmissingondst.txt $WORK/SYNCmissingondst.txt
+# diff error check vs. sync:
+cmp $WORK/CHECKerr.txt $WORK/SYNCerr.txt
+# diff differ check vs. sync:
+cmp $WORK/CHECKdiffer.txt $WORK/SYNCdiffer.txt
+
+# verify accuracy
+exec rclone check $SRC $DST
+exec diff -rya --suppress-common-lines $SRC $DST
+[!windows] exec rsync -aEvhPu $SRC/ $WORK/rsyncDst
+[!windows] exec rclone check $DST $WORK/rsyncDst
