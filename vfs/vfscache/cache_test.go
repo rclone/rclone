@@ -449,7 +449,7 @@ func TestCachePurgeMinFreeSpace(t *testing.T) {
 
 // test reset clean files
 func TestCachePurgeClean(t *testing.T) {
-	r, c := newItemTestCache(t)
+	r, c := newItemTestCache(t, nil)
 	contents, obj, potato1 := newFile(t, r, c, "existing")
 	_ = contents
 

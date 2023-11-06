@@ -90,6 +90,7 @@ find that you need one or the other or both.
     --vfs-cache-max-size SizeSuffix        Max total size of objects in the cache (default off)
     --vfs-cache-min-free-space SizeSuffix  Target minimum free space on the disk containing the cache (default off)
     --vfs-cache-poll-interval duration     Interval to poll the cache for stale objects (default 1m0s)
+    --vfs-upload-exclude                   Exclude files matching pattern from being written to remote from VFS cache
     --vfs-write-back duration              Time to writeback files after last use when using cache (default 5s)
 
 If run with !-vv! rclone will print the location of the file cache.  The
@@ -106,6 +107,9 @@ closed and if they haven't been accessed for !--vfs-write-back!
 seconds. If rclone is quit or dies with files that haven't been
 uploaded, these will be uploaded next time rclone is run with the same
 flags.
+
+If !--vfs-upload-exclude! is set, files matching the glob pattern will
+never be uploaded to the remote. See [Filtering Patterns](/filtering/#patterns) for more.
 
 If using !--vfs-cache-max-size! or !--vfs-cache-min-free-size! note
 that the cache may exceed these quotas for two reasons. Firstly

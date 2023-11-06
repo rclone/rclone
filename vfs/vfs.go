@@ -26,6 +26,7 @@ import (
 	"io"
 	"os"
 	"path"
+	"reflect"
 	"sort"
 	"strings"
 	"sync"
@@ -206,7 +207,7 @@ func New(f fs.Fs, opt *vfscommon.Options) *VFS {
 	defer activeMu.Unlock()
 	configName := fs.ConfigString(f)
 	for _, activeVFS := range active[configName] {
-		if vfs.Opt == activeVFS.Opt {
+		if reflect.DeepEqual(vfs.Opt, activeVFS.Opt) {
 			fs.Debugf(f, "Re-using VFS from active cache")
 			activeVFS.inUse.Add(1)
 			return activeVFS

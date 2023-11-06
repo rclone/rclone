@@ -2,10 +2,12 @@ package vfscommon
 
 import (
 	"os"
+	"regexp"
 	"runtime"
 	"time"
 
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/filter"
 )
 
 // Options is options for creating the vfs
@@ -37,6 +39,8 @@ type Options struct {
 	UsedIsSize         bool          // if true, use the `rclone size` algorithm for Used size
 	FastFingerprint    bool          // if set use fast fingerprints
 	DiskSpaceTotalSize fs.SizeSuffix
+	VfsUploadExclude   []string
+	VfsExcludeRegex    []*regexp.Regexp
 }
 
 // DefaultOpt is the default values uses for Opt
@@ -69,6 +73,17 @@ var DefaultOpt = Options{
 	DiskSpaceTotalSize: -1,
 }
 
+func initializeExclusionPatterns(opt *Options) {
+	for _, pattern := range opt.VfsUploadExclude {
+		regexPattern, err := filter.GlobToRegexp(pattern, true)
+		if err != nil {
+			fs.Errorf(pattern, "Could not generate regex from glob for VFS cache exclusion: %v", err)
+			continue
+		}
+		opt.VfsExcludeRegex = append(opt.VfsExcludeRegex, regexPattern)
+	}
+}
+
 // Init the options, making sure everything is within range
 func (opt *Options) Init() {
 	// Mask the permissions with the umask
@@ -77,5 +92,5 @@ func (opt *Options) Init() {
 
 	// Make sure directories are returned as directories
 	opt.DirPerms |= os.ModeDir
-
+	initializeExclusionPatterns(opt)
 }

@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"regexp"
 	"sync"
 	"time"
 
@@ -629,6 +630,15 @@ func (item *Item) store(ctx context.Context, storeFn StoreFn) (err error) {
 	return item._store(ctx, storeFn)
 }
 
+func matchesExclusionPatterns(filename string, vfsExcludeRegex []*regexp.Regexp) bool {
+	for _, regexPattern := range vfsExcludeRegex {
+		if regexPattern.MatchString(filename) {
+			return true
+		}
+	}
+	return false
+}
+
 // Close the cache file
 func (item *Item) Close(storeFn StoreFn) (err error) {
 	// defer log.Trace(item.o, "Item.Close")("err=%v", &err)
@@ -715,6 +725,10 @@ func (item *Item) Close(storeFn StoreFn) (err error) {
 
 	// upload the file to backing store if changed
 	if item.info.Dirty {
+		if matchesExclusionPatterns(item.name, item.c.opt.VfsExcludeRegex) {
+			fs.Infof(item.name, "vfs cache: skipping writeback due to exclusion pattern match")
+			return
+		}
 		fs.Infof(item.name, "vfs cache: queuing for upload in %v", item.c.opt.WriteBack)
 		if syncWriteBack {
 			// do synchronous writeback
@@ -1426,5 +1440,12 @@ func (item *Item) rename(name string, newName string, newObj fs.Object) (err err
 		_ = downloaders.Close(nil)
 	}
 	item.c.writeback.Rename(id, newName)
+	if matchesExclusionPatterns(name, item.c.opt.VfsExcludeRegex) {
+		fs.Infof(item.name, "vfs cache: performing writeback due to file rename")
+		err3 := item.reload(context.Background())
+		if err3 != nil {
+			err = err3
+		}
+	}
 	return err
 }
