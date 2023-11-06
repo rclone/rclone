@@ -114,18 +114,24 @@ func (ls *fileList) remove(file string) {
 	}
 }
 
-func (ls *fileList) put(file string, size int64, time time.Time, hash, id string, flags string) {
+func (ls *fileList) put(file string, size int64, modtime time.Time, hash, id string, flags string) {
 	fi := ls.get(file)
 	if fi != nil {
 		fi.size = size
-		fi.time = time
+		// if already have higher precision of same time, avoid overwriting it
+		if fi.time != modtime {
+			if modtime.Before(fi.time) && fi.time.Sub(modtime) < time.Second {
+				modtime = fi.time
+			}
+		}
+		fi.time = modtime
 		fi.hash = hash
 		fi.id = id
 		fi.flags = flags
 	} else {
 		fi = &fileInfo{
 			size:  size,
-			time:  time,
+			time:  modtime,
 			hash:  hash,
 			id:    id,
 			flags: flags,
@@ -445,6 +451,14 @@ func (b *bisyncRun) modifyListing(ctx context.Context, src fs.Fs, dst fs.Fs, res
 	dstListNew, err := b.loadListing(dstListing + "-new")
 	if err != nil {
 		return fmt.Errorf("cannot read new listing: %w", err)
+	}
+	// for resync only, dstListNew will be empty, so need to use results instead
+	if b.opt.Resync {
+		for _, result := range results {
+			if result.Name != "" && result.IsDst {
+				dstListNew.put(result.Name, result.Size, result.Modtime, result.Hash, "-", result.Flags)
+			}
+		}
 	}
 
 	srcWinners := newFileList()

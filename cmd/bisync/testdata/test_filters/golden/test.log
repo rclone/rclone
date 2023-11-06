@@ -9,7 +9,8 @@ INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
 INFO  : Using filters file {workdir/}filtersfile.flt
 INFO  : Storing filters file hash to {workdir/}filtersfile.flt.md5
 INFO  : Copying unique Path2 files to Path1
-INFO  : Resynching Path1 to Path2
+INFO  : - [34mPath2[0m    [35mResync is copying UNIQUE files to[0m  - [36mPath1[0m
+INFO  : - [34mPath1[0m    [35mResync is copying UNIQUE OR DIFFERING files to[0m - [36mPath2[0m
 INFO  : Resync updating listings
 INFO  : [32mBisync successful[0m
 

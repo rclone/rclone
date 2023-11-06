@@ -5,7 +5,8 @@
 [36m(03)  :[0m [34mbisync resync[0m
 INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
 INFO  : Copying unique Path2 files to Path1
-INFO  : Resynching Path1 to Path2
+INFO  : - [34mPath2[0m    [35mResync is copying UNIQUE files to[0m  - [36mPath1[0m
+INFO  : - [34mPath1[0m    [35mResync is copying UNIQUE OR DIFFERING files to[0m - [36mPath2[0m
 INFO  : Resync updating listings
 INFO  : [32mBisync successful[0m
 
@@ -44,7 +45,8 @@ Bisync error: bisync aborted
 [36m(12)  :[0m [34mbisync resync[0m
 INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
 INFO  : Copying unique Path2 files to Path1
-INFO  : Resynching Path1 to Path2
+INFO  : - [34mPath2[0m    [35mResync is copying UNIQUE files to[0m  - [36mPath1[0m
+INFO  : - [34mPath1[0m    [35mResync is copying UNIQUE OR DIFFERING files to[0m - [36mPath2[0m
 INFO  : Resync updating listings
 INFO  : [32mBisync successful[0m
 
@@ -90,9 +92,8 @@ Bisync error: bisync aborted
 [36m(23)  :[0m [34mbisync resync[0m
 INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
 INFO  : Copying unique Path2 files to Path1
-INFO  : - [34mPath2[0m    [35mResync will copy to Path1[0m          - [36mRCLONE_TEST[0m
-INFO  : - [34mPath2[0m    [35mResync is doing queued copies to[0m   - [36mPath1[0m
-INFO  : Resynching Path1 to Path2
+INFO  : - [34mPath2[0m    [35mResync is copying UNIQUE files to[0m  - [36mPath1[0m
+INFO  : - [34mPath1[0m    [35mResync is copying UNIQUE OR DIFFERING files to[0m - [36mPath2[0m
 INFO  : Resync updating listings
 INFO  : [32mBisync successful[0m
 

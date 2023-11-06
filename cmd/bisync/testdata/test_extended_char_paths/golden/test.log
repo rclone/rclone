@@ -5,7 +5,8 @@
 [36m(03)  :[0m [34mbisync subdir=測試_Русский_{spc}_{spc}_ě_áñ resync[0m
 INFO  : Synching Path1 "{path1/}測試_Русский_ _ _ě_áñ/" with Path2 "{path2/}測試_Русский_ _ _ě_áñ/"
 INFO  : Copying unique Path2 files to Path1
-INFO  : Resynching Path1 to Path2
+INFO  : - [34mPath2[0m    [35mResync is copying UNIQUE files to[0m  - [36mPath1[0m
+INFO  : - [34mPath1[0m    [35mResync is copying UNIQUE OR DIFFERING files to[0m - [36mPath2[0m
 INFO  : Resync updating listings
 INFO  : [32mBisync successful[0m
 [36m(04)  :[0m [34mcopy-listings resync[0m
@@ -40,7 +41,8 @@ INFO  : [32mBisync successful[0m
 [36m(13)  :[0m [34mbisync resync[0m
 INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
 INFO  : Copying unique Path2 files to Path1
-INFO  : Resynching Path1 to Path2
+INFO  : - [34mPath2[0m    [35mResync is copying UNIQUE files to[0m  - [36mPath1[0m
+INFO  : - [34mPath1[0m    [35mResync is copying UNIQUE OR DIFFERING files to[0m - [36mPath2[0m
 INFO  : Resync updating listings
 INFO  : [32mBisync successful[0m
 [36m(14)  :[0m [34mdelete-file {path1/}測試_Русский_{spc}_{spc}_ě_áñ/測試_check{spc}file[0m
@@ -63,9 +65,8 @@ Bisync error: bisync aborted
 [36m(18)  :[0m [34mbisync resync[0m
 INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
 INFO  : Copying unique Path2 files to Path1
-INFO  : - [34mPath2[0m    [35mResync will copy to Path1[0m          - [36m測試_Русский_ _ _ě_áñ/測試_check file[0m
-INFO  : - [34mPath2[0m    [35mResync is doing queued copies to[0m   - [36mPath1[0m
-INFO  : Resynching Path1 to Path2
+INFO  : - [34mPath2[0m    [35mResync is copying UNIQUE files to[0m  - [36mPath1[0m
+INFO  : - [34mPath1[0m    [35mResync is copying UNIQUE OR DIFFERING files to[0m - [36mPath2[0m
 INFO  : Resync updating listings
 INFO  : [32mBisync successful[0m
 [36m(19)  :[0m [34mbisync check-access check-filename=測試_check{spc}file[0m
@@ -88,7 +89,8 @@ INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
 INFO  : Using filters file {workdir/}測試_filtersfile.txt
 INFO  : Storing filters file hash to {workdir/}測試_filtersfile.txt.md5
 INFO  : Copying unique Path2 files to Path1
-INFO  : Resynching Path1 to Path2
+INFO  : - [34mPath2[0m    [35mResync is copying UNIQUE files to[0m  - [36mPath1[0m
+INFO  : - [34mPath1[0m    [35mResync is copying UNIQUE OR DIFFERING files to[0m - [36mPath2[0m
 INFO  : Resync updating listings
 INFO  : [32mBisync successful[0m
 [36m(24)  :[0m [34mcopy-as {datadir/}file1.txt {path1/} fileZ.txt[0m
