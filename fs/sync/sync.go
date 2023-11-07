@@ -452,7 +452,6 @@ func (s *syncCopyMove) pairCopyOrMove(ctx context.Context, in *pipe, fdst fs.Fs,
 				err = operations.DeleteFile(ctx, src)
 			}
 		} else {
-			fs.Debugf(src, "copy %s", src.String())
 			if _, merr := operations.Copy(ctx, fdst, dst, src.Remote(), src); merr != nil {
 				if !errors.Is(merr, os.ErrNotExist) {
 					err = fmt.Errorf("error reading source file: %w", merr)
