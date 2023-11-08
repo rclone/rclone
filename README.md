@@ -123,6 +123,7 @@ These backends adapt or modify other storage providers
   * Partial syncs supported on a whole file basis
   * [Copy](https://rclone.org/commands/rclone_copy/) mode to just copy new/changed files
   * [Sync](https://rclone.org/commands/rclone_sync/) (one way) mode to make a directory identical
+  * [Bisync](https://rclone.org/bisync/) (two way) to keep two directories in sync bidirectionally
   * [Check](https://rclone.org/commands/rclone_check/) mode to check for file hash equality
   * Can sync to and from network, e.g. two different cloud accounts
   * Optional large file chunking ([Chunker](https://rclone.org/chunker/))
