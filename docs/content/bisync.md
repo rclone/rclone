@@ -488,11 +488,11 @@ This limitation will be lifted in a future `rclone bisync` release.
 
 ### Concurrent modifications
 
-When using **Local, FTP or SFTP** remotes rclone does not create _temporary_
+When using **Local, FTP or SFTP** remotes with [`--inplace`](/docs/#inplace), rclone does not create _temporary_
 files at the destination when copying, and thus if the connection is lost
 the created file may be corrupt, which will likely propagate back to the
 original path on the next sync, resulting in data loss.
-This will be solved in a future release, there is no workaround at the moment.
+It is therefore recommended to _omit_ `--inplace`.
 
 Files that **change during** a bisync run may result in data loss.
 This has been seen in a highly dynamic environment, where the filesystem
@@ -1272,6 +1272,7 @@ about _Unison_ and synchronization in general.
 ### `v1.65`
 * Copies and deletes are now handled in one operation instead of two
 * `--track-renames` and `--backup-dir` are now supported
+* Partial uploads known issue on `local`/`ftp`/`sftp` has been resolved (unless using `--inplace`)
 
 ### `v1.64`
 * Fixed an [issue](https://forum.rclone.org/t/bisync-bugs-and-feature-requests/37636#:~:text=1.%20Dry%20runs%20are%20not%20completely%20dry) 
