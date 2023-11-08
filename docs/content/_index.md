@@ -92,6 +92,7 @@ Rclone helps you:
     - Can use multi-threaded downloads to local disk
 - [Copy](/commands/rclone_copy/) new or changed files to cloud storage
 - [Sync](/commands/rclone_sync/) (one way) to make a directory identical
+- [Bisync](/bisync/) (two way) to keep two directories in sync bidirectionally
 - [Move](/commands/rclone_move/) files to cloud storage deleting the local after verification
 - [Check](/commands/rclone_check/) hashes and for missing/extra files
 - [Mount](/commands/rclone_mount/) your cloud storage as a network disk
