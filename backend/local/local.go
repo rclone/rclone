@@ -1281,7 +1281,10 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		in = io.TeeReader(in, hasher)
 	}
 
+	now := time.Now()
 	_, err = io.Copy(out, in)
+	atomic.AddInt64(&timesToTOCopy, 1)
+	atomic.AddInt64(&timeToIOCopy, time.Since(now).Nanoseconds())
 	closeErr := out.Close()
 	if err == nil {
 		err = closeErr
