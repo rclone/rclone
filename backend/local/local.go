@@ -1100,6 +1100,39 @@ func (o *Object) openTranslatedLink(offset, limit int64) (lrc io.ReadCloser, err
 	return readers.NewLimitedReadCloser(io.NopCloser(strings.NewReader(linkdst[offset:])), limit), nil
 }
 
+var (
+	timeToOpenFile int64
+	timesToOpen    int64
+
+	timeToIOCopy  int64
+	timesToTOCopy int64
+)
+
+func init() {
+	go func() {
+		ticker := time.NewTicker(time.Second * 30)
+		for range ticker.C {
+			if timesToOpen == 0 {
+				continue
+			}
+			average := time.Duration(atomic.LoadInt64(&timeToOpenFile) / atomic.LoadInt64(&timesToOpen))
+			fs.Errorf(nil, "Average time taken to open a file: %v", average)
+
+			if timesToTOCopy == 0 {
+				continue
+			}
+
+			average = time.Duration(atomic.LoadInt64(&timeToIOCopy) / atomic.LoadInt64(&timesToTOCopy))
+			fs.Errorf(nil, "Average time taken to copy a file: %v", average)
+
+			atomic.StoreInt64(&timeToOpenFile, 0)
+			atomic.StoreInt64(&timesToOpen, 0)
+			atomic.StoreInt64(&timeToIOCopy, 0)
+			atomic.StoreInt64(&timesToTOCopy, 0)
+		}
+	}()
+}
+
 // Open an object for read
 func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.ReadCloser, err error) {
 	var offset, limit int64 = 0, -1
@@ -1136,7 +1169,13 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 		return o.openTranslatedLink(offset, limit)
 	}
 
+	now := time.Now()
+
 	fd, err := file.Open(o.path)
+
+	atomic.AddInt64(&timeToOpenFile, time.Since(now).Nanoseconds())
+	atomic.AddInt64(&timesToOpen, 1)
+
 	if err != nil {
 		err = fmt.Errorf("failed to open: %w", err)
 		return
