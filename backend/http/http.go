@@ -36,6 +36,7 @@ func init() {
 		Name:        "http",
 		Description: "HTTP",
 		NewFs:       NewFs,
+		CommandHelp: commandHelp,
 		Options: []fs.Option{{
 			Name:     "url",
 			Help:     "URL of HTTP host to connect to.\n\nE.g. \"https://example.com\", or \"https://user:pass@example.com\" to use a username and password.",
@@ -210,6 +211,42 @@ func getFsEndpoint(ctx context.Context, client *http.Client, url string, opt *Op
 	return createFileResult()
 }
 
+// Make the http connection with opt
+func (f *Fs) httpConnection(ctx context.Context, opt *Options) (isFile bool, err error) {
+	if len(opt.Headers)%2 != 0 {
+		return false, errors.New("odd number of headers supplied")
+	}
+
+	if !strings.HasSuffix(opt.Endpoint, "/") {
+		opt.Endpoint += "/"
+	}
+
+	// Parse the endpoint and stick the root onto it
+	base, err := url.Parse(opt.Endpoint)
+	if err != nil {
+		return false, err
+	}
+	u, err := rest.URLJoin(base, rest.URLPathEscape(f.root))
+	if err != nil {
+		return false, err
+	}
+
+	client := fshttp.NewClient(ctx)
+
+	endpoint, isFile := getFsEndpoint(ctx, client, u.String(), opt)
+	fs.Debugf(nil, "Root: %s", endpoint)
+	u, err = url.Parse(endpoint)
+	if err != nil {
+		return false, err
+	}
+
+	// Update f with the new parameters
+	f.httpClient = client
+	f.endpoint = u
+	f.endpointURL = u.String()
+	return isFile, nil
+}
+
 // NewFs creates a new Fs object from the name and root. It connects to
 // the host specified in the config file.
 func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, error) {
@@ -220,46 +257,22 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		return nil, err
 	}
 
-	if len(opt.Headers)%2 != 0 {
-		return nil, errors.New("odd number of headers supplied")
-	}
-
-	if !strings.HasSuffix(opt.Endpoint, "/") {
-		opt.Endpoint += "/"
-	}
-
-	// Parse the endpoint and stick the root onto it
-	base, err := url.Parse(opt.Endpoint)
-	if err != nil {
-		return nil, err
-	}
-	u, err := rest.URLJoin(base, rest.URLPathEscape(root))
-	if err != nil {
-		return nil, err
-	}
-
-	client := fshttp.NewClient(ctx)
-
-	endpoint, isFile := getFsEndpoint(ctx, client, u.String(), opt)
-	fs.Debugf(nil, "Root: %s", endpoint)
-	u, err = url.Parse(endpoint)
-	if err != nil {
-		return nil, err
-	}
-
 	ci := fs.GetConfig(ctx)
 	f := &Fs{
-		name:        name,
-		root:        root,
-		opt:         *opt,
-		ci:          ci,
-		httpClient:  client,
-		endpoint:    u,
-		endpointURL: u.String(),
+		name: name,
+		root: root,
+		opt:  *opt,
+		ci:   ci,
 	}
 	f.features = (&fs.Features{
 		CanHaveEmptyDirectories: true,
 	}).Fill(ctx, f)
+
+	// Make the http connection
+	isFile, err := f.httpConnection(ctx, opt)
+	if err != nil {
+		return nil, err
+	}
 
 	if isFile {
 		// return an error with an fs which points to the parent
@@ -685,10 +698,66 @@ func (o *Object) MimeType(ctx context.Context) string {
 	return o.contentType
 }
 
+var commandHelp = []fs.CommandHelp{{
+	Name:  "set",
+	Short: "Set command for updating the config parameters.",
+	Long: `This set command can be used to update the config parameters
+for a running http backend.
+
+Usage Examples:
+
+    rclone backend set remote: [-o opt_name=opt_value] [-o opt_name2=opt_value2]
+    rclone rc backend/command command=set fs=remote: [-o opt_name=opt_value] [-o opt_name2=opt_value2]
+    rclone rc backend/command command=set fs=remote: -o url=https://example.com
+
+The option keys are named as they are in the config file.
+
+This rebuilds the connection to the http backend when it is called with
+the new parameters. Only new parameters need be passed as the values
+will default to those currently in use.
+
+It doesn't return anything.
+`,
+}}
+
+// Command the backend to run a named command
+//
+// The command run is name
+// args may be used to read arguments from
+// opts may be used to read optional arguments from
+//
+// The result should be capable of being JSON encoded
+// If it is a string or a []string it will be shown to the user
+// otherwise it will be JSON encoded and shown to the user like that
+func (f *Fs) Command(ctx context.Context, name string, arg []string, opt map[string]string) (out interface{}, err error) {
+	switch name {
+	case "set":
+		newOpt := f.opt
+		err := configstruct.Set(configmap.Simple(opt), &newOpt)
+		if err != nil {
+			return nil, fmt.Errorf("reading config: %w", err)
+		}
+		_, err = f.httpConnection(ctx, &newOpt)
+		if err != nil {
+			return nil, fmt.Errorf("updating session: %w", err)
+		}
+		f.opt = newOpt
+		keys := []string{}
+		for k := range opt {
+			keys = append(keys, k)
+		}
+		fs.Logf(f, "Updated config values: %s", strings.Join(keys, ", "))
+		return nil, nil
+	default:
+		return nil, fs.ErrorCommandNotFound
+	}
+}
+
 // Check the interfaces are satisfied
 var (
 	_ fs.Fs          = &Fs{}
 	_ fs.PutStreamer = &Fs{}
 	_ fs.Object      = &Object{}
 	_ fs.MimeTyper   = &Object{}
+	_ fs.Commander   = &Fs{}
 )
