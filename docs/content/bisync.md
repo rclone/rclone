@@ -591,23 +591,18 @@ instead of specifying them with command flags. (You can still override them as n
 
 ### Case (and unicode) sensitivity {#case-sensitivity}
 
-Synching with **case-insensitive** filesystems, such as Windows or `Box`,
-can result in unusual behavior. As of `v1.65`, case and unicode form differences no longer cause critical errors,
-however they may cause unexpected delta outcomes, due to the delta engine still being case-sensitive.
-This will be fixed in a future release. The near-term workaround is to make sure that files on both sides
-don't have spelling case differences (`Smile.jpg` vs. `smile.jpg`).
-
-The same limitation applies to Unicode normalization forms.
-This [particularly applies to macOS](https://github.com/rclone/rclone/issues/7270),
-which prefers NFD and sometimes auto-converts filenames from the NFC form used by most other platforms.
-This should no longer cause bisync to fail entirely, but may cause surprising delta results, as explained above.
-
+As of `v1.65`, case and unicode form differences no longer cause critical errors,
+and normalization (when comparing between filesystems) is handled according to the same flags and defaults as `rclone sync`.
 See the following options (all of which are supported by bisync) to control this behavior more granularly:
 - [`--fix-case`](/docs/#fix-case)
 - [`--ignore-case-sync`](/docs/#ignore-case-sync)
 - [`--no-unicode-normalization`](/docs/#no-unicode-normalization)
 - [`--local-unicode-normalization`](/local/#local-unicode-normalization) and
 [`--local-case-sensitive`](/local/#local-case-sensitive) (caution: these are normally not what you want.)
+
+Note that in the (probably rare) event that `--fix-case` is used AND a file is new/changed on both sides 
+AND the checksums match AND the filename case does not match, the Path1 filename is considered the winner, 
+for the purposes of `--fix-case` (Path2 will be renamed to match it).
 
 ## Windows support {#windows}
 
@@ -1292,7 +1287,7 @@ about _Unison_ and synchronization in general.
 * A few basic terminal colors are now supported, controllable with [`--color`](/docs/#color-when) (`AUTO`|`NEVER`|`ALWAYS`)
 * Initial listing snapshots of Path1 and Path2 are now generated concurrently, using the same "march" infrastructure as `check` and `sync`,
 for performance improvements and less [risk of error](https://forum.rclone.org/t/bisync-bugs-and-feature-requests/37636#:~:text=4.%20Listings%20should%20alternate%20between%20paths%20to%20minimize%20errors).
-* Better handling of unicode normalization and case insensitivity, support for [`--fix-case`](/docs/#fix-case), [`--ignore-case-sync`](/docs/#ignore-case-sync), [`--no-unicode-normalization`](/docs/#no-unicode-normalization)
+* Fixed handling of unicode normalization and case insensitivity, support for [`--fix-case`](/docs/#fix-case), [`--ignore-case-sync`](/docs/#ignore-case-sync), [`--no-unicode-normalization`](/docs/#no-unicode-normalization)
 * `--resync` is now much more efficient (especially for users of `--create-empty-src-dirs`)
 
 ### `v1.64`

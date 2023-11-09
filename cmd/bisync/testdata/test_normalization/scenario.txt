@@ -43,11 +43,9 @@ bisync norm force
 test resync
 bisync resync norm
 
-test changed on both paths
+test changed on one path
 touch-copy 2001-01-05 {datadir/}file1.txt {path2/}
 copy-as-NFC {datadir/}file1.txt {path1/}測試_Русский___ě_áñ👸🏼🧝🏾‍♀️💆🏿‍♂️🐨🤙🏼🤮🧑🏻‍🔧🧑‍🔬éééö 測試_Русский___ě_áñ👸🏼🧝🏾‍♀️💆🏿‍♂️🐨🤙🏼🤮🧑🏻‍🔧🧑‍🔬éééö.txt
 copy-as-NFC {datadir/}file1.txt {path1/}folder éééö.txt
 copy-as-NFC {datadir/}file1.txt {path1/}folder HeLlO,wOrLd!.txt
-copy-as-NFD {datadir/}file1.txt {path2/}folder éééö.txt
-copy-as-NFD {datadir/}file1.txt {path2/}folder hello,WORLD!.txt
 bisync norm

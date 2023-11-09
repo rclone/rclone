@@ -36,6 +36,7 @@ type bisyncRun struct {
 	listing2    string
 	newListing1 string
 	newListing2 string
+	aliases     bilib.AliasMap
 	opt         *Options
 	octx        context.Context
 	fctx        context.Context
@@ -90,6 +91,7 @@ func Bisync(ctx context.Context, fs1, fs2 fs.Fs, optArg *Options) (err error) {
 	b.listing2 = b.basePath + ".path2.lst"
 	b.newListing1 = b.listing1 + "-new"
 	b.newListing2 = b.listing2 + "-new"
+	b.aliases = bilib.AliasMap{}
 
 	// Handle lock file
 	lockFile := ""
@@ -448,7 +450,7 @@ func (b *bisyncRun) resync(octx, fctx context.Context) error {
 	}
 
 	fs.Infof(nil, "Resync updating listings")
-	b.saveOldListings()
+	b.saveOldListings() // may not exist, as this is --resync
 	b.replaceCurrentListings()
 
 	resultsToQueue := func(results []Results) bilib.Names {
@@ -496,31 +498,15 @@ func (b *bisyncRun) checkSync(listing1, listing2 string) error {
 		return fmt.Errorf("cannot read prior listing of Path2: %w", err)
 	}
 
-	transformList := func(files *fileList, fs fs.Fs) *fileList {
-		transformed := newFileList()
-		for _, file := range files.list {
-			f := files.get(file)
-			transformed.put(ApplyTransforms(b.fctx, fs, file), f.size, f.time, f.hash, f.id, f.flags)
-		}
-		return transformed
-	}
-
-	files1Transformed := transformList(files1, b.fs1)
-	files2Transformed := transformList(files2, b.fs2)
-
-	// DEBUG
-	fs.Debugf(nil, "files1Transformed: %v", files1Transformed)
-	fs.Debugf(nil, "files2Transformed: %v", files2Transformed)
-
 	ok := true
 	for _, file := range files1.list {
-		if !files2.has(file) && !files2Transformed.has(ApplyTransforms(b.fctx, b.fs1, file)) {
+		if !files2.has(file) && !files2.has(b.aliases.Alias(file)) {
 			b.indent("ERROR", file, "Path1 file not found in Path2")
 			ok = false
 		}
 	}
 	for _, file := range files2.list {
-		if !files1.has(file) && !files1Transformed.has(ApplyTransforms(b.fctx, b.fs2, file)) {
+		if !files1.has(file) && !files1.has(b.aliases.Alias(file)) {
 			b.indent("ERROR", file, "Path2 file not found in Path1")
 			ok = false
 		}
@@ -580,7 +566,7 @@ func (b *bisyncRun) handleErr(o interface{}, msg string, err error, critical, re
 			b.critical = true
 			fs.Errorf(o, "%s: %v", msg, err)
 		} else {
-			fs.Debugf(o, "%s: %v", msg, err)
+			fs.Infof(o, "%s: %v", msg, err)
 		}
 	}
 }

@@ -15,6 +15,7 @@ var ls1 = newFileList()
 var ls2 = newFileList()
 var err error
 var firstErr error
+var marchAliasLock sync.Mutex
 var marchLsLock sync.Mutex
 var marchErrLock sync.Mutex
 var marchCtx context.Context
@@ -77,6 +78,9 @@ func (b *bisyncRun) DstOnly(o fs.DirEntry) (recurse bool) {
 // Match is called when object exists on both path1 and path2 (whether equal or not)
 func (b *bisyncRun) Match(ctx context.Context, o2, o1 fs.DirEntry) (recurse bool) {
 	fs.Debugf(o1, "both path1 and path2")
+	marchAliasLock.Lock()
+	b.aliases.Add(o1.Remote(), o2.Remote())
+	marchAliasLock.Unlock()
 	b.parse(o1, true)
 	b.parse(o2, false)
 	return isDir(o1)

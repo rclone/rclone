@@ -36,16 +36,20 @@ INFO  : - [34mPath2[0m    [35mFile is new[0m                        - [36mf
 INFO  : - [34mPath2[0m    [35mFile is new[0m                        - [36mfolder/hello,WORLD!.txt[0m
 INFO  : Path2:    3 changes:    2 new,    1 newer,    0 older,    0 deleted
 INFO  : Applying changes
-INFO  : - [34mPath1[0m    [35mQueue copy to Path2[0m                - [36m{path2/}folder/HeLlO,wOrLd!.txt[0m
-INFO  : - [34mPath1[0m    [35mQueue copy to Path2[0m                - [36m{path2/}folder/éééö.txt[0m
+INFO  : Checking potential conflicts...
+NOTICE: Local file system at {path2}: 0 differences found
+NOTICE: Local file system at {path2}: 2 matching files
+INFO  : Finished checking the potential conflicts. %!s(<nil>)
+NOTICE: - [34mWARNING[0m  [35mNew or changed in both paths[0m       - [36mfolder/HeLlO,wOrLd!.txt[0m
+INFO  : folder/hello,WORLD!.txt: Files are equal but will copy anyway to fix case to folder/HeLlO,wOrLd!.txt
+NOTICE: - [34mWARNING[0m  [35mNew or changed in both paths[0m       - [36mfolder/éééö.txt[0m
+INFO  : folder/éééö.txt: Files are equal but will copy anyway to fix case to folder/éééö.txt
 INFO  : - [34mPath1[0m    [35mQueue copy to Path2[0m                - [36m"{path2/}測試_Русский___ě_áñ👸🏼🧝🏾\u200d♀️💆🏿\u200d♂️🐨🤙🏼🤮🧑🏻\u200d🔧🧑\u200d🔬éééö/測試_Русский___ě_áñ👸🏼🧝🏾\u200d♀️💆🏿\u200d♂️🐨🤙🏼🤮🧑🏻\u200d🔧🧑\u200d🔬éééö.txt"[0m
 INFO  : - [34mPath2[0m    [35mQueue copy to Path1[0m                - [36m{path1/}file1.txt[0m
-INFO  : - [34mPath2[0m    [35mQueue copy to Path1[0m                - [36m{path1/}folder/éééö.txt[0m
-INFO  : - [34mPath2[0m    [35mQueue copy to Path1[0m                - [36m{path1/}folder/hello,WORLD!.txt[0m
 INFO  : - [34mPath2[0m    [35mDo queued copies to[0m                - [36mPath1[0m
-INFO  : folder/HeLlO,wOrLd!.txt: Fixed case by renaming to: folder/hello,WORLD!.txt
-INFO  : folder/éééö.txt: Fixed case by renaming to: folder/éééö.txt
 INFO  : - [34mPath1[0m    [35mDo queued copies to[0m                - [36mPath2[0m
+INFO  : folder/hello,WORLD!.txt: Fixed case by renaming to: folder/HeLlO,wOrLd!.txt
+INFO  : folder/éééö.txt: Fixed case by renaming to: folder/éééö.txt
 INFO  : Updating listings
 INFO  : Validating listings for Path1 "{path1/}" vs Path2 "{path2/}"
 INFO  : [32mBisync successful[0m
@@ -87,12 +91,16 @@ INFO  : - [34mPath2[0m    [35mFile is new[0m                        - [36mf
 INFO  : - [34mPath2[0m    [35mFile is new[0m                        - [36mfolder/hello,WORLD!.txt[0m
 INFO  : Path2:    3 changes:    2 new,    1 newer,    0 older,    0 deleted
 INFO  : Applying changes
-INFO  : - [34mPath1[0m    [35mQueue copy to Path2[0m                - [36m{path2/}folder/HeLlO,wOrLd!.txt[0m
-INFO  : - [34mPath1[0m    [35mQueue copy to Path2[0m                - [36m{path2/}folder/éééö.txt[0m
+INFO  : Checking potential conflicts...
+NOTICE: Local file system at {path2}: 0 differences found
+NOTICE: Local file system at {path2}: 2 matching files
+INFO  : Finished checking the potential conflicts. %!s(<nil>)
+NOTICE: - [34mWARNING[0m  [35mNew or changed in both paths[0m       - [36mfolder/HeLlO,wOrLd!.txt[0m
+INFO  : Files are equal! Skipping: folder/HeLlO,wOrLd!.txt
+NOTICE: - [34mWARNING[0m  [35mNew or changed in both paths[0m       - [36mfolder/éééö.txt[0m
+INFO  : Files are equal! Skipping: folder/éééö.txt
 INFO  : - [34mPath1[0m    [35mQueue copy to Path2[0m                - [36m"{path2/}測試_Русский___ě_áñ👸🏼🧝🏾\u200d♀️💆🏿\u200d♂️🐨🤙🏼🤮🧑🏻\u200d🔧🧑\u200d🔬éééö/測試_Русский___ě_áñ👸🏼🧝🏾\u200d♀️💆🏿\u200d♂️🐨🤙🏼🤮🧑🏻\u200d🔧🧑\u200d🔬éééö.txt"[0m
 INFO  : - [34mPath2[0m    [35mQueue copy to Path1[0m                - [36m{path1/}file1.txt[0m
-INFO  : - [34mPath2[0m    [35mQueue copy to Path1[0m                - [36m{path1/}folder/éééö.txt[0m
-INFO  : - [34mPath2[0m    [35mQueue copy to Path1[0m                - [36m{path1/}folder/hello,WORLD!.txt[0m
 INFO  : - [34mPath2[0m    [35mDo queued copies to[0m                - [36mPath1[0m
 INFO  : - [34mPath1[0m    [35mDo queued copies to[0m                - [36mPath2[0m
 INFO  : Updating listings
@@ -108,14 +116,12 @@ INFO  : - [34mPath1[0m    [35mResync is copying UNIQUE OR DIFFERING files to
 INFO  : Resync updating listings
 INFO  : [32mBisync successful[0m
 
-[36m(27)  :[0m [34mtest changed on both paths[0m
+[36m(27)  :[0m [34mtest changed on one path[0m
 [36m(28)  :[0m [34mtouch-copy 2001-01-05 {datadir/}file1.txt {path2/}[0m
 [36m(29)  :[0m [34mcopy-as-NFC {datadir/}file1.txt {path1/}測試_Русский___ě_áñ👸🏼🧝🏾‍♀️💆🏿‍♂️🐨🤙🏼🤮🧑🏻‍🔧🧑‍🔬éééö 測試_Русский___ě_áñ👸🏼🧝🏾‍♀️💆🏿‍♂️🐨🤙🏼🤮🧑🏻‍🔧🧑‍🔬éééö.txt[0m
 [36m(30)  :[0m [34mcopy-as-NFC {datadir/}file1.txt {path1/}folder éééö.txt[0m
 [36m(31)  :[0m [34mcopy-as-NFC {datadir/}file1.txt {path1/}folder HeLlO,wOrLd!.txt[0m
-[36m(32)  :[0m [34mcopy-as-NFD {datadir/}file1.txt {path2/}folder éééö.txt[0m
-[36m(33)  :[0m [34mcopy-as-NFD {datadir/}file1.txt {path2/}folder hello,WORLD!.txt[0m
-[36m(34)  :[0m [34mbisync norm[0m
+[36m(32)  :[0m [34mbisync norm[0m
 INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
 INFO  : Building Path1 and Path2 listings
 INFO  : Path1 checking for diffs
@@ -125,16 +131,12 @@ INFO  : - [34mPath1[0m    [35mFile is newer[0m                      - [36m"
 INFO  : Path1:    3 changes:    0 new,    3 newer,    0 older,    0 deleted
 INFO  : Path2 checking for diffs
 INFO  : - [34mPath2[0m    [35mFile is newer[0m                      - [36mfile1.txt[0m
-INFO  : - [34mPath2[0m    [35mFile is newer[0m                      - [36mfolder/éééö.txt[0m
-INFO  : - [34mPath2[0m    [35mFile is newer[0m                      - [36mfolder/hello,WORLD!.txt[0m
-INFO  : Path2:    3 changes:    0 new,    3 newer,    0 older,    0 deleted
+INFO  : Path2:    1 changes:    0 new,    1 newer,    0 older,    0 deleted
 INFO  : Applying changes
-INFO  : - [34mPath1[0m    [35mQueue copy to Path2[0m                - [36m{path2/}folder/HeLlO,wOrLd!.txt[0m
+INFO  : - [34mPath1[0m    [35mQueue copy to Path2[0m                - [36m{path2/}folder/hello,WORLD!.txt[0m
 INFO  : - [34mPath1[0m    [35mQueue copy to Path2[0m                - [36m{path2/}folder/éééö.txt[0m
 INFO  : - [34mPath1[0m    [35mQueue copy to Path2[0m                - [36m"{path2/}測試_Русский___ě_áñ👸🏼🧝🏾\u200d♀️💆🏿\u200d♂️🐨🤙🏼🤮🧑🏻\u200d🔧🧑\u200d🔬éééö/測試_Русский___ě_áñ👸🏼🧝🏾\u200d♀️💆🏿\u200d♂️🐨🤙🏼🤮🧑🏻\u200d🔧🧑\u200d🔬éééö.txt"[0m
 INFO  : - [34mPath2[0m    [35mQueue copy to Path1[0m                - [36m{path1/}file1.txt[0m
-INFO  : - [34mPath2[0m    [35mQueue copy to Path1[0m                - [36m{path1/}folder/éééö.txt[0m
-INFO  : - [34mPath2[0m    [35mQueue copy to Path1[0m                - [36m{path1/}folder/hello,WORLD!.txt[0m
 INFO  : - [34mPath2[0m    [35mDo queued copies to[0m                - [36mPath1[0m
 INFO  : - [34mPath1[0m    [35mDo queued copies to[0m                - [36mPath2[0m
 INFO  : Updating listings
