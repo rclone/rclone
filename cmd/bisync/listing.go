@@ -5,6 +5,7 @@ package bisync
 import (
 	"bufio"
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -20,7 +21,6 @@ import (
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/fs/operations"
 	"golang.org/x/exp/slices"
-	"golang.org/x/text/unicode/norm"
 )
 
 // ListingHeader defines first line of a listing
@@ -407,18 +407,6 @@ func ConvertPrecision(Modtime time.Time, dst fs.Fs) time.Time {
 	return Modtime
 }
 
-// ApplyTransforms handles unicode and case normalization
-func ApplyTransforms(ctx context.Context, dst fs.Fs, s string) string {
-	ci := fs.GetConfig(ctx)
-	if !ci.NoUnicodeNormalization {
-		s = norm.NFC.String(s)
-	}
-	if ci.IgnoreCaseSync || dst.Features().CaseInsensitive {
-		s = strings.ToLower(s)
-	}
-	return s
-}
-
 // modifyListing will modify the listing based on the results of the sync
 func (b *bisyncRun) modifyListing(ctx context.Context, src fs.Fs, dst fs.Fs, results []Results, queues queues, is1to2 bool) (err error) {
 	queue := queues.copy2to1
@@ -448,18 +436,6 @@ func (b *bisyncRun) modifyListing(ctx context.Context, src fs.Fs, dst fs.Fs, res
 		srcList.hash = src.Hashes().GetOne()
 		dstList.hash = dst.Hashes().GetOne()
 	}
-	dstListNew, err := b.loadListing(dstListing + "-new")
-	if err != nil {
-		return fmt.Errorf("cannot read new listing: %w", err)
-	}
-	// for resync only, dstListNew will be empty, so need to use results instead
-	if b.opt.Resync {
-		for _, result := range results {
-			if result.Name != "" && result.IsDst {
-				dstListNew.put(result.Name, result.Size, result.Modtime, result.Hash, "-", result.Flags)
-			}
-		}
-	}
 
 	srcWinners := newFileList()
 	dstWinners := newFileList()
@@ -469,6 +445,10 @@ func (b *bisyncRun) modifyListing(ctx context.Context, src fs.Fs, dst fs.Fs, res
 	for _, result := range results {
 		if result.Name == "" {
 			continue
+		}
+
+		if result.AltName != "" {
+			b.aliases.Add(result.Name, result.AltName)
 		}
 
 		if result.Flags == "d" && !b.opt.CreateEmptySrcDirs {
@@ -496,6 +476,7 @@ func (b *bisyncRun) modifyListing(ctx context.Context, src fs.Fs, dst fs.Fs, res
 		}
 	}
 
+	ci := fs.GetConfig(ctx)
 	updateLists := func(side string, winners, list *fileList) {
 		for _, queueFile := range queue.ToList() {
 			if !winners.has(queueFile) && list.has(queueFile) && !errors.has(queueFile) {
@@ -506,28 +487,17 @@ func (b *bisyncRun) modifyListing(ctx context.Context, src fs.Fs, dst fs.Fs, res
 				// copies to side
 				new := winners.get(queueFile)
 
-				// handle normalization according to settings
-				ci := fs.GetConfig(ctx)
-				if side == "dst" && (!ci.NoUnicodeNormalization || ci.IgnoreCaseSync || dst.Features().CaseInsensitive) {
-					// search list for existing file that matches queueFile when normalized
-					normalizedName := ApplyTransforms(ctx, dst, queueFile)
-					matchFound := false
-					matchedName := ""
-					for _, filename := range dstListNew.list {
-						if ApplyTransforms(ctx, dst, filename) == normalizedName {
-							matchFound = true
-							matchedName = filename // original, not normalized
-							break
-						}
-					}
-					if matchFound && matchedName != queueFile {
+				// handle normalization
+				if side == "dst" {
+					alias := b.aliases.Alias(queueFile)
+					if alias != queueFile {
 						// use the (non-identical) existing name, unless --fix-case
 						if ci.FixCase {
-							fs.Debugf(direction, "removing %s and adding %s as --fix-case was specified", matchedName, queueFile)
-							list.remove(matchedName)
+							fs.Debugf(direction, "removing %s and adding %s as --fix-case was specified", alias, queueFile)
+							list.remove(alias)
 						} else {
-							fs.Debugf(direction, "casing/unicode difference detected. using %s instead of %s", matchedName, queueFile)
-							queueFile = matchedName
+							fs.Debugf(direction, "casing/unicode difference detected. using %s instead of %s", alias, queueFile)
+							queueFile = alias
 						}
 					}
 				}
@@ -613,6 +583,16 @@ func (b *bisyncRun) modifyListing(ctx context.Context, src fs.Fs, dst fs.Fs, res
 	}
 
 	if filterRecheck.HaveFilesFrom() {
+		// also include any aliases
+		recheckFiles := filterRecheck.Files()
+		for recheckFile := range recheckFiles {
+			alias := b.aliases.Alias(recheckFile)
+			if recheckFile != alias {
+				if err := filterRecheck.AddFile(alias); err != nil {
+					fs.Debugf(alias, "error adding file to recheck filter: %v", err)
+				}
+			}
+		}
 		b.recheck(ctxRecheck, src, dst, srcList, dstList, is1to2)
 	}
 
@@ -661,7 +641,7 @@ func (b *bisyncRun) recheck(ctxRecheck context.Context, src, dst fs.Fs, srcList,
 	for _, srcObj := range srcObjs {
 		fs.Debugf(srcObj, "rechecking")
 		for _, dstObj := range dstObjs {
-			if srcObj.Remote() == dstObj.Remote() {
+			if srcObj.Remote() == dstObj.Remote() || srcObj.Remote() == b.aliases.Alias(dstObj.Remote()) {
 				if operations.Equal(ctxRecheck, srcObj, dstObj) || b.opt.DryRun {
 					putObj(srcObj, src, srcList)
 					putObj(dstObj, dst, dstList)
@@ -673,8 +653,13 @@ func (b *bisyncRun) recheck(ctxRecheck context.Context, src, dst fs.Fs, srcList,
 		}
 		// if srcObj not resolved by now (either because no dstObj match or files not equal),
 		// roll it back to old version, so it gets retried next time.
+		// skip and error during --resync, as rollback is not possible
 		if !slices.Contains(resolved, srcObj.Remote()) && !b.opt.DryRun {
-			toRollback = append(toRollback, srcObj.Remote())
+			if b.opt.Resync {
+				b.handleErr(srcObj, "Unable to rollback during --resync", errors.New("no dstObj match or files not equal"), true, false)
+			} else {
+				toRollback = append(toRollback, srcObj.Remote())
+			}
 		}
 	}
 	if len(toRollback) > 0 {
@@ -683,6 +668,9 @@ func (b *bisyncRun) recheck(ctxRecheck context.Context, src, dst fs.Fs, srcList,
 		b.handleErr(oldSrc, "error loading old src listing", err, true, true)
 		oldDst, err := b.loadListing(dstListing + "-old")
 		b.handleErr(oldDst, "error loading old dst listing", err, true, true)
+		if b.critical {
+			return
+		}
 
 		for _, item := range toRollback {
 			rollback(item, oldSrc, srcList)

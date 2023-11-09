@@ -22,6 +22,7 @@ type Results struct {
 	Src      string
 	Dst      string
 	Name     string
+	AltName  string
 	Size     int64
 	Modtime  time.Time
 	Hash     string
@@ -58,6 +59,21 @@ func resultName(result Results, side, src, dst fs.DirEntry) string {
 	return ""
 }
 
+// returns the opposite side's name, only if different
+func altName(name string, src, dst fs.DirEntry) string {
+	if src != nil && dst != nil {
+		if src.Remote() != dst.Remote() {
+			switch name {
+			case src.Remote():
+				return dst.Remote()
+			case dst.Remote():
+				return src.Remote()
+			}
+		}
+	}
+	return ""
+}
+
 // WriteResults is Bisync's LoggerFn
 func WriteResults(ctx context.Context, sigil operations.Sigil, src, dst fs.DirEntry, err error) {
 	lock.Lock()
@@ -77,6 +93,7 @@ func WriteResults(ctx context.Context, sigil operations.Sigil, src, dst fs.DirEn
 	for i, side := range fss {
 
 		result.Name = resultName(result, side, src, dst)
+		result.AltName = altName(result.Name, src, dst)
 		result.IsSrc = i == 0
 		result.IsDst = i == 1
 		result.Flags = "-"
@@ -129,7 +146,7 @@ func ReadResults(results io.Reader) []Results {
 	return slice
 }
 
-func (b *bisyncRun) fastCopy(ctx context.Context, fsrc, fdst fs.Fs, files bilib.Names, queueName string, altNames bilib.Names) ([]Results, error) {
+func (b *bisyncRun) fastCopy(ctx context.Context, fsrc, fdst fs.Fs, files bilib.Names, queueName string) ([]Results, error) {
 	if err := b.saveQueue(files, queueName); err != nil {
 		return nil, err
 	}
@@ -139,10 +156,9 @@ func (b *bisyncRun) fastCopy(ctx context.Context, fsrc, fdst fs.Fs, files bilib.
 		if err := filterCopy.AddFile(file); err != nil {
 			return nil, err
 		}
-	}
-	if altNames.NotEmpty() {
-		for _, file := range altNames.ToList() {
-			if err := filterCopy.AddFile(file); err != nil {
+		alias := b.aliases.Alias(file)
+		if alias != file {
+			if err := filterCopy.AddFile(alias); err != nil {
 				return nil, err
 			}
 		}
@@ -248,23 +264,4 @@ func (b *bisyncRun) saveQueue(files bilib.Names, jobName string) error {
 	}
 	queueFile := fmt.Sprintf("%s.%s.que", b.basePath, jobName)
 	return files.Save(queueFile)
-}
-
-func (b *bisyncRun) findAltNames(ctx context.Context, dst fs.Fs, queue bilib.Names, newListing string, altNames bilib.Names) {
-	ci := fs.GetConfig(ctx)
-	if queue.NotEmpty() && (!ci.NoUnicodeNormalization || ci.IgnoreCaseSync || b.fs1.Features().CaseInsensitive || b.fs2.Features().CaseInsensitive) {
-		// search list for existing file that matches queueFile when normalized
-		for _, queueFile := range queue.ToList() {
-			normalizedName := ApplyTransforms(ctx, dst, queueFile)
-			candidates, err := b.loadListing(newListing)
-			if err != nil {
-				fs.Errorf(candidates, "cannot read new listing: %v", err)
-			}
-			for _, filename := range candidates.list {
-				if ApplyTransforms(ctx, dst, filename) == normalizedName && filename != queueFile {
-					altNames.Add(filename) // original, not normalized
-				}
-			}
-		}
-	}
 }
