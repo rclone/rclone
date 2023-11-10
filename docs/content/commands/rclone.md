@@ -38,7 +38,7 @@ rclone [flags]
       --alias-remote string                                 Remote or path to alias
       --ask-password                                        Allow prompt for password for encrypted configuration (default true)
       --auto-confirm                                        If enabled, do not request console confirmation
-      --azureblob-access-tier string                        Access tier of blob: hot, cool or archive
+      --azureblob-access-tier string                        Access tier of blob: hot, cool, cold or archive
       --azureblob-account string                            Azure Storage Account Name
       --azureblob-archive-tier-delete                       Delete archive tier blobs before overwriting
       --azureblob-chunk-size SizeSuffix                     Upload chunk size (default 4Mi)
