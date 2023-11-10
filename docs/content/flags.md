@@ -303,7 +303,7 @@ Backend only flags. These can be set in the config file also.
       --acd-token-url string                                Token server url
       --acd-upload-wait-per-gb Duration                     Additional time per GiB to wait after a failed complete upload to see if it appears (default 3m0s)
       --alias-remote string                                 Remote or path to alias
-      --azureblob-access-tier string                        Access tier of blob: hot, cool or archive
+      --azureblob-access-tier string                        Access tier of blob: hot, cool, cold or archive
       --azureblob-account string                            Azure Storage Account Name
       --azureblob-archive-tier-delete                       Delete archive tier blobs before overwriting
       --azureblob-chunk-size SizeSuffix                     Upload chunk size (default 4Mi)
