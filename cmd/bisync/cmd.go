@@ -46,6 +46,7 @@ type Options struct {
 	IgnoreListingChecksum bool
 	Resilient             bool
 	TestFn                TestFunc // test-only option, for mocking errors
+	Retries               int
 }
 
 // Default values
@@ -103,6 +104,7 @@ func (x *CheckSyncMode) Type() string {
 var Opt Options
 
 func init() {
+	Opt.Retries = 3
 	cmd.Root.AddCommand(commandDefinition)
 	cmdFlags := commandDefinition.Flags()
 	flags.BoolVarP(cmdFlags, &Opt.Resync, "resync", "1", Opt.Resync, "Performs the resync run. Path1 files may overwrite Path2 versions. Consider using --verbose or --dry-run first.", "")
@@ -118,6 +120,7 @@ func init() {
 	flags.BoolVarP(cmdFlags, &Opt.NoCleanup, "no-cleanup", "", Opt.NoCleanup, "Retain working files (useful for troubleshooting and testing).", "")
 	flags.BoolVarP(cmdFlags, &Opt.IgnoreListingChecksum, "ignore-listing-checksum", "", Opt.IgnoreListingChecksum, "Do not use checksums for listings (add --ignore-checksum to additionally skip post-copy checksum checks)", "")
 	flags.BoolVarP(cmdFlags, &Opt.Resilient, "resilient", "", Opt.Resilient, "Allow future runs to retry after certain less-serious errors, instead of requiring --resync. Use at your own risk!", "")
+	flags.IntVarP(cmdFlags, &Opt.Retries, "retries", "", Opt.Retries, "Retry operations this many times if they fail", "")
 }
 
 // bisync command definition

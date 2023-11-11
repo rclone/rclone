@@ -427,6 +427,10 @@ func (b *bisyncRun) applyDeltas(ctx context.Context, ds1, ds2 *deltaSet) (change
 		changes1 = true
 		b.indent("Path2", "Path1", "Do queued copies to")
 		results2to1, err = b.fastCopy(ctx, b.fs2, b.fs1, copy2to1, "copy2to1")
+
+		// retries, if any
+		results2to1, err = b.retryFastCopy(ctx, b.fs2, b.fs1, copy2to1, "copy2to1", results2to1, err)
+
 		if err != nil {
 			return
 		}
@@ -439,6 +443,10 @@ func (b *bisyncRun) applyDeltas(ctx context.Context, ds1, ds2 *deltaSet) (change
 		changes2 = true
 		b.indent("Path1", "Path2", "Do queued copies to")
 		results1to2, err = b.fastCopy(ctx, b.fs1, b.fs2, copy1to2, "copy1to2")
+
+		// retries, if any
+		results1to2, err = b.retryFastCopy(ctx, b.fs1, b.fs2, copy1to2, "copy1to2", results1to2, err)
+
 		if err != nil {
 			return
 		}
