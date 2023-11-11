@@ -1231,6 +1231,7 @@ func (b *bisyncTest) newReplacer(mangle bool) *strings.Replacer {
 		"//?/" + strings.TrimSuffix(strings.Replace(b.path2, slash, "/", -1), "/"), "{path2}",
 		strings.TrimSuffix(b.path1, slash), "{path1}", // ensure it's still recognized without trailing slash
 		strings.TrimSuffix(b.path2, slash), "{path2}",
+		b.workDir, "{workdir}",
 		b.sessionName, "{session}",
 	}
 	if fixSlash {

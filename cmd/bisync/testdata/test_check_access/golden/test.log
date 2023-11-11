@@ -83,7 +83,12 @@ Bisync error: bisync aborted
 [36m(19)  :[0m [34mtest 6. run again. should fail critical due to missing listings.[0m
 [36m(20)  :[0m [34mbisync check-access[0m
 INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
-ERROR : [31mBisync critical error: cannot find prior Path1 or Path2 listings, likely due to critical error on prior run[0m
+ERROR : [31mBisync critical error: cannot find prior Path1 or Path2 listings, likely due to critical error on prior run
+[35mTip: here are the filenames we were looking for. Do they exist?
+[0m[36mPath1: [94m{workdir/}{session}.path1.lst[0m
+[0m[36mPath2: [94m{workdir/}{session}.path2.lst[0m
+[0m[35mTry running this command to inspect the work dir:
+[0m[96mrclone lsl "{workdir}"[0m[0m
 ERROR : [31mBisync aborted. Must run --resync to recover.[0m
 Bisync error: bisync aborted
 [36m(21)  :[0m [34mmove-listings missing-listings[0m

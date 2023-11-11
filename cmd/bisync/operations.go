@@ -98,7 +98,10 @@ func Bisync(ctx context.Context, fs1, fs2 fs.Fs, optArg *Options) (err error) {
 	if !opt.DryRun {
 		lockFile = b.basePath + ".lck"
 		if bilib.FileExists(lockFile) {
-			return fmt.Errorf("prior lock file found: %s", lockFile)
+			errTip := Color(terminal.MagentaFg, "Tip: this indicates that another bisync run (of these same paths) either is still running or was interrupted before completion. \n")
+			errTip += Color(terminal.MagentaFg, "If you're SURE you want to override this safety feature, you can delete the lock file with the following command, then run bisync again: \n")
+			errTip += fmt.Sprintf(Color(terminal.HiRedFg, "rclone deletefile \"%s\""), lockFile)
+			return fmt.Errorf(Color(terminal.RedFg, "prior lock file found: %s \n")+errTip, Color(terminal.HiYellowFg, lockFile))
 		}
 
 		pidStr := []byte(strconv.Itoa(os.Getpid()))
@@ -222,7 +225,13 @@ func (b *bisyncRun) runLocked(octx context.Context) (err error) {
 		// On prior critical error abort, the prior listings are renamed to .lst-err to lock out further runs
 		b.critical = true
 		b.retryable = true
-		return errors.New("cannot find prior Path1 or Path2 listings, likely due to critical error on prior run")
+		errTip := Color(terminal.MagentaFg, "Tip: here are the filenames we were looking for. Do they exist? \n")
+		errTip += fmt.Sprintf(Color(terminal.CyanFg, "Path1: %s\n"), Color(terminal.HiBlueFg, b.listing1))
+		errTip += fmt.Sprintf(Color(terminal.CyanFg, "Path2: %s\n"), Color(terminal.HiBlueFg, b.listing2))
+		errTip += Color(terminal.MagentaFg, "Try running this command to inspect the work dir: \n")
+		errTip += fmt.Sprintf(Color(terminal.HiCyanFg, "rclone lsl \"%s\""), b.workDir)
+
+		return errors.New("cannot find prior Path1 or Path2 listings, likely due to critical error on prior run \n" + errTip)
 	}
 
 	fs.Infof(nil, "Building Path1 and Path2 listings")
@@ -526,6 +535,9 @@ func (b *bisyncRun) checkAccess(checkFiles1, checkFiles2 bilib.Names) error {
 	numChecks1 := len(checkFiles1)
 	numChecks2 := len(checkFiles2)
 	if numChecks1 == 0 || numChecks1 != numChecks2 {
+		if numChecks1 == 0 && numChecks2 == 0 {
+			fs.Logf("--check-access", Color(terminal.RedFg, "Failed to find any files named %s\n More info: %s"), Color(terminal.CyanFg, opt.CheckFilename), Color(terminal.BlueFg, "https://rclone.org/bisync/#check-access"))
+		}
 		fs.Errorf(nil, "%s Path1 count %d, Path2 count %d - %s", prefix, numChecks1, numChecks2, opt.CheckFilename)
 		ok = false
 	}
