@@ -74,6 +74,12 @@ func rcBisync(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 	if opt.Workdir, err = in.GetString("workdir"); rc.NotErrParamNotFound(err) {
 		return
 	}
+	if opt.BackupDir1, err = in.GetString("backupdir1"); rc.NotErrParamNotFound(err) {
+		return
+	}
+	if opt.BackupDir2, err = in.GetString("backupdir2"); rc.NotErrParamNotFound(err) {
+		return
+	}
 
 	checkSync, err := in.GetString("checkSync")
 	if rc.NotErrParamNotFound(err) {

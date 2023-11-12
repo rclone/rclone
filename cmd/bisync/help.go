@@ -10,7 +10,7 @@ func makeHelp(help string) string {
 		"|", "`",
 		"{MAXDELETE}", strconv.Itoa(DefaultMaxDelete),
 		"{CHECKFILE}", DefaultCheckFilename,
-		"{WORKDIR}", DefaultWorkdir,
+		// "{WORKDIR}", DefaultWorkdir,
 	)
 	return replacer.Replace(help)
 }
@@ -37,7 +37,9 @@ var rcHelp = makeHelp(`This takes the following parameters
 - ignoreListingChecksum - Do not use checksums for listings
 - resilient - Allow future runs to retry after certain less-serious errors, instead of requiring resync. 
             Use at your own risk!
-- workdir - server directory for history files (default: {WORKDIR})
+- workdir - server directory for history files (default: |~/.cache/rclone/bisync|)
+- backupdir1 - --backup-dir for Path1. Must be a non-overlapping path on the same remote.
+- backupdir2 - --backup-dir for Path2. Must be a non-overlapping path on the same remote.
 - noCleanup - retain working files
 
 See [bisync command help](https://rclone.org/commands/rclone_bisync/)
