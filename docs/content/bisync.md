@@ -105,6 +105,8 @@ Optional Flags:
       --no-cleanup              Retain working files (useful for troubleshooting and testing).
       --workdir PATH            Use custom working directory (useful for testing).
                                 (default: `~/.cache/rclone/bisync`)
+      --backup-dir1 PATH        --backup-dir for Path1. Must be a non-overlapping path on the same remote.
+      --backup-dir2 PATH        --backup-dir for Path2. Must be a non-overlapping path on the same remote.
   -n, --dry-run                 Go through the motions - No files are copied/deleted.
   -v, --verbose                 Increases logging verbosity.
                                 May be specified more than once for more details.
@@ -356,6 +358,42 @@ that next run will be allowed to proceed.
 Certain more serious errors will still enforce a `--resync` lockout, even in `--resilient` mode, to prevent data loss.
 
 Behavior of `--resilient` may change in a future version.
+
+#### --backup-dir1 and --backup-dir2
+
+As of `v1.65`, [`--backup-dir`](/docs/#backup-dir-dir) is supported in bisync.
+Because `--backup-dir` must be a non-overlapping path on the same remote,
+Bisync has introduced new `--backup-dir1` and `--backup-dir2` flags to support
+separate backup-dirs for `Path1` and `Path2` (bisyncing between different
+remotes with `--backup-dir` would not otherwise be possible.) `--backup-dir1`
+and `--backup-dir2` can use different remotes from each other, but
+`--backup-dir1` must use the same remote as `Path1`, and `--backup-dir2` must
+use the same remote as `Path2`. Each backup directory must not overlap its
+respective bisync Path without being excluded by a filter rule.
+
+The standard `--backup-dir` will also work, if both paths use the same remote
+(but note that deleted files from both paths would be mixed together in the
+same dir). If either `--backup-dir1` and `--backup-dir2` are set, they will
+override `--backup-dir`.
+
+Example:
+```
+rclone bisync /Users/someuser/some/local/path/Bisync gdrive:Bisync --backup-dir1 /Users/someuser/some/local/path/BackupDir --backup-dir2 gdrive:BackupDir --suffix -2023-08-26 --suffix-keep-extension --check-access --max-delete 10 --filters-file /Users/someuser/some/local/path/bisync_filters.txt --no-cleanup --ignore-listing-checksum --checkers=16 --drive-pacer-min-sleep=10ms --create-empty-src-dirs --resilient -MvP --drive-skip-gdocs --fix-case
+```
+
+In this example, if the user deletes a file in
+`/Users/someuser/some/local/path/Bisync`, bisync will propagate the delete to
+the other side by moving the corresponding file from `gdrive:Bisync` to
+`gdrive:BackupDir`. If the user deletes a file from `gdrive:Bisync`, bisync
+moves it from `/Users/someuser/some/local/path/Bisync` to
+`/Users/someuser/some/local/path/BackupDir`.
+
+In the event of a `..path1` / `..path2` rename due to a sync conflict, the
+rename is not considered a delete, unless a previous conflict with the same
+name already exists and would get overwritten.
+
+See also: [`--suffix`](/docs/#suffix-suffix),
+[`--suffix-keep-extension`](/docs/#suffix-keep-extension)
 
 ## Operation
 
