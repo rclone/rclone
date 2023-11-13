@@ -23,6 +23,7 @@ func init() {
 			Help:      "Hadoop name nodes and ports.\n\nE.g. \"namenode-1:8020,namenode-2:8020,...\" to connect to host namenodes at port 8020.",
 			Required:  true,
 			Sensitive: true,
+			Default:   fs.CommaSepList{},
 		}, {
 			Name: "username",
 			Help: "Hadoop user name.",
@@ -65,7 +66,7 @@ and 'privacy'. Used only with KERBEROS enabled.`,
 
 // Options for this backend
 type Options struct {
-	Namenode               string               `config:"namenode"`
+	Namenode               fs.CommaSepList      `config:"namenode"`
 	Username               string               `config:"username"`
 	ServicePrincipalName   string               `config:"service_principal_name"`
 	DataTransferProtection string               `config:"data_transfer_protection"`
