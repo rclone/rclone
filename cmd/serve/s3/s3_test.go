@@ -69,7 +69,6 @@ func TestS3(t *testing.T) {
 			"type":              "s3",
 			"provider":          "Rclone",
 			"endpoint":          testURL,
-			"list_url_encode":   "true",
 			"access_key_id":     keyid,
 			"secret_access_key": keysec,
 		}

@@ -45,6 +45,10 @@ func newServer(ctx context.Context, f fs.Fs, opt *Options) (s *Server, err error
 		vfs: vfs.New(f, &vfsflags.Opt),
 	}
 
+	if len(opt.authPair) == 0 {
+		fs.Logf("serve s3", "No auth provided so allowing anonymous access")
+	}
+
 	var newLogger logger
 	w.faker = gofakes3.New(
 		newBackend(w.vfs, opt),
@@ -53,6 +57,7 @@ func newServer(ctx context.Context, f fs.Fs, opt *Options) (s *Server, err error
 		gofakes3.WithRequestID(rand.Uint64()),
 		gofakes3.WithoutVersioning(),
 		gofakes3.WithV4Auth(authlistResolver(opt.authPair)),
+		gofakes3.WithIntegrityCheck(true), // Check Content-MD5 if supplied
 	)
 
 	w.Server, err = httplib.NewServer(ctx,

@@ -15,8 +15,8 @@ import (
 	"github.com/rclone/rclone/vfs"
 )
 
-func getDirEntries(prefix string, fs *vfs.VFS) (vfs.Nodes, error) {
-	node, err := fs.Stat(prefix)
+func getDirEntries(prefix string, VFS *vfs.VFS) (vfs.Nodes, error) {
+	node, err := VFS.Stat(prefix)
 
 	if err == vfs.ENOENT {
 		return nil, gofakes3.ErrNoSuchKey
@@ -83,7 +83,6 @@ func getFileHash(node interface{}) string {
 }
 
 func prefixParser(p *gofakes3.Prefix) (path, remaining string) {
-
 	idx := strings.LastIndexByte(p.Prefix, '/')
 	if idx < 0 {
 		return "", p.Prefix
@@ -91,14 +90,15 @@ func prefixParser(p *gofakes3.Prefix) (path, remaining string) {
 	return p.Prefix[:idx], p.Prefix[idx+1:]
 }
 
-func mkdirRecursive(path string, fs *vfs.VFS) error {
+// FIXME this could be implemented by VFS.MkdirAll()
+func mkdirRecursive(path string, VFS *vfs.VFS) error {
 	path = strings.Trim(path, "/")
 	dirs := strings.Split(path, "/")
 	dir := ""
 	for _, d := range dirs {
 		dir += "/" + d
-		if _, err := fs.Stat(dir); err != nil {
-			err := fs.Mkdir(dir, 0777)
+		if _, err := VFS.Stat(dir); err != nil {
+			err := VFS.Mkdir(dir, 0777)
 			if err != nil {
 				return err
 			}
@@ -107,30 +107,30 @@ func mkdirRecursive(path string, fs *vfs.VFS) error {
 	return nil
 }
 
-func rmdirRecursive(p string, fs *vfs.VFS) {
+func rmdirRecursive(p string, VFS *vfs.VFS) {
 	dir := path.Dir(p)
 	if !strings.ContainsAny(dir, "/\\") {
 		// might be bucket(root)
 		return
 	}
-	if _, err := fs.Stat(dir); err == nil {
-		err := fs.Remove(dir)
+	if _, err := VFS.Stat(dir); err == nil {
+		err := VFS.Remove(dir)
 		if err != nil {
 			return
 		}
-		rmdirRecursive(dir, fs)
+		rmdirRecursive(dir, VFS)
 	}
 }
 
 func authlistResolver(list []string) map[string]string {
 	authList := make(map[string]string)
 	for _, v := range list {
-		splited := strings.Split(v, ",")
-		if len(splited) != 2 {
+		parts := strings.Split(v, ",")
+		if len(parts) != 2 {
 			fs.Infof(nil, fmt.Sprintf("Ignored: invalid auth pair %s", v))
 			continue
 		}
-		authList[splited[0]] = splited[1]
+		authList[parts[0]] = parts[1]
 	}
 	return authList
 }

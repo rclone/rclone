@@ -2,7 +2,7 @@ package s3
 
 import (
 	"context"
-	"strings"
+	_ "embed"
 
 	"github.com/rclone/rclone/cmd"
 	"github.com/rclone/rclone/fs/config/flags"
@@ -33,15 +33,23 @@ func init() {
 	vfsflags.AddFlags(flagSet)
 	flags.BoolVarP(flagSet, &Opt.pathBucketMode, "force-path-style", "", Opt.pathBucketMode, "If true use path style access if false use virtual hosted style (default true)", "")
 	flags.StringVarP(flagSet, &Opt.hashName, "etag-hash", "", Opt.hashName, "Which hash to use for the ETag, or auto or blank for off", "")
-	flags.StringArrayVarP(flagSet, &Opt.authPair, "s3-authkey", "", Opt.authPair, "Set key pair for v4 authorization, split by comma", "")
+	flags.StringArrayVarP(flagSet, &Opt.authPair, "auth-key", "", Opt.authPair, "Set key pair for v4 authorization: access_key_id,secret_access_key", "")
 	flags.BoolVarP(flagSet, &Opt.noCleanup, "no-cleanup", "", Opt.noCleanup, "Not to cleanup empty folder after object is deleted", "")
 }
 
+//go:embed serve_s3.md
+var serveS3Help string
+
 // Command definition for cobra
 var Command = &cobra.Command{
+	Annotations: map[string]string{
+		"versionIntroduced": "v1.65",
+		"groups":            "Filter",
+		"status":            "Experimental",
+	},
 	Use:   "s3 remote:path",
 	Short: `Serve remote:path over s3.`,
-	Long:  strings.ReplaceAll(longHelp, "|", "`") + httplib.Help(flagPrefix) + vfs.Help,
+	Long:  serveS3Help + httplib.Help(flagPrefix) + vfs.Help,
 	RunE: func(command *cobra.Command, args []string) error {
 		cmd.CheckArgs(1, 1, command, args)
 		f := cmd.NewFsSrc(args)

@@ -10,10 +10,10 @@ import (
 	"github.com/rclone/rclone/fs/walk"
 )
 
-func (db *s3Backend) entryListR(bucket, fdPath, name string, acceptComPrefix bool, response *gofakes3.ObjectList) error {
+func (b *s3Backend) entryListR(bucket, fdPath, name string, acceptComPrefix bool, response *gofakes3.ObjectList) error {
 	fp := path.Join(bucket, fdPath)
 
-	dirEntries, err := getDirEntries(fp, db.fs)
+	dirEntries, err := getDirEntries(fp, b.vfs)
 	if err != nil {
 		return err
 	}
@@ -33,7 +33,7 @@ func (db *s3Backend) entryListR(bucket, fdPath, name string, acceptComPrefix boo
 				response.AddPrefix(gofakes3.URLEncode(objectPath))
 				continue
 			}
-			err := db.entryListR(bucket, path.Join(fdPath, object), "", false, response)
+			err := b.entryListR(bucket, path.Join(fdPath, object), "", false, response)
 			if err != nil {
 				return err
 			}
@@ -52,10 +52,9 @@ func (db *s3Backend) entryListR(bucket, fdPath, name string, acceptComPrefix boo
 }
 
 // getObjectsList lists the objects in the given bucket.
-func (db *s3Backend) getObjectsListArbitrary(bucket string, prefix *gofakes3.Prefix, response *gofakes3.ObjectList) error {
-
+func (b *s3Backend) getObjectsListArbitrary(bucket string, prefix *gofakes3.Prefix, response *gofakes3.ObjectList) error {
 	// ignore error - vfs may have uncommitted updates, such as new dir etc.
-	_ = walk.ListR(context.Background(), db.fs.Fs(), bucket, false, -1, walk.ListObjects, func(entries fs.DirEntries) error {
+	_ = walk.ListR(context.Background(), b.vfs.Fs(), bucket, false, -1, walk.ListObjects, func(entries fs.DirEntries) error {
 		for _, entry := range entries {
 			entry := entry.(fs.Object)
 			objName := entry.Remote()

@@ -3134,6 +3134,13 @@ func setQuirks(opt *Options) {
 		// No quirks
 		useMultipartEtag = false // untested
 		useAlreadyExists = false // untested
+	case "Rclone":
+		listObjectsV2 = true
+		urlEncodeListings = true
+		virtualHostStyle = false
+		useMultipartEtag = false
+		useAlreadyExists = false
+		// useMultipartUploads = false - set this manually
 	case "Scaleway":
 		// Scaleway can only have 1000 parts in an upload
 		if opt.MaxUploadParts > 1000 {
@@ -3152,11 +3159,6 @@ func setQuirks(opt *Options) {
 		virtualHostStyle = false
 		urlEncodeListings = false
 		useAlreadyExists = false // untested
-	case "Rclone":
-		listObjectsV2 = true
-		urlEncodeListings = true
-		virtualHostStyle = false
-		useMultipartEtag = false
 	case "Storj":
 		// Force chunk size to >= 64 MiB
 		if opt.ChunkSize < 64*fs.Mebi {
