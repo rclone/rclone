@@ -15,6 +15,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"math"
 	"net/http"
 	"net/url"
 	"path"
@@ -2515,6 +2516,18 @@ knows about - please make a bug report if not.
 `, "|", "`"),
 			Default:  fs.Tristate{},
 			Advanced: true,
+		}, {
+			Name: "use_multipart_uploads",
+			Help: `Set if rclone should use multipart uploads.
+
+You can change this if you want to disable the use of multipart uploads.
+This shouldn't be necessary in normal operation.
+
+This should be automatically set correctly for all providers rclone
+knows about - please make a bug report if not.
+`,
+			Default:  fs.Tristate{},
+			Advanced: true,
 		},
 		}})
 }
@@ -2642,6 +2655,7 @@ type Options struct {
 	UseAcceptEncodingGzip fs.Tristate          `config:"use_accept_encoding_gzip"`
 	NoSystemMetadata      bool                 `config:"no_system_metadata"`
 	UseAlreadyExists      fs.Tristate          `config:"use_already_exists"`
+	UseMultipartUploads   fs.Tristate          `config:"use_multipart_uploads"`
 }
 
 // Fs represents a remote s3 server
@@ -3042,6 +3056,7 @@ func setQuirks(opt *Options) {
 		useAcceptEncodingGzip = true // Set Accept-Encoding: gzip
 		mightGzip             = true // assume all providers might use content encoding gzip until proven otherwise
 		useAlreadyExists      = true // Set if provider returns AlreadyOwnedByYou or no error if you try to remake your own bucket
+		useMultipartUploads   = true // Set if provider supports multipart uploads
 	)
 	switch opt.Provider {
 	case "AWS":
@@ -3215,6 +3230,16 @@ func setQuirks(opt *Options) {
 		opt.UseAlreadyExists.Valid = true
 		opt.UseAlreadyExists.Value = useAlreadyExists
 	}
+
+	// Set the correct use multipart uploads if not manually set
+	if !opt.UseMultipartUploads.Valid {
+		opt.UseMultipartUploads.Valid = true
+		opt.UseMultipartUploads.Value = useMultipartUploads
+	}
+	if !opt.UseMultipartUploads.Value {
+		opt.UploadCutoff = math.MaxInt64
+	}
+
 }
 
 // setRoot changes the root of the Fs
@@ -3327,6 +3352,10 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		f.features.CanHaveEmptyDirectories = true
 	}
 	// f.listMultipartUploads()
+	if !opt.UseMultipartUploads.Value {
+		fs.Debugf(f, "Disabling multipart uploads")
+		f.features.OpenChunkWriter = nil
+	}
 
 	if f.rootBucket != "" && f.rootDirectory != "" && !opt.NoHeadObject && !strings.HasSuffix(root, "/") {
 		// Check to see if the (bucket,directory) is actually an existing file
