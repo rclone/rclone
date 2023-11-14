@@ -431,6 +431,9 @@ func (f *Fs) Mkdir(ctx context.Context, dir string) (err error) {
 	remote := path.Join(f.root, dir)
 	parentFolderPath, folderName := path.Split(remote)
 
+	parentFolderPath = f.EncodePath(parentFolderPath)
+	folderName = f.EncodeFileName(folderName)
+
 	err = f.pacer.Call(func() (bool, error) {
 		var res *http.Response
 		res, err = f.ik.CreateFolder(ctx, client.CreateFolderParam{
@@ -715,6 +718,9 @@ func (o *Object) SetModTime(ctx context.Context, t time.Time) error {
 func uploadFile(ctx context.Context, f *Fs, in io.Reader, srcRemote string, options ...fs.OpenOption) (fs.Object, error) {
 	remote := path.Join(f.root, srcRemote)
 	folderPath, fileName := path.Split(remote)
+
+	folderPath = f.EncodePath(folderPath)
+	fileName = f.EncodeFileName(fileName)
 
 	UseUniqueFileName := new(bool)
 	*UseUniqueFileName = false

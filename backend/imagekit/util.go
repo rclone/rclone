@@ -29,9 +29,9 @@ func (f *Fs) getFiles(ctx context.Context, path string, includeVersions bool) (f
 				Path:  path,
 			}, includeVersions)
 
-			if len(*data) == 0 && len(*data) < 100 {
-				hasMore = false
-			} else {
+			hasMore = !(len(*data) == 0 || len(*data) < 100)
+
+			if len(*data) > 0 {
 				files = append(files, *data...)
 			}
 
@@ -62,9 +62,9 @@ func (f *Fs) getFolders(ctx context.Context, path string) (folders []client.Fold
 				Path:  path,
 			})
 
-			if len(*data) == 0 && len(*data) < 100 {
-				hasMore = false
-			} else {
+			hasMore = !(len(*data) == 0 || len(*data) < 100)
+
+			if len(*data) > 0 {
 				folders = append(folders, *data...)
 			}
 
@@ -172,18 +172,22 @@ func (f *Fs) shouldRetry(ctx context.Context, resp *http.Response, err error) (b
 	return fserrors.ShouldRetry(err) || shouldRetryHTTP(resp, retryErrorCodes), err
 }
 
+// EncodePath encapsulates the logic for encoding a path
 func (f *Fs) EncodePath(str string) string {
 	return f.opt.Enc.FromStandardPath(str)
 }
 
+// DecodePath encapsulates the logic for decoding a path
 func (f *Fs) DecodePath(str string) string {
 	return f.opt.Enc.ToStandardPath(str)
 }
 
+// EncodeFileName encapsulates the logic for encoding a file name
 func (f *Fs) EncodeFileName(str string) string {
 	return f.opt.Enc.FromStandardName(str)
 }
 
+// DecodeFileName encapsulates the logic for decoding a file name
 func (f *Fs) DecodeFileName(str string) string {
 	return f.opt.Enc.ToStandardName(str)
 }
