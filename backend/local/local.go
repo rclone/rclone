@@ -1447,6 +1447,10 @@ func cleanRootPath(s string, noUNC bool, enc encoder.MultiEncoder) string {
 	if runtime.GOOS == "windows" {
 		s = filepath.ToSlash(s)
 		vol := filepath.VolumeName(s)
+		if vol == `\\?` && len(s) >= 6 {
+			// `\\?\C:`
+			vol = s[:6]
+		}
 		s = vol + enc.FromStandardPath(s[len(vol):])
 		s = filepath.FromSlash(s)
 		if !noUNC {
