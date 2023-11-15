@@ -1351,6 +1351,22 @@ func testServerSideMove(ctx context.Context, t *testing.T, r *fstest.Run, withFi
 	}
 }
 
+// Test MoveDir on Local
+func TestServerSideMoveLocal(t *testing.T) {
+	ctx := context.Background()
+	r := fstest.NewRun(t)
+	f1 := r.WriteFile("dir1/file1.txt", "hello", t1)
+	f2 := r.WriteFile("dir2/file2.txt", "hello again", t2)
+	r.CheckLocalItems(t, f1, f2)
+
+	dir1, err := fs.NewFs(ctx, r.Flocal.Root()+"/dir1")
+	require.NoError(t, err)
+	dir2, err := fs.NewFs(ctx, r.Flocal.Root()+"/dir2")
+	require.NoError(t, err)
+	err = MoveDir(ctx, dir2, dir1, false, false)
+	require.NoError(t, err)
+}
+
 // Test move
 func TestMoveWithDeleteEmptySrcDirs(t *testing.T) {
 	ctx := context.Background()
