@@ -58,6 +58,7 @@ See the following for detailed instructions for
   * [Mega](/mega/)
   * [Memory](/memory/)
   * [Microsoft Azure Blob Storage](/azureblob/)
+  * [Microsoft Azure Files Storage](/azurefiles/)
   * [Microsoft OneDrive](/onedrive/)
   * [OpenStack Swift / Rackspace Cloudfiles / Blomp Cloud Storage / Memset Memstore](/swift/)
   * [OpenDrive](/opendrive/)

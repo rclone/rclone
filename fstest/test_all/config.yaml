@@ -320,6 +320,8 @@ backends:
  - backend:  "azureblob"
    remote:   "TestAzureBlob,directory_markers:"
    fastlist: true
+ - backend:  "azurefiles"
+   remote:   "TestAzureFiles:"
  - backend:  "pcloud"
    remote:   "TestPcloud:"
    fastlist: true

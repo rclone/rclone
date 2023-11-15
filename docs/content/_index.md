@@ -144,6 +144,7 @@ WebDAV or S3, that work out of the box.)
 {{< provider name="Mega" home="https://mega.nz/" config="/mega/" >}}
 {{< provider name="Memory" home="/memory/" config="/memory/" >}}
 {{< provider name="Microsoft Azure Blob Storage" home="https://azure.microsoft.com/en-us/services/storage/blobs/" config="/azureblob/" >}}
+{{< provider name="Microsoft Azure Files Storage" home="https://azure.microsoft.com/en-us/services/storage/files/" config="/azurefiles/" >}}
 {{< provider name="Microsoft OneDrive" home="https://onedrive.live.com/" config="/onedrive/" >}}
 {{< provider name="Minio" home="https://www.minio.io/" config="/s3/#minio" >}}
 {{< provider name="Nextcloud" home="https://nextcloud.com/" config="/webdav/#nextcloud" >}}

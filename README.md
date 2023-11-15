@@ -59,6 +59,7 @@ Rclone *("rsync for cloud storage")* is a command-line program to sync files and
   * Mega [:page_facing_up:](https://rclone.org/mega/)
   * Memory [:page_facing_up:](https://rclone.org/memory/)
   * Microsoft Azure Blob Storage [:page_facing_up:](https://rclone.org/azureblob/)
+  * Microsoft Azure Files Storage [:page_facing_up:](https://rclone.org/azurefiles/)
   * Microsoft OneDrive [:page_facing_up:](https://rclone.org/onedrive/)
   * Minio [:page_facing_up:](https://rclone.org/s3/#minio)
   * Nextcloud [:page_facing_up:](https://rclone.org/webdav/#nextcloud)

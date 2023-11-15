@@ -58,6 +58,7 @@ docs = [
     "memory.md",
     "netstorage.md",
     "azureblob.md",
+    "azurefiles.md",
     "onedrive.md",
     "opendrive.md",
     "oracleobjectstorage.md",

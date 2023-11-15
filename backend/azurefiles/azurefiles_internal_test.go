@@ -1,3 +1,6 @@
+//go:build !plan9 && !js
+// +build !plan9,!js
+
 package azurefiles
 
 import (
@@ -41,7 +44,7 @@ func (f *Fs) InternalTestAuth(t *testing.T) {
 			name: "SASUrl",
 			options: &Options{
 				ShareName: shareName,
-				SASUrl:    "",
+				SASURL:    "",
 			}},
 	}
 
