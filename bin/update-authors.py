@@ -27,6 +27,7 @@ def add_email(name, email):
     subprocess.check_call(["git", "commit", "-m", "Add %s to contributors" % name, AUTHORS])
     
 def main():
+    # Add emails from authors
     out = subprocess.check_output(["git", "log", '--reverse', '--format=%an|%ae', "master"])
     out = out.decode("utf-8")
 
@@ -38,6 +39,24 @@ def main():
         if line == "":
             continue
         name, email = line.split("|")
+        if email in previous:
+            continue
+        previous.add(email)
+        add_email(name, email)
+
+    # Add emails from Co-authored-by: lines
+    out = subprocess.check_output(["git", "log", '-i', '--grep', 'Co-authored-by:', "master"])
+    out = out.decode("utf-8")
+    co_authored_by = re.compile(r"(?i)Co-authored-by:\s+(.*?)\s+<([^>]+)>$")
+
+    for line in out.split("\n"):
+        line = line.strip()
+        m = co_authored_by.search(line)
+        if not m:
+            continue
+        name, email = m.group(1), m.group(2)
+        name = name.strip()
+        email = email.strip()
         if email in previous:
             continue
         previous.add(email)
