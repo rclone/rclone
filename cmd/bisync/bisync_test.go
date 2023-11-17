@@ -21,6 +21,7 @@ import (
 	"strings"
 	"testing"
 	"time"
+	"unicode/utf8"
 
 	"github.com/rclone/rclone/cmd/bisync"
 	"github.com/rclone/rclone/cmd/bisync/bilib"
@@ -29,11 +30,13 @@ import (
 	"github.com/rclone/rclone/fs/cache"
 	"github.com/rclone/rclone/fs/filter"
 	"github.com/rclone/rclone/fs/fspath"
+	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/fs/object"
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/fs/sync"
 	"github.com/rclone/rclone/fstest"
 	"github.com/rclone/rclone/lib/atexit"
+	"github.com/rclone/rclone/lib/encoder"
 	"github.com/rclone/rclone/lib/random"
 	"github.com/rclone/rclone/lib/terminal"
 	"golang.org/x/text/unicode/norm"
@@ -73,6 +76,10 @@ var logReplacements = []string{
 	`^NOTICE: too_many_(requests|write_operations)/\.*: Too many requests or write operations.*$`, dropMe,
 	`^NOTICE: Dropbox root .*?: Forced to upload files to set modification times on this backend.$`, dropMe,
 	`^INFO  : .*?: src and dst identical but can't set mod time without deleting and re-uploading$`, dropMe,
+	// ignore crypt info messages
+	`^INFO  : .*?: Crypt detected! Using cryptcheck instead of check. \(Use --size-only or --ignore-checksum to disable\)$`, dropMe,
+	// ignore drive info messages
+	`^NOTICE:.*?Files of unknown size \(such as Google Docs\) do not sync reliably with --checksum or --size-only\. Consider using modtime instead \(the default\) or --drive-skip-gdocs.*?$`, dropMe,
 }
 
 // Some dry-run messages differ depending on the particular remote.
@@ -110,7 +117,7 @@ var logHoppers = []string{
 // Some log lines can contain Windows path separator that must be
 // converted to "/" in every matching token to match golden logs.
 var logLinesWithSlash = []string{
-	`.*\(\d\d\)  :.*(touch-glob|touch-copy|copy-file|copy-as|copy-dir|delete-file) `,
+	`.*\(\d\d\)  :.*(fix-names|touch-glob|touch-copy|copy-file|copy-as|copy-dir|delete-file) `,
 	`INFO  : - .*Path[12].* +.*Queue copy to Path[12].*`,
 	`INFO  : Synching Path1 .*? with Path2 `,
 	`INFO  : Validating listings for `,
@@ -476,17 +483,19 @@ func (b *bisyncTest) runTestStep(ctx context.Context, line string) (err error) {
 	}
 
 	testFunc := func() {
-		testname := "volatile"
-		path := "path1"
-		src := filepath.Join(b.tempDir, testname, path, "file7.txt")
-		dstBase1 := filepath.Join(b.tempDir, testname, "path1", "file")
-		dstBase2 := filepath.Join(b.tempDir, testname, "path2", "file")
+		src := filepath.Join(b.dataDir, "file7.txt")
 
 		for i := 0; i < 50; i++ {
-			dst := dstBase2 + fmt.Sprint(i) + ".txt"
-			_ = bilib.CopyFile(src, dst)
-			dst = dstBase1 + fmt.Sprint(100-i) + ".txt"
-			_ = bilib.CopyFile(src, dst)
+			dst := "file" + fmt.Sprint(i) + ".txt"
+			err := b.copyFile(ctx, src, b.path2, dst)
+			if err != nil {
+				fs.Errorf(src, "error copying file: %v", err)
+			}
+			dst = "file" + fmt.Sprint(100-i) + ".txt"
+			err = b.copyFile(ctx, src, b.path1, dst)
+			if err != nil {
+				fs.Errorf(dst, "error copying file: %v", err)
+			}
 		}
 	}
 
@@ -506,7 +515,12 @@ func (b *bisyncTest) runTestStep(ctx context.Context, line string) (err error) {
 		if fsrc, err = fs.NewFs(ctx, args[1]); err != nil {
 			return err
 		}
-		return purgeChildren(ctx, fsrc, "")
+		err = purgeChildren(ctx, fsrc, "")
+		if err != nil {
+			return err
+		}
+		flushCache(fsrc)
+		return
 	case "delete-file":
 		b.checkArgs(args, 1, 1)
 		dir, file := filepath.Split(args[1])
@@ -576,7 +590,10 @@ func (b *bisyncTest) runTestStep(ctx context.Context, line string) (err error) {
 		return err
 	case "list-dirs":
 		b.checkArgs(args, 1, 1)
-		return b.listSubdirs(ctx, args[1])
+		return b.listSubdirs(ctx, args[1], true)
+	case "list-files":
+		b.checkArgs(args, 1, 1)
+		return b.listSubdirs(ctx, args[1], false)
 	case "bisync":
 		ci.NoUnicodeNormalization = false
 		ci.IgnoreCaseSync = false
@@ -584,6 +601,119 @@ func (b *bisyncTest) runTestStep(ctx context.Context, line string) (err error) {
 		return b.runBisync(ctx, args[1:])
 	case "test-func":
 		b.TestFn = testFunc
+		return
+	case "fix-names":
+		// in case the local os converted any filenames
+		ci.NoUnicodeNormalization = true
+		ci.FixCase = true
+		ci.IgnoreTimes = true
+		reset := func() {
+			ci.NoUnicodeNormalization = false
+			ci.FixCase = false
+			ci.IgnoreTimes = false
+		}
+		defer reset()
+		b.checkArgs(args, 1, 1)
+		var ok bool
+		var remoteName string
+		var remotePath string
+		remoteName, remotePath, err = fspath.SplitFs(args[1])
+		if err != nil {
+			return err
+		}
+		if remoteName == "" {
+			remoteName = "/"
+		}
+
+		fsrc, err = fs.NewFs(ctx, remoteName)
+		if err != nil {
+			return err
+		}
+
+		// DEBUG
+		fs.Debugf(remotePath, "is NFC: %v", norm.NFC.IsNormalString(remotePath))
+		fs.Debugf(remotePath, "is NFD: %v", norm.NFD.IsNormalString(remotePath))
+		fs.Debugf(remotePath, "is valid UTF8: %v", utf8.ValidString(remotePath))
+
+		// check if it's a dir, try moving it
+		var leaf string
+		_, leaf, err = fspath.Split(remotePath)
+		if err == nil && leaf == "" {
+			remotePath = args[1]
+			fs.Debugf(remotePath, "attempting to fix directory")
+
+			fixDirname := func(old, new string) {
+				if new != old {
+					oldName, err := fs.NewFs(ctx, old)
+					if err != nil {
+						fs.Logf(old, "error getting Fs: %v", err)
+					}
+					fs.Debugf(nil, "Attempting to move %s to %s", oldName.Root(), new)
+					// Create random name to temporarily move dir to
+					tmpDirName := strings.TrimSuffix(new, slash) + "-rclone-move-" + random.String(8)
+					var tmpDirFs fs.Fs
+					tmpDirFs, _ = fs.NewFs(ctx, tmpDirName)
+					err = sync.MoveDir(ctx, tmpDirFs, oldName, true, true)
+					if err != nil {
+						fs.Debugf(oldName, "error attempting to move folder: %v", err)
+					}
+					// now move the temp dir to real name
+					fsrc, _ = fs.NewFs(ctx, new)
+					err = sync.MoveDir(ctx, fsrc, tmpDirFs, true, true)
+					if err != nil {
+						fs.Debugf(tmpDirFs, "error attempting to move folder to %s: %v", fsrc.Root(), err)
+					}
+				} else {
+					fs.Debugf(nil, "old and new are equal. Skipping. %s (%s) %s (%s)", old, stringToHash(old), new, stringToHash(new))
+				}
+			}
+
+			if norm.NFC.String(remotePath) != remotePath && norm.NFD.String(remotePath) != remotePath {
+				fs.Debugf(remotePath, "This is neither fully NFD or NFC -- can't fix reliably!")
+			}
+			fixDirname(norm.NFC.String(remotePath), remotePath)
+			fixDirname(norm.NFD.String(remotePath), remotePath)
+			return
+		}
+
+		// if it's a file
+		fs.Debugf(remotePath, "attempting to fix file -- filename hash: %s", stringToHash(leaf))
+		fixFilename := func(old, new string) {
+			ok, err := fs.FileExists(ctx, fsrc, old)
+			if err != nil {
+				fs.Debugf(remotePath, "error checking if file exists: %v", err)
+			}
+			fs.Debugf(old, "file exists: %v %s", ok, stringToHash(old))
+			fs.Debugf(nil, "FILE old: %s new: %s equal: %v", old, new, old == new)
+			fs.Debugf(nil, "HASH old: %s new: %s equal: %v", stringToHash(old), stringToHash(new), stringToHash(old) == stringToHash(new))
+			if ok && new != old {
+				fs.Debugf(new, "attempting to rename %s to %s", old, new)
+				err = operations.MoveFile(ctx, fsrc, fsrc, new, old)
+				if err != nil {
+					fs.Errorf(new, "error trying to rename %s to %s - %v", old, new, err)
+				}
+			}
+		}
+
+		// look for NFC version
+		fixFilename(norm.NFC.String(remotePath), remotePath)
+		// if it's in a subdir we just moved, the file and directory might have different encodings. Check for that.
+		mixed := strings.TrimSuffix(norm.NFD.String(remotePath), norm.NFD.String(leaf)) + norm.NFC.String(leaf)
+		fixFilename(mixed, remotePath)
+		// Try NFD
+		fixFilename(norm.NFD.String(remotePath), remotePath)
+		// Try mixed in reverse
+		mixed = strings.TrimSuffix(norm.NFC.String(remotePath), norm.NFC.String(leaf)) + norm.NFD.String(leaf)
+		fixFilename(mixed, remotePath)
+		// check if it's right now, error if not
+		ok, err = fs.FileExists(ctx, fsrc, remotePath)
+		if !ok || err != nil {
+			fs.Logf(remotePath, "Can't find expected file %s (was it renamed by the os?) %v", args[1], err)
+			return
+		} else {
+			// include hash of filename to make unicode form differences easier to see in logs
+			fs.Debugf(remotePath, "verified file exists at correct path. filename hash: %s", stringToHash(leaf))
+		}
 		return
 	default:
 		return fmt.Errorf("unknown command: %q", args[0])
@@ -626,6 +756,13 @@ func (b *bisyncTest) checkArgs(args []string, min, max int) {
 	}
 }
 
+func flushCache(f fs.Fs) {
+	dirCacheFlush := f.Features().DirCacheFlush
+	if dirCacheFlush == nil {
+		fs.Errorf(nil, "%v: can't flush dir cache", f)
+	}
+}
+
 func (b *bisyncTest) runBisync(ctx context.Context, args []string) (err error) {
 	opt := &bisync.Options{
 		Workdir:       b.workDir,
@@ -638,6 +775,10 @@ func (b *bisyncTest) runBisync(ctx context.Context, args []string) (err error) {
 	}
 	octx, ci := fs.AddConfig(ctx)
 	fs1, fs2 := b.fs1, b.fs2
+
+	// flush cache
+	flushCache(fs1)
+	flushCache(fs2)
 
 	addSubdir := func(path, subdir string) fs.Fs {
 		remote := path + subdir
@@ -747,7 +888,7 @@ func (b *bisyncTest) copyFile(ctx context.Context, src, dst, asName string) (err
 	var fsrc, fdst fs.Fs
 	var srcPath, srcFile, dstPath, dstFile string
 
-	switch fsrc, err = cache.Get(ctx, src); err {
+	switch fsrc, err = fs.NewFs(ctx, src); err {
 	case fs.ErrorIsFile:
 		// ok
 	case nil:
@@ -770,7 +911,7 @@ func (b *bisyncTest) copyFile(ctx context.Context, src, dst, asName string) (err
 	if dstFile != "" {
 		dstPath = dst // force directory
 	}
-	if fdst, err = cache.Get(ctx, dstPath); err != nil {
+	if fdst, err = fs.NewFs(ctx, dstPath); err != nil {
 		return err
 	}
 
@@ -787,23 +928,27 @@ func (b *bisyncTest) copyFile(ctx context.Context, src, dst, asName string) (err
 	return operations.CopyFile(fctx, fdst, fsrc, dstFile, srcFile)
 }
 
-// listSubdirs is equivalent to `rclone lsf -R --dirs-only`
-func (b *bisyncTest) listSubdirs(ctx context.Context, remote string) error {
+// listSubdirs is equivalent to `rclone lsf -R [--dirs-only]`
+func (b *bisyncTest) listSubdirs(ctx context.Context, remote string, DirsOnly bool) error {
 	f, err := fs.NewFs(ctx, remote)
 	if err != nil {
 		return err
 	}
+
+	// flush cache
+	flushCache(f)
+
 	opt := operations.ListJSONOpt{
 		NoModTime:  true,
 		NoMimeType: true,
-		DirsOnly:   true,
+		DirsOnly:   DirsOnly,
 		Recurse:    true,
 	}
 	fmt := operations.ListFormat{}
 	fmt.SetDirSlash(true)
 	fmt.AddPath()
 	printItem := func(item *operations.ListJSONItem) error {
-		b.logPrintf("%s", fmt.Format(item))
+		b.logPrintf("%s - filename hash: %s", fmt.Format(item), stringToHash(item.Name))
 		return nil
 	}
 	return operations.ListJSON(ctx, f, "", &opt, printItem)
@@ -1058,9 +1203,12 @@ func (b *bisyncTest) mangleResult(dir, file string, golden bool) string {
 	case "queue":
 		lines := strings.Split(text, eol)
 		sort.Strings(lines)
+		for i, line := range lines {
+			lines[i] = normalizeEncoding(line)
+		}
 		return joinLines(lines)
 	case "listing":
-		return mangleListing(text, golden)
+		return b.mangleListing(text, golden, file)
 	case "log":
 		// fall thru
 	default:
@@ -1068,7 +1216,16 @@ func (b *bisyncTest) mangleResult(dir, file string, golden bool) string {
 	}
 
 	// Adapt log lines to the golden way.
-	lines := strings.Split(string(buf), eol)
+	// First replace filenames with whitespace
+	// some backends (such as crypt) log them on multiple lines due to encoding differences, while others (local) do not
+	wsrep := []string{
+		"subdir with" + eol + "white space.txt/file2 with" + eol + "white space.txt",
+		"subdir with white space.txt/file2 with white space.txt",
+	}
+	whitespaceJoiner := strings.NewReplacer(wsrep...)
+	s := whitespaceJoiner.Replace(string(buf))
+
+	lines := strings.Split(s, eol)
 	pathReplacer := b.newReplacer(true)
 
 	rep := logReplacements
@@ -1152,7 +1309,7 @@ func (b *bisyncTest) mangleResult(dir, file string, golden bool) string {
 }
 
 // mangleListing sorts listing lines before comparing.
-func mangleListing(text string, golden bool) string {
+func (b *bisyncTest) mangleListing(text string, golden bool, file string) string {
 	lines := strings.Split(text, eol)
 
 	hasHeader := len(lines) > 0 && strings.HasPrefix(lines[0], bisync.ListingHeader)
@@ -1176,12 +1333,43 @@ func mangleListing(text string, golden bool) string {
 		return getFile(lines[i]) < getFile(lines[j])
 	})
 
-	// Store hash as golden but ignore when comparing.
+	// parse whether this is Path1 or Path2 (so we can apply per-Fs precision/hash settings)
+	isPath1 := strings.Contains(file, ".path1.lst")
+	f := b.fs2
+	if isPath1 {
+		f = b.fs1
+	}
+
+	// account for differences in backend features when comparing
 	if !golden {
 		for i, s := range lines {
+			// Store hash as golden but ignore when comparing (only if no md5 support).
 			match := regex.FindStringSubmatch(strings.TrimSpace(s))
-			if match != nil && match[2] != "-" {
-				lines[i] = match[1] + "-" + match[3] + match[4]
+			if match != nil && match[2] != "-" && (!b.fs1.Hashes().Contains(hash.MD5) || !b.fs2.Hashes().Contains(hash.MD5)) { // if hash is not empty and either side lacks md5
+				lines[i] = match[1] + "-" + match[3] + match[4] // replace it with "-" for comparison purposes (see #5679)
+			}
+			// account for modtime precision
+			var lineRegex = regexp.MustCompile(`^(\S) +(-?\d+) (\S+) (\S+) (\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d\.\d{9}[+-]\d{4}) (".+")$`)
+			const timeFormat = "2006-01-02T15:04:05.000000000-0700"
+			const lineFormat = "%s %8d %s %s %s %q\n"
+			var TZ = time.UTC
+			fields := lineRegex.FindStringSubmatch(strings.TrimSuffix(lines[i], "\n"))
+			if fields != nil {
+				sizeVal, sizeErr := strconv.ParseInt(fields[2], 10, 64)
+				if sizeErr == nil {
+					// account for filename encoding differences by normalizing to OS encoding
+					fields[6] = normalizeEncoding(fields[6])
+					timeStr := fields[5]
+					if f.Precision() == fs.ModTimeNotSupported {
+						lines[i] = fmt.Sprintf(lineFormat, fields[1], sizeVal, fields[3], fields[4], "-", fields[6])
+						continue
+					}
+					timeVal, timeErr := time.ParseInLocation(timeFormat, timeStr, TZ)
+					if timeErr == nil {
+						timeRound := timeVal.Round(f.Precision() * 2)
+						lines[i] = fmt.Sprintf(lineFormat, fields[1], sizeVal, fields[3], fields[4], timeRound, fields[6])
+					}
+				}
 			}
 		}
 	}
@@ -1225,6 +1413,8 @@ func (b *bisyncTest) newReplacer(mangle bool) *strings.Replacer {
 		b.dataDir + slash, "{datadir/}",
 		b.testDir + slash, "{testdir/}",
 		b.workDir + slash, "{workdir/}",
+		b.fs1.String(), "{path1String}",
+		b.fs2.String(), "{path2String}",
 		b.path1, "{path1/}",
 		b.path2, "{path2/}",
 		"//?/" + strings.TrimSuffix(strings.Replace(b.path1, slash, "/", -1), "/"), "{path1}", // fix windows-specific issue
@@ -1334,4 +1524,37 @@ func (b *bisyncTest) logPrintf(text string, args ...interface{}) {
 		_, err := fmt.Fprintln(b.logFile, line)
 		require.NoError(b.t, err, "writing log file")
 	}
+}
+
+// account for filename encoding differences between remotes by normalizing to OS encoding
+func normalizeEncoding(s string) string {
+	if s == "" || s == "." {
+		return s
+	}
+	nameVal, err := strconv.Unquote(s)
+	if err != nil {
+		nameVal = s
+	}
+	nameVal = filepath.Clean(nameVal)
+	nameVal = encoder.OS.FromStandardPath(nameVal)
+	return strconv.Quote(encoder.OS.ToStandardPath(filepath.ToSlash(nameVal)))
+}
+
+func stringToHash(s string) string {
+	ht := hash.MD5
+	hasher, err := hash.NewMultiHasherTypes(hash.NewHashSet(ht))
+	if err != nil {
+		fs.Errorf(s, "hash unsupported: %v", err)
+	}
+
+	_, err = hasher.Write([]byte(s))
+	if err != nil {
+		fs.Errorf(s, "failed to write to hasher: %v", err)
+	}
+
+	sum, err := hasher.SumString(ht, false)
+	if err != nil {
+		fs.Errorf(s, "hasher returned an error: %v", err)
+	}
+	return sum
 }

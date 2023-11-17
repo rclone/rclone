@@ -1,8 +1,17 @@
 [36m(01)  :[0m [34mtest extended-filenames[0m
 
 
-[36m(02)  :[0m [34mtest initial bisync[0m
-[36m(03)  :[0m [34mbisync resync[0m
+[36m(02)  :[0m [34mfix-names {path1/}subdir_with_ࢺ_/[0m
+[36m(03)  :[0m [34mfix-names {path2/}subdir_with_ࢺ_/[0m
+[36m(04)  :[0m [34mfix-names {path1/}subdir_with_ࢺ_/filename_contains_ě_.txt[0m
+[36m(05)  :[0m [34mfix-names {path2/}subdir_with_ࢺ_/filename_contains_ě_.txt[0m
+[36m(06)  :[0m [34mfix-names {path1/}Русский.txt[0m
+[36m(07)  :[0m [34mfix-names {path2/}Русский.txt[0m
+[36m(08)  :[0m [34mfix-names {path1/}file_enconde_mañana_funcionará.txt[0m
+[36m(09)  :[0m [34mfix-names {path2/}file_enconde_mañana_funcionará.txt[0m
+
+[36m(10)  :[0m [34mtest initial bisync[0m
+[36m(11)  :[0m [34mbisync resync[0m
 INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
 INFO  : Copying unique Path2 files to Path1
 INFO  : - [34mPath2[0m    [35mResync is copying UNIQUE files to[0m  - [36mPath1[0m
@@ -10,34 +19,35 @@ INFO  : - [34mPath1[0m    [35mResync is copying UNIQUE OR DIFFERING files to
 INFO  : Resync updating listings
 INFO  : [32mBisync successful[0m
 
-[36m(04)  :[0m [34mtest place a newer files on both paths[0m
+[36m(12)  :[0m [34mtest place a newer files on both paths[0m
 
-[36m(05)  :[0m [34mtouch-glob 2001-01-02 {datadir/} file1.txt[0m
-[36m(06)  :[0m [34mtouch-glob 2001-01-02 {datadir/} file2.txt[0m
-[36m(07)  :[0m [34mcopy-as {datadir/}file1.txt {path2/} New_top_level_mañana_funcionará.txt[0m
-[36m(08)  :[0m [34mcopy-as {datadir/}file1.txt {path2/} file_enconde_mañana_funcionará.txt[0m
-[36m(09)  :[0m [34mcopy-as {datadir/}file1.txt {path1/} filename_contains_ࢺ_p1m.txt[0m
-[36m(10)  :[0m [34mcopy-as {datadir/}file1.txt {path2/} Русский.txt[0m
-[36m(11)  :[0m [34mcopy-as {datadir/}file1.txt {path1/} file1_with{spc}white{spc}space.txt[0m
-[36m(12)  :[0m [34mcopy-as {datadir/}file1.txt {path1/}subdir_with_ࢺ_ test.txt[0m
-[36m(13)  :[0m [34mcopy-as {datadir/}file1.txt {path1/}subdir_with_ࢺ_ mañana_funcionará.txt[0m
-[36m(14)  :[0m [34mcopy-as {datadir/}file1.txt {path1/}subdir_with_ࢺ_ file_with_測試_.txt[0m
-[36m(15)  :[0m [34mcopy-as {datadir/}file1.txt {path2/}subdir_with_ࢺ_ filename_contains_ࢺ_p2s.txt[0m
-[36m(16)  :[0m [34mcopy-as {datadir/}file1.txt {path2/}subdir{spc}with{eol}white{spc}space.txt file2{spc}with{eol}white{spc}space.txt[0m
-[36m(17)  :[0m [34mcopy-as {datadir/}file1.txt {path2/}subdir_rawchars_{chr:19}_{chr:81}_{chr:fe} file3_{chr:19}_{chr:81}_{chr:fe}[0m
+[36m(13)  :[0m [34mtouch-glob 2001-01-02 {datadir/} file1.txt[0m
+[36m(14)  :[0m [34mtouch-glob 2001-01-02 {datadir/} file2.txt[0m
+[36m(15)  :[0m [34mcopy-as {datadir/}file1.txt {path2/} New_top_level_mañana_funcionará.txt[0m
+[36m(16)  :[0m [34mcopy-as {datadir/}file1.txt {path2/} file_enconde_mañana_funcionará.txt[0m
+[36m(17)  :[0m [34mcopy-as {datadir/}file1.txt {path1/} filename_contains_ࢺ_p1m.txt[0m
+[36m(18)  :[0m [34mcopy-as {datadir/}file1.txt {path2/} Русский.txt[0m
+[36m(19)  :[0m [34mcopy-as {datadir/}file1.txt {path1/} file1_with{spc}white{spc}space.txt[0m
+[36m(20)  :[0m [34mcopy-as {datadir/}file1.txt {path1/}subdir_with_ࢺ_ test.txt[0m
+[36m(21)  :[0m [34mcopy-as {datadir/}file1.txt {path1/}subdir_with_ࢺ_ mañana_funcionará.txt[0m
+[36m(22)  :[0m [34mcopy-as {datadir/}file1.txt {path1/}subdir_with_ࢺ_ file_with_測試_.txt[0m
+[36m(23)  :[0m [34mcopy-as {datadir/}file1.txt {path2/}subdir_with_ࢺ_ filename_contains_ࢺ_p2s.txt[0m
+[36m(24)  :[0m [34mcopy-as {datadir/}file1.txt {path2/}subdir{spc}with{eol}white{spc}space.txt file2{spc}with{eol}white{spc}space.txt[0m
+[36m(25)  :[0m [34mcopy-as {datadir/}file1.txt {path2/}subdir_rawchars_{chr:19}_{chr:81}_{chr:fe} file3_{chr:19}_{chr:81}_{chr:fe}[0m
+[36m(26)  :[0m [34mfix-names {path2/}subdir{spc}with{eol}white{spc}space.txt/file2{spc}with{eol}white{spc}space.txt[0m
 
-[36m(18)  :[0m [34mtest place a new file on both paths[0m
-[36m(19)  :[0m [34mcopy-as {datadir/}file2.txt {path2/}subdir_with_ࢺ_ filechangedbothpaths_ࢺ_.txt[0m
-[36m(20)  :[0m [34mtouch-glob 2001-01-03 {datadir/} file1.txt[0m
-[36m(21)  :[0m [34mcopy-as {datadir/}file1.txt {path1/}subdir_with_ࢺ_ filechangedbothpaths_ࢺ_.txt[0m
+[36m(27)  :[0m [34mtest place a new file on both paths[0m
+[36m(28)  :[0m [34mcopy-as {datadir/}file2.txt {path2/}subdir_with_ࢺ_ filechangedbothpaths_ࢺ_.txt[0m
+[36m(29)  :[0m [34mtouch-glob 2001-01-03 {datadir/} file1.txt[0m
+[36m(30)  :[0m [34mcopy-as {datadir/}file1.txt {path1/}subdir_with_ࢺ_ filechangedbothpaths_ࢺ_.txt[0m
 
-[36m(22)  :[0m [34mtest delete files on both paths[0m
-[36m(23)  :[0m [34mdelete-file {path2/}filename_contains_ࢺ_.txt[0m
-[36m(24)  :[0m [34mdelete-file {path2/}subdir_with_ࢺ_/filename_contains_ě_.txt[0m
-[36m(25)  :[0m [34mdelete-file {path1/}Русский.txt[0m
+[36m(31)  :[0m [34mtest delete files on both paths[0m
+[36m(32)  :[0m [34mdelete-file {path2/}filename_contains_ࢺ_.txt[0m
+[36m(33)  :[0m [34mdelete-file {path2/}subdir_with_ࢺ_/filename_contains_ě_.txt[0m
+[36m(34)  :[0m [34mdelete-file {path1/}Русский.txt[0m
 
-[36m(26)  :[0m [34mtest bisync run[0m
-[36m(27)  :[0m [34mbisync[0m
+[36m(35)  :[0m [34mtest bisync run[0m
+[36m(36)  :[0m [34mbisync[0m
 INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
 INFO  : Building Path1 and Path2 listings
 INFO  : Path1 checking for diffs
@@ -63,8 +73,8 @@ INFO  : Path2:    9 changes:    5 new,    2 newer,    0 older,    2 deleted
 INFO  : Applying changes
 INFO  : Checking potential conflicts...
 ERROR : subdir_with_ࢺ_/filechangedbothpaths_ࢺ_.txt: sizes differ
-NOTICE: Local file system at {path2}: 1 differences found
-NOTICE: Local file system at {path2}: 1 errors while checking
+NOTICE: {path2String}: 1 differences found
+NOTICE: {path2String}: 1 errors while checking
 INFO  : Finished checking the potential conflicts. 1 differences found
 INFO  : - [34mPath1[0m    [35mQueue copy to Path2[0m                - [36m{path2/}file1_with white space.txt[0m
 INFO  : - [34mPath1[0m    [35mQueue copy to Path2[0m                - [36m{path2/}filename_contains_ࢺ_p1m.txt[0m

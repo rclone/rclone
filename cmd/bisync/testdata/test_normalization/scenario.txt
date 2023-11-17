@@ -9,7 +9,7 @@ test initial bisync
 bisync resync
 
 # copy NFC version to Path1
-copy-as-NFC {datadir/}file1.txt {path1/}測試_Русский___ě_áñ👸🏼🧝🏾‍♀️💆🏿‍♂️🐨🤙🏼🤮🧑🏻‍🔧🧑‍🔬éééö 測試_Русский___ě_áñ👸🏼🧝🏾‍♀️💆🏿‍♂️🐨🤙🏼🤮🧑🏻‍🔧🧑‍🔬éééö.txt
+copy-as-NFC {datadir/}file1.txt {path1/}測試_Русский___ě_áñ👸🏼🧝🏾‍♀️💆🏿‍♂️🐨🤙🏼🤮🧑🏻‍🔧🧑‍🔬éö 測試_Русский___ě_áñ👸🏼🧝🏾‍♀️💆🏿‍♂️🐨🤙🏼🤮🧑🏻‍🔧🧑‍🔬éö.txt
 copy-as-NFC {datadir/}file1.txt {path1/}folder éééö.txt
 copy-as-NFC {datadir/}file1.txt {path1/}folder HeLlO,wOrLd!.txt
 
@@ -25,10 +25,13 @@ bisync fix-case
 purge-children {path1/}
 purge-children {path2/}
 touch-copy 2001-01-02 {datadir/}file1.txt {path2/}
+copy-as-NFC {datadir/}file1.txt {path2/} file2.txt
+copy-as-NFC {datadir/}file1.txt {path1/} file3.txt
 bisync resync
 
 # copy NFC version to Path1
-copy-as-NFC {datadir/}file1.txt {path1/}測試_Русский___ě_áñ👸🏼🧝🏾‍♀️💆🏿‍♂️🐨🤙🏼🤮🧑🏻‍🔧🧑‍🔬éééö 測試_Русский___ě_áñ👸🏼🧝🏾‍♀️💆🏿‍♂️🐨🤙🏼🤮🧑🏻‍🔧🧑‍🔬éééö.txt
+# note: need to slightly change the name to avoid Drive known issue #3262 which could try to copy the old name from the trash
+copy-as-NFC {datadir/}file1.txt {path1/}測試_Руский___ě_áñ👸🏼🧝🏾‍♀️💆🏿‍♂️🐨🤙🏼🤮🧑🏻‍🔧🧑‍🔬éö 測試_Руский___ě_áñ👸🏼🧝🏾‍♀️💆🏿‍♂️🐨🤙🏼🤮🧑🏻‍🔧🧑‍🔬éö.txt
 copy-as-NFC {datadir/}file1.txt {path1/}folder éééö.txt
 copy-as-NFC {datadir/}file1.txt {path1/}folder HeLlO,wOrLd!.txt
 
@@ -45,7 +48,7 @@ bisync resync norm
 
 test changed on one path
 touch-copy 2001-01-05 {datadir/}file1.txt {path2/}
-copy-as-NFC {datadir/}file1.txt {path1/}測試_Русский___ě_áñ👸🏼🧝🏾‍♀️💆🏿‍♂️🐨🤙🏼🤮🧑🏻‍🔧🧑‍🔬éééö 測試_Русский___ě_áñ👸🏼🧝🏾‍♀️💆🏿‍♂️🐨🤙🏼🤮🧑🏻‍🔧🧑‍🔬éééö.txt
+copy-as-NFC {datadir/}file1.txt {path1/}測試_Руский___ě_áñ👸🏼🧝🏾‍♀️💆🏿‍♂️🐨🤙🏼🤮🧑🏻‍🔧🧑‍🔬éö 測試_Руский___ě_áñ👸🏼🧝🏾‍♀️💆🏿‍♂️🐨🤙🏼🤮🧑🏻‍🔧🧑‍🔬éö.txt
 copy-as-NFC {datadir/}file1.txt {path1/}folder éééö.txt
 copy-as-NFC {datadir/}file1.txt {path1/}folder HeLlO,wOrLd!.txt
 bisync norm

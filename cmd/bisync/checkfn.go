@@ -107,6 +107,9 @@ func CryptCheckFn(ctx context.Context, dst, src fs.Object) (differ bool, noHash 
 	}
 	if cryptHash != underlyingHash {
 		err = fmt.Errorf("hashes differ (%s:%s) %q vs (%s:%s) %q", fdst.Name(), fdst.Root(), cryptHash, fsrc.Name(), fsrc.Root(), underlyingHash)
+		fs.Debugf(src, err.Error())
+		// using same error msg as CheckFn so integration tests match
+		err = fmt.Errorf("%v differ", hashType)
 		fs.Errorf(src, err.Error())
 		return true, false, nil
 	}

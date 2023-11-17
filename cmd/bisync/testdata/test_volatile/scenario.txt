@@ -5,6 +5,7 @@ bisync resync
 
 test changed on both paths - file5 (file5R, file5L)
 touch-glob 2001-01-02 {datadir/} file5R.txt
+touch-glob 2023-08-26 {datadir/} file7.txt
 copy-as {datadir/}file5R.txt {path2/} file5.txt
 touch-glob 2001-03-04 {datadir/} file5L.txt
 copy-as {datadir/}file5L.txt {path1/} file5.txt

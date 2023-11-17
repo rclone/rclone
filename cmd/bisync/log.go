@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/lib/encoder"
 	"github.com/rclone/rclone/lib/terminal"
 )
 
@@ -36,6 +37,7 @@ func (b *bisyncRun) indent(tag, file, msg string) {
 // escapePath will escape control characters in path.
 // It won't quote just due to backslashes on Windows.
 func escapePath(path string, forceQuotes bool) string {
+	path = encode(path)
 	test := path
 	if runtime.GOOS == "windows" {
 		test = strings.ReplaceAll(path, "\\", "/")
@@ -57,4 +59,8 @@ func quotePath(path string) string {
 func Color(style string, s string) string {
 	terminal.Start()
 	return style + s + terminal.Reset
+}
+
+func encode(s string) string {
+	return encoder.OS.ToStandardPath(encoder.OS.FromStandardPath(s))
 }
