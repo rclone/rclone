@@ -84,8 +84,8 @@ INFO  : Path2:    6 changes:    1 new,    3 newer,    0 older,    2 deleted
 INFO  : Applying changes
 INFO  : Checking potential conflicts...
 ERROR : file5.txt: md5 differ
-NOTICE: Local file system at {path2}: 1 differences found
-NOTICE: Local file system at {path2}: 1 errors while checking
+NOTICE: {path2String}: 1 differences found
+NOTICE: {path2String}: 1 errors while checking
 INFO  : Finished checking the potential conflicts. 1 differences found
 INFO  : - [34mPath1[0m    [35mQueue copy to Path2[0m                - [36m{path2/}file11.txt[0m
 INFO  : - [34mPath1[0m    [35mQueue copy to Path2[0m                - [36m{path2/}file2.txt[0m
@@ -139,8 +139,8 @@ INFO  : Path2:    6 changes:    1 new,    3 newer,    0 older,    2 deleted
 INFO  : Applying changes
 INFO  : Checking potential conflicts...
 ERROR : file5.txt: md5 differ
-NOTICE: Local file system at {path2}: 1 differences found
-NOTICE: Local file system at {path2}: 1 errors while checking
+NOTICE: {path2String}: 1 differences found
+NOTICE: {path2String}: 1 errors while checking
 INFO  : Finished checking the potential conflicts. 1 differences found
 INFO  : - [34mPath1[0m    [35mQueue copy to Path2[0m                - [36m{path2/}file11.txt[0m
 INFO  : - [34mPath1[0m    [35mQueue copy to Path2[0m                - [36m{path2/}file2.txt[0m

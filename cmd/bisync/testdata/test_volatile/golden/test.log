@@ -11,13 +11,14 @@ INFO  : [32mBisync successful[0m
 
 [36m(04)  :[0m [34mtest changed on both paths - file5 (file5R, file5L)[0m
 [36m(05)  :[0m [34mtouch-glob 2001-01-02 {datadir/} file5R.txt[0m
-[36m(06)  :[0m [34mcopy-as {datadir/}file5R.txt {path2/} file5.txt[0m
-[36m(07)  :[0m [34mtouch-glob 2001-03-04 {datadir/} file5L.txt[0m
-[36m(08)  :[0m [34mcopy-as {datadir/}file5L.txt {path1/} file5.txt[0m
+[36m(06)  :[0m [34mtouch-glob 2023-08-26 {datadir/} file7.txt[0m
+[36m(07)  :[0m [34mcopy-as {datadir/}file5R.txt {path2/} file5.txt[0m
+[36m(08)  :[0m [34mtouch-glob 2001-03-04 {datadir/} file5L.txt[0m
+[36m(09)  :[0m [34mcopy-as {datadir/}file5L.txt {path1/} file5.txt[0m
 
-[36m(09)  :[0m [34mtest bisync with 50 files created during - should ignore new files[0m
-[36m(10)  :[0m [34mtest-func[0m
-[36m(11)  :[0m [34mbisync[0m
+[36m(10)  :[0m [34mtest bisync with 50 files created during - should ignore new files[0m
+[36m(11)  :[0m [34mtest-func[0m
+[36m(12)  :[0m [34mbisync[0m
 INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
 INFO  : Building Path1 and Path2 listings
 INFO  : Path1 checking for diffs
@@ -29,8 +30,8 @@ INFO  : Path2:    1 changes:    0 new,    1 newer,    0 older,    0 deleted
 INFO  : Applying changes
 INFO  : Checking potential conflicts...
 ERROR : file5.txt: md5 differ
-NOTICE: Local file system at {path2}: 1 differences found
-NOTICE: Local file system at {path2}: 1 errors while checking
+NOTICE: {path2String}: 1 differences found
+NOTICE: {path2String}: 1 errors while checking
 INFO  : Finished checking the potential conflicts. 1 differences found
 NOTICE: - [34mWARNING[0m  [35mNew or changed in both paths[0m       - [36mfile5.txt[0m
 NOTICE: - [34mPath1[0m    [35mRenaming Path1 copy[0m                - [36m{path1/}file5.txt..path1[0m
@@ -43,15 +44,15 @@ INFO  : Updating listings
 INFO  : Validating listings for Path1 "{path1/}" vs Path2 "{path2/}"
 INFO  : [32mBisync successful[0m
 
-[36m(12)  :[0m [34mtest changed on both paths - file5 (file5R, file5L)[0m
-[36m(13)  :[0m [34mtouch-glob 2001-01-02 {datadir/} file5R.txt[0m
-[36m(14)  :[0m [34mcopy-as {datadir/}file5R.txt {path2/} file5.txt[0m
-[36m(15)  :[0m [34mtouch-glob 2001-03-04 {datadir/} file5L.txt[0m
-[36m(16)  :[0m [34mcopy-as {datadir/}file5L.txt {path1/} file5.txt[0m
+[36m(13)  :[0m [34mtest changed on both paths - file5 (file5R, file5L)[0m
+[36m(14)  :[0m [34mtouch-glob 2001-01-02 {datadir/} file5R.txt[0m
+[36m(15)  :[0m [34mcopy-as {datadir/}file5R.txt {path2/} file5.txt[0m
+[36m(16)  :[0m [34mtouch-glob 2001-03-04 {datadir/} file5L.txt[0m
+[36m(17)  :[0m [34mcopy-as {datadir/}file5L.txt {path1/} file5.txt[0m
 
-[36m(17)  :[0m [34mtest next bisync - should now notice new files[0m
-[36m(18)  :[0m [34mtest-func[0m
-[36m(19)  :[0m [34mbisync[0m
+[36m(18)  :[0m [34mtest next bisync - should now notice new files[0m
+[36m(19)  :[0m [34mtest-func[0m
+[36m(20)  :[0m [34mbisync[0m
 INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
 INFO  : Building Path1 and Path2 listings
 INFO  : Path1 checking for diffs
@@ -108,6 +109,13 @@ INFO  : - [34mPath1[0m    [35mFile is new[0m                        - [36mf
 INFO  : - [34mPath1[0m    [35mFile is new[0m                        - [36mfile99.txt[0m
 INFO  : Path1:   51 changes:   51 new,    0 newer,    0 older,    0 deleted
 INFO  : Path2 checking for diffs
+INFO  : - [34mPath2[0m    [35mFile is newer[0m                      - [36mfile1.txt[0m
+INFO  : - [34mPath2[0m    [35mFile is newer[0m                      - [36mfile2.txt[0m
+INFO  : - [34mPath2[0m    [35mFile is newer[0m                      - [36mfile3.txt[0m
+INFO  : - [34mPath2[0m    [35mFile is newer[0m                      - [36mfile4.txt[0m
+INFO  : - [34mPath2[0m    [35mFile is newer[0m                      - [36mfile6.txt[0m
+INFO  : - [34mPath2[0m    [35mFile is newer[0m                      - [36mfile7.txt[0m
+INFO  : - [34mPath2[0m    [35mFile is newer[0m                      - [36mfile8.txt[0m
 INFO  : - [34mPath2[0m    [35mFile is new[0m                        - [36mfile0.txt[0m
 INFO  : - [34mPath2[0m    [35mFile is new[0m                        - [36mfile10.txt[0m
 INFO  : - [34mPath2[0m    [35mFile is new[0m                        - [36mfile11.txt[0m
@@ -151,12 +159,12 @@ INFO  : - [34mPath2[0m    [35mFile is new[0m                        - [36mf
 INFO  : - [34mPath2[0m    [35mFile is new[0m                        - [36mfile49.txt[0m
 INFO  : - [34mPath2[0m    [35mFile is new[0m                        - [36mfile5.txt[0m
 INFO  : - [34mPath2[0m    [35mFile is new[0m                        - [36mfile9.txt[0m
-INFO  : Path2:   43 changes:   43 new,    0 newer,    0 older,    0 deleted
+INFO  : Path2:   50 changes:   43 new,    7 newer,    0 older,    0 deleted
 INFO  : Applying changes
 INFO  : Checking potential conflicts...
 ERROR : file5.txt: md5 differ
-NOTICE: Local file system at {path2}: 1 differences found
-NOTICE: Local file system at {path2}: 1 errors while checking
+NOTICE: {path2String}: 1 differences found
+NOTICE: {path2String}: 1 errors while checking
 INFO  : Finished checking the potential conflicts. 1 differences found
 INFO  : - [34mPath1[0m    [35mQueue copy to Path2[0m                - [36m{path2/}file100.txt[0m
 NOTICE: - [34mWARNING[0m  [35mNew or changed in both paths[0m       - [36mfile5.txt[0m
@@ -214,6 +222,7 @@ INFO  : - [34mPath1[0m    [35mQueue copy to Path2[0m                - [36m{
 INFO  : - [34mPath1[0m    [35mQueue copy to Path2[0m                - [36m{path2/}file98.txt[0m
 INFO  : - [34mPath1[0m    [35mQueue copy to Path2[0m                - [36m{path2/}file99.txt[0m
 INFO  : - [34mPath2[0m    [35mQueue copy to Path1[0m                - [36m{path1/}file0.txt[0m
+INFO  : - [34mPath2[0m    [35mQueue copy to Path1[0m                - [36m{path1/}file1.txt[0m
 INFO  : - [34mPath2[0m    [35mQueue copy to Path1[0m                - [36m{path1/}file10.txt[0m
 INFO  : - [34mPath2[0m    [35mQueue copy to Path1[0m                - [36m{path1/}file11.txt[0m
 INFO  : - [34mPath2[0m    [35mQueue copy to Path1[0m                - [36m{path1/}file12.txt[0m
@@ -224,6 +233,7 @@ INFO  : - [34mPath2[0m    [35mQueue copy to Path1[0m                - [36m{
 INFO  : - [34mPath2[0m    [35mQueue copy to Path1[0m                - [36m{path1/}file17.txt[0m
 INFO  : - [34mPath2[0m    [35mQueue copy to Path1[0m                - [36m{path1/}file18.txt[0m
 INFO  : - [34mPath2[0m    [35mQueue copy to Path1[0m                - [36m{path1/}file19.txt[0m
+INFO  : - [34mPath2[0m    [35mQueue copy to Path1[0m                - [36m{path1/}file2.txt[0m
 INFO  : - [34mPath2[0m    [35mQueue copy to Path1[0m                - [36m{path1/}file20.txt[0m
 INFO  : - [34mPath2[0m    [35mQueue copy to Path1[0m                - [36m{path1/}file21.txt[0m
 INFO  : - [34mPath2[0m    [35mQueue copy to Path1[0m                - [36m{path1/}file22.txt[0m
@@ -234,6 +244,7 @@ INFO  : - [34mPath2[0m    [35mQueue copy to Path1[0m                - [36m{
 INFO  : - [34mPath2[0m    [35mQueue copy to Path1[0m                - [36m{path1/}file27.txt[0m
 INFO  : - [34mPath2[0m    [35mQueue copy to Path1[0m                - [36m{path1/}file28.txt[0m
 INFO  : - [34mPath2[0m    [35mQueue copy to Path1[0m                - [36m{path1/}file29.txt[0m
+INFO  : - [34mPath2[0m    [35mQueue copy to Path1[0m                - [36m{path1/}file3.txt[0m
 INFO  : - [34mPath2[0m    [35mQueue copy to Path1[0m                - [36m{path1/}file30.txt[0m
 INFO  : - [34mPath2[0m    [35mQueue copy to Path1[0m                - [36m{path1/}file31.txt[0m
 INFO  : - [34mPath2[0m    [35mQueue copy to Path1[0m                - [36m{path1/}file32.txt[0m
@@ -244,6 +255,7 @@ INFO  : - [34mPath2[0m    [35mQueue copy to Path1[0m                - [36m{
 INFO  : - [34mPath2[0m    [35mQueue copy to Path1[0m                - [36m{path1/}file37.txt[0m
 INFO  : - [34mPath2[0m    [35mQueue copy to Path1[0m                - [36m{path1/}file38.txt[0m
 INFO  : - [34mPath2[0m    [35mQueue copy to Path1[0m                - [36m{path1/}file39.txt[0m
+INFO  : - [34mPath2[0m    [35mQueue copy to Path1[0m                - [36m{path1/}file4.txt[0m
 INFO  : - [34mPath2[0m    [35mQueue copy to Path1[0m                - [36m{path1/}file40.txt[0m
 INFO  : - [34mPath2[0m    [35mQueue copy to Path1[0m                - [36m{path1/}file41.txt[0m
 INFO  : - [34mPath2[0m    [35mQueue copy to Path1[0m                - [36m{path1/}file42.txt[0m
@@ -254,6 +266,9 @@ INFO  : - [34mPath2[0m    [35mQueue copy to Path1[0m                - [36m{
 INFO  : - [34mPath2[0m    [35mQueue copy to Path1[0m                - [36m{path1/}file47.txt[0m
 INFO  : - [34mPath2[0m    [35mQueue copy to Path1[0m                - [36m{path1/}file48.txt[0m
 INFO  : - [34mPath2[0m    [35mQueue copy to Path1[0m                - [36m{path1/}file49.txt[0m
+INFO  : - [34mPath2[0m    [35mQueue copy to Path1[0m                - [36m{path1/}file6.txt[0m
+INFO  : - [34mPath2[0m    [35mQueue copy to Path1[0m                - [36m{path1/}file7.txt[0m
+INFO  : - [34mPath2[0m    [35mQueue copy to Path1[0m                - [36m{path1/}file8.txt[0m
 INFO  : - [34mPath2[0m    [35mQueue copy to Path1[0m                - [36m{path1/}file9.txt[0m
 INFO  : - [34mPath2[0m    [35mDo queued copies to[0m                - [36mPath1[0m
 INFO  : - [34mPath1[0m    [35mDo queued copies to[0m                - [36mPath2[0m
@@ -261,15 +276,15 @@ INFO  : Updating listings
 INFO  : Validating listings for Path1 "{path1/}" vs Path2 "{path2/}"
 INFO  : [32mBisync successful[0m
 
-[36m(20)  :[0m [34mtest changed on both paths - file5 (file5R, file5L)[0m
-[36m(21)  :[0m [34mtouch-glob 2001-01-02 {datadir/} file5R.txt[0m
-[36m(22)  :[0m [34mcopy-as {datadir/}file5R.txt {path2/} file5.txt[0m
-[36m(23)  :[0m [34mtouch-glob 2001-03-04 {datadir/} file5L.txt[0m
-[36m(24)  :[0m [34mcopy-as {datadir/}file5L.txt {path1/} file5.txt[0m
+[36m(21)  :[0m [34mtest changed on both paths - file5 (file5R, file5L)[0m
+[36m(22)  :[0m [34mtouch-glob 2001-01-02 {datadir/} file5R.txt[0m
+[36m(23)  :[0m [34mcopy-as {datadir/}file5R.txt {path2/} file5.txt[0m
+[36m(24)  :[0m [34mtouch-glob 2001-03-04 {datadir/} file5L.txt[0m
+[36m(25)  :[0m [34mcopy-as {datadir/}file5L.txt {path1/} file5.txt[0m
 
-[36m(25)  :[0m [34mtest next bisync - should be no changes except dummy[0m
-[36m(26)  :[0m [34mtest-func[0m
-[36m(27)  :[0m [34mbisync[0m
+[36m(26)  :[0m [34mtest next bisync - should be no changes except dummy[0m
+[36m(27)  :[0m [34mtest-func[0m
+[36m(28)  :[0m [34mbisync[0m
 INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
 INFO  : Building Path1 and Path2 listings
 INFO  : Path1 checking for diffs
@@ -281,8 +296,8 @@ INFO  : Path2:    1 changes:    1 new,    0 newer,    0 older,    0 deleted
 INFO  : Applying changes
 INFO  : Checking potential conflicts...
 ERROR : file5.txt: md5 differ
-NOTICE: Local file system at {path2}: 1 differences found
-NOTICE: Local file system at {path2}: 1 errors while checking
+NOTICE: {path2String}: 1 differences found
+NOTICE: {path2String}: 1 errors while checking
 INFO  : Finished checking the potential conflicts. 1 differences found
 NOTICE: - [34mWARNING[0m  [35mNew or changed in both paths[0m       - [36mfile5.txt[0m
 NOTICE: - [34mPath1[0m    [35mRenaming Path1 copy[0m                - [36m{path1/}file5.txt..path1[0m

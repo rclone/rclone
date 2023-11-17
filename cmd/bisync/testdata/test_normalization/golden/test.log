@@ -12,7 +12,7 @@ INFO  : Resync updating listings
 INFO  : [32mBisync successful[0m
 
 
-[36m(05)  :[0m [34mcopy-as-NFC {datadir/}file1.txt {path1/}測試_Русский___ě_áñ👸🏼🧝🏾‍♀️💆🏿‍♂️🐨🤙🏼🤮🧑🏻‍🔧🧑‍🔬éééö 測試_Русский___ě_áñ👸🏼🧝🏾‍♀️💆🏿‍♂️🐨🤙🏼🤮🧑🏻‍🔧🧑‍🔬éééö.txt[0m
+[36m(05)  :[0m [34mcopy-as-NFC {datadir/}file1.txt {path1/}測試_Русский___ě_áñ👸🏼🧝🏾‍♀️💆🏿‍♂️🐨🤙🏼🤮🧑🏻‍🔧🧑‍🔬éö 測試_Русский___ě_áñ👸🏼🧝🏾‍♀️💆🏿‍♂️🐨🤙🏼🤮🧑🏻‍🔧🧑‍🔬éö.txt[0m
 [36m(06)  :[0m [34mcopy-as-NFC {datadir/}file1.txt {path1/}folder éééö.txt[0m
 [36m(07)  :[0m [34mcopy-as-NFC {datadir/}file1.txt {path1/}folder HeLlO,wOrLd!.txt[0m
 
@@ -28,7 +28,7 @@ INFO  : Building Path1 and Path2 listings
 INFO  : Path1 checking for diffs
 INFO  : - [34mPath1[0m    [35mFile is new[0m                        - [36mfolder/HeLlO,wOrLd!.txt[0m
 INFO  : - [34mPath1[0m    [35mFile is new[0m                        - [36mfolder/éééö.txt[0m
-INFO  : - [34mPath1[0m    [35mFile is new[0m                        - [36m"測試_Русский___ě_áñ👸🏼🧝🏾\u200d♀️💆🏿\u200d♂️🐨🤙🏼🤮🧑🏻\u200d🔧🧑\u200d🔬éééö/測試_Русский___ě_áñ👸🏼🧝🏾\u200d♀️💆🏿\u200d♂️🐨🤙🏼🤮🧑🏻\u200d🔧🧑\u200d🔬éééö.txt"[0m
+INFO  : - [34mPath1[0m    [35mFile is new[0m                        - [36m"測試_Русский___ě_áñ👸🏼🧝🏾\u200d♀️💆🏿\u200d♂️🐨🤙🏼🤮🧑🏻\u200d🔧🧑\u200d🔬éö/測試_Русский___ě_áñ👸🏼🧝🏾\u200d♀️💆🏿\u200d♂️🐨🤙🏼🤮🧑🏻\u200d🔧🧑\u200d🔬éö.txt"[0m
 INFO  : Path1:    3 changes:    3 new,    0 newer,    0 older,    0 deleted
 INFO  : Path2 checking for diffs
 INFO  : - [34mPath2[0m    [35mFile is newer[0m                      - [36mfile1.txt[0m
@@ -37,14 +37,14 @@ INFO  : - [34mPath2[0m    [35mFile is new[0m                        - [36mf
 INFO  : Path2:    3 changes:    2 new,    1 newer,    0 older,    0 deleted
 INFO  : Applying changes
 INFO  : Checking potential conflicts...
-NOTICE: Local file system at {path2}: 0 differences found
-NOTICE: Local file system at {path2}: 2 matching files
+NOTICE: {path2String}: 0 differences found
+NOTICE: {path2String}: 2 matching files
 INFO  : Finished checking the potential conflicts. %!s(<nil>)
 NOTICE: - [34mWARNING[0m  [35mNew or changed in both paths[0m       - [36mfolder/HeLlO,wOrLd!.txt[0m
 INFO  : folder/hello,WORLD!.txt: Files are equal but will copy anyway to fix case to folder/HeLlO,wOrLd!.txt
 NOTICE: - [34mWARNING[0m  [35mNew or changed in both paths[0m       - [36mfolder/éééö.txt[0m
 INFO  : folder/éééö.txt: Files are equal but will copy anyway to fix case to folder/éééö.txt
-INFO  : - [34mPath1[0m    [35mQueue copy to Path2[0m                - [36m"{path2/}測試_Русский___ě_áñ👸🏼🧝🏾\u200d♀️💆🏿\u200d♂️🐨🤙🏼🤮🧑🏻\u200d🔧🧑\u200d🔬éééö/測試_Русский___ě_áñ👸🏼🧝🏾\u200d♀️💆🏿\u200d♂️🐨🤙🏼🤮🧑🏻\u200d🔧🧑\u200d🔬éééö.txt"[0m
+INFO  : - [34mPath1[0m    [35mQueue copy to Path2[0m                - [36m"{path2/}測試_Русский___ě_áñ👸🏼🧝🏾\u200d♀️💆🏿\u200d♂️🐨🤙🏼🤮🧑🏻\u200d🔧🧑\u200d🔬éö/測試_Русский___ě_áñ👸🏼🧝🏾\u200d♀️💆🏿\u200d♂️🐨🤙🏼🤮🧑🏻\u200d🔧🧑\u200d🔬éö.txt"[0m
 INFO  : - [34mPath2[0m    [35mQueue copy to Path1[0m                - [36m{path1/}file1.txt[0m
 INFO  : - [34mPath2[0m    [35mDo queued copies to[0m                - [36mPath1[0m
 INFO  : - [34mPath1[0m    [35mDo queued copies to[0m                - [36mPath2[0m
@@ -58,7 +58,9 @@ INFO  : [32mBisync successful[0m
 [36m(13)  :[0m [34mpurge-children {path1/}[0m
 [36m(14)  :[0m [34mpurge-children {path2/}[0m
 [36m(15)  :[0m [34mtouch-copy 2001-01-02 {datadir/}file1.txt {path2/}[0m
-[36m(16)  :[0m [34mbisync resync[0m
+[36m(16)  :[0m [34mcopy-as-NFC {datadir/}file1.txt {path2/} file2.txt[0m
+[36m(17)  :[0m [34mcopy-as-NFC {datadir/}file1.txt {path1/} file3.txt[0m
+[36m(18)  :[0m [34mbisync resync[0m
 INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
 INFO  : Copying unique Path2 files to Path1
 INFO  : - [34mPath2[0m    [35mResync is copying UNIQUE files to[0m  - [36mPath1[0m
@@ -67,23 +69,23 @@ INFO  : Resync updating listings
 INFO  : [32mBisync successful[0m
 
 
-[36m(17)  :[0m [34mcopy-as-NFC {datadir/}file1.txt {path1/}測試_Русский___ě_áñ👸🏼🧝🏾‍♀️💆🏿‍♂️🐨🤙🏼🤮🧑🏻‍🔧🧑‍🔬éééö 測試_Русский___ě_áñ👸🏼🧝🏾‍♀️💆🏿‍♂️🐨🤙🏼🤮🧑🏻‍🔧🧑‍🔬éééö.txt[0m
-[36m(18)  :[0m [34mcopy-as-NFC {datadir/}file1.txt {path1/}folder éééö.txt[0m
-[36m(19)  :[0m [34mcopy-as-NFC {datadir/}file1.txt {path1/}folder HeLlO,wOrLd!.txt[0m
+[36m(19)  :[0m [34mcopy-as-NFC {datadir/}file1.txt {path1/}測試_Руский___ě_áñ👸🏼🧝🏾‍♀️💆🏿‍♂️🐨🤙🏼🤮🧑🏻‍🔧🧑‍🔬éö 測試_Руский___ě_áñ👸🏼🧝🏾‍♀️💆🏿‍♂️🐨🤙🏼🤮🧑🏻‍🔧🧑‍🔬éö.txt[0m
+[36m(20)  :[0m [34mcopy-as-NFC {datadir/}file1.txt {path1/}folder éééö.txt[0m
+[36m(21)  :[0m [34mcopy-as-NFC {datadir/}file1.txt {path1/}folder HeLlO,wOrLd!.txt[0m
 
 
-[36m(20)  :[0m [34mtouch-copy 2001-01-03 {datadir/}file1.txt {path2/}[0m
-[36m(21)  :[0m [34mcopy-as-NFD {datadir/}file1.txt {path2/}folder éééö.txt[0m
-[36m(22)  :[0m [34mcopy-as-NFD {datadir/}file1.txt {path2/}folder hello,WORLD!.txt[0m
+[36m(22)  :[0m [34mtouch-copy 2001-01-03 {datadir/}file1.txt {path2/}[0m
+[36m(23)  :[0m [34mcopy-as-NFD {datadir/}file1.txt {path2/}folder éééö.txt[0m
+[36m(24)  :[0m [34mcopy-as-NFD {datadir/}file1.txt {path2/}folder hello,WORLD!.txt[0m
 
-[36m(23)  :[0m [34mtest bisync run with normalization[0m
-[36m(24)  :[0m [34mbisync norm force[0m
+[36m(25)  :[0m [34mtest bisync run with normalization[0m
+[36m(26)  :[0m [34mbisync norm force[0m
 INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
 INFO  : Building Path1 and Path2 listings
 INFO  : Path1 checking for diffs
 INFO  : - [34mPath1[0m    [35mFile is new[0m                        - [36mfolder/HeLlO,wOrLd!.txt[0m
 INFO  : - [34mPath1[0m    [35mFile is new[0m                        - [36mfolder/éééö.txt[0m
-INFO  : - [34mPath1[0m    [35mFile is new[0m                        - [36m"測試_Русский___ě_áñ👸🏼🧝🏾\u200d♀️💆🏿\u200d♂️🐨🤙🏼🤮🧑🏻\u200d🔧🧑\u200d🔬éééö/測試_Русский___ě_áñ👸🏼🧝🏾\u200d♀️💆🏿\u200d♂️🐨🤙🏼🤮🧑🏻\u200d🔧🧑\u200d🔬éééö.txt"[0m
+INFO  : - [34mPath1[0m    [35mFile is new[0m                        - [36m"測試_Руский___ě_áñ👸🏼🧝🏾\u200d♀️💆🏿\u200d♂️🐨🤙🏼🤮🧑🏻\u200d🔧🧑\u200d🔬éö/測試_Руский___ě_áñ👸🏼🧝🏾\u200d♀️💆🏿\u200d♂️🐨🤙🏼🤮🧑🏻\u200d🔧🧑\u200d🔬éö.txt"[0m
 INFO  : Path1:    3 changes:    3 new,    0 newer,    0 older,    0 deleted
 INFO  : Path2 checking for diffs
 INFO  : - [34mPath2[0m    [35mFile is newer[0m                      - [36mfile1.txt[0m
@@ -92,14 +94,14 @@ INFO  : - [34mPath2[0m    [35mFile is new[0m                        - [36mf
 INFO  : Path2:    3 changes:    2 new,    1 newer,    0 older,    0 deleted
 INFO  : Applying changes
 INFO  : Checking potential conflicts...
-NOTICE: Local file system at {path2}: 0 differences found
-NOTICE: Local file system at {path2}: 2 matching files
+NOTICE: {path2String}: 0 differences found
+NOTICE: {path2String}: 2 matching files
 INFO  : Finished checking the potential conflicts. %!s(<nil>)
 NOTICE: - [34mWARNING[0m  [35mNew or changed in both paths[0m       - [36mfolder/HeLlO,wOrLd!.txt[0m
 INFO  : Files are equal! Skipping: folder/HeLlO,wOrLd!.txt
 NOTICE: - [34mWARNING[0m  [35mNew or changed in both paths[0m       - [36mfolder/éééö.txt[0m
 INFO  : Files are equal! Skipping: folder/éééö.txt
-INFO  : - [34mPath1[0m    [35mQueue copy to Path2[0m                - [36m"{path2/}測試_Русский___ě_áñ👸🏼🧝🏾\u200d♀️💆🏿\u200d♂️🐨🤙🏼🤮🧑🏻\u200d🔧🧑\u200d🔬éééö/測試_Русский___ě_áñ👸🏼🧝🏾\u200d♀️💆🏿\u200d♂️🐨🤙🏼🤮🧑🏻\u200d🔧🧑\u200d🔬éééö.txt"[0m
+INFO  : - [34mPath1[0m    [35mQueue copy to Path2[0m                - [36m"{path2/}測試_Руский___ě_áñ👸🏼🧝🏾\u200d♀️💆🏿\u200d♂️🐨🤙🏼🤮🧑🏻\u200d🔧🧑\u200d🔬éö/測試_Руский___ě_áñ👸🏼🧝🏾\u200d♀️💆🏿\u200d♂️🐨🤙🏼🤮🧑🏻\u200d🔧🧑\u200d🔬éö.txt"[0m
 INFO  : - [34mPath2[0m    [35mQueue copy to Path1[0m                - [36m{path1/}file1.txt[0m
 INFO  : - [34mPath2[0m    [35mDo queued copies to[0m                - [36mPath1[0m
 INFO  : - [34mPath1[0m    [35mDo queued copies to[0m                - [36mPath2[0m
@@ -107,8 +109,8 @@ INFO  : Updating listings
 INFO  : Validating listings for Path1 "{path1/}" vs Path2 "{path2/}"
 INFO  : [32mBisync successful[0m
 
-[36m(25)  :[0m [34mtest resync[0m
-[36m(26)  :[0m [34mbisync resync norm[0m
+[36m(27)  :[0m [34mtest resync[0m
+[36m(28)  :[0m [34mbisync resync norm[0m
 INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
 INFO  : Copying unique Path2 files to Path1
 INFO  : - [34mPath2[0m    [35mResync is copying UNIQUE files to[0m  - [36mPath1[0m
@@ -116,18 +118,18 @@ INFO  : - [34mPath1[0m    [35mResync is copying UNIQUE OR DIFFERING files to
 INFO  : Resync updating listings
 INFO  : [32mBisync successful[0m
 
-[36m(27)  :[0m [34mtest changed on one path[0m
-[36m(28)  :[0m [34mtouch-copy 2001-01-05 {datadir/}file1.txt {path2/}[0m
-[36m(29)  :[0m [34mcopy-as-NFC {datadir/}file1.txt {path1/}測試_Русский___ě_áñ👸🏼🧝🏾‍♀️💆🏿‍♂️🐨🤙🏼🤮🧑🏻‍🔧🧑‍🔬éééö 測試_Русский___ě_áñ👸🏼🧝🏾‍♀️💆🏿‍♂️🐨🤙🏼🤮🧑🏻‍🔧🧑‍🔬éééö.txt[0m
-[36m(30)  :[0m [34mcopy-as-NFC {datadir/}file1.txt {path1/}folder éééö.txt[0m
-[36m(31)  :[0m [34mcopy-as-NFC {datadir/}file1.txt {path1/}folder HeLlO,wOrLd!.txt[0m
-[36m(32)  :[0m [34mbisync norm[0m
+[36m(29)  :[0m [34mtest changed on one path[0m
+[36m(30)  :[0m [34mtouch-copy 2001-01-05 {datadir/}file1.txt {path2/}[0m
+[36m(31)  :[0m [34mcopy-as-NFC {datadir/}file1.txt {path1/}測試_Руский___ě_áñ👸🏼🧝🏾‍♀️💆🏿‍♂️🐨🤙🏼🤮🧑🏻‍🔧🧑‍🔬éö 測試_Руский___ě_áñ👸🏼🧝🏾‍♀️💆🏿‍♂️🐨🤙🏼🤮🧑🏻‍🔧🧑‍🔬éö.txt[0m
+[36m(32)  :[0m [34mcopy-as-NFC {datadir/}file1.txt {path1/}folder éééö.txt[0m
+[36m(33)  :[0m [34mcopy-as-NFC {datadir/}file1.txt {path1/}folder HeLlO,wOrLd!.txt[0m
+[36m(34)  :[0m [34mbisync norm[0m
 INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
 INFO  : Building Path1 and Path2 listings
 INFO  : Path1 checking for diffs
 INFO  : - [34mPath1[0m    [35mFile is newer[0m                      - [36mfolder/HeLlO,wOrLd!.txt[0m
 INFO  : - [34mPath1[0m    [35mFile is newer[0m                      - [36mfolder/éééö.txt[0m
-INFO  : - [34mPath1[0m    [35mFile is newer[0m                      - [36m"測試_Русский___ě_áñ👸🏼🧝🏾\u200d♀️💆🏿\u200d♂️🐨🤙🏼🤮🧑🏻\u200d🔧🧑\u200d🔬éééö/測試_Русский___ě_áñ👸🏼🧝🏾\u200d♀️💆🏿\u200d♂️🐨🤙🏼🤮🧑🏻\u200d🔧🧑\u200d🔬éééö.txt"[0m
+INFO  : - [34mPath1[0m    [35mFile is newer[0m                      - [36m"測試_Руский___ě_áñ👸🏼🧝🏾\u200d♀️💆🏿\u200d♂️🐨🤙🏼🤮🧑🏻\u200d🔧🧑\u200d🔬éö/測試_Руский___ě_áñ👸🏼🧝🏾\u200d♀️💆🏿\u200d♂️🐨🤙🏼🤮🧑🏻\u200d🔧🧑\u200d🔬éö.txt"[0m
 INFO  : Path1:    3 changes:    0 new,    3 newer,    0 older,    0 deleted
 INFO  : Path2 checking for diffs
 INFO  : - [34mPath2[0m    [35mFile is newer[0m                      - [36mfile1.txt[0m
@@ -135,7 +137,7 @@ INFO  : Path2:    1 changes:    0 new,    1 newer,    0 older,    0 deleted
 INFO  : Applying changes
 INFO  : - [34mPath1[0m    [35mQueue copy to Path2[0m                - [36m{path2/}folder/hello,WORLD!.txt[0m
 INFO  : - [34mPath1[0m    [35mQueue copy to Path2[0m                - [36m{path2/}folder/éééö.txt[0m
-INFO  : - [34mPath1[0m    [35mQueue copy to Path2[0m                - [36m"{path2/}測試_Русский___ě_áñ👸🏼🧝🏾\u200d♀️💆🏿\u200d♂️🐨🤙🏼🤮🧑🏻\u200d🔧🧑\u200d🔬éééö/測試_Русский___ě_áñ👸🏼🧝🏾\u200d♀️💆🏿\u200d♂️🐨🤙🏼🤮🧑🏻\u200d🔧🧑\u200d🔬éééö.txt"[0m
+INFO  : - [34mPath1[0m    [35mQueue copy to Path2[0m                - [36m"{path2/}測試_Руский___ě_áñ👸🏼🧝🏾\u200d♀️💆🏿\u200d♂️🐨🤙🏼🤮🧑🏻\u200d🔧🧑\u200d🔬éö/測試_Руский___ě_áñ👸🏼🧝🏾\u200d♀️💆🏿\u200d♂️🐨🤙🏼🤮🧑🏻\u200d🔧🧑\u200d🔬éö.txt"[0m
 INFO  : - [34mPath2[0m    [35mQueue copy to Path1[0m                - [36m{path1/}file1.txt[0m
 INFO  : - [34mPath2[0m    [35mDo queued copies to[0m                - [36mPath1[0m
 INFO  : - [34mPath1[0m    [35mDo queued copies to[0m                - [36mPath2[0m

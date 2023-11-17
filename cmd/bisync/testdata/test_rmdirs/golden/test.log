@@ -30,9 +30,9 @@ INFO  : [32mBisync successful[0m
 
 [36m(08)  :[0m [34mtest 3. confirm the subdir still exists on both paths[0m
 [36m(09)  :[0m [34mlist-dirs {path1/}[0m
-subdir/
+subdir/ - filename hash: 86ae37b338459868804e9697025ba4c2
 [36m(10)  :[0m [34mlist-dirs {path2/}[0m
-subdir/
+subdir/ - filename hash: 86ae37b338459868804e9697025ba4c2
 
 [36m(11)  :[0m [34mtest 4. run bisync with remove-empty-dirs[0m
 [36m(12)  :[0m [34mbisync remove-empty-dirs[0m
