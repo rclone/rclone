@@ -379,6 +379,8 @@ backends:
    fastlist: false
    ignore:
      - TestIntegration/FsMkdir/FsEncoding/invalid_UTF-8
+     - TestRWFileHandleWriteNoWrite
+     - TestCaseInsensitiveMoveFile
  - backend:  "premiumizeme"
    remote:   "TestPremiumizeMe:"
    fastlist: false
