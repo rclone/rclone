@@ -78,6 +78,7 @@ require (
 	github.com/youmark/pkcs8 v0.0.0-20240726163527-a2c0da244d78
 	github.com/yunify/qingstor-sdk-go/v3 v3.2.0
 	github.com/zeebo/blake3 v0.2.4
+	github.com/zeebo/xxh3 v1.0.2
 	go.etcd.io/bbolt v1.4.0
 	goftp.io/server/v2 v2.0.1
 	golang.org/x/crypto v0.39.0
