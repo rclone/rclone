@@ -593,6 +593,10 @@ func (item *Item) _store(ctx context.Context, storeFn StoreFn) (err error) {
 		o, err := operations.Copy(ctx, item.c.fremote, o, name, cacheObj)
 		item.mu.Lock()
 		if err != nil {
+			if errors.Is(err, fs.ErrorCantUploadEmptyFiles) {
+				fs.Errorf(name, "Writeback failed: %v", err)
+				return nil
+			}
 			return fmt.Errorf("vfs cache: failed to transfer file from cache to remote: %w", err)
 		}
 		item.o = o
