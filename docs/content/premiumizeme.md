@@ -84,7 +84,7 @@ To copy a local directory to an premiumize.me directory called backup
 
     rclone copy /home/source remote:backup
 
-### Modified time and hashes
+### Modification times and hashes
 
 premiumize.me does not support modification times or hashes, therefore
 syncing will default to `--size-only` checking.  Note that using

@@ -64,11 +64,13 @@ To copy a local directory to an OpenDrive directory called backup
 
     rclone copy /home/source remote:backup
 
-### Modified time and MD5SUMs
+### Modification times and hashes
 
 OpenDrive allows modification times to be set on objects accurate to 1
 second. These will be used to detect whether objects need syncing or
 not.
+
+The MD5 hash algorithm is supported.
 
 ### Restricted filename characters
 

@@ -86,7 +86,7 @@ To copy a local directory to a pCloud directory called backup
 
     rclone copy /home/source remote:backup
 
-### Modified time and hashes ###
+### Modification times and hashes
 
 pCloud allows modification times to be set on objects accurate to 1
 second.  These will be used to detect whether objects need syncing or

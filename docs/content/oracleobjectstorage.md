@@ -154,6 +154,7 @@ Rclone supports the following OCI authentication provider.
     No authentication
 
 ### User Principal
+
 Sample rclone config file for Authentication Provider User Principal:
 
     [oos]
@@ -174,6 +175,7 @@ Considerations:
 - If the user is deleted, the config file will no longer work and may cause automation regressions that use the user's credentials.
 
 ###  Instance Principal
+
 An OCI compute instance can be authorized to use rclone by using it's identity and certificates as an instance principal. 
 With this approach no credentials have to be stored and managed.
 
@@ -203,6 +205,7 @@ Considerations:
 - It is applicable for oci compute instances only. It cannot be used on external instance or resources.
 
 ### Resource Principal
+
 Resource principal auth is very similar to instance principal auth but used for resources that are not 
 compute instances such as [serverless functions](https://docs.oracle.com/en-us/iaas/Content/Functions/Concepts/functionsoverview.htm). 
 To use resource principal ensure Rclone process is started with these environment variables set in its process.
@@ -222,6 +225,7 @@ Sample rclone configuration file for Authentication Provider Resource Principal:
     provider = resource_principal_auth
 
 ### No authentication
+
 Public buckets do not require any authentication mechanism to read objects.
 Sample rclone configuration file for No authentication:
     
@@ -232,10 +236,9 @@ Sample rclone configuration file for No authentication:
     region = us-ashburn-1
     provider = no_auth
 
-## Options
-### Modified time
+### Modification times and hashes
 
-The modified time is stored as metadata on the object as
+The modification time is stored as metadata on the object as
 `opc-meta-mtime` as floating point since the epoch, accurate to 1 ns.
 
 If the modification time needs to be updated rclone will attempt to perform a server
@@ -244,6 +247,8 @@ In the case the object is larger than 5Gb, the object will be uploaded rather th
 
 Note that reading this from the object takes an additional `HEAD` request as the metadata
 isn't returned in object listings.
+
+The MD5 hash algorithm is supported.
 
 ### Multipart uploads
 

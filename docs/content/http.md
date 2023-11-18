@@ -105,7 +105,7 @@ Sync the remote `directory` to `/home/local/directory`, deleting any excess file
 
 This remote is read only - you can't upload files to an HTTP server.
 
-### Modified time
+### Modification times
 
 Most HTTP servers store time accurate to 1 second.
 

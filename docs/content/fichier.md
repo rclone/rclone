@@ -76,11 +76,11 @@ To copy a local directory to a 1Fichier directory called backup
 
     rclone copy /home/source remote:backup
 
-### Modified time and hashes ###
+### Modification times and hashes
 
 1Fichier does not support modification times. It supports the Whirlpool hash algorithm.
 
-### Duplicated files ###
+### Duplicated files
 
 1Fichier can have two files with exactly the same name and path (unlike a
 normal file system).

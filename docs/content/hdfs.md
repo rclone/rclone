@@ -126,7 +126,7 @@ username = root
 You can stop this image with `docker kill rclone-hdfs` (**NB** it does not use volumes, so all data
 uploaded will be lost.)
 
-### Modified time
+### Modification times
 
 Time accurate to 1 second is stored.
 

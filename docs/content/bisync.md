@@ -298,7 +298,7 @@ while `--ignore-checksum` controls whether checksums are considered during the c
 if there ARE diffs.
 * Unless `--ignore-listing-checksum` is passed, bisync currently computes hashes for one path 
 *even when there's no common hash with the other path* 
-(for example, a [crypt](/crypt/#modified-time-and-hashes) remote.)
+(for example, a [crypt](/crypt/#modification-times-and-hashes) remote.)
 * If both paths support checksums and have a common hash, 
 AND `--ignore-listing-checksum` was not specified when creating the listings, 
 `--check-sync=only` can be used to compare Path1 vs. Path2 checksums (as of the time the previous listings were created.) 
@@ -402,7 +402,7 @@ Alternately, a `--resync` may be used (Path1 versions will be pushed
 to Path2). Consider the situation carefully and perhaps use `--dry-run`
 before you commit to the changes.
 
-### Modification time
+### Modification times
 
 Bisync relies on file timestamps to identify changed files and will
 _refuse_ to operate if backend lacks the modification time support.

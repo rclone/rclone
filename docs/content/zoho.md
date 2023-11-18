@@ -107,13 +107,11 @@ excess files in the path.
 
 Zoho paths may be as deep as required, eg `remote:directory/subdirectory`.
 
-### Modified time
+### Modification times and hashes
 
 Modified times are currently not supported for Zoho Workdrive
 
-### Checksums
-
-No checksums are supported.
+No hash algorithms are supported.
 
 ### Usage information
 

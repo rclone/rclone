@@ -97,7 +97,7 @@ You can then use team folders like this `remote:/TeamFolder` and
 A leading `/` for a Dropbox personal account will do nothing, but it
 will take an extra HTTP transaction so it should be avoided.
 
-### Modified time and Hashes
+### Modification times and hashes
 
 Dropbox supports modified times, but the only way to set a
 modification time is to re-upload the file.

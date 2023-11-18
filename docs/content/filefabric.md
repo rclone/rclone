@@ -101,7 +101,7 @@ To copy a local directory to an Enterprise File Fabric directory called backup
 
     rclone copy /home/source remote:backup
 
-### Modified time and hashes
+### Modification times and hashes
 
 The Enterprise File Fabric allows modification times to be set on
 files accurate to 1 second.  These will be used to detect whether

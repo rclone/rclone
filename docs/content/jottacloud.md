@@ -245,7 +245,7 @@ Note also that with rclone version 1.58 and newer, information about
 [MIME types](/overview/#mime-type) and metadata item [utime](#metadata)
 are not available when using `--fast-list`.
 
-### Modified time and hashes
+### Modification times and hashes
 
 Jottacloud allows modification times to be set on objects accurate to 1
 second. These will be used to detect whether objects need syncing or

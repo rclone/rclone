@@ -98,7 +98,7 @@ Paths may be as deep as required, e.g. `remote:directory/subdirectory`.
 create a folder, which rclone will create as a "Sync Folder" with
 SugarSync.
 
-### Modified time and hashes
+### Modification times and hashes
 
 SugarSync does not support modification times or hashes, therefore
 syncing will default to `--size-only` checking.  Note that using

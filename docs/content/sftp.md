@@ -359,7 +359,7 @@ commands is prohibited.  Set the configuration option `disable_hashcheck`
 to `true` to disable checksumming entirely, or set `shell_type` to `none`
 to disable all functionality based on remote shell command execution.
 
-### Modified time
+### Modification times and hashes
 
 Modified times are stored on the server to 1 second precision.
 

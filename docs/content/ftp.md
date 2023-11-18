@@ -486,7 +486,7 @@ at present.
 
 The `ftp_proxy` environment variable is not currently supported.
 
-#### Modified time
+### Modification times
 
 File modification time (timestamps) is supported to 1 second resolution
 for major FTP servers: ProFTPd, PureFTPd, VsFTPd, and FileZilla FTP server.
