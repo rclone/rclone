@@ -19,10 +19,10 @@ For consistencies sake one can also configure a remote of type
 rclone remote paths, e.g. `remote:path/to/wherever`, but it is probably
 easier not to.
 
-### Modified time ###
+### Modification times
 
-Rclone reads and writes the modified time using an accuracy determined by
-the OS. Typically this is 1ns on Linux, 10 ns on Windows and 1 Second
+Rclone reads and writes the modification times using an accuracy determined
+by the OS. Typically this is 1ns on Linux, 10 ns on Windows and 1 Second
 on OS X.
 
 ### Filenames ###

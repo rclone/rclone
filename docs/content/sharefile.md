@@ -105,7 +105,7 @@ To copy a local directory to an ShareFile directory called backup
 
 Paths may be as deep as required, e.g. `remote:directory/subdirectory`.
 
-### Modified time and hashes
+### Modification times and hashes
 
 ShareFile allows modification times to be set on objects accurate to 1
 second.  These will be used to detect whether objects need syncing or

@@ -127,13 +127,13 @@ To copy a local directory to an Amazon Drive directory called backup
 
     rclone copy /home/source remote:backup
 
-### Modified time and MD5SUMs
+### Modification times and hashes
 
 Amazon Drive doesn't allow modification times to be changed via
 the API so these won't be accurate or used for syncing.
 
-It does store MD5SUMs so for a more accurate sync, you can use the
-`--checksum` flag.
+It does support the MD5 hash algorithm, so for a more accurate sync,
+you can use the `--checksum` flag.
 
 ### Restricted filename characters
 

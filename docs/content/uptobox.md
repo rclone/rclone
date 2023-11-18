@@ -82,7 +82,7 @@ To copy a local directory to an Uptobox directory called backup
 
     rclone copy /home/source remote:backup
 
-### Modified time and hashes
+### Modification times and hashes
 
 Uptobox supports neither modified times nor checksums. All timestamps
 will read as that set by `--default-time`.

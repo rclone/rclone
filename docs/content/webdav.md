@@ -101,7 +101,7 @@ To copy a local directory to an WebDAV directory called backup
 
     rclone copy /home/source remote:backup
 
-### Modified time and hashes ###
+### Modification times and hashes
 
 Plain WebDAV does not support modified times.  However when used with
 Fastmail Files, Owncloud or Nextcloud rclone will support modified times.

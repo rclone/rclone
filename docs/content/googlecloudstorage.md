@@ -247,7 +247,7 @@ Eg `--header-upload "Content-Type text/potato"`
 Note that the last of these is for setting custom metadata in the form
 `--header-upload "x-goog-meta-key: value"`
 
-### Modification time
+### Modification times
 
 Google Cloud Storage stores md5sum natively.
 Google's [gsutil](https://cloud.google.com/storage/docs/gsutil) tool stores modification time

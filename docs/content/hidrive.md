@@ -123,7 +123,7 @@ Using
 
 the process is very similar to the process of initial setup exemplified before.
 
-### Modified time and hashes
+### Modification times and hashes
 
 HiDrive allows modification times to be set on objects accurate to 1 second.
 

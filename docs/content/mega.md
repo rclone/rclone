@@ -82,7 +82,7 @@ To copy a local directory to an Mega directory called backup
 
     rclone copy /home/source remote:backup
 
-### Modified time and hashes
+### Modification times and hashes
 
 Mega does not support modification times or hashes yet.
 

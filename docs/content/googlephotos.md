@@ -428,7 +428,7 @@ if you uploaded an image to `upload` then uploaded the same image to
 what it was uploaded with initially, not what you uploaded it with to
 `album`.  In practise this shouldn't cause too many problems.
 
-### Modified time
+### Modification times
 
 The date shown of media in Google Photos is the creation date as
 determined by the EXIF information, or the upload date if that is not

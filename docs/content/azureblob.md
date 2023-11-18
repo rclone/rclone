@@ -75,10 +75,10 @@ This remote supports `--fast-list` which allows you to use fewer
 transactions in exchange for more memory. See the [rclone
 docs](/docs/#fast-list) for more details.
 
-### Modified time
+### Modification times and hashes
 
-The modified time is stored as metadata on the object with the `mtime`
-key.  It is stored using RFC3339 Format time with nanosecond
+The modification time is stored as metadata on the object with the
+`mtime` key.  It is stored using RFC3339 Format time with nanosecond
 precision.  The metadata is supplied during directory listings so
 there is no performance overhead to using it.
 
@@ -87,6 +87,10 @@ the object as the modified time, then use the `--use-server-modtime`
 flag. Note that rclone can't set `LastModified`, so using the
 `--update` flag when syncing is recommended if using
 `--use-server-modtime`.
+
+MD5 hashes are stored with blobs. However blobs that were uploaded in
+chunks only have an MD5 if the source remote was capable of MD5
+hashes, e.g. the local disk.
 
 ### Performance
 
@@ -115,12 +119,6 @@ These only get replaced if they are the last character in the name:
 
 Invalid UTF-8 bytes will also be [replaced](/overview/#invalid-utf8),
 as they can't be used in JSON strings.
-
-### Hashes
-
-MD5 hashes are stored with blobs.  However blobs that were uploaded in
-chunks only have an MD5 if the source remote was capable of MD5
-hashes, e.g. the local disk.
 
 ### Authentication {#authentication}
 
