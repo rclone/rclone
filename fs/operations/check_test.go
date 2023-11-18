@@ -180,7 +180,9 @@ func testCheck(t *testing.T, checkFunction func(ctx context.Context, opt *operat
 }
 
 func TestCheck(t *testing.T) {
-	testCheck(t, operations.Check)
+	testCheck(t, func(ctx context.Context, opt *operations.CheckOpt) error {
+		return operations.Check(ctx, false, opt)
+	})
 }
 
 func TestCheckFsError(t *testing.T) {
@@ -198,12 +200,14 @@ func TestCheckFsError(t *testing.T) {
 		Fsrc:   srcFs,
 		OneWay: false,
 	}
-	err = operations.Check(ctx, &opt)
+	err = operations.Check(ctx, false, &opt)
 	require.Error(t, err)
 }
 
 func TestCheckDownload(t *testing.T) {
-	testCheck(t, operations.CheckDownload)
+	testCheck(t, func(ctx context.Context, opt *operations.CheckOpt) error {
+		return operations.CheckDownload(ctx, false, opt)
+	})
 }
 
 func TestCheckSizeOnly(t *testing.T) {

@@ -116,7 +116,7 @@ func (b *bisyncRun) checkconflicts(ctxCheck context.Context, filterCheck *filter
 		// note that cryptCheck() is not currently exported
 
 		fs.Infof(nil, "Checking potential conflicts...")
-		check := operations.Check(ctxCheck, opt)
+		check := operations.Check(ctxCheck, false, opt)
 		fs.Infof(nil, "Finished checking the potential conflicts. %s", check)
 
 		//reset error count, because we don't want to count check errors as bisync errors
