@@ -153,7 +153,7 @@ rcdocs: rclone
 
 install: rclone
 	install -d ${DESTDIR}/usr/bin
-	install -t ${DESTDIR}/usr/bin ${GOPATH}/bin/rclone
+	install ${GOPATH}/bin/rclone ${DESTDIR}/usr/bin
 
 clean:
 	go clean ./...
