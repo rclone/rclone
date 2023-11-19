@@ -828,7 +828,6 @@ type Fs struct {
 	exportExtensions []string           // preferred extensions to download docs
 	importMimeTypes  []string           // MIME types to convert to docs
 	isTeamDrive      bool               // true if this is a team drive
-	fileFields       googleapi.Field    // fields to fetch file info with
 	m                configmap.Mapper
 	grouping         int32                        // number of IDs to search at once in ListR - read with atomic
 	listRmu          *sync.Mutex                  // protects listRempties
@@ -1096,7 +1095,7 @@ func (f *Fs) list(ctx context.Context, dirIDs []string, title string, directorie
 		list.Header().Add("X-Goog-Drive-Resource-Keys", resourceKeysHeader)
 	}
 
-	fields := fmt.Sprintf("files(%s),nextPageToken,incompleteSearch", f.fileFields)
+	fields := fmt.Sprintf("files(%s),nextPageToken,incompleteSearch", f.getFileFields(ctx))
 
 OUTER:
 	for {
@@ -1374,7 +1373,6 @@ func newFs(ctx context.Context, name, path string, m configmap.Mapper) (*Fs, err
 		permissions:     make(map[string]*drive.Permission),
 	}
 	f.isTeamDrive = opt.TeamDriveID != ""
-	f.fileFields = f.getFileFields()
 	f.features = (&fs.Features{
 		DuplicateFiles:          true,
 		ReadMimeType:            true,
@@ -1510,14 +1508,14 @@ func (f *Fs) newBaseObject(ctx context.Context, remote string, info *drive.File)
 		parents:      info.Parents,
 	}
 	err = nil
-	if f.ci.Metadata {
+	if fs.GetConfig(ctx).Metadata {
 		err = o.parseMetadata(ctx, info)
 	}
 	return o, err
 }
 
 // getFileFields gets the fields for a normal file Get or List
-func (f *Fs) getFileFields() (fields googleapi.Field) {
+func (f *Fs) getFileFields(ctx context.Context) (fields googleapi.Field) {
 	fields = partialFields
 	if f.opt.AuthOwnerOnly {
 		fields += ",owners"
@@ -1531,7 +1529,7 @@ func (f *Fs) getFileFields() (fields googleapi.Field) {
 	if f.opt.SizeAsQuota {
 		fields += ",quotaBytesUsed"
 	}
-	if f.ci.Metadata {
+	if fs.GetConfig(ctx).Metadata {
 		fields += "," + metadataFields
 	}
 	return fields
@@ -2308,7 +2306,7 @@ func (f *Fs) resolveShortcut(ctx context.Context, item *drive.File) (newItem *dr
 		fs.Errorf(nil, "Expecting shortcutDetails in %v", item)
 		return item, nil
 	}
-	newItem, err = f.getFile(ctx, item.ShortcutDetails.TargetId, f.fileFields)
+	newItem, err = f.getFile(ctx, item.ShortcutDetails.TargetId, f.getFileFields(ctx))
 	if err != nil {
 		var gerr *googleapi.Error
 		if errors.As(err, &gerr) && gerr.Code == 404 {
@@ -3389,7 +3387,7 @@ func (f *Fs) unTrashDir(ctx context.Context, dir string, recurse bool) (r unTras
 
 // copy file with id to dest
 func (f *Fs) copyID(ctx context.Context, id, dest string) (err error) {
-	info, err := f.getFile(ctx, id, f.fileFields)
+	info, err := f.getFile(ctx, id, f.getFileFields(ctx))
 	if err != nil {
 		return fmt.Errorf("couldn't find id: %w", err)
 	}
@@ -4177,7 +4175,7 @@ func (o *baseObject) Metadata(ctx context.Context) (metadata fs.Metadata, err er
 	}
 	fs.Debugf(o, "Fetching metadata")
 	id := actualID(o.id)
-	info, err := o.fs.getFile(ctx, id, o.fs.fileFields)
+	info, err := o.fs.getFile(ctx, id, o.fs.getFileFields(ctx))
 	if err != nil {
 		return nil, err
 	}
