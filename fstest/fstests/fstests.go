@@ -1462,6 +1462,8 @@ func Run(t *testing.T, opt *Opt) {
 			// TestObjectMetadata tests the Metadata of the object is correct
 			t.Run("ObjectMetadata", func(t *testing.T) {
 				skipIfNotOk(t)
+				ctx, ci := fs.AddConfig(ctx)
+				ci.Metadata = true
 				features := f.Features()
 				obj := findObject(ctx, t, f, file1.Path)
 				do, objectHasMetadata := obj.(fs.Metadataer)
@@ -1496,7 +1498,7 @@ func Run(t *testing.T, opt *Opt) {
 					if features.UserMetadata {
 						// check all the metadata bits we uploaded are present - there may be more we didn't write
 						for k, v := range file1Metadata {
-							assert.Equal(t, v, metadata[k], "can read and write metadata but failed on key %q", k)
+							assert.Equal(t, v, metadata[k], "can read and write metadata but failed on key %q (want=%+v, got=%+v)", k, file1Metadata, metadata)
 						}
 					}
 					// Now test we can set the mtime and content-type via the metadata and these take precedence
