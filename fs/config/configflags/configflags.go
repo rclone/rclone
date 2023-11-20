@@ -80,7 +80,7 @@ func AddFlags(ci *fs.ConfigInfo, flagSet *pflag.FlagSet) {
 	flags.BoolVarP(flagSet, &ci.UseServerModTime, "use-server-modtime", "", ci.UseServerModTime, "Use server modified time instead of object metadata", "Config")
 	flags.BoolVarP(flagSet, &ci.NoGzip, "no-gzip-encoding", "", ci.NoGzip, "Don't set Accept-Encoding: gzip", "Networking")
 	flags.IntVarP(flagSet, &ci.MaxDepth, "max-depth", "", ci.MaxDepth, "If set limits the recursion depth to this", "Filter")
-	flags.BoolVarP(flagSet, &ci.IgnoreSize, "ignore-size", "", false, "Ignore size when skipping use mod-time or checksum", "Copy")
+	flags.BoolVarP(flagSet, &ci.IgnoreSize, "ignore-size", "", false, "Ignore size when skipping, use mod-time or checksum", "Copy")
 	flags.BoolVarP(flagSet, &ci.IgnoreChecksum, "ignore-checksum", "", ci.IgnoreChecksum, "Skip post copy check of checksums", "Copy")
 	flags.BoolVarP(flagSet, &ci.IgnoreCaseSync, "ignore-case-sync", "", ci.IgnoreCaseSync, "Ignore case when synchronizing", "Copy")
 	flags.BoolVarP(flagSet, &ci.NoTraverse, "no-traverse", "", ci.NoTraverse, "Don't traverse destination file system on copy", "Copy")

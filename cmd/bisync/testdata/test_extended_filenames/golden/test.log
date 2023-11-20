@@ -60,7 +60,7 @@ INFO  : - Path2    File was deleted                    - subdir_with_ࢺ_/filena
 INFO  : Path2:    9 changes:    5 new,    2 newer,    0 older,    2 deleted
 INFO  : Applying changes
 INFO  : Checking potential conflicts...
-ERROR : subdir_with_ࢺ_/filechangedbothpaths_ࢺ_.txt: sizes differ
+ERROR : subdir_with_ࢺ_/filechangedbothpaths_ࢺ_.txt: size differ
 NOTICE: Local file system at {path2}: 1 differences found
 NOTICE: Local file system at {path2}: 1 errors while checking
 INFO  : Finished checking the potential conflicts. 1 differences found

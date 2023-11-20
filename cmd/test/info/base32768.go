@@ -81,7 +81,7 @@ func (r *results) checkBase32768() {
 	}
 
 	// Check local to remote
-	err = operations.Check(ctx, &operations.CheckOpt{
+	err = operations.Check(ctx, false, &operations.CheckOpt{
 		Fdst: fRemote,
 		Fsrc: fLocal,
 	})

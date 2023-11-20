@@ -19,6 +19,7 @@ import (
 
 // Globals
 var (
+	modtime           = false
 	download          = false
 	oneway            = false
 	combined          = ""
@@ -33,6 +34,7 @@ var (
 func init() {
 	cmd.Root.AddCommand(commandDefinition)
 	cmdFlags := commandDefinition.Flags()
+	flags.BoolVarP(cmdFlags, &modtime, "consider-modtime", "", modtime, "Consider modtime (if available) in addition to size and checksum", "")
 	flags.BoolVarP(cmdFlags, &download, "download", "", download, "Check by downloading rather than with hash", "")
 	flags.StringVarP(cmdFlags, &checkFileHashType, "checkfile", "C", checkFileHashType, "Treat source:path as a SUM file with hashes of given type", "")
 	AddFlags(cmdFlags)
@@ -191,7 +193,7 @@ the |source:path| must point to a text file in the SUM format.
 			}
 
 			if download {
-				return operations.CheckDownload(context.Background(), opt)
+				return operations.CheckDownload(context.Background(), modtime, opt)
 			}
 			hashType := fsrc.Hashes().Overlap(fdst.Hashes()).GetOne()
 			if hashType == hash.None {
@@ -199,7 +201,7 @@ the |source:path| must point to a text file in the SUM format.
 			} else {
 				fs.Infof(nil, "Using %v for hash comparisons", hashType)
 			}
-			return operations.Check(context.Background(), opt)
+			return operations.Check(context.Background(), modtime, opt)
 		})
 		return nil
 	},

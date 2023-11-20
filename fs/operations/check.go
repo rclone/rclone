@@ -124,10 +124,13 @@ func (c *checkMarch) checkIdentical(ctx context.Context, dst, src fs.Object) (di
 	defer func() {
 		tr.Done(ctx, err)
 	}()
-	if sizeDiffers(ctx, src, dst) {
-		err = fmt.Errorf("sizes differ")
-		fs.Errorf(src, "%v", err)
-		return true, false, nil
+	if !ci.IgnoreSize {
+		same, compared := CheckSizes(ctx, src, dst)
+		if !same && compared {
+			err = fmt.Errorf("size differ")
+			fs.Errorf(src, "%v", err)
+			return true, false, nil
+		}
 	}
 	if ci.SizeOnly {
 		return false, false, nil
@@ -269,7 +272,7 @@ func (c *checkMarch) reportResults(ctx context.Context, err error) error {
 }
 
 // Check the files in fsrc and fdst according to Size and hash
-func Check(ctx context.Context, opt *CheckOpt) error {
+func Check(ctx context.Context, withModTime bool, opt *CheckOpt) error {
 	optCopy := *opt
 	optCopy.Check = func(ctx context.Context, dst, src fs.Object) (differ bool, noHash bool, err error) {
 		same, ht, err := CheckHashes(ctx, src, dst)
@@ -283,6 +286,14 @@ func Check(ctx context.Context, opt *CheckOpt) error {
 			err = fmt.Errorf("%v differ", ht)
 			fs.Errorf(src, "%v", err)
 			return true, false, nil
+		}
+		if withModTime {
+			same, compared := CheckModTimes(ctx, src, dst)
+			if !same && compared {
+				err = fmt.Errorf("modtime differ")
+				fs.Errorf(src, "%v", err)
+				return true, false, nil
+			}
 		}
 		return false, false, nil
 	}
@@ -360,14 +371,21 @@ func checkIdenticalDownload(ctx context.Context, dst, src fs.Object) (differ boo
 	return
 }
 
-// CheckDownload checks the files in fsrc and fdst according to Size
-// and the actual contents of the files.
-func CheckDownload(ctx context.Context, opt *CheckOpt) error {
+// CheckDownload checks the files in fsrc and fdst according actual contents of the files.
+func CheckDownload(ctx context.Context, withModTime bool, opt *CheckOpt) error {
 	optCopy := *opt
 	optCopy.Check = func(ctx context.Context, a, b fs.Object) (differ bool, noHash bool, err error) {
 		differ, err = CheckIdenticalDownload(ctx, a, b)
 		if err != nil {
 			return true, true, fmt.Errorf("failed to download: %w", err)
+		}
+		if withModTime {
+			sameTime, compared := CheckModTimes(ctx, a, b)
+			if !sameTime && compared {
+				err = fmt.Errorf("modtime differ")
+				fs.Errorf(a, "%v", err)
+				return true, false, nil
+			}
 		}
 		return differ, false, nil
 	}

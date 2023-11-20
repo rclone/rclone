@@ -39,14 +39,69 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
+// CheckSizes compares the sizes of two files
+//
+// Returns:
+//
+// equal - false if sizes were compared and found different.
+// compared - If both of the files had a valid size that could be compared.
+func CheckSizes(ctx context.Context, src, dst fs.ObjectInfo) (equal bool, compared bool) {
+	if src.Size() < 0 {
+		fs.Debugf(src, "Src size negative - aborting Dst size check")
+		return true, false
+	}
+	if dst.Size() < 0 {
+		fs.Debugf(src, "Dst size negative - aborting Src size check")
+		return true, false
+	}
+	srcSize := src.Size()
+	dstSize := dst.Size()
+	if srcSize == dstSize {
+		fs.Debugf(src, "size = %d OK", srcSize)
+		return true, true
+	}
+	fs.Debugf(src, "size = %d (%v)", srcSize, src.Fs())
+	fs.Debugf(dst, "size = %d (%v)", dstSize, dst.Fs())
+	return false, true
+}
+
+// CheckModTimes compare the modification times of two files
+//
+// Returns:
+//
+// equal - false if modtimes were compared and found different.
+// compared - If both of the files had a valid modtime that could be compared.
+func CheckModTimes(ctx context.Context, src, dst fs.ObjectInfo) (equal bool, compared bool) {
+	if src.Fs().Precision() == fs.ModTimeNotSupported {
+		fs.Debugf(src, "Src modtime not supported - aborting Dst modtime check")
+		return true, false
+	}
+	if src.Fs().Precision() == fs.ModTimeNotSupported {
+		fs.Debugf(src, "Dst modtime not supported - aborting Src modtime check")
+		return true, false
+	}
+	srcModTime := src.ModTime(ctx)
+	dstModTime := dst.ModTime(ctx)
+	dt := dstModTime.Sub(srcModTime)
+	modifyWindow := fs.GetModifyWindow(ctx, src.Fs(), dst.Fs())
+	if dt < modifyWindow && dt > -modifyWindow {
+		fs.Debugf(src, "modtime = %s OK (differ by %s, within tolerance %s)", srcModTime, dt, modifyWindow)
+		return true, true
+	}
+	fs.Debugf(src, "modtime = %s (%v)", srcModTime, src.Fs())
+	fs.Debugf(dst, "modtime = %s (%v)", dstModTime, dst.Fs())
+	return false, true
+}
+
 // CheckHashes checks the two files to see if they have common
 // known hash types and compares them
 //
-// Returns.
+// Returns:
 //
-// equal - which is equality of the hashes
+// equal - false if a compatible hash was compared and found different.
+// Use the ht return value to see if hashes was compared.
 //
-// hash - the HashType. This is HashNone if either of the hashes were
+// ht - the HashType. This is HashNone if either of the hashes were
 // unset or a compatible hash couldn't be found.
 //
 // err - may return an error which will already have been logged
@@ -62,14 +117,13 @@ func CheckHashes(ctx context.Context, src fs.ObjectInfo, dst fs.Object) (equal b
 	return equal, ht, err
 }
 
-var errNoHash = errors.New("no hash available")
-
 // checkHashes does the work of CheckHashes but takes a hash.Type and
 // returns the effective hash type used.
 func checkHashes(ctx context.Context, src fs.ObjectInfo, dst fs.Object, ht hash.Type) (equal bool, htOut hash.Type, srcHash, dstHash string, err error) {
 	// Calculate hashes in parallel
 	g, ctx := errgroup.WithContext(ctx)
 	var srcErr, dstErr error
+	var errNoHash = errors.New("no hash available")
 	g.Go(func() (err error) {
 		srcHash, srcErr = src.Hash(ctx, ht)
 		if srcErr != nil {

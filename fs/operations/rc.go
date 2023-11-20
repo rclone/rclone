@@ -861,10 +861,10 @@ func rcCheck(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 		err = CheckSum(context.Background(), dstFs, checkFileFs, checkFileRemote, checkFileHashType, opt, download)
 	} else {
 		if download {
-			err = CheckDownload(context.Background(), opt)
+			err = CheckDownload(context.Background(), false, opt)
 		} else {
 			out["hashType"] = srcFs.Hashes().Overlap(dstFs.Hashes()).GetOne().String()
-			err = Check(context.Background(), opt)
+			err = Check(context.Background(), false, opt)
 		}
 	}
 	if err != nil {
