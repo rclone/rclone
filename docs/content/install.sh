@@ -193,6 +193,8 @@ case "$OS" in
     exit 2
 esac
 
+#cleanup
+rm -rf "$tmp_dir"
 
 #update version variable post install
 version=$(rclone --version 2>>errors | head -n 1)
