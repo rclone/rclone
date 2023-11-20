@@ -16,6 +16,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"runtime"
 	"sort"
 	"strconv"
 	"strings"
@@ -37,6 +38,7 @@ import (
 	"github.com/rclone/rclone/lib/random"
 	"github.com/rclone/rclone/lib/readers"
 	"golang.org/x/sync/errgroup"
+	"golang.org/x/text/unicode/norm"
 )
 
 // CheckHashes checks the two files to see if they have common
@@ -328,6 +330,11 @@ func SameObject(src, dst fs.Object) bool {
 	}
 	srcPath := path.Join(srcFs.Root(), src.Remote())
 	dstPath := path.Join(dstFs.Root(), dst.Remote())
+	if srcFs.Features().IsLocal && dstFs.Features().IsLocal && runtime.GOOS == "darwin" {
+		if norm.NFC.String(srcPath) == norm.NFC.String(dstPath) {
+			return true
+		}
+	}
 	if dst.Fs().Features().CaseInsensitive {
 		srcPath = strings.ToLower(srcPath)
 		dstPath = strings.ToLower(dstPath)
@@ -1545,7 +1552,7 @@ func NeedTransfer(ctx context.Context, dst, src fs.Object) bool {
 		}
 	} else {
 		// Check to see if changed or not
-		if Equal(ctx, src, dst) {
+		if Equal(ctx, src, dst) && !SameObject(src, dst) {
 			fs.Debugf(src, "Unchanged skipping")
 			return false
 		}
@@ -1827,7 +1834,7 @@ func moveOrCopyFile(ctx context.Context, fdst fs.Fs, fsrc fs.Fs, dstFileName str
 			if ci.IgnoreExisting {
 				fs.Debugf(srcObj, "Not removing source file as destination file exists and --ignore-existing is set")
 				logger(ctx, Match, srcObj, dstObj, nil)
-			} else {
+			} else if !SameObject(srcObj, dstObj) {
 				err = DeleteFile(ctx, srcObj)
 				logger(ctx, Differ, srcObj, dstObj, nil)
 			}
