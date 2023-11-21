@@ -58,7 +58,7 @@ func (f *Fs) getFolders(ctx context.Context, path string) (folders []client.Fold
 			var res *http.Response
 			res, data, err = f.ik.Folders(ctx, client.FilesOrFolderParam{
 				Skip:  len(folders),
-				Limit: 10,
+				Limit: 100,
 				Path:  path,
 			})
 

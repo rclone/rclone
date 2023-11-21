@@ -22,9 +22,9 @@ type FilesOrFolderParam struct {
 
 // AITag represents an AI tag for a media library file.
 type AITag struct {
-	Name       string `json:"name"`
-	Confidence string `json:"confidence"`
-	Source     string `json:"source"`
+	Name       string  `json:"name"`
+	Confidence float32 `json:"confidence"`
+	Source     string  `json:"source"`
 }
 
 // File represents media library File details.

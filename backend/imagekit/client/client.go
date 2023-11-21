@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/lib/rest"
 )
@@ -19,7 +20,6 @@ type ImageKit struct {
 	PublicKey     string
 	URLEndpoint   string
 	HTTPClient    *rest.Client
-	APIHeaders    map[string]string
 }
 
 // NewParams is a struct to define parameters to imagekit
@@ -45,11 +45,13 @@ func New(ctx context.Context, params NewParams) (*ImageKit, error) {
 		return nil, fmt.Errorf("ImageKit.io private key is required")
 	}
 
-	client := rest.NewClient(fshttp.NewClient(ctx))
+	cliCtx, cliCfg := fs.AddConfig(ctx)
+
+	cliCfg.UserAgent = "rclone/imagekit"
+	client := rest.NewClient(fshttp.NewClient(cliCtx))
 
 	client.SetUserPass(privateKey, "")
 	client.SetHeader("Accept", "application/json")
-	client.SetHeader("User-Agent", "rclone/imagekit")
 
 	return &ImageKit{
 		Prefix:        "https://api.imagekit.io/v2",
@@ -60,9 +62,5 @@ func New(ctx context.Context, params NewParams) (*ImageKit, error) {
 		PublicKey:     params.PublicKey,
 		URLEndpoint:   params.URLEndpoint,
 		HTTPClient:    client,
-		APIHeaders: map[string]string{
-			"Accept":     "application/json",
-			"User-Agent": "rclone/imagekit",
-		},
 	}, nil
 }
