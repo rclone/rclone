@@ -1367,6 +1367,8 @@ for performance improvements and less [risk of error](https://forum.rclone.org/t
 * Fixed handling of unicode normalization and case insensitivity, support for [`--fix-case`](/docs/#fix-case), [`--ignore-case-sync`](/docs/#ignore-case-sync), [`--no-unicode-normalization`](/docs/#no-unicode-normalization)
 * `--resync` is now much more efficient (especially for users of `--create-empty-src-dirs`)
 * Google Docs (and other files of unknown size) are now supported (with the same options as in `sync`)
+* Equality checks before a sync conflict rename now fall back to `cryptcheck` (when possible) or `--download`,
+instead of of `--size-only`, when `check` is not available.
 
 ### `v1.64`
 * Fixed an [issue](https://forum.rclone.org/t/bisync-bugs-and-feature-requests/37636#:~:text=1.%20Dry%20runs%20are%20not%20completely%20dry) 

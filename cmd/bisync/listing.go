@@ -641,7 +641,8 @@ func (b *bisyncRun) recheck(ctxRecheck context.Context, src, dst fs.Fs, srcList,
 		fs.Debugf(srcObj, "rechecking")
 		for _, dstObj := range dstObjs {
 			if srcObj.Remote() == dstObj.Remote() || srcObj.Remote() == b.aliases.Alias(dstObj.Remote()) {
-				if operations.Equal(ctxRecheck, srcObj, dstObj) || b.opt.DryRun {
+				// note: unlike Equal(), WhichEqual() does not update the modtime in dest if sums match but modtimes don't.
+				if b.opt.DryRun || WhichEqual(ctxRecheck, srcObj, dstObj, src, dst) {
 					putObj(srcObj, src, srcList)
 					putObj(dstObj, dst, dstList)
 					resolved = append(resolved, srcObj.Remote())
@@ -655,7 +656,8 @@ func (b *bisyncRun) recheck(ctxRecheck context.Context, src, dst fs.Fs, srcList,
 		// skip and error during --resync, as rollback is not possible
 		if !slices.Contains(resolved, srcObj.Remote()) && !b.opt.DryRun {
 			if b.opt.Resync {
-				b.handleErr(srcObj, "Unable to rollback during --resync", errors.New("no dstObj match or files not equal"), true, false)
+				err = errors.New("no dstObj match or files not equal")
+				b.handleErr(srcObj, "Unable to rollback during --resync", err, true, false)
 			} else {
 				toRollback = append(toRollback, srcObj.Remote())
 			}

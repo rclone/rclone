@@ -3,7 +3,6 @@
 package bisync
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"path/filepath"
@@ -11,9 +10,7 @@ import (
 	"strings"
 
 	"github.com/rclone/rclone/cmd/bisync/bilib"
-	"github.com/rclone/rclone/cmd/check"
 	"github.com/rclone/rclone/fs"
-	"github.com/rclone/rclone/fs/accounting"
 	"github.com/rclone/rclone/fs/filter"
 	"github.com/rclone/rclone/fs/operations"
 	"golang.org/x/text/unicode/norm"
@@ -94,47 +91,6 @@ func (ds *deltaSet) printStats() {
 	}
 	fs.Infof(nil, "%s: %4d changes: %4d new, %4d newer, %4d older, %4d deleted",
 		ds.msg, nAll, nNew, nNewer, nOlder, nDeleted)
-}
-
-// check potential conflicts (to avoid renaming if already identical)
-func (b *bisyncRun) checkconflicts(ctxCheck context.Context, filterCheck *filter.Filter, fs1, fs2 fs.Fs) (bilib.Names, error) {
-	matches := bilib.Names{}
-	if filterCheck.HaveFilesFrom() {
-		fs.Debugf(nil, "There are potential conflicts to check.")
-
-		opt, close, checkopterr := check.GetCheckOpt(b.fs1, b.fs2)
-		if checkopterr != nil {
-			b.critical = true
-			b.retryable = true
-			fs.Debugf(nil, "GetCheckOpt error: %v", checkopterr)
-			return matches, checkopterr
-		}
-		defer close()
-
-		opt.Match = new(bytes.Buffer)
-
-		// TODO: consider using custom CheckFn to act like cryptcheck, if either fs is a crypt remote and -c has been passed
-		// note that cryptCheck() is not currently exported
-
-		fs.Infof(nil, "Checking potential conflicts...")
-		check := operations.Check(ctxCheck, opt)
-		fs.Infof(nil, "Finished checking the potential conflicts. %s", check)
-
-		//reset error count, because we don't want to count check errors as bisync errors
-		accounting.Stats(ctxCheck).ResetErrors()
-
-		//return the list of identical files to check against later
-		if len(fmt.Sprint(opt.Match)) > 0 {
-			matches = bilib.ToNames(strings.Split(fmt.Sprint(opt.Match), "\n"))
-		}
-		if matches.NotEmpty() {
-			fs.Debugf(nil, "The following potential conflicts were determined to be identical. %v", matches)
-		} else {
-			fs.Debugf(nil, "None of the conflicts were determined to be identical.")
-		}
-
-	}
-	return matches, nil
 }
 
 // findDeltas
