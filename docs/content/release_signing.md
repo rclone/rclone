@@ -40,7 +40,9 @@ developers at once.
 
 ## How to verify the release
 
-In the release directory you will see the release files and some files called `MD5SUMS`, `SHA1SUMS` and `SHA256SUMS`.
+In the [release directory](https://downloads.rclone.org/) you will see the release files and some files called `MD5SUMS`, `SHA1SUMS` and `SHA256SUMS`.
+
+ * https://downloads.rclone.org/
 
 ```
 $ rclone lsf --http-url https://downloads.rclone.org/v1.63.1 :http:
