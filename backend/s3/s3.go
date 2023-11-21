@@ -3721,6 +3721,9 @@ func (ls *versionsList) List(ctx context.Context) (resp *s3.ListObjectsV2Output,
 	// Set up the request for next time
 	ls.req.KeyMarker = respVersions.NextKeyMarker
 	ls.req.VersionIdMarker = respVersions.NextVersionIdMarker
+	if aws.BoolValue(respVersions.IsTruncated) && ls.req.KeyMarker == nil {
+		return nil, nil, errors.New("s3 protocol error: received versions listing with IsTruncated set with no NextKeyMarker")
+	}
 
 	// If we are URL encoding then must decode the marker
 	if ls.req.KeyMarker != nil && ls.req.EncodingType != nil {
