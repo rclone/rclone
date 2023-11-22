@@ -14,10 +14,6 @@ import (
 	"golang.org/x/net/ipv6"
 )
 
-func dialContext(ctx context.Context, network, address string, ci *fs.ConfigInfo) (net.Conn, error) {
-	return NewDialer(ctx).DialContext(ctx, network, address)
-}
-
 // Dialer structure contains default dialer and timeout, tclass support
 type Dialer struct {
 	net.Dialer

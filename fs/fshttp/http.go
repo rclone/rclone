@@ -91,8 +91,8 @@ func NewTransportCustom(ctx context.Context, customize func(*http.Transport)) ht
 	}
 
 	t.DisableCompression = ci.NoGzip
-	t.DialContext = func(ctx context.Context, network, addr string) (net.Conn, error) {
-		return dialContext(ctx, network, addr, ci)
+	t.DialContext = func(reqCtx context.Context, network, addr string) (net.Conn, error) {
+		return NewDialer(ctx).DialContext(reqCtx, network, addr)
 	}
 	t.IdleConnTimeout = 60 * time.Second
 	t.ExpectContinueTimeout = ci.ExpectContinueTimeout
