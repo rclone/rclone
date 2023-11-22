@@ -323,8 +323,8 @@ func TestMiddlewareAuthCertificateUser(t *testing.T) {
 
 var _testCORSHeaderKeys = []string{
 	"Access-Control-Allow-Origin",
-	"Access-Control-Request-Method",
 	"Access-Control-Allow-Headers",
+	"Access-Control-Allow-Methods",
 }
 
 func TestMiddlewareCORS(t *testing.T) {
