@@ -664,10 +664,12 @@ type ChunkWriter interface {
 	// WriteChunk will write chunk number with reader bytes, where chunk number >= 0
 	WriteChunk(ctx context.Context, chunkNumber int, reader io.ReadSeeker) (bytesWritten int64, err error)
 
-	// Close complete chunked writer
+	// Close complete chunked writer finalising the file.
 	Close(ctx context.Context) error
 
 	// Abort chunk write
+	//
+	// You can and should call Abort without calling Close.
 	Abort(ctx context.Context) error
 }
 

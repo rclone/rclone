@@ -165,9 +165,10 @@ func multiThreadCopy(ctx context.Context, f fs.Fs, remote string, src fs.Object,
 
 	uploadCtx, cancel := context.WithCancel(ctx)
 	defer cancel()
+	uploadedOK := false
 	defer atexit.OnError(&err, func() {
 		cancel()
-		if info.LeavePartsOnError {
+		if info.LeavePartsOnError || uploadedOK {
 			return
 		}
 		fs.Debugf(src, "multi-thread copy: cancelling transfer on exit")
@@ -226,13 +227,14 @@ func multiThreadCopy(ctx context.Context, f fs.Fs, remote string, src fs.Object,
 	}
 
 	err = g.Wait()
-	closeErr := chunkWriter.Close(ctx)
 	if err != nil {
 		return nil, err
 	}
-	if closeErr != nil {
-		return nil, fmt.Errorf("multi-thread copy: failed to close object after copy: %w", closeErr)
+	err = chunkWriter.Close(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("multi-thread copy: failed to close object after copy: %w", err)
 	}
+	uploadedOK = true // file is definitely uploaded OK so no need to abort
 
 	obj, err := f.NewObject(ctx, remote)
 	if err != nil {
@@ -282,10 +284,11 @@ type writerAtChunkWriter struct {
 	chunks          int
 	writeBufferSize int64
 	f               fs.Fs
+	closed          bool
 }
 
 // WriteChunk writes chunkNumber from reader
-func (w writerAtChunkWriter) WriteChunk(ctx context.Context, chunkNumber int, reader io.ReadSeeker) (int64, error) {
+func (w *writerAtChunkWriter) WriteChunk(ctx context.Context, chunkNumber int, reader io.ReadSeeker) (int64, error) {
 	fs.Debugf(w.remote, "writing chunk %v", chunkNumber)
 
 	bytesToWrite := w.chunkSize
@@ -316,12 +319,20 @@ func (w writerAtChunkWriter) WriteChunk(ctx context.Context, chunkNumber int, re
 }
 
 // Close the chunk writing
-func (w writerAtChunkWriter) Close(ctx context.Context) error {
+func (w *writerAtChunkWriter) Close(ctx context.Context) error {
+	if w.closed {
+		return nil
+	}
+	w.closed = true
 	return w.writerAt.Close()
 }
 
 // Abort the chunk writing
-func (w writerAtChunkWriter) Abort(ctx context.Context) error {
+func (w *writerAtChunkWriter) Abort(ctx context.Context) error {
+	err := w.Close(ctx)
+	if err != nil {
+		fs.Errorf(w.remote, "multi-thread copy: failed to close file before aborting: %v", err)
+	}
 	obj, err := w.f.NewObject(ctx, w.remote)
 	if err != nil {
 		return fmt.Errorf("multi-thread copy: failed to find temp file when aborting chunk writer: %w", err)
