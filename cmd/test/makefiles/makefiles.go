@@ -224,7 +224,7 @@ func (r *chargenReader) Read(p []byte) (n int, err error) {
 func fileName() (name string) {
 	for {
 		length := randSource.Intn(maxFileNameLength-minFileNameLength) + minFileNameLength
-		name = random.StringFn(length, randSource.Intn)
+		name = random.StringFn(length, randSource)
 		if _, found := fileNames[name]; !found {
 			break
 		}
