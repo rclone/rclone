@@ -99,4 +99,50 @@ func TestMediaWithResources(t *testing.T) {
 		sort.Strings(assocVideoResourceNames)
 		assert.Equal(t, []string{"video.en.srt", "video.srt"}, assocVideoResourceNames)
 	}
+
+	// Now test subdir3. It contains a video.mpv, as well as Sub/video.{idx,sub}.
+	{
+		rootNode, err := myvfs.Stat("subdir3")
+		require.NoError(t, err)
+
+		subtitleNode, err := myvfs.Stat("subdir3/Subs")
+		require.NoError(t, err)
+
+		rootDir := rootNode.(*vfs.Dir)
+		subtitleDir := subtitleNode.(*vfs.Dir)
+
+		dirEntries, err := rootDir.ReadDirAll()
+		require.NoError(t, err)
+
+		subtitleEntries, err := subtitleDir.ReadDirAll()
+		require.NoError(t, err)
+
+		dirEntries = append(dirEntries, subtitleEntries...)
+
+		mediaItems, assocResources := mediaWithResources(dirEntries)
+
+		// ensure mediaItems contains some items we care about.
+		// We specifically check that the .mp4 file is kept.
+		var videoMp4 *vfs.Node
+		for _, mediaItem := range mediaItems {
+			if mediaItem.Name() == "video.mp4" {
+				videoMp4 = &mediaItem
+			}
+		}
+
+		assert.True(t, videoMp4 != nil, "expected mp4 to be found")
+
+		// test assocResources to point from the video file to the subtitles
+		assocVideoResource, ok := assocResources[*videoMp4]
+		require.True(t, ok, "expected video.mp4 to have assoc video resource")
+
+		// ensure both video.idx and video.sub are in assocVideoResource.
+		assocVideoResourceNames := make([]string, 0)
+		for _, e := range assocVideoResource {
+			assocVideoResourceNames = append(assocVideoResourceNames, e.Name())
+		}
+		sort.Strings(assocVideoResourceNames)
+		assert.Equal(t, []string{"video.idx", "video.sub"}, assocVideoResourceNames)
+	}
+
 }
