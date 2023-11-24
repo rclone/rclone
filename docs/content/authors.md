@@ -802,3 +802,4 @@ put them back in again.` >}}
   * viktor <viktor@yakovchuk.net>
   * moongdal <moongdal@tutanota.com>
   * Mina Galić <freebsd@igalic.co>
+  * Alen Šiljak <dev@alensiljak.eu.org>
