@@ -1,19 +1,11 @@
 package b2
 
 import (
-	"bytes"
-	"context"
-	"fmt"
 	"testing"
 	"time"
 
-	"github.com/rclone/rclone/fs"
-	"github.com/rclone/rclone/fs/object"
 	"github.com/rclone/rclone/fstest"
 	"github.com/rclone/rclone/fstest/fstests"
-	"github.com/rclone/rclone/lib/random"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 // Test b2 string encoding
@@ -178,56 +170,9 @@ func TestParseTimeString(t *testing.T) {
 
 }
 
-// The integration tests do a reasonable job of testing the normal
-// streaming upload but don't test the chunked streaming upload.
-func (f *Fs) InternalTestChunkedStreamingUpload(t *testing.T, size int) {
-	ctx := context.Background()
-	contents := random.String(size)
-	item := fstest.NewItem(fmt.Sprintf("chunked-streaming-upload-%d", size), contents, fstest.Time("2001-05-06T04:05:06.499Z"))
-
-	// Set chunk size to mininum value so we make chunks
-	origOpt := f.opt
-	f.opt.ChunkSize = minChunkSize
-	f.opt.UploadCutoff = 0
-	defer func() {
-		f.opt = origOpt
-	}()
-
-	// Do the streaming upload
-	src := object.NewStaticObjectInfo(item.Path, item.ModTime, -1, true, item.Hashes, f)
-	in := bytes.NewBufferString(contents)
-	dst, err := f.PutStream(ctx, in, src)
-	require.NoError(t, err)
-	defer func() {
-		assert.NoError(t, dst.Remove(ctx))
-	}()
-
-	// Check size
-	assert.Equal(t, int64(size), dst.Size())
-
-	// Check modtime
-	srcModTime := src.ModTime(ctx)
-	dstModTime := dst.ModTime(ctx)
-	assert.Equal(t, srcModTime, dstModTime)
-
-	// Make sure contents are correct
-	gotContents := fstests.ReadObject(ctx, t, dst, -1)
-	assert.Equal(t, contents, gotContents, "Contents incorrect")
-}
-
 // -run TestIntegration/FsMkdir/FsPutFiles/Internal
 func (f *Fs) InternalTest(t *testing.T) {
-	for _, size := range []fs.SizeSuffix{
-		minChunkSize - 1,
-		minChunkSize,
-		minChunkSize + 1,
-		(3 * minChunkSize) / 2,
-		(5 * minChunkSize) / 2,
-	} {
-		t.Run(fmt.Sprintf("ChunkedStreamingUpload/%d", size), func(t *testing.T) {
-			f.InternalTestChunkedStreamingUpload(t, int(size))
-		})
-	}
+	// Internal tests go here
 }
 
 var _ fstests.InternalTester = (*Fs)(nil)

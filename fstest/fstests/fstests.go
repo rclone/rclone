@@ -230,8 +230,10 @@ func testPutMimeType(ctx context.Context, t *testing.T, f fs.Fs, file *fstest.It
 	return contents, PutTestContentsMetadata(ctx, t, f, file, contents, true, mimeType, metadata)
 }
 
-// TestPutLarge puts file to the remote, checks it and removes it on success.
-func TestPutLarge(ctx context.Context, t *testing.T, f fs.Fs, file *fstest.Item) {
+// testPutLarge puts file to the remote, checks it and removes it on success.
+//
+// If stream is set, then it uploads the file with size -1
+func testPutLarge(ctx context.Context, t *testing.T, f fs.Fs, file *fstest.Item, stream bool) {
 	var (
 		err        error
 		obj        fs.Object
@@ -242,7 +244,11 @@ func TestPutLarge(ctx context.Context, t *testing.T, f fs.Fs, file *fstest.Item)
 		uploadHash = hash.NewMultiHasher()
 		in := io.TeeReader(r, uploadHash)
 
-		obji := object.NewStaticObjectInfo(file.Path, file.ModTime, file.Size, true, nil, nil)
+		size := file.Size
+		if stream {
+			size = -1
+		}
+		obji := object.NewStaticObjectInfo(file.Path, file.ModTime, size, true, nil, nil)
 		obj, err = f.Put(ctx, in, obji)
 		if file.Size == 0 && err == fs.ErrorCantUploadEmptyFiles {
 			t.Skip("Can't upload zero length files")
@@ -268,6 +274,16 @@ func TestPutLarge(ctx context.Context, t *testing.T, f fs.Fs, file *fstest.Item)
 
 	// Remove the object
 	require.NoError(t, obj.Remove(ctx))
+}
+
+// TestPutLarge puts file to the remote, checks it and removes it on success.
+func TestPutLarge(ctx context.Context, t *testing.T, f fs.Fs, file *fstest.Item) {
+	testPutLarge(ctx, t, f, file, false)
+}
+
+// TestPutLargeStreamed puts file of unknown size to the remote, checks it and removes it on success.
+func TestPutLargeStreamed(ctx context.Context, t *testing.T, f fs.Fs, file *fstest.Item) {
+	testPutLarge(ctx, t, f, file, true)
 }
 
 // ReadObject reads the contents of an object as a string
@@ -2096,6 +2112,16 @@ func Run(t *testing.T, opt *Opt) {
 								ModTime: fstest.Time("2001-02-03T04:05:06.499999999Z"),
 								Path:    fmt.Sprintf("chunked-%s-%s.bin", cs.String(), fileSize.String()),
 								Size:    int64(fileSize),
+							})
+							t.Run("Streamed", func(t *testing.T) {
+								if f.Features().PutStream == nil {
+									t.Skip("FS has no PutStream interface")
+								}
+								TestPutLargeStreamed(ctx, t, f, &fstest.Item{
+									ModTime: fstest.Time("2001-02-03T04:05:06.499999999Z"),
+									Path:    fmt.Sprintf("chunked-%s-%s-streamed.bin", cs.String(), fileSize.String()),
+									Size:    int64(fileSize),
+								})
 							})
 						})
 					}
