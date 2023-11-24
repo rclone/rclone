@@ -186,6 +186,9 @@ backends:
    remote:   "TestS3,directory_markers:"
    fastlist: true
  - backend:  "s3"
+   remote:   "TestS3Rclone:"
+   fastlist: true
+ - backend:  "s3"
    remote:   "TestS3Minio:"
    fastlist: true
    ignore:

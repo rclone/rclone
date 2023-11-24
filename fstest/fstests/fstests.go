@@ -2146,7 +2146,7 @@ func Run(t *testing.T, opt *Opt) {
 				t.Skip("skipping as ChunkedUpload.Skip is set")
 			}
 
-			if strings.HasPrefix(f.Name(), "serves3") {
+			if strings.HasPrefix(f.Name(), "serves3") || strings.HasPrefix(f.Name(), "TestS3Rclone") {
 				t.Skip("FIXME skip test - see #7454")
 			}
 
