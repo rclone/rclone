@@ -1,6 +1,7 @@
 package pixeldrain
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -95,8 +96,13 @@ var (
 )
 
 func apiErrorHandler(resp *http.Response) (err error) {
+	var buf = new(bytes.Buffer)
+	buf.ReadFrom(resp.Body)
+
+	// fmt.Printf("Response body: %s\n", buf.String())
+
 	var e ApiError
-	if err = json.NewDecoder(resp.Body).Decode(&e); err != nil {
+	if err = json.NewDecoder(buf).Decode(&e); err != nil {
 		return fmt.Errorf("failed to parse error json: %w", err)
 	}
 
@@ -121,12 +127,33 @@ func (f *Fs) nodeToObject(node FilesystemNode) (o *Object) {
 	// Trim the path prefix. The path prefix is hidden from rclone during all
 	// operations. Saving it here would confuse rclone a lot. So instead we
 	// strip it here and add it back for every API request we need to perform
-	node.Path = strings.TrimPrefix(node.Path, f.pathPrefix)
+	node.Path = trimPrefix(node.Path, f.pathPrefix)
 	return &Object{fs: f, base: node}
 }
 
 func (f *Fs) nodeToDirectory(node FilesystemNode) fs.DirEntry {
-	return fs.NewDir(strings.TrimPrefix(node.Path, f.pathPrefix), node.Modified)
+	return fs.NewDir(trimPrefix(node.Path, f.pathPrefix), node.Modified)
+}
+
+func trimPath(s string) string {
+	return strings.Trim(s, "/")
+}
+func trimPrefix(s, prefix string) string {
+	return strings.TrimPrefix(trimPath(s), prefix+"/")
+}
+func mergePath(inputs ...string) (out string) {
+	var allParts []string
+	for i := range inputs {
+		// Strip the input of any preceding and trailing slashes and split all
+		// the remaining parts and add them to the collection
+		allParts = append(allParts, strings.Split(trimPath(inputs[i]), "/")...)
+	}
+
+	// Now encode all the parts and combine them together
+	for i := range allParts {
+		allParts[i] = url.PathEscape(allParts[i])
+	}
+	return strings.Join(allParts, "/")
 }
 
 func (f *Fs) put(ctx context.Context, path string, body io.Reader, options []fs.OpenOption) (node FilesystemNode, err error) {
@@ -134,14 +161,12 @@ func (f *Fs) put(ctx context.Context, path string, body io.Reader, options []fs.
 		ctx,
 		&rest.Opts{
 			Method: "PUT",
-			Path:   f.pathPrefix + url.PathEscape(path),
+			Path:   mergePath(f.pathPrefix, path),
 			Body:   body,
-			Parameters: url.Values{
-				// Tell the server to automatically create parent directories if
-				// they don't exist yet
-				"make_parents": []string{"true"},
-			},
-			Options: options,
+			// Tell the server to automatically create parent directories if
+			// they don't exist yet
+			Parameters: url.Values{"make_parents": []string{"true"}},
+			Options:    options,
 		},
 		nil,
 		&node,
@@ -155,7 +180,7 @@ func (f *Fs) put(ctx context.Context, path string, body io.Reader, options []fs.
 func (f *Fs) read(ctx context.Context, path string, options []fs.OpenOption) (in io.ReadCloser, err error) {
 	resp, err := f.srv.Call(ctx, &rest.Opts{
 		Method:  "GET",
-		Path:    f.pathPrefix + url.PathEscape(path),
+		Path:    mergePath(f.pathPrefix, path),
 		Options: options,
 	})
 	if err != nil {
@@ -172,7 +197,7 @@ func (f *Fs) stat(ctx context.Context, path string) (fsp FilesystemPath, err err
 		ctx,
 		&rest.Opts{
 			Method: "GET",
-			Path:   f.pathPrefix + url.PathEscape(path),
+			Path:   mergePath(f.pathPrefix, path),
 			// To receive node info from the pixeldrain API you need to add the
 			// ?stat query. Without it pixeldrain will return the file contents
 			// in the URL points to a file
@@ -202,7 +227,7 @@ func (f *Fs) update(ctx context.Context, path string, fields map[string]any) (no
 		ctx,
 		&rest.Opts{
 			Method:          "POST",
-			Path:            f.pathPrefix + url.PathEscape(path),
+			Path:            mergePath(f.pathPrefix, path),
 			MultipartParams: params,
 		},
 		nil,
@@ -218,12 +243,10 @@ func (f *Fs) mkdir(ctx context.Context, dir string) (err error) {
 	resp, err := f.srv.CallJSON(
 		ctx,
 		&rest.Opts{
-			Method: "POST",
-			Path:   f.pathPrefix + url.PathEscape(dir),
-			MultipartParams: url.Values{
-				"action": []string{"mkdirall"},
-			},
-			NoResponse: true,
+			Method:          "POST",
+			Path:            mergePath(f.pathPrefix, dir),
+			MultipartParams: url.Values{"action": []string{"mkdirall"}},
+			NoResponse:      true,
 		},
 		nil, nil,
 	)
@@ -251,12 +274,15 @@ func (f *Fs) rename(ctx context.Context, src fs.Fs, from, to string) (err error)
 		&rest.Opts{
 			Method: "POST",
 			// Important: We use the source FS path prefix here
-			Path: srcFs.pathPrefix + url.PathEscape(from),
+			Path: mergePath(srcFs.pathPrefix, from),
 			MultipartParams: url.Values{
 				"action": []string{"rename"},
 				// The target is always in our own filesystem so here we use our
 				// own pathPrefix
-				"target": []string{f.pathPrefix + to},
+				"target": []string{f.pathPrefix + "/" + to},
+				// Create parent directories if the parent directory of the file
+				// does not exist yet
+				"make_parents": []string{"true"},
 			},
 			NoResponse: true,
 		},
@@ -279,7 +305,7 @@ func (f *Fs) delete(ctx context.Context, path string, recursive bool) (err error
 		ctx,
 		&rest.Opts{
 			Method:     "DELETE",
-			Path:       f.pathPrefix + url.PathEscape(path),
+			Path:       mergePath(f.pathPrefix, path),
 			Parameters: params,
 			NoResponse: true,
 		},

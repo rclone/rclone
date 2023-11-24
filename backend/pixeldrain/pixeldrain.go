@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"path"
 	"time"
 
 	"github.com/rclone/rclone/fs"
@@ -18,9 +19,8 @@ import (
 )
 
 const (
-	filesystemEndpoint = "/filesystem"
+	filesystemEndpoint = "/filesystem/"
 	userEndpoint       = "/user"
-	logRequests        = false
 )
 
 // Register with Fs
@@ -99,9 +99,10 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		CanHaveEmptyDirectories: true,
 	}).Fill(ctx, f)
 
-	f.pathPrefix = "/" + opt.BucketID + "/"
+	// Set the path prefix. This is the path to the root directory on the server
+	f.pathPrefix = opt.BucketID
 	if root != "" {
-		f.pathPrefix += root + "/"
+		f.pathPrefix += "/" + root
 	}
 
 	// The root URL equates to https://pixeldrain.com/api/filesystem during
@@ -131,18 +132,21 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		return nil, errors.New("authentication required: the 'me' directory can only be accessed while logged in")
 	}
 
-	fs.Infof(nil,
-		"Created filesystem with name '%s', root '%s', bucket '%s', endpoint '%s'\n",
-		name, root, opt.BucketID, opt.APIURL+filesystemEndpoint+f.pathPrefix,
-	)
+	// Satisfy TestFsIsFile. This test expects that we throw an error if the
+	// filesystem root is a file
+	fsp, err := f.stat(ctx, "")
+	if err != errNotFound && err != nil {
+		// It doesn't matter if the root directory does not exist, as long as it
+		// is not a file. This is what the test dictates
+		return f, err
+	} else if err == nil && fsp.Base().Type == "file" {
+		// The filesystem root is a file, rclone wants us to set the root to the
+		// parent directory
+		f.pathPrefix = path.Dir(f.pathPrefix)
+		return f, fs.ErrorIsFile
+	}
 
 	return f, nil
-}
-
-func logRequest(str string, args ...any) {
-	if logRequests {
-		fmt.Printf(str+"\n", args...)
-	}
 }
 
 // =================================
@@ -160,13 +164,13 @@ var _ fs.Fs = (*Fs)(nil)
 // This should return ErrDirNotFound if the directory isn't
 // found.
 func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err error) {
-	logRequest("List '%s'", dir)
-
 	fsp, err := f.stat(ctx, dir)
 	if err == errNotFound {
-		return entries, fs.ErrorDirNotFound
+		return nil, fs.ErrorDirNotFound
 	} else if err != nil {
-		return entries, err
+		return nil, err
+	} else if fsp.Base().Type == "file" {
+		return nil, fs.ErrorIsFile
 	}
 
 	entries = make(fs.DirEntries, len(fsp.Children))
@@ -184,15 +188,12 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 // NewObject finds the Object at remote.  If it can't be found
 // it returns the error fs.ErrorObjectNotFound.
 func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
-	logRequest("NewObject '%s'", remote)
-
 	fsp, err := f.stat(ctx, remote)
 	if err == errNotFound {
-		logRequest("Object '%s' does not exist", remote)
 		return nil, fs.ErrorObjectNotFound
 	} else if err != nil {
 		return nil, err
-	} else if fsp.Path[fsp.BaseIndex].Type == "dir" {
+	} else if fsp.Base().Type == "dir" {
 		return nil, fs.ErrorIsDir
 	}
 	return f.nodeToObject(fsp.Base()), nil
@@ -204,8 +205,6 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 //
 // The new object may have been created if an error is returned
 func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
-	logRequest("Put '%s'", src.Remote())
-
 	_, err := f.put(ctx, src.Remote(), in, options)
 	if err != nil {
 		return nil, fmt.Errorf("failed to put object: %w", err)
@@ -225,8 +224,6 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 
 // Mkdir creates the container if it doesn't exist
 func (f *Fs) Mkdir(ctx context.Context, dir string) (err error) {
-	logRequest("Mkdir '%s'", dir)
-
 	err = f.mkdir(ctx, dir)
 	if err == errNotFound {
 		return fs.ErrorDirNotFound
@@ -241,8 +238,6 @@ func (f *Fs) Mkdir(ctx context.Context, dir string) (err error) {
 //
 // Returns an error if it isn't empty
 func (f *Fs) Rmdir(ctx context.Context, dir string) (err error) {
-	logRequest("Rmdir '%s'", dir)
-
 	err = f.delete(ctx, dir, false)
 	if err == errNotFound {
 		return fs.ErrorDirNotFound
@@ -285,8 +280,6 @@ var _ fs.Purger = (*Fs)(nil)
 //
 // Return an error if it doesn't exist
 func (f *Fs) Purge(ctx context.Context, dir string) (err error) {
-	logRequest("Purge '%s'", dir)
-
 	err = f.delete(ctx, dir, true)
 	if err == errNotFound {
 		return fs.ErrorDirNotFound
@@ -309,8 +302,6 @@ var _ fs.Mover = (*Fs)(nil)
 //
 // If it isn't possible then return fs.ErrorCantMove
 func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
-	logRequest("Move '%s' '%s'", src.Remote(), remote)
-
 	srcObj, ok := src.(*Object)
 	if !ok {
 		// This is not a pixeldrain object. Can't move
@@ -321,7 +312,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	if err == errIncompatibleSourceFS {
 		return nil, fs.ErrorCantMove
 	} else if err == errNotFound {
-		return nil, fs.ErrorCantMove
+		return nil, fs.ErrorObjectNotFound
 	}
 
 	// The node only got its path changed, so we just copy the original Object
@@ -346,8 +337,6 @@ var _ fs.DirMover = (*Fs)(nil)
 //
 // If destination exists then return fs.ErrorDirExists
 func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string) (err error) {
-	logRequest("DirMove '%s' '%s'", srcRemote, dstRemote)
-
 	err = f.rename(ctx, src, srcRemote, dstRemote)
 	if err == errIncompatibleSourceFS {
 		return fs.ErrorCantDirMove
@@ -366,8 +355,6 @@ var _ fs.Abouter = (*Fs)(nil)
 
 // About gets quota information
 func (f *Fs) About(ctx context.Context) (usage *fs.Usage, err error) {
-	logRequest("About")
-
 	user, err := f.userInfo(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read user info: %w", err)
@@ -378,9 +365,8 @@ func (f *Fs) About(ctx context.Context) (usage *fs.Usage, err error) {
 	}
 
 	return &fs.Usage{
-		Used:  fs.NewUsageValue(user.StorageSpaceUsed),
 		Total: fs.NewUsageValue(user.Subscription.StorageSpace),
-		Free:  fs.NewUsageValue(user.StorageSpaceUsed - user.Subscription.StorageSpace),
+		Used:  fs.NewUsageValue(user.StorageSpaceUsed),
 	}, nil
 }
 
@@ -391,8 +377,6 @@ var _ fs.Object = (*Object)(nil)
 
 // SetModTime sets the modification time of the local fs object
 func (o *Object) SetModTime(ctx context.Context, modTime time.Time) (err error) {
-	logRequest("SetModTime '%s'", o.base.Path)
-
 	_, err = o.fs.update(ctx, o.base.Path, map[string]any{"modified": modTime})
 	if err == nil {
 		o.base.Modified = modTime
@@ -402,8 +386,6 @@ func (o *Object) SetModTime(ctx context.Context, modTime time.Time) (err error) 
 
 // Open an object for read
 func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.ReadCloser, err error) {
-	logRequest("Open '%s'", o.base.Path)
-
 	return o.fs.read(ctx, o.base.Path, options)
 }
 
@@ -413,21 +395,16 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 //
 // The new object may have been created if an error is returned.
 func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (err error) {
-	logRequest("Update '%s' '%d'", src.Remote(), src.Size())
-
-	newObj, err := o.fs.Put(ctx, in, src, options...)
-	if err == nil {
-		// We replace our object with the new object so we don't have to copy
-		// all the updated values
-		*o = *newObj.(*Object)
-	}
+	// Copy the parameters and update the object
+	o.base.Modified = src.ModTime(ctx)
+	o.base.FileSize = src.Size()
+	o.base.SHA256Sum, _ = src.Hash(ctx, hash.SHA256)
+	_, err = o.fs.Put(ctx, in, o, options...)
 	return err
 }
 
 // Remove an object
 func (o *Object) Remove(ctx context.Context) error {
-	logRequest("Remove '%s'", o.base.Path)
-
 	return o.fs.delete(ctx, o.base.Path, false)
 }
 
