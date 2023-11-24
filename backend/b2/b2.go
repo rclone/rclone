@@ -1338,7 +1338,7 @@ func (f *Fs) CleanUp(ctx context.Context) error {
 // If newInfo is nil then the metadata will be copied otherwise it
 // will be replaced with newInfo
 func (f *Fs) copy(ctx context.Context, dstObj *Object, srcObj *Object, newInfo *api.File) (err error) {
-	if srcObj.size >= int64(f.opt.CopyCutoff) {
+	if srcObj.size > int64(f.opt.CopyCutoff) {
 		if newInfo == nil {
 			newInfo, err = srcObj.getMetaData(ctx)
 			if err != nil {
