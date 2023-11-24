@@ -803,3 +803,4 @@ put them back in again.` >}}
   * moongdal <moongdal@tutanota.com>
   * Mina Galić <freebsd@igalic.co>
   * Alen Šiljak <dev@alensiljak.eu.org>
+  * 你知道未来吗 <rkonfj@gmail.com>
