@@ -78,6 +78,13 @@ type SetUploadCutoffer interface {
 	SetUploadCutoff(fs.SizeSuffix) (fs.SizeSuffix, error)
 }
 
+// SetCopyCutoffer is a test only interface to change the copy cutoff size at runtime
+type SetCopyCutoffer interface {
+	// Change the configured CopyCutoff.
+	// Will only be called while no transfer is in progress.
+	SetCopyCutoff(fs.SizeSuffix) (fs.SizeSuffix, error)
+}
+
 // NextPowerOfTwo returns the current or next bigger power of two.
 // All values less or equal 0 will return 0
 func NextPowerOfTwo(i fs.SizeSuffix) fs.SizeSuffix {
@@ -2092,6 +2099,85 @@ func Run(t *testing.T, opt *Opt) {
 							})
 						})
 					}
+				})
+			}
+		})
+
+		// Copy files with chunked copy if available
+		t.Run("FsCopyChunked", func(t *testing.T) {
+			skipIfNotOk(t)
+			if testing.Short() {
+				t.Skip("not running with -short")
+			}
+
+			// Check have Copy
+			doCopy := f.Features().Copy
+			if doCopy == nil {
+				t.Skip("FS has no Copier interface")
+			}
+
+			if opt.ChunkedUpload.Skip {
+				t.Skip("skipping as ChunkedUpload.Skip is set")
+			}
+
+			do, _ := f.(SetCopyCutoffer)
+			if do == nil {
+				t.Skipf("%T does not implement SetCopyCutoff", f)
+			}
+
+			minChunkSize := opt.ChunkedUpload.MinChunkSize
+			if minChunkSize < 100 {
+				minChunkSize = 100
+			}
+			if opt.ChunkedUpload.CeilChunkSize != nil {
+				minChunkSize = opt.ChunkedUpload.CeilChunkSize(minChunkSize)
+			}
+
+			chunkSizes := fs.SizeSuffixList{
+				minChunkSize,
+				minChunkSize + 1,
+				2*minChunkSize - 1,
+				2 * minChunkSize,
+				2*minChunkSize + 1,
+			}
+			for _, chunkSize := range chunkSizes {
+				t.Run(fmt.Sprintf("%d", chunkSize), func(t *testing.T) {
+					contents := random.String(int(chunkSize))
+					item := fstest.NewItem("chunked-copy", contents, fstest.Time("2001-05-06T04:05:06.499999999Z"))
+					src := PutTestContents(ctx, t, f, &item, contents, true)
+					defer func() {
+						assert.NoError(t, src.Remove(ctx))
+					}()
+
+					var itemCopy = item
+					itemCopy.Path += ".copy"
+
+					// Set copy cutoff to mininum value so we make chunks
+					origCutoff, err := do.SetCopyCutoff(minChunkSize)
+					require.NoError(t, err)
+					defer func() {
+						_, err = do.SetCopyCutoff(origCutoff)
+						require.NoError(t, err)
+					}()
+
+					// Do the copy
+					dst, err := doCopy(ctx, src, itemCopy.Path)
+					require.NoError(t, err)
+					defer func() {
+						assert.NoError(t, dst.Remove(ctx))
+					}()
+
+					// Check size
+					assert.Equal(t, src.Size(), dst.Size())
+
+					// Check modtime
+					srcModTime := src.ModTime(ctx)
+					dstModTime := dst.ModTime(ctx)
+					assert.True(t, srcModTime.Equal(dstModTime))
+
+					// Make sure contents are correct
+					gotContents := ReadObject(ctx, t, dst, -1)
+					assert.Equal(t, contents, gotContents)
 				})
 			}
 		})

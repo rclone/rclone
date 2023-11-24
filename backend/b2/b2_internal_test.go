@@ -179,48 +179,6 @@ func TestParseTimeString(t *testing.T) {
 }
 
 // The integration tests do a reasonable job of testing the normal
-// copy but don't test the chunked copy.
-func (f *Fs) InternalTestChunkedCopy(t *testing.T) {
-	ctx := context.Background()
-
-	contents := random.String(8 * 1024 * 1024)
-	item := fstest.NewItem("chunked-copy", contents, fstest.Time("2001-05-06T04:05:06.499999999Z"))
-	src := fstests.PutTestContents(ctx, t, f, &item, contents, true)
-	defer func() {
-		assert.NoError(t, src.Remove(ctx))
-	}()
-
-	var itemCopy = item
-	itemCopy.Path += ".copy"
-
-	// Set copy cutoff to mininum value so we make chunks
-	origCutoff := f.opt.CopyCutoff
-	f.opt.CopyCutoff = minChunkSize
-	defer func() {
-		f.opt.CopyCutoff = origCutoff
-	}()
-
-	// Do the copy
-	dst, err := f.Copy(ctx, src, itemCopy.Path)
-	require.NoError(t, err)
-	defer func() {
-		assert.NoError(t, dst.Remove(ctx))
-	}()
-
-	// Check size
-	assert.Equal(t, src.Size(), dst.Size())
-
-	// Check modtime
-	srcModTime := src.ModTime(ctx)
-	dstModTime := dst.ModTime(ctx)
-	assert.True(t, srcModTime.Equal(dstModTime))
-
-	// Make sure contents are correct
-	gotContents := fstests.ReadObject(ctx, t, dst, -1)
-	assert.Equal(t, contents, gotContents)
-}
-
-// The integration tests do a reasonable job of testing the normal
 // streaming upload but don't test the chunked streaming upload.
 func (f *Fs) InternalTestChunkedStreamingUpload(t *testing.T, size int) {
 	ctx := context.Background()
@@ -259,7 +217,6 @@ func (f *Fs) InternalTestChunkedStreamingUpload(t *testing.T, size int) {
 
 // -run TestIntegration/FsMkdir/FsPutFiles/Internal
 func (f *Fs) InternalTest(t *testing.T) {
-	t.Run("ChunkedCopy", f.InternalTestChunkedCopy)
 	for _, size := range []fs.SizeSuffix{
 		minChunkSize - 1,
 		minChunkSize,

@@ -3011,6 +3011,14 @@ func (f *Fs) setUploadCutoff(cs fs.SizeSuffix) (old fs.SizeSuffix, err error) {
 	return
 }
 
+func (f *Fs) setCopyCutoff(cs fs.SizeSuffix) (old fs.SizeSuffix, err error) {
+	err = checkUploadChunkSize(cs)
+	if err == nil {
+		old, f.opt.CopyCutoff = f.opt.CopyCutoff, cs
+	}
+	return
+}
+
 // setEndpointValueForIDriveE2 gets user region endpoint against the Access Key details by calling the API
 func setEndpointValueForIDriveE2(m configmap.Mapper) (err error) {
 	value, ok := m.Get(fs.ConfigProvider)
