@@ -16,10 +16,13 @@ import (
 )
 
 type FilesystemPath struct {
-	Path        []FilesystemNode `json:"path"`
-	BaseIndex   int              `json:"base_index"`
-	Children    []FilesystemNode `json:"children"`
-	Permissions Permissions      `json:"permissions"`
+	Path      []FilesystemNode `json:"path"`
+	BaseIndex int              `json:"base_index"`
+	Children  []FilesystemNode `json:"children"`
+}
+
+func (fsp *FilesystemPath) Base() FilesystemNode {
+	return fsp.Path[fsp.BaseIndex]
 }
 
 // FilesystemNode is the return value of the GET /filesystem/ API
@@ -42,14 +45,6 @@ type FilesystemNode struct {
 	ReadPassword  string            `json:"read_password,omitempty"`
 	WritePassword string            `json:"write_password,omitempty"`
 	Properties    map[string]string `json:"properties,omitempty"`
-}
-
-// Permissions contains the actions a user can perform on an object
-type Permissions struct {
-	Create bool `json:"create"`
-	Read   bool `json:"read"`
-	Update bool `json:"update"`
-	Delete bool `json:"delete"`
 }
 
 // UserInfo contains information about the logged in user
@@ -91,10 +86,12 @@ type ApiError struct {
 
 func (e ApiError) Error() string { return e.StatusCode }
 
+// Generalized errors which are caught in our own handlers and translated to
+// more specific errors from the fs package.
 var (
-	errNotFound             = errors.New("path_not_found")
-	errExists               = errors.New("node_already_exists")
-	errAuthenticationFailed = errors.New("authentication_failed")
+	errNotFound             = errors.New("pd api: path not found")
+	errExists               = errors.New("pd api: node already exists")
+	errAuthenticationFailed = errors.New("pd api: authentication failed")
 )
 
 func apiErrorHandler(resp *http.Response) (err error) {
@@ -118,37 +115,14 @@ func apiErrorHandler(resp *http.Response) (err error) {
 	return e
 }
 
-// pathToObject converts the FilesystemPath API response to an object. The
-// entries in the path are modified and can't be reused
-func (f *Fs) pathToObject(fsp FilesystemPath) (o *Object) {
-	// Trim the path prefix from the parent and the child nodes
-	for i := range fsp.Path {
-		fsp.Path[i].Path = strings.TrimPrefix(fsp.Path[i].Path, f.pathPrefix)
-	}
-	for i := range fsp.Children {
-		fsp.Children[i].Path = strings.TrimPrefix(fsp.Children[i].Path, f.pathPrefix)
-	}
-
-	return &Object{
-		fs:       f,
-		base:     &fsp.Path[fsp.BaseIndex],
-		path:     fsp.Path,
-		children: fsp.Children,
-	}
-}
-
 // nodeToObject converts a single FilesystemNode API response to an object. The
 // node is usually a single element from a directory listing
 func (f *Fs) nodeToObject(node FilesystemNode) (o *Object) {
-	// Trim the path prefix
+	// Trim the path prefix. The path prefix is hidden from rclone during all
+	// operations. Saving it here would confuse rclone a lot. So instead we
+	// strip it here and add it back for every API request we need to perform
 	node.Path = strings.TrimPrefix(node.Path, f.pathPrefix)
-
-	return &Object{
-		fs:       f,
-		base:     &node,
-		path:     nil,
-		children: nil,
-	}
+	return &Object{fs: f, base: node}
 }
 
 func (f *Fs) nodeToDirectory(node FilesystemNode) fs.DirEntry {
@@ -160,7 +134,7 @@ func (f *Fs) put(ctx context.Context, path string, body io.Reader, options []fs.
 		ctx,
 		&rest.Opts{
 			Method: "PUT",
-			Path:   url.PathEscape(path),
+			Path:   f.pathPrefix + url.PathEscape(path),
 			Body:   body,
 			Parameters: url.Values{
 				// Tell the server to automatically create parent directories if
@@ -181,7 +155,7 @@ func (f *Fs) put(ctx context.Context, path string, body io.Reader, options []fs.
 func (f *Fs) read(ctx context.Context, path string, options []fs.OpenOption) (in io.ReadCloser, err error) {
 	resp, err := f.srv.Call(ctx, &rest.Opts{
 		Method:  "GET",
-		Path:    url.PathEscape(path),
+		Path:    f.pathPrefix + url.PathEscape(path),
 		Options: options,
 	})
 	if err != nil {
@@ -198,7 +172,7 @@ func (f *Fs) stat(ctx context.Context, path string) (fsp FilesystemPath, err err
 		ctx,
 		&rest.Opts{
 			Method: "GET",
-			Path:   url.PathEscape(path),
+			Path:   f.pathPrefix + url.PathEscape(path),
 			// To receive node info from the pixeldrain API you need to add the
 			// ?stat query. Without it pixeldrain will return the file contents
 			// in the URL points to a file
@@ -228,7 +202,7 @@ func (f *Fs) update(ctx context.Context, path string, fields map[string]any) (no
 		ctx,
 		&rest.Opts{
 			Method:          "POST",
-			Path:            url.PathEscape(path),
+			Path:            f.pathPrefix + url.PathEscape(path),
 			MultipartParams: params,
 		},
 		nil,
@@ -245,7 +219,7 @@ func (f *Fs) mkdir(ctx context.Context, dir string) (err error) {
 		ctx,
 		&rest.Opts{
 			Method: "POST",
-			Path:   url.PathEscape(dir),
+			Path:   f.pathPrefix + url.PathEscape(dir),
 			MultipartParams: url.Values{
 				"action": []string{"mkdirall"},
 			},
@@ -259,14 +233,29 @@ func (f *Fs) mkdir(ctx context.Context, dir string) (err error) {
 	return err
 }
 
-func (f *Fs) rename(ctx context.Context, from, to string) (err error) {
+var errIncompatibleSourceFS = errors.New("source filesystem is not the same as target")
+
+// Renames a file on the server side. Can be used for both directories and files
+func (f *Fs) rename(ctx context.Context, src fs.Fs, from, to string) (err error) {
+	srcFs, ok := src.(*Fs)
+	if !ok {
+		// This is not a pixeldrain FS, can't move
+		return errIncompatibleSourceFS
+	} else if srcFs.opt.BucketID != f.opt.BucketID {
+		// Path is not in the same bucket, can't move
+		return errIncompatibleSourceFS
+	}
+
 	resp, err := f.srv.CallJSON(
 		ctx,
 		&rest.Opts{
 			Method: "POST",
-			Path:   url.PathEscape(from),
+			// Important: We use the source FS path prefix here
+			Path: srcFs.pathPrefix + url.PathEscape(from),
 			MultipartParams: url.Values{
 				"action": []string{"rename"},
+				// The target is always in our own filesystem so here we use our
+				// own pathPrefix
 				"target": []string{f.pathPrefix + to},
 			},
 			NoResponse: true,
@@ -290,7 +279,7 @@ func (f *Fs) delete(ctx context.Context, path string, recursive bool) (err error
 		ctx,
 		&rest.Opts{
 			Method:     "DELETE",
-			Path:       url.PathEscape(path),
+			Path:       f.pathPrefix + url.PathEscape(path),
 			Parameters: params,
 			NoResponse: true,
 		},
@@ -306,7 +295,10 @@ func (f *Fs) userInfo(ctx context.Context) (user UserInfo, err error) {
 	resp, err := f.srv.CallJSON(
 		ctx,
 		&rest.Opts{
-			Method:  "GET",
+			Method: "GET",
+			// The default RootURL points at the filesystem endpoint. We can't
+			// use that to request user information. So here we override it to
+			// the user endpoint
 			RootURL: f.opt.APIURL + userEndpoint,
 		},
 		nil,

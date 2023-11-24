@@ -20,7 +20,7 @@ import (
 const (
 	filesystemEndpoint = "/filesystem"
 	userEndpoint       = "/user"
-	logRequests        = true
+	logRequests        = false
 )
 
 // Register with Fs
@@ -58,38 +58,25 @@ type Options struct {
 	APIURL   string `config:"api_url"`
 }
 
-// ItemMeta defines metadata we cache for each Item ID
-type ItemMeta struct {
-	SequenceID int64  // the most recent event processed for this item
-	ParentID   string // ID of the parent directory of this item
-	Name       string // leaf name of this item
-}
-
 // Fs represents a remote box
 type Fs struct {
-	name     string       // name of this remote
-	root     string       // the path we are working on
+	name     string       // name of this remote, as given to NewFS
+	root     string       // the path we are working on, as given to NewFS
 	opt      Options      // parsed options
 	features *fs.Features // optional features
 	srv      *rest.Client // the connection to the server
 	loggedIn bool         // if the user is authenticated
 
 	// Pathprefix is the directory we're working in. The pathPrefix is stripped
-	// from every API response containing a path. The pathPrefix must start with
-	// a slash because the API also starts each path with a slash
+	// from every API response containing a path. The pathPrefix always begins
+	// and ends with a slash for concatenation convenience
 	pathPrefix string
 }
 
 // Object describes a pixeldrain file
-//
-// Will definitely have info but maybe not meta
 type Object struct {
-	fs *Fs // what this object is part of
-
-	// Points to a node in the path slice
-	base     *FilesystemNode
-	path     []FilesystemNode
-	children []FilesystemNode
+	fs   *Fs            // what this object is part of
+	base FilesystemNode // the node this object references
 }
 
 // NewFs constructs an Fs from the path, container:path
@@ -116,7 +103,11 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	if root != "" {
 		f.pathPrefix += root + "/"
 	}
-	f.srv.SetRoot(opt.APIURL + filesystemEndpoint + f.pathPrefix)
+
+	// The root URL equates to https://pixeldrain.com/api/filesystem during
+	// normal operation. API handlers need to manually add the pathPrefix to
+	// each request
+	f.srv.SetRoot(opt.APIURL + filesystemEndpoint)
 
 	// If using an accessToken, set the Authorization header
 	if len(opt.APIKey) > 1 {
@@ -204,7 +195,7 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 	} else if fsp.Path[fsp.BaseIndex].Type == "dir" {
 		return nil, fs.ErrorIsDir
 	}
-	return f.pathToObject(fsp), nil
+	return f.nodeToObject(fsp.Base()), nil
 }
 
 // Put the object
@@ -322,19 +313,23 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 
 	srcObj, ok := src.(*Object)
 	if !ok {
-		fs.Debugf(src, "Can't move - not same remote type")
+		// This is not a pixeldrain object. Can't move
 		return nil, fs.ErrorCantMove
 	}
 
-	err := f.rename(ctx, src.Remote(), remote)
-	if err == errNotFound {
+	err := f.rename(ctx, srcObj.fs, srcObj.base.Path, remote)
+	if err == errIncompatibleSourceFS {
 		return nil, fs.ErrorCantMove
-	} else if err != nil {
-		return nil, fmt.Errorf("failed to rename file: %w", err)
+	} else if err == errNotFound {
+		return nil, fs.ErrorCantMove
 	}
 
-	srcObj.base.Path = remote
-	return srcObj, nil
+	// The node only got its path changed, so we just copy the original Object
+	// and change the path variable. This prevents us from having to make
+	// another request to get the updated node
+	var nodeCopy = srcObj.base
+	nodeCopy.Path = remote
+	return f.nodeToObject(nodeCopy), err
 }
 
 // =======================================
@@ -342,25 +337,25 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 // =======================================
 var _ fs.DirMover = (*Fs)(nil)
 
-// Move src to this remote using server-side move operations.
-//
-// This is stored with the remote path given.
-//
-// It returns the destination Object and a possible error.
+// DirMove moves src, srcRemote to this remote at dstRemote
+// using server-side move operations.
 //
 // Will only be called if src.Fs().Name() == f.Name()
 //
-// If it isn't possible then return fs.ErrorCantMove
+// If it isn't possible then return fs.ErrorCantDirMove
+//
+// If destination exists then return fs.ErrorDirExists
 func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string) (err error) {
 	logRequest("DirMove '%s' '%s'", srcRemote, dstRemote)
 
-	err = f.rename(ctx, srcRemote, dstRemote)
-	if err == errNotFound {
+	err = f.rename(ctx, src, srcRemote, dstRemote)
+	if err == errIncompatibleSourceFS {
+		return fs.ErrorCantDirMove
+	} else if err == errNotFound {
 		return fs.ErrorDirNotFound
 	} else if err == errExists {
 		return fs.ErrorDirExists
 	}
-
 	return err
 }
 
