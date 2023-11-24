@@ -130,6 +130,20 @@ func (cds *contentDirectoryService) readContainer(o object, host string) (ret []
 		return
 	}
 
+	// if there's a "Subs" child directory, add its children to the list as well,
+	// so mediaWithResources is able to find them.
+	for _, node := range dirEntries {
+		if strings.EqualFold(node.Name(), "Subs") && node.IsDir() {
+			subtitleDir := node.(*vfs.Dir)
+			subtitleEntries, err := subtitleDir.ReadDirAll()
+			if err != nil {
+				err = errors.New("failed to list subtitle directory")
+				return nil, err
+			}
+			dirEntries = append(dirEntries, subtitleEntries...)
+		}
+	}
+
 	dirEntries, mediaResources := mediaWithResources(dirEntries)
 	for _, de := range dirEntries {
 		child := object{
