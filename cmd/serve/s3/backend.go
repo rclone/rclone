@@ -282,11 +282,6 @@ func (b *s3Backend) PutObject(
 		}
 	}
 
-	if size == 0 {
-		// maybe a touch operation
-		return b.TouchObject(fp, meta)
-	}
-
 	f, err := b.vfs.Create(fp)
 	if err != nil {
 		return result, err
