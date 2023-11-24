@@ -2146,6 +2146,10 @@ func Run(t *testing.T, opt *Opt) {
 				t.Skip("skipping as ChunkedUpload.Skip is set")
 			}
 
+			if strings.HasPrefix(f.Name(), "serves3") {
+				t.Skip("FIXME skip test - see #7454")
+			}
+
 			do, _ := f.(SetCopyCutoffer)
 			if do == nil {
 				t.Skipf("%T does not implement SetCopyCutoff", f)

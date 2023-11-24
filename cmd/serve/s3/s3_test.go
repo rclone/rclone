@@ -113,7 +113,7 @@ func RunS3UnitTests(t *testing.T, name string, start servetest.StartFn) {
 	if *fstest.Verbose {
 		args = append(args, "-verbose")
 	}
-	remoteName := name + "test:"
+	remoteName := "serve" + name + ":"
 	args = append(args, "-remote", remoteName)
 	args = append(args, "-run", "^TestIntegration$")
 	args = append(args, "-list-retries", fmt.Sprint(*fstest.ListRetries))
