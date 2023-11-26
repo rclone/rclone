@@ -776,6 +776,31 @@ Properties:
 - Type:        bool
 - Default:     false
 
+#### --drive-show-all-gdocs
+
+Show all Google Docs including non-exportable ones in listings.
+
+If you try a server side copy on a Google Form without this flag, you
+will get this error:
+
+    No export formats found for "application/vnd.google-apps.form"
+
+However adding this flag will allow the form to be server side copied.
+
+Note that rclone doesn't add extensions to the Google Docs file names
+in this mode.
+
+Do **not** use this flag when trying to download Google Docs - rclone
+will fail to download them.
+
+
+Properties:
+
+- Config:      show_all_gdocs
+- Env Var:     RCLONE_DRIVE_SHOW_ALL_GDOCS
+- Type:        bool
+- Default:     false
+
 #### --drive-skip-checksum-gphotos
 
 Skip checksums on Google photos and videos only.
@@ -1238,6 +1263,98 @@ Properties:
 - Type:        bool
 - Default:     true
 
+#### --drive-metadata-owner
+
+Control whether owner should be read or written in metadata.
+
+Owner is a standard part of the file metadata so is easy to read. But it
+isn't always desirable to set the owner from the metadata.
+
+Note that you can't set the owner on Shared Drives, and that setting
+ownership will generate an email to the new owner (this can't be
+disabled), and you can't transfer ownership to someone outside your
+organization.
+
+
+Properties:
+
+- Config:      metadata_owner
+- Env Var:     RCLONE_DRIVE_METADATA_OWNER
+- Type:        Bits
+- Default:     read
+- Examples:
+    - "off"
+        - Do not read or write the value
+    - "read"
+        - Read the value only
+    - "write"
+        - Write the value only
+    - "read,write"
+        - Read and Write the value.
+
+#### --drive-metadata-permissions
+
+Control whether permissions should be read or written in metadata.
+
+Reading permissions metadata from files can be done quickly, but it
+isn't always desirable to set the permissions from the metadata.
+
+Note that rclone drops any inherited permissions on Shared Drives and
+any owner permission on My Drives as these are duplicated in the owner
+metadata.
+
+
+Properties:
+
+- Config:      metadata_permissions
+- Env Var:     RCLONE_DRIVE_METADATA_PERMISSIONS
+- Type:        Bits
+- Default:     off
+- Examples:
+    - "off"
+        - Do not read or write the value
+    - "read"
+        - Read the value only
+    - "write"
+        - Write the value only
+    - "read,write"
+        - Read and Write the value.
+
+#### --drive-metadata-labels
+
+Control whether labels should be read or written in metadata.
+
+Reading labels metadata from files takes an extra API transaction and
+will slow down listings. It isn't always desirable to set the labels
+from the metadata.
+
+The format of labels is documented in the drive API documentation at
+https://developers.google.com/drive/api/reference/rest/v3/Label -
+rclone just provides a JSON dump of this format.
+
+When setting labels, the label and fields must already exist - rclone
+will not create them. This means that if you are transferring labels
+from two different accounts you will have to create the labels in
+advance and use the metadata mapper to translate the IDs between the
+two accounts.
+
+
+Properties:
+
+- Config:      metadata_labels
+- Env Var:     RCLONE_DRIVE_METADATA_LABELS
+- Type:        Bits
+- Default:     off
+- Examples:
+    - "off"
+        - Do not read or write the value
+    - "read"
+        - Read the value only
+    - "write"
+        - Write the value only
+    - "read,write"
+        - Read and Write the value.
+
 #### --drive-encoding
 
 The encoding for the backend.
@@ -1248,7 +1365,7 @@ Properties:
 
 - Config:      encoding
 - Env Var:     RCLONE_DRIVE_ENCODING
-- Type:        MultiEncoder
+- Type:        Encoding
 - Default:     InvalidUtf8
 
 #### --drive-env-auth
@@ -1268,6 +1385,29 @@ Properties:
         - Enter credentials in the next step.
     - "true"
         - Get GCP IAM credentials from the environment (env vars or IAM).
+
+### Metadata
+
+User metadata is stored in the properties field of the drive object.
+
+Here are the possible system metadata items for the drive backend.
+
+| Name | Help | Type | Example | Read Only |
+|------|------|------|---------|-----------|
+| btime | Time of file birth (creation) with mS accuracy. Note that this is only writable on fresh uploads - it can't be written for updates. | RFC 3339 | 2006-01-02T15:04:05.999Z07:00 | N |
+| content-type | The MIME type of the file. | string | text/plain | N |
+| copy-requires-writer-permission | Whether the options to copy, print, or download this file, should be disabled for readers and commenters. | boolean | true | N |
+| description | A short description of the file. | string | Contract for signing | N |
+| folder-color-rgb | The color for a folder or a shortcut to a folder as an RGB hex string. | string | 881133 | N |
+| labels | Labels attached to this file in a JSON dump of Googled drive format. Enable with --drive-metadata-labels. | JSON | [] | N |
+| mtime | Time of last modification with mS accuracy. | RFC 3339 | 2006-01-02T15:04:05.999Z07:00 | N |
+| owner | The owner of the file. Usually an email address. Enable with --drive-metadata-owner. | string | user@example.com | N |
+| permissions | Permissions in a JSON dump of Google drive format. On shared drives these will only be present if they aren't inherited. Enable with --drive-metadata-permissions. | JSON | {} | N |
+| starred | Whether the user has starred the file. | boolean | false | N |
+| viewed-by-me | Whether the file has been viewed by this user. | boolean | true | **Y** |
+| writers-can-share | Whether users with only writer permission can modify the file's permissions. Not populated for items in shared drives. | boolean | false | N |
+
+See the [metadata](/docs/#metadata) docs for more info.
 
 ## Backend commands
 

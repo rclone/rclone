@@ -189,7 +189,7 @@ Properties:
 
 - Config:      encoding
 - Env Var:     RCLONE_QUATRIX_ENCODING
-- Type:        MultiEncoder
+- Type:        Encoding
 - Default:     Slash,BackSlash,Del,Ctl,InvalidUtf8,Dot
 
 #### --quatrix-effective-upload-time

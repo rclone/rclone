@@ -63,11 +63,11 @@ Flags for anything which can Copy a file.
   -c, --checksum                                    Check for changes with size & checksum (if available, or fallback to size only).
       --compare-dest stringArray                    Include additional comma separated server-side paths during comparison
       --copy-dest stringArray                       Implies --compare-dest but also copies files from paths into destination
-      --cutoff-mode string                          Mode to stop transfers when reaching the max transfer limit HARD|SOFT|CAUTIOUS (default "HARD")
+      --cutoff-mode HARD|SOFT|CAUTIOUS              Mode to stop transfers when reaching the max transfer limit HARD|SOFT|CAUTIOUS (default HARD)
       --ignore-case-sync                            Ignore case when synchronizing
       --ignore-checksum                             Skip post copy check of checksums
       --ignore-existing                             Skip all files that exist on destination
-      --ignore-size                                 Ignore size when skipping use mod-time or checksum
+      --ignore-size                                 Ignore size when skipping use modtime or checksum
   -I, --ignore-times                                Don't skip files that match size and time - transfer all files
       --immutable                                   Do not modify files, fail if existing files have been modified
       --inplace                                     Download directly to destination file instead of atomic download to temp/rename
@@ -82,11 +82,12 @@ Flags for anything which can Copy a file.
       --multi-thread-write-buffer-size SizeSuffix   In memory buffer size for writing when in multi-thread mode (default 128Ki)
       --no-check-dest                               Don't check the destination, copy regardless
       --no-traverse                                 Don't traverse destination file system on copy
-      --no-update-modtime                           Don't update destination mod-time if files identical
+      --no-update-modtime                           Don't update destination modtime if files identical
       --order-by string                             Instructions on how to order the transfers, e.g. 'size,descending'
+      --partial-suffix string                       Add partial-suffix to temporary file name when --inplace is not used (default ".partial")
       --refresh-times                               Refresh the modtime of remote files
       --server-side-across-configs                  Allow server-side operations (e.g. copy) to work across different configs
-      --size-only                                   Skip based on size only, not mod-time or checksum
+      --size-only                                   Skip based on size only, not modtime or checksum
       --streaming-upload-cutoff SizeSuffix          Cutoff for switching to chunked upload if file size is unknown, upload starts after reaching cutoff or when file ends (default 100Ki)
   -u, --update                                      Skip files that are newer on the destination
 ```

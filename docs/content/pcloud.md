@@ -225,7 +225,7 @@ Properties:
 
 - Config:      encoding
 - Env Var:     RCLONE_PCLOUD_ENCODING
-- Type:        MultiEncoder
+- Type:        Encoding
 - Default:     Slash,BackSlash,Del,Ctl,InvalidUtf8,Dot
 
 #### --pcloud-root-folder-id

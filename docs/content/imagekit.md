@@ -167,6 +167,17 @@ Properties:
 - Type:        bool
 - Default:     false
 
+#### --imagekit-upload-tags
+
+Tags to add to the uploaded files, e.g. "tag1,tag2".
+
+Properties:
+
+- Config:      upload_tags
+- Env Var:     RCLONE_IMAGEKIT_UPLOAD_TAGS
+- Type:        string
+- Required:    false
+
 #### --imagekit-encoding
 
 The encoding for the backend.
@@ -188,11 +199,11 @@ Here are the possible system metadata items for the imagekit backend.
 
 | Name | Help | Type | Example | Read Only |
 |------|------|------|---------|-----------|
-| aws-tags | AI generated tags by AWS Rekognition associated with the file | string | tag1,tag2 | **Y** |
+| aws-tags | AI generated tags by AWS Rekognition associated with the image | string | tag1,tag2 | **Y** |
 | btime | Time of file birth (creation) read from Last-Modified header | RFC 3339 | 2006-01-02T15:04:05.999999999Z07:00 | **Y** |
 | custom-coordinates | Custom coordinates of the file | string | 0,0,100,100 | **Y** |
 | file-type | Type of the file | string | image | **Y** |
-| google-tags | AI generated tags by Google Cloud Vision associated with the file | string | tag1,tag2 | **Y** |
+| google-tags | AI generated tags by Google Cloud Vision associated with the image | string | tag1,tag2 | **Y** |
 | has-alpha | Whether the image has alpha channel or not | bool |  | **Y** |
 | height | Height of the image or video in pixels | int |  | **Y** |
 | is-private-file | Whether the file is private or not | bool |  | **Y** |

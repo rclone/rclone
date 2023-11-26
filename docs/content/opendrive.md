@@ -145,7 +145,7 @@ Properties:
 
 - Config:      encoding
 - Env Var:     RCLONE_OPENDRIVE_ENCODING
-- Type:        MultiEncoder
+- Type:        Encoding
 - Default:     Slash,LtGt,DoubleQuote,Colon,Question,Asterisk,Pipe,BackSlash,LeftSpace,LeftCrLfHtVt,RightSpace,RightCrLfHtVt,InvalidUtf8,Dot
 
 #### --opendrive-chunk-size

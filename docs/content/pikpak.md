@@ -237,7 +237,7 @@ Properties:
 
 - Config:      encoding
 - Env Var:     RCLONE_PIKPAK_ENCODING
-- Type:        MultiEncoder
+- Type:        Encoding
 - Default:     Slash,LtGt,DoubleQuote,Colon,Question,Asterisk,Pipe,BackSlash,Ctl,LeftSpace,RightSpace,RightPeriod,InvalidUtf8,Dot
 
 ## Backend commands

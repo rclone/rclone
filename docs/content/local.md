@@ -451,6 +451,11 @@ time we:
 - Only checksum the size that stat gave
 - Don't update the stat info for the file
 
+**NB** do not use this flag on a Windows Volume Shadow (VSS). For some
+unknown reason, files in a VSS sometimes show different sizes from the
+directory listing (where the initial stat value comes from on Windows)
+and when stat is called on them directly. Other copy tools always use
+the direct stat value and setting this flag will disable that.
 
 
 Properties:
@@ -561,7 +566,7 @@ Properties:
 
 - Config:      encoding
 - Env Var:     RCLONE_LOCAL_ENCODING
-- Type:        MultiEncoder
+- Type:        Encoding
 - Default:     Slash,Dot
 
 ### Metadata

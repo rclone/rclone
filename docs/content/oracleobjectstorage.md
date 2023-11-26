@@ -552,7 +552,7 @@ Properties:
 
 - Config:      encoding
 - Env Var:     RCLONE_OOS_ENCODING
-- Type:        MultiEncoder
+- Type:        Encoding
 - Default:     Slash,InvalidUtf8,Dot
 
 #### --oos-leave-parts-on-error

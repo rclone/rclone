@@ -12,7 +12,6 @@ Update the rclone binary.
 
 ## Synopsis
 
-
 This command downloads the latest release of rclone and replaces the
 currently running binary. The download is verified with a hashsum and
 cryptographically signed signature; see [the release signing

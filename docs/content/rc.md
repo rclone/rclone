@@ -1173,6 +1173,56 @@ See the [about](/commands/rclone_about/) command for more information on the abo
 
 **Authentication is required for this call.**
 
+### operations/check: check the source and destination are the same {#operations-check}
+
+Checks the files in the source and destination match.  It compares
+sizes and hashes and logs a report of files that don't
+match.  It doesn't alter the source or destination.
+
+This takes the following parameters:
+
+- srcFs - a remote name string e.g. "drive:" for the source, "/" for local filesystem
+- dstFs - a remote name string e.g. "drive2:" for the destination, "/" for local filesystem
+- download - check by downloading rather than with hash
+- checkFileHash - treat checkFileFs:checkFileRemote as a SUM file with hashes of given type
+- checkFileFs - treat checkFileFs:checkFileRemote as a SUM file with hashes of given type
+- checkFileRemote - treat checkFileFs:checkFileRemote as a SUM file with hashes of given type
+- oneWay -  check one way only, source files must exist on remote
+- combined - make a combined report of changes (default false)
+- missingOnSrc - report all files missing from the source (default true)
+- missingOnDst - report all files missing from the destination (default true)
+- match - report all matching files (default false)
+- differ - report all non-matching files (default true)
+- error - report all files with errors (hashing or reading) (default true)
+
+If you supply the download flag, it will download the data from
+both remotes and check them against each other on the fly.  This can
+be useful for remotes that don't support hashes or if you really want
+to check all the data.
+
+If you supply the size-only global flag, it will only compare the sizes not
+the hashes as well.  Use this for a quick check.
+
+If you supply the checkFileHash option with a valid hash name, the
+checkFileFs:checkFileRemote must point to a text file in the SUM
+format. This treats the checksum file as the source and dstFs as the
+destination. Note that srcFs is not used and should not be supplied in
+this case.
+
+Returns:
+
+- success - true if no error, false otherwise
+- status - textual summary of check, OK or text string
+- hashType - hash used in check, may be missing
+- combined - array of strings of combined report of changes
+- missingOnSrc - array of strings of all files missing from the source
+- missingOnDst - array of strings of all files missing from the destination
+- match - array of strings of all matching files
+- differ - array of strings of all non-matching files
+- error - array of strings of all files with errors (hashing or reading)
+
+**Authentication is required for this call.**
+
 ### operations/cleanup: Remove trashed files in the remote or path {#operations-cleanup}
 
 This takes the following parameters:

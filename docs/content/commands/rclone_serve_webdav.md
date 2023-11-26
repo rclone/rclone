@@ -126,6 +126,17 @@ to be used within the template to server pages:
 |-- .Size     | Size in Bytes of the entry. |
 |-- .ModTime  | The UTC timestamp of an entry. |
 
+The server also makes the following functions available so that they can be used within the
+template. These functions help extend the options for dynamic rendering of HTML. They can
+be used to render HTML based on specific conditions.
+
+| Function   | Description |
+| :---------- | :---------- |
+| afterEpoch  | Returns the time since the epoch for the given time. |
+| contains    | Checks whether a given substring is present or not in a given string. |
+| hasPrefix   | Checks whether the given string begins with the specified prefix. |
+| hasSuffix   | Checks whether the given string end with the specified suffix. |
+
 ### Authentication
 
 By default this will serve files without needing a login.
@@ -152,7 +163,6 @@ The password file can be updated while rclone is running.
 Use `--realm` to set the authentication realm.
 
 Use `--salt` to change the password hashing salt from the default.
-
 ## VFS - Virtual File System
 
 This command uses the VFS layer. This adapts the cloud storage objects
@@ -616,6 +626,7 @@ rclone serve webdav remote:path [flags]
       --vfs-read-chunk-size SizeSuffix         Read the source objects in chunks (default 128Mi)
       --vfs-read-chunk-size-limit SizeSuffix   If greater than --vfs-read-chunk-size, double the chunk size after each chunk read, until the limit is reached ('off' is unlimited) (default off)
       --vfs-read-wait Duration                 Time to wait for in-sequence read before seeking (default 20ms)
+      --vfs-refresh                            Refreshes the directory cache recursively on start
       --vfs-used-is-size rclone size           Use the rclone size algorithm for Used size
       --vfs-write-back Duration                Time to writeback files after last use when using cache (default 5s)
       --vfs-write-wait Duration                Time to wait for in-sequence write before giving error (default 1s)

@@ -246,7 +246,7 @@ Properties:
 
 - Config:      encoding
 - Env Var:     RCLONE_PROTONDRIVE_ENCODING
-- Type:        MultiEncoder
+- Type:        Encoding
 - Default:     Slash,LeftSpace,RightSpace,InvalidUtf8,Dot
 
 #### --protondrive-original-file-size

@@ -765,7 +765,7 @@ Properties:
 
 - Config:      encoding
 - Env Var:     RCLONE_AZUREBLOB_ENCODING
-- Type:        MultiEncoder
+- Type:        Encoding
 - Default:     Slash,BackSlash,Del,Ctl,RightPeriod,InvalidUtf8
 
 #### --azureblob-public-access

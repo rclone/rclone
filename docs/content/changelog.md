@@ -5,6 +5,108 @@ description: "Rclone Changelog"
 
 # Changelog
 
+## v1.65.0 - 2023-11-26
+
+[See commits](https://github.com/rclone/rclone/compare/v1.64.0...v1.65.0)
+
+* New backends
+    * Azure Files (karan, moongdal, Nick Craig-Wood)
+    * ImageKit (Abhinav Dhiman)
+    * Linkbox (viktor, Nick Craig-Wood)
+* New commands
+    * `serve s3`: Let rclone act as an S3 compatible server (Mikubill, Artur Neumann, Saw-jan, Nick Craig-Wood)
+    * `nfsmount`: mount command to provide mount mechanism on macOS without FUSE (Saleh Dindar)
+    * `serve nfs`: to serve a remote for use by `nfsmount` (Saleh Dindar)
+* New Features
+    * install.sh: Clean up temp files in install script (Jacob Hands)
+    * build
+        * Update all dependencies (Nick Craig-Wood)
+        * Refactor version info and icon resource handling on windows (albertony)
+    * doc updates (albertony, alfish2000, asdffdsazqqq, Dimitri Papadopoulos, Herby Gillot, Joda Stößer, Manoj Ghosh, Nick Craig-Wood)
+    * Implement `--metadata-mapper` to transform metatadata with a user supplied program (Nick Craig-Wood)
+    * Add `ChunkWriterDoesntSeek` feature flag and set it for b2 (Nick Craig-Wood)
+    * lib/http: Export basic go string functions for use in `--template` (Gabriel Espinoza)
+    * makefile: Use POSIX compatible install arguments (Mina Galić)
+    * operations
+        * Use less memory when doing multithread uploads (Nick Craig-Wood)
+        * Implement `--partial-suffix` to control extension of temporary file names (Volodymyr)
+    * rc
+        * Add `operations/check` to the rc API (Nick Craig-Wood)
+        * Always report an error as JSON (Nick Craig-Wood)
+        * Set `Last-Modified` header for files served by `--rc-serve` (Nikita Shoshin)
+    * size: Dont show duplicate object count when less than 1k (albertony)
+* Bug Fixes
+    * fshttp: Fix `--contimeout` being ignored (你知道未来吗)
+    * march: Fix excessive parallelism when using `--no-traverse` (Nick Craig-Wood)
+    * ncdu: Fix crash when re-entering changed directory after rescan (Nick Craig-Wood)
+    * operations
+        * Fix overwrite of destination when multi-thread transfer fails (Nick Craig-Wood)
+        * Fix invalid UTF-8 when truncating file names when not using `--inplace` (Nick Craig-Wood)
+    * serve dnla: Fix crash on graceful exit (wuxingzhong)
+* Mount
+    * Disable mount for freebsd and alias cmount as mount on that platform (Nick Craig-Wood)
+* VFS
+    * Add `--vfs-refresh` flag to read all the directories on start (Beyond Meat)
+    * Implement Name() method in WriteFileHandle and ReadFileHandle (Saleh Dindar)
+    * Add go-billy dependency and make sure vfs.Handle implements billy.File (Saleh Dindar)
+    * Error out early if can't upload 0 length file (Nick Craig-Wood)
+* Local
+    * Fix copying from Windows Volume Shadows (Nick Craig-Wood)
+* Azure Blob
+    * Add support for cold tier (Ivan Yanitra)
+* B2
+    * Implement "rclone backend lifecycle" to read and set bucket lifecycles (Nick Craig-Wood)
+    * Implement `--b2-lifecycle` to control lifecycle when creating buckets (Nick Craig-Wood)
+    * Fix listing all buckets when not needed (Nick Craig-Wood)
+    * Fix multi-thread upload with copyto going to wrong name (Nick Craig-Wood)
+    * Fix server side chunked copy when file size was exactly `--b2-copy-cutoff` (Nick Craig-Wood)
+    * Fix streaming chunked files an exact multiple of chunk size (Nick Craig-Wood)
+* Box
+    * Filter more EventIDs when polling (David Sze)
+    * Add more logging for polling (David Sze)
+    * Fix performance problem reading metadata for single files (Nick Craig-Wood)
+* Drive
+    * Add read/write metadata support (Nick Craig-Wood)
+    * Add support for SHA-1 and SHA-256 checksums (rinsuki)
+    * Add `--drive-show-all-gdocs` to allow unexportable gdocs to be server side copied (Nick Craig-Wood)
+    * Add a note that `--drive-scope` accepts comma-separated list of scopes (Keigo Imai)
+    * Fix error updating created time metadata on existing object (Nick Craig-Wood)
+    * Fix integration tests by enabling metadata support from the context (Nick Craig-Wood)
+* Dropbox
+    * Factor batcher into lib/batcher (Nick Craig-Wood)
+    * Fix missing encoding for rclone purge (Nick Craig-Wood)
+* Google Cloud Storage
+    * Fix 400 Bad request errors when using multi-thread copy (Nick Craig-Wood)
+* Googlephotos
+    * Implement batcher for uploads (Nick Craig-Wood)
+* Hdfs
+    * Added support for list of namenodes in hdfs remote config (Tayo-pasedaRJ)
+* HTTP
+    * Implement set backend command to update running backend (Nick Craig-Wood)
+    * Enable methods used with WebDAV (Alen Šiljak)
+* Jottacloud
+    * Add support for reading and writing metadata (albertony)
+* Onedrive
+    * Implement ListR method which gives `--fast-list` support (Nick Craig-Wood)
+        * This must be enabled with the `--onedrive-delta` flag
+* Quatrix
+    * Add partial upload support (Oksana Zhykina)
+    * Overwrite files on conflict during server-side move (Oksana Zhykina)
+* S3
+    * Add Linode provider (Nick Craig-Wood)
+    * Add docs on how to add a new provider (Nick Craig-Wood)
+    * Fix no error being returned when creating a bucket we don't own (Nick Craig-Wood)
+    * Emit a debug message if anonymous credentials are in use (Nick Craig-Wood)
+    * Add `--s3-disable-multipart-uploads` flag (Nick Craig-Wood)
+    * Detect looping when using gcs and versions (Nick Craig-Wood)
+* SFTP
+    * Implement `--sftp-copy-is-hardlink` to server side copy as hardlink (Nick Craig-Wood)
+* Smb
+    * Fix incorrect `about` size by switching to `github.com/cloudsoda/go-smb2` fork (Nick Craig-Wood)
+    * Fix modtime of multithread uploads by setting PartialUploads (Nick Craig-Wood)
+* WebDAV
+    * Added an rclone vendor to work with `rclone serve webdav` (Adithya Kumar)
+
 ## v1.64.2 - 2023-10-19
 
 [See commits](https://github.com/rclone/rclone/compare/v1.64.1...v1.64.2)

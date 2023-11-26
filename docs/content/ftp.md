@@ -443,7 +443,7 @@ Properties:
 
 - Config:      encoding
 - Env Var:     RCLONE_FTP_ENCODING
-- Type:        MultiEncoder
+- Type:        Encoding
 - Default:     Slash,Del,Ctl,RightSpace,Dot
 - Examples:
     - "Asterisk,Ctl,Dot,Slash"
