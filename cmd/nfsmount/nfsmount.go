@@ -1,29 +1,38 @@
-//go:build darwin && !cmount
-// +build darwin,!cmount
+//go:build unix
+// +build unix
 
 // Package nfsmount implements mounting functionality using serve nfs command
 //
-// NFS mount is only needed for macOS since it has no
-// support for FUSE-based file systems
+// This can potentially work on all unix like systems which can mount NFS.
 package nfsmount
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"net"
 	"os/exec"
 	"runtime"
-	"strings"
 
 	"github.com/rclone/rclone/cmd/mountlib"
 	"github.com/rclone/rclone/cmd/serve/nfs"
+	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/config/flags"
 	"github.com/rclone/rclone/vfs"
 )
 
+var (
+	sudo = false
+)
+
 func init() {
-	cmd := mountlib.NewMountCommand("mount", false, mount)
-	cmd.Aliases = append(cmd.Aliases, "nfsmount")
-	mountlib.AddRc("nfsmount", mount)
+	name := "nfsmount"
+	cmd := mountlib.NewMountCommand(name, false, mount)
+	cmd.Annotations["versionIntroduced"] = "v1.65"
+	cmd.Annotations["status"] = "Experimental"
+	mountlib.AddRc(name, mount)
+	cmdFlags := cmd.Flags()
+	flags.BoolVarP(cmdFlags, &sudo, "sudo", "", sudo, "Use sudo to run the mount command as root.", "")
 }
 
 func mount(VFS *vfs.VFS, mountpoint string, opt *mountlib.Options) (asyncerrors <-chan error, unmount func() error, err error) {
@@ -42,24 +51,46 @@ func mount(VFS *vfs.VFS, mountpoint string, opt *mountlib.Options) (asyncerrors 
 		err = fmt.Errorf("cannot find port number in %s", s.Addr().String())
 		return
 	}
-	optionsString := strings.Join(opt.ExtraOptions, ",")
-	err = exec.Command("mount", fmt.Sprintf("-oport=%s,mountport=%s,%s", port, port, optionsString), "localhost:", mountpoint).Run()
+
+	// Options
+	options := []string{
+		"-o", fmt.Sprintf("port=%s", port),
+		"-o", fmt.Sprintf("mountport=%s", port),
+	}
+	for _, option := range opt.ExtraOptions {
+		options = append(options, "-o", option)
+	}
+	options = append(options, opt.ExtraFlags...)
+
+	cmd := []string{}
+	if sudo {
+		cmd = append(cmd, "sudo")
+	}
+	cmd = append(cmd, "mount")
+	cmd = append(cmd, options...)
+	cmd = append(cmd, "localhost:", mountpoint)
+	fs.Debugf(nil, "Running mount command: %q", cmd)
+
+	out, err := exec.Command(cmd[0], cmd[1:]...).CombinedOutput()
 	if err != nil {
-		err = fmt.Errorf("failed to mount NFS volume %e", err)
+		out = bytes.TrimSpace(out)
+		err = fmt.Errorf("%s: failed to mount NFS volume: %v", out, err)
 		return
 	}
 	asyncerrors = errChan
 	unmount = func() error {
 		var umountErr error
+		var out []byte
 		if runtime.GOOS == "darwin" {
-			umountErr = exec.Command("diskutil", "umount", "force", mountpoint).Run()
+			out, umountErr = exec.Command("diskutil", "umount", "force", mountpoint).CombinedOutput()
 		} else {
-			umountErr = exec.Command("umount", "-f", mountpoint).Run()
+			out, umountErr = exec.Command("umount", "-f", mountpoint).CombinedOutput()
 		}
 		shutdownErr := s.Shutdown()
 		VFS.Shutdown()
 		if umountErr != nil {
-			return fmt.Errorf("failed to umount the NFS volume %e", umountErr)
+			out = bytes.TrimSpace(out)
+			return fmt.Errorf("%s: failed to umount the NFS volume %e", out, umountErr)
 		} else if shutdownErr != nil {
 			return fmt.Errorf("failed to shutdown NFS server: %e", shutdownErr)
 		}

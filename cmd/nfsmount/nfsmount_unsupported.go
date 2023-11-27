@@ -1,8 +1,8 @@
 // Build for nfsmount for unsupported platforms to stop go complaining
 // about "no buildable Go source files "
 
-//go:build !darwin || cmount
-// +build !darwin cmount
+//go:build !unix
+// +build !unix
 
-// Package nfsmount implements mount command using NFS, not needed on most platforms
+// Package nfsmount implements mount command using NFS.
 package nfsmount
