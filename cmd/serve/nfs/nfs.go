@@ -92,6 +92,7 @@ This feature is only available on Unix platforms.
 	Annotations: map[string]string{
 		"versionIntroduced": "v1.65",
 		"groups":            "Filter",
+		"status":            "Experimental",
 	},
 	Run: Run,
 }
