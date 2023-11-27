@@ -212,15 +212,18 @@ func (f *Fs) stat(ctx context.Context, path string) (fsp FilesystemPath, err err
 	return fsp, err
 }
 
-func (f *Fs) update(ctx context.Context, path string, fields map[string]any) (node FilesystemNode, err error) {
+func (f *Fs) update(ctx context.Context, path string, fields fs.Metadata) (node FilesystemNode, err error) {
 	var params = make(url.Values)
 	params.Set("action", "update")
 
-	if created, ok := fields["created"]; ok {
-		params.Set("created", created.(time.Time).Format(time.RFC3339Nano))
+	if modified, ok := fields["mtime"]; ok {
+		params.Set("modified", modified)
 	}
-	if modified, ok := fields["modified"]; ok {
-		params.Set("modified", modified.(time.Time).Format(time.RFC3339Nano))
+	if created, ok := fields["btime"]; ok {
+		params.Set("created", created)
+	}
+	if mode, ok := fields["mode"]; ok {
+		params.Set("mode", mode)
 	}
 
 	resp, err := f.srv.CallJSON(
@@ -264,8 +267,8 @@ func (f *Fs) rename(ctx context.Context, src fs.Fs, from, to string) (err error)
 	if !ok {
 		// This is not a pixeldrain FS, can't move
 		return errIncompatibleSourceFS
-	} else if srcFs.opt.BucketID != f.opt.BucketID {
-		// Path is not in the same bucket, can't move
+	} else if srcFs.opt.DirectoryID != f.opt.DirectoryID {
+		// Path is not in the same root dir, can't move
 		return errIncompatibleSourceFS
 	}
 
@@ -325,7 +328,7 @@ func (f *Fs) userInfo(ctx context.Context) (user UserInfo, err error) {
 			// The default RootURL points at the filesystem endpoint. We can't
 			// use that to request user information. So here we override it to
 			// the user endpoint
-			RootURL: f.opt.APIURL + userEndpoint,
+			RootURL: f.opt.APIURL + "/user",
 		},
 		nil,
 		&user,

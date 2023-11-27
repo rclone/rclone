@@ -18,10 +18,7 @@ import (
 	"github.com/rclone/rclone/lib/rest"
 )
 
-const (
-	filesystemEndpoint = "/filesystem/"
-	userEndpoint       = "/user"
-)
+const timeFormat = time.RFC3339Nano
 
 // Register with Fs
 func init() {
@@ -32,11 +29,11 @@ func init() {
 		Config:      nil,
 		Options: []fs.Option{{
 			Name: "api_key",
-			Help: "API key for your pixeldrain account\n" +
+			Help: "API key for your pixeldrain account.\n" +
 				"Found on https://pixeldrain.com/user/api_keys.",
 			Sensitive: true,
 		}, {
-			Name: "bucket_id",
+			Name: "directory_id",
 			Help: "Root of the filesystem to use. Set to 'me' to use your personal filesystem.\n" +
 				"Set to a shared directory ID to use a shared directory.",
 			Default: "me",
@@ -48,14 +45,34 @@ func init() {
 			Advanced: true,
 			Required: true,
 		}},
+		MetadataInfo: &fs.MetadataInfo{
+			System: map[string]fs.MetadataHelp{
+				"mode": {
+					Help:    "File mode",
+					Type:    "octal, unix style",
+					Example: "755",
+				},
+				"mtime": {
+					Help:    "Time of last modification",
+					Type:    "RFC 3339",
+					Example: timeFormat,
+				},
+				"btime": {
+					Help:    "Time of file birth (creation)",
+					Type:    "RFC 3339",
+					Example: timeFormat,
+				},
+			},
+			Help: "Pixeldrain supports file modes and creation times.",
+		},
 	})
 }
 
 // Options defines the configuration for this backend
 type Options struct {
-	APIKey   string `config:"api_key"`
-	BucketID string `config:"bucket_id"`
-	APIURL   string `config:"api_url"`
+	APIKey      string `config:"api_key"`
+	DirectoryID string `config:"directory_id"`
+	APIURL      string `config:"api_url"`
 }
 
 // Fs represents a remote box
@@ -97,20 +114,23 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	f.features = (&fs.Features{
 		ReadMimeType:            true,
 		CanHaveEmptyDirectories: true,
+		ReadMetadata:            true,
+		WriteMetadata:           true,
 	}).Fill(ctx, f)
 
 	// Set the path prefix. This is the path to the root directory on the server
-	f.pathPrefix = opt.BucketID
+	f.pathPrefix = opt.DirectoryID
 	if root != "" {
 		f.pathPrefix += "/" + root
 	}
 
-	// The root URL equates to https://pixeldrain.com/api/filesystem during
+	// The root URL equates to https://pixeldrain.com/api/filesystem/ during
 	// normal operation. API handlers need to manually add the pathPrefix to
-	// each request
-	f.srv.SetRoot(opt.APIURL + filesystemEndpoint)
+	// each request. The trailing slash here is intentional, since rclone does
+	// not use preceding slashes in its paths
+	f.srv.SetRoot(opt.APIURL + "/filesystem/")
 
-	// If using an accessToken, set the Authorization header
+	// If using an APIKey, set the Authorization header
 	if len(opt.APIKey) > 1 {
 		f.srv.SetUserPass("", opt.APIKey)
 
@@ -123,12 +143,12 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		f.loggedIn = true
 
 		fs.Infof(nil,
-			"Logged in as '%s', subscription '%s', storage limit %d\n",
+			"Logged in as '%s', subscription '%s', storage limit %d",
 			user.Username, user.Subscription.Name, user.Subscription.StorageSpace,
 		)
 	}
 
-	if !f.loggedIn && opt.BucketID == "me" {
+	if !f.loggedIn && opt.DirectoryID == "me" {
 		return nil, errors.New("authentication required: the 'me' directory can only be accessed while logged in")
 	}
 
@@ -210,11 +230,22 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 		return nil, fmt.Errorf("failed to put object: %w", err)
 	}
 
-	// Can't set modtime in the same request
-	fsp, err := f.update(
-		ctx, src.Remote(),
-		map[string]any{"modified": src.ModTime(ctx)},
-	)
+	meta, err := fs.GetMetadataOptions(ctx, f, src, options)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get object metadata")
+	}
+	if meta == nil {
+		meta = make(fs.Metadata)
+	}
+
+	// Overwrite the mtime if it was not already set in the metadata
+	if _, ok := meta["mtime"]; !ok {
+		meta["mtime"] = src.ModTime(ctx).Format(timeFormat)
+	}
+
+	// Can't set modtime in the same request as the original upload. So we send
+	// this followup request
+	fsp, err := f.update(ctx, src.Remote(), meta)
 	if err != nil {
 		return nil, err
 	}
@@ -377,7 +408,7 @@ var _ fs.Object = (*Object)(nil)
 
 // SetModTime sets the modification time of the local fs object
 func (o *Object) SetModTime(ctx context.Context, modTime time.Time) (err error) {
-	_, err = o.fs.update(ctx, o.base.Path, map[string]any{"modified": modTime})
+	_, err = o.fs.update(ctx, o.base.Path, fs.Metadata{"mtime": modTime.Format(timeFormat)})
 	if err == nil {
 		o.base.Modified = modTime
 	}
@@ -469,4 +500,17 @@ var _ fs.MimeTyper = (*Object)(nil)
 
 func (o *Object) MimeType(ctx context.Context) string {
 	return o.base.FileType
+}
+
+// =========================================
+// Implementation of fs.Metadataer interface
+// =========================================
+var _ fs.Metadataer = (*Object)(nil)
+
+func (o *Object) Metadata(ctx context.Context) (fs.Metadata, error) {
+	return fs.Metadata{
+		"mode":  o.base.ModeOctal,
+		"mtime": o.base.Modified.Format(timeFormat),
+		"btime": o.base.Created.Format(timeFormat),
+	}, nil
 }
