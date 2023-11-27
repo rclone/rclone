@@ -521,6 +521,7 @@ upon backend-specific capabilities.
 | Oracle Object Storage        | No    | Yes  | No   | No      | Yes     | Yes   | Yes          | Yes               | No           | No    | No       |
 | pCloud                       | Yes   | Yes  | Yes  | Yes     | Yes     | No    | No           | No                | Yes          | Yes   | Yes      |
 | PikPak                       | Yes   | Yes  | Yes  | Yes     | Yes     | No    | No           | No                | Yes          | Yes   | Yes      |
+| Pixeldrain                   | Yes   | No   | Yes  | Yes     | No      | No    | No           | No                | Yes          | Yes   | Yes      |
 | premiumize.me                | Yes   | No   | Yes  | Yes     | No      | No    | No           | No                | Yes          | Yes   | Yes      |
 | put.io                       | Yes   | No   | Yes  | Yes     | Yes     | No    | Yes          | No                | No           | Yes   | Yes      |
 | Proton Drive                 | Yes   | No   | Yes  | Yes     | Yes     | No    | No           | No                | No           | Yes   | Yes      |

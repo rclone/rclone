@@ -8,6 +8,8 @@ import (
 	"fmt"
 	"io"
 	"path"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/rclone/rclone/fs"
@@ -377,6 +379,24 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 		return fs.ErrorDirExists
 	}
 	return err
+}
+
+// ===========================================
+// Implementation of fs.PublicLinker interface
+// ===========================================
+var _ fs.PublicLinker = (*Fs)(nil)
+
+// PublicLink generates a public link to the remote path (usually readable by anyone)
+func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, unlink bool) (string, error) {
+	fsn, err := f.update(ctx, remote, fs.Metadata{"shared": strconv.FormatBool(!unlink)})
+	if err != nil {
+		return "", err
+	}
+	if fsn.ID != "" {
+		return strings.Replace(f.opt.APIURL, "/api", "/d/", 1) + fsn.ID, nil
+	} else {
+		return "", nil
+	}
 }
 
 // ======================================

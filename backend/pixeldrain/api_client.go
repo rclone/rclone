@@ -225,6 +225,9 @@ func (f *Fs) update(ctx context.Context, path string, fields fs.Metadata) (node 
 	if mode, ok := fields["mode"]; ok {
 		params.Set("mode", mode)
 	}
+	if shared, ok := fields["shared"]; ok {
+		params.Set("shared", shared)
+	}
 
 	resp, err := f.srv.CallJSON(
 		ctx,
