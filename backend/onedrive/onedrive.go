@@ -1241,10 +1241,14 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 	}
 	err = f.listAll(ctx, directoryID, false, false, func(info *api.Item) error {
 		entry, err := f.itemToDirEntry(ctx, dir, info)
-		if err == nil {
-			entries = append(entries, entry)
+		if err != nil {
+			return err
 		}
-		return err
+		if entry == nil {
+			return nil
+		}
+		entries = append(entries, entry)
+		return nil
 	})
 	if err != nil {
 		return nil, err
@@ -1338,6 +1342,9 @@ func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (
 		entry, err := f.itemToDirEntry(ctx, parentPath, info)
 		if err != nil {
 			return err
+		}
+		if entry == nil {
+			return nil
 		}
 		err = list.Add(entry)
 		if err != nil {
