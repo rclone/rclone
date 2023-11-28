@@ -399,13 +399,17 @@ func (o *Object) prepareUpload(ctx context.Context, src fs.ObjectInfo, options [
 func (o *Object) createMultipartUpload(ctx context.Context, putReq *objectstorage.PutObjectRequest) (
 	uploadID string, existingParts map[int]objectstorage.MultipartUploadPartSummary, err error) {
 	bucketName, bucketPath := o.split()
-	f := o.fs
-	if f.opt.AttemptResumeUpload {
+	err = o.fs.makeBucket(ctx, bucketName)
+	if err != nil {
+		fs.Errorf(o, "failed to create bucket: %v, err: %v", bucketName, err)
+		return uploadID, existingParts, err
+	}
+	if o.fs.opt.AttemptResumeUpload {
 		fs.Debugf(o, "attempting to resume upload for %v (if any)", o.remote)
 		resumeUploads, err := o.fs.findLatestMultipartUpload(ctx, bucketName, bucketPath)
 		if err == nil && len(resumeUploads) > 0 {
 			uploadID = *resumeUploads[0].UploadId
-			existingParts, err = f.listMultipartUploadParts(ctx, bucketName, bucketPath, uploadID)
+			existingParts, err = o.fs.listMultipartUploadParts(ctx, bucketName, bucketPath, uploadID)
 			if err == nil {
 				fs.Debugf(o, "resuming with existing upload id: %v", uploadID)
 				return uploadID, existingParts, err
