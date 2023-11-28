@@ -301,12 +301,12 @@ func (s *server) Wait() {
 
 // Close shuts the running server down
 func (s *server) Close() {
+	close(s.waitChan)
 	err := s.listener.Close()
 	if err != nil {
 		fs.Errorf(nil, "Error on closing SFTP server: %v", err)
 		return
 	}
-	close(s.waitChan)
 }
 
 func loadPrivateKey(keyPath string) (ssh.Signer, error) {

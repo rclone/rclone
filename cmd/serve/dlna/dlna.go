@@ -320,12 +320,12 @@ func (s *server) Wait() {
 }
 
 func (s *server) Close() {
+	close(s.waitChan)
 	err := s.HTTPConn.Close()
 	if err != nil {
 		fs.Errorf(s.f, "Error closing HTTP server: %v", err)
 		return
 	}
-	close(s.waitChan)
 }
 
 // Run SSDP (multicast for server discovery) on all interfaces.
