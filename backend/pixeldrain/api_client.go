@@ -1,7 +1,6 @@
 package pixeldrain
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -16,24 +15,30 @@ import (
 	"github.com/rclone/rclone/lib/rest"
 )
 
+// FilesystemPath is the object which is returned from the pixeldrain API when
+// running the stat command on a path. It includes the node information for all
+// the members of the path and for all the children of the requested directory.
 type FilesystemPath struct {
 	Path      []FilesystemNode `json:"path"`
 	BaseIndex int              `json:"base_index"`
 	Children  []FilesystemNode `json:"children"`
 }
 
+// Base returns the base node of the path, this is the node that the path points
+// to
 func (fsp *FilesystemPath) Base() FilesystemNode {
 	return fsp.Path[fsp.BaseIndex]
 }
 
-// FilesystemNode is the return value of the GET /filesystem/ API
+// FilesystemNode is a single node in the pixeldrain filesystem. Usually part of
+// a Path or Children slice. The Node is also returned as response from update
+// commands, if requested
 type FilesystemNode struct {
 	Type      string    `json:"type"`
 	Path      string    `json:"path"`
 	Name      string    `json:"name"`
 	Created   time.Time `json:"created"`
 	Modified  time.Time `json:"modified"`
-	ModeStr   string    `json:"mode_string"`
 	ModeOctal string    `json:"mode_octal"`
 
 	// File params
@@ -41,51 +46,32 @@ type FilesystemNode struct {
 	FileType  string `json:"file_type"`
 	SHA256Sum string `json:"sha256_sum"`
 
-	// Meta params
-	ID            string            `json:"id,omitempty"`
-	ReadPassword  string            `json:"read_password,omitempty"`
-	WritePassword string            `json:"write_password,omitempty"`
-	Properties    map[string]string `json:"properties,omitempty"`
+	// ID is only filled in when the file/directory is publicly shared
+	ID string `json:"id,omitempty"`
 }
 
 // UserInfo contains information about the logged in user
 type UserInfo struct {
-	Username            string            `json:"username"`
-	Email               string            `json:"email"`
-	Subscription        SubscriptionType  `json:"subscription"`
-	StorageSpaceUsed    int64             `json:"storage_space_used"`
-	IsAdmin             bool              `json:"is_admin"`
-	BalanceMicroEUR     int64             `json:"balance_micro_eur"`
-	Hotlinking          bool              `json:"hotlinking_enabled"`
-	MonthlyTransferCap  int64             `json:"monthly_transfer_cap"`
-	MonthlyTransferUsed int64             `json:"monthly_transfer_used"`
-	FileViewerBranding  map[string]string `json:"file_viewer_branding"`
-	FileEmbedDomains    string            `json:"file_embed_domains"`
-	SkipFileViewer      bool              `json:"skip_file_viewer"`
+	Username         string           `json:"username"`
+	Subscription     SubscriptionType `json:"subscription"`
+	StorageSpaceUsed int64            `json:"storage_space_used"`
 }
 
 // SubscriptionType contains information about a subscription type. It's not the
 // active subscription itself, only the properties of the subscription. Like the
 // perks and cost
 type SubscriptionType struct {
-	ID                  string `json:"id"`
-	Name                string `json:"name"`
-	Type                string `json:"type"`
-	FileSizeLimit       int64  `json:"file_size_limit"`
-	FileExpiryDays      int64  `json:"file_expiry_days"`
-	StorageSpace        int64  `json:"storage_space"`
-	PricePerTBStorage   int64  `json:"price_per_tb_storage"`
-	PricePerTBBandwidth int64  `json:"price_per_tb_bandwidth"`
-	MonthlyTransferCap  int64  `json:"monthly_transfer_cap"`
-	FileViewerBranding  bool   `json:"file_viewer_branding"`
+	Name         string `json:"name"`
+	StorageSpace int64  `json:"storage_space"`
 }
 
-type ApiError struct {
+// APIError is the error type returned by the pixeldrain API
+type APIError struct {
 	StatusCode string `json:"value"`
 	Message    string `json:"message"`
 }
 
-func (e ApiError) Error() string { return e.StatusCode }
+func (e APIError) Error() string { return e.StatusCode }
 
 // Generalized errors which are caught in our own handlers and translated to
 // more specific errors from the fs package.
@@ -96,14 +82,15 @@ var (
 )
 
 func apiErrorHandler(resp *http.Response) (err error) {
-	var buf = new(bytes.Buffer)
-	buf.ReadFrom(resp.Body)
-
-	// fmt.Printf("Response body: %s\n", buf.String())
-
-	var e ApiError
-	if err = json.NewDecoder(buf).Decode(&e); err != nil {
+	var e APIError
+	if err = json.NewDecoder(resp.Body).Decode(&e); err != nil {
 		return fmt.Errorf("failed to parse error json: %w", err)
+	}
+
+	// We close the body here so that the API handlers can be sure that the
+	// response body is not still open when an error was returned
+	if err = resp.Body.Close(); err != nil {
+		return fmt.Errorf("failed to close resp body: %w", err)
 	}
 
 	if e.StatusCode == "path_not_found" {
@@ -171,10 +158,10 @@ func (f *Fs) put(ctx context.Context, path string, body io.Reader, options []fs.
 		nil,
 		&node,
 	)
-	if resp != nil && resp.Body != nil {
-		resp.Body.Close()
+	if err != nil {
+		return node, err
 	}
-	return node, err
+	return node, resp.Body.Close()
 }
 
 func (f *Fs) read(ctx context.Context, path string, options []fs.OpenOption) (in io.ReadCloser, err error) {
@@ -184,9 +171,6 @@ func (f *Fs) read(ctx context.Context, path string, options []fs.OpenOption) (in
 		Options: options,
 	})
 	if err != nil {
-		if resp != nil && resp.Body != nil {
-			resp.Body.Close()
-		}
 		return nil, err
 	}
 	return resp.Body, err
@@ -206,10 +190,10 @@ func (f *Fs) stat(ctx context.Context, path string) (fsp FilesystemPath, err err
 		nil,
 		&fsp,
 	)
-	if resp != nil && resp.Body != nil {
-		resp.Body.Close()
+	if err != nil {
+		return fsp, err
 	}
-	return fsp, err
+	return fsp, resp.Body.Close()
 }
 
 func (f *Fs) update(ctx context.Context, path string, fields fs.Metadata) (node FilesystemNode, err error) {
@@ -239,14 +223,14 @@ func (f *Fs) update(ctx context.Context, path string, fields fs.Metadata) (node 
 		nil,
 		&node,
 	)
-	if resp != nil && resp.Body != nil {
-		resp.Body.Close()
+	if err != nil {
+		return node, err
 	}
-	return node, err
+	return node, resp.Body.Close()
 }
 
 func (f *Fs) mkdir(ctx context.Context, dir string) (err error) {
-	resp, err := f.srv.CallJSON(
+	_, err = f.srv.CallJSON(
 		ctx,
 		&rest.Opts{
 			Method:          "POST",
@@ -256,9 +240,6 @@ func (f *Fs) mkdir(ctx context.Context, dir string) (err error) {
 		},
 		nil, nil,
 	)
-	if resp != nil && resp.Body != nil {
-		resp.Body.Close()
-	}
 	return err
 }
 
@@ -275,7 +256,7 @@ func (f *Fs) rename(ctx context.Context, src fs.Fs, from, to string) (err error)
 		return errIncompatibleSourceFS
 	}
 
-	resp, err := f.srv.CallJSON(
+	_, err = f.srv.CallJSON(
 		ctx,
 		&rest.Opts{
 			Method: "POST",
@@ -294,20 +275,17 @@ func (f *Fs) rename(ctx context.Context, src fs.Fs, from, to string) (err error)
 		},
 		nil, nil,
 	)
-	if resp != nil && resp.Body != nil {
-		resp.Body.Close()
-	}
 	return err
 }
 
 func (f *Fs) delete(ctx context.Context, path string, recursive bool) (err error) {
-	var params url.Values = nil
+	var params url.Values
 	if recursive {
 		// Tell the server to recursively delete all child files
 		params = url.Values{"recursive": []string{"true"}}
 	}
 
-	resp, err := f.srv.CallJSON(
+	_, err = f.srv.CallJSON(
 		ctx,
 		&rest.Opts{
 			Method:     "DELETE",
@@ -317,9 +295,6 @@ func (f *Fs) delete(ctx context.Context, path string, recursive bool) (err error
 		},
 		nil, nil,
 	)
-	if resp != nil && resp.Body != nil {
-		resp.Body.Close()
-	}
 	return err
 }
 
@@ -336,8 +311,8 @@ func (f *Fs) userInfo(ctx context.Context) (user UserInfo, err error) {
 		nil,
 		&user,
 	)
-	if resp != nil && resp.Body != nil {
-		resp.Body.Close()
+	if err != nil {
+		return user, err
 	}
-	return user, err
+	return user, resp.Body.Close()
 }

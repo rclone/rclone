@@ -394,9 +394,8 @@ func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, 
 	}
 	if fsn.ID != "" {
 		return strings.Replace(f.opt.APIURL, "/api", "/d/", 1) + fsn.ID, nil
-	} else {
-		return "", nil
 	}
+	return "", nil
 }
 
 // ======================================
@@ -518,6 +517,7 @@ func (o *Object) Size() int64 {
 // ========================================
 var _ fs.MimeTyper = (*Object)(nil)
 
+// MimeType returns the content type of the Object if known, or "" if not
 func (o *Object) MimeType(ctx context.Context) string {
 	return o.base.FileType
 }
@@ -527,6 +527,9 @@ func (o *Object) MimeType(ctx context.Context) string {
 // =========================================
 var _ fs.Metadataer = (*Object)(nil)
 
+// Metadata returns metadata for an object
+//
+// It should return nil if there is no Metadata
 func (o *Object) Metadata(ctx context.Context) (fs.Metadata, error) {
 	return fs.Metadata{
 		"mode":  o.base.ModeOctal,
