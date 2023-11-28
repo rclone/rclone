@@ -659,3 +659,14 @@ backends:
    ignoretests:
      - cmd/bisync
      - cmd/gitannex
+ - backend: "archive"
+   remote: "TestArchive:"
+   fastlist: false
+   ignoretests:
+     - cmd/bisync
+     - cmd/gitannex
+   ignore:
+     # These are caused by the archive backend returning the underlying objects
+     # with the parent backend having a different precision.
+     - TestServerSideCopyOverSelf
+     - TestServerSideMoveOverSelf

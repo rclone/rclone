@@ -218,6 +218,7 @@ WebDAV or S3, that work out of the box.)
 These backends adapt or modify other storage providers:
 
 {{< provider name="Alias: Rename existing remotes" home="/alias/" config="/alias/" >}}
+{{< provider name="Archive: Read archive files" home="/archive/" config="/archive/" >}}
 {{< provider name="Cache: Cache remotes (DEPRECATED)" home="/cache/" config="/cache/" >}}
 {{< provider name="Chunker: Split large files" home="/chunker/" config="/chunker/" >}}
 {{< provider name="Combine: Combine multiple remotes into a directory tree" home="/combine/" config="/combine/" >}}
