@@ -10,6 +10,7 @@ import (
 	"runtime"
 	"strings"
 	"sync"
+	"syscall"
 	"time"
 
 	"github.com/rclone/rclone/cmd"
@@ -222,6 +223,13 @@ func NewMountCommand(commandName string, hidden bool, mount MountFn) *cobra.Comm
 				err = WaitMountReady(mnt.MountPoint, Opt.DaemonWait)
 				if err != nil {
 					killDaemon("Daemon timed out")
+				} else {
+					// Double check daemon is still alive
+					// on non Linux OSes WaitMountReady is just a no-op
+					err = daemon.Signal(syscall.Signal(0))
+					if err != nil {
+						err = fmt.Errorf("daemon has died: %w", err)
+					}
 				}
 				atexit.Unregister(handle)
 			}
