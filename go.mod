@@ -20,7 +20,7 @@ require (
 	github.com/atotto/clipboard v0.1.4
 	github.com/aws/aws-sdk-go v1.46.6
 	github.com/buengese/sgzip v0.1.1
-	github.com/cloudsoda/go-smb2 v0.0.0-20231106205947-b0758ecc4c67
+	github.com/cloudsoda/go-smb2 v0.0.0-20231124195312-f3ec8ae2c891
 	github.com/colinmarc/hdfs/v2 v2.4.0
 	github.com/coreos/go-semver v0.3.1
 	github.com/coreos/go-systemd v0.0.0-20191104093116-d3cd4ed1dbcf

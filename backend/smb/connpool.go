@@ -40,7 +40,7 @@ func (f *Fs) dial(ctx context.Context, network, addr string) (*conn, error) {
 		},
 	}
 
-	session, err := d.DialContext(ctx, tconn)
+	session, err := d.DialConn(ctx, tconn, addr)
 	if err != nil {
 		return nil, err
 	}
