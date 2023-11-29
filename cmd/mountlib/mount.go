@@ -10,7 +10,6 @@ import (
 	"runtime"
 	"strings"
 	"sync"
-	"syscall"
 	"time"
 
 	"github.com/rclone/rclone/cmd"
@@ -157,6 +156,38 @@ func AddFlags(flagSet *pflag.FlagSet) {
 	flags.DurationVarP(flagSet, &Opt.DaemonWait, "daemon-wait", "", Opt.DaemonWait, "Time to wait for ready mount from daemon (maximum time on Linux, constant sleep time on OSX/BSD) (not supported on Windows)", "Mount")
 }
 
+const (
+	pollInterval = 100 * time.Millisecond
+)
+
+// WaitMountReady waits until mountpoint is mounted by rclone.
+//
+// If the mount daemon dies prematurely it will notice too.
+func WaitMountReady(mountpoint string, timeout time.Duration, daemon *os.Process) (err error) {
+	endTime := time.Now().Add(timeout)
+	for {
+		if CanCheckMountReady {
+			err = CheckMountReady(mountpoint)
+			if err == nil {
+				break
+			}
+		}
+		err = daemonize.Check(daemon)
+		if err != nil {
+			return err
+		}
+		delay := time.Until(endTime)
+		if delay <= 0 {
+			break
+		}
+		if delay > pollInterval {
+			delay = pollInterval
+		}
+		time.Sleep(delay)
+	}
+	return
+}
+
 // NewMountCommand makes a mount command with the given name and Mount function
 func NewMountCommand(commandName string, hidden bool, mount MountFn) *cobra.Command {
 	var commandDefinition = &cobra.Command{
@@ -220,16 +251,9 @@ func NewMountCommand(commandName string, hidden bool, mount MountFn) *cobra.Comm
 				handle := atexit.Register(func() {
 					killDaemon("Got interrupt")
 				})
-				err = WaitMountReady(mnt.MountPoint, Opt.DaemonWait)
+				err = WaitMountReady(mnt.MountPoint, Opt.DaemonWait, daemon)
 				if err != nil {
 					killDaemon("Daemon timed out")
-				} else {
-					// Double check daemon is still alive
-					// on non Linux OSes WaitMountReady is just a no-op
-					err = daemon.Signal(syscall.Signal(0))
-					if err != nil {
-						err = fmt.Errorf("daemon has died: %w", err)
-					}
 				}
 				atexit.Unregister(handle)
 			}
