@@ -10,7 +10,6 @@ import (
 	"runtime"
 	"strings"
 
-	systemd "github.com/iguanesolutions/go-systemd/v5"
 	"github.com/rclone/rclone/fs"
 	"github.com/sirupsen/logrus"
 )
@@ -49,7 +48,7 @@ func fnName() string {
 
 // Trace debugs the entry and exit of the calling function
 //
-// It is designed to be used in a defer statement so it returns a
+// It is designed to be used in a defer statement, so it returns a
 // function that logs the exit parameters.
 //
 // Any pointers in the exit function will be dereferenced
@@ -141,7 +140,7 @@ func InitLogging() {
 	// Activate systemd logger support if systemd invocation ID is
 	// detected and output is going to stderr (not logging to a file or syslog)
 	if !Redirected() {
-		if _, usingSystemd := systemd.GetInvocationID(); usingSystemd {
+		if isJournalStream() {
 			Opt.LogSystemdSupport = true
 		}
 	}
