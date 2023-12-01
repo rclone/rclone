@@ -1674,7 +1674,7 @@ use multiple threads to transfer the file (default 256M).
 
 Capable backends are marked in the
 [overview](/overview/#optional-features) as `MultithreadUpload`. (They
-need to implement either the `OpenWriterAt` or `OpenChunkedWriter`
+need to implement either the `OpenWriterAt` or `OpenChunkWriter`
 internal interfaces). These include include, `local`, `s3`,
 `azureblob`, `b2`, `oracleobjectstorage` and `smb` at the time of
 writing.
