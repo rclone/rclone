@@ -13,6 +13,7 @@ import (
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/filter"
 	"github.com/rclone/rclone/fs/operations"
+	"github.com/rclone/rclone/lib/terminal"
 	"golang.org/x/text/unicode/norm"
 )
 
@@ -24,14 +25,17 @@ const (
 	deltaNew  delta = 1 << iota
 	deltaNewer
 	deltaOlder
-	deltaSize
+	deltaLarger
+	deltaSmaller
 	deltaHash
 	deltaDeleted
 )
 
 const (
-	deltaModified delta = deltaNewer | deltaOlder | deltaSize | deltaHash | deltaDeleted
-	deltaOther    delta = deltaNew | deltaNewer | deltaOlder
+	deltaSize     delta = deltaLarger | deltaSmaller
+	deltaTime     delta = deltaNewer | deltaOlder
+	deltaModified delta = deltaTime | deltaSize | deltaHash
+	deltaOther    delta = deltaNew | deltaTime | deltaSize | deltaHash
 )
 
 func (d delta) is(cond delta) bool {
@@ -41,6 +45,8 @@ func (d delta) is(cond delta) bool {
 // deltaSet
 type deltaSet struct {
 	deltas     map[string]delta
+	size       map[string]int64
+	hash       map[string]string
 	opt        *Options
 	fs         fs.Fs  // base filesystem
 	msg        string // filesystem name for logging
@@ -72,12 +78,24 @@ func (ds *deltaSet) printStats() {
 	}
 	nAll := len(ds.deltas)
 	nNew := 0
+	nMod := 0
+	nTime := 0
 	nNewer := 0
 	nOlder := 0
+	nSize := 0
+	nLarger := 0
+	nSmaller := 0
+	nHash := 0
 	nDeleted := 0
 	for _, d := range ds.deltas {
 		if d.is(deltaNew) {
 			nNew++
+		}
+		if d.is(deltaModified) {
+			nMod++
+		}
+		if d.is(deltaTime) {
+			nTime++
 		}
 		if d.is(deltaNewer) {
 			nNewer++
@@ -85,12 +103,46 @@ func (ds *deltaSet) printStats() {
 		if d.is(deltaOlder) {
 			nOlder++
 		}
+		if d.is(deltaSize) {
+			nSize++
+		}
+		if d.is(deltaLarger) {
+			nLarger++
+		}
+		if d.is(deltaSmaller) {
+			nSmaller++
+		}
+		if d.is(deltaHash) {
+			nHash++
+		}
 		if d.is(deltaDeleted) {
 			nDeleted++
 		}
 	}
-	fs.Infof(nil, "%s: %4d changes: %4d new, %4d newer, %4d older, %4d deleted",
-		ds.msg, nAll, nNew, nNewer, nOlder, nDeleted)
+	if nAll != nNew+nMod+nDeleted {
+		fs.Errorf(nil, "something doesn't add up! %4d != %4d + %4d + %4d", nAll, nNew, nMod, nDeleted)
+	}
+	fs.Infof(nil, "%s: %4d changes: "+Color(terminal.GreenFg, "%4d new")+", "+Color(terminal.YellowFg, "%4d modified")+", "+Color(terminal.RedFg, "%4d deleted"),
+		ds.msg, nAll, nNew, nMod, nDeleted)
+	if nMod > 0 {
+		details := []string{}
+		if nTime > 0 {
+			details = append(details, fmt.Sprintf(Color(terminal.CyanFg, "%4d newer"), nNewer))
+			details = append(details, fmt.Sprintf(Color(terminal.BlueFg, "%4d older"), nOlder))
+		}
+		if nSize > 0 {
+			details = append(details, fmt.Sprintf(Color(terminal.CyanFg, "%4d larger"), nLarger))
+			details = append(details, fmt.Sprintf(Color(terminal.BlueFg, "%4d smaller"), nSmaller))
+		}
+		if nHash > 0 {
+			details = append(details, fmt.Sprintf(Color(terminal.CyanFg, "%4d hash differs"), nHash))
+		}
+		if (nNewer+nOlder != nTime) || (nLarger+nSmaller != nSize) || (nMod > nTime+nSize+nHash) {
+			fs.Errorf(nil, "something doesn't add up!")
+		}
+
+		fs.Infof(nil, "(%s: %s)", Color(terminal.YellowFg, "Modified"), strings.Join(details, ", "))
+	}
 }
 
 // findDeltas
@@ -117,6 +169,8 @@ func (b *bisyncRun) findDeltas(fctx context.Context, f fs.Fs, oldListing string,
 
 	ds = &deltaSet{
 		deltas:     map[string]delta{},
+		size:       map[string]int64{},
+		hash:       map[string]string{},
 		fs:         f,
 		msg:        msg,
 		oldCount:   len(old.list),
@@ -125,30 +179,69 @@ func (b *bisyncRun) findDeltas(fctx context.Context, f fs.Fs, oldListing string,
 	}
 
 	for _, file := range old.list {
+		// REMEMBER: this section is only concerned with comparing listings from the same side (not different sides)
 		d := deltaZero
+		s := int64(0)
+		h := ""
 		if !now.has(file) {
-			b.indent(msg, file, "File was deleted")
+			b.indent(msg, file, Color(terminal.RedFg, "File was deleted"))
 			ds.deleted++
 			d |= deltaDeleted
 		} else {
 			// skip dirs here, as we only care if they are new/deleted, not newer/older
 			if !now.isDir(file) {
-				if old.getTime(file) != now.getTime(file) {
-					if old.beforeOther(now, file) {
-						fs.Debugf(file, "(old: %v current: %v", old.getTime(file), now.getTime(file))
-						b.indent(msg, file, "File is newer")
-						d |= deltaNewer
-					} else { // Current version is older than prior sync.
-						fs.Debugf(file, "(old: %v current: %v", old.getTime(file), now.getTime(file))
-						b.indent(msg, file, "File is OLDER")
-						d |= deltaOlder
+				whatchanged := []string{}
+				if b.opt.Compare.Size {
+					if sizeDiffers(old.getSize(file), now.getSize(file)) {
+						fs.Debugf(file, "(old: %v current: %v)", old.getSize(file), now.getSize(file))
+						if now.getSize(file) > old.getSize(file) {
+							whatchanged = append(whatchanged, Color(terminal.MagentaFg, "size (larger)"))
+							d |= deltaLarger
+						} else {
+							whatchanged = append(whatchanged, Color(terminal.MagentaFg, "size (smaller)"))
+							d |= deltaSmaller
+						}
+						s = now.getSize(file)
 					}
 				}
-				// TODO Compare sizes and hashes
+				if b.opt.Compare.Modtime {
+					if timeDiffers(fctx, old.getTime(file), now.getTime(file), f, f) {
+						if old.beforeOther(now, file) {
+							fs.Debugf(file, "(old: %v current: %v)", old.getTime(file), now.getTime(file))
+							whatchanged = append(whatchanged, Color(terminal.MagentaFg, "time (newer)"))
+							d |= deltaNewer
+						} else { // Current version is older than prior sync.
+							fs.Debugf(file, "(old: %v current: %v)", old.getTime(file), now.getTime(file))
+							whatchanged = append(whatchanged, Color(terminal.MagentaFg, "time (older)"))
+							d |= deltaOlder
+						}
+					}
+				}
+				if b.opt.Compare.Checksum {
+					if hashDiffers(old.getHash(file), now.getHash(file), old.hash, now.hash, old.getSize(file), now.getSize(file)) {
+						fs.Debugf(file, "(old: %v current: %v)", old.getHash(file), now.getHash(file))
+						whatchanged = append(whatchanged, Color(terminal.MagentaFg, "hash"))
+						d |= deltaHash
+						h = now.getHash(file)
+					}
+				}
+				// concat changes and print log
+				if d.is(deltaModified) {
+					summary := fmt.Sprintf(Color(terminal.YellowFg, "File changed: %s"), strings.Join(whatchanged, ", "))
+					b.indent(msg, file, summary)
+				}
 			}
 		}
 
 		if d.is(deltaModified) {
+			ds.deltas[file] = d
+			if b.opt.Compare.Size {
+				ds.size[file] = s
+			}
+			if b.opt.Compare.Checksum {
+				ds.hash[file] = h
+			}
+		} else if d.is(deltaDeleted) {
 			ds.deltas[file] = d
 		} else {
 			// Once we've found at least one unchanged file,
@@ -160,8 +253,14 @@ func (b *bisyncRun) findDeltas(fctx context.Context, f fs.Fs, oldListing string,
 
 	for _, file := range now.list {
 		if !old.has(file) {
-			b.indent(msg, file, "File is new")
+			b.indent(msg, file, Color(terminal.GreenFg, "File is new"))
 			ds.deltas[file] = deltaNew
+			if b.opt.Compare.Size {
+				ds.size[file] = now.getSize(file)
+			}
+			if b.opt.Compare.Checksum {
+				ds.hash[file] = now.getHash(file)
+			}
 		}
 	}
 
@@ -234,20 +333,28 @@ func (b *bisyncRun) applyDeltas(ctx context.Context, ds1, ds2 *deltaSet) (change
 		d1 := ds1.deltas[file]
 		if d1.is(deltaOther) {
 			d2, in2 := ds2.deltas[file]
+			file2 := file
 			if !in2 && file != alias {
 				d2 = ds2.deltas[alias]
+				file2 = alias
 			}
 			if d2.is(deltaOther) {
-				checkit := func(filename string) {
-					if err := filterCheck.AddFile(filename); err != nil {
-						fs.Debugf(nil, "Non-critical error adding file to list of potential conflicts to check: %s", err)
-					} else {
-						fs.Debugf(nil, "Added file to list of potential conflicts to check: %s", filename)
+				// if size or hash differ, skip this, as we already know they're not equal
+				if (b.opt.Compare.Size && sizeDiffers(ds1.size[file], ds2.size[file2])) ||
+					(b.opt.Compare.Checksum && hashDiffers(ds1.hash[file], ds2.hash[file2], b.opt.Compare.HashType1, b.opt.Compare.HashType2, ds1.size[file], ds2.size[file2])) {
+					fs.Debugf(file, "skipping equality check as size/hash definitely differ")
+				} else {
+					checkit := func(filename string) {
+						if err := filterCheck.AddFile(filename); err != nil {
+							fs.Debugf(nil, "Non-critical error adding file to list of potential conflicts to check: %s", err)
+						} else {
+							fs.Debugf(nil, "Added file to list of potential conflicts to check: %s", filename)
+						}
 					}
-				}
-				checkit(file)
-				if file != alias {
-					checkit(alias)
+					checkit(file)
+					if file != alias {
+						checkit(alias)
+					}
 				}
 			}
 		}
@@ -294,6 +401,17 @@ func (b *bisyncRun) applyDeltas(ctx context.Context, ds1, ds2 *deltaSet) (change
 							// the Path1 version is deemed "correct" in this scenario
 							fs.Infof(alias, "Files are equal but will copy anyway to fix case to %s", file)
 							copy1to2.Add(file)
+						} else if b.opt.Compare.Modtime && timeDiffers(ctx, ls1.getTime(ls1.getTryAlias(file, alias)), ls2.getTime(ls2.getTryAlias(file, alias)), b.fs1, b.fs2) {
+							fs.Infof(file, "Files are equal but will copy anyway to update modtime (will not rename)")
+							if ls1.getTime(ls1.getTryAlias(file, alias)).Before(ls2.getTime(ls2.getTryAlias(file, alias))) {
+								// Path2 is newer
+								b.indent("Path2", p1, "Queue copy to Path1")
+								copy2to1.Add(ls2.getTryAlias(file, alias))
+							} else {
+								// Path1 is newer
+								b.indent("Path1", p2, "Queue copy to Path2")
+								copy1to2.Add(ls1.getTryAlias(file, alias))
+							}
 						} else {
 							fs.Infof(nil, "Files are equal! Skipping: %s", file)
 							renameSkipped.Add(file)

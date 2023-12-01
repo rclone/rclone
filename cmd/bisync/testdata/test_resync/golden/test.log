@@ -4,10 +4,20 @@
 [36m(02)  :[0m [34mtest 1. resync with empty path1, resulting in copying all content from path2.[0m
 [36m(03)  :[0m [34mpurge-children {path1/}[0m
 [36m(04)  :[0m [34mbisync resync[0m
+INFO  : [2mSetting --ignore-listing-checksum as neither --checksum nor --compare checksum are set.[0m
+INFO  : Bisyncing with Comparison Settings:
+{
+"Modtime": true,
+"Size": true,
+"Checksum": false,
+"NoSlowHash": false,
+"SlowHashSyncOnly": false,
+"DownloadHash": false
+}
 INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
 INFO  : Copying unique Path2 files to Path1
 INFO  : - [34mPath2[0m    [35mResync is copying UNIQUE files to[0m  - [36mPath1[0m
-INFO  : - [34mPath1[0m    [35mResync is copying UNIQUE OR DIFFERING files to[0m - [36mPath2[0m
+INFO  : - [36mPath1[0m    [35mResync is copying UNIQUE OR DIFFERING files to[0m - [36mPath2[0m
 INFO  : Resync updating listings
 INFO  : [32mBisync successful[0m
 [36m(05)  :[0m [34mmove-listings empty-path1[0m
@@ -15,10 +25,20 @@ INFO  : [32mBisync successful[0m
 [36m(06)  :[0m [34mtest 2. resync with empty path2, resulting in synching all content to path2.[0m
 [36m(07)  :[0m [34mpurge-children {path2/}[0m
 [36m(08)  :[0m [34mbisync resync[0m
+INFO  : [2mSetting --ignore-listing-checksum as neither --checksum nor --compare checksum are set.[0m
+INFO  : Bisyncing with Comparison Settings:
+{
+"Modtime": true,
+"Size": true,
+"Checksum": false,
+"NoSlowHash": false,
+"SlowHashSyncOnly": false,
+"DownloadHash": false
+}
 INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
 INFO  : Copying unique Path2 files to Path1
 INFO  : - [34mPath2[0m    [35mResync is copying UNIQUE files to[0m  - [36mPath1[0m
-INFO  : - [34mPath1[0m    [35mResync is copying UNIQUE OR DIFFERING files to[0m - [36mPath2[0m
+INFO  : - [36mPath1[0m    [35mResync is copying UNIQUE OR DIFFERING files to[0m - [36mPath2[0m
 INFO  : Resync updating listings
 INFO  : [32mBisync successful[0m
 [36m(09)  :[0m [34mmove-listings empty-path2[0m
@@ -52,16 +72,36 @@ INFO  : [32mBisync successful[0m
 
 [36m(29)  :[0m [34mtest run bisync with resync[0m
 [36m(30)  :[0m [34mbisync resync[0m
+INFO  : [2mSetting --ignore-listing-checksum as neither --checksum nor --compare checksum are set.[0m
+INFO  : Bisyncing with Comparison Settings:
+{
+"Modtime": true,
+"Size": true,
+"Checksum": false,
+"NoSlowHash": false,
+"SlowHashSyncOnly": false,
+"DownloadHash": false
+}
 INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
 INFO  : Copying unique Path2 files to Path1
 INFO  : - [34mPath2[0m    [35mResync is copying UNIQUE files to[0m  - [36mPath1[0m
-INFO  : - [34mPath1[0m    [35mResync is copying UNIQUE OR DIFFERING files to[0m - [36mPath2[0m
+INFO  : - [36mPath1[0m    [35mResync is copying UNIQUE OR DIFFERING files to[0m - [36mPath2[0m
 INFO  : Resync updating listings
 INFO  : [32mBisync successful[0m
 [36m(31)  :[0m [34mcopy-listings mixed-diffs[0m
 
 [36m(32)  :[0m [34mtest run normal bisync[0m
 [36m(33)  :[0m [34mbisync[0m
+INFO  : [2mSetting --ignore-listing-checksum as neither --checksum nor --compare checksum are set.[0m
+INFO  : Bisyncing with Comparison Settings:
+{
+"Modtime": true,
+"Size": true,
+"Checksum": false,
+"NoSlowHash": false,
+"SlowHashSyncOnly": false,
+"DownloadHash": false
+}
 INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
 INFO  : Building Path1 and Path2 listings
 INFO  : Path1 checking for diffs
@@ -74,6 +114,16 @@ INFO  : [32mBisync successful[0m
 [36m(34)  :[0m [34mtest 4. confirm critical error on normal sync of empty path.[0m
 [36m(35)  :[0m [34mpurge-children {path2/}[0m
 [36m(36)  :[0m [34mbisync[0m
+INFO  : [2mSetting --ignore-listing-checksum as neither --checksum nor --compare checksum are set.[0m
+INFO  : Bisyncing with Comparison Settings:
+{
+"Modtime": true,
+"Size": true,
+"Checksum": false,
+"NoSlowHash": false,
+"SlowHashSyncOnly": false,
+"DownloadHash": false
+}
 INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
 INFO  : Building Path1 and Path2 listings
 INFO  : Path1 checking for diffs

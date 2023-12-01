@@ -12,6 +12,7 @@ import (
 	"github.com/rclone/rclone/cmd/bisync/bilib"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/filter"
+	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/fs/sync"
 	"github.com/rclone/rclone/lib/terminal"
@@ -40,7 +41,18 @@ var logger = operations.NewLoggerOpt()
 var lock mutex.Mutex
 var once mutex.Once
 var ignoreListingChecksum bool
-var ci *fs.ConfigInfo
+var ignoreListingModtime bool
+var hashTypes map[string]hash.Type
+var queueCI *fs.ConfigInfo
+
+// allows us to get the right hashtype during the LoggerFn without knowing whether it's Path1/Path2
+func getHashType(fname string) hash.Type {
+	ht, ok := hashTypes[fname]
+	if ok {
+		return ht
+	}
+	return hash.None
+}
 
 // FsPathIfAny handles type assertions and returns a formatted bilib.FsPath if valid, otherwise ""
 func FsPathIfAny(x fs.DirEntry) string {
@@ -102,13 +114,16 @@ func WriteResults(ctx context.Context, sigil operations.Sigil, src, dst fs.DirEn
 		result.Flags = "-"
 		if side != nil {
 			result.Size = side.Size()
-			result.Modtime = side.ModTime(ctx).In(time.UTC)
-
+			if !ignoreListingModtime {
+				result.Modtime = side.ModTime(ctx).In(TZ)
+			}
 			if !ignoreListingChecksum {
 				sideObj, ok := side.(fs.ObjectInfo)
 				if ok {
-					result.Hash, _ = sideObj.Hash(ctx, sideObj.Fs().Hashes().GetOne())
+					result.Hash, _ = sideObj.Hash(ctx, getHashType(sideObj.Fs().Name()))
+					result.Hash, _ = tryDownloadHash(ctx, sideObj, result.Hash)
 				}
+
 			}
 		}
 		result.IsWinner = result.Winner.Obj == side
@@ -126,13 +141,13 @@ func WriteResults(ctx context.Context, sigil operations.Sigil, src, dst fs.DirEn
 			result.Size = -1
 		}
 
-		if result.Size < 0 && result.Flags != "d" && (ci.CheckSum || ci.SizeOnly) {
+		prettyprint(result, "writing result", fs.LogLevelDebug)
+		if result.Size < 0 && result.Flags != "d" && ((queueCI.CheckSum && !downloadHash) || queueCI.SizeOnly) {
 			once.Do(func() {
 				fs.Logf(result.Name, Color(terminal.YellowFg, "Files of unknown size (such as Google Docs) do not sync reliably with --checksum or --size-only. Consider using modtime instead (the default) or --drive-skip-gdocs"))
 			})
 		}
 
-		fs.Debugf(nil, "writing result: %v", result)
 		err := json.NewEncoder(opt.JSON).Encode(result)
 		if err != nil {
 			fs.Errorf(result, "Error encoding JSON: %v", err)
@@ -149,13 +164,45 @@ func ReadResults(results io.Reader) []Results {
 		if err := dec.Decode(&r); err == io.EOF {
 			break
 		}
-		fs.Debugf(nil, "result: %v", r)
+		prettyprint(r, "result", fs.LogLevelDebug)
 		slice = append(slice, r)
 	}
 	return slice
 }
 
+// for setup code shared by both fastCopy and resyncDir
+func (b *bisyncRun) preCopy(ctx context.Context) context.Context {
+	queueCI = fs.GetConfig(ctx)
+	ignoreListingChecksum = b.opt.IgnoreListingChecksum
+	ignoreListingModtime = !b.opt.Compare.Modtime
+	hashTypes = map[string]hash.Type{
+		b.fs1.Name(): b.opt.Compare.HashType1,
+		b.fs2.Name(): b.opt.Compare.HashType2,
+	}
+	logger.LoggerFn = WriteResults
+	overridingEqual := false
+	if (b.opt.Compare.Modtime && b.opt.Compare.Checksum) || b.opt.Compare.DownloadHash {
+		overridingEqual = true
+		fs.Debugf(nil, "overriding equal")
+		// otherwise impossible in Sync, so override Equal
+		ctx = b.EqualFn(ctx)
+	}
+	ctxCopyLogger := operations.WithSyncLogger(ctx, logger)
+	if b.opt.Compare.Checksum && (b.opt.Compare.NoSlowHash || b.opt.Compare.SlowHashSyncOnly) && b.opt.Compare.SlowHashDetected {
+		// set here in case !b.opt.Compare.Modtime
+		queueCI = fs.GetConfig(ctxCopyLogger)
+		if b.opt.Compare.NoSlowHash {
+			queueCI.CheckSum = false
+		}
+		if b.opt.Compare.SlowHashSyncOnly && !overridingEqual {
+			queueCI.CheckSum = true
+		}
+	}
+	return ctxCopyLogger
+}
+
 func (b *bisyncRun) fastCopy(ctx context.Context, fsrc, fdst fs.Fs, files bilib.Names, queueName string) ([]Results, error) {
+	ctx = b.preCopy(ctx)
 	if err := b.saveQueue(files, queueName); err != nil {
 		return nil, err
 	}
@@ -173,13 +220,9 @@ func (b *bisyncRun) fastCopy(ctx context.Context, fsrc, fdst fs.Fs, files bilib.
 		}
 	}
 
-	ignoreListingChecksum = b.opt.IgnoreListingChecksum
-	ci = fs.GetConfig(ctx)
-	logger.LoggerFn = WriteResults
-	ctxCopyLogger := operations.WithSyncLogger(ctxCopy, logger)
 	b.testFn()
-	err := sync.Sync(ctxCopyLogger, fdst, fsrc, b.opt.CreateEmptySrcDirs)
-	fs.Debugf(nil, "logger is: %v", logger)
+	err := sync.Sync(ctxCopy, fdst, fsrc, b.opt.CreateEmptySrcDirs)
+	prettyprint(logger, "logger", fs.LogLevelDebug)
 
 	getResults := ReadResults(logger.JSON)
 	fs.Debugf(nil, "Got %v results for %v", len(getResults), queueName)
@@ -203,12 +246,10 @@ func (b *bisyncRun) retryFastCopy(ctx context.Context, fsrc, fdst fs.Fs, files b
 }
 
 func (b *bisyncRun) resyncDir(ctx context.Context, fsrc, fdst fs.Fs) ([]Results, error) {
-	ci = fs.GetConfig(ctx)
-	ignoreListingChecksum = b.opt.IgnoreListingChecksum
-	logger.LoggerFn = WriteResults
-	ctxCopyLogger := operations.WithSyncLogger(ctx, logger)
-	err := sync.CopyDir(ctxCopyLogger, fdst, fsrc, b.opt.CreateEmptySrcDirs)
-	fs.Debugf(nil, "logger is: %v", logger)
+	ctx = b.preCopy(ctx)
+
+	err := sync.CopyDir(ctx, fdst, fsrc, b.opt.CreateEmptySrcDirs)
+	prettyprint(logger, "logger", fs.LogLevelDebug)
 
 	getResults := ReadResults(logger.JSON)
 	fs.Debugf(nil, "Got %v results for %v", len(getResults), "resync")

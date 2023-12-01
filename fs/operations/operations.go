@@ -180,6 +180,17 @@ func logModTimeUpload(dst fs.Object) {
 	})
 }
 
+// EqualFn allows replacing Equal() with a custom function during NeedTransfer()
+type EqualFn func(ctx context.Context, src fs.ObjectInfo, dst fs.Object) bool
+type equalFnContextKey struct{}
+
+var equalFnKey = equalFnContextKey{}
+
+// WithEqualFn stores equalFn in ctx and returns a copy of ctx in which equalFnKey = equalFn
+func WithEqualFn(ctx context.Context, equalFn EqualFn) context.Context {
+	return context.WithValue(ctx, equalFnKey, equalFn)
+}
+
 func equal(ctx context.Context, src fs.ObjectInfo, dst fs.Object, opt equalOpt) bool {
 	ci := fs.GetConfig(ctx)
 	logger, _ := GetLogger(ctx)
@@ -790,10 +801,10 @@ func ListLong(ctx context.Context, f fs.Fs, w io.Writer) error {
 	})
 }
 
-// hashSum returns the human-readable hash for ht passed in.  This may
+// HashSum returns the human-readable hash for ht passed in.  This may
 // be UNSUPPORTED or ERROR. If it isn't returning a valid hash it will
 // return an error.
-func hashSum(ctx context.Context, ht hash.Type, base64Encoded bool, downloadFlag bool, o fs.Object) (string, error) {
+func HashSum(ctx context.Context, ht hash.Type, base64Encoded bool, downloadFlag bool, o fs.Object) (string, error) {
 	var sum string
 	var err error
 
@@ -881,7 +892,7 @@ func HashLister(ctx context.Context, ht hash.Type, outputBase64 bool, downloadFl
 				<-concurrencyControl
 				wg.Done()
 			}()
-			sum, err := hashSum(ctx, ht, outputBase64, downloadFlag, o)
+			sum, err := HashSum(ctx, ht, outputBase64, downloadFlag, o)
 			if err != nil {
 				fs.Errorf(o, "%v", fs.CountError(err))
 				return
@@ -1572,6 +1583,10 @@ func NeedTransfer(ctx context.Context, dst, src fs.Object) bool {
 		}
 	} else {
 		// Check to see if changed or not
+		equalFn, ok := ctx.Value(equalFnKey).(EqualFn)
+		if ok {
+			return !equalFn(ctx, src, dst)
+		}
 		if Equal(ctx, src, dst) && !SameObject(src, dst) {
 			fs.Debugf(src, "Unchanged skipping")
 			return false

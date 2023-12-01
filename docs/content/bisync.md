@@ -13,7 +13,7 @@ Make sure you have read and understood the entire [manual](https://rclone.org/bi
 
 - [Install rclone](/install/) and setup your remotes.
 - Bisync will create its working directory
-  at `~/.cache/rclone/bisync` on Linux
+  at `~/.cache/rclone/bisync` on Linux, `/Users/yourusername/Library/Caches/rclone/bisync` on Mac,
   or `C:\Users\MyLogin\AppData\Local\rclone\bisync` on Windows.
   Make sure that this location is writable.
 - Run bisync with the `--resync` flag, specifying the paths
@@ -23,8 +23,15 @@ Make sure you have read and understood the entire [manual](https://rclone.org/bi
   unnecessary files and directories from the sync.
 - Consider setting up the [--check-access](#check-access) feature
   for safety.
-- On Linux, consider setting up a [crontab entry](#cron). bisync can
+- On Linux or Mac, consider setting up a [crontab entry](#cron). bisync can
   safely run in concurrent cron jobs thanks to lock files it maintains.
+
+For example, your first command might look like this:
+
+```
+rclone bisync remote1:path1 remote2:path2 --create-empty-src-dirs --compare size,modtime,checksum --slow-hash-sync-only --resilient -MvP --drive-skip-gdocs --fix-case --resync --dry-run
+```
+If all looks good, run it again without `--dry-run`. After that, remove `--resync` as well.
 
 Here is a typical run log (with timestamps removed for clarity):
 
@@ -149,7 +156,7 @@ as the last step in the process.
 
 ## Command-line flags
 
-#### --resync
+### --resync
 
 This will effectively make both Path1 and Path2 filesystems contain a
 matching superset of all files. Path2 files that do not exist in Path1 will
@@ -189,7 +196,7 @@ Therefore, if you included `--resync` for every bisync run, it would never be po
 the deleted file would always keep reappearing at the end of every run (because it's being copied from the other side where it still exists).
 Similarly, renaming a file would always result in a duplicate copy (both old and new name) on both sides.
 
-#### --check-access
+### --check-access
 
 Access check files are an additional safety measure against data loss.
 bisync will ensure it can find matching `RCLONE_TEST` files in the same places
@@ -218,7 +225,7 @@ bisync assuming a bunch of deleted files if the linked-to tree should not be
 accessible.
 See also the [--check-filename](--check-filename) flag.
 
-#### --check-filename
+### --check-filename
 
 Name of the file(s) used in access health validation.
 The default `--check-filename` is `RCLONE_TEST`.
@@ -226,7 +233,154 @@ One or more files having this filename must exist, synchronized between your
 source and destination filesets, in order for `--check-access` to succeed.
 See [--check-access](#check-access) for additional details.
 
-#### --max-delete
+### --compare
+
+As of `v1.66`, bisync fully supports comparing based on any combination of
+size, modtime, and checksum (lifting the prior restriction on backends without
+modtime support.)
+
+By default (without the `--compare` flag), bisync inherits the same comparison
+options as `sync`
+(that is: `size` and `modtime` by default, unless modified with flags such as
+[`--checksum`](/docs/#c-checksum) or [`--size-only`](/docs/#size-only).)
+
+If the `--compare` flag is set, it will override these defaults. This can be
+useful if you wish to compare based on combinations not currently supported in
+`sync`, such as comparing all three of `size` AND `modtime` AND `checksum`
+simultaneously (or just `modtime` AND `checksum`).
+
+`--compare` takes a comma-separated list, with the currently supported values
+being `size`, `modtime`, and `checksum`. For example, if you want to compare
+size and checksum, but not modtime, you would do:
+```
+--compare size,checksum
+```
+
+Or if you want to compare all three:
+```
+--compare size,modtime,checksum
+```
+
+`--compare` overrides any conflicting flags. For example, if you set the
+conflicting flags `--compare checksum --size-only`, `--size-only` will be
+ignored, and bisync will compare checksum and not size. To avoid confusion, it
+is recommended to use _either_ `--compare` or the normal `sync` flags, but not
+both.
+
+If `--compare` includes `checksum` and both remotes support checksums but have
+no hash types in common with each other, checksums will be considered _only_
+for comparisons within the same side (to determine what has changed since the
+prior sync), but not for comparisons against the opposite side. If one side
+supports checksums and the other does not, checksums will only be considered on
+the side that supports them.
+
+When comparing with `checksum` and/or `size` without `modtime`, bisync cannot
+determine whether a file is `newer` or `older` -- only whether it is `changed`
+or `unchanged`. (If it is `changed` on both sides, bisync still does the
+standard equality-check to avoid declaring a sync conflict unless it absolutely
+has to.)
+
+It is recommended to do a `--resync` when changing `--compare` settings, as
+otherwise your prior listing files may not contain the attributes you wish to
+compare (for example, they will not have stored checksums if you were not
+previously comparing checksums.)
+
+### --ignore-listing-checksum
+
+When `--checksum` or `--compare checksum` is set, bisync will retrieve (or
+generate) checksums (for backends that support them) when creating the listings
+for both paths, and store the checksums in the listing files.
+`--ignore-listing-checksum` will disable this behavior, which may speed things
+up considerably, especially on backends (such as [local](/local/)) where hashes
+must be computed on the fly instead of retrieved. Please note the following:
+
+* As of `v1.66`, `--ignore-listing-checksum` is now automatically set when
+neither `--checksum` nor `--compare checksum` are in use (as the checksums
+would not be used for anything.)
+* `--ignore-listing-checksum` is NOT the same as
+[`--ignore-checksum`](/docs/#ignore-checksum),
+and you may wish to use one or the other, or both. In a nutshell:
+`--ignore-listing-checksum` controls whether checksums are considered when
+scanning for diffs,
+while `--ignore-checksum` controls whether checksums are considered during the
+copy/sync operations that follow,
+if there ARE diffs.
+* Unless `--ignore-listing-checksum` is passed, bisync currently computes
+hashes for one path
+*even when there's no common hash with the other path*
+(for example, a [crypt](/crypt/#modification-times-and-hashes) remote.)
+This can still be beneficial, as the hashes will still be used to detect
+changes within the same side
+(if `--checksum` or `--compare checksum` is set), even if they can't be used to
+compare against the opposite side.
+* If you wish to ignore listing checksums _only_ on remotes where they are slow
+to compute, consider using
+[`--no-slow-hash`](#no-slow-hash) (or
+[`--slow-hash-sync-only`](#slow-hash-sync-only)) instead of
+`--ignore-listing-checksum`.
+* If `--ignore-listing-checksum` is used simultaneously with `--compare
+checksum` (or `--checksum`), checksums will be ignored for bisync deltas,
+but still considered during the sync operations that follow (if deltas are
+detected based on modtime and/or size.)
+
+### --no-slow-hash
+
+On some remotes (notably `local`), checksums can dramatically slow down a
+bisync run, because hashes cannot be stored and need to be computed in
+real-time when they are requested. On other remotes (such as `drive`), they add
+practically no time at all. The `--no-slow-hash` flag will automatically skip
+checksums on remotes where they are slow, while still comparing them on others
+(assuming [`--compare`](#compare) includes `checksum`.) This can be useful when one of your
+bisync paths is slow but you still want to check checksums on the other, for a more
+robust sync.
+
+### --slow-hash-sync-only
+
+Same as [`--no-slow-hash`](#no-slow-hash), except slow hashes are still
+considered during sync calls. They are still NOT considered for determining
+deltas, nor or they included in listings. They are also skipped during
+`--resync`. The main use case for this flag is when you have a large number of
+files, but relatively few of them change from run to run -- so you don't want
+to check your entire tree every time (it would take too long), but you still
+want to consider checksums for the smaller group of files for which a `modtime`
+or `size` change was detected. Keep in mind that this speed savings comes with
+a safety trade-off: if a file's content were to change without a change to its
+`modtime` or `size`, bisync would not detect it, and it would not be synced.
+
+`--slow-hash-sync-only` is only useful if both remotes share a common hash
+type (if they don't, bisync will automatically fall back to `--no-slow-hash`.)
+Both `--no-slow-hash` and `--slow-hash-sync-only` have no effect without
+`--compare checksum` (or `--checksum`).
+
+### --download-hash
+
+If `--download-hash` is set, bisync will use best efforts to obtain an MD5
+checksum by downloading and computing on-the-fly, when checksums are not
+otherwise available (for example, a remote that doesn't support them.) Note
+that since rclone has to download the entire file, this may dramatically slow
+down your bisync runs, and is also likely to use a lot of data, so it is
+probably not practical for bisync paths with a large total file size. However,
+it can be a good option for syncing small-but-important files with maximum
+accuracy (for example, a source code repo on a `crypt` remote.) An additional
+advantage over methods like [`cryptcheck`](/commands/rclone_cryptcheck/) is
+that the original file is not required for comparison (for example,
+`--download-hash` can be used to bisync two different crypt remotes with
+different passwords.)
+
+When `--download-hash` is set, bisync still looks for more efficient checksums
+first, and falls back to downloading only when none are found. It takes
+priority over conflicting flags such as `--no-slow-hash`. `--download-hash` is
+not suitable for [Google Docs](#gdocs) and other files of unknown size, as
+their checksums would change from run to run (due to small variances in the
+internals of the generated export file.) Therefore, bisync automatically skips
+`--download-hash` for files with a size less than 0.
+
+See also: [`Hasher`](https://rclone.org/hasher/) backend,
+[`cryptcheck`](/commands/rclone_cryptcheck/) command, [`rclone check
+--download`](/commands/rclone_check/) option,
+[`md5sum`](/commands/rclone_md5sum/) command
+
+### --max-delete
 
 As a safety check, if greater than the `--max-delete` percent of files were
 deleted on either the Path1 or Path2 filesystem, then bisync will abort with
@@ -244,7 +398,7 @@ to bypass the check.
 
 Also see the [all files changed](#all-files-changed) check.
 
-#### --filters-file {#filters-file}
+### --filters-file {#filters-file}
 
 By using rclone filter features you can exclude file types or directory
 sub-trees from the sync.
@@ -268,7 +422,7 @@ of the current filters file and compares it to the hash stored in the `.md5` fil
 If they don't match, the run aborts with a critical error and thus forces you
 to do a `--resync`, likely avoiding a disaster.
 
-#### --check-sync
+### --check-sync
 
 Enabled by default, the check-sync function checks that all of the same
 files exist in both the Path1 and Path2 history listings. This _check-sync_
@@ -285,9 +439,19 @@ sync run times for very large numbers of files.
 The check may be run manually with `--check-sync=only`. It runs only the
 integrity check and terminates without actually synching.
 
-Note that currently, `--check-sync` **only checks filenames and NOT modtime, size, or hash.**
-For a more robust integrity check of the current state, consider using [`check`](commands/rclone_check/)
-(or [`cryptcheck`](/commands/rclone_cryptcheck/), if at least one path is a `crypt` remote.)
+Note that currently, `--check-sync` **only checks listing snapshots and NOT the
+actual files on the remotes.** Note also that the listing snapshots will not
+know about any changes that happened during or after the latest bisync run, as
+those will be discovered on the next run. Therefore, while listings should
+always match _each other_ at the end of a bisync run, it is _expected_ that
+they will not match the underlying remotes, nor will the remotes match each
+other, if there were changes during or after the run. This is normal, and any
+differences will be detected and synced on the next run.
+
+For a robust integrity check of the current state of the remotes (as opposed to just their listing snapshots), consider using [`check`](commands/rclone_check/)
+(or [`cryptcheck`](/commands/rclone_cryptcheck/), if at least one path is a `crypt` remote) instead of `--check-sync`, 
+keeping in mind that differences are expected if files changed during or after your last bisync run.
+
 For example, a possible sequence could look like this:
 
 1. Normally scheduled bisync run:
@@ -319,28 +483,7 @@ consider alternatively running the above `rclone sync` command with `--dry-run` 
 
 See also: [Concurrent modifications](#concurrent-modifications), [`--resilient`](#resilient)
 
-
-#### --ignore-listing-checksum
-
-By default, bisync will retrieve (or generate) checksums (for backends that support them) 
-when creating the listings for both paths, and store the checksums in the listing files. 
-`--ignore-listing-checksum` will disable this behavior, which may speed things up considerably, 
-especially on backends (such as [local](/local/)) where hashes must be computed on the fly instead of retrieved. 
-Please note the following:
-
-* While checksums are (by default) generated and stored in the listing files, 
-they are NOT currently used for determining diffs (deltas). 
-It is anticipated that full checksum support will be added in a future version.
-* `--ignore-listing-checksum` is NOT the same as [`--ignore-checksum`](/docs/#ignore-checksum), 
-and you may wish to use one or the other, or both. In a nutshell: 
-`--ignore-listing-checksum` controls whether checksums are considered when scanning for diffs, 
-while `--ignore-checksum` controls whether checksums are considered during the copy/sync operations that follow, 
-if there ARE diffs.
-* Unless `--ignore-listing-checksum` is passed, bisync currently computes hashes for one path 
-*even when there's no common hash with the other path* 
-(for example, a [crypt](/crypt/#modification-times-and-hashes) remote.)
-
-#### --resilient
+### --resilient
 
 ***Caution: this is an experimental feature. Use at your own risk!***
 
@@ -364,7 +507,7 @@ Certain more serious errors will still enforce a `--resync` lockout, even in `--
 
 Behavior of `--resilient` may change in a future version.
 
-#### --backup-dir1 and --backup-dir2
+### --backup-dir1 and --backup-dir2
 
 As of `v1.66`, [`--backup-dir`](/docs/#backup-dir-dir) is supported in bisync.
 Because `--backup-dir` must be a non-overlapping path on the same remote,
@@ -473,19 +616,12 @@ before you commit to the changes.
 
 ### Modification times
 
-Bisync relies on file timestamps to identify changed files and will
-_refuse_ to operate if backend lacks the modification time support.
-
+By default, bisync compares files by modification time and size.
 If you or your application should change the content of a file
-without changing the modification time then bisync will _not_
+without changing the modification time and size, then bisync will _not_
 notice the change, and thus will not copy it to the other side.
-
-Note that on some cloud storage systems it is not possible to have file
-timestamps that match _precisely_ between the local and other filesystems.
-
-Bisync's approach to this problem is by tracking the changes on each side
-_separately_ over time with a local database of files in that side then
-applying the resulting changes on the other side.
+As an alternative, consider comparing by checksum (if your remotes support it).
+See [`--compare`](#compare) for details.
 
 ### Error handling {#error-handling}
 
@@ -546,14 +682,17 @@ Bisync is considered _BETA_ and has been tested with the following backends:
 - S3
 - SFTP
 - Yandex Disk
+- Crypt
 
 It has not been fully tested with other services yet.
 If it works, or sorta works, please let us know and we'll update the list.
 Run the test suite to check for proper operation as described below.
 
-First release of `rclone bisync` requires that underlying backend supports
-the modification time feature and will refuse to run otherwise.
-This limitation will be lifted in a future `rclone bisync` release.
+The first release of `rclone bisync` required both underlying backends to support
+modification times, and refused to run otherwise.
+This limitation has been lifted as of `v1.66`, as bisync now supports comparing 
+checksum and/or size instead of (or in addition to) modtime.
+See [`--compare`](#compare) for details.
 
 ### Concurrent modifications
 
@@ -1358,6 +1497,7 @@ for performance improvements and less [risk of error](https://forum.rclone.org/t
 * Equality checks before a sync conflict rename now fall back to `cryptcheck` (when possible) or `--download`,
 instead of of `--size-only`, when `check` is not available.
 * Bisync no longer fails to find the correct listing file when configs are overridden with backend-specific flags.
+* Bisync now fully supports comparing based on any combination of size, modtime, and checksum, lifting the prior restriction on backends without modtime support.
 
 ### `v1.64`
 * Fixed an [issue](https://forum.rclone.org/t/bisync-bugs-and-feature-requests/37636#:~:text=1.%20Dry%20runs%20are%20not%20completely%20dry) 

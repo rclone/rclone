@@ -55,6 +55,7 @@ type queues struct {
 
 // Bisync handles lock file, performs bisync run and checks exit status
 func Bisync(ctx context.Context, fs1, fs2 fs.Fs, optArg *Options) (err error) {
+	defer resetGlobals()
 	opt := *optArg // ensure that input is never changed
 	b := &bisyncRun{
 		fs1: fs1,
@@ -71,13 +72,9 @@ func Bisync(ctx context.Context, fs1, fs2 fs.Fs, optArg *Options) (err error) {
 	ci := fs.GetConfig(ctx)
 	opt.OrigBackupDir = ci.BackupDir
 
-	if !opt.DryRun && !opt.Force {
-		if fs1.Precision() == fs.ModTimeNotSupported {
-			return errors.New("modification time support is missing on path1")
-		}
-		if fs2.Precision() == fs.ModTimeNotSupported {
-			return errors.New("modification time support is missing on path2")
-		}
+	err = b.setCompareDefaults(ctx)
+	if err != nil {
+		return err
 	}
 
 	if b.workDir, err = filepath.Abs(opt.Workdir); err != nil {
@@ -389,10 +386,12 @@ func (b *bisyncRun) resync(octx, fctx context.Context) error {
 	var ls2 = newFileList()
 	err = ls1.save(fctx, b.newListing1)
 	if err != nil {
+		b.handleErr(ls1, "error saving ls1 from resync", err, true, true)
 		b.abort = true
 	}
 	err = ls2.save(fctx, b.newListing2)
 	if err != nil {
+		b.handleErr(ls2, "error saving ls2 from resync", err, true, true)
 		b.abort = true
 	}
 
@@ -519,6 +518,10 @@ func (b *bisyncRun) checkSync(listing1, listing2 string) error {
 		if !files2.has(file) && !files2.has(b.aliases.Alias(file)) {
 			b.indent("ERROR", file, "Path1 file not found in Path2")
 			ok = false
+		} else {
+			if !b.fileInfoEqual(file, files2.getTryAlias(file, b.aliases.Alias(file)), files1, files2) {
+				ok = false
+			}
 		}
 	}
 	for _, file := range files2.list {
@@ -527,6 +530,7 @@ func (b *bisyncRun) checkSync(listing1, listing2 string) error {
 			ok = false
 		}
 	}
+
 	if !ok {
 		return errors.New("path1 and path2 are out of sync, run --resync to recover")
 	}
@@ -583,6 +587,7 @@ func (b *bisyncRun) handleErr(o interface{}, msg string, err error, critical, re
 		}
 		if critical {
 			b.critical = true
+			b.abort = true
 			fs.Errorf(o, "%s: %v", msg, err)
 		} else {
 			fs.Infof(o, "%s: %v", msg, err)
@@ -602,4 +607,26 @@ func (b *bisyncRun) setBackupDir(ctx context.Context, destPath int) context.Cont
 	}
 	fs.Debugf(ci.BackupDir, "updated backup-dir for Path%d", destPath)
 	return ctx
+}
+
+// mainly to make sure tests don't interfere with each other when running more than one
+func resetGlobals() {
+	downloadHash = false
+	logger = operations.NewLoggerOpt()
+	ignoreListingChecksum = false
+	ignoreListingModtime = false
+	hashTypes = nil
+	queueCI = nil
+	hashType = 0
+	fsrc, fdst = nil, nil
+	fcrypt = nil
+	Opt = Options{}
+	once = gosync.Once{}
+	downloadHashWarn = gosync.Once{}
+	firstDownloadHash = gosync.Once{}
+	ls1 = newFileList()
+	ls2 = newFileList()
+	err = nil
+	firstErr = nil
+	marchCtx = nil
 }

@@ -80,6 +80,12 @@ var logReplacements = []string{
 	`^INFO  : .*?: Crypt detected! Using cryptcheck instead of check. \(Use --size-only or --ignore-checksum to disable\)$`, dropMe,
 	// ignore drive info messages
 	`^NOTICE:.*?Files of unknown size \(such as Google Docs\) do not sync reliably with --checksum or --size-only\. Consider using modtime instead \(the default\) or --drive-skip-gdocs.*?$`, dropMe,
+	// ignore differences in backend features
+	`^.*?"HashType1":.*?$`, dropMe,
+	`^.*?"HashType2":.*?$`, dropMe,
+	`^.*?"SlowHashDetected":.*?$`, dropMe,
+	`^.*? for same-side diffs on .*?$`, dropMe,
+	`^.*?Downloading hashes.*?$`, dropMe,
 }
 
 // Some dry-run messages differ depending on the particular remote.
@@ -118,7 +124,7 @@ var logHoppers = []string{
 // converted to "/" in every matching token to match golden logs.
 var logLinesWithSlash = []string{
 	`.*\(\d\d\)  :.*(fix-names|touch-glob|touch-copy|copy-file|copy-as|copy-dir|delete-file) `,
-	`INFO  : - .*Path[12].* +.*Queue copy to Path[12].*`,
+	`INFO  : - .*Path[12].* +.*Queue copy to.* Path[12].*`,
 	`INFO  : Synching Path1 .*? with Path2 `,
 	`INFO  : Validating listings for `,
 }
@@ -820,6 +826,14 @@ func (b *bisyncTest) runBisync(ctx context.Context, args []string) (err error) {
 			require.NoError(b.t, err, "parsing max-delete=%q", val)
 		case "size-only":
 			ci.SizeOnly = true
+		case "ignore-size":
+			ci.IgnoreSize = true
+		case "checksum":
+			ci.CheckSum = true
+			opt.Compare.DownloadHash = true // allows us to test crypt and the like
+		case "compare-all":
+			opt.CompareFlag = "size,modtime,checksum"
+			opt.Compare.DownloadHash = true // allows us to test crypt and the like
 		case "subdir":
 			fs1 = addSubdir(b.path1, val)
 			fs2 = addSubdir(b.path2, val)

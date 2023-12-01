@@ -3,10 +3,20 @@
 
 [36m(02)  :[0m [34mtest initial bisync[0m
 [36m(03)  :[0m [34mbisync resync[0m
+INFO  : [2mSetting --ignore-listing-checksum as neither --checksum nor --compare checksum are set.[0m
+INFO  : Bisyncing with Comparison Settings:
+{
+"Modtime": true,
+"Size": true,
+"Checksum": false,
+"NoSlowHash": false,
+"SlowHashSyncOnly": false,
+"DownloadHash": false
+}
 INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
 INFO  : Copying unique Path2 files to Path1
 INFO  : - [34mPath2[0m    [35mResync is copying UNIQUE files to[0m  - [36mPath1[0m
-INFO  : - [34mPath1[0m    [35mResync is copying UNIQUE OR DIFFERING files to[0m - [36mPath2[0m
+INFO  : - [36mPath1[0m    [35mResync is copying UNIQUE OR DIFFERING files to[0m - [36mPath2[0m
 INFO  : Resync updating listings
 INFO  : [32mBisync successful[0m
 
@@ -49,47 +59,59 @@ INFO  : [32mBisync successful[0m
 
 [36m(31)  :[0m [34mtest bisync run[0m
 [36m(32)  :[0m [34mbisync[0m
+INFO  : [2mSetting --ignore-listing-checksum as neither --checksum nor --compare checksum are set.[0m
+INFO  : Bisyncing with Comparison Settings:
+{
+"Modtime": true,
+"Size": true,
+"Checksum": false,
+"NoSlowHash": false,
+"SlowHashSyncOnly": false,
+"DownloadHash": false
+}
 INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
 INFO  : Building Path1 and Path2 listings
 INFO  : Path1 checking for diffs
-INFO  : - [34mPath1[0m    [35mFile is newer[0m                      - [36mfile2.txt[0m
-INFO  : - [34mPath1[0m    [35mFile was deleted[0m                   - [36mfile4.txt[0m
-INFO  : - [34mPath1[0m    [35mFile is newer[0m                      - [36mfile5.txt[0m
-INFO  : - [34mPath1[0m    [35mFile was deleted[0m                   - [36mfile6.txt[0m
-INFO  : - [34mPath1[0m    [35mFile is newer[0m                      - [36mfile7.txt[0m
-INFO  : - [34mPath1[0m    [35mFile was deleted[0m                   - [36mfile8.txt[0m
-INFO  : - [34mPath1[0m    [35mFile is new[0m                        - [36mfile11.txt[0m
-INFO  : Path1:    7 changes:    1 new,    3 newer,    0 older,    3 deleted
+INFO  : - [36mPath1[0m    [35m[33mFile changed: [35msize (larger)[0m, [35mtime (newer)[0m[0m[0m - [36mfile2.txt[0m
+INFO  : - [36mPath1[0m    [35m[31mFile was deleted[0m[0m          - [36mfile4.txt[0m
+INFO  : - [36mPath1[0m    [35m[33mFile changed: [35msize (larger)[0m, [35mtime (newer)[0m[0m[0m - [36mfile5.txt[0m
+INFO  : - [36mPath1[0m    [35m[31mFile was deleted[0m[0m          - [36mfile6.txt[0m
+INFO  : - [36mPath1[0m    [35m[33mFile changed: [35msize (larger)[0m, [35mtime (newer)[0m[0m[0m - [36mfile7.txt[0m
+INFO  : - [36mPath1[0m    [35m[31mFile was deleted[0m[0m          - [36mfile8.txt[0m
+INFO  : - [36mPath1[0m    [35m[32mFile is new[0m[0m               - [36mfile11.txt[0m
+INFO  : Path1:    7 changes: [32m   1 new[0m, [33m   3 modified[0m, [31m   3 deleted[0m
+INFO  : ([33mModified[0m: [36m   3 newer[0m, [34m   0 older[0m, [36m   3 larger[0m, [34m   0 smaller[0m)
 INFO  : Path2 checking for diffs
-INFO  : - [34mPath2[0m    [35mFile is newer[0m                      - [36mfile1.txt[0m
-INFO  : - [34mPath2[0m    [35mFile was deleted[0m                   - [36mfile3.txt[0m
-INFO  : - [34mPath2[0m    [35mFile is newer[0m                      - [36mfile5.txt[0m
-INFO  : - [34mPath2[0m    [35mFile is newer[0m                      - [36mfile6.txt[0m
-INFO  : - [34mPath2[0m    [35mFile was deleted[0m                   - [36mfile7.txt[0m
-INFO  : - [34mPath2[0m    [35mFile was deleted[0m                   - [36mfile8.txt[0m
-INFO  : - [34mPath2[0m    [35mFile is new[0m                        - [36mfile10.txt[0m
-INFO  : Path2:    7 changes:    1 new,    3 newer,    0 older,    3 deleted
+INFO  : - [34mPath2[0m    [35m[33mFile changed: [35msize (larger)[0m, [35mtime (newer)[0m[0m[0m - [36mfile1.txt[0m
+INFO  : - [34mPath2[0m    [35m[31mFile was deleted[0m[0m          - [36mfile3.txt[0m
+INFO  : - [34mPath2[0m    [35m[33mFile changed: [35msize (larger)[0m, [35mtime (newer)[0m[0m[0m - [36mfile5.txt[0m
+INFO  : - [34mPath2[0m    [35m[33mFile changed: [35msize (larger)[0m, [35mtime (newer)[0m[0m[0m - [36mfile6.txt[0m
+INFO  : - [34mPath2[0m    [35m[31mFile was deleted[0m[0m          - [36mfile7.txt[0m
+INFO  : - [34mPath2[0m    [35m[31mFile was deleted[0m[0m          - [36mfile8.txt[0m
+INFO  : - [34mPath2[0m    [35m[32mFile is new[0m[0m               - [36mfile10.txt[0m
+INFO  : Path2:    7 changes: [32m   1 new[0m, [33m   3 modified[0m, [31m   3 deleted[0m
+INFO  : ([33mModified[0m: [36m   3 newer[0m, [34m   0 older[0m, [36m   3 larger[0m, [34m   0 smaller[0m)
 INFO  : Applying changes
 INFO  : Checking potential conflicts...
 ERROR : file5.txt: md5 differ
 NOTICE: {path2String}: 1 differences found
 NOTICE: {path2String}: 1 errors while checking
 INFO  : Finished checking the potential conflicts. 1 differences found
-INFO  : - [34mPath1[0m    [35mQueue copy to Path2[0m                - [36m{path2/}file11.txt[0m
-INFO  : - [34mPath1[0m    [35mQueue copy to Path2[0m                - [36m{path2/}file2.txt[0m
-INFO  : - [34mPath2[0m    [35mQueue delete[0m                       - [36m{path2/}file4.txt[0m
+INFO  : - [36mPath1[0m    [35m[32mQueue copy to[0m Path2[0m       - [36m{path2/}file11.txt[0m
+INFO  : - [36mPath1[0m    [35m[32mQueue copy to[0m Path2[0m       - [36m{path2/}file2.txt[0m
+INFO  : - [34mPath2[0m    [35m[31mQueue delete[0m[0m              - [36m{path2/}file4.txt[0m
 NOTICE: - [34mWARNING[0m  [35mNew or changed in both paths[0m       - [36mfile5.txt[0m
-NOTICE: - [34mPath1[0m    [35mRenaming Path1 copy[0m                - [36m{path1/}file5.txt..path1[0m
-NOTICE: - [34mPath1[0m    [35mQueue copy to Path2[0m                - [36m{path2/}file5.txt..path1[0m
+NOTICE: - [36mPath1[0m    [35mRenaming Path1 copy[0m                - [36m{path1/}file5.txt..path1[0m
+NOTICE: - [36mPath1[0m    [35m[32mQueue copy to[0m Path2[0m       - [36m{path2/}file5.txt..path1[0m
 NOTICE: - [34mPath2[0m    [35mRenaming Path2 copy[0m                - [36m{path2/}file5.txt..path2[0m
-NOTICE: - [34mPath2[0m    [35mQueue copy to Path1[0m                - [36m{path1/}file5.txt..path2[0m
-INFO  : - [34mPath2[0m    [35mQueue copy to Path1[0m                - [36m{path1/}file6.txt[0m
-INFO  : - [34mPath1[0m    [35mQueue copy to Path2[0m                - [36m{path2/}file7.txt[0m
-INFO  : - [34mPath2[0m    [35mQueue copy to Path1[0m                - [36m{path1/}file1.txt[0m
-INFO  : - [34mPath2[0m    [35mQueue copy to Path1[0m                - [36m{path1/}file10.txt[0m
-INFO  : - [34mPath1[0m    [35mQueue delete[0m                       - [36m{path1/}file3.txt[0m
+NOTICE: - [34mPath2[0m    [35m[32mQueue copy to[0m Path1[0m       - [36m{path1/}file5.txt..path2[0m
+INFO  : - [34mPath2[0m    [35m[32mQueue copy to[0m Path1[0m       - [36m{path1/}file6.txt[0m
+INFO  : - [36mPath1[0m    [35m[32mQueue copy to[0m Path2[0m       - [36m{path2/}file7.txt[0m
+INFO  : - [34mPath2[0m    [35m[32mQueue copy to[0m Path1[0m       - [36m{path1/}file1.txt[0m
+INFO  : - [34mPath2[0m    [35m[32mQueue copy to[0m Path1[0m       - [36m{path1/}file10.txt[0m
+INFO  : - [36mPath1[0m    [35m[31mQueue delete[0m[0m              - [36m{path1/}file3.txt[0m
 INFO  : - [34mPath2[0m    [35mDo queued copies to[0m                - [36mPath1[0m
-INFO  : - [34mPath1[0m    [35mDo queued copies to[0m                - [36mPath2[0m
+INFO  : - [36mPath1[0m    [35mDo queued copies to[0m                - [36mPath2[0m
 INFO  : Updating listings
 INFO  : Validating listings for Path1 "{path1/}" vs Path2 "{path2/}"
 INFO  : [32mBisync successful[0m

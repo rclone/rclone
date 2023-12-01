@@ -141,12 +141,63 @@ func (ls *fileList) put(file string, size int64, modtime time.Time, hash, id str
 	}
 }
 
+func (ls *fileList) getTryAlias(file, alias string) string {
+	if ls.has(file) {
+		return file
+	} else if ls.has(alias) {
+		return alias
+	}
+	return ""
+}
+
 func (ls *fileList) getTime(file string) time.Time {
 	fi := ls.get(file)
 	if fi == nil {
 		return time.Time{}
 	}
 	return fi.time
+}
+
+func (ls *fileList) getSize(file string) int64 {
+	fi := ls.get(file)
+	if fi == nil {
+		return 0
+	}
+	return fi.size
+}
+
+func (ls *fileList) getHash(file string) string {
+	fi := ls.get(file)
+	if fi == nil {
+		return ""
+	}
+	return fi.hash
+}
+
+func (b *bisyncRun) fileInfoEqual(file1, file2 string, ls1, ls2 *fileList) bool {
+	equal := true
+	if ls1.isDir(file1) && ls2.isDir(file2) {
+		return equal
+	}
+	if b.opt.Compare.Size {
+		if sizeDiffers(ls1.getSize(file1), ls2.getSize(file2)) {
+			b.indent("ERROR", file1, fmt.Sprintf("Size not equal in listing. Path1: %v, Path2: %v", ls1.getSize(file1), ls2.getSize(file2)))
+			equal = false
+		}
+	}
+	if b.opt.Compare.Modtime {
+		if timeDiffers(b.fctx, ls1.getTime(file1), ls2.getTime(file2), b.fs1, b.fs2) {
+			b.indent("ERROR", file1, fmt.Sprintf("Modtime not equal in listing. Path1: %v, Path2: %v", ls1.getTime(file1), ls2.getTime(file2)))
+			equal = false
+		}
+	}
+	if b.opt.Compare.Checksum && !ignoreListingChecksum {
+		if hashDiffers(ls1.getHash(file1), ls2.getHash(file2), b.opt.Compare.HashType1, b.opt.Compare.HashType2, ls1.getSize(file1), ls2.getSize(file2)) {
+			b.indent("ERROR", file1, fmt.Sprintf("Checksum not equal in listing. Path1: %v, Path2: %v", ls1.getHash(file1), ls2.getHash(file2)))
+			equal = false
+		}
+	}
+	return equal
 }
 
 // also returns false if not found
@@ -418,8 +469,8 @@ func (b *bisyncRun) modifyListing(ctx context.Context, src fs.Fs, dst fs.Fs, res
 	}
 
 	fs.Debugf(nil, "updating %s", direction)
-	fs.Debugf(nil, "RESULTS: %v", results)
-	fs.Debugf(nil, "QUEUE: %v", queue)
+	prettyprint(results, "results", fs.LogLevelDebug)
+	prettyprint(queue, "queue", fs.LogLevelDebug)
 
 	srcListing, dstListing := b.getListingNames(is1to2)
 	srcList, err := b.loadListing(srcListing)
@@ -432,8 +483,19 @@ func (b *bisyncRun) modifyListing(ctx context.Context, src fs.Fs, dst fs.Fs, res
 	}
 	// set list hash type
 	if b.opt.Resync && !b.opt.IgnoreListingChecksum {
-		srcList.hash = src.Hashes().GetOne()
-		dstList.hash = dst.Hashes().GetOne()
+		if is1to2 {
+			srcList.hash = b.opt.Compare.HashType1
+			dstList.hash = b.opt.Compare.HashType2
+		} else {
+			srcList.hash = b.opt.Compare.HashType2
+			dstList.hash = b.opt.Compare.HashType1
+		}
+		if b.opt.Compare.DownloadHash && srcList.hash == hash.None {
+			srcList.hash = hash.MD5
+		}
+		if b.opt.Compare.DownloadHash && dstList.hash == hash.None {
+			dstList.hash = hash.MD5
+		}
 	}
 
 	srcWinners := newFileList()
@@ -457,13 +519,13 @@ func (b *bisyncRun) modifyListing(ctx context.Context, src fs.Fs, dst fs.Fs, res
 		// build src winners list
 		if result.IsSrc && result.Src != "" && (result.Winner.Err == nil || result.Flags == "d") {
 			srcWinners.put(result.Name, result.Size, ConvertPrecision(result.Modtime, src), result.Hash, "-", result.Flags)
-			fs.Debugf(nil, "winner: copy to src: %v", result)
+			prettyprint(result, "winner: copy to src", fs.LogLevelDebug)
 		}
 
 		// build dst winners list
 		if result.IsWinner && result.Winner.Side != "none" && (result.Winner.Err == nil || result.Flags == "d") {
 			dstWinners.put(result.Name, result.Size, ConvertPrecision(result.Modtime, dst), result.Hash, "-", result.Flags)
-			fs.Debugf(nil, "winner: copy to dst: %v", result)
+			prettyprint(result, "winner: copy to dst", fs.LogLevelDebug)
 		}
 
 		// build errors list
@@ -597,13 +659,9 @@ func (b *bisyncRun) modifyListing(ctx context.Context, src fs.Fs, dst fs.Fs, res
 
 	// update files
 	err = srcList.save(ctx, srcListing)
-	if err != nil {
-		b.abort = true
-	}
+	b.handleErr(srcList, "error saving srcList from modifyListing", err, true, true)
 	err = dstList.save(ctx, dstListing)
-	if err != nil {
-		b.abort = true
-	}
+	b.handleErr(dstList, "error saving dstList from modifyListing", err, true, true)
 
 	return err
 }
@@ -626,15 +684,20 @@ func (b *bisyncRun) recheck(ctxRecheck context.Context, src, dst fs.Fs, srcList,
 		fs.Debugf(dst, "error recchecking dst obj: %v", err)
 	}
 
-	putObj := func(obj fs.Object, f fs.Fs, list *fileList) {
+	putObj := func(obj fs.Object, list *fileList) {
 		hashVal := ""
 		if !b.opt.IgnoreListingChecksum {
-			hashType := f.Hashes().GetOne()
+			hashType := list.hash
 			if hashType != hash.None {
 				hashVal, _ = obj.Hash(ctxRecheck, hashType)
 			}
+			hashVal, _ = tryDownloadHash(ctxRecheck, obj, hashVal)
 		}
-		list.put(obj.Remote(), obj.Size(), obj.ModTime(ctxRecheck), hashVal, "-", "-")
+		var modtime time.Time
+		if b.opt.Compare.Modtime {
+			modtime = obj.ModTime(ctxRecheck).In(TZ)
+		}
+		list.put(obj.Remote(), obj.Size(), modtime, hashVal, "-", "-")
 	}
 
 	for _, srcObj := range srcObjs {
@@ -643,8 +706,8 @@ func (b *bisyncRun) recheck(ctxRecheck context.Context, src, dst fs.Fs, srcList,
 			if srcObj.Remote() == dstObj.Remote() || srcObj.Remote() == b.aliases.Alias(dstObj.Remote()) {
 				// note: unlike Equal(), WhichEqual() does not update the modtime in dest if sums match but modtimes don't.
 				if b.opt.DryRun || WhichEqual(ctxRecheck, srcObj, dstObj, src, dst) {
-					putObj(srcObj, src, srcList)
-					putObj(dstObj, dst, dstList)
+					putObj(srcObj, srcList)
+					putObj(dstObj, dstList)
 					resolved = append(resolved, srcObj.Remote())
 				} else {
 					fs.Infof(srcObj, "files not equal on recheck: %v %v", srcObj, dstObj)

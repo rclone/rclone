@@ -3,10 +3,20 @@
 
 [36m(02)  :[0m [34mtest initial bisync[0m
 [36m(03)  :[0m [34mbisync resync[0m
+INFO  : [2mSetting --ignore-listing-checksum as neither --checksum nor --compare checksum are set.[0m
+INFO  : Bisyncing with Comparison Settings:
+{
+"Modtime": true,
+"Size": true,
+"Checksum": false,
+"NoSlowHash": false,
+"SlowHashSyncOnly": false,
+"DownloadHash": false
+}
 INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
 INFO  : Copying unique Path2 files to Path1
 INFO  : - [34mPath2[0m    [35mResync is copying UNIQUE files to[0m  - [36mPath1[0m
-INFO  : - [34mPath1[0m    [35mResync is copying UNIQUE OR DIFFERING files to[0m - [36mPath2[0m
+INFO  : - [36mPath1[0m    [35mResync is copying UNIQUE OR DIFFERING files to[0m - [36mPath2[0m
 INFO  : Resync updating listings
 INFO  : [32mBisync successful[0m
 
@@ -15,6 +25,16 @@ INFO  : [32mBisync successful[0m
 
 [36m(06)  :[0m [34mtest 2. run with filters-file but without md5. should abort.[0m
 [36m(07)  :[0m [34mbisync filters-file={workdir/}filtersfile.txt[0m
+INFO  : [2mSetting --ignore-listing-checksum as neither --checksum nor --compare checksum are set.[0m
+INFO  : Bisyncing with Comparison Settings:
+{
+"Modtime": true,
+"Size": true,
+"Checksum": false,
+"NoSlowHash": false,
+"SlowHashSyncOnly": false,
+"DownloadHash": false
+}
 INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
 INFO  : Using filters file {workdir/}filtersfile.txt
 ERROR : [31mBisync critical error: filters file md5 hash not found (must run --resync): {workdir/}filtersfile.txt[0m
@@ -23,6 +43,16 @@ Bisync error: bisync aborted
 
 [36m(08)  :[0m [34mtest 3. run without filters-file. should be blocked due to prior abort.[0m
 [36m(09)  :[0m [34mbisync[0m
+INFO  : [2mSetting --ignore-listing-checksum as neither --checksum nor --compare checksum are set.[0m
+INFO  : Bisyncing with Comparison Settings:
+{
+"Modtime": true,
+"Size": true,
+"Checksum": false,
+"NoSlowHash": false,
+"SlowHashSyncOnly": false,
+"DownloadHash": false
+}
 INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
 ERROR : [31mBisync critical error: cannot find prior Path1 or Path2 listings, likely due to critical error on prior run
 [35mTip: here are the filenames we were looking for. Do they exist?
@@ -35,17 +65,37 @@ Bisync error: bisync aborted
 
 [36m(10)  :[0m [34mtest 4. run with filters-file and resync.[0m
 [36m(11)  :[0m [34mbisync filters-file={workdir/}filtersfile.txt resync[0m
+INFO  : [2mSetting --ignore-listing-checksum as neither --checksum nor --compare checksum are set.[0m
+INFO  : Bisyncing with Comparison Settings:
+{
+"Modtime": true,
+"Size": true,
+"Checksum": false,
+"NoSlowHash": false,
+"SlowHashSyncOnly": false,
+"DownloadHash": false
+}
 INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
 INFO  : Using filters file {workdir/}filtersfile.txt
 INFO  : Storing filters file hash to {workdir/}filtersfile.txt.md5
 INFO  : Copying unique Path2 files to Path1
 INFO  : - [34mPath2[0m    [35mResync is copying UNIQUE files to[0m  - [36mPath1[0m
-INFO  : - [34mPath1[0m    [35mResync is copying UNIQUE OR DIFFERING files to[0m - [36mPath2[0m
+INFO  : - [36mPath1[0m    [35mResync is copying UNIQUE OR DIFFERING files to[0m - [36mPath2[0m
 INFO  : Resync updating listings
 INFO  : [32mBisync successful[0m
 
 [36m(12)  :[0m [34mtest 5. run with filters-file alone. should run.[0m
 [36m(13)  :[0m [34mbisync filters-file={workdir/}filtersfile.txt[0m
+INFO  : [2mSetting --ignore-listing-checksum as neither --checksum nor --compare checksum are set.[0m
+INFO  : Bisyncing with Comparison Settings:
+{
+"Modtime": true,
+"Size": true,
+"Checksum": false,
+"NoSlowHash": false,
+"SlowHashSyncOnly": false,
+"DownloadHash": false
+}
 INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
 INFO  : Using filters file {workdir/}filtersfile.txt
 INFO  : Building Path1 and Path2 listings
@@ -61,6 +111,16 @@ INFO  : [32mBisync successful[0m
 
 [36m(16)  :[0m [34mtest 7. run with filters-file alone. should abort.[0m
 [36m(17)  :[0m [34mbisync filters-file={workdir/}filtersfile.txt[0m
+INFO  : [2mSetting --ignore-listing-checksum as neither --checksum nor --compare checksum are set.[0m
+INFO  : Bisyncing with Comparison Settings:
+{
+"Modtime": true,
+"Size": true,
+"Checksum": false,
+"NoSlowHash": false,
+"SlowHashSyncOnly": false,
+"DownloadHash": false
+}
 INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
 INFO  : Using filters file {workdir/}filtersfile.txt
 ERROR : [31mBisync critical error: filters file has changed (must run --resync): {workdir/}filtersfile.txt[0m
@@ -69,17 +129,37 @@ Bisync error: bisync aborted
 
 [36m(18)  :[0m [34mtest 8. run with filters-file and resync and dry-run. should do the dry-run but still cause next non-resync run to abort.[0m
 [36m(19)  :[0m [34mbisync filters-file={workdir/}filtersfile.txt resync dry-run[0m
+INFO  : [2mSetting --ignore-listing-checksum as neither --checksum nor --compare checksum are set.[0m
+INFO  : Bisyncing with Comparison Settings:
+{
+"Modtime": true,
+"Size": true,
+"Checksum": false,
+"NoSlowHash": false,
+"SlowHashSyncOnly": false,
+"DownloadHash": false
+}
 INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
 INFO  : Using filters file {workdir/}filtersfile.txt
 INFO  : Skipped storing filters file hash to {workdir/}filtersfile.txt.md5 as --dry-run is set
 INFO  : Copying unique Path2 files to Path1
 INFO  : - [34mPath2[0m    [35mResync is copying UNIQUE files to[0m  - [36mPath1[0m
-INFO  : - [34mPath1[0m    [35mResync is copying UNIQUE OR DIFFERING files to[0m - [36mPath2[0m
+INFO  : - [36mPath1[0m    [35mResync is copying UNIQUE OR DIFFERING files to[0m - [36mPath2[0m
 INFO  : Resync updating listings
 INFO  : [32mBisync successful[0m
 
 [36m(20)  :[0m [34mtest 9. run with filters-file alone. should abort.[0m
 [36m(21)  :[0m [34mbisync filters-file={workdir/}filtersfile.txt[0m
+INFO  : [2mSetting --ignore-listing-checksum as neither --checksum nor --compare checksum are set.[0m
+INFO  : Bisyncing with Comparison Settings:
+{
+"Modtime": true,
+"Size": true,
+"Checksum": false,
+"NoSlowHash": false,
+"SlowHashSyncOnly": false,
+"DownloadHash": false
+}
 INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
 INFO  : Using filters file {workdir/}filtersfile.txt
 ERROR : [31mBisync critical error: filters file has changed (must run --resync): {workdir/}filtersfile.txt[0m
