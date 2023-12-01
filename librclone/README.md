@@ -200,11 +200,16 @@ The `gomobile` subdirectory contains the equivalent of the C binding but
 suitable for using with [gomobile](https://pkg.go.dev/golang.org/x/mobile/cmd/gomobile)
 using something like this.
 
-    gomobile bind -v -target=android -javapkg=org.rclone github.com/rclone/rclone/librclone/gomobile
+Note: Make sure you have `git`, `gomobile`, `gobind` and **latest** `ndk-bundle` installed.
+
+    git clone https://github.com/rclone/rclone.git
+    cd ./rclone/librclone/gomobile
+    gomobile bind -v -target=android -javapkg="org.rclone"
 
 The command generates an Android library (`aar`) that can be imported
 into an Android application project. Librclone will be contained
 within `libgojni.so` and loaded automatically.
+ 
 
 ```java
 // imports
