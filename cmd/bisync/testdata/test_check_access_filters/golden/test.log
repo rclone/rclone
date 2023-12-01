@@ -6,17 +6,37 @@
 
 [36m(04)  :[0m [34mtest resync to get the filters file md5 built.[0m
 [36m(05)  :[0m [34mbisync resync filters-file={workdir/}exclude-other-filtersfile.txt[0m
+INFO  : [2mSetting --ignore-listing-checksum as neither --checksum nor --compare checksum are set.[0m
+INFO  : Bisyncing with Comparison Settings:
+{
+"Modtime": true,
+"Size": true,
+"Checksum": false,
+"NoSlowHash": false,
+"SlowHashSyncOnly": false,
+"DownloadHash": false
+}
 INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
 INFO  : Using filters file {workdir/}exclude-other-filtersfile.txt
 INFO  : Storing filters file hash to {workdir/}exclude-other-filtersfile.txt.md5
 INFO  : Copying unique Path2 files to Path1
 INFO  : - [34mPath2[0m    [35mResync is copying UNIQUE files to[0m  - [36mPath1[0m
-INFO  : - [34mPath1[0m    [35mResync is copying UNIQUE OR DIFFERING files to[0m - [36mPath2[0m
+INFO  : - [36mPath1[0m    [35mResync is copying UNIQUE OR DIFFERING files to[0m - [36mPath2[0m
 INFO  : Resync updating listings
 INFO  : [32mBisync successful[0m
 
 [36m(06)  :[0m [34mtest EXCLUDE - test filters for check access[0m
 [36m(07)  :[0m [34mbisync check-access filters-file={workdir/}exclude-other-filtersfile.txt[0m
+INFO  : [2mSetting --ignore-listing-checksum as neither --checksum nor --compare checksum are set.[0m
+INFO  : Bisyncing with Comparison Settings:
+{
+"Modtime": true,
+"Size": true,
+"Checksum": false,
+"NoSlowHash": false,
+"SlowHashSyncOnly": false,
+"DownloadHash": false
+}
 INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
 INFO  : Using filters file {workdir/}exclude-other-filtersfile.txt
 INFO  : Building Path1 and Path2 listings
@@ -38,6 +58,16 @@ INFO  : [32mBisync successful[0m
 
 [36m(14)  :[0m [34mtest EXCLUDE - test should PASS[0m
 [36m(15)  :[0m [34mbisync check-access filters-file={workdir/}exclude-other-filtersfile.txt[0m
+INFO  : [2mSetting --ignore-listing-checksum as neither --checksum nor --compare checksum are set.[0m
+INFO  : Bisyncing with Comparison Settings:
+{
+"Modtime": true,
+"Size": true,
+"Checksum": false,
+"NoSlowHash": false,
+"SlowHashSyncOnly": false,
+"DownloadHash": false
+}
 INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
 INFO  : Using filters file {workdir/}exclude-other-filtersfile.txt
 INFO  : Building Path1 and Path2 listings
@@ -57,15 +87,25 @@ INFO  : [32mBisync successful[0m
 
 [36m(20)  :[0m [34mtest EXCLUDE - test should ABORT[0m
 [36m(21)  :[0m [34mbisync check-access filters-file={workdir/}exclude-other-filtersfile.txt[0m
+INFO  : [2mSetting --ignore-listing-checksum as neither --checksum nor --compare checksum are set.[0m
+INFO  : Bisyncing with Comparison Settings:
+{
+"Modtime": true,
+"Size": true,
+"Checksum": false,
+"NoSlowHash": false,
+"SlowHashSyncOnly": false,
+"DownloadHash": false
+}
 INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
 INFO  : Using filters file {workdir/}exclude-other-filtersfile.txt
 INFO  : Building Path1 and Path2 listings
 INFO  : Path1 checking for diffs
-INFO  : - [34mPath1[0m    [35mFile was deleted[0m                   - [36msubdir/RCLONE_TEST[0m
-INFO  : Path1:    1 changes:    0 new,    0 newer,    0 older,    1 deleted
+INFO  : - [36mPath1[0m    [35m[31mFile was deleted[0m[0m          - [36msubdir/RCLONE_TEST[0m
+INFO  : Path1:    1 changes: [32m   0 new[0m, [33m   0 modified[0m, [31m   1 deleted[0m
 INFO  : Path2 checking for diffs
-INFO  : - [34mPath2[0m    [35mFile was deleted[0m                   - [36mRCLONE_TEST[0m
-INFO  : Path2:    1 changes:    0 new,    0 newer,    0 older,    1 deleted
+INFO  : - [34mPath2[0m    [35m[31mFile was deleted[0m[0m          - [36mRCLONE_TEST[0m
+INFO  : Path2:    1 changes: [32m   0 new[0m, [33m   0 modified[0m, [31m   1 deleted[0m
 INFO  : Checking access health
 ERROR : - [34m[0m         [35mAccess test failed: Path1 file not found in Path2[0m - [36mRCLONE_TEST[0m
 ERROR : - [34m[0m         [35mAccess test failed: Path2 file not found in Path1[0m - [36msubdir/RCLONE_TEST[0m
@@ -80,17 +120,37 @@ Bisync error: bisync aborted
 [36m(26)  :[0m [34msync-dir {path1/} {path2/}[0m
 [36m(27)  :[0m [34mcopy-file {datadir/}include-other-filtersfile.txt {workdir/}[0m
 [36m(28)  :[0m [34mbisync resync filters-file={workdir/}include-other-filtersfile.txt[0m
+INFO  : [2mSetting --ignore-listing-checksum as neither --checksum nor --compare checksum are set.[0m
+INFO  : Bisyncing with Comparison Settings:
+{
+"Modtime": true,
+"Size": true,
+"Checksum": false,
+"NoSlowHash": false,
+"SlowHashSyncOnly": false,
+"DownloadHash": false
+}
 INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
 INFO  : Using filters file {workdir/}include-other-filtersfile.txt
 INFO  : Storing filters file hash to {workdir/}include-other-filtersfile.txt.md5
 INFO  : Copying unique Path2 files to Path1
 INFO  : - [34mPath2[0m    [35mResync is copying UNIQUE files to[0m  - [36mPath1[0m
-INFO  : - [34mPath1[0m    [35mResync is copying UNIQUE OR DIFFERING files to[0m - [36mPath2[0m
+INFO  : - [36mPath1[0m    [35mResync is copying UNIQUE OR DIFFERING files to[0m - [36mPath2[0m
 INFO  : Resync updating listings
 INFO  : [32mBisync successful[0m
 
 [36m(29)  :[0m [34mtest INCLUDE - test include/exclude filters for check access[0m
 [36m(30)  :[0m [34mbisync check-access filters-file={workdir/}include-other-filtersfile.txt[0m
+INFO  : [2mSetting --ignore-listing-checksum as neither --checksum nor --compare checksum are set.[0m
+INFO  : Bisyncing with Comparison Settings:
+{
+"Modtime": true,
+"Size": true,
+"Checksum": false,
+"NoSlowHash": false,
+"SlowHashSyncOnly": false,
+"DownloadHash": false
+}
 INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
 INFO  : Using filters file {workdir/}include-other-filtersfile.txt
 INFO  : Building Path1 and Path2 listings
@@ -111,6 +171,16 @@ INFO  : [32mBisync successful[0m
 
 [36m(36)  :[0m [34mtest INCLUDE - test should PASS[0m
 [36m(37)  :[0m [34mbisync check-access filters-file={workdir/}include-other-filtersfile.txt[0m
+INFO  : [2mSetting --ignore-listing-checksum as neither --checksum nor --compare checksum are set.[0m
+INFO  : Bisyncing with Comparison Settings:
+{
+"Modtime": true,
+"Size": true,
+"Checksum": false,
+"NoSlowHash": false,
+"SlowHashSyncOnly": false,
+"DownloadHash": false
+}
 INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
 INFO  : Using filters file {workdir/}include-other-filtersfile.txt
 INFO  : Building Path1 and Path2 listings
@@ -131,16 +201,26 @@ INFO  : [32mBisync successful[0m
 
 [36m(43)  :[0m [34mtest INCLUDE - test should ABORT[0m
 [36m(44)  :[0m [34mbisync check-access filters-file={workdir/}include-other-filtersfile.txt[0m
+INFO  : [2mSetting --ignore-listing-checksum as neither --checksum nor --compare checksum are set.[0m
+INFO  : Bisyncing with Comparison Settings:
+{
+"Modtime": true,
+"Size": true,
+"Checksum": false,
+"NoSlowHash": false,
+"SlowHashSyncOnly": false,
+"DownloadHash": false
+}
 INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
 INFO  : Using filters file {workdir/}include-other-filtersfile.txt
 INFO  : Building Path1 and Path2 listings
 INFO  : Path1 checking for diffs
-INFO  : - [34mPath1[0m    [35mFile was deleted[0m                   - [36msubdir/RCLONE_TEST[0m
-INFO  : - [34mPath1[0m    [35mFile was deleted[0m                   - [36msubdirX/subdirX1/RCLONE_TEST[0m
-INFO  : Path1:    2 changes:    0 new,    0 newer,    0 older,    2 deleted
+INFO  : - [36mPath1[0m    [35m[31mFile was deleted[0m[0m          - [36msubdir/RCLONE_TEST[0m
+INFO  : - [36mPath1[0m    [35m[31mFile was deleted[0m[0m          - [36msubdirX/subdirX1/RCLONE_TEST[0m
+INFO  : Path1:    2 changes: [32m   0 new[0m, [33m   0 modified[0m, [31m   2 deleted[0m
 INFO  : Path2 checking for diffs
-INFO  : - [34mPath2[0m    [35mFile was deleted[0m                   - [36mRCLONE_TEST[0m
-INFO  : Path2:    1 changes:    0 new,    0 newer,    0 older,    1 deleted
+INFO  : - [34mPath2[0m    [35m[31mFile was deleted[0m[0m          - [36mRCLONE_TEST[0m
+INFO  : Path2:    1 changes: [32m   0 new[0m, [33m   0 modified[0m, [31m   1 deleted[0m
 INFO  : Checking access health
 ERROR : Access test failed: Path1 count 3, Path2 count 4 - RCLONE_TEST
 ERROR : - [34m[0m         [35mAccess test failed: Path1 file not found in Path2[0m - [36mRCLONE_TEST[0m

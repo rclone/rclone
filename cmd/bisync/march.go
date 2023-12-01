@@ -3,6 +3,7 @@ package bisync
 import (
 	"context"
 	"sync"
+	"time"
 
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/accounting"
@@ -45,18 +46,21 @@ func (b *bisyncRun) makeMarchListing(ctx context.Context) (*fileList, *fileList,
 		err = firstErr
 	}
 	if err != nil {
+		b.handleErr("march", "error during march", err, true, true)
 		b.abort = true
 	}
 
 	// save files
+	if b.opt.Compare.DownloadHash && ls1.hash == hash.None {
+		ls1.hash = hash.MD5
+	}
+	if b.opt.Compare.DownloadHash && ls2.hash == hash.None {
+		ls2.hash = hash.MD5
+	}
 	err = ls1.save(ctx, b.newListing1)
-	if err != nil {
-		b.abort = true
-	}
+	b.handleErr(ls1, "error saving ls1 from march", err, true, true)
 	err = ls2.save(ctx, b.newListing2)
-	if err != nil {
-		b.abort = true
-	}
+	b.handleErr(ls2, "error saving ls2 from march", err, true, true)
 
 	return ls1, ls2, err
 }
@@ -117,18 +121,10 @@ func (b *bisyncRun) setupListing() {
 	ls1 = newFileList()
 	ls2 = newFileList()
 
-	hashType1 := hash.None
-	hashType2 := hash.None
-	if !b.opt.IgnoreListingChecksum {
-		// Currently bisync just honors --ignore-listing-checksum
-		// (note that this is different from --ignore-checksum)
-		// TODO add full support for checksums and related flags
-		hashType1 = b.fs1.Hashes().GetOne()
-		hashType2 = b.fs2.Hashes().GetOne()
-	}
-
-	ls1.hash = hashType1
-	ls2.hash = hashType2
+	// note that --ignore-listing-checksum is different from --ignore-checksum
+	// and we already checked it when we set b.opt.Compare.HashType1 and 2
+	ls1.hash = b.opt.Compare.HashType1
+	ls2.hash = b.opt.Compare.HashType2
 }
 
 func (b *bisyncRun) ForObject(o fs.Object, isPath1 bool) {
@@ -150,11 +146,24 @@ func (b *bisyncRun) ForObject(o fs.Object, isPath1 bool) {
 		}
 		marchErrLock.Unlock()
 	}
-	time := o.ModTime(marchCtx).In(TZ)
+	hashVal, hashErr = tryDownloadHash(marchCtx, o, hashVal)
+	marchErrLock.Lock()
+	if firstErr == nil {
+		firstErr = hashErr
+	}
+	if firstErr != nil {
+		b.handleErr(hashType, "error hashing during march", firstErr, false, true)
+	}
+	marchErrLock.Unlock()
+
+	var modtime time.Time
+	if b.opt.Compare.Modtime {
+		modtime = o.ModTime(marchCtx).In(TZ)
+	}
 	id := ""     // TODO
 	flags := "-" // "-" for a file and "d" for a directory
 	marchLsLock.Lock()
-	ls.put(o.Remote(), o.Size(), time, hashVal, id, flags)
+	ls.put(o.Remote(), o.Size(), modtime, hashVal, id, flags)
 	marchLsLock.Unlock()
 }
 
@@ -164,11 +173,14 @@ func (b *bisyncRun) ForDir(o fs.Directory, isPath1 bool) {
 		tr.Done(marchCtx, nil)
 	}()
 	ls := whichLs(isPath1)
-	time := o.ModTime(marchCtx).In(TZ)
+	var modtime time.Time
+	if b.opt.Compare.Modtime {
+		modtime = o.ModTime(marchCtx).In(TZ)
+	}
 	id := ""     // TODO
 	flags := "d" // "-" for a file and "d" for a directory
 	marchLsLock.Lock()
-	ls.put(o.Remote(), -1, time, "", id, flags)
+	ls.put(o.Remote(), -1, modtime, "", id, flags)
 	marchLsLock.Unlock()
 }
 
@@ -217,6 +229,7 @@ func (b *bisyncRun) findCheckFiles(ctx context.Context) (*fileList, *fileList, e
 		err = firstErr
 	}
 	if err != nil {
+		b.handleErr("march", "error during findCheckFiles", err, true, true)
 		b.abort = true
 	}
 

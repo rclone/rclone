@@ -192,3 +192,44 @@ func WhichEqual(ctx context.Context, src, dst fs.Object, Fsrc, Fdst fs.Fs) bool 
 	}
 	return !differ
 }
+
+// Replaces the standard Equal func with one that also considers checksum
+// Note that it also updates the modtime the same way as Sync
+func (b *bisyncRun) EqualFn(ctx context.Context) context.Context {
+	ci := fs.GetConfig(ctx)
+	ci.CheckSum = false // force checksum off so modtime is evaluated if needed
+	// modtime and size settings should already be set correctly for Equal
+	var equalFn operations.EqualFn = func(ctx context.Context, src fs.ObjectInfo, dst fs.Object) bool {
+		fs.Debugf(src, "evaluating...")
+		equal := false
+		logger, _ := operations.GetLogger(ctx)
+		// temporarily unset logger, we don't want Equal to duplicate it
+		noop := func(ctx context.Context, sigil operations.Sigil, src, dst fs.DirEntry, err error) {
+			fs.Debugf(src, "equal skipped")
+		}
+		ctxNoLogger := operations.WithLogger(ctx, noop)
+		if operations.Equal(ctxNoLogger, src, dst) {
+			whichHashType := func(f fs.Info) hash.Type {
+				ht := getHashType(f.Name())
+				if ht == hash.None && b.opt.Compare.SlowHashSyncOnly && !b.opt.Resync {
+					ht = f.Hashes().GetOne()
+				}
+				return ht
+			}
+			srcHash, _ := src.Hash(ctx, whichHashType(src.Fs()))
+			dstHash, _ := dst.Hash(ctx, whichHashType(dst.Fs()))
+			srcHash, _ = tryDownloadHash(ctx, src, srcHash)
+			dstHash, _ = tryDownloadHash(ctx, dst, dstHash)
+			equal = !hashDiffers(srcHash, dstHash, whichHashType(src.Fs()), whichHashType(dst.Fs()), src.Size(), dst.Size())
+		}
+		if equal {
+			logger(ctx, operations.Match, src, dst, nil)
+			fs.Debugf(src, "EqualFn: files are equal")
+			return true
+		}
+		logger(ctx, operations.Differ, src, dst, nil)
+		fs.Debugf(src, "EqualFn: files are NOT equal")
+		return false
+	}
+	return operations.WithEqualFn(ctx, equalFn)
+}

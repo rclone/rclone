@@ -1,6 +1,7 @@
 package bisync
 
 import (
+	"encoding/json"
 	"fmt"
 	"runtime"
 	"strconv"
@@ -28,8 +29,14 @@ func (b *bisyncRun) indent(tag, file, msg string) {
 		logf = fs.Logf
 	}
 
-	tag = Color(terminal.BlueFg, tag)
+	if tag == "Path1" {
+		tag = Color(terminal.CyanFg, "Path1")
+	} else {
+		tag = Color(terminal.BlueFg, tag)
+	}
 	msg = Color(terminal.MagentaFg, msg)
+	msg = strings.Replace(msg, "Queue copy to", Color(terminal.GreenFg, "Queue copy to"), -1)
+	msg = strings.Replace(msg, "Queue delete", Color(terminal.RedFg, "Queue delete"), -1)
 	file = Color(terminal.CyanFg, escapePath(file, false))
 	logf(nil, "- %-18s%-43s - %s", tag, msg, file)
 }
@@ -63,4 +70,17 @@ func Color(style string, s string) string {
 
 func encode(s string) string {
 	return encoder.OS.ToStandardPath(encoder.OS.FromStandardPath(s))
+}
+
+// prettyprint formats JSON for improved readability in debug logs
+func prettyprint(in any, label string, level fs.LogLevel) {
+	inBytes, err := json.MarshalIndent(in, "", "\t")
+	if err != nil {
+		fs.Debugf(nil, "failed to marshal input: %v", err)
+	}
+	if level == fs.LogLevelDebug {
+		fs.Debugf(nil, "%s: \n%s\n", label, string(inBytes))
+	} else if level == fs.LogLevelInfo {
+		fs.Infof(nil, "%s: \n%s\n", label, string(inBytes))
+	}
 }
