@@ -31,7 +31,7 @@ var (
 
 // Seed the random number generator
 func init() {
-	rand.Seed(time.Now().UnixNano())
+	_ = random.Seed()
 
 }
 
