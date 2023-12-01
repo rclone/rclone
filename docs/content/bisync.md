@@ -614,19 +614,6 @@ and there is also a [known issue concerning Google Drive users with many empty d
 For now, the recommended way to avoid using `--fast-list` is to add `--disable ListR` 
 to all bisync commands. The default behavior may change in a future version.
 
-### Overridden Configs
-
-When rclone detects an overridden config, it adds a suffix like `{ABCDE}` on the fly 
-to the internal name of the remote. Bisync follows suit by including this suffix in its listing filenames. 
-However, this suffix does not necessarily persist from run to run, especially if different flags are provided. 
-So if next time the suffix assigned is `{FGHIJ}`, bisync will get confused, 
-because it's looking for a listing file with `{FGHIJ}`, when the file it wants has `{ABCDE}`. 
-As a result, it throws 
-`Bisync critical error: cannot find prior Path1 or Path2 listings, likely due to critical error on prior run` 
-and refuses to run again until the user runs a `--resync` (unless using `--resilient`). 
-The best workaround at the moment is to set any backend-specific flags in the [config file](/commands/rclone_config/) 
-instead of specifying them with command flags. (You can still override them as needed for other rclone commands.)
-
 ### Case (and unicode) sensitivity {#case-sensitivity}
 
 As of `v1.66`, case and unicode form differences no longer cause critical errors,
@@ -973,10 +960,6 @@ skip them.) To work around this, use the default (modtime and size) instead of
 
 To ignore Google Docs entirely, use
 [`--drive-skip-gdocs`](/drive/#drive-skip-gdocs).
-
-(Note that all flags starting with `--drive` are backend-specific, and
-therefore will cause the behavior explained in [Overridden
-Configs](/#overridden-configs).)
 
 ## Usage examples
 
@@ -1369,6 +1352,7 @@ for performance improvements and less [risk of error](https://forum.rclone.org/t
 * Google Docs (and other files of unknown size) are now supported (with the same options as in `sync`)
 * Equality checks before a sync conflict rename now fall back to `cryptcheck` (when possible) or `--download`,
 instead of of `--size-only`, when `check` is not available.
+* Bisync no longer fails to find the correct listing file when configs are overridden with backend-specific flags.
 
 ### `v1.64`
 * Fixed an [issue](https://forum.rclone.org/t/bisync-bugs-and-feature-requests/37636#:~:text=1.%20Dry%20runs%20are%20not%20completely%20dry) 

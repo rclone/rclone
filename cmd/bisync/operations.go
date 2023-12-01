@@ -88,7 +88,7 @@ func Bisync(ctx context.Context, fs1, fs2 fs.Fs, optArg *Options) (err error) {
 	}
 
 	// Produce a unique name for the sync operation
-	b.basePath = filepath.Join(b.workDir, bilib.SessionName(b.fs1, b.fs2))
+	b.basePath = bilib.BasePath(ctx, b.workDir, b.fs1, b.fs2)
 	b.listing1 = b.basePath + ".path1.lst"
 	b.listing2 = b.basePath + ".path2.lst"
 	b.newListing1 = b.listing1 + "-new"
