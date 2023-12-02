@@ -104,6 +104,7 @@ func TestCRUD(t *testing.T) {
 		"y",                  // type my own password
 		"secret",             // password
 		"secret",             // repeat
+		"n",                  // don't edit advanced config
 		"y",                  // looks good, save
 	})
 	require.NoError(t, config.NewRemote(ctx, "test"))
