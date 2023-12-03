@@ -2220,6 +2220,13 @@ Use this only if v4 signatures don't work, e.g. pre Jewel/v10 CEPH.`,
 			Default:  false,
 			Advanced: true,
 		}, {
+			Name: "use_dual_stack",
+			Help: `If true use AWS S3 dual-stack endpoint (IPv6 support).
+
+See [AWS Docs on Dualstack Endpoints](https://docs.aws.amazon.com/AmazonS3/latest/userguide/dual-stack-endpoints.html)`,
+			Default:  false,
+			Advanced: true,
+		}, {
 			Name:     "use_accelerate_endpoint",
 			Provider: "AWS",
 			Help: `If true use the AWS S3 accelerated endpoint.
@@ -2628,6 +2635,7 @@ type Options struct {
 	Region                string               `config:"region"`
 	Endpoint              string               `config:"endpoint"`
 	STSEndpoint           string               `config:"sts_endpoint"`
+	UseDualStack          bool                 `config:"use_dual_stack"`
 	LocationConstraint    string               `config:"location_constraint"`
 	ACL                   string               `config:"acl"`
 	BucketACL             string               `config:"bucket_acl"`
@@ -2955,6 +2963,9 @@ func s3Connection(ctx context.Context, opt *Options, client *http.Client) (*s3.S
 		r.addService("s3", opt.Endpoint)
 		r.addService("sts", opt.STSEndpoint)
 		awsConfig.WithEndpointResolver(r)
+	}
+	if opt.UseDualStack {
+		awsConfig.UseDualStackEndpoint = endpoints.DualStackEndpointStateEnabled
 	}
 
 	// awsConfig.WithLogLevel(aws.LogDebugWithSigning)
