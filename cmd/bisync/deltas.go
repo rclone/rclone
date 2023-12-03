@@ -387,9 +387,12 @@ func (b *bisyncRun) applyDeltas(ctx context.Context, ds1, ds2 *deltaSet) (change
 
 				//if files are identical, leave them alone instead of renaming
 				if (dirs1.has(file) || dirs1.has(alias)) && (dirs2.has(file) || dirs2.has(alias)) {
-					fs.Debugf(nil, "This is a directory, not a file. Skipping equality check and will not rename: %s", file)
+					fs.Infof(nil, "This is a directory, not a file. Skipping equality check and will not rename: %s", file)
 					ls1.getPut(file, skippedDirs1)
 					ls2.getPut(file, skippedDirs2)
+					b.debugFn(file, func() {
+						b.debug(file, fmt.Sprintf("deltas dir: %s, ls1 has name?: %v, ls2 has name?: %v", file, ls1.has(b.DebugName), ls2.has(b.DebugName)))
+					})
 				} else {
 					equal := matches.Has(file)
 					if !equal {
@@ -499,7 +502,7 @@ func (b *bisyncRun) applyDeltas(ctx context.Context, ds1, ds2 *deltaSet) (change
 	}
 
 	// Do the batch operation
-	if copy2to1.NotEmpty() {
+	if copy2to1.NotEmpty() && !b.InGracefulShutdown {
 		changes1 = true
 		b.indent("Path2", "Path1", "Do queued copies to")
 		ctx = b.setBackupDir(ctx, 1)
@@ -508,7 +511,7 @@ func (b *bisyncRun) applyDeltas(ctx context.Context, ds1, ds2 *deltaSet) (change
 		// retries, if any
 		results2to1, err = b.retryFastCopy(ctx, b.fs2, b.fs1, copy2to1, "copy2to1", results2to1, err)
 
-		if err != nil {
+		if !b.InGracefulShutdown && err != nil {
 			return
 		}
 
@@ -516,7 +519,7 @@ func (b *bisyncRun) applyDeltas(ctx context.Context, ds1, ds2 *deltaSet) (change
 		b.syncEmptyDirs(ctx, b.fs1, copy2to1, dirs2, &results2to1, "make")
 	}
 
-	if copy1to2.NotEmpty() {
+	if copy1to2.NotEmpty() && !b.InGracefulShutdown {
 		changes2 = true
 		b.indent("Path1", "Path2", "Do queued copies to")
 		ctx = b.setBackupDir(ctx, 2)
@@ -525,7 +528,7 @@ func (b *bisyncRun) applyDeltas(ctx context.Context, ds1, ds2 *deltaSet) (change
 		// retries, if any
 		results1to2, err = b.retryFastCopy(ctx, b.fs1, b.fs2, copy1to2, "copy1to2", results1to2, err)
 
-		if err != nil {
+		if !b.InGracefulShutdown && err != nil {
 			return
 		}
 
@@ -533,7 +536,7 @@ func (b *bisyncRun) applyDeltas(ctx context.Context, ds1, ds2 *deltaSet) (change
 		b.syncEmptyDirs(ctx, b.fs2, copy1to2, dirs1, &results1to2, "make")
 	}
 
-	if delete1.NotEmpty() {
+	if delete1.NotEmpty() && !b.InGracefulShutdown {
 		if err = b.saveQueue(delete1, "delete1"); err != nil {
 			return
 		}
@@ -541,7 +544,7 @@ func (b *bisyncRun) applyDeltas(ctx context.Context, ds1, ds2 *deltaSet) (change
 		b.syncEmptyDirs(ctx, b.fs1, delete1, dirs1, &results2to1, "remove")
 	}
 
-	if delete2.NotEmpty() {
+	if delete2.NotEmpty() && !b.InGracefulShutdown {
 		if err = b.saveQueue(delete2, "delete2"); err != nil {
 			return
 		}

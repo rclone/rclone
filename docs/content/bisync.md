@@ -507,6 +507,40 @@ Certain more serious errors will still enforce a `--resync` lockout, even in `--
 
 Behavior of `--resilient` may change in a future version.
 
+### --recover
+
+If `--recover` is set, in the event of a sudden interruption or other
+un-graceful shutdown, bisync will attempt to automatically recover on the next
+run, instead of requiring `--resync`. Bisync is able to recover robustly by
+keeping one "backup" listing at all times, representing the state of both paths
+after the last known successful sync. Bisync can then compare the current state
+with this snapshot to determine which changes it needs to retry. Changes that
+were synced after this snapshot (during the run that was later interrupted)
+will appear to bisync as if they are "new or changed on both sides", but in
+most cases this is not a problem, as bisync will simply do its usual "equality
+check" and learn that no action needs to be taken on these files, since they
+are already identical on both sides.
+
+In the rare event that a file is synced successfully during a run that later
+aborts, and then that same file changes AGAIN before the next run, bisync will
+think it is a sync conflict, and handle it accordingly. (From bisync's
+perspective, the file has changed on both sides since the last trusted sync,
+and the files on either side are not currently identical.) Therefore,
+`--recover` carries with it a slightly increased chance of having conflicts --
+though in practice this is pretty rare, as the conditions required to cause it
+are quite specific. This risk can be reduced by using bisync's ["Graceful
+Shutdown"](#graceful-shutdown) mode (triggered by sending `SIGINT` or
+`Ctrl+C`), when you have the choice, instead of forcing a sudden termination.
+
+`--recover` and `--resilient` are similar, but distinct -- the main difference
+is that `--resilient` is about _retrying_, while `--recover` is about
+_recovering_. Most users will probably want both. `--resilient` allows retrying
+when bisync has chosen to abort itself due to safety features such as failing
+`--check-access` or detecting a filter change. `--resilient` does not cover
+external interruptions such as a user shutting down their computer in the
+middle of a sync -- that is what `--recover` is for.
+
+
 ### --backup-dir1 and --backup-dir2
 
 As of `v1.66`, [`--backup-dir`](/docs/#backup-dir-dir) is supported in bisync.
@@ -669,6 +703,31 @@ lest there be replicated files, deleted files and general mayhem.
 - `0` on a successful run,
 - `1` for a non-critical failing run (a rerun may be successful),
 - `2` for a critically aborted run (requires a `--resync` to recover).
+
+### Graceful Shutdown
+
+Bisync has a "Graceful Shutdown" mode which is activated by sending `SIGINT` or
+pressing `Ctrl+C` during a run. Once triggered, bisync will use best efforts to
+exit cleanly before the timer runs out. If bisync is in the middle of
+transferring files, it will attempt to cleanly empty its queue by finishing
+what it has started but not taking more. If it cannot do so within 30 seconds,
+it will cancel the in-progress transfers at that point and then give itself a
+maximum of 60 seconds to wrap up, save its state for next time, and exit. With
+the `-vP` flags you will see constant status updates and a final confirmation
+of whether or not the graceful shutdown was successful.
+
+At any point during the "Graceful Shutdown" sequence, a second `SIGINT` or
+`Ctrl+C` will trigger an immediate, un-graceful exit, which will leave things
+in a messier state. Usually a robust recovery will still be possible if using
+[`--recover`](#recover) mode, otherwise you will need to do a `--resync`.
+
+If you plan to use Graceful Shutdown mode, it is recommended to use
+[`--resilient`](#resilient) and [`--recover`](#recover), and it is important to
+NOT use [`--inplace`](/docs/#inplace), otherwise you risk leaving
+partially-written files on one side, which may be confused for real files on
+the next run. Note also that in the event of an abrupt interruption, a [lock
+file](#lock-file) will be left behind to block concurrent runs. You will need
+to delete it before you can proceed with the next run.
 
 ## Limitations
 
@@ -1498,6 +1557,8 @@ for performance improvements and less [risk of error](https://forum.rclone.org/t
 instead of of `--size-only`, when `check` is not available.
 * Bisync no longer fails to find the correct listing file when configs are overridden with backend-specific flags.
 * Bisync now fully supports comparing based on any combination of size, modtime, and checksum, lifting the prior restriction on backends without modtime support.
+* Bisync now supports a "Graceful Shutdown" mode to cleanly cancel a run early without requiring `--resync`.
+* New `--recover` flag allows robust recovery in the event of interruptions, without requiring `--resync`.
 
 ### `v1.64`
 * Fixed an [issue](https://forum.rclone.org/t/bisync-bugs-and-feature-requests/37636#:~:text=1.%20Dry%20runs%20are%20not%20completely%20dry) 

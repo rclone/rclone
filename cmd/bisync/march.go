@@ -48,6 +48,7 @@ func (b *bisyncRun) makeMarchListing(ctx context.Context) (*fileList, *fileList,
 	if err != nil {
 		b.handleErr("march", "error during march", err, true, true)
 		b.abort = true
+		return ls1, ls2, err
 	}
 
 	// save files
@@ -160,7 +161,7 @@ func (b *bisyncRun) ForObject(o fs.Object, isPath1 bool) {
 	if b.opt.Compare.Modtime {
 		modtime = o.ModTime(marchCtx).In(TZ)
 	}
-	id := ""     // TODO
+	id := ""     // TODO: ID(o)
 	flags := "-" // "-" for a file and "d" for a directory
 	marchLsLock.Lock()
 	ls.put(o.Remote(), o.Size(), modtime, hashVal, id, flags)
@@ -234,4 +235,13 @@ func (b *bisyncRun) findCheckFiles(ctx context.Context) (*fileList, *fileList, e
 	}
 
 	return ls1, ls2, err
+}
+
+// ID returns the ID of the Object if known, or "" if not
+func ID(o fs.Object) string {
+	do, ok := o.(fs.IDer)
+	if !ok {
+		return ""
+	}
+	return do.ID()
 }
