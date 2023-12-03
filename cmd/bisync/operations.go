@@ -10,10 +10,13 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 	gosync "sync"
+	"time"
 
 	"github.com/rclone/rclone/cmd/bisync/bilib"
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/accounting"
 	"github.com/rclone/rclone/fs/filter"
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/lib/atexit"
@@ -25,21 +28,26 @@ var ErrBisyncAborted = errors.New("bisync aborted")
 
 // bisyncRun keeps bisync runtime state
 type bisyncRun struct {
-	fs1         fs.Fs
-	fs2         fs.Fs
-	abort       bool
-	critical    bool
-	retryable   bool
-	basePath    string
-	workDir     string
-	listing1    string
-	listing2    string
-	newListing1 string
-	newListing2 string
-	aliases     bilib.AliasMap
-	opt         *Options
-	octx        context.Context
-	fctx        context.Context
+	fs1                fs.Fs
+	fs2                fs.Fs
+	abort              bool
+	critical           bool
+	retryable          bool
+	basePath           string
+	workDir            string
+	listing1           string
+	listing2           string
+	newListing1        string
+	newListing2        string
+	aliases            bilib.AliasMap
+	opt                *Options
+	octx               context.Context
+	fctx               context.Context
+	InGracefulShutdown bool
+	CleanupCompleted   bool
+	SyncCI             *fs.ConfigInfo
+	CancelSync         context.CancelFunc
+	DebugName          string
 }
 
 type queues struct {
@@ -58,9 +66,10 @@ func Bisync(ctx context.Context, fs1, fs2 fs.Fs, optArg *Options) (err error) {
 	defer resetGlobals()
 	opt := *optArg // ensure that input is never changed
 	b := &bisyncRun{
-		fs1: fs1,
-		fs2: fs2,
-		opt: &opt,
+		fs1:       fs1,
+		fs2:       fs2,
+		opt:       &opt,
+		DebugName: opt.DebugName,
 	}
 
 	if opt.CheckFilename == "" {
@@ -119,12 +128,53 @@ func Bisync(ctx context.Context, fs1, fs2 fs.Fs, optArg *Options) (err error) {
 			_ = os.Rename(file, failFile)
 		}
 	}
+	// waitFor runs fn() until it returns true or the timeout expires
+	waitFor := func(msg string, totalWait time.Duration, fn func() bool) (ok bool) {
+		const individualWait = 1 * time.Second
+		for i := 0; i < int(totalWait/individualWait); i++ {
+			ok = fn()
+			if ok {
+				return ok
+			}
+			fs.Infof(nil, Color(terminal.YellowFg, "%s: %v"), msg, int(totalWait/individualWait)-i)
+			time.Sleep(individualWait)
+		}
+		return false
+	}
 	finalise := func() {
 		finaliseOnce.Do(func() {
 			if atexit.Signalled() {
-				fs.Logf(nil, "Bisync interrupted. Must run --resync to recover.")
-				markFailed(b.listing1)
-				markFailed(b.listing2)
+				if b.opt.Resync {
+					fs.Logf(nil, Color(terminal.GreenFg, "No need to gracefully shutdown during --resync (just run it again.)"))
+				} else {
+					fs.Logf(nil, Color(terminal.YellowFg, "Attempting to gracefully shutdown. (Send exit signal again for immediate un-graceful shutdown.)"))
+					b.InGracefulShutdown = true
+					if b.SyncCI != nil {
+						fs.Infof(nil, Color(terminal.YellowFg, "Telling Sync to wrap up early."))
+						b.SyncCI.MaxTransfer = 1
+						b.SyncCI.MaxDuration = 1 * time.Second
+						b.SyncCI.CutoffMode = fs.CutoffModeSoft
+						gracePeriod := 30 * time.Second // TODO: flag to customize this?
+						if !waitFor("Canceling Sync if not done in", gracePeriod, func() bool { return b.CleanupCompleted }) {
+							fs.Logf(nil, Color(terminal.YellowFg, "Canceling sync and cleaning up"))
+							b.CancelSync()
+							waitFor("Aborting Bisync if not done in", 60*time.Second, func() bool { return b.CleanupCompleted })
+						}
+					} else {
+						// we haven't started to sync yet, so we're good.
+						// no need to worry about the listing files, as we haven't overwritten them yet.
+						b.CleanupCompleted = true
+						fs.Logf(nil, Color(terminal.GreenFg, "Graceful shutdown completed successfully."))
+					}
+				}
+				if !b.CleanupCompleted {
+					if !b.opt.Resync {
+						fs.Logf(nil, Color(terminal.HiRedFg, "Graceful shutdown failed."))
+						fs.Logf(nil, Color(terminal.RedFg, "Bisync interrupted. Must run --resync to recover."))
+					}
+					markFailed(b.listing1)
+					markFailed(b.listing2)
+				}
 				_ = os.Remove(lockFile)
 			}
 		})
@@ -146,6 +196,17 @@ func Bisync(ctx context.Context, fs1, fs2 fs.Fs, optArg *Options) (err error) {
 		}
 	}
 
+	b.CleanupCompleted = true
+	if b.InGracefulShutdown {
+		if err == context.Canceled || err == accounting.ErrorMaxTransferLimitReachedGraceful {
+			err = nil
+			b.critical = false
+		}
+		if err == nil {
+			fs.Logf(nil, Color(terminal.GreenFg, "Graceful shutdown completed successfully."))
+		}
+	}
+
 	if b.critical {
 		if b.retryable && b.opt.Resilient {
 			fs.Errorf(nil, Color(terminal.RedFg, "Bisync critical error: %v"), err)
@@ -162,7 +223,7 @@ func Bisync(ctx context.Context, fs1, fs2 fs.Fs, optArg *Options) (err error) {
 		}
 		return ErrBisyncAborted
 	}
-	if b.abort {
+	if b.abort && !b.InGracefulShutdown {
 		fs.Logf(nil, Color(terminal.RedFg, "Bisync aborted. Please try again."))
 	}
 	if err == nil {
@@ -221,21 +282,41 @@ func (b *bisyncRun) runLocked(octx context.Context) (err error) {
 
 	// Check for existence of prior Path1 and Path2 listings
 	if !bilib.FileExists(b.listing1) || !bilib.FileExists(b.listing2) {
-		// On prior critical error abort, the prior listings are renamed to .lst-err to lock out further runs
-		b.critical = true
-		b.retryable = true
-		errTip := Color(terminal.MagentaFg, "Tip: here are the filenames we were looking for. Do they exist? \n")
-		errTip += fmt.Sprintf(Color(terminal.CyanFg, "Path1: %s\n"), Color(terminal.HiBlueFg, b.listing1))
-		errTip += fmt.Sprintf(Color(terminal.CyanFg, "Path2: %s\n"), Color(terminal.HiBlueFg, b.listing2))
-		errTip += Color(terminal.MagentaFg, "Try running this command to inspect the work dir: \n")
-		errTip += fmt.Sprintf(Color(terminal.HiCyanFg, "rclone lsl \"%s\""), b.workDir)
+		if b.opt.Recover && bilib.FileExists(b.listing1+"-old") && bilib.FileExists(b.listing2+"-old") {
+			errTip := fmt.Sprintf(Color(terminal.CyanFg, "Path1: %s\n"), Color(terminal.HiBlueFg, b.listing1))
+			errTip += fmt.Sprintf(Color(terminal.CyanFg, "Path2: %s"), Color(terminal.HiBlueFg, b.listing2))
+			fs.Logf(nil, Color(terminal.YellowFg, "Listings not found. Reverting to prior backup as --recover is set. \n")+errTip)
+			if opt.CheckSync != CheckSyncFalse {
+				// Run CheckSync to ensure old listing is valid (garbage in, garbage out!)
+				fs.Infof(nil, "Validating backup listings for Path1 %s vs Path2 %s", quotePath(path1), quotePath(path2))
+				if err = b.checkSync(b.listing1+"-old", b.listing2+"-old"); err != nil {
+					b.critical = true
+					b.retryable = true
+					return err
+				}
+				fs.Infof(nil, Color(terminal.GreenFg, "Backup listing is valid."))
+			}
+			b.revertToOldListings()
+		} else {
+			// On prior critical error abort, the prior listings are renamed to .lst-err to lock out further runs
+			b.critical = true
+			b.retryable = true
+			errTip := Color(terminal.MagentaFg, "Tip: here are the filenames we were looking for. Do they exist? \n")
+			errTip += fmt.Sprintf(Color(terminal.CyanFg, "Path1: %s\n"), Color(terminal.HiBlueFg, b.listing1))
+			errTip += fmt.Sprintf(Color(terminal.CyanFg, "Path2: %s\n"), Color(terminal.HiBlueFg, b.listing2))
+			errTip += Color(terminal.MagentaFg, "Try running this command to inspect the work dir: \n")
+			errTip += fmt.Sprintf(Color(terminal.HiCyanFg, "rclone lsl \"%s\""), b.workDir)
 
-		return errors.New("cannot find prior Path1 or Path2 listings, likely due to critical error on prior run \n" + errTip)
+			return errors.New("cannot find prior Path1 or Path2 listings, likely due to critical error on prior run \n" + errTip)
+		}
 	}
 
 	fs.Infof(nil, "Building Path1 and Path2 listings")
 	ls1, ls2, err = b.makeMarchListing(fctx)
-	if err != nil {
+	if err != nil || accounting.Stats(fctx).Errored() {
+		fs.Errorf(nil, Color(terminal.RedFg, "There were errors while building listings. Aborting as it is too dangerous to continue."))
+		b.critical = true
+		b.retryable = true
 		return err
 	}
 
@@ -306,30 +387,49 @@ func (b *bisyncRun) runLocked(octx context.Context) (err error) {
 		fs.Infof(nil, "Applying changes")
 		changes1, changes2, results2to1, results1to2, queues, err = b.applyDeltas(octx, ds1, ds2)
 		if err != nil {
-			b.critical = true
-			// b.retryable = true // not sure about this one
-			return err
+			if b.InGracefulShutdown && (err == context.Canceled || err == accounting.ErrorMaxTransferLimitReachedGraceful || strings.Contains(err.Error(), "context canceled")) {
+				fs.Infof(nil, "Ignoring sync error due to Graceful Shutdown: %v", err)
+			} else {
+				b.critical = true
+				// b.retryable = true // not sure about this one
+				return err
+			}
 		}
 	}
 
 	// Clean up and check listings integrity
 	fs.Infof(nil, "Updating listings")
 	var err1, err2 error
+	if b.DebugName != "" {
+		l1, _ := b.loadListing(b.listing1)
+		l2, _ := b.loadListing(b.listing2)
+		newl1, _ := b.loadListing(b.newListing1)
+		newl2, _ := b.loadListing(b.newListing2)
+		b.debug(b.DebugName, fmt.Sprintf("pre-saveOldListings, ls1 has name?: %v, ls2 has name?: %v", l1.has(b.DebugName), l2.has(b.DebugName)))
+		b.debug(b.DebugName, fmt.Sprintf("pre-saveOldListings, newls1 has name?: %v, newls2 has name?: %v", newl1.has(b.DebugName), newl2.has(b.DebugName)))
+	}
 	b.saveOldListings()
 	// save new listings
+	// NOTE: "changes" in this case does not mean this run vs. last run, it means start of this run vs. end of this run.
+	// i.e. whether we can use the March lst-new as this side's lst without modifying it.
 	if noChanges {
 		b.replaceCurrentListings()
 	} else {
-		if changes1 { // 2to1
+		if changes1 || b.InGracefulShutdown { // 2to1
 			err1 = b.modifyListing(fctx, b.fs2, b.fs1, results2to1, queues, false)
 		} else {
 			err1 = bilib.CopyFileIfExists(b.newListing1, b.listing1)
 		}
-		if changes2 { // 1to2
+		if changes2 || b.InGracefulShutdown { // 1to2
 			err2 = b.modifyListing(fctx, b.fs1, b.fs2, results1to2, queues, true)
 		} else {
 			err2 = bilib.CopyFileIfExists(b.newListing2, b.listing2)
 		}
+	}
+	if b.DebugName != "" {
+		l1, _ := b.loadListing(b.listing1)
+		l2, _ := b.loadListing(b.listing2)
+		b.debug(b.DebugName, fmt.Sprintf("post-modifyListing, ls1 has name?: %v, ls2 has name?: %v", l1.has(b.DebugName), l2.has(b.DebugName)))
 	}
 	err = err1
 	if err == nil {
@@ -607,6 +707,18 @@ func (b *bisyncRun) setBackupDir(ctx context.Context, destPath int) context.Cont
 	}
 	fs.Debugf(ci.BackupDir, "updated backup-dir for Path%d", destPath)
 	return ctx
+}
+
+func (b *bisyncRun) debug(nametocheck, msgiftrue string) {
+	if b.DebugName != "" && b.DebugName == nametocheck {
+		fs.Infof(Color(terminal.MagentaBg, "DEBUGNAME "+b.DebugName), Color(terminal.MagentaBg, msgiftrue))
+	}
+}
+
+func (b *bisyncRun) debugFn(nametocheck string, fn func()) {
+	if b.DebugName != "" && b.DebugName == nametocheck {
+		fn()
+	}
 }
 
 // mainly to make sure tests don't interfere with each other when running more than one
