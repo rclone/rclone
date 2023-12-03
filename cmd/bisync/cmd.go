@@ -54,6 +54,7 @@ type Options struct {
 	Compare               CompareOpt
 	CompareFlag           string
 	DebugName             string
+	MaxLock               time.Duration
 }
 
 // Default values
@@ -112,6 +113,7 @@ var Opt Options
 
 func init() {
 	Opt.Retries = 3
+	Opt.MaxLock = 0
 	cmd.Root.AddCommand(commandDefinition)
 	cmdFlags := commandDefinition.Flags()
 	// when adding new flags, remember to also update the rc params:
@@ -138,6 +140,7 @@ func init() {
 	flags.BoolVarP(cmdFlags, &Opt.Compare.NoSlowHash, "no-slow-hash", "", Opt.Compare.NoSlowHash, "Ignore listing checksums only on backends where they are slow", "")
 	flags.BoolVarP(cmdFlags, &Opt.Compare.SlowHashSyncOnly, "slow-hash-sync-only", "", Opt.Compare.SlowHashSyncOnly, "Ignore slow checksums for listings and deltas, but still consider them during sync calls.", "")
 	flags.BoolVarP(cmdFlags, &Opt.Compare.DownloadHash, "download-hash", "", Opt.Compare.DownloadHash, "Compute hash by downloading when otherwise unavailable. (warning: may be slow and use lots of data!)", "")
+	flags.DurationVarP(cmdFlags, &Opt.MaxLock, "max-lock", "", Opt.MaxLock, "Consider lock files older than this to be expired (default: 0 (never expire)) (minimum: 2m)", "")
 }
 
 // bisync command definition

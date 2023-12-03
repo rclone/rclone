@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"strconv"
 	"strings"
 	gosync "sync"
 	"time"
@@ -48,6 +47,7 @@ type bisyncRun struct {
 	SyncCI             *fs.ConfigInfo
 	CancelSync         context.CancelFunc
 	DebugName          string
+	lockFile           string
 }
 
 type queues struct {
@@ -102,32 +102,14 @@ func Bisync(ctx context.Context, fs1, fs2 fs.Fs, optArg *Options) (err error) {
 	b.aliases = bilib.AliasMap{}
 
 	// Handle lock file
-	lockFile := ""
-	if !opt.DryRun {
-		lockFile = b.basePath + ".lck"
-		if bilib.FileExists(lockFile) {
-			errTip := Color(terminal.MagentaFg, "Tip: this indicates that another bisync run (of these same paths) either is still running or was interrupted before completion. \n")
-			errTip += Color(terminal.MagentaFg, "If you're SURE you want to override this safety feature, you can delete the lock file with the following command, then run bisync again: \n")
-			errTip += fmt.Sprintf(Color(terminal.HiRedFg, "rclone deletefile \"%s\""), lockFile)
-			return fmt.Errorf(Color(terminal.RedFg, "prior lock file found: %s \n")+errTip, Color(terminal.HiYellowFg, lockFile))
-		}
-
-		pidStr := []byte(strconv.Itoa(os.Getpid()))
-		if err = os.WriteFile(lockFile, pidStr, bilib.PermSecure); err != nil {
-			return fmt.Errorf("cannot create lock file: %s: %w", lockFile, err)
-		}
-		fs.Debugf(nil, "Lock file created: %s", lockFile)
+	err = b.setLockFile()
+	if err != nil {
+		return err
 	}
 
 	// Handle SIGINT
 	var finaliseOnce gosync.Once
-	markFailed := func(file string) {
-		failFile := file + "-err"
-		if bilib.FileExists(file) {
-			_ = os.Remove(failFile)
-			_ = os.Rename(file, failFile)
-		}
-	}
+
 	// waitFor runs fn() until it returns true or the timeout expires
 	waitFor := func(msg string, totalWait time.Duration, fn func() bool) (ok bool) {
 		const individualWait = 1 * time.Second
@@ -175,7 +157,7 @@ func Bisync(ctx context.Context, fs1, fs2 fs.Fs, optArg *Options) (err error) {
 					markFailed(b.listing1)
 					markFailed(b.listing2)
 				}
-				_ = os.Remove(lockFile)
+				b.removeLockFile()
 			}
 		})
 	}
@@ -185,16 +167,7 @@ func Bisync(ctx context.Context, fs1, fs2 fs.Fs, optArg *Options) (err error) {
 	// run bisync
 	err = b.runLocked(ctx)
 
-	if lockFile != "" {
-		errUnlock := os.Remove(lockFile)
-		if errUnlock == nil {
-			fs.Debugf(nil, "Lock file removed: %s", lockFile)
-		} else if err == nil {
-			err = errUnlock
-		} else {
-			fs.Errorf(nil, "cannot remove lockfile %s: %v", lockFile, errUnlock)
-		}
-	}
+	b.removeLockFile()
 
 	b.CleanupCompleted = true
 	if b.InGracefulShutdown {

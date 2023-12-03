@@ -487,25 +487,29 @@ See also: [Concurrent modifications](#concurrent-modifications), [`--resilient`]
 
 ***Caution: this is an experimental feature. Use at your own risk!***
 
-By default, most errors or interruptions will cause bisync to abort and 
-require [`--resync`](#resync) to recover. This is a safety feature, 
-to prevent bisync from running again until a user checks things out. 
-However, in some cases, bisync can go too far and enforce a lockout when one isn't actually necessary, 
-like for certain less-serious errors that might resolve themselves on the next run. 
-When `--resilient` is specified, bisync tries its best to recover and self-correct, 
-and only requires `--resync` as a last resort when a human's involvement is absolutely necessary. 
-The intended use case is for running bisync as a background process (such as via scheduled [cron](#cron)).
+By default, most errors or interruptions will cause bisync to abort and
+require [`--resync`](#resync) to recover. This is a safety feature,  to prevent
+bisync from running again until a user checks things out.  However, in some
+cases, bisync can go too far and enforce a lockout when one isn't actually
+necessary,  like for certain less-serious errors that might resolve themselves
+on the next run.  When `--resilient` is specified, bisync tries its best to
+recover and self-correct,  and only requires `--resync` as a last resort when a
+human's involvement is absolutely necessary.  The intended use case is for
+running bisync as a background process (such as via scheduled [cron](#cron)).
 
-When using `--resilient` mode, bisync will still report the error and abort, 
-however it will not lock out future runs -- allowing the possibility of retrying at the next normally scheduled time, 
-without requiring a `--resync` first. Examples of such retryable errors include 
-access test failures, missing listing files, and filter change detections. 
-These safety features will still prevent the *current* run from proceeding -- 
-the difference is that if conditions have improved by the time of the *next* run, 
-that next run will be allowed to proceed. 
-Certain more serious errors will still enforce a `--resync` lockout, even in `--resilient` mode, to prevent data loss.
+When using `--resilient` mode, bisync will still report the error and abort,
+however it will not lock out future runs -- allowing the possibility of
+retrying at the next normally scheduled time,  without requiring a `--resync`
+first. Examples of such retryable errors include  access test failures, missing
+listing files, and filter change detections.  These safety features will still
+prevent the *current* run from proceeding --  the difference is that if
+conditions have improved by the time of the *next* run,  that next run will be
+allowed to proceed.  Certain more serious errors will still enforce a
+`--resync` lockout, even in `--resilient` mode, to prevent data loss.
 
-Behavior of `--resilient` may change in a future version.
+Behavior of `--resilient` may change in a future version. (See also:
+[`--recover`](#recover), [`--max-lock`](#max-lock), [Graceful
+Shutdown](#graceful-shutdown))
 
 ### --recover
 
@@ -539,6 +543,42 @@ when bisync has chosen to abort itself due to safety features such as failing
 `--check-access` or detecting a filter change. `--resilient` does not cover
 external interruptions such as a user shutting down their computer in the
 middle of a sync -- that is what `--recover` is for.
+
+### --max-lock
+
+Bisync uses [lock files](#lock-file) as a safety feature to prevent
+interference from other bisync runs while it is running. Bisync normally
+removes these lock files at the end of a run, but if bisync is abruptly
+interrupted, these files will be left behind. By default, they will lock out
+all future runs, until the user has a chance to manually check things out and
+remove the lock. As an alternative, `--max-lock` can be used to make them
+automatically expire after a certain period of time, so that future runs are
+not locked out forever, and auto-recovery is possible. `--max-lock` can be any
+duration `2m` or greater (or `0` to disable). If set, lock files older than
+this will be considered "expired", and future runs will be allowed to disregard
+them and proceed. (Note that the `--max-lock` duration must be set by the
+process that left the lock file -- not the later one interpreting it.)
+
+If set, bisync will also "renew" these lock files every `--max-lock minus one
+minute` throughout a run, for extra safety. (For example, with `--max-lock 5m`,
+bisync would renew the lock file (for another 5 minutes) every 4 minutes until
+the run has completed.) In other words, it should not be possible for a lock
+file to pass its expiration time while the process that created it is still
+running -- and you can therefore be reasonably sure that any _expired_ lock
+file you may find was left there by an interrupted run, not one that is still
+running and just taking awhile.
+
+If `--max-lock` is `0` or not set, the default is that lock files will never
+expire, and will block future runs (of these same two bisync paths)
+indefinitely.
+
+For maximum resilience from disruptions, consider setting a relatively short
+duration like `--max-lock 2m` along with [`--resilient`](#resilient) and
+[`--recover`](#recover), and a relatively frequent [cron schedule](#cron). The
+result will be a very robust "set-it-and-forget-it" bisync run that can
+automatically bounce back from almost any interruption it might encounter,
+without requiring the user to get involved and run a `--resync`. (See also:
+[Graceful Shutdown](#graceful-shutdown) mode)
 
 
 ### --backup-dir1 and --backup-dir2
@@ -679,7 +719,8 @@ typically at `${HOME}/.cache/rclone/bisync/` on Linux.
 Some errors are considered temporary and re-running the bisync is not blocked.
 The _critical return_ blocks further bisync runs.
 
-See also: [`--resilient`](#resilient)
+See also: [`--resilient`](#resilient), [`--recover`](#recover),
+[`--max-lock`](#max-lock), [Graceful Shutdown](#graceful-shutdown)
 
 ### Lock file
 
@@ -691,6 +732,8 @@ Delete the lock file as part of debugging the situation.
 The lock file effectively blocks follow-on (e.g., scheduled by _cron_) runs
 when the prior invocation is taking a long time.
 The lock file contains _PID_ of the blocking process, which may help in debug.
+Lock files can be set to automatically expire after a certain amount of time,
+using the [`--max-lock`](#max-lock) flag.
 
 **Note**
 that while concurrent bisync runs are allowed, _be very cautious_
@@ -727,7 +770,8 @@ NOT use [`--inplace`](/docs/#inplace), otherwise you risk leaving
 partially-written files on one side, which may be confused for real files on
 the next run. Note also that in the event of an abrupt interruption, a [lock
 file](#lock-file) will be left behind to block concurrent runs. You will need
-to delete it before you can proceed with the next run.
+to delete it before you can proceed with the next run (or wait for it to
+expire on its own, if using `--max-lock`.)
 
 ## Limitations
 
@@ -1559,6 +1603,7 @@ instead of of `--size-only`, when `check` is not available.
 * Bisync now fully supports comparing based on any combination of size, modtime, and checksum, lifting the prior restriction on backends without modtime support.
 * Bisync now supports a "Graceful Shutdown" mode to cleanly cancel a run early without requiring `--resync`.
 * New `--recover` flag allows robust recovery in the event of interruptions, without requiring `--resync`.
+* A new `--max-lock` setting allows lock files to automatically renew and expire, for better automatic recovery when a run is interrupted.
 
 ### `v1.64`
 * Fixed an [issue](https://forum.rclone.org/t/bisync-bugs-and-feature-requests/37636#:~:text=1.%20Dry%20runs%20are%20not%20completely%20dry) 
