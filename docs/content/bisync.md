@@ -2,7 +2,12 @@
 title: "Bisync"
 description: "Bidirectional cloud sync solution in rclone"
 versionIntroduced: "v1.58"
+status: Beta
 ---
+
+## Bisync
+`bisync` is **in beta** and is considered an **advanced command**, so use with care.
+Make sure you have read and understood the entire [manual](https://rclone.org/bisync) (especially the [Limitations](#limitations) section) before using, or data loss can result. Questions can be asked in the [Rclone Forum](https://forum.rclone.org/).
 
 ## Getting started {#getting-started}
 
