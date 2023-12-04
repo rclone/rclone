@@ -138,6 +138,7 @@ var commandDefinition = &cobra.Command{
 	Annotations: map[string]string{
 		"versionIntroduced": "v1.58",
 		"groups":            "Filter,Copy,Important",
+		"status":            "Beta",
 	},
 	RunE: func(command *cobra.Command, args []string) error {
 		cmd.CheckArgs(2, 2, command, args)
@@ -163,7 +164,7 @@ var commandDefinition = &cobra.Command{
 			}
 		}
 
-		fs.Logf(nil, "bisync is EXPERIMENTAL. Don't use in production!")
+		fs.Logf(nil, "bisync is IN BETA. Don't use in production!")
 		cmd.Run(false, true, command, func() error {
 			err := Bisync(ctx, fs1, fs2, &opt)
 			if err == ErrBisyncAborted {

@@ -56,5 +56,10 @@ On each successive run it will:
   Changes include |New|, |Newer|, |Older|, and |Deleted| files.
 - Propagate changes on Path1 to Path2, and vice-versa.
 
+Bisync is **in beta** and is considered an **advanced command**, so use with care.
+Make sure you have read and understood the entire [manual](https://rclone.org/bisync)
+(especially the [Limitations](https://rclone.org/bisync/#limitations) section) before using,
+or data loss can result. Questions can be asked in the [Rclone Forum](https://forum.rclone.org/).
+
 See [full bisync description](https://rclone.org/bisync/) for details.
 `)
