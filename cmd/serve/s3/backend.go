@@ -77,13 +77,9 @@ func (b *s3Backend) ListBucket(bucket string, prefix *gofakes3.Prefix, page gofa
 	}
 
 	response := gofakes3.NewObjectList()
-	if b.vfs.Fs().Features().BucketBased || prefix.HasDelimiter && prefix.Delimiter != "/" {
-		err = b.getObjectsListArbitrary(bucket, prefix, response)
-	} else {
-		path, remaining := prefixParser(prefix)
-		err = b.entryListR(bucket, path, remaining, prefix.HasDelimiter, response)
-	}
+	path, remaining := prefixParser(prefix)
 
+	err = b.entryListR(bucket, path, remaining, prefix.HasDelimiter, response)
 	if err == gofakes3.ErrNoSuchKey {
 		// AWS just returns an empty list
 		response = gofakes3.NewObjectList()
@@ -366,9 +362,7 @@ func (b *s3Backend) deleteObject(bucketName, objectName string) error {
 	}
 
 	// FIXME: unsafe operation
-	if b.vfs.Fs().Features().CanHaveEmptyDirectories {
-		rmdirRecursive(fp, b.vfs)
-	}
+	rmdirRecursive(fp, b.vfs)
 	return nil
 }
 
