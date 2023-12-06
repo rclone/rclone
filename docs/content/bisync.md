@@ -361,7 +361,7 @@ Behavior of `--resilient` may change in a future version.
 
 #### --backup-dir1 and --backup-dir2
 
-As of `v1.65`, [`--backup-dir`](/docs/#backup-dir-dir) is supported in bisync.
+As of `v1.66`, [`--backup-dir`](/docs/#backup-dir-dir) is supported in bisync.
 Because `--backup-dir` must be a non-overlapping path on the same remote,
 Bisync has introduced new `--backup-dir1` and `--backup-dir2` flags to support
 separate backup-dirs for `Path1` and `Path2` (bisyncing between different
@@ -559,9 +559,9 @@ original path on the next sync, resulting in data loss.
 It is therefore recommended to _omit_ `--inplace`.
 
 Files that **change during** a bisync run may result in data loss.
-Prior to `rclone v1.65`, this was commonly seen in highly dynamic environments, where the filesystem
+Prior to `rclone v1.66`, this was commonly seen in highly dynamic environments, where the filesystem
 was getting hammered by running processes during the sync.
-As of `rclone v1.65`, bisync was redesigned to use a "snapshot" model,
+As of `rclone v1.66`, bisync was redesigned to use a "snapshot" model,
 greatly reducing the risks from changes during a sync.
 Changes that are not detected during the current sync will now be detected during the following sync,
 and will no longer cause the entire run to throw a critical error.
@@ -596,7 +596,7 @@ Bisync sees this as all files in the old directory name as deleted and all
 files in the new directory name as new. 
 
 A recommended solution is to use [`--track-renames`](/docs/#track-renames),
-which is now supported in bisync as of `rclone v1.65`.
+which is now supported in bisync as of `rclone v1.66`.
 Note that `--track-renames` is not available during `--resync`,
 as `--resync` does not delete anything (`--track-renames` only supports `sync`, not `copy`.)
 
@@ -629,7 +629,7 @@ instead of specifying them with command flags. (You can still override them as n
 
 ### Case (and unicode) sensitivity {#case-sensitivity}
 
-As of `v1.65`, case and unicode form differences no longer cause critical errors,
+As of `v1.66`, case and unicode form differences no longer cause critical errors,
 and normalization (when comparing between filesystems) is handled according to the same flags and defaults as `rclone sync`.
 See the following options (all of which are supported by bisync) to control this behavior more granularly:
 - [`--fix-case`](/docs/#fix-case)
@@ -923,7 +923,7 @@ consider using the flag
 
 ### Google Docs (and other files of unknown size) {#gdocs}
 
-As of `v1.65`, [Google Docs](/drive/#import-export-of-google-documents)
+As of `v1.66`, [Google Docs](/drive/#import-export-of-google-documents)
 (including Google Sheets, Slides, etc.) are now supported in bisync, subject to
 the same options, defaults, and limitations as in `rclone sync`. When bisyncing
 drive with non-drive backends, the drive -> non-drive direction is controlled
@@ -1354,7 +1354,7 @@ about _Unison_ and synchronization in general.
 
 ## Changelog
 
-### `v1.65`
+### `v1.66`
 * Copies and deletes are now handled in one operation instead of two
 * `--track-renames` and `--backup-dir` are now supported
 * Partial uploads known issue on `local`/`ftp`/`sftp` has been resolved (unless using `--inplace`)
