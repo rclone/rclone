@@ -22,7 +22,7 @@ func AddFlags(flagSet *pflag.FlagSet) {
 	flags.BoolVarP(flagSet, &Opt.NoChecksum, "no-checksum", "", Opt.NoChecksum, "Don't compare checksums on up/download", "VFS")
 	flags.BoolVarP(flagSet, &Opt.NoSeek, "no-seek", "", Opt.NoSeek, "Don't allow seeking in files", "VFS")
 	flags.DurationVarP(flagSet, &Opt.DirCacheTime, "dir-cache-time", "", Opt.DirCacheTime, "Time to cache directory entries for", "VFS")
-	flags.BoolVarP(flagSet, &Opt.Refresh, "vfs-refresh", "", Opt.Refresh, "Refreshes the directory cache recursively on start", "VFS")
+	flags.BoolVarP(flagSet, &Opt.Refresh, "vfs-refresh", "", Opt.Refresh, "Refreshes the directory cache recursively in the background on start", "VFS")
 	flags.DurationVarP(flagSet, &Opt.PollInterval, "poll-interval", "", Opt.PollInterval, "Time to wait between polling for changes, must be smaller than dir-cache-time and only on supported remotes (set 0 to disable)", "VFS")
 	flags.BoolVarP(flagSet, &Opt.ReadOnly, "read-only", "", Opt.ReadOnly, "Only allow read-only access", "VFS")
 	flags.FVarP(flagSet, &Opt.CacheMode, "vfs-cache-mode", "", "Cache mode off|minimal|writes|full", "VFS")
