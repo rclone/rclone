@@ -1614,7 +1614,7 @@ json.dump(o, sys.stdout, indent="\t")
 ```
 
 You can find this example (slightly expanded) in the rclone source code at
-[bin/test_metadata_mapper.py](https://github.com/rclone/rclone/blob/master/test_metadata_mapper.py).
+[bin/test_metadata_mapper.py](https://github.com/rclone/rclone/blob/master/bin/test_metadata_mapper.py).
 
 If you want to see the input to the metadata mapper and the output
 returned from it in the log you can use `-vv --dump mapper`.
