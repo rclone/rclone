@@ -1240,7 +1240,7 @@ func TestListFormat(t *testing.T) {
 	assert.Equal(t, "a:::b", list.Format(item1))
 
 	list.SetOutput(nil)
-	list.AddModTime()
+	list.AddModTime("")
 	assert.Equal(t, t1.Local().Format("2006-01-02 15:04:05"), list.Format(item0))
 
 	list.SetOutput(nil)
@@ -1272,7 +1272,7 @@ func TestListFormat(t *testing.T) {
 	assert.Equal(t, "1", list.Format(item0))
 
 	list.AddPath()
-	list.AddModTime()
+	list.AddModTime("")
 	list.SetDirSlash(true)
 	list.SetSeparator("__SEP__")
 	assert.Equal(t, "1__SEP__a__SEP__"+t1.Local().Format("2006-01-02 15:04:05"), list.Format(item0))
@@ -1295,7 +1295,7 @@ func TestListFormat(t *testing.T) {
 	list.SetCSV(true)
 	list.AddSize()
 	list.AddPath()
-	list.AddModTime()
+	list.AddModTime("")
 	list.SetDirSlash(true)
 	assert.Equal(t, "1|a|"+t1.Local().Format("2006-01-02 15:04:05"), list.Format(item0))
 	assert.Equal(t, "-1|subdir/|"+t2.Local().Format("2006-01-02 15:04:05"), list.Format(item1))

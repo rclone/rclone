@@ -1916,9 +1916,54 @@ func (l *ListFormat) SetOutput(output []func(entry *ListJSONItem) string) {
 }
 
 // AddModTime adds file's Mod Time to output
-func (l *ListFormat) AddModTime() {
+func (l *ListFormat) AddModTime(timeFormat string) {
+	switch timeFormat {
+	case "":
+		timeFormat = "2006-01-02 15:04:05"
+	case "Layout":
+		timeFormat = time.Layout
+	case "ANSIC":
+		timeFormat = time.ANSIC
+	case "UnixDate":
+		timeFormat = time.UnixDate
+	case "RubyDate":
+		timeFormat = time.RubyDate
+	case "RFC822":
+		timeFormat = time.RFC822
+	case "RFC822Z":
+		timeFormat = time.RFC822Z
+	case "RFC850":
+		timeFormat = time.RFC850
+	case "RFC1123":
+		timeFormat = time.RFC1123
+	case "RFC1123Z":
+		timeFormat = time.RFC1123Z
+	case "RFC3339":
+		timeFormat = time.RFC3339
+	case "RFC3339Nano":
+		timeFormat = time.RFC3339Nano
+	case "Kitchen":
+		timeFormat = time.Kitchen
+	case "Stamp":
+		timeFormat = time.Stamp
+	case "StampMilli":
+		timeFormat = time.StampMilli
+	case "StampMicro":
+		timeFormat = time.StampMicro
+	case "StampNano":
+		timeFormat = time.StampNano
+	case "DateTime":
+		// timeFormat = time.DateTime // missing in go1.19
+		timeFormat = "2006-01-02 15:04:05"
+	case "DateOnly":
+		// timeFormat = time.DateOnly // missing in go1.19
+		timeFormat = "2006-01-02"
+	case "TimeOnly":
+		// timeFormat = time.TimeOnly // missing in go1.19
+		timeFormat = "15:04:05"
+	}
 	l.AppendOutput(func(entry *ListJSONItem) string {
-		return entry.ModTime.When.Local().Format("2006-01-02 15:04:05")
+		return entry.ModTime.When.Local().Format(timeFormat)
 	})
 }
 
@@ -2028,6 +2073,31 @@ func (l *ListFormat) Format(entry *ListJSONItem) (result string) {
 		result = strings.Join(out, l.separator)
 	}
 	return result
+}
+
+// FormatForLSFPrecision Returns a time format for the given precision
+func FormatForLSFPrecision(precision time.Duration) string {
+	switch {
+	case precision <= time.Nanosecond:
+		return "2006-01-02 15:04:05.000000000"
+	case precision <= 10*time.Nanosecond:
+		return "2006-01-02 15:04:05.00000000"
+	case precision <= 100*time.Nanosecond:
+		return "2006-01-02 15:04:05.0000000"
+	case precision <= time.Microsecond:
+		return "2006-01-02 15:04:05.000000"
+	case precision <= 10*time.Microsecond:
+		return "2006-01-02 15:04:05.00000"
+	case precision <= 100*time.Microsecond:
+		return "2006-01-02 15:04:05.0000"
+	case precision <= time.Millisecond:
+		return "2006-01-02 15:04:05.000"
+	case precision <= 10*time.Millisecond:
+		return "2006-01-02 15:04:05.00"
+	case precision <= 100*time.Millisecond:
+		return "2006-01-02 15:04:05.0"
+	}
+	return "2006-01-02 15:04:05"
 }
 
 // DirMove renames srcRemote to dstRemote
