@@ -240,6 +240,7 @@ func newWebDAV(ctx context.Context, f fs.Fs, opt *Options) (w *WebDAV, err error
 	return w, nil
 }
 
+// Add WebDAV-specific methods and headers for CORS.
 func MiddlewareCORS(allowOrigin string) libhttp.Middleware {
 
 	return func(next http.Handler) http.Handler {
