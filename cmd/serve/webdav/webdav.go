@@ -203,6 +203,11 @@ func newWebDAV(ctx context.Context, f fs.Fs, opt *Options) (w *WebDAV, err error
 		return nil, fmt.Errorf("failed to init server: %w", err)
 	}
 
+	// Add the CORS headers.
+	w.Server.Mux.Use(libhttp.MiddlewareCORS(w.Server.Cfg.AllowOrigin,
+		"COPY, DELETE, GET, HEAD, LOCK, MKCOL, MOVE, OPTIONS, POST, PROPFIND, PROPPATCH, PUT, TRACE, UNLOCK",
+		"Authorization, Content-Type, Depth, Destination, If, Lock-Token, Overwrite, TimeOut, Translate"))
+
 	webdavHandler := &webdav.Handler{
 		Prefix:     w.opt.HTTP.BaseURL,
 		FileSystem: w,

@@ -238,7 +238,9 @@ func NewServer(ctx context.Context, options ...Option) (*Server, error) {
 		return nil, err
 	}
 
-	s.Mux.Use(MiddlewareCORS(s.Cfg.AllowOrigin))
+	s.Mux.Use(MiddlewareCORS(s.Cfg.AllowOrigin,
+		"GET, HEAD, OPTIONS, POST",
+		"authorization, Content-Type"))
 
 	s.initAuth()
 
