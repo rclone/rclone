@@ -1680,6 +1680,12 @@ func (f *Fs) CleanUp(ctx context.Context) error {
 	return nil
 }
 
+// Shutdown shutdown the fs
+func (f *Fs) Shutdown(ctx context.Context) error {
+	f.tokenRenewer.Shutdown()
+	return nil
+}
+
 // Hashes returns the supported hash sets.
 func (f *Fs) Hashes() hash.Set {
 	return hash.Set(hash.MD5)
@@ -2104,6 +2110,7 @@ var (
 	_ fs.Abouter      = (*Fs)(nil)
 	_ fs.UserInfoer   = (*Fs)(nil)
 	_ fs.CleanUpper   = (*Fs)(nil)
+	_ fs.Shutdowner   = (*Fs)(nil)
 	_ fs.Object       = (*Object)(nil)
 	_ fs.MimeTyper    = (*Object)(nil)
 	_ fs.Metadataer   = (*Object)(nil)

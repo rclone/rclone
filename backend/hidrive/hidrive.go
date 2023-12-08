@@ -762,6 +762,12 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 	return nil
 }
 
+// Shutdown shutdown the fs
+func (f *Fs) Shutdown(ctx context.Context) error {
+	f.tokenRenewer.Shutdown()
+	return nil
+}
+
 // ------------------------------------------------------------
 
 // Fs returns the parent Fs.
@@ -997,6 +1003,7 @@ var (
 	_ fs.Copier         = (*Fs)(nil)
 	_ fs.Mover          = (*Fs)(nil)
 	_ fs.DirMover       = (*Fs)(nil)
+	_ fs.Shutdowner     = (*Fs)(nil)
 	_ fs.Object         = (*Object)(nil)
 	_ fs.IDer           = (*Object)(nil)
 )
