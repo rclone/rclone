@@ -1231,18 +1231,21 @@ func (f *Fs) About(ctx context.Context) (usage *fs.Usage, err error) {
 		return nil, err
 	}
 	var total uint64
+	var used = q.Used
 	if q.Allocation != nil {
 		if q.Allocation.Individual != nil {
 			total += q.Allocation.Individual.Allocated
 		}
 		if q.Allocation.Team != nil {
 			total += q.Allocation.Team.Allocated
+			// Override used with Team.Used as this includes q.Used already
+			used = q.Allocation.Team.Used
 		}
 	}
 	usage = &fs.Usage{
-		Total: fs.NewUsageValue(int64(total)),          // quota of bytes that can be used
-		Used:  fs.NewUsageValue(int64(q.Used)),         // bytes in use
-		Free:  fs.NewUsageValue(int64(total - q.Used)), // bytes which can be uploaded before reaching the quota
+		Total: fs.NewUsageValue(int64(total)),        // quota of bytes that can be used
+		Used:  fs.NewUsageValue(int64(used)),         // bytes in use
+		Free:  fs.NewUsageValue(int64(total - used)), // bytes which can be uploaded before reaching the quota
 	}
 	return usage, nil
 }
