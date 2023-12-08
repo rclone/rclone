@@ -159,11 +159,11 @@ func (s instance) serve(wg *sync.WaitGroup) {
 // Server contains info about the running http server
 type Server struct {
 	wg           sync.WaitGroup
-	mux          chi.Router
+	Mux          chi.Router
 	tlsConfig    *tls.Config
 	instances    []instance
 	auth         AuthConfig
-	cfg          Config
+	Cfg          Config
 	template     *TemplateConfig
 	htmlTemplate *template.Template
 	usingAuth    bool // set if we are using auth middleware
@@ -183,7 +183,7 @@ func WithAuth(cfg AuthConfig) Option {
 // WithConfig option applies the Config to the server, overriding defaults
 func WithConfig(cfg Config) Option {
 	return func(s *Server) {
-		s.cfg = cfg
+		s.Cfg = cfg
 	}
 }
 
@@ -200,32 +200,32 @@ func WithTemplate(cfg TemplateConfig) Option {
 // tlsListeners are ignored if opt.TLSKey is not provided
 func NewServer(ctx context.Context, options ...Option) (*Server, error) {
 	s := &Server{
-		mux: chi.NewRouter(),
-		cfg: DefaultCfg(),
+		Mux: chi.NewRouter(),
+		Cfg: DefaultCfg(),
 	}
 
 	// Make sure default logger is logging where everything else is
 	// middleware.DefaultLogger = middleware.RequestLogger(&middleware.DefaultLogFormatter{Logger: log.Default(), NoColor: true})
 	// Log requests
-	// s.mux.Use(middleware.Logger)
+	// s.Mux.Use(middleware.Logger)
 
 	for _, opt := range options {
 		opt(s)
 	}
 
 	// Build base router
-	s.mux.MethodNotAllowed(func(w http.ResponseWriter, _ *http.Request) {
+	s.Mux.MethodNotAllowed(func(w http.ResponseWriter, _ *http.Request) {
 		http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
 	})
-	s.mux.NotFound(func(w http.ResponseWriter, _ *http.Request) {
+	s.Mux.NotFound(func(w http.ResponseWriter, _ *http.Request) {
 		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
 	})
 
 	// Ignore passing "/" for BaseURL
-	s.cfg.BaseURL = strings.Trim(s.cfg.BaseURL, "/")
-	if s.cfg.BaseURL != "" {
-		s.cfg.BaseURL = "/" + s.cfg.BaseURL
-		s.mux.Use(MiddlewareStripPrefix(s.cfg.BaseURL))
+	s.Cfg.BaseURL = strings.Trim(s.Cfg.BaseURL, "/")
+	if s.Cfg.BaseURL != "" {
+		s.Cfg.BaseURL = "/" + s.Cfg.BaseURL
+		s.Mux.Use(MiddlewareStripPrefix(s.Cfg.BaseURL))
 	}
 
 	err := s.initTemplate()
@@ -238,11 +238,11 @@ func NewServer(ctx context.Context, options ...Option) (*Server, error) {
 		return nil, err
 	}
 
-	s.mux.Use(MiddlewareCORS(s.cfg.AllowOrigin))
+	s.Mux.Use(MiddlewareCORS(s.Cfg.AllowOrigin))
 
 	s.initAuth()
 
-	for _, addr := range s.cfg.ListenAddr {
+	for _, addr := range s.Cfg.ListenAddr {
 		var url string
 		var network = "tcp"
 		var tlsCfg *tls.Config
@@ -252,7 +252,7 @@ func NewServer(ctx context.Context, options ...Option) (*Server, error) {
 			addr = strings.TrimPrefix(addr, "unix://")
 			url = addr
 
-		} else if strings.HasPrefix(addr, "tls://") || (len(s.cfg.ListenAddr) == 1 && s.tlsConfig != nil) {
+		} else if strings.HasPrefix(addr, "tls://") || (len(s.Cfg.ListenAddr) == 1 && s.tlsConfig != nil) {
 			tlsCfg = s.tlsConfig
 			addr = strings.TrimPrefix(addr, "tls://")
 		}
@@ -272,17 +272,17 @@ func NewServer(ctx context.Context, options ...Option) (*Server, error) {
 			if tlsCfg != nil {
 				secure = "s"
 			}
-			url = fmt.Sprintf("http%s://%s%s/", secure, listener.Addr().String(), s.cfg.BaseURL)
+			url = fmt.Sprintf("http%s://%s%s/", secure, listener.Addr().String(), s.Cfg.BaseURL)
 		}
 
 		ii := instance{
 			url:      url,
 			listener: listener,
 			httpServer: &http.Server{
-				Handler:           s.mux,
-				ReadTimeout:       s.cfg.ServerReadTimeout,
-				WriteTimeout:      s.cfg.ServerWriteTimeout,
-				MaxHeaderBytes:    s.cfg.MaxHeaderBytes,
+				Handler:           s.Mux,
+				ReadTimeout:       s.Cfg.ServerReadTimeout,
+				WriteTimeout:      s.Cfg.ServerWriteTimeout,
+				MaxHeaderBytes:    s.Cfg.MaxHeaderBytes,
 				ReadHeaderTimeout: 10 * time.Second, // time to send the headers
 				IdleTimeout:       60 * time.Second, // time to keep idle connections open
 				TLSConfig:         tlsCfg,
@@ -302,24 +302,24 @@ func (s *Server) initAuth() {
 	authCertificateUserEnabled := s.tlsConfig != nil && s.tlsConfig.ClientAuth != tls.NoClientCert && s.auth.HtPasswd == "" && s.auth.BasicUser == ""
 	if authCertificateUserEnabled {
 		s.usingAuth = true
-		s.mux.Use(MiddlewareAuthCertificateUser())
+		s.Mux.Use(MiddlewareAuthCertificateUser())
 	}
 
 	if s.auth.CustomAuthFn != nil {
 		s.usingAuth = true
-		s.mux.Use(MiddlewareAuthCustom(s.auth.CustomAuthFn, s.auth.Realm, authCertificateUserEnabled))
+		s.Mux.Use(MiddlewareAuthCustom(s.auth.CustomAuthFn, s.auth.Realm, authCertificateUserEnabled))
 		return
 	}
 
 	if s.auth.HtPasswd != "" {
 		s.usingAuth = true
-		s.mux.Use(MiddlewareAuthHtpasswd(s.auth.HtPasswd, s.auth.Realm))
+		s.Mux.Use(MiddlewareAuthHtpasswd(s.auth.HtPasswd, s.auth.Realm))
 		return
 	}
 
 	if s.auth.BasicUser != "" {
 		s.usingAuth = true
-		s.mux.Use(MiddlewareAuthBasic(s.auth.BasicUser, s.auth.BasicPass, s.auth.Realm, s.auth.Salt))
+		s.Mux.Use(MiddlewareAuthBasic(s.auth.BasicUser, s.auth.BasicPass, s.auth.Realm, s.auth.Salt))
 		return
 	}
 }
@@ -350,31 +350,31 @@ var (
 )
 
 func (s *Server) initTLS() error {
-	if s.cfg.TLSCert == "" && s.cfg.TLSKey == "" && len(s.cfg.TLSCertBody) == 0 && len(s.cfg.TLSKeyBody) == 0 {
+	if s.Cfg.TLSCert == "" && s.Cfg.TLSKey == "" && len(s.Cfg.TLSCertBody) == 0 && len(s.Cfg.TLSKeyBody) == 0 {
 		return nil
 	}
 
-	if (len(s.cfg.TLSCertBody) > 0) != (len(s.cfg.TLSKeyBody) > 0) {
+	if (len(s.Cfg.TLSCertBody) > 0) != (len(s.Cfg.TLSKeyBody) > 0) {
 		return ErrTLSBodyMismatch
 	}
 
-	if (s.cfg.TLSCert != "") != (s.cfg.TLSKey != "") {
+	if (s.Cfg.TLSCert != "") != (s.Cfg.TLSKey != "") {
 		return ErrTLSFileMismatch
 	}
 
 	var cert tls.Certificate
 	var err error
-	if len(s.cfg.TLSCertBody) > 0 {
-		cert, err = tls.X509KeyPair(s.cfg.TLSCertBody, s.cfg.TLSKeyBody)
+	if len(s.Cfg.TLSCertBody) > 0 {
+		cert, err = tls.X509KeyPair(s.Cfg.TLSCertBody, s.Cfg.TLSKeyBody)
 	} else {
-		cert, err = tls.LoadX509KeyPair(s.cfg.TLSCert, s.cfg.TLSKey)
+		cert, err = tls.LoadX509KeyPair(s.Cfg.TLSCert, s.Cfg.TLSKey)
 	}
 	if err != nil {
 		return err
 	}
 
 	var minTLSVersion uint16
-	switch s.cfg.MinTLSVersion {
+	switch s.Cfg.MinTLSVersion {
 	case "tls1.0":
 		minTLSVersion = tls.VersionTLS10
 	case "tls1.1":
@@ -384,7 +384,7 @@ func (s *Server) initTLS() error {
 	case "tls1.3":
 		minTLSVersion = tls.VersionTLS13
 	default:
-		return fmt.Errorf("%w: %s", ErrInvalidMinTLSVersion, s.cfg.MinTLSVersion)
+		return fmt.Errorf("%w: %s", ErrInvalidMinTLSVersion, s.Cfg.MinTLSVersion)
 	}
 
 	s.tlsConfig = &tls.Config{
@@ -392,13 +392,13 @@ func (s *Server) initTLS() error {
 		Certificates: []tls.Certificate{cert},
 	}
 
-	if s.cfg.ClientCA != "" {
+	if s.Cfg.ClientCA != "" {
 		// if !useTLS {
 		// 	err := errors.New("can't use --client-ca without --cert and --key")
 		// 	log.Fatalf(err.Error())
 		// }
 		certpool := x509.NewCertPool()
-		pem, err := os.ReadFile(s.cfg.ClientCA)
+		pem, err := os.ReadFile(s.Cfg.ClientCA)
 		if err != nil {
 			return err
 		}
@@ -433,7 +433,7 @@ func (s *Server) Wait() {
 
 // Router returns the server base router
 func (s *Server) Router() chi.Router {
-	return s.mux
+	return s.Mux
 }
 
 // Time to wait to Shutdown an HTTP server

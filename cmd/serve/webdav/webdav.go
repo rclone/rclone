@@ -203,6 +203,9 @@ func newWebDAV(ctx context.Context, f fs.Fs, opt *Options) (w *WebDAV, err error
 		return nil, fmt.Errorf("failed to init server: %w", err)
 	}
 
+	// Add the WebDAV-specific CORS middleware
+	w.Server.Mux.Use(MiddlewareCORS(w.Server.Cfg.AllowOrigin))
+
 	webdavHandler := &webdav.Handler{
 		Prefix:     w.opt.HTTP.BaseURL,
 		FileSystem: w,
@@ -235,6 +238,27 @@ func newWebDAV(ctx context.Context, f fs.Fs, opt *Options) (w *WebDAV, err error
 	}
 
 	return w, nil
+}
+
+func MiddlewareCORS(allowOrigin string) libhttp.Middleware {
+
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			// skip cors for unix sockets
+			if libhttp.IsUnixSocket(r) {
+				next.ServeHTTP(w, r)
+				return
+			}
+
+			if allowOrigin != "" {
+				// The headers are already present, adjust them.
+				w.Header().Set("Access-Control-Allow-Headers", "Authorization, Content-Type, Depth, Destination, If, Lock-Token, Overwrite, TimeOut, Translate")
+				w.Header().Set("Access-Control-Allow-Methods", "COPY, DELETE, GET, HEAD, LOCK, MKCOL, MOVE, OPTIONS, POST, PROPFIND, PROPPATCH, PUT, TRACE, UNLOCK")
+			}
+
+			next.ServeHTTP(w, r)
+		})
+	}
 }
 
 // Gets the VFS in use for this request
