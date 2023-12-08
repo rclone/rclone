@@ -184,7 +184,7 @@ func MiddlewareCORS(allowOrigin string) Middleware {
 			if allowOrigin != "" {
 				w.Header().Add("Access-Control-Allow-Origin", allowOrigin)
 				w.Header().Add("Access-Control-Allow-Headers", "authorization, Content-Type")
-				w.Header().Add("Access-Control-Request-Method", "POST, OPTIONS, GET, HEAD")
+				w.Header().Add("Access-Control-Allow-Methods", "POST, OPTIONS, GET, HEAD")
 			}
 
 			next.ServeHTTP(w, r)
