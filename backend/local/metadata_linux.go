@@ -5,8 +5,10 @@ package local
 
 import (
 	"fmt"
+	"os"
 	"runtime"
 	"sync"
+	"syscall"
 	"time"
 
 	"github.com/rclone/rclone/fs"
@@ -17,6 +19,22 @@ var (
 	statxCheckOnce         sync.Once
 	readMetadataFromFileFn func(o *Object, m *fs.Metadata) (err error)
 )
+
+// Read the time specified from the os.FileInfo
+func readTime(t timeType, fi os.FileInfo) time.Time {
+	stat, ok := fi.Sys().(*syscall.Stat_t)
+	if !ok {
+		fs.Debugf(nil, "didn't return Stat_t as expected")
+		return fi.ModTime()
+	}
+	switch t {
+	case aTime:
+		return time.Unix(stat.Atim.Unix())
+	case cTime:
+		return time.Unix(stat.Ctim.Unix())
+	}
+	return fi.ModTime()
+}
 
 // Read the metadata from the file into metadata where possible
 func (o *Object) readMetadataFromFile(m *fs.Metadata) (err error) {

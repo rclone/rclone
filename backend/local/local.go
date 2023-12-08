@@ -36,6 +36,27 @@ const devUnset = 0xdeadbeefcafebabe                                       // a d
 const linkSuffix = ".rclonelink"                                          // The suffix added to a translated symbolic link
 const useReadDir = (runtime.GOOS == "windows" || runtime.GOOS == "plan9") // these OSes read FileInfos directly
 
+// timeType allows the user to choose what exactly ModTime() returns
+type timeType = fs.Enum[timeTypeChoices]
+
+const (
+	mTime timeType = iota
+	aTime
+	bTime
+	cTime
+)
+
+type timeTypeChoices struct{}
+
+func (timeTypeChoices) Choices() []string {
+	return []string{
+		mTime: "mtime",
+		aTime: "atime",
+		bTime: "btime",
+		cTime: "ctime",
+	}
+}
+
 // Register with Fs
 func init() {
 	fsi := &fs.RegInfo{
@@ -214,6 +235,42 @@ enabled, rclone will no longer update the modtime after copying a file.`,
 			Default:  false,
 			Advanced: true,
 		}, {
+			Name: "time_type",
+			Help: `Set what kind of time is returned.
+
+Normally rclone does all operations on the mtime or Modification time.
+
+If you set this flag then rclone will return the Modified time as whatever
+you set here. So if you use "rclone lsl --local-time-type ctime" then
+you will see ctimes in the listing.
+
+If the OS doesn't support returning the time_type specified then rclone
+will silently replace it with the modification time which all OSes support.
+
+- mtime is supported by all OSes
+- atime is supported on all OSes except: plan9, js
+- btime is only supported on: Windows, macOS, freebsd, netbsd
+- ctime is supported on all Oses except: Windows, plan9, js
+
+Note that setting the time will still set the modified time so this is
+only useful for reading.
+`,
+			Default:  mTime,
+			Advanced: true,
+			Examples: []fs.OptionExample{{
+				Value: mTime.String(),
+				Help:  "The last modification time.",
+			}, {
+				Value: aTime.String(),
+				Help:  "The last access time.",
+			}, {
+				Value: bTime.String(),
+				Help:  "The creation time.",
+			}, {
+				Value: cTime.String(),
+				Help:  "The last status change time.",
+			}},
+		}, {
 			Name:     config.ConfigEncoding,
 			Help:     config.ConfigEncodingHelp,
 			Advanced: true,
@@ -237,6 +294,7 @@ type Options struct {
 	NoPreAllocate     bool                 `config:"no_preallocate"`
 	NoSparse          bool                 `config:"no_sparse"`
 	NoSetModTime      bool                 `config:"no_set_modtime"`
+	TimeType          timeType             `config:"time_type"`
 	Enc               encoder.MultiEncoder `config:"encoding"`
 }
 
@@ -1132,7 +1190,7 @@ func (file *localOpenFile) Read(p []byte) (n int, err error) {
 		if oldsize != fi.Size() {
 			return 0, fserrors.NoLowLevelRetryError(fmt.Errorf("can't copy - source file is being updated (size changed from %d to %d)", oldsize, fi.Size()))
 		}
-		if !oldtime.Equal(fi.ModTime()) {
+		if !oldtime.Equal(readTime(file.o.fs.opt.TimeType, fi)) {
 			return 0, fserrors.NoLowLevelRetryError(fmt.Errorf("can't copy - source file is being updated (mod time changed from %v to %v)", oldtime, fi.ModTime()))
 		}
 	}
@@ -1428,7 +1486,7 @@ func (o *Object) setMetadata(info os.FileInfo) {
 	}
 	o.fs.objectMetaMu.Lock()
 	o.size = info.Size()
-	o.modTime = info.ModTime()
+	o.modTime = readTime(o.fs.opt.TimeType, info)
 	o.mode = info.Mode()
 	o.fs.objectMetaMu.Unlock()
 	// Read the size of the link.
