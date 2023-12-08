@@ -17,21 +17,23 @@ import (
 )
 
 var (
-	format    string
-	separator string
-	dirSlash  bool
-	recurse   bool
-	hashType  = hash.MD5
-	filesOnly bool
-	dirsOnly  bool
-	csv       bool
-	absolute  bool
+	format     string
+	timeFormat string
+	separator  string
+	dirSlash   bool
+	recurse    bool
+	hashType   = hash.MD5
+	filesOnly  bool
+	dirsOnly   bool
+	csv        bool
+	absolute   bool
 )
 
 func init() {
 	cmd.Root.AddCommand(commandDefinition)
 	cmdFlags := commandDefinition.Flags()
 	flags.StringVarP(cmdFlags, &format, "format", "F", "p", "Output format - see  help for details", "")
+	flags.StringVarP(cmdFlags, &timeFormat, "time-format", "t", "", "Specify a custom time format, or 'max' for max precision supported by remote (default: 2006-01-02 15:04:05)", "")
 	flags.StringVarP(cmdFlags, &separator, "separator", "s", ";", "Separator for the items in the format", "")
 	flags.BoolVarP(cmdFlags, &dirSlash, "dir-slash", "d", true, "Append a slash to directory names", "")
 	flags.FVarP(cmdFlags, &hashType, "hash", "", "Use this hash when `h` is used in the format MD5|SHA-1|DropboxHash", "")
@@ -141,6 +143,19 @@ those only (without traversing the whole directory structure):
     rclone lsf --absolute --files-only --max-age 1d /path/to/local > new_files
     rclone copy --files-from-raw new_files /path/to/local remote:path
 
+The default time format is ` + "`'2006-01-02 15:04:05'`" + `.
+[Other formats](https://pkg.go.dev/time#pkg-constants) can be specified with the ` + "`--time-format`" + ` flag.
+Examples:
+
+	rclone lsf remote:path --format pt --time-format 'Jan 2, 2006 at 3:04pm (MST)'
+	rclone lsf remote:path --format pt --time-format '2006-01-02 15:04:05.000000000'
+	rclone lsf remote:path --format pt --time-format '2006-01-02T15:04:05.999999999Z07:00'
+	rclone lsf remote:path --format pt --time-format RFC3339
+	rclone lsf remote:path --format pt --time-format DateOnly
+	rclone lsf remote:path --format pt --time-format max
+` + "`--time-format max`" + ` will automatically truncate ` + "'`2006-01-02 15:04:05.000000000`'" + `
+to the maximum precision supported by the remote.
+
 ` + lshelp.Help,
 	Annotations: map[string]string{
 		"versionIntroduced": "v1.40",
@@ -183,7 +198,10 @@ func Lsf(ctx context.Context, fsrc fs.Fs, out io.Writer) error {
 		case 'p':
 			list.AddPath()
 		case 't':
-			list.AddModTime()
+			if timeFormat == "max" {
+				timeFormat = operations.FormatForLSFPrecision(fsrc.Precision())
+			}
+			list.AddModTime(timeFormat)
 			opt.NoModTime = false
 		case 's':
 			list.AddSize()
