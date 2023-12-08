@@ -114,6 +114,13 @@ func NewFs(ctx context.Context, fsname, rpath string, cmap configmap.Mapper) (fs
 		root: rpath,
 		opt:  opt,
 	}
+	// Correct root if definitely pointing to a file
+	if err == fs.ErrorIsFile {
+		f.root = path.Dir(f.root)
+		if f.root == "." || f.root == "/" {
+			f.root = ""
+		}
+	}
 	baseFeatures := baseFs.Features()
 	f.fpTime = baseFs.Precision() != fs.ModTimeNotSupported
 

@@ -1675,6 +1675,24 @@ func Run(t *testing.T, opt *Opt) {
 				require.NotNil(t, fileRemote)
 				assert.Equal(t, fs.ErrorIsFile, err)
 
+				// Check Fs.Root returns the right thing
+				t.Run("FsRoot", func(t *testing.T) {
+					skipIfNotOk(t)
+					got := fileRemote.Root()
+					remoteDir := path.Dir(remoteName)
+					want := remoteDir
+					colon := strings.LastIndex(want, ":")
+					if colon >= 0 {
+						want = want[colon+1:]
+					}
+					if isLocalRemote {
+						// only check last path element on local
+						require.Equal(t, filepath.Base(remoteDir), filepath.Base(got))
+					} else {
+						require.Equal(t, want, got)
+					}
+				})
+
 				if strings.HasPrefix(remoteName, "TestChunker") && strings.Contains(remoteName, "Nometa") {
 					// TODO fix chunker and remove this bypass
 					t.Logf("Skip listing check -- chunker can't yet handle this tricky case")
