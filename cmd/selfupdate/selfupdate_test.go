@@ -17,6 +17,7 @@ import (
 	_ "github.com/rclone/rclone/fstest" // needed to run under integration tests
 	"github.com/rclone/rclone/fstest/testy"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestGetVersion(t *testing.T) {
@@ -76,7 +77,7 @@ func TestInstallOnLinux(t *testing.T) {
 
 	// Must keep non-standard permissions
 	assert.NoError(t, os.Chmod(path, 0644))
-	assert.NoError(t, InstallUpdate(ctx, &Options{Beta: true, Output: path}))
+	require.NoError(t, InstallUpdate(ctx, &Options{Beta: true, Output: path}))
 
 	info, err := os.Stat(path)
 	assert.NoError(t, err)
