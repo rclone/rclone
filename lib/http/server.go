@@ -110,6 +110,8 @@ type Config struct {
 	ClientCA           string        // Client certificate authority to verify clients with
 	MinTLSVersion      string        // MinTLSVersion contains the minimum TLS version that is acceptable.
 	AllowOrigin        string        // AllowOrigin sets the Access-Control-Allow-Origin header
+	CORSMethods        string        // Methods to allow with CORS
+	CORSHeaders        string        // Headers to allow with CORS
 }
 
 // AddFlagsPrefix adds flags for the httplib
@@ -139,6 +141,8 @@ func DefaultCfg() Config {
 		ServerWriteTimeout: 1 * time.Hour,
 		MaxHeaderBytes:     4096,
 		MinTLSVersion:      "tls1.0",
+		CORSMethods:        "GET, HEAD, OPTIONS, POST",
+		CORSHeaders:        "Authorization, Content-Type",
 	}
 }
 
@@ -238,7 +242,7 @@ func NewServer(ctx context.Context, options ...Option) (*Server, error) {
 		return nil, err
 	}
 
-	s.mux.Use(MiddlewareCORS(s.cfg.AllowOrigin))
+	s.mux.Use(MiddlewareCORS(&s.cfg))
 
 	s.initAuth()
 
