@@ -1213,6 +1213,7 @@ func (f *Fs) itemToDirEntry(ctx context.Context, dir string, info *api.Item) (en
 		id := info.GetID()
 		f.dirCache.Put(remote, id)
 		d := fs.NewDir(remote, time.Time(info.GetLastModifiedDateTime())).SetID(id)
+		d.SetSize(info.GetSize())
 		d.SetItems(folder.ChildCount)
 		entry = d
 	} else {
