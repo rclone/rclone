@@ -49,13 +49,12 @@ type bisyncRun struct {
 	CancelSync         context.CancelFunc
 	DebugName          string
 	lockFile           string
+	renames            renames
 }
 
 type queues struct {
 	copy1to2      bilib.Names
 	copy2to1      bilib.Names
-	renamed1      bilib.Names // renamed on 1 and copied to 2
-	renamed2      bilib.Names // renamed on 2 and copied to 1
 	renameSkipped bilib.Names // not renamed because it was equal
 	skippedDirs1  *fileList
 	skippedDirs2  *fileList
@@ -83,6 +82,10 @@ func Bisync(ctx context.Context, fs1, fs2 fs.Fs, optArg *Options) (err error) {
 	opt.OrigBackupDir = ci.BackupDir
 
 	err = b.setCompareDefaults(ctx)
+	if err != nil {
+		return err
+	}
+	err = b.setResolveDefaults(ctx)
 	if err != nil {
 		return err
 	}

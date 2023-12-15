@@ -422,6 +422,152 @@ of the current filters file and compares it to the hash stored in the `.md5` fil
 If they don't match, the run aborts with a critical error and thus forces you
 to do a `--resync`, likely avoiding a disaster.
 
+### --conflict-resolve CHOICE {#conflict-resolve}
+
+In bisync, a "conflict" is a file that is *new* or *changed* on *both sides*
+(relative to the prior run) AND is *not currently identical* on both sides.
+`--conflict-resolve` controls how bisync handles such a scenario. The currently
+supported options are:
+
+- `none` - (the default) - do not attempt to pick a winner, keep and rename
+both files according to [`--conflict-loser`](#conflict-loser) and
+[`--conflict-suffix`](#conflict-suffix) settings. For example, with the default
+settings, `file.txt` on Path1 is renamed `file.txt.conflict1` and `file.txt` on
+Path2 is renamed `file.txt.conflict2`. Both are copied to the opposite path
+during the run, so both sides end up with a copy of both files. (As `none` is
+the default, it is not necessary to specify `--conflict-resolve none` -- you
+can just omit the flag.)
+- `newer` - the newer file (by `modtime`) is considered the winner and is
+copied without renaming. The older file (the "loser") is handled according to
+`--conflict-loser` and `--conflict-suffix` settings (either renamed or
+deleted.) For example, if `file.txt` on Path1 is newer than `file.txt` on
+Path2, the result on both sides (with other default settings) will be `file.txt`
+(winner from Path1) and `file.txt.conflict1` (loser from Path2).
+- `older` - same as `newer`, except the older file is considered the winner,
+and the newer file is considered the loser.
+- `larger` - the larger file (by `size`) is considered the winner (regardless
+of `modtime`, if any).
+- `smaller` - the smaller file (by `size`) is considered the winner (regardless
+of `modtime`, if any).
+- `path1` - the version from Path1 is unconditionally considered the winner
+(regardless of `modtime` and `size`, if any). This can be useful if one side is
+usually more trusted or up-to-date than the other.
+- `path2` - same as `path1`, except the path2 version is considered the
+winner.
+
+For all of the above options, note the following:
+- If either of the underlying remotes lacks support for the chosen method, it
+will be ignored and fall back to `none`. (For example, if `--conflict-resolve
+newer` is set, but one of the paths uses a remote that doesn't support
+`modtime`.)
+- If a winner can't be determined because the chosen method's attribute is
+missing or equal, it will be ignored and fall back to `none`. (For example, if
+`--conflict-resolve newer` is set, but the Path1 and Path2 modtimes are
+identical, even if the sizes may differ.)
+- If the file's content is currently identical on both sides, it is not
+considered a "conflict", even if new or changed on both sides since the prior
+sync. (For example, if you made a change on one side and then synced it to the
+other side by other means.) Therefore, none of the conflict resolution flags
+apply in this scenario.
+- The conflict resolution flags do not apply during a `--resync`, as there is
+no "prior run" to speak of (but see [`--resync-mode`](#resync-mode) for similar
+options.)
+
+### --conflict-loser CHOICE {#conflict-loser}
+
+`--conflict-loser` determines what happens to the "loser" of a sync conflict
+(when [`--conflict-resolve`](#conflict-resolve) determines a winner) or to both
+files (when there is no winner.) The currently supported options are:
+
+- `num` - (the default) - auto-number the conflicts by automatically appending
+the next available number to the `--conflict-suffix`, in chronological order.
+For example, with the default settings, the first conflict for `file.txt` will
+be renamed `file.txt.conflict1`. If `file.txt.conflict1` already exists,
+`file.txt.conflict2` will be used instead (etc., up to a maximum of
+9223372036854775807 conflicts.)
+- `pathname` - rename the conflicts according to which side they came from,
+which was the default behavior prior to `v1.66`. For example, with
+`--conflict-suffix path`, `file.txt` from Path1 will be renamed
+`file.txt.path1`, and `file.txt` from Path2 will be renamed `file.txt.path2`.
+If two non-identical suffixes are provided (ex. `--conflict-suffix
+cloud,local`), the trailing digit is omitted. Importantly, note that with
+`pathname`, there is no auto-numbering beyond `2`, so if `file.txt.path2`
+somehow already exists, it will be overwritten. Using a dynamic date variable
+in your `--conflict-suffix` (see below) is one possible way to avoid this. Note
+also that conflicts-of-conflicts are possible, if the original conflict is not
+manually resolved -- for example, if for some reason you edited
+`file.txt.path1` on both sides, and those edits were different, the result
+would be `file.txt.path1.path1` and `file.txt.path1.path2` (in addition to
+`file.txt.path2`.)
+- `delete` - keep the winner only and delete the loser, instead of renaming it.
+If a winner cannot be determined (see `--conflict-resolve` for details on how
+this could happen), `delete` is ignored and the default `num` is used instead
+(i.e. both versions are kept and renamed, and neither is deleted.) `delete` is
+inherently the most destructive option, so use it only with care.
+
+For all of the above options, note that if a winner cannot be determined (see
+`--conflict-resolve` for details on how this could happen), or if
+`--conflict-resolve` is not in use, *both* files will be renamed.
+
+### --conflict-suffix STRING[,STRING] {#conflict-suffix}
+
+`--conflict-suffix` controls the suffix that is appended when bisync renames a
+[`--conflict-loser`](#conflict-loser) (default: `conflict`).
+`--conflict-suffix` will accept either one string or two comma-separated
+strings to assign different suffixes to Path1 vs. Path2. This may be helpful
+later in identifying the source of the conflict. (For example,
+`--conflict-suffix dropboxconflict,laptopconflict`)
+
+With `--conflict-loser num`, a number is always appended to the suffix. With
+`--conflict-loser pathname`, a number is appended only when one suffix is
+specified (or when two identical suffixes are specified.) i.e. with
+`--conflict-loser pathname`, all of the following would produce exactly the
+same result:
+
+```
+--conflict-suffix path
+--conflict-suffix path,path
+--conflict-suffix path1,path2
+```
+
+Suffixes may be as short as 1 character. By default, the suffix is appended
+after any other extensions (ex. `file.jpg.conflict1`), however, this can be
+changed with the [`--suffix-keep-extension`](/docs/#suffix-keep-extension) flag
+(i.e. to instead result in `file.conflict1.jpg`).
+
+`--conflict-suffix` supports several *dynamic date variables* when enclosed in
+curly braces as globs. This can be helpful to track the date and/or time that
+each conflict was handled by bisync. For example:
+
+```
+--conflict-suffix {DateOnly}-conflict
+// result: myfile.txt.2006-01-02-conflict1
+```
+
+All of the formats described [here](https://pkg.go.dev/time#pkg-constants) and
+[here](https://pkg.go.dev/time#example-Time.Format) are supported, but take
+care to ensure that your chosen format does not use any characters that are
+illegal on your remotes (for example, macOS does not allow colons in
+filenames, and slashes are also best avoided as they are often interpreted as
+directory separators.) To address this particular issue, an additional
+`{MacFriendlyTime}` (or just `{mac}`) option is supported, which results in
+`2006-01-02 0304PM`.
+
+Note that `--conflict-suffix` is entirely separate from rclone's main
+[`--sufix`](/docs/#suffix-suffix) flag. This is intentional, as users may wish
+to use both flags simultaneously, if also using
+[`--backup-dir`](#backup-dir1-and-backup-dir2).
+
+Finally, note that the default in bisync prior to `v1.66` was to rename
+conflicts with `..path1` and `..path2` (with two periods, and `path` instead of
+`conflict`.) Bisync now defaults to a single dot instead of a double dot, but
+additional dots can be added by including them in the specified suffix string.
+For example, for behavior equivalent to the previous default, use:
+
+```
+[--conflict-resolve none] --conflict-loser pathname --conflict-suffix .path
+```
+
 ### --check-sync
 
 Enabled by default, the check-sync function checks that all of the same
@@ -610,7 +756,7 @@ the other side by moving the corresponding file from `gdrive:Bisync` to
 moves it from `/Users/someuser/some/local/path/Bisync` to
 `/Users/someuser/some/local/path/BackupDir`.
 
-In the event of a `..path1` / `..path2` rename due to a sync conflict, the
+In the event of a [rename due to a sync conflict](#conflict-loser), the
 rename is not considered a delete, unless a previous conflict with the same
 name already exists and would get overwritten.
 
@@ -634,7 +780,8 @@ On each successive run it will:
 - Lock file prevents multiple simultaneous runs when taking a while.
   This can be particularly useful if bisync is run by cron scheduler.
 - Handle change conflicts non-destructively by creating
-  `..path1` and `..path2` file versions.
+  `.conflict1`, `.conflict2`, etc. file versions, according to
+  [`--conflict-resolve`](#conflict-resolve), [`--conflict-loser`](#conflict-loser), and [`--conflict-suffix`](#conflict-suffix) settings.
 - File system access health check using `RCLONE_TEST` files
   (see the `--check-access` flag).
 - Abort on excessive deletes - protects against a failed listing
@@ -661,8 +808,8 @@ Path1 deleted | File no longer exists on Path1                | File is deleted 
  Type                           | Description                           | Result                             | Implementation
 --------------------------------|---------------------------------------|------------------------------------|-----------------------
 Path1 new/changed AND Path2 new/changed AND Path1 == Path2       | File is new/changed on Path1 AND new/changed on Path2 AND Path1 version is currently identical to Path2 | No change | None
-Path1 new AND Path2 new         | File is new on Path1 AND new on Path2 (and Path1 version is NOT identical to Path2) | Files renamed to _Path1 and _Path2 | `rclone copy` _Path2 file to Path1, `rclone copy` _Path1 file to Path2
-Path2 newer AND Path1 changed   | File is newer on Path2 AND also changed (newer/older/size) on Path1 (and Path1 version is NOT identical to Path2) | Files renamed to _Path1 and _Path2 | `rclone copy` _Path2 file to Path1, `rclone copy` _Path1 file to Path2
+Path1 new AND Path2 new         | File is new on Path1 AND new on Path2 (and Path1 version is NOT identical to Path2) | Conflicts handled according to [`--conflict-resolve`](#conflict-resolve) & [`--conflict-loser`](#conflict-loser) settings | default: `rclone copy` renamed `Path2.conflict2` file to Path1, `rclone copy` renamed `Path1.conflict1` file to Path2
+Path2 newer AND Path1 changed   | File is newer on Path2 AND also changed (newer/older/size) on Path1 (and Path1 version is NOT identical to Path2) | Conflicts handled according to [`--conflict-resolve`](#conflict-resolve) & [`--conflict-loser`](#conflict-loser) settings | default: `rclone copy` renamed `Path2.conflict2` file to Path1, `rclone copy` renamed `Path1.conflict1` file to Path2
 Path2 newer AND Path1 deleted   | File is newer on Path2 AND also deleted on Path1 | Path2 version survives  | `rclone copy` Path2 to Path1
 Path2 deleted AND Path1 changed | File is deleted on Path2 AND changed (newer/older/size) on Path1 | Path1 version survives |`rclone copy` Path1 to Path2
 Path1 deleted AND Path2 changed | File is deleted on Path1 AND changed (newer/older/size) on Path2 | Path2 version survives  | `rclone copy` Path2 to Path1
@@ -673,7 +820,7 @@ Now, when bisync comes to a file that it wants to rename (because it is new/chan
 it first checks whether the Path1 and Path2 versions are currently *identical* 
 (using the same underlying function as [`check`](commands/rclone_check/).) 
 If bisync concludes that the files are identical, it will skip them and move on. 
-Otherwise, it will create renamed `..Path1` and `..Path2` duplicates, as before. 
+Otherwise, it will create renamed duplicates, as before.
 This behavior also [improves the experience of renaming directories](https://forum.rclone.org/t/bisync-bugs-and-feature-requests/37636#:~:text=Renamed%20directories), 
 as a `--resync` is no longer required, so long as the same change has been made on both sides.
 
@@ -1604,6 +1751,7 @@ instead of of `--size-only`, when `check` is not available.
 * Bisync now supports a "Graceful Shutdown" mode to cleanly cancel a run early without requiring `--resync`.
 * New `--recover` flag allows robust recovery in the event of interruptions, without requiring `--resync`.
 * A new `--max-lock` setting allows lock files to automatically renew and expire, for better automatic recovery when a run is interrupted.
+* Bisync now supports auto-resolving sync conflicts and customizing rename behavior with new [`--conflict-resolve`](#conflict-resolve), [`--conflict-loser`](#conflict-loser), and [`--conflict-suffix`](#conflict-suffix) flags.
 
 ### `v1.64`
 * Fixed an [issue](https://forum.rclone.org/t/bisync-bugs-and-feature-requests/37636#:~:text=1.%20Dry%20runs%20are%20not%20completely%20dry) 

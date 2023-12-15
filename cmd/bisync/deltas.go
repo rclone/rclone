@@ -8,11 +8,11 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/rclone/rclone/cmd/bisync/bilib"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/filter"
-	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/lib/terminal"
 	"golang.org/x/text/unicode/norm"
 )
@@ -46,6 +46,7 @@ func (d delta) is(cond delta) bool {
 type deltaSet struct {
 	deltas     map[string]delta
 	size       map[string]int64
+	time       map[string]time.Time
 	hash       map[string]string
 	opt        *Options
 	fs         fs.Fs  // base filesystem
@@ -170,6 +171,7 @@ func (b *bisyncRun) findDeltas(fctx context.Context, f fs.Fs, oldListing string,
 	ds = &deltaSet{
 		deltas:     map[string]delta{},
 		size:       map[string]int64{},
+		time:       map[string]time.Time{},
 		hash:       map[string]string{},
 		fs:         f,
 		msg:        msg,
@@ -183,6 +185,7 @@ func (b *bisyncRun) findDeltas(fctx context.Context, f fs.Fs, oldListing string,
 		d := deltaZero
 		s := int64(0)
 		h := ""
+		var t time.Time
 		if !now.has(file) {
 			b.indent(msg, file, Color(terminal.RedFg, "File was deleted"))
 			ds.deleted++
@@ -215,6 +218,7 @@ func (b *bisyncRun) findDeltas(fctx context.Context, f fs.Fs, oldListing string,
 							whatchanged = append(whatchanged, Color(terminal.MagentaFg, "time (older)"))
 							d |= deltaOlder
 						}
+						t = now.getTime(file)
 					}
 				}
 				if b.opt.Compare.Checksum {
@@ -238,6 +242,9 @@ func (b *bisyncRun) findDeltas(fctx context.Context, f fs.Fs, oldListing string,
 			if b.opt.Compare.Size {
 				ds.size[file] = s
 			}
+			if b.opt.Compare.Modtime {
+				ds.time[file] = t
+			}
 			if b.opt.Compare.Checksum {
 				ds.hash[file] = h
 			}
@@ -257,6 +264,9 @@ func (b *bisyncRun) findDeltas(fctx context.Context, f fs.Fs, oldListing string,
 			ds.deltas[file] = deltaNew
 			if b.opt.Compare.Size {
 				ds.size[file] = now.getSize(file)
+			}
+			if b.opt.Compare.Modtime {
+				ds.time[file] = now.getTime(file)
 			}
 			if b.opt.Compare.Checksum {
 				ds.hash[file] = now.getHash(file)
@@ -287,12 +297,11 @@ func (b *bisyncRun) applyDeltas(ctx context.Context, ds1, ds2 *deltaSet) (change
 	delete1 := bilib.Names{}
 	delete2 := bilib.Names{}
 	handled := bilib.Names{}
-	renamed1 := bilib.Names{}
-	renamed2 := bilib.Names{}
 	renameSkipped := bilib.Names{}
 	deletedonboth := bilib.Names{}
 	skippedDirs1 := newFileList()
 	skippedDirs2 := newFileList()
+	b.renames = renames{}
 
 	ctxMove := b.opt.setDryRun(ctx)
 
@@ -422,34 +431,10 @@ func (b *bisyncRun) applyDeltas(ctx context.Context, ds1, ds2 *deltaSet) (change
 						}
 					} else {
 						fs.Debugf(nil, "Files are NOT equal: %s", file)
-						b.indent("!Path1", p1+"..path1", "Renaming Path1 copy")
-						ctxMove = b.setBackupDir(ctxMove, 1) // in case already a file with new name
-						if err = operations.MoveFile(ctxMove, b.fs1, b.fs1, file+"..path1", file); err != nil {
-							err = fmt.Errorf("path1 rename failed for %s: %w", p1, err)
-							b.critical = true
+						err = b.resolve(ctxMove, path1, path2, file, alias, &renameSkipped, &copy1to2, &copy2to1, ds1, ds2)
+						if err != nil {
 							return
 						}
-						if b.opt.DryRun {
-							renameSkipped.Add(file)
-						} else {
-							renamed1.Add(file)
-						}
-						b.indent("!Path1", p2+"..path1", "Queue copy to Path2")
-						copy1to2.Add(file + "..path1")
-
-						b.indent("!Path2", p2+"..path2", "Renaming Path2 copy")
-						ctxMove = b.setBackupDir(ctxMove, 2) // in case already a file with new name
-						if err = operations.MoveFile(ctxMove, b.fs2, b.fs2, alias+"..path2", alias); err != nil {
-							err = fmt.Errorf("path2 rename failed for %s: %w", alias, err)
-							return
-						}
-						if b.opt.DryRun {
-							renameSkipped.Add(alias)
-						} else {
-							renamed2.Add(alias)
-						}
-						b.indent("!Path2", p1+"..path2", "Queue copy to Path1")
-						copy2to1.Add(alias + "..path2")
 					}
 				}
 				handled.Add(file)
@@ -554,8 +539,6 @@ func (b *bisyncRun) applyDeltas(ctx context.Context, ds1, ds2 *deltaSet) (change
 
 	queues.copy1to2 = copy1to2
 	queues.copy2to1 = copy2to1
-	queues.renamed1 = renamed1
-	queues.renamed2 = renamed2
 	queues.renameSkipped = renameSkipped
 	queues.deletedonboth = deletedonboth
 	queues.skippedDirs1 = skippedDirs1
