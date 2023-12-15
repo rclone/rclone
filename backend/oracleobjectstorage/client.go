@@ -70,6 +70,9 @@ func newObjectStorageClient(ctx context.Context, opt *Options) (*objectstorage.O
 	if opt.Region != "" {
 		client.SetRegion(opt.Region)
 	}
+	if opt.Endpoint != "" {
+		client.Host = opt.Endpoint
+	}
 	modifyClient(ctx, opt, &client.BaseClient)
 	return &client, err
 }
