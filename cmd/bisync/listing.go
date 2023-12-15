@@ -77,6 +77,10 @@ func (ls *fileList) empty() bool {
 }
 
 func (ls *fileList) has(file string) bool {
+	if file == "" {
+		fs.Debugf(nil, "called ls.has() with blank string")
+		return false
+	}
 	_, found := ls.info[file]
 	if !found {
 		//try unquoting
@@ -467,11 +471,9 @@ func ConvertPrecision(Modtime time.Time, dst fs.Fs) time.Time {
 // modifyListing will modify the listing based on the results of the sync
 func (b *bisyncRun) modifyListing(ctx context.Context, src fs.Fs, dst fs.Fs, results []Results, queues queues, is1to2 bool) (err error) {
 	queue := queues.copy2to1
-	renames := queues.renamed2
 	direction := "2to1"
 	if is1to2 {
 		queue = queues.copy1to2
-		renames = queues.renamed1
 		direction = "1to2"
 	}
 
@@ -596,37 +598,39 @@ func (b *bisyncRun) modifyListing(ctx context.Context, src fs.Fs, dst fs.Fs, res
 			dstList.remove(file)
 		}
 	}
-	if renames.NotEmpty() && !b.opt.DryRun {
+	if b.renames.NotEmpty() && !b.opt.DryRun {
 		// renamed on src and copied to dst
-		renamesList := renames.ToList()
-		for _, file := range renamesList {
+		for _, rename := range b.renames {
+			srcOldName, srcNewName, dstOldName, dstNewName := rename.getNames(is1to2)
+			fs.Debugf(nil, "%s: srcOldName: %v srcNewName: %v dstOldName: %v dstNewName: %v", direction, srcOldName, srcNewName, dstOldName, dstNewName)
 			// we'll handle the other side when we go the other direction
-			newName := file + "..path2"
-			oppositeName := file + "..path1"
-			if is1to2 {
-				newName = file + "..path1"
-				oppositeName = file + "..path2"
-			}
 			var new *fileInfo
-			// we prefer to get the info from the ..path1 / ..path2 versions
+			// we prefer to get the info from the newNamed versions
 			// since they were actually copied as opposed to operations.MoveFile()'d.
 			// the size/time/hash info is therefore fresher on the renames
 			// but we'll settle for the original if we have to.
-			if srcList.has(newName) {
-				new = srcList.get(newName)
-			} else if srcList.has(oppositeName) {
-				new = srcList.get(oppositeName)
-			} else if srcList.has(file) {
-				new = srcList.get(file)
+			if srcList.has(srcNewName) {
+				new = srcList.get(srcNewName)
+			} else if srcList.has(dstNewName) {
+				new = srcList.get(dstNewName)
+			} else if srcList.has(srcOldName) {
+				new = srcList.get(srcOldName)
 			} else {
-				if err := filterRecheck.AddFile(file); err != nil {
-					fs.Debugf(file, "error adding file to recheck filter: %v", err)
+				// something's odd, so let's recheck
+				if err := filterRecheck.AddFile(srcOldName); err != nil {
+					fs.Debugf(srcOldName, "error adding file to recheck filter: %v", err)
 				}
 			}
-			srcList.put(newName, new.size, new.time, new.hash, new.id, new.flags)
-			dstList.put(newName, new.size, ConvertPrecision(new.time, src), new.hash, new.id, new.flags)
-			srcList.remove(file)
-			dstList.remove(file)
+			if srcNewName != "" { // if it was renamed and not deleted
+				srcList.put(srcNewName, new.size, new.time, new.hash, new.id, new.flags)
+				dstList.put(srcNewName, new.size, ConvertPrecision(new.time, src), new.hash, new.id, new.flags)
+			}
+			if srcNewName != srcOldName {
+				srcList.remove(srcOldName)
+			}
+			if srcNewName != dstOldName {
+				dstList.remove(dstOldName)
+			}
 		}
 	}
 

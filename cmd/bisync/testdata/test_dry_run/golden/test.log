@@ -123,12 +123,10 @@ INFO  : - [36mPath1[0m    [35m[32mQueue copy to[0m Path2[0m       - [36m{
 INFO  : - [36mPath1[0m    [35m[32mQueue copy to[0m Path2[0m       - [36m{path2/}file2.txt[0m
 INFO  : - [34mPath2[0m    [35m[31mQueue delete[0m[0m              - [36m{path2/}file4.txt[0m
 NOTICE: - [34mWARNING[0m  [35mNew or changed in both paths[0m       - [36mfile5.txt[0m
-NOTICE: - [36mPath1[0m    [35mRenaming Path1 copy[0m                - [36m{path1/}file5.txt..path1[0m
-NOTICE: file5.txt: Skipped move as --dry-run is set (size 39)
-NOTICE: - [36mPath1[0m    [35m[32mQueue copy to[0m Path2[0m       - [36m{path2/}file5.txt..path1[0m
-NOTICE: - [34mPath2[0m    [35mRenaming Path2 copy[0m                - [36m{path2/}file5.txt..path2[0m
-NOTICE: file5.txt: Skipped move as --dry-run is set (size 39)
-NOTICE: - [34mPath2[0m    [35m[32mQueue copy to[0m Path1[0m       - [36m{path1/}file5.txt..path2[0m
+NOTICE: file5.txt: Skipped rename as --dry-run is set
+NOTICE: - [36mPath1[0m    [35m[32mQueue copy to[0m Path2[0m       - [36m{path2/}file5.txt.conflict1[0m
+NOTICE: file5.txt: Skipped rename as --dry-run is set
+NOTICE: - [34mPath2[0m    [35m[32mQueue copy to[0m Path1[0m       - [36m{path1/}file5.txt.conflict2[0m
 INFO  : - [34mPath2[0m    [35m[32mQueue copy to[0m Path1[0m       - [36m{path1/}file6.txt[0m
 INFO  : - [36mPath1[0m    [35m[32mQueue copy to[0m Path2[0m       - [36m{path2/}file7.txt[0m
 INFO  : - [34mPath2[0m    [35m[32mQueue copy to[0m Path1[0m       - [36m{path1/}file1.txt[0m
@@ -190,10 +188,10 @@ INFO  : - [36mPath1[0m    [35m[32mQueue copy to[0m Path2[0m       - [36m{
 INFO  : - [36mPath1[0m    [35m[32mQueue copy to[0m Path2[0m       - [36m{path2/}file2.txt[0m
 INFO  : - [34mPath2[0m    [35m[31mQueue delete[0m[0m              - [36m{path2/}file4.txt[0m
 NOTICE: - [34mWARNING[0m  [35mNew or changed in both paths[0m       - [36mfile5.txt[0m
-NOTICE: - [36mPath1[0m    [35mRenaming Path1 copy[0m                - [36m{path1/}file5.txt..path1[0m
-NOTICE: - [36mPath1[0m    [35m[32mQueue copy to[0m Path2[0m       - [36m{path2/}file5.txt..path1[0m
-NOTICE: - [34mPath2[0m    [35mRenaming Path2 copy[0m                - [36m{path2/}file5.txt..path2[0m
-NOTICE: - [34mPath2[0m    [35m[32mQueue copy to[0m Path1[0m       - [36m{path1/}file5.txt..path2[0m
+NOTICE: - [36mPath1[0m    [35mRenaming Path1 copy[0m                - [36m{path1/}file5.txt.conflict1[0m
+NOTICE: - [36mPath1[0m    [35m[32mQueue copy to[0m Path2[0m       - [36m{path2/}file5.txt.conflict1[0m
+NOTICE: - [34mPath2[0m    [35mRenaming Path2 copy[0m                - [36m{path2/}file5.txt.conflict2[0m
+NOTICE: - [34mPath2[0m    [35m[32mQueue copy to[0m Path1[0m       - [36m{path1/}file5.txt.conflict2[0m
 INFO  : - [34mPath2[0m    [35m[32mQueue copy to[0m Path1[0m       - [36m{path1/}file6.txt[0m
 INFO  : - [36mPath1[0m    [35m[32mQueue copy to[0m Path2[0m       - [36m{path2/}file7.txt[0m
 INFO  : - [34mPath2[0m    [35m[32mQueue copy to[0m Path1[0m       - [36m{path1/}file1.txt[0m

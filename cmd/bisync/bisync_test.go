@@ -118,6 +118,9 @@ var logHoppers = []string{
 
 	// Test case `normalization` can have random order of fix-case files.
 	`(?:INFO  |NOTICE): .*: Fixed case by renaming to: .*`,
+
+	// order of files re-checked prior to a conflict rename
+	`ERROR : .*: md5 differ.*`,
 }
 
 // Some log lines can contain Windows path separator that must be
@@ -853,6 +856,12 @@ func (b *bisyncTest) runBisync(ctx context.Context, args []string) (err error) {
 			ci.NoUnicodeNormalization = false
 			ci.IgnoreCaseSync = true
 			ci.FixCase = true
+		case "conflict-resolve":
+			_ = opt.ConflictResolve.Set(val)
+		case "conflict-loser":
+			_ = opt.ConflictLoser.Set(val)
+		case "conflict-suffix":
+			opt.ConflictSuffixFlag = val
 		default:
 			return fmt.Errorf("invalid bisync option %q", arg)
 		}
