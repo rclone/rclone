@@ -5711,6 +5711,13 @@ func (f *Fs) OpenChunkWriter(ctx context.Context, remote string, src fs.ObjectIn
 	var mOut *s3.CreateMultipartUploadOutput
 	err = f.pacer.Call(func() (bool, error) {
 		mOut, err = f.c.CreateMultipartUploadWithContext(ctx, &mReq)
+		if err == nil {
+			if mOut == nil {
+				err = fserrors.RetryErrorf("internal error: no info from multipart upload")
+			} else if mOut.UploadId == nil {
+				err = fserrors.RetryErrorf("internal error: no UploadId in multpart upload: %#v", *mOut)
+			}
+		}
 		return f.shouldRetry(ctx, err)
 	})
 	if err != nil {
