@@ -319,7 +319,7 @@ func (b *bisyncRun) makeListing(ctx context.Context, f fs.Fs, listing string) (l
 	return
 }
 
-// checkListing verifies that listing is not empty (unless resynching)
+// checkListing verifies that listing is not empty (unless resyncing)
 func (b *bisyncRun) checkListing(ls *fileList, listing, msg string) error {
 	if b.opt.Resync || !ls.empty() {
 		return nil

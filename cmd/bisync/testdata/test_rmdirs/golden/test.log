@@ -3,9 +3,9 @@
 
 (02)  : test initial bisync
 (03)  : bisync resync
-INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Syncing Path1 "{path1/}" with Path2 "{path2/}"
 INFO  : Copying unique Path2 files to Path1
-INFO  : Resynching Path1 to Path2
+INFO  : Resyncing Path1 to Path2
 INFO  : Resync updating listings
 INFO  : Bisync successful
 
@@ -14,7 +14,7 @@ INFO  : Bisync successful
 
 (06)  : test 2. run bisync without remove-empty-dirs
 (07)  : bisync
-INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Syncing Path1 "{path1/}" with Path2 "{path2/}"
 INFO  : Path1 checking for diffs
 INFO  : - Path1    File was deleted                    - subdir/file20.txt
 INFO  : Path1:    1 changes:    0 new,    0 newer,    0 older,    1 deleted
@@ -34,7 +34,7 @@ subdir/
 
 (11)  : test 4. run bisync with remove-empty-dirs
 (12)  : bisync remove-empty-dirs
-INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Syncing Path1 "{path1/}" with Path2 "{path2/}"
 INFO  : Path1 checking for diffs
 INFO  : Path2 checking for diffs
 INFO  : No changes found

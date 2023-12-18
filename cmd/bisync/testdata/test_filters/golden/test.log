@@ -5,11 +5,11 @@
 
 (03)  : test resync to force building of the filters md5 hash
 (04)  : bisync filters-file={workdir/}filtersfile.flt resync
-INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Syncing Path1 "{path1/}" with Path2 "{path2/}"
 INFO  : Using filters file {workdir/}filtersfile.flt
 INFO  : Storing filters file hash to {workdir/}filtersfile.flt.md5
 INFO  : Copying unique Path2 files to Path1
-INFO  : Resynching Path1 to Path2
+INFO  : Resyncing Path1 to Path2
 INFO  : Resync updating listings
 INFO  : Bisync successful
 
@@ -22,7 +22,7 @@ INFO  : Bisync successful
 
 (10)  : test bisync with filters-file. path2-side fileZ.txt will be filtered.
 (11)  : bisync filters-file={workdir/}filtersfile.flt
-INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Syncing Path1 "{path1/}" with Path2 "{path2/}"
 INFO  : Using filters file {workdir/}filtersfile.flt
 INFO  : Path1 checking for diffs
 INFO  : - Path1    File is new                         - subdir/fileZ.txt

@@ -10,9 +10,9 @@
 (08)  : copy-as {datadir/}placeholder.txt {path1/} file1.copy4.txt
 (09)  : copy-as {datadir/}placeholder.txt {path1/} file1.copy5.txt
 (10)  : bisync resync
-INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Syncing Path1 "{path1/}" with Path2 "{path2/}"
 INFO  : Copying unique Path2 files to Path1
-INFO  : Resynching Path1 to Path2
+INFO  : Resyncing Path1 to Path2
 INFO  : Resync updating listings
 INFO  : Bisync successful
 
@@ -23,7 +23,7 @@ INFO  : Bisync successful
 
 (15)  : test 2. Run bisync without --create-empty-src-dirs
 (16)  : bisync
-INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Syncing Path1 "{path1/}" with Path2 "{path2/}"
 INFO  : Path1 checking for diffs
 INFO  : Path2 checking for diffs
 INFO  : No changes found
@@ -38,7 +38,7 @@ subdir/
 
 (20)  : test 4.Run bisync WITH --create-empty-src-dirs
 (21)  : bisync create-empty-src-dirs
-INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Syncing Path1 "{path1/}" with Path2 "{path2/}"
 INFO  : Path1 checking for diffs
 INFO  : - Path1    File is new                         - subdir
 INFO  : Path1:    1 changes:    1 new,    0 newer,    0 older,    0 deleted
@@ -67,7 +67,7 @@ subdir/
 
 (33)  : test 7. Run bisync without --create-empty-src-dirs
 (34)  : bisync
-INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Syncing Path1 "{path1/}" with Path2 "{path2/}"
 INFO  : Path1 checking for diffs
 INFO  : - Path1    File was deleted                    - RCLONE_TEST
 INFO  : - Path1    File was deleted                    - subdir
@@ -89,12 +89,12 @@ subdir/
 
 (38)  : test 9. Reset, do the delete again, and run bisync WITH --create-empty-src-dirs
 (39)  : bisync resync create-empty-src-dirs
-INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Syncing Path1 "{path1/}" with Path2 "{path2/}"
 INFO  : Copying unique Path2 files to Path1
 INFO  : - Path2    Resync will copy to Path1           - subdir
 INFO  : - Path2    Resync is doing queued copies to    - Path1
-INFO  : Resynching Path1 to Path2
-INFO  : Resynching Path2 to Path1 (for empty dirs)
+INFO  : Resyncing Path1 to Path2
+INFO  : Resyncing Path2 to Path1 (for empty dirs)
 INFO  : Resync updating listings
 INFO  : Bisync successful
 (40)  : list-dirs {path1/}
@@ -114,7 +114,7 @@ subdir/
 subdir/
 
 (51)  : bisync create-empty-src-dirs
-INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Syncing Path1 "{path1/}" with Path2 "{path2/}"
 INFO  : Path1 checking for diffs
 INFO  : - Path1    File was deleted                    - subdir
 INFO  : Path1:    1 changes:    0 new,    0 newer,    0 older,    1 deleted
@@ -133,7 +133,7 @@ INFO  : Bisync successful
 
 (55)  : test 11. bisync again (because if we leave subdir in listings, test will fail due to mismatched modtime)
 (56)  : bisync create-empty-src-dirs
-INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Syncing Path1 "{path1/}" with Path2 "{path2/}"
 INFO  : Path1 checking for diffs
 INFO  : Path2 checking for diffs
 INFO  : No changes found

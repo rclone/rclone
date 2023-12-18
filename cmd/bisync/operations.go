@@ -163,7 +163,7 @@ func (b *bisyncRun) runLocked(octx context.Context, listing1, listing2 string) (
 		return err
 	}
 
-	fs.Infof(nil, "Synching Path1 %s with Path2 %s", quotePath(path1), quotePath(path2))
+	fs.Infof(nil, "Syncing Path1 %s with Path2 %s", quotePath(path1), quotePath(path2))
 
 	if opt.DryRun {
 		// In --dry-run mode, preserve original listings and save updates to the .lst-dry files
@@ -405,7 +405,7 @@ func (b *bisyncRun) resync(octx, fctx context.Context, listing1, listing2 string
 		}
 	}
 
-	fs.Infof(nil, "Resynching Path1 to Path2")
+	fs.Infof(nil, "Resyncing Path1 to Path2")
 	ctxRun := b.opt.setDryRun(fctx)
 	// fctx has our extra filters added!
 	ctxSync, filterSync := filter.AddConfig(ctxRun)
@@ -432,7 +432,7 @@ func (b *bisyncRun) resync(octx, fctx context.Context, listing1, listing2 string
 		// rclone copy Path2 Path1 --create-empty-src-dirs
 		// rclone copy Path1 Path2 --create-empty-src-dirs
 
-		fs.Infof(nil, "Resynching Path2 to Path1 (for empty dirs)")
+		fs.Infof(nil, "Resyncing Path2 to Path1 (for empty dirs)")
 
 		//note copy (not sync) and dst comes before src
 		if err = sync.CopyDir(ctxSync, b.fs1, b.fs2, b.opt.CreateEmptySrcDirs); err != nil {

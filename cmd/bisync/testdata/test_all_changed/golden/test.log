@@ -3,9 +3,9 @@
 
 (02)  : test initial bisync
 (03)  : bisync resync
-INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Syncing Path1 "{path1/}" with Path2 "{path2/}"
 INFO  : Copying unique Path2 files to Path1
-INFO  : Resynching Path1 to Path2
+INFO  : Resyncing Path1 to Path2
 INFO  : Resync updating listings
 INFO  : Bisync successful
 
@@ -15,7 +15,7 @@ INFO  : Bisync successful
 
 (07)  : test sync should pass
 (08)  : bisync
-INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Syncing Path1 "{path1/}" with Path2 "{path2/}"
 INFO  : Path1 checking for diffs
 INFO  : - Path1    File is newer                       - file1.copy1.txt
 INFO  : - Path1    File is newer                       - file1.copy2.txt
@@ -45,7 +45,7 @@ INFO  : Bisync successful
 
 (12)  : test sync should fail
 (13)  : bisync
-INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Syncing Path1 "{path1/}" with Path2 "{path2/}"
 INFO  : Path1 checking for diffs
 INFO  : - Path1    File is OLDER                       - file1.copy1.txt
 INFO  : - Path1    File is OLDER                       - file1.copy2.txt
@@ -63,7 +63,7 @@ Bisync error: all files were changed
 
 (14)  : test sync with force should pass
 (15)  : bisync force
-INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Syncing Path1 "{path1/}" with Path2 "{path2/}"
 INFO  : Path1 checking for diffs
 INFO  : - Path1    File is OLDER                       - file1.copy1.txt
 INFO  : - Path1    File is OLDER                       - file1.copy2.txt
