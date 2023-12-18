@@ -120,17 +120,15 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		WriteMetadata:           true,
 	}).Fill(ctx, f)
 
-	// Set the path prefix. This is the path to the root directory on the server
-	f.pathPrefix = opt.DirectoryID
-	if root != "" {
-		f.pathPrefix += "/" + root
-	}
+	// Set the path prefix. This is the path to the root directory on the
+	// server. We add it to each request and strip it from each response because
+	// rclone does not want to see it
+	f.pathPrefix = "/" + path.Join(opt.DirectoryID, f.root) + "/"
 
-	// The root URL equates to https://pixeldrain.com/api/filesystem/ during
+	// The root URL equates to https://pixeldrain.com/api/filesystem during
 	// normal operation. API handlers need to manually add the pathPrefix to
-	// each request. The trailing slash here is intentional, since rclone does
-	// not use preceding slashes in its paths
-	f.srv.SetRoot(opt.APIURL + "/filesystem/")
+	// each request
+	f.srv.SetRoot(opt.APIURL + "/filesystem")
 
 	// If using an APIKey, set the Authorization header
 	if len(opt.APIKey) > 1 {
@@ -164,7 +162,8 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	} else if err == nil && fsp.Base().Type == "file" {
 		// The filesystem root is a file, rclone wants us to set the root to the
 		// parent directory
-		f.pathPrefix = path.Dir(f.pathPrefix)
+		f.root = path.Dir(f.root)
+		f.pathPrefix = "/" + path.Join(opt.DirectoryID, f.root) + "/"
 		return f, fs.ErrorIsFile
 	}
 
