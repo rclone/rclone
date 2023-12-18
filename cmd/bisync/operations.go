@@ -248,6 +248,14 @@ func (b *bisyncRun) runLocked(octx context.Context) (err error) {
 	b.octx = octx
 	b.fctx = fctx
 
+	// overlapping paths check
+	err = b.overlappingPathsCheck(fctx, b.fs1, b.fs2)
+	if err != nil {
+		b.critical = true
+		b.retryable = true
+		return err
+	}
+
 	// Generate Path1 and Path2 listings and copy any unique Path2 files to Path1
 	if opt.Resync {
 		return b.resync(octx, fctx)
@@ -676,10 +684,43 @@ func (b *bisyncRun) setBackupDir(ctx context.Context, destPath int) context.Cont
 		ci.BackupDir = b.opt.BackupDir1
 	}
 	if destPath == 2 && b.opt.BackupDir2 != "" {
-		ci.BackupDir = b.opt.BackupDir1
+		ci.BackupDir = b.opt.BackupDir2
 	}
 	fs.Debugf(ci.BackupDir, "updated backup-dir for Path%d", destPath)
 	return ctx
+}
+
+func (b *bisyncRun) overlappingPathsCheck(fctx context.Context, fs1, fs2 fs.Fs) error {
+	if operations.OverlappingFilterCheck(fctx, fs2, fs1) {
+		err = fmt.Errorf(Color(terminal.RedFg, "Overlapping paths detected. Cannot bisync between paths that overlap, unless excluded by filters."))
+		return err
+	}
+	// need to test our BackupDirs too, as sync will be fooled by our --files-from filters
+	testBackupDir := func(ctx context.Context, destPath int) error {
+		src := fs1
+		dst := fs2
+		if destPath == 1 {
+			src = fs2
+			dst = fs1
+		}
+		ctxBackupDir := b.setBackupDir(ctx, destPath)
+		ci := fs.GetConfig(ctxBackupDir)
+		if ci.BackupDir != "" {
+			// operations.BackupDir should return an error if not properly excluded
+			_, err = operations.BackupDir(fctx, dst, src, "")
+			return err
+		}
+		return nil
+	}
+	err = testBackupDir(fctx, 1)
+	if err != nil {
+		return err
+	}
+	err = testBackupDir(fctx, 2)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (b *bisyncRun) debug(nametocheck, msgiftrue string) {
