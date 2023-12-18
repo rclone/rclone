@@ -21,7 +21,7 @@ func (b *s3Backend) entryListR(bucket, fdPath, name string, acceptComPrefix bool
 	for _, entry := range dirEntries {
 		object := entry.Name()
 
-		// workround for control-chars detect
+		// workaround for control-chars detect
 		objectPath := path.Join(fdPath, object)
 
 		if !strings.HasPrefix(object, name) {

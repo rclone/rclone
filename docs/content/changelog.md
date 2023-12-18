@@ -23,7 +23,7 @@ description: "Rclone Changelog"
         * Update all dependencies (Nick Craig-Wood)
         * Refactor version info and icon resource handling on windows (albertony)
     * doc updates (albertony, alfish2000, asdffdsazqqq, Dimitri Papadopoulos, Herby Gillot, Joda Stößer, Manoj Ghosh, Nick Craig-Wood)
-    * Implement `--metadata-mapper` to transform metatadata with a user supplied program (Nick Craig-Wood)
+    * Implement `--metadata-mapper` to transform metadata with a user supplied program (Nick Craig-Wood)
     * Add `ChunkWriterDoesntSeek` feature flag and set it for b2 (Nick Craig-Wood)
     * lib/http: Export basic go string functions for use in `--template` (Gabriel Espinoza)
     * makefile: Use POSIX compatible install arguments (Mina Galić)
@@ -138,7 +138,7 @@ description: "Rclone Changelog"
     * Fix "fatal error: concurrent map writes" (Nick Craig-Wood)
 * B2
     * Fix multipart upload: corrupted on transfer: sizes differ XXX vs 0 (Nick Craig-Wood)
-    * Fix locking window when getting mutipart upload URL (Nick Craig-Wood)
+    * Fix locking window when getting multipart upload URL (Nick Craig-Wood)
     * Fix server side copies greater than 4GB (Nick Craig-Wood)
     * Fix chunked streaming uploads (Nick Craig-Wood)
     * Reduce default `--b2-upload-concurrency` to 4 to reduce memory usage (Nick Craig-Wood)
