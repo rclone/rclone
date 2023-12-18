@@ -837,6 +837,10 @@ func (b *bisyncTest) runBisync(ctx context.Context, args []string) (err error) {
 		case "subdir":
 			fs1 = addSubdir(b.path1, val)
 			fs2 = addSubdir(b.path2, val)
+		case "backupdir1":
+			opt.BackupDir1 = val
+		case "backupdir2":
+			opt.BackupDir2 = val
 		case "ignore-listing-checksum":
 			opt.IgnoreListingChecksum = true
 		case "no-norm":
@@ -1168,6 +1172,10 @@ func (b *bisyncTest) storeGolden() {
 		if fileType(fileName) == "lock" {
 			continue
 		}
+		if fileName == "backupdirs" {
+			log.Printf("skipping: %v", fileName)
+			continue
+		}
 		goldName := b.toGolden(fileName)
 		if goldName != fileName {
 			targetPath := filepath.Join(b.workDir, goldName)
@@ -1189,6 +1197,10 @@ func (b *bisyncTest) storeGolden() {
 		if fileType(fileName) == "lock" {
 			continue
 		}
+		if fileName == "backupdirs" {
+			log.Printf("skipping: %v", fileName)
+			continue
+		}
 		text := b.mangleResult(b.goldenDir, fileName, true)
 
 		goldName := b.toGolden(fileName)
@@ -1205,6 +1217,9 @@ func (b *bisyncTest) storeGolden() {
 
 // mangleResult prepares test logs or listings for comparison
 func (b *bisyncTest) mangleResult(dir, file string, golden bool) string {
+	if file == "backupdirs" {
+		return "skipping backupdirs"
+	}
 	buf, err := os.ReadFile(filepath.Join(dir, file))
 	require.NoError(b.t, err)
 
