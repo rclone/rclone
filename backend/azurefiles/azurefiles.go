@@ -65,7 +65,7 @@ import (
 const (
 	maxFileSize           = 4 * fs.Tebi
 	defaultChunkSize      = 4 * fs.Mebi
-	storageDefaultBaseURL = "core.windows.net" // FIXME not sure this is correct
+	storageDefaultBaseURL = "file.core.windows.net"
 )
 
 func init() {
