@@ -131,6 +131,16 @@ recover as much of the file as possible.`,
 			Default:  false,
 			Advanced: true,
 		}, {
+			Name: "strict_names",
+			Help: `If set, this will raise an error when crypt comes across a filename that can't be decrypted.
+
+(By default, rclone will just log a NOTICE and continue as normal.)
+This can happen if encrypted and unencrypted files are stored in the same
+directory (which is not recommended.) It may also indicate a more serious
+problem that should be investigated.`,
+			Default:  false,
+			Advanced: true,
+		}, {
 			Name: "filename_encoding",
 			Help: `How to encode the encrypted filename to text string.
 
@@ -299,6 +309,7 @@ type Options struct {
 	PassBadBlocks           bool   `config:"pass_bad_blocks"`
 	FilenameEncoding        string `config:"filename_encoding"`
 	Suffix                  string `config:"suffix"`
+	StrictNames             bool   `config:"strict_names"`
 }
 
 // Fs represents a wrapped fs.Fs
@@ -333,45 +344,64 @@ func (f *Fs) String() string {
 }
 
 // Encrypt an object file name to entries.
-func (f *Fs) add(entries *fs.DirEntries, obj fs.Object) {
+func (f *Fs) add(entries *fs.DirEntries, obj fs.Object) error {
 	remote := obj.Remote()
 	decryptedRemote, err := f.cipher.DecryptFileName(remote)
 	if err != nil {
-		fs.Debugf(remote, "Skipping undecryptable file name: %v", err)
-		return
+		if f.opt.StrictNames {
+			return fmt.Errorf("%s: undecryptable file name detected: %v", remote, err)
+		}
+		fs.Logf(remote, "Skipping undecryptable file name: %v", err)
+		return nil
 	}
 	if f.opt.ShowMapping {
 		fs.Logf(decryptedRemote, "Encrypts to %q", remote)
 	}
 	*entries = append(*entries, f.newObject(obj))
+	return nil
 }
 
 // Encrypt a directory file name to entries.
-func (f *Fs) addDir(ctx context.Context, entries *fs.DirEntries, dir fs.Directory) {
+func (f *Fs) addDir(ctx context.Context, entries *fs.DirEntries, dir fs.Directory) error {
 	remote := dir.Remote()
 	decryptedRemote, err := f.cipher.DecryptDirName(remote)
 	if err != nil {
-		fs.Debugf(remote, "Skipping undecryptable dir name: %v", err)
-		return
+		if f.opt.StrictNames {
+			return fmt.Errorf("%s: undecryptable dir name detected: %v", remote, err)
+		}
+		fs.Logf(remote, "Skipping undecryptable dir name: %v", err)
+		return nil
 	}
 	if f.opt.ShowMapping {
 		fs.Logf(decryptedRemote, "Encrypts to %q", remote)
 	}
 	*entries = append(*entries, f.newDir(ctx, dir))
+	return nil
 }
 
 // Encrypt some directory entries.  This alters entries returning it as newEntries.
 func (f *Fs) encryptEntries(ctx context.Context, entries fs.DirEntries) (newEntries fs.DirEntries, err error) {
 	newEntries = entries[:0] // in place filter
+	errors := 0
+	var firsterr error
 	for _, entry := range entries {
 		switch x := entry.(type) {
 		case fs.Object:
-			f.add(&newEntries, x)
+			err = f.add(&newEntries, x)
 		case fs.Directory:
-			f.addDir(ctx, &newEntries, x)
+			err = f.addDir(ctx, &newEntries, x)
 		default:
 			return nil, fmt.Errorf("unknown object type %T", entry)
 		}
+		if err != nil {
+			errors++
+			if firsterr == nil {
+				firsterr = err
+			}
+		}
+	}
+	if firsterr != nil {
+		return nil, fmt.Errorf("there were %v undecryptable name errors. first error: %v", errors, firsterr)
 	}
 	return newEntries, nil
 }
