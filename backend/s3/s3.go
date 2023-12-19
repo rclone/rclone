@@ -4321,12 +4321,17 @@ func (f *Fs) makeBucket(ctx context.Context, bucket string) error {
 		}
 		err := f.pacer.Call(func() (bool, error) {
 			_, err := f.c.CreateBucketWithContext(ctx, &req)
-			return f.shouldRetry(ctx, err)
+			if err != nil {
+				fmt.Printf("CreateBucket error: %v\n", err)
+				return f.shouldRetry(ctx, err)
+			}
+			return false, nil
 		})
 		if err == nil {
 			fs.Infof(f, "Bucket %q created with ACL %q", bucket, f.opt.BucketACL)
 		}
 		if awsErr, ok := err.(awserr.Error); ok {
+			fmt.Printf("AWS Error: %v\n", awsErr)
 			switch awsErr.Code() {
 			case "BucketAlreadyOwnedByYou":
 				err = nil
