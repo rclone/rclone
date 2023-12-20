@@ -101,9 +101,24 @@ func (cds *contentDirectoryService) cdsObjectToUpnpavObject(cdsObject object, fi
 			Host:   host,
 			Path:   path.Join(resPath, resource.Path()),
 		}).String()
+
+		// Read the mime type from the fs.Object if possible,
+		// otherwise fall back to working out what it is from the file path.
+		var mimeType string
+		if o, ok := resource.DirEntry().(fs.Object); ok {
+			mimeType = fs.MimeType(context.TODO(), o)
+			// If backend doesn't know what the mime type is then
+			// try getting it from the file name
+			if mimeType == "application/octet-stream" {
+				mimeType = fs.MimeTypeFromName(resource.Name())
+			}
+		} else {
+			mimeType = fs.MimeTypeFromName(resource.Name())
+		}
+
 		item.Res = append(item.Res, upnpav.Resource{
 			URL:          subtitleURL,
-			ProtocolInfo: fmt.Sprintf("http-get:*:%s:*", "text/srt"),
+			ProtocolInfo: fmt.Sprintf("http-get:*:%s:*", mimeType),
 		})
 	}
 
