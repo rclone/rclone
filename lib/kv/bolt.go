@@ -216,7 +216,7 @@ func (db *DB) loop() {
 
 // Do a key-value operation and return error when done
 func (db *DB) Do(write bool, op Op) error {
-	if db.queue == nil {
+	if db == nil || db.queue == nil {
 		return ErrInactive
 	}
 	r := &request{
