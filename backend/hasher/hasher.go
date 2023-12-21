@@ -418,7 +418,9 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 
 // Shutdown the backend, closing any background tasks and any cached connections.
 func (f *Fs) Shutdown(ctx context.Context) (err error) {
-	err = f.db.Stop(false)
+	if f.db != nil {
+		err = f.db.Stop(false)
+	}
 	if do := f.Fs.Features().Shutdown; do != nil {
 		if err2 := do(ctx); err2 != nil {
 			err = err2
