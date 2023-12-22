@@ -44,7 +44,7 @@ func (preferChoices) Choices() []string {
 }
 
 func (preferChoices) Type() string {
-	return "Prefer"
+	return "string"
 }
 
 // ConflictResolveList is a list of --conflict-resolve flag choices used in the help
@@ -373,21 +373,22 @@ func (b *bisyncRun) conflictWinner(ds1, ds2 *deltaSet, remote1, remote2 string) 
 	case PreferPath2:
 		return 2
 	case PreferNewer, PreferOlder:
-		return b.resolveNewerOlder(ds1, ds2, remote1, remote2, b.opt.ConflictResolve)
+		t1, t2 := ds1.time[remote1], ds2.time[remote2]
+		return b.resolveNewerOlder(t1, t2, remote1, remote2, b.opt.ConflictResolve)
 	case PreferLarger, PreferSmaller:
-		return b.resolveLargerSmaller(ds1, ds2, remote1, remote2, b.opt.ConflictResolve)
+		s1, s2 := ds1.size[remote1], ds2.size[remote2]
+		return b.resolveLargerSmaller(s1, s2, remote1, remote2, b.opt.ConflictResolve)
 	default:
 		return 0
 	}
 }
 
 // returns the winning path number, or 0 if winner can't be determined
-func (b *bisyncRun) resolveNewerOlder(ds1, ds2 *deltaSet, remote1, remote2 string, prefer Prefer) int {
+func (b *bisyncRun) resolveNewerOlder(t1, t2 time.Time, remote1, remote2 string, prefer Prefer) int {
 	if fs.GetModifyWindow(b.octx, b.fs1, b.fs2) == fs.ModTimeNotSupported {
 		fs.Infof(remote1, "Winner cannot be determined as at least one path lacks modtime support.")
 		return 0
 	}
-	t1, t2 := ds1.time[remote1], ds2.time[remote2]
 	if t1.IsZero() || t2.IsZero() {
 		fs.Infof(remote1, "Winner cannot be determined as at least one modtime is missing. Path1: %v, Path2: %v", t1, t2)
 		return 0
@@ -418,8 +419,7 @@ func (b *bisyncRun) resolveNewerOlder(ds1, ds2 *deltaSet, remote1, remote2 strin
 }
 
 // returns the winning path number, or 0 if winner can't be determined
-func (b *bisyncRun) resolveLargerSmaller(ds1, ds2 *deltaSet, remote1, remote2 string, prefer Prefer) int {
-	s1, s2 := ds1.size[remote1], ds2.size[remote2]
+func (b *bisyncRun) resolveLargerSmaller(s1, s2 int64, remote1, remote2 string, prefer Prefer) int {
 	if s1 < 0 || s2 < 0 {
 		fs.Infof(remote1, "Winner cannot be determined as at least one size is unknown. Path1: %v, Path2: %v", s1, s2)
 		return 0

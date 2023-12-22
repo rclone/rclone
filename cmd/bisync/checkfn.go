@@ -208,7 +208,14 @@ func (b *bisyncRun) EqualFn(ctx context.Context) context.Context {
 			fs.Debugf(src, "equal skipped")
 		}
 		ctxNoLogger := operations.WithLogger(ctx, noop)
-		if operations.Equal(ctxNoLogger, src, dst) {
+
+		timeSizeEqualFn := func() (equal bool, skipHash bool) { return operations.Equal(ctxNoLogger, src, dst), false } // normally use Equal()
+		if b.opt.ResyncMode == PreferOlder || b.opt.ResyncMode == PreferLarger || b.opt.ResyncMode == PreferSmaller {
+			timeSizeEqualFn = func() (equal bool, skipHash bool) { return b.resyncTimeSizeEqual(ctxNoLogger, src, dst) } // but override for --resync-mode older, larger, smaller
+		}
+		skipHash := false // (note that we might skip it anyway based on compare/ht settings)
+		equal, skipHash = timeSizeEqualFn()
+		if equal && !skipHash {
 			whichHashType := func(f fs.Info) hash.Type {
 				ht := getHashType(f.Name())
 				if ht == hash.None && b.opt.Compare.SlowHashSyncOnly && !b.opt.Resync {
@@ -232,4 +239,33 @@ func (b *bisyncRun) EqualFn(ctx context.Context) context.Context {
 		return false
 	}
 	return operations.WithEqualFn(ctx, equalFn)
+}
+
+func (b *bisyncRun) resyncTimeSizeEqual(ctxNoLogger context.Context, src fs.ObjectInfo, dst fs.Object) (equal bool, skipHash bool) {
+	switch b.opt.ResyncMode {
+	case PreferLarger, PreferSmaller:
+		// note that arg order is path1, path2, regardless of src/dst
+		path1, path2 := b.resyncWhichIsWhich(src, dst)
+		if sizeDiffers(path1.Size(), path2.Size()) {
+			winningPath := b.resolveLargerSmaller(path1.Size(), path2.Size(), path1.Remote(), path2.Remote(), b.opt.ResyncMode)
+			// don't need to check/update modtime here, as sizes definitely differ and something will be transferred
+			return b.resyncWinningPathToEqual(winningPath), b.resyncWinningPathToEqual(winningPath) // skip hash check if true
+		}
+		// sizes equal or don't know, so continue to checking time/hash, if applicable
+		return operations.Equal(ctxNoLogger, src, dst), false // note we're back to src/dst, not path1/path2
+	case PreferOlder:
+		// note that arg order is path1, path2, regardless of src/dst
+		path1, path2 := b.resyncWhichIsWhich(src, dst)
+		if timeDiffers(ctxNoLogger, path1.ModTime(ctxNoLogger), path2.ModTime(ctxNoLogger), path1.Fs(), path2.Fs()) {
+			winningPath := b.resolveNewerOlder(path1.ModTime(ctxNoLogger), path2.ModTime(ctxNoLogger), path1.Remote(), path2.Remote(), b.opt.ResyncMode)
+			// if src is winner, proceed with equal to check size/hash and possibly just update dest modtime instead of transferring
+			if !b.resyncWinningPathToEqual(winningPath) {
+				return operations.Equal(ctxNoLogger, src, dst), false // note we're back to src/dst, not path1/path2
+			}
+			// if dst is winner (and definitely unequal), do not proceed further as we want dst to overwrite src regardless of size difference, and we do not want dest modtime updated
+			return true, true
+		}
+		// times equal or don't know, so continue to checking size/hash, if applicable
+	}
+	return operations.Equal(ctxNoLogger, src, dst), false // note we're back to src/dst, not path1/path2
 }

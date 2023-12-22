@@ -50,6 +50,7 @@ type bisyncRun struct {
 	DebugName          string
 	lockFile           string
 	renames            renames
+	resyncIs1to2       bool
 }
 
 type queues struct {
@@ -89,6 +90,9 @@ func Bisync(ctx context.Context, fs1, fs2 fs.Fs, optArg *Options) (err error) {
 	if err != nil {
 		return err
 	}
+
+	b.setResyncDefaults()
+
 	err = b.setResolveDefaults(ctx)
 	if err != nil {
 		return err
