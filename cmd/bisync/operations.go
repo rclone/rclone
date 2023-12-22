@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	gosync "sync"
 	"time"
@@ -100,6 +101,11 @@ func Bisync(ctx context.Context, fs1, fs2 fs.Fs, optArg *Options) (err error) {
 	b.newListing1 = b.listing1 + "-new"
 	b.newListing2 = b.listing2 + "-new"
 	b.aliases = bilib.AliasMap{}
+
+	err = b.checkSyntax()
+	if err != nil {
+		return err
+	}
 
 	// Handle lock file
 	err = b.setLockFile()
@@ -719,6 +725,29 @@ func (b *bisyncRun) overlappingPathsCheck(fctx context.Context, fs1, fs2 fs.Fs) 
 	err = testBackupDir(fctx, 2)
 	if err != nil {
 		return err
+	}
+	return nil
+}
+
+func (b *bisyncRun) checkSyntax() error {
+	// check for odd number of quotes in path, usually indicating an escaping issue
+	path1 := bilib.FsPath(b.fs1)
+	path2 := bilib.FsPath(b.fs2)
+	if strings.Count(path1, `"`)%2 != 0 || strings.Count(path2, `"`)%2 != 0 {
+		return fmt.Errorf(Color(terminal.RedFg, `detected an odd number of quotes in your path(s). This is usually a mistake indicating incorrect escaping.
+			 Please check your command and try again. Note that on Windows, quoted paths must not have a trailing slash, or it will be interpreted as escaping the quote. path1: %v path2: %v`), path1, path2)
+	}
+	// check for other syntax issues
+	_, err = os.Stat(b.basePath)
+	if err != nil {
+		if strings.Contains(err.Error(), "syntax is incorrect") {
+			return fmt.Errorf(Color(terminal.RedFg, `syntax error detected in your path(s). Please check your command and try again.
+				 Note that on Windows, quoted paths must not have a trailing slash, or it will be interpreted as escaping the quote. path1: %v path2: %v error: %v`), path1, path2, err)
+		}
+	}
+	if runtime.GOOS == "windows" && (strings.Contains(path1, " --") || strings.Contains(path2, " --")) {
+		return fmt.Errorf(Color(terminal.RedFg, `detected possible flags in your path(s). This is usually a mistake indicating incorrect escaping or quoting (possibly closing quote is missing?).
+			 Please check your command and try again. Note that on Windows, quoted paths must not have a trailing slash, or it will be interpreted as escaping the quote. path1: %v path2: %v`), path1, path2)
 	}
 	return nil
 }
