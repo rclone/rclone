@@ -205,6 +205,7 @@ func TestBisync(t *testing.T) {
 		ci.RefreshTimes = true
 	}
 	bisync.Colors = true
+	time.Local, _ = time.LoadLocation("America/New_York")
 
 	baseDir, err := os.Getwd()
 	require.NoError(t, err, "get current directory")
@@ -865,6 +866,8 @@ func (b *bisyncTest) runBisync(ctx context.Context, args []string) (err error) {
 			_ = opt.ConflictLoser.Set(val)
 		case "conflict-suffix":
 			opt.ConflictSuffixFlag = val
+		case "resync-mode":
+			_ = opt.ResyncMode.Set(val)
 		default:
 			return fmt.Errorf("invalid bisync option %q", arg)
 		}

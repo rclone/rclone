@@ -202,6 +202,11 @@ func (b *bisyncRun) preCopy(ctx context.Context) context.Context {
 		// otherwise impossible in Sync, so override Equal
 		ctx = b.EqualFn(ctx)
 	}
+	if b.opt.ResyncMode == PreferOlder || b.opt.ResyncMode == PreferLarger || b.opt.ResyncMode == PreferSmaller {
+		overridingEqual = true
+		fs.Debugf(nil, "overriding equal")
+		ctx = b.EqualFn(ctx)
+	}
 	ctxCopyLogger := operations.WithSyncLogger(ctx, logger)
 	if b.opt.Compare.Checksum && (b.opt.Compare.NoSlowHash || b.opt.Compare.SlowHashSyncOnly) && b.opt.Compare.SlowHashDetected {
 		// set here in case !b.opt.Compare.Modtime

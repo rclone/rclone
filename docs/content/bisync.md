@@ -159,10 +159,10 @@ as the last step in the process.
 ### --resync
 
 This will effectively make both Path1 and Path2 filesystems contain a
-matching superset of all files. Path2 files that do not exist in Path1 will
+matching superset of all files. By default, Path2 files that do not exist in Path1 will
 be copied to Path1, and the process will then copy the Path1 tree to Path2.
 
-The `--resync` sequence is roughly equivalent to:
+The `--resync` sequence is roughly equivalent to the following (but see [`--resync-mode`](#resync-mode) for other options):
 ```
 rclone copy Path2 Path1 --ignore-existing [--create-empty-src-dirs]
 rclone copy Path1 Path2 [--create-empty-src-dirs]
@@ -173,8 +173,8 @@ or bisync will fail. This is required for safety - that bisync can verify
 that both paths are valid.
 
 When using `--resync`, a newer version of a file on the Path2 filesystem
-will be overwritten by the Path1 filesystem version. 
-(Note that this is [NOT entirely symmetrical](https://github.com/rclone/rclone/issues/5681#issuecomment-938761815).)
+will (by default) be overwritten by the Path1 filesystem version.
+(Note that this is [NOT entirely symmetrical](https://github.com/rclone/rclone/issues/5681#issuecomment-938761815), and more symmetrical options can be specified with the [`--resync-mode`](#resync-mode) flag.)
 Carefully evaluate deltas using [--dry-run](/flags/#non-backend-flags).
 
 For a resync run, one of the paths may be empty (no files in the path tree).
@@ -186,7 +186,12 @@ For a non-resync run, either path being empty (no files in the tree) fails with
 This is a safety check that an unexpected empty path does not result in
 deleting **everything** in the other path.
 
-**Note:** `--resync` should only be used under three specific (rare) circumstances:
+Note that `--resync` implies `--resync-mode path1` unless a different
+[`--resync-mode`](#resync-mode)  is explicitly specified.
+It is not necessary to use both the `--resync` and `--resync-mode` flags --
+either one is sufficient without the other.
+
+**Note:** `--resync` (including `--resync-mode`) should only be used under three specific (rare) circumstances:
 1. It is your _first_ bisync run (between these two paths)
 2. You've just made changes to your bisync settings (such as editing the contents of your `--filters-file`)
 3. There was an error on the prior run, and as a result, bisync now requires `--resync` to recover
@@ -195,6 +200,84 @@ The rest of the time, you should _omit_ `--resync`. The reason is because `--res
 Therefore, if you included `--resync` for every bisync run, it would never be possible to delete a file --
 the deleted file would always keep reappearing at the end of every run (because it's being copied from the other side where it still exists).
 Similarly, renaming a file would always result in a duplicate copy (both old and new name) on both sides.
+
+If you find that frequent interruptions from #3 are an issue, rather than
+automatically running `--resync`, the recommended alternative is to use the
+[`--resilient`](#resilient), [`--recover`](#recover), and
+[`--conflict-resolve`](#conflict-resolve) flags, (along with [Graceful
+Shutdown](#graceful-shutdown) mode, when needed) for a very robust
+"set-it-and-forget-it" bisync setup that can automatically bounce back from
+almost any interruption it might encounter. Consider adding something like the
+following:
+
+```
+--resilient --recover --max-lock 2m --conflict-resolve newer
+```
+
+### --resync-mode CHOICE {#resync-mode}
+
+In the event that a file differs on both sides during a `--resync`,
+`--resync-mode` controls which version will overwrite the other. The supported
+options are similar to [`--conflict-resolve`](#conflict-resolve). For all of
+the following options, the version that is kept is referred to as the "winner",
+and the version that is overwritten (deleted) is referred to as the "loser".
+The options are named after the "winner":
+
+- `path1` - (the default) - the version from Path1 is unconditionally
+considered the winner (regardless of `modtime` and `size`, if any). This can be
+useful if one side is more trusted or up-to-date than the other, at the time of
+the `--resync`.
+- `path2` - same as `path1`, except the path2 version is considered the winner.
+- `newer` - the newer file (by `modtime`) is considered the winner, regardless
+of which side it came from. This may result in having a mix of some winners
+from Path1, and some winners from Path2. (The implementation is analagous to
+running `rclone copy --update` in both directions.)
+- `older` - same as `newer`, except the older file is considered the winner,
+and the newer file is considered the loser.
+- `larger` - the larger file (by `size`) is considered the winner (regardless
+of `modtime`, if any). This can be a useful option for remotes without
+`modtime` support, or with the kinds of files (such as logs) that tend to grow
+but not shrink, over time.
+- `smaller` - the smaller file (by `size`) is considered the winner (regardless
+of `modtime`, if any).
+
+For all of the above options, note the following:
+- If either of the underlying remotes lacks support for the chosen method, it
+will be ignored and will fall back to the default of `path1`. (For example, if
+`--resync-mode newer` is set, but one of the paths uses a remote that doesn't
+support `modtime`.)
+- If a winner can't be determined because the chosen method's attribute is
+missing or equal, it will be ignored, and bisync will instead try to determine
+whether the files differ by looking at the other `--compare` methods in effect.
+(For example, if `--resync-mode newer` is set, but the Path1 and Path2 modtimes
+are identical, bisync will compare the sizes.) If bisync concludes that they
+differ, preference is given to whichever is the "source" at that moment. (In
+practice, this gives a slight advantage to Path2, as the 2to1 copy comes before
+the 1to2 copy.) If the files _do not_ differ, nothing is copied (as both sides
+are already correct).
+- These options apply only to files that exist on both sides (with the same
+name and relative path). Files that exist *only* on one side and not the other
+are *always* copied to the other, during `--resync` (this is one of the main
+differences between resync and non-resync runs.).
+- `--conflict-resolve`, `--conflict-loser`, and `--conflict-suffix` do not
+apply during `--resync`, and unlike these flags, nothing is renamed during
+`--resync`. When a file differs on both sides during `--resync`, one version
+always overwrites the other (much like in `rclone copy`.) (Consider using
+[`--backup-dir`](#backup-dir1-and-backup-dir2) to retain a backup of the losing
+version.)
+- Unlike for `--conflict-resolve`, `--resync-mode none` is not a valid option
+(or rather, it will be interpreted as "no resync", unless `--resync` has also
+been specified, in which case it will be ignored.)
+- Winners and losers are decided at the individual file-level only (there is
+not currently an option to pick an entire winning directory atomically,
+although the `path1` and `path2` options typically produce a similar result.)
+- To maintain backward-compatibility, the `--resync` flag implies
+`--resync-mode path1` unless a different `--resync-mode` is explicitly
+specified. Similarly, all `--resync-mode` options (except `none`) imply
+`--resync`, so it is not necessary to use both the `--resync` and
+`--resync-mode` flags simultaneously -- either one is sufficient without the
+other.
+
 
 ### --check-access
 
@@ -1752,6 +1835,7 @@ instead of of `--size-only`, when `check` is not available.
 * New `--recover` flag allows robust recovery in the event of interruptions, without requiring `--resync`.
 * A new `--max-lock` setting allows lock files to automatically renew and expire, for better automatic recovery when a run is interrupted.
 * Bisync now supports auto-resolving sync conflicts and customizing rename behavior with new [`--conflict-resolve`](#conflict-resolve), [`--conflict-loser`](#conflict-loser), and [`--conflict-suffix`](#conflict-suffix) flags.
+* A new [`--resync-mode`](#resync-mode) flag allows more control over which version of a file gets kept during a `--resync`.
 
 ### `v1.64`
 * Fixed an [issue](https://forum.rclone.org/t/bisync-bugs-and-feature-requests/37636#:~:text=1.%20Dry%20runs%20are%20not%20completely%20dry) 

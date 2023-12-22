@@ -1,0 +1,70 @@
+test resync-mode
+# Check conflict-resolution options during resync
+# - Changed on Path2 and on Path1, and NOT identical       file1 (file1r, file1l)
+
+test changed on both paths and NOT identical - file1 (file1R, file1L)
+touch-glob 2001-01-02 {datadir/} file1R.txt
+copy-as {datadir/}file1R.txt {path2/} file1.txt
+touch-glob 2001-03-04 {datadir/} file1L.txt
+copy-as {datadir/}file1L.txt {path1/} file1.txt
+
+test bisync run with --resync-mode=newer
+bisync resync resync-mode=newer
+
+test changed on both paths and NOT identical - file1 (file1R, file1L)
+touch-glob 2001-07-23 {datadir/} file1R.txt
+copy-as {datadir/}file1R.txt {path2/} file1.txt
+touch-glob 2001-08-26 {datadir/} file1L.txt
+copy-as {datadir/}file1L.txt {path1/} file1.txt
+
+test bisync run with --resync-mode=path2
+bisync resync resync-mode=path2
+
+test changed on both paths and NOT identical - file1 (file1R, file1L)
+touch-glob 2002-07-23 {datadir/} file1R.txt
+copy-as {datadir/}file1R.txt {path2/} file1.txt
+touch-glob 2002-08-26 {datadir/} file1L.txt
+copy-as {datadir/}file1L.txt {path1/} file1.txt
+
+test bisync run with --resync-mode=larger
+bisync resync resync-mode=larger
+
+test changed on both paths and NOT identical - file1 (file1R, file1L)
+touch-glob 2003-07-23 {datadir/} file1R.txt
+copy-as {datadir/}file1R.txt {path2/} file1.txt
+touch-glob 2003-09-04 {datadir/} file1L.txt
+copy-as {datadir/}file1L.txt {path1/} file1.txt
+
+test bisync run with --resync-mode=older
+bisync resync resync-mode=older
+
+test changed on both paths and NOT identical - file1 (file1R, file1L)
+touch-glob 2004-07-23 {datadir/} file1R.txt
+copy-as {datadir/}file1R.txt {path2/} file1.txt
+touch-glob 2004-07-23 {datadir/} file1L.txt
+copy-as {datadir/}file1L.txt {path1/} file1.txt
+
+test bisync run with --resync-mode=smaller
+bisync resync resync-mode=smaller
+
+test changed on both paths and NOT identical - file1 (file1R, file1L)
+touch-glob 2005-01-02 {datadir/} file1R.txt
+copy-as {datadir/}file1R.txt {path2/} file1.txt
+copy-as {datadir/}file1R.txt {path1/} file2.txt
+touch-glob 2006-03-04 {datadir/} file1L.txt
+copy-as {datadir/}file1L.txt {path1/} file1.txt
+copy-as {datadir/}file1L.txt {path2/} file2.txt
+
+test bisync run with --resync-mode=path1
+bisync resync resync-mode=path1
+
+test no winner
+touch-glob 2022-02-22 {datadir/} file1R.txt
+copy-as {datadir/}file1R.txt {path2/} file1.txt
+copy-as {datadir/}file1R.txt {path1/} file2.txt
+touch-glob 2022-02-22 {datadir/} file1L.txt
+copy-as {datadir/}file1L.txt {path1/} file1.txt
+copy-as {datadir/}file1L.txt {path2/} file2.txt
+
+test bisync run with --resync-mode=newer
+bisync resync resync-mode=newer

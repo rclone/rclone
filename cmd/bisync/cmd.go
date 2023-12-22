@@ -30,7 +30,8 @@ type TestFunc func()
 
 // Options keep bisync options
 type Options struct {
-	Resync                bool
+	Resync                bool   // whether or not this is a resync
+	ResyncMode            Prefer // which mode to use for resync
 	CheckAccess           bool
 	CheckFilename         string
 	CheckSync             CheckSyncMode
@@ -123,7 +124,8 @@ func init() {
 	cmdFlags := commandDefinition.Flags()
 	// when adding new flags, remember to also update the rc params:
 	// cmd/bisync/rc.go cmd/bisync/help.go (not docs/content/rc.md)
-	flags.BoolVarP(cmdFlags, &Opt.Resync, "resync", "1", Opt.Resync, "Performs the resync run. Path1 files may overwrite Path2 versions. Consider using --verbose or --dry-run first.", "")
+	flags.BoolVarP(cmdFlags, &Opt.Resync, "resync", "1", Opt.Resync, "Performs the resync run. Equivalent to --resync-mode path1. Consider using --verbose or --dry-run first.", "")
+	flags.FVarP(cmdFlags, &Opt.ResyncMode, "resync-mode", "", "During resync, prefer the version that is: path1, path2, newer, older, larger, smaller (default: path1 if --resync, otherwise none for no resync.)", "")
 	flags.BoolVarP(cmdFlags, &Opt.CheckAccess, "check-access", "", Opt.CheckAccess, makeHelp("Ensure expected {CHECKFILE} files are found on both Path1 and Path2 filesystems, else abort."), "")
 	flags.StringVarP(cmdFlags, &Opt.CheckFilename, "check-filename", "", Opt.CheckFilename, makeHelp("Filename for --check-access (default: {CHECKFILE})"), "")
 	flags.BoolVarP(cmdFlags, &Opt.Force, "force", "", Opt.Force, "Bypass --max-delete safety check and run the sync. Consider using with --verbose", "")
@@ -149,6 +151,8 @@ func init() {
 	flags.FVarP(cmdFlags, &Opt.ConflictResolve, "conflict-resolve", "", "Automatically resolve conflicts by preferring the version that is: "+ConflictResolveList+" (default: none)", "")
 	flags.FVarP(cmdFlags, &Opt.ConflictLoser, "conflict-loser", "", "Action to take on the loser of a sync conflict (when there is a winner) or on both files (when there is no winner): "+ConflictLoserList+" (default: num)", "")
 	flags.StringVarP(cmdFlags, &Opt.ConflictSuffixFlag, "conflict-suffix", "", Opt.ConflictSuffixFlag, "Suffix to use when renaming a --conflict-loser. Can be either one string or two comma-separated strings to assign different suffixes to Path1/Path2. (default: 'conflict')", "")
+	_ = cmdFlags.MarkHidden("debugname")
+	_ = cmdFlags.MarkHidden("localtime")
 }
 
 // bisync command definition
