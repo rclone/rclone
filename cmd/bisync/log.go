@@ -62,8 +62,13 @@ func quotePath(path string) string {
 	return escapePath(path, true)
 }
 
+var Colors bool // Colors controls whether terminal colors are enabled
+
 // Color handles terminal colors for bisync
 func Color(style string, s string) string {
+	if !Colors {
+		return s
+	}
 	terminal.Start()
 	return style + s + terminal.Reset
 }
