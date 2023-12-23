@@ -260,6 +260,10 @@ func TestBisync(t *testing.T) {
 		testList = nil
 		for _, testCase := range b.listDir(b.dataRoot) {
 			if strings.HasPrefix(testCase, "test_") {
+				// if dir is empty, skip it (can happen due to gitignored files/dirs when checking out branch)
+				if len(b.listDir(filepath.Join(b.dataRoot, testCase))) == 0 {
+					continue
+				}
 				testList = append(testList, testCase)
 			}
 		}
