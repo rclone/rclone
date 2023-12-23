@@ -17,6 +17,7 @@ import (
 	"github.com/rclone/rclone/cmd/bisync/bilib"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/accounting"
+	"github.com/rclone/rclone/fs/log"
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/lib/atexit"
 	"github.com/rclone/rclone/lib/terminal"
@@ -79,6 +80,10 @@ func Bisync(ctx context.Context, fs1, fs2 fs.Fs, optArg *Options) (err error) {
 	}
 	ci := fs.GetConfig(ctx)
 	opt.OrigBackupDir = ci.BackupDir
+
+	if ci.TerminalColorMode == fs.TerminalColorModeAlways || (ci.TerminalColorMode == fs.TerminalColorModeAuto && !log.Redirected()) {
+		Colors = true
+	}
 
 	err = b.setCompareDefaults(ctx)
 	if err != nil {

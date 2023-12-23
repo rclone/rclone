@@ -189,8 +189,6 @@ type bisyncTest struct {
 	TestFn     bisync.TestFunc
 }
 
-const TerminalColorMode = fs.TerminalColorModeAlways
-
 var color = bisync.Color
 
 // TestBisync is a test engine for bisync test cases.
@@ -206,6 +204,7 @@ func TestBisync(t *testing.T) {
 	if *argRefreshTimes {
 		ci.RefreshTimes = true
 	}
+	bisync.Colors = true
 
 	baseDir, err := os.Getwd()
 	require.NoError(t, err, "get current directory")
