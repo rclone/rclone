@@ -36,6 +36,8 @@ import (
 	"github.com/rclone/rclone/lib/rest"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
+
+	"github.com/barasher/go-exiftool"
 )
 
 var (
@@ -992,6 +994,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 // input to the batcher
 type uploadedItem struct {
 	AlbumID     string // desired album
+	ImageTitle  string // Title taken from the EXIF XMP Title
 	UploadToken string // upload ID
 }
 
@@ -1009,6 +1012,7 @@ func (f *Fs) commitBatchAlbumID(ctx context.Context, items []uploadedItem, resul
 	for i := range items {
 		if items[i].AlbumID == albumID {
 			request.NewMediaItems = append(request.NewMediaItems, api.NewMediaItem{
+	            Description: items[i].ImageTitle,
 				SimpleMediaItem: api.SimpleMediaItem{
 					UploadToken: items[i].UploadToken,
 				},
@@ -1125,8 +1129,13 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		return errors.New("empty upload token")
 	}
 
+	et, err := exiftool.NewExiftool()
+	fileInfos := et.ExtractMetadata(fileName)
+	exifTitle, err := fileInfos[0].GetString("Title")
+
 	uploaded := uploadedItem{
 		AlbumID:     albumID,
+		ImageTitle:  exifTitle,
 		UploadToken: uploadToken,
 	}
 
