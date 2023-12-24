@@ -722,8 +722,13 @@ func (f *Fs) readPrecision() (precision time.Duration) {
 // deleting all the files quicker than just running Remove() on the
 // result of List()
 func (f *Fs) Purge(ctx context.Context, dir string) error {
+	now := time.Now()
+	defer func() {
+		fs.Errorf(dir, "took %s to purge", time.Since(now))
+	}()
 	dir = f.localPath(dir)
 	fi, err := f.lstat(dir)
+	fs.Errorf(dir, "took %s to lstat", time.Since(now))
 	if err != nil {
 		// already purged
 		if os.IsNotExist(err) {

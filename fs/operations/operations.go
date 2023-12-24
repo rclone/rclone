@@ -748,7 +748,8 @@ func DeleteFileWithBackupDir(ctx context.Context, dst fs.Object, backupDir fs.Fs
 	} else if !skip {
 		fs.Infof(dst, actioned)
 	}
-	return fmt.Errorf("failed to delete file: %w", err)
+
+	return err
 }
 
 // DeleteFile deletes a single file respecting --dry-run and accumulating stats and errors.
