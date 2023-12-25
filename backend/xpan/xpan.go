@@ -16,6 +16,7 @@ import (
 	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/configstruct"
+	"github.com/rclone/rclone/fs/config/obscure"
 	"github.com/rclone/rclone/lib/encoder"
 	"github.com/rclone/rclone/lib/oauthutil"
 	"github.com/rclone/rclone/lib/pacer"
@@ -24,8 +25,8 @@ import (
 )
 
 const (
-	appKey             = "p0bpXvQn6AWBSCObg2bc67IZ0GIGRSme"
-	secretKey          = ""
+	appKey             = "Goyebwgr4vB0NiHapB63zoAy3rGS4PyH"
+	secretKey          = "lFp0NquxDP0Eoq8ORv5ZV2PEVBFtQB1tGqqwaRo7o1dzeQ_nRtwagVqcYFEC2-vQ"
 	pacerMinSleep      = 10 * time.Millisecond
 	pacerMaxSleep      = 2 * time.Second
 	pacerDecayConstant = 2 // bigger for slower decay, exponential
@@ -40,7 +41,7 @@ var (
 			AuthStyle: oauth2.AuthStyleInParams,
 		},
 		ClientID:     appKey,
-		ClientSecret: os.Getenv("XPAN_SK"),
+		ClientSecret: obscure.MustReveal(secretKey),
 		RedirectURL:  oauthutil.RedirectURL,
 	}
 )
