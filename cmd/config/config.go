@@ -26,6 +26,7 @@ func init() {
 	configCommand.AddCommand(configTouchCommand)
 	configCommand.AddCommand(configPathsCommand)
 	configCommand.AddCommand(configShowCommand)
+	configCommand.AddCommand(configProfileCommand)
 	configCommand.AddCommand(configRedactedCommand)
 	configCommand.AddCommand(configDumpCommand)
 	configCommand.AddCommand(configProvidersCommand)
@@ -121,6 +122,21 @@ var configShowCommand = &cobra.Command{
 			config.ShowRemote(name)
 		}
 	},
+}
+
+var configProfileCommand = &cobra.Command{
+	Use:   "profile",
+	Short: `Manage saved profiles of flags.`,
+	Long: `Manage saved profiles of flags, stored in the config file under
+"[profile:NAME]" sections.
+
+Use the save, list, show and delete subcommands. See ` + "`rclone config profile --help`" + `
+for the full list, and the [Profiles](/docs/#profiles) section of the
+docs for an overview of the feature.`,
+	Annotations: map[string]string{
+		"versionIntroduced": "v1.66",
+	},
+	Aliases: []string{"profiles"},
 }
 
 var configRedactedCommand = &cobra.Command{

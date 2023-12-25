@@ -542,6 +542,212 @@ If two remotes set the same global variable then the first one instantiated will
 be overridden by the second one. A `global.var` will override all other config
 methods when the remote is created.
 
+## Profiles {#profiles}
+
+Profiles let you save a named set of flags (and optionally arguments)
+in the config file and reuse them on later command lines, so you
+don't have to retype long flag combinations every time.
+
+For example, if you regularly sync a directory to Google Drive with a
+specific set of flags, you can save that combination once as a
+profile and from then on use `--profile mybackup` instead.
+
+### Saving a profile
+
+Add `--profile-save NAME` to any rclone command. The command will run
+as normal, and rclone will additionally write all the explicitly-set
+flags from that command line into the config file under a new section
+named `[profile:NAME]`. The `profile:` prefix is the namespace
+profiles live in - because `:` is illegal in remote names, a profile
+called `backup` and a remote called `backup` can coexist without
+colliding.
+
+For example:
+
+```sh
+rclone sync src: dst: --checkers 16 --transfers 8 --metadata --profile-save fast-sync
+```
+
+writes:
+
+```ini
+[profile:fast-sync]
+checkers = 16
+transfers = 8
+metadata = true
+```
+
+Only flags whose values you explicitly changed are saved - flags left
+at their default are not.
+
+The profile-control flags themselves (`--profile-save`, `--profile`,
+`--profile-save-args`, `--profile-strict-flags`) are never saved
+into the profile. `--config` is also excluded - it's
+environment-specific and would re-point the config storage mid-load
+when applied from a profile.
+
+### Using a profile
+
+Add `--profile NAME` to apply a saved profile:
+
+```sh
+rclone sync src: dst: --profile fast-sync
+```
+
+This is equivalent to repeating all the flags from the saved profile
+on the command line.
+
+You can apply several profiles in one go by passing a comma-separated
+list. They are applied in lowest-to-highest priority order, so later
+profiles override earlier ones:
+
+```sh
+rclone sync src: dst: --profile common,fast-sync
+```
+
+Any flag you pass explicitly on the command line overrides the
+profile's value for that flag, so you can use a profile as a baseline
+and tweak individual values for one run.
+
+For safety, a profile can never turn off `--dry-run` if it was set
+explicitly on the command line.
+
+### Including command arguments
+
+By default `--profile-save` only saves flags. If you also want to
+save the positional arguments (e.g. the source and destination paths)
+add `--profile-save-args`:
+
+```sh
+rclone sync /local/path remote:backup --profile-save nightly --profile-save-args
+```
+
+When the profile is later used, saved arguments are applied
+automatically - you don't need to pass anything extra at use time.
+If you pass your own positional arguments on the command line, they
+take precedence over the profile's saved ones (the profile only
+fills slots you didn't provide).
+
+### Strict flag checking
+
+When you save a profile from one command (say `sync`) and then apply
+it to another (say `copy`), the profile may contain flags that don't
+exist on the new command. By default these flags are silently
+ignored. Pass `--profile-strict-flags` to make rclone error out
+instead of skipping them.
+
+### Command-specific flags
+
+Profiles work with the flag set of the command they're saved from
+and applied to, so command-specific flags (e.g. the [VFS
+flags](/commands/rclone_mount/#vfs-options) on `rclone mount`, or
+bisync's `--resilient`) are saved and loaded just like global flags:
+
+```sh
+rclone mount remote: /mnt --vfs-cache-mode full --dir-cache-time 24h \
+    --profile-save media-mount
+
+rclone mount remote: /mnt --profile media-mount
+```
+
+The resulting section looks like any other profile:
+
+```ini
+[profile:media-mount]
+vfs_cache_mode = full
+dir_cache_time = 24h0m0s
+```
+
+If you later apply this profile to a different command that doesn't
+have those flags (e.g. `rclone copy --profile media-mount`), the
+VFS flags are silently skipped - or rejected if you also pass
+`--profile-strict-flags`.
+
+To build a profile for command-specific flags without actually
+running the command, use `rclone config profile save NAME --flags-from CMD`:
+
+```sh
+rclone config profile save media-mount --flags-from mount \
+    --vfs-cache-mode full --dir-cache-time 24h
+```
+
+### Inheriting from parent profiles
+
+A profile can inherit settings from one or more parent profiles by
+listing them in `parent_profiles` in the config:
+
+```ini
+[profile:shared]
+checkers = 16
+metadata = true
+
+[profile:nightly]
+parent_profiles = shared
+transfers = 4
+```
+
+Parent names are also given in their user-facing form (without the
+`profile:` prefix).
+
+Using `--profile nightly` first applies `shared`, then applies
+`nightly` on top, so `nightly` overrides any flag the two have in
+common. Parents themselves can have parents - profiles are resolved
+recursively.
+
+### Always applying a profile
+
+There is no "default profile" mechanism - if you want a profile to
+apply every time, set it in the environment instead:
+
+```sh
+export RCLONE_PROFILE=mybackup
+```
+
+`--profile` is exposed as a standard rclone option, so the
+`RCLONE_PROFILE` environment variable Just Works. Use a shell
+alias or wrapper script if you want different defaults in different
+contexts. This keeps "what flags am I actually running with" answerable
+from the command line and environment alone, with no spooky action
+from the config file.
+
+### Managing profiles
+
+Use the `rclone config profile` subcommands to manage profiles
+without editing the config file by hand:
+
+```sh
+rclone config profile save NAME [args...] [flags...]
+rclone config profile list
+rclone config profile show NAME
+rclone config profile delete NAME
+```
+
+- `save` writes a new profile from the flags (and optional positional
+  args, with `--profile-save-args`) given on the command line.
+  Pass `--flags-from CMD[,CMD...]` to make flags from other commands
+  (e.g. `mount`, `bisync`) available for saving without having to
+  actually run those commands.
+- `list` prints the names of all profiles in the config file.
+- `show` prints the keys and values stored in one profile.
+- `delete` removes a profile.
+
+To edit an existing profile, either re-save it (overwriting the old
+one) or edit the corresponding `[profile:NAME]` section in the
+config file by hand.
+
+### Config file layout
+
+Profiles live under the `[profile:NAME]` namespace in the config
+file. The `profile:` prefix is the canonical signal that a section
+is a profile - `:` is illegal in remote names, so profiles and
+remotes can share a name without colliding. Profile sections are
+hidden from `rclone listremotes`, `rclone config show <remote>` and
+the rc API's `config/dump` (they don't appear as remotes).
+
+Saved flags are written with their option name in snake_case (e.g.
+`drive-skip-gdocs` becomes `drive_skip_gdocs = true`). Saved
+arguments are written as `arg_1 = ...`, `arg_2 = ...` and so on.
+
 ## Quoting and the shell
 
 When you are typing commands to your computer you are using something
@@ -2463,6 +2669,36 @@ password.
 See the [Configuration Encryption](#configuration-encryption) for more info.
 
 See a [Windows PowerShell example on the Wiki](https://github.com/rclone/rclone/wiki/Windows-Powershell-use-rclone-password-command-for-Config-file-password).
+
+### --profile CommaSepList
+
+Apply one or more saved profiles to this command, as if their flags
+had been typed on the command line. Multiple profiles are
+comma-separated and applied lowest-to-highest priority (later
+profiles override earlier ones). Explicit command-line flags still
+take precedence over the profile. See the [Profiles](#profiles)
+section.
+
+### --profile-save string
+
+Save the explicitly-set flags from this command (and optionally its
+arguments, with `--profile-save-args`) into the config file as a
+reusable profile under the given name. The command still runs as
+normal. See the [Profiles](#profiles) section.
+
+### --profile-save-args
+
+When used with `--profile-save`, also save the command's positional
+arguments (e.g. the source and destination paths) into the profile.
+At use time the saved arguments are applied automatically (the user's
+own positional arguments, if any, take precedence). See the
+[Profiles](#profiles) section.
+
+### --profile-strict-flags
+
+When used with `--profile`, error out if the profile contains a
+flag that isn't valid for the current command. The default is to
+silently skip such flags. See the [Profiles](#profiles) section.
 
 ### -P, --progress
 

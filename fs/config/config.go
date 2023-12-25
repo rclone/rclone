@@ -396,6 +396,19 @@ func SaveConfig() {
 	fs.Errorf(nil, "Failed to save config after %d tries: %v", ci.LowLevelRetries, err)
 }
 
+// ProfileSectionPrefix is the namespace prefix used for profile
+// sections in the config file (e.g. [profile:fast-sync]). It lets
+// profiles and remotes share the config file without colliding on
+// names: a section called "backup" is a remote, "profile:backup" is
+// a profile.
+const ProfileSectionPrefix = "profile:"
+
+// IsProfileSection reports whether the given section name lives in
+// the profiles namespace.
+func IsProfileSection(name string) bool {
+	return strings.HasPrefix(name, ProfileSectionPrefix)
+}
+
 // FileSections returns the sections in the config file
 func FileSections() []string {
 	return LoadedData().GetSectionList()
@@ -710,6 +723,9 @@ func DumpRcRemote(name string) (dump rc.Params) {
 func DumpRcBlob() (dump rc.Params) {
 	dump = rc.Params{}
 	for _, name := range LoadedData().GetSectionList() {
+		if IsProfileSection(name) {
+			continue
+		}
 		dump[name] = DumpRcRemote(name)
 	}
 	return dump

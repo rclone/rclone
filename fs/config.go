@@ -566,6 +566,26 @@ var ConfigOptionsInfo = Options{{
 	Default: "",
 	Help:    "HTTP proxy URL.",
 	Groups:  "Networking",
+}, {
+	Name:    "profile_save",
+	Default: "",
+	Help:    "Save this flag configuration as a reusable preset",
+	Groups:  "Config",
+}, {
+	Name:    "profile",
+	Default: []string{},
+	Help:    "Apply the flag configuration saved with this name. If more than one is provided, priority will be lowest to highest.",
+	Groups:  "Config",
+}, {
+	Name:    "profile_save_args",
+	Default: false,
+	Help:    "When used with --profile-save, also save positional args (e.g. the paths being synced) into the profile",
+	Groups:  "Config",
+}, {
+	Name:    "profile_strict_flags",
+	Default: false,
+	Help:    "If set, --profile will error if any flags are invalid for this command, instead of ignoring.",
+	Groups:  "Config",
 }}
 
 // ConfigInfo is filesystem config options
@@ -680,6 +700,10 @@ type ConfigInfo struct {
 	MaxConnections             int               `config:"max_connections"`
 	NameTransform              []string          `config:"name_transform"`
 	HTTPProxy                  string            `config:"http_proxy"`
+	SaveProfile                string            `config:"profile_save"`
+	UseProfile                 CommaSepList      `config:"profile"`
+	ProfileSaveArgs            bool              `config:"profile_save_args"`
+	ProfileStrictFlags         bool              `config:"profile_strict_flags"`
 }
 
 func init() {

@@ -294,7 +294,7 @@ func ChooseNumber(what string, min, max int) int {
 
 // ShowRemotes shows an overview of the config file
 func ShowRemotes() {
-	remotes := LoadedData().GetSectionList()
+	remotes := remoteSections()
 	if len(remotes) == 0 {
 		return
 	}
@@ -308,10 +308,24 @@ func ShowRemotes() {
 
 // ChooseRemote chooses a remote name
 func ChooseRemote() string {
-	remotes := LoadedData().GetSectionList()
+	remotes := remoteSections()
 	sort.Strings(remotes)
 	fmt.Println("Select remote.")
 	return Choose("remote", "value", remotes, nil, "", true, false)
+}
+
+// remoteSections returns the section names that are remotes (i.e.
+// everything except profile sections).
+func remoteSections() []string {
+	all := LoadedData().GetSectionList()
+	out := make([]string, 0, len(all))
+	for _, s := range all {
+		if IsProfileSection(s) {
+			continue
+		}
+		out = append(out, s)
+	}
+	return out
 }
 
 // mustFindByName finds the RegInfo for the remote name passed in or
@@ -702,7 +716,7 @@ func ShowRedactedConfig() {
 // EditConfig edits the config file interactively
 func EditConfig(ctx context.Context) (err error) {
 	for {
-		haveRemotes := len(LoadedData().GetSectionList()) != 0
+		haveRemotes := len(remoteSections()) != 0
 		what := []string{"eEdit existing remote", "nNew remote", "dDelete remote", "rRename remote", "cCopy remote", "sSet configuration password", "qQuit config"}
 		if haveRemotes {
 			fmt.Printf("Current remotes:\n\n")
