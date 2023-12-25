@@ -158,7 +158,7 @@ func Config(ctx context.Context, name string, m configmap.Mapper, config fs.Conf
 			})
 		}
 		return fs.ConfigChoose("chunk_size", "chunk_size", "Chunk Size", len(chunkSizeOptions), func(i int) (string, string) {
-			return chunkSizeOptions[i].name, chunkSizeOptions[i].value
+			return chunkSizeOptions[i].value, chunkSizeOptions[i].name
 		})
 	case "chunk_size":
 		m.Set("chunk_size", config.Result)
