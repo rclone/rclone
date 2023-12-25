@@ -128,11 +128,7 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 		item *api.Item
 		err  error
 	)
-	if src.Size() > 0 && src.Size() <= int64(f.opts.ChunkSize) {
-		item, err = f.singleUpload(ctx, in, src, options)
-	} else {
-		item, err = f.multipartUpload(ctx, in, src, options)
-	}
+	item, err = f.multipartUpload(ctx, in, src, options)
 	if err != nil {
 		return nil, err
 	}
@@ -446,48 +442,6 @@ func (f *Fs) detectModTime(ctx context.Context, src fs.ObjectInfo) time.Time {
 		}
 	}
 	return mt
-}
-
-func (f *Fs) singleUpload(ctx context.Context, in io.Reader, src fs.ObjectInfo, options []fs.OpenOption) (*api.Item, error) {
-	absolutePath := f.absolutePath(src.Remote())
-	params, err := f.newReqParams("upload")
-	params.Set("path", absolutePath)
-	params.Set("ondup", "overwrite")
-	if err != nil {
-		return nil, err
-	}
-	opts := rest.Opts{
-		Method:     "POST",
-		Path:       "/rest/2.0/pcs/file",
-		RootURL:    "https://d.pcs.baidu.com",
-		Options:    options,
-		Parameters: params,
-	}
-
-	r, contentType, overhead, err := rest.MultipartUpload(
-		ctx, in, url.Values{}, "file", filepath.Base(src.Remote()))
-	if err != nil {
-		return nil, err
-	}
-	contentLength := overhead + src.Size()
-	opts.ContentType = contentType
-	opts.Body = r
-	opts.ContentLength = &contentLength
-
-	var uploadResponse api.SingleUpoadResponse
-	err = f.pacer.Call(func() (bool, error) {
-		_, err := f.srv.CallJSON(ctx, &opts, nil, &uploadResponse)
-		return false, err
-	})
-	if err != nil {
-		return nil, err
-	}
-	if uploadResponse.ErrorNumber != 0 {
-		return nil, api.Err(uploadResponse.ErrorNumber)
-	}
-	uploadResponse.Item.LocalCreateTime = uint(f.detectModTime(ctx, src).Unix())
-	uploadResponse.Item.LocalModifyTime = uploadResponse.LocalCreateTime
-	return &uploadResponse.Item, nil
 }
 
 func (f *Fs) multipartUpload(ctx context.Context, in io.Reader, src fs.ObjectInfo, options []fs.OpenOption) (*api.Item, error) {

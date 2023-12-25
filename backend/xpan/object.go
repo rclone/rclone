@@ -121,15 +121,8 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	copiedObj.item = &copiedItem
 	copiedItem.LocalModifyTime = uint(src.ModTime(ctx).Unix())
 	copiedItem.Size = uint(src.Size())
-	if src.Size() >= 0 && src.Size() <= int64(o.fs.opts.ChunkSize) {
-		o.item, err = o.fs.singleUpload(ctx, in, &copiedObj, options)
-	} else {
-		o.item, err = o.fs.multipartUpload(ctx, in, &copiedObj, options)
-	}
-	if err != nil {
-		return err
-	}
-	return nil
+	o.item, err = o.fs.multipartUpload(ctx, in, &copiedObj, options)
+	return
 }
 
 // Remove removes this object
