@@ -93,37 +93,41 @@ type chunckReader struct {
 	chunkSize int
 
 	// internal
+	_wrapReader        io.Reader
 	_md5Hash           hash.Hash
 	_md5s              []string // chuncks md5s
 	_chunkBytesCounter int      // latest chunk bytes
 }
 
 func (r *chunckReader) Read(p []byte) (n int, err error) {
-	if r._md5Hash == nil {
+	if r._wrapReader == nil {
 		r._md5Hash = md5.New()
+		r._wrapReader = io.TeeReader(r.in, r._md5Hash)
 	}
-	n, err = r.in.Read(p)
-	bytesCountToFull := r.chunkSize - r._chunkBytesCounter
-	if r._chunkBytesCounter+n >= r.chunkSize {
-		r._md5Hash.Write(p[:bytesCountToFull])
-		r._chunkBytesCounter = r.chunkSize
+
+	c := r.chunkSize - r._chunkBytesCounter
+	if len(p) > c {
+		p = p[:c]
 	}
-	if r._chunkBytesCounter == r.chunkSize {
-		b := r._md5Hash.Sum(nil)
-		r._md5Hash = md5.New()
-		r._md5s = append(r._md5s, fmt.Sprintf("%x", b))
-		r._chunkBytesCounter = 0
-		if bytesCountToFull > 0 {
-			n1, _ := r._md5Hash.Write(p[bytesCountToFull:])
-			r._chunkBytesCounter = n1
-		}
-	} else {
-		r._md5Hash.Write(p[:n])
-		r._chunkBytesCounter += n
-	}
+
+	n, err = r._wrapReader.Read(p)
+	r._chunkBytesCounter += n
+
+	// file EOF
 	if err == io.EOF {
 		b := r._md5Hash.Sum(nil)
 		r._md5s = append(r._md5s, fmt.Sprintf("%x", b))
+		return
+	}
+
+	// chunk EOF
+	if r._chunkBytesCounter == r.chunkSize {
+		b := r._md5Hash.Sum(nil)
+		r._md5s = append(r._md5s, fmt.Sprintf("%x", b))
+		// for next chunk
+		r._md5Hash = md5.New()
+		r._wrapReader = io.TeeReader(r.in, r._md5Hash)
+		r._chunkBytesCounter = 0
 	}
 	return
 }
@@ -139,4 +143,11 @@ func newDownloadReader(ctx context.Context, fs *Fs, fileSize int64, dlink string
 
 func newChunkReader(in io.Reader, chunkSize int) *chunckReader {
 	return &chunckReader{in: in, chunkSize: chunkSize}
+}
+
+func min(a, b int) int {
+	if a < b {
+		return a
+	}
+	return b
 }
