@@ -307,7 +307,7 @@ func (f *Fs) filemanager(ctx context.Context, opera, filelist string) error {
 	return nil
 }
 
-func (f *Fs) newObjectWithInfo(ctx context.Context, remote string, item *api.Item) (*Object, error) {
+func (f *Fs) newObjectWithInfo(ctx context.Context, remote string, item *api.Item) (fs.Object, error) {
 	o := Object{
 		fs:   f,
 		item: item,
