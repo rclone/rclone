@@ -384,10 +384,8 @@ func (f *Fs) removeLeadingRoot(path string) string {
 		return s[len(prefix):]
 	}
 	path = f.opts.Enc.ToStandardPath(path)
-	if f.root != "" {
-		path = cutPrefix(path, "/"+f.root)
-		path = cutPrefix(path, "/")
-	}
+	path = cutPrefix(path, "/"+f.root)
+	path = cutPrefix(path, "/")
 	return path
 }
 
