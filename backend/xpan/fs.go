@@ -236,9 +236,11 @@ func (f *Fs) About(ctx context.Context) (*fs.Usage, error) {
 	if resp.ErrorNumber != 0 {
 		return nil, fmt.Errorf("quota error: %w", api.Err(resp.ErrorNumber))
 	}
+	free := resp.Total - resp.Used
 	return &fs.Usage{
 		Total: &resp.Total,
 		Used:  &resp.Used,
+		Free:  &free,
 	}, nil
 }
 
