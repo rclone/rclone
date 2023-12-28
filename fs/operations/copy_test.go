@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"runtime"
 	"sort"
 	"strings"
 	"testing"
@@ -448,6 +449,14 @@ func TestCopyFileMaxTransfer(t *testing.T) {
 	// Cutoff mode: Hard
 	ci.MaxTransfer = sizeCutoff
 	ci.CutoffMode = fs.CutoffModeHard
+
+	if runtime.GOOS == "darwin" {
+		// disable server-side copies as they don't count towards transfer size stats
+		r.Flocal.Features().Disable("Copy")
+		if r.Fremote.Features().IsLocal {
+			r.Fremote.Features().Disable("Copy")
+		}
+	}
 
 	// file1: Show a small file gets transferred OK
 	accounting.Stats(ctx).ResetCounters()
