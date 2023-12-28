@@ -212,6 +212,28 @@ enabled, rclone will no longer update the modtime after copying a file.`,
 			Default:  false,
 			Advanced: true,
 		}, {
+			Name: "apple_double",
+			Help: `Convert macOS extended attributes to and from rclone metadata.
+
+If set, macOS-specific metadata will be preserved by storing it as an rclone
+metadata value in "AppleDouble" format (only when the source is local on macOS).
+In the reverse direction (dest is macOS local) rclone will automatically
+"unpack" this metadata to its original form (for instance, as mac xattrs).
+
+Note that these values can be fairly large, and some backends (such as Drive)
+enforce length limits on metadata values. Consider using --local-metadata-max-length
+to skip values that would otherwise error.`,
+			Default:  false,
+			Advanced: true,
+		}, {
+			Name: "metadata_max_length",
+			Help: `Skip any metadata values longer than this many characters.
+
+May help to avoid errors if dest remote enforces length limits.
+(Zero or lower is ignored.)`,
+			Default:  0,
+			Advanced: true,
+		}, {
 			Name:     config.ConfigEncoding,
 			Help:     config.ConfigEncodingHelp,
 			Advanced: true,
@@ -235,6 +257,8 @@ type Options struct {
 	NoPreAllocate     bool                 `config:"no_preallocate"`
 	NoSparse          bool                 `config:"no_sparse"`
 	NoSetModTime      bool                 `config:"no_set_modtime"`
+	AppleDouble       bool                 `config:"apple_double"`
+	MetadataMaxLength int                  `config:"metadata_max_length"`
 	Enc               encoder.MultiEncoder `config:"encoding"`
 }
 

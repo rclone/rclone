@@ -5,17 +5,30 @@ package local
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
+	"runtime"
 	"strings"
 	"syscall"
 
 	"github.com/pkg/xattr"
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/lib/file"
 )
 
-const (
-	xattrPrefix    = "user." // FIXME is this correct for all unixes?
-	xattrSupported = xattr.XATTR_SUPPORTED
+var (
+	xattrPrefix       = "user." // FIXME is this correct for all unixes?
+	appledoubleKey    = "rcapple2"
+	appledoublePrefix = "._"
+	xattrSupported    = xattr.XATTR_SUPPORTED
+	tempdir           = setTempdir()
 )
+
+// doing it this way to avoid cgo dependency on non-darwin (darwin already has some)
+type appleDoubleFns interface {
+	packAppleDouble(src, dst string) error
+	unpackAppleDouble(src, dst string, deleteAppleDouble bool) error
+}
 
 // Check to see if the error supplied is a not supported error, and if
 // so, disable xattrs
@@ -82,6 +95,30 @@ func (o *Object) getXattr() (metadata fs.Metadata, err error) {
 		}
 		metadata[k] = string(v)
 	}
+	if o.fs.opt.AppleDouble && runtime.GOOS == "darwin" {
+		tempfile := setTempfile(o.remote)
+		fs.Debugf("packing", "%s to %s", o.path, tempfile)
+		var fns interface{} = o
+		do, ok := fns.(appleDoubleFns)
+		if !ok {
+			return metadata, fs.ErrorNotImplemented
+		}
+		err = do.packAppleDouble(o.path, tempfile)
+		if err != nil {
+			return metadata, err
+		}
+		appledoubleBytes, err := os.ReadFile(tempfile)
+		if err != nil {
+			fs.Errorf(o, "error reading appledouble temp file: %v", err)
+			return metadata, err
+		}
+		if o.fs.opt.MetadataMaxLength > 0 && len(string(appledoubleBytes)) > o.fs.opt.MetadataMaxLength {
+			fs.Debugf(o, "skipping appledouble metadata as length (%d) is greater than max length (%d)", len(string(appledoubleBytes)), o.fs.opt.MetadataMaxLength)
+		} else {
+			metadata[appledoubleKey] = string(appledoubleBytes)
+		}
+		defer func() { _ = os.Remove(tempfile) }()
+	}
 	return metadata, nil
 }
 
@@ -110,6 +147,49 @@ func (o *Object) setXattr(metadata fs.Metadata) (err error) {
 			}
 			return fmt.Errorf("failed to set xattr key %q: %w", k, err)
 		}
+		if o.fs.opt.AppleDouble && runtime.GOOS == "darwin" && k == xattrPrefix+appledoubleKey {
+			tempfile := setTempfile(o.remote)
+			err = os.WriteFile(tempfile, v, 0600)
+			if err != nil {
+				return err
+			}
+			fs.Debugf("unpacking", "%s to %s", tempfile, o.path)
+			var fns interface{} = o
+			do, ok := fns.(appleDoubleFns)
+			if !ok {
+				return fs.ErrorNotImplemented
+			}
+			err = do.unpackAppleDouble(tempfile, o.path, true)
+			if err != nil {
+				return err
+			}
+		}
 	}
 	return nil
+}
+
+func setTempdir() string {
+	dirPath := filepath.Join(os.TempDir(), appledoubleKey)
+	err := file.MkdirAll(dirPath, 0777)
+	if err != nil {
+		fs.Errorf(dirPath, "error creating temp dir: %v", err)
+		return ""
+	}
+	dir, err := os.MkdirTemp(dirPath, appledoubleKey+"-")
+	if err != nil {
+		fs.Errorf(dir, "error creating temp dir: %v", err)
+		return ""
+	}
+	return dir
+}
+
+func setTempfile(remote string) string {
+	prefixedRemote := filepath.Join(filepath.Dir(remote), appledoublePrefix+filepath.Base(remote))
+	dst := filepath.Join(tempdir, prefixedRemote)
+	err := file.MkdirAll(filepath.Dir(dst), 0777)
+	if err != nil {
+		fs.Errorf(dst, "error creating temp dir: %v", err)
+		return ""
+	}
+	return dst
 }

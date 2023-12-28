@@ -64,3 +64,37 @@ func Clone(src, dst string) error {
 var (
 	_ fs.Copier = &Fs{}
 )
+
+func (o *Object) packAppleDouble(src, dst string) error {
+	state := apfs.CopyFileStateAlloc()
+	defer stateFree(dst, state)
+	_, err := apfs.CopyFile(src, dst, state, apfs.COPYFILE_ALL|apfs.COPYFILE_PACK)
+	if err == nil {
+		fs.Debugf(dst, "created AppleDouble")
+	} else {
+		fs.Debugf(dst, "error packing AppleDouble: %v", err)
+	}
+	return err
+}
+
+func (o *Object) unpackAppleDouble(src, dst string, deleteAppleDouble bool) error {
+	state := apfs.CopyFileStateAlloc()
+	defer stateFree(dst, state)
+	flags := apfs.COPYFILE_UNPACK
+	if deleteAppleDouble {
+		flags = apfs.COPYFILE_MOVE | apfs.COPYFILE_UNPACK
+	}
+	_, err := apfs.CopyFile(src, dst, state, flags)
+	if err == nil {
+		fs.Debugf(dst, "copied xattrs from AppleDouble")
+	} else {
+		fs.Debugf(dst, "error unpacking AppleDouble: %v", err)
+	}
+	return err
+}
+
+func stateFree(file string, state apfs.COPYFILE_STATE) {
+	if err := apfs.CopyFileStateFree(state); err != nil {
+		fs.Errorf(file, "error: %v", err)
+	}
+}
