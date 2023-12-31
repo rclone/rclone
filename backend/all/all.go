@@ -54,6 +54,7 @@ import (
 	_ "github.com/rclone/rclone/backend/storj"
 	_ "github.com/rclone/rclone/backend/sugarsync"
 	_ "github.com/rclone/rclone/backend/swift"
+	_ "github.com/rclone/rclone/backend/teldrive"
 	_ "github.com/rclone/rclone/backend/union"
 	_ "github.com/rclone/rclone/backend/uptobox"
 	_ "github.com/rclone/rclone/backend/webdav"
