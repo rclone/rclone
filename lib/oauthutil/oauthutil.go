@@ -28,6 +28,10 @@ import (
 var (
 	// templateString is the template used in the authorization webserver
 	templateString string
+	// bindAddress is binding for local webserver when active
+	bindAddress string = "localhost:" + bindPort
+	// RedirectURL is redirect to local webserver when active
+	RedirectURL = "http://" + bindAddress + "/"
 )
 
 const (
@@ -38,12 +42,6 @@ const (
 
 	// bindPort is the port that we bind the local webserver to
 	bindPort = "53682"
-
-	// bindAddress is binding for local webserver when active
-	bindAddress = "127.0.0.1:" + bindPort
-
-	// RedirectURL is redirect to local webserver when active
-	RedirectURL = "http://" + bindAddress + "/"
 
 	// RedirectPublicURL is redirect to local webserver when active with public name
 	RedirectPublicURL = "http://localhost.rclone.org:" + bindPort + "/"
@@ -101,6 +99,21 @@ var SharedOptions = []fs.Option{{
 }, {
 	Name:     config.ConfigTokenURL,
 	Help:     "Token server url.\n\nLeave blank to use the provider defaults.",
+	Advanced: true,
+}, {
+	Name:    config.ConfigBindAddress,
+	Default: "localhost:53682",
+	Help:    "Listen Address to Bind to for Local OAuth Server (to receive token) ",
+	Examples: []fs.OptionExample{{
+		Value: "localhost:53682",
+		Help:  "Resolve localhost by default",
+	}, {
+		Value: "[::1]:53682",
+		Help:  "Force IPv6 address bind",
+	}, {
+		Value: "127.0.0.1:53682",
+		Help:  "Force IPv4 Address Bind",
+	}},
 	Advanced: true,
 }}
 
@@ -391,6 +404,12 @@ func overrideCredentials(name string, m configmap.Mapper, origConfig *oauth2.Con
 	TokenURL, ok := m.Get(config.ConfigTokenURL)
 	if ok && TokenURL != "" {
 		newConfig.Endpoint.TokenURL = TokenURL
+		changed = true
+	}
+	if OverrideBindAddress, ok := m.Get(config.ConfigBindAddress); ok && OverrideBindAddress != "" {
+		bindAddress = OverrideBindAddress
+		RedirectURL = "http://" + bindAddress + "/"
+		newConfig.RedirectURL = RedirectURL
 		changed = true
 	}
 	return newConfig, changed
