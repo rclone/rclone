@@ -25,6 +25,8 @@ import (
 	"github.com/skratchdot/open-golang/open"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/clientcredentials"
+
+	"github.com/tonymet/dualstack/multilistener"
 )
 
 var (
@@ -42,7 +44,7 @@ const (
 	bindPort = "53682"
 
 	// bindAddress is binding for local webserver when active
-	bindAddress = "127.0.0.1:" + bindPort
+	bindAddress string = "localhost:" + bindPort
 
 	// RedirectURL is redirect to local webserver when active
 	RedirectURL = "http://" + bindAddress + "/"
@@ -846,14 +848,14 @@ func configSetup(ctx context.Context, id, name string, m configmap.Mapper, oauth
 	}
 
 	// Prepare webserver
-	server := newAuthServer(opt, bindAddress, state, authURL)
+	server := newAuthServer(opt, state, authURL)
 	err = server.Init()
 	if err != nil {
 		return "", fmt.Errorf("failed to start auth webserver: %w", err)
 	}
 	go server.Serve()
 	defer server.Stop()
-	authURL = "http://" + bindAddress + "/auth?state=" + state
+	authURL = "http://localhost:" + bindPort + "/auth?state=" + state
 
 	if !authorizeNoAutoBrowser {
 		// Open the URL for the user to visit
@@ -903,18 +905,16 @@ type authServer struct {
 	opt         *Options
 	state       string
 	listener    net.Listener
-	bindAddress string
 	authURL     string
 	server      *http.Server
 	result      chan *AuthResult
 }
 
 // newAuthServer makes the webserver for collecting auth
-func newAuthServer(opt *Options, bindAddress, state, authURL string) *authServer {
+func newAuthServer(opt *Options, state, authURL string) *authServer {
 	return &authServer{
 		opt:         opt,
 		state:       state,
-		bindAddress: bindAddress,
 		authURL:     authURL, // http://host/auth redirects to here
 		result:      make(chan *AuthResult, 1),
 	}
@@ -987,10 +987,9 @@ func (s *authServer) handleAuth(w http.ResponseWriter, req *http.Request) {
 
 // Init gets the internal web server ready to receive config details
 func (s *authServer) Init() error {
-	fs.Debugf(nil, "Starting auth server on %s", s.bindAddress)
+	fs.Debugf(nil, "Starting auth server")
 	mux := http.NewServeMux()
 	s.server = &http.Server{
-		Addr:    s.bindAddress,
 		Handler: mux,
 	}
 	s.server.SetKeepAlivesEnabled(false)
@@ -1007,11 +1006,14 @@ func (s *authServer) Init() error {
 	})
 	mux.HandleFunc("/", s.handleAuth)
 
+	// todo use multi listener
+
 	var err error
-	s.listener, err = net.Listen("tcp", s.bindAddress)
-	if err != nil {
-		return err
+
+	if s.listener, err = multilistener.NewLocalLoopback(bindPort); err != nil {
+		panic(err)
 	}
+	fs.Debugf(nil, "Starting auth server on %s \n redirect authURL =  %s", s.listener.Addr().String(), s.authURL)
 	return nil
 }
 

@@ -1,6 +1,6 @@
 module github.com/rclone/rclone
 
-go 1.23.0
+go 1.23.4
 
 require (
 	bazil.org/fuse v0.0.0-20230120002735-62a210ff1fd5
@@ -71,6 +71,7 @@ require (
 	github.com/spf13/pflag v1.0.6
 	github.com/stretchr/testify v1.10.0
 	github.com/t3rm1n4l/go-mega v0.0.0-20241213151442-a19cff0ec7b5
+	github.com/tonymet/dualstack v0.0.5
 	github.com/unknwon/goconfig v1.0.0
 	github.com/willscott/go-nfs v0.0.3
 	github.com/winfsp/cgofuse v1.6.0
