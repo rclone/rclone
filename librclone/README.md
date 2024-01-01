@@ -12,16 +12,17 @@ notice will be removed.
 The shims are a thin wrapper over the rclone RPC.
 
 The implementation is based on cgo; to build it you need Go and a GCC compatible
-C compiler (GCC or Clang). On Windows you can use the MinGW port of GCC,
-e.g. by installing it in a [MSYS2](https://www.msys2.org) distribution
-(make sure you install GCC in the classic mingw64 subsystem, the ucrt64 version
-is not compatible with cgo).
+C compiler (GCC or Clang). On Windows you can use the MinGW ports, e.g. by installing
+in a [MSYS2](https://www.msys2.org) distribution (you may now install GCC in the newer
+and recommended UCRT64 subsystem, however there were compatibility issues with previous
+versions of cgo where, if not force rebuild with go build option `-a` helped, you had
+to resort to the classic MINGW64 subsystem).
 
-Build a shared library like this:
+Build a shared library like this (change from .so to .dll on Windows):
 
     go build --buildmode=c-shared -o librclone.so github.com/rclone/rclone/librclone
 
-Build a static library like this:
+Build a static library like this (change from .a to .lib on Windows):
 
     go build --buildmode=c-archive -o librclone.a github.com/rclone/rclone/librclone
 
