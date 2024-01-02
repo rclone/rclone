@@ -55,8 +55,7 @@ func (w *objectChunkWriter) WriteChunk(ctx context.Context, chunkNumber int, rea
 		return existing.Size, nil
 	}
 
-	var
-	(
+	var (
 		response api.PartFile
 		partName string
 		fileName string
@@ -82,7 +81,7 @@ func (w *objectChunkWriter) WriteChunk(ctx context.Context, chunkNumber int, rea
 			u1, _ := uuid.NewV4()
 			partName = hex.EncodeToString(u1.Bytes())
 		} else {
-			
+
 			partName = fileName
 			if w.totalParts > 1 {
 				partName = fmt.Sprintf("%s.part.%03d", fileName, chunkNumber)
@@ -161,7 +160,7 @@ func (w *objectChunkWriter) Close(ctx context.Context) error {
 	}
 
 	payload := api.CreateFileRequest{
-		Name:      w.f.opt.Enc.FromStandardName(leaf),
+		Name:      leaf,
 		Type:      "file",
 		Path:      base,
 		MimeType:  fs.MimeType(ctx, w.src),
@@ -175,6 +174,7 @@ func (w *objectChunkWriter) Close(ctx context.Context) error {
 		resp, err := w.f.srv.CallJSON(ctx, &opts, &payload, nil)
 		return shouldRetry(ctx, resp, err)
 	})
+
 	if err != nil {
 		return err
 	}

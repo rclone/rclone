@@ -2,9 +2,8 @@
 package api
 
 type Error struct {
-	Status  bool   `json:"status,omitempty"`
+	Code    bool   `json:"code,omitempty"`
 	Message string `json:"message,omitempty"`
-	ErrMsg  string `json:"error,omitempty"`
 }
 
 func (e Error) Error() string {

@@ -6,7 +6,6 @@ import (
 	"context"
 	"crypto/md5"
 	"encoding/hex"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -83,12 +82,7 @@ func init() {
 				Name:     config.ConfigEncoding,
 				Help:     config.ConfigEncodingHelp,
 				Advanced: true,
-				Default: (encoder.Display |
-					encoder.EncodeBackQuote |
-					encoder.EncodeDoubleQuote |
-					encoder.EncodeLtGt |
-					encoder.EncodeLeftSpace |
-					encoder.EncodeInvalidUtf8),
+				Default:  encoder.Standard,
 			}},
 	})
 }
@@ -254,16 +248,15 @@ func NewFs(ctx context.Context, name string, root string, config configmap.Mappe
 
 	client := fshttp.NewClient(ctx)
 	authCookie := http.Cookie{Name: "user-session", Value: opt.AccessToken}
-	f.srv = rest.NewClient(client).SetRoot(opt.ApiHost).SetCookie(&authCookie)
+	f.srv = rest.NewClient(client).SetRoot(strings.Trim(opt.ApiHost, "/")).SetCookie(&authCookie)
 
 	opts := rest.Opts{
 		Method: "GET",
 		Path:   "/api/auth/session",
 	}
 
-	var
-	(
-		session api.Session
+	var (
+		session     api.Session
 		sessionResp *http.Response
 	)
 
@@ -271,7 +264,7 @@ func NewFs(ctx context.Context, name string, root string, config configmap.Mappe
 		sessionResp, err = f.srv.CallJSON(ctx, &opts, nil, &session)
 		return shouldRetry(ctx, sessionResp, err)
 	})
-	
+
 	if err != nil {
 		return nil, err
 	}
@@ -281,7 +274,7 @@ func NewFs(ctx context.Context, name string, root string, config configmap.Mappe
 	}
 
 	for _, cookie := range sessionResp.Cookies() {
-		if cookie.Name == "user-session" {
+		if cookie.Name == "user-session" && cookie.Value != "" {
 			config.Set("access_token", cookie.Value)
 		}
 	}
@@ -304,34 +297,13 @@ func NewFs(ctx context.Context, name string, root string, config configmap.Mappe
 	return f, nil
 }
 
-func (f *Fs) decodeError(resp *http.Response, response interface{}) (err error) {
-	defer fs.CheckClose(resp.Body, &err)
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return err
-	}
-	// try to unmarshal into correct structure
-	err = json.Unmarshal(body, response)
-	if err == nil {
-		return nil
-	}
-	// try to unmarshal into Error
-	var apiErr api.Error
-	err = json.Unmarshal(body, &apiErr)
-	if err != nil {
-		return err
-	}
-	return apiErr
-}
-
 func (f *Fs) readMetaDataForPath(ctx context.Context, path string, options *api.MetadataRequestOptions) (*api.ReadMetadataResponse, error) {
 
 	opts := rest.Opts{
 		Method: "GET",
 		Path:   "/api/files",
 		Parameters: url.Values{
-			"path":          []string{f.opt.Enc.FromStandardPath(path)},
+			"path":          []string{path},
 			"perPage":       []string{strconv.FormatUint(options.PerPage, 10)},
 			"sort":          []string{"name"},
 			"order":         []string{"asc"},
@@ -344,7 +316,7 @@ func (f *Fs) readMetaDataForPath(ctx context.Context, path string, options *api.
 	var resp *http.Response
 
 	err = f.pacer.Call(func() (bool, error) {
-		resp, err = f.srv.Call(ctx, &opts)
+		resp, err = f.srv.CallJSON(ctx, &opts, nil, &info)
 		return shouldRetry(ctx, resp, err)
 	})
 
@@ -356,10 +328,6 @@ func (f *Fs) readMetaDataForPath(ctx context.Context, path string, options *api.
 		return nil, err
 	}
 
-	err = f.decodeError(resp, &info)
-	if err != nil {
-		return nil, err
-	}
 	return &info, nil
 }
 
@@ -369,7 +337,7 @@ func (f *Fs) getPathInfo(ctx context.Context, path string) (*api.ReadMetadataRes
 		Method: "GET",
 		Path:   "/api/files",
 		Parameters: url.Values{
-			"path": []string{f.opt.Enc.FromStandardPath(path)},
+			"path": []string{path},
 			"op":   []string{"find"},
 		},
 	}
@@ -377,17 +345,13 @@ func (f *Fs) getPathInfo(ctx context.Context, path string) (*api.ReadMetadataRes
 	var info api.ReadMetadataResponse
 	var resp *http.Response
 	err = f.pacer.Call(func() (bool, error) {
-		resp, err = f.srv.Call(ctx, &opts)
+		resp, err = f.srv.CallJSON(ctx, &opts, nil, &info)
 		return shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	err = f.decodeError(resp, &info)
-	if err != nil {
-		return nil, err
-	}
 	return &info, nil
 }
 
@@ -397,7 +361,7 @@ func (f *Fs) findObject(ctx context.Context, path string, name string) (*api.Rea
 		Method: "GET",
 		Path:   "/api/files",
 		Parameters: url.Values{
-			"path": []string{f.opt.Enc.FromStandardPath(path)},
+			"path": []string{path},
 			"op":   []string{"find"},
 			"name": []string{name},
 		},
@@ -406,7 +370,7 @@ func (f *Fs) findObject(ctx context.Context, path string, name string) (*api.Rea
 	var info api.ReadMetadataResponse
 	var resp *http.Response
 	err = f.pacer.Call(func() (bool, error) {
-		resp, err = f.srv.Call(ctx, &opts)
+		resp, err = f.srv.CallJSON(ctx, &opts, nil, &info)
 		return shouldRetry(ctx, resp, err)
 	})
 	if err != nil && resp.StatusCode == 404 {
@@ -417,10 +381,6 @@ func (f *Fs) findObject(ctx context.Context, path string, name string) (*api.Rea
 		return nil, err
 	}
 
-	err = f.decodeError(resp, &info)
-	if err != nil {
-		return nil, err
-	}
 	return &info, nil
 }
 
@@ -689,7 +649,7 @@ func (f *Fs) putUnchecked(ctx context.Context, in0 io.Reader, src fs.ObjectInfo,
 	}
 
 	payload := api.CreateFileRequest{
-		Name:      f.opt.Enc.FromStandardName(leaf),
+		Name:      leaf,
 		Type:      "file",
 		Path:      base,
 		MimeType:  fs.MimeType(ctx, src),
@@ -867,7 +827,7 @@ func (f *Fs) CreateDir(ctx context.Context, base string, leaf string) (err error
 	}
 
 	mkdir := api.CreateDirRequest{
-		Path: f.opt.Enc.FromStandardPath(dir),
+		Path: dir,
 	}
 	err = f.pacer.Call(func() (bool, error) {
 		resp, err = f.srv.CallJSON(ctx, &opts, &mkdir, &apiErr)
@@ -953,7 +913,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	// rename to final name if we need to
 	if needRename {
 		err := f.updateFileInformation(ctx, &api.UpdateFileInformation{
-			Name: f.opt.Enc.FromStandardName(dstLeaf),
+			Name: dstLeaf,
 		}, srcObj.id)
 		if err != nil {
 			return nil, fmt.Errorf("move: failed final rename: %w", err)
