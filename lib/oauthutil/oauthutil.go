@@ -292,7 +292,7 @@ func (ts *TokenSource) Token() (*oauth2.Token, error) {
 	if err != nil {
 		return nil, fmt.Errorf("couldn't fetch token: %w", err)
 	}
-	changed = changed || (*token != *ts.token)
+	changed = changed || token.AccessToken != ts.token.AccessToken || token.RefreshToken != ts.token.RefreshToken || token.Expiry != ts.token.Expiry
 	ts.token = token
 	if changed {
 		// Bump on the expiry timer if it is set
