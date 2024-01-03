@@ -18,7 +18,6 @@ Here is an overview of the major features of each cloud storage system.
 | ---------------------------- |:-----------------:|:-------:|:----------------:|:---------------:|:---------:|:--------:|
 | 1Fichier                     | Whirlpool         | -       | No               | Yes             | R         | -        |
 | Akamai Netstorage            | MD5, SHA256       | R/W     | No               | No              | R         | -        |
-| Amazon Drive                 | MD5               | -       | Yes              | No              | R         | -        |
 | Amazon S3 (or S3 compatible) | MD5               | R/W     | No               | No              | R/W       | RWU      |
 | Backblaze B2                 | SHA1              | R/W     | No               | No              | R/W       | -        |
 | Box                          | SHA1              | R/W     | Yes              | No              | -         | -        |
@@ -471,7 +470,6 @@ upon backend-specific capabilities.
 | ---------------------------- |:-----:|:----:|:----:|:-------:|:-------:|:-----:|:------------:|:------------------|:------------:|:-----:|:--------:|
 | 1Fichier                     | No    | Yes  | Yes  | No      | No      | No    | No           | No                | Yes          | No    | Yes      |
 | Akamai Netstorage            | Yes   | No   | No   | No      | No      | Yes   | Yes          | No                | No           | No    | Yes      |
-| Amazon Drive                 | Yes   | No   | Yes  | Yes     | No      | No    | No           | No                | No           | No    | Yes      |
 | Amazon S3 (or S3 compatible) | No    | Yes  | No   | No      | Yes     | Yes   | Yes          | Yes               | Yes          | No    | No       |
 | Backblaze B2                 | No    | Yes  | No   | No      | Yes     | Yes   | Yes          | Yes               | Yes          | No    | No       |
 | Box                          | Yes   | Yes  | Yes  | Yes     | Yes     | No    | Yes          | No                | Yes          | Yes   | Yes      |

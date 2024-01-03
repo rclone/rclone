@@ -30,7 +30,6 @@ See the following for detailed instructions for
   * [1Fichier](/fichier/)
   * [Akamai Netstorage](/netstorage/)
   * [Alias](/alias/)
-  * [Amazon Drive](/amazonclouddrive/)
   * [Amazon S3](/s3/)
   * [Backblaze B2](/b2/)
   * [Box](/box/)

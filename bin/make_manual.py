@@ -30,7 +30,6 @@ docs = [
     # Keep these alphabetical by full name
     "fichier.md",
     "alias.md",
-    "amazonclouddrive.md",
     "s3.md",
     "b2.md",
     "box.md",

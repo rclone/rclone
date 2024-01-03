@@ -15,9 +15,6 @@ tests:
  - path: cmd/selfupdate
    localonly: true
 backends:
- # - backend:  "amazonclouddrive"
- #   remote:   "TestAmazonCloudDrive:"
- #   fastlist: false
  - backend:  "local"
    remote:   ""
    fastlist: false
