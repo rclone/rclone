@@ -64,9 +64,6 @@ const (
 
 	// ConfigTemplateFile is the path to a template file to read into the value of `ConfigTemplate` above
 	ConfigTemplateFile = "config_template_file"
-
-	// bindAddress is binding for local webserver when active
-	ConfigBindAddress = "config_bind_address"
 )
 
 // Storage defines an interface for loading and saving config to
