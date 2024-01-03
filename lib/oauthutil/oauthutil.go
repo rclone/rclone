@@ -707,7 +707,7 @@ func configSetup(ctx context.Context, id, name string, m configmap.Mapper, oauth
 	}
 	go server.Serve()
 	defer server.Stop()
-	authURL = "http://" + bindAddress + "/auth?state=" + state
+	authURL = "http://" + server.bindAddress + "/auth?state=" + state
 
 	if !authorizeNoAutoBrowser {
 		// Open the URL for the user to visit
@@ -826,7 +826,6 @@ func (s *authServer) handleAuth(w http.ResponseWriter, req *http.Request) {
 
 // Init gets the internal web server ready to receive config details
 func (s *authServer) Init() error {
-	fs.Debugf(nil, "Starting auth server on %s", s.bindAddress)
 	mux := http.NewServeMux()
 	s.server = &http.Server{
 		Addr:    s.bindAddress,
@@ -847,10 +846,14 @@ func (s *authServer) Init() error {
 	mux.HandleFunc("/", s.handleAuth)
 
 	var err error
-	s.listener, err = net.Listen("tcp", s.bindAddress)
-	if err != nil {
-		return err
+	if s.listener, err = net.Listen("tcp", "[::1]:"+bindPort); err != nil {
+		if s.listener, err = net.Listen("tcp", "127.0.0.1:"+bindPort); err != nil {
+			return err
+		}
 	}
+	s.bindAddress = s.listener.Addr().String()
+	s.authURL = "http://" + s.bindAddress + "/"
+	fs.Debugf(nil, "Starting auth server on %s / %s", s.bindAddress, s.authURL)
 	return nil
 }
 
