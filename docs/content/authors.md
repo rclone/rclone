@@ -812,3 +812,4 @@ put them back in again.` >}}
   * emyarod <afw5059@gmail.com>
   * keongalvin <keongalvin@gmail.com>
   * rarspace01 <rarspace01@users.noreply.github.com>
+  * Paul Stern <paulstern45@gmail.com>
