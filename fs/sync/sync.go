@@ -437,7 +437,7 @@ func (s *syncCopyMove) pairCopyOrMove(ctx context.Context, in *pipe, fdst fs.Fs,
 		dst := pair.Dst
 		if s.DoMove {
 			if src != dst {
-				_, err = operations.Move(ctx, fdst, dst, src.Remote(), src)
+				_, err = operations.MoveTransfer(ctx, fdst, dst, src.Remote(), src)
 			} else {
 				// src == dst signals delete the src
 				err = operations.DeleteFile(ctx, src)
