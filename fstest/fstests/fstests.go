@@ -303,6 +303,7 @@ type Opt struct {
 	SkipObjectCheckWrap             bool     // if set skip ObjectCheckWrap
 	SkipDirectoryCheckWrap          bool     // if set skip DirectoryCheckWrap
 	SkipInvalidUTF8                 bool     // if set skip invalid UTF-8 checks
+	SkipLeadingDot                  bool     // if set skip leading dot checks
 	QuickTestOK                     bool     // if set, run this test with make quicktest
 }
 
@@ -688,6 +689,9 @@ func Run(t *testing.T, opt *Opt) {
 			} {
 				t.Run(test.name, func(t *testing.T) {
 					if opt.SkipInvalidUTF8 && test.name == "invalid UTF-8" {
+						t.Skip("Skipping " + test.name)
+					}
+					if opt.SkipLeadingDot && test.name == "leading dot" {
 						t.Skip("Skipping " + test.name)
 					}
 					// turn raw strings into Standard encoding
