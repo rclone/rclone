@@ -28,6 +28,8 @@ import (
 	"time"
 )
 
+// TODO Uloz.to only supports file names of 255 characters or less and silentlym truncates names that are longer.
+
 const (
 	minSleep      = 10 * time.Millisecond
 	maxSleep      = 2 * time.Second
@@ -54,7 +56,7 @@ func init() {
 				Name:    "app_token",
 				Default: "",
 				Help: "The application token identifying the app. An app API key can be either found in the API " +
-					"doc (https://uloz.to/upload-resumable-api-beta), or obtained from customer service.",
+					"doc https://uloz.to/upload-resumable-api-beta or obtained from customer service.",
 				Sensitive: true,
 			},
 			{
