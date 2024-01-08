@@ -437,7 +437,7 @@ rclone serve docker [flags]
       --vfs-read-chunk-size SizeSuffix         Read the source objects in chunks (default 128Mi)
       --vfs-read-chunk-size-limit SizeSuffix   If greater than --vfs-read-chunk-size, double the chunk size after each chunk read, until the limit is reached ('off' is unlimited) (default off)
       --vfs-read-wait Duration                 Time to wait for in-sequence read before seeking (default 20ms)
-      --vfs-refresh                            Refreshes the directory cache recursively on start
+      --vfs-refresh                            Refreshes the directory cache recursively in the background on start
       --vfs-used-is-size rclone size           Use the rclone size algorithm for Used size
       --vfs-write-back Duration                Time to writeback files after last use when using cache (default 5s)
       --vfs-write-wait Duration                Time to wait for in-sequence write before giving error (default 1s)
