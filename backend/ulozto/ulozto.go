@@ -246,7 +246,7 @@ func (f *Fs) authenticate(ctx context.Context) (response *api.AuthenticateRespon
 		return nil, err
 	}
 
-	f.rest.SetHeader("X-User-Token", "t9tyo9p1tbh8dbk8isejld9r3647u6")
+	f.rest.SetHeader("X-User-Token", response.TokenId)
 
 	return response, nil
 }
