@@ -458,3 +458,6 @@ backends:
  - backend:  "quatrix"
    remote:   "TestQuatrix:"
    fastlist: false
+ - backend:  "ulozto"
+   remote:   "TestUlozto:"
+   fastlist: false
