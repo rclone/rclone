@@ -265,7 +265,11 @@ func (b *bisyncRun) retryFastCopy(ctx context.Context, fsrc, fdst fs.Fs, files b
 	if err != nil && b.opt.Resilient && !b.InGracefulShutdown && b.opt.Retries > 1 {
 		for tries := 1; tries <= b.opt.Retries; tries++ {
 			fs.Logf(queueName, Color(terminal.YellowFg, "Received error: %v - retrying as --resilient is set. Retry %d/%d"), err, tries, b.opt.Retries)
+			accounting.GlobalStats().ResetErrors()
 			results, err = b.fastCopy(ctx, fsrc, fdst, files, queueName)
+			if err == nil || b.InGracefulShutdown {
+				return results, err
+			}
 		}
 	}
 	return results, err
