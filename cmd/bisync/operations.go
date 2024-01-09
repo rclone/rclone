@@ -127,19 +127,6 @@ func Bisync(ctx context.Context, fs1, fs2 fs.Fs, optArg *Options) (err error) {
 	// Handle SIGINT
 	var finaliseOnce gosync.Once
 
-	// waitFor runs fn() until it returns true or the timeout expires
-	waitFor := func(msg string, totalWait time.Duration, fn func() bool) (ok bool) {
-		const individualWait = 1 * time.Second
-		for i := 0; i < int(totalWait/individualWait); i++ {
-			ok = fn()
-			if ok {
-				return ok
-			}
-			fs.Infof(nil, Color(terminal.YellowFg, "%s: %v"), msg, int(totalWait/individualWait)-i)
-			time.Sleep(individualWait)
-		}
-		return false
-	}
 	finalise := func() {
 		finaliseOnce.Do(func() {
 			if atexit.Signalled() {
@@ -646,6 +633,20 @@ func (b *bisyncRun) debugFn(nametocheck string, fn func()) {
 	if b.DebugName != "" && b.DebugName == nametocheck {
 		fn()
 	}
+}
+
+// waitFor runs fn() until it returns true or the timeout expires
+func waitFor(msg string, totalWait time.Duration, fn func() bool) (ok bool) {
+	const individualWait = 1 * time.Second
+	for i := 0; i < int(totalWait/individualWait); i++ {
+		ok = fn()
+		if ok {
+			return ok
+		}
+		fs.Infof(nil, Color(terminal.YellowFg, "%s: %vs"), msg, int(totalWait/individualWait)-i)
+		time.Sleep(individualWait)
+	}
+	return false
 }
 
 // mainly to make sure tests don't interfere with each other when running more than one
