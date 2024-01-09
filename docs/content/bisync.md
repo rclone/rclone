@@ -114,7 +114,8 @@ Optional Flags:
       --resilient                            Allow future runs to retry after certain less-serious errors, instead of requiring --resync. Use at your own risk!
   -1, --resync                               Performs the resync run. Equivalent to --resync-mode path1. Consider using --verbose or --dry-run first.
       --resync-mode string                   During resync, prefer the version that is: path1, path2, newer, older, larger, smaller (default: path1 if --resync, otherwise none for no resync.) (default "none")
-      --retries int                          Retry operations this many times if they fail (default 3)
+      --retries int                          Retry operations this many times if they fail (requires --resilient). (default 3)
+      --retries-sleep Duration               Interval between retrying operations if they fail, e.g. 500ms, 60s, 5m (0 to disable) (default 0s)
       --slow-hash-sync-only                  Ignore slow checksums for listings and deltas, but still consider them during sync calls.
       --workdir string                       Use custom working dir - useful for testing. (default: {WORKDIR})
       --max-delete PERCENT                   Safety check on maximum percentage of deleted files allowed. If exceeded, the bisync run will abort. (default: 50%)
@@ -1833,6 +1834,7 @@ instead of of `--size-only`, when `check` is not available.
 * A new `--max-lock` setting allows lock files to automatically renew and expire, for better automatic recovery when a run is interrupted.
 * Bisync now supports auto-resolving sync conflicts and customizing rename behavior with new [`--conflict-resolve`](#conflict-resolve), [`--conflict-loser`](#conflict-loser), and [`--conflict-suffix`](#conflict-suffix) flags.
 * A new [`--resync-mode`](#resync-mode) flag allows more control over which version of a file gets kept during a `--resync`.
+* Bisync now supports [`--retries`](/docs/#retries-int) and [`--retries-sleep`](/docs/#retries-sleep-time) (when [`--resilient`](#resilient) is set.)
 
 ### `v1.64`
 * Fixed an [issue](https://forum.rclone.org/t/bisync-bugs-and-feature-requests/37636#:~:text=1.%20Dry%20runs%20are%20not%20completely%20dry) 

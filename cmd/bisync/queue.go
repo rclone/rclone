@@ -266,6 +266,16 @@ func (b *bisyncRun) retryFastCopy(ctx context.Context, fsrc, fdst fs.Fs, files b
 		for tries := 1; tries <= b.opt.Retries; tries++ {
 			fs.Logf(queueName, Color(terminal.YellowFg, "Received error: %v - retrying as --resilient is set. Retry %d/%d"), err, tries, b.opt.Retries)
 			accounting.GlobalStats().ResetErrors()
+			if retryAfter := accounting.GlobalStats().RetryAfter(); !retryAfter.IsZero() {
+				d := time.Until(retryAfter)
+				if d > 0 {
+					fs.Logf(nil, "Received retry after error - sleeping until %s (%v)", retryAfter.Format(time.RFC3339Nano), d)
+					time.Sleep(d)
+				}
+			}
+			if b.opt.RetriesInterval > 0 {
+				naptime(b.opt.RetriesInterval)
+			}
 			results, err = b.fastCopy(ctx, fsrc, fdst, files, queueName)
 			if err == nil || b.InGracefulShutdown {
 				return results, err
@@ -361,4 +371,17 @@ func (b *bisyncRun) saveQueue(files bilib.Names, jobName string) error {
 	}
 	queueFile := fmt.Sprintf("%s.%s.que", b.basePath, jobName)
 	return files.Save(queueFile)
+}
+
+func naptime(totalWait time.Duration) {
+	expireTime := time.Now().Add(totalWait)
+	fs.Logf(nil, "will retry in %v at %v", totalWait, expireTime.Format("2006-01-02 15:04:05 MST"))
+	for i := 0; time.Until(expireTime) > 0; i++ {
+		if i > 0 && i%10 == 0 {
+			fs.Infof(nil, Color(terminal.Dim, "retrying in %v..."), time.Until(expireTime).Round(1*time.Second))
+		} else {
+			fs.Debugf(nil, Color(terminal.Dim, "retrying in %v..."), time.Until(expireTime).Round(1*time.Second))
+		}
+		time.Sleep(1 * time.Second)
+	}
 }

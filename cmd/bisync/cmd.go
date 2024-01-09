@@ -52,6 +52,7 @@ type Options struct {
 	Recover               bool
 	TestFn                TestFunc // test-only option, for mocking errors
 	Retries               int
+	RetriesInterval       time.Duration
 	Compare               CompareOpt
 	CompareFlag           string
 	DebugName             string
@@ -143,7 +144,8 @@ func init() {
 	flags.BoolVarP(cmdFlags, &Opt.IgnoreListingChecksum, "ignore-listing-checksum", "", Opt.IgnoreListingChecksum, "Do not use checksums for listings (add --ignore-checksum to additionally skip post-copy checksum checks)", "")
 	flags.BoolVarP(cmdFlags, &Opt.Resilient, "resilient", "", Opt.Resilient, "Allow future runs to retry after certain less-serious errors, instead of requiring --resync. Use at your own risk!", "")
 	flags.BoolVarP(cmdFlags, &Opt.Recover, "recover", "", Opt.Recover, "Automatically recover from interruptions without requiring --resync.", "")
-	flags.IntVarP(cmdFlags, &Opt.Retries, "retries", "", Opt.Retries, "Retry operations this many times if they fail", "")
+	flags.IntVarP(cmdFlags, &Opt.Retries, "retries", "", Opt.Retries, "Retry operations this many times if they fail (requires --resilient).", "")
+	flags.DurationVarP(cmdFlags, &Opt.RetriesInterval, "retries-sleep", "", 0, "Interval between retrying operations if they fail, e.g. 500ms, 60s, 5m (0 to disable)", "")
 	flags.StringVarP(cmdFlags, &Opt.CompareFlag, "compare", "", Opt.CompareFlag, "Comma-separated list of bisync-specific compare options ex. 'size,modtime,checksum' (default: 'size,modtime')", "")
 	flags.BoolVarP(cmdFlags, &Opt.Compare.NoSlowHash, "no-slow-hash", "", Opt.Compare.NoSlowHash, "Ignore listing checksums only on backends where they are slow", "")
 	flags.BoolVarP(cmdFlags, &Opt.Compare.SlowHashSyncOnly, "slow-hash-sync-only", "", Opt.Compare.SlowHashSyncOnly, "Ignore slow checksums for listings and deltas, but still consider them during sync calls.", "")
