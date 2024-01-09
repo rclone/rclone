@@ -1,9 +1,10 @@
 package ulozto_test
 
 import (
+	"testing"
+
 	"github.com/rclone/rclone/backend/ulozto"
 	"github.com/rclone/rclone/fstest/fstests"
-	"testing"
 )
 
 // TestIntegration runs integration tests against the remote

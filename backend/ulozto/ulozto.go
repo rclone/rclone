@@ -1,3 +1,4 @@
+// Package ulozto provides an interface to the Uloz.to storage system.
 package ulozto
 
 import (
@@ -6,6 +7,14 @@ import (
 	"encoding/base64"
 	"encoding/gob"
 	"fmt"
+	"io"
+	"net/http"
+	"net/url"
+	"path"
+	"strconv"
+	"strings"
+	"time"
+
 	"github.com/pkg/errors"
 	"github.com/rclone/rclone/backend/ulozto/api"
 	"github.com/rclone/rclone/fs"
@@ -19,13 +28,6 @@ import (
 	"github.com/rclone/rclone/lib/encoder"
 	"github.com/rclone/rclone/lib/pacer"
 	"github.com/rclone/rclone/lib/rest"
-	"io"
-	"net/http"
-	"net/url"
-	"path"
-	"strconv"
-	"strings"
-	"time"
 )
 
 // TODO Uloz.to only supports file names of 255 characters or less and silentlym truncates names that are longer.
@@ -37,6 +39,7 @@ const (
 	rootURL       = "https://apis.uloz.to"
 )
 
+// Options defines the configuration for this backend
 type Options struct {
 	AppToken       string               `config:"app_token"`
 	Username       string               `config:"username"`
@@ -95,6 +98,7 @@ func init() {
 		}})
 }
 
+// Fs represents a remote uloz.to storage
 type Fs struct {
 	name     string             // name of this remote
 	root     string             // the path we are working on
@@ -246,7 +250,7 @@ func (f *Fs) authenticate(ctx context.Context) (response *api.AuthenticateRespon
 		return nil, err
 	}
 
-	f.rest.SetHeader("X-User-Token", response.TokenId)
+	f.rest.SetHeader("X-User-Token", response.TokenID)
 
 	return response, nil
 }
@@ -257,7 +261,7 @@ func (f *Fs) authenticate(ctx context.Context) (response *api.AuthenticateRespon
 // by the backend implementation and for simplicity, each session corresponds to a single file being uploaded.
 type UploadSession struct {
 	Filesystem  *Fs
-	Url         string
+	URL         string
 	PrivateSlug string
 	ValidUntil  time.Time
 }
@@ -267,7 +271,7 @@ func (f *Fs) createUploadSession(ctx context.Context) (session *UploadSession, e
 		Filesystem: f,
 	}
 
-	err = session.RenewUploadSession(ctx)
+	err = session.renewUploadSession(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -275,27 +279,27 @@ func (f *Fs) createUploadSession(ctx context.Context) (session *UploadSession, e
 	return session, nil
 }
 
-func (session *UploadSession) RenewUploadSession(ctx context.Context) error {
+func (session *UploadSession) renewUploadSession(ctx context.Context) error {
 	opts := rest.Opts{
 		Method:     "POST",
 		Path:       "/v5/upload/link",
 		Parameters: url.Values{},
 	}
 
-	createUploadUrlReq := api.CreateUploadUrlRequest{
+	createUploadURLReq := api.CreateUploadURLRequest{
 		UserLogin: session.Filesystem.opt.Username,
 		Realm:     "ulozto",
 	}
 
 	if session.PrivateSlug != "" {
-		createUploadUrlReq.ExistingSessionSlug = session.PrivateSlug
+		createUploadURLReq.ExistingSessionSlug = session.PrivateSlug
 	}
 
 	var err error
-	var response api.CreateUploadUrlResponse
+	var response api.CreateUploadURLResponse
 
 	err = session.Filesystem.pacer.Call(func() (bool, error) {
-		httpResp, err := session.Filesystem.rest.CallJSON(ctx, &opts, &createUploadUrlReq, &response)
+		httpResp, err := session.Filesystem.rest.CallJSON(ctx, &opts, &createUploadURLReq, &response)
 		return session.Filesystem.shouldRetry(ctx, httpResp, err, true)
 	})
 
@@ -304,7 +308,7 @@ func (session *UploadSession) RenewUploadSession(ctx context.Context) error {
 	}
 
 	session.PrivateSlug = response.PrivateSlug
-	session.Url = response.UploadUrl
+	session.URL = response.UploadURL
 	session.ValidUntil = response.ValidUntil
 
 	return nil
@@ -327,9 +331,15 @@ func (f *Fs) uploadUnchecked(ctx context.Context, name, parentSlug string, info 
 	if err != nil || md5digest == "" {
 		hashes.Add(hash.MD5)
 	}
-	hasher, err := hash.NewMultiHasherTypes(hashes)
 
+	var hasher *hash.MultiHasher
 	if hashes.Count() > 0 {
+		hasher, err = hash.NewMultiHasherTypes(hashes)
+
+		if err != nil {
+			return nil, err
+		}
+
 		payload = io.TeeReader(payload, hasher)
 	}
 
@@ -339,7 +349,7 @@ func (f *Fs) uploadUnchecked(ctx context.Context, name, parentSlug string, info 
 		Method: "POST",
 		Body:   payload,
 		// Not using Parameters as the session URL has parameters itself
-		RootURL:              session.Url + "&batch_file_id=1&is_porn=false",
+		RootURL:              session.URL + "&batch_file_id=1&is_porn=false",
 		MultipartContentName: "file",
 		MultipartFileName:    encodedName,
 		Parameters:           url.Values{},
@@ -377,7 +387,7 @@ func (f *Fs) uploadUnchecked(ctx context.Context, name, parentSlug string, info 
 		ModTimeEpochMicros: info.ModTime(ctx).UnixMicro(),
 	}
 
-	encodedMetadata, err := metadata.Encode()
+	encodedMetadata, err := metadata.encode()
 
 	if err != nil {
 		return nil, err
@@ -440,6 +450,7 @@ func (f *Fs) uploadUnchecked(ctx context.Context, name, parentSlug string, info 
 	return file, err
 }
 
+// Put implements the mandatory method fs.Fs.Put.
 func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
 	existingObj, err := f.NewObject(ctx, src.Remote())
 
@@ -454,6 +465,9 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 	}
 }
 
+// PutUnchecked implements the optional interface fs.PutUncheckeder.
+//
+// Uloz.to allows to have multiple files of the same name in the same folder.
 func (f *Fs) PutUnchecked(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
 	filename, folderSlug, err := f.dirCache.FindPath(ctx, src.Remote(), true)
 
@@ -464,6 +478,7 @@ func (f *Fs) PutUnchecked(ctx context.Context, in io.Reader, src fs.ObjectInfo, 
 	return f.uploadUnchecked(ctx, filename, folderSlug, src, in)
 }
 
+// Mkdir implements the mandatory method fs.Fs.Mkdir.
 func (f *Fs) Mkdir(ctx context.Context, dir string) (err error) {
 	_, err = f.dirCache.FindDir(ctx, dir, true)
 	return err
@@ -493,6 +508,7 @@ func (f *Fs) isDirEmpty(ctx context.Context, slug string) (empty bool, err error
 	return true, nil
 }
 
+// Rmdir implements the mandatory method fs.Fs.Rmdir.
 func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 	slug, err := f.dirCache.FindDir(ctx, dir, false)
 
@@ -555,6 +571,7 @@ func (f *Fs) Precision() time.Duration {
 	return time.Microsecond
 }
 
+// Hashes implements fs.Fs.Hashes by returning the supported hash types of the filesystem.
 func (f *Fs) Hashes() hash.Set {
 	return hash.NewHashSet(hash.SHA256, hash.MD5)
 }
@@ -569,7 +586,7 @@ type DescriptionEncodedMetadata struct {
 	ModTimeEpochMicros int64
 }
 
-func (md *DescriptionEncodedMetadata) Encode() (string, error) {
+func (md *DescriptionEncodedMetadata) encode() (string, error) {
 	b := bytes.Buffer{}
 	e := gob.NewEncoder(&b)
 	err := e.Encode(md)
@@ -580,7 +597,7 @@ func (md *DescriptionEncodedMetadata) Encode() (string, error) {
 	return "1;" + base64.StdEncoding.EncodeToString(b.Bytes()), nil
 }
 
-func DecodeDescriptionMetadata(str string) (*DescriptionEncodedMetadata, error) {
+func decodeDescriptionMetadata(str string) (*DescriptionEncodedMetadata, error) {
 	// The encoded data starts with a version number which is not a part iof the serialized object
 	spl := strings.SplitN(str, ";", 2)
 
@@ -603,6 +620,9 @@ func DecodeDescriptionMetadata(str string) (*DescriptionEncodedMetadata, error) 
 	return &m, nil
 }
 
+// Object describes an uloz.to object.
+//
+// Valid objects will have all the fields set.
 type Object struct {
 	fs              *Fs                         // what this object is part of
 	remote          string                      // The remote path
@@ -612,6 +632,7 @@ type Object struct {
 	encodedMetadata *DescriptionEncodedMetadata // Metadata not available natively and encoded in the description field
 }
 
+// Storable implements the mandatory method fs.ObjectInfo.Storable
 func (o *Object) Storable() bool {
 	return true
 }
@@ -636,10 +657,11 @@ func (o *Object) updateFileProperties(ctx context.Context, req interface{}) (err
 	return o.setMetaData(resp)
 }
 
+// SetModTime implements the mandatory method fs.Object.SetModTime
 func (o *Object) SetModTime(ctx context.Context, t time.Time) (err error) {
 	newMetadata := *o.encodedMetadata
 	newMetadata.ModTimeEpochMicros = t.UnixMicro()
-	encoded, err := newMetadata.Encode()
+	encoded, err := newMetadata.encode()
 	if err != nil {
 		return err
 	}
@@ -648,6 +670,7 @@ func (o *Object) SetModTime(ctx context.Context, t time.Time) (err error) {
 	})
 }
 
+// Open implements the mandatory method fs.Object.Open
 func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (rc io.ReadCloser, err error) {
 	opts := rest.Opts{
 		Method: "POST",
@@ -658,7 +681,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (rc io.Read
 		Slug:      o.slug,
 		UserLogin: o.fs.opt.Username,
 		// Has to be set but doesn't seem to be used server side.
-		DeviceId: "foobar",
+		DeviceID: "foobar",
 	}
 
 	var resp *api.GetDownloadLinkResponse
@@ -697,39 +720,49 @@ func (o *Object) copyFrom(other *Object) {
 	o.encodedMetadata = other.encodedMetadata
 }
 
+// RenamingObjectInfoProxy is a delegating proxy for fs.ObjectInfo
+// with the option of specifying a different remote path.
 type RenamingObjectInfoProxy struct {
 	delegate fs.ObjectInfo
 	remote   string
 }
 
+// Remote implements fs.ObjectInfo.Remote by delegating to the wrapped instance.
 func (s *RenamingObjectInfoProxy) String() string {
 	return s.delegate.String()
 }
 
+// Remote implements fs.ObjectInfo.Remote by returning the specified remote path.
 func (s *RenamingObjectInfoProxy) Remote() string {
 	return s.remote
 }
 
+// ModTime implements fs.ObjectInfo.ModTime by delegating to the wrapped instance.
 func (s *RenamingObjectInfoProxy) ModTime(ctx context.Context) time.Time {
 	return s.delegate.ModTime(ctx)
 }
 
+// Size implements fs.ObjectInfo.Size by delegating to the wrapped instance.
 func (s *RenamingObjectInfoProxy) Size() int64 {
 	return s.delegate.Size()
 }
 
+// Fs implements fs.ObjectInfo.Fs by delegating to the wrapped instance.
 func (s *RenamingObjectInfoProxy) Fs() fs.Info {
 	return s.delegate.Fs()
 }
 
+// Hash implements fs.ObjectInfo.Hash by delegating to the wrapped instance.
 func (s *RenamingObjectInfoProxy) Hash(ctx context.Context, ty hash.Type) (string, error) {
 	return s.delegate.Hash(ctx, ty)
 }
 
+// Storable implements fs.ObjectInfo.Storable by delegating to the wrapped instance.
 func (s *RenamingObjectInfoProxy) Storable() bool {
 	return s.delegate.Storable()
 }
 
+// Update implements the mandatory method fs.Object.Update
 func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {
 	// The backend allows to store multiple files with the same name, so simply upload the new file and remove the old
 	// one afterwards.
@@ -753,6 +786,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	return nil
 }
 
+// Remove implements the mandatory method fs.Object.Remove
 func (o *Object) Remove(ctx context.Context) error {
 	for i := 0; i < 2; i++ {
 		// First call moves the item to recycle bin, second deletes it for good
@@ -773,15 +807,17 @@ func (o *Object) Remove(ctx context.Context) error {
 	return nil
 }
 
+// ModTime implements the mandatory method fs.Object.ModTime
 func (o *Object) ModTime(ctx context.Context) time.Time {
 	return time.UnixMicro(o.encodedMetadata.ModTimeEpochMicros)
 }
 
+// Fs implements the mandatory method fs.Object.Fs
 func (o *Object) Fs() fs.Info {
 	return o.fs
 }
 
-// Return a string version
+// String returns the string representation of the remote object reference.
 func (o *Object) String() string {
 	if o == nil {
 		return "<nil>"
@@ -799,6 +835,9 @@ func (o *Object) Size() int64 {
 	return o.size
 }
 
+// Hash implements the mandatory method fs.Object.Hash.
+//
+// Supports SHA256 and MD5 hashes.
 func (o *Object) Hash(ctx context.Context, t hash.Type) (string, error) {
 	switch t {
 	case hash.MD5:
@@ -810,14 +849,15 @@ func (o *Object) Hash(ctx context.Context, t hash.Type) (string, error) {
 	}
 }
 
+// FindLeaf implements dircache.DirCacher.FindLeaf by successively walking through the folder hierarchy until
+// the desired folder is found, or there's nowhere to continue.
 func (f *Fs) FindLeaf(ctx context.Context, folderSlug, leaf string) (leafSlug string, found bool, err error) {
 	folders, err := f.listFolders(ctx, folderSlug, leaf)
 	if err != nil {
 		if errors.Is(err, fs.ErrorDirNotFound) {
 			return "", false, nil
-		} else {
-			return "", false, err
 		}
+		return "", false, err
 	}
 
 	for _, folder := range folders {
@@ -844,8 +884,9 @@ func (f *Fs) FindLeaf(ctx context.Context, folderSlug, leaf string) (leafSlug st
 	return "", false, nil
 }
 
-// CreateDir makes a directory with pathID as parent and name leaf
-func (f *Fs) CreateDir(ctx context.Context, pathID, leaf string) (newID string, err error) {
+// CreateDir implements dircache.DirCacher.CreateDir by creating a folder with the given name under a folder identified
+// by parentSlug.
+func (f *Fs) CreateDir(ctx context.Context, parentSlug, leaf string) (newID string, err error) {
 	var folder *api.Folder
 	opts := rest.Opts{
 		Method:     "POST",
@@ -854,7 +895,7 @@ func (f *Fs) CreateDir(ctx context.Context, pathID, leaf string) (newID string, 
 	}
 	mkdir := api.CreateFolderRequest{
 		Name:             f.opt.Enc.FromStandardName(leaf),
-		ParentFolderSlug: pathID,
+		ParentFolderSlug: parentSlug,
 	}
 	err = f.pacer.Call(func() (bool, error) {
 		httpResp, err := f.rest.CallJSON(ctx, &opts, &mkdir, &folder)
@@ -928,7 +969,7 @@ func (f *Fs) readMetaDataForPath(ctx context.Context, path string) (info *api.Fi
 func (o *Object) setMetaData(info *api.File) (err error) {
 	o.name = info.Name
 	o.size = info.Filesize
-	o.encodedMetadata, err = DecodeDescriptionMetadata(info.Description)
+	o.encodedMetadata, err = decodeDescriptionMetadata(info.Description)
 	if err != nil {
 		return err
 	}
@@ -936,10 +977,12 @@ func (o *Object) setMetaData(info *api.File) (err error) {
 	return nil
 }
 
+// NewObject implements fs.Fs.NewObject.
 func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 	return f.newObjectWithInfo(ctx, remote, nil)
 }
 
+// List implements fs.Fs.List by listing all files and folders in the given folder.
 func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err error) {
 	folderSlug, err := f.dirCache.FindDir(ctx, dir, false)
 	if err != nil {
@@ -1104,8 +1147,7 @@ func (f *Fs) listFiles(
 	return folders, nil
 }
 
-// DirCacheFlush resets the directory cache - used in testing as an
-// optional interface
+// DirCacheFlush implements the optional fs.DirCacheFlusher interface.
 func (f *Fs) DirCacheFlush() {
 	f.dirCache.ResetRoot()
 }
@@ -1113,7 +1155,9 @@ func (f *Fs) DirCacheFlush() {
 // Check the interfaces are satisfied
 var (
 	_ fs.Fs              = (*Fs)(nil)
+	_ dircache.DirCacher = (*Fs)(nil)
 	_ fs.DirCacheFlusher = (*Fs)(nil)
+	_ fs.PutUncheckeder  = (*Fs)(nil)
 	_ fs.Object          = (*Object)(nil)
 	_ fs.ObjectInfo      = (*RenamingObjectInfoProxy)(nil)
 )

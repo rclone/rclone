@@ -1,3 +1,4 @@
+// Package api has type definitions for uloz.to
 package api
 
 import (
@@ -6,12 +7,14 @@ import (
 	"time"
 )
 
+// Error is a representation of the JSON structure returned by uloz.to for unsuccessful requests.
 type Error struct {
 	ErrorCode  int    `json:"error"`
 	StatusCode int    `json:"code"`
 	Message    string `json:"message"`
 }
 
+// Error implements error.Error() and returns a string representation of the error.
 func (e *Error) Error() string {
 	out := fmt.Sprintf("Error %d (%d)", e.ErrorCode, e.StatusCode)
 	if e.Message != "" {
@@ -20,26 +23,32 @@ func (e *Error) Error() string {
 	return out
 }
 
+// Is determines if the error is an instance of another error. It's required for the
+// errors package to search in causal chain.
 func (e *Error) Is(target error) bool {
 	var err *Error
 	ok := errors.As(target, &err)
 	return ok
 }
 
-type ResponseMetadata struct {
+// ListResponseMetadata groups fields common for all API List calls,
+// and maps to the Metadata API JSON object.
+type ListResponseMetadata struct {
 	Timestamp  time.Time `json:"RunAt"`
 	Offset     int32     `json:"offset"`
 	Limit      int32     `json:"limit"`
 	ItemsCount int32     `json:"items_count"`
 }
 
+// Folder represents a single folder, and maps to the AggregatePrivateViewFolder
+// JSON API object.
 type Folder struct {
 	Discriminator        string    `json:"discriminator"`
 	Name                 string    `json:"name"`
 	SanitizedName        string    `json:"name_sanitized"`
 	Slug                 string    `json:"slug"`
 	Status               string    `json:"status"`
-	PublicUrl            string    `json:"public_url"`
+	PublicURL            string    `json:"public_url"`
 	IsPasswordProtected  bool      `json:"is_password_protected"`
 	Type                 string    `json:"type"`
 	FileManagerLink      string    `json:"file_manager_link"`
@@ -51,10 +60,12 @@ type Folder struct {
 	HasTrashedSubfolders bool      `json:"has_trashed_subfolders"`
 }
 
+// File represents a single file, and maps to the AggregatePrivateViewFileV3
+// JSON API object.
 type File struct {
 	Discriminator            string `json:"discriminator"`
 	Slug                     string `json:"slug"`
-	Url                      string `json:"url"`
+	URL                      string `json:"url"`
 	Realm                    string `json:"realm"`
 	Name                     string `json:"name"`
 	NameSanitized            string `json:"name_sanitized"`
@@ -93,39 +104,54 @@ type File struct {
 	} `json:"processing"`
 }
 
+// CreateFolderRequest represents the JSON API object
+// that's sent to the create folder API endpoint.
 type CreateFolderRequest struct {
 	Name             string `json:"name"`
 	ParentFolderSlug string `json:"parent_folder_slug"`
 }
 
+// ListFoldersResponse represents the JSON API object
+// that's received from the list folders API endpoint.
 type ListFoldersResponse struct {
-	Metadata   ResponseMetadata `json:"metadata"`
-	Folder     Folder           `json:"folder"`
-	Subfolders []Folder         `json:"subfolders"`
+	Metadata   ListResponseMetadata `json:"metadata"`
+	Folder     Folder               `json:"folder"`
+	Subfolders []Folder             `json:"subfolders"`
 }
 
+// ListFilesResponse represents the JSON API object
+// that's received from the list files API endpoint.
 type ListFilesResponse struct {
-	Metadata ResponseMetadata `json:"metadata"`
-	Items    []File           `json:"items"`
+	Metadata ListResponseMetadata `json:"metadata"`
+	Items    []File               `json:"items"`
 }
 
+// DeleteFoldersRequest represents the JSON API object
+// that's sent to the delete folders API endpoint.
 type DeleteFoldersRequest struct {
 	Slugs []string `json:"slugs"`
 }
 
-type CreateUploadUrlRequest struct {
+// CreateUploadURLRequest represents the JSON API object that's
+// sent to the API endpoint generating URLs for new file uploads.
+type CreateUploadURLRequest struct {
 	UserLogin           string `json:"user_login"`
 	Realm               string `json:"realm"`
 	ExistingSessionSlug string `json:"private_slug"`
 }
 
-type CreateUploadUrlResponse struct {
-	UploadUrl        string    `json:"upload_url"`
+// CreateUploadURLResponse represents the JSON API object that's
+// received from the API endpoint generating URLs for new file uploads.
+type CreateUploadURLResponse struct {
+	UploadURL        string    `json:"upload_url"`
 	PrivateSlug      string    `json:"private_slug"`
 	ValidUntil       time.Time `json:"valid_until"`
 	ValidityInterval int64     `json:"validity_interval"`
 }
 
+// BatchUpdateFilePropertiesRequest represents the JSON API object that's
+// sent to the API endpoint moving the uploaded files from a scratch space
+// to their final destination.
 type BatchUpdateFilePropertiesRequest struct {
 	Name         string            `json:"name"`
 	FolderSlug   string            `json:"folder_slug"`
@@ -134,6 +160,8 @@ type BatchUpdateFilePropertiesRequest struct {
 	UploadTokens map[string]string `json:"upload_tokens"`
 }
 
+// SendFilePayloadResponse represents the JSON API object that's received
+// in response to uploading a file's body to the CDN URL.
 type SendFilePayloadResponse struct {
 	Size        int    `json:"size"`
 	ContentType string `json:"contentType"`
@@ -143,11 +171,15 @@ type SendFilePayloadResponse struct {
 	Slug        string `json:"slug"`
 }
 
+// CommitUploadBatchRequest represents the JSON API object that's
+// sent to the API endpoint marking the upload batch as final.
 type CommitUploadBatchRequest struct {
 	Status     string `json:"status"`
 	OwnerLogin string `json:"owner_login"`
 }
 
+// CommitUploadBatchResponse represents the JSON API object that's
+// received from the API endpoint marking the upload batch as final.
 type CommitUploadBatchResponse struct {
 	PrivateSlug          string    `json:"private_slug"`
 	PublicSlug           string    `json:"public_slug"`
@@ -156,45 +188,53 @@ type CommitUploadBatchResponse struct {
 	Discriminator        string    `json:"discriminator"`
 	Privacy              string    `json:"privacy"`
 	Name                 time.Time `json:"name"`
-	PublicUrl            string    `json:"public_url"`
+	PublicURL            string    `json:"public_url"`
 	FilesCountOk         int       `json:"files_count_ok"`
 	FilesCountTrash      int       `json:"files_count_trash"`
 	FilesCountIncomplete int       `json:"files_count_incomplete"`
 }
 
+// UpdateDescriptionRequest represents the JSON API object that's
+// sent to the file modification API endpoint marking the upload batch as final.
 type UpdateDescriptionRequest struct {
 	Description string `json:"description"`
 }
 
+// GetDownloadLinkRequest represents the JSON API object that's
+// sent to the API endpoint that generates CDN download links for file payloads.
 type GetDownloadLinkRequest struct {
 	Slug      string `json:"file_slug"`
 	UserLogin string `json:"user_login"`
-	DeviceId  string `json:"device_id"`
+	DeviceID  string `json:"device_id"`
 }
 
+// GetDownloadLinkResponse represents the JSON API object that's
+// received from the API endpoint that generates CDN download links for file payloads.
 type GetDownloadLinkResponse struct {
 	Link                        string    `json:"link"`
-	DownloadUrlValidUntil       time.Time `json:"download_url_valid_until"`
-	DownloadUrlValidityInterval int       `json:"download_url_validity_interval"`
+	DownloadURLValidUntil       time.Time `json:"download_url_valid_until"`
+	DownloadURLValidityInterval int       `json:"download_url_validity_interval"`
 	Hash                        string    `json:"hash"`
 }
 
+// AuthenticateRequest represents the JSON API object that's sent to the auth API endpoint.
 type AuthenticateRequest struct {
 	Login    string `json:"login"`
 	Password string `json:"password"`
 }
 
+// AuthenticateResponse represents the JSON API object that's received from the auth API endpoint.
 type AuthenticateResponse struct {
-	TokenId               string `json:"token_id"`
+	TokenID               string `json:"token_id"`
 	TokenValidityInterval int    `json:"token_validity_interval"`
 	Session               struct {
 		Country          string `json:"country"`
 		IsLimitedCountry bool   `json:"is_limited_country"`
 		User             struct {
 			Login               string `json:"login"`
-			UserId              int64  `json:"user_id"`
+			UserID              int64  `json:"user_id"`
 			Credit              int64  `json:"credit"`
-			AvatarUrl           string `json:"avatar_url"`
+			AvatarURL           string `json:"avatar_url"`
 			FavoritesLink       string `json:"favorites_link"`
 			RootFolderSlug      string `json:"root_folder_slug"`
 			FavoritesFolderSlug string `json:"favorites_folder_slug"`
