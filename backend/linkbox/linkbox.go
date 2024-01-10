@@ -36,7 +36,7 @@ import (
 )
 
 const (
-	maxEntitiesPerPage = 1024
+	maxEntitiesPerPage = 1000
 	minSleep           = 200 * time.Millisecond
 	maxSleep           = 2 * time.Second
 	pacerBurst         = 1
@@ -220,7 +220,7 @@ type listAllFn func(*entity) bool
 //
 // If the name doesn't match this then do an dir list instead
 // N.B.: Linkbox doesn't support search by name that is longer than 50 chars
-var searchOK = regexp.MustCompile(`^[a-zA-Z0-9_ .]{1,50}$`)
+var searchOK = regexp.MustCompile(`^[a-zA-Z0-9_ -.]{1,50}$`)
 
 // Lists the directory required calling the user function on each item found
 //
