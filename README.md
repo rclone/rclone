@@ -1,5 +1,7 @@
 [<img src="https://rclone.org/img/logo_on_light__horizontal_color.svg" width="50%" alt="rclone logo">](https://rclone.org/#gh-light-mode-only)
 [<img src="https://rclone.org/img/logo_on_dark__horizontal_color.svg" width="50%" alt="rclone logo">](https://rclone.org/#gh-dark-mode-only)
+[<img src="https://rclone.org/img/logos/warp-github-light.svg" title="Visit warp.dev to learn more." align="right">](https://www.warp.dev/?utm_source=github&utm_medium=referral&utm_campaign=rclone_20231103#gh-light-mode-only)
+[<img src="https://rclone.org/img/logos/warp-github-dark.svg" title="Visit warp.dev to learn more." align="right">](https://www.warp.dev/?utm_source=github&utm_medium=referral&utm_campaign=rclone_20231103#gh-dark-mode-only)
 
 [Website](https://rclone.org) |
 [Documentation](https://rclone.org/docs/) |
