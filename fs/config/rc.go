@@ -242,3 +242,27 @@ func rcSetPath(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 	err = SetConfigPath(path)
 	return nil, err
 }
+
+func init() {
+	rc.Add(rc.Call{
+		Path:         "config/setpassword",
+		Fn:           rcSetPassword,
+		Title:        "Set the password to the config file",
+		AuthRequired: true,
+		Help: `
+Parameters:
+
+- password - password of the config file to use
+`,
+	})
+}
+
+// Set the config file password
+func rcSetPassword(ctx context.Context, in rc.Params) (out rc.Params, err error) {
+	password, err := in.GetString("password")
+	if err != nil {
+		return nil, err
+	}
+	err = SetOrClearConfigPassword(password)
+	return nil, err
+}

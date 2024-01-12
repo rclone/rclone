@@ -288,9 +288,20 @@ func SetConfigPassword(password string) error {
 	return nil
 }
 
-// ClearConfigPassword sets the current the password to empty
+// ClearConfigPassword sets the current password to empty
 func ClearConfigPassword() {
 	configKey = nil
+}
+
+// SetOrClearConfigPassword will set the configKey to the hash of
+// the password. If the password passed is an empty string,
+// then the current password will be set to empty.
+func SetOrClearConfigPassword(password string) error {
+	if password == "" {
+		ClearConfigPassword()
+		return nil
+	}
+	return SetConfigPassword(password)
 }
 
 // changeConfigPassword will query the user twice
