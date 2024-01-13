@@ -52,7 +52,7 @@ Here is an overview of the major features of each cloud storage system.
 | QingStor                     | MD5               | - ⁹     | No               | No              | R/W       | -        |
 | Quatrix by Maytech           | -                 | R/W     | No               | No              | -         | -        |
 | Seafile                      | -                 | -       | No               | No              | -         | -        |
-| SFTP                         | MD5, SHA1 ²       | R/W     | Depends          | No              | -         | -        |
+| SFTP                         | MD5, SHA1 ²       | DR/W    | Depends          | No              | -         | -        |
 | Sia                          | -                 | -       | No               | No              | -         | -        |
 | SMB                          | -                 | R/W     | Yes              | No              | -         | -        |
 | SugarSync                    | -                 | -       | No               | No              | -         | -        |
