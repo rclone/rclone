@@ -149,6 +149,7 @@ func (tr *Transfer) Account(ctx context.Context, in io.ReadCloser) *Account {
 	} else {
 		tr.acc.UpdateReader(ctx, in)
 	}
+	tr.acc.checking = tr.checking
 	tr.mu.Unlock()
 	return tr.acc
 }

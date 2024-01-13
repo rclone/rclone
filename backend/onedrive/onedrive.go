@@ -27,6 +27,7 @@ import (
 	"github.com/rclone/rclone/fs/config/configstruct"
 	"github.com/rclone/rclone/fs/config/obscure"
 	"github.com/rclone/rclone/fs/fserrors"
+	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/fs/walk"
@@ -688,6 +689,7 @@ type Fs struct {
 	ci           *fs.ConfigInfo     // global config
 	features     *fs.Features       // optional features
 	srv          *rest.Client       // the connection to the OneDrive server
+	unAuth       *rest.Client       // no authentication connection to the OneDrive server
 	dirCache     *dircache.DirCache // Map of directory path to directory id
 	pacer        *fs.Pacer          // pacer for API calls
 	tokenRenewer *oauthutil.Renew   // renew the token on expiry
@@ -946,8 +948,9 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		TokenURL: authEndpoint[opt.Region] + tokenPath,
 	}
 
+	client := fshttp.NewClient(ctx)
 	root = parsePath(root)
-	oAuthClient, ts, err := oauthutil.NewClient(ctx, name, m, oauthConfig)
+	oAuthClient, ts, err := oauthutil.NewClientWithBaseClient(ctx, name, m, oauthConfig, client)
 	if err != nil {
 		return nil, fmt.Errorf("failed to configure OneDrive: %w", err)
 	}
@@ -961,6 +964,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		driveID:   opt.DriveID,
 		driveType: opt.DriveType,
 		srv:       rest.NewClient(oAuthClient).SetRoot(rootURL),
+		unAuth:    rest.NewClient(client).SetRoot(rootURL),
 		pacer:     fs.NewPacer(ctx, pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant))),
 		hashType:  QuickXorHashType,
 	}
@@ -2245,7 +2249,7 @@ func (o *Object) uploadFragment(ctx context.Context, url string, start int64, to
 			Options:       options,
 		}
 		_, _ = chunk.Seek(skip, io.SeekStart)
-		resp, err = o.fs.srv.Call(ctx, &opts)
+		resp, err = o.fs.unAuth.Call(ctx, &opts)
 		if err != nil && resp != nil && resp.StatusCode == http.StatusRequestedRangeNotSatisfiable {
 			fs.Debugf(o, "Received 416 error - reading current position from server: %v", err)
 			pos, posErr := o.getPosition(ctx, url)

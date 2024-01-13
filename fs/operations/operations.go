@@ -332,9 +332,29 @@ func SameObject(src, dst fs.Object) bool {
 //
 // It returns the destination object if possible.  Note that this may
 // be nil.
+//
+// This is accounted as a check.
 func Move(ctx context.Context, fdst fs.Fs, dst fs.Object, remote string, src fs.Object) (newDst fs.Object, err error) {
+	return move(ctx, fdst, dst, remote, src, false)
+}
+
+// MoveTransfer moves src object to dst or fdst if nil. If dst is nil
+// then it uses remote as the name of the new object.
+//
+// This is identical to Move but is accounted as a transfer.
+func MoveTransfer(ctx context.Context, fdst fs.Fs, dst fs.Object, remote string, src fs.Object) (newDst fs.Object, err error) {
+	return move(ctx, fdst, dst, remote, src, true)
+}
+
+// move - see Move for help
+func move(ctx context.Context, fdst fs.Fs, dst fs.Object, remote string, src fs.Object, isTransfer bool) (newDst fs.Object, err error) {
 	ci := fs.GetConfig(ctx)
-	tr := accounting.Stats(ctx).NewCheckingTransfer(src, "moving")
+	var tr *accounting.Transfer
+	if isTransfer {
+		tr = accounting.Stats(ctx).NewTransfer(src)
+	} else {
+		tr = accounting.Stats(ctx).NewCheckingTransfer(src, "moving")
+	}
 	defer func() {
 		if err == nil {
 			accounting.Stats(ctx).Renames(1)
@@ -1695,7 +1715,7 @@ func moveOrCopyFile(ctx context.Context, fdst fs.Fs, fsrc fs.Fs, dstFileName str
 	}
 
 	// Choose operations
-	Op := Move
+	Op := MoveTransfer
 	if cp {
 		Op = Copy
 	}
@@ -1797,6 +1817,8 @@ func moveOrCopyFile(ctx context.Context, fdst fs.Fs, fsrc fs.Fs, dstFileName str
 }
 
 // MoveFile moves a single file possibly to a new name
+//
+// This is treated as a transfer.
 func MoveFile(ctx context.Context, fdst fs.Fs, fsrc fs.Fs, dstFileName string, srcFileName string) (err error) {
 	return moveOrCopyFile(ctx, fdst, fsrc, dstFileName, srcFileName, false)
 }

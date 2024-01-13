@@ -401,6 +401,24 @@ rclone does if you know the container exists already.
 			Help:     `If set, do not do HEAD before GET when getting objects.`,
 			Default:  false,
 			Advanced: true,
+		}, {
+			Name: "delete_snapshots",
+			Help: `Set to specify how to deal with snapshots on blob deletion.`,
+			Examples: []fs.OptionExample{
+				{
+					Value: "",
+					Help:  "By default, the delete operation fails if a blob has snapshots",
+				}, {
+					Value: string(blob.DeleteSnapshotsOptionTypeInclude),
+					Help:  "Specify 'include' to remove the root blob and all its snapshots",
+				}, {
+					Value: string(blob.DeleteSnapshotsOptionTypeOnly),
+					Help:  "Specify 'only' to remove only the snapshots but keep the root blob.",
+				},
+			},
+			Default:   "",
+			Exclusive: true,
+			Advanced:  true,
 		}},
 	})
 }
@@ -437,6 +455,7 @@ type Options struct {
 	DirectoryMarkers           bool                 `config:"directory_markers"`
 	NoCheckContainer           bool                 `config:"no_check_container"`
 	NoHeadObject               bool                 `config:"no_head_object"`
+	DeleteSnapshots            string               `config:"delete_snapshots"`
 }
 
 // Fs represents a remote azure server
@@ -2356,9 +2375,10 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 // Remove an object
 func (o *Object) Remove(ctx context.Context) error {
 	blb := o.getBlobSVC()
-	//only := blob.DeleteSnapshotsOptionTypeOnly
-	opt := blob.DeleteOptions{
-		//DeleteSnapshots: &only,
+	opt := blob.DeleteOptions{}
+	if o.fs.opt.DeleteSnapshots != "" {
+		action := blob.DeleteSnapshotsOptionType(o.fs.opt.DeleteSnapshots)
+		opt.DeleteSnapshots = &action
 	}
 	return o.fs.pacer.Call(func() (bool, error) {
 		_, err := blb.Delete(ctx, &opt)

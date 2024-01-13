@@ -527,6 +527,13 @@ func (s *StatsInfo) Bytes(bytes int64) {
 	s.bytes += bytes
 }
 
+// BytesNoNetwork updates the stats for bytes bytes but doesn't include the transfer stats
+func (s *StatsInfo) BytesNoNetwork(bytes int64) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.bytes += bytes
+}
+
 // GetBytes returns the number of bytes transferred so far
 func (s *StatsInfo) GetBytes() int64 {
 	s.mu.RLock()
