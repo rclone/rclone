@@ -341,6 +341,14 @@ func (f *Fs) MergeDirs(ctx context.Context, dirs []fs.Directory) error {
 	return errors.New("MergeDirs not supported")
 }
 
+// DirSetModTime sets the directory modtime for dir
+func (f *Fs) DirSetModTime(ctx context.Context, dir string, modTime time.Time) error {
+	if do := f.Fs.Features().DirSetModTime; do != nil {
+		return do(ctx, dir, modTime)
+	}
+	return fs.ErrorNotImplemented
+}
+
 // DirCacheFlush resets the directory cache - used in testing
 // as an optional interface
 func (f *Fs) DirCacheFlush() {
@@ -530,6 +538,7 @@ var (
 	_ fs.Abouter         = (*Fs)(nil)
 	_ fs.Wrapper         = (*Fs)(nil)
 	_ fs.MergeDirser     = (*Fs)(nil)
+	_ fs.DirSetModTimer  = (*Fs)(nil)
 	_ fs.DirCacheFlusher = (*Fs)(nil)
 	_ fs.ChangeNotifier  = (*Fs)(nil)
 	_ fs.PublicLinker    = (*Fs)(nil)

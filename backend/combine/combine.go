@@ -965,6 +965,22 @@ func (f *Fs) MergeDirs(ctx context.Context, dirs []fs.Directory) error {
 	return do(ctx, uDirs)
 }
 
+// DirSetModTime sets the directory modtime for dir
+func (f *Fs) DirSetModTime(ctx context.Context, dir string, modTime time.Time) error {
+	u, uDir, err := f.findUpstream(dir)
+	if err != nil {
+		return err
+	}
+	if uDir == "" {
+		fs.Debugf(dir, "can't set modtime on upstream root. skipping.")
+		return nil
+	}
+	if do := u.f.Features().DirSetModTime; do != nil {
+		return do(ctx, uDir, modTime)
+	}
+	return fs.ErrorNotImplemented
+}
+
 // CleanUp the trash in the Fs
 //
 // Implement this if you have a way of emptying the trash or
@@ -1099,6 +1115,7 @@ var (
 	_ fs.PublicLinker    = (*Fs)(nil)
 	_ fs.PutUncheckeder  = (*Fs)(nil)
 	_ fs.MergeDirser     = (*Fs)(nil)
+	_ fs.DirSetModTimer  = (*Fs)(nil)
 	_ fs.CleanUpper      = (*Fs)(nil)
 	_ fs.OpenWriterAter  = (*Fs)(nil)
 	_ fs.FullObject      = (*Object)(nil)

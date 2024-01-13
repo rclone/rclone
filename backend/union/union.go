@@ -386,6 +386,26 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 	return fs.ErrorDirExists
 }
 
+// DirSetModTime sets the directory modtime for dir
+func (f *Fs) DirSetModTime(ctx context.Context, dir string, modTime time.Time) error {
+	upstreams, err := f.action(ctx, dir)
+	if err != nil {
+		return err
+	}
+	errs := Errors(make([]error, len(upstreams)))
+	multithread(len(upstreams), func(i int) {
+		u := upstreams[i]
+		// ignore DirSetModTime on upstreams which don't support it
+		if do := u.Features().DirSetModTime; do != nil {
+			err := do(ctx, dir, modTime)
+			if err != nil {
+				errs[i] = fmt.Errorf("%s: %w", upstreams[i].Name(), err)
+			}
+		}
+	})
+	return errs.Err()
+}
+
 // ChangeNotify calls the passed function with a path
 // that has had changes. If the implementation
 // uses polling, it should adhere to the given interval.
@@ -988,6 +1008,7 @@ var (
 	_ fs.Copier          = (*Fs)(nil)
 	_ fs.Mover           = (*Fs)(nil)
 	_ fs.DirMover        = (*Fs)(nil)
+	_ fs.DirSetModTimer  = (*Fs)(nil)
 	_ fs.DirCacheFlusher = (*Fs)(nil)
 	_ fs.ChangeNotifier  = (*Fs)(nil)
 	_ fs.Abouter         = (*Fs)(nil)
