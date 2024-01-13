@@ -63,6 +63,11 @@ func (h *BackendAuthHandler) HandleLimit() int {
 	return -1
 }
 
+// InvalidateHandle is called on removes or renames
+func (h *BackendAuthHandler) InvalidateHandle(billy.Filesystem, []byte) error {
+	return nil
+}
+
 func newHandler(vfs *vfs.VFS) nfs.Handler {
 	handler := NewBackendAuthHandler(vfs)
 	cacheHelper := nfshelper.NewCachingHandler(handler, 1024)
