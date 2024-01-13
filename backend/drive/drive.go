@@ -2535,6 +2535,20 @@ func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 	return err
 }
 
+// DirSetModTime sets the directory modtime for dir
+func (f *Fs) DirSetModTime(ctx context.Context, dir string, modTime time.Time) error {
+	dirID, err := f.dirCache.FindDir(ctx, dir, false)
+	if err != nil {
+		return err
+	}
+	o := baseObject{
+		fs:     f,
+		remote: dir,
+		id:     dirID,
+	}
+	return o.SetModTime(ctx, modTime)
+}
+
 // delete a file or directory unconditionally by ID
 func (f *Fs) delete(ctx context.Context, id string, useTrash bool) error {
 	return f.pacer.Call(func() (bool, error) {
@@ -4242,6 +4256,7 @@ var (
 	_ fs.PublicLinker    = (*Fs)(nil)
 	_ fs.ListRer         = (*Fs)(nil)
 	_ fs.MergeDirser     = (*Fs)(nil)
+	_ fs.DirSetModTimer  = (*Fs)(nil)
 	_ fs.Abouter         = (*Fs)(nil)
 	_ fs.Object          = (*Object)(nil)
 	_ fs.MimeTyper       = (*Object)(nil)
