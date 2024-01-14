@@ -409,7 +409,13 @@ func TestItemReloadCacheStale(t *testing.T) {
 	assert.NotEqual(t, contents, contents2)
 
 	// Re-open with updated object
+	oldFingerprint := item.info.Fingerprint
+	assert.NotEqual(t, "", oldFingerprint)
 	require.NoError(t, item.Open(obj))
+
+	// Make sure fingerprint was updated
+	assert.NotEqual(t, oldFingerprint, item.info.Fingerprint)
+	assert.NotEqual(t, "", item.info.Fingerprint)
 
 	// Check size is now 110
 	size, err = item.GetSize()

@@ -714,3 +714,47 @@ func TestRWCacheRename(t *testing.T) {
 	assert.False(t, vfs.cache.Exists("rename_me"))
 	assert.True(t, vfs.cache.Exists("i_was_renamed"))
 }
+
+// Test the cache reading a file that is updated externally
+//
+// See: https://github.com/rclone/rclone/issues/6053
+func TestRWCacheUpdate(t *testing.T) {
+	opt := vfscommon.DefaultOpt
+	opt.CacheMode = vfscommon.CacheModeFull
+	opt.WriteBack = writeBackDelay
+	opt.DirCacheTime = 100 * time.Millisecond
+	r, vfs := newTestVFSOpt(t, &opt)
+
+	if r.Fremote.Precision() == fs.ModTimeNotSupported {
+		t.Skip("skip as modtime not supported")
+	}
+
+	const filename = "TestRWCacheUpdate"
+
+	modTime := time.Now().Add(-time.Hour)
+	for i := 0; i < 10; i++ {
+		modTime = modTime.Add(time.Minute)
+		// Refresh test file
+		contents := fmt.Sprintf("TestRWCacheUpdate%03d", i)
+		// Increase the size for second half of test
+		for j := 5; j < i; j++ {
+			contents += "*"
+		}
+		file1 := r.WriteObject(context.Background(), filename, contents, modTime)
+		r.CheckRemoteItems(t, file1)
+
+		// Wait for directory cache to expire
+		time.Sleep(2 * opt.DirCacheTime)
+
+		// Check the file is OK via the VFS
+		data, err := vfs.ReadFile(filename)
+		require.NoError(t, err)
+		require.Equal(t, contents, string(data))
+
+		// Check Stat
+		fi, err := vfs.Stat(filename)
+		require.NoError(t, err)
+		assert.Equal(t, int64(len(contents)), fi.Size())
+		fstest.AssertTimeEqualWithPrecision(t, filename, modTime, fi.ModTime(), r.Fremote.Precision())
+	}
+}
