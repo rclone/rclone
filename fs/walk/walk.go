@@ -320,8 +320,6 @@ func listR(ctx context.Context, f fs.Fs, path string, includeAll bool, listType 
 				}
 				if include {
 					filteredEntries = append(filteredEntries, entry)
-				} else {
-					fs.Debugf(entry, "Excluded from sync (and deletion)")
 				}
 			}
 			entries = filteredEntries
@@ -480,8 +478,6 @@ func walkRDirTree(ctx context.Context, f fs.Fs, startPath string, includeAll boo
 						dirs.Add(x)
 						excluded = false
 					}
-				} else {
-					fs.Debugf(x, "Excluded from sync (and deletion)")
 				}
 				// Make sure we include any parent directories of excluded objects
 				if excluded {
@@ -511,7 +507,6 @@ func walkRDirTree(ctx context.Context, f fs.Fs, startPath string, includeAll boo
 						if basename == excludeFile {
 							excludeDir := parentDir(x.Remote())
 							toPrune[excludeDir] = true
-							fs.Debugf(basename, "Excluded from sync (and deletion) based on exclude file")
 						}
 					}
 				}
@@ -529,8 +524,6 @@ func walkRDirTree(ctx context.Context, f fs.Fs, startPath string, includeAll boo
 							dirs.AddDir(x)
 						}
 					}
-				} else {
-					fs.Debugf(x, "Excluded from sync (and deletion)")
 				}
 			default:
 				return fmt.Errorf("unknown object type %T", entry)
