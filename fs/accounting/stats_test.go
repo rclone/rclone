@@ -157,7 +157,7 @@ func TestStatsTotalDuration(t *testing.T) {
 		s.AddTransfer(tr1)
 
 		s.mu.Lock()
-		total := s.totalDuration()
+		total := s._totalDuration()
 		s.mu.Unlock()
 
 		assert.Equal(t, 1, len(s.startedTransfers))
@@ -175,7 +175,7 @@ func TestStatsTotalDuration(t *testing.T) {
 		s.AddTransfer(tr1)
 
 		s.mu.Lock()
-		total := s.totalDuration()
+		total := s._totalDuration()
 		s.mu.Unlock()
 
 		assert.Equal(t, time.Since(time1)/time.Second, total/time.Second)
@@ -213,7 +213,7 @@ func TestStatsTotalDuration(t *testing.T) {
 		time.Sleep(time.Millisecond)
 
 		s.mu.Lock()
-		total := s.totalDuration()
+		total := s._totalDuration()
 		s.mu.Unlock()
 
 		assert.Equal(t, time.Duration(30), total/time.Second)
@@ -244,7 +244,7 @@ func TestStatsTotalDuration(t *testing.T) {
 		})
 
 		s.mu.Lock()
-		total := s.totalDuration()
+		total := s._totalDuration()
 		s.mu.Unlock()
 
 		assert.Equal(t, startTime.Sub(time1)/time.Second, total/time.Second)
@@ -449,7 +449,7 @@ func TestPruneTransfers(t *testing.T) {
 			}
 
 			s.mu.Lock()
-			assert.Equal(t, time.Duration(test.Transfers)*time.Second, s.totalDuration())
+			assert.Equal(t, time.Duration(test.Transfers)*time.Second, s._totalDuration())
 			assert.Equal(t, test.Transfers, len(s.startedTransfers))
 			s.mu.Unlock()
 
@@ -458,7 +458,7 @@ func TestPruneTransfers(t *testing.T) {
 			}
 
 			s.mu.Lock()
-			assert.Equal(t, time.Duration(test.Transfers)*time.Second, s.totalDuration())
+			assert.Equal(t, time.Duration(test.Transfers)*time.Second, s._totalDuration())
 			assert.Equal(t, test.ExpectedStartedTransfers, len(s.startedTransfers))
 			s.mu.Unlock()
 
