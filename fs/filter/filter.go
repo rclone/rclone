@@ -336,24 +336,24 @@ func (f *Filter) Include(remote string, size int64, modTime time.Time, metadata 
 	if f.files != nil {
 		_, include := f.files[remote]
 		if !include {
-			fs.Debugf(nil, "Excluded (FilesFrom Filter): %s", remote)
+			fs.Debugf(remote, "Excluded (FilesFrom Filter)", remote)
 		}
 		return include
 	}
 	if !f.ModTimeFrom.IsZero() && modTime.Before(f.ModTimeFrom) {
-		fs.Debugf(nil, "Excluded (ModTime Filter): %s", remote)
+		fs.Debugf(remote, "Excluded (ModTime Filter)", remote)
 		return false
 	}
 	if !f.ModTimeTo.IsZero() && modTime.After(f.ModTimeTo) {
-		fs.Debugf(nil, "Excluded (ModTime Filter): %s", remote)
+		fs.Debugf(remote, "Excluded (ModTime Filter)", remote)
 		return false
 	}
 	if f.Opt.MinSize >= 0 && size < int64(f.Opt.MinSize) {
-		fs.Debugf(nil, "Excluded (Size Filter): %s", remote)
+		fs.Debugf(remote, "Excluded (Size Filter)", remote)
 		return false
 	}
 	if f.Opt.MaxSize >= 0 && size > int64(f.Opt.MaxSize) {
-		fs.Debugf(nil, "Excluded (Size Filter): %s", remote)
+		fs.Debugf(remote, "Excluded (Size Filter)", remote)
 		return false
 	}
 	if f.metaRules.len() > 0 {
@@ -367,13 +367,13 @@ func (f *Filter) Include(remote string, size int64, modTime time.Time, metadata 
 			metadatas = append(metadatas, "\x00=\x00")
 		}
 		if !f.metaRules.includeMany(metadatas) {
-			fs.Debugf(nil, "Excluded (Metadata Filter): %s", remote)
+			fs.Debugf(remote, "Excluded (Metadata Filter)", remote)
 			return false
 		}
 	}
 	include := f.IncludeRemote(remote)
 	if !include {
-		fs.Debugf(nil, "Excluded (Path Filter): %s", remote)
+		fs.Debugf(remote, "Excluded (Path Filter)", remote)
 	}
 	return include
 }
