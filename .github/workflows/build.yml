@@ -168,7 +168,7 @@ jobs:
           env
 
       - name: Go module cache
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ~/go/pkg/mod
           key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
@@ -271,7 +271,7 @@ jobs:
           go-version: '1.21'
 
       - name: Go module cache
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ~/go/pkg/mod
           key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
