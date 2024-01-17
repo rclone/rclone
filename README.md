@@ -1,5 +1,7 @@
 [<img src="https://rclone.org/img/logo_on_light__horizontal_color.svg" width="50%" alt="rclone logo">](https://rclone.org/#gh-light-mode-only)
 [<img src="https://rclone.org/img/logo_on_dark__horizontal_color.svg" width="50%" alt="rclone logo">](https://rclone.org/#gh-dark-mode-only)
+[<img src="https://rclone.org/img/logos/warp-github-light.svg" title="Visit warp.dev to learn more." align="right">](https://www.warp.dev/?utm_source=github&utm_medium=referral&utm_campaign=rclone_20231103#gh-light-mode-only)
+[<img src="https://rclone.org/img/logos/warp-github-dark.svg" title="Visit warp.dev to learn more." align="right">](https://www.warp.dev/?utm_source=github&utm_medium=referral&utm_campaign=rclone_20231103#gh-dark-mode-only)
 
 [Website](https://rclone.org) |
 [Documentation](https://rclone.org/docs/) |
@@ -45,6 +47,7 @@ Rclone *("rsync for cloud storage")* is a command-line program to sync files and
   * HiDrive [:page_facing_up:](https://rclone.org/hidrive/)
   * HTTP [:page_facing_up:](https://rclone.org/http/)
   * Huawei Cloud Object Storage Service(OBS) [:page_facing_up:](https://rclone.org/s3/#huawei-obs)
+  * ImageKit [:page_facing_up:](https://rclone.org/imagekit/)
   * Internet Archive [:page_facing_up:](https://rclone.org/internetarchive/)
   * Jottacloud [:page_facing_up:](https://rclone.org/jottacloud/)
   * IBM COS S3 [:page_facing_up:](https://rclone.org/s3/#ibm-cos-s3)

@@ -49,11 +49,6 @@ var (
 	MatchTestRemote = regexp.MustCompile(`^rclone-test-[abcdefghijklmnopqrstuvwxyz0123456789]{24}$`)
 )
 
-// Seed the random number generator
-func init() {
-	_ = random.Seed()
-}
-
 // Initialise rclone for testing
 func Initialise() {
 	ctx := context.Background()

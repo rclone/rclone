@@ -139,10 +139,10 @@ func (s *StatsInfo) RemoteStats() (out rc.Params, err error) {
 	return out, nil
 }
 
-// speed returns the average speed of the transfer in bytes/second
+// _speed returns the average speed of the transfer in bytes/second
 //
 // Call with lock held
-func (s *StatsInfo) speed() float64 {
+func (s *StatsInfo) _speed() float64 {
 	return s.average.speed
 }
 
@@ -213,8 +213,9 @@ func (trs timeRanges) total() (total time.Duration) {
 
 // Total duration is union of durations of all transfers belonging to this
 // object.
+//
 // Needs to be protected by mutex.
-func (s *StatsInfo) totalDuration() time.Duration {
+func (s *StatsInfo) _totalDuration() time.Duration {
 	// copy of s.oldTimeRanges with extra room for the current transfers
 	timeRanges := make(timeRanges, len(s.oldTimeRanges), len(s.oldTimeRanges)+len(s.startedTransfers))
 	copy(timeRanges, s.oldTimeRanges)
@@ -313,7 +314,7 @@ func (s *StatsInfo) calculateTransferStats() (ts transferStats) {
 	// we take it off here to avoid double counting
 	ts.totalBytes = s.transferQueueSize + s.bytes + transferringBytesTotal - transferringBytesDone
 	ts.speed = s.average.speed
-	dt := s.totalDuration()
+	dt := s._totalDuration()
 	ts.transferTime = dt.Seconds()
 
 	return ts
@@ -355,18 +356,31 @@ func (s *StatsInfo) averageLoop() {
 	}
 }
 
+// Start the average loop
 func (s *StatsInfo) startAverageLoop() {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
 	s.average.startOnce.Do(func() {
 		s.average.stopped.Add(1)
 		go s.averageLoop()
 	})
 }
 
-func (s *StatsInfo) stopAverageLoop() {
+// Stop the average loop
+//
+// Call with the mutex held
+func (s *StatsInfo) _stopAverageLoop() {
 	s.average.stopOnce.Do(func() {
 		close(s.average.stop)
 		s.average.stopped.Wait()
 	})
+}
+
+// Stop the average loop
+func (s *StatsInfo) stopAverageLoop() {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	s._stopAverageLoop()
 }
 
 // String convert the StatsInfo to a string for printing
@@ -682,7 +696,7 @@ func (s *StatsInfo) ResetCounters() {
 	s.startedTransfers = nil
 	s.oldDuration = 0
 
-	s.stopAverageLoop()
+	s._stopAverageLoop()
 	s.average = averageValues{stop: make(chan bool)}
 }
 
@@ -822,11 +836,11 @@ func (s *StatsInfo) AddTransfer(transfer *Transfer) {
 	s.mu.Unlock()
 }
 
-// removeTransfer removes a reference to the started transfer in
+// _removeTransfer removes a reference to the started transfer in
 // position i.
 //
 // Must be called with the lock held
-func (s *StatsInfo) removeTransfer(transfer *Transfer, i int) {
+func (s *StatsInfo) _removeTransfer(transfer *Transfer, i int) {
 	now := time.Now()
 
 	// add finished transfer onto old time ranges
@@ -858,7 +872,7 @@ func (s *StatsInfo) RemoveTransfer(transfer *Transfer) {
 	s.mu.Lock()
 	for i, tr := range s.startedTransfers {
 		if tr == transfer {
-			s.removeTransfer(tr, i)
+			s._removeTransfer(tr, i)
 			break
 		}
 	}
@@ -876,7 +890,7 @@ func (s *StatsInfo) PruneTransfers() {
 	if len(s.startedTransfers) > MaxCompletedTransfers+s.ci.Transfers {
 		for i, tr := range s.startedTransfers {
 			if tr.IsDone() {
-				s.removeTransfer(tr, i)
+				s._removeTransfer(tr, i)
 				break
 			}
 		}

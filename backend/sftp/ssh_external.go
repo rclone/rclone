@@ -10,6 +10,7 @@ import (
 	"io"
 	"os/exec"
 	"strings"
+	"time"
 
 	"github.com/rclone/rclone/fs"
 )
@@ -93,8 +94,7 @@ func (f *Fs) newSSHSessionExternal() *sshSessionExternal {
 	s.cmd = exec.CommandContext(ctx, ssh[0], ssh[1:]...)
 
 	// Allow the command a short time only to shut down
-	// FIXME enable when we get rid of go1.19
-	// s.cmd.WaitDelay = time.Second
+	s.cmd.WaitDelay = time.Second
 
 	return s
 }

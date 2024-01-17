@@ -29,12 +29,6 @@ var (
 	testNumber atomic.Int32
 )
 
-// Seed the random number generator
-func init() {
-	_ = random.Seed()
-
-}
-
 // Test contains stats about the running test which work for files or
 // directories
 type Test struct {
