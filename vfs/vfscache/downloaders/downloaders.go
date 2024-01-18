@@ -518,7 +518,7 @@ loop:
 // should be called on a fresh downloader
 func (dl *downloader) open(offset int64) (err error) {
 	// defer log.Trace(dl.dls.src, "offset=%d", offset)("err=%v", &err)
-	dl.tr = accounting.Stats(dl.dls.ctx).NewTransfer(dl.dls.src)
+	dl.tr = accounting.Stats(dl.dls.ctx).NewTransfer(dl.dls.src, nil)
 
 	size := dl.dls.src.Size()
 	if size < 0 {

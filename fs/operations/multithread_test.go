@@ -183,7 +183,7 @@ func TestMultithreadCopy(t *testing.T) {
 				require.NoError(t, err)
 
 				accounting.GlobalStats().ResetCounters()
-				tr := accounting.GlobalStats().NewTransfer(src)
+				tr := accounting.GlobalStats().NewTransfer(src, nil)
 
 				defer func() {
 					tr.Done(ctx, err)
@@ -284,7 +284,7 @@ func TestMultithreadCopyAbort(t *testing.T) {
 	src, err := r.Flocal.NewObject(ctx, fileName)
 	require.NoError(t, err)
 	accounting.GlobalStats().ResetCounters()
-	tr := accounting.GlobalStats().NewTransfer(src)
+	tr := accounting.GlobalStats().NewTransfer(src, nil)
 
 	defer func() {
 		tr.Done(ctx, err)

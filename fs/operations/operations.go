@@ -382,7 +382,7 @@ func move(ctx context.Context, fdst fs.Fs, dst fs.Object, remote string, src fs.
 	ci := fs.GetConfig(ctx)
 	var tr *accounting.Transfer
 	if isTransfer {
-		tr = accounting.Stats(ctx).NewTransfer(src)
+		tr = accounting.Stats(ctx).NewTransfer(src, fdst)
 	} else {
 		tr = accounting.Stats(ctx).NewCheckingTransfer(src, "moving")
 	}
@@ -814,7 +814,7 @@ func HashSum(ctx context.Context, ht hash.Type, base64Encoded bool, downloadFlag
 		// Setup: Define accounting, open the file with NewReOpen to provide restarts, account for the transfer, and setup a multi-hasher with the appropriate type
 		// Execution: io.Copy file to hasher, get hash and encode in hex
 
-		tr := accounting.Stats(ctx).NewTransfer(o)
+		tr := accounting.Stats(ctx).NewTransfer(o, nil)
 		defer func() {
 			tr.Done(ctx, err)
 		}()
@@ -1106,7 +1106,7 @@ func Cat(ctx context.Context, f fs.Fs, w io.Writer, offset, count int64, sep []b
 	ci := fs.GetConfig(ctx)
 	return ListFn(ctx, f, func(o fs.Object) {
 		var err error
-		tr := accounting.Stats(ctx).NewTransfer(o)
+		tr := accounting.Stats(ctx).NewTransfer(o, nil)
 		defer func() {
 			tr.Done(ctx, err)
 		}()
@@ -1157,7 +1157,7 @@ func Cat(ctx context.Context, f fs.Fs, w io.Writer, offset, count int64, sep []b
 // Rcat reads data from the Reader until EOF and uploads it to a file on remote
 func Rcat(ctx context.Context, fdst fs.Fs, dstFileName string, in io.ReadCloser, modTime time.Time, meta fs.Metadata) (dst fs.Object, err error) {
 	ci := fs.GetConfig(ctx)
-	tr := accounting.Stats(ctx).NewTransferRemoteSize(dstFileName, -1)
+	tr := accounting.Stats(ctx).NewTransferRemoteSize(dstFileName, -1, nil, fdst)
 	defer func() {
 		tr.Done(ctx, err)
 	}()
@@ -1603,7 +1603,7 @@ func RcatSize(ctx context.Context, fdst fs.Fs, dstFileName string, in io.ReadClo
 	if size >= 0 {
 		var err error
 		// Size known use Put
-		tr := accounting.Stats(ctx).NewTransferRemoteSize(dstFileName, size)
+		tr := accounting.Stats(ctx).NewTransferRemoteSize(dstFileName, size, nil, fdst)
 		defer func() {
 			tr.Done(ctx, err)
 		}()
@@ -1807,7 +1807,7 @@ func moveOrCopyFile(ctx context.Context, fdst fs.Fs, fsrc fs.Fs, dstFileName str
 			logger(ctx, TransferError, nil, tmpObjFail, err)
 			return fmt.Errorf("error while attempting to move file to a temporary location: %w", err)
 		}
-		tr := accounting.Stats(ctx).NewTransfer(srcObj)
+		tr := accounting.Stats(ctx).NewTransfer(srcObj, fdst)
 		defer func() {
 			tr.Done(ctx, err)
 		}()

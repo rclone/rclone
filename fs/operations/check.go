@@ -341,7 +341,7 @@ func checkIdenticalDownload(ctx context.Context, dst, src fs.Object) (differ boo
 	if err != nil {
 		return true, fmt.Errorf("failed to open %q: %w", dst, err)
 	}
-	tr1 := accounting.Stats(ctx).NewTransfer(dst)
+	tr1 := accounting.Stats(ctx).NewTransfer(dst, nil)
 	defer func() {
 		tr1.Done(ctx, nil) // error handling is done by the caller
 	}()
@@ -351,7 +351,7 @@ func checkIdenticalDownload(ctx context.Context, dst, src fs.Object) (differ boo
 	if err != nil {
 		return true, fmt.Errorf("failed to open %q: %w", src, err)
 	}
-	tr2 := accounting.Stats(ctx).NewTransfer(dst)
+	tr2 := accounting.Stats(ctx).NewTransfer(dst, nil)
 	defer func() {
 		tr2.Done(ctx, nil) // error handling is done by the caller
 	}()
@@ -501,7 +501,7 @@ func (c *checkMarch) checkSum(ctx context.Context, obj fs.Object, download bool,
 		if in, err = Open(ctx, obj); err != nil {
 			return
 		}
-		tr := accounting.Stats(ctx).NewTransfer(obj)
+		tr := accounting.Stats(ctx).NewTransfer(obj, nil)
 		in = tr.Account(ctx, in).WithBuffer() // account and buffer the transfer
 		defer func() {
 			tr.Done(ctx, nil) // will close the stream
