@@ -102,6 +102,8 @@ Optional Flags:
       --conflict-suffix string               Suffix to use when renaming a --conflict-loser. Can be either one string or two comma-separated strings to assign different suffixes to Path1/Path2. (default: 'conflict')
       --create-empty-src-dirs                Sync creation and deletion of empty directories. (Not compatible with --remove-empty-dirs)
       --download-hash                        Compute hash by downloading when otherwise unavailable. (warning: may be slow and use lots of data!)
+      --edit-filters                         Edit --filters-file automatically with the interactive genfilters UI
+      --edit-filters-path2                   same as --edit-filters but Path2 is shown in the genfilters UI instead of Path1.
       --filters-file string                  Read filtering patterns from a file
       --force                                Bypass --max-delete safety check and run the sync. Consider using with --verbose
   -h, --help                                 help for bisync
@@ -488,6 +490,11 @@ See the [bisync filters](#filtering) section and generic
 documentation.
 An [example filters file](#example-filters-file) contains filters for
 non-allowed files for synching with Dropbox.
+
+To prevent mistakes, it is highly recommended to create/edit your `--filters-file`
+using the interactive [`genfilters`](/commands/rclone_genfilters/) UI. Bisync
+integrates with `genfilters` automatically -- just add `--edit-filters` to your
+bisync command.
 
 If you make changes to your filters file then bisync requires a run
 with `--resync`. This is a safety feature, which prevents existing files
@@ -1136,6 +1143,11 @@ filtering mechanism.
 For a given bisync run you may provide _only one_ `--filters-file`.
 The `--include*`, `--exclude*`, and `--filter` flags are also supported.
 
+To prevent mistakes, it is highly recommended to create/edit your `--filters-file`
+using the interactive [`genfilters`](/commands/rclone_genfilters/) UI. Bisync
+integrates with `genfilters` automatically -- just add `--edit-filters` to your
+bisync command.
+
 ### How to filter directories
 
 Filtering portions of the directory tree is a critical feature for synching.
@@ -1198,6 +1210,11 @@ A few rules for the syntax of a filter file expanding on
 - Only forward slashes (`/`) are used in path terms, even on Windows.
 - The rest of the line is taken as the path term.
   Trailing whitespace is taken literally, and probably is an error.
+
+If unsure, you can always check your filters using bisync's integration with the
+interactive [`genfilters`](/commands/rclone_genfilters/) UI. Add `--edit-filters`
+to your bisync command to check with Path1, or `--edit-filters-path2` to check with
+Path2.
 
 ### Example include-style filters for Windows user directories {#include-filters}
 
@@ -1835,6 +1852,7 @@ instead of of `--size-only`, when `check` is not available.
 * Bisync now supports auto-resolving sync conflicts and customizing rename behavior with new [`--conflict-resolve`](#conflict-resolve), [`--conflict-loser`](#conflict-loser), and [`--conflict-suffix`](#conflict-suffix) flags.
 * A new [`--resync-mode`](#resync-mode) flag allows more control over which version of a file gets kept during a `--resync`.
 * Bisync now supports [`--retries`](/docs/#retries-int) and [`--retries-sleep`](/docs/#retries-sleep-time) (when [`--resilient`](#resilient) is set.)
+* Added support for editing [`--filters-file`](#filters-file) automatically with the interactive [`genfilters`](/commands/rclone_genfilters/) UI
 
 ### `v1.64`
 * Fixed an [issue](https://forum.rclone.org/t/bisync-bugs-and-feature-requests/37636#:~:text=1.%20Dry%20runs%20are%20not%20completely%20dry) 
