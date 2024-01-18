@@ -124,6 +124,7 @@ func init() {
 	cmdFlags := commandDefinition.Flags()
 	// when adding new flags, remember to also update the rc params:
 	// cmd/bisync/rc.go cmd/bisync/help.go (not docs/content/rc.md)
+	// and the Command line syntax section of docs/content/bisync.md (it doesn't update automatically)
 	flags.BoolVarP(cmdFlags, &Opt.Resync, "resync", "1", Opt.Resync, "Performs the resync run. Equivalent to --resync-mode path1. Consider using --verbose or --dry-run first.", "")
 	flags.FVarP(cmdFlags, &Opt.ResyncMode, "resync-mode", "", "During resync, prefer the version that is: path1, path2, newer, older, larger, smaller (default: path1 if --resync, otherwise none for no resync.)", "")
 	flags.BoolVarP(cmdFlags, &Opt.CheckAccess, "check-access", "", Opt.CheckAccess, makeHelp("Ensure expected {CHECKFILE} files are found on both Path1 and Path2 filesystems, else abort."), "")
