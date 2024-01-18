@@ -91,38 +91,35 @@ Positional arguments:
                 Type 'rclone listremotes' for list of configured remotes.
 
 Optional Flags:
-      --check-access            Ensure expected `RCLONE_TEST` files are found on
-                                both Path1 and Path2 filesystems, else abort.
-      --check-filename FILENAME Filename for `--check-access` (default: `RCLONE_TEST`)
-      --check-sync CHOICE       Controls comparison of final listings:
-                                `true | false | only` (default: true)
-                                If set to `only`, bisync will only compare listings
-                                from the last run but skip actual sync.
-      --filters-file PATH       Read filtering patterns from a file
-      --max-delete PERCENT      Safety check on maximum percentage of deleted files allowed.
-                                If exceeded, the bisync run will abort. (default: 50%)
-      --force                   Bypass `--max-delete` safety check and run the sync.
-                                Consider using with `--verbose`
-      --create-empty-src-dirs   Sync creation and deletion of empty directories. 
-                                  (Not compatible with --remove-empty-dirs)
-      --remove-empty-dirs       Remove empty directories at the final cleanup step.
-  -1, --resync                  Performs the resync run.
-                                Warning: Path1 files may overwrite Path2 versions.
-                                Consider using `--verbose` or `--dry-run` first.
-      --ignore-listing-checksum Do not use checksums for listings 
-                                  (add --ignore-checksum to additionally skip post-copy checksum checks)
-      --resilient               Allow future runs to retry after certain less-serious errors, 
-                                  instead of requiring --resync. Use at your own risk!
-      --localtime               Use local time in listings (default: UTC)
-      --no-cleanup              Retain working files (useful for troubleshooting and testing).
-      --workdir PATH            Use custom working directory (useful for testing).
-                                (default: `~/.cache/rclone/bisync`)
-      --backup-dir1 PATH        --backup-dir for Path1. Must be a non-overlapping path on the same remote.
-      --backup-dir2 PATH        --backup-dir for Path2. Must be a non-overlapping path on the same remote.
-  -n, --dry-run                 Go through the motions - No files are copied/deleted.
-  -v, --verbose                 Increases logging verbosity.
-                                May be specified more than once for more details.
-  -h, --help                    help for bisync
+      --backup-dir1 string                   --backup-dir for Path1. Must be a non-overlapping path on the same remote.
+      --backup-dir2 string                   --backup-dir for Path2. Must be a non-overlapping path on the same remote.
+      --check-access                         Ensure expected RCLONE_TEST files are found on both Path1 and Path2 filesystems, else abort.
+      --check-filename string                Filename for --check-access (default: RCLONE_TEST)
+      --check-sync string                    Controls comparison of final listings: true|false|only (default: true) (default "true")
+      --compare string                       Comma-separated list of bisync-specific compare options ex. 'size,modtime,checksum' (default: 'size,modtime')
+      --conflict-loser ConflictLoserAction   Action to take on the loser of a sync conflict (when there is a winner) or on both files (when there is no winner): , num, pathname, delete (default: num)
+      --conflict-resolve string              Automatically resolve conflicts by preferring the version that is: none, path1, path2, newer, older, larger, smaller (default: none) (default "none")
+      --conflict-suffix string               Suffix to use when renaming a --conflict-loser. Can be either one string or two comma-separated strings to assign different suffixes to Path1/Path2. (default: 'conflict')
+      --create-empty-src-dirs                Sync creation and deletion of empty directories. (Not compatible with --remove-empty-dirs)
+      --download-hash                        Compute hash by downloading when otherwise unavailable. (warning: may be slow and use lots of data!)
+      --filters-file string                  Read filtering patterns from a file
+      --force                                Bypass --max-delete safety check and run the sync. Consider using with --verbose
+  -h, --help                                 help for bisync
+      --ignore-listing-checksum              Do not use checksums for listings (add --ignore-checksum to additionally skip post-copy checksum checks)
+      --max-lock Duration                    Consider lock files older than this to be expired (default: 0 (never expire)) (minimum: 2m) (default 0s)
+      --no-cleanup                           Retain working files (useful for troubleshooting and testing).
+      --no-slow-hash                         Ignore listing checksums only on backends where they are slow
+      --recover                              Automatically recover from interruptions without requiring --resync.
+      --remove-empty-dirs                    Remove ALL empty directories at the final cleanup step.
+      --resilient                            Allow future runs to retry after certain less-serious errors, instead of requiring --resync. Use at your own risk!
+  -1, --resync                               Performs the resync run. Equivalent to --resync-mode path1. Consider using --verbose or --dry-run first.
+      --resync-mode string                   During resync, prefer the version that is: path1, path2, newer, older, larger, smaller (default: path1 if --resync, otherwise none for no resync.) (default "none")
+      --retries int                          Retry operations this many times if they fail (default 3)
+      --slow-hash-sync-only                  Ignore slow checksums for listings and deltas, but still consider them during sync calls.
+      --workdir string                       Use custom working dir - useful for testing. (default: {WORKDIR})
+      --max-delete PERCENT                   Safety check on maximum percentage of deleted files allowed. If exceeded, the bisync run will abort. (default: 50%)
+  -n, --dry-run                              Go through the motions - No files are copied/deleted.
+  -v, --verbose                              Increases logging verbosity. May be specified more than once for more details.
 ```
 
 Arbitrary rclone flags may be specified on the
