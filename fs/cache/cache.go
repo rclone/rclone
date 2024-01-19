@@ -168,12 +168,17 @@ func GetArr(ctx context.Context, fsStrings []string) (f []fs.Fs, err error) {
 	return fArr, nil
 }
 
-// Put puts an fs.Fs named fsString into the cache
-func Put(fsString string, f fs.Fs) {
+// PutErr puts an fs.Fs named fsString into the cache with err
+func PutErr(fsString string, f fs.Fs, err error) {
 	createOnFirstUse()
 	canonicalName := fs.ConfigString(f)
-	c.Put(canonicalName, f)
+	c.PutErr(canonicalName, f, err)
 	addMapping(fsString, canonicalName)
+}
+
+// Put puts an fs.Fs named fsString into the cache
+func Put(fsString string, f fs.Fs) {
+	PutErr(fsString, f, nil)
 }
 
 // ClearConfig deletes all entries which were based on the config name passed in
