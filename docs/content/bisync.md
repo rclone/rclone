@@ -25,7 +25,7 @@ Here is a typical run log (with timestamps removed for clarity):
 
 ```
 rclone bisync /testdir/path1/ /testdir/path2/ --verbose
-INFO  : Synching Path1 "/testdir/path1/" with Path2 "/testdir/path2/"
+INFO  : Syncing Path1 "/testdir/path1/" with Path2 "/testdir/path2/"
 INFO  : Path1 checking for diffs
 INFO  : - Path1    File is new                         - file11.txt
 INFO  : - Path1    File is newer                       - file2.txt
@@ -244,7 +244,7 @@ See the [bisync filters](#filtering) section and generic
 [--filter-from](/filtering/#filter-from-read-filtering-patterns-from-a-file)
 documentation.
 An [example filters file](#example-filters-file) contains filters for
-non-allowed files for synching with Dropbox.
+non-allowed files for syncing with Dropbox.
 
 If you make changes to your filters file then bisync requires a run
 with `--resync`. This is a safety feature, which prevents existing files
@@ -275,7 +275,7 @@ Using `--check-sync=false` will disable it and may significantly reduce the
 sync run times for very large numbers of files.
 
 The check may be run manually with `--check-sync=only`. It runs only the
-integrity check and terminates without actually synching.
+integrity check and terminates without actually syncing.
 
 See also: [Concurrent modifications](#concurrent-modifications)
 
@@ -585,7 +585,7 @@ instead of specifying them with command flags. (You can still override them as n
 
 ### Case sensitivity
 
-Synching with **case-insensitive** filesystems, such as Windows or `Box`,
+Syncing with **case-insensitive** filesystems, such as Windows or `Box`,
 can result in file name conflicts. This will be fixed in a future release.
 The near-term workaround is to make sure that files on both sides
 don't have spelling case differences (`Smile.jpg` vs. `smile.jpg`).
@@ -624,7 +624,7 @@ The `--include*`, `--exclude*`, and `--filter` flags are also supported.
 
 ### How to filter directories
 
-Filtering portions of the directory tree is a critical feature for synching.
+Filtering portions of the directory tree is a critical feature for syncing.
 
 Examples of directory trees (always beneath the Path1/Path2 root level)
 you may want to exclude from your sync:
@@ -733,7 +733,7 @@ quashed by adding `--quiet` to the bisync command line.
 
 ## Example exclude-style filters files for use with Dropbox {#exclude-filters}
 
-- Dropbox disallows synching the listed temporary and configuration/data files.
+- Dropbox disallows syncing the listed temporary and configuration/data files.
   The `- <filename>` filters exclude these files where ever they may occur
   in the sync tree. Consider adding similar exclusions for file types
   you don't need to sync, such as core dump and software build files.
@@ -787,7 +787,7 @@ Here are two normal runs. The first one has a newer file on the remote.
 The second has no deltas between local and remote.
 
 ```
-2021/05/16 00:24:38 INFO  : Synching Path1 "/path/to/local/tree/" with Path2 "dropbox:/"
+2021/05/16 00:24:38 INFO  : Syncing Path1 "/path/to/local/tree/" with Path2 "dropbox:/"
 2021/05/16 00:24:38 INFO  : Path1 checking for diffs
 2021/05/16 00:24:38 INFO  : - Path1    File is new                         - file.txt
 2021/05/16 00:24:38 INFO  : Path1:    1 changes:    1 new,    0 newer,    0 older,    0 deleted
@@ -799,7 +799,7 @@ The second has no deltas between local and remote.
 2021/05/16 00:24:38 INFO  : Validating listings for Path1 "/path/to/local/tree/" vs Path2 "dropbox:/"
 2021/05/16 00:24:38 INFO  : Bisync successful
 
-2021/05/16 00:36:52 INFO  : Synching Path1 "/path/to/local/tree/" with Path2 "dropbox:/"
+2021/05/16 00:36:52 INFO  : Syncing Path1 "/path/to/local/tree/" with Path2 "dropbox:/"
 2021/05/16 00:36:52 INFO  : Path1 checking for diffs
 2021/05/16 00:36:52 INFO  : Path2 checking for diffs
 2021/05/16 00:36:52 INFO  : No changes found
@@ -837,7 +837,7 @@ Since there are no final error/warning messages on line _7_, rclone has
 recovered from failure after a retry, and the overall sync was successful.
 
 ```
-1: 2021/05/14 00:44:12 INFO  : Synching Path1 "/path/to/local/tree" with Path2 "dropbox:"
+1: 2021/05/14 00:44:12 INFO  : Syncing Path1 "/path/to/local/tree" with Path2 "dropbox:"
 2: 2021/05/14 00:44:12 INFO  : Path1 checking for diffs
 3: 2021/05/14 00:44:12 INFO  : Path2 checking for diffs
 4: 2021/05/14 00:44:12 INFO  : Path2:  113 changes:   22 new,    0 newer,    0 older,   91 deleted
@@ -882,7 +882,7 @@ They will show up with a length of `-1` in the listings.
 This bisync run is otherwise successful:
 
 ```
-2021/05/11 08:23:15 INFO  : Synching Path1 "/path/to/local/tree/base/" with Path2 "GDrive:"
+2021/05/11 08:23:15 INFO  : Syncing Path1 "/path/to/local/tree/base/" with Path2 "GDrive:"
 2021/05/11 08:23:15 INFO  : ...path2.lst-new: Ignoring incorrect line: "- -1 - - 2018-07-29T08:49:30.136000000+0000 GoogleDoc.docx"
 2021/05/11 08:23:15 INFO  : Bisync successful
 ```
@@ -1032,7 +1032,7 @@ test command flags can be equally prefixed by a single `-` or double dash.
 
 - `go test . -case basic -remote local -remote2 local`
   runs the `test_basic` test case using only the local filesystem,
-  synching one local directory with another local directory.
+  syncing one local directory with another local directory.
   Test script output is to the console, while commands within scenario.txt
   have their output sent to the `.../workdir/test.log` file,
   which is finally compared to the golden copy.

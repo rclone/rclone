@@ -139,7 +139,7 @@ func (b *s3Backend) HeadObject(bucketName, objectName string) (*gofakes3.Object,
 	}, nil
 }
 
-// GetObject fetchs the object from the filesystem.
+// GetObject fetches the object from the filesystem.
 func (b *s3Backend) GetObject(bucketName, objectName string, rangeRequest *gofakes3.ObjectRangeRequest) (obj *gofakes3.Object, err error) {
 	_, err = b.vfs.Stat(bucketName)
 	if err != nil {
@@ -355,7 +355,7 @@ func (b *s3Backend) deleteObject(bucketName, objectName string) error {
 	}
 
 	fp := path.Join(bucketName, objectName)
-	// S3 does not report an error when attemping to delete a key that does not exist, so
+	// S3 does not report an error when attempting to delete a key that does not exist, so
 	// we need to skip IsNotExist errors.
 	if err := b.vfs.Remove(fp); err != nil && !os.IsNotExist(err) {
 		return err

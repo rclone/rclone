@@ -26127,7 +26127,7 @@ Here is a typical run log (with timestamps removed for clarity):
 .nf
 \f[C]
 rclone bisync /testdir/path1/ /testdir/path2/ --verbose
-INFO  : Synching Path1 \[dq]/testdir/path1/\[dq] with Path2 \[dq]/testdir/path2/\[dq]
+INFO  : Syncing Path1 \[dq]/testdir/path1/\[dq] with Path2 \[dq]/testdir/path2/\[dq]
 INFO  : Path1 checking for diffs
 INFO  : - Path1    File is new                         - file11.txt
 INFO  : - Path1    File is newer                       - file2.txt
@@ -26363,7 +26363,7 @@ See the bisync filters section and generic
 --filter-from (https://rclone.org/filtering/#filter-from-read-filtering-patterns-from-a-file)
 documentation.
 An example filters file contains filters for non-allowed files for
-synching with Dropbox.
+syncing with Dropbox.
 .PP
 If you make changes to your filters file then bisync requires a run with
 \f[C]--resync\f[R].
@@ -26400,7 +26400,7 @@ reduce the sync run times for very large numbers of files.
 .PP
 The check may be run manually with \f[C]--check-sync=only\f[R].
 It runs only the integrity check and terminates without actually
-synching.
+syncing.
 .PP
 See also: Concurrent modifications
 .SS --ignore-listing-checksum
@@ -26912,7 +26912,7 @@ of specifying them with command flags.
 (You can still override them as needed for other rclone commands.)
 .SS Case sensitivity
 .PP
-Synching with \f[B]case-insensitive\f[R] filesystems, such as Windows or
+Syncing with \f[B]case-insensitive\f[R] filesystems, such as Windows or
 \f[C]Box\f[R], can result in file name conflicts.
 This will be fixed in a future release.
 The near-term workaround is to make sure that files on both sides
@@ -26956,7 +26956,7 @@ flags are also supported.
 .SS How to filter directories
 .PP
 Filtering portions of the directory tree is a critical feature for
-synching.
+syncing.
 .PP
 Examples of directory trees (always beneath the Path1/Path2 root level)
 you may want to exclude from your sync: - Directory trees containing
@@ -27114,7 +27114,7 @@ This noise can be quashed by adding \f[C]--quiet\f[R] to the bisync
 command line.
 .SS Example exclude-style filters files for use with Dropbox
 .IP \[bu] 2
-Dropbox disallows synching the listed temporary and configuration/data
+Dropbox disallows syncing the listed temporary and configuration/data
 files.
 The \[ga]- \[ga] filters exclude these files where ever they may occur
 in the sync tree.
@@ -27178,7 +27178,7 @@ The second has no deltas between local and remote.
 .IP
 .nf
 \f[C]
-2021/05/16 00:24:38 INFO  : Synching Path1 \[dq]/path/to/local/tree/\[dq] with Path2 \[dq]dropbox:/\[dq]
+2021/05/16 00:24:38 INFO  : Syncing Path1 \[dq]/path/to/local/tree/\[dq] with Path2 \[dq]dropbox:/\[dq]
 2021/05/16 00:24:38 INFO  : Path1 checking for diffs
 2021/05/16 00:24:38 INFO  : - Path1    File is new                         - file.txt
 2021/05/16 00:24:38 INFO  : Path1:    1 changes:    1 new,    0 newer,    0 older,    0 deleted
@@ -27190,7 +27190,7 @@ The second has no deltas between local and remote.
 2021/05/16 00:24:38 INFO  : Validating listings for Path1 \[dq]/path/to/local/tree/\[dq] vs Path2 \[dq]dropbox:/\[dq]
 2021/05/16 00:24:38 INFO  : Bisync successful
 
-2021/05/16 00:36:52 INFO  : Synching Path1 \[dq]/path/to/local/tree/\[dq] with Path2 \[dq]dropbox:/\[dq]
+2021/05/16 00:36:52 INFO  : Syncing Path1 \[dq]/path/to/local/tree/\[dq] with Path2 \[dq]dropbox:/\[dq]
 2021/05/16 00:36:52 INFO  : Path1 checking for diffs
 2021/05/16 00:36:52 INFO  : Path2 checking for diffs
 2021/05/16 00:36:52 INFO  : No changes found
@@ -27237,7 +27237,7 @@ was successful.
 .IP
 .nf
 \f[C]
-1: 2021/05/14 00:44:12 INFO  : Synching Path1 \[dq]/path/to/local/tree\[dq] with Path2 \[dq]dropbox:\[dq]
+1: 2021/05/14 00:44:12 INFO  : Syncing Path1 \[dq]/path/to/local/tree\[dq] with Path2 \[dq]dropbox:\[dq]
 2: 2021/05/14 00:44:12 INFO  : Path1 checking for diffs
 3: 2021/05/14 00:44:12 INFO  : Path2 checking for diffs
 4: 2021/05/14 00:44:12 INFO  : Path2:  113 changes:   22 new,    0 newer,    0 older,   91 deleted
@@ -27289,7 +27289,7 @@ This bisync run is otherwise successful:
 .IP
 .nf
 \f[C]
-2021/05/11 08:23:15 INFO  : Synching Path1 \[dq]/path/to/local/tree/base/\[dq] with Path2 \[dq]GDrive:\[dq]
+2021/05/11 08:23:15 INFO  : Syncing Path1 \[dq]/path/to/local/tree/base/\[dq] with Path2 \[dq]GDrive:\[dq]
 2021/05/11 08:23:15 INFO  : ...path2.lst-new: Ignoring incorrect line: \[dq]- -1 - - 2018-07-29T08:49:30.136000000+0000 GoogleDoc.docx\[dq]
 2021/05/11 08:23:15 INFO  : Bisync successful
 \f[R]
@@ -27456,7 +27456,7 @@ single \f[C]-\f[R] or double dash.
 .SS Running tests
 .IP \[bu] 2
 \f[C]go test . -case basic -remote local -remote2 local\f[R] runs the
-\f[C]test_basic\f[R] test case using only the local filesystem, synching
+\f[C]test_basic\f[R] test case using only the local filesystem, syncing
 one local directory with another local directory.
 Test script output is to the console, while commands within scenario.txt
 have their output sent to the \f[C].../workdir/test.log\f[R] file, which

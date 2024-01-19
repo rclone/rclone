@@ -11747,7 +11747,7 @@ docker volume inspect my_vol</code></pre>
 </ul>
 <p>Here is a typical run log (with timestamps removed for clarity):</p>
 <pre><code>rclone bisync /testdir/path1/ /testdir/path2/ --verbose
-INFO  : Synching Path1 &quot;/testdir/path1/&quot; with Path2 &quot;/testdir/path2/&quot;
+INFO  : Syncing Path1 &quot;/testdir/path1/&quot; with Path2 &quot;/testdir/path2/&quot;
 INFO  : Path1 checking for diffs
 INFO  : - Path1    File is new                         - file11.txt
 INFO  : - Path1    File is newer                       - file2.txt
@@ -11857,13 +11857,13 @@ rclone copy Path2 Path1 --create-empty-src-dirs</code></pre>
 <p>As a safety check, if greater than the <code>--max-delete</code> percent of files were deleted on either the Path1 or Path2 filesystem, then bisync will abort with a warning message, without making any changes. The default <code>--max-delete</code> is <code>50%</code>. One way to trigger this limit is to rename a directory that contains more than half of your files. This will appear to bisync as a bunch of deleted files and a bunch of new files. This safety check is intended to block bisync from deleting all of the files on both filesystems due to a temporary network access issue, or if the user had inadvertently deleted the files on one side or the other. To force the sync, either set a different delete percentage limit, e.g. <code>--max-delete 75</code> (allows up to 75% deletion), or use <code>--force</code> to bypass the check.</p>
 <p>Also see the <a href="#all-files-changed">all files changed</a> check.</p>
 <h4 id="filters-file">--filters-file</h4>
-<p>By using rclone filter features you can exclude file types or directory sub-trees from the sync. See the <a href="#filtering">bisync filters</a> section and generic <a href="https://rclone.org/filtering/#filter-from-read-filtering-patterns-from-a-file">--filter-from</a> documentation. An <a href="#example-filters-file">example filters file</a> contains filters for non-allowed files for synching with Dropbox.</p>
+<p>By using rclone filter features you can exclude file types or directory sub-trees from the sync. See the <a href="#filtering">bisync filters</a> section and generic <a href="https://rclone.org/filtering/#filter-from-read-filtering-patterns-from-a-file">--filter-from</a> documentation. An <a href="#example-filters-file">example filters file</a> contains filters for non-allowed files for syncing with Dropbox.</p>
 <p>If you make changes to your filters file then bisync requires a run with <code>--resync</code>. This is a safety feature, which prevents existing files on the Path1 and/or Path2 side from seeming to disappear from view (since they are excluded in the new listings), which would fool bisync into seeing them as deleted (as compared to the prior run listings), and then bisync would proceed to delete them for real.</p>
 <p>To block this from happening, bisync calculates an MD5 hash of the filters file and stores the hash in a <code>.md5</code> file in the same place as your filters file. On the next run with <code>--filters-file</code> set, bisync re-calculates the MD5 hash of the current filters file and compares it to the hash stored in the <code>.md5</code> file. If they don't match, the run aborts with a critical error and thus forces you to do a <code>--resync</code>, likely avoiding a disaster.</p>
 <h4 id="check-sync">--check-sync</h4>
 <p>Enabled by default, the check-sync function checks that all of the same files exist in both the Path1 and Path2 history listings. This <em>check-sync</em> integrity check is performed at the end of the sync run by default. Any untrapped failing copy/deletes between the two paths might result in differences between the two listings and in the untracked file content differences between the two paths. A resync run would correct the error.</p>
 <p>Note that the default-enabled integrity check locally executes a load of both the final Path1 and Path2 listings, and thus adds to the run time of a sync. Using <code>--check-sync=false</code> will disable it and may significantly reduce the sync run times for very large numbers of files.</p>
-<p>The check may be run manually with <code>--check-sync=only</code>. It runs only the integrity check and terminates without actually synching.</p>
+<p>The check may be run manually with <code>--check-sync=only</code>. It runs only the integrity check and terminates without actually syncing.</p>
 <p>See also: <a href="#concurrent-modifications">Concurrent modifications</a></p>
 <h4 id="ignore-listing-checksum">--ignore-listing-checksum</h4>
 <p>By default, bisync will retrieve (or generate) checksums (for backends that support them) when creating the listings for both paths, and store the checksums in the listing files. <code>--ignore-listing-checksum</code> will disable this behavior, which may speed things up considerably, especially on backends (such as <a href="https://rclone.org/local/">local</a>) where hashes must be computed on the fly instead of retrieved. Please note the following:</p>
@@ -12067,7 +12067,7 @@ rclone copy Path2 Path1 --create-empty-src-dirs</code></pre>
 <h3 id="overridden-configs">Overridden Configs</h3>
 <p>When rclone detects an overridden config, it adds a suffix like <code>{ABCDE}</code> on the fly to the internal name of the remote. Bisync follows suit by including this suffix in its listing filenames. However, this suffix does not necessarily persist from run to run, especially if different flags are provided. So if next time the suffix assigned is <code>{FGHIJ}</code>, bisync will get confused, because it's looking for a listing file with <code>{FGHIJ}</code>, when the file it wants has <code>{ABCDE}</code>. As a result, it throws <code>Bisync critical error: cannot find prior Path1 or Path2 listings, likely due to critical error on prior run</code> and refuses to run again until the user runs a <code>--resync</code> (unless using <code>--resilient</code>). The best workaround at the moment is to set any backend-specific flags in the <a href="https://rclone.org/commands/rclone_config/">config file</a> instead of specifying them with command flags. (You can still override them as needed for other rclone commands.)</p>
 <h3 id="case-sensitivity">Case sensitivity</h3>
-<p>Synching with <strong>case-insensitive</strong> filesystems, such as Windows or <code>Box</code>, can result in file name conflicts. This will be fixed in a future release. The near-term workaround is to make sure that files on both sides don't have spelling case differences (<code>Smile.jpg</code> vs. <code>smile.jpg</code>).</p>
+<p>Syncing with <strong>case-insensitive</strong> filesystems, such as Windows or <code>Box</code>, can result in file name conflicts. This will be fixed in a future release. The near-term workaround is to make sure that files on both sides don't have spelling case differences (<code>Smile.jpg</code> vs. <code>smile.jpg</code>).</p>
 <h2 id="windows">Windows support</h2>
 <p>Bisync has been tested on Windows 8.1, Windows 10 Pro 64-bit and on Windows GitHub runners.</p>
 <p>Drive letters are allowed, including drive letters mapped to network drives (<code>rclone bisync J:\localsync GDrive:</code>). If a drive letter is omitted, the shell current drive is the default. Drive letters are a single character follows by <code>:</code>, so cloud names must be more than one character long.</p>
@@ -12079,7 +12079,7 @@ rclone copy Path2 Path1 --create-empty-src-dirs</code></pre>
 <p>See <a href="https://rclone.org/filtering/">filtering documentation</a> for how filter rules are written and interpreted.</p>
 <p>Bisync's <a href="#filters-file"><code>--filters-file</code></a> flag slightly extends the rclone's <a href="https://rclone.org/filtering/#filter-from-read-filtering-patterns-from-a-file">--filter-from</a> filtering mechanism. For a given bisync run you may provide <em>only one</em> <code>--filters-file</code>. The <code>--include*</code>, <code>--exclude*</code>, and <code>--filter</code> flags are also supported.</p>
 <h3 id="how-to-filter-directories">How to filter directories</h3>
-<p>Filtering portions of the directory tree is a critical feature for synching.</p>
+<p>Filtering portions of the directory tree is a critical feature for syncing.</p>
 <p>Examples of directory trees (always beneath the Path1/Path2 root level) you may want to exclude from your sync: - Directory trees containing only software build intermediate files. - Directory trees containing application temporary files and data such as the Windows <code>C:\Users\MyLogin\AppData\</code> tree. - Directory trees containing files that are large, less important, or are getting thrashed continuously by ongoing processes.</p>
 <p>On the other hand, there may be only select directories that you actually want to sync, and exclude all others. See the <a href="#include-filters">Example include-style filters for Windows user directories</a> below.</p>
 <h3 id="filters-file-writing-guidelines">Filters file writing guidelines</h3>
@@ -12146,7 +12146,7 @@ rclone copy Path2 Path1 --create-empty-src-dirs</code></pre>
 <p>Note also that Windows implements several "library" links such as <code>C:\Users\MyLogin\My Documents\My Music</code> pointing to <code>C:\Users\MyLogin\Music</code>. rclone sees these as links, so you must add <code>--links</code> to the bisync command line if you which to follow these links. I find that I get permission errors in trying to follow the links, so I don't include the rclone <code>--links</code> flag, but then you get lots of <code>Can't follow symlink…</code> noise from rclone about not following the links. This noise can be quashed by adding <code>--quiet</code> to the bisync command line.</p>
 <h2 id="exclude-filters">Example exclude-style filters files for use with Dropbox</h2>
 <ul>
-<li>Dropbox disallows synching the listed temporary and configuration/data files. The `- <filename>` filters exclude these files where ever they may occur in the sync tree. Consider adding similar exclusions for file types you don't need to sync, such as core dump and software build files.</li>
+<li>Dropbox disallows syncing the listed temporary and configuration/data files. The `- <filename>` filters exclude these files where ever they may occur in the sync tree. Consider adding similar exclusions for file types you don't need to sync, such as core dump and software build files.</li>
 <li>bisync testing creates <code>/testdir/</code> at the top level of the sync tree, and usually deletes the tree after the test. If a normal sync should run while the <code>/testdir/</code> tree exists the <code>--check-access</code> phase may fail due to unbalanced RCLONE_TEST files. The `- /testdir/` filter blocks this tree from being synched. You don't need this exclusion if you are not doing bisync development testing.</li>
 <li>Everything else beneath the Path1/Path2 root will be synched.</li>
 <li>RCLONE_TEST files may be placed anywhere within the tree, including the root.</li>
@@ -12177,7 +12177,7 @@ rclone copy Path2 Path1 --create-empty-src-dirs</code></pre>
 <h2 id="troubleshooting">Troubleshooting</h2>
 <h3 id="reading-bisync-logs">Reading bisync logs</h3>
 <p>Here are two normal runs. The first one has a newer file on the remote. The second has no deltas between local and remote.</p>
-<pre><code>2021/05/16 00:24:38 INFO  : Synching Path1 &quot;/path/to/local/tree/&quot; with Path2 &quot;dropbox:/&quot;
+<pre><code>2021/05/16 00:24:38 INFO  : Syncing Path1 &quot;/path/to/local/tree/&quot; with Path2 &quot;dropbox:/&quot;
 2021/05/16 00:24:38 INFO  : Path1 checking for diffs
 2021/05/16 00:24:38 INFO  : - Path1    File is new                         - file.txt
 2021/05/16 00:24:38 INFO  : Path1:    1 changes:    1 new,    0 newer,    0 older,    0 deleted
@@ -12189,7 +12189,7 @@ rclone copy Path2 Path1 --create-empty-src-dirs</code></pre>
 2021/05/16 00:24:38 INFO  : Validating listings for Path1 &quot;/path/to/local/tree/&quot; vs Path2 &quot;dropbox:/&quot;
 2021/05/16 00:24:38 INFO  : Bisync successful
 
-2021/05/16 00:36:52 INFO  : Synching Path1 &quot;/path/to/local/tree/&quot; with Path2 &quot;dropbox:/&quot;
+2021/05/16 00:36:52 INFO  : Syncing Path1 &quot;/path/to/local/tree/&quot; with Path2 &quot;dropbox:/&quot;
 2021/05/16 00:36:52 INFO  : Path1 checking for diffs
 2021/05/16 00:36:52 INFO  : Path2 checking for diffs
 2021/05/16 00:36:52 INFO  : No changes found
@@ -12203,7 +12203,7 @@ rclone copy Path2 Path1 --create-empty-src-dirs</code></pre>
 <p>Rclone has built-in retries. If you run with <code>--verbose</code> you'll see error and retry messages such as shown below. This is usually not a bug. If at the end of the run, you see <code>Bisync successful</code> and not <code>Bisync critical error</code> or <code>Bisync aborted</code> then the run was successful, and you can ignore the error messages.</p>
 <p>The following run shows an intermittent fail. Lines <em>5</em> and _6- are low-level messages. Line <em>6</em> is a bubbled-up <em>warning</em> message, conveying the error. Rclone normally retries failing commands, so there may be numerous such messages in the log.</p>
 <p>Since there are no final error/warning messages on line <em>7</em>, rclone has recovered from failure after a retry, and the overall sync was successful.</p>
-<pre><code>1: 2021/05/14 00:44:12 INFO  : Synching Path1 &quot;/path/to/local/tree&quot; with Path2 &quot;dropbox:&quot;
+<pre><code>1: 2021/05/14 00:44:12 INFO  : Syncing Path1 &quot;/path/to/local/tree&quot; with Path2 &quot;dropbox:&quot;
 2: 2021/05/14 00:44:12 INFO  : Path1 checking for diffs
 3: 2021/05/14 00:44:12 INFO  : Path2 checking for diffs
 4: 2021/05/14 00:44:12 INFO  : Path2:  113 changes:   22 new,    0 newer,    0 older,   91 deleted
@@ -12223,7 +12223,7 @@ rclone copy Path2 Path1 --create-empty-src-dirs</code></pre>
 <h3 id="google-doc-files">Google Doc files</h3>
 <p>Google docs exist as virtual files on Google Drive and cannot be transferred to other filesystems natively. While it is possible to export a Google doc to a normal file (with <code>.xlsx</code> extension, for example), it is not possible to import a normal file back into a Google document.</p>
 <p>Bisync's handling of Google Doc files is to flag them in the run log output for user's attention and ignore them for any file transfers, deletes, or syncs. They will show up with a length of <code>-1</code> in the listings. This bisync run is otherwise successful:</p>
-<pre><code>2021/05/11 08:23:15 INFO  : Synching Path1 &quot;/path/to/local/tree/base/&quot; with Path2 &quot;GDrive:&quot;
+<pre><code>2021/05/11 08:23:15 INFO  : Syncing Path1 &quot;/path/to/local/tree/base/&quot; with Path2 &quot;GDrive:&quot;
 2021/05/11 08:23:15 INFO  : ...path2.lst-new: Ignoring incorrect line: &quot;- -1 - - 2018-07-29T08:49:30.136000000+0000 GoogleDoc.docx&quot;
 2021/05/11 08:23:15 INFO  : Bisync successful</code></pre>
 <h2 id="usage-examples">Usage examples</h2>
@@ -12303,7 +12303,7 @@ Options:
 <p>Note: unlike rclone flags which must be prefixed by double dash (<code>--</code>), the test command flags can be equally prefixed by a single <code>-</code> or double dash.</p>
 <h3 id="running-tests">Running tests</h3>
 <ul>
-<li><code>go test . -case basic -remote local -remote2 local</code> runs the <code>test_basic</code> test case using only the local filesystem, synching one local directory with another local directory. Test script output is to the console, while commands within scenario.txt have their output sent to the <code>.../workdir/test.log</code> file, which is finally compared to the golden copy.</li>
+<li><code>go test . -case basic -remote local -remote2 local</code> runs the <code>test_basic</code> test case using only the local filesystem, syncing one local directory with another local directory. Test script output is to the console, while commands within scenario.txt have their output sent to the <code>.../workdir/test.log</code> file, which is finally compared to the golden copy.</li>
 <li>The first argument after <code>go test</code> should be a relative name of the directory containing bisync source code. If you run tests right from there, the argument will be <code>.</code> (current directory) as in most examples below. If you run bisync tests from the rclone source directory, the command should be <code>go test ./cmd/bisync ...</code>.</li>
 <li>The test engine will mangle rclone output to ensure comparability with golden listings and logs.</li>
 <li>Test scenarios are located in <code>./cmd/bisync/testdata</code>. The test <code>-case</code> argument should match the full name of a subdirectory under that directory. Every test subdirectory name on disk must start with <code>test_</code>, this prefix can be omitted on command line for brevity. Also, underscores in the name can be replaced by dashes for convenience.</li>

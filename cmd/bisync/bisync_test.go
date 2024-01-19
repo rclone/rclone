@@ -107,7 +107,7 @@ var logHoppers = []string{
 var logLinesWithSlash = []string{
 	`\(\d\d\)  : (touch-glob|touch-copy|copy-file|copy-as|copy-dir|delete-file) `,
 	`INFO  : - Path[12] +Queue copy to Path[12] `,
-	`INFO  : Synching Path1 .*? with Path2 `,
+	`INFO  : Syncing Path1 .*? with Path2 `,
 	`INFO  : Validating listings for `,
 }
 var regexFixSlash = regexp.MustCompile("^(" + strings.Join(logLinesWithSlash, "|") + ")")

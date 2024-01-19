@@ -3,9 +3,9 @@
 
 (02)  : test initial bisync
 (03)  : bisync resync
-INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Syncing Path1 "{path1/}" with Path2 "{path2/}"
 INFO  : Copying unique Path2 files to Path1
-INFO  : Resynching Path1 to Path2
+INFO  : Resyncing Path1 to Path2
 INFO  : Resync updating listings
 INFO  : Bisync successful
 
@@ -43,7 +43,7 @@ INFO  : Bisync successful
 
 (27)  : test sync with dry-run and resync
 (28)  : bisync dry-run resync
-INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Syncing Path1 "{path1/}" with Path2 "{path2/}"
 INFO  : Copying unique Path2 files to Path1
 INFO  : - Path2    Resync will copy to Path1           - file10.txt
 INFO  : - Path2    Resync will copy to Path1           - file4.txt
@@ -52,7 +52,7 @@ INFO  : - Path2    Resync is doing queued copies to    - Path1
 NOTICE: file10.txt: Skipped copy as --dry-run is set (size 19)
 NOTICE: file4.txt: Skipped copy as --dry-run is set (size 0)
 NOTICE: file6.txt: Skipped copy as --dry-run is set (size 19)
-INFO  : Resynching Path1 to Path2
+INFO  : Resyncing Path1 to Path2
 NOTICE: file1.txt: Skipped copy as --dry-run is set (size 0)
 NOTICE: file11.txt: Skipped copy as --dry-run is set (size 19)
 NOTICE: file2.txt: Skipped copy as --dry-run is set (size 13)
@@ -65,7 +65,7 @@ INFO  : Bisync successful
 
 (30)  : test sync with dry-run
 (31)  : bisync dry-run
-INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Syncing Path1 "{path1/}" with Path2 "{path2/}"
 INFO  : Path1 checking for diffs
 INFO  : - Path1    File is new                         - file11.txt
 INFO  : - Path1    File is newer                       - file2.txt
@@ -121,7 +121,7 @@ INFO  : Bisync successful
 
 (33)  : test sync without dry-run
 (34)  : bisync
-INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Syncing Path1 "{path1/}" with Path2 "{path2/}"
 INFO  : Path1 checking for diffs
 INFO  : - Path1    File is new                         - file11.txt
 INFO  : - Path1    File is newer                       - file2.txt

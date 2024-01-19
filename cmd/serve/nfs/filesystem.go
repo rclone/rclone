@@ -131,7 +131,7 @@ func (f *FS) Chown(name string, uid, gid int) error {
 	return file.Chown(uid, gid)
 }
 
-// Chtimes changes the acces time and modified time
+// Chtimes changes the access time and modified time
 func (f *FS) Chtimes(name string, atime time.Time, mtime time.Time) error {
 	return f.vfs.Chtimes(name, atime, mtime)
 }
