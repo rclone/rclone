@@ -3,14 +3,15 @@ package ulozto
 import (
 	"context"
 	"errors"
+	"testing"
+	"time"
+
 	"github.com/rclone/rclone/backend/ulozto/api"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/fstest"
 	"github.com/stretchr/testify/require"
-	"testing"
-	"time"
 
 	"github.com/rclone/rclone/fstest/fstests"
 )
@@ -36,6 +37,7 @@ func TestListWithoutMetadata(t *testing.T) {
 	ctx := context.Background()
 	fstest.Initialise()
 	subRemoteName, subRemoteLeaf, err := fstest.RandomRemoteName(remoteName)
+	require.NoError(t, err)
 	f, err := fs.NewFs(ctx, subRemoteName)
 	if errors.Is(err, fs.ErrorNotFoundInConfigFile) {
 		t.Logf("Didn't find %q in config file - skipping tests", remoteName)
