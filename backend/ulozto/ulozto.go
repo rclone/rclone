@@ -6,6 +6,7 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/gob"
+	"encoding/hex"
 	"fmt"
 	"io"
 	"net/http"
@@ -321,27 +322,14 @@ func (f *Fs) uploadUnchecked(ctx context.Context, name, parentSlug string, info 
 		return nil, err
 	}
 
-	// If hashes are unavailable from the info, calculate them while we upload.
-	hashes := hash.NewHashSet()
-	sha256digest, err := info.Hash(ctx, hash.SHA256)
-	if err != nil || sha256digest == "" {
-		hashes.Add(hash.SHA256)
-	}
-	md5digest, err := info.Hash(ctx, hash.MD5)
-	if err != nil || md5digest == "" {
-		hashes.Add(hash.MD5)
+	hashes := hash.NewHashSet(hash.MD5, hash.SHA256)
+	hasher, err := hash.NewMultiHasherTypes(hashes)
+
+	if err != nil {
+		return nil, err
 	}
 
-	var hasher *hash.MultiHasher
-	if hashes.Count() > 0 {
-		hasher, err = hash.NewMultiHasherTypes(hashes)
-
-		if err != nil {
-			return nil, err
-		}
-
-		payload = io.TeeReader(payload, hasher)
-	}
+	payload = io.TeeReader(payload, hasher)
 
 	encodedName := f.opt.Enc.FromStandardName(name)
 
@@ -365,19 +353,17 @@ func (f *Fs) uploadUnchecked(ctx context.Context, name, parentSlug string, info 
 		return nil, err
 	}
 
-	digests := hasher.Sums()
-
-	if hashes.Count() > 0 {
-		if hashes.Contains(hash.SHA256) {
-			sha256digest = digests[hash.SHA256]
-		}
-
-		if hashes.Contains(hash.MD5) {
-			md5digest = digests[hash.MD5]
-		}
+	sha256digest, err := hasher.Sum(hash.SHA256)
+	if err != nil {
+		return nil, err
 	}
 
-	if md5digest != uploadResponse.Md5 {
+	md5digest, err := hasher.Sum(hash.MD5)
+	if err != nil {
+		return nil, err
+	}
+
+	if hex.EncodeToString(md5digest) != uploadResponse.Md5 {
 		return nil, errors.New("MD5 digest mismatch")
 	}
 
@@ -586,8 +572,8 @@ func (f *Fs) Hashes() hash.Set {
 // it's a real attack vector, a nefarious person already has write access to the repo, and the situation is above
 // rclone's pay grade already.
 type DescriptionEncodedMetadata struct {
-	Md5Hash            string // The MD5 hash of the file
-	Sha256Hash         string // The SHA256 hash of the file
+	Md5Hash            []byte // The MD5 hash of the file
+	Sha256Hash         []byte // The SHA256 hash of the file
 	ModTimeEpochMicros int64  // The mtime of the file, as set by rclone
 }
 
@@ -870,9 +856,9 @@ func (o *Object) Hash(ctx context.Context, t hash.Type) (string, error) {
 
 	switch t {
 	case hash.MD5:
-		return o.encodedMetadata.Md5Hash, nil
+		return hex.EncodeToString(o.encodedMetadata.Md5Hash), nil
 	case hash.SHA256:
-		return o.encodedMetadata.Sha256Hash, nil
+		return hex.EncodeToString(o.encodedMetadata.Sha256Hash), nil
 	}
 
 	panic("Should never get here")
