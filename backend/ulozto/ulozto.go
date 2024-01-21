@@ -383,7 +383,7 @@ func (f *Fs) uploadUnchecked(ctx context.Context, name, parentSlug string, info 
 
 	metadata := DescriptionEncodedMetadata{
 		Md5Hash:            md5digest,
-		Sha256hash:         sha256digest,
+		Sha256Hash:         sha256digest,
 		ModTimeEpochMicros: info.ModTime(ctx).UnixMicro(),
 	}
 
@@ -580,10 +580,15 @@ func (f *Fs) Hashes() hash.Set {
 //
 // Uloz.to doesn't support setting metadata such as mtime but allows the user to set an arbitrary description field.
 // The content of this structure will be serialized and stored in the backend.
+//
+// The files themselves are immutable so there's no danger that the file changes, and we'll forget to update the hashes.
+// It is theoretically possible to rewrite the description to provide incorrect information for a file. However, in case
+// it's a real attack vector, a nefarious person already has write access to the repo, and the situation is above
+// rclone's pay grade already.
 type DescriptionEncodedMetadata struct {
-	Md5Hash            string
-	Sha256hash         string
-	ModTimeEpochMicros int64
+	Md5Hash            string // The MD5 hash of the file
+	Sha256Hash         string // The SHA256 hash of the file
+	ModTimeEpochMicros int64  // The mtime of the file, as set by rclone
 }
 
 func (md *DescriptionEncodedMetadata) encode() (string, error) {
@@ -622,14 +627,17 @@ func decodeDescriptionMetadata(str string) (*DescriptionEncodedMetadata, error) 
 
 // Object describes an uloz.to object.
 //
-// Valid objects will have all the fields set.
+// Valid objects will always have all fields but encodedMetadata set.
 type Object struct {
-	fs              *Fs                         // what this object is part of
-	remote          string                      // The remote path
-	name            string                      // The file name
-	size            int64                       // size of the object
-	slug            string                      // ID of the object
-	encodedMetadata *DescriptionEncodedMetadata // Metadata not available natively and encoded in the description field
+	fs            *Fs       // what this object is part of
+	remote        string    // The remote path
+	name          string    // The file name
+	size          int64     // size of the object
+	slug          string    // ID of the object
+	remoteFsMtime time.Time // The time the object was last modified in the remote fs.
+	// Metadata not available natively and encoded in the description field. May not be present if the encoded metadata
+	// is not present (e.g. if file wasn't uploaded by rclone) or invalid.
+	encodedMetadata *DescriptionEncodedMetadata
 }
 
 // Storable implements the mandatory method fs.ObjectInfo.Storable
@@ -659,7 +667,13 @@ func (o *Object) updateFileProperties(ctx context.Context, req interface{}) (err
 
 // SetModTime implements the mandatory method fs.Object.SetModTime
 func (o *Object) SetModTime(ctx context.Context, t time.Time) (err error) {
-	newMetadata := *o.encodedMetadata
+	var newMetadata DescriptionEncodedMetadata
+	if o.encodedMetadata == nil {
+		newMetadata = DescriptionEncodedMetadata{}
+	} else {
+		newMetadata = *o.encodedMetadata
+	}
+
 	newMetadata.ModTimeEpochMicros = t.UnixMicro()
 	encoded, err := newMetadata.encode()
 	if err != nil {
@@ -717,6 +731,7 @@ func (o *Object) copyFrom(other *Object) {
 	o.remote = other.remote
 	o.size = other.size
 	o.slug = other.slug
+	o.remoteFsMtime = other.remoteFsMtime
 	o.encodedMetadata = other.encodedMetadata
 }
 
@@ -809,7 +824,13 @@ func (o *Object) Remove(ctx context.Context) error {
 
 // ModTime implements the mandatory method fs.Object.ModTime
 func (o *Object) ModTime(ctx context.Context) time.Time {
-	return time.UnixMicro(o.encodedMetadata.ModTimeEpochMicros)
+	if o.encodedMetadata != nil {
+		return time.UnixMicro(o.encodedMetadata.ModTimeEpochMicros)
+	}
+
+	// The time the object was last modified on the server - a handwavy guess, but we don't have any better
+	return o.remoteFsMtime
+
 }
 
 // Fs implements the mandatory method fs.Object.Fs
@@ -839,14 +860,22 @@ func (o *Object) Size() int64 {
 //
 // Supports SHA256 and MD5 hashes.
 func (o *Object) Hash(ctx context.Context, t hash.Type) (string, error) {
+	if t != hash.MD5 && t != hash.SHA256 {
+		return "", hash.ErrUnsupported
+	}
+
+	if o.encodedMetadata == nil {
+		return "", nil
+	}
+
 	switch t {
 	case hash.MD5:
 		return o.encodedMetadata.Md5Hash, nil
 	case hash.SHA256:
-		return o.encodedMetadata.Sha256hash, nil
-	default:
-		return "", hash.ErrUnsupported
+		return o.encodedMetadata.Sha256Hash, nil
 	}
+
+	panic("Should never get here")
 }
 
 // FindLeaf implements dircache.DirCacher.FindLeaf by successively walking through the folder hierarchy until
@@ -969,9 +998,10 @@ func (f *Fs) readMetaDataForPath(ctx context.Context, path string) (info *api.Fi
 func (o *Object) setMetaData(info *api.File) (err error) {
 	o.name = info.Name
 	o.size = info.Filesize
+	o.remoteFsMtime = info.LastUserModified
 	o.encodedMetadata, err = decodeDescriptionMetadata(info.Description)
 	if err != nil {
-		return err
+		fs.Debugf(o, "Couldn't decode metadata: %v", err)
 	}
 	o.slug = info.Slug
 	return nil
