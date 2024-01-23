@@ -563,9 +563,6 @@ func TestApplyTransforms(t *testing.T) {
 
 	testScenario := func(checkfileName, remotefileName, scenario string) {
 		r := fstest.NewRunIndividual(t)
-		if !r.Flocal.Hashes().Contains(hashType) || !r.Fremote.Hashes().Contains(hashType) {
-			t.Skipf("Fs lacks %s, skipping", hashType)
-		}
 		ctx := context.Background()
 		ci := fs.GetConfig(ctx)
 		opt := operations.CheckOpt{}
@@ -580,7 +577,7 @@ func TestApplyTransforms(t *testing.T) {
 		ci.NoUnicodeNormalization = true
 		ci.IgnoreCaseSync = false
 		accounting.GlobalStats().ResetCounters()
-		err := operations.CheckSum(ctx, r.Fremote, r.Flocal, "test.sum", hashType, &opt, false)
+		err := operations.CheckSum(ctx, r.Fremote, r.Flocal, "test.sum", hashType, &opt, true)
 		assert.Error(t, err, "no expected error for %s %v %v", testname, checkfileName, remotefileName)
 
 		testname = scenario + " (with normalization)"
@@ -588,7 +585,7 @@ func TestApplyTransforms(t *testing.T) {
 		ci.NoUnicodeNormalization = false
 		ci.IgnoreCaseSync = true
 		accounting.GlobalStats().ResetCounters()
-		err = operations.CheckSum(ctx, r.Fremote, r.Flocal, "test.sum", hashType, &opt, false)
+		err = operations.CheckSum(ctx, r.Fremote, r.Flocal, "test.sum", hashType, &opt, true)
 		assert.NoError(t, err, "unexpected error for %s %v %v", testname, checkfileName, remotefileName)
 	}
 
