@@ -8,6 +8,7 @@ import (
 	"context"
 	"crypto/md5"
 	"encoding/base64"
+	"encoding/binary"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
@@ -1985,34 +1986,21 @@ func (rs *readSeekCloser) Close() error {
 	return nil
 }
 
-// increment the array as LSB binary
-func increment(xs *[8]byte) {
-	for i, digit := range xs {
-		newDigit := digit + 1
-		xs[i] = newDigit
-		if newDigit >= digit {
-			// exit if no carry
-			break
-		}
-	}
-}
-
 // record chunk number and id for Close
 type azBlock struct {
-	chunkNumber int
+	chunkNumber uint64
 	id          string
 }
 
 // Implements the fs.ChunkWriter interface
 type azChunkWriter struct {
-	chunkSize     int64
-	size          int64
-	f             *Fs
-	ui            uploadInfo
-	blocksMu      sync.Mutex // protects the below
-	blocks        []azBlock  // list of blocks for finalize
-	binaryBlockID [8]byte    // block counter as LSB first 8 bytes
-	o             *Object
+	chunkSize int64
+	size      int64
+	f         *Fs
+	ui        uploadInfo
+	blocksMu  sync.Mutex // protects the below
+	blocks    []azBlock  // list of blocks for finalize
+	o         *Object
 }
 
 // OpenChunkWriter returns the chunk size and a ChunkWriter
@@ -2100,13 +2088,14 @@ func (w *azChunkWriter) WriteChunk(ctx context.Context, chunkNumber int, reader 
 	transactionalMD5 := md5sum[:]
 
 	// increment the blockID and save the blocks for finalize
-	increment(&w.binaryBlockID)
-	blockID := base64.StdEncoding.EncodeToString(w.binaryBlockID[:])
+	var binaryBlockID [8]byte // block counter as LSB first 8 bytes
+	binary.LittleEndian.PutUint64(binaryBlockID[:], uint64(chunkNumber))
+	blockID := base64.StdEncoding.EncodeToString(binaryBlockID[:])
 
 	// Save the blockID for the commit
 	w.blocksMu.Lock()
 	w.blocks = append(w.blocks, azBlock{
-		chunkNumber: chunkNumber,
+		chunkNumber: uint64(chunkNumber),
 		id:          blockID,
 	})
 	w.blocksMu.Unlock()
@@ -2171,9 +2160,20 @@ func (w *azChunkWriter) Close(ctx context.Context) (err error) {
 		return w.blocks[i].chunkNumber < w.blocks[j].chunkNumber
 	})
 
-	// Create a list of block IDs
+	// Create and check a list of block IDs
 	blockIDs := make([]string, len(w.blocks))
 	for i := range w.blocks {
+		if w.blocks[i].chunkNumber != uint64(i) {
+			return fmt.Errorf("internal error: expecting chunkNumber %d but got %d", i, w.blocks[i].chunkNumber)
+		}
+		chunkBytes, err := base64.StdEncoding.DecodeString(w.blocks[i].id)
+		if err != nil {
+			return fmt.Errorf("internal error: bad block ID: %w", err)
+		}
+		chunkNumber := binary.LittleEndian.Uint64(chunkBytes)
+		if w.blocks[i].chunkNumber != chunkNumber {
+			return fmt.Errorf("internal error: expecting decoded chunkNumber %d but got %d", w.blocks[i].chunkNumber, chunkNumber)
+		}
 		blockIDs[i] = w.blocks[i].id
 	}
 
