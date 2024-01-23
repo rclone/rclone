@@ -367,7 +367,7 @@ func (s *syncCopyMove) pairChecker(in *pipe, out *pipe, fraction int, wg *sync.W
 			}
 			// Fix case for case insensitive filesystems
 			if s.ci.FixCase && !s.ci.Immutable && src.Remote() != pair.Dst.Remote() {
-				if newDst, err := operations.Move(s.ctx, s.fdst, nil, src.Remote(), pair.Dst); err != nil {
+				if newDst, err := operations.Move(s.ctx, s.fdst, pair.Dst, src.Remote(), pair.Dst); err != nil {
 					fs.Errorf(pair.Dst, "Error while attempting to rename to %s: %v", src.Remote(), err)
 					s.processError(err)
 				} else {
@@ -1151,9 +1151,9 @@ func (s *syncCopyMove) Match(ctx context.Context, dst, src fs.DirEntry) (recurse
 			if s.ci.FixCase && !s.ci.Immutable && src.Remote() != dst.Remote() {
 				// Fix case for case insensitive filesystems
 				// Fix each dir before recursing into subdirs and files
-				oldDirFs, err := fs.NewFs(s.ctx, filepath.Join(s.fdst.Root(), dst.Remote()))
+				oldDirFs, err := fs.NewFs(s.ctx, filepath.Join(fs.ConfigStringFull(s.fdst), dst.Remote()))
 				s.processError(err)
-				newDirPath := filepath.Join(s.fdst.Root(), filepath.Dir(dst.Remote()), filepath.Base(src.Remote()))
+				newDirPath := filepath.Join(fs.ConfigStringFull(s.fdst), filepath.Dir(dst.Remote()), filepath.Base(src.Remote()))
 				newDirFs, err := fs.NewFs(s.ctx, newDirPath)
 				s.processError(err)
 				// Create random name to temporarily move dir to

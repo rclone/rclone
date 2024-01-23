@@ -401,10 +401,16 @@ func move(ctx context.Context, fdst fs.Fs, dst fs.Object, remote string, src fs.
 	// See if we have Move available
 	if doMove := fdst.Features().Move; doMove != nil && (SameConfig(src.Fs(), fdst) || (SameRemoteType(src.Fs(), fdst) && (fdst.Features().ServerSideAcrossConfigs || ci.ServerSideAcrossConfigs))) {
 		// Delete destination if it exists and is not the same file as src (could be same file while seemingly different if the remote is case insensitive)
-		if dst != nil && !SameObject(src, dst) {
-			err = DeleteFile(ctx, dst)
-			if err != nil {
-				return newDst, err
+		if dst != nil {
+			if !SameObject(src, dst) {
+				err = DeleteFile(ctx, dst)
+				if err != nil {
+					return newDst, err
+				}
+			} else if needsMoveCaseInsensitive(fdst, fdst, remote, src.Remote(), false) {
+				doMove = func(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
+					return moveCaseInsensitive(ctx, fdst, fdst, remote, src.Remote(), false, src)
+				}
 			}
 		}
 		// Move dst <- src
@@ -1746,6 +1752,58 @@ func MoveBackupDir(ctx context.Context, backupDir fs.Fs, dst fs.Object) (err err
 	return err
 }
 
+// needsMoveCaseInsensitive returns true if moveCaseInsensitive is needed
+func needsMoveCaseInsensitive(fdst fs.Fs, fsrc fs.Fs, dstFileName string, srcFileName string, cp bool) bool {
+	dstFilePath := path.Join(fdst.Root(), dstFileName)
+	srcFilePath := path.Join(fsrc.Root(), srcFileName)
+	return !cp && fdst.Name() == fsrc.Name() && fdst.Features().CaseInsensitive && dstFileName != srcFileName && strings.EqualFold(dstFilePath, srcFilePath)
+}
+
+// Special case for changing case of a file on a case insensitive remote
+// This will move the file to a temporary name then
+// move it back to the intended destination. This is required
+// to avoid issues with certain remotes and avoid file deletion.
+// returns nil, nil if !needsMoveCaseInsensitive.
+// this does not account a transfer -- the caller should do that if desired.
+func moveCaseInsensitive(ctx context.Context, fdst fs.Fs, fsrc fs.Fs, dstFileName string, srcFileName string, cp bool, srcObj fs.Object) (newDst fs.Object, err error) {
+	if !needsMoveCaseInsensitive(fdst, fsrc, dstFileName, srcFileName, cp) {
+		return nil, nil
+	}
+	logger, _ := GetLogger(ctx)
+
+	// Choose operations
+	Op := MoveTransfer
+	if cp {
+		Op = Copy
+	}
+
+	if SkipDestructive(ctx, srcFileName, "rename to "+dstFileName) {
+		// avoid fatalpanic on --dry-run (trying to access non-existent tmpObj)
+		return nil, nil
+	}
+	// Create random name to temporarily move file to
+	tmpObjName := dstFileName + "-rclone-move-" + random.String(8)
+	tmpObjFail, err := fdst.NewObject(ctx, tmpObjName)
+	if err != fs.ErrorObjectNotFound {
+		if err == nil {
+			logger(ctx, TransferError, nil, tmpObjFail, err)
+			return nil, errors.New("found an already existing file with a randomly generated name. Try the operation again")
+		}
+		logger(ctx, TransferError, nil, tmpObjFail, err)
+		return nil, fmt.Errorf("error while attempting to move file to a temporary location: %w", err)
+	}
+	fs.Debugf(srcObj, "moving to %v", tmpObjName)
+	tmpObj, err := Op(ctx, fdst, nil, tmpObjName, srcObj)
+	if err != nil {
+		logger(ctx, TransferError, srcObj, tmpObj, err)
+		return nil, fmt.Errorf("error while moving file to temporary location: %w", err)
+	}
+	fs.Debugf(srcObj, "moving to %v", dstFileName)
+	newDst, err = Op(ctx, fdst, nil, dstFileName, tmpObj)
+	logger(ctx, MissingOnDst, tmpObj, nil, err)
+	return newDst, err
+}
+
 // moveOrCopyFile moves or copies a single file possibly to a new name
 func moveOrCopyFile(ctx context.Context, fdst fs.Fs, fsrc fs.Fs, dstFileName string, srcFileName string, cp bool) (err error) {
 	ci := fs.GetConfig(ctx)
@@ -1791,33 +1849,12 @@ func moveOrCopyFile(ctx context.Context, fdst fs.Fs, fsrc fs.Fs, dstFileName str
 	// This will move the file to a temporary name then
 	// move it back to the intended destination. This is required
 	// to avoid issues with certain remotes and avoid file deletion.
-	if !cp && fdst.Name() == fsrc.Name() && fdst.Features().CaseInsensitive && dstFileName != srcFileName && strings.EqualFold(dstFilePath, srcFilePath) {
-		if SkipDestructive(ctx, srcFileName, "rename to "+dstFileName) {
-			// avoid fatalpanic on --dry-run (trying to access non-existent tmpObj)
-			return nil
-		}
-		// Create random name to temporarily move file to
-		tmpObjName := dstFileName + "-rclone-move-" + random.String(8)
-		tmpObjFail, err := fdst.NewObject(ctx, tmpObjName)
-		if err != fs.ErrorObjectNotFound {
-			if err == nil {
-				logger(ctx, TransferError, nil, tmpObjFail, err)
-				return errors.New("found an already existing file with a randomly generated name. Try the operation again")
-			}
-			logger(ctx, TransferError, nil, tmpObjFail, err)
-			return fmt.Errorf("error while attempting to move file to a temporary location: %w", err)
-		}
+	if needsMoveCaseInsensitive(fdst, fsrc, dstFileName, srcFileName, cp) {
 		tr := accounting.Stats(ctx).NewTransfer(srcObj, fdst)
 		defer func() {
 			tr.Done(ctx, err)
 		}()
-		tmpObj, err := Op(ctx, fdst, nil, tmpObjName, srcObj)
-		if err != nil {
-			logger(ctx, TransferError, srcObj, tmpObj, err)
-			return fmt.Errorf("error while moving file to temporary location: %w", err)
-		}
-		_, err = Op(ctx, fdst, nil, dstFileName, tmpObj)
-		logger(ctx, MissingOnDst, tmpObj, nil, err)
+		_, err = moveCaseInsensitive(ctx, fdst, fsrc, dstFileName, srcFileName, cp, srcObj)
 		return err
 	}
 
