@@ -81,7 +81,7 @@
 <header id="title-block-header">
 <h1 class="title">rclone(1) User Manual</h1>
 <p class="author">Nick Craig-Wood</p>
-<p class="date">Jan 08, 2024</p>
+<p class="date">Jan 24, 2024</p>
 </header>
 <h1 id="rclone-syncs-your-files-to-cloud-storage">Rclone syncs your files to cloud storage</h1>
 <p><img width="50%" src="https://rclone.org/img/logo_on_light__horizontal_color.svg" alt="rclone logo" style="float:right; padding: 5px;" ></p>
@@ -127,6 +127,7 @@
 </ul></li>
 <li><a href="https://rclone.org/commands/rclone_copy/">Copy</a> new or changed files to cloud storage</li>
 <li><a href="https://rclone.org/commands/rclone_sync/">Sync</a> (one way) to make a directory identical</li>
+<li><a href="https://rclone.org/bisync/">Bisync</a> (two way) to keep two directories in sync bidirectionally</li>
 <li><a href="https://rclone.org/commands/rclone_move/">Move</a> files to cloud storage deleting the local after verification</li>
 <li><a href="https://rclone.org/commands/rclone_check/">Check</a> hashes and for missing/extra files</li>
 <li><a href="https://rclone.org/commands/rclone_mount/">Mount</a> your cloud storage as a network disk</li>
@@ -162,6 +163,7 @@
 <li>Hetzner Storage Box</li>
 <li>HiDrive</li>
 <li>HTTP</li>
+<li>ImageKit</li>
 <li>Internet Archive</li>
 <li>Jottacloud</li>
 <li>IBM COS S3</li>
@@ -2501,7 +2503,11 @@ Supported hashes are:
   * sha1
   * whirlpool
   * crc32
-  * sha256</code></pre>
+  * sha256
+  * dropbox
+  * hidrive
+  * mailru
+  * quickxor</code></pre>
 <p>Then</p>
 <pre><code>$ rclone hashsum MD5 remote:path</code></pre>
 <p>Note that hash names are case insensitive and values are output in lower case.</p>
@@ -7860,7 +7866,7 @@ file2.avi</code></pre>
 + *.png
 + file2.avi
 - *</code></pre>
-<p>Files <code>file1.jpg</code>, <code>file3.png</code> and <code>file2.avi</code> are listed whilst <code>secret17.jpg</code> and files without the suffix .jpg<code>or</code>.png` are excluded.</p>
+<p>Files <code>file1.jpg</code>, <code>file3.png</code> and <code>file2.avi</code> are listed whilst <code>secret17.jpg</code> and files without the suffix <code>.jpg</code> or <code>.png</code> are excluded.</p>
 <p>E.g. for an alternative <code>filter-file.txt</code>:</p>
 <pre><code>+ *.jpg
 + *.gif
@@ -10563,6 +10569,20 @@ Showing nodes accounting for 1537.03kB, 100% of 1537.03kB total
 <td style="text-align: center;">Yes</td>
 </tr>
 <tr class="odd">
+<td>ImageKit</td>
+<td style="text-align: center;">Yes</td>
+<td style="text-align: center;">Yes</td>
+<td style="text-align: center;">Yes</td>
+<td style="text-align: center;">No</td>
+<td style="text-align: center;">No</td>
+<td style="text-align: center;">No</td>
+<td style="text-align: center;">No</td>
+<td style="text-align: left;">No</td>
+<td style="text-align: center;">No</td>
+<td style="text-align: center;">No</td>
+<td style="text-align: center;">Yes</td>
+</tr>
+<tr class="even">
 <td>Internet Archive</td>
 <td style="text-align: center;">No</td>
 <td style="text-align: center;">Yes</td>
@@ -10576,7 +10596,7 @@ Showing nodes accounting for 1537.03kB, 100% of 1537.03kB total
 <td style="text-align: center;">Yes</td>
 <td style="text-align: center;">No</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td>Jottacloud</td>
 <td style="text-align: center;">Yes</td>
 <td style="text-align: center;">Yes</td>
@@ -10590,7 +10610,7 @@ Showing nodes accounting for 1537.03kB, 100% of 1537.03kB total
 <td style="text-align: center;">Yes</td>
 <td style="text-align: center;">Yes</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td>Koofr</td>
 <td style="text-align: center;">Yes</td>
 <td style="text-align: center;">Yes</td>
@@ -10604,7 +10624,7 @@ Showing nodes accounting for 1537.03kB, 100% of 1537.03kB total
 <td style="text-align: center;">Yes</td>
 <td style="text-align: center;">Yes</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td>Mail.ru Cloud</td>
 <td style="text-align: center;">Yes</td>
 <td style="text-align: center;">Yes</td>
@@ -10618,7 +10638,7 @@ Showing nodes accounting for 1537.03kB, 100% of 1537.03kB total
 <td style="text-align: center;">Yes</td>
 <td style="text-align: center;">Yes</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td>Mega</td>
 <td style="text-align: center;">Yes</td>
 <td style="text-align: center;">No</td>
@@ -10632,7 +10652,7 @@ Showing nodes accounting for 1537.03kB, 100% of 1537.03kB total
 <td style="text-align: center;">Yes</td>
 <td style="text-align: center;">Yes</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td>Memory</td>
 <td style="text-align: center;">No</td>
 <td style="text-align: center;">Yes</td>
@@ -10646,7 +10666,7 @@ Showing nodes accounting for 1537.03kB, 100% of 1537.03kB total
 <td style="text-align: center;">No</td>
 <td style="text-align: center;">No</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td>Microsoft Azure Blob Storage</td>
 <td style="text-align: center;">Yes</td>
 <td style="text-align: center;">Yes</td>
@@ -10660,7 +10680,7 @@ Showing nodes accounting for 1537.03kB, 100% of 1537.03kB total
 <td style="text-align: center;">No</td>
 <td style="text-align: center;">No</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td>Microsoft Azure Files Storage</td>
 <td style="text-align: center;">No</td>
 <td style="text-align: center;">Yes</td>
@@ -10674,7 +10694,7 @@ Showing nodes accounting for 1537.03kB, 100% of 1537.03kB total
 <td style="text-align: center;">Yes</td>
 <td style="text-align: center;">Yes</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td>Microsoft OneDrive</td>
 <td style="text-align: center;">Yes</td>
 <td style="text-align: center;">Yes</td>
@@ -10688,7 +10708,7 @@ Showing nodes accounting for 1537.03kB, 100% of 1537.03kB total
 <td style="text-align: center;">Yes</td>
 <td style="text-align: center;">Yes</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td>OpenDrive</td>
 <td style="text-align: center;">Yes</td>
 <td style="text-align: center;">Yes</td>
@@ -10702,7 +10722,7 @@ Showing nodes accounting for 1537.03kB, 100% of 1537.03kB total
 <td style="text-align: center;">No</td>
 <td style="text-align: center;">Yes</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td>OpenStack Swift</td>
 <td style="text-align: center;">Yes ¹</td>
 <td style="text-align: center;">Yes</td>
@@ -10716,7 +10736,7 @@ Showing nodes accounting for 1537.03kB, 100% of 1537.03kB total
 <td style="text-align: center;">Yes</td>
 <td style="text-align: center;">No</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td>Oracle Object Storage</td>
 <td style="text-align: center;">No</td>
 <td style="text-align: center;">Yes</td>
@@ -10730,7 +10750,7 @@ Showing nodes accounting for 1537.03kB, 100% of 1537.03kB total
 <td style="text-align: center;">No</td>
 <td style="text-align: center;">No</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td>pCloud</td>
 <td style="text-align: center;">Yes</td>
 <td style="text-align: center;">Yes</td>
@@ -10744,7 +10764,7 @@ Showing nodes accounting for 1537.03kB, 100% of 1537.03kB total
 <td style="text-align: center;">Yes</td>
 <td style="text-align: center;">Yes</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td>PikPak</td>
 <td style="text-align: center;">Yes</td>
 <td style="text-align: center;">Yes</td>
@@ -10758,7 +10778,7 @@ Showing nodes accounting for 1537.03kB, 100% of 1537.03kB total
 <td style="text-align: center;">Yes</td>
 <td style="text-align: center;">Yes</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td>premiumize.me</td>
 <td style="text-align: center;">Yes</td>
 <td style="text-align: center;">No</td>
@@ -10772,7 +10792,7 @@ Showing nodes accounting for 1537.03kB, 100% of 1537.03kB total
 <td style="text-align: center;">Yes</td>
 <td style="text-align: center;">Yes</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td>put.io</td>
 <td style="text-align: center;">Yes</td>
 <td style="text-align: center;">No</td>
@@ -10786,7 +10806,7 @@ Showing nodes accounting for 1537.03kB, 100% of 1537.03kB total
 <td style="text-align: center;">Yes</td>
 <td style="text-align: center;">Yes</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td>Proton Drive</td>
 <td style="text-align: center;">Yes</td>
 <td style="text-align: center;">No</td>
@@ -10800,7 +10820,7 @@ Showing nodes accounting for 1537.03kB, 100% of 1537.03kB total
 <td style="text-align: center;">Yes</td>
 <td style="text-align: center;">Yes</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td>QingStor</td>
 <td style="text-align: center;">No</td>
 <td style="text-align: center;">Yes</td>
@@ -10814,7 +10834,7 @@ Showing nodes accounting for 1537.03kB, 100% of 1537.03kB total
 <td style="text-align: center;">No</td>
 <td style="text-align: center;">No</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td>Quatrix by Maytech</td>
 <td style="text-align: center;">Yes</td>
 <td style="text-align: center;">Yes</td>
@@ -10828,7 +10848,7 @@ Showing nodes accounting for 1537.03kB, 100% of 1537.03kB total
 <td style="text-align: center;">Yes</td>
 <td style="text-align: center;">Yes</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td>Seafile</td>
 <td style="text-align: center;">Yes</td>
 <td style="text-align: center;">Yes</td>
@@ -10842,7 +10862,7 @@ Showing nodes accounting for 1537.03kB, 100% of 1537.03kB total
 <td style="text-align: center;">Yes</td>
 <td style="text-align: center;">Yes</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td>SFTP</td>
 <td style="text-align: center;">No</td>
 <td style="text-align: center;">Yes ⁴</td>
@@ -10856,7 +10876,7 @@ Showing nodes accounting for 1537.03kB, 100% of 1537.03kB total
 <td style="text-align: center;">Yes</td>
 <td style="text-align: center;">Yes</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td>Sia</td>
 <td style="text-align: center;">No</td>
 <td style="text-align: center;">No</td>
@@ -10870,7 +10890,7 @@ Showing nodes accounting for 1537.03kB, 100% of 1537.03kB total
 <td style="text-align: center;">No</td>
 <td style="text-align: center;">Yes</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td>SMB</td>
 <td style="text-align: center;">No</td>
 <td style="text-align: center;">No</td>
@@ -10884,7 +10904,7 @@ Showing nodes accounting for 1537.03kB, 100% of 1537.03kB total
 <td style="text-align: center;">No</td>
 <td style="text-align: center;">Yes</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td>SugarSync</td>
 <td style="text-align: center;">Yes</td>
 <td style="text-align: center;">Yes</td>
@@ -10898,7 +10918,7 @@ Showing nodes accounting for 1537.03kB, 100% of 1537.03kB total
 <td style="text-align: center;">No</td>
 <td style="text-align: center;">Yes</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td>Storj</td>
 <td style="text-align: center;">Yes ²</td>
 <td style="text-align: center;">Yes</td>
@@ -10912,7 +10932,7 @@ Showing nodes accounting for 1537.03kB, 100% of 1537.03kB total
 <td style="text-align: center;">No</td>
 <td style="text-align: center;">No</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td>Uptobox</td>
 <td style="text-align: center;">No</td>
 <td style="text-align: center;">Yes</td>
@@ -10926,7 +10946,7 @@ Showing nodes accounting for 1537.03kB, 100% of 1537.03kB total
 <td style="text-align: center;">No</td>
 <td style="text-align: center;">No</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td>WebDAV</td>
 <td style="text-align: center;">Yes</td>
 <td style="text-align: center;">Yes</td>
@@ -10940,7 +10960,7 @@ Showing nodes accounting for 1537.03kB, 100% of 1537.03kB total
 <td style="text-align: center;">Yes</td>
 <td style="text-align: center;">Yes</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td>Yandex Disk</td>
 <td style="text-align: center;">Yes</td>
 <td style="text-align: center;">Yes</td>
@@ -10954,7 +10974,7 @@ Showing nodes accounting for 1537.03kB, 100% of 1537.03kB total
 <td style="text-align: center;">Yes</td>
 <td style="text-align: center;">Yes</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td>Zoho WorkDrive</td>
 <td style="text-align: center;">Yes</td>
 <td style="text-align: center;">Yes</td>
@@ -10968,7 +10988,7 @@ Showing nodes accounting for 1537.03kB, 100% of 1537.03kB total
 <td style="text-align: center;">Yes</td>
 <td style="text-align: center;">Yes</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td>The local filesystem</td>
 <td style="text-align: center;">Yes</td>
 <td style="text-align: center;">No</td>
@@ -11096,7 +11116,7 @@ Showing nodes accounting for 1537.03kB, 100% of 1537.03kB total
       --tpslimit float                     Limit HTTP transactions per second to this
       --tpslimit-burst int                 Max burst of transactions for --tpslimit (default 1)
       --use-cookies                        Enable session cookiejar
-      --user-agent string                  Set the user-agent to a specified string (default &quot;rclone/v1.65.1&quot;)</code></pre>
+      --user-agent string                  Set the user-agent to a specified string (default &quot;rclone/v1.65.2&quot;)</code></pre>
 <h2 id="performance">Performance</h2>
 <p>Flags helpful for increasing performance.</p>
 <pre><code>      --buffer-size SizeSuffix   In memory buffer size when reading files for each --transfer (default 16Mi)
@@ -36687,6 +36707,23 @@ $ tree /tmp/b
 <li>"error": return an error based on option value</li>
 </ul>
 <h1 id="changelog-1">Changelog</h1>
+<h2 id="v1.65.2---2024-01-24">v1.65.2 - 2024-01-24</h2>
+<p><a href="https://github.com/rclone/rclone/compare/v1.65.1...v1.65.2">See commits</a></p>
+<ul>
+<li>Bug Fixes
+<ul>
+<li>build: bump github.com/cloudflare/circl from 1.3.6 to 1.3.7 (dependabot)</li>
+<li>docs updates (Nick Craig-Wood, kapitainsky, nielash, Tera, Harshit Budhraja)</li>
+</ul></li>
+<li>VFS
+<ul>
+<li>Fix stale data when using <code>--vfs-cache-mode</code> full (Nick Craig-Wood)</li>
+</ul></li>
+<li>Azure Blob
+<ul>
+<li><strong>IMPORTANT</strong> Fix data corruption bug - see <a href="https://github.com/rclone/rclone/issues/7590">#7590</a> (Nick Craig-Wood)</li>
+</ul></li>
+</ul>
 <h2 id="v1.65.1---2024-01-08">v1.65.1 - 2024-01-08</h2>
 <p><a href="https://github.com/rclone/rclone/compare/v1.65.0...v1.65.1">See commits</a></p>
 <ul>

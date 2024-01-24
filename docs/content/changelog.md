@@ -5,6 +5,18 @@ description: "Rclone Changelog"
 
 # Changelog
 
+## v1.65.2 - 2024-01-24
+
+[See commits](https://github.com/rclone/rclone/compare/v1.65.1...v1.65.2)
+
+* Bug Fixes
+    * build: bump github.com/cloudflare/circl from 1.3.6 to 1.3.7 (dependabot)
+    * docs updates (Nick Craig-Wood, kapitainsky, nielash, Tera, Harshit Budhraja)
+* VFS
+    * Fix stale data when using `--vfs-cache-mode` full (Nick Craig-Wood)
+* Azure Blob
+    * **IMPORTANT** Fix data corruption bug - see [#7590](https://github.com/rclone/rclone/issues/7590) (Nick Craig-Wood)
+
 ## v1.65.1 - 2024-01-08
 
 [See commits](https://github.com/rclone/rclone/compare/v1.65.0...v1.65.1)

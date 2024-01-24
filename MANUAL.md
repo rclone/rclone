@@ -1,6 +1,6 @@
 % rclone(1) User Manual
 % Nick Craig-Wood
-% Jan 08, 2024
+% Jan 24, 2024
 
 # Rclone syncs your files to cloud storage
 
@@ -89,6 +89,7 @@ Rclone helps you:
     - Can use multi-threaded downloads to local disk
 - [Copy](https://rclone.org/commands/rclone_copy/) new or changed files to cloud storage
 - [Sync](https://rclone.org/commands/rclone_sync/) (one way) to make a directory identical
+- [Bisync](https://rclone.org/bisync/) (two way) to keep two directories in sync bidirectionally
 - [Move](https://rclone.org/commands/rclone_move/) files to cloud storage deleting the local after verification
 - [Check](https://rclone.org/commands/rclone_check/) hashes and for missing/extra files
 - [Mount](https://rclone.org/commands/rclone_mount/) your cloud storage as a network disk
@@ -127,6 +128,7 @@ WebDAV or S3, that work out of the box.)
 - Hetzner Storage Box
 - HiDrive
 - HTTP
+- ImageKit
 - Internet Archive
 - Jottacloud
 - IBM COS S3
@@ -4503,6 +4505,10 @@ Run without a hash to see the list of all supported hashes, e.g.
       * whirlpool
       * crc32
       * sha256
+      * dropbox
+      * hidrive
+      * mailru
+      * quickxor
 
 Then
 
@@ -15918,7 +15924,7 @@ E.g. for an alternative `filter-file.txt`:
     - *
 
 Files `file1.jpg`, `file3.png` and `file2.avi` are listed whilst
-`secret17.jpg` and files without the suffix .jpg` or `.png` are excluded.
+`secret17.jpg` and files without the suffix `.jpg` or `.png` are excluded.
 
 E.g. for an alternative `filter-file.txt`:
 
@@ -18913,6 +18919,7 @@ upon backend-specific capabilities.
 | HDFS                         | Yes   | No   | Yes  | Yes     | No      | No    | Yes          | No                | No           | Yes   | Yes      |
 | HiDrive                      | Yes   | Yes  | Yes  | Yes     | No      | No    | Yes          | No                | No           | No    | Yes      |
 | HTTP                         | No    | No   | No   | No      | No      | No    | No           | No                | No           | No    | Yes      |
+| ImageKit                     | Yes    | Yes  | Yes   | No      | No     | No   | No           | No                | No          | No   | Yes       |
 | Internet Archive             | No    | Yes  | No   | No      | Yes     | Yes   | No           | No                | Yes          | Yes   | No       |
 | Jottacloud                   | Yes   | Yes  | Yes  | Yes     | Yes     | Yes   | No           | No                | Yes          | Yes   | Yes      |
 | Koofr                        | Yes   | Yes  | Yes  | Yes     | No      | No    | Yes          | No                | Yes          | Yes   | Yes      |
@@ -19150,7 +19157,7 @@ General networking and HTTP stuff.
       --tpslimit float                     Limit HTTP transactions per second to this
       --tpslimit-burst int                 Max burst of transactions for --tpslimit (default 1)
       --use-cookies                        Enable session cookiejar
-      --user-agent string                  Set the user-agent to a specified string (default "rclone/v1.65.1")
+      --user-agent string                  Set the user-agent to a specified string (default "rclone/v1.65.2")
 ```
 
 
@@ -50411,6 +50418,18 @@ Options:
 
 
 # Changelog
+
+## v1.65.2 - 2024-01-24
+
+[See commits](https://github.com/rclone/rclone/compare/v1.65.1...v1.65.2)
+
+* Bug Fixes
+    * build: bump github.com/cloudflare/circl from 1.3.6 to 1.3.7 (dependabot)
+    * docs updates (Nick Craig-Wood, kapitainsky, nielash, Tera, Harshit Budhraja)
+* VFS
+    * Fix stale data when using `--vfs-cache-mode` full (Nick Craig-Wood)
+* Azure Blob
+    * **IMPORTANT** Fix data corruption bug - see [#7590](https://github.com/rclone/rclone/issues/7590) (Nick Craig-Wood)
 
 ## v1.65.1 - 2024-01-08
 
