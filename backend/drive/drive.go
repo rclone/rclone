@@ -3420,6 +3420,53 @@ func (f *Fs) copyID(ctx context.Context, id, dest string) (err error) {
 	return nil
 }
 
+func (f *Fs) query(ctx context.Context, query string) (entries []string, err error) {
+	list := f.svc.Files.List()
+	if query != "" {
+		list.Q(query)
+	}
+
+	if f.opt.ListChunk > 0 {
+		list.PageSize(f.opt.ListChunk)
+	}
+	list.SupportsAllDrives(true)
+	list.IncludeItemsFromAllDrives(true)
+	if f.isTeamDrive && !f.opt.SharedWithMe {
+		list.DriveId(f.opt.TeamDriveID)
+		list.Corpora("drive")
+	}
+	// If using appDataFolder then need to add Spaces
+	if f.rootFolderID == "appDataFolder" {
+		list.Spaces("appDataFolder")
+	}
+
+	fields := fmt.Sprintf("files(%s),nextPageToken,incompleteSearch", f.getFileFields(ctx))
+
+	var results []string
+	for {
+		var files *drive.FileList
+		err = f.pacer.Call(func() (bool, error) {
+			files, err = list.Fields(googleapi.Field(fields)).Context(ctx).Do()
+			return f.shouldRetry(ctx, err)
+		})
+		if err != nil {
+			return nil, fmt.Errorf("failed to execute query: %w", err)
+		}
+		if files.IncompleteSearch {
+			fs.Errorf(f, "search result INCOMPLETE")
+		}
+		for _, item := range files.Files {
+			item.Name = f.opt.Enc.ToStandardName(item.Name)
+			results = append(results, fmt.Sprintf("%s\t%s", item.Id, item.Name))
+		}
+		if files.NextPageToken == "" {
+			break
+		}
+		list.PageToken(files.NextPageToken)
+	}
+	return results, nil
+}
+
 var commandHelp = []fs.CommandHelp{{
 	Name:  "get",
 	Short: "Get command for fetching the drive config parameters",
@@ -3570,6 +3617,19 @@ Use the --interactive/-i or --dry-run flag to see what would be copied before co
 }, {
 	Name:  "importformats",
 	Short: "Dump the import formats for debug purposes",
+}, {
+	Name:  "query",
+	Short: "List files using Google Drive query language",
+	Long: `This command lists files based on a query
+
+Usage:
+
+    rclone backend query drive: query
+    
+The query syntax is documented at [Google Drive Search query terms and 
+operators](https://developers.google.com/drive/api/guides/ref-search-terms).
+
+Results are tab-separated id, name pairs.`,
 }}
 
 // Command the backend to run a named command
@@ -3687,6 +3747,17 @@ func (f *Fs) Command(ctx context.Context, name string, arg []string, opt map[str
 		return f.exportFormats(ctx), nil
 	case "importformats":
 		return f.importFormats(ctx), nil
+	case "query":
+		if len(arg) == 1 {
+			query := arg[0]
+			var results, err = f.query(ctx, query)
+			if err != nil {
+				return nil, fmt.Errorf("failed to execute query: %q, error: %w", query, err)
+			}
+			return results, nil
+		} else {
+			return nil, errors.New("need a query argument")
+		}
 	default:
 		return nil, fs.ErrorCommandNotFound
 	}
