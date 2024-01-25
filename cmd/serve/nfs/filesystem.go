@@ -22,27 +22,35 @@ type FS struct {
 
 // ReadDir implements read dir
 func (f *FS) ReadDir(path string) (dir []os.FileInfo, err error) {
+	fs.Debugf("nfs", "ReadDir %v", path)
 	return f.vfs.ReadDir(path)
 }
 
 // Create implements creating new files
 func (f *FS) Create(filename string) (billy.File, error) {
+	fs.Debugf("nfs", "Create %v", filename)
 	return f.vfs.Create(filename)
 }
 
 // Open opens a file
 func (f *FS) Open(filename string) (billy.File, error) {
-	return f.vfs.Open(filename)
+	file, err := f.vfs.Open(filename)
+	fs.Debugf("nfs", "Open %v file: %v err: %v", filename, file, err)
+	return file, err
 }
 
 // OpenFile opens a file
 func (f *FS) OpenFile(filename string, flag int, perm os.FileMode) (billy.File, error) {
-	return f.vfs.OpenFile(filename, flag, perm)
+	file, err := f.vfs.OpenFile(filename, flag, perm)
+	fs.Debugf("nfs", "OpenFile %v flag: %v perm: %v file: %v err: %v", filename, flag, perm, file, err)
+	return file, err
 }
 
 // Stat gets the file stat
 func (f *FS) Stat(filename string) (os.FileInfo, error) {
-	return f.vfs.Stat(filename)
+	node, err := f.vfs.Stat(filename)
+	fs.Debugf("nfs", "Stat %v node: %v err: %v", filename, node, err)
+	return node, err
 }
 
 // Rename renames a file
@@ -85,7 +93,9 @@ func (f *FS) MkdirAll(filename string, perm os.FileMode) error {
 
 // Lstat gets the stats for symlink
 func (f *FS) Lstat(filename string) (os.FileInfo, error) {
-	return f.vfs.Stat(filename)
+	node, err := f.vfs.Stat(filename)
+	fs.Debugf("nfs", "Lstat %v node: %v err: %v", filename, node, err)
+	return node, err
 }
 
 // Symlink is not supported over NFS

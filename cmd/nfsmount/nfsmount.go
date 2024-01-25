@@ -22,7 +22,8 @@ import (
 )
 
 var (
-	sudo = false
+	sudo         = false
+	nfsServerOpt nfs.Options
 )
 
 func init() {
@@ -33,10 +34,11 @@ func init() {
 	mountlib.AddRc(name, mount)
 	cmdFlags := cmd.Flags()
 	flags.BoolVarP(cmdFlags, &sudo, "sudo", "", sudo, "Use sudo to run the mount command as root.", "")
+	nfs.AddFlags(cmdFlags, &nfsServerOpt)
 }
 
 func mount(VFS *vfs.VFS, mountpoint string, opt *mountlib.Options) (asyncerrors <-chan error, unmount func() error, err error) {
-	s, err := nfs.NewServer(context.Background(), VFS, &nfs.Options{})
+	s, err := nfs.NewServer(context.Background(), VFS, &nfsServerOpt)
 	if err != nil {
 		return
 	}
