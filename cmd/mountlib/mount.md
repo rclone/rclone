@@ -263,6 +263,10 @@ This method spins up an NFS server using [serve nfs](/commands/rclone_serve_nfs/
 it to the specified mountpoint. If you run this in background mode using |--daemon|, you will need to
 send SIGTERM signal to the rclone process using |kill| command to stop the mount.
 
+Note that `--nfs-cache-handle-limit` controls the maximum number of cached file handles stored by the `nfsmount` caching handler.
+This should not be set too low or you may experience errors when trying to access files. The default is 1000000,
+but consider lowering this limit if the server's system resource usage causes problems.
+
 #### macFUSE Notes
 
 If installing macFUSE using [dmg packages](https://github.com/osxfuse/osxfuse/releases) from
