@@ -608,14 +608,16 @@ func (f *Fs) download(ctx context.Context, downloadLink string, size int64, opti
 		Method:  "GET",
 		Options: options,
 	}
-	parsedURL, _ := url.Parse(downloadLink)
+	parsedURL, err := url.Parse(downloadLink)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse download url: %w", err)
+	}
 	if parsedURL.IsAbs() {
 		opts.RootURL = downloadLink
 	} else {
 		opts.Path = downloadLink
 	}
 	var resp *http.Response
-	var err error
 	err = f.pacer.Call(func() (bool, error) {
 		resp, err = f.srv.Call(ctx, &opts)
 		return f.shouldRetry(ctx, resp, err)
@@ -697,7 +699,10 @@ func (f *Fs) upload(ctx context.Context, in io.Reader, uploadLink, filePath stri
 		ContentType: contentType,
 		Parameters:  url.Values{"ret-json": {"1"}}, // It needs to be on the url, not in the body parameters
 	}
-	parsedURL, _ := url.Parse(uploadLink)
+	parsedURL, err := url.Parse(uploadLink)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse upload url: %w", err)
+	}
 	if parsedURL.IsAbs() {
 		opts.RootURL = uploadLink
 	} else {
