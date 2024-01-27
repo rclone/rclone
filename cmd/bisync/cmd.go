@@ -20,6 +20,7 @@ import (
 	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fs/config/flags"
 	"github.com/rclone/rclone/fs/filter"
+	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/fs/hash"
 
 	"github.com/spf13/cobra"
@@ -193,7 +194,7 @@ var commandDefinition = &cobra.Command{
 		cmd.Run(false, true, command, func() error {
 			err := Bisync(ctx, fs1, fs2, &opt)
 			if err == ErrBisyncAborted {
-				os.Exit(2)
+				return fserrors.FatalError(err)
 			}
 			return err
 		})
