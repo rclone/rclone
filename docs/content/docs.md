@@ -2868,9 +2868,9 @@ messages may not be valid after the retry. If rclone has done a retry
 it will log a high priority message if the retry was successful.
 
 ### List of exit codes ###
-  * `0` - success
-  * `1` - Syntax or usage error
-  * `2` - Error not otherwise categorised
+  * `0` - Success
+  * `1` - Error not otherwise categorised
+  * `2` - Syntax or usage error
   * `3` - Directory not found
   * `4` - File not found
   * `5` - Temporary error (one that more retries might fix) (Retry errors)

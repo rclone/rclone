@@ -50,7 +50,6 @@ var (
 	version       bool
 	// Errors
 	errorCommandNotFound    = errors.New("command not found")
-	errorUncategorized      = errors.New("uncategorized error")
 	errorNotEnoughArguments = errors.New("not enough arguments")
 	errorTooManyArguments   = errors.New("too many arguments")
 )
@@ -495,8 +494,6 @@ func resolveExitCode(err error) {
 		os.Exit(exitcode.DirNotFound)
 	case errors.Is(err, fs.ErrorObjectNotFound):
 		os.Exit(exitcode.FileNotFound)
-	case errors.Is(err, errorUncategorized):
-		os.Exit(exitcode.UncategorizedError)
 	case errors.Is(err, accounting.ErrorMaxTransferLimitReached):
 		os.Exit(exitcode.TransferExceeded)
 	case errors.Is(err, fssync.ErrorMaxDurationReached):
@@ -507,8 +504,10 @@ func resolveExitCode(err error) {
 		os.Exit(exitcode.NoRetryError)
 	case fserrors.IsFatalError(err):
 		os.Exit(exitcode.FatalError)
-	default:
+	case errors.Is(err, errorCommandNotFound), errors.Is(err, errorNotEnoughArguments), errors.Is(err, errorTooManyArguments):
 		os.Exit(exitcode.UsageError)
+	default:
+		os.Exit(exitcode.UncategorizedError)
 	}
 }
 
@@ -536,6 +535,7 @@ func Main() {
 		if strings.HasPrefix(err.Error(), "unknown command") && selfupdateEnabled {
 			Root.PrintErrf("You could use '%s selfupdate' to get latest features.\n\n", Root.CommandPath())
 		}
-		fs.Fatalf(nil, "Fatal error: %v", err)
+		fs.Logf(nil, "Fatal error: %v", err)
+		os.Exit(exitcode.UsageError)
 	}
 }

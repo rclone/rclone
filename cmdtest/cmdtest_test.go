@@ -174,7 +174,7 @@ func TestCmdTest(t *testing.T) {
 	// Test error and error output
 	out, err = rclone("version", "--provoke-an-error")
 	if assert.Error(t, err) {
-		assert.Contains(t, err.Error(), "exit status 1")
+		assert.Contains(t, err.Error(), "exit status 2")
 		assert.Contains(t, out, "Error: unknown flag")
 	}
 
