@@ -153,7 +153,7 @@ The main rclone commands with most used first
 * [rclone authorize](/commands/rclone_authorize/)	- Remote authorization.
 * [rclone cat](/commands/rclone_cat/)		- Concatenate any files and send them to stdout.
 * [rclone copyto](/commands/rclone_copyto/)	- Copy files from source to dest, skipping already copied.
-* [rclone genautocomplete](/commands/rclone_genautocomplete/)	- Output shell completion scripts for rclone.
+* [rclone completion](/commands/rclone_completion/)	- Output shell completion scripts for rclone.
 * [rclone gendocs](/commands/rclone_gendocs/)	- Output markdown docs for rclone to the directory supplied.
 * [rclone listremotes](/commands/rclone_listremotes/)	- List all the remotes in the config file.
 * [rclone mount](/commands/rclone_mount/)	- Mount the remote as a mountpoint.
@@ -2608,7 +2608,7 @@ a configuration file, you can avoid it being loaded by overriding the
 location, e.g. with one of the documented special values for
 memory-only configuration. Since only backend options can be stored
 in configuration files, this is normally unnecessary for commands
-that do not operate on backends, e.g. `genautocomplete`. However,
+that do not operate on backends, e.g. `completion`. However,
 it will be relevant for commands that do operate on backends in
 general, but are used without referencing a stored remote, e.g.
 listing local filesystem paths, or
