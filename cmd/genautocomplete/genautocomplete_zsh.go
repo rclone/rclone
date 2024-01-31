@@ -21,7 +21,7 @@ Generates a zsh autocompletion script for rclone.
 This writes to /usr/share/zsh/vendor-completions/_rclone by default so will
 probably need to be run with sudo or as root, e.g.
 
-    sudo rclone genautocomplete zsh
+    sudo rclone completion zsh
 
 Logout and login again to use the autocompletion scripts, or source
 them directly

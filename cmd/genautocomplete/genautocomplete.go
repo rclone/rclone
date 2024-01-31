@@ -1,4 +1,4 @@
-// Package genautocomplete provides the genautocomplete command.
+// Package genautocomplete provides the completion command.
 package genautocomplete
 
 import (
