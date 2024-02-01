@@ -1198,11 +1198,12 @@ func (o *Object) uploadSession(ctx context.Context, parentID, name string) (uplo
 
 func (o *Object) upload(ctx context.Context, uploadKey string, chunk io.Reader, fullSize int64, offset int64, chunkSize int64, options ...fs.OpenOption) (err error) {
 	opts := rest.Opts{
-		Method:       "POST",
-		RootURL:      fmt.Sprintf(uploadURL, o.fs.opt.Host) + uploadKey,
-		Body:         chunk,
-		ContentRange: fmt.Sprintf("bytes %d-%d/%d", offset, offset+chunkSize, fullSize),
-		Options:      options,
+		Method:        "POST",
+		RootURL:       fmt.Sprintf(uploadURL, o.fs.opt.Host) + uploadKey,
+		Body:          chunk,
+		ContentLength: &chunkSize,
+		ContentRange:  fmt.Sprintf("bytes %d-%d/%d", offset, offset+chunkSize-1, fullSize),
+		Options:       options,
 	}
 
 	var fileID string
