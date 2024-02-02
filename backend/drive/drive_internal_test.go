@@ -552,12 +552,9 @@ func (f *Fs) InternalTestQuery(t *testing.T) {
 			results, err := f.query(ctx, fmt.Sprintf("%strashed=false and name='%s'", parent, escapedItem))
 			require.NoError(t, err)
 			require.Len(t, results, 1)
-			elem := strings.Split(results[0], "\t")
-			id := elem[0]
-			name := elem[1]
-			assert.Len(t, id, 33)
-			assert.Equal(t, name, item)
-			parent = fmt.Sprintf("'%s' in parents and ", id)
+			assert.Len(t, results[0].Id, 33)
+			assert.Equal(t, results[0].Name, item)
+			parent = fmt.Sprintf("'%s' in parents and ", results[0].Id)
 		}
 	})
 }

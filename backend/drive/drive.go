@@ -3420,7 +3420,7 @@ func (f *Fs) copyID(ctx context.Context, id, dest string) (err error) {
 	return nil
 }
 
-func (f *Fs) query(ctx context.Context, query string) (entries []string, err error) {
+func (f *Fs) query(ctx context.Context, query string) (entries []*drive.File, err error) {
 	list := f.svc.Files.List()
 	if query != "" {
 		list.Q(query)
@@ -3442,7 +3442,7 @@ func (f *Fs) query(ctx context.Context, query string) (entries []string, err err
 
 	fields := fmt.Sprintf("files(%s),nextPageToken,incompleteSearch", f.getFileFields(ctx))
 
-	var results []string
+	var results []*drive.File
 	for {
 		var files *drive.FileList
 		err = f.pacer.Call(func() (bool, error) {
@@ -3455,10 +3455,7 @@ func (f *Fs) query(ctx context.Context, query string) (entries []string, err err
 		if files.IncompleteSearch {
 			fs.Errorf(f, "search result INCOMPLETE")
 		}
-		for _, item := range files.Files {
-			item.Name = f.opt.Enc.ToStandardName(item.Name)
-			results = append(results, fmt.Sprintf("%s\t%s", item.Id, item.Name))
-		}
+		results = append(results, files.Files...)
 		if files.NextPageToken == "" {
 			break
 		}
@@ -3629,7 +3626,35 @@ Usage:
 The query syntax is documented at [Google Drive Search query terms and 
 operators](https://developers.google.com/drive/api/guides/ref-search-terms).
 
-Results are tab-separated id, name pairs.`,
+For example:
+
+	rclone backend query drive: "'0ABc9DEFGHIJKLMNop0QRatUVW3X' in parents and name contains 'foo'"
+
+If the query contains literal ' or \ characters, these need to be escaped with
+\ characters. "'" becomes "\'" and "\" becomes "\\\", for example to match a 
+file named "foo ' \.txt":
+
+	rclone backend query drive: "name = 'foo \' \\\.txt'"
+
+The result is a JSON array of matches, for example:
+
+[
+	{
+		"createdTime": "2017-06-29T19:58:28.537Z",
+		"id": "0AxBe_CDEF4zkGHI4d0FjYko2QkD",
+		"md5Checksum": "68518d16be0c6fbfab918be61d658032",
+		"mimeType": "text/plain",
+		"modifiedTime": "2024-02-02T10:40:02.874Z",
+		"name": "foo ' \\.txt",
+		"parents": [
+			"0BxAe_BCDE4zkFGZpcWJGek0xbzC"
+		],
+		"resourceKey": "0-ABCDEFGHIXJQpIGqBJq3MC",
+		"sha1Checksum": "8f284fa768bfb4e45d076a579ab3905ab6bfa893",
+		"size": "311",
+		"webViewLink": "https://drive.google.com/file/d/0AxBe_CDEF4zkGHI4d0FjYko2QkD/view?usp=drivesdk\u0026resourcekey=0-ABCDEFGHIXJQpIGqBJq3MC"
+	}
+]`,
 }}
 
 // Command the backend to run a named command
