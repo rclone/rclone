@@ -1,90 +1,138 @@
-(01)  : test all-changed
+[36m(01)  :[0m [34mtest all-changed[0m
 
 
-(02)  : test initial bisync
-(03)  : bisync resync
+[36m(02)  :[0m [34mtest initial bisync[0m
+[36m(03)  :[0m [34mbisync resync[0m
+INFO  : [2mSetting --ignore-listing-checksum as neither --checksum nor --compare checksum are set.[0m
+INFO  : Bisyncing with Comparison Settings:
+{
+"Modtime": true,
+"Size": true,
+"Checksum": false,
+"NoSlowHash": false,
+"SlowHashSyncOnly": false,
+"DownloadHash": false
+}
 INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
-INFO  : Copying unique Path2 files to Path1
-INFO  : Resynching Path1 to Path2
+INFO  : Copying Path2 files to Path1
+INFO  : - [34mPath2[0m    [35mResync is copying files to[0m         - [36mPath1[0m
+INFO  : - [36mPath1[0m    [35mResync is copying files to[0m         - [36mPath2[0m
 INFO  : Resync updating listings
-INFO  : Bisync successful
+INFO  : Validating listings for Path1 "{path1/}" vs Path2 "{path2/}"
+INFO  : [32mBisync successful[0m
 
-(04)  : test change timestamp on all files except RCLONE_TEST
-(05)  : touch-glob 2005-01-02 {path1/} file*
-(06)  : touch-glob 2005-01-02 {path1/}subdir file*
+[36m(04)  :[0m [34mtest change timestamp on all files except RCLONE_TEST[0m
+[36m(05)  :[0m [34mtouch-glob 2005-01-02 {path1/} file*[0m
+[36m(06)  :[0m [34mtouch-glob 2005-01-02 {path1/}subdir file*[0m
 
-(07)  : test sync should pass
-(08)  : bisync
+[36m(07)  :[0m [34mtest sync should pass[0m
+[36m(08)  :[0m [34mbisync[0m
+INFO  : [2mSetting --ignore-listing-checksum as neither --checksum nor --compare checksum are set.[0m
+INFO  : Bisyncing with Comparison Settings:
+{
+"Modtime": true,
+"Size": true,
+"Checksum": false,
+"NoSlowHash": false,
+"SlowHashSyncOnly": false,
+"DownloadHash": false
+}
 INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Building Path1 and Path2 listings
 INFO  : Path1 checking for diffs
-INFO  : - Path1    File is newer                       - file1.copy1.txt
-INFO  : - Path1    File is newer                       - file1.copy2.txt
-INFO  : - Path1    File is newer                       - file1.copy3.txt
-INFO  : - Path1    File is newer                       - file1.copy4.txt
-INFO  : - Path1    File is newer                       - file1.copy5.txt
-INFO  : - Path1    File is newer                       - file1.txt
-INFO  : - Path1    File is newer                       - subdir/file20.txt
-INFO  : Path1:    7 changes:    0 new,    7 newer,    0 older,    0 deleted
+INFO  : - [36mPath1[0m    [35m[33mFile changed: [35mtime (newer)[0m[0m[0m - [36mfile1.copy1.txt[0m
+INFO  : - [36mPath1[0m    [35m[33mFile changed: [35mtime (newer)[0m[0m[0m - [36mfile1.copy2.txt[0m
+INFO  : - [36mPath1[0m    [35m[33mFile changed: [35mtime (newer)[0m[0m[0m - [36mfile1.copy3.txt[0m
+INFO  : - [36mPath1[0m    [35m[33mFile changed: [35mtime (newer)[0m[0m[0m - [36mfile1.copy4.txt[0m
+INFO  : - [36mPath1[0m    [35m[33mFile changed: [35mtime (newer)[0m[0m[0m - [36mfile1.copy5.txt[0m
+INFO  : - [36mPath1[0m    [35m[33mFile changed: [35mtime (newer)[0m[0m[0m - [36mfile1.txt[0m
+INFO  : - [36mPath1[0m    [35m[33mFile changed: [35mtime (newer)[0m[0m[0m - [36msubdir/file20.txt[0m
+INFO  : Path1:    7 changes: [32m   0 new[0m, [33m   7 modified[0m, [31m   0 deleted[0m
+INFO  : ([33mModified[0m: [36m   7 newer[0m, [34m   0 older[0m)
 INFO  : Path2 checking for diffs
 INFO  : Applying changes
-INFO  : - Path1    Queue copy to Path2                 - {path2/}file1.copy1.txt
-INFO  : - Path1    Queue copy to Path2                 - {path2/}file1.copy2.txt
-INFO  : - Path1    Queue copy to Path2                 - {path2/}file1.copy3.txt
-INFO  : - Path1    Queue copy to Path2                 - {path2/}file1.copy4.txt
-INFO  : - Path1    Queue copy to Path2                 - {path2/}file1.copy5.txt
-INFO  : - Path1    Queue copy to Path2                 - {path2/}file1.txt
-INFO  : - Path1    Queue copy to Path2                 - {path2/}subdir/file20.txt
-INFO  : - Path1    Do queued copies to                 - Path2
+INFO  : - [36mPath1[0m    [35m[32mQueue copy to[0m Path2[0m       - [36m{path2/}file1.copy1.txt[0m
+INFO  : - [36mPath1[0m    [35m[32mQueue copy to[0m Path2[0m       - [36m{path2/}file1.copy2.txt[0m
+INFO  : - [36mPath1[0m    [35m[32mQueue copy to[0m Path2[0m       - [36m{path2/}file1.copy3.txt[0m
+INFO  : - [36mPath1[0m    [35m[32mQueue copy to[0m Path2[0m       - [36m{path2/}file1.copy4.txt[0m
+INFO  : - [36mPath1[0m    [35m[32mQueue copy to[0m Path2[0m       - [36m{path2/}file1.copy5.txt[0m
+INFO  : - [36mPath1[0m    [35m[32mQueue copy to[0m Path2[0m       - [36m{path2/}file1.txt[0m
+INFO  : - [36mPath1[0m    [35m[32mQueue copy to[0m Path2[0m       - [36m{path2/}subdir/file20.txt[0m
+INFO  : - [36mPath1[0m    [35mDo queued copies to[0m                - [36mPath2[0m
 INFO  : Updating listings
 INFO  : Validating listings for Path1 "{path1/}" vs Path2 "{path2/}"
-INFO  : Bisync successful
+INFO  : [32mBisync successful[0m
 
-(09)  : test change timestamp on all files including RCLONE_TEST
-(10)  : touch-glob 2004-01-02 {path1/} *
-(11)  : touch-glob 2004-01-02 {path1/}subdir *
+[36m(09)  :[0m [34mtest change timestamp on all files including RCLONE_TEST[0m
+[36m(10)  :[0m [34mtouch-glob 2004-01-02 {path1/} *[0m
+[36m(11)  :[0m [34mtouch-glob 2004-01-02 {path1/}subdir *[0m
 
-(12)  : test sync should fail
-(13)  : bisync
+[36m(12)  :[0m [34mtest sync should fail[0m
+[36m(13)  :[0m [34mbisync[0m
+INFO  : [2mSetting --ignore-listing-checksum as neither --checksum nor --compare checksum are set.[0m
+INFO  : Bisyncing with Comparison Settings:
+{
+"Modtime": true,
+"Size": true,
+"Checksum": false,
+"NoSlowHash": false,
+"SlowHashSyncOnly": false,
+"DownloadHash": false
+}
 INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Building Path1 and Path2 listings
 INFO  : Path1 checking for diffs
-INFO  : - Path1    File is OLDER                       - file1.copy1.txt
-INFO  : - Path1    File is OLDER                       - file1.copy2.txt
-INFO  : - Path1    File is OLDER                       - file1.copy3.txt
-INFO  : - Path1    File is OLDER                       - file1.copy4.txt
-INFO  : - Path1    File is OLDER                       - file1.copy5.txt
-INFO  : - Path1    File is OLDER                       - file1.txt
-INFO  : - Path1    File is OLDER                       - subdir/file20.txt
-INFO  : - Path1    File is newer                       - RCLONE_TEST
-INFO  : Path1:    8 changes:    0 new,    1 newer,    7 older,    0 deleted
+INFO  : - [36mPath1[0m    [35m[33mFile changed: [35mtime (newer)[0m[0m[0m - [36mRCLONE_TEST[0m
+INFO  : - [36mPath1[0m    [35m[33mFile changed: [35mtime (older)[0m[0m[0m - [36mfile1.copy1.txt[0m
+INFO  : - [36mPath1[0m    [35m[33mFile changed: [35mtime (older)[0m[0m[0m - [36mfile1.copy2.txt[0m
+INFO  : - [36mPath1[0m    [35m[33mFile changed: [35mtime (older)[0m[0m[0m - [36mfile1.copy3.txt[0m
+INFO  : - [36mPath1[0m    [35m[33mFile changed: [35mtime (older)[0m[0m[0m - [36mfile1.copy4.txt[0m
+INFO  : - [36mPath1[0m    [35m[33mFile changed: [35mtime (older)[0m[0m[0m - [36mfile1.copy5.txt[0m
+INFO  : - [36mPath1[0m    [35m[33mFile changed: [35mtime (older)[0m[0m[0m - [36mfile1.txt[0m
+INFO  : - [36mPath1[0m    [35m[33mFile changed: [35mtime (older)[0m[0m[0m - [36msubdir/file20.txt[0m
+INFO  : Path1:    8 changes: [32m   0 new[0m, [33m   8 modified[0m, [31m   0 deleted[0m
+INFO  : ([33mModified[0m: [36m   1 newer[0m, [34m   7 older[0m)
 INFO  : Path2 checking for diffs
 ERROR : Safety abort: all files were changed on Path1 "{path1/}". Run with --force if desired.
-NOTICE: Bisync aborted. Please try again.
+NOTICE: [31mBisync aborted. Please try again.[0m
 Bisync error: all files were changed
 
-(14)  : test sync with force should pass
-(15)  : bisync force
+[36m(14)  :[0m [34mtest sync with force should pass[0m
+[36m(15)  :[0m [34mbisync force[0m
+INFO  : [2mSetting --ignore-listing-checksum as neither --checksum nor --compare checksum are set.[0m
+INFO  : Bisyncing with Comparison Settings:
+{
+"Modtime": true,
+"Size": true,
+"Checksum": false,
+"NoSlowHash": false,
+"SlowHashSyncOnly": false,
+"DownloadHash": false
+}
 INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Building Path1 and Path2 listings
 INFO  : Path1 checking for diffs
-INFO  : - Path1    File is OLDER                       - file1.copy1.txt
-INFO  : - Path1    File is OLDER                       - file1.copy2.txt
-INFO  : - Path1    File is OLDER                       - file1.copy3.txt
-INFO  : - Path1    File is OLDER                       - file1.copy4.txt
-INFO  : - Path1    File is OLDER                       - file1.copy5.txt
-INFO  : - Path1    File is OLDER                       - file1.txt
-INFO  : - Path1    File is OLDER                       - subdir/file20.txt
-INFO  : - Path1    File is newer                       - RCLONE_TEST
-INFO  : Path1:    8 changes:    0 new,    1 newer,    7 older,    0 deleted
+INFO  : - [36mPath1[0m    [35m[33mFile changed: [35mtime (newer)[0m[0m[0m - [36mRCLONE_TEST[0m
+INFO  : - [36mPath1[0m    [35m[33mFile changed: [35mtime (older)[0m[0m[0m - [36mfile1.copy1.txt[0m
+INFO  : - [36mPath1[0m    [35m[33mFile changed: [35mtime (older)[0m[0m[0m - [36mfile1.copy2.txt[0m
+INFO  : - [36mPath1[0m    [35m[33mFile changed: [35mtime (older)[0m[0m[0m - [36mfile1.copy3.txt[0m
+INFO  : - [36mPath1[0m    [35m[33mFile changed: [35mtime (older)[0m[0m[0m - [36mfile1.copy4.txt[0m
+INFO  : - [36mPath1[0m    [35m[33mFile changed: [35mtime (older)[0m[0m[0m - [36mfile1.copy5.txt[0m
+INFO  : - [36mPath1[0m    [35m[33mFile changed: [35mtime (older)[0m[0m[0m - [36mfile1.txt[0m
+INFO  : - [36mPath1[0m    [35m[33mFile changed: [35mtime (older)[0m[0m[0m - [36msubdir/file20.txt[0m
+INFO  : Path1:    8 changes: [32m   0 new[0m, [33m   8 modified[0m, [31m   0 deleted[0m
+INFO  : ([33mModified[0m: [36m   1 newer[0m, [34m   7 older[0m)
 INFO  : Path2 checking for diffs
 INFO  : Applying changes
-INFO  : - Path1    Queue copy to Path2                 - {path2/}RCLONE_TEST
-INFO  : - Path1    Queue copy to Path2                 - {path2/}file1.copy1.txt
-INFO  : - Path1    Queue copy to Path2                 - {path2/}file1.copy2.txt
-INFO  : - Path1    Queue copy to Path2                 - {path2/}file1.copy3.txt
-INFO  : - Path1    Queue copy to Path2                 - {path2/}file1.copy4.txt
-INFO  : - Path1    Queue copy to Path2                 - {path2/}file1.copy5.txt
-INFO  : - Path1    Queue copy to Path2                 - {path2/}file1.txt
-INFO  : - Path1    Queue copy to Path2                 - {path2/}subdir/file20.txt
-INFO  : - Path1    Do queued copies to                 - Path2
+INFO  : - [36mPath1[0m    [35m[32mQueue copy to[0m Path2[0m       - [36m{path2/}RCLONE_TEST[0m
+INFO  : - [36mPath1[0m    [35m[32mQueue copy to[0m Path2[0m       - [36m{path2/}file1.copy1.txt[0m
+INFO  : - [36mPath1[0m    [35m[32mQueue copy to[0m Path2[0m       - [36m{path2/}file1.copy2.txt[0m
+INFO  : - [36mPath1[0m    [35m[32mQueue copy to[0m Path2[0m       - [36m{path2/}file1.copy3.txt[0m
+INFO  : - [36mPath1[0m    [35m[32mQueue copy to[0m Path2[0m       - [36m{path2/}file1.copy4.txt[0m
+INFO  : - [36mPath1[0m    [35m[32mQueue copy to[0m Path2[0m       - [36m{path2/}file1.copy5.txt[0m
+INFO  : - [36mPath1[0m    [35m[32mQueue copy to[0m Path2[0m       - [36m{path2/}file1.txt[0m
+INFO  : - [36mPath1[0m    [35m[32mQueue copy to[0m Path2[0m       - [36m{path2/}subdir/file20.txt[0m
+INFO  : - [36mPath1[0m    [35mDo queued copies to[0m                - [36mPath2[0m
 INFO  : Updating listings
 INFO  : Validating listings for Path1 "{path1/}" vs Path2 "{path2/}"
-INFO  : Bisync successful
+INFO  : [32mBisync successful[0m

@@ -847,12 +847,15 @@ Returns the following values:
 		[
 			{
 				"bytes": total transferred bytes for this file,
-				"eta": estimated time in seconds until file transfer completion
+				"eta": estimated time in seconds until file transfer completion (may be nil)
 				"name": name of the file,
 				"percentage": progress of the file transfer in percent,
 				"speed": average speed over the whole transfer in bytes per second,
 				"speedAvg": current speed in bytes per second as an exponentially weighted moving average,
 				"size": size of the file in bytes
+				"group": stats group this transfer is part of
+				"srcFs": name of the source remote (not present if not known)
+				"dstFs": name of the destination remote (not present if not known)
 			}
 		],
 	"checking": an array of names of currently active file checks
@@ -904,9 +907,12 @@ Returns the following values:
 				"size": size of the file in bytes,
 				"bytes": total transferred bytes for this file,
 				"checked": if the transfer is only checked (skipped, deleted),
-				"timestamp": integer representing millisecond unix epoch,
+				"started_at": time the transfer was started at (RFC3339 format, eg `"2000-01-01T01:00:00.085742121Z"`),
+				"completed_at": time the transfer was completed at (RFC3339 format, only present if transfer is completed),
 				"error": string description of the error (empty if successful),
-				"jobid": id of the job that this transfer belongs to
+				"group": string representing which stats group this is part of,
+				"srcFs": name of the source remote (not present if not known),
+				"dstFs": name of the destination remote (not present if not known),
 			}
 		]
 }

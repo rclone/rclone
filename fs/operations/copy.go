@@ -369,7 +369,7 @@ func (c *copy) copy(ctx context.Context) (newDst fs.Object, err error) {
 // be nil.
 func Copy(ctx context.Context, f fs.Fs, dst fs.Object, remote string, src fs.Object) (newDst fs.Object, err error) {
 	ci := fs.GetConfig(ctx)
-	tr := accounting.Stats(ctx).NewTransfer(src)
+	tr := accounting.Stats(ctx).NewTransfer(src, f)
 	defer func() {
 		tr.Done(ctx, err)
 	}()

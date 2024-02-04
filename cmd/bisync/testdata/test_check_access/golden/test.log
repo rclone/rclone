@@ -1,17 +1,40 @@
-(01)  : test check-access
+[36m(01)  :[0m [34mtest check-access[0m
 
 
-(02)  : test initial bisync
-(03)  : bisync resync
+[36m(02)  :[0m [34mtest initial bisync[0m
+[36m(03)  :[0m [34mbisync resync[0m
+INFO  : [2mSetting --ignore-listing-checksum as neither --checksum nor --compare checksum are set.[0m
+INFO  : Bisyncing with Comparison Settings:
+{
+"Modtime": true,
+"Size": true,
+"Checksum": false,
+"NoSlowHash": false,
+"SlowHashSyncOnly": false,
+"DownloadHash": false
+}
 INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
-INFO  : Copying unique Path2 files to Path1
-INFO  : Resynching Path1 to Path2
+INFO  : Copying Path2 files to Path1
+INFO  : - [34mPath2[0m    [35mResync is copying files to[0m         - [36mPath1[0m
+INFO  : - [36mPath1[0m    [35mResync is copying files to[0m         - [36mPath2[0m
 INFO  : Resync updating listings
-INFO  : Bisync successful
+INFO  : Validating listings for Path1 "{path1/}" vs Path2 "{path2/}"
+INFO  : [32mBisync successful[0m
 
-(04)  : test 1. see that check-access passes with the initial setup
-(05)  : bisync check-access
+[36m(04)  :[0m [34mtest 1. see that check-access passes with the initial setup[0m
+[36m(05)  :[0m [34mbisync check-access[0m
+INFO  : [2mSetting --ignore-listing-checksum as neither --checksum nor --compare checksum are set.[0m
+INFO  : Bisyncing with Comparison Settings:
+{
+"Modtime": true,
+"Size": true,
+"Checksum": false,
+"NoSlowHash": false,
+"SlowHashSyncOnly": false,
+"DownloadHash": false
+}
 INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Building Path1 and Path2 listings
 INFO  : Path1 checking for diffs
 INFO  : Path2 checking for diffs
 INFO  : Checking access health
@@ -19,36 +42,70 @@ INFO  : Found 2 matching "RCLONE_TEST" files on both paths
 INFO  : No changes found
 INFO  : Updating listings
 INFO  : Validating listings for Path1 "{path1/}" vs Path2 "{path2/}"
-INFO  : Bisync successful
+INFO  : [32mBisync successful[0m
 
-(06)  : test 2. delete the path2 subdir RCLONE_TEST and run sync. should fail critical.
-(07)  : delete-file {path2/}subdir/RCLONE_TEST
-(08)  : bisync check-access
+[36m(06)  :[0m [34mtest 2. delete the path2 subdir RCLONE_TEST and run sync. should fail critical.[0m
+[36m(07)  :[0m [34mdelete-file {path2/}subdir/RCLONE_TEST[0m
+[36m(08)  :[0m [34mbisync check-access[0m
+INFO  : [2mSetting --ignore-listing-checksum as neither --checksum nor --compare checksum are set.[0m
+INFO  : Bisyncing with Comparison Settings:
+{
+"Modtime": true,
+"Size": true,
+"Checksum": false,
+"NoSlowHash": false,
+"SlowHashSyncOnly": false,
+"DownloadHash": false
+}
 INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Building Path1 and Path2 listings
 INFO  : Path1 checking for diffs
 INFO  : Path2 checking for diffs
-INFO  : - Path2    File was deleted                    - subdir/RCLONE_TEST
-INFO  : Path2:    1 changes:    0 new,    0 newer,    0 older,    1 deleted
+INFO  : - [34mPath2[0m    [35m[31mFile was deleted[0m[0m          - [36msubdir/RCLONE_TEST[0m
+INFO  : Path2:    1 changes: [32m   0 new[0m, [33m   0 modified[0m, [31m   1 deleted[0m
 INFO  : Checking access health
 ERROR : Access test failed: Path1 count 2, Path2 count 1 - RCLONE_TEST
-ERROR : -          Access test failed: Path1 file not found in Path2 - subdir/RCLONE_TEST
-ERROR : Bisync critical error: check file check failed
-ERROR : Bisync aborted. Must run --resync to recover.
+ERROR : - [34m[0m         [35mAccess test failed: Path1 file not found in Path2[0m - [36msubdir/RCLONE_TEST[0m
+ERROR : [31mBisync critical error: check file check failed[0m
+ERROR : [31mBisync aborted. Must run --resync to recover.[0m
 Bisync error: bisync aborted
-(09)  : copy-listings path2-missing
+[36m(09)  :[0m [34mcopy-listings path2-missing[0m
 
-(10)  : test 3. put the path2 subdir RCLONE_TEST back, resync.
-(11)  : copy-file {path1/}subdir/RCLONE_TEST {path2/}
-(12)  : bisync resync
+[36m(10)  :[0m [34mtest 3. put the path2 subdir RCLONE_TEST back, resync.[0m
+[36m(11)  :[0m [34mcopy-file {path1/}subdir/RCLONE_TEST {path2/}[0m
+[36m(12)  :[0m [34mbisync resync[0m
+INFO  : [2mSetting --ignore-listing-checksum as neither --checksum nor --compare checksum are set.[0m
+INFO  : Bisyncing with Comparison Settings:
+{
+"Modtime": true,
+"Size": true,
+"Checksum": false,
+"NoSlowHash": false,
+"SlowHashSyncOnly": false,
+"DownloadHash": false
+}
 INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
-INFO  : Copying unique Path2 files to Path1
-INFO  : Resynching Path1 to Path2
+INFO  : Copying Path2 files to Path1
+INFO  : - [34mPath2[0m    [35mResync is copying files to[0m         - [36mPath1[0m
+INFO  : - [36mPath1[0m    [35mResync is copying files to[0m         - [36mPath2[0m
 INFO  : Resync updating listings
-INFO  : Bisync successful
+INFO  : Validating listings for Path1 "{path1/}" vs Path2 "{path2/}"
+INFO  : [32mBisync successful[0m
 
-(13)  : test 4. run sync with check-access. should pass.
-(14)  : bisync check-access
+[36m(13)  :[0m [34mtest 4. run sync with check-access. should pass.[0m
+[36m(14)  :[0m [34mbisync check-access[0m
+INFO  : [2mSetting --ignore-listing-checksum as neither --checksum nor --compare checksum are set.[0m
+INFO  : Bisyncing with Comparison Settings:
+{
+"Modtime": true,
+"Size": true,
+"Checksum": false,
+"NoSlowHash": false,
+"SlowHashSyncOnly": false,
+"DownloadHash": false
+}
 INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Building Path1 and Path2 listings
 INFO  : Path1 checking for diffs
 INFO  : Path2 checking for diffs
 INFO  : Checking access health
@@ -56,45 +113,92 @@ INFO  : Found 2 matching "RCLONE_TEST" files on both paths
 INFO  : No changes found
 INFO  : Updating listings
 INFO  : Validating listings for Path1 "{path1/}" vs Path2 "{path2/}"
-INFO  : Bisync successful
+INFO  : [32mBisync successful[0m
 
-(15)  : test 5. delete path1 top level RCLONE_TEST, run sync. should fail critical.
-(16)  : delete-file {path1/}RCLONE_TEST
-(17)  : bisync check-access
+[36m(15)  :[0m [34mtest 5. delete path1 top level RCLONE_TEST, run sync. should fail critical.[0m
+[36m(16)  :[0m [34mdelete-file {path1/}RCLONE_TEST[0m
+[36m(17)  :[0m [34mbisync check-access[0m
+INFO  : [2mSetting --ignore-listing-checksum as neither --checksum nor --compare checksum are set.[0m
+INFO  : Bisyncing with Comparison Settings:
+{
+"Modtime": true,
+"Size": true,
+"Checksum": false,
+"NoSlowHash": false,
+"SlowHashSyncOnly": false,
+"DownloadHash": false
+}
 INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Building Path1 and Path2 listings
 INFO  : Path1 checking for diffs
-INFO  : - Path1    File was deleted                    - RCLONE_TEST
-INFO  : Path1:    1 changes:    0 new,    0 newer,    0 older,    1 deleted
+INFO  : - [36mPath1[0m    [35m[31mFile was deleted[0m[0m          - [36mRCLONE_TEST[0m
+INFO  : Path1:    1 changes: [32m   0 new[0m, [33m   0 modified[0m, [31m   1 deleted[0m
 INFO  : Path2 checking for diffs
 INFO  : Checking access health
 ERROR : Access test failed: Path1 count 1, Path2 count 2 - RCLONE_TEST
-ERROR : -          Access test failed: Path2 file not found in Path1 - RCLONE_TEST
-ERROR : Bisync critical error: check file check failed
-ERROR : Bisync aborted. Must run --resync to recover.
+ERROR : - [34m[0m         [35mAccess test failed: Path2 file not found in Path1[0m - [36mRCLONE_TEST[0m
+ERROR : [31mBisync critical error: check file check failed[0m
+ERROR : [31mBisync aborted. Must run --resync to recover.[0m
 Bisync error: bisync aborted
-(18)  : copy-listings path1-missing
+[36m(18)  :[0m [34mcopy-listings path1-missing[0m
 
-(19)  : test 6. run again. should fail critical due to missing listings.
-(20)  : bisync check-access
+[36m(19)  :[0m [34mtest 6. run again. should fail critical due to missing listings.[0m
+[36m(20)  :[0m [34mbisync check-access[0m
+INFO  : [2mSetting --ignore-listing-checksum as neither --checksum nor --compare checksum are set.[0m
+INFO  : Bisyncing with Comparison Settings:
+{
+"Modtime": true,
+"Size": true,
+"Checksum": false,
+"NoSlowHash": false,
+"SlowHashSyncOnly": false,
+"DownloadHash": false
+}
 INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
-ERROR : Bisync critical error: cannot find prior Path1 or Path2 listings, likely due to critical error on prior run
-ERROR : Bisync aborted. Must run --resync to recover.
+ERROR : [31mBisync critical error: cannot find prior Path1 or Path2 listings, likely due to critical error on prior run
+[35mTip: here are the filenames we were looking for. Do they exist?
+[0m[36mPath1: [94m{workdir/}{session}.path1.lst[0m
+[0m[36mPath2: [94m{workdir/}{session}.path2.lst[0m
+[0m[35mTry running this command to inspect the work dir:
+[0m[96mrclone lsl "{workdir}"[0m[0m
+ERROR : [31mBisync aborted. Must run --resync to recover.[0m
 Bisync error: bisync aborted
-(21)  : move-listings missing-listings
+[36m(21)  :[0m [34mmove-listings missing-listings[0m
 
-(22)  : test 7. run resync, which will copy the path2 top level back to path1.
-(23)  : bisync resync
+[36m(22)  :[0m [34mtest 7. run resync, which will copy the path2 top level back to path1.[0m
+[36m(23)  :[0m [34mbisync resync[0m
+INFO  : [2mSetting --ignore-listing-checksum as neither --checksum nor --compare checksum are set.[0m
+INFO  : Bisyncing with Comparison Settings:
+{
+"Modtime": true,
+"Size": true,
+"Checksum": false,
+"NoSlowHash": false,
+"SlowHashSyncOnly": false,
+"DownloadHash": false
+}
 INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
-INFO  : Copying unique Path2 files to Path1
-INFO  : - Path2    Resync will copy to Path1           - RCLONE_TEST
-INFO  : - Path2    Resync is doing queued copies to    - Path1
-INFO  : Resynching Path1 to Path2
+INFO  : Copying Path2 files to Path1
+INFO  : - [34mPath2[0m    [35mResync is copying files to[0m         - [36mPath1[0m
+INFO  : - [36mPath1[0m    [35mResync is copying files to[0m         - [36mPath2[0m
 INFO  : Resync updating listings
-INFO  : Bisync successful
+INFO  : Validating listings for Path1 "{path1/}" vs Path2 "{path2/}"
+INFO  : [32mBisync successful[0m
 
-(24)  : test 8. run sync with --check-access. should pass.
-(25)  : bisync check-access
+[36m(24)  :[0m [34mtest 8. run sync with --check-access. should pass.[0m
+[36m(25)  :[0m [34mbisync check-access[0m
+INFO  : [2mSetting --ignore-listing-checksum as neither --checksum nor --compare checksum are set.[0m
+INFO  : Bisyncing with Comparison Settings:
+{
+"Modtime": true,
+"Size": true,
+"Checksum": false,
+"NoSlowHash": false,
+"SlowHashSyncOnly": false,
+"DownloadHash": false
+}
 INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Building Path1 and Path2 listings
 INFO  : Path1 checking for diffs
 INFO  : Path2 checking for diffs
 INFO  : Checking access health
@@ -102,4 +206,4 @@ INFO  : Found 2 matching "RCLONE_TEST" files on both paths
 INFO  : No changes found
 INFO  : Updating listings
 INFO  : Validating listings for Path1 "{path1/}" vs Path2 "{path2/}"
-INFO  : Bisync successful
+INFO  : [32mBisync successful[0m

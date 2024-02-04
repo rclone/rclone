@@ -5,6 +5,68 @@ description: "Rclone Changelog"
 
 # Changelog
 
+## v1.65.2 - 2024-01-24
+
+[See commits](https://github.com/rclone/rclone/compare/v1.65.1...v1.65.2)
+
+* Bug Fixes
+    * build: bump github.com/cloudflare/circl from 1.3.6 to 1.3.7 (dependabot)
+    * docs updates (Nick Craig-Wood, kapitainsky, nielash, Tera, Harshit Budhraja)
+* VFS
+    * Fix stale data when using `--vfs-cache-mode` full (Nick Craig-Wood)
+* Azure Blob
+    * **IMPORTANT** Fix data corruption bug - see [#7590](https://github.com/rclone/rclone/issues/7590) (Nick Craig-Wood)
+
+## v1.65.1 - 2024-01-08
+
+[See commits](https://github.com/rclone/rclone/compare/v1.65.0...v1.65.1)
+
+* Bug Fixes
+    * build
+        * Bump golang.org/x/crypto to fix ssh terrapin CVE-2023-48795 (dependabot)
+        * Update to go1.21.5 to fix Windows path problems (Nick Craig-Wood)
+        * Fix docker build on arm/v6 (Nick Craig-Wood)
+    * install.sh: fix harmless error message on install (Nick Craig-Wood)
+    * accounting: fix stats to show server side transfers (Nick Craig-Wood)
+    * doc fixes (albertony, ben-ba, Eli Orzitzer, emyarod, keongalvin, rarspace01)
+    * nfsmount: Compile for all unix oses, add `--sudo` and fix error/option handling (Nick Craig-Wood)
+    * operations: Fix files moved by rclone move not being counted as transfers (Nick Craig-Wood)
+    * oauthutil: Avoid panic when `*token` and `*ts.token` are the same (rkonfj)
+    * serve s3: Fix listing oddities (Nick Craig-Wood)
+* VFS
+    * Note that `--vfs-refresh` runs in the background (Nick Craig-Wood)
+* Azurefiles
+    * Fix storage base url (Oksana)
+* Crypt
+    * Fix rclone move a file over itself deleting the file (Nick Craig-Wood)
+* Chunker
+    * Fix rclone move a file over itself deleting the file (Nick Craig-Wood)
+* Compress
+    * Fix rclone move a file over itself deleting the file (Nick Craig-Wood)
+* Dropbox
+    * Fix used space on dropbox team accounts (Nick Craig-Wood)
+* FTP
+    * Fix multi-thread copy (WeidiDeng)
+* Googlephotos
+    * Fix nil pointer exception when batch failed (Nick Craig-Wood)
+* Hasher
+    * Fix rclone move a file over itself deleting the file (Nick Craig-Wood)
+    * Fix invalid memory address error when MaxAge == 0 (nielash)
+* Onedrive
+    * Fix error listing: unknown object type `<nil>` (Nick Craig-Wood)
+    * Fix "unauthenticated: Unauthenticated" errors when uploading (Nick Craig-Wood)
+* Oracleobjectstorage
+    * Fix object storage endpoint for custom endpoints (Manoj Ghosh)
+    * Multipart copy create bucket if it doesn't exist. (Manoj Ghosh)
+* Protondrive
+    * Fix CVE-2023-45286 / GHSA-xwh9-gc39-5298 (Nick Craig-Wood)
+* S3
+    * Fix crash if no UploadId in multipart upload (Nick Craig-Wood)
+* Smb
+    * Fix shares not listed by updating go-smb2 (halms)
+* Union
+    * Fix rclone move a file over itself deleting the file (Nick Craig-Wood)
+
 ## v1.65.0 - 2023-11-26
 
 [See commits](https://github.com/rclone/rclone/compare/v1.64.0...v1.65.0)

@@ -177,3 +177,14 @@ func TestRcSetPath(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, oldPath, config.GetConfigPath())
 }
+
+func TestRcPaths(t *testing.T) {
+	call := rc.Calls.Get("config/paths")
+	assert.NotNil(t, call)
+	out, err := call.Fn(context.Background(), nil)
+	require.NoError(t, err)
+
+	assert.Equal(t, config.GetConfigPath(), out["config"])
+	assert.Equal(t, config.GetCacheDir(), out["cache"])
+	assert.Equal(t, os.TempDir(), out["temp"])
+}

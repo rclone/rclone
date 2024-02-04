@@ -20,6 +20,7 @@ import (
 	"github.com/rclone/rclone/lib/readers"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/text/unicode/norm"
 )
 
 func testCheck(t *testing.T, checkFunction func(ctx context.Context, opt *operations.CheckOpt) error) {
@@ -543,4 +544,62 @@ func TestCheckSum(t *testing.T) {
 
 func TestCheckSumDownload(t *testing.T) {
 	testCheckSum(t, true)
+}
+
+func TestApplyTransforms(t *testing.T) {
+	var (
+		hashType        = hash.MD5
+		content         = "Hello, World!"
+		hash            = "65a8e27d8879283831b664bd8b7f0ad4"
+		nfc             = norm.NFC.String(norm.NFD.String("測試_Русский___ě_áñ"))
+		nfd             = norm.NFD.String(nfc)
+		nfcx2           = nfc + nfc
+		nfdx2           = nfd + nfd
+		both            = nfc + nfd
+		upper           = "HELLO, WORLD!"
+		lower           = "hello, world!"
+		upperlowermixed = "HeLlO, wOrLd!"
+	)
+
+	testScenario := func(checkfileName, remotefileName, scenario string) {
+		r := fstest.NewRunIndividual(t)
+		if !r.Flocal.Hashes().Contains(hashType) || !r.Fremote.Hashes().Contains(hashType) {
+			t.Skipf("Fs lacks %s, skipping", hashType)
+		}
+		ctx := context.Background()
+		ci := fs.GetConfig(ctx)
+		opt := operations.CheckOpt{}
+
+		remotefile := r.WriteObject(ctx, remotefileName, content, t2)
+		checkfile := r.WriteFile("test.sum", hash+"  "+checkfileName, t2)
+		r.CheckLocalItems(t, checkfile)
+		assert.False(t, checkfileName == remotefile.Path, "Values match but should not: %s %s", checkfileName, remotefile.Path)
+
+		testname := scenario + " (without normalization)"
+		println(testname)
+		ci.NoUnicodeNormalization = true
+		ci.IgnoreCaseSync = false
+		accounting.GlobalStats().ResetCounters()
+		err := operations.CheckSum(ctx, r.Fremote, r.Flocal, "test.sum", hashType, &opt, false)
+		assert.Error(t, err, "no expected error for %s %v %v", testname, checkfileName, remotefileName)
+
+		testname = scenario + " (with normalization)"
+		println(testname)
+		ci.NoUnicodeNormalization = false
+		ci.IgnoreCaseSync = true
+		accounting.GlobalStats().ResetCounters()
+		err = operations.CheckSum(ctx, r.Fremote, r.Flocal, "test.sum", hashType, &opt, false)
+		assert.NoError(t, err, "unexpected error for %s %v %v", testname, checkfileName, remotefileName)
+	}
+
+	testScenario(upper, lower, "upper checkfile vs. lower remote")
+	testScenario(lower, upper, "lower checkfile vs. upper remote")
+	testScenario(lower, upperlowermixed, "lower checkfile vs. upperlowermixed remote")
+	testScenario(upperlowermixed, upper, "upperlowermixed checkfile vs. upper remote")
+	testScenario(nfd, nfc, "NFD checkfile vs. NFC remote")
+	testScenario(nfc, nfd, "NFC checkfile vs. NFD remote")
+	testScenario(nfdx2, both, "NFDx2 checkfile vs. both remote")
+	testScenario(nfcx2, both, "NFCx2 checkfile vs. both remote")
+	testScenario(both, nfdx2, "both checkfile vs. NFDx2 remote")
+	testScenario(both, nfcx2, "both checkfile vs. NFCx2 remote")
 }

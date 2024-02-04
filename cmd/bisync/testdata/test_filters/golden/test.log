@@ -1,36 +1,59 @@
-(01)  : test filters
+[36m(01)  :[0m [34mtest filters[0m
 
 
-(02)  : copy-file {datadir/}filtersfile.flt {workdir/}
+[36m(02)  :[0m [34mcopy-file {datadir/}filtersfile.flt {workdir/}[0m
 
-(03)  : test resync to force building of the filters md5 hash
-(04)  : bisync filters-file={workdir/}filtersfile.flt resync
+[36m(03)  :[0m [34mtest resync to force building of the filters md5 hash[0m
+[36m(04)  :[0m [34mbisync filters-file={workdir/}filtersfile.flt resync[0m
+INFO  : [2mSetting --ignore-listing-checksum as neither --checksum nor --compare checksum are set.[0m
+INFO  : Bisyncing with Comparison Settings:
+{
+"Modtime": true,
+"Size": true,
+"Checksum": false,
+"NoSlowHash": false,
+"SlowHashSyncOnly": false,
+"DownloadHash": false
+}
 INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
 INFO  : Using filters file {workdir/}filtersfile.flt
 INFO  : Storing filters file hash to {workdir/}filtersfile.flt.md5
-INFO  : Copying unique Path2 files to Path1
-INFO  : Resynching Path1 to Path2
+INFO  : Copying Path2 files to Path1
+INFO  : - [34mPath2[0m    [35mResync is copying files to[0m         - [36mPath1[0m
+INFO  : - [36mPath1[0m    [35mResync is copying files to[0m         - [36mPath2[0m
 INFO  : Resync updating listings
-INFO  : Bisync successful
+INFO  : Validating listings for Path1 "{path1/}" vs Path2 "{path2/}"
+INFO  : [32mBisync successful[0m
 
-(05)  : copy-listings resync
+[36m(05)  :[0m [34mcopy-listings resync[0m
 
-(06)  : test place new files on the remote
-(07)  : touch-glob 2001-01-02 {datadir/} fileZ.txt
-(08)  : copy-as {datadir/}fileZ.txt {path2/} fileZ.txt
-(09)  : copy-as {datadir/}fileZ.txt {path1/}subdir fileZ.txt
+[36m(06)  :[0m [34mtest place new files on the remote[0m
+[36m(07)  :[0m [34mtouch-glob 2001-01-02 {datadir/} fileZ.txt[0m
+[36m(08)  :[0m [34mcopy-as {datadir/}fileZ.txt {path2/} fileZ.txt[0m
+[36m(09)  :[0m [34mcopy-as {datadir/}fileZ.txt {path1/}subdir fileZ.txt[0m
 
-(10)  : test bisync with filters-file. path2-side fileZ.txt will be filtered.
-(11)  : bisync filters-file={workdir/}filtersfile.flt
+[36m(10)  :[0m [34mtest bisync with filters-file. path2-side fileZ.txt will be filtered.[0m
+[36m(11)  :[0m [34mbisync filters-file={workdir/}filtersfile.flt[0m
+INFO  : [2mSetting --ignore-listing-checksum as neither --checksum nor --compare checksum are set.[0m
+INFO  : Bisyncing with Comparison Settings:
+{
+"Modtime": true,
+"Size": true,
+"Checksum": false,
+"NoSlowHash": false,
+"SlowHashSyncOnly": false,
+"DownloadHash": false
+}
 INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
 INFO  : Using filters file {workdir/}filtersfile.flt
+INFO  : Building Path1 and Path2 listings
 INFO  : Path1 checking for diffs
-INFO  : - Path1    File is new                         - subdir/fileZ.txt
-INFO  : Path1:    1 changes:    1 new,    0 newer,    0 older,    0 deleted
+INFO  : - [36mPath1[0m    [35m[32mFile is new[0m[0m               - [36msubdir/fileZ.txt[0m
+INFO  : Path1:    1 changes: [32m   1 new[0m, [33m   0 modified[0m, [31m   0 deleted[0m
 INFO  : Path2 checking for diffs
 INFO  : Applying changes
-INFO  : - Path1    Queue copy to Path2                 - {path2/}subdir/fileZ.txt
-INFO  : - Path1    Do queued copies to                 - Path2
+INFO  : - [36mPath1[0m    [35m[32mQueue copy to[0m Path2[0m       - [36m{path2/}subdir/fileZ.txt[0m
+INFO  : - [36mPath1[0m    [35mDo queued copies to[0m                - [36mPath2[0m
 INFO  : Updating listings
 INFO  : Validating listings for Path1 "{path1/}" vs Path2 "{path2/}"
-INFO  : Bisync successful
+INFO  : [32mBisync successful[0m

@@ -1,0 +1,67 @@
+test resolve
+# Check conflict-resolution options
+# - Changed on Path2 and on Path1, and NOT identical       file1 (file1r, file1l)
+
+test initial bisync
+bisync resync
+
+test changed on both paths and NOT identical - file1 (file1R, file1L)
+touch-glob 2001-01-02 {datadir/} file1R.txt
+copy-as {datadir/}file1R.txt {path2/} file1.txt
+touch-glob 2001-03-04 {datadir/} file1L.txt
+copy-as {datadir/}file1L.txt {path1/} file1.txt
+
+test bisync run with --conflict-resolve=newer --conflict-loser=delete --conflict-suffix=potato
+# result should be "file1.txt", "file1.txt" (no potato)
+bisync conflict-resolve=newer conflict-loser=delete conflict-suffix=potato
+
+test changed on both paths and NOT identical - file1 (file1R, file1L)
+touch-glob 2001-07-23 {datadir/} file1R.txt
+copy-as {datadir/}file1R.txt {path2/} file1.txt
+touch-glob 2001-08-26 {datadir/} file1L.txt
+copy-as {datadir/}file1L.txt {path1/} file1.txt
+
+test bisync run with --conflict-resolve=path2 --conflict-loser=num --conflict-suffix=dinosaur
+# result should be "file1.txt.dinosaur1", "file1.txt"
+bisync conflict-resolve=path2 conflict-loser=num conflict-suffix=dinosaur
+
+test changed on both paths and NOT identical - file1 (file1R, file1L)
+touch-glob 2002-07-23 {datadir/} file1R.txt
+copy-as {datadir/}file1R.txt {path2/} file1.txt
+touch-glob 2002-08-26 {datadir/} file1L.txt
+copy-as {datadir/}file1L.txt {path1/} file1.txt
+
+test bisync run with --conflict-resolve=larger --conflict-loser=num --conflict-suffix=apple
+# result should be no winner -- "file1.txt.apple1", "file1.txt.apple2"
+bisync conflict-resolve=larger conflict-loser=num conflict-suffix=apple
+
+test different suffixes
+touch-glob 2003-07-23 {datadir/} file1R.txt
+copy-as {datadir/}file1R.txt {path2/} file1.txt
+touch-glob 2003-07-23 {datadir/} file1L.txt
+copy-as {datadir/}file1L.txt {path1/} file1.txt
+
+test bisync run with --conflict-resolve=older --conflict-loser=num --conflict-suffix=cloud,local
+# result should be no winner -- "file1.txt.cloud1", "file1.txt.local1"
+bisync conflict-resolve=older conflict-loser=num conflict-suffix=cloud,local
+
+test legacy
+touch-glob 2004-07-23 {datadir/} file1R.txt
+copy-as {datadir/}file1R.txt {path2/} file1.txt
+touch-glob 2004-07-23 {datadir/} file1L.txt
+copy-as {datadir/}file1L.txt {path1/} file1.txt
+
+test bisync run with --conflict-resolve=none --conflict-loser=pathname --conflict-suffix=.path
+# result should be no winner -- "file1.txt..path1", "file1.txt..path2"
+bisync conflict-resolve=none conflict-loser=pathname conflict-suffix=.path
+
+test deletes on both sides with default suffix
+touch-glob 2005-01-02 {datadir/} file1R.txt
+copy-as {datadir/}file1R.txt {path2/} file1.txt
+copy-as {datadir/}file1R.txt {path1/} file2.txt
+touch-glob 2006-03-04 {datadir/} file1L.txt
+copy-as {datadir/}file1L.txt {path1/} file1.txt
+copy-as {datadir/}file1L.txt {path2/} file2.txt
+
+test bisync run with --conflict-resolve=newer --conflict-loser=delete
+bisync conflict-resolve=newer conflict-loser=delete

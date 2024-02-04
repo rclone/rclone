@@ -1,10 +1,9 @@
-name: release
+name: build
 
 on:
   push:
     tags:
       - '**'
-
 jobs:
   build:
     timeout-minutes: 60
@@ -16,14 +15,14 @@ jobs:
         include:
           - job_name: linux
             os: ubuntu-latest
-            go: '1.21'
+            go: '>=1.22.0-rc.1'
             gotags: cmount
             cgo: '0'
             build_flags: '-include "^(linux/amd64|linux/arm64|linux/arm-v7)"'
 
           - job_name: windows
             os: windows-latest
-            go: '1.21'
+            go: '>=1.22.0-rc.1'
             gotags: cmount
             cgo: '0'
             build_flags: '-include "^(windows/amd64|windows/arm64)"'
@@ -92,7 +91,7 @@ jobs:
           env
 
       - name: Go module cache
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ~/go/pkg/mod
           key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
@@ -111,26 +110,107 @@ jobs:
           name: rclone-${{ matrix.job_name }}
           path: ${{ github.workspace }}/build/**/*
 
+  android:
+    timeout-minutes: 30
+    name: "android-all"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '>=1.22.0-rc.1'
+
+      - name: Go module cache
+        uses: actions/cache@v4
+        with:
+          path: ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+
+      - name: install gomobile
+        run: |
+          go install golang.org/x/mobile/cmd/gobind@latest
+          go install golang.org/x/mobile/cmd/gomobile@latest
+          env PATH=$PATH:~/go/bin gomobile init
+          echo "RCLONE_NDK_VERSION=21" >> $GITHUB_ENV
+
+      - name: arm-v7a gomobile build
+        run: env PATH=$PATH:~/go/bin gomobile bind -androidapi ${RCLONE_NDK_VERSION} -v -target=android/arm -javapkg=org.rclone -ldflags '-s -X github.com/rclone/rclone/fs.Version='${{ github.ref_name }} github.com/rclone/rclone/librclone/gomobile
+
+      - name: arm-v7a Set environment variables
+        shell: bash
+        run: |
+          echo "CC=$(echo $ANDROID_NDK/toolchains/llvm/prebuilt/linux-x86_64/bin/armv7a-linux-androideabi${RCLONE_NDK_VERSION}-clang)" >> $GITHUB_ENV
+          echo "CC_FOR_TARGET=$CC" >> $GITHUB_ENV
+          echo 'GOOS=android' >> $GITHUB_ENV
+          echo 'GOARCH=arm' >> $GITHUB_ENV
+          echo 'GOARM=7' >> $GITHUB_ENV
+          echo 'CGO_ENABLED=1' >> $GITHUB_ENV
+          echo 'CGO_LDFLAGS=-fuse-ld=lld -s -w' >> $GITHUB_ENV
+
+      - name: arm-v7a Set environment variables
+        shell: bash
+        run: |
+          echo "CC=$(echo $ANDROID_NDK/toolchains/llvm/prebuilt/linux-x86_64/bin/armv7a-linux-androideabi${RCLONE_NDK_VERSION}-clang)" >> $GITHUB_ENV
+          echo "CC_FOR_TARGET=$CC" >> $GITHUB_ENV
+          echo 'GOOS=android' >> $GITHUB_ENV
+          echo 'GOARCH=arm' >> $GITHUB_ENV
+          echo 'GOARM=7' >> $GITHUB_ENV
+          echo 'CGO_ENABLED=1' >> $GITHUB_ENV
+          echo 'CGO_LDFLAGS=-fuse-ld=lld -s -w' >> $GITHUB_ENV
+
+      - name: arm-v7a build
+        run: go build -v -tags android -trimpath -ldflags '-s -X github.com/rclone/rclone/fs.Version='${{ github.ref_name }} -o build/rclone-armv7a .
+
+      - name: arm64-v8a Set environment variables
+        shell: bash
+        run: |
+          echo "CC=$(echo $ANDROID_NDK/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android${RCLONE_NDK_VERSION}-clang)" >> $GITHUB_ENV
+          echo "CC_FOR_TARGET=$CC" >> $GITHUB_ENV
+          echo 'GOOS=android' >> $GITHUB_ENV
+          echo 'GOARCH=arm64' >> $GITHUB_ENV
+          echo 'CGO_ENABLED=1' >> $GITHUB_ENV
+          echo 'CGO_LDFLAGS=-fuse-ld=lld -s -w' >> $GITHUB_ENV
+
+      - name: arm64-v8a build
+        run: go build -v -tags android -trimpath -ldflags '-s -X github.com/rclone/rclone/fs.Version='${{ github.ref_name }} -o build/rclone-armv8a .
+
+      - name: Package into Zip
+        run: |
+          cd build
+          mv rclone-armv7a rclone
+          zip -r rclone-${{ github.ref_name }}-android-arm.zip rclone
+          mv rclone-armv8a rclone
+          zip -r rclone-${{ github.ref_name }}-android-arm64.zip rclone
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: rclone-android
+          path: ${{ github.workspace }}/build/rclone-*.zip
+
   release:
    name: Create Release
    runs-on: ubuntu-latest
-   needs: build
+   needs: [build,android]
    steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-
-      - uses: actions/download-artifact@v4
+          
+      - name: Download All Artifacts
+        uses: actions/download-artifact@v4
         with:
-         name: rclone-windows
-         path: ${{ github.workspace }}/build
-
-      - uses: actions/download-artifact@v4
-        with:
-         name: rclone-linux
-         path: ${{ github.workspace }}/build
-
+           path: ${{ github.workspace }}/build
+           pattern: rclone-*
+           merge-multiple: true
+      
       - name: Upload Assets
         shell: bash
         env:

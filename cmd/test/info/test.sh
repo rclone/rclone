@@ -8,7 +8,6 @@ export PATH=$GOPATH/src/github.com/rclone/rclone:$PATH
 
 typeset -A allRemotes
 allRemotes=(
-  TestAmazonCloudDrive '--low-level-retries=2 --checkers=5 --upload-wait=5s'
   TestB2 ''
   TestBox ''
   TestDrive '--tpslimit=5'

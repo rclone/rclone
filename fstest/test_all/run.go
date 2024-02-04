@@ -286,6 +286,9 @@ func (r *Run) MakeTestBinary() {
 	binaryName := r.BinaryName()
 	log.Printf("%s: Making test binary %q", r.Path, binaryName)
 	CmdLine := []string{"go", "test", "-c"}
+	if *race {
+		CmdLine = append(CmdLine, "-race")
+	}
 	if *dryRun {
 		log.Printf("Not executing: %v", CmdLine)
 		return

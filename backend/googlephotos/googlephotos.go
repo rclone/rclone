@@ -1143,6 +1143,9 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 			info = results[0]
 		}
 	}
+	if err != nil {
+		return fmt.Errorf("failed to commit batch: %w", err)
+	}
 
 	o.setMetaData(info)
 
