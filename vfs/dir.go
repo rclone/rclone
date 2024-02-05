@@ -18,6 +18,7 @@ import (
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/fs/walk"
 	"github.com/rclone/rclone/vfs/vfscommon"
+	"golang.org/x/text/unicode/norm"
 )
 
 // Dir represents a directory entry
@@ -466,7 +467,6 @@ func (d *Dir) AddVirtual(leaf string, size int64, isDir bool) {
 		node = f
 	}
 	d.addObject(node)
-
 }
 
 // delObject removes an object from the directory
@@ -512,6 +512,35 @@ func (d *Dir) _readDir() error {
 		// create directories on the fly
 	} else if err != nil {
 		return err
+	}
+
+	if d.vfs.Opt.BlockNormDupes { // do this only if requested, as it will have a performance hit
+		ci := fs.GetConfig(context.TODO())
+
+		// sort entries such that NFD comes before NFC of same name
+		sort.Slice(entries, func(i, j int) bool {
+			if entries[i] != entries[j] && fs.DirEntryType(entries[i]) == fs.DirEntryType(entries[j]) && norm.NFC.String(entries[i].Remote()) == norm.NFC.String(entries[j].Remote()) {
+				if norm.NFD.IsNormalString(entries[i].Remote()) && !norm.NFD.IsNormalString(entries[j].Remote()) {
+					return true
+				}
+			}
+			return entries.Less(i, j)
+		})
+
+		// detect dupes, remove them from the list and log an error
+		normalizedNames := make(map[string]struct{}, entries.Len())
+		filteredEntries := make(fs.DirEntries, 0)
+		for _, e := range entries {
+			normName := fmt.Sprintf("%s-%T", operations.ToNormal(e.Remote(), !ci.NoUnicodeNormalization, (ci.IgnoreCaseSync || d.vfs.Opt.CaseInsensitive)), e) // include type to track objects and dirs separately
+			_, found := normalizedNames[normName]
+			if found {
+				fs.Errorf(e.Remote(), "duplicate normalized names detected - skipping")
+				continue
+			}
+			normalizedNames[normName] = struct{}{}
+			filteredEntries = append(filteredEntries, e)
+		}
+		entries = filteredEntries
 	}
 
 	err = d._readDirFromEntries(entries, nil, time.Time{})
@@ -767,15 +796,18 @@ func (d *Dir) stat(leaf string) (Node, error) {
 	}
 	item, ok := d.items[leaf]
 
-	if !ok && d.vfs.Opt.CaseInsensitive {
-		leafLower := strings.ToLower(leaf)
+	ci := fs.GetConfig(context.TODO())
+	normUnicode := !ci.NoUnicodeNormalization
+	normCase := ci.IgnoreCaseSync || d.vfs.Opt.CaseInsensitive
+	if !ok && (normUnicode || normCase) {
+		leafNormalized := operations.ToNormal(leaf, normUnicode, normCase) // this handles both case and unicode normalization
 		for name, node := range d.items {
-			if strings.ToLower(name) == leafLower {
+			if operations.ToNormal(name, normUnicode, normCase) == leafNormalized {
 				if ok {
-					// duplicate case insensitive match is an error
-					return nil, fmt.Errorf("duplicate filename %q detected with --vfs-case-insensitive set", leaf)
+					// duplicate normalized match is an error
+					return nil, fmt.Errorf("duplicate filename %q detected with case/unicode normalization settings", leaf)
 				}
-				// found a case insensitive match
+				// found a normalized match
 				ok = true
 				item = node
 			}
