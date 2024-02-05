@@ -104,6 +104,16 @@ func (f *File) IsDir() bool {
 	return f.Type == "D" || f.Type == "S" || f.Type == "T"
 }
 
+// IsProjectFolder returns true if object is a project folder
+// false otherwise
+func (f *File) IsProjectFolder() bool {
+	if f == nil {
+		return false
+	}
+
+	return f.Type == "S"
+}
+
 // SetMTimeParams is the request to set modification time for object
 type SetMTimeParams struct {
 	ID    string   `json:"id,omitempty"`
