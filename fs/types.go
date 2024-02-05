@@ -144,6 +144,16 @@ type Directory interface {
 	ID() string
 }
 
+// FullDirectory contains all the optional interfaces for Directory
+//
+// Use for checking making wrapping Directories implement everything
+type FullDirectory interface {
+	Directory
+	Metadataer
+	SetMetadataer
+	SetModTimer
+}
+
 // MimeTyper is an optional interface for Object
 type MimeTyper interface {
 	// MimeType returns the content type of the Object if
@@ -183,12 +193,30 @@ type GetTierer interface {
 	GetTier() string
 }
 
-// Metadataer is an optional interface for Object
+// Metadataer is an optional interface for DirEntry
 type Metadataer interface {
-	// Metadata returns metadata for an object
+	// Metadata returns metadata for an DirEntry
 	//
 	// It should return nil if there is no Metadata
 	Metadata(ctx context.Context) (Metadata, error)
+}
+
+// SetMetadataer is an optional interface for DirEntry
+type SetMetadataer interface {
+	// SetMetadata sets metadata for an DirEntry
+	//
+	// It should return fs.ErrorNotImplemented if it can't set metadata
+	SetMetadata(ctx context.Context, metadata Metadata) error
+}
+
+// SetModTimer is an optional interface for Directory.
+//
+// Object implements this as part of its requires set of interfaces.
+type SetModTimer interface {
+	// SetModTime sets the metadata on the DirEntry to set the modification date
+	//
+	// If there is any other metadata it does not overwrite it.
+	SetModTime(ctx context.Context, t time.Time) error
 }
 
 // FullObjectInfo contains all the read-only optional interfaces
@@ -244,6 +272,29 @@ func ObjectOptionalInterfaces(o Object) (supported, unsupported []string) {
 
 	_, ok = o.(Metadataer)
 	store(ok, "Metadata")
+
+	return supported, unsupported
+}
+
+// DirectoryOptionalInterfaces returns the names of supported and
+// unsupported optional interfaces for a Directory
+func DirectoryOptionalInterfaces(d Directory) (supported, unsupported []string) {
+	store := func(ok bool, name string) {
+		if ok {
+			supported = append(supported, name)
+		} else {
+			unsupported = append(unsupported, name)
+		}
+	}
+
+	_, ok := d.(Metadataer)
+	store(ok, "Metadata")
+
+	_, ok = d.(SetMetadataer)
+	store(ok, "SetMetadata")
+
+	_, ok = d.(SetModTimer)
+	store(ok, "SetModTime")
 
 	return supported, unsupported
 }
