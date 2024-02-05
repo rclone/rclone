@@ -380,10 +380,19 @@ func CheckDownload(ctx context.Context, opt *CheckOpt) error {
 // so that it matches behavior of Check (where it's handled by March)
 func ApplyTransforms(ctx context.Context, s string) string {
 	ci := fs.GetConfig(ctx)
-	if !ci.NoUnicodeNormalization {
+	return ToNormal(s, !ci.NoUnicodeNormalization, ci.IgnoreCaseSync)
+}
+
+// ToNormal normalizes case and unicode form and returns the transformed string.
+// It is similar to ApplyTransforms but does not use a context.
+// If normUnicode == true, s will be transformed to NFC.
+// If normCase == true, s will be transformed to lowercase.
+// If both are true, both transformations will be performed.
+func ToNormal(s string, normUnicode, normCase bool) string {
+	if normUnicode {
 		s = norm.NFC.String(s)
 	}
-	if ci.IgnoreCaseSync {
+	if normCase {
 		s = strings.ToLower(s)
 	}
 	return s

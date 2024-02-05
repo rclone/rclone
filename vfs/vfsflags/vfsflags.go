@@ -35,6 +35,7 @@ func AddFlags(flagSet *pflag.FlagSet) {
 	flags.FVarP(flagSet, DirPerms, "dir-perms", "", "Directory permissions", "VFS")
 	flags.FVarP(flagSet, FilePerms, "file-perms", "", "File permissions", "VFS")
 	flags.BoolVarP(flagSet, &Opt.CaseInsensitive, "vfs-case-insensitive", "", Opt.CaseInsensitive, "If a file name not found, find a case insensitive match", "VFS")
+	flags.BoolVarP(flagSet, &Opt.BlockNormDupes, "vfs-block-norm-dupes", "", Opt.BlockNormDupes, "If duplicate filenames exist in the same directory (after normalization), log an error and hide the duplicates (may have a performance cost)", "VFS")
 	flags.DurationVarP(flagSet, &Opt.WriteWait, "vfs-write-wait", "", Opt.WriteWait, "Time to wait for in-sequence write before giving error", "VFS")
 	flags.DurationVarP(flagSet, &Opt.ReadWait, "vfs-read-wait", "", Opt.ReadWait, "Time to wait for in-sequence read before seeking", "VFS")
 	flags.DurationVarP(flagSet, &Opt.WriteBack, "vfs-write-back", "", Opt.WriteBack, "Time to writeback files after last use when using cache", "VFS")
