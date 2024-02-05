@@ -89,7 +89,13 @@ func init() {
 			},
 			{
 				Name:     "hard_delete",
-				Help:     "Delete files permanently rather than putting them into the trash.",
+				Help:     "Delete files permanently rather than putting them into the trash",
+				Advanced: true,
+				Default:  false,
+			},
+			{
+				Name:     "skip_project_folders",
+				Help:     "Skip project folders in operations",
 				Advanced: true,
 				Default:  false,
 			},
@@ -106,6 +112,7 @@ type Options struct {
 	MinimalChunkSize        fs.SizeSuffix        `config:"minimal_chunk_size"`
 	MaximalSummaryChunkSize fs.SizeSuffix        `config:"maximal_summary_chunk_size"`
 	HardDelete              bool                 `config:"hard_delete"`
+	SkipProjectFolders      bool                 `config:"skip_project_folders"`
 }
 
 // Fs represents remote Quatrix fs
@@ -376,6 +383,10 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 	}
 
 	for _, file := range folder.Content {
+		if f.skipFile(&file) {
+			continue
+		}
+
 		remote := path.Join(dir, f.opt.Enc.ToStandardName(file.Name))
 		if file.IsDir() {
 			f.dirCache.Put(remote, file.ID)
@@ -399,6 +410,10 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 	}
 
 	return entries, nil
+}
+
+func (f *Fs) skipFile(file *api.File) bool {
+	return f.opt.SkipProjectFolders && file.IsProjectFolder()
 }
 
 // NewObject finds the Object at remote.  If it can't be found
