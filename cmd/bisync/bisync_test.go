@@ -86,6 +86,10 @@ var logReplacements = []string{
 	`^.*?"SlowHashDetected":.*?$`, dropMe,
 	`^.*? for same-side diffs on .*?$`, dropMe,
 	`^.*?Downloading hashes.*?$`, dropMe,
+	// ignore timestamps in directory time updates
+	`^(INFO  : .*?: Made directory with (metadata|modification time)).*$`, `$1`,
+	// ignore sizes in directory time updates
+	`^(NOTICE: .*?: Skipped set directory modification time as --dry-run is set).*$`, `$1`,
 }
 
 // Some dry-run messages differ depending on the particular remote.
@@ -121,6 +125,9 @@ var logHoppers = []string{
 
 	// order of files re-checked prior to a conflict rename
 	`ERROR : .*: md5 differ.*`,
+
+	// Directory modification time setting can happen in any order
+	`INFO  : .*: (Set directory modification time|Made directory with metadata).*`,
 }
 
 // Some log lines can contain Windows path separator that must be

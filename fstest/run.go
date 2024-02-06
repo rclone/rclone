@@ -360,6 +360,22 @@ func (r *Run) CheckRemoteListing(t *testing.T, items []Item, expectedDirs []stri
 	CheckListingWithPrecision(t, r.Fremote, items, expectedDirs, r.Precision)
 }
 
+// CheckDirectoryModTimes checks that the directory names in r.Flocal has the correct modtime compared to r.Fremote
+func (r *Run) CheckDirectoryModTimes(t *testing.T, names ...string) {
+	if r.Fremote.Features().DirSetModTime == nil && r.Fremote.Features().MkdirMetadata == nil {
+		fs.Debugf(r.Fremote, "Skipping modtime test as remote does not support DirSetModTime or MkdirMetadata")
+		return
+	}
+	ctx := context.Background()
+	for _, name := range names {
+		wantT := NewDirectory(ctx, t, r.Flocal, name).ModTime(ctx)
+		got := NewDirectory(ctx, t, r.Fremote, name)
+		gotT := got.ModTime(ctx)
+		fs.Debugf(r.Fremote, "Testing directory mod time of %q: wantT=%v, gotT=%v", name, wantT, gotT)
+		AssertTimeEqualWithPrecision(t, got.Remote(), wantT, gotT, fs.GetModifyWindow(ctx, r.Fremote, r.Flocal))
+	}
+}
+
 // Clean the temporary directory
 func (r *Run) cleanTempDir() {
 	err := os.RemoveAll(r.LocalName)

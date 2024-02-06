@@ -16,7 +16,11 @@ INFO  : Bisyncing with Comparison Settings:
 INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
 INFO  : Copying Path2 files to Path1
 INFO  : - [34mPath2[0m    [35mResync is copying files to[0m         - [36mPath1[0m
+INFO  : subdir: Set directory modification time (using SetModTime)
+INFO  : subdir: Set directory modification time (using SetModTime)
 INFO  : - [36mPath1[0m    [35mResync is copying files to[0m         - [36mPath2[0m
+INFO  : subdir: Set directory modification time (using SetModTime)
+INFO  : subdir: Set directory modification time (using SetModTime)
 INFO  : Resync updating listings
 INFO  : Validating listings for Path1 "{path1/}" vs Path2 "{path2/}"
 INFO  : [32mBisync successful[0m
@@ -81,7 +85,11 @@ INFO  : Using filters file {workdir/}filtersfile.txt
 INFO  : Storing filters file hash to {workdir/}filtersfile.txt.md5
 INFO  : Copying Path2 files to Path1
 INFO  : - [34mPath2[0m    [35mResync is copying files to[0m         - [36mPath1[0m
+INFO  : subdir: Set directory modification time (using SetModTime)
+INFO  : subdir: Set directory modification time (using SetModTime)
 INFO  : - [36mPath1[0m    [35mResync is copying files to[0m         - [36mPath2[0m
+INFO  : subdir: Set directory modification time (using SetModTime)
+INFO  : subdir: Set directory modification time (using SetModTime)
 INFO  : Resync updating listings
 INFO  : Validating listings for Path1 "{path1/}" vs Path2 "{path2/}"
 INFO  : [32mBisync successful[0m
@@ -146,7 +154,11 @@ INFO  : Using filters file {workdir/}filtersfile.txt
 INFO  : Skipped storing filters file hash to {workdir/}filtersfile.txt.md5 as --dry-run is set
 INFO  : Copying Path2 files to Path1
 INFO  : - [34mPath2[0m    [35mResync is copying files to[0m         - [36mPath1[0m
+NOTICE: subdir: Skipped set directory modification time as --dry-run is set (size 4Ki)
+NOTICE: {path1String}: Skipped set directory modification time as --dry-run is set
 INFO  : - [36mPath1[0m    [35mResync is copying files to[0m         - [36mPath2[0m
+NOTICE: subdir: Skipped set directory modification time as --dry-run is set (size 4Ki)
+NOTICE: {path2String}: Skipped set directory modification time as --dry-run is set
 INFO  : Resync updating listings
 INFO  : [32mBisync successful[0m
 
