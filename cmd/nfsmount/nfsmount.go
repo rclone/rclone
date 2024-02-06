@@ -81,6 +81,9 @@ func mount(VFS *vfs.VFS, mountpoint string, opt *mountlib.Options) (asyncerrors 
 	}
 	asyncerrors = errChan
 	unmount = func() error {
+		if s.UnmountedExternally {
+			return nil
+		}
 		var umountErr error
 		var out []byte
 		if runtime.GOOS == "darwin" {
@@ -98,5 +101,12 @@ func mount(VFS *vfs.VFS, mountpoint string, opt *mountlib.Options) (asyncerrors 
 		}
 		return nil
 	}
+
+	nfs.OnUnmountFunc = func() {
+		s.UnmountedExternally = true
+		errChan <- nil
+		VFS.Shutdown()
+	}
+
 	return
 }

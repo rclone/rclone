@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 	"net"
+	"strings"
 
 	"github.com/go-git/go-billy/v5"
 	"github.com/rclone/rclone/fs"
@@ -100,6 +101,16 @@ func (o *Options) Limit() int {
 	return o.HandleLimit
 }
 
+// OnUnmountFunc registers a function to call when externally unmounted
+var OnUnmountFunc func()
+
+func onUnmount() {
+	fs.Infof(nil, "unmount detected")
+	if OnUnmountFunc != nil {
+		OnUnmountFunc()
+	}
+}
+
 // LogIntercepter intercepts noisy go-nfs logs and reroutes them to DEBUG
 type LogIntercepter struct {
 	Level nfs.LogLevel
@@ -114,6 +125,12 @@ func (l *LogIntercepter) Intercept(args ...interface{}) {
 
 // Interceptf intercepts go-nfs logs and calls fs.Debugf instead
 func (l *LogIntercepter) Interceptf(format string, args ...interface{}) {
+	argsS := fmt.Sprint(args...)
+	// bit of a workaround... the real fix is probably https://github.com/willscott/go-nfs/pull/28
+	if strings.Contains(argsS, "mount.Umnt") {
+		onUnmount()
+	}
+
 	fs.Debugf(nil, "[NFS DEBUG] "+format, args...)
 }
 
