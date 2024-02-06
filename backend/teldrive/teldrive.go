@@ -320,12 +320,12 @@ func (f *Fs) readMetaDataForPath(ctx context.Context, path string, options *api.
 		return shouldRetry(ctx, resp, err)
 	})
 
-	if resp.StatusCode == 404 {
-		return nil, fs.ErrorDirNotFound
-	}
-
 	if err != nil {
-		return nil, err
+		if resp != nil && resp.StatusCode == 404 {
+			return nil, fs.ErrorDirNotFound
+		} else {
+			return nil, err
+		}
 	}
 
 	return &info, nil
@@ -373,12 +373,13 @@ func (f *Fs) findObject(ctx context.Context, path string, name string) (*api.Rea
 		resp, err = f.srv.CallJSON(ctx, &opts, nil, &info)
 		return shouldRetry(ctx, resp, err)
 	})
-	if err != nil && resp.StatusCode == 404 {
-		return nil, fs.ErrorDirNotFound
-	}
 
 	if err != nil {
-		return nil, err
+		if resp != nil && resp.StatusCode == 404 {
+			return nil, fs.ErrorDirNotFound
+		} else {
+			return nil, err
+		}
 	}
 
 	return &info, nil
