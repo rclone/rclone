@@ -53,6 +53,8 @@ netbsd, macOS and Solaris. It is **not** supported on Windows yet
 
 User metadata is stored as extended attributes (which may not be
 supported by all file systems) under the "user.*" prefix.
+
+Metadata is supported on files and directories.
 `,
 		},
 		Options: []fs.Option{{
@@ -270,6 +272,11 @@ type Object struct {
 	translatedLink bool // Is this object a translated link
 }
 
+// Directory represents a local filesystem directory
+type Directory struct {
+	Object
+}
+
 // ------------------------------------------------------------
 
 var (
@@ -301,15 +308,20 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	}
 	f.root = cleanRootPath(root, f.opt.NoUNC, f.opt.Enc)
 	f.features = (&fs.Features{
-		CaseInsensitive:         f.caseInsensitive(),
-		CanHaveEmptyDirectories: true,
-		IsLocal:                 true,
-		SlowHash:                true,
-		ReadMetadata:            true,
-		WriteMetadata:           true,
-		UserMetadata:            xattrSupported, // can only R/W general purpose metadata if xattrs are supported
-		FilterAware:             true,
-		PartialUploads:          true,
+		CaseInsensitive:          f.caseInsensitive(),
+		CanHaveEmptyDirectories:  true,
+		IsLocal:                  true,
+		SlowHash:                 true,
+		ReadMetadata:             true,
+		WriteMetadata:            true,
+		ReadDirMetadata:          true,
+		WriteDirMetadata:         true,
+		WriteDirSetModTime:       true,
+		UserDirMetadata:          xattrSupported, // can only R/W general purpose metadata if xattrs are supported
+		DirModTimeUpdatesOnWrite: true,
+		UserMetadata:             xattrSupported, // can only R/W general purpose metadata if xattrs are supported
+		FilterAware:              true,
+		PartialUploads:           true,
 	}).Fill(ctx, f)
 	if opt.FollowSymlinks {
 		f.lstat = os.Stat
@@ -453,6 +465,15 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 	return f.newObjectWithInfo(remote, nil)
 }
 
+// Create new directory object from the info passed in
+func (f *Fs) newDirectory(dir string, fi os.FileInfo) *Directory {
+	o := f.newObject(dir)
+	o.setMetadata(fi)
+	return &Directory{
+		Object: *o,
+	}
+}
+
 // List the objects and directories in dir into entries.  The
 // entries can be returned in any order but should be for a
 // complete directory.
@@ -563,7 +584,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 				// Ignore directories which are symlinks.  These are junction points under windows which
 				// are kind of a souped up symlink. Unix doesn't have directories which are symlinks.
 				if (mode&os.ModeSymlink) == 0 && f.dev == readDevice(fi, f.opt.OneFileSystem) {
-					d := fs.NewDir(newRemote, fi.ModTime())
+					d := f.newDirectory(newRemote, fi)
 					entries = append(entries, d)
 				}
 			} else {
@@ -651,6 +672,48 @@ func (f *Fs) DirSetModTime(ctx context.Context, dir string, modTime time.Time) e
 		path:   f.localPath(dir),
 	}
 	return o.SetModTime(ctx, modTime)
+}
+
+// MkdirMetadata makes the directory passed in as dir.
+//
+// It shouldn't return an error if it already exists.
+//
+// If the metadata is not nil it is set.
+//
+// It returns the directory that was created.
+func (f *Fs) MkdirMetadata(ctx context.Context, dir string, metadata fs.Metadata) (fs.Directory, error) {
+	// Find and or create the directory
+	localPath := f.localPath(dir)
+	fi, err := f.lstat(localPath)
+	if errors.Is(err, os.ErrNotExist) {
+		err := f.Mkdir(ctx, dir)
+		if err != nil {
+			return nil, fmt.Errorf("mkdir metadata: failed make directory: %w", err)
+		}
+		fi, err = f.lstat(localPath)
+		if err != nil {
+			return nil, fmt.Errorf("mkdir metadata: failed to read info: %w", err)
+		}
+	} else if err != nil {
+		return nil, err
+	}
+
+	// Create directory object
+	d := f.newDirectory(dir, fi)
+
+	// Set metadata on the directory object if provided
+	if metadata != nil {
+		err = d.writeMetadata(metadata)
+		if err != nil {
+			return nil, fmt.Errorf("failed to set metadata on directory: %w", err)
+		}
+		// Re-read info now we have finished setting stuff
+		err = d.lstat()
+		if err != nil {
+			return nil, fmt.Errorf("mkdir metadata: failed to re-read info: %w", err)
+		}
+	}
+	return d, nil
 }
 
 // Rmdir removes the directory
@@ -1473,16 +1536,52 @@ func cleanRootPath(s string, noUNC bool, enc encoder.MultiEncoder) string {
 	return s
 }
 
+// Items returns the count of items in this directory or this
+// directory and subdirectories if known, -1 for unknown
+func (d *Directory) Items() int64 {
+	return -1
+}
+
+// ID returns the internal ID of this directory if known, or
+// "" otherwise
+func (d *Directory) ID() string {
+	return ""
+}
+
+// SetMetadata sets metadata for a Directory
+//
+// It should return fs.ErrorNotImplemented if it can't set metadata
+func (d *Directory) SetMetadata(ctx context.Context, metadata fs.Metadata) error {
+	err := d.writeMetadata(metadata)
+	if err != nil {
+		return fmt.Errorf("SetMetadata failed on Directory: %w", err)
+	}
+	// Re-read info now we have finished setting stuff
+	return d.lstat()
+}
+
+// Hash does nothing on a directory
+//
+// This method is implemented with the incorrect type signature to
+// stop the Directory type asserting to fs.Object or fs.ObjectInfo
+func (d *Directory) Hash() {
+	// Does nothing
+}
+
 // Check the interfaces are satisfied
 var (
-	_ fs.Fs             = &Fs{}
-	_ fs.Purger         = &Fs{}
-	_ fs.PutStreamer    = &Fs{}
-	_ fs.Mover          = &Fs{}
-	_ fs.DirMover       = &Fs{}
-	_ fs.Commander      = &Fs{}
-	_ fs.OpenWriterAter = &Fs{}
-	_ fs.DirSetModTimer = &Fs{}
-	_ fs.Object         = &Object{}
-	_ fs.Metadataer     = &Object{}
+	_ fs.Fs              = &Fs{}
+	_ fs.Purger          = &Fs{}
+	_ fs.PutStreamer     = &Fs{}
+	_ fs.Mover           = &Fs{}
+	_ fs.DirMover        = &Fs{}
+	_ fs.Commander       = &Fs{}
+	_ fs.OpenWriterAter  = &Fs{}
+	_ fs.DirSetModTimer  = &Fs{}
+	_ fs.MkdirMetadataer = &Fs{}
+	_ fs.Object          = &Object{}
+	_ fs.Metadataer      = &Object{}
+	_ fs.Directory       = &Directory{}
+	_ fs.SetModTimer     = &Directory{}
+	_ fs.SetMetadataer   = &Directory{}
 )
