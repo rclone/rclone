@@ -628,6 +628,10 @@ func (s *syncCopyMove) deleteFiles(checkSrcMap bool) error {
 // This deletes the empty directories in the slice passed in.  It
 // ignores any errors deleting directories
 func (s *syncCopyMove) deleteEmptyDirectories(ctx context.Context, f fs.Fs, entriesMap map[string]fs.DirEntry) error {
+	ci := fs.GetConfig(ctx)
+	if s.DoMove && !ci.LeaveRoot {
+		entriesMap[""] = fs.NewDir("", time.Time{})
+	}
 	if len(entriesMap) == 0 {
 		return nil
 	}
@@ -1239,6 +1243,8 @@ func moveDir(ctx context.Context, fdst, fsrc fs.Fs, deleteEmptySrcDirs bool, cop
 }
 
 // MoveDir moves fsrc into fdst
+// use ci.LeaveRoot to control whether deleteEmptySrcDirs deletes an empty root directory
+// note that for server-side directory moves, deleteEmptySrcDirs is always true and LeaveRoot is always false
 func MoveDir(ctx context.Context, fdst, fsrc fs.Fs, deleteEmptySrcDirs bool, copyEmptySrcDirs bool) error {
 	fi := filter.GetConfig(ctx)
 	if operations.Same(fdst, fsrc) {

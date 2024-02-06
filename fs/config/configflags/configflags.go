@@ -73,6 +73,7 @@ func AddFlags(ci *fs.ConfigInfo, flagSet *pflag.FlagSet) {
 	flags.BoolVarP(flagSet, &deleteAfter, "delete-after", "", false, "When synchronizing, delete files on destination after transferring (default)", "Sync")
 	flags.Int64VarP(flagSet, &ci.MaxDelete, "max-delete", "", -1, "When synchronizing, limit the number of deletes", "Sync")
 	flags.FVarP(flagSet, &ci.MaxDeleteSize, "max-delete-size", "", "When synchronizing, limit the total size of deletes", "Sync")
+	flags.BoolVarP(flagSet, &ci.LeaveRoot, "leave-root", "", false, "When moving with --delete-empty-src-dirs, prevent the src root directory from being deleted", "Sync")
 	flags.BoolVarP(flagSet, &ci.TrackRenames, "track-renames", "", ci.TrackRenames, "When synchronizing, track file renames and do a server-side move if possible", "Sync")
 	flags.StringVarP(flagSet, &ci.TrackRenamesStrategy, "track-renames-strategy", "", ci.TrackRenamesStrategy, "Strategies to use when synchronizing using track-renames hash|modtime|leaf", "Sync")
 	flags.IntVarP(flagSet, &ci.LowLevelRetries, "low-level-retries", "", ci.LowLevelRetries, "Number of low level retries to do", "Config")
