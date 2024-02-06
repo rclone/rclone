@@ -16,10 +16,11 @@ import (
 
 // Server contains everything to run the Server
 type Server struct {
-	opt      Options
-	handler  nfs.Handler
-	ctx      context.Context // for global config
-	listener net.Listener
+	opt                 Options
+	handler             nfs.Handler
+	ctx                 context.Context // for global config
+	listener            net.Listener
+	UnmountedExternally bool
 }
 
 // NewServer creates a new server
