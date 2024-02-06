@@ -35,6 +35,7 @@ import (
 	"github.com/rclone/rclone/fs/object"
 	"github.com/rclone/rclone/fs/walk"
 	"github.com/rclone/rclone/lib/atexit"
+	"github.com/rclone/rclone/lib/errcount"
 	"github.com/rclone/rclone/lib/random"
 	"github.com/rclone/rclone/lib/readers"
 	"golang.org/x/sync/errgroup"
@@ -1353,9 +1354,7 @@ func Rmdirs(ctx context.Context, f fs.Fs, dir string, leaveRoot bool) error {
 	}
 
 	var (
-		errMu     sync.Mutex
-		errCount  int
-		lastError error
+		errCount = errcount.New()
 	)
 	// Delete all directories at the same level in parallel
 	for level := len(toDelete) - 1; level >= 0; level-- {
@@ -1378,10 +1377,7 @@ func Rmdirs(ctx context.Context, f fs.Fs, dir string, leaveRoot bool) error {
 				if err != nil {
 					err = fs.CountError(err)
 					fs.Errorf(dir, "Failed to rmdir: %v", err)
-					errMu.Lock()
-					lastError = err
-					errCount += 1
-					errMu.Unlock()
+					errCount.Add(err)
 				}
 				return nil // don't return errors, just count them
 			})
@@ -1391,10 +1387,7 @@ func Rmdirs(ctx context.Context, f fs.Fs, dir string, leaveRoot bool) error {
 			return err
 		}
 	}
-	if lastError != nil {
-		return fmt.Errorf("failed to remove %d directories: last error: %w", errCount, lastError)
-	}
-	return nil
+	return errCount.Err("failed to remove directories")
 }
 
 // GetCompareDest sets up --compare-dest
