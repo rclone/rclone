@@ -183,7 +183,7 @@ func MiddlewareCORS(allowOrigin string) Middleware {
 
 			if allowOrigin != "" {
 				w.Header().Add("Access-Control-Allow-Origin", allowOrigin)
-				w.Header().Add("Access-Control-Allow-Headers", "authorization, Content-Type")
+				w.Header().Add("Access-Control-Allow-Headers", "authorization, Content-Type,Depth")
 				w.Header().Add("Access-Control-Allow-Methods", "COPY, DELETE, GET, HEAD, LOCK, MKCOL, MOVE, OPTIONS, POST, PROPFIND, PROPPATCH, PUT, TRACE, UNLOCK")
 			}
 
