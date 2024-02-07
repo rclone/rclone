@@ -54,7 +54,7 @@ func MimeTypeFromName(remote string) (mimeType string) {
 
 // MimeType returns the MimeType from the object, either by calling
 // the MimeTyper interface or using MimeTypeFromName
-func MimeType(ctx context.Context, o ObjectInfo) (mimeType string) {
+func MimeType(ctx context.Context, o DirEntry) (mimeType string) {
 	// Read the MimeType from the optional interface if available
 	if do, ok := o.(MimeTyper); ok {
 		mimeType = do.MimeType(ctx)

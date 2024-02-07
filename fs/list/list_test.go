@@ -87,6 +87,7 @@ func TestFilterAndSortCheckDirRoot(t *testing.T) {
 
 type unknownDirEntry string
 
+func (o unknownDirEntry) Fs() fs.Info                               { return fs.Unknown }
 func (o unknownDirEntry) String() string                            { return string(o) }
 func (o unknownDirEntry) Remote() string                            { return string(o) }
 func (o unknownDirEntry) ModTime(ctx context.Context) (t time.Time) { return t }

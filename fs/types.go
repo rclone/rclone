@@ -102,9 +102,6 @@ type Object interface {
 type ObjectInfo interface {
 	DirEntry
 
-	// Fs returns read only access to the Fs that this object is part of
-	Fs() Info
-
 	// Hash returns the selected checksum of the file
 	// If no checksum is available it returns ""
 	Hash(ctx context.Context, ty hash.Type) (string, error)
@@ -117,6 +114,9 @@ type ObjectInfo interface {
 // a Dir or Object.  These are returned from directory listings - type
 // assert them into the correct type.
 type DirEntry interface {
+	// Fs returns read only access to the Fs that this object is part of
+	Fs() Info
+
 	// String returns a description of the Object
 	String() string
 
@@ -332,3 +332,28 @@ type WriterAtCloser interface {
 	io.WriterAt
 	io.Closer
 }
+
+type unknownFs struct{}
+
+// Name of the remote (as passed into NewFs)
+func (unknownFs) Name() string { return "unknown" }
+
+// Root of the remote (as passed into NewFs)
+func (unknownFs) Root() string { return "" }
+
+// String returns a description of the FS
+func (unknownFs) String() string { return "unknown" }
+
+// Precision of the ModTimes in this Fs
+func (unknownFs) Precision() time.Duration { return ModTimeNotSupported }
+
+// Returns the supported hash types of the filesystem
+func (unknownFs) Hashes() hash.Set { return hash.Set(hash.None) }
+
+// Features returns the optional features of this Fs
+func (unknownFs) Features() *Features { return &Features{} }
+
+// Unknown holds an Info for an unknown Fs
+//
+// This is used when we need an Fs but don't have one.
+var Unknown Info = unknownFs{}
