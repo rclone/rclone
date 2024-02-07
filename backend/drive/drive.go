@@ -287,7 +287,10 @@ func init() {
 		},
 		MetadataInfo: &fs.MetadataInfo{
 			System: systemMetadataInfo,
-			Help:   `User metadata is stored in the properties field of the drive object.`,
+			Help: `User metadata is stored in the properties field of the drive object.
+
+Metadata is supported on files and directories.
+`,
 		},
 		Options: append(driveOAuthOptions(), []fs.Option{{
 			Name: "scope",
@@ -870,6 +873,11 @@ type Object struct {
 	v2Download bool   // generate v2 download link ondemand
 }
 
+// Directory describes a drive directory
+type Directory struct {
+	baseObject
+}
+
 // ------------------------------------------------------------
 
 // Name of the remote (as passed into NewFs)
@@ -1374,15 +1382,20 @@ func newFs(ctx context.Context, name, path string, m configmap.Mapper) (*Fs, err
 	}
 	f.isTeamDrive = opt.TeamDriveID != ""
 	f.features = (&fs.Features{
-		DuplicateFiles:          true,
-		ReadMimeType:            true,
-		WriteMimeType:           true,
-		CanHaveEmptyDirectories: true,
-		ServerSideAcrossConfigs: opt.ServerSideAcrossConfigs,
-		FilterAware:             true,
-		ReadMetadata:            true,
-		WriteMetadata:           true,
-		UserMetadata:            true,
+		DuplicateFiles:           true,
+		ReadMimeType:             true,
+		WriteMimeType:            true,
+		CanHaveEmptyDirectories:  true,
+		ServerSideAcrossConfigs:  opt.ServerSideAcrossConfigs,
+		FilterAware:              true,
+		ReadMetadata:             true,
+		WriteMetadata:            true,
+		UserMetadata:             true,
+		ReadDirMetadata:          true,
+		WriteDirMetadata:         true,
+		WriteDirSetModTime:       true,
+		UserDirMetadata:          true,
+		DirModTimeUpdatesOnWrite: false, // FIXME need to check!
 	}).Fill(ctx, f)
 
 	// Create a new authorized Drive client.
@@ -1729,11 +1742,9 @@ func (f *Fs) FindLeaf(ctx context.Context, pathID, leaf string) (pathIDOut strin
 	return pathIDOut, found, err
 }
 
-// CreateDir makes a directory with pathID as parent and name leaf
-func (f *Fs) CreateDir(ctx context.Context, pathID, leaf string) (newID string, err error) {
+// createDir makes a directory with pathID as parent and name leaf with optional metadata
+func (f *Fs) createDir(ctx context.Context, pathID, leaf string, metadata fs.Metadata) (info *drive.File, err error) {
 	leaf = f.opt.Enc.FromStandardName(leaf)
-	// fmt.Println("Making", path)
-	// Define the metadata for the directory we are going to create.
 	pathID = actualID(pathID)
 	createInfo := &drive.File{
 		Name:        leaf,
@@ -1741,14 +1752,63 @@ func (f *Fs) CreateDir(ctx context.Context, pathID, leaf string) (newID string, 
 		MimeType:    driveFolderType,
 		Parents:     []string{pathID},
 	}
-	var info *drive.File
+	var updateMetadata updateMetadataFn
+	if len(metadata) > 0 {
+		updateMetadata, err = f.updateMetadata(ctx, createInfo, metadata, true)
+		if err != nil {
+			return nil, fmt.Errorf("create dir: failed to update metadata: %w", err)
+		}
+	}
 	err = f.pacer.Call(func() (bool, error) {
 		info, err = f.svc.Files.Create(createInfo).
-			Fields("id").
+			Fields(f.getFileFields(ctx)).
 			SupportsAllDrives(true).
 			Context(ctx).Do()
 		return f.shouldRetry(ctx, err)
 	})
+	if err != nil {
+		return nil, err
+	}
+	if updateMetadata != nil {
+		err = updateMetadata(ctx, info)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return info, nil
+}
+
+// updateDir updates an existing a directory with the metadata passed in
+func (f *Fs) updateDir(ctx context.Context, dirID string, metadata fs.Metadata) (info *drive.File, err error) {
+	if len(metadata) == 0 {
+		return f.getFile(ctx, dirID, f.getFileFields(ctx))
+	}
+	dirID = actualID(dirID)
+	updateInfo := &drive.File{}
+	updateMetadata, err := f.updateMetadata(ctx, updateInfo, metadata, true)
+	if err != nil {
+		return nil, fmt.Errorf("update dir: failed to update metadata from source object: %w", err)
+	}
+	err = f.pacer.Call(func() (bool, error) {
+		info, err = f.svc.Files.Update(dirID, updateInfo).
+			Fields(f.getFileFields(ctx)).
+			SupportsAllDrives(true).
+			Context(ctx).Do()
+		return f.shouldRetry(ctx, err)
+	})
+	if err != nil {
+		return nil, err
+	}
+	err = updateMetadata(ctx, info)
+	if err != nil {
+		return nil, err
+	}
+	return info, nil
+}
+
+// CreateDir makes a directory with pathID as parent and name leaf
+func (f *Fs) CreateDir(ctx context.Context, pathID, leaf string) (newID string, err error) {
+	info, err := f.createDir(ctx, pathID, leaf, nil)
 	if err != nil {
 		return "", err
 	}
@@ -2161,7 +2221,7 @@ func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (
 
 	// Send the entry to the caller, queueing any directories as new jobs
 	cb := func(entry fs.DirEntry) error {
-		if d, isDir := entry.(*fs.Dir); isDir {
+		if d, isDir := entry.(fs.Directory); isDir {
 			job := listREntry{actualID(d.ID()), d.Remote()}
 			sendJob(job)
 		}
@@ -2338,11 +2398,11 @@ func (f *Fs) itemToDirEntry(ctx context.Context, remote string, item *drive.File
 		if item.ResourceKey != "" {
 			f.dirResourceKeys.Store(item.Id, item.ResourceKey)
 		}
-		when, _ := time.Parse(timeFormatIn, item.ModifiedTime)
-		d := fs.NewDir(remote, when).SetID(item.Id)
-		if len(item.Parents) > 0 {
-			d.SetParentID(item.Parents[0])
+		baseObject, err := f.newBaseObject(ctx, remote, item)
+		if err != nil {
+			return nil, err
 		}
+		d := &Directory{baseObject: baseObject}
 		return d, nil
 	case f.opt.AuthOwnerOnly && !isAuthOwned(item):
 		// ignore object
@@ -2533,6 +2593,45 @@ func (f *Fs) MergeDirs(ctx context.Context, dirs []fs.Directory) error {
 func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 	_, err := f.dirCache.FindDir(ctx, dir, true)
 	return err
+}
+
+// MkdirMetadata makes the directory passed in as dir.
+//
+// It shouldn't return an error if it already exists.
+//
+// If the metadata is not nil it is set.
+//
+// It returns the directory that was created.
+func (f *Fs) MkdirMetadata(ctx context.Context, dir string, metadata fs.Metadata) (fs.Directory, error) {
+	var info *drive.File
+	dirID, err := f.dirCache.FindDir(ctx, dir, false)
+	if err == fs.ErrorDirNotFound {
+		// Directory does not exist so create it
+		var leaf, parentID string
+		leaf, parentID, err = f.dirCache.FindPath(ctx, dir, true)
+		if err != nil {
+			return nil, err
+		}
+		info, err = f.createDir(ctx, parentID, leaf, metadata)
+	} else if err == nil {
+		// Directory exists and needs updating
+		info, err = f.updateDir(ctx, dirID, metadata)
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	// Convert the info into a directory entry
+	entry, err := f.itemToDirEntry(ctx, dir, info)
+	if err != nil {
+		return nil, err
+	}
+	dirEntry, ok := entry.(fs.Directory)
+	if !ok {
+		return nil, fmt.Errorf("internal error: expecting %T to be an fs.Directory", entry)
+	}
+
+	return dirEntry, nil
 }
 
 // DirSetModTime sets the directory modtime for dir
@@ -4207,6 +4306,37 @@ func (o *linkObject) ext() string {
 	return o.baseObject.remote[len(o.baseObject.remote)-o.extLen:]
 }
 
+// Items returns the count of items in this directory or this
+// directory and subdirectories if known, -1 for unknown
+func (d *Directory) Items() int64 {
+	return -1
+}
+
+// SetMetadata sets metadata for a Directory
+//
+// It should return fs.ErrorNotImplemented if it can't set metadata
+func (d *Directory) SetMetadata(ctx context.Context, metadata fs.Metadata) error {
+	info, err := d.fs.updateDir(ctx, d.id, metadata)
+	if err != nil {
+		return fmt.Errorf("failed to update directory info: %w", err)
+	}
+	// Update directory from info returned
+	baseObject, err := d.fs.newBaseObject(ctx, d.remote, info)
+	if err != nil {
+		return fmt.Errorf("failed to process directory info: %w", err)
+	}
+	d.baseObject = baseObject
+	return err
+}
+
+// Hash does nothing on a directory
+//
+// This method is implemented with the incorrect type signature to
+// stop the Directory type asserting to fs.Object or fs.ObjectInfo
+func (d *Directory) Hash() {
+	// Does nothing
+}
+
 // templates for document link files
 const (
 	urlTemplate = `[InternetShortcut]{{"\r"}}
@@ -4257,6 +4387,7 @@ var (
 	_ fs.ListRer         = (*Fs)(nil)
 	_ fs.MergeDirser     = (*Fs)(nil)
 	_ fs.DirSetModTimer  = (*Fs)(nil)
+	_ fs.MkdirMetadataer = (*Fs)(nil)
 	_ fs.Abouter         = (*Fs)(nil)
 	_ fs.Object          = (*Object)(nil)
 	_ fs.MimeTyper       = (*Object)(nil)
@@ -4271,4 +4402,8 @@ var (
 	_ fs.MimeTyper       = (*linkObject)(nil)
 	_ fs.IDer            = (*linkObject)(nil)
 	_ fs.ParentIDer      = (*linkObject)(nil)
+	_ fs.Directory       = (*Directory)(nil)
+	_ fs.SetModTimer     = (*Directory)(nil)
+	_ fs.SetMetadataer   = (*Directory)(nil)
+	_ fs.ParentIDer      = (*Directory)(nil)
 )
