@@ -527,7 +527,7 @@ upon backend-specific capabilities.
 | WebDAV                       | Yes   | Yes  | Yes  | Yes     | No      | No    | Yes ³        | No                | No           | Yes   | Yes      |
 | Yandex Disk                  | Yes   | Yes  | Yes  | Yes     | Yes     | No    | Yes          | No                | Yes          | Yes   | Yes      |
 | Zoho WorkDrive               | Yes   | Yes  | Yes  | Yes     | No      | No    | No           | No                | No           | Yes   | Yes      |
-| The local filesystem         | Yes   | No   | Yes  | Yes     | No      | No    | Yes          | Yes               | No           | Yes   | Yes      |
+| The local filesystem         | No    | No   | Yes  | Yes     | No      | No    | Yes          | Yes               | No           | Yes   | Yes      |
 
 ¹ Note Swift implements this in order to delete directory markers but
 it doesn't actually have a quicker way of deleting files other than
