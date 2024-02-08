@@ -1531,12 +1531,14 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 			o.size = int64(inCount.BytesRead())
 		}
 	}
-	isInContainerVersioning, _ := o.isInContainerVersioning(ctx, container)
 	// If file was a large object and the container is not enable versioning then remove old/all segments
-	if isLargeObject && len(segmentsContainer) > 0 && !isInContainerVersioning {
-		err := o.removeSegmentsLargeObject(ctx, segmentsContainer)
-		if err != nil {
-			fs.Logf(o, "Failed to remove old segments - carrying on with upload: %v", err)
+	if isLargeObject && len(segmentsContainer) > 0 {
+		isInContainerVersioning, _ := o.isInContainerVersioning(ctx, container)
+		if !isInContainerVersioning {
+			err := o.removeSegmentsLargeObject(ctx, segmentsContainer)
+			if err != nil {
+				fs.Logf(o, "Failed to remove old segments - carrying on with upload: %v", err)
+			}
 		}
 	}
 
