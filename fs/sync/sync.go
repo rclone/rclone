@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"path"
-	"path/filepath"
 	"sort"
 	"strings"
 	"sync"
@@ -19,7 +18,6 @@ import (
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/fs/march"
 	"github.com/rclone/rclone/fs/operations"
-	"github.com/rclone/rclone/lib/random"
 )
 
 // ErrorMaxDurationReached defines error when transfer duration is reached
@@ -1151,25 +1149,12 @@ func (s *syncCopyMove) Match(ctx context.Context, dst, src fs.DirEntry) (recurse
 			if s.ci.FixCase && !s.ci.Immutable && src.Remote() != dst.Remote() {
 				// Fix case for case insensitive filesystems
 				// Fix each dir before recursing into subdirs and files
-				oldDirFs, err := fs.NewFs(s.ctx, filepath.Join(fs.ConfigStringFull(s.fdst), dst.Remote()))
-				s.processError(err)
-				newDirPath := filepath.Join(fs.ConfigStringFull(s.fdst), filepath.Dir(dst.Remote()), filepath.Base(src.Remote()))
-				newDirFs, err := fs.NewFs(s.ctx, newDirPath)
-				s.processError(err)
-				// Create random name to temporarily move dir to
-				tmpDirName := newDirPath + "-rclone-move-" + random.String(8)
-				tmpDirFs, err := fs.NewFs(s.ctx, tmpDirName)
-				s.processError(err)
-				if err = MoveDir(s.ctx, tmpDirFs, oldDirFs, s.deleteEmptySrcDirs, s.copyEmptySrcDirs); err != nil {
-					fs.Errorf(dst, "Error while attempting to move dir to temporary location %s: %v", tmpDirName, err)
+				err := operations.DirMoveCaseInsensitive(s.ctx, s.fdst, dst.Remote(), src.Remote())
+				if err != nil {
+					fs.Errorf(dst, "Error while attempting to rename to %s: %v", src.Remote(), err)
 					s.processError(err)
 				} else {
-					if err = MoveDir(s.ctx, newDirFs, tmpDirFs, s.deleteEmptySrcDirs, s.copyEmptySrcDirs); err != nil {
-						fs.Errorf(dst, "Error while attempting to rename to %s: %v", src.Remote(), err)
-						s.processError(err)
-					} else {
-						fs.Infof(dst, "Fixed case by renaming to: %s", src.Remote())
-					}
+					fs.Infof(dst, "Fixed case by renaming to: %s", src.Remote())
 				}
 			}
 

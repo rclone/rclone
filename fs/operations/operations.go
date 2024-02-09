@@ -2288,6 +2288,17 @@ func DirMove(ctx context.Context, f fs.Fs, srcRemote, dstRemote string) (err err
 	return nil
 }
 
+// DirMoveCaseInsensitive does DirMove in two steps (to temp name, then real name)
+// which is necessary for some case-insensitive backends
+func DirMoveCaseInsensitive(ctx context.Context, f fs.Fs, srcRemote, dstRemote string) (err error) {
+	tmpDstRemote := dstRemote + "-rclone-move-" + random.String(8)
+	err = DirMove(ctx, f, srcRemote, tmpDstRemote)
+	if err != nil {
+		return err
+	}
+	return DirMove(ctx, f, tmpDstRemote, dstRemote)
+}
+
 // FsInfo provides information about a remote
 type FsInfo struct {
 	// Name of the remote (as passed into NewFs)
