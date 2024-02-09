@@ -568,6 +568,13 @@ func TestApplyTransforms(t *testing.T) {
 		opt := operations.CheckOpt{}
 
 		remotefile := r.WriteObject(ctx, remotefileName, content, t2)
+		// test whether remote is capable of running test
+		entries, err := r.Fremote.List(ctx, "")
+		assert.NoError(t, err)
+		if entries.Len() == 1 && entries[0].Remote() != remotefileName {
+			t.Skipf("Fs is incapable of running test, skipping: %s (expected: %s (%s) actual: %s (%s))", scenario, remotefileName, detectEncoding(remotefileName), entries[0].Remote(), detectEncoding(entries[0].Remote()))
+		}
+
 		checkfile := r.WriteFile("test.sum", hash+"  "+checkfileName, t2)
 		r.CheckLocalItems(t, checkfile)
 		assert.False(t, checkfileName == remotefile.Path, "Values match but should not: %s %s", checkfileName, remotefile.Path)
@@ -577,7 +584,7 @@ func TestApplyTransforms(t *testing.T) {
 		ci.NoUnicodeNormalization = true
 		ci.IgnoreCaseSync = false
 		accounting.GlobalStats().ResetCounters()
-		err := operations.CheckSum(ctx, r.Fremote, r.Flocal, "test.sum", hashType, &opt, true)
+		err = operations.CheckSum(ctx, r.Fremote, r.Flocal, "test.sum", hashType, &opt, true)
 		assert.Error(t, err, "no expected error for %s %v %v", testname, checkfileName, remotefileName)
 
 		testname = scenario + " (with normalization)"
@@ -599,4 +606,17 @@ func TestApplyTransforms(t *testing.T) {
 	testScenario(nfcx2, both, "NFCx2 checkfile vs. both remote")
 	testScenario(both, nfdx2, "both checkfile vs. NFDx2 remote")
 	testScenario(both, nfcx2, "both checkfile vs. NFCx2 remote")
+}
+
+func detectEncoding(s string) string {
+	if norm.NFC.IsNormalString(s) && norm.NFD.IsNormalString(s) {
+		return "BOTH"
+	}
+	if !norm.NFC.IsNormalString(s) && norm.NFD.IsNormalString(s) {
+		return "NFD"
+	}
+	if norm.NFC.IsNormalString(s) && !norm.NFD.IsNormalString(s) {
+		return "NFC"
+	}
+	return "OTHER"
 }
