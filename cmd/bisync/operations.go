@@ -15,8 +15,10 @@ import (
 	"time"
 
 	"github.com/rclone/rclone/cmd/bisync/bilib"
+	"github.com/rclone/rclone/cmd/genfilters"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/accounting"
+	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fs/log"
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/lib/atexit"
@@ -127,19 +129,6 @@ func Bisync(ctx context.Context, fs1, fs2 fs.Fs, optArg *Options) (err error) {
 	// Handle SIGINT
 	var finaliseOnce gosync.Once
 
-	// waitFor runs fn() until it returns true or the timeout expires
-	waitFor := func(msg string, totalWait time.Duration, fn func() bool) (ok bool) {
-		const individualWait = 1 * time.Second
-		for i := 0; i < int(totalWait/individualWait); i++ {
-			ok = fn()
-			if ok {
-				return ok
-			}
-			fs.Infof(nil, Color(terminal.YellowFg, "%s: %v"), msg, int(totalWait/individualWait)-i)
-			time.Sleep(individualWait)
-		}
-		return false
-	}
 	finalise := func() {
 		finaliseOnce.Do(func() {
 			if atexit.Signalled() {
@@ -253,6 +242,28 @@ func (b *bisyncRun) runLocked(octx context.Context) (err error) {
 		if err := bilib.CopyFileIfExists(origListing2, b.listing2); err != nil {
 			return err
 		}
+	}
+
+	if b.opt.EditFilters || b.opt.EditFiltersPath2 {
+		if opt.FiltersFile == "" {
+			return errors.New(Color(terminal.RedFg, "--edit-filters was specified but no --filters-file was found"))
+		}
+		f := b.fs1
+		if b.opt.EditFiltersPath2 {
+			f = b.fs2
+		}
+		err = genfilters.GenFilters(octx, f, opt.FiltersFile, opt.FiltersFile)
+		if err != nil {
+			return err
+		}
+		operations.StdoutMutex.Lock()
+		fmt.Println(Color(terminal.YellowFg, "\na --resync is required after editing filters. Would you like to do one now?"))
+		doResync := config.Confirm(false)
+		operations.StdoutMutex.Unlock()
+		if !doResync {
+			return nil
+		}
+		opt.Resync, b.opt.Resync = true, true
 	}
 
 	// Create second context with filters
@@ -646,6 +657,20 @@ func (b *bisyncRun) debugFn(nametocheck string, fn func()) {
 	if b.DebugName != "" && b.DebugName == nametocheck {
 		fn()
 	}
+}
+
+// waitFor runs fn() until it returns true or the timeout expires
+func waitFor(msg string, totalWait time.Duration, fn func() bool) (ok bool) {
+	const individualWait = 1 * time.Second
+	for i := 0; i < int(totalWait/individualWait); i++ {
+		ok = fn()
+		if ok {
+			return ok
+		}
+		fs.Infof(nil, Color(terminal.YellowFg, "%s: %vs"), msg, int(totalWait/individualWait)-i)
+		time.Sleep(individualWait)
+	}
+	return false
 }
 
 // mainly to make sure tests don't interfere with each other when running more than one
