@@ -72,6 +72,7 @@ type ConfigInfo struct {
 	DeleteMode                 DeleteMode
 	MaxDelete                  int64
 	MaxDeleteSize              SizeSuffix
+	LeaveRoot                  bool
 	TrackRenames               bool   // Track file renames.
 	TrackRenamesStrategy       string // Comma separated list of strategies used to track renames
 	LowLevelRetries            int

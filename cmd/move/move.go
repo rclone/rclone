@@ -48,7 +48,9 @@ into |dest:path| then delete the original (if no errors on copy) in
 |source:path|.
 
 If you want to delete empty source directories after move, use the
-|--delete-empty-src-dirs| flag.
+|--delete-empty-src-dirs| flag. Use with |--leave-root| to prevent
+the source root directory from being deleted. Note that both options
+are ignored for server-side directory move operations.
 
 See the [--no-traverse](/docs/#no-traverse) option for controlling
 whether rclone lists the destination directory or not.  Supplying this

@@ -1413,6 +1413,54 @@ func TestMoveWithoutDeleteEmptySrcDirs(t *testing.T) {
 	r.CheckRemoteItems(t, file1, file2)
 }
 
+func TestMoveWithoutLeaveRoot(t *testing.T) {
+	ctx := context.Background()
+	r := fstest.NewRun(t)
+	r.WriteFile("dir1/sub dir/hello world", "hello world", t1)
+	r.WriteFile("dir1/nested/sub dir/file", "nested", t1)
+	r.Mkdir(ctx, r.Fremote)
+	dir1, err := fs.NewFs(ctx, r.Flocal.Root()+"/dir1")
+	require.NoError(t, err)
+
+	ci := fs.GetConfig(ctx)
+	ci.LeaveRoot = false // root should be deleted
+	ctx = predictDstFromLogger(ctx)
+	err = MoveDir(ctx, r.Fremote, dir1, true, false)
+	require.NoError(t, err)
+	testLoggerVsLsf(ctx, r.Fremote, operations.GetLoggerOpt(ctx).JSON, t)
+
+	r.CheckLocalListing(
+		t,
+		nil,
+		[]string{},
+	)
+}
+
+func TestMoveWithLeaveRoot(t *testing.T) {
+	ctx := context.Background()
+	r := fstest.NewRun(t)
+	r.WriteFile("dir1/sub dir/hello world", "hello world", t1)
+	r.WriteFile("dir1/nested/sub dir/file", "nested", t1)
+	r.Mkdir(ctx, r.Fremote)
+	dir1, err := fs.NewFs(ctx, r.Flocal.Root()+"/dir1")
+	require.NoError(t, err)
+
+	ci := fs.GetConfig(ctx)
+	ci.LeaveRoot = true // root should not be deleted
+	ctx = predictDstFromLogger(ctx)
+	err = MoveDir(ctx, r.Fremote, dir1, true, false)
+	require.NoError(t, err)
+	testLoggerVsLsf(ctx, r.Fremote, operations.GetLoggerOpt(ctx).JSON, t)
+
+	r.CheckLocalListing(
+		t,
+		nil,
+		[]string{
+			"dir1",
+		},
+	)
+}
+
 func TestMoveWithIgnoreExisting(t *testing.T) {
 	ctx := context.Background()
 	ctx, ci := fs.AddConfig(ctx)
