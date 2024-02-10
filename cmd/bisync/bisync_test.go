@@ -532,7 +532,6 @@ func (b *bisyncTest) runTestStep(ctx context.Context, line string) (err error) {
 		if err != nil {
 			return err
 		}
-		flushCache(fsrc)
 		return
 	case "delete-file":
 		b.checkArgs(args, 1, 1)
@@ -769,13 +768,6 @@ func (b *bisyncTest) checkArgs(args []string, min, max int) {
 	}
 }
 
-func flushCache(f fs.Fs) {
-	dirCacheFlush := f.Features().DirCacheFlush
-	if dirCacheFlush == nil {
-		fs.Errorf(nil, "%v: can't flush dir cache", f)
-	}
-}
-
 func (b *bisyncTest) runBisync(ctx context.Context, args []string) (err error) {
 	opt := &bisync.Options{
 		Workdir:       b.workDir,
@@ -788,10 +780,6 @@ func (b *bisyncTest) runBisync(ctx context.Context, args []string) (err error) {
 	}
 	octx, ci := fs.AddConfig(ctx)
 	fs1, fs2 := b.fs1, b.fs2
-
-	// flush cache
-	flushCache(fs1)
-	flushCache(fs2)
 
 	addSubdir := func(path, subdir string) fs.Fs {
 		remote := path + subdir
@@ -967,9 +955,6 @@ func (b *bisyncTest) listSubdirs(ctx context.Context, remote string, DirsOnly bo
 	if err != nil {
 		return err
 	}
-
-	// flush cache
-	flushCache(f)
 
 	opt := operations.ListJSONOpt{
 		NoModTime:  true,
