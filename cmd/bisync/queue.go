@@ -51,13 +51,15 @@ func (rs *ResultsSlice) has(name string) bool {
 	return false
 }
 
-var logger = operations.NewLoggerOpt()
-var lock mutex.Mutex
-var once mutex.Once
-var ignoreListingChecksum bool
-var ignoreListingModtime bool
-var hashTypes map[string]hash.Type
-var queueCI *fs.ConfigInfo
+var (
+	logger                = operations.NewLoggerOpt()
+	lock                  mutex.Mutex
+	once                  mutex.Once
+	ignoreListingChecksum bool
+	ignoreListingModtime  bool
+	hashTypes             map[string]hash.Type
+	queueCI               *fs.ConfigInfo
+)
 
 // allows us to get the right hashtype during the LoggerFn without knowing whether it's Path1/Path2
 func getHashType(fname string) hash.Type {
@@ -262,9 +264,10 @@ func (b *bisyncRun) fastCopy(ctx context.Context, fsrc, fdst fs.Fs, files bilib.
 }
 
 func (b *bisyncRun) retryFastCopy(ctx context.Context, fsrc, fdst fs.Fs, files bilib.Names, queueName string, results []Results, err error) ([]Results, error) {
-	if err != nil && b.opt.Resilient && !b.InGracefulShutdown && b.opt.Retries > 1 {
-		for tries := 1; tries <= b.opt.Retries; tries++ {
-			fs.Logf(queueName, Color(terminal.YellowFg, "Received error: %v - retrying as --resilient is set. Retry %d/%d"), err, tries, b.opt.Retries)
+	ci := fs.GetConfig(ctx)
+	if err != nil && b.opt.Resilient && !b.InGracefulShutdown && ci.Retries > 1 {
+		for tries := 1; tries <= ci.Retries; tries++ {
+			fs.Logf(queueName, Color(terminal.YellowFg, "Received error: %v - retrying as --resilient is set. Retry %d/%d"), err, tries, ci.Retries)
 			accounting.GlobalStats().ResetErrors()
 			if retryAfter := accounting.GlobalStats().RetryAfter(); !retryAfter.IsZero() {
 				d := time.Until(retryAfter)
@@ -273,8 +276,8 @@ func (b *bisyncRun) retryFastCopy(ctx context.Context, fsrc, fdst fs.Fs, files b
 					time.Sleep(d)
 				}
 			}
-			if b.opt.RetriesInterval > 0 {
-				naptime(b.opt.RetriesInterval)
+			if ci.RetriesInterval > 0 {
+				naptime(ci.RetriesInterval)
 			}
 			results, err = b.fastCopy(ctx, fsrc, fdst, files, queueName)
 			if err == nil || b.InGracefulShutdown {
@@ -313,7 +316,7 @@ func (b *bisyncRun) syncEmptyDirs(ctx context.Context, dst fs.Fs, candidates bil
 
 		for _, s := range candidatesList {
 			var direrr error
-			if dirsList.has(s) { //make sure it's a dir, not a file
+			if dirsList.has(s) { // make sure it's a dir, not a file
 				r := Results{}
 				r.Name = s
 				r.Size = -1
