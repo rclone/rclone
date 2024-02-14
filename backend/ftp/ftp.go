@@ -970,6 +970,8 @@ func (f *Fs) mkdir(ctx context.Context, abspath string) error {
 	f.putFtpConnection(&c, err)
 	if errX := textprotoError(err); errX != nil {
 		switch errX.Code {
+		case ftp.StatusRequestedFileActionOK: // some ftp servers apparently return 250 instead of 257
+			err = nil // see: https://forum.rclone.org/t/rclone-pop-up-an-i-o-error-when-creating-a-folder-in-a-mounted-ftp-drive/44368/
 		case ftp.StatusFileUnavailable: // dir already exists: see issue #2181
 			err = nil
 		case 521: // dir already exists: error number according to RFC 959: issue #2363

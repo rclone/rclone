@@ -539,9 +539,8 @@ func (acc *Account) String() string {
 	)
 }
 
-// rcStats produces remote control stats for this file
-func (acc *Account) rcStats() (out rc.Params) {
-	out = make(rc.Params)
+// rcStats adds remote control stats for this file
+func (acc *Account) rcStats(out rc.Params) {
 	a, b := acc.progress()
 	out["bytes"] = a
 	out["size"] = b
@@ -563,8 +562,6 @@ func (acc *Account) rcStats() (out rc.Params) {
 	}
 	out["percentage"] = percentageDone
 	out["group"] = acc.stats.group
-
-	return out
 }
 
 // OldStream returns the top io.Reader

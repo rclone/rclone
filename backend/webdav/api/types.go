@@ -75,6 +75,7 @@ type Prop struct {
 	Size         int64     `xml:"DAV: prop>getcontentlength,omitempty"`
 	Modified     Time      `xml:"DAV: prop>getlastmodified,omitempty"`
 	Checksums    []string  `xml:"prop>checksums>checksum,omitempty"`
+	Permissions  string    `xml:"prop>permissions,omitempty"`
 	MESha1Hex    *string   `xml:"ME: prop>sha1hex,omitempty"` // Fastmail-specific sha1 checksum
 }
 

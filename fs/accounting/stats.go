@@ -775,16 +775,24 @@ func (s *StatsInfo) GetTransfers() int64 {
 }
 
 // NewTransfer adds a transfer to the stats from the object.
-func (s *StatsInfo) NewTransfer(obj fs.DirEntry) *Transfer {
-	tr := newTransfer(s, obj)
+//
+// The obj is uses as the srcFs, the dstFs must be supplied
+func (s *StatsInfo) NewTransfer(obj fs.DirEntry, dstFs fs.Fs) *Transfer {
+	var srcFs fs.Fs
+	if oi, ok := obj.(fs.ObjectInfo); ok {
+		if f, ok := oi.Fs().(fs.Fs); ok {
+			srcFs = f
+		}
+	}
+	tr := newTransfer(s, obj, srcFs, dstFs)
 	s.transferring.add(tr)
 	s.startAverageLoop()
 	return tr
 }
 
 // NewTransferRemoteSize adds a transfer to the stats based on remote and size.
-func (s *StatsInfo) NewTransferRemoteSize(remote string, size int64) *Transfer {
-	tr := newTransferRemoteSize(s, remote, size, false, "")
+func (s *StatsInfo) NewTransferRemoteSize(remote string, size int64, srcFs, dstFs fs.Fs) *Transfer {
+	tr := newTransferRemoteSize(s, remote, size, false, "", srcFs, dstFs)
 	s.transferring.add(tr)
 	s.startAverageLoop()
 	return tr

@@ -79,7 +79,7 @@ func (fh *ReadFileHandle) openPending() (err error) {
 	if err != nil {
 		return err
 	}
-	tr := accounting.GlobalStats().NewTransfer(o)
+	tr := accounting.GlobalStats().NewTransfer(o, nil)
 	fh.done = tr.Done
 	fh.r = tr.Account(context.TODO(), r).WithBuffer() // account the transfer
 	fh.opened = true

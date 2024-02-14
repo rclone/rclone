@@ -149,6 +149,11 @@ Set to 0 to disable chunked uploading.
 `,
 			Advanced: true,
 			Default:  10 * fs.Mebi, // Default NextCloud `max_chunk_size` is `10 MiB`. See https://github.com/nextcloud/server/blob/0447b53bda9fe95ea0cbed765aa332584605d652/apps/files/lib/App.php#L57
+		}, {
+			Name:     "owncloud_exclude_shares",
+			Help:     "Exclude ownCloud shares",
+			Advanced: true,
+			Default:  false,
 		}},
 	})
 }
@@ -165,6 +170,7 @@ type Options struct {
 	Headers            fs.CommaSepList      `config:"headers"`
 	PacerMinSleep      fs.Duration          `config:"pacer_min_sleep"`
 	ChunkSize          fs.SizeSuffix        `config:"nextcloud_chunk_size"`
+	ExcludeShares      bool                 `config:"owncloud_exclude_shares"`
 }
 
 // Fs represents a remote webdav
@@ -702,6 +708,7 @@ var owncloudProps = []byte(`<?xml version="1.0"?>
   <d:resourcetype />
   <d:getcontenttype />
   <oc:checksums />
+  <oc:permissions />
  </d:prop>
 </d:propfind>
 `)
@@ -794,6 +801,11 @@ func (f *Fs) listAll(ctx context.Context, dir string, directoriesOnly bool, file
 			}
 		} else {
 			if directoriesOnly {
+				continue
+			}
+		}
+		if f.opt.ExcludeShares {
+			if strings.Contains(item.Props.Permissions, "S") {
 				continue
 			}
 		}

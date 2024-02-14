@@ -121,6 +121,7 @@ ignore_docs = [
     "downloads.md",
     "privacy.md",
     "sponsor.md",
+    "amazonclouddrive.md",
 ]
 
 def read_doc(doc):
