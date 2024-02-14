@@ -428,9 +428,10 @@ func (f *Fs) changeNotify(ctx context.Context, notify func(string, fs.EntryType)
 				continue
 			}
 
-			fs.Debugf(f, "Received %d changes for directory %s", len(clog), f.pathPrefix)
-
 			for i := range clog {
+				fs.Debugf(f, "Path '%s' (%s) changed (%s) in directory '%s'",
+					clog[i].Path, clog[i].Type, clog[i].Action, f.pathPrefix)
+
 				if clog[i].Type == "dir" {
 					notify(strings.TrimPrefix(clog[i].Path, "/"), fs.EntryDirectory)
 				} else if clog[i].Type == "file" {

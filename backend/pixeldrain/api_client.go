@@ -50,8 +50,19 @@ type FilesystemNode struct {
 	ID string `json:"id,omitempty"`
 }
 
+// ChangeLog is a log of changes that happened in a filesystem. Changes returned
+// from the API are on chronological order from old to new. A change log can be
+// requested for any directory or file, but change logging needs to be enabled
+// with the update API before any log entries will be made. Changes are logged
+// for 24 hours after logging was enabled. Each time a change log is requested
+// the timer is reset to 24 hours.
 type ChangeLog []ChangeLogEntry
 
+// ChangeLogEntry is a single entry in a directory's change log. It contains the
+// time at which the change occurred. The path relative to the requested
+// directory and the action that was performend (update, move or delete). In
+// case of a move operation the new path of the file is stored in the path_new
+// field
 type ChangeLogEntry struct {
 	Time    time.Time `json:"time"`
 	Path    string    `json:"path"`
