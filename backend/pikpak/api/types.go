@@ -71,12 +71,11 @@ type Error struct {
 
 // ErrorDetails contains further details of api error
 type ErrorDetails struct {
-	Type     string `json:"@type,omitempty"`
-	Reason   string `json:"reason,omitempty"`
-	Domain   string `json:"domain,omitempty"`
-	Metadata struct {
-	} `json:"metadata,omitempty"` // TODO: undiscovered yet
-	Locale       string        `json:"locale,omitempty"` // e.g. "en"
+	Type         string        `json:"@type,omitempty"`
+	Reason       string        `json:"reason,omitempty"`
+	Domain       string        `json:"domain,omitempty"`
+	Metadata     struct{}      `json:"metadata,omitempty"` // TODO: undiscovered yet
+	Locale       string        `json:"locale,omitempty"`   // e.g. "en"
 	Message      string        `json:"message,omitempty"`
 	StackEntries []interface{} `json:"stack_entries,omitempty"` // TODO: undiscovered yet
 	Detail       string        `json:"detail,omitempty"`
@@ -266,13 +265,11 @@ type FileApp struct {
 	NeedMoreQuota bool          `json:"need_more_quota,omitempty"`
 	IconLink      string        `json:"icon_link,omitempty"`
 	IsDefault     bool          `json:"is_default,omitempty"`
-	Params        struct {
-	} `json:"params,omitempty"` // TODO
-	CategoryIds []interface{} `json:"category_ids,omitempty"`
-	AdSceneType int           `json:"ad_scene_type,omitempty"`
-	Space       string        `json:"space,omitempty"`
-	Links       struct {
-	} `json:"links,omitempty"` // TODO
+	Params        struct{}      `json:"params,omitempty"` // TODO
+	CategoryIDs   []interface{} `json:"category_ids,omitempty"`
+	AdSceneType   int           `json:"ad_scene_type,omitempty"`
+	Space         string        `json:"space,omitempty"`
+	Links         struct{}      `json:"links,omitempty"` // TODO
 }
 
 // ------------------------------------------------------------
@@ -384,11 +381,10 @@ type NewTask struct {
 
 // About informs drive status
 type About struct {
-	Kind      string `json:"kind,omitempty"` // "drive#about"
-	Quota     *Quota `json:"quota,omitempty"`
-	ExpiresAt string `json:"expires_at,omitempty"`
-	Quotas    struct {
-	} `json:"quotas,omitempty"` // maybe []*Quota?
+	Kind      string   `json:"kind,omitempty"` // "drive#about"
+	Quota     *Quota   `json:"quota,omitempty"`
+	ExpiresAt string   `json:"expires_at,omitempty"`
+	Quotas    struct{} `json:"quotas,omitempty"` // maybe []*Quota?
 }
 
 // Quota informs drive quota
@@ -462,7 +458,7 @@ type DecompressResult struct {
 
 // RequestShare is to request for file share
 type RequestShare struct {
-	FileIds        []string `json:"file_ids,omitempty"`
+	FileIDs        []string `json:"file_ids,omitempty"`
 	ShareTo        string   `json:"share_to,omitempty"`         // "publiclink",
 	ExpirationDays int      `json:"expiration_days,omitempty"`  // -1 = 'forever'
 	PassCodeOption string   `json:"pass_code_option,omitempty"` // "NOT_REQUIRED"
@@ -470,7 +466,7 @@ type RequestShare struct {
 
 // RequestBatch is to request for batch actions
 type RequestBatch struct {
-	Ids []string          `json:"ids,omitempty"`
+	IDs []string          `json:"ids,omitempty"`
 	To  map[string]string `json:"to,omitempty"`
 }
 

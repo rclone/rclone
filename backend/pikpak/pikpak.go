@@ -775,7 +775,7 @@ func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, 
 		expiry = int(math.Ceil(time.Duration(expire).Hours() / 24))
 	}
 	req := api.RequestShare{
-		FileIds:        []string{id},
+		FileIDs:        []string{id},
 		ShareTo:        "publiclink",
 		ExpirationDays: expiry,
 		PassCodeOption: "NOT_REQUIRED",
@@ -797,7 +797,7 @@ func (f *Fs) deleteObjects(ctx context.Context, IDs []string, useTrash bool) (er
 		action = "batchTrash"
 	}
 	req := api.RequestBatch{
-		Ids: IDs,
+		IDs: IDs,
 	}
 	if err := f.requestBatchAction(ctx, action, &req); err != nil {
 		return fmt.Errorf("delete object failed: %w", err)
@@ -817,7 +817,7 @@ func (f *Fs) purgeCheck(ctx context.Context, dir string, check bool) error {
 		return err
 	}
 
-	var trashedFiles = false
+	trashedFiles := false
 	if check {
 		found, err := f.listAll(ctx, rootID, "", "", func(item *api.File) bool {
 			if !item.Trashed {
@@ -893,7 +893,7 @@ func (f *Fs) moveObjects(ctx context.Context, IDs []string, dirID string) (err e
 		return nil
 	}
 	req := api.RequestBatch{
-		Ids: IDs,
+		IDs: IDs,
 		To:  map[string]string{"parent_id": parentIDForRequest(dirID)},
 	}
 	if err := f.requestBatchAction(ctx, "batchMove", &req); err != nil {
@@ -1039,7 +1039,7 @@ func (f *Fs) copyObjects(ctx context.Context, IDs []string, dirID string) (err e
 		return nil
 	}
 	req := api.RequestBatch{
-		Ids: IDs,
+		IDs: IDs,
 		To:  map[string]string{"parent_id": parentIDForRequest(dirID)},
 	}
 	if err := f.requestBatchAction(ctx, "batchCopy", &req); err != nil {

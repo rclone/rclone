@@ -51,7 +51,6 @@ type Options struct {
 	Resilient             bool
 	Recover               bool
 	TestFn                TestFunc // test-only option, for mocking errors
-	Retries               int
 	Compare               CompareOpt
 	CompareFlag           string
 	DebugName             string
@@ -118,12 +117,12 @@ func (x *CheckSyncMode) Type() string {
 var Opt Options
 
 func init() {
-	Opt.Retries = 3
 	Opt.MaxLock = 0
 	cmd.Root.AddCommand(commandDefinition)
 	cmdFlags := commandDefinition.Flags()
 	// when adding new flags, remember to also update the rc params:
 	// cmd/bisync/rc.go cmd/bisync/help.go (not docs/content/rc.md)
+	// and the Command line syntax section of docs/content/bisync.md (it doesn't update automatically)
 	flags.BoolVarP(cmdFlags, &Opt.Resync, "resync", "1", Opt.Resync, "Performs the resync run. Equivalent to --resync-mode path1. Consider using --verbose or --dry-run first.", "")
 	flags.FVarP(cmdFlags, &Opt.ResyncMode, "resync-mode", "", "During resync, prefer the version that is: path1, path2, newer, older, larger, smaller (default: path1 if --resync, otherwise none for no resync.)", "")
 	flags.BoolVarP(cmdFlags, &Opt.CheckAccess, "check-access", "", Opt.CheckAccess, makeHelp("Ensure expected {CHECKFILE} files are found on both Path1 and Path2 filesystems, else abort."), "")
@@ -142,7 +141,6 @@ func init() {
 	flags.BoolVarP(cmdFlags, &Opt.IgnoreListingChecksum, "ignore-listing-checksum", "", Opt.IgnoreListingChecksum, "Do not use checksums for listings (add --ignore-checksum to additionally skip post-copy checksum checks)", "")
 	flags.BoolVarP(cmdFlags, &Opt.Resilient, "resilient", "", Opt.Resilient, "Allow future runs to retry after certain less-serious errors, instead of requiring --resync. Use at your own risk!", "")
 	flags.BoolVarP(cmdFlags, &Opt.Recover, "recover", "", Opt.Recover, "Automatically recover from interruptions without requiring --resync.", "")
-	flags.IntVarP(cmdFlags, &Opt.Retries, "retries", "", Opt.Retries, "Retry operations this many times if they fail", "")
 	flags.StringVarP(cmdFlags, &Opt.CompareFlag, "compare", "", Opt.CompareFlag, "Comma-separated list of bisync-specific compare options ex. 'size,modtime,checksum' (default: 'size,modtime')", "")
 	flags.BoolVarP(cmdFlags, &Opt.Compare.NoSlowHash, "no-slow-hash", "", Opt.Compare.NoSlowHash, "Ignore listing checksums only on backends where they are slow", "")
 	flags.BoolVarP(cmdFlags, &Opt.Compare.SlowHashSyncOnly, "slow-hash-sync-only", "", Opt.Compare.SlowHashSyncOnly, "Ignore slow checksums for listings and deltas, but still consider them during sync calls.", "")

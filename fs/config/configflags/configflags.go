@@ -75,6 +75,8 @@ func AddFlags(ci *fs.ConfigInfo, flagSet *pflag.FlagSet) {
 	flags.FVarP(flagSet, &ci.MaxDeleteSize, "max-delete-size", "", "When synchronizing, limit the total size of deletes", "Sync")
 	flags.BoolVarP(flagSet, &ci.TrackRenames, "track-renames", "", ci.TrackRenames, "When synchronizing, track file renames and do a server-side move if possible", "Sync")
 	flags.StringVarP(flagSet, &ci.TrackRenamesStrategy, "track-renames-strategy", "", ci.TrackRenamesStrategy, "Strategies to use when synchronizing using track-renames hash|modtime|leaf", "Sync")
+	flags.IntVarP(flagSet, &ci.Retries, "retries", "", 3, "Retry operations this many times if they fail", "Config")
+	flags.DurationVarP(flagSet, &ci.RetriesInterval, "retries-sleep", "", 0, "Interval between retrying operations if they fail, e.g. 500ms, 60s, 5m (0 to disable)", "Config")
 	flags.IntVarP(flagSet, &ci.LowLevelRetries, "low-level-retries", "", ci.LowLevelRetries, "Number of low level retries to do", "Config")
 	flags.BoolVarP(flagSet, &ci.UpdateOlder, "update", "u", ci.UpdateOlder, "Skip files that are newer on the destination", "Copy")
 	flags.BoolVarP(flagSet, &ci.UseServerModTime, "use-server-modtime", "", ci.UseServerModTime, "Use server modified time instead of object metadata", "Config")
