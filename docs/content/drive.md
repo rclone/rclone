@@ -436,6 +436,8 @@ The [rclone backend](https://rclone.org/commands/rclone_backend/) command can be
 Shortcuts can be completely ignored with the `--drive-skip-shortcuts` flag
 or the corresponding `skip_shortcuts` configuration setting.
 
+If you have shortcuts that leads to an infinite recursion in your drive (eg a shorcut pointing to a parent folder), `skip_shortcuts` might be mandatory to be able to clone the drive.
+
 ### Emptying trash
 
 If you wish to empty your trash you can use the `rclone cleanup remote:`
