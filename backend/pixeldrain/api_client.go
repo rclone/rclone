@@ -50,6 +50,16 @@ type FilesystemNode struct {
 	ID string `json:"id,omitempty"`
 }
 
+type ChangeLog []ChangeLogEntry
+
+type ChangeLogEntry struct {
+	Time    time.Time `json:"time"`
+	Path    string    `json:"path"`
+	PathNew string    `json:"path_new"`
+	Action  string    `json:"action"`
+	Type    string    `json:"type"`
+}
+
 // UserInfo contains information about the logged in user
 type UserInfo struct {
 	Username         string           `json:"username"`
@@ -184,6 +194,27 @@ func (f *Fs) stat(ctx context.Context, path string) (fsp FilesystemPath, err err
 	return fsp, resp.Body.Close()
 }
 
+func (f *Fs) changeLog(ctx context.Context, start, end time.Time) (changeLog ChangeLog, err error) {
+	resp, err := f.srv.CallJSON(
+		ctx,
+		&rest.Opts{
+			Method: "GET",
+			Path:   f.escapePath(""),
+			Parameters: url.Values{
+				"change_log": []string{""},
+				"start":      []string{start.Format(time.RFC3339Nano)},
+				"end":        []string{end.Format(time.RFC3339Nano)},
+			},
+		},
+		nil,
+		&changeLog,
+	)
+	if err != nil {
+		return changeLog, err
+	}
+	return changeLog, resp.Body.Close()
+}
+
 func (f *Fs) update(ctx context.Context, path string, fields fs.Metadata) (node FilesystemNode, err error) {
 	var params = make(url.Values)
 	params.Set("action", "update")
@@ -199,6 +230,9 @@ func (f *Fs) update(ctx context.Context, path string, fields fs.Metadata) (node 
 	}
 	if shared, ok := fields["shared"]; ok {
 		params.Set("shared", shared)
+	}
+	if loggingEnabled, ok := fields["logging_enabled"]; ok {
+		params.Set("logging_enabled", loggingEnabled)
 	}
 
 	resp, err := f.srv.CallJSON(

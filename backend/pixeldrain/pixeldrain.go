@@ -380,6 +380,84 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 	return err
 }
 
+// =============================================
+// Implementation of fs.ChangeNotifier interface
+// =============================================
+var _ fs.ChangeNotifier = (*Fs)(nil)
+
+// ChangeNotify calls the passed function with a path
+// that has had changes. If the implementation
+// uses polling, it should adhere to the given interval.
+// At least one value will be written to the channel,
+// specifying the initial value and updated values might
+// follow. A 0 Duration should pause the polling.
+// The ChangeNotify implementation must empty the channel
+// regularly. When the channel gets closed, the implementation
+// should stop polling and release resources.
+func (f *Fs) ChangeNotify(ctx context.Context, notify func(string, fs.EntryType), newInterval <-chan time.Duration) {
+	// If the bucket ID is not /me we need to explicitly enable change logging
+	// for this directory or file
+	if f.pathPrefix != "/me/" {
+		_, err := f.update(ctx, "", fs.Metadata{"logging_enabled": "true"})
+		if err != nil {
+			fs.Errorf(f, "Failed to set up change logging for path '%s': %s", f.pathPrefix, err)
+		}
+	}
+
+	go f.changeNotify(ctx, notify, newInterval)
+}
+func (f *Fs) changeNotify(ctx context.Context, notify func(string, fs.EntryType), newInterval <-chan time.Duration) {
+	var ticker = time.NewTicker(<-newInterval)
+	var lastPoll = time.Now()
+
+	for {
+		select {
+		case dur, ok := <-newInterval:
+			if !ok {
+				ticker.Stop()
+				return
+			}
+
+			fs.Debugf(f, "Polling changes at an interval of %s", dur)
+			ticker.Reset(dur)
+
+		case t := <-ticker.C:
+			clog, err := f.changeLog(ctx, lastPoll, t)
+			if err != nil {
+				fs.Errorf(f, "Failed to get change log for path '%s': %s", f.pathPrefix, err)
+				continue
+			}
+
+			fs.Debugf(f, "Received %d changes for directory %s", len(clog), f.pathPrefix)
+
+			for i := range clog {
+				if clog[i].Type == "dir" {
+					notify(strings.TrimPrefix(clog[i].Path, "/"), fs.EntryDirectory)
+				} else if clog[i].Type == "file" {
+					notify(strings.TrimPrefix(clog[i].Path, "/"), fs.EntryObject)
+				}
+			}
+
+			lastPoll = t
+		}
+	}
+}
+
+// ==========================================
+// Implementation of fs.PutStreamer interface
+// ==========================================
+var _ fs.PutStreamer = (*Fs)(nil)
+
+// PutStream uploads to the remote path with the modTime given of indeterminate size
+//
+// May create the object even if it returns an error - if so
+// will return the object and the error, otherwise will return
+// nil and the error
+func (f *Fs) PutStream(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
+	// Put already supports streaming so we just use that
+	return f.Put(ctx, in, src, options...)
+}
+
 // ===========================================
 // Implementation of fs.PublicLinker interface
 // ===========================================
