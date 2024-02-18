@@ -31,10 +31,6 @@ import (
 )
 
 const (
-	minSleep         = 400 * time.Millisecond
-	maxSleep         = 5 * time.Second
-	decayConstant    = 2
-	attackConstant   = 0
 	timeFormat       = time.RFC3339
 	maxChunkSize     = 2000 * fs.Mebi
 	defaultChunkSize = 1000 * fs.Mebi
@@ -231,7 +227,7 @@ func NewFs(ctx context.Context, name string, root string, config configmap.Mappe
 		name:  name,
 		root:  root,
 		opt:   *opt,
-		pacer: fs.NewPacer(ctx, pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant), pacer.AttackConstant(attackConstant))),
+		pacer: fs.NewPacer(ctx, pacer.NewDefault()),
 	}
 	if root == "/" || root == "." {
 		f.root = ""
