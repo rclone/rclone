@@ -280,7 +280,7 @@ func errorHandler(resp *http.Response) error {
 	if strings.HasPrefix(resp.Header.Get("Content-Type"), "image/") {
 		body = []byte("Image not found or broken")
 	}
-	var e = api.Error{
+	e := api.Error{
 		Details: api.ErrorDetails{
 			Code:    resp.StatusCode,
 			Message: string(body),
@@ -702,7 +702,7 @@ func (f *Fs) createAlbum(ctx context.Context, albumTitle string) (album *api.Alb
 		Path:       "/albums",
 		Parameters: url.Values{},
 	}
-	var request = api.CreateAlbum{
+	request := api.CreateAlbum{
 		Album: &api.Album{
 			Title: albumTitle,
 		},
@@ -1002,7 +1002,7 @@ func (f *Fs) commitBatchAlbumID(ctx context.Context, items []uploadedItem, resul
 		Method: "POST",
 		Path:   "/mediaItems:batchCreate",
 	}
-	var request = api.BatchCreateRequest{
+	request := api.BatchCreateRequest{
 		AlbumID: albumID,
 	}
 	itemsInBatch := 0
@@ -1174,8 +1174,8 @@ func (o *Object) Remove(ctx context.Context) (err error) {
 		Path:       "/albums/" + album.ID + ":batchRemoveMediaItems",
 		NoResponse: true,
 	}
-	var request = api.BatchRemoveItems{
-		MediaItemIds: []string{o.id},
+	request := api.BatchRemoveItems{
+		MediaItemIDs: []string{o.id},
 	}
 	var resp *http.Response
 	err = o.fs.pacer.Call(func() (bool, error) {

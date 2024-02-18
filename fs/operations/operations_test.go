@@ -1005,10 +1005,10 @@ func TestCaseInsensitiveMoveFileDryRun(t *testing.T) {
 		return
 	}
 
-	ci.DryRun = true
 	file1 := r.WriteObject(ctx, "hello", "world", t1)
 	r.CheckRemoteItems(t, file1)
 
+	ci.DryRun = true
 	err := operations.MoveFile(ctx, r.Fremote, r.Fremote, "HELLO", file1.Path)
 	require.NoError(t, err)
 	r.CheckRemoteItems(t, file1)

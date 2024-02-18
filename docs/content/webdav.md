@@ -278,7 +278,7 @@ Properties:
 
 See below for notes on specific providers.
 
-## Fastmail Files
+### Fastmail Files
 
 Use `https://webdav.fastmail.com/` or a subdirectory as the URL,
 and your Fastmail email `username@domain.tld` as the username.

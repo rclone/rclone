@@ -193,9 +193,12 @@ Example:
 			Advanced: true,
 		}, {
 			Name: "download_auth_duration",
-			Help: `Time before the authorization token will expire in s or suffix ms|s|m|h|d.
+			Help: `Time before the public link authorization token will expire in s or suffix ms|s|m|h|d.
 
-The duration before the download authorization token will expire.
+This is used in combination with "rclone link" for making files
+accessible to the public and sets the duration before the download
+authorization token will expire.
+
 The minimum value is 1 second. The maximum value is one week.`,
 			Default:  fs.Duration(7 * 24 * time.Hour),
 			Advanced: true,
