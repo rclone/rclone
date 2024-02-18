@@ -42,7 +42,7 @@ var (
 	RedirectPublicURL = "http://localhost.rclone.org:" + bindPort + "/"
 
 	// RedirectLocalhostURL is redirect to local webserver when active with localhost
-	RedirectLocalhostURL = "https://localhost:" + bindPort + "/"
+	RedirectLocalhostURL = "http://localhost:" + bindPort + "/"
 
 	// RedirectPublicSecureURL is a public https URL which
 	// redirects to the local webserver
@@ -400,7 +400,7 @@ func overrideCredentials(name string, m configmap.Mapper, origConfig *oauth2.Con
 // authentication server as well as overriding the redirect
 // URL of the remote.
 // the origConfig is copied
-func overrideAuthServer(name string, m configmap.Mapper, origConfig *oauth2.Config, ctx context.Context) (newConfig *oauth2.Config, changed bool) {
+func overrideAuthServer(ctx context.Context, name string, m configmap.Mapper, origConfig *oauth2.Config) (newConfig *oauth2.Config, changed bool) {
 	newConfig = new(oauth2.Config)
 	*newConfig = *origConfig
 	changed = false
@@ -429,7 +429,7 @@ func overrideAuthServer(name string, m configmap.Mapper, origConfig *oauth2.Conf
 // httpClient passed in as the base client.
 func NewClientWithBaseClient(ctx context.Context, name string, m configmap.Mapper, config *oauth2.Config, baseClient *http.Client) (*http.Client, *TokenSource, error) {
 	config, _ = overrideCredentials(name, m, config)
-	config, _ = overrideAuthServer(name, m, config, ctx)
+	config, _ = overrideAuthServer(ctx, name, m, config)
 	token, err := GetToken(name, m)
 	if err != nil {
 		return nil, nil, err
@@ -647,7 +647,7 @@ version recommended):
 			return nil, err
 		}
 		oauthConfigTemp, _ := overrideCredentials(name, m, opt.OAuth2Config)
-		oauthConfig, changed := overrideAuthServer(name, m, oauthConfigTemp, ctx)
+		oauthConfig, changed := overrideAuthServer(ctx, name, m, oauthConfigTemp)
 		if changed {
 			fs.Logf(nil, "Make sure your Redirect URL is set to %q in your custom config.\n", oauthConfig.RedirectURL)
 		}
