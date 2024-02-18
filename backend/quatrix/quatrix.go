@@ -233,9 +233,10 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		}
 
 		if fileID.IsFile() {
-			root, _ = dircache.SplitPath(root)
-			f.dirCache = dircache.New(root, rootID.FileID, f)
+			f.root, _ = dircache.SplitPath(root)
+			f.dirCache = dircache.New(f.root, rootID.FileID, f)
 
+			// return an error with an fs which points to the parent
 			return f, fs.ErrorIsFile
 		}
 	}
