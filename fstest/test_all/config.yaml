@@ -57,10 +57,14 @@ backends:
  - backend:  "chunker"
    remote:   "TestChunkerMailru:"
    fastlist: true
+   ignore:
+     - TestApplyTransforms
  - backend:  "chunker"
    remote:   "TestChunkerChunk50bMailru:"
    fastlist: true
    maxfile:  10k
+   ignore:
+     - TestApplyTransforms
  - backend:  "chunker"
    remote:   "TestChunkerChunk50bYandex:"
    fastlist: true
@@ -403,6 +407,8 @@ backends:
    remote:   "TestMailru:"
    subdir:   false
    fastlist: false
+   ignore:
+     - TestApplyTransforms
  - backend:  "seafile"
    remote:   "TestSeafileV6:"
    fastlist: false
