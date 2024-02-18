@@ -25,15 +25,17 @@ import (
 
 // Options contains options for the NFS Server
 type Options struct {
-	ListenAddr string // Port to listen on
+	ListenAddr  string // Port to listen on
+	HandleLimit int    // max file handles cached by go-nfs CachingHandler
 }
 
 var opt Options
 
-// AddFlags adds flags for the sftp
+// AddFlags adds flags for serve nfs (and nfsmount)
 func AddFlags(flagSet *pflag.FlagSet, Opt *Options) {
 	rc.AddOption("nfs", &Opt)
 	flags.StringVarP(flagSet, &Opt.ListenAddr, "addr", "", Opt.ListenAddr, "IPaddress:Port or :Port to bind server to", "")
+	flags.IntVarP(flagSet, &Opt.HandleLimit, "nfs-cache-handle-limit", "", 1000000, "max file handles cached simultaneously (min 5)", "")
 }
 
 func init() {
@@ -72,7 +74,9 @@ NFS mount over local network, you need to specify the listening address and port
 
 Modifying files through NFS protocol requires VFS caching. Usually you will need to specify ` + "`--vfs-cache-mode`" + `
 in order to be able to write to the mountpoint (full is recommended). If you don't specify VFS cache mode,
-the mount will be read-only.
+the mount will be read-only. Note also that ` + "`--nfs-cache-handle-limit`" + ` controls the maximum number of cached file handles stored by the caching handler.
+This should not be set too low or you may experience errors when trying to access files. The default is ` + "`1000000`" + `, but consider lowering this limit if
+the server's system resource usage causes problems.
 
 To serve NFS over the network use following command:
 
