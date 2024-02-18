@@ -614,7 +614,7 @@ func (f *Fs) setQuirks(ctx context.Context, vendor string) error {
 			}
 
 			f.chunksUploadURL = chunksUploadURL
-			fs.Logf(nil, "Chunks temporary upload directory: %s", f.chunksUploadURL)
+			fs.Debugf(nil, "Chunks temporary upload directory: %s", f.chunksUploadURL)
 		}
 	case "sharepoint":
 		// To mount sharepoint, two Cookies are required
