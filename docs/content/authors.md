@@ -823,3 +823,4 @@ put them back in again.` >}}
   * Jack Provance <49460795+njprov@users.noreply.github.com>
   * Gabriel Ramos <109390599+gabrielramos02@users.noreply.github.com>
   * Dan McArdle <d@nmcardle.com>
+  * Joe Cai <joe.cai@bigcommerce.com>
