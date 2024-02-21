@@ -824,3 +824,4 @@ put them back in again.` >}}
   * Gabriel Ramos <109390599+gabrielramos02@users.noreply.github.com>
   * Dan McArdle <d@nmcardle.com>
   * Joe Cai <joe.cai@bigcommerce.com>
+  * Anders Swanson <anders.swanson@oracle.com>
