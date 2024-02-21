@@ -822,3 +822,4 @@ put them back in again.` >}}
   * DanielEgbers <27849724+DanielEgbers@users.noreply.github.com>
   * Jack Provance <49460795+njprov@users.noreply.github.com>
   * Gabriel Ramos <109390599+gabrielramos02@users.noreply.github.com>
+  * Dan McArdle <d@nmcardle.com>
