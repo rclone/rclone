@@ -1639,3 +1639,112 @@ func TestTouchDir(t *testing.T) {
 		r.CheckRemoteItems(t, file1, file2, file3)
 	}
 }
+
+var testMetadata = fs.Metadata{
+	// System metadata supported by all backends
+	"mtime": t1.Format(time.RFC3339Nano),
+	// User metadata
+	"potato": "jersey",
+}
+
+func TestMkdirMetadata(t *testing.T) {
+	const name = "dir with metadata"
+	ctx := context.Background()
+	ctx, ci := fs.AddConfig(ctx)
+	ci.Metadata = true
+	r := fstest.NewRun(t)
+	features := r.Fremote.Features()
+	if features.MkdirMetadata == nil {
+		t.Skip("Skipping test as remote does not support MkdirMetadata")
+	}
+
+	newDst, err := operations.MkdirMetadata(ctx, r.Fremote, name, testMetadata)
+	require.NoError(t, err)
+	require.NotNil(t, newDst)
+
+	require.True(t, features.ReadDirMetadata, "Expecting ReadDirMetadata to be supported if MkdirMetadata is supported")
+
+	// Check the returned directory and one read from the listing
+	fstest.CheckEntryMetadata(ctx, t, r.Fremote, newDst, testMetadata)
+	fstest.CheckEntryMetadata(ctx, t, r.Fremote, fstest.NewDirectory(ctx, t, r.Fremote, name), testMetadata)
+}
+
+func TestMkdirModTime(t *testing.T) {
+	const name = "directory with modtime"
+	ctx := context.Background()
+	r := fstest.NewRun(t)
+	if r.Fremote.Features().DirSetModTime == nil && r.Fremote.Features().MkdirMetadata == nil {
+		t.Skip("Skipping test as remote does not support DirSetModTime or MkdirMetadata")
+	}
+	newDst, err := operations.MkdirModTime(ctx, r.Fremote, name, t2)
+	require.NoError(t, err)
+
+	// Check the returned directory and one read from the listing
+	fstest.CheckDirModTime(ctx, t, r.Fremote, newDst, t2)
+	fstest.CheckDirModTime(ctx, t, r.Fremote, fstest.NewDirectory(ctx, t, r.Fremote, name), t2)
+}
+
+func TestCopyDirMetadata(t *testing.T) {
+	const nameNonExistent = "non existent directory"
+	const nameExistent = "existing directory"
+	ctx := context.Background()
+	ctx, ci := fs.AddConfig(ctx)
+	ci.Metadata = true
+	r := fstest.NewRun(t)
+	if !r.Fremote.Features().WriteDirMetadata && r.Fremote.Features().MkdirMetadata == nil {
+		t.Skip("Skipping test as remote does not support WriteDirMetadata or MkdirMetadata")
+	}
+
+	// Create a source local directory with metadata
+	newSrc, err := operations.MkdirMetadata(ctx, r.Flocal, "dir with metadata to be copied", testMetadata)
+	require.NoError(t, err)
+	require.NotNil(t, newSrc)
+
+	// First try with the directory not existing
+	newDst, err := operations.CopyDirMetadata(ctx, r.Fremote, nil, nameNonExistent, newSrc)
+	require.NoError(t, err)
+	require.NotNil(t, newDst)
+
+	// Check the returned directory and one read from the listing
+	fstest.CheckEntryMetadata(ctx, t, r.Fremote, newDst, testMetadata)
+	fstest.CheckEntryMetadata(ctx, t, r.Fremote, fstest.NewDirectory(ctx, t, r.Fremote, nameNonExistent), testMetadata)
+
+	// Then try with the directory existing
+	require.NoError(t, r.Fremote.Rmdir(ctx, nameNonExistent))
+	require.NoError(t, r.Fremote.Mkdir(ctx, nameExistent))
+	existingDir := fstest.NewDirectory(ctx, t, r.Fremote, nameExistent)
+
+	newDst, err = operations.CopyDirMetadata(ctx, r.Fremote, existingDir, "SHOULD BE IGNORED", newSrc)
+	require.NoError(t, err)
+	require.NotNil(t, newDst)
+
+	// Check the returned directory and one read from the listing
+	fstest.CheckEntryMetadata(ctx, t, r.Fremote, newDst, testMetadata)
+	fstest.CheckEntryMetadata(ctx, t, r.Fremote, fstest.NewDirectory(ctx, t, r.Fremote, nameExistent), testMetadata)
+}
+
+func TestSetDirModTime(t *testing.T) {
+	const name = "set modtime on existing directory"
+	ctx := context.Background()
+	r := fstest.NewRun(t)
+	if r.Fremote.Features().DirSetModTime == nil && !r.Fremote.Features().WriteDirSetModTime {
+		t.Skip("Skipping test as remote does not support DirSetModTime or WriteDirSetModTime")
+	}
+
+	// First try with the directory not existing - should return an error
+	newDst, err := operations.SetDirModTime(ctx, r.Fremote, nil, "set modtime on non existent directory", t2)
+	require.Error(t, err)
+	require.Nil(t, newDst)
+
+	// Then try with the directory existing
+	require.NoError(t, r.Fremote.Mkdir(ctx, name))
+	existingDir := fstest.NewDirectory(ctx, t, r.Fremote, name)
+
+	newDst, err = operations.SetDirModTime(ctx, r.Fremote, existingDir, "SHOULD BE IGNORED", t2)
+	require.NoError(t, err)
+	require.NotNil(t, newDst)
+
+	// Check the returned directory and one read from the listing
+	fstest.CheckDirModTime(ctx, t, r.Fremote, newDst, t2)
+	fstest.CheckDirModTime(ctx, t, r.Fremote, fstest.NewDirectory(ctx, t, r.Fremote, name), t2)
+}

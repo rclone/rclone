@@ -307,19 +307,21 @@ type ExtraConfigItem struct{ Name, Key, Value string }
 
 // Opt is options for Run
 type Opt struct {
-	RemoteName                   string
-	NilObject                    fs.Object
-	ExtraConfig                  []ExtraConfigItem
-	SkipBadWindowsCharacters     bool     // skips unusable characters for windows if set
-	SkipFsMatch                  bool     // if set skip exact matching of Fs value
-	TiersToTest                  []string // List of tiers which can be tested in setTier test
-	ChunkedUpload                ChunkedUploadConfig
-	UnimplementableFsMethods     []string // List of methods which can't be implemented in this wrapping Fs
-	UnimplementableObjectMethods []string // List of methods which can't be implemented in this wrapping Fs
-	SkipFsCheckWrap              bool     // if set skip FsCheckWrap
-	SkipObjectCheckWrap          bool     // if set skip ObjectCheckWrap
-	SkipInvalidUTF8              bool     // if set skip invalid UTF-8 checks
-	QuickTestOK                  bool     // if set, run this test with make quicktest
+	RemoteName                      string
+	NilObject                       fs.Object
+	ExtraConfig                     []ExtraConfigItem
+	SkipBadWindowsCharacters        bool     // skips unusable characters for windows if set
+	SkipFsMatch                     bool     // if set skip exact matching of Fs value
+	TiersToTest                     []string // List of tiers which can be tested in setTier test
+	ChunkedUpload                   ChunkedUploadConfig
+	UnimplementableFsMethods        []string // List of Fs methods which can't be implemented in this wrapping Fs
+	UnimplementableObjectMethods    []string // List of Object methods which can't be implemented in this wrapping Fs
+	UnimplementableDirectoryMethods []string // List of Directory methods which can't be implemented in this wrapping Fs
+	SkipFsCheckWrap                 bool     // if set skip FsCheckWrap
+	SkipObjectCheckWrap             bool     // if set skip ObjectCheckWrap
+	SkipDirectoryCheckWrap          bool     // if set skip DirectoryCheckWrap
+	SkipInvalidUTF8                 bool     // if set skip invalid UTF-8 checks
+	QuickTestOK                     bool     // if set, run this test with make quicktest
 }
 
 // returns true if x is found in ss
@@ -1513,8 +1515,8 @@ func Run(t *testing.T, opt *Opt) {
 					}
 				}
 				if !features.ReadMetadata {
-					if metadata != nil {
-						require.Equal(t, "", metadata, "Features.ReadMetadata is not set but Object.Metadata returned a non nil Metadata")
+					if metadata != nil && !features.Overlay {
+						require.Equal(t, "", metadata, "Features.ReadMetadata is not set but Object.Metadata returned a non nil Metadata: %#v", metadata)
 					}
 				} else if features.WriteMetadata {
 					require.NotNil(t, metadata)
@@ -2299,6 +2301,190 @@ func Run(t *testing.T, opt *Opt) {
 			require.Equal(t, fs.ErrorObjectNotFound, err)
 			// If err is not fs.ErrorObjectNotFound, it means the backend is
 			// somehow confused about root and absolute root.
+		})
+
+		// FsDirSetModTime tests setting the mod time on a directory if possible
+		t.Run("FsDirSetModTime", func(t *testing.T) {
+			const name = "dir-mod-time"
+			do := f.Features().DirSetModTime
+			if do == nil {
+				t.Skip("FS has no DirSetModTime interface")
+			}
+
+			// Set ModTime on non existing directory should return error
+			t1 := fstest.Time("2001-02-03T04:05:06.499999999Z")
+			err := do(ctx, name, t1)
+			require.Error(t, err)
+
+			// Make the directory and try again
+			err = f.Mkdir(ctx, name)
+			require.NoError(t, err)
+			err = do(ctx, name, t1)
+			require.NoError(t, err)
+
+			// Check the modtime got set properly
+			dir := fstest.NewDirectory(ctx, t, f, name)
+			fstest.CheckDirModTime(ctx, t, f, dir, t1)
+
+			// Tidy up
+			err = f.Rmdir(ctx, name)
+			require.NoError(t, err)
+		})
+
+		var testMetadata = fs.Metadata{
+			// System metadata supported by all backends
+			"mtime": "2001-02-03T04:05:06.499999999Z",
+			// User metadata
+			"potato": "jersey",
+		}
+		var testMetadata2 = fs.Metadata{
+			// System metadata supported by all backends
+			"mtime": "2002-02-03T04:05:06.499999999Z",
+			// User metadata
+			"potato": "king edwards",
+		}
+
+		// FsMkdirMetadata tests creating a directory with metadata if possible
+		t.Run("FsMkdirMetadata", func(t *testing.T) {
+			ctx, ci := fs.AddConfig(ctx)
+			ci.Metadata = true
+			const name = "dir-metadata"
+			do := f.Features().MkdirMetadata
+			if do == nil {
+				t.Skip("FS has no MkdirMetadata interface")
+			}
+			assert.True(t, f.Features().WriteDirMetadata, "Backends must support Directory.SetMetadata and Fs.MkdirMetadata")
+
+			// Create the directory from fresh
+			dir, err := do(ctx, name, testMetadata)
+			require.NoError(t, err)
+			require.NotNil(t, dir)
+
+			// Check the returned directory and one read from the listing
+			fstest.CheckEntryMetadata(ctx, t, f, dir, testMetadata)
+			fstest.CheckEntryMetadata(ctx, t, f, fstest.NewDirectory(ctx, t, f, name), testMetadata)
+
+			// Now update the metadata on the existing directory
+			t.Run("Update", func(t *testing.T) {
+				dir, err := do(ctx, name, testMetadata2)
+				require.NoError(t, err)
+				require.NotNil(t, dir)
+
+				// Check the returned directory and one read from the listing
+				fstest.CheckEntryMetadata(ctx, t, f, dir, testMetadata2)
+				// The TestUnionPolicy2 has randomness in it so it sets metadata on
+				// one directory but can read a different one from the listing.
+				if f.Name() != "TestUnionPolicy2" {
+					fstest.CheckEntryMetadata(ctx, t, f, fstest.NewDirectory(ctx, t, f, name), testMetadata2)
+				}
+			})
+
+			// Now test the Directory methods
+			t.Run("CheckDirectory", func(t *testing.T) {
+				_, ok := dir.(fs.Object)
+				assert.False(t, ok, "Directory must not type assert to Object")
+				_, ok = dir.(fs.ObjectInfo)
+				assert.False(t, ok, "Directory must not type assert to ObjectInfo")
+			})
+
+			// Tidy up
+			err = f.Rmdir(ctx, name)
+			require.NoError(t, err)
+		})
+
+		// FsDirectory checks methods on the directory object
+		t.Run("FsDirectory", func(t *testing.T) {
+			ctx, ci := fs.AddConfig(ctx)
+			ci.Metadata = true
+			const name = "dir-methods"
+			features := f.Features()
+
+			if !features.CanHaveEmptyDirectories {
+				t.Skip("Can't test if can't have empty directories")
+			}
+			if !features.ReadDirMetadata &&
+				!features.WriteDirMetadata &&
+				!features.WriteDirSetModTime &&
+				!features.UserDirMetadata &&
+				!features.Overlay &&
+				features.UnWrap == nil {
+				t.Skip("FS has no Directory methods and doesn't Wrap")
+			}
+
+			// Create a directory to start with
+			err := f.Mkdir(ctx, name)
+			require.NoError(t, err)
+
+			// Get the directory object
+			dir := fstest.NewDirectory(ctx, t, f, name)
+			_, ok := dir.(fs.Object)
+			assert.False(t, ok, "Directory must not type assert to Object")
+			_, ok = dir.(fs.ObjectInfo)
+			assert.False(t, ok, "Directory must not type assert to ObjectInfo")
+
+			// Now test the directory methods
+			t.Run("ReadDirMetadata", func(t *testing.T) {
+				if !features.ReadDirMetadata {
+					t.Skip("Directories don't support ReadDirMetadata")
+				}
+				if f.Name() == "TestUnionPolicy3" {
+					t.Skipf("Test unreliable on %q", f.Name())
+				}
+				fstest.CheckEntryMetadata(ctx, t, f, dir, fs.Metadata{
+					"mtime": dir.ModTime(ctx).Format(time.RFC3339Nano),
+				})
+			})
+
+			t.Run("WriteDirMetadata", func(t *testing.T) {
+				if !features.WriteDirMetadata {
+					t.Skip("Directories don't support WriteDirMetadata")
+				}
+				assert.NotNil(t, features.MkdirMetadata, "Backends must support Directory.SetMetadata and Fs.MkdirMetadata")
+				do, ok := dir.(fs.SetMetadataer)
+				require.True(t, ok, "Expected to find SetMetadata method on Directory")
+				err := do.SetMetadata(ctx, testMetadata)
+				require.NoError(t, err)
+
+				fstest.CheckEntryMetadata(ctx, t, f, dir, testMetadata)
+				fstest.CheckEntryMetadata(ctx, t, f, fstest.NewDirectory(ctx, t, f, name), testMetadata)
+			})
+
+			t.Run("WriteDirSetModTime", func(t *testing.T) {
+				if !features.WriteDirSetModTime {
+					t.Skip("Directories don't support WriteDirSetModTime")
+				}
+				assert.NotNil(t, features.DirSetModTime, "Backends must support Directory.SetModTime and Fs.DirSetModTime")
+
+				t1 := fstest.Time("2001-02-03T04:05:10.123123123Z")
+
+				do, ok := dir.(fs.SetModTimer)
+				require.True(t, ok, "Expected to find SetMetadata method on Directory")
+				err := do.SetModTime(ctx, t1)
+				require.NoError(t, err)
+
+				fstest.CheckDirModTime(ctx, t, f, dir, t1)
+				fstest.CheckDirModTime(ctx, t, f, fstest.NewDirectory(ctx, t, f, name), t1)
+			})
+
+			// Check to see if Fs that wrap other Directories implement all the optional methods
+			t.Run("DirectoryCheckWrap", func(t *testing.T) {
+				if opt.SkipDirectoryCheckWrap {
+					t.Skip("Skipping DirectoryCheckWrap on this Fs")
+				}
+				if !features.Overlay && features.UnWrap == nil {
+					t.Skip("Not a wrapping Fs")
+				}
+				_, unsupported := fs.DirectoryOptionalInterfaces(dir)
+				for _, name := range unsupported {
+					if !stringsContains(name, opt.UnimplementableDirectoryMethods) {
+						t.Errorf("Missing Directory wrapper for %s", name)
+					}
+				}
+			})
+
+			// Tidy up
+			err = f.Rmdir(ctx, name)
+			require.NoError(t, err)
 		})
 
 		// Purge the folder
