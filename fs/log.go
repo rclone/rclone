@@ -2,6 +2,7 @@ package fs
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"os"
@@ -193,4 +194,18 @@ func LogDirName(f Fs, dir string) interface{} {
 		return dir
 	}
 	return f
+}
+
+// PrettyPrint formats JSON for improved readability in debug logs.
+// If it can't Marshal JSON, it falls back to fmt.
+func PrettyPrint(in any, label string, level LogLevel) {
+	if GetConfig(context.TODO()).LogLevel < level {
+		return
+	}
+	inBytes, err := json.MarshalIndent(in, "", "\t")
+	if err != nil {
+		LogPrintf(level, label, "\n%+v\n", in)
+		return
+	}
+	LogPrintf(level, label, "\n%s\n", string(inBytes))
 }
