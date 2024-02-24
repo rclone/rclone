@@ -85,17 +85,16 @@ func (n *Node) lookupVfsNodeInDir(leaf string) (vfsNode vfs.Node, errno syscall.
 // will not work.
 func (n *Node) Statfs(ctx context.Context, out *fuse.StatfsOut) syscall.Errno {
 	defer log.Trace(n, "")("out=%+v", &out)
-	out = new(fuse.StatfsOut)
 	const blockSize = 4096
-	const fsBlocks = (1 << 50) / blockSize
-	out.Blocks = fsBlocks  // Total data blocks in file system.
-	out.Bfree = fsBlocks   // Free blocks in file system.
-	out.Bavail = fsBlocks  // Free blocks in file system if you're not root.
-	out.Files = 1e9        // Total files in file system.
-	out.Ffree = 1e9        // Free files in file system.
-	out.Bsize = blockSize  // Block size
-	out.NameLen = 255      // Maximum file name length?
-	out.Frsize = blockSize // Fragment size, smallest addressable data size in the file system.
+	total, _, free := n.fsys.VFS.Statfs()
+	out.Blocks = uint64(total) / blockSize // Total data blocks in file system.
+	out.Bfree = uint64(free) / blockSize   // Free blocks in file system.
+	out.Bavail = out.Bfree                 // Free blocks in file system if you're not root.
+	out.Files = 1e9                        // Total files in file system.
+	out.Ffree = 1e9                        // Free files in file system.
+	out.Bsize = blockSize                  // Block size
+	out.NameLen = 255                      // Maximum file name length?
+	out.Frsize = blockSize                 // Fragment size, smallest addressable data size in the file system.
 	mountlib.ClipBlocks(&out.Blocks)
 	mountlib.ClipBlocks(&out.Bfree)
 	mountlib.ClipBlocks(&out.Bavail)
@@ -405,3 +404,40 @@ func (n *Node) Rename(ctx context.Context, oldName string, newParent fusefs.Inod
 }
 
 var _ = (fusefs.NodeRenamer)((*Node)(nil))
+
+// Getxattr should read data for the given attribute into
+// `dest` and return the number of bytes. If `dest` is too
+// small, it should return ERANGE and the size of the attribute.
+// If not defined, Getxattr will return ENOATTR.
+func (n *Node) Getxattr(ctx context.Context, attr string, dest []byte) (uint32, syscall.Errno) {
+	return 0, syscall.ENOSYS // we never implement this
+}
+
+var _ fusefs.NodeGetxattrer = (*Node)(nil)
+
+// Setxattr should store data for the given attribute.  See
+// setxattr(2) for information about flags.
+// If not defined, Setxattr will return ENOATTR.
+func (n *Node) Setxattr(ctx context.Context, attr string, data []byte, flags uint32) syscall.Errno {
+	return syscall.ENOSYS // we never implement this
+}
+
+var _ fusefs.NodeSetxattrer = (*Node)(nil)
+
+// Removexattr should delete the given attribute.
+// If not defined, Removexattr will return ENOATTR.
+func (n *Node) Removexattr(ctx context.Context, attr string) syscall.Errno {
+	return syscall.ENOSYS // we never implement this
+}
+
+var _ fusefs.NodeRemovexattrer = (*Node)(nil)
+
+// Listxattr should read all attributes (null terminated) into
+// `dest`. If the `dest` buffer is too small, it should return ERANGE
+// and the correct size.  If not defined, return an empty list and
+// success.
+func (n *Node) Listxattr(ctx context.Context, dest []byte) (uint32, syscall.Errno) {
+	return 0, syscall.ENOSYS // we never implement this
+}
+
+var _ fusefs.NodeListxattrer = (*Node)(nil)

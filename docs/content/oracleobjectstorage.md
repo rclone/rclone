@@ -1,16 +1,21 @@
 ---
 title: "Oracle Object Storage"
 description: "Rclone docs for Oracle Object Storage"
+type: page
 versionIntroduced: "v1.60"
 ---
 
 # {{< icon "fa fa-cloud" >}} Oracle Object Storage
-[Oracle Object Storage Overview](https://docs.oracle.com/en-us/iaas/Content/Object/Concepts/objectstorageoverview.htm)
-
-[Oracle Object Storage FAQ](https://www.oracle.com/cloud/storage/object-storage/faq/)
+- [Oracle Object Storage Overview](https://docs.oracle.com/en-us/iaas/Content/Object/Concepts/objectstorageoverview.htm)
+- [Oracle Object Storage FAQ](https://www.oracle.com/cloud/storage/object-storage/faq/)
+- [Oracle Object Storage Limits](https://docs.oracle.com/en-us/iaas/Content/Resources/Assets/whitepapers/oci-object-storage-best-practices.pdf)
 
 Paths are specified as `remote:bucket` (or `remote:` for the `lsd` command.)  You may put subdirectories in 
 too, e.g. `remote:bucket/path/to/dir`.
+
+Sample command to transfer local artifacts to remote:bucket in oracle object storage:
+
+`rclone -vvv  --progress --stats-one-line --max-stats-groups 10 --log-format date,time,UTC,longfile --fast-list --buffer-size 256Mi --oos-no-check-bucket --oos-upload-cutoff 10Mi --multi-thread-cutoff 16Mi --multi-thread-streams 3000 --transfers 3000 --checkers 64  --retries 2  --oos-chunk-size 10Mi --oos-upload-concurrency 10000  --oos-attempt-resume-upload --oos-leave-parts-on-error sync ./artifacts  remote:bucket -vv`
 
 ## Configuration
 
@@ -54,13 +59,17 @@ Press Enter for the default (env_auth).
  2 | you’ll need to put in a config file your tenancy OCID, user OCID, region, the path, fingerprint to an API key.
    | https://docs.oracle.com/en-us/iaas/Content/API/Concepts/sdkconfig.htm
    \ (user_principal_auth)
-   / use instance principals to authorize an instance to make API calls. 
- 3 | each instance has its own identity, and authenticates using the certificates that are read from instance metadata. 
+   / use instance principals to authorize an instance to make API calls.
+ 3 | each instance has its own identity, and authenticates using the certificates that are read from instance metadata.
    | https://docs.oracle.com/en-us/iaas/Content/Identity/Tasks/callingservicesfrominstances.htm
    \ (instance_principal_auth)
- 4 / use resource principals to make API calls
+   / use workload identity to grant Kubernetes pods policy-driven access to Oracle Cloud
+ 4 | Infrastructure (OCI) resources using OCI Identity and Access Management (IAM).
+   | https://docs.oracle.com/en-us/iaas/Content/ContEng/Tasks/contenggrantingworkloadaccesstoresources.htm
+   \ (workload_identity_auth)
+ 5 / use resource principals to make API calls
    \ (resource_principal_auth)
- 5 / no credentials needed, this is typically for reading public buckets
+ 6 / no credentials needed, this is typically for reading public buckets
    \ (no_auth)
 provider> 2
 
@@ -135,7 +144,7 @@ List the contents of a bucket
     rclone ls remote:bucket
     rclone ls remote:bucket --max-depth 1
 
-### OCI Authentication Provider 
+## Authentication Providers 
 
 OCI has various authentication methods. To learn more about authentication methods please refer [oci authentication 
 methods](https://docs.oracle.com/en-us/iaas/Content/API/Concepts/sdk_authentication_methods.htm) 
@@ -146,9 +155,11 @@ Rclone supports the following OCI authentication provider.
     User Principal
     Instance Principal
     Resource Principal
+    Workload Identity
     No authentication
 
-#### Authentication provider choice: User Principal
+### User Principal
+
 Sample rclone config file for Authentication Provider User Principal:
 
     [oos]
@@ -168,7 +179,8 @@ Considerations:
 - Overhead of managing users and keys.
 - If the user is deleted, the config file will no longer work and may cause automation regressions that use the user's credentials.
 
-####  Authentication provider choice: Instance Principal
+###  Instance Principal
+
 An OCI compute instance can be authorized to use rclone by using it's identity and certificates as an instance principal. 
 With this approach no credentials have to be stored and managed.
 
@@ -197,7 +209,8 @@ Considerations:
 - Everyone who has access to this machine can execute the CLI commands.
 - It is applicable for oci compute instances only. It cannot be used on external instance or resources.
 
-#### Authentication provider choice: Resource Principal
+### Resource Principal
+
 Resource principal auth is very similar to instance principal auth but used for resources that are not 
 compute instances such as [serverless functions](https://docs.oracle.com/en-us/iaas/Content/Functions/Concepts/functionsoverview.htm). 
 To use resource principal ensure Rclone process is started with these environment variables set in its process.
@@ -216,7 +229,16 @@ Sample rclone configuration file for Authentication Provider Resource Principal:
     region = us-ashburn-1
     provider = resource_principal_auth
 
-#### Authentication provider choice: No authentication
+### Workload Identity
+Workload Identity auth may be used when running Rclone from Kubernetes pod on a Container Engine for Kubernetes (OKE) cluster.
+For more details on configuring Workload Identity, see [Granting Workloads Access to OCI Resources](https://docs.oracle.com/en-us/iaas/Content/ContEng/Tasks/contenggrantingworkloadaccesstoresources.htm).
+To use workload identity, ensure Rclone is started with these environment variables set in its process.
+
+    export OCI_RESOURCE_PRINCIPAL_VERSION=2.2
+    export OCI_RESOURCE_PRINCIPAL_REGION=us-ashburn-1
+
+### No authentication
+
 Public buckets do not require any authentication mechanism to read objects.
 Sample rclone configuration file for No authentication:
     
@@ -227,10 +249,9 @@ Sample rclone configuration file for No authentication:
     region = us-ashburn-1
     provider = no_auth
 
-## Options
-### Modified time
+### Modification times and hashes
 
-The modified time is stored as metadata on the object as
+The modification time is stored as metadata on the object as
 `opc-meta-mtime` as floating point since the epoch, accurate to 1 ns.
 
 If the modification time needs to be updated rclone will attempt to perform a server
@@ -239,6 +260,8 @@ In the case the object is larger than 5Gb, the object will be uploaded rather th
 
 Note that reading this from the object takes an additional `HEAD` request as the metadata
 isn't returned in object listings.
+
+The MD5 hash algorithm is supported.
 
 ### Multipart uploads
 
@@ -419,9 +442,8 @@ Properties:
 Chunk size to use for uploading.
 
 When uploading files larger than upload_cutoff or files with unknown
-size (e.g. from "rclone rcat" or uploaded with "rclone mount" or google
-photos or google docs) they will be uploaded as multipart uploads
-using this chunk size.
+size (e.g. from "rclone rcat" or uploaded with "rclone mount" they will be uploaded 
+as multipart uploads using this chunk size.
 
 Note that "upload_concurrency" chunks of this size are buffered
 in memory per transfer.
@@ -448,6 +470,26 @@ Properties:
 - Env Var:     RCLONE_OOS_CHUNK_SIZE
 - Type:        SizeSuffix
 - Default:     5Mi
+
+#### --oos-max-upload-parts
+
+Maximum number of parts in a multipart upload.
+
+This option defines the maximum number of multipart chunks to use
+when doing a multipart upload.
+
+OCI has max parts limit of 10,000 chunks.
+
+Rclone will automatically increase the chunk size when uploading a
+large file of a known size to stay below this number of chunks limit.
+
+
+Properties:
+
+- Config:      max_upload_parts
+- Env Var:     RCLONE_OOS_MAX_UPLOAD_PARTS
+- Type:        int
+- Default:     10000
 
 #### --oos-upload-concurrency
 
@@ -523,12 +565,12 @@ Properties:
 
 - Config:      encoding
 - Env Var:     RCLONE_OOS_ENCODING
-- Type:        MultiEncoder
+- Type:        Encoding
 - Default:     Slash,InvalidUtf8,Dot
 
 #### --oos-leave-parts-on-error
 
-If true avoid calling abort upload on a failure, leaving all successfully uploaded parts on S3 for manual recovery.
+If true avoid calling abort upload on a failure, leaving all successfully uploaded parts for manual recovery.
 
 It should be set to true for resuming uploads across different sessions.
 
@@ -540,6 +582,24 @@ Properties:
 
 - Config:      leave_parts_on_error
 - Env Var:     RCLONE_OOS_LEAVE_PARTS_ON_ERROR
+- Type:        bool
+- Default:     false
+
+#### --oos-attempt-resume-upload
+
+If true attempt to resume previously started multipart upload for the object.
+This will be helpful to speed up multipart transfers by resuming uploads from past session.
+
+WARNING: If chunk size differs in resumed session from past incomplete session, then the resumed multipart upload is 
+aborted and a new multipart upload is started with the new chunk size.
+
+The flag leave_parts_on_error must be true to resume and optimize to skip parts that were already uploaded successfully.
+
+
+Properties:
+
+- Config:      attempt_resume_upload
+- Env Var:     RCLONE_OOS_ATTEMPT_RESUME_UPLOAD
 - Type:        bool
 - Default:     false
 
@@ -611,7 +671,7 @@ Properties:
 
 #### --oos-sse-kms-key-id
 
-if using using your own master key in vault, this header specifies the 
+if using your own master key in vault, this header specifies the
 OCID (https://docs.cloud.oracle.com/Content/General/Concepts/identifiers.htm) of a master encryption key used to call
 the Key Management service to generate a data encryption key or to encrypt or decrypt a data encryption key.
 Please note only one of sse_customer_key_file|sse_customer_key|sse_kms_key_id is needed.
@@ -724,4 +784,48 @@ Options:
 
 - "max-age": Max age of upload to delete
 
+### restore
+
+Restore objects from Archive to Standard storage
+
+    rclone backend restore remote: [options] [<arguments>+]
+
+This command can be used to restore one or more objects from Archive to Standard storage.
+
+	Usage Examples:
+
+    rclone backend restore oos:bucket/path/to/directory -o hours=HOURS
+    rclone backend restore oos:bucket -o hours=HOURS
+
+This flag also obeys the filters. Test first with --interactive/-i or --dry-run flags
+
+	rclone --interactive backend restore --include "*.txt" oos:bucket/path -o hours=72
+
+All the objects shown will be marked for restore, then
+
+	rclone backend restore --include "*.txt" oos:bucket/path -o hours=72
+
+	It returns a list of status dictionaries with Object Name and Status
+	keys. The Status will be "RESTORED"" if it was successful or an error message
+	if not.
+
+	[
+		{
+			"Object": "test.txt"
+			"Status": "RESTORED",
+		},
+		{
+			"Object": "test/file4.txt"
+			"Status": "RESTORED",
+		}
+	]
+
+
+Options:
+
+- "hours": The number of hours for which this object will be restored. Default is 24 hrs.
+
 {{< rem autogenerated options stop >}}
+
+## Tutorials
+### [Mounting Buckets](/oracleobjectstorage/tutorial_mount/)

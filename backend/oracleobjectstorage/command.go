@@ -6,12 +6,16 @@ package oracleobjectstorage
 import (
 	"context"
 	"fmt"
+	"sort"
+	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/oracle/oci-go-sdk/v65/common"
 	"github.com/oracle/oci-go-sdk/v65/objectstorage"
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/operations"
 )
 
 // ------------------------------------------------------------
@@ -22,6 +26,7 @@ const (
 	operationRename        = "rename"
 	operationListMultiPart = "list-multipart-uploads"
 	operationCleanup       = "cleanup"
+	operationRestore       = "restore"
 )
 
 var commandHelp = []fs.CommandHelp{{
@@ -76,6 +81,42 @@ Durations are parsed as per the rest of rclone, 2h, 7d, 7w etc.
 	Opts: map[string]string{
 		"max-age": "Max age of upload to delete",
 	},
+}, {
+	Name:  operationRestore,
+	Short: "Restore objects from Archive to Standard storage",
+	Long: `This command can be used to restore one or more objects from Archive to Standard storage.
+
+	Usage Examples:
+
+    rclone backend restore oos:bucket/path/to/directory -o hours=HOURS
+    rclone backend restore oos:bucket -o hours=HOURS
+
+This flag also obeys the filters. Test first with --interactive/-i or --dry-run flags
+
+	rclone --interactive backend restore --include "*.txt" oos:bucket/path -o hours=72
+
+All the objects shown will be marked for restore, then
+
+	rclone backend restore --include "*.txt" oos:bucket/path -o hours=72
+
+	It returns a list of status dictionaries with Object Name and Status
+	keys. The Status will be "RESTORED"" if it was successful or an error message
+	if not.
+
+	[
+		{
+			"Object": "test.txt"
+			"Status": "RESTORED",
+		},
+		{
+			"Object": "test/file4.txt"
+			"Status": "RESTORED",
+		}
+	]
+`,
+	Opts: map[string]string{
+		"hours": "The number of hours for which this object will be restored. Default is 24 hrs.",
+	},
 },
 }
 
@@ -112,6 +153,8 @@ func (f *Fs) Command(ctx context.Context, commandName string, args []string,
 			}
 		}
 		return nil, f.cleanUp(ctx, maxAge)
+	case operationRestore:
+		return f.restore(ctx, opt)
 	default:
 		return nil, fs.ErrorCommandNotFound
 	}
@@ -196,6 +239,32 @@ func (f *Fs) listMultipartUploadsAll(ctx context.Context) (uploadsMap map[string
 // for "dir" and it returns "dirKey"
 func (f *Fs) listMultipartUploads(ctx context.Context, bucketName, directory string) (
 	uploads []*objectstorage.MultipartUpload, err error) {
+	return f.listMultipartUploadsObject(ctx, bucketName, directory, false)
+}
+
+// listMultipartUploads finds first outstanding multipart uploads for (bucket, key)
+//
+// Note that rather lazily we treat key as a prefix, so it matches
+// directories and objects. This could surprise the user if they ask
+// for "dir" and it returns "dirKey"
+func (f *Fs) findLatestMultipartUpload(ctx context.Context, bucketName, directory string) (
+	uploads []*objectstorage.MultipartUpload, err error) {
+	pastUploads, err := f.listMultipartUploadsObject(ctx, bucketName, directory, true)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(pastUploads) > 0 {
+		sort.Slice(pastUploads, func(i, j int) bool {
+			return pastUploads[i].TimeCreated.After(pastUploads[j].TimeCreated.Time)
+		})
+		return pastUploads[:1], nil
+	}
+	return nil, err
+}
+
+func (f *Fs) listMultipartUploadsObject(ctx context.Context, bucketName, directory string, exact bool) (
+	uploads []*objectstorage.MultipartUpload, err error) {
 
 	uploads = []*objectstorage.MultipartUpload{}
 	req := objectstorage.ListMultipartUploadsRequest{
@@ -217,7 +286,13 @@ func (f *Fs) listMultipartUploads(ctx context.Context, bucketName, directory str
 			if directory != "" && item.Object != nil && !strings.HasPrefix(*item.Object, directory) {
 				continue
 			}
-			uploads = append(uploads, &response.Items[index])
+			if exact {
+				if *item.Object == directory {
+					uploads = append(uploads, &response.Items[index])
+				}
+			} else {
+				uploads = append(uploads, &response.Items[index])
+			}
 		}
 		if response.OpcNextPage == nil {
 			break
@@ -225,4 +300,95 @@ func (f *Fs) listMultipartUploads(ctx context.Context, bucketName, directory str
 		req.Page = response.OpcNextPage
 	}
 	return uploads, nil
+}
+
+func (f *Fs) listMultipartUploadParts(ctx context.Context, bucketName, bucketPath string, uploadID string) (
+	uploadedParts map[int]objectstorage.MultipartUploadPartSummary, err error) {
+	uploadedParts = make(map[int]objectstorage.MultipartUploadPartSummary)
+	req := objectstorage.ListMultipartUploadPartsRequest{
+		NamespaceName: common.String(f.opt.Namespace),
+		BucketName:    common.String(bucketName),
+		ObjectName:    common.String(bucketPath),
+		UploadId:      common.String(uploadID),
+		Limit:         common.Int(1000),
+	}
+
+	var response objectstorage.ListMultipartUploadPartsResponse
+	for {
+		err = f.pacer.Call(func() (bool, error) {
+			response, err = f.srv.ListMultipartUploadParts(ctx, req)
+			return shouldRetry(ctx, response.HTTPResponse(), err)
+		})
+		if err != nil {
+			return uploadedParts, err
+		}
+		for _, item := range response.Items {
+			uploadedParts[*item.PartNumber] = item
+		}
+		if response.OpcNextPage == nil {
+			break
+		}
+		req.Page = response.OpcNextPage
+	}
+	return uploadedParts, nil
+}
+
+func (f *Fs) restore(ctx context.Context, opt map[string]string) (interface{}, error) {
+	req := objectstorage.RestoreObjectsRequest{
+		NamespaceName:         common.String(f.opt.Namespace),
+		RestoreObjectsDetails: objectstorage.RestoreObjectsDetails{},
+	}
+	if hours := opt["hours"]; hours != "" {
+		ihours, err := strconv.Atoi(hours)
+		if err != nil {
+			return nil, fmt.Errorf("bad value for hours: %w", err)
+		}
+		req.RestoreObjectsDetails.Hours = &ihours
+	}
+	type status struct {
+		Object string
+		Status string
+	}
+	var (
+		outMu sync.Mutex
+		out   = []status{}
+		err   error
+	)
+	err = operations.ListFn(ctx, f, func(obj fs.Object) {
+		// Remember this is run --checkers times concurrently
+		o, ok := obj.(*Object)
+		st := status{Object: obj.Remote(), Status: "RESTORED"}
+		defer func() {
+			outMu.Lock()
+			out = append(out, st)
+			outMu.Unlock()
+		}()
+		if !ok {
+			st.Status = "Not an OCI Object Storage object"
+			return
+		}
+		if o.storageTier == nil || (*o.storageTier != "archive") {
+			st.Status = "Object not in Archive storage tier"
+			return
+		}
+		if operations.SkipDestructive(ctx, obj, "restore") {
+			return
+		}
+		bucket, bucketPath := o.split()
+		reqCopy := req
+		reqCopy.BucketName = &bucket
+		reqCopy.ObjectName = &bucketPath
+		var response objectstorage.RestoreObjectsResponse
+		err = f.pacer.Call(func() (bool, error) {
+			response, err = f.srv.RestoreObjects(ctx, reqCopy)
+			return shouldRetry(ctx, response.HTTPResponse(), err)
+		})
+		if err != nil {
+			st.Status = err.Error()
+		}
+	})
+	if err != nil {
+		return out, err
+	}
+	return out, nil
 }

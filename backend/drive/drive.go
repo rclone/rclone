@@ -71,7 +71,7 @@ const (
 	// 1<<18 is the minimum size supported by the Google uploader, and there is no maximum.
 	minChunkSize     = fs.SizeSuffix(googleapi.MinUploadChunkSize)
 	defaultChunkSize = 8 * fs.Mebi
-	partialFields    = "id,name,size,md5Checksum,trashed,explicitlyTrashed,modifiedTime,createdTime,mimeType,parents,webViewLink,shortcutDetails,exportLinks,resourceKey"
+	partialFields    = "id,name,size,md5Checksum,sha1Checksum,sha256Checksum,trashed,explicitlyTrashed,modifiedTime,createdTime,mimeType,parents,webViewLink,shortcutDetails,exportLinks,resourceKey"
 	listRGrouping    = 50   // number of IDs to search at once when using ListR
 	listRInputBuffer = 1000 // size of input buffer when using ListR
 	defaultXDGIcon   = "text-html"
@@ -143,6 +143,41 @@ var (
 	_linkTemplates   map[string]*template.Template // available link types
 )
 
+// rwChoices type for fs.Bits
+type rwChoices struct{}
+
+func (rwChoices) Choices() []fs.BitsChoicesInfo {
+	return []fs.BitsChoicesInfo{
+		{Bit: uint64(rwOff), Name: "off"},
+		{Bit: uint64(rwRead), Name: "read"},
+		{Bit: uint64(rwWrite), Name: "write"},
+	}
+}
+
+// rwChoice type alias
+type rwChoice = fs.Bits[rwChoices]
+
+const (
+	rwRead rwChoice = 1 << iota
+	rwWrite
+	rwOff rwChoice = 0
+)
+
+// Examples for the options
+var rwExamples = fs.OptionExamples{{
+	Value: rwOff.String(),
+	Help:  "Do not read or write the value",
+}, {
+	Value: rwRead.String(),
+	Help:  "Read the value only",
+}, {
+	Value: rwWrite.String(),
+	Help:  "Write the value only",
+}, {
+	Value: (rwRead | rwWrite).String(),
+	Help:  "Read and Write the value.",
+}}
+
 // Parse the scopes option returning a slice of scopes
 func driveScopes(scopesString string) (scopes []string) {
 	if scopesString == "" {
@@ -202,7 +237,7 @@ func init() {
 					m.Set("root_folder_id", "appDataFolder")
 				}
 
-				if opt.ServiceAccountFile == "" && opt.ServiceAccountCredentials == "" {
+				if opt.ServiceAccountFile == "" && opt.ServiceAccountCredentials == "" && !opt.EnvAuth {
 					return oauthutil.ConfigOut("teamdrive", &oauthutil.Options{
 						OAuth2Config: driveConfig,
 					})
@@ -250,9 +285,13 @@ func init() {
 			}
 			return nil, fmt.Errorf("unknown state %q", config.State)
 		},
+		MetadataInfo: &fs.MetadataInfo{
+			System: systemMetadataInfo,
+			Help:   `User metadata is stored in the properties field of the drive object.`,
+		},
 		Options: append(driveOAuthOptions(), []fs.Option{{
 			Name: "scope",
-			Help: "Scope that rclone should use when requesting access from drive.",
+			Help: "Comma separated list of scopes that rclone should use when requesting access from drive.",
 			Examples: []fs.OptionExample{{
 				Value: "drive",
 				Help:  "Full access all files, excluding Application Data Folder.",
@@ -277,20 +316,23 @@ Leave blank normally.
 Fill in to access "Computers" folders (see docs), or for rclone to use
 a non root folder as its starting point.
 `,
-			Advanced: true,
+			Advanced:  true,
+			Sensitive: true,
 		}, {
 			Name: "service_account_file",
 			Help: "Service Account Credentials JSON file path.\n\nLeave blank normally.\nNeeded only if you want use SA instead of interactive login." + env.ShellExpandHelp,
 		}, {
-			Name:     "service_account_credentials",
-			Help:     "Service Account Credentials JSON blob.\n\nLeave blank normally.\nNeeded only if you want use SA instead of interactive login.",
-			Hide:     fs.OptionHideConfigurator,
-			Advanced: true,
+			Name:      "service_account_credentials",
+			Help:      "Service Account Credentials JSON blob.\n\nLeave blank normally.\nNeeded only if you want use SA instead of interactive login.",
+			Hide:      fs.OptionHideConfigurator,
+			Advanced:  true,
+			Sensitive: true,
 		}, {
-			Name:     "team_drive",
-			Help:     "ID of the Shared Drive (Team Drive).",
-			Hide:     fs.OptionHideConfigurator,
-			Advanced: true,
+			Name:      "team_drive",
+			Help:      "ID of the Shared Drive (Team Drive).",
+			Hide:      fs.OptionHideConfigurator,
+			Advanced:  true,
+			Sensitive: true,
 		}, {
 			Name:     "auth_owner_only",
 			Default:  false,
@@ -318,15 +360,34 @@ rather than shortcuts themselves when doing server side copies.`,
 			Help:     "Skip google documents in all listings.\n\nIf given, gdocs practically become invisible to rclone.",
 			Advanced: true,
 		}, {
+			Name:    "show_all_gdocs",
+			Default: false,
+			Help: `Show all Google Docs including non-exportable ones in listings.
+
+If you try a server side copy on a Google Form without this flag, you
+will get this error:
+
+    No export formats found for "application/vnd.google-apps.form"
+
+However adding this flag will allow the form to be server side copied.
+
+Note that rclone doesn't add extensions to the Google Docs file names
+in this mode.
+
+Do **not** use this flag when trying to download Google Docs - rclone
+will fail to download them.
+`,
+			Advanced: true,
+		}, {
 			Name:    "skip_checksum_gphotos",
 			Default: false,
-			Help: `Skip MD5 checksum on Google photos and videos only.
+			Help: `Skip checksums on Google photos and videos only.
 
 Use this if you get checksum errors when transferring Google photos or
 videos.
 
 Setting this flag will cause Google photos and videos to return a
-blank MD5 checksum.
+blank checksums.
 
 Google photos are identified by being in the "photos" space.
 
@@ -416,10 +477,11 @@ date is used.`,
 			Help:     "Size of listing chunk 100-1000, 0 to disable.",
 			Advanced: true,
 		}, {
-			Name:     "impersonate",
-			Default:  "",
-			Help:     `Impersonate this user when using a service account.`,
-			Advanced: true,
+			Name:      "impersonate",
+			Default:   "",
+			Help:      `Impersonate this user when using a service account.`,
+			Advanced:  true,
+			Sensitive: true,
 		}, {
 			Name:    "alternate_export",
 			Default: false,
@@ -499,7 +561,9 @@ need to use --ignore size also.`,
 		}, {
 			Name:    "server_side_across_configs",
 			Default: false,
-			Help: `Allow server-side operations (e.g. copy) to work across different drive configs.
+			Help: `Deprecated: use --server-side-across-configs instead.
+
+Allow server-side operations (e.g. copy) to work across different drive configs.
 
 This can be useful if you wish to do a server-side copy between two
 different Google drives.  Note that this isn't enabled by default
@@ -588,9 +652,82 @@ This resource key requirement only applies to a subset of old files.
 
 Note also that opening the folder once in the web interface (with the
 user you've authenticated rclone with) seems to be enough so that the
-resource key is no needed.
+resource key is not needed.
+`,
+			Advanced:  true,
+			Sensitive: true,
+		}, {
+			Name: "fast_list_bug_fix",
+			Help: `Work around a bug in Google Drive listing.
+
+Normally rclone will work around a bug in Google Drive when using
+--fast-list (ListR) where the search "(A in parents) or (B in
+parents)" returns nothing sometimes. See #3114, #4289 and
+https://issuetracker.google.com/issues/149522397
+
+Rclone detects this by finding no items in more than one directory
+when listing and retries them as lists of individual directories.
+
+This means that if you have a lot of empty directories rclone will end
+up listing them all individually and this can take many more API
+calls.
+
+This flag allows the work-around to be disabled. This is **not**
+recommended in normal use - only if you have a particular case you are
+having trouble with like many empty directories.
 `,
 			Advanced: true,
+			Default:  true,
+		}, {
+			Name: "metadata_owner",
+			Help: `Control whether owner should be read or written in metadata.
+
+Owner is a standard part of the file metadata so is easy to read. But it
+isn't always desirable to set the owner from the metadata.
+
+Note that you can't set the owner on Shared Drives, and that setting
+ownership will generate an email to the new owner (this can't be
+disabled), and you can't transfer ownership to someone outside your
+organization.
+`,
+			Advanced: true,
+			Default:  rwRead,
+			Examples: rwExamples,
+		}, {
+			Name: "metadata_permissions",
+			Help: `Control whether permissions should be read or written in metadata.
+
+Reading permissions metadata from files can be done quickly, but it
+isn't always desirable to set the permissions from the metadata.
+
+Note that rclone drops any inherited permissions on Shared Drives and
+any owner permission on My Drives as these are duplicated in the owner
+metadata.
+`,
+			Advanced: true,
+			Default:  rwOff,
+			Examples: rwExamples,
+		}, {
+			Name: "metadata_labels",
+			Help: `Control whether labels should be read or written in metadata.
+
+Reading labels metadata from files takes an extra API transaction and
+will slow down listings. It isn't always desirable to set the labels
+from the metadata.
+
+The format of labels is documented in the drive API documentation at
+https://developers.google.com/drive/api/reference/rest/v3/Label -
+rclone just provides a JSON dump of this format.
+
+When setting labels, the label and fields must already exist - rclone
+will not create them. This means that if you are transferring labels
+from two different accounts you will have to create the labels in
+advance and use the metadata mapper to translate the IDs between the
+two accounts.
+`,
+			Advanced: true,
+			Default:  rwOff,
+			Examples: rwExamples,
 		}, {
 			Name:     config.ConfigEncoding,
 			Help:     config.ConfigEncodingHelp,
@@ -598,6 +735,18 @@ resource key is no needed.
 			// Encode invalid UTF-8 bytes as json doesn't handle them properly.
 			// Don't encode / as it's a valid name character in drive.
 			Default: encoder.EncodeInvalidUtf8,
+		}, {
+			Name:     "env_auth",
+			Help:     "Get IAM credentials from runtime (environment variables or instance meta data if no env vars).\n\nOnly applies if service_account_file and service_account_credentials is blank.",
+			Default:  false,
+			Advanced: true,
+			Examples: []fs.OptionExample{{
+				Value: "false",
+				Help:  "Enter credentials in the next step.",
+			}, {
+				Value: "true",
+				Help:  "Get GCP IAM credentials from the environment (env vars or IAM).",
+			}},
 		}}...),
 	})
 
@@ -626,6 +775,7 @@ type Options struct {
 	UseTrash                  bool                 `config:"use_trash"`
 	CopyShortcutContent       bool                 `config:"copy_shortcut_content"`
 	SkipGdocs                 bool                 `config:"skip_gdocs"`
+	ShowAllGdocs              bool                 `config:"show_all_gdocs"`
 	SkipChecksumGphotos       bool                 `config:"skip_checksum_gphotos"`
 	SharedWithMe              bool                 `config:"shared_with_me"`
 	TrashedOnly               bool                 `config:"trashed_only"`
@@ -653,7 +803,12 @@ type Options struct {
 	SkipShortcuts             bool                 `config:"skip_shortcuts"`
 	SkipDanglingShortcuts     bool                 `config:"skip_dangling_shortcuts"`
 	ResourceKey               string               `config:"resource_key"`
+	FastListBugFix            bool                 `config:"fast_list_bug_fix"`
+	MetadataOwner             rwChoice             `config:"metadata_owner"`
+	MetadataPermissions       rwChoice             `config:"metadata_permissions"`
+	MetadataLabels            rwChoice             `config:"metadata_labels"`
 	Enc                       encoder.MultiEncoder `config:"encoding"`
+	EnvAuth                   bool                 `config:"env_auth"`
 }
 
 // Fs represents a remote drive server
@@ -673,23 +828,25 @@ type Fs struct {
 	exportExtensions []string           // preferred extensions to download docs
 	importMimeTypes  []string           // MIME types to convert to docs
 	isTeamDrive      bool               // true if this is a team drive
-	fileFields       googleapi.Field    // fields to fetch file info with
 	m                configmap.Mapper
-	grouping         int32               // number of IDs to search at once in ListR - read with atomic
-	listRmu          *sync.Mutex         // protects listRempties
-	listRempties     map[string]struct{} // IDs of supposedly empty directories which triggered grouping disable
-	dirResourceKeys  *sync.Map           // map directory ID to resource key
+	grouping         int32                        // number of IDs to search at once in ListR - read with atomic
+	listRmu          *sync.Mutex                  // protects listRempties
+	listRempties     map[string]struct{}          // IDs of supposedly empty directories which triggered grouping disable
+	dirResourceKeys  *sync.Map                    // map directory ID to resource key
+	permissionsMu    *sync.Mutex                  // protect the below
+	permissions      map[string]*drive.Permission // map permission IDs to Permissions
 }
 
 type baseObject struct {
-	fs           *Fs      // what this object is part of
-	remote       string   // The remote path
-	id           string   // Drive Id of this object
-	modifiedDate string   // RFC3339 time it was last modified
-	mimeType     string   // The object MIME type
-	bytes        int64    // size of the object
-	parents      []string // IDs of the parent directories
-	resourceKey  *string  // resourceKey is needed for link shared objects
+	fs           *Fs          // what this object is part of
+	remote       string       // The remote path
+	id           string       // Drive Id of this object
+	modifiedDate string       // RFC3339 time it was last modified
+	mimeType     string       // The object MIME type
+	bytes        int64        // size of the object
+	parents      []string     // IDs of the parent directories
+	resourceKey  *string      // resourceKey is needed for link shared objects
+	metadata     *fs.Metadata // metadata if known
 }
 type documentObject struct {
 	baseObject
@@ -708,6 +865,8 @@ type Object struct {
 	baseObject
 	url        string // Download URL of this object
 	md5sum     string // md5sum of the object
+	sha1sum    string // sha1sum of the object
+	sha256sum  string // sha256sum of the object
 	v2Download bool   // generate v2 download link ondemand
 }
 
@@ -761,7 +920,7 @@ func (f *Fs) shouldRetry(ctx context.Context, err error) (bool, error) {
 			} else if f.opt.StopOnDownloadLimit && reason == "downloadQuotaExceeded" {
 				fs.Errorf(f, "Received download limit error: %v", err)
 				return false, fserrors.FatalError(err)
-			} else if f.opt.StopOnUploadLimit && reason == "quotaExceeded" {
+			} else if f.opt.StopOnUploadLimit && (reason == "quotaExceeded" || reason == "storageQuotaExceeded") {
 				fs.Errorf(f, "Received upload limit error: %v", err)
 				return false, fserrors.FatalError(err)
 			} else if f.opt.StopOnUploadLimit && reason == "teamDriveFileLimitExceeded" {
@@ -936,7 +1095,7 @@ func (f *Fs) list(ctx context.Context, dirIDs []string, title string, directorie
 		list.Header().Add("X-Goog-Drive-Resource-Keys", resourceKeysHeader)
 	}
 
-	fields := fmt.Sprintf("files(%s),nextPageToken,incompleteSearch", f.fileFields)
+	fields := fmt.Sprintf("files(%s),nextPageToken,incompleteSearch", f.getFileFields(ctx))
 
 OUTER:
 	for {
@@ -1122,6 +1281,12 @@ func createOAuthClient(ctx context.Context, opt *Options, name string, m configm
 		if err != nil {
 			return nil, fmt.Errorf("failed to create oauth client from service account: %w", err)
 		}
+	} else if opt.EnvAuth {
+		scopes := driveScopes(opt.Scope)
+		oAuthClient, err = google.DefaultClient(ctx, scopes...)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create client from environment: %w", err)
+		}
 	} else {
 		oAuthClient, _, err = oauthutil.NewClientWithBaseClient(ctx, name, m, driveConfig, getClient(ctx, opt))
 		if err != nil {
@@ -1204,9 +1369,10 @@ func newFs(ctx context.Context, name, path string, m configmap.Mapper) (*Fs, err
 		listRmu:         new(sync.Mutex),
 		listRempties:    make(map[string]struct{}),
 		dirResourceKeys: new(sync.Map),
+		permissionsMu:   new(sync.Mutex),
+		permissions:     make(map[string]*drive.Permission),
 	}
 	f.isTeamDrive = opt.TeamDriveID != ""
-	f.fileFields = f.getFileFields()
 	f.features = (&fs.Features{
 		DuplicateFiles:          true,
 		ReadMimeType:            true,
@@ -1214,6 +1380,9 @@ func newFs(ctx context.Context, name, path string, m configmap.Mapper) (*Fs, err
 		CanHaveEmptyDirectories: true,
 		ServerSideAcrossConfigs: opt.ServerSideAcrossConfigs,
 		FilterAware:             true,
+		ReadMetadata:            true,
+		WriteMetadata:           true,
+		UserMetadata:            true,
 	}).Fill(ctx, f)
 
 	// Create a new authorized Drive client.
@@ -1318,7 +1487,7 @@ func NewFs(ctx context.Context, name, path string, m configmap.Mapper) (fs.Fs, e
 	return f, nil
 }
 
-func (f *Fs) newBaseObject(remote string, info *drive.File) baseObject {
+func (f *Fs) newBaseObject(ctx context.Context, remote string, info *drive.File) (o baseObject, err error) {
 	modifiedDate := info.ModifiedTime
 	if f.opt.UseCreatedDate {
 		modifiedDate = info.CreatedTime
@@ -1329,7 +1498,7 @@ func (f *Fs) newBaseObject(remote string, info *drive.File) baseObject {
 	if f.opt.SizeAsQuota {
 		size = info.QuotaBytesUsed
 	}
-	return baseObject{
+	o = baseObject{
 		fs:           f,
 		remote:       remote,
 		id:           info.Id,
@@ -1338,10 +1507,15 @@ func (f *Fs) newBaseObject(remote string, info *drive.File) baseObject {
 		bytes:        size,
 		parents:      info.Parents,
 	}
+	err = nil
+	if fs.GetConfig(ctx).Metadata {
+		err = o.parseMetadata(ctx, info)
+	}
+	return o, err
 }
 
 // getFileFields gets the fields for a normal file Get or List
-func (f *Fs) getFileFields() (fields googleapi.Field) {
+func (f *Fs) getFileFields(ctx context.Context) (fields googleapi.Field) {
 	fields = partialFields
 	if f.opt.AuthOwnerOnly {
 		fields += ",owners"
@@ -1355,40 +1529,53 @@ func (f *Fs) getFileFields() (fields googleapi.Field) {
 	if f.opt.SizeAsQuota {
 		fields += ",quotaBytesUsed"
 	}
+	if fs.GetConfig(ctx).Metadata {
+		fields += "," + metadataFields
+	}
 	return fields
 }
 
 // newRegularObject creates an fs.Object for a normal drive.File
-func (f *Fs) newRegularObject(remote string, info *drive.File) fs.Object {
+func (f *Fs) newRegularObject(ctx context.Context, remote string, info *drive.File) (obj fs.Object, err error) {
 	// wipe checksum if SkipChecksumGphotos and file is type Photo or Video
 	if f.opt.SkipChecksumGphotos {
 		for _, space := range info.Spaces {
 			if space == "photos" {
 				info.Md5Checksum = ""
+				info.Sha1Checksum = ""
+				info.Sha256Checksum = ""
 				break
 			}
 		}
 	}
 	o := &Object{
-		baseObject: f.newBaseObject(remote, info),
 		url:        fmt.Sprintf("%sfiles/%s?alt=media", f.svc.BasePath, actualID(info.Id)),
 		md5sum:     strings.ToLower(info.Md5Checksum),
+		sha1sum:    strings.ToLower(info.Sha1Checksum),
+		sha256sum:  strings.ToLower(info.Sha256Checksum),
 		v2Download: f.opt.V2DownloadMinSize != -1 && info.Size >= int64(f.opt.V2DownloadMinSize),
+	}
+	o.baseObject, err = f.newBaseObject(ctx, remote, info)
+	if err != nil {
+		return nil, err
 	}
 	if info.ResourceKey != "" {
 		o.resourceKey = &info.ResourceKey
 	}
-	return o
+	return o, nil
 }
 
 // newDocumentObject creates an fs.Object for a google docs drive.File
-func (f *Fs) newDocumentObject(remote string, info *drive.File, extension, exportMimeType string) (fs.Object, error) {
+func (f *Fs) newDocumentObject(ctx context.Context, remote string, info *drive.File, extension, exportMimeType string) (fs.Object, error) {
 	mediaType, _, err := mime.ParseMediaType(exportMimeType)
 	if err != nil {
 		return nil, err
 	}
 	url := info.ExportLinks[mediaType]
-	baseObject := f.newBaseObject(remote+extension, info)
+	baseObject, err := f.newBaseObject(ctx, remote+extension, info)
+	if err != nil {
+		return nil, err
+	}
 	baseObject.bytes = -1
 	baseObject.mimeType = exportMimeType
 	return &documentObject{
@@ -1400,7 +1587,7 @@ func (f *Fs) newDocumentObject(remote string, info *drive.File, extension, expor
 }
 
 // newLinkObject creates an fs.Object that represents a link a google docs drive.File
-func (f *Fs) newLinkObject(remote string, info *drive.File, extension, exportMimeType string) (fs.Object, error) {
+func (f *Fs) newLinkObject(ctx context.Context, remote string, info *drive.File, extension, exportMimeType string) (fs.Object, error) {
 	t := linkTemplate(exportMimeType)
 	if t == nil {
 		return nil, fmt.Errorf("unsupported link type %s", exportMimeType)
@@ -1419,7 +1606,10 @@ func (f *Fs) newLinkObject(remote string, info *drive.File, extension, exportMim
 		return nil, fmt.Errorf("executing template failed: %w", err)
 	}
 
-	baseObject := f.newBaseObject(remote+extension, info)
+	baseObject, err := f.newBaseObject(ctx, remote+extension, info)
+	if err != nil {
+		return nil, err
+	}
 	baseObject.bytes = int64(buf.Len())
 	baseObject.mimeType = exportMimeType
 	return &linkObject{
@@ -1435,7 +1625,7 @@ func (f *Fs) newLinkObject(remote string, info *drive.File, extension, exportMim
 func (f *Fs) newObjectWithInfo(ctx context.Context, remote string, info *drive.File) (fs.Object, error) {
 	// If item has MD5 sum it is a file stored on drive
 	if info.Md5Checksum != "" {
-		return f.newRegularObject(remote, info), nil
+		return f.newRegularObject(ctx, remote, info)
 	}
 
 	extension, exportName, exportMimeType, isDocument := f.findExportFormat(ctx, info)
@@ -1466,13 +1656,15 @@ func (f *Fs) newObjectWithExportInfo(
 	case info.MimeType == shortcutMimeTypeDangling:
 		// Pretend a dangling shortcut is a regular object
 		// It will error if used, but appear in listings so it can be deleted
-		return f.newRegularObject(remote, info), nil
+		return f.newRegularObject(ctx, remote, info)
 	case info.Md5Checksum != "":
 		// If item has MD5 sum it is a file stored on drive
-		return f.newRegularObject(remote, info), nil
+		return f.newRegularObject(ctx, remote, info)
 	case f.opt.SkipGdocs:
 		fs.Debugf(remote, "Skipping google document type %q", info.MimeType)
 		return nil, fs.ErrorObjectNotFound
+	case f.opt.ShowAllGdocs:
+		return f.newDocumentObject(ctx, remote, info, "", info.MimeType)
 	default:
 		// If item MimeType is in the ExportFormats then it is a google doc
 		if !isDocument {
@@ -1484,15 +1676,18 @@ func (f *Fs) newObjectWithExportInfo(
 			return nil, fs.ErrorObjectNotFound
 		}
 		if isLinkMimeType(exportMimeType) {
-			return f.newLinkObject(remote, info, extension, exportMimeType)
+			return f.newLinkObject(ctx, remote, info, extension, exportMimeType)
 		}
-		return f.newDocumentObject(remote, info, extension, exportMimeType)
+		return f.newDocumentObject(ctx, remote, info, extension, exportMimeType)
 	}
 }
 
 // NewObject finds the Object at remote.  If it can't be found
 // it returns the error fs.ErrorObjectNotFound.
 func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
+	if strings.HasSuffix(remote, "/") {
+		return nil, fs.ErrorIsDir
+	}
 	info, extension, exportName, exportMimeType, isDocument, err := f.getRemoteInfoWithExport(ctx, remote)
 	if err != nil {
 		return nil, err
@@ -1862,7 +2057,7 @@ func (f *Fs) listRRunner(ctx context.Context, wg *sync.WaitGroup, in chan listRE
 		// drive where (A in parents) or (B in parents) returns nothing
 		// sometimes. See #3114, #4289 and
 		// https://issuetracker.google.com/issues/149522397
-		if len(dirs) > 1 && !foundItems {
+		if f.opt.FastListBugFix && len(dirs) > 1 && !foundItems {
 			if atomic.SwapInt32(&f.grouping, 1) != 1 {
 				fs.Debugf(f, "Disabling ListR to work around bug in drive as multi listing (%d) returned no entries", len(dirs))
 			}
@@ -2111,7 +2306,7 @@ func (f *Fs) resolveShortcut(ctx context.Context, item *drive.File) (newItem *dr
 		fs.Errorf(nil, "Expecting shortcutDetails in %v", item)
 		return item, nil
 	}
-	newItem, err = f.getFile(ctx, item.ShortcutDetails.TargetId, f.fileFields)
+	newItem, err = f.getFile(ctx, item.ShortcutDetails.TargetId, f.getFileFields(ctx))
 	if err != nil {
 		var gerr *googleapi.Error
 		if errors.As(err, &gerr) && gerr.Code == 404 {
@@ -2243,6 +2438,10 @@ func (f *Fs) PutUnchecked(ctx context.Context, in io.Reader, src fs.ObjectInfo, 
 	} else {
 		createInfo.MimeType = fs.MimeTypeFromName(remote)
 	}
+	updateMetadata, err := f.fetchAndUpdateMetadata(ctx, src, options, createInfo, false)
+	if err != nil {
+		return nil, err
+	}
 
 	var info *drive.File
 	if size >= 0 && size < int64(f.opt.UploadCutoff) {
@@ -2266,6 +2465,10 @@ func (f *Fs) PutUnchecked(ctx context.Context, in io.Reader, src fs.ObjectInfo, 
 		if err != nil {
 			return nil, err
 		}
+	}
+	err = updateMetadata(ctx, info)
+	if err != nil {
+		return nil, err
 	}
 	return f.newObjectWithInfo(ctx, remote, info)
 }
@@ -2880,6 +3083,7 @@ func (f *Fs) changeNotifyRunner(ctx context.Context, notifyFunc func(string, fs.
 			if f.rootFolderID == "appDataFolder" {
 				changesCall.Spaces("appDataFolder")
 			}
+			changesCall.RestrictToMyDrive(!f.opt.SharedWithMe)
 			changeList, err = changesCall.Context(ctx).Do()
 			return f.shouldRetry(ctx, err)
 		})
@@ -2954,7 +3158,7 @@ func (f *Fs) DirCacheFlush() {
 
 // Hashes returns the supported hash sets.
 func (f *Fs) Hashes() hash.Set {
-	return hash.Set(hash.MD5)
+	return hash.NewHashSet(hash.MD5, hash.SHA1, hash.SHA256)
 }
 
 func (f *Fs) changeChunkSize(chunkSizeString string) (err error) {
@@ -3183,7 +3387,7 @@ func (f *Fs) unTrashDir(ctx context.Context, dir string, recurse bool) (r unTras
 
 // copy file with id to dest
 func (f *Fs) copyID(ctx context.Context, id, dest string) (err error) {
-	info, err := f.getFile(ctx, id, f.fileFields)
+	info, err := f.getFile(ctx, id, f.getFileFields(ctx))
 	if err != nil {
 		return fmt.Errorf("couldn't find id: %w", err)
 	}
@@ -3515,10 +3719,16 @@ func (o *baseObject) Remote() string {
 
 // Hash returns the Md5sum of an object returning a lowercase hex string
 func (o *Object) Hash(ctx context.Context, t hash.Type) (string, error) {
-	if t != hash.MD5 {
-		return "", hash.ErrUnsupported
+	if t == hash.MD5 {
+		return o.md5sum, nil
 	}
-	return o.md5sum, nil
+	if t == hash.SHA1 {
+		return o.sha1sum, nil
+	}
+	if t == hash.SHA256 {
+		return o.sha256sum, nil
+	}
+	return "", hash.ErrUnsupported
 }
 func (o *baseObject) Hash(ctx context.Context, t hash.Type) (string, error) {
 	if t != hash.MD5 {
@@ -3857,11 +4067,21 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		MimeType:     srcMimeType,
 		ModifiedTime: src.ModTime(ctx).Format(timeFormatOut),
 	}
+
+	updateMetadata, err := o.fs.fetchAndUpdateMetadata(ctx, src, options, updateInfo, true)
+	if err != nil {
+		return err
+	}
+
 	info, err := o.baseObject.update(ctx, updateInfo, srcMimeType, in, src)
 	if err != nil {
 		return err
 	}
-	newO, err := o.fs.newObjectWithInfo(ctx, src.Remote(), info)
+	err = updateMetadata(ctx, info)
+	if err != nil {
+		return err
+	}
+	newO, err := o.fs.newObjectWithInfo(ctx, o.remote, info)
 	if err != nil {
 		return err
 	}
@@ -3946,6 +4166,26 @@ func (o *baseObject) ParentID() string {
 	return ""
 }
 
+// Metadata returns metadata for an object
+//
+// It should return nil if there is no Metadata
+func (o *baseObject) Metadata(ctx context.Context) (metadata fs.Metadata, err error) {
+	if o.metadata != nil {
+		return *o.metadata, nil
+	}
+	fs.Debugf(o, "Fetching metadata")
+	id := actualID(o.id)
+	info, err := o.fs.getFile(ctx, id, o.fs.getFileFields(ctx))
+	if err != nil {
+		return nil, err
+	}
+	err = o.parseMetadata(ctx, info)
+	if err != nil {
+		return nil, err
+	}
+	return *o.metadata, nil
+}
+
 func (o *documentObject) ext() string {
 	return o.baseObject.remote[len(o.baseObject.remote)-o.extLen:]
 }
@@ -4007,6 +4247,7 @@ var (
 	_ fs.MimeTyper       = (*Object)(nil)
 	_ fs.IDer            = (*Object)(nil)
 	_ fs.ParentIDer      = (*Object)(nil)
+	_ fs.Metadataer      = (*Object)(nil)
 	_ fs.Object          = (*documentObject)(nil)
 	_ fs.MimeTyper       = (*documentObject)(nil)
 	_ fs.IDer            = (*documentObject)(nil)

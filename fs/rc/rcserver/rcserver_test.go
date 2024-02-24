@@ -552,32 +552,6 @@ Unknown command
 	testServer(t, tests, &opt)
 }
 
-func TestMethods(t *testing.T) {
-	tests := []testRun{{
-		Name:     "options",
-		URL:      "",
-		Method:   "OPTIONS",
-		Status:   http.StatusOK,
-		Expected: "",
-		Headers: map[string]string{
-			"Access-Control-Allow-Origin":   "testURL",
-			"Access-Control-Request-Method": "POST, OPTIONS, GET, HEAD",
-			"Access-Control-Allow-Headers":  "authorization, Content-Type",
-		},
-	}, {
-		Name:   "bad",
-		URL:    "",
-		Method: "POTATO",
-		Status: http.StatusMethodNotAllowed,
-		Expected: `Method Not Allowed
-`,
-	}}
-	opt := newTestOpt()
-	opt.Serve = true
-	opt.Files = testFs
-	testServer(t, tests, &opt)
-}
-
 func TestMetrics(t *testing.T) {
 	stats := accounting.GlobalStats()
 	tests := makeMetricsTestCases(stats)
@@ -587,7 +561,9 @@ func TestMetrics(t *testing.T) {
 
 	// Test changing a couple options
 	stats.Bytes(500)
-	stats.Deletes(30)
+	for i := 0; i < 30; i++ {
+		require.NoError(t, stats.DeleteFile(context.Background(), 0))
+	}
 	stats.Errors(2)
 	stats.Bytes(324)
 
@@ -619,7 +595,7 @@ func makeMetricsTestCases(stats *accounting.StatsInfo) (tests []testRun) {
 		URL:      "/metrics",
 		Method:   "GET",
 		Status:   http.StatusOK,
-		Contains: regexp.MustCompile(fmt.Sprintf("rclone_files_deleted_total %d", stats.Deletes(0))),
+		Contains: regexp.MustCompile(fmt.Sprintf("rclone_files_deleted_total %d", stats.GetDeletes())),
 	}, {
 		Name:     "Files Transferred Metric",
 		URL:      "/metrics",

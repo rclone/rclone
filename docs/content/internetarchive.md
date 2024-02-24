@@ -260,7 +260,7 @@ Properties:
 
 - Config:      encoding
 - Env Var:     RCLONE_INTERNETARCHIVE_ENCODING
-- Type:        MultiEncoder
+- Type:        Encoding
 - Default:     Slash,LtGt,CrLf,Del,Ctl,InvalidUtf8,Dot
 
 ### Metadata

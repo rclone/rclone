@@ -17,11 +17,10 @@ start() {
            nextcloud:latest
     
     echo type=webdav
-    echo url=http://$(docker_ip)/remote.php/webdav/
+    echo url=http://$(docker_ip)/remote.php/dav/files/$USER/
     echo user=$USER
     echo pass=$(rclone obscure $PASS)
-    # the tests don't pass if we use the nextcloud features
-    # echo vendor=nextcloud
+    echo vendor=nextcloud
     echo _connect=$(docker_ip):80
 }
 

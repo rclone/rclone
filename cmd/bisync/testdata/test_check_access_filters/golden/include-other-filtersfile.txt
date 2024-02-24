@@ -5,5 +5,6 @@
 	- /subdir/subdirA/
 #	 + /subdir/**
 - /subdir-not/
+- .DS_Store
 #+ /*
 #- **

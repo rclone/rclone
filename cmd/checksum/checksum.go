@@ -19,26 +19,30 @@ var download = false
 func init() {
 	cmd.Root.AddCommand(commandDefinition)
 	cmdFlags := commandDefinition.Flags()
-	flags.BoolVarP(cmdFlags, &download, "download", "", download, "Check by hashing the contents")
+	flags.BoolVarP(cmdFlags, &download, "download", "", download, "Check by hashing the contents", "")
 	check.AddFlags(cmdFlags)
 }
 
 var commandDefinition = &cobra.Command{
-	Use:   "checksum <hash> sumfile src:path",
-	Short: `Checks the files in the source against a SUM file.`,
+	Use:   "checksum <hash> sumfile dst:path",
+	Short: `Checks the files in the destination against a SUM file.`,
 	Long: strings.ReplaceAll(`
-Checks that hashsums of source files match the SUM file.
+Checks that hashsums of destination files match the SUM file.
 It compares hashes (MD5, SHA1, etc) and logs a report of files which
 don't match.  It doesn't alter the file system.
 
-If you supply the |--download| flag, it will download the data from remote
-and calculate the contents hash on the fly.  This can be useful for remotes
+The sumfile is treated as the source and the dst:path is treated as
+the destination for the purposes of the output.
+
+If you supply the |--download| flag, it will download the data from the remote
+and calculate the content hash on the fly.  This can be useful for remotes
 that don't support hashes or if you really want to check all the data.
 
 Note that hash values in the SUM file are treated as case insensitive.
 `, "|", "`") + check.FlagsHelp,
 	Annotations: map[string]string{
 		"versionIntroduced": "v1.56",
+		"groups":            "Filter,Listing",
 	},
 	RunE: func(command *cobra.Command, args []string) error {
 		cmd.CheckArgs(3, 3, command, args)

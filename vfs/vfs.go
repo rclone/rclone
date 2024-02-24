@@ -13,7 +13,7 @@
 // # It also includes directory caching
 //
 // The vfs package returns Error values to signal precisely which
-// error conditions have ocurred.  It may also return general errors
+// error conditions have occurred.  It may also return general errors
 // it receives.  It tries to use os Error values (e.g. os.ErrExist)
 // where possible.
 //
@@ -22,6 +22,7 @@ package vfs
 
 import (
 	"context"
+	_ "embed"
 	"fmt"
 	"io"
 	"os"
@@ -32,6 +33,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/go-git/go-billy/v5"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/cache"
 	"github.com/rclone/rclone/fs/log"
@@ -40,6 +42,11 @@ import (
 	"github.com/rclone/rclone/vfs/vfscache"
 	"github.com/rclone/rclone/vfs/vfscommon"
 )
+
+// Help for the VFS.
+//
+//go:embed vfs.md
+var Help string
 
 // Node represents either a directory (*Dir) or a file (*File)
 type Node interface {
@@ -119,6 +126,8 @@ type Handle interface {
 	Release() error
 	Node() Node
 	//	Size() int64
+	Lock() error
+	Unlock() error
 }
 
 // baseHandle implements all the missing methods
@@ -144,16 +153,19 @@ func (h baseHandle) WriteString(s string) (n int, err error)              { retu
 func (h baseHandle) Flush() (err error)                                   { return ENOSYS }
 func (h baseHandle) Release() (err error)                                 { return ENOSYS }
 func (h baseHandle) Node() Node                                           { return nil }
+func (h baseHandle) Unlock() error                                        { return os.ErrInvalid }
+func (h baseHandle) Lock() error                                          { return os.ErrInvalid }
 
 //func (h baseHandle) Size() int64                                          { return 0 }
 
 // Check interfaces
 var (
-	_ OsFiler = (*os.File)(nil)
-	_ Handle  = (*baseHandle)(nil)
-	_ Handle  = (*ReadFileHandle)(nil)
-	_ Handle  = (*WriteFileHandle)(nil)
-	_ Handle  = (*DirHandle)(nil)
+	_ OsFiler    = (*os.File)(nil)
+	_ Handle     = (*baseHandle)(nil)
+	_ Handle     = (*ReadFileHandle)(nil)
+	_ Handle     = (*WriteFileHandle)(nil)
+	_ Handle     = (*DirHandle)(nil)
+	_ billy.File = (Handle)(nil)
 )
 
 // VFS represents the top level filing system
@@ -167,7 +179,7 @@ type VFS struct {
 	usageTime   time.Time
 	usage       *fs.Usage
 	pollChan    chan time.Duration
-	inUse       int32 // count of number of opens accessed with atomic
+	inUse       atomic.Int32 // count of number of opens
 }
 
 // Keep track of active VFS keyed on fs.ConfigString(f)
@@ -181,9 +193,9 @@ var (
 func New(f fs.Fs, opt *vfscommon.Options) *VFS {
 	fsDir := fs.NewDir("", time.Now())
 	vfs := &VFS{
-		f:     f,
-		inUse: int32(1),
+		f: f,
 	}
+	vfs.inUse.Store(1)
 
 	// Make a copy of the options
 	if opt != nil {
@@ -202,7 +214,7 @@ func New(f fs.Fs, opt *vfscommon.Options) *VFS {
 	for _, activeVFS := range active[configName] {
 		if vfs.Opt == activeVFS.Opt {
 			fs.Debugf(f, "Re-using VFS from active cache")
-			atomic.AddInt32(&activeVFS.inUse, 1)
+			activeVFS.inUse.Add(1)
 			return activeVFS
 		}
 	}
@@ -227,14 +239,29 @@ func New(f fs.Fs, opt *vfscommon.Options) *VFS {
 		fs.Logf(f, "--vfs-cache-mode writes or full is recommended for this remote as it can't stream")
 	}
 
-	vfs.SetCacheMode(vfs.Opt.CacheMode)
-
 	// Pin the Fs into the cache so that when we use cache.NewFs
 	// with the same remote string we get this one. The Pin is
 	// removed when the vfs is finalized
 	cache.PinUntilFinalized(f, vfs)
 
+	// Refresh the dircache if required
+	if vfs.Opt.Refresh {
+		go vfs.refresh()
+	}
+
+	// This can take some time so do it after the Pin
+	vfs.SetCacheMode(vfs.Opt.CacheMode)
+
 	return vfs
+}
+
+// refresh the directory cache for all directories
+func (vfs *VFS) refresh() {
+	fs.Debugf(vfs.f, "Refreshing VFS directory cache")
+	err := vfs.root.readDirTree()
+	if err != nil {
+		fs.Errorf(vfs.f, "Error refreshing VFS directory cache: %v", err)
+	}
 }
 
 // Stats returns info about the VFS
@@ -242,7 +269,7 @@ func (vfs *VFS) Stats() (out rc.Params) {
 	out = make(rc.Params)
 	out["fs"] = fs.ConfigString(vfs.f)
 	out["opt"] = vfs.Opt
-	out["inUse"] = atomic.LoadInt32(&vfs.inUse)
+	out["inUse"] = vfs.inUse.Load()
 
 	var (
 		dirs  int
@@ -312,7 +339,7 @@ func (vfs *VFS) shutdownCache() {
 // Shutdown stops any background go-routines and removes the VFS from
 // the active ache.
 func (vfs *VFS) Shutdown() {
-	if atomic.AddInt32(&vfs.inUse, -1) > 0 {
+	if vfs.inUse.Add(-1) > 0 {
 		return
 	}
 
@@ -385,11 +412,11 @@ func (vfs *VFS) Root() (*Dir, error) {
 	return vfs.root, nil
 }
 
-var inodeCount uint64
+var inodeCount atomic.Uint64
 
 // newInode creates a new unique inode number
 func newInode() (inode uint64) {
-	return atomic.AddUint64(&inodeCount, 1)
+	return inodeCount.Add(1)
 }
 
 // Stat finds the Node by path starting from the root
@@ -654,18 +681,54 @@ func (vfs *VFS) Chtimes(name string, atime time.Time, mtime time.Time) error {
 	return nil
 }
 
+// mkdir creates a new directory with the specified name and permission bits
+// (before umask) returning the new directory node.
+func (vfs *VFS) mkdir(name string, perm os.FileMode) (*Dir, error) {
+	dir, leaf, err := vfs.StatParent(name)
+	if err != nil {
+		return nil, err
+	}
+	return dir.Mkdir(leaf)
+}
+
 // Mkdir creates a new directory with the specified name and permission bits
 // (before umask).
 func (vfs *VFS) Mkdir(name string, perm os.FileMode) error {
-	dir, leaf, err := vfs.StatParent(name)
-	if err != nil {
-		return err
+	_, err := vfs.mkdir(name, perm)
+	return err
+}
+
+// mkdirAll creates a new directory with the specified name and
+// permission bits (before umask) and all of its parent directories up
+// to the root.
+func (vfs *VFS) mkdirAll(name string, perm os.FileMode) (dir *Dir, err error) {
+	name = strings.Trim(name, "/")
+	// the root directory node already exists even if the directory isn't created yet
+	if name == "" {
+		return vfs.root, nil
 	}
-	_, err = dir.Mkdir(leaf)
-	if err != nil {
-		return err
+	var parent, leaf string
+	dir, leaf, err = vfs.StatParent(name)
+	if err == ENOENT {
+		parent, leaf = path.Split(name)
+		dir, err = vfs.mkdirAll(parent, perm)
 	}
-	return nil
+	if err != nil {
+		return nil, err
+	}
+	dir, err = dir.Mkdir(leaf)
+	if err != nil {
+		return nil, err
+	}
+	return dir, nil
+}
+
+// MkdirAll creates a new directory with the specified name and
+// permission bits (before umask) and all of its parent directories up
+// to the root.
+func (vfs *VFS) MkdirAll(name string, perm os.FileMode) error {
+	_, err := vfs.mkdirAll(name, perm)
+	return err
 }
 
 // ReadDir reads the directory named by dirname and returns
@@ -701,8 +764,17 @@ func (vfs *VFS) ReadFile(filename string) (b []byte, err error) {
 }
 
 // AddVirtual adds the object (file or dir) to the directory cache
-func (vfs *VFS) AddVirtual(remote string, size int64, isDir bool) error {
-	dir, leaf, err := vfs.StatParent(remote)
+func (vfs *VFS) AddVirtual(remote string, size int64, isDir bool) (err error) {
+	remote = strings.TrimRight(remote, "/")
+	var dir *Dir
+	var parent, leaf string
+	if vfs.f.Features().CanHaveEmptyDirectories {
+		dir, leaf, err = vfs.StatParent(remote)
+	} else {
+		// Create parent of virtual directory since backend can't have empty directories
+		parent, leaf = path.Split(remote)
+		dir, err = vfs.mkdirAll(parent, vfs.Opt.DirPerms)
+	}
 	if err != nil {
 		return err
 	}

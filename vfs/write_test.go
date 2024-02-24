@@ -5,6 +5,7 @@ import (
 	"errors"
 	"io"
 	"os"
+	"runtime"
 	"sync"
 	"testing"
 	"time"
@@ -26,6 +27,66 @@ func writeHandleCreate(t *testing.T) (r *fstest.Run, vfs *VFS, fh *WriteFileHand
 	require.True(t, ok)
 
 	return r, vfs, fh
+}
+
+// Test write when underlying storage is readonly, must be run as non-root
+func TestWriteFileHandleReadonly(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skipf("Skipping test on %s", runtime.GOOS)
+	}
+	if *fstest.RemoteName != "" {
+		t.Skip("Skipping test on non local remote")
+	}
+	r, vfs, fh := writeHandleCreate(t)
+
+	// Name
+	assert.Equal(t, "file1", fh.Name())
+
+	// Write a file, so underlying remote will be created
+	_, err := fh.Write([]byte("hello"))
+	assert.NoError(t, err)
+
+	err = fh.Close()
+	assert.NoError(t, err)
+
+	var info os.FileInfo
+	info, err = os.Stat(r.FremoteName)
+	assert.NoError(t, err)
+
+	// Remove write permission
+	oldMode := info.Mode()
+	err = os.Chmod(r.FremoteName, oldMode^(oldMode&0222))
+	assert.NoError(t, err)
+
+	var h Handle
+	h, err = vfs.OpenFile("file2", os.O_WRONLY|os.O_CREATE, 0777)
+	require.NoError(t, err)
+
+	var ok bool
+	fh, ok = h.(*WriteFileHandle)
+	require.True(t, ok)
+
+	// error is propagated to Close()
+	_, err = fh.Write([]byte("hello"))
+	assert.NoError(t, err)
+
+	err = fh.Close()
+	assert.NotNil(t, err)
+
+	// Remove should fail
+	err = vfs.Remove("file1")
+	assert.NotNil(t, err)
+
+	// Only file1 should exist
+	_, err = vfs.Stat("file1")
+	assert.NoError(t, err)
+
+	_, err = vfs.Stat("file2")
+	assert.Equal(t, true, errors.Is(err, os.ErrNotExist))
+
+	// Restore old permission
+	err = os.Chmod(r.FremoteName, oldMode)
+	assert.NoError(t, err)
 }
 
 func TestWriteFileHandleMethods(t *testing.T) {

@@ -19,7 +19,7 @@ var (
 func init() {
 	cmd.Root.AddCommand(commandDefinition)
 	cmdFlags := commandDefinition.Flags()
-	flags.BoolVarP(cmdFlags, &createEmptySrcDirs, "create-empty-src-dirs", "", createEmptySrcDirs, "Create empty source dirs on destination after copy")
+	flags.BoolVarP(cmdFlags, &createEmptySrcDirs, "create-empty-src-dirs", "", createEmptySrcDirs, "Create empty source dirs on destination after copy", "")
 }
 
 var commandDefinition = &cobra.Command{
@@ -83,6 +83,9 @@ recently very efficiently like this:
 
 **Note**: Use the |--dry-run| or the |--interactive|/|-i| flag to test without copying anything.
 `, "|", "`"),
+	Annotations: map[string]string{
+		"groups": "Copy,Filter,Listing,Important",
+	},
 	Run: func(command *cobra.Command, args []string) {
 
 		cmd.CheckArgs(2, 2, command, args)

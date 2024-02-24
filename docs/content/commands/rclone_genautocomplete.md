@@ -10,14 +10,14 @@ versionIntroduced: v1.33
 
 Output completion script for a given shell.
 
-## Synopsis
+# Synopsis
 
 
 Generates a shell completion script for rclone.
 Run with `--help` to list the supported shells.
 
 
-## Options
+# Options
 
 ```
   -h, --help   help for genautocomplete
@@ -25,7 +25,7 @@ Run with `--help` to list the supported shells.
 
 See the [global flags page](/flags/) for global options not listed here.
 
-## SEE ALSO
+# SEE ALSO
 
 * [rclone](/commands/rclone/)	 - Show help for rclone commands, flags and backends.
 * [rclone genautocomplete bash](/commands/rclone_genautocomplete_bash/)	 - Output bash completion script for rclone.

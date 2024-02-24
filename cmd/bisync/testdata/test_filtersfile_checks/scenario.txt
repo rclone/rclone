@@ -34,3 +34,9 @@ copy-as {datadir/}filtersfile2.txt {workdir/} filtersfile.txt
 
 test 7. run with filters-file alone. should abort.
 bisync filters-file={workdir/}filtersfile.txt
+
+test 8. run with filters-file and resync and dry-run. should do the dry-run but still cause next non-resync run to abort.
+bisync filters-file={workdir/}filtersfile.txt resync dry-run
+
+test 9. run with filters-file alone. should abort.
+bisync filters-file={workdir/}filtersfile.txt

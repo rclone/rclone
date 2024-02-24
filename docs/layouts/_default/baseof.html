@@ -7,13 +7,7 @@
     <meta name="description" content="{{ .Description }}">
     <meta name="author" content="Nick Craig-Wood">
     <link rel="shortcut icon" type="image/png" href="/img/rclone-32x32.png"/>
-    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-51081799-1"></script>
-    <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
-      gtag('config', 'UA-51081799-1');
-    </script>
+    <script defer data-domain="rclone.org" src="https://weblog.rclone.org/js/script.js"></script>
     <title>{{ block "title" . }}{{ .Title }}{{ end }}</title>
     <link rel="canonical" href="{{ .Permalink }}">
     <link href="/css/bootstrap.min.4.4.1.css" rel="stylesheet">
@@ -53,12 +47,14 @@
           <div class="col-md-10">
             <div class="card card-body">
               <p style="font-size: 90%;">
-                &copy; <a href="https://www.craig-wood.com/nick/">Nick Craig-Wood</a> 2014-{{ now.Format "2006" }}<br>
-                {{ if .File}}{{ with $path := strings.TrimPrefix "/" .File.Path }}Source file <a href="https://github.com/rclone/rclone/blob/master/docs/content/{{ $path }}">{{ $path }}</a>{{ end }}
+                &copy; <a href="https://www.craig-wood.com/nick/" target="blank">Nick Craig-Wood</a> 2014-{{ now.Format "2006" }}<br>
+                {{ if .File}}{{ with $path := strings.TrimPrefix "/" .File.Path }}Source file <a href="https://github.com/rclone/rclone/blob/master/docs/content/{{ $path }}" target="blank">{{ $path }}</a>{{ end }}
                 last updated <a href="https://github.com/rclone/rclone/commit/{{ with .GitInfo }}{{ .Hash }}{{ end }}">{{ .Lastmod.Format "2006-01-02" }}</a><br>{{end}}
                 Uploaded with <a href="https://rclone.org">rclone</a>.
-                Built with <a href="https://github.com/spf13/hugo">Hugo</a>.
-                Logo by <a href="https://twitter.com/andy23">@andy23</a>.
+                Built with <a href="https://gohugo.io/" target="blank">Hugo</a>.
+                Logo by <a href="https://twitter.com/andy23" target="blank">@andy23</a>.
+                Served by <a href="https://caddyserver.com/" target="blank">Caddy</a>.
+                Hosted at <a href="https://hetzner.cloud/?ref=62WcciVmlzHt" title="Get €⁠20 in cloud credits" target="blank">Hetzner Cloud</a>.
               </p>
             </div>
           </div>

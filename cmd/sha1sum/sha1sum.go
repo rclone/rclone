@@ -43,6 +43,7 @@ a remote:path.
 `,
 	Annotations: map[string]string{
 		"versionIntroduced": "v1.27",
+		"groups":            "Filter,Listing",
 	},
 	RunE: func(command *cobra.Command, args []string) error {
 		cmd.CheckArgs(0, 1, command, args)

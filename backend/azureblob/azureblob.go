@@ -1,14 +1,14 @@
-//go:build !plan9 && !solaris && !js && go1.18
-// +build !plan9,!solaris,!js,go1.18
+//go:build !plan9 && !solaris && !js
+// +build !plan9,!solaris,!js
 
 // Package azureblob provides an interface to the Microsoft Azure blob object storage system
 package azureblob
 
 import (
-	"bytes"
 	"context"
 	"crypto/md5"
 	"encoding/base64"
+	"encoding/binary"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
@@ -18,6 +18,7 @@ import (
 	"net/url"
 	"os"
 	"path"
+	"sort"
 	"strconv"
 	"strings"
 	"sync"
@@ -33,7 +34,6 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob/sas"
 	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob/service"
 	"github.com/rclone/rclone/fs"
-	"github.com/rclone/rclone/fs/accounting"
 	"github.com/rclone/rclone/fs/chunksize"
 	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fs/config/configmap"
@@ -46,10 +46,8 @@ import (
 	"github.com/rclone/rclone/lib/bucket"
 	"github.com/rclone/rclone/lib/encoder"
 	"github.com/rclone/rclone/lib/env"
+	"github.com/rclone/rclone/lib/multipart"
 	"github.com/rclone/rclone/lib/pacer"
-	"github.com/rclone/rclone/lib/pool"
-	"github.com/rclone/rclone/lib/readers"
-	"golang.org/x/sync/errgroup"
 )
 
 const (
@@ -58,6 +56,8 @@ const (
 	decayConstant         = 1    // bigger for slower decay, exponential
 	maxListChunkSize      = 5000 // number of items to read at once
 	modTimeKey            = "mtime"
+	dirMetaKey            = "hdi_isfolder"
+	dirMetaValue          = "true"
 	timeFormatIn          = time.RFC3339
 	timeFormatOut         = "2006-01-02T15:04:05.000000000Z07:00"
 	storageDefaultBaseURL = "blob.core.windows.net"
@@ -68,12 +68,16 @@ const (
 	emulatorAccount      = "devstoreaccount1"
 	emulatorAccountKey   = "Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw=="
 	emulatorBlobEndpoint = "http://127.0.0.1:10000/devstoreaccount1"
-	memoryPoolFlushTime  = fs.Duration(time.Minute) // flush the cached buffers after this long
-	memoryPoolUseMmap    = false
 )
 
 var (
 	errCantUpdateArchiveTierBlobs = fserrors.NoRetryError(errors.New("can't update archive tier blob without --azureblob-archive-tier-delete"))
+
+	// Take this when changing or reading metadata.
+	//
+	// It acts as global metadata lock so we don't bloat Object
+	// with an extra lock that will only very rarely be contended.
+	metadataMu sync.Mutex
 )
 
 // Register with Fs
@@ -93,6 +97,7 @@ Leave blank to use SAS URL or Emulator, otherwise it needs to be set.
 If this is blank and if env_auth is set it will be read from the
 environment variable ` + "`AZURE_STORAGE_ACCOUNT_NAME`" + ` if possible.
 `,
+			Sensitive: true,
 		}, {
 			Name: "env_auth",
 			Help: `Read credentials from runtime (environment variables, CLI or MSI).
@@ -104,11 +109,13 @@ See the [authentication docs](/azureblob#authentication) for full info.`,
 			Help: `Storage Account Shared Key.
 
 Leave blank to use SAS URL or Emulator.`,
+			Sensitive: true,
 		}, {
 			Name: "sas_url",
 			Help: `SAS URL for container level access only.
 
 Leave blank if using account/key or Emulator.`,
+			Sensitive: true,
 		}, {
 			Name: "tenant",
 			Help: `ID of the service principal's tenant. Also called its directory ID.
@@ -118,6 +125,7 @@ Set this if using
 - Service principal with certificate
 - User with username and password
 `,
+			Sensitive: true,
 		}, {
 			Name: "client_id",
 			Help: `The ID of the client in use.
@@ -127,6 +135,7 @@ Set this if using
 - Service principal with certificate
 - User with username and password
 `,
+			Sensitive: true,
 		}, {
 			Name: "client_secret",
 			Help: `One of the service principal's client secrets
@@ -134,6 +143,7 @@ Set this if using
 Set this if using
 - Service principal with client secret
 `,
+			Sensitive: true,
 		}, {
 			Name: "client_certificate_path",
 			Help: `Path to a PEM or PKCS12 certificate file including the private key.
@@ -171,7 +181,8 @@ Optionally set this if using
 Set this if using
 - User with username and password
 `,
-			Advanced: true,
+			Advanced:  true,
+			Sensitive: true,
 		}, {
 			Name: "password",
 			Help: `The user's password
@@ -214,17 +225,20 @@ msi_client_id, or msi_mi_res_id parameters.`,
 			Default:  false,
 			Advanced: true,
 		}, {
-			Name:     "msi_object_id",
-			Help:     "Object ID of the user-assigned MSI to use, if any.\n\nLeave blank if msi_client_id or msi_mi_res_id specified.",
-			Advanced: true,
+			Name:      "msi_object_id",
+			Help:      "Object ID of the user-assigned MSI to use, if any.\n\nLeave blank if msi_client_id or msi_mi_res_id specified.",
+			Advanced:  true,
+			Sensitive: true,
 		}, {
-			Name:     "msi_client_id",
-			Help:     "Object ID of the user-assigned MSI to use, if any.\n\nLeave blank if msi_object_id or msi_mi_res_id specified.",
-			Advanced: true,
+			Name:      "msi_client_id",
+			Help:      "Object ID of the user-assigned MSI to use, if any.\n\nLeave blank if msi_object_id or msi_mi_res_id specified.",
+			Advanced:  true,
+			Sensitive: true,
 		}, {
-			Name:     "msi_mi_res_id",
-			Help:     "Azure resource ID of the user-assigned MSI to use, if any.\n\nLeave blank if msi_client_id or msi_object_id specified.",
-			Advanced: true,
+			Name:      "msi_mi_res_id",
+			Help:      "Azure resource ID of the user-assigned MSI to use, if any.\n\nLeave blank if msi_client_id or msi_object_id specified.",
+			Advanced:  true,
+			Sensitive: true,
 		}, {
 			Name:     "use_emulator",
 			Help:     "Uses local storage emulator if provided as 'true'.\n\nLeave blank if using real azure storage endpoint.",
@@ -282,10 +296,10 @@ avoid the time out.`,
 			Advanced: true,
 		}, {
 			Name: "access_tier",
-			Help: `Access tier of blob: hot, cool or archive.
+			Help: `Access tier of blob: hot, cool, cold or archive.
 
-Archived blobs can be restored by setting access tier to hot or
-cool. Leave blank if you intend to use default access tier, which is
+Archived blobs can be restored by setting access tier to hot, cool or
+cold. Leave blank if you intend to use default access tier, which is
 set at account level
 
 If there is no "access tier" specified, rclone doesn't apply any tier.
@@ -293,7 +307,7 @@ rclone performs "Set Tier" operation on blobs while uploading, if objects
 are not modified, specifying "access tier" to new one will have no effect.
 If blobs are in "archive tier" at remote, trying to perform data transfer
 operations from remote will not be allowed. User should first restore by
-tiering blob to "Hot" or "Cool".`,
+tiering blob to "Hot", "Cool" or "Cold".`,
 			Advanced: true,
 		}, {
 			Name:    "archive_tier_delete",
@@ -325,17 +339,16 @@ to start uploading.`,
 			Advanced: true,
 		}, {
 			Name:     "memory_pool_flush_time",
-			Default:  memoryPoolFlushTime,
+			Default:  fs.Duration(time.Minute),
 			Advanced: true,
-			Help: `How often internal memory buffer pools will be flushed.
-
-Uploads which requires additional buffers (f.e multipart) will use memory pool for allocations.
-This option controls how often unused buffers will be removed from the pool.`,
+			Hide:     fs.OptionHideBoth,
+			Help:     `How often internal memory buffer pools will be flushed. (no longer used)`,
 		}, {
 			Name:     "memory_pool_use_mmap",
-			Default:  memoryPoolUseMmap,
+			Default:  false,
 			Advanced: true,
-			Help:     `Whether to use mmap buffers in internal memory pool.`,
+			Hide:     fs.OptionHideBoth,
+			Help:     `Whether to use mmap buffers in internal memory pool. (no longer used)`,
 		}, {
 			Name:     config.ConfigEncoding,
 			Help:     config.ConfigEncodingHelp,
@@ -364,6 +377,18 @@ This option controls how often unused buffers will be removed from the pool.`,
 			},
 			Advanced: true,
 		}, {
+			Name:     "directory_markers",
+			Default:  false,
+			Advanced: true,
+			Help: `Upload an empty object with a trailing slash when a new directory is created
+
+Empty folders are unsupported for bucket based remotes, this option
+creates an empty object ending with "/", to persist the folder.
+
+This object also has the metadata "` + dirMetaKey + ` = ` + dirMetaValue + `" to conform to
+the Microsoft standard.
+ `,
+		}, {
 			Name: "no_check_container",
 			Help: `If set, don't attempt to check the container exists or create it.
 
@@ -377,6 +402,24 @@ rclone does if you know the container exists already.
 			Help:     `If set, do not do HEAD before GET when getting objects.`,
 			Default:  false,
 			Advanced: true,
+		}, {
+			Name: "delete_snapshots",
+			Help: `Set to specify how to deal with snapshots on blob deletion.`,
+			Examples: []fs.OptionExample{
+				{
+					Value: "",
+					Help:  "By default, the delete operation fails if a blob has snapshots",
+				}, {
+					Value: string(blob.DeleteSnapshotsOptionTypeInclude),
+					Help:  "Specify 'include' to remove the root blob and all its snapshots",
+				}, {
+					Value: string(blob.DeleteSnapshotsOptionTypeOnly),
+					Help:  "Specify 'only' to remove only the snapshots but keep the root blob.",
+				},
+			},
+			Default:   "",
+			Exclusive: true,
+			Advanced:  true,
 		}},
 	})
 }
@@ -408,12 +451,12 @@ type Options struct {
 	ArchiveTierDelete          bool                 `config:"archive_tier_delete"`
 	UseEmulator                bool                 `config:"use_emulator"`
 	DisableCheckSum            bool                 `config:"disable_checksum"`
-	MemoryPoolFlushTime        fs.Duration          `config:"memory_pool_flush_time"`
-	MemoryPoolUseMmap          bool                 `config:"memory_pool_use_mmap"`
 	Enc                        encoder.MultiEncoder `config:"encoding"`
 	PublicAccess               string               `config:"public_access"`
+	DirectoryMarkers           bool                 `config:"directory_markers"`
 	NoCheckContainer           bool                 `config:"no_check_container"`
 	NoHeadObject               bool                 `config:"no_head_object"`
+	DeleteSnapshots            string               `config:"delete_snapshots"`
 }
 
 // Fs represents a remote azure server
@@ -432,8 +475,6 @@ type Fs struct {
 	cache         *bucket.Cache                // cache for container creation status
 	pacer         *fs.Pacer                    // To pace and retry the API calls
 	uploadToken   *pacer.TokenDispenser        // control concurrency
-	pool          *pool.Pool                   // memory pool
-	poolSize      int64                        // size of pages in memory pool
 	publicAccess  container.PublicAccessType   // Container Public Access Level
 }
 
@@ -446,7 +487,7 @@ type Object struct {
 	size       int64             // Size of the object
 	mimeType   string            // Content-Type of the object
 	accessTier blob.AccessTier   // Blob Access Tier
-	meta       map[string]string // blob metadata
+	meta       map[string]string // blob metadata - take metadataMu when accessing
 }
 
 // ------------------------------------------------------------
@@ -486,7 +527,7 @@ func parsePath(path string) (root string) {
 // split returns container and containerPath from the rootRelativePath
 // relative to f.root
 func (f *Fs) split(rootRelativePath string) (containerName, containerPath string) {
-	containerName, containerPath = bucket.Split(path.Join(f.root, rootRelativePath))
+	containerName, containerPath = bucket.Split(bucket.Join(f.root, rootRelativePath))
 	return f.opt.Enc.FromStandardName(containerName), f.opt.Enc.FromStandardPath(containerPath)
 }
 
@@ -499,6 +540,7 @@ func (o *Object) split() (container, containerPath string) {
 func validateAccessTier(tier string) bool {
 	return strings.EqualFold(tier, string(blob.AccessTierHot)) ||
 		strings.EqualFold(tier, string(blob.AccessTierCool)) ||
+		strings.EqualFold(tier, string(blob.AccessTierCold)) ||
 		strings.EqualFold(tier, string(blob.AccessTierArchive))
 }
 
@@ -628,8 +670,8 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	if opt.AccessTier == "" {
 		opt.AccessTier = string(defaultAccessTier)
 	} else if !validateAccessTier(opt.AccessTier) {
-		return nil, fmt.Errorf("supported access tiers are %s, %s and %s",
-			string(blob.AccessTierHot), string(blob.AccessTierCool), string(blob.AccessTierArchive))
+		return nil, fmt.Errorf("supported access tiers are %s, %s, %s and %s",
+			string(blob.AccessTierHot), string(blob.AccessTierCool), string(blob.AccessTierCold), string(blob.AccessTierArchive))
 	}
 
 	if !validatePublicAccess((opt.PublicAccess)) {
@@ -646,13 +688,6 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		uploadToken: pacer.NewTokenDispenser(ci.Transfers),
 		cache:       bucket.NewCache(),
 		cntSVCcache: make(map[string]*container.Client, 1),
-		pool: pool.New(
-			time.Duration(opt.MemoryPoolFlushTime),
-			int(opt.ChunkSize),
-			ci.Transfers,
-			opt.MemoryPoolUseMmap,
-		),
-		poolSize: int64(opt.ChunkSize),
 	}
 	f.publicAccess = container.PublicAccessType(opt.PublicAccess)
 	f.setRoot(root)
@@ -664,6 +699,10 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		SetTier:           true,
 		GetTier:           true,
 	}).Fill(ctx, f)
+	if opt.DirectoryMarkers {
+		f.features.CanHaveEmptyDirectories = true
+		fs.Debugf(f, "Using directory markers")
+	}
 
 	// Client options specifying our own transport
 	policyClientOptions := policy.ClientOptions{
@@ -690,7 +729,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		}
 		cred, err = azidentity.NewDefaultAzureCredential(&options)
 		if err != nil {
-			return nil, fmt.Errorf("create azure enviroment credential failed: %w", err)
+			return nil, fmt.Errorf("create azure environment credential failed: %w", err)
 		}
 	case opt.UseEmulator:
 		if opt.Account == "" {
@@ -906,7 +945,7 @@ func (f *Fs) cntSVC(containerName string) (containerClient *container.Client) {
 // Return an Object from a path
 //
 // If it can't be found it returns the error fs.ErrorObjectNotFound.
-func (f *Fs) newObjectWithInfo(remote string, info *container.BlobItem) (fs.Object, error) {
+func (f *Fs) newObjectWithInfo(ctx context.Context, remote string, info *container.BlobItem) (fs.Object, error) {
 	o := &Object{
 		fs:     f,
 		remote: remote,
@@ -917,7 +956,7 @@ func (f *Fs) newObjectWithInfo(remote string, info *container.BlobItem) (fs.Obje
 			return nil, err
 		}
 	} else if !o.fs.opt.NoHeadObject {
-		err := o.readMetaData() // reads info and headers, returning an error
+		err := o.readMetaData(ctx) // reads info and headers, returning an error
 		if err != nil {
 			return nil, err
 		}
@@ -928,7 +967,7 @@ func (f *Fs) newObjectWithInfo(remote string, info *container.BlobItem) (fs.Obje
 // NewObject finds the Object at remote.  If it can't be found
 // it returns the error fs.ErrorObjectNotFound.
 func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
-	return f.newObjectWithInfo(remote, nil)
+	return f.newObjectWithInfo(ctx, remote, nil)
 }
 
 // getBlobSVC creates a blob client
@@ -943,6 +982,9 @@ func (f *Fs) getBlockBlobSVC(container, containerPath string) *blockblob.Client 
 
 // updateMetadataWithModTime adds the modTime passed in to o.meta.
 func (o *Object) updateMetadataWithModTime(modTime time.Time) {
+	metadataMu.Lock()
+	defer metadataMu.Unlock()
+
 	// Make sure o.meta is not nil
 	if o.meta == nil {
 		o.meta = make(map[string]string, 1)
@@ -953,7 +995,7 @@ func (o *Object) updateMetadataWithModTime(modTime time.Time) {
 }
 
 // Returns whether file is a directory marker or not
-func isDirectoryMarker(size int64, metadata map[string]string, remote string) bool {
+func isDirectoryMarker(size int64, metadata map[string]*string, remote string) bool {
 	// Directory markers are 0 length
 	if size == 0 {
 		endsWithSlash := strings.HasSuffix(remote, "/")
@@ -964,31 +1006,7 @@ func isDirectoryMarker(size int64, metadata map[string]string, remote string) bo
 		// defacto standard for marking blobs as directories.
 		// Note also that the metadata hasn't been normalised to lower case yet
 		for k, v := range metadata {
-			if strings.EqualFold(k, "hdi_isfolder") && v == "true" {
-				return true
-			}
-		}
-	}
-	return false
-}
-
-// Returns whether file is a directory marker or not using metadata
-// with pointers to strings as the SDK seems to use both forms rather
-// annoyingly.
-//
-// NB This is a duplicate of isDirectoryMarker
-func isDirectoryMarkerP(size int64, metadata map[string]*string, remote string) bool {
-	// Directory markers are 0 length
-	if size == 0 {
-		endsWithSlash := strings.HasSuffix(remote, "/")
-		if endsWithSlash || remote == "" {
-			return true
-		}
-		// Note that metadata with hdi_isfolder = true seems to be a
-		// defacto standard for marking blobs as directories.
-		// Note also that the metadata hasn't been normalised to lower case yet
-		for k, pv := range metadata {
-			if strings.EqualFold(k, "hdi_isfolder") && pv != nil && *pv == "true" {
+			if v != nil && strings.EqualFold(k, dirMetaKey) && *v == dirMetaValue {
 				return true
 			}
 		}
@@ -1033,6 +1051,7 @@ func (f *Fs) list(ctx context.Context, containerName, directory, prefix string, 
 		Prefix:     &directory,
 		MaxResults: &maxResults,
 	})
+	foundItems := 0
 	for pager.More() {
 		var response container.ListBlobsHierarchyResponse
 		err := f.pacer.Call(func() (bool, error) {
@@ -1051,6 +1070,7 @@ func (f *Fs) list(ctx context.Context, containerName, directory, prefix string, 
 		}
 		// Advance marker to next
 		// marker = response.NextMarker
+		foundItems += len(response.Segment.BlobItems)
 		for i := range response.Segment.BlobItems {
 			file := response.Segment.BlobItems[i]
 			// Finish if file name no longer has prefix
@@ -1066,20 +1086,27 @@ func (f *Fs) list(ctx context.Context, containerName, directory, prefix string, 
 				fs.Debugf(f, "Odd name received %q", remote)
 				continue
 			}
-			remote = remote[len(prefix):]
-			if isDirectoryMarkerP(*file.Properties.ContentLength, file.Metadata, remote) {
-				continue // skip directory marker
+			isDirectory := isDirectoryMarker(*file.Properties.ContentLength, file.Metadata, remote)
+			if isDirectory {
+				// Don't insert the root directory
+				if remote == directory {
+					continue
+				}
+				// process directory markers as directories
+				remote = strings.TrimRight(remote, "/")
 			}
+			remote = remote[len(prefix):]
 			if addContainer {
 				remote = path.Join(containerName, remote)
 			}
 			// Send object
-			err = fn(remote, file, false)
+			err = fn(remote, file, isDirectory)
 			if err != nil {
 				return err
 			}
 		}
 		// Send the subdirectories
+		foundItems += len(response.Segment.BlobPrefixes)
 		for _, remote := range response.Segment.BlobPrefixes {
 			if remote.Name == nil {
 				fs.Debugf(f, "Nil prefix received")
@@ -1102,16 +1129,26 @@ func (f *Fs) list(ctx context.Context, containerName, directory, prefix string, 
 			}
 		}
 	}
+	if f.opt.DirectoryMarkers && foundItems == 0 && directory != "" {
+		// Determine whether the directory exists or not by whether it has a marker
+		_, err := f.readMetaData(ctx, containerName, directory)
+		if err != nil {
+			if err == fs.ErrorObjectNotFound {
+				return fs.ErrorDirNotFound
+			}
+			return err
+		}
+	}
 	return nil
 }
 
 // Convert a list item into a DirEntry
-func (f *Fs) itemToDirEntry(remote string, object *container.BlobItem, isDirectory bool) (fs.DirEntry, error) {
+func (f *Fs) itemToDirEntry(ctx context.Context, remote string, object *container.BlobItem, isDirectory bool) (fs.DirEntry, error) {
 	if isDirectory {
 		d := fs.NewDir(remote, time.Time{})
 		return d, nil
 	}
-	o, err := f.newObjectWithInfo(remote, object)
+	o, err := f.newObjectWithInfo(ctx, remote, object)
 	if err != nil {
 		return nil, err
 	}
@@ -1139,7 +1176,7 @@ func (f *Fs) listDir(ctx context.Context, containerName, directory, prefix strin
 		return nil, fs.ErrorDirNotFound
 	}
 	err = f.list(ctx, containerName, directory, prefix, addContainer, false, int32(f.opt.ListChunkSize), func(remote string, object *container.BlobItem, isDirectory bool) error {
-		entry, err := f.itemToDirEntry(remote, object, isDirectory)
+		entry, err := f.itemToDirEntry(ctx, remote, object, isDirectory)
 		if err != nil {
 			return err
 		}
@@ -1220,7 +1257,7 @@ func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (
 	list := walk.NewListRHelper(callback)
 	listR := func(containerName, directory, prefix string, addContainer bool) error {
 		return f.list(ctx, containerName, directory, prefix, addContainer, true, int32(f.opt.ListChunkSize), func(remote string, object *container.BlobItem, isDirectory bool) error {
-			entry, err := f.itemToDirEntry(remote, object, isDirectory)
+			entry, err := f.itemToDirEntry(ctx, remote, object, isDirectory)
 			if err != nil {
 				return err
 			}
@@ -1314,10 +1351,71 @@ func (f *Fs) PutStream(ctx context.Context, in io.Reader, src fs.ObjectInfo, opt
 	return f.Put(ctx, in, src, options...)
 }
 
+// Create directory marker file and parents
+func (f *Fs) createDirectoryMarker(ctx context.Context, container, dir string) error {
+	if !f.opt.DirectoryMarkers || container == "" {
+		return nil
+	}
+
+	// Object to be uploaded
+	o := &Object{
+		fs:      f,
+		modTime: time.Now(),
+		meta: map[string]string{
+			dirMetaKey: dirMetaValue,
+		},
+	}
+
+	for {
+		_, containerPath := f.split(dir)
+		// Don't create the directory marker if it is the bucket or at the very root
+		if containerPath == "" {
+			break
+		}
+		o.remote = dir + "/"
+
+		// Check to see if object already exists
+		_, err := f.readMetaData(ctx, container, containerPath+"/")
+		if err == nil {
+			return nil
+		}
+
+		// Upload it if not
+		fs.Debugf(o, "Creating directory marker")
+		content := io.Reader(strings.NewReader(""))
+		err = o.Update(ctx, content, o)
+		if err != nil {
+			return fmt.Errorf("creating directory marker failed: %w", err)
+		}
+
+		// Now check parent directory exists
+		dir = path.Dir(dir)
+		if dir == "/" || dir == "." {
+			break
+		}
+	}
+
+	return nil
+}
+
 // Mkdir creates the container if it doesn't exist
 func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 	container, _ := f.split(dir)
-	return f.makeContainer(ctx, container)
+	e := f.makeContainer(ctx, container)
+	if e != nil {
+		return e
+	}
+	return f.createDirectoryMarker(ctx, container, dir)
+}
+
+// mkdirParent creates the parent bucket/directory if it doesn't exist
+func (f *Fs) mkdirParent(ctx context.Context, remote string) error {
+	remote = strings.TrimRight(remote, "/")
+	dir := path.Dir(remote)
+	if dir == "/" || dir == "." {
+		dir = ""
+	}
+	return f.Mkdir(ctx, dir)
 }
 
 // makeContainer creates the container if it doesn't exist
@@ -1417,6 +1515,18 @@ func (f *Fs) deleteContainer(ctx context.Context, containerName string) error {
 // Returns an error if it isn't empty
 func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 	container, directory := f.split(dir)
+	// Remove directory marker file
+	if f.opt.DirectoryMarkers && container != "" && directory != "" {
+		o := &Object{
+			fs:     f,
+			remote: dir + "/",
+		}
+		fs.Debugf(o, "Removing directory marker")
+		err := o.Remove(ctx)
+		if err != nil {
+			return fmt.Errorf("removing directory marker failed: %w", err)
+		}
+	}
 	if container == "" || directory != "" {
 		return nil
 	}
@@ -1440,7 +1550,10 @@ func (f *Fs) Hashes() hash.Set {
 // Purge deletes all the files and directories including the old versions.
 func (f *Fs) Purge(ctx context.Context, dir string) error {
 	container, directory := f.split(dir)
-	if container == "" || directory != "" {
+	if container == "" {
+		return errors.New("can't purge from root")
+	}
+	if directory != "" {
 		// Delegate to caller if not root of a container
 		return fs.ErrorCantPurge
 	}
@@ -1458,7 +1571,7 @@ func (f *Fs) Purge(ctx context.Context, dir string) error {
 // If it isn't possible then return fs.ErrorCantCopy
 func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
 	dstContainer, dstPath := f.split(remote)
-	err := f.makeContainer(ctx, dstContainer)
+	err := f.mkdirParent(ctx, remote)
 	if err != nil {
 		return nil, err
 	}
@@ -1471,9 +1584,8 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	srcBlobSVC := srcObj.getBlobSVC()
 	srcURL := srcBlobSVC.URL()
 
-	tier := blob.AccessTier(f.opt.AccessTier)
 	options := blob.StartCopyFromURLOptions{
-		Tier: &tier,
+		Tier: parseTier(f.opt.AccessTier),
 	}
 	var startCopy blob.StartCopyFromURLResponse
 	err = f.pacer.Call(func() (bool, error) {
@@ -1496,19 +1608,6 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	}
 
 	return f.NewObject(ctx, remote)
-}
-
-func (f *Fs) getMemoryPool(size int64) *pool.Pool {
-	if size == int64(f.opt.ChunkSize) {
-		return f.pool
-	}
-
-	return pool.New(
-		time.Duration(f.opt.MemoryPoolFlushTime),
-		int(size),
-		f.ci.Transfers,
-		f.opt.MemoryPoolUseMmap,
-	)
 }
 
 // ------------------------------------------------------------
@@ -1552,12 +1651,18 @@ func (o *Object) Size() int64 {
 	return o.size
 }
 
-func (o *Object) setMetadata(metadata map[string]string) {
+// Set o.metadata from metadata
+func (o *Object) setMetadata(metadata map[string]*string) {
+	metadataMu.Lock()
+	defer metadataMu.Unlock()
+
 	if len(metadata) > 0 {
 		// Lower case the metadata
 		o.meta = make(map[string]string, len(metadata))
 		for k, v := range metadata {
-			o.meta[strings.ToLower(k)] = v
+			if v != nil {
+				o.meta[strings.ToLower(k)] = *v
+			}
 		}
 		// Set o.modTime from metadata if it exists and
 		// UseServerModTime isn't in use.
@@ -1573,20 +1678,20 @@ func (o *Object) setMetadata(metadata map[string]string) {
 	}
 }
 
-// Duplicte of setMetadata but taking pointers to strings
-func (o *Object) setMetadataP(metadata map[string]*string) {
-	if len(metadata) > 0 {
-		// Convert the format of the metadata
-		newMeta := make(map[string]string, len(metadata))
-		for k, v := range metadata {
-			if v != nil {
-				newMeta[k] = *v
-			}
-		}
-		o.setMetadata(newMeta)
-	} else {
-		o.meta = nil
+// Get metadata from o.meta
+func (o *Object) getMetadata() (metadata map[string]*string) {
+	metadataMu.Lock()
+	defer metadataMu.Unlock()
+
+	if len(o.meta) == 0 {
+		return nil
 	}
+	metadata = make(map[string]*string, len(o.meta))
+	for k, v := range o.meta {
+		v := v
+		metadata[k] = &v
+	}
+	return metadata
 }
 
 // decodeMetaDataFromPropertiesResponse sets the metadata from the data passed in
@@ -1696,7 +1801,7 @@ func (o *Object) decodeMetaDataFromBlob(info *container.BlobItem) (err error) {
 	} else {
 		size = *info.Properties.ContentLength
 	}
-	if isDirectoryMarkerP(size, metadata, o.remote) {
+	if isDirectoryMarker(size, metadata, o.remote) {
 		return fs.ErrorNotAFile
 	}
 	// NOTE - Client library always returns MD5 as base64 decoded string, Object needs to maintain
@@ -1718,7 +1823,7 @@ func (o *Object) decodeMetaDataFromBlob(info *container.BlobItem) (err error) {
 	} else {
 		o.accessTier = *info.Properties.AccessTier
 	}
-	o.setMetadataP(metadata)
+	o.setMetadata(metadata)
 
 	return nil
 }
@@ -1729,15 +1834,32 @@ func (o *Object) getBlobSVC() *blob.Client {
 	return o.fs.getBlobSVC(container, directory)
 }
 
-// getBlockBlobSVC creates a block blob client
-func (o *Object) getBlockBlobSVC() *blockblob.Client {
-	container, directory := o.split()
-	return o.fs.getBlockBlobSVC(container, directory)
-}
-
 // clearMetaData clears enough metadata so readMetaData will re-read it
 func (o *Object) clearMetaData() {
 	o.modTime = time.Time{}
+}
+
+// readMetaData gets the metadata if it hasn't already been fetched
+func (f *Fs) readMetaData(ctx context.Context, container, containerPath string) (blobProperties blob.GetPropertiesResponse, err error) {
+	if !f.containerOK(container) {
+		return blobProperties, fs.ErrorObjectNotFound
+	}
+	blb := f.getBlobSVC(container, containerPath)
+
+	// Read metadata (this includes metadata)
+	options := blob.GetPropertiesOptions{}
+	err = f.pacer.Call(func() (bool, error) {
+		blobProperties, err = blb.GetProperties(ctx, &options)
+		return f.shouldRetry(ctx, err)
+	})
+	if err != nil {
+		// On directories - GetProperties does not work and current SDK does not populate service code correctly hence check regular http response as well
+		if storageErr, ok := err.(*azcore.ResponseError); ok && (storageErr.ErrorCode == string(bloberror.BlobNotFound) || storageErr.StatusCode == http.StatusNotFound) {
+			return blobProperties, fs.ErrorObjectNotFound
+		}
+		return blobProperties, err
+	}
+	return blobProperties, nil
 }
 
 // readMetaData gets the metadata if it hasn't already been fetched
@@ -1748,33 +1870,15 @@ func (o *Object) clearMetaData() {
 //	o.modTime
 //	o.size
 //	o.md5
-func (o *Object) readMetaData() (err error) {
-	container, _ := o.split()
-	if !o.fs.containerOK(container) {
-		return fs.ErrorObjectNotFound
-	}
+func (o *Object) readMetaData(ctx context.Context) (err error) {
 	if !o.modTime.IsZero() {
 		return nil
 	}
-	blb := o.getBlobSVC()
-	// fs.Debugf(o, "Blob URL = %q", blb.URL())
-
-	// Read metadata (this includes metadata)
-	options := blob.GetPropertiesOptions{}
-	ctx := context.Background()
-	var blobProperties blob.GetPropertiesResponse
-	err = o.fs.pacer.Call(func() (bool, error) {
-		blobProperties, err = blb.GetProperties(ctx, &options)
-		return o.fs.shouldRetry(ctx, err)
-	})
+	container, containerPath := o.split()
+	blobProperties, err := o.fs.readMetaData(ctx, container, containerPath)
 	if err != nil {
-		// On directories - GetProperties does not work and current SDK does not populate service code correctly hence check regular http response as well
-		if storageErr, ok := err.(*azcore.ResponseError); ok && (storageErr.ErrorCode == string(bloberror.BlobNotFound) || storageErr.StatusCode == http.StatusNotFound) {
-			return fs.ErrorObjectNotFound
-		}
 		return err
 	}
-
 	return o.decodeMetaDataFromPropertiesResponse(&blobProperties)
 }
 
@@ -1784,23 +1888,18 @@ func (o *Object) readMetaData() (err error) {
 // LastModified returned in the http headers
 func (o *Object) ModTime(ctx context.Context) (result time.Time) {
 	// The error is logged in readMetaData
-	_ = o.readMetaData()
+	_ = o.readMetaData(ctx)
 	return o.modTime
 }
 
 // SetModTime sets the modification time of the local fs object
 func (o *Object) SetModTime(ctx context.Context, modTime time.Time) error {
-	// Make sure o.meta is not nil
-	if o.meta == nil {
-		o.meta = make(map[string]string, 1)
-	}
-	// Set modTimeKey in it
-	o.meta[modTimeKey] = modTime.Format(timeFormatOut)
+	o.updateMetadataWithModTime(modTime)
 
 	blb := o.getBlobSVC()
 	opt := blob.SetMetadataOptions{}
 	err := o.fs.pacer.Call(func() (bool, error) {
-		_, err := blb.SetMetadata(ctx, o.meta, &opt)
+		_, err := blb.SetMetadata(ctx, o.getMetadata(), &opt)
 		return o.fs.shouldRetry(ctx, err)
 	})
 	if err != nil {
@@ -1821,7 +1920,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 	var offset int64
 	var count int64
 	if o.AccessTier() == blob.AccessTierArchive {
-		return nil, fmt.Errorf("blob in archive tier, you need to set tier to hot or cool first")
+		return nil, fmt.Errorf("blob in archive tier, you need to set tier to hot, cool, cold first")
 	}
 	fs.FixRangeOption(options, o.size)
 	for _, option := range options {
@@ -1871,48 +1970,6 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 	return downloadResponse.Body, nil
 }
 
-// poolWrapper wraps a pool.Pool as an azblob.TransferManager
-type poolWrapper struct {
-	pool     *pool.Pool
-	bufToken chan struct{}
-	runToken chan struct{}
-}
-
-// newPoolWrapper creates an azblob.TransferManager that will use a
-// pool.Pool with maximum concurrency as specified.
-func (f *Fs) newPoolWrapper(concurrency int) *poolWrapper {
-	return &poolWrapper{
-		pool:     f.pool,
-		bufToken: make(chan struct{}, concurrency),
-		runToken: make(chan struct{}, concurrency),
-	}
-}
-
-// Get implements TransferManager.Get().
-func (pw *poolWrapper) Get() []byte {
-	pw.bufToken <- struct{}{}
-	return pw.pool.Get()
-}
-
-// Put implements TransferManager.Put().
-func (pw *poolWrapper) Put(b []byte) {
-	pw.pool.Put(b)
-	<-pw.bufToken
-}
-
-// Run implements TransferManager.Run().
-func (pw *poolWrapper) Run(f func()) {
-	pw.runToken <- struct{}{}
-	go func() {
-		f()
-		<-pw.runToken
-	}()
-}
-
-// Close implements TransferManager.Close().
-func (pw *poolWrapper) Close() {
-}
-
 // Converts a string into a pointer to a string
 func pString(s string) *string {
 	return &s
@@ -1929,34 +1986,42 @@ func (rs *readSeekCloser) Close() error {
 	return nil
 }
 
-// increment the slice passed in as LSB binary
-func increment(xs []byte) {
-	for i, digit := range xs {
-		newDigit := digit + 1
-		xs[i] = newDigit
-		if newDigit >= digit {
-			// exit if no carry
-			break
-		}
-	}
+// record chunk number and id for Close
+type azBlock struct {
+	chunkNumber uint64
+	id          string
 }
 
-var warnStreamUpload sync.Once
+// Implements the fs.ChunkWriter interface
+type azChunkWriter struct {
+	chunkSize int64
+	size      int64
+	f         *Fs
+	ui        uploadInfo
+	blocksMu  sync.Mutex // protects the below
+	blocks    []azBlock  // list of blocks for finalize
+	o         *Object
+}
 
-// uploadMultipart uploads a file using multipart upload
+// OpenChunkWriter returns the chunk size and a ChunkWriter
 //
-// Write a larger blob, using CreateBlockBlob, PutBlock, and PutBlockList.
-func (o *Object) uploadMultipart(ctx context.Context, in io.Reader, size int64, blb *blockblob.Client, httpHeaders *blob.HTTPHeaders) (err error) {
-	// Calculate correct partSize
-	partSize := o.fs.opt.ChunkSize
-	totalParts := -1
-
-	// make concurrency machinery
-	concurrency := o.fs.opt.UploadConcurrency
-	if concurrency < 1 {
-		concurrency = 1
+// Pass in the remote and the src object
+// You can also use options to hint at the desired chunk size
+func (f *Fs) OpenChunkWriter(ctx context.Context, remote string, src fs.ObjectInfo, options ...fs.OpenOption) (info fs.ChunkWriterInfo, writer fs.ChunkWriter, err error) {
+	// Temporary Object under construction
+	o := &Object{
+		fs:     f,
+		remote: remote,
 	}
-	tokens := pacer.NewTokenDispenser(concurrency)
+	ui, err := o.prepareUpload(ctx, src, options)
+	if err != nil {
+		return info, nil, fmt.Errorf("failed to prepare upload: %w", err)
+	}
+
+	// Calculate correct partSize
+	partSize := f.opt.ChunkSize
+	totalParts := -1
+	size := src.Size()
 
 	// Note that the max size of file is 4.75 TB (100 MB X 50,000
 	// blocks) and this is bigger than the max uncommitted block
@@ -1970,13 +2035,13 @@ func (o *Object) uploadMultipart(ctx context.Context, in io.Reader, size int64, 
 	// 195GB which seems like a not too unreasonable limit.
 	if size == -1 {
 		warnStreamUpload.Do(func() {
-			fs.Logf(o, "Streaming uploads using chunk size %v will have maximum file size of %v",
-				o.fs.opt.ChunkSize, partSize*fs.SizeSuffix(blockblob.MaxBlocks))
+			fs.Logf(f, "Streaming uploads using chunk size %v will have maximum file size of %v",
+				f.opt.ChunkSize, partSize*fs.SizeSuffix(blockblob.MaxBlocks))
 		})
 	} else {
-		partSize = chunksize.Calculator(o, size, blockblob.MaxBlocks, o.fs.opt.ChunkSize)
+		partSize = chunksize.Calculator(remote, size, blockblob.MaxBlocks, f.opt.ChunkSize)
 		if partSize > fs.SizeSuffix(blockblob.MaxStageBlockBytes) {
-			return fmt.Errorf("can't upload as it is too big %v - takes more than %d chunks of %v", fs.SizeSuffix(size), fs.SizeSuffix(blockblob.MaxBlocks), fs.SizeSuffix(blockblob.MaxStageBlockBytes))
+			return info, nil, fmt.Errorf("can't upload as it is too big %v - takes more than %d chunks of %v", fs.SizeSuffix(size), fs.SizeSuffix(blockblob.MaxBlocks), fs.SizeSuffix(blockblob.MaxStageBlockBytes))
 		}
 		totalParts = int(fs.SizeSuffix(size) / partSize)
 		if fs.SizeSuffix(size)%partSize != 0 {
@@ -1986,173 +2051,274 @@ func (o *Object) uploadMultipart(ctx context.Context, in io.Reader, size int64, 
 
 	fs.Debugf(o, "Multipart upload session started for %d parts of size %v", totalParts, partSize)
 
-	// unwrap the accounting from the input, we use wrap to put it
-	// back on after the buffering
-	in, wrap := accounting.UnWrap(in)
-
-	// FIXME it would be nice to delete uncommitted blocks
-	// See: https://github.com/rclone/rclone/issues/5583
-	//
-	// However there doesn't seem to be an easy way of doing this other than
-	// by deleting the target.
-	//
-	// This means that a failed upload deletes the target which isn't ideal.
-	//
-	// Uploading a zero length blob and deleting it will remove the
-	// uncommitted blocks I think.
-	//
-	// Could check to see if a file exists already and if it
-	// doesn't then create a 0 length file and delete it to flush
-	// the uncommitted blocks.
-	//
-	// This is what azcopy does
-	// https://github.com/MicrosoftDocs/azure-docs/issues/36347#issuecomment-541457962
-	// defer atexit.OnError(&err, func() {
-	// 	fs.Debugf(o, "Cancelling multipart upload")
-	//      // Code goes here!
-	// })()
-
-	// Upload the chunks
-	var (
-		g, gCtx       = errgroup.WithContext(ctx)
-		remaining     = fs.SizeSuffix(size)                 // remaining size in file for logging only, -1 if size < 0
-		position      = fs.SizeSuffix(0)                    // position in file
-		memPool       = o.fs.getMemoryPool(int64(partSize)) // pool to get memory from
-		finished      = false                               // set when we have read EOF
-		blocks        []string                              // list of blocks for finalize
-		binaryBlockID = make([]byte, 8)                     // block counter as LSB first 8 bytes
-	)
-	for part := 0; !finished; part++ {
-		// Get a block of memory from the pool and a token which limits concurrency
-		tokens.Get()
-		buf := memPool.Get()
-
-		free := func() {
-			memPool.Put(buf) // return the buf
-			tokens.Put()     // return the token
-		}
-
-		// Fail fast, in case an errgroup managed function returns an error
-		// gCtx is cancelled. There is no point in uploading all the other parts.
-		if gCtx.Err() != nil {
-			free()
-			break
-		}
-
-		// Read the chunk
-		n, err := readers.ReadFill(in, buf) // this can never return 0, nil
-		if err == io.EOF {
-			if n == 0 { // end if no data
-				free()
-				break
-			}
-			finished = true
-		} else if err != nil {
-			free()
-			return fmt.Errorf("multipart upload failed to read source: %w", err)
-		}
-		buf = buf[:n]
-
-		// increment the blockID and save the blocks for finalize
-		increment(binaryBlockID)
-		blockID := base64.StdEncoding.EncodeToString(binaryBlockID)
-		blocks = append(blocks, blockID)
-
-		// Transfer the chunk
-		fs.Debugf(o, "Uploading part %d/%d offset %v/%v part size %d", part+1, totalParts, position, fs.SizeSuffix(size), len(buf))
-		g.Go(func() (err error) {
-			defer free()
-
-			// Upload the block, with MD5 for check
-			md5sum := md5.Sum(buf)
-			transactionalMD5 := md5sum[:]
-			err = o.fs.pacer.Call(func() (bool, error) {
-				bufferReader := bytes.NewReader(buf)
-				wrappedReader := wrap(bufferReader)
-				rs := readSeekCloser{wrappedReader, bufferReader}
-				options := blockblob.StageBlockOptions{
-					// Specify the transactional md5 for the body, to be validated by the service.
-					TransactionalValidation: blob.TransferValidationTypeMD5(transactionalMD5),
-				}
-				_, err = blb.StageBlock(ctx, blockID, &rs, &options)
-				return o.fs.shouldRetry(ctx, err)
-			})
-			if err != nil {
-				return fmt.Errorf("multipart upload failed to upload part: %w", err)
-			}
-			return nil
-		})
-
-		// ready for next block
-		if size >= 0 {
-			remaining -= partSize
-		}
-		position += partSize
+	chunkWriter := &azChunkWriter{
+		chunkSize: int64(partSize),
+		size:      size,
+		f:         f,
+		ui:        ui,
+		o:         o,
 	}
-	err = g.Wait()
+	info = fs.ChunkWriterInfo{
+		ChunkSize:   int64(partSize),
+		Concurrency: o.fs.opt.UploadConcurrency,
+		//LeavePartsOnError: o.fs.opt.LeavePartsOnError,
+	}
+	fs.Debugf(o, "open chunk writer: started multipart upload")
+	return info, chunkWriter, nil
+}
+
+// WriteChunk will write chunk number with reader bytes, where chunk number >= 0
+func (w *azChunkWriter) WriteChunk(ctx context.Context, chunkNumber int, reader io.ReadSeeker) (int64, error) {
+	if chunkNumber < 0 {
+		err := fmt.Errorf("invalid chunk number provided: %v", chunkNumber)
+		return -1, err
+	}
+
+	// Upload the block, with MD5 for check
+	m := md5.New()
+	currentChunkSize, err := io.Copy(m, reader)
 	if err != nil {
-		return err
+		return -1, err
 	}
-
-	tier := blob.AccessTier(o.fs.opt.AccessTier)
-	options := blockblob.CommitBlockListOptions{
-		Metadata:    o.meta,
-		Tier:        &tier,
-		HTTPHeaders: httpHeaders,
+	// If no data read, don't write the chunk
+	if currentChunkSize == 0 {
+		return 0, nil
 	}
+	md5sum := m.Sum(nil)
+	transactionalMD5 := md5sum[:]
 
-	// Finalise the upload session
-	err = o.fs.pacer.Call(func() (bool, error) {
-		_, err := blb.CommitBlockList(ctx, blocks, &options)
-		return o.fs.shouldRetry(ctx, err)
+	// increment the blockID and save the blocks for finalize
+	var binaryBlockID [8]byte // block counter as LSB first 8 bytes
+	binary.LittleEndian.PutUint64(binaryBlockID[:], uint64(chunkNumber))
+	blockID := base64.StdEncoding.EncodeToString(binaryBlockID[:])
+
+	// Save the blockID for the commit
+	w.blocksMu.Lock()
+	w.blocks = append(w.blocks, azBlock{
+		chunkNumber: uint64(chunkNumber),
+		id:          blockID,
+	})
+	w.blocksMu.Unlock()
+
+	err = w.f.pacer.Call(func() (bool, error) {
+		// rewind the reader on retry and after reading md5
+		_, err = reader.Seek(0, io.SeekStart)
+		if err != nil {
+			return false, err
+		}
+		options := blockblob.StageBlockOptions{
+			// Specify the transactional md5 for the body, to be validated by the service.
+			TransactionalValidation: blob.TransferValidationTypeMD5(transactionalMD5),
+		}
+		_, err = w.ui.blb.StageBlock(ctx, blockID, &readSeekCloser{Reader: reader, Seeker: reader}, &options)
+		if err != nil {
+			if chunkNumber <= 8 {
+				return w.f.shouldRetry(ctx, err)
+			}
+			// retry all chunks once have done the first few
+			return true, err
+		}
+		return false, nil
 	})
 	if err != nil {
-		return fmt.Errorf("multipart upload failed to finalize: %w", err)
+		return -1, fmt.Errorf("failed to upload chunk %d with %v bytes: %w", chunkNumber+1, currentChunkSize, err)
 	}
+
+	fs.Debugf(w.o, "multipart upload wrote chunk %d with %v bytes", chunkNumber+1, currentChunkSize)
+	return currentChunkSize, err
+}
+
+// Abort the multipart upload.
+//
+// FIXME it would be nice to delete uncommitted blocks.
+//
+// See: https://github.com/rclone/rclone/issues/5583
+//
+// However there doesn't seem to be an easy way of doing this other than
+// by deleting the target.
+//
+// This means that a failed upload deletes the target which isn't ideal.
+//
+// Uploading a zero length blob and deleting it will remove the
+// uncommitted blocks I think.
+//
+// Could check to see if a file exists already and if it doesn't then
+// create a 0 length file and delete it to flush the uncommitted
+// blocks.
+//
+// This is what azcopy does
+// https://github.com/MicrosoftDocs/azure-docs/issues/36347#issuecomment-541457962
+func (w *azChunkWriter) Abort(ctx context.Context) error {
+	fs.Debugf(w.o, "multipart upload aborted (did nothing - see issue #5583)")
 	return nil
 }
 
-// uploadSinglepart uploads a short blob using a single part upload
-func (o *Object) uploadSinglepart(ctx context.Context, in io.Reader, size int64, blb *blockblob.Client, httpHeaders *blob.HTTPHeaders) (err error) {
-	// fs.Debugf(o, "Single part upload starting of object %d bytes", size)
-	if size > o.fs.poolSize || size < 0 {
-		return fmt.Errorf("internal error: single part upload size too big %d > %d", size, o.fs.opt.ChunkSize)
-	}
+// Close and finalise the multipart upload
+func (w *azChunkWriter) Close(ctx context.Context) (err error) {
+	// sort the completed parts by part number
+	sort.Slice(w.blocks, func(i, j int) bool {
+		return w.blocks[i].chunkNumber < w.blocks[j].chunkNumber
+	})
 
-	buf := o.fs.pool.Get()
-	defer o.fs.pool.Put(buf)
-
-	n, err := readers.ReadFill(in, buf)
-	if err == nil {
-		// Check to see whether in is exactly len(buf) or bigger
-		var buf2 = []byte{0}
-		n2, err2 := readers.ReadFill(in, buf2)
-		if n2 != 0 || err2 != io.EOF {
-			return fmt.Errorf("single part upload read failed: object longer than expected (expecting %d but got > %d)", size, len(buf))
+	// Create and check a list of block IDs
+	blockIDs := make([]string, len(w.blocks))
+	for i := range w.blocks {
+		if w.blocks[i].chunkNumber != uint64(i) {
+			return fmt.Errorf("internal error: expecting chunkNumber %d but got %d", i, w.blocks[i].chunkNumber)
 		}
+		chunkBytes, err := base64.StdEncoding.DecodeString(w.blocks[i].id)
+		if err != nil {
+			return fmt.Errorf("internal error: bad block ID: %w", err)
+		}
+		chunkNumber := binary.LittleEndian.Uint64(chunkBytes)
+		if w.blocks[i].chunkNumber != chunkNumber {
+			return fmt.Errorf("internal error: expecting decoded chunkNumber %d but got %d", w.blocks[i].chunkNumber, chunkNumber)
+		}
+		blockIDs[i] = w.blocks[i].id
 	}
+
+	options := blockblob.CommitBlockListOptions{
+		Metadata:    w.o.getMetadata(),
+		Tier:        parseTier(w.f.opt.AccessTier),
+		HTTPHeaders: &w.ui.httpHeaders,
+	}
+
+	// Finalise the upload session
+	err = w.f.pacer.Call(func() (bool, error) {
+		_, err := w.ui.blb.CommitBlockList(ctx, blockIDs, &options)
+		return w.f.shouldRetry(ctx, err)
+	})
+	if err != nil {
+		return fmt.Errorf("failed to complete multipart upload: %w", err)
+	}
+	fs.Debugf(w.o, "multipart upload finished")
+	return err
+}
+
+var warnStreamUpload sync.Once
+
+// uploadMultipart uploads a file using multipart upload
+//
+// Write a larger blob, using CreateBlockBlob, PutBlock, and PutBlockList.
+func (o *Object) uploadMultipart(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (ui uploadInfo, err error) {
+	chunkWriter, err := multipart.UploadMultipart(ctx, src, in, multipart.UploadMultipartOptions{
+		Open:        o.fs,
+		OpenOptions: options,
+	})
+	if err != nil {
+		return ui, err
+	}
+	return chunkWriter.(*azChunkWriter).ui, nil
+}
+
+// uploadSinglepart uploads a short blob using a single part upload
+func (o *Object) uploadSinglepart(ctx context.Context, in io.Reader, size int64, ui uploadInfo) (err error) {
+	chunkSize := int64(o.fs.opt.ChunkSize)
+	// fs.Debugf(o, "Single part upload starting of object %d bytes", size)
+	if size > chunkSize || size < 0 {
+		return fmt.Errorf("internal error: single part upload size too big %d > %d", size, chunkSize)
+	}
+
+	rw := multipart.NewRW()
+	defer fs.CheckClose(rw, &err)
+
+	n, err := io.CopyN(rw, in, size+1)
 	if err != nil && err != io.EOF {
 		return fmt.Errorf("single part upload read failed: %w", err)
 	}
-	if int64(n) != size {
+	if n != size {
 		return fmt.Errorf("single part upload: expecting to read %d bytes but read %d", size, n)
 	}
 
-	b := bytes.NewReader(buf[:n])
-	rs := &readSeekCloser{Reader: b, Seeker: b}
+	rs := &readSeekCloser{Reader: rw, Seeker: rw}
 
-	tier := blob.AccessTier(o.fs.opt.AccessTier)
 	options := blockblob.UploadOptions{
-		Metadata:    o.meta,
-		Tier:        &tier,
-		HTTPHeaders: httpHeaders,
+		Metadata:    o.getMetadata(),
+		Tier:        parseTier(o.fs.opt.AccessTier),
+		HTTPHeaders: &ui.httpHeaders,
 	}
 
-	// Don't retry, return a retry error instead
-	return o.fs.pacer.CallNoRetry(func() (bool, error) {
-		_, err = blb.Upload(ctx, rs, &options)
+	return o.fs.pacer.Call(func() (bool, error) {
+		// rewind the reader on retry
+		_, err = rs.Seek(0, io.SeekStart)
+		if err != nil {
+			return false, err
+		}
+		_, err = ui.blb.Upload(ctx, rs, &options)
 		return o.fs.shouldRetry(ctx, err)
 	})
+}
+
+// Info needed for an upload
+type uploadInfo struct {
+	blb         *blockblob.Client
+	httpHeaders blob.HTTPHeaders
+	isDirMarker bool
+}
+
+// Prepare the object for upload
+func (o *Object) prepareUpload(ctx context.Context, src fs.ObjectInfo, options []fs.OpenOption) (ui uploadInfo, err error) {
+	container, containerPath := o.split()
+	if container == "" || containerPath == "" {
+		return ui, fmt.Errorf("can't upload to root - need a container")
+	}
+	// Create parent dir/bucket if not saving directory marker
+	metadataMu.Lock()
+	_, ui.isDirMarker = o.meta[dirMetaKey]
+	metadataMu.Unlock()
+	if !ui.isDirMarker {
+		err = o.fs.mkdirParent(ctx, o.remote)
+		if err != nil {
+			return ui, err
+		}
+	}
+
+	// Update Mod time
+	o.updateMetadataWithModTime(src.ModTime(ctx))
+	if err != nil {
+		return ui, err
+	}
+
+	// Create the HTTP headers for the upload
+	ui.httpHeaders = blob.HTTPHeaders{
+		BlobContentType: pString(fs.MimeType(ctx, src)),
+	}
+
+	// Compute the Content-MD5 of the file. As we stream all uploads it
+	// will be set in PutBlockList API call using the 'x-ms-blob-content-md5' header
+	if !o.fs.opt.DisableCheckSum {
+		if sourceMD5, _ := src.Hash(ctx, hash.MD5); sourceMD5 != "" {
+			sourceMD5bytes, err := hex.DecodeString(sourceMD5)
+			if err == nil {
+				ui.httpHeaders.BlobContentMD5 = sourceMD5bytes
+			} else {
+				fs.Debugf(o, "Failed to decode %q as MD5: %v", sourceMD5, err)
+			}
+		}
+	}
+
+	// Apply upload options (also allows one to overwrite content-type)
+	for _, option := range options {
+		key, value := option.Header()
+		lowerKey := strings.ToLower(key)
+		switch lowerKey {
+		case "":
+			// ignore
+		case "cache-control":
+			ui.httpHeaders.BlobCacheControl = pString(value)
+		case "content-disposition":
+			ui.httpHeaders.BlobContentDisposition = pString(value)
+		case "content-encoding":
+			ui.httpHeaders.BlobContentEncoding = pString(value)
+		case "content-language":
+			ui.httpHeaders.BlobContentLanguage = pString(value)
+		case "content-type":
+			ui.httpHeaders.BlobContentType = pString(value)
+		}
+	}
+
+	ui.blb = o.fs.getBlockBlobSVC(container, containerPath)
+	return ui, nil
 }
 
 // Update the object with the contents of the io.Reader, modTime and size
@@ -2170,77 +2336,31 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 			return errCantUpdateArchiveTierBlobs
 		}
 	}
-	container, containerPath := o.split()
-	if container == "" || containerPath == "" {
-		return fmt.Errorf("can't upload to root - need a container")
-	}
-	err = o.fs.makeContainer(ctx, container)
-	if err != nil {
-		return err
-	}
 
-	// Update Mod time
-	o.updateMetadataWithModTime(src.ModTime(ctx))
-	if err != nil {
-		return err
-	}
-
-	// Create the HTTP headers for the upload
-	httpHeaders := blob.HTTPHeaders{
-		BlobContentType: pString(fs.MimeType(ctx, src)),
-	}
-
-	// Compute the Content-MD5 of the file. As we stream all uploads it
-	// will be set in PutBlockList API call using the 'x-ms-blob-content-md5' header
-	if !o.fs.opt.DisableCheckSum {
-		if sourceMD5, _ := src.Hash(ctx, hash.MD5); sourceMD5 != "" {
-			sourceMD5bytes, err := hex.DecodeString(sourceMD5)
-			if err == nil {
-				httpHeaders.BlobContentMD5 = sourceMD5bytes
-			} else {
-				fs.Debugf(o, "Failed to decode %q as MD5: %v", sourceMD5, err)
-			}
-		}
-	}
-
-	// Apply upload options (also allows one to overwrite content-type)
-	for _, option := range options {
-		key, value := option.Header()
-		lowerKey := strings.ToLower(key)
-		switch lowerKey {
-		case "":
-			// ignore
-		case "cache-control":
-			httpHeaders.BlobCacheControl = pString(value)
-		case "content-disposition":
-			httpHeaders.BlobContentDisposition = pString(value)
-		case "content-encoding":
-			httpHeaders.BlobContentEncoding = pString(value)
-		case "content-language":
-			httpHeaders.BlobContentLanguage = pString(value)
-		case "content-type":
-			httpHeaders.BlobContentType = pString(value)
-		}
-	}
-
-	blb := o.fs.getBlockBlobSVC(container, containerPath)
 	size := src.Size()
-	multipartUpload := size < 0 || size > o.fs.poolSize
+	multipartUpload := size < 0 || size > int64(o.fs.opt.ChunkSize)
+	var ui uploadInfo
 
 	if multipartUpload {
-		err = o.uploadMultipart(ctx, in, size, blb, &httpHeaders)
+		ui, err = o.uploadMultipart(ctx, in, src, options...)
 	} else {
-		err = o.uploadSinglepart(ctx, in, size, blb, &httpHeaders)
+		ui, err = o.prepareUpload(ctx, src, options)
+		if err != nil {
+			return fmt.Errorf("failed to prepare upload: %w", err)
+		}
+		err = o.uploadSinglepart(ctx, in, size, ui)
 	}
 	if err != nil {
 		return err
 	}
 
 	// Refresh metadata on object
-	o.clearMetaData()
-	err = o.readMetaData()
-	if err != nil {
-		return err
+	if !ui.isDirMarker {
+		o.clearMetaData()
+		err = o.readMetaData(ctx)
+		if err != nil {
+			return err
+		}
 	}
 
 	// If tier is not changed or not specified, do not attempt to invoke `SetBlobTier` operation
@@ -2255,9 +2375,10 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 // Remove an object
 func (o *Object) Remove(ctx context.Context) error {
 	blb := o.getBlobSVC()
-	//only := blob.DeleteSnapshotsOptionTypeOnly
-	opt := blob.DeleteOptions{
-		//DeleteSnapshots: &only,
+	opt := blob.DeleteOptions{}
+	if o.fs.opt.DeleteSnapshots != "" {
+		action := blob.DeleteSnapshotsOptionType(o.fs.opt.DeleteSnapshots)
+		opt.DeleteSnapshots = &action
 	}
 	return o.fs.pacer.Call(func() (bool, error) {
 		_, err := blb.Delete(ctx, &opt)
@@ -2314,15 +2435,24 @@ func (o *Object) GetTier() string {
 	return string(o.accessTier)
 }
 
+func parseTier(tier string) *blob.AccessTier {
+	if tier == "" {
+		return nil
+	}
+	msTier := blob.AccessTier(tier)
+	return &msTier
+}
+
 // Check the interfaces are satisfied
 var (
-	_ fs.Fs          = &Fs{}
-	_ fs.Copier      = &Fs{}
-	_ fs.PutStreamer = &Fs{}
-	_ fs.Purger      = &Fs{}
-	_ fs.ListRer     = &Fs{}
-	_ fs.Object      = &Object{}
-	_ fs.MimeTyper   = &Object{}
-	_ fs.GetTierer   = &Object{}
-	_ fs.SetTierer   = &Object{}
+	_ fs.Fs              = &Fs{}
+	_ fs.Copier          = &Fs{}
+	_ fs.PutStreamer     = &Fs{}
+	_ fs.Purger          = &Fs{}
+	_ fs.ListRer         = &Fs{}
+	_ fs.OpenChunkWriter = &Fs{}
+	_ fs.Object          = &Object{}
+	_ fs.MimeTyper       = &Object{}
+	_ fs.GetTierer       = &Object{}
+	_ fs.SetTierer       = &Object{}
 )

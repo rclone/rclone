@@ -22,7 +22,6 @@ package operations_test
 import (
 	"bytes"
 	"context"
-	"crypto/rand"
 	"errors"
 	"fmt"
 	"io"
@@ -38,7 +37,6 @@ import (
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/accounting"
 	"github.com/rclone/rclone/fs/filter"
-	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/fs/operations"
@@ -371,9 +369,14 @@ func TestSuffixName(t *testing.T) {
 		{"test.txt", "-suffix", false, "test.txt-suffix"},
 		{"test.txt", "-suffix", true, "test-suffix.txt"},
 		{"test.txt.csv", "-suffix", false, "test.txt.csv-suffix"},
-		{"test.txt.csv", "-suffix", true, "test.txt-suffix.csv"},
+		{"test.txt.csv", "-suffix", true, "test-suffix.txt.csv"},
 		{"test", "-suffix", false, "test-suffix"},
 		{"test", "-suffix", true, "test-suffix"},
+		{"test.html", "-suffix", true, "test-suffix.html"},
+		{"test.html.txt", "-suffix", true, "test-suffix.html.txt"},
+		{"test.csv.html.txt", "-suffix", true, "test-suffix.csv.html.txt"},
+		{"test.badext.csv.html.txt", "-suffix", true, "test.badext-suffix.csv.html.txt"},
+		{"test.badext", "-suffix", true, "test-suffix.badext"},
 	} {
 		ci.Suffix = test.suffix
 		ci.SuffixKeepExtension = test.keepExt
@@ -419,6 +422,75 @@ func TestDelete(t *testing.T) {
 	r.CheckRemoteItems(t, file3)
 }
 
+func isChunker(f fs.Fs) bool {
+	return strings.HasPrefix(f.Name(), "TestChunker")
+}
+
+func skipIfChunker(t *testing.T, f fs.Fs) {
+	if isChunker(f) {
+		t.Skip("Skipping test on chunker backend")
+	}
+}
+
+func TestMaxDelete(t *testing.T) {
+	ctx := context.Background()
+	ctx, ci := fs.AddConfig(ctx)
+	r := fstest.NewRun(t)
+	accounting.GlobalStats().ResetCounters()
+	ci.MaxDelete = 2
+	defer r.Finalise()
+	skipIfChunker(t, r.Fremote)                                                                                                                      // chunker does copy/delete on s3
+	file1 := r.WriteObject(ctx, "small", "1234567890", t2)                                                                                           // 10 bytes
+	file2 := r.WriteObject(ctx, "medium", "------------------------------------------------------------", t1)                                        // 60 bytes
+	file3 := r.WriteObject(ctx, "large", "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", t1) // 100 bytes
+	r.CheckRemoteItems(t, file1, file2, file3)
+	err := operations.Delete(ctx, r.Fremote)
+
+	require.Error(t, err)
+	objects, _, _, err := operations.Count(ctx, r.Fremote)
+	require.NoError(t, err)
+	assert.Equal(t, int64(1), objects)
+}
+
+// TestMaxDeleteSizeLargeFile one of the files is larger than allowed
+func TestMaxDeleteSizeLargeFile(t *testing.T) {
+	ctx := context.Background()
+	ctx, ci := fs.AddConfig(ctx)
+	r := fstest.NewRun(t)
+	accounting.GlobalStats().ResetCounters()
+	ci.MaxDeleteSize = 70
+	defer r.Finalise()
+	skipIfChunker(t, r.Fremote)                                                                                                                      // chunker does copy/delete on s3
+	file1 := r.WriteObject(ctx, "small", "1234567890", t2)                                                                                           // 10 bytes
+	file2 := r.WriteObject(ctx, "medium", "------------------------------------------------------------", t1)                                        // 60 bytes
+	file3 := r.WriteObject(ctx, "large", "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", t1) // 100 bytes
+	r.CheckRemoteItems(t, file1, file2, file3)
+
+	err := operations.Delete(ctx, r.Fremote)
+	require.Error(t, err)
+	r.CheckRemoteItems(t, file3)
+}
+
+func TestMaxDeleteSize(t *testing.T) {
+	ctx := context.Background()
+	ctx, ci := fs.AddConfig(ctx)
+	r := fstest.NewRun(t)
+	accounting.GlobalStats().ResetCounters()
+	ci.MaxDeleteSize = 160
+	defer r.Finalise()
+	skipIfChunker(t, r.Fremote)                                                                                                                      // chunker does copy/delete on s3
+	file1 := r.WriteObject(ctx, "small", "1234567890", t2)                                                                                           // 10 bytes
+	file2 := r.WriteObject(ctx, "medium", "------------------------------------------------------------", t1)                                        // 60 bytes
+	file3 := r.WriteObject(ctx, "large", "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", t1) // 100 bytes
+	r.CheckRemoteItems(t, file1, file2, file3)
+
+	err := operations.Delete(ctx, r.Fremote)
+	require.Error(t, err)
+	objects, _, _, err := operations.Count(ctx, r.Fremote)
+	require.NoError(t, err)
+	assert.Equal(t, int64(1), objects) // 10 or 100 bytes
+}
+
 func TestRetry(t *testing.T) {
 	ctx := context.Background()
 
@@ -455,23 +527,25 @@ func TestCat(t *testing.T) {
 	r.CheckRemoteItems(t, file1, file2)
 
 	for _, test := range []struct {
-		offset int64
-		count  int64
-		a      string
-		b      string
+		offset    int64
+		count     int64
+		separator string
+		a         string
+		b         string
 	}{
-		{0, -1, "ABCDEFGHIJ", "012345678"},
-		{0, 5, "ABCDE", "01234"},
-		{-3, -1, "HIJ", "678"},
-		{1, 3, "BCD", "123"},
+		{0, -1, "", "ABCDEFGHIJ", "012345678"},
+		{0, 5, "", "ABCDE", "01234"},
+		{-3, -1, "", "HIJ", "678"},
+		{1, 3, "", "BCD", "123"},
+		{0, -1, "\n", "ABCDEFGHIJ", "012345678"},
 	} {
 		var buf bytes.Buffer
-		err := operations.Cat(ctx, r.Fremote, &buf, test.offset, test.count)
+		err := operations.Cat(ctx, r.Fremote, &buf, test.offset, test.count, []byte(test.separator))
 		require.NoError(t, err)
 		res := buf.String()
 
-		if res != test.a+test.b && res != test.b+test.a {
-			t.Errorf("Incorrect output from Cat(%d,%d): %q", test.offset, test.count, res)
+		if res != test.a+test.separator+test.b+test.separator && res != test.b+test.separator+test.a+test.separator {
+			t.Errorf("Incorrect output from Cat(%d,%d,%s): %q", test.offset, test.count, test.separator, res)
 		}
 	}
 }
@@ -626,6 +700,22 @@ func TestRmdirsNoLeaveRoot(t *testing.T) {
 		fs.GetModifyWindow(ctx, r.Fremote),
 	)
 
+	// Delete the files so we can remove everything including the root
+	for _, file := range []fstest.Item{file1, file2} {
+		o, err := r.Fremote.NewObject(ctx, file.Path)
+		require.NoError(t, err)
+		require.NoError(t, o.Remove(ctx))
+	}
+
+	require.NoError(t, operations.Rmdirs(ctx, r.Fremote, "", false))
+
+	fstest.CheckListingWithPrecision(
+		t,
+		r.Fremote,
+		[]fstest.Item{},
+		[]string{},
+		fs.GetModifyWindow(ctx, r.Fremote),
+	)
 }
 
 func TestRmdirsLeaveRoot(t *testing.T) {
@@ -720,7 +810,7 @@ func TestCopyURL(t *testing.T) {
 	headerFilename := "headerfilename.txt"
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if status != 0 {
-			http.Error(w, "an error ocurred", status)
+			http.Error(w, "an error occurred", status)
 		}
 		if nameHeader {
 			w.Header().Set("Content-Disposition", `attachment; filename="folder\`+headerFilename+`"`)
@@ -794,7 +884,7 @@ func TestCopyURLToWriter(t *testing.T) {
 	status := 0
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if status != 0 {
-			http.Error(w, "an error ocurred", status)
+			http.Error(w, "an error occurred", status)
 			return
 		}
 		_, err := w.Write([]byte(contents))
@@ -907,6 +997,23 @@ func TestCaseInsensitiveMoveFile(t *testing.T) {
 	r.CheckRemoteItems(t, file2Capitalized)
 }
 
+func TestCaseInsensitiveMoveFileDryRun(t *testing.T) {
+	ctx := context.Background()
+	ctx, ci := fs.AddConfig(ctx)
+	r := fstest.NewRun(t)
+	if !r.Fremote.Features().CaseInsensitive {
+		return
+	}
+
+	file1 := r.WriteObject(ctx, "hello", "world", t1)
+	r.CheckRemoteItems(t, file1)
+
+	ci.DryRun = true
+	err := operations.MoveFile(ctx, r.Fremote, r.Fremote, "HELLO", file1.Path)
+	require.NoError(t, err)
+	r.CheckRemoteItems(t, file1)
+}
+
 func TestMoveFileBackupDir(t *testing.T) {
 	ctx := context.Background()
 	ctx, ci := fs.AddConfig(ctx)
@@ -928,228 +1035,6 @@ func TestMoveFileBackupDir(t *testing.T) {
 	r.CheckLocalItems(t)
 	file1old.Path = "backup/dst/file1"
 	r.CheckRemoteItems(t, file1old, file1)
-}
-
-func TestCopyFile(t *testing.T) {
-	ctx := context.Background()
-	r := fstest.NewRun(t)
-
-	file1 := r.WriteFile("file1", "file1 contents", t1)
-	r.CheckLocalItems(t, file1)
-
-	file2 := file1
-	file2.Path = "sub/file2"
-
-	err := operations.CopyFile(ctx, r.Fremote, r.Flocal, file2.Path, file1.Path)
-	require.NoError(t, err)
-	r.CheckLocalItems(t, file1)
-	r.CheckRemoteItems(t, file2)
-
-	err = operations.CopyFile(ctx, r.Fremote, r.Flocal, file2.Path, file1.Path)
-	require.NoError(t, err)
-	r.CheckLocalItems(t, file1)
-	r.CheckRemoteItems(t, file2)
-
-	err = operations.CopyFile(ctx, r.Fremote, r.Fremote, file2.Path, file2.Path)
-	require.NoError(t, err)
-	r.CheckLocalItems(t, file1)
-	r.CheckRemoteItems(t, file2)
-}
-
-func TestCopyFileBackupDir(t *testing.T) {
-	ctx := context.Background()
-	ctx, ci := fs.AddConfig(ctx)
-	r := fstest.NewRun(t)
-	if !operations.CanServerSideMove(r.Fremote) {
-		t.Skip("Skipping test as remote does not support server-side move or copy")
-	}
-
-	ci.BackupDir = r.FremoteName + "/backup"
-
-	file1 := r.WriteFile("dst/file1", "file1 contents", t1)
-	r.CheckLocalItems(t, file1)
-
-	file1old := r.WriteObject(ctx, "dst/file1", "file1 contents old", t1)
-	r.CheckRemoteItems(t, file1old)
-
-	err := operations.CopyFile(ctx, r.Fremote, r.Flocal, file1.Path, file1.Path)
-	require.NoError(t, err)
-	r.CheckLocalItems(t, file1)
-	file1old.Path = "backup/dst/file1"
-	r.CheckRemoteItems(t, file1old, file1)
-}
-
-// Test with CompareDest set
-func TestCopyFileCompareDest(t *testing.T) {
-	ctx := context.Background()
-	ctx, ci := fs.AddConfig(ctx)
-	r := fstest.NewRun(t)
-
-	ci.CompareDest = []string{r.FremoteName + "/CompareDest"}
-	fdst, err := fs.NewFs(ctx, r.FremoteName+"/dst")
-	require.NoError(t, err)
-
-	// check empty dest, empty compare
-	file1 := r.WriteFile("one", "one", t1)
-	r.CheckLocalItems(t, file1)
-
-	err = operations.CopyFile(ctx, fdst, r.Flocal, file1.Path, file1.Path)
-	require.NoError(t, err)
-
-	file1dst := file1
-	file1dst.Path = "dst/one"
-
-	r.CheckRemoteItems(t, file1dst)
-
-	// check old dest, empty compare
-	file1b := r.WriteFile("one", "onet2", t2)
-	r.CheckRemoteItems(t, file1dst)
-	r.CheckLocalItems(t, file1b)
-
-	err = operations.CopyFile(ctx, fdst, r.Flocal, file1b.Path, file1b.Path)
-	require.NoError(t, err)
-
-	file1bdst := file1b
-	file1bdst.Path = "dst/one"
-
-	r.CheckRemoteItems(t, file1bdst)
-
-	// check old dest, new compare
-	file3 := r.WriteObject(ctx, "dst/one", "one", t1)
-	file2 := r.WriteObject(ctx, "CompareDest/one", "onet2", t2)
-	file1c := r.WriteFile("one", "onet2", t2)
-	r.CheckRemoteItems(t, file2, file3)
-	r.CheckLocalItems(t, file1c)
-
-	err = operations.CopyFile(ctx, fdst, r.Flocal, file1c.Path, file1c.Path)
-	require.NoError(t, err)
-
-	r.CheckRemoteItems(t, file2, file3)
-
-	// check empty dest, new compare
-	file4 := r.WriteObject(ctx, "CompareDest/two", "two", t2)
-	file5 := r.WriteFile("two", "two", t2)
-	r.CheckRemoteItems(t, file2, file3, file4)
-	r.CheckLocalItems(t, file1c, file5)
-
-	err = operations.CopyFile(ctx, fdst, r.Flocal, file5.Path, file5.Path)
-	require.NoError(t, err)
-
-	r.CheckRemoteItems(t, file2, file3, file4)
-
-	// check new dest, new compare
-	err = operations.CopyFile(ctx, fdst, r.Flocal, file5.Path, file5.Path)
-	require.NoError(t, err)
-
-	r.CheckRemoteItems(t, file2, file3, file4)
-
-	// check empty dest, old compare
-	file5b := r.WriteFile("two", "twot3", t3)
-	r.CheckRemoteItems(t, file2, file3, file4)
-	r.CheckLocalItems(t, file1c, file5b)
-
-	err = operations.CopyFile(ctx, fdst, r.Flocal, file5b.Path, file5b.Path)
-	require.NoError(t, err)
-
-	file5bdst := file5b
-	file5bdst.Path = "dst/two"
-
-	r.CheckRemoteItems(t, file2, file3, file4, file5bdst)
-}
-
-// Test with CopyDest set
-func TestCopyFileCopyDest(t *testing.T) {
-	ctx := context.Background()
-	ctx, ci := fs.AddConfig(ctx)
-	r := fstest.NewRun(t)
-
-	if r.Fremote.Features().Copy == nil {
-		t.Skip("Skipping test as remote does not support server-side copy")
-	}
-
-	ci.CopyDest = []string{r.FremoteName + "/CopyDest"}
-
-	fdst, err := fs.NewFs(ctx, r.FremoteName+"/dst")
-	require.NoError(t, err)
-
-	// check empty dest, empty copy
-	file1 := r.WriteFile("one", "one", t1)
-	r.CheckLocalItems(t, file1)
-
-	err = operations.CopyFile(ctx, fdst, r.Flocal, file1.Path, file1.Path)
-	require.NoError(t, err)
-
-	file1dst := file1
-	file1dst.Path = "dst/one"
-
-	r.CheckRemoteItems(t, file1dst)
-
-	// check old dest, empty copy
-	file1b := r.WriteFile("one", "onet2", t2)
-	r.CheckRemoteItems(t, file1dst)
-	r.CheckLocalItems(t, file1b)
-
-	err = operations.CopyFile(ctx, fdst, r.Flocal, file1b.Path, file1b.Path)
-	require.NoError(t, err)
-
-	file1bdst := file1b
-	file1bdst.Path = "dst/one"
-
-	r.CheckRemoteItems(t, file1bdst)
-
-	// check old dest, new copy, backup-dir
-
-	ci.BackupDir = r.FremoteName + "/BackupDir"
-
-	file3 := r.WriteObject(ctx, "dst/one", "one", t1)
-	file2 := r.WriteObject(ctx, "CopyDest/one", "onet2", t2)
-	file1c := r.WriteFile("one", "onet2", t2)
-	r.CheckRemoteItems(t, file2, file3)
-	r.CheckLocalItems(t, file1c)
-
-	err = operations.CopyFile(ctx, fdst, r.Flocal, file1c.Path, file1c.Path)
-	require.NoError(t, err)
-
-	file2dst := file2
-	file2dst.Path = "dst/one"
-	file3.Path = "BackupDir/one"
-
-	r.CheckRemoteItems(t, file2, file2dst, file3)
-	ci.BackupDir = ""
-
-	// check empty dest, new copy
-	file4 := r.WriteObject(ctx, "CopyDest/two", "two", t2)
-	file5 := r.WriteFile("two", "two", t2)
-	r.CheckRemoteItems(t, file2, file2dst, file3, file4)
-	r.CheckLocalItems(t, file1c, file5)
-
-	err = operations.CopyFile(ctx, fdst, r.Flocal, file5.Path, file5.Path)
-	require.NoError(t, err)
-
-	file4dst := file4
-	file4dst.Path = "dst/two"
-
-	r.CheckRemoteItems(t, file2, file2dst, file3, file4, file4dst)
-
-	// check new dest, new copy
-	err = operations.CopyFile(ctx, fdst, r.Flocal, file5.Path, file5.Path)
-	require.NoError(t, err)
-
-	r.CheckRemoteItems(t, file2, file2dst, file3, file4, file4dst)
-
-	// check empty dest, old copy
-	file6 := r.WriteObject(ctx, "CopyDest/three", "three", t2)
-	file7 := r.WriteFile("three", "threet3", t3)
-	r.CheckRemoteItems(t, file2, file2dst, file3, file4, file4dst, file6)
-	r.CheckLocalItems(t, file1c, file5, file7)
-
-	err = operations.CopyFile(ctx, fdst, r.Flocal, file7.Path, file7.Path)
-	require.NoError(t, err)
-
-	file7dst := file7
-	file7dst.Path = "dst/three"
-
-	r.CheckRemoteItems(t, file2, file2dst, file3, file4, file4dst, file6, file7dst)
 }
 
 // testFsInfo is for unit testing fs.Info
@@ -1276,11 +1161,13 @@ func TestOverlappingFilterCheckWithFilter(t *testing.T) {
 	ctx := context.Background()
 	fi, err := filter.NewFilter(nil)
 	require.NoError(t, err)
-	require.NoError(t, fi.Add(false, "*/exclude/"))
-	fi.Opt.ExcludeFile = []string{".ignore"}
+	require.NoError(t, fi.Add(false, "/exclude/"))
+	require.NoError(t, fi.Add(false, "/Exclude2/"))
+	require.NoError(t, fi.Add(true, "*"))
 	ctx = filter.ReplaceConfig(ctx, fi)
 
 	src := &testFs{testFsInfo{name: "name", root: "root"}}
+	src.features.CaseInsensitive = true
 	slash := string(os.PathSeparator) // native path separator
 	for _, test := range []struct {
 		name     string
@@ -1288,24 +1175,31 @@ func TestOverlappingFilterCheckWithFilter(t *testing.T) {
 		expected bool
 	}{
 		{"name", "root", true},
+		{"name", "ROOT", true}, // case insensitive is set
 		{"name", "/root", true},
 		{"name", "root/", true},
 		{"name", "root" + slash, true},
 		{"name", "root/exclude", false},
+		{"name", "root/Exclude2", false},
+		{"name", "root/include", true},
 		{"name", "root/exclude/", false},
+		{"name", "root/Exclude2/", false},
+		{"name", "root/exclude/sub", false},
+		{"name", "root/Exclude2/sub", false},
 		{"name", "/root/exclude/", false},
 		{"name", "root" + slash + "exclude", false},
 		{"name", "root" + slash + "exclude" + slash, false},
-		{"name", "root/.ignore", false},
-		{"name", "root" + slash + ".ignore", false},
 		{"namey", "root/include", false},
 		{"namey", "root/include/", false},
 		{"namey", "root" + slash + "include", false},
 		{"namey", "root" + slash + "include" + slash, false},
 	} {
 		dst := &testFs{testFsInfo{name: test.name, root: test.root}}
+		dst.features.CaseInsensitive = true
 		what := fmt.Sprintf("(%q,%q) vs (%q,%q)", src.name, src.root, dst.name, dst.root)
 		actual := operations.OverlappingFilterCheck(ctx, dst, src)
+		assert.Equal(t, test.expected, actual, what)
+		actual = operations.OverlappingFilterCheck(ctx, src, dst)
 		assert.Equal(t, test.expected, actual, what)
 	}
 }
@@ -1363,7 +1257,7 @@ func TestListFormat(t *testing.T) {
 	assert.Equal(t, "a:::b", list.Format(item1))
 
 	list.SetOutput(nil)
-	list.AddModTime()
+	list.AddModTime("")
 	assert.Equal(t, t1.Local().Format("2006-01-02 15:04:05"), list.Format(item0))
 
 	list.SetOutput(nil)
@@ -1395,7 +1289,7 @@ func TestListFormat(t *testing.T) {
 	assert.Equal(t, "1", list.Format(item0))
 
 	list.AddPath()
-	list.AddModTime()
+	list.AddModTime("")
 	list.SetDirSlash(true)
 	list.SetSeparator("__SEP__")
 	assert.Equal(t, "1__SEP__a__SEP__"+t1.Local().Format("2006-01-02 15:04:05"), list.Format(item0))
@@ -1418,7 +1312,7 @@ func TestListFormat(t *testing.T) {
 	list.SetCSV(true)
 	list.AddSize()
 	list.AddPath()
-	list.AddModTime()
+	list.AddModTime("")
 	list.SetDirSlash(true)
 	assert.Equal(t, "1|a|"+t1.Local().Format("2006-01-02 15:04:05"), list.Format(item0))
 	assert.Equal(t, "-1|subdir/|"+t2.Local().Format("2006-01-02 15:04:05"), list.Format(item1))
@@ -1625,7 +1519,7 @@ func TestRcatMetadata(t *testing.T) {
 		gotMeta, err := fs.GetMetadata(ctx, o)
 		require.NoError(t, err)
 		// Check the specific user data we set is set
-		// Likey there will be other values
+		// Likely there will be other values
 		assert.Equal(t, "value", gotMeta["key"])
 		assert.Equal(t, "potato", gotMeta["sausage"])
 
@@ -1712,77 +1606,10 @@ func TestRcatSizeMetadata(t *testing.T) {
 		gotMeta, err := fs.GetMetadata(ctx, o)
 		require.NoError(t, err)
 		// Check the specific user data we set is set
-		// Likey there will be other values
+		// Likely there will be other values
 		assert.Equal(t, "value", gotMeta["key"])
 		assert.Equal(t, "potato", gotMeta["sausage"])
 	}
-}
-
-func TestCopyFileMaxTransfer(t *testing.T) {
-	ctx := context.Background()
-	ctx, ci := fs.AddConfig(ctx)
-	r := fstest.NewRun(t)
-	defer accounting.Stats(ctx).ResetCounters()
-
-	const sizeCutoff = 2048
-
-	// Make random incompressible data
-	randomData := make([]byte, sizeCutoff)
-	_, err := rand.Read(randomData)
-	require.NoError(t, err)
-	randomString := string(randomData)
-
-	file1 := r.WriteFile("TestCopyFileMaxTransfer/file1", "file1 contents", t1)
-	file2 := r.WriteFile("TestCopyFileMaxTransfer/file2", "file2 contents"+randomString, t2)
-	file3 := r.WriteFile("TestCopyFileMaxTransfer/file3", "file3 contents"+randomString, t2)
-	file4 := r.WriteFile("TestCopyFileMaxTransfer/file4", "file4 contents"+randomString, t2)
-
-	// Cutoff mode: Hard
-	ci.MaxTransfer = sizeCutoff
-	ci.CutoffMode = fs.CutoffModeHard
-
-	// file1: Show a small file gets transferred OK
-	accounting.Stats(ctx).ResetCounters()
-	err = operations.CopyFile(ctx, r.Fremote, r.Flocal, file1.Path, file1.Path)
-	require.NoError(t, err)
-	r.CheckLocalItems(t, file1, file2, file3, file4)
-	r.CheckRemoteItems(t, file1)
-
-	// file2: show a large file does not get transferred
-	accounting.Stats(ctx).ResetCounters()
-	err = operations.CopyFile(ctx, r.Fremote, r.Flocal, file2.Path, file2.Path)
-	require.NotNil(t, err, "Did not get expected max transfer limit error")
-	assert.Contains(t, err.Error(), "max transfer limit reached")
-	assert.True(t, fserrors.IsFatalError(err), fmt.Sprintf("Not fatal error: %v: %#v:", err, err))
-	r.CheckLocalItems(t, file1, file2, file3, file4)
-	r.CheckRemoteItems(t, file1)
-
-	// Cutoff mode: Cautious
-	ci.CutoffMode = fs.CutoffModeCautious
-
-	// file3: show a large file does not get transferred
-	accounting.Stats(ctx).ResetCounters()
-	err = operations.CopyFile(ctx, r.Fremote, r.Flocal, file3.Path, file3.Path)
-	require.NotNil(t, err)
-	assert.Contains(t, err.Error(), "max transfer limit reached")
-	assert.True(t, fserrors.IsNoRetryError(err))
-	r.CheckLocalItems(t, file1, file2, file3, file4)
-	r.CheckRemoteItems(t, file1)
-
-	if strings.HasPrefix(r.Fremote.Name(), "TestChunker") {
-		t.Log("skipping remainder of test for chunker as it involves multiple transfers")
-		return
-	}
-
-	// Cutoff mode: Soft
-	ci.CutoffMode = fs.CutoffModeSoft
-
-	// file4: show a large file does get transferred this time
-	accounting.Stats(ctx).ResetCounters()
-	err = operations.CopyFile(ctx, r.Fremote, r.Flocal, file4.Path, file4.Path)
-	require.NoError(t, err)
-	r.CheckLocalItems(t, file1, file2, file3, file4)
-	r.CheckRemoteItems(t, file1, file4)
 }
 
 func TestTouchDir(t *testing.T) {
@@ -1798,6 +1625,7 @@ func TestTouchDir(t *testing.T) {
 	file3 := r.WriteBoth(ctx, "sub dir/potato3", "hello", t2)
 	r.CheckRemoteItems(t, file1, file2, file3)
 
+	accounting.GlobalStats().ResetCounters()
 	timeValue := time.Date(2010, 9, 8, 7, 6, 5, 4, time.UTC)
 	err := operations.TouchDir(ctx, r.Fremote, "", timeValue, true)
 	require.NoError(t, err)

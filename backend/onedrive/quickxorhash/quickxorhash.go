@@ -61,7 +61,7 @@ func New() hash.Hash {
 func (q *quickXorHash) Write(p []byte) (n int, err error) {
 	var i int
 	// fill last remain
-	lastRemain := int(q.size) % dataSize
+	lastRemain := q.size % dataSize
 	if lastRemain != 0 {
 		i += xorBytes(q.data[lastRemain:], p)
 	}

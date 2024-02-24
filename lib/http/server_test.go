@@ -14,9 +14,23 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func testEmptyHandler() http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
+}
+
 func testEchoHandler(data []byte) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		_, _ = w.Write(data)
+	})
+}
+
+func testAuthUserHandler() http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		userID, ok := CtxGetUser(r.Context())
+		if !ok {
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		}
+		_, _ = w.Write([]byte(userID))
 	})
 }
 
@@ -71,8 +85,6 @@ func TestNewServerUnix(t *testing.T) {
 	}()
 
 	require.Empty(t, s.URLs(), "unix socket should not appear in URLs")
-
-	s.Router().Use(MiddlewareCORS(""))
 
 	expected := []byte("hello world")
 	s.Router().Mount("/", testEchoHandler(expected))
@@ -234,19 +246,22 @@ func TestNewServerBaseURL(t *testing.T) {
 }
 
 func TestNewServerTLS(t *testing.T) {
-	certBytes := testReadTestdataFile(t, "local.crt")
-	keyBytes := testReadTestdataFile(t, "local.key")
+	serverCertBytes := testReadTestdataFile(t, "local.crt")
+	serverKeyBytes := testReadTestdataFile(t, "local.key")
+	clientCertBytes := testReadTestdataFile(t, "client.crt")
+	clientKeyBytes := testReadTestdataFile(t, "client.key")
+	clientCert, err := tls.X509KeyPair(clientCertBytes, clientKeyBytes)
+	require.NoError(t, err)
 
 	// TODO: generate a proper cert with SAN
-	// TODO: generate CA, test mTLS
-	// clientCert, err := tls.X509KeyPair(certBytes, keyBytes)
-	// require.NoError(t, err, "should be testing with a valid self signed certificate")
 
 	servers := []struct {
-		name    string
-		wantErr bool
-		err     error
-		http    Config
+		name          string
+		clientCerts   []tls.Certificate
+		wantErr       bool
+		wantClientErr bool
+		err           error
+		http          Config
 	}{
 		{
 			name: "FromFile/Valid",
@@ -303,8 +318,8 @@ func TestNewServerTLS(t *testing.T) {
 			name: "FromBody/Valid",
 			http: Config{
 				ListenAddr:    []string{"127.0.0.1:0"},
-				TLSCertBody:   certBytes,
-				TLSKeyBody:    keyBytes,
+				TLSCertBody:   serverCertBytes,
+				TLSKeyBody:    serverKeyBytes,
 				MinTLSVersion: "tls1.0",
 			},
 		},
@@ -315,7 +330,7 @@ func TestNewServerTLS(t *testing.T) {
 			http: Config{
 				ListenAddr:    []string{"127.0.0.1:0"},
 				TLSCertBody:   nil,
-				TLSKeyBody:    keyBytes,
+				TLSKeyBody:    serverKeyBytes,
 				MinTLSVersion: "tls1.0",
 			},
 		},
@@ -325,7 +340,7 @@ func TestNewServerTLS(t *testing.T) {
 			http: Config{
 				ListenAddr:    []string{"127.0.0.1:0"},
 				TLSCertBody:   []byte("JUNK DATA"),
-				TLSKeyBody:    keyBytes,
+				TLSKeyBody:    serverKeyBytes,
 				MinTLSVersion: "tls1.0",
 			},
 		},
@@ -335,7 +350,7 @@ func TestNewServerTLS(t *testing.T) {
 			err:     ErrTLSBodyMismatch,
 			http: Config{
 				ListenAddr:    []string{"127.0.0.1:0"},
-				TLSCertBody:   certBytes,
+				TLSCertBody:   serverCertBytes,
 				TLSKeyBody:    nil,
 				MinTLSVersion: "tls1.0",
 			},
@@ -345,7 +360,7 @@ func TestNewServerTLS(t *testing.T) {
 			wantErr: true,
 			http: Config{
 				ListenAddr:    []string{"127.0.0.1:0"},
-				TLSCertBody:   certBytes,
+				TLSCertBody:   serverCertBytes,
 				TLSKeyBody:    []byte("JUNK DATA"),
 				MinTLSVersion: "tls1.0",
 			},
@@ -354,8 +369,8 @@ func TestNewServerTLS(t *testing.T) {
 			name: "MinTLSVersion/Valid/1.1",
 			http: Config{
 				ListenAddr:    []string{"127.0.0.1:0"},
-				TLSCertBody:   certBytes,
-				TLSKeyBody:    keyBytes,
+				TLSCertBody:   serverCertBytes,
+				TLSKeyBody:    serverKeyBytes,
 				MinTLSVersion: "tls1.1",
 			},
 		},
@@ -363,8 +378,8 @@ func TestNewServerTLS(t *testing.T) {
 			name: "MinTLSVersion/Valid/1.2",
 			http: Config{
 				ListenAddr:    []string{"127.0.0.1:0"},
-				TLSCertBody:   certBytes,
-				TLSKeyBody:    keyBytes,
+				TLSCertBody:   serverCertBytes,
+				TLSKeyBody:    serverKeyBytes,
 				MinTLSVersion: "tls1.2",
 			},
 		},
@@ -372,8 +387,8 @@ func TestNewServerTLS(t *testing.T) {
 			name: "MinTLSVersion/Valid/1.3",
 			http: Config{
 				ListenAddr:    []string{"127.0.0.1:0"},
-				TLSCertBody:   certBytes,
-				TLSKeyBody:    keyBytes,
+				TLSCertBody:   serverCertBytes,
+				TLSKeyBody:    serverKeyBytes,
 				MinTLSVersion: "tls1.3",
 			},
 		},
@@ -383,9 +398,44 @@ func TestNewServerTLS(t *testing.T) {
 			err:     ErrInvalidMinTLSVersion,
 			http: Config{
 				ListenAddr:    []string{"127.0.0.1:0"},
-				TLSCertBody:   certBytes,
-				TLSKeyBody:    keyBytes,
+				TLSCertBody:   serverCertBytes,
+				TLSKeyBody:    serverKeyBytes,
 				MinTLSVersion: "tls0.9",
+			},
+		},
+		{
+			name:        "MutualTLS/InvalidCA",
+			clientCerts: []tls.Certificate{clientCert},
+			wantErr:     true,
+			http: Config{
+				ListenAddr:    []string{"127.0.0.1:0"},
+				TLSCertBody:   serverCertBytes,
+				TLSKeyBody:    serverKeyBytes,
+				MinTLSVersion: "tls1.0",
+				ClientCA:      "./testdata/client-ca.crt.invalid",
+			},
+		},
+		{
+			name:          "MutualTLS/InvalidClient",
+			clientCerts:   []tls.Certificate{},
+			wantClientErr: true,
+			http: Config{
+				ListenAddr:    []string{"127.0.0.1:0"},
+				TLSCertBody:   serverCertBytes,
+				TLSKeyBody:    serverKeyBytes,
+				MinTLSVersion: "tls1.0",
+				ClientCA:      "./testdata/client-ca.crt",
+			},
+		},
+		{
+			name:        "MutualTLS/Valid",
+			clientCerts: []tls.Certificate{clientCert},
+			http: Config{
+				ListenAddr:    []string{"127.0.0.1:0"},
+				TLSCertBody:   serverCertBytes,
+				TLSKeyBody:    serverKeyBytes,
+				MinTLSVersion: "tls1.0",
+				ClientCA:      "./testdata/client-ca.crt",
 			},
 		},
 	}
@@ -422,7 +472,7 @@ func TestNewServerTLS(t *testing.T) {
 						return net.Dial("tcp", dest)
 					},
 					TLSClientConfig: &tls.Config{
-						// Certificates: []tls.Certificate{clientCert},
+						Certificates:       ss.clientCerts,
 						InsecureSkipVerify: true,
 					},
 				},
@@ -431,6 +481,12 @@ func TestNewServerTLS(t *testing.T) {
 			require.NoError(t, err)
 
 			resp, err := client.Do(req)
+
+			if ss.wantClientErr {
+				require.Error(t, err, "new server client should return error")
+				return
+			}
+
 			require.NoError(t, err)
 			defer func() {
 				_ = resp.Body.Close()
@@ -440,5 +496,14 @@ func TestNewServerTLS(t *testing.T) {
 
 			testExpectRespBody(t, resp, expected)
 		})
+	}
+}
+
+func TestHelpPrefixServer(t *testing.T) {
+	// This test assumes template variables are placed correctly.
+	const testPrefix = "server-help-test"
+	helpMessage := Help(testPrefix)
+	if !strings.Contains(helpMessage, testPrefix) {
+		t.Fatal("flag prefix not found")
 	}
 }

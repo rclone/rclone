@@ -13,6 +13,7 @@ import (
 	"runtime"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 	"unicode/utf8"
 
@@ -145,6 +146,11 @@ time we:
 - Only checksum the size that stat gave
 - Don't update the stat info for the file
 
+**NB** do not use this flag on a Windows Volume Shadow (VSS). For some
+unknown reason, files in a VSS sometimes show different sizes from the
+directory listing (where the initial stat value comes from on Windows)
+and when stat is called on them directly. Other copy tools always use
+the direct stat value and setting this flag will disable that.
 `,
 			Default:  false,
 			Advanced: true,
@@ -243,7 +249,7 @@ type Fs struct {
 	precision      time.Duration       // precision of local filesystem
 	warnedMu       sync.Mutex          // used for locking access to 'warned'.
 	warned         map[string]struct{} // whether we have warned about this string
-	xattrSupported int32               // whether xattrs are supported (atomic access)
+	xattrSupported atomic.Int32        // whether xattrs are supported
 
 	// do os.Lstat or os.Stat
 	lstat        func(name string) (os.FileInfo, error)
@@ -266,7 +272,10 @@ type Object struct {
 
 // ------------------------------------------------------------
 
-var errLinksAndCopyLinks = errors.New("can't use -l/--links with -L/--copy-links")
+var (
+	errLinksAndCopyLinks = errors.New("can't use -l/--links with -L/--copy-links")
+	errLinksNeedsSuffix  = errors.New("need \"" + linkSuffix + "\" suffix to refer to symlink when using -l/--links")
+)
 
 // NewFs constructs an Fs from the path
 func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, error) {
@@ -288,7 +297,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		lstat:  os.Lstat,
 	}
 	if xattrSupported {
-		f.xattrSupported = 1
+		f.xattrSupported.Store(1)
 	}
 	f.root = cleanRootPath(root, f.opt.NoUNC, f.opt.Enc)
 	f.features = (&fs.Features{
@@ -300,6 +309,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		WriteMetadata:           true,
 		UserMetadata:            xattrSupported, // can only R/W general purpose metadata if xattrs are supported
 		FilterAware:             true,
+		PartialUploads:          true,
 	}).Fill(ctx, f)
 	if opt.FollowSymlinks {
 		f.lstat = os.Stat
@@ -310,7 +320,16 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	if err == nil {
 		f.dev = readDevice(fi, f.opt.OneFileSystem)
 	}
+	// Check to see if this is a .rclonelink if not found
+	hasLinkSuffix := strings.HasSuffix(f.root, linkSuffix)
+	if hasLinkSuffix && opt.TranslateSymlinks && os.IsNotExist(err) {
+		fi, err = f.lstat(strings.TrimSuffix(f.root, linkSuffix))
+	}
 	if err == nil && f.isRegular(fi.Mode()) {
+		// Handle the odd case, that a symlink was specified by name without the link suffix
+		if !hasLinkSuffix && opt.TranslateSymlinks && fi.Mode()&os.ModeSymlink != 0 {
+			return nil, errLinksNeedsSuffix
+		}
 		// It is a file, so use the parent as the root
 		f.root = filepath.Dir(f.root)
 		// return an error with an fs which points to the parent
@@ -503,7 +522,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 								continue
 							}
 						}
-						err = fmt.Errorf("failed to read directory %q: %w", namepath, fierr)
+						fierr = fmt.Errorf("failed to get info about directory entry %q: %w", namepath, fierr)
 						fs.Errorf(dir, "%v", fierr)
 						_ = accounting.Stats(ctx).Error(fserrors.NoRetryError(fierr)) // fail the sync
 						continue
@@ -524,6 +543,10 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 			if f.opt.FollowSymlinks && (mode&os.ModeSymlink) != 0 {
 				localPath := filepath.Join(fsDirPath, name)
 				fi, err = os.Stat(localPath)
+				// Quietly skip errors on excluded files and directories
+				if err != nil && useFilter && !filter.IncludeRemote(newRemote) {
+					continue
+				}
 				if os.IsNotExist(err) || isCircularSymlinkError(err) {
 					// Skip bad symlinks and circular symlinks
 					err = fserrors.NoRetryError(fmt.Errorf("symlink: %w", err))
@@ -536,11 +559,6 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 				}
 				mode = fi.Mode()
 			}
-			// Don't include non directory if not included
-			// we leave directory filtering to the layer above
-			if useFilter && !fi.IsDir() && !filter.IncludeRemote(newRemote) {
-				continue
-			}
 			if fi.IsDir() {
 				// Ignore directories which are symlinks.  These are junction points under windows which
 				// are kind of a souped up symlink. Unix doesn't have directories which are symlinks.
@@ -552,6 +570,11 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 				// Check whether this link should be translated
 				if f.opt.TranslateSymlinks && fi.Mode()&os.ModeSymlink != 0 {
 					newRemote += linkSuffix
+				}
+				// Don't include non directory if not included
+				// we leave directory filtering to the layer above
+				if useFilter && !filter.IncludeRemote(newRemote) {
+					continue
 				}
 				fso, err := f.newObjectWithInfo(newRemote, fi)
 				if err != nil {
@@ -624,7 +647,13 @@ func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 //
 // If it isn't empty it will return an error
 func (f *Fs) Rmdir(ctx context.Context, dir string) error {
-	return os.Remove(f.localPath(dir))
+	localPath := f.localPath(dir)
+	if fi, err := os.Stat(localPath); err != nil {
+		return err
+	} else if !fi.IsDir() {
+		return fs.ErrorIsFile
+	}
+	return os.Remove(localPath)
 }
 
 // Precision of the file system
@@ -1099,6 +1128,12 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 		}
 	}
 
+	// Update the file info before we start reading
+	err = o.lstat()
+	if err != nil {
+		return nil, err
+	}
+
 	// If not checking updated then limit to current size.  This means if
 	// file is being extended, readers will read a o.Size() bytes rather
 	// than the new size making for a consistent upload.
@@ -1263,7 +1298,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	}
 
 	// Fetch and set metadata if --metadata is in use
-	meta, err := fs.GetMetadataOptions(ctx, src, options)
+	meta, err := fs.GetMetadataOptions(ctx, o.fs, src, options)
 	if err != nil {
 		return fmt.Errorf("failed to read metadata from source object: %w", err)
 	}
@@ -1412,6 +1447,10 @@ func cleanRootPath(s string, noUNC bool, enc encoder.MultiEncoder) string {
 	if runtime.GOOS == "windows" {
 		s = filepath.ToSlash(s)
 		vol := filepath.VolumeName(s)
+		if vol == `\\?` && len(s) >= 6 {
+			// `\\?\C:`
+			vol = s[:6]
+		}
 		s = vol + enc.FromStandardPath(s[len(vol):])
 		s = filepath.FromSlash(s)
 		if !noUNC {

@@ -13,9 +13,10 @@ import (
 
 const (
 	maxSizeForCopy             = 4768 * 1024 * 1024
-	minChunkSize               = fs.SizeSuffix(1024 * 1024 * 5)
-	defaultUploadCutoff        = fs.SizeSuffix(200 * 1024 * 1024)
+	maxUploadParts             = 10000
 	defaultUploadConcurrency   = 10
+	minChunkSize               = fs.SizeSuffix(5 * 1024 * 1024)
+	defaultUploadCutoff        = fs.SizeSuffix(200 * 1024 * 1024)
 	maxUploadCutoff            = fs.SizeSuffix(5 * 1024 * 1024 * 1024)
 	minSleep                   = 10 * time.Millisecond
 	defaultCopyTimeoutDuration = fs.Duration(time.Minute)
@@ -25,6 +26,7 @@ const (
 	userPrincipal     = "user_principal_auth"
 	instancePrincipal = "instance_principal_auth"
 	resourcePrincipal = "resource_principal_auth"
+	workloadIdentity  = "workload_identity_auth"
 	environmentAuth   = "env_auth"
 	noAuth            = "no_auth"
 
@@ -36,6 +38,8 @@ https://docs.oracle.com/en-us/iaas/Content/API/Concepts/sdkconfig.htm`
 each instance has its own identity, and authenticates using the certificates that are read from instance metadata. 
 https://docs.oracle.com/en-us/iaas/Content/Identity/Tasks/callingservicesfrominstances.htm`
 
+	workloadIdentityHelpText = `use workload identity to grant OCI Container Engine for Kubernetes workloads policy-driven access to OCI resources using OCI Identity and Access Management (IAM).
+https://docs.oracle.com/en-us/iaas/Content/ContEng/Tasks/contenggrantingworkloadaccesstoresources.htm`
 	resourcePrincipalHelpText = `use resource principals to make API calls`
 
 	environmentAuthHelpText = `automatically pickup the credentials from runtime(env), first one to provide auth wins`
@@ -55,12 +59,14 @@ type Options struct {
 	ConfigProfile        string               `config:"config_profile"`
 	UploadCutoff         fs.SizeSuffix        `config:"upload_cutoff"`
 	ChunkSize            fs.SizeSuffix        `config:"chunk_size"`
+	MaxUploadParts       int                  `config:"max_upload_parts"`
 	UploadConcurrency    int                  `config:"upload_concurrency"`
 	DisableChecksum      bool                 `config:"disable_checksum"`
 	CopyCutoff           fs.SizeSuffix        `config:"copy_cutoff"`
 	CopyTimeout          fs.Duration          `config:"copy_timeout"`
 	StorageTier          string               `config:"storage_tier"`
 	LeavePartsOnError    bool                 `config:"leave_parts_on_error"`
+	AttemptResumeUpload  bool                 `config:"attempt_resume_upload"`
 	NoCheckBucket        bool                 `config:"no_check_bucket"`
 	SSEKMSKeyID          string               `config:"sse_kms_key_id"`
 	SSECustomerAlgorithm string               `config:"sse_customer_algorithm"`
@@ -85,6 +91,9 @@ func newOptions() []fs.Option {
 			Value: instancePrincipal,
 			Help:  instancePrincipalHelpText,
 		}, {
+			Value: workloadIdentity,
+			Help:  workloadIdentityHelpText,
+		}, {
 			Value: resourcePrincipal,
 			Help:  resourcePrincipalHelpText,
 		}, {
@@ -92,14 +101,16 @@ func newOptions() []fs.Option {
 			Help:  noAuthHelpText,
 		}},
 	}, {
-		Name:     "namespace",
-		Help:     "Object storage namespace",
-		Required: true,
+		Name:      "namespace",
+		Help:      "Object storage namespace",
+		Required:  true,
+		Sensitive: true,
 	}, {
-		Name:     "compartment",
-		Help:     "Object storage compartment OCID",
-		Provider: "!no_auth",
-		Required: true,
+		Name:      "compartment",
+		Help:      "Object storage compartment OCID",
+		Provider:  "!no_auth",
+		Required:  true,
+		Sensitive: true,
 	}, {
 		Name:     "region",
 		Help:     "Object storage Region",
@@ -155,9 +166,8 @@ The minimum is 0 and the maximum is 5 GiB.`,
 		Help: `Chunk size to use for uploading.
 
 When uploading files larger than upload_cutoff or files with unknown
-size (e.g. from "rclone rcat" or uploaded with "rclone mount" or google
-photos or google docs) they will be uploaded as multipart uploads
-using this chunk size.
+size (e.g. from "rclone rcat" or uploaded with "rclone mount" they will be uploaded 
+as multipart uploads using this chunk size.
 
 Note that "upload_concurrency" chunks of this size are buffered
 in memory per transfer.
@@ -178,6 +188,20 @@ Increasing the chunk size decreases the accuracy of the progress
 statistics displayed with "-P" flag.
 `,
 		Default:  minChunkSize,
+		Advanced: true,
+	}, {
+		Name: "max_upload_parts",
+		Help: `Maximum number of parts in a multipart upload.
+
+This option defines the maximum number of multipart chunks to use
+when doing a multipart upload.
+
+OCI has max parts limit of 10,000 chunks.
+
+Rclone will automatically increase the chunk size when uploading a
+large file of a known size to stay below this number of chunks limit.
+`,
+		Default:  maxUploadParts,
 		Advanced: true,
 	}, {
 		Name: "upload_concurrency",
@@ -236,12 +260,24 @@ to start uploading.`,
 			encoder.EncodeDot,
 	}, {
 		Name: "leave_parts_on_error",
-		Help: `If true avoid calling abort upload on a failure, leaving all successfully uploaded parts on S3 for manual recovery.
+		Help: `If true avoid calling abort upload on a failure, leaving all successfully uploaded parts for manual recovery.
 
 It should be set to true for resuming uploads across different sessions.
 
 WARNING: Storing parts of an incomplete multipart upload counts towards space usage on object storage and will add
 additional costs if not cleaned up.
+`,
+		Default:  false,
+		Advanced: true,
+	}, {
+		Name: "attempt_resume_upload",
+		Help: `If true attempt to resume previously started multipart upload for the object.
+This will be helpful to speed up multipart transfers by resuming uploads from past session.
+
+WARNING: If chunk size differs in resumed session from past incomplete session, then the resumed multipart upload is 
+aborted and a new multipart upload is started with the new chunk size.
+
+The flag leave_parts_on_error must be true to resume and optimize to skip parts that were already uploaded successfully.
 `,
 		Default:  false,
 		Advanced: true,
@@ -289,7 +325,7 @@ Server-Side Encryption (https://docs.cloud.oracle.com/Content/Object/Tasks/using
 		}},
 	}, {
 		Name: "sse_kms_key_id",
-		Help: `if using using your own master key in vault, this header specifies the 
+		Help: `if using your own master key in vault, this header specifies the
 OCID (https://docs.cloud.oracle.com/Content/General/Concepts/identifiers.htm) of a master encryption key used to call
 the Key Management service to generate a data encryption key or to encrypt or decrypt a data encryption key.
 Please note only one of sse_customer_key_file|sse_customer_key|sse_kms_key_id is needed.`,

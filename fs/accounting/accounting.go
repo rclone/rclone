@@ -49,17 +49,18 @@ type Account struct {
 	// in http transport calls Read() after Do() returns on
 	// CancelRequest so this race can happen when it apparently
 	// shouldn't.
-	mu      sync.Mutex // mutex protects these values
-	in      io.Reader
-	ctx     context.Context // current context for transfer - may change
-	ci      *fs.ConfigInfo
-	origIn  io.ReadCloser
-	close   io.Closer
-	size    int64
-	name    string
-	closed  bool          // set if the file is closed
-	exit    chan struct{} // channel that will be closed when transfer is finished
-	withBuf bool          // is using a buffered in
+	mu       sync.Mutex // mutex protects these values
+	in       io.Reader
+	ctx      context.Context // current context for transfer - may change
+	ci       *fs.ConfigInfo
+	origIn   io.ReadCloser
+	close    io.Closer
+	size     int64
+	name     string
+	closed   bool          // set if the file is closed
+	exit     chan struct{} // channel that will be closed when transfer is finished
+	withBuf  bool          // is using a buffered in
+	checking bool          // set if attached transfer is checking
 
 	tokenBucket buckets // per file bandwidth limiter (may be nil)
 
@@ -272,10 +273,10 @@ func (acc *Account) checkReadAfter(bytesUntilLimit int64, n int, err error) (out
 	return n, err
 }
 
-// ServerSideCopyStart should be called at the start of a server-side copy
+// ServerSideTransferStart should be called at the start of a server-side transfer
 //
 // This pretends a transfer has started
-func (acc *Account) ServerSideCopyStart() {
+func (acc *Account) ServerSideTransferStart() {
 	acc.values.mu.Lock()
 	// Set start time.
 	if acc.values.start.IsZero() {
@@ -284,8 +285,9 @@ func (acc *Account) ServerSideCopyStart() {
 	acc.values.mu.Unlock()
 }
 
-// ServerSideCopyEnd accounts for a read of n bytes in a sever side copy
-func (acc *Account) ServerSideCopyEnd(n int64) {
+// ServerSideTransferEnd accounts for a read of n bytes in a sever
+// side transfer to be treated as a normal transfer.
+func (acc *Account) ServerSideTransferEnd(n int64) {
 	// Update Stats
 	acc.values.mu.Lock()
 	acc.values.bytes += n
@@ -294,10 +296,30 @@ func (acc *Account) ServerSideCopyEnd(n int64) {
 	acc.stats.Bytes(n)
 }
 
+// serverSideEnd accounts for non specific server side data
+func (acc *Account) serverSideEnd(n int64) {
+	// Account for bytes unless we are checking
+	if !acc.checking {
+		acc.stats.BytesNoNetwork(n)
+	}
+}
+
+// ServerSideCopyEnd accounts for a read of n bytes in a sever side copy
+func (acc *Account) ServerSideCopyEnd(n int64) {
+	acc.stats.AddServerSideCopy(n)
+	acc.serverSideEnd(n)
+}
+
+// ServerSideMoveEnd accounts for a read of n bytes in a sever side move
+func (acc *Account) ServerSideMoveEnd(n int64) {
+	acc.stats.AddServerSideMove(n)
+	acc.serverSideEnd(n)
+}
+
 // DryRun accounts for statistics without running the operation
 func (acc *Account) DryRun(n int64) {
-	acc.ServerSideCopyStart()
-	acc.ServerSideCopyEnd(n)
+	acc.ServerSideTransferStart()
+	acc.ServerSideTransferEnd(n)
 }
 
 // Account for n bytes from the current file bandwidth limit (if any)
@@ -517,9 +539,8 @@ func (acc *Account) String() string {
 	)
 }
 
-// rcStats produces remote control stats for this file
-func (acc *Account) rcStats() (out rc.Params) {
-	out = make(rc.Params)
+// rcStats adds remote control stats for this file
+func (acc *Account) rcStats(out rc.Params) {
 	a, b := acc.progress()
 	out["bytes"] = a
 	out["size"] = b
@@ -541,8 +562,6 @@ func (acc *Account) rcStats() (out rc.Params) {
 	}
 	out["percentage"] = percentageDone
 	out["group"] = acc.stats.group
-
-	return out
 }
 
 // OldStream returns the top io.Reader
@@ -620,4 +639,16 @@ func UnWrap(in io.Reader) (unwrapped io.Reader, wrap WrapFn) {
 		return in, func(r io.Reader) io.Reader { return r }
 	}
 	return acc.OldStream(), acc.WrapStream
+}
+
+// UnWrapAccounting unwraps a reader returning unwrapped and acc a
+// pointer to the accounting.
+//
+// The caller is expected to manage the accounting at this point.
+func UnWrapAccounting(in io.Reader) (unwrapped io.Reader, acc *Account) {
+	a, ok := in.(*accountStream)
+	if !ok {
+		return in, nil
+	}
+	return a.in, a.acc
 }

@@ -9,6 +9,7 @@ import (
 	"bytes"
 	"context"
 	"crypto/sha1"
+	"encoding/json"
 	"errors"
 	"fmt"
 	gohash "hash"
@@ -32,6 +33,7 @@ import (
 	"github.com/rclone/rclone/fs/walk"
 	"github.com/rclone/rclone/lib/bucket"
 	"github.com/rclone/rclone/lib/encoder"
+	"github.com/rclone/rclone/lib/multipart"
 	"github.com/rclone/rclone/lib/pacer"
 	"github.com/rclone/rclone/lib/pool"
 	"github.com/rclone/rclone/lib/rest"
@@ -57,9 +59,7 @@ const (
 	minChunkSize        = 5 * fs.Mebi
 	defaultChunkSize    = 96 * fs.Mebi
 	defaultUploadCutoff = 200 * fs.Mebi
-	largeFileCopyCutoff = 4 * fs.Gibi              // 5E9 is the max
-	memoryPoolFlushTime = fs.Duration(time.Minute) // flush the cached buffers after this long
-	memoryPoolUseMmap   = false
+	largeFileCopyCutoff = 4 * fs.Gibi // 5E9 is the max
 )
 
 // Globals
@@ -74,14 +74,17 @@ func init() {
 		Name:        "b2",
 		Description: "Backblaze B2",
 		NewFs:       NewFs,
+		CommandHelp: commandHelp,
 		Options: []fs.Option{{
-			Name:     "account",
-			Help:     "Account ID or Application Key ID.",
-			Required: true,
+			Name:      "account",
+			Help:      "Account ID or Application Key ID.",
+			Required:  true,
+			Sensitive: true,
 		}, {
-			Name:     "key",
-			Help:     "Application Key.",
-			Required: true,
+			Name:      "key",
+			Help:      "Application Key.",
+			Required:  true,
+			Sensitive: true,
 		}, {
 			Name:     "endpoint",
 			Help:     "Endpoint for the service.\n\nLeave blank normally.",
@@ -148,6 +151,18 @@ might a maximum of "--transfers" chunks in progress at once.
 			Default:  defaultChunkSize,
 			Advanced: true,
 		}, {
+			Name: "upload_concurrency",
+			Help: `Concurrency for multipart uploads.
+
+This is the number of chunks of the same file that are uploaded
+concurrently.
+
+Note that chunks are stored in memory and there may be up to
+"--transfers" * "--b2-upload-concurrency" chunks stored at once
+in memory.`,
+			Default:  4,
+			Advanced: true,
+		}, {
 			Name: "disable_checksum",
 			Help: `Disable checksums for large (> upload cutoff) files.
 
@@ -178,24 +193,52 @@ Example:
 			Advanced: true,
 		}, {
 			Name: "download_auth_duration",
-			Help: `Time before the authorization token will expire in s or suffix ms|s|m|h|d.
+			Help: `Time before the public link authorization token will expire in s or suffix ms|s|m|h|d.
 
-The duration before the download authorization token will expire.
+This is used in combination with "rclone link" for making files
+accessible to the public and sets the duration before the download
+authorization token will expire.
+
 The minimum value is 1 second. The maximum value is one week.`,
 			Default:  fs.Duration(7 * 24 * time.Hour),
 			Advanced: true,
 		}, {
 			Name:     "memory_pool_flush_time",
-			Default:  memoryPoolFlushTime,
+			Default:  fs.Duration(time.Minute),
 			Advanced: true,
-			Help: `How often internal memory buffer pools will be flushed.
-Uploads which requires additional buffers (f.e multipart) will use memory pool for allocations.
-This option controls how often unused buffers will be removed from the pool.`,
+			Hide:     fs.OptionHideBoth,
+			Help:     `How often internal memory buffer pools will be flushed. (no longer used)`,
 		}, {
 			Name:     "memory_pool_use_mmap",
-			Default:  memoryPoolUseMmap,
+			Default:  false,
 			Advanced: true,
-			Help:     `Whether to use mmap buffers in internal memory pool.`,
+			Hide:     fs.OptionHideBoth,
+			Help:     `Whether to use mmap buffers in internal memory pool. (no longer used)`,
+		}, {
+			Name: "lifecycle",
+			Help: `Set the number of days deleted files should be kept when creating a bucket.
+
+On bucket creation, this parameter is used to create a lifecycle rule
+for the entire bucket.
+
+If lifecycle is 0 (the default) it does not create a lifecycle rule so
+the default B2 behaviour applies. This is to create versions of files
+on delete and overwrite and to keep them indefinitely.
+
+If lifecycle is >0 then it creates a single rule setting the number of
+days before a file that is deleted or overwritten is deleted
+permanently. This is known as daysFromHidingToDeleting in the b2 docs.
+
+The minimum value for this parameter is 1 day.
+
+You can also enable hard_delete in the config also which will mean
+deletions won't cause versions but overwrites will still cause
+versions to be made.
+
+See: [rclone backend lifecycle](#lifecycle) for setting lifecycles after bucket creation.
+`,
+			Default:  0,
+			Advanced: true,
 		}, {
 			Name:     config.ConfigEncoding,
 			Help:     config.ConfigEncodingHelp,
@@ -222,11 +265,11 @@ type Options struct {
 	UploadCutoff                  fs.SizeSuffix        `config:"upload_cutoff"`
 	CopyCutoff                    fs.SizeSuffix        `config:"copy_cutoff"`
 	ChunkSize                     fs.SizeSuffix        `config:"chunk_size"`
+	UploadConcurrency             int                  `config:"upload_concurrency"`
 	DisableCheckSum               bool                 `config:"disable_checksum"`
 	DownloadURL                   string               `config:"download_url"`
 	DownloadAuthorizationDuration fs.Duration          `config:"download_auth_duration"`
-	MemoryPoolFlushTime           fs.Duration          `config:"memory_pool_flush_time"`
-	MemoryPoolUseMmap             bool                 `config:"memory_pool_use_mmap"`
+	Lifecycle                     int                  `config:"lifecycle"`
 	Enc                           encoder.MultiEncoder `config:"encoding"`
 }
 
@@ -251,7 +294,6 @@ type Fs struct {
 	authMu          sync.Mutex                             // lock for authorizing the account
 	pacer           *fs.Pacer                              // To pace and retry the API calls
 	uploadToken     *pacer.TokenDispenser                  // control concurrency
-	pool            *pool.Pool                             // memory pool
 }
 
 // Object describes a b2 object
@@ -361,11 +403,18 @@ func (f *Fs) shouldRetry(ctx context.Context, resp *http.Response, err error) (b
 
 // errorHandler parses a non 2xx error response into an error
 func errorHandler(resp *http.Response) error {
-	// Decode error response
-	errResponse := new(api.Error)
-	err := rest.DecodeJSON(resp, &errResponse)
+	body, err := rest.ReadBody(resp)
 	if err != nil {
-		fs.Debugf(nil, "Couldn't decode error response: %v", err)
+		fs.Errorf(nil, "Couldn't read error out of body: %v", err)
+		body = nil
+	}
+	// Decode error response if there was one - they can be blank
+	errResponse := new(api.Error)
+	if len(body) > 0 {
+		err = json.Unmarshal(body, errResponse)
+		if err != nil {
+			fs.Errorf(nil, "Couldn't decode error response: %v", err)
+		}
 	}
 	if errResponse.Code == "" {
 		errResponse.Code = "unknown"
@@ -405,6 +454,14 @@ func (f *Fs) setUploadCutoff(cs fs.SizeSuffix) (old fs.SizeSuffix, err error) {
 	err = checkUploadCutoff(&f.opt, cs)
 	if err == nil {
 		old, f.opt.UploadCutoff = f.opt.UploadCutoff, cs
+	}
+	return
+}
+
+func (f *Fs) setCopyCutoff(cs fs.SizeSuffix) (old fs.SizeSuffix, err error) {
+	err = checkUploadChunkSize(cs)
+	if err == nil {
+		old, f.opt.CopyCutoff = f.opt.CopyCutoff, cs
 	}
 	return
 }
@@ -456,19 +513,14 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		uploads:     make(map[string][]*api.GetUploadURLResponse),
 		pacer:       fs.NewPacer(ctx, pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant))),
 		uploadToken: pacer.NewTokenDispenser(ci.Transfers),
-		pool: pool.New(
-			time.Duration(opt.MemoryPoolFlushTime),
-			int(opt.ChunkSize),
-			ci.Transfers,
-			opt.MemoryPoolUseMmap,
-		),
 	}
 	f.setRoot(root)
 	f.features = (&fs.Features{
-		ReadMimeType:      true,
-		WriteMimeType:     true,
-		BucketBased:       true,
-		BucketBasedRootOK: true,
+		ReadMimeType:          true,
+		WriteMimeType:         true,
+		BucketBased:           true,
+		BucketBasedRootOK:     true,
+		ChunkWriterDoesntSeek: true,
 	}).Fill(ctx, f)
 	// Set the test flag if required
 	if opt.TestMode != "" {
@@ -595,23 +647,24 @@ func (f *Fs) clearUploadURL(bucketID string) {
 	f.uploadMu.Unlock()
 }
 
-// getBuf gets a buffer of f.opt.ChunkSize and an upload token
+// getRW gets a RW buffer and an upload token
 //
 // If noBuf is set then it just gets an upload token
-func (f *Fs) getBuf(noBuf bool) (buf []byte) {
+func (f *Fs) getRW(noBuf bool) (rw *pool.RW) {
 	f.uploadToken.Get()
 	if !noBuf {
-		buf = f.pool.Get()
+		rw = multipart.NewRW()
 	}
-	return buf
+	return rw
 }
 
-// putBuf returns a buffer to the memory pool and an upload token
+// putRW returns a RW buffer to the memory pool and returns an upload
+// token
 //
-// If noBuf is set then it just returns the upload token
-func (f *Fs) putBuf(buf []byte, noBuf bool) {
-	if !noBuf {
-		f.pool.Put(buf)
+// If buf is nil then it just returns the upload token
+func (f *Fs) putRW(rw *pool.RW) {
+	if rw != nil {
+		_ = rw.Close()
 	}
 	f.uploadToken.Put()
 }
@@ -818,7 +871,7 @@ func (f *Fs) listDir(ctx context.Context, bucket, directory, prefix string, addB
 
 // listBuckets returns all the buckets to out
 func (f *Fs) listBuckets(ctx context.Context) (entries fs.DirEntries, err error) {
-	err = f.listBucketsToFn(ctx, func(bucket *api.Bucket) error {
+	err = f.listBucketsToFn(ctx, "", func(bucket *api.Bucket) error {
 		d := fs.NewDir(bucket.Name, time.Time{})
 		entries = append(entries, d)
 		return nil
@@ -911,10 +964,13 @@ func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (
 type listBucketFn func(*api.Bucket) error
 
 // listBucketsToFn lists the buckets to the function supplied
-func (f *Fs) listBucketsToFn(ctx context.Context, fn listBucketFn) error {
+func (f *Fs) listBucketsToFn(ctx context.Context, bucketName string, fn listBucketFn) error {
 	var account = api.ListBucketsRequest{
 		AccountID: f.info.AccountID,
 		BucketID:  f.info.Allowed.BucketID,
+	}
+	if bucketName != "" && account.BucketID == "" {
+		account.BucketName = f.opt.Enc.FromStandardName(bucketName)
 	}
 
 	var response api.ListBucketsResponse
@@ -961,7 +1017,7 @@ func (f *Fs) getbucketType(ctx context.Context, bucket string) (bucketType strin
 	if bucketType != "" {
 		return bucketType, nil
 	}
-	err = f.listBucketsToFn(ctx, func(bucket *api.Bucket) error {
+	err = f.listBucketsToFn(ctx, bucket, func(bucket *api.Bucket) error {
 		// listBucketsToFn reads bucket Types
 		return nil
 	})
@@ -996,7 +1052,7 @@ func (f *Fs) getBucketID(ctx context.Context, bucket string) (bucketID string, e
 	if bucketID != "" {
 		return bucketID, nil
 	}
-	err = f.listBucketsToFn(ctx, func(bucket *api.Bucket) error {
+	err = f.listBucketsToFn(ctx, bucket, func(bucket *api.Bucket) error {
 		// listBucketsToFn sets IDs
 		return nil
 	})
@@ -1059,6 +1115,11 @@ func (f *Fs) makeBucket(ctx context.Context, bucket string) error {
 			AccountID: f.info.AccountID,
 			Name:      f.opt.Enc.FromStandardName(bucket),
 			Type:      "allPrivate",
+		}
+		if f.opt.Lifecycle > 0 {
+			request.LifecycleRules = []api.LifecycleRule{{
+				DaysFromHidingToDeleting: &f.opt.Lifecycle,
+			}}
 		}
 		var response api.Bucket
 		err := f.pacer.Call(func() (bool, error) {
@@ -1221,7 +1282,7 @@ func (f *Fs) purge(ctx context.Context, dir string, oldOnly bool) error {
 					fs.Errorf(object.Name, "Can't create object %v", err)
 					continue
 				}
-				tr := accounting.Stats(ctx).NewCheckingTransfer(oi)
+				tr := accounting.Stats(ctx).NewCheckingTransfer(oi, "deleting")
 				err = f.deleteByID(ctx, object.ID, object.Name)
 				checkErr(err)
 				tr.Done(ctx, err)
@@ -1235,7 +1296,7 @@ func (f *Fs) purge(ctx context.Context, dir string, oldOnly bool) error {
 			if err != nil {
 				fs.Errorf(object, "Can't create object %+v", err)
 			}
-			tr := accounting.Stats(ctx).NewCheckingTransfer(oi)
+			tr := accounting.Stats(ctx).NewCheckingTransfer(oi, "checking")
 			if oldOnly && last != remote {
 				// Check current version of the file
 				if object.Action == "hide" {
@@ -1280,7 +1341,7 @@ func (f *Fs) CleanUp(ctx context.Context) error {
 // If newInfo is nil then the metadata will be copied otherwise it
 // will be replaced with newInfo
 func (f *Fs) copy(ctx context.Context, dstObj *Object, srcObj *Object, newInfo *api.File) (err error) {
-	if srcObj.size >= int64(f.opt.CopyCutoff) {
+	if srcObj.size > int64(f.opt.CopyCutoff) {
 		if newInfo == nil {
 			newInfo, err = srcObj.getMetaData(ctx)
 			if err != nil {
@@ -1291,7 +1352,11 @@ func (f *Fs) copy(ctx context.Context, dstObj *Object, srcObj *Object, newInfo *
 		if err != nil {
 			return err
 		}
-		return up.Upload(ctx)
+		err = up.Copy(ctx)
+		if err != nil {
+			return err
+		}
+		return dstObj.decodeMetaDataFileInfo(up.info)
 	}
 
 	dstBucket, dstPath := dstObj.split()
@@ -1420,7 +1485,7 @@ func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, 
 	if err != nil {
 		return "", err
 	}
-	absPath := "/" + bucketPath
+	absPath := "/" + urlEncode(bucketPath)
 	link = RootURL + "/file/" + urlEncode(bucket) + absPath
 	bucketType, err := f.getbucketType(ctx, bucket)
 	if err != nil {
@@ -1859,11 +1924,11 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	if err != nil {
 		return err
 	}
-	if size == -1 {
+	if size < 0 {
 		// Check if the file is large enough for a chunked upload (needs to be at least two chunks)
-		buf := o.fs.getBuf(false)
+		rw := o.fs.getRW(false)
 
-		n, err := io.ReadFull(in, buf)
+		n, err := io.CopyN(rw, in, int64(o.fs.opt.ChunkSize))
 		if err == nil {
 			bufReader := bufio.NewReader(in)
 			in = bufReader
@@ -1874,26 +1939,34 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 			fs.Debugf(o, "File is big enough for chunked streaming")
 			up, err := o.fs.newLargeUpload(ctx, o, in, src, o.fs.opt.ChunkSize, false, nil)
 			if err != nil {
-				o.fs.putBuf(buf, false)
+				o.fs.putRW(rw)
 				return err
 			}
 			// NB Stream returns the buffer and token
-			return up.Stream(ctx, buf)
-		} else if err == io.EOF || err == io.ErrUnexpectedEOF {
+			err = up.Stream(ctx, rw)
+			if err != nil {
+				return err
+			}
+			return o.decodeMetaDataFileInfo(up.info)
+		} else if err == io.EOF {
 			fs.Debugf(o, "File has %d bytes, which makes only one chunk. Using direct upload.", n)
-			defer o.fs.putBuf(buf, false)
-			size = int64(n)
-			in = bytes.NewReader(buf[:n])
+			defer o.fs.putRW(rw)
+			size = n
+			in = rw
 		} else {
-			o.fs.putBuf(buf, false)
+			o.fs.putRW(rw)
 			return err
 		}
 	} else if size > int64(o.fs.opt.UploadCutoff) {
-		up, err := o.fs.newLargeUpload(ctx, o, in, src, o.fs.opt.ChunkSize, false, nil)
+		chunkWriter, err := multipart.UploadMultipart(ctx, src, in, multipart.UploadMultipartOptions{
+			Open:        o.fs,
+			OpenOptions: options,
+		})
 		if err != nil {
 			return err
 		}
-		return up.Upload(ctx)
+		up := chunkWriter.(*largeUpload)
+		return o.decodeMetaDataFileInfo(up.info)
 	}
 
 	modTime := src.ModTime(ctx)
@@ -2001,6 +2074,41 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	return o.decodeMetaDataFileInfo(&response)
 }
 
+// OpenChunkWriter returns the chunk size and a ChunkWriter
+//
+// Pass in the remote and the src object
+// You can also use options to hint at the desired chunk size
+func (f *Fs) OpenChunkWriter(ctx context.Context, remote string, src fs.ObjectInfo, options ...fs.OpenOption) (info fs.ChunkWriterInfo, writer fs.ChunkWriter, err error) {
+	// FIXME what if file is smaller than 1 chunk?
+	if f.opt.Versions {
+		return info, nil, errNotWithVersions
+	}
+	if f.opt.VersionAt.IsSet() {
+		return info, nil, errNotWithVersionAt
+	}
+	//size := src.Size()
+
+	// Temporary Object under construction
+	o := &Object{
+		fs:     f,
+		remote: remote,
+	}
+
+	bucket, _ := o.split()
+	err = f.makeBucket(ctx, bucket)
+	if err != nil {
+		return info, nil, err
+	}
+
+	info = fs.ChunkWriterInfo{
+		ChunkSize:   int64(f.opt.ChunkSize),
+		Concurrency: o.fs.opt.UploadConcurrency,
+		//LeavePartsOnError: o.fs.opt.LeavePartsOnError,
+	}
+	up, err := f.newLargeUpload(ctx, o, nil, src, f.opt.ChunkSize, false, nil)
+	return info, up, err
+}
+
 // Remove an object
 func (o *Object) Remove(ctx context.Context) error {
 	bucket, bucketPath := o.split()
@@ -2026,16 +2134,149 @@ func (o *Object) ID() string {
 	return o.id
 }
 
+var lifecycleHelp = fs.CommandHelp{
+	Name:  "lifecycle",
+	Short: "Read or set the lifecycle for a bucket",
+	Long: `This command can be used to read or set the lifecycle for a bucket.
+
+Usage Examples:
+
+To show the current lifecycle rules:
+
+    rclone backend lifecycle b2:bucket
+
+This will dump something like this showing the lifecycle rules.
+
+    [
+        {
+            "daysFromHidingToDeleting": 1,
+            "daysFromUploadingToHiding": null,
+            "fileNamePrefix": ""
+        }
+    ]
+
+If there are no lifecycle rules (the default) then it will just return [].
+
+To reset the current lifecycle rules:
+
+    rclone backend lifecycle b2:bucket -o daysFromHidingToDeleting=30
+    rclone backend lifecycle b2:bucket -o daysFromUploadingToHiding=5 -o daysFromHidingToDeleting=1
+
+This will run and then print the new lifecycle rules as above.
+
+Rclone only lets you set lifecycles for the whole bucket with the
+fileNamePrefix = "".
+
+You can't disable versioning with B2. The best you can do is to set
+the daysFromHidingToDeleting to 1 day. You can enable hard_delete in
+the config also which will mean deletions won't cause versions but
+overwrites will still cause versions to be made.
+
+    rclone backend lifecycle b2:bucket -o daysFromHidingToDeleting=1
+
+See: https://www.backblaze.com/docs/cloud-storage-lifecycle-rules
+`,
+	Opts: map[string]string{
+		"daysFromHidingToDeleting":  "After a file has been hidden for this many days it is deleted. 0 is off.",
+		"daysFromUploadingToHiding": "This many days after uploading a file is hidden",
+	},
+}
+
+func (f *Fs) lifecycleCommand(ctx context.Context, name string, arg []string, opt map[string]string) (out interface{}, err error) {
+	var newRule api.LifecycleRule
+	if daysStr := opt["daysFromHidingToDeleting"]; daysStr != "" {
+		days, err := strconv.Atoi(daysStr)
+		if err != nil {
+			return nil, fmt.Errorf("bad daysFromHidingToDeleting: %w", err)
+		}
+		newRule.DaysFromHidingToDeleting = &days
+	}
+	if daysStr := opt["daysFromUploadingToHiding"]; daysStr != "" {
+		days, err := strconv.Atoi(daysStr)
+		if err != nil {
+			return nil, fmt.Errorf("bad daysFromUploadingToHiding: %w", err)
+		}
+		newRule.DaysFromUploadingToHiding = &days
+	}
+	bucketName, _ := f.split("")
+	if bucketName == "" {
+		return nil, errors.New("bucket required")
+
+	}
+
+	var bucket *api.Bucket
+	if newRule.DaysFromHidingToDeleting != nil || newRule.DaysFromUploadingToHiding != nil {
+		bucketID, err := f.getBucketID(ctx, bucketName)
+		if err != nil {
+			return nil, err
+		}
+		opts := rest.Opts{
+			Method: "POST",
+			Path:   "/b2_update_bucket",
+		}
+		var request = api.UpdateBucketRequest{
+			ID:             bucketID,
+			AccountID:      f.info.AccountID,
+			LifecycleRules: []api.LifecycleRule{newRule},
+		}
+		var response api.Bucket
+		err = f.pacer.Call(func() (bool, error) {
+			resp, err := f.srv.CallJSON(ctx, &opts, &request, &response)
+			return f.shouldRetry(ctx, resp, err)
+		})
+		if err != nil {
+			return nil, err
+		}
+		bucket = &response
+	} else {
+		err = f.listBucketsToFn(ctx, bucketName, func(b *api.Bucket) error {
+			bucket = b
+			return nil
+		})
+		if err != nil {
+			return nil, err
+		}
+	}
+	if bucket == nil {
+		return nil, fs.ErrorDirNotFound
+	}
+	return bucket.LifecycleRules, nil
+}
+
+var commandHelp = []fs.CommandHelp{
+	lifecycleHelp,
+}
+
+// Command the backend to run a named command
+//
+// The command run is name
+// args may be used to read arguments from
+// opts may be used to read optional arguments from
+//
+// The result should be capable of being JSON encoded
+// If it is a string or a []string it will be shown to the user
+// otherwise it will be JSON encoded and shown to the user like that
+func (f *Fs) Command(ctx context.Context, name string, arg []string, opt map[string]string) (out interface{}, err error) {
+	switch name {
+	case "lifecycle":
+		return f.lifecycleCommand(ctx, name, arg, opt)
+	default:
+		return nil, fs.ErrorCommandNotFound
+	}
+}
+
 // Check the interfaces are satisfied
 var (
-	_ fs.Fs           = &Fs{}
-	_ fs.Purger       = &Fs{}
-	_ fs.Copier       = &Fs{}
-	_ fs.PutStreamer  = &Fs{}
-	_ fs.CleanUpper   = &Fs{}
-	_ fs.ListRer      = &Fs{}
-	_ fs.PublicLinker = &Fs{}
-	_ fs.Object       = &Object{}
-	_ fs.MimeTyper    = &Object{}
-	_ fs.IDer         = &Object{}
+	_ fs.Fs              = &Fs{}
+	_ fs.Purger          = &Fs{}
+	_ fs.Copier          = &Fs{}
+	_ fs.PutStreamer     = &Fs{}
+	_ fs.CleanUpper      = &Fs{}
+	_ fs.ListRer         = &Fs{}
+	_ fs.PublicLinker    = &Fs{}
+	_ fs.OpenChunkWriter = &Fs{}
+	_ fs.Commander       = &Fs{}
+	_ fs.Object          = &Object{}
+	_ fs.MimeTyper       = &Object{}
+	_ fs.IDer            = &Object{}
 )

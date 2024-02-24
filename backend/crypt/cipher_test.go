@@ -27,14 +27,14 @@ func TestNewNameEncryptionMode(t *testing.T) {
 		{"off", NameEncryptionOff, ""},
 		{"standard", NameEncryptionStandard, ""},
 		{"obfuscate", NameEncryptionObfuscated, ""},
-		{"potato", NameEncryptionOff, "Unknown file name encryption mode \"potato\""},
+		{"potato", NameEncryptionOff, "unknown file name encryption mode \"potato\""},
 	} {
 		actual, actualErr := NewNameEncryptionMode(test.in)
 		assert.Equal(t, actual, test.expected)
 		if test.expectedErr == "" {
 			assert.NoError(t, actualErr)
 		} else {
-			assert.Error(t, actualErr, test.expectedErr)
+			assert.EqualError(t, actualErr, test.expectedErr)
 		}
 	}
 }
@@ -405,6 +405,13 @@ func TestNonStandardEncryptFileName(t *testing.T) {
 	// Off mode
 	c, _ := newCipher(NameEncryptionOff, "", "", true, nil)
 	assert.Equal(t, "1/12/123.bin", c.EncryptFileName("1/12/123"))
+	// Off mode with custom suffix
+	c, _ = newCipher(NameEncryptionOff, "", "", true, nil)
+	c.setEncryptedSuffix(".jpg")
+	assert.Equal(t, "1/12/123.jpg", c.EncryptFileName("1/12/123"))
+	// Off mode with empty suffix
+	c.setEncryptedSuffix("none")
+	assert.Equal(t, "1/12/123", c.EncryptFileName("1/12/123"))
 	// Obfuscation mode
 	c, _ = newCipher(NameEncryptionObfuscated, "", "", true, nil)
 	assert.Equal(t, "49.6/99.23/150.890/53.!!lipps", c.EncryptFileName("1/12/123/!hello"))
@@ -483,21 +490,27 @@ func TestNonStandardDecryptFileName(t *testing.T) {
 			in             string
 			expected       string
 			expectedErr    error
+			customSuffix   string
 		}{
-			{NameEncryptionOff, true, "1/12/123.bin", "1/12/123", nil},
-			{NameEncryptionOff, true, "1/12/123.bix", "", ErrorNotAnEncryptedFile},
-			{NameEncryptionOff, true, ".bin", "", ErrorNotAnEncryptedFile},
-			{NameEncryptionOff, true, "1/12/123-v2001-02-03-040506-123.bin", "1/12/123-v2001-02-03-040506-123", nil},
-			{NameEncryptionOff, true, "1/12/123-v1970-01-01-010101-123-v2001-02-03-040506-123.bin", "1/12/123-v1970-01-01-010101-123-v2001-02-03-040506-123", nil},
-			{NameEncryptionOff, true, "1/12/123-v1970-01-01-010101-123-v2001-02-03-040506-123.txt.bin", "1/12/123-v1970-01-01-010101-123-v2001-02-03-040506-123.txt", nil},
-			{NameEncryptionObfuscated, true, "!.hello", "hello", nil},
-			{NameEncryptionObfuscated, true, "hello", "", ErrorNotAnEncryptedFile},
-			{NameEncryptionObfuscated, true, "161.\u00e4", "\u00a1", nil},
-			{NameEncryptionObfuscated, true, "160.\u03c2", "\u03a0", nil},
-			{NameEncryptionObfuscated, false, "1/12/123/53.!!lipps", "1/12/123/!hello", nil},
-			{NameEncryptionObfuscated, false, "1/12/123/53-v2001-02-03-040506-123.!!lipps", "1/12/123/!hello-v2001-02-03-040506-123", nil},
+			{NameEncryptionOff, true, "1/12/123.bin", "1/12/123", nil, ""},
+			{NameEncryptionOff, true, "1/12/123.bix", "", ErrorNotAnEncryptedFile, ""},
+			{NameEncryptionOff, true, ".bin", "", ErrorNotAnEncryptedFile, ""},
+			{NameEncryptionOff, true, "1/12/123-v2001-02-03-040506-123.bin", "1/12/123-v2001-02-03-040506-123", nil, ""},
+			{NameEncryptionOff, true, "1/12/123-v1970-01-01-010101-123-v2001-02-03-040506-123.bin", "1/12/123-v1970-01-01-010101-123-v2001-02-03-040506-123", nil, ""},
+			{NameEncryptionOff, true, "1/12/123-v1970-01-01-010101-123-v2001-02-03-040506-123.txt.bin", "1/12/123-v1970-01-01-010101-123-v2001-02-03-040506-123.txt", nil, ""},
+			{NameEncryptionOff, true, "1/12/123.jpg", "1/12/123", nil, ".jpg"},
+			{NameEncryptionOff, true, "1/12/123", "1/12/123", nil, "none"},
+			{NameEncryptionObfuscated, true, "!.hello", "hello", nil, ""},
+			{NameEncryptionObfuscated, true, "hello", "", ErrorNotAnEncryptedFile, ""},
+			{NameEncryptionObfuscated, true, "161.\u00e4", "\u00a1", nil, ""},
+			{NameEncryptionObfuscated, true, "160.\u03c2", "\u03a0", nil, ""},
+			{NameEncryptionObfuscated, false, "1/12/123/53.!!lipps", "1/12/123/!hello", nil, ""},
+			{NameEncryptionObfuscated, false, "1/12/123/53-v2001-02-03-040506-123.!!lipps", "1/12/123/!hello-v2001-02-03-040506-123", nil, ""},
 		} {
 			c, _ := newCipher(test.mode, "", "", test.dirNameEncrypt, enc)
+			if test.customSuffix != "" {
+				c.setEncryptedSuffix(test.customSuffix)
+			}
 			actual, actualErr := c.DecryptFileName(test.in)
 			what := fmt.Sprintf("Testing %q (mode=%v)", test.in, test.mode)
 			assert.Equal(t, test.expected, actual, what)
@@ -726,7 +739,7 @@ func TestNonceFromReader(t *testing.T) {
 	assert.Equal(t, nonce{'1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o'}, x)
 	buf = bytes.NewBufferString("123456789abcdefghijklmn")
 	err = x.fromReader(buf)
-	assert.Error(t, err, "short read of nonce")
+	assert.EqualError(t, err, "short read of nonce: EOF")
 }
 
 func TestNonceFromBuf(t *testing.T) {
@@ -1050,7 +1063,7 @@ func TestRandomSource(t *testing.T) {
 	_, _ = source.Read(buf)
 	sink = newRandomSource(1e8)
 	_, err = io.Copy(sink, source)
-	assert.Error(t, err, "Error in stream")
+	assert.EqualError(t, err, "Error in stream at 1")
 }
 
 type zeroes struct{}
@@ -1167,13 +1180,13 @@ func TestNewEncrypter(t *testing.T) {
 	fh, err := c.newEncrypter(z, nil)
 	assert.NoError(t, err)
 	assert.Equal(t, nonce{0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18}, fh.nonce)
-	assert.Equal(t, []byte{'R', 'C', 'L', 'O', 'N', 'E', 0x00, 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18}, fh.buf[:32])
+	assert.Equal(t, []byte{'R', 'C', 'L', 'O', 'N', 'E', 0x00, 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18}, (*fh.buf)[:32])
 
 	// Test error path
 	c.cryptoRand = bytes.NewBufferString("123456789abcdefghijklmn")
 	fh, err = c.newEncrypter(z, nil)
 	assert.Nil(t, fh)
-	assert.Error(t, err, "short read of nonce")
+	assert.EqualError(t, err, "short read of nonce: EOF")
 }
 
 // Test the stream returning 0, io.ErrUnexpectedEOF - this used to
@@ -1224,7 +1237,7 @@ func TestNewDecrypter(t *testing.T) {
 		cd := newCloseDetector(bytes.NewBuffer(file0[:i]))
 		fh, err = c.newDecrypter(cd)
 		assert.Nil(t, fh)
-		assert.Error(t, err, ErrorEncryptedFileTooShort.Error())
+		assert.EqualError(t, err, ErrorEncryptedFileTooShort.Error())
 		assert.Equal(t, 1, cd.closed)
 	}
 
@@ -1232,7 +1245,7 @@ func TestNewDecrypter(t *testing.T) {
 	cd = newCloseDetector(er)
 	fh, err = c.newDecrypter(cd)
 	assert.Nil(t, fh)
-	assert.Error(t, err, "potato")
+	assert.EqualError(t, err, "potato")
 	assert.Equal(t, 1, cd.closed)
 
 	// bad magic
@@ -1243,7 +1256,7 @@ func TestNewDecrypter(t *testing.T) {
 		cd := newCloseDetector(bytes.NewBuffer(file0copy))
 		fh, err := c.newDecrypter(cd)
 		assert.Nil(t, fh)
-		assert.Error(t, err, ErrorEncryptedBadMagic.Error())
+		assert.EqualError(t, err, ErrorEncryptedBadMagic.Error())
 		file0copy[i] ^= 0x1
 		assert.Equal(t, 1, cd.closed)
 	}
@@ -1495,8 +1508,10 @@ func TestDecrypterRead(t *testing.T) {
 		case i == fileHeaderSize:
 			// This would normally produce an error *except* on the first block
 			expectedErr = nil
+		case i <= fileHeaderSize+blockHeaderSize:
+			expectedErr = ErrorEncryptedFileBadHeader
 		default:
-			expectedErr = io.ErrUnexpectedEOF
+			expectedErr = ErrorEncryptedBadBlock
 		}
 		if expectedErr != nil {
 			assert.EqualError(t, err, expectedErr.Error(), what)
@@ -1514,7 +1529,7 @@ func TestDecrypterRead(t *testing.T) {
 	fh, err := c.newDecrypter(cd)
 	assert.NoError(t, err)
 	_, err = io.ReadAll(fh)
-	assert.Error(t, err, "potato")
+	assert.EqualError(t, err, "potato")
 	assert.Equal(t, 0, cd.closed)
 
 	// Test corrupting the input
@@ -1525,15 +1540,26 @@ func TestDecrypterRead(t *testing.T) {
 		file16copy[i] ^= 0xFF
 		fh, err := c.newDecrypter(io.NopCloser(bytes.NewBuffer(file16copy)))
 		if i < fileMagicSize {
-			assert.Error(t, err, ErrorEncryptedBadMagic.Error())
+			assert.EqualError(t, err, ErrorEncryptedBadMagic.Error())
 			assert.Nil(t, fh)
 		} else {
 			assert.NoError(t, err)
 			_, err = io.ReadAll(fh)
-			assert.Error(t, err, ErrorEncryptedFileBadHeader.Error())
+			assert.EqualError(t, err, ErrorEncryptedBadBlock.Error())
 		}
 		file16copy[i] ^= 0xFF
 	}
+
+	// Test that we can corrupt a byte and read zeroes if
+	// passBadBlocks is set
+	copy(file16copy, file16)
+	file16copy[len(file16copy)-1] ^= 0xFF
+	c.passBadBlocks = true
+	fh, err = c.newDecrypter(io.NopCloser(bytes.NewBuffer(file16copy)))
+	assert.NoError(t, err)
+	buf, err := io.ReadAll(fh)
+	assert.NoError(t, err)
+	assert.Equal(t, make([]byte, 16), buf)
 }
 
 func TestDecrypterClose(t *testing.T) {
@@ -1554,7 +1580,7 @@ func TestDecrypterClose(t *testing.T) {
 
 	// double close
 	err = fh.Close()
-	assert.Error(t, err, ErrorFileClosed.Error())
+	assert.EqualError(t, err, ErrorFileClosed.Error())
 	assert.Equal(t, 1, cd.closed)
 
 	// try again reading the file this time
@@ -1581,8 +1607,6 @@ func TestPutGetBlock(t *testing.T) {
 	block := c.getBlock()
 	c.putBlock(block)
 	c.putBlock(block)
-
-	assert.Panics(t, func() { c.putBlock(block[:len(block)-1]) })
 }
 
 func TestKey(t *testing.T) {

@@ -1098,27 +1098,6 @@ func (r *run) list(t *testing.T, f fs.Fs, remote string) ([]interface{}, error) 
 	return l, err
 }
 
-func (r *run) copyFile(t *testing.T, f fs.Fs, src, dst string) error {
-	in, err := os.Open(src)
-	if err != nil {
-		return err
-	}
-	defer func() {
-		_ = in.Close()
-	}()
-
-	out, err := os.Create(dst)
-	if err != nil {
-		return err
-	}
-	defer func() {
-		_ = out.Close()
-	}()
-
-	_, err = io.Copy(out, in)
-	return err
-}
-
 func (r *run) dirMove(t *testing.T, rootFs fs.Fs, src, dst string) error {
 	var err error
 

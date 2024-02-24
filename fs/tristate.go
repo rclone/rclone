@@ -70,3 +70,11 @@ func (t *Tristate) UnmarshalJSON(in []byte) error {
 	}
 	return nil
 }
+
+// MarshalJSON encodes it as a bool or nil for unset
+func (t *Tristate) MarshalJSON() ([]byte, error) {
+	if !t.Valid {
+		return json.Marshal(nil)
+	}
+	return json.Marshal(t.Value)
+}

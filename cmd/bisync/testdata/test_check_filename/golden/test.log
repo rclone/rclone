@@ -1,17 +1,40 @@
-(01)  : test check-filename
+[36m(01)  :[0m [34mtest check-filename[0m
 
 
-(02)  : test initial bisync
-(03)  : bisync resync
+[36m(02)  :[0m [34mtest initial bisync[0m
+[36m(03)  :[0m [34mbisync resync[0m
+INFO  : [2mSetting --ignore-listing-checksum as neither --checksum nor --compare checksum are set.[0m
+INFO  : Bisyncing with Comparison Settings:
+{
+"Modtime": true,
+"Size": true,
+"Checksum": false,
+"NoSlowHash": false,
+"SlowHashSyncOnly": false,
+"DownloadHash": false
+}
 INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
-INFO  : Copying unique Path2 files to Path1
-INFO  : Resynching Path1 to Path2
+INFO  : Copying Path2 files to Path1
+INFO  : - [34mPath2[0m    [35mResync is copying files to[0m         - [36mPath1[0m
+INFO  : - [36mPath1[0m    [35mResync is copying files to[0m         - [36mPath2[0m
 INFO  : Resync updating listings
-INFO  : Bisync successful
+INFO  : Validating listings for Path1 "{path1/}" vs Path2 "{path2/}"
+INFO  : [32mBisync successful[0m
 
-(04)  : test 1. see that check-access passes with the initial setup
-(05)  : bisync check-access check-filename=.chk_file
+[36m(04)  :[0m [34mtest 1. see that check-access passes with the initial setup[0m
+[36m(05)  :[0m [34mbisync check-access check-filename=.chk_file[0m
+INFO  : [2mSetting --ignore-listing-checksum as neither --checksum nor --compare checksum are set.[0m
+INFO  : Bisyncing with Comparison Settings:
+{
+"Modtime": true,
+"Size": true,
+"Checksum": false,
+"NoSlowHash": false,
+"SlowHashSyncOnly": false,
+"DownloadHash": false
+}
 INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Building Path1 and Path2 listings
 INFO  : Path1 checking for diffs
 INFO  : Path2 checking for diffs
 INFO  : Checking access health
@@ -19,37 +42,73 @@ INFO  : Found 2 matching ".chk_file" files on both paths
 INFO  : No changes found
 INFO  : Updating listings
 INFO  : Validating listings for Path1 "{path1/}" vs Path2 "{path2/}"
-INFO  : Bisync successful
-(06)  : copy-listings initial-pass
+INFO  : [32mBisync successful[0m
+[36m(06)  :[0m [34mcopy-listings initial-pass[0m
 
-(07)  : test 2. delete the remote subdir .chk_file, run sync. should fail critical.
-(08)  : delete-file {path2/}subdir/.chk_file
-(09)  : bisync check-access check-filename=.chk_file
+[36m(07)  :[0m [34mtest 2. delete the remote subdir .chk_file, run sync. should fail critical.[0m
+[36m(08)  :[0m [34mdelete-file {path2/}subdir/.chk_file[0m
+[36m(09)  :[0m [34mbisync check-access check-filename=.chk_file[0m
+INFO  : [2mSetting --ignore-listing-checksum as neither --checksum nor --compare checksum are set.[0m
+INFO  : Bisyncing with Comparison Settings:
+{
+"Modtime": true,
+"Size": true,
+"Checksum": false,
+"NoSlowHash": false,
+"SlowHashSyncOnly": false,
+"DownloadHash": false
+}
 INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Building Path1 and Path2 listings
 INFO  : Path1 checking for diffs
 INFO  : Path2 checking for diffs
-INFO  : - Path2    File was deleted                    - subdir/.chk_file
-INFO  : Path2:    1 changes:    0 new,    0 newer,    0 older,    1 deleted
+INFO  : - [34mPath2[0m    [35m[31mFile was deleted[0m[0m          - [36msubdir/.chk_file[0m
+INFO  : Path2:    1 changes: [32m   0 new[0m, [33m   0 modified[0m, [31m   1 deleted[0m
 INFO  : Checking access health
 ERROR : Access test failed: Path1 count 2, Path2 count 1 - .chk_file
-ERROR : -          Access test failed: Path1 file not found in Path2 - subdir/.chk_file
-ERROR : Bisync critical error: check file check failed
-ERROR : Bisync aborted. Must run --resync to recover.
+ERROR : - [34m[0m         [35mAccess test failed: Path1 file not found in Path2[0m - [36msubdir/.chk_file[0m
+ERROR : [31mBisync critical error: check file check failed[0m
+ERROR : [31mBisync aborted. Must run --resync to recover.[0m
 Bisync error: bisync aborted
-(10)  : move-listings path2-missing
+[36m(10)  :[0m [34mmove-listings path2-missing[0m
 
-(11)  : test 3. put the remote subdir .chk_file back, run resync.
-(12)  : copy-file {path1/}subdir/.chk_file {path2/}
-(13)  : bisync check-access resync check-filename=.chk_file
+[36m(11)  :[0m [34mtest 3. put the remote subdir .chk_file back, run resync.[0m
+[36m(12)  :[0m [34mcopy-file {path1/}subdir/.chk_file {path2/}subdir/[0m
+[36m(13)  :[0m [34mbisync check-access resync check-filename=.chk_file[0m
+INFO  : [2mSetting --ignore-listing-checksum as neither --checksum nor --compare checksum are set.[0m
+INFO  : Bisyncing with Comparison Settings:
+{
+"Modtime": true,
+"Size": true,
+"Checksum": false,
+"NoSlowHash": false,
+"SlowHashSyncOnly": false,
+"DownloadHash": false
+}
 INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
-INFO  : Copying unique Path2 files to Path1
-INFO  : Resynching Path1 to Path2
+INFO  : Copying Path2 files to Path1
+INFO  : Checking access health
+INFO  : Found 2 matching ".chk_file" files on both paths
+INFO  : - [34mPath2[0m    [35mResync is copying files to[0m         - [36mPath1[0m
+INFO  : - [36mPath1[0m    [35mResync is copying files to[0m         - [36mPath2[0m
 INFO  : Resync updating listings
-INFO  : Bisync successful
+INFO  : Validating listings for Path1 "{path1/}" vs Path2 "{path2/}"
+INFO  : [32mBisync successful[0m
 
-(14)  : test 4. run sync with check-access. should pass.
-(15)  : bisync check-access check-filename=.chk_file
+[36m(14)  :[0m [34mtest 4. run sync with check-access. should pass.[0m
+[36m(15)  :[0m [34mbisync check-access check-filename=.chk_file[0m
+INFO  : [2mSetting --ignore-listing-checksum as neither --checksum nor --compare checksum are set.[0m
+INFO  : Bisyncing with Comparison Settings:
+{
+"Modtime": true,
+"Size": true,
+"Checksum": false,
+"NoSlowHash": false,
+"SlowHashSyncOnly": false,
+"DownloadHash": false
+}
 INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Building Path1 and Path2 listings
 INFO  : Path1 checking for diffs
 INFO  : Path2 checking for diffs
 INFO  : Checking access health
@@ -57,4 +116,4 @@ INFO  : Found 2 matching ".chk_file" files on both paths
 INFO  : No changes found
 INFO  : Updating listings
 INFO  : Validating listings for Path1 "{path1/}" vs Path2 "{path2/}"
-INFO  : Bisync successful
+INFO  : [32mBisync successful[0m

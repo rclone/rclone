@@ -80,6 +80,14 @@ func (f *Fs) dbDump(ctx context.Context, full bool, root string) error {
 		}
 		root = fspath.JoinRootPath(remoteFs.Root(), f.Root())
 	}
+	if f.db == nil {
+		if f.opt.MaxAge == 0 {
+			fs.Errorf(f, "db not found. (disabled with max_age = 0)")
+		} else {
+			fs.Errorf(f, "db not found.")
+		}
+		return kv.ErrInactive
+	}
 	op := &kvDump{
 		full: full,
 		root: root,
@@ -161,7 +169,7 @@ func (f *Fs) dbImport(ctx context.Context, hashName, sumRemote string, sticky bo
 			if err := o.putHashes(ctx, hashMap{hashType: hash}); err != nil {
 				fs.Errorf(nil, "%s: failed to import: %v", remote, err)
 			}
-			accounting.Stats(ctx).NewCheckingTransfer(obj).Done(ctx, err)
+			accounting.Stats(ctx).NewCheckingTransfer(obj, "importing").Done(ctx, err)
 			doneCount++
 		}
 	})

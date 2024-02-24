@@ -23,6 +23,7 @@ import (
 	"github.com/rclone/rclone/fs/walk"
 	libhttp "github.com/rclone/rclone/lib/http"
 	"github.com/rclone/rclone/lib/http/serve"
+	"github.com/rclone/rclone/lib/systemd"
 	"github.com/rclone/rclone/lib/terminal"
 	"github.com/spf13/cobra"
 	"golang.org/x/net/http2"
@@ -47,14 +48,18 @@ var DefaultOpt = Options{
 // Opt is options set by command line flags
 var Opt = DefaultOpt
 
+// flagPrefix is the prefix used to uniquely identify command line flags.
+// It is intentionally empty for this package.
+const flagPrefix = ""
+
 func init() {
 	flagSet := Command.Flags()
-	libhttp.AddAuthFlagsPrefix(flagSet, "", &Opt.Auth)
-	libhttp.AddHTTPFlagsPrefix(flagSet, "", &Opt.HTTP)
-	flags.BoolVarP(flagSet, &Opt.Stdio, "stdio", "", false, "Run an HTTP2 server on stdin/stdout")
-	flags.BoolVarP(flagSet, &Opt.AppendOnly, "append-only", "", false, "Disallow deletion of repository data")
-	flags.BoolVarP(flagSet, &Opt.PrivateRepos, "private-repos", "", false, "Users can only access their private repo")
-	flags.BoolVarP(flagSet, &Opt.CacheObjects, "cache-objects", "", true, "Cache listed objects")
+	libhttp.AddAuthFlagsPrefix(flagSet, flagPrefix, &Opt.Auth)
+	libhttp.AddHTTPFlagsPrefix(flagSet, flagPrefix, &Opt.HTTP)
+	flags.BoolVarP(flagSet, &Opt.Stdio, "stdio", "", false, "Run an HTTP2 server on stdin/stdout", "")
+	flags.BoolVarP(flagSet, &Opt.AppendOnly, "append-only", "", false, "Disallow deletion of repository data", "")
+	flags.BoolVarP(flagSet, &Opt.PrivateRepos, "private-repos", "", false, "Users can only access their private repo", "")
+	flags.BoolVarP(flagSet, &Opt.CacheObjects, "cache-objects", "", true, "Cache listed objects", "")
 }
 
 // Command definition for cobra
@@ -142,7 +147,7 @@ these **must** end with /.  Eg
 
 The` + "`--private-repos`" + ` flag can be used to limit users to repositories starting
 with a path of ` + "`/<username>/`" + `.
-` + libhttp.Help + libhttp.AuthHelp,
+` + libhttp.Help(flagPrefix) + libhttp.AuthHelp(flagPrefix),
 	Annotations: map[string]string{
 		"versionIntroduced": "v1.40",
 	},
@@ -173,7 +178,10 @@ with a path of ` + "`/<username>/`" + `.
 				return nil
 			}
 			fs.Logf(s.f, "Serving restic REST API on %s", s.URLs())
+
+			defer systemd.Notify()()
 			s.Wait()
+
 			return nil
 		})
 	},
@@ -333,7 +341,11 @@ func (s *server) serveObject(w http.ResponseWriter, r *http.Request) {
 	o, err := s.newObject(r.Context(), remote)
 	if err != nil {
 		fs.Debugf(remote, "%s request error: %v", r.Method, err)
-		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+		if errors.Is(err, fs.ErrorObjectNotFound) {
+			http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+		} else {
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		}
 		return
 	}
 	serve.Object(w, r, o)
@@ -396,7 +408,7 @@ func (s *server) deleteObject(w http.ResponseWriter, r *http.Request) {
 
 	if err := o.Remove(r.Context()); err != nil {
 		fs.Errorf(remote, "Delete request remove error: %v", err)
-		if err == fs.ErrorObjectNotFound {
+		if errors.Is(err, fs.ErrorObjectNotFound) {
 			http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
 		} else {
 			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
@@ -458,7 +470,7 @@ func (s *server) listObjects(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		if !errors.Is(err, fs.ErrorDirNotFound) {
 			fs.Errorf(remote, "list failed: %#v %T", err, err)
-			http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			return
 		}
 	}

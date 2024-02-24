@@ -16,6 +16,7 @@ start() {
     echo host=$(docker_ip)
     echo user=$USER
     echo pass=$(rclone obscure $PASS)
+    echo copy_is_hardlink=true
     echo _connect=$(docker_ip):22
 }
 

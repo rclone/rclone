@@ -29,7 +29,7 @@ func NewPacer(ctx context.Context, c pacer.Calculator) *Pacer {
 	p := &Pacer{
 		Pacer: pacer.New(
 			pacer.InvokerOption(pacerInvoker),
-			pacer.MaxConnectionsOption(ci.Checkers+ci.Transfers),
+			// pacer.MaxConnectionsOption(ci.Checkers+ci.Transfers),
 			pacer.RetriesOption(retries),
 			pacer.CalculatorOption(c),
 		),
@@ -73,7 +73,7 @@ func (p *Pacer) SetCalculator(c pacer.Calculator) {
 // ModifyCalculator calls the given function with the currently configured
 // Calculator and the Pacer lock held.
 func (p *Pacer) ModifyCalculator(f func(pacer.Calculator)) {
-	p.ModifyCalculator(func(c pacer.Calculator) {
+	p.Pacer.ModifyCalculator(func(c pacer.Calculator) {
 		switch _c := c.(type) {
 		case *logCalculator:
 			f(_c.Calculator)

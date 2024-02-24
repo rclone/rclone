@@ -5,6 +5,7 @@ package local
 
 import (
 	"fmt"
+	"runtime"
 	"sync"
 	"time"
 
@@ -23,7 +24,7 @@ func (o *Object) readMetadataFromFile(m *fs.Metadata) (err error) {
 		// Check statx() is available as it was only introduced in kernel 4.11
 		// If not, fall back to fstatat() which was introduced in 2.6.16 which is guaranteed for all Go versions
 		var stat unix.Statx_t
-		if unix.Statx(unix.AT_FDCWD, ".", 0, unix.STATX_ALL, &stat) != unix.ENOSYS {
+		if runtime.GOOS != "android" && unix.Statx(unix.AT_FDCWD, ".", 0, unix.STATX_ALL, &stat) != unix.ENOSYS {
 			readMetadataFromFileFn = readMetadataFromFileStatx
 		} else {
 			readMetadataFromFileFn = readMetadataFromFileFstatat
@@ -91,7 +92,7 @@ func readMetadataFromFileFstatat(o *Object, m *fs.Metadata) (err error) {
 		// The types of t.Sec and t.Nsec vary from int32 to int64 on
 		// different Linux architectures so we need to cast them to
 		// int64 here and hence need to quiet the linter about
-		// unecessary casts.
+		// unnecessary casts.
 		//
 		// nolint: unconvert
 		m.Set(key, time.Unix(int64(t.Sec), int64(t.Nsec)).Format(metadataTimeFormat))

@@ -8,10 +8,13 @@ rclone.iml
 .idea
 .history
 *.test
-*.log
 *.iml
 fuzz-build.zip
 *.orig
 *.rej
 Thumbs.db
 __pycache__
+.DS_Store
+/docs/static/img/logos/
+resource_windows_*.syso
+.devcontainer

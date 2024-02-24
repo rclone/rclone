@@ -13,7 +13,6 @@ import (
 	"os"
 	"runtime"
 	"strings"
-	"sync/atomic"
 	"time"
 
 	"github.com/rclone/rclone/cmd/mountlib"
@@ -26,7 +25,7 @@ import (
 
 func init() {
 	name := "cmount"
-	cmountOnly := ProvidedBy(runtime.GOOS)
+	cmountOnly := runtime.GOOS != "linux" // rclone mount only works for linux
 	if cmountOnly {
 		name = "mount"
 	}
@@ -160,7 +159,11 @@ func mount(VFS *vfs.VFS, mountPath string, opt *mountlib.Options) (<-chan error,
 	fsys := NewFS(VFS)
 	host := fuse.NewFileSystemHost(fsys)
 	host.SetCapReaddirPlus(true) // only works on Windows
-	host.SetCapCaseInsensitive(f.Features().CaseInsensitive)
+	if opt.CaseInsensitive.Valid {
+		host.SetCapCaseInsensitive(opt.CaseInsensitive.Value)
+	} else {
+		host.SetCapCaseInsensitive(f.Features().CaseInsensitive)
+	}
 
 	// Create options
 	options := mountOptions(VFS, opt.DeviceName, mountpoint, opt)
@@ -188,7 +191,7 @@ func mount(VFS *vfs.VFS, mountPath string, opt *mountlib.Options) (<-chan error,
 		// Shutdown the VFS
 		fsys.VFS.Shutdown()
 		var umountOK bool
-		if atomic.LoadInt32(&fsys.destroyed) != 0 {
+		if fsys.destroyed.Load() != 0 {
 			fs.Debugf(nil, "Not calling host.Unmount as mount already Destroyed")
 			umountOK = true
 		} else if atexit.Signalled() {

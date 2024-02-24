@@ -3,7 +3,6 @@ package policy
 import (
 	"context"
 	"fmt"
-	"math/rand"
 	"path"
 	"strings"
 	"time"
@@ -109,9 +108,7 @@ func findEntry(ctx context.Context, f fs.Fs, remote string) fs.DirEntry {
 		if err != nil {
 			return nil
 		}
-		// random modtime for root
-		randomNow := time.Unix(time.Now().Unix()-rand.Int63n(10000), 0)
-		return fs.NewDir("", randomNow)
+		return fs.NewDir("", time.Time{})
 	}
 	found := false
 	for _, e := range entries {

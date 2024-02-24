@@ -15,7 +15,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/rclone/ftp"
+	"github.com/jlaffaye/ftp"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/accounting"
 	"github.com/rclone/rclone/fs/config"
@@ -28,6 +28,7 @@ import (
 	"github.com/rclone/rclone/lib/encoder"
 	"github.com/rclone/rclone/lib/env"
 	"github.com/rclone/rclone/lib/pacer"
+	"github.com/rclone/rclone/lib/proxy"
 	"github.com/rclone/rclone/lib/readers"
 )
 
@@ -48,13 +49,15 @@ func init() {
 		Description: "FTP",
 		NewFs:       NewFs,
 		Options: []fs.Option{{
-			Name:     "host",
-			Help:     "FTP host to connect to.\n\nE.g. \"ftp.example.com\".",
-			Required: true,
+			Name:      "host",
+			Help:      "FTP host to connect to.\n\nE.g. \"ftp.example.com\".",
+			Required:  true,
+			Sensitive: true,
 		}, {
-			Name:    "user",
-			Help:    "FTP username.",
-			Default: currentUser,
+			Name:      "user",
+			Help:      "FTP username.",
+			Default:   currentUser,
+			Sensitive: true,
 		}, {
 			Name:    "port",
 			Help:    "FTP port number.",
@@ -173,6 +176,18 @@ If this is set and no password is supplied then rclone will ask for a password
 `,
 			Advanced: true,
 		}, {
+			Name:    "socks_proxy",
+			Default: "",
+			Help: `Socks 5 proxy host.
+		
+		Supports the format user:pass@host:port, user@host:port, host:port.
+		
+		Example:
+		
+			myUser:myPass@localhost:9005
+		`,
+			Advanced: true,
+		}, {
 			Name:     config.ConfigEncoding,
 			Help:     config.ConfigEncodingHelp,
 			Advanced: true,
@@ -216,6 +231,7 @@ type Options struct {
 	ShutTimeout       fs.Duration          `config:"shut_timeout"`
 	AskPassword       bool                 `config:"ask_password"`
 	Enc               encoder.MultiEncoder `config:"encoding"`
+	SocksProxy        string               `config:"socks_proxy"`
 }
 
 // Fs represents a remote FTP server
@@ -233,7 +249,6 @@ type Fs struct {
 	pool     []*ftp.ServerConn
 	drain    *time.Timer // used to drain the pool when we stop using the connections
 	tokens   *pacer.TokenDispenser
-	tlsConf  *tls.Config
 	pacer    *fs.Pacer // pacer for FTP connections
 	fGetTime bool      // true if the ftp library accepts GetTime
 	fSetTime bool      // true if the ftp library accepts SetTime
@@ -315,25 +330,66 @@ func (dl *debugLog) Write(p []byte) (n int, err error) {
 	return len(p), nil
 }
 
+// Return a *textproto.Error if err contains one or nil otherwise
+func textprotoError(err error) (errX *textproto.Error) {
+	if errors.As(err, &errX) {
+		return errX
+	}
+	return nil
+}
+
+// returns true if this FTP error should be retried
+func isRetriableFtpError(err error) bool {
+	if errX := textprotoError(err); errX != nil {
+		switch errX.Code {
+		case ftp.StatusNotAvailable, ftp.StatusTransfertAborted:
+			return true
+		}
+	}
+	return false
+}
+
 // shouldRetry returns a boolean as to whether this err deserve to be
 // retried.  It returns the err as a convenience
 func shouldRetry(ctx context.Context, err error) (bool, error) {
 	if fserrors.ContextError(ctx, &err) {
 		return false, err
 	}
-	switch errX := err.(type) {
-	case *textproto.Error:
-		switch errX.Code {
-		case ftp.StatusNotAvailable:
-			return true, err
-		}
+	if isRetriableFtpError(err) {
+		return true, err
 	}
 	return fserrors.ShouldRetry(err), err
+}
+
+// Get a TLS config with a unique session cache.
+//
+// We can't share session caches between connections.
+//
+// See: https://github.com/rclone/rclone/issues/7234
+func (f *Fs) tlsConfig() *tls.Config {
+	var tlsConfig *tls.Config
+	if f.opt.TLS || f.opt.ExplicitTLS {
+		tlsConfig = &tls.Config{
+			ServerName:         f.opt.Host,
+			InsecureSkipVerify: f.opt.SkipVerifyTLSCert,
+		}
+		if f.opt.TLSCacheSize > 0 {
+			tlsConfig.ClientSessionCache = tls.NewLRUClientSessionCache(f.opt.TLSCacheSize)
+		}
+		if f.opt.DisableTLS13 {
+			tlsConfig.MaxVersion = tls.VersionTLS12
+		}
+	}
+	return tlsConfig
 }
 
 // Open a new connection to the FTP server.
 func (f *Fs) ftpConnection(ctx context.Context) (c *ftp.ServerConn, err error) {
 	fs.Debugf(f, "Connecting to FTP server")
+
+	// tls.Config for this connection only. Will be used for data
+	// and control connections.
+	tlsConfig := f.tlsConfig()
 
 	// Make ftp library dial with fshttp dialer optionally using TLS
 	initialConnection := true
@@ -342,12 +398,17 @@ func (f *Fs) ftpConnection(ctx context.Context) (c *ftp.ServerConn, err error) {
 		defer func() {
 			fs.Debugf(f, "> dial: conn=%T, err=%v", conn, err)
 		}()
-		conn, err = fshttp.NewDialer(ctx).Dial(network, address)
+		baseDialer := fshttp.NewDialer(ctx)
+		if f.opt.SocksProxy != "" {
+			conn, err = proxy.SOCKS5Dial(network, address, f.opt.SocksProxy, baseDialer)
+		} else {
+			conn, err = baseDialer.Dial(network, address)
+		}
 		if err != nil {
 			return nil, err
 		}
 		// Connect using cleartext only for non TLS
-		if f.tlsConf == nil {
+		if tlsConfig == nil {
 			return conn, nil
 		}
 		// Initial connection only needs to be cleartext for explicit TLS
@@ -356,7 +417,7 @@ func (f *Fs) ftpConnection(ctx context.Context) (c *ftp.ServerConn, err error) {
 			return conn, nil
 		}
 		// Upgrade connection to TLS
-		tlsConn := tls.Client(conn, f.tlsConf)
+		tlsConn := tls.Client(conn, tlsConfig)
 		// Do the initial handshake - tls.Client doesn't do it for us
 		// If we do this then connections to proftpd/pureftpd lock up
 		// See: https://github.com/rclone/rclone/issues/6426
@@ -378,9 +439,9 @@ func (f *Fs) ftpConnection(ctx context.Context) (c *ftp.ServerConn, err error) {
 	if f.opt.TLS {
 		// Our dialer takes care of TLS but ftp library also needs tlsConf
 		// as a trigger for sending PSBZ and PROT options to server.
-		ftpConfig = append(ftpConfig, ftp.DialWithTLS(f.tlsConf))
+		ftpConfig = append(ftpConfig, ftp.DialWithTLS(tlsConfig))
 	} else if f.opt.ExplicitTLS {
-		ftpConfig = append(ftpConfig, ftp.DialWithExplicitTLS(f.tlsConf))
+		ftpConfig = append(ftpConfig, ftp.DialWithExplicitTLS(tlsConfig))
 	}
 	if f.opt.DisableEPSV {
 		ftpConfig = append(ftpConfig, ftp.DialWithDisabledEPSV(true))
@@ -463,8 +524,7 @@ func (f *Fs) putFtpConnection(pc **ftp.ServerConn, err error) {
 	*pc = nil
 	if err != nil {
 		// If not a regular FTP error code then check the connection
-		var tpErr *textproto.Error
-		if !errors.As(err, &tpErr) {
+		if tpErr := textprotoError(err); tpErr != nil {
 			nopErr := c.NoOp()
 			if nopErr != nil {
 				fs.Debugf(f, "Connection failed, closing: %v", nopErr)
@@ -536,19 +596,6 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (ff fs.Fs
 	if opt.TLS && opt.ExplicitTLS {
 		return nil, errors.New("implicit TLS and explicit TLS are mutually incompatible, please revise your config")
 	}
-	var tlsConfig *tls.Config
-	if opt.TLS || opt.ExplicitTLS {
-		tlsConfig = &tls.Config{
-			ServerName:         opt.Host,
-			InsecureSkipVerify: opt.SkipVerifyTLSCert,
-		}
-		if opt.TLSCacheSize > 0 {
-			tlsConfig.ClientSessionCache = tls.NewLRUClientSessionCache(opt.TLSCacheSize)
-		}
-		if opt.DisableTLS13 {
-			tlsConfig.MaxVersion = tls.VersionTLS12
-		}
-	}
 	u := protocol + path.Join(dialAddr+"/", root)
 	ci := fs.GetConfig(ctx)
 	f := &Fs{
@@ -561,11 +608,11 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (ff fs.Fs
 		pass:     pass,
 		dialAddr: dialAddr,
 		tokens:   pacer.NewTokenDispenser(opt.Concurrency),
-		tlsConf:  tlsConfig,
 		pacer:    fs.NewPacer(ctx, pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant))),
 	}
 	f.features = (&fs.Features{
 		CanHaveEmptyDirectories: true,
+		PartialUploads:          true,
 	}).Fill(ctx, f)
 	// set the pool drainer timer going
 	if f.opt.IdleTimeout > 0 {
@@ -613,8 +660,7 @@ func (f *Fs) Shutdown(ctx context.Context) error {
 
 // translateErrorFile turns FTP errors into rclone errors if possible for a file
 func translateErrorFile(err error) error {
-	switch errX := err.(type) {
-	case *textproto.Error:
+	if errX := textprotoError(err); errX != nil {
 		switch errX.Code {
 		case ftp.StatusFileUnavailable, ftp.StatusFileActionIgnored:
 			err = fs.ErrorObjectNotFound
@@ -625,8 +671,7 @@ func translateErrorFile(err error) error {
 
 // translateErrorDir turns FTP errors into rclone errors if possible for a directory
 func translateErrorDir(err error) error {
-	switch errX := err.(type) {
-	case *textproto.Error:
+	if errX := textprotoError(err); errX != nil {
 		switch errX.Code {
 		case ftp.StatusFileUnavailable, ftp.StatusFileActionIgnored:
 			err = fs.ErrorDirNotFound
@@ -679,6 +724,12 @@ func (f *Fs) findItem(ctx context.Context, remote string) (entry *ftp.Entry, err
 			err = translateErrorFile(err)
 			if err == fs.ErrorObjectNotFound {
 				return nil, nil
+			}
+			if errX := textprotoError(err); errX != nil {
+				switch errX.Code {
+				case ftp.StatusBadArguments:
+					err = nil
+				}
 			}
 			return nil, err
 		}
@@ -917,9 +968,10 @@ func (f *Fs) mkdir(ctx context.Context, abspath string) error {
 	}
 	err = c.MakeDir(f.dirFromStandardPath(abspath))
 	f.putFtpConnection(&c, err)
-	switch errX := err.(type) {
-	case *textproto.Error:
+	if errX := textprotoError(err); errX != nil {
 		switch errX.Code {
+		case ftp.StatusRequestedFileActionOK: // some ftp servers apparently return 250 instead of 257
+			err = nil // see: https://forum.rclone.org/t/rclone-pop-up-an-i-o-error-when-creating-a-folder-in-a-mounted-ftp-drive/44368/
 		case ftp.StatusFileUnavailable: // dir already exists: see issue #2181
 			err = nil
 		case 521: // dir already exists: error number according to RFC 959: issue #2363
@@ -1087,7 +1139,7 @@ func (o *Object) ModTime(ctx context.Context) time.Time {
 // SetModTime sets the modification time of the object
 func (o *Object) SetModTime(ctx context.Context, modTime time.Time) error {
 	if !o.fs.fSetTime {
-		fs.Errorf(o.fs, "SetModTime is not supported")
+		fs.Debugf(o.fs, "SetModTime is not supported")
 		return nil
 	}
 	c, err := o.fs.getFtpConnection(ctx)
@@ -1159,8 +1211,7 @@ func (f *ftpReadCloser) Close() error {
 	// mask the error if it was caused by a premature close
 	// NB StatusAboutToSend is to work around a bug in pureftpd
 	// See: https://github.com/rclone/rclone/issues/3445#issuecomment-521654257
-	switch errX := err.(type) {
-	case *textproto.Error:
+	if errX := textprotoError(err); errX != nil {
 		switch errX.Code {
 		case ftp.StatusTransfertAborted, ftp.StatusFileUnavailable, ftp.StatusAboutToSend:
 			err = nil
@@ -1186,15 +1237,26 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (rc io.Read
 			}
 		}
 	}
-	c, err := o.fs.getFtpConnection(ctx)
+
+	var (
+		fd *ftp.Response
+		c  *ftp.ServerConn
+	)
+	err = o.fs.pacer.Call(func() (bool, error) {
+		c, err = o.fs.getFtpConnection(ctx)
+		if err != nil {
+			return false, err // getFtpConnection has retries already
+		}
+		fd, err = c.RetrFrom(o.fs.opt.Enc.FromStandardPath(path), uint64(offset))
+		if err != nil {
+			o.fs.putFtpConnection(&c, err)
+		}
+		return shouldRetry(ctx, err)
+	})
 	if err != nil {
 		return nil, fmt.Errorf("open: %w", err)
 	}
-	fd, err := c.RetrFrom(o.fs.opt.Enc.FromStandardPath(path), uint64(offset))
-	if err != nil {
-		o.fs.putFtpConnection(&c, err)
-		return nil, fmt.Errorf("open: %w", err)
-	}
+
 	rc = &ftpReadCloser{rc: readers.NewLimitedReadCloser(fd, limit), c: c, f: o.fs}
 	return rc, nil
 }
@@ -1227,13 +1289,10 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	}
 	err = c.Stor(o.fs.opt.Enc.FromStandardPath(path), in)
 	// Ignore error 250 here - send by some servers
-	if err != nil {
-		switch errX := err.(type) {
-		case *textproto.Error:
-			switch errX.Code {
-			case ftp.StatusRequestedFileActionOK:
-				err = nil
-			}
+	if errX := textprotoError(err); errX != nil {
+		switch errX.Code {
+		case ftp.StatusRequestedFileActionOK:
+			err = nil
 		}
 	}
 	if err != nil {

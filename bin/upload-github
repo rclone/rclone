@@ -26,7 +26,8 @@ echo "Making release ${VERSION} anchor ${ANCHOR} to repo ${REPO}"
 gh release create "${VERSION}" \
     --repo ${REPO} \
     --title "rclone ${VERSION}" \
-    --notes-file "/tmp/${VERSION}-release-notes"
+    --notes-file "/tmp/${VERSION}-release-notes" \
+    --draft=true
 
 for build in build/*; do
     case $build in
@@ -39,6 +40,10 @@ for build in build/*; do
         --repo ${REPO} \
         "${build}"
 done
+
+gh release edit "${VERSION}" \
+    --repo ${REPO} \
+    --draft=false
 
 gh release view "${VERSION}" \
     --repo ${REPO}

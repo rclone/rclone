@@ -121,8 +121,10 @@ func TestStatsGroupOperations(t *testing.T) {
 	})
 
 	testGroupStatsInfo := NewStatsGroup(ctx, "test-group")
-	testGroupStatsInfo.Deletes(1)
-	GlobalStats().Deletes(41)
+	require.NoError(t, testGroupStatsInfo.DeleteFile(ctx, 0))
+	for i := 0; i < 41; i++ {
+		require.NoError(t, GlobalStats().DeleteFile(ctx, 0))
+	}
 
 	t.Run("core/group-list", func(t *testing.T) {
 		call := rc.Calls.Get("core/group-list")

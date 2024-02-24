@@ -124,6 +124,8 @@ use.  This changes what type of token is granted to rclone.  [The
 scopes are defined
 here](https://developers.google.com/drive/v3/web/about-auth).
 
+A comma-separated list is allowed e.g. `drive.readonly,drive.file`.
+
 The scope are
 
 #### drive
@@ -227,12 +229,9 @@ There's a few steps we need to go through to accomplish this:
 [Google Developer Console](https://console.developers.google.com).
   - You must have a project - create one if you don't.
   - Then go to "IAM & admin" -> "Service Accounts".
-  - Use the "Create Credentials" button. Fill in "Service account name"
-with something that identifies your client. "Role" can be empty.
-  - Tick "Furnish a new private key" - select "Key type JSON".
-  - Tick "Enable G Suite Domain-wide Delegation". This option makes
-"impersonation" possible, as documented here:
-[Delegating domain-wide authority to the service account](https://developers.google.com/identity/protocols/OAuth2ServiceAccount#delegatingauthority)
+  - Use the "Create Service Account" button. Fill in "Service account name"
+and "Service account ID" with something that identifies your client.
+  - Select "Create And Continue". Step 2 and 3 are optional.
   - These credentials are what rclone will use for authentication.
 If you ever need to remove access, press the "Delete service
 account key" button.
@@ -362,9 +361,13 @@ large folder (10600 directories, 39000 files):
 - without `--fast-list`: 22:05 min
 - with `--fast-list`: 58s
 
-### Modified time
+### Modification times and hashes
 
 Google drive stores modification times accurate to 1 ms.
+
+Hash algorithms MD5, SHA1 and SHA256 are supported. Note, however,
+that a small fraction of files uploaded may not have SHA1 or SHA256
+hashes especially if they were uploaded before 2018.
 
 ### Restricted filename characters
 
@@ -406,7 +409,7 @@ like a symlink in unix, except they point to the underlying file data
 (e.g. the inode in unix terms) so they don't break if the source is
 renamed or moved about.
 
-Be default rclone treats these as follows.
+By default rclone treats these as follows.
 
 For shortcuts pointing to files:
 
@@ -585,7 +588,7 @@ Properties:
 
 #### --drive-scope
 
-Scope that rclone should use when requesting access from drive.
+Comma separated list of scopes that rclone should use when requesting access from drive.
 
 Properties:
 
@@ -773,15 +776,40 @@ Properties:
 - Type:        bool
 - Default:     false
 
+#### --drive-show-all-gdocs
+
+Show all Google Docs including non-exportable ones in listings.
+
+If you try a server side copy on a Google Form without this flag, you
+will get this error:
+
+    No export formats found for "application/vnd.google-apps.form"
+
+However adding this flag will allow the form to be server side copied.
+
+Note that rclone doesn't add extensions to the Google Docs file names
+in this mode.
+
+Do **not** use this flag when trying to download Google Docs - rclone
+will fail to download them.
+
+
+Properties:
+
+- Config:      show_all_gdocs
+- Env Var:     RCLONE_DRIVE_SHOW_ALL_GDOCS
+- Type:        bool
+- Default:     false
+
 #### --drive-skip-checksum-gphotos
 
-Skip MD5 checksum on Google photos and videos only.
+Skip checksums on Google photos and videos only.
 
 Use this if you get checksum errors when transferring Google photos or
 videos.
 
 Setting this flag will cause Google photos and videos to return a
-blank MD5 checksum.
+blank checksums.
 
 Google photos are identified by being in the "photos" space.
 
@@ -988,6 +1016,10 @@ as malware or spam and cannot be downloaded" with the error code
 indicate you acknowledge the risks of downloading the file and rclone
 will download it anyway.
 
+Note that if you are using service account it will need Manager
+permission (not Content Manager) to for this flag to work. If the SA
+does not have the right permission, Google will just ignore the flag.
+
 Properties:
 
 - Config:      acknowledge_abuse
@@ -1064,6 +1096,8 @@ Properties:
 - Default:     100
 
 #### --drive-server-side-across-configs
+
+Deprecated: use --server-side-across-configs instead.
 
 Allow server-side operations (e.g. copy) to work across different drive configs.
 
@@ -1191,7 +1225,7 @@ This resource key requirement only applies to a subset of old files.
 
 Note also that opening the folder once in the web interface (with the
 user you've authenticated rclone with) seems to be enough so that the
-resource key is no needed.
+resource key is not needed.
 
 
 Properties:
@@ -1200,6 +1234,126 @@ Properties:
 - Env Var:     RCLONE_DRIVE_RESOURCE_KEY
 - Type:        string
 - Required:    false
+
+#### --drive-fast-list-bug-fix
+
+Work around a bug in Google Drive listing.
+
+Normally rclone will work around a bug in Google Drive when using
+--fast-list (ListR) where the search "(A in parents) or (B in
+parents)" returns nothing sometimes. See #3114, #4289 and
+https://issuetracker.google.com/issues/149522397
+
+Rclone detects this by finding no items in more than one directory
+when listing and retries them as lists of individual directories.
+
+This means that if you have a lot of empty directories rclone will end
+up listing them all individually and this can take many more API
+calls.
+
+This flag allows the work-around to be disabled. This is **not**
+recommended in normal use - only if you have a particular case you are
+having trouble with like many empty directories.
+
+
+Properties:
+
+- Config:      fast_list_bug_fix
+- Env Var:     RCLONE_DRIVE_FAST_LIST_BUG_FIX
+- Type:        bool
+- Default:     true
+
+#### --drive-metadata-owner
+
+Control whether owner should be read or written in metadata.
+
+Owner is a standard part of the file metadata so is easy to read. But it
+isn't always desirable to set the owner from the metadata.
+
+Note that you can't set the owner on Shared Drives, and that setting
+ownership will generate an email to the new owner (this can't be
+disabled), and you can't transfer ownership to someone outside your
+organization.
+
+
+Properties:
+
+- Config:      metadata_owner
+- Env Var:     RCLONE_DRIVE_METADATA_OWNER
+- Type:        Bits
+- Default:     read
+- Examples:
+    - "off"
+        - Do not read or write the value
+    - "read"
+        - Read the value only
+    - "write"
+        - Write the value only
+    - "read,write"
+        - Read and Write the value.
+
+#### --drive-metadata-permissions
+
+Control whether permissions should be read or written in metadata.
+
+Reading permissions metadata from files can be done quickly, but it
+isn't always desirable to set the permissions from the metadata.
+
+Note that rclone drops any inherited permissions on Shared Drives and
+any owner permission on My Drives as these are duplicated in the owner
+metadata.
+
+
+Properties:
+
+- Config:      metadata_permissions
+- Env Var:     RCLONE_DRIVE_METADATA_PERMISSIONS
+- Type:        Bits
+- Default:     off
+- Examples:
+    - "off"
+        - Do not read or write the value
+    - "read"
+        - Read the value only
+    - "write"
+        - Write the value only
+    - "read,write"
+        - Read and Write the value.
+
+#### --drive-metadata-labels
+
+Control whether labels should be read or written in metadata.
+
+Reading labels metadata from files takes an extra API transaction and
+will slow down listings. It isn't always desirable to set the labels
+from the metadata.
+
+The format of labels is documented in the drive API documentation at
+https://developers.google.com/drive/api/reference/rest/v3/Label -
+rclone just provides a JSON dump of this format.
+
+When setting labels, the label and fields must already exist - rclone
+will not create them. This means that if you are transferring labels
+from two different accounts you will have to create the labels in
+advance and use the metadata mapper to translate the IDs between the
+two accounts.
+
+
+Properties:
+
+- Config:      metadata_labels
+- Env Var:     RCLONE_DRIVE_METADATA_LABELS
+- Type:        Bits
+- Default:     off
+- Examples:
+    - "off"
+        - Do not read or write the value
+    - "read"
+        - Read the value only
+    - "write"
+        - Write the value only
+    - "read,write"
+        - Read and Write the value.
 
 #### --drive-encoding
 
@@ -1211,8 +1365,49 @@ Properties:
 
 - Config:      encoding
 - Env Var:     RCLONE_DRIVE_ENCODING
-- Type:        MultiEncoder
+- Type:        Encoding
 - Default:     InvalidUtf8
+
+#### --drive-env-auth
+
+Get IAM credentials from runtime (environment variables or instance meta data if no env vars).
+
+Only applies if service_account_file and service_account_credentials is blank.
+
+Properties:
+
+- Config:      env_auth
+- Env Var:     RCLONE_DRIVE_ENV_AUTH
+- Type:        bool
+- Default:     false
+- Examples:
+    - "false"
+        - Enter credentials in the next step.
+    - "true"
+        - Get GCP IAM credentials from the environment (env vars or IAM).
+
+### Metadata
+
+User metadata is stored in the properties field of the drive object.
+
+Here are the possible system metadata items for the drive backend.
+
+| Name | Help | Type | Example | Read Only |
+|------|------|------|---------|-----------|
+| btime | Time of file birth (creation) with mS accuracy. Note that this is only writable on fresh uploads - it can't be written for updates. | RFC 3339 | 2006-01-02T15:04:05.999Z07:00 | N |
+| content-type | The MIME type of the file. | string | text/plain | N |
+| copy-requires-writer-permission | Whether the options to copy, print, or download this file, should be disabled for readers and commenters. | boolean | true | N |
+| description | A short description of the file. | string | Contract for signing | N |
+| folder-color-rgb | The color for a folder or a shortcut to a folder as an RGB hex string. | string | 881133 | N |
+| labels | Labels attached to this file in a JSON dump of Googled drive format. Enable with --drive-metadata-labels. | JSON | [] | N |
+| mtime | Time of last modification with mS accuracy. | RFC 3339 | 2006-01-02T15:04:05.999Z07:00 | N |
+| owner | The owner of the file. Usually an email address. Enable with --drive-metadata-owner. | string | user@example.com | N |
+| permissions | Permissions in a JSON dump of Google drive format. On shared drives these will only be present if they aren't inherited. Enable with --drive-metadata-permissions. | JSON | {} | N |
+| starred | Whether the user has starred the file. | boolean | false | N |
+| viewed-by-me | Whether the file has been viewed by this user. | boolean | true | **Y** |
+| writers-can-share | Whether users with only writer permission can modify the file's permissions. Not populated for items in shared drives. | boolean | false | N |
+
+See the [metadata](/docs/#metadata) docs for more info.
 
 ## Backend commands
 
@@ -1362,9 +1557,9 @@ This takes an optional directory to trash which make this easier to
 use via the API.
 
     rclone backend untrash drive:directory
-    rclone backend -i untrash drive:directory subdir
+    rclone backend --interactive untrash drive:directory subdir
 
-Use the -i flag to see what would be restored before restoring it.
+Use the --interactive/-i or --dry-run flag to see what would be restored before restoring it.
 
 Result:
 
@@ -1398,7 +1593,7 @@ component will be used as the file name.
 If the destination is a drive backend then server-side copying will be
 attempted if possible.
 
-Use the -i flag to see what would be copied before copying.
+Use the --interactive/-i or --dry-run flag to see what would be copied before copying.
 
 
 ### exportformats
@@ -1477,6 +1672,11 @@ Waiting a moderate period of time between attempts (estimated to be
 approximately 1 hour) and/or not using --fast-list both seem to be
 effective in preventing the problem.
 
+### SHA1 or SHA256 hashes may be missing
+
+All files have MD5 hashes, but a small fraction of files uploaded may
+not have SHA1 or SHA256 hashes especially if they were uploaded before 2018.
+
 ## Making your own client_id
 
 When you use rclone with Google drive in its default configuration you
@@ -1501,7 +1701,7 @@ be the same account as the Google Drive you want to access)
 "Google Drive API".
 
 4. Click "Credentials" in the left-side panel (not "Create
-credentials", which opens the wizard), then "Create credentials"
+credentials", which opens the wizard).
 
 5. If you already configured an "Oauth Consent Screen", then skip
 to the next step; if not, click on "CONFIGURE CONSENT SCREEN" button 

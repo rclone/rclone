@@ -26,6 +26,7 @@ func init() {
 	configCommand.AddCommand(configTouchCommand)
 	configCommand.AddCommand(configPathsCommand)
 	configCommand.AddCommand(configShowCommand)
+	configCommand.AddCommand(configRedactedCommand)
 	configCommand.AddCommand(configDumpCommand)
 	configCommand.AddCommand(configProvidersCommand)
 	configCommand.AddCommand(configCreateCommand)
@@ -60,7 +61,10 @@ var configEditCommand = &cobra.Command{
 	Annotations: map[string]string{
 		"versionIntroduced": "v1.39",
 	},
-	Run: configCommand.Run,
+	RunE: func(command *cobra.Command, args []string) error {
+		cmd.CheckArgs(0, 0, command, args)
+		return config.EditConfig(context.Background())
+	},
 }
 
 var configFileCommand = &cobra.Command{
@@ -115,6 +119,35 @@ var configShowCommand = &cobra.Command{
 			name := strings.TrimRight(args[0], ":")
 			config.ShowRemote(name)
 		}
+	},
+}
+
+var configRedactedCommand = &cobra.Command{
+	Use:   "redacted [<remote>]",
+	Short: `Print redacted (decrypted) config file, or the redacted config for a single remote.`,
+	Long: `This prints a redacted copy of the config file, either the
+whole config file or for a given remote.
+
+The config file will be redacted by replacing all passwords and other
+sensitive info with XXX.
+
+This makes the config file suitable for posting online for support.
+
+It should be double checked before posting as the redaction may not be perfect.
+
+`,
+	Annotations: map[string]string{
+		"versionIntroduced": "v1.64",
+	},
+	Run: func(command *cobra.Command, args []string) {
+		cmd.CheckArgs(0, 1, command, args)
+		if len(args) == 0 {
+			config.ShowRedactedConfig()
+		} else {
+			name := strings.TrimRight(args[0], ":")
+			config.ShowRedactedRemote(name)
+		}
+		fmt.Println("### Double check the config for sensitive info before posting publicly")
 	},
 }
 
@@ -288,13 +321,13 @@ func doConfig(name string, in rc.Params, do func(config.UpdateRemoteOpt) (*fs.Co
 
 func init() {
 	for _, cmdFlags := range []*pflag.FlagSet{configCreateCommand.Flags(), configUpdateCommand.Flags()} {
-		flags.BoolVarP(cmdFlags, &updateRemoteOpt.Obscure, "obscure", "", false, "Force any passwords to be obscured")
-		flags.BoolVarP(cmdFlags, &updateRemoteOpt.NoObscure, "no-obscure", "", false, "Force any passwords not to be obscured")
-		flags.BoolVarP(cmdFlags, &updateRemoteOpt.NonInteractive, "non-interactive", "", false, "Don't interact with user and return questions")
-		flags.BoolVarP(cmdFlags, &updateRemoteOpt.Continue, "continue", "", false, "Continue the configuration process with an answer")
-		flags.BoolVarP(cmdFlags, &updateRemoteOpt.All, "all", "", false, "Ask the full set of config questions")
-		flags.StringVarP(cmdFlags, &updateRemoteOpt.State, "state", "", "", "State - use with --continue")
-		flags.StringVarP(cmdFlags, &updateRemoteOpt.Result, "result", "", "", "Result - use with --continue")
+		flags.BoolVarP(cmdFlags, &updateRemoteOpt.Obscure, "obscure", "", false, "Force any passwords to be obscured", "Config")
+		flags.BoolVarP(cmdFlags, &updateRemoteOpt.NoObscure, "no-obscure", "", false, "Force any passwords not to be obscured", "Config")
+		flags.BoolVarP(cmdFlags, &updateRemoteOpt.NonInteractive, "non-interactive", "", false, "Don't interact with user and return questions", "Config")
+		flags.BoolVarP(cmdFlags, &updateRemoteOpt.Continue, "continue", "", false, "Continue the configuration process with an answer", "Config")
+		flags.BoolVarP(cmdFlags, &updateRemoteOpt.All, "all", "", false, "Ask the full set of config questions", "Config")
+		flags.StringVarP(cmdFlags, &updateRemoteOpt.State, "state", "", "", "State - use with --continue", "Config")
+		flags.StringVarP(cmdFlags, &updateRemoteOpt.Result, "result", "", "", "Result - use with --continue", "Config")
 	}
 }
 
@@ -450,7 +483,7 @@ var (
 )
 
 func init() {
-	flags.BoolVarP(configUserInfoCommand.Flags(), &jsonOutput, "json", "", false, "Format output as JSON")
+	flags.BoolVarP(configUserInfoCommand.Flags(), &jsonOutput, "json", "", false, "Format output as JSON", "")
 }
 
 var configUserInfoCommand = &cobra.Command{

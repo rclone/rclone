@@ -48,7 +48,7 @@ type DirCacher interface {
 // error. This isn't done at initialization as it isn't known whether
 // the root and intermediate directories need to be created or not.
 //
-// Most of the utility functions wil call FindRoot() on the caller's
+// Most of the utility functions will call FindRoot() on the caller's
 // behalf with the create flag passed in.
 //
 // The cache is safe for concurrent use

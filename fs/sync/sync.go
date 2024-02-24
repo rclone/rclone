@@ -20,6 +20,14 @@ import (
 	"github.com/rclone/rclone/fs/operations"
 )
 
+// ErrorMaxDurationReached defines error when transfer duration is reached
+// Used for checking on exit and matching to correct exit code.
+var ErrorMaxDurationReached = errors.New("max transfer duration reached as set by --max-duration")
+
+// ErrorMaxDurationReachedFatal is returned from when the max
+// duration limit is reached.
+var ErrorMaxDurationReachedFatal = fserrors.FatalError(ErrorMaxDurationReached)
+
 type syncCopyMove struct {
 	// parameters
 	fdst               fs.Fs
@@ -74,6 +82,8 @@ type syncCopyMove struct {
 	backupDir              fs.Fs                  // place to store overwrites/deletes
 	checkFirst             bool                   // if set run all the checkers before starting transfers
 	maxDurationEndTime     time.Time              // end time if --max-duration is set
+	logger                 operations.LoggerFn    // LoggerFn used to report the results of a sync (or bisync) to an io.Writer
+	usingLogger            bool                   // whether we are using logger
 }
 
 type trackRenamesStrategy byte
@@ -127,6 +137,16 @@ func newSyncCopyMove(ctx context.Context, fdst, fsrc fs.Fs, deleteMode fs.Delete
 		trackRenamesCh:         make(chan fs.Object, ci.Checkers),
 		checkFirst:             ci.CheckFirst,
 	}
+
+	s.logger, s.usingLogger = operations.GetLogger(ctx)
+
+	if deleteMode == fs.DeleteModeOff {
+		loggerOpt := operations.GetLoggerOpt(ctx)
+		loggerOpt.DeleteModeOff = true
+		loggerOpt.LoggerFn = s.logger
+		ctx = operations.WithLoggerOpt(ctx, loggerOpt)
+	}
+
 	backlog := ci.MaxBacklog
 	if s.checkFirst {
 		fs.Infof(s.fdst, "Running all checks before starting transfers")
@@ -329,7 +349,7 @@ func (s *syncCopyMove) pairChecker(in *pipe, out *pipe, fraction int, wg *sync.W
 		}
 		src := pair.Src
 		var err error
-		tr := accounting.Stats(s.ctx).NewCheckingTransfer(src)
+		tr := accounting.Stats(s.ctx).NewCheckingTransfer(src, "checking")
 		// Check to see if can store this
 		if src.Storable() {
 			needTransfer := operations.NeedTransfer(s.ctx, pair.Dst, pair.Src)
@@ -337,9 +357,20 @@ func (s *syncCopyMove) pairChecker(in *pipe, out *pipe, fraction int, wg *sync.W
 				NoNeedTransfer, err := operations.CompareOrCopyDest(s.ctx, s.fdst, pair.Dst, pair.Src, s.compareCopyDest, s.backupDir)
 				if err != nil {
 					s.processError(err)
+					s.logger(s.ctx, operations.TransferError, pair.Src, pair.Dst, err)
 				}
 				if NoNeedTransfer {
 					needTransfer = false
+				}
+			}
+			// Fix case for case insensitive filesystems
+			if s.ci.FixCase && !s.ci.Immutable && src.Remote() != pair.Dst.Remote() {
+				if newDst, err := operations.Move(s.ctx, s.fdst, pair.Dst, src.Remote(), pair.Dst); err != nil {
+					fs.Errorf(pair.Dst, "Error while attempting to rename to %s: %v", src.Remote(), err)
+					s.processError(err)
+				} else {
+					fs.Infof(pair.Dst, "Fixed case by renaming to: %s", src.Remote())
+					pair.Dst = newDst
 				}
 			}
 			if needTransfer {
@@ -354,16 +385,17 @@ func (s *syncCopyMove) pairChecker(in *pipe, out *pipe, fraction int, wg *sync.W
 						err := operations.MoveBackupDir(s.ctx, s.backupDir, pair.Dst)
 						if err != nil {
 							s.processError(err)
+							s.logger(s.ctx, operations.TransferError, pair.Src, pair.Dst, err)
 						} else {
 							// If successful zero out the dst as it is no longer there and copy the file
 							pair.Dst = nil
-							ok = out.Put(s.ctx, pair)
+							ok = out.Put(s.inCtx, pair)
 							if !ok {
 								return
 							}
 						}
 					} else {
-						ok = out.Put(s.ctx, pair)
+						ok = out.Put(s.inCtx, pair)
 						if !ok {
 							return
 						}
@@ -377,8 +409,18 @@ func (s *syncCopyMove) pairChecker(in *pipe, out *pipe, fraction int, wg *sync.W
 						fs.Logf(src, "Not removing source file as it is the same file as the destination")
 					} else if s.ci.IgnoreExisting {
 						fs.Debugf(src, "Not removing source file as destination file exists and --ignore-existing is set")
+					} else if s.checkFirst && s.ci.OrderBy != "" {
+						// If we want perfect ordering then use the transfers to delete the file
+						//
+						// We send src == dst, to say we want the src deleted
+						ok = out.Put(s.inCtx, fs.ObjectPair{Src: src, Dst: src})
+						if !ok {
+							return
+						}
 					} else {
-						s.processError(operations.DeleteFile(s.ctx, src))
+						deleteFileErr := operations.DeleteFile(s.ctx, src)
+						s.processError(deleteFileErr)
+						s.logger(s.ctx, operations.TransferError, pair.Src, pair.Dst, deleteFileErr)
 					}
 				}
 			}
@@ -399,7 +441,8 @@ func (s *syncCopyMove) pairRenamer(in *pipe, out *pipe, fraction int, wg *sync.W
 		src := pair.Src
 		if !s.tryRename(src) {
 			// pass on if not renamed
-			ok = out.Put(s.ctx, pair)
+			fs.Debugf(src, "Need to transfer - No matching file found at Destination")
+			ok = out.Put(s.inCtx, pair)
 			if !ok {
 				return
 			}
@@ -417,12 +460,21 @@ func (s *syncCopyMove) pairCopyOrMove(ctx context.Context, in *pipe, fdst fs.Fs,
 			return
 		}
 		src := pair.Src
+		dst := pair.Dst
 		if s.DoMove {
-			_, err = operations.Move(ctx, fdst, pair.Dst, src.Remote(), src)
+			if src != dst {
+				_, err = operations.MoveTransfer(ctx, fdst, dst, src.Remote(), src)
+			} else {
+				// src == dst signals delete the src
+				err = operations.DeleteFile(ctx, src)
+			}
 		} else {
-			_, err = operations.Copy(ctx, fdst, pair.Dst, src.Remote(), src)
+			_, err = operations.Copy(ctx, fdst, dst, src.Remote(), src)
 		}
 		s.processError(err)
+		if err != nil {
+			s.logger(ctx, operations.TransferError, src, dst, err)
+		}
 	}
 }
 
@@ -533,11 +585,21 @@ func (s *syncCopyMove) stopDeleters() {
 func (s *syncCopyMove) deleteFiles(checkSrcMap bool) error {
 	if accounting.Stats(s.ctx).Errored() && !s.ci.IgnoreErrors {
 		fs.Errorf(s.fdst, "%v", fs.ErrorNotDeleting)
+		// log all deletes as errors
+		for remote, o := range s.dstFiles {
+			if checkSrcMap {
+				_, exists := s.srcFiles[remote]
+				if exists {
+					continue
+				}
+			}
+			s.logger(s.ctx, operations.TransferError, nil, o, fs.ErrorNotDeleting)
+		}
 		return fs.ErrorNotDeleting
 	}
 
 	// Delete the spare files
-	toDelete := make(fs.ObjectsChan, s.ci.Transfers)
+	toDelete := make(fs.ObjectsChan, s.ci.Checkers)
 	go func() {
 	outer:
 		for remote, o := range s.dstFiles {
@@ -772,14 +834,14 @@ func (s *syncCopyMove) makeRenameMap() {
 	// now make a map of size,hash for all dstFiles
 	s.renameMap = make(map[string][]fs.Object)
 	var wg sync.WaitGroup
-	wg.Add(s.ci.Transfers)
-	for i := 0; i < s.ci.Transfers; i++ {
+	wg.Add(s.ci.Checkers)
+	for i := 0; i < s.ci.Checkers; i++ {
 		go func() {
 			defer wg.Done()
 			for obj := range in {
 				// only create hash for dst fs.Object if its size could match
 				if _, found := possibleSizes[obj.Size()]; found {
-					tr := accounting.Stats(s.ctx).NewCheckingTransfer(obj)
+					tr := accounting.Stats(s.ctx).NewCheckingTransfer(obj, "renaming")
 					hash := s.renameID(obj, s.trackRenamesStrategy, s.modifyWindow)
 
 					if hash != "" {
@@ -830,10 +892,6 @@ func (s *syncCopyMove) tryRename(src fs.Object) bool {
 	return true
 }
 
-// errorMaxDurationReached defines error when transfer duration is reached
-// Used for checking on exit and matching to correct exit code.
-var errorMaxDurationReached = fserrors.FatalError(errors.New("max transfer duration reached as set by --max-duration"))
-
 // Syncs fsrc into fdst
 //
 // If Delete is true then it deletes any files in fdst that aren't in fsrc
@@ -878,7 +936,7 @@ func (s *syncCopyMove) run() error {
 		s.makeRenameMap()
 		// Attempt renames for all the files which don't have a matching dst
 		for _, src := range s.renameCheck {
-			ok := s.toBeRenamed.Put(s.ctx, fs.ObjectPair{Src: src, Dst: nil})
+			ok := s.toBeRenamed.Put(s.inCtx, fs.ObjectPair{Src: src, Dst: nil})
 			if !ok {
 				break
 			}
@@ -930,8 +988,8 @@ func (s *syncCopyMove) run() error {
 
 	// If the duration was exceeded then add a Fatal Error so we don't retry
 	if !s.maxDurationEndTime.IsZero() && time.Since(s.maxDurationEndTime) > 0 {
-		fs.Errorf(s.fdst, "%v", errorMaxDurationReached)
-		s.processError(errorMaxDurationReached)
+		fs.Errorf(s.fdst, "%v", ErrorMaxDurationReachedFatal)
+		s.processError(ErrorMaxDurationReachedFatal)
 	}
 
 	// Print nothing to transfer message if there were no transfers and no errors
@@ -948,10 +1006,23 @@ func (s *syncCopyMove) run() error {
 // DstOnly have an object which is in the destination only
 func (s *syncCopyMove) DstOnly(dst fs.DirEntry) (recurse bool) {
 	if s.deleteMode == fs.DeleteModeOff {
+		if s.usingLogger {
+			switch x := dst.(type) {
+			case fs.Object:
+				s.logger(s.ctx, operations.MissingOnSrc, nil, x, nil)
+			case fs.Directory:
+				// it's a directory that we'd normally skip, because we're not deleting anything on the dest
+				// however, to make sure every file is logged, we need to list it, so we need to return true here.
+				// we skip this when not using logger.
+				s.logger(s.ctx, operations.MissingOnSrc, nil, dst, fs.ErrorIsDir)
+				return true
+			}
+		}
 		return false
 	}
 	switch x := dst.(type) {
 	case fs.Object:
+		s.logger(s.ctx, operations.MissingOnSrc, nil, x, nil)
 		switch s.deleteMode {
 		case fs.DeleteModeAfter:
 			// record object as needs deleting
@@ -973,6 +1044,7 @@ func (s *syncCopyMove) DstOnly(dst fs.DirEntry) (recurse bool) {
 		if s.fdst.Features().CanHaveEmptyDirectories {
 			s.dstEmptyDirsMu.Lock()
 			s.dstEmptyDirs[dst.Remote()] = dst
+			s.logger(s.ctx, operations.MissingOnSrc, nil, dst, fs.ErrorIsDir)
 			s.dstEmptyDirsMu.Unlock()
 		}
 		return true
@@ -990,6 +1062,7 @@ func (s *syncCopyMove) SrcOnly(src fs.DirEntry) (recurse bool) {
 	}
 	switch x := src.(type) {
 	case fs.Object:
+		s.logger(s.ctx, operations.MissingOnDst, x, nil, nil)
 		// If it's a copy operation,
 		// remove parent directory from srcEmptyDirs
 		// since it's not really empty
@@ -1009,10 +1082,12 @@ func (s *syncCopyMove) SrcOnly(src fs.DirEntry) (recurse bool) {
 			NoNeedTransfer, err := operations.CompareOrCopyDest(s.ctx, s.fdst, nil, x, s.compareCopyDest, s.backupDir)
 			if err != nil {
 				s.processError(err)
+				s.logger(s.ctx, operations.TransferError, x, nil, err)
 			}
 			if !NoNeedTransfer {
 				// No need to check since doesn't exist
-				ok := s.toBeUploaded.Put(s.ctx, fs.ObjectPair{Src: x, Dst: nil})
+				fs.Debugf(src, "Need to transfer - File not found at Destination")
+				ok := s.toBeUploaded.Put(s.inCtx, fs.ObjectPair{Src: x, Dst: nil})
 				if !ok {
 					return
 				}
@@ -1024,6 +1099,7 @@ func (s *syncCopyMove) SrcOnly(src fs.DirEntry) (recurse bool) {
 		s.srcEmptyDirsMu.Lock()
 		s.srcParentDirCheck(src)
 		s.srcEmptyDirs[src.Remote()] = src
+		s.logger(s.ctx, operations.MissingOnDst, src, nil, fs.ErrorIsDir)
 		s.srcEmptyDirsMu.Unlock()
 		return true
 	default:
@@ -1045,7 +1121,8 @@ func (s *syncCopyMove) Match(ctx context.Context, dst, src fs.DirEntry) (recurse
 		}
 		dstX, ok := dst.(fs.Object)
 		if ok {
-			ok = s.toBeChecked.Put(s.ctx, fs.ObjectPair{Src: srcX, Dst: dstX})
+			// No logger here because we'll handle it in equal()
+			ok = s.toBeChecked.Put(s.inCtx, fs.ObjectPair{Src: srcX, Dst: dstX})
 			if !ok {
 				return false
 			}
@@ -1054,11 +1131,13 @@ func (s *syncCopyMove) Match(ctx context.Context, dst, src fs.DirEntry) (recurse
 			err := errors.New("can't overwrite directory with file")
 			fs.Errorf(dst, "%v", err)
 			s.processError(err)
+			s.logger(ctx, operations.TransferError, srcX, dstX, err)
 		}
 	case fs.Directory:
 		// Do the same thing to the entire contents of the directory
 		_, ok := dst.(fs.Directory)
 		if ok {
+			s.logger(s.ctx, operations.Match, src, dst, fs.ErrorIsDir)
 			// Only record matched (src & dst) empty dirs when performing move
 			if s.DoMove {
 				// Record the src directory for deletion
@@ -1067,6 +1146,17 @@ func (s *syncCopyMove) Match(ctx context.Context, dst, src fs.DirEntry) (recurse
 				s.srcEmptyDirs[src.Remote()] = src
 				s.srcEmptyDirsMu.Unlock()
 			}
+			if s.ci.FixCase && !s.ci.Immutable && src.Remote() != dst.Remote() {
+				// Fix case for case insensitive filesystems
+				// Fix each dir before recursing into subdirs and files
+				err := operations.DirMoveCaseInsensitive(s.ctx, s.fdst, dst.Remote(), src.Remote())
+				if err != nil {
+					fs.Errorf(dst, "Error while attempting to rename to %s: %v", src.Remote(), err)
+					s.processError(err)
+				} else {
+					fs.Infof(dst, "Fixed case by renaming to: %s", src.Remote())
+				}
+			}
 
 			return true
 		}
@@ -1074,6 +1164,7 @@ func (s *syncCopyMove) Match(ctx context.Context, dst, src fs.DirEntry) (recurse
 		err := errors.New("can't overwrite file with directory")
 		fs.Errorf(dst, "%v", err)
 		s.processError(err)
+		s.logger(ctx, operations.TransferError, src.(fs.ObjectInfo), dst.(fs.ObjectInfo), err)
 	default:
 		panic("Bad object in DirEntries")
 	}

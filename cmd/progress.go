@@ -20,7 +20,7 @@ const (
 	// interval between progress prints
 	defaultProgressInterval = 500 * time.Millisecond
 	// time format for logging
-	logTimeFormat = "2006-01-02 15:04:05"
+	logTimeFormat = "2006/01/02 15:04:05"
 )
 
 // startProgress starts the progress bar printing
@@ -75,14 +75,13 @@ func startProgress() func() {
 
 // state for the progress printing
 var (
-	nlines     = 0 // number of lines in the previous stats block
-	progressMu sync.Mutex
+	nlines = 0 // number of lines in the previous stats block
 )
 
 // printProgress prints the progress with an optional log
 func printProgress(logMessage string) {
-	progressMu.Lock()
-	defer progressMu.Unlock()
+	operations.StdoutMutex.Lock()
+	defer operations.StdoutMutex.Unlock()
 
 	var buf bytes.Buffer
 	w, _ := terminal.GetSize()

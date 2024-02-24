@@ -364,6 +364,84 @@ func TestVFSStatfs(t *testing.T) {
 	assert.Equal(t, oldTime, vfs.usageTime)
 }
 
+func TestVFSMkdir(t *testing.T) {
+	r, vfs := newTestVFS(t)
+
+	if !r.Fremote.Features().CanHaveEmptyDirectories {
+		return // can't test if can't have empty directories
+	}
+
+	r.CheckRemoteListing(t, nil, []string{})
+
+	// Try making the root
+	err := vfs.Mkdir("", 0777)
+	require.NoError(t, err)
+	r.CheckRemoteListing(t, nil, []string{})
+
+	// Try making a sub directory
+	err = vfs.Mkdir("a", 0777)
+	require.NoError(t, err)
+
+	r.CheckRemoteListing(t, nil, []string{"a"})
+
+	// Try making an existing directory
+	err = vfs.Mkdir("a", 0777)
+	require.NoError(t, err)
+
+	r.CheckRemoteListing(t, nil, []string{"a"})
+
+	// Try making a new directory
+	err = vfs.Mkdir("b/", 0777)
+	require.NoError(t, err)
+
+	r.CheckRemoteListing(t, nil, []string{"a", "b"})
+
+	// Try making a new directory
+	err = vfs.Mkdir("/c", 0777)
+	require.NoError(t, err)
+
+	r.CheckRemoteListing(t, nil, []string{"a", "b", "c"})
+
+	// Try making a new directory
+	err = vfs.Mkdir("/d/", 0777)
+	require.NoError(t, err)
+
+	r.CheckRemoteListing(t, nil, []string{"a", "b", "c", "d"})
+}
+
+func TestVFSMkdirAll(t *testing.T) {
+	r, vfs := newTestVFS(t)
+
+	if !r.Fremote.Features().CanHaveEmptyDirectories {
+		return // can't test if can't have empty directories
+	}
+
+	r.CheckRemoteListing(t, nil, []string{})
+
+	// Try making the root
+	err := vfs.MkdirAll("", 0777)
+	require.NoError(t, err)
+	r.CheckRemoteListing(t, nil, []string{})
+
+	// Try making a sub directory
+	err = vfs.MkdirAll("a/b/c/d", 0777)
+	require.NoError(t, err)
+
+	r.CheckRemoteListing(t, nil, []string{"a", "a/b", "a/b/c", "a/b/c/d"})
+
+	// Try making an existing directory
+	err = vfs.MkdirAll("a/b/c", 0777)
+	require.NoError(t, err)
+
+	r.CheckRemoteListing(t, nil, []string{"a", "a/b", "a/b/c", "a/b/c/d"})
+
+	// Try making an existing directory
+	err = vfs.MkdirAll("/a/b/c/", 0777)
+	require.NoError(t, err)
+
+	r.CheckRemoteListing(t, nil, []string{"a", "a/b", "a/b/c", "a/b/c/d"})
+}
+
 func TestFillInMissingSizes(t *testing.T) {
 	const unknownFree = 10
 	for _, test := range []struct {

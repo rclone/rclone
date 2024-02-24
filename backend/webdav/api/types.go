@@ -75,6 +75,8 @@ type Prop struct {
 	Size         int64     `xml:"DAV: prop>getcontentlength,omitempty"`
 	Modified     Time      `xml:"DAV: prop>getlastmodified,omitempty"`
 	Checksums    []string  `xml:"prop>checksums>checksum,omitempty"`
+	Permissions  string    `xml:"prop>permissions,omitempty"`
+	MESha1Hex    *string   `xml:"ME: prop>sha1hex,omitempty"` // Fastmail-specific sha1 checksum
 }
 
 // Parse a status of the form "HTTP/1.1 200 OK" or "HTTP/1.1 200"
@@ -102,22 +104,26 @@ func (p *Prop) StatusOK() bool {
 
 // Hashes returns a map of all checksums - may be nil
 func (p *Prop) Hashes() (hashes map[hash.Type]string) {
-	if len(p.Checksums) == 0 {
-		return nil
-	}
-	hashes = make(map[hash.Type]string)
-	for _, checksums := range p.Checksums {
-		checksums = strings.ToLower(checksums)
-		for _, checksum := range strings.Split(checksums, " ") {
-			switch {
-			case strings.HasPrefix(checksum, "sha1:"):
-				hashes[hash.SHA1] = checksum[5:]
-			case strings.HasPrefix(checksum, "md5:"):
-				hashes[hash.MD5] = checksum[4:]
+	if len(p.Checksums) > 0 {
+		hashes = make(map[hash.Type]string)
+		for _, checksums := range p.Checksums {
+			checksums = strings.ToLower(checksums)
+			for _, checksum := range strings.Split(checksums, " ") {
+				switch {
+				case strings.HasPrefix(checksum, "sha1:"):
+					hashes[hash.SHA1] = checksum[5:]
+				case strings.HasPrefix(checksum, "md5:"):
+					hashes[hash.MD5] = checksum[4:]
+				}
 			}
 		}
+		return hashes
+	} else if p.MESha1Hex != nil {
+		hashes = make(map[hash.Type]string)
+		hashes[hash.SHA1] = *p.MESha1Hex
+		return hashes
 	}
-	return hashes
+	return nil
 }
 
 // PropValue is a tagged name and value

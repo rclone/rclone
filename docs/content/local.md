@@ -19,10 +19,10 @@ For consistencies sake one can also configure a remote of type
 rclone remote paths, e.g. `remote:path/to/wherever`, but it is probably
 easier not to.
 
-### Modified time ###
+### Modification times
 
-Rclone reads and writes the modified time using an accuracy determined by
-the OS. Typically this is 1ns on Linux, 10 ns on Windows and 1 Second
+Rclone reads and writes the modification times using an accuracy determined
+by the OS. Typically this is 1ns on Linux, 10 ns on Windows and 1 Second
 on OS X.
 
 ### Filenames ###
@@ -451,6 +451,11 @@ time we:
 - Only checksum the size that stat gave
 - Don't update the stat info for the file
 
+**NB** do not use this flag on a Windows Volume Shadow (VSS). For some
+unknown reason, files in a VSS sometimes show different sizes from the
+directory listing (where the initial stat value comes from on Windows)
+and when stat is called on them directly. Other copy tools always use
+the direct stat value and setting this flag will disable that.
 
 
 Properties:
@@ -561,7 +566,7 @@ Properties:
 
 - Config:      encoding
 - Env Var:     RCLONE_LOCAL_ENCODING
-- Type:        MultiEncoder
+- Type:        Encoding
 - Default:     Slash,Dot
 
 ### Metadata

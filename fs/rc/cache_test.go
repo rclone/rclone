@@ -12,7 +12,8 @@ import (
 )
 
 func mockNewFs(t *testing.T) func() {
-	f := mockfs.NewFs(context.Background(), "mock", "mock")
+	f, err := mockfs.NewFs(context.Background(), "mock", "mock", nil)
+	require.NoError(t, err)
 	cache.Put("/", f)
 	cache.Put("mock:/", f)
 	cache.Put(":mock:/", f)

@@ -293,6 +293,15 @@ func TestStatJSON(t *testing.T) {
 				IsDir: true,
 			},
 		}, {
+			name:   "DirWithTrailingSlash",
+			remote: "sub/",
+			opt:    operations.ListJSONOpt{},
+			want: &operations.ListJSONItem{
+				Path:  "sub",
+				Name:  "sub",
+				IsDir: true,
+			},
+		}, {
 			name:   "File",
 			remote: "file1",
 			opt:    operations.ListJSONOpt{},

@@ -11,8 +11,11 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// Check it satisfies the interface
-var _ flagger = (*Duration)(nil)
+// Check it satisfies the interfaces
+var (
+	_ flagger   = (*Duration)(nil)
+	_ flaggerNP = Duration(0)
+)
 
 func TestParseDuration(t *testing.T) {
 	now := time.Date(2020, 9, 5, 8, 15, 5, 250, time.UTC)

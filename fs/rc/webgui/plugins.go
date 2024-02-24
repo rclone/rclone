@@ -152,33 +152,6 @@ func (p *Plugins) addPlugin(pluginName string, packageJSONPath string) (err erro
 	return nil
 }
 
-func (p *Plugins) addTestPlugin(pluginName string, testURL string, handlesType []string) (err error) {
-	p.mutex.Lock()
-	defer p.mutex.Unlock()
-	err = p.readFromFile()
-	if err != nil {
-		return err
-	}
-
-	var pkgJSON = PackageJSON{
-		Name:    pluginName,
-		TestURL: testURL,
-		Rclone: RcloneConfig{
-			HandlesType: handlesType,
-			Test:        true,
-		},
-	}
-
-	p.LoadedPlugins[pluginName] = pkgJSON
-
-	err = p.writeToFile()
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
 func (p *Plugins) writeToFile() (err error) {
 	availablePluginsJSON := filepath.Join(pluginsConfigPath, p.fileName)
 

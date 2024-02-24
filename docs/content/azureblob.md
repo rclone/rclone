@@ -75,10 +75,10 @@ This remote supports `--fast-list` which allows you to use fewer
 transactions in exchange for more memory. See the [rclone
 docs](/docs/#fast-list) for more details.
 
-### Modified time
+### Modification times and hashes
 
-The modified time is stored as metadata on the object with the `mtime`
-key.  It is stored using RFC3339 Format time with nanosecond
+The modification time is stored as metadata on the object with the
+`mtime` key.  It is stored using RFC3339 Format time with nanosecond
 precision.  The metadata is supplied during directory listings so
 there is no performance overhead to using it.
 
@@ -87,6 +87,10 @@ the object as the modified time, then use the `--use-server-modtime`
 flag. Note that rclone can't set `LastModified`, so using the
 `--update` flag when syncing is recommended if using
 `--use-server-modtime`.
+
+MD5 hashes are stored with blobs. However blobs that were uploaded in
+chunks only have an MD5 if the source remote was capable of MD5
+hashes, e.g. the local disk.
 
 ### Performance
 
@@ -115,12 +119,6 @@ These only get replaced if they are the last character in the name:
 
 Invalid UTF-8 bytes will also be [replaced](/overview/#invalid-utf8),
 as they can't be used in JSON strings.
-
-### Hashes
-
-MD5 hashes are stored with blobs.  However blobs that were uploaded in
-chunks only have an MD5 if the source remote was capable of MD5
-hashes, e.g. the local disk.
 
 ### Authentication {#authentication}
 
@@ -162,6 +160,12 @@ It reads configuration from these variables, in the following order:
     - `AZURE_CLIENT_ID`: client ID of the application the user will authenticate to
     - `AZURE_USERNAME`: a username (usually an email address)
     - `AZURE_PASSWORD`: the user's password
+4. Workload Identity
+    - `AZURE_TENANT_ID`: Tenant to authenticate in.
+    - `AZURE_CLIENT_ID`: Client ID of the application the user will authenticate to.
+    - `AZURE_FEDERATED_TOKEN_FILE`: Path to projected service account token file.
+    - `AZURE_AUTHORITY_HOST`: Authority of an Azure Active Directory endpoint (default: login.microsoftonline.com).
+
 
 ##### Env Auth: 2. Managed Service Identity Credentials
 
@@ -189,7 +193,7 @@ Then you could access rclone resources like this:
 
 Or
 
-    rclone lsf --azureblob-env-auth --azureblob-acccount=ACCOUNT :azureblob:CONTAINER
+    rclone lsf --azureblob-env-auth --azureblob-account=ACCOUNT :azureblob:CONTAINER
 
 Which is analogous to using the `az` tool:
 
@@ -669,10 +673,10 @@ Properties:
 
 #### --azureblob-access-tier
 
-Access tier of blob: hot, cool or archive.
+Access tier of blob: hot, cool, cold or archive.
 
-Archived blobs can be restored by setting access tier to hot or
-cool. Leave blank if you intend to use default access tier, which is
+Archived blobs can be restored by setting access tier to hot, cool or
+cold. Leave blank if you intend to use default access tier, which is
 set at account level
 
 If there is no "access tier" specified, rclone doesn't apply any tier.
@@ -680,7 +684,7 @@ rclone performs "Set Tier" operation on blobs while uploading, if objects
 are not modified, specifying "access tier" to new one will have no effect.
 If blobs are in "archive tier" at remote, trying to perform data transfer
 operations from remote will not be allowed. User should first restore by
-tiering blob to "Hot" or "Cool".
+tiering blob to "Hot", "Cool" or "Cold".
 
 Properties:
 
@@ -731,10 +735,7 @@ Properties:
 
 #### --azureblob-memory-pool-flush-time
 
-How often internal memory buffer pools will be flushed.
-
-Uploads which requires additional buffers (f.e multipart) will use memory pool for allocations.
-This option controls how often unused buffers will be removed from the pool.
+How often internal memory buffer pools will be flushed. (no longer used)
 
 Properties:
 
@@ -745,7 +746,7 @@ Properties:
 
 #### --azureblob-memory-pool-use-mmap
 
-Whether to use mmap buffers in internal memory pool.
+Whether to use mmap buffers in internal memory pool. (no longer used)
 
 Properties:
 
@@ -764,7 +765,7 @@ Properties:
 
 - Config:      encoding
 - Env Var:     RCLONE_AZUREBLOB_ENCODING
-- Type:        MultiEncoder
+- Type:        Encoding
 - Default:     Slash,BackSlash,Del,Ctl,RightPeriod,InvalidUtf8
 
 #### --azureblob-public-access
@@ -785,6 +786,24 @@ Properties:
         - Blob data within this container can be read via anonymous request.
     - "container"
         - Allow full public read access for container and blob data.
+
+#### --azureblob-directory-markers
+
+Upload an empty object with a trailing slash when a new directory is created
+
+Empty folders are unsupported for bucket based remotes, this option
+creates an empty object ending with "/", to persist the folder.
+
+This object also has the metadata "hdi_isfolder = true" to conform to
+the Microsoft standard.
+ 
+
+Properties:
+
+- Config:      directory_markers
+- Env Var:     RCLONE_AZUREBLOB_DIRECTORY_MARKERS
+- Type:        bool
+- Default:     false
 
 #### --azureblob-no-check-container
 

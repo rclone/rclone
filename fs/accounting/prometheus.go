@@ -90,7 +90,7 @@ func (c *RcloneCollector) Collect(ch chan<- prometheus.Metric) {
 	s.mu.RLock()
 
 	ch <- prometheus.MustNewConstMetric(c.bytesTransferred, prometheus.CounterValue, float64(s.bytes))
-	ch <- prometheus.MustNewConstMetric(c.transferSpeed, prometheus.GaugeValue, s.speed())
+	ch <- prometheus.MustNewConstMetric(c.transferSpeed, prometheus.GaugeValue, s._speed())
 	ch <- prometheus.MustNewConstMetric(c.numOfErrors, prometheus.CounterValue, float64(s.errors))
 	ch <- prometheus.MustNewConstMetric(c.numOfCheckFiles, prometheus.CounterValue, float64(s.checks))
 	ch <- prometheus.MustNewConstMetric(c.transferredFiles, prometheus.CounterValue, float64(s.transfers))

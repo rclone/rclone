@@ -75,7 +75,7 @@ type Paced func() (bool, error)
 // New returns a Pacer with sensible defaults.
 func New(options ...Option) *Pacer {
 	opts := pacerOptions{
-		maxConnections: 10,
+		maxConnections: 0,
 		retries:        3,
 	}
 	for _, o := range options {
@@ -103,7 +103,7 @@ func New(options ...Option) *Pacer {
 // SetMaxConnections sets the maximum number of concurrent connections.
 // Setting the value to 0 will allow unlimited number of connections.
 // Should not be changed once you have started calling the pacer.
-// By default this will be set to fs.Config.Checkers.
+// By default this will be 0.
 func (p *Pacer) SetMaxConnections(n int) {
 	p.mu.Lock()
 	defer p.mu.Unlock()

@@ -10,6 +10,7 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"os"
 	"strings"
 	"sync"
 	"time"
@@ -22,6 +23,11 @@ import (
 	"github.com/rclone/rclone/lib/random"
 	"github.com/skratchdot/open-golang/open"
 	"golang.org/x/oauth2"
+)
+
+var (
+	// templateString is the template used in the authorization webserver
+	templateString string
 )
 
 const (
@@ -49,8 +55,8 @@ const (
 	// redirects to the local webserver
 	RedirectPublicSecureURL = "https://oauth.rclone.org/"
 
-	// AuthResponseTemplate is a template to handle the redirect URL for oauth requests
-	AuthResponseTemplate = `<!DOCTYPE html>
+	// DefaultAuthResponseTemplate is the default template used in the authorization webserver
+	DefaultAuthResponseTemplate = `<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
@@ -76,15 +82,18 @@ All done. Please go back to rclone.
 
 // SharedOptions are shared between backends the utilize an OAuth flow
 var SharedOptions = []fs.Option{{
-	Name: config.ConfigClientID,
-	Help: "OAuth Client Id.\n\nLeave blank normally.",
+	Name:      config.ConfigClientID,
+	Help:      "OAuth Client Id.\n\nLeave blank normally.",
+	Sensitive: true,
 }, {
-	Name: config.ConfigClientSecret,
-	Help: "OAuth Client Secret.\n\nLeave blank normally.",
+	Name:      config.ConfigClientSecret,
+	Help:      "OAuth Client Secret.\n\nLeave blank normally.",
+	Sensitive: true,
 }, {
-	Name:     config.ConfigToken,
-	Help:     "OAuth Access Token as a JSON blob.",
-	Advanced: true,
+	Name:      config.ConfigToken,
+	Help:      "OAuth Access Token as a JSON blob.",
+	Advanced:  true,
+	Sensitive: true,
 }, {
 	Name:     config.ConfigAuthURL,
 	Help:     "Auth server URL.\n\nLeave blank to use the provider defaults.",
@@ -223,7 +232,7 @@ func maybeWrapOAuthError(err error, remoteName string) (newErr error) {
 			var suggestion string
 			switch resp.Error {
 			case "invalid_client", "unauthorized_client", "unsupported_grant_type", "invalid_scope":
-				suggestion = fmt.Sprintf("if you're using your own client id/secret, make sure they're properly set up following the docs")
+				suggestion = "if you're using your own client id/secret, make sure they're properly set up following the docs"
 			case "invalid_grant":
 				fallthrough
 			default:
@@ -283,7 +292,7 @@ func (ts *TokenSource) Token() (*oauth2.Token, error) {
 	if err != nil {
 		return nil, fmt.Errorf("couldn't fetch token: %w", err)
 	}
-	changed = changed || (*token != *ts.token)
+	changed = changed || token.AccessToken != ts.token.AccessToken || token.RefreshToken != ts.token.RefreshToken || token.Expiry != ts.token.Expiry
 	ts.token = token
 	if changed {
 		// Bump on the expiry timer if it is set
@@ -587,6 +596,23 @@ version recommended):
 		}
 		return fs.ConfigGoto(newState("*oauth-done"))
 	case "*oauth-do":
+		// Make sure we can read the HTML template file if it was specified.
+		configTemplateFile, _ := m.Get("config_template_file")
+		configTemplateString, _ := m.Get("config_template")
+
+		if configTemplateFile != "" {
+			dat, err := os.ReadFile(configTemplateFile)
+
+			if err != nil {
+				return nil, fmt.Errorf("failed to read template file: %w", err)
+			}
+
+			templateString = string(dat)
+		} else if configTemplateString != "" {
+			templateString = configTemplateString
+		} else {
+			templateString = DefaultAuthResponseTemplate
+		}
 		code := in.Result
 		opt, err := getOAuth()
 		if err != nil {
@@ -755,7 +781,7 @@ func (s *authServer) handleAuth(w http.ResponseWriter, req *http.Request) {
 	reply := func(status int, res *AuthResult) {
 		w.WriteHeader(status)
 		w.Header().Set("Content-Type", "text/html")
-		var t = template.Must(template.New("authResponse").Parse(AuthResponseTemplate))
+		var t = template.Must(template.New("authResponse").Parse(templateString))
 		if err := t.Execute(w, res); err != nil {
 			fs.Debugf(nil, "Could not execute template for web response.")
 		}

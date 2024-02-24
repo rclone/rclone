@@ -51,6 +51,7 @@ successful transfer.
 `,
 	Annotations: map[string]string{
 		"versionIntroduced": "v1.35",
+		"groups":            "Filter,Listing,Important,Copy",
 	},
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(2, 2, command, args)

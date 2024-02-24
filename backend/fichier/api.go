@@ -28,14 +28,14 @@ var retryErrorCodes = []int{
 	509, // Bandwidth Limit Exceeded
 }
 
-var errorRegex = regexp.MustCompile(`#\d{1,3}`)
+var errorRegex = regexp.MustCompile(`#(\d{1,3})`)
 
 func parseFichierError(err error) int {
 	matches := errorRegex.FindStringSubmatch(err.Error())
 	if len(matches) == 0 {
 		return 0
 	}
-	code, err := strconv.Atoi(matches[0])
+	code, err := strconv.Atoi(matches[1])
 	if err != nil {
 		fs.Debugf(nil, "failed parsing fichier error: %v", err)
 		return 0
@@ -117,6 +117,9 @@ func (f *Fs) getDownloadToken(ctx context.Context, url string) (*GetTokenRespons
 		URL:    url,
 		Single: 1,
 		Pass:   f.opt.FilePassword,
+	}
+	if f.opt.CDN {
+		request.CDN = 1
 	}
 	opts := rest.Opts{
 		Method: "POST",
@@ -405,6 +408,32 @@ func (f *Fs) moveFile(ctx context.Context, url string, folderID int, rename stri
 	return response, nil
 }
 
+func (f *Fs) moveDir(ctx context.Context, folderID int, newLeaf string, destinationFolderID int) (response *MoveDirResponse, err error) {
+	request := &MoveDirRequest{
+		FolderID:            folderID,
+		DestinationFolderID: destinationFolderID,
+		Rename:              newLeaf,
+		// DestinationUser:     destinationUser,
+	}
+
+	opts := rest.Opts{
+		Method: "POST",
+		Path:   "/folder/mv.cgi",
+	}
+
+	response = &MoveDirResponse{}
+	err = f.pacer.Call(func() (bool, error) {
+		resp, err := f.rest.CallJSON(ctx, &opts, request, response)
+		return shouldRetry(ctx, resp, err)
+	})
+
+	if err != nil {
+		return nil, fmt.Errorf("couldn't move dir: %w", err)
+	}
+
+	return response, nil
+}
+
 func (f *Fs) copyFile(ctx context.Context, url string, folderID int, rename string) (response *CopyFileResponse, err error) {
 	request := &CopyFileRequest{
 		URLs:     []string{url},
@@ -473,7 +502,7 @@ func (f *Fs) getUploadNode(ctx context.Context) (response *GetUploadNodeResponse
 		return shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
-		return nil, fmt.Errorf("didnt got an upload node: %w", err)
+		return nil, fmt.Errorf("didn't get an upload node: %w", err)
 	}
 
 	// fs.Debugf(f, "Got Upload node")

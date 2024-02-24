@@ -9,8 +9,11 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// Check it satisfies the interface
-var _ flagger = (*CutoffMode)(nil)
+// Check it satisfies the interfaces
+var (
+	_ flagger   = (*CutoffMode)(nil)
+	_ flaggerNP = CutoffMode(0)
+)
 
 func TestCutoffModeString(t *testing.T) {
 	for _, test := range []struct {
@@ -19,7 +22,7 @@ func TestCutoffModeString(t *testing.T) {
 	}{
 		{CutoffModeHard, "HARD"},
 		{CutoffModeSoft, "SOFT"},
-		{99, "CutoffMode(99)"},
+		{99, "Unknown(99)"},
 	} {
 		cm := test.in
 		got := cm.String()

@@ -52,6 +52,8 @@ func getConfigurationProvider(opt *Options) (common.ConfigurationProvider, error
 	case noAuth:
 		fs.Infof("client", "using no auth provider")
 		return getNoAuthConfiguration()
+	case workloadIdentity:
+		return auth.OkeWorkloadIdentityConfigurationProvider()
 	default:
 	}
 	return common.DefaultConfigProvider(), nil
@@ -69,6 +71,9 @@ func newObjectStorageClient(ctx context.Context, opt *Options) (*objectstorage.O
 	}
 	if opt.Region != "" {
 		client.SetRegion(opt.Region)
+	}
+	if opt.Endpoint != "" {
+		client.Host = opt.Endpoint
 	}
 	modifyClient(ctx, opt, &client.BaseClient)
 	return &client, err

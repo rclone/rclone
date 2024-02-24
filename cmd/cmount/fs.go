@@ -30,7 +30,7 @@ type FS struct {
 	ready     chan (struct{})
 	mu        sync.Mutex // to protect the below
 	handles   []vfs.Handle
-	destroyed int32 // read/write with sync/atomic
+	destroyed atomic.Int32
 }
 
 // NewFS makes a new FS
@@ -190,7 +190,7 @@ func (fsys *FS) Init() {
 // Destroy call).
 func (fsys *FS) Destroy() {
 	defer log.Trace(fsys.f, "")("")
-	atomic.StoreInt32(&fsys.destroyed, 1)
+	fsys.destroyed.Store(1)
 }
 
 // Getattr reads the attributes for path

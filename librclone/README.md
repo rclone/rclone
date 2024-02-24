@@ -12,16 +12,17 @@ notice will be removed.
 The shims are a thin wrapper over the rclone RPC.
 
 The implementation is based on cgo; to build it you need Go and a GCC compatible
-C compiler (GCC or Clang). On Windows you can use the MinGW port of GCC,
-e.g. by installing it in a [MSYS2](https://www.msys2.org) distribution
-(make sure you install GCC in the classic mingw64 subsystem, the ucrt64 version
-is not compatible with cgo).
+C compiler (GCC or Clang). On Windows you can use the MinGW ports, e.g. by installing
+in a [MSYS2](https://www.msys2.org) distribution (you may now install GCC in the newer
+and recommended UCRT64 subsystem, however there were compatibility issues with previous
+versions of cgo where, if not force rebuild with go build option `-a` helped, you had
+to resort to the classic MINGW64 subsystem).
 
-Build a shared library like this:
+Build a shared library like this (change from .so to .dll on Windows):
 
     go build --buildmode=c-shared -o librclone.so github.com/rclone/rclone/librclone
 
-Build a static library like this:
+Build a static library like this (change from .a to .lib on Windows):
 
     go build --buildmode=c-archive -o librclone.a github.com/rclone/rclone/librclone
 
@@ -44,6 +45,14 @@ with the "Developer" feature selected, and to set environment variable CPATH
 pointing to the fuse include directory within the WinFsp installation
 (typically `C:\Program Files (x86)\WinFsp\inc\fuse`). See also the
 [mount](/commands/rclone_mount/#installing-on-windows) documentation.
+
+On Windows, when you build a shared library, you can embed version information
+as binary resource. To do that you need to run the following command **before**
+the build command.
+
+```
+go run bin/resource_windows.go -binary librclone.dll -dir librclone
+```
 
 ### Documentation
 
@@ -162,6 +171,29 @@ const char* input = "{"
 
 With C++11 you can use raw string literals to avoid the C++ escaping of string
 constants, leaving escaping only necessary for the contained JSON.
+
+## Example in golang
+
+Here is a go example to help you move files : 
+
+```go
+func main() {
+  librclone.Initialize()
+    syncRequest: = syncRequest {
+    SrcFs: "<absolute_path>",
+    DstFs: ":s3,env_auth=false,access_key_id=<access>,secret_access_key=<secret>,endpoint='<endpoint>':<bucket>",
+    }
+
+    syncRequestJSON, err: = json.Marshal(syncRequest)
+    if err != nil {
+    fmt.Println(err)
+    }
+		
+    out, status: = librclone.RPC("sync/copy", string(syncRequestJSON))
+    fmt.Println("Got status : %d and output %q", status, out)
+}
+
+```
 
 ## gomobile
 

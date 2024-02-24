@@ -9,8 +9,11 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// Check it satisfies the interface
-var _ flagger = (*Tristate)(nil)
+// Check it satisfies the interfaces
+var (
+	_ flagger   = (*Tristate)(nil)
+	_ flaggerNP = Tristate{}
+)
 
 func TestTristateString(t *testing.T) {
 	for _, test := range []struct {
@@ -83,5 +86,20 @@ func TestTristateUnmarshalJSON(t *testing.T) {
 			require.NoError(t, err, test.in)
 		}
 		assert.Equal(t, test.want, got, test.in)
+	}
+}
+
+func TestTristateMarshalJSON(t *testing.T) {
+	for _, test := range []struct {
+		in   Tristate
+		want string
+	}{
+		{Tristate{}, `null`},
+		{Tristate{Valid: true, Value: true}, `true`},
+		{Tristate{Valid: true, Value: false}, `false`},
+	} {
+		got, err := json.Marshal(&test.in)
+		require.NoError(t, err)
+		assert.Equal(t, test.want, string(got), fmt.Sprintf("%#v", test.in))
 	}
 }

@@ -3,10 +3,14 @@ package webdav
 
 import (
 	"context"
+	"encoding/xml"
 	"errors"
 	"fmt"
+	"mime"
 	"net/http"
 	"os"
+	"path"
+	"strconv"
 	"strings"
 	"time"
 
@@ -20,6 +24,7 @@ import (
 	"github.com/rclone/rclone/fs/hash"
 	libhttp "github.com/rclone/rclone/lib/http"
 	"github.com/rclone/rclone/lib/http/serve"
+	"github.com/rclone/rclone/lib/systemd"
 	"github.com/rclone/rclone/vfs"
 	"github.com/rclone/rclone/vfs/vfsflags"
 	"github.com/spf13/cobra"
@@ -48,15 +53,19 @@ var DefaultOpt = Options{
 // Opt is options set by command line flags
 var Opt = DefaultOpt
 
+// flagPrefix is the prefix used to uniquely identify command line flags.
+// It is intentionally empty for this package.
+const flagPrefix = ""
+
 func init() {
 	flagSet := Command.Flags()
-	libhttp.AddAuthFlagsPrefix(flagSet, "", &Opt.Auth)
-	libhttp.AddHTTPFlagsPrefix(flagSet, "", &Opt.HTTP)
+	libhttp.AddAuthFlagsPrefix(flagSet, flagPrefix, &Opt.Auth)
+	libhttp.AddHTTPFlagsPrefix(flagSet, flagPrefix, &Opt.HTTP)
 	libhttp.AddTemplateFlagsPrefix(flagSet, "", &Opt.Template)
 	vfsflags.AddFlags(flagSet)
 	proxyflags.AddFlags(flagSet)
-	flags.StringVarP(flagSet, &Opt.HashName, "etag-hash", "", "", "Which hash to use for the ETag, or auto or blank for off")
-	flags.BoolVarP(flagSet, &Opt.DisableGETDir, "disable-dir-list", "", false, "Disable HTML directory list on GET request for a directory")
+	flags.StringVarP(flagSet, &Opt.HashName, "etag-hash", "", "", "Which hash to use for the ETag, or auto or blank for off", "")
+	flags.BoolVarP(flagSet, &Opt.DisableGETDir, "disable-dir-list", "", false, "Disable HTML directory list on GET request for a directory", "")
 }
 
 // Command definition for cobra
@@ -103,9 +112,10 @@ Create a new DWORD BasicAuthLevel with value 2.
 
 https://learn.microsoft.com/en-us/office/troubleshoot/powerpoint/office-opens-blank-from-sharepoint
 
-` + libhttp.Help + libhttp.TemplateHelp + libhttp.AuthHelp + vfs.Help + proxy.Help,
+` + libhttp.Help(flagPrefix) + libhttp.TemplateHelp(flagPrefix) + libhttp.AuthHelp(flagPrefix) + vfs.Help + proxy.Help,
 	Annotations: map[string]string{
 		"versionIntroduced": "v1.39",
+		"groups":            "Filter",
 	},
 	RunE: func(command *cobra.Command, args []string) error {
 		var f fs.Fs
@@ -136,6 +146,7 @@ https://learn.microsoft.com/en-us/office/troubleshoot/powerpoint/office-opens-bl
 			if err != nil {
 				return err
 			}
+			defer systemd.Notify()()
 			s.Wait()
 			return nil
 		})
@@ -191,6 +202,9 @@ func newWebDAV(ctx context.Context, f fs.Fs, opt *Options) (w *WebDAV, err error
 	if err != nil {
 		return nil, fmt.Errorf("failed to init server: %w", err)
 	}
+
+	// Make sure BaseURL starts with a / and doesn't end with one
+	w.opt.HTTP.BaseURL = "/" + strings.Trim(w.opt.HTTP.BaseURL, "/")
 
 	webdavHandler := &webdav.Handler{
 		Prefix:     w.opt.HTTP.BaseURL,
@@ -251,6 +265,52 @@ func (w *WebDAV) auth(user, pass string) (value interface{}, err error) {
 	return VFS, err
 }
 
+type webdavRW struct {
+	http.ResponseWriter
+	status int
+}
+
+func (rw *webdavRW) WriteHeader(statusCode int) {
+	rw.status = statusCode
+	rw.ResponseWriter.WriteHeader(statusCode)
+}
+
+func (rw *webdavRW) isSuccessfull() bool {
+	return rw.status == 0 || (rw.status >= 200 && rw.status <= 299)
+}
+
+func (w *WebDAV) postprocess(r *http.Request, remote string) {
+	// set modtime from requests, don't write to client because status is already written
+	switch r.Method {
+	case "COPY", "MOVE", "PUT":
+		VFS, err := w.getVFS(r.Context())
+		if err != nil {
+			fs.Errorf(nil, "Failed to get VFS: %v", err)
+			return
+		}
+
+		// Get the node
+		node, err := VFS.Stat(remote)
+		if err != nil {
+			fs.Errorf(nil, "Failed to stat node: %v", err)
+			return
+		}
+
+		mh := r.Header.Get("X-OC-Mtime")
+		if mh != "" {
+			modtimeUnix, err := strconv.ParseInt(mh, 10, 64)
+			if err == nil {
+				err = node.SetModTime(time.Unix(modtimeUnix, 0))
+				if err != nil {
+					fs.Errorf(nil, "Failed to set modtime: %v", err)
+				}
+			} else {
+				fs.Errorf(nil, "Failed to parse modtime: %v", err)
+			}
+		}
+	}
+}
+
 func (w *WebDAV) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	urlPath := r.URL.Path
 	isDir := strings.HasSuffix(urlPath, "/")
@@ -262,7 +322,12 @@ func (w *WebDAV) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	// Add URL Prefix back to path since webdavhandler needs to
 	// return absolute references.
 	r.URL.Path = w.opt.HTTP.BaseURL + r.URL.Path
-	w.webdavhandler.ServeHTTP(rw, r)
+	wrw := &webdavRW{ResponseWriter: rw}
+	w.webdavhandler.ServeHTTP(wrw, r)
+
+	if wrw.isSuccessfull() {
+		w.postprocess(r, remote)
+	}
 }
 
 // serveDir serves a directory index at dirRemote
@@ -352,7 +417,7 @@ func (w *WebDAV) OpenFile(ctx context.Context, name string, flags int, perm os.F
 	if err != nil {
 		return nil, err
 	}
-	return Handle{Handle: f, w: w}, nil
+	return Handle{Handle: f, w: w, ctx: ctx}, nil
 }
 
 // RemoveAll removes a file or a directory and its contents
@@ -400,7 +465,8 @@ func (w *WebDAV) Stat(ctx context.Context, name string) (fi os.FileInfo, err err
 // Handle represents an open file
 type Handle struct {
 	vfs.Handle
-	w *WebDAV
+	w   *WebDAV
+	ctx context.Context
 }
 
 // Readdir reads directory entries from the handle
@@ -423,6 +489,65 @@ func (h Handle) Stat() (fi os.FileInfo, err error) {
 		return nil, err
 	}
 	return FileInfo{FileInfo: fi, w: h.w}, nil
+}
+
+// DeadProps returns extra properties about the handle
+func (h Handle) DeadProps() (map[xml.Name]webdav.Property, error) {
+	var (
+		xmlName    xml.Name
+		property   webdav.Property
+		properties = make(map[xml.Name]webdav.Property)
+	)
+	if h.w.opt.HashType != hash.None {
+		entry := h.Handle.Node().DirEntry()
+		if o, ok := entry.(fs.Object); ok {
+			hash, err := o.Hash(h.ctx, h.w.opt.HashType)
+			if err == nil {
+				xmlName.Space = "http://owncloud.org/ns"
+				xmlName.Local = "checksums"
+				property.XMLName = xmlName
+				property.InnerXML = append(property.InnerXML, "<checksum xmlns=\"http://owncloud.org/ns\">"...)
+				property.InnerXML = append(property.InnerXML, strings.ToUpper(h.w.opt.HashType.String())...)
+				property.InnerXML = append(property.InnerXML, ':')
+				property.InnerXML = append(property.InnerXML, hash...)
+				property.InnerXML = append(property.InnerXML, "</checksum>"...)
+				properties[xmlName] = property
+			} else {
+				fs.Errorf(nil, "failed to calculate hash: %v", err)
+			}
+		}
+	}
+
+	xmlName.Space = "DAV:"
+	xmlName.Local = "lastmodified"
+	property.XMLName = xmlName
+	property.InnerXML = strconv.AppendInt(nil, h.Handle.Node().ModTime().Unix(), 10)
+	properties[xmlName] = property
+
+	return properties, nil
+}
+
+// Patch changes modtime of the underlying resources, it returns ok for all properties, the error is from setModtime if any
+// FIXME does not check for invalid property and SetModTime error
+func (h Handle) Patch(proppatches []webdav.Proppatch) ([]webdav.Propstat, error) {
+	var (
+		stat webdav.Propstat
+		err  error
+	)
+	stat.Status = http.StatusOK
+	for _, patch := range proppatches {
+		for _, prop := range patch.Props {
+			stat.Props = append(stat.Props, webdav.Property{XMLName: prop.XMLName})
+			if prop.XMLName.Space == "DAV:" && prop.XMLName.Local == "lastmodified" {
+				var modtimeUnix int64
+				modtimeUnix, err = strconv.ParseInt(string(prop.InnerXML), 10, 64)
+				if err == nil {
+					err = h.Handle.Node().SetModTime(time.Unix(modtimeUnix, 0))
+				}
+			}
+		}
+	}
+	return []webdav.Propstat{stat}, err
 }
 
 // FileInfo represents info about a file satisfying os.FileInfo and
@@ -463,12 +588,14 @@ func (fi FileInfo) ContentType(ctx context.Context) (contentType string, err err
 		fs.Errorf(fi, "Expecting vfs.Node, got %T", fi.FileInfo)
 		return "application/octet-stream", nil
 	}
-	entry := node.DirEntry()
+	entry := node.DirEntry() // can be nil
 	switch x := entry.(type) {
 	case fs.Object:
 		return fs.MimeType(ctx, x), nil
 	case fs.Directory:
 		return "inode/directory", nil
+	case nil:
+		return mime.TypeByExtension(path.Ext(node.Name())), nil
 	}
 	fs.Errorf(fi, "Expecting fs.Object or fs.Directory, got %T", entry)
 	return "application/octet-stream", nil

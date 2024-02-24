@@ -10,6 +10,11 @@ import (
 	"github.com/rclone/rclone/fstest/fstests"
 )
 
+var (
+	unimplementableFsMethods     = []string{"UnWrap", "WrapFs", "SetWrapper", "UserInfo", "Disconnect", "OpenChunkWriter"}
+	unimplementableObjectMethods = []string{}
+)
+
 // TestIntegration runs integration tests against the remote
 func TestIntegration(t *testing.T) {
 	if *fstest.RemoteName == "" {
@@ -17,8 +22,8 @@ func TestIntegration(t *testing.T) {
 	}
 	fstests.Run(t, &fstests.Opt{
 		RemoteName:                   *fstest.RemoteName,
-		UnimplementableFsMethods:     []string{"OpenWriterAt", "DuplicateFiles"},
-		UnimplementableObjectMethods: []string{"MimeType"},
+		UnimplementableFsMethods:     unimplementableFsMethods,
+		UnimplementableObjectMethods: unimplementableObjectMethods,
 	})
 }
 
@@ -35,7 +40,9 @@ func TestLocal(t *testing.T) {
 			{Name: name, Key: "type", Value: "combine"},
 			{Name: name, Key: "upstreams", Value: upstreams},
 		},
-		QuickTestOK: true,
+		QuickTestOK:                  true,
+		UnimplementableFsMethods:     unimplementableFsMethods,
+		UnimplementableObjectMethods: unimplementableObjectMethods,
 	})
 }
 
@@ -51,7 +58,9 @@ func TestMemory(t *testing.T) {
 			{Name: name, Key: "type", Value: "combine"},
 			{Name: name, Key: "upstreams", Value: upstreams},
 		},
-		QuickTestOK: true,
+		QuickTestOK:                  true,
+		UnimplementableFsMethods:     unimplementableFsMethods,
+		UnimplementableObjectMethods: unimplementableObjectMethods,
 	})
 }
 
@@ -68,6 +77,8 @@ func TestMixed(t *testing.T) {
 			{Name: name, Key: "type", Value: "combine"},
 			{Name: name, Key: "upstreams", Value: upstreams},
 		},
+		UnimplementableFsMethods:     unimplementableFsMethods,
+		UnimplementableObjectMethods: unimplementableObjectMethods,
 	})
 }
 

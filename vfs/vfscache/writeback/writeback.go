@@ -26,6 +26,9 @@ type Handle uint64
 
 // WriteBack keeps track of the items which need to be written back to the disk at some point
 type WriteBack struct {
+	// read and written with atomic, must be 64-bit aligned
+	id Handle // id of the last writeBackItem created
+
 	ctx     context.Context
 	mu      sync.Mutex
 	items   writeBackItems            // priority queue of *writeBackItem - writeBackItems are in here while awaiting transfer only
@@ -34,9 +37,6 @@ type WriteBack struct {
 	timer   *time.Timer               // next scheduled time for the uploader
 	expiry  time.Time                 // time the next item expires or IsZero
 	uploads int                       // number of uploads in progress
-
-	// read and written with atomic
-	id Handle // id of the last writeBackItem created
 }
 
 // New make a new WriteBack

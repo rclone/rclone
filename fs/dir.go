@@ -16,6 +16,8 @@ type Dir struct {
 }
 
 // NewDir creates an unspecialized Directory object
+//
+// If the modTime is unknown pass in time.Time{}
 func NewDir(remote string, modTime time.Time) *Dir {
 	return &Dir{
 		remote:  remote,
@@ -75,12 +77,14 @@ func (d *Dir) SetParentID(parent string) *Dir {
 }
 
 // ModTime returns the modification date of the file
-// It should return a best guess if one isn't available
+//
+// If one isn't available it returns the configured --default-dir-time
 func (d *Dir) ModTime(ctx context.Context) time.Time {
 	if !d.modTime.IsZero() {
 		return d.modTime
 	}
-	return time.Now()
+	ci := GetConfig(ctx)
+	return time.Time(ci.DefaultTime)
 }
 
 // Size returns the size of the file

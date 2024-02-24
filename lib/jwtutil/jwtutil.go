@@ -14,12 +14,12 @@ import (
 	"strings"
 	"time"
 
+	"github.com/golang-jwt/jwt/v4"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/lib/oauthutil"
 
 	"golang.org/x/oauth2"
-	"golang.org/x/oauth2/jws"
 )
 
 // RandomHex creates a random string of the given length
@@ -32,12 +32,16 @@ func RandomHex(n int) (string, error) {
 }
 
 // Config configures rclone using JWT
-func Config(id, name string, claims *jws.ClaimSet, header *jws.Header, queryParams map[string]string, privateKey *rsa.PrivateKey, m configmap.Mapper, client *http.Client) (err error) {
-	payload, err := jws.Encode(header, claims, privateKey)
+func Config(id, name, url string, claims jwt.Claims, headerParams map[string]interface{}, queryParams map[string]string, privateKey *rsa.PrivateKey, m configmap.Mapper, client *http.Client) (err error) {
+	jwtToken := jwt.NewWithClaims(jwt.SigningMethodRS256, claims)
+	for key, value := range headerParams {
+		jwtToken.Header[key] = value
+	}
+	payload, err := jwtToken.SignedString(privateKey)
 	if err != nil {
 		return fmt.Errorf("jwtutil: failed to encode payload: %w", err)
 	}
-	req, err := http.NewRequest("POST", claims.Aud, nil)
+	req, err := http.NewRequest("POST", url, nil)
 	if err != nil {
 		return fmt.Errorf("jwtutil: failed to create new request: %w", err)
 	}
@@ -49,7 +53,7 @@ func Config(id, name string, claims *jws.ClaimSet, header *jws.Header, queryPara
 	}
 	queryString := q.Encode()
 
-	req, err = http.NewRequest("POST", claims.Aud, bytes.NewBuffer([]byte(queryString)))
+	req, err = http.NewRequest("POST", url, bytes.NewBuffer([]byte(queryString)))
 	if err != nil {
 		return fmt.Errorf("jwtutil: failed to create new request: %w", err)
 	}

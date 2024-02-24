@@ -1,9 +1,12 @@
 package http
 
 import (
+	"bytes"
 	"embed"
 	"html/template"
+	"log"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/spf13/pflag"
@@ -11,11 +14,12 @@ import (
 	"github.com/rclone/rclone/fs/config/flags"
 )
 
-// TemplateHelp describes how to use a custom template
-var TemplateHelp = `
+// TemplateHelp returns a string that describes how to use a custom template
+func TemplateHelp(prefix string) string {
+	help := `
 #### Template
 
-` + "`--template`" + ` allows a user to specify a custom markup template for HTTP
+` + "`--{{ .Prefix }}template`" + ` allows a user to specify a custom markup template for HTTP
 and WebDAV serve functions.  The server exports the following markup
 to be used within the template to server pages:
 
@@ -37,7 +41,36 @@ to be used within the template to server pages:
 |-- .IsDir    | Boolean for if an entry is a directory or not. |
 |-- .Size     | Size in Bytes of the entry. |
 |-- .ModTime  | The UTC timestamp of an entry. |
+
+The server also makes the following functions available so that they can be used within the
+template. These functions help extend the options for dynamic rendering of HTML. They can
+be used to render HTML based on specific conditions.
+
+| Function   | Description |
+| :---------- | :---------- |
+| afterEpoch  | Returns the time since the epoch for the given time. |
+| contains    | Checks whether a given substring is present or not in a given string. |
+| hasPrefix   | Checks whether the given string begins with the specified prefix. |
+| hasSuffix   | Checks whether the given string end with the specified suffix. |
 `
+
+	tmpl, err := template.New("template help").Parse(help)
+	if err != nil {
+		log.Fatal("Fatal error parsing template", err)
+	}
+
+	data := struct {
+		Prefix string
+	}{
+		Prefix: prefix,
+	}
+	buf := &bytes.Buffer{}
+	err = tmpl.Execute(buf, data)
+	if err != nil {
+		log.Fatal("Fatal error executing template", err)
+	}
+	return buf.String()
+}
 
 // TemplateConfig for the templating functionality
 type TemplateConfig struct {
@@ -46,7 +79,7 @@ type TemplateConfig struct {
 
 // AddFlagsPrefix for the templating functionality
 func (cfg *TemplateConfig) AddFlagsPrefix(flagSet *pflag.FlagSet, prefix string) {
-	flags.StringVarP(flagSet, &cfg.Path, prefix+"template", "", cfg.Path, "User-specified template")
+	flags.StringVarP(flagSet, &cfg.Path, prefix+"template", "", cfg.Path, "User-specified template", prefix)
 }
 
 // AddTemplateFlagsPrefix for the templating functionality
@@ -84,6 +117,9 @@ func GetTemplate(tmpl string) (*template.Template, error) {
 
 	funcMap := template.FuncMap{
 		"afterEpoch": AfterEpoch,
+		"contains":   strings.Contains,
+		"hasPrefix":  strings.HasPrefix,
+		"hasSuffix":  strings.HasSuffix,
 	}
 
 	tpl, err := template.New("index").Funcs(funcMap).Parse(string(data))

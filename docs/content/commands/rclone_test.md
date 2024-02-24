@@ -14,7 +14,7 @@ Run a test command
 
 Rclone test is used to run test commands.
 
-Select which test comand you want with the subcommand, eg
+Select which test command you want with the subcommand, eg
 
     rclone test memory remote:
 
@@ -30,9 +30,10 @@ so reading their documentation first is recommended.
   -h, --help   help for test
 ```
 
+
 See the [global flags page](/flags/) for global options not listed here.
 
-## SEE ALSO
+# SEE ALSO
 
 * [rclone](/commands/rclone/)	 - Show help for rclone commands, flags and backends.
 * [rclone test changenotify](/commands/rclone_test_changenotify/)	 - Log any change notify requests for the remote passed in.

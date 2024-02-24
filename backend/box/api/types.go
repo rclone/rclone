@@ -52,7 +52,7 @@ func (e *Error) Error() string {
 		out += ": " + e.Message
 	}
 	if e.ContextInfo != nil {
-		out += fmt.Sprintf(" (%+v)", e.ContextInfo)
+		out += fmt.Sprintf(" (%s)", string(e.ContextInfo))
 	}
 	return out
 }
@@ -63,7 +63,7 @@ var _ error = (*Error)(nil)
 // ItemFields are the fields needed for FileInfo
 var ItemFields = "type,id,sequence_id,etag,sha1,name,size,created_at,modified_at,content_created_at,content_modified_at,item_status,shared_link,owned_by"
 
-// Types of things in Item
+// Types of things in Item/ItemMini
 const (
 	ItemTypeFolder    = "folder"
 	ItemTypeFile      = "file"
@@ -72,20 +72,31 @@ const (
 	ItemStatusDeleted = "deleted"
 )
 
+// ItemMini is a subset of the elements in a full Item returned by some API calls
+type ItemMini struct {
+	Type       string `json:"type"`
+	ID         string `json:"id"`
+	SequenceID int64  `json:"sequence_id,string"`
+	Etag       string `json:"etag"`
+	SHA1       string `json:"sha1"`
+	Name       string `json:"name"`
+}
+
 // Item describes a folder or a file as returned by Get Folder Items and others
 type Item struct {
-	Type              string  `json:"type"`
-	ID                string  `json:"id"`
-	SequenceID        string  `json:"sequence_id"`
-	Etag              string  `json:"etag"`
-	SHA1              string  `json:"sha1"`
-	Name              string  `json:"name"`
-	Size              float64 `json:"size"` // box returns this in xEyy format for very large numbers - see #2261
-	CreatedAt         Time    `json:"created_at"`
-	ModifiedAt        Time    `json:"modified_at"`
-	ContentCreatedAt  Time    `json:"content_created_at"`
-	ContentModifiedAt Time    `json:"content_modified_at"`
-	ItemStatus        string  `json:"item_status"` // active, trashed if the file has been moved to the trash, and deleted if the file has been permanently deleted
+	Type              string   `json:"type"`
+	ID                string   `json:"id"`
+	SequenceID        int64    `json:"sequence_id,string"`
+	Etag              string   `json:"etag"`
+	SHA1              string   `json:"sha1"`
+	Name              string   `json:"name"`
+	Size              float64  `json:"size"` // box returns this in xEyy format for very large numbers - see #2261
+	CreatedAt         Time     `json:"created_at"`
+	ModifiedAt        Time     `json:"modified_at"`
+	ContentCreatedAt  Time     `json:"content_created_at"`
+	ContentModifiedAt Time     `json:"content_modified_at"`
+	ItemStatus        string   `json:"item_status"` // active, trashed if the file has been moved to the trash, and deleted if the file has been permanently deleted
+	Parent            ItemMini `json:"parent"`
 	SharedLink        struct {
 		URL    string `json:"url,omitempty"`
 		Access string `json:"access,omitempty"`
@@ -156,19 +167,7 @@ type PreUploadCheckResponse struct {
 // PreUploadCheckConflict is returned in the ContextInfo error field
 // from PreUploadCheck when the error code is "item_name_in_use"
 type PreUploadCheckConflict struct {
-	Conflicts struct {
-		Type        string `json:"type"`
-		ID          string `json:"id"`
-		FileVersion struct {
-			Type string `json:"type"`
-			ID   string `json:"id"`
-			Sha1 string `json:"sha1"`
-		} `json:"file_version"`
-		SequenceID string `json:"sequence_id"`
-		Etag       string `json:"etag"`
-		Sha1       string `json:"sha1"`
-		Name       string `json:"name"`
-	} `json:"conflicts"`
+	Conflicts ItemMini `json:"conflicts"`
 }
 
 // UpdateFileModTime is used in Update File Info
@@ -280,4 +279,31 @@ type User struct {
 	Phone         string    `json:"phone"`
 	Address       string    `json:"address"`
 	AvatarURL     string    `json:"avatar_url"`
+}
+
+// FileTreeChangeEventTypes are the events that can require cache invalidation
+var FileTreeChangeEventTypes = map[string]struct{}{
+	"ITEM_COPY":                 {},
+	"ITEM_CREATE":               {},
+	"ITEM_MAKE_CURRENT_VERSION": {},
+	"ITEM_MODIFY":               {},
+	"ITEM_MOVE":                 {},
+	"ITEM_RENAME":               {},
+	"ITEM_TRASH":                {},
+	"ITEM_UNDELETE_VIA_TRASH":   {},
+	"ITEM_UPLOAD":               {},
+}
+
+// Event is an array element in the response returned from /events
+type Event struct {
+	EventType string `json:"event_type"`
+	EventID   string `json:"event_id"`
+	Source    Item   `json:"source"`
+}
+
+// Events is returned from /events
+type Events struct {
+	ChunkSize          int64   `json:"chunk_size"`
+	Entries            []Event `json:"entries"`
+	NextStreamPosition int64   `json:"next_stream_position"`
 }

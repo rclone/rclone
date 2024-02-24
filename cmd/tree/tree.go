@@ -18,6 +18,8 @@ import (
 	"github.com/rclone/rclone/fs/dirtree"
 	"github.com/rclone/rclone/fs/log"
 	"github.com/rclone/rclone/fs/walk"
+	"github.com/rclone/rclone/lib/encoder"
+	"github.com/rclone/rclone/lib/terminal"
 	"github.com/spf13/cobra"
 )
 
@@ -26,41 +28,42 @@ var (
 	outFileName string
 	noReport    bool
 	sort        string
+	enc         = encoder.OS
 )
 
 func init() {
 	cmd.Root.AddCommand(commandDefinition)
 	cmdFlags := commandDefinition.Flags()
 	// List
-	flags.BoolVarP(cmdFlags, &opts.All, "all", "a", false, "All files are listed (list . files too)")
-	flags.BoolVarP(cmdFlags, &opts.DirsOnly, "dirs-only", "d", false, "List directories only")
-	flags.BoolVarP(cmdFlags, &opts.FullPath, "full-path", "", false, "Print the full path prefix for each file")
-	//flags.BoolVarP(cmdFlags, &opts.IgnoreCase, "ignore-case", "", false, "Ignore case when pattern matching")
-	flags.BoolVarP(cmdFlags, &noReport, "noreport", "", false, "Turn off file/directory count at end of tree listing")
-	// flags.BoolVarP(cmdFlags, &opts.FollowLink, "follow", "l", false, "Follow symbolic links like directories")
-	flags.IntVarP(cmdFlags, &opts.DeepLevel, "level", "", 0, "Descend only level directories deep")
+	flags.BoolVarP(cmdFlags, &opts.All, "all", "a", false, "All files are listed (list . files too)", "")
+	flags.BoolVarP(cmdFlags, &opts.DirsOnly, "dirs-only", "d", false, "List directories only", "")
+	flags.BoolVarP(cmdFlags, &opts.FullPath, "full-path", "", false, "Print the full path prefix for each file", "")
+	//flags.BoolVarP(cmdFlags, &opts.IgnoreCase, "ignore-case", "", false, "Ignore case when pattern matching", "")
+	flags.BoolVarP(cmdFlags, &noReport, "noreport", "", false, "Turn off file/directory count at end of tree listing", "")
+	// flags.BoolVarP(cmdFlags, &opts.FollowLink, "follow", "l", false, "Follow symbolic links like directories","")
+	flags.IntVarP(cmdFlags, &opts.DeepLevel, "level", "", 0, "Descend only level directories deep", "")
 	// flags.StringVarP(cmdFlags, &opts.Pattern, "pattern", "P", "", "List only those files that match the pattern given")
 	// flags.StringVarP(cmdFlags, &opts.IPattern, "exclude", "", "", "Do not list files that match the given pattern")
-	flags.StringVarP(cmdFlags, &outFileName, "output", "o", "", "Output to file instead of stdout")
+	flags.StringVarP(cmdFlags, &outFileName, "output", "o", "", "Output to file instead of stdout", "")
 	// Files
-	flags.BoolVarP(cmdFlags, &opts.ByteSize, "size", "s", false, "Print the size in bytes of each file.")
-	flags.BoolVarP(cmdFlags, &opts.FileMode, "protections", "p", false, "Print the protections for each file.")
+	flags.BoolVarP(cmdFlags, &opts.ByteSize, "size", "s", false, "Print the size in bytes of each file.", "")
+	flags.BoolVarP(cmdFlags, &opts.FileMode, "protections", "p", false, "Print the protections for each file.", "")
 	// flags.BoolVarP(cmdFlags, &opts.ShowUid, "uid", "", false, "Displays file owner or UID number.")
 	// flags.BoolVarP(cmdFlags, &opts.ShowGid, "gid", "", false, "Displays file group owner or GID number.")
-	flags.BoolVarP(cmdFlags, &opts.Quotes, "quote", "Q", false, "Quote filenames with double quotes.")
-	flags.BoolVarP(cmdFlags, &opts.LastMod, "modtime", "D", false, "Print the date of last modification.")
+	flags.BoolVarP(cmdFlags, &opts.Quotes, "quote", "Q", false, "Quote filenames with double quotes.", "")
+	flags.BoolVarP(cmdFlags, &opts.LastMod, "modtime", "D", false, "Print the date of last modification.", "")
 	// flags.BoolVarP(cmdFlags, &opts.Inodes, "inodes", "", false, "Print inode number of each file.")
 	// flags.BoolVarP(cmdFlags, &opts.Device, "device", "", false, "Print device ID number to which each file belongs.")
 	// Sort
-	flags.BoolVarP(cmdFlags, &opts.NoSort, "unsorted", "U", false, "Leave files unsorted")
-	flags.BoolVarP(cmdFlags, &opts.VerSort, "version", "", false, "Sort files alphanumerically by version")
-	flags.BoolVarP(cmdFlags, &opts.ModSort, "sort-modtime", "t", false, "Sort files by last modification time")
-	flags.BoolVarP(cmdFlags, &opts.CTimeSort, "sort-ctime", "", false, "Sort files by last status change time")
-	flags.BoolVarP(cmdFlags, &opts.ReverSort, "sort-reverse", "r", false, "Reverse the order of the sort")
-	flags.BoolVarP(cmdFlags, &opts.DirSort, "dirsfirst", "", false, "List directories before files (-U disables)")
-	flags.StringVarP(cmdFlags, &sort, "sort", "", "", "Select sort: name,version,size,mtime,ctime")
+	flags.BoolVarP(cmdFlags, &opts.NoSort, "unsorted", "U", false, "Leave files unsorted", "")
+	flags.BoolVarP(cmdFlags, &opts.VerSort, "version", "", false, "Sort files alphanumerically by version", "")
+	flags.BoolVarP(cmdFlags, &opts.ModSort, "sort-modtime", "t", false, "Sort files by last modification time", "")
+	flags.BoolVarP(cmdFlags, &opts.CTimeSort, "sort-ctime", "", false, "Sort files by last status change time", "")
+	flags.BoolVarP(cmdFlags, &opts.ReverSort, "sort-reverse", "r", false, "Reverse the order of the sort", "")
+	flags.BoolVarP(cmdFlags, &opts.DirSort, "dirsfirst", "", false, "List directories before files (-U disables)", "")
+	flags.StringVarP(cmdFlags, &sort, "sort", "", "", "Select sort: name,version,size,mtime,ctime", "")
 	// Graphics
-	flags.BoolVarP(cmdFlags, &opts.NoIndent, "noindent", "", false, "Don't print indentation lines")
+	flags.BoolVarP(cmdFlags, &opts.NoIndent, "noindent", "", false, "Don't print indentation lines", "")
 }
 
 var commandDefinition = &cobra.Command{
@@ -96,26 +99,31 @@ For a more interactive navigation of the remote see the
 `,
 	Annotations: map[string]string{
 		"versionIntroduced": "v1.38",
+		"groups":            "Filter,Listing",
 	},
 	RunE: func(command *cobra.Command, args []string) error {
 		cmd.CheckArgs(1, 1, command, args)
 		fsrc := cmd.NewFsSrc(args)
-		outFile := os.Stdout
+		ci := fs.GetConfig(context.Background())
+		var outFile io.Writer
 		if outFileName != "" {
 			var err error
 			outFile, err = os.Create(outFileName)
 			if err != nil {
 				return fmt.Errorf("failed to create output file: %w", err)
 			}
+			opts.Colorize = false
+		} else {
+			terminal.Start()
+			outFile = terminal.Out
+			opts.Colorize = true
 		}
 		opts.VerSort = opts.VerSort || sort == "version"
 		opts.ModSort = opts.ModSort || sort == "mtime"
 		opts.CTimeSort = opts.CTimeSort || sort == "ctime"
 		opts.NameSort = sort == "name"
 		opts.SizeSort = sort == "size"
-		ci := fs.GetConfig(context.Background())
 		opts.UnitSize = ci.HumanReadable
-		opts.Colorize = ci.TerminalColorMode != fs.TerminalColorModeNever
 		if opts.DeepLevel == 0 {
 			opts.DeepLevel = ci.MaxDepth
 		}
@@ -158,7 +166,7 @@ type FileInfo struct {
 
 // Name is base name of the file
 func (to *FileInfo) Name() string {
-	return path.Base(to.entry.Remote())
+	return enc.FromStandardName(path.Base(to.entry.Remote()))
 }
 
 // Size in bytes for regular files; system-dependent for others
@@ -192,7 +200,7 @@ func (to *FileInfo) Sys() interface{} {
 
 // String returns the full path
 func (to *FileInfo) String() string {
-	return to.entry.Remote()
+	return filepath.FromSlash(enc.FromStandardPath(to.entry.Remote()))
 }
 
 // Fs maps an fs.Fs into a tree.Fs
@@ -207,6 +215,7 @@ func NewFs(dirs dirtree.DirTree) Fs {
 func (dirs Fs) Stat(filePath string) (fi os.FileInfo, err error) {
 	defer log.Trace(nil, "filePath=%q", filePath)("fi=%+v, err=%v", &fi, &err)
 	filePath = filepath.ToSlash(filePath)
+	filePath = enc.ToStandardPath(filePath)
 	filePath = strings.TrimLeft(filePath, "/")
 	if filePath == "" {
 		return &FileInfo{fs.NewDir("", time.Now())}, nil
@@ -222,13 +231,14 @@ func (dirs Fs) Stat(filePath string) (fi os.FileInfo, err error) {
 func (dirs Fs) ReadDir(dir string) (names []string, err error) {
 	defer log.Trace(nil, "dir=%s", dir)("names=%+v, err=%v", &names, &err)
 	dir = filepath.ToSlash(dir)
+	dir = enc.ToStandardPath(dir)
 	dir = strings.TrimLeft(dir, "/")
 	entries, ok := dirs[dir]
 	if !ok {
 		return nil, fmt.Errorf("couldn't find directory %q", dir)
 	}
 	for _, entry := range entries {
-		names = append(names, path.Base(entry.Remote()))
+		names = append(names, enc.FromStandardName(path.Base(entry.Remote())))
 	}
 	return
 }

@@ -152,7 +152,7 @@ func TestMemoryObject(t *testing.T) {
 	err = o.Update(context.Background(), newContent, src)
 	assert.NoError(t, err)
 	checkContent(o, newStr)
-	assert.Equal(t, "Rutaba", string(content)) // check we didn't re-use the buffer
+	assert.Equal(t, "Rutaba", string(content)) // check we didn't reuse the buffer
 
 	// now try streaming
 	newStr = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"

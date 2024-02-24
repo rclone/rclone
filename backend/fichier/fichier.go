@@ -38,8 +38,9 @@ func init() {
 		Description: "1Fichier",
 		NewFs:       NewFs,
 		Options: []fs.Option{{
-			Help: "Your API Key, get it from https://1fichier.com/console/params.pl.",
-			Name: "api_key",
+			Help:      "Your API Key, get it from https://1fichier.com/console/params.pl.",
+			Name:      "api_key",
+			Sensitive: true,
 		}, {
 			Help:     "If you want to download a shared folder, add this parameter.",
 			Name:     "shared_folder",
@@ -54,6 +55,11 @@ func init() {
 			Name:       "folder_password",
 			Advanced:   true,
 			IsPassword: true,
+		}, {
+			Help:     "Set if you wish to use CDN download links.",
+			Name:     "cdn",
+			Default:  false,
+			Advanced: true,
 		}, {
 			Name:     config.ConfigEncoding,
 			Help:     config.ConfigEncodingHelp,
@@ -89,6 +95,7 @@ type Options struct {
 	SharedFolder   string               `config:"shared_folder"`
 	FilePassword   string               `config:"file_password"`
 	FolderPassword string               `config:"folder_password"`
+	CDN            bool                 `config:"cdn"`
 	Enc            encoder.MultiEncoder `config:"encoding"`
 }
 
@@ -333,7 +340,7 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 // checking to see if there is one already - use Put() for that.
 func (f *Fs) putUnchecked(ctx context.Context, in io.Reader, remote string, size int64, options ...fs.OpenOption) (fs.Object, error) {
 	if size > int64(300e9) {
-		return nil, errors.New("File too big, cant upload")
+		return nil, errors.New("File too big, can't upload")
 	} else if size == 0 {
 		return nil, fs.ErrorCantUploadEmptyFiles
 	}
@@ -481,6 +488,51 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	return dstObj, nil
 }
 
+// DirMove moves src, srcRemote to this remote at dstRemote
+// using server-side move operations.
+//
+// Will only be called if src.Fs().Name() == f.Name()
+//
+// If it isn't possible then return fs.ErrorCantDirMove.
+//
+// If destination exists then return fs.ErrorDirExists.
+//
+// This is complicated by the fact that we can't use moveDir to move
+// to a different directory AND rename at the same time as it can
+// overwrite files in the source directory.
+func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string) error {
+	srcFs, ok := src.(*Fs)
+	if !ok {
+		fs.Debugf(srcFs, "Can't move directory - not same remote type")
+		return fs.ErrorCantDirMove
+	}
+
+	srcID, _, _, dstDirectoryID, dstLeaf, err := f.dirCache.DirMove(ctx, srcFs.dirCache, srcFs.root, srcRemote, f.root, dstRemote)
+	if err != nil {
+		return err
+	}
+	srcIDnumeric, err := strconv.Atoi(srcID)
+	if err != nil {
+		return err
+	}
+	dstDirectoryIDnumeric, err := strconv.Atoi(dstDirectoryID)
+	if err != nil {
+		return err
+	}
+
+	var resp *MoveDirResponse
+	resp, err = f.moveDir(ctx, srcIDnumeric, dstLeaf, dstDirectoryIDnumeric)
+	if err != nil {
+		return fmt.Errorf("couldn't rename leaf: %w", err)
+	}
+	if resp.Status != "OK" {
+		return fmt.Errorf("couldn't rename leaf: %s", resp.Message)
+	}
+
+	srcFs.dirCache.FlushDir(srcRemote)
+	return nil
+}
+
 // Copy src to this remote using server side move operations.
 func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
 	srcObj, ok := src.(*Object)
@@ -554,6 +606,7 @@ func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, 
 var (
 	_ fs.Fs              = (*Fs)(nil)
 	_ fs.Mover           = (*Fs)(nil)
+	_ fs.DirMover        = (*Fs)(nil)
 	_ fs.Copier          = (*Fs)(nil)
 	_ fs.PublicLinker    = (*Fs)(nil)
 	_ fs.PutUncheckeder  = (*Fs)(nil)

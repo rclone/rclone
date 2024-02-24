@@ -44,13 +44,22 @@ func TestJobsExpire(t *testing.T) {
 	jobs := newJobs()
 	jobs.opt.JobExpireInterval = time.Millisecond
 	assert.Equal(t, false, jobs.expireRunning)
+	var gotJobID int64
+	var gotJob *Job
 	job, out, err := jobs.NewJob(ctx, func(ctx context.Context, in rc.Params) (rc.Params, error) {
 		defer close(wait)
+		var ok bool
+		gotJobID, ok = GetJobID(ctx)
+		assert.True(t, ok)
+		gotJob, ok = GetJob(ctx)
+		assert.True(t, ok)
 		return in, nil
 	}, rc.Params{"_async": true})
 	require.NoError(t, err)
 	assert.Equal(t, 1, len(out))
 	<-wait
+	assert.Equal(t, job.ID, gotJobID, "check can get JobID from ctx")
+	assert.Equal(t, job, gotJob, "check can get Job from ctx")
 	assert.Equal(t, 1, len(jobs.jobs))
 	jobs.Expire()
 	assert.Equal(t, 1, len(jobs.jobs))
@@ -220,7 +229,7 @@ func TestJobRunPanic(t *testing.T) {
 
 func TestJobsNewJob(t *testing.T) {
 	ctx := context.Background()
-	jobID = 0
+	jobID.Store(0)
 	jobs := newJobs()
 	job, out, err := jobs.NewJob(ctx, noopFn, rc.Params{"_async": true})
 	require.NoError(t, err)
@@ -232,7 +241,7 @@ func TestJobsNewJob(t *testing.T) {
 
 func TestStartJob(t *testing.T) {
 	ctx := context.Background()
-	jobID = 0
+	jobID.Store(0)
 	job, out, err := NewJob(ctx, longFn, rc.Params{"_async": true})
 	assert.NoError(t, err)
 	assert.Equal(t, rc.Params{"jobid": int64(1)}, out)
@@ -240,7 +249,7 @@ func TestStartJob(t *testing.T) {
 }
 
 func TestExecuteJob(t *testing.T) {
-	jobID = 0
+	jobID.Store(0)
 	job, out, err := NewJob(context.Background(), shortFn, rc.Params{})
 	assert.NoError(t, err)
 	assert.Equal(t, int64(1), job.ID)
@@ -249,7 +258,7 @@ func TestExecuteJob(t *testing.T) {
 
 func TestExecuteJobWithConfig(t *testing.T) {
 	ctx := context.Background()
-	jobID = 0
+	jobID.Store(0)
 	called := false
 	jobFn := func(ctx context.Context, in rc.Params) (rc.Params, error) {
 		ci := fs.GetConfig(ctx)
@@ -265,7 +274,7 @@ func TestExecuteJobWithConfig(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, true, called)
 	// Retest with string parameter
-	jobID = 0
+	jobID.Store(0)
 	called = false
 	_, _, err = NewJob(ctx, jobFn, rc.Params{
 		"_config": `{"BufferSize": "42M"}`,
@@ -280,7 +289,7 @@ func TestExecuteJobWithConfig(t *testing.T) {
 func TestExecuteJobWithFilter(t *testing.T) {
 	ctx := context.Background()
 	called := false
-	jobID = 0
+	jobID.Store(0)
 	jobFn := func(ctx context.Context, in rc.Params) (rc.Params, error) {
 		fi := filter.GetConfig(ctx)
 		assert.Equal(t, fs.SizeSuffix(1024), fi.Opt.MaxSize)
@@ -300,7 +309,7 @@ func TestExecuteJobWithFilter(t *testing.T) {
 
 func TestExecuteJobWithGroup(t *testing.T) {
 	ctx := context.Background()
-	jobID = 0
+	jobID.Store(0)
 	called := false
 	jobFn := func(ctx context.Context, in rc.Params) (rc.Params, error) {
 		called = true
@@ -318,7 +327,7 @@ func TestExecuteJobWithGroup(t *testing.T) {
 
 func TestExecuteJobErrorPropagation(t *testing.T) {
 	ctx := context.Background()
-	jobID = 0
+	jobID.Store(0)
 
 	testErr := errors.New("test error")
 	errorFn := func(ctx context.Context, in rc.Params) (out rc.Params, err error) {
@@ -330,7 +339,7 @@ func TestExecuteJobErrorPropagation(t *testing.T) {
 
 func TestRcJobStatus(t *testing.T) {
 	ctx := context.Background()
-	jobID = 0
+	jobID.Store(0)
 	_, _, err := NewJob(ctx, longFn, rc.Params{"_async": true})
 	assert.NoError(t, err)
 
@@ -358,22 +367,36 @@ func TestRcJobStatus(t *testing.T) {
 
 func TestRcJobList(t *testing.T) {
 	ctx := context.Background()
-	jobID = 0
+	jobID.Store(0)
 	_, _, err := NewJob(ctx, longFn, rc.Params{"_async": true})
 	assert.NoError(t, err)
 
 	call := rc.Calls.Get("job/list")
 	assert.NotNil(t, call)
 	in := rc.Params{}
-	out, err := call.Fn(context.Background(), in)
+	out1, err := call.Fn(context.Background(), in)
 	require.NoError(t, err)
-	require.NotNil(t, out)
-	assert.Equal(t, rc.Params{"jobids": []int64{1}}, out)
+	require.NotNil(t, out1)
+	assert.Equal(t, []int64{1}, out1["jobids"], "should have job listed")
+
+	_, _, err = NewJob(ctx, longFn, rc.Params{"_async": true})
+	assert.NoError(t, err)
+
+	call = rc.Calls.Get("job/list")
+	assert.NotNil(t, call)
+	in = rc.Params{}
+	out2, err := call.Fn(context.Background(), in)
+	require.NoError(t, err)
+	require.NotNil(t, out2)
+	assert.Equal(t, 2, len(out2["jobids"].([]int64)), "should have all jobs listed")
+
+	require.NotNil(t, out1["executeId"], "should have executeId")
+	assert.Equal(t, out1["executeId"], out2["executeId"], "executeId should be the same")
 }
 
 func TestRcAsyncJobStop(t *testing.T) {
 	ctx := context.Background()
-	jobID = 0
+	jobID.Store(0)
 	_, _, err := NewJob(ctx, ctxFn, rc.Params{"_async": true})
 	assert.NoError(t, err)
 
@@ -411,7 +434,7 @@ func TestRcAsyncJobStop(t *testing.T) {
 func TestRcSyncJobStop(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	go func() {
-		jobID = 0
+		jobID.Store(0)
 		job, out, err := NewJob(ctx, ctxFn, rc.Params{})
 		assert.Error(t, err)
 		assert.Equal(t, int64(1), job.ID)
@@ -454,7 +477,7 @@ func TestRcSyncJobStop(t *testing.T) {
 
 func TestRcJobStopGroup(t *testing.T) {
 	ctx := context.Background()
-	jobID = 0
+	jobID.Store(0)
 	_, _, err := NewJob(ctx, ctxFn, rc.Params{
 		"_async": true,
 		"_group": "myparty",
@@ -495,7 +518,7 @@ func TestRcJobStopGroup(t *testing.T) {
 }
 
 func TestOnFinish(t *testing.T) {
-	jobID = 0
+	jobID.Store(0)
 	done := make(chan struct{})
 	ctx, cancel := context.WithCancel(context.Background())
 	job, _, err := NewJob(ctx, ctxParmFn(ctx, false), rc.Params{"_async": true})
@@ -515,7 +538,7 @@ func TestOnFinish(t *testing.T) {
 }
 
 func TestOnFinishAlreadyFinished(t *testing.T) {
-	jobID = 0
+	jobID.Store(0)
 	done := make(chan struct{})
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()

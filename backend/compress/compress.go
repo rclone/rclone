@@ -14,6 +14,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path"
 	"regexp"
 	"strings"
 	"time"
@@ -172,6 +173,13 @@ func NewFs(ctx context.Context, name, rpath string, m configmap.Mapper) (fs.Fs, 
 		opt:  *opt,
 		mode: compressionModeFromName(opt.CompressionMode),
 	}
+	// Correct root if definitely pointing to a file
+	if err == fs.ErrorIsFile {
+		f.root = path.Dir(f.root)
+		if f.root == "." || f.root == "/" {
+			f.root = ""
+		}
+	}
 	// the features here are ones we could support, and they are
 	// ANDed with the ones from wrappedFs
 	f.features = (&fs.Features{
@@ -186,6 +194,7 @@ func NewFs(ctx context.Context, name, rpath string, m configmap.Mapper) (fs.Fs, 
 		ReadMetadata:            true,
 		WriteMetadata:           true,
 		UserMetadata:            true,
+		PartialUploads:          true,
 	}).Fill(ctx, f).Mask(ctx, wrappedFs).WrapsFs(f, wrappedFs)
 	// We support reading MIME types no matter the wrapped fs
 	f.features.ReadMimeType = true
@@ -254,6 +263,16 @@ func makeMetadataName(remote string) (newRemote string) {
 // Checks whether a file is a metadata file
 func isMetadataFile(filename string) bool {
 	return strings.HasSuffix(filename, metaFileExt)
+}
+
+// Checks whether a file is a metadata file and returns the original
+// file name and a flag indicating whether it was a metadata file or
+// not.
+func unwrapMetadataFile(filename string) (string, bool) {
+	if !isMetadataFile(filename) {
+		return "", false
+	}
+	return filename[:len(filename)-len(metaFileExt)], true
 }
 
 // makeDataName generates the file name for a data file with specified compression mode
@@ -978,7 +997,8 @@ func (f *Fs) ChangeNotify(ctx context.Context, notifyFunc func(string, fs.EntryT
 	wrappedNotifyFunc := func(path string, entryType fs.EntryType) {
 		fs.Logf(f, "path %q entryType %d", path, entryType)
 		var (
-			wrappedPath string
+			wrappedPath    string
+			isMetadataFile bool
 		)
 		switch entryType {
 		case fs.EntryDirectory:
@@ -986,7 +1006,10 @@ func (f *Fs) ChangeNotify(ctx context.Context, notifyFunc func(string, fs.EntryT
 		case fs.EntryObject:
 			// Note: All we really need to do to monitor the object is to check whether the metadata changed,
 			// as the metadata contains the hash. This will work unless there's a hash collision and the sizes stay the same.
-			wrappedPath = makeMetadataName(path)
+			wrappedPath, isMetadataFile = unwrapMetadataFile(path)
+			if !isMetadataFile {
+				return
+			}
 		default:
 			fs.Errorf(path, "press ChangeNotify: ignoring unknown EntryType %d", entryType)
 			return

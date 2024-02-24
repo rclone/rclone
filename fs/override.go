@@ -12,6 +12,13 @@ type OverrideRemote struct {
 // NewOverrideRemote returns an OverrideRemoteObject which will
 // return the remote specified
 func NewOverrideRemote(oi ObjectInfo, remote string) *OverrideRemote {
+	// re-wrap an OverrideRemote
+	if or, ok := oi.(*OverrideRemote); ok {
+		return &OverrideRemote{
+			ObjectInfo: or.ObjectInfo,
+			remote:     remote,
+		}
+	}
 	return &OverrideRemote{
 		ObjectInfo: oi,
 		remote:     remote,
@@ -20,6 +27,11 @@ func NewOverrideRemote(oi ObjectInfo, remote string) *OverrideRemote {
 
 // Remote returns the overridden remote name
 func (o *OverrideRemote) Remote() string {
+	return o.remote
+}
+
+// String returns the overridden remote name
+func (o *OverrideRemote) String() string {
 	return o.remote
 }
 

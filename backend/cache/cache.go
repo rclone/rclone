@@ -76,17 +76,19 @@ func init() {
 			Name: "plex_url",
 			Help: "The URL of the Plex server.",
 		}, {
-			Name: "plex_username",
-			Help: "The username of the Plex user.",
+			Name:      "plex_username",
+			Help:      "The username of the Plex user.",
+			Sensitive: true,
 		}, {
 			Name:       "plex_password",
 			Help:       "The password of the Plex user.",
 			IsPassword: true,
 		}, {
-			Name:     "plex_token",
-			Help:     "The plex token for authentication - auto set normally.",
-			Hide:     fs.OptionHideBoth,
-			Advanced: true,
+			Name:      "plex_token",
+			Help:      "The plex token for authentication - auto set normally.",
+			Hide:      fs.OptionHideBoth,
+			Advanced:  true,
+			Sensitive: true,
 		}, {
 			Name:     "plex_insecure",
 			Help:     "Skip all certificate verification when connecting to the Plex server.",
@@ -1787,7 +1789,7 @@ func (f *Fs) CleanUpCache(ignoreLastTs bool) {
 	}
 }
 
-// StopBackgroundRunners will signall all the runners to stop their work
+// StopBackgroundRunners will signal all the runners to stop their work
 // can be triggered from a terminate signal or from testing between runs
 func (f *Fs) StopBackgroundRunners() {
 	f.cleanupChan <- false

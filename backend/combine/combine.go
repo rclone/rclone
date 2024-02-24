@@ -1,4 +1,4 @@
-// Package combine implents a backend to combine multiple remotes in a directory tree
+// Package combine implements a backend to combine multiple remotes in a directory tree
 package combine
 
 /*
@@ -233,6 +233,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (outFs fs
 		ReadMetadata:            true,
 		WriteMetadata:           true,
 		UserMetadata:            true,
+		PartialUploads:          true,
 	}).Fill(ctx, f)
 	canMove := true
 	for _, u := range f.upstreams {
@@ -289,6 +290,16 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (outFs fs
 		}
 	}
 
+	// Enable CleanUp when any upstreams support it
+	if features.CleanUp == nil {
+		for _, u := range f.upstreams {
+			if u.f.Features().CleanUp != nil {
+				features.CleanUp = f.CleanUp
+				break
+			}
+		}
+	}
+
 	// Enable ChangeNotify when any upstreams support it
 	if features.ChangeNotify == nil {
 		for _, u := range f.upstreams {
@@ -298,6 +309,9 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (outFs fs
 			}
 		}
 	}
+
+	// show that we wrap other backends
+	features.Overlay = true
 
 	f.features = features
 
@@ -351,7 +365,7 @@ func (f *Fs) multithread(ctx context.Context, fn func(context.Context, *upstream
 	return g.Wait()
 }
 
-// join the elements together but unline path.Join return empty string
+// join the elements together but unlike path.Join return empty string
 func join(elem ...string) string {
 	result := path.Join(elem...)
 	if result == "." {
@@ -887,6 +901,100 @@ func (f *Fs) Shutdown(ctx context.Context) error {
 	})
 }
 
+// PublicLink generates a public link to the remote path (usually readable by anyone)
+func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, unlink bool) (string, error) {
+	u, uRemote, err := f.findUpstream(remote)
+	if err != nil {
+		return "", err
+	}
+	do := u.f.Features().PublicLink
+	if do == nil {
+		return "", fs.ErrorNotImplemented
+	}
+	return do(ctx, uRemote, expire, unlink)
+}
+
+// PutUnchecked in to the remote path with the modTime given of the given size
+//
+// May create the object even if it returns an error - if so
+// will return the object and the error, otherwise will return
+// nil and the error
+//
+// May create duplicates or return errors if src already
+// exists.
+func (f *Fs) PutUnchecked(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
+	srcPath := src.Remote()
+	u, uRemote, err := f.findUpstream(srcPath)
+	if err != nil {
+		return nil, err
+	}
+	do := u.f.Features().PutUnchecked
+	if do == nil {
+		return nil, fs.ErrorNotImplemented
+	}
+	uSrc := fs.NewOverrideRemote(src, uRemote)
+	return do(ctx, in, uSrc, options...)
+}
+
+// MergeDirs merges the contents of all the directories passed
+// in into the first one and rmdirs the other directories.
+func (f *Fs) MergeDirs(ctx context.Context, dirs []fs.Directory) error {
+	if len(dirs) == 0 {
+		return nil
+	}
+	var (
+		u     *upstream
+		uDirs []fs.Directory
+	)
+	for _, dir := range dirs {
+		uNew, uDir, err := f.findUpstream(dir.Remote())
+		if err != nil {
+			return err
+		}
+		if u == nil {
+			u = uNew
+		} else if u != uNew {
+			return fmt.Errorf("can't merge directories from different upstreams")
+		}
+		uDirs = append(uDirs, fs.NewOverrideDirectory(dir, uDir))
+	}
+	do := u.f.Features().MergeDirs
+	if do == nil {
+		return fs.ErrorNotImplemented
+	}
+	return do(ctx, uDirs)
+}
+
+// CleanUp the trash in the Fs
+//
+// Implement this if you have a way of emptying the trash or
+// otherwise cleaning up old versions of files.
+func (f *Fs) CleanUp(ctx context.Context) error {
+	return f.multithread(ctx, func(ctx context.Context, u *upstream) error {
+		if do := u.f.Features().CleanUp; do != nil {
+			return do(ctx)
+		}
+		return nil
+	})
+}
+
+// OpenWriterAt opens with a handle for random access writes
+//
+// Pass in the remote desired and the size if known.
+//
+// It truncates any existing object
+func (f *Fs) OpenWriterAt(ctx context.Context, remote string, size int64) (fs.WriterAtCloser, error) {
+	u, uRemote, err := f.findUpstream(remote)
+	if err != nil {
+		return nil, err
+	}
+	do := u.f.Features().OpenWriterAt
+	if do == nil {
+		return nil, fs.ErrorNotImplemented
+	}
+	return do(ctx, uRemote, size)
+}
+
 // Object describes a wrapped Object
 //
 // This is a wrapped Object which knows its path prefix
@@ -916,7 +1024,7 @@ func (o *Object) String() string {
 func (o *Object) Remote() string {
 	newPath, err := o.u.pathAdjustment.do(o.Object.String())
 	if err != nil {
-		fs.Errorf(o, "Bad object: %v", err)
+		fs.Errorf(o.Object, "Bad object: %v", err)
 		return err.Error()
 	}
 	return newPath
@@ -988,5 +1096,10 @@ var (
 	_ fs.Abouter         = (*Fs)(nil)
 	_ fs.ListRer         = (*Fs)(nil)
 	_ fs.Shutdowner      = (*Fs)(nil)
+	_ fs.PublicLinker    = (*Fs)(nil)
+	_ fs.PutUncheckeder  = (*Fs)(nil)
+	_ fs.MergeDirser     = (*Fs)(nil)
+	_ fs.CleanUpper      = (*Fs)(nil)
+	_ fs.OpenWriterAter  = (*Fs)(nil)
 	_ fs.FullObject      = (*Object)(nil)
 )

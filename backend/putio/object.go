@@ -275,7 +275,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	if err != nil {
 		return err
 	}
-	newObj, err := o.fs.PutUnchecked(ctx, in, src, options...)
+	newObj, err := o.fs.putUnchecked(ctx, in, src, o.remote, options...)
 	if err != nil {
 		return err
 	}
