@@ -15,7 +15,7 @@ INFO  : Bisyncing with Comparison Settings:
 }
 INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
 INFO  : Copying Path2 files to Path1
-INFO  : - Path2             [35mResync is copying files to[0m         - [36mPath1[0m
+INFO  : - [34mPath2[0m    [35mResync is copying files to[0m         - [36mPath1[0m
 INFO  : subdir: Set directory modification time (using SetModTime)
 INFO  : subdir: Set directory modification time (using SetModTime)
 INFO  : - [36mPath1[0m    [35mResync is copying files to[0m         - [36mPath2[0m
@@ -66,11 +66,11 @@ INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
 INFO  : Building Path1 and Path2 listings
 INFO  : Path1 checking for diffs
 INFO  : Path2 checking for diffs
-INFO  : - Path2             [35m[31mFile was deleted[0m[0m          - [36msubdir/.chk_file[0m
+INFO  : - [34mPath2[0m    [35m[31mFile was deleted[0m[0m          - [36msubdir/.chk_file[0m
 INFO  : Path2:    1 changes: [32m   0 new[0m, [33m   0 modified[0m, [31m   1 deleted[0m
 INFO  : Checking access health
 ERROR : Access test failed: Path1 count 2, Path2 count 1 - .chk_file
-ERROR : -                   [35mAccess test failed: Path1 file not found in Path2[0m - [36msubdir/.chk_file[0m
+ERROR : - [34m[0m         [35mAccess test failed: Path1 file not found in Path2[0m - [36msubdir/.chk_file[0m
 ERROR : [31mBisync critical error: check file check failed[0m
 ERROR : [31mBisync aborted. Must run --resync to recover.[0m
 Bisync error: bisync aborted
@@ -93,7 +93,7 @@ INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
 INFO  : Copying Path2 files to Path1
 INFO  : Checking access health
 INFO  : Found 2 matching ".chk_file" files on both paths
-INFO  : - Path2             [35mResync is copying files to[0m         - [36mPath1[0m
+INFO  : - [34mPath2[0m    [35mResync is copying files to[0m         - [36mPath1[0m
 INFO  : subdir: Set directory modification time (using SetModTime)
 INFO  : subdir: Set directory modification time (using SetModTime)
 INFO  : - [36mPath1[0m    [35mResync is copying files to[0m         - [36mPath2[0m
