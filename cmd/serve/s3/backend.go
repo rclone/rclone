@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding/hex"
 	"io"
-	"net/http"
 	"os"
 	"path"
 	"strings"
@@ -40,8 +39,8 @@ func newBackend(s *Server, opt *Options) gofakes3.Backend {
 }
 
 // ListBuckets always returns the default bucket.
-func (b *s3Backend) ListBuckets(r *http.Request) ([]gofakes3.BucketInfo, error) {
-	_vfs, err := b.s.getVFS(r.Context())
+func (b *s3Backend) ListBuckets(ctx context.Context) ([]gofakes3.BucketInfo, error) {
+	_vfs, err := b.s.getVFS(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -64,8 +63,8 @@ func (b *s3Backend) ListBuckets(r *http.Request) ([]gofakes3.BucketInfo, error) 
 }
 
 // ListBucket lists the objects in the given bucket.
-func (b *s3Backend) ListBucket(r *http.Request, bucket string, prefix *gofakes3.Prefix, page gofakes3.ListBucketPage) (*gofakes3.ObjectList, error) {
-	_vfs, err := b.s.getVFS(r.Context())
+func (b *s3Backend) ListBucket(ctx context.Context, bucket string, prefix *gofakes3.Prefix, page gofakes3.ListBucketPage) (*gofakes3.ObjectList, error) {
+	_vfs, err := b.s.getVFS(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -102,8 +101,8 @@ func (b *s3Backend) ListBucket(r *http.Request, bucket string, prefix *gofakes3.
 // HeadObject returns the fileinfo for the given object name.
 //
 // Note that the metadata is not supported yet.
-func (b *s3Backend) HeadObject(r *http.Request, bucketName, objectName string) (*gofakes3.Object, error) {
-	_vfs, err := b.s.getVFS(r.Context())
+func (b *s3Backend) HeadObject(ctx context.Context, bucketName, objectName string) (*gofakes3.Object, error) {
+	_vfs, err := b.s.getVFS(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -153,8 +152,8 @@ func (b *s3Backend) HeadObject(r *http.Request, bucketName, objectName string) (
 }
 
 // GetObject fetchs the object from the filesystem.
-func (b *s3Backend) GetObject(r *http.Request, bucketName, objectName string, rangeRequest *gofakes3.ObjectRangeRequest) (obj *gofakes3.Object, err error) {
-	_vfs, err := b.s.getVFS(r.Context())
+func (b *s3Backend) GetObject(ctx context.Context, bucketName, objectName string, rangeRequest *gofakes3.ObjectRangeRequest) (obj *gofakes3.Object, err error) {
+	_vfs, err := b.s.getVFS(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -231,8 +230,8 @@ func (b *s3Backend) GetObject(r *http.Request, bucketName, objectName string, ra
 }
 
 // TouchObject creates or updates meta on specified object.
-func (b *s3Backend) TouchObject(r *http.Request, fp string, meta map[string]string) (result gofakes3.PutObjectResult, err error) {
-	_vfs, err := b.s.getVFS(r.Context())
+func (b *s3Backend) TouchObject(ctx context.Context, fp string, meta map[string]string) (result gofakes3.PutObjectResult, err error) {
+	_vfs, err := b.s.getVFS(ctx)
 	if err != nil {
 		return result, err
 	}
@@ -243,7 +242,7 @@ func (b *s3Backend) TouchObject(r *http.Request, fp string, meta map[string]stri
 			return result, err
 		}
 		_ = f.Close()
-		return b.TouchObject(r, fp, meta)
+		return b.TouchObject(ctx, fp, meta)
 	} else if err != nil {
 		return result, err
 	}
@@ -275,12 +274,12 @@ func (b *s3Backend) TouchObject(r *http.Request, fp string, meta map[string]stri
 }
 
 // PutObject creates or overwrites the object with the given name.
-func (b *s3Backend) PutObject(r *http.Request,
+func (b *s3Backend) PutObject(ctx context.Context,
 	bucketName, objectName string,
 	meta map[string]string,
 	input io.Reader, size int64,
 ) (result gofakes3.PutObjectResult, err error) {
-	_vfs, err := b.s.getVFS(r.Context())
+	_vfs, err := b.s.getVFS(ctx)
 	if err != nil {
 		return result, err
 	}
@@ -348,9 +347,9 @@ func (b *s3Backend) PutObject(r *http.Request,
 }
 
 // DeleteMulti deletes multiple objects in a single request.
-func (b *s3Backend) DeleteMulti(r *http.Request, bucketName string, objects ...string) (result gofakes3.MultiDeleteResult, rerr error) {
+func (b *s3Backend) DeleteMulti(ctx context.Context, bucketName string, objects ...string) (result gofakes3.MultiDeleteResult, rerr error) {
 	for _, object := range objects {
-		if err := b.deleteObject(r, bucketName, object); err != nil {
+		if err := b.deleteObject(ctx, bucketName, object); err != nil {
 			fs.Errorf("serve s3", "delete object failed: %v", err)
 			result.Error = append(result.Error, gofakes3.ErrorResult{
 				Code:    gofakes3.ErrInternal,
@@ -368,13 +367,13 @@ func (b *s3Backend) DeleteMulti(r *http.Request, bucketName string, objects ...s
 }
 
 // DeleteObject deletes the object with the given name.
-func (b *s3Backend) DeleteObject(r *http.Request, bucketName, objectName string) (result gofakes3.ObjectDeleteResult, rerr error) {
-	return result, b.deleteObject(r, bucketName, objectName)
+func (b *s3Backend) DeleteObject(ctx context.Context, bucketName, objectName string) (result gofakes3.ObjectDeleteResult, rerr error) {
+	return result, b.deleteObject(ctx, bucketName, objectName)
 }
 
 // deleteObject deletes the object from the filesystem.
-func (b *s3Backend) deleteObject(r *http.Request, bucketName, objectName string) error {
-	_vfs, err := b.s.getVFS(r.Context())
+func (b *s3Backend) deleteObject(ctx context.Context, bucketName, objectName string) error {
+	_vfs, err := b.s.getVFS(ctx)
 	if err != nil {
 		return err
 	}
@@ -396,8 +395,8 @@ func (b *s3Backend) deleteObject(r *http.Request, bucketName, objectName string)
 }
 
 // CreateBucket creates a new bucket.
-func (b *s3Backend) CreateBucket(r *http.Request, name string) error {
-	_vfs, err := b.s.getVFS(r.Context())
+func (b *s3Backend) CreateBucket(ctx context.Context, name string) error {
+	_vfs, err := b.s.getVFS(ctx)
 	if err != nil {
 		return err
 	}
@@ -417,8 +416,8 @@ func (b *s3Backend) CreateBucket(r *http.Request, name string) error {
 }
 
 // DeleteBucket deletes the bucket with the given name.
-func (b *s3Backend) DeleteBucket(r *http.Request, name string) error {
-	_vfs, err := b.s.getVFS(r.Context())
+func (b *s3Backend) DeleteBucket(ctx context.Context, name string) error {
+	_vfs, err := b.s.getVFS(ctx)
 	if err != nil {
 		return err
 	}
@@ -435,8 +434,8 @@ func (b *s3Backend) DeleteBucket(r *http.Request, name string) error {
 }
 
 // BucketExists checks if the bucket exists.
-func (b *s3Backend) BucketExists(r *http.Request, name string) (exists bool, err error) {
-	_vfs, err := b.s.getVFS(r.Context())
+func (b *s3Backend) BucketExists(ctx context.Context, name string) (exists bool, err error) {
+	_vfs, err := b.s.getVFS(ctx)
 	if err != nil {
 		return false, err
 	}
@@ -449,8 +448,8 @@ func (b *s3Backend) BucketExists(r *http.Request, name string) (exists bool, err
 }
 
 // CopyObject copy specified object from srcKey to dstKey.
-func (b *s3Backend) CopyObject(r *http.Request, srcBucket, srcKey, dstBucket, dstKey string, meta map[string]string) (result gofakes3.CopyObjectResult, err error) {
-	_vfs, err := b.s.getVFS(r.Context())
+func (b *s3Backend) CopyObject(ctx context.Context, srcBucket, srcKey, dstBucket, dstKey string, meta map[string]string) (result gofakes3.CopyObjectResult, err error) {
+	_vfs, err := b.s.getVFS(ctx)
 	if err != nil {
 		return result, err
 	}
@@ -478,7 +477,7 @@ func (b *s3Backend) CopyObject(r *http.Request, srcBucket, srcKey, dstBucket, ds
 		return
 	}
 
-	c, err := b.GetObject(r, srcBucket, srcKey, nil)
+	c, err := b.GetObject(ctx, srcBucket, srcKey, nil)
 	if err != nil {
 		return
 	}
@@ -495,7 +494,7 @@ func (b *s3Backend) CopyObject(r *http.Request, srcBucket, srcKey, dstBucket, ds
 		meta["mtime"] = swift.TimeToFloatString(cStat.ModTime())
 	}
 
-	_, err = b.PutObject(r, dstBucket, dstKey, meta, c.Contents, c.Size)
+	_, err = b.PutObject(ctx, dstBucket, dstKey, meta, c.Contents, c.Size)
 	if err != nil {
 		return
 	}

@@ -476,7 +476,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	if opt.User != "" || opt.Pass != "" {
 		f.srv.SetUserPass(opt.User, opt.Pass)
 	} else if opt.BearerToken != "" {
-		f.SetBearerToken(opt.BearerToken)
+		f.setBearerToken(opt.BearerToken)
 	} else if f.opt.BearerTokenCommand != "" {
 		err = f.fetchAndSetBearerToken()
 		if err != nil {
@@ -518,7 +518,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 }
 
 // sets the BearerToken up
-func (f *Fs) SetBearerToken(token string) {
+func (f *Fs) setBearerToken(token string) {
 	f.opt.BearerToken = token
 	f.srv.SetHeader("Authorization", "Bearer "+token)
 }
@@ -576,7 +576,7 @@ func (f *Fs) fetchAndSetBearerToken() error {
 	if err != nil {
 		return err
 	}
-	f.SetBearerToken(token)
+	f.setBearerToken(token)
 	return nil
 }
 
