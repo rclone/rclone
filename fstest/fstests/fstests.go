@@ -127,24 +127,6 @@ func objsToNames(objs []fs.Object) []string {
 	return names
 }
 
-// findObject finds the object on the remote
-func findObject(ctx context.Context, t *testing.T, f fs.Fs, Name string) fs.Object {
-	var obj fs.Object
-	var err error
-	sleepTime := 1 * time.Second
-	for i := 1; i <= *fstest.ListRetries; i++ {
-		obj, err = f.NewObject(ctx, Name)
-		if err == nil {
-			break
-		}
-		t.Logf("Sleeping for %v for findObject eventual consistency: %d/%d (%v)", sleepTime, i, *fstest.ListRetries, err)
-		time.Sleep(sleepTime)
-		sleepTime = (sleepTime * 3) / 2
-	}
-	require.NoError(t, err)
-	return obj
-}
-
 // retry f() until no retriable error
 func retry(t *testing.T, what string, f func() error) {
 	const maxTries = 10
@@ -207,7 +189,7 @@ func PutTestContentsMetadata(ctx context.Context, t *testing.T, f fs.Fs, file *f
 		}
 		file.Check(t, obj, f.Precision())
 		// Re-read the object and check again
-		obj = findObject(ctx, t, f, file.Path)
+		obj = fstest.NewObject(ctx, t, f, file.Path)
 		file.Check(t, obj, f.Precision())
 	}
 	return obj
@@ -259,7 +241,7 @@ func testPutLarge(ctx context.Context, t *testing.T, f fs.Fs, file *fstest.Item,
 	file.Check(t, obj, f.Precision())
 
 	// Re-read the object and check again
-	obj = findObject(ctx, t, f, file.Path)
+	obj = fstest.NewObject(ctx, t, f, file.Path)
 	file.Check(t, obj, f.Precision())
 
 	// Download the object and check it is OK
@@ -803,7 +785,7 @@ func Run(t *testing.T, opt *Opt) {
 
 			assert.NoError(t, out.Close())
 
-			obj := findObject(ctx, t, f, path)
+			obj := fstest.NewObject(ctx, t, f, path)
 			assert.Equal(t, "abcdefghi", ReadObject(ctx, t, obj, -1), "contents of file differ")
 
 			assert.NoError(t, obj.Remove(ctx))
@@ -846,7 +828,7 @@ func Run(t *testing.T, opt *Opt) {
 
 			assert.NoError(t, out.Close(ctx))
 
-			obj := findObject(ctx, t, f, path)
+			obj := fstest.NewObject(ctx, t, f, path)
 			originalContents := contents1 + contents2 + contents3
 			fileContents := ReadObject(ctx, t, obj, -1)
 			isEqual := originalContents == fileContents
@@ -1111,7 +1093,7 @@ func Run(t *testing.T, opt *Opt) {
 			// TestFsNewObject tests NewObject
 			t.Run("FsNewObject", func(t *testing.T) {
 				skipIfNotOk(t)
-				obj := findObject(ctx, t, f, file1.Path)
+				obj := fstest.NewObject(ctx, t, f, file1.Path)
 				file1.Check(t, obj, f.Precision())
 			})
 
@@ -1121,10 +1103,10 @@ func Run(t *testing.T, opt *Opt) {
 				if !f.Features().CaseInsensitive {
 					t.Skip("Not Case Insensitive")
 				}
-				obj := findObject(ctx, t, f, toUpperASCII(file1.Path))
+				obj := fstest.NewObject(ctx, t, f, toUpperASCII(file1.Path))
 				file1.Check(t, obj, f.Precision())
 				t.Run("Dir", func(t *testing.T) {
-					obj := findObject(ctx, t, f, toUpperASCII(file2.Path))
+					obj := fstest.NewObject(ctx, t, f, toUpperASCII(file2.Path))
 					file2.Check(t, obj, f.Precision())
 				})
 			})
@@ -1238,7 +1220,7 @@ func Run(t *testing.T, opt *Opt) {
 				file2Copy.Path += "-copy"
 
 				// do the copy
-				src := findObject(ctx, t, f, file2.Path)
+				src := fstest.NewObject(ctx, t, f, file2.Path)
 				dst, err := doCopy(ctx, src, file2Copy.Path)
 				if err == fs.ErrorCantCopy {
 					t.Skip("FS can't copy")
@@ -1277,7 +1259,7 @@ func Run(t *testing.T, opt *Opt) {
 				// check happy path, i.e. no naming conflicts when rename and move are two
 				// separate operations
 				file2Move.Path = "other.txt"
-				src := findObject(ctx, t, f, file2.Path)
+				src := fstest.NewObject(ctx, t, f, file2.Path)
 				dst, err := doMove(ctx, src, file2Move.Path)
 				if err == fs.ErrorCantMove {
 					t.Skip("FS can't move")
@@ -1292,7 +1274,7 @@ func Run(t *testing.T, opt *Opt) {
 
 				// Check conflict on "rename, then move"
 				file1Move.Path = "moveTest/other.txt"
-				src = findObject(ctx, t, f, file1.Path)
+				src = fstest.NewObject(ctx, t, f, file1.Path)
 				_, err = doMove(ctx, src, file1Move.Path)
 				require.NoError(t, err)
 				fstest.CheckListing(t, f, []fstest.Item{file1Move, file2Move})
@@ -1300,14 +1282,14 @@ func Run(t *testing.T, opt *Opt) {
 				// 2: other.txt
 
 				// Check conflict on "move, then rename"
-				src = findObject(ctx, t, f, file1Move.Path)
+				src = fstest.NewObject(ctx, t, f, file1Move.Path)
 				_, err = doMove(ctx, src, file1.Path)
 				require.NoError(t, err)
 				fstest.CheckListing(t, f, []fstest.Item{file1, file2Move})
 				// 1: file name.txt
 				// 2: other.txt
 
-				src = findObject(ctx, t, f, file2Move.Path)
+				src = fstest.NewObject(ctx, t, f, file2Move.Path)
 				_, err = doMove(ctx, src, file2.Path)
 				require.NoError(t, err)
 				fstest.CheckListing(t, f, []fstest.Item{file1, file2})
@@ -1412,7 +1394,7 @@ func Run(t *testing.T, opt *Opt) {
 			// TestObjectString tests the Object String method
 			t.Run("ObjectString", func(t *testing.T) {
 				skipIfNotOk(t)
-				obj := findObject(ctx, t, f, file1.Path)
+				obj := fstest.NewObject(ctx, t, f, file1.Path)
 				assert.Equal(t, file1.Path, obj.String())
 				if opt.NilObject != nil {
 					assert.Equal(t, "<nil>", opt.NilObject.String())
@@ -1422,7 +1404,7 @@ func Run(t *testing.T, opt *Opt) {
 			// TestObjectFs tests the object can be found
 			t.Run("ObjectFs", func(t *testing.T) {
 				skipIfNotOk(t)
-				obj := findObject(ctx, t, f, file1.Path)
+				obj := fstest.NewObject(ctx, t, f, file1.Path)
 				// If this is set we don't do the direct comparison of
 				// the Fs from the object as it may be different
 				if opt.SkipFsMatch {
@@ -1441,21 +1423,21 @@ func Run(t *testing.T, opt *Opt) {
 			// TestObjectRemote tests the Remote is correct
 			t.Run("ObjectRemote", func(t *testing.T) {
 				skipIfNotOk(t)
-				obj := findObject(ctx, t, f, file1.Path)
+				obj := fstest.NewObject(ctx, t, f, file1.Path)
 				assert.Equal(t, file1.Path, obj.Remote())
 			})
 
 			// TestObjectHashes checks all the hashes the object supports
 			t.Run("ObjectHashes", func(t *testing.T) {
 				skipIfNotOk(t)
-				obj := findObject(ctx, t, f, file1.Path)
+				obj := fstest.NewObject(ctx, t, f, file1.Path)
 				file1.CheckHashes(t, obj)
 			})
 
 			// TestObjectModTime tests the ModTime of the object is correct
 			TestObjectModTime := func(t *testing.T) {
 				skipIfNotOk(t)
-				obj := findObject(ctx, t, f, file1.Path)
+				obj := fstest.NewObject(ctx, t, f, file1.Path)
 				file1.CheckModTime(t, obj, obj.ModTime(ctx), f.Precision())
 			}
 			t.Run("ObjectModTime", TestObjectModTime)
@@ -1464,7 +1446,7 @@ func Run(t *testing.T, opt *Opt) {
 			t.Run("ObjectMimeType", func(t *testing.T) {
 				skipIfNotOk(t)
 				features := f.Features()
-				obj := findObject(ctx, t, f, file1.Path)
+				obj := fstest.NewObject(ctx, t, f, file1.Path)
 				do, ok := obj.(fs.MimeTyper)
 				if !ok {
 					require.False(t, features.ReadMimeType, "Features.ReadMimeType is set but Object.MimeType method not found")
@@ -1490,7 +1472,7 @@ func Run(t *testing.T, opt *Opt) {
 				ctx, ci := fs.AddConfig(ctx)
 				ci.Metadata = true
 				features := f.Features()
-				obj := findObject(ctx, t, f, file1.Path)
+				obj := fstest.NewObject(ctx, t, f, file1.Path)
 				do, objectHasMetadata := obj.(fs.Metadataer)
 				if objectHasMetadata || features.ReadMetadata || features.WriteMetadata || features.UserMetadata {
 					fsInfo := fs.FindFromFs(f)
@@ -1563,7 +1545,7 @@ func Run(t *testing.T, opt *Opt) {
 			t.Run("ObjectSetModTime", func(t *testing.T) {
 				skipIfNotOk(t)
 				newModTime := fstest.Time("2011-12-13T14:15:16.999999999Z")
-				obj := findObject(ctx, t, f, file1.Path)
+				obj := fstest.NewObject(ctx, t, f, file1.Path)
 				err := obj.SetModTime(ctx, newModTime)
 				if err == fs.ErrorCantSetModTime || err == fs.ErrorCantSetModTimeWithoutDelete {
 					t.Log(err)
@@ -1579,21 +1561,21 @@ func Run(t *testing.T, opt *Opt) {
 			// TestObjectSize tests that Size works
 			t.Run("ObjectSize", func(t *testing.T) {
 				skipIfNotOk(t)
-				obj := findObject(ctx, t, f, file1.Path)
+				obj := fstest.NewObject(ctx, t, f, file1.Path)
 				assert.Equal(t, file1.Size, obj.Size())
 			})
 
 			// TestObjectOpen tests that Open works
 			t.Run("ObjectOpen", func(t *testing.T) {
 				skipIfNotOk(t)
-				obj := findObject(ctx, t, f, file1.Path)
+				obj := fstest.NewObject(ctx, t, f, file1.Path)
 				assert.Equal(t, file1Contents, ReadObject(ctx, t, obj, -1), "contents of file1 differ")
 			})
 
 			// TestObjectOpenSeek tests that Open works with SeekOption
 			t.Run("ObjectOpenSeek", func(t *testing.T) {
 				skipIfNotOk(t)
-				obj := findObject(ctx, t, f, file1.Path)
+				obj := fstest.NewObject(ctx, t, f, file1.Path)
 				assert.Equal(t, file1Contents[50:], ReadObject(ctx, t, obj, -1, &fs.SeekOption{Offset: 50}), "contents of file1 differ after seek")
 			})
 
@@ -1602,7 +1584,7 @@ func Run(t *testing.T, opt *Opt) {
 			// go test -v -run 'TestIntegration/Test(Setup|Init|FsMkdir|FsPutFile1|FsPutFile2|FsUpdateFile1|ObjectOpenRange)$'
 			t.Run("ObjectOpenRange", func(t *testing.T) {
 				skipIfNotOk(t)
-				obj := findObject(ctx, t, f, file1.Path)
+				obj := fstest.NewObject(ctx, t, f, file1.Path)
 				for _, test := range []struct {
 					ro                 fs.RangeOption
 					wantStart, wantEnd int
@@ -1623,7 +1605,7 @@ func Run(t *testing.T, opt *Opt) {
 			// TestObjectPartialRead tests that reading only part of the object does the correct thing
 			t.Run("ObjectPartialRead", func(t *testing.T) {
 				skipIfNotOk(t)
-				obj := findObject(ctx, t, f, file1.Path)
+				obj := fstest.NewObject(ctx, t, f, file1.Path)
 				assert.Equal(t, file1Contents[:50], ReadObject(ctx, t, obj, 50), "contents of file1 differ after limited read")
 			})
 
@@ -1634,7 +1616,7 @@ func Run(t *testing.T, opt *Opt) {
 				var h *hash.MultiHasher
 
 				file1.Size = int64(len(contents))
-				obj := findObject(ctx, t, f, file1.Path)
+				obj := fstest.NewObject(ctx, t, f, file1.Path)
 				remoteBefore := obj.Remote()
 				obji := object.NewStaticObjectInfo(file1.Path+"-should-be-ignored.bin", file1.ModTime, int64(len(contents)), true, nil, obj.Fs())
 				retry(t, "Update object", func() error {
@@ -1651,7 +1633,7 @@ func Run(t *testing.T, opt *Opt) {
 				file1.Check(t, obj, f.Precision())
 
 				// Re-read the object and check again
-				obj = findObject(ctx, t, f, file1.Path)
+				obj = fstest.NewObject(ctx, t, f, file1.Path)
 				file1.Check(t, obj, f.Precision())
 
 				// check contents correct
@@ -1662,7 +1644,7 @@ func Run(t *testing.T, opt *Opt) {
 			// TestObjectStorable tests that Storable works
 			t.Run("ObjectStorable", func(t *testing.T) {
 				skipIfNotOk(t)
-				obj := findObject(ctx, t, f, file1.Path)
+				obj := fstest.NewObject(ctx, t, f, file1.Path)
 				require.NotNil(t, !obj.Storable(), "Expecting object to be storable")
 			})
 
@@ -1898,7 +1880,7 @@ func Run(t *testing.T, opt *Opt) {
 			// TestSetTier tests SetTier and GetTier functionality
 			t.Run("SetTier", func(t *testing.T) {
 				skipIfNotSetTier(t)
-				obj := findObject(ctx, t, f, file1.Path)
+				obj := fstest.NewObject(ctx, t, f, file1.Path)
 				setter, ok := obj.(fs.SetTierer)
 				assert.NotNil(t, ok)
 				getter, ok := obj.(fs.GetTierer)
@@ -1926,7 +1908,7 @@ func Run(t *testing.T, opt *Opt) {
 				if ft.UnWrap == nil {
 					t.Skip("Not a wrapping Fs")
 				}
-				obj := findObject(ctx, t, f, file1.Path)
+				obj := fstest.NewObject(ctx, t, f, file1.Path)
 				_, unsupported := fs.ObjectOptionalInterfaces(obj)
 				for _, name := range unsupported {
 					if !stringsContains(name, opt.UnimplementableObjectMethods) {
@@ -1942,7 +1924,7 @@ func Run(t *testing.T, opt *Opt) {
 			t.Run("ObjectRemove", func(t *testing.T) {
 				skipIfNotOk(t)
 				// remove file1
-				obj := findObject(ctx, t, f, file1.Path)
+				obj := fstest.NewObject(ctx, t, f, file1.Path)
 				err := obj.Remove(ctx)
 				require.NoError(t, err)
 				// check listing without modtime as TestPublicLink may change the modtime
@@ -2007,7 +1989,7 @@ func Run(t *testing.T, opt *Opt) {
 						file.Size = int64(contentSize) // use correct size when checking
 						file.Check(t, obj, f.Precision())
 						// Re-read the object and check again
-						obj = findObject(ctx, t, f, file.Path)
+						obj = fstest.NewObject(ctx, t, f, file.Path)
 						file.Check(t, obj, f.Precision())
 						require.NoError(t, obj.Remove(ctx))
 					})
@@ -2271,7 +2253,7 @@ func Run(t *testing.T, opt *Opt) {
 				newContents := random.String(200)
 				in := bytes.NewBufferString(newContents)
 
-				obj := findObject(ctx, t, f, unknownSizeUpdateFile.Path)
+				obj := fstest.NewObject(ctx, t, f, unknownSizeUpdateFile.Path)
 				obji := object.NewStaticObjectInfo(unknownSizeUpdateFile.Path, unknownSizeUpdateFile.ModTime, -1, true, nil, obj.Fs())
 				err := obj.Update(ctx, in, obji)
 				if err == nil {

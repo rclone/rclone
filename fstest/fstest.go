@@ -520,6 +520,24 @@ func Purge(f fs.Fs) {
 	}
 }
 
+// NewObject finds the object on the remote
+func NewObject(ctx context.Context, t *testing.T, f fs.Fs, remote string) fs.Object {
+	var obj fs.Object
+	var err error
+	sleepTime := 1 * time.Second
+	for i := 1; i <= *ListRetries; i++ {
+		obj, err = f.NewObject(ctx, remote)
+		if err == nil {
+			break
+		}
+		t.Logf("Sleeping for %v for findObject eventual consistency: %d/%d (%v)", sleepTime, i, *ListRetries, err)
+		time.Sleep(sleepTime)
+		sleepTime = (sleepTime * 3) / 2
+	}
+	require.NoError(t, err)
+	return obj
+}
+
 // NewDirectory finds the directory with remote in f
 //
 // One day this will be an rclone primitive
