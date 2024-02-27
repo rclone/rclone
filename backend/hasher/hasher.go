@@ -164,16 +164,21 @@ func NewFs(ctx context.Context, fsname, rpath string, cmap configmap.Mapper) (fs
 	}
 
 	stubFeatures := &fs.Features{
-		CanHaveEmptyDirectories: true,
-		IsLocal:                 true,
-		ReadMimeType:            true,
-		WriteMimeType:           true,
-		SetTier:                 true,
-		GetTier:                 true,
-		ReadMetadata:            true,
-		WriteMetadata:           true,
-		UserMetadata:            true,
-		PartialUploads:          true,
+		CanHaveEmptyDirectories:  true,
+		IsLocal:                  true,
+		ReadMimeType:             true,
+		WriteMimeType:            true,
+		SetTier:                  true,
+		GetTier:                  true,
+		ReadMetadata:             true,
+		WriteMetadata:            true,
+		UserMetadata:             true,
+		ReadDirMetadata:          true,
+		WriteDirMetadata:         true,
+		WriteDirSetModTime:       true,
+		UserDirMetadata:          true,
+		DirModTimeUpdatesOnWrite: true,
+		PartialUploads:           true,
 	}
 	f.features = stubFeatures.Fill(ctx, f).Mask(ctx, f.Fs).WrapsFs(f, f.Fs)
 
@@ -347,6 +352,14 @@ func (f *Fs) DirSetModTime(ctx context.Context, dir string, modTime time.Time) e
 		return do(ctx, dir, modTime)
 	}
 	return fs.ErrorNotImplemented
+}
+
+// MkdirMetadata makes the root directory of the Fs object
+func (f *Fs) MkdirMetadata(ctx context.Context, dir string, metadata fs.Metadata) (fs.Directory, error) {
+	if do := f.Fs.Features().MkdirMetadata; do != nil {
+		return do(ctx, dir, metadata)
+	}
+	return nil, fs.ErrorNotImplemented
 }
 
 // DirCacheFlush resets the directory cache - used in testing
@@ -539,6 +552,7 @@ var (
 	_ fs.Wrapper         = (*Fs)(nil)
 	_ fs.MergeDirser     = (*Fs)(nil)
 	_ fs.DirSetModTimer  = (*Fs)(nil)
+	_ fs.MkdirMetadataer = (*Fs)(nil)
 	_ fs.DirCacheFlusher = (*Fs)(nil)
 	_ fs.ChangeNotifier  = (*Fs)(nil)
 	_ fs.PublicLinker    = (*Fs)(nil)

@@ -183,18 +183,23 @@ func NewFs(ctx context.Context, name, rpath string, m configmap.Mapper) (fs.Fs, 
 	// the features here are ones we could support, and they are
 	// ANDed with the ones from wrappedFs
 	f.features = (&fs.Features{
-		CaseInsensitive:         true,
-		DuplicateFiles:          false,
-		ReadMimeType:            false,
-		WriteMimeType:           false,
-		GetTier:                 true,
-		SetTier:                 true,
-		BucketBased:             true,
-		CanHaveEmptyDirectories: true,
-		ReadMetadata:            true,
-		WriteMetadata:           true,
-		UserMetadata:            true,
-		PartialUploads:          true,
+		CaseInsensitive:          true,
+		DuplicateFiles:           false,
+		ReadMimeType:             false,
+		WriteMimeType:            false,
+		GetTier:                  true,
+		SetTier:                  true,
+		BucketBased:              true,
+		CanHaveEmptyDirectories:  true,
+		ReadMetadata:             true,
+		WriteMetadata:            true,
+		UserMetadata:             true,
+		ReadDirMetadata:          true,
+		WriteDirMetadata:         true,
+		WriteDirSetModTime:       true,
+		UserDirMetadata:          true,
+		DirModTimeUpdatesOnWrite: true,
+		PartialUploads:           true,
 	}).Fill(ctx, f).Mask(ctx, wrappedFs).WrapsFs(f, wrappedFs)
 	// We support reading MIME types no matter the wrapped fs
 	f.features.ReadMimeType = true
@@ -782,6 +787,14 @@ func (f *Fs) Hashes() hash.Set {
 // Shouldn't return an error if it already exists
 func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 	return f.Fs.Mkdir(ctx, dir)
+}
+
+// MkdirMetadata makes the root directory of the Fs object
+func (f *Fs) MkdirMetadata(ctx context.Context, dir string, metadata fs.Metadata) (fs.Directory, error) {
+	if do := f.Fs.Features().MkdirMetadata; do != nil {
+		return do(ctx, dir, metadata)
+	}
+	return nil, fs.ErrorNotImplemented
 }
 
 // Rmdir removes the directory (container, bucket) if empty
@@ -1506,6 +1519,7 @@ var (
 	_ fs.Mover           = (*Fs)(nil)
 	_ fs.DirMover        = (*Fs)(nil)
 	_ fs.DirSetModTimer  = (*Fs)(nil)
+	_ fs.MkdirMetadataer = (*Fs)(nil)
 	_ fs.PutStreamer     = (*Fs)(nil)
 	_ fs.CleanUpper      = (*Fs)(nil)
 	_ fs.UnWrapper       = (*Fs)(nil)

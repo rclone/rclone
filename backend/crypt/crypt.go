@@ -263,19 +263,24 @@ func NewFs(ctx context.Context, name, rpath string, m configmap.Mapper) (fs.Fs, 
 	// the features here are ones we could support, and they are
 	// ANDed with the ones from wrappedFs
 	f.features = (&fs.Features{
-		CaseInsensitive:         !cipher.dirNameEncrypt || cipher.NameEncryptionMode() == NameEncryptionOff,
-		DuplicateFiles:          true,
-		ReadMimeType:            false, // MimeTypes not supported with crypt
-		WriteMimeType:           false,
-		BucketBased:             true,
-		CanHaveEmptyDirectories: true,
-		SetTier:                 true,
-		GetTier:                 true,
-		ServerSideAcrossConfigs: opt.ServerSideAcrossConfigs,
-		ReadMetadata:            true,
-		WriteMetadata:           true,
-		UserMetadata:            true,
-		PartialUploads:          true,
+		CaseInsensitive:          !cipher.dirNameEncrypt || cipher.NameEncryptionMode() == NameEncryptionOff,
+		DuplicateFiles:           true,
+		ReadMimeType:             false, // MimeTypes not supported with crypt
+		WriteMimeType:            false,
+		BucketBased:              true,
+		CanHaveEmptyDirectories:  true,
+		SetTier:                  true,
+		GetTier:                  true,
+		ServerSideAcrossConfigs:  opt.ServerSideAcrossConfigs,
+		ReadMetadata:             true,
+		WriteMetadata:            true,
+		UserMetadata:             true,
+		ReadDirMetadata:          true,
+		WriteDirMetadata:         true,
+		WriteDirSetModTime:       true,
+		UserDirMetadata:          true,
+		DirModTimeUpdatesOnWrite: true,
+		PartialUploads:           true,
 	}).Fill(ctx, f).Mask(ctx, wrappedFs).WrapsFs(f, wrappedFs)
 
 	return f, err
@@ -518,6 +523,25 @@ func (f *Fs) Hashes() hash.Set {
 // Shouldn't return an error if it already exists
 func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 	return f.Fs.Mkdir(ctx, f.cipher.EncryptDirName(dir))
+}
+
+// MkdirMetadata makes the root directory of the Fs object
+func (f *Fs) MkdirMetadata(ctx context.Context, dir string, metadata fs.Metadata) (fs.Directory, error) {
+	do := f.Fs.Features().MkdirMetadata
+	if do == nil {
+		return nil, fs.ErrorNotImplemented
+	}
+	newDir, err := do(ctx, f.cipher.EncryptDirName(dir), metadata)
+	if err != nil {
+		return nil, err
+	}
+	var entries = make(fs.DirEntries, 0, 1)
+	f.addDir(ctx, &entries, newDir)
+	newDir, ok := entries[0].(fs.Directory)
+	if !ok {
+		return nil, fmt.Errorf("internal error: expecting %T to be fs.Directory", entries[0])
+	}
+	return newDir, nil
 }
 
 // DirSetModTime sets the directory modtime for dir
@@ -770,7 +794,7 @@ func (f *Fs) MergeDirs(ctx context.Context, dirs []fs.Directory) error {
 	}
 	out := make([]fs.Directory, len(dirs))
 	for i, dir := range dirs {
-		out[i] = fs.NewDirCopy(ctx, dir).SetRemote(f.cipher.EncryptDirName(dir.Remote()))
+		out[i] = fs.NewDirWrapper(f.cipher.EncryptDirName(dir.Remote()), dir)
 	}
 	return do(ctx, out)
 }
@@ -1006,14 +1030,14 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 
 // newDir returns a dir with the Name decrypted
 func (f *Fs) newDir(ctx context.Context, dir fs.Directory) fs.Directory {
-	newDir := fs.NewDirCopy(ctx, dir)
 	remote := dir.Remote()
 	decryptedRemote, err := f.cipher.DecryptDirName(remote)
 	if err != nil {
 		fs.Debugf(remote, "Undecryptable dir name: %v", err)
 	} else {
-		newDir.SetRemote(decryptedRemote)
+		remote = decryptedRemote
 	}
+	newDir := fs.NewDirWrapper(remote, dir)
 	return newDir
 }
 
@@ -1217,6 +1241,7 @@ var (
 	_ fs.Wrapper         = (*Fs)(nil)
 	_ fs.MergeDirser     = (*Fs)(nil)
 	_ fs.DirSetModTimer  = (*Fs)(nil)
+	_ fs.MkdirMetadataer = (*Fs)(nil)
 	_ fs.DirCacheFlusher = (*Fs)(nil)
 	_ fs.ChangeNotifier  = (*Fs)(nil)
 	_ fs.PublicLinker    = (*Fs)(nil)
