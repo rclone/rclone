@@ -9,6 +9,7 @@ import (
 	"bytes"
 	"context"
 	"crypto/sha1"
+	"encoding/json"
 	"errors"
 	"fmt"
 	gohash "hash"
@@ -192,9 +193,12 @@ Example:
 			Advanced: true,
 		}, {
 			Name: "download_auth_duration",
-			Help: `Time before the authorization token will expire in s or suffix ms|s|m|h|d.
+			Help: `Time before the public link authorization token will expire in s or suffix ms|s|m|h|d.
 
-The duration before the download authorization token will expire.
+This is used in combination with "rclone link" for making files
+accessible to the public and sets the duration before the download
+authorization token will expire.
+
 The minimum value is 1 second. The maximum value is one week.`,
 			Default:  fs.Duration(7 * 24 * time.Hour),
 			Advanced: true,
@@ -399,11 +403,18 @@ func (f *Fs) shouldRetry(ctx context.Context, resp *http.Response, err error) (b
 
 // errorHandler parses a non 2xx error response into an error
 func errorHandler(resp *http.Response) error {
-	// Decode error response
-	errResponse := new(api.Error)
-	err := rest.DecodeJSON(resp, &errResponse)
+	body, err := rest.ReadBody(resp)
 	if err != nil {
-		fs.Debugf(nil, "Couldn't decode error response: %v", err)
+		fs.Errorf(nil, "Couldn't read error out of body: %v", err)
+		body = nil
+	}
+	// Decode error response if there was one - they can be blank
+	errResponse := new(api.Error)
+	if len(body) > 0 {
+		err = json.Unmarshal(body, errResponse)
+		if err != nil {
+			fs.Errorf(nil, "Couldn't decode error response: %v", err)
+		}
 	}
 	if errResponse.Code == "" {
 		errResponse.Code = "unknown"
@@ -443,6 +454,14 @@ func (f *Fs) setUploadCutoff(cs fs.SizeSuffix) (old fs.SizeSuffix, err error) {
 	err = checkUploadCutoff(&f.opt, cs)
 	if err == nil {
 		old, f.opt.UploadCutoff = f.opt.UploadCutoff, cs
+	}
+	return
+}
+
+func (f *Fs) setCopyCutoff(cs fs.SizeSuffix) (old fs.SizeSuffix, err error) {
+	err = checkUploadChunkSize(cs)
+	if err == nil {
+		old, f.opt.CopyCutoff = f.opt.CopyCutoff, cs
 	}
 	return
 }
@@ -497,10 +516,11 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	}
 	f.setRoot(root)
 	f.features = (&fs.Features{
-		ReadMimeType:      true,
-		WriteMimeType:     true,
-		BucketBased:       true,
-		BucketBasedRootOK: true,
+		ReadMimeType:          true,
+		WriteMimeType:         true,
+		BucketBased:           true,
+		BucketBasedRootOK:     true,
+		ChunkWriterDoesntSeek: true,
 	}).Fill(ctx, f)
 	// Set the test flag if required
 	if opt.TestMode != "" {
@@ -1321,7 +1341,7 @@ func (f *Fs) CleanUp(ctx context.Context) error {
 // If newInfo is nil then the metadata will be copied otherwise it
 // will be replaced with newInfo
 func (f *Fs) copy(ctx context.Context, dstObj *Object, srcObj *Object, newInfo *api.File) (err error) {
-	if srcObj.size >= int64(f.opt.CopyCutoff) {
+	if srcObj.size > int64(f.opt.CopyCutoff) {
 		if newInfo == nil {
 			newInfo, err = srcObj.getMetaData(ctx)
 			if err != nil {
@@ -1923,7 +1943,11 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 				return err
 			}
 			// NB Stream returns the buffer and token
-			return up.Stream(ctx, rw)
+			err = up.Stream(ctx, rw)
+			if err != nil {
+				return err
+			}
+			return o.decodeMetaDataFileInfo(up.info)
 		} else if err == io.EOF {
 			fs.Debugf(o, "File has %d bytes, which makes only one chunk. Using direct upload.", n)
 			defer o.fs.putRW(rw)
@@ -2067,7 +2091,7 @@ func (f *Fs) OpenChunkWriter(ctx context.Context, remote string, src fs.ObjectIn
 	// Temporary Object under construction
 	o := &Object{
 		fs:     f,
-		remote: src.Remote(),
+		remote: remote,
 	}
 
 	bucket, _ := o.split()

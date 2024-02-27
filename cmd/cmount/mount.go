@@ -25,7 +25,7 @@ import (
 
 func init() {
 	name := "cmount"
-	cmountOnly := ProvidedBy(runtime.GOOS)
+	cmountOnly := runtime.GOOS != "linux" // rclone mount only works for linux
 	if cmountOnly {
 		name = "mount"
 	}

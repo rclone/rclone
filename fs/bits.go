@@ -22,10 +22,10 @@ import (
 //
 //	func (bitsChoices) Choices() []BitsChoicesInfo {
 //		return []BitsChoicesInfo{
-//			{uint64(0), "OFF"}, // Optional Off value - "" if not defined
-//			{uint64(bitA), "A"},
-//			{uint64(bitB), "B"},
-//			{uint64(bitC), "C"},
+//			{Bit: uint64(0), Name: "OFF"}, // Optional Off value - "" if not defined
+//			{Bit: uint64(bitA), Name: "A"},
+//			{Bit: uint64(bitB), Name: "B"},
+//			{Bit: uint64(bitC), Name: "C"},
 //		}
 //	}
 type Bits[C BitsChoices] uint64
@@ -112,6 +112,11 @@ func (b *Bits[C]) Set(s string) error {
 	}
 	*b = flags
 	return nil
+}
+
+// IsSet returns true all the bits in mask are set in b.
+func (b Bits[C]) IsSet(mask Bits[C]) bool {
+	return (b & mask) == mask
 }
 
 // Type of the value.

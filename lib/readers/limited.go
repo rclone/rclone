@@ -1,11 +1,25 @@
 package readers
 
-import "io"
+import (
+	"io"
+
+	"github.com/rclone/rclone/fs"
+)
 
 // LimitedReadCloser adds io.Closer to io.LimitedReader.  Create one with NewLimitedReadCloser
 type LimitedReadCloser struct {
 	*io.LimitedReader
 	io.Closer
+}
+
+// Close closes the underlying io.Closer. The error, if any, will be ignored if data is read completely
+func (lrc *LimitedReadCloser) Close() error {
+	err := lrc.Closer.Close()
+	if err != nil && lrc.N == 0 {
+		fs.Debugf(nil, "ignoring close error because we already got all the data")
+		err = nil
+	}
+	return err
 }
 
 // NewLimitedReadCloser returns a LimitedReadCloser wrapping rc to

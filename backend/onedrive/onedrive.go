@@ -27,6 +27,7 @@ import (
 	"github.com/rclone/rclone/fs/config/configstruct"
 	"github.com/rclone/rclone/fs/config/obscure"
 	"github.com/rclone/rclone/fs/fserrors"
+	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/fs/walk"
@@ -323,6 +324,37 @@ If you are 100% sure you want to download this file anyway then use
 the --onedrive-av-override flag, or av_override = true in the config
 file.
 `,
+			Advanced: true,
+		}, {
+			Name:    "delta",
+			Default: false,
+			Help: strings.ReplaceAll(`If set rclone will use delta listing to implement recursive listings.
+
+If this flag is set the the onedrive backend will advertise |ListR|
+support for recursive listings.
+
+Setting this flag speeds up these things greatly:
+
+    rclone lsf -R onedrive:
+    rclone size onedrive:
+    rclone rc vfs/refresh recursive=true
+
+**However** the delta listing API **only** works at the root of the
+drive. If you use it not at the root then it recurses from the root
+and discards all the data that is not under the directory you asked
+for. So it will be correct but may not be very efficient.
+
+This is why this flag is not set as the default.
+
+As a rule of thumb if nearly all of your data is under rclone's root
+directory (the |root/directory| in |onedrive:root/directory|) then
+using this flag will be be a big performance win. If your data is
+mostly not under the root then using this flag will be a big
+performance loss.
+
+It is recommended if you are mounting your onedrive at the root
+(or near the root when using crypt) and using rclone |rc vfs/refresh|.
+`, "|", "`"),
 			Advanced: true,
 		}, {
 			Name:     config.ConfigEncoding,
@@ -645,6 +677,7 @@ type Options struct {
 	LinkPassword            string               `config:"link_password"`
 	HashType                string               `config:"hash_type"`
 	AVOverride              bool                 `config:"av_override"`
+	Delta                   bool                 `config:"delta"`
 	Enc                     encoder.MultiEncoder `config:"encoding"`
 }
 
@@ -656,6 +689,7 @@ type Fs struct {
 	ci           *fs.ConfigInfo     // global config
 	features     *fs.Features       // optional features
 	srv          *rest.Client       // the connection to the OneDrive server
+	unAuth       *rest.Client       // no authentication connection to the OneDrive server
 	dirCache     *dircache.DirCache // Map of directory path to directory id
 	pacer        *fs.Pacer          // pacer for API calls
 	tokenRenewer *oauthutil.Renew   // renew the token on expiry
@@ -914,8 +948,9 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		TokenURL: authEndpoint[opt.Region] + tokenPath,
 	}
 
+	client := fshttp.NewClient(ctx)
 	root = parsePath(root)
-	oAuthClient, ts, err := oauthutil.NewClient(ctx, name, m, oauthConfig)
+	oAuthClient, ts, err := oauthutil.NewClientWithBaseClient(ctx, name, m, oauthConfig, client)
 	if err != nil {
 		return nil, fmt.Errorf("failed to configure OneDrive: %w", err)
 	}
@@ -929,6 +964,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		driveID:   opt.DriveID,
 		driveType: opt.DriveType,
 		srv:       rest.NewClient(oAuthClient).SetRoot(rootURL),
+		unAuth:    rest.NewClient(client).SetRoot(rootURL),
 		pacer:     fs.NewPacer(ctx, pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant))),
 		hashType:  QuickXorHashType,
 	}
@@ -975,6 +1011,11 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	}
 
 	f.dirCache = dircache.New(root, rootID, f)
+
+	// ListR only supported if delta set
+	if !f.opt.Delta {
+		f.features.ListR = nil
+	}
 
 	// Find the current root
 	err = f.dirCache.FindRoot(ctx, false)
@@ -1204,10 +1245,14 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 	}
 	err = f.listAll(ctx, directoryID, false, false, func(info *api.Item) error {
 		entry, err := f.itemToDirEntry(ctx, dir, info)
-		if err == nil {
-			entries = append(entries, entry)
+		if err != nil {
+			return err
 		}
-		return err
+		if entry == nil {
+			return nil
+		}
+		entries = append(entries, entry)
+		return nil
 	})
 	if err != nil {
 		return nil, err
@@ -1302,6 +1347,9 @@ func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (
 		if err != nil {
 			return err
 		}
+		if entry == nil {
+			return nil
+		}
 		err = list.Add(entry)
 		if err != nil {
 			return err
@@ -1331,6 +1379,12 @@ func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (
 
 	return list.Flush()
 
+}
+
+// Shutdown shutdown the fs
+func (f *Fs) Shutdown(ctx context.Context) error {
+	f.tokenRenewer.Shutdown()
+	return nil
 }
 
 // Creates from the parameters passed in a half finished Object which
@@ -2195,7 +2249,7 @@ func (o *Object) uploadFragment(ctx context.Context, url string, start int64, to
 			Options:       options,
 		}
 		_, _ = chunk.Seek(skip, io.SeekStart)
-		resp, err = o.fs.srv.Call(ctx, &opts)
+		resp, err = o.fs.unAuth.Call(ctx, &opts)
 		if err != nil && resp != nil && resp.StatusCode == http.StatusRequestedRangeNotSatisfiable {
 			fs.Debugf(o, "Received 416 error - reading current position from server: %v", err)
 			pos, posErr := o.getPosition(ctx, url)
@@ -2711,6 +2765,7 @@ var (
 	_ fs.PublicLinker    = (*Fs)(nil)
 	_ fs.CleanUpper      = (*Fs)(nil)
 	_ fs.ListRer         = (*Fs)(nil)
+	_ fs.Shutdowner      = (*Fs)(nil)
 	_ fs.Object          = (*Object)(nil)
 	_ fs.MimeTyper       = &Object{}
 	_ fs.IDer            = &Object{}

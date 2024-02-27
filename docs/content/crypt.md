@@ -405,7 +405,7 @@ Example:
 `1/12/qgm4avr35m5loi1th53ato71v0`
 
 
-### Modified time and hashes
+### Modification times and hashes
 
 Crypt stores modification times using the underlying remote so support
 depends on that.
@@ -784,7 +784,7 @@ encoding is modified in two ways:
   * we strip the padding character `=`
 
 `base32` is used rather than the more efficient `base64` so rclone can be
-used on case insensitive remotes (e.g. Windows, Amazon Drive).
+used on case insensitive remotes (e.g. Windows, Box, Dropbox, Onedrive etc).
 
 ### Key derivation
 

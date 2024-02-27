@@ -8,6 +8,7 @@ import (
 	"context"
 	"crypto/md5"
 	"encoding/base64"
+	"encoding/binary"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
@@ -295,10 +296,10 @@ avoid the time out.`,
 			Advanced: true,
 		}, {
 			Name: "access_tier",
-			Help: `Access tier of blob: hot, cool or archive.
+			Help: `Access tier of blob: hot, cool, cold or archive.
 
-Archived blobs can be restored by setting access tier to hot or
-cool. Leave blank if you intend to use default access tier, which is
+Archived blobs can be restored by setting access tier to hot, cool or
+cold. Leave blank if you intend to use default access tier, which is
 set at account level
 
 If there is no "access tier" specified, rclone doesn't apply any tier.
@@ -306,7 +307,7 @@ rclone performs "Set Tier" operation on blobs while uploading, if objects
 are not modified, specifying "access tier" to new one will have no effect.
 If blobs are in "archive tier" at remote, trying to perform data transfer
 operations from remote will not be allowed. User should first restore by
-tiering blob to "Hot" or "Cool".`,
+tiering blob to "Hot", "Cool" or "Cold".`,
 			Advanced: true,
 		}, {
 			Name:    "archive_tier_delete",
@@ -401,6 +402,24 @@ rclone does if you know the container exists already.
 			Help:     `If set, do not do HEAD before GET when getting objects.`,
 			Default:  false,
 			Advanced: true,
+		}, {
+			Name: "delete_snapshots",
+			Help: `Set to specify how to deal with snapshots on blob deletion.`,
+			Examples: []fs.OptionExample{
+				{
+					Value: "",
+					Help:  "By default, the delete operation fails if a blob has snapshots",
+				}, {
+					Value: string(blob.DeleteSnapshotsOptionTypeInclude),
+					Help:  "Specify 'include' to remove the root blob and all its snapshots",
+				}, {
+					Value: string(blob.DeleteSnapshotsOptionTypeOnly),
+					Help:  "Specify 'only' to remove only the snapshots but keep the root blob.",
+				},
+			},
+			Default:   "",
+			Exclusive: true,
+			Advanced:  true,
 		}},
 	})
 }
@@ -437,6 +456,7 @@ type Options struct {
 	DirectoryMarkers           bool                 `config:"directory_markers"`
 	NoCheckContainer           bool                 `config:"no_check_container"`
 	NoHeadObject               bool                 `config:"no_head_object"`
+	DeleteSnapshots            string               `config:"delete_snapshots"`
 }
 
 // Fs represents a remote azure server
@@ -520,6 +540,7 @@ func (o *Object) split() (container, containerPath string) {
 func validateAccessTier(tier string) bool {
 	return strings.EqualFold(tier, string(blob.AccessTierHot)) ||
 		strings.EqualFold(tier, string(blob.AccessTierCool)) ||
+		strings.EqualFold(tier, string(blob.AccessTierCold)) ||
 		strings.EqualFold(tier, string(blob.AccessTierArchive))
 }
 
@@ -649,8 +670,8 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	if opt.AccessTier == "" {
 		opt.AccessTier = string(defaultAccessTier)
 	} else if !validateAccessTier(opt.AccessTier) {
-		return nil, fmt.Errorf("supported access tiers are %s, %s and %s",
-			string(blob.AccessTierHot), string(blob.AccessTierCool), string(blob.AccessTierArchive))
+		return nil, fmt.Errorf("supported access tiers are %s, %s, %s and %s",
+			string(blob.AccessTierHot), string(blob.AccessTierCool), string(blob.AccessTierCold), string(blob.AccessTierArchive))
 	}
 
 	if !validatePublicAccess((opt.PublicAccess)) {
@@ -1899,7 +1920,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 	var offset int64
 	var count int64
 	if o.AccessTier() == blob.AccessTierArchive {
-		return nil, fmt.Errorf("blob in archive tier, you need to set tier to hot or cool first")
+		return nil, fmt.Errorf("blob in archive tier, you need to set tier to hot, cool, cold first")
 	}
 	fs.FixRangeOption(options, o.size)
 	for _, option := range options {
@@ -1965,34 +1986,21 @@ func (rs *readSeekCloser) Close() error {
 	return nil
 }
 
-// increment the array as LSB binary
-func increment(xs *[8]byte) {
-	for i, digit := range xs {
-		newDigit := digit + 1
-		xs[i] = newDigit
-		if newDigit >= digit {
-			// exit if no carry
-			break
-		}
-	}
-}
-
 // record chunk number and id for Close
 type azBlock struct {
-	chunkNumber int
+	chunkNumber uint64
 	id          string
 }
 
 // Implements the fs.ChunkWriter interface
 type azChunkWriter struct {
-	chunkSize     int64
-	size          int64
-	f             *Fs
-	ui            uploadInfo
-	blocksMu      sync.Mutex // protects the below
-	blocks        []azBlock  // list of blocks for finalize
-	binaryBlockID [8]byte    // block counter as LSB first 8 bytes
-	o             *Object
+	chunkSize int64
+	size      int64
+	f         *Fs
+	ui        uploadInfo
+	blocksMu  sync.Mutex // protects the below
+	blocks    []azBlock  // list of blocks for finalize
+	o         *Object
 }
 
 // OpenChunkWriter returns the chunk size and a ChunkWriter
@@ -2080,13 +2088,14 @@ func (w *azChunkWriter) WriteChunk(ctx context.Context, chunkNumber int, reader 
 	transactionalMD5 := md5sum[:]
 
 	// increment the blockID and save the blocks for finalize
-	increment(&w.binaryBlockID)
-	blockID := base64.StdEncoding.EncodeToString(w.binaryBlockID[:])
+	var binaryBlockID [8]byte // block counter as LSB first 8 bytes
+	binary.LittleEndian.PutUint64(binaryBlockID[:], uint64(chunkNumber))
+	blockID := base64.StdEncoding.EncodeToString(binaryBlockID[:])
 
 	// Save the blockID for the commit
 	w.blocksMu.Lock()
 	w.blocks = append(w.blocks, azBlock{
-		chunkNumber: chunkNumber,
+		chunkNumber: uint64(chunkNumber),
 		id:          blockID,
 	})
 	w.blocksMu.Unlock()
@@ -2151,9 +2160,20 @@ func (w *azChunkWriter) Close(ctx context.Context) (err error) {
 		return w.blocks[i].chunkNumber < w.blocks[j].chunkNumber
 	})
 
-	// Create a list of block IDs
+	// Create and check a list of block IDs
 	blockIDs := make([]string, len(w.blocks))
 	for i := range w.blocks {
+		if w.blocks[i].chunkNumber != uint64(i) {
+			return fmt.Errorf("internal error: expecting chunkNumber %d but got %d", i, w.blocks[i].chunkNumber)
+		}
+		chunkBytes, err := base64.StdEncoding.DecodeString(w.blocks[i].id)
+		if err != nil {
+			return fmt.Errorf("internal error: bad block ID: %w", err)
+		}
+		chunkNumber := binary.LittleEndian.Uint64(chunkBytes)
+		if w.blocks[i].chunkNumber != chunkNumber {
+			return fmt.Errorf("internal error: expecting decoded chunkNumber %d but got %d", w.blocks[i].chunkNumber, chunkNumber)
+		}
 		blockIDs[i] = w.blocks[i].id
 	}
 
@@ -2355,9 +2375,10 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 // Remove an object
 func (o *Object) Remove(ctx context.Context) error {
 	blb := o.getBlobSVC()
-	//only := blob.DeleteSnapshotsOptionTypeOnly
-	opt := blob.DeleteOptions{
-		//DeleteSnapshots: &only,
+	opt := blob.DeleteOptions{}
+	if o.fs.opt.DeleteSnapshots != "" {
+		action := blob.DeleteSnapshotsOptionType(o.fs.opt.DeleteSnapshots)
+		opt.DeleteSnapshots = &action
 	}
 	return o.fs.pacer.Call(func() (bool, error) {
 		_, err := blb.Delete(ctx, &opt)

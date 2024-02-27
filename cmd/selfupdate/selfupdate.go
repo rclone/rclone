@@ -10,6 +10,7 @@ import (
 	"bytes"
 	"context"
 	"crypto/sha256"
+	_ "embed"
 	"encoding/hex"
 	"errors"
 	"fmt"
@@ -34,6 +35,9 @@ import (
 
 	versionCmd "github.com/rclone/rclone/cmd/version"
 )
+
+//go:embed selfupdate.md
+var selfUpdateHelp string
 
 // Options contains options for the self-update command
 type Options struct {
@@ -63,7 +67,7 @@ var cmdSelfUpdate = &cobra.Command{
 	Use:     "selfupdate",
 	Aliases: []string{"self-update"},
 	Short:   `Update the rclone binary.`,
-	Long:    strings.ReplaceAll(selfUpdateHelp, "|", "`"),
+	Long:    selfUpdateHelp,
 	Annotations: map[string]string{
 		"versionIntroduced": "v1.55",
 	},

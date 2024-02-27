@@ -847,12 +847,15 @@ Returns the following values:
 		[
 			{
 				"bytes": total transferred bytes for this file,
-				"eta": estimated time in seconds until file transfer completion
+				"eta": estimated time in seconds until file transfer completion (may be nil)
 				"name": name of the file,
 				"percentage": progress of the file transfer in percent,
 				"speed": average speed over the whole transfer in bytes per second,
 				"speedAvg": current speed in bytes per second as an exponentially weighted moving average,
 				"size": size of the file in bytes
+				"group": stats group this transfer is part of
+				"srcFs": name of the source remote (not present if not known)
+				"dstFs": name of the destination remote (not present if not known)
 			}
 		],
 	"checking": an array of names of currently active file checks
@@ -904,9 +907,12 @@ Returns the following values:
 				"size": size of the file in bytes,
 				"bytes": total transferred bytes for this file,
 				"checked": if the transfer is only checked (skipped, deleted),
-				"timestamp": integer representing millisecond unix epoch,
+				"started_at": time the transfer was started at (RFC3339 format, eg `"2000-01-01T01:00:00.085742121Z"`),
+				"completed_at": time the transfer was completed at (RFC3339 format, only present if transfer is completed),
 				"error": string description of the error (empty if successful),
-				"jobid": id of the job that this transfer belongs to
+				"group": string representing which stats group this is part of,
+				"srcFs": name of the source remote (not present if not known),
+				"dstFs": name of the destination remote (not present if not known),
 			}
 		]
 }
@@ -1170,6 +1176,56 @@ This takes the following parameters:
 The result is as returned from rclone about --json
 
 See the [about](/commands/rclone_about/) command for more information on the above.
+
+**Authentication is required for this call.**
+
+### operations/check: check the source and destination are the same {#operations-check}
+
+Checks the files in the source and destination match.  It compares
+sizes and hashes and logs a report of files that don't
+match.  It doesn't alter the source or destination.
+
+This takes the following parameters:
+
+- srcFs - a remote name string e.g. "drive:" for the source, "/" for local filesystem
+- dstFs - a remote name string e.g. "drive2:" for the destination, "/" for local filesystem
+- download - check by downloading rather than with hash
+- checkFileHash - treat checkFileFs:checkFileRemote as a SUM file with hashes of given type
+- checkFileFs - treat checkFileFs:checkFileRemote as a SUM file with hashes of given type
+- checkFileRemote - treat checkFileFs:checkFileRemote as a SUM file with hashes of given type
+- oneWay -  check one way only, source files must exist on remote
+- combined - make a combined report of changes (default false)
+- missingOnSrc - report all files missing from the source (default true)
+- missingOnDst - report all files missing from the destination (default true)
+- match - report all matching files (default false)
+- differ - report all non-matching files (default true)
+- error - report all files with errors (hashing or reading) (default true)
+
+If you supply the download flag, it will download the data from
+both remotes and check them against each other on the fly.  This can
+be useful for remotes that don't support hashes or if you really want
+to check all the data.
+
+If you supply the size-only global flag, it will only compare the sizes not
+the hashes as well.  Use this for a quick check.
+
+If you supply the checkFileHash option with a valid hash name, the
+checkFileFs:checkFileRemote must point to a text file in the SUM
+format. This treats the checksum file as the source and dstFs as the
+destination. Note that srcFs is not used and should not be supplied in
+this case.
+
+Returns:
+
+- success - true if no error, false otherwise
+- status - textual summary of check, OK or text string
+- hashType - hash used in check, may be missing
+- combined - array of strings of combined report of changes
+- missingOnSrc - array of strings of all files missing from the source
+- missingOnDst - array of strings of all files missing from the destination
+- match - array of strings of all matching files
+- differ - array of strings of all non-matching files
+- error - array of strings of all files with errors (hashing or reading)
 
 **Authentication is required for this call.**
 

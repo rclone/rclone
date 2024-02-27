@@ -13,6 +13,7 @@ const (
 	DumpFilters
 	DumpGoRoutines
 	DumpOpenFiles
+	DumpMapper
 )
 
 type dumpChoices struct{}
@@ -27,6 +28,7 @@ func (dumpChoices) Choices() []BitsChoicesInfo {
 		{uint64(DumpFilters), "filters"},
 		{uint64(DumpGoRoutines), "goroutines"},
 		{uint64(DumpOpenFiles), "openfiles"},
+		{uint64(DumpMapper), "mapper"},
 	}
 }
 

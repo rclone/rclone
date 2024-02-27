@@ -1,0 +1,48 @@
+# tests whether an md5sum file generated post-sync matches our pre-sync prediction
+
+# Filling src and dst with two different versions of rclone source!:
+exec rclone copyurl https://github.com/rclone/rclone/archive/refs/tags/v1.49.1.zip $SRC/src.zip
+exec rclone copyurl https://github.com/rclone/rclone/archive/refs/tags/v1.54.1.zip $DST/dst.zip
+exec unzip $SRC/src.zip -d $SRC
+exec unzip $DST/dst.zip -d $DST
+
+
+# generating sumfiles:
+exec rclone md5sum $SRC --output-file $WORK/src-before.txt
+exec rclone md5sum $DST --output-file $WORK/dst-before.txt
+
+# running sync with output files:
+exec rclone sync $SRC $DST --match $WORK/SYNCmatch.txt --combined $WORK/SYNCcombined.txt --missing-on-src $WORK/SYNCmissingonsrc.txt --missing-on-dst $WORK/SYNCmissingondst.txt --error $WORK/SYNCerr.txt --differ $WORK/SYNCdiffer.txt --dest-after $WORK/SYNCdestafter.txt --format 'hp' --separator '  '
+
+# generating sumfiles:
+exec rclone md5sum $SRC --output-file $WORK/src-after.txt
+exec rclone md5sum $DST --output-file $WORK/dst-after.txt
+
+# sorting them by line and diffing:
+exec sort $WORK/src-before.txt -o $WORK/src-before.txt
+exec sort $WORK/dst-before.txt -o $WORK/dst-before.txt
+exec sort $WORK/src-after.txt -o $WORK/src-after.txt
+exec sort $WORK/dst-after.txt -o $WORK/dst-after.txt
+
+exec sort $WORK/SYNCmatch.txt -o $WORK/SYNCmatch.txt
+exec sort $WORK/SYNCcombined.txt -o $WORK/SYNCcombined.txt
+exec sort $WORK/SYNCmissingonsrc.txt -o $WORK/SYNCmissingonsrc.txt
+exec sort $WORK/SYNCmissingondst.txt -o $WORK/SYNCmissingondst.txt
+exec sort $WORK/SYNCerr.txt -o $WORK/SYNCerr.txt
+exec sort $WORK/SYNCdiffer.txt -o $WORK/SYNCdiffer.txt
+exec sort $WORK/SYNCdestafter.txt -o $WORK/SYNCdestafter.txt
+
+# diff src before vs src after:
+cmp $WORK/src-before.txt $WORK/src-after.txt
+
+# diff dst before vs dst after:
+! cmp $WORK/dst-before.txt $WORK/dst-after.txt
+
+# diff src before vs dst after:
+cmp $WORK/src-before.txt $WORK/dst-after.txt
+
+# diff dst before vs src after:
+! cmp $WORK/dst-before.txt $WORK/src-after.txt
+
+# diff md5sum dst after vs sync dest-after:
+cmp $WORK/dst-after.txt $WORK/SYNCdestafter.txt

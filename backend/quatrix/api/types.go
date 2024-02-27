@@ -6,8 +6,8 @@ import (
 	"time"
 )
 
-// OverwriteOnCopyMode is a conflict resolve mode during copy. Files with conflicting names will be overwritten
-const OverwriteOnCopyMode = "overwrite"
+// OverwriteMode is a conflict resolve mode during copy or move. Files with conflicting names will be overwritten
+const OverwriteMode = "overwrite"
 
 // ProfileInfo is a profile info about quota
 type ProfileInfo struct {
@@ -102,6 +102,16 @@ func (f *File) IsDir() bool {
 	}
 
 	return f.Type == "D" || f.Type == "S" || f.Type == "T"
+}
+
+// IsProjectFolder returns true if object is a project folder
+// false otherwise
+func (f *File) IsProjectFolder() bool {
+	if f == nil {
+		return false
+	}
+
+	return f.Type == "S"
 }
 
 // SetMTimeParams is the request to set modification time for object

@@ -1,20 +1,21 @@
 // Systemd interface for Unix variants only
 
-//go:build !windows && !nacl && !plan9
-// +build !windows,!nacl,!plan9
+//go:build unix
+// +build unix
 
 package log
 
 import (
 	"fmt"
 	"log"
+	"strconv"
 	"strings"
 
-	sysdjournald "github.com/iguanesolutions/go-systemd/v5/journald"
+	"github.com/coreos/go-systemd/v22/journal"
 	"github.com/rclone/rclone/fs"
 )
 
-// Enables systemd logs if configured or if auto detected
+// Enables systemd logs if configured or if auto-detected
 func startSystemdLog() bool {
 	flagsStr := "," + Opt.Format + ","
 	var flags int
@@ -25,27 +26,36 @@ func startSystemdLog() bool {
 		flags |= log.Lshortfile
 	}
 	log.SetFlags(flags)
+	// TODO: Use the native journal.Print approach rather than a custom implementation
 	fs.LogPrint = func(level fs.LogLevel, text string) {
-		text = fmt.Sprintf("%s%-6s: %s", systemdLogPrefix(level), level, text)
+		text = fmt.Sprintf("<%s>%-6s: %s", systemdLogPrefix(level), level, text)
 		_ = log.Output(4, text)
 	}
 	return true
 }
 
-var logLevelToSystemdPrefix = []string{
-	fs.LogLevelEmergency: sysdjournald.EmergPrefix,
-	fs.LogLevelAlert:     sysdjournald.AlertPrefix,
-	fs.LogLevelCritical:  sysdjournald.CritPrefix,
-	fs.LogLevelError:     sysdjournald.ErrPrefix,
-	fs.LogLevelWarning:   sysdjournald.WarningPrefix,
-	fs.LogLevelNotice:    sysdjournald.NoticePrefix,
-	fs.LogLevelInfo:      sysdjournald.InfoPrefix,
-	fs.LogLevelDebug:     sysdjournald.DebugPrefix,
+var logLevelToSystemdPrefix = []journal.Priority{
+	fs.LogLevelEmergency: journal.PriEmerg,
+	fs.LogLevelAlert:     journal.PriAlert,
+	fs.LogLevelCritical:  journal.PriCrit,
+	fs.LogLevelError:     journal.PriErr,
+	fs.LogLevelWarning:   journal.PriWarning,
+	fs.LogLevelNotice:    journal.PriNotice,
+	fs.LogLevelInfo:      journal.PriInfo,
+	fs.LogLevelDebug:     journal.PriDebug,
 }
 
 func systemdLogPrefix(l fs.LogLevel) string {
 	if l >= fs.LogLevel(len(logLevelToSystemdPrefix)) {
 		return ""
 	}
-	return logLevelToSystemdPrefix[l]
+	return strconv.Itoa(int(logLevelToSystemdPrefix[l]))
+}
+
+func isJournalStream() bool {
+	if usingJournald, _ := journal.StderrIsJournalStream(); usingJournald {
+		return true
+	}
+
+	return false
 }

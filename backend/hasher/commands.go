@@ -80,6 +80,14 @@ func (f *Fs) dbDump(ctx context.Context, full bool, root string) error {
 		}
 		root = fspath.JoinRootPath(remoteFs.Root(), f.Root())
 	}
+	if f.db == nil {
+		if f.opt.MaxAge == 0 {
+			fs.Errorf(f, "db not found. (disabled with max_age = 0)")
+		} else {
+			fs.Errorf(f, "db not found.")
+		}
+		return kv.ErrInactive
+	}
 	op := &kvDump{
 		full: full,
 		root: root,

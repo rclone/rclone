@@ -1,0 +1,22 @@
+#!/bin/bash
+
+set -e
+
+NAME=rclone-serve-s3
+ACCESS_KEY_ID=rclone
+SECRET_ACCESS_KEY=JoltRogueVerde5
+IP=127.0.0.1
+PORT=28624
+
+start() {
+    run rclone serve s3 --auth-key ${ACCESS_KEY_ID},${SECRET_ACCESS_KEY} --addr ${IP}:${PORT} ${DATADIR}
+    
+    echo type=s3
+    echo provider=Rclone
+    echo endpoint=http://${IP}:${PORT}/
+    echo access_key_id=${ACCESS_KEY_ID}
+    echo secret_access_key=${SECRET_ACCESS_KEY}
+    echo _connect=${IP}:${PORT}
+}
+
+. $(dirname "$0")/rclone-serve.bash

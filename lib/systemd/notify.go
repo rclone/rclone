@@ -1,10 +1,11 @@
 package systemd
 
 import (
+	"fmt"
 	"log"
 	"sync"
 
-	sysdnotify "github.com/iguanesolutions/go-systemd/v5/notify"
+	"github.com/coreos/go-systemd/v22/daemon"
 	"github.com/rclone/rclone/lib/atexit"
 )
 
@@ -13,13 +14,13 @@ import (
 // stopping. This function will be called on exit if the service exits
 // on a signal.
 func Notify() func() {
-	if err := sysdnotify.Ready(); err != nil {
+	if _, err := daemon.SdNotify(false, daemon.SdNotifyReady); err != nil {
 		log.Printf("failed to notify ready to systemd: %v", err)
 	}
 	var finaliseOnce sync.Once
 	finalise := func() {
 		finaliseOnce.Do(func() {
-			if err := sysdnotify.Stopping(); err != nil {
+			if _, err := daemon.SdNotify(false, daemon.SdNotifyStopping); err != nil {
 				log.Printf("failed to notify stopping to systemd: %v", err)
 			}
 		})
@@ -29,4 +30,11 @@ func Notify() func() {
 		atexit.Unregister(finaliseHandle)
 		finalise()
 	}
+}
+
+// UpdateStatus updates the systemd status
+func UpdateStatus(status string) error {
+	systemdStatus := fmt.Sprintf("STATUS=%s", status)
+	_, err := daemon.SdNotify(false, systemdStatus)
+	return err
 }

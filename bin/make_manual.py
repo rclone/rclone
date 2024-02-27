@@ -30,7 +30,6 @@ docs = [
     # Keep these alphabetical by full name
     "fichier.md",
     "alias.md",
-    "amazonclouddrive.md",
     "s3.md",
     "b2.md",
     "box.md",
@@ -50,14 +49,17 @@ docs = [
     "hdfs.md",
     "hidrive.md",
     "http.md",
+    "imagekit.md",
     "internetarchive.md",
     "jottacloud.md",
     "koofr.md",
+    "linkbox.md",
     "mailru.md",
     "mega.md",
     "memory.md",
     "netstorage.md",
     "azureblob.md",
+    "azurefiles.md",
     "onedrive.md",
     "opendrive.md",
     "oracleobjectstorage.md",
@@ -119,6 +121,7 @@ ignore_docs = [
     "downloads.md",
     "privacy.md",
     "sponsor.md",
+    "amazonclouddrive.md",
 ]
 
 def read_doc(doc):

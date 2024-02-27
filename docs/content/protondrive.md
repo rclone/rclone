@@ -95,9 +95,11 @@ To copy a local directory to an Proton Drive directory called backup
 
     rclone copy /home/source remote:backup
 
-### Modified time
+### Modification times and hashes
 
 Proton Drive Bridge does not support updating modification times yet.
+
+The SHA1 hash algorithm is supported.
 
 ### Restricted filename characters
 
@@ -244,7 +246,7 @@ Properties:
 
 - Config:      encoding
 - Env Var:     RCLONE_PROTONDRIVE_ENCODING
-- Type:        MultiEncoder
+- Type:        Encoding
 - Default:     Slash,LeftSpace,RightSpace,InvalidUtf8,Dot
 
 #### --protondrive-original-file-size

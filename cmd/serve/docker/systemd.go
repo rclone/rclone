@@ -6,8 +6,8 @@ package docker
 import (
 	"os"
 
-	"github.com/coreos/go-systemd/activation"
-	"github.com/coreos/go-systemd/util"
+	"github.com/coreos/go-systemd/v22/activation"
+	"github.com/coreos/go-systemd/v22/util"
 )
 
 func systemdActivationFiles() []*os.File {

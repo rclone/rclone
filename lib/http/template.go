@@ -6,6 +6,7 @@ import (
 	"html/template"
 	"log"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/spf13/pflag"
@@ -40,6 +41,17 @@ to be used within the template to server pages:
 |-- .IsDir    | Boolean for if an entry is a directory or not. |
 |-- .Size     | Size in Bytes of the entry. |
 |-- .ModTime  | The UTC timestamp of an entry. |
+
+The server also makes the following functions available so that they can be used within the
+template. These functions help extend the options for dynamic rendering of HTML. They can
+be used to render HTML based on specific conditions.
+
+| Function   | Description |
+| :---------- | :---------- |
+| afterEpoch  | Returns the time since the epoch for the given time. |
+| contains    | Checks whether a given substring is present or not in a given string. |
+| hasPrefix   | Checks whether the given string begins with the specified prefix. |
+| hasSuffix   | Checks whether the given string end with the specified suffix. |
 `
 
 	tmpl, err := template.New("template help").Parse(help)
@@ -105,6 +117,9 @@ func GetTemplate(tmpl string) (*template.Template, error) {
 
 	funcMap := template.FuncMap{
 		"afterEpoch": AfterEpoch,
+		"contains":   strings.Contains,
+		"hasPrefix":  strings.HasPrefix,
+		"hasSuffix":  strings.HasSuffix,
 	}
 
 	tpl, err := template.New("index").Funcs(funcMap).Parse(string(data))

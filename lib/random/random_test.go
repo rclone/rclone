@@ -1,7 +1,6 @@
 package random
 
 import (
-	"math/rand"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -47,18 +46,5 @@ func TestPasswordDuplicates(t *testing.T) {
 		require.NoError(t, err)
 		assert.False(t, seen[s])
 		seen[s] = true
-	}
-}
-
-func TestSeed(t *testing.T) {
-	// seed 100 times and check the first random number doesn't repeat
-	// This test could fail with a probability of ~ 10**-15
-	const n = 100
-	var seen = map[int64]bool{}
-	for i := 0; i < n; i++ {
-		assert.NoError(t, Seed())
-		first := rand.Int63()
-		assert.False(t, seen[first])
-		seen[first] = true
 	}
 }

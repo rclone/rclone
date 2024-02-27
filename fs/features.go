@@ -33,6 +33,7 @@ type Features struct {
 	PartialUploads          bool // uploaded file can appear incomplete on the fs while it's being uploaded
 	NoMultiThreading        bool // set if can't have multiplethreads on one download open
 	Overlay                 bool // this wraps one or more backends to add functionality
+	ChunkWriterDoesntSeek   bool // set if the chunk writer doesn't need to read the data more than once
 
 	// Purge all files in the directory specified
 	//
@@ -663,10 +664,12 @@ type ChunkWriter interface {
 	// WriteChunk will write chunk number with reader bytes, where chunk number >= 0
 	WriteChunk(ctx context.Context, chunkNumber int, reader io.ReadSeeker) (bytesWritten int64, err error)
 
-	// Close complete chunked writer
+	// Close complete chunked writer finalising the file.
 	Close(ctx context.Context) error
 
 	// Abort chunk write
+	//
+	// You can and should call Abort without calling Close.
 	Abort(ctx context.Context) error
 }
 

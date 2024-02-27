@@ -5,6 +5,7 @@ package restic
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -12,6 +13,8 @@ import (
 	"testing"
 
 	_ "github.com/rclone/rclone/backend/all"
+	"github.com/rclone/rclone/cmd"
+	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fstest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -113,4 +116,57 @@ func TestMakeRemote(t *testing.T) {
 		got := WithRemote(next)
 		got.ServeHTTP(w, r)
 	}
+}
+
+type listErrorFs struct {
+	fs.Fs
+}
+
+func (f *listErrorFs) List(ctx context.Context, dir string) (entries fs.DirEntries, err error) {
+	return fs.DirEntries{}, errors.New("oops")
+}
+
+func TestListErrors(t *testing.T) {
+	ctx := context.Background()
+	// setup rclone with a local backend in a temporary directory
+	tempdir := t.TempDir()
+	opt := newOpt()
+
+	// make a new file system in the temp dir
+	f := &listErrorFs{Fs: cmd.NewFsSrc([]string{tempdir})}
+	s, err := newServer(ctx, f, &opt)
+	require.NoError(t, err)
+	router := s.Server.Router()
+
+	req := newRequest(t, "GET", "/test/snapshots/", nil)
+	checkRequest(t, router.ServeHTTP, req, []wantFunc{wantCode(http.StatusInternalServerError)})
+}
+
+type newObjectErrorFs struct {
+	fs.Fs
+	err error
+}
+
+func (f *newObjectErrorFs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
+	return nil, f.err
+}
+
+func TestServeErrors(t *testing.T) {
+	ctx := context.Background()
+	// setup rclone with a local backend in a temporary directory
+	tempdir := t.TempDir()
+	opt := newOpt()
+
+	// make a new file system in the temp dir
+	f := &newObjectErrorFs{Fs: cmd.NewFsSrc([]string{tempdir})}
+	s, err := newServer(ctx, f, &opt)
+	require.NoError(t, err)
+	router := s.Server.Router()
+
+	f.err = errors.New("oops")
+	req := newRequest(t, "GET", "/test/config", nil)
+	checkRequest(t, router.ServeHTTP, req, []wantFunc{wantCode(http.StatusInternalServerError)})
+
+	f.err = fs.ErrorObjectNotFound
+	checkRequest(t, router.ServeHTTP, req, []wantFunc{wantCode(http.StatusNotFound)})
 }

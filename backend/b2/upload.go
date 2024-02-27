@@ -393,10 +393,11 @@ func (up *largeUpload) Stream(ctx context.Context, initialUploadBlock *pool.RW) 
 		hasMoreParts = true
 	)
 	up.size = initialUploadBlock.Size()
+	up.parts = 0
 	for part := 0; hasMoreParts; part++ {
 		// Get a block of memory from the pool and token which limits concurrency.
 		var rw *pool.RW
-		if part == 1 {
+		if part == 0 {
 			rw = initialUploadBlock
 		} else {
 			rw = up.f.getRW(false)
@@ -411,12 +412,18 @@ func (up *largeUpload) Stream(ctx context.Context, initialUploadBlock *pool.RW) 
 
 		// Read the chunk
 		var n int64
-		if part == 1 {
+		if part == 0 {
 			n = rw.Size()
 		} else {
 			n, err = io.CopyN(rw, up.in, up.chunkSize)
 			if err == io.EOF {
-				fs.Debugf(up.o, "Read less than a full chunk, making this the last one.")
+				if n == 0 {
+					fs.Debugf(up.o, "Not sending empty chunk after EOF - ending.")
+					up.f.putRW(rw)
+					break
+				} else {
+					fs.Debugf(up.o, "Read less than a full chunk %d, making this the last one.", n)
+				}
 				hasMoreParts = false
 			} else if err != nil {
 				// other kinds of errors indicate failure
@@ -426,7 +433,7 @@ func (up *largeUpload) Stream(ctx context.Context, initialUploadBlock *pool.RW) 
 		}
 
 		// Keep stats up to date
-		up.parts = part
+		up.parts += 1
 		up.size += n
 		if part > maxParts {
 			up.f.putRW(rw)

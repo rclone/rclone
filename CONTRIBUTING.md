@@ -1,8 +1,8 @@
-# Contributing to rclone #
+# Contributing to rclone
 
 This is a short guide on how to contribute things to rclone.
 
-## Reporting a bug ##
+## Reporting a bug
 
 If you've just got a question or aren't sure if you've found a bug
 then please use the [rclone forum](https://forum.rclone.org/) instead
@@ -12,13 +12,13 @@ When filing an issue, please include the following information if
 possible as well as a description of the problem.  Make sure you test
 with the [latest beta of rclone](https://beta.rclone.org/):
 
-  * Rclone version (e.g. output from `rclone version`)
-  * Which OS you are using and how many bits (e.g. Windows 10, 64 bit)
-  * The command you were trying to run (e.g. `rclone copy /tmp remote:tmp`)
-  * A log of the command with the `-vv` flag (e.g. output from `rclone -vv copy /tmp remote:tmp`)
-    * if the log contains secrets then edit the file with a text editor first to obscure them
+- Rclone version (e.g. output from `rclone version`)
+- Which OS you are using and how many bits (e.g. Windows 10, 64 bit)
+- The command you were trying to run (e.g. `rclone copy /tmp remote:tmp`)
+- A log of the command with the `-vv` flag (e.g. output from `rclone -vv copy /tmp remote:tmp`)
+    - if the log contains secrets then edit the file with a text editor first to obscure them
 
-## Submitting a new feature or bug fix ##
+## Submitting a new feature or bug fix
 
 If you find a bug that you'd like to fix, or a new feature that you'd
 like to implement then please submit a pull request via GitHub.
@@ -73,9 +73,9 @@ This is typically enough if you made a simple bug fix, otherwise please read the
 
 Make sure you
 
-  * Add [unit tests](#testing) for a new feature.
-  * Add [documentation](#writing-documentation) for a new feature.
-  * [Commit your changes](#committing-your-changes) using the [message guideline](#commit-messages).
+- Add [unit tests](#testing) for a new feature.
+- Add [documentation](#writing-documentation) for a new feature.
+- [Commit your changes](#committing-your-changes) using the [commit message guidelines](#commit-messages).
 
 When you are done with that push your changes to GitHub:
 
@@ -88,9 +88,9 @@ Your changes will then get reviewed and you might get asked to fix some stuff. I
 
 You may sometimes be asked to [base your changes on the latest master](#basing-your-changes-on-the-latest-master) or [squash your commits](#squashing-your-commits).
 
-## Using Git and GitHub ##
+## Using Git and GitHub
 
-### Committing your changes ###
+### Committing your changes
 
 Follow the guideline for [commit messages](#commit-messages) and then:
 
@@ -107,7 +107,7 @@ You can modify the message or changes in the latest commit using:
 
 If you amend to commits that have been pushed to GitHub, then you will have to [replace your previously pushed commits](#replacing-your-previously-pushed-commits).
 
-### Replacing your previously pushed commits ###
+### Replacing your previously pushed commits
 
 Note that you are about to rewrite the GitHub history of your branch. It is good practice to involve your collaborators before modifying commits that have been pushed to GitHub.
 
@@ -115,7 +115,7 @@ Your previously pushed commits are replaced by:
 
     git push --force origin my-new-feature 
 
-### Basing your changes on the latest master ###
+### Basing your changes on the latest master
 
 To base your changes on the latest version of the [rclone master](https://github.com/rclone/rclone/tree/master) (upstream):
 
@@ -149,13 +149,21 @@ If you squash commits that have been pushed to GitHub, then you will have to [re
 
 Tip: You may like to use `git rebase -i master` if you are experienced or have a more complex situation.
 
-### GitHub Continuous Integration ###
+### GitHub Continuous Integration
 
 rclone currently uses [GitHub Actions](https://github.com/rclone/rclone/actions) to build and test the project, which should be automatically available for your fork too from the `Actions` tab in your repository.
 
-## Testing ##
+## Testing
 
-### Quick testing ###
+### Code quality tests
+
+If you install [golangci-lint](https://github.com/golangci/golangci-lint) then you can run the same tests as get run in the CI which can be very helpful.
+
+You can run them with `make check` or with `golangci-lint run ./...`.
+
+Using these tests ensures that the rclone codebase all uses the same coding standards. These tests also check for easy mistakes to make (like forgetting to check an error return).
+
+### Quick testing
 
 rclone's tests are run from the go testing framework, so at the top
 level you can run this to run all the tests.
@@ -168,7 +176,7 @@ You can also use `make`, if supported by your platform
 
 The quicktest is [automatically run by GitHub](#github-continuous-integration) when you push your branch to GitHub.
 
-### Backend testing ###
+### Backend testing
 
 rclone contains a mixture of unit tests and integration tests.
 Because it is difficult (and in some respects pointless) to test cloud
@@ -203,7 +211,7 @@ project root:
     go install github.com/rclone/rclone/fstest/test_all
     test_all -backend drive
 
-### Full integration testing ###
+### Full integration testing
 
 If you want to run all the integration tests against all the remotes,
 then change into the project root and run
@@ -218,55 +226,56 @@ The commands may require some extra go packages which you can install with
 The full integration tests are run daily on the integration test server. You can
 find the results at https://pub.rclone.org/integration-tests/
 
-## Code Organisation ##
+## Code Organisation
 
 Rclone code is organised into a small number of top level directories
 with modules beneath.
 
-  * backend - the rclone backends for interfacing to cloud providers -
-    * all - import this to load all the cloud providers
-    * ...providers
-  * bin - scripts for use while building or maintaining rclone
-  * cmd - the rclone commands
-    * all - import this to load all the commands
-    * ...commands
-  * cmdtest - end-to-end tests of commands, flags, environment variables,...
-  * docs - the documentation and website
-    * content - adjust these docs only - everything else is autogenerated
-      * command - these are auto-generated - edit the corresponding .go file
-  * fs - main rclone definitions - minimal amount of code
-    * accounting - bandwidth limiting and statistics
-    * asyncreader - an io.Reader which reads ahead
-    * config - manage the config file and flags
-    * driveletter - detect if a name is a drive letter
-    * filter - implements include/exclude filtering
-    * fserrors - rclone specific error handling
-    * fshttp - http handling for rclone
-    * fspath - path handling for rclone
-    * hash - defines rclone's hash types and functions
-    * list - list a remote
-    * log - logging facilities
-    * march - iterates directories in lock step
-    * object - in memory Fs objects
-    * operations - primitives for sync, e.g. Copy, Move
-    * sync - sync directories
-    * walk - walk a directory
-  * fstest - provides integration test framework
-    * fstests - integration tests for the backends
-    * mockdir - mocks an fs.Directory
-    * mockobject - mocks an fs.Object
-    * test_all - Runs integration tests for everything
-  * graphics - the images used in the website, etc.
-  * lib - libraries used by the backend
-    * atexit - register functions to run when rclone exits
-    * dircache - directory ID to name caching
-    * oauthutil - helpers for using oauth
-    * pacer - retries with backoff and paces operations
-    * readers - a selection of useful io.Readers
-    * rest - a thin abstraction over net/http for REST
-  * vfs - Virtual FileSystem layer for implementing rclone mount and similar
+- backend - the rclone backends for interfacing to cloud providers -
+    - all - import this to load all the cloud providers
+    - ...providers
+- bin - scripts for use while building or maintaining rclone
+- cmd - the rclone commands
+    - all - import this to load all the commands
+    - ...commands
+- cmdtest - end-to-end tests of commands, flags, environment variables,...
+- docs - the documentation and website
+    - content - adjust these docs only - everything else is autogenerated
+    - command - these are auto-generated - edit the corresponding .go file
+- fs - main rclone definitions - minimal amount of code
+    - accounting - bandwidth limiting and statistics
+    - asyncreader - an io.Reader which reads ahead
+    - config - manage the config file and flags
+    - driveletter - detect if a name is a drive letter
+    - filter - implements include/exclude filtering
+    - fserrors - rclone specific error handling
+    - fshttp - http handling for rclone
+    - fspath - path handling for rclone
+    - hash - defines rclone's hash types and functions
+    - list - list a remote
+    - log - logging facilities
+    - march - iterates directories in lock step
+    - object - in memory Fs objects
+    - operations - primitives for sync, e.g. Copy, Move
+    - sync - sync directories
+    - walk - walk a directory
+- fstest - provides integration test framework
+    - fstests - integration tests for the backends
+    - mockdir - mocks an fs.Directory
+    - mockobject - mocks an fs.Object
+    - test_all - Runs integration tests for everything
+- graphics - the images used in the website, etc.
+- lib - libraries used by the backend
+    - atexit - register functions to run when rclone exits
+    - dircache - directory ID to name caching
+    - oauthutil - helpers for using oauth
+    - pacer - retries with backoff and paces operations
+    - readers - a selection of useful io.Readers
+    - rest - a thin abstraction over net/http for REST
+- librclone - in memory interface to rclone's API for embedding rclone
+- vfs - Virtual FileSystem layer for implementing rclone mount and similar
 
-## Writing Documentation ##
+## Writing Documentation
 
 If you are adding a new feature then please update the documentation.
 
@@ -277,22 +286,22 @@ alphabetical order.
 If you add a new backend option/flag, then it should be documented in
 the source file in the `Help:` field.
 
-  * Start with the most important information about the option,
+- Start with the most important information about the option,
     as a single sentence on a single line.
-    * This text will be used for the command-line flag help.
-    * It will be combined with other information, such as any default value,
+    - This text will be used for the command-line flag help.
+    - It will be combined with other information, such as any default value,
       and the result will look odd if not written as a single sentence.
-    * It should end with a period/full stop character, which will be shown
+    - It should end with a period/full stop character, which will be shown
       in docs but automatically removed when producing the flag help.
-    * Try to keep it below 80 characters, to reduce text wrapping in the terminal.
-  * More details can be added in a new paragraph, after an empty line (`"\n\n"`).
-    * Like with docs generated from Markdown, a single line break is ignored
+    - Try to keep it below 80 characters, to reduce text wrapping in the terminal.
+- More details can be added in a new paragraph, after an empty line (`"\n\n"`).
+    - Like with docs generated from Markdown, a single line break is ignored
       and two line breaks creates a new paragraph.
-    * This text will be shown to the user in `rclone config`
+    - This text will be shown to the user in `rclone config`
       and in the docs (where it will be added by `make backenddocs`,
       normally run some time before next release).
-  * To create options of enumeration type use the `Examples:` field.
-    * Each example value have their own `Help:` field, but they are treated
+- To create options of enumeration type use the `Examples:` field.
+    - Each example value have their own `Help:` field, but they are treated
       a bit different than the main option help text. They will be shown
       as an unordered list, therefore a single line break is enough to
       create a new list item. Also, for enumeration texts like name of
@@ -312,12 +321,12 @@ combined unmodified with other information (such as any default value).
 Note that you can use [GitHub's online editor](https://help.github.com/en/github/managing-files-in-a-repository/editing-files-in-another-users-repository)
 for small changes in the docs which makes it very easy.
 
-## Making a release ##
+## Making a release
 
 There are separate instructions for making a release in the RELEASE.md
 file.
 
-## Commit messages ##
+## Commit messages
 
 Please make the first line of your commit message a summary of the
 change that a user (not a developer) of rclone would like to read, and
@@ -358,7 +367,7 @@ error fixing the hang.
 Fixes #1498
 ```
 
-## Adding a dependency ##
+## Adding a dependency
 
 rclone uses the [go
 modules](https://tip.golang.org/cmd/go/#hdr-Modules__module_versions__and_more)
@@ -370,7 +379,7 @@ To add a dependency `github.com/ncw/new_dependency` see the
 instructions below.  These will fetch the dependency and add it to
 `go.mod` and `go.sum`.
 
-    GO111MODULE=on go get github.com/ncw/new_dependency
+    go get github.com/ncw/new_dependency
 
 You can add constraints on that package when doing `go get` (see the
 go docs linked above), but don't unless you really need to.
@@ -378,15 +387,15 @@ go docs linked above), but don't unless you really need to.
 Please check in the changes generated by `go mod` including `go.mod`
 and `go.sum` in the same commit as your other changes.
 
-## Updating a dependency ##
+## Updating a dependency
 
 If you need to update a dependency then run
 
-    GO111MODULE=on go get -u golang.org/x/crypto
+    go get golang.org/x/crypto
 
 Check in a single commit as above.
 
-## Updating all the dependencies ##
+## Updating all the dependencies
 
 In order to update all the dependencies then run `make update`.  This
 just uses the go modules to update all the modules to their latest
@@ -395,7 +404,7 @@ stable release. Check in the changes in a single commit as above.
 This should be done early in the release cycle to pick up new versions
 of packages in time for them to get some testing.
 
-## Updating a backend ##
+## Updating a backend
 
 If you update a backend then please run the unit tests and the
 integration tests for that backend.
@@ -410,76 +419,82 @@ integration tests.
 
 The next section goes into more detail about the tests.
 
-## Writing a new backend ##
+## Writing a new backend
 
 Choose a name.  The docs here will use `remote` as an example.
 
 Note that in rclone terminology a file system backend is called a
 remote or an fs.
 
-Research
+### Research
 
-  * Look at the interfaces defined in `fs/types.go`
-  * Study one or more of the existing remotes
+- Look at the interfaces defined in `fs/types.go`
+- Study one or more of the existing remotes
 
-Getting going
+### Getting going
 
-  * Create `backend/remote/remote.go` (copy this from a similar remote)
-    * box is a good one to start from if you have a directory-based remote
-    * b2 is a good one to start from if you have a bucket-based remote
-  * Add your remote to the imports in `backend/all/all.go`
-  * HTTP based remotes are easiest to maintain if they use rclone's [lib/rest](https://pkg.go.dev/github.com/rclone/rclone/lib/rest) module, but if there is a really good go SDK then use that instead.
-  * Try to implement as many optional methods as possible as it makes the remote more usable.
-  * Use [lib/encoder](https://pkg.go.dev/github.com/rclone/rclone/lib/encoder) to make sure we can encode any path name and `rclone info` to help determine the encodings needed
-    * `rclone purge -v TestRemote:rclone-info`
-    * `rclone test info --all --remote-encoding None -vv --write-json remote.json TestRemote:rclone-info`
-    * `go run cmd/test/info/internal/build_csv/main.go -o remote.csv remote.json`
-    * open `remote.csv` in a spreadsheet and examine
+- Create `backend/remote/remote.go` (copy this from a similar remote)
+    - box is a good one to start from if you have a directory-based remote (and shows how to use the directory cache)
+    - b2 is a good one to start from if you have a bucket-based remote
+- Add your remote to the imports in `backend/all/all.go`
+- HTTP based remotes are easiest to maintain if they use rclone's [lib/rest](https://pkg.go.dev/github.com/rclone/rclone/lib/rest) module, but if there is a really good Go SDK from the provider then use that instead.
+- Try to implement as many optional methods as possible as it makes the remote more usable.
+- Use [lib/encoder](https://pkg.go.dev/github.com/rclone/rclone/lib/encoder) to make sure we can encode any path name and `rclone info` to help determine the encodings needed
+    - `rclone purge -v TestRemote:rclone-info`
+    - `rclone test info --all --remote-encoding None -vv --write-json remote.json TestRemote:rclone-info`
+    - `go run cmd/test/info/internal/build_csv/main.go -o remote.csv remote.json`
+    - open `remote.csv` in a spreadsheet and examine
 
-Important:
+### Guidelines for a speedy merge
 
-  * Please use [lib/rest](https://pkg.go.dev/github.com/rclone/rclone/lib/rest) if you are implementing a REST like backend and parsing XML/JSON in the backend. It makes maintenance much easier.
-  * If your backend is HTTP based then please use rclone's Client or Transport from [fs/fshttp](https://pkg.go.dev/github.com/rclone/rclone/fs/fshttp) - this adds features like `--dump bodies`, `--tpslimit`, `--user-agent` without you having to code anything!
+- **Do** use [lib/rest](https://pkg.go.dev/github.com/rclone/rclone/lib/rest) if you are implementing a REST like backend and parsing XML/JSON in the backend.
+- **Do** use rclone's Client or Transport from [fs/fshttp](https://pkg.go.dev/github.com/rclone/rclone/fs/fshttp) if your backend is HTTP based - this adds features like `--dump bodies`, `--tpslimit`, `--user-agent` without you having to code anything!
+- **Do** follow your example backend exactly - use the same code order, function names, layout, structure. **Don't** move stuff around and **Don't** delete the comments.
+- **Do not** split your backend up into `fs.go` and `object.go` (there are a few backends like that - don't follow them!)
+- **Do** put your API type definitions in a separate file - by preference `api/types.go`
+- **Remember** we have >50 backends to maintain so keeping them as similar as possible to each other is a high priority!
 
-Unit tests
+### Unit tests
 
-  * Create a config entry called `TestRemote` for the unit tests to use
-  * Create a `backend/remote/remote_test.go` - copy and adjust your example remote
-  * Make sure all tests pass with `go test -v`
+- Create a config entry called `TestRemote` for the unit tests to use
+- Create a `backend/remote/remote_test.go` - copy and adjust your example remote
+- Make sure all tests pass with `go test -v`
 
-Integration tests
+### Integration tests
 
-  * Add your backend to `fstest/test_all/config.yaml`
-      * Once you've done that then you can use the integration test framework from the project root:
-      * go install ./...
-      * test_all -backends remote
+- Add your backend to `fstest/test_all/config.yaml`
+    - Once you've done that then you can use the integration test framework from the project root:
+    - go install ./...
+    - test_all -backends remote
 
 Or if you want to run the integration tests manually:
 
-  * Make sure integration tests pass with
-      * `cd fs/operations`
-      * `go test -v -remote TestRemote:`
-      * `cd fs/sync`
-      * `go test -v -remote TestRemote:`
-  * If your remote defines `ListR` check with this also
-      * `go test -v -remote TestRemote: -fast-list`
+- Make sure integration tests pass with
+    - `cd fs/operations`
+    - `go test -v -remote TestRemote:`
+    - `cd fs/sync`
+    - `go test -v -remote TestRemote:`
+- If your remote defines `ListR` check with this also
+    - `go test -v -remote TestRemote: -fast-list`
 
 See the [testing](#testing) section for more information on integration tests.
 
-Add your fs to the docs - you'll need to pick an icon for it from
+### Backend documentation
+
+Add your backend to the docs - you'll need to pick an icon for it from
 [fontawesome](http://fontawesome.io/icons/).  Keep lists of remotes in
 alphabetical order of full name of remote (e.g. `drive` is ordered as
 `Google Drive`) but with the local file system last.
 
-  * `README.md` - main GitHub page
-  * `docs/content/remote.md` - main docs page (note the backend options are automatically added to this file with `make backenddocs`)
-    * make sure this has the `autogenerated options` comments in (see your reference backend docs)
-    * update them in your backend with `bin/make_backend_docs.py remote`
-  * `docs/content/overview.md` - overview docs
-  * `docs/content/docs.md` - list of remotes in config section
-  * `docs/content/_index.md` - front page of rclone.org
-  * `docs/layouts/chrome/navbar.html` - add it to the website navigation
-  * `bin/make_manual.py` - add the page to the `docs` constant
+- `README.md` - main GitHub page
+- `docs/content/remote.md` - main docs page (note the backend options are automatically added to this file with `make backenddocs`)
+    - make sure this has the `autogenerated options` comments in (see your reference backend docs)
+    - update them in your backend with `bin/make_backend_docs.py remote`
+- `docs/content/overview.md` - overview docs
+- `docs/content/docs.md` - list of remotes in config section
+- `docs/content/_index.md` - front page of rclone.org
+- `docs/layouts/chrome/navbar.html` - add it to the website navigation
+- `bin/make_manual.py` - add the page to the `docs` constant
 
 Once you've written the docs, run `make serve` and check they look OK
 in the web browser and the links (internal and external) all work.
@@ -524,13 +539,13 @@ in the names so if these fail and the provider doesn't support
 
 For an example of adding an s3 provider see [eb3082a1](https://github.com/rclone/rclone/commit/eb3082a1ebdb76d5625f14cedec3f5154a5e7b10).
 
-## Writing a plugin ##
+## Writing a plugin
 
 New features (backends, commands) can also be added "out-of-tree", through Go plugins.
 Changes will be kept in a dynamically loaded file instead of being compiled into the main binary.
 This is useful if you can't merge your changes upstream or don't want to maintain a fork of rclone.
 
-Usage
+### Usage
 
  - Naming
    - Plugins names must have the pattern `librcloneplugin_KIND_NAME.so`.
@@ -545,7 +560,7 @@ Usage
    - Plugins must be compiled against the exact version of rclone to work.
      (The rclone used during building the plugin must be the same as the source of rclone)
 
-Building
+### Building
 
 To turn your existing additions into a Go plugin, move them to an external repository
 and change the top-level package name to `main`.

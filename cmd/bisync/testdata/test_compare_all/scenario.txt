@@ -1,0 +1,55 @@
+test changes compare-all
+# Exercise all of the various file change scenarios
+# - New on Path2                            file10
+# - Newer on Path2                          file1
+# - New on Path1                            file11
+# - Newer on Path1                          file2
+# - Deleted on Path2                        file3
+# - Deleted on Path1                        file4
+# - Changed on Path2 and on Path1           file5 (file5r, file5l)
+# - Newer on Path2 and deleted on Path1     file6
+# - Newer on Path1 and deleted on Path2     file7
+# - Deleted on both paths                   file8
+
+test initial bisync
+bisync resync compare-all
+
+test make modifications on both paths
+test new on path2 - file10
+touch-copy 2001-01-02 {datadir/}file10.txt {path2/}
+
+test newer on path2 - file1
+touch-copy 2001-01-02 {datadir/}file1.txt {path2/}
+
+test new on path1 - file11
+touch-copy 2001-01-02 {datadir/}file11.txt {path1/}
+
+test newer on path1 - file2
+touch-copy 2001-01-02 {datadir/}file2.txt {path1/}
+
+test deleted on path2 - file3
+delete-file {path2/}file3.txt
+
+test deleted on path1 - file4
+delete-file {path1/}file4.txt
+
+test deleted on both paths - file8
+delete-file {path1/}file8.txt
+delete-file {path2/}file8.txt
+
+test changed on both paths - file5 (file5R, file5L)
+touch-glob 2001-01-02 {datadir/} file5R.txt
+copy-as {datadir/}file5R.txt {path2/} file5.txt
+touch-glob 2001-03-04 {datadir/} file5L.txt
+copy-as {datadir/}file5L.txt {path1/} file5.txt
+
+test newer on path2 and deleted on path1 - file6
+touch-copy 2001-01-02 {datadir/}file6.txt {path2/}
+delete-file {path1/}file6.txt
+
+test newer on path1 and deleted on path2 - file7
+touch-copy 2001-01-02 {datadir/}file7.txt {path1/}
+delete-file {path2/}file7.txt
+
+test bisync run
+bisync compare-all

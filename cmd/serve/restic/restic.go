@@ -341,7 +341,11 @@ func (s *server) serveObject(w http.ResponseWriter, r *http.Request) {
 	o, err := s.newObject(r.Context(), remote)
 	if err != nil {
 		fs.Debugf(remote, "%s request error: %v", r.Method, err)
-		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+		if errors.Is(err, fs.ErrorObjectNotFound) {
+			http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+		} else {
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		}
 		return
 	}
 	serve.Object(w, r, o)
@@ -404,7 +408,7 @@ func (s *server) deleteObject(w http.ResponseWriter, r *http.Request) {
 
 	if err := o.Remove(r.Context()); err != nil {
 		fs.Errorf(remote, "Delete request remove error: %v", err)
-		if err == fs.ErrorObjectNotFound {
+		if errors.Is(err, fs.ErrorObjectNotFound) {
 			http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
 		} else {
 			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
@@ -466,7 +470,7 @@ func (s *server) listObjects(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		if !errors.Is(err, fs.ErrorDirNotFound) {
 			fs.Errorf(remote, "list failed: %#v %T", err, err)
-			http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			return
 		}
 	}

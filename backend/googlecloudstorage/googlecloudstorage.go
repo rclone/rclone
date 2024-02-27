@@ -1310,10 +1310,11 @@ func (o *Object) Storable() bool {
 
 // Open an object for read
 func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.ReadCloser, err error) {
+	url := o.url
 	if o.fs.opt.UserProject != "" {
-		o.url = o.url + "&userProject=" + o.fs.opt.UserProject
+		url += "&userProject=" + o.fs.opt.UserProject
 	}
-	req, err := http.NewRequestWithContext(ctx, "GET", o.url, nil)
+	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
 	if err != nil {
 		return nil, err
 	}

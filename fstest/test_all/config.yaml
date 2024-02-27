@@ -10,10 +10,11 @@ tests:
  - path: vfs
  - path: cmd/serve/restic
    localonly: true
+ - path: cmd/serve/docker
+   localonly: true
+ - path: cmd/selfupdate
+   localonly: true
 backends:
- # - backend:  "amazonclouddrive"
- #   remote:   "TestAmazonCloudDrive:"
- #   fastlist: false
  - backend:  "local"
    remote:   ""
    fastlist: false
@@ -56,10 +57,14 @@ backends:
  - backend:  "chunker"
    remote:   "TestChunkerMailru:"
    fastlist: true
+   ignore:
+     - TestApplyTransforms
  - backend:  "chunker"
    remote:   "TestChunkerChunk50bMailru:"
    fastlist: true
    maxfile:  10k
+   ignore:
+     - TestApplyTransforms
  - backend:  "chunker"
    remote:   "TestChunkerChunk50bYandex:"
    fastlist: true
@@ -144,6 +149,9 @@ backends:
  - backend: "hidrive"
    remote:   "TestHiDrive:"
    fastlist: false
+ - backend:  "imagekit"
+   remote:   "TestImageKit:"
+   fastlist: false
  - backend:  "internetarchive"
    remote:   "TestIA:rclone-integration-test"
    fastlist: true
@@ -177,6 +185,9 @@ backends:
    fastlist: true
  - backend:  "s3"
    remote:   "TestS3,directory_markers:"
+   fastlist: true
+ - backend:  "s3"
+   remote:   "TestS3Rclone:"
    fastlist: true
  - backend:  "s3"
    remote:   "TestS3Minio:"
@@ -288,10 +299,6 @@ backends:
    fastlist: false
  - backend:  "ftp"
    remote:   "TestFTPRclone:"
-   ignore:
-     - "TestMultithreadCopy/{size:131071_streams:2}"
-     - "TestMultithreadCopy/{size:131072_streams:2}"
-     - "TestMultithreadCopy/{size:131073_streams:2}"
    fastlist: false
  - backend:  "box"
    remote:   "TestBox:"
@@ -316,6 +323,8 @@ backends:
  - backend:  "azureblob"
    remote:   "TestAzureBlob,directory_markers:"
    fastlist: true
+ - backend:  "azurefiles"
+   remote:   "TestAzureFiles:"
  - backend:  "pcloud"
    remote:   "TestPcloud:"
    fastlist: true
@@ -368,6 +377,14 @@ backends:
  # - backend:  "koofr"
  #   remote:   "TestDigiStorage:"
  #   fastlist: false
+ - backend: "linkbox"
+   remote: "TestLinkbox:"
+   fastlist: false
+   ignore:
+     - TestIntegration/FsMkdir/FsEncoding/invalid_UTF-8
+     - TestRWFileHandleWriteNoWrite
+     - TestCaseInsensitiveMoveFile
+     - TestFixCase
  - backend:  "premiumizeme"
    remote:   "TestPremiumizeMe:"
    fastlist: false
@@ -390,6 +407,8 @@ backends:
    remote:   "TestMailru:"
    subdir:   false
    fastlist: false
+   ignore:
+     - TestApplyTransforms
  - backend:  "seafile"
    remote:   "TestSeafileV6:"
    fastlist: false
@@ -413,16 +432,18 @@ backends:
  - backend:  "zoho"
    remote:   "TestZoho:"
    fastlist: false
+   tests:
+     - backend
  - backend: "hdfs"
    remote: "TestHdfs:"
    fastlist: false
    ignore:
      - TestSyncUTFNorm
- - backend: "uptobox"
-   remote: "TestUptobox:"
-   fastlist: false
-   ignore:
-     - TestRWFileHandleWriteNoWrite
+ # - backend: "uptobox"
+ #   remote: "TestUptobox:"
+ #   fastlist: false
+ #   ignore:
+ #     - TestRWFileHandleWriteNoWrite
  - backend: "oracleobjectstorage"
    remote: "TestOracleObjectStorage:"
    fastlist: true

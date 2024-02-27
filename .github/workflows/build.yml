@@ -27,12 +27,12 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        job_name: ['linux', 'linux_386', 'mac_amd64', 'mac_arm64', 'windows', 'other_os', 'go1.19', 'go1.20']
+        job_name: ['linux', 'linux_386', 'mac_amd64', 'mac_arm64', 'windows', 'other_os', 'go1.20', 'go1.21']
 
         include:
           - job_name: linux
             os: ubuntu-latest
-            go: '1.21'
+            go: '>=1.22.0-rc.1'
             gotags: cmount
             build_flags: '-include "^linux/"'
             check: true
@@ -43,14 +43,14 @@ jobs:
 
           - job_name: linux_386
             os: ubuntu-latest
-            go: '1.21'
+            go: '>=1.22.0-rc.1'
             goarch: 386
             gotags: cmount
             quicktest: true
 
           - job_name: mac_amd64
             os: macos-11
-            go: '1.21'
+            go: '>=1.22.0-rc.1'
             gotags: 'cmount'
             build_flags: '-include "^darwin/amd64" -cgo'
             quicktest: true
@@ -59,14 +59,14 @@ jobs:
 
           - job_name: mac_arm64
             os: macos-11
-            go: '1.21'
+            go: '>=1.22.0-rc.1'
             gotags: 'cmount'
             build_flags: '-include "^darwin/arm64" -cgo -macos-arch arm64 -cgo-cflags=-I/usr/local/include -cgo-ldflags=-L/usr/local/lib'
             deploy: true
 
           - job_name: windows
             os: windows-latest
-            go: '1.21'
+            go: '>=1.22.0-rc.1'
             gotags: cmount
             cgo: '0'
             build_flags: '-include "^windows/"'
@@ -76,20 +76,20 @@ jobs:
 
           - job_name: other_os
             os: ubuntu-latest
-            go: '1.21'
+            go: '>=1.22.0-rc.1'
             build_flags: '-exclude "^(windows/|darwin/|linux/)"'
             compile_all: true
             deploy: true
 
-          - job_name: go1.19
-            os: ubuntu-latest
-            go: '1.19'
-            quicktest: true
-            racequicktest: true
-
           - job_name: go1.20
             os: ubuntu-latest
             go: '1.20'
+            quicktest: true
+            racequicktest: true
+
+          - job_name: go1.21
+            os: ubuntu-latest
+            go: '1.21'
             quicktest: true
             racequicktest: true
 
@@ -104,7 +104,7 @@ jobs:
           fetch-depth: 0
 
       - name: Install Go
-        uses: actions/setup-go@v4
+        uses: actions/setup-go@v5
         with:
           go-version: ${{ matrix.go }}
           check-latest: true
@@ -168,7 +168,7 @@ jobs:
           env
 
       - name: Go module cache
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ~/go/pkg/mod
           key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
@@ -216,7 +216,6 @@ jobs:
         shell: bash
         run: |
           if [[ "${{ matrix.os }}" == "ubuntu-latest" ]]; then make release_dep_linux ; fi
-          if [[ "${{ matrix.os }}" == "windows-latest" ]]; then make release_dep_windows ; fi
           make ci_beta
         env:
           RCLONE_CONFIG_PASS: ${{ secrets.RCLONE_CONFIG_PASS }}
@@ -235,16 +234,16 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Code quality test
-        uses: golangci/golangci-lint-action@v3
+        uses: golangci/golangci-lint-action@v4
         with:
           # Optional: version of golangci-lint to use in form of v1.2 or v1.2.3 or `latest` to use the latest version
           version: latest
 
       # Run govulncheck on the latest go version, the one we build binaries with
       - name: Install Go
-        uses: actions/setup-go@v4
+        uses: actions/setup-go@v5
         with:
-          go-version: '1.21'
+          go-version: '>=1.22.0-rc.1'
           check-latest: true
 
       - name: Install govulncheck
@@ -267,12 +266,12 @@ jobs:
 
       # Upgrade together with NDK version
       - name: Set up Go
-        uses: actions/setup-go@v4
+        uses: actions/setup-go@v5
         with:
-          go-version: '1.21'
+          go-version: '>=1.22.0-rc.1'
 
       - name: Go module cache
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ~/go/pkg/mod
           key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}

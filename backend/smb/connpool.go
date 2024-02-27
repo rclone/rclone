@@ -6,7 +6,7 @@ import (
 	"net"
 	"time"
 
-	smb2 "github.com/hirochachacha/go-smb2"
+	smb2 "github.com/cloudsoda/go-smb2"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/accounting"
 	"github.com/rclone/rclone/fs/config/obscure"
@@ -40,7 +40,7 @@ func (f *Fs) dial(ctx context.Context, network, addr string) (*conn, error) {
 		},
 	}
 
-	session, err := d.DialContext(ctx, tconn)
+	session, err := d.DialConn(ctx, tconn, addr)
 	if err != nil {
 		return nil, err
 	}

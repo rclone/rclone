@@ -1,91 +1,137 @@
-(01)  : test resync
+[36m(01)  :[0m [34mtest resync[0m
 
 
-(02)  : test 1. resync with empty path1, resulting in copying all content from path2.
-(03)  : purge-children {path1/}
-(04)  : bisync resync
+[36m(02)  :[0m [34mtest 1. resync with empty path1, resulting in copying all content from path2.[0m
+[36m(03)  :[0m [34mpurge-children {path1/}[0m
+[36m(04)  :[0m [34mbisync resync[0m
+INFO  : [2mSetting --ignore-listing-checksum as neither --checksum nor --compare checksum are set.[0m
+INFO  : Bisyncing with Comparison Settings:
+{
+"Modtime": true,
+"Size": true,
+"Checksum": false,
+"NoSlowHash": false,
+"SlowHashSyncOnly": false,
+"DownloadHash": false
+}
 INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
-INFO  : Copying unique Path2 files to Path1
-INFO  : - Path2    Resync will copy to Path1           - RCLONE_TEST
-INFO  : - Path2    Resync will copy to Path1           - file1.txt
-INFO  : - Path2    Resync will copy to Path1           - file2.txt
-INFO  : - Path2    Resync will copy to Path1           - file3.txt
-INFO  : - Path2    Resync will copy to Path1           - file4.txt
-INFO  : - Path2    Resync will copy to Path1           - file5.txt
-INFO  : - Path2    Resync will copy to Path1           - file6.txt
-INFO  : - Path2    Resync will copy to Path1           - file7.txt
-INFO  : - Path2    Resync is doing queued copies to    - Path1
-INFO  : Resynching Path1 to Path2
+INFO  : Copying Path2 files to Path1
+INFO  : - [34mPath2[0m    [35mResync is copying files to[0m         - [36mPath1[0m
+INFO  : - [36mPath1[0m    [35mResync is copying files to[0m         - [36mPath2[0m
 INFO  : Resync updating listings
-INFO  : Bisync successful
-(05)  : move-listings empty-path1
+INFO  : Validating listings for Path1 "{path1/}" vs Path2 "{path2/}"
+INFO  : [32mBisync successful[0m
+[36m(05)  :[0m [34mmove-listings empty-path1[0m
 
-(06)  : test 2. resync with empty path2, resulting in synching all content to path2.
-(07)  : purge-children {path2/}
-(08)  : bisync resync
+[36m(06)  :[0m [34mtest 2. resync with empty path2, resulting in synching all content to path2.[0m
+[36m(07)  :[0m [34mpurge-children {path2/}[0m
+[36m(08)  :[0m [34mbisync resync[0m
+INFO  : [2mSetting --ignore-listing-checksum as neither --checksum nor --compare checksum are set.[0m
+INFO  : Bisyncing with Comparison Settings:
+{
+"Modtime": true,
+"Size": true,
+"Checksum": false,
+"NoSlowHash": false,
+"SlowHashSyncOnly": false,
+"DownloadHash": false
+}
 INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
-INFO  : Copying unique Path2 files to Path1
-INFO  : Resynching Path1 to Path2
+INFO  : Copying Path2 files to Path1
+INFO  : - [34mPath2[0m    [35mResync is copying files to[0m         - [36mPath1[0m
+INFO  : - [36mPath1[0m    [35mResync is copying files to[0m         - [36mPath2[0m
 INFO  : Resync updating listings
-INFO  : Bisync successful
-(09)  : move-listings empty-path2
+INFO  : Validating listings for Path1 "{path1/}" vs Path2 "{path2/}"
+INFO  : [32mBisync successful[0m
+[36m(09)  :[0m [34mmove-listings empty-path2[0m
 
-(10)  : test 3. exercise all of the various file difference scenarios during a resync.
-(11)  : touch-glob 2002-02-02 {datadir/} fileA.txt
-(12)  : touch-glob 1999-09-09 {datadir/} fileB.txt
+[36m(10)  :[0m [34mtest 3. exercise all of the various file difference scenarios during a resync.[0m
+[36m(11)  :[0m [34mtouch-glob 2002-02-02 {datadir/} fileA.txt[0m
+[36m(12)  :[0m [34mtouch-glob 1999-09-09 {datadir/} fileB.txt[0m
 
-(13)  : test = file      - path1      - path2      - expected action    - who wins
-(14)  : test - file1.txt - exists     - missing    - sync path1 > path2 - path1
-(15)  : delete-file {path2/}file1.txt
+[36m(13)  :[0m [34mtest = file      - path1      - path2      - expected action    - who wins[0m
+[36m(14)  :[0m [34mtest - file1.txt - exists     - missing    - sync path1 > path2 - path1[0m
+[36m(15)  :[0m [34mdelete-file {path2/}file1.txt[0m
 
-(16)  : test - file2.txt - missing    - exists     - copy path2 > path1 - path2
-(17)  : delete-file {path1/}file2.txt
+[36m(16)  :[0m [34mtest - file2.txt - missing    - exists     - copy path2 > path1 - path2[0m
+[36m(17)  :[0m [34mdelete-file {path1/}file2.txt[0m
 
-(18)  : test - file3.txt - exists     - newer date - sync path1 > path2 - path1
-(19)  : copy-as {datadir/}fileA.txt {path2/} file3.txt
+[36m(18)  :[0m [34mtest - file3.txt - exists     - newer date - sync path1 > path2 - path1[0m
+[36m(19)  :[0m [34mcopy-as {datadir/}fileA.txt {path2/} file3.txt[0m
 
-(20)  : test - file4.txt - missing    - newer date - copy path2 > path1 - path2
-(21)  : delete-file {path1/}file4.txt
-(22)  : copy-as {datadir/}fileA.txt {path2/} file4.txt
+[36m(20)  :[0m [34mtest - file4.txt - missing    - newer date - copy path2 > path1 - path2[0m
+[36m(21)  :[0m [34mdelete-file {path1/}file4.txt[0m
+[36m(22)  :[0m [34mcopy-as {datadir/}fileA.txt {path2/} file4.txt[0m
 
-(23)  : test - file5.txt - exists     - older date - sync path1 > path2 - path1
-(24)  : copy-as {datadir/}fileB.txt {path2/} file5.txt
+[36m(23)  :[0m [34mtest - file5.txt - exists     - older date - sync path1 > path2 - path1[0m
+[36m(24)  :[0m [34mcopy-as {datadir/}fileB.txt {path2/} file5.txt[0m
 
-(25)  : test - file6.txt - older date - newer date - sync path1 > path2	- path1
-(26)  : copy-as {datadir/}fileB.txt {path1/} file6.txt
-(27)  : copy-as {datadir/}fileA.txt {path2/} file6.txt
+[36m(25)  :[0m [34mtest - file6.txt - older date - newer date - sync path1 > path2	- path1[0m
+[36m(26)  :[0m [34mcopy-as {datadir/}fileB.txt {path1/} file6.txt[0m
+[36m(27)  :[0m [34mcopy-as {datadir/}fileA.txt {path2/} file6.txt[0m
 
-(28)  : test - file7.txt - exists     - exists (same) - none            - same
+[36m(28)  :[0m [34mtest - file7.txt - exists     - exists (same) - none            - same[0m
 
-(29)  : test run bisync with resync
-(30)  : bisync resync
+[36m(29)  :[0m [34mtest run bisync with resync[0m
+[36m(30)  :[0m [34mbisync resync[0m
+INFO  : [2mSetting --ignore-listing-checksum as neither --checksum nor --compare checksum are set.[0m
+INFO  : Bisyncing with Comparison Settings:
+{
+"Modtime": true,
+"Size": true,
+"Checksum": false,
+"NoSlowHash": false,
+"SlowHashSyncOnly": false,
+"DownloadHash": false
+}
 INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
-INFO  : Copying unique Path2 files to Path1
-INFO  : - Path2    Resync will copy to Path1           - file2.txt
-INFO  : - Path2    Resync will copy to Path1           - file4.txt
-INFO  : - Path2    Resync is doing queued copies to    - Path1
-INFO  : Resynching Path1 to Path2
+INFO  : Copying Path2 files to Path1
+INFO  : - [34mPath2[0m    [35mResync is copying files to[0m         - [36mPath1[0m
+INFO  : - [36mPath1[0m    [35mResync is copying files to[0m         - [36mPath2[0m
 INFO  : Resync updating listings
-INFO  : Bisync successful
-(31)  : copy-listings mixed-diffs
+INFO  : Validating listings for Path1 "{path1/}" vs Path2 "{path2/}"
+INFO  : [32mBisync successful[0m
+[36m(31)  :[0m [34mcopy-listings mixed-diffs[0m
 
-(32)  : test run normal bisync
-(33)  : bisync
+[36m(32)  :[0m [34mtest run normal bisync[0m
+[36m(33)  :[0m [34mbisync[0m
+INFO  : [2mSetting --ignore-listing-checksum as neither --checksum nor --compare checksum are set.[0m
+INFO  : Bisyncing with Comparison Settings:
+{
+"Modtime": true,
+"Size": true,
+"Checksum": false,
+"NoSlowHash": false,
+"SlowHashSyncOnly": false,
+"DownloadHash": false
+}
 INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Building Path1 and Path2 listings
 INFO  : Path1 checking for diffs
 INFO  : Path2 checking for diffs
 INFO  : No changes found
 INFO  : Updating listings
 INFO  : Validating listings for Path1 "{path1/}" vs Path2 "{path2/}"
-INFO  : Bisync successful
+INFO  : [32mBisync successful[0m
 
-(34)  : test 4. confirm critical error on normal sync of empty path.
-(35)  : purge-children {path2/}
-(36)  : bisync
+[36m(34)  :[0m [34mtest 4. confirm critical error on normal sync of empty path.[0m
+[36m(35)  :[0m [34mpurge-children {path2/}[0m
+[36m(36)  :[0m [34mbisync[0m
+INFO  : [2mSetting --ignore-listing-checksum as neither --checksum nor --compare checksum are set.[0m
+INFO  : Bisyncing with Comparison Settings:
+{
+"Modtime": true,
+"Size": true,
+"Checksum": false,
+"NoSlowHash": false,
+"SlowHashSyncOnly": false,
+"DownloadHash": false
+}
 INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Building Path1 and Path2 listings
 INFO  : Path1 checking for diffs
 INFO  : Path2 checking for diffs
 ERROR : Empty current Path2 listing. Cannot sync to an empty directory: {workdir/}{session}.path2.lst-new
-ERROR : Bisync critical error: empty current Path2 listing: {workdir/}{session}.path2.lst-new
-ERROR : Bisync aborted. Must run --resync to recover.
+ERROR : [31mBisync critical error: empty current Path2 listing: {workdir/}{session}.path2.lst-new[0m
+ERROR : [31mBisync aborted. Must run --resync to recover.[0m
 Bisync error: bisync aborted

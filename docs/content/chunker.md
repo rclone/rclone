@@ -244,7 +244,7 @@ revert (sometimes silently) to time/size comparison if compatible hashsums
 between source and target are not found.
 
 
-### Modified time
+### Modification times
 
 Chunker stores modification times using the wrapped remote so support
 depends on that. For a small non-chunked file the chunker overlay simply

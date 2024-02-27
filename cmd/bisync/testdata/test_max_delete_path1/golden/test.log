@@ -1,55 +1,89 @@
-(01)  : test max-delete-path1
+[36m(01)  :[0m [34mtest max-delete-path1[0m
 
 
-(02)  : test initial bisync
-(03)  : bisync resync
+[36m(02)  :[0m [34mtest initial bisync[0m
+[36m(03)  :[0m [34mbisync resync[0m
+INFO  : [2mSetting --ignore-listing-checksum as neither --checksum nor --compare checksum are set.[0m
+INFO  : Bisyncing with Comparison Settings:
+{
+"Modtime": true,
+"Size": true,
+"Checksum": false,
+"NoSlowHash": false,
+"SlowHashSyncOnly": false,
+"DownloadHash": false
+}
 INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
-INFO  : Copying unique Path2 files to Path1
-INFO  : Resynching Path1 to Path2
+INFO  : Copying Path2 files to Path1
+INFO  : - [34mPath2[0m    [35mResync is copying files to[0m         - [36mPath1[0m
+INFO  : - [36mPath1[0m    [35mResync is copying files to[0m         - [36mPath2[0m
 INFO  : Resync updating listings
-INFO  : Bisync successful
+INFO  : Validating listings for Path1 "{path1/}" vs Path2 "{path2/}"
+INFO  : [32mBisync successful[0m
 
-(04)  : test delete >50% of local files
-(05)  : delete-file {path1/}file1.txt
-(06)  : delete-file {path1/}file2.txt
-(07)  : delete-file {path1/}file3.txt
-(08)  : delete-file {path1/}file4.txt
-(09)  : delete-file {path1/}file5.txt
+[36m(04)  :[0m [34mtest delete >50% of local files[0m
+[36m(05)  :[0m [34mdelete-file {path1/}file1.txt[0m
+[36m(06)  :[0m [34mdelete-file {path1/}file2.txt[0m
+[36m(07)  :[0m [34mdelete-file {path1/}file3.txt[0m
+[36m(08)  :[0m [34mdelete-file {path1/}file4.txt[0m
+[36m(09)  :[0m [34mdelete-file {path1/}file5.txt[0m
 
-(10)  : test sync should fail due to too many local deletes
-(11)  : bisync
+[36m(10)  :[0m [34mtest sync should fail due to too many local deletes[0m
+[36m(11)  :[0m [34mbisync[0m
+INFO  : [2mSetting --ignore-listing-checksum as neither --checksum nor --compare checksum are set.[0m
+INFO  : Bisyncing with Comparison Settings:
+{
+"Modtime": true,
+"Size": true,
+"Checksum": false,
+"NoSlowHash": false,
+"SlowHashSyncOnly": false,
+"DownloadHash": false
+}
 INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Building Path1 and Path2 listings
 INFO  : Path1 checking for diffs
-INFO  : - Path1    File was deleted                    - file1.txt
-INFO  : - Path1    File was deleted                    - file2.txt
-INFO  : - Path1    File was deleted                    - file3.txt
-INFO  : - Path1    File was deleted                    - file4.txt
-INFO  : - Path1    File was deleted                    - file5.txt
-INFO  : Path1:    5 changes:    0 new,    0 newer,    0 older,    5 deleted
+INFO  : - [36mPath1[0m    [35m[31mFile was deleted[0m[0m          - [36mfile1.txt[0m
+INFO  : - [36mPath1[0m    [35m[31mFile was deleted[0m[0m          - [36mfile2.txt[0m
+INFO  : - [36mPath1[0m    [35m[31mFile was deleted[0m[0m          - [36mfile3.txt[0m
+INFO  : - [36mPath1[0m    [35m[31mFile was deleted[0m[0m          - [36mfile4.txt[0m
+INFO  : - [36mPath1[0m    [35m[31mFile was deleted[0m[0m          - [36mfile5.txt[0m
+INFO  : Path1:    5 changes: [32m   0 new[0m, [33m   0 modified[0m, [31m   5 deleted[0m
 INFO  : Path2 checking for diffs
 ERROR : Safety abort: too many deletes (>50%, 5 of 9) on Path1 "{path1/}". Run with --force if desired.
-NOTICE: Bisync aborted. Please try again.
+NOTICE: [31mBisync aborted. Please try again.[0m
 Bisync error: too many deletes
-(12)  : copy-listings initial-fail
+[36m(12)  :[0m [34mcopy-listings initial-fail[0m
 
-(13)  : test change max-delete limit to 60%. sync should run.
-(14)  : bisync max-delete=60
+[36m(13)  :[0m [34mtest change max-delete limit to 60%. sync should run.[0m
+[36m(14)  :[0m [34mbisync max-delete=60[0m
+INFO  : [2mSetting --ignore-listing-checksum as neither --checksum nor --compare checksum are set.[0m
+INFO  : Bisyncing with Comparison Settings:
+{
+"Modtime": true,
+"Size": true,
+"Checksum": false,
+"NoSlowHash": false,
+"SlowHashSyncOnly": false,
+"DownloadHash": false
+}
 INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Building Path1 and Path2 listings
 INFO  : Path1 checking for diffs
-INFO  : - Path1    File was deleted                    - file1.txt
-INFO  : - Path1    File was deleted                    - file2.txt
-INFO  : - Path1    File was deleted                    - file3.txt
-INFO  : - Path1    File was deleted                    - file4.txt
-INFO  : - Path1    File was deleted                    - file5.txt
-INFO  : Path1:    5 changes:    0 new,    0 newer,    0 older,    5 deleted
+INFO  : - [36mPath1[0m    [35m[31mFile was deleted[0m[0m          - [36mfile1.txt[0m
+INFO  : - [36mPath1[0m    [35m[31mFile was deleted[0m[0m          - [36mfile2.txt[0m
+INFO  : - [36mPath1[0m    [35m[31mFile was deleted[0m[0m          - [36mfile3.txt[0m
+INFO  : - [36mPath1[0m    [35m[31mFile was deleted[0m[0m          - [36mfile4.txt[0m
+INFO  : - [36mPath1[0m    [35m[31mFile was deleted[0m[0m          - [36mfile5.txt[0m
+INFO  : Path1:    5 changes: [32m   0 new[0m, [33m   0 modified[0m, [31m   5 deleted[0m
 INFO  : Path2 checking for diffs
 INFO  : Applying changes
-INFO  : - Path2    Queue delete                        - {path2/}file1.txt
-INFO  : - Path2    Queue delete                        - {path2/}file2.txt
-INFO  : - Path2    Queue delete                        - {path2/}file3.txt
-INFO  : - Path2    Queue delete                        - {path2/}file4.txt
-INFO  : - Path2    Queue delete                        - {path2/}file5.txt
-INFO  : -          Do queued deletes on                - Path2
+INFO  : - [34mPath2[0m    [35m[31mQueue delete[0m[0m              - [36m{path2/}file1.txt[0m
+INFO  : - [34mPath2[0m    [35m[31mQueue delete[0m[0m              - [36m{path2/}file2.txt[0m
+INFO  : - [34mPath2[0m    [35m[31mQueue delete[0m[0m              - [36m{path2/}file3.txt[0m
+INFO  : - [34mPath2[0m    [35m[31mQueue delete[0m[0m              - [36m{path2/}file4.txt[0m
+INFO  : - [34mPath2[0m    [35m[31mQueue delete[0m[0m              - [36m{path2/}file5.txt[0m
+INFO  : - [36mPath1[0m    [35mDo queued copies to[0m                - [36mPath2[0m
 INFO  : Updating listings
 INFO  : Validating listings for Path1 "{path1/}" vs Path2 "{path2/}"
-INFO  : Bisync successful
+INFO  : [32mBisync successful[0m

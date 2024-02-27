@@ -366,26 +366,59 @@ port of GCC, e.g. by installing it in a [MSYS2](https://www.msys2.org)
 distribution (make sure you install it in the classic mingw64 subsystem, the
 ucrt64 version is not compatible).
 
-Additionally, on Windows, you must install the third party utility
-[WinFsp](https://winfsp.dev/), with the "Developer" feature selected.
+Additionally, to build with mount on Windows, you must install the third party
+utility [WinFsp](https://winfsp.dev/), with the "Developer" feature selected.
 If building with cgo, you must also set environment variable CPATH pointing to
 the fuse include directory within the WinFsp installation
 (normally `C:\Program Files (x86)\WinFsp\inc\fuse`).
 
-You may also add arguments `-ldflags -s` (with or without `-tags cmount`),
-to omit symbol table and debug information, making the executable file smaller,
-and `-trimpath` to remove references to local file system paths. This is how
-the official rclone releases are built.
+You may add arguments `-ldflags -s` to omit symbol table and debug information,
+making the executable file smaller, and `-trimpath` to remove references to
+local file system paths. The official rclone releases are built with both of these.
 
 ```
 go build -trimpath -ldflags -s -tags cmount
 ```
 
+If you want to customize the version string, as reported by
+the `rclone version` command, you can set one of the variables `fs.Version`,
+`fs.VersionTag` (to keep default suffix but customize the number),
+or `fs.VersionSuffix` (to keep default number but customize the suffix).
+This can be done from the build command, by adding to the `-ldflags`
+argument value as shown below.
+
+```
+go build -trimpath -ldflags "-s -X github.com/rclone/rclone/fs.Version=v9.9.9-test" -tags cmount
+```
+
+On Windows, the official executables also have the version information,
+as well as a file icon, embedded as binary resources. To get that with your
+own build you need to run the following command **before** the build command.
+It generates a Windows resource system object file, with extension .syso, e.g.
+`resource_windows_amd64.syso`, that will be automatically picked up by
+future build commands.
+
+```
+go run bin/resource_windows.go
+```
+
+The above command will generate a resource file containing version information
+based on the fs.Version variable in source at the time you run the command,
+which means if the value of this variable changes you need to re-run the
+command for it to be reflected in the version information. Also, if you
+override this version variable in the build command as described above, you
+need to do that also when generating the resource file, or else it will still
+use the value from the source.
+
+```
+go run bin/resource_windows.go -version v9.9.9-test
+```
+
 Instead of executing the `go build` command directly, you can run it via the
-Makefile. It changes the version number suffix from "-DEV" to "-beta" and
-appends commit details. It also copies the resulting rclone executable into
-your GOPATH bin folder (`$(go env GOPATH)/bin`, which corresponds to
-`~/go/bin/rclone` by default).
+Makefile. The default target changes the version suffix from "-DEV" to "-beta"
+followed by additional commit details, embeds version information binary resources
+on Windows, and copies the resulting rclone executable into your GOPATH bin folder
+(`$(go env GOPATH)/bin`, which corresponds to `~/go/bin/rclone` by default).
 
 ```
 make
@@ -398,17 +431,17 @@ make GOTAGS=cmount
 ```
 
 There are other make targets that can be used for more advanced builds,
-such as cross-compiling for all supported os/architectures, embedding
-icon and version info resources into windows executable, and packaging
+such as cross-compiling for all supported os/architectures, and packaging
 results into release artifacts.
 See [Makefile](https://github.com/rclone/rclone/blob/master/Makefile)
 and [cross-compile.go](https://github.com/rclone/rclone/blob/master/bin/cross-compile.go)
 for details.
 
-Another alternative is to download the source, build and install rclone in one
-operation, as a regular Go package. The source will be stored it in the Go
-module cache, and the resulting executable will be in your GOPATH bin folder
-(`$(go env GOPATH)/bin`, which corresponds to `~/go/bin/rclone` by default).
+Another alternative method for source installation is to download the source,
+build and install rclone - all in one operation, as a regular Go package.
+The source will be stored it in the Go module cache, and the resulting
+executable will be in your GOPATH bin folder (`$(go env GOPATH)/bin`,
+which corresponds to `~/go/bin/rclone` by default).
 
 ```
 go install github.com/rclone/rclone@latest

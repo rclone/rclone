@@ -428,15 +428,15 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		members := []*team.UserSelectorArg{&user}
 		args := team.NewMembersGetInfoArgs(members)
 
-		memberIds, err := f.team.MembersGetInfo(args)
+		memberIDs, err := f.team.MembersGetInfo(args)
 		if err != nil {
 			return nil, fmt.Errorf("invalid dropbox team member: %q: %w", opt.Impersonate, err)
 		}
-		if len(memberIds) == 0 || memberIds[0].MemberInfo == nil || memberIds[0].MemberInfo.Profile == nil {
+		if len(memberIDs) == 0 || memberIDs[0].MemberInfo == nil || memberIDs[0].MemberInfo.Profile == nil {
 			return nil, fmt.Errorf("dropbox team member not found: %q", opt.Impersonate)
 		}
 
-		cfg.AsMemberID = memberIds[0].MemberInfo.Profile.MemberProfile.TeamMemberId
+		cfg.AsMemberID = memberIDs[0].MemberInfo.Profile.MemberProfile.TeamMemberId
 	}
 
 	f.srv = files.New(cfg)
@@ -946,6 +946,7 @@ func (f *Fs) purgeCheck(ctx context.Context, dir string, check bool) (err error)
 	if root == "/" {
 		return errors.New("can't remove root directory")
 	}
+	encRoot := f.opt.Enc.FromStandardPath(root)
 
 	if check {
 		// check directory exists
@@ -954,10 +955,9 @@ func (f *Fs) purgeCheck(ctx context.Context, dir string, check bool) (err error)
 			return fmt.Errorf("Rmdir: %w", err)
 		}
 
-		root = f.opt.Enc.FromStandardPath(root)
 		// check directory empty
 		arg := files.ListFolderArg{
-			Path:      root,
+			Path:      encRoot,
 			Recursive: false,
 		}
 		if root == "/" {
@@ -978,7 +978,7 @@ func (f *Fs) purgeCheck(ctx context.Context, dir string, check bool) (err error)
 
 	// remove it
 	err = f.pacer.Call(func() (bool, error) {
-		_, err = f.srv.DeleteV2(&files.DeleteArg{Path: root})
+		_, err = f.srv.DeleteV2(&files.DeleteArg{Path: encRoot})
 		return shouldRetry(ctx, err)
 	})
 	return err
@@ -1231,18 +1231,21 @@ func (f *Fs) About(ctx context.Context) (usage *fs.Usage, err error) {
 		return nil, err
 	}
 	var total uint64
+	used := q.Used
 	if q.Allocation != nil {
 		if q.Allocation.Individual != nil {
 			total += q.Allocation.Individual.Allocated
 		}
 		if q.Allocation.Team != nil {
 			total += q.Allocation.Team.Allocated
+			// Override used with Team.Used as this includes q.Used already
+			used = q.Allocation.Team.Used
 		}
 	}
 	usage = &fs.Usage{
-		Total: fs.NewUsageValue(int64(total)),          // quota of bytes that can be used
-		Used:  fs.NewUsageValue(int64(q.Used)),         // bytes in use
-		Free:  fs.NewUsageValue(int64(total - q.Used)), // bytes which can be uploaded before reaching the quota
+		Total: fs.NewUsageValue(int64(total)),        // quota of bytes that can be used
+		Used:  fs.NewUsageValue(int64(used)),         // bytes in use
+		Free:  fs.NewUsageValue(int64(total - used)), // bytes which can be uploaded before reaching the quota
 	}
 	return usage, nil
 }

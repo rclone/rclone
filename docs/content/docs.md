@@ -30,7 +30,6 @@ See the following for detailed instructions for
   * [1Fichier](/fichier/)
   * [Akamai Netstorage](/netstorage/)
   * [Alias](/alias/)
-  * [Amazon Drive](/amazonclouddrive/)
   * [Amazon S3](/s3/)
   * [Backblaze B2](/b2/)
   * [Box](/box/)
@@ -54,10 +53,12 @@ See the following for detailed instructions for
   * [Internet Archive](/internetarchive/)
   * [Jottacloud](/jottacloud/)
   * [Koofr](/koofr/)
+  * [Linkbox](/linkbox/)
   * [Mail.ru Cloud](/mailru/)
   * [Mega](/mega/)
   * [Memory](/memory/)
   * [Microsoft Azure Blob Storage](/azureblob/)
+  * [Microsoft Azure Files Storage](/azurefiles/)
   * [Microsoft OneDrive](/onedrive/)
   * [OpenStack Swift / Rackspace Cloudfiles / Blomp Cloud Storage / Memset Memstore](/swift/)
   * [OpenDrive](/opendrive/)
@@ -472,6 +473,10 @@ Windows).
 Note that arbitrary metadata may be added to objects using the
 `--metadata-set key=value` flag when the object is first uploaded.
 This flag can be repeated as many times as necessary.
+
+The [--metadata-mapper](#metadata-mapper) flag can be used to pass the
+name of a program in which can transform metadata when it is being
+copied from source to destination.
 
 ### Types of metadata
 
@@ -1102,6 +1107,26 @@ triggering follow-on actions if data was copied, or skipping if not.
 NB: Enabling this option turns a usually non-fatal error into a potentially
 fatal one - please check and adjust your scripts accordingly!
 
+### --fix-case ###
+
+Normally, a sync to a case insensitive dest (such as macOS / Windows) will
+not result in a matching filename if the source and dest filenames have
+casing differences but are otherwise identical. For example, syncing `hello.txt`
+to `HELLO.txt` will normally result in the dest filename remaining `HELLO.txt`.
+If `--fix-case` is set, then `HELLO.txt` will be renamed to `hello.txt`
+to match the source.
+
+NB:
+- directory names with incorrect casing will also be fixed
+- `--fix-case` will be ignored if `--immutable` is set
+- using `--local-case-sensitive` instead is not advisable;
+it will cause `HELLO.txt` to get deleted!
+- the old dest filename must not be excluded by filters.
+Be especially careful with [`--files-from`](/filtering/#files-from-read-list-of-source-file-names),
+which does not respect [`--ignore-case`](/filtering/#ignore-case-make-searches-case-insensitive)!
+- on remotes that do not support server-side move, `--fix-case` will require
+downloading the file and re-uploading it. To avoid this, do not use `--fix-case`.
+
 ### --fs-cache-expire-duration=TIME
 
 When using rclone via the API rclone caches created remotes for 5
@@ -1502,12 +1527,123 @@ from reaching the limit. Only applicable for `--max-transfer`
 
 Setting this flag enables rclone to copy the metadata from the source
 to the destination. For local backends this is ownership, permissions,
-xattr etc. See the [#metadata](metadata section) for more info.
+xattr etc. See the [metadata section](#metadata) for more info.
+
+### --metadata-mapper SpaceSepList {#metadata-mapper}
+
+If you supply the parameter `--metadata-mapper /path/to/program` then
+rclone will use that program to map metadata from source object to
+destination object.
+
+The argument to this flag should be a command with an optional space separated
+list of arguments. If one of the arguments has a space in then enclose
+it in `"`, if you want a literal `"` in an argument then enclose the
+argument in `"` and double the `"`. See [CSV encoding](https://godoc.org/encoding/csv)
+for more info.
+
+    --metadata-mapper "python bin/test_metadata_mapper.py"
+    --metadata-mapper 'python bin/test_metadata_mapper.py "argument with a space"'
+    --metadata-mapper 'python bin/test_metadata_mapper.py "argument with ""two"" quotes"'
+
+This uses a simple JSON based protocol with input on STDIN and output
+on STDOUT. This will be called for every file and directory copied and
+may be called concurrently.
+
+The program's job is to take a metadata blob on the input and turn it
+into a metadata blob on the output suitable for the destination
+backend.
+
+Input to the program (via STDIN) might look like this. This provides
+some context for the `Metadata` which may be important.
+
+- `SrcFs` is the config string for the remote that the object is currently on.
+- `SrcFsType` is the name of the source backend.
+- `DstFs` is the config string for the remote that the object is being copied to
+- `DstFsType` is the name of the destination backend.
+- `Remote` is the path of the file relative to the root.
+- `Size`, `MimeType`, `ModTime` are attributes of the file.
+- `IsDir` is `true` if this is a directory (not yet implemented).
+- `ID` is the source `ID` of the file if known.
+- `Metadata` is the backend specific metadata as described in the backend docs.
+
+```json
+{
+    "SrcFs": "gdrive:",
+    "SrcFsType": "drive",
+    "DstFs": "newdrive:user",
+    "DstFsType": "onedrive",
+    "Remote": "test.txt",
+    "Size": 6,
+    "MimeType": "text/plain; charset=utf-8",
+    "ModTime": "2022-10-11T17:53:10.286745272+01:00",
+    "IsDir": false,
+    "ID": "xyz",
+    "Metadata": {
+        "btime": "2022-10-11T16:53:11Z",
+        "content-type": "text/plain; charset=utf-8",
+        "mtime": "2022-10-11T17:53:10.286745272+01:00",
+        "owner": "user1@domain1.com",
+        "permissions": "...",
+        "description": "my nice file",
+        "starred": "false"
+    }
+}
+```
+
+The program should then modify the input as desired and send it to
+STDOUT. The returned `Metadata` field will be used in its entirety for
+the destination object. Any other fields will be ignored. Note in this
+example we translate user names and permissions and add something to
+the description:
+
+```json
+{
+    "Metadata": {
+        "btime": "2022-10-11T16:53:11Z",
+        "content-type": "text/plain; charset=utf-8",
+        "mtime": "2022-10-11T17:53:10.286745272+01:00",
+        "owner": "user1@domain2.com",
+        "permissions": "...",
+        "description": "my nice file [migrated from domain1]",
+        "starred": "false"
+    }
+}
+```
+
+Metadata can be removed here too.
+
+An example python program might look something like this to implement
+the above transformations.
+
+```python
+import sys, json
+
+i = json.load(sys.stdin)
+metadata = i["Metadata"]
+# Add tag to description
+if "description" in metadata:
+    metadata["description"] += " [migrated from domain1]"
+else:
+    metadata["description"] = "[migrated from domain1]"
+# Modify owner
+if "owner" in metadata:
+    metadata["owner"] = metadata["owner"].replace("domain1.com", "domain2.com")
+o = { "Metadata": metadata }
+json.dump(o, sys.stdout, indent="\t")
+```
+
+You can find this example (slightly expanded) in the rclone source code at
+[bin/test_metadata_mapper.py](https://github.com/rclone/rclone/blob/master/bin/test_metadata_mapper.py).
+
+If you want to see the input to the metadata mapper and the output
+returned from it in the log you can use `-vv --dump mapper`.
+
+See the [metadata section](#metadata) for more info.
 
 ### --metadata-set key=value
 
 Add metadata `key` = `value` when uploading. This can be repeated as
-many times as required. See the [#metadata](metadata section) for more
+many times as required. See the [metadata section](#metadata) for more
 info.
 
 ### --modify-window=TIME ###
@@ -1557,7 +1693,7 @@ use multiple threads to transfer the file (default 256M).
 
 Capable backends are marked in the
 [overview](/overview/#optional-features) as `MultithreadUpload`. (They
-need to implement either the `OpenWriterAt` or `OpenChunkedWriter`
+need to implement either the `OpenWriterAt` or `OpenChunkWriter`
 internal interfaces). These include include, `local`, `s3`,
 `azureblob`, `b2`, `oracleobjectstorage` and `smb` at the time of
 writing.
@@ -1750,9 +1886,9 @@ for more info.
 
 Eg
 
-    --password-command echo hello
-    --password-command echo "hello with space"
-    --password-command echo "hello with ""quotes"" and space"
+    --password-command "echo hello"
+    --password-command 'echo "hello with space"'
+    --password-command 'echo "hello with ""quotes"" and space"'
 
 See the [Configuration Encryption](#configuration-encryption) for more info.
 
@@ -2121,34 +2257,50 @@ there were IO errors`.
 ### --fast-list ###
 
 When doing anything which involves a directory listing (e.g. `sync`,
-`copy`, `ls` - in fact nearly every command), rclone normally lists a
-directory and processes it before using more directory lists to
-process any subdirectories.  This can be parallelised and works very
-quickly using the least amount of memory.
+`copy`, `ls` - in fact nearly every command), rclone has different
+strategies to choose from.
 
-However, some remotes have a way of listing all files beneath a
-directory in one (or a small number) of transactions.  These tend to
-be the bucket-based remotes (e.g. S3, B2, GCS, Swift).
+The basic strategy is to list one directory and processes it before using
+more directory lists to process any subdirectories. This is a mandatory
+backend feature, called `List`, which means it is supported by all backends.
+This strategy uses small amount of memory, and because it can be parallelised
+it is fast for operations involving processing of the list results.
 
-If you use the `--fast-list` flag then rclone will use this method for
-listing directories.  This will have the following consequences for
-the listing:
+Some backends provide the support for an alternative strategy, where all
+files beneath a directory can be listed in one (or a small number) of
+transactions. Rclone supports this alternative strategy through an optional
+backend feature called [`ListR`](/overview/#listr). You can see in the storage
+system overview documentation's [optional features](/overview/#optional-features)
+section which backends it is enabled for (these tend to be the bucket-based
+ones, e.g. S3, B2, GCS, Swift). This strategy requires fewer transactions
+for highly recursive operations, which is important on backends where this
+is charged or heavily rate limited. It may be faster (due to fewer transactions)
+or slower (because it can't be parallelized) depending on different parameters,
+and may require more memory if rclone has to keep the whole listing in memory.
 
-  * It **will** use fewer transactions (important if you pay for them)
-  * It **will** use more memory.  Rclone has to load the whole listing into memory.
-  * It *may* be faster because it uses fewer transactions
-  * It *may* be slower because it can't be parallelized
+Which listing strategy rclone picks for a given operation is complicated, but
+in general it tries to choose the best possible. It will prefer `ListR` in
+situations where it doesn't need to store the listed files in memory, e.g.
+for unlimited recursive `ls` command variants. In other situations it will
+prefer `List`, e.g. for `sync` and `copy`, where it needs to keep the listed
+files in memory, and is performing operations on them where parallelization
+may be a huge advantage.
 
-rclone should always give identical results with and without
-`--fast-list`.
+Rclone is not able to take all relevant parameters into account for deciding
+the best strategy, and therefore allows you to influence the choice in two ways:
+You can stop rclone from using `ListR` by disabling the feature, using the
+[--disable](#disable-feature-feature) option (`--disable ListR`), or you can
+allow rclone to use `ListR` where it would normally choose not to do so due to
+higher memory usage, using the `--fast-list` option. Rclone should always
+produce identical results either way. Using `--disable ListR` or `--fast-list`
+on a remote which doesn't support `ListR` does nothing, rclone will just ignore
+it.
 
-If you pay for transactions and can fit your entire sync listing into
-memory then `--fast-list` is recommended.  If you have a very big sync
-to do then don't use `--fast-list` otherwise you will run out of
-memory.
-
-If you use `--fast-list` on a remote which doesn't support it, then
-rclone will just ignore it.
+A rule of thumb is that if you pay for transactions and can fit your entire
+sync listing into memory, then `--fast-list` is recommended. If you have a
+very big sync to do, then don't use `--fast-list`, otherwise you will run out
+of memory. Run some tests and compare before you decide, and if in doubt then
+just leave the default, let rclone decide, i.e. not use `--fast-list`.
 
 ### --timeout=TIME ###
 
@@ -2484,6 +2636,12 @@ to standard output.
 This dumps a list of the open files at the end of the command.  It
 uses the `lsof` command to do that so you'll need that installed to
 use it.
+
+#### --dump mapper ####
+
+This shows the JSON blobs being sent to the program supplied with
+`--metadata-mapper` and received from it. It can be useful for
+debugging the metadata mapper interface.
 
 ### --memprofile=FILE ###
 

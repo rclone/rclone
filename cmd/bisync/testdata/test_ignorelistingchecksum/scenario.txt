@@ -1,0 +1,14 @@
+test basic
+# Simple test case for development
+
+test initial bisync
+bisync resync
+bisync resync ignore-listing-checksum
+
+test place newer files on both paths
+# force specific modification time since file time is lost through git
+touch-copy 2001-01-02 {datadir/}file1.txt {path2/}
+copy-as {datadir/}file1.txt {path1/}subdir file20.txt
+
+test bisync run
+bisync ignore-listing-checksum

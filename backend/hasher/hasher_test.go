@@ -37,4 +37,9 @@ func TestIntegration(t *testing.T) {
 		opt.QuickTestOK = true
 	}
 	fstests.Run(t, &opt)
+	// test again with MaxAge = 0
+	if *fstest.RemoteName == "" {
+		opt.ExtraConfig = append(opt.ExtraConfig, fstests.ExtraConfigItem{Name: "TestHasher", Key: "max_age", Value: "0"})
+		fstests.Run(t, &opt)
+	}
 }

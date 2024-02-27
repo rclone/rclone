@@ -89,7 +89,13 @@ func init() {
 			},
 			{
 				Name:     "hard_delete",
-				Help:     "Delete files permanently rather than putting them into the trash.",
+				Help:     "Delete files permanently rather than putting them into the trash",
+				Advanced: true,
+				Default:  false,
+			},
+			{
+				Name:     "skip_project_folders",
+				Help:     "Skip project folders in operations",
 				Advanced: true,
 				Default:  false,
 			},
@@ -106,6 +112,7 @@ type Options struct {
 	MinimalChunkSize        fs.SizeSuffix        `config:"minimal_chunk_size"`
 	MaximalSummaryChunkSize fs.SizeSuffix        `config:"maximal_summary_chunk_size"`
 	HardDelete              bool                 `config:"hard_delete"`
+	SkipProjectFolders      bool                 `config:"skip_project_folders"`
 }
 
 // Fs represents remote Quatrix fs
@@ -193,6 +200,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	f.features = (&fs.Features{
 		CaseInsensitive:         false,
 		CanHaveEmptyDirectories: true,
+		PartialUploads:          true,
 	}).Fill(ctx, f)
 
 	if f.opt.APIKey != "" {
@@ -375,6 +383,10 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 	}
 
 	for _, file := range folder.Content {
+		if f.skipFile(&file) {
+			continue
+		}
+
 		remote := path.Join(dir, f.opt.Enc.ToStandardName(file.Name))
 		if file.IsDir() {
 			f.dirCache.Put(remote, file.ID)
@@ -398,6 +410,10 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 	}
 
 	return entries, nil
+}
+
+func (f *Fs) skipFile(file *api.File) bool {
+	return f.opt.SkipProjectFolders && file.IsProjectFolder()
 }
 
 // NewObject finds the Object at remote.  If it can't be found
@@ -728,7 +744,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		Resolve:     true,
 		MTime:       api.JSONTime(srcObj.ModTime(ctx)),
 		Name:        dstLeaf,
-		ResolveMode: api.OverwriteOnCopyMode,
+		ResolveMode: api.OverwriteMode,
 	}
 
 	result := &api.File{}
@@ -788,11 +804,12 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	}
 
 	params := &api.FileCopyMoveOneParams{
-		ID:      srcObj.id,
-		Target:  directoryID,
-		Resolve: false,
-		MTime:   api.JSONTime(srcObj.ModTime(ctx)),
-		Name:    dstLeaf,
+		ID:          srcObj.id,
+		Target:      directoryID,
+		Resolve:     true,
+		MTime:       api.JSONTime(srcObj.ModTime(ctx)),
+		Name:        dstLeaf,
+		ResolveMode: api.OverwriteMode,
 	}
 
 	var resp *http.Response
@@ -1196,11 +1213,12 @@ func (o *Object) uploadSession(ctx context.Context, parentID, name string) (uplo
 
 func (o *Object) upload(ctx context.Context, uploadKey string, chunk io.Reader, fullSize int64, offset int64, chunkSize int64, options ...fs.OpenOption) (err error) {
 	opts := rest.Opts{
-		Method:       "POST",
-		RootURL:      fmt.Sprintf(uploadURL, o.fs.opt.Host) + uploadKey,
-		Body:         chunk,
-		ContentRange: fmt.Sprintf("bytes %d-%d/%d", offset, offset+chunkSize, fullSize),
-		Options:      options,
+		Method:        "POST",
+		RootURL:       fmt.Sprintf(uploadURL, o.fs.opt.Host) + uploadKey,
+		Body:          chunk,
+		ContentLength: &chunkSize,
+		ContentRange:  fmt.Sprintf("bytes %d-%d/%d", offset, offset+chunkSize-1, fullSize),
+		Options:       options,
 	}
 
 	var fileID string

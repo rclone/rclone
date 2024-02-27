@@ -92,6 +92,9 @@ func init() {
 				Value: "sharepoint-ntlm",
 				Help:  "Sharepoint with NTLM authentication, usually self-hosted or on-premises",
 			}, {
+				Value: "rclone",
+				Help:  "rclone WebDAV server to serve a remote over HTTP via the WebDAV protocol",
+			}, {
 				Value: "other",
 				Help:  "Other site/service or software",
 			}},
@@ -146,6 +149,11 @@ Set to 0 to disable chunked uploading.
 `,
 			Advanced: true,
 			Default:  10 * fs.Mebi, // Default NextCloud `max_chunk_size` is `10 MiB`. See https://github.com/nextcloud/server/blob/0447b53bda9fe95ea0cbed765aa332584605d652/apps/files/lib/App.php#L57
+		}, {
+			Name:     "owncloud_exclude_shares",
+			Help:     "Exclude ownCloud shares",
+			Advanced: true,
+			Default:  false,
 		}},
 	})
 }
@@ -162,6 +170,7 @@ type Options struct {
 	Headers            fs.CommaSepList      `config:"headers"`
 	PacerMinSleep      fs.Duration          `config:"pacer_min_sleep"`
 	ChunkSize          fs.SizeSuffix        `config:"nextcloud_chunk_size"`
+	ExcludeShares      bool                 `config:"owncloud_exclude_shares"`
 }
 
 // Fs represents a remote webdav
@@ -605,7 +614,7 @@ func (f *Fs) setQuirks(ctx context.Context, vendor string) error {
 			}
 
 			f.chunksUploadURL = chunksUploadURL
-			fs.Logf(nil, "Chunks temporary upload directory: %s", f.chunksUploadURL)
+			fs.Debugf(nil, "Chunks temporary upload directory: %s", f.chunksUploadURL)
 		}
 	case "sharepoint":
 		// To mount sharepoint, two Cookies are required
@@ -644,6 +653,10 @@ func (f *Fs) setQuirks(ctx context.Context, vendor string) error {
 		// so we must perform an extra check to detect this
 		// condition and return a proper error code.
 		f.checkBeforePurge = true
+	case "rclone":
+		f.canStream = true
+		f.precision = time.Second
+		f.useOCMtime = true
 	case "other":
 	default:
 		fs.Debugf(f, "Unknown vendor %q", vendor)
@@ -695,6 +708,7 @@ var owncloudProps = []byte(`<?xml version="1.0"?>
   <d:resourcetype />
   <d:getcontenttype />
   <oc:checksums />
+  <oc:permissions />
  </d:prop>
 </d:propfind>
 `)
@@ -787,6 +801,11 @@ func (f *Fs) listAll(ctx context.Context, dir string, directoriesOnly bool, file
 			}
 		} else {
 			if directoriesOnly {
+				continue
+			}
+		}
+		if f.opt.ExcludeShares {
+			if strings.Contains(item.Props.Permissions, "S") {
 				continue
 			}
 		}

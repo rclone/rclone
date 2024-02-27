@@ -35,6 +35,7 @@ var (
 	clean        = flag.Bool("clean", false, "Instead of testing, clean all left over test directories")
 	runOnly      = flag.String("run", "", "Run only those tests matching the regexp supplied")
 	timeout      = flag.Duration("timeout", 60*time.Minute, "Maximum time to run each test for before giving up")
+	race         = flag.Bool("race", false, "If set run the tests under the race detector")
 	configFile   = flag.String("config", "fstest/test_all/config.yaml", "Path to config file")
 	outputDir    = flag.String("output", path.Join(os.TempDir(), "rclone-integration-tests"), "Place to store results")
 	emailReport  = flag.String("email", "", "Set to email the report to the address supplied")

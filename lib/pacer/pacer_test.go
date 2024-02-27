@@ -163,38 +163,6 @@ func TestDefaultPacer(t *testing.T) {
 
 }
 
-func TestAmazonCloudDrivePacer(t *testing.T) {
-	c := NewAmazonCloudDrive(MinSleep(1 * time.Millisecond))
-	// Do lots of times because of the random number!
-	for _, test := range []struct {
-		state State
-		want  time.Duration
-	}{
-		{State{SleepTime: 1 * time.Millisecond, ConsecutiveRetries: 0}, 1 * time.Millisecond},
-		{State{SleepTime: 10 * time.Millisecond, ConsecutiveRetries: 0}, 1 * time.Millisecond},
-		{State{SleepTime: 1 * time.Second, ConsecutiveRetries: 1}, 500 * time.Millisecond},
-		{State{SleepTime: 1 * time.Second, ConsecutiveRetries: 2}, 1 * time.Second},
-		{State{SleepTime: 1 * time.Second, ConsecutiveRetries: 3}, 2 * time.Second},
-		{State{SleepTime: 1 * time.Second, ConsecutiveRetries: 4}, 4 * time.Second},
-		{State{SleepTime: 1 * time.Second, ConsecutiveRetries: 5}, 8 * time.Second},
-		{State{SleepTime: 1 * time.Second, ConsecutiveRetries: 6}, 16 * time.Second},
-		{State{SleepTime: 1 * time.Second, ConsecutiveRetries: 7}, 32 * time.Second},
-		{State{SleepTime: 1 * time.Second, ConsecutiveRetries: 8}, 64 * time.Second},
-		{State{SleepTime: 1 * time.Second, ConsecutiveRetries: 9}, 128 * time.Second},
-		{State{SleepTime: 1 * time.Second, ConsecutiveRetries: 10}, 128 * time.Second},
-		{State{SleepTime: 1 * time.Second, ConsecutiveRetries: 11}, 128 * time.Second},
-	} {
-		const n = 1000
-		var sum time.Duration
-		// measure average time over n cycles
-		for i := 0; i < n; i++ {
-			sum += c.Calculate(test.state)
-		}
-		got := sum / n
-		assert.False(t, got < (test.want*9)/10 || got > (test.want*11)/10, "test: %+v", test)
-	}
-}
-
 func TestAzureIMDSPacer(t *testing.T) {
 	c := NewAzureIMDS()
 	for _, test := range []struct {

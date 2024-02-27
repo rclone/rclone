@@ -21,6 +21,8 @@ type TransferSnapshot struct {
 	CompletedAt time.Time `json:"completed_at,omitempty"`
 	Error       error     `json:"-"`
 	Group       string    `json:"group"`
+	SrcFs       string    `json:"srcFs,omitempty"`
+	DstFs       string    `json:"dstFs,omitempty"`
 }
 
 // MarshalJSON implements json.Marshaler interface.
@@ -51,6 +53,8 @@ type Transfer struct {
 	startedAt time.Time
 	checking  bool
 	what      string // what kind of transfer this is
+	srcFs     fs.Fs  // source Fs - may be nil
+	dstFs     fs.Fs  // destination Fs - may be nil
 
 	// Protects all below
 	//
@@ -65,15 +69,15 @@ type Transfer struct {
 
 // newCheckingTransfer instantiates new checking of the object.
 func newCheckingTransfer(stats *StatsInfo, obj fs.DirEntry, what string) *Transfer {
-	return newTransferRemoteSize(stats, obj.Remote(), obj.Size(), true, what)
+	return newTransferRemoteSize(stats, obj.Remote(), obj.Size(), true, what, nil, nil)
 }
 
 // newTransfer instantiates new transfer.
-func newTransfer(stats *StatsInfo, obj fs.DirEntry) *Transfer {
-	return newTransferRemoteSize(stats, obj.Remote(), obj.Size(), false, "")
+func newTransfer(stats *StatsInfo, obj fs.DirEntry, srcFs, dstFs fs.Fs) *Transfer {
+	return newTransferRemoteSize(stats, obj.Remote(), obj.Size(), false, "", srcFs, dstFs)
 }
 
-func newTransferRemoteSize(stats *StatsInfo, remote string, size int64, checking bool, what string) *Transfer {
+func newTransferRemoteSize(stats *StatsInfo, remote string, size int64, checking bool, what string, srcFs, dstFs fs.Fs) *Transfer {
 	tr := &Transfer{
 		stats:     stats,
 		remote:    remote,
@@ -81,6 +85,8 @@ func newTransferRemoteSize(stats *StatsInfo, remote string, size int64, checking
 		startedAt: time.Now(),
 		checking:  checking,
 		what:      what,
+		srcFs:     srcFs,
+		dstFs:     dstFs,
 	}
 	stats.AddTransfer(tr)
 	return tr
@@ -149,6 +155,7 @@ func (tr *Transfer) Account(ctx context.Context, in io.ReadCloser) *Account {
 	} else {
 		tr.acc.UpdateReader(ctx, in)
 	}
+	tr.acc.checking = tr.checking
 	tr.mu.Unlock()
 	return tr.acc
 }
@@ -177,7 +184,7 @@ func (tr *Transfer) Snapshot() TransferSnapshot {
 	if tr.acc != nil {
 		b, s = tr.acc.progress()
 	}
-	return TransferSnapshot{
+	snapshot := TransferSnapshot{
 		Name:        tr.remote,
 		Checked:     tr.checking,
 		Size:        s,
@@ -187,12 +194,26 @@ func (tr *Transfer) Snapshot() TransferSnapshot {
 		Error:       tr.err,
 		Group:       tr.stats.group,
 	}
+	if tr.srcFs != nil {
+		snapshot.SrcFs = fs.ConfigString(tr.srcFs)
+	}
+	if tr.dstFs != nil {
+		snapshot.DstFs = fs.ConfigString(tr.dstFs)
+	}
+	return snapshot
 }
 
 // rcStats returns stats for the transfer suitable for the rc
 func (tr *Transfer) rcStats() rc.Params {
-	return rc.Params{
+	out := rc.Params{
 		"name": tr.remote, // no locking needed to access this
 		"size": tr.size,
 	}
+	if tr.srcFs != nil {
+		out["srcFs"] = fs.ConfigString(tr.srcFs)
+	}
+	if tr.dstFs != nil {
+		out["dstFs"] = fs.ConfigString(tr.dstFs)
+	}
+	return out
 }

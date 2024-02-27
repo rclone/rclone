@@ -203,6 +203,9 @@ func newWebDAV(ctx context.Context, f fs.Fs, opt *Options) (w *WebDAV, err error
 		return nil, fmt.Errorf("failed to init server: %w", err)
 	}
 
+	// Make sure BaseURL starts with a / and doesn't end with one
+	w.opt.HTTP.BaseURL = "/" + strings.Trim(w.opt.HTTP.BaseURL, "/")
+
 	webdavHandler := &webdav.Handler{
 		Prefix:     w.opt.HTTP.BaseURL,
 		FileSystem: w,

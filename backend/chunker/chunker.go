@@ -325,6 +325,14 @@ func NewFs(ctx context.Context, name, rpath string, m configmap.Mapper) (fs.Fs, 
 		}
 	}
 
+	// Correct root if definitely pointing to a file
+	if err == fs.ErrorIsFile {
+		f.root = path.Dir(f.root)
+		if f.root == "." || f.root == "/" {
+			f.root = ""
+		}
+	}
+
 	// Note 1: the features here are ones we could support, and they are
 	// ANDed with the ones from wrappedFs.
 	// Note 2: features.Fill() points features.PutStream to our PutStream,

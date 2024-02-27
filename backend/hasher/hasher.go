@@ -114,6 +114,13 @@ func NewFs(ctx context.Context, fsname, rpath string, cmap configmap.Mapper) (fs
 		root: rpath,
 		opt:  opt,
 	}
+	// Correct root if definitely pointing to a file
+	if err == fs.ErrorIsFile {
+		f.root = path.Dir(f.root)
+		if f.root == "." || f.root == "/" {
+			f.root = ""
+		}
+	}
 	baseFeatures := baseFs.Features()
 	f.fpTime = baseFs.Precision() != fs.ModTimeNotSupported
 
@@ -411,7 +418,9 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 
 // Shutdown the backend, closing any background tasks and any cached connections.
 func (f *Fs) Shutdown(ctx context.Context) (err error) {
-	err = f.db.Stop(false)
+	if f.db != nil {
+		err = f.db.Stop(false)
+	}
 	if do := f.Fs.Features().Shutdown; do != nil {
 		if err2 := do(ctx); err2 != nil {
 			err = err2
