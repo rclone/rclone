@@ -39,7 +39,7 @@ func FileExists(file string) bool {
 	return !os.IsNotExist(err)
 }
 
-// CopyFileIfExists is like CopyFile but does to fail if source does not exist
+// CopyFileIfExists is like CopyFile but does not fail if source does not exist
 func CopyFileIfExists(srcFile, dstFile string) error {
 	if !FileExists(srcFile) {
 		return nil

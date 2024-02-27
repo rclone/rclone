@@ -190,6 +190,7 @@ If you are using `systemd-resolved` (default on Arch Linux), ensure it
 is at version 233 or higher. Previous releases contain a bug which
 causes not all domains to be resolved properly.
 
+
 The Go resolver decision can be influenced with the `GODEBUG=netdns=...`
 environment variable. This also allows to resolve certain issues with
 DNS resolution. On Windows or MacOS systems, try forcing use of the
@@ -198,6 +199,20 @@ other systems (Linux, \*BSD, etc) try forcing use of the system
 name resolver by setting `GODEBUG=netdns=cgo` (and recompile rclone
 from source with CGO enabled if necessary). See the
 [name resolution section in the go docs](https://golang.org/pkg/net/#hdr-Name_Resolution).
+
+### Failed to start auth webserver on Windows ###
+```
+Error: config failed to refresh token: failed to start auth webserver: listen tcp 127.0.0.1:53682: bind: An attempt was made to access a socket in a way forbidden by its access permissions.
+...
+yyyy/mm/dd hh:mm:ss Fatal error: config failed to refresh token: failed to start auth webserver: listen tcp 127.0.0.1:53682: bind: An attempt was made to access a socket in a way forbidden by its access permissions.
+```
+
+This is sometimes caused by the Host Network Service causing issues with opening the port on the host.
+
+A simple solution may be restarting the Host Network Service with eg. Powershell
+```
+Restart-Service hns
+```
 
 ### The total size reported in the stats for a sync is wrong and keeps changing
 

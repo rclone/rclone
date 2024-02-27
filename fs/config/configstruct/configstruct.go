@@ -24,8 +24,7 @@ func camelToSnake(in string) string {
 // StringToInterface turns in into an interface{} the same type as def
 func StringToInterface(def interface{}, in string) (newValue interface{}, err error) {
 	typ := reflect.TypeOf(def)
-	switch typ.Kind() {
-	case reflect.String:
+	if typ.Kind() == reflect.String && typ.Name() == "string" {
 		// Pass strings unmodified
 		return in, nil
 	}

@@ -4,14 +4,12 @@ package rcd
 import (
 	"context"
 	"log"
-	"sync"
 
-	sysdnotify "github.com/iguanesolutions/go-systemd/v5/notify"
 	"github.com/rclone/rclone/cmd"
 	"github.com/rclone/rclone/fs/rc/rcflags"
 	"github.com/rclone/rclone/fs/rc/rcserver"
-	"github.com/rclone/rclone/lib/atexit"
 	libhttp "github.com/rclone/rclone/lib/http"
+	"github.com/rclone/rclone/lib/systemd"
 	"github.com/spf13/cobra"
 )
 
@@ -35,6 +33,7 @@ See the [rc documentation](/rc/) for more info on the rc flags.
 ` + libhttp.Help(rcflags.FlagPrefix) + libhttp.TemplateHelp(rcflags.FlagPrefix) + libhttp.AuthHelp(rcflags.FlagPrefix),
 	Annotations: map[string]string{
 		"versionIntroduced": "v1.45",
+		"groups":            "RC",
 	},
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(0, 1, command, args)
@@ -57,21 +56,8 @@ See the [rc documentation](/rc/) for more info on the rc flags.
 		}
 
 		// Notify stopping on exit
-		var finaliseOnce sync.Once
-		finalise := func() {
-			finaliseOnce.Do(func() {
-				_ = sysdnotify.Stopping()
-			})
-		}
-		fnHandle := atexit.Register(finalise)
-		defer atexit.Unregister(fnHandle)
-
-		// Notify ready to systemd
-		if err := sysdnotify.Ready(); err != nil {
-			log.Fatalf("failed to notify ready to systemd: %v", err)
-		}
+		defer systemd.Notify()()
 
 		s.Wait()
-		finalise()
 	},
 }

@@ -20,8 +20,8 @@ var (
 func init() {
 	cmd.Root.AddCommand(commandDefinition)
 	cmdFlag := commandDefinition.Flags()
-	flags.FVarP(cmdFlag, &dedupeMode, "dedupe-mode", "", "Dedupe mode interactive|skip|first|newest|oldest|largest|smallest|rename")
-	flags.BoolVarP(cmdFlag, &byHash, "by-hash", "", false, "Find identical hashes rather than names")
+	flags.FVarP(cmdFlag, &dedupeMode, "dedupe-mode", "", "Dedupe mode interactive|skip|first|newest|oldest|largest|smallest|rename", "")
+	flags.BoolVarP(cmdFlag, &byHash, "by-hash", "", false, "Find identical hashes rather than names", "")
 }
 
 var commandDefinition = &cobra.Command{
@@ -137,6 +137,7 @@ Or
 `,
 	Annotations: map[string]string{
 		"versionIntroduced": "v1.27",
+		"groups":            "Important",
 	},
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(1, 2, command, args)

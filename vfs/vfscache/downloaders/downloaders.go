@@ -345,7 +345,7 @@ func (dls *Downloaders) _ensureDownloader(r ranges.Range) (err error) {
 		start, offset := dl.getRange()
 
 		// The downloader's offset to offset+window is the gap
-		// in which we would like to re-use this
+		// in which we would like to reuse this
 		// downloader. The downloader will never reach before
 		// start and offset+windows is too far away - we'd
 		// rather start another downloader.
@@ -518,7 +518,7 @@ loop:
 // should be called on a fresh downloader
 func (dl *downloader) open(offset int64) (err error) {
 	// defer log.Trace(dl.dls.src, "offset=%d", offset)("err=%v", &err)
-	dl.tr = accounting.Stats(dl.dls.ctx).NewTransfer(dl.dls.src)
+	dl.tr = accounting.Stats(dl.dls.ctx).NewTransfer(dl.dls.src, nil)
 
 	size := dl.dls.src.Size()
 	if size < 0 {

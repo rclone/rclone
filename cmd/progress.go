@@ -20,7 +20,7 @@ const (
 	// interval between progress prints
 	defaultProgressInterval = 500 * time.Millisecond
 	// time format for logging
-	logTimeFormat = "2006-01-02 15:04:05"
+	logTimeFormat = "2006/01/02 15:04:05"
 )
 
 // startProgress starts the progress bar printing

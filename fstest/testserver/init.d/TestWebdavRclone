@@ -12,6 +12,7 @@ start() {
     run rclone serve webdav --user $USER --pass $PASS --addr ${IP}:${PORT} ${DATADIR}
     
     echo type=webdav
+    echo vendor=rclone
     echo url=http://${IP}:${PORT}/
     echo user=$USER
     echo pass=$(rclone obscure $PASS)

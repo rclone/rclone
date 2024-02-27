@@ -1,12 +1,10 @@
 test rclone-args
 # Pass generic flags to rclone under test using as an example
 # the --size-only flag, which changes the meaning of operations.
-# Note that --size-only is honored by the rclone proper, but not bisync.
-# Bisync copies the newer {path2/}file21.txt to {path1/}, but `rlcone sync`
-# does not copy the newer {path1/}file20.txt to {path2/}.
+
 
 test initial bisync
-bisync resync
+bisync resync checksum
 
 test place newer files on both paths
 
@@ -20,4 +18,36 @@ copy-file {datadir/}file20.txt {path1/}subdir
 copy-file {datadir/}file21.txt {path2/}subdir
 
 test run bisync with custom options
+bisync checksum
+
+touch-glob 2007-07-23 {datadir/} *
+
+copy-file {datadir/}file1.txt {path1/}
+copy-file {datadir/}file2.txt {path2/}
+
+copy-file {datadir/}file20.txt {path1/}subdir
+copy-as {datadir/}file21.txt {path2/} file1.txt
+
 bisync size-only
+bisync resync
+
+copy-file {datadir/}file1.txt {path1/}
+copy-file {datadir/}file2.txt {path2/}
+
+copy-file {datadir/}file20.txt {path1/}subdir
+copy-file {datadir/}file21.txt {path2/}subdir
+
+bisync ignore-size
+
+bisync resync compare-all
+
+copy-as {datadir/}file21.txt {path2/} file2.txt
+
+touch-glob 2023-08-26 {datadir/} *
+
+copy-file {datadir/}file1.txt {path1/}
+
+copy-file {datadir/}file20.txt {path1/}subdir
+copy-file {datadir/}file21.txt {path2/}subdir
+
+bisync compare-all

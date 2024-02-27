@@ -100,7 +100,7 @@ but other operations such as Remove and Copy will fail.
 func init() {
 	fs.Register(&fs.RegInfo{
 		Name:        "swift",
-		Description: "OpenStack Swift (Rackspace Cloud Files, Memset Memstore, OVH)",
+		Description: "OpenStack Swift (Rackspace Cloud Files, Blomp Cloud Storage, Memset Memstore, OVH)",
 		NewFs:       NewFs,
 		Options: append([]fs.Option{{
 			Name:    "env_auth",
@@ -116,11 +116,13 @@ func init() {
 				},
 			},
 		}, {
-			Name: "user",
-			Help: "User name to log in (OS_USERNAME).",
+			Name:      "user",
+			Help:      "User name to log in (OS_USERNAME).",
+			Sensitive: true,
 		}, {
-			Name: "key",
-			Help: "API key or password (OS_PASSWORD).",
+			Name:      "key",
+			Help:      "API key or password (OS_PASSWORD).",
+			Sensitive: true,
 		}, {
 			Name: "auth",
 			Help: "Authentication URL for server (OS_AUTH_URL).",
@@ -142,22 +144,30 @@ func init() {
 			}, {
 				Value: "https://auth.cloud.ovh.net/v3",
 				Help:  "OVH",
+			}, {
+				Value: "https://authenticate.ain.net",
+				Help:  "Blomp Cloud Storage",
 			}},
 		}, {
-			Name: "user_id",
-			Help: "User ID to log in - optional - most swift systems use user and leave this blank (v3 auth) (OS_USER_ID).",
+			Name:      "user_id",
+			Help:      "User ID to log in - optional - most swift systems use user and leave this blank (v3 auth) (OS_USER_ID).",
+			Sensitive: true,
 		}, {
-			Name: "domain",
-			Help: "User domain - optional (v3 auth) (OS_USER_DOMAIN_NAME)",
+			Name:      "domain",
+			Help:      "User domain - optional (v3 auth) (OS_USER_DOMAIN_NAME)",
+			Sensitive: true,
 		}, {
-			Name: "tenant",
-			Help: "Tenant name - optional for v1 auth, this or tenant_id required otherwise (OS_TENANT_NAME or OS_PROJECT_NAME).",
+			Name:      "tenant",
+			Help:      "Tenant name - optional for v1 auth, this or tenant_id required otherwise (OS_TENANT_NAME or OS_PROJECT_NAME).",
+			Sensitive: true,
 		}, {
-			Name: "tenant_id",
-			Help: "Tenant ID - optional for v1 auth, this or tenant required otherwise (OS_TENANT_ID).",
+			Name:      "tenant_id",
+			Help:      "Tenant ID - optional for v1 auth, this or tenant required otherwise (OS_TENANT_ID).",
+			Sensitive: true,
 		}, {
-			Name: "tenant_domain",
-			Help: "Tenant domain - optional (v3 auth) (OS_PROJECT_DOMAIN_NAME).",
+			Name:      "tenant_domain",
+			Help:      "Tenant domain - optional (v3 auth) (OS_PROJECT_DOMAIN_NAME).",
+			Sensitive: true,
 		}, {
 			Name: "region",
 			Help: "Region name - optional (OS_REGION_NAME).",
@@ -165,17 +175,21 @@ func init() {
 			Name: "storage_url",
 			Help: "Storage URL - optional (OS_STORAGE_URL).",
 		}, {
-			Name: "auth_token",
-			Help: "Auth Token from alternate authentication - optional (OS_AUTH_TOKEN).",
+			Name:      "auth_token",
+			Help:      "Auth Token from alternate authentication - optional (OS_AUTH_TOKEN).",
+			Sensitive: true,
 		}, {
-			Name: "application_credential_id",
-			Help: "Application Credential ID (OS_APPLICATION_CREDENTIAL_ID).",
+			Name:      "application_credential_id",
+			Help:      "Application Credential ID (OS_APPLICATION_CREDENTIAL_ID).",
+			Sensitive: true,
 		}, {
-			Name: "application_credential_name",
-			Help: "Application Credential Name (OS_APPLICATION_CREDENTIAL_NAME).",
+			Name:      "application_credential_name",
+			Help:      "Application Credential Name (OS_APPLICATION_CREDENTIAL_NAME).",
+			Sensitive: true,
 		}, {
-			Name: "application_credential_secret",
-			Help: "Application Credential Secret (OS_APPLICATION_CREDENTIAL_SECRET).",
+			Name:      "application_credential_secret",
+			Help:      "Application Credential Secret (OS_APPLICATION_CREDENTIAL_SECRET).",
+			Sensitive: true,
 		}, {
 			Name:    "auth_version",
 			Help:    "AuthVersion - optional - set to (1,2,3) if your auth URL has no version (ST_AUTH_VERSION).",
@@ -547,7 +561,7 @@ func (f *Fs) newObjectWithInfo(ctx context.Context, remote string, info *swift.O
 	// returned as 0 bytes in the listing.  Correct this here by
 	// making sure we read the full metadata for all 0 byte files.
 	// We don't read the metadata for directory marker objects.
-	if info != nil && info.Bytes == 0 && info.ContentType != "application/directory" {
+	if info != nil && info.Bytes == 0 && info.ContentType != "application/directory" && !o.fs.opt.NoLargeObjects {
 		err := o.readMetaData(ctx) // reads info and headers, returning an error
 		if err == fs.ErrorObjectNotFound {
 			// We have a dangling large object here so just return the original metadata
@@ -1517,12 +1531,14 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 			o.size = int64(inCount.BytesRead())
 		}
 	}
-	isInContainerVersioning, _ := o.isInContainerVersioning(ctx, container)
 	// If file was a large object and the container is not enable versioning then remove old/all segments
-	if isLargeObject && len(segmentsContainer) > 0 && !isInContainerVersioning {
-		err := o.removeSegmentsLargeObject(ctx, segmentsContainer)
-		if err != nil {
-			fs.Logf(o, "Failed to remove old segments - carrying on with upload: %v", err)
+	if isLargeObject && len(segmentsContainer) > 0 {
+		isInContainerVersioning, _ := o.isInContainerVersioning(ctx, container)
+		if !isInContainerVersioning {
+			err := o.removeSegmentsLargeObject(ctx, segmentsContainer)
+			if err != nil {
+				fs.Logf(o, "Failed to remove old segments - carrying on with upload: %v", err)
+			}
 		}
 	}
 

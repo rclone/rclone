@@ -79,7 +79,9 @@ NB If filename_encryption is "off" then this option will do nothing.`,
 		}, {
 			Name:    "server_side_across_configs",
 			Default: false,
-			Help: `Allow server-side operations (e.g. copy) to work across different crypt configs.
+			Help: `Deprecated: use --server-side-across-configs instead.
+
+Allow server-side operations (e.g. copy) to work across different crypt configs.
 
 Normally this option is not what you want, but if you have two crypts
 pointing to the same backend you can use it.
@@ -124,7 +126,7 @@ names, or for debugging purposes.`,
 			Help: `If set this will pass bad blocks through as all 0.
 
 This should not be set in normal operation, it should only be set if
-trying to recover a crypted file with errors and it is desired to
+trying to recover an encrypted file with errors and it is desired to
 recover as much of the file as possible.`,
 			Default:  false,
 			Advanced: true,
@@ -251,6 +253,13 @@ func NewFs(ctx context.Context, name, rpath string, m configmap.Mapper) (fs.Fs, 
 		cipher: cipher,
 	}
 	cache.PinUntilFinalized(f.Fs, f)
+	// Correct root if definitely pointing to a file
+	if err == fs.ErrorIsFile {
+		f.root = path.Dir(f.root)
+		if f.root == "." || f.root == "/" {
+			f.root = ""
+		}
+	}
 	// the features here are ones we could support, and they are
 	// ANDed with the ones from wrappedFs
 	f.features = (&fs.Features{
@@ -266,6 +275,7 @@ func NewFs(ctx context.Context, name, rpath string, m configmap.Mapper) (fs.Fs, 
 		ReadMetadata:            true,
 		WriteMetadata:           true,
 		UserMetadata:            true,
+		PartialUploads:          true,
 	}).Fill(ctx, f).Mask(ctx, wrappedFs).WrapsFs(f, wrappedFs)
 
 	return f, err

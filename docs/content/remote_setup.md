@@ -36,7 +36,7 @@ For more help and alternate methods see: https://rclone.org/remote_setup/
 Execute the following on the machine with the web browser (same rclone
 version recommended):
 
-	rclone authorize "amazon cloud drive"
+	rclone authorize "dropbox"
 
 Then paste the result below:
 result>
@@ -45,7 +45,7 @@ result>
 Then on your main desktop machine
 
 ```
-rclone authorize "amazon cloud drive"
+rclone authorize "dropbox"
 If your browser doesn't open automatically go to the following link: http://127.0.0.1:53682/auth
 Log in and authorize rclone for access
 Waiting for code...

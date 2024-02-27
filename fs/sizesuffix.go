@@ -192,7 +192,7 @@ func (x *SizeSuffix) Set(s string) error {
 }
 
 // Type of the value
-func (x *SizeSuffix) Type() string {
+func (x SizeSuffix) Type() string {
 	return "SizeSuffix"
 }
 

@@ -15,7 +15,6 @@ import (
 	"regexp"
 	"sort"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/go-chi/chi/v5/middleware"
@@ -38,7 +37,6 @@ import (
 )
 
 var promHandler http.Handler
-var onlyOnceWarningAllowOrigin sync.Once
 
 func init() {
 	rcloneCollector := accounting.NewRcloneCollector(context.Background())
@@ -213,28 +211,6 @@ func writeError(path string, in rc.Params, w http.ResponseWriter, err error, sta
 // handler reads incoming requests and dispatches them
 func (s *Server) handler(w http.ResponseWriter, r *http.Request) {
 	path := strings.TrimLeft(r.URL.Path, "/")
-
-	allowOrigin := rcflags.Opt.AccessControlAllowOrigin
-	if allowOrigin != "" {
-		onlyOnceWarningAllowOrigin.Do(func() {
-			if allowOrigin == "*" {
-				fs.Logf(nil, "Warning: Allow origin set to *. This can cause serious security problems.")
-			}
-		})
-		w.Header().Add("Access-Control-Allow-Origin", allowOrigin)
-	} else {
-		urls := s.server.URLs()
-		if len(urls) == 1 {
-			w.Header().Add("Access-Control-Allow-Origin", urls[0])
-		} else {
-			fs.Errorf(nil, "Warning, need exactly 1 URL for Access-Control-Allow-Origin, got %d %q", len(urls), urls)
-		}
-	}
-
-	// echo back access control headers client needs
-	//reqAccessHeaders := r.Header.Get("Access-Control-Request-Headers")
-	w.Header().Add("Access-Control-Request-Method", "POST, OPTIONS, GET, HEAD")
-	w.Header().Add("Access-Control-Allow-Headers", "authorization, Content-Type")
 
 	switch r.Method {
 	case "POST":

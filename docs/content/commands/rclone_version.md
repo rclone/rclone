@@ -62,9 +62,10 @@ rclone version [flags]
   -h, --help    help for version
 ```
 
+
 See the [global flags page](/flags/) for global options not listed here.
 
-## SEE ALSO
+# SEE ALSO
 
 * [rclone](/commands/rclone/)	 - Show help for rclone commands, flags and backends.
 

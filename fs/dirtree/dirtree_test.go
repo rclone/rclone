@@ -1,6 +1,7 @@
 package dirtree
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/rclone/rclone/fstest/mockdir"
@@ -108,7 +109,7 @@ func TestDirTreeCheckParent(t *testing.T) {
   sausage
 `, dt.String())
 
-	dt.CheckParent("", "dir/subdir")
+	dt.checkParent("", "dir/subdir", nil)
 
 	assert.Equal(t, `/
   dir/
@@ -199,4 +200,22 @@ dir2/
   file
 `, dt.String())
 
+}
+
+func BenchmarkCheckParents(b *testing.B) {
+	for _, N := range []int{1e2, 1e3, 1e4, 1e5, 1e6} {
+		b.Run(fmt.Sprintf("%d", N), func(b *testing.B) {
+			b.StopTimer()
+			dt := New()
+			for i := 0; i < N; i++ {
+				remote := fmt.Sprintf("dir%09d/file%09d.txt", i, 1)
+				o := mockobject.New(remote)
+				dt.Add(o)
+			}
+			b.StartTimer()
+			for n := 0; n < b.N; n++ {
+				dt.CheckParents("")
+			}
+		})
+	}
 }

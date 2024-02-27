@@ -37,6 +37,7 @@ var (
 	checkControl       bool
 	checkLength        bool
 	checkStreaming     bool
+	checkBase32768     bool
 	all                bool
 	uploadWait         time.Duration
 	positionLeftRe     = regexp.MustCompile(`(?s)^(.*)-position-left-([[:xdigit:]]+)$`)
@@ -47,13 +48,14 @@ var (
 func init() {
 	test.Command.AddCommand(commandDefinition)
 	cmdFlags := commandDefinition.Flags()
-	flags.StringVarP(cmdFlags, &writeJSON, "write-json", "", "", "Write results to file")
-	flags.BoolVarP(cmdFlags, &checkNormalization, "check-normalization", "", false, "Check UTF-8 Normalization")
-	flags.BoolVarP(cmdFlags, &checkControl, "check-control", "", false, "Check control characters")
-	flags.DurationVarP(cmdFlags, &uploadWait, "upload-wait", "", 0, "Wait after writing a file")
-	flags.BoolVarP(cmdFlags, &checkLength, "check-length", "", false, "Check max filename length")
-	flags.BoolVarP(cmdFlags, &checkStreaming, "check-streaming", "", false, "Check uploads with indeterminate file size")
-	flags.BoolVarP(cmdFlags, &all, "all", "", false, "Run all tests")
+	flags.StringVarP(cmdFlags, &writeJSON, "write-json", "", "", "Write results to file", "")
+	flags.BoolVarP(cmdFlags, &checkNormalization, "check-normalization", "", false, "Check UTF-8 Normalization", "")
+	flags.BoolVarP(cmdFlags, &checkControl, "check-control", "", false, "Check control characters", "")
+	flags.DurationVarP(cmdFlags, &uploadWait, "upload-wait", "", 0, "Wait after writing a file", "")
+	flags.BoolVarP(cmdFlags, &checkLength, "check-length", "", false, "Check max filename length", "")
+	flags.BoolVarP(cmdFlags, &checkStreaming, "check-streaming", "", false, "Check uploads with indeterminate file size", "")
+	flags.BoolVarP(cmdFlags, &checkBase32768, "check-base32768", "", false, "Check can store all possible base32768 characters", "")
+	flags.BoolVarP(cmdFlags, &all, "all", "", false, "Run all tests", "")
 }
 
 var commandDefinition = &cobra.Command{
@@ -71,14 +73,15 @@ a bit of go code for each one.
 	},
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(1, 1e6, command, args)
-		if !checkNormalization && !checkControl && !checkLength && !checkStreaming && !all {
-			log.Fatalf("no tests selected - select a test or use -all")
+		if !checkNormalization && !checkControl && !checkLength && !checkStreaming && !checkBase32768 && !all {
+			log.Fatalf("no tests selected - select a test or use --all")
 		}
 		if all {
 			checkNormalization = true
 			checkControl = true
 			checkLength = true
 			checkStreaming = true
+			checkBase32768 = true
 		}
 		for i := range args {
 			f := cmd.NewFsDir(args[i : i+1])
@@ -100,6 +103,7 @@ type results struct {
 	canReadUnnormalized  bool
 	canReadRenormalized  bool
 	canStream            bool
+	canBase32768         bool
 }
 
 func newResults(ctx context.Context, f fs.Fs) *results {
@@ -140,6 +144,9 @@ func (r *results) Print() {
 	}
 	if checkStreaming {
 		fmt.Printf("canStream = %v\n", r.canStream)
+	}
+	if checkBase32768 {
+		fmt.Printf("base32768isOK = %v // make sure maxFileLength for 2 byte unicode chars is the same as for 1 byte characters\n", r.canBase32768)
 	}
 }
 
@@ -482,6 +489,9 @@ func readInfo(ctx context.Context, f fs.Fs) error {
 	}
 	if checkStreaming {
 		r.checkStreaming()
+	}
+	if checkBase32768 {
+		r.checkBase32768()
 	}
 	r.Print()
 	r.WriteJSON()

@@ -13,6 +13,18 @@ test extended-char-paths
 # - Due to different encoding local backend returns the literal tab
 #   in logs or listings, but remotes return two ASCII chars `\t`.
 
+# verify expected files, attempt to fix
+fix-names {path1/}測試_Русский_{spc}_{spc}_ě_áñ{/}
+fix-names {path2/}測試_Русский_{spc}_{spc}_ě_áñ{/}
+fix-names {path1/}測試_Русский_{spc}_{spc}_ě_áñ/測試_check{spc}file
+fix-names {path2/}測試_Русский_{spc}_{spc}_ě_áñ/測試_check{spc}file
+fix-names {path1/}測試_Русский_{spc}_{spc}_ě_áñ/filename_contains_ě_.txt
+fix-names {path2/}測試_Русский_{spc}_{spc}_ě_áñ/filename_contains_ě_.txt
+fix-names {path1/}測試_check{spc}file
+fix-names {path2/}測試_check{spc}file
+fix-names {path1/}測試_Русский_{spc}_{spc}_ě_áñ/測試_check{spc}file
+fix-names {path2/}測試_Русский_{spc}_{spc}_ě_áñ/測試_check{spc}file
+
 test resync subdirs with extended chars
 bisync subdir=測試_Русский_{spc}_{spc}_ě_áñ resync
 copy-listings resync

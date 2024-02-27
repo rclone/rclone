@@ -162,7 +162,7 @@ You may try to [verify you account](https://docs.microsoft.com/en-us/azure/activ
 Note: If you have a special region, you may need a different host in step 4 and 5. Here are [some hints](https://github.com/rclone/rclone/blob/bc23bf11db1c78c6ebbf8ea538fbebf7058b4176/backend/onedrive/onedrive.go#L86).
 
 
-### Modification time and hashes
+### Modification times and hashes
 
 OneDrive allows modification times to be set on objects accurate to 1
 second.  These will be used to detect whether objects need syncing or
@@ -182,6 +182,32 @@ to select `SHA1` during the transition period if this is important
 your workflow.
 
 For all types of OneDrive you can use the `--checksum` flag.
+
+### --fast-list
+
+This remote supports `--fast-list` which allows you to use fewer
+transactions in exchange for more memory. See the [rclone
+docs](/docs/#fast-list) for more details.
+
+This must be enabled with the `--onedrive-delta` flag (or `delta =
+true` in the config file) as it can cause performance degradation.
+
+It does this by using the delta listing facilities of OneDrive which
+returns all the files in the remote very efficiently. This is much
+more efficient than listing directories recursively and is Microsoft's
+recommended way of reading all the file information from a drive.
+
+This can be useful with `rclone mount` and [rclone rc vfs/refresh
+recursive=true](/rc/#vfs-refresh)) to very quickly fill the mount with
+information about all the files.
+
+The API used for the recursive listing (`ListR`) only supports listing
+from the root of the drive. This will become increasingly inefficient
+the further away you get from the root as rclone will have to discard
+files outside of the directory you are using.
+
+Some commands (like `rclone lsf -R`) will use `ListR` by default - you
+can turn this off with `--disable ListR` if you need to.
 
 ### Restricted filename characters
 
@@ -428,6 +454,8 @@ Properties:
 
 #### --onedrive-server-side-across-configs
 
+Deprecated: use --server-side-across-configs instead.
+
 Allow server-side operations (e.g. copy) to work across different onedrive configs.
 
 This will only work if you are copying between two OneDrive *Personal* drives AND
@@ -531,7 +559,7 @@ Properties:
 Specify the hash in use for the backend.
 
 This specifies the hash type in use. If set to "auto" it will use the
-default hash which is is QuickXorHash.
+default hash which is QuickXorHash.
 
 Before rclone 1.62 an SHA1 hash was used by default for Onedrive
 Personal. For 1.62 and later the default is to use a QuickXorHash for
@@ -568,6 +596,67 @@ Properties:
     - "none"
         - None - don't use any hashes
 
+#### --onedrive-av-override
+
+Allows download of files the server thinks has a virus.
+
+The onedrive/sharepoint server may check files uploaded with an Anti
+Virus checker. If it detects any potential viruses or malware it will
+block download of the file.
+
+In this case you will see a message like this
+
+    server reports this file is infected with a virus - use --onedrive-av-override to download anyway: Infected (name of virus): 403 Forbidden: 
+
+If you are 100% sure you want to download this file anyway then use
+the --onedrive-av-override flag, or av_override = true in the config
+file.
+
+
+Properties:
+
+- Config:      av_override
+- Env Var:     RCLONE_ONEDRIVE_AV_OVERRIDE
+- Type:        bool
+- Default:     false
+
+#### --onedrive-delta
+
+If set rclone will use delta listing to implement recursive listings.
+
+If this flag is set the the onedrive backend will advertise `ListR`
+support for recursive listings.
+
+Setting this flag speeds up these things greatly:
+
+    rclone lsf -R onedrive:
+    rclone size onedrive:
+    rclone rc vfs/refresh recursive=true
+
+**However** the delta listing API **only** works at the root of the
+drive. If you use it not at the root then it recurses from the root
+and discards all the data that is not under the directory you asked
+for. So it will be correct but may not be very efficient.
+
+This is why this flag is not set as the default.
+
+As a rule of thumb if nearly all of your data is under rclone's root
+directory (the `root/directory` in `onedrive:root/directory`) then
+using this flag will be be a big performance win. If your data is
+mostly not under the root then using this flag will be a big
+performance loss.
+
+It is recommended if you are mounting your onedrive at the root
+(or near the root when using crypt) and using rclone `rc vfs/refresh`.
+
+
+Properties:
+
+- Config:      delta
+- Env Var:     RCLONE_ONEDRIVE_DELTA
+- Type:        bool
+- Default:     false
+
 #### --onedrive-encoding
 
 The encoding for the backend.
@@ -578,7 +667,7 @@ Properties:
 
 - Config:      encoding
 - Env Var:     RCLONE_ONEDRIVE_ENCODING
-- Type:        MultiEncoder
+- Type:        Encoding
 - Default:     Slash,LtGt,DoubleQuote,Colon,Question,Asterisk,Pipe,BackSlash,Del,Ctl,LeftSpace,LeftTilde,RightSpace,RightPeriod,InvalidUtf8,Dot
 
 {{< rem autogenerated options stop >}}

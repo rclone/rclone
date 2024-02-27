@@ -18,8 +18,8 @@ var (
 func init() {
 	cmd.Root.AddCommand(commandDefinition)
 	cmdFlags := commandDefinition.Flags()
-	flags.BoolVarP(cmdFlags, &noAutoBrowser, "auth-no-open-browser", "", false, "Do not automatically open auth link in default browser")
-	flags.StringVarP(cmdFlags, &template, "template", "", "", "The path to a custom Go template for generating HTML responses")
+	flags.BoolVarP(cmdFlags, &noAutoBrowser, "auth-no-open-browser", "", false, "Do not automatically open auth link in default browser", "")
+	flags.StringVarP(cmdFlags, &template, "template", "", "", "The path to a custom Go template for generating HTML responses", "")
 }
 
 var commandDefinition = &cobra.Command{
@@ -36,6 +36,7 @@ link in default browser automatically.
 Use --template to generate HTML output via a custom Go template. If a blank string is provided as an argument to this flag, the default template is used.`,
 	Annotations: map[string]string{
 		"versionIntroduced": "v1.27",
+		// "groups":            "",
 	},
 	RunE: func(command *cobra.Command, args []string) error {
 		cmd.CheckArgs(1, 3, command, args)

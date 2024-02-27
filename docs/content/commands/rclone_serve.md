@@ -30,16 +30,19 @@ rclone serve <protocol> [opts] <remote> [flags]
   -h, --help   help for serve
 ```
 
+
 See the [global flags page](/flags/) for global options not listed here.
 
-## SEE ALSO
+# SEE ALSO
 
 * [rclone](/commands/rclone/)	 - Show help for rclone commands, flags and backends.
 * [rclone serve dlna](/commands/rclone_serve_dlna/)	 - Serve remote:path over DLNA
 * [rclone serve docker](/commands/rclone_serve_docker/)	 - Serve any remote on docker's volume plugin API.
 * [rclone serve ftp](/commands/rclone_serve_ftp/)	 - Serve remote:path over FTP.
 * [rclone serve http](/commands/rclone_serve_http/)	 - Serve the remote over HTTP.
+* [rclone serve nfs](/commands/rclone_serve_nfs/)	 - Serve the remote as an NFS mount
 * [rclone serve restic](/commands/rclone_serve_restic/)	 - Serve the remote for restic's REST API.
+* [rclone serve s3](/commands/rclone_serve_s3/)	 - Serve remote:path over s3.
 * [rclone serve sftp](/commands/rclone_serve_sftp/)	 - Serve the remote over SFTP.
 * [rclone serve webdav](/commands/rclone_serve_webdav/)	 - Serve remote:path over WebDAV.
 

@@ -40,6 +40,7 @@ import (
 	_ "github.com/rclone/rclone/cmd/move"
 	_ "github.com/rclone/rclone/cmd/moveto"
 	_ "github.com/rclone/rclone/cmd/ncdu"
+	_ "github.com/rclone/rclone/cmd/nfsmount"
 	_ "github.com/rclone/rclone/cmd/obscure"
 	_ "github.com/rclone/rclone/cmd/purge"
 	_ "github.com/rclone/rclone/cmd/rc"

@@ -158,9 +158,10 @@ func init() {
 			return nil, fmt.Errorf("unknown state %q", config.State)
 		},
 		Options: append(pikpakOAuthOptions(), []fs.Option{{
-			Name:     "user",
-			Help:     "Pikpak username.",
-			Required: true,
+			Name:      "user",
+			Help:      "Pikpak username.",
+			Required:  true,
+			Sensitive: true,
 		}, {
 			Name:       "pass",
 			Help:       "Pikpak password.",
@@ -173,7 +174,8 @@ Leave blank normally.
 
 Fill in for rclone to use a non root folder as its starting point.
 `,
-			Advanced: true,
+			Advanced:  true,
+			Sensitive: true,
 		}, {
 			Name:     "use_trash",
 			Default:  true,
@@ -773,7 +775,7 @@ func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, 
 		expiry = int(math.Ceil(time.Duration(expire).Hours() / 24))
 	}
 	req := api.RequestShare{
-		FileIds:        []string{id},
+		FileIDs:        []string{id},
 		ShareTo:        "publiclink",
 		ExpirationDays: expiry,
 		PassCodeOption: "NOT_REQUIRED",
@@ -795,7 +797,7 @@ func (f *Fs) deleteObjects(ctx context.Context, IDs []string, useTrash bool) (er
 		action = "batchTrash"
 	}
 	req := api.RequestBatch{
-		Ids: IDs,
+		IDs: IDs,
 	}
 	if err := f.requestBatchAction(ctx, action, &req); err != nil {
 		return fmt.Errorf("delete object failed: %w", err)
@@ -815,7 +817,7 @@ func (f *Fs) purgeCheck(ctx context.Context, dir string, check bool) error {
 		return err
 	}
 
-	var trashedFiles = false
+	trashedFiles := false
 	if check {
 		found, err := f.listAll(ctx, rootID, "", "", func(item *api.File) bool {
 			if !item.Trashed {
@@ -891,7 +893,7 @@ func (f *Fs) moveObjects(ctx context.Context, IDs []string, dirID string) (err e
 		return nil
 	}
 	req := api.RequestBatch{
-		Ids: IDs,
+		IDs: IDs,
 		To:  map[string]string{"parent_id": parentIDForRequest(dirID)},
 	}
 	if err := f.requestBatchAction(ctx, "batchMove", &req); err != nil {
@@ -1037,7 +1039,7 @@ func (f *Fs) copyObjects(ctx context.Context, IDs []string, dirID string) (err e
 		return nil
 	}
 	req := api.RequestBatch{
-		Ids: IDs,
+		IDs: IDs,
 		To:  map[string]string{"parent_id": parentIDForRequest(dirID)},
 	}
 	if err := f.requestBatchAction(ctx, "batchCopy", &req); err != nil {
@@ -1213,7 +1215,7 @@ func (f *Fs) upload(ctx context.Context, in io.Reader, leaf, dirID, sha1Str stri
 		return nil, fmt.Errorf("failed to upload: %w", err)
 	}
 	// refresh uploaded file info
-	// Compared to `newfile.File` this upgrades several feilds...
+	// Compared to `newfile.File` this upgrades several fields...
 	// audit, links, modified_time, phase, revision, and web_content_link
 	return f.getFile(ctx, newfile.File.ID)
 }

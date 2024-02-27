@@ -17,7 +17,7 @@ func TestTerminalColorModeString(t *testing.T) {
 		{TerminalColorModeAuto, "AUTO"},
 		{TerminalColorModeAlways, "ALWAYS"},
 		{TerminalColorModeNever, "NEVER"},
-		{36, "TerminalColorMode(36)"},
+		{36, "Unknown(36)"},
 	} {
 		tcm := test.in
 		assert.Equal(t, test.want, tcm.String(), test.in)

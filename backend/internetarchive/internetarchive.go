@@ -133,11 +133,13 @@ Owner is able to add custom keys. Metadata feature grabs all the keys including 
 		},
 
 		Options: []fs.Option{{
-			Name: "access_key_id",
-			Help: "IAS3 Access Key.\n\nLeave blank for anonymous access.\nYou can find one here: https://archive.org/account/s3.php",
+			Name:      "access_key_id",
+			Help:      "IAS3 Access Key.\n\nLeave blank for anonymous access.\nYou can find one here: https://archive.org/account/s3.php",
+			Sensitive: true,
 		}, {
-			Name: "secret_access_key",
-			Help: "IAS3 Secret Key (password).\n\nLeave blank for anonymous access.",
+			Name:      "secret_access_key",
+			Help:      "IAS3 Secret Key (password).\n\nLeave blank for anonymous access.",
+			Sensitive: true,
 		}, {
 			// their official client (https://github.com/jjjake/internetarchive) hardcodes following the two
 			Name:     "endpoint",
@@ -800,7 +802,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		headers["x-archive-size-hint"] = fmt.Sprintf("%d", size)
 	}
 	var mdata fs.Metadata
-	mdata, err = fs.GetMetadataOptions(ctx, src, options)
+	mdata, err = fs.GetMetadataOptions(ctx, o.fs, src, options)
 	if err == nil && mdata != nil {
 		for mk, mv := range mdata {
 			mk = strings.ToLower(mk)

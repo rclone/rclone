@@ -12,12 +12,14 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/cache"
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/fstest"
 	"github.com/rclone/rclone/fstest/fstests"
+	"github.com/rclone/rclone/lib/bucket"
 	"github.com/rclone/rclone/lib/random"
 	"github.com/rclone/rclone/lib/version"
 	"github.com/stretchr/testify/assert"
@@ -317,15 +319,19 @@ func (f *Fs) InternalTestVersions(t *testing.T) {
 
 		// Check we can make a NewFs from that object with a version suffix
 		t.Run("NewFs", func(t *testing.T) {
-			newPath := path.Join(fs.ConfigString(f), fileNameVersion)
+			newPath := bucket.Join(fs.ConfigStringFull(f), fileNameVersion)
 			// Make sure --s3-versions is set in the config of the new remote
-			confPath := strings.Replace(newPath, ":", ",versions:", 1)
-			fNew, err := cache.Get(ctx, confPath)
+			fs.Debugf(nil, "oldPath = %q", newPath)
+			lastColon := strings.LastIndex(newPath, ":")
+			require.True(t, lastColon >= 0)
+			newPath = newPath[:lastColon] + ",versions" + newPath[lastColon:]
+			fs.Debugf(nil, "newPath = %q", newPath)
+			fNew, err := cache.Get(ctx, newPath)
 			// This should return pointing to a file
 			require.Equal(t, fs.ErrorIsFile, err)
 			require.NotNil(t, fNew)
 			// With the directory the directory above
-			assert.Equal(t, dirName, path.Base(fs.ConfigString(fNew)))
+			assert.Equal(t, dirName, path.Base(fs.ConfigStringFull(fNew)))
 		})
 	})
 
@@ -385,6 +391,41 @@ func (f *Fs) InternalTestVersions(t *testing.T) {
 					}
 				})
 			})
+		}
+	})
+
+	t.Run("Mkdir", func(t *testing.T) {
+		// Test what happens when we create a bucket we already own and see whether the
+		// quirk is set correctly
+		req := s3.CreateBucketInput{
+			Bucket: &f.rootBucket,
+			ACL:    stringPointerOrNil(f.opt.BucketACL),
+		}
+		if f.opt.LocationConstraint != "" {
+			req.CreateBucketConfiguration = &s3.CreateBucketConfiguration{
+				LocationConstraint: &f.opt.LocationConstraint,
+			}
+		}
+		err := f.pacer.Call(func() (bool, error) {
+			_, err := f.c.CreateBucketWithContext(ctx, &req)
+			return f.shouldRetry(ctx, err)
+		})
+		var errString string
+		if err == nil {
+			errString = "No Error"
+		} else if awsErr, ok := err.(awserr.Error); ok {
+			errString = awsErr.Code()
+		} else {
+			assert.Fail(t, "Unknown error %T %v", err, err)
+		}
+		t.Logf("Creating a bucket we already have created returned code: %s", errString)
+		switch errString {
+		case "BucketAlreadyExists":
+			assert.False(t, f.opt.UseAlreadyExists.Value, "Need to clear UseAlreadyExists quirk")
+		case "No Error", "BucketAlreadyOwnedByYou":
+			assert.True(t, f.opt.UseAlreadyExists.Value, "Need to set UseAlreadyExists quirk")
+		default:
+			assert.Fail(t, "Unknown error string %q", errString)
 		}
 	})
 

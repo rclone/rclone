@@ -233,6 +233,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (outFs fs
 		ReadMetadata:            true,
 		WriteMetadata:           true,
 		UserMetadata:            true,
+		PartialUploads:          true,
 	}).Fill(ctx, f)
 	canMove := true
 	for _, u := range f.upstreams {
@@ -913,7 +914,7 @@ func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, 
 	return do(ctx, uRemote, expire, unlink)
 }
 
-// Put in to the remote path with the modTime given of the given size
+// PutUnchecked in to the remote path with the modTime given of the given size
 //
 // May create the object even if it returns an error - if so
 // will return the object and the error, otherwise will return
@@ -953,7 +954,7 @@ func (f *Fs) MergeDirs(ctx context.Context, dirs []fs.Directory) error {
 		if u == nil {
 			u = uNew
 		} else if u != uNew {
-			return fmt.Errorf("can't merge dirctories from different upstreams")
+			return fmt.Errorf("can't merge directories from different upstreams")
 		}
 		uDirs = append(uDirs, fs.NewOverrideDirectory(dir, uDir))
 	}

@@ -13,6 +13,7 @@ import (
 	"runtime"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 	"unicode/utf8"
 
@@ -145,6 +146,11 @@ time we:
 - Only checksum the size that stat gave
 - Don't update the stat info for the file
 
+**NB** do not use this flag on a Windows Volume Shadow (VSS). For some
+unknown reason, files in a VSS sometimes show different sizes from the
+directory listing (where the initial stat value comes from on Windows)
+and when stat is called on them directly. Other copy tools always use
+the direct stat value and setting this flag will disable that.
 `,
 			Default:  false,
 			Advanced: true,
@@ -243,7 +249,7 @@ type Fs struct {
 	precision      time.Duration       // precision of local filesystem
 	warnedMu       sync.Mutex          // used for locking access to 'warned'.
 	warned         map[string]struct{} // whether we have warned about this string
-	xattrSupported int32               // whether xattrs are supported (atomic access)
+	xattrSupported atomic.Int32        // whether xattrs are supported
 
 	// do os.Lstat or os.Stat
 	lstat        func(name string) (os.FileInfo, error)
@@ -291,7 +297,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		lstat:  os.Lstat,
 	}
 	if xattrSupported {
-		f.xattrSupported = 1
+		f.xattrSupported.Store(1)
 	}
 	f.root = cleanRootPath(root, f.opt.NoUNC, f.opt.Enc)
 	f.features = (&fs.Features{
@@ -516,7 +522,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 								continue
 							}
 						}
-						err = fmt.Errorf("failed to read directory %q: %w", namepath, fierr)
+						fierr = fmt.Errorf("failed to get info about directory entry %q: %w", namepath, fierr)
 						fs.Errorf(dir, "%v", fierr)
 						_ = accounting.Stats(ctx).Error(fserrors.NoRetryError(fierr)) // fail the sync
 						continue
@@ -641,7 +647,13 @@ func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 //
 // If it isn't empty it will return an error
 func (f *Fs) Rmdir(ctx context.Context, dir string) error {
-	return os.Remove(f.localPath(dir))
+	localPath := f.localPath(dir)
+	if fi, err := os.Stat(localPath); err != nil {
+		return err
+	} else if !fi.IsDir() {
+		return fs.ErrorIsFile
+	}
+	return os.Remove(localPath)
 }
 
 // Precision of the file system
@@ -1116,6 +1128,12 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 		}
 	}
 
+	// Update the file info before we start reading
+	err = o.lstat()
+	if err != nil {
+		return nil, err
+	}
+
 	// If not checking updated then limit to current size.  This means if
 	// file is being extended, readers will read a o.Size() bytes rather
 	// than the new size making for a consistent upload.
@@ -1280,7 +1298,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	}
 
 	// Fetch and set metadata if --metadata is in use
-	meta, err := fs.GetMetadataOptions(ctx, src, options)
+	meta, err := fs.GetMetadataOptions(ctx, o.fs, src, options)
 	if err != nil {
 		return fmt.Errorf("failed to read metadata from source object: %w", err)
 	}
@@ -1429,6 +1447,10 @@ func cleanRootPath(s string, noUNC bool, enc encoder.MultiEncoder) string {
 	if runtime.GOOS == "windows" {
 		s = filepath.ToSlash(s)
 		vol := filepath.VolumeName(s)
+		if vol == `\\?` && len(s) >= 6 {
+			// `\\?\C:`
+			vol = s[:6]
+		}
 		s = vol + enc.FromStandardPath(s[len(vol):])
 		s = filepath.FromSlash(s)
 		if !noUNC {

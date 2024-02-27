@@ -82,14 +82,15 @@ func init() {
 				OAuth2Config: oauthConfig,
 			})
 		},
-		Options: []fs.Option{{
+		Options: append(oauthutil.SharedOptions, []fs.Option{{
 			Name: "api_key",
 			Help: `API Key.
 
 This is not normally used - use oauth instead.
 `,
-			Hide:    fs.OptionHideBoth,
-			Default: "",
+			Hide:      fs.OptionHideBoth,
+			Default:   "",
+			Sensitive: true,
 		}, {
 			Name:     config.ConfigEncoding,
 			Help:     config.ConfigEncodingHelp,
@@ -99,7 +100,7 @@ This is not normally used - use oauth instead.
 				encoder.EncodeBackSlash |
 				encoder.EncodeDoubleQuote |
 				encoder.EncodeInvalidUtf8),
-		}},
+		}}...),
 	})
 }
 
@@ -769,6 +770,12 @@ func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, 
 	return o.(*Object).url, nil
 }
 
+// Shutdown shutdown the fs
+func (f *Fs) Shutdown(ctx context.Context) error {
+	f.tokenRenewer.Shutdown()
+	return nil
+}
+
 // About gets quota information
 func (f *Fs) About(ctx context.Context) (usage *fs.Usage, err error) {
 	var resp *http.Response
@@ -1109,6 +1116,7 @@ var (
 	_ fs.DirCacheFlusher = (*Fs)(nil)
 	_ fs.Abouter         = (*Fs)(nil)
 	_ fs.PublicLinker    = (*Fs)(nil)
+	_ fs.Shutdowner      = (*Fs)(nil)
 	_ fs.Object          = (*Object)(nil)
 	_ fs.MimeTyper       = (*Object)(nil)
 	_ fs.IDer            = (*Object)(nil)

@@ -70,6 +70,22 @@ type MoveFileResponse struct {
 	URLs    []string `json:"urls"`
 }
 
+// MoveDirRequest is the request structure of the corresponding request
+type MoveDirRequest struct {
+	FolderID            int    `json:"folder_id"`
+	DestinationFolderID int    `json:"destination_folder_id,omitempty"`
+	DestinationUser     string `json:"destination_user"`
+	Rename              string `json:"rename,omitempty"`
+}
+
+// MoveDirResponse is the response structure of the corresponding request
+type MoveDirResponse struct {
+	Status  string `json:"status"`
+	Message string `json:"message"`
+	OldName string `json:"old_name"`
+	NewName string `json:"new_name"`
+}
+
 // CopyFileRequest is the request structure of the corresponding request
 type CopyFileRequest struct {
 	URLs     []string `json:"urls"`

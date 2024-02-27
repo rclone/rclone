@@ -10,12 +10,23 @@ test extended-filenames
 #   `name{spc}with{eol}white{spc}space` instead of
 #   `name{tab}with{eol}white{spc}space`.
 
+# verify expected files, attempt to fix
+fix-names {path1/}subdir_with_ࢺ_{/}
+fix-names {path2/}subdir_with_ࢺ_{/}
+fix-names {path1/}subdir_with_ࢺ_/filename_contains_ě_.txt
+fix-names {path2/}subdir_with_ࢺ_/filename_contains_ě_.txt
+fix-names {path1/}Русский.txt
+fix-names {path2/}Русский.txt
+fix-names {path1/}file_enconde_mañana_funcionará.txt
+fix-names {path2/}file_enconde_mañana_funcionará.txt
+
 test initial bisync
 bisync resync
 
 test place a newer files on both paths
 # force specific modification time since file time is lost through git
 touch-glob 2001-01-02 {datadir/} file1.txt
+touch-glob 2001-01-02 {datadir/} file2.txt
 copy-as {datadir/}file1.txt {path2/} New_top_level_mañana_funcionará.txt
 copy-as {datadir/}file1.txt {path2/} file_enconde_mañana_funcionará.txt
 copy-as {datadir/}file1.txt {path1/} filename_contains_ࢺ_p1m.txt
@@ -27,9 +38,10 @@ copy-as {datadir/}file1.txt {path1/}subdir_with_ࢺ_ file_with_測試_.txt
 copy-as {datadir/}file1.txt {path2/}subdir_with_ࢺ_ filename_contains_ࢺ_p2s.txt
 copy-as {datadir/}file1.txt {path2/}subdir{spc}with{eol}white{spc}space.txt file2{spc}with{eol}white{spc}space.txt
 copy-as {datadir/}file1.txt {path2/}subdir_rawchars_{chr:19}_{chr:81}_{chr:fe} file3_{chr:19}_{chr:81}_{chr:fe}
+fix-names {path2/}subdir{spc}with{eol}white{spc}space.txt{/}file2{spc}with{eol}white{spc}space.txt
 
 test place a new file on both paths
-copy-as {datadir/}file1.txt {path2/}subdir_with_ࢺ_ filechangedbothpaths_ࢺ_.txt
+copy-as {datadir/}file2.txt {path2/}subdir_with_ࢺ_ filechangedbothpaths_ࢺ_.txt
 touch-glob 2001-01-03 {datadir/} file1.txt
 copy-as {datadir/}file1.txt {path1/}subdir_with_ࢺ_ filechangedbothpaths_ࢺ_.txt
 

@@ -85,10 +85,11 @@ func init() {
 		Name:        "mailru",
 		Description: "Mail.ru Cloud",
 		NewFs:       NewFs,
-		Options: []fs.Option{{
-			Name:     "user",
-			Help:     "User name (usually email).",
-			Required: true,
+		Options: append(oauthutil.SharedOptions, []fs.Option{{
+			Name:      "user",
+			Help:      "User name (usually email).",
+			Required:  true,
+			Sensitive: true,
 		}, {
 			Name: "pass",
 			Help: `Password.
@@ -213,7 +214,7 @@ Supported quirks: atomicmkdir binlist unknowndirs`,
 				encoder.EncodeWin | // :?"*<>|
 				encoder.EncodeBackSlash |
 				encoder.EncodeInvalidUtf8),
-		}},
+		}}...),
 	})
 }
 

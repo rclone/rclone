@@ -62,6 +62,11 @@ func basicAuth(authenticator *LoggedBasicAuth) func(next http.Handler) http.Hand
 				next.ServeHTTP(w, r)
 				return
 			}
+			// skip auth for CORS preflight
+			if r.Method == "OPTIONS" {
+				next.ServeHTTP(w, r)
+				return
+			}
 
 			username := authenticator.CheckAuth(r)
 			if username == "" {
@@ -70,6 +75,24 @@ func basicAuth(authenticator *LoggedBasicAuth) func(next http.Handler) http.Hand
 			}
 			ctx := context.WithValue(r.Context(), ctxKeyUser, username)
 			next.ServeHTTP(w, r.WithContext(ctx))
+		})
+	}
+}
+
+// MiddlewareAuthCertificateUser instantiates middleware that extracts the authenticated user via client certificate common name
+func MiddlewareAuthCertificateUser() Middleware {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			for _, cert := range r.TLS.PeerCertificates {
+				if cert.Subject.CommonName != "" {
+					r = r.WithContext(context.WithValue(r.Context(), ctxKeyUser, cert.Subject.CommonName))
+					next.ServeHTTP(w, r)
+					return
+				}
+			}
+			code := http.StatusUnauthorized
+			w.Header().Set("Content-Type", "text/plain")
+			http.Error(w, http.StatusText(code), code)
 		})
 	}
 }
@@ -97,7 +120,7 @@ func MiddlewareAuthBasic(user, pass, realm, salt string) Middleware {
 }
 
 // MiddlewareAuthCustom instantiates middleware that authenticates using a custom function
-func MiddlewareAuthCustom(fn CustomAuthFn, realm string) Middleware {
+func MiddlewareAuthCustom(fn CustomAuthFn, realm string, userFromContext bool) Middleware {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			// skip auth for unix socket
@@ -105,8 +128,17 @@ func MiddlewareAuthCustom(fn CustomAuthFn, realm string) Middleware {
 				next.ServeHTTP(w, r)
 				return
 			}
+			// skip auth for CORS preflight
+			if r.Method == "OPTIONS" {
+				next.ServeHTTP(w, r)
+				return
+			}
 
 			user, pass, ok := parseAuthorization(r)
+			if !ok && userFromContext {
+				user, ok = CtxGetUser(r.Context())
+			}
+
 			if !ok {
 				code := http.StatusUnauthorized
 				w.Header().Set("Content-Type", "text/plain")
@@ -151,13 +183,9 @@ func MiddlewareCORS(allowOrigin string) Middleware {
 
 			if allowOrigin != "" {
 				w.Header().Add("Access-Control-Allow-Origin", allowOrigin)
-			} else {
-				w.Header().Add("Access-Control-Allow-Origin", PublicURL(r))
+				w.Header().Add("Access-Control-Allow-Headers", "authorization, Content-Type")
+				w.Header().Add("Access-Control-Allow-Methods", "COPY, DELETE, GET, HEAD, LOCK, MKCOL, MOVE, OPTIONS, POST, PROPFIND, PROPPATCH, PUT, TRACE, UNLOCK")
 			}
-
-			// echo back access control headers client needs
-			w.Header().Add("Access-Control-Request-Method", "POST, OPTIONS, GET, HEAD")
-			w.Header().Add("Access-Control-Allow-Headers", "authorization, Content-Type")
 
 			next.ServeHTTP(w, r)
 		})

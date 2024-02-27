@@ -30,3 +30,13 @@ func TestIntegration2(t *testing.T) {
 		NilObject:  (*sftp.Object)(nil),
 	})
 }
+
+func TestIntegration3(t *testing.T) {
+	if *fstest.RemoteName != "" {
+		t.Skip("skipping as -remote is set")
+	}
+	fstests.Run(t, &fstests.Opt{
+		RemoteName: "TestSFTPRcloneSSH:",
+		NilObject:  (*sftp.Object)(nil),
+	})
+}

@@ -330,23 +330,30 @@ func (f *Filter) DirContainsExcludeFile(ctx context.Context, fremote fs.Fs, remo
 }
 
 // Include returns whether this object should be included into the
-// sync or not
+// sync or not and logs the reason for exclusion if not included
 func (f *Filter) Include(remote string, size int64, modTime time.Time, metadata fs.Metadata) bool {
 	// filesFrom takes precedence
 	if f.files != nil {
 		_, include := f.files[remote]
+		if !include {
+			fs.Debugf(remote, "Excluded (FilesFrom Filter)")
+		}
 		return include
 	}
 	if !f.ModTimeFrom.IsZero() && modTime.Before(f.ModTimeFrom) {
+		fs.Debugf(remote, "Excluded (ModTime Filter)")
 		return false
 	}
 	if !f.ModTimeTo.IsZero() && modTime.After(f.ModTimeTo) {
+		fs.Debugf(remote, "Excluded (ModTime Filter)")
 		return false
 	}
 	if f.Opt.MinSize >= 0 && size < int64(f.Opt.MinSize) {
+		fs.Debugf(remote, "Excluded (Size Filter)")
 		return false
 	}
 	if f.Opt.MaxSize >= 0 && size > int64(f.Opt.MaxSize) {
+		fs.Debugf(remote, "Excluded (Size Filter)")
 		return false
 	}
 	if f.metaRules.len() > 0 {
@@ -360,10 +367,15 @@ func (f *Filter) Include(remote string, size int64, modTime time.Time, metadata 
 			metadatas = append(metadatas, "\x00=\x00")
 		}
 		if !f.metaRules.includeMany(metadatas) {
+			fs.Debugf(remote, "Excluded (Metadata Filter)")
 			return false
 		}
 	}
-	return f.IncludeRemote(remote)
+	include := f.IncludeRemote(remote)
+	if !include {
+		fs.Debugf(remote, "Excluded (Path Filter)")
+	}
+	return include
 }
 
 // IncludeObject returns whether this object should be included into

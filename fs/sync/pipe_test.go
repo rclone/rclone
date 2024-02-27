@@ -112,7 +112,7 @@ func TestPipeConcurrent(t *testing.T) {
 	obj1 := mockobject.New("potato").WithContent([]byte("hello"), mockobject.SeekModeNone)
 	pair1 := fs.ObjectPair{Src: obj1, Dst: nil}
 	ctx := context.Background()
-	var count int64
+	var count atomic.Int64
 
 	for j := 0; j < readWriters; j++ {
 		wg.Add(2)
@@ -123,7 +123,7 @@ func TestPipeConcurrent(t *testing.T) {
 				pair2, ok := p.Get(ctx)
 				assert.Equal(t, pair1, pair2)
 				assert.Equal(t, true, ok)
-				atomic.AddInt64(&count, -1)
+				count.Add(-1)
 			}
 		}()
 		go func() {
@@ -132,13 +132,13 @@ func TestPipeConcurrent(t *testing.T) {
 				// Put an object
 				ok := p.Put(ctx, pair1)
 				assert.Equal(t, true, ok)
-				atomic.AddInt64(&count, 1)
+				count.Add(1)
 			}
 		}()
 	}
 	wg.Wait()
 
-	assert.Equal(t, int64(0), count)
+	assert.Equal(t, int64(0), count.Load())
 }
 
 func TestPipeOrderBy(t *testing.T) {

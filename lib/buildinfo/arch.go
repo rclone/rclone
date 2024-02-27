@@ -37,13 +37,12 @@ func GetSupportedGOARM() int {
 			// means it can run programs built with GOARM value 6 and lower,
 			// but not 7.
 			return 6
-		} else {
-			// This CPU has no VFP floating point hardware, which means it can
-			// only run programs built with GOARM value 5, which is minimum supported.
-			// Note that the CPU can still in reality be based on e.g. ARMv7
-			// architecture, but simply lack hardfloat support.
-			return 5
 		}
+		// This CPU has no VFP floating point hardware, which means it can
+		// only run programs built with GOARM value 5, which is minimum supported.
+		// Note that the CPU can still in reality be based on e.g. ARMv7
+		// architecture, but simply lack hardfloat support.
+		return 5
 	}
 	return 0
 }

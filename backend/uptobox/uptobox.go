@@ -43,8 +43,9 @@ func init() {
 		Description: "Uptobox",
 		NewFs:       NewFs,
 		Options: []fs.Option{{
-			Help: "Your access token.\n\nGet it from https://uptobox.com/my_account.",
-			Name: "access_token",
+			Help:      "Your access token.\n\nGet it from https://uptobox.com/my_account.",
+			Name:      "access_token",
+			Sensitive: true,
 		}, {
 			Help:     "Set to make uploaded files private",
 			Name:     "private",
@@ -482,11 +483,11 @@ func (f *Fs) updateFileInformation(ctx context.Context, update *api.UpdateFileIn
 	return err
 }
 
-func (f *Fs) putUnchecked(ctx context.Context, in io.Reader, remote string, size int64, options ...fs.OpenOption) (fs.Object, error) {
+func (f *Fs) putUnchecked(ctx context.Context, in io.Reader, remote string, size int64, options ...fs.OpenOption) error {
 	if size > int64(200e9) { // max size 200GB
-		return nil, errors.New("file too big, can't upload")
+		return errors.New("file too big, can't upload")
 	} else if size == 0 {
-		return nil, fs.ErrorCantUploadEmptyFiles
+		return fs.ErrorCantUploadEmptyFiles
 	}
 	// yes it does take 4 requests if we're uploading to root and 6+ if we're uploading to any subdir :(
 
@@ -504,19 +505,19 @@ func (f *Fs) putUnchecked(ctx context.Context, in io.Reader, remote string, size
 		return shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
-		return nil, err
+		return err
 	}
 	if info.StatusCode != 0 {
-		return nil, fmt.Errorf("putUnchecked api error: %d - %s", info.StatusCode, info.Message)
+		return fmt.Errorf("putUnchecked api error: %d - %s", info.StatusCode, info.Message)
 	}
 	// we need to have a safe name for the upload to work
 	tmpName := "rcloneTemp" + random.String(8)
 	upload, err := f.uploadFile(ctx, in, size, tmpName, info.Data.UploadLink, options...)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	if len(upload.Files) != 1 {
-		return nil, errors.New("upload unexpected response")
+		return errors.New("upload unexpected response")
 	}
 	match := f.IDRegexp.FindStringSubmatch(upload.Files[0].URL)
 
@@ -531,12 +532,12 @@ func (f *Fs) putUnchecked(ctx context.Context, in io.Reader, remote string, size
 			// this might need some more error handling. if any of the following requests fail
 			// we'll leave an orphaned temporary file floating around somewhere
 			// they rarely fail though
-			return nil, err
+			return err
 		}
 
 		err = f.move(ctx, fullBase, match[1])
 		if err != nil {
-			return nil, err
+			return err
 		}
 	}
 
@@ -548,11 +549,10 @@ func (f *Fs) putUnchecked(ctx context.Context, in io.Reader, remote string, size
 		Public:   f.public,
 	})
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	// finally fetch the file object.
-	return f.NewObject(ctx, remote)
+	return nil
 }
 
 // Put in to the remote path with the modTime given of the given size
@@ -582,7 +582,11 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 // This will create a duplicate if we upload a new file without
 // checking to see if there is one already - use Put() for that.
 func (f *Fs) PutUnchecked(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
-	return f.putUnchecked(ctx, in, src.Remote(), src.Size(), options...)
+	err := f.putUnchecked(ctx, in, src.Remote(), src.Size(), options...)
+	if err != nil {
+		return nil, err
+	}
+	return f.NewObject(ctx, src.Remote())
 }
 
 // CreateDir dir creates a directory with the given parent path
@@ -675,7 +679,7 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 	if err != nil {
 		return err
 	}
-	if info.Data.CurrentFolder.FileCount > 0 {
+	if len(info.Data.Folders) > 0 || len(info.Data.Files) > 0 {
 		return fs.ErrorDirectoryNotEmpty
 	}
 
@@ -1026,7 +1030,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	}
 
 	// upload with new size but old name
-	info, err := o.fs.putUnchecked(ctx, in, o.Remote(), src.Size(), options...)
+	err := o.fs.putUnchecked(ctx, in, o.Remote(), src.Size(), options...)
 	if err != nil {
 		return err
 	}
@@ -1035,6 +1039,12 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	err = o.Remove(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to remove old version: %w", err)
+	}
+
+	// Fetch new object after deleting the duplicate
+	info, err := o.fs.NewObject(ctx, o.Remote())
+	if err != nil {
+		return err
 	}
 
 	// Replace guts of old object with new one

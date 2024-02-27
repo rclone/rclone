@@ -379,7 +379,7 @@ address this problem to a certain degree.
 For cloud storage systems with case sensitive file names (e.g. Google Drive),
 `base64` can be used to reduce file name length. 
 For cloud storage systems using UTF-16 to store file names internally
-(e.g. OneDrive, Dropbox), `base32768` can be used to drastically reduce
+(e.g. OneDrive, Dropbox, Box), `base32768` can be used to drastically reduce
 file name length. 
 
 An alternative, future rclone file name encryption mode may tolerate
@@ -405,7 +405,7 @@ Example:
 `1/12/qgm4avr35m5loi1th53ato71v0`
 
 
-### Modified time and hashes
+### Modification times and hashes
 
 Crypt stores modification times using the underlying remote so support
 depends on that.
@@ -454,7 +454,7 @@ Properties:
         - Very simple filename obfuscation.
     - "off"
         - Don't encrypt the file names.
-        - Adds a ".bin" extension only.
+        - Adds a ".bin", or "suffix" extension only.
 
 #### --crypt-directory-name-encryption
 
@@ -509,6 +509,8 @@ Here are the Advanced options specific to crypt (Encrypt/Decrypt a remote).
 
 #### --crypt-server-side-across-configs
 
+Deprecated: use --server-side-across-configs instead.
+
 Allow server-side operations (e.g. copy) to work across different crypt configs.
 
 Normally this option is not what you want, but if you have two crypts
@@ -562,6 +564,21 @@ Properties:
     - "false"
         - Encrypt file data.
 
+#### --crypt-pass-bad-blocks
+
+If set this will pass bad blocks through as all 0.
+
+This should not be set in normal operation, it should only be set if
+trying to recover an encrypted file with errors and it is desired to
+recover as much of the file as possible.
+
+Properties:
+
+- Config:      pass_bad_blocks
+- Env Var:     RCLONE_CRYPT_PASS_BAD_BLOCKS
+- Type:        bool
+- Default:     false
+
 #### --crypt-filename-encoding
 
 How to encode the encrypted filename to text string.
@@ -583,7 +600,21 @@ Properties:
         - Encode using base64. Suitable for case sensitive remote.
     - "base32768"
         - Encode using base32768. Suitable if your remote counts UTF-16 or
-        - Unicode codepoint instead of UTF-8 byte length. (Eg. Onedrive)
+        - Unicode codepoint instead of UTF-8 byte length. (Eg. Onedrive, Dropbox)
+
+#### --crypt-suffix
+
+If this is set it will override the default suffix of ".bin".
+
+Setting suffix to "none" will result in an empty suffix. This may be useful 
+when the path length is critical.
+
+Properties:
+
+- Config:      suffix
+- Env Var:     RCLONE_CRYPT_SUFFIX
+- Type:        string
+- Default:     ".bin"
 
 ### Metadata
 
@@ -681,7 +712,7 @@ has a header and is divided into chunks.
 The initial nonce is generated from the operating systems crypto
 strong random number generator.  The nonce is incremented for each
 chunk read making sure each nonce is unique for each block written.
-The chance of a nonce being re-used is minuscule.  If you wrote an
+The chance of a nonce being reused is minuscule.  If you wrote an
 exabyte of data (10¹⁸ bytes) you would have a probability of
 approximately 2×10⁻³² of re-using a nonce.
 
@@ -753,7 +784,7 @@ encoding is modified in two ways:
   * we strip the padding character `=`
 
 `base32` is used rather than the more efficient `base64` so rclone can be
-used on case insensitive remotes (e.g. Windows, Amazon Drive).
+used on case insensitive remotes (e.g. Windows, Box, Dropbox, Onedrive etc).
 
 ### Key derivation
 

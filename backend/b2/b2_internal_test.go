@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/rclone/rclone/fstest"
+	"github.com/rclone/rclone/fstest/fstests"
 )
 
 // Test b2 string encoding
@@ -168,3 +169,10 @@ func TestParseTimeString(t *testing.T) {
 	}
 
 }
+
+// -run TestIntegration/FsMkdir/FsPutFiles/Internal
+func (f *Fs) InternalTest(t *testing.T) {
+	// Internal tests go here
+}
+
+var _ fstests.InternalTester = (*Fs)(nil)

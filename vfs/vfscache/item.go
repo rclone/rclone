@@ -593,6 +593,10 @@ func (item *Item) _store(ctx context.Context, storeFn StoreFn) (err error) {
 		o, err := operations.Copy(ctx, item.c.fremote, o, name, cacheObj)
 		item.mu.Lock()
 		if err != nil {
+			if errors.Is(err, fs.ErrorCantUploadEmptyFiles) {
+				fs.Errorf(name, "Writeback failed: %v", err)
+				return nil
+			}
 			return fmt.Errorf("vfs cache: failed to transfer file from cache to remote: %w", err)
 		}
 		item.o = o
@@ -806,6 +810,7 @@ func (item *Item) _checkObject(o fs.Object) error {
 				if !item.info.Dirty {
 					fs.Debugf(item.name, "vfs cache: removing cached entry as stale (remote fingerprint %q != cached fingerprint %q)", remoteFingerprint, item.info.Fingerprint)
 					item._remove("stale (remote is different)")
+					item.info.Fingerprint = remoteFingerprint
 				} else {
 					fs.Debugf(item.name, "vfs cache: remote object has changed but local object modified - keeping it (remote fingerprint %q != cached fingerprint %q)", remoteFingerprint, item.info.Fingerprint)
 				}

@@ -877,6 +877,17 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		opt:       *opt,
 		upstreams: usedUpstreams,
 	}
+	// Correct root if definitely pointing to a file
+	if fserr == fs.ErrorIsFile {
+		f.root = path.Dir(f.root)
+		if f.root == "." || f.root == "/" {
+			f.root = ""
+		}
+	}
+	err = upstream.Prepare(f.upstreams)
+	if err != nil {
+		return nil, err
+	}
 	f.actionPolicy, err = policy.Get(opt.ActionPolicy)
 	if err != nil {
 		return nil, err
@@ -902,6 +913,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		ReadMetadata:            true,
 		WriteMetadata:           true,
 		UserMetadata:            true,
+		PartialUploads:          true,
 	}).Fill(ctx, f)
 	canMove, slowHash := true, false
 	for _, f := range upstreams {

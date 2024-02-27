@@ -35,11 +35,15 @@ empty directories in. For example the [delete](/commands/rclone_delete/)
 command will delete files but leave the directory structure (unless
 used with option ` + "`--rmdirs`" + `).
 
-To delete a path and any objects in it, use [purge](/commands/rclone_purge/)
+This will delete ` + "`--checkers`" + ` directories concurrently so
+if you have thousands of empty directories consider increasing this number.
+
+To delete a path and any objects in it, use the [purge](/commands/rclone_purge/)
 command.
 `,
 	Annotations: map[string]string{
 		"versionIntroduced": "v1.35",
+		"groups":            "Important",
 	},
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(1, 1, command, args)

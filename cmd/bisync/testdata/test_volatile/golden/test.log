@@ -1,0 +1,355 @@
+[36m(01)  :[0m [34mtest volatile[0m
+
+[36m(02)  :[0m [34mtest initial bisync[0m
+[36m(03)  :[0m [34mbisync resync[0m
+INFO  : [2mSetting --ignore-listing-checksum as neither --checksum nor --compare checksum are set.[0m
+INFO  : Bisyncing with Comparison Settings:
+{
+"Modtime": true,
+"Size": true,
+"Checksum": false,
+"NoSlowHash": false,
+"SlowHashSyncOnly": false,
+"DownloadHash": false
+}
+INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Copying Path2 files to Path1
+INFO  : - [34mPath2[0m    [35mResync is copying files to[0m         - [36mPath1[0m
+INFO  : - [36mPath1[0m    [35mResync is copying files to[0m         - [36mPath2[0m
+INFO  : Resync updating listings
+INFO  : Validating listings for Path1 "{path1/}" vs Path2 "{path2/}"
+INFO  : [32mBisync successful[0m
+
+[36m(04)  :[0m [34mtest changed on both paths - file5 (file5R, file5L)[0m
+[36m(05)  :[0m [34mtouch-glob 2001-01-02 {datadir/} file5R.txt[0m
+[36m(06)  :[0m [34mtouch-glob 2023-08-26 {datadir/} file7.txt[0m
+[36m(07)  :[0m [34mcopy-as {datadir/}file5R.txt {path2/} file5.txt[0m
+[36m(08)  :[0m [34mtouch-glob 2001-03-04 {datadir/} file5L.txt[0m
+[36m(09)  :[0m [34mcopy-as {datadir/}file5L.txt {path1/} file5.txt[0m
+
+[36m(10)  :[0m [34mtest bisync with 50 files created during - should ignore new files[0m
+[36m(11)  :[0m [34mtest-func[0m
+[36m(12)  :[0m [34mbisync[0m
+INFO  : [2mSetting --ignore-listing-checksum as neither --checksum nor --compare checksum are set.[0m
+INFO  : Bisyncing with Comparison Settings:
+{
+"Modtime": true,
+"Size": true,
+"Checksum": false,
+"NoSlowHash": false,
+"SlowHashSyncOnly": false,
+"DownloadHash": false
+}
+INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Building Path1 and Path2 listings
+INFO  : Path1 checking for diffs
+INFO  : - [36mPath1[0m    [35m[33mFile changed: [35msize (larger)[0m, [35mtime (newer)[0m[0m[0m - [36mfile5.txt[0m
+INFO  : Path1:    1 changes: [32m   0 new[0m, [33m   1 modified[0m, [31m   0 deleted[0m
+INFO  : ([33mModified[0m: [36m   1 newer[0m, [34m   0 older[0m, [36m   1 larger[0m, [34m   0 smaller[0m)
+INFO  : Path2 checking for diffs
+INFO  : - [34mPath2[0m    [35m[33mFile changed: [35msize (larger)[0m, [35mtime (newer)[0m[0m[0m - [36mfile5.txt[0m
+INFO  : Path2:    1 changes: [32m   0 new[0m, [33m   1 modified[0m, [31m   0 deleted[0m
+INFO  : ([33mModified[0m: [36m   1 newer[0m, [34m   0 older[0m, [36m   1 larger[0m, [34m   0 smaller[0m)
+INFO  : Applying changes
+INFO  : Checking potential conflicts...
+ERROR : file5.txt: md5 differ
+NOTICE: {path2String}: 1 differences found
+NOTICE: {path2String}: 1 errors while checking
+INFO  : Finished checking the potential conflicts. 1 differences found
+NOTICE: - [34mWARNING[0m  [35mNew or changed in both paths[0m       - [36mfile5.txt[0m
+NOTICE: - [36mPath1[0m    [35mRenaming Path1 copy[0m                - [36m{path1/}file5.txt.conflict1[0m
+NOTICE: - [36mPath1[0m    [35m[32mQueue copy to[0m Path2[0m       - [36m{path2/}file5.txt.conflict1[0m
+NOTICE: - [34mPath2[0m    [35mRenaming Path2 copy[0m                - [36m{path2/}file5.txt.conflict2[0m
+NOTICE: - [34mPath2[0m    [35m[32mQueue copy to[0m Path1[0m       - [36m{path1/}file5.txt.conflict2[0m
+INFO  : - [34mPath2[0m    [35mDo queued copies to[0m                - [36mPath1[0m
+INFO  : - [36mPath1[0m    [35mDo queued copies to[0m                - [36mPath2[0m
+INFO  : Updating listings
+INFO  : Validating listings for Path1 "{path1/}" vs Path2 "{path2/}"
+INFO  : [32mBisync successful[0m
+
+[36m(13)  :[0m [34mtest changed on both paths - file5 (file5R, file5L)[0m
+[36m(14)  :[0m [34mtouch-glob 2001-01-02 {datadir/} file5R.txt[0m
+[36m(15)  :[0m [34mcopy-as {datadir/}file5R.txt {path2/} file5.txt[0m
+[36m(16)  :[0m [34mtouch-glob 2001-03-04 {datadir/} file5L.txt[0m
+[36m(17)  :[0m [34mcopy-as {datadir/}file5L.txt {path1/} file5.txt[0m
+
+[36m(18)  :[0m [34mtest next bisync - should now notice new files[0m
+[36m(19)  :[0m [34mtest-func[0m
+[36m(20)  :[0m [34mbisync[0m
+INFO  : [2mSetting --ignore-listing-checksum as neither --checksum nor --compare checksum are set.[0m
+INFO  : Bisyncing with Comparison Settings:
+{
+"Modtime": true,
+"Size": true,
+"Checksum": false,
+"NoSlowHash": false,
+"SlowHashSyncOnly": false,
+"DownloadHash": false
+}
+INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Building Path1 and Path2 listings
+INFO  : Path1 checking for diffs
+INFO  : - [36mPath1[0m    [35m[32mFile is new[0m[0m               - [36mfile100.txt[0m
+INFO  : - [36mPath1[0m    [35m[32mFile is new[0m[0m               - [36mfile5.txt[0m
+INFO  : - [36mPath1[0m    [35m[32mFile is new[0m[0m               - [36mfile51.txt[0m
+INFO  : - [36mPath1[0m    [35m[32mFile is new[0m[0m               - [36mfile52.txt[0m
+INFO  : - [36mPath1[0m    [35m[32mFile is new[0m[0m               - [36mfile53.txt[0m
+INFO  : - [36mPath1[0m    [35m[32mFile is new[0m[0m               - [36mfile54.txt[0m
+INFO  : - [36mPath1[0m    [35m[32mFile is new[0m[0m               - [36mfile55.txt[0m
+INFO  : - [36mPath1[0m    [35m[32mFile is new[0m[0m               - [36mfile56.txt[0m
+INFO  : - [36mPath1[0m    [35m[32mFile is new[0m[0m               - [36mfile57.txt[0m
+INFO  : - [36mPath1[0m    [35m[32mFile is new[0m[0m               - [36mfile58.txt[0m
+INFO  : - [36mPath1[0m    [35m[32mFile is new[0m[0m               - [36mfile59.txt[0m
+INFO  : - [36mPath1[0m    [35m[32mFile is new[0m[0m               - [36mfile60.txt[0m
+INFO  : - [36mPath1[0m    [35m[32mFile is new[0m[0m               - [36mfile61.txt[0m
+INFO  : - [36mPath1[0m    [35m[32mFile is new[0m[0m               - [36mfile62.txt[0m
+INFO  : - [36mPath1[0m    [35m[32mFile is new[0m[0m               - [36mfile63.txt[0m
+INFO  : - [36mPath1[0m    [35m[32mFile is new[0m[0m               - [36mfile64.txt[0m
+INFO  : - [36mPath1[0m    [35m[32mFile is new[0m[0m               - [36mfile65.txt[0m
+INFO  : - [36mPath1[0m    [35m[32mFile is new[0m[0m               - [36mfile66.txt[0m
+INFO  : - [36mPath1[0m    [35m[32mFile is new[0m[0m               - [36mfile67.txt[0m
+INFO  : - [36mPath1[0m    [35m[32mFile is new[0m[0m               - [36mfile68.txt[0m
+INFO  : - [36mPath1[0m    [35m[32mFile is new[0m[0m               - [36mfile69.txt[0m
+INFO  : - [36mPath1[0m    [35m[32mFile is new[0m[0m               - [36mfile70.txt[0m
+INFO  : - [36mPath1[0m    [35m[32mFile is new[0m[0m               - [36mfile71.txt[0m
+INFO  : - [36mPath1[0m    [35m[32mFile is new[0m[0m               - [36mfile72.txt[0m
+INFO  : - [36mPath1[0m    [35m[32mFile is new[0m[0m               - [36mfile73.txt[0m
+INFO  : - [36mPath1[0m    [35m[32mFile is new[0m[0m               - [36mfile74.txt[0m
+INFO  : - [36mPath1[0m    [35m[32mFile is new[0m[0m               - [36mfile75.txt[0m
+INFO  : - [36mPath1[0m    [35m[32mFile is new[0m[0m               - [36mfile76.txt[0m
+INFO  : - [36mPath1[0m    [35m[32mFile is new[0m[0m               - [36mfile77.txt[0m
+INFO  : - [36mPath1[0m    [35m[32mFile is new[0m[0m               - [36mfile78.txt[0m
+INFO  : - [36mPath1[0m    [35m[32mFile is new[0m[0m               - [36mfile79.txt[0m
+INFO  : - [36mPath1[0m    [35m[32mFile is new[0m[0m               - [36mfile80.txt[0m
+INFO  : - [36mPath1[0m    [35m[32mFile is new[0m[0m               - [36mfile81.txt[0m
+INFO  : - [36mPath1[0m    [35m[32mFile is new[0m[0m               - [36mfile82.txt[0m
+INFO  : - [36mPath1[0m    [35m[32mFile is new[0m[0m               - [36mfile83.txt[0m
+INFO  : - [36mPath1[0m    [35m[32mFile is new[0m[0m               - [36mfile84.txt[0m
+INFO  : - [36mPath1[0m    [35m[32mFile is new[0m[0m               - [36mfile85.txt[0m
+INFO  : - [36mPath1[0m    [35m[32mFile is new[0m[0m               - [36mfile86.txt[0m
+INFO  : - [36mPath1[0m    [35m[32mFile is new[0m[0m               - [36mfile87.txt[0m
+INFO  : - [36mPath1[0m    [35m[32mFile is new[0m[0m               - [36mfile88.txt[0m
+INFO  : - [36mPath1[0m    [35m[32mFile is new[0m[0m               - [36mfile89.txt[0m
+INFO  : - [36mPath1[0m    [35m[32mFile is new[0m[0m               - [36mfile90.txt[0m
+INFO  : - [36mPath1[0m    [35m[32mFile is new[0m[0m               - [36mfile91.txt[0m
+INFO  : - [36mPath1[0m    [35m[32mFile is new[0m[0m               - [36mfile92.txt[0m
+INFO  : - [36mPath1[0m    [35m[32mFile is new[0m[0m               - [36mfile93.txt[0m
+INFO  : - [36mPath1[0m    [35m[32mFile is new[0m[0m               - [36mfile94.txt[0m
+INFO  : - [36mPath1[0m    [35m[32mFile is new[0m[0m               - [36mfile95.txt[0m
+INFO  : - [36mPath1[0m    [35m[32mFile is new[0m[0m               - [36mfile96.txt[0m
+INFO  : - [36mPath1[0m    [35m[32mFile is new[0m[0m               - [36mfile97.txt[0m
+INFO  : - [36mPath1[0m    [35m[32mFile is new[0m[0m               - [36mfile98.txt[0m
+INFO  : - [36mPath1[0m    [35m[32mFile is new[0m[0m               - [36mfile99.txt[0m
+INFO  : Path1:   51 changes: [32m  51 new[0m, [33m   0 modified[0m, [31m   0 deleted[0m
+INFO  : Path2 checking for diffs
+INFO  : - [34mPath2[0m    [35m[33mFile changed: [35msize (larger)[0m, [35mtime (newer)[0m[0m[0m - [36mfile1.txt[0m
+INFO  : - [34mPath2[0m    [35m[33mFile changed: [35msize (larger)[0m, [35mtime (newer)[0m[0m[0m - [36mfile2.txt[0m
+INFO  : - [34mPath2[0m    [35m[33mFile changed: [35msize (larger)[0m, [35mtime (newer)[0m[0m[0m - [36mfile3.txt[0m
+INFO  : - [34mPath2[0m    [35m[33mFile changed: [35msize (larger)[0m, [35mtime (newer)[0m[0m[0m - [36mfile4.txt[0m
+INFO  : - [34mPath2[0m    [35m[33mFile changed: [35msize (larger)[0m, [35mtime (newer)[0m[0m[0m - [36mfile6.txt[0m
+INFO  : - [34mPath2[0m    [35m[33mFile changed: [35msize (larger)[0m, [35mtime (newer)[0m[0m[0m - [36mfile7.txt[0m
+INFO  : - [34mPath2[0m    [35m[33mFile changed: [35msize (larger)[0m, [35mtime (newer)[0m[0m[0m - [36mfile8.txt[0m
+INFO  : - [34mPath2[0m    [35m[32mFile is new[0m[0m               - [36mfile0.txt[0m
+INFO  : - [34mPath2[0m    [35m[32mFile is new[0m[0m               - [36mfile10.txt[0m
+INFO  : - [34mPath2[0m    [35m[32mFile is new[0m[0m               - [36mfile11.txt[0m
+INFO  : - [34mPath2[0m    [35m[32mFile is new[0m[0m               - [36mfile12.txt[0m
+INFO  : - [34mPath2[0m    [35m[32mFile is new[0m[0m               - [36mfile13.txt[0m
+INFO  : - [34mPath2[0m    [35m[32mFile is new[0m[0m               - [36mfile14.txt[0m
+INFO  : - [34mPath2[0m    [35m[32mFile is new[0m[0m               - [36mfile15.txt[0m
+INFO  : - [34mPath2[0m    [35m[32mFile is new[0m[0m               - [36mfile16.txt[0m
+INFO  : - [34mPath2[0m    [35m[32mFile is new[0m[0m               - [36mfile17.txt[0m
+INFO  : - [34mPath2[0m    [35m[32mFile is new[0m[0m               - [36mfile18.txt[0m
+INFO  : - [34mPath2[0m    [35m[32mFile is new[0m[0m               - [36mfile19.txt[0m
+INFO  : - [34mPath2[0m    [35m[32mFile is new[0m[0m               - [36mfile20.txt[0m
+INFO  : - [34mPath2[0m    [35m[32mFile is new[0m[0m               - [36mfile21.txt[0m
+INFO  : - [34mPath2[0m    [35m[32mFile is new[0m[0m               - [36mfile22.txt[0m
+INFO  : - [34mPath2[0m    [35m[32mFile is new[0m[0m               - [36mfile23.txt[0m
+INFO  : - [34mPath2[0m    [35m[32mFile is new[0m[0m               - [36mfile24.txt[0m
+INFO  : - [34mPath2[0m    [35m[32mFile is new[0m[0m               - [36mfile25.txt[0m
+INFO  : - [34mPath2[0m    [35m[32mFile is new[0m[0m               - [36mfile26.txt[0m
+INFO  : - [34mPath2[0m    [35m[32mFile is new[0m[0m               - [36mfile27.txt[0m
+INFO  : - [34mPath2[0m    [35m[32mFile is new[0m[0m               - [36mfile28.txt[0m
+INFO  : - [34mPath2[0m    [35m[32mFile is new[0m[0m               - [36mfile29.txt[0m
+INFO  : - [34mPath2[0m    [35m[32mFile is new[0m[0m               - [36mfile30.txt[0m
+INFO  : - [34mPath2[0m    [35m[32mFile is new[0m[0m               - [36mfile31.txt[0m
+INFO  : - [34mPath2[0m    [35m[32mFile is new[0m[0m               - [36mfile32.txt[0m
+INFO  : - [34mPath2[0m    [35m[32mFile is new[0m[0m               - [36mfile33.txt[0m
+INFO  : - [34mPath2[0m    [35m[32mFile is new[0m[0m               - [36mfile34.txt[0m
+INFO  : - [34mPath2[0m    [35m[32mFile is new[0m[0m               - [36mfile35.txt[0m
+INFO  : - [34mPath2[0m    [35m[32mFile is new[0m[0m               - [36mfile36.txt[0m
+INFO  : - [34mPath2[0m    [35m[32mFile is new[0m[0m               - [36mfile37.txt[0m
+INFO  : - [34mPath2[0m    [35m[32mFile is new[0m[0m               - [36mfile38.txt[0m
+INFO  : - [34mPath2[0m    [35m[32mFile is new[0m[0m               - [36mfile39.txt[0m
+INFO  : - [34mPath2[0m    [35m[32mFile is new[0m[0m               - [36mfile40.txt[0m
+INFO  : - [34mPath2[0m    [35m[32mFile is new[0m[0m               - [36mfile41.txt[0m
+INFO  : - [34mPath2[0m    [35m[32mFile is new[0m[0m               - [36mfile42.txt[0m
+INFO  : - [34mPath2[0m    [35m[32mFile is new[0m[0m               - [36mfile43.txt[0m
+INFO  : - [34mPath2[0m    [35m[32mFile is new[0m[0m               - [36mfile44.txt[0m
+INFO  : - [34mPath2[0m    [35m[32mFile is new[0m[0m               - [36mfile45.txt[0m
+INFO  : - [34mPath2[0m    [35m[32mFile is new[0m[0m               - [36mfile46.txt[0m
+INFO  : - [34mPath2[0m    [35m[32mFile is new[0m[0m               - [36mfile47.txt[0m
+INFO  : - [34mPath2[0m    [35m[32mFile is new[0m[0m               - [36mfile48.txt[0m
+INFO  : - [34mPath2[0m    [35m[32mFile is new[0m[0m               - [36mfile49.txt[0m
+INFO  : - [34mPath2[0m    [35m[32mFile is new[0m[0m               - [36mfile5.txt[0m
+INFO  : - [34mPath2[0m    [35m[32mFile is new[0m[0m               - [36mfile9.txt[0m
+INFO  : Path2:   50 changes: [32m  43 new[0m, [33m   7 modified[0m, [31m   0 deleted[0m
+INFO  : ([33mModified[0m: [36m   7 newer[0m, [34m   0 older[0m, [36m   7 larger[0m, [34m   0 smaller[0m)
+INFO  : Applying changes
+INFO  : Checking potential conflicts...
+ERROR : file5.txt: md5 differ
+NOTICE: {path2String}: 1 differences found
+NOTICE: {path2String}: 1 errors while checking
+INFO  : Finished checking the potential conflicts. 1 differences found
+INFO  : - [36mPath1[0m    [35m[32mQueue copy to[0m Path2[0m       - [36m{path2/}file100.txt[0m
+NOTICE: - [34mWARNING[0m  [35mNew or changed in both paths[0m       - [36mfile5.txt[0m
+NOTICE: - [36mPath1[0m    [35mRenaming Path1 copy[0m                - [36m{path1/}file5.txt.conflict3[0m
+NOTICE: - [36mPath1[0m    [35m[32mQueue copy to[0m Path2[0m       - [36m{path2/}file5.txt.conflict3[0m
+NOTICE: - [34mPath2[0m    [35mRenaming Path2 copy[0m                - [36m{path2/}file5.txt.conflict4[0m
+NOTICE: - [34mPath2[0m    [35m[32mQueue copy to[0m Path1[0m       - [36m{path1/}file5.txt.conflict4[0m
+INFO  : - [36mPath1[0m    [35m[32mQueue copy to[0m Path2[0m       - [36m{path2/}file51.txt[0m
+INFO  : - [36mPath1[0m    [35m[32mQueue copy to[0m Path2[0m       - [36m{path2/}file52.txt[0m
+INFO  : - [36mPath1[0m    [35m[32mQueue copy to[0m Path2[0m       - [36m{path2/}file53.txt[0m
+INFO  : - [36mPath1[0m    [35m[32mQueue copy to[0m Path2[0m       - [36m{path2/}file54.txt[0m
+INFO  : - [36mPath1[0m    [35m[32mQueue copy to[0m Path2[0m       - [36m{path2/}file55.txt[0m
+INFO  : - [36mPath1[0m    [35m[32mQueue copy to[0m Path2[0m       - [36m{path2/}file56.txt[0m
+INFO  : - [36mPath1[0m    [35m[32mQueue copy to[0m Path2[0m       - [36m{path2/}file57.txt[0m
+INFO  : - [36mPath1[0m    [35m[32mQueue copy to[0m Path2[0m       - [36m{path2/}file58.txt[0m
+INFO  : - [36mPath1[0m    [35m[32mQueue copy to[0m Path2[0m       - [36m{path2/}file59.txt[0m
+INFO  : - [36mPath1[0m    [35m[32mQueue copy to[0m Path2[0m       - [36m{path2/}file60.txt[0m
+INFO  : - [36mPath1[0m    [35m[32mQueue copy to[0m Path2[0m       - [36m{path2/}file61.txt[0m
+INFO  : - [36mPath1[0m    [35m[32mQueue copy to[0m Path2[0m       - [36m{path2/}file62.txt[0m
+INFO  : - [36mPath1[0m    [35m[32mQueue copy to[0m Path2[0m       - [36m{path2/}file63.txt[0m
+INFO  : - [36mPath1[0m    [35m[32mQueue copy to[0m Path2[0m       - [36m{path2/}file64.txt[0m
+INFO  : - [36mPath1[0m    [35m[32mQueue copy to[0m Path2[0m       - [36m{path2/}file65.txt[0m
+INFO  : - [36mPath1[0m    [35m[32mQueue copy to[0m Path2[0m       - [36m{path2/}file66.txt[0m
+INFO  : - [36mPath1[0m    [35m[32mQueue copy to[0m Path2[0m       - [36m{path2/}file67.txt[0m
+INFO  : - [36mPath1[0m    [35m[32mQueue copy to[0m Path2[0m       - [36m{path2/}file68.txt[0m
+INFO  : - [36mPath1[0m    [35m[32mQueue copy to[0m Path2[0m       - [36m{path2/}file69.txt[0m
+INFO  : - [36mPath1[0m    [35m[32mQueue copy to[0m Path2[0m       - [36m{path2/}file70.txt[0m
+INFO  : - [36mPath1[0m    [35m[32mQueue copy to[0m Path2[0m       - [36m{path2/}file71.txt[0m
+INFO  : - [36mPath1[0m    [35m[32mQueue copy to[0m Path2[0m       - [36m{path2/}file72.txt[0m
+INFO  : - [36mPath1[0m    [35m[32mQueue copy to[0m Path2[0m       - [36m{path2/}file73.txt[0m
+INFO  : - [36mPath1[0m    [35m[32mQueue copy to[0m Path2[0m       - [36m{path2/}file74.txt[0m
+INFO  : - [36mPath1[0m    [35m[32mQueue copy to[0m Path2[0m       - [36m{path2/}file75.txt[0m
+INFO  : - [36mPath1[0m    [35m[32mQueue copy to[0m Path2[0m       - [36m{path2/}file76.txt[0m
+INFO  : - [36mPath1[0m    [35m[32mQueue copy to[0m Path2[0m       - [36m{path2/}file77.txt[0m
+INFO  : - [36mPath1[0m    [35m[32mQueue copy to[0m Path2[0m       - [36m{path2/}file78.txt[0m
+INFO  : - [36mPath1[0m    [35m[32mQueue copy to[0m Path2[0m       - [36m{path2/}file79.txt[0m
+INFO  : - [36mPath1[0m    [35m[32mQueue copy to[0m Path2[0m       - [36m{path2/}file80.txt[0m
+INFO  : - [36mPath1[0m    [35m[32mQueue copy to[0m Path2[0m       - [36m{path2/}file81.txt[0m
+INFO  : - [36mPath1[0m    [35m[32mQueue copy to[0m Path2[0m       - [36m{path2/}file82.txt[0m
+INFO  : - [36mPath1[0m    [35m[32mQueue copy to[0m Path2[0m       - [36m{path2/}file83.txt[0m
+INFO  : - [36mPath1[0m    [35m[32mQueue copy to[0m Path2[0m       - [36m{path2/}file84.txt[0m
+INFO  : - [36mPath1[0m    [35m[32mQueue copy to[0m Path2[0m       - [36m{path2/}file85.txt[0m
+INFO  : - [36mPath1[0m    [35m[32mQueue copy to[0m Path2[0m       - [36m{path2/}file86.txt[0m
+INFO  : - [36mPath1[0m    [35m[32mQueue copy to[0m Path2[0m       - [36m{path2/}file87.txt[0m
+INFO  : - [36mPath1[0m    [35m[32mQueue copy to[0m Path2[0m       - [36m{path2/}file88.txt[0m
+INFO  : - [36mPath1[0m    [35m[32mQueue copy to[0m Path2[0m       - [36m{path2/}file89.txt[0m
+INFO  : - [36mPath1[0m    [35m[32mQueue copy to[0m Path2[0m       - [36m{path2/}file90.txt[0m
+INFO  : - [36mPath1[0m    [35m[32mQueue copy to[0m Path2[0m       - [36m{path2/}file91.txt[0m
+INFO  : - [36mPath1[0m    [35m[32mQueue copy to[0m Path2[0m       - [36m{path2/}file92.txt[0m
+INFO  : - [36mPath1[0m    [35m[32mQueue copy to[0m Path2[0m       - [36m{path2/}file93.txt[0m
+INFO  : - [36mPath1[0m    [35m[32mQueue copy to[0m Path2[0m       - [36m{path2/}file94.txt[0m
+INFO  : - [36mPath1[0m    [35m[32mQueue copy to[0m Path2[0m       - [36m{path2/}file95.txt[0m
+INFO  : - [36mPath1[0m    [35m[32mQueue copy to[0m Path2[0m       - [36m{path2/}file96.txt[0m
+INFO  : - [36mPath1[0m    [35m[32mQueue copy to[0m Path2[0m       - [36m{path2/}file97.txt[0m
+INFO  : - [36mPath1[0m    [35m[32mQueue copy to[0m Path2[0m       - [36m{path2/}file98.txt[0m
+INFO  : - [36mPath1[0m    [35m[32mQueue copy to[0m Path2[0m       - [36m{path2/}file99.txt[0m
+INFO  : - [34mPath2[0m    [35m[32mQueue copy to[0m Path1[0m       - [36m{path1/}file0.txt[0m
+INFO  : - [34mPath2[0m    [35m[32mQueue copy to[0m Path1[0m       - [36m{path1/}file1.txt[0m
+INFO  : - [34mPath2[0m    [35m[32mQueue copy to[0m Path1[0m       - [36m{path1/}file10.txt[0m
+INFO  : - [34mPath2[0m    [35m[32mQueue copy to[0m Path1[0m       - [36m{path1/}file11.txt[0m
+INFO  : - [34mPath2[0m    [35m[32mQueue copy to[0m Path1[0m       - [36m{path1/}file12.txt[0m
+INFO  : - [34mPath2[0m    [35m[32mQueue copy to[0m Path1[0m       - [36m{path1/}file13.txt[0m
+INFO  : - [34mPath2[0m    [35m[32mQueue copy to[0m Path1[0m       - [36m{path1/}file14.txt[0m
+INFO  : - [34mPath2[0m    [35m[32mQueue copy to[0m Path1[0m       - [36m{path1/}file15.txt[0m
+INFO  : - [34mPath2[0m    [35m[32mQueue copy to[0m Path1[0m       - [36m{path1/}file16.txt[0m
+INFO  : - [34mPath2[0m    [35m[32mQueue copy to[0m Path1[0m       - [36m{path1/}file17.txt[0m
+INFO  : - [34mPath2[0m    [35m[32mQueue copy to[0m Path1[0m       - [36m{path1/}file18.txt[0m
+INFO  : - [34mPath2[0m    [35m[32mQueue copy to[0m Path1[0m       - [36m{path1/}file19.txt[0m
+INFO  : - [34mPath2[0m    [35m[32mQueue copy to[0m Path1[0m       - [36m{path1/}file2.txt[0m
+INFO  : - [34mPath2[0m    [35m[32mQueue copy to[0m Path1[0m       - [36m{path1/}file20.txt[0m
+INFO  : - [34mPath2[0m    [35m[32mQueue copy to[0m Path1[0m       - [36m{path1/}file21.txt[0m
+INFO  : - [34mPath2[0m    [35m[32mQueue copy to[0m Path1[0m       - [36m{path1/}file22.txt[0m
+INFO  : - [34mPath2[0m    [35m[32mQueue copy to[0m Path1[0m       - [36m{path1/}file23.txt[0m
+INFO  : - [34mPath2[0m    [35m[32mQueue copy to[0m Path1[0m       - [36m{path1/}file24.txt[0m
+INFO  : - [34mPath2[0m    [35m[32mQueue copy to[0m Path1[0m       - [36m{path1/}file25.txt[0m
+INFO  : - [34mPath2[0m    [35m[32mQueue copy to[0m Path1[0m       - [36m{path1/}file26.txt[0m
+INFO  : - [34mPath2[0m    [35m[32mQueue copy to[0m Path1[0m       - [36m{path1/}file27.txt[0m
+INFO  : - [34mPath2[0m    [35m[32mQueue copy to[0m Path1[0m       - [36m{path1/}file28.txt[0m
+INFO  : - [34mPath2[0m    [35m[32mQueue copy to[0m Path1[0m       - [36m{path1/}file29.txt[0m
+INFO  : - [34mPath2[0m    [35m[32mQueue copy to[0m Path1[0m       - [36m{path1/}file3.txt[0m
+INFO  : - [34mPath2[0m    [35m[32mQueue copy to[0m Path1[0m       - [36m{path1/}file30.txt[0m
+INFO  : - [34mPath2[0m    [35m[32mQueue copy to[0m Path1[0m       - [36m{path1/}file31.txt[0m
+INFO  : - [34mPath2[0m    [35m[32mQueue copy to[0m Path1[0m       - [36m{path1/}file32.txt[0m
+INFO  : - [34mPath2[0m    [35m[32mQueue copy to[0m Path1[0m       - [36m{path1/}file33.txt[0m
+INFO  : - [34mPath2[0m    [35m[32mQueue copy to[0m Path1[0m       - [36m{path1/}file34.txt[0m
+INFO  : - [34mPath2[0m    [35m[32mQueue copy to[0m Path1[0m       - [36m{path1/}file35.txt[0m
+INFO  : - [34mPath2[0m    [35m[32mQueue copy to[0m Path1[0m       - [36m{path1/}file36.txt[0m
+INFO  : - [34mPath2[0m    [35m[32mQueue copy to[0m Path1[0m       - [36m{path1/}file37.txt[0m
+INFO  : - [34mPath2[0m    [35m[32mQueue copy to[0m Path1[0m       - [36m{path1/}file38.txt[0m
+INFO  : - [34mPath2[0m    [35m[32mQueue copy to[0m Path1[0m       - [36m{path1/}file39.txt[0m
+INFO  : - [34mPath2[0m    [35m[32mQueue copy to[0m Path1[0m       - [36m{path1/}file4.txt[0m
+INFO  : - [34mPath2[0m    [35m[32mQueue copy to[0m Path1[0m       - [36m{path1/}file40.txt[0m
+INFO  : - [34mPath2[0m    [35m[32mQueue copy to[0m Path1[0m       - [36m{path1/}file41.txt[0m
+INFO  : - [34mPath2[0m    [35m[32mQueue copy to[0m Path1[0m       - [36m{path1/}file42.txt[0m
+INFO  : - [34mPath2[0m    [35m[32mQueue copy to[0m Path1[0m       - [36m{path1/}file43.txt[0m
+INFO  : - [34mPath2[0m    [35m[32mQueue copy to[0m Path1[0m       - [36m{path1/}file44.txt[0m
+INFO  : - [34mPath2[0m    [35m[32mQueue copy to[0m Path1[0m       - [36m{path1/}file45.txt[0m
+INFO  : - [34mPath2[0m    [35m[32mQueue copy to[0m Path1[0m       - [36m{path1/}file46.txt[0m
+INFO  : - [34mPath2[0m    [35m[32mQueue copy to[0m Path1[0m       - [36m{path1/}file47.txt[0m
+INFO  : - [34mPath2[0m    [35m[32mQueue copy to[0m Path1[0m       - [36m{path1/}file48.txt[0m
+INFO  : - [34mPath2[0m    [35m[32mQueue copy to[0m Path1[0m       - [36m{path1/}file49.txt[0m
+INFO  : - [34mPath2[0m    [35m[32mQueue copy to[0m Path1[0m       - [36m{path1/}file6.txt[0m
+INFO  : - [34mPath2[0m    [35m[32mQueue copy to[0m Path1[0m       - [36m{path1/}file7.txt[0m
+INFO  : - [34mPath2[0m    [35m[32mQueue copy to[0m Path1[0m       - [36m{path1/}file8.txt[0m
+INFO  : - [34mPath2[0m    [35m[32mQueue copy to[0m Path1[0m       - [36m{path1/}file9.txt[0m
+INFO  : - [34mPath2[0m    [35mDo queued copies to[0m                - [36mPath1[0m
+INFO  : - [36mPath1[0m    [35mDo queued copies to[0m                - [36mPath2[0m
+INFO  : Updating listings
+INFO  : Validating listings for Path1 "{path1/}" vs Path2 "{path2/}"
+INFO  : [32mBisync successful[0m
+
+[36m(21)  :[0m [34mtest changed on both paths - file5 (file5R, file5L)[0m
+[36m(22)  :[0m [34mtouch-glob 2001-01-02 {datadir/} file5R.txt[0m
+[36m(23)  :[0m [34mcopy-as {datadir/}file5R.txt {path2/} file5.txt[0m
+[36m(24)  :[0m [34mtouch-glob 2001-03-04 {datadir/} file5L.txt[0m
+[36m(25)  :[0m [34mcopy-as {datadir/}file5L.txt {path1/} file5.txt[0m
+
+[36m(26)  :[0m [34mtest next bisync - should be no changes except dummy[0m
+[36m(27)  :[0m [34mtest-func[0m
+[36m(28)  :[0m [34mbisync[0m
+INFO  : [2mSetting --ignore-listing-checksum as neither --checksum nor --compare checksum are set.[0m
+INFO  : Bisyncing with Comparison Settings:
+{
+"Modtime": true,
+"Size": true,
+"Checksum": false,
+"NoSlowHash": false,
+"SlowHashSyncOnly": false,
+"DownloadHash": false
+}
+INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Building Path1 and Path2 listings
+INFO  : Path1 checking for diffs
+INFO  : - [36mPath1[0m    [35m[32mFile is new[0m[0m               - [36mfile5.txt[0m
+INFO  : Path1:    1 changes: [32m   1 new[0m, [33m   0 modified[0m, [31m   0 deleted[0m
+INFO  : Path2 checking for diffs
+INFO  : - [34mPath2[0m    [35m[32mFile is new[0m[0m               - [36mfile5.txt[0m
+INFO  : Path2:    1 changes: [32m   1 new[0m, [33m   0 modified[0m, [31m   0 deleted[0m
+INFO  : Applying changes
+INFO  : Checking potential conflicts...
+ERROR : file5.txt: md5 differ
+NOTICE: {path2String}: 1 differences found
+NOTICE: {path2String}: 1 errors while checking
+INFO  : Finished checking the potential conflicts. 1 differences found
+NOTICE: - [34mWARNING[0m  [35mNew or changed in both paths[0m       - [36mfile5.txt[0m
+NOTICE: - [36mPath1[0m    [35mRenaming Path1 copy[0m                - [36m{path1/}file5.txt.conflict5[0m
+NOTICE: - [36mPath1[0m    [35m[32mQueue copy to[0m Path2[0m       - [36m{path2/}file5.txt.conflict5[0m
+NOTICE: - [34mPath2[0m    [35mRenaming Path2 copy[0m                - [36m{path2/}file5.txt.conflict6[0m
+NOTICE: - [34mPath2[0m    [35m[32mQueue copy to[0m Path1[0m       - [36m{path1/}file5.txt.conflict6[0m
+INFO  : - [34mPath2[0m    [35mDo queued copies to[0m                - [36mPath1[0m
+INFO  : - [36mPath1[0m    [35mDo queued copies to[0m                - [36mPath2[0m
+INFO  : Updating listings
+INFO  : Validating listings for Path1 "{path1/}" vs Path2 "{path2/}"
+INFO  : [32mBisync successful[0m

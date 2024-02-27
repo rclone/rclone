@@ -1,8 +1,9 @@
-FROM golang AS builder
+FROM golang:alpine AS builder
 
 COPY . /go/src/github.com/rclone/rclone/
 WORKDIR /go/src/github.com/rclone/rclone/
 
+RUN apk add --no-cache make bash gawk git
 RUN \
   CGO_ENABLED=0 \
   make

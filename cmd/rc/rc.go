@@ -36,14 +36,14 @@ var (
 func init() {
 	cmd.Root.AddCommand(commandDefinition)
 	cmdFlags := commandDefinition.Flags()
-	flags.BoolVarP(cmdFlags, &noOutput, "no-output", "", noOutput, "If set, don't output the JSON result")
-	flags.StringVarP(cmdFlags, &url, "url", "", url, "URL to connect to rclone remote control")
-	flags.StringVarP(cmdFlags, &jsonInput, "json", "", jsonInput, "Input JSON - use instead of key=value args")
-	flags.StringVarP(cmdFlags, &authUser, "user", "", "", "Username to use to rclone remote control")
-	flags.StringVarP(cmdFlags, &authPass, "pass", "", "", "Password to use to connect to rclone remote control")
-	flags.BoolVarP(cmdFlags, &loopback, "loopback", "", false, "If set connect to this rclone instance not via HTTP")
-	flags.StringArrayVarP(cmdFlags, &options, "opt", "o", options, "Option in the form name=value or name placed in the \"opt\" array")
-	flags.StringArrayVarP(cmdFlags, &arguments, "arg", "a", arguments, "Argument placed in the \"arg\" array")
+	flags.BoolVarP(cmdFlags, &noOutput, "no-output", "", noOutput, "If set, don't output the JSON result", "")
+	flags.StringVarP(cmdFlags, &url, "url", "", url, "URL to connect to rclone remote control", "")
+	flags.StringVarP(cmdFlags, &jsonInput, "json", "", jsonInput, "Input JSON - use instead of key=value args", "")
+	flags.StringVarP(cmdFlags, &authUser, "user", "", "", "Username to use to rclone remote control", "")
+	flags.StringVarP(cmdFlags, &authPass, "pass", "", "", "Password to use to connect to rclone remote control", "")
+	flags.BoolVarP(cmdFlags, &loopback, "loopback", "", false, "If set connect to this rclone instance not via HTTP", "")
+	flags.StringArrayVarP(cmdFlags, &options, "opt", "o", options, "Option in the form name=value or name placed in the \"opt\" array", "")
+	flags.StringArrayVarP(cmdFlags, &arguments, "arg", "a", arguments, "Argument placed in the \"arg\" array", "")
 }
 
 var commandDefinition = &cobra.Command{
@@ -168,6 +168,16 @@ func setAlternateFlag(flagName string, output *string) {
 	}
 }
 
+// Format an error and create a synthetic server return from it
+func errorf(status int, path string, format string, arg ...any) (out rc.Params, err error) {
+	err = fmt.Errorf(format, arg...)
+	out = make(rc.Params)
+	out["error"] = err.Error()
+	out["path"] = path
+	out["status"] = status
+	return out, err
+}
+
 // do a call from (path, in) to (out, err).
 //
 // if err is set, out may be a valid error return or it may be nil
@@ -176,16 +186,16 @@ func doCall(ctx context.Context, path string, in rc.Params) (out rc.Params, err 
 	if loopback {
 		call := rc.Calls.Get(path)
 		if call == nil {
-			return nil, fmt.Errorf("method %q not found", path)
+			return errorf(http.StatusBadRequest, path, "loopback: method %q not found", path)
 		}
 		_, out, err := jobs.NewJob(ctx, call.Fn, in)
 		if err != nil {
-			return nil, fmt.Errorf("loopback call failed: %w", err)
+			return errorf(http.StatusInternalServerError, path, "loopback: call failed: %w", err)
 		}
 		// Reshape (serialize then deserialize) the data so it is in the form expected
 		err = rc.Reshape(&out, out)
 		if err != nil {
-			return nil, fmt.Errorf("loopback reshape failed: %w", err)
+			return errorf(http.StatusInternalServerError, path, "loopback: reshape failed: %w", err)
 		}
 		return out, nil
 	}
@@ -195,12 +205,12 @@ func doCall(ctx context.Context, path string, in rc.Params) (out rc.Params, err 
 	url += path
 	data, err := json.Marshal(in)
 	if err != nil {
-		return nil, fmt.Errorf("failed to encode JSON: %w", err)
+		return errorf(http.StatusBadRequest, path, "failed to encode request: %w", err)
 	}
 
 	req, err := http.NewRequestWithContext(ctx, "POST", url, bytes.NewBuffer(data))
 	if err != nil {
-		return nil, fmt.Errorf("failed to make request: %w", err)
+		return errorf(http.StatusInternalServerError, path, "failed to make request: %w", err)
 	}
 
 	req.Header.Set("Content-Type", "application/json")
@@ -210,28 +220,24 @@ func doCall(ctx context.Context, path string, in rc.Params) (out rc.Params, err 
 
 	resp, err := client.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("connection failed: %w", err)
+		return errorf(http.StatusServiceUnavailable, path, "connection failed: %w", err)
 	}
 	defer fs.CheckClose(resp.Body, &err)
 
-	if resp.StatusCode != http.StatusOK {
-		var body []byte
-		body, err = io.ReadAll(resp.Body)
-		var bodyString string
-		if err == nil {
-			bodyString = string(body)
-		} else {
-			bodyString = err.Error()
-		}
-		bodyString = strings.TrimSpace(bodyString)
-		return nil, fmt.Errorf("failed to read rc response: %s: %s", resp.Status, bodyString)
+	// Read response
+	var body []byte
+	var bodyString string
+	body, err = io.ReadAll(resp.Body)
+	bodyString = strings.TrimSpace(string(body))
+	if err != nil {
+		return errorf(resp.StatusCode, "failed to read rc response: %s: %s", resp.Status, bodyString)
 	}
 
 	// Parse output
 	out = make(rc.Params)
-	err = json.NewDecoder(resp.Body).Decode(&out)
+	err = json.NewDecoder(strings.NewReader(bodyString)).Decode(&out)
 	if err != nil {
-		return nil, fmt.Errorf("failed to decode JSON: %w", err)
+		return errorf(resp.StatusCode, path, "failed to decode response: %w: %s", err, bodyString)
 	}
 
 	// Check we got 200 OK

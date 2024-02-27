@@ -32,12 +32,14 @@ func TestNewFs(t *testing.T) {
 	assert.Equal(t, ":mockfs{S_NHG}", f2.Name())
 	assert.Equal(t, "/tmp", f2.Root())
 
-	assert.Equal(t, ":mockfs,potato='true':/tmp", fs.ConfigString(f2))
+	assert.Equal(t, ":mockfs{S_NHG}:/tmp", fs.ConfigString(f2))
+	assert.Equal(t, ":mockfs,potato='true':/tmp", fs.ConfigStringFull(f2))
 
 	f3, err := fs.NewFs(ctx, ":mockfs,potato='true':/tmp")
 	require.NoError(t, err)
 	assert.Equal(t, ":mockfs{S_NHG}", f3.Name())
 	assert.Equal(t, "/tmp", f3.Root())
 
-	assert.Equal(t, ":mockfs,potato='true':/tmp", fs.ConfigString(f3))
+	assert.Equal(t, ":mockfs{S_NHG}:/tmp", fs.ConfigString(f3))
+	assert.Equal(t, ":mockfs,potato='true':/tmp", fs.ConfigStringFull(f3))
 }

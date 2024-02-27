@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"strconv"
 
 	"github.com/rclone/rclone/cmd"
 	"github.com/rclone/rclone/fs"
@@ -19,7 +20,7 @@ var jsonOutput bool
 func init() {
 	cmd.Root.AddCommand(commandDefinition)
 	cmdFlags := commandDefinition.Flags()
-	flags.BoolVarP(cmdFlags, &jsonOutput, "json", "", false, "Format output as JSON")
+	flags.BoolVarP(cmdFlags, &jsonOutput, "json", "", false, "Format output as JSON", "")
 }
 
 var commandDefinition = &cobra.Command{
@@ -46,6 +47,7 @@ of the size command.
 `,
 	Annotations: map[string]string{
 		"versionIntroduced": "v1.23",
+		"groups":            "Filter,Listing",
 	},
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(1, 1, command, args)
@@ -68,7 +70,13 @@ of the size command.
 			if jsonOutput {
 				return json.NewEncoder(os.Stdout).Encode(results)
 			}
-			fmt.Printf("Total objects: %s (%d)\n", fs.CountSuffix(results.Count), results.Count)
+			count := strconv.FormatInt(results.Count, 10)
+			countSuffix := fs.CountSuffix(results.Count).String()
+			if count == countSuffix {
+				fmt.Printf("Total objects: %s\n", count)
+			} else {
+				fmt.Printf("Total objects: %s (%s)\n", countSuffix, count)
+			}
 			fmt.Printf("Total size: %s (%d Byte)\n", fs.SizeSuffix(results.Bytes).ByteUnit(), results.Bytes)
 			if results.Sizeless > 0 {
 				fmt.Printf("Total objects with unknown size: %s (%d)\n", fs.CountSuffix(results.Sizeless), results.Sizeless)

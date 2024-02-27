@@ -60,9 +60,11 @@ func (f *Fs) testUploadFromCrypt(t *testing.T) {
 	assert.NotNil(t, dst)
 
 	// check that hash was created
-	hash, err = f.getRawHash(ctx, hashType, fileName, anyFingerprint, longTime)
-	assert.NoError(t, err)
-	assert.NotEmpty(t, hash)
+	if f.opt.MaxAge > 0 {
+		hash, err = f.getRawHash(ctx, hashType, fileName, anyFingerprint, longTime)
+		assert.NoError(t, err)
+		assert.NotEmpty(t, hash)
+	}
 	//t.Logf("hash is %q", hash)
 	_ = operations.Purge(ctx, f, dirName)
 }

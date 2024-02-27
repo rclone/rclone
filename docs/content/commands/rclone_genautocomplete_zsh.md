@@ -9,7 +9,7 @@ url: /commands/rclone_genautocomplete_zsh/
 
 Output zsh completion script for rclone.
 
-## Synopsis
+# Synopsis
 
 
 Generates a zsh autocompletion script for rclone.
@@ -34,7 +34,7 @@ If output_file is "-", then the output will be written to stdout.
 rclone genautocomplete zsh [output_file] [flags]
 ```
 
-## Options
+# Options
 
 ```
   -h, --help   help for zsh
@@ -42,7 +42,7 @@ rclone genautocomplete zsh [output_file] [flags]
 
 See the [global flags page](/flags/) for global options not listed here.
 
-## SEE ALSO
+# SEE ALSO
 
 * [rclone genautocomplete](/commands/rclone_genautocomplete/)	 - Output completion script for a given shell.
 

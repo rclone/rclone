@@ -47,9 +47,10 @@ rclone link remote:path [flags]
       --unlink            Remove existing public link to file/folder
 ```
 
+
 See the [global flags page](/flags/) for global options not listed here.
 
-## SEE ALSO
+# SEE ALSO
 
 * [rclone](/commands/rclone/)	 - Show help for rclone commands, flags and backends.
 

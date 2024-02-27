@@ -9,8 +9,11 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// Check it satisfies the interface
-var _ flagger = (*Tristate)(nil)
+// Check it satisfies the interfaces
+var (
+	_ flagger   = (*Tristate)(nil)
+	_ flaggerNP = Tristate{}
+)
 
 func TestTristateString(t *testing.T) {
 	for _, test := range []struct {

@@ -99,6 +99,16 @@ type ItemReference struct {
 	DriveType string `json:"driveType"` // Type of the drive,	Read-Only
 }
 
+// GetID returns a normalized ID of the item
+// If DriveID is known it will be prefixed to the ID with # separator
+// Can be parsed using onedrive.parseNormalizedID(normalizedID)
+func (i *ItemReference) GetID() string {
+	if !strings.Contains(i.ID, "#") {
+		return i.DriveID + "#" + i.ID
+	}
+	return i.ID
+}
+
 // RemoteItemFacet groups data needed to reference a OneDrive remote item
 type RemoteItemFacet struct {
 	ID                   string               `json:"id"`                   // The unique identifier of the item within the remote Drive. Read-only.
@@ -185,8 +195,8 @@ type Item struct {
 	Deleted *DeletedFacet `json:"deleted"` // Information about the deleted state of the item. Read-only.
 }
 
-// ViewDeltaResponse is the response to the view delta method
-type ViewDeltaResponse struct {
+// DeltaResponse is the response to the view delta method
+type DeltaResponse struct {
 	Value      []Item `json:"value"`            // An array of Item objects which have been created, modified, or deleted.
 	NextLink   string `json:"@odata.nextLink"`  // A URL to retrieve the next available page of changes.
 	DeltaLink  string `json:"@odata.deltaLink"` // A URL returned instead of @odata.nextLink after all current changes have been returned. Used to read the next set of changes in the future.
@@ -437,4 +447,28 @@ type Version struct {
 // VersionsResponse is returned from /versions
 type VersionsResponse struct {
 	Versions []Version `json:"value"`
+}
+
+// DriveResource is returned from /me/drive
+type DriveResource struct {
+	DriveID   string `json:"id"`
+	DriveName string `json:"name"`
+	DriveType string `json:"driveType"`
+}
+
+// DrivesResponse is returned from /sites/{siteID}/drives",
+type DrivesResponse struct {
+	Drives []DriveResource `json:"value"`
+}
+
+// SiteResource is part of the response from from "/sites/root:"
+type SiteResource struct {
+	SiteID   string `json:"id"`
+	SiteName string `json:"displayName"`
+	SiteURL  string `json:"webUrl"`
+}
+
+// SiteResponse is returned from "/sites/root:"
+type SiteResponse struct {
+	Sites []SiteResource `json:"value"`
 }

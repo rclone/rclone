@@ -1,68 +1,149 @@
-(01)  : test check-sync
+[36m(01)  :[0m [34mtest check-sync[0m
 
 
-(02)  : test initial bisync
-(03)  : bisync resync
+[36m(02)  :[0m [34mtest initial bisync[0m
+[36m(03)  :[0m [34mbisync resync[0m
+INFO  : [2mSetting --ignore-listing-checksum as neither --checksum nor --compare checksum are set.[0m
+INFO  : Bisyncing with Comparison Settings:
+{
+"Modtime": true,
+"Size": true,
+"Checksum": false,
+"NoSlowHash": false,
+"SlowHashSyncOnly": false,
+"DownloadHash": false
+}
 INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
-INFO  : Copying unique Path2 files to Path1
-INFO  : Resynching Path1 to Path2
+INFO  : Copying Path2 files to Path1
+INFO  : - [34mPath2[0m    [35mResync is copying files to[0m         - [36mPath1[0m
+INFO  : - [36mPath1[0m    [35mResync is copying files to[0m         - [36mPath2[0m
 INFO  : Resync updating listings
-INFO  : Bisync successful
-
-(04)  : test 1. run check-sync-only on a clean sync
-(05)  : bisync check-sync-only
 INFO  : Validating listings for Path1 "{path1/}" vs Path2 "{path2/}"
-INFO  : Bisync successful
+INFO  : [32mBisync successful[0m
 
-(06)  : test 2. inject modified listings into the workdir
-(07)  : copy-as {datadir/}_testdir_path1.._testdir_path2.path1.lst {workdir/} {session}.path1.lst
-(08)  : copy-as {datadir/}_testdir_path1.._testdir_path2.path2.lst {workdir/} {session}.path2.lst
-
-(09)  : test 3. run check-sync-only on modified listings
-(10)  : bisync check-sync-only
+[36m(04)  :[0m [34mtest 1. run check-sync-only on a clean sync[0m
+[36m(05)  :[0m [34mbisync check-sync-only[0m
+INFO  : [2mSetting --ignore-listing-checksum as neither --checksum nor --compare checksum are set.[0m
+INFO  : Bisyncing with Comparison Settings:
+{
+"Modtime": true,
+"Size": true,
+"Checksum": false,
+"NoSlowHash": false,
+"SlowHashSyncOnly": false,
+"DownloadHash": false
+}
 INFO  : Validating listings for Path1 "{path1/}" vs Path2 "{path2/}"
-ERROR : -          Path1 file not found in Path2       - file2.txt
-ERROR : -          Path2 file not found in Path1       - file1.txt
-ERROR : Bisync critical error: path1 and path2 are out of sync, run --resync to recover
-ERROR : Bisync aborted. Must run --resync to recover.
+INFO  : [32mBisync successful[0m
+
+[36m(06)  :[0m [34mtest 2. inject modified listings into the workdir[0m
+[36m(07)  :[0m [34mcopy-as {datadir/}_testdir_path1.._testdir_path2.path1.lst {workdir/} {session}.path1.lst[0m
+[36m(08)  :[0m [34mcopy-as {datadir/}_testdir_path1.._testdir_path2.path2.lst {workdir/} {session}.path2.lst[0m
+
+[36m(09)  :[0m [34mtest 3. run check-sync-only on modified listings[0m
+[36m(10)  :[0m [34mbisync check-sync-only[0m
+INFO  : [2mSetting --ignore-listing-checksum as neither --checksum nor --compare checksum are set.[0m
+INFO  : Bisyncing with Comparison Settings:
+{
+"Modtime": true,
+"Size": true,
+"Checksum": false,
+"NoSlowHash": false,
+"SlowHashSyncOnly": false,
+"DownloadHash": false
+}
+INFO  : Validating listings for Path1 "{path1/}" vs Path2 "{path2/}"
+ERROR : - [34m[0m         [35mPath1 file not found in Path2[0m      - [36mfile2.txt[0m
+ERROR : - [34m[0m         [35mPath2 file not found in Path1[0m      - [36mfile1.txt[0m
+ERROR : [31mBisync critical error: path1 and path2 are out of sync, run --resync to recover[0m
+ERROR : [31mBisync aborted. Must run --resync to recover.[0m
 Bisync error: bisync aborted
-(11)  : copy-listings check-sync-only
+[36m(11)  :[0m [34mcopy-listings check-sync-only[0m
 
-(12)  : test 4. run normal sync to check that it aborts
-(13)  : bisync
+[36m(12)  :[0m [34mtest 4. run normal sync to check that it aborts[0m
+[36m(13)  :[0m [34mbisync[0m
+INFO  : [2mSetting --ignore-listing-checksum as neither --checksum nor --compare checksum are set.[0m
+INFO  : Bisyncing with Comparison Settings:
+{
+"Modtime": true,
+"Size": true,
+"Checksum": false,
+"NoSlowHash": false,
+"SlowHashSyncOnly": false,
+"DownloadHash": false
+}
 INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
-ERROR : Bisync critical error: cannot find prior Path1 or Path2 listings, likely due to critical error on prior run
-ERROR : Bisync aborted. Must run --resync to recover.
+ERROR : [31mBisync critical error: cannot find prior Path1 or Path2 listings, likely due to critical error on prior run
+[35mTip: here are the filenames we were looking for. Do they exist?
+[0m[36mPath1: [94m{workdir/}{session}.path1.lst[0m
+[0m[36mPath2: [94m{workdir/}{session}.path2.lst[0m
+[0m[35mTry running this command to inspect the work dir:
+[0m[96mrclone lsl "{workdir}"[0m[0m
+ERROR : [31mBisync aborted. Must run --resync to recover.[0m
 Bisync error: bisync aborted
 
-(14)  : test 5. prune failure listings after critical abort
-(15)  : delete-glob {workdir/} *.lst
-(16)  : delete-glob {workdir/} *.lst-err
-(17)  : delete-glob {workdir/} *.lst-new
+[36m(14)  :[0m [34mtest 5. prune failure listings after critical abort[0m
+[36m(15)  :[0m [34mdelete-glob {workdir/} *.lst[0m
+[36m(16)  :[0m [34mdelete-glob {workdir/} *.lst-err[0m
+[36m(17)  :[0m [34mdelete-glob {workdir/} *.lst-new[0m
 
-(18)  : test 6. run resync
-(19)  : bisync resync
+[36m(18)  :[0m [34mtest 6. run resync[0m
+[36m(19)  :[0m [34mbisync resync[0m
+INFO  : [2mSetting --ignore-listing-checksum as neither --checksum nor --compare checksum are set.[0m
+INFO  : Bisyncing with Comparison Settings:
+{
+"Modtime": true,
+"Size": true,
+"Checksum": false,
+"NoSlowHash": false,
+"SlowHashSyncOnly": false,
+"DownloadHash": false
+}
 INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
-INFO  : Copying unique Path2 files to Path1
-INFO  : Resynching Path1 to Path2
+INFO  : Copying Path2 files to Path1
+INFO  : - [34mPath2[0m    [35mResync is copying files to[0m         - [36mPath1[0m
+INFO  : - [36mPath1[0m    [35mResync is copying files to[0m         - [36mPath2[0m
 INFO  : Resync updating listings
-INFO  : Bisync successful
+INFO  : Validating listings for Path1 "{path1/}" vs Path2 "{path2/}"
+INFO  : [32mBisync successful[0m
 
-(20)  : test 7. run normal sync with check-sync enabled (default)
-(21)  : bisync
+[36m(20)  :[0m [34mtest 7. run normal sync with check-sync enabled (default)[0m
+[36m(21)  :[0m [34mbisync[0m
+INFO  : [2mSetting --ignore-listing-checksum as neither --checksum nor --compare checksum are set.[0m
+INFO  : Bisyncing with Comparison Settings:
+{
+"Modtime": true,
+"Size": true,
+"Checksum": false,
+"NoSlowHash": false,
+"SlowHashSyncOnly": false,
+"DownloadHash": false
+}
 INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Building Path1 and Path2 listings
 INFO  : Path1 checking for diffs
 INFO  : Path2 checking for diffs
 INFO  : No changes found
 INFO  : Updating listings
 INFO  : Validating listings for Path1 "{path1/}" vs Path2 "{path2/}"
-INFO  : Bisync successful
+INFO  : [32mBisync successful[0m
 
-(22)  : test 8. run normal sync with no-check-sync
-(23)  : bisync no-check-sync
+[36m(22)  :[0m [34mtest 8. run normal sync with no-check-sync[0m
+[36m(23)  :[0m [34mbisync no-check-sync[0m
+INFO  : [2mSetting --ignore-listing-checksum as neither --checksum nor --compare checksum are set.[0m
+INFO  : Bisyncing with Comparison Settings:
+{
+"Modtime": true,
+"Size": true,
+"Checksum": false,
+"NoSlowHash": false,
+"SlowHashSyncOnly": false,
+"DownloadHash": false
+}
 INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Building Path1 and Path2 listings
 INFO  : Path1 checking for diffs
 INFO  : Path2 checking for diffs
 INFO  : No changes found
 INFO  : Updating listings
-INFO  : Bisync successful
+INFO  : [32mBisync successful[0m

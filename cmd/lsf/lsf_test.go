@@ -8,6 +8,7 @@ import (
 	_ "github.com/rclone/rclone/backend/local"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/list"
+	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/fstest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -207,6 +208,85 @@ func TestWholeLsf(t *testing.T) {
 	}
 	for _, item := range itemsInSubdir {
 		expectedOutput = append(expectedOutput, item.ModTime(context.Background()).Format("2006-01-02 15:04:05"))
+	}
+
+	assert.Equal(t, `file1_+_0_+_`+expectedOutput[0]+`
+file2_+_321_+_`+expectedOutput[1]+`
+file3_+_1234_+_`+expectedOutput[2]+`
+subdir/_+_-1_+_`+expectedOutput[3]+`
+subdir/file1_+_0_+_`+expectedOutput[4]+`
+subdir/file2_+_1_+_`+expectedOutput[5]+`
+subdir/file3_+_111_+_`+expectedOutput[6]+`
+`, buf.String())
+
+	format = ""
+	separator = ""
+	recurse = false
+	dirSlash = false
+}
+
+func TestTimeFormat(t *testing.T) {
+	fstest.Initialise()
+	f, err := fs.NewFs(context.Background(), "testfiles")
+	require.NoError(t, err)
+	format = "pst"
+	separator = "_+_"
+	recurse = true
+	dirSlash = true
+	timeFormat = "Jan 2, 2006 at 3:04pm (MST)"
+
+	buf := new(bytes.Buffer)
+	err = Lsf(context.Background(), f, buf)
+	require.NoError(t, err)
+
+	items, _ := list.DirSorted(context.Background(), f, true, "")
+	itemsInSubdir, _ := list.DirSorted(context.Background(), f, true, "subdir")
+	var expectedOutput []string
+	for _, item := range items {
+		expectedOutput = append(expectedOutput, item.ModTime(context.Background()).Format(timeFormat))
+	}
+	for _, item := range itemsInSubdir {
+		expectedOutput = append(expectedOutput, item.ModTime(context.Background()).Format(timeFormat))
+	}
+
+	assert.Equal(t, `file1_+_0_+_`+expectedOutput[0]+`
+file2_+_321_+_`+expectedOutput[1]+`
+file3_+_1234_+_`+expectedOutput[2]+`
+subdir/_+_-1_+_`+expectedOutput[3]+`
+subdir/file1_+_0_+_`+expectedOutput[4]+`
+subdir/file2_+_1_+_`+expectedOutput[5]+`
+subdir/file3_+_111_+_`+expectedOutput[6]+`
+`, buf.String())
+
+	format = ""
+	separator = ""
+	recurse = false
+	dirSlash = false
+}
+
+func TestTimeFormatMax(t *testing.T) {
+	fstest.Initialise()
+	f, err := fs.NewFs(context.Background(), "testfiles")
+	require.NoError(t, err)
+	format = "pst"
+	separator = "_+_"
+	recurse = true
+	dirSlash = true
+	timeFormat = "max"
+	precision := operations.FormatForLSFPrecision(f.Precision())
+
+	buf := new(bytes.Buffer)
+	err = Lsf(context.Background(), f, buf)
+	require.NoError(t, err)
+
+	items, _ := list.DirSorted(context.Background(), f, true, "")
+	itemsInSubdir, _ := list.DirSorted(context.Background(), f, true, "subdir")
+	var expectedOutput []string
+	for _, item := range items {
+		expectedOutput = append(expectedOutput, item.ModTime(context.Background()).Format(precision))
+	}
+	for _, item := range itemsInSubdir {
+		expectedOutput = append(expectedOutput, item.ModTime(context.Background()).Format(precision))
 	}
 
 	assert.Equal(t, `file1_+_0_+_`+expectedOutput[0]+`
