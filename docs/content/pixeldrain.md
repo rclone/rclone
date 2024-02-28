@@ -8,21 +8,23 @@ versionIntroduced: "v1.66"
 
 This is the backend for Pixeldrain's premium filesystem feature. This is not the
 same as pixeldrain's free file sharing product. The filesystem requires either a
-Persistence subscription or the Prepaid plan. [More information on
+Pro subscription or the Prepaid plan. [More information on
 subscriptions](https://pixeldrain.com/#pro).
 
-**EXPERIMENTAL**: Pixeldrain's filesystem is still in development and is
-currently in closed beta. For that reason it is not advertised anywhere on the
-website. Use at your own risk, things may break and data loss may occur. If you
-do run into problems, please report it on our [issue
-tracker](https://github.com/Fornaxian/pixeldrain_web/issues).
+An overview of the filesystem's features and limitations is available in the
+[filesystem guide](https://pixeldrain.com/filesystem) on pixeldrain.
+
+*EXPERIMENTAL*: Pixeldrain's filesystem is still in development and is
+currently in public beta. If you do run into problems, please report it on our
+[issue tracker](https://github.com/Fornaxian/pixeldrain_web/issues) or our
+[Discord forum](https://discord.gg/UDjaBGwr4p).
 
 ### Usage with account
 
 To use the personal filesystem you will need a [pixeldrain
-account](https://pixeldrain.com/register) and either a Prepaid or Persistence
-paid subscription. After registering and subscribing, your personal filesystem
-will be available at this link: https://pixeldrain.com/d/me.
+account](https://pixeldrain.com/register) and either the Prepaid plan or one of
+the Patreon-based subscriptions. After registering and subscribing, your
+personal filesystem will be available at this link: https://pixeldrain.com/d/me.
 
 Go to the [API keys page](https://pixeldrain.com/user/api_keys) on your account
 and generate a new API key for rclone. Then run `rclone config` and use the API
@@ -147,6 +149,17 @@ Properties:
 - Env Var:     RCLONE_PIXELDRAIN_API_URL
 - Type:        string
 - Default:     "https://pixeldrain.com/api"
+
+#### --pixeldrain-description
+
+Description of the remote
+
+Properties:
+
+- Config:      description
+- Env Var:     RCLONE_PIXELDRAIN_DESCRIPTION
+- Type:        string
+- Required:    false
 
 ### Metadata
 
