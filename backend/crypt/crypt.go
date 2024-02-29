@@ -566,7 +566,10 @@ func (f *Fs) MkdirMetadata(ctx context.Context, dir string, metadata fs.Metadata
 		return nil, err
 	}
 	var entries = make(fs.DirEntries, 0, 1)
-	f.addDir(ctx, &entries, newDir)
+	err = f.addDir(ctx, &entries, newDir)
+	if err != nil {
+		return nil, err
+	}
 	newDir, ok := entries[0].(fs.Directory)
 	if !ok {
 		return nil, fmt.Errorf("internal error: expecting %T to be fs.Directory", entries[0])
