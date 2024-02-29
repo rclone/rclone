@@ -89,9 +89,10 @@ type syncCopyMove struct {
 	setDirMetadata         bool                   // if set we set the directory metadata
 	setDirModTime          bool                   // if set we set the directory modtimes
 	setDirModTimeAfter     bool                   // if set we set the directory modtimes at the end of the sync
-	setDirModTimeMu        sync.Mutex             // protect setDirModTimeMu
+	setDirModTimeMu        sync.Mutex             // protect setDirModTimes and modifiedDirs
 	setDirModTimes         []setDirModTime        // directories that need their modtime set
 	setDirModTimesMaxLevel int                    // max level of the directories to set
+	modifiedDirs           map[string]struct{}    // dirs with changed contents (if s.setDirModTimeAfter)
 }
 
 // For keeping track of delayed modtime sets
@@ -155,6 +156,7 @@ func newSyncCopyMove(ctx context.Context, fdst, fsrc fs.Fs, deleteMode fs.Delete
 		setDirMetadata:         ci.Metadata && fsrc.Features().ReadDirMetadata && fdst.Features().WriteDirMetadata,
 		setDirModTime:          fdst.Features().WriteDirSetModTime || fdst.Features().MkdirMetadata != nil || fdst.Features().DirSetModTime != nil,
 		setDirModTimeAfter:     fdst.Features().DirModTimeUpdatesOnWrite,
+		modifiedDirs:           make(map[string]struct{}),
 	}
 
 	s.logger, s.usingLogger = operations.GetLogger(ctx)
@@ -399,6 +401,11 @@ func (s *syncCopyMove) pairChecker(in *pipe, out *pipe, fraction int, wg *sync.W
 					fs.Errorf(pair.Dst, "Source and destination exist but do not match: %v", err)
 					s.processError(err)
 				} else {
+					if pair.Dst != nil {
+						s.markDirModifiedObject(pair.Dst)
+					} else {
+						s.markDirModifiedObject(src)
+					}
 					// If destination already exists, then we must move it into --backup-dir if required
 					if pair.Dst != nil && s.backupDir != nil {
 						err := operations.MoveBackupDir(s.ctx, s.backupDir, pair.Dst)
@@ -764,7 +771,6 @@ func (s *syncCopyMove) renameID(obj fs.Object, renamesStrategy trackRenamesStrat
 	if renamesStrategy.hash() {
 		var err error
 		hash, err := obj.Hash(s.ctx, s.commonHash)
-
 		if err != nil {
 			fs.Debugf(obj, "Hash failed: %v", err)
 			return ""
@@ -1079,6 +1085,26 @@ func (s *syncCopyMove) DstOnly(dst fs.DirEntry) (recurse bool) {
 	return false
 }
 
+// keeps track of dirs with changed contents, to avoid setting modtimes on dirs that haven't changed
+func (s *syncCopyMove) markDirModified(dir string) {
+	if !s.setDirModTimeAfter {
+		return
+	}
+	s.setDirModTimeMu.Lock()
+	defer s.setDirModTimeMu.Unlock()
+	s.modifiedDirs[dir] = struct{}{}
+}
+
+// like markDirModified, but accepts an Object instead of a string.
+// the marked dir will be this object's parent.
+func (s *syncCopyMove) markDirModifiedObject(o fs.Object) {
+	dir := path.Dir(o.Remote())
+	if dir == "." {
+		dir = ""
+	}
+	s.markDirModified(dir)
+}
+
 // copyDirMetadata copies the src directory modTime or Metadata to dst
 // or f if nil. If dst is nil then it uses dir as the name of the new
 // directory.
@@ -1087,17 +1113,25 @@ func (s *syncCopyMove) DstOnly(dst fs.DirEntry) (recurse bool) {
 // be nil.
 func (s *syncCopyMove) copyDirMetadata(ctx context.Context, f fs.Fs, dst fs.Directory, dir string, src fs.Directory) (newDst fs.Directory) {
 	var err error
-	if s.setDirMetadata {
-		newDst, err = operations.CopyDirMetadata(ctx, f, dst, dir, src)
-	} else if s.setDirModTime {
-		if dst == nil {
-			newDst, err = operations.MkdirModTime(ctx, f, dir, src.ModTime(ctx))
-		} else {
-			newDst, err = operations.SetDirModTime(ctx, f, dst, dir, src.ModTime(ctx))
+	equal := operations.DirsEqual(ctx, src, dst, operations.DirsEqualOpt{ModifyWindow: s.modifyWindow, SetDirModtime: s.setDirModTime, SetDirMetadata: s.setDirMetadata})
+	if !s.setDirModTimeAfter && equal {
+		return nil
+	}
+	if s.setDirModTimeAfter && equal {
+		newDst = dst
+	} else {
+		if s.setDirMetadata {
+			newDst, err = operations.CopyDirMetadata(ctx, f, dst, dir, src)
+		} else if s.setDirModTime {
+			if dst == nil {
+				newDst, err = operations.MkdirModTime(ctx, f, dir, src.ModTime(ctx))
+			} else {
+				newDst, err = operations.SetDirModTime(ctx, f, dst, dir, src.ModTime(ctx))
+			}
+		} else if dst == nil {
+			// Create the directory if it doesn't exist
+			err = operations.Mkdir(ctx, f, dir)
 		}
-	} else if dst == nil {
-		// Create the directory if it doesn't exist
-		err = operations.Mkdir(ctx, f, dir)
 	}
 	// If we need to set modtime after and we created a dir, then save it for later
 	if s.setDirModTime && s.setDirModTimeAfter && err == nil {
@@ -1138,7 +1172,7 @@ func (s *syncCopyMove) setDelayedDirModTimes(ctx context.Context) error {
 	// Timestamp all directories at the same level in parallel, deepest first
 	// We do this by iterating the slice multiple times to save memory
 	// There could be a lot of directories in this slice.
-	var errCount = errcount.New()
+	errCount := errcount.New()
 	for level := s.setDirModTimesMaxLevel; level >= 0; level-- {
 		g, gCtx := errgroup.WithContext(ctx)
 		g.SetLimit(s.ci.Checkers)
@@ -1151,6 +1185,9 @@ func (s *syncCopyMove) setDelayedDirModTimes(ctx context.Context) error {
 				break
 			}
 			item := item
+			if _, ok := s.modifiedDirs[item.dir]; !ok {
+				continue
+			}
 			g.Go(func() error {
 				_, err := operations.SetDirModTime(gCtx, s.fdst, item.dst, item.dir, item.modTime)
 				if err != nil {
@@ -1201,6 +1238,7 @@ func (s *syncCopyMove) SrcOnly(src fs.DirEntry) (recurse bool) {
 			if !NoNeedTransfer {
 				// No need to check since doesn't exist
 				fs.Debugf(src, "Need to transfer - File not found at Destination")
+				s.markDirModifiedObject(x)
 				ok := s.toBeUploaded.Put(s.inCtx, fs.ObjectPair{Src: x, Dst: nil})
 				if !ok {
 					return
@@ -1217,6 +1255,7 @@ func (s *syncCopyMove) SrcOnly(src fs.DirEntry) (recurse bool) {
 		s.srcEmptyDirsMu.Unlock()
 
 		// Create the directory and make sure the Metadata/ModTime is correct
+		s.markDirModified(x.Remote())
 		s.copyDirMetadata(s.ctx, s.fdst, nil, x.Remote(), x)
 		return true
 	default:
