@@ -1754,3 +1754,74 @@ func TestSetDirModTime(t *testing.T) {
 	}
 	fstest.CheckDirModTime(ctx, t, r.Fremote, fstest.NewDirectory(ctx, t, r.Fremote, name), t2)
 }
+
+func TestDirsEqual(t *testing.T) {
+	ctx := context.Background()
+	ctx, ci := fs.AddConfig(ctx)
+	ci.Metadata = true
+	r := fstest.NewRun(t)
+	if !r.Fremote.Features().WriteDirMetadata && r.Fremote.Features().MkdirMetadata == nil {
+		t.Skip("Skipping test as remote does not support WriteDirMetadata or MkdirMetadata")
+	}
+
+	opt := operations.DirsEqualOpt{
+		ModifyWindow:   fs.GetModifyWindow(ctx, r.Flocal, r.Fremote),
+		SetDirModtime:  true,
+		SetDirMetadata: true,
+	}
+
+	// Create a source local directory with metadata
+	src, err := operations.MkdirMetadata(ctx, r.Flocal, "dir with metadata to be copied", testMetadata)
+	require.NoError(t, err)
+	require.NotNil(t, src)
+
+	// try with nil dst -- should be false
+	equal := operations.DirsEqual(ctx, src, nil, opt)
+	assert.False(t, equal)
+
+	// make a dest with an equal modtime
+	dst, err := operations.MkdirModTime(ctx, r.Fremote, "dst", src.ModTime(ctx))
+	require.NoError(t, err)
+
+	// try with equal modtimes -- should be true
+	equal = operations.DirsEqual(ctx, src, dst, opt)
+	assert.True(t, equal)
+
+	// try with unequal modtimes -- should be false
+	dst, err = operations.SetDirModTime(ctx, r.Fremote, dst, "", t2)
+	require.NoError(t, err)
+	equal = operations.DirsEqual(ctx, src, dst, opt)
+	assert.False(t, equal)
+
+	// try with unequal modtimes that are within modify window -- should be true
+	halfWindow := opt.ModifyWindow / 2
+	dst, err = operations.SetDirModTime(ctx, r.Fremote, dst, "", src.ModTime(ctx).Add(halfWindow))
+	require.NoError(t, err)
+	equal = operations.DirsEqual(ctx, src, dst, opt)
+	assert.True(t, equal)
+
+	// test ignoretimes -- should be false
+	ci.IgnoreTimes = true
+	equal = operations.DirsEqual(ctx, src, dst, opt)
+	assert.False(t, equal)
+
+	// test immutable -- should be true
+	ci.IgnoreTimes = false
+	ci.Immutable = true
+	dst, err = operations.SetDirModTime(ctx, r.Fremote, dst, "", t3)
+	require.NoError(t, err)
+	equal = operations.DirsEqual(ctx, src, dst, opt)
+	assert.True(t, equal)
+
+	// test dst newer than src with --update -- should be true
+	ci.Immutable = false
+	ci.UpdateOlder = true
+	equal = operations.DirsEqual(ctx, src, dst, opt)
+	assert.True(t, equal)
+
+	// test no SetDirModtime or SetDirMetadata -- should be true
+	ci.UpdateOlder = false
+	opt.SetDirMetadata, opt.SetDirModtime = false, false
+	equal = operations.DirsEqual(ctx, src, dst, opt)
+	assert.True(t, equal)
+}
