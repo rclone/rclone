@@ -1748,6 +1748,9 @@ func TestSetDirModTime(t *testing.T) {
 	require.NotNil(t, newDst)
 
 	// Check the returned directory and one read from the listing
-	fstest.CheckDirModTime(ctx, t, r.Fremote, newDst, t2)
+	// The modtime will only be correct on newDst if it had a SetModTime method
+	if _, ok := newDst.(fs.SetModTimer); ok {
+		fstest.CheckDirModTime(ctx, t, r.Fremote, newDst, t2)
+	}
 	fstest.CheckDirModTime(ctx, t, r.Fremote, fstest.NewDirectory(ctx, t, r.Fremote, name), t2)
 }
