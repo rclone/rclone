@@ -1680,7 +1680,10 @@ func TestMkdirModTime(t *testing.T) {
 	require.NoError(t, err)
 
 	// Check the returned directory and one read from the listing
-	fstest.CheckDirModTime(ctx, t, r.Fremote, newDst, t2)
+	// newDst may be nil here depending on how the modtime was set
+	if newDst != nil {
+		fstest.CheckDirModTime(ctx, t, r.Fremote, newDst, t2)
+	}
 	fstest.CheckDirModTime(ctx, t, r.Fremote, fstest.NewDirectory(ctx, t, r.Fremote, name), t2)
 }
 

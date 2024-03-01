@@ -1015,11 +1015,12 @@ func MkdirMetadata(ctx context.Context, f fs.Fs, dir string, metadata fs.Metadat
 
 // MkdirModTime makes a destination directory or container with modtime
 //
-// If the destination Fs doesn't support this it will fall back to
-// Mkdir and in this case newDst will be nil.
+// It will try to make the directory with MkdirMetadata and if that
+// succeeds it will return a non-nil newDst. In all other cases newDst
+// will be nil.
 //
 // If the directory was created with MkDir then it will attempt to use
-// Fs.DirSetModTime if available.
+// Fs.DirSetModTime to update the directory modtime if available.
 func MkdirModTime(ctx context.Context, f fs.Fs, dir string, modTime time.Time) (newDst fs.Directory, err error) {
 	logName := fs.LogDirName(f, dir)
 	if SkipDestructive(ctx, logName, "make directory") {
