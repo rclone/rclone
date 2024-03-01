@@ -602,6 +602,10 @@ func CheckEntryMetadata(ctx context.Context, t *testing.T, f fs.Fs, entry fs.Dir
 
 // CheckDirModTime checks the modtime on the directory
 func CheckDirModTime(ctx context.Context, t *testing.T, f fs.Fs, dir fs.Directory, wantT time.Time) {
+	if f.Features().DirSetModTime == nil && f.Features().MkdirMetadata == nil {
+		fs.Debugf(f, "Skipping modtime test as remote does not support DirSetModTime or MkdirMetadata")
+		return
+	}
 	gotT := dir.ModTime(ctx)
 	AssertTimeEqualWithPrecision(t, dir.Remote(), wantT, gotT, f.Precision())
 }

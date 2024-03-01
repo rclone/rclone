@@ -340,8 +340,7 @@ func TestMoveEmptyDirectories(t *testing.T) {
 	// Note that "sub dir" mod time is updated when file1 is deleted from it
 	// So check it more manually
 	got := fstest.NewDirectory(ctx, t, r.Fremote, "sub dir")
-	gotT := got.ModTime(ctx)
-	fstest.AssertTimeEqualWithPrecision(t, subDir.Remote(), subDirT, gotT, fs.GetModifyWindow(ctx, r.Fremote, r.Flocal))
+	fstest.CheckDirModTime(ctx, t, r.Fremote, got, subDirT)
 }
 
 // Test sync empty directories

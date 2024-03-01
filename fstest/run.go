@@ -370,9 +370,7 @@ func (r *Run) CheckDirectoryModTimes(t *testing.T, names ...string) {
 	for _, name := range names {
 		wantT := NewDirectory(ctx, t, r.Flocal, name).ModTime(ctx)
 		got := NewDirectory(ctx, t, r.Fremote, name)
-		gotT := got.ModTime(ctx)
-		fs.Debugf(r.Fremote, "Testing directory mod time of %q: wantT=%v, gotT=%v", name, wantT, gotT)
-		AssertTimeEqualWithPrecision(t, got.Remote(), wantT, gotT, fs.GetModifyWindow(ctx, r.Fremote, r.Flocal))
+		CheckDirModTime(ctx, t, r.Fremote, got, wantT)
 	}
 }
 
