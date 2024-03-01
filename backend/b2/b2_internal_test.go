@@ -1,11 +1,25 @@
 package b2
 
 import (
+	"context"
+	"crypto/sha1"
+	"fmt"
+	"path"
+	"strings"
 	"testing"
 	"time"
 
+	"github.com/rclone/rclone/backend/b2/api"
+	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/cache"
+	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/fstest"
 	"github.com/rclone/rclone/fstest/fstests"
+	"github.com/rclone/rclone/lib/bucket"
+	"github.com/rclone/rclone/lib/random"
+	"github.com/rclone/rclone/lib/version"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 // Test b2 string encoding
@@ -170,9 +184,234 @@ func TestParseTimeString(t *testing.T) {
 
 }
 
+// This is adapted from the s3 equivalent.
+func (f *Fs) InternalTestMetadata(t *testing.T) {
+	ctx := context.Background()
+	original := random.String(1000)
+	contents := fstest.Gz(t, original)
+	mimeType := "text/html"
+
+	item := fstest.NewItem("test-metadata", contents, fstest.Time("2001-05-06T04:05:06.499Z"))
+	btime := time.Now()
+	obj := fstests.PutTestContentsMetadata(ctx, t, f, &item, contents, true, mimeType, nil)
+	defer func() {
+		assert.NoError(t, obj.Remove(ctx))
+	}()
+	o := obj.(*Object)
+	gotMetadata, err := o.getMetaData(ctx)
+	require.NoError(t, err)
+
+	// We currently have a limited amount of metadata to test with B2
+	assert.Equal(t, mimeType, gotMetadata.ContentType, "Content-Type")
+
+	// Modification time from the x-bz-info-src_last_modified_millis header
+	var mtime api.Timestamp
+	err = mtime.UnmarshalJSON([]byte(gotMetadata.Info[timeKey]))
+	if err != nil {
+		fs.Debugf(o, "Bad "+timeHeader+" header: %v", err)
+	}
+	assert.Equal(t, item.ModTime, time.Time(mtime), "Modification time")
+
+	// Upload time
+	gotBtime := time.Time(gotMetadata.UploadTimestamp)
+	dt := gotBtime.Sub(btime)
+	assert.True(t, dt < time.Minute && dt > -time.Minute, fmt.Sprintf("btime more than 1 minute out want %v got %v delta %v", btime, gotBtime, dt))
+
+	t.Run("GzipEncoding", func(t *testing.T) {
+		// Test that the gzipped file we uploaded can be
+		// downloaded
+		checkDownload := func(wantContents string, wantSize int64, wantHash string) {
+			gotContents := fstests.ReadObject(ctx, t, o, -1)
+			assert.Equal(t, wantContents, gotContents)
+			assert.Equal(t, wantSize, o.Size())
+			gotHash, err := o.Hash(ctx, hash.SHA1)
+			require.NoError(t, err)
+			assert.Equal(t, wantHash, gotHash)
+		}
+
+		t.Run("NoDecompress", func(t *testing.T) {
+			checkDownload(contents, int64(len(contents)), sha1Sum(t, contents))
+		})
+	})
+}
+
+func sha1Sum(t *testing.T, s string) string {
+	hash := sha1.Sum([]byte(s))
+	return fmt.Sprintf("%x", hash)
+}
+
+// This is adapted from the s3 equivalent.
+func (f *Fs) InternalTestVersions(t *testing.T) {
+	ctx := context.Background()
+
+	// Small pause to make the LastModified different since AWS
+	// only seems to track them to 1 second granularity
+	time.Sleep(2 * time.Second)
+
+	// Create an object
+	const dirName = "versions"
+	const fileName = dirName + "/" + "test-versions.txt"
+	contents := random.String(100)
+	item := fstest.NewItem(fileName, contents, fstest.Time("2001-05-06T04:05:06.499999999Z"))
+	obj := fstests.PutTestContents(ctx, t, f, &item, contents, true)
+	defer func() {
+		assert.NoError(t, obj.Remove(ctx))
+	}()
+	objMetadata, err := obj.(*Object).getMetaData(ctx)
+	require.NoError(t, err)
+
+	// Small pause
+	time.Sleep(2 * time.Second)
+
+	// Remove it
+	assert.NoError(t, obj.Remove(ctx))
+
+	// Small pause to make the LastModified different since AWS only seems to track them to 1 second granularity
+	time.Sleep(2 * time.Second)
+
+	// And create it with different size and contents
+	newContents := random.String(101)
+	newItem := fstest.NewItem(fileName, newContents, fstest.Time("2002-05-06T04:05:06.499999999Z"))
+	newObj := fstests.PutTestContents(ctx, t, f, &newItem, newContents, true)
+	newObjMetadata, err := newObj.(*Object).getMetaData(ctx)
+	require.NoError(t, err)
+
+	t.Run("Versions", func(t *testing.T) {
+		// Set --b2-versions for this test
+		f.opt.Versions = true
+		defer func() {
+			f.opt.Versions = false
+		}()
+
+		// Read the contents
+		entries, err := f.List(ctx, dirName)
+		require.NoError(t, err)
+		tests := 0
+		var fileNameVersion string
+		for _, entry := range entries {
+			t.Log(entry)
+			remote := entry.Remote()
+			if remote == fileName {
+				t.Run("ReadCurrent", func(t *testing.T) {
+					assert.Equal(t, newContents, fstests.ReadObject(ctx, t, entry.(fs.Object), -1))
+				})
+				tests++
+			} else if versionTime, p := version.Remove(remote); !versionTime.IsZero() && p == fileName {
+				t.Run("ReadVersion", func(t *testing.T) {
+					assert.Equal(t, contents, fstests.ReadObject(ctx, t, entry.(fs.Object), -1))
+				})
+				assert.WithinDuration(t, time.Time(objMetadata.UploadTimestamp), versionTime, time.Second, "object time must be with 1 second of version time")
+				fileNameVersion = remote
+				tests++
+			}
+		}
+		assert.Equal(t, 2, tests, "object missing from listing")
+
+		// Check we can read the object with a version suffix
+		t.Run("NewObject", func(t *testing.T) {
+			o, err := f.NewObject(ctx, fileNameVersion)
+			require.NoError(t, err)
+			require.NotNil(t, o)
+			assert.Equal(t, int64(100), o.Size(), o.Remote())
+		})
+
+		// Check we can make a NewFs from that object with a version suffix
+		t.Run("NewFs", func(t *testing.T) {
+			newPath := bucket.Join(fs.ConfigStringFull(f), fileNameVersion)
+			// Make sure --b2-versions is set in the config of the new remote
+			fs.Debugf(nil, "oldPath = %q", newPath)
+			lastColon := strings.LastIndex(newPath, ":")
+			require.True(t, lastColon >= 0)
+			newPath = newPath[:lastColon] + ",versions" + newPath[lastColon:]
+			fs.Debugf(nil, "newPath = %q", newPath)
+			fNew, err := cache.Get(ctx, newPath)
+			// This should return pointing to a file
+			require.Equal(t, fs.ErrorIsFile, err)
+			require.NotNil(t, fNew)
+			// With the directory above
+			assert.Equal(t, dirName, path.Base(fs.ConfigStringFull(fNew)))
+		})
+	})
+
+	t.Run("VersionAt", func(t *testing.T) {
+		// We set --b2-version-at for this test so make sure we reset it at the end
+		defer func() {
+			f.opt.VersionAt = fs.Time{}
+		}()
+
+		var (
+			firstObjectTime  = time.Time(objMetadata.UploadTimestamp)
+			secondObjectTime = time.Time(newObjMetadata.UploadTimestamp)
+		)
+
+		for _, test := range []struct {
+			what     string
+			at       time.Time
+			want     []fstest.Item
+			wantErr  error
+			wantSize int64
+		}{
+			{
+				what:    "Before",
+				at:      firstObjectTime.Add(-time.Second),
+				want:    fstests.InternalTestFiles,
+				wantErr: fs.ErrorObjectNotFound,
+			},
+			{
+				what:     "AfterOne",
+				at:       firstObjectTime.Add(time.Second),
+				want:     append([]fstest.Item{item}, fstests.InternalTestFiles...),
+				wantSize: 100,
+			},
+			{
+				what:    "AfterDelete",
+				at:      secondObjectTime.Add(-time.Second),
+				want:    fstests.InternalTestFiles,
+				wantErr: fs.ErrorObjectNotFound,
+			},
+			{
+				what:     "AfterTwo",
+				at:       secondObjectTime.Add(time.Second),
+				want:     append([]fstest.Item{newItem}, fstests.InternalTestFiles...),
+				wantSize: 101,
+			},
+		} {
+			t.Run(test.what, func(t *testing.T) {
+				f.opt.VersionAt = fs.Time(test.at)
+				t.Run("List", func(t *testing.T) {
+					fstest.CheckListing(t, f, test.want)
+				})
+				// b2 NewObject doesn't work with VersionAt
+				//t.Run("NewObject", func(t *testing.T) {
+				//	gotObj, gotErr := f.NewObject(ctx, fileName)
+				//	assert.Equal(t, test.wantErr, gotErr)
+				//	if gotErr == nil {
+				//		assert.Equal(t, test.wantSize, gotObj.Size())
+				//	}
+				//})
+			})
+		}
+	})
+
+	t.Run("Cleanup", func(t *testing.T) {
+		require.NoError(t, f.cleanUp(ctx, true, false, 0))
+		items := append([]fstest.Item{newItem}, fstests.InternalTestFiles...)
+		fstest.CheckListing(t, f, items)
+		// Set --b2-versions for this test
+		f.opt.Versions = true
+		defer func() {
+			f.opt.Versions = false
+		}()
+		fstest.CheckListing(t, f, items)
+	})
+
+	// Purge gets tested later
+}
+
 // -run TestIntegration/FsMkdir/FsPutFiles/Internal
 func (f *Fs) InternalTest(t *testing.T) {
-	// Internal tests go here
+	t.Run("Metadata", f.InternalTestMetadata)
+	t.Run("Versions", f.InternalTestVersions)
 }
 
 var _ fstests.InternalTester = (*Fs)(nil)
