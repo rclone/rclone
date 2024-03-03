@@ -29,14 +29,15 @@ func (b *bisyncRun) indent(tag, file, msg string) {
 		logf = fs.Logf
 	}
 
+	if b.opt.DryRun {
+		logf = fs.Logf
+	}
+
 	if tag == "Path1" {
 		tag = Color(terminal.CyanFg, "Path1")
-	} else {
-		tag = Color(terminal.BlueFg, tag)
 	}
+
 	msg = Color(terminal.MagentaFg, msg)
-	msg = strings.Replace(msg, "Queue copy to", Color(terminal.GreenFg, "Queue copy to"), -1)
-	msg = strings.Replace(msg, "Queue delete", Color(terminal.RedFg, "Queue delete"), -1)
 	file = Color(terminal.CyanFg, escapePath(file, false))
 	logf(nil, "- %-18s%-43s - %s", tag, msg, file)
 }
