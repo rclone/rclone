@@ -24,7 +24,7 @@ INFO  : Bisyncing with Comparison Settings:
 }
 INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
 INFO  : Copying Path2 files to Path1
-INFO  : - [34mPath2[0m    [35mResync is copying files to[0m         - [36mPath1[0m
+INFO  : - Path2             [35mResync is copying files to[0m         - [36mPath1[0m
 INFO  : subdir_with_ࢺ_: Set directory modification time (using SetModTime)
 INFO  : subdir_with_ࢺ_: Set directory modification time (using SetModTime)
 INFO  : - [36mPath1[0m    [35mResync is copying files to[0m         - [36mPath2[0m
@@ -85,42 +85,42 @@ INFO  : - [36mPath1[0m    [35m[32mFile is new[0m[0m               - [36ms
 INFO  : - [36mPath1[0m    [35m[32mFile is new[0m[0m               - [36msubdir_with_ࢺ_/test.txt[0m
 INFO  : Path1:    7 changes: [32m   6 new[0m, [33m   0 modified[0m, [31m   1 deleted[0m
 INFO  : Path2 checking for diffs
-INFO  : - [34mPath2[0m    [35m[33mFile changed: [35msize (larger)[0m, [35mtime (newer)[0m[0m[0m - [36mfile_enconde_mañana_funcionará.txt[0m
-INFO  : - [34mPath2[0m    [35m[31mFile was deleted[0m[0m          - [36mfilename_contains_ࢺ_.txt[0m
-INFO  : - [34mPath2[0m    [35m[31mFile was deleted[0m[0m          - [36msubdir_with_ࢺ_/filename_contains_ě_.txt[0m
-INFO  : - [34mPath2[0m    [35m[33mFile changed: [35msize (larger)[0m, [35mtime (newer)[0m[0m[0m - [36mРусский.txt[0m
-INFO  : - [34mPath2[0m    [35m[32mFile is new[0m[0m               - [36mNew_top_level_mañana_funcionará.txt[0m
-INFO  : - [34mPath2[0m    [35m[32mFile is new[0m[0m               - [36msubdir with␊white space.txt/file2 with␊white space.txt[0m
-INFO  : - [34mPath2[0m    [35m[32mFile is new[0m[0m               - [36m"subdir_rawchars_␙_\x81_\xfe/file3_␙_\x81_\xfe"[0m
-INFO  : - [34mPath2[0m    [35m[32mFile is new[0m[0m               - [36msubdir_with_ࢺ_/filechangedbothpaths_ࢺ_.txt[0m
-INFO  : - [34mPath2[0m    [35m[32mFile is new[0m[0m               - [36msubdir_with_ࢺ_/filename_contains_ࢺ_p2s.txt[0m
+INFO  : - Path2             [35m[33mFile changed: [35msize (larger)[0m, [35mtime (newer)[0m[0m[0m - [36mfile_enconde_mañana_funcionará.txt[0m
+INFO  : - Path2             [35m[31mFile was deleted[0m[0m          - [36mfilename_contains_ࢺ_.txt[0m
+INFO  : - Path2             [35m[31mFile was deleted[0m[0m          - [36msubdir_with_ࢺ_/filename_contains_ě_.txt[0m
+INFO  : - Path2             [35m[33mFile changed: [35msize (larger)[0m, [35mtime (newer)[0m[0m[0m - [36mРусский.txt[0m
+INFO  : - Path2             [35m[32mFile is new[0m[0m               - [36mNew_top_level_mañana_funcionará.txt[0m
+INFO  : - Path2             [35m[32mFile is new[0m[0m               - [36msubdir with␊white space.txt/file2 with␊white space.txt[0m
+INFO  : - Path2             [35m[32mFile is new[0m[0m               - [36m"subdir_rawchars_␙_\x81_\xfe/file3_␙_\x81_\xfe"[0m
+INFO  : - Path2             [35m[32mFile is new[0m[0m               - [36msubdir_with_ࢺ_/filechangedbothpaths_ࢺ_.txt[0m
+INFO  : - Path2             [35m[32mFile is new[0m[0m               - [36msubdir_with_ࢺ_/filename_contains_ࢺ_p2s.txt[0m
 INFO  : Path2:    9 changes: [32m   5 new[0m, [33m   2 modified[0m, [31m   2 deleted[0m
 INFO  : ([33mModified[0m: [36m   2 newer[0m, [34m   0 older[0m, [36m   2 larger[0m, [34m   0 smaller[0m)
 INFO  : Applying changes
-INFO  : - [36mPath1[0m    [35m[32mQueue copy to[0m Path2[0m       - [36m{path2/}file1_with white space.txt[0m
-INFO  : - [36mPath1[0m    [35m[32mQueue copy to[0m Path2[0m       - [36m{path2/}filename_contains_ࢺ_p1m.txt[0m
-INFO  : - [36mPath1[0m    [35m[32mQueue copy to[0m Path2[0m       - [36m{path2/}subdir_with_ࢺ_/file_with_測試_.txt[0m
-NOTICE: - [34mWARNING[0m  [35mNew or changed in both paths[0m       - [36msubdir_with_ࢺ_/filechangedbothpaths_ࢺ_.txt[0m
+INFO  : - [36mPath1[0m    [35mQueue copy to Path2[0m                - [36m{path2/}file1_with white space.txt[0m
+INFO  : - [36mPath1[0m    [35mQueue copy to Path2[0m                - [36m{path2/}filename_contains_ࢺ_p1m.txt[0m
+INFO  : - [36mPath1[0m    [35mQueue copy to Path2[0m                - [36m{path2/}subdir_with_ࢺ_/file_with_測試_.txt[0m
+NOTICE: - WARNING           [35mNew or changed in both paths[0m       - [36msubdir_with_ࢺ_/filechangedbothpaths_ࢺ_.txt[0m
 NOTICE: - [36mPath1[0m    [35mRenaming Path1 copy[0m                - [36m{path1/}subdir_with_ࢺ_/filechangedbothpaths_ࢺ_.txt.conflict1[0m
-NOTICE: - [36mPath1[0m    [35m[32mQueue copy to[0m Path2[0m       - [36m{path2/}subdir_with_ࢺ_/filechangedbothpaths_ࢺ_.txt.conflict1[0m
-NOTICE: - [34mPath2[0m    [35mRenaming Path2 copy[0m                - [36m{path2/}subdir_with_ࢺ_/filechangedbothpaths_ࢺ_.txt.conflict2[0m
-NOTICE: - [34mPath2[0m    [35m[32mQueue copy to[0m Path1[0m       - [36m{path1/}subdir_with_ࢺ_/filechangedbothpaths_ࢺ_.txt.conflict2[0m
-INFO  : - [36mPath1[0m    [35m[32mQueue copy to[0m Path2[0m       - [36m{path2/}subdir_with_ࢺ_/mañana_funcionará.txt[0m
-INFO  : - [36mPath1[0m    [35m[32mQueue copy to[0m Path2[0m       - [36m{path2/}subdir_with_ࢺ_/test.txt[0m
-INFO  : - [34mPath2[0m    [35m[32mQueue copy to[0m Path1[0m       - [36m{path1/}Русский.txt[0m
-INFO  : - [34mPath2[0m    [35m[32mQueue copy to[0m Path1[0m       - [36m{path1/}New_top_level_mañana_funcionará.txt[0m
-INFO  : - [34mPath2[0m    [35m[32mQueue copy to[0m Path1[0m       - [36m{path1/}file_enconde_mañana_funcionará.txt[0m
-INFO  : - [36mPath1[0m    [35m[31mQueue delete[0m[0m              - [36m{path1/}filename_contains_ࢺ_.txt[0m
-INFO  : - [34mPath2[0m    [35m[32mQueue copy to[0m Path1[0m       - [36m{path1/}subdir with␊white space.txt/file2 with␊white space.txt[0m
-INFO  : - [34mPath2[0m    [35m[32mQueue copy to[0m Path1[0m       - [36m"{path1/}subdir_rawchars_␙_\x81_\xfe/file3_␙_\x81_\xfe"[0m
-INFO  : - [36mPath1[0m    [35m[31mQueue delete[0m[0m              - [36m{path1/}subdir_with_ࢺ_/filename_contains_ě_.txt[0m
-INFO  : - [34mPath2[0m    [35m[32mQueue copy to[0m Path1[0m       - [36m{path1/}subdir_with_ࢺ_/filename_contains_ࢺ_p2s.txt[0m
-INFO  : - [34mPath2[0m    [35mDo queued copies to[0m                - [36mPath1[0m
-INFO  : subdir with␊white space.txt: Made directory with metadata (mtime=2024-02-27T04:53:52.913860529-05:00)
-INFO  : subdir_rawchars_␙_�_�: Made directory with metadata (mtime=2024-02-27T04:53:52.913860529-05:00)
-INFO  : subdir_with_ࢺ_: Set directory modification time (using SetModTime)
+NOTICE: - [36mPath1[0m    [35mQueue copy to Path2[0m                - [36m{path2/}subdir_with_ࢺ_/filechangedbothpaths_ࢺ_.txt.conflict1[0m
+NOTICE: - Path2             [35mRenaming Path2 copy[0m                - [36m{path2/}subdir_with_ࢺ_/filechangedbothpaths_ࢺ_.txt.conflict2[0m
+NOTICE: - Path2             [35mQueue copy to Path1[0m                - [36m{path1/}subdir_with_ࢺ_/filechangedbothpaths_ࢺ_.txt.conflict2[0m
+INFO  : - [36mPath1[0m    [35mQueue copy to Path2[0m                - [36m{path2/}subdir_with_ࢺ_/mañana_funcionará.txt[0m
+INFO  : - [36mPath1[0m    [35mQueue copy to Path2[0m                - [36m{path2/}subdir_with_ࢺ_/test.txt[0m
+INFO  : - Path2             [35mQueue copy to Path1[0m                - [36m{path1/}Русский.txt[0m
+INFO  : - Path2             [35mQueue copy to Path1[0m                - [36m{path1/}New_top_level_mañana_funcionará.txt[0m
+INFO  : - Path2             [35mQueue copy to Path1[0m                - [36m{path1/}file_enconde_mañana_funcionará.txt[0m
+INFO  : - [36mPath1[0m    [35mQueue delete[0m                       - [36m{path1/}filename_contains_ࢺ_.txt[0m
+INFO  : - Path2             [35mQueue copy to Path1[0m                - [36m{path1/}subdir with␊white space.txt/file2 with␊white space.txt[0m
+INFO  : - Path2             [35mQueue copy to Path1[0m                - [36m"{path1/}subdir_rawchars_␙_\x81_\xfe/file3_␙_\x81_\xfe"[0m
+INFO  : - [36mPath1[0m    [35mQueue delete[0m                       - [36m{path1/}subdir_with_ࢺ_/filename_contains_ě_.txt[0m
+INFO  : - Path2             [35mQueue copy to Path1[0m                - [36m{path1/}subdir_with_ࢺ_/filename_contains_ࢺ_p2s.txt[0m
+INFO  : - Path2             [35mDo queued copies to[0m                - [36mPath1[0m
+INFO  : subdir with␊white space.txt: Made directory with metadata
 INFO  : subdir with␊white space.txt: Set directory modification time (using SetModTime)
+INFO  : subdir_rawchars_␙_�_�: Made directory with metadata
 INFO  : subdir_rawchars_␙_�_�: Set directory modification time (using SetModTime)
+INFO  : subdir_with_ࢺ_: Set directory modification time (using SetModTime)
 INFO  : subdir_with_ࢺ_: Set directory modification time (using SetModTime)
 INFO  : - [36mPath1[0m    [35mDo queued copies to[0m                - [36mPath2[0m
 INFO  : subdir_with_ࢺ_: Set directory modification time (using SetModTime)

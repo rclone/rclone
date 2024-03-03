@@ -15,7 +15,7 @@ INFO  : Bisyncing with Comparison Settings:
 }
 INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
 INFO  : Copying Path2 files to Path1
-INFO  : - [34mPath2[0m    [35mResync is copying files to[0m         - [36mPath1[0m
+INFO  : - Path2             [35mResync is copying files to[0m         - [36mPath1[0m
 INFO  : subdir: Set directory modification time (using SetModTime)
 INFO  : subdir: Set directory modification time (using SetModTime)
 INFO  : - [36mPath1[0m    [35mResync is copying files to[0m         - [36mPath2[0m
@@ -55,13 +55,13 @@ INFO  : Path1:    7 changes: [32m   0 new[0m, [33m   7 modified[0m, [31m   
 INFO  : ([33mModified[0m: [36m   7 newer[0m, [34m   0 older[0m)
 INFO  : Path2 checking for diffs
 INFO  : Applying changes
-INFO  : - [36mPath1[0m    [35m[32mQueue copy to[0m Path2[0m       - [36m{path2/}file1.copy1.txt[0m
-INFO  : - [36mPath1[0m    [35m[32mQueue copy to[0m Path2[0m       - [36m{path2/}file1.copy2.txt[0m
-INFO  : - [36mPath1[0m    [35m[32mQueue copy to[0m Path2[0m       - [36m{path2/}file1.copy3.txt[0m
-INFO  : - [36mPath1[0m    [35m[32mQueue copy to[0m Path2[0m       - [36m{path2/}file1.copy4.txt[0m
-INFO  : - [36mPath1[0m    [35m[32mQueue copy to[0m Path2[0m       - [36m{path2/}file1.copy5.txt[0m
-INFO  : - [36mPath1[0m    [35m[32mQueue copy to[0m Path2[0m       - [36m{path2/}file1.txt[0m
-INFO  : - [36mPath1[0m    [35m[32mQueue copy to[0m Path2[0m       - [36m{path2/}subdir/file20.txt[0m
+INFO  : - [36mPath1[0m    [35mQueue copy to Path2[0m                - [36m{path2/}file1.copy1.txt[0m
+INFO  : - [36mPath1[0m    [35mQueue copy to Path2[0m                - [36m{path2/}file1.copy2.txt[0m
+INFO  : - [36mPath1[0m    [35mQueue copy to Path2[0m                - [36m{path2/}file1.copy3.txt[0m
+INFO  : - [36mPath1[0m    [35mQueue copy to Path2[0m                - [36m{path2/}file1.copy4.txt[0m
+INFO  : - [36mPath1[0m    [35mQueue copy to Path2[0m                - [36m{path2/}file1.copy5.txt[0m
+INFO  : - [36mPath1[0m    [35mQueue copy to Path2[0m                - [36m{path2/}file1.txt[0m
+INFO  : - [36mPath1[0m    [35mQueue copy to Path2[0m                - [36m{path2/}subdir/file20.txt[0m
 INFO  : - [36mPath1[0m    [35mDo queued copies to[0m                - [36mPath2[0m
 INFO  : subdir: Set directory modification time (using SetModTime)
 INFO  : subdir: Set directory modification time (using SetModTime)
@@ -130,14 +130,14 @@ INFO  : Path1:    8 changes: [32m   0 new[0m, [33m   8 modified[0m, [31m   
 INFO  : ([33mModified[0m: [36m   1 newer[0m, [34m   7 older[0m)
 INFO  : Path2 checking for diffs
 INFO  : Applying changes
-INFO  : - [36mPath1[0m    [35m[32mQueue copy to[0m Path2[0m       - [36m{path2/}RCLONE_TEST[0m
-INFO  : - [36mPath1[0m    [35m[32mQueue copy to[0m Path2[0m       - [36m{path2/}file1.copy1.txt[0m
-INFO  : - [36mPath1[0m    [35m[32mQueue copy to[0m Path2[0m       - [36m{path2/}file1.copy2.txt[0m
-INFO  : - [36mPath1[0m    [35m[32mQueue copy to[0m Path2[0m       - [36m{path2/}file1.copy3.txt[0m
-INFO  : - [36mPath1[0m    [35m[32mQueue copy to[0m Path2[0m       - [36m{path2/}file1.copy4.txt[0m
-INFO  : - [36mPath1[0m    [35m[32mQueue copy to[0m Path2[0m       - [36m{path2/}file1.copy5.txt[0m
-INFO  : - [36mPath1[0m    [35m[32mQueue copy to[0m Path2[0m       - [36m{path2/}file1.txt[0m
-INFO  : - [36mPath1[0m    [35m[32mQueue copy to[0m Path2[0m       - [36m{path2/}subdir/file20.txt[0m
+INFO  : - [36mPath1[0m    [35mQueue copy to Path2[0m                - [36m{path2/}RCLONE_TEST[0m
+INFO  : - [36mPath1[0m    [35mQueue copy to Path2[0m                - [36m{path2/}file1.copy1.txt[0m
+INFO  : - [36mPath1[0m    [35mQueue copy to Path2[0m                - [36m{path2/}file1.copy2.txt[0m
+INFO  : - [36mPath1[0m    [35mQueue copy to Path2[0m                - [36m{path2/}file1.copy3.txt[0m
+INFO  : - [36mPath1[0m    [35mQueue copy to Path2[0m                - [36m{path2/}file1.copy4.txt[0m
+INFO  : - [36mPath1[0m    [35mQueue copy to Path2[0m                - [36m{path2/}file1.copy5.txt[0m
+INFO  : - [36mPath1[0m    [35mQueue copy to Path2[0m                - [36m{path2/}file1.txt[0m
+INFO  : - [36mPath1[0m    [35mQueue copy to Path2[0m                - [36m{path2/}subdir/file20.txt[0m
 INFO  : - [36mPath1[0m    [35mDo queued copies to[0m                - [36mPath2[0m
 INFO  : subdir: Set directory modification time (using SetModTime)
 INFO  : subdir: Set directory modification time (using SetModTime)

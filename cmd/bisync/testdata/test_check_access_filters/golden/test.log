@@ -20,16 +20,16 @@ INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
 INFO  : Using filters file {workdir/}exclude-other-filtersfile.txt
 INFO  : Storing filters file hash to {workdir/}exclude-other-filtersfile.txt.md5
 INFO  : Copying Path2 files to Path1
-INFO  : - [34mPath2[0m    [35mResync is copying files to[0m         - [36mPath1[0m
-INFO  : subdir: Set directory modification time (using SetModTime)
+INFO  : - Path2             [35mResync is copying files to[0m         - [36mPath1[0m
+INFO  : subdir/subdirB: Set directory modification time (using SetModTime)
 INFO  : subdir/subdirB: Set directory modification time (using SetModTime)
 INFO  : subdir: Set directory modification time (using SetModTime)
-INFO  : subdir/subdirB: Set directory modification time (using SetModTime)
+INFO  : subdir: Set directory modification time (using SetModTime)
 INFO  : - [36mPath1[0m    [35mResync is copying files to[0m         - [36mPath2[0m
-INFO  : subdir: Set directory modification time (using SetModTime)
+INFO  : subdir/subdirB: Set directory modification time (using SetModTime)
 INFO  : subdir/subdirB: Set directory modification time (using SetModTime)
 INFO  : subdir: Set directory modification time (using SetModTime)
-INFO  : subdir/subdirB: Set directory modification time (using SetModTime)
+INFO  : subdir: Set directory modification time (using SetModTime)
 INFO  : Resync updating listings
 INFO  : Validating listings for Path1 "{path1/}" vs Path2 "{path2/}"
 INFO  : [32mBisync successful[0m
@@ -113,11 +113,11 @@ INFO  : Path1 checking for diffs
 INFO  : - [36mPath1[0m    [35m[31mFile was deleted[0m[0m          - [36msubdir/RCLONE_TEST[0m
 INFO  : Path1:    1 changes: [32m   0 new[0m, [33m   0 modified[0m, [31m   1 deleted[0m
 INFO  : Path2 checking for diffs
-INFO  : - [34mPath2[0m    [35m[31mFile was deleted[0m[0m          - [36mRCLONE_TEST[0m
+INFO  : - Path2             [35m[31mFile was deleted[0m[0m          - [36mRCLONE_TEST[0m
 INFO  : Path2:    1 changes: [32m   0 new[0m, [33m   0 modified[0m, [31m   1 deleted[0m
 INFO  : Checking access health
-ERROR : - [34m[0m         [35mAccess test failed: Path1 file not found in Path2[0m - [36mRCLONE_TEST[0m
-ERROR : - [34m[0m         [35mAccess test failed: Path2 file not found in Path1[0m - [36msubdir/RCLONE_TEST[0m
+ERROR : -                   [35mAccess test failed: Path1 file not found in Path2[0m - [36mRCLONE_TEST[0m
+ERROR : -                   [35mAccess test failed: Path2 file not found in Path1[0m - [36msubdir/RCLONE_TEST[0m
 ERROR : [31mBisync critical error: check file check failed[0m
 ERROR : [31mBisync aborted. Must run --resync to recover.[0m
 Bisync error: bisync aborted
@@ -143,24 +143,24 @@ INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
 INFO  : Using filters file {workdir/}include-other-filtersfile.txt
 INFO  : Storing filters file hash to {workdir/}include-other-filtersfile.txt.md5
 INFO  : Copying Path2 files to Path1
-INFO  : - [34mPath2[0m    [35mResync is copying files to[0m         - [36mPath1[0m
-INFO  : subdir: Set directory modification time (using SetModTime)
-INFO  : subdirX: Set directory modification time (using SetModTime)
-INFO  : subdirX/subdirX1: Set directory modification time (using SetModTime)
+INFO  : - Path2             [35mResync is copying files to[0m         - [36mPath1[0m
+INFO  : subdir/subdirB: Set directory modification time (using SetModTime)
 INFO  : subdir/subdirB: Set directory modification time (using SetModTime)
 INFO  : subdir: Set directory modification time (using SetModTime)
-INFO  : subdirX: Set directory modification time (using SetModTime)
+INFO  : subdir: Set directory modification time (using SetModTime)
 INFO  : subdirX/subdirX1: Set directory modification time (using SetModTime)
-INFO  : subdir/subdirB: Set directory modification time (using SetModTime)
+INFO  : subdirX/subdirX1: Set directory modification time (using SetModTime)
+INFO  : subdirX: Set directory modification time (using SetModTime)
+INFO  : subdirX: Set directory modification time (using SetModTime)
 INFO  : - [36mPath1[0m    [35mResync is copying files to[0m         - [36mPath2[0m
-INFO  : subdir: Set directory modification time (using SetModTime)
-INFO  : subdirX: Set directory modification time (using SetModTime)
 INFO  : subdir/subdirB: Set directory modification time (using SetModTime)
-INFO  : subdirX/subdirX1: Set directory modification time (using SetModTime)
-INFO  : subdir: Set directory modification time (using SetModTime)
-INFO  : subdirX: Set directory modification time (using SetModTime)
 INFO  : subdir/subdirB: Set directory modification time (using SetModTime)
+INFO  : subdir: Set directory modification time (using SetModTime)
+INFO  : subdir: Set directory modification time (using SetModTime)
 INFO  : subdirX/subdirX1: Set directory modification time (using SetModTime)
+INFO  : subdirX/subdirX1: Set directory modification time (using SetModTime)
+INFO  : subdirX: Set directory modification time (using SetModTime)
+INFO  : subdirX: Set directory modification time (using SetModTime)
 INFO  : Resync updating listings
 INFO  : Validating listings for Path1 "{path1/}" vs Path2 "{path2/}"
 INFO  : [32mBisync successful[0m
@@ -245,13 +245,13 @@ INFO  : - [36mPath1[0m    [35m[31mFile was deleted[0m[0m          - [36ms
 INFO  : - [36mPath1[0m    [35m[31mFile was deleted[0m[0m          - [36msubdirX/subdirX1/RCLONE_TEST[0m
 INFO  : Path1:    2 changes: [32m   0 new[0m, [33m   0 modified[0m, [31m   2 deleted[0m
 INFO  : Path2 checking for diffs
-INFO  : - [34mPath2[0m    [35m[31mFile was deleted[0m[0m          - [36mRCLONE_TEST[0m
+INFO  : - Path2             [35m[31mFile was deleted[0m[0m          - [36mRCLONE_TEST[0m
 INFO  : Path2:    1 changes: [32m   0 new[0m, [33m   0 modified[0m, [31m   1 deleted[0m
 INFO  : Checking access health
 ERROR : Access test failed: Path1 count 3, Path2 count 4 - RCLONE_TEST
-ERROR : - [34m[0m         [35mAccess test failed: Path1 file not found in Path2[0m - [36mRCLONE_TEST[0m
-ERROR : - [34m[0m         [35mAccess test failed: Path2 file not found in Path1[0m - [36msubdir/RCLONE_TEST[0m
-ERROR : - [34m[0m         [35mAccess test failed: Path2 file not found in Path1[0m - [36msubdirX/subdirX1/RCLONE_TEST[0m
+ERROR : -                   [35mAccess test failed: Path1 file not found in Path2[0m - [36mRCLONE_TEST[0m
+ERROR : -                   [35mAccess test failed: Path2 file not found in Path1[0m - [36msubdir/RCLONE_TEST[0m
+ERROR : -                   [35mAccess test failed: Path2 file not found in Path1[0m - [36msubdirX/subdirX1/RCLONE_TEST[0m
 ERROR : [31mBisync critical error: check file check failed[0m
 ERROR : [31mBisync aborted. Must run --resync to recover.[0m
 Bisync error: bisync aborted
