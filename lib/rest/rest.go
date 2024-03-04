@@ -211,6 +211,11 @@ func ClientWithNoRedirects(c *http.Client) *http.Client {
 	return &clientCopy
 }
 
+// Do calls the internal http.Client.Do method
+func (api *Client) Do(req *http.Request) (*http.Response, error) {
+	return api.c.Do(req)
+}
+
 // Call makes the call and returns the http.Response
 //
 // if err == nil then resp.Body will need to be closed unless
