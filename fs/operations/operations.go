@@ -2587,7 +2587,7 @@ func CopyDirMetadata(ctx context.Context, f fs.Fs, dst fs.Directory, dir string,
 	} else {
 		do, ok := dst.(fs.SetMetadataer)
 		if !ok {
-			return nil, fmt.Errorf("internal error: expecting directory %T from %v to have SetMetadata method: %w", dir, f, fs.ErrorNotImplemented)
+			return nil, fmt.Errorf("internal error: expecting directory %s (%T) from %v to have SetMetadata method: %w", logName, dst, f, fs.ErrorNotImplemented)
 		}
 		err = do.SetMetadata(ctx, metadata)
 		newDst = dst
@@ -2639,5 +2639,5 @@ func SetDirModTime(ctx context.Context, f fs.Fs, dst fs.Directory, dir string, m
 	}
 
 	// Something should have worked so return an error
-	return nil, fmt.Errorf("no method to set directory modtime found for %v (%T): %w", f, dir, fs.ErrorNotImplemented)
+	return nil, fmt.Errorf("no method to set directory modtime found for %v (%T): %w", f, dst, fs.ErrorNotImplemented)
 }
