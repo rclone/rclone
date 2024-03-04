@@ -7,10 +7,13 @@ description: "Rclone Bugs and Limitations"
 
 ## Limitations
 
-### Directory timestamps aren't preserved
+### Directory timestamps aren't preserved on some backends
 
-Rclone doesn't currently preserve the timestamps of directories.  This
-is because rclone only really considers objects when syncing.
+As of `v1.66`, rclone supports syncing directory modtimes, if the backend
+supports it. Some backends do not support it -- see
+[overview](https://rclone.org/overview/) for a complete list. Additionally, note
+that empty directories are not synced by default (this can be enabled with
+`--create-empty-src-dirs`.)
 
 ### Rclone struggles with millions of files in a directory/bucket
 
