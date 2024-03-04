@@ -78,6 +78,9 @@ func (f *File) Open(ctx context.Context, req *fuse.OpenRequest, resp *fuse.OpenR
 	if entry := handle.Node().DirEntry(); entry != nil && entry.Size() < 0 {
 		resp.Flags |= fuse.OpenDirectIO
 	}
+	if f.fsys.opt.DirectIO {
+		resp.Flags |= fuse.OpenDirectIO
+	}
 
 	return &FileHandle{handle}, nil
 }

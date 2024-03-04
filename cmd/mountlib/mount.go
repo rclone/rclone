@@ -52,6 +52,7 @@ type Options struct {
 	DaemonTimeout      time.Duration // OSXFUSE only
 	AsyncRead          bool
 	NetworkMode        bool // Windows only
+	DirectIO           bool // use Direct IO for file access
 	CaseInsensitive    fs.Tristate
 }
 
@@ -145,6 +146,7 @@ func AddFlags(flagSet *pflag.FlagSet) {
 	flags.BoolVarP(flagSet, &Opt.WritebackCache, "write-back-cache", "", Opt.WritebackCache, "Makes kernel buffer writes before sending them to rclone (without this, writethrough caching is used) (not supported on Windows)", "Mount")
 	flags.StringVarP(flagSet, &Opt.DeviceName, "devname", "", Opt.DeviceName, "Set the device name - default is remote:path", "Mount")
 	flags.FVarP(flagSet, &Opt.CaseInsensitive, "mount-case-insensitive", "", "Tell the OS the mount is case insensitive (true) or sensitive (false) regardless of the backend (auto)", "Mount")
+	flags.BoolVarP(flagSet, &Opt.DirectIO, "direct-io", "", Opt.DirectIO, "Use Direct IO, disables caching of data", "Mount")
 	// Windows and OSX
 	flags.StringVarP(flagSet, &Opt.VolumeName, "volname", "", Opt.VolumeName, "Set the volume name (supported on Windows and OSX only)", "Mount")
 	// OSX only
