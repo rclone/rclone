@@ -47,6 +47,9 @@ const (
 	// ConfigTokenURL is the config key used to store the token server endpoint
 	ConfigTokenURL = "token_url"
 
+	// ConfigDeviceURL is the config key used to store the device flow server endpoint
+	ConfigDeviceURL = "device_url"
+
 	// ConfigEncoding is the config key to change the encoding for a backend
 	ConfigEncoding = "encoding"
 
