@@ -813,7 +813,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 	if f.root == "" && dir == "" {
 		entries = make(fs.DirEntries, 0, len(f.upstreams))
 		for combineDir := range f.upstreams {
-			d := fs.NewDir(combineDir, f.when)
+			d := fs.NewLimitedDirWrapper(combineDir, fs.NewDir(combineDir, f.when))
 			entries = append(entries, d)
 		}
 		return entries, nil
@@ -1002,7 +1002,7 @@ func (f *Fs) DirSetModTime(ctx context.Context, dir string, modTime time.Time) e
 		return err
 	}
 	if uDir == "" {
-		fs.Debugf(dir, "can't set modtime on upstream root. skipping.")
+		fs.Debugf(dir, "Can't set modtime on upstream root. skipping.")
 		return nil
 	}
 	if do := u.f.Features().DirSetModTime; do != nil {
