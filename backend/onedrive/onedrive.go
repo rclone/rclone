@@ -2254,9 +2254,23 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 	if o.fs.opt.AVOverride {
 		opts.Parameters = url.Values{"AVOverride": {"1"}}
 	}
+	// Make a note of the redirect target as we need to call it without Auth
+	var redirectReq *http.Request
+	opts.CheckRedirect = func(req *http.Request, via []*http.Request) error {
+		if len(via) >= 10 {
+			return errors.New("stopped after 10 redirects")
+		}
+		req.Header.Del("Authorization") // remove Auth header
+		redirectReq = req
+		return http.ErrUseLastResponse
+	}
 
 	err = o.fs.pacer.Call(func() (bool, error) {
 		resp, err = o.fs.srv.Call(ctx, &opts)
+		if redirectReq != nil {
+			// It is a redirect which we are expecting
+			err = nil
+		}
 		return shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
@@ -2266,6 +2280,20 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 			}
 		}
 		return nil, err
+	}
+	if redirectReq != nil {
+		err = o.fs.pacer.Call(func() (bool, error) {
+			resp, err = o.fs.unAuth.Do(redirectReq)
+			return shouldRetry(ctx, resp, err)
+		})
+		if err != nil {
+			if resp != nil {
+				if virus := resp.Header.Get("X-Virus-Infected"); virus != "" {
+					err = fmt.Errorf("server reports this file is infected with a virus - use --onedrive-av-override to download anyway: %s: %w", virus, err)
+				}
+			}
+			return nil, err
+		}
 	}
 
 	if resp.StatusCode == http.StatusOK && resp.ContentLength > 0 && resp.Header.Get("Content-Range") == "" {
