@@ -1279,6 +1279,15 @@ func (item *Item) readAt(b []byte, off int64) (n int, err error) {
 		return 0, err
 	}
 
+	// Check to see if object has shrunk - if so don't read too much.
+	if item.o != nil && !item.info.Dirty && item.o.Size() != item.info.Size {
+		fs.Debugf(item.o, "Size has changed from %d to %d", item.info.Size, item.o.Size())
+		err = item._truncate(item.o.Size())
+		if err != nil {
+			return 0, err
+		}
+	}
+
 	item.info.ATime = time.Now()
 	// Do the reading with Item.mu unlocked and cache protected by preAccess
 	n, err = item.fd.ReadAt(b, off)
