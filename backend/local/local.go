@@ -832,6 +832,12 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		return nil, err
 	}
 
+	// Fetch metadata if --metadata is in use
+	meta, err := fs.GetMetadataOptions(ctx, f, src, fs.MetadataAsOpenOptions(ctx))
+	if err != nil {
+		return nil, fmt.Errorf("move: failed to read metadata: %w", err)
+	}
+
 	// Do the move
 	err = os.Rename(srcObj.path, dstObj.path)
 	if os.IsNotExist(err) {
@@ -845,6 +851,12 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		// boundaries. Copying might still work.
 		fs.Debugf(src, "Can't move: %v: trying copy", err)
 		return nil, fs.ErrorCantMove
+	}
+
+	// Set metadata if --metadata is in use
+	err = dstObj.writeMetadata(meta)
+	if err != nil {
+		return nil, fmt.Errorf("move: failed to set metadata: %w", err)
 	}
 
 	// Update the info
