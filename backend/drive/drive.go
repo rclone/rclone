@@ -2791,6 +2791,12 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		createInfo.Description = ""
 	}
 
+	// Adjust metadata if required
+	updateMetadata, err := f.fetchAndUpdateMetadata(ctx, src, fs.MetadataAsOpenOptions(ctx), createInfo, false)
+	if err != nil {
+		return nil, err
+	}
+
 	// get the ID of the thing to copy
 	// copy the contents if CopyShortcutContent
 	// else copy the shortcut only
@@ -2804,7 +2810,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	var info *drive.File
 	err = f.pacer.Call(func() (bool, error) {
 		copy := f.svc.Files.Copy(id, createInfo).
-			Fields(partialFields).
+			Fields(f.getFileFields(ctx)).
 			SupportsAllDrives(true).
 			KeepRevisionForever(f.opt.KeepRevisionForever)
 		srcObj.addResourceKey(copy.Header())
@@ -2839,6 +2845,11 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		if err != nil {
 			fs.Errorf(existingObject, "Failed to remove existing object after copy: %v", err)
 		}
+	}
+	// Finalise metadata
+	err = updateMetadata(ctx, info)
+	if err != nil {
+		return nil, err
 	}
 	return newObject, nil
 }
@@ -3013,13 +3024,19 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	dstParents := strings.Join(dstInfo.Parents, ",")
 	dstInfo.Parents = nil
 
+	// Adjust metadata if required
+	updateMetadata, err := f.fetchAndUpdateMetadata(ctx, src, fs.MetadataAsOpenOptions(ctx), dstInfo, true)
+	if err != nil {
+		return nil, err
+	}
+
 	// Do the move
 	var info *drive.File
 	err = f.pacer.Call(func() (bool, error) {
 		info, err = f.svc.Files.Update(shortcutID(srcObj.id), dstInfo).
 			RemoveParents(srcParentID).
 			AddParents(dstParents).
-			Fields(partialFields).
+			Fields(f.getFileFields(ctx)).
 			SupportsAllDrives(true).
 			Context(ctx).Do()
 		return f.shouldRetry(ctx, err)
@@ -3028,6 +3045,11 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		return nil, err
 	}
 
+	// Finalise metadata
+	err = updateMetadata(ctx, info)
+	if err != nil {
+		return nil, err
+	}
 	return f.newObjectWithInfo(ctx, remote, info)
 }
 
