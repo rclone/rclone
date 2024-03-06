@@ -1237,6 +1237,53 @@ func Run(t *testing.T, opt *Opt) {
 				err = dst.Remove(ctx)
 				require.NoError(t, err)
 
+				// Test that server side copying files does the correct thing with metadata
+				t.Run("Metadata", func(t *testing.T) {
+					if !f.Features().WriteMetadata {
+						t.Skip("Skipping test as can't write metadata")
+					}
+					ctx, ci := fs.AddConfig(ctx)
+					ci.Metadata = true
+
+					// Create file with metadata
+					const srcName = "test metadata copy.txt"
+					const dstName = "test metadata copied.txt"
+					t1 := fstest.Time("2003-02-03T04:05:06.499999999Z")
+					t2 := fstest.Time("2004-03-03T04:05:06.499999999Z")
+					fileSrc := fstest.NewItem(srcName, srcName, t1)
+					contents := random.String(100)
+					var testMetadata = fs.Metadata{
+						// System metadata supported by all backends
+						"mtime": t1.Format(time.RFC3339Nano),
+						// User metadata
+						"potato": "jersey",
+					}
+					oSrc := PutTestContentsMetadata(ctx, t, f, &fileSrc, contents, true, "text/plain", testMetadata)
+					fstest.CheckEntryMetadata(ctx, t, f, oSrc, testMetadata)
+
+					// Copy it with --metadata-set
+					ci.MetadataSet = fs.Metadata{
+						// System metadata supported by all backends
+						"mtime": t2.Format(time.RFC3339Nano),
+						// User metadata
+						"potato": "royal",
+					}
+					oDst, err := doCopy(ctx, oSrc, dstName)
+					require.NoError(t, err)
+					fileDst := fileSrc
+					fileDst.Path = dstName
+					fileDst.ModTime = t2
+					fstest.CheckListing(t, f, []fstest.Item{file1, file2, fileSrc, fileDst})
+
+					// Check metadata is correct
+					fstest.CheckEntryMetadata(ctx, t, f, oDst, ci.MetadataSet)
+					oDst = fstest.NewObject(ctx, t, f, dstName)
+					fstest.CheckEntryMetadata(ctx, t, f, oDst, ci.MetadataSet)
+
+					// Remove test files
+					require.NoError(t, oSrc.Remove(ctx))
+					require.NoError(t, oDst.Remove(ctx))
+				})
 			})
 
 			// TestFsMove tests Move
@@ -1298,6 +1345,52 @@ func Run(t *testing.T, opt *Opt) {
 
 				// Tidy up moveTest directory
 				require.NoError(t, f.Rmdir(ctx, "moveTest"))
+
+				// Test that server side moving files does the correct thing with metadata
+				t.Run("Metadata", func(t *testing.T) {
+					if !f.Features().WriteMetadata {
+						t.Skip("Skipping test as can't write metadata")
+					}
+					ctx, ci := fs.AddConfig(ctx)
+					ci.Metadata = true
+
+					// Create file with metadata
+					const name = "test metadata move.txt"
+					const newName = "test metadata moved.txt"
+					t1 := fstest.Time("2003-02-03T04:05:06.499999999Z")
+					t2 := fstest.Time("2004-03-03T04:05:06.499999999Z")
+					file := fstest.NewItem(name, name, t1)
+					contents := random.String(100)
+					var testMetadata = fs.Metadata{
+						// System metadata supported by all backends
+						"mtime": t1.Format(time.RFC3339Nano),
+						// User metadata
+						"potato": "jersey",
+					}
+					o := PutTestContentsMetadata(ctx, t, f, &file, contents, true, "text/plain", testMetadata)
+					fstest.CheckEntryMetadata(ctx, t, f, o, testMetadata)
+
+					// Move it with --metadata-set
+					ci.MetadataSet = fs.Metadata{
+						// System metadata supported by all backends
+						"mtime": t2.Format(time.RFC3339Nano),
+						// User metadata
+						"potato": "royal",
+					}
+					newO, err := doMove(ctx, o, newName)
+					require.NoError(t, err)
+					file.Path = newName
+					file.ModTime = t2
+					fstest.CheckListing(t, f, []fstest.Item{file1, file2, file})
+
+					// Check metadata is correct
+					fstest.CheckEntryMetadata(ctx, t, f, newO, ci.MetadataSet)
+					newO = fstest.NewObject(ctx, t, f, newName)
+					fstest.CheckEntryMetadata(ctx, t, f, newO, ci.MetadataSet)
+
+					// Remove test file
+					require.NoError(t, newO.Remove(ctx))
+				})
 			})
 
 			// Move src to this remote using server-side move operations.
