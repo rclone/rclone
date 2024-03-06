@@ -330,7 +330,7 @@ file.
 			Default: false,
 			Help: strings.ReplaceAll(`If set rclone will use delta listing to implement recursive listings.
 
-If this flag is set the the onedrive backend will advertise |ListR|
+If this flag is set the onedrive backend will advertise |ListR|
 support for recursive listings.
 
 Setting this flag speeds up these things greatly:
