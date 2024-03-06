@@ -1405,6 +1405,33 @@ func TestDirMove(t *testing.T) {
 		fs.GetModifyWindow(ctx, r.Fremote),
 	)
 
+	// Try with a DirMove method that exists but returns fs.ErrorCantDirMove (ex. combine moving across upstreams)
+	// Should fall back to manual move (copy + delete)
+
+	features.DirMove = func(ctx context.Context, src fs.Fs, srcRemote string, dstRemote string) error {
+		return fs.ErrorCantDirMove
+	}
+
+	assert.NoError(t, operations.DirMove(ctx, r.Fremote, "A3", "A4"))
+
+	for i := range files {
+		files[i].Path = strings.ReplaceAll(files[i].Path, "A3/", "A4/")
+	}
+
+	fstest.CheckListingWithPrecision(
+		t,
+		r.Fremote,
+		files,
+		[]string{
+			"A4",
+			"A4/B1",
+			"A4/B2",
+			"A4/B1/C1",
+			"A4/B1/C2",
+			"A4/B1/C3",
+		},
+		fs.GetModifyWindow(ctx, r.Fremote),
+	)
 }
 
 func TestGetFsInfo(t *testing.T) {
