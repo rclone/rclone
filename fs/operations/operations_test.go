@@ -1755,14 +1755,21 @@ func TestCopyDirMetadata(t *testing.T) {
 
 func TestSetDirModTime(t *testing.T) {
 	const name = "set modtime on existing directory"
-	ctx := context.Background()
+	ctx, ci := fs.AddConfig(context.Background())
 	r := fstest.NewRun(t)
 	if r.Fremote.Features().DirSetModTime == nil && !r.Fremote.Features().WriteDirSetModTime {
 		t.Skip("Skipping test as remote does not support DirSetModTime or WriteDirSetModTime")
 	}
 
-	// First try with the directory not existing - should return an error
+	// Check that we obey --no-update-dir-modtime - this should return nil, nil
+	ci.NoUpdateDirModTime = true
 	newDst, err := operations.SetDirModTime(ctx, r.Fremote, nil, "set modtime on non existent directory", t2)
+	require.NoError(t, err)
+	require.Nil(t, newDst)
+	ci.NoUpdateDirModTime = false
+
+	// First try with the directory not existing - should return an error
+	newDst, err = operations.SetDirModTime(ctx, r.Fremote, nil, "set modtime on non existent directory", t2)
 	require.Error(t, err)
 	require.Nil(t, newDst)
 

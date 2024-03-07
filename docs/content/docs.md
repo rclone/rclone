@@ -1809,6 +1809,11 @@ files if they are incorrect as it would normally.
 This can be used if the remote is being synced with another tool also
 (e.g. the Google Drive client).
 
+### --no-update-dir-modtime ###
+
+When using this flag, rclone won't update modification times of remote
+directories if they are incorrect as it would normally.
+
 ### --order-by string ###
 
 The `--order-by` flag controls the order in which files in the backlog

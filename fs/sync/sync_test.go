@@ -344,6 +344,45 @@ func TestMoveEmptyDirectories(t *testing.T) {
 	fstest.CheckDirModTime(ctx, t, r.Fremote, got, subDirT)
 }
 
+// Test that --no-update-dir-modtime is working
+func TestSyncNoUpdateDirModtime(t *testing.T) {
+	r := fstest.NewRun(t)
+	if r.Fremote.Features().DirSetModTime == nil {
+		t.Skip("Skipping test as backend does not support DirSetModTime")
+	}
+
+	ctx, ci := fs.AddConfig(context.Background())
+	ci.NoUpdateDirModTime = true
+	const name = "sub dir no update dir modtime"
+
+	// Set the modtime on name to something specific
+	_, err := operations.MkdirModTime(ctx, r.Flocal, name, t1)
+	require.NoError(t, err)
+
+	// Create the remote directory with the current time
+	require.NoError(t, r.Fremote.Mkdir(ctx, name))
+
+	// Read its modification time
+	wantT := fstest.NewDirectory(ctx, t, r.Fremote, name).ModTime(ctx)
+
+	ctx = predictDstFromLogger(ctx)
+	err = Sync(ctx, r.Fremote, r.Flocal, true)
+	require.NoError(t, err)
+	testLoggerVsLsf(ctx, r.Fremote, operations.GetLoggerOpt(ctx).JSON, t)
+
+	r.CheckRemoteListing(
+		t,
+		[]fstest.Item{},
+		[]string{
+			name,
+		},
+	)
+
+	// Read the new directory modification time - it should not have changed
+	gotT := fstest.NewDirectory(ctx, t, r.Fremote, name).ModTime(ctx)
+	fstest.AssertTimeEqualWithPrecision(t, name, wantT, gotT, r.Fremote.Precision())
+}
+
 // Test sync empty directories
 func TestSyncEmptyDirectories(t *testing.T) {
 	ctx := context.Background()
