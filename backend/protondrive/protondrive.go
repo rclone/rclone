@@ -244,7 +244,7 @@ func (f *Fs) Name() string {
 
 // Root of the remote (as passed into NewFs)
 func (f *Fs) Root() string {
-	return f.root
+	return f.opt.Enc.ToStandardPath(f.root)
 }
 
 // String converts this Fs to a string
