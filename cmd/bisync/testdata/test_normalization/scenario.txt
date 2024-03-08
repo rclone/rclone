@@ -32,13 +32,13 @@ bisync resync
 # copy NFC version to Path1
 # note: need to slightly change the name to avoid Drive known issue #3262 which could try to copy the old name from the trash
 copy-as-NFC {datadir/}file1.txt {path1/}測試_Руский___ě_áñ👸🏼🧝🏾‍♀️💆🏿‍♂️🐨🤙🏼🤮🧑🏻‍🔧🧑‍🔬éö 測試_Руский___ě_áñ👸🏼🧝🏾‍♀️💆🏿‍♂️🐨🤙🏼🤮🧑🏻‍🔧🧑‍🔬éö.txt
-copy-as-NFC {datadir/}file1.txt {path1/}folder éééö.txt
-copy-as-NFC {datadir/}file1.txt {path1/}folder HeLlO,wOrLd!.txt
+copy-as-NFC {datadir/}file1.txt {path1/}newfolder éééö.txt
+copy-as-NFC {datadir/}file1.txt {path1/}newfolder HeLlO,wOrLd!.txt
 
 # place newer NFD version on Path2
 touch-copy 2001-01-03 {datadir/}file1.txt {path2/}
-copy-as-NFD {datadir/}file1.txt {path2/}folder éééö.txt
-copy-as-NFD {datadir/}file1.txt {path2/}folder hello,WORLD!.txt
+copy-as-NFD {datadir/}file1.txt {path2/}newfolder éééö.txt
+copy-as-NFD {datadir/}file1.txt {path2/}newfolder hello,WORLD!.txt
 
 test bisync run with normalization
 bisync norm force
@@ -49,6 +49,6 @@ bisync resync norm
 test changed on one path
 touch-copy 2001-01-05 {datadir/}file1.txt {path2/}
 copy-as-NFC {datadir/}file1.txt {path1/}測試_Руский___ě_áñ👸🏼🧝🏾‍♀️💆🏿‍♂️🐨🤙🏼🤮🧑🏻‍🔧🧑‍🔬éö 測試_Руский___ě_áñ👸🏼🧝🏾‍♀️💆🏿‍♂️🐨🤙🏼🤮🧑🏻‍🔧🧑‍🔬éö.txt
-copy-as-NFC {datadir/}file1.txt {path1/}folder éééö.txt
-copy-as-NFC {datadir/}file1.txt {path1/}folder HeLlO,wOrLd!.txt
+copy-as-NFC {datadir/}file1.txt {path1/}newfolder éééö.txt
+copy-as-NFC {datadir/}file1.txt {path1/}newfolder HeLlO,wOrLd!.txt
 bisync norm
