@@ -214,3 +214,32 @@ func TestParseUnmarshalJSON(t *testing.T) {
 		assert.Equal(t, Duration(test.want), duration, test.in)
 	}
 }
+
+func TestUnmarshalJSON(t *testing.T) {
+	tests := []struct {
+		name    string
+		input   string
+		want    Duration
+		wantErr bool
+	}{
+		{"off string", `"off"`, DurationOff, false},
+		{"max int64", `9223372036854775807`, DurationOff, false},
+		{"duration string", `"1h"`, Duration(time.Hour), false},
+		{"invalid string", `"invalid"`, 0, true},
+		{"negative int", `-1`, Duration(-1), false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var d Duration
+			err := json.Unmarshal([]byte(tt.input), &d)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("UnmarshalJSON() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if d != tt.want {
+				t.Errorf("UnmarshalJSON() got = %v, want %v", d, tt.want)
+			}
+		})
+	}
+}
