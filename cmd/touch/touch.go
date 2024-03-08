@@ -139,7 +139,12 @@ func Touch(ctx context.Context, f fs.Fs, remote string) error {
 		return err
 	}
 	fs.Debugf(nil, "Touch time %v", t)
-	file, err := f.NewObject(ctx, remote)
+	var file fs.Object
+	if remote == "" {
+		err = fs.ErrorIsDir
+	} else {
+		file, err = f.NewObject(ctx, remote)
+	}
 	if err != nil {
 		if errors.Is(err, fs.ErrorObjectNotFound) {
 			// Touching non-existent path, possibly creating it as new file
