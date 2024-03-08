@@ -171,7 +171,7 @@ INFO  : Bisyncing with Comparison Settings:
 }
 INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
 INFO  : Using filters file {workdir/}測試_filtersfile.txt
-INFO  : Storing filters file hash to {workdir/}測試_filtersfile.txt.md5
+INFO  : Storing filters file hash to {workdir/}測試_filtersfile.txt.{hashtype}
 INFO  : Copying Path2 files to Path1
 INFO  : - [34mPath2[0m    [35mResync is copying files to[0m         - [36mPath1[0m
 INFO  : - [36mPath1[0m    [35mResync is copying files to[0m         - [36mPath2[0m
