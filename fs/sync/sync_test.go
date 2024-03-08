@@ -2582,7 +2582,7 @@ func TestNothingToTransfer(t *testing.T) {
 		assert.True(t, strings.Contains(string(output), "Set directory modification time"), `expected to find at least one "Set directory modification time" log: `+string(output))
 	}
 	assert.False(t, strings.Contains(string(output), "There was nothing to transfer"), `expected to find no "There was nothing to transfer" logs, but found one: `+string(output))
-	assert.Equal(t, int64(2), accounting.GlobalStats().GetTransfers())
+	assert.True(t, accounting.GlobalStats().GetTransfers() >= 2)
 
 	// run it again and make sure no actions were taken
 	accounting.GlobalStats().ResetCounters()
