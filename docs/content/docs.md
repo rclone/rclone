@@ -481,6 +481,14 @@ The [--metadata-mapper](#metadata-mapper) flag can be used to pass the
 name of a program in which can transform metadata when it is being
 copied from source to destination.
 
+Rclone supports `--metadata-set` and `--metadata-mapper` when doing
+sever side `Move` and server side `Copy`, but not when doing server
+side `DirMove` (renaming a directory) as this would involve recursing
+into the directory. Note that you can disable `DirMove` with
+`--disable DirMove` and rclone will revert back to using `Move` for
+each individual object where `--metadata-set` and `--metadata-mapper`
+are supported.
+
 ### Types of metadata
 
 Metadata is divided into two type. System metadata and User metadata.
