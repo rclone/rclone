@@ -233,13 +233,9 @@ func (d Duration) Type() string {
 // UnmarshalJSON makes sure the value can be parsed as a string or integer in JSON
 func (d *Duration) UnmarshalJSON(in []byte) error {
 	// Check if the input is a string value.
-	if in[0] == '"' {
+	if len(in) >= 2 && in[0] == '"' && in[len(in)-1] == '"' {
 		strVal := string(in[1 : len(in)-1]) // Remove the quotes
-		// Handle the special "off" case.
-		if strVal == "off" {
-			*d = DurationOff
-			return nil
-		}
+
 		// Attempt to parse the string as a duration.
 		parsedDuration, err := ParseDuration(strVal)
 		if err != nil {
