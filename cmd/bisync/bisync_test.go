@@ -34,6 +34,7 @@ import (
 	"github.com/rclone/rclone/fs/object"
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/fs/sync"
+	"github.com/rclone/rclone/fs/walk"
 	"github.com/rclone/rclone/fstest"
 	"github.com/rclone/rclone/lib/atexit"
 	"github.com/rclone/rclone/lib/encoder"
@@ -57,6 +58,8 @@ const (
 	slash           = string(os.PathSeparator)
 	fixSlash        = (runtime.GOOS == "windows")
 )
+
+var initDate = time.Date(2000, time.January, 1, 0, 0, 0, 0, bisync.TZ)
 
 // logReplacements make modern test logs comparable with golden dir.
 // It is a string slice of even length with this structure:
@@ -86,6 +89,10 @@ var logReplacements = []string{
 	`^.*?"SlowHashDetected":.*?$`, dropMe,
 	`^.*? for same-side diffs on .*?$`, dropMe,
 	`^.*?Downloading hashes.*?$`, dropMe,
+	// ignore timestamps in directory time updates
+	`^(INFO  : .*?: (Made directory with|Set directory) (metadata|modification time)).*$`, dropMe,
+	// ignore sizes in directory time updates
+	`^(NOTICE: .*?: Skipped set directory modification time as --dry-run is set).*$`, dropMe,
 }
 
 // Some dry-run messages differ depending on the particular remote.
@@ -121,6 +128,9 @@ var logHoppers = []string{
 
 	// order of files re-checked prior to a conflict rename
 	`ERROR : .*: md5 differ.*`,
+
+	// Directory modification time setting can happen in any order
+	`INFO  : .*: (Set directory modification time|Made directory with metadata).*`,
 }
 
 // Some log lines can contain Windows path separator that must be
@@ -313,7 +323,6 @@ func (b *bisyncTest) runTestCase(ctx context.Context, t *testing.T, testCase str
 
 	// For test stability, jam initial dates to a fixed past date.
 	// Test cases that change files will touch specific files to fixed new dates.
-	initDate := time.Date(2000, time.January, 1, 0, 0, 0, 0, bisync.TZ)
 	err = filepath.Walk(b.initDir, func(path string, info os.FileInfo, err error) error {
 		if err == nil && !info.IsDir() {
 			return os.Chtimes(path, initDate, initDate)
@@ -861,6 +870,20 @@ func (b *bisyncTest) runBisync(ctx context.Context, args []string) (err error) {
 		}
 	}
 
+	// set all dirs to a fixed date for test stability, as they are considered as of v1.66.
+	jamDirTimes := func(f fs.Fs) {
+		err := walk.ListR(ctx, f, "", true, -1, walk.ListDirs, func(entries fs.DirEntries) error {
+			var err error
+			entries.ForDir(func(dir fs.Directory) {
+				_, err = operations.SetDirModTime(ctx, f, dir, "", initDate)
+			})
+			return err
+		})
+		assert.NoError(b.t, err, "error jamming dirtimes")
+	}
+	jamDirTimes(fs1)
+	jamDirTimes(fs2)
+
 	output := bilib.CaptureOutput(func() {
 		err = bisync.Bisync(octx, fs1, fs2, opt)
 	})
@@ -1378,10 +1401,10 @@ func (b *bisyncTest) mangleListing(text string, golden bool, file string) string
 				lines[i] = match[1] + "-" + match[3] + match[4] // replace it with "-" for comparison purposes (see #5679)
 			}
 			// account for modtime precision
-			var lineRegex = regexp.MustCompile(`^(\S) +(-?\d+) (\S+) (\S+) (\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d\.\d{9}[+-]\d{4}) (".+")$`)
+			lineRegex := regexp.MustCompile(`^(\S) +(-?\d+) (\S+) (\S+) (\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d\.\d{9}[+-]\d{4}) (".+")$`)
 			const timeFormat = "2006-01-02T15:04:05.000000000-0700"
 			const lineFormat = "%s %8d %s %s %s %q\n"
-			var TZ = time.UTC
+			TZ := time.UTC
 			fields := lineRegex.FindStringSubmatch(strings.TrimSuffix(lines[i], "\n"))
 			if fields != nil {
 				sizeVal, sizeErr := strconv.ParseInt(fields[2], 10, 64)
@@ -1502,7 +1525,8 @@ func (b *bisyncTest) listDir(dir string) (names []string) {
 	ignoreIt := func(file string) bool {
 		ignoreList := []string{
 			// ".lst-control", ".lst-dry-control", ".lst-old", ".lst-dry-old",
-			".DS_Store"}
+			".DS_Store",
+		}
 		for _, s := range ignoreList {
 			if strings.Contains(file, s) {
 				return true

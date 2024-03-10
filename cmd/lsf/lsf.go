@@ -231,6 +231,10 @@ func Lsf(ctx context.Context, fsrc fs.Fs, out io.Writer) error {
 	}
 
 	return operations.ListJSON(ctx, fsrc, "", &opt, func(item *operations.ListJSONItem) error {
+		// Make size deterministic for tests
+		if item.IsDir {
+			item.Size = -1
+		}
 		_, _ = fmt.Fprintln(out, list.Format(item))
 		return nil
 	})

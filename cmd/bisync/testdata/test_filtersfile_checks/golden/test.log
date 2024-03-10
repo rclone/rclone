@@ -145,8 +145,8 @@ INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
 INFO  : Using filters file {workdir/}filtersfile.txt
 INFO  : Skipped storing filters file hash to {workdir/}filtersfile.txt.md5 as --dry-run is set
 INFO  : Copying Path2 files to Path1
-INFO  : - [34mPath2[0m    [35mResync is copying files to[0m         - [36mPath1[0m
-INFO  : - [36mPath1[0m    [35mResync is copying files to[0m         - [36mPath2[0m
+NOTICE: - [34mPath2[0m    [35mResync is copying files to[0m         - [36mPath1[0m
+NOTICE: - [36mPath1[0m    [35mResync is copying files to[0m         - [36mPath2[0m
 INFO  : Resync updating listings
 INFO  : [32mBisync successful[0m
 

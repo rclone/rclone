@@ -283,8 +283,8 @@ INFO  : Path2:    2 changes: [32m   1 new[0m, [33m   1 modified[0m, [31m   
 INFO  : ([33mModified[0m: [36m   1 newer[0m, [34m   0 older[0m, [36m   1 larger[0m, [34m   0 smaller[0m)
 INFO  : Applying changes
 INFO  : Checking potential conflicts...
-ERROR : file2.txt: md5 differ
 ERROR : file1.txt: md5 differ
+ERROR : file2.txt: md5 differ
 NOTICE: {path2String}: 2 differences found
 NOTICE: {path2String}: 2 errors while checking
 INFO  : Finished checking the potential conflicts. 2 differences found

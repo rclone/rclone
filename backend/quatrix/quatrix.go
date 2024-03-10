@@ -235,6 +235,11 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		if fileID.IsFile() {
 			root, _ = dircache.SplitPath(root)
 			f.dirCache = dircache.New(root, rootID.FileID, f)
+			// Correct root if definitely pointing to a file
+			f.root = path.Dir(f.root)
+			if f.root == "." || f.root == "/" {
+				f.root = ""
+			}
 
 			return f, fs.ErrorIsFile
 		}

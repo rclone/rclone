@@ -447,6 +447,17 @@ Properties:
 - Type:        Encoding
 - Default:     Slash,LtGt,DoubleQuote,Colon,Question,Asterisk,Pipe,Del,Ctl,InvalidUtf8,Dot
 
+#### --jottacloud-description
+
+Description of the remote
+
+Properties:
+
+- Config:      description
+- Env Var:     RCLONE_JOTTACLOUD_DESCRIPTION
+- Type:        string
+- Required:    false
+
 ### Metadata
 
 Jottacloud has limited support for metadata, currently an extended set of timestamps.

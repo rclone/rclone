@@ -43,15 +43,22 @@ the destination from the sync with a filter rule or by putting an
 exclude-if-present file inside the destination directory and sync to a
 destination that is inside the source directory.
 
+Rclone will sync the modification times of files and directories if
+the backend supports it. If metadata syncing is required then use the
+`--metadata` flag.
+
+Note that the modification time and metadata for the root directory
+will **not** be synced. See https://github.com/rclone/rclone/issues/7652
+for more info.
+
 **Note**: Use the `-P`/`--progress` flag to view real-time transfer statistics
 
 **Note**: Use the `rclone dedupe` command to deal with "Duplicate object/directory found in source/destination - ignoring" errors.
 See [this forum post](https://forum.rclone.org/t/sync-not-clearing-duplicates/14372) for more info.
 
-## Logger Flags
+# Logger Flags
 
-The `--differ`, `--missing-on-dst`, `--missing-on-src`, `--match`
-and `--error` flags write paths, one per line, to the file name (or
+The `--differ`, `--missing-on-dst`, `--missing-on-src`, `--match` and `--error` flags write paths, one per line, to the file name (or
 stdout if it is `-`) supplied. What they write is described in the
 help below. For example `--differ` will write all paths which are
 present on both the source and destination but different.
@@ -86,6 +93,7 @@ Note also that each file is logged during the sync, as opposed to after, so it
 is most useful as a predictor of what SHOULD happen to each file
 (which may or may not match what actually DID.)
 
+
 ```
 rclone sync source:path dest:path [flags]
 ```
@@ -93,8 +101,24 @@ rclone sync source:path dest:path [flags]
 ## Options
 
 ```
+      --absolute                Put a leading / in front of path names
+      --combined string         Make a combined report of changes to this file
       --create-empty-src-dirs   Create empty source dirs on destination after sync
+      --csv                     Output in CSV format
+      --dest-after string       Report all files that exist on the dest post-sync
+      --differ string           Report all non-matching files to this file
+  -d, --dir-slash               Append a slash to directory names (default true)
+      --dirs-only               Only list directories
+      --error string            Report all files with errors (hashing or reading) to this file
+      --files-only              Only list files (default true)
+  -F, --format string           Output format - see lsf help for details (default "p")
+      --hash h                  Use this hash when h is used in the format MD5|SHA-1|DropboxHash (default "md5")
   -h, --help                    help for sync
+      --match string            Report all matching files to this file
+      --missing-on-dst string   Report all files missing from the destination to this file
+      --missing-on-src string   Report all files missing from the source to this file
+  -s, --separator string        Separator for the items in the format (default ";")
+  -t, --timeformat string       Specify a custom time format, or 'max' for max precision supported by remote (default: 2006-01-02 15:04:05)
 ```
 
 
@@ -112,7 +136,7 @@ Flags for anything which can Copy a file.
       --ignore-checksum                             Skip post copy check of checksums
       --ignore-existing                             Skip all files that exist on destination
       --ignore-size                                 Ignore size when skipping use modtime or checksum
-  -I, --ignore-times                                Don't skip files that match size and time - transfer all files
+  -I, --ignore-times                                Don't skip items that match size and time - transfer all unconditionally
       --immutable                                   Do not modify files, fail if existing files have been modified
       --inplace                                     Download directly to destination file instead of atomic download to temp/rename
       --max-backlog int                             Maximum number of objects in sync or check backlog (default 10000)
@@ -126,6 +150,7 @@ Flags for anything which can Copy a file.
       --multi-thread-write-buffer-size SizeSuffix   In memory buffer size for writing when in multi-thread mode (default 128Ki)
       --no-check-dest                               Don't check the destination, copy regardless
       --no-traverse                                 Don't traverse destination file system on copy
+      --no-update-dir-modtime                       Don't update directory modification times
       --no-update-modtime                           Don't update destination modtime if files identical
       --order-by string                             Instructions on how to order the transfers, e.g. 'size,descending'
       --partial-suffix string                       Add partial-suffix to temporary file name when --inplace is not used (default ".partial")
@@ -145,6 +170,7 @@ Flags just used for `rclone sync`.
       --delete-after                    When synchronizing, delete files on destination after transferring (default)
       --delete-before                   When synchronizing, delete files on destination before transferring
       --delete-during                   When synchronizing, delete files during transfer
+      --fix-case                        Force rename of case insensitive dest to match source
       --ignore-errors                   Delete even if there are I/O errors
       --max-delete int                  When synchronizing, limit the number of deletes (default -1)
       --max-delete-size SizeSuffix      When synchronizing, limit the total size of deletes (default off)

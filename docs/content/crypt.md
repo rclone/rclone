@@ -579,6 +579,22 @@ Properties:
 - Type:        bool
 - Default:     false
 
+#### --crypt-strict-names
+
+If set, this will raise an error when crypt comes across a filename that can't be decrypted.
+
+(By default, rclone will just log a NOTICE and continue as normal.)
+This can happen if encrypted and unencrypted files are stored in the same
+directory (which is not recommended.) It may also indicate a more serious
+problem that should be investigated.
+
+Properties:
+
+- Config:      strict_names
+- Env Var:     RCLONE_CRYPT_STRICT_NAMES
+- Type:        bool
+- Default:     false
+
 #### --crypt-filename-encoding
 
 How to encode the encrypted filename to text string.
@@ -615,6 +631,17 @@ Properties:
 - Env Var:     RCLONE_CRYPT_SUFFIX
 - Type:        string
 - Default:     ".bin"
+
+#### --crypt-description
+
+Description of the remote
+
+Properties:
+
+- Config:      description
+- Env Var:     RCLONE_CRYPT_DESCRIPTION
+- Type:        string
+- Required:    false
 
 ### Metadata
 

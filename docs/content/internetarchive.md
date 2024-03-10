@@ -263,6 +263,17 @@ Properties:
 - Type:        Encoding
 - Default:     Slash,LtGt,CrLf,Del,Ctl,InvalidUtf8,Dot
 
+#### --internetarchive-description
+
+Description of the remote
+
+Properties:
+
+- Config:      description
+- Env Var:     RCLONE_INTERNETARCHIVE_DESCRIPTION
+- Type:        string
+- Required:    false
+
 ### Metadata
 
 Metadata fields provided by Internet Archive.

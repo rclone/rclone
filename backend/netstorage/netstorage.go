@@ -15,6 +15,7 @@ import (
 	"math/rand"
 	"net/http"
 	"net/url"
+	"path"
 	"strconv"
 	"strings"
 	"sync"
@@ -260,6 +261,11 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	case fs.ErrorObjectNotFound:
 		return f, nil
 	case fs.ErrorIsFile:
+		// Correct root if definitely pointing to a file
+		f.root = path.Dir(f.root)
+		if f.root == "." || f.root == "/" {
+			f.root = ""
+		}
 		// Fs points to the parent directory
 		return f, err
 	default:

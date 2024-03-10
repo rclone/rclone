@@ -1066,9 +1066,10 @@ func NewFsWithConnection(ctx context.Context, f *Fs, name string, root string, m
 	}
 
 	f.features = (&fs.Features{
-		CanHaveEmptyDirectories: true,
-		SlowHash:                true,
-		PartialUploads:          true,
+		CanHaveEmptyDirectories:  true,
+		SlowHash:                 true,
+		PartialUploads:           true,
+		DirModTimeUpdatesOnWrite: true, // indicate writing files to a directory updates its modtime
 	}).Fill(ctx, f)
 	if !opt.CopyIsHardlink {
 		// Disable server side copy unless --sftp-copy-is-hardlink is set
@@ -1365,6 +1366,15 @@ func (f *Fs) mkdir(ctx context.Context, dirPath string) error {
 func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 	root := path.Join(f.absRoot, dir)
 	return f.mkdir(ctx, root)
+}
+
+// DirSetModTime sets the directory modtime for dir
+func (f *Fs) DirSetModTime(ctx context.Context, dir string, modTime time.Time) error {
+	o := Object{
+		fs:     f,
+		remote: dir,
+	}
+	return o.SetModTime(ctx, modTime)
 }
 
 // Rmdir removes the root directory of the Fs object
@@ -1985,7 +1995,7 @@ func (o *Object) SetModTime(ctx context.Context, modTime time.Time) error {
 		return fmt.Errorf("SetModTime failed: %w", err)
 	}
 	err = o.stat(ctx)
-	if err != nil {
+	if err != nil && err != fs.ErrorIsDir {
 		return fmt.Errorf("SetModTime stat failed: %w", err)
 	}
 	return nil
@@ -2179,12 +2189,13 @@ func (o *Object) Remove(ctx context.Context) error {
 
 // Check the interfaces are satisfied
 var (
-	_ fs.Fs          = &Fs{}
-	_ fs.PutStreamer = &Fs{}
-	_ fs.Mover       = &Fs{}
-	_ fs.Copier      = &Fs{}
-	_ fs.DirMover    = &Fs{}
-	_ fs.Abouter     = &Fs{}
-	_ fs.Shutdowner  = &Fs{}
-	_ fs.Object      = &Object{}
+	_ fs.Fs             = &Fs{}
+	_ fs.PutStreamer    = &Fs{}
+	_ fs.Mover          = &Fs{}
+	_ fs.Copier         = &Fs{}
+	_ fs.DirMover       = &Fs{}
+	_ fs.DirSetModTimer = &Fs{}
+	_ fs.Abouter        = &Fs{}
+	_ fs.Shutdowner     = &Fs{}
+	_ fs.Object         = &Object{}
 )

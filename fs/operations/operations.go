@@ -35,6 +35,7 @@ import (
 	"github.com/rclone/rclone/fs/object"
 	"github.com/rclone/rclone/fs/walk"
 	"github.com/rclone/rclone/lib/atexit"
+	"github.com/rclone/rclone/lib/errcount"
 	"github.com/rclone/rclone/lib/random"
 	"github.com/rclone/rclone/lib/readers"
 	"golang.org/x/sync/errgroup"
@@ -140,6 +141,40 @@ func Equal(ctx context.Context, src fs.ObjectInfo, dst fs.Object) bool {
 	return equal(ctx, src, dst, defaultEqualOpt(ctx))
 }
 
+// DirsEqual is like Equal but for dirs instead of objects.
+// It returns true if two dirs should be considered "equal" for the purposes of syncCopyMove
+// (in other words, true == "skip updating modtime/metadata for this dir".)
+// Unlike Equal, it does not consider size or checksum, as these do not apply to directories.
+func DirsEqual(ctx context.Context, src, dst fs.Directory, opt DirsEqualOpt) (equal bool) {
+	if dst == nil {
+		return false
+	}
+	ci := fs.GetConfig(ctx)
+	if ci.SizeOnly || ci.Immutable || ci.IgnoreExisting || opt.ModifyWindow == fs.ModTimeNotSupported {
+		return true
+	}
+	if ci.IgnoreTimes {
+		return false
+	}
+	if !(opt.SetDirModtime || opt.SetDirMetadata) {
+		return true
+	}
+	srcModTime, dstModTime := src.ModTime(ctx), dst.ModTime(ctx)
+	if srcModTime.IsZero() || dstModTime.IsZero() {
+		return false
+	}
+	dt := dstModTime.Sub(srcModTime)
+	if dt < opt.ModifyWindow && dt > -opt.ModifyWindow {
+		fs.Debugf(dst, "Directory modification time the same (differ by %s, within tolerance %s)", dt, opt.ModifyWindow)
+		return true
+	}
+	if ci.UpdateOlder && dt >= opt.ModifyWindow {
+		fs.Debugf(dst, "Destination directory is newer than source, skipping")
+		return true
+	}
+	return false
+}
+
 // sizeDiffers compare the size of src and dst taking into account the
 // various ways of ignoring sizes
 func sizeDiffers(ctx context.Context, src, dst fs.ObjectInfo) bool {
@@ -169,6 +204,13 @@ func defaultEqualOpt(ctx context.Context) equalOpt {
 		updateModTime:     !ci.NoUpdateModTime,
 		forceModTimeMatch: false,
 	}
+}
+
+// DirsEqualOpt represents options for DirsEqual function()
+type DirsEqualOpt struct {
+	ModifyWindow   time.Duration // Max time diff to be considered the same
+	SetDirModtime  bool          // whether to consider dir modtime
+	SetDirMetadata bool          // whether to consider dir metadata
 }
 
 var modTimeUploadOnce sync.Once
@@ -985,6 +1027,65 @@ func Mkdir(ctx context.Context, f fs.Fs, dir string) error {
 	return nil
 }
 
+// MkdirMetadata makes a destination directory or container with metadata
+//
+// If the destination Fs doesn't support this it will fall back to
+// Mkdir and in this case newDst will be nil.
+func MkdirMetadata(ctx context.Context, f fs.Fs, dir string, metadata fs.Metadata) (newDst fs.Directory, err error) {
+	do := f.Features().MkdirMetadata
+	if do == nil {
+		return nil, Mkdir(ctx, f, dir)
+	}
+	logName := fs.LogDirName(f, dir)
+	if SkipDestructive(ctx, logName, "make directory") {
+		return nil, nil
+	}
+	fs.Debugf(fs.LogDirName(f, dir), "Making directory with metadata")
+	newDst, err = do(ctx, dir, metadata)
+	if err != nil {
+		err = fs.CountError(err)
+		return nil, err
+	}
+	if mtime, ok := metadata["mtime"]; ok {
+		fs.Infof(logName, "Made directory with metadata (mtime=%s)", mtime)
+	} else {
+		fs.Infof(logName, "Made directory with metadata")
+	}
+	return newDst, err
+}
+
+// MkdirModTime makes a destination directory or container with modtime
+//
+// It will try to make the directory with MkdirMetadata and if that
+// succeeds it will return a non-nil newDst. In all other cases newDst
+// will be nil.
+//
+// If the directory was created with MkDir then it will attempt to use
+// Fs.DirSetModTime to update the directory modtime if available.
+func MkdirModTime(ctx context.Context, f fs.Fs, dir string, modTime time.Time) (newDst fs.Directory, err error) {
+	logName := fs.LogDirName(f, dir)
+	if SkipDestructive(ctx, logName, "make directory") {
+		return nil, nil
+	}
+	metadata := fs.Metadata{
+		"mtime": modTime.Format(time.RFC3339Nano),
+	}
+	newDst, err = MkdirMetadata(ctx, f, dir, metadata)
+	if err != nil {
+		return nil, err
+	}
+	if newDst != nil {
+		// The directory was created and we have logged already
+		return newDst, nil
+	}
+	// The directory was created with Mkdir then we should try to set the time
+	if do := f.Features().DirSetModTime; do != nil {
+		err = do(ctx, dir, modTime)
+	}
+	fs.Infof(logName, "Made directory with modification time %v", modTime)
+	return newDst, err
+}
+
 // TryRmdir removes a container but not if not empty.  It doesn't
 // count errors but may return one.
 func TryRmdir(ctx context.Context, f fs.Fs, dir string) error {
@@ -1353,9 +1454,7 @@ func Rmdirs(ctx context.Context, f fs.Fs, dir string, leaveRoot bool) error {
 	}
 
 	var (
-		errMu     sync.Mutex
-		errCount  int
-		lastError error
+		errCount = errcount.New()
 	)
 	// Delete all directories at the same level in parallel
 	for level := len(toDelete) - 1; level >= 0; level-- {
@@ -1378,10 +1477,7 @@ func Rmdirs(ctx context.Context, f fs.Fs, dir string, leaveRoot bool) error {
 				if err != nil {
 					err = fs.CountError(err)
 					fs.Errorf(dir, "Failed to rmdir: %v", err)
-					errMu.Lock()
-					lastError = err
-					errCount += 1
-					errMu.Unlock()
+					errCount.Add(err)
 				}
 				return nil // don't return errors, just count them
 			})
@@ -1391,10 +1487,7 @@ func Rmdirs(ctx context.Context, f fs.Fs, dir string, leaveRoot bool) error {
 			return err
 		}
 	}
-	if lastError != nil {
-		return fmt.Errorf("failed to remove %d directories: last error: %w", errCount, lastError)
-	}
-	return nil
+	return errCount.Err("failed to remove directories")
 }
 
 // GetCompareDest sets up --compare-dest
@@ -2217,7 +2310,10 @@ func DirMove(ctx context.Context, f fs.Fs, srcRemote, dstRemote string) (err err
 		if err == nil {
 			accounting.Stats(ctx).Renames(1)
 		}
-		return err
+		if err != fs.ErrorCantDirMove && err != fs.ErrorDirExists {
+			return err
+		}
+		fs.Infof(f, "Can't DirMove - falling back to file moves: %v", err)
 	}
 
 	// Load the directory tree into memory
@@ -2434,4 +2530,122 @@ func SkipDestructive(ctx context.Context, subject interface{}, action string) (s
 		}
 	}
 	return skip
+}
+
+// Return the best way of describing the directory for the logs
+func dirName(f fs.Fs, dst fs.Directory, dir string) any {
+	if dst != nil {
+		if dst.Remote() != "" {
+			return dst
+		}
+		// Root is described as the Fs
+		return f
+	}
+	if dir != "" {
+		return dir
+	}
+	// Root is described as the Fs
+	return f
+}
+
+// CopyDirMetadata copies the src directory to dst or f if nil.  If dst is nil then it uses
+// dir as the name of the new directory.
+//
+// It returns the destination directory if possible.  Note that this may
+// be nil.
+func CopyDirMetadata(ctx context.Context, f fs.Fs, dst fs.Directory, dir string, src fs.Directory) (newDst fs.Directory, err error) {
+	ci := fs.GetConfig(ctx)
+	logName := dirName(f, dst, dir)
+	if SkipDestructive(ctx, logName, "update directory metadata") {
+		return nil, nil
+	}
+
+	// Options for the directory metadata
+	options := []fs.OpenOption{}
+	if ci.MetadataSet != nil {
+		options = append(options, fs.MetadataOption(ci.MetadataSet))
+	}
+
+	// Read metadata from src and add options and use metadata mapper
+	metadata, err := fs.GetMetadataOptions(ctx, f, src, options)
+	if err != nil {
+		return nil, err
+	}
+
+	// Fall back to ModTime if metadata not available
+	if metadata == nil {
+		metadata = fs.Metadata{}
+	}
+	if metadata["mtime"] == "" {
+		metadata["mtime"] = src.ModTime(ctx).Format(time.RFC3339Nano)
+	}
+
+	// Now set the metadata
+	if dst == nil {
+		do := f.Features().MkdirMetadata
+		if do == nil {
+			return nil, fmt.Errorf("internal error: expecting %v to have MkdirMetadata method: %w", f, fs.ErrorNotImplemented)
+		}
+		newDst, err = do(ctx, dir, metadata)
+	} else {
+		do, ok := dst.(fs.SetMetadataer)
+		if !ok {
+			return nil, fmt.Errorf("internal error: expecting directory %s (%T) from %v to have SetMetadata method: %w", logName, dst, f, fs.ErrorNotImplemented)
+		}
+		err = do.SetMetadata(ctx, metadata)
+		newDst = dst
+	}
+	if err != nil {
+		return nil, err
+	}
+	fs.Infof(logName, "Updated directory metadata")
+	return newDst, nil
+}
+
+// SetDirModTime sets the modtime on dst or dir
+//
+// If dst is nil then it uses dir as the name of the directory.
+//
+// It returns the destination directory if possible. Note that this
+// may be nil.
+//
+// It does not create the directory.
+func SetDirModTime(ctx context.Context, f fs.Fs, dst fs.Directory, dir string, modTime time.Time) (newDst fs.Directory, err error) {
+	logName := dirName(f, dst, dir)
+	ci := fs.GetConfig(ctx)
+	if ci.NoUpdateDirModTime {
+		fs.Debugf(logName, "Skipping set directory modification time as --no-update-dir-modtime is set")
+		return nil, nil
+	}
+	if SkipDestructive(ctx, logName, "set directory modification time") {
+		return nil, nil
+	}
+	if dst != nil {
+		dir = dst.Remote()
+	}
+
+	// Try to set the ModTime with the Directory.SetModTime method first as this is the most efficient
+	if dst != nil {
+		if do, ok := dst.(fs.SetModTimer); ok {
+			err := do.SetModTime(ctx, modTime)
+			if err != nil {
+				return dst, err
+			}
+			fs.Infof(logName, "Set directory modification time (using SetModTime)")
+			return dst, nil
+		}
+	}
+
+	// Next try to set the ModTime with the Fs.DirSetModTime method as this works for non-metadata backends
+	if do := f.Features().DirSetModTime; do != nil {
+		err := do(ctx, dir, modTime)
+		if err != nil {
+			return dst, err
+		}
+		fs.Infof(logName, "Set directory modification time (using DirSetModTime)")
+		return dst, nil
+	}
+
+	// Something should have worked so return an error
+	return nil, fmt.Errorf("no method to set directory modtime found for %v (%T): %w", f, dst, fs.ErrorNotImplemented)
 }

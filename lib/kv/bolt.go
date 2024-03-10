@@ -293,6 +293,11 @@ func (db *DB) Stop(remove bool) error {
 	return db.Do(false, &opStop{remove: remove})
 }
 
+// IsStopped returns true if db is already stopped
+func (db *DB) IsStopped() bool {
+	return len(dbMap) == 0
+}
+
 // opStop: close database and stop operation loop
 type opStop struct {
 	remove bool

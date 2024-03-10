@@ -569,6 +569,17 @@ Properties:
 - Type:        Encoding
 - Default:     Slash,Dot
 
+#### --local-description
+
+Description of the remote
+
+Properties:
+
+- Config:      description
+- Env Var:     RCLONE_LOCAL_DESCRIPTION
+- Type:        string
+- Required:    false
+
 ### Metadata
 
 Depending on which OS is in use the local backend may return only some
@@ -579,6 +590,8 @@ netbsd, macOS and Solaris. It is **not** supported on Windows yet
 
 User metadata is stored as extended attributes (which may not be
 supported by all file systems) under the "user.*" prefix.
+
+Metadata is supported on files and directories.
 
 Here are the possible system metadata items for the local backend.
 

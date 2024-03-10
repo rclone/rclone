@@ -228,7 +228,7 @@ the `--resync`.
 - `path2` - same as `path1`, except the path2 version is considered the winner.
 - `newer` - the newer file (by `modtime`) is considered the winner, regardless
 of which side it came from. This may result in having a mix of some winners
-from Path1, and some winners from Path2. (The implementation is analagous to
+from Path1, and some winners from Path2. (The implementation is analogous to
 running `rclone copy --update` in both directions.)
 - `older` - same as `newer`, except the older file is considered the winner,
 and the newer file is considered the loser.

@@ -1386,9 +1386,22 @@ Properties:
     - "true"
         - Get GCP IAM credentials from the environment (env vars or IAM).
 
+#### --drive-description
+
+Description of the remote
+
+Properties:
+
+- Config:      description
+- Env Var:     RCLONE_DRIVE_DESCRIPTION
+- Type:        string
+- Required:    false
+
 ### Metadata
 
 User metadata is stored in the properties field of the drive object.
+
+Metadata is supported on files and directories.
 
 Here are the possible system metadata items for the drive backend.
 

@@ -68,7 +68,7 @@ Flags for anything which can Copy a file.
       --ignore-checksum                             Skip post copy check of checksums
       --ignore-existing                             Skip all files that exist on destination
       --ignore-size                                 Ignore size when skipping use modtime or checksum
-  -I, --ignore-times                                Don't skip files that match size and time - transfer all files
+  -I, --ignore-times                                Don't skip items that match size and time - transfer all unconditionally
       --immutable                                   Do not modify files, fail if existing files have been modified
       --inplace                                     Download directly to destination file instead of atomic download to temp/rename
       --max-backlog int                             Maximum number of objects in sync or check backlog (default 10000)
@@ -82,6 +82,7 @@ Flags for anything which can Copy a file.
       --multi-thread-write-buffer-size SizeSuffix   In memory buffer size for writing when in multi-thread mode (default 128Ki)
       --no-check-dest                               Don't check the destination, copy regardless
       --no-traverse                                 Don't traverse destination file system on copy
+      --no-update-dir-modtime                       Don't update directory modification times
       --no-update-modtime                           Don't update destination modtime if files identical
       --order-by string                             Instructions on how to order the transfers, e.g. 'size,descending'
       --partial-suffix string                       Add partial-suffix to temporary file name when --inplace is not used (default ".partial")

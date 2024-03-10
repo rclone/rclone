@@ -26,7 +26,7 @@ Here is an overview of the major features of each cloud storage system.
 | Enterprise File Fabric       | -                 | R/W     | Yes              | No              | R/W       | -        |
 | FTP                          | -                 | R/W ¹⁰  | No               | No              | -         | -        |
 | Google Cloud Storage         | MD5               | R/W     | No               | No              | R/W       | -        |
-| Google Drive                 | MD5, SHA1, SHA256 | R/W     | No               | Yes             | R/W       | -        |
+| Google Drive                 | MD5, SHA1, SHA256 | DR/W    | No               | Yes             | R/W       | DRWU     |
 | Google Photos                | -                 | -       | No               | Yes             | R         | -        |
 | HDFS                         | -                 | R/W     | No               | No              | -         | -        |
 | HiDrive                      | HiDrive ¹²        | R/W     | No               | No              | -         | -        |
@@ -40,7 +40,7 @@ Here is an overview of the major features of each cloud storage system.
 | Memory                       | MD5               | R/W     | No               | No              | -         | -        |
 | Microsoft Azure Blob Storage | MD5               | R/W     | No               | No              | R/W       | -        |
 | Microsoft Azure Files Storage | MD5              | R/W     | Yes              | No              | R/W       | -        |
-| Microsoft OneDrive           | QuickXorHash ⁵    | R/W     | Yes              | No              | R         | -        |
+| Microsoft OneDrive           | QuickXorHash ⁵    | DR/W    | Yes              | No              | R         | DRW      |
 | OpenDrive                    | MD5               | R/W     | Yes              | Partial ⁸       | -         | -        |
 | OpenStack Swift              | MD5               | R/W     | No               | No              | R/W       | -        |
 | Oracle Object Storage        | MD5               | R/W     | No               | No              | R/W       | -        |
@@ -52,7 +52,7 @@ Here is an overview of the major features of each cloud storage system.
 | QingStor                     | MD5               | - ⁹     | No               | No              | R/W       | -        |
 | Quatrix by Maytech           | -                 | R/W     | No               | No              | -         | -        |
 | Seafile                      | -                 | -       | No               | No              | -         | -        |
-| SFTP                         | MD5, SHA1 ²       | R/W     | Depends          | No              | -         | -        |
+| SFTP                         | MD5, SHA1 ²       | DR/W    | Depends          | No              | -         | -        |
 | Sia                          | -                 | -       | No               | No              | -         | -        |
 | SMB                          | -                 | R/W     | Yes              | No              | -         | -        |
 | SugarSync                    | -                 | -       | No               | No              | -         | -        |
@@ -61,7 +61,7 @@ Here is an overview of the major features of each cloud storage system.
 | WebDAV                       | MD5, SHA1 ³       | R ⁴     | Depends          | No              | -         | -        |
 | Yandex Disk                  | MD5               | R/W     | No               | No              | R         | -        |
 | Zoho WorkDrive               | -                 | -       | No               | No              | -         | -        |
-| The local filesystem         | All               | R/W     | Depends          | No              | -         | RWU      |
+| The local filesystem         | All               | DR/W    | Depends          | No              | -         | DRWU     |
 
 ¹ Dropbox supports [its own custom
 hash](https://www.dropbox.com/developers/reference/content-hash).
@@ -115,12 +115,20 @@ systems they must support a common hash type.
 Almost all cloud storage systems store some sort of timestamp
 on objects, but several of them not something that is appropriate
 to use for syncing. E.g. some backends will only write a timestamp
-that represent the time of the upload. To be relevant for syncing
+that represents the time of the upload. To be relevant for syncing
 it should be able to store the modification time of the source
 object. If this is not the case, rclone will only check the file
 size by default, though can be configured to check the file hash
 (with the `--checksum` flag). Ideally it should also be possible to
 change the timestamp of an existing file without having to re-upload it.
+
+| Key | Explanation |
+|-----|-------------|
+| `-` | ModTimes not supported - times likely the upload time |
+| `R` | ModTimes supported on files but can't be changed without re-upload |
+| `R/W` | Read and Write ModTimes fully supported on files |
+| `DR` | ModTimes supported on files and directories but can't be changed without re-upload |
+| `DR/W` | Read and Write ModTimes fully supported on files and directories |
 
 Storage systems with a `-` in the ModTime column, means the
 modification read on objects is not the modification time of the
@@ -142,6 +150,9 @@ in a `mount` will be silently ignored.
 
 Storage systems with `R/W` (for read/write) in the ModTime column,
 means they do also support modtime-only operations.
+
+Storage systems with `D` in the ModTime column means that the
+following symbols apply to directories as well as files.
 
 ### Case Insensitive ###
 
@@ -455,9 +466,12 @@ The levels of metadata support are
 
 | Key | Explanation |
 |-----|-------------|
-| `R` | Read only System Metadata |
-| `RW` | Read and write System Metadata |
-| `RWU` | Read and write System Metadata and read and write User Metadata |
+| `R` | Read only System Metadata on files only|
+| `RW` | Read and write System Metadata on files only|
+| `RWU` | Read and write System Metadata and read and write User Metadata on files only|
+| `DR` | Read only System Metadata on files and directories |
+| `DRW` | Read and write System Metadata on files and directories|
+| `DRWU` | Read and write System Metadata and read and write User Metadata on files and directories |
 
 See [the metadata docs](/docs/#metadata) for more info.
 
@@ -513,7 +527,7 @@ upon backend-specific capabilities.
 | WebDAV                       | Yes   | Yes  | Yes  | Yes     | No      | No    | Yes ³        | No                | No           | Yes   | Yes      |
 | Yandex Disk                  | Yes   | Yes  | Yes  | Yes     | Yes     | No    | Yes          | No                | Yes          | Yes   | Yes      |
 | Zoho WorkDrive               | Yes   | Yes  | Yes  | Yes     | No      | No    | No           | No                | No           | Yes   | Yes      |
-| The local filesystem         | Yes   | No   | Yes  | Yes     | No      | No    | Yes          | Yes               | No           | Yes   | Yes      |
+| The local filesystem         | No    | No   | Yes  | Yes     | No      | No    | Yes          | Yes               | No           | Yes   | Yes      |
 
 ¹ Note Swift implements this in order to delete directory markers but
 it doesn't actually have a quicker way of deleting files other than

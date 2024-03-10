@@ -222,18 +222,23 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (outFs fs
 	}
 	// check features
 	var features = (&fs.Features{
-		CaseInsensitive:         true,
-		DuplicateFiles:          false,
-		ReadMimeType:            true,
-		WriteMimeType:           true,
-		CanHaveEmptyDirectories: true,
-		BucketBased:             true,
-		SetTier:                 true,
-		GetTier:                 true,
-		ReadMetadata:            true,
-		WriteMetadata:           true,
-		UserMetadata:            true,
-		PartialUploads:          true,
+		CaseInsensitive:          true,
+		DuplicateFiles:           false,
+		ReadMimeType:             true,
+		WriteMimeType:            true,
+		CanHaveEmptyDirectories:  true,
+		BucketBased:              true,
+		SetTier:                  true,
+		GetTier:                  true,
+		ReadMetadata:             true,
+		WriteMetadata:            true,
+		UserMetadata:             true,
+		ReadDirMetadata:          true,
+		WriteDirMetadata:         true,
+		WriteDirSetModTime:       true,
+		UserDirMetadata:          true,
+		DirModTimeUpdatesOnWrite: true,
+		PartialUploads:           true,
 	}).Fill(ctx, f)
 	canMove := true
 	for _, u := range f.upstreams {
@@ -438,6 +443,32 @@ func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 		return err
 	}
 	return u.f.Mkdir(ctx, uRemote)
+}
+
+// MkdirMetadata makes the root directory of the Fs object
+func (f *Fs) MkdirMetadata(ctx context.Context, dir string, metadata fs.Metadata) (fs.Directory, error) {
+	u, uRemote, err := f.findUpstream(dir)
+	if err != nil {
+		return nil, err
+	}
+	do := u.f.Features().MkdirMetadata
+	if do == nil {
+		return nil, fs.ErrorNotImplemented
+	}
+	newDir, err := do(ctx, uRemote, metadata)
+	if err != nil {
+		return nil, err
+	}
+	entries := fs.DirEntries{newDir}
+	entries, err = u.wrapEntries(ctx, entries)
+	if err != nil {
+		return nil, err
+	}
+	newDir, ok := entries[0].(fs.Directory)
+	if !ok {
+		return nil, fmt.Errorf("internal error: expecting %T to be fs.Directory", entries[0])
+	}
+	return newDir, nil
 }
 
 // purge the upstream or fallback to a slow way
@@ -755,12 +786,11 @@ func (u *upstream) wrapEntries(ctx context.Context, entries fs.DirEntries) (fs.D
 		case fs.Object:
 			entries[i] = u.newObject(x)
 		case fs.Directory:
-			newDir := fs.NewDirCopy(ctx, x)
-			newPath, err := u.pathAdjustment.do(newDir.Remote())
+			newPath, err := u.pathAdjustment.do(x.Remote())
 			if err != nil {
 				return nil, err
 			}
-			newDir.SetRemote(newPath)
+			newDir := fs.NewDirWrapper(newPath, x)
 			entries[i] = newDir
 		default:
 			return nil, fmt.Errorf("unknown entry type %T", entry)
@@ -783,7 +813,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 	if f.root == "" && dir == "" {
 		entries = make(fs.DirEntries, 0, len(f.upstreams))
 		for combineDir := range f.upstreams {
-			d := fs.NewDir(combineDir, f.when)
+			d := fs.NewLimitedDirWrapper(combineDir, fs.NewDir(combineDir, f.when))
 			entries = append(entries, d)
 		}
 		return entries, nil
@@ -965,6 +995,22 @@ func (f *Fs) MergeDirs(ctx context.Context, dirs []fs.Directory) error {
 	return do(ctx, uDirs)
 }
 
+// DirSetModTime sets the directory modtime for dir
+func (f *Fs) DirSetModTime(ctx context.Context, dir string, modTime time.Time) error {
+	u, uDir, err := f.findUpstream(dir)
+	if err != nil {
+		return err
+	}
+	if uDir == "" {
+		fs.Debugf(dir, "Can't set modtime on upstream root. skipping.")
+		return nil
+	}
+	if do := u.f.Features().DirSetModTime; do != nil {
+		return do(ctx, uDir, modTime)
+	}
+	return fs.ErrorNotImplemented
+}
+
 // CleanUp the trash in the Fs
 //
 // Implement this if you have a way of emptying the trash or
@@ -1099,6 +1145,8 @@ var (
 	_ fs.PublicLinker    = (*Fs)(nil)
 	_ fs.PutUncheckeder  = (*Fs)(nil)
 	_ fs.MergeDirser     = (*Fs)(nil)
+	_ fs.DirSetModTimer  = (*Fs)(nil)
+	_ fs.MkdirMetadataer = (*Fs)(nil)
 	_ fs.CleanUpper      = (*Fs)(nil)
 	_ fs.OpenWriterAter  = (*Fs)(nil)
 	_ fs.FullObject      = (*Object)(nil)

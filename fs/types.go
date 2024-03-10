@@ -102,9 +102,6 @@ type Object interface {
 type ObjectInfo interface {
 	DirEntry
 
-	// Fs returns read only access to the Fs that this object is part of
-	Fs() Info
-
 	// Hash returns the selected checksum of the file
 	// If no checksum is available it returns ""
 	Hash(ctx context.Context, ty hash.Type) (string, error)
@@ -117,6 +114,9 @@ type ObjectInfo interface {
 // a Dir or Object.  These are returned from directory listings - type
 // assert them into the correct type.
 type DirEntry interface {
+	// Fs returns read only access to the Fs that this object is part of
+	Fs() Info
+
 	// String returns a description of the Object
 	String() string
 
@@ -142,6 +142,16 @@ type Directory interface {
 	// ID returns the internal ID of this directory if known, or
 	// "" otherwise
 	ID() string
+}
+
+// FullDirectory contains all the optional interfaces for Directory
+//
+// Use for checking making wrapping Directories implement everything
+type FullDirectory interface {
+	Directory
+	Metadataer
+	SetMetadataer
+	SetModTimer
 }
 
 // MimeTyper is an optional interface for Object
@@ -183,12 +193,30 @@ type GetTierer interface {
 	GetTier() string
 }
 
-// Metadataer is an optional interface for Object
+// Metadataer is an optional interface for DirEntry
 type Metadataer interface {
-	// Metadata returns metadata for an object
+	// Metadata returns metadata for an DirEntry
 	//
 	// It should return nil if there is no Metadata
 	Metadata(ctx context.Context) (Metadata, error)
+}
+
+// SetMetadataer is an optional interface for DirEntry
+type SetMetadataer interface {
+	// SetMetadata sets metadata for an DirEntry
+	//
+	// It should return fs.ErrorNotImplemented if it can't set metadata
+	SetMetadata(ctx context.Context, metadata Metadata) error
+}
+
+// SetModTimer is an optional interface for Directory.
+//
+// Object implements this as part of its requires set of interfaces.
+type SetModTimer interface {
+	// SetModTime sets the metadata on the DirEntry to set the modification date
+	//
+	// If there is any other metadata it does not overwrite it.
+	SetModTime(ctx context.Context, t time.Time) error
 }
 
 // FullObjectInfo contains all the read-only optional interfaces
@@ -248,6 +276,29 @@ func ObjectOptionalInterfaces(o Object) (supported, unsupported []string) {
 	return supported, unsupported
 }
 
+// DirectoryOptionalInterfaces returns the names of supported and
+// unsupported optional interfaces for a Directory
+func DirectoryOptionalInterfaces(d Directory) (supported, unsupported []string) {
+	store := func(ok bool, name string) {
+		if ok {
+			supported = append(supported, name)
+		} else {
+			unsupported = append(unsupported, name)
+		}
+	}
+
+	_, ok := d.(Metadataer)
+	store(ok, "Metadata")
+
+	_, ok = d.(SetMetadataer)
+	store(ok, "SetMetadata")
+
+	_, ok = d.(SetModTimer)
+	store(ok, "SetModTime")
+
+	return supported, unsupported
+}
+
 // ListRCallback defines a callback function for ListR to use
 //
 // It is called for each tranche of entries read from the listing and
@@ -281,3 +332,28 @@ type WriterAtCloser interface {
 	io.WriterAt
 	io.Closer
 }
+
+type unknownFs struct{}
+
+// Name of the remote (as passed into NewFs)
+func (unknownFs) Name() string { return "unknown" }
+
+// Root of the remote (as passed into NewFs)
+func (unknownFs) Root() string { return "" }
+
+// String returns a description of the FS
+func (unknownFs) String() string { return "unknown" }
+
+// Precision of the ModTimes in this Fs
+func (unknownFs) Precision() time.Duration { return ModTimeNotSupported }
+
+// Returns the supported hash types of the filesystem
+func (unknownFs) Hashes() hash.Set { return hash.Set(hash.None) }
+
+// Features returns the optional features of this Fs
+func (unknownFs) Features() *Features { return &Features{} }
+
+// Unknown holds an Info for an unknown Fs
+//
+// This is used when we need an Fs but don't have one.
+var Unknown Info = unknownFs{}

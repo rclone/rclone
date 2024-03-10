@@ -38,7 +38,7 @@ If output_file is "-", then the output will be written to stdout.
 		out := "/etc/bash_completion.d/rclone"
 		if len(args) > 0 {
 			if args[0] == "-" {
-				err := cmd.Root.GenBashCompletion(os.Stdout)
+				err := cmd.Root.GenBashCompletionV2(os.Stdout, false)
 				if err != nil {
 					log.Fatal(err)
 				}
@@ -46,7 +46,7 @@ If output_file is "-", then the output will be written to stdout.
 			}
 			out = args[0]
 		}
-		err := cmd.Root.GenBashCompletionFile(out)
+		err := cmd.Root.GenBashCompletionFileV2(out, false)
 		if err != nil {
 			log.Fatal(err)
 		}

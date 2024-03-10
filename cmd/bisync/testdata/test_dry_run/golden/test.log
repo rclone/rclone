@@ -67,11 +67,11 @@ INFO  : Bisyncing with Comparison Settings:
 }
 INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
 INFO  : Copying Path2 files to Path1
-INFO  : - [34mPath2[0m    [35mResync is copying files to[0m         - [36mPath1[0m
+NOTICE: - [34mPath2[0m    [35mResync is copying files to[0m         - [36mPath1[0m
 NOTICE: file10.txt: Skipped copy as --dry-run is set (size 19)
 NOTICE: file4.txt: Skipped copy as --dry-run is set (size 0)
 NOTICE: file6.txt: Skipped copy as --dry-run is set (size 19)
-INFO  : - [36mPath1[0m    [35mResync is copying files to[0m         - [36mPath2[0m
+NOTICE: - [36mPath1[0m    [35mResync is copying files to[0m         - [36mPath2[0m
 NOTICE: file1.txt: Skipped copy as --dry-run is set (size 0)
 NOTICE: file11.txt: Skipped copy as --dry-run is set (size 19)
 NOTICE: file2.txt: Skipped copy as --dry-run is set (size 13)
@@ -97,21 +97,21 @@ INFO  : Bisyncing with Comparison Settings:
 INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
 INFO  : Building Path1 and Path2 listings
 INFO  : Path1 checking for diffs
-INFO  : - [36mPath1[0m    [35m[33mFile changed: [35msize (larger)[0m, [35mtime (newer)[0m[0m[0m - [36mfile2.txt[0m
-INFO  : - [36mPath1[0m    [35m[31mFile was deleted[0m[0m          - [36mfile4.txt[0m
-INFO  : - [36mPath1[0m    [35m[33mFile changed: [35msize (larger)[0m, [35mtime (newer)[0m[0m[0m - [36mfile5.txt[0m
-INFO  : - [36mPath1[0m    [35m[31mFile was deleted[0m[0m          - [36mfile6.txt[0m
-INFO  : - [36mPath1[0m    [35m[33mFile changed: [35msize (larger)[0m, [35mtime (newer)[0m[0m[0m - [36mfile7.txt[0m
-INFO  : - [36mPath1[0m    [35m[32mFile is new[0m[0m               - [36mfile11.txt[0m
+NOTICE: - [36mPath1[0m    [35m[33mFile changed: [35msize (larger)[0m, [35mtime (newer)[0m[0m[0m - [36mfile2.txt[0m
+NOTICE: - [36mPath1[0m    [35m[31mFile was deleted[0m[0m          - [36mfile4.txt[0m
+NOTICE: - [36mPath1[0m    [35m[33mFile changed: [35msize (larger)[0m, [35mtime (newer)[0m[0m[0m - [36mfile5.txt[0m
+NOTICE: - [36mPath1[0m    [35m[31mFile was deleted[0m[0m          - [36mfile6.txt[0m
+NOTICE: - [36mPath1[0m    [35m[33mFile changed: [35msize (larger)[0m, [35mtime (newer)[0m[0m[0m - [36mfile7.txt[0m
+NOTICE: - [36mPath1[0m    [35m[32mFile is new[0m[0m               - [36mfile11.txt[0m
 INFO  : Path1:    6 changes: [32m   1 new[0m, [33m   3 modified[0m, [31m   2 deleted[0m
 INFO  : ([33mModified[0m: [36m   3 newer[0m, [34m   0 older[0m, [36m   3 larger[0m, [34m   0 smaller[0m)
 INFO  : Path2 checking for diffs
-INFO  : - [34mPath2[0m    [35m[33mFile changed: [35msize (larger)[0m, [35mtime (newer)[0m[0m[0m - [36mfile1.txt[0m
-INFO  : - [34mPath2[0m    [35m[31mFile was deleted[0m[0m          - [36mfile3.txt[0m
-INFO  : - [34mPath2[0m    [35m[33mFile changed: [35msize (larger)[0m, [35mtime (newer)[0m[0m[0m - [36mfile5.txt[0m
-INFO  : - [34mPath2[0m    [35m[33mFile changed: [35msize (larger)[0m, [35mtime (newer)[0m[0m[0m - [36mfile6.txt[0m
-INFO  : - [34mPath2[0m    [35m[31mFile was deleted[0m[0m          - [36mfile7.txt[0m
-INFO  : - [34mPath2[0m    [35m[32mFile is new[0m[0m               - [36mfile10.txt[0m
+NOTICE: - [34mPath2[0m    [35m[33mFile changed: [35msize (larger)[0m, [35mtime (newer)[0m[0m[0m - [36mfile1.txt[0m
+NOTICE: - [34mPath2[0m    [35m[31mFile was deleted[0m[0m          - [36mfile3.txt[0m
+NOTICE: - [34mPath2[0m    [35m[33mFile changed: [35msize (larger)[0m, [35mtime (newer)[0m[0m[0m - [36mfile5.txt[0m
+NOTICE: - [34mPath2[0m    [35m[33mFile changed: [35msize (larger)[0m, [35mtime (newer)[0m[0m[0m - [36mfile6.txt[0m
+NOTICE: - [34mPath2[0m    [35m[31mFile was deleted[0m[0m          - [36mfile7.txt[0m
+NOTICE: - [34mPath2[0m    [35m[32mFile is new[0m[0m               - [36mfile10.txt[0m
 INFO  : Path2:    6 changes: [32m   1 new[0m, [33m   3 modified[0m, [31m   2 deleted[0m
 INFO  : ([33mModified[0m: [36m   3 newer[0m, [34m   0 older[0m, [36m   3 larger[0m, [34m   0 smaller[0m)
 INFO  : Applying changes
@@ -120,25 +120,25 @@ ERROR : file5.txt: md5 differ
 NOTICE: {path2String}: 1 differences found
 NOTICE: {path2String}: 1 errors while checking
 INFO  : Finished checking the potential conflicts. 1 differences found
-INFO  : - [36mPath1[0m    [35m[32mQueue copy to[0m Path2[0m       - [36m{path2/}file11.txt[0m
-INFO  : - [36mPath1[0m    [35m[32mQueue copy to[0m Path2[0m       - [36m{path2/}file2.txt[0m
-INFO  : - [34mPath2[0m    [35m[31mQueue delete[0m[0m              - [36m{path2/}file4.txt[0m
+NOTICE: - [36mPath1[0m    [35m[32mQueue copy to[0m Path2[0m       - [36m{path2/}file11.txt[0m
+NOTICE: - [36mPath1[0m    [35m[32mQueue copy to[0m Path2[0m       - [36m{path2/}file2.txt[0m
+NOTICE: - [34mPath2[0m    [35m[31mQueue delete[0m[0m              - [36m{path2/}file4.txt[0m
 NOTICE: - [34mWARNING[0m  [35mNew or changed in both paths[0m       - [36mfile5.txt[0m
 NOTICE: file5.txt: Skipped rename as --dry-run is set
 NOTICE: - [36mPath1[0m    [35m[32mQueue copy to[0m Path2[0m       - [36m{path2/}file5.txt.conflict1[0m
 NOTICE: file5.txt: Skipped rename as --dry-run is set
 NOTICE: - [34mPath2[0m    [35m[32mQueue copy to[0m Path1[0m       - [36m{path1/}file5.txt.conflict2[0m
-INFO  : - [34mPath2[0m    [35m[32mQueue copy to[0m Path1[0m       - [36m{path1/}file6.txt[0m
-INFO  : - [36mPath1[0m    [35m[32mQueue copy to[0m Path2[0m       - [36m{path2/}file7.txt[0m
-INFO  : - [34mPath2[0m    [35m[32mQueue copy to[0m Path1[0m       - [36m{path1/}file1.txt[0m
-INFO  : - [34mPath2[0m    [35m[32mQueue copy to[0m Path1[0m       - [36m{path1/}file10.txt[0m
-INFO  : - [36mPath1[0m    [35m[31mQueue delete[0m[0m              - [36m{path1/}file3.txt[0m
-INFO  : - [34mPath2[0m    [35mDo queued copies to[0m                - [36mPath1[0m
+NOTICE: - [34mPath2[0m    [35m[32mQueue copy to[0m Path1[0m       - [36m{path1/}file6.txt[0m
+NOTICE: - [36mPath1[0m    [35m[32mQueue copy to[0m Path2[0m       - [36m{path2/}file7.txt[0m
+NOTICE: - [34mPath2[0m    [35m[32mQueue copy to[0m Path1[0m       - [36m{path1/}file1.txt[0m
+NOTICE: - [34mPath2[0m    [35m[32mQueue copy to[0m Path1[0m       - [36m{path1/}file10.txt[0m
+NOTICE: - [36mPath1[0m    [35m[31mQueue delete[0m[0m              - [36m{path1/}file3.txt[0m
+NOTICE: - [34mPath2[0m    [35mDo queued copies to[0m                - [36mPath1[0m
 NOTICE: file1.txt: Skipped copy as --dry-run is set (size 19)
 NOTICE: file10.txt: Skipped copy as --dry-run is set (size 19)
 NOTICE: file3.txt: Skipped delete as --dry-run is set (size 0)
 NOTICE: file6.txt: Skipped copy as --dry-run is set (size 19)
-INFO  : - [36mPath1[0m    [35mDo queued copies to[0m                - [36mPath2[0m
+NOTICE: - [36mPath1[0m    [35mDo queued copies to[0m                - [36mPath2[0m
 NOTICE: file11.txt: Skipped copy as --dry-run is set (size 19)
 NOTICE: file2.txt: Skipped copy as --dry-run is set (size 13)
 NOTICE: file4.txt: Skipped delete as --dry-run is set (size 0)

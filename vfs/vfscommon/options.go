@@ -30,6 +30,7 @@ type Options struct {
 	CacheMinFreeSpace  fs.SizeSuffix
 	CachePollInterval  time.Duration
 	CaseInsensitive    bool
+	BlockNormDupes     bool
 	WriteWait          time.Duration // time to wait for in-sequence write
 	ReadWait           time.Duration // time to wait for in-sequence read
 	WriteBack          time.Duration // time to wait before writing back dirty files
