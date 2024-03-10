@@ -287,6 +287,17 @@ Properties:
 - Type:        SizeSuffix
 - Default:     1Gi
 
+#### --union-description
+
+Description of the remote
+
+Properties:
+
+- Config:      description
+- Env Var:     RCLONE_UNION_DESCRIPTION
+- Type:        string
+- Required:    false
+
 ### Metadata
 
 Any metadata supported by the underlying remote is read and written.

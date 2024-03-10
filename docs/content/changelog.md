@@ -5,6 +5,176 @@ description: "Rclone Changelog"
 
 # Changelog
 
+## v1.66.0 - 2024-03-10
+
+[See commits](https://github.com/rclone/rclone/compare/v1.65.0...v1.66.0)
+
+* Major features
+    * Rclone will now sync directory modification times if the backend supports it.
+        * This can be disabled with [--no-update-dir-modtime](/docs/#no-update-dir-modtime)
+        * See [the overview](/overview/#features) and look for the `D` flags in the `ModTime` column to see which backends support it.
+    * Rclone will now sync directory metadata if the backend supports it when `-M`/`--metadata` is in use.
+        * See [the overview](/overview/#features) and look for the `D` flags in the `Metadata` column to see which backends support it.
+    * Bisync has received many updates see below for more details or [bisync's changelog](/bisync/#changelog)
+* Removed backends
+    * amazonclouddrive: Remove Amazon Drive backend code and docs (Nick Craig-Wood)
+* New Features
+    * backend
+        * Add description field for all backends (Paul Stern)
+    * build
+        * Update to go1.22 and make go1.20 the minimum required version (Nick Craig-Wood)
+        * Fix `CVE-2024-24786` by upgrading `google.golang.org/protobuf` (Nick Craig-Wood)
+    * check: Respect `--no-unicode-normalization` and `--ignore-case-sync` for `--checkfile` (nielash)
+    * cmd: Much improved shell auto completion which reduces the size of the completion file and works faster (Nick Craig-Wood)
+    * doc updates (albertony, ben-ba, Eli, emyarod, huajin tong, Jack Provance, kapitainsky, keongalvin, Nick Craig-Wood, nielash, rarspace01, rzitzer, Tera, Vincent Murphy)
+    * fs: Add more detailed logging for file includes/excludes (Kyle Reynolds)
+    * lsf
+        * Add `--time-format` flag (nielash)
+        * Make metadata appear for directories (Nick Craig-Wood)
+    * lsjson: Make metadata appear for directories (Nick Craig-Wood)
+    * rc
+        * Add `srcFs` and `dstFs` to `core/stats` and `core/transferred` stats (Nick Craig-Wood)
+        * Add `operations/hashsum` to the rc as `rclone hashsum` equivalent (Nick Craig-Wood)
+        * Add `config/paths` to the rc as `rclone config paths` equivalent (Nick Craig-Wood)
+    * sync
+        * Optionally report list of synced paths to file (nielash)
+        * Implement directory sync for mod times and metadata (Nick Craig-Wood)
+        * Don't set directory modtimes if already set (nielash)
+        * Don't sync directory modtimes from backends which don't have directories (Nick Craig-Wood)
+* Bug Fixes
+    * backend
+        * Make backends which use oauth implement the `Shutdown` and shutdown the oauth properly (rkonfj)
+    * bisync
+        * Handle unicode and case normalization consistently (nielash)
+        * Partial uploads known issue on `local`/`ftp`/`sftp` has been resolved (unless using `--inplace`) (nielash)
+        * Fixed handling of unicode normalization and case insensitivity, support for [`--fix-case`](/docs/#fix-case), [`--ignore-case-sync`](/docs/#ignore-case-sync), [`--no-unicode-normalization`](/docs/#no-unicode-normalization) (nielash)
+        * Bisync no longer fails to find the correct listing file when configs are overridden with backend-specific flags. (nielash)
+    * nfsmount
+        * Fix exit after external unmount (nielash)
+        * Fix `--volname` being ignored (nielash)
+    * operations
+        * Fix renaming a file on macOS (nielash)
+        * Fix case-insensitive moves in operations.Move (nielash)
+        * Fix TestCaseInsensitiveMoveFileDryRun on chunker integration tests (nielash)
+        * Fix TestMkdirModTime test (Nick Craig-Wood)
+        * Fix TestSetDirModTime for backends with SetDirModTime but not Metadata (Nick Craig-Wood)
+        * Fix typo in log messages (nielash)
+    * serve nfs: Fix writing files via Finder on macOS (nielash)
+    * serve restic: Fix error handling (Michael Eischer)
+    * serve webdav: Fix `--baseurl` without leading / (Nick Craig-Wood)
+    * stats: Fix race between ResetCounters and stopAverageLoop called from time.AfterFunc (Nick Craig-Wood)
+    * sync
+        * `--fix-case` flag to rename case insensitive dest (nielash)
+        * Use operations.DirMove instead of sync.MoveDir for `--fix-case` (nielash)
+    * systemd: Fix detection and switch to the coreos package everywhere rather than having 2 separate libraries (Anagh Kumar Baranwal)
+* Mount
+    * Fix macOS not noticing errors with `--daemon` (Nick Craig-Wood)
+    * Notice daemon dying much quicker (Nick Craig-Wood)
+* VFS
+    * Fix unicode normalization on macOS (nielash)
+* Bisync
+    * Copies and deletes are now handled in one operation instead of two (nielash)
+    * `--track-renames` and `--backup-dir` are now supported (nielash)
+    * Final listings are now generated from sync results, to avoid needing to re-list (nielash)
+    * Bisync is now much more resilient to changes that happen during a bisync run, and far less prone to critical errors / undetected changes (nielash)
+    * Bisync is now capable of rolling a file listing back in cases of uncertainty, essentially marking the file as needing to be rechecked next time. (nielash)
+    * A few basic terminal colors are now supported, controllable with [`--color`](/docs/#color-when) (`AUTO`|`NEVER`|`ALWAYS`) (nielash)
+    * Initial listing snapshots of Path1 and Path2 are now generated concurrently, using the same "march" infrastructure as `check` and `sync`, for performance improvements and less risk of error. (nielash)
+    * `--resync` is now much more efficient (especially for users of `--create-empty-src-dirs`) (nielash)
+    * Google Docs (and other files of unknown size) are now supported (with the same options as in `sync`) (nielash)
+    * Equality checks before a sync conflict rename now fall back to `cryptcheck` (when possible) or `--download`, (nielash)
+instead of of `--size-only`, when `check` is not available.
+    * Bisync now fully supports comparing based on any combination of size, modtime, and checksum, lifting the prior restriction on backends without modtime support. (nielash)
+    * Bisync now supports a "Graceful Shutdown" mode to cleanly cancel a run early without requiring `--resync`. (nielash)
+    * New `--recover` flag allows robust recovery in the event of interruptions, without requiring `--resync`. (nielash)
+    * A new `--max-lock` setting allows lock files to automatically renew and expire, for better automatic recovery when a run is interrupted. (nielash)
+    * Bisync now supports auto-resolving sync conflicts and customizing rename behavior with new [`--conflict-resolve`](#conflict-resolve), [`--conflict-loser`](#conflict-loser), and [`--conflict-suffix`](#conflict-suffix) flags. (nielash)
+    * A new [`--resync-mode`](#resync-mode) flag allows more control over which version of a file gets kept during a `--resync`. (nielash)
+    * Bisync now supports [`--retries`](/docs/#retries-int) and [`--retries-sleep`](/docs/#retries-sleep-time) (when [`--resilient`](#resilient) is set.) (nielash)
+    * Clarify file operation directions in dry-run logs (Kyle Reynolds)
+* Local
+    * Fix cleanRootPath on Windows after go1.21.4 stdlib update (nielash)
+    * Implement setting modification time on directories (nielash)
+    * Implement modtime and metadata for directories (Nick Craig-Wood)
+    * Fix setting of btime on directories on Windows (Nick Craig-Wood)
+    * Delete backend implementation of Purge to speed up and make stats (Nick Craig-Wood)
+    * Support metadata setting and mapping on server side Move (Nick Craig-Wood)
+* Cache
+    * Implement setting modification time on directories (if supported by wrapped remote) (nielash)
+    * Implement setting metadata on directories (Nick Craig-Wood)
+* Crypt
+    * Implement setting modification time on directories (if supported by wrapped remote) (nielash)
+    * Implement setting metadata on directories (Nick Craig-Wood)
+    * Improve handling of undecryptable file names (nielash)
+    * Add missing error check spotted by linter (Nick Craig-Wood)
+* Azure Blob
+    * Implement `--azureblob-delete-snapshots` (Nick Craig-Wood)
+* B2
+    * Clarify exactly what `--b2-download-auth-duration` does in the docs (Nick Craig-Wood)
+* Chunker
+    * Implement setting modification time on directories (if supported by wrapped remote) (nielash)
+    * Implement setting metadata on directories (Nick Craig-Wood)
+* Combine
+    * Implement setting modification time on directories (if supported by wrapped remote) (nielash)
+    * Implement setting metadata on directories (Nick Craig-Wood)
+    * Fix directory metadata error on upstream root (nielash)
+    * Fix directory move across upstreams (nielash)
+* Compress
+    * Implement setting modification time on directories (if supported by wrapped remote) (nielash)
+    * Implement setting metadata on directories (Nick Craig-Wood)
+* Drive
+    * Implement setting modification time on directories (nielash)
+    * Implement modtime and metadata setting for directories (Nick Craig-Wood)
+    * Support metadata setting and mapping on server side Move,Copy (Nick Craig-Wood)
+* FTP
+    * Fix mkdir with rsftp which is returning the wrong code (Nick Craig-Wood)
+* Hasher
+    * Implement setting modification time on directories (if supported by wrapped remote) (nielash)
+    * Implement setting metadata on directories (Nick Craig-Wood)
+    * Fix error from trying to stop an already-stopped db (nielash)
+    * Look for cached hash if passed hash unexpectedly blank (nielash)
+* Imagekit
+    * Updated docs and web content (Harshit Budhraja)
+    * Updated overview - supported operations (Harshit Budhraja)
+* Mega
+    * Fix panic with go1.22 (Nick Craig-Wood)
+* Netstorage
+    * Fix Root to return correct directory when pointing to a file (Nick Craig-Wood)
+* Onedrive
+    * Add metadata support (nielash)
+* Opendrive
+    * Fix moving file/folder within the same parent dir (nielash)
+* Oracle Object Storage
+    * Support `backend restore` command (Nikhil Ahuja)
+    * Support workload identity authentication for OKE (Anders Swanson)
+* Protondrive
+    * Fix encoding of Root method (Nick Craig-Wood)
+* Quatrix
+    * Fix `Content-Range` header (Volodymyr)
+    * Add option to skip project folders (Oksana Zhykina)
+    * Fix Root to return correct directory when pointing to a file (Nick Craig-Wood)
+* S3
+    * Add `--s3-version-deleted` to show delete markers in listings when using versions. (Nick Craig-Wood)
+    * Add IPv6 support with option `--s3-use-dual-stack` (Anthony Metzidis)
+    * Copy parts in parallel when doing chunked server side copy (Nick Craig-Wood)
+    * GCS provider: fix server side copy of files bigger than 5G (Nick Craig-Wood)
+    * Support metadata setting and mapping on server side Copy (Nick Craig-Wood)
+* Seafile
+    * Fix download/upload error when `FILE_SERVER_ROOT` is relative (DanielEgbers)
+    * Fix Root to return correct directory when pointing to a file (Nick Craig-Wood)
+* SFTP
+    * Implement setting modification time on directories (nielash)
+    * Set directory modtimes update on write flag (Nick Craig-Wood)
+    * Shorten wait delay for external ssh binaries now that we are using go1.20 (Nick Craig-Wood)
+* Swift
+    * Avoid unnecessary container versioning check (Joe Cai)
+* Union
+    * Implement setting modification time on directories (if supported by wrapped remote) (nielash)
+    * Implement setting metadata on directories (Nick Craig-Wood)
+* WebDAV
+    * Reduce priority of chunks upload log (Gabriel Ramos)
+    * owncloud: Add config `owncloud_exclude_shares` which allows to exclude shared files and folders when listing remote resources (Thomas Müller)
+
 ## v1.65.2 - 2024-01-24
 
 [See commits](https://github.com/rclone/rclone/compare/v1.65.1...v1.65.2)
@@ -3435,7 +3605,7 @@ all the docs and Edward Barker for helping re-write the front page.
           * this is for building web native GUIs for rclone
         * Optionally serving objects on the rc http server
         * Ensure rclone fails to start up if the `--rc` port is in use already
-        * See [the rc docs](https://rclone.org/rc/) for more info
+        * See [the rc docs](/rc/) for more info
     * sync/copy/move
         * Make `--files-from` only read the objects specified and don't scan directories (Nick Craig-Wood)
             * This is a huge speed improvement for destinations with lots of files

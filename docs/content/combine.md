@@ -154,6 +154,21 @@ Properties:
 - Type:        SpaceSepList
 - Default:     
 
+### Advanced options
+
+Here are the Advanced options specific to combine (Combine several remotes into one).
+
+#### --combine-description
+
+Description of the remote
+
+Properties:
+
+- Config:      description
+- Env Var:     RCLONE_COMBINE_DESCRIPTION
+- Type:        string
+- Required:    false
+
 ### Metadata
 
 Any metadata supported by the underlying remote is read and written.

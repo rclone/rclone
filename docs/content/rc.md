@@ -607,6 +607,26 @@ See the [config password](/commands/rclone_config_password/) command for more in
 
 **Authentication is required for this call.**
 
+### config/paths: Reads the config file path and other important paths. {#config-paths}
+
+Returns a JSON object with the following keys:
+
+- config: path to config file
+- cache: path to root of cache directory
+- temp: path to root of temporary directory
+
+Eg
+
+    {
+        "cache": "/home/USER/.cache/rclone",
+        "config": "/home/USER/.rclone.conf",
+        "temp": "/tmp"
+    }
+
+See the [config paths](/commands/rclone_config_paths/) command for more information on the above.
+
+**Authentication is required for this call.**
+
 ### config/providers: Shows how providers are configured in the config file. {#config-providers}
 
 Returns a JSON object:
@@ -847,15 +867,12 @@ Returns the following values:
 		[
 			{
 				"bytes": total transferred bytes for this file,
-				"eta": estimated time in seconds until file transfer completion (may be nil)
+				"eta": estimated time in seconds until file transfer completion
 				"name": name of the file,
 				"percentage": progress of the file transfer in percent,
 				"speed": average speed over the whole transfer in bytes per second,
 				"speedAvg": current speed in bytes per second as an exponentially weighted moving average,
 				"size": size of the file in bytes
-				"group": stats group this transfer is part of
-				"srcFs": name of the source remote (not present if not known)
-				"dstFs": name of the destination remote (not present if not known)
 			}
 		],
 	"checking": an array of names of currently active file checks
@@ -907,12 +924,9 @@ Returns the following values:
 				"size": size of the file in bytes,
 				"bytes": total transferred bytes for this file,
 				"checked": if the transfer is only checked (skipped, deleted),
-				"started_at": time the transfer was started at (RFC3339 format, eg `"2000-01-01T01:00:00.085742121Z"`),
-				"completed_at": time the transfer was completed at (RFC3339 format, only present if transfer is completed),
+				"timestamp": integer representing millisecond unix epoch,
 				"error": string description of the error (empty if successful),
-				"group": string representing which stats group this is part of,
-				"srcFs": name of the source remote (not present if not known),
-				"dstFs": name of the destination remote (not present if not known),
+				"jobid": id of the job that this transfer belongs to
 			}
 		]
 }
@@ -1398,6 +1412,50 @@ This command does not have a command line equivalent so use this instead:
 
     rclone rc --loopback operations/fsinfo fs=remote:
 
+### operations/hashsum: Produces a hashsum file for all the objects in the path. {#operations-hashsum}
+
+Produces a hash file for all the objects in the path using the hash
+named.  The output is in the same format as the standard
+md5sum/sha1sum tool.
+
+This takes the following parameters:
+
+- fs - a remote name string e.g. "drive:" for the source, "/" for local filesystem
+    - this can point to a file and just that file will be returned in the listing.
+- hashType - type of hash to be used
+- download - check by downloading rather than with hash (boolean)
+- base64 - output the hashes in base64 rather than hex (boolean)
+
+If you supply the download flag, it will download the data from the
+remote and create the hash on the fly. This can be useful for remotes
+that don't support the given hash or if you really want to check all
+the data.
+
+Note that if you wish to supply a checkfile to check hashes against
+the current files then you should use operations/check instead of
+operations/hashsum.
+
+Returns:
+
+- hashsum - array of strings of the hashes
+- hashType - type of hash used
+
+Example:
+
+    $ rclone rc --loopback operations/hashsum fs=bin hashType=MD5 download=true base64=true
+    {
+        "hashType": "md5",
+        "hashsum": [
+            "WTSVLpuiXyJO_kGzJerRLg==  backend-versions.sh",
+            "v1b_OlWCJO9LtNq3EIKkNQ==  bisect-go-rclone.sh",
+            "VHbmHzHh4taXzgag8BAIKQ==  bisect-rclone.sh",
+        ]
+    }
+
+See the [hashsum](/commands/rclone_hashsum/) command for more information on the above.
+
+**Authentication is required for this call.**
+
 ### operations/list: List the given remote and path in JSON format {#operations-list}
 
 This takes the following parameters:
@@ -1764,7 +1822,9 @@ This takes the following parameters
 - ignoreListingChecksum - Do not use checksums for listings
 - resilient - Allow future runs to retry after certain less-serious errors, instead of requiring resync. 
             Use at your own risk!
-- workdir - server directory for history files (default: /home/ncw/.cache/rclone/bisync)
+- workdir - server directory for history files (default: `~/.cache/rclone/bisync`)
+- backupdir1 - --backup-dir for Path1. Must be a non-overlapping path on the same remote.
+- backupdir2 - --backup-dir for Path2. Must be a non-overlapping path on the same remote.
 - noCleanup - retain working files
 
 See [bisync command help](https://rclone.org/commands/rclone_bisync/)

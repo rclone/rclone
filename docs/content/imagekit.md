@@ -191,6 +191,17 @@ Properties:
 - Type:        Encoding
 - Default:     Slash,LtGt,DoubleQuote,Dollar,Question,Hash,Percent,BackSlash,Del,Ctl,InvalidUtf8,Dot,SquareBracket
 
+#### --imagekit-description
+
+Description of the remote
+
+Properties:
+
+- Config:      description
+- Env Var:     RCLONE_IMAGEKIT_DESCRIPTION
+- Type:        string
+- Required:    false
+
 ### Metadata
 
 Any metadata supported by the underlying remote is read and written.

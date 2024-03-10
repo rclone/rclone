@@ -319,6 +319,9 @@ Properties:
         - use instance principals to authorize an instance to make API calls. 
         - each instance has its own identity, and authenticates using the certificates that are read from instance metadata. 
         - https://docs.oracle.com/en-us/iaas/Content/Identity/Tasks/callingservicesfrominstances.htm
+    - "workload_identity_auth"
+        - use workload identity to grant OCI Container Engine for Kubernetes workloads policy-driven access to OCI resources using OCI Identity and Access Management (IAM).
+        - https://docs.oracle.com/en-us/iaas/Content/ContEng/Tasks/contenggrantingworkloadaccesstoresources.htm
     - "resource_principal_auth"
         - use resource principals to make API calls
     - "no_auth"
@@ -703,6 +706,17 @@ Properties:
         - None
     - "AES256"
         - AES256
+
+#### --oos-description
+
+Description of the remote
+
+Properties:
+
+- Config:      description
+- Env Var:     RCLONE_OOS_DESCRIPTION
+- Type:        string
+- Required:    false
 
 ## Backend commands
 

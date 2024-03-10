@@ -23,7 +23,7 @@ Flags for anything which can Copy a file.
       --ignore-checksum                             Skip post copy check of checksums
       --ignore-existing                             Skip all files that exist on destination
       --ignore-size                                 Ignore size when skipping use modtime or checksum
-  -I, --ignore-times                                Don't skip files that match size and time - transfer all files
+  -I, --ignore-times                                Don't skip items that match size and time - transfer all unconditionally
       --immutable                                   Do not modify files, fail if existing files have been modified
       --inplace                                     Download directly to destination file instead of atomic download to temp/rename
       --max-backlog int                             Maximum number of objects in sync or check backlog (default 10000)
@@ -37,6 +37,7 @@ Flags for anything which can Copy a file.
       --multi-thread-write-buffer-size SizeSuffix   In memory buffer size for writing when in multi-thread mode (default 128Ki)
       --no-check-dest                               Don't check the destination, copy regardless
       --no-traverse                                 Don't traverse destination file system on copy
+      --no-update-dir-modtime                       Don't update directory modification times
       --no-update-modtime                           Don't update destination modtime if files identical
       --order-by string                             Instructions on how to order the transfers, e.g. 'size,descending'
       --partial-suffix string                       Add partial-suffix to temporary file name when --inplace is not used (default ".partial")
@@ -57,6 +58,7 @@ Flags just used for `rclone sync`.
       --delete-after                    When synchronizing, delete files on destination after transferring (default)
       --delete-before                   When synchronizing, delete files on destination before transferring
       --delete-during                   When synchronizing, delete files during transfer
+      --fix-case                        Force rename of case insensitive dest to match source
       --ignore-errors                   Delete even if there are I/O errors
       --max-delete int                  When synchronizing, limit the number of deletes (default -1)
       --max-delete-size SizeSuffix      When synchronizing, limit the total size of deletes (default off)
@@ -112,7 +114,7 @@ General networking and HTTP stuff.
       --tpslimit float                     Limit HTTP transactions per second to this
       --tpslimit-burst int                 Max burst of transactions for --tpslimit (default 1)
       --use-cookies                        Enable session cookiejar
-      --user-agent string                  Set the user-agent to a specified string (default "rclone/v1.65.0")
+      --user-agent string                  Set the user-agent to a specified string (default "rclone/v1.66.0")
 ```
 
 
@@ -296,14 +298,7 @@ Flags to control the Remote Control API.
 Backend only flags. These can be set in the config file also.
 
 ```
-      --acd-auth-url string                                 Auth server URL
-      --acd-client-id string                                OAuth Client Id
-      --acd-client-secret string                            OAuth Client Secret
-      --acd-encoding Encoding                               The encoding for the backend (default Slash,InvalidUtf8,Dot)
-      --acd-templink-threshold SizeSuffix                   Files >= this size will be downloaded via their tempLink (default 9Gi)
-      --acd-token string                                    OAuth Access Token as a JSON blob
-      --acd-token-url string                                Token server url
-      --acd-upload-wait-per-gb Duration                     Additional time per GiB to wait after a failed complete upload to see if it appears (default 3m0s)
+      --alias-description string                            Description of the remote
       --alias-remote string                                 Remote or path to alias
       --azureblob-access-tier string                        Access tier of blob: hot, cool, cold or archive
       --azureblob-account string                            Azure Storage Account Name
@@ -314,6 +309,8 @@ Backend only flags. These can be set in the config file also.
       --azureblob-client-id string                          The ID of the client in use
       --azureblob-client-secret string                      One of the service principal's client secrets
       --azureblob-client-send-certificate-chain             Send the certificate chain when using certificate auth
+      --azureblob-delete-snapshots string                   Set to specify how to deal with snapshots on blob deletion
+      --azureblob-description string                        Description of the remote
       --azureblob-directory-markers                         Upload an empty object with a trailing slash when a new directory is created
       --azureblob-disable-checksum                          Don't store MD5 checksum with object metadata
       --azureblob-encoding Encoding                         The encoding for the backend (default Slash,BackSlash,Del,Ctl,RightPeriod,InvalidUtf8)
@@ -344,6 +341,7 @@ Backend only flags. These can be set in the config file also.
       --azurefiles-client-secret string                     One of the service principal's client secrets
       --azurefiles-client-send-certificate-chain            Send the certificate chain when using certificate auth
       --azurefiles-connection-string string                 Azure Files Connection String
+      --azurefiles-description string                       Description of the remote
       --azurefiles-encoding Encoding                        The encoding for the backend (default Slash,LtGt,DoubleQuote,Colon,Question,Asterisk,Pipe,BackSlash,Del,Ctl,RightPeriod,InvalidUtf8,Dot)
       --azurefiles-endpoint string                          Endpoint for the service
       --azurefiles-env-auth                                 Read credentials from runtime (environment variables, CLI or MSI)
@@ -363,8 +361,9 @@ Backend only flags. These can be set in the config file also.
       --b2-account string                                   Account ID or Application Key ID
       --b2-chunk-size SizeSuffix                            Upload chunk size (default 96Mi)
       --b2-copy-cutoff SizeSuffix                           Cutoff for switching to multipart copy (default 4Gi)
+      --b2-description string                               Description of the remote
       --b2-disable-checksum                                 Disable checksums for large (> upload cutoff) files
-      --b2-download-auth-duration Duration                  Time before the authorization token will expire in s or suffix ms|s|m|h|d (default 1w)
+      --b2-download-auth-duration Duration                  Time before the public link authorization token will expire in s or suffix ms|s|m|h|d (default 1w)
       --b2-download-url string                              Custom endpoint for downloads
       --b2-encoding Encoding                                The encoding for the backend (default Slash,BackSlash,Del,Ctl,InvalidUtf8,Dot)
       --b2-endpoint string                                  Endpoint for the service
@@ -383,6 +382,7 @@ Backend only flags. These can be set in the config file also.
       --box-client-id string                                OAuth Client Id
       --box-client-secret string                            OAuth Client Secret
       --box-commit-retries int                              Max number of times to try committing a multipart file (default 100)
+      --box-description string                              Description of the remote
       --box-encoding Encoding                               The encoding for the backend (default Slash,BackSlash,Del,Ctl,RightSpace,InvalidUtf8,Dot)
       --box-impersonate string                              Impersonate this user ID when using a service account
       --box-list-chunk int                                  Size of listing chunk 1-1000 (default 1000)
@@ -399,6 +399,7 @@ Backend only flags. These can be set in the config file also.
       --cache-db-path string                                Directory to store file structure metadata DB (default "$HOME/.cache/rclone/cache-backend")
       --cache-db-purge                                      Clear all the cached data for this remote on start
       --cache-db-wait-time Duration                         How long to wait for the DB to be available - 0 is unlimited (default 1s)
+      --cache-description string                            Description of the remote
       --cache-info-age Duration                             How long to cache file structure information (directory listings, file size, times, etc.) (default 6h0m0s)
       --cache-plex-insecure string                          Skip all certificate verification when connecting to the Plex server
       --cache-plex-password string                          The password of the Plex user (obscured)
@@ -412,15 +413,19 @@ Backend only flags. These can be set in the config file also.
       --cache-workers int                                   How many workers should run in parallel to download chunks (default 4)
       --cache-writes                                        Cache file data on writes through the FS
       --chunker-chunk-size SizeSuffix                       Files larger than chunk size will be split in chunks (default 2Gi)
+      --chunker-description string                          Description of the remote
       --chunker-fail-hard                                   Choose how chunker should handle files with missing or invalid chunks
       --chunker-hash-type string                            Choose how chunker handles hash sums (default "md5")
       --chunker-remote string                               Remote to chunk/unchunk
+      --combine-description string                          Description of the remote
       --combine-upstreams SpaceSepList                      Upstreams for combining
+      --compress-description string                         Description of the remote
       --compress-level int                                  GZIP compression level (-2 to 9) (default -1)
       --compress-mode string                                Compression mode (default "gzip")
       --compress-ram-cache-limit SizeSuffix                 Some remotes don't allow the upload of files with unknown size (default 20Mi)
       --compress-remote string                              Remote to compress
   -L, --copy-links                                          Follow symlinks and copy the pointed to item
+      --crypt-description string                            Description of the remote
       --crypt-directory-name-encryption                     Option to either encrypt directory names or leave them intact (default true)
       --crypt-filename-encoding string                      How to encode the encrypted filename to text string (default "base32")
       --crypt-filename-encryption string                    How to encrypt the filenames (default "standard")
@@ -431,6 +436,7 @@ Backend only flags. These can be set in the config file also.
       --crypt-remote string                                 Remote to encrypt/decrypt
       --crypt-server-side-across-configs                    Deprecated: use --server-side-across-configs instead
       --crypt-show-mapping                                  For all files listed show how the names encrypt
+      --crypt-strict-names                                  If set, this will raise an error when crypt comes across a filename that can't be decrypted
       --crypt-suffix string                                 If this is set it will override the default suffix of ".bin" (default ".bin")
       --drive-acknowledge-abuse                             Set to allow files which return cannotDownloadAbusiveFile to be downloaded
       --drive-allow-import-name-change                      Allow the filetype to change when uploading Google docs
@@ -440,6 +446,7 @@ Backend only flags. These can be set in the config file also.
       --drive-client-id string                              Google Application Client Id
       --drive-client-secret string                          OAuth Client Secret
       --drive-copy-shortcut-content                         Server side copy contents of shortcuts instead of the shortcut
+      --drive-description string                            Description of the remote
       --drive-disable-http2                                 Disable drive using http2 (default true)
       --drive-encoding Encoding                             The encoding for the backend (default InvalidUtf8)
       --drive-env-auth                                      Get IAM credentials from runtime (environment variables or instance meta data if no env vars)
@@ -488,6 +495,7 @@ Backend only flags. These can be set in the config file also.
       --dropbox-chunk-size SizeSuffix                       Upload chunk size (< 150Mi) (default 48Mi)
       --dropbox-client-id string                            OAuth Client Id
       --dropbox-client-secret string                        OAuth Client Secret
+      --dropbox-description string                          Description of the remote
       --dropbox-encoding Encoding                           The encoding for the backend (default Slash,BackSlash,Del,RightSpace,InvalidUtf8,Dot)
       --dropbox-impersonate string                          Impersonate this user when using a business account
       --dropbox-pacer-min-sleep Duration                    Minimum time to sleep between API calls (default 10ms)
@@ -497,10 +505,12 @@ Backend only flags. These can be set in the config file also.
       --dropbox-token-url string                            Token server url
       --fichier-api-key string                              Your API Key, get it from https://1fichier.com/console/params.pl
       --fichier-cdn                                         Set if you wish to use CDN download links
+      --fichier-description string                          Description of the remote
       --fichier-encoding Encoding                           The encoding for the backend (default Slash,LtGt,DoubleQuote,SingleQuote,BackQuote,Dollar,BackSlash,Del,Ctl,LeftSpace,RightSpace,InvalidUtf8,Dot)
       --fichier-file-password string                        If you want to download a shared file that is password protected, add this parameter (obscured)
       --fichier-folder-password string                      If you want to list the files in a shared folder that is password protected, add this parameter (obscured)
       --fichier-shared-folder string                        If you want to download a shared folder, add this parameter
+      --filefabric-description string                       Description of the remote
       --filefabric-encoding Encoding                        The encoding for the backend (default Slash,Del,Ctl,InvalidUtf8,Dot)
       --filefabric-permanent-token string                   Permanent Authentication Token
       --filefabric-root-folder-id string                    ID of the root folder
@@ -511,6 +521,7 @@ Backend only flags. These can be set in the config file also.
       --ftp-ask-password                                    Allow asking for FTP password when needed
       --ftp-close-timeout Duration                          Maximum time to wait for a response to close (default 1m0s)
       --ftp-concurrency int                                 Maximum number of FTP simultaneous connections, 0 for unlimited
+      --ftp-description string                              Description of the remote
       --ftp-disable-epsv                                    Disable using EPSV even if server advertises support
       --ftp-disable-mlsd                                    Disable using MLSD even if server advertises support
       --ftp-disable-tls13                                   Disable TLS 1.3 (workaround for FTP servers with buggy TLS)
@@ -536,6 +547,7 @@ Backend only flags. These can be set in the config file also.
       --gcs-client-id string                                OAuth Client Id
       --gcs-client-secret string                            OAuth Client Secret
       --gcs-decompress                                      If set this will decompress gzip encoded objects
+      --gcs-description string                              Description of the remote
       --gcs-directory-markers                               Upload an empty object with a trailing slash when a new directory is created
       --gcs-encoding Encoding                               The encoding for the backend (default Slash,CrLf,InvalidUtf8,Dot)
       --gcs-endpoint string                                 Endpoint for the service
@@ -556,6 +568,7 @@ Backend only flags. These can be set in the config file also.
       --gphotos-batch-timeout Duration                      Max time to allow an idle upload batch before uploading (default 0s)
       --gphotos-client-id string                            OAuth Client Id
       --gphotos-client-secret string                        OAuth Client Secret
+      --gphotos-description string                          Description of the remote
       --gphotos-encoding Encoding                           The encoding for the backend (default Slash,CrLf,InvalidUtf8,Dot)
       --gphotos-include-archived                            Also view and download archived media
       --gphotos-read-only                                   Set to make the Google Photos backend read only
@@ -564,10 +577,12 @@ Backend only flags. These can be set in the config file also.
       --gphotos-token string                                OAuth Access Token as a JSON blob
       --gphotos-token-url string                            Token server url
       --hasher-auto-size SizeSuffix                         Auto-update checksum for files smaller than this size (disabled by default)
+      --hasher-description string                           Description of the remote
       --hasher-hashes CommaSepList                          Comma separated list of supported checksum types (default md5,sha1)
       --hasher-max-age Duration                             Maximum time to keep checksums in cache (0 = no cache, off = cache forever) (default off)
       --hasher-remote string                                Remote to cache checksums for (e.g. myRemote:path)
       --hdfs-data-transfer-protection string                Kerberos data transfer protection: authentication|integrity|privacy
+      --hdfs-description string                             Description of the remote
       --hdfs-encoding Encoding                              The encoding for the backend (default Slash,Colon,Del,Ctl,InvalidUtf8,Dot)
       --hdfs-namenode CommaSepList                          Hadoop name nodes and ports
       --hdfs-service-principal-name string                  Kerberos service principal name for the namenode
@@ -576,6 +591,7 @@ Backend only flags. These can be set in the config file also.
       --hidrive-chunk-size SizeSuffix                       Chunksize for chunked uploads (default 48Mi)
       --hidrive-client-id string                            OAuth Client Id
       --hidrive-client-secret string                        OAuth Client Secret
+      --hidrive-description string                          Description of the remote
       --hidrive-disable-fetching-member-count               Do not fetch number of objects in directories unless it is absolutely necessary
       --hidrive-encoding Encoding                           The encoding for the backend (default Slash,Dot)
       --hidrive-endpoint string                             Endpoint for the service (default "https://api.hidrive.strato.com/2.1")
@@ -586,10 +602,12 @@ Backend only flags. These can be set in the config file also.
       --hidrive-token-url string                            Token server url
       --hidrive-upload-concurrency int                      Concurrency for chunked uploads (default 4)
       --hidrive-upload-cutoff SizeSuffix                    Cutoff/Threshold for chunked uploads (default 96Mi)
+      --http-description string                             Description of the remote
       --http-headers CommaSepList                           Set HTTP headers for all transactions
       --http-no-head                                        Don't use HEAD requests
       --http-no-slash                                       Set this if the site doesn't end directories with /
       --http-url string                                     URL of HTTP host to connect to
+      --imagekit-description string                         Description of the remote
       --imagekit-encoding Encoding                          The encoding for the backend (default Slash,LtGt,DoubleQuote,Dollar,Question,Hash,Percent,BackSlash,Del,Ctl,InvalidUtf8,Dot,SquareBracket)
       --imagekit-endpoint string                            You can find your ImageKit.io URL endpoint in your [dashboard](https://imagekit.io/dashboard/developer/api-keys)
       --imagekit-only-signed Restrict unsigned image URLs   If you have configured Restrict unsigned image URLs in your dashboard settings, set this to true
@@ -598,6 +616,7 @@ Backend only flags. These can be set in the config file also.
       --imagekit-upload-tags string                         Tags to add to the uploaded files, e.g. "tag1,tag2"
       --imagekit-versions                                   Include old versions in directory listings
       --internetarchive-access-key-id string                IAS3 Access Key
+      --internetarchive-description string                  Description of the remote
       --internetarchive-disable-checksum                    Don't ask the server to test against MD5 checksum calculated by rclone (default true)
       --internetarchive-encoding Encoding                   The encoding for the backend (default Slash,LtGt,CrLf,Del,Ctl,InvalidUtf8,Dot)
       --internetarchive-endpoint string                     IAS3 Endpoint (default "https://s3.us.archive.org")
@@ -607,6 +626,7 @@ Backend only flags. These can be set in the config file also.
       --jottacloud-auth-url string                          Auth server URL
       --jottacloud-client-id string                         OAuth Client Id
       --jottacloud-client-secret string                     OAuth Client Secret
+      --jottacloud-description string                       Description of the remote
       --jottacloud-encoding Encoding                        The encoding for the backend (default Slash,LtGt,DoubleQuote,Colon,Question,Asterisk,Pipe,Del,Ctl,InvalidUtf8,Dot)
       --jottacloud-hard-delete                              Delete files permanently rather than putting them into the trash
       --jottacloud-md5-memory-limit SizeSuffix              Files bigger than this will be cached on disk to calculate the MD5 if required (default 10Mi)
@@ -615,6 +635,7 @@ Backend only flags. These can be set in the config file also.
       --jottacloud-token-url string                         Token server url
       --jottacloud-trashed-only                             Only show files that are in the trash
       --jottacloud-upload-resume-limit SizeSuffix           Files bigger than this can be resumed if the upload fail's (default 10Mi)
+      --koofr-description string                            Description of the remote
       --koofr-encoding Encoding                             The encoding for the backend (default Slash,BackSlash,Del,Ctl,InvalidUtf8,Dot)
       --koofr-endpoint string                               The Koofr API endpoint to use
       --koofr-mountid string                                Mount ID of the mount to use
@@ -622,10 +643,12 @@ Backend only flags. These can be set in the config file also.
       --koofr-provider string                               Choose your storage provider
       --koofr-setmtime                                      Does the backend support setting modification time (default true)
       --koofr-user string                                   Your user name
+      --linkbox-description string                          Description of the remote
       --linkbox-token string                                Token from https://www.linkbox.to/admin/account
   -l, --links                                               Translate symlinks to/from regular files with a '.rclonelink' extension
       --local-case-insensitive                              Force the filesystem to report itself as case insensitive
       --local-case-sensitive                                Force the filesystem to report itself as case sensitive
+      --local-description string                            Description of the remote
       --local-encoding Encoding                             The encoding for the backend (default Slash,Dot)
       --local-no-check-updated                              Don't check to see if the files change during upload
       --local-no-preallocate                                Disable preallocation of disk space for transferred files
@@ -638,6 +661,7 @@ Backend only flags. These can be set in the config file also.
       --mailru-check-hash                                   What should copy do if file checksum is mismatched or invalid (default true)
       --mailru-client-id string                             OAuth Client Id
       --mailru-client-secret string                         OAuth Client Secret
+      --mailru-description string                           Description of the remote
       --mailru-encoding Encoding                            The encoding for the backend (default Slash,LtGt,DoubleQuote,Colon,Question,Asterisk,Pipe,BackSlash,Del,Ctl,InvalidUtf8,Dot)
       --mailru-pass string                                  Password (obscured)
       --mailru-speedup-enable                               Skip full upload if there is another file with same data hash (default true)
@@ -648,12 +672,15 @@ Backend only flags. These can be set in the config file also.
       --mailru-token-url string                             Token server url
       --mailru-user string                                  User name (usually email)
       --mega-debug                                          Output more debug from Mega
+      --mega-description string                             Description of the remote
       --mega-encoding Encoding                              The encoding for the backend (default Slash,InvalidUtf8,Dot)
       --mega-hard-delete                                    Delete files permanently rather than putting them into the trash
       --mega-pass string                                    Password (obscured)
       --mega-use-https                                      Use HTTPS for transfers
       --mega-user string                                    User name
+      --memory-description string                           Description of the remote
       --netstorage-account string                           Set the NetStorage account name
+      --netstorage-description string                       Description of the remote
       --netstorage-host string                              Domain+path of NetStorage host to connect to
       --netstorage-protocol string                          Select between HTTP or HTTPS protocol (default "https")
       --netstorage-secret string                            Set the NetStorage account secret/G2O key for authentication (obscured)
@@ -665,6 +692,7 @@ Backend only flags. These can be set in the config file also.
       --onedrive-client-id string                           OAuth Client Id
       --onedrive-client-secret string                       OAuth Client Secret
       --onedrive-delta                                      If set rclone will use delta listing to implement recursive listings
+      --onedrive-description string                         Description of the remote
       --onedrive-drive-id string                            The ID of the drive to use
       --onedrive-drive-type string                          The type of the drive (personal | business | documentLibrary)
       --onedrive-encoding Encoding                          The encoding for the backend (default Slash,LtGt,DoubleQuote,Colon,Question,Asterisk,Pipe,BackSlash,Del,Ctl,LeftSpace,LeftTilde,RightSpace,RightPeriod,InvalidUtf8,Dot)
@@ -674,6 +702,7 @@ Backend only flags. These can be set in the config file also.
       --onedrive-link-scope string                          Set the scope of the links created by the link command (default "anonymous")
       --onedrive-link-type string                           Set the type of the links created by the link command (default "view")
       --onedrive-list-chunk int                             Size of listing chunk (default 1000)
+      --onedrive-metadata-permissions Bits                  Control whether permissions should be read or written in metadata (default off)
       --onedrive-no-versions                                Remove all versions on modifying operations
       --onedrive-region string                              Choose national cloud region for OneDrive (default "global")
       --onedrive-root-folder-id string                      ID of the root folder
@@ -687,6 +716,7 @@ Backend only flags. These can be set in the config file also.
       --oos-config-profile string                           Profile name inside the oci config file (default "Default")
       --oos-copy-cutoff SizeSuffix                          Cutoff for switching to multipart copy (default 4.656Gi)
       --oos-copy-timeout Duration                           Timeout for copy (default 1m0s)
+      --oos-description string                              Description of the remote
       --oos-disable-checksum                                Don't store MD5 checksum with object metadata
       --oos-encoding Encoding                               The encoding for the backend (default Slash,InvalidUtf8,Dot)
       --oos-endpoint string                                 Endpoint for Object storage API
@@ -705,12 +735,14 @@ Backend only flags. These can be set in the config file also.
       --oos-upload-concurrency int                          Concurrency for multipart uploads (default 10)
       --oos-upload-cutoff SizeSuffix                        Cutoff for switching to chunked upload (default 200Mi)
       --opendrive-chunk-size SizeSuffix                     Files will be uploaded in chunks this size (default 10Mi)
+      --opendrive-description string                        Description of the remote
       --opendrive-encoding Encoding                         The encoding for the backend (default Slash,LtGt,DoubleQuote,Colon,Question,Asterisk,Pipe,BackSlash,LeftSpace,LeftCrLfHtVt,RightSpace,RightCrLfHtVt,InvalidUtf8,Dot)
       --opendrive-password string                           Password (obscured)
       --opendrive-username string                           Username
       --pcloud-auth-url string                              Auth server URL
       --pcloud-client-id string                             OAuth Client Id
       --pcloud-client-secret string                         OAuth Client Secret
+      --pcloud-description string                           Description of the remote
       --pcloud-encoding Encoding                            The encoding for the backend (default Slash,BackSlash,Del,Ctl,InvalidUtf8,Dot)
       --pcloud-hostname string                              Hostname to connect to (default "api.pcloud.com")
       --pcloud-password string                              Your pcloud password (obscured)
@@ -721,6 +753,7 @@ Backend only flags. These can be set in the config file also.
       --pikpak-auth-url string                              Auth server URL
       --pikpak-client-id string                             OAuth Client Id
       --pikpak-client-secret string                         OAuth Client Secret
+      --pikpak-description string                           Description of the remote
       --pikpak-encoding Encoding                            The encoding for the backend (default Slash,LtGt,DoubleQuote,Colon,Question,Asterisk,Pipe,BackSlash,Ctl,LeftSpace,RightSpace,RightPeriod,InvalidUtf8,Dot)
       --pikpak-hash-memory-limit SizeSuffix                 Files bigger than this will be cached on disk to calculate hash if required (default 10Mi)
       --pikpak-pass string                                  Pikpak password (obscured)
@@ -733,11 +766,13 @@ Backend only flags. These can be set in the config file also.
       --premiumizeme-auth-url string                        Auth server URL
       --premiumizeme-client-id string                       OAuth Client Id
       --premiumizeme-client-secret string                   OAuth Client Secret
+      --premiumizeme-description string                     Description of the remote
       --premiumizeme-encoding Encoding                      The encoding for the backend (default Slash,DoubleQuote,BackSlash,Del,Ctl,InvalidUtf8,Dot)
       --premiumizeme-token string                           OAuth Access Token as a JSON blob
       --premiumizeme-token-url string                       Token server url
       --protondrive-2fa string                              The 2FA code
       --protondrive-app-version string                      The app version string (default "macos-drive@1.0.0-alpha.1+rclone")
+      --protondrive-description string                      Description of the remote
       --protondrive-enable-caching                          Caches the files and folders metadata to reduce API calls (default true)
       --protondrive-encoding Encoding                       The encoding for the backend (default Slash,LeftSpace,RightSpace,InvalidUtf8,Dot)
       --protondrive-mailbox-password string                 The mailbox password of your two-password proton account (obscured)
@@ -748,12 +783,14 @@ Backend only flags. These can be set in the config file also.
       --putio-auth-url string                               Auth server URL
       --putio-client-id string                              OAuth Client Id
       --putio-client-secret string                          OAuth Client Secret
+      --putio-description string                            Description of the remote
       --putio-encoding Encoding                             The encoding for the backend (default Slash,BackSlash,Del,Ctl,InvalidUtf8,Dot)
       --putio-token string                                  OAuth Access Token as a JSON blob
       --putio-token-url string                              Token server url
       --qingstor-access-key-id string                       QingStor Access Key ID
       --qingstor-chunk-size SizeSuffix                      Chunk size to use for uploading (default 4Mi)
       --qingstor-connection-retries int                     Number of connection retries (default 3)
+      --qingstor-description string                         Description of the remote
       --qingstor-encoding Encoding                          The encoding for the backend (default Slash,Ctl,InvalidUtf8)
       --qingstor-endpoint string                            Enter an endpoint URL to connection QingStor API
       --qingstor-env-auth                                   Get QingStor credentials from runtime
@@ -762,18 +799,21 @@ Backend only flags. These can be set in the config file also.
       --qingstor-upload-cutoff SizeSuffix                   Cutoff for switching to chunked upload (default 200Mi)
       --qingstor-zone string                                Zone to connect to
       --quatrix-api-key string                              API key for accessing Quatrix account
+      --quatrix-description string                          Description of the remote
       --quatrix-effective-upload-time string                Wanted upload time for one chunk (default "4s")
       --quatrix-encoding Encoding                           The encoding for the backend (default Slash,BackSlash,Del,Ctl,InvalidUtf8,Dot)
       --quatrix-hard-delete                                 Delete files permanently rather than putting them into the trash
       --quatrix-host string                                 Host name of Quatrix account
       --quatrix-maximal-summary-chunk-size SizeSuffix       The maximal summary for all chunks. It should not be less than 'transfers'*'minimal_chunk_size' (default 95.367Mi)
       --quatrix-minimal-chunk-size SizeSuffix               The minimal size for one chunk (default 9.537Mi)
+      --quatrix-skip-project-folders                        Skip project folders in operations
       --s3-access-key-id string                             AWS Access Key ID
       --s3-acl string                                       Canned ACL used when creating buckets and storing or copying objects
       --s3-bucket-acl string                                Canned ACL used when creating buckets
       --s3-chunk-size SizeSuffix                            Chunk size to use for uploading (default 5Mi)
       --s3-copy-cutoff SizeSuffix                           Cutoff for switching to multipart copy (default 4.656Gi)
       --s3-decompress                                       If set this will decompress gzip encoded objects
+      --s3-description string                               Description of the remote
       --s3-directory-markers                                Upload an empty object with a trailing slash when a new directory is created
       --s3-disable-checksum                                 Don't store MD5 checksum with object metadata
       --s3-disable-http2                                    Disable usage of http2 for S3 backends
@@ -808,19 +848,22 @@ Backend only flags. These can be set in the config file also.
       --s3-sse-kms-key-id string                            If using KMS ID you must provide the ARN of Key
       --s3-storage-class string                             The storage class to use when storing new objects in S3
       --s3-sts-endpoint string                              Endpoint for STS
-      --s3-upload-concurrency int                           Concurrency for multipart uploads (default 4)
+      --s3-upload-concurrency int                           Concurrency for multipart uploads and copies (default 4)
       --s3-upload-cutoff SizeSuffix                         Cutoff for switching to chunked upload (default 200Mi)
       --s3-use-accelerate-endpoint                          If true use the AWS S3 accelerated endpoint
       --s3-use-accept-encoding-gzip Accept-Encoding: gzip   Whether to send Accept-Encoding: gzip header (default unset)
       --s3-use-already-exists Tristate                      Set if rclone should report BucketAlreadyExists errors on bucket creation (default unset)
+      --s3-use-dual-stack                                   If true use AWS S3 dual-stack endpoint (IPv6 support)
       --s3-use-multipart-etag Tristate                      Whether to use ETag in multipart uploads for verification (default unset)
       --s3-use-multipart-uploads Tristate                   Set if rclone should use multipart uploads (default unset)
       --s3-use-presigned-request                            Whether to use a presigned request or PutObject for single part uploads
       --s3-v2-auth                                          If true use v2 authentication
       --s3-version-at Time                                  Show file versions as they were at the specified time (default off)
+      --s3-version-deleted                                  Show deleted file markers when using versions
       --s3-versions                                         Include old versions in directory listings
       --seafile-2fa                                         Two-factor authentication ('true' if the account has 2FA enabled)
       --seafile-create-library                              Should rclone create a library if it doesn't exist
+      --seafile-description string                          Description of the remote
       --seafile-encoding Encoding                           The encoding for the backend (default Slash,DoubleQuote,BackSlash,Ctl,InvalidUtf8)
       --seafile-library string                              Name of the library
       --seafile-library-key string                          Library password (for encrypted libraries only) (obscured)
@@ -832,6 +875,7 @@ Backend only flags. These can be set in the config file also.
       --sftp-ciphers SpaceSepList                           Space separated list of ciphers to be used for session encryption, ordered by preference
       --sftp-concurrency int                                The maximum number of outstanding requests for one file (default 64)
       --sftp-copy-is-hardlink                               Set to enable server side copies using hardlinks
+      --sftp-description string                             Description of the remote
       --sftp-disable-concurrent-reads                       If set don't use concurrent reads
       --sftp-disable-concurrent-writes                      If set don't use concurrent writes
       --sftp-disable-hashcheck                              Disable the execution of SSH commands to determine if remote file hashing is available
@@ -866,6 +910,7 @@ Backend only flags. These can be set in the config file also.
       --sharefile-chunk-size SizeSuffix                     Upload chunk size (default 64Mi)
       --sharefile-client-id string                          OAuth Client Id
       --sharefile-client-secret string                      OAuth Client Secret
+      --sharefile-description string                        Description of the remote
       --sharefile-encoding Encoding                         The encoding for the backend (default Slash,LtGt,DoubleQuote,Colon,Question,Asterisk,Pipe,BackSlash,Ctl,LeftSpace,LeftPeriod,RightSpace,RightPeriod,InvalidUtf8,Dot)
       --sharefile-endpoint string                           Endpoint for API calls
       --sharefile-root-folder-id string                     ID of the root folder
@@ -874,10 +919,12 @@ Backend only flags. These can be set in the config file also.
       --sharefile-upload-cutoff SizeSuffix                  Cutoff for switching to multipart upload (default 128Mi)
       --sia-api-password string                             Sia Daemon API Password (obscured)
       --sia-api-url string                                  Sia daemon API URL, like http://sia.daemon.host:9980 (default "http://127.0.0.1:9980")
+      --sia-description string                              Description of the remote
       --sia-encoding Encoding                               The encoding for the backend (default Slash,Question,Hash,Percent,Del,Ctl,InvalidUtf8,Dot)
       --sia-user-agent string                               Siad User Agent (default "Sia-Agent")
       --skip-links                                          Don't warn about skipped symlinks
       --smb-case-insensitive                                Whether the server is configured to be case-insensitive (default true)
+      --smb-description string                              Description of the remote
       --smb-domain string                                   Domain name for NTLM authentication (default "WORKGROUP")
       --smb-encoding Encoding                               The encoding for the backend (default Slash,LtGt,DoubleQuote,Colon,Question,Asterisk,Pipe,BackSlash,Ctl,RightSpace,RightPeriod,InvalidUtf8,Dot)
       --smb-hide-special-share                              Hide special shares (e.g. print$) which users aren't supposed to access (default true)
@@ -889,6 +936,7 @@ Backend only flags. These can be set in the config file also.
       --smb-user string                                     SMB username (default "$USER")
       --storj-access-grant string                           Access grant
       --storj-api-key string                                API key
+      --storj-description string                            Description of the remote
       --storj-passphrase string                             Encryption passphrase
       --storj-provider string                               Choose an authentication method (default "existing")
       --storj-satellite-address string                      Satellite address (default "us1.storj.io")
@@ -897,6 +945,7 @@ Backend only flags. These can be set in the config file also.
       --sugarsync-authorization string                      Sugarsync authorization
       --sugarsync-authorization-expiry string               Sugarsync authorization expiry
       --sugarsync-deleted-id string                         Sugarsync deleted folder id
+      --sugarsync-description string                        Description of the remote
       --sugarsync-encoding Encoding                         The encoding for the backend (default Slash,Ctl,InvalidUtf8,Dot)
       --sugarsync-hard-delete                               Permanently delete files if true
       --sugarsync-private-access-key string                 Sugarsync Private Access Key
@@ -910,6 +959,7 @@ Backend only flags. These can be set in the config file also.
       --swift-auth-token string                             Auth Token from alternate authentication - optional (OS_AUTH_TOKEN)
       --swift-auth-version int                              AuthVersion - optional - set to (1,2,3) if your auth URL has no version (ST_AUTH_VERSION)
       --swift-chunk-size SizeSuffix                         Above this size files will be chunked into a _segments container (default 5Gi)
+      --swift-description string                            Description of the remote
       --swift-domain string                                 User domain - optional (v3 auth) (OS_USER_DOMAIN_NAME)
       --swift-encoding Encoding                             The encoding for the backend (default Slash,InvalidUtf8)
       --swift-endpoint-type string                          Endpoint type to choose from the service catalogue (OS_ENDPOINT_TYPE) (default "public")
@@ -929,17 +979,21 @@ Backend only flags. These can be set in the config file also.
       --union-action-policy string                          Policy to choose upstream on ACTION category (default "epall")
       --union-cache-time int                                Cache time of usage and free space (in seconds) (default 120)
       --union-create-policy string                          Policy to choose upstream on CREATE category (default "epmfs")
+      --union-description string                            Description of the remote
       --union-min-free-space SizeSuffix                     Minimum viable free space for lfs/eplfs policies (default 1Gi)
       --union-search-policy string                          Policy to choose upstream on SEARCH category (default "ff")
       --union-upstreams string                              List of space separated upstreams
       --uptobox-access-token string                         Your access token
+      --uptobox-description string                          Description of the remote
       --uptobox-encoding Encoding                           The encoding for the backend (default Slash,LtGt,DoubleQuote,BackQuote,Del,Ctl,LeftSpace,InvalidUtf8,Dot)
       --uptobox-private                                     Set to make uploaded files private
       --webdav-bearer-token string                          Bearer token instead of user/pass (e.g. a Macaroon)
       --webdav-bearer-token-command string                  Command to run to get a bearer token
+      --webdav-description string                           Description of the remote
       --webdav-encoding string                              The encoding for the backend
       --webdav-headers CommaSepList                         Set HTTP headers for all transactions
       --webdav-nextcloud-chunk-size SizeSuffix              Nextcloud upload chunk size (default 10Mi)
+      --webdav-owncloud-exclude-shares                      Exclude ownCloud shares
       --webdav-pacer-min-sleep Duration                     Minimum time to sleep between API calls (default 10ms)
       --webdav-pass string                                  Password (obscured)
       --webdav-url string                                   URL of http host to connect to
@@ -948,6 +1002,7 @@ Backend only flags. These can be set in the config file also.
       --yandex-auth-url string                              Auth server URL
       --yandex-client-id string                             OAuth Client Id
       --yandex-client-secret string                         OAuth Client Secret
+      --yandex-description string                           Description of the remote
       --yandex-encoding Encoding                            The encoding for the backend (default Slash,Del,Ctl,InvalidUtf8,Dot)
       --yandex-hard-delete                                  Delete files permanently rather than putting them into the trash
       --yandex-token string                                 OAuth Access Token as a JSON blob
@@ -955,6 +1010,7 @@ Backend only flags. These can be set in the config file also.
       --zoho-auth-url string                                Auth server URL
       --zoho-client-id string                               OAuth Client Id
       --zoho-client-secret string                           OAuth Client Secret
+      --zoho-description string                             Description of the remote
       --zoho-encoding Encoding                              The encoding for the backend (default Del,Ctl,InvalidUtf8)
       --zoho-region string                                  Zoho region to connect to
       --zoho-token string                                   OAuth Access Token as a JSON blob
