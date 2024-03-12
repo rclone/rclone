@@ -581,7 +581,7 @@ type DrivesResponse struct {
 	Drives []DriveResource `json:"value"`
 }
 
-// SiteResource is part of the response from from "/sites/root:"
+// SiteResource is part of the response from "/sites/root:"
 type SiteResource struct {
 	SiteID   string `json:"id"`
 	SiteName string `json:"displayName"`
