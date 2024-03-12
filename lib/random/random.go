@@ -46,7 +46,7 @@ func String(n int) string {
 
 // Password creates a crypto strong password which is just about
 // memorable.  The password is composed of printable ASCII characters
-// from the base64 alphabet.
+// from the URL encoding base64 alphabet (A-Za-z0-9_-).
 //
 // Requires password strength in bits.
 // 64 is just about memorable
