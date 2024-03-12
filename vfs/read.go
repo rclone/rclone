@@ -75,7 +75,8 @@ func (fh *ReadFileHandle) openPending() (err error) {
 		return nil
 	}
 	o := fh.file.getObject()
-	r, err := chunkedreader.New(context.TODO(), o, int64(fh.file.VFS().Opt.ChunkSize), int64(fh.file.VFS().Opt.ChunkSizeLimit)).Open()
+	opt := &fh.file.VFS().Opt
+	r, err := chunkedreader.New(context.TODO(), o, int64(opt.ChunkSize), int64(opt.ChunkSizeLimit), opt.ChunkStreams).Open()
 	if err != nil {
 		return err
 	}
@@ -127,7 +128,7 @@ func (fh *ReadFileHandle) seek(offset int64, reopen bool) (err error) {
 	}
 	fh.r.StopBuffering() // stop the background reading first
 	oldReader := fh.r.GetReader()
-	r, ok := oldReader.(*chunkedreader.ChunkedReader)
+	r, ok := oldReader.(chunkedreader.ChunkedReader)
 	if !ok {
 		fs.Logf(fh.remote, "ReadFileHandle.Read expected reader to be a ChunkedReader, got %T", oldReader)
 		reopen = true
@@ -148,7 +149,8 @@ func (fh *ReadFileHandle) seek(offset int64, reopen bool) (err error) {
 		}
 		// re-open with a seek
 		o := fh.file.getObject()
-		r = chunkedreader.New(context.TODO(), o, int64(fh.file.VFS().Opt.ChunkSize), int64(fh.file.VFS().Opt.ChunkSizeLimit))
+		opt := &fh.file.VFS().Opt
+		r = chunkedreader.New(context.TODO(), o, int64(opt.ChunkSize), int64(opt.ChunkSizeLimit), opt.ChunkStreams)
 		_, err := r.Seek(offset, 0)
 		if err != nil {
 			fs.Debugf(fh.remote, "ReadFileHandle.Read seek failed: %v", err)
