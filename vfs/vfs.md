@@ -230,6 +230,11 @@ These flags control the chunking:
 
     --vfs-read-chunk-size SizeSuffix        Read the source objects in chunks (default 128M)
     --vfs-read-chunk-size-limit SizeSuffix  Max chunk doubling size (default off)
+    --vfs-read-chunk-streams int            The number of parallel streams to read at once
+
+The chunking behaves differently depending on the `--vfs-read-chunk-streams` parameter.
+
+#### `--vfs-read-chunk-streams` == 0
 
 Rclone will start reading a chunk of size `--vfs-read-chunk-size`,
 and then double the size for each read. When `--vfs-read-chunk-size-limit` is
@@ -244,6 +249,14 @@ When `--vfs-read-chunk-size-limit 500M` is specified, the result would be
 0-100M, 100M-300M, 300M-700M, 700M-1200M, 1200M-1700M and so on.
 
 Setting `--vfs-read-chunk-size` to `0` or "off" disables chunked reading.
+
+The chunks will not be buffered in memory.
+
+#### `--vfs-read-chunk-streams` > 0
+
+Rclone read `--vfs-read-chunk-streams` chunks of size
+`--vfs-read-chunk-size` in parallel. The size for each read will stay
+constant.
 
 ### VFS Performance
 

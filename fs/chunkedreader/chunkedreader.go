@@ -1,4 +1,4 @@
-// Package chunkedreader provides functionality for reading in chunks.
+// Package chunkedreader provides functionality for reading a stream in chunks.
 package chunkedreader
 
 import (
@@ -31,6 +31,7 @@ type ChunkedReader struct {
 	chunkSize        int64         // length of the current or next chunk. -1 will open o from chunkOffset to the end
 	initialChunkSize int64         // default chunkSize after the chunk specified by RangeSeek is complete
 	maxChunkSize     int64         // consecutive read chunks will double in size until reached. -1 means no limit
+	streams          int           // number of streams to use
 	customChunkSize  bool          // is the current chunkSize set by RangeSeek?
 	closed           bool          // has Close been called?
 }
@@ -41,7 +42,7 @@ type ChunkedReader struct {
 // If maxChunkSize is greater than initialChunkSize, the chunk size will be
 // doubled after each chunk read with a maximum of maxChunkSize.
 // A Seek or RangeSeek will reset the chunk size to it's initial value
-func New(ctx context.Context, o fs.Object, initialChunkSize int64, maxChunkSize int64) *ChunkedReader {
+func New(ctx context.Context, o fs.Object, initialChunkSize int64, maxChunkSize int64, streams int) *ChunkedReader {
 	if initialChunkSize <= 0 {
 		initialChunkSize = -1
 	}
@@ -55,6 +56,7 @@ func New(ctx context.Context, o fs.Object, initialChunkSize int64, maxChunkSize 
 		chunkSize:        initialChunkSize,
 		initialChunkSize: initialChunkSize,
 		maxChunkSize:     maxChunkSize,
+		streams:          streams,
 	}
 }
 

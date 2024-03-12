@@ -39,7 +39,7 @@ func testRead(content []byte, mode mockobject.SeekMode) func(*testing.T) {
 				}
 
 				t.Run(fmt.Sprintf("Chunksize_%d_%d", cs, csMax), func(t *testing.T) {
-					cr := New(context.Background(), o, cs, csMax)
+					cr := New(context.Background(), o, cs, csMax, 0)
 
 					for _, offset := range offsets {
 						for _, limit := range limits {
@@ -79,25 +79,25 @@ func TestErrorAfterClose(t *testing.T) {
 	o := mockobject.New("test.bin").WithContent(content, mockobject.SeekModeNone)
 
 	// Close
-	cr := New(context.Background(), o, 0, 0)
+	cr := New(context.Background(), o, 0, 0, 0)
 	require.NoError(t, cr.Close())
 	require.Error(t, cr.Close())
 
 	// Read
-	cr = New(context.Background(), o, 0, 0)
+	cr = New(context.Background(), o, 0, 0, 0)
 	require.NoError(t, cr.Close())
 	var buf [1]byte
 	_, err := cr.Read(buf[:])
 	require.Error(t, err)
 
 	// Seek
-	cr = New(context.Background(), o, 0, 0)
+	cr = New(context.Background(), o, 0, 0, 0)
 	require.NoError(t, cr.Close())
 	_, err = cr.Seek(1, io.SeekCurrent)
 	require.Error(t, err)
 
 	// RangeSeek
-	cr = New(context.Background(), o, 0, 0)
+	cr = New(context.Background(), o, 0, 0, 0)
 	require.NoError(t, cr.Close())
 	_, err = cr.RangeSeek(context.Background(), 1, io.SeekCurrent, 0)
 	require.Error(t, err)
