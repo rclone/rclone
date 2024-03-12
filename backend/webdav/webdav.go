@@ -154,6 +154,11 @@ Set to 0 to disable chunked uploading.
 			Help:     "Exclude ownCloud shares",
 			Advanced: true,
 			Default:  false,
+		}, {
+			Name:     "owncloud_exclude_mounts",
+			Help:     "Exclude ownCloud mounted storages",
+			Advanced: true,
+			Default:  false,
 		}},
 	})
 }
@@ -171,6 +176,7 @@ type Options struct {
 	PacerMinSleep      fs.Duration          `config:"pacer_min_sleep"`
 	ChunkSize          fs.SizeSuffix        `config:"nextcloud_chunk_size"`
 	ExcludeShares      bool                 `config:"owncloud_exclude_shares"`
+	ExcludeMounts      bool                 `config:"owncloud_exclude_mounts"`
 }
 
 // Fs represents a remote webdav
@@ -805,7 +811,14 @@ func (f *Fs) listAll(ctx context.Context, dir string, directoriesOnly bool, file
 			}
 		}
 		if f.opt.ExcludeShares {
+			// https: //owncloud.dev/apis/http/webdav/#supported-webdav-properties
 			if strings.Contains(item.Props.Permissions, "S") {
+				continue
+			}
+		}
+		if f.opt.ExcludeMounts {
+			// https: //owncloud.dev/apis/http/webdav/#supported-webdav-properties
+			if strings.Contains(item.Props.Permissions, "M") {
 				continue
 			}
 		}
