@@ -1787,6 +1787,13 @@ func TestSetDirModTime(t *testing.T) {
 		fstest.CheckDirModTime(ctx, t, r.Fremote, newDst, t2)
 	}
 	fstest.CheckDirModTime(ctx, t, r.Fremote, fstest.NewDirectory(ctx, t, r.Fremote, name), t2)
+
+	// Now wrap the directory to make the SetModTime method return fs.ErrorNotImplemented and check that it falls back correctly
+	wrappedDir := fs.NewDirWrapper(existingDir.Remote(), fs.NewDir(existingDir.Remote(), existingDir.ModTime(ctx)))
+	newDst, err = operations.SetDirModTime(ctx, r.Fremote, wrappedDir, "SHOULD BE IGNORED", t1)
+	require.NoError(t, err)
+	require.NotNil(t, newDst)
+	fstest.CheckDirModTime(ctx, t, r.Fremote, fstest.NewDirectory(ctx, t, r.Fremote, name), t1)
 }
 
 func TestDirsEqual(t *testing.T) {

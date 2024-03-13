@@ -2628,11 +2628,15 @@ func SetDirModTime(ctx context.Context, f fs.Fs, dst fs.Directory, dir string, m
 	if dst != nil {
 		if do, ok := dst.(fs.SetModTimer); ok {
 			err := do.SetModTime(ctx, modTime)
-			if err != nil {
+			if errors.Is(err, fs.ErrorNotImplemented) {
+				// Fall through and run the code below if not implemented
+				// This can happen for fs.DirWrapper instances
+			} else if err != nil {
 				return dst, err
+			} else {
+				fs.Infof(logName, "Set directory modification time (using SetModTime)")
+				return dst, nil
 			}
-			fs.Infof(logName, "Set directory modification time (using SetModTime)")
-			return dst, nil
 		}
 	}
 
