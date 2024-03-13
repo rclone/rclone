@@ -1,6 +1,7 @@
 package fs
 
 import (
+	"encoding/json"
 	"fmt"
 	"math"
 	"strconv"
@@ -231,10 +232,26 @@ func (d Duration) Type() string {
 
 // UnmarshalJSON makes sure the value can be parsed as a string or integer in JSON
 func (d *Duration) UnmarshalJSON(in []byte) error {
-	return UnmarshalJSONFlag(in, d, func(i int64) error {
-		*d = Duration(i)
+	// Check if the input is a string value.
+	if len(in) >= 2 && in[0] == '"' && in[len(in)-1] == '"' {
+		strVal := string(in[1 : len(in)-1]) // Remove the quotes
+
+		// Attempt to parse the string as a duration.
+		parsedDuration, err := ParseDuration(strVal)
+		if err != nil {
+			return err
+		}
+		*d = Duration(parsedDuration)
 		return nil
-	})
+	}
+	// Handle numeric values.
+	var i int64
+	err := json.Unmarshal(in, &i)
+	if err != nil {
+		return err
+	}
+	*d = Duration(i)
+	return nil
 }
 
 // Scan implements the fmt.Scanner interface
