@@ -2,6 +2,7 @@ package pool
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"io"
 	"sync"
@@ -526,7 +527,7 @@ func TestRWConcurrency(t *testing.T) {
 	}
 
 	// Read the data back from inP and check it is OK
-	check := func(in io.Reader, size int64) {
+	check := func(in io.Reader, size int64, rw *RW) {
 		ck := readers.NewPatternReader(size)
 		ckBuf := make([]byte, bufSize)
 		rwBuf := make([]byte, bufSize)
@@ -549,6 +550,7 @@ func TestRWConcurrency(t *testing.T) {
 				if nin >= len(rwBuf) || nn >= size || inErr != io.EOF {
 					break
 				}
+				rw.WaitWrite(context.Background())
 			}
 			require.Equal(t, ckBuf[:nck], rwBuf[:nin])
 			if ckErr == io.EOF && inErr == io.EOF {
@@ -560,7 +562,7 @@ func TestRWConcurrency(t *testing.T) {
 
 	// Read the data back and check it is OK
 	read := func(rw *RW, size int64) {
-		check(rw, size)
+		check(rw, size, rw)
 	}
 
 	// Read the data back and check it is OK in using WriteTo
@@ -570,7 +572,7 @@ func TestRWConcurrency(t *testing.T) {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			check(in, size)
+			check(in, size, rw)
 		}()
 		var n int64
 		for n < size {

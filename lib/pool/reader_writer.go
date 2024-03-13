@@ -1,9 +1,11 @@
 package pool
 
 import (
+	"context"
 	"errors"
 	"io"
 	"sync"
+	"time"
 )
 
 // RWAccount is a function which will be called after every read
@@ -24,10 +26,11 @@ type RW struct {
 	// Shared variables between Read and Write
 	// Write updates these but Read reads from them
 	// They must all stay in sync together
-	mu         sync.Mutex // protect the shared variables
-	pages      [][]byte   // backing store
-	size       int        // size written
-	lastOffset int        // size in last page
+	mu         sync.Mutex    // protect the shared variables
+	pages      [][]byte      // backing store
+	size       int           // size written
+	lastOffset int           // size in last page
+	written    chan struct{} // signalled when a write happens
 
 	// Read side Variables
 	out   int // offset we are reading from
@@ -48,10 +51,12 @@ var (
 //
 // When writing it only appends data. Seek only applies to reading.
 func NewRW(pool *Pool) *RW {
-	return &RW{
-		pool:  pool,
-		pages: make([][]byte, 0, 16),
+	rw := &RW{
+		pool:    pool,
+		pages:   make([][]byte, 0, 16),
+		written: make(chan struct{}, 1),
 	}
+	return rw
 }
 
 // SetAccounting should be provided with a function which will be
@@ -217,6 +222,7 @@ func (rw *RW) Write(p []byte) (n int, err error) {
 		rw.size += nn
 		rw.lastOffset += nn
 		rw.mu.Unlock()
+		rw.signalWrite() // signal more data available
 	}
 	return n, nil
 }
@@ -240,11 +246,35 @@ func (rw *RW) ReadFrom(r io.Reader) (n int64, err error) {
 		rw.size += nn
 		rw.lastOffset += nn
 		rw.mu.Unlock()
+		rw.signalWrite() // signal more data available
 	}
 	if err == io.EOF {
 		err = nil
 	}
 	return n, err
+}
+
+// signal that a write has happened
+func (rw *RW) signalWrite() {
+	select {
+	case rw.written <- struct{}{}:
+	default:
+	}
+}
+
+// WaitWrite sleeps until a data is written to the RW or Close is
+// called or the context is cancelled occurs or for a maximum of 1
+// Second then returns.
+//
+// This can be used when calling Read while the buffer is filling up.
+func (rw *RW) WaitWrite(ctx context.Context) {
+	timer := time.NewTimer(time.Second)
+	select {
+	case <-timer.C:
+	case <-ctx.Done():
+	case <-rw.written:
+	}
+	timer.Stop()
 }
 
 // Seek sets the offset for the next Read (not Write - this is always
@@ -286,6 +316,7 @@ func (rw *RW) Seek(offset int64, whence int) (int64, error) {
 func (rw *RW) Close() error {
 	rw.mu.Lock()
 	defer rw.mu.Unlock()
+	rw.signalWrite() // signal more data available
 	for _, page := range rw.pages {
 		rw.pool.Put(page)
 	}
