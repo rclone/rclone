@@ -603,7 +603,7 @@ func (a *accountStream) SetStream(in io.Reader) {
 	a.in = in
 }
 
-// WrapStream wrap in in an accounter
+// WrapStream wrap in an accounter
 func (a *accountStream) WrapStream(in io.Reader) io.Reader {
 	return a.acc.WrapStream(in)
 }
