@@ -37,7 +37,7 @@ var systemMetadataInfo = map[string]fs.MetadataHelp{
 		Example: "true",
 	},
 	"writers-can-share": {
-		Help:    "Whether users with only writer permission can modify the file's permissions. Not populated for items in shared drives.",
+		Help:    "Whether users with only writer permission can modify the file's permissions. Not populated and ignored when setting for items in shared drives.",
 		Type:    "boolean",
 		Example: "false",
 	},
@@ -528,8 +528,12 @@ func (f *Fs) updateMetadata(ctx context.Context, updateInfo *drive.File, meta fs
 				return nil, err
 			}
 		case "writers-can-share":
-			if err := parseBool(&updateInfo.WritersCanShare); err != nil {
-				return nil, err
+			if !f.isTeamDrive {
+				if err := parseBool(&updateInfo.WritersCanShare); err != nil {
+					return nil, err
+				}
+			} else {
+				fs.Debugf(f, "Ignoring %s=%s as can't set on shared drives", k, v)
 			}
 		case "viewed-by-me":
 			// Can't write this
