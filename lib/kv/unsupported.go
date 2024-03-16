@@ -36,5 +36,10 @@ func (*DB) Stop(remove bool) error {
 	return ErrUnsupported
 }
 
+// IsStopped returns true if db is already stopped
+func (db *DB) IsStopped() bool {
+	return true
+}
+
 // Exit stops all databases
 func Exit() {}

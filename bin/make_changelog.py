@@ -23,8 +23,6 @@ CATEGORY = re.compile(r"(^[\w/ ]+(?:, *[\w/ ]+)*):\s*(.*)$")
 backends = [ x for x in os.listdir("backend") if x != "all"]
 
 backend_aliases = {
-    "amazon cloud drive" : "amazonclouddrive",
-    "acd" : "amazonclouddrive",
     "google cloud storage" : "googlecloudstorage",
     "gcs" : "googlecloudstorage",
     "azblob" : "azureblob",
@@ -34,7 +32,6 @@ backend_aliases = {
 }
 
 backend_titles = {
-    "amazonclouddrive": "Amazon Cloud Drive",
     "googlecloudstorage": "Google Cloud Storage",
     "azureblob": "Azure Blob",
     "ftp": "FTP",

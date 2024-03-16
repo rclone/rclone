@@ -10,7 +10,7 @@ func makeHelp(help string) string {
 		"|", "`",
 		"{MAXDELETE}", strconv.Itoa(DefaultMaxDelete),
 		"{CHECKFILE}", DefaultCheckFilename,
-		"{WORKDIR}", DefaultWorkdir,
+		// "{WORKDIR}", DefaultWorkdir,
 	)
 	return replacer.Replace(help)
 }
@@ -37,7 +37,9 @@ var rcHelp = makeHelp(`This takes the following parameters
 - ignoreListingChecksum - Do not use checksums for listings
 - resilient - Allow future runs to retry after certain less-serious errors, instead of requiring resync. 
             Use at your own risk!
-- workdir - server directory for history files (default: {WORKDIR})
+- workdir - server directory for history files (default: |~/.cache/rclone/bisync|)
+- backupdir1 - --backup-dir for Path1. Must be a non-overlapping path on the same remote.
+- backupdir2 - --backup-dir for Path2. Must be a non-overlapping path on the same remote.
 - noCleanup - retain working files
 
 See [bisync command help](https://rclone.org/commands/rclone_bisync/)
@@ -53,6 +55,11 @@ On each successive run it will:
 - list files on Path1 and Path2, and check for changes on each side.
   Changes include |New|, |Newer|, |Older|, and |Deleted| files.
 - Propagate changes on Path1 to Path2, and vice-versa.
+
+Bisync is **in beta** and is considered an **advanced command**, so use with care.
+Make sure you have read and understood the entire [manual](https://rclone.org/bisync)
+(especially the [Limitations](https://rclone.org/bisync/#limitations) section) before using,
+or data loss can result. Questions can be asked in the [Rclone Forum](https://forum.rclone.org/).
 
 See [full bisync description](https://rclone.org/bisync/) for details.
 `)

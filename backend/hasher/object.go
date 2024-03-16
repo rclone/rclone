@@ -71,7 +71,14 @@ func (o *Object) Hash(ctx context.Context, hashType hash.Type) (hashVal string, 
 	f := o.f
 	if f.passHashes.Contains(hashType) {
 		fs.Debugf(o, "pass %s", hashType)
-		return o.Object.Hash(ctx, hashType)
+		hashVal, err = o.Object.Hash(ctx, hashType)
+		if hashVal != "" {
+			return hashVal, err
+		}
+		if err != nil {
+			fs.Debugf(o, "error passing %s: %v", hashType, err)
+		}
+		fs.Debugf(o, "passed %s is blank -- trying other methods", hashType)
 	}
 	if !f.suppHashes.Contains(hashType) {
 		fs.Debugf(o, "unsupp %s", hashType)

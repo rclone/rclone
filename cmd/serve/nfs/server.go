@@ -16,10 +16,11 @@ import (
 
 // Server contains everything to run the Server
 type Server struct {
-	opt      Options
-	handler  nfs.Handler
-	ctx      context.Context // for global config
-	listener net.Listener
+	opt                 Options
+	handler             nfs.Handler
+	ctx                 context.Context // for global config
+	listener            net.Listener
+	UnmountedExternally bool
 }
 
 // NewServer creates a new server
@@ -36,7 +37,7 @@ func NewServer(ctx context.Context, vfs *vfs.VFS, opt *Options) (s *Server, err 
 		ctx: ctx,
 		opt: *opt,
 	}
-	s.handler = newHandler(vfs)
+	s.handler = newHandler(vfs, opt)
 	s.listener, err = net.Listen("tcp", s.opt.ListenAddr)
 	if err != nil {
 		fs.Errorf(nil, "NFS server failed to listen: %v\n", err)

@@ -876,3 +876,80 @@ func rcCheck(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 	}
 	return out, nil
 }
+
+func init() {
+	rc.Add(rc.Call{
+		Path:         "operations/hashsum",
+		AuthRequired: true,
+		Fn:           rcHashsum,
+		Title:        "Produces a hashsum file for all the objects in the path.",
+		Help: `Produces a hash file for all the objects in the path using the hash
+named.  The output is in the same format as the standard
+md5sum/sha1sum tool.
+
+This takes the following parameters:
+
+- fs - a remote name string e.g. "drive:" for the source, "/" for local filesystem
+    - this can point to a file and just that file will be returned in the listing.
+- hashType - type of hash to be used
+- download - check by downloading rather than with hash (boolean)
+- base64 - output the hashes in base64 rather than hex (boolean)
+
+If you supply the download flag, it will download the data from the
+remote and create the hash on the fly. This can be useful for remotes
+that don't support the given hash or if you really want to check all
+the data.
+
+Note that if you wish to supply a checkfile to check hashes against
+the current files then you should use operations/check instead of
+operations/hashsum.
+
+Returns:
+
+- hashsum - array of strings of the hashes
+- hashType - type of hash used
+
+Example:
+
+    $ rclone rc --loopback operations/hashsum fs=bin hashType=MD5 download=true base64=true
+    {
+        "hashType": "md5",
+        "hashsum": [
+            "WTSVLpuiXyJO_kGzJerRLg==  backend-versions.sh",
+            "v1b_OlWCJO9LtNq3EIKkNQ==  bisect-go-rclone.sh",
+            "VHbmHzHh4taXzgag8BAIKQ==  bisect-rclone.sh",
+        ]
+    }
+
+See the [hashsum](/commands/rclone_hashsum/) command for more information on the above.
+`,
+	})
+}
+
+// Hashsum a directory
+func rcHashsum(ctx context.Context, in rc.Params) (out rc.Params, err error) {
+	ctx, f, err := rc.GetFsNamedFileOK(ctx, in, "fs")
+	if err != nil {
+		return nil, err
+	}
+
+	download, _ := in.GetBool("download")
+	base64, _ := in.GetBool("base64")
+	hashType, err := in.GetString("hashType")
+	if err != nil {
+		return nil, fmt.Errorf("%s\n%w", hash.HelpString(0), err)
+	}
+	var ht hash.Type
+	err = ht.Set(hashType)
+	if err != nil {
+		return nil, fmt.Errorf("%s\n%w", hash.HelpString(0), err)
+	}
+
+	hashes := []string{}
+	err = HashLister(ctx, ht, base64, download, f, stringWriter{&hashes})
+	out = rc.Params{
+		"hashType": ht.String(),
+		"hashsum":  hashes,
+	}
+	return out, err
+}

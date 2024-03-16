@@ -1,5 +1,7 @@
 [<img src="https://rclone.org/img/logo_on_light__horizontal_color.svg" width="50%" alt="rclone logo">](https://rclone.org/#gh-light-mode-only)
 [<img src="https://rclone.org/img/logo_on_dark__horizontal_color.svg" width="50%" alt="rclone logo">](https://rclone.org/#gh-dark-mode-only)
+[<img src="https://rclone.org/img/logos/warp-github-light.svg" title="Visit warp.dev to learn more." align="right">](https://www.warp.dev/?utm_source=github&utm_medium=referral&utm_campaign=rclone_20231103#gh-light-mode-only)
+[<img src="https://rclone.org/img/logos/warp-github-dark.svg" title="Visit warp.dev to learn more." align="right">](https://www.warp.dev/?utm_source=github&utm_medium=referral&utm_campaign=rclone_20231103#gh-dark-mode-only)
 
 [Website](https://rclone.org) |
 [Documentation](https://rclone.org/docs/) |
@@ -23,7 +25,6 @@ Rclone *("rsync for cloud storage")* is a command-line program to sync files and
   * 1Fichier [:page_facing_up:](https://rclone.org/fichier/)
   * Akamai Netstorage [:page_facing_up:](https://rclone.org/netstorage/)
   * Alibaba Cloud (Aliyun) Object Storage System (OSS) [:page_facing_up:](https://rclone.org/s3/#alibaba-oss)
-  * Amazon Drive [:page_facing_up:](https://rclone.org/amazonclouddrive/) ([See note](https://rclone.org/amazonclouddrive/#status))
   * Amazon S3 [:page_facing_up:](https://rclone.org/s3/)
   * ArvanCloud Object Storage (AOS) [:page_facing_up:](https://rclone.org/s3/#arvan-cloud-object-storage-aos)
   * Backblaze B2 [:page_facing_up:](https://rclone.org/b2/)
@@ -46,6 +47,7 @@ Rclone *("rsync for cloud storage")* is a command-line program to sync files and
   * HiDrive [:page_facing_up:](https://rclone.org/hidrive/)
   * HTTP [:page_facing_up:](https://rclone.org/http/)
   * Huawei Cloud Object Storage Service(OBS) [:page_facing_up:](https://rclone.org/s3/#huawei-obs)
+  * ImageKit [:page_facing_up:](https://rclone.org/imagekit/)
   * Internet Archive [:page_facing_up:](https://rclone.org/internetarchive/)
   * Jottacloud [:page_facing_up:](https://rclone.org/jottacloud/)
   * IBM COS S3 [:page_facing_up:](https://rclone.org/s3/#ibm-cos-s3)
@@ -120,6 +122,7 @@ These backends adapt or modify other storage providers
   * Partial syncs supported on a whole file basis
   * [Copy](https://rclone.org/commands/rclone_copy/) mode to just copy new/changed files
   * [Sync](https://rclone.org/commands/rclone_sync/) (one way) mode to make a directory identical
+  * [Bisync](https://rclone.org/bisync/) (two way) to keep two directories in sync bidirectionally
   * [Check](https://rclone.org/commands/rclone_check/) mode to check for file hash equality
   * Can sync to and from network, e.g. two different cloud accounts
   * Optional large file chunking ([Chunker](https://rclone.org/chunker/))

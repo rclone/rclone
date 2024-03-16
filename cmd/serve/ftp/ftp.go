@@ -339,7 +339,7 @@ func (d *driver) ListDir(sctx *ftp.Context, path string, callback func(iofs.File
 	}
 
 	// Account the transfer
-	tr := accounting.GlobalStats().NewTransferRemoteSize(path, node.Size())
+	tr := accounting.GlobalStats().NewTransferRemoteSize(path, node.Size(), d.f, nil)
 	defer func() {
 		tr.Done(d.ctx, err)
 	}()
@@ -448,7 +448,7 @@ func (d *driver) GetFile(sctx *ftp.Context, path string, offset int64) (size int
 	}
 
 	// Account the transfer
-	tr := accounting.GlobalStats().NewTransferRemoteSize(path, node.Size())
+	tr := accounting.GlobalStats().NewTransferRemoteSize(path, node.Size(), d.f, nil)
 	defer tr.Done(d.ctx, nil)
 
 	return node.Size(), handle, nil

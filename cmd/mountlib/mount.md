@@ -257,11 +257,20 @@ Mounting on macOS can be done either via [built-in NFS server](/commands/rclone_
 FUSE driver utilizing a macOS kernel extension (kext). FUSE-T is an alternative FUSE system
 which "mounts" via an NFSv4 local server.
 
-## NFS mount
+##### Unicode Normalization
+
+It is highly recommended to keep the default of `--no-unicode-normalization=false`
+for all `mount` and `serve` commands on macOS. For details, see [vfs-case-sensitivity](https://rclone.org/commands/rclone_mount/#vfs-case-sensitivity).
+
+#### NFS mount
 
 This method spins up an NFS server using [serve nfs](/commands/rclone_serve_nfs/) command and mounts
 it to the specified mountpoint. If you run this in background mode using |--daemon|, you will need to
 send SIGTERM signal to the rclone process using |kill| command to stop the mount.
+
+Note that `--nfs-cache-handle-limit` controls the maximum number of cached file handles stored by the `nfsmount` caching handler.
+This should not be set too low or you may experience errors when trying to access files. The default is 1000000,
+but consider lowering this limit if the server's system resource usage causes problems.
 
 #### macFUSE Notes
 
@@ -290,15 +299,6 @@ As per the [FUSE-T wiki](https://github.com/macos-fuse-t/fuse-t/wiki#caveats):
 This means that viewing files with various tools, notably macOS Finder, will cause rlcone
 to update the modification time of the file. This may make rclone upload a full new copy
 of the file.
-
-##### Unicode Normalization
-
-Rclone includes flags for unicode normalization with macFUSE that should be updated
-for FUSE-T. See [this forum post](https://forum.rclone.org/t/some-unicode-forms-break-mount-on-macos-with-fuse-t/36403)
-and [FUSE-T issue #16](https://github.com/macos-fuse-t/fuse-t/issues/16). The following
-flag should be added to the `rclone mount` command.
-
-    -o modules=iconv,from_code=UTF-8,to_code=UTF-8
     
 ##### Read Only mounts
 

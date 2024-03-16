@@ -15,9 +15,6 @@ tests:
  - path: cmd/selfupdate
    localonly: true
 backends:
- # - backend:  "amazonclouddrive"
- #   remote:   "TestAmazonCloudDrive:"
- #   fastlist: false
  - backend:  "local"
    remote:   ""
    fastlist: false
@@ -60,10 +57,14 @@ backends:
  - backend:  "chunker"
    remote:   "TestChunkerMailru:"
    fastlist: true
+   ignore:
+     - TestApplyTransforms
  - backend:  "chunker"
    remote:   "TestChunkerChunk50bMailru:"
    fastlist: true
    maxfile:  10k
+   ignore:
+     - TestApplyTransforms
  - backend:  "chunker"
    remote:   "TestChunkerChunk50bYandex:"
    fastlist: true
@@ -298,10 +299,6 @@ backends:
    fastlist: false
  - backend:  "ftp"
    remote:   "TestFTPRclone:"
-   ignore:
-     - "TestMultithreadCopy/{size:131071_streams:2}"
-     - "TestMultithreadCopy/{size:131072_streams:2}"
-     - "TestMultithreadCopy/{size:131073_streams:2}"
    fastlist: false
  - backend:  "box"
    remote:   "TestBox:"
@@ -387,6 +384,7 @@ backends:
      - TestIntegration/FsMkdir/FsEncoding/invalid_UTF-8
      - TestRWFileHandleWriteNoWrite
      - TestCaseInsensitiveMoveFile
+     - TestFixCase
  - backend:  "premiumizeme"
    remote:   "TestPremiumizeMe:"
    fastlist: false
@@ -409,6 +407,8 @@ backends:
    remote:   "TestMailru:"
    subdir:   false
    fastlist: false
+   ignore:
+     - TestApplyTransforms
  - backend:  "seafile"
    remote:   "TestSeafileV6:"
    fastlist: false

@@ -212,6 +212,17 @@ Properties:
 - Type:        bool
 - Default:     false
 
+#### --http-description
+
+Description of the remote
+
+Properties:
+
+- Config:      description
+- Env Var:     RCLONE_HTTP_DESCRIPTION
+- Type:        string
+- Required:    false
+
 ## Backend commands
 
 Here are the commands specific to the http backend.

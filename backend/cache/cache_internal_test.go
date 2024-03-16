@@ -30,6 +30,7 @@ import (
 	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/object"
+	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/fstest"
 	"github.com/rclone/rclone/fstest/testy"
 	"github.com/rclone/rclone/lib/random"
@@ -935,8 +936,7 @@ func (r *run) newCacheFs(t *testing.T, remote, id string, needRemote, purge bool
 	}
 
 	if purge {
-		_ = f.Features().Purge(context.Background(), "")
-		require.NoError(t, err)
+		_ = operations.Purge(context.Background(), f, "")
 	}
 	err = f.Mkdir(context.Background(), "")
 	require.NoError(t, err)
@@ -949,7 +949,7 @@ func (r *run) newCacheFs(t *testing.T, remote, id string, needRemote, purge bool
 }
 
 func (r *run) cleanupFs(t *testing.T, f fs.Fs) {
-	err := f.Features().Purge(context.Background(), "")
+	err := operations.Purge(context.Background(), f, "")
 	require.NoError(t, err)
 	cfs, err := r.getCacheFs(f)
 	require.NoError(t, err)

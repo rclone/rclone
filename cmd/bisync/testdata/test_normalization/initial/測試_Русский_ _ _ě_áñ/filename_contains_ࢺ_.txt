@@ -1,0 +1,7 @@
+ma�ana                        << Coded as xF1, which is the unicode ID name, but not the correct byte stream coding.
+filename_contains_\u011b_
+filename_contains_e_
+
+_mañana_funcionará.txt
+
+file_enconde_mañana_funcionará  << Valid byte stream unicode is read correctly

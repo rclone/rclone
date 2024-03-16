@@ -3,6 +3,7 @@ package config
 import (
 	"context"
 	"errors"
+	"os"
 
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/rc"
@@ -241,4 +242,39 @@ func rcSetPath(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 	}
 	err = SetConfigPath(path)
 	return nil, err
+}
+
+func init() {
+	rc.Add(rc.Call{
+		Path:         "config/paths",
+		Fn:           rcPaths,
+		Title:        "Reads the config file path and other important paths.",
+		AuthRequired: true,
+		Help: `
+Returns a JSON object with the following keys:
+
+- config: path to config file
+- cache: path to root of cache directory
+- temp: path to root of temporary directory
+
+Eg
+
+    {
+        "cache": "/home/USER/.cache/rclone",
+        "config": "/home/USER/.rclone.conf",
+        "temp": "/tmp"
+    }
+
+See the [config paths](/commands/rclone_config_paths/) command for more information on the above.
+`,
+	})
+}
+
+// Set the config file path
+func rcPaths(ctx context.Context, in rc.Params) (out rc.Params, err error) {
+	return rc.Params{
+		"config": GetConfigPath(),
+		"cache":  GetCacheDir(),
+		"temp":   os.TempDir(),
+	}, nil
 }

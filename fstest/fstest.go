@@ -10,7 +10,6 @@ import (
 	"fmt"
 	"io"
 	"log"
-	"math/rand"
 	"os"
 	"path"
 	"path/filepath"
@@ -49,12 +48,6 @@ var (
 	// MatchTestRemote matches the remote names used for testing
 	MatchTestRemote = regexp.MustCompile(`^rclone-test-[abcdefghijklmnopqrstuvwxyz0123456789]{24}$`)
 )
-
-// Seed the random number generator
-func init() {
-	rand.Seed(time.Now().UnixNano())
-
-}
 
 // Initialise rclone for testing
 func Initialise() {
@@ -286,7 +279,7 @@ func CheckListingWithRoot(t *testing.T, f fs.Fs, dir string, items []Item, expec
 		listingOK = wantListing == gotListing
 		if listingOK && (expectedDirs == nil || len(dirs) == len(expectedDirs)) {
 			// Put an extra sleep in if we did any retries just to make sure it really
-			// is consistent (here is looking at you Amazon Drive!)
+			// is consistent
 			if i != 1 {
 				extraSleep := 5*time.Second + sleep
 				t.Logf("Sleeping for %v just to make sure", extraSleep)
@@ -525,4 +518,94 @@ func Purge(f fs.Fs) {
 	if err != nil {
 		log.Printf("purge failed: %v", err)
 	}
+}
+
+// NewObject finds the object on the remote
+func NewObject(ctx context.Context, t *testing.T, f fs.Fs, remote string) fs.Object {
+	var obj fs.Object
+	var err error
+	sleepTime := 1 * time.Second
+	for i := 1; i <= *ListRetries; i++ {
+		obj, err = f.NewObject(ctx, remote)
+		if err == nil {
+			break
+		}
+		t.Logf("Sleeping for %v for findObject eventual consistency: %d/%d (%v)", sleepTime, i, *ListRetries, err)
+		time.Sleep(sleepTime)
+		sleepTime = (sleepTime * 3) / 2
+	}
+	require.NoError(t, err)
+	return obj
+}
+
+// NewDirectory finds the directory with remote in f
+//
+// One day this will be an rclone primitive
+func NewDirectory(ctx context.Context, t *testing.T, f fs.Fs, remote string) fs.Directory {
+	var err error
+	var dir fs.Directory
+	sleepTime := 1 * time.Second
+	root := path.Dir(remote)
+	if root == "." {
+		root = ""
+	}
+	for i := 1; i <= *ListRetries; i++ {
+		var entries fs.DirEntries
+		entries, err = f.List(ctx, root)
+		if err != nil {
+			continue
+		}
+		for _, entry := range entries {
+			var ok bool
+			dir, ok = entry.(fs.Directory)
+			if ok && dir.Remote() == remote {
+				return dir
+			}
+		}
+		err = fmt.Errorf("directory %q not found in %q", remote, root)
+		t.Logf("Sleeping for %v for findDir eventual consistency: %d/%d (%v)", sleepTime, i, *ListRetries, err)
+		time.Sleep(sleepTime)
+		sleepTime = (sleepTime * 3) / 2
+	}
+	require.NoError(t, err)
+	return dir
+}
+
+// CheckEntryMetadata checks the metadata on the directory
+//
+// This checks a limited set of metadata on the directory
+func CheckEntryMetadata(ctx context.Context, t *testing.T, f fs.Fs, entry fs.DirEntry, wantMeta fs.Metadata) {
+	features := f.Features()
+	do, ok := entry.(fs.Metadataer)
+	require.True(t, ok, "Didn't find expected Metadata() method on %T", entry)
+	gotMeta, err := do.Metadata(ctx)
+	require.NoError(t, err)
+
+	for k, v := range wantMeta {
+		switch k {
+		case "mtime", "atime", "btime", "ctime":
+			// Check the system time Metadata
+			wantT, err := time.Parse(time.RFC3339, v)
+			require.NoError(t, err)
+			gotT, err := time.Parse(time.RFC3339, gotMeta[k])
+			require.NoError(t, err)
+			AssertTimeEqualWithPrecision(t, entry.Remote(), wantT, gotT, f.Precision())
+		default:
+			// Check the User metadata if we can
+			_, isDir := entry.(fs.Directory)
+			if (isDir && features.UserDirMetadata) || (!isDir && features.UserMetadata) {
+				assert.Equal(t, v, gotMeta[k])
+			}
+		}
+	}
+}
+
+// CheckDirModTime checks the modtime on the directory
+func CheckDirModTime(ctx context.Context, t *testing.T, f fs.Fs, dir fs.Directory, wantT time.Time) {
+	if f.Features().DirSetModTime == nil && f.Features().MkdirMetadata == nil {
+		fs.Debugf(f, "Skipping modtime test as remote does not support DirSetModTime or MkdirMetadata")
+		return
+	}
+	gotT := dir.ModTime(ctx)
+	AssertTimeEqualWithPrecision(t, dir.Remote(), wantT, gotT, f.Precision())
 }

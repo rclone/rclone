@@ -1,0 +1,192 @@
+[36m(01)  :[0m [34mtest resync-mode[0m
+
+
+[36m(02)  :[0m [34mtest changed on both paths and NOT identical - file1 (file1R, file1L)[0m
+[36m(03)  :[0m [34mtouch-glob 2001-01-02 {datadir/} file1R.txt[0m
+[36m(04)  :[0m [34mcopy-as {datadir/}file1R.txt {path2/} file1.txt[0m
+[36m(05)  :[0m [34mtouch-glob 2001-03-04 {datadir/} file1L.txt[0m
+[36m(06)  :[0m [34mcopy-as {datadir/}file1L.txt {path1/} file1.txt[0m
+
+[36m(07)  :[0m [34mtest bisync run with --resync-mode=newer[0m
+[36m(08)  :[0m [34mbisync resync resync-mode=newer[0m
+INFO  : [2mSetting --ignore-listing-checksum as neither --checksum nor --compare checksum are set.[0m
+INFO  : Bisyncing with Comparison Settings:
+{
+"Modtime": true,
+"Size": true,
+"Checksum": false,
+"NoSlowHash": false,
+"SlowHashSyncOnly": false,
+"DownloadHash": false
+}
+INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Copying Path2 files to Path1
+INFO  : - [34mPath2[0m    [35mResync is copying files to[0m         - [36mPath1[0m
+INFO  : - [36mPath1[0m    [35mResync is copying files to[0m         - [36mPath2[0m
+INFO  : Resync updating listings
+INFO  : Validating listings for Path1 "{path1/}" vs Path2 "{path2/}"
+INFO  : [32mBisync successful[0m
+
+[36m(09)  :[0m [34mtest changed on both paths and NOT identical - file1 (file1R, file1L)[0m
+[36m(10)  :[0m [34mtouch-glob 2001-07-23 {datadir/} file1R.txt[0m
+[36m(11)  :[0m [34mcopy-as {datadir/}file1R.txt {path2/} file1.txt[0m
+[36m(12)  :[0m [34mtouch-glob 2001-08-26 {datadir/} file1L.txt[0m
+[36m(13)  :[0m [34mcopy-as {datadir/}file1L.txt {path1/} file1.txt[0m
+
+[36m(14)  :[0m [34mtest bisync run with --resync-mode=path2[0m
+[36m(15)  :[0m [34mbisync resync resync-mode=path2[0m
+INFO  : [2mSetting --ignore-listing-checksum as neither --checksum nor --compare checksum are set.[0m
+INFO  : Bisyncing with Comparison Settings:
+{
+"Modtime": true,
+"Size": true,
+"Checksum": false,
+"NoSlowHash": false,
+"SlowHashSyncOnly": false,
+"DownloadHash": false
+}
+INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Copying Path2 files to Path1
+INFO  : - [34mPath2[0m    [35mResync is copying files to[0m         - [36mPath1[0m
+INFO  : - [36mPath1[0m    [35mResync is copying files to[0m         - [36mPath2[0m
+INFO  : Resync updating listings
+INFO  : Validating listings for Path1 "{path1/}" vs Path2 "{path2/}"
+INFO  : [32mBisync successful[0m
+
+[36m(16)  :[0m [34mtest changed on both paths and NOT identical - file1 (file1R, file1L)[0m
+[36m(17)  :[0m [34mtouch-glob 2002-07-23 {datadir/} file1R.txt[0m
+[36m(18)  :[0m [34mcopy-as {datadir/}file1R.txt {path2/} file1.txt[0m
+[36m(19)  :[0m [34mtouch-glob 2002-08-26 {datadir/} file1L.txt[0m
+[36m(20)  :[0m [34mcopy-as {datadir/}file1L.txt {path1/} file1.txt[0m
+
+[36m(21)  :[0m [34mtest bisync run with --resync-mode=larger[0m
+[36m(22)  :[0m [34mbisync resync resync-mode=larger[0m
+INFO  : [2mSetting --ignore-listing-checksum as neither --checksum nor --compare checksum are set.[0m
+INFO  : Bisyncing with Comparison Settings:
+{
+"Modtime": true,
+"Size": true,
+"Checksum": false,
+"NoSlowHash": false,
+"SlowHashSyncOnly": false,
+"DownloadHash": false
+}
+INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Copying Path2 files to Path1
+INFO  : - [34mPath2[0m    [35mResync is copying files to[0m         - [36mPath1[0m
+INFO  : file1.txt: Path2 is larger. Path1: 33, Path2: 42, Difference: 9
+INFO  : - [36mPath1[0m    [35mResync is copying files to[0m         - [36mPath2[0m
+INFO  : Resync updating listings
+INFO  : Validating listings for Path1 "{path1/}" vs Path2 "{path2/}"
+INFO  : [32mBisync successful[0m
+
+[36m(23)  :[0m [34mtest changed on both paths and NOT identical - file1 (file1R, file1L)[0m
+[36m(24)  :[0m [34mtouch-glob 2003-07-23 {datadir/} file1R.txt[0m
+[36m(25)  :[0m [34mcopy-as {datadir/}file1R.txt {path2/} file1.txt[0m
+[36m(26)  :[0m [34mtouch-glob 2003-09-04 {datadir/} file1L.txt[0m
+[36m(27)  :[0m [34mcopy-as {datadir/}file1L.txt {path1/} file1.txt[0m
+
+[36m(28)  :[0m [34mtest bisync run with --resync-mode=older[0m
+[36m(29)  :[0m [34mbisync resync resync-mode=older[0m
+INFO  : [2mSetting --ignore-listing-checksum as neither --checksum nor --compare checksum are set.[0m
+INFO  : Bisyncing with Comparison Settings:
+{
+"Modtime": true,
+"Size": true,
+"Checksum": false,
+"NoSlowHash": false,
+"SlowHashSyncOnly": false,
+"DownloadHash": false
+}
+INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Copying Path2 files to Path1
+INFO  : - [34mPath2[0m    [35mResync is copying files to[0m         - [36mPath1[0m
+INFO  : file1.txt: Path2 is older. Path1: 2003-09-03 20:00:00 -0400 EDT, Path2: 2003-07-22 20:00:00 -0400 EDT, Difference: 1032h0m0s
+INFO  : - [36mPath1[0m    [35mResync is copying files to[0m         - [36mPath2[0m
+INFO  : Resync updating listings
+INFO  : Validating listings for Path1 "{path1/}" vs Path2 "{path2/}"
+INFO  : [32mBisync successful[0m
+
+[36m(30)  :[0m [34mtest changed on both paths and NOT identical - file1 (file1R, file1L)[0m
+[36m(31)  :[0m [34mtouch-glob 2004-07-23 {datadir/} file1R.txt[0m
+[36m(32)  :[0m [34mcopy-as {datadir/}file1R.txt {path2/} file1.txt[0m
+[36m(33)  :[0m [34mtouch-glob 2004-07-23 {datadir/} file1L.txt[0m
+[36m(34)  :[0m [34mcopy-as {datadir/}file1L.txt {path1/} file1.txt[0m
+
+[36m(35)  :[0m [34mtest bisync run with --resync-mode=smaller[0m
+[36m(36)  :[0m [34mbisync resync resync-mode=smaller[0m
+INFO  : [2mSetting --ignore-listing-checksum as neither --checksum nor --compare checksum are set.[0m
+INFO  : Bisyncing with Comparison Settings:
+{
+"Modtime": true,
+"Size": true,
+"Checksum": false,
+"NoSlowHash": false,
+"SlowHashSyncOnly": false,
+"DownloadHash": false
+}
+INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Copying Path2 files to Path1
+INFO  : - [34mPath2[0m    [35mResync is copying files to[0m         - [36mPath1[0m
+INFO  : file1.txt: Path1 is smaller. Path1: 33, Path2: 42, Difference: 9
+INFO  : - [36mPath1[0m    [35mResync is copying files to[0m         - [36mPath2[0m
+INFO  : file1.txt: Path1 is smaller. Path1: 33, Path2: 42, Difference: 9
+INFO  : Resync updating listings
+INFO  : Validating listings for Path1 "{path1/}" vs Path2 "{path2/}"
+INFO  : [32mBisync successful[0m
+
+[36m(37)  :[0m [34mtest changed on both paths and NOT identical - file1 (file1R, file1L)[0m
+[36m(38)  :[0m [34mtouch-glob 2005-01-02 {datadir/} file1R.txt[0m
+[36m(39)  :[0m [34mcopy-as {datadir/}file1R.txt {path2/} file1.txt[0m
+[36m(40)  :[0m [34mcopy-as {datadir/}file1R.txt {path1/} file2.txt[0m
+[36m(41)  :[0m [34mtouch-glob 2006-03-04 {datadir/} file1L.txt[0m
+[36m(42)  :[0m [34mcopy-as {datadir/}file1L.txt {path1/} file1.txt[0m
+[36m(43)  :[0m [34mcopy-as {datadir/}file1L.txt {path2/} file2.txt[0m
+
+[36m(44)  :[0m [34mtest bisync run with --resync-mode=path1[0m
+[36m(45)  :[0m [34mbisync resync resync-mode=path1[0m
+INFO  : [2mSetting --ignore-listing-checksum as neither --checksum nor --compare checksum are set.[0m
+INFO  : Bisyncing with Comparison Settings:
+{
+"Modtime": true,
+"Size": true,
+"Checksum": false,
+"NoSlowHash": false,
+"SlowHashSyncOnly": false,
+"DownloadHash": false
+}
+INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Copying Path2 files to Path1
+INFO  : - [34mPath2[0m    [35mResync is copying files to[0m         - [36mPath1[0m
+INFO  : - [36mPath1[0m    [35mResync is copying files to[0m         - [36mPath2[0m
+INFO  : Resync updating listings
+INFO  : Validating listings for Path1 "{path1/}" vs Path2 "{path2/}"
+INFO  : [32mBisync successful[0m
+
+[36m(46)  :[0m [34mtest no winner[0m
+[36m(47)  :[0m [34mtouch-glob 2022-02-22 {datadir/} file1R.txt[0m
+[36m(48)  :[0m [34mcopy-as {datadir/}file1R.txt {path2/} file1.txt[0m
+[36m(49)  :[0m [34mcopy-as {datadir/}file1R.txt {path1/} file2.txt[0m
+[36m(50)  :[0m [34mtouch-glob 2022-02-22 {datadir/} file1L.txt[0m
+[36m(51)  :[0m [34mcopy-as {datadir/}file1L.txt {path1/} file1.txt[0m
+[36m(52)  :[0m [34mcopy-as {datadir/}file1L.txt {path2/} file2.txt[0m
+
+[36m(53)  :[0m [34mtest bisync run with --resync-mode=newer[0m
+[36m(54)  :[0m [34mbisync resync resync-mode=newer[0m
+INFO  : [2mSetting --ignore-listing-checksum as neither --checksum nor --compare checksum are set.[0m
+INFO  : Bisyncing with Comparison Settings:
+{
+"Modtime": true,
+"Size": true,
+"Checksum": false,
+"NoSlowHash": false,
+"SlowHashSyncOnly": false,
+"DownloadHash": false
+}
+INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Copying Path2 files to Path1
+INFO  : - [34mPath2[0m    [35mResync is copying files to[0m         - [36mPath1[0m
+INFO  : - [36mPath1[0m    [35mResync is copying files to[0m         - [36mPath2[0m
+INFO  : Resync updating listings
+INFO  : Validating listings for Path1 "{path1/}" vs Path2 "{path2/}"
+INFO  : [32mBisync successful[0m

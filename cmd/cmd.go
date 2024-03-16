@@ -39,7 +39,6 @@ import (
 	"github.com/rclone/rclone/lib/atexit"
 	"github.com/rclone/rclone/lib/buildinfo"
 	"github.com/rclone/rclone/lib/exitcode"
-	"github.com/rclone/rclone/lib/random"
 	"github.com/rclone/rclone/lib/terminal"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
@@ -48,13 +47,11 @@ import (
 // Globals
 var (
 	// Flags
-	cpuProfile      = flags.StringP("cpuprofile", "", "", "Write cpu profile to file", "Debugging")
-	memProfile      = flags.StringP("memprofile", "", "", "Write memory profile to file", "Debugging")
-	statsInterval   = flags.DurationP("stats", "", time.Minute*1, "Interval between printing stats, e.g. 500ms, 60s, 5m (0 to disable)", "Logging")
-	dataRateUnit    = flags.StringP("stats-unit", "", "bytes", "Show data rate in stats as either 'bits' or 'bytes' per second", "Logging")
-	version         bool
-	retries         = flags.IntP("retries", "", 3, "Retry operations this many times if they fail", "Config")
-	retriesInterval = flags.DurationP("retries-sleep", "", 0, "Interval between retrying operations if they fail, e.g. 500ms, 60s, 5m (0 to disable)", "Config")
+	cpuProfile    = flags.StringP("cpuprofile", "", "", "Write cpu profile to file", "Debugging")
+	memProfile    = flags.StringP("memprofile", "", "", "Write memory profile to file", "Debugging")
+	statsInterval = flags.DurationP("stats", "", time.Minute*1, "Interval between printing stats, e.g. 500ms, 60s, 5m (0 to disable)", "Logging")
+	dataRateUnit  = flags.StringP("stats-unit", "", "bytes", "Show data rate in stats as either 'bits' or 'bytes' per second", "Logging")
+	version       bool
 	// Errors
 	errorCommandNotFound    = errors.New("command not found")
 	errorUncategorized      = errors.New("uncategorized error")
@@ -254,7 +251,7 @@ func Run(Retry bool, showStats bool, cmd *cobra.Command, f func() error) {
 		stopStats = StartStats()
 	}
 	SigInfoHandler()
-	for try := 1; try <= *retries; try++ {
+	for try := 1; try <= ci.Retries; try++ {
 		cmdErr = f()
 		cmdErr = fs.CountError(cmdErr)
 		lastErr := accounting.GlobalStats().GetLastError()
@@ -263,7 +260,7 @@ func Run(Retry bool, showStats bool, cmd *cobra.Command, f func() error) {
 		}
 		if !Retry || !accounting.GlobalStats().Errored() {
 			if try > 1 {
-				fs.Errorf(nil, "Attempt %d/%d succeeded", try, *retries)
+				fs.Errorf(nil, "Attempt %d/%d succeeded", try, ci.Retries)
 			}
 			break
 		}
@@ -283,15 +280,15 @@ func Run(Retry bool, showStats bool, cmd *cobra.Command, f func() error) {
 			}
 		}
 		if lastErr != nil {
-			fs.Errorf(nil, "Attempt %d/%d failed with %d errors and: %v", try, *retries, accounting.GlobalStats().GetErrors(), lastErr)
+			fs.Errorf(nil, "Attempt %d/%d failed with %d errors and: %v", try, ci.Retries, accounting.GlobalStats().GetErrors(), lastErr)
 		} else {
-			fs.Errorf(nil, "Attempt %d/%d failed with %d errors", try, *retries, accounting.GlobalStats().GetErrors())
+			fs.Errorf(nil, "Attempt %d/%d failed with %d errors", try, ci.Retries, accounting.GlobalStats().GetErrors())
 		}
-		if try < *retries {
+		if try < ci.Retries {
 			accounting.GlobalStats().ResetErrors()
 		}
-		if *retriesInterval > 0 {
-			time.Sleep(*retriesInterval)
+		if ci.RetriesInterval > 0 {
+			time.Sleep(ci.RetriesInterval)
 		}
 	}
 	stopStats()
@@ -340,7 +337,6 @@ func Run(Retry bool, showStats bool, cmd *cobra.Command, f func() error) {
 		}
 	}
 	resolveExitCode(cmdErr)
-
 }
 
 // CheckArgs checks there are enough arguments and prints a message if not
@@ -555,16 +551,13 @@ func AddBackendFlags() {
 			} else {
 				fs.Errorf(nil, "Not adding duplicate flag --%s", name)
 			}
-			//flag.Hidden = true
+			// flag.Hidden = true
 		}
 	}
 }
 
 // Main runs rclone interpreting flags and commands out of os.Args
 func Main() {
-	if err := random.Seed(); err != nil {
-		log.Fatalf("Fatal error: %v", err)
-	}
 	setupRootCommand(Root)
 	AddBackendFlags()
 	if err := Root.Execute(); err != nil {

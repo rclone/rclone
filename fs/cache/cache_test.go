@@ -116,6 +116,35 @@ func TestGetError(t *testing.T) {
 	assert.Equal(t, 0, Entries())
 }
 
+func TestPutErr(t *testing.T) {
+	create := mockNewFs(t)
+
+	f, err := mockfs.NewFs(context.Background(), "mock", "", nil)
+	require.NoError(t, err)
+
+	assert.Equal(t, 0, Entries())
+
+	PutErr("mock:file.txt", f, fs.ErrorIsFile)
+
+	assert.Equal(t, 1, Entries())
+
+	fNew, err := GetFn(context.Background(), "mock:file.txt", create)
+	require.Equal(t, fs.ErrorIsFile, err)
+	require.Equal(t, f, fNew)
+
+	assert.Equal(t, 1, Entries())
+
+	// Check canonicalisation
+
+	PutErr("mock:/file.txt", f, fs.ErrorIsFile)
+
+	fNew, err = GetFn(context.Background(), "mock:/file.txt", create)
+	require.Equal(t, fs.ErrorIsFile, err)
+	require.Equal(t, f, fNew)
+
+	assert.Equal(t, 1, Entries())
+}
+
 func TestPut(t *testing.T) {
 	create := mockNewFs(t)
 
@@ -143,7 +172,6 @@ func TestPut(t *testing.T) {
 	require.Equal(t, f, fNew)
 
 	assert.Equal(t, 1, Entries())
-
 }
 
 func TestPin(t *testing.T) {

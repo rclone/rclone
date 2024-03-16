@@ -38,57 +38,9 @@ documentation, changelog and configuration walkthroughs.
 		fs.Debugf("rclone", "Version %q finishing with parameters %q", fs.Version, os.Args)
 		atexit.Run()
 	},
-	BashCompletionFunction: bashCompletionFunc,
-	DisableAutoGenTag:      true,
+	ValidArgsFunction: validArgs,
+	DisableAutoGenTag: true,
 }
-
-const (
-	bashCompletionFunc = `
-__rclone_custom_func() {
-    if [[ ${#COMPREPLY[@]} -eq 0 ]]; then
-        local cur cword prev words
-        if declare -F _init_completion > /dev/null; then
-            _init_completion -n : || return
-        else
-            __rclone_init_completion -n : || return
-        fi
-	local rclone=(command rclone --ask-password=false)
-        if [[ $cur != *:* ]]; then
-            local ifs=$IFS
-            IFS=$'\n'
-            local remotes=($("${rclone[@]}" listremotes 2> /dev/null))
-            IFS=$ifs
-            local remote
-            for remote in "${remotes[@]}"; do
-                [[ $remote != $cur* ]] || COMPREPLY+=("$remote")
-            done
-            if [[ ${COMPREPLY[@]} ]]; then
-                local paths=("$cur"*)
-                [[ ! -f ${paths[0]} ]] || COMPREPLY+=("${paths[@]}")
-            fi
-        else
-            local path=${cur#*:}
-            if [[ $path == */* ]]; then
-                local prefix=$(eval printf '%s' "${path%/*}")
-            else
-                local prefix=
-            fi
-            local ifs=$IFS
-            IFS=$'\n'
-            local lines=($("${rclone[@]}" lsf "${cur%%:*}:$prefix" 2> /dev/null))
-            IFS=$ifs
-            local line
-            for line in "${lines[@]}"; do
-                local reply=${prefix:+$prefix/}$line
-                [[ $reply != $path* ]] || COMPREPLY+=("$reply")
-            done
-	    [[ ! ${COMPREPLY[@]} || $(type -t compopt) != builtin ]] || compopt -o filenames
-        fi
-        [[ ! ${COMPREPLY[@]} || $(type -t compopt) != builtin ]] || compopt -o nospace
-    fi
-}
-`
-)
 
 // GeneratingDocs is set by rclone gendocs to alter the format of the
 // output suitable for the documentation.
@@ -220,8 +172,23 @@ func setupRootCommand(rootCmd *cobra.Command) {
 	helpCommand.AddCommand(helpBackends)
 	helpCommand.AddCommand(helpBackend)
 
+	// Set command completion for all functions to be the same
+	traverseCommands(rootCmd, func(cmd *cobra.Command) {
+		cmd.ValidArgsFunction = validArgs
+	})
+
 	cobra.OnInitialize(initConfig)
 
+}
+
+// Traverse the tree of commands running fn on each
+//
+// I was surprised there wasn't a cobra command to do this
+func traverseCommands(cmd *cobra.Command, fn func(*cobra.Command)) {
+	fn(cmd)
+	for _, childCmd := range cmd.Commands() {
+		traverseCommands(childCmd, fn)
+	}
 }
 
 var usageTemplate = `Usage:{{if .Runnable}}

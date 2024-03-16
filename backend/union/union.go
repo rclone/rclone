@@ -95,6 +95,7 @@ func (f *Fs) wrapEntries(entries ...upstream.Entry) (entry, error) {
 	case *upstream.Directory:
 		return &Directory{
 			Directory: e,
+			fs:        f,
 			cd:        entries,
 		}, nil
 	default:
@@ -180,6 +181,51 @@ func (f *Fs) mkdir(ctx context.Context, dir string) ([]*upstream.Fs, error) {
 func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 	_, err := f.mkdir(ctx, dir)
 	return err
+}
+
+// MkdirMetadata makes the root directory of the Fs object
+func (f *Fs) MkdirMetadata(ctx context.Context, dir string, metadata fs.Metadata) (fs.Directory, error) {
+	upstreams, err := f.create(ctx, dir)
+	if err != nil {
+		return nil, err
+	}
+	errs := Errors(make([]error, len(upstreams)))
+	entries := make([]upstream.Entry, len(upstreams))
+	multithread(len(upstreams), func(i int) {
+		u := upstreams[i]
+		if do := u.Features().MkdirMetadata; do != nil {
+			newDir, err := do(ctx, dir, metadata)
+			if err != nil {
+				errs[i] = fmt.Errorf("%s: %w", upstreams[i].Name(), err)
+			} else {
+				entries[i], err = u.WrapEntry(newDir)
+				if err != nil {
+					errs[i] = fmt.Errorf("%s: %w", upstreams[i].Name(), err)
+				}
+			}
+
+		} else {
+			// Just do Mkdir on upstreams which don't support MkdirMetadata
+			err := u.Mkdir(ctx, dir)
+			if err != nil {
+				errs[i] = fmt.Errorf("%s: %w", upstreams[i].Name(), err)
+			}
+		}
+	})
+	err = errs.Err()
+	if err != nil {
+		return nil, err
+	}
+
+	entry, err := f.wrapEntries(entries...)
+	if err != nil {
+		return nil, err
+	}
+	newDir, ok := entry.(fs.Directory)
+	if !ok {
+		return nil, fmt.Errorf("internal error: expecting %T to be an fs.Directory", entry)
+	}
+	return newDir, nil
 }
 
 // Purge all files in the directory
@@ -384,6 +430,26 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 		}
 	}
 	return fs.ErrorDirExists
+}
+
+// DirSetModTime sets the directory modtime for dir
+func (f *Fs) DirSetModTime(ctx context.Context, dir string, modTime time.Time) error {
+	upstreams, err := f.action(ctx, dir)
+	if err != nil {
+		return err
+	}
+	errs := Errors(make([]error, len(upstreams)))
+	multithread(len(upstreams), func(i int) {
+		u := upstreams[i]
+		// ignore DirSetModTime on upstreams which don't support it
+		if do := u.Features().DirSetModTime; do != nil {
+			err := do(ctx, dir, modTime)
+			if err != nil {
+				errs[i] = fmt.Errorf("%s: %w", upstreams[i].Name(), err)
+			}
+		}
+	})
+	return errs.Err()
 }
 
 // ChangeNotify calls the passed function with a path
@@ -902,18 +968,23 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	}
 	fs.Debugf(f, "actionPolicy = %T, createPolicy = %T, searchPolicy = %T", f.actionPolicy, f.createPolicy, f.searchPolicy)
 	var features = (&fs.Features{
-		CaseInsensitive:         true,
-		DuplicateFiles:          false,
-		ReadMimeType:            true,
-		WriteMimeType:           true,
-		CanHaveEmptyDirectories: true,
-		BucketBased:             true,
-		SetTier:                 true,
-		GetTier:                 true,
-		ReadMetadata:            true,
-		WriteMetadata:           true,
-		UserMetadata:            true,
-		PartialUploads:          true,
+		CaseInsensitive:          true,
+		DuplicateFiles:           false,
+		ReadMimeType:             true,
+		WriteMimeType:            true,
+		CanHaveEmptyDirectories:  true,
+		BucketBased:              true,
+		SetTier:                  true,
+		GetTier:                  true,
+		ReadMetadata:             true,
+		WriteMetadata:            true,
+		UserMetadata:             true,
+		ReadDirMetadata:          true,
+		WriteDirMetadata:         true,
+		WriteDirSetModTime:       true,
+		UserDirMetadata:          true,
+		DirModTimeUpdatesOnWrite: true,
+		PartialUploads:           true,
 	}).Fill(ctx, f)
 	canMove, slowHash := true, false
 	for _, f := range upstreams {
@@ -988,6 +1059,8 @@ var (
 	_ fs.Copier          = (*Fs)(nil)
 	_ fs.Mover           = (*Fs)(nil)
 	_ fs.DirMover        = (*Fs)(nil)
+	_ fs.DirSetModTimer  = (*Fs)(nil)
+	_ fs.MkdirMetadataer = (*Fs)(nil)
 	_ fs.DirCacheFlusher = (*Fs)(nil)
 	_ fs.ChangeNotifier  = (*Fs)(nil)
 	_ fs.Abouter         = (*Fs)(nil)

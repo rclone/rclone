@@ -109,6 +109,19 @@ those only (without traversing the whole directory structure):
     rclone lsf --absolute --files-only --max-age 1d /path/to/local > new_files
     rclone copy --files-from-raw new_files /path/to/local remote:path
 
+The default time format is `'2006-01-02 15:04:05'`.
+[Other formats](https://pkg.go.dev/time#pkg-constants) can be specified with the `--time-format` flag.
+Examples:
+
+	rclone lsf remote:path --format pt --time-format 'Jan 2, 2006 at 3:04pm (MST)'
+	rclone lsf remote:path --format pt --time-format '2006-01-02 15:04:05.000000000'
+	rclone lsf remote:path --format pt --time-format '2006-01-02T15:04:05.999999999Z07:00'
+	rclone lsf remote:path --format pt --time-format RFC3339
+	rclone lsf remote:path --format pt --time-format DateOnly
+	rclone lsf remote:path --format pt --time-format max
+`--time-format max` will automatically truncate '`2006-01-02 15:04:05.000000000`'
+to the maximum precision supported by the remote.
+
 
 Any of the filtering options can be applied to this command.
 
@@ -140,16 +153,17 @@ rclone lsf remote:path [flags]
 ## Options
 
 ```
-      --absolute           Put a leading / in front of path names
-      --csv                Output in CSV format
-  -d, --dir-slash          Append a slash to directory names (default true)
-      --dirs-only          Only list directories
-      --files-only         Only list files
-  -F, --format string      Output format - see  help for details (default "p")
-      --hash h             Use this hash when h is used in the format MD5|SHA-1|DropboxHash (default "md5")
-  -h, --help               help for lsf
-  -R, --recursive          Recurse into the listing
-  -s, --separator string   Separator for the items in the format (default ";")
+      --absolute             Put a leading / in front of path names
+      --csv                  Output in CSV format
+  -d, --dir-slash            Append a slash to directory names (default true)
+      --dirs-only            Only list directories
+      --files-only           Only list files
+  -F, --format string        Output format - see  help for details (default "p")
+      --hash h               Use this hash when h is used in the format MD5|SHA-1|DropboxHash (default "md5")
+  -h, --help                 help for lsf
+  -R, --recursive            Recurse into the listing
+  -s, --separator string     Separator for the items in the format (default ";")
+  -t, --time-format string   Specify a custom time format, or 'max' for max precision supported by remote (default: 2006-01-02 15:04:05)
 ```
 
 

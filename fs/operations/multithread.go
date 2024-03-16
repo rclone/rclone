@@ -254,27 +254,6 @@ func multiThreadCopy(ctx context.Context, f fs.Fs, remote string, src fs.Object,
 	return obj, nil
 }
 
-// An offsetWriter maps writes at offset base to offset base+off in the underlying writer.
-//
-// Modified from the go source code. Can be replaced with
-// io.OffsetWriter when we no longer need to support go1.19
-type offsetWriter struct {
-	w   io.WriterAt
-	off int64 // the current offset
-}
-
-// newOffsetWriter returns an offsetWriter that writes to w
-// starting at offset off.
-func newOffsetWriter(w io.WriterAt, off int64) *offsetWriter {
-	return &offsetWriter{w, off}
-}
-
-func (o *offsetWriter) Write(p []byte) (n int, err error) {
-	n, err = o.w.WriteAt(p, o.off)
-	o.off += int64(n)
-	return
-}
-
 // writerAtChunkWriter converts a WriterAtCloser into a ChunkWriter
 type writerAtChunkWriter struct {
 	remote          string
@@ -296,7 +275,7 @@ func (w *writerAtChunkWriter) WriteChunk(ctx context.Context, chunkNumber int, r
 		bytesToWrite = w.size % w.chunkSize
 	}
 
-	var writer io.Writer = newOffsetWriter(w.writerAt, int64(chunkNumber)*w.chunkSize)
+	var writer io.Writer = io.NewOffsetWriter(w.writerAt, int64(chunkNumber)*w.chunkSize)
 	if w.writeBufferSize > 0 {
 		writer = bufio.NewWriterSize(writer, int(w.writeBufferSize))
 	}

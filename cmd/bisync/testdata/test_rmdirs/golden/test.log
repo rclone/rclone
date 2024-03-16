@@ -1,40 +1,74 @@
-(01)  : test rmdirs
+[36m(01)  :[0m [34mtest rmdirs[0m
 
 
-(02)  : test initial bisync
-(03)  : bisync resync
+[36m(02)  :[0m [34mtest initial bisync[0m
+[36m(03)  :[0m [34mbisync resync[0m
+INFO  : [2mSetting --ignore-listing-checksum as neither --checksum nor --compare checksum are set.[0m
+INFO  : Bisyncing with Comparison Settings:
+{
+"Modtime": true,
+"Size": true,
+"Checksum": false,
+"NoSlowHash": false,
+"SlowHashSyncOnly": false,
+"DownloadHash": false
+}
 INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
-INFO  : Copying unique Path2 files to Path1
-INFO  : Resynching Path1 to Path2
+INFO  : Copying Path2 files to Path1
+INFO  : - [34mPath2[0m    [35mResync is copying files to[0m         - [36mPath1[0m
+INFO  : - [36mPath1[0m    [35mResync is copying files to[0m         - [36mPath2[0m
 INFO  : Resync updating listings
-INFO  : Bisync successful
+INFO  : Validating listings for Path1 "{path1/}" vs Path2 "{path2/}"
+INFO  : [32mBisync successful[0m
 
-(04)  : test 1. delete path1 subdir file
-(05)  : delete-file {path1/}subdir/file20.txt
+[36m(04)  :[0m [34mtest 1. delete path1 subdir file[0m
+[36m(05)  :[0m [34mdelete-file {path1/}subdir/file20.txt[0m
 
-(06)  : test 2. run bisync without remove-empty-dirs
-(07)  : bisync
+[36m(06)  :[0m [34mtest 2. run bisync without remove-empty-dirs[0m
+[36m(07)  :[0m [34mbisync[0m
+INFO  : [2mSetting --ignore-listing-checksum as neither --checksum nor --compare checksum are set.[0m
+INFO  : Bisyncing with Comparison Settings:
+{
+"Modtime": true,
+"Size": true,
+"Checksum": false,
+"NoSlowHash": false,
+"SlowHashSyncOnly": false,
+"DownloadHash": false
+}
 INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Building Path1 and Path2 listings
 INFO  : Path1 checking for diffs
-INFO  : - Path1    File was deleted                    - subdir/file20.txt
-INFO  : Path1:    1 changes:    0 new,    0 newer,    0 older,    1 deleted
+INFO  : - [36mPath1[0m    [35m[31mFile was deleted[0m[0m          - [36msubdir/file20.txt[0m
+INFO  : Path1:    1 changes: [32m   0 new[0m, [33m   0 modified[0m, [31m   1 deleted[0m
 INFO  : Path2 checking for diffs
 INFO  : Applying changes
-INFO  : - Path2    Queue delete                        - {path2/}subdir/file20.txt
-INFO  : -          Do queued deletes on                - Path2
+INFO  : - [34mPath2[0m    [35m[31mQueue delete[0m[0m              - [36m{path2/}subdir/file20.txt[0m
+INFO  : - [36mPath1[0m    [35mDo queued copies to[0m                - [36mPath2[0m
 INFO  : Updating listings
 INFO  : Validating listings for Path1 "{path1/}" vs Path2 "{path2/}"
-INFO  : Bisync successful
+INFO  : [32mBisync successful[0m
 
-(08)  : test 3. confirm the subdir still exists on both paths
-(09)  : list-dirs {path1/}
-subdir/
-(10)  : list-dirs {path2/}
-subdir/
+[36m(08)  :[0m [34mtest 3. confirm the subdir still exists on both paths[0m
+[36m(09)  :[0m [34mlist-dirs {path1/}[0m
+subdir/ - filename hash: 86ae37b338459868804e9697025ba4c2
+[36m(10)  :[0m [34mlist-dirs {path2/}[0m
+subdir/ - filename hash: 86ae37b338459868804e9697025ba4c2
 
-(11)  : test 4. run bisync with remove-empty-dirs
-(12)  : bisync remove-empty-dirs
+[36m(11)  :[0m [34mtest 4. run bisync with remove-empty-dirs[0m
+[36m(12)  :[0m [34mbisync remove-empty-dirs[0m
+INFO  : [2mSetting --ignore-listing-checksum as neither --checksum nor --compare checksum are set.[0m
+INFO  : Bisyncing with Comparison Settings:
+{
+"Modtime": true,
+"Size": true,
+"Checksum": false,
+"NoSlowHash": false,
+"SlowHashSyncOnly": false,
+"DownloadHash": false
+}
 INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Building Path1 and Path2 listings
 INFO  : Path1 checking for diffs
 INFO  : Path2 checking for diffs
 INFO  : No changes found
@@ -43,8 +77,8 @@ INFO  : Validating listings for Path1 "{path1/}" vs Path2 "{path2/}"
 INFO  : Removing empty directories
 INFO  : subdir: Removing directory
 INFO  : subdir: Removing directory
-INFO  : Bisync successful
+INFO  : [32mBisync successful[0m
 
-(13)  : test 5. confirm the subdir has been removed on both paths
-(14)  : list-dirs {path1/}
-(15)  : list-dirs {path2/}
+[36m(13)  :[0m [34mtest 5. confirm the subdir has been removed on both paths[0m
+[36m(14)  :[0m [34mlist-dirs {path1/}[0m
+[36m(15)  :[0m [34mlist-dirs {path2/}[0m

@@ -103,7 +103,7 @@ check:	rclone
 
 # Get the build dependencies
 build_dep:
-	go run bin/get-github-release.go -extract golangci-lint golangci/golangci-lint 'golangci-lint-.*\.tar\.gz'
+	go run bin/get-github-release.go -use-api -extract golangci-lint golangci/golangci-lint 'golangci-lint-.*\.tar\.gz'
 
 # Get the release dependencies we only install on linux
 release_dep_linux:
