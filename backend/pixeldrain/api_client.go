@@ -129,6 +129,28 @@ func apiErrorHandler(resp *http.Response) (err error) {
 	return e
 }
 
+func paramsFromMetadata(meta fs.Metadata) (params url.Values) {
+	params = make(url.Values)
+
+	if modified, ok := meta["mtime"]; ok {
+		params.Set("modified", modified)
+	}
+	if created, ok := meta["btime"]; ok {
+		params.Set("created", created)
+	}
+	if mode, ok := meta["mode"]; ok {
+		params.Set("mode", mode)
+	}
+	if shared, ok := meta["shared"]; ok {
+		params.Set("shared", shared)
+	}
+	if loggingEnabled, ok := meta["logging_enabled"]; ok {
+		params.Set("logging_enabled", loggingEnabled)
+	}
+
+	return params
+}
+
 // nodeToObject converts a single FilesystemNode API response to an object. The
 // node is usually a single element from a directory listing
 func (f *Fs) nodeToObject(node FilesystemNode) (o *Object) {
@@ -152,7 +174,16 @@ func (f *Fs) escapePath(p string) (out string) {
 	return strings.Join(parts, "/")
 }
 
-func (f *Fs) put(ctx context.Context, path string, body io.Reader, options []fs.OpenOption) (node FilesystemNode, err error) {
+func (f *Fs) put(
+	ctx context.Context,
+	path string,
+	body io.Reader,
+	meta fs.Metadata,
+	options []fs.OpenOption,
+) (node FilesystemNode, err error) {
+	var params = paramsFromMetadata(meta)
+	params.Set("make_parents", "true")
+
 	resp, err := f.srv.CallJSON(
 		ctx,
 		&rest.Opts{
@@ -161,7 +192,7 @@ func (f *Fs) put(ctx context.Context, path string, body io.Reader, options []fs.
 			Body:   body,
 			// Tell the server to automatically create parent directories if
 			// they don't exist yet
-			Parameters: url.Values{"make_parents": []string{"true"}},
+			Parameters: params,
 			Options:    options,
 		},
 		nil,
@@ -227,24 +258,8 @@ func (f *Fs) changeLog(ctx context.Context, start, end time.Time) (changeLog Cha
 }
 
 func (f *Fs) update(ctx context.Context, path string, fields fs.Metadata) (node FilesystemNode, err error) {
-	var params = make(url.Values)
+	var params = paramsFromMetadata(fields)
 	params.Set("action", "update")
-
-	if modified, ok := fields["mtime"]; ok {
-		params.Set("modified", modified)
-	}
-	if created, ok := fields["btime"]; ok {
-		params.Set("created", created)
-	}
-	if mode, ok := fields["mode"]; ok {
-		params.Set("mode", mode)
-	}
-	if shared, ok := fields["shared"]; ok {
-		params.Set("shared", shared)
-	}
-	if loggingEnabled, ok := fields["logging_enabled"]; ok {
-		params.Set("logging_enabled", loggingEnabled)
-	}
 
 	resp, err := f.srv.CallJSON(
 		ctx,
@@ -271,7 +286,8 @@ func (f *Fs) mkdir(ctx context.Context, dir string) (err error) {
 			MultipartParams: url.Values{"action": []string{"mkdirall"}},
 			NoResponse:      true,
 		},
-		nil, nil,
+		nil,
+		nil,
 	)
 	return err
 }
@@ -279,36 +295,42 @@ func (f *Fs) mkdir(ctx context.Context, dir string) (err error) {
 var errIncompatibleSourceFS = errors.New("source filesystem is not the same as target")
 
 // Renames a file on the server side. Can be used for both directories and files
-func (f *Fs) rename(ctx context.Context, src fs.Fs, from, to string) (err error) {
+func (f *Fs) rename(ctx context.Context, src fs.Fs, from, to string, meta fs.Metadata) (node FilesystemNode, err error) {
 	srcFs, ok := src.(*Fs)
 	if !ok {
 		// This is not a pixeldrain FS, can't move
-		return errIncompatibleSourceFS
+		return node, errIncompatibleSourceFS
 	} else if srcFs.opt.DirectoryID != f.opt.DirectoryID {
 		// Path is not in the same root dir, can't move
-		return errIncompatibleSourceFS
+		return node, errIncompatibleSourceFS
 	}
 
-	_, err = f.srv.CallJSON(
+	var params = paramsFromMetadata(meta)
+	params.Set("action", "rename")
+
+	// The target is always in our own filesystem so here we use our
+	// own pathPrefix
+	params.Set("target", f.pathPrefix+to)
+
+	// Create parent directories if the parent directory of the file
+	// does not exist yet
+	params.Set("make_parents", "true")
+
+	resp, err := f.srv.CallJSON(
 		ctx,
 		&rest.Opts{
 			Method: "POST",
 			// Important: We use the source FS path prefix here
-			Path: srcFs.escapePath(from),
-			MultipartParams: url.Values{
-				"action": []string{"rename"},
-				// The target is always in our own filesystem so here we use our
-				// own pathPrefix
-				"target": []string{f.pathPrefix + to},
-				// Create parent directories if the parent directory of the file
-				// does not exist yet
-				"make_parents": []string{"true"},
-			},
-			NoResponse: true,
+			Path:            srcFs.escapePath(from),
+			MultipartParams: params,
 		},
-		nil, nil,
+		nil,
+		&node,
 	)
-	return err
+	if err != nil {
+		return node, err
+	}
+	return node, resp.Body.Close()
 }
 
 func (f *Fs) delete(ctx context.Context, path string, recursive bool) (err error) {

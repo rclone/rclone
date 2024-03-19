@@ -226,32 +226,25 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 //
 // The new object may have been created if an error is returned
 func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
-	_, err := f.put(ctx, src.Remote(), in, options)
-	if err != nil {
-		return nil, fmt.Errorf("failed to put object: %w", err)
-	}
-
 	meta, err := fs.GetMetadataOptions(ctx, f, src, options)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get object metadata")
 	}
-	if meta == nil {
-		meta = make(fs.Metadata)
-	}
 
 	// Overwrite the mtime if it was not already set in the metadata
 	if _, ok := meta["mtime"]; !ok {
+		if meta == nil {
+			meta = make(fs.Metadata)
+		}
 		meta["mtime"] = src.ModTime(ctx).Format(timeFormat)
 	}
 
-	// Can't set modtime in the same request as the original upload. So we send
-	// this followup request
-	fsp, err := f.update(ctx, src.Remote(), meta)
+	node, err := f.put(ctx, src.Remote(), in, meta, options)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to put object: %w", err)
 	}
 
-	return f.nodeToObject(fsp), nil
+	return f.nodeToObject(node), nil
 }
 
 // Mkdir creates the container if it doesn't exist
@@ -340,19 +333,14 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		return nil, fs.ErrorCantMove
 	}
 
-	err := f.rename(ctx, srcObj.fs, srcObj.base.Path, remote)
+	node, err := f.rename(ctx, srcObj.fs, srcObj.base.Path, remote, fs.GetConfig(ctx).MetadataSet)
 	if err == errIncompatibleSourceFS {
 		return nil, fs.ErrorCantMove
 	} else if err == errNotFound {
 		return nil, fs.ErrorObjectNotFound
 	}
 
-	// The node only got its path changed, so we just copy the original Object
-	// and change the path variable. This prevents us from having to make
-	// another request to get the updated node
-	var nodeCopy = srcObj.base
-	nodeCopy.Path = remote
-	return f.nodeToObject(nodeCopy), err
+	return f.nodeToObject(node), nil
 }
 
 // =======================================
@@ -369,7 +357,7 @@ var _ fs.DirMover = (*Fs)(nil)
 //
 // If destination exists then return fs.ErrorDirExists
 func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string) (err error) {
-	err = f.rename(ctx, src, srcRemote, dstRemote)
+	_, err = f.rename(ctx, src, srcRemote, dstRemote, nil)
 	if err == errIncompatibleSourceFS {
 		return fs.ErrorCantDirMove
 	} else if err == errNotFound {
