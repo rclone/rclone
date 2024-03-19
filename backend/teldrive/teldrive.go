@@ -622,6 +622,10 @@ func (f *Fs) putUnchecked(ctx context.Context, in0 io.Reader, src fs.ObjectInfo,
 		if err != nil {
 			return err
 		}
+
+		if info.PartId == 0 {
+			return fmt.Errorf(" upload failed for chunk %d", partNo)
+		}
 		uploadedSize += chunkSize
 
 		partsToCommit = append(partsToCommit, info)
