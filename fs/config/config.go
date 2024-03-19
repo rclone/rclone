@@ -248,7 +248,7 @@ func makeConfigPath() string {
 	}
 
 	// No existing config file found, prepare proper default for a new one.
-	// But first check if if user supplied a --config variable or environment
+	// But first check if user supplied a --config variable or environment
 	// variable, since then we skip actually trying to create the default
 	// and report any errors related to it (we can't use pflag for this because
 	// it isn't initialised yet so we search the command line manually).
