@@ -213,9 +213,11 @@ listing, set this option.`,
 
 Allow server-side operations (e.g. copy) to work across different onedrive configs.
 
-This will only work if you are copying between two OneDrive *Personal* drives AND
-the files to copy are already shared between them.  In other cases, rclone will
-fall back to normal copy (which will be slightly slower).`,
+This will work if you are copying between two OneDrive *Personal* drives AND the files to
+copy are already shared between them. Additionally, it should also function for a user who
+has access permissions both between Onedrive for *business* and *SharePoint* under the *same
+tenant*, and between *SharePoint* and another *SharePoint* under the *same tenant*. In other
+cases, rclone will fall back to normal copy (which will be slightly slower).`,
 			Advanced: true,
 		}, {
 			Name:     "list_chunk",
@@ -1591,14 +1593,12 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		fs.Debugf(src, "Can't copy - not same remote type")
 		return nil, fs.ErrorCantCopy
 	}
-	if f.driveType != srcObj.fs.driveType {
-		fs.Debugf(src, "Can't server-side copy - drive types differ")
-		return nil, fs.ErrorCantCopy
-	}
 
-	// For OneDrive Business, this is only supported within the same drive
-	if f.driveType != driveTypePersonal && srcObj.fs.driveID != f.driveID {
-		fs.Debugf(src, "Can't server-side copy - cross-drive but not OneDrive Personal")
+	if (f.driveType == driveTypePersonal && srcObj.fs.driveType != driveTypePersonal) || (f.driveType != driveTypePersonal && srcObj.fs.driveType == driveTypePersonal) {
+		fs.Debugf(src, "Can't server-side copy - cross-drive between OneDrive Personal and OneDrive for business (SharePoint)")
+		return nil, fs.ErrorCantCopy
+	} else if f.driveType == driveTypeBusiness && srcObj.fs.driveType == driveTypeBusiness && srcObj.fs.driveID != f.driveID {
+		fs.Debugf(src, "Can't server-side copy - cross-drive between difference OneDrive for business (Not SharePoint)")
 		return nil, fs.ErrorCantCopy
 	}
 
