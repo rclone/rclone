@@ -279,6 +279,8 @@ option before first run, the auto-detection will be skipped, and if
 you set a different value later this will override any existing.
 Value `none` can be set to avoid any attempts at executing shell
 commands, e.g. if this is not allowed on the server.
+If you have `shell_type = none` in the configuration then
+the [ssh](#sftp-ssh) must not be set.
 
 When the server is [rclone serve sftp](/commands/rclone_serve_sftp/),
 the rclone SFTP remote will detect this as a Unix type shell - even
