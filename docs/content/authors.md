@@ -830,3 +830,4 @@ put them back in again.` >}}
   * racerole <148756161+racerole@users.noreply.github.com>
   * Gachoud Philippe <ph.gachoud@gmail.com>
   * YukiUnHappy <saberhana@yandex.com>
+  * Kyle Reynolds <kyle.reynolds@bridgerphotonics.com>
