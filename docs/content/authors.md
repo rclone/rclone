@@ -826,3 +826,4 @@ put them back in again.` >}}
   * Joe Cai <joe.cai@bigcommerce.com>
   * Anders Swanson <anders.swanson@oracle.com>
   * huajin tong <137764712+thirdkeyword@users.noreply.github.com>
+  * John-Paul Smith <john-paulsmith@users.noreply.github.com>
