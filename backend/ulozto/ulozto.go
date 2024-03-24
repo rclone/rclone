@@ -31,13 +31,15 @@ import (
 	"github.com/rclone/rclone/lib/rest"
 )
 
-// TODO Uloz.to only supports file names of 255 characters or less and silentlym truncates names that are longer.
+// TODO Uloz.to only supports file names of 255 characters or less and silently truncates names that are longer.
 
 const (
 	minSleep      = 10 * time.Millisecond
 	maxSleep      = 2 * time.Second
 	decayConstant = 2 // bigger for slower decay, exponential
 	rootURL       = "https://apis.uloz.to"
+	// TODO temporary limitation, remove with chunked upload impl
+	maxFileSizeBytes = 2500 * 1024 * 1024
 )
 
 // Options defines the configuration for this backend
@@ -192,7 +194,9 @@ func errorHandler(resp *http.Response) error {
 // retryErrorCodes is a slice of error codes that we will retry
 var retryErrorCodes = []int{
 	429, // Too Many Requests.
-	500, // Internal Server Error
+	// TODO: random 500s should be retried but the error code corresponds to a known issue with uploading large files,
+	//   leading to numerous (slow & resource consuming) retries. Don't retry them until the root cause is addressed.
+	// 500, // Internal Server Error
 	502, // Bad Gateway
 	503, // Service Unavailable
 	504, // Gateway Timeout
@@ -438,6 +442,10 @@ func (f *Fs) uploadUnchecked(ctx context.Context, name, parentSlug string, info 
 
 // Put implements the mandatory method fs.Fs.Put.
 func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
+	// TODO: workaround for uloz.to's bug. Remove when chunked upload support is implemented.
+	if src.Size() > maxFileSizeBytes {
+		return nil, errors.New("file size over the supported max threshold")
+	}
 	existingObj, err := f.NewObject(ctx, src.Remote())
 
 	switch {
