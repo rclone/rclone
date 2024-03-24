@@ -296,7 +296,7 @@ func (f *Fs) list(ctx context.Context, bucket, directory, prefix string, addBuck
 				slash := strings.IndexRune(localPath, '/')
 				if slash >= 0 {
 					// send a directory if have a slash
-					dir := directory + localPath[:slash]
+					dir := strings.TrimPrefix(directory, f.rootDirectory+"/") + localPath[:slash]
 					if addBucket {
 						dir = path.Join(bucket, dir)
 					}

@@ -24,6 +24,7 @@ import (
 	"time"
 
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/cache"
 	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/fs/fspath"
@@ -1208,6 +1209,28 @@ func Run(t *testing.T, opt *Opt) {
 					"hello? sausage/êé/Hello, 世界/ \" ' @ < > & ? + ≠",
 				}, fs.GetModifyWindow(ctx, f))
 			})
+
+			// TestFsListRootedSubdir tests putting and listing with an Fs that is rooted at a subdirectory 2 levels down
+			TestFsListRootedSubdir := func(t *testing.T) {
+				skipIfNotOk(t)
+				newF, err := cache.Get(ctx, subRemoteName+"/hello? sausage/êé")
+				assert.NoError(t, err)
+				nestedFile := fstest.Item{
+					ModTime: fstest.Time("2001-02-03T04:05:06.499999999Z"),
+					Path:    "a/b/c/d/e.txt",
+				}
+				_, _ = testPut(ctx, t, newF, &nestedFile)
+
+				objs, dirs, err := walk.GetAll(ctx, newF, "", true, 10)
+				require.NoError(t, err)
+				assert.Equal(t, []string{`Hello, 世界/ " ' @ < > & ? + ≠/z.txt`, nestedFile.Path}, objsToNames(objs))
+				assert.Equal(t, []string{`Hello, 世界`, `Hello, 世界/ " ' @ < > & ? + ≠`, "a", "a/b", "a/b/c", "a/b/c/d"}, dirsToNames(dirs))
+
+				// cleanup
+				err = operations.Purge(ctx, newF, "a")
+				require.NoError(t, err)
+			}
+			t.Run("FsListRootedSubdir", TestFsListRootedSubdir)
 
 			// TestFsCopy tests Copy
 			t.Run("FsCopy", func(t *testing.T) {
