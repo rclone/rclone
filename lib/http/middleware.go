@@ -166,9 +166,9 @@ func MiddlewareAuthCustom(fn CustomAuthFn, realm string, userFromContext bool) M
 var onlyOnceWarningAllowOrigin sync.Once
 
 // MiddlewareCORS instantiates middleware that handles basic CORS protections for rcd
-func MiddlewareCORS(allowOrigin string) Middleware {
+func MiddlewareCORS(cfg *Config) Middleware {
 	onlyOnceWarningAllowOrigin.Do(func() {
-		if allowOrigin == "*" {
+		if cfg.AllowOrigin == "*" {
 			fs.Logf(nil, "Warning: Allow origin set to *. This can cause serious security problems.")
 		}
 	})
@@ -181,10 +181,10 @@ func MiddlewareCORS(allowOrigin string) Middleware {
 				return
 			}
 
-			if allowOrigin != "" {
-				w.Header().Add("Access-Control-Allow-Origin", allowOrigin)
-				w.Header().Add("Access-Control-Allow-Headers", "authorization, Content-Type")
-				w.Header().Add("Access-Control-Allow-Methods", "COPY, DELETE, GET, HEAD, LOCK, MKCOL, MOVE, OPTIONS, POST, PROPFIND, PROPPATCH, PUT, TRACE, UNLOCK")
+			if cfg.AllowOrigin != "" {
+				w.Header().Add("Access-Control-Allow-Origin", cfg.AllowOrigin)
+				w.Header().Add("Access-Control-Allow-Headers", cfg.CORSHeaders)
+				w.Header().Add("Access-Control-Allow-Methods", cfg.CORSMethods)
 			}
 
 			next.ServeHTTP(w, r)
