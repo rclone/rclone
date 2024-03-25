@@ -1331,14 +1331,23 @@ func (o *Object) removeSegmentsLargeObject(ctx context.Context, containerSegment
 	if containerSegments == nil || len(containerSegments) <= 0 {
 		return nil
 	}
+	var err error = nil
 	for container, segments := range containerSegments {
-		_, err := o.fs.c.BulkDelete(ctx, container, segments)
-		if err != nil {
-			fs.Debugf(o, "Failed to delete bulk segments %v", err)
-			return err
+		_, e := o.fs.c.BulkDelete(ctx, container, segments)
+		if e != nil {
+			fs.Debugf(o, "Failed to delete bulk segments: %v", e)
+			for _, segment := range segments {
+				e := o.fs.c.ObjectDelete(ctx, container, segment)
+				if e != nil {
+					fs.Debugf(o, "Failed to delete manual segment: %s, %s, %v", container, segment, e)
+					if err == nil {
+						err = e
+					}
+				}
+			}
 		}
 	}
-	return nil
+	return err
 }
 
 // urlEncode encodes a string so that it is a valid URL
