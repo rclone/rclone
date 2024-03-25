@@ -103,9 +103,24 @@ func (cds *contentDirectoryService) cdsObjectToUpnpavObject(cdsObject object, fi
 			Host:   host,
 			Path:   path.Join(resPath, resource.Path()),
 		}).String()
+
+		// Read the mime type from the fs.Object if possible,
+		// otherwise fall back to working out what it is from the file path.
+		var mimeType string
+		if o, ok := resource.DirEntry().(fs.Object); ok {
+			mimeType = fs.MimeType(context.TODO(), o)
+			// If backend doesn't know what the mime type is then
+			// try getting it from the file name
+			if mimeType == "application/octet-stream" {
+				mimeType = fs.MimeTypeFromName(resource.Name())
+			}
+		} else {
+			mimeType = fs.MimeTypeFromName(resource.Name())
+		}
+
 		item.Res = append(item.Res, upnpav.Resource{
 			URL:          subtitleURL,
-			ProtocolInfo: fmt.Sprintf("http-get:*:%s:*", "text/srt"),
+			ProtocolInfo: fmt.Sprintf("http-get:*:%s:*", mimeType),
 		})
 	}
 
@@ -130,6 +145,20 @@ func (cds *contentDirectoryService) readContainer(o object, host string) (ret []
 	if err != nil {
 		err = errors.New("failed to list directory")
 		return
+	}
+
+	// if there's a "Subs" child directory, add its children to the list as well,
+	// so mediaWithResources is able to find them.
+	for _, node := range dirEntries {
+		if node.Name() == "Subs" && node.IsDir() {
+			subtitleDir := node.(*vfs.Dir)
+			subtitleEntries, err := subtitleDir.ReadDirAll()
+			if err != nil {
+				err = errors.New("failed to list subtitle directory")
+				return nil, err
+			}
+			dirEntries = append(dirEntries, subtitleEntries...)
+		}
 	}
 
 	dirEntries, mediaResources := mediaWithResources(dirEntries)
@@ -161,14 +190,14 @@ func mediaWithResources(nodes vfs.Nodes) (vfs.Nodes, map[vfs.Node]vfs.Nodes) {
 	media, mediaResources := vfs.Nodes{}, make(map[vfs.Node]vfs.Nodes)
 
 	// First, separate out the subtitles and media into maps, keyed by their lowercase base names.
-	mediaByName, subtitlesByName := make(map[string]vfs.Nodes), make(map[string]vfs.Node)
+	mediaByName, subtitlesByName := make(map[string]vfs.Nodes), make(map[string]vfs.Nodes)
 	for _, node := range nodes {
 		baseName, ext := splitExt(strings.ToLower(node.Name()))
 		switch ext {
 		case ".srt", ".ass", ".ssa", ".sub", ".idx", ".sup", ".jss", ".txt", ".usf", ".cue", ".vtt", ".css":
 			// .idx should be with .sub, .css should be with vtt otherwise they should be culled,
 			// and their mimeTypes are not consistent, but anyway these negatives don't throw errors.
-			subtitlesByName[baseName] = node
+			subtitlesByName[baseName] = append(subtitlesByName[baseName], node)
 		default:
 			mediaByName[baseName] = append(mediaByName[baseName], node)
 			media = append(media, node)
@@ -176,25 +205,26 @@ func mediaWithResources(nodes vfs.Nodes) (vfs.Nodes, map[vfs.Node]vfs.Nodes) {
 	}
 
 	// Find the associated media file for each subtitle
-	for baseName, node := range subtitlesByName {
+	for baseName, nodes := range subtitlesByName {
 		// Find a media file with the same basename (video.mp4 for video.srt)
 		mediaNodes, found := mediaByName[baseName]
 		if !found {
 			// Or basename of the basename (video.mp4 for video.en.srt)
-			baseName, _ = splitExt(baseName)
+			baseName, _ := splitExt(baseName)
 			mediaNodes, found = mediaByName[baseName]
 		}
 
 		// Just advise if no match found
 		if !found {
-			fs.Infof(node, "could not find associated media for subtitle: %s", node.Name())
+			fs.Infof(nodes, "could not find associated media for subtitle: %s", baseName)
+			fs.Infof(mediaByName, "mediaByName is this, baseName is %s", baseName)
 			continue
 		}
 
 		// Associate with all potential media nodes
-		fs.Debugf(mediaNodes, "associating subtitle: %s", node.Name())
+		fs.Debugf(mediaNodes, "associating subtitle: %s", baseName)
 		for _, mediaNode := range mediaNodes {
-			mediaResources[mediaNode] = append(mediaResources[mediaNode], node)
+			mediaResources[mediaNode] = append(mediaResources[mediaNode], nodes...)
 		}
 	}
 
