@@ -144,6 +144,7 @@ func (f *Fs) setPermissions(ctx context.Context, info *drive.File, permissions [
 		err = f.pacer.Call(func() (bool, error) {
 			_, err = f.svc.Permissions.Create(info.Id, perm).
 				SupportsAllDrives(true).
+				SendNotificationEmail(false).
 				Context(ctx).Do()
 			return f.shouldRetry(ctx, err)
 		})
