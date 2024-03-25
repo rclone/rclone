@@ -1592,6 +1592,11 @@ func (o *Object) uploadChunked(ctx context.Context, in0 io.Reader, commitInfo *f
 
 	chunkSize := int64(o.fs.opt.ChunkSize)
 	chunks, remainder := size/chunkSize, size%chunkSize
+	if size > -1 && size <= chunkSize {
+		chunkSize = size
+		chunks = 1
+		remainder = 0
+	}
 	if remainder > 0 {
 		chunks++
 	}
@@ -1605,6 +1610,9 @@ func (o *Object) uploadChunked(ctx context.Context, in0 io.Reader, commitInfo *f
 	}
 	appendArg := files.UploadSessionAppendArg{Cursor: &cursor}
 	for currentChunk := 1; ; currentChunk++ {
+		if int64(currentChunk) > chunks {
+			chunkSize = 0 // don't read the same bytes again
+		}
 		cursor.Offset = in.BytesRead()
 
 		if chunks < 0 {
@@ -1654,7 +1662,7 @@ func (o *Object) uploadChunked(ctx context.Context, in0 io.Reader, commitInfo *f
 			break
 		}
 
-		if size > 0 {
+		if size >= 0 {
 			// if size is known, check if next chunk is final
 			appendArg.Close = uint64(size)-in.BytesRead() <= uint64(chunkSize)
 			if in.BytesRead() > uint64(size) {
