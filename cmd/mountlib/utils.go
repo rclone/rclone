@@ -97,29 +97,10 @@ func checkMountEmpty(mountpoint string) error {
 	return fmt.Errorf(msg+": %w", mountpoint, err)
 }
 
-// SetVolumeName with sensible default
-func (m *MountPoint) SetVolumeName(vol string) {
-	if vol == "" {
-		vol = fs.ConfigString(m.Fs)
-	}
-	m.MountOpt.SetVolumeName(vol)
-}
-
-// SetVolumeName removes special characters from volume name if necessary
-func (o *Options) SetVolumeName(vol string) {
-	vol = strings.ReplaceAll(vol, ":", " ")
-	vol = strings.ReplaceAll(vol, "/", " ")
-	vol = strings.TrimSpace(vol)
-	if runtime.GOOS == "windows" && len(vol) > 32 {
-		vol = vol[:32]
-	}
-	o.VolumeName = vol
-}
-
-// SetDeviceName with sensible default
-func (m *MountPoint) SetDeviceName(dev string) {
-	if dev == "" {
-		dev = fs.ConfigString(m.Fs)
-	}
-	m.MountOpt.DeviceName = dev
+// MakeVolumeNameValidOnUnix takes a volume name and returns a variant that is valid on unix systems.
+func MakeVolumeNameValidOnUnix(volumeName string) string {
+	volumeName = strings.ReplaceAll(volumeName, ":", " ")
+	volumeName = strings.ReplaceAll(volumeName, "/", " ")
+	volumeName = strings.TrimSpace(volumeName)
+	return volumeName
 }
