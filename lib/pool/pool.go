@@ -5,6 +5,7 @@ package pool
 import (
 	"fmt"
 	"log"
+	"runtime"
 	"sync"
 	"time"
 
@@ -58,6 +59,7 @@ func New(flushTime time.Duration, bufferSize, poolSize int, useMmap bool) *Pool 
 		}
 	}
 	bp.timer = time.AfterFunc(flushTime, bp.flushAged)
+	runtime.SetFinalizer(bp, (*Pool).flushAndStop)
 	return bp
 }
 
@@ -91,6 +93,14 @@ func (bp *Pool) flush(n int) {
 // Flush the entire buffer pool
 func (bp *Pool) Flush() {
 	bp.mu.Lock()
+	bp.flush(len(bp.cache))
+	bp.mu.Unlock()
+}
+
+// Flush the entire buffer pool and stop flusher
+func (bp *Pool) flushAndStop() {
+	bp.mu.Lock()
+	bp.timer.Stop()
 	bp.flush(len(bp.cache))
 	bp.mu.Unlock()
 }
