@@ -25,6 +25,7 @@ type Options struct {
 	ChunkSize          fs.SizeSuffix // if > 0 read files in chunks
 	ChunkSizeLimit     fs.SizeSuffix // if > ChunkSize double the chunk size after each chunk until reached
 	CacheMode          CacheMode
+	CacheStrategy      CacheStrategy
 	CacheMaxAge        time.Duration
 	CacheMaxSize       fs.SizeSuffix
 	CacheMinFreeSpace  fs.SizeSuffix
@@ -55,6 +56,7 @@ var DefaultOpt = Options{
 	DirPerms:           os.FileMode(0777),
 	FilePerms:          os.FileMode(0666),
 	CacheMode:          CacheModeOff,
+	CacheStrategy:      CacheStrategyLRU,
 	CacheMaxAge:        3600 * time.Second,
 	CachePollInterval:  60 * time.Second,
 	ChunkSize:          128 * fs.Mebi,

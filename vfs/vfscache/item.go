@@ -17,6 +17,7 @@ import (
 	"github.com/rclone/rclone/lib/ranges"
 	"github.com/rclone/rclone/vfs/vfscache/downloaders"
 	"github.com/rclone/rclone/vfs/vfscache/writeback"
+	"github.com/rclone/rclone/vfs/vfscommon"
 )
 
 // NB as Cache and Item are tightly linked it is necessary to have a
@@ -59,6 +60,7 @@ type Item struct {
 	mu              sync.Mutex               // protect the variables
 	cond            sync.Cond                // synchronize with cache cleaner
 	name            string                   // name in the VFS
+	score           float64                  // score for likelihood of reaping from cache (bigger is more likely)
 	opens           int                      // number of times file is open
 	downloaders     *downloaders.Downloaders // a record of the downloaders in action - may be nil
 	o               fs.Object                // object we are caching - may be nil
@@ -75,6 +77,7 @@ type Info struct {
 	ModTime     time.Time     // last time file was modified
 	ATime       time.Time     // last time file was accessed
 	Size        int64         // size of the file
+	Opens       int64         // number of times the file has been opened
 	Rs          ranges.Ranges // which parts of the file are present
 	Fingerprint string        // fingerprint of remote object
 	Dirty       bool          // set if the backing file has been modified
@@ -103,6 +106,8 @@ func (rr ResetResult) String() string {
 
 func (v Items) Len() int      { return len(v) }
 func (v Items) Swap(i, j int) { v[i], v[j] = v[j], v[i] }
+
+// Less implements the caching strategy of the VFS cache.
 func (v Items) Less(i, j int) bool {
 	if i == j {
 		return false
@@ -114,7 +119,7 @@ func (v Items) Less(i, j int) bool {
 	jItem.mu.Lock()
 	defer jItem.mu.Unlock()
 
-	return iItem.info.ATime.Before(jItem.info.ATime)
+	return iItem.score > jItem.score
 }
 
 // clean the item after its cache file has been deleted
@@ -170,6 +175,74 @@ func (item *Item) inUse() bool {
 	item.mu.Lock()
 	defer item.mu.Unlock()
 	return item.opens != 0 || item.info.Dirty
+}
+
+// For LRU cache, score is time since last access
+//
+// Call with the lock held
+func (item *Item) _getScoreLRU(now time.Time) float64 {
+	return now.Sub(item.info.ATime).Seconds()
+}
+
+// For LFU cache, score is 1 / number of opens
+//
+// Call with the lock held
+func (item *Item) _getScoreLFU() float64 {
+	opens := float64(item.info.Opens)
+	if opens < 1 {
+		opens = 1
+	}
+	return 1 / opens
+}
+
+// For LFF cache, score is size
+//
+// Call with the lock held
+func (item *Item) _getScoreLFF() float64 {
+	size := float64(item.info.Rs.Size())
+	if size < 4096 {
+		size = 4096 // minimum size is 1 disk block ish
+	}
+	return size
+}
+
+// For LRU-SP cache, score is size * time since last access / number of opens
+//
+// Call with the lock held
+func (item *Item) _getScoreLRUSP(now time.Time) float64 {
+	accessedAgo := now.Sub(item.info.ATime).Seconds()
+	opens := float64(item.info.Opens)
+	if opens < 1 {
+		opens = 1
+	}
+	size := float64(item.info.Rs.Size())
+	if size < 4096 {
+		size = 4096 // minimum size is 1 disk block ish
+	}
+	return size * accessedAgo / opens
+}
+
+// Update the score for the item and return it
+//
+// Bigger scores mean more likely to be reaped
+func (item *Item) updateScore(now time.Time) float64 {
+	item.mu.Lock()
+	defer item.mu.Unlock()
+
+	switch item.c.opt.CacheStrategy {
+	case vfscommon.CacheStrategyLFU:
+		item.score = item._getScoreLFU()
+	case vfscommon.CacheStrategyLFF:
+		item.score = item._getScoreLFF()
+	case vfscommon.CacheStrategyLRUSP:
+		item.score = item._getScoreLRUSP(now)
+	case vfscommon.CacheStrategyLRU:
+		fallthrough
+	default:
+		item.score = item._getScoreLRU(now)
+	}
+
+	return item.score
 }
 
 // getDiskSize returns the size on disk (approximately) of the item
@@ -519,6 +592,7 @@ func (item *Item) open(o fs.Object) (err error) {
 	defer item.mu.Unlock()
 
 	item.info.ATime = time.Now()
+	item.info.Opens++
 
 	osPath, err := item.c.createItemDir(item.name) // No locking in Cache
 	if err != nil {
