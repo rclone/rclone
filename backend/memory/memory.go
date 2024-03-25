@@ -482,7 +482,8 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	if od == nil {
 		return nil, fs.ErrorObjectNotFound
 	}
-	buckets.updateObjectData(dstBucket, dstPath, od)
+	odCopy := *od
+	buckets.updateObjectData(dstBucket, dstPath, &odCopy)
 	return f.NewObject(ctx, remote)
 }
 
