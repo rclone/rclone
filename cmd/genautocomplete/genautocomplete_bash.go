@@ -21,7 +21,7 @@ Generates a bash shell autocompletion script for rclone.
 This writes to /etc/bash_completion.d/rclone by default so will
 probably need to be run with sudo or as root, e.g.
 
-    sudo rclone genautocomplete bash
+    sudo rclone completion bash
 
 Logout and login again to use the autocompletion scripts, or source
 them directly
