@@ -200,6 +200,12 @@ upload:
 upload_github:
 	./bin/upload-github $(TAG)
 
+repo_apt:
+	./bin/make_repo_apt.sh
+
+repo_yum:
+	./bin/make_repo_yum.sh
+
 cross:	doc
 	go run bin/cross-compile.go -release current $(BUILD_FLAGS) $(BUILDTAGS) $(BUILD_ARGS) $(TAG)
 
