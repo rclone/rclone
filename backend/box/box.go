@@ -27,7 +27,6 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/golang-jwt/jwt/v4"
 	"github.com/rclone/rclone/backend/box/api"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config"
@@ -77,7 +76,7 @@ var (
 )
 
 type boxCustomClaims struct {
-	jwt.StandardClaims
+	jwtutil.StandardClaims
 	BoxSubType string `json:"box_sub_type,omitempty"`
 }
 
@@ -225,10 +224,8 @@ func getClaims(boxConfig *api.ConfigJSON, boxSubType string) (claims *boxCustomC
 	}
 
 	claims = &boxCustomClaims{
-		//lint:ignore SA1019 since we need to use jwt.StandardClaims even if deprecated in jwt-go v4 until a more permanent solution is ready in time before jwt-go v5 where it is removed entirely
-		//nolint:staticcheck // Don't include staticcheck when running golangci-lint to avoid SA1019
-		StandardClaims: jwt.StandardClaims{
-			Id:        val,
+		StandardClaims: jwtutil.StandardClaims{
+			ID:        val,
 			Issuer:    boxConfig.BoxAppSettings.ClientID,
 			Subject:   boxConfig.EnterpriseID,
 			Audience:  tokenURL,
