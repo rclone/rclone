@@ -281,6 +281,7 @@ Flags to control the Remote Control API.
       --rc-realm string                    Realm for authentication
       --rc-salt string                     Password hashing salt (default "dlPL2MqE")
       --rc-serve                           Enable the serving of remote objects
+      --rc-serve-no-modtime                Don't read the modification time (can speed things up)
       --rc-server-read-timeout Duration    Timeout for server reading data (default 1h0m0s)
       --rc-server-write-timeout Duration   Timeout for server writing data (default 1h0m0s)
       --rc-template string                 User-specified template

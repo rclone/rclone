@@ -23,6 +23,7 @@ type Options struct {
 	Template            libhttp.TemplateConfig
 	Enabled             bool   // set to enable the server
 	Serve               bool   // set to serve files from remotes
+	ServeNoModTime      bool   // don't read the modification time
 	Files               string // set to enable serving files locally
 	NoAuth              bool   // set to disable auth checks on AuthRequired methods
 	WebUI               bool   // set to launch the web ui
