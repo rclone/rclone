@@ -7,9 +7,15 @@ NAME=swift-aio
 . $(dirname "$0")/docker.bash
 
 start() {
+    # When running the second set of integration tests against SwiftAIO, we need to wait for the first run to stop.
+    if docker inspect ${NAME} >/dev/null 2>&1; then
+        echo "Waiting for the previous run to stop..."
+        sleep 3
+    fi
+
     docker run --rm -d --name ${NAME} \
            bouncestorage/swift-aio
-    
+
     echo type=swift
     echo env_auth=false
     echo user=test:tester
