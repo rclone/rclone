@@ -77,6 +77,7 @@ See the following for detailed instructions for
   * [Storj](/storj/)
   * [SugarSync](/sugarsync/)
   * [Union](/union/)
+  * [Uloz.to](/ulozto/)
   * [Uptobox](/uptobox/)
   * [WebDAV](/webdav/)
   * [Yandex Disk](/yandex/)
