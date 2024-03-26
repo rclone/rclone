@@ -834,3 +834,4 @@ put them back in again.` >}}
   * Lewis Hook <lewis@hook.im>
   * hoyho <luohaihao@gmail.com>
   * Vitaly <9034218+gvitali@users.noreply.github.com>
+  * iotmaestro <iotmaestro@proton.me>
