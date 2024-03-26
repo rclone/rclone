@@ -831,3 +831,4 @@ put them back in again.` >}}
   * Gachoud Philippe <ph.gachoud@gmail.com>
   * YukiUnHappy <saberhana@yandex.com>
   * Kyle Reynolds <kyle.reynolds@bridgerphotonics.com>
+  * Lewis Hook <lewis@hook.im>
