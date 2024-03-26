@@ -12,6 +12,7 @@ import (
 func AddFlags(flagSet *pflag.FlagSet) {
 	rc.AddOption("log", &log.Opt)
 
+	flags.StringVarP(flagSet, &log.Opt.FilenameTimeFormat, "log-filename-time-format", "", log.Opt.FilenameTimeFormat, "Date time format that is used to replace the :dt: in logging filename", "Logging")
 	flags.StringVarP(flagSet, &log.Opt.File, "log-file", "", log.Opt.File, "Log everything to this file", "Logging")
 	flags.StringVarP(flagSet, &log.Opt.Format, "log-format", "", log.Opt.Format, "Comma separated list of log format options", "Logging")
 	flags.BoolVarP(flagSet, &log.Opt.UseSyslog, "syslog", "", log.Opt.UseSyslog, "Use Syslog for logging", "Logging")

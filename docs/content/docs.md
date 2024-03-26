@@ -1390,6 +1390,42 @@ The options mean
 
 During rmdirs it will not remove root directory, even if it's empty.
 
+### --log-file-time-format=FORMAT ###
+
+A format that is used to generate a datetime string. Any `:dt:` wildcard
+in the log filename specified via `--log-file=FILE` will be replaced with
+this datetime string.
+
+If `FORMAT` is `%Y-%m-%d`, and log-file `FILE` is `err_:dt:.log`, then
+all rclone output will be logged to the file `err_2024-03-26.log`
+assuming that the current date it `26 March 2024`.
+
+Following keywords in the `FORMAT` are recognised as below:
+
+`%A` - Weekday (E.g.: Monday)
+
+`%a` - Short Weekday (E.g.: Mon)
+
+`%Y` - Year (E.g.: 2006)
+
+`%y` - Short Year (E.g.: 06)
+
+`%B` - Month name (E.g.: January)
+
+`%b` - Short Month name (E.g.: Jan)
+
+`%m` - Month number (E.g.: 01)
+
+`%d` - Day of month (E.g.: 02)
+
+`%H` - Hour of day in 24-hour format (E.g.: 15)
+
+`%I` - Hour of day in 12-hour format (E.g.: 03)
+
+`%M` - Minute of hour (E.g.: 04)
+
+`%S` - Second of minute (E.g.: 05)
+
 ### --log-file=FILE ###
 
 Log all of rclone's output to FILE.  This is not active by default.
