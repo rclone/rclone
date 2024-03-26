@@ -833,3 +833,4 @@ put them back in again.` >}}
   * Kyle Reynolds <kyle.reynolds@bridgerphotonics.com>
   * Lewis Hook <lewis@hook.im>
   * hoyho <luohaihao@gmail.com>
+  * Vitaly <9034218+gvitali@users.noreply.github.com>
