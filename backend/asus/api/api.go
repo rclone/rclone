@@ -231,7 +231,7 @@ type AsusPackage struct {
 			Enable     int    `xml:"enable,attr"`
 			Properties []struct {
 				Name  string `xml:"name,attr"`
-				Value int    `xml:"value,attr"`
+				Value string `xml:"value,attr"`
 			} `xml:"property"`
 		} `xml:"feature"`
 	} `xml:"featurelist"`
