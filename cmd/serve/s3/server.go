@@ -42,7 +42,7 @@ type Options struct {
 
 // Server is a s3.FileSystem interface
 type Server struct {
-	*httplib.Server
+	server  *httplib.Server
 	f       fs.Fs
 	_vfs    *vfs.VFS // don't use directly, use getVFS
 	faker   *gofakes3.GoFakeS3
@@ -85,7 +85,7 @@ func newServer(ctx context.Context, f fs.Fs, opt *Options) (s *Server, err error
 
 	}
 
-	w.Server, err = httplib.NewServer(ctx,
+	w.server, err = httplib.NewServer(ctx,
 		httplib.WithConfig(opt.HTTP),
 		httplib.WithAuth(opt.Auth),
 	)
@@ -127,9 +127,9 @@ func (w *Server) Bind(router chi.Router) {
 	router.Handle("/*", w.handler)
 }
 
-func (w *Server) serve() error {
-	w.Serve()
-	fs.Logf(w.f, "Starting s3 server on %s", w.URLs())
+func (w *Server) Serve() error {
+	w.server.Serve()
+	fs.Logf(w.f, "Starting s3 server on %s", w.server.URLs())
 	return nil
 }
 

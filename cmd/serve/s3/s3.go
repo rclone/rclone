@@ -83,13 +83,13 @@ var Command = &cobra.Command{
 			if err != nil {
 				return err
 			}
-			router := s.Router()
+			router := s.server.Router()
 			s.Bind(router)
-			err = s.serve()
+			err = s.Serve()
 			if err != nil {
 				return err
 			}
-			s.Wait()
+			s.server.Wait()
 			return nil
 		})
 		return nil

@@ -50,11 +50,11 @@ func serveS3(f fs.Fs) (testURL string, keyid string, keysec string) {
 
 	serveropt.HTTP.ListenAddr = []string{endpoint}
 	w, _ := newServer(context.Background(), f, serveropt)
-	router := w.Router()
+	router := w.server.Router()
 
 	w.Bind(router)
 	w.Serve()
-	testURL = w.Server.URLs()[0]
+	testURL = w.server.URLs()[0]
 
 	return
 }
@@ -200,5 +200,4 @@ func TestEncodingWithMinioClient(t *testing.T) {
 			}
 		})
 	}
-
 }
