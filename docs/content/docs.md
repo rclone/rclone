@@ -1751,6 +1751,28 @@ If the backend has a `--backend-upload-concurrency` setting (eg
 number of transfers instead if it is larger than the value of
 `--multi-thread-streams` or `--multi-thread-streams` isn't set.
 
+### --no-block-rmdir CommaSepList ###
+
+Normally, rclone commands that remove empty dirs (including
+[`rmdir`](/commands/rclone_rmdir/), [`rmdirs`](/commands/rclone_rmdirs/),
+[`sync`](/commands/rclone_sync/), and [`bisync`](https://rclone.org/bisync/))
+will silently fail to remove dirs if those dirs contain files that are excluded
+by filters. This can pose a problem for some automatically created system
+files, such as `.DS_Store` on macOS, which users often prefer to exclude from
+syncs -- including them makes for noisy logs, but excluding them can make it
+impossible to remove otherwise empty directories. The `--no-block-rmdir` flag
+allows specifying a comma-separated list of such files which rclone should
+consider "disposable" if they block removal of otherwise empty directories.
+When set, if rclone fails to remove a directory, it will check the contents of
+the directory (ignoring any filters.) If the directory contains ONLY files on
+the disposable list, rclone will delete the files and then remove the directory.
+
+Note that `--no-block-rmdir` does not automatically filter such files, nor is it
+limited to excluded files. If you want these files excluded, you still have to
+apply a filter rule, as usual.
+
+Example: `--no-block-rmdir ".DS_Store,deleteme.tmp"`
+
 ### --no-check-dest ###
 
 The `--no-check-dest` can be used with `move` or `copy` and it causes

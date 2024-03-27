@@ -793,6 +793,35 @@ func TestRmdirsWithFilter(t *testing.T) {
 	)
 }
 
+func TestNoBlockRmdir(t *testing.T) {
+	ctx := context.Background()
+	r := fstest.NewRun(t)
+	r.Mkdir(ctx, r.Fremote)
+
+	r.ForceMkdir(ctx, r.Fremote)
+
+	file1 := r.WriteObject(ctx, "A1/B1/C1/.DS_Store", "delete me", t2)
+	file2 := r.WriteObject(ctx, "A2/B2/C2/Important-File", "keep me", t2)
+
+	r.CheckRemoteItems(t, file1, file2)
+
+	ctx, fi := filter.AddConfig(ctx)
+	require.NoError(t, fi.AddRule("- .DS_Store"))
+	ci := fs.GetConfig(ctx)
+	ci.NoBlockRmdir = []string{".DS_Store"}
+
+	require.NoError(t, operations.Rmdir(ctx, r.Fremote, "A1/B1/C1"))
+	require.Error(t, operations.Rmdir(ctx, r.Fremote, "A2/B2/C2"))
+	r.CheckRemoteItems(t, file2)
+
+	file1 = r.WriteObject(ctx, "A1/B1/C1/.DS_Store", "delete me", t2)
+	r.CheckRemoteItems(t, file1, file2)
+
+	require.NoError(t, operations.Rmdirs(ctx, r.Fremote, "A1", false))
+	require.NoError(t, operations.Rmdirs(ctx, r.Fremote, "A2", false)) // Rmdirs does not return errors for non-empty
+	r.CheckRemoteItems(t, file2)
+}
+
 func TestCopyURL(t *testing.T) {
 	ctx := context.Background()
 	ctx, ci := fs.AddConfig(ctx)

@@ -32,12 +32,14 @@ import (
 	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/fs/hash"
+	"github.com/rclone/rclone/fs/list"
 	"github.com/rclone/rclone/fs/object"
 	"github.com/rclone/rclone/fs/walk"
 	"github.com/rclone/rclone/lib/atexit"
 	"github.com/rclone/rclone/lib/errcount"
 	"github.com/rclone/rclone/lib/random"
 	"github.com/rclone/rclone/lib/readers"
+	"golang.org/x/exp/slices" // replace with slices after go1.21 is the minimum version
 	"golang.org/x/sync/errgroup"
 	"golang.org/x/text/unicode/norm"
 )
@@ -1094,7 +1096,26 @@ func TryRmdir(ctx context.Context, f fs.Fs, dir string) error {
 		return nil
 	}
 	fs.Infof(fs.LogDirName(f, dir), "Removing directory")
-	return f.Rmdir(ctx, dir)
+	err := f.Rmdir(ctx, dir)
+	ci := fs.GetConfig(ctx)
+	if len(ci.NoBlockRmdir) == 0 || err == nil {
+		return err
+	}
+	entries, err := list.DirSorted(ctx, f, true, dir) // includeAll to ignore filters here
+	if err != nil {
+		return err
+	}
+	for _, entry := range entries {
+		obj, ok := entry.(fs.Object)
+		if ok {
+			basename := path.Base(obj.Remote())
+			if !slices.Contains(ci.NoBlockRmdir, basename) {
+				return fmt.Errorf("%s: Cannot remove directory due to un-ignorable file: %s", dir, basename)
+			}
+		}
+	}
+	// directory contains nothing but deletable files
+	return Purge(ctx, f, dir)
 }
 
 // Rmdir removes a container but not if not empty
@@ -1411,6 +1432,10 @@ func Rmdirs(ctx context.Context, f fs.Fs, dir string, leaveRoot bool) error {
 					dirEmpty[dir] = true
 				}
 			case fs.Object:
+				if len(ci.NoBlockRmdir) > 0 && slices.Contains(ci.NoBlockRmdir, path.Base(x.Remote())) {
+					fs.Debugf(x.Remote(), "found in --no-block-rmdir list, ignoring")
+					continue
+				}
 				// mark the parents of the file as being non-empty
 				dir := x.Remote()
 				for dir != "" {
