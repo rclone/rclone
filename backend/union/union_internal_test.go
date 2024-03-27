@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"runtime"
 	"testing"
 	"time"
 
@@ -94,6 +95,12 @@ func TestMoveCopy(t *testing.T) {
 	unionFs := f.(*Fs)
 	fLocal := unionFs.upstreams[0].Fs
 	fMemory := unionFs.upstreams[1].Fs
+
+	if runtime.GOOS == "darwin" {
+		// need to disable as this test specifically tests a local that can't Copy
+		f.Features().Disable("Copy")
+		fLocal.Features().Disable("Copy")
+	}
 
 	t.Run("Features", func(t *testing.T) {
 		assert.NotNil(t, f.Features().Move)

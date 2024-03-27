@@ -29,6 +29,7 @@ require (
 	github.com/gabriel-vasile/mimetype v1.4.3
 	github.com/gdamore/tcell/v2 v2.7.0
 	github.com/go-chi/chi/v5 v5.0.11
+	github.com/go-darwin/apfs v0.0.0-20211011131704-f84b94dbf348
 	github.com/go-git/go-billy/v5 v5.5.0
 	github.com/google/uuid v1.5.0
 	github.com/hanwen/go-fuse/v2 v2.4.0
