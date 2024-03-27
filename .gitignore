@@ -18,3 +18,4 @@ __pycache__
 /docs/static/img/logos/
 resource_windows_*.syso
 .devcontainer
+.vscode

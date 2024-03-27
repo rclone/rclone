@@ -28,13 +28,6 @@ import (
 var (
 	// templateString is the template used in the authorization webserver
 	templateString string
-)
-
-const (
-	// TitleBarRedirectURL is the OAuth2 redirect URL to use when the authorization
-	// code should be returned in the title bar of the browser, with the page text
-	// prompting the user to copy the code and paste it in the application.
-	TitleBarRedirectURL = "urn:ietf:wg:oauth:2.0:oob"
 
 	// bindPort is the port that we bind the local webserver to
 	bindPort = "53682"
@@ -54,6 +47,13 @@ const (
 	// RedirectPublicSecureURL is a public https URL which
 	// redirects to the local webserver
 	RedirectPublicSecureURL = "https://oauth.rclone.org/"
+)
+
+const (
+	// TitleBarRedirectURL is the OAuth2 redirect URL to use when the authorization
+	// code should be returned in the title bar of the browser, with the page text
+	// prompting the user to copy the code and paste it in the application.
+	TitleBarRedirectURL = "urn:ietf:wg:oauth:2.0:oob"
 
 	// DefaultAuthResponseTemplate is the default template used in the authorization webserver
 	DefaultAuthResponseTemplate = `<!DOCTYPE html>
@@ -396,12 +396,40 @@ func overrideCredentials(name string, m configmap.Mapper, origConfig *oauth2.Con
 	return newConfig, changed
 }
 
+// overrideAuthServer sets the package level variables for the
+// authentication server as well as overriding the redirect
+// URL of the remote.
+// the origConfig is copied
+func overrideAuthServer(ctx context.Context, name string, m configmap.Mapper, origConfig *oauth2.Config) (newConfig *oauth2.Config, changed bool) {
+	newConfig = new(oauth2.Config)
+	*newConfig = *origConfig
+	changed = false
+
+	bindOverride := fs.GetConfig(ctx).AuthAddr
+	if bindOverride != "" {
+		bindAddress = bindOverride
+		changed = true
+	}
+
+	redirectOverride := fs.GetConfig(ctx).RedirectURL
+	if redirectOverride != "" {
+		RedirectPublicURL = redirectOverride + "/"
+		RedirectLocalhostURL = redirectOverride + "/"
+		RedirectPublicSecureURL = redirectOverride + "/"
+
+		newConfig.RedirectURL = redirectOverride
+		changed = true
+	}
+	return newConfig, changed
+}
+
 // NewClientWithBaseClient gets a token from the config file and
 // configures a Client with it.  It returns the client and a
 // TokenSource which Invalidate may need to be called on.  It uses the
 // httpClient passed in as the base client.
 func NewClientWithBaseClient(ctx context.Context, name string, m configmap.Mapper, config *oauth2.Config, baseClient *http.Client) (*http.Client, *TokenSource, error) {
 	config, _ = overrideCredentials(name, m, config)
+	config, _ = overrideAuthServer(ctx, name, m, config)
 	token, err := GetToken(name, m)
 	if err != nil {
 		return nil, nil, err
@@ -618,7 +646,8 @@ version recommended):
 		if err != nil {
 			return nil, err
 		}
-		oauthConfig, changed := overrideCredentials(name, m, opt.OAuth2Config)
+		oauthConfigTemp, _ := overrideCredentials(name, m, opt.OAuth2Config)
+		oauthConfig, changed := overrideAuthServer(ctx, name, m, oauthConfigTemp)
 		if changed {
 			fs.Logf(nil, "Make sure your Redirect URL is set to %q in your custom config.\n", oauthConfig.RedirectURL)
 		}
@@ -709,14 +738,15 @@ func configSetup(ctx context.Context, id, name string, m configmap.Mapper, oauth
 	}
 	go server.Serve()
 	defer server.Stop()
-	authURL = "http://" + bindAddress + "/auth?state=" + state
+
+	authRedirectURL := "http://" + oauthConfig.RedirectURL + "/auth?state=" + state
 
 	if !authorizeNoAutoBrowser {
 		// Open the URL for the user to visit
-		_ = open.Start(authURL)
-		fs.Logf(nil, "If your browser doesn't open automatically go to the following link: %s\n", authURL)
+		_ = open.Start(authRedirectURL)
+		fs.Logf(nil, "If your browser doesn't open automatically go to the following link: %s\n", authRedirectURL)
 	} else {
-		fs.Logf(nil, "Please go to the following link: %s\n", authURL)
+		fs.Logf(nil, "Please go to the following link: %s\n", authRedirectURL)
 	}
 	fs.Logf(nil, "Log in and authorize rclone for access\n")
 

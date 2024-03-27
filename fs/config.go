@@ -103,6 +103,8 @@ type ConfigInfo struct {
 	TPSLimit                   float64
 	TPSLimitBurst              int
 	BindAddr                   net.IP
+	AuthAddr                   string
+	RedirectURL                string
 	DisableFeatures            []string
 	UserAgent                  string
 	Immutable                  bool
