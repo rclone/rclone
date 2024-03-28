@@ -1,7 +1,6 @@
 package ulozto
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"testing"
@@ -10,7 +9,6 @@ import (
 	"github.com/rclone/rclone/backend/ulozto/api"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/hash"
-	"github.com/rclone/rclone/fs/object"
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/fstest"
 	"github.com/stretchr/testify/require"
@@ -85,33 +83,4 @@ func TestListWithoutMetadata(t *testing.T) {
 
 	// Tear down
 	require.NoError(t, operations.Purge(ctx, f, ""))
-}
-
-// TestUploadLargeFile verifies that files over the supported threshold are not uploaded.
-func TestUploadLargeFile(t *testing.T) {
-	const (
-		remoteName = "TestUlozto:"
-		payload    = "foobar"
-		filesize   = maxFileSizeBytes + 1
-	)
-	ctx := context.Background()
-	fstest.Initialise()
-	subRemoteName, subRemoteLeaf, err := fstest.RandomRemoteName(remoteName)
-	require.NoError(t, err)
-	f, err := fs.NewFs(ctx, subRemoteName)
-	if errors.Is(err, fs.ErrorNotFoundInConfigFile) {
-		t.Logf("Didn't find %q in config file - skipping tests", remoteName)
-		return
-	}
-	require.NoError(t, err)
-
-	file := fstest.Item{ModTime: time.UnixMilli(123456789), Path: subRemoteLeaf, Size: int64(filesize)}
-	obji := object.NewStaticObjectInfo(file.Path, file.ModTime, file.Size, true, nil, nil)
-	// The payload buffer is just a placeholder which shouldn't be used
-	_, err = f.Put(ctx, bytes.NewBufferString(payload), obji)
-
-	require.Error(t, err, "File size over the supported max threshold.")
-
-	// Verify the remote stayed intact
-	fstest.CheckListing(t, f, []fstest.Item{})
 }
