@@ -3190,8 +3190,8 @@ func setQuirks(opt *Options) {
 		if opt.MaxUploadParts > 1000 {
 			opt.MaxUploadParts = 1000
 		}
-		urlEncodeListings = false
-		useAlreadyExists = false // untested
+		urlEncodeListings = true
+		useAlreadyExists = true
 	case "SeaweedFS":
 		listObjectsV2 = false // untested
 		virtualHostStyle = false
