@@ -200,6 +200,26 @@ type UpdateDescriptionRequest struct {
 	Description string `json:"description"`
 }
 
+// MoveFolderRequest represents the JSON API object that's
+// sent to the folder moving API endpoint.
+type MoveFolderRequest struct {
+	FolderSlugs         []string `json:"slugs"`
+	NewParentFolderSlug string   `json:"parent_folder_slug"`
+}
+
+// RenameFolderRequest represents the JSON API object that's
+// sent to the folder moving API endpoint.
+type RenameFolderRequest struct {
+	NewName string `json:"name"`
+}
+
+// MoveFileRequest represents the JSON API object that's
+// sent to the file  moving API endpoint.
+type MoveFileRequest struct {
+	ParentFolderSlug string `json:"folder_slug,omitempty"`
+	NewFilename      string `json:"name,omitempty"`
+}
+
 // GetDownloadLinkRequest represents the JSON API object that's
 // sent to the API endpoint that generates CDN download links for file payloads.
 type GetDownloadLinkRequest struct {
