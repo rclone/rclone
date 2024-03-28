@@ -61,6 +61,15 @@ const (
 
 var initDate = time.Date(2000, time.January, 1, 0, 0, 0, 0, bisync.TZ)
 
+/* Useful Command Shortcuts */
+// go test ./cmd/bisync -remote local -race
+// go test ./cmd/bisync -remote local -golden
+// go test ./cmd/bisync -remote local -case extended_filenames
+// go run ./fstest/test_all -run '^TestBisync.*$' -timeout 3h -verbose -maxtries 5
+// go run ./fstest/test_all -remotes local,TestCrypt:,TestDrive:,TestOneDrive:,TestOneDriveBusiness:,TestDropbox:,TestCryptDrive:,TestOpenDrive:,TestChunker:,:memory:,TestCryptNoEncryption:,TestCombine:DirA,TestFTPRclone:,TestWebdavRclone:,TestS3Rclone:,TestSFTPRclone:,TestSFTPRcloneSSH: -run '^TestBisync.*$' -timeout 3h -verbose -maxtries 5
+// go test -timeout 3h -run '^TestBisync.*$' github.com/rclone/rclone/cmd/bisync -remote TestDrive:Bisync -v
+// go test -timeout 3h -run '^TestBisyncRemoteRemote/basic$' github.com/rclone/rclone/cmd/bisync -remote TestDropbox:Bisync -v
+
 // logReplacements make modern test logs comparable with golden dir.
 // It is a string slice of even length with this structure:
 //
@@ -77,7 +86,8 @@ var logReplacements = []string{
 	`^DEBUG : .*$`, dropMe,
 	// ignore dropbox info messages
 	`^NOTICE: too_many_(requests|write_operations)/\.*: Too many requests or write operations.*$`, dropMe,
-	`^NOTICE: Dropbox root .*?: Forced to upload files to set modification times on this backend.$`, dropMe,
+	`^NOTICE: .*?: Forced to upload files to set modification times on this backend.$`, dropMe,
+	`^INFO  : .*? Committing uploads - please wait...$`, dropMe,
 	`^INFO  : .*?: src and dst identical but can't set mod time without deleting and re-uploading$`, dropMe,
 	// ignore crypt info messages
 	`^INFO  : .*?: Crypt detected! Using cryptcheck instead of check. \(Use --size-only or --ignore-checksum to disable\)$`, dropMe,
@@ -89,6 +99,7 @@ var logReplacements = []string{
 	`^.*?"SlowHashDetected":.*?$`, dropMe,
 	`^.*? for same-side diffs on .*?$`, dropMe,
 	`^.*?Downloading hashes.*?$`, dropMe,
+	`^.*?Can't compare hashes, so using check --download.*?$`, dropMe,
 	// ignore timestamps in directory time updates
 	`^(INFO  : .*?: (Made directory with|Set directory) (metadata|modification time)).*$`, dropMe,
 	// ignore sizes in directory time updates
@@ -127,7 +138,7 @@ var logHoppers = []string{
 	`(?:INFO  |NOTICE): .*: Fixed case by renaming to: .*`,
 
 	// order of files re-checked prior to a conflict rename
-	`ERROR : .*: md5 differ.*`,
+	`ERROR : .*: {hashtype} differ.*`,
 
 	// Directory modification time setting can happen in any order
 	`INFO  : .*: (Set directory modification time|Made directory with metadata).*`,
@@ -189,20 +200,43 @@ type bisyncTest struct {
 	parent1  fs.Fs
 	parent2  fs.Fs
 	// global flags
-	argRemote1 string
-	argRemote2 string
-	noCompare  bool
-	noCleanup  bool
-	golden     bool
-	debug      bool
-	stopAt     int
-	TestFn     bisync.TestFunc
+	argRemote1    string
+	argRemote2    string
+	noCompare     bool
+	noCleanup     bool
+	golden        bool
+	debug         bool
+	stopAt        int
+	TestFn        bisync.TestFunc
+	ignoreModtime bool // ignore modtimes when comparing final listings, for backends without support
 }
 
 var color = bisync.Color
 
+// Path1 is remote, Path2 is local
+func TestBisyncRemoteLocal(t *testing.T) {
+	if *fstest.RemoteName == *argRemote2 {
+		t.Skip("path1 and path2 are the same remote")
+	}
+	testBisync(t, *fstest.RemoteName, *argRemote2)
+}
+
+// Path1 is local, Path2 is remote
+func TestBisyncLocalRemote(t *testing.T) {
+	if *fstest.RemoteName == *argRemote2 {
+		t.Skip("path1 and path2 are the same remote")
+	}
+	testBisync(t, *argRemote2, *fstest.RemoteName)
+}
+
+// Path1 and Path2 are both different directories on remote
+// (useful for testing server-side copy/move)
+func TestBisyncRemoteRemote(t *testing.T) {
+	testBisync(t, *fstest.RemoteName, *fstest.RemoteName)
+}
+
 // TestBisync is a test engine for bisync test cases.
-func TestBisync(t *testing.T) {
+func testBisync(t *testing.T, path1, path2 string) {
 	ctx := context.Background()
 	fstest.Initialise()
 
@@ -215,7 +249,8 @@ func TestBisync(t *testing.T) {
 		ci.RefreshTimes = true
 	}
 	bisync.Colors = true
-	time.Local, _ = time.LoadLocation("America/New_York")
+	time.Local = bisync.TZ
+	ci.FsCacheExpireDuration = 5 * time.Hour
 
 	baseDir, err := os.Getwd()
 	require.NoError(t, err, "get current directory")
@@ -234,8 +269,8 @@ func TestBisync(t *testing.T) {
 		logDir:   filepath.Join(tempDir, "logs"),
 		logPath:  filepath.Join(workDir, logFileName),
 		// global flags
-		argRemote1: *fstest.RemoteName,
-		argRemote2: *argRemote2,
+		argRemote1: path1,
+		argRemote2: path2,
 		noCompare:  *argNoCompare,
 		noCleanup:  *argNoCleanup,
 		golden:     *argGolden,
@@ -333,10 +368,11 @@ func (b *bisyncTest) runTestCase(ctx context.Context, t *testing.T, testCase str
 
 	// Prepare initial content
 	b.cleanupCase(ctx)
-	initFs, err := fs.NewFs(ctx, b.initDir)
+	initFs, err := cache.Get(ctx, b.initDir)
 	require.NoError(b.t, err)
-	require.NoError(b.t, sync.CopyDir(ctx, b.fs1, initFs, true), "setting up path1")
-	require.NoError(b.t, sync.CopyDir(ctx, b.fs2, initFs, true), "setting up path2")
+	ctxNoDsStore, _ := ctxNoDsStore(ctx, b.t)
+	require.NoError(b.t, sync.CopyDir(ctxNoDsStore, b.fs1, initFs, true), "setting up path1")
+	require.NoError(b.t, sync.CopyDir(ctxNoDsStore, b.fs2, initFs, true), "setting up path2")
 
 	// Create log file
 	b.mkdir(b.workDir)
@@ -443,11 +479,11 @@ func (b *bisyncTest) runTestCase(ctx context.Context, t *testing.T, testCase str
 // if a local path is provided, it's ignored (the test will run under system temp)
 func (b *bisyncTest) makeTempRemote(ctx context.Context, remote, subdir string) (f, parent fs.Fs, path, canon string) {
 	var err error
-	if bilib.IsLocalPath(remote) {
+	if bilib.IsLocalPath(remote) && !strings.HasPrefix(remote, ":") {
 		if remote != "" && remote != "local" {
 			b.t.Fatalf(`Missing ":" in remote %q. Use "local" to test with local filesystem.`, remote)
 		}
-		parent, err = fs.NewFs(ctx, b.tempDir)
+		parent, err = cache.Get(ctx, b.tempDir)
 		require.NoError(b.t, err, "parsing %s", b.tempDir)
 
 		path = filepath.Join(b.tempDir, b.testCase)
@@ -459,7 +495,7 @@ func (b *bisyncTest) makeTempRemote(ctx context.Context, remote, subdir string) 
 			remote += "/"
 		}
 		remote += b.randName
-		parent, err = fs.NewFs(ctx, remote)
+		parent, err = cache.Get(ctx, remote)
 		require.NoError(b.t, err, "parsing %s", remote)
 
 		path = remote + "/" + b.testCase
@@ -467,13 +503,9 @@ func (b *bisyncTest) makeTempRemote(ctx context.Context, remote, subdir string) 
 		path += "/" + subdir
 	}
 
-	f, err = fs.NewFs(ctx, path)
+	f, err = cache.Get(ctx, path)
 	require.NoError(b.t, err, "parsing %s/%s", remote, subdir)
 	path = bilib.FsPath(f) // Make it canonical
-
-	if f.Precision() == fs.ModTimeNotSupported {
-		b.t.Skipf("modification time support is missing on %s", subdir)
-	}
 	return
 }
 
@@ -509,12 +541,12 @@ func (b *bisyncTest) runTestStep(ctx context.Context, line string) (err error) {
 
 		for i := 0; i < 50; i++ {
 			dst := "file" + fmt.Sprint(i) + ".txt"
-			err := b.copyFile(ctx, src, b.path2, dst)
+			err := b.copyFile(ctx, src, bilib.StripHexString(b.path2), dst)
 			if err != nil {
 				fs.Errorf(src, "error copying file: %v", err)
 			}
 			dst = "file" + fmt.Sprint(100-i) + ".txt"
-			err = b.copyFile(ctx, src, b.path1, dst)
+			err = b.copyFile(ctx, src, bilib.StripHexString(b.path1), dst)
 			if err != nil {
 				fs.Errorf(dst, "error copying file: %v", err)
 			}
@@ -534,18 +566,21 @@ func (b *bisyncTest) runTestStep(ctx context.Context, line string) (err error) {
 		return b.saveTestListings(args[1], false)
 	case "purge-children":
 		b.checkArgs(args, 1, 1)
-		if fsrc, err = fs.NewFs(ctx, args[1]); err != nil {
-			return err
+		dir := ""
+		if strings.HasPrefix(args[1], bilib.StripHexString(b.path1)) {
+			fsrc = b.fs1
+			dir = strings.TrimPrefix(args[1], bilib.StripHexString(b.path1))
+		} else if strings.HasPrefix(args[1], bilib.StripHexString(b.path2)) {
+			fsrc = b.fs2
+			dir = strings.TrimPrefix(args[1], bilib.StripHexString(b.path2))
+		} else {
+			return fmt.Errorf("error parsing arg: %q (path1: %q, path2: %q)", args[1], b.path1, b.path2)
 		}
-		err = purgeChildren(ctx, fsrc, "")
-		if err != nil {
-			return err
-		}
-		return
+		return purgeChildren(ctx, fsrc, dir)
 	case "delete-file":
 		b.checkArgs(args, 1, 1)
 		dir, file := filepath.Split(args[1])
-		if fsrc, err = fs.NewFs(ctx, dir); err != nil {
+		if fsrc, err = cache.Get(ctx, dir); err != nil {
 			return err
 		}
 		var obj fs.Object
@@ -555,14 +590,14 @@ func (b *bisyncTest) runTestStep(ctx context.Context, line string) (err error) {
 		return operations.DeleteFile(ctx, obj)
 	case "delete-glob":
 		b.checkArgs(args, 2, 2)
-		if fsrc, err = fs.NewFs(ctx, args[1]); err != nil {
+		if fsrc, err = cache.Get(ctx, args[1]); err != nil {
 			return err
 		}
 		return deleteFiles(ctx, fsrc, args[2])
 	case "touch-glob":
 		b.checkArgs(args, 3, 3)
 		date, src, glob := args[1], args[2], args[3]
-		if fsrc, err = fs.NewFs(ctx, src); err != nil {
+		if fsrc, err = cache.Get(ctx, src); err != nil {
 			return err
 		}
 		_, err = touchFiles(ctx, date, fsrc, src, glob)
@@ -571,7 +606,7 @@ func (b *bisyncTest) runTestStep(ctx context.Context, line string) (err error) {
 		b.checkArgs(args, 3, 3)
 		date, src, dst := args[1], args[2], args[3]
 		dir, file := filepath.Split(src)
-		if fsrc, err = fs.NewFs(ctx, dir); err != nil {
+		if fsrc, err = cache.Get(ctx, dir); err != nil {
 			return err
 		}
 		if _, err = touchFiles(ctx, date, fsrc, dir, file); err != nil {
@@ -604,9 +639,11 @@ func (b *bisyncTest) runTestStep(ctx context.Context, line string) (err error) {
 		}
 		switch args[0] {
 		case "copy-dir":
-			err = sync.CopyDir(ctx, fdst, fsrc, true)
+			ctxNoDsStore, _ := ctxNoDsStore(ctx, b.t)
+			err = sync.CopyDir(ctxNoDsStore, fdst, fsrc, true)
 		case "sync-dir":
-			err = sync.Sync(ctx, fdst, fsrc, true)
+			ctxNoDsStore, _ := ctxNoDsStore(ctx, b.t)
+			err = sync.Sync(ctxNoDsStore, fdst, fsrc, true)
 		}
 		return err
 	case "list-dirs":
@@ -646,7 +683,7 @@ func (b *bisyncTest) runTestStep(ctx context.Context, line string) (err error) {
 			remoteName = "/"
 		}
 
-		fsrc, err = fs.NewFs(ctx, remoteName)
+		fsrc, err = cache.Get(ctx, remoteName)
 		if err != nil {
 			return err
 		}
@@ -665,21 +702,34 @@ func (b *bisyncTest) runTestStep(ctx context.Context, line string) (err error) {
 
 			fixDirname := func(old, new string) {
 				if new != old {
-					oldName, err := fs.NewFs(ctx, old)
+					oldName, err := cache.Get(ctx, old)
 					if err != nil {
-						fs.Logf(old, "error getting Fs: %v", err)
+						fs.Errorf(old, "error getting Fs: %v", err)
+						return
 					}
 					fs.Debugf(nil, "Attempting to move %s to %s", oldName.Root(), new)
 					// Create random name to temporarily move dir to
 					tmpDirName := strings.TrimSuffix(new, slash) + "-rclone-move-" + random.String(8)
 					var tmpDirFs fs.Fs
-					tmpDirFs, _ = fs.NewFs(ctx, tmpDirName)
+					tmpDirFs, err = cache.Get(ctx, tmpDirName)
+					if err != nil {
+						fs.Errorf(tmpDirName, "error creating temp dir for move: %v", err)
+					}
+					if tmpDirFs == nil {
+						return
+					}
 					err = sync.MoveDir(ctx, tmpDirFs, oldName, true, true)
 					if err != nil {
 						fs.Debugf(oldName, "error attempting to move folder: %v", err)
 					}
 					// now move the temp dir to real name
-					fsrc, _ = fs.NewFs(ctx, new)
+					fsrc, err = cache.Get(ctx, new)
+					if err != nil {
+						fs.Errorf(new, "error creating fsrc dir for move: %v", err)
+					}
+					if fsrc == nil {
+						return
+					}
 					err = sync.MoveDir(ctx, fsrc, tmpDirFs, true, true)
 					if err != nil {
 						fs.Debugf(tmpDirFs, "error attempting to move folder to %s: %v", fsrc.Root(), err)
@@ -709,7 +759,11 @@ func (b *bisyncTest) runTestStep(ctx context.Context, line string) (err error) {
 			fs.Debugf(nil, "HASH old: %s new: %s equal: %v", stringToHash(old), stringToHash(new), stringToHash(old) == stringToHash(new))
 			if ok && new != old {
 				fs.Debugf(new, "attempting to rename %s to %s", old, new)
-				err = operations.MoveFile(ctx, fsrc, fsrc, new, old)
+				srcObj, err := fsrc.NewObject(ctx, old)
+				if err != nil {
+					fs.Errorf(old, "errorfinding srcObj - %v", err)
+				}
+				_, err = operations.MoveCaseInsensitive(ctx, fsrc, fsrc, new, old, false, srcObj)
 				if err != nil {
 					fs.Errorf(new, "error trying to rename %s to %s - %v", old, new, err)
 				}
@@ -777,6 +831,95 @@ func (b *bisyncTest) checkArgs(args []string, min, max int) {
 	}
 }
 
+func (b *bisyncTest) checkPreReqs(ctx context.Context, opt *bisync.Options) (context.Context, *bisync.Options) {
+	// check pre-requisites
+	if b.testCase == "backupdir" && !(b.fs1.Features().IsLocal && b.fs2.Features().IsLocal) {
+		b.t.Skip("backupdir test currently only works on local (it uses the workdir)")
+	}
+	if b.testCase == "volatile" && !(b.fs1.Features().IsLocal && b.fs2.Features().IsLocal) {
+		b.t.Skip("skipping 'volatile' test on non-local as it requires uploading 100 files")
+	}
+	if strings.HasPrefix(b.fs1.String(), "Dropbox") || strings.HasPrefix(b.fs2.String(), "Dropbox") {
+		fs.GetConfig(ctx).RefreshTimes = true // https://rclone.org/bisync/#notes-about-testing
+	}
+	if strings.HasPrefix(b.fs1.String(), "Dropbox") {
+		b.fs1.Features().Disable("Copy") // https://github.com/rclone/rclone/issues/6199#issuecomment-1570366202
+	}
+	if strings.HasPrefix(b.fs2.String(), "Dropbox") {
+		b.fs2.Features().Disable("Copy") // https://github.com/rclone/rclone/issues/6199#issuecomment-1570366202
+	}
+	if strings.HasPrefix(b.fs1.String(), "OneDrive") {
+		b.fs1.Features().Disable("Copy") // API has longstanding bug for conflictBehavior=replace https://github.com/rclone/rclone/issues/4590
+		b.fs1.Features().Disable("Move")
+	}
+	if strings.HasPrefix(b.fs2.String(), "OneDrive") {
+		b.fs2.Features().Disable("Copy") // API has longstanding bug for conflictBehavior=replace https://github.com/rclone/rclone/issues/4590
+		b.fs2.Features().Disable("Move")
+	}
+	if (!b.fs1.Features().CanHaveEmptyDirectories || !b.fs2.Features().CanHaveEmptyDirectories) && (b.testCase == "createemptysrcdirs" || b.testCase == "rmdirs") {
+		b.t.Skip("skipping test as remote does not support empty dirs")
+	}
+	if b.fs1.Precision() == fs.ModTimeNotSupported || b.fs2.Precision() == fs.ModTimeNotSupported {
+		if b.testCase != "nomodtime" {
+			b.t.Skip("skipping test as at least one remote does not support setting modtime")
+		}
+		b.ignoreModtime = true
+	}
+	// test if modtimes are writeable
+	testSetModtime := func(f fs.Fs) {
+		in := bytes.NewBufferString("modtime_write_test")
+		objinfo := object.NewStaticObjectInfo("modtime_write_test", initDate, int64(len("modtime_write_test")), true, nil, nil)
+		obj, err := f.Put(ctx, in, objinfo)
+		require.NoError(b.t, err)
+		err = obj.SetModTime(ctx, initDate)
+		if err == fs.ErrorCantSetModTime {
+			if b.testCase != "nomodtime" {
+				b.t.Skip("skipping test as at least one remote does not support setting modtime")
+			}
+		}
+		err = obj.Remove(ctx)
+		require.NoError(b.t, err)
+	}
+	testSetModtime(b.fs1)
+	testSetModtime(b.fs2)
+
+	if b.testCase == "normalization" || b.testCase == "extended_char_paths" || b.testCase == "extended_filenames" {
+		// test whether remote is capable of running test
+		const chars = "ě_{chr:81}{chr:fe}{spc}áñhࢺ_測試Русский_ěáñ👸🏼🧝🏾‍♀️💆🏿‍♂️🐨🤙🏼🤮🧑🏻‍🔧🧑‍🔬éö"
+		testfilename1 := splitLine(norm.NFD.String(norm.NFC.String(chars)))[0]
+		testfilename2 := splitLine(norm.NFC.String(norm.NFD.String(chars)))[0]
+		preTest := func(f fs.Fs, testfilename string) string {
+			in := bytes.NewBufferString(testfilename)
+			objinfo := object.NewStaticObjectInfo(testfilename, initDate, int64(len(testfilename)), true, nil, nil)
+			obj, err := f.Put(ctx, in, objinfo)
+			if err != nil {
+				b.t.Skipf("Fs is incapable of running test, skipping: %s (expected: \n%s (%s) actual: \n%s (%v))\n (fs: %s) \n", b.testCase, testfilename, detectEncoding(testfilename), "upload failed", err, f)
+			}
+			entries, err := f.List(ctx, "")
+			assert.NoError(b.t, err)
+			if entries.Len() == 1 && entries[0].Remote() != testfilename {
+				diffStr, _ := difflib.GetUnifiedDiffString(difflib.UnifiedDiff{A: []string{testfilename}, B: []string{entries[0].Remote()}})
+				// we can still deal with this as long as both remotes auto-convert the same way.
+				b.t.Logf("Warning: this remote seems to auto-convert special characters (testcase: %s) (expected: \n%s (%s) actual: \n%s (%s))\n (fs: %s) \n%v", b.testCase, testfilename, detectEncoding(testfilename), entries[0].Remote(), detectEncoding(entries[0].Remote()), f, diffStr)
+			}
+			err = obj.Remove(ctx)
+			require.NoError(b.t, err)
+			return entries[0].Remote()
+		}
+		got1 := preTest(b.fs1, testfilename1)
+		got1 += preTest(b.fs1, testfilename2)
+		if b.fs1.Name() != b.fs2.Name() {
+			got2 := preTest(b.fs2, testfilename1)
+			got2 += preTest(b.fs2, testfilename2)
+			if got1 != got2 {
+				diffStr, _ := difflib.GetUnifiedDiffString(difflib.UnifiedDiff{A: []string{got1}, B: []string{got2}})
+				b.t.Skipf("Fs is incapable of running test as the paths produce different results, skipping: %s (path1: \n%s (%s) path2: \n%s (%s))\n (fs1: %s fs2: %s) \n%v", b.testCase, got1, detectEncoding(got1), got2, got2, b.fs1, b.fs2, diffStr)
+			}
+		}
+	}
+	return ctx, opt
+}
+
 func (b *bisyncTest) runBisync(ctx context.Context, args []string) (err error) {
 	opt := &bisync.Options{
 		Workdir:       b.workDir,
@@ -787,12 +930,13 @@ func (b *bisyncTest) runBisync(ctx context.Context, args []string) (err error) {
 		CheckSync:     bisync.CheckSyncTrue,
 		TestFn:        b.TestFn,
 	}
+	ctx, opt = b.checkPreReqs(ctx, opt)
 	octx, ci := fs.AddConfig(ctx)
 	fs1, fs2 := b.fs1, b.fs2
 
 	addSubdir := func(path, subdir string) fs.Fs {
 		remote := path + subdir
-		f, err := fs.NewFs(ctx, remote)
+		f, err := cache.Get(ctx, remote)
 		require.NoError(b.t, err, "parsing remote %q", remote)
 		return f
 	}
@@ -838,9 +982,13 @@ func (b *bisyncTest) runBisync(ctx context.Context, args []string) (err error) {
 		case "compare-all":
 			opt.CompareFlag = "size,modtime,checksum"
 			opt.Compare.DownloadHash = true // allows us to test crypt and the like
+		case "nomodtime":
+			ci.CheckSum = true
+			opt.CompareFlag = "size,checksum"
+			opt.Compare.DownloadHash = true // allows us to test crypt and the like
 		case "subdir":
-			fs1 = addSubdir(b.path1, val)
-			fs2 = addSubdir(b.path2, val)
+			fs1 = addSubdir(bilib.StripHexString(b.path1), val)
+			fs2 = addSubdir(bilib.StripHexString(b.path2), val)
 		case "backupdir1":
 			opt.BackupDir1 = val
 		case "backupdir2":
@@ -872,6 +1020,10 @@ func (b *bisyncTest) runBisync(ctx context.Context, args []string) (err error) {
 
 	// set all dirs to a fixed date for test stability, as they are considered as of v1.66.
 	jamDirTimes := func(f fs.Fs) {
+		if f.Features().DirSetModTime == nil && f.Features().MkdirMetadata == nil {
+			fs.Debugf(f, "Skipping jamDirTimes as remote does not support DirSetModTime or MkdirMetadata")
+			return
+		}
 		err := walk.ListR(ctx, f, "", true, -1, walk.ListDirs, func(entries fs.DirEntries) error {
 			var err error
 			entries.ForDir(func(dir fs.Directory) {
@@ -929,10 +1081,11 @@ func (b *bisyncTest) saveTestListings(prefix string, keepSource bool) (err error
 }
 
 func (b *bisyncTest) copyFile(ctx context.Context, src, dst, asName string) (err error) {
+	fs.Debugf(nil, "copyFile %q to %q as %q", src, dst, asName)
 	var fsrc, fdst fs.Fs
 	var srcPath, srcFile, dstPath, dstFile string
 
-	switch fsrc, err = fs.NewFs(ctx, src); err {
+	switch fsrc, err = fs.NewFs(ctx, src); err { // intentionally using NewFs here to avoid dircaching the parent
 	case fs.ErrorIsFile:
 		// ok
 	case nil:
@@ -955,7 +1108,7 @@ func (b *bisyncTest) copyFile(ctx context.Context, src, dst, asName string) (err
 	if dstFile != "" {
 		dstPath = dst // force directory
 	}
-	if fdst, err = fs.NewFs(ctx, dstPath); err != nil {
+	if fdst, err = fs.NewFs(ctx, dstPath); err != nil { // intentionally using NewFs here to avoid dircaching the parent
 		return err
 	}
 
@@ -969,12 +1122,13 @@ func (b *bisyncTest) copyFile(ctx context.Context, src, dst, asName string) (err
 	if err := fi.AddFile(srcFile); err != nil {
 		return err
 	}
+	fs.Debugf(nil, "operations.CopyFile %q to %q as %q", srcFile, fdst.String(), dstFile)
 	return operations.CopyFile(fctx, fdst, fsrc, dstFile, srcFile)
 }
 
 // listSubdirs is equivalent to `rclone lsf -R [--dirs-only]`
 func (b *bisyncTest) listSubdirs(ctx context.Context, remote string, DirsOnly bool) error {
-	f, err := fs.NewFs(ctx, remote)
+	f, err := cache.Get(ctx, remote)
 	if err != nil {
 		return err
 	}
@@ -1036,6 +1190,9 @@ func deleteFiles(ctx context.Context, f fs.Fs, glob string) error {
 // Note: `rclone touch` can touch only single file, doesn't support filters.
 func touchFiles(ctx context.Context, dateStr string, f fs.Fs, dir, glob string) ([]string, error) {
 	files := []string{}
+	if f.Precision() == fs.ModTimeNotSupported {
+		return files, nil
+	}
 
 	date, err := time.ParseInLocation(touchDateFormat, dateStr, bisync.TZ)
 	if err != nil {
@@ -1065,14 +1222,19 @@ func touchFiles(ctx context.Context, dateStr string, f fs.Fs, dir, glob string) 
 
 		fs.Debugf(obj, "Set modification time %s", dateStr)
 		err := obj.SetModTime(ctx, date)
-		if err == fs.ErrorCantSetModTimeWithoutDelete {
+		if err == fs.ErrorCantSetModTimeWithoutDelete || err == fs.ErrorCantSetModTime {
 			// Workaround for dropbox, similar to --refresh-times
 			err = nil
 			buf := new(bytes.Buffer)
 			size := obj.Size()
 			separator := ""
 			if size > 0 {
-				err = operations.Cat(ctx, f, buf, 0, size, []byte(separator))
+				filterCtx, fi := filter.AddConfig(ctx)
+				err = fi.AddFile(remote) // limit Cat to only this file, not all files in dir
+				if err != nil {
+					return files, err
+				}
+				err = operations.Cat(filterCtx, f, buf, 0, size, []byte(separator))
 			}
 			info := object.NewStaticObjectInfo(remote, date, size, true, nil, f)
 			if err == nil {
@@ -1186,6 +1348,7 @@ func (b *bisyncTest) compareResults() int {
 // Golden results will have adapted file names and contain
 // generic strings instead of local or cloud paths.
 func (b *bisyncTest) storeGolden() {
+	b.generateDebuggers()
 	// Perform consistency checks
 	files := b.listDir(b.workDir)
 	require.NotEmpty(b.t, files, "nothing to store in golden dir")
@@ -1271,8 +1434,9 @@ func (b *bisyncTest) mangleResult(dir, file string, golden bool) string {
 	// First replace filenames with whitespace
 	// some backends (such as crypt) log them on multiple lines due to encoding differences, while others (local) do not
 	wsrep := []string{
-		"subdir with" + eol + "white space.txt/file2 with" + eol + "white space.txt",
-		"subdir with white space.txt/file2 with white space.txt",
+		"subdir with" + eol + "white space.txt/file2 with" + eol + "white space.txt", "subdir with white space.txt/file2 with white space.txt",
+		"with\nwhite space", "with white space",
+		"with\u0090white space", "with white space",
 	}
 	whitespaceJoiner := strings.NewReplacer(wsrep...)
 	s := whitespaceJoiner.Replace(string(buf))
@@ -1404,7 +1568,6 @@ func (b *bisyncTest) mangleListing(text string, golden bool, file string) string
 			lineRegex := regexp.MustCompile(`^(\S) +(-?\d+) (\S+) (\S+) (\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d\.\d{9}[+-]\d{4}) (".+")$`)
 			const timeFormat = "2006-01-02T15:04:05.000000000-0700"
 			const lineFormat = "%s %8d %s %s %s %q\n"
-			TZ := time.UTC
 			fields := lineRegex.FindStringSubmatch(strings.TrimSuffix(lines[i], "\n"))
 			if fields != nil {
 				sizeVal, sizeErr := strconv.ParseInt(fields[2], 10, 64)
@@ -1412,11 +1575,11 @@ func (b *bisyncTest) mangleListing(text string, golden bool, file string) string
 					// account for filename encoding differences by normalizing to OS encoding
 					fields[6] = normalizeEncoding(fields[6])
 					timeStr := fields[5]
-					if f.Precision() == fs.ModTimeNotSupported {
+					if f.Precision() == fs.ModTimeNotSupported || b.ignoreModtime {
 						lines[i] = fmt.Sprintf(lineFormat, fields[1], sizeVal, fields[3], fields[4], "-", fields[6])
 						continue
 					}
-					timeVal, timeErr := time.ParseInLocation(timeFormat, timeStr, TZ)
+					timeVal, timeErr := time.ParseInLocation(timeFormat, timeStr, bisync.TZ)
 					if timeErr == nil {
 						timeRound := timeVal.Round(f.Precision() * 2)
 						lines[i] = fmt.Sprintf(lineFormat, fields[1], sizeVal, fields[3], fields[4], timeRound, fields[6])
@@ -1453,8 +1616,8 @@ func (b *bisyncTest) newReplacer(mangle bool) *strings.Replacer {
 			"{datadir/}", b.dataDir + slash,
 			"{testdir/}", b.testDir + slash,
 			"{workdir/}", b.workDir + slash,
-			"{path1/}", b.path1,
-			"{path2/}", b.path2,
+			"{path1/}", bilib.StripHexString(b.path1),
+			"{path2/}", bilib.StripHexString(b.path2),
 			"{session}", b.sessionName,
 			"{/}", slash,
 		}
@@ -1469,12 +1632,18 @@ func (b *bisyncTest) newReplacer(mangle bool) *strings.Replacer {
 		b.fs2.String(), "{path2String}",
 		b.path1, "{path1/}",
 		b.path2, "{path2/}",
+		bilib.StripHexString(b.path1), "{path1/}",
+		bilib.StripHexString(b.path2), "{path2/}",
 		"//?/" + strings.TrimSuffix(strings.Replace(b.path1, slash, "/", -1), "/"), "{path1}", // fix windows-specific issue
 		"//?/" + strings.TrimSuffix(strings.Replace(b.path2, slash, "/", -1), "/"), "{path2}",
 		strings.TrimSuffix(b.path1, slash), "{path1}", // ensure it's still recognized without trailing slash
 		strings.TrimSuffix(b.path2, slash), "{path2}",
 		b.workDir, "{workdir}",
 		b.sessionName, "{session}",
+	}
+	// convert all hash types to "{hashtype}"
+	for _, ht := range hash.Supported().Array() {
+		rep = append(rep, ht.String(), "{hashtype}")
 	}
 	if fixSlash {
 		prep := []string{}
@@ -1610,4 +1779,27 @@ func stringToHash(s string) string {
 		fs.Errorf(s, "hasher returned an error: %v", err)
 	}
 	return sum
+}
+
+func detectEncoding(s string) string {
+	if norm.NFC.IsNormalString(s) && norm.NFD.IsNormalString(s) {
+		return "BOTH"
+	}
+	if !norm.NFC.IsNormalString(s) && norm.NFD.IsNormalString(s) {
+		return "NFD"
+	}
+	if norm.NFC.IsNormalString(s) && !norm.NFD.IsNormalString(s) {
+		return "NFC"
+	}
+	return "OTHER"
+}
+
+// filters out those pesky macOS .DS_Store files, which are forbidden on Dropbox and just generally annoying
+func ctxNoDsStore(ctx context.Context, t *testing.T) (context.Context, *filter.Filter) {
+	ctxNoDsStore, fi := filter.AddConfig(ctx)
+	err := fi.AddRule("- .DS_Store")
+	require.NoError(t, err)
+	err = fi.AddRule("+ **")
+	require.NoError(t, err)
+	return ctxNoDsStore, fi
 }

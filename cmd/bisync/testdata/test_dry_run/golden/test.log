@@ -116,7 +116,7 @@ INFO  : Path2:    6 changes: [32m   1 new[0m, [33m   3 modified[0m, [31m   
 INFO  : ([33mModified[0m: [36m   3 newer[0m, [34m   0 older[0m, [36m   3 larger[0m, [34m   0 smaller[0m)
 INFO  : Applying changes
 INFO  : Checking potential conflicts...
-ERROR : file5.txt: md5 differ
+ERROR : file5.txt: {hashtype} differ
 NOTICE: {path2String}: 1 differences found
 NOTICE: {path2String}: 1 errors while checking
 INFO  : Finished checking the potential conflicts. 1 differences found
@@ -181,7 +181,7 @@ INFO  : Path2:    6 changes: [32m   1 new[0m, [33m   3 modified[0m, [31m   
 INFO  : ([33mModified[0m: [36m   3 newer[0m, [34m   0 older[0m, [36m   3 larger[0m, [34m   0 smaller[0m)
 INFO  : Applying changes
 INFO  : Checking potential conflicts...
-ERROR : file5.txt: md5 differ
+ERROR : file5.txt: {hashtype} differ
 NOTICE: {path2String}: 1 differences found
 NOTICE: {path2String}: 1 errors while checking
 INFO  : Finished checking the potential conflicts. 1 differences found

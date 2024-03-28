@@ -223,8 +223,10 @@ func logModTimeUpload(dst fs.Object) {
 }
 
 // EqualFn allows replacing Equal() with a custom function during NeedTransfer()
-type EqualFn func(ctx context.Context, src fs.ObjectInfo, dst fs.Object) bool
-type equalFnContextKey struct{}
+type (
+	EqualFn           func(ctx context.Context, src fs.ObjectInfo, dst fs.Object) bool
+	equalFnContextKey struct{}
+)
 
 var equalFnKey = equalFnContextKey{}
 
@@ -451,7 +453,7 @@ func move(ctx context.Context, fdst fs.Fs, dst fs.Object, remote string, src fs.
 				}
 			} else if needsMoveCaseInsensitive(fdst, fdst, remote, src.Remote(), false) {
 				doMove = func(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
-					return moveCaseInsensitive(ctx, fdst, fdst, remote, src.Remote(), false, src)
+					return MoveCaseInsensitive(ctx, fdst, fdst, remote, src.Remote(), false, src)
 				}
 			}
 		}
@@ -1453,9 +1455,7 @@ func Rmdirs(ctx context.Context, f fs.Fs, dir string, leaveRoot bool) error {
 		}
 	}
 
-	var (
-		errCount = errcount.New()
-	)
+	errCount := errcount.New()
 	// Delete all directories at the same level in parallel
 	for level := len(toDelete) - 1; level >= 0; level-- {
 		dirs := toDelete[level]
@@ -1775,7 +1775,6 @@ func copyURLFn(ctx context.Context, dstFileName string, url string, autoFilename
 
 // CopyURL copies the data from the url to (fdst, dstFileName)
 func CopyURL(ctx context.Context, fdst fs.Fs, dstFileName string, url string, autoFilename, dstFileNameFromHeader bool, noClobber bool) (dst fs.Object, err error) {
-
 	err = copyURLFn(ctx, dstFileName, url, autoFilename, dstFileNameFromHeader, func(ctx context.Context, dstFileName string, in io.ReadCloser, size int64, modTime time.Time) (err error) {
 		if noClobber {
 			_, err = fdst.NewObject(ctx, dstFileName)
@@ -1852,16 +1851,13 @@ func needsMoveCaseInsensitive(fdst fs.Fs, fsrc fs.Fs, dstFileName string, srcFil
 	return !cp && fdst.Name() == fsrc.Name() && fdst.Features().CaseInsensitive && dstFileName != srcFileName && strings.EqualFold(dstFilePath, srcFilePath)
 }
 
-// Special case for changing case of a file on a case insensitive remote
+// MoveCaseInsensitive handles changing case of a file on a case insensitive remote.
 // This will move the file to a temporary name then
 // move it back to the intended destination. This is required
 // to avoid issues with certain remotes and avoid file deletion.
 // returns nil, nil if !needsMoveCaseInsensitive.
 // this does not account a transfer -- the caller should do that if desired.
-func moveCaseInsensitive(ctx context.Context, fdst fs.Fs, fsrc fs.Fs, dstFileName string, srcFileName string, cp bool, srcObj fs.Object) (newDst fs.Object, err error) {
-	if !needsMoveCaseInsensitive(fdst, fsrc, dstFileName, srcFileName, cp) {
-		return nil, nil
-	}
+func MoveCaseInsensitive(ctx context.Context, fdst fs.Fs, fsrc fs.Fs, dstFileName string, srcFileName string, cp bool, srcObj fs.Object) (newDst fs.Object, err error) {
 	logger, _ := GetLogger(ctx)
 
 	// Choose operations
@@ -1947,7 +1943,7 @@ func moveOrCopyFile(ctx context.Context, fdst fs.Fs, fsrc fs.Fs, dstFileName str
 		defer func() {
 			tr.Done(ctx, err)
 		}()
-		_, err = moveCaseInsensitive(ctx, fdst, fsrc, dstFileName, srcFileName, cp, srcObj)
+		_, err = MoveCaseInsensitive(ctx, fdst, fsrc, dstFileName, srcFileName, cp, srcObj)
 		return err
 	}
 

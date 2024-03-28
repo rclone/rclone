@@ -1,8 +1,10 @@
 [36m(01)  :[0m [34mtest rclone-args[0m
 
 
-[36m(02)  :[0m [34mtest initial bisync[0m
-[36m(03)  :[0m [34mbisync resync checksum[0m
+[36m(02)  :[0m [34mtouch-glob 2001-01-02 {datadir/} *[0m
+
+[36m(03)  :[0m [34mtest initial bisync[0m
+[36m(04)  :[0m [34mbisync resync checksum[0m
 INFO  : Bisyncing with Comparison Settings:
 {
 "Modtime": false,
@@ -20,19 +22,20 @@ INFO  : Resync updating listings
 INFO  : Validating listings for Path1 "{path1/}" vs Path2 "{path2/}"
 INFO  : [32mBisync successful[0m
 
-[36m(04)  :[0m [34mtest place newer files on both paths[0m
-
-
-[36m(05)  :[0m [34mtouch-glob 2001-01-02 {datadir/} *[0m
-
+[36m(05)  :[0m [34mtest place newer files on both paths[0m
 [36m(06)  :[0m [34mcopy-file {datadir/}file1.txt {path1/}[0m
 [36m(07)  :[0m [34mcopy-file {datadir/}file2.txt {path2/}[0m
-
 [36m(08)  :[0m [34mcopy-file {datadir/}file20.txt {path1/}subdir[0m
 [36m(09)  :[0m [34mcopy-file {datadir/}file21.txt {path2/}subdir[0m
 
-[36m(10)  :[0m [34mtest run bisync with custom options[0m
-[36m(11)  :[0m [34mbisync checksum[0m
+
+[36m(10)  :[0m [34mtouch-glob 2001-01-02 {path1/} file1.txt[0m
+[36m(11)  :[0m [34mtouch-glob 2001-01-02 {path2/} file2.txt[0m
+[36m(12)  :[0m [34mtouch-glob 2001-01-02 {path1/}subdir/ file20.txt[0m
+[36m(13)  :[0m [34mtouch-glob 2001-01-02 {path2/}subdir/ file21.txt[0m
+
+[36m(14)  :[0m [34mtest run bisync with custom options[0m
+[36m(15)  :[0m [34mbisync checksum[0m
 INFO  : Bisyncing with Comparison Settings:
 {
 "Modtime": false,
@@ -61,15 +64,20 @@ INFO  : Updating listings
 INFO  : Validating listings for Path1 "{path1/}" vs Path2 "{path2/}"
 INFO  : [32mBisync successful[0m
 
-[36m(12)  :[0m [34mtouch-glob 2007-07-23 {datadir/} *[0m
+[36m(16)  :[0m [34mtouch-glob 2007-07-23 {datadir/} *[0m
 
-[36m(13)  :[0m [34mcopy-file {datadir/}file1.txt {path1/}[0m
-[36m(14)  :[0m [34mcopy-file {datadir/}file2.txt {path2/}[0m
+[36m(17)  :[0m [34mcopy-file {datadir/}file1.txt {path1/}[0m
+[36m(18)  :[0m [34mcopy-file {datadir/}file2.txt {path2/}[0m
+[36m(19)  :[0m [34mcopy-file {datadir/}file20.txt {path1/}subdir[0m
+[36m(20)  :[0m [34mcopy-as {datadir/}file21.txt {path2/} file1.txt[0m
 
-[36m(15)  :[0m [34mcopy-file {datadir/}file20.txt {path1/}subdir[0m
-[36m(16)  :[0m [34mcopy-as {datadir/}file21.txt {path2/} file1.txt[0m
 
-[36m(17)  :[0m [34mbisync size-only[0m
+[36m(21)  :[0m [34mtouch-glob 2007-07-23 {path1/} file1.txt[0m
+[36m(22)  :[0m [34mtouch-glob 2007-07-23 {path2/} file2.txt[0m
+[36m(23)  :[0m [34mtouch-glob 2007-07-23 {path1/}subdir/ file20.txt[0m
+[36m(24)  :[0m [34mtouch-glob 2007-07-23 {path2/}subdir/ file21.txt[0m
+
+[36m(25)  :[0m [34mbisync size-only[0m
 INFO  : [2mSetting --ignore-listing-checksum as neither --checksum nor --compare checksum are set.[0m
 INFO  : Bisyncing with Comparison Settings:
 {
@@ -93,7 +101,7 @@ INFO  : - [34mPath2[0m    [35mDo queued copies to[0m                - [36mP
 INFO  : Updating listings
 INFO  : Validating listings for Path1 "{path1/}" vs Path2 "{path2/}"
 INFO  : [32mBisync successful[0m
-[36m(18)  :[0m [34mbisync resync[0m
+[36m(26)  :[0m [34mbisync resync[0m
 INFO  : [2mSetting --ignore-listing-checksum as neither --checksum nor --compare checksum are set.[0m
 INFO  : Bisyncing with Comparison Settings:
 {
@@ -112,13 +120,18 @@ INFO  : Resync updating listings
 INFO  : Validating listings for Path1 "{path1/}" vs Path2 "{path2/}"
 INFO  : [32mBisync successful[0m
 
-[36m(19)  :[0m [34mcopy-file {datadir/}file1.txt {path1/}[0m
-[36m(20)  :[0m [34mcopy-file {datadir/}file2.txt {path2/}[0m
+[36m(27)  :[0m [34mcopy-file {datadir/}file1.txt {path1/}[0m
+[36m(28)  :[0m [34mcopy-file {datadir/}file2.txt {path2/}[0m
+[36m(29)  :[0m [34mcopy-file {datadir/}file20.txt {path1/}subdir[0m
+[36m(30)  :[0m [34mcopy-file {datadir/}file21.txt {path2/}subdir[0m
 
-[36m(21)  :[0m [34mcopy-file {datadir/}file20.txt {path1/}subdir[0m
-[36m(22)  :[0m [34mcopy-file {datadir/}file21.txt {path2/}subdir[0m
 
-[36m(23)  :[0m [34mbisync ignore-size[0m
+[36m(31)  :[0m [34mtouch-glob 2007-07-23 {path1/} file1.txt[0m
+[36m(32)  :[0m [34mtouch-glob 2007-07-23 {path2/} file2.txt[0m
+[36m(33)  :[0m [34mtouch-glob 2007-07-23 {path1/}subdir/ file20.txt[0m
+[36m(34)  :[0m [34mtouch-glob 2007-07-23 {path2/}subdir/ file21.txt[0m
+
+[36m(35)  :[0m [34mbisync ignore-size[0m
 INFO  : [2mSetting --ignore-listing-checksum as neither --checksum nor --compare checksum are set.[0m
 INFO  : Bisyncing with Comparison Settings:
 {
@@ -145,7 +158,7 @@ INFO  : Updating listings
 INFO  : Validating listings for Path1 "{path1/}" vs Path2 "{path2/}"
 INFO  : [32mBisync successful[0m
 
-[36m(24)  :[0m [34mbisync resync compare-all[0m
+[36m(36)  :[0m [34mbisync resync compare-all[0m
 INFO  : Bisyncing with Comparison Settings:
 {
 "Modtime": true,
@@ -163,16 +176,22 @@ INFO  : Resync updating listings
 INFO  : Validating listings for Path1 "{path1/}" vs Path2 "{path2/}"
 INFO  : [32mBisync successful[0m
 
-[36m(25)  :[0m [34mcopy-as {datadir/}file21.txt {path2/} file2.txt[0m
+[36m(37)  :[0m [34mcopy-as {datadir/}file21.txt {path2/} file2.txt[0m
 
-[36m(26)  :[0m [34mtouch-glob 2023-08-26 {datadir/} *[0m
+[36m(38)  :[0m [34mtouch-glob 2023-08-26 {datadir/} *[0m
 
-[36m(27)  :[0m [34mcopy-file {datadir/}file1.txt {path1/}[0m
+[36m(39)  :[0m [34mcopy-file {datadir/}file1.txt {path1/}[0m
 
-[36m(28)  :[0m [34mcopy-file {datadir/}file20.txt {path1/}subdir[0m
-[36m(29)  :[0m [34mcopy-file {datadir/}file21.txt {path2/}subdir[0m
+[36m(40)  :[0m [34mcopy-file {datadir/}file20.txt {path1/}subdir[0m
+[36m(41)  :[0m [34mcopy-file {datadir/}file21.txt {path2/}subdir[0m
 
-[36m(30)  :[0m [34mbisync compare-all[0m
+
+[36m(42)  :[0m [34mtouch-glob 2007-07-23 {path2/} file2.txt[0m
+[36m(43)  :[0m [34mtouch-glob 2023-08-26 {path1/} file1.txt[0m
+[36m(44)  :[0m [34mtouch-glob 2023-08-26 {path1/}subdir/ file20.txt[0m
+[36m(45)  :[0m [34mtouch-glob 2023-08-26 {path2/}subdir/ file21.txt[0m
+
+[36m(46)  :[0m [34mbisync compare-all[0m
 INFO  : Bisyncing with Comparison Settings:
 {
 "Modtime": true,

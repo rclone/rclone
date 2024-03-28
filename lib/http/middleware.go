@@ -195,6 +195,14 @@ func MiddlewareCORS(allowOrigin string) Middleware {
 // MiddlewareStripPrefix instantiates middleware that removes the BaseURL from the path
 func MiddlewareStripPrefix(prefix string) Middleware {
 	return func(next http.Handler) http.Handler {
-		return http.StripPrefix(prefix, next)
+		stripPrefixHandler := http.StripPrefix(prefix, next)
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			// Allow OPTIONS on the root only
+			if r.URL.Path == "/" && r.Method == "OPTIONS" {
+				next.ServeHTTP(w, r)
+				return
+			}
+			stripPrefixHandler.ServeHTTP(w, r)
+		})
 	}
 }

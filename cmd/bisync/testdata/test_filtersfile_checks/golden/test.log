@@ -24,7 +24,7 @@ INFO  : [32mBisync successful[0m
 [36m(04)  :[0m [34mtest 1. inject filters file in workdir.[0m
 [36m(05)  :[0m [34mcopy-file {datadir/}filtersfile.txt {workdir/}[0m
 
-[36m(06)  :[0m [34mtest 2. run with filters-file but without md5. should abort.[0m
+[36m(06)  :[0m [34mtest 2. run with filters-file but without {hashtype}. should abort.[0m
 [36m(07)  :[0m [34mbisync filters-file={workdir/}filtersfile.txt[0m
 INFO  : [2mSetting --ignore-listing-checksum as neither --checksum nor --compare checksum are set.[0m
 INFO  : Bisyncing with Comparison Settings:
@@ -38,7 +38,7 @@ INFO  : Bisyncing with Comparison Settings:
 }
 INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
 INFO  : Using filters file {workdir/}filtersfile.txt
-ERROR : [31mBisync critical error: filters file md5 hash not found (must run --resync): {workdir/}filtersfile.txt[0m
+ERROR : [31mBisync critical error: filters file {hashtype} hash not found (must run --resync): {workdir/}filtersfile.txt[0m
 ERROR : [31mBisync aborted. Must run --resync to recover.[0m
 Bisync error: bisync aborted
 
@@ -78,7 +78,7 @@ INFO  : Bisyncing with Comparison Settings:
 }
 INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
 INFO  : Using filters file {workdir/}filtersfile.txt
-INFO  : Storing filters file hash to {workdir/}filtersfile.txt.md5
+INFO  : Storing filters file hash to {workdir/}filtersfile.txt.{hashtype}
 INFO  : Copying Path2 files to Path1
 INFO  : - [34mPath2[0m    [35mResync is copying files to[0m         - [36mPath1[0m
 INFO  : - [36mPath1[0m    [35mResync is copying files to[0m         - [36mPath2[0m
@@ -143,7 +143,7 @@ INFO  : Bisyncing with Comparison Settings:
 }
 INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
 INFO  : Using filters file {workdir/}filtersfile.txt
-INFO  : Skipped storing filters file hash to {workdir/}filtersfile.txt.md5 as --dry-run is set
+INFO  : Skipped storing filters file hash to {workdir/}filtersfile.txt.{hashtype} as --dry-run is set
 INFO  : Copying Path2 files to Path1
 NOTICE: - [34mPath2[0m    [35mResync is copying files to[0m         - [36mPath1[0m
 NOTICE: - [36mPath1[0m    [35mResync is copying files to[0m         - [36mPath2[0m

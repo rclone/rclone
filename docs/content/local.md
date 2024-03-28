@@ -237,7 +237,7 @@ $ tree /tmp/a
 Copying the entire directory with '-l'
 
 ```
-$ rclone copyto -l /tmp/a/file1 remote:/tmp/a/
+$ rclone copy -l /tmp/a/ remote:/tmp/a/
 ```
 
 The remote files are created with a '.rclonelink' suffix
@@ -261,7 +261,7 @@ $ rclone cat remote:/tmp/a/file2.rclonelink
 Copying them back with '-l'
 
 ```
-$ rclone copyto -l remote:/tmp/a/ /tmp/b/
+$ rclone copy -l remote:/tmp/a/ /tmp/b/
 
 $ tree /tmp/b
 /tmp/b
@@ -279,6 +279,16 @@ $ tree /tmp/b
 ├── file1.rclonelink
 └── file2.rclonelink
 ````
+
+If you want to copy a single file with `-l` then you must use the `.rclonelink` suffix.
+
+```
+$ rclone copy -l remote:/tmp/a/file1.rclonelink /tmp/c
+
+$ tree /tmp/c
+/tmp/c
+└── file1 -> ./file4
+```
 
 Note that this flag is incompatible with `-copy-links` / `-L`.
 

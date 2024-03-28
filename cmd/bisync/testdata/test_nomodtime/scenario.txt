@@ -1,0 +1,53 @@
+test changes
+# Exercise all of the various file change scenarios
+# - New on Path2                            file10
+# - changed on Path2                          file1
+# - New on Path1                            file11
+# - changed on Path1                          file2
+# - Deleted on Path2                        file3
+# - Deleted on Path1                        file4
+# - Changed on Path2 and on Path1           file5 (file5r, file5l)
+# - changed on Path2 and deleted on Path1     file6
+# - changed on Path1 and deleted on Path2     file7
+# - Deleted on both paths                   file8
+
+test initial bisync
+bisync resync nomodtime
+
+test make modifications on both paths
+test new on path2 - file10
+copy-file {datadir/}file10.txt {path2/}
+
+test changed on path2 - file1
+copy-file {datadir/}file1.txt {path2/}
+
+test new on path1 - file11
+copy-file {datadir/}file11.txt {path1/}
+
+test changed on path1 - file2
+copy-file {datadir/}file2.txt {path1/}
+
+test deleted on path2 - file3
+delete-file {path2/}file3.txt
+
+test deleted on path1 - file4
+delete-file {path1/}file4.txt
+
+test deleted on both paths - file8
+delete-file {path1/}file8.txt
+delete-file {path2/}file8.txt
+
+test changed on both paths - file5 (file5R, file5L)
+copy-as {datadir/}file5R.txt {path2/} file5.txt
+copy-as {datadir/}file5L.txt {path1/} file5.txt
+
+test changed on path2 and deleted on path1 - file6
+copy-file {datadir/}file6.txt {path2/}
+delete-file {path1/}file6.txt
+
+test changed on path1 and deleted on path2 - file7
+copy-file {datadir/}file7.txt {path1/}
+delete-file {path2/}file7.txt
+
+test bisync run
+bisync nomodtime
