@@ -87,20 +87,20 @@ a bit of go code for each one.
 			checkBase32768 = true
 		}
 		for i := range args {
-            tempDirName := "rclone-test-info-" + random.String(8)
-            tempDirPath := path.Join(args[i], tempDirName)
-            f := cmd.NewFsDir([]string{tempDirPath})
-            fs.Infof(f, "Created temporary directory for test files: %s", tempDirPath)
-            err := f.Mkdir(context.Background(), "")
-            if err != nil {
-                log.Fatalf("couldn't create temporary directory: %v", err)
-            }
+			tempDirName := "rclone-test-info-" + random.String(8)
+			tempDirPath := path.Join(args[i], tempDirName)
+			f := cmd.NewFsDir([]string{tempDirPath})
+			fs.Infof(f, "Created temporary directory for test files: %s", tempDirPath)
+			err := f.Mkdir(context.Background(), "")
+			if err != nil {
+				log.Fatalf("couldn't create temporary directory: %v", err)
+			}
 
-            cmd.Run(false, false, command, func() error {
-                return readInfo(context.Background(), f)
-            })
-        }
-    },
+			cmd.Run(false, false, command, func() error {
+				return readInfo(context.Background(), f)
+			})
+		}
+	},
 }
 
 type results struct {
@@ -482,39 +482,37 @@ func (r *results) checkStreaming() {
 }
 
 func readInfo(ctx context.Context, f fs.Fs) error {
-    // Ensure cleanup unless --keep-test-files is specified
-    if !keepTestFiles {
-        defer func() {
-            err := operations.Purge(ctx, f, "")
-            if err != nil {
-                fs.Errorf(f, "Failed to purge temporary directory: %v", err)
-            } else {
-                fs.Infof(f, "Removed temporary directory for test files: %s", f.Root())
-            }
-        }()
-    }
+	// Ensure cleanup unless --keep-test-files is specified
+	if !keepTestFiles {
+		defer func() {
+			err := operations.Purge(ctx, f, "")
+			if err != nil {
+				fs.Errorf(f, "Failed to purge temporary directory: %v", err)
+			} else {
+				fs.Infof(f, "Removed temporary directory for test files: %s", f.Root())
+			}
+		}()
+	}
 
-    r := newResults(ctx, f)
-    if checkControl {
-        r.checkControls()
-    }
-    if checkLength {
-        for i := range r.maxFileLength {
-            r.findMaxLength(i + 1)
-        }
-    }
-    if checkNormalization {
-        r.checkUTF8Normalization()
-    }
-    if checkStreaming {
-        r.checkStreaming()
-    }
-    if checkBase32768 {
-        r.checkBase32768()
-    }
-    r.Print()
-    r.WriteJSON()
-    return nil
+	r := newResults(ctx, f)
+	if checkControl {
+		r.checkControls()
+	}
+	if checkLength {
+		for i := range r.maxFileLength {
+			r.findMaxLength(i + 1)
+		}
+	}
+	if checkNormalization {
+		r.checkUTF8Normalization()
+	}
+	if checkStreaming {
+		r.checkStreaming()
+	}
+	if checkBase32768 {
+		r.checkBase32768()
+	}
+	r.Print()
+	r.WriteJSON()
+	return nil
 }
-
-
