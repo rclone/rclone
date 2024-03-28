@@ -9,18 +9,22 @@ import (
 	"reflect"
 	"runtime"
 	"strings"
+	"time"
 
+	"github.com/ncruces/go-strftime"
 	"github.com/rclone/rclone/fs"
 	"github.com/sirupsen/logrus"
 )
 
 // Options contains options for controlling the logging
 type Options struct {
-	File              string // Log everything to this file
-	Format            string // Comma separated list of log format options
-	UseSyslog         bool   // Use Syslog for logging
-	SyslogFacility    string // Facility for syslog, e.g. KERN,USER,...
-	LogSystemdSupport bool   // set if using systemd logging
+	File                 string // Log everything to this file
+	FilenameTimeFormat   string // Date time format that is used to replace the :dt: in logging filename
+	FilenameTimeWildcard string // The wildcard that is replaced with formatted time in logging filenames
+	Format               string // Comma separated list of log format options
+	UseSyslog            bool   // Use Syslog for logging
+	SyslogFacility       string // Facility for syslog, e.g. KERN,USER,...
+	LogSystemdSupport    bool   // set if using systemd logging
 }
 
 // DefaultOpt is the default values used for Opt
@@ -114,8 +118,27 @@ func InitLogging() {
 
 	fs.LogPrintPid = strings.Contains(flagsStr, ",pid,")
 
+	if Opt.FilenameTimeFormat != "" {
+		tmp := strings.SplitN(Opt.FilenameTimeFormat, "~#~", 2)
+		if len(tmp) != 2 {
+			log.Fatalf("Invalid Filename Time Format provided via --file-time-format. Please refer docs for proper usage.")
+		}
+
+		Opt.FilenameTimeWildcard = tmp[0]
+		Opt.FilenameTimeFormat = tmp[1]
+
+		if Opt.FilenameTimeWildcard == "" {
+			log.Fatalf("The wildcard in the Filename Time Format cannot be empty")
+		}
+	}
+
 	// Log file output
 	if Opt.File != "" {
+		if Opt.FilenameTimeFormat != "" && Opt.FilenameTimeWildcard != "" {
+			timeStr := strftime.Format(Opt.FilenameTimeFormat, time.Now())
+			Opt.File = strings.ReplaceAll(Opt.File, Opt.FilenameTimeWildcard, timeStr)
+		}
+
 		f, err := os.OpenFile(Opt.File, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0640)
 		if err != nil {
 			log.Fatalf("Failed to open log file: %v", err)
