@@ -346,6 +346,11 @@ func (f *Fs) uploadUnchecked(ctx context.Context, name, parentSlug string, info 
 		MultipartFileName:    encodedName,
 		Parameters:           url.Values{},
 	}
+	if info.Size() > 0 {
+		size := info.Size()
+		opts.ContentLength = &size
+	}
+
 	var uploadResponse api.SendFilePayloadResponse
 
 	err = f.pacer.CallNoRetry(func() (bool, error) {
