@@ -1119,6 +1119,22 @@ triggering follow-on actions if data was copied, or skipping if not.
 NB: Enabling this option turns a usually non-fatal error into a potentially
 fatal one - please check and adjust your scripts accordingly!
 
+### --file-time-format=WILDCARD~#~FORMAT ###
+
+The value provided for this flag is split into two parts (`WILDCARD` and `FORMAT`)
+at `~#~`. The `FORMAT` is a time stamp format as defined
+[here](https://pkg.go.dev/github.com/ncruces/go-strftime). The timestamp is converted
+into the provided format and all the `WILDCARD` in the filename,
+(e.g., `--log-file=FILE`, see [Log File Section](#--log-filefile-))
+will be replaced by the formatted timestamp.
+
+E.g. usage:
+
+Assume that the current time is `27 March 2024 10:00 P.M.` and the flag is used as
+`--file-time-format=:dt:~#~%Y-%m-%d` along with the flag `--log-file=C:\err_:dt:.log`.
+This means that the wildcard is `:dt:` and the time format is `%Y-%m-%d`.
+So the logs will be printed in the file `C:\err_2024-03-27.log`.
+
 ### --fix-case ###
 
 Normally, a sync to a case insensitive dest (such as macOS / Windows) will
@@ -1389,42 +1405,6 @@ The options mean
 ### --leave-root ####
 
 During rmdirs it will not remove root directory, even if it's empty.
-
-### --log-file-time-format=FORMAT ###
-
-A format that is used to generate a datetime string. Any `:dt:` wildcard
-in the log filename specified via `--log-file=FILE` will be replaced with
-this datetime string.
-
-If `FORMAT` is `%Y-%m-%d`, and log-file `FILE` is `err_:dt:.log`, then
-all rclone output will be logged to the file `err_2024-03-26.log`
-assuming that the current date it `26 March 2024`.
-
-Following keywords in the `FORMAT` are recognised as below:
-
-`%A` - Weekday (E.g.: Monday)
-
-`%a` - Short Weekday (E.g.: Mon)
-
-`%Y` - Year (E.g.: 2006)
-
-`%y` - Short Year (E.g.: 06)
-
-`%B` - Month name (E.g.: January)
-
-`%b` - Short Month name (E.g.: Jan)
-
-`%m` - Month number (E.g.: 01)
-
-`%d` - Day of month (E.g.: 02)
-
-`%H` - Hour of day in 24-hour format (E.g.: 15)
-
-`%I` - Hour of day in 12-hour format (E.g.: 03)
-
-`%M` - Minute of hour (E.g.: 04)
-
-`%S` - Second of minute (E.g.: 05)
 
 ### --log-file=FILE ###
 
