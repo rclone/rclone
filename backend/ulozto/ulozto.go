@@ -537,6 +537,92 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 	return nil
 }
 
+// Move implements the optional method fs.Mover.Move.
+func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
+	if remote == src.Remote() {
+		// Already there, do nothing
+		return src, nil
+	}
+
+	srcObj, ok := src.(*Object)
+	if !ok {
+		fs.Debugf(src, "Can't move - not same remote type")
+		return nil, fs.ErrorCantMove
+	}
+
+	filename, folderSlug, err := f.dirCache.FindPath(ctx, remote, true)
+
+	if err != nil {
+		return nil, err
+	}
+
+	newObj := &Object{}
+	newObj.copyFrom(srcObj)
+	newObj.remote = remote
+
+	return newObj, newObj.updateFileProperties(ctx, api.MoveFileRequest{
+		ParentFolderSlug: folderSlug,
+		NewFilename:      filename,
+	})
+}
+
+// DirMove implements the optional method fs.DirMover.DirMove.
+func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string) error {
+	srcFs, ok := src.(*Fs)
+	if !ok {
+		fs.Debugf(srcFs, "Can't move directory - not same remote type")
+		return fs.ErrorCantDirMove
+	}
+
+	srcSlug, _, srcName, dstParentSlug, dstName, err := f.dirCache.DirMove(ctx, srcFs.dirCache, srcFs.root, srcRemote, f.root, dstRemote)
+	if err != nil {
+		return err
+	}
+
+	opts := rest.Opts{
+		Method: "PATCH",
+		Path:   "/v6/user/" + f.opt.Username + "/folder-list/parent-folder",
+	}
+
+	req := api.MoveFolderRequest{
+		FolderSlugs:         []string{srcSlug},
+		NewParentFolderSlug: dstParentSlug,
+	}
+
+	err = f.pacer.Call(func() (bool, error) {
+		httpResp, err := f.rest.CallJSON(ctx, &opts, &req, nil)
+		return f.shouldRetry(ctx, httpResp, err, true)
+	})
+
+	if err != nil {
+		return err
+	}
+
+	// The old folder doesn't exist anymore so clear the cache now instead of after renaming
+	srcFs.dirCache.FlushDir(srcRemote)
+
+	if srcName != dstName {
+		// There's no endpoint to rename the folder alongside moving it, so this has to happen separately.
+		opts = rest.Opts{
+			Method: "PATCH",
+			Path:   "/v7/user/" + f.opt.Username + "/folder/" + srcSlug,
+		}
+
+		renameReq := api.RenameFolderRequest{
+			NewName: dstName,
+		}
+
+		err = f.pacer.Call(func() (bool, error) {
+			httpResp, err := f.rest.CallJSON(ctx, &opts, &renameReq, nil)
+			return f.shouldRetry(ctx, httpResp, err, true)
+		})
+
+		return err
+	}
+
+	return nil
+}
+
 // Name of the remote (as passed into NewFs)
 func (f *Fs) Name() string {
 	return f.name
@@ -1179,6 +1265,8 @@ var (
 	_ dircache.DirCacher = (*Fs)(nil)
 	_ fs.DirCacheFlusher = (*Fs)(nil)
 	_ fs.PutUncheckeder  = (*Fs)(nil)
+	_ fs.Mover           = (*Fs)(nil)
+	_ fs.DirMover        = (*Fs)(nil)
 	_ fs.Object          = (*Object)(nil)
 	_ fs.ObjectInfo      = (*RenamingObjectInfoProxy)(nil)
 )
