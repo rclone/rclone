@@ -323,6 +323,49 @@ func (f *Fs) TestServerSideCopyMove(t *testing.T, r *fstest.Run) {
 	f.compareMeta(t, expectedMeta, actualMeta, true)
 }
 
+// TestMetadataMapper tests adding permissions with the --metadata-mapper
+func (f *Fs) TestMetadataMapper(t *testing.T, r *fstest.Run) {
+	// setup
+	ctx, ci := fs.AddConfig(ctx)
+	ci.Metadata = true
+	_ = f.opt.MetadataPermissions.Set("read,write")
+	file1 := r.WriteFile(randomFilename(), content, t2)
+
+	const blob = `{"Metadata":{"permissions":"[{\"grantedToIdentities\":[{\"user\":{\"id\":\"ryan@contoso.com\"}}],\"roles\":[\"read\"]}]"}}`
+
+	// Copy
+	ci.MetadataMapper = []string{"echo", blob}
+	require.NoError(t, ci.Dump.Set("mapper"))
+	obj1, err := r.Flocal.NewObject(ctx, file1.Path)
+	assert.NoError(t, err)
+	obj2, err := operations.Copy(ctx, f, nil, randomFilename(), obj1)
+	assert.NoError(t, err)
+	actualMeta, err := fs.GetMetadata(ctx, obj2)
+	assert.NoError(t, err)
+
+	actualP := unmarshalPerms(t, actualMeta["permissions"])
+	found := false
+	foundCount := 0
+	for _, p := range actualP {
+		for _, identity := range p.GrantedToIdentities {
+			if identity.User.DisplayName == testUserID {
+				assert.Equal(t, []api.Role{api.ReadRole}, p.Roles)
+				found = true
+				foundCount++
+			}
+		}
+		if f.driveType == driveTypePersonal {
+			if p.GrantedTo != nil && p.GrantedTo.User != (api.Identity{}) && p.GrantedTo.User.ID == testUserID { // shows up in a different place on biz vs. personal
+				assert.Equal(t, []api.Role{api.ReadRole}, p.Roles)
+				found = true
+				foundCount++
+			}
+		}
+	}
+	assert.True(t, found, fmt.Sprintf("no permission found with expected role (want: \n\n%v \n\ngot: \n\n%v\n\n)", blob, actualMeta))
+	assert.Equal(t, 1, foundCount, "expected to find exactly 1 match")
+}
+
 // helper function to put an object with metadata and permissions
 func (f *Fs) putWithMeta(ctx context.Context, t *testing.T, file *fstest.Item, perms []*api.PermissionsType) (expectedMeta, actualMeta fs.Metadata) {
 	t.Helper()
@@ -458,6 +501,8 @@ func (f *Fs) InternalTest(t *testing.T) {
 	testF.resetTestDefaults(r)
 	testF, r = newTestF()
 	t.Run("TestServerSideCopyMove", func(t *testing.T) { testF.TestServerSideCopyMove(t, r) })
+	testF.resetTestDefaults(r)
+	t.Run("TestMetadataMapper", func(t *testing.T) { testF.TestMetadataMapper(t, r) })
 	testF.resetTestDefaults(r)
 }
 
