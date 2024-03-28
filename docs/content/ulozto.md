@@ -94,7 +94,8 @@ precision.
 
 A server calculated MD5 hash of the file is verified upon upload. 
 Afterwards, the backend only serves the client-side calculated
-hashes. 
+hashes. Hashes can also be retrieved upon creating a file download
+link, but it's impractical for `list`-like use cases.
 
 ### Restricted filename characters
 
@@ -111,7 +112,7 @@ as they can't be used in JSON strings.
 ### Transfers
 
 All files are currently uploaded using a single HTTP request, so 
-for uploading large files a stable connection is necesary.  Rclone will
+for uploading large files a stable connection is necessary.  Rclone will
 upload up to `--transfers` chunks at the same time (shared among all 
 uploads).  
 
