@@ -5,6 +5,9 @@ import (
 	"crypto/rand"
 	"errors"
 	"fmt"
+	"os"
+	"path"
+	"sort"
 	"strings"
 	"testing"
 
@@ -119,6 +122,46 @@ func TestCopyFile(t *testing.T) {
 	require.NoError(t, err)
 	r.CheckLocalItems(t, file1)
 	r.CheckRemoteItems(t, file2)
+}
+
+// Find the longest file name for writing to local
+func maxLengthFileName(t *testing.T, r *fstest.Run) string {
+	require.NoError(t, r.Flocal.Mkdir(context.Background(), "")) // create the root
+	const maxLen = 16 * 1024
+	name := strings.Repeat("A", maxLen)
+	i := sort.Search(len(name), func(i int) (fail bool) {
+		filePath := path.Join(r.LocalName, name[:i])
+		err := os.WriteFile(filePath, []byte{0}, 0777)
+		if err != nil {
+			return true
+		}
+		err = os.Remove(filePath)
+		if err != nil {
+			t.Logf("Failed to remove test file: %v", err)
+		}
+		return false
+	})
+	return name[:i-1]
+}
+
+// Check we can copy a file of maximum name length
+func TestCopyLongFile(t *testing.T) {
+	ctx := context.Background()
+	r := fstest.NewRun(t)
+	if !r.Fremote.Features().IsLocal {
+		t.Skip("Test only runs on local")
+	}
+
+	// Find the maximum length of file we can write
+	name := maxLengthFileName(t, r)
+	t.Logf("Max length of file name is %d", len(name))
+	file1 := r.WriteFile(name, "file1 contents", t1)
+	r.CheckLocalItems(t, file1)
+
+	err := operations.CopyFile(ctx, r.Fremote, r.Flocal, file1.Path, file1.Path)
+	require.NoError(t, err)
+	r.CheckLocalItems(t, file1)
+	r.CheckRemoteItems(t, file1)
 }
 
 func TestCopyFileBackupDir(t *testing.T) {
