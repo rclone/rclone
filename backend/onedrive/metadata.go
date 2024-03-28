@@ -613,7 +613,7 @@ func (o *Object) tryGetBtime(modTime time.Time) time.Time {
 }
 
 // adds metadata (except permissions) if --metadata is in use
-func (o *Object) fetchMetadataForCreate(ctx context.Context, src fs.ObjectInfo, options []fs.OpenOption, modTime time.Time) (createRequest api.CreateUploadRequest, err error) {
+func (o *Object) fetchMetadataForCreate(ctx context.Context, src fs.ObjectInfo, options []fs.OpenOption, modTime time.Time) (createRequest api.CreateUploadRequest, metadata fs.Metadata, err error) {
 	createRequest = api.CreateUploadRequest{ // we set mtime no matter what
 		Item: api.Metadata{
 			FileSystemInfo: &api.FileSystemInfoFacet{
@@ -625,10 +625,10 @@ func (o *Object) fetchMetadataForCreate(ctx context.Context, src fs.ObjectInfo, 
 
 	meta, err := fs.GetMetadataOptions(ctx, o.fs, src, options)
 	if err != nil {
-		return createRequest, fmt.Errorf("failed to read metadata from source object: %w", err)
+		return createRequest, nil, fmt.Errorf("failed to read metadata from source object: %w", err)
 	}
 	if meta == nil {
-		return createRequest, nil // no metadata or --metadata not in use, so just return mtime
+		return createRequest, nil, nil // no metadata or --metadata not in use, so just return mtime
 	}
 	if o.meta == nil {
 		o.meta = o.fs.newMetadata(o.Remote())
@@ -636,13 +636,13 @@ func (o *Object) fetchMetadataForCreate(ctx context.Context, src fs.ObjectInfo, 
 	o.meta.mtime = modTime
 	numSet, err := o.meta.Set(ctx, meta)
 	if err != nil {
-		return createRequest, err
+		return createRequest, meta, err
 	}
 	if numSet == 0 {
-		return createRequest, nil
+		return createRequest, meta, nil
 	}
 	createRequest.Item = o.meta.toAPIMetadata()
-	return createRequest, nil
+	return createRequest, meta, nil
 }
 
 // Fetch metadata and update updateInfo if --metadata is in use
@@ -654,27 +654,6 @@ func (f *Fs) fetchAndUpdateMetadata(ctx context.Context, src fs.ObjectInfo, opti
 	}
 	if meta == nil {
 		return updateInfo.setModTime(ctx, src.ModTime(ctx)) // no metadata or --metadata not in use, so just set modtime
-	}
-	if updateInfo.meta == nil {
-		updateInfo.meta = f.newMetadata(updateInfo.Remote())
-	}
-	newInfo, err := updateInfo.updateMetadata(ctx, meta)
-	if newInfo == nil {
-		return info, err
-	}
-	return newInfo, err
-}
-
-// Fetch and update permissions if --metadata is in use
-// This is similar to fetchAndUpdateMetadata, except it does NOT set modtime or other metadata if there are no permissions to set.
-// This is intended for cases where metadata may already have been set during upload and an extra step is needed only for permissions.
-func (f *Fs) fetchAndUpdatePermissions(ctx context.Context, src fs.ObjectInfo, options []fs.OpenOption, updateInfo *Object) (info *api.Item, err error) {
-	meta, err := fs.GetMetadataOptions(ctx, f, src, options)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read metadata from source object: %w", err)
-	}
-	if meta == nil || !f.needsUpdatePermissions(meta) {
-		return nil, nil // no metadata, --metadata not in use, or wrong flags
 	}
 	if updateInfo.meta == nil {
 		updateInfo.meta = f.newMetadata(updateInfo.Remote())

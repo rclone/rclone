@@ -4,11 +4,11 @@ differences between OneDrive Personal and Business (see table below for
 details).
 
 Permissions are also supported, if `--onedrive-metadata-permissions` is set. The
-accepted values for `--onedrive-metadata-permissions` are `read`, `write`,
-`read,write`, and `off` (the default). `write` supports adding new permissions,
+accepted values for `--onedrive-metadata-permissions` are "`read`", "`write`",
+"`read,write`", and "`off`" (the default). "`write`" supports adding new permissions,
 updating the "role" of existing permissions, and removing permissions. Updating
 and removing require the Permission ID to be known, so it is recommended to use
-`read,write` instead of `write` if you wish to update/remove permissions.
+"`read,write`" instead of "`write`" if you wish to update/remove permissions.
 
 Permissions are read/written in JSON format using the same schema as the
 [OneDrive API](https://learn.microsoft.com/en-us/onedrive/developer/rest-api/resources/permission?view=odsp-graph-online),
@@ -92,31 +92,14 @@ an ObjectID can be provided in `User.ID`. At least one valid recipient must be
 provided in order to add a permission for a user. Creating a Public Link is also
 supported, if `Link.Scope` is set to `"anonymous"`.
 
-Example request to add a "read" permission:
+Example request to add a "read" permission with `--metadata-mapper`:
 
 ```json
-[
-	{
-			"id": "",
-			"grantedTo": {
-					"user": {},
-					"application": {},
-					"device": {}
-			},
-			"grantedToIdentities": [
-					{
-							"user": {
-									"id": "ryan@contoso.com"
-							},
-							"application": {},
-							"device": {}
-					}
-			],
-			"roles": [
-					"read"
-			]
-	}
-]
+{
+    "Metadata": {
+        "permissions": "[{\"grantedToIdentities\":[{\"user\":{\"id\":\"ryan@contoso.com\"}}],\"roles\":[\"read\"]}]"
+    }
+}
 ```
 
 Note that adding a permission can fail if a conflicting permission already

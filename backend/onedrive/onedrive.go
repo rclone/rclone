@@ -2304,11 +2304,11 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 }
 
 // createUploadSession creates an upload session for the object
-func (o *Object) createUploadSession(ctx context.Context, src fs.ObjectInfo, modTime time.Time) (response *api.CreateUploadResponse, err error) {
+func (o *Object) createUploadSession(ctx context.Context, src fs.ObjectInfo, modTime time.Time) (response *api.CreateUploadResponse, metadata fs.Metadata, err error) {
 	opts := o.fs.newOptsCallWithPath(ctx, o.remote, "POST", "/createUploadSession")
-	createRequest, err := o.fetchMetadataForCreate(ctx, src, opts.Options, modTime)
+	createRequest, metadata, err := o.fetchMetadataForCreate(ctx, src, opts.Options, modTime)
 	if err != nil {
-		return nil, err
+		return nil, metadata, err
 	}
 	var resp *http.Response
 	err = o.fs.pacer.Call(func() (bool, error) {
@@ -2321,7 +2321,7 @@ func (o *Object) createUploadSession(ctx context.Context, src fs.ObjectInfo, mod
 		}
 		return shouldRetry(ctx, resp, err)
 	})
-	return response, err
+	return response, metadata, err
 }
 
 // getPosition gets the current position in a multipart upload
@@ -2437,7 +2437,7 @@ func (o *Object) uploadMultipart(ctx context.Context, in io.Reader, src fs.Objec
 
 	// Create upload session
 	fs.Debugf(o, "Starting multipart upload")
-	session, err := o.createUploadSession(ctx, src, modTime)
+	session, metadata, err := o.createUploadSession(ctx, src, modTime)
 	if err != nil {
 		return nil, err
 	}
@@ -2474,10 +2474,10 @@ func (o *Object) uploadMultipart(ctx context.Context, in io.Reader, src fs.Objec
 	if err != nil {
 		return info, err
 	}
-	if !o.fs.opt.MetadataPermissions.IsSet(rwWrite) {
+	if metadata == nil || !o.fs.needsUpdatePermissions(metadata) {
 		return info, err
 	}
-	info, err = o.fs.fetchAndUpdatePermissions(ctx, src, options, o) // for permissions, which can't be set during original upload
+	info, err = o.updateMetadata(ctx, metadata) // for permissions, which can't be set during original upload
 	if info == nil {
 		return nil, err
 	}
