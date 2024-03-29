@@ -26785,13 +26785,10 @@ endpoint = s3.nl-ams.scw.cloud
 access_key_id = SCWXXXXXXXXXXXXXX
 secret_access_key = 1111111-2222-3333-44444-55555555555555
 region = nl-ams
-location_constraint = nl-ams
+location_constraint =
 acl = private
-upload_cutoff = 5M
-chunk_size = 5M
-copy_cutoff = 5M
-list_url_encode = true
-use_already_exists = true
+server_side_encryption =
+storage_class =
 ```
 
 [C14 Cold Storage](https://www.online.net/en/storage/c14-cold-storage) is the low-cost S3 Glacier alternative from Scaleway and it works the same way as on S3 by accepting the "GLACIER" `storage_class`.
