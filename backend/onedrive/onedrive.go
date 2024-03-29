@@ -291,7 +291,7 @@ all onedrive types. If an SHA1 hash is desired then set this option
 accordingly.
 
 From July 2023 QuickXorHash will be the only available hash for
-both OneDrive for Business and OneDriver Personal.
+both OneDrive for Business and OneDrive Personal.
 
 This can be set to "none" to not use any hashes.
 
