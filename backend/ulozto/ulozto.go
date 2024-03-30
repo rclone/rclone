@@ -22,6 +22,7 @@ import (
 	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/configstruct"
+	"github.com/rclone/rclone/fs/config/obscure"
 	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/fs/hash"
@@ -59,8 +60,8 @@ func init() {
 			{
 				Name:    "app_token",
 				Default: "",
-				Help: "The application token identifying the app. An app API key can be either found in the API " +
-					"doc https://uloz.to/upload-resumable-api-beta or obtained from customer service.",
+				Help: `The application token identifying the app. An app API key can be either found in the API
+doc https://uloz.to/upload-resumable-api-beta or obtained from customer service.`,
 				Sensitive: true,
 			},
 			{
@@ -70,16 +71,16 @@ func init() {
 				Sensitive: true,
 			},
 			{
-				Name:      "password",
-				Default:   "",
-				Help:      "The password for the user.",
-				Sensitive: true,
+				Name:       "password",
+				Default:    "",
+				Help:       "The password for the user.",
+				IsPassword: true,
 			},
 			{
 				Name: "root_folder_slug",
-				Help: "If set, rclone will use this folder as the root folder for all operations. For example, " +
-					"if the slug identifies 'foo/bar/', 'ulozto:baz' is equivalent to 'ulozto:foo/bar/baz' without " +
-					"any root slug set.",
+				Help: `If set, rclone will use this folder as the root folder for all operations. For example,
+if the slug identifies 'foo/bar/', 'ulozto:baz' is equivalent to 'ulozto:foo/bar/baz' without
+any root slug set.`,
 				Default:   "",
 				Advanced:  true,
 				Sensitive: true,
@@ -237,9 +238,13 @@ func (f *Fs) authenticate(ctx context.Context) (response *api.AuthenticateRespon
 		Path:   "/v6/session",
 	}
 
+	clearPassword, err := obscure.Reveal(f.opt.Password)
+	if err != nil {
+		return nil, err
+	}
 	authRequest := api.AuthenticateRequest{
 		Login:    f.opt.Username,
-		Password: f.opt.Password,
+		Password: clearPassword,
 	}
 
 	err = f.pacer.Call(func() (bool, error) {
