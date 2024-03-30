@@ -837,3 +837,4 @@ put them back in again.` >}}
   * iotmaestro <iotmaestro@proton.me>
   * psychopatt <66741203+psychopatt@users.noreply.github.com>
   * Alex Garel <alex@garel.org>
+  * Warrentheo <warrentheo@hotmail.com>
