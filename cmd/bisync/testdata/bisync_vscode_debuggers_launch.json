@@ -58537,6 +58537,654 @@
 			"program": "./cmd/bisync",
 			"args": ["-remote", "TestQuatrix:", "-remote2", "TestQuatrix:", "-case", "test_volatile", "-no-cleanup"]
 		},
+		{
+			"name": "Test TestUlozto: test_all_changed LocalRemote",
+			"type": "go",
+			"request": "launch",
+			"mode": "test",
+			"program": "./cmd/bisync",
+			"args": ["-remote", "local", "-remote2", "TestUlozto:", "-case", "test_all_changed", "-no-cleanup"]
+		},
+		{
+			"name": "Test TestUlozto: test_all_changed RemoteLocal",
+			"type": "go",
+			"request": "launch",
+			"mode": "test",
+			"program": "./cmd/bisync",
+			"args": ["-remote", "TestUlozto:", "-remote2", "local", "-case", "test_all_changed", "-no-cleanup"]
+		},
+		{
+			"name": "Test TestUlozto: test_all_changed RemoteRemote",
+			"type": "go",
+			"request": "launch",
+			"mode": "test",
+			"program": "./cmd/bisync",
+			"args": ["-remote", "TestUlozto:", "-remote2", "TestUlozto:", "-case", "test_all_changed", "-no-cleanup"]
+		},
+		{
+			"name": "Test TestUlozto: test_backupdir LocalRemote",
+			"type": "go",
+			"request": "launch",
+			"mode": "test",
+			"program": "./cmd/bisync",
+			"args": ["-remote", "local", "-remote2", "TestUlozto:", "-case", "test_backupdir", "-no-cleanup"]
+		},
+		{
+			"name": "Test TestUlozto: test_backupdir RemoteLocal",
+			"type": "go",
+			"request": "launch",
+			"mode": "test",
+			"program": "./cmd/bisync",
+			"args": ["-remote", "TestUlozto:", "-remote2", "local", "-case", "test_backupdir", "-no-cleanup"]
+		},
+		{
+			"name": "Test TestUlozto: test_backupdir RemoteRemote",
+			"type": "go",
+			"request": "launch",
+			"mode": "test",
+			"program": "./cmd/bisync",
+			"args": ["-remote", "TestUlozto:", "-remote2", "TestUlozto:", "-case", "test_backupdir", "-no-cleanup"]
+		},
+		{
+			"name": "Test TestUlozto: test_basic LocalRemote",
+			"type": "go",
+			"request": "launch",
+			"mode": "test",
+			"program": "./cmd/bisync",
+			"args": ["-remote", "local", "-remote2", "TestUlozto:", "-case", "test_basic", "-no-cleanup"]
+		},
+		{
+			"name": "Test TestUlozto: test_basic RemoteLocal",
+			"type": "go",
+			"request": "launch",
+			"mode": "test",
+			"program": "./cmd/bisync",
+			"args": ["-remote", "TestUlozto:", "-remote2", "local", "-case", "test_basic", "-no-cleanup"]
+		},
+		{
+			"name": "Test TestUlozto: test_basic RemoteRemote",
+			"type": "go",
+			"request": "launch",
+			"mode": "test",
+			"program": "./cmd/bisync",
+			"args": ["-remote", "TestUlozto:", "-remote2", "TestUlozto:", "-case", "test_basic", "-no-cleanup"]
+		},
+		{
+			"name": "Test TestUlozto: test_changes LocalRemote",
+			"type": "go",
+			"request": "launch",
+			"mode": "test",
+			"program": "./cmd/bisync",
+			"args": ["-remote", "local", "-remote2", "TestUlozto:", "-case", "test_changes", "-no-cleanup"]
+		},
+		{
+			"name": "Test TestUlozto: test_changes RemoteLocal",
+			"type": "go",
+			"request": "launch",
+			"mode": "test",
+			"program": "./cmd/bisync",
+			"args": ["-remote", "TestUlozto:", "-remote2", "local", "-case", "test_changes", "-no-cleanup"]
+		},
+		{
+			"name": "Test TestUlozto: test_changes RemoteRemote",
+			"type": "go",
+			"request": "launch",
+			"mode": "test",
+			"program": "./cmd/bisync",
+			"args": ["-remote", "TestUlozto:", "-remote2", "TestUlozto:", "-case", "test_changes", "-no-cleanup"]
+		},
+		{
+			"name": "Test TestUlozto: test_check_access LocalRemote",
+			"type": "go",
+			"request": "launch",
+			"mode": "test",
+			"program": "./cmd/bisync",
+			"args": ["-remote", "local", "-remote2", "TestUlozto:", "-case", "test_check_access", "-no-cleanup"]
+		},
+		{
+			"name": "Test TestUlozto: test_check_access RemoteLocal",
+			"type": "go",
+			"request": "launch",
+			"mode": "test",
+			"program": "./cmd/bisync",
+			"args": ["-remote", "TestUlozto:", "-remote2", "local", "-case", "test_check_access", "-no-cleanup"]
+		},
+		{
+			"name": "Test TestUlozto: test_check_access RemoteRemote",
+			"type": "go",
+			"request": "launch",
+			"mode": "test",
+			"program": "./cmd/bisync",
+			"args": ["-remote", "TestUlozto:", "-remote2", "TestUlozto:", "-case", "test_check_access", "-no-cleanup"]
+		},
+		{
+			"name": "Test TestUlozto: test_check_access_filters LocalRemote",
+			"type": "go",
+			"request": "launch",
+			"mode": "test",
+			"program": "./cmd/bisync",
+			"args": ["-remote", "local", "-remote2", "TestUlozto:", "-case", "test_check_access_filters", "-no-cleanup"]
+		},
+		{
+			"name": "Test TestUlozto: test_check_access_filters RemoteLocal",
+			"type": "go",
+			"request": "launch",
+			"mode": "test",
+			"program": "./cmd/bisync",
+			"args": ["-remote", "TestUlozto:", "-remote2", "local", "-case", "test_check_access_filters", "-no-cleanup"]
+		},
+		{
+			"name": "Test TestUlozto: test_check_access_filters RemoteRemote",
+			"type": "go",
+			"request": "launch",
+			"mode": "test",
+			"program": "./cmd/bisync",
+			"args": ["-remote", "TestUlozto:", "-remote2", "TestUlozto:", "-case", "test_check_access_filters", "-no-cleanup"]
+		},
+		{
+			"name": "Test TestUlozto: test_check_filename LocalRemote",
+			"type": "go",
+			"request": "launch",
+			"mode": "test",
+			"program": "./cmd/bisync",
+			"args": ["-remote", "local", "-remote2", "TestUlozto:", "-case", "test_check_filename", "-no-cleanup"]
+		},
+		{
+			"name": "Test TestUlozto: test_check_filename RemoteLocal",
+			"type": "go",
+			"request": "launch",
+			"mode": "test",
+			"program": "./cmd/bisync",
+			"args": ["-remote", "TestUlozto:", "-remote2", "local", "-case", "test_check_filename", "-no-cleanup"]
+		},
+		{
+			"name": "Test TestUlozto: test_check_filename RemoteRemote",
+			"type": "go",
+			"request": "launch",
+			"mode": "test",
+			"program": "./cmd/bisync",
+			"args": ["-remote", "TestUlozto:", "-remote2", "TestUlozto:", "-case", "test_check_filename", "-no-cleanup"]
+		},
+		{
+			"name": "Test TestUlozto: test_check_sync LocalRemote",
+			"type": "go",
+			"request": "launch",
+			"mode": "test",
+			"program": "./cmd/bisync",
+			"args": ["-remote", "local", "-remote2", "TestUlozto:", "-case", "test_check_sync", "-no-cleanup"]
+		},
+		{
+			"name": "Test TestUlozto: test_check_sync RemoteLocal",
+			"type": "go",
+			"request": "launch",
+			"mode": "test",
+			"program": "./cmd/bisync",
+			"args": ["-remote", "TestUlozto:", "-remote2", "local", "-case", "test_check_sync", "-no-cleanup"]
+		},
+		{
+			"name": "Test TestUlozto: test_check_sync RemoteRemote",
+			"type": "go",
+			"request": "launch",
+			"mode": "test",
+			"program": "./cmd/bisync",
+			"args": ["-remote", "TestUlozto:", "-remote2", "TestUlozto:", "-case", "test_check_sync", "-no-cleanup"]
+		},
+		{
+			"name": "Test TestUlozto: test_compare_all LocalRemote",
+			"type": "go",
+			"request": "launch",
+			"mode": "test",
+			"program": "./cmd/bisync",
+			"args": ["-remote", "local", "-remote2", "TestUlozto:", "-case", "test_compare_all", "-no-cleanup"]
+		},
+		{
+			"name": "Test TestUlozto: test_compare_all RemoteLocal",
+			"type": "go",
+			"request": "launch",
+			"mode": "test",
+			"program": "./cmd/bisync",
+			"args": ["-remote", "TestUlozto:", "-remote2", "local", "-case", "test_compare_all", "-no-cleanup"]
+		},
+		{
+			"name": "Test TestUlozto: test_compare_all RemoteRemote",
+			"type": "go",
+			"request": "launch",
+			"mode": "test",
+			"program": "./cmd/bisync",
+			"args": ["-remote", "TestUlozto:", "-remote2", "TestUlozto:", "-case", "test_compare_all", "-no-cleanup"]
+		},
+		{
+			"name": "Test TestUlozto: test_createemptysrcdirs LocalRemote",
+			"type": "go",
+			"request": "launch",
+			"mode": "test",
+			"program": "./cmd/bisync",
+			"args": ["-remote", "local", "-remote2", "TestUlozto:", "-case", "test_createemptysrcdirs", "-no-cleanup"]
+		},
+		{
+			"name": "Test TestUlozto: test_createemptysrcdirs RemoteLocal",
+			"type": "go",
+			"request": "launch",
+			"mode": "test",
+			"program": "./cmd/bisync",
+			"args": ["-remote", "TestUlozto:", "-remote2", "local", "-case", "test_createemptysrcdirs", "-no-cleanup"]
+		},
+		{
+			"name": "Test TestUlozto: test_createemptysrcdirs RemoteRemote",
+			"type": "go",
+			"request": "launch",
+			"mode": "test",
+			"program": "./cmd/bisync",
+			"args": ["-remote", "TestUlozto:", "-remote2", "TestUlozto:", "-case", "test_createemptysrcdirs", "-no-cleanup"]
+		},
+		{
+			"name": "Test TestUlozto: test_dry_run LocalRemote",
+			"type": "go",
+			"request": "launch",
+			"mode": "test",
+			"program": "./cmd/bisync",
+			"args": ["-remote", "local", "-remote2", "TestUlozto:", "-case", "test_dry_run", "-no-cleanup"]
+		},
+		{
+			"name": "Test TestUlozto: test_dry_run RemoteLocal",
+			"type": "go",
+			"request": "launch",
+			"mode": "test",
+			"program": "./cmd/bisync",
+			"args": ["-remote", "TestUlozto:", "-remote2", "local", "-case", "test_dry_run", "-no-cleanup"]
+		},
+		{
+			"name": "Test TestUlozto: test_dry_run RemoteRemote",
+			"type": "go",
+			"request": "launch",
+			"mode": "test",
+			"program": "./cmd/bisync",
+			"args": ["-remote", "TestUlozto:", "-remote2", "TestUlozto:", "-case", "test_dry_run", "-no-cleanup"]
+		},
+		{
+			"name": "Test TestUlozto: test_equal LocalRemote",
+			"type": "go",
+			"request": "launch",
+			"mode": "test",
+			"program": "./cmd/bisync",
+			"args": ["-remote", "local", "-remote2", "TestUlozto:", "-case", "test_equal", "-no-cleanup"]
+		},
+		{
+			"name": "Test TestUlozto: test_equal RemoteLocal",
+			"type": "go",
+			"request": "launch",
+			"mode": "test",
+			"program": "./cmd/bisync",
+			"args": ["-remote", "TestUlozto:", "-remote2", "local", "-case", "test_equal", "-no-cleanup"]
+		},
+		{
+			"name": "Test TestUlozto: test_equal RemoteRemote",
+			"type": "go",
+			"request": "launch",
+			"mode": "test",
+			"program": "./cmd/bisync",
+			"args": ["-remote", "TestUlozto:", "-remote2", "TestUlozto:", "-case", "test_equal", "-no-cleanup"]
+		},
+		{
+			"name": "Test TestUlozto: test_extended_char_paths LocalRemote",
+			"type": "go",
+			"request": "launch",
+			"mode": "test",
+			"program": "./cmd/bisync",
+			"args": ["-remote", "local", "-remote2", "TestUlozto:", "-case", "test_extended_char_paths", "-no-cleanup"]
+		},
+		{
+			"name": "Test TestUlozto: test_extended_char_paths RemoteLocal",
+			"type": "go",
+			"request": "launch",
+			"mode": "test",
+			"program": "./cmd/bisync",
+			"args": ["-remote", "TestUlozto:", "-remote2", "local", "-case", "test_extended_char_paths", "-no-cleanup"]
+		},
+		{
+			"name": "Test TestUlozto: test_extended_char_paths RemoteRemote",
+			"type": "go",
+			"request": "launch",
+			"mode": "test",
+			"program": "./cmd/bisync",
+			"args": ["-remote", "TestUlozto:", "-remote2", "TestUlozto:", "-case", "test_extended_char_paths", "-no-cleanup"]
+		},
+		{
+			"name": "Test TestUlozto: test_extended_filenames LocalRemote",
+			"type": "go",
+			"request": "launch",
+			"mode": "test",
+			"program": "./cmd/bisync",
+			"args": ["-remote", "local", "-remote2", "TestUlozto:", "-case", "test_extended_filenames", "-no-cleanup"]
+		},
+		{
+			"name": "Test TestUlozto: test_extended_filenames RemoteLocal",
+			"type": "go",
+			"request": "launch",
+			"mode": "test",
+			"program": "./cmd/bisync",
+			"args": ["-remote", "TestUlozto:", "-remote2", "local", "-case", "test_extended_filenames", "-no-cleanup"]
+		},
+		{
+			"name": "Test TestUlozto: test_extended_filenames RemoteRemote",
+			"type": "go",
+			"request": "launch",
+			"mode": "test",
+			"program": "./cmd/bisync",
+			"args": ["-remote", "TestUlozto:", "-remote2", "TestUlozto:", "-case", "test_extended_filenames", "-no-cleanup"]
+		},
+		{
+			"name": "Test TestUlozto: test_filters LocalRemote",
+			"type": "go",
+			"request": "launch",
+			"mode": "test",
+			"program": "./cmd/bisync",
+			"args": ["-remote", "local", "-remote2", "TestUlozto:", "-case", "test_filters", "-no-cleanup"]
+		},
+		{
+			"name": "Test TestUlozto: test_filters RemoteLocal",
+			"type": "go",
+			"request": "launch",
+			"mode": "test",
+			"program": "./cmd/bisync",
+			"args": ["-remote", "TestUlozto:", "-remote2", "local", "-case", "test_filters", "-no-cleanup"]
+		},
+		{
+			"name": "Test TestUlozto: test_filters RemoteRemote",
+			"type": "go",
+			"request": "launch",
+			"mode": "test",
+			"program": "./cmd/bisync",
+			"args": ["-remote", "TestUlozto:", "-remote2", "TestUlozto:", "-case", "test_filters", "-no-cleanup"]
+		},
+		{
+			"name": "Test TestUlozto: test_filtersfile_checks LocalRemote",
+			"type": "go",
+			"request": "launch",
+			"mode": "test",
+			"program": "./cmd/bisync",
+			"args": ["-remote", "local", "-remote2", "TestUlozto:", "-case", "test_filtersfile_checks", "-no-cleanup"]
+		},
+		{
+			"name": "Test TestUlozto: test_filtersfile_checks RemoteLocal",
+			"type": "go",
+			"request": "launch",
+			"mode": "test",
+			"program": "./cmd/bisync",
+			"args": ["-remote", "TestUlozto:", "-remote2", "local", "-case", "test_filtersfile_checks", "-no-cleanup"]
+		},
+		{
+			"name": "Test TestUlozto: test_filtersfile_checks RemoteRemote",
+			"type": "go",
+			"request": "launch",
+			"mode": "test",
+			"program": "./cmd/bisync",
+			"args": ["-remote", "TestUlozto:", "-remote2", "TestUlozto:", "-case", "test_filtersfile_checks", "-no-cleanup"]
+		},
+		{
+			"name": "Test TestUlozto: test_ignorelistingchecksum LocalRemote",
+			"type": "go",
+			"request": "launch",
+			"mode": "test",
+			"program": "./cmd/bisync",
+			"args": ["-remote", "local", "-remote2", "TestUlozto:", "-case", "test_ignorelistingchecksum", "-no-cleanup"]
+		},
+		{
+			"name": "Test TestUlozto: test_ignorelistingchecksum RemoteLocal",
+			"type": "go",
+			"request": "launch",
+			"mode": "test",
+			"program": "./cmd/bisync",
+			"args": ["-remote", "TestUlozto:", "-remote2", "local", "-case", "test_ignorelistingchecksum", "-no-cleanup"]
+		},
+		{
+			"name": "Test TestUlozto: test_ignorelistingchecksum RemoteRemote",
+			"type": "go",
+			"request": "launch",
+			"mode": "test",
+			"program": "./cmd/bisync",
+			"args": ["-remote", "TestUlozto:", "-remote2", "TestUlozto:", "-case", "test_ignorelistingchecksum", "-no-cleanup"]
+		},
+		{
+			"name": "Test TestUlozto: test_max_delete_path1 LocalRemote",
+			"type": "go",
+			"request": "launch",
+			"mode": "test",
+			"program": "./cmd/bisync",
+			"args": ["-remote", "local", "-remote2", "TestUlozto:", "-case", "test_max_delete_path1", "-no-cleanup"]
+		},
+		{
+			"name": "Test TestUlozto: test_max_delete_path1 RemoteLocal",
+			"type": "go",
+			"request": "launch",
+			"mode": "test",
+			"program": "./cmd/bisync",
+			"args": ["-remote", "TestUlozto:", "-remote2", "local", "-case", "test_max_delete_path1", "-no-cleanup"]
+		},
+		{
+			"name": "Test TestUlozto: test_max_delete_path1 RemoteRemote",
+			"type": "go",
+			"request": "launch",
+			"mode": "test",
+			"program": "./cmd/bisync",
+			"args": ["-remote", "TestUlozto:", "-remote2", "TestUlozto:", "-case", "test_max_delete_path1", "-no-cleanup"]
+		},
+		{
+			"name": "Test TestUlozto: test_max_delete_path2_force LocalRemote",
+			"type": "go",
+			"request": "launch",
+			"mode": "test",
+			"program": "./cmd/bisync",
+			"args": ["-remote", "local", "-remote2", "TestUlozto:", "-case", "test_max_delete_path2_force", "-no-cleanup"]
+		},
+		{
+			"name": "Test TestUlozto: test_max_delete_path2_force RemoteLocal",
+			"type": "go",
+			"request": "launch",
+			"mode": "test",
+			"program": "./cmd/bisync",
+			"args": ["-remote", "TestUlozto:", "-remote2", "local", "-case", "test_max_delete_path2_force", "-no-cleanup"]
+		},
+		{
+			"name": "Test TestUlozto: test_max_delete_path2_force RemoteRemote",
+			"type": "go",
+			"request": "launch",
+			"mode": "test",
+			"program": "./cmd/bisync",
+			"args": ["-remote", "TestUlozto:", "-remote2", "TestUlozto:", "-case", "test_max_delete_path2_force", "-no-cleanup"]
+		},
+		{
+			"name": "Test TestUlozto: test_nomodtime LocalRemote",
+			"type": "go",
+			"request": "launch",
+			"mode": "test",
+			"program": "./cmd/bisync",
+			"args": ["-remote", "local", "-remote2", "TestUlozto:", "-case", "test_nomodtime", "-no-cleanup"]
+		},
+		{
+			"name": "Test TestUlozto: test_nomodtime RemoteLocal",
+			"type": "go",
+			"request": "launch",
+			"mode": "test",
+			"program": "./cmd/bisync",
+			"args": ["-remote", "TestUlozto:", "-remote2", "local", "-case", "test_nomodtime", "-no-cleanup"]
+		},
+		{
+			"name": "Test TestUlozto: test_nomodtime RemoteRemote",
+			"type": "go",
+			"request": "launch",
+			"mode": "test",
+			"program": "./cmd/bisync",
+			"args": ["-remote", "TestUlozto:", "-remote2", "TestUlozto:", "-case", "test_nomodtime", "-no-cleanup"]
+		},
+		{
+			"name": "Test TestUlozto: test_normalization LocalRemote",
+			"type": "go",
+			"request": "launch",
+			"mode": "test",
+			"program": "./cmd/bisync",
+			"args": ["-remote", "local", "-remote2", "TestUlozto:", "-case", "test_normalization", "-no-cleanup"]
+		},
+		{
+			"name": "Test TestUlozto: test_normalization RemoteLocal",
+			"type": "go",
+			"request": "launch",
+			"mode": "test",
+			"program": "./cmd/bisync",
+			"args": ["-remote", "TestUlozto:", "-remote2", "local", "-case", "test_normalization", "-no-cleanup"]
+		},
+		{
+			"name": "Test TestUlozto: test_normalization RemoteRemote",
+			"type": "go",
+			"request": "launch",
+			"mode": "test",
+			"program": "./cmd/bisync",
+			"args": ["-remote", "TestUlozto:", "-remote2", "TestUlozto:", "-case", "test_normalization", "-no-cleanup"]
+		},
+		{
+			"name": "Test TestUlozto: test_rclone_args LocalRemote",
+			"type": "go",
+			"request": "launch",
+			"mode": "test",
+			"program": "./cmd/bisync",
+			"args": ["-remote", "local", "-remote2", "TestUlozto:", "-case", "test_rclone_args", "-no-cleanup"]
+		},
+		{
+			"name": "Test TestUlozto: test_rclone_args RemoteLocal",
+			"type": "go",
+			"request": "launch",
+			"mode": "test",
+			"program": "./cmd/bisync",
+			"args": ["-remote", "TestUlozto:", "-remote2", "local", "-case", "test_rclone_args", "-no-cleanup"]
+		},
+		{
+			"name": "Test TestUlozto: test_rclone_args RemoteRemote",
+			"type": "go",
+			"request": "launch",
+			"mode": "test",
+			"program": "./cmd/bisync",
+			"args": ["-remote", "TestUlozto:", "-remote2", "TestUlozto:", "-case", "test_rclone_args", "-no-cleanup"]
+		},
+		{
+			"name": "Test TestUlozto: test_resolve LocalRemote",
+			"type": "go",
+			"request": "launch",
+			"mode": "test",
+			"program": "./cmd/bisync",
+			"args": ["-remote", "local", "-remote2", "TestUlozto:", "-case", "test_resolve", "-no-cleanup"]
+		},
+		{
+			"name": "Test TestUlozto: test_resolve RemoteLocal",
+			"type": "go",
+			"request": "launch",
+			"mode": "test",
+			"program": "./cmd/bisync",
+			"args": ["-remote", "TestUlozto:", "-remote2", "local", "-case", "test_resolve", "-no-cleanup"]
+		},
+		{
+			"name": "Test TestUlozto: test_resolve RemoteRemote",
+			"type": "go",
+			"request": "launch",
+			"mode": "test",
+			"program": "./cmd/bisync",
+			"args": ["-remote", "TestUlozto:", "-remote2", "TestUlozto:", "-case", "test_resolve", "-no-cleanup"]
+		},
+		{
+			"name": "Test TestUlozto: test_resync LocalRemote",
+			"type": "go",
+			"request": "launch",
+			"mode": "test",
+			"program": "./cmd/bisync",
+			"args": ["-remote", "local", "-remote2", "TestUlozto:", "-case", "test_resync", "-no-cleanup"]
+		},
+		{
+			"name": "Test TestUlozto: test_resync RemoteLocal",
+			"type": "go",
+			"request": "launch",
+			"mode": "test",
+			"program": "./cmd/bisync",
+			"args": ["-remote", "TestUlozto:", "-remote2", "local", "-case", "test_resync", "-no-cleanup"]
+		},
+		{
+			"name": "Test TestUlozto: test_resync RemoteRemote",
+			"type": "go",
+			"request": "launch",
+			"mode": "test",
+			"program": "./cmd/bisync",
+			"args": ["-remote", "TestUlozto:", "-remote2", "TestUlozto:", "-case", "test_resync", "-no-cleanup"]
+		},
+		{
+			"name": "Test TestUlozto: test_resync_modes LocalRemote",
+			"type": "go",
+			"request": "launch",
+			"mode": "test",
+			"program": "./cmd/bisync",
+			"args": ["-remote", "local", "-remote2", "TestUlozto:", "-case", "test_resync_modes", "-no-cleanup"]
+		},
+		{
+			"name": "Test TestUlozto: test_resync_modes RemoteLocal",
+			"type": "go",
+			"request": "launch",
+			"mode": "test",
+			"program": "./cmd/bisync",
+			"args": ["-remote", "TestUlozto:", "-remote2", "local", "-case", "test_resync_modes", "-no-cleanup"]
+		},
+		{
+			"name": "Test TestUlozto: test_resync_modes RemoteRemote",
+			"type": "go",
+			"request": "launch",
+			"mode": "test",
+			"program": "./cmd/bisync",
+			"args": ["-remote", "TestUlozto:", "-remote2", "TestUlozto:", "-case", "test_resync_modes", "-no-cleanup"]
+		},
+		{
+			"name": "Test TestUlozto: test_rmdirs LocalRemote",
+			"type": "go",
+			"request": "launch",
+			"mode": "test",
+			"program": "./cmd/bisync",
+			"args": ["-remote", "local", "-remote2", "TestUlozto:", "-case", "test_rmdirs", "-no-cleanup"]
+		},
+		{
+			"name": "Test TestUlozto: test_rmdirs RemoteLocal",
+			"type": "go",
+			"request": "launch",
+			"mode": "test",
+			"program": "./cmd/bisync",
+			"args": ["-remote", "TestUlozto:", "-remote2", "local", "-case", "test_rmdirs", "-no-cleanup"]
+		},
+		{
+			"name": "Test TestUlozto: test_rmdirs RemoteRemote",
+			"type": "go",
+			"request": "launch",
+			"mode": "test",
+			"program": "./cmd/bisync",
+			"args": ["-remote", "TestUlozto:", "-remote2", "TestUlozto:", "-case", "test_rmdirs", "-no-cleanup"]
+		},
+		{
+			"name": "Test TestUlozto: test_volatile LocalRemote",
+			"type": "go",
+			"request": "launch",
+			"mode": "test",
+			"program": "./cmd/bisync",
+			"args": ["-remote", "local", "-remote2", "TestUlozto:", "-case", "test_volatile", "-no-cleanup"]
+		},
+		{
+			"name": "Test TestUlozto: test_volatile RemoteLocal",
+			"type": "go",
+			"request": "launch",
+			"mode": "test",
+			"program": "./cmd/bisync",
+			"args": ["-remote", "TestUlozto:", "-remote2", "local", "-case", "test_volatile", "-no-cleanup"]
+		},
+		{
+			"name": "Test TestUlozto: test_volatile RemoteRemote",
+			"type": "go",
+			"request": "launch",
+			"mode": "test",
+			"program": "./cmd/bisync",
+			"args": ["-remote", "TestUlozto:", "-remote2", "TestUlozto:", "-case", "test_volatile", "-no-cleanup"]
+		},
 
     ]
 }

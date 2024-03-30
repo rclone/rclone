@@ -66,7 +66,7 @@ var initDate = time.Date(2000, time.January, 1, 0, 0, 0, 0, bisync.TZ)
 // go test ./cmd/bisync -remote local -golden
 // go test ./cmd/bisync -remote local -case extended_filenames
 // go run ./fstest/test_all -run '^TestBisync.*$' -timeout 3h -verbose -maxtries 5
-// go run ./fstest/test_all -remotes local,TestCrypt:,TestDrive:,TestOneDrive:,TestOneDriveBusiness:,TestDropbox:,TestCryptDrive:,TestOpenDrive:,TestChunker:,:memory:,TestCryptNoEncryption:,TestCombine:DirA,TestFTPRclone:,TestWebdavRclone:,TestS3Rclone:,TestSFTPRclone:,TestSFTPRcloneSSH: -run '^TestBisync.*$' -timeout 3h -verbose -maxtries 5
+// go run ./fstest/test_all -remotes local,TestCrypt:,TestDrive:,TestOneDrive:,TestOneDriveBusiness:,TestDropbox:,TestCryptDrive:,TestOpenDrive:,TestChunker:,:memory:,TestCryptNoEncryption:,TestCombine:DirA,TestFTPRclone:,TestWebdavRclone:,TestS3Rclone:,TestSFTPRclone:,TestSFTPRcloneSSH:,TestNextcloud:,TestChunkerNometaLocal:,TestChunkerChunk3bLocal:,TestChunkerLocal:,TestChunkerChunk3bNometaLocal:,TestChunkerCompatLocal: -run '^TestBisync.*$' -timeout 3h -verbose -maxtries 5
 // go test -timeout 3h -run '^TestBisync.*$' github.com/rclone/rclone/cmd/bisync -remote TestDrive:Bisync -v
 // go test -timeout 3h -run '^TestBisyncRemoteRemote/basic$' github.com/rclone/rclone/cmd/bisync -remote TestDropbox:Bisync -v
 
@@ -93,6 +93,8 @@ var logReplacements = []string{
 	`^INFO  : .*?: Crypt detected! Using cryptcheck instead of check. \(Use --size-only or --ignore-checksum to disable\)$`, dropMe,
 	// ignore drive info messages
 	`^NOTICE:.*?Files of unknown size \(such as Google Docs\) do not sync reliably with --checksum or --size-only\. Consider using modtime instead \(the default\) or --drive-skip-gdocs.*?$`, dropMe,
+	// ignore cache backend cache expired messages
+	`^INFO  : .*cache expired.*$`, dropMe,
 	// ignore differences in backend features
 	`^.*?"HashType1":.*?$`, dropMe,
 	`^.*?"HashType2":.*?$`, dropMe,
@@ -254,7 +256,7 @@ func testBisync(t *testing.T, path1, path2 string) {
 
 	baseDir, err := os.Getwd()
 	require.NoError(t, err, "get current directory")
-	randName := "bisync." + time.Now().Format("150405-") + random.String(5)
+	randName := "bisync-" + time.Now().Format("150405-") + random.String(5) // AzureBlob doesn't like dots
 	tempDir := filepath.Join(os.TempDir(), randName)
 	workDir := filepath.Join(tempDir, "workdir")
 
@@ -319,7 +321,8 @@ func testBisync(t *testing.T, path1, path2 string) {
 		testCase = strings.ReplaceAll(testCase, "-", "_")
 		testCase = strings.TrimPrefix(testCase, "test_")
 		t.Run(testCase, func(childTest *testing.T) {
-			b.runTestCase(ctx, childTest, testCase)
+			bCopy := *b
+			bCopy.runTestCase(ctx, childTest, testCase)
 		})
 	}
 }
@@ -366,13 +369,58 @@ func (b *bisyncTest) runTestCase(ctx context.Context, t *testing.T, testCase str
 	})
 	require.NoError(b.t, err, "jamming initial dates")
 
+	// copy to a new unique initdir and datadir so concurrent tests don't interfere with each other
+	ctxNoDsStore, _ := ctxNoDsStore(ctx, b.t)
+	makeUnique := func(label, oldPath string) (newPath string) {
+		newPath = oldPath
+		info, err := os.Stat(oldPath)
+		if err == nil && info.IsDir() { // datadir is optional
+			oldFs, err := cache.Get(ctx, oldPath)
+			require.NoError(b.t, err)
+			newPath = b.tempDir + "/" + label + "/" + "test_" + b.testCase + "-" + random.String(8)
+			newFs, err := cache.Get(ctx, newPath)
+			require.NoError(b.t, err)
+			require.NoError(b.t, sync.CopyDir(ctxNoDsStore, newFs, oldFs, true), "setting up "+label)
+		}
+		return newPath
+	}
+	b.initDir = makeUnique("initdir", b.initDir)
+	b.dataDir = makeUnique("datadir", b.dataDir)
+
 	// Prepare initial content
 	b.cleanupCase(ctx)
+	fstest.CheckListingWithPrecision(b.t, b.fs1, []fstest.Item{}, []string{}, b.fs1.Precision()) // verify starting from empty
+	fstest.CheckListingWithPrecision(b.t, b.fs2, []fstest.Item{}, []string{}, b.fs2.Precision())
 	initFs, err := cache.Get(ctx, b.initDir)
 	require.NoError(b.t, err)
-	ctxNoDsStore, _ := ctxNoDsStore(ctx, b.t)
+
+	// verify pre-test equality (garbage in, garbage out!)
+	srcObjs, srcDirs, err := walk.GetAll(ctxNoDsStore, initFs, "", false, -1)
+	assert.NoError(b.t, err)
+	items := []fstest.Item{}
+	for _, obj := range srcObjs {
+		require.False(b.t, strings.Contains(obj.Remote(), ".partial"))
+		rc, err := operations.Open(ctxNoDsStore, obj)
+		assert.NoError(b.t, err)
+		bytes := make([]byte, obj.Size())
+		_, err = rc.Read(bytes)
+		assert.NoError(b.t, err)
+		assert.NoError(b.t, rc.Close())
+		item := fstest.NewItem(norm.NFC.String(obj.Remote()), string(bytes), obj.ModTime(ctxNoDsStore))
+		items = append(items, item)
+	}
+	dirs := []string{}
+	for _, dir := range srcDirs {
+		dirs = append(dirs, norm.NFC.String(dir.Remote()))
+	}
+	log.Printf("checking initFs %s", initFs)
+	fstest.CheckListingWithPrecision(b.t, initFs, items, dirs, initFs.Precision())
 	require.NoError(b.t, sync.CopyDir(ctxNoDsStore, b.fs1, initFs, true), "setting up path1")
+	log.Printf("checking Path1 %s", b.fs1)
+	fstest.CheckListingWithPrecision(b.t, b.fs1, items, dirs, b.fs1.Precision())
 	require.NoError(b.t, sync.CopyDir(ctxNoDsStore, b.fs2, initFs, true), "setting up path2")
+	log.Printf("checking path2 %s", b.fs2)
+	fstest.CheckListingWithPrecision(b.t, b.fs2, items, dirs, b.fs2.Precision())
 
 	// Create log file
 	b.mkdir(b.workDir)
@@ -885,9 +933,11 @@ func (b *bisyncTest) checkPreReqs(ctx context.Context, opt *bisync.Options) (con
 
 	if b.testCase == "normalization" || b.testCase == "extended_char_paths" || b.testCase == "extended_filenames" {
 		// test whether remote is capable of running test
-		const chars = "ě_{chr:81}{chr:fe}{spc}áñhࢺ_測試Русский_ěáñ👸🏼🧝🏾‍♀️💆🏿‍♂️🐨🤙🏼🤮🧑🏻‍🔧🧑‍🔬éö"
+		const chars = "ě{chr:81}{chr:fe}{spc}áñhࢺ_測試Рускийěáñ👸🏼🧝🏾‍♀️💆🏿‍♂️🐨🤙🏼🤮🧑🏻‍🔧🧑‍🔬éö"
 		testfilename1 := splitLine(norm.NFD.String(norm.NFC.String(chars)))[0]
 		testfilename2 := splitLine(norm.NFC.String(norm.NFD.String(chars)))[0]
+		tempDir, err := cache.Get(ctx, b.tempDir)
+		require.NoError(b.t, err)
 		preTest := func(f fs.Fs, testfilename string) string {
 			in := bytes.NewBufferString(testfilename)
 			objinfo := object.NewStaticObjectInfo(testfilename, initDate, int64(len(testfilename)), true, nil, nil)
@@ -902,8 +952,21 @@ func (b *bisyncTest) checkPreReqs(ctx context.Context, opt *bisync.Options) (con
 				// we can still deal with this as long as both remotes auto-convert the same way.
 				b.t.Logf("Warning: this remote seems to auto-convert special characters (testcase: %s) (expected: \n%s (%s) actual: \n%s (%s))\n (fs: %s) \n%v", b.testCase, testfilename, detectEncoding(testfilename), entries[0].Remote(), detectEncoding(entries[0].Remote()), f, diffStr)
 			}
-			err = obj.Remove(ctx)
+			// test whether we can fix-case
+			ctxFixCase, ci := fs.AddConfig(ctx)
+			ci.FixCase = true
+			transformedName := strings.ToLower(obj.Remote())
+			src, err := tempDir.Put(ctx, in, object.NewStaticObjectInfo(transformedName, initDate, int64(len(transformedName)), true, nil, nil)) // local
 			require.NoError(b.t, err)
+			upperObj, err := operations.Copy(ctxFixCase, f, nil, transformedName, src)
+			if err != nil || upperObj.Remote() != transformedName {
+				b.t.Skipf("Fs is incapable of running test as can't fix-case, skipping: %s (expected: \n%s (%s) actual: \n%s (%v))\n (fs: %s) \n", b.testCase, transformedName, detectEncoding(transformedName), upperObj.Remote(), err, f)
+			}
+			require.NoError(b.t, src.Remove(ctx))
+			require.NoError(b.t, obj.Remove(ctx))
+			if obj != nil {
+				require.NoError(b.t, upperObj.Remove(ctx))
+			}
 			return entries[0].Remote()
 		}
 		got1 := preTest(b.fs1, testfilename1)
@@ -1444,6 +1507,9 @@ func (b *bisyncTest) mangleResult(dir, file string, golden bool) string {
 	lines := strings.Split(s, eol)
 	pathReplacer := b.newReplacer(true)
 
+	if b.fs1.Hashes() == hash.Set(hash.None) || b.fs2.Hashes() == hash.Set(hash.None) {
+		logReplacements = append(logReplacements, `^.*{hashtype} differ.*$`, dropMe)
+	}
 	rep := logReplacements
 	if b.testCase == "dry_run" {
 		rep = append(rep, dryrunReplacements...)
@@ -1798,6 +1864,8 @@ func detectEncoding(s string) string {
 func ctxNoDsStore(ctx context.Context, t *testing.T) (context.Context, *filter.Filter) {
 	ctxNoDsStore, fi := filter.AddConfig(ctx)
 	err := fi.AddRule("- .DS_Store")
+	require.NoError(t, err)
+	err = fi.AddRule("- *.partial")
 	require.NoError(t, err)
 	err = fi.AddRule("+ **")
 	require.NoError(t, err)
