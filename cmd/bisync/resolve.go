@@ -120,14 +120,16 @@ func (b *bisyncRun) setResolveDefaults(ctx context.Context) error {
 	return nil
 }
 
-type renames map[string]renamesInfo // [originalName]newName (remember the originalName may have an alias)
-// the newName may be the same as the old name (if winner), but should not be blank, unless we're deleting.
-// the oldNames may not match each other, if we're normalizing case or unicode
-// all names should be "remotes" (relative names, without base path)
-type renamesInfo struct {
-	path1 namePair
-	path2 namePair
-}
+type (
+	renames map[string]renamesInfo // [originalName]newName (remember the originalName may have an alias)
+	// the newName may be the same as the old name (if winner), but should not be blank, unless we're deleting.
+	// the oldNames may not match each other, if we're normalizing case or unicode
+	// all names should be "remotes" (relative names, without base path)
+	renamesInfo struct {
+		path1 namePair
+		path2 namePair
+	}
+)
 type namePair struct {
 	oldName string
 	newName string
@@ -395,26 +397,26 @@ func (b *bisyncRun) resolveNewerOlder(t1, t2 time.Time, remote1, remote2 string,
 	}
 	if t1.After(t2) {
 		if prefer == PreferNewer {
-			fs.Infof(remote1, "Path1 is newer. Path1: %v, Path2: %v, Difference: %s", t1, t2, t1.Sub(t2))
+			fs.Infof(remote1, "Path1 is newer. Path1: %v, Path2: %v, Difference: %s", t1.Local(), t2.Local(), t1.Sub(t2))
 			return 1
 		} else if prefer == PreferOlder {
-			fs.Infof(remote1, "Path2 is older. Path1: %v, Path2: %v, Difference: %s", t1, t2, t1.Sub(t2))
+			fs.Infof(remote1, "Path2 is older. Path1: %v, Path2: %v, Difference: %s", t1.Local(), t2.Local(), t1.Sub(t2))
 			return 2
 		}
 	} else if t1.Before(t2) {
 		if prefer == PreferNewer {
-			fs.Infof(remote1, "Path2 is newer. Path1: %v, Path2: %v, Difference: %s", t1, t2, t2.Sub(t1))
+			fs.Infof(remote1, "Path2 is newer. Path1: %v, Path2: %v, Difference: %s", t1.Local(), t2.Local(), t2.Sub(t1))
 			return 2
 		} else if prefer == PreferOlder {
-			fs.Infof(remote1, "Path1 is older. Path1: %v, Path2: %v, Difference: %s", t1, t2, t2.Sub(t1))
+			fs.Infof(remote1, "Path1 is older. Path1: %v, Path2: %v, Difference: %s", t1.Local(), t2.Local(), t2.Sub(t1))
 			return 1
 		}
 	}
 	if t1.Equal(t2) {
-		fs.Infof(remote1, "Winner cannot be determined as times are equal. Path1: %v, Path2: %v, Difference: %s", t1, t2, t2.Sub(t1))
+		fs.Infof(remote1, "Winner cannot be determined as times are equal. Path1: %v, Path2: %v, Difference: %s", t1.Local(), t2.Local(), t2.Sub(t1))
 		return 0
 	}
-	fs.Errorf(remote1, "Winner cannot be determined. Path1: %v, Path2: %v", t1, t2) // shouldn't happen unless prefer is of wrong type
+	fs.Errorf(remote1, "Winner cannot be determined. Path1: %v, Path2: %v", t1.Local(), t2.Local()) // shouldn't happen unless prefer is of wrong type
 	return 0
 }
 
