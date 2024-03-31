@@ -266,14 +266,14 @@ func (c *copy) manualCopy(ctx context.Context) (actionTaken string, newDst fs.Ob
 func (c *copy) verify(ctx context.Context, newDst fs.Object) (err error) {
 	// Verify sizes are the same after transfer
 	if sizeDiffers(ctx, c.src, newDst) {
-		return fmt.Errorf("corrupted on transfer: sizes differ src(%s) %d vs dst(%s) %d", c.src.Fs(), c.src.Size(), c.dst.Fs(), c.dst.Size())
+		return fmt.Errorf("corrupted on transfer: sizes differ src(%s) %d vs dst(%s) %d", c.src.Fs(), c.src.Size(), newDst.Fs(), newDst.Size())
 	}
 	// Verify hashes are the same after transfer - ignoring blank hashes
 	if c.hashType != hash.None {
 		// checkHashes has logs and counts errors
 		equal, _, srcSum, dstSum, _ := checkHashes(ctx, c.src, newDst, c.hashType)
 		if !equal {
-			return fmt.Errorf("corrupted on transfer: %v hashes differ src(%s) %q vs dst(%s) %q", c.hashType, c.src.Fs(), srcSum, c.dst.Fs(), dstSum)
+			return fmt.Errorf("corrupted on transfer: %v hashes differ src(%s) %q vs dst(%s) %q", c.hashType, c.src.Fs(), srcSum, newDst.Fs(), dstSum)
 		}
 	}
 	return nil

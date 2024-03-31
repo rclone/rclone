@@ -76,6 +76,23 @@ func TestUpdatingCheck(t *testing.T) {
 
 }
 
+// Test corrupted on transfer
+// should error due to size/hash mismatch
+func TestVerifyCopy(t *testing.T) {
+	r := fstest.NewRun(t)
+	filePath := "sub dir/local test"
+	r.WriteFile(filePath, "some content", time.Now())
+	src, err := r.Flocal.NewObject(context.Background(), filePath)
+	require.NoError(t, err)
+	src.(*Object).fs.opt.NoCheckUpdated = true
+
+	for i := 0; i < 100; i++ {
+		go r.WriteFile(src.Remote(), fmt.Sprintf("some new content %d", i), src.ModTime(context.Background()))
+	}
+	_, err = operations.Copy(context.Background(), r.Fremote, nil, filePath+"2", src)
+	assert.Error(t, err)
+}
+
 func TestSymlink(t *testing.T) {
 	ctx := context.Background()
 	r := fstest.NewRun(t)
