@@ -66,7 +66,7 @@ var initDate = time.Date(2000, time.January, 1, 0, 0, 0, 0, bisync.TZ)
 // go test ./cmd/bisync -remote local -golden
 // go test ./cmd/bisync -remote local -case extended_filenames
 // go run ./fstest/test_all -run '^TestBisync.*$' -timeout 3h -verbose -maxtries 5
-// go run ./fstest/test_all -remotes local,TestCrypt:,TestDrive:,TestOneDrive:,TestOneDriveBusiness:,TestDropbox:,TestCryptDrive:,TestOpenDrive:,TestChunker:,:memory:,TestCryptNoEncryption:,TestCombine:DirA,TestFTPRclone:,TestWebdavRclone:,TestS3Rclone:,TestSFTPRclone:,TestSFTPRcloneSSH:,TestNextcloud:,TestChunkerNometaLocal:,TestChunkerChunk3bLocal:,TestChunkerLocal:,TestChunkerChunk3bNometaLocal:,TestChunkerCompatLocal: -run '^TestBisync.*$' -timeout 3h -verbose -maxtries 5
+// go run ./fstest/test_all -remotes local,TestCrypt:,TestDrive:,TestOneDrive:,TestOneDriveBusiness:,TestDropbox:,TestCryptDrive:,TestOpenDrive:,TestChunker:,:memory:,TestCryptNoEncryption:,TestCombine:DirA,TestFTPRclone:,TestWebdavRclone:,TestS3Rclone:,TestSFTPRclone:,TestSFTPRcloneSSH:,TestNextcloud:,TestChunkerNometaLocal:,TestChunkerChunk3bLocal:,TestChunkerLocal:,TestChunkerChunk3bNometaLocal:,TestStorj: -run '^TestBisync.*$' -timeout 3h -verbose -maxtries 5
 // go test -timeout 3h -run '^TestBisync.*$' github.com/rclone/rclone/cmd/bisync -remote TestDrive:Bisync -v
 // go test -timeout 3h -run '^TestBisyncRemoteRemote/basic$' github.com/rclone/rclone/cmd/bisync -remote TestDropbox:Bisync -v
 
@@ -415,10 +415,10 @@ func (b *bisyncTest) runTestCase(ctx context.Context, t *testing.T, testCase str
 	}
 	log.Printf("checking initFs %s", initFs)
 	fstest.CheckListingWithPrecision(b.t, initFs, items, dirs, initFs.Precision())
-	require.NoError(b.t, sync.CopyDir(ctxNoDsStore, b.fs1, initFs, true), "setting up path1")
+	checkError(b.t, sync.CopyDir(ctxNoDsStore, b.fs1, initFs, true), "setting up path1")
 	log.Printf("checking Path1 %s", b.fs1)
 	fstest.CheckListingWithPrecision(b.t, b.fs1, items, dirs, b.fs1.Precision())
-	require.NoError(b.t, sync.CopyDir(ctxNoDsStore, b.fs2, initFs, true), "setting up path2")
+	checkError(b.t, sync.CopyDir(ctxNoDsStore, b.fs2, initFs, true), "setting up path2")
 	log.Printf("checking path2 %s", b.fs2)
 	fstest.CheckListingWithPrecision(b.t, b.fs2, items, dirs, b.fs2.Precision())
 
@@ -527,12 +527,12 @@ func (b *bisyncTest) runTestCase(ctx context.Context, t *testing.T, testCase str
 // if a local path is provided, it's ignored (the test will run under system temp)
 func (b *bisyncTest) makeTempRemote(ctx context.Context, remote, subdir string) (f, parent fs.Fs, path, canon string) {
 	var err error
-	if bilib.IsLocalPath(remote) && !strings.HasPrefix(remote, ":") {
+	if bilib.IsLocalPath(remote) && !strings.HasPrefix(remote, ":") && !strings.Contains(remote, ",") {
 		if remote != "" && remote != "local" {
 			b.t.Fatalf(`Missing ":" in remote %q. Use "local" to test with local filesystem.`, remote)
 		}
 		parent, err = cache.Get(ctx, b.tempDir)
-		require.NoError(b.t, err, "parsing %s", b.tempDir)
+		checkError(b.t, err, "parsing local tempdir %s", b.tempDir)
 
 		path = filepath.Join(b.tempDir, b.testCase)
 		canon = bilib.CanonicalPath(path) + "_"
@@ -544,7 +544,8 @@ func (b *bisyncTest) makeTempRemote(ctx context.Context, remote, subdir string) 
 		}
 		remote += b.randName
 		parent, err = cache.Get(ctx, remote)
-		require.NoError(b.t, err, "parsing %s", remote)
+		checkError(b.t, err, "parsing remote %s", remote)
+		checkError(b.t, operations.Mkdir(ctx, parent, subdir), "Mkdir "+subdir) // ensure dir exists (storj seems to need this)
 
 		path = remote + "/" + b.testCase
 		canon = bilib.CanonicalPath(path) + "_"
@@ -552,7 +553,7 @@ func (b *bisyncTest) makeTempRemote(ctx context.Context, remote, subdir string) 
 	}
 
 	f, err = cache.Get(ctx, path)
-	require.NoError(b.t, err, "parsing %s/%s", remote, subdir)
+	checkError(b.t, err, "parsing remote/subdir %s/%s", remote, subdir)
 	path = bilib.FsPath(f) // Make it canonical
 	return
 }
@@ -1870,4 +1871,11 @@ func ctxNoDsStore(ctx context.Context, t *testing.T) (context.Context, *filter.F
 	err = fi.AddRule("+ **")
 	require.NoError(t, err)
 	return ctxNoDsStore, fi
+}
+
+func checkError(t *testing.T, err error, msgAndArgs ...interface{}) {
+	if errors.Is(err, fs.ErrorCantUploadEmptyFiles) {
+		t.Skipf("Skip test because remote cannot upload empty files")
+	}
+	assert.NoError(t, err, msgAndArgs...)
 }
