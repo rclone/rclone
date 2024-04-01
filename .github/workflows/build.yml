@@ -124,7 +124,7 @@ jobs:
           sudo modprobe fuse
           sudo chmod 666 /dev/fuse
           sudo chown root:$USER /etc/fuse.conf
-          sudo apt-get install fuse3 libfuse-dev rpm pkg-config
+          sudo apt-get install fuse3 libfuse-dev rpm pkg-config git-annex
         if: matrix.os == 'ubuntu-latest'
 
       - name: Install Libraries on macOS
@@ -137,6 +137,7 @@ jobs:
           brew untap --force homebrew/cask
           brew update
           brew install --cask macfuse
+          brew install git-annex
         if: matrix.os == 'macos-11'
 
       - name: Install Libraries on Windows
