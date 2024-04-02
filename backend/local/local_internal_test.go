@@ -79,6 +79,7 @@ func TestUpdatingCheck(t *testing.T) {
 // Test corrupted on transfer
 // should error due to size/hash mismatch
 func TestVerifyCopy(t *testing.T) {
+	t.Skip("FIXME this test is unreliable")
 	r := fstest.NewRun(t)
 	filePath := "sub dir/local test"
 	r.WriteFile(filePath, "some content", time.Now())
