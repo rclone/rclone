@@ -90,6 +90,7 @@ var logReplacements = []string{
 	`^NOTICE: .*?: Forced to upload files to set modification times on this backend.$`, dropMe,
 	`^INFO  : .*? Committing uploads - please wait...$`, dropMe,
 	`^INFO  : .*?: src and dst identical but can't set mod time without deleting and re-uploading$`, dropMe,
+	`^INFO  : .*?: src and dst identical but can't set mod time without re-uploading$`, dropMe,
 	// ignore crypt info messages
 	`^INFO  : .*?: Crypt detected! Using cryptcheck instead of check. \(Use --size-only or --ignore-checksum to disable\)$`, dropMe,
 	// ignore drive info messages

@@ -759,7 +759,7 @@ func (f *Fs) listAll(ctx context.Context, dir string, directoriesOnly bool, file
 		}
 		return found, fmt.Errorf("couldn't list files: %w", err)
 	}
-	//fmt.Printf("result = %#v", &result)
+	// fmt.Printf("result = %#v", &result)
 	baseURL, err := rest.URLJoin(f.endpoint, opts.Path)
 	if err != nil {
 		return false, fmt.Errorf("couldn't join URL: %w", err)
@@ -1110,7 +1110,7 @@ func (f *Fs) copyOrMove(ctx context.Context, src fs.Object, remote string, metho
 	if err != nil {
 		return nil, fmt.Errorf("copy NewObject failed: %w", err)
 	}
-	if f.useOCMtime && resp.Header.Get("X-OC-Mtime") != "accepted" && f.propsetMtime {
+	if f.useOCMtime && resp.Header.Get("X-OC-Mtime") != "accepted" && f.propsetMtime && !dstObj.ModTime(ctx).Equal(src.ModTime(ctx)) {
 		fs.Debugf(dstObj, "Setting modtime after copy to %v", src.ModTime(ctx))
 		err = dstObj.SetModTime(ctx, src.ModTime(ctx))
 		if err != nil {
@@ -1364,14 +1364,37 @@ var owncloudPropset = `<?xml version="1.0" encoding="utf-8" ?>
 </D:propertyupdate>
 `
 
+var owncloudPropsetWithChecksum = `<?xml version="1.0" encoding="utf-8" ?>
+<D:propertyupdate xmlns:D="DAV:" xmlns:oc="http://owncloud.org/ns">
+ <D:set>
+  <D:prop>
+   <lastmodified xmlns="DAV:">%d</lastmodified>
+   <oc:checksums>
+	<oc:checksum>%s</oc:checksum>
+   </oc:checksums>
+  </D:prop>
+ </D:set>
+</D:propertyupdate>
+`
+
 // SetModTime sets the modification time of the local fs object
 func (o *Object) SetModTime(ctx context.Context, modTime time.Time) error {
 	if o.fs.propsetMtime {
+		checksums := ""
+		if o.fs.hasOCSHA1 && o.sha1 != "" {
+			checksums = "SHA1:" + o.sha1
+		} else if o.fs.hasOCMD5 && o.md5 != "" {
+			checksums = "MD5:" + o.md5
+		}
+
 		opts := rest.Opts{
 			Method:     "PROPPATCH",
 			Path:       o.filePath(),
 			NoRedirect: true,
 			Body:       strings.NewReader(fmt.Sprintf(owncloudPropset, modTime.Unix())),
+		}
+		if checksums != "" {
+			opts.Body = strings.NewReader(fmt.Sprintf(owncloudPropsetWithChecksum, modTime.Unix(), checksums))
 		}
 		var result api.Multistatus
 		var resp *http.Response
@@ -1393,6 +1416,14 @@ func (o *Object) SetModTime(ctx context.Context, modTime time.Time) error {
 		if len(result.Responses) == 1 && result.Responses[0].Props.StatusOK() {
 			// update cached modtime
 			o.modTime = modTime
+			return nil
+		}
+		// got an error, but it's possible it actually worked, so double-check
+		newO, err := o.fs.NewObject(ctx, o.remote)
+		if err != nil {
+			return err
+		}
+		if newO.ModTime(ctx).Equal(modTime) {
 			return nil
 		}
 		// fallback
@@ -1521,7 +1552,6 @@ func (o *Object) updateSimple(ctx context.Context, body io.Reader, getBody func(
 		return err
 	}
 	return nil
-
 }
 
 // Remove an object
