@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"math/rand"
 	"net/http"
+	"strings"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/rclone/gofakes3"
@@ -42,13 +43,14 @@ type Options struct {
 
 // Server is a s3.FileSystem interface
 type Server struct {
-	server  *httplib.Server
-	f       fs.Fs
-	_vfs    *vfs.VFS // don't use directly, use getVFS
-	faker   *gofakes3.GoFakeS3
-	handler http.Handler
-	proxy   *proxy.Proxy
-	ctx     context.Context // for global config
+	server   *httplib.Server
+	f        fs.Fs
+	_vfs     *vfs.VFS // don't use directly, use getVFS
+	faker    *gofakes3.GoFakeS3
+	handler  http.Handler
+	proxy    *proxy.Proxy
+	ctx      context.Context // for global config
+	s3Secret string
 }
 
 // Make a new S3 Server to serve the remote
@@ -60,6 +62,8 @@ func newServer(ctx context.Context, f fs.Fs, opt *Options) (s *Server, err error
 
 	if len(opt.authPair) == 0 {
 		fs.Logf("serve s3", "No auth provided so allowing anonymous access")
+	} else {
+		w.s3Secret = getAuthSecret(opt.authPair)
 	}
 
 	var newLogger logger
@@ -80,9 +84,13 @@ func newServer(ctx context.Context, f fs.Fs, opt *Options) (s *Server, err error
 		w.proxy = proxy.New(ctx, &proxyflags.Opt)
 		// proxy auth middleware
 		w.handler = proxyAuthMiddleware(w.handler, w)
+		w.handler = authPairMiddleware(w.handler, w)
 	} else {
 		w._vfs = vfs.New(f, &vfscommon.Opt)
 
+		if len(opt.authPair) > 0 {
+			w.faker.AddAuthKeys(authlistResolver(opt.authPair))
+		}
 	}
 
 	w.server, err = httplib.NewServer(ctx,
@@ -133,6 +141,19 @@ func (w *Server) Serve() error {
 	return nil
 }
 
+func authPairMiddleware(next http.Handler, ws *Server) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		accessKey, _ := parseAccessKeyId(r)
+		fmt.Println(ws.s3Secret)
+		// set the auth pair
+		authPair := map[string]string{
+			accessKey: ws.s3Secret,
+		}
+		ws.faker.AddAuthKeys(authPair)
+		next.ServeHTTP(w, r)
+	})
+}
+
 func proxyAuthMiddleware(next http.Handler, ws *Server) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		accessKey, _ := parseAccessKeyId(r)
@@ -162,4 +183,18 @@ func stringToMd5Hash(s string) string {
 	hasher := md5.New()
 	hasher.Write([]byte(s))
 	return hex.EncodeToString(hasher.Sum(nil))
+}
+
+func getAuthSecret(authPair []string) string {
+	if len(authPair) == 0 {
+		return ""
+	}
+
+	splited := strings.Split(authPair[0], ",")
+	if len(splited) != 2 {
+		return ""
+	}
+
+	secret := strings.TrimSpace(splited[1])
+	return secret
 }
