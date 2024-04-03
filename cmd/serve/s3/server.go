@@ -26,7 +26,7 @@ import (
 type ctxKey int
 
 const (
-	ctxKeyId ctxKey = iota
+	ctxKeyID ctxKey = iota
 )
 
 // Options contains options for the http Server
@@ -109,7 +109,7 @@ func (w *Server) getVFS(ctx context.Context) (VFS *vfs.VFS, err error) {
 		return w._vfs, nil
 	}
 
-	value := ctx.Value(ctxKeyId)
+	value := ctx.Value(ctxKeyID)
 	if value == nil {
 		return nil, errors.New("no VFS found in context")
 	}
@@ -122,8 +122,8 @@ func (w *Server) getVFS(ctx context.Context) (VFS *vfs.VFS, err error) {
 }
 
 // auth does proxy authorization
-func (w *Server) auth(accessKeyId string) (value interface{}, err error) {
-	VFS, _, err := w.proxy.Call(stringToMd5Hash(accessKeyId), accessKeyId, false)
+func (w *Server) auth(accessKeyID string) (value interface{}, err error) {
+	VFS, _, err := w.proxy.Call(stringToMd5Hash(accessKeyID), accessKeyID, false)
 	if err != nil {
 		return nil, err
 	}
@@ -135,6 +135,7 @@ func (w *Server) Bind(router chi.Router) {
 	router.Handle("/*", w.handler)
 }
 
+// Serve serves the s3 server
 func (w *Server) Serve() error {
 	w.server.Serve()
 	fs.Logf(w.f, "Starting s3 server on %s", w.server.URLs())
@@ -143,7 +144,7 @@ func (w *Server) Serve() error {
 
 func authPairMiddleware(next http.Handler, ws *Server) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		accessKey, _ := parseAccessKeyId(r)
+		accessKey, _ := parseAccessKeyID(r)
 		// set the auth pair
 		authPair := map[string]string{
 			accessKey: ws.s3Secret,
@@ -155,20 +156,20 @@ func authPairMiddleware(next http.Handler, ws *Server) http.Handler {
 
 func proxyAuthMiddleware(next http.Handler, ws *Server) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		accessKey, _ := parseAccessKeyId(r)
+		accessKey, _ := parseAccessKeyID(r)
 		value, err := ws.auth(accessKey)
 		if err != nil {
 			fs.Infof(r.URL.Path, "%s: Auth failed: %v", r.RemoteAddr, err)
 		}
 		if value != nil {
-			r = r.WithContext(context.WithValue(r.Context(), ctxKeyId, value))
+			r = r.WithContext(context.WithValue(r.Context(), ctxKeyID, value))
 		}
 
 		next.ServeHTTP(w, r)
 	})
 }
 
-func parseAccessKeyId(r *http.Request) (accessKey string, error signature.ErrorCode) {
+func parseAccessKeyID(r *http.Request) (accessKey string, error signature.ErrorCode) {
 	v4Auth := r.Header.Get("Authorization")
 	req, err := signature.ParseSignV4(v4Auth)
 	if err != signature.ErrNone {

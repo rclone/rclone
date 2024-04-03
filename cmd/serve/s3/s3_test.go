@@ -55,7 +55,7 @@ func serveS3(f fs.Fs) (testURL string, keyid string, keysec string, w *Server) {
 	router := w.server.Router()
 
 	w.Bind(router)
-	w.Serve()
+	_ = w.Serve()
 	testURL = w.server.URLs()[0]
 
 	return
@@ -286,7 +286,7 @@ func testListBuckets(t *testing.T, useProxy bool) {
 		for _, tt := range testdata.files {
 			file := path.Join(tt.path, tt.filename)
 
-			var found bool = false
+			found := false
 			for object := range objects {
 				if file == object.Key {
 					found = true
