@@ -209,26 +209,16 @@ type FileStuct struct {
 	filename string
 }
 
-var testdata = struct {
+type TestCase struct {
 	description string
 	bucket      string
 	files       []FileStuct
-}{
-	description: "list buckets",
-	bucket:      "mybucket",
-	files: []FileStuct{
-		{
-			path:     "",
-			filename: "lorem.txt",
-		},
-		{
-			path:     "foo",
-			filename: "bar.txt",
-		},
-	},
+	keyID       string
+	keySec      string
+	shouldFail  bool
 }
 
-func testListBuckets(t *testing.T, useProxy bool) {
+func testListBuckets(t *testing.T, cases []TestCase, useProxy bool) {
 	fstest.Initialise()
 
 	var f fs.Fs
@@ -254,54 +244,119 @@ func testListBuckets(t *testing.T, useProxy bool) {
 		require.NoError(t, err)
 	}
 
-	endpoint, keyid, keysec, s := serveS3(f)
-	defer func() {
-		assert.NoError(t, s.server.Shutdown())
-	}()
+	for _, tt := range cases {
+		t.Run(tt.description, func(t *testing.T) {
+			endpoint, keyid, keysec, s := serveS3(f)
+			defer func() {
+				assert.NoError(t, s.server.Shutdown())
+			}()
 
-	t.Run(testdata.description, func(t *testing.T) {
-		if useProxy {
-			// regenerate randon keyid
-			// so that we request with another keyid
-			// instead of what was set in 'authPair'
-			keyid = random.String(16)
-		}
+			if tt.keyID != "" {
+				keyid = tt.keyID
+			}
+			if tt.keySec != "" {
+				keysec = tt.keySec
+			}
 
-		testURL, _ := url.Parse(endpoint)
-		minioClient, err := minio.New(testURL.Host, &minio.Options{
-			Creds:  credentials.NewStaticV4(keyid, keysec, ""),
-			Secure: false,
-		})
-		assert.NoError(t, err)
+			testURL, _ := url.Parse(endpoint)
+			minioClient, err := minio.New(testURL.Host, &minio.Options{
+				Creds:  credentials.NewStaticV4(keyid, keysec, ""),
+				Secure: false,
+			})
+			assert.NoError(t, err)
 
-		buckets, err := minioClient.ListBuckets(context.Background())
-		require.NoError(t, err)
-		require.NotEmpty(t, buckets)
-		assert.Equal(t, buckets[0].Name, testdata.bucket)
+			buckets, err := minioClient.ListBuckets(context.Background())
+			if tt.shouldFail {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+				require.NotEmpty(t, buckets)
+				assert.Equal(t, buckets[0].Name, tt.bucket)
 
-		objects := minioClient.ListObjects(context.Background(), testdata.bucket, minio.ListObjectsOptions{
-			Recursive: true,
-		})
+				o := minioClient.ListObjects(context.Background(), tt.bucket, minio.ListObjectsOptions{
+					Recursive: true,
+				})
+				// save files after reading from channel
+				objects := []string{}
+				for object := range o {
+					objects = append(objects, object.Key)
+				}
 
-		for _, tt := range testdata.files {
-			file := path.Join(tt.path, tt.filename)
-
-			found := false
-			for object := range objects {
-				if file == object.Key {
-					found = true
-					break
+				for _, tt := range tt.files {
+					file := path.Join(tt.path, tt.filename)
+					found := false
+					for _, fname := range objects {
+						if file == fname {
+							found = true
+							break
+						}
+					}
+					require.Equal(t, true, found, "Object not found: "+file)
 				}
 			}
-			require.Equal(t, true, found, "Object not found: "+file)
-		}
-	})
+		})
+	}
 }
 
 func TestListBuckets(t *testing.T) {
-	testListBuckets(t, false)
+	var cases = []TestCase{
+		{
+			description: "list buckets",
+			bucket:      "mybucket",
+			files: []FileStuct{
+				{
+					path:     "",
+					filename: "lorem.txt",
+				},
+				{
+					path:     "foo",
+					filename: "bar.txt",
+				},
+			},
+		},
+		{
+			description: "list buckets: wrong s3 key",
+			bucket:      "mybucket",
+			keyID:       "invalid",
+			shouldFail:  true,
+		},
+		{
+			description: "list buckets: wrong s3 secret",
+			bucket:      "mybucket",
+			keySec:      "invalid",
+			shouldFail:  true,
+		},
+	}
+
+	testListBuckets(t, cases, false)
 }
 
 func TestListBucketsAuthProxy(t *testing.T) {
-	testListBuckets(t, true)
+	var cases = []TestCase{
+		{
+			description: "list buckets",
+			bucket:      "mybucket",
+			// request with random keyid
+			// instead of what was set in 'authPair'
+			keyID: random.String(16),
+			files: []FileStuct{
+				{
+					path:     "",
+					filename: "lorem.txt",
+				},
+				{
+					path:     "foo",
+					filename: "bar.txt",
+				},
+			},
+		},
+		{
+			description: "list buckets: wrong s3 secret",
+			bucket:      "mybucket",
+			keySec:      "invalid",
+			shouldFail:  true,
+		},
+	}
+
+	testListBuckets(t, cases, true)
 }
