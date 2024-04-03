@@ -144,7 +144,6 @@ func (w *Server) Serve() error {
 func authPairMiddleware(next http.Handler, ws *Server) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		accessKey, _ := parseAccessKeyId(r)
-		fmt.Println(ws.s3Secret)
 		// set the auth pair
 		authPair := map[string]string{
 			accessKey: ws.s3Secret,
