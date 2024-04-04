@@ -108,6 +108,8 @@ var logReplacements = []string{
 	`^(INFO  : .*?: (Made directory with|Set directory) (metadata|modification time)).*$`, dropMe,
 	// ignore sizes in directory time updates
 	`^(NOTICE: .*?: Skipped set directory modification time as --dry-run is set).*$`, dropMe,
+	// ignore sizes in directory metadata updates
+	`^(NOTICE: .*?: Skipped update directory metadata as --dry-run is set).*$`, dropMe,
 }
 
 // Some dry-run messages differ depending on the particular remote.
