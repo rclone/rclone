@@ -63,6 +63,7 @@ type syncCopyMove struct {
 	dstEmptyDirs           map[string]fs.DirEntry // potentially empty directories
 	srcEmptyDirsMu         sync.Mutex             // protect srcEmptyDirs
 	srcEmptyDirs           map[string]fs.DirEntry // potentially empty directories
+	srcMoveEmptyDirs       map[string]fs.DirEntry // potentially empty directories when moving files out of them
 	checkerWg              sync.WaitGroup         // wait for checkers
 	toBeChecked            *pipe                  // checkers channel
 	transfersWg            sync.WaitGroup         // wait for transfers
@@ -144,6 +145,7 @@ func newSyncCopyMove(ctx context.Context, fdst, fsrc fs.Fs, deleteMode fs.Delete
 		dstFilesResult:         make(chan error, 1),
 		dstEmptyDirs:           make(map[string]fs.DirEntry),
 		srcEmptyDirs:           make(map[string]fs.DirEntry),
+		srcMoveEmptyDirs:       make(map[string]fs.DirEntry),
 		noTraverse:             ci.NoTraverse,
 		noCheckDest:            ci.NoCheckDest,
 		noUnicodeNormalization: ci.NoUnicodeNormalization,
@@ -725,12 +727,21 @@ func copyEmptyDirectories(ctx context.Context, f fs.Fs, entries map[string]fs.Di
 	return nil
 }
 
-func (s *syncCopyMove) srcParentDirCheck(entry fs.DirEntry) {
-	// If we are moving files then we don't want to remove directories with files in them
-	// from the srcEmptyDirs as we are about to move them making the directory empty.
-	if s.DoMove {
-		return
+// mark the parent of entry as not empty and if entry is a directory mark it as potentially empty.
+func (s *syncCopyMove) markParentNotEmpty(entry fs.DirEntry) {
+	s.srcEmptyDirsMu.Lock()
+	defer s.srcEmptyDirsMu.Unlock()
+	// Mark entry as potentially empty if it is a directory
+	if _, isDir := entry.(fs.Directory); isDir {
+		s.srcEmptyDirs[entry.Remote()] = entry
+		// if DoMove and --delete-empty-src-dirs flag is set then record the parent but
+		// don't remove any as we are about to move files out of them them making the
+		// directory empty.
+		if s.DoMove && s.deleteEmptySrcDirs {
+			s.srcMoveEmptyDirs[entry.Remote()] = entry
+		}
 	}
+	// Mark its parent as not empty
 	parentDir := path.Dir(entry.Remote())
 	if parentDir == "." {
 		parentDir = ""
@@ -1008,8 +1019,8 @@ func (s *syncCopyMove) run() error {
 	// Delete empty fsrc subdirectories
 	// if DoMove and --delete-empty-src-dirs flag is set
 	if s.DoMove && s.deleteEmptySrcDirs {
-		// delete empty subdirectories that were part of the move
-		s.processError(s.deleteEmptyDirectories(s.ctx, s.fsrc, s.srcEmptyDirs))
+		// delete potentially empty subdirectories that were part of the move
+		s.processError(s.deleteEmptyDirectories(s.ctx, s.fsrc, s.srcMoveEmptyDirs))
 	}
 
 	// Read the error out of the contexts if there is one
@@ -1074,8 +1085,8 @@ func (s *syncCopyMove) DstOnly(dst fs.DirEntry) (recurse bool) {
 		if s.fdst.Features().CanHaveEmptyDirectories {
 			s.dstEmptyDirsMu.Lock()
 			s.dstEmptyDirs[dst.Remote()] = dst
-			s.logger(s.ctx, operations.MissingOnSrc, nil, dst, fs.ErrorIsDir)
 			s.dstEmptyDirsMu.Unlock()
+			s.logger(s.ctx, operations.MissingOnSrc, nil, dst, fs.ErrorIsDir)
 		}
 		return true
 	default:
@@ -1214,12 +1225,7 @@ func (s *syncCopyMove) SrcOnly(src fs.DirEntry) (recurse bool) {
 	switch x := src.(type) {
 	case fs.Object:
 		s.logger(s.ctx, operations.MissingOnDst, x, nil, nil)
-		// If it's a copy operation,
-		// remove parent directory from srcEmptyDirs
-		// since it's not really empty
-		s.srcEmptyDirsMu.Lock()
-		s.srcParentDirCheck(src)
-		s.srcEmptyDirsMu.Unlock()
+		s.markParentNotEmpty(src)
 
 		if s.trackRenames {
 			// Save object to check for a rename later
@@ -1247,12 +1253,8 @@ func (s *syncCopyMove) SrcOnly(src fs.DirEntry) (recurse bool) {
 		}
 	case fs.Directory:
 		// Do the same thing to the entire contents of the directory
-		// Record the directory for deletion
-		s.srcEmptyDirsMu.Lock()
-		s.srcParentDirCheck(src)
-		s.srcEmptyDirs[src.Remote()] = src
+		s.markParentNotEmpty(src)
 		s.logger(s.ctx, operations.MissingOnDst, src, nil, fs.ErrorIsDir)
-		s.srcEmptyDirsMu.Unlock()
 
 		// Create the directory and make sure the Metadata/ModTime is correct
 		s.markDirModified(x.Remote())
@@ -1268,9 +1270,7 @@ func (s *syncCopyMove) SrcOnly(src fs.DirEntry) (recurse bool) {
 func (s *syncCopyMove) Match(ctx context.Context, dst, src fs.DirEntry) (recurse bool) {
 	switch srcX := src.(type) {
 	case fs.Object:
-		s.srcEmptyDirsMu.Lock()
-		s.srcParentDirCheck(src)
-		s.srcEmptyDirsMu.Unlock()
+		s.markParentNotEmpty(src)
 
 		if s.deleteMode == fs.DeleteModeOnly {
 			return false
@@ -1291,20 +1291,13 @@ func (s *syncCopyMove) Match(ctx context.Context, dst, src fs.DirEntry) (recurse
 		}
 	case fs.Directory:
 		// Do the same thing to the entire contents of the directory
+		s.markParentNotEmpty(src)
 		dstX, ok := dst.(fs.Directory)
 		if ok {
 			s.logger(s.ctx, operations.Match, src, dst, fs.ErrorIsDir)
 			// Create the directory and make sure the Metadata/ModTime is correct
 			s.copyDirMetadata(s.ctx, s.fdst, dstX, "", srcX)
 
-			// Only record matched (src & dst) empty dirs when performing move
-			if s.DoMove {
-				// Record the src directory for deletion
-				s.srcEmptyDirsMu.Lock()
-				s.srcParentDirCheck(src)
-				s.srcEmptyDirs[src.Remote()] = src
-				s.srcEmptyDirsMu.Unlock()
-			}
 			if s.ci.FixCase && !s.ci.Immutable && src.Remote() != dst.Remote() {
 				// Fix case for case insensitive filesystems
 				// Fix each dir before recursing into subdirs and files
