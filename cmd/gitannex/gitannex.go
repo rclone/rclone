@@ -168,7 +168,7 @@ func (s *server) getMsg() (*messageParser, error) {
 
 func (s *server) run() error {
 	// The remote sends the first message.
-	s.sendMsg("VERSION 2")
+	s.sendMsg("VERSION 1")
 
 	for {
 		message, err := s.getMsg()
