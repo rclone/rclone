@@ -831,6 +831,17 @@ Properties:
 - Type:        bool
 - Default:     false
 
+#### --azureblob-no-read-for-metadata
+
+If set, use a list operation instead of the HEAD method on objects, to avoid requiring read permissions.
+
+Properties:
+
+- Config:      no_read_for_metadata
+- Env Var:     RCLONE_AZUREBLOB_NO_READ_FOR_METADATA
+- Type:        bool
+- Default:     false
+
 #### --azureblob-delete-snapshots
 
 Set to specify how to deal with snapshots on blob deletion.

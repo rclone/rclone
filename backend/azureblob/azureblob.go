@@ -402,6 +402,11 @@ rclone does if you know the container exists already.
 			Default:  false,
 			Advanced: true,
 		}, {
+			Name:     "no_read_for_metadata",
+			Help:     `If set, use a list operation instead of the HEAD method on objects, to avoid requiring read permissions.`,
+			Default:  false,
+			Advanced: true,
+		}, {
 			Name: "delete_snapshots",
 			Help: `Set to specify how to deal with snapshots on blob deletion.`,
 			Examples: []fs.OptionExample{
@@ -455,6 +460,7 @@ type Options struct {
 	DirectoryMarkers           bool                 `config:"directory_markers"`
 	NoCheckContainer           bool                 `config:"no_check_container"`
 	NoHeadObject               bool                 `config:"no_head_object"`
+	NoReadForMetadata          bool                 `config:"no_read_for_metadata"`
 	DeleteSnapshots            string               `config:"delete_snapshots"`
 }
 
@@ -909,7 +915,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		return nil, fmt.Errorf("internal error: auth failed to make credentials or client")
 	}
 
-	if f.rootContainer != "" && f.rootDirectory != "" {
+	if f.rootContainer != "" && f.rootDirectory != "" && !opt.NoHeadObject && !strings.HasSuffix(root, "/") {
 		// Check to see if the (container,directory) is actually an existing file
 		oldRoot := f.root
 		newRoot, leaf := path.Split(oldRoot)
@@ -1838,12 +1844,109 @@ func (o *Object) clearMetaData() {
 	o.modTime = time.Time{}
 }
 
+// convertMetadataFromBlobItemToPropertiesResponse converts metadata from a list request to the one from an object request
+// Thanks Microsoft for making these two types almost the same, but only almost... -.-
+func convertMetadataFromBlobItemToPropertiesResponse(currentBlob container.BlobItem) blob.GetPropertiesResponse {
+	tagCount := int64(0)
+	if currentBlob.Properties.TagCount != nil {
+		tagCount = int64(*currentBlob.Properties.TagCount)
+	}
+	isCurrentVersion := true
+	return blob.GetPropertiesResponse{
+		AcceptRanges:                nil,
+		AccessTier:                  (*string)(currentBlob.Properties.AccessTier),
+		AccessTierChangeTime:        currentBlob.Properties.AccessTierChangeTime,
+		AccessTierInferred:          currentBlob.Properties.AccessTierInferred,
+		ArchiveStatus:               (*string)(currentBlob.Properties.ArchiveStatus),
+		BlobCommittedBlockCount:     nil,
+		BlobSequenceNumber:          currentBlob.Properties.BlobSequenceNumber,
+		BlobType:                    currentBlob.Properties.BlobType,
+		CacheControl:                currentBlob.Properties.CacheControl,
+		ClientRequestID:             nil,
+		ContentDisposition:          currentBlob.Properties.ContentDisposition,
+		ContentEncoding:             currentBlob.Properties.ContentEncoding,
+		ContentLanguage:             currentBlob.Properties.ContentLanguage,
+		ContentLength:               currentBlob.Properties.ContentLength,
+		ContentMD5:                  currentBlob.Properties.ContentMD5,
+		ContentType:                 currentBlob.Properties.ContentType,
+		CopyCompletionTime:          currentBlob.Properties.CopyCompletionTime,
+		CopyID:                      currentBlob.Properties.CopyID,
+		CopyProgress:                currentBlob.Properties.CopyProgress,
+		CopySource:                  currentBlob.Properties.CopySource,
+		CopyStatus:                  currentBlob.Properties.CopyStatus,
+		CopyStatusDescription:       currentBlob.Properties.CopyStatusDescription,
+		CreationTime:                currentBlob.Properties.CreationTime,
+		Date:                        currentBlob.Properties.LastModified,
+		DestinationSnapshot:         currentBlob.Properties.DestinationSnapshot,
+		EncryptionKeySHA256:         currentBlob.Properties.CustomerProvidedKeySHA256,
+		EncryptionScope:             currentBlob.Properties.EncryptionScope,
+		ETag:                        currentBlob.Properties.ETag,
+		ExpiresOn:                   currentBlob.Properties.ExpiresOn,
+		ImmutabilityPolicyExpiresOn: currentBlob.Properties.ImmutabilityPolicyExpiresOn,
+		ImmutabilityPolicyMode:      currentBlob.Properties.ImmutabilityPolicyMode,
+		IsCurrentVersion:            &isCurrentVersion,
+		IsIncrementalCopy:           currentBlob.Properties.IncrementalCopy,
+		IsSealed:                    currentBlob.Properties.IsSealed,
+		IsServerEncrypted:           currentBlob.Properties.ServerEncrypted,
+		LastAccessed:                currentBlob.Properties.LastAccessedOn,
+		LastModified:                currentBlob.Properties.LastModified,
+		LeaseDuration:               currentBlob.Properties.LeaseDuration,
+		LeaseState:                  currentBlob.Properties.LeaseState,
+		LeaseStatus:                 currentBlob.Properties.LeaseStatus,
+		LegalHold:                   currentBlob.Properties.LegalHold,
+		Metadata:                    currentBlob.Metadata,
+		ObjectReplicationPolicyID:   nil,
+		ObjectReplicationRules:      nil,
+		RehydratePriority:           (*string)(currentBlob.Properties.RehydratePriority),
+		RequestID:                   nil,
+		TagCount:                    &tagCount,
+		Version:                     nil,
+		VersionID:                   nil,
+	}
+}
+
+// readMetaData gets the metadata using a ListBlobsFlatPager, to avoid requiring read access on the blob itself, and is used by Fs.readMetaData if no_read_for_metadata is set
+func (f *Fs) readMetadataUsingList(ctx context.Context, containerName, containerPath string) (blobProperties blob.GetPropertiesResponse, err error) {
+	blobsPager := f.cntSVC(containerName).NewListBlobsFlatPager(&container.ListBlobsFlatOptions{
+		Include: container.ListBlobsInclude{
+			Metadata: true,
+		},
+		Prefix: &containerPath,
+	})
+	for blobsPager.More() {
+		blobs, err := blobsPager.NextPage(ctx)
+		if err != nil {
+			return blobProperties, err
+		}
+
+		for _, currentBlob := range blobs.ListBlobsFlatSegmentResponse.Segment.BlobItems {
+
+			if *currentBlob.Name != containerPath {
+				continue
+			}
+			return convertMetadataFromBlobItemToPropertiesResponse(*currentBlob), nil
+		}
+	}
+	return blobProperties, fs.ErrorObjectNotFound
+}
+
 // readMetaData gets the metadata if it hasn't already been fetched
-func (f *Fs) readMetaData(ctx context.Context, container, containerPath string) (blobProperties blob.GetPropertiesResponse, err error) {
-	if !f.containerOK(container) {
+func (f *Fs) readMetaData(ctx context.Context, containerName, containerPath string) (blobProperties blob.GetPropertiesResponse, err error) {
+	if !f.containerOK(containerName) {
 		return blobProperties, fs.ErrorObjectNotFound
 	}
-	blb := f.getBlobSVC(container, containerPath)
+
+	if f.opt.NoReadForMetadata {
+		// When not using HEAD (which requires read permissions), we need to use a list operation.
+		// By using the filename itself as a prefix, we hopefully only get that one file, but if not it is possible that this takes a bit longer than the HEAD operation.
+		err = f.pacer.Call(func() (bool, error) {
+			blobProperties, err = f.readMetadataUsingList(ctx, containerName, containerPath)
+			return f.shouldRetry(ctx, err)
+		})
+		return blobProperties, err
+	}
+
+	blb := f.getBlobSVC(containerName, containerPath)
 
 	// Read metadata (this includes metadata)
 	options := blob.GetPropertiesOptions{}
