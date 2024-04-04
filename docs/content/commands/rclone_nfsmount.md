@@ -476,6 +476,7 @@ Mount option syntax includes a few extra options treated specially:
 - `vv...` will be transformed into appropriate `--verbose=N`
 - standard mount options like `x-systemd.automount`, `_netdev`, `nosuid` and alike
   are intended only for Automountd and ignored by rclone.
+
 ## VFS - Virtual File System
 
 This command uses the VFS layer. This adapts the cloud storage objects

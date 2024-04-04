@@ -134,6 +134,7 @@ The password file can be updated while rclone is running.
 Use `--realm` to set the authentication realm.
 
 Use `--salt` to change the password hashing salt from the default.
+
 ## VFS - Virtual File System
 
 This command uses the VFS layer. This adapts the cloud storage objects
