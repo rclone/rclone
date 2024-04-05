@@ -92,7 +92,7 @@ Where ` + "`$PORT`" + ` is the same port number we used in the serve nfs command
 
 This feature is only available on Unix platforms.
 
-` + vfs.Help,
+` + vfs.Help(),
 	Annotations: map[string]string{
 		"versionIntroduced": "v1.65",
 		"groups":            "Filter",

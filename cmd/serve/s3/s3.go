@@ -3,6 +3,7 @@ package s3
 import (
 	"context"
 	_ "embed"
+	"strings"
 
 	"github.com/rclone/rclone/cmd"
 	"github.com/rclone/rclone/fs/config/flags"
@@ -40,6 +41,11 @@ func init() {
 //go:embed serve_s3.md
 var serveS3Help string
 
+// help returns the help string cleaned up to simplify appending
+func help() string {
+	return strings.TrimSpace(serveS3Help) + "\n\n"
+}
+
 // Command definition for cobra
 var Command = &cobra.Command{
 	Annotations: map[string]string{
@@ -49,7 +55,7 @@ var Command = &cobra.Command{
 	},
 	Use:   "s3 remote:path",
 	Short: `Serve remote:path over s3.`,
-	Long:  serveS3Help + httplib.Help(flagPrefix) + vfs.Help,
+	Long:  help() + httplib.Help(flagPrefix) + vfs.Help(),
 	RunE: func(command *cobra.Command, args []string) error {
 		cmd.CheckArgs(1, 1, command, args)
 		f := cmd.NewFsSrc(args)

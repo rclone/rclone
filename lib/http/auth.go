@@ -11,8 +11,7 @@ import (
 
 // AuthHelp returns text describing the http authentication to add to the command help.
 func AuthHelp(prefix string) string {
-	help := `
-#### Authentication
+	help := `#### Authentication
 
 By default this will serve files without needing a login.
 
@@ -38,6 +37,7 @@ The password file can be updated while rclone is running.
 Use ` + "`--{{ .Prefix }}realm`" + ` to set the authentication realm.
 
 Use ` + "`--{{ .Prefix }}salt`" + ` to change the password hashing salt from the default.
+
 `
 	tmpl, err := template.New("auth help").Parse(help)
 	if err != nil {

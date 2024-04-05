@@ -43,10 +43,13 @@ import (
 	"github.com/rclone/rclone/vfs/vfscommon"
 )
 
-// Help for the VFS.
-//
 //go:embed vfs.md
-var Help string
+var help string
+
+// Help returns the help string cleaned up to simplify appending
+func Help() string {
+	return strings.TrimSpace(help) + "\n\n"
+}
 
 // Node represents either a directory (*Dir) or a file (*File)
 type Node interface {
