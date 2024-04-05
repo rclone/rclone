@@ -841,3 +841,4 @@ put them back in again.` >}}
   * Alexandre Lavigne <lavigne958@gmail.com>
   * yoelvini <134453420+yoelvini@users.noreply.github.com>
   * Erisa A <erisa@cloudflare.com>
+  * Pieter van Oostrum <pieter@vanoostrum.org>
