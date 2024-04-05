@@ -91,7 +91,24 @@ Rclone syncs a directory tree from one storage system to another.
 
 Its syntax is like this
 
-    Syntax: [options] subcommand <parameters> <parameters...>
+    rclone subcommand [options] <parameters> <parameters...>
+
+A `subcommand` is a the rclone operation required, (e.g. `sync`,
+`copy`, `ls`).
+
+An `option` is a single letter flag (e.g. `-v`) or a group of single
+letter flags (e.g. `-Pv`) or a long flag (e.g. `--progress`). No
+options are required. Options can come after the `subcommand` or in
+between parameters too or on the end, but only global options can be
+used before the `subcommand`. Anything after a `--` option will not be
+interpreted as an option so if you need to add a parameter which
+starts with a `-` then put a `--` on its own first, eg
+
+    rclone lsf -- -directory-starting-with-dash
+
+A `parameter` is usually a file path or [rclone remote](#syntax-of-remote-paths), eg
+`/path/to/file` or `remote:path/to/file` but it can be other things -
+the `subcommand` help will tell you what.
 
 Source and destination paths are specified by the name you gave the
 storage system in the config file then the sub path, e.g.
