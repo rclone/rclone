@@ -3,6 +3,7 @@ package rcserver
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -147,7 +148,11 @@ func testServer(t *testing.T, tests []testRun, opt *rc.Options) {
 			body, err := io.ReadAll(resp.Body)
 			require.NoError(t, err)
 
-			if test.Contains == nil {
+			if test.ContentType == "application/json" && test.Expected != "" {
+				expectedNormalized := normalizeJSON(t, test.Expected)
+				actualNormalized := normalizeJSON(t, string(body))
+				assert.Equal(t, expectedNormalized, actualNormalized, "Normalized JSON does not match")
+			} else if test.Contains == nil {
 				assert.Equal(t, test.Expected, string(body))
 			} else {
 				assert.True(t, test.Contains.Match(body), fmt.Sprintf("body didn't match: %v: %v", test.Contains, string(body)))
@@ -846,4 +851,50 @@ func TestServeModTime(t *testing.T) {
 		Expected: "* dir/ - 0001-01-01T00:00:00Z\n* modtime.txt - 0001-01-01T00:00:00Z\n",
 	}}
 	testServer(t, tests, &opt)
+}
+
+func TestContentTypeJSON(t *testing.T) {
+	tests := []testRun{
+		{
+			Name:        "Check Content-Type for JSON response",
+			URL:         "rc/noop",
+			Method:      "POST",
+			Body:        `{}`,
+			ContentType: "application/json",
+			Status:      http.StatusOK,
+			Expected:    "{}\n",
+			Headers: map[string]string{
+				"Content-Type": "application/json",
+			},
+		},
+		{
+			Name:        "Check Content-Type for JSON error response",
+			URL:         "rc/error",
+			Method:      "POST",
+			Body:        `{}`,
+			ContentType: "application/json",
+			Status:      http.StatusInternalServerError,
+			Expected: `{
+				"error": "arbitrary error on input map[]",
+				"input": {},
+				"path": "rc/error",
+				"status": 500
+			}
+			`,
+			Headers: map[string]string{
+				"Content-Type": "application/json",
+			},
+		},
+	}
+	opt := newTestOpt()
+	testServer(t, tests, &opt)
+}
+
+func normalizeJSON(t *testing.T, jsonStr string) string {
+	var jsonObj map[string]interface{}
+	err := json.Unmarshal([]byte(jsonStr), &jsonObj)
+	require.NoError(t, err, "JSON unmarshalling failed")
+	normalizedJSON, err := json.Marshal(jsonObj)
+	require.NoError(t, err, "JSON marshalling failed")
+	return string(normalizedJSON)
 }
