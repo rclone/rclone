@@ -20,8 +20,7 @@ func init() {
 var commandDefinition = &cobra.Command{
 	Use:   "rcd <path to files to serve>*",
 	Short: `Run rclone listening to remote control commands only.`,
-	Long: `
-This runs rclone so that it only listens to remote control commands.
+	Long: `This runs rclone so that it only listens to remote control commands.
 
 This is useful if you are controlling rclone via the rc API.
 
@@ -30,6 +29,7 @@ for GET requests on the URL passed in.  It will also open the URL in
 the browser when rclone is run.
 
 See the [rc documentation](/rc/) for more info on the rc flags.
+
 ` + libhttp.Help(rcflags.FlagPrefix) + libhttp.TemplateHelp(rcflags.FlagPrefix) + libhttp.AuthHelp(rcflags.FlagPrefix),
 	Annotations: map[string]string{
 		"versionIntroduced": "v1.45",

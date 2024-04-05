@@ -50,7 +50,7 @@ based on media formats or file extensions. Additionally, there is no
 media transcoding support. This means that some players might show
 files that they are not able to play back correctly.
 
-` + dlnaflags.Help + vfs.Help,
+` + dlnaflags.Help + vfs.Help(),
 	Annotations: map[string]string{
 		"versionIntroduced": "v1.46",
 		"groups":            "Filter",

@@ -89,6 +89,7 @@ supported hash on the backend or you can use a named hash such as
 to see the full list.
 
 ### Access WebDAV on Windows
+
 WebDAV shared folder can be mapped as a drive on Windows, however the default settings prevent it.
 Windows will fail to connect to the server using insecure Basic authentication.
 It will not even display any login dialog. Windows requires SSL / HTTPS connection to be used with Basic.
@@ -104,6 +105,7 @@ If required, increase the FileSizeLimitInBytes to a higher value.
 Navigate to the Services interface, then restart the WebClient service.
 
 ### Access Office applications on WebDAV
+
 Navigate to following registry HKEY_CURRENT_USER\Software\Microsoft\Office\[14.0/15.0/16.0]\Common\Internet
 Create a new DWORD BasicAuthLevel with value 2.
     0 - Basic authentication disabled
@@ -112,7 +114,7 @@ Create a new DWORD BasicAuthLevel with value 2.
 
 https://learn.microsoft.com/en-us/office/troubleshoot/powerpoint/office-opens-blank-from-sharepoint
 
-` + libhttp.Help(flagPrefix) + libhttp.TemplateHelp(flagPrefix) + libhttp.AuthHelp(flagPrefix) + vfs.Help + proxy.Help,
+` + libhttp.Help(flagPrefix) + libhttp.TemplateHelp(flagPrefix) + libhttp.AuthHelp(flagPrefix) + vfs.Help() + proxy.Help,
 	Annotations: map[string]string{
 		"versionIntroduced": "v1.39",
 		"groups":            "Filter",
