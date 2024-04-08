@@ -268,7 +268,7 @@ var localBackendTestCases = []testCase{
 		testProtocolFunc: func(t *testing.T, h *testState) {
 			h.preconfigureServer()
 
-			h.requireReadLineExact("VERSION 2")
+			h.requireReadLineExact("VERSION 1")
 			h.requireWriteLine("INITREMOTE")
 			h.requireReadLineExact("INITREMOTE-SUCCESS")
 
@@ -278,7 +278,7 @@ var localBackendTestCases = []testCase{
 	{
 		label: "HandlesPrepare",
 		testProtocolFunc: func(t *testing.T, h *testState) {
-			h.requireReadLineExact("VERSION 2")
+			h.requireReadLineExact("VERSION 1")
 			h.requireWriteLine("EXTENSIONS INFO") // Advertise that we support the INFO extension
 			h.requireReadLineExact("EXTENSIONS")
 
@@ -304,7 +304,7 @@ var localBackendTestCases = []testCase{
 	{
 		label: "HandlesPrepareAndDoesNotTrimWhitespaceFromValue",
 		testProtocolFunc: func(t *testing.T, h *testState) {
-			h.requireReadLineExact("VERSION 2")
+			h.requireReadLineExact("VERSION 1")
 			h.requireWriteLine("EXTENSIONS INFO") // Advertise that we support the INFO extension
 			h.requireReadLineExact("EXTENSIONS")
 
@@ -337,7 +337,7 @@ var localBackendTestCases = []testCase{
 		testProtocolFunc: func(t *testing.T, h *testState) {
 			h.preconfigureServer()
 
-			h.requireReadLineExact("VERSION 2")
+			h.requireReadLineExact("VERSION 1")
 			h.requireWriteLine("ERROR foo")
 
 			require.NoError(t, h.mockStdinW.Close())
@@ -349,7 +349,7 @@ var localBackendTestCases = []testCase{
 	{
 		label: "ConfigFail",
 		testProtocolFunc: func(t *testing.T, h *testState) {
-			h.requireReadLineExact("VERSION 2")
+			h.requireReadLineExact("VERSION 1")
 			h.requireWriteLine("EXTENSIONS INFO") // Advertise that we support the INFO extension
 			h.requireReadLineExact("EXTENSIONS")
 			require.True(t, h.server.extensionInfo)
@@ -368,7 +368,7 @@ var localBackendTestCases = []testCase{
 		testProtocolFunc: func(t *testing.T, h *testState) {
 			h.preconfigureServer()
 
-			h.requireReadLineExact("VERSION 2")
+			h.requireReadLineExact("VERSION 1")
 			h.requireWriteLine("INITREMOTE")
 			h.requireReadLineExact("INITREMOTE-SUCCESS")
 
@@ -388,7 +388,7 @@ var localBackendTestCases = []testCase{
 		testProtocolFunc: func(t *testing.T, h *testState) {
 			h.preconfigureServer()
 
-			h.requireReadLineExact("VERSION 2")
+			h.requireReadLineExact("VERSION 1")
 			h.requireWriteLine("INITREMOTE")
 			h.requireReadLineExact("INITREMOTE-SUCCESS")
 
@@ -435,7 +435,7 @@ var localBackendTestCases = []testCase{
 		testProtocolFunc: func(t *testing.T, h *testState) {
 			h.preconfigureServer()
 
-			h.requireReadLineExact("VERSION 2")
+			h.requireReadLineExact("VERSION 1")
 			h.requireWriteLine("INITREMOTE")
 			h.requireReadLineExact("INITREMOTE-SUCCESS")
 
@@ -482,7 +482,7 @@ var localBackendTestCases = []testCase{
 		testProtocolFunc: func(t *testing.T, h *testState) {
 			h.preconfigureServer()
 
-			h.requireReadLineExact("VERSION 2")
+			h.requireReadLineExact("VERSION 1")
 			h.requireWriteLine("INITREMOTE")
 			h.requireReadLineExact("INITREMOTE-SUCCESS")
 
@@ -508,7 +508,7 @@ var localBackendTestCases = []testCase{
 		testProtocolFunc: func(t *testing.T, h *testState) {
 			h.preconfigureServer()
 
-			h.requireReadLineExact("VERSION 2")
+			h.requireReadLineExact("VERSION 1")
 			h.requireWriteLine("INITREMOTE")
 			h.requireReadLineExact("INITREMOTE-SUCCESS")
 
@@ -552,7 +552,7 @@ var localBackendTestCases = []testCase{
 			require.NoError(t, os.Chdir(t.TempDir()))
 			t.Cleanup(func() { require.NoError(t, os.Chdir(cwd)) })
 
-			h.requireReadLineExact("VERSION 2")
+			h.requireReadLineExact("VERSION 1")
 			h.requireWriteLine("INITREMOTE")
 			h.requireReadLineExact("INITREMOTE-SUCCESS")
 
@@ -589,7 +589,7 @@ var localBackendTestCases = []testCase{
 
 			h.preconfigureServer()
 
-			h.requireReadLineExact("VERSION 2")
+			h.requireReadLineExact("VERSION 1")
 			h.requireWriteLine("INITREMOTE")
 			h.requireReadLineExact("INITREMOTE-SUCCESS")
 
@@ -622,7 +622,7 @@ var localBackendTestCases = []testCase{
 			fileToTransfer := filepath.Join(t.TempDir(), "file.txt")
 			require.NoError(t, os.WriteFile(fileToTransfer, []byte("HELLO"), 0600))
 
-			h.requireReadLineExact("VERSION 2")
+			h.requireReadLineExact("VERSION 1")
 			h.requireWriteLine("INITREMOTE")
 			h.requireReadLineExact("INITREMOTE-SUCCESS")
 
@@ -658,7 +658,7 @@ var localBackendTestCases = []testCase{
 			fileToTransfer := filepath.Join(t.TempDir(), "file.txt")
 			require.NoError(t, os.WriteFile(fileToTransfer, []byte("HELLO"), 0600))
 
-			h.requireReadLineExact("VERSION 2")
+			h.requireReadLineExact("VERSION 1")
 			h.requireWriteLine("INITREMOTE")
 			h.requireReadLineExact("INITREMOTE-SUCCESS")
 
@@ -684,7 +684,7 @@ var localBackendTestCases = []testCase{
 			fileToTransfer := filepath.Join(t.TempDir(), "file.txt")
 			require.NoError(t, os.WriteFile(fileToTransfer, []byte("HELLO"), 0600))
 
-			h.requireReadLineExact("VERSION 2")
+			h.requireReadLineExact("VERSION 1")
 			h.requireWriteLine("INITREMOTE")
 			h.requireReadLineExact("INITREMOTE-SUCCESS")
 
@@ -707,7 +707,7 @@ var localBackendTestCases = []testCase{
 		testProtocolFunc: func(t *testing.T, h *testState) {
 			h.preconfigureServer()
 
-			h.requireReadLineExact("VERSION 2")
+			h.requireReadLineExact("VERSION 1")
 			h.requireWriteLine("INITREMOTE")
 			h.requireReadLineExact("INITREMOTE-SUCCESS")
 
@@ -726,7 +726,7 @@ var localBackendTestCases = []testCase{
 			fileToTransfer := filepath.Join(t.TempDir(), "file.txt")
 			require.NoError(t, os.WriteFile(fileToTransfer, []byte("HELLO"), 0600))
 
-			h.requireReadLineExact("VERSION 2")
+			h.requireReadLineExact("VERSION 1")
 			h.requireWriteLine("INITREMOTE")
 			h.requireReadLineExact("INITREMOTE-SUCCESS")
 
@@ -759,7 +759,7 @@ var localBackendTestCases = []testCase{
 			require.NoError(t, os.WriteFile(remoteFilePath, []byte("HELLO"), 0600))
 			require.FileExists(t, remoteFilePath)
 
-			h.requireReadLineExact("VERSION 2")
+			h.requireReadLineExact("VERSION 1")
 			h.requireWriteLine("INITREMOTE")
 			h.requireReadLineExact("INITREMOTE-SUCCESS")
 
@@ -787,7 +787,7 @@ var localBackendTestCases = []testCase{
 			fileToTransfer := filepath.Join(t.TempDir(), "file.txt")
 			require.NoError(t, os.WriteFile(fileToTransfer, []byte("HELLO"), 0600))
 
-			h.requireReadLineExact("VERSION 2")
+			h.requireReadLineExact("VERSION 1")
 			h.requireWriteLine("INITREMOTE")
 			h.requireReadLineExact("INITREMOTE-SUCCESS")
 
@@ -822,7 +822,7 @@ var localBackendTestCases = []testCase{
 			fileToTransfer := filepath.Join(t.TempDir(), "file.txt")
 			require.NoError(t, os.WriteFile(fileToTransfer, []byte("HELLO"), 0600))
 
-			h.requireReadLineExact("VERSION 2")
+			h.requireReadLineExact("VERSION 1")
 			h.requireWriteLine("INITREMOTE")
 			h.requireReadLineExact("INITREMOTE-SUCCESS")
 
@@ -845,7 +845,7 @@ var localBackendTestCases = []testCase{
 		testProtocolFunc: func(t *testing.T, h *testState) {
 			h.preconfigureServer()
 
-			h.requireReadLineExact("VERSION 2")
+			h.requireReadLineExact("VERSION 1")
 			h.requireWriteLine("INITREMOTE")
 			h.requireReadLineExact("INITREMOTE-SUCCESS")
 
@@ -963,7 +963,7 @@ func TestGitAnnexHandleInitRemoteBackendDoesNotSupportEmptyDirectories(t *testin
 	}()
 	defer wg.Wait()
 
-	handle.requireReadLineExact("VERSION 2")
+	handle.requireReadLineExact("VERSION 1")
 	handle.requireWriteLine("INITREMOTE")
 	handle.requireReadLineExact("INITREMOTE-FAILURE this rclone remote does not support empty directories")
 }

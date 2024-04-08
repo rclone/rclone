@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"log"
 
+	"github.com/rclone/rclone/fs"
 	"github.com/sirupsen/logrus"
 )
 
@@ -12,6 +13,12 @@ import (
 func CaptureOutput(fun func()) []byte {
 	logSave := log.Writer()
 	logrusSave := logrus.StandardLogger().Writer()
+	defer func() {
+		err := logrusSave.Close()
+		if err != nil {
+			fs.Errorf(nil, "error closing logrusSave: %v", err)
+		}
+	}()
 	buf := &bytes.Buffer{}
 	log.SetOutput(buf)
 	logrus.SetOutput(buf)

@@ -1,6 +1,5 @@
-rclone @ allows Linux, FreeBSD, macOS and Windows to
-mount any of Rclone's cloud storage systems as a file system with
-FUSE.
+Rclone @ allows Linux, FreeBSD, macOS and Windows to
+mount any of Rclone's cloud storage systems as a file system with FUSE.
 
 First set up your remote using `rclone config`.  Check it works with `rclone ls` etc.
 

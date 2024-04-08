@@ -7,6 +7,7 @@ import (
 	"encoding/base64"
 	"encoding/gob"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -16,12 +17,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/pkg/errors"
 	"github.com/rclone/rclone/backend/ulozto/api"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/configstruct"
+	"github.com/rclone/rclone/fs/config/obscure"
 	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/fs/hash"
@@ -38,8 +39,6 @@ const (
 	maxSleep      = 2 * time.Second
 	decayConstant = 2 // bigger for slower decay, exponential
 	rootURL       = "https://apis.uloz.to"
-	// TODO temporary limitation, remove with chunked upload impl
-	maxFileSizeBytes = 2500 * 1024 * 1024
 )
 
 // Options defines the configuration for this backend
@@ -61,8 +60,8 @@ func init() {
 			{
 				Name:    "app_token",
 				Default: "",
-				Help: "The application token identifying the app. An app API key can be either found in the API " +
-					"doc https://uloz.to/upload-resumable-api-beta or obtained from customer service.",
+				Help: `The application token identifying the app. An app API key can be either found in the API
+doc https://uloz.to/upload-resumable-api-beta or obtained from customer service.`,
 				Sensitive: true,
 			},
 			{
@@ -72,16 +71,16 @@ func init() {
 				Sensitive: true,
 			},
 			{
-				Name:      "password",
-				Default:   "",
-				Help:      "The password for the user.",
-				Sensitive: true,
+				Name:       "password",
+				Default:    "",
+				Help:       "The password for the user.",
+				IsPassword: true,
 			},
 			{
 				Name: "root_folder_slug",
-				Help: "If set, rclone will use this folder as the root folder for all operations. For example, " +
-					"if the slug identifies 'foo/bar/', 'ulozto:baz' is equivalent to 'ulozto:foo/bar/baz' without " +
-					"any root slug set.",
+				Help: `If set, rclone will use this folder as the root folder for all operations. For example,
+if the slug identifies 'foo/bar/', 'ulozto:baz' is equivalent to 'ulozto:foo/bar/baz' without
+any root slug set.`,
 				Default:   "",
 				Advanced:  true,
 				Sensitive: true,
@@ -187,16 +186,13 @@ func errorHandler(resp *http.Response) error {
 	if errResponse.StatusCode == 0 {
 		errResponse.StatusCode = resp.StatusCode
 	}
-
-	return errors.WithStack(errResponse)
+	return errResponse
 }
 
 // retryErrorCodes is a slice of error codes that we will retry
 var retryErrorCodes = []int{
 	429, // Too Many Requests.
-	// TODO: random 500s should be retried but the error code corresponds to a known issue with uploading large files,
-	//   leading to numerous (slow & resource consuming) retries. Don't retry them until the root cause is addressed.
-	// 500, // Internal Server Error
+	500, // Internal Server Error
 	502, // Bad Gateway
 	503, // Service Unavailable
 	504, // Gateway Timeout
@@ -241,9 +237,13 @@ func (f *Fs) authenticate(ctx context.Context) (response *api.AuthenticateRespon
 		Path:   "/v6/session",
 	}
 
+	clearPassword, err := obscure.Reveal(f.opt.Password)
+	if err != nil {
+		return nil, err
+	}
 	authRequest := api.AuthenticateRequest{
 		Login:    f.opt.Username,
-		Password: f.opt.Password,
+		Password: clearPassword,
 	}
 
 	err = f.pacer.Call(func() (bool, error) {
@@ -346,6 +346,11 @@ func (f *Fs) uploadUnchecked(ctx context.Context, name, parentSlug string, info 
 		MultipartFileName:    encodedName,
 		Parameters:           url.Values{},
 	}
+	if info.Size() > 0 {
+		size := info.Size()
+		opts.ContentLength = &size
+	}
+
 	var uploadResponse api.SendFilePayloadResponse
 
 	err = f.pacer.CallNoRetry(func() (bool, error) {
@@ -442,10 +447,6 @@ func (f *Fs) uploadUnchecked(ctx context.Context, name, parentSlug string, info 
 
 // Put implements the mandatory method fs.Fs.Put.
 func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
-	// TODO: workaround for uloz.to's bug. Remove when chunked upload support is implemented.
-	if src.Size() > maxFileSizeBytes {
-		return nil, errors.New("file size over the supported max threshold")
-	}
 	existingObj, err := f.NewObject(ctx, src.Remote())
 
 	switch {
@@ -536,6 +537,92 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 	}
 
 	f.dirCache.FlushDir(dir)
+
+	return nil
+}
+
+// Move implements the optional method fs.Mover.Move.
+func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
+	if remote == src.Remote() {
+		// Already there, do nothing
+		return src, nil
+	}
+
+	srcObj, ok := src.(*Object)
+	if !ok {
+		fs.Debugf(src, "Can't move - not same remote type")
+		return nil, fs.ErrorCantMove
+	}
+
+	filename, folderSlug, err := f.dirCache.FindPath(ctx, remote, true)
+
+	if err != nil {
+		return nil, err
+	}
+
+	newObj := &Object{}
+	newObj.copyFrom(srcObj)
+	newObj.remote = remote
+
+	return newObj, newObj.updateFileProperties(ctx, api.MoveFileRequest{
+		ParentFolderSlug: folderSlug,
+		NewFilename:      filename,
+	})
+}
+
+// DirMove implements the optional method fs.DirMover.DirMove.
+func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string) error {
+	srcFs, ok := src.(*Fs)
+	if !ok {
+		fs.Debugf(srcFs, "Can't move directory - not same remote type")
+		return fs.ErrorCantDirMove
+	}
+
+	srcSlug, _, srcName, dstParentSlug, dstName, err := f.dirCache.DirMove(ctx, srcFs.dirCache, srcFs.root, srcRemote, f.root, dstRemote)
+	if err != nil {
+		return err
+	}
+
+	opts := rest.Opts{
+		Method: "PATCH",
+		Path:   "/v6/user/" + f.opt.Username + "/folder-list/parent-folder",
+	}
+
+	req := api.MoveFolderRequest{
+		FolderSlugs:         []string{srcSlug},
+		NewParentFolderSlug: dstParentSlug,
+	}
+
+	err = f.pacer.Call(func() (bool, error) {
+		httpResp, err := f.rest.CallJSON(ctx, &opts, &req, nil)
+		return f.shouldRetry(ctx, httpResp, err, true)
+	})
+
+	if err != nil {
+		return err
+	}
+
+	// The old folder doesn't exist anymore so clear the cache now instead of after renaming
+	srcFs.dirCache.FlushDir(srcRemote)
+
+	if srcName != dstName {
+		// There's no endpoint to rename the folder alongside moving it, so this has to happen separately.
+		opts = rest.Opts{
+			Method: "PATCH",
+			Path:   "/v7/user/" + f.opt.Username + "/folder/" + srcSlug,
+		}
+
+		renameReq := api.RenameFolderRequest{
+			NewName: dstName,
+		}
+
+		err = f.pacer.Call(func() (bool, error) {
+			httpResp, err := f.rest.CallJSON(ctx, &opts, &renameReq, nil)
+			return f.shouldRetry(ctx, httpResp, err, true)
+		})
+
+		return err
+	}
 
 	return nil
 }
@@ -1182,6 +1269,8 @@ var (
 	_ dircache.DirCacher = (*Fs)(nil)
 	_ fs.DirCacheFlusher = (*Fs)(nil)
 	_ fs.PutUncheckeder  = (*Fs)(nil)
+	_ fs.Mover           = (*Fs)(nil)
+	_ fs.DirMover        = (*Fs)(nil)
 	_ fs.Object          = (*Object)(nil)
 	_ fs.ObjectInfo      = (*RenamingObjectInfoProxy)(nil)
 )

@@ -147,6 +147,7 @@ these **must** end with /.  Eg
 
 The` + "`--private-repos`" + ` flag can be used to limit users to repositories starting
 with a path of ` + "`/<username>/`" + `.
+
 ` + libhttp.Help(flagPrefix) + libhttp.AuthHelp(flagPrefix),
 	Annotations: map[string]string{
 		"versionIntroduced": "v1.40",

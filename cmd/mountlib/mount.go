@@ -31,6 +31,11 @@ import (
 //go:embed mount.md
 var mountHelp string
 
+// help returns the help string cleaned up to simplify appending
+func help(commandName string) string {
+	return strings.TrimSpace(strings.ReplaceAll(mountHelp, "@", commandName)) + "\n\n"
+}
+
 // Options for creating the mount
 type Options struct {
 	DebugFUSE          bool
@@ -196,7 +201,7 @@ func NewMountCommand(commandName string, hidden bool, mount MountFn) *cobra.Comm
 		Use:    commandName + " remote:path /path/to/mountpoint",
 		Hidden: hidden,
 		Short:  `Mount the remote as file system on a mountpoint.`,
-		Long:   strings.ReplaceAll(mountHelp, "@", commandName) + vfs.Help,
+		Long:   help(commandName) + vfs.Help(),
 		Annotations: map[string]string{
 			"versionIntroduced": "v1.33",
 			"groups":            "Filter",

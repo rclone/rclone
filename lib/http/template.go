@@ -16,8 +16,7 @@ import (
 
 // TemplateHelp returns a string that describes how to use a custom template
 func TemplateHelp(prefix string) string {
-	help := `
-#### Template
+	help := `#### Template
 
 ` + "`--{{ .Prefix }}template`" + ` allows a user to specify a custom markup template for HTTP
 and WebDAV serve functions.  The server exports the following markup
@@ -52,6 +51,7 @@ be used to render HTML based on specific conditions.
 | contains    | Checks whether a given substring is present or not in a given string. |
 | hasPrefix   | Checks whether the given string begins with the specified prefix. |
 | hasSuffix   | Checks whether the given string end with the specified suffix. |
+
 `
 
 	tmpl, err := template.New("template help").Parse(help)

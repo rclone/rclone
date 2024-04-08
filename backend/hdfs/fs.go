@@ -150,7 +150,7 @@ func (f *Fs) Root() string {
 
 // String returns a description of the FS
 func (f *Fs) String() string {
-	return fmt.Sprintf("hdfs://%s", f.opt.Namenode)
+	return fmt.Sprintf("hdfs://%s/%s", f.opt.Namenode, f.root)
 }
 
 // Features returns the optional features of this Fs
@@ -210,7 +210,8 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 				fs:      f,
 				remote:  remote,
 				size:    x.Size(),
-				modTime: x.ModTime()})
+				modTime: x.ModTime(),
+			})
 		}
 	}
 	return entries, nil

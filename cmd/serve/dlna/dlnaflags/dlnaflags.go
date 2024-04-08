@@ -10,8 +10,7 @@ import (
 )
 
 // Help contains the text for the command line help and manual.
-var Help = `
-### Server options
+var Help = `### Server options
 
 Use ` + "`--addr`" + ` to specify which IP address and port the server should
 listen on, e.g. ` + "`--addr 1.2.3.4:8000` or `--addr :8080`" + ` to listen to all
@@ -22,6 +21,7 @@ default "rclone (hostname)".
 
 Use ` + "`--log-trace` in conjunction with `-vv`" + ` to enable additional debug
 logging of all UPNP traffic.
+
 `
 
 // Options is the type for DLNA serving options.

@@ -36,6 +36,7 @@ default "rclone (hostname)".
 
 Use `--log-trace` in conjunction with `-vv` to enable additional debug
 logging of all UPNP traffic.
+
 ## VFS - Virtual File System
 
 This command uses the VFS layer. This adapts the cloud storage objects
