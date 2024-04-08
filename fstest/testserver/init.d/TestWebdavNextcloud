@@ -5,6 +5,7 @@ set -e
 NAME=nextcloud
 USER=rclone
 PASS=ArmorAbleMale6
+PORT=28629
 
 . $(dirname "$0")/docker.bash
 
@@ -14,14 +15,15 @@ start() {
            -e "NEXTCLOUD_ADMIN_USER=rclone" \
            -e "NEXTCLOUD_ADMIN_PASSWORD=$PASS" \
            -e "NEXTCLOUD_TRUSTED_DOMAINS=*.*.*.*" \
+           -p 127.0.0.1:${PORT}:80 \
            nextcloud:latest
     
     echo type=webdav
-    echo url=http://$(docker_ip)/remote.php/dav/files/$USER/
+    echo url=http://127.0.0.1:${PORT}/remote.php/dav/files/$USER/
     echo user=$USER
     echo pass=$(rclone obscure $PASS)
     echo vendor=nextcloud
-    echo _connect=$(docker_ip):80
+    echo _connect=127.0.0.1:${PORT}
 }
 
 . $(dirname "$0")/run.bash
