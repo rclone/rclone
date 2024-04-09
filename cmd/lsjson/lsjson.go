@@ -63,7 +63,7 @@ The output is an array of Items, where each Item looks like this
       "Tier" : "hot",
     }
 
-If ` + "`--hash`" + ` is not specified the Hashes property won't be emitted. The
+If ` + "`--hash`" + ` is not specified, the Hashes property will be omitted. The
 types of hash can be specified with the ` + "`--hash-type`" + ` parameter (which
 may be repeated). If ` + "`--hash-type`" + ` is set then it implies ` + "`--hash`" + `.
 
@@ -75,7 +75,7 @@ If ` + "`--no-mimetype`" + ` is specified then MimeType will be blank. This can
 speed things up on remotes where reading the MimeType takes an extra
 request (e.g. s3, swift).
 
-If ` + "`--encrypted`" + ` is not specified the Encrypted won't be emitted.
+If ` + "`--encrypted`" + ` is not specified the Encrypted will be omitted.
 
 If ` + "`--dirs-only`" + ` is not specified files in addition to directories are
 returned
