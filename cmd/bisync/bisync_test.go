@@ -275,7 +275,7 @@ func testBisync(t *testing.T, path1, path2 string) {
 
 	baseDir, err := os.Getwd()
 	require.NoError(t, err, "get current directory")
-	randName := "bisync-" + time.Now().Format("150405-") + random.String(5) // AzureBlob doesn't like dots
+	randName := "bs-" + time.Now().Format("150405-") + random.String(2) // some bucket backends don't like dots, keep this short to avoid linux errors
 	tempDir := filepath.Join(os.TempDir(), randName)
 	workDir := filepath.Join(tempDir, "workdir")
 
