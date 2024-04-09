@@ -299,13 +299,14 @@ type Fs struct {
 
 // Object describes a b2 object
 type Object struct {
-	fs       *Fs       // what this object is part of
-	remote   string    // The remote path
-	id       string    // b2 id of the file
-	modTime  time.Time // The modified time of the object if known
-	sha1     string    // SHA-1 hash if known
-	size     int64     // Size of the object
-	mimeType string    // Content-Type of the object
+	fs       *Fs               // what this object is part of
+	remote   string            // The remote path
+	id       string            // b2 id of the file
+	modTime  time.Time         // The modified time of the object if known
+	sha1     string            // SHA-1 hash if known
+	size     int64             // Size of the object
+	mimeType string            // Content-Type of the object
+	meta     map[string]string // The object metadata if known - may be nil - with lower case keys
 }
 
 // ------------------------------------------------------------
@@ -1593,7 +1594,14 @@ func (o *Object) decodeMetaDataRaw(ID, SHA1 string, Size int64, UploadTimestamp 
 	o.size = Size
 	// Use the UploadTimestamp if can't get file info
 	o.modTime = time.Time(UploadTimestamp)
-	return o.parseTimeString(Info[timeKey])
+	err = o.parseTimeString(Info[timeKey])
+	if err != nil {
+		return err
+	}
+	// For now, just set "mtime" in metadata
+	o.meta = make(map[string]string, 1)
+	o.meta["mtime"] = o.modTime.Format(time.RFC3339Nano)
+	return nil
 }
 
 // decodeMetaData sets the metadata in the object from an api.File
@@ -1695,6 +1703,16 @@ func timeString(modTime time.Time) string {
 	return strconv.FormatInt(modTime.UnixNano()/1e6, 10)
 }
 
+// parseTimeStringHelper converts a decimal string number of milliseconds
+// elapsed since January 1, 1970 UTC into a time.Time
+func parseTimeStringHelper(timeString string) (time.Time, error) {
+	unixMilliseconds, err := strconv.ParseInt(timeString, 10, 64)
+	if err != nil {
+		return time.Time{}, err
+	}
+	return time.Unix(unixMilliseconds/1e3, (unixMilliseconds%1e3)*1e6).UTC(), nil
+}
+
 // parseTimeString converts a decimal string number of milliseconds
 // elapsed since January 1, 1970 UTC into a time.Time and stores it in
 // the modTime variable.
@@ -1702,12 +1720,12 @@ func (o *Object) parseTimeString(timeString string) (err error) {
 	if timeString == "" {
 		return nil
 	}
-	unixMilliseconds, err := strconv.ParseInt(timeString, 10, 64)
+	modTime, err := parseTimeStringHelper(timeString)
 	if err != nil {
 		fs.Debugf(o, "Failed to parse mod time string %q: %v", timeString, err)
 		return nil
 	}
-	o.modTime = time.Unix(unixMilliseconds/1e3, (unixMilliseconds%1e3)*1e6).UTC()
+	o.modTime = modTime
 	return nil
 }
 
@@ -1861,6 +1879,14 @@ func (o *Object) getOrHead(ctx context.Context, method string, options []fs.Open
 		ContentType:     resp.Header.Get("Content-Type"),
 		Info:            Info,
 	}
+
+	// Embryonic metadata support - just mtime
+	o.meta = make(map[string]string, 1)
+	modTime, err := parseTimeStringHelper(info.Info[timeKey])
+	if err == nil {
+		o.meta["mtime"] = modTime.Format(time.RFC3339Nano)
+	}
+
 	// When reading files from B2 via cloudflare using
 	// --b2-download-url cloudflare strips the Content-Length
 	// headers (presumably so it can inject stuff) so use the old
@@ -1958,7 +1984,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 
 		if err == nil {
 			fs.Debugf(o, "File is big enough for chunked streaming")
-			up, err := o.fs.newLargeUpload(ctx, o, in, src, o.fs.opt.ChunkSize, false, nil)
+			up, err := o.fs.newLargeUpload(ctx, o, in, src, o.fs.opt.ChunkSize, false, nil, options...)
 			if err != nil {
 				o.fs.putRW(rw)
 				return err
@@ -1990,7 +2016,10 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		return o.decodeMetaDataFileInfo(up.info)
 	}
 
-	modTime := src.ModTime(ctx)
+	modTime, err := o.getModTime(ctx, src, options)
+	if err != nil {
+		return err
+	}
 
 	calculatedSha1, _ := src.Hash(ctx, hash.SHA1)
 	if calculatedSha1 == "" {
@@ -2095,6 +2124,36 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	return o.decodeMetaDataFileInfo(&response)
 }
 
+// Get modTime from the source; if --metadata is set, fetch the src metadata and get it from there.
+// When metadata support is added to b2, this method will need a more generic name
+func (o *Object) getModTime(ctx context.Context, src fs.ObjectInfo, options []fs.OpenOption) (time.Time, error) {
+	modTime := src.ModTime(ctx)
+
+	// Fetch metadata if --metadata is in use
+	meta, err := fs.GetMetadataOptions(ctx, o.fs, src, options)
+	if err != nil {
+		return time.Time{}, fmt.Errorf("failed to read metadata from source object: %w", err)
+	}
+	// merge metadata into request and user metadata
+	for k, v := range meta {
+		k = strings.ToLower(k)
+		// For now, the only metadata we're concerned with is "mtime"
+		switch k {
+		case "mtime":
+			// mtime in meta overrides source ModTime
+			metaModTime, err := time.Parse(time.RFC3339Nano, v)
+			if err != nil {
+				fs.Debugf(o, "failed to parse metadata %s: %q: %v", k, v, err)
+			} else {
+				modTime = metaModTime
+			}
+		default:
+			// Do nothing for now
+		}
+	}
+	return modTime, nil
+}
+
 // OpenChunkWriter returns the chunk size and a ChunkWriter
 //
 // Pass in the remote and the src object
@@ -2126,7 +2185,7 @@ func (f *Fs) OpenChunkWriter(ctx context.Context, remote string, src fs.ObjectIn
 		Concurrency: o.fs.opt.UploadConcurrency,
 		//LeavePartsOnError: o.fs.opt.LeavePartsOnError,
 	}
-	up, err := f.newLargeUpload(ctx, o, nil, src, f.opt.ChunkSize, false, nil)
+	up, err := f.newLargeUpload(ctx, o, nil, src, f.opt.ChunkSize, false, nil, options...)
 	return info, up, err
 }
 

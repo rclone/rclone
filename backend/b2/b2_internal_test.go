@@ -184,55 +184,124 @@ func TestParseTimeString(t *testing.T) {
 
 }
 
-// This is adapted from the s3 equivalent.
-func (f *Fs) InternalTestMetadata(t *testing.T) {
-	ctx := context.Background()
-	original := random.String(1000)
-	contents := fstest.Gz(t, original)
-	mimeType := "text/html"
-
-	item := fstest.NewItem("test-metadata", contents, fstest.Time("2001-05-06T04:05:06.499Z"))
-	btime := time.Now()
-	obj := fstests.PutTestContentsMetadata(ctx, t, f, &item, contents, true, mimeType, nil)
-	defer func() {
-		assert.NoError(t, obj.Remove(ctx))
-	}()
-	o := obj.(*Object)
-	gotMetadata, err := o.getMetaData(ctx)
-	require.NoError(t, err)
-
-	// We currently have a limited amount of metadata to test with B2
-	assert.Equal(t, mimeType, gotMetadata.ContentType, "Content-Type")
-
-	// Modification time from the x-bz-info-src_last_modified_millis header
-	var mtime api.Timestamp
-	err = mtime.UnmarshalJSON([]byte(gotMetadata.Info[timeKey]))
-	if err != nil {
-		fs.Debugf(o, "Bad "+timeHeader+" header: %v", err)
+// Return a map of the headers in the options with keys stripped of the "x-bz-info-" prefix
+func OpenOptionToMetaData(options []fs.OpenOption) map[string]string {
+	var headers = make(map[string]string)
+	for _, option := range options {
+		k, v := option.Header()
+		k = strings.ToLower(k)
+		if strings.HasPrefix(k, headerPrefix) {
+			headers[k[len(headerPrefix):]] = v
+		}
 	}
-	assert.Equal(t, item.ModTime, time.Time(mtime), "Modification time")
 
-	// Upload time
-	gotBtime := time.Time(gotMetadata.UploadTimestamp)
-	dt := gotBtime.Sub(btime)
-	assert.True(t, dt < time.Minute && dt > -time.Minute, fmt.Sprintf("btime more than 1 minute out want %v got %v delta %v", btime, gotBtime, dt))
+	return headers
+}
 
-	t.Run("GzipEncoding", func(t *testing.T) {
-		// Test that the gzipped file we uploaded can be
-		// downloaded
-		checkDownload := func(wantContents string, wantSize int64, wantHash string) {
-			gotContents := fstests.ReadObject(ctx, t, o, -1)
-			assert.Equal(t, wantContents, gotContents)
-			assert.Equal(t, wantSize, o.Size())
-			gotHash, err := o.Hash(ctx, hash.SHA1)
+func (f *Fs) internalTestMetadata(t *testing.T, size string, uploadCutoff string, chunkSize string) {
+	what := fmt.Sprintf("Size%s/UploadCutoff%s/ChunkSize%s", size, uploadCutoff, chunkSize)
+	t.Run(what, func(t *testing.T) {
+		ctx := context.Background()
+
+		ss := fs.SizeSuffix(0)
+		err := ss.Set(size)
+		require.NoError(t, err)
+		original := random.String(int(ss))
+
+		contents := fstest.Gz(t, original)
+		mimeType := "text/html"
+
+		if chunkSize != "" {
+			ss := fs.SizeSuffix(0)
+			err := ss.Set(chunkSize)
 			require.NoError(t, err)
-			assert.Equal(t, wantHash, gotHash)
+			_, err = f.SetUploadChunkSize(ss)
+			require.NoError(t, err)
 		}
 
-		t.Run("NoDecompress", func(t *testing.T) {
-			checkDownload(contents, int64(len(contents)), sha1Sum(t, contents))
+		if uploadCutoff != "" {
+			ss := fs.SizeSuffix(0)
+			err := ss.Set(uploadCutoff)
+			require.NoError(t, err)
+			_, err = f.SetUploadCutoff(ss)
+			require.NoError(t, err)
+		}
+
+		item := fstest.NewItem("test-metadata", contents, fstest.Time("2001-05-06T04:05:06.499Z"))
+		btime := time.Now()
+		metadata := fs.Metadata{
+			// Just mtime for now - limit to milliseconds since x-bz-info-src_last_modified_millis can't support any
+
+			"mtime": "2009-05-06T04:05:06.499Z",
+		}
+
+		// Need to specify HTTP options with the header prefix since they are passed as-is
+		options := []fs.OpenOption{
+			&fs.HTTPOption{Key: "X-Bz-Info-a", Value: "1"},
+			&fs.HTTPOption{Key: "X-Bz-Info-b", Value: "2"},
+		}
+
+		obj := fstests.PutTestContentsMetadata(ctx, t, f, &item, true, contents, true, mimeType, metadata, options...)
+		defer func() {
+			assert.NoError(t, obj.Remove(ctx))
+		}()
+		o := obj.(*Object)
+		gotMetadata, err := o.getMetaData(ctx)
+		require.NoError(t, err)
+
+		// X-Bz-Info-a & X-Bz-Info-b
+		optMetadata := OpenOptionToMetaData(options)
+		for k, v := range optMetadata {
+			got := gotMetadata.Info[k]
+			assert.Equal(t, v, got, k)
+		}
+
+		// mtime
+		for k, v := range metadata {
+			got := o.meta[k]
+			assert.Equal(t, v, got, k)
+		}
+
+		assert.Equal(t, mimeType, gotMetadata.ContentType, "Content-Type")
+
+		// Modification time from the x-bz-info-src_last_modified_millis header
+		var mtime api.Timestamp
+		err = mtime.UnmarshalJSON([]byte(gotMetadata.Info[timeKey]))
+		if err != nil {
+			fs.Debugf(o, "Bad "+timeHeader+" header: %v", err)
+		}
+		assert.Equal(t, item.ModTime, time.Time(mtime), "Modification time")
+
+		// Upload time
+		gotBtime := time.Time(gotMetadata.UploadTimestamp)
+		dt := gotBtime.Sub(btime)
+		assert.True(t, dt < time.Minute && dt > -time.Minute, fmt.Sprintf("btime more than 1 minute out want %v got %v delta %v", btime, gotBtime, dt))
+
+		t.Run("GzipEncoding", func(t *testing.T) {
+			// Test that the gzipped file we uploaded can be
+			// downloaded
+			checkDownload := func(wantContents string, wantSize int64, wantHash string) {
+				gotContents := fstests.ReadObject(ctx, t, o, -1)
+				assert.Equal(t, wantContents, gotContents)
+				assert.Equal(t, wantSize, o.Size())
+				gotHash, err := o.Hash(ctx, hash.SHA1)
+				require.NoError(t, err)
+				assert.Equal(t, wantHash, gotHash)
+			}
+
+			t.Run("NoDecompress", func(t *testing.T) {
+				checkDownload(contents, int64(len(contents)), sha1Sum(t, contents))
+			})
 		})
 	})
+}
+
+func (f *Fs) InternalTestMetadata(t *testing.T) {
+	// 1 kB regular file
+	f.internalTestMetadata(t, "1kiB", "", "")
+
+	// 10 MiB large file
+	f.internalTestMetadata(t, "10MiB", "6MiB", "6MiB")
 }
 
 func sha1Sum(t *testing.T, s string) string {

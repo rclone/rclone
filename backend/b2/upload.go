@@ -91,7 +91,7 @@ type largeUpload struct {
 // newLargeUpload starts an upload of object o from in with metadata in src
 //
 // If newInfo is set then metadata from that will be used instead of reading it from src
-func (f *Fs) newLargeUpload(ctx context.Context, o *Object, in io.Reader, src fs.ObjectInfo, defaultChunkSize fs.SizeSuffix, doCopy bool, newInfo *api.File) (up *largeUpload, err error) {
+func (f *Fs) newLargeUpload(ctx context.Context, o *Object, in io.Reader, src fs.ObjectInfo, defaultChunkSize fs.SizeSuffix, doCopy bool, newInfo *api.File, options ...fs.OpenOption) (up *largeUpload, err error) {
 	size := src.Size()
 	parts := 0
 	chunkSize := defaultChunkSize
@@ -104,11 +104,6 @@ func (f *Fs) newLargeUpload(ctx context.Context, o *Object, in io.Reader, src fs
 			parts++
 		}
 	}
-
-	opts := rest.Opts{
-		Method: "POST",
-		Path:   "/b2_start_large_file",
-	}
 	bucket, bucketPath := o.split()
 	bucketID, err := f.getBucketID(ctx, bucket)
 	if err != nil {
@@ -118,11 +113,26 @@ func (f *Fs) newLargeUpload(ctx context.Context, o *Object, in io.Reader, src fs
 		BucketID: bucketID,
 		Name:     f.opt.Enc.FromStandardPath(bucketPath),
 	}
+	optionsToSend := make([]fs.OpenOption, 0, len(options))
 	if newInfo == nil {
-		modTime := src.ModTime(ctx)
+		modTime, err := o.getModTime(ctx, src, options)
+		if err != nil {
+			return nil, err
+		}
+
 		request.ContentType = fs.MimeType(ctx, src)
 		request.Info = map[string]string{
 			timeKey: timeString(modTime),
+		}
+		// Custom upload headers - remove header prefix since they are sent in the body
+		for _, option := range options {
+			k, v := option.Header()
+			k = strings.ToLower(k)
+			if strings.HasPrefix(k, headerPrefix) {
+				request.Info[k[len(headerPrefix):]] = v
+			} else {
+				optionsToSend = append(optionsToSend, option)
+			}
 		}
 		// Set the SHA1 if known
 		if !o.fs.opt.DisableCheckSum || doCopy {
@@ -133,6 +143,11 @@ func (f *Fs) newLargeUpload(ctx context.Context, o *Object, in io.Reader, src fs
 	} else {
 		request.ContentType = newInfo.ContentType
 		request.Info = newInfo.Info
+	}
+	opts := rest.Opts{
+		Method:  "POST",
+		Path:    "/b2_start_large_file",
+		Options: optionsToSend,
 	}
 	var response api.StartLargeFileResponse
 	err = f.pacer.Call(func() (bool, error) {
