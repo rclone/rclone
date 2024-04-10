@@ -29,6 +29,7 @@ import (
 	"github.com/rclone/rclone/fs/fspath"
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/fs/operations"
+	"github.com/rclone/rclone/lib/encoder"
 )
 
 // Chunker's composite files have one or more chunks
@@ -963,6 +964,11 @@ func (f *Fs) scanObject(ctx context.Context, remote string, quickScan bool) (fs.
 		}
 		if caseInsensitive {
 			sameMain = strings.EqualFold(mainRemote, remote)
+			if sameMain && f.base.Features().IsLocal {
+				// on local, make sure the EqualFold still holds true when accounting for encoding.
+				// sometimes paths with special characters will only normalize the same way in Standard Encoding.
+				sameMain = strings.EqualFold(encoder.OS.FromStandardPath(mainRemote), encoder.OS.FromStandardPath(remote))
+			}
 		} else {
 			sameMain = mainRemote == remote
 		}
