@@ -220,23 +220,31 @@ func skipE2eTestIfNecessary(t *testing.T) {
 func TestEndToEnd(t *testing.T) {
 	skipE2eTestIfNecessary(t)
 
-	// Create a temp directory and chdir there, just in case.
-	originalWd, err := os.Getwd()
-	require.NoError(t, err)
-	tempDir := t.TempDir()
-	require.NoError(t, os.Chdir(tempDir))
-	defer func() { require.NoError(t, os.Chdir(originalWd)) }()
+	for _, mode := range allLayoutModes() {
+		mode := mode
+		t.Run(string(mode), func(t *testing.T) {
+			t.Parallel()
 
-	testingContext := makeE2eTestingContext(t)
-	testingContext.installRcloneGitannexSymlink(t)
-	testingContext.installRcloneConfig(t)
-	testingContext.createGitRepo(t)
+			// Create a temp directory and chdir there, just in case.
+			originalWd, err := os.Getwd()
+			require.NoError(t, err)
+			tempDir := t.TempDir()
+			require.NoError(t, os.Chdir(tempDir))
+			t.Cleanup(func() { require.NoError(t, os.Chdir(originalWd)) })
 
-	testingContext.runInRepo(t, "git", "annex", "initremote", "MyTestRemote",
-		"type=external", "externaltype=rclone-builtin", "encryption=none",
-		"rcloneremotename=MyRcloneRemote", "rcloneprefix="+testingContext.ephemeralRepoDir)
+			testingContext := makeE2eTestingContext(t)
+			testingContext.installRcloneGitannexSymlink(t)
+			testingContext.installRcloneConfig(t)
+			testingContext.createGitRepo(t)
 
-	testingContext.runInRepo(t, "git", "annex", "testremote", "MyTestRemote")
+			testingContext.runInRepo(t, "git", "annex", "initremote", "MyTestRemote",
+				"type=external", "externaltype=rclone-builtin", "encryption=none",
+				"rcloneremotename=MyRcloneRemote", "rcloneprefix="+testingContext.ephemeralRepoDir,
+				"rclonelayout="+string(mode))
+
+			testingContext.runInRepo(t, "git", "annex", "testremote", "MyTestRemote")
+		})
+	}
 }
 
 // For each layout mode, ensure that we're compatible with data written by
