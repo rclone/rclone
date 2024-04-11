@@ -446,6 +446,7 @@ func move(ctx context.Context, fdst fs.Fs, dst fs.Object, remote string, src fs.
 	if doMove := fdst.Features().Move; doMove != nil && (SameConfig(src.Fs(), fdst) || (SameRemoteType(src.Fs(), fdst) && (fdst.Features().ServerSideAcrossConfigs || ci.ServerSideAcrossConfigs))) {
 		// Delete destination if it exists and is not the same file as src (could be same file while seemingly different if the remote is case insensitive)
 		if dst != nil {
+			remote = dst.Remote()
 			if !SameObject(src, dst) {
 				err = DeleteFile(ctx, dst)
 				if err != nil {
@@ -455,6 +456,10 @@ func move(ctx context.Context, fdst fs.Fs, dst fs.Object, remote string, src fs.
 				doMove = func(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
 					return MoveCaseInsensitive(ctx, fdst, fdst, remote, src.Remote(), false, src)
 				}
+			}
+		} else if needsMoveCaseInsensitive(fdst, fdst, remote, src.Remote(), false) {
+			doMove = func(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
+				return MoveCaseInsensitive(ctx, fdst, fdst, remote, src.Remote(), false, src)
 			}
 		}
 		// Move dst <- src
