@@ -16,6 +16,16 @@ Installation on Linux
    "git-annex-remote-rclone-builtin", so the symlink from the previous step
    should be on your PATH.
 
+   * NOTE: If you are porting a remote from git-annex-remote-rclone, first
+     change the externaltype from "rclone" to "rclone-builtin". Watch out, our
+     configs have slightly different names:
+
+      | config for "rclone" | config for "rclone-builtin" |
+      |:--------------------|:----------------------------|
+      | `prefix`            | `rcloneprefix`              |
+      | `target`            | `rcloneremotename`          |
+      | `rclone_layout`     | `rclonelayout`              |
+
    The following example creates a new git-annex remote named "MyRemote" that
    will use the rclone remote named "SomeRcloneRemote". This rclone remote must
    be configured in your rclone.conf file, wherever that is located on your
@@ -27,7 +37,8 @@ Installation on Linux
             externaltype=rclone-builtin       \
             encryption=none                   \
             rcloneremotename=SomeRcloneRemote \
-            rcloneprefix=git-annex-content
+            rcloneprefix=git-annex-content    \
+            rclonelayout=nodir
 
 3. Before you trust this command with your precious data, be sure to **test the
    remote**. This command is very new and has not been tested on many rclone
