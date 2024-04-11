@@ -12,6 +12,7 @@ import (
 	"github.com/rclone/rclone/backend/onedrive/api"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/lib/dircache"
+	"github.com/rclone/rclone/lib/errcount"
 	"golang.org/x/exp/slices" // replace with slices after go1.21 is the minimum version
 )
 
@@ -432,17 +433,21 @@ func (m *Metadata) sortPermissions() (add, update, remove []*api.PermissionsType
 
 // processPermissions executes the add, update, and remove queues for writing permissions
 func (m *Metadata) processPermissions(ctx context.Context, add, update, remove []*api.PermissionsType) (newPermissions []*api.PermissionsType, err error) {
+	errs := errcount.New()
 	for _, p := range remove { // remove (need to do these first because of remove + add workaround)
 		_, err := m.removePermission(ctx, p)
 		if err != nil {
-			return newPermissions, err
+			fs.Errorf(m.remote, "Failed to remove permission: %v", err)
+			errs.Add(err)
 		}
 	}
 
 	for _, p := range add { // add
 		newPs, _, err := m.addPermission(ctx, p)
 		if err != nil {
-			return newPermissions, err
+			fs.Errorf(m.remote, "Failed to add permission: %v", err)
+			errs.Add(err)
+			continue
 		}
 		newPermissions = append(newPermissions, newPs...)
 	}
@@ -450,12 +455,14 @@ func (m *Metadata) processPermissions(ctx context.Context, add, update, remove [
 	for _, p := range update { // update
 		newP, _, err := m.updatePermission(ctx, p)
 		if err != nil {
-			return newPermissions, err
+			fs.Errorf(m.remote, "Failed to update permission: %v", err)
+			errs.Add(err)
+			continue
 		}
 		newPermissions = append(newPermissions, newP)
 	}
 
-	return newPermissions, err
+	return newPermissions, errs.Err("failed to set permissions")
 }
 
 // fillRecipients looks for recipients to add from the permission passed in.
