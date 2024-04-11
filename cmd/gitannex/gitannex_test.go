@@ -64,12 +64,10 @@ var messageParserTestCases = []messageParserTestCase{
 			assert.Error(t, err)
 			assert.Equal(t, param, "")
 
-			param, err = m.finalParameter()
-			assert.Error(t, err)
+			param = m.finalParameter()
 			assert.Equal(t, param, "")
 
-			param, err = m.finalParameter()
-			assert.Error(t, err)
+			param = m.finalParameter()
 			assert.Equal(t, param, "")
 
 			param, err = m.nextSpaceDelimitedParameter()
@@ -95,8 +93,7 @@ var messageParserTestCases = []messageParserTestCase{
 			assert.Error(t, err)
 			assert.Equal(t, param, "")
 
-			param, err = m.finalParameter()
-			assert.Error(t, err)
+			param = m.finalParameter()
 			assert.Equal(t, param, "")
 		},
 	},
@@ -118,8 +115,7 @@ var messageParserTestCases = []messageParserTestCase{
 			assert.Error(t, err)
 			assert.Equal(t, param, "")
 
-			param, err = m.finalParameter()
-			assert.Error(t, err)
+			param = m.finalParameter()
 			assert.Equal(t, param, "")
 		},
 	},
@@ -136,8 +132,7 @@ var messageParserTestCases = []messageParserTestCase{
 			assert.NoError(t, err)
 			assert.Equal(t, param, "secondparam")
 
-			param, err = m.finalParameter()
-			assert.NoError(t, err)
+			param = m.finalParameter()
 			assert.Equal(t, param, "final param with spaces")
 		},
 	},
@@ -151,12 +146,10 @@ var messageParserTestCases = []messageParserTestCase{
 				t.Run(testName, func(t *testing.T) {
 					m := messageParser{"one long final parameter" + lineEnding}
 
-					param, err := m.finalParameter()
-					assert.NoError(t, err)
+					param := m.finalParameter()
 					assert.Equal(t, param, "one long final parameter")
 
-					param, err = m.finalParameter()
-					assert.Error(t, err)
+					param = m.finalParameter()
 					assert.Equal(t, param, "")
 				})
 

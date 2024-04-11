@@ -96,15 +96,15 @@ func (m *messageParser) nextSpaceDelimitedParameter() (string, error) {
 }
 
 // finalParameter consumes the final parameter, which may contain spaces.
-func (m *messageParser) finalParameter() (string, error) {
+func (m *messageParser) finalParameter() string {
 	m.line = strings.TrimRight(m.line, "\r\n")
 	if len(m.line) == 0 {
-		return "", errors.New("nothing remains to parse")
+		return ""
 	}
 
 	param := m.line
 	m.line = ""
-	return param, nil
+	return param
 }
 
 // configDefinition describes a configuration value required by this command. We
@@ -203,11 +203,7 @@ func (s *server) run() error {
 		case "REMOVE":
 			err = s.handleRemove(message)
 		case "ERROR":
-			errorMessage, parseErr := message.finalParameter()
-			if parseErr != nil {
-				err = fmt.Errorf("error while parsing ERROR message from git-annex: %w", parseErr)
-				break
-			}
+			errorMessage := message.finalParameter()
 			err = fmt.Errorf("received error message from git-annex: %s", errorMessage)
 
 		//
@@ -310,8 +306,8 @@ func (s *server) queryConfigs() error {
 			return fmt.Errorf("failed to parse config value: %s %s", valueKeyword, message.line)
 		}
 
-		value, err := message.finalParameter()
-		if err != nil || value == "" {
+		value := message.finalParameter()
+		if value == "" {
 			return fmt.Errorf("config value of %q must not be empty", config.name)
 		}
 
@@ -351,10 +347,10 @@ func (s *server) handleTransfer(message *messageParser) error {
 		s.sendMsg("TRANSFER-FAILURE failed to parse key")
 		return fmt.Errorf("malformed arguments for TRANSFER: %w", err)
 	}
-	argFile, err := message.finalParameter()
-	if err != nil {
-		s.sendMsg("TRANSFER-FAILURE failed to parse file")
-		return fmt.Errorf("malformed arguments for TRANSFER: %w", err)
+	argFile := message.finalParameter()
+	if argFile == "" {
+		s.sendMsg("TRANSFER-FAILURE failed to parse file path")
+		return errors.New("failed to parse file path")
 	}
 
 	if err := s.queryConfigs(); err != nil {
@@ -409,9 +405,9 @@ func (s *server) handleTransfer(message *messageParser) error {
 }
 
 func (s *server) handleCheckPresent(message *messageParser) error {
-	argKey, err := message.finalParameter()
-	if err != nil {
-		return err
+	argKey := message.finalParameter()
+	if argKey == "" {
+		return errors.New("failed to parse response for CHECKPRESENT")
 	}
 
 	if err := s.queryConfigs(); err != nil {
@@ -440,7 +436,11 @@ func (s *server) handleCheckPresent(message *messageParser) error {
 }
 
 func (s *server) handleRemove(message *messageParser) error {
-	argKey, err := message.finalParameter()
+	argKey := message.finalParameter()
+	if argKey == "" {
+		return errors.New("failed to parse key for REMOVE")
+	}
+
 	if err != nil {
 		return err
 	}
