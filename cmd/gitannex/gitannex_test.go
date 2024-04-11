@@ -234,6 +234,7 @@ func (h *testState) requireWriteLine(line string) {
 func (h *testState) preconfigureServer() {
 	h.server.configPrefix = h.localFsDir
 	h.server.configRcloneRemoteName = h.remoteName
+	h.server.configRcloneLayout = string(layoutModeNodir)
 	h.server.configsDone = true
 }
 
@@ -285,6 +286,8 @@ var localBackendTestCases = []testCase{
 			h.requireWriteLine("VALUE " + h.remoteName)
 			h.requireReadLineExact("GETCONFIG rcloneprefix")
 			h.requireWriteLine("VALUE " + h.localFsDir)
+			h.requireReadLineExact("GETCONFIG rclonelayout")
+			h.requireWriteLine("VALUE foo")
 			h.requireReadLineExact("PREPARE-SUCCESS")
 
 			require.Equal(t, h.server.configRcloneRemoteName, h.remoteName)
@@ -313,9 +316,13 @@ var localBackendTestCases = []testCase{
 			localFsDirWithSpaces := fmt.Sprintf(" %s\t", h.localFsDir)
 
 			h.requireWriteLine(fmt.Sprintf("VALUE %s", remoteNameWithSpaces))
-			h.requireReadLineExact("GETCONFIG rcloneprefix")
 
+			h.requireReadLineExact("GETCONFIG rcloneprefix")
 			h.requireWriteLine(fmt.Sprintf("VALUE %s", localFsDirWithSpaces))
+
+			h.requireReadLineExact("GETCONFIG rclonelayout")
+			h.requireWriteLine("VALUE")
+
 			h.requireReadLineExact("PREPARE-SUCCESS")
 
 			require.Equal(t, h.server.configRcloneRemoteName, remoteNameWithSpaces)
@@ -367,11 +374,11 @@ var localBackendTestCases = []testCase{
 
 			// Note the whitespace following the key.
 			h.requireWriteLine("TRANSFER STORE Key ")
-			h.requireReadLineExact("TRANSFER-FAILURE failed to parse file")
+			h.requireReadLineExact("TRANSFER-FAILURE failed to parse file path")
 
 			require.NoError(t, h.mockStdinW.Close())
 		},
-		expectedError: "malformed arguments for TRANSFER: nothing remains to parse",
+		expectedError: "failed to parse file",
 	},
 	// Repeated EXTENSIONS messages add to each other rather than overriding
 	// prior advertised extensions. This behavior is not mandated by the
