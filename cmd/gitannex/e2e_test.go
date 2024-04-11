@@ -225,13 +225,6 @@ func TestEndToEnd(t *testing.T) {
 		t.Run(string(mode), func(t *testing.T) {
 			t.Parallel()
 
-			// Create a temp directory and chdir there, just in case.
-			originalWd, err := os.Getwd()
-			require.NoError(t, err)
-			tempDir := t.TempDir()
-			require.NoError(t, os.Chdir(tempDir))
-			t.Cleanup(func() { require.NoError(t, os.Chdir(originalWd)) })
-
 			testingContext := makeE2eTestingContext(t)
 			testingContext.installRcloneGitannexSymlink(t)
 			testingContext.installRcloneConfig(t)
@@ -260,13 +253,6 @@ func TestEndToEndRepoLayoutCompat(t *testing.T) {
 		mode := mode
 		t.Run(string(mode), func(t *testing.T) {
 			t.Parallel()
-
-			// Create a temp directory and chdir there, just in case.
-			originalWd, err := os.Getwd()
-			require.NoError(t, err)
-			tempDir := t.TempDir()
-			require.NoError(t, os.Chdir(tempDir))
-			defer func() { require.NoError(t, os.Chdir(originalWd)) }()
 
 			tc := makeE2eTestingContext(t)
 			tc.installRcloneGitannexSymlink(t)
