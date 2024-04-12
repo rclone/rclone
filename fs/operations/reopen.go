@@ -138,6 +138,8 @@ func (h *ReOpen) open() error {
 		// Adjust range start to where we have got to
 		h.rangeOption.Start = h.start + h.offset
 	}
+	// Make a copy of the options as fs.FixRangeOption modifies them :-(
+	opts = append(make([]fs.OpenOption, 0, len(opts)), opts...)
 	h.tries++
 	if h.tries > h.maxTries {
 		h.err = errTooManyTries

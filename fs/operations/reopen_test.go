@@ -39,6 +39,8 @@ type reOpenTestObject struct {
 //
 // This will break after reading the number of bytes in breaks
 func (o *reOpenTestObject) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadCloser, error) {
+	// Lots of backends do this - make sure it works as it modifies options
+	fs.FixRangeOption(options, o.Size())
 	gotHash := false
 	gotRange := false
 	startPos := int64(0)
