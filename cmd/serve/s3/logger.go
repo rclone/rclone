@@ -3,7 +3,7 @@ package s3
 import (
 	"fmt"
 
-	"github.com/Mikubill/gofakes3"
+	"github.com/rclone/gofakes3"
 	"github.com/rclone/rclone/fs"
 )
 

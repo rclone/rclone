@@ -10,7 +10,6 @@ require (
 	github.com/Azure/azure-sdk-for-go/sdk/storage/azfile v1.1.1
 	github.com/Azure/go-ntlmssp v0.0.0-20221128193559-754e69321358
 	github.com/Max-Sum/base32768 v0.0.0-20230304063302-18e6ce5945fd
-	github.com/Mikubill/gofakes3 v0.0.3-0.20230622102024-284c0f988700
 	github.com/Unknwon/goconfig v1.0.0
 	github.com/a8m/tree v0.0.0-20240104212747-2c8764a5f17e
 	github.com/aalpar/deheap v0.0.0-20210914013432-0cc84d79dec3
@@ -158,6 +157,7 @@ require (
 	github.com/prometheus/common v0.45.0 // indirect
 	github.com/prometheus/procfs v0.12.0 // indirect
 	github.com/rasky/go-xdr v0.0.0-20170124162913-1a41d1a06c93 // indirect
+	github.com/rclone/gofakes3 v0.0.3-0.20240413171058-b7a9fdb78ddb // indirect
 	github.com/relvacode/iso8601 v1.3.0 // indirect
 	github.com/rs/xid v1.5.0 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect

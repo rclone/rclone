@@ -60,8 +60,6 @@ github.com/Max-Sum/base32768 v0.0.0-20230304063302-18e6ce5945fd/go.mod h1:C8yoIf
 github.com/Microsoft/go-winio v0.5.2/go.mod h1:WpS1mjBmmwHBEWmogvA2mj8546UReBk4v8QkMxJ6pZY=
 github.com/Microsoft/go-winio v0.6.1 h1:9/kr64B9VUZrLm5YYwbGtUJnMgqWVOdUAXu6Migciow=
 github.com/Microsoft/go-winio v0.6.1/go.mod h1:LRdKpFKfdobln8UmuiYcKPot9D2v6svN5+sAH+4kjUM=
-github.com/Mikubill/gofakes3 v0.0.3-0.20230622102024-284c0f988700 h1:r3fp2/Ro+0RtpjNY0/wsbN7vRmCW//dXTOZDQTct25Q=
-github.com/Mikubill/gofakes3 v0.0.3-0.20230622102024-284c0f988700/go.mod h1:OSXqXEGUe9CmPiwLMMnVrbXonMf4BeLBkBdLufxxiyY=
 github.com/ProtonMail/bcrypt v0.0.0-20210511135022-227b4adcab57/go.mod h1:HecWFHognK8GfRDGnFQbW/LiV7A3MX3gZVs45vk5h8I=
 github.com/ProtonMail/bcrypt v0.0.0-20211005172633-e235017c1baf h1:yc9daCCYUefEs69zUkSzubzjBbL+cmOXgnmt9Fyd9ug=
 github.com/ProtonMail/bcrypt v0.0.0-20211005172633-e235017c1baf/go.mod h1:o0ESU9p83twszAU8LBeJKFAAMX14tISa0yk4Oo5TOqo=
@@ -458,6 +456,10 @@ github.com/quic-go/qtls-go1-20 v0.4.1 h1:D33340mCNDAIKBqXuAvexTNMUByrYmFYVfKfDN5
 github.com/quic-go/quic-go v0.40.1 h1:X3AGzUNFs0jVuO3esAGnTfvdgvL4fq655WaOi1snv1Q=
 github.com/rasky/go-xdr v0.0.0-20170124162913-1a41d1a06c93 h1:UVArwN/wkKjMVhh2EQGC0tEc1+FqiLlvYXY5mQ2f8Wg=
 github.com/rasky/go-xdr v0.0.0-20170124162913-1a41d1a06c93/go.mod h1:Nfe4efndBz4TibWycNE+lqyJZiMX4ycx+QKV8Ta0f/o=
+github.com/rclone/gofakes3 v0.0.3-0.20240413163749-372c3e746e45 h1:qrH/G7j3Ru2E6tuKaNvpA+KD9uQSujTTMyQoonCJ7kU=
+github.com/rclone/gofakes3 v0.0.3-0.20240413163749-372c3e746e45/go.mod h1:L0VIBE0mT6ArN/5dfHsJm3UjqCpi5B/cdN+qWDNh7ko=
+github.com/rclone/gofakes3 v0.0.3-0.20240413171058-b7a9fdb78ddb h1:HJJ7XgRBfXew3EosVk45aGPJRY5wSTSpmAJqz8Kiw0w=
+github.com/rclone/gofakes3 v0.0.3-0.20240413171058-b7a9fdb78ddb/go.mod h1:L0VIBE0mT6ArN/5dfHsJm3UjqCpi5B/cdN+qWDNh7ko=
 github.com/relvacode/iso8601 v1.3.0 h1:HguUjsGpIMh/zsTczGN3DVJFxTU/GX+MMmzcKoMO7ko=
 github.com/relvacode/iso8601 v1.3.0/go.mod h1:FlNp+jz+TXpyRqgmM7tnzHHzBnz776kmAH2h3sZCn0I=
 github.com/rfjakob/eme v1.1.2 h1:SxziR8msSOElPayZNFfQw4Tjx/Sbaeeh3eRvrHVMUs4=

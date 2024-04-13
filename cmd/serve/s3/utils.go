@@ -9,7 +9,7 @@ import (
 	"path"
 	"strings"
 
-	"github.com/Mikubill/gofakes3"
+	"github.com/rclone/gofakes3"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/vfs"

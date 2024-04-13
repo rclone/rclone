@@ -4,7 +4,7 @@ import (
 	"path"
 	"strings"
 
-	"github.com/Mikubill/gofakes3"
+	"github.com/rclone/gofakes3"
 )
 
 func (b *s3Backend) entryListR(bucket, fdPath, name string, addPrefix bool, response *gofakes3.ObjectList) error {
