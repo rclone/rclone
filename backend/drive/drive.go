@@ -1919,7 +1919,7 @@ func (f *Fs) findExportFormatByMimeType(ctx context.Context, itemMimeType string
 	return "", "", isDocument
 }
 
-// findExportFormatByMimeType works out the optimum export settings
+// findExportFormat works out the optimum export settings
 // for the given drive.File.
 //
 // Look through the exportExtensions and find the first format that can be
