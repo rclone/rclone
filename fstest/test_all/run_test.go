@@ -40,7 +40,7 @@ func TestTestsToRegexp(t *testing.T) {
 				"TestOne/Sub1",
 				"TestTwo",
 			},
-			want: "^(TestOne|TestTwo)$/^Sub1$",
+			want: "^TestOne$/^Sub1$|^TestTwo$",
 		},
 		{
 			in: []string{
@@ -48,7 +48,7 @@ func TestTestsToRegexp(t *testing.T) {
 				"TestOne/Sub2",
 				"TestTwo",
 			},
-			want: "^(TestOne|TestTwo)$/^(Sub1|Sub2)$",
+			want: "^TestOne$/^(Sub1|Sub2)$|^TestTwo$",
 		},
 		{
 			in: []string{
@@ -56,7 +56,7 @@ func TestTestsToRegexp(t *testing.T) {
 				"TestOne/Sub2/SubSub1",
 				"TestTwo",
 			},
-			want: "^(TestOne|TestTwo)$/^(Sub1|Sub2)$/^SubSub1$",
+			want: "^TestOne$/^Sub1$|^TestOne$/^Sub2$/^SubSub1$|^TestTwo$",
 		},
 		{
 			in: []string{
@@ -64,7 +64,7 @@ func TestTestsToRegexp(t *testing.T) {
 				"TestTests/B/B1",
 				"TestTests/C/C3/C31",
 			},
-			want: "^TestTests$/^(A1|B|C)$/^(B1|C3)$/^C31$",
+			want: "^TestTests$/^A1$|^TestTests$/^B$/^B1$|^TestTests$/^C$/^C3$/^C31$",
 		},
 	} {
 		got := testsToRegexp(test.in)
@@ -108,13 +108,11 @@ func TestTestsToRegexpLive(t *testing.T) {
 				"TestTests/B",
 				"TestTests/B/B1",
 				"TestTests/C",
-				// FIXME there doesn't seem to be a way to select a non-terminal test
-				// and all of its subtests if there is a longer path (in this case B/B1)
-				// "TestTests/C/C1",
-				// "TestTests/C/C2",
-				// "TestTests/C/C3",
-				// "TestTests/C/C3/C31",
-				// "TestTests/C/C3/C32",
+				"TestTests/C/C1",
+				"TestTests/C/C2",
+				"TestTests/C/C3",
+				"TestTests/C/C3/C31",
+				"TestTests/C/C3/C32",
 			},
 		},
 		{
