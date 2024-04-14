@@ -363,7 +363,7 @@ var retryErrorCodes = []int{
 	504, // Gateway Time-out
 }
 
-// shouldRetryNoAuth returns a boolean as to whether this resp and err
+// shouldRetryNoReauth returns a boolean as to whether this resp and err
 // deserve to be retried.  It returns the err as a convenience
 func (f *Fs) shouldRetryNoReauth(ctx context.Context, resp *http.Response, err error) (bool, error) {
 	if fserrors.ContextError(ctx, &err) {
