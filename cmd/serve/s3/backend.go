@@ -18,7 +18,7 @@ import (
 
 var (
 	emptyPrefix = &gofakes3.Prefix{}
-	timeFormat  = "Mon, 2 Jan 2006 15:04:05.999999999 GMT"
+	timeFormat  = "Mon, 2 Jan 2006 15:04:05 GMT"
 )
 
 // s3Backend implements the gofacess3.Backend interface to make an S3
