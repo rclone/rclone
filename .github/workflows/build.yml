@@ -124,7 +124,7 @@ jobs:
           sudo modprobe fuse
           sudo chmod 666 /dev/fuse
           sudo chown root:$USER /etc/fuse.conf
-          sudo apt-get install fuse3 libfuse-dev rpm pkg-config git-annex
+          sudo apt-get install fuse3 libfuse-dev rpm pkg-config git-annex git-annex-remote-rclone
         if: matrix.os == 'ubuntu-latest'
 
       - name: Install Libraries on macOS
@@ -137,7 +137,7 @@ jobs:
           brew untap --force homebrew/cask
           brew update
           brew install --cask macfuse
-          brew install git-annex
+          brew install git-annex git-annex-remote-rclone
         if: matrix.os == 'macos-latest'
 
       - name: Install Libraries on Windows
