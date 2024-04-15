@@ -240,8 +240,68 @@ func TestEndToEnd(t *testing.T) {
 	}
 }
 
-// For each layout mode, ensure that we're compatible with data written by
-// git-annex-remote-rclone.
+// For each layout mode, migrate a single remote from git-annex-remote-rclone to
+// git-annex-remote-rclone-builtin and run `git annex testremote`.
+func TestEndToEndMigration(t *testing.T) {
+	skipE2eTestIfNecessary(t)
+
+	if _, err := exec.LookPath("git-annex-remote-rclone"); err != nil {
+		t.Skipf("Skipping because git-annex-remote-rclone was not found: %s", err)
+	}
+
+	for _, mode := range allLayoutModes() {
+		mode := mode
+		t.Run(string(mode), func(t *testing.T) {
+			t.Parallel()
+
+			tc := makeE2eTestingContext(t)
+			tc.installRcloneGitannexSymlink(t)
+			tc.installRcloneConfig(t)
+			tc.createGitRepo(t)
+
+			remoteStorage := filepath.Join(tc.tempDir, "remotePrefix")
+			require.NoError(t, os.Mkdir(remoteStorage, 0777))
+
+			tc.runInRepo(t,
+				"git", "annex", "initremote", "MigratedRemote",
+				"type=external", "externaltype=rclone", "encryption=none",
+				"target=MyRcloneRemote",
+				"rclone_layout="+string(mode),
+				"prefix="+remoteStorage,
+			)
+
+			fooFileContents := []byte{1, 2, 3, 4}
+			fooFilePath := filepath.Join(tc.ephemeralRepoDir, "foo")
+			require.NoError(t, os.WriteFile(fooFilePath, fooFileContents, 0700))
+			tc.runInRepo(t, "git", "annex", "add", "foo")
+			tc.runInRepo(t, "git", "commit", "-m", "Add foo file")
+			// Git-annex objects are not writable, which prevents `testing` from
+			// cleaning up the temp directory. We can work around this by
+			// explicitly dropping any files we add to the annex.
+			t.Cleanup(func() { tc.runInRepo(t, "git", "annex", "drop", "--force", "foo") })
+
+			tc.runInRepo(t, "git", "annex", "copy", "--to=MigratedRemote", "foo")
+			tc.runInRepo(t, "git", "annex", "fsck", "--from=MigratedRemote", "foo")
+
+			tc.runInRepo(t,
+				"git", "annex", "enableremote", "MigratedRemote",
+				"externaltype=rclone-builtin",
+				"rcloneremotename=MyRcloneRemote",
+				"rclonelayout="+string(mode),
+				"rcloneprefix="+remoteStorage,
+			)
+
+			tc.runInRepo(t, "git", "annex", "fsck", "--from=MigratedRemote", "foo")
+
+			tc.runInRepo(t, "git", "annex", "testremote", "MigratedRemote")
+		})
+	}
+}
+
+// For each layout mode, create two git-annex remotes with externaltype=rclone
+// and externaltype=rclone-builtin respectively. Test that files copied to one
+// remote are present on the other. Similarly, test that files deleted from one
+// are removed on the other.
 func TestEndToEndRepoLayoutCompat(t *testing.T) {
 	skipE2eTestIfNecessary(t)
 
