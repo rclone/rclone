@@ -24,11 +24,11 @@ By default, when run without any arguments,
 
 the generated script will be written to
 
-/etc/bash_completion.d/rclone
+    /etc/bash_completion.d/rclone
 
-and so will probably need to be run as root, or with sudo.
+and so rclone will probably need to be run as root, or with sudo.
 
-If you supply a path to a file as the command line argument, theh 
+If you supply a path to a file as the command line argument, then 
 the generated script will be written to that file, in which case
 you should not need root privileges.
 
