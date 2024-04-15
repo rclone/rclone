@@ -11,6 +11,7 @@ import (
 
 	"github.com/rclone/rclone/backend/onedrive/api"
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/lib/dircache"
 	"github.com/rclone/rclone/lib/errcount"
 	"golang.org/x/exp/slices" // replace with slices after go1.21 is the minimum version
@@ -462,7 +463,11 @@ func (m *Metadata) processPermissions(ctx context.Context, add, update, remove [
 		newPermissions = append(newPermissions, newP)
 	}
 
-	return newPermissions, errs.Err("failed to set permissions")
+	err = errs.Err("failed to set permissions")
+	if err != nil {
+		err = fserrors.NoRetryError(err)
+	}
+	return newPermissions, err
 }
 
 // fillRecipients looks for recipients to add from the permission passed in.

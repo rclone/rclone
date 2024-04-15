@@ -9,6 +9,7 @@ import (
 	"sync"
 
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/lib/errcount"
 	"golang.org/x/sync/errgroup"
 	drive "google.golang.org/api/drive/v3"
@@ -155,7 +156,11 @@ func (f *Fs) setPermissions(ctx context.Context, info *drive.File, permissions [
 			errs.Add(err)
 		}
 	}
-	return errs.Err("failed to set permission")
+	err = errs.Err("failed to set permission")
+	if err != nil {
+		err = fserrors.NoRetryError(err)
+	}
+	return err
 }
 
 // Clean attributes from permissions which we can't write
