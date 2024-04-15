@@ -80,7 +80,7 @@ developers so it may be out of date. Its current version is as below.
 
 [![Homebrew package](https://repology.org/badge/version-for-repo/homebrew/rclone.svg)](https://repology.org/project/rclone/versions)
 
-### Installation with MacPorts (#macos-macports)
+### Installation with MacPorts {#macos-macports}
 
 On macOS, rclone can also be installed via [MacPorts](https://www.macports.org):
 
