@@ -1,19 +1,19 @@
 [36m(01)  :[0m [34mtest extended-char-paths[0m
 
 
-[36m(02)  :[0m [34mfix-names {path1/}測試_Русский_{spc}_{spc}_ě_áñ/[0m
-[36m(03)  :[0m [34mfix-names {path2/}測試_Русский_{spc}_{spc}_ě_áñ/[0m
-[36m(04)  :[0m [34mfix-names {path1/}測試_Русский_{spc}_{spc}_ě_áñ/測試_check{spc}file[0m
-[36m(05)  :[0m [34mfix-names {path2/}測試_Русский_{spc}_{spc}_ě_áñ/測試_check{spc}file[0m
-[36m(06)  :[0m [34mfix-names {path1/}測試_Русский_{spc}_{spc}_ě_áñ/filename_contains_ě_.txt[0m
-[36m(07)  :[0m [34mfix-names {path2/}測試_Русский_{spc}_{spc}_ě_áñ/filename_contains_ě_.txt[0m
+[36m(02)  :[0m [34mfix-names {path1/}測試Русский{spc}{spc}ěáñ/[0m
+[36m(03)  :[0m [34mfix-names {path2/}測試Русский{spc}{spc}ěáñ/[0m
+[36m(04)  :[0m [34mfix-names {path1/}測試Русский{spc}{spc}ěáñ/測試_check{spc}file[0m
+[36m(05)  :[0m [34mfix-names {path2/}測試Русский{spc}{spc}ěáñ/測試_check{spc}file[0m
+[36m(06)  :[0m [34mfix-names {path1/}測試Русский{spc}{spc}ěáñ/filename_contains_ě_.txt[0m
+[36m(07)  :[0m [34mfix-names {path2/}測試Русский{spc}{spc}ěáñ/filename_contains_ě_.txt[0m
 [36m(08)  :[0m [34mfix-names {path1/}測試_check{spc}file[0m
 [36m(09)  :[0m [34mfix-names {path2/}測試_check{spc}file[0m
-[36m(10)  :[0m [34mfix-names {path1/}測試_Русский_{spc}_{spc}_ě_áñ/測試_check{spc}file[0m
-[36m(11)  :[0m [34mfix-names {path2/}測試_Русский_{spc}_{spc}_ě_áñ/測試_check{spc}file[0m
+[36m(10)  :[0m [34mfix-names {path1/}測試Русский{spc}{spc}ěáñ/測試_check{spc}file[0m
+[36m(11)  :[0m [34mfix-names {path2/}測試Русский{spc}{spc}ěáñ/測試_check{spc}file[0m
 
 [36m(12)  :[0m [34mtest resync subdirs with extended chars[0m
-[36m(13)  :[0m [34mbisync subdir=測試_Русский_{spc}_{spc}_ě_áñ resync[0m
+[36m(13)  :[0m [34mbisync subdir=測試Русский{spc}{spc}ěáñ resync[0m
 INFO  : [2mSetting --ignore-listing-checksum as neither --checksum nor --compare checksum are set.[0m
 INFO  : Bisyncing with Comparison Settings:
 {
@@ -24,23 +24,23 @@ INFO  : Bisyncing with Comparison Settings:
 "SlowHashSyncOnly": false,
 "DownloadHash": false
 }
-INFO  : Synching Path1 "{path1/}測試_Русский_ _ _ě_áñ/" with Path2 "{path2/}測試_Русский_ _ _ě_áñ/"
+INFO  : Synching Path1 "{path1/}測試Русский  ěáñ/" with Path2 "{path2/}測試Русский  ěáñ/"
 INFO  : Copying Path2 files to Path1
 INFO  : - [34mPath2[0m    [35mResync is copying files to[0m         - [36mPath1[0m
 INFO  : - [36mPath1[0m    [35mResync is copying files to[0m         - [36mPath2[0m
 INFO  : Resync updating listings
-INFO  : Validating listings for Path1 "{path1/}測試_Русский_ _ _ě_áñ/" vs Path2 "{path2/}測試_Русский_ _ _ě_áñ/"
+INFO  : Validating listings for Path1 "{path1/}測試Русский  ěáñ/" vs Path2 "{path2/}測試Русский  ěáñ/"
 INFO  : [32mBisync successful[0m
 [36m(14)  :[0m [34mcopy-listings resync[0m
 
 [36m(15)  :[0m [34mtest place new files with extended chars on each side[0m
 
 [36m(16)  :[0m [34mtouch-glob 2001-01-02 {datadir/} file1.txt[0m
-[36m(17)  :[0m [34mcopy-as {datadir/}file1.txt {path1/}測試_Русский_{spc}_{spc}_ě_áñ 測試_file1p1[0m
-[36m(18)  :[0m [34mcopy-as {datadir/}file1.txt {path2/}測試_Русский_{spc}_{spc}_ě_áñ 測試_file1p2[0m
+[36m(17)  :[0m [34mcopy-as {datadir/}file1.txt {path1/}測試Русский{spc}{spc}ěáñ 測試_file1p1[0m
+[36m(18)  :[0m [34mcopy-as {datadir/}file1.txt {path2/}測試Русский{spc}{spc}ěáñ 測試_file1p2[0m
 
 [36m(19)  :[0m [34mtest normal sync of subdirs with extended chars[0m
-[36m(20)  :[0m [34mbisync subdir=測試_Русский_{spc}_{spc}_ě_áñ[0m
+[36m(20)  :[0m [34mbisync subdir=測試Русский{spc}{spc}ěáñ[0m
 INFO  : [2mSetting --ignore-listing-checksum as neither --checksum nor --compare checksum are set.[0m
 INFO  : Bisyncing with Comparison Settings:
 {
@@ -51,7 +51,7 @@ INFO  : Bisyncing with Comparison Settings:
 "SlowHashSyncOnly": false,
 "DownloadHash": false
 }
-INFO  : Synching Path1 "{path1/}測試_Русский_ _ _ě_áñ/" with Path2 "{path2/}測試_Русский_ _ _ě_áñ/"
+INFO  : Synching Path1 "{path1/}測試Русский  ěáñ/" with Path2 "{path2/}測試Русский  ěáñ/"
 INFO  : Building Path1 and Path2 listings
 INFO  : Path1 checking for diffs
 INFO  : - [36mPath1[0m    [35m[32mFile is new[0m[0m               - [36m測試_file1p1[0m
@@ -60,12 +60,12 @@ INFO  : Path2 checking for diffs
 INFO  : - [34mPath2[0m    [35m[32mFile is new[0m[0m               - [36m測試_file1p2[0m
 INFO  : Path2:    1 changes: [32m   1 new[0m, [33m   0 modified[0m, [31m   0 deleted[0m
 INFO  : Applying changes
-INFO  : - [36mPath1[0m    [35m[32mQueue copy to[0m Path2[0m       - [36m{path2/}測試_Русский_ _ _ě_áñ/測試_file1p1[0m
-INFO  : - [34mPath2[0m    [35m[32mQueue copy to[0m Path1[0m       - [36m{path1/}測試_Русский_ _ _ě_áñ/測試_file1p2[0m
+INFO  : - [36mPath1[0m    [35m[32mQueue copy to[0m Path2[0m       - [36m{path2/}測試Русский  ěáñ/測試_file1p1[0m
+INFO  : - [34mPath2[0m    [35m[32mQueue copy to[0m Path1[0m       - [36m{path1/}測試Русский  ěáñ/測試_file1p2[0m
 INFO  : - [34mPath2[0m    [35mDo queued copies to[0m                - [36mPath1[0m
 INFO  : - [36mPath1[0m    [35mDo queued copies to[0m                - [36mPath2[0m
 INFO  : Updating listings
-INFO  : Validating listings for Path1 "{path1/}測試_Русский_ _ _ě_áñ/" vs Path2 "{path2/}測試_Русский_ _ _ě_áñ/"
+INFO  : Validating listings for Path1 "{path1/}測試Русский  ěáñ/" vs Path2 "{path2/}測試Русский  ěáñ/"
 INFO  : [32mBisync successful[0m
 [36m(21)  :[0m [34mmove-listings normal-sync[0m
 
@@ -88,7 +88,7 @@ INFO  : - [36mPath1[0m    [35mResync is copying files to[0m         - [36mP
 INFO  : Resync updating listings
 INFO  : Validating listings for Path1 "{path1/}" vs Path2 "{path2/}"
 INFO  : [32mBisync successful[0m
-[36m(24)  :[0m [34mdelete-file {path1/}測試_Русский_{spc}_{spc}_ě_áñ/測試_check{spc}file[0m
+[36m(24)  :[0m [34mdelete-file {path1/}測試Русский{spc}{spc}ěáñ/測試_check{spc}file[0m
 [36m(25)  :[0m [34mbisync check-access check-filename=測試_check{spc}file[0m
 INFO  : [2mSetting --ignore-listing-checksum as neither --checksum nor --compare checksum are set.[0m
 INFO  : Bisyncing with Comparison Settings:
@@ -103,12 +103,12 @@ INFO  : Bisyncing with Comparison Settings:
 INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
 INFO  : Building Path1 and Path2 listings
 INFO  : Path1 checking for diffs
-INFO  : - [36mPath1[0m    [35m[31mFile was deleted[0m[0m          - [36m測試_Русский_ _ _ě_áñ/測試_check file[0m
+INFO  : - [36mPath1[0m    [35m[31mFile was deleted[0m[0m          - [36m測試Русский  ěáñ/測試_check file[0m
 INFO  : Path1:    1 changes: [32m   0 new[0m, [33m   0 modified[0m, [31m   1 deleted[0m
 INFO  : Path2 checking for diffs
 INFO  : Checking access health
 ERROR : Access test failed: Path1 count 1, Path2 count 2 - 測試_check file
-ERROR : - [34m[0m         [35mAccess test failed: Path2 file not found in Path1[0m - [36m測試_Русский_ _ _ě_áñ/測試_check file[0m
+ERROR : - [34m[0m         [35mAccess test failed: Path2 file not found in Path1[0m - [36m測試Русский  ěáñ/測試_check file[0m
 ERROR : [31mBisync critical error: check file check failed[0m
 ERROR : [31mBisync aborted. Must run --resync to recover.[0m
 Bisync error: bisync aborted
