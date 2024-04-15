@@ -847,3 +847,4 @@ put them back in again.` >}}
   * static-moonlight <107991124+static-moonlight@users.noreply.github.com>
   * yudrywet <yudeyao@yeah.net>
   * Butanediol <git@xnh.app>
+  * Dave Nicolson <david.nicolson@gmail.com>
