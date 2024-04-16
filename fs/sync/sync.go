@@ -1203,10 +1203,8 @@ func (s *syncCopyMove) setDelayedDirModTimes(ctx context.Context) error {
 			if gCtx.Err() != nil {
 				break
 			}
-			if item.src == nil {
-				if _, ok := s.modifiedDirs[item.dir]; !ok {
-					continue
-				}
+			if _, ok := s.modifiedDirs[item.dir]; !ok {
+				continue
 			}
 			if !s.copyEmptySrcDirs {
 				if _, isEmpty := s.srcEmptyDirs[item.dir]; isEmpty {
