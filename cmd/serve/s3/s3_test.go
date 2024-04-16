@@ -360,3 +360,29 @@ func TestListBucketsAuthProxy(t *testing.T) {
 
 	testListBuckets(t, cases, true)
 }
+
+// TestS3Integration runs the s3 server then runs the unit tests for the
+// s3 remote against it.
+func TestS3Integration(t *testing.T) {
+	// Configure and start the server
+	start := func(f fs.Fs) (configmap.Simple, func()) {
+		testURL, keyid, keysec, w := serveS3(f)
+
+		// Config for the backend we'll use to connect to the server
+		config := configmap.Simple{
+			"type":              "s3",
+			"provider":          "Rclone",
+			"endpoint":          testURL,
+			"access_key_id":     keyid,
+			"secret_access_key": keysec,
+		}
+
+		// return a stop function
+		return config, func() {
+			assert.NoError(t, w.server.Shutdown())
+			w.server.Wait()
+		}
+	}
+
+	servetest.Run(t, "s3", start)
+}
