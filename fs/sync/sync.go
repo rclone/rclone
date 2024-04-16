@@ -1147,6 +1147,7 @@ func (s *syncCopyMove) copyDirMetadata(ctx context.Context, f fs.Fs, dst fs.Dire
 		}
 	} else {
 		setMeta = s.setDirMetadata
+		newDst = dst
 	}
 	// If we need to set modtime after and we created a dir, then save it for later
 	if s.setDirModTime && s.setDirModTimeAfter && err == nil {

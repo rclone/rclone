@@ -2674,7 +2674,6 @@ func testNothingToTransfer(t *testing.T, copyEmptySrcDirs bool) {
 	assert.True(t, strings.Contains(string(output), "Copied"), `expected to find at least one "Copied" log: `+string(output))
 	if r.Fremote.Features().DirSetModTime != nil || r.Fremote.Features().MkdirMetadata != nil {
 		assert.True(t, strings.Contains(string(output), "Set directory modification time"), `expected to find at least one "Set directory modification time" log: `+string(output))
-		assert.True(t, strings.Contains(string(output), "Made directory with metadata"), `expected to find at least one "Made directory with metadata" log: `+string(output))
 	}
 	assert.False(t, strings.Contains(string(output), "There was nothing to transfer"), `expected to find no "There was nothing to transfer" logs, but found one: `+string(output))
 	assert.True(t, accounting.GlobalStats().GetTransfers() >= 2)
@@ -2702,6 +2701,29 @@ func testNothingToTransfer(t *testing.T, copyEmptySrcDirs bool) {
 	}
 	assert.True(t, strings.Contains(string(output), "There was nothing to transfer"), `expected to find a "There was nothing to transfer" log: `+string(output))
 	assert.Equal(t, int64(0), accounting.GlobalStats().GetTransfers())
+
+	// make a change in one dir and check that parent isn't changed
+	if r.Fremote.Features().DirSetModTime == nil && r.Fremote.Features().MkdirMetadata == nil {
+		return
+	}
+	file3 := r.WriteFile("sub dir2/sub dir3/hello world", "hello again, world", t1)
+	_, err = operations.SetDirModTime(ctx, r.Flocal, nil, "sub dir2", t1)
+	assert.NoError(t, err)
+	_, err = operations.SetDirModTime(ctx, r.Fremote, nil, "sub dir2", t1)
+	assert.NoError(t, err)
+
+	accounting.GlobalStats().ResetCounters()
+	ctx = predictDstFromLogger(ctx)
+	output = bilib.CaptureOutput(func() {
+		err = CopyDir(ctx, r.Fremote, r.Flocal, copyEmptySrcDirs)
+		require.NoError(t, err)
+	})
+	require.NotNil(t, output)
+	testLoggerVsLsf(ctx, r.Fremote, operations.GetLoggerOpt(ctx).JSON, t)
+	r.CheckLocalItems(t, file1, file2, file3)
+	r.CheckRemoteItems(t, file1, file2, file3)
+	assert.True(t, strings.Contains(string(output), "sub dir3:"), `expected to find at least one "sub dir3:" log: `+string(output))
+	assert.False(t, strings.Contains(string(output), "sub dir2:"), `expected to find no "sub dir2:" logs, but found one (unmodified dir was marked modified): `+string(output))
 }
 
 func TestNothingToTransferWithEmptyDirs(t *testing.T) {
