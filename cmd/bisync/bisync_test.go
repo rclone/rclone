@@ -368,6 +368,10 @@ func (b *bisyncTest) runTestCase(ctx context.Context, t *testing.T, testCase str
 	b.fs1, b.parent1, b.path1, b.canonPath1 = b.makeTempRemote(ctx, b.argRemote1, "path1")
 	b.fs2, b.parent2, b.path2, b.canonPath2 = b.makeTempRemote(ctx, b.argRemote2, "path2")
 
+	if strings.Contains(b.replaceHex(b.path1), " ") || strings.Contains(b.replaceHex(b.path2), " ") {
+		b.t.Skip("skipping as tests can't handle spaces config string")
+	}
+
 	b.sessionName = bilib.SessionName(b.fs1, b.fs2)
 	b.testDir = b.ensureDir(b.dataRoot, "test_"+b.testCase, false)
 	b.initDir = b.ensureDir(b.testDir, "initial", false)
