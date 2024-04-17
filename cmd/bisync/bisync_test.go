@@ -335,13 +335,23 @@ func testBisync(t *testing.T, path1, path2 string) {
 		}
 	}
 	require.False(t, b.stopAt > 0 && len(testList) > 1, "-stop-at is meaningful only for a single test")
+	deadline, hasDeadline := t.Deadline()
+	var maxRunDuration time.Duration
 
 	for _, testCase := range testList {
 		testCase = strings.ReplaceAll(testCase, "-", "_")
 		testCase = strings.TrimPrefix(testCase, "test_")
 		t.Run(testCase, func(childTest *testing.T) {
+			startTime := time.Now()
+			remaining := time.Until(deadline)
+			if hasDeadline && (remaining < maxRunDuration || remaining < 10*time.Second) { // avoid starting tests we don't have time to finish
+				childTest.Fatalf("test %v timed out - not enough time to start test (%v remaining, need %v for test)", testCase, remaining, maxRunDuration)
+			}
 			bCopy := *b
 			bCopy.runTestCase(ctx, childTest, testCase)
+			if time.Since(startTime) > maxRunDuration {
+				maxRunDuration = time.Since(startTime)
+			}
 		})
 	}
 }
