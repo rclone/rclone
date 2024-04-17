@@ -733,7 +733,8 @@ func (s *syncCopyMove) markParentNotEmpty(entry fs.DirEntry) {
 	s.srcEmptyDirsMu.Lock()
 	defer s.srcEmptyDirsMu.Unlock()
 	// Mark entry as potentially empty if it is a directory
-	if _, isDir := entry.(fs.Directory); isDir {
+	_, isDir := entry.(fs.Directory)
+	if isDir {
 		s.srcEmptyDirs[entry.Remote()] = entry
 		// if DoMove and --delete-empty-src-dirs flag is set then record the parent but
 		// don't remove any as we are about to move files out of them them making the
@@ -742,12 +743,27 @@ func (s *syncCopyMove) markParentNotEmpty(entry fs.DirEntry) {
 			s.srcMoveEmptyDirs[entry.Remote()] = entry
 		}
 	}
-	// Mark its parent as not empty
 	parentDir := path.Dir(entry.Remote())
-	if parentDir == "." {
-		parentDir = ""
+	if isDir && s.copyEmptySrcDirs {
+		// Mark its parent as not empty
+		if parentDir == "." {
+			parentDir = ""
+		}
+		delete(s.srcEmptyDirs, parentDir)
 	}
-	delete(s.srcEmptyDirs, parentDir)
+	if !isDir {
+		// Mark ALL its parents as not empty
+		for {
+			if parentDir == "." {
+				parentDir = ""
+			}
+			delete(s.srcEmptyDirs, parentDir)
+			if parentDir == "" {
+				break
+			}
+			parentDir = path.Dir(parentDir)
+		}
+	}
 }
 
 // parseTrackRenamesStrategy turns a config string into a trackRenamesStrategy
@@ -1213,6 +1229,13 @@ func (s *syncCopyMove) setDelayedDirModTimes(ctx context.Context) error {
 				}
 			}
 			item := item
+			if s.setDirModTimeAfter { // mark dir's parent as modified
+				dir := path.Dir(item.dir)
+				if dir == "." {
+					dir = ""
+				}
+				s.modifiedDirs[dir] = struct{}{} // lock is already held
+			}
 			g.Go(func() error {
 				var err error
 				// if item.src is set must copy full metadata
@@ -1277,8 +1300,8 @@ func (s *syncCopyMove) SrcOnly(src fs.DirEntry) (recurse bool) {
 		s.logger(s.ctx, operations.MissingOnDst, src, nil, fs.ErrorIsDir)
 
 		// Create the directory and make sure the Metadata/ModTime is correct
-		s.markDirModified(x.Remote())
 		s.copyDirMetadata(s.ctx, s.fdst, nil, x.Remote(), x)
+		s.markDirModified(x.Remote())
 		return true
 	default:
 		panic("Bad object in DirEntries")

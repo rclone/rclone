@@ -305,7 +305,9 @@ func TestCopyEmptyDirectories(t *testing.T) {
 	ctx := context.Background()
 	r := fstest.NewRun(t)
 	file1 := r.WriteFile("sub dir/hello world", "hello world", t1)
-	_, err := operations.MkdirModTime(ctx, r.Flocal, "sub dir2", t2)
+	_, err := operations.MkdirModTime(ctx, r.Flocal, "sub dir2/sub sub dir2", t2)
+	require.NoError(t, err)
+	_, err = operations.SetDirModTime(ctx, r.Flocal, nil, "sub dir2", t2)
 	require.NoError(t, err)
 	r.Mkdir(ctx, r.Fremote)
 
@@ -327,11 +329,12 @@ func TestCopyEmptyDirectories(t *testing.T) {
 		[]string{
 			"sub dir",
 			"sub dir2",
+			"sub dir2/sub sub dir2",
 		},
 	)
 
 	// Check that the modtimes of the directories are as expected
-	r.CheckDirectoryModTimes(t, "sub dir", "sub dir2")
+	r.CheckDirectoryModTimes(t, "sub dir", "sub dir2", "sub dir2/sub sub dir2")
 }
 
 // Test copy empty directories when we are configured not to create them
@@ -340,6 +343,8 @@ func TestCopyNoEmptyDirectories(t *testing.T) {
 	r := fstest.NewRun(t)
 	file1 := r.WriteFile("sub dir/hello world", "hello world", t1)
 	err := operations.Mkdir(ctx, r.Flocal, "sub dir2")
+	require.NoError(t, err)
+	_, err = operations.MkdirModTime(ctx, r.Flocal, "sub dir2/sub sub dir2", t2)
 	require.NoError(t, err)
 	r.Mkdir(ctx, r.Fremote)
 
@@ -2668,7 +2673,7 @@ func testNothingToTransfer(t *testing.T, copyEmptySrcDirs bool) {
 	r.CheckLocalItems(t, file1, file2)
 	r.CheckRemoteItems(t, file1, file2)
 	// Check that the modtimes of the directories are as expected
-	r.CheckDirectoryModTimes(t, "sub dir")
+	r.CheckDirectoryModTimes(t, "sub dir", "sub dir2", "sub dir2/very", "sub dir2/very/very", "sub dir2/very/very/very/very/very/nested/subdir")
 
 	// check that actions were taken
 	assert.True(t, strings.Contains(string(output), "Copied"), `expected to find at least one "Copied" log: `+string(output))
@@ -2690,7 +2695,7 @@ func testNothingToTransfer(t *testing.T, copyEmptySrcDirs bool) {
 	r.CheckLocalItems(t, file1, file2)
 	r.CheckRemoteItems(t, file1, file2)
 	// Check that the modtimes of the directories are as expected
-	r.CheckDirectoryModTimes(t, "sub dir")
+	r.CheckDirectoryModTimes(t, "sub dir", "sub dir2", "sub dir2/very", "sub dir2/very/very", "sub dir2/very/very/very/very/very/nested/subdir")
 
 	// check that actions were NOT taken
 	assert.False(t, strings.Contains(string(output), "Copied"), `expected to find no "Copied" logs, but found one: `+string(output))
@@ -2702,7 +2707,7 @@ func testNothingToTransfer(t *testing.T, copyEmptySrcDirs bool) {
 	assert.True(t, strings.Contains(string(output), "There was nothing to transfer"), `expected to find a "There was nothing to transfer" log: `+string(output))
 	assert.Equal(t, int64(0), accounting.GlobalStats().GetTransfers())
 
-	// make a change in one dir and check that parent isn't changed
+	// check nested empty dir behavior (FIXME: probably belongs in a separate test)
 	if r.Fremote.Features().DirSetModTime == nil && r.Fremote.Features().MkdirMetadata == nil {
 		return
 	}
@@ -2710,6 +2715,10 @@ func testNothingToTransfer(t *testing.T, copyEmptySrcDirs bool) {
 	_, err = operations.SetDirModTime(ctx, r.Flocal, nil, "sub dir2", t1)
 	assert.NoError(t, err)
 	_, err = operations.SetDirModTime(ctx, r.Fremote, nil, "sub dir2", t1)
+	assert.NoError(t, err)
+	_, err = operations.MkdirModTime(ctx, r.Flocal, "sub dirEmpty/sub dirEmpty2", t2)
+	assert.NoError(t, err)
+	_, err = operations.SetDirModTime(ctx, r.Flocal, nil, "sub dirEmpty", t2)
 	assert.NoError(t, err)
 
 	accounting.GlobalStats().ResetCounters()
@@ -2722,8 +2731,16 @@ func testNothingToTransfer(t *testing.T, copyEmptySrcDirs bool) {
 	testLoggerVsLsf(ctx, r.Fremote, operations.GetLoggerOpt(ctx).JSON, t)
 	r.CheckLocalItems(t, file1, file2, file3)
 	r.CheckRemoteItems(t, file1, file2, file3)
+	// Check that the modtimes of the directories are as expected
+	r.CheckDirectoryModTimes(t, "sub dir", "sub dir2", "sub dir2/very", "sub dir2/very/very", "sub dir2/very/very/very/very/very/nested/subdir", "sub dir2/sub dir3")
+	if copyEmptySrcDirs {
+		r.CheckDirectoryModTimes(t, "sub dirEmpty", "sub dirEmpty/sub dirEmpty2")
+		assert.True(t, strings.Contains(string(output), "sub dirEmpty:"), `expected to find at least one "sub dirEmpty:" log: `+string(output))
+	} else {
+		assert.False(t, strings.Contains(string(output), "sub dirEmpty:"), `expected to find no "sub dirEmpty:" logs, but found one (empty dir was synced and shouldn't have been): `+string(output))
+	}
 	assert.True(t, strings.Contains(string(output), "sub dir3:"), `expected to find at least one "sub dir3:" log: `+string(output))
-	assert.False(t, strings.Contains(string(output), "sub dir2:"), `expected to find no "sub dir2:" logs, but found one (unmodified dir was marked modified): `+string(output))
+	assert.False(t, strings.Contains(string(output), "sub dir2/very:"), `expected to find no "sub dir2/very:" logs, but found one (unmodified dir was marked modified): `+string(output))
 }
 
 func TestNothingToTransferWithEmptyDirs(t *testing.T) {
