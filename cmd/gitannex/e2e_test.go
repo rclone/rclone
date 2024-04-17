@@ -9,6 +9,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -41,7 +42,7 @@ func checkRcloneBinaryVersion() error {
 	if parsed.Version != fs.Version {
 		return fmt.Errorf("expected version %q, but got %q", fs.Version, parsed.Version)
 	}
-	if !parsed.IsGit {
+	if parsed.IsGit != strings.HasSuffix(fs.Version, "-DEV") {
 		return errors.New("expected rclone to be a dev build")
 	}
 	_, tagString := buildinfo.GetLinkingAndTags()
