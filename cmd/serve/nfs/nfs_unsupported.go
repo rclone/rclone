@@ -8,5 +8,5 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// For unsupported platforms we just put nil
-var Command *cobra.Command = nil
+// Command is just nil for unsupported platforms
+var Command *cobra.Command

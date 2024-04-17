@@ -13,7 +13,7 @@ func HideConsole() {
 	if getConsoleWindow.Find() == nil && showWindow.Find() == nil {
 		hwnd, _, _ := getConsoleWindow.Call()
 		if hwnd != 0 {
-			showWindow.Call(hwnd, 0)
+			_, _, _ = showWindow.Call(hwnd, 0)
 		}
 	}
 }
