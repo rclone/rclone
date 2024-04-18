@@ -2,7 +2,6 @@
 // See https://github.com/golang/go/issues/14441 - plan9
 
 //go:build plan9
-// +build plan9
 
 package config
 

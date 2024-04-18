@@ -1,5 +1,4 @@
 //go:build unix
-// +build unix
 
 // Package nfsmount implements mounting functionality using serve nfs command
 //
