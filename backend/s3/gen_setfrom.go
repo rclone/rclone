@@ -1,7 +1,6 @@
 // Generate boilerplate code for setting similar structs from each other
 
 //go:build ignore
-// +build ignore
 
 package main
 

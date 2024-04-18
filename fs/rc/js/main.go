@@ -3,7 +3,6 @@
 // This library exports the core rc functionality
 
 //go:build js
-// +build js
 
 package main
 
