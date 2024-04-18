@@ -1,4 +1,4 @@
-//go:build !linux && !darwin && !freebsd
+//go:build windows
 
 package vfstest
 

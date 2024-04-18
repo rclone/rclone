@@ -3,9 +3,10 @@
 
 //go:build plan9
 
+// Package ftp implements an FTP server for rclone
 package ftp
 
 import "github.com/spf13/cobra"
 
 // Command definition is nil to show not implemented
-var Command *cobra.Command = nil
+var Command *cobra.Command

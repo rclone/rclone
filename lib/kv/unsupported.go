@@ -1,5 +1,6 @@
 //go:build plan9 || js
 
+// Package kv provides key/value database.
 package kv
 
 import (
