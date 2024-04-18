@@ -3,4 +3,5 @@
 
 //go:build plan9
 
+// Package sftp provides a filesystem interface using github.com/pkg/sftp
 package sftp
