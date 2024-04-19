@@ -28,6 +28,17 @@ func TestIntegration(t *testing.T) {
 	})
 }
 
+// TestIntegrationWithDirectoryMarkers runs integration tests against the remote with directory markers enabled
+func TestIntegrationWithDirectoryMarkers(t *testing.T) {
+	fstests.Run(t, &fstests.Opt{
+		RemoteName: "TestSwiftAIO:",
+		NilObject:  (*Object)(nil),
+		ExtraConfig: []fstests.ExtraConfigItem{
+			{Name: "TestSwiftAIO", Key: "directory_markers", Value: "true"},
+		},
+	})
+}
+
 func (f *Fs) SetUploadChunkSize(cs fs.SizeSuffix) (fs.SizeSuffix, error) {
 	return f.setUploadChunkSize(cs)
 }
