@@ -696,38 +696,6 @@ func (s *syncCopyMove) deleteEmptyDirectories(ctx context.Context, f fs.Fs, entr
 	return nil
 }
 
-// This copies the empty directories in the slice passed in and logs
-// any errors copying the directories
-func copyEmptyDirectories(ctx context.Context, f fs.Fs, entries map[string]fs.DirEntry) error {
-	if len(entries) == 0 {
-		return nil
-	}
-
-	var okCount int
-	for _, entry := range entries {
-		dir, ok := entry.(fs.Directory)
-		if ok {
-			err := operations.Mkdir(ctx, f, dir.Remote())
-			if err != nil {
-				fs.Errorf(fs.LogDirName(f, dir.Remote()), "Failed to Mkdir: %v", err)
-			} else {
-				okCount++
-			}
-		} else {
-			fs.Errorf(f, "Not a directory: %v", entry)
-		}
-	}
-
-	if accounting.Stats(ctx).Errored() {
-		fs.Debugf(f, "failed to copy %d directories", accounting.Stats(ctx).GetErrors())
-	}
-
-	if okCount > 0 {
-		fs.Debugf(f, "copied %d directories", okCount)
-	}
-	return nil
-}
-
 // mark the parent of entry as not empty and if entry is a directory mark it as potentially empty.
 func (s *syncCopyMove) markParentNotEmpty(entry fs.DirEntry) {
 	s.srcEmptyDirsMu.Lock()
@@ -1005,10 +973,6 @@ func (s *syncCopyMove) run() error {
 	s.stopRenamers()
 	s.stopTransfers()
 	s.stopDeleters()
-
-	if s.copyEmptySrcDirs {
-		s.processError(copyEmptyDirectories(s.ctx, s.fdst, s.srcEmptyDirs))
-	}
 
 	// Delete files after
 	if s.deleteMode == fs.DeleteModeAfter {
