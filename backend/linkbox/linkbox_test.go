@@ -13,5 +13,7 @@ func TestIntegration(t *testing.T) {
 	fstests.Run(t, &fstests.Opt{
 		RemoteName: "TestLinkbox:",
 		NilObject:  (*linkbox.Object)(nil),
+		// Linkbox doesn't support leading dots for files
+		SkipLeadingDot: true,
 	})
 }

@@ -5,6 +5,7 @@ package fstest
 
 import (
 	"bytes"
+	"compress/gzip"
 	"context"
 	"flag"
 	"fmt"
@@ -608,4 +609,15 @@ func CheckDirModTime(ctx context.Context, t *testing.T, f fs.Fs, dir fs.Director
 	}
 	gotT := dir.ModTime(ctx)
 	AssertTimeEqualWithPrecision(t, dir.Remote(), wantT, gotT, f.Precision())
+}
+
+// Gz returns a compressed version of its input string
+func Gz(t *testing.T, s string) string {
+	var buf bytes.Buffer
+	zw := gzip.NewWriter(&buf)
+	_, err := zw.Write([]byte(s))
+	require.NoError(t, err)
+	err = zw.Close()
+	require.NoError(t, err)
+	return buf.String()
 }

@@ -444,6 +444,11 @@ func initConfig() {
 		}
 		atexit.Register(func() {
 			pprof.StopCPUProfile()
+			err := f.Close()
+			if err != nil {
+				err = fs.CountError(err)
+				log.Fatal(err)
+			}
 		})
 	}
 

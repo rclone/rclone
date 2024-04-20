@@ -176,6 +176,7 @@ certificate authority certificate.
 --min-tls-version is minimum TLS version that is acceptable. Valid
   values are "tls1.0", "tls1.1", "tls1.2" and "tls1.3" (default
   "tls1.0").
+
 ## VFS - Virtual File System
 
 This command uses the VFS layer. This adapts the cloud storage objects

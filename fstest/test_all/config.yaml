@@ -7,6 +7,7 @@ tests:
    fastlist: true
  - path: fs/sync
    fastlist: true
+ - path: cmd/bisync
  - path: vfs
  - path: cmd/serve/restic
    localonly: true
@@ -457,4 +458,7 @@ backends:
      - TestIntegration/FsMkdir/FsPutFiles/FsPutStream/0
  - backend:  "quatrix"
    remote:   "TestQuatrix:"
+   fastlist: false
+ - backend:  "ulozto"
+   remote:   "TestUlozto:"
    fastlist: false

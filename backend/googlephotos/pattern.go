@@ -38,7 +38,7 @@ type dirPattern struct {
 	toEntries func(ctx context.Context, f lister, prefix string, match []string) (fs.DirEntries, error)
 }
 
-// dirPatters is a slice of all the directory patterns
+// dirPatterns is a slice of all the directory patterns
 type dirPatterns []dirPattern
 
 // patterns describes the layout of the google photos backend file system.

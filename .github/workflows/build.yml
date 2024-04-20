@@ -59,7 +59,7 @@ jobs:
           sudo modprobe fuse
           sudo chmod 666 /dev/fuse
           sudo chown root:$USER /etc/fuse.conf
-          sudo apt-get install fuse3 libfuse-dev rpm pkg-config
+          sudo apt-get install fuse3 libfuse-dev rpm pkg-config git-annex
         if: matrix.os == 'ubuntu-latest'
 
       - name: Install Libraries on Windows
@@ -89,14 +89,6 @@ jobs:
           make vars
           printf "\n\nSystem environment:\n\n"
           env
-
-      - name: Go module cache
-        uses: actions/cache@v4
-        with:
-          path: ~/go/pkg/mod
-          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-go-
 
       - name: Build rclone
         shell: bash

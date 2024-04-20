@@ -181,7 +181,7 @@ func (f *Fs) getAbout(ctx context.Context) (info *api.About, err error) {
 	return
 }
 
-// requestShare returns information about ssharable links
+// requestShare returns information about sharable links
 func (f *Fs) requestShare(ctx context.Context, req *api.RequestShare) (info *api.Share, err error) {
 	opts := rest.Opts{
 		Method: "POST",

@@ -1,5 +1,4 @@
 //go:build !plan9
-// +build !plan9
 
 // Package sftp implements an SFTP server to serve an rclone VFS
 package sftp
@@ -114,7 +113,7 @@ used. Omitting "restrict" and using  ` + "`--sftp-path-override`" + ` to enable
 checksumming is possible but less secure and you could use the SFTP server
 provided by OpenSSH in this case.
 
-` + vfs.Help + proxy.Help,
+` + vfs.Help() + proxy.Help,
 	Annotations: map[string]string{
 		"versionIntroduced": "v1.48",
 		"groups":            "Filter",

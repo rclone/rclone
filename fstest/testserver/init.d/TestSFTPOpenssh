@@ -5,19 +5,22 @@ set -e
 NAME=rclone-sftp-openssh
 USER=rclone
 PASS=password
+PORT=28627
 
 . $(dirname "$0")/docker.bash
 
 start() {
     docker run --rm -d --name ${NAME} \
+           -p 127.0.0.1:${PORT}:22 \
            rclone/test-sftp-openssh
     
     echo type=sftp
-    echo host=$(docker_ip)
+    echo host=127.0.0.1
+    echo port=$PORT
     echo user=$USER
     echo pass=$(rclone obscure $PASS)
     echo copy_is_hardlink=true
-    echo _connect=$(docker_ip):22
+    echo _connect=127.0.0.1:${PORT}
 }
 
 . $(dirname "$0")/run.bash

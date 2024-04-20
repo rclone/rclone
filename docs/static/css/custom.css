@@ -142,6 +142,11 @@ h5 {
     font-size: 95%;
 }
 
+.container-fluid {
+    padding-left: 2.2rem !important;
+    padding-right: 2.2rem !important;
+}
+
 /* Make primary buttons rclone colours. Should learn sass and do this the proper way! */
 .btn-primary {
     background-color: #3f79ad;

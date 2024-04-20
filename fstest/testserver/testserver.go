@@ -103,14 +103,31 @@ func start(name string) error {
 	}
 	// If we got a _connect value then try to connect to it
 	const maxTries = 30
+	var rdBuf = make([]byte, 1)
 	for i := 1; i <= maxTries; i++ {
-		fs.Debugf(name, "Attempting to connect to %q try %d/%d", connect, i, maxTries)
-		conn, err := net.Dial("tcp", connect)
-		if err == nil {
-			_ = conn.Close()
-			return nil
+		if i != 0 {
+			time.Sleep(time.Second)
 		}
-		time.Sleep(time.Second)
+		fs.Debugf(name, "Attempting to connect to %q try %d/%d", connect, i, maxTries)
+		conn, err := net.DialTimeout("tcp", connect, time.Second)
+		if err != nil {
+			fs.Debugf(name, "Connection to %q failed try %d/%d: %v", connect, i, maxTries, err)
+			continue
+		}
+
+		err = conn.SetReadDeadline(time.Now().Add(time.Second))
+		if err != nil {
+			return fmt.Errorf("failed to set deadline: %w", err)
+		}
+		n, err := conn.Read(rdBuf)
+		_ = conn.Close()
+		fs.Debugf(name, "Read %d, error: %v", n, err)
+		if err != nil && !errors.Is(err, os.ErrDeadlineExceeded) {
+			// Try again
+			continue
+		}
+		//time.Sleep(30 * time.Second)
+		return nil
 	}
 	return fmt.Errorf("failed to connect to %q on %q", name, connect)
 }

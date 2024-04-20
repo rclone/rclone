@@ -290,6 +290,9 @@ func init() {
 				Value: "sa-east-1",
 				Help:  "South America (Sao Paulo) Region.\nNeeds location constraint sa-east-1.",
 			}, {
+				Value: "il-central-1",
+				Help:  "Israel (Tel Aviv) Region.\nNeeds location constraint il-central-1.",
+			}, {
 				Value: "me-south-1",
 				Help:  "Middle East (Bahrain) Region.\nNeeds location constraint me-south-1.",
 			}, {
@@ -1453,6 +1456,9 @@ func init() {
 			}, {
 				Value: "sa-east-1",
 				Help:  "South America (Sao Paulo) Region",
+			}, {
+				Value: "il-central-1",
+				Help:  "Israel (Tel Aviv) Region",
 			}, {
 				Value: "me-south-1",
 				Help:  "Middle East (Bahrain) Region",
@@ -3022,6 +3028,14 @@ func (f *Fs) setUploadChunkSize(cs fs.SizeSuffix) (old fs.SizeSuffix, err error)
 	return
 }
 
+func checkCopyCutoff(cs fs.SizeSuffix) error {
+	minCopySize := fs.SizeSuffixBase
+	if cs < minCopySize {
+		return fmt.Errorf("value is too small (%v is less than %v)", cs, minCopySize)
+	}
+	return nil
+}
+
 func checkUploadCutoff(cs fs.SizeSuffix) error {
 	if cs > maxUploadCutoff {
 		return fmt.Errorf("%s is greater than %s", cs, maxUploadCutoff)
@@ -3182,8 +3196,8 @@ func setQuirks(opt *Options) {
 		if opt.MaxUploadParts > 1000 {
 			opt.MaxUploadParts = 1000
 		}
-		urlEncodeListings = false
-		useAlreadyExists = false // untested
+		urlEncodeListings = true
+		useAlreadyExists = true
 	case "SeaweedFS":
 		listObjectsV2 = false // untested
 		virtualHostStyle = false
@@ -3321,6 +3335,10 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	err = checkUploadCutoff(opt.UploadCutoff)
 	if err != nil {
 		return nil, fmt.Errorf("s3: upload cutoff: %w", err)
+	}
+	err = checkCopyCutoff(opt.CopyCutoff)
+	if err != nil {
+		return nil, fmt.Errorf("s3: --s3-copy-cutoff: %w", err)
 	}
 	if opt.Versions && opt.VersionAt.IsSet() {
 		return nil, errors.New("s3: can't use --s3-versions and --s3-version-at at the same time")

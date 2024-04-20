@@ -1,5 +1,4 @@
 //go:build ignore
-// +build ignore
 
 // Test that the tests in the suite passed in are independent
 

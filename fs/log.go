@@ -203,7 +203,7 @@ func PrettyPrint(in any, label string, level LogLevel) {
 		return
 	}
 	inBytes, err := json.MarshalIndent(in, "", "\t")
-	if err != nil {
+	if err != nil || string(inBytes) == "{}" || string(inBytes) == "[]" {
 		LogPrintf(level, label, "\n%+v\n", in)
 		return
 	}

@@ -16,7 +16,6 @@
 
 //go:generate go run resource_windows.go
 //go:build tools
-// +build tools
 
 package main
 

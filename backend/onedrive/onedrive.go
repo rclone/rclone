@@ -213,9 +213,11 @@ listing, set this option.`,
 
 Allow server-side operations (e.g. copy) to work across different onedrive configs.
 
-This will only work if you are copying between two OneDrive *Personal* drives AND
-the files to copy are already shared between them.  In other cases, rclone will
-fall back to normal copy (which will be slightly slower).`,
+This will work if you are copying between two OneDrive *Personal* drives AND the files to
+copy are already shared between them. Additionally, it should also function for a user who
+has access permissions both between Onedrive for *business* and *SharePoint* under the *same
+tenant*, and between *SharePoint* and another *SharePoint* under the *same tenant*. In other
+cases, rclone will fall back to normal copy (which will be slightly slower).`,
 			Advanced: true,
 		}, {
 			Name:     "list_chunk",
@@ -289,7 +291,7 @@ all onedrive types. If an SHA1 hash is desired then set this option
 accordingly.
 
 From July 2023 QuickXorHash will be the only available hash for
-both OneDrive for Business and OneDriver Personal.
+both OneDrive for Business and OneDrive Personal.
 
 This can be set to "none" to not use any hashes.
 
@@ -1591,14 +1593,12 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		fs.Debugf(src, "Can't copy - not same remote type")
 		return nil, fs.ErrorCantCopy
 	}
-	if f.driveType != srcObj.fs.driveType {
-		fs.Debugf(src, "Can't server-side copy - drive types differ")
-		return nil, fs.ErrorCantCopy
-	}
 
-	// For OneDrive Business, this is only supported within the same drive
-	if f.driveType != driveTypePersonal && srcObj.fs.driveID != f.driveID {
-		fs.Debugf(src, "Can't server-side copy - cross-drive but not OneDrive Personal")
+	if (f.driveType == driveTypePersonal && srcObj.fs.driveType != driveTypePersonal) || (f.driveType != driveTypePersonal && srcObj.fs.driveType == driveTypePersonal) {
+		fs.Debugf(src, "Can't server-side copy - cross-drive between OneDrive Personal and OneDrive for business (SharePoint)")
+		return nil, fs.ErrorCantCopy
+	} else if f.driveType == driveTypeBusiness && srcObj.fs.driveType == driveTypeBusiness && srcObj.fs.driveID != f.driveID {
+		fs.Debugf(src, "Can't server-side copy - cross-drive between difference OneDrive for business (Not SharePoint)")
 		return nil, fs.ErrorCantCopy
 	}
 
@@ -2254,9 +2254,23 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 	if o.fs.opt.AVOverride {
 		opts.Parameters = url.Values{"AVOverride": {"1"}}
 	}
+	// Make a note of the redirect target as we need to call it without Auth
+	var redirectReq *http.Request
+	opts.CheckRedirect = func(req *http.Request, via []*http.Request) error {
+		if len(via) >= 10 {
+			return errors.New("stopped after 10 redirects")
+		}
+		req.Header.Del("Authorization") // remove Auth header
+		redirectReq = req
+		return http.ErrUseLastResponse
+	}
 
 	err = o.fs.pacer.Call(func() (bool, error) {
 		resp, err = o.fs.srv.Call(ctx, &opts)
+		if redirectReq != nil {
+			// It is a redirect which we are expecting
+			err = nil
+		}
 		return shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
@@ -2267,6 +2281,20 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 		}
 		return nil, err
 	}
+	if redirectReq != nil {
+		err = o.fs.pacer.Call(func() (bool, error) {
+			resp, err = o.fs.unAuth.Do(redirectReq)
+			return shouldRetry(ctx, resp, err)
+		})
+		if err != nil {
+			if resp != nil {
+				if virus := resp.Header.Get("X-Virus-Infected"); virus != "" {
+					err = fmt.Errorf("server reports this file is infected with a virus - use --onedrive-av-override to download anyway: %s: %w", virus, err)
+				}
+			}
+			return nil, err
+		}
+	}
 
 	if resp.StatusCode == http.StatusOK && resp.ContentLength > 0 && resp.Header.Get("Content-Range") == "" {
 		// Overwrite size with actual size since size readings from Onedrive is unreliable.
@@ -2276,11 +2304,11 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 }
 
 // createUploadSession creates an upload session for the object
-func (o *Object) createUploadSession(ctx context.Context, src fs.ObjectInfo, modTime time.Time) (response *api.CreateUploadResponse, err error) {
+func (o *Object) createUploadSession(ctx context.Context, src fs.ObjectInfo, modTime time.Time) (response *api.CreateUploadResponse, metadata fs.Metadata, err error) {
 	opts := o.fs.newOptsCallWithPath(ctx, o.remote, "POST", "/createUploadSession")
-	createRequest, err := o.fetchMetadataForCreate(ctx, src, opts.Options, modTime)
+	createRequest, metadata, err := o.fetchMetadataForCreate(ctx, src, opts.Options, modTime)
 	if err != nil {
-		return nil, err
+		return nil, metadata, err
 	}
 	var resp *http.Response
 	err = o.fs.pacer.Call(func() (bool, error) {
@@ -2293,7 +2321,7 @@ func (o *Object) createUploadSession(ctx context.Context, src fs.ObjectInfo, mod
 		}
 		return shouldRetry(ctx, resp, err)
 	})
-	return response, err
+	return response, metadata, err
 }
 
 // getPosition gets the current position in a multipart upload
@@ -2409,7 +2437,7 @@ func (o *Object) uploadMultipart(ctx context.Context, in io.Reader, src fs.Objec
 
 	// Create upload session
 	fs.Debugf(o, "Starting multipart upload")
-	session, err := o.createUploadSession(ctx, src, modTime)
+	session, metadata, err := o.createUploadSession(ctx, src, modTime)
 	if err != nil {
 		return nil, err
 	}
@@ -2446,10 +2474,10 @@ func (o *Object) uploadMultipart(ctx context.Context, in io.Reader, src fs.Objec
 	if err != nil {
 		return info, err
 	}
-	if !o.fs.opt.MetadataPermissions.IsSet(rwWrite) {
+	if metadata == nil || !o.fs.needsUpdatePermissions(metadata) {
 		return info, err
 	}
-	info, err = o.fs.fetchAndUpdatePermissions(ctx, src, options, o) // for permissions, which can't be set during original upload
+	info, err = o.updateMetadata(ctx, metadata) // for permissions, which can't be set during original upload
 	if info == nil {
 		return nil, err
 	}

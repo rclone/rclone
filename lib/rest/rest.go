@@ -149,6 +149,8 @@ type Opts struct {
 	Trailer               *http.Header // set the request trailer
 	Close                 bool         // set to close the connection after this transaction
 	NoRedirect            bool         // if this is set then the client won't follow redirects
+	// On Redirects, call this function - see the http.Client docs: https://pkg.go.dev/net/http#Client
+	CheckRedirect func(req *http.Request, via []*http.Request) error
 }
 
 // Copy creates a copy of the options
@@ -207,6 +209,11 @@ func ClientWithNoRedirects(c *http.Client) *http.Client {
 		return http.ErrUseLastResponse
 	}
 	return &clientCopy
+}
+
+// Do calls the internal http.Client.Do method
+func (api *Client) Do(req *http.Request) (*http.Response, error) {
+	return api.c.Do(req)
 }
 
 // Call makes the call and returns the http.Response
@@ -299,6 +306,10 @@ func (api *Client) Call(ctx context.Context, opts *Opts) (resp *http.Response, e
 	var c *http.Client
 	if opts.NoRedirect {
 		c = ClientWithNoRedirects(api.c)
+	} else if opts.CheckRedirect != nil {
+		clientCopy := *api.c
+		clientCopy.CheckRedirect = opts.CheckRedirect
+		c = &clientCopy
 	} else {
 		c = api.c
 	}

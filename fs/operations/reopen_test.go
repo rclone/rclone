@@ -30,6 +30,7 @@ var errorTestError = errors.New("test error")
 type reOpenTestObject struct {
 	fs.Object
 	t           *testing.T
+	wantStart   int64
 	breaks      []int64
 	unknownSize bool
 }
@@ -38,6 +39,8 @@ type reOpenTestObject struct {
 //
 // This will break after reading the number of bytes in breaks
 func (o *reOpenTestObject) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadCloser, error) {
+	// Lots of backends do this - make sure it works as it modifies options
+	fs.FixRangeOption(options, o.Size())
 	gotHash := false
 	gotRange := false
 	startPos := int64(0)
@@ -55,6 +58,7 @@ func (o *reOpenTestObject) Open(ctx context.Context, options ...fs.OpenOption) (
 			startPos = x.Offset
 		}
 	}
+	assert.Equal(o.t, o.wantStart, startPos)
 	// Check if ranging, mustn't have hash if offset != 0
 	if gotHash && gotRange {
 		assert.Equal(o.t, int64(0), startPos)
@@ -67,6 +71,7 @@ func (o *reOpenTestObject) Open(ctx context.Context, options ...fs.OpenOption) (
 		// Pop a breakpoint off
 		N := o.breaks[0]
 		o.breaks = o.breaks[1:]
+		o.wantStart += N
 		// If 0 then return an error immediately
 		if N == 0 {
 			return nil, errorTestError
@@ -107,7 +112,7 @@ func TestReOpen(t *testing.T) {
 			}
 
 			// Start the test with the given breaks
-			testReOpen := func(breaks []int64, maxRetries int) (*ReOpen, error) {
+			testReOpen := func(breaks []int64, maxRetries int) (*ReOpen, *reOpenTestObject, error) {
 				srcOrig := mockobject.New("potato").WithContent(reOpenTestcontents, mockobject.SeekModeNone)
 				srcOrig.SetUnknownSize(unknownSize)
 				src := &reOpenTestObject{
@@ -122,16 +127,19 @@ func TestReOpen(t *testing.T) {
 				}
 				if rangeOption != nil {
 					opts = append(opts, rangeOption)
+					src.wantStart = rangeOption.Start
 				}
 				if seekOption != nil {
 					opts = append(opts, seekOption)
+					src.wantStart = seekOption.Offset
 				}
-				return NewReOpen(context.Background(), src, maxRetries, opts...)
+				rc, err := NewReOpen(context.Background(), src, maxRetries, opts...)
+				return rc, src, err
 			}
 
 			t.Run("Basics", func(t *testing.T) {
 				// open
-				h, err := testReOpen(nil, 10)
+				h, _, err := testReOpen(nil, 10)
 				assert.NoError(t, err)
 
 				// Check contents read correctly
@@ -168,14 +176,14 @@ func TestReOpen(t *testing.T) {
 
 			t.Run("ErrorAtStart", func(t *testing.T) {
 				// open with immediate breaking
-				h, err := testReOpen([]int64{0}, 10)
+				h, _, err := testReOpen([]int64{0}, 10)
 				assert.Equal(t, errorTestError, err)
 				assert.Nil(t, h)
 			})
 
 			t.Run("WithErrors", func(t *testing.T) {
 				// open with a few break points but less than the max
-				h, err := testReOpen([]int64{2, 1, 3}, 10)
+				h, _, err := testReOpen([]int64{2, 1, 3}, 10)
 				assert.NoError(t, err)
 
 				// check contents
@@ -189,7 +197,7 @@ func TestReOpen(t *testing.T) {
 
 			t.Run("TooManyErrors", func(t *testing.T) {
 				// open with a few break points but >= the max
-				h, err := testReOpen([]int64{2, 1, 3}, 3)
+				h, _, err := testReOpen([]int64{2, 1, 3}, 3)
 				assert.NoError(t, err)
 
 				// check contents
@@ -209,7 +217,7 @@ func TestReOpen(t *testing.T) {
 
 			t.Run("Seek", func(t *testing.T) {
 				// open
-				h, err := testReOpen([]int64{2, 1, 3}, 10)
+				h, src, err := testReOpen([]int64{2, 1, 3}, 10)
 				assert.NoError(t, err)
 
 				// Seek to end
@@ -259,7 +267,18 @@ func TestReOpen(t *testing.T) {
 				assert.Nil(t, err)
 				assert.Equal(t, 2, int(pos))
 
+				// Reset the start after a seek, taking into account the offset
+				setWantStart := func(x int64) {
+					src.wantStart = x
+					if rangeOption != nil {
+						src.wantStart += rangeOption.Start
+					} else if seekOption != nil {
+						src.wantStart += seekOption.Offset
+					}
+				}
+
 				// check read
+				setWantStart(2)
 				n, err = h.Read(dst)
 				assert.Nil(t, err)
 				assert.Equal(t, 5, n)
@@ -286,6 +305,7 @@ func TestReOpen(t *testing.T) {
 
 				// check read
 				dst = make([]byte, 3)
+				setWantStart(int64(len(expectedRead) - 3))
 				n, err = h.Read(dst)
 				assert.Nil(t, err)
 				assert.Equal(t, 3, n)
@@ -298,7 +318,7 @@ func TestReOpen(t *testing.T) {
 			})
 
 			t.Run("AccountRead", func(t *testing.T) {
-				h, err := testReOpen(nil, 10)
+				h, _, err := testReOpen(nil, 10)
 				assert.NoError(t, err)
 
 				var total int
@@ -315,7 +335,7 @@ func TestReOpen(t *testing.T) {
 			})
 
 			t.Run("AccountReadDelay", func(t *testing.T) {
-				h, err := testReOpen(nil, 10)
+				h, _, err := testReOpen(nil, 10)
 				assert.NoError(t, err)
 
 				var total int
@@ -360,7 +380,7 @@ func TestReOpen(t *testing.T) {
 
 			t.Run("AccountReadError", func(t *testing.T) {
 				// Test accounting errors
-				h, err := testReOpen(nil, 10)
+				h, _, err := testReOpen(nil, 10)
 				assert.NoError(t, err)
 
 				h.SetAccounting(func(n int) error {

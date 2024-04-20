@@ -1,5 +1,4 @@
 //go:build !plan9
-// +build !plan9
 
 // Test Storj filesystem interface
 package storj_test

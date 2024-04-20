@@ -24,6 +24,7 @@ import (
 	"time"
 
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/cache"
 	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/fs/fspath"
@@ -303,6 +304,7 @@ type Opt struct {
 	SkipObjectCheckWrap             bool     // if set skip ObjectCheckWrap
 	SkipDirectoryCheckWrap          bool     // if set skip DirectoryCheckWrap
 	SkipInvalidUTF8                 bool     // if set skip invalid UTF-8 checks
+	SkipLeadingDot                  bool     // if set skip leading dot checks
 	QuickTestOK                     bool     // if set, run this test with make quicktest
 }
 
@@ -688,6 +690,9 @@ func Run(t *testing.T, opt *Opt) {
 			} {
 				t.Run(test.name, func(t *testing.T) {
 					if opt.SkipInvalidUTF8 && test.name == "invalid UTF-8" {
+						t.Skip("Skipping " + test.name)
+					}
+					if opt.SkipLeadingDot && test.name == "leading dot" {
 						t.Skip("Skipping " + test.name)
 					}
 					// turn raw strings into Standard encoding
@@ -1205,6 +1210,28 @@ func Run(t *testing.T, opt *Opt) {
 				}, fs.GetModifyWindow(ctx, f))
 			})
 
+			// TestFsListRootedSubdir tests putting and listing with an Fs that is rooted at a subdirectory 2 levels down
+			TestFsListRootedSubdir := func(t *testing.T) {
+				skipIfNotOk(t)
+				newF, err := cache.Get(ctx, subRemoteName+"/hello? sausage/êé")
+				assert.NoError(t, err)
+				nestedFile := fstest.Item{
+					ModTime: fstest.Time("2001-02-03T04:05:06.499999999Z"),
+					Path:    "a/b/c/d/e.txt",
+				}
+				_, _ = testPut(ctx, t, newF, &nestedFile)
+
+				objs, dirs, err := walk.GetAll(ctx, newF, "", true, 10)
+				require.NoError(t, err)
+				assert.Equal(t, []string{`Hello, 世界/ " ' @ < > & ? + ≠/z.txt`, nestedFile.Path}, objsToNames(objs))
+				assert.Equal(t, []string{`Hello, 世界`, `Hello, 世界/ " ' @ < > & ? + ≠`, "a", "a/b", "a/b/c", "a/b/c/d"}, dirsToNames(dirs))
+
+				// cleanup
+				err = operations.Purge(ctx, newF, "a")
+				require.NoError(t, err)
+			}
+			t.Run("FsListRootedSubdir", TestFsListRootedSubdir)
+
 			// TestFsCopy tests Copy
 			t.Run("FsCopy", func(t *testing.T) {
 				skipIfNotOk(t)
@@ -1232,6 +1259,13 @@ func Run(t *testing.T, opt *Opt) {
 
 				// Check dst lightly - list above has checked ModTime/Hashes
 				assert.Equal(t, file2Copy.Path, dst.Remote())
+
+				// check that mutating dst does not mutate src
+				err = dst.SetModTime(ctx, fstest.Time("2004-03-03T04:05:06.499999999Z"))
+				if err != fs.ErrorCantSetModTimeWithoutDelete && err != fs.ErrorCantSetModTime {
+					assert.NoError(t, err)
+					assert.False(t, src.ModTime(ctx).Equal(dst.ModTime(ctx)), "mutating dst should not mutate src -- is it Copying by pointer?")
+				}
 
 				// Delete copy
 				err = dst.Remove(ctx)

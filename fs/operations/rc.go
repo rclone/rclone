@@ -639,7 +639,7 @@ func rcBackend(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 	if err != nil {
 		return nil, err
 	}
-	result, err := doCommand(context.Background(), command, arg, opt)
+	result, err := doCommand(ctx, command, arg, opt)
 	if err != nil {
 		return nil, fmt.Errorf("command %q failed: %w", command, err)
 
@@ -858,13 +858,13 @@ func rcCheck(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 
 	if checkFileHash != "" {
 		out["hashType"] = checkFileHashType.String()
-		err = CheckSum(context.Background(), dstFs, checkFileFs, checkFileRemote, checkFileHashType, opt, download)
+		err = CheckSum(ctx, dstFs, checkFileFs, checkFileRemote, checkFileHashType, opt, download)
 	} else {
 		if download {
-			err = CheckDownload(context.Background(), opt)
+			err = CheckDownload(ctx, opt)
 		} else {
 			out["hashType"] = srcFs.Hashes().Overlap(dstFs.Hashes()).GetOne().String()
-			err = Check(context.Background(), opt)
+			err = Check(ctx, opt)
 		}
 	}
 	if err != nil {

@@ -5,7 +5,6 @@
 // https://play.golang.org/p/kLtct7lSUg
 
 //go:build windows
-// +build windows
 
 package log
 

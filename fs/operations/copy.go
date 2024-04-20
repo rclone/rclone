@@ -98,9 +98,9 @@ func (c *copy) checkPartial() (remoteForCopy string, inplace bool, err error) {
 	// Avoid making the leaf name longer if it's already lengthy to avoid
 	// trouble with file name length limits.
 	suffix := "." + random.String(8) + c.ci.PartialSuffix
-	base := path.Base(c.remoteForCopy)
+	base := path.Base(remoteForCopy)
 	if len(base) > 100 {
-		remoteForCopy = TruncateString(c.remoteForCopy, len(c.remoteForCopy)-len(suffix)) + suffix
+		remoteForCopy = TruncateString(remoteForCopy, len(remoteForCopy)-len(suffix)) + suffix
 	} else {
 		remoteForCopy += suffix
 	}
@@ -266,14 +266,14 @@ func (c *copy) manualCopy(ctx context.Context) (actionTaken string, newDst fs.Ob
 func (c *copy) verify(ctx context.Context, newDst fs.Object) (err error) {
 	// Verify sizes are the same after transfer
 	if sizeDiffers(ctx, c.src, newDst) {
-		return fmt.Errorf("corrupted on transfer: sizes differ %d vs %d", c.src.Size(), newDst.Size())
+		return fmt.Errorf("corrupted on transfer: sizes differ src(%s) %d vs dst(%s) %d", c.src.Fs(), c.src.Size(), newDst.Fs(), newDst.Size())
 	}
 	// Verify hashes are the same after transfer - ignoring blank hashes
 	if c.hashType != hash.None {
 		// checkHashes has logs and counts errors
 		equal, _, srcSum, dstSum, _ := checkHashes(ctx, c.src, newDst, c.hashType)
 		if !equal {
-			return fmt.Errorf("corrupted on transfer: %v hash differ %q vs %q", c.hashType, srcSum, dstSum)
+			return fmt.Errorf("corrupted on transfer: %v hashes differ src(%s) %q vs dst(%s) %q", c.hashType, c.src.Fs(), srcSum, newDst.Fs(), dstSum)
 		}
 	}
 	return nil

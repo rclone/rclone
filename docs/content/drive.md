@@ -436,6 +436,8 @@ The [rclone backend](https://rclone.org/commands/rclone_backend/) command can be
 Shortcuts can be completely ignored with the `--drive-skip-shortcuts` flag
 or the corresponding `skip_shortcuts` configuration setting.
 
+If you have shortcuts that lead to an infinite recursion in your drive (e.g. a shortcut pointing to a parent folder), `skip_shortcuts` might be mandatory to be able to copy the drive.
+
 ### Emptying trash
 
 If you wish to empty your trash you can use the `rclone cleanup remote:`
@@ -1722,10 +1724,14 @@ to the next step; if not, click on "CONFIGURE CONSENT SCREEN" button
 and click on "CREATE"; on the next screen, enter an "Application name"
 ("rclone" is OK); enter "User Support Email" (your own email is OK); 
 enter "Developer Contact Email" (your own email is OK); then click on
-"Save" (all other data is optional). You will also have to add some scopes,
-including `.../auth/docs` and `.../auth/drive` in order to be able to edit,
-create and delete files with RClone. You may also want to include the
-`../auth/drive.metadata.readonly` scope. After adding scopes, click
+"Save" (all other data is optional). You will also have to add [some scopes](https://developers.google.com/drive/api/guides/api-specific-auth),
+including
+  - `https://www.googleapis.com/auth/docs`
+  - `https://www.googleapis.com/auth/drive` in order to be able to edit,
+create and delete files with RClone. 
+  - `https://www.googleapis.com/auth/drive.metadata.readonly` which you may also want to add.
+  - If you want to add all at once, comma separated it would be `https://www.googleapis.com/auth/docs,https://www.googleapis.com/auth/drive,https://www.googleapis.com/auth/drive.metadata.readonly`.
+6. After adding scopes, click
 "Save and continue" to add test users. Be sure to add your own account to
 the test users. Once you've added yourself as a test user and saved the
 changes, click again on "Credentials" on the left panel to go back to
@@ -1735,21 +1741,21 @@ the "Credentials" screen.
 of "External" above, but this will restrict API use to Google Workspace 
 users in your organisation). 
 
-6.  Click on the "+ CREATE CREDENTIALS" button at the top of the screen,
+7.  Click on the "+ CREATE CREDENTIALS" button at the top of the screen,
 then select "OAuth client ID".
 
-7. Choose an application type of "Desktop app" and click "Create". (the default name is fine)
+8. Choose an application type of "Desktop app" and click "Create". (the default name is fine)
 
-8. It will show you a client ID and client secret. Make a note of these.
+9. It will show you a client ID and client secret. Make a note of these.
    
    (If you selected "External" at Step 5 continue to Step 9. 
    If you chose "Internal" you don't need to publish and can skip straight to
    Step 10 but your destination drive must be part of the same Google Workspace.)
 
-9. Go to "Oauth consent screen" and then click "PUBLISH APP" button and confirm.
+10. Go to "Oauth consent screen" and then click "PUBLISH APP" button and confirm.
    You will also want to add yourself as a test user.
 
-10. Provide the noted client ID and client secret to rclone.
+11. Provide the noted client ID and client secret to rclone.
 
 Be aware that, due to the "enhanced security" recently introduced by
 Google, you are theoretically expected to "submit your app for verification"

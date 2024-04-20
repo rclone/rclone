@@ -29,6 +29,7 @@ import (
 	"github.com/rclone/rclone/fs/fspath"
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/fs/operations"
+	"github.com/rclone/rclone/lib/encoder"
 )
 
 // Chunker's composite files have one or more chunks
@@ -101,8 +102,10 @@ var (
 //
 // And still chunker's primary function is to chunk large files
 // rather than serve as a generic metadata container.
-const maxMetadataSize = 1023
-const maxMetadataSizeWritten = 255
+const (
+	maxMetadataSize        = 1023
+	maxMetadataSizeWritten = 255
+)
 
 // Current/highest supported metadata format.
 const metadataVersion = 2
@@ -317,11 +320,13 @@ func NewFs(ctx context.Context, name, rpath string, m configmap.Mapper) (fs.Fs, 
 	// i.e. `rpath` does not exist in the wrapped remote, but chunker
 	// detects a composite file because it finds the first chunk!
 	// (yet can't satisfy fstest.CheckListing, will ignore)
-	if err == nil && !f.useMeta && strings.Contains(rpath, "/") {
+	if err == nil && !f.useMeta {
 		firstChunkPath := f.makeChunkName(remotePath, 0, "", "")
-		_, testErr := cache.Get(ctx, baseName+firstChunkPath)
+		newBase, testErr := cache.Get(ctx, baseName+firstChunkPath)
 		if testErr == fs.ErrorIsFile {
+			f.base = newBase
 			err = testErr
+			cache.PinUntilFinalized(f.base, f)
 		}
 	}
 
@@ -959,6 +964,11 @@ func (f *Fs) scanObject(ctx context.Context, remote string, quickScan bool) (fs.
 		}
 		if caseInsensitive {
 			sameMain = strings.EqualFold(mainRemote, remote)
+			if sameMain && f.base.Features().IsLocal {
+				// on local, make sure the EqualFold still holds true when accounting for encoding.
+				// sometimes paths with special characters will only normalize the same way in Standard Encoding.
+				sameMain = strings.EqualFold(encoder.OS.FromStandardPath(mainRemote), encoder.OS.FromStandardPath(remote))
+			}
 		} else {
 			sameMain = mainRemote == remote
 		}
@@ -972,7 +982,7 @@ func (f *Fs) scanObject(ctx context.Context, remote string, quickScan bool) (fs.
 			}
 			continue
 		}
-		//fs.Debugf(f, "%q belongs to %q as chunk %d", entryRemote, mainRemote, chunkNo)
+		// fs.Debugf(f, "%q belongs to %q as chunk %d", entryRemote, mainRemote, chunkNo)
 		if err := o.addChunk(entry, chunkNo); err != nil {
 			return nil, err
 		}
@@ -1134,8 +1144,8 @@ func (o *Object) readXactID(ctx context.Context) (xactID string, err error) {
 // put implements Put, PutStream, PutUnchecked, Update
 func (f *Fs) put(
 	ctx context.Context, in io.Reader, src fs.ObjectInfo, remote string, options []fs.OpenOption,
-	basePut putFn, action string, target fs.Object) (obj fs.Object, err error) {
-
+	basePut putFn, action string, target fs.Object,
+) (obj fs.Object, err error) {
 	// Perform consistency checks
 	if err := f.forbidChunk(src, remote); err != nil {
 		return nil, fmt.Errorf("%s refused: %w", action, err)
@@ -1956,7 +1966,7 @@ func (f *Fs) ChangeNotify(ctx context.Context, notifyFunc func(string, fs.EntryT
 		return
 	}
 	wrappedNotifyFunc := func(path string, entryType fs.EntryType) {
-		//fs.Debugf(f, "ChangeNotify: path %q entryType %d", path, entryType)
+		// fs.Debugf(f, "ChangeNotify: path %q entryType %d", path, entryType)
 		if entryType == fs.EntryObject {
 			mainPath, _, _, xactID := f.parseChunkName(path)
 			metaXactID := ""

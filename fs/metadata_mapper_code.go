@@ -1,5 +1,4 @@
 //go:build ignore
-// +build ignore
 
 // A simple metadata mapper for testing purposes
 package main

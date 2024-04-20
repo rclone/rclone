@@ -644,7 +644,7 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 	return f.newObjectWithInfo(ctx, remote, nil)
 }
 
-// listSharedFoldersApi lists all available shared folders mounted and not mounted
+// listSharedFolders lists all available shared folders mounted and not mounted
 // we'll need the id later so we have to return them in original format
 func (f *Fs) listSharedFolders(ctx context.Context) (entries fs.DirEntries, err error) {
 	started := false

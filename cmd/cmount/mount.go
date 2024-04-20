@@ -1,6 +1,4 @@
 //go:build cmount && ((linux && cgo) || (darwin && cgo) || (freebsd && cgo) || windows)
-// +build cmount
-// +build linux,cgo darwin,cgo freebsd,cgo windows
 
 // Package cmount implements a FUSE mounting system for rclone remotes.
 //
@@ -149,7 +147,7 @@ func mount(VFS *vfs.VFS, mountPath string, opt *mountlib.Options) (<-chan error,
 	fs.Debugf(nil, "Mounting on %q (%q)", mountpoint, opt.VolumeName)
 
 	// Create underlying FS
-	fsys := NewFS(VFS)
+	fsys := NewFS(VFS, opt)
 	host := fuse.NewFileSystemHost(fsys)
 	host.SetCapReaddirPlus(true) // only works on Windows
 	if opt.CaseInsensitive.Valid {

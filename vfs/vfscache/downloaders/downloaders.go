@@ -359,6 +359,10 @@ func (dls *Downloaders) _ensureDownloader(r ranges.Range) (err error) {
 	if !startNew {
 		return nil
 	}
+	// Size can be 0 here if file shrinks - no need to download
+	if r.Size == 0 {
+		return nil
+	}
 	// Downloader not found so start a new one
 	_, err = dls._newDownloader(r)
 	if err != nil {
@@ -389,7 +393,10 @@ func (dls *Downloaders) _dispatchWaiters() {
 
 	newWaiters := dls.waiters[:0]
 	for _, waiter := range dls.waiters {
-		if dls.item.HasRange(waiter.r) {
+		// Clip the size against the actual size in case it has shrunk
+		r := waiter.r
+		r.Clip(dls.src.Size())
+		if dls.item.HasRange(r) {
 			waiter.errChan <- nil
 		} else {
 			newWaiters = append(newWaiters, waiter)

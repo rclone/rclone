@@ -386,7 +386,7 @@ func (s *syncCopyMove) pairChecker(in *pipe, out *pipe, fraction int, wg *sync.W
 			}
 			// Fix case for case insensitive filesystems
 			if s.ci.FixCase && !s.ci.Immutable && src.Remote() != pair.Dst.Remote() {
-				if newDst, err := operations.Move(s.ctx, s.fdst, pair.Dst, src.Remote(), pair.Dst); err != nil {
+				if newDst, err := operations.Move(s.ctx, s.fdst, nil, src.Remote(), pair.Dst); err != nil {
 					fs.Errorf(pair.Dst, "Error while attempting to rename to %s: %v", src.Remote(), err)
 					s.processError(err)
 				} else {
