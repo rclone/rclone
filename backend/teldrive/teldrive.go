@@ -16,7 +16,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gofrs/uuid"
+	"github.com/google/uuid"
 	"github.com/rclone/rclone/backend/teldrive/api"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config"
@@ -594,8 +594,7 @@ func (f *Fs) putUnchecked(ctx context.Context, in0 io.Reader, src fs.ObjectInfo,
 		partReader := io.LimitReader(in, chunkSize)
 
 		if f.opt.RandomisePart {
-			u1, _ := uuid.NewV4()
-			partName = hex.EncodeToString(u1.Bytes())
+			partName = getMD5Hash(uuid.New().String())
 		} else if totalParts > 1 {
 			partName = fmt.Sprintf("%s.part.%03d", leaf, partNo)
 		}

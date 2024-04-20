@@ -2,6 +2,7 @@ package teldrive
 
 import (
 	"context"
+	"crypto/md5"
 	"encoding/hex"
 	"fmt"
 	"io"
@@ -11,7 +12,7 @@ import (
 	"strconv"
 	"sync"
 
-	"github.com/gofrs/uuid"
+	"github.com/google/uuid"
 	"github.com/rclone/rclone/backend/teldrive/api"
 	"github.com/rclone/rclone/lib/rest"
 
@@ -38,6 +39,11 @@ type objectChunkWriter struct {
 	totalParts      int64
 	channelID       int64
 	encryptFile     bool
+}
+
+func getMD5Hash(text string) string {
+	hash := md5.Sum([]byte(text))
+	return hex.EncodeToString(hash[:])
 }
 
 // WriteChunk will write chunk number with reader bytes, where chunk number >= 0
@@ -78,10 +84,8 @@ func (w *objectChunkWriter) WriteChunk(ctx context.Context, chunkNumber int, rea
 
 		fs.Debugf(w.o, "Sending chunk %d length %d", chunkNumber, size)
 		if w.f.opt.RandomisePart {
-			u1, _ := uuid.NewV4()
-			partName = hex.EncodeToString(u1.Bytes())
+			partName = getMD5Hash(uuid.New().String())
 		} else {
-
 			partName = fileName
 			if w.totalParts > 1 {
 				partName = fmt.Sprintf("%s.part.%03d", fileName, chunkNumber)
