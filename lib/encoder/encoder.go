@@ -35,34 +35,35 @@ const (
 
 // Possible flags for the MultiEncoder
 const (
-	EncodeZero          MultiEncoder = 0         // NUL(0x00)
-	EncodeSlash         MultiEncoder = 1 << iota // /
-	EncodeLtGt                                   // <>
-	EncodeDoubleQuote                            // "
-	EncodeSingleQuote                            // '
-	EncodeBackQuote                              // `
-	EncodeDollar                                 // $
-	EncodeColon                                  // :
-	EncodeQuestion                               // ?
-	EncodeAsterisk                               // *
-	EncodePipe                                   // |
-	EncodeHash                                   // #
-	EncodePercent                                // %
-	EncodeBackSlash                              // \
-	EncodeCrLf                                   // CR(0x0D), LF(0x0A)
-	EncodeDel                                    // DEL(0x7F)
-	EncodeCtl                                    // CTRL(0x01-0x1F)
-	EncodeLeftSpace                              // Leading SPACE
-	EncodeLeftPeriod                             // Leading .
-	EncodeLeftTilde                              // Leading ~
-	EncodeLeftCrLfHtVt                           // Leading CR LF HT VT
-	EncodeRightSpace                             // Trailing SPACE
-	EncodeRightPeriod                            // Trailing .
-	EncodeRightCrLfHtVt                          // Trailing CR LF HT VT
-	EncodeInvalidUtf8                            // Invalid UTF-8 bytes
-	EncodeDot                                    // . and .. names
-	EncodeSquareBracket                          // []
-	EncodeSemicolon                              // ;
+	EncodeZero          MultiEncoder = 0 // NUL(0x00)
+	EncodeRaw           MultiEncoder = 1 << (iota - 1)
+	EncodeSlash                      // /
+	EncodeLtGt                       // <>
+	EncodeDoubleQuote                // "
+	EncodeSingleQuote                // '
+	EncodeBackQuote                  // `
+	EncodeDollar                     // $
+	EncodeColon                      // :
+	EncodeQuestion                   // ?
+	EncodeAsterisk                   // *
+	EncodePipe                       // |
+	EncodeHash                       // #
+	EncodePercent                    // %
+	EncodeBackSlash                  // \
+	EncodeCrLf                       // CR(0x0D), LF(0x0A)
+	EncodeDel                        // DEL(0x7F)
+	EncodeCtl                        // CTRL(0x01-0x1F)
+	EncodeLeftSpace                  // Leading SPACE
+	EncodeLeftPeriod                 // Leading .
+	EncodeLeftTilde                  // Leading ~
+	EncodeLeftCrLfHtVt               // Leading CR LF HT VT
+	EncodeRightSpace                 // Trailing SPACE
+	EncodeRightPeriod                // Trailing .
+	EncodeRightCrLfHtVt              // Trailing CR LF HT VT
+	EncodeInvalidUtf8                // Invalid UTF-8 bytes
+	EncodeDot                        // . and .. names
+	EncodeSquareBracket              // []
+	EncodeSemicolon                  // ;
 
 	// Synthetic
 	EncodeWin         = EncodeColon | EncodeQuestion | EncodeDoubleQuote | EncodeAsterisk | EncodeLtGt | EncodePipe // :?"*<>|
@@ -117,6 +118,7 @@ func alias(name string, mask MultiEncoder) {
 }
 
 func init() {
+	alias("Raw", EncodeRaw)
 	alias("None", EncodeZero)
 	alias("Slash", EncodeSlash)
 	alias("LtGt", EncodeLtGt)
@@ -214,6 +216,10 @@ func (mask *MultiEncoder) Scan(s fmt.ScanState, ch rune) error {
 // Encode takes a raw name and substitutes any reserved characters and
 // patterns in it
 func (mask MultiEncoder) Encode(in string) string {
+	if mask == EncodeRaw {
+		return in
+	}
+
 	if in == "" {
 		return ""
 	}
@@ -671,6 +677,10 @@ func (mask MultiEncoder) Encode(in string) string {
 
 // Decode takes a name and undoes any substitutions made by Encode
 func (mask MultiEncoder) Decode(in string) string {
+	if mask == EncodeRaw {
+		return in
+	}
+
 	if mask.Has(EncodeDot) {
 		switch in {
 		case "．":
