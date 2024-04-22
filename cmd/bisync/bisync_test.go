@@ -97,6 +97,8 @@ var logReplacements = []string{
 	`^NOTICE:.*?Files of unknown size \(such as Google Docs\) do not sync reliably with --checksum or --size-only\. Consider using modtime instead \(the default\) or --drive-skip-gdocs.*?$`, dropMe,
 	// ignore cache backend cache expired messages
 	`^INFO  : .*cache expired.*$`, dropMe,
+	// ignore "Implicitly create directory" messages (TestnStorage:)
+	`^INFO  : .*Implicitly create directory.*$`, dropMe,
 	// ignore differences in backend features
 	`^.*?"HashType1":.*?$`, dropMe,
 	`^.*?"HashType2":.*?$`, dropMe,
