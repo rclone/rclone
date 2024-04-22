@@ -477,11 +477,11 @@ func (m *Metadata) processPermissions(ctx context.Context, add, update, remove [
 // fillRecipients looks for recipients to add from the permission passed in.
 // It looks for an email address in identity.User.ID and DisplayName, otherwise it uses the identity.User.ID as r.ObjectID.
 // It considers both "GrantedTo" and "GrantedToIdentities".
-func fillRecipients(p *api.PermissionsType) (recipients []api.DriveRecipient) {
+func fillRecipients(p *api.PermissionsType, driveType string) (recipients []api.DriveRecipient) {
 	if p == nil {
 		return recipients
 	}
-	ids := make(map[string]struct{}, len(p.GrantedToIdentities)+1)
+	ids := make(map[string]struct{}, len(p.GetGrantedToIdentities(driveType))+1)
 	isUnique := func(s string) bool {
 		_, ok := ids[s]
 		return !ok && s != ""
@@ -507,11 +507,11 @@ func fillRecipients(p *api.PermissionsType) (recipients []api.DriveRecipient) {
 		ids[id] = struct{}{}
 		recipients = append(recipients, r)
 	}
-	for _, identity := range p.GrantedToIdentities {
+	for _, identity := range p.GetGrantedToIdentities(driveType) {
 		addRecipient(identity)
 	}
-	if p.GrantedTo != nil && p.GrantedTo.User != (api.Identity{}) {
-		addRecipient(p.GrantedTo)
+	if p.GetGrantedTo(driveType) != nil && p.GetGrantedTo(driveType).User != (api.Identity{}) {
+		addRecipient(p.GetGrantedTo(driveType))
 	}
 	return recipients
 }
@@ -522,7 +522,7 @@ func (m *Metadata) addPermission(ctx context.Context, p *api.PermissionsType) (n
 	opts := m.fs.newOptsCall(m.normalizedID, "POST", "/invite")
 
 	req := &api.AddPermissionsRequest{
-		Recipients:    fillRecipients(p),
+		Recipients:    fillRecipients(p, m.fs.driveType),
 		RequireSignIn: m.fs.driveType != driveTypePersonal, // personal and business have conflicting requirements
 		Roles:         p.Roles,
 	}
