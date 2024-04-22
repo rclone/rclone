@@ -396,7 +396,7 @@ func (m *Metadata) sortPermissions() (add, update, remove []*api.PermissionsType
 		if n.ID != "" {
 			// sanity check: ensure there's a matching "old" id with a non-matching role
 			if !slices.ContainsFunc(old, func(o *api.PermissionsType) bool {
-				return o.ID == n.ID && slices.Compare(o.Roles, n.Roles) != 0 && len(o.Roles) > 0 && len(n.Roles) > 0
+				return o.ID == n.ID && slices.Compare(o.Roles, n.Roles) != 0 && len(o.Roles) > 0 && len(n.Roles) > 0 && !slices.Contains(o.Roles, api.OwnerRole)
 			}) {
 				fs.Debugf(m.remote, "skipping update for invalid roles: %v (perm ID: %v)", n.Roles, n.ID)
 				continue
@@ -418,6 +418,10 @@ func (m *Metadata) sortPermissions() (add, update, remove []*api.PermissionsType
 		}
 	}
 	for _, o := range old {
+		if slices.Contains(o.Roles, api.OwnerRole) {
+			fs.Debugf(m.remote, "skipping remove permission -- can't remove 'owner' role")
+			continue
+		}
 		newHasOld := slices.ContainsFunc(new, func(n *api.PermissionsType) bool {
 			if n == nil || n.ID == "" {
 				return false // can't remove perms without an ID
