@@ -229,8 +229,8 @@ func main() {
 			fatalW(fd.WriteString(" "))("Write:")
 		}
 		in, out := buildTestString(
-			[]mapping{getMapping(m.mask)},                               // pick
-			[]mapping{getMapping(encoder.EncodeZero)},                   // quote
+			[]mapping{getMapping(m.mask)},             // pick
+			[]mapping{getMapping(encoder.EncodeZero)}, // quote
 			printables, fullwidthPrintables, encodables, encoded, greek) // fill
 		fatalW(fmt.Fprintf(fd, `{ // %d
 		mask: %s,
