@@ -3,6 +3,7 @@ package fs
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net"
 	"os"
 	"strconv"
@@ -200,6 +201,9 @@ func NewConfig() *ConfigInfo {
 	c.KvLockTime = 1 * time.Second
 	c.DefaultTime = Time(time.Date(2000, 1, 1, 0, 0, 0, 0, time.UTC))
 	c.PartialSuffix = ".partial"
+
+	// Display a general warning about the default unencrypted configuration behavior
+	fmt.Fprintln(os.Stderr, "WARNING: By default, rclone configuration files are not encrypted, which may pose a security risk. It is highly recommended to encrypt your configuration file to protect sensitive information. For details on how to encrypt your configuration, visit https://rclone.org/docs/#configuration-encryption.")
 
 	// Perform a simple check for debug flags to enable debug logging during the flag initialization
 	for argIndex, arg := range os.Args {
