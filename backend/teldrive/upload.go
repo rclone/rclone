@@ -115,15 +115,12 @@ func (w *objectChunkWriter) WriteChunk(ctx context.Context, chunkNumber int, rea
 
 	})
 
-	if err != nil {
-		fs.Debugf(w.o, "Error sending chunk %d: %v", chunkNumber, err)
-	} else {
-		if response.PartId == 0 {
-			return 0, fmt.Errorf(" upload failed for chunk %d", chunkNumber)
-		}
-		w.addCompletedPart(response)
-		fs.Debugf(w.o, "Done sending chunk %d", chunkNumber)
+	if err != nil || response.PartId == 0 {
+		return 0, fmt.Errorf("error sending chunk %d: %v", chunkNumber, err)
 	}
+	w.addCompletedPart(response)
+	fs.Debugf(w.o, "Done sending chunk %d", chunkNumber)
+
 	return size, err
 
 }
@@ -207,7 +204,7 @@ func (o *Object) prepareUpload(ctx context.Context, src fs.ObjectInfo, options [
 
 	modTime := src.ModTime(ctx).UTC().Format(timeFormat)
 
-	uploadID := MD5(fmt.Sprintf("%s:%d:%s", path.Join(base, leaf), src.Size(), modTime))
+	uploadID := getMD5Hash(fmt.Sprintf("%s:%d:%s", path.Join(base, leaf), src.Size(), modTime))
 
 	var uploadParts api.UploadFile
 	opts := rest.Opts{

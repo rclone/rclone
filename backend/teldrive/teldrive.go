@@ -4,8 +4,6 @@ package teldrive
 import (
 	"bufio"
 	"context"
-	"crypto/md5"
-	"encoding/hex"
 	"errors"
 	"fmt"
 	"io"
@@ -516,19 +514,13 @@ func (f *Fs) updateFileInformation(ctx context.Context, update *api.UpdateFileIn
 	return err
 }
 
-func MD5(text string) string {
-	algorithm := md5.New()
-	algorithm.Write([]byte(text))
-	return hex.EncodeToString(algorithm.Sum(nil))
-}
-
 func (f *Fs) putUnchecked(ctx context.Context, in0 io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {
 
 	base, leaf := f.splitPathFull(src.Remote())
 
 	modTime := src.ModTime(ctx).UTC().Format(timeFormat)
 
-	uploadID := MD5(fmt.Sprintf("%s:%d:%s", path.Join(base, leaf), src.Size(), modTime))
+	uploadID := getMD5Hash(fmt.Sprintf("%s:%d:%s", path.Join(base, leaf), src.Size(), modTime))
 
 	chunkSize := int64(f.opt.ChunkSize)
 
@@ -618,12 +610,8 @@ func (f *Fs) putUnchecked(ctx context.Context, in0 io.Reader, src fs.ObjectInfo,
 			resp, err := f.srv.CallJSON(ctx, &opts, nil, &info)
 			return shouldRetry(ctx, resp, err)
 		})
-		if err != nil {
-			return err
-		}
-
-		if info.PartId == 0 {
-			return fmt.Errorf(" upload failed for chunk %d", partNo)
+		if err != nil || info.PartId == 0 {
+			return fmt.Errorf("error sending chunk %d: %v", partNo, err)
 		}
 		uploadedSize += chunkSize
 
