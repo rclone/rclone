@@ -109,7 +109,8 @@ To update an existing permission, include both the Permission ID and the new
 `roles` to be assigned. `roles` is the only property that can be changed.
 
 To remove permissions, pass in a blob containing only the permissions you wish
-to keep (which can be empty, to remove all.)
+to keep (which can be empty, to remove all.) Note that the `owner` role will be
+ignored, as it cannot be removed.
 
 Note that both reading and writing permissions requires extra API calls, so if
 you don't need to read or write permissions it is recommended to omit
