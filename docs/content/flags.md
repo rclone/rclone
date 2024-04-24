@@ -89,6 +89,15 @@ Flags used for `rclone check`.
 ```
 
 
+## Mount
+
+Flags specifically used for mounting operations with rclone.
+
+```
+      --remount Attempt to remount an already-mounted filesystem. This is useful for changing mount flags without unmounting. Supported only on Linux.
+```
+
+
 ## Networking
 
 General networking and HTTP stuff.
