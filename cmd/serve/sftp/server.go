@@ -21,6 +21,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	sdActivation "github.com/coreos/go-systemd/v22/activation"
 	"github.com/rclone/rclone/cmd/serve/proxy"
 	"github.com/rclone/rclone/cmd/serve/proxy/proxyflags"
 	"github.com/rclone/rclone/fs"
@@ -266,10 +267,27 @@ func (s *server) serve() (err error) {
 
 	// Once a ServerConfig has been configured, connections can be
 	// accepted.
-	s.listener, err = net.Listen("tcp", s.opt.ListenAddr)
+	var listener net.Listener
+
+	// In case we run in a socket-activated environment, listen on (the first)
+	// passed FD.
+	sdListeners, err := sdActivation.Listeners()
 	if err != nil {
-		return fmt.Errorf("failed to listen for connection: %w", err)
+		return fmt.Errorf("unable to acquire listeners: %w", err)
 	}
+
+	if len(sdListeners) > 0 {
+		if len(sdListeners) > 1 {
+			fs.LogPrintf(fs.LogLevelWarning, nil, "more than one listener passed, ignoring all but the first.\n")
+		}
+		listener = sdListeners[0]
+	} else {
+		listener, err = net.Listen("tcp", s.opt.ListenAddr)
+		if err != nil {
+			return fmt.Errorf("failed to listen for connection: %w", err)
+		}
+	}
+	s.listener = listener
 	fs.Logf(nil, "SFTP server listening on %v\n", s.listener.Addr())
 
 	go s.acceptConnections()
