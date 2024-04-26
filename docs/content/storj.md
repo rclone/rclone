@@ -6,9 +6,15 @@ versionIntroduced: "v1.52"
 
 # {{< icon "fas fa-dove" >}} Storj
 
-[Storj](https://storj.io) is an encrypted, secure, and 
-cost-effective object storage service that enables you to store, back up, and 
-archive large amounts of data in a decentralized manner.
+[Storj](https://storj.io) is redefining the cloud to support the
+future of data—sustainably and economically. Storj leverages the vast
+global supply of underutilized resources to deliver better security,
+durability, and performance services. Experience up to 90% lower costs
+and carbon reduction with Storj.
+
+Storj is an encrypted, secure, and cost-effective object storage service
+that enables you to store, back up, and archive large amounts of data
+in a decentralized manner.
 
 ## Backend options
 
