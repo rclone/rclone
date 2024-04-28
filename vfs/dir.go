@@ -371,7 +371,9 @@ func (d *Dir) renameTree(dirPath string) {
 	// Make sure the path is correct for each node
 	if d.path != dirPath {
 		fs.Debugf(d.path, "Renaming to %q", dirPath)
+		delete(d.parent.items, name(d.path))
 		d.path = dirPath
+		d.parent.items[name(d.path)] = d
 		d.entry = fs.NewDirCopy(context.TODO(), d.entry).SetRemote(dirPath)
 	}
 
@@ -404,6 +406,8 @@ func (d *Dir) rename(newParent *Dir, fsDir fs.Directory) {
 	d.entry = fsDir
 	d.path = fsDir.Remote()
 	newPath := d.path
+	delete(d.parent.items, name(oldPath))
+	d.parent.items[name(d.path)] = d
 	d.read = time.Time{}
 	d.mu.Unlock()
 
@@ -416,6 +420,15 @@ func (d *Dir) rename(newParent *Dir, fsDir fs.Directory) {
 			fs.Infof(d, "Dir.Rename failed in Cache: %v", err)
 		}
 	}
+}
+
+// convert path to name
+func name(p string) string {
+	p = path.Base(p)
+	if p == "." {
+		p = "/"
+	}
+	return p
 }
 
 // addObject adds a new object or directory to the directory
