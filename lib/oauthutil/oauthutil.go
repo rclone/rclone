@@ -376,6 +376,9 @@ func overrideCredentials(name string, m configmap.Mapper, origConfig *oauth2.Con
 	ClientID, ok := m.Get(config.ConfigClientID)
 	if ok && ClientID != "" {
 		newConfig.ClientID = ClientID
+		// Clear out any existing client secret since the ID changed.
+		// (otherwise it's impossible for a config to clear the secret)
+		newConfig.ClientSecret = ""
 		changed = true
 	}
 	ClientSecret, ok := m.Get(config.ConfigClientSecret)
