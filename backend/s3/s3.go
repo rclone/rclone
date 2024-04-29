@@ -4026,7 +4026,7 @@ func (f *Fs) list(ctx context.Context, opt listOpt, fn listFn) error {
 					isDirectory = false
 				} else {
 					// Don't insert the root directory
-					if remote == opt.directory {
+					if remote == f.opt.Enc.ToStandardPath(opt.directory) {
 						continue
 					}
 				}
