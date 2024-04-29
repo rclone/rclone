@@ -21,7 +21,7 @@ import (
 // checkRcloneBinaryVersion runs whichever rclone is on the PATH and checks
 // whether it reports a version that matches the test's expectations. Returns
 // nil when the version is the expected version, otherwise returns an error.
-func checkRcloneBinaryVersion() error {
+func checkRcloneBinaryVersion(t *testing.T) error {
 	// versionInfo is a subset of information produced by "core/version".
 	type versionInfo struct {
 		Version string
@@ -47,7 +47,8 @@ func checkRcloneBinaryVersion() error {
 	}
 	_, tagString := buildinfo.GetLinkingAndTags()
 	if parsed.GoTags != tagString {
-		return fmt.Errorf("expected tag string %q, but got %q", tagString, parsed.GoTags)
+		// TODO: Skip the test when tags do not match.
+		t.Logf("expected tag string %q, but got %q. Not skipping!", tagString, parsed.GoTags)
 	}
 	return nil
 }
@@ -196,7 +197,7 @@ func skipE2eTestIfNecessary(t *testing.T) {
 		t.Skipf("GOOS %q is not supported.", runtime.GOOS)
 	}
 
-	if err := checkRcloneBinaryVersion(); err != nil {
+	if err := checkRcloneBinaryVersion(t); err != nil {
 		t.Skipf("Skipping due to rclone version: %s", err)
 	}
 
