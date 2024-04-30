@@ -42,6 +42,8 @@ var _ error = (*Error)(nil)
 type Identity struct {
 	DisplayName string `json:"displayName,omitempty"`
 	ID          string `json:"id,omitempty"`
+	Email       string `json:"email,omitempty"`     // not officially documented, but seems to sometimes exist
+	LoginName   string `json:"loginName,omitempty"` // SharePoint only
 }
 
 // IdentitySet is a keyed collection of Identity objects. It is used
@@ -51,6 +53,9 @@ type IdentitySet struct {
 	User        Identity `json:"user,omitempty"`
 	Application Identity `json:"application,omitempty"`
 	Device      Identity `json:"device,omitempty"`
+	Group       Identity `json:"group,omitempty"`
+	SiteGroup   Identity `json:"siteGroup,omitempty"` // The SharePoint group associated with this action. Optional.
+	SiteUser    Identity `json:"siteUser,omitempty"`  // The SharePoint user associated with this action. Optional.
 }
 
 // Quota groups storage space quota-related information on OneDrive into a single structure.
