@@ -475,7 +475,7 @@ func (m *Metadata) processPermissions(ctx context.Context, add, update, remove [
 }
 
 // fillRecipients looks for recipients to add from the permission passed in.
-// It looks for an email address in identity.User.ID and DisplayName, otherwise it uses the identity.User.ID as r.ObjectID.
+// It looks for an email address in identity.User.Email, ID, and DisplayName, otherwise it uses the identity.User.ID as r.ObjectID.
 // It considers both "GrantedTo" and "GrantedToIdentities".
 func fillRecipients(p *api.PermissionsType, driveType string) (recipients []api.DriveRecipient) {
 	if p == nil {
@@ -491,7 +491,10 @@ func fillRecipients(p *api.PermissionsType, driveType string) (recipients []api.
 		r := api.DriveRecipient{}
 
 		id := ""
-		if strings.ContainsRune(identity.User.ID, '@') {
+		if strings.ContainsRune(identity.User.Email, '@') {
+			id = identity.User.Email
+			r.Email = id
+		} else if strings.ContainsRune(identity.User.ID, '@') {
 			id = identity.User.ID
 			r.Email = id
 		} else if strings.ContainsRune(identity.User.DisplayName, '@') {
@@ -507,12 +510,31 @@ func fillRecipients(p *api.PermissionsType, driveType string) (recipients []api.
 		ids[id] = struct{}{}
 		recipients = append(recipients, r)
 	}
-	for _, identity := range p.GetGrantedToIdentities(driveType) {
-		addRecipient(identity)
+
+	forIdentitySet := func(iSet *api.IdentitySet) {
+		if iSet == nil {
+			return
+		}
+		iS := *iSet
+		forIdentity := func(i api.Identity) {
+			if i != (api.Identity{}) {
+				iS.User = i
+				addRecipient(&iS)
+			}
+		}
+		forIdentity(iS.User)
+		forIdentity(iS.SiteUser)
+		forIdentity(iS.Group)
+		forIdentity(iS.SiteGroup)
+		forIdentity(iS.Application)
+		forIdentity(iS.Device)
 	}
-	if p.GetGrantedTo(driveType) != nil && p.GetGrantedTo(driveType).User != (api.Identity{}) {
-		addRecipient(p.GetGrantedTo(driveType))
+
+	for _, identitySet := range p.GetGrantedToIdentities(driveType) {
+		forIdentitySet(identitySet)
 	}
+	forIdentitySet(p.GetGrantedTo(driveType))
+
 	return recipients
 }
 
