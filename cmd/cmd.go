@@ -246,7 +246,7 @@ func Run(Retry bool, showStats bool, cmd *cobra.Command, f func() error) {
 		showStats = true
 	}
 	if ci.Progress {
-		stopStats = startProgress()
+		stopStats = startProgress(ci.StatsPrintContinuous)
 	} else if showStats {
 		stopStats = StartStats()
 	}

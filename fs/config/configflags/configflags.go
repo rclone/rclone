@@ -121,6 +121,7 @@ func AddFlags(ci *fs.ConfigInfo, flagSet *pflag.FlagSet) {
 	flags.BoolVarP(flagSet, &ci.StatsOneLine, "stats-one-line", "", ci.StatsOneLine, "Make the stats fit on one line", "Logging")
 	flags.BoolVarP(flagSet, &ci.StatsOneLineDate, "stats-one-line-date", "", ci.StatsOneLineDate, "Enable --stats-one-line and add current date/time prefix", "Logging")
 	flags.StringVarP(flagSet, &ci.StatsOneLineDateFormat, "stats-one-line-date-format", "", ci.StatsOneLineDateFormat, "Enable --stats-one-line-date and use custom formatted date: Enclose date string in double quotes (\"), see https://golang.org/pkg/time/#Time.Format", "Logging")
+	flags.BoolVarP(flagSet, &ci.StatsPrintContinuous, "stats-print-continuous", "", ci.StatsPrintContinuous, "Print stats continuously (interleaved with log messages) instead of in-place in a static block", "Logging")
 	flags.BoolVarP(flagSet, &ci.ErrorOnNoTransfer, "error-on-no-transfer", "", ci.ErrorOnNoTransfer, "Sets exit code 9 if no files are transferred, useful in scripts", "Config")
 	flags.BoolVarP(flagSet, &ci.Progress, "progress", "P", ci.Progress, "Show progress during transfer", "Logging")
 	flags.BoolVarP(flagSet, &ci.ProgressTerminalTitle, "progress-terminal-title", "", ci.ProgressTerminalTitle, "Show progress on the terminal title (requires -P/--progress)", "Logging")

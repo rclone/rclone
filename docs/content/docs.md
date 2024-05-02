@@ -1937,6 +1937,12 @@ Any log messages will scroll above the static block.  Log messages
 will push the static block down to the bottom of the terminal where it
 will stay.
 
+In-place printing to a static block may be overridden by setting
+the `--stats-print-continuous` flag - this will print continuous
+lines of progress interleaved with log messages. Useful e.g. when capturing
+long-running rclone output in log files, or when running rclone from
+a systemd unit.
+
 Normally this is updated every 500mS but this period can be overridden
 with the `--stats` flag.
 
@@ -2080,6 +2086,14 @@ When this is specified, rclone enables the single-line stats and prepends
 the display with a user-supplied date string. The date string MUST be
 enclosed in quotes. Follow [golang specs](https://golang.org/pkg/time/#Time.Format) for
 date formatting syntax.
+
+### --stats--print-continuous ###
+
+When this is specified, stats information is printed contonuously, with line breaks, instead
+of a static block.
+
+This is useful e.g. when capturing long-running rclone output in logfiles
+and when running rclone from a systemd unit and capturing output in the system journal.
 
 ### --stats-unit=bits|bytes ###
 

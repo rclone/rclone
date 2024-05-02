@@ -120,6 +120,7 @@ type ConfigInfo struct {
 	StatsOneLine               bool
 	StatsOneLineDate           bool   // If we want a date prefix at all
 	StatsOneLineDateFormat     string // If we want to customize the prefix
+	StatsPrintContinuous       bool   // Print stats continuously instead of a static block
 	ErrorOnNoTransfer          bool   // Set appropriate exit code if no files transferred
 	Progress                   bool
 	ProgressTerminalTitle      bool
@@ -183,6 +184,7 @@ func NewConfig() *ConfigInfo {
 	c.StreamingUploadCutoff = SizeSuffix(100 * 1024)
 	c.MaxStatsGroups = 1000
 	c.StatsFileNameLength = 45
+	c.StatsPrintContinuous = false
 	c.AskPassword = true
 	c.TPSLimitBurst = 1
 	c.MaxTransfer = -1

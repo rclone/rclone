@@ -23,10 +23,15 @@ const (
 	logTimeFormat = "2006/01/02 15:04:05"
 )
 
+// printProgress specific ConfigInfo options; set by startProgress()
+var (
+	printContinuous = false
+)
+
 // startProgress starts the progress bar printing
 //
 // It returns a func which should be called to stop the stats.
-func startProgress() func() {
+func startProgress(_printContinuous bool) func() {
 	stopStats := make(chan struct{})
 	oldLogPrint := fs.LogPrint
 	oldSyncPrint := operations.SyncPrintf
@@ -43,6 +48,8 @@ func startProgress() func() {
 	operations.SyncPrintf = func(format string, a ...interface{}) {
 		printProgress(fmt.Sprintf(format, a...))
 	}
+
+	printContinuous = _printContinuous
 
 	var wg sync.WaitGroup
 	wg.Add(1)
@@ -96,11 +103,15 @@ func printProgress(logMessage string) {
 		out("\n")
 		out(terminal.MoveUp)
 	}
+
+	if ! printContinuous {
 	// Move to the start of the block we wrote erasing all the previous lines
-	for i := 0; i < nlines-1; i++ {
-		out(terminal.EraseLine)
-		out(terminal.MoveUp)
+		for i := 0; i < nlines-1; i++ {
+			out(terminal.EraseLine)
+			out(terminal.MoveUp)
+		}
 	}
+
 	out(terminal.EraseLine)
 	out(terminal.MoveToStartOfLine)
 	if logMessage != "" {
@@ -118,5 +129,10 @@ func printProgress(logMessage string) {
 			out("\n")
 		}
 	}
+
+	if printContinuous {
+		out("\n")
+	}
+
 	terminal.Write(buf.Bytes())
 }
