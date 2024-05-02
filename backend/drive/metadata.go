@@ -152,7 +152,7 @@ func (f *Fs) setPermissions(ctx context.Context, info *drive.File, permissions [
 			return f.shouldRetry(ctx, err)
 		})
 		if err != nil {
-			fs.Errorf(f, "Failed to set permission: %v", err)
+			fs.Errorf(f, "Failed to set permission %s for %q: %v", perm.Role, perm.EmailAddress, err)
 			errs.Add(err)
 		}
 	}
