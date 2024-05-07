@@ -1143,7 +1143,7 @@ func (f *Fs) uploadByForm(ctx context.Context, in io.Reader, name string, size i
 	return
 }
 
-func (f *Fs) uploadByResumable(ctx context.Context, in io.Reader, resumable *api.Resumable, options ...fs.OpenOption) (err error) {
+func (f *Fs) uploadByResumable(ctx context.Context, in io.Reader, resumable *api.Resumable) (err error) {
 	p := resumable.Params
 	endpoint := strings.Join(strings.Split(p.Endpoint, ".")[1:], ".") // "mypikpak.com"
 
@@ -1206,7 +1206,7 @@ func (f *Fs) upload(ctx context.Context, in io.Reader, leaf, dirID, sha1Str stri
 	if uploadType == api.UploadTypeForm && newfile.Form != nil {
 		err = f.uploadByForm(ctx, in, req.Name, size, newfile.Form, options...)
 	} else if uploadType == api.UploadTypeResumable && newfile.Resumable != nil {
-		err = f.uploadByResumable(ctx, in, newfile.Resumable, options...)
+		err = f.uploadByResumable(ctx, in, newfile.Resumable)
 	} else {
 		return nil, fmt.Errorf("unable to proceed upload: %+v", newfile)
 	}
