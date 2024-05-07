@@ -234,13 +234,13 @@ jobs:
           cache: false
 
       - name: Code quality test (Linux)
-        uses: golangci/golangci-lint-action@v4
+        uses: golangci/golangci-lint-action@v6
         with:
           version: latest
           skip-cache: false # Caching enabled (which is default) on this first lint step only, it handles complete cache of build, go modules and golangci-lint analysis which was necessary to get all lint steps to properly take advantage of it
 
       - name: Code quality test (Windows)
-        uses: golangci/golangci-lint-action@v4
+        uses: golangci/golangci-lint-action@v6
         env:
           GOOS: "windows"
         with:
@@ -248,7 +248,7 @@ jobs:
           skip-cache: true
 
       - name: Code quality test (macOS)
-        uses: golangci/golangci-lint-action@v4
+        uses: golangci/golangci-lint-action@v6
         env:
           GOOS: "darwin"
         with:
@@ -256,7 +256,7 @@ jobs:
           skip-cache: true
 
       - name: Code quality test (FreeBSD)
-        uses: golangci/golangci-lint-action@v4
+        uses: golangci/golangci-lint-action@v6
         env:
           GOOS: "freebsd"
         with:
@@ -264,7 +264,7 @@ jobs:
           skip-cache: true
 
       - name: Code quality test (OpenBSD)
-        uses: golangci/golangci-lint-action@v4
+        uses: golangci/golangci-lint-action@v6
         env:
           GOOS: "openbsd"
         with:
