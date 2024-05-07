@@ -1016,21 +1016,24 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	}
 	dstObj.id = srcObj.id
 
-	var info *api.File
 	if srcLeaf != dstLeaf {
 		// Rename
-		info, err = f.renameObject(ctx, srcObj.id, dstLeaf)
+		info, err := f.renameObject(ctx, srcObj.id, dstLeaf)
 		if err != nil {
 			return nil, fmt.Errorf("move: couldn't rename moved file: %w", err)
 		}
+		err = dstObj.setMetaData(info)
+		if err != nil {
+			return nil, err
+		}
 	} else {
 		// Update info
-		info, err = f.getFile(ctx, dstObj.id)
+		err = dstObj.readMetaData(ctx)
 		if err != nil {
-			return nil, fmt.Errorf("move: couldn't update moved file: %w", err)
+			return nil, fmt.Errorf("move: couldn't locate moved file: %w", err)
 		}
 	}
-	return dstObj, dstObj.setMetaData(info)
+	return dstObj, nil
 }
 
 // copy objects
