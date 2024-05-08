@@ -127,6 +127,11 @@ func (f *Fs) Features() *fs.Features {
 func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 	upstreams, err := f.action(ctx, dir)
 	if err != nil {
+		// If none of the backends can have empty directories then
+		// don't complain about directories not being found
+		if !f.features.CanHaveEmptyDirectories && err == fs.ErrorObjectNotFound {
+			return nil
+		}
 		return err
 	}
 	errs := Errors(make([]error, len(upstreams)))
