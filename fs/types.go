@@ -242,6 +242,7 @@ type FullObject interface {
 	GetTierer
 	SetTierer
 	Metadataer
+	SetMetadataer
 }
 
 // ObjectOptionalInterfaces returns the names of supported and
@@ -272,6 +273,9 @@ func ObjectOptionalInterfaces(o Object) (supported, unsupported []string) {
 
 	_, ok = o.(Metadataer)
 	store(ok, "Metadata")
+
+	_, ok = o.(SetMetadataer)
+	store(ok, "SetMetadata")
 
 	return supported, unsupported
 }
