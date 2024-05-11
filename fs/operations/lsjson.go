@@ -119,7 +119,7 @@ func newListJSON(ctx context.Context, fsrc fs.Fs, remote string, opt *ListJSONOp
 		lj.dirs = false
 	}
 	if opt.ShowEncrypted {
-		fsInfo, _, _, config, err := fs.ConfigFs(fsrc.Name() + ":" + fsrc.Root())
+		fsInfo, _, _, config, err := fs.ConfigFs(fs.ConfigStringFull(fsrc))
 		if err != nil {
 			return nil, fmt.Errorf("ListJSON failed to load config for crypt remote: %w", err)
 		}
