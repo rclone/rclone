@@ -235,6 +235,7 @@ func (d *Directory) Serve(w http.ResponseWriter, r *http.Request) {
 		Error(d.DirRemote, w, "Failed to render template", err)
 		return
 	}
+	w.Header().Set("Content-Length", fmt.Sprintf("%d", buf.Len()))
 	_, err = buf.WriteTo(w)
 	if err != nil {
 		Error(d.DirRemote, nil, "Failed to drain template buffer", err)
