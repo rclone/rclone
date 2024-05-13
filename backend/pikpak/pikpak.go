@@ -53,6 +53,7 @@ import (
 	"github.com/rclone/rclone/fs/config/obscure"
 	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/fs/hash"
+	"github.com/rclone/rclone/lib/atexit"
 	"github.com/rclone/rclone/lib/dircache"
 	"github.com/rclone/rclone/lib/encoder"
 	"github.com/rclone/rclone/lib/oauthutil"
@@ -1175,7 +1176,7 @@ func (f *Fs) uploadByResumable(ctx context.Context, in io.Reader, resumable *api
 	return
 }
 
-func (f *Fs) upload(ctx context.Context, in io.Reader, leaf, dirID, sha1Str string, size int64, options ...fs.OpenOption) (file *api.File, err error) {
+func (f *Fs) upload(ctx context.Context, in io.Reader, leaf, dirID, sha1Str string, size int64, options ...fs.OpenOption) (info *api.File, err error) {
 	// determine upload type
 	uploadType := api.UploadTypeResumable
 	if size >= 0 && size < int64(5*fs.Mebi) {
@@ -1199,41 +1200,38 @@ func (f *Fs) upload(ctx context.Context, in io.Reader, leaf, dirID, sha1Str stri
 	if err != nil {
 		return nil, fmt.Errorf("failed to create a new file: %w", err)
 	}
-	file = new.File
-	if file == nil {
+	if new.File == nil {
 		return nil, fmt.Errorf("invalid response: %+v", new)
-	} else if file.Phase == api.PhaseTypeComplete {
+	} else if new.File.Phase == api.PhaseTypeComplete {
 		// early return; in case of zero-byte objects
-		return
+		return new.File, nil
 	}
 
-	task := new.Task
-	if task == nil {
-		return nil, fmt.Errorf("invalid response: %+v", new)
-	}
-	defer func() {
-		if err != nil {
-			fs.Debugf(nil, "canceling upload...")
-			_ = f.deleteObjects(ctx, []string{file.ID}, false)
-			_ = f.deleteTask(ctx, task.ID, false)
+	defer atexit.OnError(&err, func() {
+		fs.Debugf(leaf, "canceling upload: %v", err)
+		if cancelErr := f.deleteObjects(ctx, []string{new.File.ID}, false); cancelErr != nil {
+			fs.Logf(leaf, "failed to cancel upload: %v", cancelErr)
 		}
-	}()
+		if cancelErr := f.deleteTask(ctx, new.Task.ID, false); cancelErr != nil {
+			fs.Logf(leaf, "failed to cancel upload: %v", cancelErr)
+		}
+	})()
 
 	if uploadType == api.UploadTypeForm && new.Form != nil {
 		err = f.uploadByForm(ctx, in, req.Name, size, new.Form, options...)
 	} else if uploadType == api.UploadTypeResumable && new.Resumable != nil {
 		err = f.uploadByResumable(ctx, in, new.Resumable)
 	} else {
-		err = fmt.Errorf("unable to proceed upload: %+v", new)
+		err = fmt.Errorf("no method available for uploading: %+v", new)
 	}
 
 	if err != nil {
 		return nil, fmt.Errorf("failed to upload: %w", err)
 	}
-	if _, err = f.getTask(ctx, task.ID, true); err != nil {
+	if _, err = f.getTask(ctx, new.Task.ID, true); err != nil {
 		return nil, fmt.Errorf("unable to locate uploaded file: %w", err)
 	}
-	return
+	return new.File, nil
 }
 
 // Put the object
