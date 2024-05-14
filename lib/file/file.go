@@ -8,8 +8,8 @@ import "os"
 // the returned file can be used for reading; the associated file
 // descriptor has mode O_RDONLY.
 // If there is an error, it will be of type *PathError.
-func Open(name string) (*os.File, error) {
-	return OpenFile(name, os.O_RDONLY, 0)
+func Open(name string, additionalModeFlags int) (*os.File, error) {
+	return OpenFile(name, os.O_RDONLY|additionalModeFlags, 0)
 }
 
 // Create creates the named file with mode 0666 (before umask), truncating

@@ -38,7 +38,7 @@ func TestUpdatingCheck(t *testing.T) {
 	filePath := "sub dir/local test"
 	r.WriteFile(filePath, "content", time.Now())
 
-	fd, err := file.Open(path.Join(r.LocalName, filePath))
+	fd, err := file.Open(path.Join(r.LocalName, filePath), 0)
 	if err != nil {
 		t.Fatalf("failed opening file %q: %v", filePath, err)
 	}
