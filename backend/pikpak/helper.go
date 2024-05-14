@@ -143,6 +143,9 @@ func (f *Fs) getFile(ctx context.Context, ID string) (info *api.File, err error)
 	var resp *http.Response
 	err = f.pacer.Call(func() (bool, error) {
 		resp, err = f.rst.CallJSON(ctx, &opts, nil, &info)
+		if err == nil && !info.Links.ApplicationOctetStream.Valid() {
+			return true, errors.New("no link")
+		}
 		return f.shouldRetry(ctx, resp, err)
 	})
 	return

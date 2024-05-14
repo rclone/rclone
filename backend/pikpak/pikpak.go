@@ -67,8 +67,9 @@ import (
 const (
 	rcloneClientID              = "YNxT9w7GMdWvEOKa"
 	rcloneEncryptedClientSecret = "aqrmB6M1YJ1DWCBxVxFSjFo7wzWEky494YMmkqgAl1do1WKOe2E"
-	minSleep                    = 10 * time.Millisecond
+	minSleep                    = 100 * time.Millisecond
 	maxSleep                    = 2 * time.Second
+	waitTime                    = 500 * time.Millisecond
 	decayConstant               = 2 // bigger for slower decay, exponential
 	rootURL                     = "https://api-drive.mypikpak.com"
 )
@@ -1179,9 +1180,10 @@ func (f *Fs) uploadByResumable(ctx context.Context, in io.Reader, resumable *api
 func (f *Fs) upload(ctx context.Context, in io.Reader, leaf, dirID, sha1Str string, size int64, options ...fs.OpenOption) (info *api.File, err error) {
 	// determine upload type
 	uploadType := api.UploadTypeResumable
-	if size >= 0 && size < int64(5*fs.Mebi) {
-		uploadType = api.UploadTypeForm
-	}
+	// if size >= 0 && size < int64(5*fs.Mebi) {
+	// 	uploadType = api.UploadTypeForm
+	// }
+	// stop using uploadByForm() cause it is not as reliable as uploadByResumable() for a large number of small files
 
 	// request upload ticket to API
 	req := api.RequestNewFile{
@@ -1215,6 +1217,8 @@ func (f *Fs) upload(ctx context.Context, in io.Reader, leaf, dirID, sha1Str stri
 		if cancelErr := f.deleteTask(ctx, new.Task.ID, false); cancelErr != nil {
 			fs.Logf(leaf, "failed to cancel upload: %v", cancelErr)
 		}
+		fs.Debugf(leaf, "waiting %v for the cancellation to be effective", waitTime)
+		time.Sleep(waitTime)
 	})()
 
 	if uploadType == api.UploadTypeForm && new.Form != nil {
@@ -1228,8 +1232,10 @@ func (f *Fs) upload(ctx context.Context, in io.Reader, leaf, dirID, sha1Str stri
 	if err != nil {
 		return nil, fmt.Errorf("failed to upload: %w", err)
 	}
+	fs.Debugf(leaf, "sleeping for %v before checking upload status", waitTime)
+	time.Sleep(waitTime)
 	if _, err = f.getTask(ctx, new.Task.ID, true); err != nil {
-		return nil, fmt.Errorf("unable to locate uploaded file: %w", err)
+		return nil, fmt.Errorf("unable to complete the upload: %w", err)
 	}
 	return new.File, nil
 }
@@ -1484,22 +1490,11 @@ func (o *Object) setMetaDataWithLink(ctx context.Context) error {
 		return nil
 	}
 
-	// fetch download link with retry scheme
-	// 1 initial attempt and 2 retries are reasonable based on empirical analysis
-	retries := 2
-	for i := 1; i <= retries+1; i++ {
-		info, err := o.fs.getFile(ctx, o.id)
-		if err != nil {
-			return fmt.Errorf("can't fetch download link: %w", err)
-		}
-		if err = o.setMetaData(info); err == nil && o.link.Valid() {
-			return nil
-		}
-		if i <= retries {
-			time.Sleep(time.Duration(200*i) * time.Millisecond)
-		}
+	info, err := o.fs.getFile(ctx, o.id)
+	if err != nil {
+		return err
 	}
-	return errors.New("can't download - no link to download")
+	return o.setMetaData(info)
 }
 
 // readMetaData gets the metadata if it hasn't already been fetched
@@ -1633,14 +1628,14 @@ func (o *Object) open(ctx context.Context, url string, options ...fs.OpenOption)
 // Open an object for read
 func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.ReadCloser, err error) {
 	if o.id == "" {
-		return nil, errors.New("can't download - no id")
+		return nil, errors.New("can't download: no id")
 	}
 	if o.size == 0 {
 		// zero-byte objects may have no download link
 		return io.NopCloser(bytes.NewBuffer([]byte(nil))), nil
 	}
 	if err = o.setMetaDataWithLink(ctx); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("can't download: %w", err)
 	}
 	return o.open(ctx, o.link.URL, options...)
 }
