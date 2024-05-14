@@ -10,10 +10,6 @@ import (
 	"syscall"
 )
 
-func OpenWithBackupSemantics(name string) (*os.File, error) {
-	return OpenFile(name, syscall.FILE_FLAG_BACKUP_SEMANTICS, 0)
-}
-
 // OpenFile is the generalized open call; most users will use Open or Create
 // instead. It opens the named file with specified flag (O_RDONLY etc.) and
 // perm (before umask), if applicable. If successful, methods on the returned
