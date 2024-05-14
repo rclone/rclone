@@ -1668,6 +1668,67 @@ func Run(t *testing.T, opt *Opt) {
 				} // else: Have some metadata here we didn't write - can't really check it!
 			})
 
+			// TestObjectSetMetadata tests the SetMetadata of the object
+			t.Run("ObjectSetMetadata", func(t *testing.T) {
+				skipIfNotOk(t)
+				ctx, ci := fs.AddConfig(ctx)
+				ci.Metadata = true
+				features := f.Features()
+
+				// Test to see if SetMetadata is supported on an existing object before creating a new one
+				obj := fstest.NewObject(ctx, t, f, file1.Path)
+				_, objectHasSetMetadata := obj.(fs.SetMetadataer)
+				if !objectHasSetMetadata {
+					t.Skip("SetMetadata method not supported")
+				}
+				if !features.Overlay {
+					require.True(t, features.WriteMetadata, "Features.WriteMetadata is false but Object.SetMetadata found")
+				}
+				if !features.ReadMetadata {
+					t.Skip("SetMetadata can't be tested without ReadMetadata")
+				}
+
+				// Create file with metadata
+				const fileName = "test set metadata.txt"
+				t1 := fstest.Time("2003-02-03T04:05:06.499999999Z")
+				t2 := fstest.Time("2004-03-03T04:05:06.499999999Z")
+				contents := random.String(100)
+				file := fstest.NewItem(fileName, contents, t1)
+				var testMetadata = fs.Metadata{
+					// System metadata supported by all backends
+					"mtime": t1.Format(time.RFC3339Nano),
+					// User metadata
+					"potato": "jersey",
+				}
+				obj = PutTestContentsMetadata(ctx, t, f, &file, contents, true, "text/plain", testMetadata)
+				fstest.CheckEntryMetadata(ctx, t, f, obj, testMetadata)
+				do, objectHasSetMetadata := obj.(fs.SetMetadataer)
+				require.True(t, objectHasSetMetadata)
+
+				// Set new metadata
+				err := do.SetMetadata(ctx, fs.Metadata{
+					// System metadata supported by all backends
+					"mtime": t2.Format(time.RFC3339Nano),
+					// User metadata
+					"potato": "royal",
+				})
+				if err == fs.ErrorNotImplemented {
+					t.Log("SetMetadata returned fs.ErrorNotImplemented")
+				} else {
+					require.NoError(t, err)
+					file.ModTime = t2
+					fstest.CheckListing(t, f, []fstest.Item{file1, file2, file})
+
+					// Check metadata is correct
+					fstest.CheckEntryMetadata(ctx, t, f, obj, ci.MetadataSet)
+					obj = fstest.NewObject(ctx, t, f, fileName)
+					fstest.CheckEntryMetadata(ctx, t, f, obj, ci.MetadataSet)
+				}
+
+				// Remove test file
+				require.NoError(t, obj.Remove(ctx))
+			})
+
 			// TestObjectSetModTime tests that SetModTime works
 			t.Run("ObjectSetModTime", func(t *testing.T) {
 				skipIfNotOk(t)

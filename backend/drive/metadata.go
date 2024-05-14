@@ -262,7 +262,7 @@ func (f *Fs) setLabels(ctx context.Context, info *drive.File, labels []*drive.La
 		return f.shouldRetry(ctx, err)
 	})
 	if err != nil {
-		return fmt.Errorf("failed to set owner: %w", err)
+		return fmt.Errorf("failed to set labels: %w", err)
 	}
 	return nil
 }
@@ -553,7 +553,12 @@ func (f *Fs) updateMetadata(ctx context.Context, updateInfo *drive.File, meta fs
 			}
 			// Can't set Owner on upload so need to set afterwards
 			callbackFns = append(callbackFns, func(ctx context.Context, info *drive.File) error {
-				return f.setOwner(ctx, info, v)
+				err := f.setOwner(ctx, info, v)
+				if err != nil && f.opt.MetadataOwner.IsSet(rwFailOK) {
+					fs.Errorf(f, "Ignoring error as failok is set: %v", err)
+					return nil
+				}
+				return err
 			})
 		case "permissions":
 			if !f.opt.MetadataPermissions.IsSet(rwWrite) {
@@ -566,7 +571,13 @@ func (f *Fs) updateMetadata(ctx context.Context, updateInfo *drive.File, meta fs
 			}
 			// Can't set Permissions on upload so need to set afterwards
 			callbackFns = append(callbackFns, func(ctx context.Context, info *drive.File) error {
-				return f.setPermissions(ctx, info, perms)
+				err := f.setPermissions(ctx, info, perms)
+				if err != nil && f.opt.MetadataPermissions.IsSet(rwFailOK) {
+					// We've already logged the permissions errors individually here
+					fs.Debugf(f, "Ignoring error as failok is set: %v", err)
+					return nil
+				}
+				return err
 			})
 		case "labels":
 			if !f.opt.MetadataLabels.IsSet(rwWrite) {
@@ -579,7 +590,12 @@ func (f *Fs) updateMetadata(ctx context.Context, updateInfo *drive.File, meta fs
 			}
 			// Can't set Labels on upload so need to set afterwards
 			callbackFns = append(callbackFns, func(ctx context.Context, info *drive.File) error {
-				return f.setLabels(ctx, info, labels)
+				err := f.setLabels(ctx, info, labels)
+				if err != nil && f.opt.MetadataLabels.IsSet(rwFailOK) {
+					fs.Errorf(f, "Ignoring error as failok is set: %v", err)
+					return nil
+				}
+				return err
 			})
 		case "folder-color-rgb":
 			updateInfo.FolderColorRgb = v
