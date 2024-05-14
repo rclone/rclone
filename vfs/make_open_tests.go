@@ -110,7 +110,7 @@ func test(fileName string, flags int, mode string) {
 	}
 
 	// read the file
-	f, err = file.Open(fileName)
+	f, err = file.Open(fileName, 0)
 	if err != nil {
 		log.Fatalf("failed to open: %v", err)
 	}

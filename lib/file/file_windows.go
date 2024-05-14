@@ -61,7 +61,11 @@ func OpenFile(path string, mode int, perm os.FileMode) (*os.File, error) {
 	default:
 		createmode = syscall.OPEN_EXISTING
 	}
-	h, e := syscall.CreateFile(pathp, access, sharemode, nil, createmode, syscall.FILE_ATTRIBUTE_NORMAL, 0)
+	var fileFlagBackupSemantics uint32 = 0
+	if mode&syscall.FILE_FLAG_BACKUP_SEMANTICS == syscall.FILE_FLAG_BACKUP_SEMANTICS {
+		fileFlagBackupSemantics = syscall.FILE_FLAG_BACKUP_SEMANTICS
+	}
+	h, e := syscall.CreateFile(pathp, access, sharemode, nil, createmode, syscall.FILE_ATTRIBUTE_NORMAL|fileFlagBackupSemantics, 0)
 	if e != nil {
 		return nil, e
 	}

@@ -1073,8 +1073,13 @@ func (o *Object) Hash(ctx context.Context, r hash.Type) (string, error) {
 		var in io.ReadCloser
 
 		if !o.translatedLink {
+			fileFlagBackupSemantics := 0
+			useBackupSemantics := fs.GetConfig(ctx).UseWindowsBackupSemantics
+			if runtime.GOOS == "windows" && useBackupSemantics {
+				fileFlagBackupSemantics = 33554432 // syscall.FILE_FLAG_BACKUP_SEMANTICS on Windows OSs
+			}
 			var fd *os.File
-			fd, err = file.Open(o.path)
+			fd, err = file.Open(o.path, fileFlagBackupSemantics)
 			if fd != nil {
 				in = newFadviseReadCloser(o, fd, 0, 0)
 			}
@@ -1268,7 +1273,12 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 		return o.openTranslatedLink(offset, limit)
 	}
 
-	fd, err := file.Open(o.path)
+	fileFlagBackupSemantics := 0
+	useBackupSemantics := fs.GetConfig(ctx).UseWindowsBackupSemantics
+	if runtime.GOOS == "windows" && useBackupSemantics {
+		fileFlagBackupSemantics = 33554432 // syscall.FILE_FLAG_BACKUP_SEMANTICS on Windows OSs
+	}
+	fd, err := file.Open(o.path, fileFlagBackupSemantics)
 	if err != nil {
 		return
 	}
@@ -1338,13 +1348,18 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	// If it is a translated link, just read in the contents, and
 	// then create a symlink
 	if !o.translatedLink {
-		f, err := file.OpenFile(o.path, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0666)
+		fileFlagBackupSemantics := 0
+		useBackupSemantics := fs.GetConfig(ctx).UseWindowsBackupSemantics
+		if runtime.GOOS == "windows" && useBackupSemantics {
+			fileFlagBackupSemantics = 33554432 // syscall.FILE_FLAG_BACKUP_SEMANTICS on Windows OSs
+		}
+		f, err := file.OpenFile(o.path, os.O_WRONLY|os.O_CREATE|os.O_TRUNC|fileFlagBackupSemantics, 0666)
 		if err != nil {
 			if runtime.GOOS == "windows" && os.IsPermission(err) {
 				// If permission denied on Windows might be trying to update a
 				// hidden file, in which case try opening without CREATE
 				// See: https://stackoverflow.com/questions/13215716/ioerror-errno-13-permission-denied-when-trying-to-open-hidden-file-in-w-mod
-				f, err = file.OpenFile(o.path, os.O_WRONLY|os.O_TRUNC, 0666)
+				f, err = file.OpenFile(o.path, os.O_WRONLY|os.O_TRUNC|fileFlagBackupSemantics, 0666)
 				if err != nil {
 					return err
 				}
@@ -1453,7 +1468,12 @@ func (f *Fs) OpenWriterAt(ctx context.Context, remote string, size int64) (fs.Wr
 		return nil, errors.New("can't open a symlink for random writing")
 	}
 
-	out, err := file.OpenFile(o.path, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0666)
+	fileFlagBackupSemantics := 0
+	useBackupSemantics := fs.GetConfig(ctx).UseWindowsBackupSemantics
+	if runtime.GOOS == "windows" && useBackupSemantics {
+		fileFlagBackupSemantics = 33554432 // syscall.FILE_FLAG_BACKUP_SEMANTICS on Windows OSs
+	}
+	out, err := file.OpenFile(o.path, os.O_WRONLY|os.O_CREATE|os.O_TRUNC|fileFlagBackupSemantics, 0666)
 	if err != nil {
 		return nil, err
 	}

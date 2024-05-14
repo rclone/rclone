@@ -127,7 +127,7 @@ func TestOpenFileOperations(t *testing.T) {
 
 	// Read it back in
 
-	f, err = Open(filepath)
+	f, err = Open(filepath, 0)
 	require.NoError(t, err)
 	var b = make([]byte, 10)
 	n, err := f.Read(b)
