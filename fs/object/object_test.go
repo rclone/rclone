@@ -34,6 +34,7 @@ func TestStaticObject(t *testing.T) {
 	o = object.NewStaticObjectInfo(remote, now, size, true, nil, nil)
 	_, err = o.Hash(context.Background(), hash.MD5)
 	assert.Equal(t, hash.ErrUnsupported, err)
+	assert.Equal(t, object.MemoryFs, o.Fs())
 
 	hs := map[hash.Type]string{
 		hash.MD5: "potato",

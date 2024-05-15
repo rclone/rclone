@@ -43,6 +43,9 @@ func NewStaticObjectInfo(remote string, modTime time.Time, size int64, storable 
 			info.hashes[ht] = ""
 		}
 	}
+	if f == nil {
+		info.fs = MemoryFs
+	}
 	return info
 }
 
