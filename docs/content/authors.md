@@ -853,3 +853,5 @@ put them back in again.` >}}
   * hidewrong <167099254+hidewrong@users.noreply.github.com>
   * Michael Terry <mike@mterry.name>
   * Sunny <25066078+LoSunny@users.noreply.github.com>
+  * overallteach <cricis@foxmail.com>
+  * JT Olio <jt@olio.lol>

@@ -125,7 +125,7 @@ func TestVFSbaseHandle(t *testing.T) {
 	assert.Nil(t, node)
 }
 
-// TestNew sees if the New command works properly
+// TestVFSNew sees if the New command works properly
 func TestVFSNew(t *testing.T) {
 	// Check active cache has this many entries
 	checkActiveCacheEntries := func(i int) {
@@ -162,7 +162,7 @@ func TestVFSNew(t *testing.T) {
 	checkActiveCacheEntries(0)
 }
 
-// TestNew sees if the New command works properly
+// TestVFSNewWithOpts sees if the New command works properly
 func TestVFSNewWithOpts(t *testing.T) {
 	var opt = vfscommon.DefaultOpt
 	opt.DirPerms = 0777
@@ -174,7 +174,7 @@ func TestVFSNewWithOpts(t *testing.T) {
 	assert.Equal(t, os.FileMode(0664), vfs.Opt.FilePerms)
 }
 
-// TestRoot checks root directory is present and correct
+// TestVFSRoot checks root directory is present and correct
 func TestVFSRoot(t *testing.T) {
 	_, vfs := newTestVFS(t)
 
