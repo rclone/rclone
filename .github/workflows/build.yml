@@ -28,7 +28,7 @@ jobs:
             build_flags: '-include "^(windows/amd64|windows/arm64)"'
             build_args: '-buildmode exe'
           
-           - job_name: mac_amd64
+          - job_name: mac_amd64
             os: macos-latest
             go: '>=1.22.0-rc.1'
             gotags: 'cmount'
