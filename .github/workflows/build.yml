@@ -27,6 +27,18 @@ jobs:
             cgo: '0'
             build_flags: '-include "^(windows/amd64|windows/arm64)"'
             build_args: '-buildmode exe'
+          
+           - job_name: mac_amd64
+            os: macos-latest
+            go: '>=1.22.0-rc.1'
+            gotags: 'cmount'
+            build_flags: '-include "^darwin/amd64" -cgo'
+
+          - job_name: mac_arm64
+            os: macos-latest
+            go: '>=1.22.0-rc.1'
+            gotags: 'cmount'
+            build_flags: '-include "^darwin/arm64" -cgo -macos-arch arm64 -cgo-cflags=-I/usr/local/include -cgo-ldflags=-L/usr/local/lib'
 
 
     name: ${{ matrix.job_name }}
@@ -61,6 +73,19 @@ jobs:
           sudo chown root:$USER /etc/fuse.conf
           sudo apt-get install fuse3 libfuse-dev rpm pkg-config git-annex
         if: matrix.os == 'ubuntu-latest'
+
+      - name: Install Libraries on macOS
+        shell: bash
+        run: |
+          # https://github.com/Homebrew/brew/issues/15621#issuecomment-1619266788
+          # https://github.com/orgs/Homebrew/discussions/4612#discussioncomment-6319008
+          unset HOMEBREW_NO_INSTALL_FROM_API
+          brew untap --force homebrew/core
+          brew untap --force homebrew/cask
+          brew update
+          brew install --cask macfuse
+          brew install git-annex git-annex-remote-rclone
+        if: matrix.os == 'macos-latest'
 
       - name: Install Libraries on Windows
         shell: powershell

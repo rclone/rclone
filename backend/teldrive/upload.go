@@ -115,9 +115,14 @@ func (w *objectChunkWriter) WriteChunk(ctx context.Context, chunkNumber int, rea
 
 	})
 
-	if err != nil || response.PartId == 0 {
+	if err != nil {
 		return 0, fmt.Errorf("error sending chunk %d: %v", chunkNumber, err)
 	}
+
+	if response.PartId == 0 {
+		return 0, fmt.Errorf("error sending chunk %d", chunkNumber)
+	}
+
 	w.addCompletedPart(response)
 	fs.Debugf(w.o, "Done sending chunk %d", chunkNumber)
 

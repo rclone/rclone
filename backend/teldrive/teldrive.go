@@ -610,9 +610,14 @@ func (f *Fs) putUnchecked(ctx context.Context, in0 io.Reader, src fs.ObjectInfo,
 			resp, err := f.srv.CallJSON(ctx, &opts, nil, &info)
 			return shouldRetry(ctx, resp, err)
 		})
-		if err != nil || info.PartId == 0 {
+		if err != nil {
 			return fmt.Errorf("error sending chunk %d: %v", partNo, err)
 		}
+
+		if info.PartId == 0 {
+			return fmt.Errorf("error sending chunk %d", partNo)
+		}
+
 		uploadedSize += chunkSize
 
 		partsToCommit = append(partsToCommit, info)
