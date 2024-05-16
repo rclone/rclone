@@ -50,7 +50,7 @@ func (f *Fs) TestWritePermissions(t *testing.T, r *fstest.Run) {
 	file1 := r.WriteFile(randomFilename(), content, t2)
 
 	// add a permission with "read" role
-	permissions := defaultPermissions()
+	permissions := defaultPermissions(f.driveType)
 	permissions[0].Roles[0] = api.ReadRole
 	expectedMeta, actualMeta := f.putWithMeta(ctx, t, &file1, permissions)
 	f.compareMeta(t, expectedMeta, actualMeta, false)
@@ -59,7 +59,7 @@ func (f *Fs) TestWritePermissions(t *testing.T, r *fstest.Run) {
 	found, num := false, 0
 	foundCount := 0
 	for i, p := range actualP {
-		for _, identity := range p.GrantedToIdentities {
+		for _, identity := range p.GetGrantedToIdentities(f.driveType) {
 			if identity.User.DisplayName == testUserID {
 				// note: expected will always be element 0 here, but actual may be variable based on org settings
 				assert.Equal(t, expectedP[0].Roles, p.Roles)
@@ -68,7 +68,7 @@ func (f *Fs) TestWritePermissions(t *testing.T, r *fstest.Run) {
 			}
 		}
 		if f.driveType == driveTypePersonal {
-			if p.GrantedTo != nil && p.GrantedTo.User != (api.Identity{}) && p.GrantedTo.User.ID == testUserID { // shows up in a different place on biz vs. personal
+			if p.GetGrantedTo(f.driveType) != nil && p.GetGrantedTo(f.driveType).User != (api.Identity{}) && p.GetGrantedTo(f.driveType).User.ID == testUserID { // shows up in a different place on biz vs. personal
 				assert.Equal(t, expectedP[0].Roles, p.Roles)
 				found, num = true, i
 				foundCount++
@@ -106,7 +106,7 @@ func (f *Fs) TestWritePermissions(t *testing.T, r *fstest.Run) {
 	found = false
 	var foundP *api.PermissionsType
 	for _, p := range actualP {
-		if p.GrantedTo == nil || p.GrantedTo.User == (api.Identity{}) || p.GrantedTo.User.ID != testUserID {
+		if p.GetGrantedTo(f.driveType) == nil || p.GetGrantedTo(f.driveType).User == (api.Identity{}) || p.GetGrantedTo(f.driveType).User.ID != testUserID {
 			continue
 		}
 		found = true
@@ -134,7 +134,7 @@ func (f *Fs) TestReadPermissions(t *testing.T, r *fstest.Run) {
 	// test that what we got before vs. after is the same
 	_ = f.opt.MetadataPermissions.Set("read")
 	_, expectedMeta := f.putWithMeta(ctx, t, &file1, []*api.PermissionsType{}) // return var intentionally switched here
-	permissions := defaultPermissions()
+	permissions := defaultPermissions(f.driveType)
 	_, actualMeta := f.putWithMeta(ctx, t, &file1, permissions)
 	if f.driveType == driveTypePersonal {
 		perms, ok := actualMeta["permissions"]
@@ -150,7 +150,7 @@ func (f *Fs) TestReadMetadata(t *testing.T, r *fstest.Run) {
 	ctx, ci := fs.AddConfig(ctx)
 	ci.Metadata = true
 	file1 := r.WriteFile(randomFilename(), "hello", t2)
-	permissions := defaultPermissions()
+	permissions := defaultPermissions(f.driveType)
 
 	_ = f.opt.MetadataPermissions.Set("read,write")
 	_, actualMeta := f.putWithMeta(ctx, t, &file1, permissions)
@@ -174,7 +174,7 @@ func (f *Fs) TestDirectoryMetadata(t *testing.T, r *fstest.Run) {
 	ctx, ci := fs.AddConfig(ctx)
 	ci.Metadata = true
 	_ = f.opt.MetadataPermissions.Set("read,write")
-	permissions := defaultPermissions()
+	permissions := defaultPermissions(f.driveType)
 	permissions[0].Roles[0] = api.ReadRole
 
 	expectedMeta := fs.Metadata{
@@ -288,7 +288,7 @@ func (f *Fs) TestServerSideCopyMove(t *testing.T, r *fstest.Run) {
 	file1 := r.WriteFile(randomFilename(), content, t2)
 
 	// add a permission with "read" role
-	permissions := defaultPermissions()
+	permissions := defaultPermissions(f.driveType)
 	permissions[0].Roles[0] = api.ReadRole
 	expectedMeta, actualMeta := f.putWithMeta(ctx, t, &file1, permissions)
 	f.compareMeta(t, expectedMeta, actualMeta, false)
@@ -331,7 +331,10 @@ func (f *Fs) TestMetadataMapper(t *testing.T, r *fstest.Run) {
 	_ = f.opt.MetadataPermissions.Set("read,write")
 	file1 := r.WriteFile(randomFilename(), content, t2)
 
-	const blob = `{"Metadata":{"permissions":"[{\"grantedToIdentities\":[{\"user\":{\"id\":\"ryan@contoso.com\"}}],\"roles\":[\"read\"]}]"}}`
+	blob := `{"Metadata":{"permissions":"[{\"grantedToIdentities\":[{\"user\":{\"id\":\"ryan@contoso.com\"}}],\"roles\":[\"read\"]}]"}}`
+	if f.driveType != driveTypePersonal {
+		blob = `{"Metadata":{"permissions":"[{\"grantedToIdentitiesV2\":[{\"user\":{\"id\":\"ryan@contoso.com\"}}],\"roles\":[\"read\"]}]"}}`
+	}
 
 	// Copy
 	ci.MetadataMapper = []string{"echo", blob}
@@ -347,7 +350,7 @@ func (f *Fs) TestMetadataMapper(t *testing.T, r *fstest.Run) {
 	found := false
 	foundCount := 0
 	for _, p := range actualP {
-		for _, identity := range p.GrantedToIdentities {
+		for _, identity := range p.GetGrantedToIdentities(f.driveType) {
 			if identity.User.DisplayName == testUserID {
 				assert.Equal(t, []api.Role{api.ReadRole}, p.Roles)
 				found = true
@@ -355,7 +358,7 @@ func (f *Fs) TestMetadataMapper(t *testing.T, r *fstest.Run) {
 			}
 		}
 		if f.driveType == driveTypePersonal {
-			if p.GrantedTo != nil && p.GrantedTo.User != (api.Identity{}) && p.GrantedTo.User.ID == testUserID { // shows up in a different place on biz vs. personal
+			if p.GetGrantedTo(f.driveType) != nil && p.GetGrantedTo(f.driveType).User != (api.Identity{}) && p.GetGrantedTo(f.driveType).User.ID == testUserID { // shows up in a different place on biz vs. personal
 				assert.Equal(t, []api.Role{api.ReadRole}, p.Roles)
 				found = true
 				foundCount++
@@ -449,11 +452,18 @@ func indent(t *testing.T, s string) string {
 	return marshalPerms(t, p)
 }
 
-func defaultPermissions() []*api.PermissionsType {
+func defaultPermissions(driveType string) []*api.PermissionsType {
+	if driveType == driveTypePersonal {
+		return []*api.PermissionsType{{
+			GrantedTo:           &api.IdentitySet{User: api.Identity{}},
+			GrantedToIdentities: []*api.IdentitySet{{User: api.Identity{ID: testUserID}}},
+			Roles:               []api.Role{api.WriteRole},
+		}}
+	}
 	return []*api.PermissionsType{{
-		GrantedTo:           &api.IdentitySet{User: api.Identity{}},
-		GrantedToIdentities: []*api.IdentitySet{{User: api.Identity{ID: testUserID}}},
-		Roles:               []api.Role{api.WriteRole},
+		GrantedToV2:           &api.IdentitySet{User: api.Identity{}},
+		GrantedToIdentitiesV2: []*api.IdentitySet{{User: api.Identity{ID: testUserID}}},
+		Roles:                 []api.Role{api.WriteRole},
 	}}
 }
 

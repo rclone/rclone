@@ -151,6 +151,7 @@ func (rwChoices) Choices() []fs.BitsChoicesInfo {
 		{Bit: uint64(rwOff), Name: "off"},
 		{Bit: uint64(rwRead), Name: "read"},
 		{Bit: uint64(rwWrite), Name: "write"},
+		{Bit: uint64(rwFailOK), Name: "failok"},
 	}
 }
 
@@ -160,6 +161,7 @@ type rwChoice = fs.Bits[rwChoices]
 const (
 	rwRead rwChoice = 1 << iota
 	rwWrite
+	rwFailOK
 	rwOff rwChoice = 0
 )
 
@@ -173,6 +175,9 @@ var rwExamples = fs.OptionExamples{{
 }, {
 	Value: rwWrite.String(),
 	Help:  "Write the value only",
+}, {
+	Value: rwFailOK.String(),
+	Help:  "If writing fails log errors only, don't fail the transfer",
 }, {
 	Value: (rwRead | rwWrite).String(),
 	Help:  "Read and Write the value.",
@@ -1747,10 +1752,9 @@ func (f *Fs) createDir(ctx context.Context, pathID, leaf string, metadata fs.Met
 	leaf = f.opt.Enc.FromStandardName(leaf)
 	pathID = actualID(pathID)
 	createInfo := &drive.File{
-		Name:        leaf,
-		Description: leaf,
-		MimeType:    driveFolderType,
-		Parents:     []string{pathID},
+		Name:     leaf,
+		MimeType: driveFolderType,
+		Parents:  []string{pathID},
 	}
 	var updateMetadata updateMetadataFn
 	if len(metadata) > 0 {
@@ -2430,7 +2434,6 @@ func (f *Fs) createFileInfo(ctx context.Context, remote string, modTime time.Tim
 	// Define the metadata for the file we are going to create.
 	createInfo := &drive.File{
 		Name:         leaf,
-		Description:  leaf,
 		Parents:      []string{directoryID},
 		ModifiedTime: modTime.Format(timeFormatOut),
 	}

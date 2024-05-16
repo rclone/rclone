@@ -27,6 +27,7 @@ import (
 	"github.com/rclone/rclone/fs/config/configfile"
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/fs/walk"
+	"github.com/rclone/rclone/fstest/testy"
 	"github.com/rclone/rclone/lib/random"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -539,10 +540,12 @@ func NewObject(ctx context.Context, t *testing.T, f fs.Fs, remote string) fs.Obj
 	return obj
 }
 
-// NewDirectory finds the directory with remote in f
+// NewDirectoryRetries finds the directory with remote in f
+//
+// If directory can't be found it returns an error wrapping fs.ErrorDirNotFound
 //
 // One day this will be an rclone primitive
-func NewDirectory(ctx context.Context, t *testing.T, f fs.Fs, remote string) fs.Directory {
+func NewDirectoryRetries(ctx context.Context, t *testing.T, f fs.Fs, remote string, retries int) (fs.Directory, error) {
 	var err error
 	var dir fs.Directory
 	sleepTime := 1 * time.Second
@@ -550,7 +553,7 @@ func NewDirectory(ctx context.Context, t *testing.T, f fs.Fs, remote string) fs.
 	if root == "." {
 		root = ""
 	}
-	for i := 1; i <= *ListRetries; i++ {
+	for i := 1; i <= retries; i++ {
 		var entries fs.DirEntries
 		entries, err = f.List(ctx, root)
 		if err != nil {
@@ -560,14 +563,24 @@ func NewDirectory(ctx context.Context, t *testing.T, f fs.Fs, remote string) fs.
 			var ok bool
 			dir, ok = entry.(fs.Directory)
 			if ok && dir.Remote() == remote {
-				return dir
+				return dir, nil
 			}
 		}
-		err = fmt.Errorf("directory %q not found in %q", remote, root)
-		t.Logf("Sleeping for %v for findDir eventual consistency: %d/%d (%v)", sleepTime, i, *ListRetries, err)
-		time.Sleep(sleepTime)
-		sleepTime = (sleepTime * 3) / 2
+		err = fmt.Errorf("directory %q not found in %q: %w", remote, root, fs.ErrorDirNotFound)
+		if i < retries {
+			t.Logf("Sleeping for %v for NewDirectoryRetries eventual consistency: %d/%d (%v)", sleepTime, i, retries, err)
+			time.Sleep(sleepTime)
+			sleepTime = (sleepTime * 3) / 2
+		}
 	}
+	return dir, err
+}
+
+// NewDirectory finds the directory with remote in f
+//
+// One day this will be an rclone primitive
+func NewDirectory(ctx context.Context, t *testing.T, f fs.Fs, remote string) fs.Directory {
+	dir, err := NewDirectoryRetries(ctx, t, f, remote, *ListRetries)
 	require.NoError(t, err)
 	return dir
 }
@@ -608,7 +621,15 @@ func CheckDirModTime(ctx context.Context, t *testing.T, f fs.Fs, dir fs.Director
 		return
 	}
 	gotT := dir.ModTime(ctx)
-	AssertTimeEqualWithPrecision(t, dir.Remote(), wantT, gotT, f.Precision())
+	precision := f.Precision()
+	// For unknown reasons the precision of modification times of
+	// directories on the CI is about >15mS. The tests work fine
+	// when run in Virtualbox though so I conjecture this is
+	// something to do with the file system used there.
+	if runtime.GOOS == "windows" && testy.CI() {
+		precision = 100 * time.Millisecond
+	}
+	AssertTimeEqualWithPrecision(t, dir.Remote(), wantT, gotT, precision)
 }
 
 // Gz returns a compressed version of its input string

@@ -3,9 +3,10 @@
 
 //go:build plan9
 
+// Package sftp implements an SFTP server to serve an rclone VFS
 package sftp
 
 import "github.com/spf13/cobra"
 
 // Command definition is nil to show not implemented
-var Command *cobra.Command = nil
+var Command *cobra.Command

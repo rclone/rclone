@@ -308,7 +308,6 @@ func NewFs(ctx context.Context, name, rpath string, m configmap.Mapper) (fs.Fs, 
 		root: rpath,
 		opt:  *opt,
 	}
-	cache.PinUntilFinalized(f.base, f)
 	f.dirSort = true // processEntries requires that meta Objects prerun data chunks atm.
 
 	if err := f.configure(opt.NameFormat, opt.MetaFormat, opt.HashType, opt.Transactions); err != nil {
@@ -326,9 +325,9 @@ func NewFs(ctx context.Context, name, rpath string, m configmap.Mapper) (fs.Fs, 
 		if testErr == fs.ErrorIsFile {
 			f.base = newBase
 			err = testErr
-			cache.PinUntilFinalized(f.base, f)
 		}
 	}
+	cache.PinUntilFinalized(f.base, f)
 
 	// Correct root if definitely pointing to a file
 	if err == fs.ErrorIsFile {

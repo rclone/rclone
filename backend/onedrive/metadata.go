@@ -11,6 +11,7 @@ import (
 
 	"github.com/rclone/rclone/backend/onedrive/api"
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/lib/dircache"
 	"github.com/rclone/rclone/lib/errcount"
 	"golang.org/x/exp/slices" // replace with slices after go1.21 is the minimum version
@@ -395,7 +396,7 @@ func (m *Metadata) sortPermissions() (add, update, remove []*api.PermissionsType
 		if n.ID != "" {
 			// sanity check: ensure there's a matching "old" id with a non-matching role
 			if !slices.ContainsFunc(old, func(o *api.PermissionsType) bool {
-				return o.ID == n.ID && slices.Compare(o.Roles, n.Roles) != 0 && len(o.Roles) > 0 && len(n.Roles) > 0
+				return o.ID == n.ID && slices.Compare(o.Roles, n.Roles) != 0 && len(o.Roles) > 0 && len(n.Roles) > 0 && !slices.Contains(o.Roles, api.OwnerRole)
 			}) {
 				fs.Debugf(m.remote, "skipping update for invalid roles: %v (perm ID: %v)", n.Roles, n.ID)
 				continue
@@ -417,6 +418,10 @@ func (m *Metadata) sortPermissions() (add, update, remove []*api.PermissionsType
 		}
 	}
 	for _, o := range old {
+		if slices.Contains(o.Roles, api.OwnerRole) {
+			fs.Debugf(m.remote, "skipping remove permission -- can't remove 'owner' role")
+			continue
+		}
 		newHasOld := slices.ContainsFunc(new, func(n *api.PermissionsType) bool {
 			if n == nil || n.ID == "" {
 				return false // can't remove perms without an ID
@@ -462,17 +467,21 @@ func (m *Metadata) processPermissions(ctx context.Context, add, update, remove [
 		newPermissions = append(newPermissions, newP)
 	}
 
-	return newPermissions, errs.Err("failed to set permissions")
+	err = errs.Err("failed to set permissions")
+	if err != nil {
+		err = fserrors.NoRetryError(err)
+	}
+	return newPermissions, err
 }
 
 // fillRecipients looks for recipients to add from the permission passed in.
-// It looks for an email address in identity.User.ID and DisplayName, otherwise it uses the identity.User.ID as r.ObjectID.
+// It looks for an email address in identity.User.Email, ID, and DisplayName, otherwise it uses the identity.User.ID as r.ObjectID.
 // It considers both "GrantedTo" and "GrantedToIdentities".
-func fillRecipients(p *api.PermissionsType) (recipients []api.DriveRecipient) {
+func fillRecipients(p *api.PermissionsType, driveType string) (recipients []api.DriveRecipient) {
 	if p == nil {
 		return recipients
 	}
-	ids := make(map[string]struct{}, len(p.GrantedToIdentities)+1)
+	ids := make(map[string]struct{}, len(p.GetGrantedToIdentities(driveType))+1)
 	isUnique := func(s string) bool {
 		_, ok := ids[s]
 		return !ok && s != ""
@@ -482,7 +491,10 @@ func fillRecipients(p *api.PermissionsType) (recipients []api.DriveRecipient) {
 		r := api.DriveRecipient{}
 
 		id := ""
-		if strings.ContainsRune(identity.User.ID, '@') {
+		if strings.ContainsRune(identity.User.Email, '@') {
+			id = identity.User.Email
+			r.Email = id
+		} else if strings.ContainsRune(identity.User.ID, '@') {
 			id = identity.User.ID
 			r.Email = id
 		} else if strings.ContainsRune(identity.User.DisplayName, '@') {
@@ -498,12 +510,31 @@ func fillRecipients(p *api.PermissionsType) (recipients []api.DriveRecipient) {
 		ids[id] = struct{}{}
 		recipients = append(recipients, r)
 	}
-	for _, identity := range p.GrantedToIdentities {
-		addRecipient(identity)
+
+	forIdentitySet := func(iSet *api.IdentitySet) {
+		if iSet == nil {
+			return
+		}
+		iS := *iSet
+		forIdentity := func(i api.Identity) {
+			if i != (api.Identity{}) {
+				iS.User = i
+				addRecipient(&iS)
+			}
+		}
+		forIdentity(iS.User)
+		forIdentity(iS.SiteUser)
+		forIdentity(iS.Group)
+		forIdentity(iS.SiteGroup)
+		forIdentity(iS.Application)
+		forIdentity(iS.Device)
 	}
-	if p.GrantedTo != nil && p.GrantedTo.User != (api.Identity{}) {
-		addRecipient(p.GrantedTo)
+
+	for _, identitySet := range p.GetGrantedToIdentities(driveType) {
+		forIdentitySet(identitySet)
 	}
+	forIdentitySet(p.GetGrantedTo(driveType))
+
 	return recipients
 }
 
@@ -513,7 +544,7 @@ func (m *Metadata) addPermission(ctx context.Context, p *api.PermissionsType) (n
 	opts := m.fs.newOptsCall(m.normalizedID, "POST", "/invite")
 
 	req := &api.AddPermissionsRequest{
-		Recipients:    fillRecipients(p),
+		Recipients:    fillRecipients(p, m.fs.driveType),
 		RequireSignIn: m.fs.driveType != driveTypePersonal, // personal and business have conflicting requirements
 		Roles:         p.Roles,
 	}

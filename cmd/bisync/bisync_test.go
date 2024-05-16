@@ -97,6 +97,8 @@ var logReplacements = []string{
 	`^NOTICE:.*?Files of unknown size \(such as Google Docs\) do not sync reliably with --checksum or --size-only\. Consider using modtime instead \(the default\) or --drive-skip-gdocs.*?$`, dropMe,
 	// ignore cache backend cache expired messages
 	`^INFO  : .*cache expired.*$`, dropMe,
+	// ignore "Implicitly create directory" messages (TestnStorage:)
+	`^INFO  : .*Implicitly create directory.*$`, dropMe,
 	// ignore differences in backend features
 	`^.*?"HashType1":.*?$`, dropMe,
 	`^.*?"HashType2":.*?$`, dropMe,
@@ -108,6 +110,8 @@ var logReplacements = []string{
 	`^(INFO  : .*?: (Made directory with|Set directory) (metadata|modification time)).*$`, dropMe,
 	// ignore sizes in directory time updates
 	`^(NOTICE: .*?: Skipped set directory modification time as --dry-run is set).*$`, dropMe,
+	// ignore sizes in directory metadata updates
+	`^(NOTICE: .*?: Skipped update directory metadata as --dry-run is set).*$`, dropMe,
 }
 
 // Some dry-run messages differ depending on the particular remote.
@@ -936,6 +940,9 @@ func (b *bisyncTest) checkPreReqs(ctx context.Context, opt *bisync.Options) (con
 	if strings.HasPrefix(b.fs2.String(), "OneDrive") {
 		b.fs2.Features().Disable("Copy") // API has longstanding bug for conflictBehavior=replace https://github.com/rclone/rclone/issues/4590
 		b.fs2.Features().Disable("Move")
+	}
+	if strings.Contains(strings.ToLower(fs.ConfigString(b.fs1)), "mailru") || strings.Contains(strings.ToLower(fs.ConfigString(b.fs2)), "mailru") {
+		fs.GetConfig(ctx).TPSLimit = 10 // https://github.com/rclone/rclone/issues/7768#issuecomment-2060888980
 	}
 	if (!b.fs1.Features().CanHaveEmptyDirectories || !b.fs2.Features().CanHaveEmptyDirectories) && (b.testCase == "createemptysrcdirs" || b.testCase == "rmdirs") {
 		b.t.Skip("skipping test as remote does not support empty dirs")

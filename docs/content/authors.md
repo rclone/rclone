@@ -850,3 +850,8 @@ put them back in again.` >}}
   * Dave Nicolson <david.nicolson@gmail.com>
   * Katia Esposito <katia@linux.com>
   * pawsey-kbuckley <36438302+pawsey-kbuckley@users.noreply.github.com>
+  * hidewrong <167099254+hidewrong@users.noreply.github.com>
+  * Michael Terry <mike@mterry.name>
+  * Sunny <25066078+LoSunny@users.noreply.github.com>
+  * overallteach <cricis@foxmail.com>
+  * JT Olio <jt@olio.lol>

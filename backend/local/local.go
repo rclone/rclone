@@ -1555,6 +1555,18 @@ func (o *Object) writeMetadata(metadata fs.Metadata) (err error) {
 	return err
 }
 
+// SetMetadata sets metadata for an Object
+//
+// It should return fs.ErrorNotImplemented if it can't set metadata
+func (o *Object) SetMetadata(ctx context.Context, metadata fs.Metadata) error {
+	err := o.writeMetadata(metadata)
+	if err != nil {
+		return fmt.Errorf("SetMetadata failed on Object: %w", err)
+	}
+	// Re-read info now we have finished setting stuff
+	return o.lstat()
+}
+
 func cleanRootPath(s string, noUNC bool, enc encoder.MultiEncoder) string {
 	if runtime.GOOS != "windows" || !strings.HasPrefix(s, "\\") {
 		if !filepath.IsAbs(s) {
@@ -1629,6 +1641,7 @@ var (
 	_ fs.MkdirMetadataer = &Fs{}
 	_ fs.Object          = &Object{}
 	_ fs.Metadataer      = &Object{}
+	_ fs.SetMetadataer   = &Object{}
 	_ fs.Directory       = &Directory{}
 	_ fs.SetModTimer     = &Directory{}
 	_ fs.SetMetadataer   = &Directory{}

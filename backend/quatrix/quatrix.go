@@ -349,7 +349,7 @@ func (f *Fs) Root() string {
 
 // String converts this Fs to a string
 func (f *Fs) String() string {
-	return f.description
+	return f.description + " at " + f.root
 }
 
 // Precision return the precision of this Fs

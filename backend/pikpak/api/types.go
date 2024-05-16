@@ -53,7 +53,7 @@ const (
 	PhaseTypePending    = "PHASE_TYPE_PENDING"
 	UploadTypeForm      = "UPLOAD_TYPE_FORM"
 	UploadTypeResumable = "UPLOAD_TYPE_RESUMABLE"
-	ListLimit           = 100
+	ListLimit           = 500
 )
 
 // ------------------------------------------------------------
@@ -156,6 +156,7 @@ type FileList struct {
 	NextPageToken   string  `json:"next_page_token"`
 	Version         string  `json:"version,omitempty"`
 	VersionOutdated bool    `json:"version_outdated,omitempty"`
+	SyncTime        Time    `json:"sync_time"`
 }
 
 // File is a basic element representing a single file object
@@ -165,14 +166,14 @@ type FileList struct {
 // 2) the other from File.Medias[].Link.URL.
 // Empirically, 2) is less restrictive to multiple concurrent range-requests
 // for a single file, i.e. supports for higher `--multi-thread-streams=N`.
-// However, it is not generally applicable as it is only for meadia.
+// However, it is not generally applicable as it is only for media.
 type File struct {
 	Apps              []*FileApp    `json:"apps,omitempty"`
 	Audit             *FileAudit    `json:"audit,omitempty"`
 	Collection        string        `json:"collection,omitempty"` // TODO
 	CreatedTime       Time          `json:"created_time,omitempty"`
 	DeleteTime        Time          `json:"delete_time,omitempty"`
-	FileCategory      string        `json:"file_category,omitempty"`
+	FileCategory      string        `json:"file_category,omitempty"` // "AUDIO", "VIDEO"
 	FileExtension     string        `json:"file_extension,omitempty"`
 	FolderType        string        `json:"folder_type,omitempty"`
 	Hash              string        `json:"hash,omitempty"` // sha1 but NOT a valid file hash. looks like a torrent hash
@@ -191,11 +192,14 @@ type File struct {
 	ParentID          string        `json:"parent_id,omitempty"`
 	Phase             string        `json:"phase,omitempty"`
 	Revision          int           `json:"revision,omitempty,string"`
+	ReferenceEvents   []interface{} `json:"reference_events"`
+	ReferenceResource interface{}   `json:"reference_resource"`
 	Size              int64         `json:"size,omitempty,string"`
 	SortName          string        `json:"sort_name,omitempty"`
 	Space             string        `json:"space,omitempty"`
 	SpellName         []interface{} `json:"spell_name,omitempty"` // TODO maybe list of something?
 	Starred           bool          `json:"starred,omitempty"`
+	Tags              []interface{} `json:"tags"`
 	ThumbnailLink     string        `json:"thumbnail_link,omitempty"`
 	Trashed           bool          `json:"trashed,omitempty"`
 	UserID            string        `json:"user_id,omitempty"`
@@ -241,7 +245,8 @@ type Media struct {
 	IsOrigin       bool          `json:"is_origin,omitempty"`
 	ResolutionName string        `json:"resolution_name,omitempty"`
 	IsVisible      bool          `json:"is_visible,omitempty"`
-	Category       string        `json:"category,omitempty"`
+	Category       string        `json:"category,omitempty"` // "category_origin"
+	Audio          interface{}   `json:"audio"`              // TODO: undiscovered yet
 }
 
 // FileParams includes parameters for instant open
@@ -395,6 +400,7 @@ type Quota struct {
 	UsageInTrash   int64  `json:"usage_in_trash,omitempty,string"` // bytes in trash but this seems not working
 	PlayTimesLimit string `json:"play_times_limit,omitempty"`      // maybe in seconds
 	PlayTimesUsage string `json:"play_times_usage,omitempty"`      // maybe in seconds
+	IsUnlimited    bool   `json:"is_unlimited,omitempty"`
 }
 
 // Share is a response to RequestShare

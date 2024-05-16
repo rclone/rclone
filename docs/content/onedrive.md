@@ -754,7 +754,7 @@ Example for OneDrive Business:
 [
 	{
 		"id": "48d31887-5fad-4d73-a9f5-3c356e68a038",
-		"grantedToIdentities": [
+		"grantedToIdentitiesV2": [
 			{
 				"user": {
 					"displayName": "ryan@contoso.com"
@@ -775,7 +775,7 @@ Example for OneDrive Business:
 	},
 	{
 		"id": "5D33DD65C6932946",
-		"grantedTo": {
+		"grantedToV2": {
 			"user": {
 				"displayName": "John Doe",
 				"id": "efee1b77-fb3b-4f65-99d6-274c11914d12"
@@ -796,10 +796,12 @@ format. The [`--metadata-mapper`](https://rclone.org/docs/#metadata-mapper) tool
 be very helpful for this.
 
 When adding permissions, an email address can be provided in the `User.ID` or
-`DisplayName` properties of `grantedTo` or `grantedToIdentities`. Alternatively,
-an ObjectID can be provided in `User.ID`. At least one valid recipient must be
-provided in order to add a permission for a user. Creating a Public Link is also
-supported, if `Link.Scope` is set to `"anonymous"`.
+`DisplayName` properties of `grantedTo` or `grantedToIdentities` (these are
+deprecated on OneDrive Business -- instead, use `grantedToV2` and
+`grantedToIdentitiesV2`, respectively). Alternatively, an ObjectID can be
+provided in `User.ID`. At least one valid recipient must be provided in order to
+add a permission for a user. Creating a Public Link is also supported, if
+`Link.Scope` is set to `"anonymous"`.
 
 Example request to add a "read" permission:
 

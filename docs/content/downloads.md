@@ -14,12 +14,14 @@ See the [install](https://rclone.org/install/) documentation for more details.
 
 | OS | Minimum Version | 
 |:-------:|:-------:|
-| Linux | kernel 2.6.32 |
+| Linux | Kernel 2.6.32 (or later depending on architecture, e.g. 3.1 on ARMv5) |
 | macOS (Intel) | 10.15 (Catalina) |
 | macOS (ARM64) | 11 (Big Sur) |
 | Windows | 10, Server 2016 |
 | FreeBSD | 12.2 |
 | OpenBSD | 6.9 |
+
+See [minimum requirements](https://go.dev/wiki/MinimumRequirements) and other [platform specific information](https://go.dev/wiki/#platform-specific-information) in Go Wiki for more details.
 
 ## Release {{% version %}} {#release}
 
