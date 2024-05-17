@@ -271,6 +271,11 @@ only useful for reading.
 				Help:  "The last status change time.",
 			}},
 		}, {
+			Name:     "hashes",
+			Help:     `Comma separated list of supported checksum types.`,
+			Default:  fs.CommaSepList{},
+			Advanced: true,
+		}, {
 			Name:     config.ConfigEncoding,
 			Help:     config.ConfigEncodingHelp,
 			Advanced: true,
@@ -295,6 +300,7 @@ type Options struct {
 	NoSparse          bool                 `config:"no_sparse"`
 	NoSetModTime      bool                 `config:"no_set_modtime"`
 	TimeType          timeType             `config:"time_type"`
+	Hashes            fs.CommaSepList      `config:"hashes"`
 	Enc               encoder.MultiEncoder `config:"encoding"`
 }
 
@@ -975,6 +981,19 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 
 // Hashes returns the supported hash sets.
 func (f *Fs) Hashes() hash.Set {
+	if len(f.opt.Hashes) > 0 {
+		// Return only configured hashes.
+		// Note: Could have used hash.SupportOnly to limit supported hashes for all hash related features.
+		var supported hash.Set
+		for _, hashName := range f.opt.Hashes {
+			var ht hash.Type
+			if err := ht.Set(hashName); err != nil {
+				fs.Infof(nil, "Invalid token %q in hash string %q", hashName, f.opt.Hashes.String())
+			}
+			supported.Add(ht)
+		}
+		return supported
+	}
 	return hash.Supported()
 }
 

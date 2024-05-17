@@ -217,6 +217,11 @@ E.g. the second example above should be rewritten as:
 			Help:     "The command used to read sha1 hashes.\n\nLeave blank for autodetect.",
 			Advanced: true,
 		}, {
+			Name:     "blake3sum_command",
+			Default:  "",
+			Help:     "The command used to read blake3 hashes.\n\nLeave blank for autodetect.",
+			Advanced: true,
+		}, {
 			Name:     "skip_links",
 			Default:  false,
 			Help:     "Set to skip any symlinks and any other non regular files.",
@@ -493,6 +498,7 @@ type Options struct {
 	ShellType               string          `config:"shell_type"`
 	Md5sumCommand           string          `config:"md5sum_command"`
 	Sha1sumCommand          string          `config:"sha1sum_command"`
+	Blake3sumCommand        string          `config:"blake3sum_command"`
 	SkipLinks               bool            `config:"skip_links"`
 	Subsystem               string          `config:"subsystem"`
 	ServerCommand           string          `config:"server_command"`
@@ -537,13 +543,14 @@ type Fs struct {
 
 // Object is a remote SFTP file that has been stat'd (so it exists, but is not necessarily open for reading)
 type Object struct {
-	fs      *Fs
-	remote  string
-	size    int64       // size of the object
-	modTime time.Time   // modification time of the object
-	mode    os.FileMode // mode bits from the file
-	md5sum  *string     // Cached MD5 checksum
-	sha1sum *string     // Cached SHA1 checksum
+	fs        *Fs
+	remote    string
+	size      int64       // size of the object
+	modTime   time.Time   // modification time of the object
+	mode      os.FileMode // mode bits from the file
+	md5sum    *string     // Cached MD5 checksum
+	sha1sum   *string     // Cached SHA1 checksum
+	blake3sum *string     // Cached BLAKE3 checksum
 }
 
 // conn encapsulates an ssh client and corresponding sftp client
@@ -1618,6 +1625,12 @@ func (f *Fs) Hashes() hash.Set {
 		{"sha1 -r", "sha1 -r"},
 		{"rclone sha1sum", "rclone sha1sum"},
 	}
+	blake3Commands := []struct {
+		hashFile, hashEmpty string
+	}{
+		{"b3sum", "b3sum"},
+		{"rclone hashsum blake3", "rclone hashsum blake3"},
+	}
 	if f.shellType == "powershell" {
 		md5Commands = append(md5Commands, struct {
 			hashFile, hashEmpty string
@@ -1636,6 +1649,7 @@ func (f *Fs) Hashes() hash.Set {
 
 	md5Works := checkHash(hash.MD5, md5Commands, "d41d8cd98f00b204e9800998ecf8427e", &f.opt.Md5sumCommand, &changed)
 	sha1Works := checkHash(hash.SHA1, sha1Commands, "da39a3ee5e6b4b0d3255bfef95601890afd80709", &f.opt.Sha1sumCommand, &changed)
+	blake3Works := checkHash(hash.BLAKE3, blake3Commands, "af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262", &f.opt.Blake3sumCommand, &changed)
 
 	if changed {
 		// Save permanently in config to avoid the extra work next time
@@ -1643,8 +1657,13 @@ func (f *Fs) Hashes() hash.Set {
 		f.m.Set("md5sum_command", f.opt.Md5sumCommand)
 		fs.Debugf(f, "Setting hash command for %v to %q (set md5sum_command to override)", hash.SHA1, f.opt.Sha1sumCommand)
 		f.m.Set("sha1sum_command", f.opt.Sha1sumCommand)
+		fs.Debugf(f, "Setting hash command for %v to %q (set blake3sum_command to override)", hash.BLAKE3, f.opt.Blake3sumCommand)
+		f.m.Set("blake3sum_command", f.opt.Blake3sumCommand)
 	}
 
+	if blake3Works {
+		hashSet.Add(hash.BLAKE3)
+	}
 	if sha1Works {
 		hashSet.Add(hash.SHA1)
 	}
@@ -1797,6 +1816,11 @@ func (o *Object) Hash(ctx context.Context, r hash.Type) (string, error) {
 			return *o.sha1sum, nil
 		}
 		hashCmd = o.fs.opt.Sha1sumCommand
+	} else if r == hash.BLAKE3 {
+		if o.blake3sum != nil {
+			return *o.blake3sum, nil
+		}
+		hashCmd = o.fs.opt.Blake3sumCommand
 	} else {
 		return "", hash.ErrUnsupported
 	}
@@ -1818,6 +1842,8 @@ func (o *Object) Hash(ctx context.Context, r hash.Type) (string, error) {
 		o.md5sum = &hashString
 	} else if r == hash.SHA1 {
 		o.sha1sum = &hashString
+	} else if r == hash.BLAKE3 {
+		o.blake3sum = &hashString
 	}
 	return hashString, nil
 }
@@ -1882,7 +1908,7 @@ func (f *Fs) remoteShellPath(remote string) string {
 }
 
 // Converts a byte array from the SSH session returned by
-// an invocation of md5sum/sha1sum to a hash string
+// an invocation of hash command to a hash string
 // as expected by the rest of this application
 func parseHash(bytes []byte) string {
 	// For strings with backslash *sum writes a leading \
@@ -2111,6 +2137,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	// Clear the hash cache since we are about to update the object
 	o.md5sum = nil
 	o.sha1sum = nil
+	o.blake3sum = nil
 	c, err := o.fs.getSftpConnection(ctx)
 	if err != nil {
 		return fmt.Errorf("Update: %w", err)
