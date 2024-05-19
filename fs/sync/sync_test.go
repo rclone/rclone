@@ -154,7 +154,7 @@ func testCopyMetadata(t *testing.T, createEmptySrcDirs bool) {
 	if features.ReadDirMetadata {
 		fstest.CheckEntryMetadata(ctx, t, r.Fremote, fstest.NewDirectory(ctx, t, r.Fremote, dirPath), dirMetadata)
 	}
-	if !createEmptySrcDirs {
+	if !createEmptySrcDirs || !features.CanHaveEmptyDirectories {
 		// dir must not exist
 		_, err := fstest.NewDirectoryRetries(ctx, t, r.Fremote, emptyDirPath, 1)
 		assert.Error(t, err, "Not expecting to find empty directory")
@@ -2310,15 +2310,19 @@ func testSyncBackupDir(t *testing.T, backupDir string, suffix string, suffixKeep
 
 	r.CheckRemoteItems(t, file1b, file2, file3a, file1a)
 }
+
 func TestSyncBackupDir(t *testing.T) {
 	testSyncBackupDir(t, "backup", "", false)
 }
+
 func TestSyncBackupDirWithSuffix(t *testing.T) {
 	testSyncBackupDir(t, "backup", ".bak", false)
 }
+
 func TestSyncBackupDirWithSuffixKeepExtension(t *testing.T) {
 	testSyncBackupDir(t, "backup", "-2019-01-01", true)
 }
+
 func TestSyncBackupDirSuffixOnly(t *testing.T) {
 	testSyncBackupDir(t, "", ".bak", false)
 }
@@ -2788,7 +2792,7 @@ func predictDstFromLogger(ctx context.Context) context.Context {
 }
 
 func DstLsf(ctx context.Context, Fremote fs.Fs) *bytes.Buffer {
-	var opt = operations.ListJSONOpt{
+	opt := operations.ListJSONOpt{
 		NoModTime:  false,
 		NoMimeType: true,
 		DirsOnly:   false,
