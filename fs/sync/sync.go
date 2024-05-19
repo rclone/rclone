@@ -1203,7 +1203,7 @@ func (s *syncCopyMove) setDelayedDirModTimes(ctx context.Context) error {
 			g.Go(func() error {
 				var err error
 				// if item.src is set must copy full metadata
-				if item.src != nil {
+				if item.src != nil && s.setDirMetadata {
 					_, err = operations.CopyDirMetadata(gCtx, s.fdst, item.dst, item.dir, item.src)
 				} else {
 					_, err = operations.SetDirModTime(gCtx, s.fdst, item.dst, item.dir, item.modTime)
