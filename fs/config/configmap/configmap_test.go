@@ -2,6 +2,7 @@ package configmap
 
 import (
 	"encoding/base64"
+	"encoding/json"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -356,4 +357,25 @@ func TestSimpleDecode(t *testing.T) {
 			assert.Contains(t, err.Error(), test.wantErr, test.in)
 		}
 	}
+}
+
+func TestConfiMapWithFilter(t *testing.T) {
+	in := `{
+"type": "local",
+"_root": "/",
+"_filter":{ "IncludeRule":["testing2/**"] }
+}`
+	var simple Simple
+	err := json.Unmarshal([]byte(in), &simple)
+
+	assert.NoError(t, err, "Unable to unmarshal simple config map")
+
+	rootConfig, _ := simple.Get("_root")
+	assert.Equal(t, "/", rootConfig)
+
+	typeConfig, _ := simple.Get("type")
+	assert.Equal(t, "local", typeConfig)
+
+	filterConfig, _ := simple.Get("_filter")
+	assert.Equal(t, "{\"IncludeRule\":[\"testing2/**\"]}", filterConfig)
 }

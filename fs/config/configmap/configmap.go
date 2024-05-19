@@ -125,6 +125,33 @@ func (c *Map) Set(key, value string) {
 // Simple is a simple Mapper for testing
 type Simple map[string]string
 
+// UnmarshalJSON customizes the JSON unmarshaling for the Simple type to
+// support _filter and custom types extensions.
+func (s *Simple) UnmarshalJSON(data []byte) error {
+	tmp := make(map[string]interface{})
+	if err := json.Unmarshal(data, &tmp); err != nil {
+		return err
+	}
+	if *s == nil {
+		*s = make(Simple)
+	}
+
+	for key, value := range tmp {
+		if key == "_filter" {
+			// Marshal the _filter value to a JSON string
+			filterData, err := json.Marshal(value)
+			if err != nil {
+				return err
+			}
+			(*s)[key] = string(filterData)
+		} else {
+			(*s)[key] = value.(string)
+		}
+	}
+
+	return nil
+}
+
 // Get the value
 func (c Simple) Get(key string) (value string, ok bool) {
 	value, ok = c[key]
