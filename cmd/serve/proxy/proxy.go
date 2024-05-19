@@ -17,6 +17,7 @@ import (
 	"github.com/rclone/rclone/fs/cache"
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/obscure"
+	"github.com/rclone/rclone/fs/filter"
 	libcache "github.com/rclone/rclone/lib/cache"
 	"github.com/rclone/rclone/vfs"
 	"github.com/rclone/rclone/vfs/vfsflags"
@@ -210,6 +211,14 @@ func (p *Proxy) call(user, auth string, isPublicKey bool) (value interface{}, er
 	if !ok {
 		return nil, errors.New("proxy: _root not set in result")
 	}
+	fiOpsString, ok := config.Get("_filter")
+	var fiOpt filter.Opt
+	if ok {
+		err := json.Unmarshal([]byte(fiOpsString), &fiOpt)
+		if err != nil {
+			return nil, errors.New("proxy: _filter unable to parse it")
+		}
+	}
 
 	// Find the backend
 	fsInfo, err := fs.Find(fsName)
@@ -220,6 +229,15 @@ func (p *Proxy) call(user, auth string, isPublicKey bool) (value interface{}, er
 	// base name of config on user name.  This may appear in logs
 	name := "proxy-" + user
 	fsString := name + ":" + root
+
+	// Add exclude and include rules to current filter
+	fi := filter.GetConfig(p.ctx)
+	for _, excludeRule := range fiOpt.ExcludeRule {
+		fi.AddRule("- " + excludeRule)
+	}
+	for _, includeRule := range fiOpt.IncludeRule {
+		fi.AddRule("+ " + includeRule)
+	}
 
 	// Look for fs in the VFS cache
 	value, err = p.vfsCache.Get(user, func(key string) (value interface{}, ok bool, err error) {
