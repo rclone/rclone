@@ -855,3 +855,5 @@ put them back in again.` >}}
   * Sunny <25066078+LoSunny@users.noreply.github.com>
   * overallteach <cricis@foxmail.com>
   * JT Olio <jt@olio.lol>
+  * Evan McBeth <64177332+AtomicRobotMan0101@users.noreply.github.com>
+  * Dominik Joe Pantůček <dominik.pantucek@trustica.cz>
