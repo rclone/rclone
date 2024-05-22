@@ -53,6 +53,10 @@ func init() {
 			Name:    "chunk_size",
 			Default: defaultChunkSize,
 		}, {
+			Help:    "Page Size for listing files",
+			Name:    "page_size",
+			Default: 500,
+		}, {
 			Name:     "randomise_part",
 			Default:  true,
 			Help:     "Randomise part",
@@ -90,6 +94,7 @@ type Options struct {
 	UploadConcurrency int                  `config:"upload_concurrency"`
 	ChannelID         int64                `config:"channel_id"`
 	EncryptFiles      bool                 `config:"encrypt_files"`
+	PageSize          int64                `config:"page_size"`
 	Enc               encoder.MultiEncoder `config:"encoding"`
 }
 
@@ -298,9 +303,9 @@ func (f *Fs) readMetaDataForPath(ctx context.Context, path string, options *api.
 		Path:   "/api/files",
 		Parameters: url.Values{
 			"path":          []string{path},
-			"perPage":       []string{strconv.FormatUint(options.PerPage, 10)},
-			"sort":          []string{"name"},
-			"order":         []string{"asc"},
+			"perPage":       []string{strconv.FormatInt(options.PerPage, 10)},
+			"sort":          []string{"updatedAt"},
+			"order":         []string{"desc"},
 			"op":            []string{"list"},
 			"nextPageToken": []string{options.NextPageToken},
 		},
@@ -391,12 +396,11 @@ func (f *Fs) findObject(ctx context.Context, path string, name string) (*api.Rea
 func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err error) {
 	root := f.dirPath(dir)
 
-	var limit uint64 = 500        // max number of objects per request - 100 seems to be the maximum the api accepts
-	var nextPageToken string = "" // for the next page of requests
+	var nextPageToken string = ""
 
 	for {
 		opts := &api.MetadataRequestOptions{
-			PerPage:       limit,
+			PerPage:       f.opt.PageSize,
 			NextPageToken: nextPageToken,
 		}
 

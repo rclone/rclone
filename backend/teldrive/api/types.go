@@ -78,7 +78,7 @@ type Download struct {
 
 // MetadataRequestOptions represents all the options when listing folder contents
 type MetadataRequestOptions struct {
-	PerPage       uint64
+	PerPage       int64
 	SearchField   string
 	Search        string
 	NextPageToken string
