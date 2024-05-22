@@ -37,18 +37,44 @@ This file describes how to make the various kinds of releases
 
 ## Update dependencies
 
-Early in the next release cycle update the dependencies
+Early in the next release cycle update the dependencies.
 
   * Review any pinned packages in go.mod and remove if possible
-  * make updatedirect
-  * make GOTAGS=cmount
-  * make compiletest
-  * git commit -a -v
-  * make update
-  * make GOTAGS=cmount
-  * make compiletest
+  * `make updatedirect`
+  * `make GOTAGS=cmount`
+  * `make compiletest`
+  * Fix anything which doesn't compile at this point and commit changes here
+  * `git commit -a -v -m "build: update all dependencies"`
+
+If the `make updatedirect` upgrades the version of go in the `go.mod`
+then go to manual mode. `go1.20` here is the lowest supported version
+in the `go.mod`.
+
+```
+go list -m -f '{{if not (or .Main .Indirect)}}{{.Path}}{{end}}' all > /tmp/potential-upgrades
+go get -d $(cat /tmp/potential-upgrades)
+go mod tidy -go=1.20 -compat=1.20
+```
+
+If the `go mod tidy` fails use the output from it to remove the
+package which can't be upgraded from `/tmp/potential-upgrades` when
+done
+
+```
+git co go.mod go.sum
+```
+
+And try again.
+
+Optionally upgrade the direct and indirect dependencies. This is very
+likely to fail if the manual method was used abve - in that case
+ignore it as it is too time consuming to fix.
+
+  * `make update`
+  * `make GOTAGS=cmount`
+  * `make compiletest`
   * roll back any updates which didn't compile
-  * git commit -a -v --amend
+  * `git commit -a -v --amend`
   * **NB** watch out for this changing the default go version in `go.mod`
 
 Note that `make update` updates all direct and indirect dependencies
@@ -56,6 +82,9 @@ and there can occasionally be forwards compatibility problems with
 doing that so it may be necessary to roll back dependencies to the
 version specified by `make updatedirect` in order to get rclone to
 build.
+
+Once it compiles locally, push it on a test branch and commit fixes
+until the tests pass.
 
 ## Tidy beta
 
