@@ -31,6 +31,14 @@ var (
 	noTransport  = new(sync.Once)
 	cookieJar, _ = cookiejar.New(&cookiejar.Options{PublicSuffixList: publicsuffix.List})
 	logMutex     sync.Mutex
+
+	// UnixSocketConfig describes the option to configure the path to a unix domain socket to connect to
+	UnixSocketConfig = fs.Option{
+		Name:     "unix_socket",
+		Help:     "Path to a unix domain socket to dial to, instead of opening a TCP connection directly",
+		Advanced: true,
+		Default:  "",
+	}
 )
 
 // ResetTransport resets the existing transport, allowing it to take new settings.
@@ -134,14 +142,31 @@ func NewTransport(ctx context.Context) http.RoundTripper {
 
 // NewClient returns an http.Client with the correct timeouts
 func NewClient(ctx context.Context) *http.Client {
+	return NewClientCustom(ctx, nil)
+}
+
+// NewClientCustom returns an http.Client with the correct timeouts.
+// It allows customizing the transport, using NewTransportCustom.
+func NewClientCustom(ctx context.Context, customize func(*http.Transport)) *http.Client {
 	ci := fs.GetConfig(ctx)
 	client := &http.Client{
-		Transport: NewTransport(ctx),
+		Transport: NewTransportCustom(ctx, customize),
 	}
 	if ci.Cookie {
 		client.Jar = cookieJar
 	}
 	return client
+}
+
+// NewClientWithUnixSocket returns an http.Client with the correct timeout.
+// It internally uses NewClientCustom with a custom dialer connecting to
+// the specified unix domain socket.
+func NewClientWithUnixSocket(ctx context.Context, path string) *http.Client {
+	return NewClientCustom(ctx, func(t *http.Transport) {
+		t.DialContext = func(reqCtx context.Context, network, addr string) (net.Conn, error) {
+			return NewDialer(ctx).DialContext(reqCtx, "unix", path)
+		}
+	})
 }
 
 // Transport is our http Transport which wraps an http.Transport
