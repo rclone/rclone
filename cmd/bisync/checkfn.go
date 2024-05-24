@@ -64,7 +64,7 @@ func WhichCheck(ctx context.Context, opt *operations.CheckOpt) *operations.Check
 		}
 	}
 
-	// if we've gotten this far, niether check or cryptcheck will work, so use --download
+	// if we've gotten this far, neither check or cryptcheck will work, so use --download
 	fs.Infof(fdst, "Can't compare hashes, so using check --download for safety. (Use --size-only or --ignore-checksum to disable)")
 	opt.Check = DownloadCheckFn
 	return opt
