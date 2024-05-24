@@ -127,9 +127,15 @@ func NewTransport(ctx context.Context) http.RoundTripper {
 
 // NewClient returns an http.Client with the correct timeouts
 func NewClient(ctx context.Context) *http.Client {
+	return NewClientCustom(ctx, nil)
+}
+
+// NewClientCustom returns an http.Client with the correct timeouts.
+// It allows customizing the transport, using NewTransportCustom.
+func NewClientCustom(ctx context.Context, customize func(*http.Transport)) *http.Client {
 	ci := fs.GetConfig(ctx)
 	client := &http.Client{
-		Transport: NewTransport(ctx),
+		Transport: NewTransportCustom(ctx, customize),
 	}
 	if ci.Cookie {
 		client.Jar = cookieJar
