@@ -330,7 +330,7 @@ then auto-mounting.
 Content of /etc/rclone/scripts/rclone_nanny_script.sh
 ```shell
 
-#!/bin/bash
+#!/usr/bin/env bash
 erroneous_list=$(df 2>&1 | grep -i 'Transport endpoint is not connected' | awk '{print ""$2"" }' | tr -d \:)
 rclone_list=$(findmnt -t fuse.rclone -n 2>&1 | awk '{print ""$1"" }' | tr -d \:)
 IFS=$'\n'; set -f
