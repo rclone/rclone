@@ -150,8 +150,10 @@ type DirMove struct {
 
 // UpdateFileInformation is used for renaming a file
 type UpdateFileInformation struct {
-	Name string `json:"name"`
-	Type string `json:"type,omitempty"`
+	Name      string     `json:"name,omitempty"`
+	Type      string     `json:"type,omitempty"`
+	UpdatedAt string     `json:"updatedAt,omitempty"`
+	Parts     []FilePart `json:"parts,omitempty"`
 }
 
 // RemoveFileRequest is used for deleting a file

@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/md5"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"io"
 	"net/url"
@@ -14,31 +15,33 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/rclone/rclone/backend/teldrive/api"
+	"github.com/rclone/rclone/fs/operations"
+	"github.com/rclone/rclone/lib/pool"
 	"github.com/rclone/rclone/lib/rest"
 
 	"github.com/rclone/rclone/fs"
 )
 
 type uploadInfo struct {
-	existingChunks []api.PartFile
+	existingChunks map[int]api.PartFile
 	uploadID       string
 	channelID      int64
 	encryptFile    bool
+	chunkSize      int64
+	totalChunks    int64
+	fileChunks     []api.FilePart
+	fileName       string
+	dir            string
 }
 
 type objectChunkWriter struct {
-	chunkSize       int64
 	size            int64
 	f               *Fs
-	uploadID        string
 	src             fs.ObjectInfo
 	partsToCommitMu sync.Mutex
 	partsToCommit   []api.PartFile
-	existingParts   map[int]api.PartFile
 	o               *Object
-	totalParts      int64
-	channelID       int64
-	encryptFile     bool
+	uploadInfo      *uploadInfo
 }
 
 func getMD5Hash(text string) string {
@@ -55,8 +58,14 @@ func (w *objectChunkWriter) WriteChunk(ctx context.Context, chunkNumber int, rea
 
 	chunkNumber += 1
 
-	if existing, ok := w.existingParts[chunkNumber]; ok {
-		io.CopyN(io.Discard, reader, existing.Size)
+	if existing, ok := w.uploadInfo.existingChunks[chunkNumber]; ok {
+		switch r := reader.(type) {
+		case *operations.ReOpen:
+			r.Account(int(existing.Size))
+		case *pool.RW:
+			r.Account(int(existing.Size))
+		default:
+		}
 		w.addCompletedPart(existing)
 		return existing.Size, nil
 	}
@@ -87,22 +96,22 @@ func (w *objectChunkWriter) WriteChunk(ctx context.Context, chunkNumber int, rea
 			partName = getMD5Hash(uuid.New().String())
 		} else {
 			partName = fileName
-			if w.totalParts > 1 {
+			if w.uploadInfo.totalChunks > 1 {
 				partName = fmt.Sprintf("%s.part.%03d", fileName, chunkNumber)
 			}
 		}
 
 		opts := rest.Opts{
 			Method:        "POST",
-			Path:          "/api/uploads/" + w.uploadID,
+			Path:          "/api/uploads/" + w.uploadInfo.uploadID,
 			Body:          reader,
 			ContentLength: &size,
 			Parameters: url.Values{
 				"partName":  []string{partName},
 				"fileName":  []string{fileName},
 				"partNo":    []string{strconv.Itoa(chunkNumber)},
-				"channelId": []string{strconv.FormatInt(w.channelID, 10)},
-				"encrypted": []string{strconv.FormatBool(w.encryptFile)},
+				"channelId": []string{strconv.FormatInt(w.uploadInfo.channelID, 10)},
+				"encrypted": []string{strconv.FormatBool(w.uploadInfo.encryptFile)},
 			},
 		}
 
@@ -111,16 +120,16 @@ func (w *objectChunkWriter) WriteChunk(ctx context.Context, chunkNumber int, rea
 		if err != nil {
 			fs.Debugf(w.o, "Error sending chunk %d (retry=%v): %v: %#v", chunkNumber, retry, err, err)
 		}
+		if response.PartId == 0 {
+			return true, fmt.Errorf("error sending chunk %d", chunkNumber)
+		}
+
 		return retry, err
 
 	})
 
 	if err != nil {
 		return 0, fmt.Errorf("error sending chunk %d: %v", chunkNumber, err)
-	}
-
-	if response.PartId == 0 {
-		return 0, fmt.Errorf("error sending chunk %d", chunkNumber)
 	}
 
 	w.addCompletedPart(response)
@@ -139,14 +148,172 @@ func (w *objectChunkWriter) addCompletedPart(part api.PartFile) {
 
 func (w *objectChunkWriter) Close(ctx context.Context) error {
 
-	if w.totalParts != int64(len(w.partsToCommit)) {
+	if w.uploadInfo.totalChunks != int64(len(w.partsToCommit)) {
 		return fmt.Errorf("uploaded failed")
 	}
 
-	base, leaf := w.f.splitPathFull(w.src.Remote())
+	return w.o.createFile(ctx, w.src, w.uploadInfo)
+}
 
-	if base != "/" {
-		err := w.f.CreateDir(ctx, base, "")
+func (*objectChunkWriter) Abort(ctx context.Context) error {
+	return nil
+}
+
+func (o *Object) prepareUpload(ctx context.Context, src fs.ObjectInfo) (*uploadInfo, error) {
+
+	base, leaf := o.fs.splitPathFull(src.Remote())
+
+	modTime := src.ModTime(ctx).UTC().Format(timeFormat)
+
+	uploadID := getMD5Hash(fmt.Sprintf("%s:%d:%s", path.Join(base, leaf), src.Size(), modTime))
+
+	var (
+		uploadFile     api.UploadFile
+		existingChunks map[int]api.PartFile
+	)
+
+	opts := rest.Opts{
+		Method: "GET",
+		Path:   "/api/uploads/" + uploadID,
+	}
+
+	chunkSize := int64(o.fs.opt.ChunkSize)
+
+	if chunkSize < src.Size() {
+		err := o.fs.pacer.Call(func() (bool, error) {
+			resp, err := o.fs.srv.CallJSON(ctx, &opts, nil, &uploadFile)
+			return shouldRetry(ctx, resp, err)
+		})
+
+		if err != nil {
+			return nil, err
+		}
+		existingChunks = make(map[int]api.PartFile, len(uploadFile.Parts))
+		for _, part := range uploadFile.Parts {
+			existingChunks[part.PartNo] = part
+		}
+
+	}
+
+	totalChunks := src.Size() / chunkSize
+
+	if src.Size()%chunkSize != 0 {
+		totalChunks++
+	}
+
+	channelID := o.fs.opt.ChannelID
+
+	encryptFile := o.fs.opt.EncryptFiles
+
+	if len(uploadFile.Parts) > 0 {
+		channelID = uploadFile.Parts[0].ChannelID
+		encryptFile = uploadFile.Parts[0].Encrypted
+	}
+
+	return &uploadInfo{
+		existingChunks: existingChunks,
+		uploadID:       uploadID,
+		channelID:      channelID,
+		encryptFile:    encryptFile,
+		chunkSize:      chunkSize,
+		totalChunks:    totalChunks,
+		fileName:       leaf,
+		dir:            base,
+	}, nil
+}
+
+func (o *Object) uploadMultipart(ctx context.Context, in io.Reader, src fs.ObjectInfo) (*uploadInfo, error) {
+
+	size := src.Size()
+
+	if size <= 0 {
+		return nil, errors.New("unknown-sized upload not supported")
+	}
+
+	uploadInfo, err := o.prepareUpload(ctx, src)
+
+	if err != nil {
+		return nil, err
+	}
+
+	var (
+		partsToCommit []api.PartFile
+		uploadedSize  int64
+	)
+
+	totalChunks := int(uploadInfo.totalChunks)
+
+	for chunkNo := 1; chunkNo <= totalChunks; chunkNo++ {
+		if existing, ok := uploadInfo.existingChunks[chunkNo]; ok {
+			io.CopyN(io.Discard, in, existing.Size)
+			partsToCommit = append(partsToCommit, existing)
+			uploadedSize += existing.Size
+			continue
+		}
+
+		n := uploadInfo.chunkSize
+
+		if chunkNo == totalChunks {
+			n = src.Size() - uploadedSize
+		}
+
+		chunkName := uploadInfo.fileName
+
+		if o.fs.opt.RandomisePart {
+			chunkName = getMD5Hash(uuid.New().String())
+		} else if totalChunks > 1 {
+			chunkName = fmt.Sprintf("%s.part.%03d", chunkName, chunkNo)
+		}
+
+		partReader := io.LimitReader(in, n)
+
+		opts := rest.Opts{
+			Method:        "POST",
+			Path:          "/api/uploads/" + uploadInfo.uploadID,
+			Body:          partReader,
+			ContentLength: &n,
+			Parameters: url.Values{
+				"partName":  []string{chunkName},
+				"fileName":  []string{uploadInfo.fileName},
+				"partNo":    []string{strconv.Itoa(chunkNo)},
+				"channelId": []string{strconv.FormatInt(uploadInfo.channelID, 10)},
+				"encrypted": []string{strconv.FormatBool(uploadInfo.encryptFile)},
+			},
+		}
+
+		var partInfo api.PartFile
+
+		_, err := o.fs.srv.CallJSON(ctx, &opts, nil, &partInfo)
+
+		if err != nil {
+			return nil, err
+		}
+
+		uploadedSize += n
+
+		partsToCommit = append(partsToCommit, partInfo)
+	}
+
+	sort.Slice(partsToCommit, func(i, j int) bool {
+		return partsToCommit[i].PartNo < partsToCommit[j].PartNo
+	})
+
+	fileChunks := []api.FilePart{}
+
+	for _, part := range partsToCommit {
+		fileChunks = append(fileChunks, api.FilePart{ID: part.PartId, Salt: part.Salt})
+	}
+
+	uploadInfo.fileChunks = fileChunks
+
+	return uploadInfo, nil
+
+}
+
+func (o *Object) createFile(ctx context.Context, src fs.ObjectInfo, uploadInfo *uploadInfo) error {
+
+	if uploadInfo.dir != "/" {
+		err := o.fs.CreateDir(ctx, uploadInfo.dir, "")
 		if err != nil {
 			return err
 		}
@@ -156,29 +323,19 @@ func (w *objectChunkWriter) Close(ctx context.Context) error {
 		Path:   "/api/files",
 	}
 
-	sort.Slice(w.partsToCommit, func(i, j int) bool {
-		return w.partsToCommit[i].PartNo < w.partsToCommit[j].PartNo
-	})
-
-	fileParts := []api.FilePart{}
-
-	for _, part := range w.partsToCommit {
-		fileParts = append(fileParts, api.FilePart{ID: part.PartId, Salt: part.Salt})
-	}
-
 	payload := api.CreateFileRequest{
-		Name:      leaf,
+		Name:      uploadInfo.fileName,
 		Type:      "file",
-		Path:      base,
-		MimeType:  fs.MimeType(ctx, w.src),
-		Size:      w.src.Size(),
-		Parts:     fileParts,
-		ChannelID: w.channelID,
-		Encrypted: w.encryptFile,
+		Path:      uploadInfo.dir,
+		MimeType:  fs.MimeType(ctx, src),
+		Size:      src.Size(),
+		Parts:     uploadInfo.fileChunks,
+		ChannelID: uploadInfo.channelID,
+		Encrypted: uploadInfo.encryptFile,
 	}
 
-	err := w.f.pacer.Call(func() (bool, error) {
-		resp, err := w.f.srv.CallJSON(ctx, &opts, &payload, nil)
+	err := o.fs.pacer.Call(func() (bool, error) {
+		resp, err := o.fs.srv.CallJSON(ctx, &opts, &payload, nil)
 		return shouldRetry(ctx, resp, err)
 	})
 
@@ -188,57 +345,15 @@ func (w *objectChunkWriter) Close(ctx context.Context) error {
 
 	opts = rest.Opts{
 		Method: "DELETE",
-		Path:   "/api/uploads/" + w.uploadID,
+		Path:   "/api/uploads/" + uploadInfo.uploadID,
 	}
-	err = w.f.pacer.Call(func() (bool, error) {
-		resp, err := w.f.srv.Call(ctx, &opts)
+
+	err = o.fs.pacer.Call(func() (bool, error) {
+		resp, err := o.fs.srv.Call(ctx, &opts)
 		return shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
 		return err
 	}
 	return nil
-}
-
-func (*objectChunkWriter) Abort(ctx context.Context) error {
-	return nil
-}
-
-func (o *Object) prepareUpload(ctx context.Context, src fs.ObjectInfo, options []fs.OpenOption) (*uploadInfo, error) {
-	base, leaf := o.fs.splitPathFull(src.Remote())
-
-	modTime := src.ModTime(ctx).UTC().Format(timeFormat)
-
-	uploadID := getMD5Hash(fmt.Sprintf("%s:%d:%s", path.Join(base, leaf), src.Size(), modTime))
-
-	var uploadParts api.UploadFile
-	opts := rest.Opts{
-		Method: "GET",
-		Path:   "/api/uploads/" + uploadID,
-	}
-
-	err := o.fs.pacer.Call(func() (bool, error) {
-		resp, err := o.fs.srv.CallJSON(ctx, &opts, nil, &uploadParts)
-		return shouldRetry(ctx, resp, err)
-	})
-
-	if err != nil {
-		return nil, err
-	}
-
-	channelID := o.fs.opt.ChannelID
-
-	encryptFile := o.fs.opt.EncryptFiles
-
-	if len(uploadParts.Parts) > 0 {
-		channelID = uploadParts.Parts[0].ChannelID
-		encryptFile = uploadParts.Parts[0].Encrypted
-	}
-
-	return &uploadInfo{
-		existingChunks: uploadParts.Parts,
-		uploadID:       uploadID,
-		channelID:      channelID,
-		encryptFile:    encryptFile,
-	}, nil
 }

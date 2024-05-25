@@ -14,7 +14,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/rclone/rclone/backend/teldrive/api"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config"
@@ -80,7 +79,7 @@ func init() {
 				Name:     config.ConfigEncoding,
 				Help:     config.ConfigEncodingHelp,
 				Advanced: true,
-				Default:  encoder.Standard,
+				Default:  encoder.EncodeInvalidUtf8,
 			}},
 	})
 }
@@ -171,28 +170,16 @@ func shouldRetry(ctx context.Context, resp *http.Response, err error) (bool, err
 
 // dirPath returns an escaped file path (f.root, file)
 func (f *Fs) dirPath(file string) string {
-	//return path.Join(f.diskRoot, file)
 	if file == "" || file == "." {
-		return "/" + f.root
+		return f.opt.Enc.FromStandardPath("/" + f.root)
 	}
-	return "/" + path.Join(f.root, file)
+	return f.opt.Enc.FromStandardPath("/" + strings.Trim(path.Join(f.root, file), "/"))
 }
 
 // returns the full path based on root and the last element
-func (f *Fs) splitPathFull(pth string) (string, string) {
-	fullPath := strings.Trim(path.Join(f.root, pth), "/")
-
-	i := len(fullPath) - 1
-	for i >= 0 && fullPath[i] != '/' {
-		i--
-	}
-
-	if i < 0 {
-		return "/" + fullPath[:i+1], fullPath[i+1:]
-	}
-
-	// do not include the / at the split
-	return "/" + fullPath[:i], fullPath[i+1:]
+func (f *Fs) splitPathFull(file string) (string, string) {
+	base, leaf := path.Split(f.opt.Enc.FromStandardPath("/" + strings.Trim(path.Join(f.root, file), "/")))
+	return "/" + strings.Trim(base, "/"), leaf
 }
 
 func checkUploadChunkSize(cs fs.SizeSuffix) error {
@@ -289,7 +276,7 @@ func NewFs(ctx context.Context, name string, root string, config configmap.Mappe
 	}
 
 	if res != nil && len(res.Files) == 1 && res.Files[0].Type == "file" {
-		f.root = strings.Trim(dir, "/")
+		f.root = strings.Trim(path.Base(f.root), "/")
 		return f, fs.ErrorIsFile
 	}
 
@@ -394,6 +381,7 @@ func (f *Fs) findObject(ctx context.Context, path string, name string) (*api.Rea
 // This should return ErrDirNotFound if the directory isn't
 // found.
 func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err error) {
+
 	root := f.dirPath(dir)
 
 	var nextPageToken string = ""
@@ -438,7 +426,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 // Return an Object from a path
 //
 // If it can't be found it returns the error fs.ErrorObjectNotFound.
-func (f *Fs) newObjectWithInfo(ctx context.Context, remote string, info *api.FileInfo) (fs.Object, error) {
+func (f *Fs) newObjectWithInfo(_ context.Context, remote string, info *api.FileInfo) (fs.Object, error) {
 	o := &Object{
 		fs:       f,
 		remote:   remote,
@@ -460,8 +448,6 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 	res, err := f.findObject(ctx, base, leaf)
 
 	if err != nil {
-		// need to change error type
-		// if the parent dir doesn't exist the object doesn't exist either
 		if err == fs.ErrorDirNotFound {
 			return nil, fs.ErrorObjectNotFound
 		}
@@ -484,7 +470,7 @@ func (f *Fs) move(ctx context.Context, dstPath string, fileID string) (err error
 
 	mv := api.MoveFileRequest{
 		Files:       []string{fileID},
-		Destination: dstPath,
+		Destination: f.opt.Enc.FromStandardPath(dstPath),
 	}
 
 	var resp *http.Response
@@ -518,163 +504,19 @@ func (f *Fs) updateFileInformation(ctx context.Context, update *api.UpdateFileIn
 	return err
 }
 
-func (f *Fs) putUnchecked(ctx context.Context, in0 io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {
+func (f *Fs) putUnchecked(ctx context.Context, in io.Reader, src fs.ObjectInfo, _ ...fs.OpenOption) error {
 
-	base, leaf := f.splitPathFull(src.Remote())
-
-	modTime := src.ModTime(ctx).UTC().Format(timeFormat)
-
-	uploadID := getMD5Hash(fmt.Sprintf("%s:%d:%s", path.Join(base, leaf), src.Size(), modTime))
-
-	chunkSize := int64(f.opt.ChunkSize)
-
-	var existingParts map[int]api.PartFile
-
-	var uploadFile api.UploadFile
-
-	if chunkSize < src.Size() {
-		opts := rest.Opts{
-			Method: "GET",
-			Path:   "/api/uploads/" + uploadID,
-		}
-
-		err := f.pacer.Call(func() (bool, error) {
-			resp, err := f.srv.CallJSON(ctx, &opts, nil, &uploadFile)
-			return shouldRetry(ctx, resp, err)
-		})
-
-		if err == nil {
-			existingParts = make(map[int]api.PartFile, len(uploadFile.Parts))
-			for _, part := range uploadFile.Parts {
-				existingParts[part.PartNo] = part
-			}
-		}
+	o := &Object{
+		fs: f,
 	}
 
-	totalParts := src.Size() / chunkSize
+	uploadInfo, err := o.uploadMultipart(ctx, bufio.NewReader(in), src)
 
-	if src.Size()%chunkSize != 0 {
-		totalParts++
-	}
-
-	var partsToCommit []api.PartFile
-
-	var uploadedSize int64
-
-	in := bufio.NewReader(in0)
-
-	channelID := f.opt.ChannelID
-
-	encryptFile := f.opt.EncryptFiles
-
-	if len(uploadFile.Parts) > 0 {
-		channelID = uploadFile.Parts[0].ChannelID
-
-		encryptFile = uploadFile.Parts[0].Encrypted
-	}
-
-	partName := leaf
-
-	for partNo := 1; partNo <= int(totalParts); partNo++ {
-
-		if existing, ok := existingParts[partNo]; ok {
-			io.CopyN(io.Discard, in, existing.Size)
-			partsToCommit = append(partsToCommit, existing)
-			uploadedSize += existing.Size
-			continue
-		}
-
-		if partNo == int(totalParts) {
-			chunkSize = src.Size() - uploadedSize
-		}
-		partReader := io.LimitReader(in, chunkSize)
-
-		if f.opt.RandomisePart {
-			partName = getMD5Hash(uuid.New().String())
-		} else if totalParts > 1 {
-			partName = fmt.Sprintf("%s.part.%03d", leaf, partNo)
-		}
-
-		opts := rest.Opts{
-			Method:        "POST",
-			Path:          "/api/uploads/" + uploadID,
-			Body:          partReader,
-			ContentLength: &chunkSize,
-			Parameters: url.Values{
-				"partName":  []string{partName},
-				"fileName":  []string{leaf},
-				"partNo":    []string{strconv.Itoa(partNo)},
-				"channelId": []string{strconv.FormatInt(channelID, 10)},
-				"encrypted": []string{strconv.FormatBool(encryptFile)},
-			},
-		}
-
-		var info api.PartFile
-		err := f.pacer.Call(func() (bool, error) {
-			resp, err := f.srv.CallJSON(ctx, &opts, nil, &info)
-			return shouldRetry(ctx, resp, err)
-		})
-		if err != nil {
-			return fmt.Errorf("error sending chunk %d: %v", partNo, err)
-		}
-
-		if info.PartId == 0 {
-			return fmt.Errorf("error sending chunk %d", partNo)
-		}
-
-		uploadedSize += chunkSize
-
-		partsToCommit = append(partsToCommit, info)
-	}
-
-	if base != "/" {
-		err := f.CreateDir(ctx, base, "")
-		if err != nil {
-			return err
-		}
-	}
-
-	opts := rest.Opts{
-		Method: "POST",
-		Path:   "/api/files",
-	}
-
-	fileParts := []api.FilePart{}
-
-	for _, part := range partsToCommit {
-		fileParts = append(fileParts, api.FilePart{ID: part.PartId, Salt: part.Salt})
-	}
-
-	payload := api.CreateFileRequest{
-		Name:      leaf,
-		Type:      "file",
-		Path:      base,
-		MimeType:  fs.MimeType(ctx, src),
-		Size:      src.Size(),
-		Parts:     fileParts,
-		ChannelID: channelID,
-		Encrypted: encryptFile,
-	}
-	err := f.pacer.Call(func() (bool, error) {
-		resp, err := f.srv.CallJSON(ctx, &opts, &payload, nil)
-		return shouldRetry(ctx, resp, err)
-	})
-	if err != nil {
-		return err
-	}
-	opts = rest.Opts{
-		Method: "DELETE",
-		Path:   "/api/uploads/" + uploadID,
-	}
-	err = f.pacer.Call(func() (bool, error) {
-		resp, err := f.srv.Call(ctx, &opts)
-		return shouldRetry(ctx, resp, err)
-	})
 	if err != nil {
 		return err
 	}
 
-	return nil
+	return o.createFile(ctx, src, uploadInfo)
 }
 
 // Put in to the remote path with the modTime given of the given size
@@ -717,31 +559,37 @@ func (f *Fs) PutUnchecked(ctx context.Context, in io.Reader, src fs.ObjectInfo, 
 //
 // The new object may have been created if an error is returned
 func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {
+
 	if src.Size() < 0 {
 		return errors.New("refusing to update with unknown size")
 	}
 
-	// upload with new size but old name
-	//to change
-	err := o.fs.putUnchecked(ctx, in, src, options...)
+	modtime := src.ModTime(ctx).Format(timeFormat)
+
+	uploadInfo, err := o.uploadMultipart(ctx, in, src)
+
 	if err != nil {
 		return err
 	}
 
-	// delete duplicate object after successful upload
-	err = o.Remove(ctx)
+	err = o.fs.updateFileInformation(ctx, &api.UpdateFileInformation{
+		Type:      "file",
+		UpdatedAt: modtime,
+		Parts:     uploadInfo.fileChunks,
+	}, o.id)
+
 	if err != nil {
-		return fmt.Errorf("failed to remove old version: %w", err)
+		return fmt.Errorf("failed to update file information: %w", err)
 	}
 
-	// Fetch new object after deleting the duplicate
-	info, err := o.fs.NewObject(ctx, o.Remote())
-	if err != nil {
-		return err
+	opts := rest.Opts{
+		Method: "DELETE",
+		Path:   "/api/files/" + o.id + "/parts",
 	}
 
-	// Replace guts of old object with new one
-	*o = *info.(*Object)
+	o.fs.srv.Call(ctx, &opts)
+
+	o.modTime = modtime
 
 	return nil
 }
@@ -756,50 +604,34 @@ func (f *Fs) OpenChunkWriter(
 	src fs.ObjectInfo,
 	options ...fs.OpenOption) (info fs.ChunkWriterInfo, writer fs.ChunkWriter, err error) {
 
+	if src.Size() <= 0 {
+		return info, nil, errors.New("unknown-sized upload not supported")
+	}
+
 	o := &Object{
 		fs:     f,
 		remote: remote,
 	}
-	ui, err := o.prepareUpload(ctx, src, options)
+
+	uploadInfo, err := o.prepareUpload(ctx, src)
 
 	if err != nil {
 		return info, nil, fmt.Errorf("failed to prepare upload: %w", err)
 	}
 
-	size := src.Size()
-
-	chunkSize := int64(f.opt.ChunkSize)
-
-	totalParts := size / chunkSize
-
-	if src.Size()%chunkSize != 0 {
-		totalParts++
-	}
-
-	existingParts := make(map[int]api.PartFile, len(ui.existingChunks))
-
-	for _, part := range ui.existingChunks {
-		existingParts[part.PartNo] = part
-	}
-
 	chunkWriter := &objectChunkWriter{
-		chunkSize:     chunkSize,
-		size:          size,
-		f:             f,
-		uploadID:      ui.uploadID,
-		existingParts: existingParts,
-		src:           src,
-		o:             o,
-		totalParts:    totalParts,
-		channelID:     ui.channelID,
-		encryptFile:   ui.encryptFile,
+		size:       src.Size(),
+		f:          f,
+		src:        src,
+		o:          o,
+		uploadInfo: uploadInfo,
 	}
 	info = fs.ChunkWriterInfo{
-		ChunkSize:         int64(chunkSize),
+		ChunkSize:         uploadInfo.chunkSize,
 		Concurrency:       o.fs.opt.UploadConcurrency,
 		LeavePartsOnError: true,
 	}
-	fs.Debugf(o, "open chunk writer: started upload: %v", ui.uploadID)
+	fs.Debugf(o, "open chunk writer: started upload: %v", uploadInfo.uploadID)
 	return info, chunkWriter, err
 }
 
@@ -815,6 +647,7 @@ func (f *Fs) CreateDir(ctx context.Context, base string, leaf string) (err error
 	}
 
 	dir := base
+
 	if leaf != "" {
 		dir = path.Join(dir, leaf)
 	}
@@ -824,7 +657,7 @@ func (f *Fs) CreateDir(ctx context.Context, base string, leaf string) (err error
 	}
 
 	mkdir := api.CreateDirRequest{
-		Path: dir,
+		Path: f.opt.Enc.FromStandardPath(dir),
 	}
 	err = f.pacer.Call(func() (bool, error) {
 		resp, err = f.srv.CallJSON(ctx, &opts, &mkdir, &apiErr)

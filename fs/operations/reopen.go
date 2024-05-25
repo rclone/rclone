@@ -302,6 +302,14 @@ func (h *ReOpen) SetAccounting(account AccountFn) *ReOpen {
 	return h
 }
 
+// Account sets the accounting function to account for n bytes being read
+func (h *ReOpen) Account(n int) *ReOpen {
+	if h.account != nil {
+		h.account(n)
+	}
+	return h
+}
+
 // DelayAccounting makes sure the accounting function only gets called
 // on the i-th or later read of the data from this point (counting
 // from 1).
