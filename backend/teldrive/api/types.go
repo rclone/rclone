@@ -1,4 +1,4 @@
-// Package api provides types used by the Uptobox API.
+// Package api provides types used by the Teldrive API.
 package api
 
 type Error struct {
@@ -154,6 +154,7 @@ type UpdateFileInformation struct {
 	Type      string     `json:"type,omitempty"`
 	UpdatedAt string     `json:"updatedAt,omitempty"`
 	Parts     []FilePart `json:"parts,omitempty"`
+	Size      int64      `json:"size,omitempty"`
 }
 
 // RemoveFileRequest is used for deleting a file

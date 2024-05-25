@@ -566,7 +566,21 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 
 	modtime := src.ModTime(ctx).Format(timeFormat)
 
-	uploadInfo, err := o.uploadMultipart(ctx, in, src)
+	uploadInfo, err := o.uploadMultipart(ctx, bufio.NewReader(in), src)
+
+	if err != nil {
+		return err
+	}
+
+	opts := rest.Opts{
+		Method: "DELETE",
+		Path:   "/api/files/" + o.id + "/parts",
+	}
+
+	err = o.fs.pacer.Call(func() (bool, error) {
+		resp, err := o.fs.srv.Call(ctx, &opts)
+		return shouldRetry(ctx, resp, err)
+	})
 
 	if err != nil {
 		return err
@@ -576,20 +590,16 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		Type:      "file",
 		UpdatedAt: modtime,
 		Parts:     uploadInfo.fileChunks,
+		Size:      src.Size(),
 	}, o.id)
 
 	if err != nil {
 		return fmt.Errorf("failed to update file information: %w", err)
 	}
 
-	opts := rest.Opts{
-		Method: "DELETE",
-		Path:   "/api/files/" + o.id + "/parts",
-	}
-
-	o.fs.srv.Call(ctx, &opts)
-
 	o.modTime = modtime
+
+	o.size = src.Size()
 
 	return nil
 }
