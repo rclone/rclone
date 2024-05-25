@@ -90,7 +90,7 @@ type UploadResponse struct {
 	Uploads []UploadInfo `json:"data"`
 }
 
-// WriteMetadataRequest is is used to write metadata for a
+// WriteMetadataRequest is used to write metadata for a
 // single item
 type WriteMetadataRequest struct {
 	Data WriteMetadata `json:"data"`
