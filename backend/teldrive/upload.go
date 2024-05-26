@@ -92,7 +92,7 @@ func (w *objectChunkWriter) WriteChunk(ctx context.Context, chunkNumber int, rea
 		}
 
 		fs.Debugf(w.o, "Sending chunk %d length %d", chunkNumber, size)
-		if w.f.opt.RandomisePart {
+		if w.f.opt.RandomChunkName {
 			partName = getMD5Hash(uuid.New().String())
 		} else {
 			partName = fileName
@@ -271,7 +271,7 @@ func (o *Object) uploadMultipart(ctx context.Context, in io.Reader, src fs.Objec
 
 		chunkName := uploadInfo.fileName
 
-		if o.fs.opt.RandomisePart {
+		if o.fs.opt.RandomChunkName {
 			chunkName = getMD5Hash(uuid.New().String())
 		} else if totalChunks > 1 {
 			chunkName = fmt.Sprintf("%s.part.%03d", chunkName, chunkNo)

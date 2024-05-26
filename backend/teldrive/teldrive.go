@@ -30,7 +30,7 @@ import (
 const (
 	timeFormat       = time.RFC3339
 	maxChunkSize     = 2000 * fs.Mebi
-	defaultChunkSize = 1000 * fs.Mebi
+	defaultChunkSize = 500 * fs.Mebi
 	minChunkSize     = 500 * fs.Mebi
 )
 
@@ -56,9 +56,9 @@ func init() {
 			Name:    "page_size",
 			Default: 500,
 		}, {
-			Name:     "randomise_part",
+			Name:     "random_chunk_name",
 			Default:  true,
-			Help:     "Randomise part",
+			Help:     "Random Names For Chunks for Security",
 			Advanced: true,
 		}, {
 			Name:      "channel_id",
@@ -73,7 +73,7 @@ func init() {
 			{
 				Name:    "encrypt_files",
 				Default: false,
-				Help:    "Enable Native  Teldrive Encryption",
+				Help:    "Enable Native Teldrive Encryption",
 			}, {
 
 				Name:     config.ConfigEncoding,
@@ -89,7 +89,7 @@ type Options struct {
 	ApiHost           string               `config:"api_host"`
 	AccessToken       string               `config:"access_token"`
 	ChunkSize         fs.SizeSuffix        `config:"chunk_size"`
-	RandomisePart     bool                 `config:"randomise_part"`
+	RandomChunkName   bool                 `config:"random_chunk_name"`
 	UploadConcurrency int                  `config:"upload_concurrency"`
 	ChannelID         int64                `config:"channel_id"`
 	EncryptFiles      bool                 `config:"encrypt_files"`
@@ -564,7 +564,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		return errors.New("refusing to update with unknown size")
 	}
 
-	modtime := src.ModTime(ctx).Format(timeFormat)
+	modTime := src.ModTime(ctx).UTC().Format(timeFormat)
 
 	uploadInfo, err := o.uploadMultipart(ctx, bufio.NewReader(in), src)
 
@@ -588,7 +588,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 
 	err = o.fs.updateFileInformation(ctx, &api.UpdateFileInformation{
 		Type:      "file",
-		UpdatedAt: modtime,
+		UpdatedAt: modTime,
 		Parts:     uploadInfo.fileChunks,
 		Size:      src.Size(),
 	}, o.id)
@@ -597,7 +597,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		return fmt.Errorf("failed to update file information: %w", err)
 	}
 
-	o.modTime = modtime
+	o.modTime = modTime
 
 	o.size = src.Size()
 
