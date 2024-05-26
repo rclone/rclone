@@ -152,6 +152,18 @@ func (w *objectChunkWriter) Close(ctx context.Context) error {
 		return fmt.Errorf("uploaded failed")
 	}
 
+	sort.Slice(w.partsToCommit, func(i, j int) bool {
+		return w.partsToCommit[i].PartNo < w.partsToCommit[j].PartNo
+	})
+
+	fileChunks := []api.FilePart{}
+
+	for _, part := range w.partsToCommit {
+		fileChunks = append(fileChunks, api.FilePart{ID: part.PartId, Salt: part.Salt})
+	}
+
+	w.uploadInfo.fileChunks = fileChunks
+
 	return w.o.createFile(ctx, w.src, w.uploadInfo)
 }
 
