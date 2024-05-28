@@ -3207,6 +3207,10 @@ func setQuirks(opt *Options) {
 		useMultipartEtag = false // LyveCloud seems to calculate multipart Etags differently from AWS
 		useAlreadyExists = false // untested
 	case "Magalu":
+		listObjectsV2 = false
+		virtualHostStyle = false
+		urlEncodeListings = false
+		useMultipartEtag = false
 		useAlreadyExists = false
 	case "Minio":
 		virtualHostStyle = false
