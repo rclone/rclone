@@ -138,7 +138,6 @@ WebDAV or S3, that work out of the box.)
 - Liara Object Storage
 - Linkbox
 - Linode Object Storage
-- Magalu Object Storage
 - Mail.ru Cloud
 - Memset Memstore
 - Mega
@@ -23452,7 +23451,6 @@ The S3 backend can be used with a number of different providers:
 - Leviia Object Storage
 - Liara Object Storage
 - Linode Object Storage
-- Magalu Object Storage
 - Minio
 - Petabox
 - Qiniu Cloud Object Storage (Kodo)
@@ -24099,7 +24097,7 @@ A simple solution is to set the `--s3-upload-cutoff 0` and force all the files t
 
 ### Standard options
 
-Here are the Standard options specific to s3 (Amazon S3 Compliant Storage Providers including AWS, Alibaba, ArvanCloud, Ceph, ChinaMobile, Cloudflare, DigitalOcean, Dreamhost, GCS, HuaweiOBS, IBMCOS, IDrive, IONOS, LyveCloud, Leviia, Liara, Linode, Magalu, Minio, Netease, Petabox, RackCorp, Rclone, Scaleway, SeaweedFS, StackPath, Storj, Synology, TencentCOS, Wasabi, Qiniu and others).
+Here are the Standard options specific to s3 (Amazon S3 Compliant Storage Providers including AWS, Alibaba, ArvanCloud, Ceph, ChinaMobile, Cloudflare, DigitalOcean, Dreamhost, GCS, HuaweiOBS, IBMCOS, IDrive, IONOS, LyveCloud, Leviia, Liara, Linode, Minio, Netease, Petabox, RackCorp, Rclone, Scaleway, SeaweedFS, StackPath, Storj, Synology, TencentCOS, Wasabi, Qiniu and others).
 
 #### --s3-provider
 
@@ -24146,8 +24144,6 @@ Properties:
         - Liara Object Storage
     - "Linode"
         - Linode Object Storage
-    - "Magalu"
-        - Magalu Object Storage
     - "Minio"
         - Minio Object Storage
     - "Netease"
@@ -24522,7 +24518,7 @@ Properties:
 
 ### Advanced options
 
-Here are the Advanced options specific to s3 (Amazon S3 Compliant Storage Providers including AWS, Alibaba, ArvanCloud, Ceph, ChinaMobile, Cloudflare, DigitalOcean, Dreamhost, GCS, HuaweiOBS, IBMCOS, IDrive, IONOS, LyveCloud, Leviia, Liara, Linode, Magalu, Minio, Netease, Petabox, RackCorp, Rclone, Scaleway, SeaweedFS, StackPath, Storj, Synology, TencentCOS, Wasabi, Qiniu and others).
+Here are the Advanced options specific to s3 (Amazon S3 Compliant Storage Providers including AWS, Alibaba, ArvanCloud, Ceph, ChinaMobile, Cloudflare, DigitalOcean, Dreamhost, GCS, HuaweiOBS, IBMCOS, IDrive, IONOS, LyveCloud, Leviia, Liara, Linode, Minio, Netease, Petabox, RackCorp, Rclone, Scaleway, SeaweedFS, StackPath, Storj, Synology, TencentCOS, Wasabi, Qiniu and others).
 
 #### --s3-bucket-acl
 
@@ -27812,123 +27808,6 @@ provider = Linode
 access_key_id = ACCESS_KEY
 secret_access_key = SECRET_ACCESS_KEY
 endpoint = eu-central-1.linodeobjects.com
-```
-
-### Magalu {#magalu}
-
-Here is an example of making a [Magalu Object Storage](https://magalu.cloud/object-storage/)
-configuration.  First run:
-
-    rclone config
-
-This will guide you through an interactive setup process.
-
-```
-No remotes found, make a new one?
-n) New remote
-s) Set configuration password
-q) Quit config
-n/s/q> n
-
-Enter name for new remote.
-name> magalu
-
-Option Storage.
-Type of storage to configure.
-Choose a number from below, or type in your own value.
-[snip]
-XX / Amazon S3 Compliant Storage Providers including AWS, ...Magalu, ...and others
-   \ (s3)
-[snip]
-Storage> s3
-
-Option provider.
-Choose your S3 provider.
-Choose a number from below, or type in your own value.
-Press Enter to leave empty.
-[snip]
-XX / Magalu Object Storage
-   \ (Magalu)
-[snip]
-provider> Magalu
-
-Option env_auth.
-Get AWS credentials from runtime (environment variables or EC2/ECS meta data if no env vars).
-Only applies if access_key_id and secret_access_key is blank.
-Choose a number from below, or type in your own boolean value (true or false).
-Press Enter for the default (false).
- 1 / Enter AWS credentials in the next step.
-   \ (false)
- 2 / Get AWS credentials from the environment (env vars or IAM).
-   \ (true)
-env_auth> 
-
-Option access_key_id.
-AWS Access Key ID.
-Leave blank for anonymous access or runtime credentials.
-Enter a value. Press Enter to leave empty.
-access_key_id> ACCESS_KEY
-
-Option secret_access_key.
-AWS Secret Access Key (password).
-Leave blank for anonymous access or runtime credentials.
-Enter a value. Press Enter to leave empty.
-secret_access_key> SECRET_ACCESS_KEY
-
-Option endpoint.
-Endpoint for Magalu Object Storage API.
-Choose a number from below, or type in your own value.
-Press Enter to leave empty.
- 1 / São Paulo, SP (BR), br-se1
-   \ (br-se1.magaluobjects.com)
- 2 / Fortaleza, CE (BR), br-ne1
-   \ (br-ne1.magaluobjects.com)
-endpoint> 2
-
-Option acl.
-Canned ACL used when creating buckets and storing or copying objects.
-This ACL is used for creating objects and if bucket_acl isn't set, for creating buckets too.
-For more info visit https://docs.aws.amazon.com/AmazonS3/latest/dev/acl-overview.html#canned-acl
-Note that this ACL is applied when server-side copying objects as S3
-doesn't copy the ACL from the source but rather writes a fresh one.
-If the acl is an empty string then no X-Amz-Acl: header is added and
-the default (private) will be used.
-Choose a number from below, or type in your own value.
-Press Enter to leave empty.
-   / Owner gets FULL_CONTROL.
- 1 | No one else has access rights (default).
-   \ (private)
-[snip]
-acl> 
-
-Edit advanced config?
-y) Yes
-n) No (default)
-y/n> n
-
-Configuration complete.
-Options:
-- type: s3
-- provider: Magalu
-- access_key_id: ACCESS_KEY
-- secret_access_key: SECRET_ACCESS_KEY
-- endpoint: br-ne1.magaluobjects.com
-Keep this "magalu" remote?
-y) Yes this is OK (default)
-e) Edit this remote
-d) Delete this remote
-y/e/d> y
-```
-
-This will leave the config file looking like this.
-
-```
-[magalu]
-type = s3
-provider = Magalu
-access_key_id = ACCESS_KEY
-secret_access_key = SECRET_ACCESS_KEY
-endpoint = br-ne1.magaluobjects.com
 ```
 
 ### ArvanCloud {#arvan-cloud}
