@@ -245,7 +245,7 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 // Put uploads content to Cloudinary
 func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
 	params := uploader.UploadParams{
-		AssetFolder: src.Fs().Root(),
+		AssetFolder: f.Fs().Root(),
 		DisplayName: src.Remote(),
 	}
 	uploadResult, err := f.cld.Upload.Upload(ctx, in, params)
