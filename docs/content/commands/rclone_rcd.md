@@ -96,6 +96,17 @@ to be used within the template to server pages:
 |-- .Size     | Size in Bytes of the entry. |
 |-- .ModTime  | The UTC timestamp of an entry. |
 
+The server also makes the following functions available so that they can be used within the
+template. These functions help extend the options for dynamic rendering of HTML. They can
+be used to render HTML based on specific conditions.
+
+| Function   | Description |
+| :---------- | :---------- |
+| afterEpoch  | Returns the time since the epoch for the given time. |
+| contains    | Checks whether a given substring is present or not in a given string. |
+| hasPrefix   | Checks whether the given string begins with the specified prefix. |
+| hasSuffix   | Checks whether the given string end with the specified suffix. |
+
 ### Authentication
 
 By default this will serve files without needing a login.

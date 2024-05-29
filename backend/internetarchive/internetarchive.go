@@ -802,7 +802,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		headers["x-archive-size-hint"] = fmt.Sprintf("%d", size)
 	}
 	var mdata fs.Metadata
-	mdata, err = fs.GetMetadataOptions(ctx, src, options)
+	mdata, err = fs.GetMetadataOptions(ctx, o.fs, src, options)
 	if err == nil && mdata != nil {
 		for mk, mv := range mdata {
 			mk = strings.ToLower(mk)

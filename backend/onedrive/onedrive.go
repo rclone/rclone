@@ -4,6 +4,7 @@ package onedrive
 
 import (
 	"context"
+	_ "embed"
 	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
@@ -27,7 +28,9 @@ import (
 	"github.com/rclone/rclone/fs/config/configstruct"
 	"github.com/rclone/rclone/fs/config/obscure"
 	"github.com/rclone/rclone/fs/fserrors"
+	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/fs/hash"
+	"github.com/rclone/rclone/fs/log"
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/fs/walk"
 	"github.com/rclone/rclone/lib/atexit"
@@ -92,6 +95,9 @@ var (
 
 	// QuickXorHashType is the hash.Type for OneDrive
 	QuickXorHashType hash.Type
+
+	//go:embed metadata.md
+	metadataHelp string
 )
 
 // Register with Fs
@@ -102,6 +108,10 @@ func init() {
 		Description: "Microsoft OneDrive",
 		NewFs:       NewFs,
 		Config:      Config,
+		MetadataInfo: &fs.MetadataInfo{
+			System: systemMetadataInfo,
+			Help:   metadataHelp,
+		},
 		Options: append(oauthutil.SharedOptions, []fs.Option{{
 			Name:    "region",
 			Help:    "Choose national cloud region for OneDrive.",
@@ -172,7 +182,8 @@ Choose or manually enter a custom space separated list with all scopes, that rcl
 					Value: "Files.Read Files.ReadWrite Files.Read.All Files.ReadWrite.All offline_access",
 					Help:  "Read and write access to all resources, without the ability to browse SharePoint sites. \nSame as if disable_site_permission was set to true",
 				},
-			}}, {
+			},
+		}, {
 			Name: "disable_site_permission",
 			Help: `Disable the request for Sites.Read.All permission.
 
@@ -202,9 +213,11 @@ listing, set this option.`,
 
 Allow server-side operations (e.g. copy) to work across different onedrive configs.
 
-This will only work if you are copying between two OneDrive *Personal* drives AND
-the files to copy are already shared between them.  In other cases, rclone will
-fall back to normal copy (which will be slightly slower).`,
+This will work if you are copying between two OneDrive *Personal* drives AND the files to
+copy are already shared between them. Additionally, it should also function for a user who
+has access permissions both between Onedrive for *business* and *SharePoint* under the *same
+tenant*, and between *SharePoint* and another *SharePoint* under the *same tenant*. In other
+cases, rclone will fall back to normal copy (which will be slightly slower).`,
 			Advanced: true,
 		}, {
 			Name:     "list_chunk",
@@ -278,7 +291,7 @@ all onedrive types. If an SHA1 hash is desired then set this option
 accordingly.
 
 From July 2023 QuickXorHash will be the only available hash for
-both OneDrive for Business and OneDriver Personal.
+both OneDrive for Business and OneDrive Personal.
 
 This can be set to "none" to not use any hashes.
 
@@ -324,6 +337,47 @@ the --onedrive-av-override flag, or av_override = true in the config
 file.
 `,
 			Advanced: true,
+		}, {
+			Name:    "delta",
+			Default: false,
+			Help: strings.ReplaceAll(`If set rclone will use delta listing to implement recursive listings.
+
+If this flag is set the onedrive backend will advertise |ListR|
+support for recursive listings.
+
+Setting this flag speeds up these things greatly:
+
+    rclone lsf -R onedrive:
+    rclone size onedrive:
+    rclone rc vfs/refresh recursive=true
+
+**However** the delta listing API **only** works at the root of the
+drive. If you use it not at the root then it recurses from the root
+and discards all the data that is not under the directory you asked
+for. So it will be correct but may not be very efficient.
+
+This is why this flag is not set as the default.
+
+As a rule of thumb if nearly all of your data is under rclone's root
+directory (the |root/directory| in |onedrive:root/directory|) then
+using this flag will be be a big performance win. If your data is
+mostly not under the root then using this flag will be a big
+performance loss.
+
+It is recommended if you are mounting your onedrive at the root
+(or near the root when using crypt) and using rclone |rc vfs/refresh|.
+`, "|", "`"),
+			Advanced: true,
+		}, {
+			Name: "metadata_permissions",
+			Help: `Control whether permissions should be read or written in metadata.
+
+Reading permissions metadata from files can be done quickly, but it
+isn't always desirable to set the permissions from the metadata.
+`,
+			Advanced: true,
+			Default:  rwOff,
+			Examples: rwExamples,
 		}, {
 			Name:     config.ConfigEncoding,
 			Help:     config.ConfigEncodingHelp,
@@ -371,28 +425,6 @@ file.
 	})
 }
 
-type driveResource struct {
-	DriveID   string `json:"id"`
-	DriveName string `json:"name"`
-	DriveType string `json:"driveType"`
-}
-type drivesResponse struct {
-	Drives []driveResource `json:"value"`
-}
-
-type siteResource struct {
-	SiteID   string `json:"id"`
-	SiteName string `json:"displayName"`
-	SiteURL  string `json:"webUrl"`
-}
-type siteResponse struct {
-	Sites []siteResource `json:"value"`
-}
-type deltaResponse struct {
-	DeltaLink string     `json:"@odata.deltaLink"`
-	Value     []api.Item `json:"value"`
-}
-
 // Get the region and graphURL from the config
 func getRegionURL(m configmap.Mapper) (region, graphURL string) {
 	region, _ = m.Get("region")
@@ -419,7 +451,7 @@ func chooseDrive(ctx context.Context, name string, m configmap.Mapper, srv *rest
 			RootURL: graphURL,
 			Path:    "/sites/root:" + opt.relativePath,
 		}
-		site := siteResource{}
+		site := api.SiteResource{}
 		_, err := srv.CallJSON(ctx, &opt.opts, nil, &site)
 		if err != nil {
 			return fs.ConfigError("choose_type", fmt.Sprintf("Failed to query available site by relative path: %v", err))
@@ -436,7 +468,7 @@ func chooseDrive(ctx context.Context, name string, m configmap.Mapper, srv *rest
 		}
 	}
 
-	drives := drivesResponse{}
+	drives := api.DrivesResponse{}
 
 	// We don't have the final ID yet?
 	// query Microsoft Graph
@@ -449,7 +481,7 @@ func chooseDrive(ctx context.Context, name string, m configmap.Mapper, srv *rest
 		// Also call /me/drive as sometimes /me/drives doesn't return it #4068
 		if opt.opts.Path == "/me/drives" {
 			opt.opts.Path = "/me/drive"
-			meDrive := driveResource{}
+			meDrive := api.DriveResource{}
 			_, err := srv.CallJSON(ctx, &opt.opts, nil, &meDrive)
 			if err != nil {
 				return fs.ConfigError("choose_type", fmt.Sprintf("Failed to query available drives: %v", err))
@@ -468,7 +500,7 @@ func chooseDrive(ctx context.Context, name string, m configmap.Mapper, srv *rest
 			}
 		}
 	} else {
-		drives.Drives = append(drives.Drives, driveResource{
+		drives.Drives = append(drives.Drives, api.DriveResource{
 			DriveID:   opt.finalDriveID,
 			DriveName: "Chosen Drive ID",
 			DriveType: "drive",
@@ -572,15 +604,18 @@ func Config(ctx context.Context, name string, m configmap.Mapper, config fs.Conf
 	case "url":
 		return fs.ConfigInput("url_end", "config_site_url", `Site URL
 
-Example: "https://contoso.sharepoint.com/sites/mysite" or "mysite"
+Examples:
+- "mysite"
+- "https://XXX.sharepoint.com/sites/mysite"
+- "https://XXX.sharepoint.com/teams/ID"
 `)
 	case "url_end":
 		siteURL := config.Result
-		re := regexp.MustCompile(`https://.*\.sharepoint\.com/sites/(.*)`)
+		re := regexp.MustCompile(`https://.*\.sharepoint\.com(/.*)`)
 		match := re.FindStringSubmatch(siteURL)
 		if len(match) == 2 {
 			return chooseDrive(ctx, name, m, srv, chooseDriveOpt{
-				relativePath: "/sites/" + match[1],
+				relativePath: match[1],
 			})
 		}
 		return chooseDrive(ctx, name, m, srv, chooseDriveOpt{
@@ -602,7 +637,7 @@ Example: "https://contoso.sharepoint.com/sites/mysite" or "mysite"
 			Path:    "/sites?search=" + searchTerm,
 		}
 
-		sites := siteResponse{}
+		sites := api.SiteResponse{}
 		_, err := srv.CallJSON(ctx, &opts, nil, &sites)
 		if err != nil {
 			return fs.ConfigError("choose_type", fmt.Sprintf("Failed to query available sites: %v", err))
@@ -626,7 +661,8 @@ Example: "https://contoso.sharepoint.com/sites/mysite" or "mysite"
 		opts := rest.Opts{
 			Method:  "GET",
 			RootURL: graphURL,
-			Path:    "/drives/" + finalDriveID + "/root"}
+			Path:    "/drives/" + finalDriveID + "/root",
+		}
 		var rootItem api.Item
 		_, err = srv.CallJSON(ctx, &opts, nil, &rootItem)
 		if err != nil {
@@ -664,7 +700,9 @@ type Options struct {
 	LinkPassword            string               `config:"link_password"`
 	HashType                string               `config:"hash_type"`
 	AVOverride              bool                 `config:"av_override"`
+	Delta                   bool                 `config:"delta"`
 	Enc                     encoder.MultiEncoder `config:"encoding"`
+	MetadataPermissions     rwChoice             `config:"metadata_permissions"`
 }
 
 // Fs represents a remote OneDrive
@@ -675,6 +713,7 @@ type Fs struct {
 	ci           *fs.ConfigInfo     // global config
 	features     *fs.Features       // optional features
 	srv          *rest.Client       // the connection to the OneDrive server
+	unAuth       *rest.Client       // no authentication connection to the OneDrive server
 	dirCache     *dircache.DirCache // Map of directory path to directory id
 	pacer        *fs.Pacer          // pacer for API calls
 	tokenRenewer *oauthutil.Renew   // renew the token on expiry
@@ -696,6 +735,17 @@ type Object struct {
 	id            string    // ID of the object
 	hash          string    // Hash of the content, usually QuickXorHash but set as hash_type
 	mimeType      string    // Content-Type of object from server (may not be as uploaded)
+	meta          *Metadata // metadata properties
+}
+
+// Directory describes a OneDrive directory
+type Directory struct {
+	fs     *Fs       // what this object is part of
+	remote string    // The remote path
+	size   int64     // size of directory and contents or -1 if unknown
+	items  int64     // number of objects or -1 for unknown
+	id     string    // dir ID
+	meta   *Metadata // metadata properties
 }
 
 // ------------------------------------------------------------
@@ -736,8 +786,10 @@ var retryErrorCodes = []int{
 	509, // Bandwidth Limit Exceeded
 }
 
-var gatewayTimeoutError sync.Once
-var errAsyncJobAccessDenied = errors.New("async job failed - access denied")
+var (
+	gatewayTimeoutError     sync.Once
+	errAsyncJobAccessDenied = errors.New("async job failed - access denied")
+)
 
 // shouldRetry returns a boolean as to whether this resp and err
 // deserve to be retried.  It returns the err as a convenience
@@ -933,8 +985,9 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		TokenURL: authEndpoint[opt.Region] + tokenPath,
 	}
 
+	client := fshttp.NewClient(ctx)
 	root = parsePath(root)
-	oAuthClient, ts, err := oauthutil.NewClient(ctx, name, m, oauthConfig)
+	oAuthClient, ts, err := oauthutil.NewClientWithBaseClient(ctx, name, m, oauthConfig, client)
 	if err != nil {
 		return nil, fmt.Errorf("failed to configure OneDrive: %w", err)
 	}
@@ -948,14 +1001,24 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		driveID:   opt.DriveID,
 		driveType: opt.DriveType,
 		srv:       rest.NewClient(oAuthClient).SetRoot(rootURL),
+		unAuth:    rest.NewClient(client).SetRoot(rootURL),
 		pacer:     fs.NewPacer(ctx, pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant))),
 		hashType:  QuickXorHashType,
 	}
 	f.features = (&fs.Features{
-		CaseInsensitive:         true,
-		ReadMimeType:            true,
-		CanHaveEmptyDirectories: true,
-		ServerSideAcrossConfigs: opt.ServerSideAcrossConfigs,
+		CaseInsensitive:          true,
+		ReadMimeType:             true,
+		WriteMimeType:            false,
+		CanHaveEmptyDirectories:  true,
+		ServerSideAcrossConfigs:  opt.ServerSideAcrossConfigs,
+		ReadMetadata:             true,
+		WriteMetadata:            true,
+		UserMetadata:             false,
+		ReadDirMetadata:          true,
+		WriteDirMetadata:         true,
+		WriteDirSetModTime:       true,
+		UserDirMetadata:          false,
+		DirModTimeUpdatesOnWrite: false,
 	}).Fill(ctx, f)
 	f.srv.SetErrorHandler(errorHandler)
 
@@ -981,7 +1044,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	})
 
 	// Get rootID
-	var rootID = opt.RootFolderID
+	rootID := opt.RootFolderID
 	if rootID == "" {
 		rootInfo, _, err := f.readMetaDataForPath(ctx, "")
 		if err != nil {
@@ -994,6 +1057,11 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	}
 
 	f.dirCache = dircache.New(root, rootID, f)
+
+	// ListR only supported if delta set
+	if !f.opt.Delta {
+		f.features.ListR = nil
+	}
 
 	// Find the current root
 	err = f.dirCache.FindRoot(ctx, false)
@@ -1043,6 +1111,7 @@ func (f *Fs) newObjectWithInfo(ctx context.Context, remote string, info *api.Ite
 	o := &Object{
 		fs:     f,
 		remote: remote,
+		meta:   f.newMetadata(remote),
 	}
 	var err error
 	if info != nil {
@@ -1101,11 +1170,11 @@ func (f *Fs) CreateDir(ctx context.Context, dirID, leaf string) (newID string, e
 		return shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
-		//fmt.Printf("...Error %v\n", err)
+		// fmt.Printf("...Error %v\n", err)
 		return "", err
 	}
 
-	//fmt.Printf("...Id %q\n", *info.Id)
+	// fmt.Printf("...Id %q\n", *info.Id)
 	return info.GetID(), nil
 }
 
@@ -1114,32 +1183,29 @@ func (f *Fs) CreateDir(ctx context.Context, dirID, leaf string) (newID string, e
 // If directories is set it only sends directories
 // User function to process a File item from listAll
 //
-// Should return true to finish processing
-type listAllFn func(*api.Item) bool
+// If an error is returned then processing stops
+type listAllFn func(*api.Item) error
 
 // Lists the directory required calling the user function on each item found
 //
 // If the user fn ever returns true then it early exits with found = true
-func (f *Fs) listAll(ctx context.Context, dirID string, directoriesOnly bool, filesOnly bool, fn listAllFn) (found bool, err error) {
-	// Top parameter asks for bigger pages of data
-	// https://dev.onedrive.com/odata/optional-query-parameters.htm
-	opts := f.newOptsCall(dirID, "GET", fmt.Sprintf("/children?$top=%d", f.opt.ListChunk))
-OUTER:
+//
+// This listing function works on both normal listings and delta listings
+func (f *Fs) _listAll(ctx context.Context, dirID string, directoriesOnly bool, filesOnly bool, fn listAllFn, opts *rest.Opts, result any, pValue *[]api.Item, pNextLink *string) (err error) {
 	for {
-		var result api.ListChildrenResponse
 		var resp *http.Response
 		err = f.pacer.Call(func() (bool, error) {
-			resp, err = f.srv.CallJSON(ctx, &opts, nil, &result)
+			resp, err = f.srv.CallJSON(ctx, opts, nil, result)
 			return shouldRetry(ctx, resp, err)
 		})
 		if err != nil {
-			return found, fmt.Errorf("couldn't list files: %w", err)
+			return fmt.Errorf("couldn't list files: %w", err)
 		}
-		if len(result.Value) == 0 {
+		if len(*pValue) == 0 {
 			break
 		}
-		for i := range result.Value {
-			item := &result.Value[i]
+		for i := range *pValue {
+			item := &(*pValue)[i]
 			isFolder := item.GetFolder() != nil
 			if isFolder {
 				if filesOnly {
@@ -1154,18 +1220,61 @@ OUTER:
 				continue
 			}
 			item.Name = f.opt.Enc.ToStandardName(item.GetName())
-			if fn(item) {
-				found = true
-				break OUTER
+			err = fn(item)
+			if err != nil {
+				return err
 			}
 		}
-		if result.NextLink == "" {
+		if *pNextLink == "" {
 			break
 		}
 		opts.Path = ""
-		opts.RootURL = result.NextLink
+		opts.Parameters = nil
+		opts.RootURL = *pNextLink
+		// reset results
+		*pNextLink = ""
+		*pValue = nil
 	}
-	return
+	return nil
+}
+
+// Lists the directory required calling the user function on each item found
+//
+// If the user fn ever returns true then it early exits with found = true
+func (f *Fs) listAll(ctx context.Context, dirID string, directoriesOnly bool, filesOnly bool, fn listAllFn) (err error) {
+	// Top parameter asks for bigger pages of data
+	// https://dev.onedrive.com/odata/optional-query-parameters.htm
+	opts := f.newOptsCall(dirID, "GET", fmt.Sprintf("/children?$top=%d", f.opt.ListChunk))
+	var result api.ListChildrenResponse
+	return f._listAll(ctx, dirID, directoriesOnly, filesOnly, fn, &opts, &result, &result.Value, &result.NextLink)
+}
+
+// Convert a list item into a DirEntry
+//
+// Can return nil for an item which should be skipped
+func (f *Fs) itemToDirEntry(ctx context.Context, dir string, info *api.Item) (entry fs.DirEntry, err error) {
+	if !f.opt.ExposeOneNoteFiles && info.GetPackageType() == api.PackageTypeOneNote {
+		fs.Debugf(info.Name, "OneNote file not shown in directory listing")
+		return nil, nil
+	}
+	remote := path.Join(dir, info.GetName())
+	folder := info.GetFolder()
+	if folder != nil {
+		// cache the directory ID for later lookups
+		id := info.GetID()
+		f.dirCache.Put(remote, id)
+		d := f.newDir(id, remote)
+		d.items = folder.ChildCount
+		f.setSystemMetadata(info, d.meta, remote, dirMimeType)
+		entry = d
+	} else {
+		o, err := f.newObjectWithInfo(ctx, remote, info)
+		if err != nil {
+			return nil, err
+		}
+		entry = o
+	}
+	return entry, nil
 }
 
 // List the objects and directories in dir into entries.  The
@@ -1182,39 +1291,147 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 	if err != nil {
 		return nil, err
 	}
-	var iErr error
-	_, err = f.listAll(ctx, directoryID, false, false, func(info *api.Item) bool {
-		if !f.opt.ExposeOneNoteFiles && info.GetPackageType() == api.PackageTypeOneNote {
-			fs.Debugf(info.Name, "OneNote file not shown in directory listing")
-			return false
+	err = f.listAll(ctx, directoryID, false, false, func(info *api.Item) error {
+		entry, err := f.itemToDirEntry(ctx, dir, info)
+		if err != nil {
+			return err
 		}
-
-		remote := path.Join(dir, info.GetName())
-		folder := info.GetFolder()
-		if folder != nil {
-			// cache the directory ID for later lookups
-			id := info.GetID()
-			f.dirCache.Put(remote, id)
-			d := fs.NewDir(remote, time.Time(info.GetLastModifiedDateTime())).SetID(id)
-			d.SetItems(folder.ChildCount)
-			entries = append(entries, d)
-		} else {
-			o, err := f.newObjectWithInfo(ctx, remote, info)
-			if err != nil {
-				iErr = err
-				return true
-			}
-			entries = append(entries, o)
+		if entry == nil {
+			return nil
 		}
-		return false
+		entries = append(entries, entry)
+		return nil
 	})
 	if err != nil {
 		return nil, err
 	}
-	if iErr != nil {
-		return nil, iErr
-	}
 	return entries, nil
+}
+
+// ListR lists the objects and directories of the Fs starting
+// from dir recursively into out.
+//
+// dir should be "" to start from the root, and should not
+// have trailing slashes.
+//
+// This should return ErrDirNotFound if the directory isn't
+// found.
+//
+// It should call callback for each tranche of entries read.
+// These need not be returned in any particular order.  If
+// callback returns an error then the listing will stop
+// immediately.
+//
+// Don't implement this unless you have a more efficient way
+// of listing recursively than doing a directory traversal.
+func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (err error) {
+	// Make sure this ID is in the directory cache
+	directoryID, err := f.dirCache.FindDir(ctx, dir, false)
+	if err != nil {
+		return err
+	}
+
+	// ListR only works at the root of a onedrive, not on a folder
+	// So we have to filter things outside of the root which is
+	// inefficient.
+
+	list := walk.NewListRHelper(callback)
+
+	// list a folder conventionally - used for shared folders
+	var listFolder func(dir string) error
+	listFolder = func(dir string) error {
+		entries, err := f.List(ctx, dir)
+		if err != nil {
+			return err
+		}
+		for _, entry := range entries {
+			err = list.Add(entry)
+			if err != nil {
+				return err
+			}
+			if _, isDir := entry.(fs.Directory); isDir {
+				err = listFolder(entry.Remote())
+				if err != nil {
+					return err
+				}
+			}
+		}
+		return nil
+	}
+
+	// This code relies on the fact that directories are sent before their children. This isn't
+	// mentioned in the docs though, so maybe it shouldn't be relied on.
+	seen := map[string]struct{}{}
+	fn := func(info *api.Item) error {
+		var parentPath string
+		var ok bool
+		id := info.GetID()
+		// The API can produce duplicates, so skip them
+		if _, found := seen[id]; found {
+			return nil
+		}
+		seen[id] = struct{}{}
+		// Skip the root directory
+		if id == directoryID {
+			return nil
+		}
+		// Skip deleted items
+		if info.Deleted != nil {
+			return nil
+		}
+		dirID := info.GetParentReference().GetID()
+		// Skip files that don't have their parent directory
+		// cached as they are outside the root.
+		parentPath, ok = f.dirCache.GetInv(dirID)
+		if !ok {
+			return nil
+		}
+		// Skip files not under the root directory
+		remote := path.Join(parentPath, info.GetName())
+		if dir != "" && !strings.HasPrefix(remote, dir+"/") {
+			return nil
+		}
+		entry, err := f.itemToDirEntry(ctx, parentPath, info)
+		if err != nil {
+			return err
+		}
+		if entry == nil {
+			return nil
+		}
+		err = list.Add(entry)
+		if err != nil {
+			return err
+		}
+		// If this is a shared folder, we'll need list it too
+		if info.RemoteItem != nil && info.RemoteItem.Folder != nil {
+			fs.Debugf(remote, "Listing shared directory")
+			return listFolder(remote)
+		}
+		return nil
+	}
+
+	opts := rest.Opts{
+		Method: "GET",
+		Path:   "/root/delta",
+		Parameters: map[string][]string{
+			// "token": {token},
+			"$top": {fmt.Sprintf("%d", f.opt.ListChunk)},
+		},
+	}
+
+	var result api.DeltaResponse
+	err = f._listAll(ctx, "", false, false, fn, &opts, &result, &result.Value, &result.NextLink)
+	if err != nil {
+		return err
+	}
+
+	return list.Flush()
+}
+
+// Shutdown shutdown the fs
+func (f *Fs) Shutdown(ctx context.Context) error {
+	f.tokenRenewer.Shutdown()
+	return nil
 }
 
 // Creates from the parameters passed in a half finished Object which
@@ -1285,14 +1502,11 @@ func (f *Fs) purgeCheck(ctx context.Context, dir string, check bool) error {
 	}
 	if check {
 		// check to see if there are any items
-		found, err := f.listAll(ctx, rootID, false, false, func(item *api.Item) bool {
-			return true
+		err := f.listAll(ctx, rootID, false, false, func(item *api.Item) error {
+			return fs.ErrorDirectoryNotEmpty
 		})
 		if err != nil {
 			return err
-		}
-		if found {
-			return fs.ErrorDirectoryNotEmpty
 		}
 	}
 	err = f.deleteObject(ctx, rootID)
@@ -1312,6 +1526,9 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 
 // Precision return the precision of this Fs
 func (f *Fs) Precision() time.Duration {
+	if f.driveType == driveTypePersonal {
+		return time.Millisecond
+	}
 	return time.Second
 }
 
@@ -1376,14 +1593,12 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		fs.Debugf(src, "Can't copy - not same remote type")
 		return nil, fs.ErrorCantCopy
 	}
-	if f.driveType != srcObj.fs.driveType {
-		fs.Debugf(src, "Can't server-side copy - drive types differ")
-		return nil, fs.ErrorCantCopy
-	}
 
-	// For OneDrive Business, this is only supported within the same drive
-	if f.driveType != driveTypePersonal && srcObj.fs.driveID != f.driveID {
-		fs.Debugf(src, "Can't server-side copy - cross-drive but not OneDrive Personal")
+	if (f.driveType == driveTypePersonal && srcObj.fs.driveType != driveTypePersonal) || (f.driveType != driveTypePersonal && srcObj.fs.driveType == driveTypePersonal) {
+		fs.Debugf(src, "Can't server-side copy - cross-drive between OneDrive Personal and OneDrive for business (SharePoint)")
+		return nil, fs.ErrorCantCopy
+	} else if f.driveType == driveTypeBusiness && srcObj.fs.driveType == driveTypeBusiness && srcObj.fs.driveID != f.driveID {
+		fs.Debugf(src, "Can't server-side copy - cross-drive between difference OneDrive for business (Not SharePoint)")
 		return nil, fs.ErrorCantCopy
 	}
 
@@ -1451,12 +1666,19 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	// Copy does NOT copy the modTime from the source and there seems to
 	// be no way to set date before
 	// This will create TWO versions on OneDrive
-	err = dstObj.SetModTime(ctx, srcObj.ModTime(ctx))
+
+	// Set modtime and adjust metadata if required
+	_, err = dstObj.Metadata(ctx) // make sure we get the correct new normalizedID
 	if err != nil {
 		return nil, err
 	}
-
-	return dstObj, nil
+	dstObj.meta.permsAddOnly = true // dst will have different IDs from src, so can't update/remove
+	info, err := f.fetchAndUpdateMetadata(ctx, src, fs.MetadataAsOpenOptions(ctx), dstObj)
+	if err != nil {
+		return nil, err
+	}
+	err = dstObj.setMetaData(info)
+	return dstObj, err
 }
 
 // Purge deletes all the files in the directory
@@ -1511,12 +1733,12 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		},
 		// We set the mod time too as it gets reset otherwise
 		FileSystemInfo: &api.FileSystemInfoFacet{
-			CreatedDateTime:      api.Timestamp(srcObj.modTime),
+			CreatedDateTime:      api.Timestamp(srcObj.tryGetBtime(srcObj.modTime)),
 			LastModifiedDateTime: api.Timestamp(srcObj.modTime),
 		},
 	}
 	var resp *http.Response
-	var info api.Item
+	var info *api.Item
 	err = f.pacer.Call(func() (bool, error) {
 		resp, err = f.srv.CallJSON(ctx, &opts, &move, &info)
 		return shouldRetry(ctx, resp, err)
@@ -1525,11 +1747,18 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		return nil, err
 	}
 
-	err = dstObj.setMetaData(&info)
+	err = dstObj.setMetaData(info)
 	if err != nil {
 		return nil, err
 	}
-	return dstObj, nil
+
+	// Set modtime and adjust metadata if required
+	info, err = f.fetchAndUpdateMetadata(ctx, src, fs.MetadataAsOpenOptions(ctx), dstObj)
+	if err != nil {
+		return nil, err
+	}
+	err = dstObj.setMetaData(info)
+	return dstObj, err
 }
 
 // DirMove moves src, srcRemote to this remote at dstRemote
@@ -1865,6 +2094,7 @@ func (o *Object) Size() int64 {
 // setMetaData sets the metadata from info
 func (o *Object) setMetaData(info *api.Item) (err error) {
 	if info.GetFolder() != nil {
+		log.Stack(o, "setMetaData called on dir instead of obj")
 		return fs.ErrorIsDir
 	}
 	o.hasMetaData = true
@@ -1904,7 +2134,38 @@ func (o *Object) setMetaData(info *api.Item) (err error) {
 		o.modTime = time.Time(info.GetLastModifiedDateTime())
 	}
 	o.id = info.GetID()
+	if o.meta == nil {
+		o.meta = o.fs.newMetadata(o.Remote())
+	}
+	o.fs.setSystemMetadata(info, o.meta, o.remote, o.mimeType)
 	return nil
+}
+
+// sets system metadata shared by both objects and directories
+func (f *Fs) setSystemMetadata(info *api.Item, meta *Metadata, remote string, mimeType string) {
+	meta.fs = f
+	meta.remote = remote
+	meta.mimeType = mimeType
+	if info == nil {
+		fs.Errorf("setSystemMetadata", "internal error: info is nil")
+	}
+	fileSystemInfo := info.GetFileSystemInfo()
+	if fileSystemInfo != nil {
+		meta.mtime = time.Time(fileSystemInfo.LastModifiedDateTime)
+		meta.btime = time.Time(fileSystemInfo.CreatedDateTime)
+
+	} else {
+		meta.mtime = time.Time(info.GetLastModifiedDateTime())
+		meta.btime = time.Time(info.GetCreatedDateTime())
+	}
+	meta.utime = time.Time(info.GetCreatedDateTime())
+	meta.description = info.Description
+	meta.packageType = info.GetPackageType()
+	meta.createdBy = info.GetCreatedBy()
+	meta.lastModifiedBy = info.GetLastModifiedBy()
+	meta.malwareDetected = info.MalwareDetected()
+	meta.shared = info.Shared
+	meta.normalizedID = info.GetID()
 }
 
 // readMetaData gets the metadata if it hasn't already been fetched
@@ -1944,7 +2205,7 @@ func (o *Object) setModTime(ctx context.Context, modTime time.Time) (*api.Item, 
 	opts := o.fs.newOptsCallWithPath(ctx, o.remote, "PATCH", "")
 	update := api.SetFileSystemInfo{
 		FileSystemInfo: api.FileSystemInfoFacet{
-			CreatedDateTime:      api.Timestamp(modTime),
+			CreatedDateTime:      api.Timestamp(o.tryGetBtime(modTime)),
 			LastModifiedDateTime: api.Timestamp(modTime),
 		},
 	}
@@ -1993,9 +2254,23 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 	if o.fs.opt.AVOverride {
 		opts.Parameters = url.Values{"AVOverride": {"1"}}
 	}
+	// Make a note of the redirect target as we need to call it without Auth
+	var redirectReq *http.Request
+	opts.CheckRedirect = func(req *http.Request, via []*http.Request) error {
+		if len(via) >= 10 {
+			return errors.New("stopped after 10 redirects")
+		}
+		req.Header.Del("Authorization") // remove Auth header
+		redirectReq = req
+		return http.ErrUseLastResponse
+	}
 
 	err = o.fs.pacer.Call(func() (bool, error) {
 		resp, err = o.fs.srv.Call(ctx, &opts)
+		if redirectReq != nil {
+			// It is a redirect which we are expecting
+			err = nil
+		}
 		return shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
@@ -2006,20 +2281,35 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 		}
 		return nil, err
 	}
+	if redirectReq != nil {
+		err = o.fs.pacer.Call(func() (bool, error) {
+			resp, err = o.fs.unAuth.Do(redirectReq)
+			return shouldRetry(ctx, resp, err)
+		})
+		if err != nil {
+			if resp != nil {
+				if virus := resp.Header.Get("X-Virus-Infected"); virus != "" {
+					err = fmt.Errorf("server reports this file is infected with a virus - use --onedrive-av-override to download anyway: %s: %w", virus, err)
+				}
+			}
+			return nil, err
+		}
+	}
 
 	if resp.StatusCode == http.StatusOK && resp.ContentLength > 0 && resp.Header.Get("Content-Range") == "" {
-		//Overwrite size with actual size since size readings from Onedrive is unreliable.
+		// Overwrite size with actual size since size readings from Onedrive is unreliable.
 		o.size = resp.ContentLength
 	}
 	return resp.Body, err
 }
 
 // createUploadSession creates an upload session for the object
-func (o *Object) createUploadSession(ctx context.Context, modTime time.Time) (response *api.CreateUploadResponse, err error) {
+func (o *Object) createUploadSession(ctx context.Context, src fs.ObjectInfo, modTime time.Time) (response *api.CreateUploadResponse, metadata fs.Metadata, err error) {
 	opts := o.fs.newOptsCallWithPath(ctx, o.remote, "POST", "/createUploadSession")
-	createRequest := api.CreateUploadRequest{}
-	createRequest.Item.FileSystemInfo.CreatedDateTime = api.Timestamp(modTime)
-	createRequest.Item.FileSystemInfo.LastModifiedDateTime = api.Timestamp(modTime)
+	createRequest, metadata, err := o.fetchMetadataForCreate(ctx, src, opts.Options, modTime)
+	if err != nil {
+		return nil, metadata, err
+	}
 	var resp *http.Response
 	err = o.fs.pacer.Call(func() (bool, error) {
 		resp, err = o.fs.srv.CallJSON(ctx, &opts, &createRequest, &response)
@@ -2031,7 +2321,7 @@ func (o *Object) createUploadSession(ctx context.Context, modTime time.Time) (re
 		}
 		return shouldRetry(ctx, resp, err)
 	})
-	return response, err
+	return response, metadata, err
 }
 
 // getPosition gets the current position in a multipart upload
@@ -2070,7 +2360,7 @@ func (o *Object) uploadFragment(ctx context.Context, url string, start int64, to
 	//	var response api.UploadFragmentResponse
 	var resp *http.Response
 	var body []byte
-	var skip = int64(0)
+	skip := int64(0)
 	err = o.fs.pacer.Call(func() (bool, error) {
 		toSend := chunkSize - skip
 		opts := rest.Opts{
@@ -2082,7 +2372,7 @@ func (o *Object) uploadFragment(ctx context.Context, url string, start int64, to
 			Options:       options,
 		}
 		_, _ = chunk.Seek(skip, io.SeekStart)
-		resp, err = o.fs.srv.Call(ctx, &opts)
+		resp, err = o.fs.unAuth.Call(ctx, &opts)
 		if err != nil && resp != nil && resp.StatusCode == http.StatusRequestedRangeNotSatisfiable {
 			fs.Debugf(o, "Received 416 error - reading current position from server: %v", err)
 			pos, posErr := o.getPosition(ctx, url)
@@ -2137,14 +2427,17 @@ func (o *Object) cancelUploadSession(ctx context.Context, url string) (err error
 }
 
 // uploadMultipart uploads a file using multipart upload
-func (o *Object) uploadMultipart(ctx context.Context, in io.Reader, size int64, modTime time.Time, options ...fs.OpenOption) (info *api.Item, err error) {
+// if there is metadata, it will be set at the same time, except for permissions, which must be set after (if present and enabled).
+func (o *Object) uploadMultipart(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (info *api.Item, err error) {
+	size := src.Size()
+	modTime := src.ModTime(ctx)
 	if size <= 0 {
 		return nil, errors.New("unknown-sized upload not supported")
 	}
 
 	// Create upload session
 	fs.Debugf(o, "Starting multipart upload")
-	session, err := o.createUploadSession(ctx, modTime)
+	session, metadata, err := o.createUploadSession(ctx, src, modTime)
 	if err != nil {
 		return nil, err
 	}
@@ -2177,12 +2470,25 @@ func (o *Object) uploadMultipart(ctx context.Context, in io.Reader, size int64, 
 		position += n
 	}
 
-	return info, nil
+	err = o.setMetaData(info)
+	if err != nil {
+		return info, err
+	}
+	if metadata == nil || !o.fs.needsUpdatePermissions(metadata) {
+		return info, err
+	}
+	info, err = o.updateMetadata(ctx, metadata) // for permissions, which can't be set during original upload
+	if info == nil {
+		return nil, err
+	}
+	return info, o.setMetaData(info)
 }
 
 // Update the content of a remote file within 4 MiB size in one single request
-// This function will set modtime after uploading, which will create a new version for the remote file
-func (o *Object) uploadSinglepart(ctx context.Context, in io.Reader, size int64, modTime time.Time, options ...fs.OpenOption) (info *api.Item, err error) {
+// (currently only used when size is exactly 0)
+// This function will set modtime and metadata after uploading, which will create a new version for the remote file
+func (o *Object) uploadSinglepart(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (info *api.Item, err error) {
+	size := src.Size()
 	if size < 0 || size > int64(fs.SizeSuffix(4*1024*1024)) {
 		return nil, errors.New("size passed into uploadSinglepart must be >= 0 and <= 4 MiB")
 	}
@@ -2213,7 +2519,8 @@ func (o *Object) uploadSinglepart(ctx context.Context, in io.Reader, size int64,
 		return nil, err
 	}
 	// Set the mod time now and read metadata
-	return o.setModTime(ctx, modTime)
+	info, err = o.fs.fetchAndUpdateMetadata(ctx, src, options, o)
+	return info, o.setMetaData(info)
 }
 
 // Update the object with the contents of the io.Reader, modTime and size
@@ -2228,17 +2535,17 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	defer o.fs.tokenRenewer.Stop()
 
 	size := src.Size()
-	modTime := src.ModTime(ctx)
 
 	var info *api.Item
 	if size > 0 {
-		info, err = o.uploadMultipart(ctx, in, size, modTime, options...)
+		info, err = o.uploadMultipart(ctx, in, src, options...)
 	} else if size == 0 {
-		info, err = o.uploadSinglepart(ctx, in, size, modTime, options...)
+		info, err = o.uploadSinglepart(ctx, in, src, options...)
 	} else {
 		return errors.New("unknown-sized upload not supported")
 	}
 	if err != nil {
+		fs.PrettyPrint(info, "info from Update error", fs.LogLevelDebug)
 		return err
 	}
 
@@ -2249,8 +2556,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 			fs.Errorf(o, "Failed to remove versions: %v", err)
 		}
 	}
-
-	return o.setMetaData(info)
+	return nil
 }
 
 // Remove an object
@@ -2478,7 +2784,7 @@ func (f *Fs) changeNotifyStartPageToken(ctx context.Context) (nextDeltaToken str
 	return
 }
 
-func (f *Fs) changeNotifyNextChange(ctx context.Context, token string) (delta deltaResponse, err error) {
+func (f *Fs) changeNotifyNextChange(ctx context.Context, token string) (delta api.DeltaResponse, err error) {
 	opts := f.buildDriveDeltaOpts(token)
 
 	_, err = f.srv.CallJSON(ctx, &opts, nil, &delta)
@@ -2597,7 +2903,16 @@ var (
 	_ fs.Abouter         = (*Fs)(nil)
 	_ fs.PublicLinker    = (*Fs)(nil)
 	_ fs.CleanUpper      = (*Fs)(nil)
+	_ fs.ListRer         = (*Fs)(nil)
+	_ fs.Shutdowner      = (*Fs)(nil)
 	_ fs.Object          = (*Object)(nil)
 	_ fs.MimeTyper       = &Object{}
 	_ fs.IDer            = &Object{}
+	_ fs.Metadataer      = (*Object)(nil)
+	_ fs.Metadataer      = (*Directory)(nil)
+	_ fs.SetModTimer     = (*Directory)(nil)
+	_ fs.SetMetadataer   = (*Directory)(nil)
+	_ fs.MimeTyper       = &Directory{}
+	_ fs.DirSetModTimer  = (*Fs)(nil)
+	_ fs.MkdirMetadataer = (*Fs)(nil)
 )

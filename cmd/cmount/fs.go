@@ -1,6 +1,4 @@
 //go:build cmount && ((linux && cgo) || (darwin && cgo) || (freebsd && cgo) || windows)
-// +build cmount
-// +build linux,cgo darwin,cgo freebsd,cgo windows
 
 package cmount
 
@@ -27,17 +25,19 @@ const fhUnset = ^uint64(0)
 type FS struct {
 	VFS       *vfs.VFS
 	f         fs.Fs
+	opt       *mountlib.Options
 	ready     chan (struct{})
 	mu        sync.Mutex // to protect the below
 	handles   []vfs.Handle
-	destroyed int32 // read/write with sync/atomic
+	destroyed atomic.Int32
 }
 
 // NewFS makes a new FS
-func NewFS(VFS *vfs.VFS) *FS {
+func NewFS(VFS *vfs.VFS, opt *mountlib.Options) *FS {
 	fsys := &FS{
 		VFS:   VFS,
 		f:     VFS.Fs(),
+		opt:   opt,
 		ready: make(chan (struct{})),
 	}
 	return fsys
@@ -190,7 +190,7 @@ func (fsys *FS) Init() {
 // Destroy call).
 func (fsys *FS) Destroy() {
 	defer log.Trace(fsys.f, "")("")
-	atomic.StoreInt32(&fsys.destroyed, 1)
+	fsys.destroyed.Store(1)
 }
 
 // Getattr reads the attributes for path
@@ -307,6 +307,9 @@ func (fsys *FS) OpenEx(path string, fi *fuse.FileInfo_t) (errc int) {
 
 	// If size unknown then use direct io to read
 	if entry := handle.Node().DirEntry(); entry != nil && entry.Size() < 0 {
+		fi.DirectIo = true
+	}
+	if fsys.opt.DirectIO {
 		fi.DirectIo = true
 	}
 

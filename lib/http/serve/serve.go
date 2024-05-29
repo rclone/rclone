@@ -35,6 +35,10 @@ func Object(w http.ResponseWriter, r *http.Request, o fs.Object) {
 		w.Header().Set("Content-Type", mimeType)
 	}
 
+	// Set last modified
+	modTime := o.ModTime(r.Context())
+	w.Header().Set("Last-Modified", modTime.UTC().Format(http.TimeFormat))
+
 	if r.Method == "HEAD" {
 		return
 	}
@@ -75,7 +79,7 @@ func Object(w http.ResponseWriter, r *http.Request, o fs.Object) {
 		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
 		return
 	}
-	tr := accounting.Stats(r.Context()).NewTransfer(o)
+	tr := accounting.Stats(r.Context()).NewTransfer(o, nil)
 	defer func() {
 		tr.Done(r.Context(), err)
 	}()

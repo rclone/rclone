@@ -22,6 +22,7 @@ import (
 	"github.com/rclone/rclone/fs/accounting"
 	libhttp "github.com/rclone/rclone/lib/http"
 	"github.com/rclone/rclone/lib/http/serve"
+	"github.com/rclone/rclone/lib/systemd"
 	"github.com/rclone/rclone/vfs"
 	"github.com/rclone/rclone/vfs/vfsflags"
 	"github.com/spf13/cobra"
@@ -72,7 +73,8 @@ The server will log errors.  Use ` + "`-v`" + ` to see access logs.
 
 ` + "`--bwlimit`" + ` will be respected for file transfers.  Use ` + "`--stats`" + ` to
 control the stats printing.
-` + libhttp.Help(flagPrefix) + libhttp.TemplateHelp(flagPrefix) + libhttp.AuthHelp(flagPrefix) + vfs.Help + proxy.Help,
+
+` + libhttp.Help(flagPrefix) + libhttp.TemplateHelp(flagPrefix) + libhttp.AuthHelp(flagPrefix) + vfs.Help() + proxy.Help,
 	Annotations: map[string]string{
 		"versionIntroduced": "v1.39",
 		"groups":            "Filter",
@@ -92,6 +94,7 @@ control the stats printing.
 				log.Fatal(err)
 			}
 
+			defer systemd.Notify()()
 			s.server.Wait()
 			return nil
 		})
@@ -295,7 +298,7 @@ func (s *HTTP) serveFile(w http.ResponseWriter, r *http.Request, remote string) 
 	}()
 
 	// Account the transfer
-	tr := accounting.Stats(r.Context()).NewTransfer(obj)
+	tr := accounting.Stats(r.Context()).NewTransfer(obj, nil)
 	defer tr.Done(r.Context(), nil)
 	// FIXME in = fs.NewAccount(in, obj).WithBuffer() // account the transfer
 

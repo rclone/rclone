@@ -7,7 +7,6 @@ import (
 
 	"github.com/shirou/gopsutil/v3/host"
 	"golang.org/x/sys/windows"
-	"golang.org/x/sys/windows/registry"
 )
 
 // GetOSVersion returns OS version, kernel and bitness
@@ -95,38 +94,4 @@ func getRegistryVersionString(name string) string {
 	}
 
 	return windows.UTF16ToString(regBuf[:])
-}
-
-func getRegistryVersionInt(name string) int {
-	var (
-		err     error
-		handle  windows.Handle
-		bufLen  uint32
-		valType uint32
-	)
-
-	err = windows.RegOpenKeyEx(windows.HKEY_LOCAL_MACHINE, regVersionKeyUTF16, 0, windows.KEY_READ|windows.KEY_WOW64_64KEY, &handle)
-	if err != nil {
-		return 0
-	}
-	defer func() {
-		_ = windows.RegCloseKey(handle)
-	}()
-
-	nameUTF16 := windows.StringToUTF16Ptr(name)
-	err = windows.RegQueryValueEx(handle, nameUTF16, nil, &valType, nil, &bufLen)
-	if err != nil {
-		return 0
-	}
-
-	if valType != registry.DWORD || bufLen != 4 {
-		return 0
-	}
-	var val32 uint32
-	err = windows.RegQueryValueEx(handle, nameUTF16, nil, &valType, (*byte)(unsafe.Pointer(&val32)), &bufLen)
-	if err != nil {
-		return 0
-	}
-
-	return int(val32)
 }

@@ -1,5 +1,4 @@
-//go:build linux || freebsd
-// +build linux freebsd
+//go:build linux
 
 package mount
 
@@ -76,6 +75,9 @@ func (f *File) Open(ctx context.Context, req *fuse.OpenRequest, resp *fuse.OpenR
 
 	// If size unknown then use direct io to read
 	if entry := handle.Node().DirEntry(); entry != nil && entry.Size() < 0 {
+		resp.Flags |= fuse.OpenDirectIO
+	}
+	if f.fsys.opt.DirectIO {
 		resp.Flags |= fuse.OpenDirectIO
 	}
 

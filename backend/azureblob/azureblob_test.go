@@ -1,7 +1,6 @@
 // Test AzureBlob filesystem interface
 
 //go:build !plan9 && !solaris && !js
-// +build !plan9,!solaris,!js
 
 package azureblob
 
@@ -19,7 +18,7 @@ func TestIntegration(t *testing.T) {
 	fstests.Run(t, &fstests.Opt{
 		RemoteName:  "TestAzureBlob:",
 		NilObject:   (*Object)(nil),
-		TiersToTest: []string{"Hot", "Cool"},
+		TiersToTest: []string{"Hot", "Cool", "Cold"},
 		ChunkedUpload: fstests.ChunkedUploadConfig{
 			MinChunkSize: defaultChunkSize,
 		},
@@ -31,11 +30,11 @@ func TestIntegration2(t *testing.T) {
 	if *fstest.RemoteName != "" {
 		t.Skip("Skipping as -remote set")
 	}
-	name := "TestAzureBlob:"
+	name := "TestAzureBlob"
 	fstests.Run(t, &fstests.Opt{
-		RemoteName:  name,
+		RemoteName:  name + ":",
 		NilObject:   (*Object)(nil),
-		TiersToTest: []string{"Hot", "Cool"},
+		TiersToTest: []string{"Hot", "Cool", "Cold"},
 		ChunkedUpload: fstests.ChunkedUploadConfig{
 			MinChunkSize: defaultChunkSize,
 		},
@@ -62,6 +61,7 @@ func TestValidateAccessTier(t *testing.T) {
 		"HOT":     {"HOT", true},
 		"Hot":     {"Hot", true},
 		"cool":    {"cool", true},
+		"cold":    {"cold", true},
 		"archive": {"archive", true},
 		"empty":   {"", false},
 		"unknown": {"unknown", false},

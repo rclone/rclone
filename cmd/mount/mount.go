@@ -1,5 +1,4 @@
-//go:build linux || freebsd
-// +build linux freebsd
+//go:build linux
 
 // Package mount implements a FUSE mounting system for rclone remotes.
 package mount

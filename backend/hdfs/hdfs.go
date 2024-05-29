@@ -1,5 +1,4 @@
 //go:build !plan9
-// +build !plan9
 
 // Package hdfs provides an interface to the HDFS storage system.
 package hdfs
@@ -20,9 +19,10 @@ func init() {
 		NewFs:       NewFs,
 		Options: []fs.Option{{
 			Name:      "namenode",
-			Help:      "Hadoop name node and port.\n\nE.g. \"namenode:8020\" to connect to host namenode at port 8020.",
+			Help:      "Hadoop name nodes and ports.\n\nE.g. \"namenode-1:8020,namenode-2:8020,...\" to connect to host namenodes at port 8020.",
 			Required:  true,
 			Sensitive: true,
+			Default:   fs.CommaSepList{},
 		}, {
 			Name: "username",
 			Help: "Hadoop user name.",
@@ -65,7 +65,7 @@ and 'privacy'. Used only with KERBEROS enabled.`,
 
 // Options for this backend
 type Options struct {
-	Namenode               string               `config:"namenode"`
+	Namenode               fs.CommaSepList      `config:"namenode"`
 	Username               string               `config:"username"`
 	ServicePrincipalName   string               `config:"service_principal_name"`
 	DataTransferProtection string               `config:"data_transfer_protection"`

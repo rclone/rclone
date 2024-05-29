@@ -104,6 +104,7 @@ func (gs *Groups) AllRegistered() map[*pflag.Flag]struct{} {
 	return out
 }
 
+// All is the global stats Groups
 var All *Groups
 
 // Groups of flags for documentation purposes

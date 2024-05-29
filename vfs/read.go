@@ -79,7 +79,7 @@ func (fh *ReadFileHandle) openPending() (err error) {
 	if err != nil {
 		return err
 	}
-	tr := accounting.GlobalStats().NewTransfer(o)
+	tr := accounting.GlobalStats().NewTransfer(o, nil)
 	fh.done = tr.Done
 	fh.r = tr.Account(context.TODO(), r).WithBuffer() // account the transfer
 	fh.opened = true
@@ -223,7 +223,7 @@ func waitSequential(what string, remote string, cond *sync.Cond, maxWait time.Du
 	var (
 		timeout = time.NewTimer(maxWait)
 		done    = make(chan struct{})
-		abort   = int32(0)
+		abort   atomic.Int32
 	)
 	go func() {
 		select {
@@ -232,14 +232,14 @@ func waitSequential(what string, remote string, cond *sync.Cond, maxWait time.Du
 			// cond.Broadcast. NB cond.L == mu
 			cond.L.Lock()
 			// set abort flag and give all the waiting goroutines a kick on timeout
-			atomic.StoreInt32(&abort, 1)
+			abort.Store(1)
 			fs.Debugf(remote, "aborting in-sequence %s wait, off=%d", what, off)
 			cond.Broadcast()
 			cond.L.Unlock()
 		case <-done:
 		}
 	}()
-	for *poff != off && atomic.LoadInt32(&abort) == 0 {
+	for *poff != off && abort.Load() == 0 {
 		fs.Debugf(remote, "waiting for in-sequence %s to %d for %v", what, off, maxWait)
 		cond.Wait()
 	}
@@ -363,7 +363,7 @@ func (fh *ReadFileHandle) checkHash() error {
 			return err
 		}
 		if !hash.Equals(dstSum, srcSum) {
-			return fmt.Errorf("corrupted on transfer: %v hash differ %q vs %q", hashType, dstSum, srcSum)
+			return fmt.Errorf("corrupted on transfer: %v hashes differ src %q vs dst %q", hashType, srcSum, dstSum)
 		}
 	}
 
@@ -482,6 +482,11 @@ func (fh *ReadFileHandle) Release() error {
 		// fs.Debugf(fh.remote, "ReadFileHandle.Release OK")
 	}
 	return err
+}
+
+// Name returns the name of the file from the underlying Object.
+func (fh *ReadFileHandle) Name() string {
+	return fh.file.String()
 }
 
 // Size returns the size of the underlying file

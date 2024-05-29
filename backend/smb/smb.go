@@ -9,6 +9,7 @@ import (
 	"path"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/rclone/rclone/fs"
@@ -140,7 +141,7 @@ type Fs struct {
 	features *fs.Features // optional features
 	pacer    *fs.Pacer    // pacer for operations
 
-	sessions int32
+	sessions atomic.Int32
 	poolMu   sync.Mutex
 	pool     []*conn
 	drain    *time.Timer // used to drain the pool when we stop using the connections
@@ -176,6 +177,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		CaseInsensitive:         opt.CaseInsensitive,
 		CanHaveEmptyDirectories: true,
 		BucketBased:             true,
+		PartialUploads:          true,
 	}).Fill(ctx, f)
 
 	f.pacer = fs.NewPacer(ctx, pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant)))

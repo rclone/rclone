@@ -4,14 +4,12 @@ package rcd
 import (
 	"context"
 	"log"
-	"sync"
 
-	sysdnotify "github.com/iguanesolutions/go-systemd/v5/notify"
 	"github.com/rclone/rclone/cmd"
 	"github.com/rclone/rclone/fs/rc/rcflags"
 	"github.com/rclone/rclone/fs/rc/rcserver"
-	"github.com/rclone/rclone/lib/atexit"
 	libhttp "github.com/rclone/rclone/lib/http"
+	"github.com/rclone/rclone/lib/systemd"
 	"github.com/spf13/cobra"
 )
 
@@ -22,8 +20,7 @@ func init() {
 var commandDefinition = &cobra.Command{
 	Use:   "rcd <path to files to serve>*",
 	Short: `Run rclone listening to remote control commands only.`,
-	Long: `
-This runs rclone so that it only listens to remote control commands.
+	Long: `This runs rclone so that it only listens to remote control commands.
 
 This is useful if you are controlling rclone via the rc API.
 
@@ -32,6 +29,7 @@ for GET requests on the URL passed in.  It will also open the URL in
 the browser when rclone is run.
 
 See the [rc documentation](/rc/) for more info on the rc flags.
+
 ` + libhttp.Help(rcflags.FlagPrefix) + libhttp.TemplateHelp(rcflags.FlagPrefix) + libhttp.AuthHelp(rcflags.FlagPrefix),
 	Annotations: map[string]string{
 		"versionIntroduced": "v1.45",
@@ -58,21 +56,8 @@ See the [rc documentation](/rc/) for more info on the rc flags.
 		}
 
 		// Notify stopping on exit
-		var finaliseOnce sync.Once
-		finalise := func() {
-			finaliseOnce.Do(func() {
-				_ = sysdnotify.Stopping()
-			})
-		}
-		fnHandle := atexit.Register(finalise)
-		defer atexit.Unregister(fnHandle)
-
-		// Notify ready to systemd
-		if err := sysdnotify.Ready(); err != nil {
-			log.Fatalf("failed to notify ready to systemd: %v", err)
-		}
+		defer systemd.Notify()()
 
 		s.Wait()
-		finalise()
 	},
 }

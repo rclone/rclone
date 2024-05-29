@@ -93,13 +93,14 @@ const (
 // SeekModes contains all valid SeekMode's
 var SeekModes = []SeekMode{SeekModeNone, SeekModeRegular, SeekModeRange}
 
-// ContentMockObject mocks an fs.Object and has content
+// ContentMockObject mocks an fs.Object and has content, mod time
 type ContentMockObject struct {
 	Object
 	content     []byte
 	seekMode    SeekMode
 	f           fs.Fs
 	unknownSize bool
+	modTime     time.Time
 }
 
 // WithContent returns an fs.Object with the given content.
@@ -118,7 +119,7 @@ func (o *ContentMockObject) SetFs(f fs.Fs) {
 
 // SetUnknownSize makes the mock object return -1 for size if true
 func (o *ContentMockObject) SetUnknownSize(unknownSize bool) {
-	o.unknownSize = true
+	o.unknownSize = unknownSize
 }
 
 // Fs returns read only access to the Fs that this object is part of
@@ -190,6 +191,18 @@ func (o *ContentMockObject) Hash(ctx context.Context, t hash.Type) (string, erro
 		return "", err
 	}
 	return hasher.Sums()[t], nil
+}
+
+// ModTime returns the modification date of the file
+// It should return a best guess if one isn't available
+func (o *ContentMockObject) ModTime(ctx context.Context) time.Time {
+	return o.modTime
+}
+
+// SetModTime sets the metadata on the object to set the modification date
+func (o *ContentMockObject) SetModTime(ctx context.Context, t time.Time) error {
+	o.modTime = t
+	return nil
 }
 
 type readCloser struct{ io.Reader }

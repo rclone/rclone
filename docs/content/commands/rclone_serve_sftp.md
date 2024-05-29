@@ -65,7 +65,6 @@ used. Omitting "restrict" and using  `--sftp-path-override` to enable
 checksumming is possible but less secure and you could use the SFTP server
 provided by OpenSSH in this case.
 
-
 ## VFS - Virtual File System
 
 This command uses the VFS layer. This adapts the cloud storage objects
@@ -140,12 +139,13 @@ write simultaneously to a file.  See below for more details.
 Note that the VFS cache is separate from the cache backend and you may
 find that you need one or the other or both.
 
-    --cache-dir string                   Directory rclone will use for caching.
-    --vfs-cache-mode CacheMode           Cache mode off|minimal|writes|full (default off)
-    --vfs-cache-max-age duration         Max time since last access of objects in the cache (default 1h0m0s)
-    --vfs-cache-max-size SizeSuffix      Max total size of objects in the cache (default off)
-    --vfs-cache-poll-interval duration   Interval to poll the cache for stale objects (default 1m0s)
-    --vfs-write-back duration            Time to writeback files after last use when using cache (default 5s)
+    --cache-dir string                     Directory rclone will use for caching.
+    --vfs-cache-mode CacheMode             Cache mode off|minimal|writes|full (default off)
+    --vfs-cache-max-age duration           Max time since last access of objects in the cache (default 1h0m0s)
+    --vfs-cache-max-size SizeSuffix        Max total size of objects in the cache (default off)
+    --vfs-cache-min-free-space SizeSuffix  Target minimum free space on the disk containing the cache (default off)
+    --vfs-cache-poll-interval duration     Interval to poll the cache for stale objects (default 1m0s)
+    --vfs-write-back duration              Time to writeback files after last use when using cache (default 5s)
 
 If run with `-vv` rclone will print the location of the file cache.  The
 files are stored in the user cache file area which is OS dependent but
@@ -162,14 +162,15 @@ seconds. If rclone is quit or dies with files that haven't been
 uploaded, these will be uploaded next time rclone is run with the same
 flags.
 
-If using `--vfs-cache-max-size` note that the cache may exceed this size
-for two reasons.  Firstly because it is only checked every
-`--vfs-cache-poll-interval`.  Secondly because open files cannot be
-evicted from the cache. When `--vfs-cache-max-size`
-is exceeded, rclone will attempt to evict the least accessed files
-from the cache first. rclone will start with files that haven't
-been accessed for the longest. This cache flushing strategy is
-efficient and more relevant files are likely to remain cached.
+If using `--vfs-cache-max-size` or `--vfs-cache-min-free-size` note
+that the cache may exceed these quotas for two reasons. Firstly
+because it is only checked every `--vfs-cache-poll-interval`. Secondly
+because open files cannot be evicted from the cache. When
+`--vfs-cache-max-size` or `--vfs-cache-min-free-size` is exceeded,
+rclone will attempt to evict the least accessed files from the cache
+first. rclone will start with files that haven't been accessed for the
+longest. This cache flushing strategy is efficient and more relevant
+files are likely to remain cached.
 
 The `--vfs-cache-max-age` will evict files from the cache
 after the set time since last access has passed. The default value of
@@ -375,6 +376,28 @@ If the flag is not provided on the command line, then its default value depends
 on the operating system where rclone runs: "true" on Windows and macOS, "false"
 otherwise. If the flag is provided without a value, then it is "true".
 
+The `--no-unicode-normalization` flag controls whether a similar "fixup" is
+performed for filenames that differ but are [canonically
+equivalent](https://en.wikipedia.org/wiki/Unicode_equivalence) with respect to
+unicode. Unicode normalization can be particularly helpful for users of macOS,
+which prefers form NFD instead of the NFC used by most other platforms. It is
+therefore highly recommended to keep the default of `false` on macOS, to avoid
+encoding compatibility issues.
+
+In the (probably unlikely) event that a directory has multiple duplicate
+filenames after applying case and unicode normalization, the `--vfs-block-norm-dupes`
+flag allows hiding these duplicates. This comes with a performance tradeoff, as
+rclone will have to scan the entire directory for duplicates when listing a
+directory. For this reason, it is recommended to leave this disabled if not
+needed. However, macOS users may wish to consider using it, as otherwise, if a
+remote directory contains both NFC and NFD versions of the same filename, an odd
+situation will occur: both versions of the file will be visible in the mount,
+and both will appear to be editable, however, editing either version will
+actually result in only the NFD version getting edited under the hood. `--vfs-block-
+norm-dupes` prevents this confusion by detecting this scenario, hiding the
+duplicates, and logging an error, similar to how this is handled in `rclone
+sync`.
+
 ## VFS Disk Options
 
 This flag allows you to manually set the statistics about the filing system.
@@ -407,7 +430,7 @@ together, if `--auth-proxy` is set the authorized keys option will be
 ignored.
 
 There is an example program
-[bin/test_proxy.py](https://github.com/rclone/rclone/blob/master/test_proxy.py)
+[bin/test_proxy.py](https://github.com/rclone/rclone/blob/master/bin/test_proxy.py)
 in the rclone source code.
 
 The program's job is to take a `user` and `pass` on the input and turn
@@ -504,8 +527,10 @@ rclone serve sftp remote:path [flags]
       --uid uint32                             Override the uid field set by the filesystem (not supported on Windows) (default 1000)
       --umask int                              Override the permission bits set by the filesystem (not supported on Windows) (default 2)
       --user string                            User name for authentication
+      --vfs-block-norm-dupes                   If duplicate filenames exist in the same directory (after normalization), log an error and hide the duplicates (may have a performance cost)
       --vfs-cache-max-age Duration             Max time since last access of objects in the cache (default 1h0m0s)
       --vfs-cache-max-size SizeSuffix          Max total size of objects in the cache (default off)
+      --vfs-cache-min-free-space SizeSuffix    Target minimum free space on the disk containing the cache (default off)
       --vfs-cache-mode CacheMode               Cache mode off|minimal|writes|full (default off)
       --vfs-cache-poll-interval Duration       Interval to poll the cache for stale objects (default 1m0s)
       --vfs-case-insensitive                   If a file name not found, find a case insensitive match
@@ -515,6 +540,7 @@ rclone serve sftp remote:path [flags]
       --vfs-read-chunk-size SizeSuffix         Read the source objects in chunks (default 128Mi)
       --vfs-read-chunk-size-limit SizeSuffix   If greater than --vfs-read-chunk-size, double the chunk size after each chunk read, until the limit is reached ('off' is unlimited) (default off)
       --vfs-read-wait Duration                 Time to wait for in-sequence read before seeking (default 20ms)
+      --vfs-refresh                            Refreshes the directory cache recursively in the background on start
       --vfs-used-is-size rclone size           Use the rclone size algorithm for Used size
       --vfs-write-back Duration                Time to writeback files after last use when using cache (default 5s)
       --vfs-write-wait Duration                Time to wait for in-sequence write before giving error (default 1s)

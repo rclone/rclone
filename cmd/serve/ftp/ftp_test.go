@@ -4,7 +4,6 @@
 // We skip tests on platforms with troublesome character mappings
 
 //go:build !windows && !darwin && !plan9
-// +build !windows,!darwin,!plan9
 
 package ftp
 
@@ -18,7 +17,7 @@ import (
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/obscure"
 	"github.com/stretchr/testify/assert"
-	ftp "goftp.io/server/core"
+	ftp "goftp.io/server/v2"
 )
 
 const (

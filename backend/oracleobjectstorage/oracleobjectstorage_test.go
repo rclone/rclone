@@ -1,5 +1,4 @@
 //go:build !plan9 && !solaris && !js
-// +build !plan9,!solaris,!js
 
 package oracleobjectstorage
 
@@ -30,4 +29,12 @@ func (f *Fs) SetUploadCutoff(cs fs.SizeSuffix) (fs.SizeSuffix, error) {
 	return f.setUploadCutoff(cs)
 }
 
-var _ fstests.SetUploadChunkSizer = (*Fs)(nil)
+func (f *Fs) SetCopyCutoff(cs fs.SizeSuffix) (fs.SizeSuffix, error) {
+	return f.setCopyCutoff(cs)
+}
+
+var (
+	_ fstests.SetUploadChunkSizer = (*Fs)(nil)
+	_ fstests.SetUploadCutoffer   = (*Fs)(nil)
+	_ fstests.SetCopyCutoffer     = (*Fs)(nil)
+)

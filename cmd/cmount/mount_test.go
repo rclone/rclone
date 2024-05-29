@@ -1,7 +1,4 @@
 //go:build cmount && ((linux && cgo) || (darwin && cgo) || (freebsd && cgo) || windows) && (!race || !windows)
-// +build cmount
-// +build linux,cgo darwin,cgo freebsd,cgo windows
-// +build !race !windows
 
 // Package cmount implements a FUSE mounting system for rclone remotes.
 //
@@ -15,6 +12,7 @@ import (
 	"testing"
 
 	"github.com/rclone/rclone/fstest/testy"
+	"github.com/rclone/rclone/vfs/vfscommon"
 	"github.com/rclone/rclone/vfs/vfstest"
 )
 
@@ -23,5 +21,5 @@ func TestMount(t *testing.T) {
 	if runtime.GOOS == "darwin" {
 		testy.SkipUnreliable(t)
 	}
-	vfstest.RunTests(t, false, mount)
+	vfstest.RunTests(t, false, vfscommon.CacheModeOff, true, mount)
 }

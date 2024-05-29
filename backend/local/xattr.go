@@ -1,12 +1,10 @@
 //go:build !openbsd && !plan9
-// +build !openbsd,!plan9
 
 package local
 
 import (
 	"fmt"
 	"strings"
-	"sync/atomic"
 	"syscall"
 
 	"github.com/pkg/xattr"
@@ -28,7 +26,7 @@ func (f *Fs) xattrIsNotSupported(err error) bool {
 	// Xattrs not supported can be ENOTSUP or ENOATTR or EINVAL (on Solaris)
 	if xattrErr.Err == syscall.EINVAL || xattrErr.Err == syscall.ENOTSUP || xattrErr.Err == xattr.ENOATTR {
 		// Show xattrs not supported
-		if atomic.CompareAndSwapInt32(&f.xattrSupported, 1, 0) {
+		if f.xattrSupported.CompareAndSwap(1, 0) {
 			fs.Errorf(f, "xattrs not supported - disabling: %v", err)
 		}
 		return true
@@ -41,7 +39,7 @@ func (f *Fs) xattrIsNotSupported(err error) bool {
 // It doesn't return any attributes owned by this backend in
 // metadataKeys
 func (o *Object) getXattr() (metadata fs.Metadata, err error) {
-	if !xattrSupported || atomic.LoadInt32(&o.fs.xattrSupported) == 0 {
+	if !xattrSupported || o.fs.xattrSupported.Load() == 0 {
 		return nil, nil
 	}
 	var list []string
@@ -90,7 +88,7 @@ func (o *Object) getXattr() (metadata fs.Metadata, err error) {
 //
 // It doesn't set any attributes owned by this backend in metadataKeys
 func (o *Object) setXattr(metadata fs.Metadata) (err error) {
-	if !xattrSupported || atomic.LoadInt32(&o.fs.xattrSupported) == 0 {
+	if !xattrSupported || o.fs.xattrSupported.Load() == 0 {
 		return nil
 	}
 	for k, value := range metadata {

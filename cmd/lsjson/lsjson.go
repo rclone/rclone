@@ -63,7 +63,7 @@ The output is an array of Items, where each Item looks like this
       "Tier" : "hot",
     }
 
-If ` + "`--hash`" + ` is not specified the Hashes property won't be emitted. The
+If ` + "`--hash`" + ` is not specified, the Hashes property will be omitted. The
 types of hash can be specified with the ` + "`--hash-type`" + ` parameter (which
 may be repeated). If ` + "`--hash-type`" + ` is set then it implies ` + "`--hash`" + `.
 
@@ -75,7 +75,7 @@ If ` + "`--no-mimetype`" + ` is specified then MimeType will be blank. This can
 speed things up on remotes where reading the MimeType takes an extra
 request (e.g. s3, swift).
 
-If ` + "`--encrypted`" + ` is not specified the Encrypted won't be emitted.
+If ` + "`--encrypted`" + ` is not specified the Encrypted will be omitted.
 
 If ` + "`--dirs-only`" + ` is not specified files in addition to directories are
 returned
@@ -117,6 +117,12 @@ can be processed line by line as each item is written one to a line.
 		"groups":            "Filter,Listing",
 	},
 	RunE: func(command *cobra.Command, args []string) error {
+		// Make sure we set the global Metadata flag too as it
+		// isn't parsed by cobra. We need to do this first
+		// before any backends are created.
+		ci := fs.GetConfig(context.Background())
+		ci.Metadata = opt.Metadata
+
 		cmd.CheckArgs(1, 1, command, args)
 		var fsrc fs.Fs
 		var remote string

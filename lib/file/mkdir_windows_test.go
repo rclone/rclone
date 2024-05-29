@@ -1,5 +1,4 @@
 //go:build windows
-// +build windows
 
 package file
 
@@ -35,7 +34,11 @@ func TestMkdirAll(t *testing.T) {
 	if err != nil {
 		t.Fatalf("create %q: %s", fpath, err)
 	}
-	defer f.Close()
+	defer func() {
+		if err := f.Close(); err != nil {
+			t.Fatalf("Close %q: %s", fpath, err)
+		}
+	}()
 
 	// Can't make directory named after file.
 	err = MkdirAll(fpath, 0777)
@@ -89,7 +92,7 @@ func checkMkdirAll(t *testing.T, path string, valid bool, errormsgs ...string) {
 				ok = true
 			}
 		}
-		assert.True(t, ok, err.Error())
+		assert.True(t, ok, fmt.Sprintf("Error message '%v' didn't match any of %v", err, errormsgs))
 	}
 }
 
@@ -114,7 +117,7 @@ func TestMkdirAllOnDrive(t *testing.T) {
 
 	checkMkdirAll(t, drive, true, "")
 	checkMkdirAll(t, drive+`\`, true, "")
-	checkMkdirAll(t, `\\?\`+drive, true, "")
+	// checkMkdirAll(t, `\\?\`+drive, true, "") - this isn't actually a Valid Windows path - this test used to work under go1.21.3 but fails under go1.21.4
 	checkMkdirAll(t, `\\?\`+drive+`\`, true, "")
 	checkMkdirAllSubdirs(t, path, true, "")
 	checkMkdirAllSubdirs(t, `\\?\`+path, true, "")
@@ -129,10 +132,11 @@ func TestMkdirAllOnDrive(t *testing.T) {
 // "mkdir \\?\A:\: The system cannot find the path specified."
 func TestMkdirAllOnUnusedDrive(t *testing.T) {
 	path := unusedDrive(t)
-	errormsg := fmt.Sprintf("mkdir %s\\: The system cannot find the path specified.", path)
+	errormsg := fmt.Sprintf(`mkdir %s\: The system cannot find the path specified.`, path)
 	checkMkdirAllSubdirs(t, path, false, errormsg)
-	errormsg = fmt.Sprintf("mkdir \\\\?\\%s\\: The system cannot find the path specified.", path)
-	checkMkdirAllSubdirs(t, `\\?\`+path, false, errormsg)
+	errormsg1 := fmt.Sprintf(`mkdir \\?\%s\: The system cannot find the path specified.`, path) // pre go1.21.4
+	errormsg2 := fmt.Sprintf(`mkdir \\?\%s: The system cannot find the file specified.`, path)  // go1.21.4 and after
+	checkMkdirAllSubdirs(t, `\\?\`+path, false, errormsg1, errormsg2)
 }
 
 // Testing paths on unknown network host

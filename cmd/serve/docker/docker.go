@@ -3,6 +3,7 @@ package docker
 
 import (
 	"context"
+	_ "embed"
 	"path/filepath"
 	"strings"
 	"syscall"
@@ -30,6 +31,14 @@ var (
 	noSpec      = false
 )
 
+//go:embed docker.md
+var longHelp string
+
+// help returns the help string cleaned up to simplify appending
+func help() string {
+	return strings.TrimSpace(longHelp) + "\n\n"
+}
+
 func init() {
 	cmdFlags := Command.Flags()
 	// Add command specific flags
@@ -47,7 +56,7 @@ func init() {
 var Command = &cobra.Command{
 	Use:   "docker",
 	Short: `Serve any remote on docker's volume plugin API.`,
-	Long:  strings.ReplaceAll(longHelp, "|", "`") + vfs.Help,
+	Long:  help() + vfs.Help(),
 	Annotations: map[string]string{
 		"versionIntroduced": "v1.56",
 		"groups":            "Filter",

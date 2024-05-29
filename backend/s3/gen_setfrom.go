@@ -1,7 +1,6 @@
 // Generate boilerplate code for setting similar structs from each other
 
 //go:build ignore
-// +build ignore
 
 package main
 
@@ -98,4 +97,5 @@ import "github.com/aws/aws-sdk-go/service/s3"
 	genSetFrom(new(s3.HeadObjectOutput), new(s3.GetObjectOutput))
 	genSetFrom(new(s3.CreateMultipartUploadInput), new(s3.PutObjectInput))
 	genSetFrom(new(s3.HeadObjectOutput), new(s3.PutObjectInput))
+	genSetFrom(new(s3.CopyObjectInput), new(s3.PutObjectInput))
 }

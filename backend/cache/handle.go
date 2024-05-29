@@ -1,5 +1,4 @@
 //go:build !plan9 && !js
-// +build !plan9,!js
 
 package cache
 
@@ -119,7 +118,7 @@ func (r *Handle) startReadWorkers() {
 	r.scaleWorkers(totalWorkers)
 }
 
-// scaleOutWorkers will increase the worker pool count by the provided amount
+// scaleWorkers will increase the worker pool count by the provided amount
 func (r *Handle) scaleWorkers(desired int) {
 	current := r.workers
 	if current == desired {

@@ -56,8 +56,7 @@ type MediaItem struct {
 		CreationTime time.Time `json:"creationTime"`
 		Width        string    `json:"width"`
 		Height       string    `json:"height"`
-		Photo        struct {
-		} `json:"photo"`
+		Photo        struct{}  `json:"photo"`
 	} `json:"mediaMetadata"`
 	Filename string `json:"filename"`
 }
@@ -68,7 +67,7 @@ type MediaItems struct {
 	NextPageToken string      `json:"nextPageToken"`
 }
 
-//Content categories
+// Content categories
 // NONE	Default content category. This category is ignored when any other category is used in the filter.
 // LANDSCAPES	Media items containing landscapes.
 // RECEIPTS	Media items containing receipts.
@@ -187,5 +186,5 @@ type BatchCreateResponse struct {
 
 // BatchRemoveItems is for removing items from an album
 type BatchRemoveItems struct {
-	MediaItemIds []string `json:"mediaItemIds"`
+	MediaItemIDs []string `json:"mediaItemIds"`
 }

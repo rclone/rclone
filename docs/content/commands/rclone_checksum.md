@@ -1,6 +1,6 @@
 ---
 title: "rclone checksum"
-description: "Checks the files in the source against a SUM file."
+description: "Checks the files in the destination against a SUM file."
 slug: rclone_checksum
 url: /commands/rclone_checksum/
 groups: Filter,Listing
@@ -9,17 +9,20 @@ versionIntroduced: v1.56
 ---
 # rclone checksum
 
-Checks the files in the source against a SUM file.
+Checks the files in the destination against a SUM file.
 
 ## Synopsis
 
 
-Checks that hashsums of source files match the SUM file.
+Checks that hashsums of destination files match the SUM file.
 It compares hashes (MD5, SHA1, etc) and logs a report of files which
 don't match.  It doesn't alter the file system.
 
-If you supply the `--download` flag, it will download the data from remote
-and calculate the contents hash on the fly.  This can be useful for remotes
+The sumfile is treated as the source and the dst:path is treated as
+the destination for the purposes of the output.
+
+If you supply the `--download` flag, it will download the data from the remote
+and calculate the content hash on the fly.  This can be useful for remotes
 that don't support hashes or if you really want to check all the data.
 
 Note that hash values in the SUM file are treated as case insensitive.
@@ -50,7 +53,7 @@ option for more information.
 
 
 ```
-rclone checksum <hash> sumfile src:path [flags]
+rclone checksum <hash> sumfile dst:path [flags]
 ```
 
 ## Options

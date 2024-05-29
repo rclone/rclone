@@ -1,5 +1,4 @@
 //go:build windows
-// +build windows
 
 package file
 
@@ -53,7 +52,7 @@ func MkdirAll(path string, perm os.FileMode) error {
 				j--
 			}
 			if j > 1 {
-				if path[:j-1] != `\\?\UNC` {
+				if path[:j-1] != `\\?\UNC` && path[:j-1] != `\\?` {
 					// Create parent.
 					err = MkdirAll(path[:j-1], perm)
 					if err != nil {

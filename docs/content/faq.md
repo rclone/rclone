@@ -71,7 +71,7 @@ support partially uploading an object. You can't take an existing
 object, and change some bytes in the middle of it.
 
 It would be possible to make a sync system which stored binary diffs
-instead of whole objects like rclone does, but that would break the
+like rsync does, instead of whole objects, but that would break the
 1:1 mapping of files on your hard disk to objects in the remote cloud
 storage system.
 

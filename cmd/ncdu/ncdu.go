@@ -1,5 +1,4 @@
 //go:build !plan9 && !js
-// +build !plan9,!js
 
 // Package ncdu implements a text based user interface for exploring a remote
 package ncdu
@@ -112,8 +111,10 @@ func helpText() (tr []string) {
 	tr = append(tr, []string{
 		" Y display current path",
 		" ^L refresh screen (fix screen corruption)",
+		" r recalculate file sizes",
 		" ? to toggle help on and off",
-		" q/ESC/^c to quit",
+		" ESC to close the menu box",
+		" q/^c to quit",
 	}...)
 	return
 }
@@ -122,6 +123,7 @@ func helpText() (tr []string) {
 type UI struct {
 	s                  tcell.Screen
 	f                  fs.Fs     // fs being displayed
+	cancel             func()    // cancel the current scanning process
 	fsName             string    // human name of Fs
 	root               *scan.Dir // root directory
 	d                  *scan.Dir // current directory being displayed
@@ -384,6 +386,12 @@ func (u *UI) Draw() {
 		}
 		showEmptyDir := u.hasEmptyDir()
 		dirPos := u.dirPosMap[u.path]
+		// Check to see if a rescan has invalidated the position
+		if dirPos.offset >= len(u.sortPerm) {
+			delete(u.dirPosMap, u.path)
+			dirPos.offset = 0
+			dirPos.entry = 0
+		}
 		for i, j := range u.sortPerm[dirPos.offset:] {
 			entry := u.entries[j]
 			n := i + dirPos.offset
@@ -900,6 +908,16 @@ func NewUI(f fs.Fs) *UI {
 	}
 }
 
+func (u *UI) scan() (chan *scan.Dir, chan error, chan struct{}) {
+	if cancel := u.cancel; cancel != nil {
+		cancel()
+	}
+	u.listing = true
+	ctx := context.Background()
+	ctx, u.cancel = context.WithCancel(ctx)
+	return scan.Scan(ctx, u.f)
+}
+
 // Run shows the user interface
 func (u *UI) Run() error {
 	var err error
@@ -936,8 +954,7 @@ func (u *UI) Run() error {
 	defer u.s.Fini()
 
 	// scan the disk in the background
-	u.listing = true
-	rootChan, errChan, updated := scan.Scan(context.Background(), u.f)
+	rootChan, errChan, updated := u.scan()
 
 	// Poll the events into a channel
 	events := make(chan tcell.Event)
@@ -973,7 +990,7 @@ outer:
 				}
 				switch c {
 				case key(tcell.KeyEsc), key(tcell.KeyCtrlC), 'q':
-					if u.showBox {
+					if u.showBox || c == key(tcell.KeyEsc) {
 						u.showBox = false
 					} else {
 						break outer
@@ -1038,6 +1055,9 @@ outer:
 					u.deleteSelected()
 				case '?':
 					u.togglePopupBox(helpText())
+				case 'r':
+					// restart scan
+					rootChan, errChan, updated = u.scan()
 
 				// Refresh the screen. Not obvious what key to map
 				// this onto, but ^L is a common choice.

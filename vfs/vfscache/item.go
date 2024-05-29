@@ -593,6 +593,10 @@ func (item *Item) _store(ctx context.Context, storeFn StoreFn) (err error) {
 		o, err := operations.Copy(ctx, item.c.fremote, o, name, cacheObj)
 		item.mu.Lock()
 		if err != nil {
+			if errors.Is(err, fs.ErrorCantUploadEmptyFiles) {
+				fs.Errorf(name, "Writeback failed: %v", err)
+				return nil
+			}
 			return fmt.Errorf("vfs cache: failed to transfer file from cache to remote: %w", err)
 		}
 		item.o = o
@@ -806,6 +810,7 @@ func (item *Item) _checkObject(o fs.Object) error {
 				if !item.info.Dirty {
 					fs.Debugf(item.name, "vfs cache: removing cached entry as stale (remote fingerprint %q != cached fingerprint %q)", remoteFingerprint, item.info.Fingerprint)
 					item._remove("stale (remote is different)")
+					item.info.Fingerprint = remoteFingerprint
 				} else {
 					fs.Debugf(item.name, "vfs cache: remote object has changed but local object modified - keeping it (remote fingerprint %q != cached fingerprint %q)", remoteFingerprint, item.info.Fingerprint)
 				}
@@ -1272,6 +1277,15 @@ func (item *Item) readAt(b []byte, off int64) (n int, err error) {
 	err = item._ensure(off, int64(len(b)))
 	if err != nil {
 		return 0, err
+	}
+
+	// Check to see if object has shrunk - if so don't read too much.
+	if item.o != nil && !item.info.Dirty && item.o.Size() != item.info.Size {
+		fs.Debugf(item.o, "Size has changed from %d to %d", item.info.Size, item.o.Size())
+		err = item._truncate(item.o.Size())
+		if err != nil {
+			return 0, err
+		}
 	}
 
 	item.info.ATime = time.Now()

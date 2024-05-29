@@ -44,6 +44,7 @@ press '?' to toggle the help on and off. The supported keys are:
      y copy current path to clipboard
      Y display current path
      ^L refresh screen (fix screen corruption)
+     r recalculate file sizes
      ? to toggle help on and off
      q/ESC/^c to quit
 

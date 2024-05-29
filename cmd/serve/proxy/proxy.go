@@ -23,8 +23,7 @@ import (
 )
 
 // Help contains text describing how to use the proxy
-var Help = strings.Replace(`
-### Auth Proxy
+var Help = strings.Replace(`### Auth Proxy
 
 If you supply the parameter |--auth-proxy /path/to/program| then
 rclone will use that program to generate backends on the fly which
@@ -36,7 +35,7 @@ together, if |--auth-proxy| is set the authorized keys option will be
 ignored.
 
 There is an example program
-[bin/test_proxy.py](https://github.com/rclone/rclone/blob/master/test_proxy.py)
+[bin/test_proxy.py](https://github.com/rclone/rclone/blob/master/bin/test_proxy.py)
 in the rclone source code.
 
 The program's job is to take a |user| and |pass| on the input and turn
@@ -104,6 +103,7 @@ before it takes effect.
 
 This can be used to build general purpose proxies to any kind of
 backend that rclone supports.  
+
 `, "|", "`", -1)
 
 // Options is options for creating the proxy

@@ -1,5 +1,4 @@
 //go:build !plan9
-// +build !plan9
 
 package sftp
 
@@ -10,6 +9,7 @@ import (
 	"io"
 	"os/exec"
 	"strings"
+	"time"
 
 	"github.com/rclone/rclone/fs"
 )
@@ -47,7 +47,7 @@ func (s *sshClientExternal) Close() error {
 
 // NewSession makes a new external SSH connection
 func (s *sshClientExternal) NewSession() (sshSession, error) {
-	session := s.f.newSshSessionExternal()
+	session := s.f.newSSHSessionExternal()
 	if s.session == nil {
 		fs.Debugf(s.f, "ssh external: creating additional session")
 	}
@@ -77,7 +77,7 @@ type sshSessionExternal struct {
 	runningSFTP bool
 }
 
-func (f *Fs) newSshSessionExternal() *sshSessionExternal {
+func (f *Fs) newSSHSessionExternal() *sshSessionExternal {
 	s := &sshSessionExternal{
 		f: f,
 	}
@@ -93,8 +93,7 @@ func (f *Fs) newSshSessionExternal() *sshSessionExternal {
 	s.cmd = exec.CommandContext(ctx, ssh[0], ssh[1:]...)
 
 	// Allow the command a short time only to shut down
-	// FIXME enable when we get rid of go1.19
-	// s.cmd.WaitDelay = time.Second
+	s.cmd.WaitDelay = time.Second
 
 	return s
 }

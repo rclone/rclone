@@ -1,5 +1,4 @@
 //go:build windows
-// +build windows
 
 package file
 
@@ -56,10 +55,10 @@ func PreAllocate(size int64, out *os.File) error {
 
 	// Query info about the block sizes on the file system
 	_, _, e1 := ntQueryVolumeInformationFile.Call(
-		uintptr(out.Fd()),
+		out.Fd(),
 		uintptr(unsafe.Pointer(&iosb)),
 		uintptr(unsafe.Pointer(&fsSizeInfo)),
-		uintptr(unsafe.Sizeof(fsSizeInfo)),
+		unsafe.Sizeof(fsSizeInfo),
 		uintptr(3), // FileFsSizeInformation
 	)
 	if e1 != nil && e1 != syscall.Errno(0) {
@@ -75,14 +74,14 @@ func PreAllocate(size int64, out *os.File) error {
 
 	// Ask for the allocation
 	_, _, e1 = ntSetInformationFile.Call(
-		uintptr(out.Fd()),
+		out.Fd(),
 		uintptr(unsafe.Pointer(&iosb)),
 		uintptr(unsafe.Pointer(&allocInfo)),
-		uintptr(unsafe.Sizeof(allocInfo)),
+		unsafe.Sizeof(allocInfo),
 		uintptr(19), // FileAllocationInformation
 	)
 	if e1 != nil && e1 != syscall.Errno(0) {
-		if e1 == syscall.Errno(windows.ERROR_DISK_FULL) || e1 == syscall.Errno(windows.ERROR_HANDLE_DISK_FULL) {
+		if e1 == windows.ERROR_DISK_FULL || e1 == windows.ERROR_HANDLE_DISK_FULL {
 			return ErrDiskFull
 		}
 		return fmt.Errorf("preAllocate NtSetInformationFile failed: %w", e1)
@@ -91,10 +90,6 @@ func PreAllocate(size int64, out *os.File) error {
 	return nil
 }
 
-const (
-	FSCTL_SET_SPARSE = 0x000900c4 // Control code to set or clears the FILE_ATTRIBUTE_SPARSE_FILE attribute of a file.
-)
-
 // SetSparseImplemented is a constant indicating whether the
 // implementation of SetSparse actually does anything.
 const SetSparseImplemented = true
@@ -102,7 +97,7 @@ const SetSparseImplemented = true
 // SetSparse makes the file be a sparse file
 func SetSparse(out *os.File) error {
 	var bytesReturned uint32
-	err := syscall.DeviceIoControl(syscall.Handle(out.Fd()), FSCTL_SET_SPARSE, nil, 0, nil, 0, &bytesReturned, nil)
+	err := syscall.DeviceIoControl(syscall.Handle(out.Fd()), windows.FSCTL_SET_SPARSE, nil, 0, nil, 0, &bytesReturned, nil)
 	if err != nil {
 		return fmt.Errorf("DeviceIoControl FSCTL_SET_SPARSE: %w", err)
 	}

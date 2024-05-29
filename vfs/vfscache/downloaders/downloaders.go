@@ -345,7 +345,7 @@ func (dls *Downloaders) _ensureDownloader(r ranges.Range) (err error) {
 		start, offset := dl.getRange()
 
 		// The downloader's offset to offset+window is the gap
-		// in which we would like to re-use this
+		// in which we would like to reuse this
 		// downloader. The downloader will never reach before
 		// start and offset+windows is too far away - we'd
 		// rather start another downloader.
@@ -357,6 +357,10 @@ func (dls *Downloaders) _ensureDownloader(r ranges.Range) (err error) {
 		}
 	}
 	if !startNew {
+		return nil
+	}
+	// Size can be 0 here if file shrinks - no need to download
+	if r.Size == 0 {
 		return nil
 	}
 	// Downloader not found so start a new one
@@ -389,7 +393,10 @@ func (dls *Downloaders) _dispatchWaiters() {
 
 	newWaiters := dls.waiters[:0]
 	for _, waiter := range dls.waiters {
-		if dls.item.HasRange(waiter.r) {
+		// Clip the size against the actual size in case it has shrunk
+		r := waiter.r
+		r.Clip(dls.src.Size())
+		if dls.item.HasRange(r) {
 			waiter.errChan <- nil
 		} else {
 			newWaiters = append(newWaiters, waiter)
@@ -518,7 +525,7 @@ loop:
 // should be called on a fresh downloader
 func (dl *downloader) open(offset int64) (err error) {
 	// defer log.Trace(dl.dls.src, "offset=%d", offset)("err=%v", &err)
-	dl.tr = accounting.Stats(dl.dls.ctx).NewTransfer(dl.dls.src)
+	dl.tr = accounting.Stats(dl.dls.ctx).NewTransfer(dl.dls.src, nil)
 
 	size := dl.dls.src.Size()
 	if size < 0 {

@@ -1,5 +1,4 @@
 //go:build !plan9
-// +build !plan9
 
 package sftp
 
@@ -82,6 +81,10 @@ func (v vfsHandler) Filecmd(r *sftp.Request) error {
 		// link := newMemFile(r.Target, false)
 		// link.symlink = r.Filepath
 		// v.files[r.Target] = link
+		return sftp.ErrSshFxOpUnsupported
+	case "Link":
+		return sftp.ErrSshFxOpUnsupported
+	default:
 		return sftp.ErrSshFxOpUnsupported
 	}
 	return nil

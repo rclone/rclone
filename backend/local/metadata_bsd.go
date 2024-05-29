@@ -1,15 +1,33 @@
 //go:build darwin || freebsd || netbsd
-// +build darwin freebsd netbsd
 
 package local
 
 import (
 	"fmt"
+	"os"
 	"syscall"
 	"time"
 
 	"github.com/rclone/rclone/fs"
 )
+
+// Read the time specified from the os.FileInfo
+func readTime(t timeType, fi os.FileInfo) time.Time {
+	stat, ok := fi.Sys().(*syscall.Stat_t)
+	if !ok {
+		fs.Debugf(nil, "didn't return Stat_t as expected")
+		return fi.ModTime()
+	}
+	switch t {
+	case aTime:
+		return time.Unix(stat.Atimespec.Unix())
+	case bTime:
+		return time.Unix(stat.Birthtimespec.Unix())
+	case cTime:
+		return time.Unix(stat.Ctimespec.Unix())
+	}
+	return fi.ModTime()
+}
 
 // Read the metadata from the file into metadata where possible
 func (o *Object) readMetadataFromFile(m *fs.Metadata) (err error) {

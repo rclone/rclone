@@ -72,8 +72,10 @@ type ConfigInfo struct {
 	DeleteMode                 DeleteMode
 	MaxDelete                  int64
 	MaxDeleteSize              SizeSuffix
-	TrackRenames               bool   // Track file renames.
-	TrackRenamesStrategy       string // Comma separated list of strategies used to track renames
+	TrackRenames               bool          // Track file renames.
+	TrackRenamesStrategy       string        // Comma separated list of strategies used to track renames
+	Retries                    int           // High-level retries
+	RetriesInterval            time.Duration // --retries-sleep
 	LowLevelRetries            int
 	UpdateOlder                bool // Skip files that are newer on the destination
 	NoGzip                     bool // Disable compression
@@ -81,11 +83,13 @@ type ConfigInfo struct {
 	IgnoreSize                 bool
 	IgnoreChecksum             bool
 	IgnoreCaseSync             bool
+	FixCase                    bool
 	NoTraverse                 bool
 	CheckFirst                 bool
 	NoCheckDest                bool
 	NoUnicodeNormalization     bool
 	NoUpdateModTime            bool
+	NoUpdateDirModTime         bool
 	DataRateUnit               string
 	CompareDest                []string
 	CopyDest                   []string
@@ -94,7 +98,6 @@ type ConfigInfo struct {
 	SuffixKeepExtension        bool
 	UseListR                   bool
 	BufferSize                 SizeSuffix
-	MultiThreadWriteBufferSize SizeSuffix
 	BwLimit                    BwTimetable
 	BwLimitFile                BwTimetable
 	TPSLimit                   float64
@@ -127,7 +130,9 @@ type ConfigInfo struct {
 	ClientKey                  string   // Client Side Key
 	MultiThreadCutoff          SizeSuffix
 	MultiThreadStreams         int
-	MultiThreadSet             bool   // whether MultiThreadStreams was set (set in fs/config/configflags)
+	MultiThreadSet             bool       // whether MultiThreadStreams was set (set in fs/config/configflags)
+	MultiThreadChunkSize       SizeSuffix // Chunk size for multi-thread downloads / uploads, if not set by filesystem
+	MultiThreadWriteBufferSize SizeSuffix
 	OrderBy                    string // instructions on how to order the transfer
 	UploadHeaders              []*HTTPOption
 	DownloadHeaders            []*HTTPOption
@@ -145,9 +150,10 @@ type ConfigInfo struct {
 	Metadata                   bool
 	ServerSideAcrossConfigs    bool
 	TerminalColorMode          TerminalColorMode
-	DefaultTime                Time       // time that directories with no time should display
-	Inplace                    bool       // Download directly to destination file instead of atomic download to temp/rename
-	MultiThreadChunkSize       SizeSuffix // Chunk size for multi-thread downloads / uploads, if not set by filesystem
+	DefaultTime                Time // time that directories with no time should display
+	Inplace                    bool // Download directly to destination file instead of atomic download to temp/rename
+	PartialSuffix              string
+	MetadataMapper             SpaceSepList
 }
 
 // NewConfig creates a new config with everything set to the default
@@ -168,11 +174,11 @@ func NewConfig() *ConfigInfo {
 	c.DeleteMode = DeleteModeDefault
 	c.MaxDelete = -1
 	c.MaxDeleteSize = SizeSuffix(-1)
+	c.Retries = 3
 	c.LowLevelRetries = 10
 	c.MaxDepth = -1
 	c.DataRateUnit = "bytes"
 	c.BufferSize = SizeSuffix(16 << 20)
-	c.MultiThreadWriteBufferSize = SizeSuffix(128 * 1024)
 	c.UserAgent = "rclone/" + Version
 	c.StreamingUploadCutoff = SizeSuffix(100 * 1024)
 	c.MaxStatsGroups = 1000
@@ -183,15 +189,17 @@ func NewConfig() *ConfigInfo {
 	c.MaxBacklog = 10000
 	// We do not want to set the default here. We use this variable being empty as part of the fall-through of options.
 	//	c.StatsOneLineDateFormat = "2006/01/02 15:04:05 - "
-	c.MultiThreadCutoff = SizeSuffix(250 * 1024 * 1024)
+	c.MultiThreadCutoff = SizeSuffix(256 * 1024 * 1024)
 	c.MultiThreadStreams = 4
-	c.MultiThreadChunkSize = SizeSuffix(50 * 1024 * 1024)
+	c.MultiThreadChunkSize = SizeSuffix(64 * 1024 * 1024)
+	c.MultiThreadWriteBufferSize = SizeSuffix(128 * 1024)
 
 	c.TrackRenamesStrategy = "hash"
 	c.FsCacheExpireDuration = 300 * time.Second
 	c.FsCacheExpireInterval = 60 * time.Second
 	c.KvLockTime = 1 * time.Second
 	c.DefaultTime = Time(time.Date(2000, 1, 1, 0, 0, 0, 0, time.UTC))
+	c.PartialSuffix = ".partial"
 
 	// Perform a simple check for debug flags to enable debug logging during the flag initialization
 	for argIndex, arg := range os.Args {

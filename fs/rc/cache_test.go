@@ -5,18 +5,26 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/cache"
+	"github.com/rclone/rclone/fs/filter"
 	"github.com/rclone/rclone/fstest/mockfs"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func mockNewFs(t *testing.T) func() {
-	f, err := mockfs.NewFs(context.Background(), "mock", "mock", nil)
+	ctx := context.Background()
+	f, err := mockfs.NewFs(ctx, "/", "", nil)
 	require.NoError(t, err)
 	cache.Put("/", f)
+	f, err = mockfs.NewFs(ctx, "mock", "/", nil)
+	require.NoError(t, err)
 	cache.Put("mock:/", f)
 	cache.Put(":mock:/", f)
+	f, err = mockfs.NewFs(ctx, "mock", "dir/file.txt", nil)
+	require.NoError(t, err)
+	cache.PutErr("mock:dir/file.txt", f, fs.ErrorIsFile)
 	return func() {
 		cache.Clear()
 	}
@@ -62,6 +70,40 @@ func TestGetFsNamedStruct(t *testing.T) {
 	f, err = GetFsNamed(context.Background(), in, "potato")
 	require.NoError(t, err)
 	assert.NotNil(t, f)
+}
+
+func TestGetFsNamedFileOK(t *testing.T) {
+	defer mockNewFs(t)()
+	ctx := context.Background()
+
+	in := Params{
+		"potato": "/",
+	}
+	newCtx, f, err := GetFsNamedFileOK(ctx, in, "potato")
+	require.NoError(t, err)
+	assert.NotNil(t, f)
+	assert.Equal(t, ctx, newCtx)
+
+	in = Params{
+		"sausage": "/",
+	}
+	newCtx, f, err = GetFsNamedFileOK(ctx, in, "potato")
+	require.Error(t, err)
+	assert.Nil(t, f)
+	assert.Equal(t, ctx, newCtx)
+
+	in = Params{
+		"potato": "mock:dir/file.txt",
+	}
+	newCtx, f, err = GetFsNamedFileOK(ctx, in, "potato")
+	assert.Nil(t, err)
+	assert.NotNil(t, f)
+	assert.NotEqual(t, ctx, newCtx)
+
+	fi := filter.GetConfig(newCtx)
+	assert.False(t, fi.InActive())
+	assert.True(t, fi.IncludeRemote("file.txt"))
+	assert.False(t, fi.IncludeRemote("other.txt"))
 }
 
 func TestGetConfigMap(t *testing.T) {

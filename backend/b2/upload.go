@@ -5,7 +5,6 @@
 package b2
 
 import (
-	"bytes"
 	"context"
 	"crypto/sha1"
 	"encoding/hex"
@@ -14,7 +13,6 @@ import (
 	"io"
 	"strings"
 	"sync"
-	"time"
 
 	"github.com/rclone/rclone/backend/b2/api"
 	"github.com/rclone/rclone/fs"
@@ -80,12 +78,14 @@ type largeUpload struct {
 	wrap      accounting.WrapFn               // account parts being transferred
 	id        string                          // ID of the file being uploaded
 	size      int64                           // total size
-	parts     int64                           // calculated number of parts, if known
+	parts     int                             // calculated number of parts, if known
+	sha1smu   sync.Mutex                      // mutex to protect sha1s
 	sha1s     []string                        // slice of SHA1s for each part
 	uploadMu  sync.Mutex                      // lock for upload variable
 	uploads   []*api.GetUploadPartURLResponse // result of get upload URL calls
 	chunkSize int64                           // chunk size to use
 	src       *Object                         // if copying, object we are reading from
+	info      *api.FileInfo                   // final response with info about the object
 }
 
 // newLargeUpload starts an upload of object o from in with metadata in src
@@ -93,18 +93,16 @@ type largeUpload struct {
 // If newInfo is set then metadata from that will be used instead of reading it from src
 func (f *Fs) newLargeUpload(ctx context.Context, o *Object, in io.Reader, src fs.ObjectInfo, defaultChunkSize fs.SizeSuffix, doCopy bool, newInfo *api.File) (up *largeUpload, err error) {
 	size := src.Size()
-	parts := int64(0)
-	sha1SliceSize := int64(maxParts)
+	parts := 0
 	chunkSize := defaultChunkSize
 	if size == -1 {
 		fs.Debugf(o, "Streaming upload with --b2-chunk-size %s allows uploads of up to %s and will fail only when that limit is reached.", f.opt.ChunkSize, maxParts*f.opt.ChunkSize)
 	} else {
 		chunkSize = chunksize.Calculator(o, size, maxParts, defaultChunkSize)
-		parts = size / int64(chunkSize)
+		parts = int(size / int64(chunkSize))
 		if size%int64(chunkSize) != 0 {
 			parts++
 		}
-		sha1SliceSize = parts
 	}
 
 	opts := rest.Opts{
@@ -152,7 +150,7 @@ func (f *Fs) newLargeUpload(ctx context.Context, o *Object, in io.Reader, src fs
 		id:        response.ID,
 		size:      size,
 		parts:     parts,
-		sha1s:     make([]string, sha1SliceSize),
+		sha1s:     make([]string, 0, 16),
 		chunkSize: int64(chunkSize),
 	}
 	// unwrap the accounting from the input, we use wrap to put it
@@ -171,24 +169,26 @@ func (f *Fs) newLargeUpload(ctx context.Context, o *Object, in io.Reader, src fs
 // This should be returned with returnUploadURL when finished
 func (up *largeUpload) getUploadURL(ctx context.Context) (upload *api.GetUploadPartURLResponse, err error) {
 	up.uploadMu.Lock()
-	defer up.uploadMu.Unlock()
-	if len(up.uploads) == 0 {
-		opts := rest.Opts{
-			Method: "POST",
-			Path:   "/b2_get_upload_part_url",
-		}
-		var request = api.GetUploadPartURLRequest{
-			ID: up.id,
-		}
-		err := up.f.pacer.Call(func() (bool, error) {
-			resp, err := up.f.srv.CallJSON(ctx, &opts, &request, &upload)
-			return up.f.shouldRetry(ctx, resp, err)
-		})
-		if err != nil {
-			return nil, fmt.Errorf("failed to get upload URL: %w", err)
-		}
-	} else {
+	if len(up.uploads) > 0 {
 		upload, up.uploads = up.uploads[0], up.uploads[1:]
+		up.uploadMu.Unlock()
+		return upload, nil
+	}
+	up.uploadMu.Unlock()
+
+	opts := rest.Opts{
+		Method: "POST",
+		Path:   "/b2_get_upload_part_url",
+	}
+	var request = api.GetUploadPartURLRequest{
+		ID: up.id,
+	}
+	err = up.f.pacer.Call(func() (bool, error) {
+		resp, err := up.f.srv.CallJSON(ctx, &opts, &request, &upload)
+		return up.f.shouldRetry(ctx, resp, err)
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to get upload URL: %w", err)
 	}
 	return upload, nil
 }
@@ -203,10 +203,39 @@ func (up *largeUpload) returnUploadURL(upload *api.GetUploadPartURLResponse) {
 	up.uploadMu.Unlock()
 }
 
-// Transfer a chunk
-func (up *largeUpload) transferChunk(ctx context.Context, part int64, body []byte) error {
-	err := up.f.pacer.Call(func() (bool, error) {
-		fs.Debugf(up.o, "Sending chunk %d length %d", part, len(body))
+// Add an sha1 to the being built up sha1s
+func (up *largeUpload) addSha1(chunkNumber int, sha1 string) {
+	up.sha1smu.Lock()
+	defer up.sha1smu.Unlock()
+	if len(up.sha1s) < chunkNumber+1 {
+		up.sha1s = append(up.sha1s, make([]string, chunkNumber+1-len(up.sha1s))...)
+	}
+	up.sha1s[chunkNumber] = sha1
+}
+
+// WriteChunk will write chunk number with reader bytes, where chunk number >= 0
+func (up *largeUpload) WriteChunk(ctx context.Context, chunkNumber int, reader io.ReadSeeker) (size int64, err error) {
+	// Only account after the checksum reads have been done
+	if do, ok := reader.(pool.DelayAccountinger); ok {
+		// To figure out this number, do a transfer and if the accounted size is 0 or a
+		// multiple of what it should be, increase or decrease this number.
+		do.DelayAccounting(1)
+	}
+
+	err = up.f.pacer.Call(func() (bool, error) {
+		// Discover the size by seeking to the end
+		size, err = reader.Seek(0, io.SeekEnd)
+		if err != nil {
+			return false, err
+		}
+
+		// rewind the reader on retry and after reading size
+		_, err = reader.Seek(0, io.SeekStart)
+		if err != nil {
+			return false, err
+		}
+
+		fs.Debugf(up.o, "Sending chunk %d length %d", chunkNumber, size)
 
 		// Get upload URL
 		upload, err := up.getUploadURL(ctx)
@@ -214,8 +243,8 @@ func (up *largeUpload) transferChunk(ctx context.Context, part int64, body []byt
 			return false, err
 		}
 
-		in := newHashAppendingReader(bytes.NewReader(body), sha1.New())
-		size := int64(len(body)) + int64(in.AdditionalLength())
+		in := newHashAppendingReader(reader, sha1.New())
+		sizeWithHash := size + int64(in.AdditionalLength())
 
 		// Authorization
 		//
@@ -245,10 +274,10 @@ func (up *largeUpload) transferChunk(ctx context.Context, part int64, body []byt
 			Body:    up.wrap(in),
 			ExtraHeaders: map[string]string{
 				"Authorization":    upload.AuthorizationToken,
-				"X-Bz-Part-Number": fmt.Sprintf("%d", part),
+				"X-Bz-Part-Number": fmt.Sprintf("%d", chunkNumber+1),
 				sha1Header:         "hex_digits_at_end",
 			},
-			ContentLength: &size,
+			ContentLength: &sizeWithHash,
 		}
 
 		var response api.UploadPartResponse
@@ -256,7 +285,7 @@ func (up *largeUpload) transferChunk(ctx context.Context, part int64, body []byt
 		resp, err := up.f.srv.CallJSON(ctx, &opts, nil, &response)
 		retry, err := up.f.shouldRetry(ctx, resp, err)
 		if err != nil {
-			fs.Debugf(up.o, "Error sending chunk %d (retry=%v): %v: %#v", part, retry, err, err)
+			fs.Debugf(up.o, "Error sending chunk %d (retry=%v): %v: %#v", chunkNumber, retry, err, err)
 		}
 		// On retryable error clear PartUploadURL
 		if retry {
@@ -264,30 +293,30 @@ func (up *largeUpload) transferChunk(ctx context.Context, part int64, body []byt
 			upload = nil
 		}
 		up.returnUploadURL(upload)
-		up.sha1s[part-1] = in.HexSum()
+		up.addSha1(chunkNumber, in.HexSum())
 		return retry, err
 	})
 	if err != nil {
-		fs.Debugf(up.o, "Error sending chunk %d: %v", part, err)
+		fs.Debugf(up.o, "Error sending chunk %d: %v", chunkNumber, err)
 	} else {
-		fs.Debugf(up.o, "Done sending chunk %d", part)
+		fs.Debugf(up.o, "Done sending chunk %d", chunkNumber)
 	}
-	return err
+	return size, err
 }
 
 // Copy a chunk
-func (up *largeUpload) copyChunk(ctx context.Context, part int64, partSize int64) error {
+func (up *largeUpload) copyChunk(ctx context.Context, part int, partSize int64) error {
 	err := up.f.pacer.Call(func() (bool, error) {
 		fs.Debugf(up.o, "Copying chunk %d length %d", part, partSize)
 		opts := rest.Opts{
 			Method: "POST",
 			Path:   "/b2_copy_part",
 		}
-		offset := (part - 1) * up.chunkSize // where we are in the source file
+		offset := int64(part) * up.chunkSize // where we are in the source file
 		var request = api.CopyPartRequest{
 			SourceID:    up.src.id,
 			LargeFileID: up.id,
-			PartNumber:  part,
+			PartNumber:  int64(part + 1),
 			Range:       fmt.Sprintf("bytes=%d-%d", offset, offset+partSize-1),
 		}
 		var response api.UploadPartResponse
@@ -296,7 +325,7 @@ func (up *largeUpload) copyChunk(ctx context.Context, part int64, partSize int64
 		if err != nil {
 			fs.Debugf(up.o, "Error copying chunk %d (retry=%v): %v: %#v", part, retry, err, err)
 		}
-		up.sha1s[part-1] = response.SHA1
+		up.addSha1(part, response.SHA1)
 		return retry, err
 	})
 	if err != nil {
@@ -307,8 +336,8 @@ func (up *largeUpload) copyChunk(ctx context.Context, part int64, partSize int64
 	return err
 }
 
-// finish closes off the large upload
-func (up *largeUpload) finish(ctx context.Context) error {
+// Close closes off the large upload
+func (up *largeUpload) Close(ctx context.Context) error {
 	fs.Debugf(up.o, "Finishing large file %s with %d parts", up.what, up.parts)
 	opts := rest.Opts{
 		Method: "POST",
@@ -326,11 +355,12 @@ func (up *largeUpload) finish(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	return up.o.decodeMetaDataFileInfo(&response)
+	up.info = &response
+	return nil
 }
 
-// cancel aborts the large upload
-func (up *largeUpload) cancel(ctx context.Context) error {
+// Abort aborts the large upload
+func (up *largeUpload) Abort(ctx context.Context) error {
 	fs.Debugf(up.o, "Cancelling large file %s", up.what)
 	opts := rest.Opts{
 		Method: "POST",
@@ -355,157 +385,105 @@ func (up *largeUpload) cancel(ctx context.Context) error {
 // reaches EOF.
 //
 // Note that initialUploadBlock must be returned to f.putBuf()
-func (up *largeUpload) Stream(ctx context.Context, initialUploadBlock []byte) (err error) {
-	defer atexit.OnError(&err, func() { _ = up.cancel(ctx) })()
+func (up *largeUpload) Stream(ctx context.Context, initialUploadBlock *pool.RW) (err error) {
+	defer atexit.OnError(&err, func() { _ = up.Abort(ctx) })()
 	fs.Debugf(up.o, "Starting streaming of large file (id %q)", up.id)
 	var (
 		g, gCtx      = errgroup.WithContext(ctx)
 		hasMoreParts = true
 	)
-	up.size = int64(len(initialUploadBlock))
-	g.Go(func() error {
-		for part := int64(1); hasMoreParts; part++ {
-			// Get a block of memory from the pool and token which limits concurrency.
-			var buf []byte
-			if part == 1 {
-				buf = initialUploadBlock
-			} else {
-				buf = up.f.getBuf(false)
-			}
-
-			// Fail fast, in case an errgroup managed function returns an error
-			// gCtx is cancelled. There is no point in uploading all the other parts.
-			if gCtx.Err() != nil {
-				up.f.putBuf(buf, false)
-				return nil
-			}
-
-			// Read the chunk
-			var n int
-			if part == 1 {
-				n = len(buf)
-			} else {
-				n, err = io.ReadFull(up.in, buf)
-				if err == io.ErrUnexpectedEOF {
-					fs.Debugf(up.o, "Read less than a full chunk, making this the last one.")
-					buf = buf[:n]
-					hasMoreParts = false
-				} else if err == io.EOF {
-					fs.Debugf(up.o, "Could not read any more bytes, previous chunk was the last.")
-					up.f.putBuf(buf, false)
-					return nil
-				} else if err != nil {
-					// other kinds of errors indicate failure
-					up.f.putBuf(buf, false)
-					return err
-				}
-			}
-
-			// Keep stats up to date
-			up.parts = part
-			up.size += int64(n)
-			if part > maxParts {
-				up.f.putBuf(buf, false)
-				return fmt.Errorf("%q too big (%d bytes so far) makes too many parts %d > %d - increase --b2-chunk-size", up.o, up.size, up.parts, maxParts)
-			}
-
-			part := part // for the closure
-			g.Go(func() (err error) {
-				defer up.f.putBuf(buf, false)
-				return up.transferChunk(gCtx, part, buf)
-			})
+	up.size = initialUploadBlock.Size()
+	up.parts = 0
+	for part := 0; hasMoreParts; part++ {
+		// Get a block of memory from the pool and token which limits concurrency.
+		var rw *pool.RW
+		if part == 0 {
+			rw = initialUploadBlock
+		} else {
+			rw = up.f.getRW(false)
 		}
-		return nil
-	})
+
+		// Fail fast, in case an errgroup managed function returns an error
+		// gCtx is cancelled. There is no point in uploading all the other parts.
+		if gCtx.Err() != nil {
+			up.f.putRW(rw)
+			break
+		}
+
+		// Read the chunk
+		var n int64
+		if part == 0 {
+			n = rw.Size()
+		} else {
+			n, err = io.CopyN(rw, up.in, up.chunkSize)
+			if err == io.EOF {
+				if n == 0 {
+					fs.Debugf(up.o, "Not sending empty chunk after EOF - ending.")
+					up.f.putRW(rw)
+					break
+				} else {
+					fs.Debugf(up.o, "Read less than a full chunk %d, making this the last one.", n)
+				}
+				hasMoreParts = false
+			} else if err != nil {
+				// other kinds of errors indicate failure
+				up.f.putRW(rw)
+				return err
+			}
+		}
+
+		// Keep stats up to date
+		up.parts += 1
+		up.size += n
+		if part > maxParts {
+			up.f.putRW(rw)
+			return fmt.Errorf("%q too big (%d bytes so far) makes too many parts %d > %d - increase --b2-chunk-size", up.o, up.size, up.parts, maxParts)
+		}
+
+		part := part // for the closure
+		g.Go(func() (err error) {
+			defer up.f.putRW(rw)
+			_, err = up.WriteChunk(gCtx, part, rw)
+			return err
+		})
+	}
 	err = g.Wait()
 	if err != nil {
 		return err
 	}
-	up.sha1s = up.sha1s[:up.parts]
-	return up.finish(ctx)
+	return up.Close(ctx)
 }
 
-// Upload uploads the chunks from the input
-func (up *largeUpload) Upload(ctx context.Context) (err error) {
-	defer atexit.OnError(&err, func() { _ = up.cancel(ctx) })()
+// Copy the chunks from the source to the destination
+func (up *largeUpload) Copy(ctx context.Context) (err error) {
+	defer atexit.OnError(&err, func() { _ = up.Abort(ctx) })()
 	fs.Debugf(up.o, "Starting %s of large file in %d chunks (id %q)", up.what, up.parts, up.id)
 	var (
-		g, gCtx    = errgroup.WithContext(ctx)
-		remaining  = up.size
-		uploadPool *pool.Pool
-		ci         = fs.GetConfig(ctx)
+		g, gCtx   = errgroup.WithContext(ctx)
+		remaining = up.size
 	)
-	// If using large chunk size then make a temporary pool
-	if up.chunkSize <= int64(up.f.opt.ChunkSize) {
-		uploadPool = up.f.pool
-	} else {
-		uploadPool = pool.New(
-			time.Duration(up.f.opt.MemoryPoolFlushTime),
-			int(up.chunkSize),
-			ci.Transfers,
-			up.f.opt.MemoryPoolUseMmap,
-		)
-		defer uploadPool.Flush()
-	}
-	// Get an upload token and a buffer
-	getBuf := func() (buf []byte) {
-		up.f.getBuf(true)
-		if !up.doCopy {
-			buf = uploadPool.Get()
+	g.SetLimit(up.f.opt.UploadConcurrency)
+	for part := 0; part < up.parts; part++ {
+		// Fail fast, in case an errgroup managed function returns an error
+		// gCtx is cancelled. There is no point in copying all the other parts.
+		if gCtx.Err() != nil {
+			break
 		}
-		return buf
-	}
-	// Put an upload token and a buffer
-	putBuf := func(buf []byte) {
-		if !up.doCopy {
-			uploadPool.Put(buf)
+
+		reqSize := remaining
+		if reqSize >= up.chunkSize {
+			reqSize = up.chunkSize
 		}
-		up.f.putBuf(nil, true)
+
+		part := part // for the closure
+		g.Go(func() (err error) {
+			return up.copyChunk(gCtx, part, reqSize)
+		})
+		remaining -= reqSize
 	}
-	g.Go(func() error {
-		for part := int64(1); part <= up.parts; part++ {
-			// Get a block of memory from the pool and token which limits concurrency.
-			buf := getBuf()
-
-			// Fail fast, in case an errgroup managed function returns an error
-			// gCtx is cancelled. There is no point in uploading all the other parts.
-			if gCtx.Err() != nil {
-				putBuf(buf)
-				return nil
-			}
-
-			reqSize := remaining
-			if reqSize >= up.chunkSize {
-				reqSize = up.chunkSize
-			}
-
-			if !up.doCopy {
-				// Read the chunk
-				buf = buf[:reqSize]
-				_, err = io.ReadFull(up.in, buf)
-				if err != nil {
-					putBuf(buf)
-					return err
-				}
-			}
-
-			part := part // for the closure
-			g.Go(func() (err error) {
-				defer putBuf(buf)
-				if !up.doCopy {
-					err = up.transferChunk(gCtx, part, buf)
-				} else {
-					err = up.copyChunk(gCtx, part, reqSize)
-				}
-				return err
-			})
-			remaining -= reqSize
-		}
-		return nil
-	})
 	err = g.Wait()
 	if err != nil {
 		return err
 	}
-	return up.finish(ctx)
+	return up.Close(ctx)
 }

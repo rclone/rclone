@@ -57,7 +57,7 @@ put them back in again.` >}}
   * Scott McGillivray <scott.mcgillivray@gmail.com>
   * Bjørn Erik Pedersen <bjorn.erik.pedersen@gmail.com>
   * Lukas Loesche <lukas@mesosphere.io>
-  * emyarod <allllaboutyou@gmail.com>
+  * emyarod <emyarod@users.noreply.github.com>
   * T.C. Ferguson <tcf909@gmail.com>
   * Brandur <brandur@mutelight.org>
   * Dario Giovannetti <dev@dariogiovannetti.net>
@@ -386,7 +386,7 @@ put them back in again.` >}}
   * Roman Kredentser <shareed2k@gmail.com>
   * Kamil Trzciński <ayufan@ayufan.eu>
   * Zac Rubin <z-0@users.noreply.github.com>
-  * Vincent Feltz <psycho@feltzv.fr>
+  * Vincent Feltz
   * Heiko Bornholdt <bornholdt@informatik.uni-hamburg.de>
   * Matteo Pietro Dazzi <matteopietro.dazzi@gmail.com>
   * jtagcat <gitlab@c7.ee>
@@ -526,7 +526,7 @@ put them back in again.` >}}
   * HNGamingUK <connor@earnshawhome.co.uk>
   * Jonta <359397+Jonta@users.noreply.github.com>
   * YenForYang <YenForYang@users.noreply.github.com>
-  * Joda Stößer <stoesser@yay-digital.de> <services+github@simjo.st>
+  * SimJoSt / Joda Stößer <git@simjo.st>
   * Logeshwaran <waranlogesh@gmail.com>
   * Rajat Goel <rajat@dropbox.com>
   * r0kk3rz <r0kk3rz@gmail.com>
@@ -541,7 +541,6 @@ put them back in again.` >}}
   * Chris Nelson <stuff@cjnaz.com>
   * Felix Bünemann <felix.buenemann@gmail.com>
   * Atílio Antônio <atiliodadalto@hotmail.com>
-  * Roberto Ricci <ricci@disroot.org>
   * Carlo Mion <mion00@gmail.com>
   * Chris Lu <chris.lu@gmail.com>
   * Vitor Arruda <vitor.pimenta.arruda@gmail.com>
@@ -764,3 +763,97 @@ put them back in again.` >}}
   * alexia <me@alexia.lol>
   * nielash <nielronash@gmail.com>
   * Vitor Gomes <vitor.gomes@delivion.de> <mail@vitorgomes.com>
+  * Jacob Hands <jacob@gogit.io>
+  * hideo aoyama <100831251+boukendesho@users.noreply.github.com>
+  * Roberto Ricci <io@r-ricci.it>
+  * Bjørn Smith <bjornsmith@gmail.com>
+  * Alishan Ladhani <8869764+aladh@users.noreply.github.com>
+  * zjx20 <zhoujianxiong2@gmail.com>
+  * Oksana <142890647+oks-maytech@users.noreply.github.com>
+  * Volodymyr Kit <v.kit@maytech.net>
+  * David Pedersen <limero@me.com>
+  * Drew Stinnett <drew@drewlink.com>
+  * Pat Patterson <pat@backblaze.com>
+  * Herby Gillot <herby.gillot@gmail.com>
+  * Nikita Shoshin <shoshin_nikita@fastmail.com>
+  * rinsuki <428rinsuki+git@gmail.com>
+  * Beyond Meat <51850644+beyondmeat@users.noreply.github.com>
+  * Saleh Dindar <salh@fb.com>
+  * Volodymyr <142890760+vkit-maytech@users.noreply.github.com>
+  * Gabriel Espinoza <31670639+gspinoza@users.noreply.github.com>
+  * Keigo Imai <keigo.imai@gmail.com>
+  * Ivan Yanitra <iyanitra@tesla-consulting.com>
+  * alfish2000 <alfish2000@gmail.com>
+  * wuxingzhong <qq330332812@gmail.com>
+  * Adithya Kumar <akumar42@protonmail.com>
+  * Tayo-pasedaRJ <138471223+Tayo-pasedaRJ@users.noreply.github.com>
+  * Peter Kreuser <logo@kreuser.name>
+  * Piyush <piyushgarg80>
+  * fotile96 <fotile96@users.noreply.github.com>
+  * Luc Ritchie <luc.ritchie@gmail.com>
+  * cynful <cynful@users.noreply.github.com>
+  * wjielai <wjielai@tencent.com>
+  * Jack Deng <jackdeng@gmail.com>
+  * Mikubill <31246794+Mikubill@users.noreply.github.com>
+  * Artur Neumann <artur@jankaritech.com>
+  * Saw-jan <saw.jan.grg3e@gmail.com>
+  * Oksana Zhykina <o.zhykina@maytech.net>
+  * karan <karan.gupta92@gmail.com>
+  * viktor <viktor@yakovchuk.net>
+  * moongdal <moongdal@tutanota.com>
+  * Mina Galić <freebsd@igalic.co>
+  * Alen Šiljak <dev@alensiljak.eu.org>
+  * 你知道未来吗 <rkonfj@gmail.com>
+  * Abhinav Dhiman <8640877+ahnv@users.noreply.github.com>
+  * halms <7513146+halms@users.noreply.github.com>
+  * ben-ba <benjamin.brauner@gmx.de>
+  * Eli Orzitzer <e_orz@yahoo.com>
+  * Anthony Metzidis <anthony.metzidis@gmail.com>
+  * emyarod <afw5059@gmail.com>
+  * keongalvin <keongalvin@gmail.com>
+  * rarspace01 <rarspace01@users.noreply.github.com>
+  * Paul Stern <paulstern45@gmail.com>
+  * Nikhil Ahuja <nikhilahuja@live.com>
+  * Harshit Budhraja <52413945+harshit-budhraja@users.noreply.github.com>
+  * Tera <24725862+teraa@users.noreply.github.com>
+  * Kyle Reynolds <kylereynoldsdev@gmail.com>
+  * Michael Eischer <michael.eischer@gmx.de>
+  * Thomas Müller <1005065+DeepDiver1975@users.noreply.github.com>
+  * DanielEgbers <27849724+DanielEgbers@users.noreply.github.com>
+  * Jack Provance <49460795+njprov@users.noreply.github.com>
+  * Gabriel Ramos <109390599+gabrielramos02@users.noreply.github.com>
+  * Dan McArdle <d@nmcardle.com>
+  * Joe Cai <joe.cai@bigcommerce.com>
+  * Anders Swanson <anders.swanson@oracle.com>
+  * huajin tong <137764712+thirdkeyword@users.noreply.github.com>
+  * John-Paul Smith <john-paulsmith@users.noreply.github.com>
+  * racerole <148756161+racerole@users.noreply.github.com>
+  * Gachoud Philippe <ph.gachoud@gmail.com>
+  * YukiUnHappy <saberhana@yandex.com>
+  * Kyle Reynolds <kyle.reynolds@bridgerphotonics.com>
+  * Lewis Hook <lewis@hook.im>
+  * hoyho <luohaihao@gmail.com>
+  * Vitaly <9034218+gvitali@users.noreply.github.com>
+  * iotmaestro <iotmaestro@proton.me>
+  * psychopatt <66741203+psychopatt@users.noreply.github.com>
+  * Alex Garel <alex@garel.org>
+  * Warrentheo <warrentheo@hotmail.com>
+  * Alexandre Lavigne <lavigne958@gmail.com>
+  * yoelvini <134453420+yoelvini@users.noreply.github.com>
+  * Erisa A <erisa@cloudflare.com>
+  * Pieter van Oostrum <pieter@vanoostrum.org>
+  * jakzoe <155812065+jakzoe@users.noreply.github.com>
+  * guangwu <guoguangwu@magic-shield.com>
+  * static-moonlight <107991124+static-moonlight@users.noreply.github.com>
+  * yudrywet <yudeyao@yeah.net>
+  * Butanediol <git@xnh.app>
+  * Dave Nicolson <david.nicolson@gmail.com>
+  * Katia Esposito <katia@linux.com>
+  * pawsey-kbuckley <36438302+pawsey-kbuckley@users.noreply.github.com>
+  * hidewrong <167099254+hidewrong@users.noreply.github.com>
+  * Michael Terry <mike@mterry.name>
+  * Sunny <25066078+LoSunny@users.noreply.github.com>
+  * overallteach <cricis@foxmail.com>
+  * JT Olio <jt@olio.lol>
+  * Evan McBeth <64177332+AtomicRobotMan0101@users.noreply.github.com>
+  * Dominik Joe Pantůček <dominik.pantucek@trustica.cz>

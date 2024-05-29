@@ -775,7 +775,7 @@ func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, 
 		expiry = int(math.Ceil(time.Duration(expire).Hours() / 24))
 	}
 	req := api.RequestShare{
-		FileIds:        []string{id},
+		FileIDs:        []string{id},
 		ShareTo:        "publiclink",
 		ExpirationDays: expiry,
 		PassCodeOption: "NOT_REQUIRED",
@@ -797,7 +797,7 @@ func (f *Fs) deleteObjects(ctx context.Context, IDs []string, useTrash bool) (er
 		action = "batchTrash"
 	}
 	req := api.RequestBatch{
-		Ids: IDs,
+		IDs: IDs,
 	}
 	if err := f.requestBatchAction(ctx, action, &req); err != nil {
 		return fmt.Errorf("delete object failed: %w", err)
@@ -817,7 +817,7 @@ func (f *Fs) purgeCheck(ctx context.Context, dir string, check bool) error {
 		return err
 	}
 
-	var trashedFiles = false
+	trashedFiles := false
 	if check {
 		found, err := f.listAll(ctx, rootID, "", "", func(item *api.File) bool {
 			if !item.Trashed {
@@ -893,7 +893,7 @@ func (f *Fs) moveObjects(ctx context.Context, IDs []string, dirID string) (err e
 		return nil
 	}
 	req := api.RequestBatch{
-		Ids: IDs,
+		IDs: IDs,
 		To:  map[string]string{"parent_id": parentIDForRequest(dirID)},
 	}
 	if err := f.requestBatchAction(ctx, "batchMove", &req); err != nil {
@@ -1016,21 +1016,24 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	}
 	dstObj.id = srcObj.id
 
-	var info *api.File
 	if srcLeaf != dstLeaf {
 		// Rename
-		info, err = f.renameObject(ctx, srcObj.id, dstLeaf)
+		info, err := f.renameObject(ctx, srcObj.id, dstLeaf)
 		if err != nil {
 			return nil, fmt.Errorf("move: couldn't rename moved file: %w", err)
 		}
+		err = dstObj.setMetaData(info)
+		if err != nil {
+			return nil, err
+		}
 	} else {
 		// Update info
-		info, err = f.getFile(ctx, dstObj.id)
+		err = dstObj.readMetaData(ctx)
 		if err != nil {
-			return nil, fmt.Errorf("move: couldn't update moved file: %w", err)
+			return nil, fmt.Errorf("move: couldn't locate moved file: %w", err)
 		}
 	}
-	return dstObj, dstObj.setMetaData(info)
+	return dstObj, nil
 }
 
 // copy objects
@@ -1039,7 +1042,7 @@ func (f *Fs) copyObjects(ctx context.Context, IDs []string, dirID string) (err e
 		return nil
 	}
 	req := api.RequestBatch{
-		Ids: IDs,
+		IDs: IDs,
 		To:  map[string]string{"parent_id": parentIDForRequest(dirID)},
 	}
 	if err := f.requestBatchAction(ctx, "batchCopy", &req); err != nil {
@@ -1143,7 +1146,7 @@ func (f *Fs) uploadByForm(ctx context.Context, in io.Reader, name string, size i
 	return
 }
 
-func (f *Fs) uploadByResumable(ctx context.Context, in io.Reader, resumable *api.Resumable, options ...fs.OpenOption) (err error) {
+func (f *Fs) uploadByResumable(ctx context.Context, in io.Reader, resumable *api.Resumable) (err error) {
 	p := resumable.Params
 	endpoint := strings.Join(strings.Split(p.Endpoint, ".")[1:], ".") // "mypikpak.com"
 
@@ -1206,7 +1209,7 @@ func (f *Fs) upload(ctx context.Context, in io.Reader, leaf, dirID, sha1Str stri
 	if uploadType == api.UploadTypeForm && newfile.Form != nil {
 		err = f.uploadByForm(ctx, in, req.Name, size, newfile.Form, options...)
 	} else if uploadType == api.UploadTypeResumable && newfile.Resumable != nil {
-		err = f.uploadByResumable(ctx, in, newfile.Resumable, options...)
+		err = f.uploadByResumable(ctx, in, newfile.Resumable)
 	} else {
 		return nil, fmt.Errorf("unable to proceed upload: %+v", newfile)
 	}
@@ -1214,10 +1217,7 @@ func (f *Fs) upload(ctx context.Context, in io.Reader, leaf, dirID, sha1Str stri
 	if err != nil {
 		return nil, fmt.Errorf("failed to upload: %w", err)
 	}
-	// refresh uploaded file info
-	// Compared to `newfile.File` this upgrades several feilds...
-	// audit, links, modified_time, phase, revision, and web_content_link
-	return f.getFile(ctx, newfile.File.ID)
+	return newfile.File, nil
 }
 
 // Put the object

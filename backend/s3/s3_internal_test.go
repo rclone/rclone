@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/cache"
@@ -390,6 +391,41 @@ func (f *Fs) InternalTestVersions(t *testing.T) {
 					}
 				})
 			})
+		}
+	})
+
+	t.Run("Mkdir", func(t *testing.T) {
+		// Test what happens when we create a bucket we already own and see whether the
+		// quirk is set correctly
+		req := s3.CreateBucketInput{
+			Bucket: &f.rootBucket,
+			ACL:    stringPointerOrNil(f.opt.BucketACL),
+		}
+		if f.opt.LocationConstraint != "" {
+			req.CreateBucketConfiguration = &s3.CreateBucketConfiguration{
+				LocationConstraint: &f.opt.LocationConstraint,
+			}
+		}
+		err := f.pacer.Call(func() (bool, error) {
+			_, err := f.c.CreateBucketWithContext(ctx, &req)
+			return f.shouldRetry(ctx, err)
+		})
+		var errString string
+		if err == nil {
+			errString = "No Error"
+		} else if awsErr, ok := err.(awserr.Error); ok {
+			errString = awsErr.Code()
+		} else {
+			assert.Fail(t, "Unknown error %T %v", err, err)
+		}
+		t.Logf("Creating a bucket we already have created returned code: %s", errString)
+		switch errString {
+		case "BucketAlreadyExists":
+			assert.False(t, f.opt.UseAlreadyExists.Value, "Need to clear UseAlreadyExists quirk")
+		case "No Error", "BucketAlreadyOwnedByYou":
+			assert.True(t, f.opt.UseAlreadyExists.Value, "Need to set UseAlreadyExists quirk")
+		default:
+			assert.Fail(t, "Unknown error string %q", errString)
 		}
 	})
 

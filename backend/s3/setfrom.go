@@ -11,6 +11,7 @@ func setFrom_s3ListObjectsInput_s3ListObjectsV2Input(a *s3.ListObjectsInput, b *
 	a.EncodingType = b.EncodingType
 	a.ExpectedBucketOwner = b.ExpectedBucketOwner
 	a.MaxKeys = b.MaxKeys
+	a.OptionalObjectAttributes = b.OptionalObjectAttributes
 	a.Prefix = b.Prefix
 	a.RequestPayer = b.RequestPayer
 }
@@ -25,6 +26,7 @@ func setFrom_s3ListObjectsV2Output_s3ListObjectsOutput(a *s3.ListObjectsV2Output
 	a.MaxKeys = b.MaxKeys
 	a.Name = b.Name
 	a.Prefix = b.Prefix
+	a.RequestCharged = b.RequestCharged
 }
 
 // setFrom_s3ListObjectVersionsInput_s3ListObjectsV2Input copies matching elements from a to b
@@ -34,7 +36,9 @@ func setFrom_s3ListObjectVersionsInput_s3ListObjectsV2Input(a *s3.ListObjectVers
 	a.EncodingType = b.EncodingType
 	a.ExpectedBucketOwner = b.ExpectedBucketOwner
 	a.MaxKeys = b.MaxKeys
+	a.OptionalObjectAttributes = b.OptionalObjectAttributes
 	a.Prefix = b.Prefix
+	a.RequestPayer = b.RequestPayer
 }
 
 // setFrom_s3ObjectVersion_s3DeleteMarkerEntry copies matching elements from a to b
@@ -55,6 +59,7 @@ func setFrom_s3ListObjectsV2Output_s3ListObjectVersionsOutput(a *s3.ListObjectsV
 	a.MaxKeys = b.MaxKeys
 	a.Name = b.Name
 	a.Prefix = b.Prefix
+	a.RequestCharged = b.RequestCharged
 }
 
 // setFrom_s3Object_s3ObjectVersion copies matching elements from a to b
@@ -64,6 +69,7 @@ func setFrom_s3Object_s3ObjectVersion(a *s3.Object, b *s3.ObjectVersion) {
 	a.Key = b.Key
 	a.LastModified = b.LastModified
 	a.Owner = b.Owner
+	a.RestoreStatus = b.RestoreStatus
 	a.Size = b.Size
 	a.StorageClass = b.StorageClass
 }
@@ -235,5 +241,39 @@ func setFrom_s3HeadObjectOutput_s3PutObjectInput(a *s3.HeadObjectOutput, b *s3.P
 	a.SSEKMSKeyId = b.SSEKMSKeyId
 	a.ServerSideEncryption = b.ServerSideEncryption
 	a.StorageClass = b.StorageClass
+	a.WebsiteRedirectLocation = b.WebsiteRedirectLocation
+}
+
+// setFrom_s3CopyObjectInput_s3PutObjectInput copies matching elements from a to b
+func setFrom_s3CopyObjectInput_s3PutObjectInput(a *s3.CopyObjectInput, b *s3.PutObjectInput) {
+	a.ACL = b.ACL
+	a.Bucket = b.Bucket
+	a.BucketKeyEnabled = b.BucketKeyEnabled
+	a.CacheControl = b.CacheControl
+	a.ChecksumAlgorithm = b.ChecksumAlgorithm
+	a.ContentDisposition = b.ContentDisposition
+	a.ContentEncoding = b.ContentEncoding
+	a.ContentLanguage = b.ContentLanguage
+	a.ContentType = b.ContentType
+	a.ExpectedBucketOwner = b.ExpectedBucketOwner
+	a.Expires = b.Expires
+	a.GrantFullControl = b.GrantFullControl
+	a.GrantRead = b.GrantRead
+	a.GrantReadACP = b.GrantReadACP
+	a.GrantWriteACP = b.GrantWriteACP
+	a.Key = b.Key
+	a.Metadata = b.Metadata
+	a.ObjectLockLegalHoldStatus = b.ObjectLockLegalHoldStatus
+	a.ObjectLockMode = b.ObjectLockMode
+	a.ObjectLockRetainUntilDate = b.ObjectLockRetainUntilDate
+	a.RequestPayer = b.RequestPayer
+	a.SSECustomerAlgorithm = b.SSECustomerAlgorithm
+	a.SSECustomerKey = b.SSECustomerKey
+	a.SSECustomerKeyMD5 = b.SSECustomerKeyMD5
+	a.SSEKMSEncryptionContext = b.SSEKMSEncryptionContext
+	a.SSEKMSKeyId = b.SSEKMSKeyId
+	a.ServerSideEncryption = b.ServerSideEncryption
+	a.StorageClass = b.StorageClass
+	a.Tagging = b.Tagging
 	a.WebsiteRedirectLocation = b.WebsiteRedirectLocation
 }

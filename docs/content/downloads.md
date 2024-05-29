@@ -10,6 +10,19 @@ Rclone is single executable (`rclone`, or `rclone.exe` on Windows) that you can
 simply download as a zip archive and extract into a location of your choosing.
 See the [install](https://rclone.org/install/) documentation for more details.
 
+## Release {{% version %}} OS requirements {#osrequirements}
+
+| OS | Minimum Version | 
+|:-------:|:-------:|
+| Linux | Kernel 2.6.32 (or later depending on architecture, e.g. 3.1 on ARMv5) |
+| macOS (Intel) | 10.15 (Catalina) |
+| macOS (ARM64) | 11 (Big Sur) |
+| Windows | 10, Server 2016 |
+| FreeBSD | 12.2 |
+| OpenBSD | 6.9 |
+
+See [minimum requirements](https://go.dev/wiki/MinimumRequirements) and other [platform specific information](https://go.dev/wiki/#platform-specific-information) in Go Wiki for more details.
+
 ## Release {{% version %}} {#release}
 
 | Arch-OS | Windows | macOS | Linux | .deb | .rpm | FreeBSD | NetBSD | OpenBSD | Plan9 | Solaris |
@@ -28,6 +41,9 @@ You can also find a [mirror of the downloads on GitHub](https://github.com/rclon
 See also [Android builds](https://beta.rclone.org/{{% version %}}/testbuilds/).
 These are built as part of the official release, but haven't been
 adopted as first class builds yet.
+
+See [the release signing docs](/release_signing/) for how to verify
+signatures on the release.
 
 ## Script download and install ##
 
@@ -98,3 +114,19 @@ script) from a URL which doesn't change then you can use these links.
 ## Older Downloads
 
 Older downloads can be found [here](https://downloads.rclone.org/).
+
+The latest `rclone` version working for:
+| OS | Maximum rclone version | 
+|:-------:|:-------:|
+| Windows 7 | v1.63.1 |
+| Windows Server 2008 | v1.63.1 |
+| Windows Server 2012 | v1.63.1 |
+| Windows XP | v1.42 |
+| Windows Vista | v1.42 |
+| macOS 10.14 (Mojave) | v1.63.1 |
+| macOS 10.13 (High Sierra) | v1.63.1 |
+| macOS 10.12 (Sierra) | v1.56.0 |
+| macOS 10.11 (El Capitan) | v1.52.0 |
+| macOS 10.10 (Yosemite) | v1.49.0 |
+| OS X 10.9 (Mavericks) | v1.42 |
+| OS X 10.8 (Mountain Lion) | v1.42 |

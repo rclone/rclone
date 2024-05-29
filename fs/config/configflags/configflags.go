@@ -38,6 +38,7 @@ var (
 	downloadHeaders []string
 	headers         []string
 	metadataSet     []string
+	partialSuffix   string
 )
 
 // AddFlags adds the non filing system specific flags to the command
@@ -53,8 +54,8 @@ func AddFlags(ci *fs.ConfigInfo, flagSet *pflag.FlagSet) {
 	flags.StringVarP(flagSet, &cacheDir, "cache-dir", "", config.GetCacheDir(), "Directory rclone will use for caching", "Config")
 	flags.StringVarP(flagSet, &tempDir, "temp-dir", "", os.TempDir(), "Directory rclone will use for temporary files", "Config")
 	flags.BoolVarP(flagSet, &ci.CheckSum, "checksum", "c", ci.CheckSum, "Check for changes with size & checksum (if available, or fallback to size only).", "Copy")
-	flags.BoolVarP(flagSet, &ci.SizeOnly, "size-only", "", ci.SizeOnly, "Skip based on size only, not mod-time or checksum", "Copy")
-	flags.BoolVarP(flagSet, &ci.IgnoreTimes, "ignore-times", "I", ci.IgnoreTimes, "Don't skip files that match size and time - transfer all files", "Copy")
+	flags.BoolVarP(flagSet, &ci.SizeOnly, "size-only", "", ci.SizeOnly, "Skip based on size only, not modtime or checksum", "Copy")
+	flags.BoolVarP(flagSet, &ci.IgnoreTimes, "ignore-times", "I", ci.IgnoreTimes, "Don't skip items that match size and time - transfer all unconditionally", "Copy")
 	flags.BoolVarP(flagSet, &ci.IgnoreExisting, "ignore-existing", "", ci.IgnoreExisting, "Skip all files that exist on destination", "Copy")
 	flags.BoolVarP(flagSet, &ci.IgnoreErrors, "ignore-errors", "", ci.IgnoreErrors, "Delete even if there are I/O errors", "Sync")
 	flags.BoolVarP(flagSet, &ci.DryRun, "dry-run", "n", ci.DryRun, "Do a trial run with no permanent changes", "Config,Important")
@@ -74,19 +75,23 @@ func AddFlags(ci *fs.ConfigInfo, flagSet *pflag.FlagSet) {
 	flags.FVarP(flagSet, &ci.MaxDeleteSize, "max-delete-size", "", "When synchronizing, limit the total size of deletes", "Sync")
 	flags.BoolVarP(flagSet, &ci.TrackRenames, "track-renames", "", ci.TrackRenames, "When synchronizing, track file renames and do a server-side move if possible", "Sync")
 	flags.StringVarP(flagSet, &ci.TrackRenamesStrategy, "track-renames-strategy", "", ci.TrackRenamesStrategy, "Strategies to use when synchronizing using track-renames hash|modtime|leaf", "Sync")
+	flags.IntVarP(flagSet, &ci.Retries, "retries", "", 3, "Retry operations this many times if they fail", "Config")
+	flags.DurationVarP(flagSet, &ci.RetriesInterval, "retries-sleep", "", 0, "Interval between retrying operations if they fail, e.g. 500ms, 60s, 5m (0 to disable)", "Config")
 	flags.IntVarP(flagSet, &ci.LowLevelRetries, "low-level-retries", "", ci.LowLevelRetries, "Number of low level retries to do", "Config")
 	flags.BoolVarP(flagSet, &ci.UpdateOlder, "update", "u", ci.UpdateOlder, "Skip files that are newer on the destination", "Copy")
 	flags.BoolVarP(flagSet, &ci.UseServerModTime, "use-server-modtime", "", ci.UseServerModTime, "Use server modified time instead of object metadata", "Config")
 	flags.BoolVarP(flagSet, &ci.NoGzip, "no-gzip-encoding", "", ci.NoGzip, "Don't set Accept-Encoding: gzip", "Networking")
 	flags.IntVarP(flagSet, &ci.MaxDepth, "max-depth", "", ci.MaxDepth, "If set limits the recursion depth to this", "Filter")
-	flags.BoolVarP(flagSet, &ci.IgnoreSize, "ignore-size", "", false, "Ignore size when skipping use mod-time or checksum", "Copy")
+	flags.BoolVarP(flagSet, &ci.IgnoreSize, "ignore-size", "", false, "Ignore size when skipping use modtime or checksum", "Copy")
 	flags.BoolVarP(flagSet, &ci.IgnoreChecksum, "ignore-checksum", "", ci.IgnoreChecksum, "Skip post copy check of checksums", "Copy")
 	flags.BoolVarP(flagSet, &ci.IgnoreCaseSync, "ignore-case-sync", "", ci.IgnoreCaseSync, "Ignore case when synchronizing", "Copy")
+	flags.BoolVarP(flagSet, &ci.FixCase, "fix-case", "", ci.FixCase, "Force rename of case insensitive dest to match source", "Sync")
 	flags.BoolVarP(flagSet, &ci.NoTraverse, "no-traverse", "", ci.NoTraverse, "Don't traverse destination file system on copy", "Copy")
 	flags.BoolVarP(flagSet, &ci.CheckFirst, "check-first", "", ci.CheckFirst, "Do all the checks before starting transfers", "Copy")
 	flags.BoolVarP(flagSet, &ci.NoCheckDest, "no-check-dest", "", ci.NoCheckDest, "Don't check the destination, copy regardless", "Copy")
 	flags.BoolVarP(flagSet, &ci.NoUnicodeNormalization, "no-unicode-normalization", "", ci.NoUnicodeNormalization, "Don't normalize unicode characters in filenames", "Config")
-	flags.BoolVarP(flagSet, &ci.NoUpdateModTime, "no-update-modtime", "", ci.NoUpdateModTime, "Don't update destination mod-time if files identical", "Copy")
+	flags.BoolVarP(flagSet, &ci.NoUpdateModTime, "no-update-modtime", "", ci.NoUpdateModTime, "Don't update destination modtime if files identical", "Copy")
+	flags.BoolVarP(flagSet, &ci.NoUpdateDirModTime, "no-update-dir-modtime", "", ci.NoUpdateModTime, "Don't update directory modification times", "Copy")
 	flags.StringArrayVarP(flagSet, &ci.CompareDest, "compare-dest", "", nil, "Include additional comma separated server-side paths during comparison", "Copy")
 	flags.StringArrayVarP(flagSet, &ci.CopyDest, "copy-dest", "", nil, "Implies --compare-dest but also copies files from paths into destination", "Copy")
 	flags.StringVarP(flagSet, &ci.BackupDir, "backup-dir", "", ci.BackupDir, "Make backups into hierarchy based in DIR", "Sync")
@@ -125,7 +130,7 @@ func AddFlags(ci *fs.ConfigInfo, flagSet *pflag.FlagSet) {
 	flags.StringVarP(flagSet, &ci.ClientCert, "client-cert", "", ci.ClientCert, "Client SSL certificate (PEM) for mutual TLS auth", "Networking")
 	flags.StringVarP(flagSet, &ci.ClientKey, "client-key", "", ci.ClientKey, "Client SSL private key (PEM) for mutual TLS auth", "Networking")
 	flags.FVarP(flagSet, &ci.MultiThreadCutoff, "multi-thread-cutoff", "", "Use multi-thread downloads for files above this size", "Copy")
-	flags.IntVarP(flagSet, &ci.MultiThreadStreams, "multi-thread-streams", "", ci.MultiThreadStreams, "Max number of streams to use for multi-thread downloads", "Copy")
+	flags.IntVarP(flagSet, &ci.MultiThreadStreams, "multi-thread-streams", "", ci.MultiThreadStreams, "Number of streams to use for multi-thread downloads", "Copy")
 	flags.FVarP(flagSet, &ci.MultiThreadWriteBufferSize, "multi-thread-write-buffer-size", "", "In memory buffer size for writing when in multi-thread mode", "Copy")
 	flags.FVarP(flagSet, &ci.MultiThreadChunkSize, "multi-thread-chunk-size", "", "Chunk size for multi-thread downloads / uploads, if not set by filesystem", "Copy")
 	flags.BoolVarP(flagSet, &ci.UseJSONLog, "use-json-log", "", ci.UseJSONLog, "Use json log format", "Logging")
@@ -148,6 +153,8 @@ func AddFlags(ci *fs.ConfigInfo, flagSet *pflag.FlagSet) {
 	flags.FVarP(flagSet, &ci.TerminalColorMode, "color", "", "When to show colors (and other ANSI codes) AUTO|NEVER|ALWAYS", "Config")
 	flags.FVarP(flagSet, &ci.DefaultTime, "default-time", "", "Time to show if modtime is unknown for files and directories", "Config,Listing")
 	flags.BoolVarP(flagSet, &ci.Inplace, "inplace", "", ci.Inplace, "Download directly to destination file instead of atomic download to temp/rename", "Copy")
+	flags.StringVarP(flagSet, &partialSuffix, "partial-suffix", "", ci.PartialSuffix, "Add partial-suffix to temporary file name when --inplace is not used", "Copy")
+	flags.FVarP(flagSet, &ci.MetadataMapper, "metadata-mapper", "", "Program to run to transforming metadata before upload", "Metadata")
 }
 
 // ParseHeaders converts the strings passed in via the header flags into HTTPOptions
@@ -321,6 +328,11 @@ func SetFlags(ci *fs.ConfigInfo) {
 	// Set whether multi-thread-streams was set
 	multiThreadStreamsFlag := pflag.Lookup("multi-thread-streams")
 	ci.MultiThreadSet = multiThreadStreamsFlag != nil && multiThreadStreamsFlag.Changed
+
+	if len(partialSuffix) > 16 {
+		log.Fatalf("--partial-suffix: Expecting suffix length not greater than %d but got %d", 16, len(partialSuffix))
+	}
+	ci.PartialSuffix = partialSuffix
 
 	// Make sure some values are > 0
 	nonZero := func(pi *int) {

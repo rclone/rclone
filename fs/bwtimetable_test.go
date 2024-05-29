@@ -9,8 +9,11 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// Check it satisfies the interface
-var _ flagger = (*BwTimetable)(nil)
+// Check it satisfies the interfaces
+var (
+	_ flagger   = (*BwTimetable)(nil)
+	_ flaggerNP = BwTimetable{}
+)
 
 func TestBwTimetableSet(t *testing.T) {
 	for _, test := range []struct {

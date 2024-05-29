@@ -43,10 +43,55 @@ the destination from the sync with a filter rule or by putting an
 exclude-if-present file inside the destination directory and sync to a
 destination that is inside the source directory.
 
+Rclone will sync the modification times of files and directories if
+the backend supports it. If metadata syncing is required then use the
+`--metadata` flag.
+
+Note that the modification time and metadata for the root directory
+will **not** be synced. See https://github.com/rclone/rclone/issues/7652
+for more info.
+
 **Note**: Use the `-P`/`--progress` flag to view real-time transfer statistics
 
 **Note**: Use the `rclone dedupe` command to deal with "Duplicate object/directory found in source/destination - ignoring" errors.
 See [this forum post](https://forum.rclone.org/t/sync-not-clearing-duplicates/14372) for more info.
+
+# Logger Flags
+
+The `--differ`, `--missing-on-dst`, `--missing-on-src`, `--match` and `--error` flags write paths, one per line, to the file name (or
+stdout if it is `-`) supplied. What they write is described in the
+help below. For example `--differ` will write all paths which are
+present on both the source and destination but different.
+
+The `--combined` flag will write a file (or stdout) which contains all
+file paths with a symbol and then a space and then the path to tell
+you what happened to it. These are reminiscent of diff files.
+
+- `= path` means path was found in source and destination and was identical
+- `- path` means path was missing on the source, so only in the destination
+- `+ path` means path was missing on the destination, so only in the source
+- `* path` means path was present in source and destination but different.
+- `! path` means there was an error reading or hashing the source or dest.
+
+The `--dest-after` flag writes a list file using the same format flags
+as [`lsf`](/commands/rclone_lsf/#synopsis) (including [customizable options
+for hash, modtime, etc.](/commands/rclone_lsf/#synopsis))
+Conceptually it is similar to rsync's `--itemize-changes`, but not identical
+-- it should output an accurate list of what will be on the destination
+after the sync.
+
+Note that these logger flags have a few limitations, and certain scenarios
+are not currently supported:
+
+- `--max-duration` / `CutoffModeHard`
+- `--compare-dest` / `--copy-dest`
+- server-side moves of an entire dir at once
+- High-level retries, because there would be duplicates (use `--retries 1` to disable)
+- Possibly some unusual error scenarios
+
+Note also that each file is logged during the sync, as opposed to after, so it
+is most useful as a predictor of what SHOULD happen to each file
+(which may or may not match what actually DID.)
 
 
 ```
@@ -56,8 +101,24 @@ rclone sync source:path dest:path [flags]
 ## Options
 
 ```
+      --absolute                Put a leading / in front of path names
+      --combined string         Make a combined report of changes to this file
       --create-empty-src-dirs   Create empty source dirs on destination after sync
+      --csv                     Output in CSV format
+      --dest-after string       Report all files that exist on the dest post-sync
+      --differ string           Report all non-matching files to this file
+  -d, --dir-slash               Append a slash to directory names (default true)
+      --dirs-only               Only list directories
+      --error string            Report all files with errors (hashing or reading) to this file
+      --files-only              Only list files (default true)
+  -F, --format string           Output format - see lsf help for details (default "p")
+      --hash h                  Use this hash when h is used in the format MD5|SHA-1|DropboxHash (default "md5")
   -h, --help                    help for sync
+      --match string            Report all matching files to this file
+      --missing-on-dst string   Report all files missing from the destination to this file
+      --missing-on-src string   Report all files missing from the source to this file
+  -s, --separator string        Separator for the items in the format (default ";")
+  -t, --timeformat string       Specify a custom time format, or 'max' for max precision supported by remote (default: 2006-01-02 15:04:05)
 ```
 
 
@@ -67,15 +128,15 @@ Flags for anything which can Copy a file.
 
 ```
       --check-first                                 Do all the checks before starting transfers
-  -c, --checksum                                    Skip based on checksum (if available) & size, not mod-time & size
+  -c, --checksum                                    Check for changes with size & checksum (if available, or fallback to size only).
       --compare-dest stringArray                    Include additional comma separated server-side paths during comparison
       --copy-dest stringArray                       Implies --compare-dest but also copies files from paths into destination
-      --cutoff-mode string                          Mode to stop transfers when reaching the max transfer limit HARD|SOFT|CAUTIOUS (default "HARD")
+      --cutoff-mode HARD|SOFT|CAUTIOUS              Mode to stop transfers when reaching the max transfer limit HARD|SOFT|CAUTIOUS (default HARD)
       --ignore-case-sync                            Ignore case when synchronizing
       --ignore-checksum                             Skip post copy check of checksums
       --ignore-existing                             Skip all files that exist on destination
-      --ignore-size                                 Ignore size when skipping use mod-time or checksum
-  -I, --ignore-times                                Don't skip files that match size and time - transfer all files
+      --ignore-size                                 Ignore size when skipping use modtime or checksum
+  -I, --ignore-times                                Don't skip items that match size and time - transfer all unconditionally
       --immutable                                   Do not modify files, fail if existing files have been modified
       --inplace                                     Download directly to destination file instead of atomic download to temp/rename
       --max-backlog int                             Maximum number of objects in sync or check backlog (default 10000)
@@ -83,16 +144,19 @@ Flags for anything which can Copy a file.
       --max-transfer SizeSuffix                     Maximum size of data to transfer (default off)
   -M, --metadata                                    If set, preserve metadata when copying objects
       --modify-window Duration                      Max time diff to be considered the same (default 1ns)
-      --multi-thread-cutoff SizeSuffix              Use multi-thread downloads for files above this size (default 250Mi)
-      --multi-thread-streams int                    Max number of streams to use for multi-thread downloads (default 4)
+      --multi-thread-chunk-size SizeSuffix          Chunk size for multi-thread downloads / uploads, if not set by filesystem (default 64Mi)
+      --multi-thread-cutoff SizeSuffix              Use multi-thread downloads for files above this size (default 256Mi)
+      --multi-thread-streams int                    Number of streams to use for multi-thread downloads (default 4)
       --multi-thread-write-buffer-size SizeSuffix   In memory buffer size for writing when in multi-thread mode (default 128Ki)
       --no-check-dest                               Don't check the destination, copy regardless
       --no-traverse                                 Don't traverse destination file system on copy
-      --no-update-modtime                           Don't update destination mod-time if files identical
+      --no-update-dir-modtime                       Don't update directory modification times
+      --no-update-modtime                           Don't update destination modtime if files identical
       --order-by string                             Instructions on how to order the transfers, e.g. 'size,descending'
+      --partial-suffix string                       Add partial-suffix to temporary file name when --inplace is not used (default ".partial")
       --refresh-times                               Refresh the modtime of remote files
       --server-side-across-configs                  Allow server-side operations (e.g. copy) to work across different configs
-      --size-only                                   Skip based on size only, not mod-time or checksum
+      --size-only                                   Skip based on size only, not modtime or checksum
       --streaming-upload-cutoff SizeSuffix          Cutoff for switching to chunked upload if file size is unknown, upload starts after reaching cutoff or when file ends (default 100Ki)
   -u, --update                                      Skip files that are newer on the destination
 ```
@@ -106,6 +170,7 @@ Flags just used for `rclone sync`.
       --delete-after                    When synchronizing, delete files on destination after transferring (default)
       --delete-before                   When synchronizing, delete files on destination before transferring
       --delete-during                   When synchronizing, delete files during transfer
+      --fix-case                        Force rename of case insensitive dest to match source
       --ignore-errors                   Delete even if there are I/O errors
       --max-delete int                  When synchronizing, limit the number of deletes (default -1)
       --max-delete-size SizeSuffix      When synchronizing, limit the total size of deletes (default off)

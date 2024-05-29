@@ -948,6 +948,12 @@ func (f *Fs) About(ctx context.Context) (usage *fs.Usage, err error) {
 	return usage, nil
 }
 
+// Shutdown shutdown the fs
+func (f *Fs) Shutdown(ctx context.Context) error {
+	f.tokenRenewer.Shutdown()
+	return nil
+}
+
 // Hashes returns the supported hash sets.
 func (f *Fs) Hashes() hash.Set {
 	// EU region supports SHA1 and SHA256 (but rclone doesn't
@@ -1280,6 +1286,7 @@ var (
 	_ fs.DirCacheFlusher = (*Fs)(nil)
 	_ fs.PublicLinker    = (*Fs)(nil)
 	_ fs.Abouter         = (*Fs)(nil)
+	_ fs.Shutdowner      = (*Fs)(nil)
 	_ fs.Object          = (*Object)(nil)
 	_ fs.IDer            = (*Object)(nil)
 )

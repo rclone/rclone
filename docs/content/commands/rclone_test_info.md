@@ -28,6 +28,7 @@ rclone test info [remote:path]+ [flags]
 
 ```
       --all                    Run all tests
+      --check-base32768        Check can store all possible base32768 characters
       --check-control          Check control characters
       --check-length           Check max filename length
       --check-normalization    Check UTF-8 Normalization

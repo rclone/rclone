@@ -48,6 +48,14 @@ func (f realOsFile) Node() vfs.Node {
 	return nil
 }
 
+func (f realOsFile) Lock() error {
+	return os.ErrInvalid
+}
+
+func (f realOsFile) Unlock() error {
+	return os.ErrInvalid
+}
+
 // Chtimes
 func (r realOs) Chtimes(name string, atime time.Time, mtime time.Time) error {
 	return os.Chtimes(name, atime, mtime)

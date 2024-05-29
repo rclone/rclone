@@ -229,7 +229,7 @@ func TestJobRunPanic(t *testing.T) {
 
 func TestJobsNewJob(t *testing.T) {
 	ctx := context.Background()
-	jobID = 0
+	jobID.Store(0)
 	jobs := newJobs()
 	job, out, err := jobs.NewJob(ctx, noopFn, rc.Params{"_async": true})
 	require.NoError(t, err)
@@ -241,7 +241,7 @@ func TestJobsNewJob(t *testing.T) {
 
 func TestStartJob(t *testing.T) {
 	ctx := context.Background()
-	jobID = 0
+	jobID.Store(0)
 	job, out, err := NewJob(ctx, longFn, rc.Params{"_async": true})
 	assert.NoError(t, err)
 	assert.Equal(t, rc.Params{"jobid": int64(1)}, out)
@@ -249,7 +249,7 @@ func TestStartJob(t *testing.T) {
 }
 
 func TestExecuteJob(t *testing.T) {
-	jobID = 0
+	jobID.Store(0)
 	job, out, err := NewJob(context.Background(), shortFn, rc.Params{})
 	assert.NoError(t, err)
 	assert.Equal(t, int64(1), job.ID)
@@ -258,7 +258,7 @@ func TestExecuteJob(t *testing.T) {
 
 func TestExecuteJobWithConfig(t *testing.T) {
 	ctx := context.Background()
-	jobID = 0
+	jobID.Store(0)
 	called := false
 	jobFn := func(ctx context.Context, in rc.Params) (rc.Params, error) {
 		ci := fs.GetConfig(ctx)
@@ -274,7 +274,7 @@ func TestExecuteJobWithConfig(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, true, called)
 	// Retest with string parameter
-	jobID = 0
+	jobID.Store(0)
 	called = false
 	_, _, err = NewJob(ctx, jobFn, rc.Params{
 		"_config": `{"BufferSize": "42M"}`,
@@ -289,7 +289,7 @@ func TestExecuteJobWithConfig(t *testing.T) {
 func TestExecuteJobWithFilter(t *testing.T) {
 	ctx := context.Background()
 	called := false
-	jobID = 0
+	jobID.Store(0)
 	jobFn := func(ctx context.Context, in rc.Params) (rc.Params, error) {
 		fi := filter.GetConfig(ctx)
 		assert.Equal(t, fs.SizeSuffix(1024), fi.Opt.MaxSize)
@@ -309,7 +309,7 @@ func TestExecuteJobWithFilter(t *testing.T) {
 
 func TestExecuteJobWithGroup(t *testing.T) {
 	ctx := context.Background()
-	jobID = 0
+	jobID.Store(0)
 	called := false
 	jobFn := func(ctx context.Context, in rc.Params) (rc.Params, error) {
 		called = true
@@ -327,7 +327,7 @@ func TestExecuteJobWithGroup(t *testing.T) {
 
 func TestExecuteJobErrorPropagation(t *testing.T) {
 	ctx := context.Background()
-	jobID = 0
+	jobID.Store(0)
 
 	testErr := errors.New("test error")
 	errorFn := func(ctx context.Context, in rc.Params) (out rc.Params, err error) {
@@ -339,7 +339,7 @@ func TestExecuteJobErrorPropagation(t *testing.T) {
 
 func TestRcJobStatus(t *testing.T) {
 	ctx := context.Background()
-	jobID = 0
+	jobID.Store(0)
 	_, _, err := NewJob(ctx, longFn, rc.Params{"_async": true})
 	assert.NoError(t, err)
 
@@ -367,7 +367,7 @@ func TestRcJobStatus(t *testing.T) {
 
 func TestRcJobList(t *testing.T) {
 	ctx := context.Background()
-	jobID = 0
+	jobID.Store(0)
 	_, _, err := NewJob(ctx, longFn, rc.Params{"_async": true})
 	assert.NoError(t, err)
 
@@ -396,7 +396,7 @@ func TestRcJobList(t *testing.T) {
 
 func TestRcAsyncJobStop(t *testing.T) {
 	ctx := context.Background()
-	jobID = 0
+	jobID.Store(0)
 	_, _, err := NewJob(ctx, ctxFn, rc.Params{"_async": true})
 	assert.NoError(t, err)
 
@@ -434,7 +434,7 @@ func TestRcAsyncJobStop(t *testing.T) {
 func TestRcSyncJobStop(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	go func() {
-		jobID = 0
+		jobID.Store(0)
 		job, out, err := NewJob(ctx, ctxFn, rc.Params{})
 		assert.Error(t, err)
 		assert.Equal(t, int64(1), job.ID)
@@ -477,7 +477,7 @@ func TestRcSyncJobStop(t *testing.T) {
 
 func TestRcJobStopGroup(t *testing.T) {
 	ctx := context.Background()
-	jobID = 0
+	jobID.Store(0)
 	_, _, err := NewJob(ctx, ctxFn, rc.Params{
 		"_async": true,
 		"_group": "myparty",
@@ -518,7 +518,7 @@ func TestRcJobStopGroup(t *testing.T) {
 }
 
 func TestOnFinish(t *testing.T) {
-	jobID = 0
+	jobID.Store(0)
 	done := make(chan struct{})
 	ctx, cancel := context.WithCancel(context.Background())
 	job, _, err := NewJob(ctx, ctxParmFn(ctx, false), rc.Params{"_async": true})
@@ -538,7 +538,7 @@ func TestOnFinish(t *testing.T) {
 }
 
 func TestOnFinishAlreadyFinished(t *testing.T) {
-	jobID = 0
+	jobID.Store(0)
 	done := make(chan struct{})
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()

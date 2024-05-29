@@ -16,6 +16,7 @@ import (
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/cache"
 	"github.com/rclone/rclone/fs/fspath"
+	"github.com/rclone/rclone/fs/operations"
 )
 
 var (
@@ -25,10 +26,6 @@ var (
 
 // Fs is a wrap of any fs and its configs
 type Fs struct {
-	// In order to ensure memory alignment on 32-bit architectures
-	// when this field is accessed through sync/atomic functions,
-	// it must be the first entry in the struct
-	cacheExpiry int64 // usage cache expiry time
 	fs.Fs
 	RootFs      fs.Fs
 	RootPath    string
@@ -37,9 +34,12 @@ type Fs struct {
 	creatable   bool
 	usage       *fs.Usage     // Cache the usage
 	cacheTime   time.Duration // cache duration
+	cacheExpiry atomic.Int64  // usage cache expiry time
 	cacheMutex  sync.RWMutex
 	cacheOnce   sync.Once
 	cacheUpdate bool // if the cache is updating
+	writeback   bool // writeback to this upstream
+	writebackFs *Fs  // if non zero, writeback to this upstream
 }
 
 // Directory describes a wrapped Directory
@@ -73,14 +73,14 @@ func New(ctx context.Context, remote, root string, opt *common.Options) (*Fs, er
 		return nil, err
 	}
 	f := &Fs{
-		RootPath:    strings.TrimRight(root, "/"),
-		Opt:         opt,
-		writable:    true,
-		creatable:   true,
-		cacheExpiry: time.Now().Unix(),
-		cacheTime:   time.Duration(opt.CacheTime) * time.Second,
-		usage:       &fs.Usage{},
+		RootPath:  strings.TrimRight(root, "/"),
+		Opt:       opt,
+		writable:  true,
+		creatable: true,
+		cacheTime: time.Duration(opt.CacheTime) * time.Second,
+		usage:     &fs.Usage{},
 	}
+	f.cacheExpiry.Store(time.Now().Unix())
 	if strings.HasSuffix(fsPath, ":ro") {
 		f.writable = false
 		f.creatable = false
@@ -89,6 +89,9 @@ func New(ctx context.Context, remote, root string, opt *common.Options) (*Fs, er
 		f.writable = true
 		f.creatable = false
 		fsPath = fsPath[0 : len(fsPath)-3]
+	} else if strings.HasSuffix(fsPath, ":writeback") {
+		f.writeback = true
+		fsPath = fsPath[0 : len(fsPath)-len(":writeback")]
 	}
 	remote = configName + fsPath
 	rFs, err := cache.Get(ctx, remote)
@@ -104,6 +107,29 @@ func New(ctx context.Context, remote, root string, opt *common.Options) (*Fs, er
 	f.Fs = myFs
 	cache.PinUntilFinalized(f.Fs, f)
 	return f, err
+}
+
+// Prepare the configured upstreams as a group
+func Prepare(fses []*Fs) error {
+	writebacks := 0
+	var writebackFs *Fs
+	for _, f := range fses {
+		if f.writeback {
+			writebackFs = f
+			writebacks++
+		}
+	}
+	if writebacks == 0 {
+		return nil
+	} else if writebacks > 1 {
+		return fmt.Errorf("can only have 1 :writeback not %d", writebacks)
+	}
+	for _, f := range fses {
+		if !f.writeback {
+			f.writebackFs = writebackFs
+		}
+	}
+	return nil
 }
 
 // WrapDirectory wraps an fs.Directory to include the info
@@ -296,9 +322,75 @@ func (o *Object) Metadata(ctx context.Context) (fs.Metadata, error) {
 	return do.Metadata(ctx)
 }
 
+// SetMetadata sets metadata for an Object
+//
+// It should return fs.ErrorNotImplemented if it can't set metadata
+func (o *Object) SetMetadata(ctx context.Context, metadata fs.Metadata) error {
+	do, ok := o.Object.(fs.SetMetadataer)
+	if !ok {
+		return fs.ErrorNotImplemented
+	}
+	return do.SetMetadata(ctx, metadata)
+}
+
+// Metadata returns metadata for an DirEntry
+//
+// It should return nil if there is no Metadata
+func (e *Directory) Metadata(ctx context.Context) (fs.Metadata, error) {
+	do, ok := e.Directory.(fs.Metadataer)
+	if !ok {
+		return nil, nil
+	}
+	return do.Metadata(ctx)
+}
+
+// SetMetadata sets metadata for an DirEntry
+//
+// It should return fs.ErrorNotImplemented if it can't set metadata
+func (e *Directory) SetMetadata(ctx context.Context, metadata fs.Metadata) error {
+	do, ok := e.Directory.(fs.SetMetadataer)
+	if !ok {
+		return fs.ErrorNotImplemented
+	}
+	return do.SetMetadata(ctx, metadata)
+}
+
+// SetModTime sets the metadata on the DirEntry to set the modification date
+//
+// If there is any other metadata it does not overwrite it.
+func (e *Directory) SetModTime(ctx context.Context, t time.Time) error {
+	do, ok := e.Directory.(fs.SetModTimer)
+	if !ok {
+		return fs.ErrorNotImplemented
+	}
+	return do.SetModTime(ctx, t)
+}
+
+// Writeback writes the object back and returns a new object
+//
+// If it returns nil, nil then the original object is OK
+func (o *Object) Writeback(ctx context.Context) (*Object, error) {
+	if o.f.writebackFs == nil {
+		return nil, nil
+	}
+	newObj, err := operations.Copy(ctx, o.f.writebackFs.Fs, nil, o.Object.Remote(), o.Object)
+	if err != nil {
+		return nil, err
+	}
+	// newObj could be nil here
+	if newObj == nil {
+		fs.Errorf(o, "nil Object returned from operations.Copy")
+		return nil, nil
+	}
+	return &Object{
+		Object: newObj,
+		f:      o.f,
+	}, err
+}
+
 // About gets quota information from the Fs
 func (f *Fs) About(ctx context.Context) (*fs.Usage, error) {
-	if atomic.LoadInt64(&f.cacheExpiry) <= time.Now().Unix() {
+	if f.cacheExpiry.Load() <= time.Now().Unix() {
 		err := f.updateUsage()
 		if err != nil {
 			return nil, ErrUsageFieldNotSupported
@@ -313,7 +405,7 @@ func (f *Fs) About(ctx context.Context) (*fs.Usage, error) {
 //
 // This is returned as 0..math.MaxInt64-1 leaving math.MaxInt64 as a sentinel
 func (f *Fs) GetFreeSpace() (int64, error) {
-	if atomic.LoadInt64(&f.cacheExpiry) <= time.Now().Unix() {
+	if f.cacheExpiry.Load() <= time.Now().Unix() {
 		err := f.updateUsage()
 		if err != nil {
 			return math.MaxInt64 - 1, ErrUsageFieldNotSupported
@@ -331,7 +423,7 @@ func (f *Fs) GetFreeSpace() (int64, error) {
 //
 // This is returned as 0..math.MaxInt64-1 leaving math.MaxInt64 as a sentinel
 func (f *Fs) GetUsedSpace() (int64, error) {
-	if atomic.LoadInt64(&f.cacheExpiry) <= time.Now().Unix() {
+	if f.cacheExpiry.Load() <= time.Now().Unix() {
 		err := f.updateUsage()
 		if err != nil {
 			return 0, ErrUsageFieldNotSupported
@@ -347,7 +439,7 @@ func (f *Fs) GetUsedSpace() (int64, error) {
 
 // GetNumObjects get the number of objects of the fs
 func (f *Fs) GetNumObjects() (int64, error) {
-	if atomic.LoadInt64(&f.cacheExpiry) <= time.Now().Unix() {
+	if f.cacheExpiry.Load() <= time.Now().Unix() {
 		err := f.updateUsage()
 		if err != nil {
 			return 0, ErrUsageFieldNotSupported
@@ -402,12 +494,13 @@ func (f *Fs) updateUsageCore(lock bool) error {
 		defer f.cacheMutex.Unlock()
 	}
 	// Store usage
-	atomic.StoreInt64(&f.cacheExpiry, time.Now().Add(f.cacheTime).Unix())
+	f.cacheExpiry.Store(time.Now().Add(f.cacheTime).Unix())
 	f.usage = usage
 	return nil
 }
 
 // Check the interfaces are satisfied
 var (
-	_ fs.FullObject = (*Object)(nil)
+	_ fs.FullObject    = (*Object)(nil)
+	_ fs.FullDirectory = (*Directory)(nil)
 )

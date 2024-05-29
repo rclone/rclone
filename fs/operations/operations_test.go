@@ -22,7 +22,6 @@ package operations_test
 import (
 	"bytes"
 	"context"
-	"crypto/rand"
 	"errors"
 	"fmt"
 	"io"
@@ -38,12 +37,12 @@ import (
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/accounting"
 	"github.com/rclone/rclone/fs/filter"
-	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/fstest"
 	"github.com/rclone/rclone/fstest/fstests"
+	"github.com/rclone/rclone/lib/pacer"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/text/cases"
@@ -506,12 +505,12 @@ func TestRetry(t *testing.T) {
 		return err
 	}
 
-	i, err = 3, io.EOF
+	i, err = 3, fmt.Errorf("Wrapped EOF is retriable: %w", io.EOF)
 	assert.Equal(t, nil, operations.Retry(ctx, nil, 5, fn))
 	assert.Equal(t, 0, i)
 
-	i, err = 10, io.EOF
-	assert.Equal(t, io.EOF, operations.Retry(ctx, nil, 5, fn))
+	i, err = 10, pacer.RetryAfterError(errors.New("BANG"), 10*time.Millisecond)
+	assert.Equal(t, err, operations.Retry(ctx, nil, 5, fn))
 	assert.Equal(t, 5, i)
 
 	i, err = 10, fs.ErrorObjectNotFound
@@ -702,6 +701,22 @@ func TestRmdirsNoLeaveRoot(t *testing.T) {
 		fs.GetModifyWindow(ctx, r.Fremote),
 	)
 
+	// Delete the files so we can remove everything including the root
+	for _, file := range []fstest.Item{file1, file2} {
+		o, err := r.Fremote.NewObject(ctx, file.Path)
+		require.NoError(t, err)
+		require.NoError(t, o.Remove(ctx))
+	}
+
+	require.NoError(t, operations.Rmdirs(ctx, r.Fremote, "", false))
+
+	fstest.CheckListingWithPrecision(
+		t,
+		r.Fremote,
+		[]fstest.Item{},
+		[]string{},
+		fs.GetModifyWindow(ctx, r.Fremote),
+	)
 }
 
 func TestRmdirsLeaveRoot(t *testing.T) {
@@ -983,6 +998,23 @@ func TestCaseInsensitiveMoveFile(t *testing.T) {
 	r.CheckRemoteItems(t, file2Capitalized)
 }
 
+func TestCaseInsensitiveMoveFileDryRun(t *testing.T) {
+	ctx := context.Background()
+	ctx, ci := fs.AddConfig(ctx)
+	r := fstest.NewRun(t)
+	if !r.Fremote.Features().CaseInsensitive {
+		return
+	}
+
+	file1 := r.WriteObject(ctx, "hello", "world", t1)
+	r.CheckRemoteItems(t, file1)
+
+	ci.DryRun = true
+	err := operations.MoveFile(ctx, r.Fremote, r.Fremote, "HELLO", file1.Path)
+	require.NoError(t, err)
+	r.CheckRemoteItems(t, file1)
+}
+
 func TestMoveFileBackupDir(t *testing.T) {
 	ctx := context.Background()
 	ctx, ci := fs.AddConfig(ctx)
@@ -1004,294 +1036,6 @@ func TestMoveFileBackupDir(t *testing.T) {
 	r.CheckLocalItems(t)
 	file1old.Path = "backup/dst/file1"
 	r.CheckRemoteItems(t, file1old, file1)
-}
-
-func TestCopyFile(t *testing.T) {
-	ctx := context.Background()
-	r := fstest.NewRun(t)
-
-	file1 := r.WriteFile("file1", "file1 contents", t1)
-	r.CheckLocalItems(t, file1)
-
-	file2 := file1
-	file2.Path = "sub/file2"
-
-	err := operations.CopyFile(ctx, r.Fremote, r.Flocal, file2.Path, file1.Path)
-	require.NoError(t, err)
-	r.CheckLocalItems(t, file1)
-	r.CheckRemoteItems(t, file2)
-
-	err = operations.CopyFile(ctx, r.Fremote, r.Flocal, file2.Path, file1.Path)
-	require.NoError(t, err)
-	r.CheckLocalItems(t, file1)
-	r.CheckRemoteItems(t, file2)
-
-	err = operations.CopyFile(ctx, r.Fremote, r.Fremote, file2.Path, file2.Path)
-	require.NoError(t, err)
-	r.CheckLocalItems(t, file1)
-	r.CheckRemoteItems(t, file2)
-}
-
-func TestCopyFileBackupDir(t *testing.T) {
-	ctx := context.Background()
-	ctx, ci := fs.AddConfig(ctx)
-	r := fstest.NewRun(t)
-	if !operations.CanServerSideMove(r.Fremote) {
-		t.Skip("Skipping test as remote does not support server-side move or copy")
-	}
-
-	ci.BackupDir = r.FremoteName + "/backup"
-
-	file1 := r.WriteFile("dst/file1", "file1 contents", t1)
-	r.CheckLocalItems(t, file1)
-
-	file1old := r.WriteObject(ctx, "dst/file1", "file1 contents old", t1)
-	r.CheckRemoteItems(t, file1old)
-
-	err := operations.CopyFile(ctx, r.Fremote, r.Flocal, file1.Path, file1.Path)
-	require.NoError(t, err)
-	r.CheckLocalItems(t, file1)
-	file1old.Path = "backup/dst/file1"
-	r.CheckRemoteItems(t, file1old, file1)
-}
-
-// Test with CompareDest set
-func TestCopyFileCompareDest(t *testing.T) {
-	ctx := context.Background()
-	ctx, ci := fs.AddConfig(ctx)
-	r := fstest.NewRun(t)
-
-	ci.CompareDest = []string{r.FremoteName + "/CompareDest"}
-	fdst, err := fs.NewFs(ctx, r.FremoteName+"/dst")
-	require.NoError(t, err)
-
-	// check empty dest, empty compare
-	file1 := r.WriteFile("one", "one", t1)
-	r.CheckLocalItems(t, file1)
-
-	err = operations.CopyFile(ctx, fdst, r.Flocal, file1.Path, file1.Path)
-	require.NoError(t, err)
-
-	file1dst := file1
-	file1dst.Path = "dst/one"
-
-	r.CheckRemoteItems(t, file1dst)
-
-	// check old dest, empty compare
-	file1b := r.WriteFile("one", "onet2", t2)
-	r.CheckRemoteItems(t, file1dst)
-	r.CheckLocalItems(t, file1b)
-
-	err = operations.CopyFile(ctx, fdst, r.Flocal, file1b.Path, file1b.Path)
-	require.NoError(t, err)
-
-	file1bdst := file1b
-	file1bdst.Path = "dst/one"
-
-	r.CheckRemoteItems(t, file1bdst)
-
-	// check old dest, new compare
-	file3 := r.WriteObject(ctx, "dst/one", "one", t1)
-	file2 := r.WriteObject(ctx, "CompareDest/one", "onet2", t2)
-	file1c := r.WriteFile("one", "onet2", t2)
-	r.CheckRemoteItems(t, file2, file3)
-	r.CheckLocalItems(t, file1c)
-
-	err = operations.CopyFile(ctx, fdst, r.Flocal, file1c.Path, file1c.Path)
-	require.NoError(t, err)
-
-	r.CheckRemoteItems(t, file2, file3)
-
-	// check empty dest, new compare
-	file4 := r.WriteObject(ctx, "CompareDest/two", "two", t2)
-	file5 := r.WriteFile("two", "two", t2)
-	r.CheckRemoteItems(t, file2, file3, file4)
-	r.CheckLocalItems(t, file1c, file5)
-
-	err = operations.CopyFile(ctx, fdst, r.Flocal, file5.Path, file5.Path)
-	require.NoError(t, err)
-
-	r.CheckRemoteItems(t, file2, file3, file4)
-
-	// check new dest, new compare
-	err = operations.CopyFile(ctx, fdst, r.Flocal, file5.Path, file5.Path)
-	require.NoError(t, err)
-
-	r.CheckRemoteItems(t, file2, file3, file4)
-
-	// check empty dest, old compare
-	file5b := r.WriteFile("two", "twot3", t3)
-	r.CheckRemoteItems(t, file2, file3, file4)
-	r.CheckLocalItems(t, file1c, file5b)
-
-	err = operations.CopyFile(ctx, fdst, r.Flocal, file5b.Path, file5b.Path)
-	require.NoError(t, err)
-
-	file5bdst := file5b
-	file5bdst.Path = "dst/two"
-
-	r.CheckRemoteItems(t, file2, file3, file4, file5bdst)
-}
-
-// Test with CopyDest set
-func TestCopyFileCopyDest(t *testing.T) {
-	ctx := context.Background()
-	ctx, ci := fs.AddConfig(ctx)
-	r := fstest.NewRun(t)
-
-	if r.Fremote.Features().Copy == nil {
-		t.Skip("Skipping test as remote does not support server-side copy")
-	}
-
-	ci.CopyDest = []string{r.FremoteName + "/CopyDest"}
-
-	fdst, err := fs.NewFs(ctx, r.FremoteName+"/dst")
-	require.NoError(t, err)
-
-	// check empty dest, empty copy
-	file1 := r.WriteFile("one", "one", t1)
-	r.CheckLocalItems(t, file1)
-
-	err = operations.CopyFile(ctx, fdst, r.Flocal, file1.Path, file1.Path)
-	require.NoError(t, err)
-
-	file1dst := file1
-	file1dst.Path = "dst/one"
-
-	r.CheckRemoteItems(t, file1dst)
-
-	// check old dest, empty copy
-	file1b := r.WriteFile("one", "onet2", t2)
-	r.CheckRemoteItems(t, file1dst)
-	r.CheckLocalItems(t, file1b)
-
-	err = operations.CopyFile(ctx, fdst, r.Flocal, file1b.Path, file1b.Path)
-	require.NoError(t, err)
-
-	file1bdst := file1b
-	file1bdst.Path = "dst/one"
-
-	r.CheckRemoteItems(t, file1bdst)
-
-	// check old dest, new copy, backup-dir
-
-	ci.BackupDir = r.FremoteName + "/BackupDir"
-
-	file3 := r.WriteObject(ctx, "dst/one", "one", t1)
-	file2 := r.WriteObject(ctx, "CopyDest/one", "onet2", t2)
-	file1c := r.WriteFile("one", "onet2", t2)
-	r.CheckRemoteItems(t, file2, file3)
-	r.CheckLocalItems(t, file1c)
-
-	err = operations.CopyFile(ctx, fdst, r.Flocal, file1c.Path, file1c.Path)
-	require.NoError(t, err)
-
-	file2dst := file2
-	file2dst.Path = "dst/one"
-	file3.Path = "BackupDir/one"
-
-	r.CheckRemoteItems(t, file2, file2dst, file3)
-	ci.BackupDir = ""
-
-	// check empty dest, new copy
-	file4 := r.WriteObject(ctx, "CopyDest/two", "two", t2)
-	file5 := r.WriteFile("two", "two", t2)
-	r.CheckRemoteItems(t, file2, file2dst, file3, file4)
-	r.CheckLocalItems(t, file1c, file5)
-
-	err = operations.CopyFile(ctx, fdst, r.Flocal, file5.Path, file5.Path)
-	require.NoError(t, err)
-
-	file4dst := file4
-	file4dst.Path = "dst/two"
-
-	r.CheckRemoteItems(t, file2, file2dst, file3, file4, file4dst)
-
-	// check new dest, new copy
-	err = operations.CopyFile(ctx, fdst, r.Flocal, file5.Path, file5.Path)
-	require.NoError(t, err)
-
-	r.CheckRemoteItems(t, file2, file2dst, file3, file4, file4dst)
-
-	// check empty dest, old copy
-	file6 := r.WriteObject(ctx, "CopyDest/three", "three", t2)
-	file7 := r.WriteFile("three", "threet3", t3)
-	r.CheckRemoteItems(t, file2, file2dst, file3, file4, file4dst, file6)
-	r.CheckLocalItems(t, file1c, file5, file7)
-
-	err = operations.CopyFile(ctx, fdst, r.Flocal, file7.Path, file7.Path)
-	require.NoError(t, err)
-
-	file7dst := file7
-	file7dst.Path = "dst/three"
-
-	r.CheckRemoteItems(t, file2, file2dst, file3, file4, file4dst, file6, file7dst)
-}
-
-func TestCopyInplace(t *testing.T) {
-	ctx := context.Background()
-	ctx, ci := fs.AddConfig(ctx)
-	r := fstest.NewRun(t)
-
-	if !r.Fremote.Features().PartialUploads {
-		t.Skip("Partial uploads not supported")
-	}
-
-	ci.Inplace = true
-
-	file1 := r.WriteFile("file1", "file1 contents", t1)
-	r.CheckLocalItems(t, file1)
-
-	file2 := file1
-	file2.Path = "sub/file2"
-
-	err := operations.CopyFile(ctx, r.Fremote, r.Flocal, file2.Path, file1.Path)
-	require.NoError(t, err)
-	r.CheckLocalItems(t, file1)
-	r.CheckRemoteItems(t, file2)
-
-	err = operations.CopyFile(ctx, r.Fremote, r.Flocal, file2.Path, file1.Path)
-	require.NoError(t, err)
-	r.CheckLocalItems(t, file1)
-	r.CheckRemoteItems(t, file2)
-
-	err = operations.CopyFile(ctx, r.Fremote, r.Fremote, file2.Path, file2.Path)
-	require.NoError(t, err)
-	r.CheckLocalItems(t, file1)
-	r.CheckRemoteItems(t, file2)
-}
-
-func TestCopyLongFileName(t *testing.T) {
-	ctx := context.Background()
-	ctx, ci := fs.AddConfig(ctx)
-	r := fstest.NewRun(t)
-
-	if !r.Fremote.Features().PartialUploads {
-		t.Skip("Partial uploads not supported")
-	}
-
-	ci.Inplace = false // the default
-
-	file1 := r.WriteFile("file1", "file1 contents", t1)
-	r.CheckLocalItems(t, file1)
-
-	file2 := file1
-	file2.Path = "sub/" + strings.Repeat("file2", 30)
-
-	err := operations.CopyFile(ctx, r.Fremote, r.Flocal, file2.Path, file1.Path)
-	require.NoError(t, err)
-	r.CheckLocalItems(t, file1)
-	r.CheckRemoteItems(t, file2)
-
-	err = operations.CopyFile(ctx, r.Fremote, r.Flocal, file2.Path, file1.Path)
-	require.NoError(t, err)
-	r.CheckLocalItems(t, file1)
-	r.CheckRemoteItems(t, file2)
-
-	err = operations.CopyFile(ctx, r.Fremote, r.Fremote, file2.Path, file2.Path)
-	require.NoError(t, err)
-	r.CheckLocalItems(t, file1)
-	r.CheckRemoteItems(t, file2)
 }
 
 // testFsInfo is for unit testing fs.Info
@@ -1514,7 +1258,7 @@ func TestListFormat(t *testing.T) {
 	assert.Equal(t, "a:::b", list.Format(item1))
 
 	list.SetOutput(nil)
-	list.AddModTime()
+	list.AddModTime("")
 	assert.Equal(t, t1.Local().Format("2006-01-02 15:04:05"), list.Format(item0))
 
 	list.SetOutput(nil)
@@ -1546,7 +1290,7 @@ func TestListFormat(t *testing.T) {
 	assert.Equal(t, "1", list.Format(item0))
 
 	list.AddPath()
-	list.AddModTime()
+	list.AddModTime("")
 	list.SetDirSlash(true)
 	list.SetSeparator("__SEP__")
 	assert.Equal(t, "1__SEP__a__SEP__"+t1.Local().Format("2006-01-02 15:04:05"), list.Format(item0))
@@ -1569,7 +1313,7 @@ func TestListFormat(t *testing.T) {
 	list.SetCSV(true)
 	list.AddSize()
 	list.AddPath()
-	list.AddModTime()
+	list.AddModTime("")
 	list.SetDirSlash(true)
 	assert.Equal(t, "1|a|"+t1.Local().Format("2006-01-02 15:04:05"), list.Format(item0))
 	assert.Equal(t, "-1|subdir/|"+t2.Local().Format("2006-01-02 15:04:05"), list.Format(item1))
@@ -1662,6 +1406,33 @@ func TestDirMove(t *testing.T) {
 		fs.GetModifyWindow(ctx, r.Fremote),
 	)
 
+	// Try with a DirMove method that exists but returns fs.ErrorCantDirMove (ex. combine moving across upstreams)
+	// Should fall back to manual move (copy + delete)
+
+	features.DirMove = func(ctx context.Context, src fs.Fs, srcRemote string, dstRemote string) error {
+		return fs.ErrorCantDirMove
+	}
+
+	assert.NoError(t, operations.DirMove(ctx, r.Fremote, "A3", "A4"))
+
+	for i := range files {
+		files[i].Path = strings.ReplaceAll(files[i].Path, "A3/", "A4/")
+	}
+
+	fstest.CheckListingWithPrecision(
+		t,
+		r.Fremote,
+		files,
+		[]string{
+			"A4",
+			"A4/B1",
+			"A4/B2",
+			"A4/B1/C1",
+			"A4/B1/C2",
+			"A4/B1/C3",
+		},
+		fs.GetModifyWindow(ctx, r.Fremote),
+	)
 }
 
 func TestGetFsInfo(t *testing.T) {
@@ -1869,73 +1640,6 @@ func TestRcatSizeMetadata(t *testing.T) {
 	}
 }
 
-func TestCopyFileMaxTransfer(t *testing.T) {
-	ctx := context.Background()
-	ctx, ci := fs.AddConfig(ctx)
-	r := fstest.NewRun(t)
-	defer accounting.Stats(ctx).ResetCounters()
-
-	const sizeCutoff = 2048
-
-	// Make random incompressible data
-	randomData := make([]byte, sizeCutoff)
-	_, err := rand.Read(randomData)
-	require.NoError(t, err)
-	randomString := string(randomData)
-
-	file1 := r.WriteFile("TestCopyFileMaxTransfer/file1", "file1 contents", t1)
-	file2 := r.WriteFile("TestCopyFileMaxTransfer/file2", "file2 contents"+randomString, t2)
-	file3 := r.WriteFile("TestCopyFileMaxTransfer/file3", "file3 contents"+randomString, t2)
-	file4 := r.WriteFile("TestCopyFileMaxTransfer/file4", "file4 contents"+randomString, t2)
-
-	// Cutoff mode: Hard
-	ci.MaxTransfer = sizeCutoff
-	ci.CutoffMode = fs.CutoffModeHard
-
-	// file1: Show a small file gets transferred OK
-	accounting.Stats(ctx).ResetCounters()
-	err = operations.CopyFile(ctx, r.Fremote, r.Flocal, file1.Path, file1.Path)
-	require.NoError(t, err)
-	r.CheckLocalItems(t, file1, file2, file3, file4)
-	r.CheckRemoteItems(t, file1)
-
-	// file2: show a large file does not get transferred
-	accounting.Stats(ctx).ResetCounters()
-	err = operations.CopyFile(ctx, r.Fremote, r.Flocal, file2.Path, file2.Path)
-	require.NotNil(t, err, "Did not get expected max transfer limit error")
-	assert.Contains(t, err.Error(), "max transfer limit reached")
-	assert.True(t, fserrors.IsFatalError(err), fmt.Sprintf("Not fatal error: %v: %#v:", err, err))
-	r.CheckLocalItems(t, file1, file2, file3, file4)
-	r.CheckRemoteItems(t, file1)
-
-	// Cutoff mode: Cautious
-	ci.CutoffMode = fs.CutoffModeCautious
-
-	// file3: show a large file does not get transferred
-	accounting.Stats(ctx).ResetCounters()
-	err = operations.CopyFile(ctx, r.Fremote, r.Flocal, file3.Path, file3.Path)
-	require.NotNil(t, err)
-	assert.Contains(t, err.Error(), "max transfer limit reached")
-	assert.True(t, fserrors.IsNoRetryError(err))
-	r.CheckLocalItems(t, file1, file2, file3, file4)
-	r.CheckRemoteItems(t, file1)
-
-	if isChunker(r.Fremote) {
-		t.Log("skipping remainder of test for chunker as it involves multiple transfers")
-		return
-	}
-
-	// Cutoff mode: Soft
-	ci.CutoffMode = fs.CutoffModeSoft
-
-	// file4: show a large file does get transferred this time
-	accounting.Stats(ctx).ResetCounters()
-	err = operations.CopyFile(ctx, r.Fremote, r.Flocal, file4.Path, file4.Path)
-	require.NoError(t, err)
-	r.CheckLocalItems(t, file1, file2, file3, file4)
-	r.CheckRemoteItems(t, file1, file4)
-}
-
 func TestTouchDir(t *testing.T) {
 	ctx := context.Background()
 	r := fstest.NewRun(t)
@@ -1949,6 +1653,7 @@ func TestTouchDir(t *testing.T) {
 	file3 := r.WriteBoth(ctx, "sub dir/potato3", "hello", t2)
 	r.CheckRemoteItems(t, file1, file2, file3)
 
+	accounting.GlobalStats().ResetCounters()
 	timeValue := time.Date(2010, 9, 8, 7, 6, 5, 4, time.UTC)
 	err := operations.TouchDir(ctx, r.Fremote, "", timeValue, true)
 	require.NoError(t, err)
@@ -1961,4 +1666,204 @@ func TestTouchDir(t *testing.T) {
 		file3.ModTime = timeValue
 		r.CheckRemoteItems(t, file1, file2, file3)
 	}
+}
+
+var testMetadata = fs.Metadata{
+	// System metadata supported by all backends
+	"mtime": t1.Format(time.RFC3339Nano),
+	// User metadata
+	"potato": "jersey",
+}
+
+func TestMkdirMetadata(t *testing.T) {
+	const name = "dir with metadata"
+	ctx := context.Background()
+	ctx, ci := fs.AddConfig(ctx)
+	ci.Metadata = true
+	r := fstest.NewRun(t)
+	features := r.Fremote.Features()
+	if features.MkdirMetadata == nil {
+		t.Skip("Skipping test as remote does not support MkdirMetadata")
+	}
+
+	newDst, err := operations.MkdirMetadata(ctx, r.Fremote, name, testMetadata)
+	require.NoError(t, err)
+	require.NotNil(t, newDst)
+
+	require.True(t, features.ReadDirMetadata, "Expecting ReadDirMetadata to be supported if MkdirMetadata is supported")
+
+	// Check the returned directory and one read from the listing
+	fstest.CheckEntryMetadata(ctx, t, r.Fremote, newDst, testMetadata)
+	fstest.CheckEntryMetadata(ctx, t, r.Fremote, fstest.NewDirectory(ctx, t, r.Fremote, name), testMetadata)
+}
+
+func TestMkdirModTime(t *testing.T) {
+	const name = "directory with modtime"
+	ctx := context.Background()
+	r := fstest.NewRun(t)
+	if r.Fremote.Features().DirSetModTime == nil && r.Fremote.Features().MkdirMetadata == nil {
+		t.Skip("Skipping test as remote does not support DirSetModTime or MkdirMetadata")
+	}
+	newDst, err := operations.MkdirModTime(ctx, r.Fremote, name, t2)
+	require.NoError(t, err)
+
+	// Check the returned directory and one read from the listing
+	// newDst may be nil here depending on how the modtime was set
+	if newDst != nil {
+		fstest.CheckDirModTime(ctx, t, r.Fremote, newDst, t2)
+	}
+	fstest.CheckDirModTime(ctx, t, r.Fremote, fstest.NewDirectory(ctx, t, r.Fremote, name), t2)
+}
+
+func TestCopyDirMetadata(t *testing.T) {
+	const nameNonExistent = "non existent directory"
+	const nameExistent = "existing directory"
+	ctx := context.Background()
+	ctx, ci := fs.AddConfig(ctx)
+	ci.Metadata = true
+	r := fstest.NewRun(t)
+	if !r.Fremote.Features().WriteDirMetadata && r.Fremote.Features().MkdirMetadata == nil {
+		t.Skip("Skipping test as remote does not support WriteDirMetadata or MkdirMetadata")
+	}
+
+	// Create a source local directory with metadata
+	newSrc, err := operations.MkdirMetadata(ctx, r.Flocal, "dir with metadata to be copied", testMetadata)
+	require.NoError(t, err)
+	require.NotNil(t, newSrc)
+
+	// First try with the directory not existing
+	newDst, err := operations.CopyDirMetadata(ctx, r.Fremote, nil, nameNonExistent, newSrc)
+	require.NoError(t, err)
+	require.NotNil(t, newDst)
+
+	// Check the returned directory and one read from the listing
+	fstest.CheckEntryMetadata(ctx, t, r.Fremote, newDst, testMetadata)
+	fstest.CheckEntryMetadata(ctx, t, r.Fremote, fstest.NewDirectory(ctx, t, r.Fremote, nameNonExistent), testMetadata)
+
+	// Then try with the directory existing
+	require.NoError(t, r.Fremote.Rmdir(ctx, nameNonExistent))
+	require.NoError(t, r.Fremote.Mkdir(ctx, nameExistent))
+	existingDir := fstest.NewDirectory(ctx, t, r.Fremote, nameExistent)
+
+	newDst, err = operations.CopyDirMetadata(ctx, r.Fremote, existingDir, "SHOULD BE IGNORED", newSrc)
+	require.NoError(t, err)
+	require.NotNil(t, newDst)
+
+	// Check the returned directory and one read from the listing
+	fstest.CheckEntryMetadata(ctx, t, r.Fremote, newDst, testMetadata)
+	fstest.CheckEntryMetadata(ctx, t, r.Fremote, fstest.NewDirectory(ctx, t, r.Fremote, nameExistent), testMetadata)
+}
+
+func TestSetDirModTime(t *testing.T) {
+	const name = "set modtime on existing directory"
+	ctx, ci := fs.AddConfig(context.Background())
+	r := fstest.NewRun(t)
+	if r.Fremote.Features().DirSetModTime == nil && !r.Fremote.Features().WriteDirSetModTime {
+		t.Skip("Skipping test as remote does not support DirSetModTime or WriteDirSetModTime")
+	}
+
+	// Check that we obey --no-update-dir-modtime - this should return nil, nil
+	ci.NoUpdateDirModTime = true
+	newDst, err := operations.SetDirModTime(ctx, r.Fremote, nil, "set modtime on non existent directory", t2)
+	require.NoError(t, err)
+	require.Nil(t, newDst)
+	ci.NoUpdateDirModTime = false
+
+	// First try with the directory not existing - should return an error
+	newDst, err = operations.SetDirModTime(ctx, r.Fremote, nil, "set modtime on non existent directory", t2)
+	require.Error(t, err)
+	require.Nil(t, newDst)
+
+	// Then try with the directory existing
+	require.NoError(t, r.Fremote.Mkdir(ctx, name))
+	existingDir := fstest.NewDirectory(ctx, t, r.Fremote, name)
+
+	newDst, err = operations.SetDirModTime(ctx, r.Fremote, existingDir, "SHOULD BE IGNORED", t2)
+	require.NoError(t, err)
+	require.NotNil(t, newDst)
+
+	// Check the returned directory and one read from the listing
+	// The modtime will only be correct on newDst if it had a SetModTime method
+	if _, ok := newDst.(fs.SetModTimer); ok {
+		fstest.CheckDirModTime(ctx, t, r.Fremote, newDst, t2)
+	}
+	fstest.CheckDirModTime(ctx, t, r.Fremote, fstest.NewDirectory(ctx, t, r.Fremote, name), t2)
+
+	// Now wrap the directory to make the SetModTime method return fs.ErrorNotImplemented and check that it falls back correctly
+	wrappedDir := fs.NewDirWrapper(existingDir.Remote(), fs.NewDir(existingDir.Remote(), existingDir.ModTime(ctx)))
+	newDst, err = operations.SetDirModTime(ctx, r.Fremote, wrappedDir, "SHOULD BE IGNORED", t1)
+	require.NoError(t, err)
+	require.NotNil(t, newDst)
+	fstest.CheckDirModTime(ctx, t, r.Fremote, fstest.NewDirectory(ctx, t, r.Fremote, name), t1)
+}
+
+func TestDirsEqual(t *testing.T) {
+	ctx := context.Background()
+	ctx, ci := fs.AddConfig(ctx)
+	ci.Metadata = true
+	r := fstest.NewRun(t)
+	if !r.Fremote.Features().WriteDirMetadata && r.Fremote.Features().MkdirMetadata == nil {
+		t.Skip("Skipping test as remote does not support WriteDirMetadata or MkdirMetadata")
+	}
+
+	opt := operations.DirsEqualOpt{
+		ModifyWindow:   fs.GetModifyWindow(ctx, r.Flocal, r.Fremote),
+		SetDirModtime:  true,
+		SetDirMetadata: true,
+	}
+
+	// Create a source local directory with metadata
+	src, err := operations.MkdirMetadata(ctx, r.Flocal, "dir with metadata to be copied", testMetadata)
+	require.NoError(t, err)
+	require.NotNil(t, src)
+
+	// try with nil dst -- should be false
+	equal := operations.DirsEqual(ctx, src, nil, opt)
+	assert.False(t, equal)
+
+	// make a dest with an equal modtime
+	dst, err := operations.MkdirModTime(ctx, r.Fremote, "dst", src.ModTime(ctx))
+	require.NoError(t, err)
+
+	// try with equal modtimes -- should be true
+	equal = operations.DirsEqual(ctx, src, dst, opt)
+	assert.True(t, equal)
+
+	// try with unequal modtimes -- should be false
+	dst, err = operations.SetDirModTime(ctx, r.Fremote, dst, "", t2)
+	require.NoError(t, err)
+	equal = operations.DirsEqual(ctx, src, dst, opt)
+	assert.False(t, equal)
+
+	// try with unequal modtimes that are within modify window -- should be true
+	halfWindow := opt.ModifyWindow / 2
+	dst, err = operations.SetDirModTime(ctx, r.Fremote, dst, "", src.ModTime(ctx).Add(halfWindow))
+	require.NoError(t, err)
+	equal = operations.DirsEqual(ctx, src, dst, opt)
+	assert.True(t, equal)
+
+	// test ignoretimes -- should be false
+	ci.IgnoreTimes = true
+	equal = operations.DirsEqual(ctx, src, dst, opt)
+	assert.False(t, equal)
+
+	// test immutable -- should be true
+	ci.IgnoreTimes = false
+	ci.Immutable = true
+	dst, err = operations.SetDirModTime(ctx, r.Fremote, dst, "", t3)
+	require.NoError(t, err)
+	equal = operations.DirsEqual(ctx, src, dst, opt)
+	assert.True(t, equal)
+
+	// test dst newer than src with --update -- should be true
+	ci.Immutable = false
+	ci.UpdateOlder = true
+	equal = operations.DirsEqual(ctx, src, dst, opt)
+	assert.True(t, equal)
+
+	// test no SetDirModtime or SetDirMetadata -- should be true
+	ci.UpdateOlder = false
+	opt.SetDirMetadata, opt.SetDirModtime = false, false
+	equal = operations.DirsEqual(ctx, src, dst, opt)
+	assert.True(t, equal)
 }

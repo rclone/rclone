@@ -34,6 +34,7 @@ func TestStaticObject(t *testing.T) {
 	o = object.NewStaticObjectInfo(remote, now, size, true, nil, nil)
 	_, err = o.Hash(context.Background(), hash.MD5)
 	assert.Equal(t, hash.ErrUnsupported, err)
+	assert.Equal(t, object.MemoryFs, o.Fs())
 
 	hs := map[hash.Type]string{
 		hash.MD5: "potato",
@@ -152,7 +153,7 @@ func TestMemoryObject(t *testing.T) {
 	err = o.Update(context.Background(), newContent, src)
 	assert.NoError(t, err)
 	checkContent(o, newStr)
-	assert.Equal(t, "Rutaba", string(content)) // check we didn't re-use the buffer
+	assert.Equal(t, "Rutaba", string(content)) // check we didn't reuse the buffer
 
 	// now try streaming
 	newStr = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"

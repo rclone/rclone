@@ -1,3 +1,5 @@
+//go:build go1.21
+
 // Package dlna provides DLNA server.
 package dlna
 
@@ -22,6 +24,7 @@ import (
 	"github.com/rclone/rclone/cmd/serve/dlna/data"
 	"github.com/rclone/rclone/cmd/serve/dlna/dlnaflags"
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/lib/systemd"
 	"github.com/rclone/rclone/vfs"
 	"github.com/rclone/rclone/vfs/vfsflags"
 	"github.com/spf13/cobra"
@@ -47,7 +50,7 @@ based on media formats or file extensions. Additionally, there is no
 media transcoding support. This means that some players might show
 files that they are not able to play back correctly.
 
-` + dlnaflags.Help + vfs.Help,
+` + dlnaflags.Help + vfs.Help(),
 	Annotations: map[string]string{
 		"versionIntroduced": "v1.46",
 		"groups":            "Filter",
@@ -64,6 +67,7 @@ files that they are not able to play back correctly.
 			if err := s.Serve(); err != nil {
 				return err
 			}
+			defer systemd.Notify()()
 			s.Wait()
 			return nil
 		})
@@ -127,11 +131,10 @@ func newServer(f fs.Fs, opt *dlnaflags.Options) (*server, error) {
 		FriendlyName:     friendlyName,
 		RootDeviceUUID:   makeDeviceUUID(friendlyName),
 		Interfaces:       interfaces,
-
-		httpListenAddr: opt.ListenAddr,
-
-		f:   f,
-		vfs: vfs.New(f, &vfsflags.Opt),
+		waitChan:         make(chan struct{}),
+		httpListenAddr:   opt.ListenAddr,
+		f:                f,
+		vfs:              vfs.New(f, &vfsflags.Opt),
 	}
 
 	s.services = map[string]UPnPService{

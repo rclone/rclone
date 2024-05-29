@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 exec rclone --check-normalization=true --check-control=true --check-length=true info \
 	/tmp/testInfo \
-	TestAmazonCloudDrive:testInfo \
 	TestB2:testInfo \
 	TestCryptDrive:testInfo \
 	TestCryptSwift:testInfo \

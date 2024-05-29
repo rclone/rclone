@@ -47,6 +47,7 @@ import (
 	"github.com/rclone/rclone/fs/config/obscure"
 	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/fs/hash"
+	"github.com/rclone/rclone/lib/batcher"
 	"github.com/rclone/rclone/lib/encoder"
 	"github.com/rclone/rclone/lib/oauthutil"
 	"github.com/rclone/rclone/lib/pacer"
@@ -121,6 +122,14 @@ var (
 
 	// Errors
 	errNotSupportedInSharedMode = fserrors.NoRetryError(errors.New("not supported in shared files mode"))
+
+	// Configure the batcher
+	defaultBatcherOptions = batcher.Options{
+		MaxBatchSize:          1000,
+		DefaultTimeoutSync:    500 * time.Millisecond,
+		DefaultTimeoutAsync:   10 * time.Second,
+		DefaultBatchSizeAsync: 100,
+	}
 )
 
 // Gets an oauth config with the right scopes
@@ -152,7 +161,7 @@ func init() {
 				},
 			})
 		},
-		Options: append(oauthutil.SharedOptions, []fs.Option{{
+		Options: append(append(oauthutil.SharedOptions, []fs.Option{{
 			Name: "chunk_size",
 			Help: fmt.Sprintf(`Upload chunk size (< %v).
 
@@ -211,68 +220,6 @@ shared folder.`,
 			Default:  false,
 			Advanced: true,
 		}, {
-			Name: "batch_mode",
-			Help: `Upload file batching sync|async|off.
-
-This sets the batch mode used by rclone.
-
-For full info see [the main docs](https://rclone.org/dropbox/#batch-mode)
-
-This has 3 possible values
-
-- off - no batching
-- sync - batch uploads and check completion (default)
-- async - batch upload and don't check completion
-
-Rclone will close any outstanding batches when it exits which may make
-a delay on quit.
-`,
-			Default:  "sync",
-			Advanced: true,
-		}, {
-			Name: "batch_size",
-			Help: `Max number of files in upload batch.
-
-This sets the batch size of files to upload. It has to be less than 1000.
-
-By default this is 0 which means rclone which calculate the batch size
-depending on the setting of batch_mode.
-
-- batch_mode: async - default batch_size is 100
-- batch_mode: sync - default batch_size is the same as --transfers
-- batch_mode: off - not in use
-
-Rclone will close any outstanding batches when it exits which may make
-a delay on quit.
-
-Setting this is a great idea if you are uploading lots of small files
-as it will make them a lot quicker. You can use --transfers 32 to
-maximise throughput.
-`,
-			Default:  0,
-			Advanced: true,
-		}, {
-			Name: "batch_timeout",
-			Help: `Max time to allow an idle upload batch before uploading.
-
-If an upload batch is idle for more than this long then it will be
-uploaded.
-
-The default for this is 0 which means rclone will choose a sensible
-default based on the batch_mode in use.
-
-- batch_mode: async - default batch_timeout is 10s
-- batch_mode: sync - default batch_timeout is 500ms
-- batch_mode: off - not in use
-`,
-			Default:  fs.Duration(0),
-			Advanced: true,
-		}, {
-			Name:     "batch_commit_timeout",
-			Help:     `Max time to wait for a batch to finish committing`,
-			Default:  fs.Duration(10 * time.Minute),
-			Advanced: true,
-		}, {
 			Name:     "pacer_min_sleep",
 			Default:  defaultMinSleep,
 			Help:     "Minimum time to sleep between API calls.",
@@ -290,23 +237,22 @@ default based on the batch_mode in use.
 				encoder.EncodeDel |
 				encoder.EncodeRightSpace |
 				encoder.EncodeInvalidUtf8,
-		}}...),
+		}}...), defaultBatcherOptions.FsOptions("For full info see [the main docs](https://rclone.org/dropbox/#batch-mode)\n\n")...),
 	})
 }
 
 // Options defines the configuration for this backend
 type Options struct {
-	ChunkSize          fs.SizeSuffix        `config:"chunk_size"`
-	Impersonate        string               `config:"impersonate"`
-	SharedFiles        bool                 `config:"shared_files"`
-	SharedFolders      bool                 `config:"shared_folders"`
-	BatchMode          string               `config:"batch_mode"`
-	BatchSize          int                  `config:"batch_size"`
-	BatchTimeout       fs.Duration          `config:"batch_timeout"`
-	BatchCommitTimeout fs.Duration          `config:"batch_commit_timeout"`
-	AsyncBatch         bool                 `config:"async_batch"`
-	PacerMinSleep      fs.Duration          `config:"pacer_min_sleep"`
-	Enc                encoder.MultiEncoder `config:"encoding"`
+	ChunkSize     fs.SizeSuffix        `config:"chunk_size"`
+	Impersonate   string               `config:"impersonate"`
+	SharedFiles   bool                 `config:"shared_files"`
+	SharedFolders bool                 `config:"shared_folders"`
+	BatchMode     string               `config:"batch_mode"`
+	BatchSize     int                  `config:"batch_size"`
+	BatchTimeout  fs.Duration          `config:"batch_timeout"`
+	AsyncBatch    bool                 `config:"async_batch"`
+	PacerMinSleep fs.Duration          `config:"pacer_min_sleep"`
+	Enc           encoder.MultiEncoder `config:"encoding"`
 }
 
 // Fs represents a remote dropbox server
@@ -325,7 +271,7 @@ type Fs struct {
 	slashRootSlash string         // root with "/" prefix and postfix, lowercase
 	pacer          *fs.Pacer      // To pace the API calls
 	ns             string         // The namespace we are using or "" for none
-	batcher        *batcher       // batch builder
+	batcher        *batcher.Batcher[*files.UploadSessionFinishArg, *files.FileMetadata]
 }
 
 // Object describes a dropbox object
@@ -451,7 +397,11 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		ci:    ci,
 		pacer: fs.NewPacer(ctx, pacer.NewDefault(pacer.MinSleep(opt.PacerMinSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant))),
 	}
-	f.batcher, err = newBatcher(ctx, f, f.opt.BatchMode, f.opt.BatchSize, time.Duration(f.opt.BatchTimeout))
+	batcherOptions := defaultBatcherOptions
+	batcherOptions.Mode = f.opt.BatchMode
+	batcherOptions.Size = f.opt.BatchSize
+	batcherOptions.Timeout = time.Duration(f.opt.BatchTimeout)
+	f.batcher, err = batcher.New(ctx, f, f.commitBatch, batcherOptions)
 	if err != nil {
 		return nil, err
 	}
@@ -478,15 +428,15 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		members := []*team.UserSelectorArg{&user}
 		args := team.NewMembersGetInfoArgs(members)
 
-		memberIds, err := f.team.MembersGetInfo(args)
+		memberIDs, err := f.team.MembersGetInfo(args)
 		if err != nil {
 			return nil, fmt.Errorf("invalid dropbox team member: %q: %w", opt.Impersonate, err)
 		}
-		if len(memberIds) == 0 || memberIds[0].MemberInfo == nil || memberIds[0].MemberInfo.Profile == nil {
+		if len(memberIDs) == 0 || memberIDs[0].MemberInfo == nil || memberIDs[0].MemberInfo.Profile == nil {
 			return nil, fmt.Errorf("dropbox team member not found: %q", opt.Impersonate)
 		}
 
-		cfg.AsMemberID = memberIds[0].MemberInfo.Profile.MemberProfile.TeamMemberId
+		cfg.AsMemberID = memberIDs[0].MemberInfo.Profile.MemberProfile.TeamMemberId
 	}
 
 	f.srv = files.New(cfg)
@@ -694,7 +644,7 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 	return f.newObjectWithInfo(ctx, remote, nil)
 }
 
-// listSharedFoldersApi lists all available shared folders mounted and not mounted
+// listSharedFolders lists all available shared folders mounted and not mounted
 // we'll need the id later so we have to return them in original format
 func (f *Fs) listSharedFolders(ctx context.Context) (entries fs.DirEntries, err error) {
 	started := false
@@ -996,6 +946,7 @@ func (f *Fs) purgeCheck(ctx context.Context, dir string, check bool) (err error)
 	if root == "/" {
 		return errors.New("can't remove root directory")
 	}
+	encRoot := f.opt.Enc.FromStandardPath(root)
 
 	if check {
 		// check directory exists
@@ -1004,10 +955,9 @@ func (f *Fs) purgeCheck(ctx context.Context, dir string, check bool) (err error)
 			return fmt.Errorf("Rmdir: %w", err)
 		}
 
-		root = f.opt.Enc.FromStandardPath(root)
 		// check directory empty
 		arg := files.ListFolderArg{
-			Path:      root,
+			Path:      encRoot,
 			Recursive: false,
 		}
 		if root == "/" {
@@ -1028,7 +978,7 @@ func (f *Fs) purgeCheck(ctx context.Context, dir string, check bool) (err error)
 
 	// remove it
 	err = f.pacer.Call(func() (bool, error) {
-		_, err = f.srv.DeleteV2(&files.DeleteArg{Path: root})
+		_, err = f.srv.DeleteV2(&files.DeleteArg{Path: encRoot})
 		return shouldRetry(ctx, err)
 	})
 	return err
@@ -1281,18 +1231,21 @@ func (f *Fs) About(ctx context.Context) (usage *fs.Usage, err error) {
 		return nil, err
 	}
 	var total uint64
+	used := q.Used
 	if q.Allocation != nil {
 		if q.Allocation.Individual != nil {
 			total += q.Allocation.Individual.Allocated
 		}
 		if q.Allocation.Team != nil {
 			total += q.Allocation.Team.Allocated
+			// Override used with Team.Used as this includes q.Used already
+			used = q.Allocation.Team.Used
 		}
 	}
 	usage = &fs.Usage{
-		Total: fs.NewUsageValue(int64(total)),          // quota of bytes that can be used
-		Used:  fs.NewUsageValue(int64(q.Used)),         // bytes in use
-		Free:  fs.NewUsageValue(int64(total - q.Used)), // bytes which can be uploaded before reaching the quota
+		Total: fs.NewUsageValue(int64(total)),        // quota of bytes that can be used
+		Used:  fs.NewUsageValue(int64(used)),         // bytes in use
+		Free:  fs.NewUsageValue(int64(total - used)), // bytes which can be uploaded before reaching the quota
 	}
 	return usage, nil
 }
@@ -1722,7 +1675,7 @@ func (o *Object) uploadChunked(ctx context.Context, in0 io.Reader, commitInfo *f
 	// If we are batching then we should have written all the data now
 	// store the commit info now for a batch commit
 	if o.fs.batcher.Batching() {
-		return o.fs.batcher.Commit(ctx, args)
+		return o.fs.batcher.Commit(ctx, o.remote, args)
 	}
 
 	err = o.fs.pacer.Call(func() (bool, error) {

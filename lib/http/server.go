@@ -27,8 +27,7 @@ import (
 // Help returns text describing the http server to add to the command
 // help.
 func Help(prefix string) string {
-	help := `
-### Server options
+	help := `### Server options
 
 Use ` + "`--{{ .Prefix }}addr`" + ` to specify which IP address and port the server should
 listen on, eg ` + "`--{{ .Prefix }}addr 1.2.3.4:8000` or `--{{ .Prefix }}addr :8080`" + ` to listen to all
@@ -71,9 +70,10 @@ of that with the CA certificate.  ` + "`--k{{ .Prefix }}ey`" + ` should be the P
 private key and ` + "`--{{ .Prefix }}client-ca`" + ` should be the PEM encoded client
 certificate authority certificate.
 
---{{ .Prefix }}min-tls-version is minimum TLS version that is acceptable. Valid
+` + "`--{{ .Prefix }}min-tls-version`" + ` is minimum TLS version that is acceptable. Valid
   values are "tls1.0", "tls1.1", "tls1.2" and "tls1.3" (default
   "tls1.0").
+
 `
 	tmpl, err := template.New("server help").Parse(help)
 	if err != nil {

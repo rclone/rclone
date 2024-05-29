@@ -1,5 +1,4 @@
 //go:build !plan9
-// +build !plan9
 
 // Package sftp implements an SFTP server to serve an rclone VFS
 package sftp
@@ -13,6 +12,7 @@ import (
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config/flags"
 	"github.com/rclone/rclone/fs/rc"
+	"github.com/rclone/rclone/lib/systemd"
 	"github.com/rclone/rclone/vfs"
 	"github.com/rclone/rclone/vfs/vfsflags"
 	"github.com/spf13/cobra"
@@ -113,7 +113,7 @@ used. Omitting "restrict" and using  ` + "`--sftp-path-override`" + ` to enable
 checksumming is possible but less secure and you could use the SFTP server
 provided by OpenSSH in this case.
 
-` + vfs.Help + proxy.Help,
+` + vfs.Help() + proxy.Help,
 	Annotations: map[string]string{
 		"versionIntroduced": "v1.48",
 		"groups":            "Filter",
@@ -135,6 +135,7 @@ provided by OpenSSH in this case.
 			if err != nil {
 				return err
 			}
+			defer systemd.Notify()()
 			s.Wait()
 			return nil
 		})

@@ -122,7 +122,7 @@ type Jobs struct {
 
 var (
 	running   = newJobs()
-	jobID     = int64(0)
+	jobID     atomic.Int64
 	executeID = uuid.New().String()
 )
 
@@ -141,7 +141,7 @@ func SetOpt(opt *rc.Options) {
 
 // SetInitialJobID allows for setting jobID before starting any jobs.
 func SetInitialJobID(id int64) {
-	if !atomic.CompareAndSwapInt64(&jobID, 0, id) {
+	if !jobID.CompareAndSwap(0, id) {
 		panic("Setting jobID is only possible before starting any jobs")
 	}
 }
@@ -264,7 +264,7 @@ var jobKey = jobKeyType{}
 
 // NewJob creates a Job and executes it, possibly in the background if _async is set
 func (jobs *Jobs) NewJob(ctx context.Context, fn rc.Func, in rc.Params) (job *Job, out rc.Params, err error) {
-	id := atomic.AddInt64(&jobID, 1)
+	id := jobID.Add(1)
 	in = in.Copy() // copy input so we can change it
 
 	ctx, isAsync, err := getAsync(ctx, in)

@@ -1,5 +1,4 @@
 //go:build !plan9 && !solaris && !js
-// +build !plan9,!solaris,!js
 
 package oracleobjectstorage
 
@@ -20,14 +19,13 @@ const (
 	maxUploadCutoff            = fs.SizeSuffix(5 * 1024 * 1024 * 1024)
 	minSleep                   = 10 * time.Millisecond
 	defaultCopyTimeoutDuration = fs.Duration(time.Minute)
-	memoryPoolFlushTime        = fs.Duration(time.Minute) // flush the cached buffers after this long
-	memoryPoolUseMmap          = false
 )
 
 const (
 	userPrincipal     = "user_principal_auth"
 	instancePrincipal = "instance_principal_auth"
 	resourcePrincipal = "resource_principal_auth"
+	workloadIdentity  = "workload_identity_auth"
 	environmentAuth   = "env_auth"
 	noAuth            = "no_auth"
 
@@ -39,6 +37,8 @@ https://docs.oracle.com/en-us/iaas/Content/API/Concepts/sdkconfig.htm`
 each instance has its own identity, and authenticates using the certificates that are read from instance metadata. 
 https://docs.oracle.com/en-us/iaas/Content/Identity/Tasks/callingservicesfrominstances.htm`
 
+	workloadIdentityHelpText = `use workload identity to grant OCI Container Engine for Kubernetes workloads policy-driven access to OCI resources using OCI Identity and Access Management (IAM).
+https://docs.oracle.com/en-us/iaas/Content/ContEng/Tasks/contenggrantingworkloadaccesstoresources.htm`
 	resourcePrincipalHelpText = `use resource principals to make API calls`
 
 	environmentAuthHelpText = `automatically pickup the credentials from runtime(env), first one to provide auth wins`
@@ -61,8 +61,6 @@ type Options struct {
 	MaxUploadParts       int                  `config:"max_upload_parts"`
 	UploadConcurrency    int                  `config:"upload_concurrency"`
 	DisableChecksum      bool                 `config:"disable_checksum"`
-	MemoryPoolFlushTime  fs.Duration          `config:"memory_pool_flush_time"`
-	MemoryPoolUseMmap    bool                 `config:"memory_pool_use_mmap"`
 	CopyCutoff           fs.SizeSuffix        `config:"copy_cutoff"`
 	CopyTimeout          fs.Duration          `config:"copy_timeout"`
 	StorageTier          string               `config:"storage_tier"`
@@ -91,6 +89,9 @@ func newOptions() []fs.Option {
 		}, {
 			Value: instancePrincipal,
 			Help:  instancePrincipalHelpText,
+		}, {
+			Value: workloadIdentity,
+			Help:  workloadIdentityHelpText,
 		}, {
 			Value: resourcePrincipal,
 			Help:  resourcePrincipalHelpText,
@@ -223,19 +224,6 @@ copied in chunks of this size.
 The minimum is 0 and the maximum is 5 GiB.`,
 		Default:  fs.SizeSuffix(maxSizeForCopy),
 		Advanced: true,
-	}, {
-		Name:     "memory_pool_flush_time",
-		Default:  memoryPoolFlushTime,
-		Advanced: true,
-		Help: `How often internal memory buffer pools will be flushed.
-
-Uploads which requires additional buffers (f.e multipart) will use memory pool for allocations.
-This option controls how often unused buffers will be removed from the pool.`,
-	}, {
-		Name:     "memory_pool_use_mmap",
-		Default:  memoryPoolUseMmap,
-		Advanced: true,
-		Help:     `Whether to use mmap buffers in internal memory pool.`,
 	}, {
 		Name: "copy_timeout",
 		Help: `Timeout for copy.

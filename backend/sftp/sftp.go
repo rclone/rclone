@@ -1,5 +1,4 @@
 //go:build !plan9
-// +build !plan9
 
 // Package sftp provides a filesystem interface using github.com/pkg/sftp
 package sftp
@@ -232,7 +231,16 @@ E.g. the second example above should be rewritten as:
 			Default: "",
 			Help: `Specifies the path or command to run a sftp server on the remote host.
 
-The subsystem option is ignored when server_command is defined.`,
+The subsystem option is ignored when server_command is defined.
+
+If adding server_command to the configuration file please note that 
+it should not be enclosed in quotes, since that will make rclone fail.
+
+A working example is:
+
+    [remote_name]
+    type = sftp
+    server_command = sudo /usr/libexec/openssh/sftp-server`,
 			Advanced: true,
 		}, {
 			Name:    "use_fstat",
@@ -440,6 +448,26 @@ Example:
 	myUser:myPass@localhost:9005
 	`,
 			Advanced: true,
+		}, {
+			Name:    "copy_is_hardlink",
+			Default: false,
+			Help: `Set to enable server side copies using hardlinks.
+
+The SFTP protocol does not define a copy command so normally server
+side copies are not allowed with the sftp backend.
+
+However the SFTP protocol does support hardlinking, and if you enable
+this flag then the sftp backend will support server side copies. These
+will be implemented by doing a hardlink from the source to the
+destination.
+
+Not all sftp servers support this.
+
+Note that hardlinking two files together will use no additional space
+as the source and the destination will be the same file.
+
+This feature may be useful backups made with --copy-dest.`,
+			Advanced: true,
 		}},
 	}
 	fs.Register(fsi)
@@ -481,6 +509,7 @@ type Options struct {
 	HostKeyAlgorithms       fs.SpaceSepList `config:"host_key_algorithms"`
 	SSH                     fs.SpaceSepList `config:"ssh"`
 	SocksProxy              string          `config:"socks_proxy"`
+	CopyIsHardlink          bool            `config:"copy_is_hardlink"`
 }
 
 // Fs stores the interface to the remote SFTP files
@@ -503,7 +532,7 @@ type Fs struct {
 	drain        *time.Timer // used to drain the pool when we stop using the connections
 	pacer        *fs.Pacer   // pacer for operations
 	savedpswd    string
-	sessions     int32 // count in use sessions
+	sessions     atomic.Int32 // count in use sessions
 }
 
 // Object is a remote SFTP file that has been stat'd (so it exists, but is not necessarily open for reading)
@@ -571,17 +600,17 @@ func (c *conn) closed() error {
 //
 // Call removeSession() when done
 func (f *Fs) addSession() {
-	atomic.AddInt32(&f.sessions, 1)
+	f.sessions.Add(1)
 }
 
 // Show the ssh session is no longer in use
 func (f *Fs) removeSession() {
-	atomic.AddInt32(&f.sessions, -1)
+	f.sessions.Add(-1)
 }
 
 // getSessions shows whether there are any sessions in use
 func (f *Fs) getSessions() int32 {
-	return atomic.LoadInt32(&f.sessions)
+	return f.sessions.Load()
 }
 
 // Open a new connection to the SFTP server.
@@ -780,7 +809,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	if err != nil {
 		return nil, err
 	}
-	if len(opt.SSH) != 0 && (opt.User != "" || opt.Host != "" || opt.Port != "") {
+	if len(opt.SSH) != 0 && ((opt.User != currentUser && opt.User != "") || opt.Host != "" || (opt.Port != "22" && opt.Port != "")) {
 		fs.Logf(name, "--sftp-ssh is in use - ignoring user/host/port from config - set in the parameters to --sftp-ssh (remove them from the config to silence this warning)")
 	}
 
@@ -836,7 +865,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	pubkeyFile := env.ShellExpand(opt.PubKeyFile)
 	//keyPem := env.ShellExpand(opt.KeyPem)
 	// Add ssh agent-auth if no password or file or key PEM specified
-	if (opt.Pass == "" && keyFile == "" && !opt.AskPassword && opt.KeyPem == "") || opt.KeyUseAgent {
+	if (len(opt.SSH) == 0 && opt.Pass == "" && keyFile == "" && !opt.AskPassword && opt.KeyPem == "") || opt.KeyUseAgent {
 		sshAgentClient, _, err := sshagent.New()
 		if err != nil {
 			return nil, fmt.Errorf("couldn't connect to ssh-agent: %w", err)
@@ -1005,7 +1034,7 @@ func (f *Fs) keyboardInteractiveReponse(user, instruction string, questions []st
 // save it so on reconnection we give back the previous string.
 // This removes the ability to let the user correct a mistaken entry,
 // but means that reconnects are transparent.
-// We'll re-use config.Pass for this, 'cos we know it's not been
+// We'll reuse config.Pass for this, 'cos we know it's not been
 // specified.
 func (f *Fs) getPass() (string, error) {
 	for f.savedpswd == "" {
@@ -1036,10 +1065,15 @@ func NewFsWithConnection(ctx context.Context, f *Fs, name string, root string, m
 	}
 
 	f.features = (&fs.Features{
-		CanHaveEmptyDirectories: true,
-		SlowHash:                true,
-		PartialUploads:          true,
+		CanHaveEmptyDirectories:  true,
+		SlowHash:                 true,
+		PartialUploads:           true,
+		DirModTimeUpdatesOnWrite: true, // indicate writing files to a directory updates its modtime
 	}).Fill(ctx, f)
+	if !opt.CopyIsHardlink {
+		// Disable server side copy unless --sftp-copy-is-hardlink is set
+		f.features.Copy = nil
+	}
 	// Make a connection and pool it to return errors early
 	c, err := f.getSftpConnection(ctx)
 	if err != nil {
@@ -1333,6 +1367,15 @@ func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 	return f.mkdir(ctx, root)
 }
 
+// DirSetModTime sets the directory modtime for dir
+func (f *Fs) DirSetModTime(ctx context.Context, dir string, modTime time.Time) error {
+	o := Object{
+		fs:     f,
+		remote: dir,
+	}
+	return o.SetModTime(ctx, modTime)
+}
+
 // Rmdir removes the root directory of the Fs object
 func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 	// Check to see if directory is empty as some servers will
@@ -1388,6 +1431,43 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	dstObj, err := f.NewObject(ctx, remote)
 	if err != nil {
 		return nil, fmt.Errorf("Move NewObject failed: %w", err)
+	}
+	return dstObj, nil
+}
+
+// Copy server side copies a remote sftp file object using hardlinks
+func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
+	if !f.opt.CopyIsHardlink {
+		return nil, fs.ErrorCantCopy
+	}
+	srcObj, ok := src.(*Object)
+	if !ok {
+		fs.Debugf(src, "Can't copy - not same remote type")
+		return nil, fs.ErrorCantCopy
+	}
+	err := f.mkParentDir(ctx, remote)
+	if err != nil {
+		return nil, fmt.Errorf("Copy mkParentDir failed: %w", err)
+	}
+	c, err := f.getSftpConnection(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("Copy: %w", err)
+	}
+	srcPath, dstPath := srcObj.path(), path.Join(f.absRoot, remote)
+	err = c.sftpClient.Link(srcPath, dstPath)
+	f.putSftpConnection(&c, err)
+	if err != nil {
+		if sftpErr, ok := err.(*sftp.StatusError); ok {
+			if sftpErr.FxCode() == sftp.ErrSSHFxOpUnsupported {
+				// Remote doesn't support Link
+				return nil, fs.ErrorCantCopy
+			}
+		}
+		return nil, fmt.Errorf("Copy failed: %w", err)
+	}
+	dstObj, err := f.NewObject(ctx, remote)
+	if err != nil {
+		return nil, fmt.Errorf("Copy NewObject failed: %w", err)
 	}
 	return dstObj, nil
 }
@@ -1593,7 +1673,7 @@ func (f *Fs) About(ctx context.Context) (*fs.Usage, error) {
 		fs.Debugf(f, "About path %q", aboutPath)
 		vfsStats, err = c.sftpClient.StatVFS(aboutPath)
 	}
-	f.putSftpConnection(&c, err) // Return to pool asap, if running shell command below it will be re-used
+	f.putSftpConnection(&c, err) // Return to pool asap, if running shell command below it will be reused
 	if vfsStats != nil {
 		total := vfsStats.TotalSpace()
 		free := vfsStats.FreeSpace()
@@ -1914,7 +1994,7 @@ func (o *Object) SetModTime(ctx context.Context, modTime time.Time) error {
 		return fmt.Errorf("SetModTime failed: %w", err)
 	}
 	err = o.stat(ctx)
-	if err != nil {
+	if err != nil && err != fs.ErrorIsDir {
 		return fmt.Errorf("SetModTime stat failed: %w", err)
 	}
 	return nil
@@ -2035,7 +2115,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	if err != nil {
 		return fmt.Errorf("Update: %w", err)
 	}
-	// Hang on to the connection for the whole upload so it doesn't get re-used while we are uploading
+	// Hang on to the connection for the whole upload so it doesn't get reused while we are uploading
 	file, err := c.sftpClient.OpenFile(o.path(), os.O_WRONLY|os.O_CREATE|os.O_TRUNC)
 	if err != nil {
 		o.fs.putSftpConnection(&c, err)
@@ -2108,11 +2188,13 @@ func (o *Object) Remove(ctx context.Context) error {
 
 // Check the interfaces are satisfied
 var (
-	_ fs.Fs          = &Fs{}
-	_ fs.PutStreamer = &Fs{}
-	_ fs.Mover       = &Fs{}
-	_ fs.DirMover    = &Fs{}
-	_ fs.Abouter     = &Fs{}
-	_ fs.Shutdowner  = &Fs{}
-	_ fs.Object      = &Object{}
+	_ fs.Fs             = &Fs{}
+	_ fs.PutStreamer    = &Fs{}
+	_ fs.Mover          = &Fs{}
+	_ fs.Copier         = &Fs{}
+	_ fs.DirMover       = &Fs{}
+	_ fs.DirSetModTimer = &Fs{}
+	_ fs.Abouter        = &Fs{}
+	_ fs.Shutdowner     = &Fs{}
+	_ fs.Object         = &Object{}
 )

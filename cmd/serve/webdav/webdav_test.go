@@ -4,7 +4,6 @@
 // We skip tests on platforms with troublesome character mappings
 
 //go:build !windows && !darwin
-// +build !windows,!darwin
 
 package webdav
 
@@ -65,7 +64,7 @@ func TestWebDav(t *testing.T) {
 		// Config for the backend we'll use to connect to the server
 		config := configmap.Simple{
 			"type":   "webdav",
-			"vendor": "owncloud",
+			"vendor": "rclone",
 			"url":    w.Server.URLs()[0],
 			"user":   testUser,
 			"pass":   obscure.MustObscure(testPass),

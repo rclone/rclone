@@ -162,7 +162,7 @@ You may try to [verify you account](https://docs.microsoft.com/en-us/azure/activ
 Note: If you have a special region, you may need a different host in step 4 and 5. Here are [some hints](https://github.com/rclone/rclone/blob/bc23bf11db1c78c6ebbf8ea538fbebf7058b4176/backend/onedrive/onedrive.go#L86).
 
 
-### Modification time and hashes
+### Modification times and hashes
 
 OneDrive allows modification times to be set on objects accurate to 1
 second.  These will be used to detect whether objects need syncing or
@@ -182,6 +182,32 @@ to select `SHA1` during the transition period if this is important
 your workflow.
 
 For all types of OneDrive you can use the `--checksum` flag.
+
+### --fast-list
+
+This remote supports `--fast-list` which allows you to use fewer
+transactions in exchange for more memory. See the [rclone
+docs](/docs/#fast-list) for more details.
+
+This must be enabled with the `--onedrive-delta` flag (or `delta =
+true` in the config file) as it can cause performance degradation.
+
+It does this by using the delta listing facilities of OneDrive which
+returns all the files in the remote very efficiently. This is much
+more efficient than listing directories recursively and is Microsoft's
+recommended way of reading all the file information from a drive.
+
+This can be useful with `rclone mount` and [rclone rc vfs/refresh
+recursive=true](/rc/#vfs-refresh)) to very quickly fill the mount with
+information about all the files.
+
+The API used for the recursive listing (`ListR`) only supports listing
+from the root of the drive. This will become increasingly inefficient
+the further away you get from the root as rclone will have to discard
+files outside of the directory you are using.
+
+Some commands (like `rclone lsf -R`) will use `ListR` by default - you
+can turn this off with `--disable ListR` if you need to.
 
 ### Restricted filename characters
 
@@ -594,6 +620,67 @@ Properties:
 - Type:        bool
 - Default:     false
 
+#### --onedrive-delta
+
+If set rclone will use delta listing to implement recursive listings.
+
+If this flag is set the onedrive backend will advertise `ListR`
+support for recursive listings.
+
+Setting this flag speeds up these things greatly:
+
+    rclone lsf -R onedrive:
+    rclone size onedrive:
+    rclone rc vfs/refresh recursive=true
+
+**However** the delta listing API **only** works at the root of the
+drive. If you use it not at the root then it recurses from the root
+and discards all the data that is not under the directory you asked
+for. So it will be correct but may not be very efficient.
+
+This is why this flag is not set as the default.
+
+As a rule of thumb if nearly all of your data is under rclone's root
+directory (the `root/directory` in `onedrive:root/directory`) then
+using this flag will be be a big performance win. If your data is
+mostly not under the root then using this flag will be a big
+performance loss.
+
+It is recommended if you are mounting your onedrive at the root
+(or near the root when using crypt) and using rclone `rc vfs/refresh`.
+
+
+Properties:
+
+- Config:      delta
+- Env Var:     RCLONE_ONEDRIVE_DELTA
+- Type:        bool
+- Default:     false
+
+#### --onedrive-metadata-permissions
+
+Control whether permissions should be read or written in metadata.
+
+Reading permissions metadata from files can be done quickly, but it
+isn't always desirable to set the permissions from the metadata.
+
+
+Properties:
+
+- Config:      metadata_permissions
+- Env Var:     RCLONE_ONEDRIVE_METADATA_PERMISSIONS
+- Type:        Bits
+- Default:     off
+- Examples:
+    - "off"
+        - Do not read or write the value
+    - "read"
+        - Read the value only
+    - "write"
+        - Write the value only
+    - "read,write"
+        - Read and Write the value.
+
 #### --onedrive-encoding
 
 The encoding for the backend.
@@ -604,8 +691,195 @@ Properties:
 
 - Config:      encoding
 - Env Var:     RCLONE_ONEDRIVE_ENCODING
-- Type:        MultiEncoder
+- Type:        Encoding
 - Default:     Slash,LtGt,DoubleQuote,Colon,Question,Asterisk,Pipe,BackSlash,Del,Ctl,LeftSpace,LeftTilde,RightSpace,RightPeriod,InvalidUtf8,Dot
+
+#### --onedrive-description
+
+Description of the remote
+
+Properties:
+
+- Config:      description
+- Env Var:     RCLONE_ONEDRIVE_DESCRIPTION
+- Type:        string
+- Required:    false
+
+### Metadata
+
+OneDrive supports System Metadata (not User Metadata, as of this writing) for
+both files and directories. Much of the metadata is read-only, and there are some
+differences between OneDrive Personal and Business (see table below for
+details).
+
+Permissions are also supported, if `--onedrive-metadata-permissions` is set. The
+accepted values for `--onedrive-metadata-permissions` are `read`, `write`,
+`read,write`, and `off` (the default). `write` supports adding new permissions,
+updating the "role" of existing permissions, and removing permissions. Updating
+and removing require the Permission ID to be known, so it is recommended to use
+`read,write` instead of `write` if you wish to update/remove permissions.
+
+Permissions are read/written in JSON format using the same schema as the
+[OneDrive API](https://learn.microsoft.com/en-us/onedrive/developer/rest-api/resources/permission?view=odsp-graph-online),
+which differs slightly between OneDrive Personal and Business.
+
+Example for OneDrive Personal:
+```json
+[
+	{
+		"id": "1234567890ABC!123",
+		"grantedTo": {
+			"user": {
+				"id": "ryan@contoso.com"
+			},
+			"application": {},
+			"device": {}
+		},
+		"invitation": {
+			"email": "ryan@contoso.com"
+		},
+		"link": {
+			"webUrl": "https://1drv.ms/t/s!1234567890ABC"
+		},
+		"roles": [
+			"read"
+		],
+		"shareId": "s!1234567890ABC"
+	}
+]
+```
+
+Example for OneDrive Business:
+```json
+[
+	{
+		"id": "48d31887-5fad-4d73-a9f5-3c356e68a038",
+		"grantedToIdentitiesV2": [
+			{
+				"user": {
+					"displayName": "ryan@contoso.com"
+				},
+				"application": {},
+				"device": {}
+			}
+		],
+		"link": {
+			"type": "view",
+			"scope": "users",
+			"webUrl": "https://contoso.sharepoint.com/:w:/t/design/a577ghg9hgh737613bmbjf839026561fmzhsr85ng9f3hjck2t5s"
+		},
+		"roles": [
+			"read"
+		],
+		"shareId": "u!LKj1lkdlals90j1nlkascl"
+	},
+	{
+		"id": "5D33DD65C6932946",
+		"grantedToV2": {
+			"user": {
+				"displayName": "John Doe",
+				"id": "efee1b77-fb3b-4f65-99d6-274c11914d12"
+			},
+			"application": {},
+			"device": {}
+		},
+		"roles": [
+			"owner"
+		],
+		"shareId": "FWxc1lasfdbEAGM5fI7B67aB5ZMPDMmQ11U"
+	}
+]
+```
+
+To write permissions, pass in a "permissions" metadata key using this same
+format. The [`--metadata-mapper`](https://rclone.org/docs/#metadata-mapper) tool can
+be very helpful for this.
+
+When adding permissions, an email address can be provided in the `User.ID` or
+`DisplayName` properties of `grantedTo` or `grantedToIdentities` (these are
+deprecated on OneDrive Business -- instead, use `grantedToV2` and
+`grantedToIdentitiesV2`, respectively). Alternatively, an ObjectID can be
+provided in `User.ID`. At least one valid recipient must be provided in order to
+add a permission for a user. Creating a Public Link is also supported, if
+`Link.Scope` is set to `"anonymous"`.
+
+Example request to add a "read" permission:
+
+```json
+[
+	{
+			"id": "",
+			"grantedTo": {
+					"user": {},
+					"application": {},
+					"device": {}
+			},
+			"grantedToIdentities": [
+					{
+							"user": {
+									"id": "ryan@contoso.com"
+							},
+							"application": {},
+							"device": {}
+					}
+			],
+			"roles": [
+					"read"
+			]
+	}
+]
+```
+
+Note that adding a permission can fail if a conflicting permission already
+exists for the file/folder.
+
+To update an existing permission, include both the Permission ID and the new
+`roles` to be assigned. `roles` is the only property that can be changed.
+
+To remove permissions, pass in a blob containing only the permissions you wish
+to keep (which can be empty, to remove all.)
+
+Note that both reading and writing permissions requires extra API calls, so if
+you don't need to read or write permissions it is recommended to omit
+`--onedrive-metadata-permissions`.
+
+Metadata and permissions are supported for Folders (directories) as well as
+Files. Note that setting the `mtime` or `btime` on a Folder requires one extra
+API call on OneDrive Business only.
+
+OneDrive does not currently support User Metadata. When writing metadata, only
+writeable system properties will be written -- any read-only or unrecognized keys
+passed in will be ignored.
+
+TIP: to see the metadata and permissions for any file or folder, run:
+
+```
+rclone lsjson remote:path --stat -M --onedrive-metadata-permissions read
+```
+
+Here are the possible system metadata items for the onedrive backend.
+
+| Name | Help | Type | Example | Read Only |
+|------|------|------|---------|-----------|
+| btime | Time of file birth (creation) with S accuracy (mS for OneDrive Personal). | RFC 3339 | 2006-01-02T15:04:05Z | N |
+| content-type | The MIME type of the file. | string | text/plain | **Y** |
+| created-by-display-name | Display name of the user that created the item. | string | John Doe | **Y** |
+| created-by-id | ID of the user that created the item. | string | 48d31887-5fad-4d73-a9f5-3c356e68a038 | **Y** |
+| description | A short description of the file. Max 1024 characters. Only supported for OneDrive Personal. | string | Contract for signing | N |
+| id | The unique identifier of the item within OneDrive. | string | 01BYE5RZ6QN3ZWBTUFOFD3GSPGOHDJD36K | **Y** |
+| last-modified-by-display-name | Display name of the user that last modified the item. | string | John Doe | **Y** |
+| last-modified-by-id | ID of the user that last modified the item. | string | 48d31887-5fad-4d73-a9f5-3c356e68a038 | **Y** |
+| malware-detected | Whether OneDrive has detected that the item contains malware. | boolean | true | **Y** |
+| mtime | Time of last modification with S accuracy (mS for OneDrive Personal). | RFC 3339 | 2006-01-02T15:04:05Z | N |
+| package-type | If present, indicates that this item is a package instead of a folder or file. Packages are treated like files in some contexts and folders in others. | string | oneNote | **Y** |
+| permissions | Permissions in a JSON dump of OneDrive format. Enable with --onedrive-metadata-permissions. Properties: id, grantedTo, grantedToIdentities, invitation, inheritedFrom, link, roles, shareId | JSON | {} | N |
+| shared-by-id | ID of the user that shared the item (if shared). | string | 48d31887-5fad-4d73-a9f5-3c356e68a038 | **Y** |
+| shared-owner-id | ID of the owner of the shared item (if shared). | string | 48d31887-5fad-4d73-a9f5-3c356e68a038 | **Y** |
+| shared-scope | If shared, indicates the scope of how the item is shared: anonymous, organization, or users. | string | users | **Y** |
+| shared-time | Time when the item was shared, with S accuracy (mS for OneDrive Personal). | RFC 3339 | 2006-01-02T15:04:05Z | **Y** |
+| utime | Time of upload with S accuracy (mS for OneDrive Personal). | RFC 3339 | 2006-01-02T15:04:05Z | **Y** |
+
+See the [metadata](/docs/#metadata) docs for more info.
 
 {{< rem autogenerated options stop >}}
 

@@ -224,6 +224,17 @@ Properties:
 - Type:        SizeSuffix
 - Default:     0
 
+#### --hasher-description
+
+Description of the remote
+
+Properties:
+
+- Config:      description
+- Env Var:     RCLONE_HASHER_DESCRIPTION
+- Type:        string
+- Required:    false
+
 ### Metadata
 
 Any metadata supported by the underlying remote is read and written.

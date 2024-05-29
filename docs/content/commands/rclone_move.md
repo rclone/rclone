@@ -39,6 +39,14 @@ whether rclone lists the destination directory or not.  Supplying this
 option when moving a small number of files into a large destination
 can speed transfers up greatly.
 
+Rclone will sync the modification times of files and directories if
+the backend supports it. If metadata syncing is required then use the
+`--metadata` flag.
+
+Note that the modification time and metadata for the root directory
+will **not** be synced. See https://github.com/rclone/rclone/issues/7652
+for more info.
+
 **Important**: Since this can cause data loss, test first with the
 `--dry-run` or the `--interactive`/`-i` flag.
 
@@ -64,15 +72,15 @@ Flags for anything which can Copy a file.
 
 ```
       --check-first                                 Do all the checks before starting transfers
-  -c, --checksum                                    Skip based on checksum (if available) & size, not mod-time & size
+  -c, --checksum                                    Check for changes with size & checksum (if available, or fallback to size only).
       --compare-dest stringArray                    Include additional comma separated server-side paths during comparison
       --copy-dest stringArray                       Implies --compare-dest but also copies files from paths into destination
-      --cutoff-mode string                          Mode to stop transfers when reaching the max transfer limit HARD|SOFT|CAUTIOUS (default "HARD")
+      --cutoff-mode HARD|SOFT|CAUTIOUS              Mode to stop transfers when reaching the max transfer limit HARD|SOFT|CAUTIOUS (default HARD)
       --ignore-case-sync                            Ignore case when synchronizing
       --ignore-checksum                             Skip post copy check of checksums
       --ignore-existing                             Skip all files that exist on destination
-      --ignore-size                                 Ignore size when skipping use mod-time or checksum
-  -I, --ignore-times                                Don't skip files that match size and time - transfer all files
+      --ignore-size                                 Ignore size when skipping use modtime or checksum
+  -I, --ignore-times                                Don't skip items that match size and time - transfer all unconditionally
       --immutable                                   Do not modify files, fail if existing files have been modified
       --inplace                                     Download directly to destination file instead of atomic download to temp/rename
       --max-backlog int                             Maximum number of objects in sync or check backlog (default 10000)
@@ -80,16 +88,19 @@ Flags for anything which can Copy a file.
       --max-transfer SizeSuffix                     Maximum size of data to transfer (default off)
   -M, --metadata                                    If set, preserve metadata when copying objects
       --modify-window Duration                      Max time diff to be considered the same (default 1ns)
-      --multi-thread-cutoff SizeSuffix              Use multi-thread downloads for files above this size (default 250Mi)
-      --multi-thread-streams int                    Max number of streams to use for multi-thread downloads (default 4)
+      --multi-thread-chunk-size SizeSuffix          Chunk size for multi-thread downloads / uploads, if not set by filesystem (default 64Mi)
+      --multi-thread-cutoff SizeSuffix              Use multi-thread downloads for files above this size (default 256Mi)
+      --multi-thread-streams int                    Number of streams to use for multi-thread downloads (default 4)
       --multi-thread-write-buffer-size SizeSuffix   In memory buffer size for writing when in multi-thread mode (default 128Ki)
       --no-check-dest                               Don't check the destination, copy regardless
       --no-traverse                                 Don't traverse destination file system on copy
-      --no-update-modtime                           Don't update destination mod-time if files identical
+      --no-update-dir-modtime                       Don't update directory modification times
+      --no-update-modtime                           Don't update destination modtime if files identical
       --order-by string                             Instructions on how to order the transfers, e.g. 'size,descending'
+      --partial-suffix string                       Add partial-suffix to temporary file name when --inplace is not used (default ".partial")
       --refresh-times                               Refresh the modtime of remote files
       --server-side-across-configs                  Allow server-side operations (e.g. copy) to work across different configs
-      --size-only                                   Skip based on size only, not mod-time or checksum
+      --size-only                                   Skip based on size only, not modtime or checksum
       --streaming-upload-cutoff SizeSuffix          Cutoff for switching to chunked upload if file size is unknown, upload starts after reaching cutoff or when file ends (default 100Ki)
   -u, --update                                      Skip files that are newer on the destination
 ```

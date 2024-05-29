@@ -2,6 +2,7 @@ package fs
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"os"
@@ -10,7 +11,7 @@ import (
 )
 
 // LogLevel describes rclone's logs.  These are a subset of the syslog log levels.
-type LogLevel byte
+type LogLevel = Enum[logLevelChoices]
 
 // Log levels.  These are the syslog levels of which we only use a
 // subset.
@@ -34,50 +35,23 @@ const (
 	LogLevelDebug  // Debug level, needs -vv
 )
 
-var logLevelToString = []string{
-	LogLevelEmergency: "EMERGENCY",
-	LogLevelAlert:     "ALERT",
-	LogLevelCritical:  "CRITICAL",
-	LogLevelError:     "ERROR",
-	LogLevelWarning:   "WARNING",
-	LogLevelNotice:    "NOTICE",
-	LogLevelInfo:      "INFO",
-	LogLevelDebug:     "DEBUG",
-}
+type logLevelChoices struct{}
 
-// String turns a LogLevel into a string
-func (l LogLevel) String() string {
-	if l >= LogLevel(len(logLevelToString)) {
-		return fmt.Sprintf("LogLevel(%d)", l)
+func (logLevelChoices) Choices() []string {
+	return []string{
+		LogLevelEmergency: "EMERGENCY",
+		LogLevelAlert:     "ALERT",
+		LogLevelCritical:  "CRITICAL",
+		LogLevelError:     "ERROR",
+		LogLevelWarning:   "WARNING",
+		LogLevelNotice:    "NOTICE",
+		LogLevelInfo:      "INFO",
+		LogLevelDebug:     "DEBUG",
 	}
-	return logLevelToString[l]
 }
 
-// Set a LogLevel
-func (l *LogLevel) Set(s string) error {
-	for n, name := range logLevelToString {
-		if s != "" && name == s {
-			*l = LogLevel(n)
-			return nil
-		}
-	}
-	return fmt.Errorf("unknown log level %q", s)
-}
-
-// Type of the value
-func (l *LogLevel) Type() string {
-	return "string"
-}
-
-// UnmarshalJSON makes sure the value can be parsed as a string or integer in JSON
-func (l *LogLevel) UnmarshalJSON(in []byte) error {
-	return UnmarshalJSONFlag(in, l, func(i int64) error {
-		if i < 0 || i >= int64(LogLevel(len(logLevelToString))) {
-			return fmt.Errorf("unknown log level %d", i)
-		}
-		*l = (LogLevel)(i)
-		return nil
-	})
+func (logLevelChoices) Type() string {
+	return "LogLevel"
 }
 
 // LogPrintPid enables process pid in log
@@ -220,4 +194,18 @@ func LogDirName(f Fs, dir string) interface{} {
 		return dir
 	}
 	return f
+}
+
+// PrettyPrint formats JSON for improved readability in debug logs.
+// If it can't Marshal JSON, it falls back to fmt.
+func PrettyPrint(in any, label string, level LogLevel) {
+	if GetConfig(context.TODO()).LogLevel < level {
+		return
+	}
+	inBytes, err := json.MarshalIndent(in, "", "\t")
+	if err != nil || string(inBytes) == "{}" || string(inBytes) == "[]" {
+		LogPrintf(level, label, "\n%+v\n", in)
+		return
+	}
+	LogPrintf(level, label, "\n%s\n", string(inBytes))
 }

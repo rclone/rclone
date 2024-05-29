@@ -19,6 +19,13 @@ import (
 // Registry of filesystems
 var Registry []*RegInfo
 
+// optDescription is a basic description option
+var optDescription = Option{
+	Name:     "description",
+	Help:     "Description of the remote.",
+	Advanced: true,
+}
+
 // RegInfo provides information about a filesystem
 type RegInfo struct {
 	// Name of this fs
@@ -59,6 +66,15 @@ func (os Options) setValues() {
 		o := &os[i]
 		if o.Default == nil {
 			o.Default = ""
+		}
+		// Create options for Enums
+		if do, ok := o.Default.(Choices); ok && len(o.Examples) == 0 {
+			o.Exclusive = true
+			o.Required = true
+			o.Examples = make(OptionExamples, len(do.Choices()))
+			for i, choice := range do.Choices() {
+				o.Examples[i].Value = choice
+			}
 		}
 	}
 }
@@ -207,9 +223,20 @@ func (o *Option) Set(s string) (err error) {
 	return nil
 }
 
+type typer interface {
+	Type() string
+}
+
 // Type of the value
 func (o *Option) Type() string {
-	return reflect.TypeOf(o.GetValue()).Name()
+	v := o.GetValue()
+
+	// Try to call Type method on non-pointer
+	if do, ok := v.(typer); ok {
+		return do.Type()
+	}
+
+	return reflect.TypeOf(v).Name()
 }
 
 // FlagName for the option
@@ -263,6 +290,7 @@ func Register(info *RegInfo) {
 	if info.Prefix == "" {
 		info.Prefix = info.Name
 	}
+	info.Options = append(info.Options, optDescription)
 	Registry = append(Registry, info)
 	for _, alias := range info.Aliases {
 		// Copy the info block and rename and hide the alias and options

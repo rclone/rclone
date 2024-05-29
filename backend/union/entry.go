@@ -17,8 +17,9 @@ import (
 // This is a wrapped object which returns the Union Fs as its parent
 type Object struct {
 	*upstream.Object
-	fs *Fs // what this object is part of
-	co []upstream.Entry
+	fs          *Fs // what this object is part of
+	co          []upstream.Entry
+	writebackMu sync.Mutex
 }
 
 // Directory describes a union Directory
@@ -26,12 +27,20 @@ type Object struct {
 // This is a wrapped object contains all candidates
 type Directory struct {
 	*upstream.Directory
+	fs *Fs // what this directory is part of
 	cd []upstream.Entry
 }
 
 type entry interface {
 	upstream.Entry
 	candidates() []upstream.Entry
+}
+
+// Update o with the contents of newO excluding the lock
+func (o *Object) update(newO *Object) {
+	o.Object = newO.Object
+	o.fs = newO.fs
+	o.co = newO.co
 }
 
 // UnWrapUpstream returns the upstream Object that this Object is wrapping
@@ -67,7 +76,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 			return err
 		}
 		// Update current object
-		*o = *newO.(*Object)
+		o.update(newO.(*Object))
 		return nil
 	} else if err != nil {
 		return err
@@ -175,6 +184,25 @@ func (o *Object) SetTier(tier string) error {
 	return do.SetTier(tier)
 }
 
+// Open opens the file for read.  Call Close() on the returned io.ReadCloser
+func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadCloser, error) {
+	// Need some sort of locking to prevent multiple downloads
+	o.writebackMu.Lock()
+	defer o.writebackMu.Unlock()
+
+	// FIXME what if correct object is already in o.co
+
+	newObj, err := o.Object.Writeback(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if newObj != nil {
+		o.Object = newObj
+		o.co = append(o.co, newObj) // FIXME should this append or overwrite or update?
+	}
+	return o.Object.Object.Open(ctx, options...)
+}
+
 // ModTime returns the modification date of the directory
 // It returns the latest ModTime of all candidates
 func (d *Directory) ModTime(ctx context.Context) (t time.Time) {
@@ -200,7 +228,56 @@ func (d *Directory) Size() (s int64) {
 	return s
 }
 
+// SetMetadata sets metadata for an DirEntry
+//
+// It should return fs.ErrorNotImplemented if it can't set metadata
+func (d *Directory) SetMetadata(ctx context.Context, metadata fs.Metadata) error {
+	entries, err := d.fs.actionEntries(d.candidates()...)
+	if err != nil {
+		return err
+	}
+	var wg sync.WaitGroup
+	errs := Errors(make([]error, len(entries)))
+	multithread(len(entries), func(i int) {
+		if d, ok := entries[i].(*upstream.Directory); ok {
+			err := d.SetMetadata(ctx, metadata)
+			if err != nil {
+				errs[i] = fmt.Errorf("%s: %w", d.UpstreamFs().Name(), err)
+			}
+		} else {
+			errs[i] = fs.ErrorIsFile
+		}
+	})
+	wg.Wait()
+	return errs.Err()
+}
+
+// SetModTime sets the metadata on the DirEntry to set the modification date
+//
+// If there is any other metadata it does not overwrite it.
+func (d *Directory) SetModTime(ctx context.Context, t time.Time) error {
+	entries, err := d.fs.actionEntries(d.candidates()...)
+	if err != nil {
+		return err
+	}
+	var wg sync.WaitGroup
+	errs := Errors(make([]error, len(entries)))
+	multithread(len(entries), func(i int) {
+		if d, ok := entries[i].(*upstream.Directory); ok {
+			err := d.SetModTime(ctx, t)
+			if err != nil {
+				errs[i] = fmt.Errorf("%s: %w", d.UpstreamFs().Name(), err)
+			}
+		} else {
+			errs[i] = fs.ErrorIsFile
+		}
+	})
+	wg.Wait()
+	return errs.Err()
+}
+
 // Check the interfaces are satisfied
 var (
-	_ fs.FullObject = (*Object)(nil)
+	_ fs.FullObject    = (*Object)(nil)
+	_ fs.FullDirectory = (*Directory)(nil)
 )

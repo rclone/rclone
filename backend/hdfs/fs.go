@@ -1,5 +1,4 @@
 //go:build !plan9
-// +build !plan9
 
 package hdfs
 
@@ -21,6 +20,7 @@ import (
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/configstruct"
 	"github.com/rclone/rclone/fs/hash"
+	"github.com/rclone/rclone/lib/pacer"
 )
 
 // Fs represents a HDFS server
@@ -31,7 +31,14 @@ type Fs struct {
 	opt      Options        // options for this backend
 	ci       *fs.ConfigInfo // global config
 	client   *hdfs.Client
+	pacer    *fs.Pacer // pacer for API calls
 }
+
+const (
+	minSleep      = 20 * time.Millisecond
+	maxSleep      = 10 * time.Second
+	decayConstant = 2 // bigger for slower decay, exponential
+)
 
 // copy-paste from https://github.com/colinmarc/hdfs/blob/master/cmd/hdfs/kerberos.go
 func getKerberosClient() (*krb.Client, error) {
@@ -85,7 +92,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	}
 
 	options := hdfs.ClientOptions{
-		Addresses:           []string{opt.Namenode},
+		Addresses:           opt.Namenode,
 		UseDatanodeHostname: false,
 	}
 
@@ -114,6 +121,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		opt:    *opt,
 		ci:     fs.GetConfig(ctx),
 		client: client,
+		pacer:  fs.NewPacer(ctx, pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant))),
 	}
 
 	f.features = (&fs.Features{
@@ -141,7 +149,7 @@ func (f *Fs) Root() string {
 
 // String returns a description of the FS
 func (f *Fs) String() string {
-	return fmt.Sprintf("hdfs://%s", f.opt.Namenode)
+	return fmt.Sprintf("hdfs://%s/%s", f.opt.Namenode, f.root)
 }
 
 // Features returns the optional features of this Fs
@@ -201,7 +209,8 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 				fs:      f,
 				remote:  remote,
 				size:    x.Size(),
-				modTime: x.ModTime()})
+				modTime: x.ModTime(),
+			})
 		}
 	}
 	return entries, nil

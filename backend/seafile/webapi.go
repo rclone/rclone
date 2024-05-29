@@ -577,7 +577,7 @@ func (f *Fs) getDownloadLink(ctx context.Context, libraryID, filePath string) (s
 	return result, nil
 }
 
-func (f *Fs) download(ctx context.Context, url string, size int64, options ...fs.OpenOption) (io.ReadCloser, error) {
+func (f *Fs) download(ctx context.Context, downloadLink string, size int64, options ...fs.OpenOption) (io.ReadCloser, error) {
 	// Check if we need to download partial content
 	var start, end int64 = 0, size
 	partialContent := false
@@ -606,11 +606,18 @@ func (f *Fs) download(ctx context.Context, url string, size int64, options ...fs
 	// Build the http request
 	opts := rest.Opts{
 		Method:  "GET",
-		RootURL: url,
 		Options: options,
 	}
+	parsedURL, err := url.Parse(downloadLink)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse download url: %w", err)
+	}
+	if parsedURL.IsAbs() {
+		opts.RootURL = downloadLink
+	} else {
+		opts.Path = downloadLink
+	}
 	var resp *http.Response
-	var err error
 	err = f.pacer.Call(func() (bool, error) {
 		resp, err = f.srv.Call(ctx, &opts)
 		return f.shouldRetry(ctx, resp, err)
@@ -618,7 +625,7 @@ func (f *Fs) download(ctx context.Context, url string, size int64, options ...fs
 	if err != nil {
 		if resp != nil {
 			if resp.StatusCode == 404 {
-				return nil, fmt.Errorf("file not found '%s'", url)
+				return nil, fmt.Errorf("file not found '%s'", downloadLink)
 			}
 		}
 		return nil, err
@@ -688,10 +695,18 @@ func (f *Fs) upload(ctx context.Context, in io.Reader, uploadLink, filePath stri
 
 	opts := rest.Opts{
 		Method:      "POST",
-		RootURL:     uploadLink,
 		Body:        formReader,
 		ContentType: contentType,
 		Parameters:  url.Values{"ret-json": {"1"}}, // It needs to be on the url, not in the body parameters
+	}
+	parsedURL, err := url.Parse(uploadLink)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse upload url: %w", err)
+	}
+	if parsedURL.IsAbs() {
+		opts.RootURL = uploadLink
+	} else {
+		opts.Path = uploadLink
 	}
 	result := make([]api.FileDetail, 1)
 	var resp *http.Response

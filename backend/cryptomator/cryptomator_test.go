@@ -19,17 +19,24 @@ import (
 	_ "github.com/rclone/rclone/backend/s3"
 )
 
+var (
+	UnimplementableFsMethods        = []string{"Purge", "ChangeNotify", "MergeDirs", "ListR", "OpenWriterAt", "MkdirMetadata", "DirSetModTime", "OpenChunkWriter"}
+	UnimplementableObjectMethods    = []string{"MimeType"}
+	UnimplementableDirectoryMethods = []string{"Metadata", "SetMetadata", "SetModTime"}
+)
+
 // TestIntegration runs integration tests against the remote
 func TestIntegration(t *testing.T) {
 	if *fstest.RemoteName == "" {
 		t.Skip("Skipping as -remote not set")
 	}
 	fstests.Run(t, &fstests.Opt{
-		RemoteName:                   *fstest.RemoteName,
-		NilObject:                    (*cryptomator.Object)(nil),
-		UnimplementableFsMethods:     []string{"Purge", "ChangeNotify", "MergeDirs", "ListR", "OpenWriterAt"},
-		UnimplementableObjectMethods: []string{"MimeType"},
-		TiersToTest:                  []string{"REDUCED_REDUNDANCY", "STANDARD"},
+		RemoteName:                      *fstest.RemoteName,
+		NilObject:                       (*cryptomator.Object)(nil),
+		TiersToTest:                     []string{"REDUCED_REDUNDANCY", "STANDARD"},
+		UnimplementableFsMethods:        UnimplementableFsMethods,
+		UnimplementableObjectMethods:    UnimplementableObjectMethods,
+		UnimplementableDirectoryMethods: UnimplementableDirectoryMethods,
 	})
 }
 
@@ -48,8 +55,9 @@ func TestStandard(t *testing.T) {
 			{Name: name, Key: "remote", Value: tempdir},
 			{Name: name, Key: "password", Value: obscure.MustObscure("potato")},
 		},
-		UnimplementableFsMethods:     []string{"Purge", "ChangeNotify", "MergeDirs", "ListR", "OpenWriterAt"},
-		UnimplementableObjectMethods: []string{"MimeType"},
-		QuickTestOK:                  true,
+		QuickTestOK:                     true,
+		UnimplementableFsMethods:        UnimplementableFsMethods,
+		UnimplementableObjectMethods:    UnimplementableObjectMethods,
+		UnimplementableDirectoryMethods: UnimplementableDirectoryMethods,
 	})
 }

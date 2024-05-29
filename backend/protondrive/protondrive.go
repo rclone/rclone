@@ -1,3 +1,4 @@
+// Package protondrive implements the Proton Drive backend
 package protondrive
 
 import (
@@ -5,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
 	"path"
 	"strings"
 	"time"
@@ -38,15 +38,15 @@ const (
 	maxSleep      = 2 * time.Second
 	decayConstant = 2 // bigger for slower decay, exponential
 
-	clientUIDKey           = "clientUID"
-	clientAccessTokenKey   = "clientAccessToken"
-	clientRefreshTokenKey  = "clientRefreshToken"
-	clientSaltedKeyPassKey = "clientSaltedKeyPass"
+	clientUIDKey           = "client_uid"
+	clientAccessTokenKey   = "client_access_token"
+	clientRefreshTokenKey  = "client_refresh_token"
+	clientSaltedKeyPassKey = "client_salted_key_pass"
 )
 
 var (
-	ErrCanNotUploadFileWithUnknownSize = errors.New("proton Drive can't upload files with unknown size")
-	ErrCanNotPurgeRootDirectory        = errors.New("can't purge root directory")
+	errCanNotUploadFileWithUnknownSize = errors.New("proton Drive can't upload files with unknown size")
+	errCanNotPurgeRootDirectory        = errors.New("can't purge root directory")
 
 	// for the auth/deauth handler
 	_mapper        configmap.Mapper
@@ -61,19 +61,60 @@ func init() {
 		NewFs:       NewFs,
 		Options: []fs.Option{{
 			Name:     "username",
-			Help:     `The username of your proton drive account`,
+			Help:     `The username of your proton account`,
 			Required: true,
 		}, {
 			Name:       "password",
-			Help:       "The password of your proton drive account.",
+			Help:       "The password of your proton account.",
 			Required:   true,
 			IsPassword: true,
 		}, {
+			Name: "mailbox_password",
+			Help: `The mailbox password of your two-password proton account.
+
+For more information regarding the mailbox password, please check the 
+following official knowledge base article: 
+https://proton.me/support/the-difference-between-the-mailbox-password-and-login-password
+`,
+			IsPassword: true,
+			Advanced:   true,
+		}, {
 			Name: "2fa",
 			Help: `The 2FA code
+
+The value can also be provided with --protondrive-2fa=000000
+
 The 2FA code of your proton drive account if the account is set up with 
 two-factor authentication`,
 			Required: false,
+		}, {
+			Name:      clientUIDKey,
+			Help:      "Client uid key (internal use only)",
+			Required:  false,
+			Advanced:  true,
+			Sensitive: true,
+			Hide:      fs.OptionHideBoth,
+		}, {
+			Name:      clientAccessTokenKey,
+			Help:      "Client access token key (internal use only)",
+			Required:  false,
+			Advanced:  true,
+			Sensitive: true,
+			Hide:      fs.OptionHideBoth,
+		}, {
+			Name:      clientRefreshTokenKey,
+			Help:      "Client refresh token key (internal use only)",
+			Required:  false,
+			Advanced:  true,
+			Sensitive: true,
+			Hide:      fs.OptionHideBoth,
+		}, {
+			Name:      clientSaltedKeyPassKey,
+			Help:      "Client salted key pass key (internal use only)",
+			Required:  false,
+			Advanced:  true,
+			Sensitive: true,
+			Hide:      fs.OptionHideBoth,
 		}, {
 			Name:     config.ConfigEncoding,
 			Help:     config.ConfigEncodingHelp,
@@ -110,6 +151,8 @@ When a file upload is cancelled or failed before completion, a draft will be
 created and the subsequent upload of the same file to the same location will be 
 reported as a conflict.
 
+The value can also be set by --protondrive-replace-existing-draft=true
+
 If the option is set to true, the draft will be replaced and then the upload 
 operation will restart. If there are other clients also uploading at the same 
 file location at the same time, the behavior is currently unknown. Need to set 
@@ -144,9 +187,10 @@ then we might have a problem with caching the stale data.`,
 
 // Options defines the configuration for this backend
 type Options struct {
-	Username string `config:"username"`
-	Password string `config:"password"`
-	TwoFA    string `config:"2fa"`
+	Username        string `config:"username"`
+	Password        string `config:"password"`
+	MailboxPassword string `config:"mailbox_password"`
+	TwoFA           string `config:"2fa"`
 
 	// advanced
 	Enc                  encoder.MultiEncoder `config:"encoding"`
@@ -200,7 +244,7 @@ func (f *Fs) Name() string {
 
 // Root of the remote (as passed into NewFs)
 func (f *Fs) Root() string {
-	return f.root
+	return f.opt.Enc.ToStandardPath(f.root)
 }
 
 // String converts this Fs to a string
@@ -258,12 +302,12 @@ func clearConfigMap(m configmap.Mapper) {
 }
 
 func authHandler(auth proton.Auth) {
-	// log.Println("authHandler called")
+	// fs.Debugf("authHandler called")
 	setConfigMap(_mapper, auth.UID, auth.AccessToken, auth.RefreshToken, _saltedKeyPass)
 }
 
 func deAuthHandler() {
-	// log.Println("deAuthHandler called")
+	// fs.Debugf("deAuthHandler called")
 	clearConfigMap(_mapper)
 }
 
@@ -308,6 +352,7 @@ func newProtonDrive(ctx context.Context, f *Fs, opt *Options, m configmap.Mapper
 	config.UseReusableLogin = false
 	config.FirstLoginCredential.Username = opt.Username
 	config.FirstLoginCredential.Password = opt.Password
+	config.FirstLoginCredential.MailboxPassword = opt.MailboxPassword
 	config.FirstLoginCredential.TwoFA = opt.TwoFA
 	protonDrive, auth, err := protonDriveAPI.NewProtonDrive(ctx, config, authHandler, deAuthHandler)
 	if err != nil {
@@ -336,6 +381,14 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		opt.Password, err = obscure.Reveal(opt.Password)
 		if err != nil {
 			return nil, fmt.Errorf("couldn't decrypt password: %w", err)
+		}
+	}
+
+	if opt.MailboxPassword != "" {
+		var err error
+		opt.MailboxPassword, err = obscure.Reveal(opt.MailboxPassword)
+		if err != nil {
+			return nil, fmt.Errorf("couldn't decrypt mailbox password: %w", err)
 		}
 	}
 
@@ -569,12 +622,10 @@ func (f *Fs) List(ctx context.Context, dir string) (fs.DirEntries, error) {
 	return entries, nil
 }
 
-// DirCacher describes an interface for doing the low level directory work
+// FindLeaf finds a directory of name leaf in the folder with ID pathID
 //
 // This should be implemented by the backend and will be called by the
 // dircache package when appropriate.
-//
-// FindLeaf finds a directory of name leaf in the folder with ID pathID
 func (f *Fs) FindLeaf(ctx context.Context, pathID, leaf string) (string, bool, error) {
 	/* f.opt.Enc.FromStandardName(leaf) not required since the DirCache only process sanitized path */
 
@@ -593,12 +644,10 @@ func (f *Fs) FindLeaf(ctx context.Context, pathID, leaf string) (string, bool, e
 	return link.LinkID, true, nil
 }
 
-// DirCacher describes an interface for doing the low level directory work
+// CreateDir makes a directory with pathID as parent and name leaf
 //
 // This should be implemented by the backend and will be called by the
 // dircache package when appropriate.
-//
-// CreateDir makes a directory with pathID as parent and name leaf
 func (f *Fs) CreateDir(ctx context.Context, pathID, leaf string) (string, error) {
 	/* f.opt.Enc.FromStandardName(leaf) not required since the DirCache only process sanitized path */
 
@@ -626,7 +675,7 @@ func (f *Fs) CreateDir(ctx context.Context, pathID, leaf string) (string, error)
 func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
 	size := src.Size()
 	if size < 0 {
-		return nil, ErrCanNotUploadFileWithUnknownSize
+		return nil, errCanNotUploadFileWithUnknownSize
 	}
 
 	existingObj, err := f.NewObject(ctx, src.Remote())
@@ -725,7 +774,7 @@ func (f *Fs) DirCacheFlush() {
 	f.protonDrive.ClearCache()
 }
 
-// Returns the supported hash types of the filesystem
+// Hashes returns the supported hash types of the filesystem
 func (f *Fs) Hashes() hash.Set {
 	return hash.Set(hash.SHA1)
 }
@@ -784,9 +833,7 @@ func (o *Object) Hash(ctx context.Context, t hash.Type) (string, error) {
 		return *o.digests, nil
 	}
 
-	// sha1 not cached
-	log.Println("sha1 not cached")
-	// we fetch and try to obtain the sha1 of the link
+	// sha1 not cached: we fetch and try to obtain the sha1 of the link
 	fileSystemAttrs, err := o.fs.protonDrive.GetActiveRevisionAttrsByID(ctx, o.ID())
 	if err != nil {
 		return "", err
@@ -808,7 +855,7 @@ func (o *Object) Size() int64 {
 			return *o.originalSize
 		}
 
-		fs.Errorf(o, "Original size should exist")
+		fs.Debugf(o, "Original file size missing")
 	}
 	return o.size
 }
@@ -887,7 +934,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {
 	size := src.Size()
 	if size < 0 {
-		return ErrCanNotUploadFileWithUnknownSize
+		return errCanNotUploadFileWithUnknownSize
 	}
 
 	remote := o.Remote()
@@ -945,7 +992,7 @@ func (f *Fs) Purge(ctx context.Context, dir string) error {
 	root := path.Join(f.root, dir)
 	if root == "" {
 		// we can't remove the root directory, but we can list the directory and delete every folder and file in here
-		return ErrCanNotPurgeRootDirectory
+		return errCanNotPurgeRootDirectory
 	}
 
 	folderLinkID, err := f.dirCache.FindDir(ctx, f.sanitizePath(dir), false)

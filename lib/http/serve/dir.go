@@ -224,7 +224,7 @@ const (
 // Serve serves a directory
 func (d *Directory) Serve(w http.ResponseWriter, r *http.Request) {
 	// Account the transfer
-	tr := accounting.Stats(r.Context()).NewTransferRemoteSize(d.DirRemote, -1)
+	tr := accounting.Stats(r.Context()).NewTransferRemoteSize(d.DirRemote, -1, nil, nil)
 	defer tr.Done(r.Context(), nil)
 
 	fs.Infof(d.DirRemote, "%s: Serving directory", r.RemoteAddr)
@@ -235,6 +235,7 @@ func (d *Directory) Serve(w http.ResponseWriter, r *http.Request) {
 		Error(d.DirRemote, w, "Failed to render template", err)
 		return
 	}
+	w.Header().Set("Content-Length", fmt.Sprintf("%d", buf.Len()))
 	_, err = buf.WriteTo(w)
 	if err != nil {
 		Error(d.DirRemote, nil, "Failed to drain template buffer", err)

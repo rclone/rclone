@@ -2,19 +2,24 @@ package operations_test
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
 	"os"
 	"path"
+	"sort"
+	"strings"
 	"testing"
 	"time"
 
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/cache"
+	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/fs/rc"
 	"github.com/rclone/rclone/fstest"
+	"github.com/rclone/rclone/lib/diskusage"
 	"github.com/rclone/rclone/lib/rest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -222,7 +227,7 @@ func TestRcList(t *testing.T) {
 	checkSubdir := func(got *operations.ListJSONItem) {
 		assert.Equal(t, "subdir", got.Path)
 		assert.Equal(t, "subdir", got.Name)
-		assert.Equal(t, int64(-1), got.Size)
+		// assert.Equal(t, int64(-1), got.Size) // size can vary for directories
 		assert.Equal(t, "inode/directory", got.MimeType)
 		assert.Equal(t, true, got.IsDir)
 	}
@@ -295,7 +300,7 @@ func TestRcStat(t *testing.T) {
 		stat := fetch(t, "subdir")
 		assert.Equal(t, "subdir", stat.Path)
 		assert.Equal(t, "subdir", stat.Name)
-		assert.Equal(t, int64(-1), stat.Size)
+		// assert.Equal(t, int64(-1), stat.Size) // size can vary for directories
 		assert.Equal(t, "inode/directory", stat.MimeType)
 		assert.Equal(t, true, stat.IsDir)
 	})
@@ -304,6 +309,61 @@ func TestRcStat(t *testing.T) {
 		stat := fetch(t, "notfound")
 		assert.Nil(t, stat)
 	})
+}
+
+// operations/settier: Set the storage tier of a fs
+func TestRcSetTier(t *testing.T) {
+	ctx := context.Background()
+	r, call := rcNewRun(t, "operations/settier")
+	if !r.Fremote.Features().SetTier {
+		t.Skip("settier not supported")
+	}
+	file1 := r.WriteObject(context.Background(), "file1", "file1 contents", t1)
+	r.CheckRemoteItems(t, file1)
+
+	// Because we don't know what the current tier options here are, let's
+	// just get the current tier, and reuse that
+	o, err := r.Fremote.NewObject(ctx, file1.Path)
+	require.NoError(t, err)
+	trr, ok := o.(fs.GetTierer)
+	require.True(t, ok)
+	ctier := trr.GetTier()
+	in := rc.Params{
+		"fs":   r.FremoteName,
+		"tier": ctier,
+	}
+	out, err := call.Fn(context.Background(), in)
+	require.NoError(t, err)
+	assert.Equal(t, rc.Params(nil), out)
+
+}
+
+// operations/settier: Set the storage tier of a file
+func TestRcSetTierFile(t *testing.T) {
+	ctx := context.Background()
+	r, call := rcNewRun(t, "operations/settierfile")
+	if !r.Fremote.Features().SetTier {
+		t.Skip("settier not supported")
+	}
+	file1 := r.WriteObject(context.Background(), "file1", "file1 contents", t1)
+	r.CheckRemoteItems(t, file1)
+
+	// Because we don't know what the current tier options here are, let's
+	// just get the current tier, and reuse that
+	o, err := r.Fremote.NewObject(ctx, file1.Path)
+	require.NoError(t, err)
+	trr, ok := o.(fs.GetTierer)
+	require.True(t, ok)
+	ctier := trr.GetTier()
+	in := rc.Params{
+		"fs":     r.FremoteName,
+		"remote": "file1",
+		"tier":   ctier,
+	}
+	out, err := call.Fn(context.Background(), in)
+	require.NoError(t, err)
+	assert.Equal(t, rc.Params(nil), out)
+
 }
 
 // operations/mkdir: Make a destination directory or container
@@ -488,7 +548,7 @@ func TestUploadFile(t *testing.T) {
 	r, call := rcNewRun(t, "operations/uploadfile")
 	ctx := context.Background()
 
-	testFileName := "test.txt"
+	testFileName := "uploadfile-test.txt"
 	testFileContent := "Hello World"
 	r.WriteFile(testFileName, testFileContent, t1)
 	testItem1 := fstest.NewItem(testFileName, testFileContent, t1)
@@ -496,6 +556,10 @@ func TestUploadFile(t *testing.T) {
 
 	currentFile, err := os.Open(path.Join(r.LocalName, testFileName))
 	require.NoError(t, err)
+
+	defer func() {
+		assert.NoError(t, currentFile.Close())
+	}()
 
 	formReader, contentType, _, err := rest.MultipartUpload(ctx, currentFile, url.Values{}, "file", testFileName)
 	require.NoError(t, err)
@@ -516,10 +580,14 @@ func TestUploadFile(t *testing.T) {
 
 	assert.NoError(t, r.Fremote.Mkdir(context.Background(), "subdir"))
 
-	currentFile, err = os.Open(path.Join(r.LocalName, testFileName))
+	currentFile2, err := os.Open(path.Join(r.LocalName, testFileName))
 	require.NoError(t, err)
 
-	formReader, contentType, _, err = rest.MultipartUpload(ctx, currentFile, url.Values{}, "file", testFileName)
+	defer func() {
+		assert.NoError(t, currentFile2.Close())
+	}()
+
+	formReader, contentType, _, err = rest.MultipartUpload(ctx, currentFile2, url.Values{}, "file", testFileName)
 	require.NoError(t, err)
 
 	httpReq = httptest.NewRequest("POST", "/", formReader)
@@ -576,4 +644,225 @@ func TestRcCommand(t *testing.T) {
 	_, err = call.Fn(context.Background(), in)
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), errTxt)
+}
+
+// operations/command: Runs a backend command
+func TestRcDu(t *testing.T) {
+	ctx := context.Background()
+	_, call := rcNewRun(t, "core/du")
+	in := rc.Params{}
+	out, err := call.Fn(ctx, in)
+	if err == diskusage.ErrUnsupported {
+		t.Skip(err)
+	}
+	assert.NotEqual(t, "", out["dir"])
+	info := out["info"].(diskusage.Info)
+	assert.True(t, info.Total != 0)
+	assert.True(t, info.Total > info.Free)
+	assert.True(t, info.Total > info.Available)
+	assert.True(t, info.Free >= info.Available)
+}
+
+// operations/check: check the source and destination are the same
+func TestRcCheck(t *testing.T) {
+	ctx := context.Background()
+	r, call := rcNewRun(t, "operations/check")
+	r.Mkdir(ctx, r.Fremote)
+
+	MD5SUMS := `
+0ef726ce9b1a7692357ff70dd321d595  file1
+deadbeefcafe00000000000000000000  subdir/file2
+0386a8b8fcf672c326845c00ba41b9e2  subdir/subsubdir/file4
+`
+
+	file1 := r.WriteBoth(ctx, "file1", "file1 contents", t1)
+	file2 := r.WriteFile("subdir/file2", MD5SUMS, t2)
+	file3 := r.WriteObject(ctx, "subdir/subsubdir/file3", "file3 contents", t3)
+	file4a := r.WriteFile("subdir/subsubdir/file4", "file4 contents", t3)
+	file4b := r.WriteObject(ctx, "subdir/subsubdir/file4", "file4 different contents", t3)
+	// operations.HashLister(ctx, hash.MD5, false, false, r.Fremote, os.Stdout)
+
+	r.CheckLocalItems(t, file1, file2, file4a)
+	r.CheckRemoteItems(t, file1, file3, file4b)
+
+	pstring := func(items ...fstest.Item) *[]string {
+		xs := make([]string, len(items))
+		for i, item := range items {
+			xs[i] = item.Path
+		}
+		return &xs
+	}
+
+	for _, testName := range []string{"Normal", "Download"} {
+		t.Run(testName, func(t *testing.T) {
+			in := rc.Params{
+				"srcFs":        r.LocalName,
+				"dstFs":        r.FremoteName,
+				"combined":     true,
+				"missingOnSrc": true,
+				"missingOnDst": true,
+				"match":        true,
+				"differ":       true,
+				"error":        true,
+			}
+			if testName == "Download" {
+				in["download"] = true
+			}
+			out, err := call.Fn(ctx, in)
+			require.NoError(t, err)
+
+			combined := []string{
+				"= " + file1.Path,
+				"+ " + file2.Path,
+				"- " + file3.Path,
+				"* " + file4a.Path,
+			}
+			sort.Strings(combined)
+			sort.Strings(*out["combined"].(*[]string))
+			want := rc.Params{
+				"missingOnSrc": pstring(file3),
+				"missingOnDst": pstring(file2),
+				"differ":       pstring(file4a),
+				"error":        pstring(),
+				"match":        pstring(file1),
+				"combined":     &combined,
+				"status":       "3 differences found",
+				"success":      false,
+			}
+			if testName == "Normal" {
+				want["hashType"] = "md5"
+			}
+
+			assert.Equal(t, want, out)
+		})
+	}
+
+	t.Run("CheckFile", func(t *testing.T) {
+		// The checksum file is treated as the source and srcFs is not used
+		in := rc.Params{
+			"dstFs":           r.FremoteName,
+			"combined":        true,
+			"missingOnSrc":    true,
+			"missingOnDst":    true,
+			"match":           true,
+			"differ":          true,
+			"error":           true,
+			"checkFileFs":     r.LocalName,
+			"checkFileRemote": file2.Path,
+			"checkFileHash":   "md5",
+		}
+		out, err := call.Fn(ctx, in)
+		require.NoError(t, err)
+
+		combined := []string{
+			"= " + file1.Path,
+			"+ " + file2.Path,
+			"- " + file3.Path,
+			"* " + file4a.Path,
+		}
+		sort.Strings(combined)
+		sort.Strings(*out["combined"].(*[]string))
+		if strings.HasPrefix(out["status"].(string), "file not in") {
+			out["status"] = "file not in"
+		}
+		want := rc.Params{
+			"missingOnSrc": pstring(file3),
+			"missingOnDst": pstring(file2),
+			"differ":       pstring(file4a),
+			"error":        pstring(),
+			"match":        pstring(file1),
+			"combined":     &combined,
+			"hashType":     "md5",
+			"status":       "file not in",
+			"success":      false,
+		}
+
+		assert.Equal(t, want, out)
+	})
+
+}
+
+// operations/hashsum: hashsum a directory
+func TestRcHashsum(t *testing.T) {
+	ctx := context.Background()
+	r, call := rcNewRun(t, "operations/hashsum")
+	r.Mkdir(ctx, r.Fremote)
+
+	file1Contents := "file1 contents"
+	file1 := r.WriteBoth(ctx, "hashsum-file1", file1Contents, t1)
+	r.CheckLocalItems(t, file1)
+	r.CheckRemoteItems(t, file1)
+
+	hasher := hash.NewMultiHasher()
+	_, err := hasher.Write([]byte(file1Contents))
+	require.NoError(t, err)
+
+	for _, test := range []struct {
+		ht       hash.Type
+		base64   bool
+		download bool
+	}{
+		{
+			ht: r.Fremote.Hashes().GetOne(),
+		}, {
+			ht:     r.Fremote.Hashes().GetOne(),
+			base64: true,
+		}, {
+			ht:       hash.Whirlpool,
+			base64:   false,
+			download: true,
+		}, {
+			ht:       hash.Whirlpool,
+			base64:   true,
+			download: true,
+		},
+	} {
+		t.Run(fmt.Sprintf("hash=%v,base64=%v,download=%v", test.ht, test.base64, test.download), func(t *testing.T) {
+			file1Hash, err := hasher.SumString(test.ht, test.base64)
+			require.NoError(t, err)
+
+			in := rc.Params{
+				"fs":       r.FremoteName,
+				"hashType": test.ht.String(),
+				"base64":   test.base64,
+				"download": test.download,
+			}
+
+			out, err := call.Fn(ctx, in)
+			require.NoError(t, err)
+			assert.Equal(t, test.ht.String(), out["hashType"])
+			want := []string{
+				fmt.Sprintf("%s  hashsum-file1", file1Hash),
+			}
+			assert.Equal(t, want, out["hashsum"])
+		})
+	}
+}
+
+// operations/hashsum: hashsum a single file
+func TestRcHashsumFile(t *testing.T) {
+	ctx := context.Background()
+	r, call := rcNewRun(t, "operations/hashsum")
+	r.Mkdir(ctx, r.Fremote)
+
+	file1Contents := "file1 contents"
+	file1 := r.WriteBoth(ctx, "hashsum-file1", file1Contents, t1)
+	file2Contents := "file2 contents"
+	file2 := r.WriteBoth(ctx, "hashsum-file2", file2Contents, t1)
+	r.CheckLocalItems(t, file1, file2)
+	r.CheckRemoteItems(t, file1, file2)
+
+	// Make an fs pointing to just the file
+	fsString := path.Join(r.FremoteName, file1.Path)
+
+	in := rc.Params{
+		"fs":       fsString,
+		"hashType": "MD5",
+		"download": true,
+	}
+
+	out, err := call.Fn(ctx, in)
+	require.NoError(t, err)
+	assert.Equal(t, "md5", out["hashType"])
+	assert.Equal(t, []string{"0ef726ce9b1a7692357ff70dd321d595  hashsum-file1"}, out["hashsum"])
 }

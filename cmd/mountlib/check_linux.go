@@ -1,5 +1,4 @@
 //go:build linux
-// +build linux
 
 package mountlib
 
@@ -7,13 +6,8 @@ import (
 	"fmt"
 	"path/filepath"
 	"strings"
-	"time"
 
 	"github.com/moby/sys/mountinfo"
-)
-
-const (
-	pollInterval = 100 * time.Millisecond
 )
 
 // CheckMountEmpty checks if folder is not already a mountpoint.
@@ -47,6 +41,15 @@ func CheckMountEmpty(mountpoint string) error {
 	return checkMountEmpty(mountpoint)
 }
 
+// singleEntryFilter looks for a specific entry.
+//
+// It may appear more than once and we return all of them if so.
+func singleEntryFilter(mp string) mountinfo.FilterFunc {
+	return func(m *mountinfo.Info) (skip, stop bool) {
+		return m.Mountpoint != mp, false
+	}
+}
+
 // CheckMountReady checks whether mountpoint is mounted by rclone.
 // Only mounts with type "rclone" or "fuse.rclone" count.
 func CheckMountReady(mountpoint string) error {
@@ -57,7 +60,7 @@ func CheckMountReady(mountpoint string) error {
 		return fmt.Errorf("cannot get absolute path: %s: %w", mountpoint, err)
 	}
 
-	infos, err := mountinfo.GetMounts(mountinfo.SingleEntryFilter(mountpointAbs))
+	infos, err := mountinfo.GetMounts(singleEntryFilter(mountpointAbs))
 	if err != nil {
 		return fmt.Errorf("cannot get mounts: %w", err)
 	}
@@ -71,19 +74,5 @@ func CheckMountReady(mountpoint string) error {
 	return fmt.Errorf(msg, mountpointAbs)
 }
 
-// WaitMountReady waits until mountpoint is mounted by rclone.
-func WaitMountReady(mountpoint string, timeout time.Duration) (err error) {
-	endTime := time.Now().Add(timeout)
-	for {
-		err = CheckMountReady(mountpoint)
-		delay := time.Until(endTime)
-		if err == nil || delay <= 0 {
-			break
-		}
-		if delay > pollInterval {
-			delay = pollInterval
-		}
-		time.Sleep(delay)
-	}
-	return
-}
+// CanCheckMountReady is set if CheckMountReady is functional
+var CanCheckMountReady = true
