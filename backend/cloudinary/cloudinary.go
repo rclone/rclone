@@ -212,6 +212,7 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 		size:    int64(asset.Bytes),
 		modTime: asset.CreatedAt,
 		url:     asset.SecureURL,
+		md5sum:  asset.ETag
 	}
 
 	return o, nil
