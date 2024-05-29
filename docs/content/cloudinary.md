@@ -48,11 +48,6 @@ XX / cloudinary.com
 \ (cloudinary)
 [snip]
 Storage> cloudinary
-  
-Option endpoint.
-You can find your cloudinary.com URL endpoint in your [dashboard](https://console.cloudinary.com/pm/developer-dashboard)
-Enter a value.
-endpoint> https://api<-geo>.cloudinary.com  
 
 Option api_key.
 You can find your cloudinary.com api key in your [dashboard](https://console.cloudinary.com/pm/developer-dashboard)
@@ -63,6 +58,11 @@ Option api_secret.
 You can find your cloudinary.com api secret in your [dashboard](https://console.cloudinary.com/pm/developer-dashboard)
 Enter a value.
 api_secret> ****************************
+
+Option cloud_name.
+You can find your cloudinary.com api secret in your [dashboard](https://console.cloudinary.com/pm/developer-dashboard)
+Enter a value.
+cloud_name> ****************************
 
 Edit advanced config?
 y) Yes
