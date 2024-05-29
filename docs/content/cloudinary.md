@@ -72,9 +72,9 @@ y/n> n
 Configuration complete.
 Options:
 - type: cloudinary
-- endpoint: https://api.cloudinary.com
 - api_key: ****************************
 - api_secret: ****************************
+- cloud_name: ****************************
 
 Keep this "cloudinary-media-library" remote?
 y) Yes this is OK (default)
