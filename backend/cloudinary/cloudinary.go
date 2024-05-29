@@ -3,16 +3,18 @@ package cloudinary
 import (
 	"context"
 	"fmt"
-	"github.com/cloudinary/cloudinary-go/v2"
-	"github.com/rclone/rclone/fs/config/configstruct"
 	"io"
 	"net/http"
+	"path"
+	"strings"
 	"time"
 
+	"github.com/cloudinary/cloudinary-go/v2"
 	"github.com/cloudinary/cloudinary-go/v2/api/admin"
 	"github.com/cloudinary/cloudinary-go/v2/api/uploader"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config/configmap"
+	"github.com/rclone/rclone/fs/config/configstruct"
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/lib/pacer"
 )
@@ -132,26 +134,58 @@ func (f *Fs) Features() *fs.Features {
 
 // List the objects and directories in dir into entries.
 func (f *Fs) List(ctx context.Context, dir string) (fs.DirEntries, error) {
-	params := admin.AssetsParams{
-		MaxResults: 100,
-		Prefix:     f.root + dir,
-	}
-	assets, err := f.cld.Admin.Assets(ctx, params)
-	if err != nil {
-		return nil, fmt.Errorf("failed to list assets: %w", err)
+	remotePrefix := path.Join(f.root, dir)
+	if remotePrefix != "" && !strings.HasSuffix(remotePrefix, "/") {
+		remotePrefix += "/"
 	}
 
 	var entries fs.DirEntries
-	for _, asset := range assets.Assets {
-		remote := asset.PublicID[len(f.root):]
-		o := &Object{
-			fs:      f,
-			remote:  remote,
-			size:    int64(asset.Bytes),
-			modTime: asset.CreatedAt,
-			url:     asset.URL,
+	dirs := make(map[string]struct{})
+	nextCursor := ""
+
+	for {
+		// Use the Admin API to list assets
+		params := admin.AssetsParams{
+			//		Type:       "upload",
+			Prefix:     remotePrefix,
+			MaxResults: 500,
+			NextCursor: nextCursor,
 		}
-		entries = append(entries, o)
+
+		assets, err := f.cld.Admin.Assets(ctx, params)
+		if err != nil {
+			return nil, fmt.Errorf("failed to list assets: %w", err)
+		}
+
+		for _, asset := range assets.Assets {
+			remote := strings.TrimPrefix(asset.PublicID, f.root+"/")
+			if strings.Contains(remote, "/") {
+				// Extract directory name
+				dirName := strings.Split(remote, "/")[0]
+				if _, found := dirs[dirName]; !found {
+					d := fs.NewDir(path.Join(dir, dirName), time.Now())
+					entries = append(entries, d)
+					dirs[dirName] = struct{}{}
+				}
+			} else {
+				o := &Object{
+					fs:      f,
+					remote:  remote,
+					size:    int64(asset.Bytes),
+					modTime: asset.CreatedAt,
+					url:     asset.SecureURL,
+				}
+				entries = append(entries, o)
+			}
+		}
+
+		// Break if there are no more results
+		println(assets.NextCursor)
+
+		if assets.NextCursor == "" {
+			break
+		}
+		nextCursor = assets.NextCursor
 	}
 
 	return entries, nil
@@ -159,24 +193,20 @@ func (f *Fs) List(ctx context.Context, dir string) (fs.DirEntries, error) {
 
 // NewObject finds the Object at remote. If it can't be found it returns the error fs.ErrorObjectNotFound.
 func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
-	// Note: Cloudinary doesn't provide a direct way to get a single asset by its public ID,
-	// so we list assets with a limit of 1 to find the specific object.
-	params := admin.AssetsParams{
-		MaxResults: 1,
-		Prefix:     f.root + remote,
-	}
-	assets, err := f.cld.Admin.Assets(ctx, params)
-	if err != nil || len(assets.Assets) == 0 {
+	// Use the Admin API to get the specific asset by its public ID
+	asset, err := f.cld.Admin.Asset(ctx, admin.AssetParams{
+		PublicID: path.Join(f.root, remote),
+	})
+	if err != nil {
 		return nil, fs.ErrorObjectNotFound
 	}
 
-	asset := assets.Assets[0]
 	o := &Object{
 		fs:      f,
 		remote:  remote,
 		size:    int64(asset.Bytes),
 		modTime: asset.CreatedAt,
-		url:     asset.URL,
+		url:     asset.SecureURL,
 	}
 
 	return o, nil
@@ -185,7 +215,7 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 // Put uploads content to Cloudinary
 func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
 	params := uploader.UploadParams{
-		PublicID: f.root + src.Remote(),
+		PublicID: path.Join(f.root, src.Remote()),
 	}
 	uploadResult, err := f.cld.Upload.Upload(ctx, in, params)
 	if err != nil {
@@ -197,7 +227,7 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 		remote:  src.Remote(),
 		size:    src.Size(),
 		modTime: time.Now(),
-		url:     uploadResult.URL,
+		url:     uploadResult.SecureURL,
 	}
 
 	return o, nil
@@ -222,7 +252,7 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 
 func (f *Fs) Remove(ctx context.Context, o fs.Object) error {
 	params := uploader.DestroyParams{
-		PublicID: f.root + o.Remote(),
+		PublicID: path.Join(f.root, o.Remote()),
 	}
 	_, err := f.cld.Upload.Destroy(ctx, params)
 	return err
