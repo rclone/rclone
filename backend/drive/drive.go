@@ -2833,7 +2833,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	// FIXME remove this when google fixes the problem!
 	if isDoc {
 		// A short sleep is needed here in order to make the
-		// change effective, without it is is ignored. This is
+		// change effective, without it is ignored. This is
 		// probably some eventual consistency nastiness.
 		sleepTime := 2 * time.Second
 		fs.Debugf(f, "Sleeping for %v before setting the modtime to work around drive bug - see #4517", sleepTime)

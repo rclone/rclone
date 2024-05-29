@@ -372,6 +372,7 @@ func (o *baseObject) parseMetadata(ctx context.Context, info *drive.File) (err e
 		// shared drives.
 		if o.fs.isTeamDrive && !info.HasAugmentedPermissions {
 			// Don't process permissions if there aren't any specifically set
+			fs.Debugf(o, "Ignoring %d permissions and %d permissionIds as is shared drive with hasAugmentedPermissions false", len(info.Permissions), len(info.PermissionIds))
 			info.Permissions = nil
 			info.PermissionIds = nil
 		}

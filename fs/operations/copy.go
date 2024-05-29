@@ -180,7 +180,11 @@ func (c *copy) rcat(ctx context.Context, in io.ReadCloser) (actionTaken string, 
 	}
 
 	// NB Rcat closes in0
-	newDst, err = Rcat(ctx, c.f, c.remoteForCopy, in, c.src.ModTime(ctx), meta)
+	fsrc, ok := c.src.Fs().(fs.Fs)
+	if !ok {
+		fsrc = nil
+	}
+	newDst, err = rcatSrc(ctx, c.f, c.remoteForCopy, in, c.src.ModTime(ctx), meta, fsrc)
 	if c.doUpdate {
 		actionTaken = "Copied (Rcat, replaced existing)"
 	} else {

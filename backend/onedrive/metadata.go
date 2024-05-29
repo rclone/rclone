@@ -133,6 +133,7 @@ func (rwChoices) Choices() []fs.BitsChoicesInfo {
 		{Bit: uint64(rwOff), Name: "off"},
 		{Bit: uint64(rwRead), Name: "read"},
 		{Bit: uint64(rwWrite), Name: "write"},
+		{Bit: uint64(rwFailOK), Name: "failok"},
 	}
 }
 
@@ -142,6 +143,7 @@ type rwChoice = fs.Bits[rwChoices]
 const (
 	rwRead rwChoice = 1 << iota
 	rwWrite
+	rwFailOK
 	rwOff rwChoice = 0
 )
 
@@ -158,6 +160,9 @@ var rwExamples = fs.OptionExamples{{
 }, {
 	Value: (rwRead | rwWrite).String(),
 	Help:  "Read and Write the value.",
+}, {
+	Value: rwFailOK.String(),
+	Help:  "If writing fails log errors only, don't fail the transfer",
 }}
 
 // Metadata describes metadata properties shared by both Objects and Directories
@@ -362,6 +367,15 @@ func (m *Metadata) WritePermissions(ctx context.Context) (err error) {
 	}
 	if m.normalizedID == "" {
 		return errors.New("internal error: normalizedID is missing")
+	}
+	if m.fs.opt.MetadataPermissions.IsSet(rwFailOK) {
+		// If failok is set, allow the permissions setting to fail and only log an ERROR
+		defer func() {
+			if err != nil {
+				fs.Errorf(m.fs, "Ignoring error as failok is set: %v", err)
+				err = nil
+			}
+		}()
 	}
 
 	// compare current to queued and sort into add/update/remove queues
