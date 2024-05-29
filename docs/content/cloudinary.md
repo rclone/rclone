@@ -1,14 +1,14 @@
 ---
 title: "Cloudinary"
-description: "Rclone docs for Cloudinary backend."
+description: "Rclone docs for Cloudinary backend"
 versionIntroduced: "v1.0"
 
 ---
 # {{< icon "fa fa-cloud" >}} Cloudinary
-This is a backend for the [cloudinary.com](https://cloudinary.com/) storage service.
+This is a backend for the [Cloudinary](https://cloudinary.com/) platform
 
 #### About Cloudinary
-[cloudinary.com](https://cloudinary.com/) is an an image and video API platform.
+[Cloudinary](https://cloudinary.com/) is an an image and video API platform.
 Trusted by 1.5 million developers and 10,000 enterprise and hyper-growth companies as a critical part of their tech stack to deliver visualize engaging experiences.
 
 #### Accounts & Pricing
