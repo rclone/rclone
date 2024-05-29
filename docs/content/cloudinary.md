@@ -11,8 +11,6 @@ This is a backend for the [cloudinary.com](https://cloudinary.com/) storage serv
 [cloudinary.com](https://cloudinary.com/) is an an image and video API platform.
 Trusted by 1.5 million developers and 10,000 enterprise and hyper-growth companies as a critical part of their tech stack to deliver visualize engaging experiences.
 
-
-
 #### Accounts & Pricing
 
 To use this backend, you need to [create a free account](https://cloudinary.com/users/register_free) on Cloudinary. Start with a free plan with generous usage limits. Then, as your requirements grow, upgrade to a plan that best fits your needs. See [the pricing details](https://cloudinary.com/pricing).
@@ -26,13 +24,13 @@ First create a [cloudinary.com](https://cloudinary.com/users/register_free) acco
 You will need to log in and get the `API Key` and `API Secret` for your account from the developer section.
 
 Now run
-```
+```bash
 rclone config
 ```
 
 This will guide you through an interactive setup process:
 
-```
+```bash
 No remotes found, make a new one?
 n) New remote
 s) Set configuration password
@@ -85,15 +83,15 @@ d) Delete this remote
 y/e/d> y
 ```
 List directories in the top level of your Media Library
-```
+```bash
 rclone lsd cloudinary-media-library:
 ```
 Make a new directory.
-```
+```bash
 rclone mkdir cloudinary-media-library:directory
 ```
 List the contents of a directory.
-```
+```bash
 rclone ls cloudinary-media-library:directory
 ```
 
