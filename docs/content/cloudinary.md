@@ -1,7 +1,7 @@
 ---
 title: "Cloudinary"
 description: "Rclone docs for Cloudinary backend."
-versionIntroduced: "v1.63"
+versionIntroduced: "v1.0"
 
 ---
 # {{< icon "fa fa-cloud" >}} Cloudinary
