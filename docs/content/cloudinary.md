@@ -1,17 +1,15 @@
 ---
 title: "Cloudinary"
-description: "Rclone docs for Cloudinary backend."
+description: "Rclone docs for Cloudinary backend"
 versionIntroduced: "v1.0"
 
 ---
 # {{< icon "fa fa-cloud" >}} Cloudinary
-This is a backend for the [cloudinary.com](https://cloudinary.com/) storage service.
+This is a backend for the [Cloudinary](https://cloudinary.com/) platform
 
 #### About Cloudinary
-[cloudinary.com](https://cloudinary.com/) is an an image and video API platform.
-Trusted by 1.5 million developers and 10,000 enterprise and hyper-growth companies as a critical part of their tech stack to deliver visualize engaging experiences.
-
-
+[Cloudinary](https://cloudinary.com/) is an image and video API platform.
+Trusted by 1.5 million developers and 10,000 enterprise and hyper-growth companies as a critical part of their tech stack to deliver visually engaging experiences.
 
 #### Accounts & Pricing
 
@@ -21,7 +19,7 @@ To use this backend, you need to [create a free account](https://cloudinary.com/
 
 Here is an example of making a Cloudinary configuration.
 
-First create a [cloudinary.com](https://cloudinary.com/users/register_free) account and choose a plan.
+First, create a [cloudinary.com](https://cloudinary.com/users/register_free) account and choose a plan.
 
 You will need to log in and get the `API Key` and `API Secret` for your account from the developer section.
 
@@ -50,11 +48,6 @@ XX / cloudinary.com
 \ (cloudinary)
 [snip]
 Storage> cloudinary
-  
-Option endpoint.
-You can find your cloudinary.com URL endpoint in your [dashboard](https://console.cloudinary.com/pm/developer-dashboard)
-Enter a value.
-endpoint> https://api<-geo>.cloudinary.com  
 
 Option api_key.
 You can find your cloudinary.com api key in your [dashboard](https://console.cloudinary.com/pm/developer-dashboard)
@@ -66,6 +59,11 @@ You can find your cloudinary.com api secret in your [dashboard](https://console.
 Enter a value.
 api_secret> ****************************
 
+Option cloud_name.
+You can find your cloudinary.com api secret in your [dashboard](https://console.cloudinary.com/pm/developer-dashboard)
+Enter a value.
+cloud_name> ****************************
+
 Edit advanced config?
 y) Yes
 n) No (default)
@@ -74,9 +72,9 @@ y/n> n
 Configuration complete.
 Options:
 - type: cloudinary
-- endpoint: https://api.cloudinary.com
 - api_key: ****************************
 - api_secret: ****************************
+- cloud_name: ****************************
 
 Keep this "cloudinary-media-library" remote?
 y) Yes this is OK (default)
