@@ -8,8 +8,8 @@ versionIntroduced: "v1.0"
 This is a backend for the [Cloudinary](https://cloudinary.com/) platform
 
 #### About Cloudinary
-[Cloudinary](https://cloudinary.com/) is an an image and video API platform.
-Trusted by 1.5 million developers and 10,000 enterprise and hyper-growth companies as a critical part of their tech stack to deliver visualize engaging experiences.
+[Cloudinary](https://cloudinary.com/) is an image and video API platform.
+Trusted by 1.5 million developers and 10,000 enterprise and hyper-growth companies as a critical part of their tech stack to deliver visually engaging experiences.
 
 #### Accounts & Pricing
 
@@ -19,7 +19,7 @@ To use this backend, you need to [create a free account](https://cloudinary.com/
 
 Here is an example of making a Cloudinary configuration.
 
-First create a [cloudinary.com](https://cloudinary.com/users/register_free) account and choose a plan.
+First, create a [cloudinary.com](https://cloudinary.com/users/register_free) account and choose a plan.
 
 You will need to log in and get the `API Key` and `API Secret` for your account from the developer section.
 
