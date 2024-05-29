@@ -193,9 +193,13 @@ func (f *Fs) List(ctx context.Context, dir string) (fs.DirEntries, error) {
 		}
 
 		for _, asset := range results.Assets {
+			remote := asset.DisplayName
+			if asset.AssetFolder != "" {
+				remote = path.Join(asset.AssetFolder, asset.DisplayName)
+			}
 			o := &Object{
 				fs:      f,
-				remote:  asset.DisplayName,
+				remote:  remote,
 				size:    int64(asset.Bytes),
 				modTime: asset.CreatedAt,
 				url:     asset.SecureURL,
