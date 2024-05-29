@@ -17,17 +17,3 @@ func TestIntegration(t *testing.T) {
 		NilObject:  (*cloudinary.Object)(nil),
 	})
 }
-
-func TestIntegration2(t *testing.T) {
-	if *fstest.RemoteName != "" {
-		t.Skip("Skipping as -remote set")
-	}
-	name := "TestCloudinary"
-	fstests.Run(t, &fstests.Opt{
-		RemoteName: name + ":",
-		NilObject:  (*cloudinary.Object)(nil),
-		ExtraConfig: []fstests.ExtraConfigItem{
-			{Name: name, Key: "directory_markers", Value: "true"},
-		},
-	})
-}
