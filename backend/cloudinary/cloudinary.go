@@ -178,7 +178,7 @@ func (f *Fs) List(ctx context.Context, dir string) (fs.DirEntries, error) {
 	}
 
 	for {
-		// Use the assetsbyassetfolder API to list assets
+		// Use the assets.byassetfolder API to list assets
 		assetsParams := admin.AssetsByAssetFolderParams{
 			AssetFolder: remotePrefix,
 			MaxResults:  500,
@@ -193,28 +193,14 @@ func (f *Fs) List(ctx context.Context, dir string) (fs.DirEntries, error) {
 		}
 
 		for _, asset := range results.Assets {
-			relativePath := strings.TrimPrefix(asset.PublicID, remotePrefix)
-			parts := strings.Split(relativePath, "/")
-
-			if len(parts) > 1 {
-				// It's a directory
-				dirName := parts[0]
-				if _, found := dirs[dirName]; !found {
-					d := fs.NewDir(path.Join(dir, dirName), time.Now())
-					entries = append(entries, d)
-					dirs[dirName] = struct{}{}
-				}
-			} else {
-				// It's a file
-				o := &Object{
-					fs:      f,
-					remote:  relativePath,
-					size:    int64(asset.Bytes),
-					modTime: asset.CreatedAt,
-					url:     asset.SecureURL,
-				}
-				entries = append(entries, o)
+			o := &Object{
+				fs:      f,
+				remote:  asset.DisplayName,
+				size:    int64(asset.Bytes),
+				modTime: asset.CreatedAt,
+				url:     asset.SecureURL,
 			}
+			entries = append(entries, o)
 		}
 
 		// Break if there are no more results
