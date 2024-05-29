@@ -8,18 +8,20 @@ versionIntroduced: "v1.63"
 This is a backend for the [cloudinary.com](https://cloudinary.com/) storage service.
 
 #### About Cloudinary
-[cloudinary.com](https://cloudinary.com/)  provides real-time image and video optimizations, transformations, and CDN delivery. Over 1,000 businesses and 70,000 developers trust Cloudinary with their images and videos on the web.
+[cloudinary.com](https://cloudinary.com/) is an an image and video API platform
+Trusted by 1.5 million developers and 10,000 enterprise and hyper-growth companies as a critical part of their tech stack to deliver visualize engaging experiences
+
 
 
 #### Accounts & Pricing
 
-To use this backend, you need to [create an account](https://cloudinary.com/registration/) on Cloudinary. Start with a free plan with generous usage limits. Then, as your requirements grow, upgrade to a plan that best fits your needs. See [the pricing details](https://cloudinary.com/plans).
+To use this backend, you need to [create a free account](https://cloudinary.com/users/register_free) on Cloudinary. Start with a free plan with generous usage limits. Then, as your requirements grow, upgrade to a plan that best fits your needs. See [the pricing details](https://cloudinary.com/pricing).
 
 ## Configuration
 
 Here is an example of making a Cloudinary configuration.
 
-Firstly create a [cloudinary.com](https://cloudinary.com/) account and choose a plan.
+Firstly create a [cloudinary.com](https://cloudinary.com/users/register_free) account and choose a plan.
 
 You will need to log in and get the `API Key` and `API Secret` for your account from the developer section.
 
@@ -52,17 +54,17 @@ Storage> cloudinary
 Option endpoint.
 You can find your cloudinary.com URL endpoint in your [dashboard](https://console.cloudinary.com/pm/developer-dashboard)
 Enter a value.
-endpoint> https://api.cloudinary.com/public_id  
+endpoint> https://api<-geo>.cloudinary.com  
 
-Option public_key.
+Option api_key.
 You can find your cloudinary.com public key in your [dashboard](https://console.cloudinary.com/pm/developer-dashboard)
 Enter a value.
-public_key> public_****************************
+api_key> public_****************************
 
-Option private_key.
+Option api_secret.
 You can find your cloudinary.com private key in your [dashboard](https://console.cloudinary.com/pm/developer-dashboard)
 Enter a value.
-private_key> private_****************************
+api_secret> private_****************************
 
 Edit advanced config?
 y) Yes
@@ -72,9 +74,9 @@ y/n> n
 Configuration complete.
 Options:
 - type: cloudinary
-- endpoint: https://api.cloudinary.com/public_id
-- public_key: public_****************************
-- private_key: private_****************************
+- endpoint: https://api.cloudinary.com
+- api_key: ****************************
+- api_secret: ****************************
 
 Keep this "cloudinary-media-library" remote?
 y) Yes this is OK (default)
@@ -125,8 +127,8 @@ You can find your cloudinary.com public key in your [dashboard](https://console.
 
 Properties:
 
-- Config:      public_key
-- Env Var:     RCLONE_CLOUDINARY_PUBLIC_KEY
+- Config:      api_key
+- Env Var:     RCLONE_CLOUDINARY_API_KEY
 - Type:        string
 - Required:    true
 
@@ -136,8 +138,8 @@ You can find your cloudinary.com private key in your [dashboard](https://console
 
 Properties:
 
-- Config:      private_key
-- Env Var:     RCLONE_CLOUDINARY_PRIVATE_KEY
+- Config:      api_secret
+- Env Var:     RCLONE_CLOUDINARY_API_SECRET
 - Type:        string
 - Required:    true
 
