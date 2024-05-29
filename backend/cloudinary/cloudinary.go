@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/cloudinary/cloudinary-go/v2"
+	"github.com/cloudinary/cloudinary-go/v2/api/admin"
 	"github.com/cloudinary/cloudinary-go/v2/api/admin/search"
 	"github.com/cloudinary/cloudinary-go/v2/api/uploader"
 	"github.com/rclone/rclone/fs"
@@ -144,16 +145,49 @@ func (f *Fs) List(ctx context.Context, dir string) (fs.DirEntries, error) {
 	nextCursor := ""
 
 	for {
-		// Use the Search API to list assets
-		searchParams := search.Query{
-			Expression: fmt.Sprintf("folder:\"%s\"", remotePrefix),
+		// user the folders api to list folders.
+		folderParams := admin.SubFoldersParams{
+			Folder:     remotePrefix,
 			MaxResults: 500,
 		}
 		if nextCursor != "" {
-			searchParams.NextCursor = nextCursor
+			folderParams.NextCursor = nextCursor
 		}
 
-		results, err := f.cld.Admin.Search(ctx, searchParams)
+		results, err := f.cld.Admin.SubFolders(ctx, folderParams)
+		if err != nil {
+			return nil, fmt.Errorf("failed to list subfolders: %w", err)
+		}
+		for _, folder := range results.Folders {
+			relativePath := strings.TrimPrefix(folder.Path, remotePrefix)
+			parts := strings.Split(relativePath, "/")
+
+			// It's a directory
+			dirName := parts[0]
+			if _, found := dirs[dirName]; !found {
+				d := fs.NewDir(path.Join(dir, dirName), time.Now())
+				entries = append(entries, d)
+				dirs[dirName] = struct{}{}
+			}
+		}
+		// Break if there are no more results
+		if results.NextCursor == "" {
+			break
+		}
+		nextCursor = results.NextCursor
+	}
+
+	for {
+		// Use the assetsbyassetfolder API to list assets
+		assetsParams := admin.AssetsByAssetFolderParams{
+			AssetFolder: remotePrefix,
+			MaxResults:  500,
+		}
+		if nextCursor != "" {
+			assetsParams.NextCursor = nextCursor
+		}
+
+		results, err := f.cld.Admin.AssetsByAssetFolder(ctx, assetsParams)
 		if err != nil {
 			return nil, fmt.Errorf("failed to search assets: %w", err)
 		}
