@@ -465,3 +465,9 @@ backends:
  - backend:  "ulozto"
    remote:   "TestUlozto:"
    fastlist: false
+ - backend:  "cloudinary"
+   remote:   "TestCloudinary:"
+   fastlist: true
+ - backend:  "cloudinary"
+   remote:   "TestCloudinary,directory_markers:"
+   fastlist: true
