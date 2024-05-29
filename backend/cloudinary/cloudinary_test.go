@@ -4,9 +4,10 @@ package cloudinary_test
 
 import (
 	"testing"
-	"github.com/rclone/rclone/fs"
+
+	"github.com/rclone/rclone/backend/cloudinary"
+	"github.com/rclone/rclone/fstest"
 	"github.com/rclone/rclone/fstest/fstests"
-	_ "github.com/rclone/rclone/backend/cloudinary"
 )
 
 // TestIntegration runs integration tests against the remote
