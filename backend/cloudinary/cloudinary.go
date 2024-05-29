@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/cloudinary/cloudinary-go/v2"
-	"github.com/cloudinary/cloudinary-go/v2/api/admin"
+	"github.com/cloudinary/cloudinary-go/v2/api/admin/search"
 	"github.com/cloudinary/cloudinary-go/v2/api/uploader"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config/configmap"
@@ -144,33 +144,37 @@ func (f *Fs) List(ctx context.Context, dir string) (fs.DirEntries, error) {
 	nextCursor := ""
 
 	for {
-		// Use the Admin API to list assets
-		params := admin.AssetsParams{
-			//		Type:       "upload",
-			Prefix:     remotePrefix,
+		// Use the Search API to list assets
+		searchParams := search.Query{
+			Expression: fmt.Sprintf("folder:\"%s\"", remotePrefix),
 			MaxResults: 500,
-			NextCursor: nextCursor,
+		}
+		if nextCursor != "" {
+			searchParams.NextCursor = nextCursor
 		}
 
-		assets, err := f.cld.Admin.Assets(ctx, params)
+		results, err := f.cld.Admin.Search(ctx, searchParams)
 		if err != nil {
-			return nil, fmt.Errorf("failed to list assets: %w", err)
+			return nil, fmt.Errorf("failed to search assets: %w", err)
 		}
 
-		for _, asset := range assets.Assets {
-			remote := strings.TrimPrefix(asset.PublicID, f.root+"/")
-			if strings.Contains(remote, "/") {
-				// Extract directory name
-				dirName := strings.Split(remote, "/")[0]
+		for _, asset := range results.Assets {
+			relativePath := strings.TrimPrefix(asset.PublicID, remotePrefix)
+			parts := strings.Split(relativePath, "/")
+
+			if len(parts) > 1 {
+				// It's a directory
+				dirName := parts[0]
 				if _, found := dirs[dirName]; !found {
 					d := fs.NewDir(path.Join(dir, dirName), time.Now())
 					entries = append(entries, d)
 					dirs[dirName] = struct{}{}
 				}
 			} else {
+				// It's a file
 				o := &Object{
 					fs:      f,
-					remote:  remote,
+					remote:  relativePath,
 					size:    int64(asset.Bytes),
 					modTime: asset.CreatedAt,
 					url:     asset.SecureURL,
@@ -180,12 +184,10 @@ func (f *Fs) List(ctx context.Context, dir string) (fs.DirEntries, error) {
 		}
 
 		// Break if there are no more results
-		println(assets.NextCursor)
-
-		if assets.NextCursor == "" {
+		if results.NextCursor == "" {
 			break
 		}
-		nextCursor = assets.NextCursor
+		nextCursor = results.NextCursor
 	}
 
 	return entries, nil
@@ -193,14 +195,17 @@ func (f *Fs) List(ctx context.Context, dir string) (fs.DirEntries, error) {
 
 // NewObject finds the Object at remote. If it can't be found it returns the error fs.ErrorObjectNotFound.
 func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
-	// Use the Admin API to get the specific asset by its public ID
-	asset, err := f.cld.Admin.Asset(ctx, admin.AssetParams{
-		PublicID: path.Join(f.root, remote),
-	})
-	if err != nil {
+	// Use the Search API to get the specific asset by its public ID
+	searchParams := search.Query{
+		Expression: fmt.Sprintf("public_id:\"%s\"", path.Join(f.root, remote)),
+		MaxResults: 1,
+	}
+	results, err := f.cld.Admin.Search(ctx, searchParams)
+	if err != nil || len(results.Assets) == 0 {
 		return nil, fs.ErrorObjectNotFound
 	}
 
+	asset := results.Assets[0]
 	o := &Object{
 		fs:      f,
 		remote:  remote,
