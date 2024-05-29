@@ -178,7 +178,7 @@ func (f *Fs) List(ctx context.Context, dir string) (fs.DirEntries, error) {
 	}
 
 	for {
-		// Use the assets.byassetfolder API to list assets
+		// Use the assets.AssetsByAssetFolder API to list assets
 		assetsParams := admin.AssetsByAssetFolderParams{
 			AssetFolder: remotePrefix,
 			MaxResults:  500,
@@ -189,7 +189,7 @@ func (f *Fs) List(ctx context.Context, dir string) (fs.DirEntries, error) {
 
 		results, err := f.cld.Admin.AssetsByAssetFolder(ctx, assetsParams)
 		if err != nil {
-			return nil, fmt.Errorf("failed to search assets: %w", err)
+			return nil, fmt.Errorf("failed to list assets: %w", err)
 		}
 
 		for _, asset := range results.Assets {
@@ -244,13 +244,9 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 
 // Put uploads content to Cloudinary
 func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
-	assetFolder := path.Dir(src.Remote())
-	if assetFolder == "." {
-		assetFolder = "/"
-	}
 	params := uploader.UploadParams{
-		AssetFolder: assetFolder,
-		DisplayName: path.Base(src.Remote()),
+		AssetFolder: src.Fs().Root(),
+		DisplayName: src.Remote(),
 	}
 	uploadResult, err := f.cld.Upload.Upload(ctx, in, params)
 	if err != nil {
