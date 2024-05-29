@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	"github.com/rclone/rclone/backend/cloudinary"
-	"github.com/rclone/rclone/fstest"
 	"github.com/rclone/rclone/fstest/fstests"
 )
 
