@@ -24,13 +24,13 @@ First create a [cloudinary.com](https://cloudinary.com/users/register_free) acco
 You will need to log in and get the `API Key` and `API Secret` for your account from the developer section.
 
 Now run
-```bash
+```
 rclone config
 ```
 
 This will guide you through an interactive setup process:
 
-```bash
+```
 No remotes found, make a new one?
 n) New remote
 s) Set configuration password
@@ -83,15 +83,15 @@ d) Delete this remote
 y/e/d> y
 ```
 List directories in the top level of your Media Library
-```bash
+```
 rclone lsd cloudinary-media-library:
 ```
 Make a new directory.
-```bash
+```
 rclone mkdir cloudinary-media-library:directory
 ```
 List the contents of a directory.
-```bash
+```
 rclone ls cloudinary-media-library:directory
 ```
 
