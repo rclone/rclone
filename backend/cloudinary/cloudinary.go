@@ -158,6 +158,14 @@ func (f *Fs) List(ctx context.Context, dir string) (fs.DirEntries, error) {
 		if err != nil {
 			return nil, fmt.Errorf("failed to list subfolders: %w", err)
 		}
+		if results.Error.Message != "" {
+			if strings.HasPrefix(results.Error.Message, "Can't find folder with path") {
+				return nil, fs.ErrorDirNotFound
+			}
+
+			return nil, fmt.Errorf("failed to list subfolders: %s", results.Error.Message)
+		}
+
 		for _, folder := range results.Folders {
 			relativePath := strings.TrimPrefix(folder.Path, remotePrefix)
 			parts := strings.Split(relativePath, "/")
@@ -194,8 +202,8 @@ func (f *Fs) List(ctx context.Context, dir string) (fs.DirEntries, error) {
 
 		for _, asset := range results.Assets {
 			remote := asset.DisplayName
-			if asset.AssetFolder != "" {
-				remote = path.Join(asset.AssetFolder, asset.DisplayName)
+			if dir != "" {
+				remote = path.Join(dir, asset.DisplayName)
 			}
 			o := &Object{
 				fs:      f,
@@ -217,11 +225,13 @@ func (f *Fs) List(ctx context.Context, dir string) (fs.DirEntries, error) {
 	return entries, nil
 }
 
-// NewObject finds the Object at remote. If it can't be found it returns the error fs.ErrorObjectNotFound.
-func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
-	// Use the Search API to get the specific asset by its public ID
+// getCLDAsset finds the asset at Cloudinary. If it can't be found it returns the error fs.ErrorObjectNotFound.
+func (f *Fs) getCLDAsset(ctx context.Context, remote string) (*admin.SearchAsset, error) {
+	// Use the Search API to get the specific asset by display name and asset folder
 	searchParams := search.Query{
-		Expression: fmt.Sprintf("public_id:\"%s\"", path.Join(f.root, remote)),
+		Expression: fmt.Sprintf("asset_folder=\"%s\" AND display_name=\"%s\"",
+			strings.TrimLeft(path.Join(f.root, path.Dir(remote)), "/"),
+			path.Base(remote)),
 		MaxResults: 1,
 	}
 	results, err := f.cld.Admin.Search(ctx, searchParams)
@@ -229,12 +239,21 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 		return nil, fs.ErrorObjectNotFound
 	}
 
-	asset := results.Assets[0]
+	return &results.Assets[0], nil
+}
+
+// NewObject finds the Object at remote. If it can't be found it returns the error fs.ErrorObjectNotFound.
+func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
+	asset, err := f.getCLDAsset(ctx, remote)
+	if err != nil {
+		return nil, err
+	}
+
 	o := &Object{
 		fs:      f,
 		remote:  remote,
 		size:    int64(asset.Bytes),
-		modTime: asset.CreatedAt,
+		modTime: asset.UploadedAt,
 		url:     asset.SecureURL,
 		md5sum:  asset.Etag,
 	}
@@ -256,8 +275,8 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 	o := &Object{
 		fs:      f,
 		remote:  src.Remote(),
-		size:    src.Size(),
-		modTime: time.Now(),
+		size:    int64(uploadResult.Bytes),
+		modTime: uploadResult.CreatedAt,
 		url:     uploadResult.SecureURL,
 	}
 
@@ -265,8 +284,9 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 }
 
 // Other required methods (not fully implemented):
+
 func (f *Fs) Precision() time.Duration {
-	return time.Millisecond
+	return time.Second
 }
 
 func (f *Fs) Hashes() hash.Set {
@@ -274,22 +294,63 @@ func (f *Fs) Hashes() hash.Set {
 }
 
 func (f *Fs) Mkdir(ctx context.Context, dir string) error {
+	params := admin.CreateFolderParams{Folder: path.Join(f.Root(), dir)}
+	res, err := f.cld.Admin.CreateFolder(ctx, params)
+	if err != nil {
+		return err
+	}
+	if res.Error.Message != "" {
+		return fmt.Errorf(res.Error.Message)
+	}
+
 	return nil
 }
 
 func (f *Fs) Rmdir(ctx context.Context, dir string) error {
+	params := admin.DeleteFolderParams{Folder: path.Join(f.Root(), dir)}
+	res, err := f.cld.Admin.DeleteFolder(ctx, params)
+	if err != nil {
+		return err
+	}
+	if res.Error.Message != "" {
+		if strings.HasPrefix(res.Error.Message, "Can't find folder with path") {
+			return fs.ErrorDirNotFound
+		}
+
+		return fmt.Errorf(res.Error.Message)
+	}
+
 	return nil
 }
 
 func (f *Fs) Remove(ctx context.Context, o fs.Object) error {
-	params := uploader.DestroyParams{
-		PublicID: path.Join(f.root, o.Remote()),
+	asset, err := f.getCLDAsset(ctx, o.Remote())
+	if err != nil {
+		return err
 	}
-	_, err := f.cld.Upload.Destroy(ctx, params)
-	return err
+	params := uploader.DestroyParams{
+		PublicID:     asset.PublicID,
+		ResourceType: asset.ResourceType,
+		Type:         asset.Type,
+	}
+	res, dErr := f.cld.Upload.Destroy(ctx, params)
+	if dErr != nil {
+		return dErr
+	}
+
+	if res.Error.Message != "" {
+		return fmt.Errorf(res.Error.Message)
+	}
+
+	if res.Result != "ok" {
+		return fmt.Errorf(res.Result)
+	}
+
+	return nil
 }
 
 // Object methods
+
 func (o *Object) Fs() fs.Info {
 	return o.fs
 }
