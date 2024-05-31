@@ -1283,7 +1283,7 @@ func Cat(ctx context.Context, f fs.Fs, w io.Writer, offset, count int64, sep []b
 			err = fs.CountError(err)
 			fs.Errorf(o, "Failed to send to output: %v", err)
 		}
-		if len(sep) >= 0 {
+		if len(sep) > 0 {
 			_, err = w.Write(sep)
 			if err != nil {
 				err = fs.CountError(err)
