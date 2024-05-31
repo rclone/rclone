@@ -2094,7 +2094,6 @@ func (w *azChunkWriter) WriteChunk(ctx context.Context, chunkNumber int, reader 
 		return 0, nil
 	}
 	md5sum := m.Sum(nil)
-	transactionalMD5 := md5sum[:]
 
 	// increment the blockID and save the blocks for finalize
 	var binaryBlockID [8]byte // block counter as LSB first 8 bytes
@@ -2117,7 +2116,7 @@ func (w *azChunkWriter) WriteChunk(ctx context.Context, chunkNumber int, reader 
 		}
 		options := blockblob.StageBlockOptions{
 			// Specify the transactional md5 for the body, to be validated by the service.
-			TransactionalValidation: blob.TransferValidationTypeMD5(transactionalMD5),
+			TransactionalValidation: blob.TransferValidationTypeMD5(md5sum),
 		}
 		_, err = w.ui.blb.StageBlock(ctx, blockID, &readSeekCloser{Reader: reader, Seeker: reader}, &options)
 		if err != nil {
