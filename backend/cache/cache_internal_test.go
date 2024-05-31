@@ -417,7 +417,7 @@ func TestInternalWrappedFsChangeNotSeen(t *testing.T) {
 	if runInstance.rootIsCrypt {
 		data2, err = base64.StdEncoding.DecodeString(cryptedText3Base64)
 		require.NoError(t, err)
-		expectedSize = expectedSize + 1 // FIXME newline gets in, likely test data issue
+		expectedSize++ // FIXME newline gets in, likely test data issue
 	} else {
 		data2 = []byte("test content")
 	}
@@ -1192,7 +1192,7 @@ func (r *run) updateData(t *testing.T, rootFs fs.Fs, src, data, append string) e
 func (r *run) cleanSize(t *testing.T, size int64) int64 {
 	if r.rootIsCrypt {
 		denominator := int64(65536 + 16)
-		size = size - 32
+		size -= 32
 		quotient := size / denominator
 		remainder := size % denominator
 		return (quotient*65536 + remainder - 16)

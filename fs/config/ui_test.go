@@ -88,7 +88,7 @@ func testConfigFile(t *testing.T, options []fs.Option, configFileName string) fu
 func makeReadLine(answers []string) func() string {
 	i := 0
 	return func() string {
-		i = i + 1
+		i++
 		return answers[i-1]
 	}
 }
