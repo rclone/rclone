@@ -476,10 +476,8 @@ func (b *bisyncRun) checkSync(listing1, listing2 string) error {
 		if !files2.has(file) && !files2.has(b.aliases.Alias(file)) {
 			b.indent("ERROR", file, "Path1 file not found in Path2")
 			ok = false
-		} else {
-			if !b.fileInfoEqual(file, files2.getTryAlias(file, b.aliases.Alias(file)), files1, files2) {
-				ok = false
-			}
+		} else if !b.fileInfoEqual(file, files2.getTryAlias(file, b.aliases.Alias(file)), files1, files2) {
+			ok = false
 		}
 	}
 	for _, file := range files2.list {

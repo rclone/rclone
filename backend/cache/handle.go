@@ -415,10 +415,8 @@ func (w *worker) run() {
 					continue
 				}
 			}
-		} else {
-			if w.r.storage().HasChunk(w.r.cachedObject, chunkStart) {
-				continue
-			}
+		} else if w.r.storage().HasChunk(w.r.cachedObject, chunkStart) {
+			continue
 		}
 
 		chunkEnd := chunkStart + int64(w.r.cacheFs().opt.ChunkSize)
