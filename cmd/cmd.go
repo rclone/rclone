@@ -238,7 +238,7 @@ func ShowStats() bool {
 }
 
 // Run the function with stats and retries if required
-func Run(Retry bool, showStats bool, cmd *cobra.Command, f func() error) {
+func Run(retry bool, showStats bool, cmd *cobra.Command, f func() error) {
 	ci := fs.GetConfig(context.Background())
 	var cmdErr error
 	stopStats := func() {}
@@ -258,7 +258,7 @@ func Run(Retry bool, showStats bool, cmd *cobra.Command, f func() error) {
 		if cmdErr == nil {
 			cmdErr = lastErr
 		}
-		if !Retry || !accounting.GlobalStats().Errored() {
+		if !retry || !accounting.GlobalStats().Errored() {
 			if try > 1 {
 				fs.Errorf(nil, "Attempt %d/%d succeeded", try, ci.Retries)
 			}
@@ -340,14 +340,14 @@ func Run(Retry bool, showStats bool, cmd *cobra.Command, f func() error) {
 }
 
 // CheckArgs checks there are enough arguments and prints a message if not
-func CheckArgs(MinArgs, MaxArgs int, cmd *cobra.Command, args []string) {
-	if len(args) < MinArgs {
+func CheckArgs(minArgs, maxArgs int, cmd *cobra.Command, args []string) {
+	if len(args) < minArgs {
 		_ = cmd.Usage()
-		_, _ = fmt.Fprintf(os.Stderr, "Command %s needs %d arguments minimum: you provided %d non flag arguments: %q\n", cmd.Name(), MinArgs, len(args), args)
+		_, _ = fmt.Fprintf(os.Stderr, "Command %s needs %d arguments minimum: you provided %d non flag arguments: %q\n", cmd.Name(), minArgs, len(args), args)
 		resolveExitCode(errorNotEnoughArguments)
-	} else if len(args) > MaxArgs {
+	} else if len(args) > maxArgs {
 		_ = cmd.Usage()
-		_, _ = fmt.Fprintf(os.Stderr, "Command %s needs %d arguments maximum: you provided %d non flag arguments: %q\n", cmd.Name(), MaxArgs, len(args), args)
+		_, _ = fmt.Fprintf(os.Stderr, "Command %s needs %d arguments maximum: you provided %d non flag arguments: %q\n", cmd.Name(), maxArgs, len(args), args)
 		resolveExitCode(errorTooManyArguments)
 	}
 }

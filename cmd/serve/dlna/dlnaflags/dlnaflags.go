@@ -47,13 +47,13 @@ var (
 	Opt = DefaultOpt
 )
 
-func addFlagsPrefix(flagSet *pflag.FlagSet, prefix string, Opt *Options) {
-	rc.AddOption("dlna", &Opt)
-	flags.StringVarP(flagSet, &Opt.ListenAddr, prefix+"addr", "", Opt.ListenAddr, "The ip:port or :port to bind the DLNA http server to", prefix)
-	flags.StringVarP(flagSet, &Opt.FriendlyName, prefix+"name", "", Opt.FriendlyName, "Name of DLNA server", prefix)
-	flags.BoolVarP(flagSet, &Opt.LogTrace, prefix+"log-trace", "", Opt.LogTrace, "Enable trace logging of SOAP traffic", prefix)
-	flags.StringArrayVarP(flagSet, &Opt.InterfaceNames, prefix+"interface", "", Opt.InterfaceNames, "The interface to use for SSDP (repeat as necessary)", prefix)
-	flags.DurationVarP(flagSet, &Opt.AnnounceInterval, prefix+"announce-interval", "", Opt.AnnounceInterval, "The interval between SSDP announcements", prefix)
+func addFlagsPrefix(flagSet *pflag.FlagSet, prefix string, opt *Options) {
+	rc.AddOption("dlna", &opt)
+	flags.StringVarP(flagSet, &opt.ListenAddr, prefix+"addr", "", opt.ListenAddr, "The ip:port or :port to bind the DLNA http server to", prefix)
+	flags.StringVarP(flagSet, &opt.FriendlyName, prefix+"name", "", opt.FriendlyName, "Name of DLNA server", prefix)
+	flags.BoolVarP(flagSet, &opt.LogTrace, prefix+"log-trace", "", opt.LogTrace, "Enable trace logging of SOAP traffic", prefix)
+	flags.StringArrayVarP(flagSet, &opt.InterfaceNames, prefix+"interface", "", opt.InterfaceNames, "The interface to use for SSDP (repeat as necessary)", prefix)
+	flags.DurationVarP(flagSet, &opt.AnnounceInterval, prefix+"announce-interval", "", opt.AnnounceInterval, "The interval between SSDP announcements", prefix)
 }
 
 // AddFlags add the command line flags for DLNA serving.

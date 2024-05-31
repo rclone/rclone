@@ -534,7 +534,7 @@ func UpdateRemote(ctx context.Context, name string, keyValues rc.Params, opt Upd
 // CreateRemote creates a new remote with name, type and a list of
 // parameters which are key, value pairs.  If update is set then it
 // adds the new keys rather than replacing all of them.
-func CreateRemote(ctx context.Context, name string, Type string, keyValues rc.Params, opts UpdateRemoteOpt) (out *fs.ConfigOut, err error) {
+func CreateRemote(ctx context.Context, name string, remoteType string, keyValues rc.Params, opts UpdateRemoteOpt) (out *fs.ConfigOut, err error) {
 	err = fspath.CheckConfigName(name)
 	if err != nil {
 		return nil, err
@@ -543,7 +543,7 @@ func CreateRemote(ctx context.Context, name string, Type string, keyValues rc.Pa
 		// Delete the old config if it exists
 		LoadedData().DeleteSection(name)
 		// Set the type
-		LoadedData().SetValue(name, "type", Type)
+		LoadedData().SetValue(name, "type", remoteType)
 	}
 	// Set the remaining values
 	return UpdateRemote(ctx, name, keyValues, opts)

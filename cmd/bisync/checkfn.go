@@ -173,8 +173,8 @@ func (b *bisyncRun) checkconflicts(ctxCheck context.Context, filterCheck *filter
 
 // WhichEqual is similar to WhichCheck, but checks a single object.
 // Returns true if the objects are equal, false if they differ or if we don't know
-func WhichEqual(ctx context.Context, src, dst fs.Object, Fsrc, Fdst fs.Fs) bool {
-	opt, close, checkopterr := check.GetCheckOpt(Fsrc, Fdst)
+func WhichEqual(ctx context.Context, src, dst fs.Object, srcFs, dstFs fs.Fs) bool {
+	opt, close, checkopterr := check.GetCheckOpt(srcFs, dstFs)
 	if checkopterr != nil {
 		fs.Debugf(nil, "GetCheckOpt error: %v", checkopterr)
 	}

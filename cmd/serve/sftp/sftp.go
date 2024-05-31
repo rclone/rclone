@@ -40,15 +40,15 @@ var DefaultOpt = Options{
 var Opt = DefaultOpt
 
 // AddFlags adds flags for the sftp
-func AddFlags(flagSet *pflag.FlagSet, Opt *Options) {
-	rc.AddOption("sftp", &Opt)
-	flags.StringVarP(flagSet, &Opt.ListenAddr, "addr", "", Opt.ListenAddr, "IPaddress:Port or :Port to bind server to", "")
-	flags.StringArrayVarP(flagSet, &Opt.HostKeys, "key", "", Opt.HostKeys, "SSH private host key file (Can be multi-valued, leave blank to auto generate)", "")
-	flags.StringVarP(flagSet, &Opt.AuthorizedKeys, "authorized-keys", "", Opt.AuthorizedKeys, "Authorized keys file", "")
-	flags.StringVarP(flagSet, &Opt.User, "user", "", Opt.User, "User name for authentication", "")
-	flags.StringVarP(flagSet, &Opt.Pass, "pass", "", Opt.Pass, "Password for authentication", "")
-	flags.BoolVarP(flagSet, &Opt.NoAuth, "no-auth", "", Opt.NoAuth, "Allow connections with no authentication if set", "")
-	flags.BoolVarP(flagSet, &Opt.Stdio, "stdio", "", Opt.Stdio, "Run an sftp server on stdin/stdout", "")
+func AddFlags(flagSet *pflag.FlagSet, opt *Options) {
+	rc.AddOption("sftp", &opt)
+	flags.StringVarP(flagSet, &opt.ListenAddr, "addr", "", opt.ListenAddr, "IPaddress:Port or :Port to bind server to", "")
+	flags.StringArrayVarP(flagSet, &opt.HostKeys, "key", "", opt.HostKeys, "SSH private host key file (Can be multi-valued, leave blank to auto generate)", "")
+	flags.StringVarP(flagSet, &opt.AuthorizedKeys, "authorized-keys", "", opt.AuthorizedKeys, "Authorized keys file", "")
+	flags.StringVarP(flagSet, &opt.User, "user", "", opt.User, "User name for authentication", "")
+	flags.StringVarP(flagSet, &opt.Pass, "pass", "", opt.Pass, "Password for authentication", "")
+	flags.BoolVarP(flagSet, &opt.NoAuth, "no-auth", "", opt.NoAuth, "Allow connections with no authentication if set", "")
+	flags.BoolVarP(flagSet, &opt.Stdio, "stdio", "", opt.Stdio, "Run an sftp server on stdin/stdout", "")
 }
 
 func init() {

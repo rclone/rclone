@@ -89,9 +89,9 @@ func Command(commands []string) byte {
 // Confirm asks the user for Yes or No and returns true or false
 //
 // If the user presses enter then the Default will be used
-func Confirm(Default bool) bool {
+func Confirm(defaultYes bool) bool {
 	defaultIndex := 0
-	if !Default {
+	if !defaultYes {
 		defaultIndex = 1
 	}
 	return CommandDefault([]string{"yYes", "nNo"}, defaultIndex) == 'y'

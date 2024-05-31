@@ -67,10 +67,10 @@ func (api *Client) SetErrorHandler(fn func(resp *http.Response) error) *Client {
 
 // SetRoot sets the default RootURL.  You can override this on a per
 // call basis using the RootURL field in Opts.
-func (api *Client) SetRoot(RootURL string) *Client {
+func (api *Client) SetRoot(rootURL string) *Client {
 	api.mu.Lock()
 	defer api.mu.Unlock()
-	api.rootURL = RootURL
+	api.rootURL = rootURL
 	return api
 }
 
@@ -104,9 +104,9 @@ func (api *Client) SetSigner(signer SignerFn) *Client {
 
 // SetUserPass creates an Authorization header for all requests with
 // the UserName and Password passed in
-func (api *Client) SetUserPass(UserName, Password string) *Client {
+func (api *Client) SetUserPass(userName, password string) *Client {
 	req, _ := http.NewRequest("GET", "http://example.com", nil)
-	req.SetBasicAuth(UserName, Password)
+	req.SetBasicAuth(userName, password)
 	api.SetHeader("Authorization", req.Header.Get("Authorization"))
 	return api
 }
