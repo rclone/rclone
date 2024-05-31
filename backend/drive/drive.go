@@ -2219,7 +2219,7 @@ func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (
 		case in <- job:
 		default:
 			overflow = append(overflow, job)
-			wg.Add(-1)
+			wg.Done()
 		}
 	}
 

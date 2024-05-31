@@ -39,8 +39,8 @@ func (b *bisyncRun) indent(tag, file, msg string) {
 		tag = Color(terminal.BlueFg, tag)
 	}
 	msg = Color(terminal.MagentaFg, msg)
-	msg = strings.Replace(msg, "Queue copy to", Color(terminal.GreenFg, "Queue copy to"), -1)
-	msg = strings.Replace(msg, "Queue delete", Color(terminal.RedFg, "Queue delete"), -1)
+	msg = strings.ReplaceAll(msg, "Queue copy to", Color(terminal.GreenFg, "Queue copy to"))
+	msg = strings.ReplaceAll(msg, "Queue delete", Color(terminal.RedFg, "Queue delete"))
 	file = Color(terminal.CyanFg, escapePath(file, false))
 	logf(nil, "- %-18s%-43s - %s", tag, msg, file)
 }
