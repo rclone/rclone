@@ -888,7 +888,7 @@ func (fh *decrypter) fillBuffer() (err error) {
 		fs.Errorf(nil, "crypt: ignoring: %v", ErrorEncryptedBadBlock)
 		// Zero out the bad block and continue
 		for i := range (*fh.buf)[:n] {
-			(*fh.buf)[i] = 0
+			fh.buf[i] = 0
 		}
 	}
 	fh.bufIndex = 0

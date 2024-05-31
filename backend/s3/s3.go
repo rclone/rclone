@@ -3889,7 +3889,7 @@ func versionLess(a, b *types.ObjectVersion) bool {
 	if *a.Key > *b.Key {
 		return false
 	}
-	dt := (*a.LastModified).Sub(*b.LastModified)
+	dt := a.LastModified.Sub(*b.LastModified)
 	if dt > 0 {
 		return true
 	}
@@ -5601,8 +5601,8 @@ func (o *Object) setMetaData(resp *s3.HeadObjectOutput) {
 		// it from listings then it may have millisecond precision, but
 		// if we read it from a HEAD/GET request then it will have
 		// second precision.
-		equalToWithinOneSecond := o.lastModified.Truncate(time.Second).Equal((*resp.LastModified).Truncate(time.Second))
-		newHasNs := (*resp.LastModified).Nanosecond() != 0
+		equalToWithinOneSecond := o.lastModified.Truncate(time.Second).Equal(resp.LastModified.Truncate(time.Second))
+		newHasNs := resp.LastModified.Nanosecond() != 0
 		if !equalToWithinOneSecond || newHasNs {
 			o.lastModified = *resp.LastModified
 		}
