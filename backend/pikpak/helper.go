@@ -347,7 +347,7 @@ func calcGcid(r io.Reader, size int64) (string, error) {
 	calcBlockSize := func(j int64) int64 {
 		var psize int64 = 0x40000
 		for float64(j)/float64(psize) > 0x200 && psize < 0x200000 {
-			psize = psize << 1
+			psize <<= 1
 		}
 		return psize
 	}

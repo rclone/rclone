@@ -527,7 +527,7 @@ func (acc *Account) String() string {
 	}
 
 	if acc.ci.DataRateUnit == "bits" {
-		cur = cur * 8
+		cur *= 8
 	}
 
 	percentageDone := 0
