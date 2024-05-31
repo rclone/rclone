@@ -157,7 +157,7 @@ type server struct {
 }
 
 func (s *server) sendMsg(msg string) {
-	msg = msg + "\n"
+	msg += "\n"
 	if _, err := io.WriteString(s.writer, msg); err != nil {
 		panic(err)
 	}

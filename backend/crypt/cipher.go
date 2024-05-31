@@ -329,7 +329,7 @@ func (c *Cipher) obfuscateSegment(plaintext string) string {
 	for _, runeValue := range plaintext {
 		dir += int(runeValue)
 	}
-	dir = dir % 256
+	dir %= 256
 
 	// We'll use this number to store in the result filename...
 	var result bytes.Buffer
@@ -450,7 +450,7 @@ func (c *Cipher) deobfuscateSegment(ciphertext string) (string, error) {
 			if pos >= 26 {
 				pos -= 6
 			}
-			pos = pos - thisdir
+			pos -= thisdir
 			if pos < 0 {
 				pos += 52
 			}
