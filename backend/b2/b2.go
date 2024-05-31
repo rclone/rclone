@@ -1032,10 +1032,10 @@ func (f *Fs) getbucketType(ctx context.Context, bucket string) (bucketType strin
 	return bucketType, err
 }
 
-// setBucketType sets the Type for the current bucket name
-func (f *Fs) setBucketType(bucket string, Type string) {
+// setBucketType sets the type for the current bucket name
+func (f *Fs) setBucketType(bucket string, bucketType string) {
 	f.bucketTypeMutex.Lock()
-	f._bucketType[bucket] = Type
+	f._bucketType[bucket] = bucketType
 	f.bucketTypeMutex.Unlock()
 }
 
@@ -1225,14 +1225,14 @@ func (f *Fs) hide(ctx context.Context, bucket, bucketPath string) error {
 }
 
 // deleteByID deletes a file version given Name and ID
-func (f *Fs) deleteByID(ctx context.Context, id, Name string) error {
+func (f *Fs) deleteByID(ctx context.Context, id, name string) error {
 	opts := rest.Opts{
 		Method: "POST",
 		Path:   "/b2_delete_file_version",
 	}
 	var request = api.DeleteFileRequest{
 		ID:   id,
-		Name: f.opt.Enc.FromStandardPath(Name),
+		Name: f.opt.Enc.FromStandardPath(name),
 	}
 	var response api.File
 	err := f.pacer.Call(func() (bool, error) {
@@ -1240,7 +1240,7 @@ func (f *Fs) deleteByID(ctx context.Context, id, Name string) error {
 		return f.shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
-		return fmt.Errorf("failed to delete %q: %w", Name, err)
+		return fmt.Errorf("failed to delete %q: %w", name, err)
 	}
 	return nil
 }
@@ -1582,19 +1582,19 @@ func cleanSHA1(sha1 string) string {
 //	o.modTime
 //	o.size
 //	o.sha1
-func (o *Object) decodeMetaDataRaw(id, SHA1 string, Size int64, UploadTimestamp api.Timestamp, Info map[string]string, mimeType string) (err error) {
+func (o *Object) decodeMetaDataRaw(id, sha1 string, size int64, uploadTimestamp api.Timestamp, info map[string]string, mimeType string) (err error) {
 	o.id = id
-	o.sha1 = SHA1
+	o.sha1 = sha1
 	o.mimeType = mimeType
 	// Read SHA1 from metadata if it exists and isn't set
 	if o.sha1 == "" || o.sha1 == "none" {
-		o.sha1 = Info[sha1Key]
+		o.sha1 = info[sha1Key]
 	}
 	o.sha1 = cleanSHA1(o.sha1)
-	o.size = Size
+	o.size = size
 	// Use the UploadTimestamp if can't get file info
-	o.modTime = time.Time(UploadTimestamp)
-	err = o.parseTimeString(Info[timeKey])
+	o.modTime = time.Time(uploadTimestamp)
+	err = o.parseTimeString(info[timeKey])
 	if err != nil {
 		return err
 	}

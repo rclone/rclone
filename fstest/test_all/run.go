@@ -411,7 +411,7 @@ func (r *Run) FailedTestsCSV() string {
 }
 
 // Run runs all the trials for this test
-func (r *Run) Run(LogDir string, result chan<- *Run) {
+func (r *Run) Run(logDir string, result chan<- *Run) {
 	if r.OneOnly {
 		oneOnlyMu.Lock()
 		mu := oneOnly[r.Backend]
@@ -424,7 +424,7 @@ func (r *Run) Run(LogDir string, result chan<- *Run) {
 		defer mu.Unlock()
 	}
 	r.Init()
-	r.LogDir = LogDir
+	r.LogDir = logDir
 	for r.Try = 1; r.Try <= *maxTries; r.Try++ {
 		r.TrialName = r.Name() + ".txt"
 		r.TrialNames = append(r.TrialNames, r.TrialName)

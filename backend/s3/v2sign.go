@@ -39,7 +39,7 @@ var s3ParamsToSign = map[string]struct{}{
 // sign signs requests using v2 auth
 //
 // Cobbled together from goamz and aws-sdk-go
-func sign(AccessKey, SecretKey string, req *http.Request) {
+func sign(accessKey, secretKey string, req *http.Request) {
 	// Set date
 	date := time.Now().UTC().Format(time.RFC1123)
 	req.Header.Set("Date", date)
@@ -107,11 +107,11 @@ func sign(AccessKey, SecretKey string, req *http.Request) {
 
 	// Make signature
 	payload := req.Method + "\n" + md5 + "\n" + contentType + "\n" + date + "\n" + joinedHeadersToSign + uri
-	hash := hmac.New(sha1.New, []byte(SecretKey))
+	hash := hmac.New(sha1.New, []byte(secretKey))
 	_, _ = hash.Write([]byte(payload))
 	signature := make([]byte, base64.StdEncoding.EncodedLen(hash.Size()))
 	base64.StdEncoding.Encode(signature, hash.Sum(nil))
 
 	// Set signature in request
-	req.Header.Set("Authorization", "AWS "+AccessKey+":"+string(signature))
+	req.Header.Set("Authorization", "AWS "+accessKey+":"+string(signature))
 }

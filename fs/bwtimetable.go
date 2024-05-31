@@ -81,20 +81,20 @@ func (x BwTimetable) String() string {
 }
 
 // Basic hour format checking
-func validateHour(HHMM string) error {
-	if len(HHMM) != 5 {
-		return fmt.Errorf("invalid time specification (hh:mm): %q", HHMM)
+func validateHour(hhmm string) error {
+	if len(hhmm) != 5 {
+		return fmt.Errorf("invalid time specification (hh:mm): %q", hhmm)
 	}
-	hh, err := strconv.Atoi(HHMM[0:2])
+	hh, err := strconv.Atoi(hhmm[0:2])
 	if err != nil {
-		return fmt.Errorf("invalid hour in time specification %q: %v", HHMM, err)
+		return fmt.Errorf("invalid hour in time specification %q: %v", hhmm, err)
 	}
 	if hh < 0 || hh > 23 {
 		return fmt.Errorf("invalid hour (must be between 00 and 23): %q", hh)
 	}
-	mm, err := strconv.Atoi(HHMM[3:])
+	mm, err := strconv.Atoi(hhmm[3:])
 	if err != nil {
-		return fmt.Errorf("invalid minute in time specification: %q: %v", HHMM, err)
+		return fmt.Errorf("invalid minute in time specification: %q: %v", hhmm, err)
 	}
 	if mm < 0 || mm > 59 {
 		return fmt.Errorf("invalid minute (must be between 00 and 59): %q", hh)

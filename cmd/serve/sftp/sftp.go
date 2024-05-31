@@ -68,7 +68,7 @@ func init() {
 var Opt Options
 
 // AddFlags adds flags for the sftp
-func AddFlags(flagSet *pflag.FlagSet, Opt *Options) {
+func AddFlags(flagSet *pflag.FlagSet, opt *Options) {
 	flags.AddFlagsFromOptions(flagSet, "", OptionsInfo)
 }
 

@@ -1232,7 +1232,7 @@ func (b *bisyncTest) copyFile(ctx context.Context, src, dst, asName string) (err
 }
 
 // listSubdirs is equivalent to `rclone lsf -R [--dirs-only]`
-func (b *bisyncTest) listSubdirs(ctx context.Context, remote string, DirsOnly bool) error {
+func (b *bisyncTest) listSubdirs(ctx context.Context, remote string, dirsOnly bool) error {
 	f, err := cache.Get(ctx, remote)
 	if err != nil {
 		return err
@@ -1241,7 +1241,7 @@ func (b *bisyncTest) listSubdirs(ctx context.Context, remote string, DirsOnly bo
 	opt := operations.ListJSONOpt{
 		NoModTime:  true,
 		NoMimeType: true,
-		DirsOnly:   DirsOnly,
+		DirsOnly:   dirsOnly,
 		Recurse:    true,
 	}
 	fmt := operations.ListFormat{}

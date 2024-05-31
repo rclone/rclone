@@ -89,14 +89,14 @@ type Item struct {
 }
 
 // NewItem creates an item from a string content
-func NewItem(Path, Content string, modTime time.Time) Item {
+func NewItem(path, content string, modTime time.Time) Item {
 	i := Item{
-		Path:    Path,
+		Path:    path,
 		ModTime: modTime,
-		Size:    int64(len(Content)),
+		Size:    int64(len(content)),
 	}
 	hash := hash.NewMultiHasher()
-	buf := bytes.NewBufferString(Content)
+	buf := bytes.NewBufferString(content)
 	_, err := io.Copy(hash, buf)
 	if err != nil {
 		log.Fatalf("Failed to create item: %v", err)
