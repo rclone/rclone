@@ -213,6 +213,11 @@ func NewFs(ctx context.Context, name string, root string, config configmap.Mappe
 		return nil, err
 	}
 
+	if opt.ChannelID < 0 {
+		channnelId := strconv.FormatInt(opt.ChannelID, 10)
+		opt.ChannelID, _ = strconv.ParseInt(strings.TrimPrefix(channnelId, "-100"), 10, 64)
+	}
+
 	f := &Fs{
 		name:  name,
 		root:  root,
