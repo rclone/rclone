@@ -18,10 +18,10 @@ func newStringLock() *stringLock {
 }
 
 // Lock locks on the id passed in
-func (l *stringLock) Lock(ID string) {
+func (l *stringLock) Lock(id string) {
 	l.mu.Lock()
 	for {
-		ch, ok := l.locks[ID]
+		ch, ok := l.locks[id]
 		if !ok {
 			break
 		}
@@ -31,19 +31,19 @@ func (l *stringLock) Lock(ID string) {
 		<-ch
 		l.mu.Lock()
 	}
-	l.locks[ID] = make(chan struct{})
+	l.locks[id] = make(chan struct{})
 	l.mu.Unlock()
 }
 
 // Unlock unlocks on the id passed in.  Will panic if Lock with the
 // given id wasn't called first.
-func (l *stringLock) Unlock(ID string) {
+func (l *stringLock) Unlock(id string) {
 	l.mu.Lock()
-	ch, ok := l.locks[ID]
+	ch, ok := l.locks[id]
 	if !ok {
 		panic("stringLock: Unlock before Lock")
 	}
 	close(ch)
-	delete(l.locks, ID)
+	delete(l.locks, id)
 	l.mu.Unlock()
 }

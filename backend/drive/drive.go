@@ -966,9 +966,9 @@ func containsString(slice []string, s string) bool {
 }
 
 // getFile returns drive.File for the ID passed and fields passed in
-func (f *Fs) getFile(ctx context.Context, ID string, fields googleapi.Field) (info *drive.File, err error) {
+func (f *Fs) getFile(ctx context.Context, id string, fields googleapi.Field) (info *drive.File, err error) {
 	err = f.pacer.Call(func() (bool, error) {
-		info, err = f.svc.Files.Get(ID).
+		info, err = f.svc.Files.Get(id).
 			Fields(fields).
 			SupportsAllDrives(true).
 			Context(ctx).Do()
