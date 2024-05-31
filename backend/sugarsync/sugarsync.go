@@ -303,11 +303,11 @@ func (f *Fs) readMetaDataForPath(ctx context.Context, path string) (info *api.Fi
 }
 
 // readMetaDataForID reads the metadata for a file from the ID
-func (f *Fs) readMetaDataForID(ctx context.Context, ID string) (info *api.File, err error) {
+func (f *Fs) readMetaDataForID(ctx context.Context, id string) (info *api.File, err error) {
 	var resp *http.Response
 	opts := rest.Opts{
 		Method:  "GET",
-		RootURL: ID,
+		RootURL: id,
 	}
 	err = f.pacer.Call(func() (bool, error) {
 		resp, err = f.srv.CallXML(ctx, &opts, nil, &info)

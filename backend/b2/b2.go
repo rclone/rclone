@@ -1068,9 +1068,9 @@ func (f *Fs) getBucketID(ctx context.Context, bucket string) (bucketID string, e
 }
 
 // setBucketID sets the ID for the current bucket name
-func (f *Fs) setBucketID(bucket, ID string) {
+func (f *Fs) setBucketID(bucket, id string) {
 	f.bucketIDMutex.Lock()
-	f._bucketID[bucket] = ID
+	f._bucketID[bucket] = id
 	f.bucketIDMutex.Unlock()
 }
 
@@ -1225,13 +1225,13 @@ func (f *Fs) hide(ctx context.Context, bucket, bucketPath string) error {
 }
 
 // deleteByID deletes a file version given Name and ID
-func (f *Fs) deleteByID(ctx context.Context, ID, Name string) error {
+func (f *Fs) deleteByID(ctx context.Context, id, Name string) error {
 	opts := rest.Opts{
 		Method: "POST",
 		Path:   "/b2_delete_file_version",
 	}
 	var request = api.DeleteFileRequest{
-		ID:   ID,
+		ID:   id,
 		Name: f.opt.Enc.FromStandardPath(Name),
 	}
 	var response api.File
@@ -1582,8 +1582,8 @@ func cleanSHA1(sha1 string) string {
 //	o.modTime
 //	o.size
 //	o.sha1
-func (o *Object) decodeMetaDataRaw(ID, SHA1 string, Size int64, UploadTimestamp api.Timestamp, Info map[string]string, mimeType string) (err error) {
-	o.id = ID
+func (o *Object) decodeMetaDataRaw(id, SHA1 string, Size int64, UploadTimestamp api.Timestamp, Info map[string]string, mimeType string) (err error) {
+	o.id = id
 	o.sha1 = SHA1
 	o.mimeType = mimeType
 	// Read SHA1 from metadata if it exists and isn't set

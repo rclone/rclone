@@ -177,21 +177,21 @@ func (jobs *Jobs) Expire() {
 }
 
 // IDs returns the IDs of the running jobs
-func (jobs *Jobs) IDs() (IDs []int64) {
+func (jobs *Jobs) IDs() (ids []int64) {
 	jobs.mu.RLock()
 	defer jobs.mu.RUnlock()
-	IDs = []int64{}
+	ids = []int64{}
 	for ID := range jobs.jobs {
-		IDs = append(IDs, ID)
+		ids = append(ids, ID)
 	}
-	return IDs
+	return ids
 }
 
 // Get a job with a given ID or nil if it doesn't exist
-func (jobs *Jobs) Get(ID int64) *Job {
+func (jobs *Jobs) Get(id int64) *Job {
 	jobs.mu.RLock()
 	defer jobs.mu.RUnlock()
-	return jobs.jobs[ID]
+	return jobs.jobs[id]
 }
 
 // Check to see if the group is set
