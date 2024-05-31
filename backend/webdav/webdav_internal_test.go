@@ -29,7 +29,7 @@ func prepareServer(t *testing.T) (configmap.Simple, func()) {
 		what := fmt.Sprintf("%s %s: Header ", r.Method, r.URL.Path)
 		assert.Equal(t, headers[1], r.Header.Get(headers[0]), what+headers[0])
 		assert.Equal(t, headers[3], r.Header.Get(headers[2]), what+headers[2])
-		fmt.Fprintf(w, `<d:multistatus xmlns:d="DAV:" xmlns:s="http://sabredav.org/ns" xmlns:oc="http://owncloud.org/ns" xmlns:nc="http://nextcloud.org/ns">
+		_, err := fmt.Fprintf(w, `<d:multistatus xmlns:d="DAV:" xmlns:s="http://sabredav.org/ns" xmlns:oc="http://owncloud.org/ns" xmlns:nc="http://nextcloud.org/ns">
 <d:response>
  <d:href>/remote.php/webdav/</d:href>
  <d:propstat>
@@ -41,8 +41,8 @@ func prepareServer(t *testing.T) (configmap.Simple, func()) {
  </d:propstat>
 </d:response>
 </d:multistatus>`)
+		require.NoError(t, err)
 	})
-
 	// Make the test server
 	ts := httptest.NewServer(handler)
 
