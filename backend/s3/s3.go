@@ -5964,7 +5964,7 @@ func (w *s3ChunkWriter) addMd5(md5binary *[]byte, chunkNumber int64) {
 	if extend := end - int64(len(w.md5s)); extend > 0 {
 		w.md5s = append(w.md5s, make([]byte, extend)...)
 	}
-	copy(w.md5s[start:end], (*md5binary)[:])
+	copy(w.md5s[start:end], (*md5binary))
 }
 
 // WriteChunk will write chunk number with reader bytes, where chunk number >= 0
@@ -5994,7 +5994,7 @@ func (w *s3ChunkWriter) WriteChunk(ctx context.Context, chunkNumber int, reader 
 	}
 	md5sumBinary := m.Sum([]byte{})
 	w.addMd5(&md5sumBinary, int64(chunkNumber))
-	md5sum := base64.StdEncoding.EncodeToString(md5sumBinary[:])
+	md5sum := base64.StdEncoding.EncodeToString(md5sumBinary)
 
 	// S3 requires 1 <= PartNumber <= 10000
 	s3PartNumber := aws.Int32(int32(chunkNumber + 1))
