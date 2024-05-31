@@ -291,8 +291,7 @@ func (f *Fs) readMetaDataForPath(ctx context.Context, path string, options *api.
 		Parameters: url.Values{
 			"path":          []string{path},
 			"perPage":       []string{strconv.FormatInt(options.PerPage, 10)},
-			"sort":          []string{"updatedAt"},
-			"order":         []string{"desc"},
+			"sort":          []string{"id"},
 			"op":            []string{"list"},
 			"nextPageToken": []string{options.NextPageToken},
 		},
