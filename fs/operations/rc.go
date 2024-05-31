@@ -819,10 +819,8 @@ func rcCheck(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 		if srcFs != nil {
 			return nil, rc.NewErrParamInvalid(errors.New("only supply dstFs when using checkFileHash"))
 		}
-	} else {
-		if srcFs == nil {
-			return nil, rc.NewErrParamInvalid(errors.New("need srcFs parameter when not using checkFileHash"))
-		}
+	} else if srcFs == nil {
+		return nil, rc.NewErrParamInvalid(errors.New("need srcFs parameter when not using checkFileHash"))
 	}
 
 	oneway, _ := in.GetBool("oneway")

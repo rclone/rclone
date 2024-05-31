@@ -4063,11 +4063,9 @@ func (f *Fs) list(ctx context.Context, opt listOpt, fn listFn) error {
 				if opt.noSkipMarkers {
 					// process directory markers as files
 					isDirectory = false
-				} else {
+				} else if remote == opt.directory {
 					// Don't insert the root directory
-					if remote == opt.directory {
-						continue
-					}
+					continue
 				}
 			}
 			remote = remote[len(opt.prefix):]

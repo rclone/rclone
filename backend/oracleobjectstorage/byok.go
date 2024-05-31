@@ -58,12 +58,10 @@ func populateSSECustomerKeys(opt *Options) error {
 		sha256Checksum := base64.StdEncoding.EncodeToString(getSha256(decoded))
 		if opt.SSECustomerKeySha256 == "" {
 			opt.SSECustomerKeySha256 = sha256Checksum
-		} else {
-			if opt.SSECustomerKeySha256 != sha256Checksum {
-				return fmt.Errorf("the computed SHA256 checksum "+
-					"(%v) of the key doesn't match the config entry sse_customer_key_sha256=(%v)",
-					sha256Checksum, opt.SSECustomerKeySha256)
-			}
+		} else if opt.SSECustomerKeySha256 != sha256Checksum {
+			return fmt.Errorf("the computed SHA256 checksum "+
+				"(%v) of the key doesn't match the config entry sse_customer_key_sha256=(%v)",
+				sha256Checksum, opt.SSECustomerKeySha256)
 		}
 		if opt.SSECustomerAlgorithm == "" {
 			opt.SSECustomerAlgorithm = sseDefaultAlgorithm
