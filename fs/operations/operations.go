@@ -1865,14 +1865,12 @@ func BackupDir(ctx context.Context, fdst fs.Fs, fsrc fs.Fs, srcFileName string) 
 			if OverlappingFilterCheck(ctx, backupDir, fsrc) {
 				return nil, fserrors.FatalError(errors.New("source and parameter to --backup-dir mustn't overlap"))
 			}
-		} else {
-			if ci.Suffix == "" {
-				if SameDir(fdst, backupDir) {
-					return nil, fserrors.FatalError(errors.New("destination and parameter to --backup-dir mustn't be the same"))
-				}
-				if SameDir(fsrc, backupDir) {
-					return nil, fserrors.FatalError(errors.New("source and parameter to --backup-dir mustn't be the same"))
-				}
+		} else if ci.Suffix == "" {
+			if SameDir(fdst, backupDir) {
+				return nil, fserrors.FatalError(errors.New("destination and parameter to --backup-dir mustn't be the same"))
+			}
+			if SameDir(fsrc, backupDir) {
+				return nil, fserrors.FatalError(errors.New("source and parameter to --backup-dir mustn't be the same"))
 			}
 		}
 	} else if ci.Suffix != "" {
@@ -2041,15 +2039,13 @@ func moveOrCopyFile(ctx context.Context, fdst fs.Fs, fsrc fs.Fs, dstFileName str
 		}
 
 		_, err = Op(ctx, fdst, dstObj, dstFileName, srcObj)
-	} else {
-		if !cp {
-			if ci.IgnoreExisting {
-				fs.Debugf(srcObj, "Not removing source file as destination file exists and --ignore-existing is set")
-				logger(ctx, Match, srcObj, dstObj, nil)
-			} else if !SameObject(srcObj, dstObj) {
-				err = DeleteFile(ctx, srcObj)
-				logger(ctx, Differ, srcObj, dstObj, nil)
-			}
+	} else if !cp {
+		if ci.IgnoreExisting {
+			fs.Debugf(srcObj, "Not removing source file as destination file exists and --ignore-existing is set")
+			logger(ctx, Match, srcObj, dstObj, nil)
+		} else if !SameObject(srcObj, dstObj) {
+			err = DeleteFile(ctx, srcObj)
+			logger(ctx, Differ, srcObj, dstObj, nil)
 		}
 	}
 	return err
