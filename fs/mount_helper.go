@@ -100,10 +100,7 @@ func convertMountHelperArgs(origArgs []string) ([]string, error) {
 				continue
 			}
 
-			param, value := opt, ""
-			if idx := strings.Index(opt, "="); idx != -1 {
-				param, value = opt[:idx], opt[idx+1:]
-			}
+			param, value, _ := strings.Cut(opt, "=")
 
 			// Set environment variables
 			if strings.HasPrefix(param, "env.") {
