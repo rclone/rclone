@@ -42,11 +42,11 @@ func TestTimestampIsZero(t *testing.T) {
 }
 
 func TestTimestampEqual(t *testing.T) {
-	assert.False(t, emptyT.Equal(emptyT))
+	assert.False(t, emptyT.Equal(emptyT)) //nolint:gocritic // Don't include gocritic when running golangci-lint to avoid dupArg: suspicious method call with the same argument and receiver
 	assert.False(t, t0.Equal(emptyT))
 	assert.False(t, emptyT.Equal(t0))
 	assert.False(t, t0.Equal(t1))
 	assert.False(t, t1.Equal(t0))
-	assert.True(t, t0.Equal(t0))
-	assert.True(t, t1.Equal(t1))
+	assert.True(t, t0.Equal(t0)) //nolint:gocritic // Don't include gocritic when running golangci-lint to avoid dupArg: suspicious method call with the same argument and receiver
+	assert.True(t, t1.Equal(t1)) //nolint:gocritic // Don't include gocritic when running golangci-lint to avoid dupArg: suspicious method call with the same argument and receiver
 }
