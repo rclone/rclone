@@ -60,7 +60,7 @@ func newServer(ctx context.Context, f fs.Fs, opt *Options) *server {
 }
 
 // getVFS gets the vfs from s or the proxy
-func (s *server) getVFS(what string, sshConn *ssh.ServerConn) (VFS *vfs.VFS) {
+func (s *server) getVFS(what string, sshConn *ssh.ServerConn) (vf *vfs.VFS) {
 	if s.proxy == nil {
 		return s.vfs
 	}
@@ -73,12 +73,12 @@ func (s *server) getVFS(what string, sshConn *ssh.ServerConn) (VFS *vfs.VFS) {
 		fs.Infof(what, "VFS key not found")
 		return nil
 	}
-	VFS = s.proxy.Get(key)
-	if VFS == nil {
+	vf = s.proxy.Get(key)
+	if vf == nil {
 		fs.Infof(what, "failed to read VFS from cache")
 		return nil
 	}
-	return VFS
+	return vf
 }
 
 // Accept a single connection - run in a go routine as the ssh
