@@ -289,7 +289,10 @@ func (cds *contentDirectoryService) Handle(action string, argsXML []byte, r *htt
 				return nil, err
 			}
 			return map[string]string{
-				"Result": didlLite(string(result)),
+				"TotalMatches":   "1",
+				"NumberReturned": "1",
+				"Result":         didlLite(string(result)),
+				"UpdateID":       cds.updateIDString(),
 			}, nil
 		default:
 			return nil, upnp.Errorf(upnp.ArgumentValueInvalidErrorCode, "unhandled browse flag: %v", browse.BrowseFlag)
