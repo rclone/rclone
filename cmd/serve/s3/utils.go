@@ -15,8 +15,8 @@ import (
 	"github.com/rclone/rclone/vfs"
 )
 
-func getDirEntries(prefix string, VFS *vfs.VFS) (vfs.Nodes, error) {
-	node, err := VFS.Stat(prefix)
+func getDirEntries(prefix string, vf *vfs.VFS) (vfs.Nodes, error) {
+	node, err := vf.Stat(prefix)
 
 	if err == vfs.ENOENT {
 		return nil, gofakes3.ErrNoSuchKey
@@ -91,14 +91,14 @@ func prefixParser(p *gofakes3.Prefix) (path, remaining string) {
 }
 
 // FIXME this could be implemented by VFS.MkdirAll()
-func mkdirRecursive(path string, VFS *vfs.VFS) error {
+func mkdirRecursive(path string, vf *vfs.VFS) error {
 	path = strings.Trim(path, "/")
 	dirs := strings.Split(path, "/")
 	dir := ""
 	for _, d := range dirs {
 		dir += "/" + d
-		if _, err := VFS.Stat(dir); err != nil {
-			err := VFS.Mkdir(dir, 0777)
+		if _, err := vf.Stat(dir); err != nil {
+			err := vf.Mkdir(dir, 0777)
 			if err != nil {
 				return err
 			}
@@ -107,18 +107,18 @@ func mkdirRecursive(path string, VFS *vfs.VFS) error {
 	return nil
 }
 
-func rmdirRecursive(p string, VFS *vfs.VFS) {
+func rmdirRecursive(p string, vf *vfs.VFS) {
 	dir := path.Dir(p)
 	if !strings.ContainsAny(dir, "/\\") {
 		// might be bucket(root)
 		return
 	}
-	if _, err := VFS.Stat(dir); err == nil {
-		err := VFS.Remove(dir)
+	if _, err := vf.Stat(dir); err == nil {
+		err := vf.Remove(dir)
 		if err != nil {
 			return
 		}
-		rmdirRecursive(dir, VFS)
+		rmdirRecursive(dir, vf)
 	}
 }
 

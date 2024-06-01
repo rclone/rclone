@@ -1105,7 +1105,7 @@ func (o *Object) Storable() bool {
 }
 
 // downloadURL fetches the download link
-func (o *Object) downloadURL(ctx context.Context) (URL string, err error) {
+func (o *Object) downloadURL(ctx context.Context) (linkURL string, err error) {
 	if o.id == "" {
 		return "", errors.New("can't download - no id")
 	}
