@@ -238,7 +238,7 @@ func (o *Object) uploadMultipart(ctx context.Context, in io.Reader, src fs.Objec
 
 	size := src.Size()
 
-	if size <= 0 {
+	if size < 0 {
 		return nil, errors.New("unknown-sized upload not supported")
 	}
 
@@ -248,75 +248,78 @@ func (o *Object) uploadMultipart(ctx context.Context, in io.Reader, src fs.Objec
 		return nil, err
 	}
 
-	var (
-		partsToCommit []api.PartFile
-		uploadedSize  int64
-	)
+	if size > 0 {
 
-	totalChunks := int(uploadInfo.totalChunks)
+		var (
+			partsToCommit []api.PartFile
+			uploadedSize  int64
+		)
 
-	for chunkNo := 1; chunkNo <= totalChunks; chunkNo++ {
-		if existing, ok := uploadInfo.existingChunks[chunkNo]; ok {
-			io.CopyN(io.Discard, in, existing.Size)
-			partsToCommit = append(partsToCommit, existing)
-			uploadedSize += existing.Size
-			continue
+		totalChunks := int(uploadInfo.totalChunks)
+
+		for chunkNo := 1; chunkNo <= totalChunks; chunkNo++ {
+			if existing, ok := uploadInfo.existingChunks[chunkNo]; ok {
+				io.CopyN(io.Discard, in, existing.Size)
+				partsToCommit = append(partsToCommit, existing)
+				uploadedSize += existing.Size
+				continue
+			}
+
+			n := uploadInfo.chunkSize
+
+			if chunkNo == totalChunks {
+				n = src.Size() - uploadedSize
+			}
+
+			chunkName := uploadInfo.fileName
+
+			if o.fs.opt.RandomChunkName {
+				chunkName = getMD5Hash(uuid.New().String())
+			} else if totalChunks > 1 {
+				chunkName = fmt.Sprintf("%s.part.%03d", chunkName, chunkNo)
+			}
+
+			partReader := io.LimitReader(in, n)
+
+			opts := rest.Opts{
+				Method:        "POST",
+				Path:          "/api/uploads/" + uploadInfo.uploadID,
+				Body:          partReader,
+				ContentLength: &n,
+				Parameters: url.Values{
+					"partName":  []string{chunkName},
+					"fileName":  []string{uploadInfo.fileName},
+					"partNo":    []string{strconv.Itoa(chunkNo)},
+					"channelId": []string{strconv.FormatInt(uploadInfo.channelID, 10)},
+					"encrypted": []string{strconv.FormatBool(uploadInfo.encryptFile)},
+				},
+			}
+
+			var partInfo api.PartFile
+
+			_, err := o.fs.srv.CallJSON(ctx, &opts, nil, &partInfo)
+
+			if err != nil {
+				return nil, err
+			}
+
+			uploadedSize += n
+
+			partsToCommit = append(partsToCommit, partInfo)
 		}
 
-		n := uploadInfo.chunkSize
+		sort.Slice(partsToCommit, func(i, j int) bool {
+			return partsToCommit[i].PartNo < partsToCommit[j].PartNo
+		})
 
-		if chunkNo == totalChunks {
-			n = src.Size() - uploadedSize
+		fileChunks := []api.FilePart{}
+
+		for _, part := range partsToCommit {
+			fileChunks = append(fileChunks, api.FilePart{ID: part.PartId, Salt: part.Salt})
 		}
 
-		chunkName := uploadInfo.fileName
-
-		if o.fs.opt.RandomChunkName {
-			chunkName = getMD5Hash(uuid.New().String())
-		} else if totalChunks > 1 {
-			chunkName = fmt.Sprintf("%s.part.%03d", chunkName, chunkNo)
-		}
-
-		partReader := io.LimitReader(in, n)
-
-		opts := rest.Opts{
-			Method:        "POST",
-			Path:          "/api/uploads/" + uploadInfo.uploadID,
-			Body:          partReader,
-			ContentLength: &n,
-			Parameters: url.Values{
-				"partName":  []string{chunkName},
-				"fileName":  []string{uploadInfo.fileName},
-				"partNo":    []string{strconv.Itoa(chunkNo)},
-				"channelId": []string{strconv.FormatInt(uploadInfo.channelID, 10)},
-				"encrypted": []string{strconv.FormatBool(uploadInfo.encryptFile)},
-			},
-		}
-
-		var partInfo api.PartFile
-
-		_, err := o.fs.srv.CallJSON(ctx, &opts, nil, &partInfo)
-
-		if err != nil {
-			return nil, err
-		}
-
-		uploadedSize += n
-
-		partsToCommit = append(partsToCommit, partInfo)
+		uploadInfo.fileChunks = fileChunks
 	}
-
-	sort.Slice(partsToCommit, func(i, j int) bool {
-		return partsToCommit[i].PartNo < partsToCommit[j].PartNo
-	})
-
-	fileChunks := []api.FilePart{}
-
-	for _, part := range partsToCommit {
-		fileChunks = append(fileChunks, api.FilePart{ID: part.PartId, Salt: part.Salt})
-	}
-
-	uploadInfo.fileChunks = fileChunks
 
 	return uploadInfo, nil
 
@@ -354,18 +357,19 @@ func (o *Object) createFile(ctx context.Context, src fs.ObjectInfo, uploadInfo *
 	if err != nil {
 		return err
 	}
+	if src.Size() > 0 {
+		opts = rest.Opts{
+			Method: "DELETE",
+			Path:   "/api/uploads/" + uploadInfo.uploadID,
+		}
 
-	opts = rest.Opts{
-		Method: "DELETE",
-		Path:   "/api/uploads/" + uploadInfo.uploadID,
-	}
-
-	err = o.fs.pacer.Call(func() (bool, error) {
-		resp, err := o.fs.srv.Call(ctx, &opts)
-		return shouldRetry(ctx, resp, err)
-	})
-	if err != nil {
-		return err
+		err = o.fs.pacer.Call(func() (bool, error) {
+			resp, err := o.fs.srv.Call(ctx, &opts)
+			return shouldRetry(ctx, resp, err)
+		})
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }
