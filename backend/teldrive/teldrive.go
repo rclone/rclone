@@ -281,7 +281,7 @@ func NewFs(ctx context.Context, name string, root string, config configmap.Mappe
 	}
 
 	if res != nil && len(res.Files) == 1 && res.Files[0].Type == "file" {
-		f.root = strings.Trim(path.Base(f.root), "/")
+		f.root = strings.Trim(path.Dir(f.root), "/")
 		return f, fs.ErrorIsFile
 	}
 
