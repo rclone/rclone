@@ -3160,7 +3160,7 @@ func setQuirks(opt *Options) {
 		listObjectsV2 = false
 		virtualHostStyle = false
 		urlEncodeListings = false
-		useAlreadyExists = false // untested
+		useAlreadyExists = true
 	case "ChinaMobile":
 		listObjectsV2 = false
 		virtualHostStyle = false
