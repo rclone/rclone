@@ -2558,6 +2558,53 @@ knows about - please make a bug report if not.
 `,
 			Default:  fs.Tristate{},
 			Advanced: true,
+		}, {
+			Name: "bucket_object_lock_enabled",
+			Help: `S3 Object Lock can help prevent Amazon S3 objects from being deleted 
+or overwritten for a fixed amount of time or indefinitely. 
+
+Object Lock uses a write-once-read-many (WORM) model to store objects. 
+
+You can use Object Lock to help meet regulatory requirements that require WORM storage, 
+or to add another layer of protection against object changes or deletion.
+`,
+			Provider: "AWS",
+			Default:  false,
+			Advanced: true,
+		}, {
+			Name: "bucket_object_lock_retention_mode",
+			Help: `S3 Object Lock provides two retention modes that apply different levels of protection to your objects:
+
+- Compliance mode
+
+- Governance mode
+
+In compliance mode, a protected object version can't be overwritten or deleted by any user,including the root user in your AWS account. 
+When an object is locked in compliance mode, its retention mode can't be changed, and its retention period can't be shortened. 
+Compliance mode helps ensure that an object version can't be overwritten or deleted for the duration of the retention period.
+
+In governance mode, users can't overwrite or delete an object version or alter its lock settings unless they have special permissions. 
+With governance mode, you protect objects against being deleted by most users, 
+but you can still grant some users permission to alter the retention settings or delete the objects if necessary. 
+You can also use governance mode to test retention-period settings before creating a compliance-mode retention period.
+`,
+			Provider: "AWS",
+			Default:  "Governance",
+			Advanced: true,
+		}, {
+			Name: "bucket_object_lock_retention_period",
+			Help: `A retention period protects an object version for a fixed amount of time.
+
+When you place a retention period on an object version, 
+Amazon S3 stores a timestamp in the object version's metadata to indicate when the retention period expires. 
+
+After the retention period expires, the object version can be overwritten or deleted.
+
+Retention period can be set in days or years, not both. e.g. 30d or 1y
+`,
+			Provider: "AWS",
+			Default:  "30d",
+			Advanced: true,
 		},
 		}})
 }
@@ -2635,59 +2682,65 @@ var systemMetadataInfo = map[string]fs.MetadataHelp{
 
 // Options defines the configuration for this backend
 type Options struct {
-	Provider              string               `config:"provider"`
-	EnvAuth               bool                 `config:"env_auth"`
-	AccessKeyID           string               `config:"access_key_id"`
-	SecretAccessKey       string               `config:"secret_access_key"`
-	Region                string               `config:"region"`
-	Endpoint              string               `config:"endpoint"`
-	STSEndpoint           string               `config:"sts_endpoint"`
-	UseDualStack          bool                 `config:"use_dual_stack"`
-	LocationConstraint    string               `config:"location_constraint"`
-	ACL                   string               `config:"acl"`
-	BucketACL             string               `config:"bucket_acl"`
-	RequesterPays         bool                 `config:"requester_pays"`
-	ServerSideEncryption  string               `config:"server_side_encryption"`
-	SSEKMSKeyID           string               `config:"sse_kms_key_id"`
-	SSECustomerAlgorithm  string               `config:"sse_customer_algorithm"`
-	SSECustomerKey        string               `config:"sse_customer_key"`
-	SSECustomerKeyBase64  string               `config:"sse_customer_key_base64"`
-	SSECustomerKeyMD5     string               `config:"sse_customer_key_md5"`
-	StorageClass          string               `config:"storage_class"`
-	UploadCutoff          fs.SizeSuffix        `config:"upload_cutoff"`
-	CopyCutoff            fs.SizeSuffix        `config:"copy_cutoff"`
-	ChunkSize             fs.SizeSuffix        `config:"chunk_size"`
-	MaxUploadParts        int                  `config:"max_upload_parts"`
-	DisableChecksum       bool                 `config:"disable_checksum"`
-	SharedCredentialsFile string               `config:"shared_credentials_file"`
-	Profile               string               `config:"profile"`
-	SessionToken          string               `config:"session_token"`
-	UploadConcurrency     int                  `config:"upload_concurrency"`
-	ForcePathStyle        bool                 `config:"force_path_style"`
-	V2Auth                bool                 `config:"v2_auth"`
-	UseAccelerateEndpoint bool                 `config:"use_accelerate_endpoint"`
-	LeavePartsOnError     bool                 `config:"leave_parts_on_error"`
-	ListChunk             int64                `config:"list_chunk"`
-	ListVersion           int                  `config:"list_version"`
-	ListURLEncode         fs.Tristate          `config:"list_url_encode"`
-	NoCheckBucket         bool                 `config:"no_check_bucket"`
-	NoHead                bool                 `config:"no_head"`
-	NoHeadObject          bool                 `config:"no_head_object"`
-	Enc                   encoder.MultiEncoder `config:"encoding"`
-	DisableHTTP2          bool                 `config:"disable_http2"`
-	DownloadURL           string               `config:"download_url"`
-	DirectoryMarkers      bool                 `config:"directory_markers"`
-	UseMultipartEtag      fs.Tristate          `config:"use_multipart_etag"`
-	UsePresignedRequest   bool                 `config:"use_presigned_request"`
-	Versions              bool                 `config:"versions"`
-	VersionAt             fs.Time              `config:"version_at"`
-	VersionDeleted        bool                 `config:"version_deleted"`
-	Decompress            bool                 `config:"decompress"`
-	MightGzip             fs.Tristate          `config:"might_gzip"`
-	UseAcceptEncodingGzip fs.Tristate          `config:"use_accept_encoding_gzip"`
-	NoSystemMetadata      bool                 `config:"no_system_metadata"`
-	UseAlreadyExists      fs.Tristate          `config:"use_already_exists"`
-	UseMultipartUploads   fs.Tristate          `config:"use_multipart_uploads"`
+	Provider                        string               `config:"provider"`
+	EnvAuth                         bool                 `config:"env_auth"`
+	AccessKeyID                     string               `config:"access_key_id"`
+	SecretAccessKey                 string               `config:"secret_access_key"`
+	Region                          string               `config:"region"`
+	Endpoint                        string               `config:"endpoint"`
+	STSEndpoint                     string               `config:"sts_endpoint"`
+	UseDualStack                    bool                 `config:"use_dual_stack"`
+	LocationConstraint              string               `config:"location_constraint"`
+	ACL                             string               `config:"acl"`
+	BucketACL                       string               `config:"bucket_acl"`
+	RequesterPays                   bool                 `config:"requester_pays"`
+	ServerSideEncryption            string               `config:"server_side_encryption"`
+	SSEKMSKeyID                     string               `config:"sse_kms_key_id"`
+	SSECustomerAlgorithm            string               `config:"sse_customer_algorithm"`
+	SSECustomerKey                  string               `config:"sse_customer_key"`
+	SSECustomerKeyBase64            string               `config:"sse_customer_key_base64"`
+	SSECustomerKeyMD5               string               `config:"sse_customer_key_md5"`
+	StorageClass                    string               `config:"storage_class"`
+	UploadCutoff                    fs.SizeSuffix        `config:"upload_cutoff"`
+	CopyCutoff                      fs.SizeSuffix        `config:"copy_cutoff"`
+	ChunkSize                       fs.SizeSuffix        `config:"chunk_size"`
+	MaxUploadParts                  int                  `config:"max_upload_parts"`
+	DisableChecksum                 bool                 `config:"disable_checksum"`
+	SharedCredentialsFile           string               `config:"shared_credentials_file"`
+	Profile                         string               `config:"profile"`
+	SessionToken                    string               `config:"session_token"`
+	UploadConcurrency               int                  `config:"upload_concurrency"`
+	ForcePathStyle                  bool                 `config:"force_path_style"`
+	V2Auth                          bool                 `config:"v2_auth"`
+	UseAccelerateEndpoint           bool                 `config:"use_accelerate_endpoint"`
+	LeavePartsOnError               bool                 `config:"leave_parts_on_error"`
+	ListChunk                       int64                `config:"list_chunk"`
+	ListVersion                     int                  `config:"list_version"`
+	ListURLEncode                   fs.Tristate          `config:"list_url_encode"`
+	NoCheckBucket                   bool                 `config:"no_check_bucket"`
+	NoHead                          bool                 `config:"no_head"`
+	NoHeadObject                    bool                 `config:"no_head_object"`
+	Enc                             encoder.MultiEncoder `config:"encoding"`
+	DisableHTTP2                    bool                 `config:"disable_http2"`
+	DownloadURL                     string               `config:"download_url"`
+	DirectoryMarkers                bool                 `config:"directory_markers"`
+	UseMultipartEtag                fs.Tristate          `config:"use_multipart_etag"`
+	UsePresignedRequest             bool                 `config:"use_presigned_request"`
+	Versions                        bool                 `config:"versions"`
+	VersionAt                       fs.Time              `config:"version_at"`
+	VersionDeleted                  bool                 `config:"version_deleted"`
+	Decompress                      bool                 `config:"decompress"`
+	MightGzip                       fs.Tristate          `config:"might_gzip"`
+	UseAcceptEncodingGzip           fs.Tristate          `config:"use_accept_encoding_gzip"`
+	NoSystemMetadata                bool                 `config:"no_system_metadata"`
+	UseAlreadyExists                fs.Tristate          `config:"use_already_exists"`
+	UseMultipartUploads             fs.Tristate          `config:"use_multipart_uploads"`
+	BucketObjectLockEnabled         bool                 `config:"bucket_object_lock_enabled"`
+	BucketObjectLockRetentionMode   string               `config:"bucket_object_lock_retention_mode"`
+	BucketObjectLockRetentionPeriod string               `config:"bucket_object_lock_retention_period"`
+	ObjectLockMode                  string               `config:"object_lock_mode"`
+	ObjectLockRetainUntilDate       fs.Time              `config:"object_lock_retain_until_date"`
+	ObjectLockLegalHoldStatus       string               `config:"object_lock_legal_hold_status"`
 }
 
 // Fs represents a remote s3 server
@@ -4334,8 +4387,9 @@ func (f *Fs) makeBucket(ctx context.Context, bucket string) error {
 	}
 	return f.cache.Create(bucket, func() error {
 		req := s3.CreateBucketInput{
-			Bucket: &bucket,
-			ACL:    stringPointerOrNil(f.opt.BucketACL),
+			Bucket:                     &bucket,
+			ACL:                        stringPointerOrNil(f.opt.BucketACL),
+			ObjectLockEnabledForBucket: &f.opt.BucketObjectLockEnabled,
 		}
 		if f.opt.LocationConstraint != "" {
 			req.CreateBucketConfiguration = &s3.CreateBucketConfiguration{
@@ -4363,10 +4417,60 @@ func (f *Fs) makeBucket(ctx context.Context, bucket string) error {
 				}
 			}
 		}
+		if err != nil {
+			return err
+		}
+		// Set the Default Object Lock Enabled Values if set
+		err = f.createBucketObjectLockRules(bucket)
 		return err
 	}, func() (bool, error) {
 		return f.bucketExists(ctx, bucket)
 	})
+}
+
+// createBucketObjectLockRules creates the default bucket object lock rules if enabled
+func (f *Fs) createBucketObjectLockRules(bucket string) error {
+	if !f.opt.BucketObjectLockEnabled {
+		return nil
+	}
+
+	// AWS expects to be passed an UPPERCASE value
+	mode := strings.ToUpper(f.opt.BucketObjectLockRetentionMode)
+
+	// Regex string to get value and timespan from Retention Period string
+	redy := regexp.MustCompile("[0-9]+")
+	rets := regexp.MustCompile("[dyDY]")
+
+	period, _ := strconv.Atoi(redy.FindString(f.opt.BucketObjectLockRetentionPeriod))
+	periodts := rets.FindString(f.opt.BucketObjectLockRetentionPeriod)
+
+	var dr s3.DefaultRetention
+
+	switch strings.ToUpper(periodts) {
+	case "D":
+		dr.Mode = aws.String(mode)
+		dr.Days = aws.Int64(int64(period))
+	case "Y":
+		dr.Mode = aws.String(mode)
+		dr.Years = aws.Int64(int64(period))
+	default:
+		return errors.New("The timespan you have set for bucket_object_lock_retention_period must be Y or D")
+	}
+
+	req := s3.PutObjectLockConfigurationInput{
+		Bucket: &bucket,
+		ObjectLockConfiguration: &s3.ObjectLockConfiguration{
+			ObjectLockEnabled: aws.String("Enabled"),
+			Rule: &s3.ObjectLockRule{
+				DefaultRetention: &dr,
+			},
+		},
+	}
+	_, err := f.c.PutObjectLockConfiguration(&req)
+	if err == nil {
+		fs.Infof(f, "Bucket : %q. Object Lock config has been added", bucket)
+	}
+	return err
 }
 
 // Rmdir deletes the bucket if the fs is at the root
