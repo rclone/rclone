@@ -102,7 +102,7 @@ below will cause b2 to return specific errors:
   * "force_cap_exceeded"
 
 These will be set in the "X-Bz-Test-Mode" header which is documented
-in the [b2 integrations checklist](https://www.backblaze.com/b2/docs/integration_checklist.html).`,
+in the [b2 integrations checklist](https://www.backblaze.com/docs/cloud-storage-integration-checklist).`,
 			Default:  "",
 			Hide:     fs.OptionHideConfigurator,
 			Advanced: true,
@@ -244,7 +244,7 @@ See: [rclone backend lifecycle](#lifecycle) for setting lifecycles after bucket 
 			Name:     config.ConfigEncoding,
 			Help:     config.ConfigEncodingHelp,
 			Advanced: true,
-			// See: https://www.backblaze.com/b2/docs/files.html
+			// See: https://www.backblaze.com/docs/cloud-storage-files
 			// Encode invalid UTF-8 bytes as json doesn't handle them properly.
 			// FIXME: allow /, but not leading, trailing or double
 			Default: (encoder.Display |
@@ -1566,7 +1566,7 @@ func (o *Object) Size() int64 {
 //
 // Make sure it is lower case.
 //
-// Remove unverified prefix - see https://www.backblaze.com/b2/docs/uploading.html
+// Remove unverified prefix - see https://www.backblaze.com/docs/cloud-storage-upload-files-with-the-native-api
 // Some tools (e.g. Cyberduck) use this
 func cleanSHA1(sha1 string) string {
 	const unverified = "unverified:"

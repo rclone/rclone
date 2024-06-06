@@ -1,49 +1,69 @@
-Rclone's gitannex subcommand enables git-annex to store and retrieve content
-from an rclone remote. It expects to be run by git-annex, not directly by users.
-It is an "external special remote program" as defined by git-annex.
+Rclone's `gitannex` subcommand enables [git-annex] to store and retrieve content
+from an rclone remote. It is meant to be run by git-annex, not directly by
+users.
+
+[git-annex]: https://git-annex.branchable.com/
 
 Installation on Linux
 ---------------------
 
-1. Create a symlink and ensure it's on your PATH. For example:
+1. Skip this step if your version of git-annex is [10.20240430] or newer.
+   Otherwise, you must create a symlink somewhere on your PATH with a particular
+   name. This symlink helps git-annex tell rclone it wants to run the "gitannex"
+   subcommand.
 
-        ln -s "$(realpath rclone)" "$HOME/bin/git-annex-remote-rclone-builtin"
+   ```sh
+   # Create the helper symlink in "$HOME/bin".
+   ln -s "$(realpath rclone)" "$HOME/bin/git-annex-remote-rclone-builtin"
 
-2. Add a new external remote to your git-annex repo.
+   # Verify the new symlink is on your PATH.
+   which git-annex-remote-rclone-builtin
+   ```
 
-   The new remote's type should be "rclone-builtin". When git-annex interacts
-   with remotes of this type, it will try to run a command named
-   "git-annex-remote-rclone-builtin", so the symlink from the previous step
-   should be on your PATH.
+   [10.20240430]: https://git-annex.branchable.com/news/version_10.20240430/
 
-   * NOTE: If you are porting a remote from git-annex-remote-rclone, first
-     change the externaltype from "rclone" to "rclone-builtin". Watch out, our
-     configs have slightly different names:
+2. Add a new remote to your git-annex repo. This new remote will connect
+   git-annex with the `rclone gitannex` subcommand.
 
-      | config for "rclone" | config for "rclone-builtin" |
-      |:--------------------|:----------------------------|
-      | `prefix`            | `rcloneprefix`              |
-      | `target`            | `rcloneremotename`          |
-      | `rclone_layout`     | `rclonelayout`              |
+   Start by asking git-annex to describe the remote's available configuration
+   parameters.
+
+   ```sh
+   # If you skipped step 1:
+   git annex initremote MyRemote type=rclone --whatelse
+
+   # If you created a symlink in step 1:
+   git annex initremote MyRemote type=external externaltype=rclone-builtin --whatelse
+    ```
+
+   > **NOTE**: If you're porting an existing [git-annex-remote-rclone] remote to
+   > use `rclone gitannex`, you can probably reuse the configuration parameters
+   > verbatim without renaming them. Check parameter synonyms with `--whatelse`
+   > as shown above.
+   >
+   > [git-annex-remote-rclone]: https://github.com/git-annex-remote-rclone/git-annex-remote-rclone
 
    The following example creates a new git-annex remote named "MyRemote" that
-   will use the rclone remote named "SomeRcloneRemote". This rclone remote must
-   be configured in your rclone.conf file, wherever that is located on your
-   system. The rcloneprefix value ensures that content is only written into the
-   rclone remote underneath the "git-annex-content" directory.
+   will use the rclone remote named "SomeRcloneRemote". That rclone remote must
+   be one configured in your rclone.conf file, which can be located with `rclone
+   config file`.
 
-        git annex initremote MyRemote         \
-            type=external                     \
-            externaltype=rclone-builtin       \
-            encryption=none                   \
-            rcloneremotename=SomeRcloneRemote \
-            rcloneprefix=git-annex-content    \
-            rclonelayout=nodir
+   ```sh
+   git annex initremote MyRemote         \
+       type=external                     \
+       externaltype=rclone-builtin       \
+       encryption=none                   \
+       rcloneremotename=SomeRcloneRemote \
+       rcloneprefix=git-annex-content    \
+       rclonelayout=nodir
+   ```
 
 3. Before you trust this command with your precious data, be sure to **test the
    remote**. This command is very new and has not been tested on many rclone
    backends. Caveat emptor!
 
-        git annex testremote my-rclone-remote
+   ```sh
+   git annex testremote MyRemote
+   ```
 
 Happy annexing!
