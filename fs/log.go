@@ -157,9 +157,7 @@ func LogLevelPrintf(level LogLevel, o interface{}, text string, args ...interfac
 // Errorf writes error log output for this Object or Fs.  It
 // should always be seen by the user.
 func Errorf(o interface{}, text string, args ...interface{}) {
-	if GetConfig(context.TODO()).LogLevel >= LogLevelError {
-		LogPrintf(LogLevelError, o, text, args...)
-	}
+	LogLevelPrintf(LogLevelError, o, text, args...)
 }
 
 // Logf writes log output for this Object or Fs.  This should be
@@ -168,26 +166,20 @@ func Errorf(o interface{}, text string, args ...interface{}) {
 // important things the user should see.  The user can filter these
 // out with the -q flag.
 func Logf(o interface{}, text string, args ...interface{}) {
-	if GetConfig(context.TODO()).LogLevel >= LogLevelNotice {
-		LogPrintf(LogLevelNotice, o, text, args...)
-	}
+	LogLevelPrintf(LogLevelNotice, o, text, args...)
 }
 
 // Infof writes info on transfers for this Object or Fs.  Use this
 // level for logging transfers, deletions and things which should
 // appear with the -v flag.
 func Infof(o interface{}, text string, args ...interface{}) {
-	if GetConfig(context.TODO()).LogLevel >= LogLevelInfo {
-		LogPrintf(LogLevelInfo, o, text, args...)
-	}
+	LogLevelPrintf(LogLevelInfo, o, text, args...)
 }
 
 // Debugf writes debugging output for this Object or Fs.  Use this for
 // debug only.  The user must have to specify -vv to see this.
 func Debugf(o interface{}, text string, args ...interface{}) {
-	if GetConfig(context.TODO()).LogLevel >= LogLevelDebug {
-		LogPrintf(LogLevelDebug, o, text, args...)
-	}
+	LogLevelPrintf(LogLevelDebug, o, text, args...)
 }
 
 // LogDirName returns an object for the logger, logging a root
