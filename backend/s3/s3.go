@@ -4493,7 +4493,7 @@ func (f *Fs) createBucketObjectLockRules(bucket string) error {
 		dr.Mode = aws.String(mode)
 		dr.Years = aws.Int64(int64(period))
 	default:
-		return errors.New("The timespan you have set for bucket_object_lock_retention_period must be Y or D")
+		return errors.New("the timespan you have set for bucket_object_lock_retention_period must be Y or D")
 	}
 
 	req := s3.PutObjectLockConfigurationInput{
