@@ -57,8 +57,8 @@ func (logLevelChoices) Type() string {
 // LogPrintPid enables process pid in log
 var LogPrintPid = false
 
-// LogPrint sends the text to the logger of level
-var LogPrint = func(level LogLevel, text string) {
+// LogOutput sends the text to the logger of level
+var LogOutput = func(level LogLevel, text string) {
 	text = fmt.Sprintf("%-6s: %s", level, text)
 	if LogPrintPid {
 		text = fmt.Sprintf("[%d] %s", os.Getpid(), text)
@@ -140,7 +140,7 @@ func LogPrintf(level LogLevel, o interface{}, text string, args ...interface{}) 
 		if o != nil {
 			out = fmt.Sprintf("%v: %s", o, out)
 		}
-		LogPrint(level, out)
+		LogOutput(level, out)
 	}
 }
 
