@@ -57,7 +57,7 @@ func TestParseTime(t *testing.T) {
 		{"2001-02-03T10:11:12.123Z", time.Date(2001, 2, 3, 10, 11, 12, 123000000, time.UTC), false},
 		{"2001-02-03T10:11:12.123+00:00", time.Date(2001, 2, 3, 10, 11, 12, 123000000, time.UTC), false},
 	} {
-		parsedTime, err := ParseTime(test.in)
+		parsedTime, err := ParseTime(test.in, false)
 		if test.err {
 			require.Error(t, err, test.in)
 		} else {
@@ -65,6 +65,17 @@ func TestParseTime(t *testing.T) {
 		}
 		assert.True(t, test.want.Equal(parsedTime), "%v should be parsed as %v instead of %v", test.in, test.want, parsedTime)
 	}
+}
+
+func TestParseTimeFuture(t *testing.T) {
+	now := time.Date(2020, 9, 5, 8, 15, 5, 250, time.UTC)
+	oldTimeNowFunc := timeNowFunc
+	timeNowFunc = func() time.Time { return now }
+	defer func() { timeNowFunc = oldTimeNowFunc }()
+
+	parsedTime, err := ParseTime("10m", true)
+	require.NoError(t, err)
+	assert.Equal(t, now.Add(10*time.Minute), parsedTime)
 }
 
 func TestTimeString(t *testing.T) {
@@ -84,7 +95,7 @@ func TestTimeString(t *testing.T) {
 		got := Time(test.in).String()
 		assert.Equal(t, test.want, got)
 		// Test the reverse
-		reverse, err := ParseTime(test.want)
+		reverse, err := ParseTime(test.want, false)
 		assert.NoError(t, err)
 		assert.Equal(t, test.in, reverse)
 	}
@@ -108,6 +119,27 @@ func TestTimeScan(t *testing.T) {
 		{"2022-03-26 17:48:19", Time(time.Date(2022, 03, 26, 17, 48, 19, 0, time.Local))},
 	} {
 		var got Time
+		n, err := fmt.Sscan(test.in, &got)
+		require.NoError(t, err)
+		assert.Equal(t, 1, n)
+		assert.Equal(t, test.want, got)
+	}
+}
+
+func TestTimeScanFuture(t *testing.T) {
+	now := time.Date(2020, 9, 5, 8, 15, 5, 250, time.UTC)
+	oldTimeNowFunc := timeNowFunc
+	timeNowFunc = func() time.Time { return now }
+	defer func() { timeNowFunc = oldTimeNowFunc }()
+
+	for _, test := range []struct {
+		in   string
+		want TimeFuture
+	}{
+		{"17m", TimeFuture(now.Add(17 * time.Minute))},
+		{"-12h", TimeFuture(now.Add(-12 * time.Hour))},
+	} {
+		var got TimeFuture
 		n, err := fmt.Sscan(test.in, &got)
 		require.NoError(t, err)
 		assert.Equal(t, 1, n)

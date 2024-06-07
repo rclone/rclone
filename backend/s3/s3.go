@@ -60,6 +60,7 @@ import (
 	"github.com/rclone/rclone/lib/readers"
 	"github.com/rclone/rclone/lib/rest"
 	"github.com/rclone/rclone/lib/version"
+	"golang.org/x/exp/slices"
 	"golang.org/x/net/http/httpguts"
 	"golang.org/x/sync/errgroup"
 )
@@ -2558,6 +2559,53 @@ knows about - please make a bug report if not.
 `,
 			Default:  fs.Tristate{},
 			Advanced: true,
+		}, {
+			Name: "bucket_object_lock_enabled",
+			Help: `Enable object-locking for newly created buckets. 
+
+Updating old buckets is not possible. Note that versioning will be turned on for object-locking.`,
+			Default: false,
+		}, {
+			Name: "object_lock_mode",
+			Help: "Set the object lock mode.",
+			Examples: []fs.OptionExample{{
+				Value: "GOVERNANCE",
+				Help:  "Retention period can be updated by authorized user, and bypassed with bypass-governance-retention.",
+			}, {
+				Value: "COMPLIANCE",
+				Help:  "Retention period can't be updated or bypassed.",
+			}},
+		}, {
+			Name: "object_lock_retain_until",
+			Help: `How long the retention period should be. 
+
+Requires object_lock_mode to be set.
+
+The parameter should be a date in the future, "2035-01-02", datetime "2035-01-02
+15:04:05" or a duration from the time of execution, eg "100d" or "1h".`,
+		}, {
+			Name:    "object_lock_legal_hold",
+			Help:    "Should uploaded objects be in legal hold.",
+			Default: fs.Tristate{},
+		}, {
+			Name: "bypass_governance_retention",
+			Help: `If set, objects locked with governance mode will be forcefully deleted forever. 
+
+Warning: possible data loss.`,
+			Default: false,
+			Hide:    fs.OptionHideConfigurator,
+		}, {
+			Name: "manually_set_object_lock",
+			Help: `Manually set object lock and legal hold after object creation.
+
+Some providers don't support the x-amz-object-lock-x headers, 
+so we'll need to set them manually using separate requests.
+This will cause additional api calls, 
+but is required to get object locking to work on them.
+
+This option is forcefully turned on for unverified and known non-compliant providers.`,
+			Default: false,
+			Hide:    fs.OptionHideBoth,
 		},
 		}})
 }
@@ -2635,81 +2683,99 @@ var systemMetadataInfo = map[string]fs.MetadataHelp{
 
 // Options defines the configuration for this backend
 type Options struct {
-	Provider              string               `config:"provider"`
-	EnvAuth               bool                 `config:"env_auth"`
-	AccessKeyID           string               `config:"access_key_id"`
-	SecretAccessKey       string               `config:"secret_access_key"`
-	Region                string               `config:"region"`
-	Endpoint              string               `config:"endpoint"`
-	STSEndpoint           string               `config:"sts_endpoint"`
-	UseDualStack          bool                 `config:"use_dual_stack"`
-	LocationConstraint    string               `config:"location_constraint"`
-	ACL                   string               `config:"acl"`
-	BucketACL             string               `config:"bucket_acl"`
-	RequesterPays         bool                 `config:"requester_pays"`
-	ServerSideEncryption  string               `config:"server_side_encryption"`
-	SSEKMSKeyID           string               `config:"sse_kms_key_id"`
-	SSECustomerAlgorithm  string               `config:"sse_customer_algorithm"`
-	SSECustomerKey        string               `config:"sse_customer_key"`
-	SSECustomerKeyBase64  string               `config:"sse_customer_key_base64"`
-	SSECustomerKeyMD5     string               `config:"sse_customer_key_md5"`
-	StorageClass          string               `config:"storage_class"`
-	UploadCutoff          fs.SizeSuffix        `config:"upload_cutoff"`
-	CopyCutoff            fs.SizeSuffix        `config:"copy_cutoff"`
-	ChunkSize             fs.SizeSuffix        `config:"chunk_size"`
-	MaxUploadParts        int                  `config:"max_upload_parts"`
-	DisableChecksum       bool                 `config:"disable_checksum"`
-	SharedCredentialsFile string               `config:"shared_credentials_file"`
-	Profile               string               `config:"profile"`
-	SessionToken          string               `config:"session_token"`
-	UploadConcurrency     int                  `config:"upload_concurrency"`
-	ForcePathStyle        bool                 `config:"force_path_style"`
-	V2Auth                bool                 `config:"v2_auth"`
-	UseAccelerateEndpoint bool                 `config:"use_accelerate_endpoint"`
-	LeavePartsOnError     bool                 `config:"leave_parts_on_error"`
-	ListChunk             int64                `config:"list_chunk"`
-	ListVersion           int                  `config:"list_version"`
-	ListURLEncode         fs.Tristate          `config:"list_url_encode"`
-	NoCheckBucket         bool                 `config:"no_check_bucket"`
-	NoHead                bool                 `config:"no_head"`
-	NoHeadObject          bool                 `config:"no_head_object"`
-	Enc                   encoder.MultiEncoder `config:"encoding"`
-	DisableHTTP2          bool                 `config:"disable_http2"`
-	DownloadURL           string               `config:"download_url"`
-	DirectoryMarkers      bool                 `config:"directory_markers"`
-	UseMultipartEtag      fs.Tristate          `config:"use_multipart_etag"`
-	UsePresignedRequest   bool                 `config:"use_presigned_request"`
-	Versions              bool                 `config:"versions"`
-	VersionAt             fs.Time              `config:"version_at"`
-	VersionDeleted        bool                 `config:"version_deleted"`
-	Decompress            bool                 `config:"decompress"`
-	MightGzip             fs.Tristate          `config:"might_gzip"`
-	UseAcceptEncodingGzip fs.Tristate          `config:"use_accept_encoding_gzip"`
-	NoSystemMetadata      bool                 `config:"no_system_metadata"`
-	UseAlreadyExists      fs.Tristate          `config:"use_already_exists"`
-	UseMultipartUploads   fs.Tristate          `config:"use_multipart_uploads"`
+	Provider                  string               `config:"provider"`
+	EnvAuth                   bool                 `config:"env_auth"`
+	AccessKeyID               string               `config:"access_key_id"`
+	SecretAccessKey           string               `config:"secret_access_key"`
+	Region                    string               `config:"region"`
+	Endpoint                  string               `config:"endpoint"`
+	STSEndpoint               string               `config:"sts_endpoint"`
+	UseDualStack              bool                 `config:"use_dual_stack"`
+	LocationConstraint        string               `config:"location_constraint"`
+	ACL                       string               `config:"acl"`
+	BucketACL                 string               `config:"bucket_acl"`
+	RequesterPays             bool                 `config:"requester_pays"`
+	ServerSideEncryption      string               `config:"server_side_encryption"`
+	SSEKMSKeyID               string               `config:"sse_kms_key_id"`
+	SSECustomerAlgorithm      string               `config:"sse_customer_algorithm"`
+	SSECustomerKey            string               `config:"sse_customer_key"`
+	SSECustomerKeyBase64      string               `config:"sse_customer_key_base64"`
+	SSECustomerKeyMD5         string               `config:"sse_customer_key_md5"`
+	StorageClass              string               `config:"storage_class"`
+	UploadCutoff              fs.SizeSuffix        `config:"upload_cutoff"`
+	CopyCutoff                fs.SizeSuffix        `config:"copy_cutoff"`
+	ChunkSize                 fs.SizeSuffix        `config:"chunk_size"`
+	MaxUploadParts            int                  `config:"max_upload_parts"`
+	DisableChecksum           bool                 `config:"disable_checksum"`
+	SharedCredentialsFile     string               `config:"shared_credentials_file"`
+	Profile                   string               `config:"profile"`
+	SessionToken              string               `config:"session_token"`
+	UploadConcurrency         int                  `config:"upload_concurrency"`
+	ForcePathStyle            bool                 `config:"force_path_style"`
+	V2Auth                    bool                 `config:"v2_auth"`
+	UseAccelerateEndpoint     bool                 `config:"use_accelerate_endpoint"`
+	LeavePartsOnError         bool                 `config:"leave_parts_on_error"`
+	ListChunk                 int64                `config:"list_chunk"`
+	ListVersion               int                  `config:"list_version"`
+	ListURLEncode             fs.Tristate          `config:"list_url_encode"`
+	NoCheckBucket             bool                 `config:"no_check_bucket"`
+	NoHead                    bool                 `config:"no_head"`
+	NoHeadObject              bool                 `config:"no_head_object"`
+	Enc                       encoder.MultiEncoder `config:"encoding"`
+	DisableHTTP2              bool                 `config:"disable_http2"`
+	DownloadURL               string               `config:"download_url"`
+	DirectoryMarkers          bool                 `config:"directory_markers"`
+	UseMultipartEtag          fs.Tristate          `config:"use_multipart_etag"`
+	UsePresignedRequest       bool                 `config:"use_presigned_request"`
+	Versions                  bool                 `config:"versions"`
+	VersionAt                 fs.Time              `config:"version_at"`
+	VersionDeleted            bool                 `config:"version_deleted"`
+	Decompress                bool                 `config:"decompress"`
+	MightGzip                 fs.Tristate          `config:"might_gzip"`
+	UseAcceptEncodingGzip     fs.Tristate          `config:"use_accept_encoding_gzip"`
+	NoSystemMetadata          bool                 `config:"no_system_metadata"`
+	UseAlreadyExists          fs.Tristate          `config:"use_already_exists"`
+	UseMultipartUploads       fs.Tristate          `config:"use_multipart_uploads"`
+	BucketObjectLockEnabled   bool                 `config:"bucket_object_lock_enabled"`
+	ObjectLockMode            string               `config:"object_lock_mode"`
+	ObjectLockRetainUntil     fs.TimeFuture        `config:"object_lock_retain_until"`
+	ObjectLockLegalHold       fs.Tristate          `config:"object_lock_legal_hold"`
+	BypassGovernanceRetention bool                 `config:"bypass_governance_retention"`
+	ManuallySetObjectLock     bool                 `config:"manually_set_object_lock"`
+}
+
+func (o Options) getObjectLegalHoldStatus() *string {
+	status := s3.ObjectLockLegalHoldStatusOff
+	if o.ObjectLockLegalHold.Valid && o.ObjectLockLegalHold.Value {
+		status = s3.ObjectLockLegalHoldStatusOn
+	}
+	return &status
 }
 
 // Fs represents a remote s3 server
 type Fs struct {
-	name           string           // the name of the remote
-	root           string           // root of the bucket - ignore all objects above this
-	opt            Options          // parsed options
-	ci             *fs.ConfigInfo   // global config
-	ctx            context.Context  // global context for reading config
-	features       *fs.Features     // optional features
-	c              *s3.S3           // the connection to the s3 server
-	ses            *session.Session // the s3 session
-	rootBucket     string           // bucket part of root (if any)
-	rootDirectory  string           // directory part of root (if any)
-	cache          *bucket.Cache    // cache for bucket creation status
-	pacer          *fs.Pacer        // To pace the API calls
-	srv            *http.Client     // a plain http client
-	srvRest        *rest.Client     // the rest connection to the server
-	etagIsNotMD5   bool             // if set ETags are not MD5s
-	versioningMu   sync.Mutex
-	versioning     fs.Tristate // if set bucket is using versions
-	warnCompressed sync.Once   // warn once about compressed files
+	name                              string           // the name of the remote
+	root                              string           // root of the bucket - ignore all objects above this
+	opt                               Options          // parsed options
+	ci                                *fs.ConfigInfo   // global config
+	ctx                               context.Context  // global context for reading config
+	features                          *fs.Features     // optional features
+	c                                 *s3.S3           // the connection to the s3 server
+	ses                               *session.Session // the s3 session
+	rootBucket                        string           // bucket part of root (if any)
+	rootDirectory                     string           // directory part of root (if any)
+	cache                             *bucket.Cache    // cache for bucket creation status
+	pacer                             *fs.Pacer        // To pace the API calls
+	srv                               *http.Client     // a plain http client
+	srvRest                           *rest.Client     // the rest connection to the server
+	etagIsNotMD5                      bool             // if set ETags are not MD5s
+	versioningMu                      sync.Mutex
+	versioning                        fs.Tristate // if set bucket is using versions
+	warnCompressed                    sync.Once   // warn once about compressed files
+	objectLockingMu                   sync.Mutex
+	objectLockingIsSet                bool
+	bucketObjectLockSupported         bool // object-lock config upon bucket creation, immutable for some providers
+	objectLockConfigObjectLockEnabled bool // ObjectLockEnabled from ObjectLockConfiguration, can be updated with PutObjectLockConfiguration
 }
 
 // Object describes a s3 object
@@ -2728,11 +2794,14 @@ type Object struct {
 	versionID    *string           // If present this points to an object version
 
 	// Metadata as pointers to strings as they often won't be present
-	storageClass       *string // e.g. GLACIER
-	cacheControl       *string // Cache-Control: header
-	contentDisposition *string // Content-Disposition: header
-	contentEncoding    *string // Content-Encoding: header
-	contentLanguage    *string // Content-Language: header
+	storageClass              *string    // e.g. GLACIER
+	cacheControl              *string    // Cache-Control: header
+	contentDisposition        *string    // Content-Disposition: header
+	contentEncoding           *string    // Content-Encoding: header
+	contentLanguage           *string    // Content-Language: header
+	objectLockMode            *string    // x-amz-object-lock-mode: GOVERNANCE | COMPLIANCE
+	objectLockRetainUntil     *time.Time // x-amz-object-lock-retain-until-date
+	objectLockLegalHoldStatus *string    // x-amz-object-lock-legal-hold: ON | OFF
 }
 
 // ------------------------------------------------------------
@@ -3110,6 +3179,7 @@ func setQuirks(opt *Options) {
 		mightGzip             = true // assume all providers might use content encoding gzip until proven otherwise
 		useAlreadyExists      = true // Set if provider returns AlreadyOwnedByYou or no error if you try to remake your own bucket
 		useMultipartUploads   = true // Set if provider supports multipart uploads
+		manuallySetObjectLock = true // Set if provider doesn't support the x-amz-object-lock-* header, and we need to manually set the object lock
 	)
 	switch opt.Provider {
 	case "AWS":
@@ -3303,7 +3373,10 @@ func setQuirks(opt *Options) {
 	if !opt.UseMultipartUploads.Value {
 		opt.UploadCutoff = math.MaxInt64
 	}
-
+	// set manuallySetObjectLock if not manually set in configs
+	if !opt.ManuallySetObjectLock {
+		opt.ManuallySetObjectLock = manuallySetObjectLock
+	}
 }
 
 // setRoot changes the root of the Fs
@@ -3360,6 +3433,23 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		// calculate CustomerKeyMD5 if not supplied
 		md5sumBinary := md5.Sum([]byte(opt.SSECustomerKey))
 		opt.SSECustomerKeyMD5 = base64.StdEncoding.EncodeToString(md5sumBinary[:])
+	}
+	if opt.ObjectLockMode != "" {
+		opt.ObjectLockMode = strings.ToUpper(opt.ObjectLockMode)
+		if !slices.Contains(s3.ObjectLockMode_Values(), opt.ObjectLockMode) {
+			return nil, fmt.Errorf("s3: Invalid object_lock_mode value %s", opt.ObjectLockMode)
+		}
+		if !opt.ObjectLockRetainUntil.IsSet() {
+			return nil, errors.New("s3: object_lock_retain_until is unset but object lock is enabled (object_lock_mode is set)")
+		}
+	}
+	if opt.ObjectLockRetainUntil.IsSet() {
+		if opt.ObjectLockMode == "" {
+			return nil, errors.New("s3: object_lock_retain_until is set but object locking is not enabled (object_lock_mode is not set)")
+		}
+		if time.Now().After(time.Time(opt.ObjectLockRetainUntil)) {
+			return nil, fmt.Errorf("s3: object_lock_retain_until is in the past: %s", opt.ObjectLockRetainUntil)
+		}
 	}
 	srv := getClient(ctx, opt)
 	c, ses, err := s3Connection(ctx, opt, srv)
@@ -4334,8 +4424,9 @@ func (f *Fs) makeBucket(ctx context.Context, bucket string) error {
 	}
 	return f.cache.Create(bucket, func() error {
 		req := s3.CreateBucketInput{
-			Bucket: &bucket,
-			ACL:    stringPointerOrNil(f.opt.BucketACL),
+			Bucket:                     &bucket,
+			ACL:                        stringPointerOrNil(f.opt.BucketACL),
+			ObjectLockEnabledForBucket: &f.opt.BucketObjectLockEnabled,
 		}
 		if f.opt.LocationConstraint != "" {
 			req.CreateBucketConfiguration = &s3.CreateBucketConfiguration{
@@ -4346,9 +4437,6 @@ func (f *Fs) makeBucket(ctx context.Context, bucket string) error {
 			_, err := f.c.CreateBucketWithContext(ctx, &req)
 			return f.shouldRetry(ctx, err)
 		})
-		if err == nil {
-			fs.Infof(f, "Bucket %q created with ACL %q", bucket, f.opt.BucketACL)
-		}
 		if awsErr, ok := err.(awserr.Error); ok {
 			switch awsErr.Code() {
 			case "BucketAlreadyOwnedByYou":
@@ -4363,6 +4451,11 @@ func (f *Fs) makeBucket(ctx context.Context, bucket string) error {
 				}
 			}
 		}
+		if err != nil {
+			return err
+		}
+		fs.Infof(f, "Bucket %q created with ACL %q, object locking %v", bucket, f.opt.BucketACL, f.opt.BucketObjectLockEnabled)
+		err = f.setObjectLockingEnabled(ctx, bucket)
 		return err
 	}, func() (bool, error) {
 		return f.bucketExists(ctx, bucket)
@@ -4419,7 +4512,7 @@ func pathEscape(s string) string {
 //
 // It adds the boiler plate to the req passed in and calls the s3
 // method
-func (f *Fs) copy(ctx context.Context, req *s3.CopyObjectInput, dstBucket, dstPath, srcBucket, srcPath string, src *Object) error {
+func (f *Fs) copy(ctx context.Context, req *s3.CopyObjectInput, dstBucket, dstPath, srcBucket, srcPath string, src *Object) (err error) {
 	req.Bucket = &dstBucket
 	req.ACL = stringPointerOrNil(f.opt.ACL)
 	req.Key = &dstPath
@@ -4452,6 +4545,11 @@ func (f *Fs) copy(ctx context.Context, req *s3.CopyObjectInput, dstBucket, dstPa
 	if req.StorageClass == nil && f.opt.StorageClass != "" {
 		req.StorageClass = &f.opt.StorageClass
 	}
+	if f.opt.ObjectLockMode != "" && f.opt.ObjectLockRetainUntil.IsSet() {
+		req.ObjectLockMode = &f.opt.ObjectLockMode
+		req.ObjectLockRetainUntilDate = (*time.Time)(&f.opt.ObjectLockRetainUntil)
+	}
+	req.ObjectLockLegalHoldStatus = f.opt.getObjectLegalHoldStatus()
 
 	if src.bytes >= int64(f.opt.CopyCutoff) {
 		return f.copyMultipart(ctx, req, dstBucket, dstPath, srcBucket, srcPath, src)
@@ -4572,7 +4670,7 @@ func (f *Fs) copyMultipart(ctx context.Context, copyReq *s3.CopyObjectInput, dst
 		return err
 	}
 
-	return f.pacer.Call(func() (bool, error) {
+	err = f.pacer.Call(func() (bool, error) {
 		_, err := f.c.CompleteMultipartUploadWithContext(ctx, &s3.CompleteMultipartUploadInput{
 			Bucket: &dstBucket,
 			Key:    &dstPath,
@@ -4584,6 +4682,10 @@ func (f *Fs) copyMultipart(ctx context.Context, copyReq *s3.CopyObjectInput, dst
 		})
 		return f.shouldRetry(ctx, err)
 	})
+	if err != nil {
+		return err
+	}
+	return
 }
 
 // Copy src to this remote using server-side copy operations.
@@ -4612,7 +4714,10 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 
 	srcBucket, srcPath := srcObj.split()
 	req := s3.CopyObjectInput{
-		MetadataDirective: aws.String(s3.MetadataDirectiveCopy),
+		MetadataDirective:         aws.String(s3.MetadataDirectiveCopy),
+		ObjectLockMode:            &f.opt.ObjectLockMode,
+		ObjectLockRetainUntilDate: (*time.Time)(&f.opt.ObjectLockRetainUntil),
+		ObjectLockLegalHoldStatus: f.opt.getObjectLegalHoldStatus(),
 	}
 
 	// Update the metadata if it is in use
@@ -4629,7 +4734,11 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	if err != nil {
 		return nil, err
 	}
-	return f.NewObject(ctx, remote)
+	obj, err := f.NewObject(ctx, remote)
+	if err != nil {
+		return nil, err
+	}
+	return obj, f.SetObjectObjectLockManuallyIfNeeded(ctx, obj.(*Object))
 }
 
 // Hashes returns the supported hash sets.
@@ -5182,6 +5291,55 @@ func (f *Fs) setGetVersioning(ctx context.Context, arg ...string) (status string
 	return *resp.Status, err
 }
 
+// IsObjectLockingEnabled checks whether the bucket has object locking enabled
+// if returned true, it's safe to use the object lock feature
+func (f *Fs) IsObjectLockingEnabled(ctx context.Context) bool {
+	f.objectLockingMu.Lock()
+	defer f.objectLockingMu.Unlock()
+	if !f.objectLockingIsSet {
+		_, _, _ = f.setObjectLockingStatus(ctx)
+		fs.Debugf(f, "bucket support object-locking: %v, enabled: %v", f.bucketObjectLockSupported, f.objectLockConfigObjectLockEnabled)
+	}
+	return f.bucketObjectLockSupported && f.objectLockConfigObjectLockEnabled
+}
+
+func (f *Fs) setObjectLockingStatus(ctx context.Context) (supported bool, enabled bool, err error) {
+	if f.rootBucket == "" {
+		return false, false, errors.New("need a bucket")
+	}
+	lockCfg, err := f.c.GetObjectLockConfigurationWithContext(ctx, &s3.GetObjectLockConfigurationInput{
+		Bucket: &f.rootBucket,
+	})
+	if err != nil {
+		return false, false, err
+	}
+	supported = true
+	f.bucketObjectLockSupported = true
+	enabled = *lockCfg.ObjectLockConfiguration.ObjectLockEnabled == s3.ObjectLockEnabledEnabled
+	f.objectLockConfigObjectLockEnabled = enabled
+	f.objectLockingIsSet = true
+	return
+}
+
+func (f *Fs) setObjectLockingEnabled(ctx context.Context, bucket string) (err error) {
+	resp, err := f.c.GetObjectLockConfigurationWithContext(ctx, &s3.GetObjectLockConfigurationInput{
+		Bucket: &bucket,
+	})
+	// will this always fail for a bucket without bucket-object-lock-enabled set?
+	// documentation doesn't make clear of this
+	if err != nil {
+		return err
+	}
+	enabledStr := s3.ObjectLockEnabledEnabled
+	resp.ObjectLockConfiguration.ObjectLockEnabled = &enabledStr
+	// surely this will fail if bucket doesn't support object locking
+	_, err = f.c.PutObjectLockConfigurationWithContext(ctx, &s3.PutObjectLockConfigurationInput{
+		Bucket:                  &bucket,
+		ObjectLockConfiguration: resp.ObjectLockConfiguration,
+	})
+	return err
+}
+
 // CleanUp removes all pending multipart uploads older than 24 hours
 func (f *Fs) CleanUp(ctx context.Context) (err error) {
 	return f.cleanUp(ctx, 24*time.Hour)
@@ -5473,6 +5631,9 @@ func (o *Object) setMetaData(resp *s3.HeadObjectOutput) {
 	o.contentDisposition = resp.ContentDisposition
 	o.contentEncoding = resp.ContentEncoding
 	o.contentLanguage = resp.ContentLanguage
+	o.objectLockMode = resp.ObjectLockMode
+	o.objectLockRetainUntil = resp.ObjectLockRetainUntilDate
+	o.objectLockLegalHoldStatus = resp.ObjectLockLegalHoldStatus
 
 	// If decompressing then size and md5sum are unknown
 	if o.fs.opt.Decompress && aws.StringValue(o.contentEncoding) == "gzip" {
@@ -5796,6 +5957,20 @@ func (f *Fs) OpenChunkWriter(ctx context.Context, remote string, src fs.ObjectIn
 	return info, chunkWriter, err
 }
 
+// SetObjectObjectLockManuallyIfNeeded sends extra requests to set the object-lock status on the given object if needed
+func (f *Fs) SetObjectObjectLockManuallyIfNeeded(ctx context.Context, o *Object) error {
+	if o.fs.opt.ManuallySetObjectLock {
+		err := o.SetObjectLock(ctx, o.fs.opt.ObjectLockMode, time.Time(o.fs.opt.ObjectLockRetainUntil))
+		if err != nil {
+			return err
+		}
+		if o.fs.opt.ObjectLockLegalHold.Valid && o.fs.opt.ObjectLockLegalHold.Value {
+			return o.SetLegalHold(ctx, true)
+		}
+	}
+	return nil
+}
+
 // add a part number and etag to the completed parts
 func (w *s3ChunkWriter) addCompletedPart(partNum *int64, eTag *string) {
 	w.completedPartsMu.Lock()
@@ -6108,9 +6283,12 @@ func (o *Object) prepareUpload(ctx context.Context, src fs.ObjectInfo, options [
 	modTime := src.ModTime(ctx)
 
 	ui.req = &s3.PutObjectInput{
-		Bucket: &bucket,
-		ACL:    stringPointerOrNil(o.fs.opt.ACL),
-		Key:    &bucketPath,
+		Bucket:                    &bucket,
+		ACL:                       stringPointerOrNil(o.fs.opt.ACL),
+		Key:                       &bucketPath,
+		ObjectLockMode:            &o.fs.opt.ObjectLockMode,
+		ObjectLockRetainUntilDate: (*time.Time)(&o.fs.opt.ObjectLockRetainUntil),
+		ObjectLockLegalHoldStatus: o.fs.opt.getObjectLegalHoldStatus(),
 	}
 
 	// Fetch metadata if --metadata is in use
@@ -6340,7 +6518,8 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		}
 		fs.Debugf(o, "Multipart upload Etag: %s OK", wantETag)
 	}
-	return err
+	// this is done after HEADing the object so that it overrides related metadata
+	return o.fs.SetObjectObjectLockManuallyIfNeeded(ctx, o)
 }
 
 // Remove an object
@@ -6350,9 +6529,10 @@ func (o *Object) Remove(ctx context.Context) error {
 	}
 	bucket, bucketPath := o.split()
 	req := s3.DeleteObjectInput{
-		Bucket:    &bucket,
-		Key:       &bucketPath,
-		VersionId: o.versionID,
+		Bucket:                    &bucket,
+		Key:                       &bucketPath,
+		VersionId:                 o.versionID,
+		BypassGovernanceRetention: &o.fs.opt.BypassGovernanceRetention,
 	}
 	if o.fs.opt.RequesterPays {
 		req.RequestPayer = aws.String(s3.RequestPayerRequester)
@@ -6445,6 +6625,46 @@ func (o *Object) Metadata(ctx context.Context) (metadata fs.Metadata, err error)
 	metadata["tier"] = o.GetTier()
 
 	return metadata, nil
+}
+
+// SetObjectLock tries to change the object lock on the object
+func (o *Object) SetObjectLock(ctx context.Context, mode string, until time.Time) error {
+	bucket, key := o.split()
+	_, err := o.fs.c.PutObjectRetentionWithContext(ctx, &s3.PutObjectRetentionInput{
+		Bucket:    &bucket,
+		Key:       &key,
+		VersionId: o.versionID,
+		Retention: &s3.ObjectLockRetention{
+			Mode:            &mode,
+			RetainUntilDate: &until,
+		},
+	})
+	if err != nil {
+		return err
+	}
+	o.objectLockMode = &mode
+	o.objectLockRetainUntil = &until
+	return nil
+}
+
+// SetLegalHold tries to change the legal hold status on the object
+func (o *Object) SetLegalHold(ctx context.Context, on bool) error {
+	status := s3.ObjectLockLegalHoldStatusOff
+	if on {
+		status = s3.ObjectLockLegalHoldStatusOn
+	}
+	bucket, key := o.split()
+	_, err := o.fs.c.PutObjectLegalHoldWithContext(ctx, &s3.PutObjectLegalHoldInput{
+		Bucket:    &bucket,
+		Key:       &key,
+		VersionId: o.versionID,
+		LegalHold: &s3.ObjectLockLegalHold{Status: &status},
+	})
+	if err != nil {
+		return err
+	}
+	o.objectLockLegalHoldStatus = &status
+	return nil
 }
 
 // Check the interfaces are satisfied
