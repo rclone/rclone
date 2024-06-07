@@ -51,7 +51,7 @@ func startSysLog() bool {
 	}
 	log.SetFlags(0)
 	log.SetOutput(w)
-	fs.LogPrint = func(level fs.LogLevel, text string) {
+	fs.LogOutput = func(level fs.LogLevel, text string) {
 		switch level {
 		case fs.LogLevelEmergency:
 			_ = w.Emerg(text)
