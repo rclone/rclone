@@ -154,10 +154,33 @@ func LogLevelPrintf(level LogLevel, o interface{}, text string, args ...interfac
 	}
 }
 
+// Panicf writes alert log output for this Object or Fs and calls panic().
+// It should always be seen by the user.
+func Panicf(o interface{}, text string, args ...interface{}) {
+	if GetConfig(context.TODO()).LogLevel >= LogLevelAlert {
+		LogPrintf(LogLevelAlert, o, text, args...)
+	}
+	panic(fmt.Sprintf(text, args...))
+}
+
+// Fatalf writes critical log output for this Object or Fs and calls os.Exit(1).
+// It should always be seen by the user.
+func Fatalf(o interface{}, text string, args ...interface{}) {
+	if GetConfig(context.TODO()).LogLevel >= LogLevelCritical {
+		LogPrintf(LogLevelCritical, o, text, args...)
+	}
+	os.Exit(1)
+}
+
 // Errorf writes error log output for this Object or Fs.  It
 // should always be seen by the user.
 func Errorf(o interface{}, text string, args ...interface{}) {
 	LogLevelPrintf(LogLevelError, o, text, args...)
+}
+
+// Printf writes log output for this Object or Fs, same as Logf.
+func Printf(o interface{}, text string, args ...interface{}) {
+	LogLevelPrintf(LogLevelNotice, o, text, args...)
 }
 
 // Logf writes log output for this Object or Fs.  This should be
