@@ -28,12 +28,12 @@ const (
 // It returns a func which should be called to stop the stats.
 func startProgress() func() {
 	stopStats := make(chan struct{})
-	oldLogPrint := fs.LogPrint
+	oldLogOutput := fs.LogOutput
 	oldSyncPrint := operations.SyncPrintf
 
 	if !log.Redirected() {
 		// Intercept the log calls if not logging to file or syslog
-		fs.LogPrint = func(level fs.LogLevel, text string) {
+		fs.LogOutput = func(level fs.LogLevel, text string) {
 			printProgress(fmt.Sprintf("%s %-6s: %s", time.Now().Format(logTimeFormat), level, text))
 
 		}
@@ -60,7 +60,7 @@ func startProgress() func() {
 			case <-stopStats:
 				ticker.Stop()
 				printProgress("")
-				fs.LogPrint = oldLogPrint
+				fs.LogOutput = oldLogOutput
 				operations.SyncPrintf = oldSyncPrint
 				fmt.Println("")
 				return

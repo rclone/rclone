@@ -450,22 +450,22 @@ func (b *bisyncRun) listDirsOnly(listingNum int) (*fileList, error) {
 	return dirsonly, err
 }
 
-// ConvertPrecision returns the Modtime rounded to Dest's precision if lower, otherwise unchanged
+// ConvertPrecision returns the modTime rounded to Dest's precision if lower, otherwise unchanged
 // Need to use the other fs's precision (if lower) when copying
 // Note: we need to use Truncate rather than Round so that After() is reliable.
 // (2023-11-02 20:22:45.552679442 +0000 < UTC 2023-11-02 20:22:45.553 +0000 UTC)
-func ConvertPrecision(Modtime time.Time, dst fs.Fs) time.Time {
+func ConvertPrecision(modTime time.Time, dst fs.Fs) time.Time {
 	DestPrecision := dst.Precision()
 
 	// In case it's wrapping an Fs with lower precision, try unwrapping and use the lowest.
-	if Modtime.Truncate(DestPrecision).After(Modtime.Truncate(fs.UnWrapFs(dst).Precision())) {
+	if modTime.Truncate(DestPrecision).After(modTime.Truncate(fs.UnWrapFs(dst).Precision())) {
 		DestPrecision = fs.UnWrapFs(dst).Precision()
 	}
 
-	if Modtime.After(Modtime.Truncate(DestPrecision)) {
-		return Modtime.Truncate(DestPrecision)
+	if modTime.After(modTime.Truncate(DestPrecision)) {
+		return modTime.Truncate(DestPrecision)
 	}
-	return Modtime
+	return modTime
 }
 
 // modifyListing will modify the listing based on the results of the sync

@@ -23,7 +23,7 @@ import (
 )
 
 // Help contains text describing how to use the proxy
-var Help = strings.Replace(`### Auth Proxy
+var Help = strings.ReplaceAll(`### Auth Proxy
 
 If you supply the parameter |--auth-proxy /path/to/program| then
 rclone will use that program to generate backends on the fly which
@@ -104,7 +104,7 @@ before it takes effect.
 This can be used to build general purpose proxies to any kind of
 backend that rclone supports.  
 
-`, "|", "`", -1)
+`, "|", "`")
 
 // Options is options for creating the proxy
 type Options struct {
@@ -255,7 +255,7 @@ func (p *Proxy) call(user, auth string, isPublicKey bool) (value interface{}, er
 
 // Call runs the auth proxy with the username and password/public key provided
 // returning a *vfs.VFS and the key used in the VFS cache.
-func (p *Proxy) Call(user, auth string, isPublicKey bool) (VFS *vfs.VFS, vfsKey string, err error) {
+func (p *Proxy) Call(user, auth string, isPublicKey bool) (vf *vfs.VFS, vfsKey string, err error) {
 	// Look in the cache first
 	value, ok := p.vfsCache.GetMaybe(user)
 

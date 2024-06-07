@@ -858,10 +858,10 @@ func shouldRetry(ctx context.Context, resp *http.Response, err error) (bool, err
 
 // callBackend calls NetStorage API using either rest.Call or rest.CallXML function,
 // depending on whether the response is required
-func (f *Fs) callBackend(ctx context.Context, URL, method, actionHeader string, noResponse bool, response interface{}, options []fs.OpenOption) (io.ReadCloser, error) {
+func (f *Fs) callBackend(ctx context.Context, endpoint, method, actionHeader string, noResponse bool, response interface{}, options []fs.OpenOption) (io.ReadCloser, error) {
 	opts := rest.Opts{
 		Method:     method,
-		RootURL:    URL,
+		RootURL:    endpoint,
 		NoResponse: noResponse,
 		ExtraHeaders: map[string]string{
 			"*X-Akamai-ACS-Action": actionHeader,
@@ -895,22 +895,22 @@ func (f *Fs) callBackend(ctx context.Context, URL, method, actionHeader string, 
 }
 
 // netStorageStatRequest performs a NetStorage stat request
-func (f *Fs) netStorageStatRequest(ctx context.Context, URL string, directory bool) ([]File, error) {
-	if strings.HasSuffix(URL, ".rclonelink") {
-		fs.Infof(nil, "Converting rclonelink to a symlink on the stat request %q", URL)
-		URL = strings.TrimSuffix(URL, ".rclonelink")
+func (f *Fs) netStorageStatRequest(ctx context.Context, path string, directory bool) ([]File, error) {
+	if strings.HasSuffix(path, ".rclonelink") {
+		fs.Infof(nil, "Converting rclonelink to a symlink on the stat request %q", path)
+		path = strings.TrimSuffix(path, ".rclonelink")
 	}
-	URL = strings.TrimSuffix(URL, "/")
-	files := f.getStatCache(URL)
+	path = strings.TrimSuffix(path, "/")
+	files := f.getStatCache(path)
 	if files == nil {
 		const actionHeader = "version=1&action=stat&implicit=yes&format=xml&encoding=utf-8&slash=both"
 		statResp := &Stat{}
-		if _, err := f.callBackend(ctx, URL, "GET", actionHeader, false, statResp, nil); err != nil {
-			fs.Debugf(nil, "NetStorage action stat failed for %q: %v", URL, err)
+		if _, err := f.callBackend(ctx, path, "GET", actionHeader, false, statResp, nil); err != nil {
+			fs.Debugf(nil, "NetStorage action stat failed for %q: %v", path, err)
 			return nil, err
 		}
 		files = statResp.Files
-		f.setStatCache(URL, files)
+		f.setStatCache(path, files)
 	}
 	// Multiple objects can be returned with the "slash=both" option,
 	// when file/symlink/directory has the same name
@@ -923,23 +923,21 @@ func (f *Fs) netStorageStatRequest(ctx context.Context, URL string, directory bo
 		entrywanted := (directory && files[i].Type == "dir") ||
 			(!directory && files[i].Type != "dir")
 		if entrywanted {
-			filestamp := files[0]
-			files[0] = files[i]
-			files[i] = filestamp
+			files[0], files[i] = files[i], files[0]
 		}
 	}
 	return files, nil
 }
 
 // netStorageDirRequest performs a NetStorage dir request
-func (f *Fs) netStorageDirRequest(ctx context.Context, URL string) ([]File, error) {
+func (f *Fs) netStorageDirRequest(ctx context.Context, path string) ([]File, error) {
 	const actionHeader = "version=1&action=dir&format=xml&encoding=utf-8"
 	statResp := &Stat{}
-	if _, err := f.callBackend(ctx, URL, "GET", actionHeader, false, statResp, nil); err != nil {
+	if _, err := f.callBackend(ctx, path, "GET", actionHeader, false, statResp, nil); err != nil {
 		if err == fs.ErrorObjectNotFound {
 			return nil, fs.ErrorDirNotFound
 		}
-		fs.Debugf(nil, "NetStorage action dir failed for %q: %v", URL, err)
+		fs.Debugf(nil, "NetStorage action dir failed for %q: %v", path, err)
 		return nil, err
 	}
 	return statResp.Files, nil
@@ -947,7 +945,7 @@ func (f *Fs) netStorageDirRequest(ctx context.Context, URL string) ([]File, erro
 
 // netStorageListRequest performs a NetStorage list request
 // Second returning parameter is resumeStart string, if not empty the function should be restarted with the adjusted URL to continue the listing.
-func (f *Fs) netStorageListRequest(ctx context.Context, URL, endPath string) ([]File, string, error) {
+func (f *Fs) netStorageListRequest(ctx context.Context, path, endPath string) ([]File, string, error) {
 	actionHeader := "version=1&action=list&mtime_all=yes&format=xml&encoding=utf-8"
 	if !pathIsOneLevelDeep(endPath) {
 		// Add end= to limit the depth to endPath
@@ -958,17 +956,17 @@ func (f *Fs) netStorageListRequest(ctx context.Context, URL, endPath string) ([]
 		actionHeader += end
 	}
 	listResp := &List{}
-	if _, err := f.callBackend(ctx, URL, "GET", actionHeader, false, listResp, nil); err != nil {
+	if _, err := f.callBackend(ctx, path, "GET", actionHeader, false, listResp, nil); err != nil {
 		if err == fs.ErrorObjectNotFound {
 			// List action is known to return 404 for a valid [CP Code] path with no objects inside.
 			// Call stat to find out whether it is an empty directory or path does not exist.
-			fs.Debugf(nil, "NetStorage action list returned 404, call stat for %q", URL)
-			files, err := f.netStorageStatRequest(ctx, URL, true)
+			fs.Debugf(nil, "NetStorage action list returned 404, call stat for %q", path)
+			files, err := f.netStorageStatRequest(ctx, path, true)
 			if err == nil && len(files) > 0 && files[0].Type == "dir" {
 				return []File{}, "", nil
 			}
 		}
-		fs.Debugf(nil, "NetStorage action list failed for %q: %v", URL, err)
+		fs.Debugf(nil, "NetStorage action list failed for %q: %v", path, err)
 		return nil, "", err
 	}
 	return listResp.Files, listResp.Resume.Start, nil
@@ -1102,18 +1100,18 @@ func (f *Fs) netStorageDuRequest(ctx context.Context) (interface{}, error) {
 }
 
 // netStorageDuRequest performs a NetStorage symlink request
-func (f *Fs) netStorageSymlinkRequest(ctx context.Context, URL string, dst string, modTime *int64) (interface{}, error) {
+func (f *Fs) netStorageSymlinkRequest(ctx context.Context, path string, dst string, modTime *int64) (interface{}, error) {
 	target := url.QueryEscape(strings.TrimSuffix(dst, "/"))
 	actionHeader := "version=1&action=symlink&target=" + target
 	if modTime != nil {
 		when := strconv.FormatInt(*modTime, 10)
 		actionHeader += "&mtime=" + when
 	}
-	if _, err := f.callBackend(ctx, URL, "POST", actionHeader, true, nil, nil); err != nil {
-		fs.Debugf(nil, "NetStorage action symlink failed for %q: %v", URL, err)
+	if _, err := f.callBackend(ctx, path, "POST", actionHeader, true, nil, nil); err != nil {
+		fs.Debugf(nil, "NetStorage action symlink failed for %q: %v", path, err)
 		return nil, fmt.Errorf("symlink creation failed: %w", err)
 	}
-	f.deleteStatCache(URL)
+	f.deleteStatCache(path)
 	out := map[string]string{
 		"Symlink successfully created": dst,
 	}
@@ -1121,13 +1119,13 @@ func (f *Fs) netStorageSymlinkRequest(ctx context.Context, URL string, dst strin
 }
 
 // netStorageMkdirRequest performs a NetStorage mkdir request
-func (f *Fs) netStorageMkdirRequest(ctx context.Context, URL string) error {
+func (f *Fs) netStorageMkdirRequest(ctx context.Context, path string) error {
 	const actionHeader = "version=1&action=mkdir"
-	if _, err := f.callBackend(ctx, URL, "POST", actionHeader, true, nil, nil); err != nil {
-		fs.Debugf(nil, "NetStorage action mkdir failed for %q: %v", URL, err)
+	if _, err := f.callBackend(ctx, path, "POST", actionHeader, true, nil, nil); err != nil {
+		fs.Debugf(nil, "NetStorage action mkdir failed for %q: %v", path, err)
 		return err
 	}
-	f.deleteStatCache(URL)
+	f.deleteStatCache(path)
 	return nil
 }
 
@@ -1167,57 +1165,57 @@ func (f *Fs) netStorageRmdirRequest(ctx context.Context, dir string) error {
 }
 
 // deleteDirscreated deletes URL from dirscreated map thread-safely
-func (f *Fs) deleteDirscreated(URL string) {
-	URL = strings.TrimSuffix(URL, "/")
+func (f *Fs) deleteDirscreated(path string) {
+	path = strings.TrimSuffix(path, "/")
 	f.dirscreatedMutex.Lock()
-	delete(f.dirscreated, URL)
+	delete(f.dirscreated, path)
 	f.dirscreatedMutex.Unlock()
 }
 
 // setDirscreated sets to true URL in dirscreated map thread-safely
-func (f *Fs) setDirscreated(URL string) {
-	URL = strings.TrimSuffix(URL, "/")
+func (f *Fs) setDirscreated(path string) {
+	path = strings.TrimSuffix(path, "/")
 	f.dirscreatedMutex.Lock()
-	f.dirscreated[URL] = true
+	f.dirscreated[path] = true
 	f.dirscreatedMutex.Unlock()
 }
 
 // testAndSetDirscreated atomic test-and-set to true URL in dirscreated map,
 // returns the previous value
-func (f *Fs) testAndSetDirscreated(URL string) bool {
-	URL = strings.TrimSuffix(URL, "/")
+func (f *Fs) testAndSetDirscreated(path string) bool {
+	path = strings.TrimSuffix(path, "/")
 	f.dirscreatedMutex.Lock()
-	oldValue := f.dirscreated[URL]
-	f.dirscreated[URL] = true
+	oldValue := f.dirscreated[path]
+	f.dirscreated[path] = true
 	f.dirscreatedMutex.Unlock()
 	return oldValue
 }
 
 // deleteStatCache deletes URL from stat cache thread-safely
-func (f *Fs) deleteStatCache(URL string) {
-	URL = strings.TrimSuffix(URL, "/")
+func (f *Fs) deleteStatCache(path string) {
+	path = strings.TrimSuffix(path, "/")
 	f.statcacheMutex.Lock()
-	delete(f.statcache, URL)
+	delete(f.statcache, path)
 	f.statcacheMutex.Unlock()
 }
 
 // getStatCache gets value from statcache map thread-safely
-func (f *Fs) getStatCache(URL string) (files []File) {
-	URL = strings.TrimSuffix(URL, "/")
+func (f *Fs) getStatCache(path string) (files []File) {
+	path = strings.TrimSuffix(path, "/")
 	f.statcacheMutex.RLock()
-	files = f.statcache[URL]
+	files = f.statcache[path]
 	f.statcacheMutex.RUnlock()
 	if files != nil {
-		fs.Debugf(nil, "NetStorage stat cache hit for %q", URL)
+		fs.Debugf(nil, "NetStorage stat cache hit for %q", path)
 	}
 	return
 }
 
 // setStatCache sets value to statcache map thread-safely
-func (f *Fs) setStatCache(URL string, files []File) {
-	URL = strings.TrimSuffix(URL, "/")
+func (f *Fs) setStatCache(path string, files []File) {
+	path = strings.TrimSuffix(path, "/")
 	f.statcacheMutex.Lock()
-	f.statcache[URL] = files
+	f.statcache[path] = files
 	f.statcacheMutex.Unlock()
 }
 

@@ -38,8 +38,8 @@ func DirSorted(ctx context.Context, f fs.Fs, includeAll bool, dir string) (entri
 
 // filter (if required) and check the entries, then sort them
 func filterAndSortDir(ctx context.Context, entries fs.DirEntries, includeAll bool, dir string,
-	IncludeObject func(ctx context.Context, o fs.Object) bool,
-	IncludeDirectory func(remote string) (bool, error)) (newEntries fs.DirEntries, err error) {
+	includeObjectFn func(ctx context.Context, o fs.Object) bool,
+	includeDirectoryFn func(remote string) (bool, error)) (newEntries fs.DirEntries, err error) {
 	newEntries = entries[:0] // in place filter
 	prefix := ""
 	if dir != "" {
@@ -51,13 +51,13 @@ func filterAndSortDir(ctx context.Context, entries fs.DirEntries, includeAll boo
 		switch x := entry.(type) {
 		case fs.Object:
 			// Make sure we don't delete excluded files if not required
-			if !includeAll && !IncludeObject(ctx, x) {
+			if !includeAll && !includeObjectFn(ctx, x) {
 				ok = false
 				fs.Debugf(x, "Excluded")
 			}
 		case fs.Directory:
 			if !includeAll {
-				include, err := IncludeDirectory(x.Remote())
+				include, err := includeDirectoryFn(x.Remote())
 				if err != nil {
 					return nil, err
 				}

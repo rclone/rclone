@@ -28,7 +28,7 @@ func Reload(ctx context.Context) (err error) {
 }
 
 // AddRuleFlags add a set of rules flags with prefix
-func AddRuleFlags(flagSet *pflag.FlagSet, Opt *filter.RulesOpt, what, prefix string) {
+func AddRuleFlags(flagSet *pflag.FlagSet, opt *filter.RulesOpt, what, prefix string) {
 	shortFilter := ""
 	if prefix == "" {
 		shortFilter = "f"
@@ -37,12 +37,12 @@ func AddRuleFlags(flagSet *pflag.FlagSet, Opt *filter.RulesOpt, what, prefix str
 	if prefix == "metadata-" {
 		group += ",Metadata"
 	}
-	flags.StringArrayVarP(flagSet, &Opt.FilterRule, prefix+"filter", shortFilter, nil, fmt.Sprintf("Add a %s filtering rule", what), group)
-	flags.StringArrayVarP(flagSet, &Opt.FilterFrom, prefix+"filter-from", "", nil, fmt.Sprintf("Read %s filtering patterns from a file (use - to read from stdin)", what), group)
-	flags.StringArrayVarP(flagSet, &Opt.ExcludeRule, prefix+"exclude", "", nil, fmt.Sprintf("Exclude %ss matching pattern", what), group)
-	flags.StringArrayVarP(flagSet, &Opt.ExcludeFrom, prefix+"exclude-from", "", nil, fmt.Sprintf("Read %s exclude patterns from file (use - to read from stdin)", what), group)
-	flags.StringArrayVarP(flagSet, &Opt.IncludeRule, prefix+"include", "", nil, fmt.Sprintf("Include %ss matching pattern", what), group)
-	flags.StringArrayVarP(flagSet, &Opt.IncludeFrom, prefix+"include-from", "", nil, fmt.Sprintf("Read %s include patterns from file (use - to read from stdin)", what), group)
+	flags.StringArrayVarP(flagSet, &opt.FilterRule, prefix+"filter", shortFilter, nil, fmt.Sprintf("Add a %s filtering rule", what), group)
+	flags.StringArrayVarP(flagSet, &opt.FilterFrom, prefix+"filter-from", "", nil, fmt.Sprintf("Read %s filtering patterns from a file (use - to read from stdin)", what), group)
+	flags.StringArrayVarP(flagSet, &opt.ExcludeRule, prefix+"exclude", "", nil, fmt.Sprintf("Exclude %ss matching pattern", what), group)
+	flags.StringArrayVarP(flagSet, &opt.ExcludeFrom, prefix+"exclude-from", "", nil, fmt.Sprintf("Read %s exclude patterns from file (use - to read from stdin)", what), group)
+	flags.StringArrayVarP(flagSet, &opt.IncludeRule, prefix+"include", "", nil, fmt.Sprintf("Include %ss matching pattern", what), group)
+	flags.StringArrayVarP(flagSet, &opt.IncludeFrom, prefix+"include-from", "", nil, fmt.Sprintf("Read %s include patterns from file (use - to read from stdin)", what), group)
 }
 
 // AddFlags adds the non filing system specific flags to the command

@@ -459,8 +459,8 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 }
 
 // addID adds the ID to name
-func addID(name string, ID string) string {
-	idStr := "{" + ID + "}"
+func addID(name string, id string) string {
+	idStr := "{" + id + "}"
 	if name == "" {
 		return idStr
 	}
@@ -468,10 +468,10 @@ func addID(name string, ID string) string {
 }
 
 // addFileID adds the ID to the fileName passed in
-func addFileID(fileName string, ID string) string {
+func addFileID(fileName string, id string) string {
 	ext := path.Ext(fileName)
 	base := fileName[:len(fileName)-len(ext)]
-	return addID(base, ID) + ext
+	return addID(base, id) + ext
 }
 
 var idRe = regexp.MustCompile(`\{([A-Za-z0-9_-]{55,})\}`)

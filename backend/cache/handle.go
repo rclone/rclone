@@ -208,7 +208,7 @@ func (r *Handle) getChunk(chunkStart int64) ([]byte, error) {
 	offset := chunkStart % int64(r.cacheFs().opt.ChunkSize)
 
 	// we align the start offset of the first chunk to a likely chunk in the storage
-	chunkStart = chunkStart - offset
+	chunkStart -= offset
 	r.queueOffset(chunkStart)
 	found := false
 
@@ -327,7 +327,7 @@ func (r *Handle) Seek(offset int64, whence int) (int64, error) {
 
 	chunkStart := r.offset - (r.offset % int64(r.cacheFs().opt.ChunkSize))
 	if chunkStart >= int64(r.cacheFs().opt.ChunkSize) {
-		chunkStart = chunkStart - int64(r.cacheFs().opt.ChunkSize)
+		chunkStart -= int64(r.cacheFs().opt.ChunkSize)
 	}
 	r.queueOffset(chunkStart)
 
@@ -415,10 +415,8 @@ func (w *worker) run() {
 					continue
 				}
 			}
-		} else {
-			if w.r.storage().HasChunk(w.r.cachedObject, chunkStart) {
-				continue
-			}
+		} else if w.r.storage().HasChunk(w.r.cachedObject, chunkStart) {
+			continue
 		}
 
 		chunkEnd := chunkStart + int64(w.r.cacheFs().opt.ChunkSize)

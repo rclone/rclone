@@ -133,10 +133,10 @@ func (f *Fs) requestNewFile(ctx context.Context, req *api.RequestNewFile) (info 
 // * thumbnail_link
 // * links
 // * medias
-func (f *Fs) getFile(ctx context.Context, ID string) (info *api.File, err error) {
+func (f *Fs) getFile(ctx context.Context, id string) (info *api.File, err error) {
 	opts := rest.Opts{
 		Method: "GET",
-		Path:   "/drive/v1/files/" + ID,
+		Path:   "/drive/v1/files/" + id,
 	}
 	var resp *http.Response
 	err = f.pacer.Call(func() (bool, error) {
@@ -154,10 +154,10 @@ func (f *Fs) getFile(ctx context.Context, ID string) (info *api.File, err error)
 //
 // currently known patchable fields are
 // * name
-func (f *Fs) patchFile(ctx context.Context, ID string, req *api.File) (info *api.File, err error) {
+func (f *Fs) patchFile(ctx context.Context, id string, req *api.File) (info *api.File, err error) {
 	opts := rest.Opts{
 		Method: "PATCH",
-		Path:   "/drive/v1/files/" + ID,
+		Path:   "/drive/v1/files/" + id,
 	}
 	var resp *http.Response
 	err = f.pacer.Call(func() (bool, error) {

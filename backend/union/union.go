@@ -903,7 +903,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	// Backward compatible to old config
 	if len(opt.Upstreams) == 0 && len(opt.Remotes) > 0 {
 		for i := 0; i < len(opt.Remotes)-1; i++ {
-			opt.Remotes[i] = opt.Remotes[i] + ":ro"
+			opt.Remotes[i] += ":ro"
 		}
 		opt.Upstreams = opt.Remotes
 	}

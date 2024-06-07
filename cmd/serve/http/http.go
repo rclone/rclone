@@ -112,7 +112,7 @@ type HTTP struct {
 }
 
 // Gets the VFS in use for this request
-func (s *HTTP) getVFS(ctx context.Context) (VFS *vfs.VFS, err error) {
+func (s *HTTP) getVFS(ctx context.Context) (vf *vfs.VFS, err error) {
 	if s._vfs != nil {
 		return s._vfs, nil
 	}
@@ -120,11 +120,11 @@ func (s *HTTP) getVFS(ctx context.Context) (VFS *vfs.VFS, err error) {
 	if value == nil {
 		return nil, errors.New("no VFS found in context")
 	}
-	VFS, ok := value.(*vfs.VFS)
+	vf, ok := value.(*vfs.VFS)
 	if !ok {
 		return nil, fmt.Errorf("context value is not VFS: %#v", value)
 	}
-	return VFS, nil
+	return vf, nil
 }
 
 // auth does proxy authorization

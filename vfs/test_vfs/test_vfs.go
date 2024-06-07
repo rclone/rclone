@@ -44,9 +44,9 @@ type Test struct {
 }
 
 // NewTest creates a new test and fills in the Tests
-func NewTest(Dir string) *Test {
+func NewTest(dir string) *Test {
 	t := &Test{
-		dir:    Dir,
+		dir:    dir,
 		name:   random.String(*nameLength),
 		isDir:  rand.Intn(2) == 0,
 		number: testNumber.Add(1),

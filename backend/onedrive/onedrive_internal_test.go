@@ -468,8 +468,8 @@ func defaultPermissions(driveType string) []*api.PermissionsType {
 }
 
 // zeroes out some things we expect to be different when copying/moving between objects
-func normalize(Ps []*api.PermissionsType) {
-	for _, ep := range Ps {
+func normalize(ps []*api.PermissionsType) {
+	for _, ep := range ps {
 		ep.ID = ""
 		ep.Link = nil
 		ep.ShareID = ""

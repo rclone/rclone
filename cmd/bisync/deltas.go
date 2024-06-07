@@ -190,50 +190,48 @@ func (b *bisyncRun) findDeltas(fctx context.Context, f fs.Fs, oldListing string,
 			b.indent(msg, file, Color(terminal.RedFg, "File was deleted"))
 			ds.deleted++
 			d |= deltaDeleted
-		} else {
+		} else if !now.isDir(file) {
 			// skip dirs here, as we only care if they are new/deleted, not newer/older
-			if !now.isDir(file) {
-				whatchanged := []string{}
-				if b.opt.Compare.Size {
-					if sizeDiffers(old.getSize(file), now.getSize(file)) {
-						fs.Debugf(file, "(old: %v current: %v)", old.getSize(file), now.getSize(file))
-						if now.getSize(file) > old.getSize(file) {
-							whatchanged = append(whatchanged, Color(terminal.MagentaFg, "size (larger)"))
-							d |= deltaLarger
-						} else {
-							whatchanged = append(whatchanged, Color(terminal.MagentaFg, "size (smaller)"))
-							d |= deltaSmaller
-						}
-						s = now.getSize(file)
+			whatchanged := []string{}
+			if b.opt.Compare.Size {
+				if sizeDiffers(old.getSize(file), now.getSize(file)) {
+					fs.Debugf(file, "(old: %v current: %v)", old.getSize(file), now.getSize(file))
+					if now.getSize(file) > old.getSize(file) {
+						whatchanged = append(whatchanged, Color(terminal.MagentaFg, "size (larger)"))
+						d |= deltaLarger
+					} else {
+						whatchanged = append(whatchanged, Color(terminal.MagentaFg, "size (smaller)"))
+						d |= deltaSmaller
 					}
+					s = now.getSize(file)
 				}
-				if b.opt.Compare.Modtime {
-					if timeDiffers(fctx, old.getTime(file), now.getTime(file), f, f) {
-						if old.beforeOther(now, file) {
-							fs.Debugf(file, "(old: %v current: %v)", old.getTime(file), now.getTime(file))
-							whatchanged = append(whatchanged, Color(terminal.MagentaFg, "time (newer)"))
-							d |= deltaNewer
-						} else { // Current version is older than prior sync.
-							fs.Debugf(file, "(old: %v current: %v)", old.getTime(file), now.getTime(file))
-							whatchanged = append(whatchanged, Color(terminal.MagentaFg, "time (older)"))
-							d |= deltaOlder
-						}
-						t = now.getTime(file)
+			}
+			if b.opt.Compare.Modtime {
+				if timeDiffers(fctx, old.getTime(file), now.getTime(file), f, f) {
+					if old.beforeOther(now, file) {
+						fs.Debugf(file, "(old: %v current: %v)", old.getTime(file), now.getTime(file))
+						whatchanged = append(whatchanged, Color(terminal.MagentaFg, "time (newer)"))
+						d |= deltaNewer
+					} else { // Current version is older than prior sync.
+						fs.Debugf(file, "(old: %v current: %v)", old.getTime(file), now.getTime(file))
+						whatchanged = append(whatchanged, Color(terminal.MagentaFg, "time (older)"))
+						d |= deltaOlder
 					}
+					t = now.getTime(file)
 				}
-				if b.opt.Compare.Checksum {
-					if hashDiffers(old.getHash(file), now.getHash(file), old.hash, now.hash, old.getSize(file), now.getSize(file)) {
-						fs.Debugf(file, "(old: %v current: %v)", old.getHash(file), now.getHash(file))
-						whatchanged = append(whatchanged, Color(terminal.MagentaFg, "hash"))
-						d |= deltaHash
-						h = now.getHash(file)
-					}
+			}
+			if b.opt.Compare.Checksum {
+				if hashDiffers(old.getHash(file), now.getHash(file), old.hash, now.hash, old.getSize(file), now.getSize(file)) {
+					fs.Debugf(file, "(old: %v current: %v)", old.getHash(file), now.getHash(file))
+					whatchanged = append(whatchanged, Color(terminal.MagentaFg, "hash"))
+					d |= deltaHash
+					h = now.getHash(file)
 				}
-				// concat changes and print log
-				if d.is(deltaModified) {
-					summary := fmt.Sprintf(Color(terminal.YellowFg, "File changed: %s"), strings.Join(whatchanged, ", "))
-					b.indent(msg, file, summary)
-				}
+			}
+			// concat changes and print log
+			if d.is(deltaModified) {
+				summary := fmt.Sprintf(Color(terminal.YellowFg, "File changed: %s"), strings.Join(whatchanged, ", "))
+				b.indent(msg, file, summary)
 			}
 		}
 

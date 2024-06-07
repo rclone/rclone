@@ -260,7 +260,7 @@ func (d *driver) CheckPasswd(sctx *ftp.Context, user, pass string) (ok bool, err
 }
 
 // Get the VFS for this connection
-func (d *driver) getVFS(sctx *ftp.Context) (VFS *vfs.VFS, err error) {
+func (d *driver) getVFS(sctx *ftp.Context) (vf *vfs.VFS, err error) {
 	if d.proxy == nil {
 		// If no proxy always use the same VFS
 		return d.globalVFS, nil
@@ -276,11 +276,11 @@ func (d *driver) getVFS(sctx *ftp.Context) (VFS *vfs.VFS, err error) {
 	if err != nil {
 		return nil, err
 	}
-	VFS, _, err = d.proxy.Call(user, pass, false)
+	vf, _, err = d.proxy.Call(user, pass, false)
 	if err != nil {
 		return nil, fmt.Errorf("proxy login failed: %w", err)
 	}
-	return VFS, nil
+	return vf, nil
 }
 
 // Stat get information on file or folder
