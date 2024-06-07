@@ -26,7 +26,7 @@ func startSystemdLog() bool {
 	}
 	log.SetFlags(flags)
 	// TODO: Use the native journal.Print approach rather than a custom implementation
-	fs.LogPrint = func(level fs.LogLevel, text string) {
+	fs.LogOutput = func(level fs.LogLevel, text string) {
 		text = fmt.Sprintf("<%s>%-6s: %s", systemdLogPrefix(level), level, text)
 		_ = log.Output(4, text)
 	}
