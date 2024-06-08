@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"time"
 
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/accounting"
@@ -252,6 +253,9 @@ func multiThreadCopy(ctx context.Context, f fs.Fs, remote string, src fs.Object,
 				meta, err := fs.GetMetadataOptions(ctx, f, src, options)
 				if err != nil {
 					return nil, fmt.Errorf("multi-thread copy: failed to read metadata from source object: %w", err)
+				}
+				if _, foundMeta := meta["mtime"]; !foundMeta {
+					meta.Set("mtime", src.ModTime(ctx).Format(time.RFC3339Nano))
 				}
 				err = do.SetMetadata(ctx, meta)
 				if err != nil {
