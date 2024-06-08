@@ -859,3 +859,4 @@ put them back in again.` >}}
   * Dominik Joe Pantůček <dominik.pantucek@trustica.cz>
   * yumeiyin <155420652+yumeiyin@users.noreply.github.com>
   * Bruno Fernandes <54373093+folkzb@users.noreply.github.com>
+  * Thomas Schneider <tspam.github@brainfuck.space>
