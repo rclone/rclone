@@ -858,3 +858,4 @@ put them back in again.` >}}
   * Evan McBeth <64177332+AtomicRobotMan0101@users.noreply.github.com>
   * Dominik Joe Pantůček <dominik.pantucek@trustica.cz>
   * yumeiyin <155420652+yumeiyin@users.noreply.github.com>
+  * Bruno Fernandes <54373093+folkzb@users.noreply.github.com>
