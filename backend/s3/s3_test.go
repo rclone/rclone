@@ -4,6 +4,7 @@ package s3
 import (
 	"bytes"
 	"context"
+	"github.com/rclone/rclone/lib/random"
 	"net/http"
 	"strings"
 	"testing"
@@ -78,12 +79,9 @@ func TestAWSDualStackOption(t *testing.T) {
 }
 
 func TestIntegrationObjectLocking(t *testing.T) {
-	var bucketName = "rclone-integration-test-object-locking"
+	var bucketName = "rclone-test-object-locking-" + random.String(12)
 	fstest.Initialise()
 	ctx := context.Background()
-	ci := fs.GetConfig(ctx)
-	ci.Dump = fs.DumpBodies
-	ci.LogLevel = fs.LogLevelDebug
 
 	remote, err := fs.NewFs(ctx, *fstest.RemoteName)
 	require.NoError(t, err, "remote not configured")

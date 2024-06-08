@@ -4545,11 +4545,13 @@ func (f *Fs) copy(ctx context.Context, req *s3.CopyObjectInput, dstBucket, dstPa
 	if req.StorageClass == nil && f.opt.StorageClass != "" {
 		req.StorageClass = &f.opt.StorageClass
 	}
-	if f.opt.ObjectLockMode != "" && f.opt.ObjectLockRetainUntil.IsSet() {
+	if f.opt.ObjectLockMode != "" {
 		req.ObjectLockMode = &f.opt.ObjectLockMode
 		req.ObjectLockRetainUntilDate = (*time.Time)(&f.opt.ObjectLockRetainUntil)
 	}
-	req.ObjectLockLegalHoldStatus = f.opt.getObjectLegalHoldStatus()
+	if f.opt.ObjectLockLegalHold.Valid {
+		req.ObjectLockLegalHoldStatus = f.opt.getObjectLegalHoldStatus()
+	}
 
 	if src.bytes >= int64(f.opt.CopyCutoff) {
 		return f.copyMultipart(ctx, req, dstBucket, dstPath, srcBucket, srcPath, src)
@@ -4714,10 +4716,16 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 
 	srcBucket, srcPath := srcObj.split()
 	req := s3.CopyObjectInput{
-		MetadataDirective:         aws.String(s3.MetadataDirectiveCopy),
-		ObjectLockMode:            &f.opt.ObjectLockMode,
-		ObjectLockRetainUntilDate: (*time.Time)(&f.opt.ObjectLockRetainUntil),
-		ObjectLockLegalHoldStatus: f.opt.getObjectLegalHoldStatus(),
+		MetadataDirective: aws.String(s3.MetadataDirectiveCopy),
+	}
+	// don't set anything if object-locking is not enabled in the config
+	if f.opt.ObjectLockMode != "" {
+		req.SetObjectLockMode(f.opt.ObjectLockMode)
+		req.SetObjectLockRetainUntilDate((time.Time)(f.opt.ObjectLockRetainUntil))
+	}
+	if f.opt.ObjectLockLegalHold.Valid {
+		// this isn't always bound to retention
+		req.ObjectLockLegalHoldStatus = f.opt.getObjectLegalHoldStatus()
 	}
 
 	// Update the metadata if it is in use
@@ -5293,14 +5301,17 @@ func (f *Fs) setGetVersioning(ctx context.Context, arg ...string) (status string
 
 // IsObjectLockingEnabled checks whether the bucket has object locking enabled
 // if returned true, it's safe to use the object lock feature
-func (f *Fs) IsObjectLockingEnabled(ctx context.Context) bool {
+func (f *Fs) IsObjectLockingEnabled(ctx context.Context) (bool, error) {
 	f.objectLockingMu.Lock()
 	defer f.objectLockingMu.Unlock()
 	if !f.objectLockingIsSet {
-		_, _, _ = f.setObjectLockingStatus(ctx)
+		_, _, err := f.setObjectLockingStatus(ctx)
+		if err != nil {
+			return false, err
+		}
 		fs.Debugf(f, "bucket support object-locking: %v, enabled: %v", f.bucketObjectLockSupported, f.objectLockConfigObjectLockEnabled)
 	}
-	return f.bucketObjectLockSupported && f.objectLockConfigObjectLockEnabled
+	return f.bucketObjectLockSupported && f.objectLockConfigObjectLockEnabled, nil
 }
 
 func (f *Fs) setObjectLockingStatus(ctx context.Context) (supported bool, enabled bool, err error) {
@@ -5328,6 +5339,12 @@ func (f *Fs) setObjectLockingEnabled(ctx context.Context, bucket string) (err er
 	// will this always fail for a bucket without bucket-object-lock-enabled set?
 	// documentation doesn't make clear of this
 	if err != nil {
+		if awsErr, ok := err.(awserr.RequestFailure); ok {
+			if awsErr.StatusCode() == http.StatusNotFound {
+				//  404: Object Lock configuration does not exist for this bucket
+				return nil
+			}
+		}
 		return err
 	}
 	enabledStr := s3.ObjectLockEnabledEnabled
@@ -5959,7 +5976,7 @@ func (f *Fs) OpenChunkWriter(ctx context.Context, remote string, src fs.ObjectIn
 
 // SetObjectObjectLockManuallyIfNeeded sends extra requests to set the object-lock status on the given object if needed
 func (f *Fs) SetObjectObjectLockManuallyIfNeeded(ctx context.Context, o *Object) error {
-	if o.fs.opt.ManuallySetObjectLock {
+	if o.fs.opt.ManuallySetObjectLock && o.fs.opt.ObjectLockMode != "" {
 		err := o.SetObjectLock(ctx, o.fs.opt.ObjectLockMode, time.Time(o.fs.opt.ObjectLockRetainUntil))
 		if err != nil {
 			return err
@@ -6283,12 +6300,17 @@ func (o *Object) prepareUpload(ctx context.Context, src fs.ObjectInfo, options [
 	modTime := src.ModTime(ctx)
 
 	ui.req = &s3.PutObjectInput{
-		Bucket:                    &bucket,
-		ACL:                       stringPointerOrNil(o.fs.opt.ACL),
-		Key:                       &bucketPath,
-		ObjectLockMode:            &o.fs.opt.ObjectLockMode,
-		ObjectLockRetainUntilDate: (*time.Time)(&o.fs.opt.ObjectLockRetainUntil),
-		ObjectLockLegalHoldStatus: o.fs.opt.getObjectLegalHoldStatus(),
+		Bucket: &bucket,
+		ACL:    stringPointerOrNil(o.fs.opt.ACL),
+		Key:    &bucketPath,
+	}
+	if o.fs.opt.ObjectLockMode != "" {
+		ui.req.SetObjectLockMode(o.fs.opt.ObjectLockMode)
+		ui.req.SetObjectLockRetainUntilDate((time.Time)(o.fs.opt.ObjectLockRetainUntil))
+	}
+	if o.fs.opt.ObjectLockLegalHold.Valid {
+		// this isn't always bound to retention
+		ui.req.ObjectLockLegalHoldStatus = o.fs.opt.getObjectLegalHoldStatus()
 	}
 
 	// Fetch metadata if --metadata is in use
