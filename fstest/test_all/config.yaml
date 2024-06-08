@@ -279,7 +279,7 @@ backends:
    remote:   "TestSwiftAIO:"
    fastlist: true
  - backend:  "swift"
-   remote:   "TestSwiftAIO,use_segments_container=false:"
+   remote:   "TestSwiftAIOsegments:"
    fastlist: true
  - backend:  "swift"
    remote:   "TestSwift:"
