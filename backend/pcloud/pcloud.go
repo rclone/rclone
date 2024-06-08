@@ -1094,9 +1094,49 @@ func (o *Object) ModTime(ctx context.Context) time.Time {
 
 // SetModTime sets the modification time of the local fs object
 func (o *Object) SetModTime(ctx context.Context, modTime time.Time) error {
-	// Pcloud doesn't have a way of doing this so returning this
-	// error will cause the file to be re-uploaded to set the time.
-	return fs.ErrorCantSetModTime
+	filename, directoryID, err := o.fs.dirCache.FindPath(ctx, o.Remote(), true)
+	if err != nil {
+		return err
+	}
+	return o.setModTime(ctx, fileIDtoNumber(o.id), filename, directoryID, modTime)
+}
+
+func (o *Object) setModTime(
+	ctx context.Context,
+	fileID, filename, directoryID string,
+	modTime time.Time,
+) error {
+	filename = o.fs.opt.Enc.FromStandardName(filename)
+	opts := rest.Opts{
+		Method:           "PUT",
+		Path:             "/copyfile",
+		Parameters:       url.Values{},
+		TransferEncoding: []string{"identity"}, // pcloud doesn't like chunked encoding
+		ExtraHeaders: map[string]string{
+			"Connection": "keep-alive",
+		},
+	}
+	opts.Parameters.Set("fileid", fileID)
+	opts.Parameters.Set("folderid", dirIDtoNumber(directoryID))
+	opts.Parameters.Set("toname", filename)
+	opts.Parameters.Set("tofolderid", dirIDtoNumber(directoryID))
+	opts.Parameters.Set("ctime", strconv.FormatInt(modTime.Unix(), 10))
+	opts.Parameters.Set("mtime", strconv.FormatInt(modTime.Unix(), 10))
+
+	result := &api.ItemResult{}
+	err := o.fs.pacer.CallNoRetry(func() (bool, error) {
+		resp, err := o.fs.srv.CallJSON(ctx, &opts, nil, result)
+		err = result.Error.Update(err)
+		return shouldRetry(ctx, resp, err)
+	})
+	if err != nil {
+		return fmt.Errorf("update mtime: copyfile: %w", err)
+	}
+	if err := o.setMetaData(&result.Metadata); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // Storable returns a boolean showing whether this object storable
