@@ -11,9 +11,11 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"math"
 	"net/http"
 	"net/url"
 	"path"
+	"strconv"
 	"strings"
 	"time"
 
@@ -42,6 +44,9 @@ const (
 	maxSleep                    = 2 * time.Second
 	decayConstant               = 2 // bigger for slower decay, exponential
 	defaultHostname             = "api.pcloud.com"
+
+	defaultUploadCutoff = fs.SizeSuffix(-1)
+	defaultChunkSize    = fs.SizeSuffix(5 * 1024 * 1024)
 )
 
 // Globals
@@ -146,30 +151,76 @@ we have to rely on user password authentication for it.`,
 			Help:       "Your pcloud password.",
 			IsPassword: true,
 			Advanced:   true,
+		}, {
+			Name: "upload_cutoff",
+			Help: `Cutoff for switching to chunked upload.
+
+Any files larger than this will be uploaded in chunks of chunk_size.`,
+			Default:  defaultUploadCutoff,
+			Advanced: true,
+		}, {
+			Name: "upload_concurrency",
+			Help: `Concurrency for multipart uploads and copies.
+
+This is the number of chunks of the same file that are uploaded
+concurrently for multipart uploads and copies.
+
+If you are uploading small numbers of large files over high-speed links
+and these uploads do not fully utilize your bandwidth, then increasing
+this may help to speed up the transfers.`,
+			Default:  4,
+			Advanced: true,
+		}, {
+			Name: "chunk_size",
+			Help: `Chunk size to use for uploading.
+
+When uploading files larger than upload_cutoff or files with unknown
+size (e.g. from "rclone rcat" or uploaded with "rclone mount" or google
+photos or google docs) they will be uploaded as multipart uploads
+using this chunk size.
+
+Note that "upload_concurrency" chunks of this size are buffered
+in memory per transfer.
+
+If you are transferring large files over high-speed links and you have
+enough memory, then increasing this will speed up the transfers.
+
+Files of unknown size are uploaded with the configured chunk_size.  
+
+Increasing the chunk size decreases the accuracy of the progress
+statistics displayed with "-P" flag. Rclone treats chunk as sent when
+it's buffered, when in fact it may still be uploading.
+`,
+			Default:  defaultChunkSize,
+			Advanced: true,
 		}}...),
 	})
 }
 
 // Options defines the configuration for this backend
 type Options struct {
-	Enc          encoder.MultiEncoder `config:"encoding"`
-	RootFolderID string               `config:"root_folder_id"`
-	Hostname     string               `config:"hostname"`
-	Username     string               `config:"username"`
-	Password     string               `config:"password"`
+	Enc               encoder.MultiEncoder `config:"encoding"`
+	RootFolderID      string               `config:"root_folder_id"`
+	Hostname          string               `config:"hostname"`
+	Username          string               `config:"username"`
+	Password          string               `config:"password"`
+	UploadCutoff      fs.SizeSuffix        `config:"upload_cutoff"`
+	UploadConcurrency int                  `config:"upload_concurrency"`
+	ChunkSize         fs.SizeSuffix        `config:"chunk_size"`
 }
 
 // Fs represents a remote pcloud
 type Fs struct {
-	name         string             // name of this remote
-	root         string             // the path we are working on
-	opt          Options            // parsed options
-	features     *fs.Features       // optional features
-	srv          *rest.Client       // the connection to the server
-	cleanupSrv   *rest.Client       // the connection used for the cleanup method
-	dirCache     *dircache.DirCache // Map of directory path to directory id
-	pacer        *fs.Pacer          // pacer for API calls
-	tokenRenewer *oauthutil.Renew   // renew the token on expiry
+	name         string                 // name of this remote
+	root         string                 // the path we are working on
+	opt          Options                // parsed options
+	features     *fs.Features           // optional features
+	ts           *oauthutil.TokenSource // the token source, used to create new clients
+	srv          *rest.Client           // the connection to the server
+	cleanupSrv   *rest.Client           // the connection used for the cleanup method
+	dirCache     *dircache.DirCache     // Map of directory path to directory id
+	pacer        *fs.Pacer              // pacer for API calls
+	tokenRenewer *oauthutil.Renew       // renew the token on expiry
 }
 
 // Object describes a pcloud object
@@ -317,6 +368,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		name:  name,
 		root:  root,
 		opt:   *opt,
+		ts:    ts,
 		srv:   rest.NewClient(oAuthClient).SetRoot("https://" + opt.Hostname),
 		pacer: fs.NewPacer(ctx, pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant))),
 	}
@@ -326,6 +378,9 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	f.features = (&fs.Features{
 		CaseInsensitive:         false,
 		CanHaveEmptyDirectories: true,
+		OpenChunkWriter: func(ctx context.Context, remote string, src fs.ObjectInfo, options ...fs.OpenOption) (info fs.ChunkWriterInfo, writer fs.ChunkWriter, err error) {
+			return newChunkWriter(ctx, remote, src, f)
+		},
 	}).Fill(ctx, f)
 	if !canCleanup {
 		f.features.CleanUp = nil
@@ -333,7 +388,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	f.srv.SetErrorHandler(errorHandler)
 
 	// Renew the token in the background
-	f.tokenRenewer = oauthutil.NewRenew(f.String(), ts, func() error {
+	f.tokenRenewer = oauthutil.NewRenew(f.String(), f.ts, func() error {
 		_, err := f.readMetaDataForPath(ctx, "")
 		return err
 	})
@@ -373,6 +428,23 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		return f, fs.ErrorIsFile
 	}
 	return f, nil
+}
+
+// Create a new http client, accepting keep-alive headers, limited to single connection.
+// Necessary for pcloud fileops API, as it binds the session to the underlying TCP connection.
+// File descriptors are only valid within the same connection and auto-closed when the connection is closed,
+// hence we need a separate client (with single connection) for each fd to avoid all sorts of errors and race conditions.
+func (f *Fs) newSingleConnClient(ctx context.Context) (*rest.Client, error) {
+	baseClient := fshttp.NewClient(ctx)
+	baseClient.Transport = fshttp.NewTransportCustom(ctx, func(t *http.Transport) {
+		t.MaxConnsPerHost = 1
+		t.DisableKeepAlives = false
+	})
+	// Set our own http client in the context
+	ctx = oauthutil.Context(ctx, baseClient)
+	// create a new oauth client, re-use the token source
+	oAuthClient := oauth2.NewClient(ctx, f.ts)
+	return rest.NewClient(oAuthClient).SetRoot("https://" + f.opt.Hostname), nil
 }
 
 // Return an Object from a path
@@ -1218,6 +1290,33 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	leaf, directoryID, err := o.fs.dirCache.FindPath(ctx, remote, true)
 	if err != nil {
 		return err
+	}
+
+	// if upload cutoff is set and file hits the limit, use chunkWriter
+	sizeUnknown := size < 0
+	cutoffHit := o.fs.opt.UploadCutoff > 0 && o.fs.opt.UploadCutoff < fs.SizeSuffix(size)
+	if sizeUnknown || cutoffHit {
+		_, chunkWriter, err := newChunkWriter(ctx, remote, src, o.fs)
+		if err != nil {
+			return fmt.Errorf("create chunk writer")
+		}
+		o.id = strconv.FormatInt(chunkWriter.fileID, 10)
+		totalChunks := int(math.Ceil(float64(size) / float64(chunkWriter.chunkSize)))
+
+		fs.Debugf(o, "upload in %d chunks", totalChunks)
+		for chunk := 0; chunk < totalChunks; chunk++ {
+			// FIXME: Could be done in parallel (by using opt upload_concurrency), not necessary in praxis as that is covered by operations.multithreaded.
+			_, err := chunkWriter.writeChunk(ctx, chunk, in)
+			if err != nil {
+				return fmt.Errorf("upload chunk %d: %w", chunk, err)
+			}
+		}
+
+		if err := chunkWriter.Close(ctx); err != nil {
+			return fmt.Errorf("close chunk writer: %w", err)
+		}
+
+		return nil
 	}
 
 	// Experiments with pcloud indicate that it doesn't like any
