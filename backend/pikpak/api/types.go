@@ -251,10 +251,12 @@ type Media struct {
 
 // FileParams includes parameters for instant open
 type FileParams struct {
+	DeviceID     string `json:"device_id,omitempty"`
 	Duration     int64  `json:"duration,omitempty,string"` // in seconds
 	Height       int    `json:"height,omitempty,string"`
 	Platform     string `json:"platform,omitempty"` // "Upload"
 	PlatformIcon string `json:"platform_icon,omitempty"`
+	TaskID       string `json:"task_id"`
 	URL          string `json:"url,omitempty"`
 	Width        int    `json:"width,omitempty,string"`
 }

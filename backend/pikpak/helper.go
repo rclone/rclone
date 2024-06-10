@@ -9,7 +9,9 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"os"
+	"strconv"
 
 	"github.com/rclone/rclone/backend/pikpak/api"
 	"github.com/rclone/rclone/lib/rest"
@@ -141,9 +143,8 @@ func (f *Fs) getFile(ctx context.Context, ID string) (info *api.File, err error)
 	var resp *http.Response
 	err = f.pacer.Call(func() (bool, error) {
 		resp, err = f.rst.CallJSON(ctx, &opts, nil, &info)
-		if err == nil && info.Phase != api.PhaseTypeComplete {
-			// could be pending right after file is created/uploaded.
-			return true, errors.New("not PHASE_TYPE_COMPLETE")
+		if err == nil && !info.Links.ApplicationOctetStream.Valid() {
+			return true, errors.New("no link")
 		}
 		return f.shouldRetry(ctx, resp, err)
 	})
@@ -162,6 +163,45 @@ func (f *Fs) patchFile(ctx context.Context, ID string, req *api.File) (info *api
 	var resp *http.Response
 	err = f.pacer.Call(func() (bool, error) {
 		resp, err = f.rst.CallJSON(ctx, &opts, &req, &info)
+		return f.shouldRetry(ctx, resp, err)
+	})
+	return
+}
+
+// getTask gets api.Task from API for the ID passed
+func (f *Fs) getTask(ctx context.Context, ID string, checkPhase bool) (info *api.Task, err error) {
+	opts := rest.Opts{
+		Method: "GET",
+		Path:   "/drive/v1/tasks/" + ID,
+	}
+	var resp *http.Response
+	err = f.pacer.Call(func() (bool, error) {
+		resp, err = f.rst.CallJSON(ctx, &opts, nil, &info)
+		if checkPhase {
+			if err == nil && info.Phase != api.PhaseTypeComplete {
+				// could be pending right after file is created/uploaded.
+				return true, errors.New(info.Phase)
+			}
+		}
+		return f.shouldRetry(ctx, resp, err)
+	})
+	return
+}
+
+// deleteTask remove a task having the specified ID
+func (f *Fs) deleteTask(ctx context.Context, ID string, deleteFiles bool) (err error) {
+	params := url.Values{}
+	params.Set("delete_files", strconv.FormatBool(deleteFiles))
+	params.Set("task_ids", ID)
+	opts := rest.Opts{
+		Method:     "DELETE",
+		Path:       "/drive/v1/tasks",
+		Parameters: params,
+		NoResponse: true,
+	}
+	var resp *http.Response
+	err = f.pacer.Call(func() (bool, error) {
+		resp, err = f.rst.CallJSON(ctx, &opts, nil, nil)
 		return f.shouldRetry(ctx, resp, err)
 	})
 	return
