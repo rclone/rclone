@@ -289,6 +289,10 @@ func shouldRetry(ctx context.Context, resp *http.Response, err error) (bool, err
 		authRetry = true
 		fs.Debugf(nil, "Should retry: %v", err)
 	}
+	if resp != nil && resp.StatusCode == 429 {
+		fs.Errorf(nil, "zoho: rate limit error received, sleeping for 60s: %v", err)
+		time.Sleep(60 * time.Second)
+	}
 	return authRetry || fserrors.ShouldRetry(err) || fserrors.ShouldRetryHTTP(resp, retryErrorCodes), err
 }
 
