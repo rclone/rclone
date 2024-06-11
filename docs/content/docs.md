@@ -65,6 +65,7 @@ See the following for detailed instructions for
   * [Oracle Object Storage](/oracleobjectstorage/)
   * [Pcloud](/pcloud/)
   * [PikPak](/pikpak/)
+  * [Pixeldrain](/pixeldrain/)
   * [premiumize.me](/premiumizeme/)
   * [put.io](/putio/)
   * [Proton Drive](/protondrive/)
@@ -279,9 +280,9 @@ However using the connection string syntax, this does work.
 
     rclone copy "gdrive,shared_with_me:shared-file.txt" gdrive:
 
-Note that the connection string only affects the options of the immediate 
-backend. If for example gdriveCrypt is a crypt based on gdrive, then the 
-following command **will not work** as intended, because 
+Note that the connection string only affects the options of the immediate
+backend. If for example gdriveCrypt is a crypt based on gdrive, then the
+following command **will not work** as intended, because
 `shared_with_me` is ignored by the crypt backend:
 
     rclone copy "gdriveCrypt,shared_with_me:shared-file.txt" gdriveCrypt:
@@ -846,21 +847,21 @@ objects to transfer is held in memory before the transfers start.
 
 ### --checkers=N ###
 
-Originally controlling just the number of file checkers to run in parallel, 
-e.g. by `rclone copy`. Now a fairly universal parallelism control 
-used by `rclone` in several places. 
+Originally controlling just the number of file checkers to run in parallel,
+e.g. by `rclone copy`. Now a fairly universal parallelism control
+used by `rclone` in several places.
 
-Note: checkers do the equality checking of files during a sync. 
-For some storage systems (e.g. S3, Swift, Dropbox) this can take 
+Note: checkers do the equality checking of files during a sync.
+For some storage systems (e.g. S3, Swift, Dropbox) this can take
 a significant amount of time so they are run in parallel.
 
-The default is to run 8 checkers in parallel. However, in case 
+The default is to run 8 checkers in parallel. However, in case
 of slow-reacting backends you may need to lower (rather than increase)
-this default by setting `--checkers` to 4 or less threads. This is 
-especially advised if you are experiencing backend server crashes 
-during file checking phase (e.g. on subsequent or top-up backups 
-where little or no file copying is done and checking takes up 
-most of the time). Increase this setting only with utmost care, 
+this default by setting `--checkers` to 4 or less threads. This is
+especially advised if you are experiencing backend server crashes
+during file checking phase (e.g. on subsequent or top-up backups
+where little or no file copying is done and checking takes up
+most of the time). Increase this setting only with utmost care,
 while monitoring your server health and file checking throughput.
 
 ### -c, --checksum ###
@@ -1032,8 +1033,8 @@ See `--compare-dest` and `--backup-dir`.
 
 ### --dedupe-mode MODE ###
 
-Mode to run dedupe command in.  One of `interactive`, `skip`, `first`, 
-`newest`, `oldest`, `rename`.  The default is `interactive`.  
+Mode to run dedupe command in.  One of `interactive`, `skip`, `first`,
+`newest`, `oldest`, `rename`.  The default is `interactive`.
 See the dedupe command for more information as to what these options mean.
 
 ### --default-time TIME ###
@@ -1422,8 +1423,8 @@ have a signal to rotate logs.
 
 ### --log-format LIST ###
 
-Comma separated list of log format options. Accepted options are `date`, 
-`time`, `microseconds`, `pid`, `longfile`, `shortfile`, `UTC`. Any other 
+Comma separated list of log format options. Accepted options are `date`,
+`time`, `microseconds`, `pid`, `longfile`, `shortfile`, `UTC`. Any other
 keywords will be silently ignored. `pid` will tag log messages with process
 identifier which useful with `rclone mount --daemon`. Other accepted
 options are explained in the [go documentation](https://pkg.go.dev/log#pkg-constants).
@@ -2806,8 +2807,8 @@ override the environment variable setting.
 Or to always use the trash in drive `--drive-use-trash`, set
 `RCLONE_DRIVE_USE_TRASH=true`.
 
-Verbosity is slightly different, the environment variable 
-equivalent of `--verbose` or `-v` is `RCLONE_VERBOSE=1`, 
+Verbosity is slightly different, the environment variable
+equivalent of `--verbose` or `-v` is `RCLONE_VERBOSE=1`,
 or for `-vv`, `RCLONE_VERBOSE=2`.
 
 The same parser is used for the options and the environment variables
@@ -2858,9 +2859,9 @@ $ rclone lsd MYS3:
 ```
 
 
-Note that you can only set the options of the immediate backend, 
-so RCLONE_CONFIG_MYS3CRYPT_ACCESS_KEY_ID has no effect, if myS3Crypt is 
-a crypt remote based on an S3 remote. However RCLONE_S3_ACCESS_KEY_ID will 
+Note that you can only set the options of the immediate backend,
+so RCLONE_CONFIG_MYS3CRYPT_ACCESS_KEY_ID has no effect, if myS3Crypt is
+a crypt remote based on an S3 remote. However RCLONE_S3_ACCESS_KEY_ID will
 set the access key of all remotes using S3, including myS3Crypt.
 
 Note also that now rclone has [connection strings](#connection-strings),

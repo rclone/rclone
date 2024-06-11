@@ -343,6 +343,11 @@ backends:
      - TestSyncWithTrackRenames
     # integration
      - TestIntegration/FsMkdir/FsPutFiles/ObjectMimeType
+ - backend:  "pixeldrain"
+   remote: "TestPixeldrain:"
+   ignore:
+     - TestIntegration/FsMkdir/FsEncoding/invalid_UTF-8
+   fastlist: false
  - backend:  "webdav"
    remote:   "TestWebdavNextcloud:"
    ignore:
