@@ -343,6 +343,9 @@ backends:
      - TestSyncWithTrackRenames
     # integration
      - TestIntegration/FsMkdir/FsPutFiles/ObjectMimeType
+    # This test fails with message
+    # "share_status_prohibited" (9): Sorry, the sharing service is under maintenance in the current region.
+     - TestIntegration/FsMkdir/FsPutFiles/PublicLink
  - backend:  "webdav"
    remote:   "TestWebdavNextcloud:"
    ignore:
