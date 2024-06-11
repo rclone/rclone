@@ -639,24 +639,6 @@ func (f *Fs) createObject(ctx context.Context, remote string, size int64, modTim
 	return
 }
 
-// Put the object
-//
-// Copy the reader in to the new object which is returned.
-//
-// The new object may have been created if an error is returned
-func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
-	existingObj, err := f.newObjectWithInfo(ctx, src.Remote(), nil)
-	switch err {
-	case nil:
-		return existingObj, existingObj.Update(ctx, in, src, options...)
-	case fs.ErrorObjectNotFound:
-		// Not found so create it
-		return f.PutUnchecked(ctx, in, src)
-	default:
-		return nil, err
-	}
-}
-
 func isSimpleName(s string) bool {
 	for _, r := range s {
 		if (r < 'a' || r > 'z') && (r < 'A' || r > 'Z') && (r != '.') {
@@ -709,14 +691,12 @@ func (f *Fs) upload(ctx context.Context, name string, parent string, size int64,
 	return info, nil
 }
 
-// PutUnchecked the object into the container
-//
-// This will produce an error if the object already exists.
+// Put the object into the container
 //
 // Copy the reader in to the new object which is returned.
 //
 // The new object may have been created if an error is returned
-func (f *Fs) PutUnchecked(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
+func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
 	size := src.Size()
 	remote := src.Remote()
 
