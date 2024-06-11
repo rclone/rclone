@@ -332,7 +332,7 @@ func parsePath(path string) (root string) {
 
 // readMetaDataForPath reads the metadata from the path
 func (f *Fs) readMetaDataForPath(ctx context.Context, path string) (info *api.Item, err error) {
-	// defer fs.Trace(f, "path=%q", path)("info=%+v, err=%v", &info, &err)
+	// defer log.Trace(f, "path=%q", path)("info=%+v, err=%v", &info, &err)
 	leaf, directoryID, err := f.dirCache.FindPath(ctx, path, false)
 	if err != nil {
 		if err == fs.ErrorDirNotFound {
@@ -683,9 +683,21 @@ func (f *Fs) upload(ctx context.Context, name string, parent string, size int64,
 		return nil, errors.New("upload: invalid response")
 	}
 	// Received meta data is missing size so we have to read it again.
-	info, err := f.readMetaDataForID(ctx, uploadResponse.Uploads[0].Attributes.RessourceID)
-	if err != nil {
-		return nil, err
+	// It doesn't always appear on first read so try again if necessary
+	var info *api.Item
+	const maxTries = 10
+	sleepTime := 100 * time.Millisecond
+	for i := 0; i < maxTries; i++ {
+		info, err = f.readMetaDataForID(ctx, uploadResponse.Uploads[0].Attributes.RessourceID)
+		if err != nil {
+			return nil, err
+		}
+		if info.Attributes.StorageInfo.Size != 0 || size == 0 {
+			break
+		}
+		fs.Debugf(f, "Size not available yet for %q - try again in %v (try %d/%d)", name, sleepTime, i+1, maxTries)
+		time.Sleep(sleepTime)
+		sleepTime *= 2
 	}
 
 	return info, nil
