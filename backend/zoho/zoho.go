@@ -639,15 +639,6 @@ func (f *Fs) createObject(ctx context.Context, remote string, size int64, modTim
 	return
 }
 
-func isSimpleName(s string) bool {
-	for _, r := range s {
-		if (r < 'a' || r > 'z') && (r < 'A' || r > 'Z') && (r != '.') {
-			return false
-		}
-	}
-	return true
-}
-
 func (f *Fs) upload(ctx context.Context, name string, parent string, size int64, in io.Reader, options ...fs.OpenOption) (*api.Item, error) {
 	params := url.Values{}
 	params.Set("filename", name)
@@ -718,25 +709,12 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 		return nil, err
 	}
 
-	if isSimpleName(leaf) {
-		info, err := f.upload(ctx, f.opt.Enc.FromStandardName(leaf), directoryID, size, in, options...)
-		if err != nil {
-			return nil, err
-		}
-		return f.newObjectWithInfo(ctx, remote, info)
-	}
-
-	tempName := "rcloneTemp" + random.String(8)
-	info, err := f.upload(ctx, tempName, directoryID, size, in, options...)
+	// Upload the file
+	info, err := f.upload(ctx, f.opt.Enc.FromStandardName(leaf), directoryID, size, in, options...)
 	if err != nil {
 		return nil, err
 	}
-
-	o, err := f.newObjectWithInfo(ctx, remote, info)
-	if err != nil {
-		return nil, err
-	}
-	return o, o.(*Object).rename(ctx, leaf)
+	return f.newObjectWithInfo(ctx, remote, info)
 }
 
 // Mkdir creates the container if it doesn't exist
@@ -1200,32 +1178,12 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		return err
 	}
 
-	if isSimpleName(leaf) {
-		// Simple name we can just overwrite the old file
-		info, err := o.fs.upload(ctx, o.fs.opt.Enc.FromStandardName(leaf), directoryID, size, in, options...)
-		if err != nil {
-			return err
-		}
-		return o.setMetaData(info)
-	}
-
-	// We have to fall back to upload + rename
-	tempName := "rcloneTemp" + random.String(8)
-	info, err := o.fs.upload(ctx, tempName, directoryID, size, in, options...)
+	// Overwrite the old file
+	info, err := o.fs.upload(ctx, o.fs.opt.Enc.FromStandardName(leaf), directoryID, size, in, options...)
 	if err != nil {
 		return err
 	}
-
-	// upload was successful, need to delete old object before rename
-	if err = o.Remove(ctx); err != nil {
-		return fmt.Errorf("failed to remove old object: %w", err)
-	}
-	if err = o.setMetaData(info); err != nil {
-		return err
-	}
-
-	// rename also updates metadata
-	return o.rename(ctx, leaf)
+	return o.setMetaData(info)
 }
 
 // Remove an object
