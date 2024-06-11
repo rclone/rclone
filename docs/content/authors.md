@@ -861,3 +861,4 @@ put them back in again.` >}}
   * Bruno Fernandes <54373093+folkzb@users.noreply.github.com>
   * Thomas Schneider <tspam.github@brainfuck.space>
   * Charles Hamilton <52973156+chamilton-ccn@users.noreply.github.com>
+  * Tomasz Melcer <tomasz@melcer.pl>
