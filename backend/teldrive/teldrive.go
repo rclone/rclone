@@ -321,30 +321,6 @@ func (f *Fs) readMetaDataForPath(ctx context.Context, path string, options *api.
 	return &info, nil
 }
 
-func (f *Fs) getPathInfo(ctx context.Context, path string) (*api.ReadMetadataResponse, error) {
-
-	opts := rest.Opts{
-		Method: "GET",
-		Path:   "/api/files",
-		Parameters: url.Values{
-			"path": []string{path},
-			"op":   []string{"find"},
-		},
-	}
-	var err error
-	var info api.ReadMetadataResponse
-	var resp *http.Response
-	err = f.pacer.Call(func() (bool, error) {
-		resp, err = f.srv.CallJSON(ctx, &opts, nil, &info)
-		return shouldRetry(ctx, resp, err)
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	return &info, nil
-}
-
 func (f *Fs) findObject(ctx context.Context, path string, name string) (*api.ReadMetadataResponse, error) {
 
 	opts := rest.Opts{
@@ -695,15 +671,17 @@ func (f *Fs) Mkdir(ctx context.Context, dir string) (err error) {
 	return f.CreateDir(ctx, f.root, dir)
 }
 
-// may or may not delete folders with contents?
-func (f *Fs) purge(ctx context.Context, folderID string) (err error) {
+// Rmdir removes the directory (container, bucket) if empty
+//
+// Return an error if it doesn't exist or isn't empty
+func (f *Fs) Rmdir(ctx context.Context, dir string) (err error) {
 	var resp *http.Response
 	opts := rest.Opts{
 		Method: "POST",
 		Path:   "/api/files/delete",
 	}
 	rm := api.RemoveFileRequest{
-		Files: []string{folderID},
+		Source: f.dirPath(dir),
 	}
 	err = f.pacer.Call(func() (bool, error) {
 		resp, err = f.srv.CallJSON(ctx, &opts, &rm, nil)
@@ -713,17 +691,6 @@ func (f *Fs) purge(ctx context.Context, folderID string) (err error) {
 		return err
 	}
 	return nil
-}
-
-// Rmdir removes the directory (container, bucket) if empty
-//
-// Return an error if it doesn't exist or isn't empty
-func (f *Fs) Rmdir(ctx context.Context, dir string) error {
-	info, err := f.getPathInfo(ctx, f.dirPath(dir))
-	if err != nil {
-		return err
-	}
-	return f.purge(ctx, info.Files[0].Id)
 }
 
 // Move src to this remote using server-side move operations.

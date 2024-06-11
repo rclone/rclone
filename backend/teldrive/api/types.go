@@ -124,20 +124,6 @@ type CreateFileRequest struct {
 	UpdatedAt string     `json:"updatedAt,omitempty"`
 }
 
-// DeleteFolderRequest is used for deleting a folder
-type DeleteFolderRequest struct {
-	Token    string `json:"token"`
-	FolderID string `json:"fld_id"`
-}
-
-// CopyMoveFileRequest is used for moving/copying a file
-type CopyMoveFileRequest struct {
-	Token               string `json:"token"`
-	FileCodes           string `json:"file_codes"`
-	DestinationFolderID string `json:"destination_fld_id"`
-	Action              string `json:"action"`
-}
-
 // MoveFolderRequest is used for moving a folder
 type MoveFileRequest struct {
 	Files       []string `json:"files"`
@@ -159,9 +145,9 @@ type UpdateFileInformation struct {
 
 // RemoveFileRequest is used for deleting a file
 type RemoveFileRequest struct {
-	Files []string `json:"files"`
+	Source string   `json:"source,omitempty"`
+	Files  []string `json:"files,omitempty"`
 }
-
 type CopyFile struct {
 	ID          string `json:"id"`
 	Name        string `json:"name"`
