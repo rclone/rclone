@@ -454,18 +454,18 @@ type listAllFn func(*api.Item) bool
 //
 // If the user fn ever returns true then it early exits with found = true
 func (f *Fs) listAll(ctx context.Context, dirID string, directoriesOnly bool, filesOnly bool, fn listAllFn) (found bool, err error) {
+	const listItemsLimit = 1000
 	opts := rest.Opts{
 		Method:       "GET",
 		Path:         "/files/" + dirID + "/files",
 		ExtraHeaders: map[string]string{"Accept": "application/vnd.api+json"},
-		Parameters:   url.Values{},
+		Parameters: url.Values{
+			"page[limit]": {strconv.Itoa(listItemsLimit)},
+			"page[next]":  {"0"},
+		},
 	}
-	opts.Parameters.Set("page[limit]", strconv.Itoa(10))
-	offset := 0
 OUTER:
 	for {
-		opts.Parameters.Set("page[offset]", strconv.Itoa(offset))
-
 		var result api.ItemList
 		var resp *http.Response
 		err = f.pacer.Call(func() (bool, error) {
@@ -495,7 +495,15 @@ OUTER:
 				break OUTER
 			}
 		}
-		offset += 10
+		if !result.Links.Cursor.HasNext {
+			break
+		}
+		// Fetch the next from the URL in the response
+		nextURL, err := url.Parse(result.Links.Cursor.Next)
+		if err != nil {
+			return found, fmt.Errorf("failed to parse next link as URL: %w", err)
+		}
+		opts.Parameters.Set("page[next]", nextURL.Query().Get("page[next]"))
 	}
 	return
 }

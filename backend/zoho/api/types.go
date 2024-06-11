@@ -70,8 +70,17 @@ type ItemInfo struct {
 	Item Item `json:"data"`
 }
 
+// Links contains Cursor information
+type Links struct {
+	Cursor struct {
+		HasNext bool   `json:"has_next"`
+		Next    string `json:"next"`
+	} `json:"cursor"`
+}
+
 // ItemList contains multiple Zoho Items
 type ItemList struct {
+	Links Links  `json:"links"`
 	Items []Item `json:"data"`
 }
 
