@@ -23,7 +23,6 @@ package pikpak
 import (
 	"bytes"
 	"context"
-	"crypto/sha1"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -89,8 +88,6 @@ var (
 		ClientSecret: obscure.MustReveal(rcloneEncryptedClientSecret),
 		RedirectURL:  oauthutil.RedirectURL,
 	}
-	// pphashType is the hash.Type for pikpak hashes.
-	pphashType hash.Type
 )
 
 // Returns OAuthOptions modified for pikpak
@@ -129,7 +126,6 @@ func pikpakAuthorize(ctx context.Context, opt *Options, name string, m configmap
 
 // Register with Fs
 func init() {
-	pphashType = hash.RegisterHash("pikpak", "PikPakHash", 40, sha1.New)
 	fs.Register(&fs.RegInfo{
 		Name:        "pikpak",
 		Description: "PikPak",
@@ -293,7 +289,7 @@ type Object struct {
 	modTime     time.Time // modification time of the object
 	mimeType    string    // The object MIME type
 	parent      string    // ID of the parent directories
-	hash        string    // hash of the object
+	gcid        string    // custom hash of the object
 	md5sum      string    // md5sum of the object
 	link        *api.Link // link to download the object
 	linkMu      *sync.Mutex
@@ -336,7 +332,7 @@ func (f *Fs) DirCacheFlush() {
 
 // Hashes returns the supported hash sets.
 func (f *Fs) Hashes() hash.Set {
-	return hash.Set(pphashType | hash.MD5)
+	return hash.Set(hash.MD5)
 }
 
 // parsePath parses a remote path
@@ -1506,7 +1502,7 @@ func (o *Object) setMetaData(info *api.File) (err error) {
 	} else {
 		o.parent = info.ParentID
 	}
-	o.hash = info.Hash
+	o.gcid = info.Hash
 	o.md5sum = info.Md5Checksum
 	if info.Links.ApplicationOctetStream != nil {
 		o.link = info.Links.ApplicationOctetStream
@@ -1575,16 +1571,12 @@ func (o *Object) Remote() string {
 	return o.remote
 }
 
-// Hash returns the supported hash of an object returning a lowercase hex string
+// Hash returns the Md5sum of an object returning a lowercase hex string
 func (o *Object) Hash(ctx context.Context, t hash.Type) (string, error) {
-	switch t {
-	case pphashType:
-		return strings.ToLower(o.hash), nil
-	case hash.MD5:
-		return strings.ToLower(o.md5sum), nil
-	default:
+	if t != hash.MD5 {
 		return "", hash.ErrUnsupported
 	}
+	return strings.ToLower(o.md5sum), nil
 }
 
 // Size returns the size of an object in bytes
@@ -1707,25 +1699,23 @@ func (o *Object) upload(ctx context.Context, in io.Reader, src fs.ObjectInfo, wi
 		return err
 	}
 
-	// Calculate hashStr; grabbed from package jottacloud
-	hashStr, err := src.Hash(ctx, pphashType)
-	if err != nil || hashStr == "" {
-		// unwrap the accounting from the input, we use wrap to put it
-		// back on after the buffering
-		var wrap accounting.WrapFn
-		in, wrap = accounting.UnWrap(in)
-		var cleanup func()
-		hashStr, in, cleanup, err = readGcid(in, size, int64(o.fs.opt.HashMemoryThreshold))
-		defer cleanup()
-		if err != nil {
-			return fmt.Errorf("failed to calculate hash: %w", err)
-		}
-		// Wrap the accounting back onto the stream
-		in = wrap(in)
+	// Calculate gcid; grabbed from package jottacloud
+	var gcid string
+	// unwrap the accounting from the input, we use wrap to put it
+	// back on after the buffering
+	var wrap accounting.WrapFn
+	in, wrap = accounting.UnWrap(in)
+	var cleanup func()
+	gcid, in, cleanup, err = readGcid(in, size, int64(o.fs.opt.HashMemoryThreshold))
+	defer cleanup()
+	if err != nil {
+		return fmt.Errorf("failed to calculate gcid: %w", err)
 	}
+	// Wrap the accounting back onto the stream
+	in = wrap(in)
 
 	if !withTemp {
-		info, err := o.fs.upload(ctx, in, leaf, dirID, hashStr, size, options...)
+		info, err := o.fs.upload(ctx, in, leaf, dirID, gcid, size, options...)
 		if err != nil {
 			return err
 		}
@@ -1734,7 +1724,7 @@ func (o *Object) upload(ctx context.Context, in io.Reader, src fs.ObjectInfo, wi
 
 	// We have to fall back to upload + rename
 	tempName := "rcloneTemp" + random.String(8)
-	info, err := o.fs.upload(ctx, in, tempName, dirID, hashStr, size, options...)
+	info, err := o.fs.upload(ctx, in, tempName, dirID, gcid, size, options...)
 	if err != nil {
 		return err
 	}
