@@ -41,7 +41,7 @@ var commandDefinition = &cobra.Command{
 	Short: `List directories and objects in the path in JSON format.`,
 	Long: `List directories and objects in the path in JSON format.
 
-The output is an array of Items, where each Item looks like this
+The output is an array of Items, where each Item looks like this:
 
     {
       "Hashes" : {
@@ -63,43 +63,49 @@ The output is an array of Items, where each Item looks like this
       "Tier" : "hot",
     }
 
-If ` + "`--hash`" + ` is not specified, the Hashes property will be omitted. The
-types of hash can be specified with the ` + "`--hash-type`" + ` parameter (which
-may be repeated). If ` + "`--hash-type`" + ` is set then it implies ` + "`--hash`" + `.
+The exact set of properties included depends on the backend:
 
-If ` + "`--no-modtime`" + ` is specified then ModTime will be blank. This can
-speed things up on remotes where reading the ModTime takes an extra
-request (e.g. s3, swift).
+- The property IsBucket will only be included for bucket-based remotes, and only
+  for directories that are buckets. It will always be omitted when value is not true.
+- Properties Encrypted and EncryptedPath will only be included for encrypted
+  remotes, and (as mentioned below) only if the ` + "`--encrypted`" + ` option is set.
 
-If ` + "`--no-mimetype`" + ` is specified then MimeType will be blank. This can
-speed things up on remotes where reading the MimeType takes an extra
-request (e.g. s3, swift).
+Different options may also affect which properties are included:
 
-If ` + "`--encrypted`" + ` is not specified the Encrypted will be omitted.
+- If ` + "`--hash`" + ` is not specified, the Hashes property will be omitted. The
+  types of hash can be specified with the ` + "`--hash-type`" + ` parameter (which
+  may be repeated). If ` + "`--hash-type`" + ` is set then it implies ` + "`--hash`" + `.
+- If ` + "`--no-modtime`" + ` is specified then ModTime will be blank. This can
+  speed things up on remotes where reading the ModTime takes an extra
+  request (e.g. s3, swift).
+- If ` + "`--no-mimetype`" + ` is specified then MimeType will be blank. This can
+  speed things up on remotes where reading the MimeType takes an extra
+  request (e.g. s3, swift).
+- If ` + "`--encrypted`" + ` is not specified the Encrypted and EncryptedPath
+  properties will be omitted - even for encrypted remotes.
+- If ` + "`--metadata`" + ` is set then an additional Metadata property will be
+  returned. This will have [metadata](/docs/#metadata) in rclone standard format
+  as a JSON object.
 
-If ` + "`--dirs-only`" + ` is not specified files in addition to directories are
-returned
+The default is to list directories and files/objects, but this can be changed
+with the following options:
 
-If ` + "`--files-only`" + ` is not specified directories in addition to the files
-will be returned.
+- If ` + "`--dirs-only`" + ` is specified then directories will be returned
+  only, no files/objects.
+- If ` + "`--files-only`" + ` is specified then files will be returned only,
+  no directories.
 
-If ` + "`--metadata`" + ` is set then an additional Metadata key will be returned.
-This will have metadata in rclone standard format as a JSON object.
-
-if ` + "`--stat`" + ` is set then a single JSON blob will be returned about the
-item pointed to. This will return an error if the item isn't found.
-However on bucket based backends (like s3, gcs, b2, azureblob etc) if
-the item isn't found it will return an empty directory as it isn't
-possible to tell empty directories from missing directories there.
+If ` + "`--stat`" + ` is set then the the output is not an array of items,
+but instead a single JSON blob will be returned about the item pointed to.
+This will return an error if the item isn't found, however on bucket based
+backends (like s3, gcs, b2, azureblob etc) if the item isn't found it will
+return an empty directory, as it isn't possible to tell empty directories
+from missing directories there.
 
 The Path field will only show folders below the remote path being listed.
 If "remote:path" contains the file "subfolder/file.txt", the Path for "file.txt"
 will be "subfolder/file.txt", not "remote:path/subfolder/file.txt".
 When used without ` + "`--recursive`" + ` the Path will always be the same as Name.
-
-If the directory is a bucket in a bucket-based backend, then
-"IsBucket" will be set to true. This key won't be present unless it is
-"true".
 
 The time is in RFC3339 format with up to nanosecond precision.  The
 number of decimal digits in the seconds will depend on the precision
@@ -110,7 +116,8 @@ accurate to the nearest second (Dropbox, Box, WebDav, etc.) no digits
 will be shown ("2017-05-31T16:15:57+01:00").
 
 The whole output can be processed as a JSON blob, or alternatively it
-can be processed line by line as each item is written one to a line.
+can be processed line by line as each item is written on individual lines
+(except with ` + "`--stat`" + `).
 ` + lshelp.Help,
 	Annotations: map[string]string{
 		"versionIntroduced": "v1.37",
