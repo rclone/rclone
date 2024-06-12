@@ -1223,7 +1223,7 @@ func (f *Fs) uploadByResumable(ctx context.Context, in io.Reader, name string, s
 	return
 }
 
-func (f *Fs) upload(ctx context.Context, in io.Reader, leaf, dirID, hashStr string, size int64, options ...fs.OpenOption) (info *api.File, err error) {
+func (f *Fs) upload(ctx context.Context, in io.Reader, leaf, dirID, gcid string, size int64, options ...fs.OpenOption) (info *api.File, err error) {
 	// determine upload type
 	uploadType := api.UploadTypeResumable
 	// if size >= 0 && size < int64(5*fs.Mebi) {
@@ -1238,7 +1238,7 @@ func (f *Fs) upload(ctx context.Context, in io.Reader, leaf, dirID, hashStr stri
 		ParentID:   parentIDForRequest(dirID),
 		FolderType: "NORMAL",
 		Size:       size,
-		Hash:       strings.ToUpper(hashStr),
+		Hash:       strings.ToUpper(gcid),
 		UploadType: uploadType,
 	}
 	if uploadType == api.UploadTypeResumable {
