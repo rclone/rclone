@@ -5422,7 +5422,7 @@ func (f *Fs) headObject(ctx context.Context, req *s3.HeadObjectInput) (resp *s3.
 	})
 	if err != nil {
 		if awsErr, ok := err.(awserr.RequestFailure); ok {
-			if awsErr.StatusCode() == http.StatusNotFound {
+			if awsErr.StatusCode() == http.StatusNotFound || awsErr.StatusCode() == http.StatusMethodNotAllowed {
 				return nil, fs.ErrorObjectNotFound
 			}
 		}
