@@ -864,3 +864,4 @@ put them back in again.` >}}
   * Tomasz Melcer <tomasz@melcer.pl>
   * Michał Dzienisiewicz <michal.piotr.dz@gmail.com>
   * Florian Klink <flokli@flokli.de>
+  * Bill Fraser <bill@wfraser.dev>
