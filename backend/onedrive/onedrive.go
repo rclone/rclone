@@ -1933,7 +1933,9 @@ func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, 
 	switch f.driveType {
 	case driveTypePersonal:
 		// Method: https://stackoverflow.com/questions/37951114/direct-download-link-to-onedrive-file
-		if len(segments) != 5 {
+		// https://1drv.ms/t/XXX
+		// https://1drv.ms/v/c/XXX/YYY
+		if len(segments) < 5 {
 			fs.Logf(f, cnvFailMsg)
 			return shareURL, nil
 		}
