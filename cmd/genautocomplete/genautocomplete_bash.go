@@ -20,7 +20,7 @@ Generates a bash shell autocompletion script for rclone.
 
 By default, when run without any arguments, 
 
-    rclone genautocomplete bash
+    rclone completion bash
 
 the generated script will be written to
 
