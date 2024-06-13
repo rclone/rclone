@@ -313,14 +313,15 @@ backends:
    listretries: 5
    tests:
      - backend
- - backend:  "qingstor"
-   remote:   "TestQingStor:"
-   fastlist: false
-   oneonly:  true
-   cleanup:  true
-   ignore:
-     # This test fails because of a broken bucket in the account!
-     - TestIntegration/FsMkdir/FsPutFiles/FromRoot/ListR
+ # Disabled due to account cancellation - no longer available to me
+ # - backend:  "qingstor"
+ #   remote:   "TestQingStor:"
+ #   fastlist: false
+ #   oneonly:  true
+ #   cleanup:  true
+ #   ignore:
+ #     # This test fails because of a broken bucket in the account!
+ #     - TestIntegration/FsMkdir/FsPutFiles/FromRoot/ListR
  - backend:  "azureblob"
    remote:   "TestAzureBlob:"
    fastlist: true
