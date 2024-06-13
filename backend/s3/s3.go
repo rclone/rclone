@@ -1415,8 +1415,8 @@ func init() {
 				Help:     "Magalu BR Southeast 1 endpoint",
 				Provider: "Magalu",
 			}, {
-				Value:    "br-se1.magaluobjects.com",
-				Help:     "Magalu BR Northest 1 endpoint",
+				Value:    "br-ne1.magaluobjects.com",
+				Help:     "Magalu BR Northeast 1 endpoint",
 				Provider: "Magalu",
 			}},
 		}, {
