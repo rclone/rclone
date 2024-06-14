@@ -118,7 +118,7 @@ Here are the Advanced options specific to alias (Alias for an existing remote).
 
 #### --alias-description
 
-Description of the remote
+Description of the remote.
 
 Properties:
 

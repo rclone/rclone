@@ -1088,7 +1088,7 @@ func (f *Fs) list(ctx context.Context, containerName, directory, prefix string, 
 			isDirectory := isDirectoryMarker(*file.Properties.ContentLength, file.Metadata, remote)
 			if isDirectory {
 				// Don't insert the root directory
-				if remote == directory {
+				if remote == f.opt.Enc.ToStandardPath(directory) {
 					continue
 				}
 				// process directory markers as directories

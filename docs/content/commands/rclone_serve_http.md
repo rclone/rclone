@@ -68,7 +68,7 @@ of that with the CA certificate.  `--key` should be the PEM encoded
 private key and `--client-ca` should be the PEM encoded client
 certificate authority certificate.
 
---min-tls-version is minimum TLS version that is acceptable. Valid
+`--min-tls-version` is minimum TLS version that is acceptable. Valid
   values are "tls1.0", "tls1.1", "tls1.2" and "tls1.3" (default
   "tls1.0").
 
@@ -568,6 +568,7 @@ before it takes effect.
 
 This can be used to build general purpose proxies to any kind of
 backend that rclone supports.  
+
 
 
 ```

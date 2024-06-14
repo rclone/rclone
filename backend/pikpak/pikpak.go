@@ -18,7 +18,6 @@ package pikpak
 // ------------------------------------------------------------
 
 // * List() with options starred-only
-// * uploadByResumable() with configurable chunk-size
 // * user-configurable list chunk
 // * backend command: untrash, iscached
 // * api(event,task)
@@ -47,12 +46,14 @@ import (
 	"github.com/rclone/rclone/backend/pikpak/api"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/accounting"
+	"github.com/rclone/rclone/fs/chunksize"
 	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/configstruct"
 	"github.com/rclone/rclone/fs/config/obscure"
 	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/fs/hash"
+	"github.com/rclone/rclone/lib/atexit"
 	"github.com/rclone/rclone/lib/dircache"
 	"github.com/rclone/rclone/lib/encoder"
 	"github.com/rclone/rclone/lib/oauthutil"
@@ -66,10 +67,13 @@ import (
 const (
 	rcloneClientID              = "YNxT9w7GMdWvEOKa"
 	rcloneEncryptedClientSecret = "aqrmB6M1YJ1DWCBxVxFSjFo7wzWEky494YMmkqgAl1do1WKOe2E"
-	minSleep                    = 10 * time.Millisecond
+	minSleep                    = 100 * time.Millisecond
 	maxSleep                    = 2 * time.Second
+	waitTime                    = 500 * time.Millisecond
 	decayConstant               = 2 // bigger for slower decay, exponential
 	rootURL                     = "https://api-drive.mypikpak.com"
+	minChunkSize                = fs.SizeSuffix(s3manager.MinUploadPartSize)
+	defaultUploadConcurrency    = s3manager.DefaultUploadConcurrency
 )
 
 // Globals
@@ -192,6 +196,42 @@ Fill in for rclone to use a non root folder as its starting point.
 			Default:  fs.SizeSuffix(10 * 1024 * 1024),
 			Advanced: true,
 		}, {
+			Name: "chunk_size",
+			Help: `Chunk size for multipart uploads.
+	
+Large files will be uploaded in chunks of this size.
+
+Note that this is stored in memory and there may be up to
+"--transfers" * "--pikpak-upload-concurrency" chunks stored at once
+in memory.
+
+If you are transferring large files over high-speed links and you have
+enough memory, then increasing this will speed up the transfers.
+
+Rclone will automatically increase the chunk size when uploading a
+large file of known size to stay below the 10,000 chunks limit.
+
+Increasing the chunk size decreases the accuracy of the progress
+statistics displayed with "-P" flag.`,
+			Default:  minChunkSize,
+			Advanced: true,
+		}, {
+			Name: "upload_concurrency",
+			Help: `Concurrency for multipart uploads.
+
+This is the number of chunks of the same file that are uploaded
+concurrently for multipart uploads.
+
+Note that chunks are stored in memory and there may be up to
+"--transfers" * "--pikpak-upload-concurrency" chunks stored at once
+in memory.
+
+If you are uploading small numbers of large files over high-speed links
+and these uploads do not fully utilize your bandwidth, then increasing
+this may help to speed up the transfers.`,
+			Default:  defaultUploadConcurrency,
+			Advanced: true,
+		}, {
 			Name:     config.ConfigEncoding,
 			Help:     config.ConfigEncodingHelp,
 			Advanced: true,
@@ -221,6 +261,8 @@ type Options struct {
 	UseTrash            bool                 `config:"use_trash"`
 	TrashedOnly         bool                 `config:"trashed_only"`
 	HashMemoryThreshold fs.SizeSuffix        `config:"hash_memory_limit"`
+	ChunkSize           fs.SizeSuffix        `config:"chunk_size"`
+	UploadConcurrency   int                  `config:"upload_concurrency"`
 	Enc                 encoder.MultiEncoder `config:"encoding"`
 }
 
@@ -429,6 +471,9 @@ func newFs(ctx context.Context, name, path string, m configmap.Mapper) (*Fs, err
 	opt := new(Options)
 	if err := configstruct.Set(m, opt); err != nil {
 		return nil, err
+	}
+	if opt.ChunkSize < minChunkSize {
+		return nil, fmt.Errorf("chunk size must be at least %s", minChunkSize)
 	}
 
 	root := parsePath(path)
@@ -1146,7 +1191,7 @@ func (f *Fs) uploadByForm(ctx context.Context, in io.Reader, name string, size i
 	return
 }
 
-func (f *Fs) uploadByResumable(ctx context.Context, in io.Reader, resumable *api.Resumable) (err error) {
+func (f *Fs) uploadByResumable(ctx context.Context, in io.Reader, name string, size int64, resumable *api.Resumable) (err error) {
 	p := resumable.Params
 	endpoint := strings.Join(strings.Split(p.Endpoint, ".")[1:], ".") // "mypikpak.com"
 
@@ -1159,28 +1204,31 @@ func (f *Fs) uploadByResumable(ctx context.Context, in io.Reader, resumable *api
 	if err != nil {
 		return
 	}
+	partSize := chunksize.Calculator(name, size, s3manager.MaxUploadParts, f.opt.ChunkSize)
 
-	uploader := s3manager.NewUploader(sess)
+	// Create an uploader with the session and custom options
+	uploader := s3manager.NewUploader(sess, func(u *s3manager.Uploader) {
+		u.PartSize = int64(partSize)
+		u.Concurrency = f.opt.UploadConcurrency
+	})
 	// Upload input parameters
 	uParams := &s3manager.UploadInput{
 		Bucket: &p.Bucket,
 		Key:    &p.Key,
 		Body:   in,
 	}
-	// Perform upload with options different than the those in the Uploader.
-	_, err = uploader.UploadWithContext(ctx, uParams, func(u *s3manager.Uploader) {
-		// TODO can be user-configurable
-		u.PartSize = 10 * 1024 * 1024 // 10MB part size
-	})
+	// Perform an upload
+	_, err = uploader.UploadWithContext(ctx, uParams)
 	return
 }
 
-func (f *Fs) upload(ctx context.Context, in io.Reader, leaf, dirID, sha1Str string, size int64, options ...fs.OpenOption) (*api.File, error) {
+func (f *Fs) upload(ctx context.Context, in io.Reader, leaf, dirID, sha1Str string, size int64, options ...fs.OpenOption) (info *api.File, err error) {
 	// determine upload type
 	uploadType := api.UploadTypeResumable
-	if size >= 0 && size < int64(5*fs.Mebi) {
-		uploadType = api.UploadTypeForm
-	}
+	// if size >= 0 && size < int64(5*fs.Mebi) {
+	// 	uploadType = api.UploadTypeForm
+	// }
+	// stop using uploadByForm() cause it is not as reliable as uploadByResumable() for a large number of small files
 
 	// request upload ticket to API
 	req := api.RequestNewFile{
@@ -1195,29 +1243,46 @@ func (f *Fs) upload(ctx context.Context, in io.Reader, leaf, dirID, sha1Str stri
 	if uploadType == api.UploadTypeResumable {
 		req.Resumable = map[string]string{"provider": "PROVIDER_ALIYUN"}
 	}
-	newfile, err := f.requestNewFile(ctx, &req)
+	new, err := f.requestNewFile(ctx, &req)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create a new file: %w", err)
 	}
-	if newfile.File == nil {
-		return nil, fmt.Errorf("invalid response: %+v", newfile)
-	} else if newfile.File.Phase == api.PhaseTypeComplete {
+	if new.File == nil {
+		return nil, fmt.Errorf("invalid response: %+v", new)
+	} else if new.File.Phase == api.PhaseTypeComplete {
 		// early return; in case of zero-byte objects
-		return newfile.File, nil
+		return new.File, nil
 	}
 
-	if uploadType == api.UploadTypeForm && newfile.Form != nil {
-		err = f.uploadByForm(ctx, in, req.Name, size, newfile.Form, options...)
-	} else if uploadType == api.UploadTypeResumable && newfile.Resumable != nil {
-		err = f.uploadByResumable(ctx, in, newfile.Resumable)
+	defer atexit.OnError(&err, func() {
+		fs.Debugf(leaf, "canceling upload: %v", err)
+		if cancelErr := f.deleteObjects(ctx, []string{new.File.ID}, false); cancelErr != nil {
+			fs.Logf(leaf, "failed to cancel upload: %v", cancelErr)
+		}
+		if cancelErr := f.deleteTask(ctx, new.Task.ID, false); cancelErr != nil {
+			fs.Logf(leaf, "failed to cancel upload: %v", cancelErr)
+		}
+		fs.Debugf(leaf, "waiting %v for the cancellation to be effective", waitTime)
+		time.Sleep(waitTime)
+	})()
+
+	if uploadType == api.UploadTypeForm && new.Form != nil {
+		err = f.uploadByForm(ctx, in, req.Name, size, new.Form, options...)
+	} else if uploadType == api.UploadTypeResumable && new.Resumable != nil {
+		err = f.uploadByResumable(ctx, in, leaf, size, new.Resumable)
 	} else {
-		return nil, fmt.Errorf("unable to proceed upload: %+v", newfile)
+		err = fmt.Errorf("no method available for uploading: %+v", new)
 	}
 
 	if err != nil {
 		return nil, fmt.Errorf("failed to upload: %w", err)
 	}
-	return newfile.File, nil
+	fs.Debugf(leaf, "sleeping for %v before checking upload status", waitTime)
+	time.Sleep(waitTime)
+	if _, err = f.getTask(ctx, new.Task.ID, true); err != nil {
+		return nil, fmt.Errorf("unable to complete the upload: %w", err)
+	}
+	return new.File, nil
 }
 
 // Put the object
@@ -1470,22 +1535,11 @@ func (o *Object) setMetaDataWithLink(ctx context.Context) error {
 		return nil
 	}
 
-	// fetch download link with retry scheme
-	// 1 initial attempt and 2 retries are reasonable based on empirical analysis
-	retries := 2
-	for i := 1; i <= retries+1; i++ {
-		info, err := o.fs.getFile(ctx, o.id)
-		if err != nil {
-			return fmt.Errorf("can't fetch download link: %w", err)
-		}
-		if err = o.setMetaData(info); err == nil && o.link.Valid() {
-			return nil
-		}
-		if i <= retries {
-			time.Sleep(time.Duration(200*i) * time.Millisecond)
-		}
+	info, err := o.fs.getFile(ctx, o.id)
+	if err != nil {
+		return err
 	}
-	return errors.New("can't download - no link to download")
+	return o.setMetaData(info)
 }
 
 // readMetaData gets the metadata if it hasn't already been fetched
@@ -1619,14 +1673,14 @@ func (o *Object) open(ctx context.Context, url string, options ...fs.OpenOption)
 // Open an object for read
 func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.ReadCloser, err error) {
 	if o.id == "" {
-		return nil, errors.New("can't download - no id")
+		return nil, errors.New("can't download: no id")
 	}
 	if o.size == 0 {
 		// zero-byte objects may have no download link
 		return io.NopCloser(bytes.NewBuffer([]byte(nil))), nil
 	}
 	if err = o.setMetaDataWithLink(ctx); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("can't download: %w", err)
 	}
 	return o.open(ctx, o.link.URL, options...)
 }

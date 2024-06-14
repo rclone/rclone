@@ -242,6 +242,18 @@ this flag there.
 `,
 			Advanced: true,
 		}, {
+			Name: "hard_delete",
+			Help: `Permanently delete files on removal.
+
+Normally files will get sent to the recycle bin on deletion. Setting
+this flag causes them to be permanently deleted. Use with care.
+
+OneDrive personal accounts do not support the permanentDelete API,
+it only applies to OneDrive for Business and SharePoint document libraries.
+`,
+			Advanced: true,
+			Default:  false,
+		}, {
 			Name:     "link_scope",
 			Default:  "anonymous",
 			Help:     `Set the scope of the links created by the link command.`,
@@ -695,6 +707,7 @@ type Options struct {
 	ServerSideAcrossConfigs bool                 `config:"server_side_across_configs"`
 	ListChunk               int64                `config:"list_chunk"`
 	NoVersions              bool                 `config:"no_versions"`
+	HardDelete              bool                 `config:"hard_delete"`
 	LinkScope               string               `config:"link_scope"`
 	LinkType                string               `config:"link_type"`
 	LinkPassword            string               `config:"link_password"`
@@ -1479,7 +1492,12 @@ func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 
 // deleteObject removes an object by ID
 func (f *Fs) deleteObject(ctx context.Context, id string) error {
-	opts := f.newOptsCall(id, "DELETE", "")
+	var opts rest.Opts
+	if f.opt.HardDelete {
+		opts = f.newOptsCall(id, "POST", "/permanentDelete")
+	} else {
+		opts = f.newOptsCall(id, "DELETE", "")
+	}
 	opts.NoResponse = true
 
 	return f.pacer.Call(func() (bool, error) {

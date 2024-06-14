@@ -227,6 +227,54 @@ Properties:
 - Type:        SizeSuffix
 - Default:     10Mi
 
+#### --pikpak-chunk-size
+
+Chunk size for multipart uploads.
+	
+Large files will be uploaded in chunks of this size.
+
+Note that this is stored in memory and there may be up to
+"--transfers" * "--pikpak-upload-concurrency" chunks stored at once
+in memory.
+
+If you are transferring large files over high-speed links and you have
+enough memory, then increasing this will speed up the transfers.
+
+Rclone will automatically increase the chunk size when uploading a
+large file of known size to stay below the 10,000 chunks limit.
+
+Increasing the chunk size decreases the accuracy of the progress
+statistics displayed with "-P" flag.
+
+Properties:
+
+- Config:      chunk_size
+- Env Var:     RCLONE_PIKPAK_CHUNK_SIZE
+- Type:        SizeSuffix
+- Default:     5Mi
+
+#### --pikpak-upload-concurrency
+
+Concurrency for multipart uploads.
+
+This is the number of chunks of the same file that are uploaded
+concurrently for multipart uploads.
+
+Note that chunks are stored in memory and there may be up to
+"--transfers" * "--pikpak-upload-concurrency" chunks stored at once
+in memory.
+
+If you are uploading small numbers of large files over high-speed links
+and these uploads do not fully utilize your bandwidth, then increasing
+this may help to speed up the transfers.
+
+Properties:
+
+- Config:      upload_concurrency
+- Env Var:     RCLONE_PIKPAK_UPLOAD_CONCURRENCY
+- Type:        int
+- Default:     5
+
 #### --pikpak-encoding
 
 The encoding for the backend.
@@ -242,7 +290,7 @@ Properties:
 
 #### --pikpak-description
 
-Description of the remote
+Description of the remote.
 
 Properties:
 

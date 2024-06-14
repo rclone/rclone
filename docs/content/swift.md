@@ -510,10 +510,15 @@ Properties:
 
 #### --swift-chunk-size
 
-Above this size files will be chunked into a _segments container.
+Above this size files will be chunked.
 
-Above this size files will be chunked into a _segments container.  The
-default for this is 5 GiB which is its maximum value.
+Above this size files will be chunked into a a `_segments` container
+or a `.file-segments` directory. (See the `use_segments_container` option
+for more info). Default for this is 5 GiB which is its maximum value, which
+means only files above this size will be chunked.
+
+Rclone uploads chunked files as dynamic large objects (DLO).
+
 
 Properties:
 
@@ -526,14 +531,16 @@ Properties:
 
 Don't chunk files during streaming upload.
 
-When doing streaming uploads (e.g. using rcat or mount) setting this
-flag will cause the swift backend to not upload chunked files.
+When doing streaming uploads (e.g. using `rcat` or `mount` with
+`--vfs-cache-mode off`) setting this flag will cause the swift backend
+to not upload chunked files.
 
-This will limit the maximum upload size to 5 GiB. However non chunked
-files are easier to deal with and have an MD5SUM.
+This will limit the maximum streamed upload size to 5 GiB. This is
+useful because non chunked files are easier to deal with and have an
+MD5SUM.
 
-Rclone will still chunk files bigger than chunk_size when doing normal
-copy operations.
+Rclone will still chunk files bigger than `chunk_size` when doing
+normal copy operations.
 
 Properties:
 
@@ -547,11 +554,12 @@ Properties:
 Disable support for static and dynamic large objects
 
 Swift cannot transparently store files bigger than 5 GiB. There are
-two schemes for doing that, static or dynamic large objects, and the
-API does not allow rclone to determine whether a file is a static or
-dynamic large object without doing a HEAD on the object. Since these
-need to be treated differently, this means rclone has to issue HEAD
-requests for objects for example when reading checksums.
+two schemes for chunking large files, static large objects (SLO) or
+dynamic large objects (DLO), and the API does not allow rclone to
+determine whether a file is a static or dynamic large object without
+doing a HEAD on the object. Since these need to be treated
+differently, this means rclone has to issue HEAD requests for objects
+for example when reading checksums.
 
 When `no_large_objects` is set, rclone will assume that there are no
 static or dynamic large objects stored. This means it can stop doing
@@ -562,7 +570,7 @@ Setting this option implies `no_chunk` and also that no files will be
 uploaded in chunks, so files bigger than 5 GiB will just fail on
 upload.
 
-If you set this option and there *are* static or dynamic large objects,
+If you set this option and there **are** static or dynamic large objects,
 then this will give incorrect hashes for them. Downloads will succeed,
 but other operations such as Remove and Copy will fail.
 
@@ -573,6 +581,40 @@ Properties:
 - Env Var:     RCLONE_SWIFT_NO_LARGE_OBJECTS
 - Type:        bool
 - Default:     false
+
+#### --swift-use-segments-container
+
+Choose destination for large object segments
+
+Swift cannot transparently store files bigger than 5 GiB and rclone
+will chunk files larger than `chunk_size` (default 5 GiB) in order to
+upload them.
+
+If this value is `true` the chunks will be stored in an additional
+container named the same as the destination container but with
+`_segments` appended. This means that there won't be any duplicated
+data in the original container but having another container may not be
+acceptable.
+
+If this value is `false` the chunks will be stored in a
+`.file-segments` directory in the root of the container. This
+directory will be omitted when listing the container. Some
+providers (eg Blomp) require this mode as creating additional
+containers isn't allowed. If it is desired to see the `.file-segments`
+directory in the root then this flag must be set to `true`.
+
+If this value is `unset` (the default), then rclone will choose the value
+to use. It will be `false` unless rclone detects any `auth_url`s that
+it knows need it to be `true`. In this case you'll see a message in
+the DEBUG log.
+
+
+Properties:
+
+- Config:      use_segments_container
+- Env Var:     RCLONE_SWIFT_USE_SEGMENTS_CONTAINER
+- Type:        Tristate
+- Default:     unset
 
 #### --swift-encoding
 
@@ -589,7 +631,7 @@ Properties:
 
 #### --swift-description
 
-Description of the remote
+Description of the remote.
 
 Properties:
 

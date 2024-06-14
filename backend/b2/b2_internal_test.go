@@ -23,7 +23,7 @@ import (
 )
 
 // Test b2 string encoding
-// https://www.backblaze.com/b2/docs/string_encoding.html
+// https://www.backblaze.com/docs/cloud-storage-native-api-string-encoding
 
 var encodeTest = []struct {
 	fullyEncoded     string

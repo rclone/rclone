@@ -97,6 +97,10 @@ func testCopyMetadata(t *testing.T, createEmptySrcDirs bool) {
 		t.Skip("Skipping as metadata not supported")
 	}
 
+	if createEmptySrcDirs && !features.CanHaveEmptyDirectories {
+		t.Skip("Skipping as can't have empty directories")
+	}
+
 	const content = "hello metadata world!"
 	const dirPath = "metadata sub dir"
 	const emptyDirPath = "empty metadata sub dir"
@@ -148,10 +152,10 @@ func testCopyMetadata(t *testing.T, createEmptySrcDirs bool) {
 	r.CheckDirectoryModTimes(t, dirPath)
 
 	// Check that the metadata on the directory and file is correct
-	if features.ReadMetadata {
+	if features.WriteMetadata && features.ReadMetadata {
 		fstest.CheckEntryMetadata(ctx, t, r.Fremote, fstest.NewObject(ctx, t, r.Fremote, filePath), fileMetadata)
 	}
-	if features.ReadDirMetadata {
+	if features.WriteDirMetadata && features.ReadDirMetadata {
 		fstest.CheckEntryMetadata(ctx, t, r.Fremote, fstest.NewDirectory(ctx, t, r.Fremote, dirPath), dirMetadata)
 	}
 	if !createEmptySrcDirs {

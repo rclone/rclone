@@ -24,7 +24,6 @@ based on media formats or file extensions. Additionally, there is no
 media transcoding support. This means that some players might show
 files that they are not able to play back correctly.
 
-
 ## Server options
 
 Use `--addr` to specify which IP address and port the server should
@@ -389,6 +388,7 @@ and compute the total used space itself.
 _WARNING._ Contrary to `rclone size`, this flag ignores filters so that the
 result is accurate. However, this is very inefficient and may cost lots of API
 calls resulting in extra charges. Use it as a last resort and only with caching.
+
 
 
 ```

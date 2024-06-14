@@ -895,6 +895,31 @@ Properties:
 - Type:        int
 - Default:     64
 
+#### --sftp-connections
+
+Maximum number of SFTP simultaneous connections, 0 for unlimited.
+
+Note that setting this is very likely to cause deadlocks so it should
+be used with care.
+
+If you are doing a sync or copy then make sure concurrency is one more
+than the sum of `--transfers` and `--checkers`.
+
+If you use `--check-first` then it just needs to be one more than the
+maximum of `--checkers` and `--transfers`.
+
+So for `concurrency 3` you'd use `--checkers 2 --transfers 2
+--check-first` or `--checkers 1 --transfers 1`.
+
+
+
+Properties:
+
+- Config:      connections
+- Env Var:     RCLONE_SFTP_CONNECTIONS
+- Type:        int
+- Default:     0
+
 #### --sftp-set-env
 
 Environment variables to pass to sftp and commands
@@ -1046,7 +1071,7 @@ Properties:
 
 #### --sftp-description
 
-Description of the remote
+Description of the remote.
 
 Properties:
 

@@ -34,6 +34,7 @@ rclone test info [remote:path]+ [flags]
       --check-normalization    Check UTF-8 Normalization
       --check-streaming        Check uploads with indeterminate file size
   -h, --help                   help for info
+      --keep-test-files        Keep test files after execution
       --upload-wait Duration   Wait after writing a file (default 0s)
       --write-json string      Write results to file
 ```

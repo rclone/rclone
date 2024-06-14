@@ -857,3 +857,11 @@ put them back in again.` >}}
   * JT Olio <jt@olio.lol>
   * Evan McBeth <64177332+AtomicRobotMan0101@users.noreply.github.com>
   * Dominik Joe Pantůček <dominik.pantucek@trustica.cz>
+  * yumeiyin <155420652+yumeiyin@users.noreply.github.com>
+  * Bruno Fernandes <54373093+folkzb@users.noreply.github.com>
+  * Thomas Schneider <tspam.github@brainfuck.space>
+  * Charles Hamilton <52973156+chamilton-ccn@users.noreply.github.com>
+  * Tomasz Melcer <tomasz@melcer.pl>
+  * Michał Dzienisiewicz <michal.piotr.dz@gmail.com>
+  * Florian Klink <flokli@flokli.de>
+  * Bill Fraser <bill@wfraser.dev>

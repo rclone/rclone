@@ -566,6 +566,44 @@ Properties:
 - Type:        bool
 - Default:     false
 
+#### --local-time-type
+
+Set what kind of time is returned.
+
+Normally rclone does all operations on the mtime or Modification time.
+
+If you set this flag then rclone will return the Modified time as whatever
+you set here. So if you use "rclone lsl --local-time-type ctime" then
+you will see ctimes in the listing.
+
+If the OS doesn't support returning the time_type specified then rclone
+will silently replace it with the modification time which all OSes support.
+
+- mtime is supported by all OSes
+- atime is supported on all OSes except: plan9, js
+- btime is only supported on: Windows, macOS, freebsd, netbsd
+- ctime is supported on all Oses except: Windows, plan9, js
+
+Note that setting the time will still set the modified time so this is
+only useful for reading.
+
+
+Properties:
+
+- Config:      time_type
+- Env Var:     RCLONE_LOCAL_TIME_TYPE
+- Type:        mtime|atime|btime|ctime
+- Default:     mtime
+- Examples:
+    - "mtime"
+        - The last modification time.
+    - "atime"
+        - The last access time.
+    - "btime"
+        - The creation time.
+    - "ctime"
+        - The last status change time.
+
 #### --local-encoding
 
 The encoding for the backend.
@@ -581,7 +619,7 @@ Properties:
 
 #### --local-description
 
-Description of the remote
+Description of the remote.
 
 Properties:
 

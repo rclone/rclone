@@ -9,8 +9,7 @@
   "description": "rclone - rsync for cloud storage: google drive, s3, gcs, azure, dropbox, box...",
   "canonifyurls": false,
   "disableKinds": [
-    "taxonomy",
-    "taxonomyTerm"
+    "taxonomy"
   ],
   "ignoreFiles": [
     "~$",

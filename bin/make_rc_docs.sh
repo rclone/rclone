@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Insert the rc docs into docs/content/rc.md
 
 set -e

@@ -142,6 +142,17 @@ Properties:
 - Type:        string
 - Required:    true
 
+#### --http-no-escape
+
+Do not escape URL metacharacters in path names.
+
+Properties:
+
+- Config:      no_escape
+- Env Var:     RCLONE_HTTP_NO_ESCAPE
+- Type:        bool
+- Default:     false
+
 ### Advanced options
 
 Here are the Advanced options specific to http (HTTP).
@@ -214,7 +225,7 @@ Properties:
 
 #### --http-description
 
-Description of the remote
+Description of the remote.
 
 Properties:
 

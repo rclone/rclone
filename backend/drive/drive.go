@@ -3776,7 +3776,7 @@ file named "foo ' \.txt":
 
 The result is a JSON array of matches, for example:
 
-[
+    [
 	{
 		"createdTime": "2017-06-29T19:58:28.537Z",
 		"id": "0AxBe_CDEF4zkGHI4d0FjYko2QkD",
@@ -3792,7 +3792,7 @@ The result is a JSON array of matches, for example:
 		"size": "311",
 		"webViewLink": "https://drive.google.com/file/d/0AxBe_CDEF4zkGHI4d0FjYko2QkD/view?usp=drivesdk\u0026resourcekey=0-ABCDEFGHIXJQpIGqBJq3MC"
 	}
-]`,
+    ]`,
 }}
 
 // Command the backend to run a named command

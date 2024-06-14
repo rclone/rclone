@@ -46,7 +46,8 @@ press '?' to toggle the help on and off. The supported keys are:
      ^L refresh screen (fix screen corruption)
      r recalculate file sizes
      ? to toggle help on and off
-     q/ESC/^c to quit
+     ESC to close the menu box
+     q/^c to quit
 
 Listed files/directories may be prefixed by a one-character flag,
 some of them combined with a description in brackets at end of line.

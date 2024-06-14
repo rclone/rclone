@@ -110,10 +110,30 @@ func (m *messageParser) finalParameter() string {
 // configDefinition describes a configuration value required by this command. We
 // use "GETCONFIG" messages to query git-annex for these values at runtime.
 type configDefinition struct {
-	name         string
+	names        []string
 	description  string
 	destination  *string
 	defaultValue *string
+}
+
+func (c *configDefinition) getCanonicalName() string {
+	if len(c.names) < 1 {
+		panic(fmt.Errorf("configDefinition must have at least one name: %v", c))
+	}
+	return c.names[0]
+}
+
+// fullDescription returns a single-line, human-readable description for this
+// config. The returned string begins with a list of synonyms and ends with
+// `c.description`.
+func (c *configDefinition) fullDescription() string {
+	if len(c.names) <= 1 {
+		return c.description
+	}
+	// Exclude the canonical name from the list of synonyms.
+	synonyms := c.names[1:len(c.names)]
+	commaSeparatedSynonyms := strings.Join(synonyms, ", ")
+	return fmt.Sprintf("(synonyms: %s) %s", commaSeparatedSynonyms, c.description)
 }
 
 // server contains this command's current state.
@@ -274,7 +294,7 @@ func (s *server) getRequiredConfigs() []configDefinition {
 
 	return []configDefinition{
 		{
-			"rcloneremotename",
+			[]string{"rcloneremotename", "target"},
 			"Name of the rclone remote to use. " +
 				"Must match a remote known to rclone. " +
 				"(Note that rclone remotes are a distinct concept from git-annex remotes.)",
@@ -282,7 +302,7 @@ func (s *server) getRequiredConfigs() []configDefinition {
 			nil,
 		},
 		{
-			"rcloneprefix",
+			[]string{"rcloneprefix", "prefix"},
 			"Directory where rclone will write git-annex content. " +
 				fmt.Sprintf("If not specified, defaults to %q. ", defaultRclonePrefix) +
 				"This directory will be created on init if it does not exist.",
@@ -290,7 +310,7 @@ func (s *server) getRequiredConfigs() []configDefinition {
 			&defaultRclonePrefix,
 		},
 		{
-			"rclonelayout",
+			[]string{"rclonelayout", "rclone_layout"},
 			"Defines where, within the rcloneprefix directory, rclone will write git-annex content. " +
 				fmt.Sprintf("Must be one of %v. ", allLayoutModes()) +
 				fmt.Sprintf("If empty, defaults to %q.", defaultRcloneLayout),
@@ -309,27 +329,35 @@ func (s *server) queryConfigs() error {
 	// Send a "GETCONFIG" message for each required config and parse git-annex's
 	// "VALUE" response.
 	for _, config := range s.getRequiredConfigs() {
-		s.sendMsg(fmt.Sprintf("GETCONFIG %s", config.name))
+		var valueReceived bool
+		// Try each of the config's names in sequence, starting with the
+		// canonical name.
+		for _, configName := range config.names {
+			s.sendMsg(fmt.Sprintf("GETCONFIG %s", configName))
 
-		message, err := s.getMsg()
-		if err != nil {
-			return err
-		}
+			message, err := s.getMsg()
+			if err != nil {
+				return err
+			}
 
-		valueKeyword, err := message.nextSpaceDelimitedParameter()
-		if err != nil || valueKeyword != "VALUE" {
-			return fmt.Errorf("failed to parse config value: %s %s", valueKeyword, message.line)
-		}
+			valueKeyword, err := message.nextSpaceDelimitedParameter()
+			if err != nil || valueKeyword != "VALUE" {
+				return fmt.Errorf("failed to parse config value: %s %s", valueKeyword, message.line)
+			}
 
-		value := message.finalParameter()
-		if value == "" && config.defaultValue == nil {
-			return fmt.Errorf("config value of %q must not be empty", config.name)
+			value := message.finalParameter()
+			if value != "" {
+				*config.destination = value
+				valueReceived = true
+				break
+			}
 		}
-		if value == "" {
+		if !valueReceived {
+			if config.defaultValue == nil {
+				return fmt.Errorf("did not receive a non-empty config value for %q", config.getCanonicalName())
+			}
 			*config.destination = *config.defaultValue
-			continue
 		}
-		*config.destination = value
 	}
 
 	s.configsDone = true
@@ -349,7 +377,7 @@ func (s *server) handlePrepare() error {
 // in sync with `handlePrepare()`.
 func (s *server) handleListConfigs() {
 	for _, config := range s.getRequiredConfigs() {
-		s.sendMsg(fmt.Sprintf("CONFIG %s %s", config.name, config.description))
+		s.sendMsg(fmt.Sprintf("CONFIG %s %s", config.getCanonicalName(), config.fullDescription()))
 	}
 	s.sendMsg("CONFIGEND")
 }
