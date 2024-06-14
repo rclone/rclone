@@ -130,6 +130,7 @@ These backends adapt or modify other storage providers
   * Combine: combine multiple remotes into a directory tree [:page_facing_up:](https://rclone.org/combine/)
   * Compress: compress files [:page_facing_up:](https://rclone.org/compress/)
   * Crypt: encrypt files [:page_facing_up:](https://rclone.org/crypt/)
+  * Cryptomator: encrypt files like cryptomator [:page_facing_up:](https://rclone/cryptomator)
   * Hasher: hash files [:page_facing_up:](https://rclone.org/hasher/)
   * Union: join multiple remotes to work together [:page_facing_up:](https://rclone.org/union/)
 
@@ -145,7 +146,7 @@ These backends adapt or modify other storage providers
   * Can sync to and from network, e.g. two different cloud accounts
   * Optional large file chunking ([Chunker](https://rclone.org/chunker/))
   * Optional transparent compression ([Compress](https://rclone.org/compress/))
-  * Optional encryption ([Crypt](https://rclone.org/crypt/))
+  * Optional encryption ([Crypt](https://rclone.org/crypt/), [Cryptomator](https://rclone.org/cryptomator))
   * Optional FUSE mount ([rclone mount](https://rclone.org/commands/rclone_mount/))
   * Multi-threaded downloads to local disk
   * Can [serve](https://rclone.org/commands/rclone_serve/) local or remote files over HTTP/WebDAV/FTP/SFTP/DLNA
