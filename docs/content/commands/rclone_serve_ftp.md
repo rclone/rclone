@@ -13,7 +13,6 @@ Serve remote:path over FTP.
 
 ## Synopsis
 
-
 Run a basic FTP server to serve a remote over FTP protocol.
 This can be viewed with a FTP client or you can make a remote of
 type FTP to read and write it.
@@ -467,6 +466,7 @@ before it takes effect.
 
 This can be used to build general purpose proxies to any kind of
 backend that rclone supports.  
+
 
 
 ```

@@ -13,7 +13,6 @@ Run rclone listening to remote control commands only.
 
 ## Synopsis
 
-
 This runs rclone so that it only listens to remote control commands.
 
 This is useful if you are controlling rclone via the rc API.
@@ -67,7 +66,7 @@ of that with the CA certificate.  `--krc-ey` should be the PEM encoded
 private key and `--rc-client-ca` should be the PEM encoded client
 certificate authority certificate.
 
---rc-min-tls-version is minimum TLS version that is acceptable. Valid
+`--rc-min-tls-version` is minimum TLS version that is acceptable. Valid
   values are "tls1.0", "tls1.1", "tls1.2" and "tls1.3" (default
   "tls1.0").
 
@@ -135,6 +134,7 @@ Use `--rc-realm` to set the authentication realm.
 Use `--rc-salt` to change the password hashing salt from the default.
 
 
+
 ```
 rclone rcd <path to files to serve>* [flags]
 ```
@@ -170,6 +170,7 @@ Flags to control the Remote Control API.
       --rc-realm string                    Realm for authentication
       --rc-salt string                     Password hashing salt (default "dlPL2MqE")
       --rc-serve                           Enable the serving of remote objects
+      --rc-serve-no-modtime                Don't read the modification time (can speed things up)
       --rc-server-read-timeout Duration    Timeout for server reading data (default 1h0m0s)
       --rc-server-write-timeout Duration   Timeout for server writing data (default 1h0m0s)
       --rc-template string                 User-specified template

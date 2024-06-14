@@ -305,7 +305,7 @@ Here are the Advanced options specific to storj (Storj Decentralized Cloud Stora
 
 #### --storj-description
 
-Description of the remote
+Description of the remote.
 
 Properties:
 

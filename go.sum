@@ -450,10 +450,6 @@ github.com/quic-go/qtls-go1-20 v0.4.1 h1:D33340mCNDAIKBqXuAvexTNMUByrYmFYVfKfDN5
 github.com/quic-go/quic-go v0.40.1 h1:X3AGzUNFs0jVuO3esAGnTfvdgvL4fq655WaOi1snv1Q=
 github.com/rasky/go-xdr v0.0.0-20170124162913-1a41d1a06c93 h1:UVArwN/wkKjMVhh2EQGC0tEc1+FqiLlvYXY5mQ2f8Wg=
 github.com/rasky/go-xdr v0.0.0-20170124162913-1a41d1a06c93/go.mod h1:Nfe4efndBz4TibWycNE+lqyJZiMX4ycx+QKV8Ta0f/o=
-github.com/rclone/gofakes3 v0.0.3-0.20240413171058-b7a9fdb78ddb h1:HJJ7XgRBfXew3EosVk45aGPJRY5wSTSpmAJqz8Kiw0w=
-github.com/rclone/gofakes3 v0.0.3-0.20240413171058-b7a9fdb78ddb/go.mod h1:L0VIBE0mT6ArN/5dfHsJm3UjqCpi5B/cdN+qWDNh7ko=
-github.com/rclone/gofakes3 v0.0.3-0.20240414171457-6975bf40a0a8 h1:hJNS/Xf4iQD/Et/pOVuYtJE9zbEZ01MeQM10Xa3xf+k=
-github.com/rclone/gofakes3 v0.0.3-0.20240414171457-6975bf40a0a8/go.mod h1:L0VIBE0mT6ArN/5dfHsJm3UjqCpi5B/cdN+qWDNh7ko=
 github.com/rclone/gofakes3 v0.0.3-0.20240422160309-90e8e825c0c3 h1:PyMsWM61oBPU3ajQfCImfxPHyESb5wC6NaZ6b2GAXTo=
 github.com/rclone/gofakes3 v0.0.3-0.20240422160309-90e8e825c0c3/go.mod h1:L0VIBE0mT6ArN/5dfHsJm3UjqCpi5B/cdN+qWDNh7ko=
 github.com/relvacode/iso8601 v1.3.0 h1:HguUjsGpIMh/zsTczGN3DVJFxTU/GX+MMmzcKoMO7ko=

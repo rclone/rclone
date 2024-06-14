@@ -406,6 +406,7 @@ result is accurate. However, this is very inefficient and may cost lots of API
 calls resulting in extra charges. Use it as a last resort and only with caching.
 
 
+
 ```
 rclone serve docker [flags]
 ```
@@ -427,6 +428,7 @@ rclone serve docker [flags]
       --devname string                         Set the device name - default is remote:path
       --dir-cache-time Duration                Time to cache directory entries for (default 5m0s)
       --dir-perms FileMode                     Directory permissions (default 0777)
+      --direct-io                              Use Direct IO, disables caching of data
       --file-perms FileMode                    File permissions (default 0666)
       --forget-state                           Skip restoring previous state
       --fuse-flag stringArray                  Flags or arguments to be passed direct to libfuse/WinFsp (repeat if required)

@@ -114,7 +114,7 @@ General networking and HTTP stuff.
       --tpslimit float                     Limit HTTP transactions per second to this
       --tpslimit-burst int                 Max burst of transactions for --tpslimit (default 1)
       --use-cookies                        Enable session cookiejar
-      --user-agent string                  Set the user-agent to a specified string (default "rclone/v1.66.0")
+      --user-agent string                  Set the user-agent to a specified string (default "rclone/v1.67.0")
 ```
 
 
@@ -500,6 +500,7 @@ Backend only flags. These can be set in the config file also.
       --dropbox-encoding Encoding                           The encoding for the backend (default Slash,BackSlash,Del,RightSpace,InvalidUtf8,Dot)
       --dropbox-impersonate string                          Impersonate this user when using a business account
       --dropbox-pacer-min-sleep Duration                    Minimum time to sleep between API calls (default 10ms)
+      --dropbox-root-namespace string                       Specify a different Dropbox namespace ID to use as the root for all paths
       --dropbox-shared-files                                Instructs rclone to work on individual shared files
       --dropbox-shared-folders                              Instructs rclone to work on shared folders
       --dropbox-token string                                OAuth Access Token as a JSON blob
@@ -605,6 +606,7 @@ Backend only flags. These can be set in the config file also.
       --hidrive-upload-cutoff SizeSuffix                    Cutoff/Threshold for chunked uploads (default 96Mi)
       --http-description string                             Description of the remote
       --http-headers CommaSepList                           Set HTTP headers for all transactions
+      --http-no-escape                                      Do not escape URL metacharacters in path names
       --http-no-head                                        Don't use HEAD requests
       --http-no-slash                                       Set this if the site doesn't end directories with /
       --http-url string                                     URL of HTTP host to connect to
@@ -640,7 +642,7 @@ Backend only flags. These can be set in the config file also.
       --koofr-encoding Encoding                             The encoding for the backend (default Slash,BackSlash,Del,Ctl,InvalidUtf8,Dot)
       --koofr-endpoint string                               The Koofr API endpoint to use
       --koofr-mountid string                                Mount ID of the mount to use
-      --koofr-password string                               Your password for rclone (generate one at https://app.koofr.net/app/admin/preferences/password) (obscured)
+      --koofr-password string                               Your password for rclone generate one at https://app.koofr.net/app/admin/preferences/password (obscured)
       --koofr-provider string                               Choose your storage provider
       --koofr-setmtime                                      Does the backend support setting modification time (default true)
       --koofr-user string                                   Your user name
@@ -656,6 +658,7 @@ Backend only flags. These can be set in the config file also.
       --local-no-set-modtime                                Disable setting modtime
       --local-no-sparse                                     Disable sparse files for multi-thread downloads
       --local-nounc                                         Disable UNC (long path names) conversion on Windows
+      --local-time-type mtime|atime|btime|ctime             Set what kind of time is returned (default mtime)
       --local-unicode-normalization                         Apply unicode NFC normalization to paths and filenames
       --local-zero-size-links                               Assume the Stat size of links is zero (and read them instead) (deprecated)
       --mailru-auth-url string                              Auth server URL
@@ -698,6 +701,7 @@ Backend only flags. These can be set in the config file also.
       --onedrive-drive-type string                          The type of the drive (personal | business | documentLibrary)
       --onedrive-encoding Encoding                          The encoding for the backend (default Slash,LtGt,DoubleQuote,Colon,Question,Asterisk,Pipe,BackSlash,Del,Ctl,LeftSpace,LeftTilde,RightSpace,RightPeriod,InvalidUtf8,Dot)
       --onedrive-expose-onenote-files                       Set to make OneNote files show up in directory listings
+      --onedrive-hard-delete                                Permanently delete files on removal
       --onedrive-hash-type string                           Specify the hash in use for the backend (default "auto")
       --onedrive-link-password string                       Set the password for links created by the link command
       --onedrive-link-scope string                          Set the scope of the links created by the link command (default "anonymous")
@@ -752,6 +756,7 @@ Backend only flags. These can be set in the config file also.
       --pcloud-token-url string                             Token server url
       --pcloud-username string                              Your pcloud username
       --pikpak-auth-url string                              Auth server URL
+      --pikpak-chunk-size SizeSuffix                        Chunk size for multipart uploads (default 5Mi)
       --pikpak-client-id string                             OAuth Client Id
       --pikpak-client-secret string                         OAuth Client Secret
       --pikpak-description string                           Description of the remote
@@ -762,6 +767,7 @@ Backend only flags. These can be set in the config file also.
       --pikpak-token string                                 OAuth Access Token as a JSON blob
       --pikpak-token-url string                             Token server url
       --pikpak-trashed-only                                 Only show files that are in the trash
+      --pikpak-upload-concurrency int                       Concurrency for multipart uploads (default 5)
       --pikpak-use-trash                                    Send files to the trash instead of deleting permanently (default true)
       --pikpak-user string                                  Pikpak username
       --premiumizeme-auth-url string                        Auth server URL
@@ -875,6 +881,7 @@ Backend only flags. These can be set in the config file also.
       --sftp-chunk-size SizeSuffix                          Upload and download chunk size (default 32Ki)
       --sftp-ciphers SpaceSepList                           Space separated list of ciphers to be used for session encryption, ordered by preference
       --sftp-concurrency int                                The maximum number of outstanding requests for one file (default 64)
+      --sftp-connections int                                Maximum number of SFTP simultaneous connections, 0 for unlimited
       --sftp-copy-is-hardlink                               Set to enable server side copies using hardlinks
       --sftp-description string                             Description of the remote
       --sftp-disable-concurrent-reads                       If set don't use concurrent reads
@@ -959,7 +966,7 @@ Backend only flags. These can be set in the config file also.
       --swift-auth string                                   Authentication URL for server (OS_AUTH_URL)
       --swift-auth-token string                             Auth Token from alternate authentication - optional (OS_AUTH_TOKEN)
       --swift-auth-version int                              AuthVersion - optional - set to (1,2,3) if your auth URL has no version (ST_AUTH_VERSION)
-      --swift-chunk-size SizeSuffix                         Above this size files will be chunked into a _segments container (default 5Gi)
+      --swift-chunk-size SizeSuffix                         Above this size files will be chunked (default 5Gi)
       --swift-description string                            Description of the remote
       --swift-domain string                                 User domain - optional (v3 auth) (OS_USER_DOMAIN_NAME)
       --swift-encoding Encoding                             The encoding for the backend (default Slash,InvalidUtf8)
@@ -975,8 +982,16 @@ Backend only flags. These can be set in the config file also.
       --swift-tenant string                                 Tenant name - optional for v1 auth, this or tenant_id required otherwise (OS_TENANT_NAME or OS_PROJECT_NAME)
       --swift-tenant-domain string                          Tenant domain - optional (v3 auth) (OS_PROJECT_DOMAIN_NAME)
       --swift-tenant-id string                              Tenant ID - optional for v1 auth, this or tenant required otherwise (OS_TENANT_ID)
+      --swift-use-segments-container Tristate               Choose destination for large object segments (default unset)
       --swift-user string                                   User name to log in (OS_USERNAME)
       --swift-user-id string                                User ID to log in - optional - most swift systems use user and leave this blank (v3 auth) (OS_USER_ID)
+      --ulozto-app-token string                             The application token identifying the app. An app API key can be either found in the API
+      --ulozto-description string                           Description of the remote
+      --ulozto-encoding Encoding                            The encoding for the backend (default Slash,BackSlash,Del,Ctl,InvalidUtf8,Dot)
+      --ulozto-list-page-size int                           The size of a single page for list commands. 1-500 (default 500)
+      --ulozto-password string                              The password for the user (obscured)
+      --ulozto-root-folder-slug string                      If set, rclone will use this folder as the root folder for all operations. For example,
+      --ulozto-username string                              The username of the principal to operate as
       --union-action-policy string                          Policy to choose upstream on ACTION category (default "epall")
       --union-cache-time int                                Cache time of usage and free space (in seconds) (default 120)
       --union-create-policy string                          Policy to choose upstream on CREATE category (default "epmfs")
@@ -994,6 +1009,7 @@ Backend only flags. These can be set in the config file also.
       --webdav-encoding string                              The encoding for the backend
       --webdav-headers CommaSepList                         Set HTTP headers for all transactions
       --webdav-nextcloud-chunk-size SizeSuffix              Nextcloud upload chunk size (default 10Mi)
+      --webdav-owncloud-exclude-mounts                      Exclude ownCloud mounted storages
       --webdav-owncloud-exclude-shares                      Exclude ownCloud shares
       --webdav-pacer-min-sleep Duration                     Minimum time to sleep between API calls (default 10ms)
       --webdav-pass string                                  Password (obscured)

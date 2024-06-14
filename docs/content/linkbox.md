@@ -74,7 +74,7 @@ Here are the Advanced options specific to linkbox (Linkbox).
 
 #### --linkbox-description
 
-Description of the remote
+Description of the remote.
 
 Properties:
 
