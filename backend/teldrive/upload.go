@@ -175,9 +175,7 @@ func (o *Object) prepareUpload(ctx context.Context, src fs.ObjectInfo) (*uploadI
 
 	base, leaf := o.fs.splitPathFull(src.Remote())
 
-	modTime := src.ModTime(ctx).UTC().Format(timeFormat)
-
-	uploadID := getMD5Hash(fmt.Sprintf("%s:%d:%s", path.Join(base, leaf), src.Size(), modTime))
+	uploadID := getMD5Hash(fmt.Sprintf("%s:%d:%d", path.Join(base, leaf), src.Size(), o.fs.userId))
 
 	var (
 		uploadFile     api.UploadFile

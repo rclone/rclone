@@ -106,6 +106,7 @@ type Fs struct {
 	srv      *rest.Client
 	pacer    *fs.Pacer
 	authHash string
+	userId   int64
 }
 
 // Object represents an teldrive object
@@ -271,6 +272,7 @@ func NewFs(ctx context.Context, name string, root string, config configmap.Mappe
 	}
 
 	f.authHash = session.Hash
+	f.userId = session.UserId
 
 	dir, base := f.splitPathFull("")
 

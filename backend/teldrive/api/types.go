@@ -161,5 +161,6 @@ type Token struct {
 
 type Session struct {
 	UserName string `json:"userName"`
+	UserId   int64  `json:"userId"`
 	Hash     string `json:"hash"`
 }
