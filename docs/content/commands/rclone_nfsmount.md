@@ -1,8 +1,6 @@
 ---
 title: "rclone nfsmount"
 description: "Mount the remote as file system on a mountpoint."
-slug: rclone_nfsmount
-url: /commands/rclone_nfsmount/
 groups: Filter
 status: Experimental
 versionIntroduced: v1.65

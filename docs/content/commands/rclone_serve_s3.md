@@ -1,8 +1,6 @@
 ---
 title: "rclone serve s3"
 description: "Serve remote:path over s3."
-slug: rclone_serve_s3
-url: /commands/rclone_serve_s3/
 groups: Filter
 status: Experimental
 versionIntroduced: v1.65

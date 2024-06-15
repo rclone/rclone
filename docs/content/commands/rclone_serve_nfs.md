@@ -1,8 +1,6 @@
 ---
 title: "rclone serve nfs"
 description: "Serve the remote as an NFS mount"
-slug: rclone_serve_nfs
-url: /commands/rclone_serve_nfs/
 groups: Filter
 status: Experimental
 versionIntroduced: v1.65

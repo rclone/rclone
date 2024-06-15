@@ -1,8 +1,6 @@
 ---
 title: "rclone bisync"
 description: "Perform bidirectional synchronization between two paths."
-slug: rclone_bisync
-url: /commands/rclone_bisync/
 groups: Filter,Copy,Important
 status: Beta
 versionIntroduced: v1.58
