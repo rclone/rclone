@@ -142,7 +142,13 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		}
 	}
 
-	_, err = io.Copy(out, in)
+	err = o.fs.pacer.Call(func() (bool, error) {
+		_, err = io.Copy(out, in)
+		if err == nil {
+			return false, nil
+		}
+		return errors.Is(err, io.ErrUnexpectedEOF), err
+	})
 	if err != nil {
 		fs.Errorf(o, "update: io.Copy returned error: %v", err)
 		cleanup()
