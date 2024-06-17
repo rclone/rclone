@@ -1907,24 +1907,25 @@ func convertMetadataFromBlobItemToPropertiesResponse(currentBlob container.BlobI
 
 // readMetaData gets the metadata using a ListBlobsFlatPager, to avoid requiring read access on the blob itself, and is used by Fs.readMetaData if no_read_for_metadata is set
 func (f *Fs) readMetadataUsingList(ctx context.Context, containerName, containerPath string) (blobProperties blob.GetPropertiesResponse, err error) {
+	var max_results int32 = 1
 	blobsPager := f.cntSVC(containerName).NewListBlobsFlatPager(&container.ListBlobsFlatOptions{
 		Include: container.ListBlobsInclude{
 			Metadata: true,
 		},
-		Prefix: &containerPath,
+		MaxResults: &max_results,
+		Prefix:     &containerPath,
 	})
 	for blobsPager.More() {
 		blobs, err := blobsPager.NextPage(ctx)
 		if err != nil {
 			return blobProperties, err
 		}
-
-		for _, currentBlob := range blobs.ListBlobsFlatSegmentResponse.Segment.BlobItems {
-
-			if *currentBlob.Name != containerPath {
-				continue
+		if len(blobs.ListBlobsFlatSegmentResponse.Segment.BlobItems) == 1 {
+			if *blobs.ListBlobsFlatSegmentResponse.Segment.BlobItems[0].Name != encoder.Standard.Decode(containerPath) {
+				// Object doesn't exist, but one with this prefix does.
+				return blobProperties, fs.ErrorObjectNotFound
 			}
-			return convertMetadataFromBlobItemToPropertiesResponse(*currentBlob), nil
+			return convertMetadataFromBlobItemToPropertiesResponse(*blobs.ListBlobsFlatSegmentResponse.Segment.BlobItems[0]), nil
 		}
 	}
 	return blobProperties, fs.ErrorObjectNotFound
