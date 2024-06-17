@@ -32,12 +32,13 @@ type stream struct {
 	cr        *parallel       // parent reader
 	ctx       context.Context // ctx to cancel if needed
 	cancel    func()          // cancel the stream
-	rc        io.ReadCloser   // reader that it is reading from
+	rc        io.ReadCloser   // reader that it is reading from, may be nil
 	offset    int64           // where the stream is reading from
 	size      int64           // and the size it is reading
 	readBytes int64           // bytes read from the stream
 	rw        *pool.RW        // buffer for read
 	err       chan error      // error returned from the read
+	name      string          // name of this stream for debugging
 }
 
 // Start a stream reading (offset, offset+size)
@@ -55,6 +56,7 @@ func (cr *parallel) newStream(ctx context.Context, offset, size int64) (s *strea
 		rw:     rw,
 		err:    make(chan error, 1),
 	}
+	s.name = fmt.Sprintf("stream(%d,%d,%p)", s.offset, s.size, s)
 
 	// Start the background read into the buffer
 	go s.readFrom(ctx)
@@ -66,7 +68,7 @@ func (cr *parallel) newStream(ctx context.Context, offset, size int64) (s *strea
 // read the file into the buffer
 func (s *stream) readFrom(ctx context.Context) {
 	// Open the object at the correct range
-	fs.Debugf(s.cr.o, "stream(%d,%d): open", s.offset, s.size)
+	fs.Debugf(s.cr.o, "%s: open", s.name)
 	rc, err := operations.Open(ctx, s.cr.o,
 		&fs.HashesOption{Hashes: hash.Set(hash.None)},
 		&fs.RangeOption{Start: s.offset, End: s.offset + s.size - 1})
@@ -76,9 +78,9 @@ func (s *stream) readFrom(ctx context.Context) {
 	}
 	s.rc = rc
 
-	fs.Debugf(s.cr.o, "stream(%d,%d): readfrom started", s.offset, s.size)
+	fs.Debugf(s.cr.o, "%s: readfrom started", s.name)
 	_, err = s.rw.ReadFrom(s.rc)
-	fs.Debugf(s.cr.o, "stream(%d,%d): readfrom finished (%d bytes): %v", s.offset, s.size, s.rw.Size(), err)
+	fs.Debugf(s.cr.o, "%s: readfrom finished (%d bytes): %v", s.name, s.rw.Size(), err)
 	s.err <- err
 }
 
@@ -92,14 +94,14 @@ func (s *stream) eof() bool {
 // data is available but not len(p) bytes, read returns what is
 // available instead of waiting for more.
 func (s *stream) read(p []byte) (n int, err error) {
-	defer log.Trace(s.cr.o, "stream(%d,%d): Read len(p)=%d", s.offset, s.size, len(p))("n=%d, err=%v", &n, &err)
+	defer log.Trace(s.cr.o, "%s: Read len(p)=%d", s.name, len(p))("n=%d, err=%v", &n, &err)
 	if len(p) == 0 {
 		return n, nil
 	}
 	for {
 		var nn int
 		nn, err = s.rw.Read(p[n:])
-		fs.Debugf(s.cr.o, "stream(%d,%d): rw.Read nn=%d, err=%v", s.offset, s.size, nn, err)
+		fs.Debugf(s.cr.o, "%s: rw.Read nn=%d, err=%v", s.name, nn, err)
 		s.readBytes += int64(nn)
 		n += nn
 		if err != nil && err != io.EOF {
@@ -127,11 +129,13 @@ func orErr(perr *error, newErr error) {
 
 // Close a stream
 func (s *stream) close() (err error) {
-	fs.Debugf(s.cr.o, "stream(%d,%d): close", s.offset, s.size)
+	defer log.Trace(s.cr.o, "%s: close", s.name)("err=%v", &err)
 	s.cancel()
 	err = <-s.err // wait for readFrom to stop and return error
 	orErr(&err, s.rw.Close())
-	orErr(&err, s.rc.Close())
+	if s.rc != nil {
+		orErr(&err, s.rc.Close())
+	}
 	if err != nil && err != io.EOF {
 		return fmt.Errorf("parallel chunked reader: failed to read stream at %d size %d: %w", s.offset, s.size, err)
 	}
@@ -204,6 +208,7 @@ func (cr *parallel) _open() (err error) {
 //
 // Call with lock held
 func (cr *parallel) _popStream() (err error) {
+	defer log.Trace(cr.o, "streams=%+v", cr.streams)("streams=%+v, err=%v", &cr.streams, &err)
 	if len(cr.streams) == 0 {
 		return nil
 	}
@@ -218,7 +223,8 @@ func (cr *parallel) _popStream() (err error) {
 //
 // Call with lock held
 func (cr *parallel) _popStreams() (err error) {
-	for len(cr.streams) != 0 {
+	defer log.Trace(cr.o, "streams=%+v", cr.streams)("streams=%+v, err=%v", &cr.streams, &err)
+	for len(cr.streams) > 0 {
 		orErr(&err, cr._popStream())
 	}
 	cr.streams = nil
