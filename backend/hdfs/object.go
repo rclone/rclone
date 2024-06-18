@@ -128,12 +128,6 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		}
 	}
 
-	out, err := o.fs.client.Create(realpath)
-	if err != nil {
-		fs.Errorf(o, "update: Create(%q) returned error: %v", realpath, err)
-		return err
-	}
-
 	cleanup := func() {
 		rerr := o.fs.client.Remove(realpath)
 		if rerr != nil {
@@ -142,7 +136,19 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		}
 	}
 
+	var out *hdfs.FileWriter
 	err = o.fs.pacer.Call(func() (bool, error) {
+		if out != nil {
+			_ = out.Close()
+			out = nil
+		}
+
+		out, err = o.fs.client.Create(realpath)
+		if err != nil {
+			fs.Errorf(o, "update: Create(%q) returned error: %v", realpath, err)
+			return false, err
+		}
+
 		_, err = io.Copy(out, in)
 		if err == nil {
 			return false, nil
