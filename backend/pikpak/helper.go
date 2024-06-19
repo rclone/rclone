@@ -12,6 +12,7 @@ import (
 	"net/url"
 	"os"
 	"strconv"
+	"time"
 
 	"github.com/rclone/rclone/backend/pikpak/api"
 	"github.com/rclone/rclone/lib/rest"
@@ -82,19 +83,21 @@ func (f *Fs) getVIPInfo(ctx context.Context) (info *api.VIP, err error) {
 // action can be one of batch{Copy,Delete,Trash,Untrash}
 func (f *Fs) requestBatchAction(ctx context.Context, action string, req *api.RequestBatch) (err error) {
 	opts := rest.Opts{
-		Method:     "POST",
-		Path:       "/drive/v1/files:" + action,
-		NoResponse: true, // Only returns `{"task_id":""}
+		Method: "POST",
+		Path:   "/drive/v1/files:" + action,
 	}
+	info := struct {
+		TaskID string `json:"task_id"`
+	}{}
 	var resp *http.Response
 	err = f.pacer.Call(func() (bool, error) {
-		resp, err = f.rst.CallJSON(ctx, &opts, &req, nil)
+		resp, err = f.rst.CallJSON(ctx, &opts, &req, &info)
 		return f.shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
 		return fmt.Errorf("batch action %q failed: %w", action, err)
 	}
-	return nil
+	return f.waitTask(ctx, info.TaskID)
 }
 
 // requestNewTask requests a new api.NewTask and returns api.Task
@@ -179,12 +182,24 @@ func (f *Fs) getTask(ctx context.Context, ID string, checkPhase bool) (info *api
 		resp, err = f.rst.CallJSON(ctx, &opts, nil, &info)
 		if checkPhase {
 			if err == nil && info.Phase != api.PhaseTypeComplete {
-				// could be pending right after file is created/uploaded.
-				return true, errors.New(info.Phase)
+				// could be pending right after the task is created
+				return true, fmt.Errorf("%s (%s) is still in %s", info.Name, info.Type, info.Phase)
 			}
 		}
 		return f.shouldRetry(ctx, resp, err)
 	})
+	return
+}
+
+// waitTask waits for async tasks to be completed
+func (f *Fs) waitTask(ctx context.Context, ID string) (err error) {
+	time.Sleep(taskWaitTime)
+	if info, err := f.getTask(ctx, ID, true); err != nil {
+		if info == nil {
+			return fmt.Errorf("can't verify the task is completed: %q", ID)
+		}
+		return fmt.Errorf("can't verify the task is completed: %#v", info)
+	}
 	return
 }
 
