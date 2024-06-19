@@ -2538,6 +2538,9 @@ func (o *Object) uploadSinglepart(ctx context.Context, in io.Reader, src fs.Obje
 	}
 	// Set the mod time now and read metadata
 	info, err = o.fs.fetchAndUpdateMetadata(ctx, src, options, o)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch and update metadata: %w", err)
+	}
 	return info, o.setMetaData(info)
 }
 
