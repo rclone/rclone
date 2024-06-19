@@ -69,7 +69,7 @@ const (
 	rcloneEncryptedClientSecret = "aqrmB6M1YJ1DWCBxVxFSjFo7wzWEky494YMmkqgAl1do1WKOe2E"
 	minSleep                    = 100 * time.Millisecond
 	maxSleep                    = 2 * time.Second
-	waitTime                    = 500 * time.Millisecond
+	taskWaitTime                = 500 * time.Millisecond
 	decayConstant               = 2 // bigger for slower decay, exponential
 	rootURL                     = "https://api-drive.mypikpak.com"
 	minChunkSize                = fs.SizeSuffix(s3manager.MinUploadPartSize)
@@ -917,19 +917,21 @@ func (f *Fs) Purge(ctx context.Context, dir string) error {
 // CleanUp empties the trash
 func (f *Fs) CleanUp(ctx context.Context) (err error) {
 	opts := rest.Opts{
-		Method:     "PATCH",
-		Path:       "/drive/v1/files/trash:empty",
-		NoResponse: true, // Only returns `{"task_id":""}
+		Method: "PATCH",
+		Path:   "/drive/v1/files/trash:empty",
 	}
+	info := struct {
+		TaskID string `json:"task_id"`
+	}{}
 	var resp *http.Response
 	err = f.pacer.Call(func() (bool, error) {
-		resp, err = f.rst.Call(ctx, &opts)
+		resp, err = f.rst.CallJSON(ctx, &opts, nil, &info)
 		return f.shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
 		return fmt.Errorf("couldn't empty trash: %w", err)
 	}
-	return nil
+	return f.waitTask(ctx, info.TaskID)
 }
 
 // Move the object
@@ -1262,8 +1264,8 @@ func (f *Fs) upload(ctx context.Context, in io.Reader, leaf, dirID, sha1Str stri
 		if cancelErr := f.deleteTask(ctx, new.Task.ID, false); cancelErr != nil {
 			fs.Logf(leaf, "failed to cancel upload: %v", cancelErr)
 		}
-		fs.Debugf(leaf, "waiting %v for the cancellation to be effective", waitTime)
-		time.Sleep(waitTime)
+		fs.Debugf(leaf, "waiting %v for the cancellation to be effective", taskWaitTime)
+		time.Sleep(taskWaitTime)
 	})()
 
 	if uploadType == api.UploadTypeForm && new.Form != nil {
@@ -1277,12 +1279,7 @@ func (f *Fs) upload(ctx context.Context, in io.Reader, leaf, dirID, sha1Str stri
 	if err != nil {
 		return nil, fmt.Errorf("failed to upload: %w", err)
 	}
-	fs.Debugf(leaf, "sleeping for %v before checking upload status", waitTime)
-	time.Sleep(waitTime)
-	if _, err = f.getTask(ctx, new.Task.ID, true); err != nil {
-		return nil, fmt.Errorf("unable to complete the upload: %w", err)
-	}
-	return new.File, nil
+	return new.File, f.waitTask(ctx, new.Task.ID)
 }
 
 // Put the object
