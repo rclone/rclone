@@ -20,7 +20,7 @@ import (
 
 // Globals
 const (
-	cachePrefix = "rclone-pikpak-sha1sum-"
+	cachePrefix = "rclone-pikpak-gcid-"
 )
 
 // requestDecompress requests decompress of compressed files
@@ -151,6 +151,9 @@ func (f *Fs) getFile(ctx context.Context, ID string) (info *api.File, err error)
 		}
 		return f.shouldRetry(ctx, resp, err)
 	})
+	if err == nil {
+		info.Name = f.opt.Enc.ToStandardName(info.Name)
+	}
 	return
 }
 
@@ -250,16 +253,11 @@ func (f *Fs) requestShare(ctx context.Context, req *api.RequestShare) (info *api
 	return
 }
 
-// Read the sha1 of in returning a reader which will read the same contents
+// Read the gcid of in returning a reader which will read the same contents
 //
 // The cleanup function should be called when out is finished with
 // regardless of whether this function returned an error or not.
-func readSHA1(in io.Reader, size, threshold int64) (sha1sum string, out io.Reader, cleanup func(), err error) {
-	// we need an SHA1
-	hash := sha1.New()
-	// use the teeReader to write to the local file AND calculate the SHA1 while doing so
-	teeReader := io.TeeReader(in, hash)
-
+func readGcid(in io.Reader, size, threshold int64) (gcid string, out io.Reader, cleanup func(), err error) {
 	// nothing to clean up by default
 	cleanup = func() {}
 
@@ -282,8 +280,11 @@ func readSHA1(in io.Reader, size, threshold int64) (sha1sum string, out io.Reade
 			_ = os.Remove(tempFile.Name()) // delete the cache file after we are done - may be deleted already
 		}
 
-		// copy the ENTIRE file to disc and calculate the SHA1 in the process
-		if _, err = io.Copy(tempFile, teeReader); err != nil {
+		// use the teeReader to write to the local file AND calculate the gcid while doing so
+		teeReader := io.TeeReader(in, tempFile)
+
+		// copy the ENTIRE file to disk and calculate the gcid in the process
+		if gcid, err = calcGcid(teeReader, size); err != nil {
 			return
 		}
 		// jump to the start of the local file so we can pass it along
@@ -294,15 +295,38 @@ func readSHA1(in io.Reader, size, threshold int64) (sha1sum string, out io.Reade
 		// replace the already read source with a reader of our cached file
 		out = tempFile
 	} else {
-		// that's a small file, just read it into memory
-		var inData []byte
-		inData, err = io.ReadAll(teeReader)
-		if err != nil {
+		buf := &bytes.Buffer{}
+		teeReader := io.TeeReader(in, buf)
+
+		if gcid, err = calcGcid(teeReader, size); err != nil {
 			return
 		}
-
-		// set the reader to our read memory block
-		out = bytes.NewReader(inData)
+		out = buf
 	}
-	return hex.EncodeToString(hash.Sum(nil)), out, cleanup, nil
+	return
+}
+
+func calcGcid(r io.Reader, size int64) (string, error) {
+	calcBlockSize := func(j int64) int64 {
+		var psize int64 = 0x40000
+		for float64(j)/float64(psize) > 0x200 && psize < 0x200000 {
+			psize = psize << 1
+		}
+		return psize
+	}
+
+	totalHash := sha1.New()
+	blockHash := sha1.New()
+	readSize := calcBlockSize(size)
+	for {
+		blockHash.Reset()
+		if n, err := io.CopyN(blockHash, r, readSize); err != nil && n == 0 {
+			if err != io.EOF {
+				return "", err
+			}
+			break
+		}
+		totalHash.Write(blockHash.Sum(nil))
+	}
+	return hex.EncodeToString(totalHash.Sum(nil)), nil
 }

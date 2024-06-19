@@ -176,7 +176,7 @@ type File struct {
 	FileCategory      string        `json:"file_category,omitempty"` // "AUDIO", "VIDEO"
 	FileExtension     string        `json:"file_extension,omitempty"`
 	FolderType        string        `json:"folder_type,omitempty"`
-	Hash              string        `json:"hash,omitempty"` // sha1 but NOT a valid file hash. looks like a torrent hash
+	Hash              string        `json:"hash,omitempty"` // custom hash with a form of sha1sum
 	IconLink          string        `json:"icon_link,omitempty"`
 	ID                string        `json:"id,omitempty"`
 	Kind              string        `json:"kind,omitempty"` // "drive#file"
@@ -486,7 +486,7 @@ type RequestNewFile struct {
 	ParentID   string `json:"parent_id"`
 	FolderType string `json:"folder_type"`
 	// only when uploading a new file
-	Hash       string            `json:"hash,omitempty"`      // sha1sum
+	Hash       string            `json:"hash,omitempty"`      // gcid
 	Resumable  map[string]string `json:"resumable,omitempty"` // {"provider": "PROVIDER_ALIYUN"}
 	Size       int64             `json:"size,omitempty"`
 	UploadType string            `json:"upload_type,omitempty"` // "UPLOAD_TYPE_FORM" or "UPLOAD_TYPE_RESUMABLE"

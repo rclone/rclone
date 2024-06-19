@@ -7,8 +7,6 @@ package pikpak
 
 // md5sum is not always available, sometimes given empty.
 
-// sha1sum used for upload differs from the one with official apps.
-
 // Trashed files are not restored to the original location when using `batchUntrash`
 
 // Can't stream without `--vfs-cache-mode=full`
@@ -291,6 +289,7 @@ type Object struct {
 	modTime     time.Time // modification time of the object
 	mimeType    string    // The object MIME type
 	parent      string    // ID of the parent directories
+	gcid        string    // custom hash of the object
 	md5sum      string    // md5sum of the object
 	link        *api.Link // link to download the object
 	linkMu      *sync.Mutex
@@ -1224,7 +1223,7 @@ func (f *Fs) uploadByResumable(ctx context.Context, in io.Reader, name string, s
 	return
 }
 
-func (f *Fs) upload(ctx context.Context, in io.Reader, leaf, dirID, sha1Str string, size int64, options ...fs.OpenOption) (info *api.File, err error) {
+func (f *Fs) upload(ctx context.Context, in io.Reader, leaf, dirID, gcid string, size int64, options ...fs.OpenOption) (info *api.File, err error) {
 	// determine upload type
 	uploadType := api.UploadTypeResumable
 	// if size >= 0 && size < int64(5*fs.Mebi) {
@@ -1239,7 +1238,7 @@ func (f *Fs) upload(ctx context.Context, in io.Reader, leaf, dirID, sha1Str stri
 		ParentID:   parentIDForRequest(dirID),
 		FolderType: "NORMAL",
 		Size:       size,
-		Hash:       strings.ToUpper(sha1Str),
+		Hash:       strings.ToUpper(gcid),
 		UploadType: uploadType,
 	}
 	if uploadType == api.UploadTypeResumable {
@@ -1503,6 +1502,7 @@ func (o *Object) setMetaData(info *api.File) (err error) {
 	} else {
 		o.parent = info.ParentID
 	}
+	o.gcid = info.Hash
 	o.md5sum = info.Md5Checksum
 	if info.Links.ApplicationOctetStream != nil {
 		o.link = info.Links.ApplicationOctetStream
@@ -1575,9 +1575,6 @@ func (o *Object) Remote() string {
 func (o *Object) Hash(ctx context.Context, t hash.Type) (string, error) {
 	if t != hash.MD5 {
 		return "", hash.ErrUnsupported
-	}
-	if o.md5sum == "" {
-		return "", nil
 	}
 	return strings.ToLower(o.md5sum), nil
 }
@@ -1702,25 +1699,23 @@ func (o *Object) upload(ctx context.Context, in io.Reader, src fs.ObjectInfo, wi
 		return err
 	}
 
-	// Calculate sha1sum; grabbed from package jottacloud
-	hashStr, err := src.Hash(ctx, hash.SHA1)
-	if err != nil || hashStr == "" {
-		// unwrap the accounting from the input, we use wrap to put it
-		// back on after the buffering
-		var wrap accounting.WrapFn
-		in, wrap = accounting.UnWrap(in)
-		var cleanup func()
-		hashStr, in, cleanup, err = readSHA1(in, size, int64(o.fs.opt.HashMemoryThreshold))
-		defer cleanup()
-		if err != nil {
-			return fmt.Errorf("failed to calculate SHA1: %w", err)
-		}
-		// Wrap the accounting back onto the stream
-		in = wrap(in)
+	// Calculate gcid; grabbed from package jottacloud
+	var gcid string
+	// unwrap the accounting from the input, we use wrap to put it
+	// back on after the buffering
+	var wrap accounting.WrapFn
+	in, wrap = accounting.UnWrap(in)
+	var cleanup func()
+	gcid, in, cleanup, err = readGcid(in, size, int64(o.fs.opt.HashMemoryThreshold))
+	defer cleanup()
+	if err != nil {
+		return fmt.Errorf("failed to calculate gcid: %w", err)
 	}
+	// Wrap the accounting back onto the stream
+	in = wrap(in)
 
 	if !withTemp {
-		info, err := o.fs.upload(ctx, in, leaf, dirID, hashStr, size, options...)
+		info, err := o.fs.upload(ctx, in, leaf, dirID, gcid, size, options...)
 		if err != nil {
 			return err
 		}
@@ -1729,7 +1724,7 @@ func (o *Object) upload(ctx context.Context, in io.Reader, src fs.ObjectInfo, wi
 
 	// We have to fall back to upload + rename
 	tempName := "rcloneTemp" + random.String(8)
-	info, err := o.fs.upload(ctx, in, tempName, dirID, hashStr, size, options...)
+	info, err := o.fs.upload(ctx, in, tempName, dirID, gcid, size, options...)
 	if err != nil {
 		return err
 	}
