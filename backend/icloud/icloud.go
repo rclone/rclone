@@ -64,6 +64,7 @@ func init() {
 			// Password is not required, it will be left blank for 2FA
 			Name:       configPassword,
 			Help:       "Password.",
+   Required:   true,
 			IsPassword: true,
 			Sensitive:  true,
 		}, {
