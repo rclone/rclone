@@ -545,6 +545,50 @@ func TestWriteBackQueue(t *testing.T) {
 	assert.Equal(t, []QueueInfo{}, queue)
 }
 
+func TestWriteBackSetExpiry(t *testing.T) {
+	wb, cancel := newTestWriteBack(t)
+	defer cancel()
+
+	err := wb.SetExpiry(123123123, time.Now())
+	assert.Equal(t, ErrorIDNotFound, err)
+
+	pi := newPutItem(t)
+
+	id := wb.Add(0, "one", 10, true, pi.put)
+	wbItem := wb.lookup[id]
+
+	// get the expiry time with locking so we don't cause races
+	getExpiry := func() time.Time {
+		wb.mu.Lock()
+		defer wb.mu.Unlock()
+		return wbItem.expiry
+	}
+
+	expiry := time.Until(getExpiry()).Seconds()
+	assert.Greater(t, expiry, 0.0)
+	assert.Less(t, expiry, 1.0)
+
+	newExpiry := time.Now().Add(100 * time.Second)
+	require.NoError(t, wb.SetExpiry(wbItem.id, newExpiry))
+	assert.Equal(t, newExpiry, getExpiry())
+
+	// This starts the transfer
+	newExpiry = time.Now().Add(-100 * time.Second)
+	require.NoError(t, wb.SetExpiry(wbItem.id, newExpiry))
+	assert.Equal(t, newExpiry, getExpiry())
+
+	<-pi.started
+
+	expiry = time.Until(getExpiry()).Seconds()
+	assert.LessOrEqual(t, expiry, -100.0)
+
+	pi.finish(nil) // transfer successful
+	waitUntilNoTransfers(t, wb)
+
+	expiry = time.Until(getExpiry()).Seconds()
+	assert.LessOrEqual(t, expiry, -100.0)
+}
+
 // Test queuing more than fs.Config.Transfers
 func TestWriteBackMaxQueue(t *testing.T) {
 	ctx := context.Background()
