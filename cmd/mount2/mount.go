@@ -192,6 +192,7 @@ func mount(VFS *vfs.VFS, mountpoint string, opt *mountlib.Options) (<-chan error
 	if err := mountlib.CheckAllowNonEmpty(mountpoint, opt); err != nil {
 		return nil, nil, err
 	}
+	opt.VolumeName = mountlib.MakeVolumeNameValidOnUnix(opt.VolumeName)
 	fs.Debugf(f, "Mounting on %q", mountpoint)
 
 	fsys := NewFS(VFS, opt)

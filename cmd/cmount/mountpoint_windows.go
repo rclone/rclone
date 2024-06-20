@@ -8,9 +8,11 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"strings"
 
 	"github.com/rclone/rclone/cmd/mountlib"
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/lib/encoder"
 	"github.com/rclone/rclone/lib/file"
 )
 
@@ -18,10 +20,13 @@ var isDriveRegex = regexp.MustCompile(`^[a-zA-Z]\:$`)
 var isDriveRootPathRegex = regexp.MustCompile(`^[a-zA-Z]\:\\$`)
 var isDriveOrRootPathRegex = regexp.MustCompile(`^[a-zA-Z]\:\\?$`)
 var isNetworkSharePathRegex = regexp.MustCompile(`^\\\\[^\\\?]+\\[^\\]`)
+var isAnyPathSeparatorRegex = regexp.MustCompile(`[/\\]+`) // Matches any path separators, slash or backslash, or sequences of them
 
-// isNetworkSharePath returns true if the given string is a valid network share path,
-// in the basic UNC format "\\Server\Share\Path", where the first two path components
-// are required ("\\Server\Share", which represents the volume).
+// isNetworkSharePath returns true if the given string is a network share path,
+// in the basic UNC format "\\Server\Share\Path". The first two path components
+// are required ("\\Server\Share"), and represents the volume. The rest of the
+// string can be anything, i.e. can be a nested path ("\\Server\Share\Path\Path\Path").
+// Actual validity of the path, e.g. if it contains invalid characters, is not considered.
 // Extended-length UNC format "\\?\UNC\Server\Share\Path" is not considered, as it is
 // not supported by cgofuse/winfsp, so returns false for any paths with prefix "\\?\".
 // Note: There is a UNCPath function in lib/file, but it refers to any extended-length
@@ -110,7 +115,7 @@ func handleLocalMountpath(f fs.Fs, mountpath string, opt *mountlib.Options) (str
 		// Drive letter string can be used as is, since we have already checked it does not exist,
 		// but directory path needs more checks.
 		if opt.NetworkMode {
-			fs.Errorf(nil, "Ignoring --network-mode as it is not supported with directory mountpoint")
+			fs.Debugf(nil, "Ignoring --network-mode as it is not supported with directory mountpoint")
 			opt.NetworkMode = false
 		}
 		var err error
@@ -131,30 +136,47 @@ func handleLocalMountpath(f fs.Fs, mountpath string, opt *mountlib.Options) (str
 	return mountpath, nil
 }
 
+// networkSharePathEncoder is an encoder used to make strings valid as (part of) Windows network share UNC paths
+const networkSharePathEncoder = (encoder.EncodeZero | // NUL(0x00)
+	encoder.EncodeCtl | // CTRL(0x01-0x1F)
+	encoder.EncodeDel | // DEL(0x7F)
+	encoder.EncodeWin | // :?"*<>|
+	encoder.EncodeInvalidUtf8) // Also encode invalid UTF-8 bytes as Go can't convert them to UTF-16.
+
+// encodeNetworkSharePath makes a string valid to use as (part of) a Windows network share UNC path.
+// Using backslash as path separator here, but forward slashes would also be treated as
+// path separators by the library, and therefore does not encode either of them. For convenience,
+// normalizes to backslashes-only. UNC paths always start with two path separators, but WinFsp
+// requires volume prefix as UNC-like path but with only a single backslash prefix, and multiple
+// separators are not valid in any other parts of network share paths, so therefore (unlike what
+// filepath.FromSlash would do) replaces multiple separators with a single one (like filpath.Clean
+// would do, but it does also more). A trailing path separator would just be ignored, but we
+// remove it here as well for convenience.
+func encodeNetworkSharePath(volumeName string) string {
+	return networkSharePathEncoder.Encode(strings.TrimRight(isAnyPathSeparatorRegex.ReplaceAllString(volumeName, `\`), `\`))
+}
+
 // handleVolumeName handles the volume name option.
-func handleVolumeName(opt *mountlib.Options, volumeName string) {
-	// If volumeName parameter is set, then just set that into options replacing any existing value.
-	// Else, ensure the volume name option is a valid network share UNC path if network mode,
+func handleVolumeName(opt *mountlib.Options) {
+	// Ensure the volume name option is a valid network share UNC path if network mode,
 	// and ensure network mode if configured volume name is already UNC path.
-	if volumeName != "" {
-		opt.VolumeName = volumeName
-	} else if opt.VolumeName != "" { // Should always be true due to code in mountlib caller
+	if opt.VolumeName != "" { // Should always be true due to code in mountlib caller
 		// Use value of given volume name option, but check if it is disk volume name or network volume prefix
 		if isNetworkSharePath(opt.VolumeName) {
 			// Specified volume name is network share UNC path, assume network mode and use it as volume prefix
-			opt.VolumeName = opt.VolumeName[1:] // WinFsp requires volume prefix as UNC-like path but with only a single backslash
+			opt.VolumeName = encodeNetworkSharePath(opt.VolumeName[1:]) // We know from isNetworkSharePath it has a duplicate path separator prefix, so removes that right away (but encodeNetworkSharePath would remove it also)
 			if !opt.NetworkMode {
 				// Specified volume name is network share UNC path, force network mode and use it as volume prefix
 				fs.Debugf(nil, "Forcing network mode due to network share (UNC) volume name")
 				opt.NetworkMode = true
 			}
 		} else if opt.NetworkMode {
-			// Plain volume name treated as share name in network mode, append to hard coded "\\server" prefix to get full volume prefix.
-			opt.VolumeName = "\\server\\" + opt.VolumeName
+			// Specified volume name is not a valid network share UNC path, but network mode is enabled, so append to a hard coded server prefix and use it as volume prefix
+			opt.VolumeName = `\server\` + strings.TrimLeft(encodeNetworkSharePath(opt.VolumeName), `\`)
 		}
 	} else if opt.NetworkMode {
-		// Hard coded default
-		opt.VolumeName = "\\server\\share"
+		// Use hard coded default
+		opt.VolumeName = `\server\share`
 	}
 }
 
@@ -173,22 +195,27 @@ func getMountpoint(f fs.Fs, mountpath string, opt *mountlib.Options) (mountpoint
 	}
 
 	// Handle mountpath
-	var volumeName string
 	if isDefaultPath(mountpath) {
 		// Mount path indicates defaults, which will automatically pick an unused drive letter.
-		mountpoint, err = handleDefaultMountpath()
+		if mountpoint, err = handleDefaultMountpath(); err != nil {
+			return
+		}
 	} else if isNetworkSharePath(mountpath) {
 		// Mount path is a valid network share path (UNC format, "\\Server\Share" prefix).
-		mountpoint, err = handleNetworkShareMountpath(mountpath, opt)
-		// In this case the volume name is taken from the mount path, will replace any existing volume name option.
-		volumeName = mountpath[1:] // WinFsp requires volume prefix as UNC-like path but with only a single backslash
+		if mountpoint, err = handleNetworkShareMountpath(mountpath, opt); err != nil {
+			return
+		}
+		// In this case the volume name is taken from the mount path, it replaces any existing volume name option.
+		opt.VolumeName = mountpath
 	} else {
 		// Mount path is drive letter or directory path.
-		mountpoint, err = handleLocalMountpath(f, mountpath, opt)
+		if mountpoint, err = handleLocalMountpath(f, mountpath, opt); err != nil {
+			return
+		}
 	}
 
 	// Handle volume name
-	handleVolumeName(opt, volumeName)
+	handleVolumeName(opt)
 
 	// Done, return mountpoint to be used, together with updated mount options.
 	if opt.NetworkMode {
