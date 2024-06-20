@@ -19,6 +19,7 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config/flags"
 	"github.com/rclone/rclone/lib/atexit"
 	"github.com/spf13/pflag"
@@ -57,6 +58,10 @@ useful if you wish to proxy rclone serve.  Rclone automatically
 inserts leading and trailing "/" on ` + "`--{{ .Prefix }}baseurl`" + `, so ` + "`--{{ .Prefix }}baseurl \"rclone\"`" + `,
 ` + "`--{{ .Prefix }}baseurl \"/rclone\"` and `--{{ .Prefix }}baseurl \"/rclone/\"`" + ` are all treated
 identically.
+
+` + "`--{{ .Prefix }}allow-origin`" + ` sets the origin which cross-domain request (CORS) can be executed from.
+
+` + "`--{{ .Prefix }}response-header`" + ` sets a custom HTTP response header.
 
 #### TLS (SSL)
 
@@ -110,6 +115,7 @@ type Config struct {
 	ClientCA           string        // Client certificate authority to verify clients with
 	MinTLSVersion      string        // MinTLSVersion contains the minimum TLS version that is acceptable.
 	AllowOrigin        string        // AllowOrigin sets the Access-Control-Allow-Origin header
+	ResponseHeaders    []string      // Custom HTTP response headers
 }
 
 // AddFlagsPrefix adds flags for the httplib
@@ -124,6 +130,7 @@ func (cfg *Config) AddFlagsPrefix(flagSet *pflag.FlagSet, prefix string) {
 	flags.StringVarP(flagSet, &cfg.BaseURL, prefix+"baseurl", "", cfg.BaseURL, "Prefix for URLs - leave blank for root", prefix)
 	flags.StringVarP(flagSet, &cfg.MinTLSVersion, prefix+"min-tls-version", "", cfg.MinTLSVersion, "Minimum TLS version that is acceptable", prefix)
 	flags.StringVarP(flagSet, &cfg.AllowOrigin, prefix+"allow-origin", "", cfg.AllowOrigin, "Origin which cross-domain request (CORS) can be executed from", prefix)
+	flags.StringArrayVarP(flagSet, &cfg.ResponseHeaders, prefix+"response-header", "", cfg.ResponseHeaders, "Set custom HTTP response header", prefix)
 }
 
 // AddHTTPFlagsPrefix adds flags for the httplib
@@ -239,6 +246,8 @@ func NewServer(ctx context.Context, options ...Option) (*Server, error) {
 	}
 
 	s.mux.Use(MiddlewareCORS(s.cfg.AllowOrigin))
+
+	s.mux.Use(MiddlewareCustomResponseHeaders(fs.ParseHeaders(s.cfg.ResponseHeaders)))
 
 	s.initAuth()
 

@@ -157,23 +157,6 @@ func AddFlags(ci *fs.ConfigInfo, flagSet *pflag.FlagSet) {
 	flags.FVarP(flagSet, &ci.MetadataMapper, "metadata-mapper", "", "Program to run to transforming metadata before upload", "Metadata")
 }
 
-// ParseHeaders converts the strings passed in via the header flags into HTTPOptions
-func ParseHeaders(headers []string) []*fs.HTTPOption {
-	opts := []*fs.HTTPOption{}
-	for _, header := range headers {
-		parts := strings.SplitN(header, ":", 2)
-		if len(parts) == 1 {
-			log.Fatalf("Failed to parse '%s' as an HTTP header. Expecting a string like: 'Content-Encoding: gzip'", header)
-		}
-		option := &fs.HTTPOption{
-			Key:   strings.TrimSpace(parts[0]),
-			Value: strings.TrimSpace(parts[1]),
-		}
-		opts = append(opts, option)
-	}
-	return opts
-}
-
 // SetFlags converts any flags into config which weren't straight forward
 func SetFlags(ci *fs.ConfigInfo) {
 	if dumpHeaders {
@@ -280,16 +263,13 @@ func SetFlags(ci *fs.ConfigInfo) {
 	}
 
 	if len(uploadHeaders) != 0 {
-		ci.UploadHeaders = ParseHeaders(uploadHeaders)
+		ci.UploadHeaders = fs.ParseHeaders(uploadHeaders)
 	}
 	if len(downloadHeaders) != 0 {
-		ci.DownloadHeaders = ParseHeaders(downloadHeaders)
+		ci.DownloadHeaders = fs.ParseHeaders(downloadHeaders)
 	}
 	if len(headers) != 0 {
-		ci.Headers = ParseHeaders(headers)
-	}
-	if len(headers) != 0 {
-		ci.Headers = ParseHeaders(headers)
+		ci.Headers = fs.ParseHeaders(headers)
 	}
 	if len(metadataSet) != 0 {
 		ci.MetadataSet = make(fs.Metadata, len(metadataSet))
