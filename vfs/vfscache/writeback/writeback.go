@@ -6,6 +6,7 @@ import (
 	"container/heap"
 	"context"
 	"errors"
+	"sort"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -465,4 +466,48 @@ func (wb *WriteBack) Stats() (uploadsInProgress, uploadsQueued int) {
 	wb.mu.Lock()
 	defer wb.mu.Unlock()
 	return wb.uploads, len(wb.items)
+}
+
+// QueueInfo is information about an item queued for upload, returned
+// by Queue
+type QueueInfo struct {
+	Name      string  `json:"name"`      // name (full path) of the file,
+	ID        Handle  `json:"id"`        // id of queue item
+	Size      int64   `json:"size"`      // integer size of the file in bytes
+	Expiry    float64 `json:"expiry"`    // seconds from now which the file is eligible for transfer, oldest goes first
+	Tries     int     `json:"tries"`     // number of times we have tried to upload
+	Delay     float64 `json:"delay"`     // delay between upload attempts (s)
+	Uploading bool    `json:"uploading"` // true if item is being uploaded
+}
+
+// Queue return info about the current upload queue
+func (wb *WriteBack) Queue() []QueueInfo {
+	wb.mu.Lock()
+	defer wb.mu.Unlock()
+
+	items := make([]QueueInfo, 0, len(wb.lookup))
+	now := time.Now()
+
+	// Lookup all the items in no particular order
+	for _, wbItem := range wb.lookup {
+		items = append(items, QueueInfo{
+			Name:      wbItem.name,
+			ID:        wbItem.id,
+			Size:      wbItem.size,
+			Expiry:    wbItem.expiry.Sub(now).Seconds(),
+			Tries:     wbItem.tries,
+			Delay:     wbItem.delay.Seconds(),
+			Uploading: wbItem.uploading,
+		})
+	}
+
+	// Sort by Uploading first then Expiry
+	sort.Slice(items, func(i, j int) bool {
+		if items[i].Uploading != items[j].Uploading {
+			return items[i].Uploading
+		}
+		return items[i].Expiry < items[j].Expiry
+	})
+
+	return items
 }

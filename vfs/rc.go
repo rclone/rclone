@@ -437,3 +437,51 @@ func rcStats(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 	}
 	return vfs.Stats(), nil
 }
+
+func init() {
+	rc.Add(rc.Call{
+		Path:  "vfs/queue",
+		Title: "Queue info for a VFS.",
+		Help: strings.ReplaceAll(`
+This returns info about the upload queue for the selected VFS.
+
+This is only useful if |--vfs-cache-mode| > off. If you call it when
+the |--vfs-cache-mode| is off, it will return an empty result.
+
+    {
+        "queued": // an array of files queued for upload
+        [
+            {
+                "name":      "file",   // string: name (full path) of the file,
+                "id":        123,      // integer: id of this item in the queue,
+                "size":      79,       // integer: size of the file in bytes
+                "expiry":    1.5       // float: time until file is eligible for transfer, lowest goes first
+                "tries":     1,        // integer: number of times we have tried to upload
+                "delay":     5.0,      // float: seconds between upload attempts
+                "uploading": false,    // boolean: true if item is being uploaded
+            },
+       ],
+    }
+
+The |expiry| time is the time until the file is elegible for being
+uploaded in floating point seconds. This may go negative. As rclone
+only transfers |--transfers| files at once, only the lowest
+|--transfers| expiry times will have |uploading| as |true|. So there
+may be files with negative expiry times for which |uploading| is
+|false|.
+
+`, "|", "`") + getVFSHelp,
+		Fn: rcQueue,
+	})
+}
+
+func rcQueue(ctx context.Context, in rc.Params) (out rc.Params, err error) {
+	vfs, err := getVFS(in)
+	if err != nil {
+		return nil, err
+	}
+	if vfs.cache == nil {
+		return nil, nil
+	}
+	return vfs.cache.Queue(), nil
+}

@@ -170,6 +170,13 @@ func (c *Cache) Stats() (out rc.Params) {
 	return out
 }
 
+// Queue returns info about the Cache
+func (c *Cache) Queue() (out rc.Params) {
+	out = make(rc.Params)
+	out["queue"] = c.writeback.Queue()
+	return out
+}
+
 // createDir creates a directory path, along with any necessary parents
 func createDir(dir string) error {
 	return file.MkdirAll(dir, 0700)
