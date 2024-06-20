@@ -13,6 +13,7 @@ import (
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/vfs/vfscommon"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func newTestWriteBack(t *testing.T) (wb *WriteBack, cancel func()) {
@@ -491,6 +492,57 @@ func TestWriteBackGetStats(t *testing.T) {
 	assert.Equal(t, queued, 0)
 	assert.Equal(t, inProgress, 0)
 
+}
+
+func TestWriteBackQueue(t *testing.T) {
+	wb, cancel := newTestWriteBack(t)
+	defer cancel()
+
+	pi := newPutItem(t)
+
+	id := wb.Add(0, "one", 10, true, pi.put)
+
+	queue := wb.Queue()
+	require.Equal(t, 1, len(queue))
+	assert.Greater(t, queue[0].Expiry, 0.0)
+	assert.Less(t, queue[0].Expiry, 1.0)
+	queue[0].Expiry = 0.0
+	assert.Equal(t, []QueueInfo{
+		{
+			Name:      "one",
+			Size:      10,
+			Expiry:    0.0,
+			Tries:     0,
+			Delay:     0.1,
+			Uploading: false,
+			ID:        id,
+		},
+	}, queue)
+
+	<-pi.started
+
+	queue = wb.Queue()
+	require.Equal(t, 1, len(queue))
+	assert.Less(t, queue[0].Expiry, 0.0)
+	assert.Greater(t, queue[0].Expiry, -1.0)
+	queue[0].Expiry = 0.0
+	assert.Equal(t, []QueueInfo{
+		{
+			Name:      "one",
+			Size:      10,
+			Expiry:    0.0,
+			Tries:     1,
+			Delay:     0.1,
+			Uploading: true,
+			ID:        id,
+		},
+	}, queue)
+
+	pi.finish(nil) // transfer successful
+	waitUntilNoTransfers(t, wb)
+
+	queue = wb.Queue()
+	assert.Equal(t, []QueueInfo{}, queue)
 }
 
 // Test queuing more than fs.Config.Transfers
