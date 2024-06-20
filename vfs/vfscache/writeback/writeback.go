@@ -62,6 +62,7 @@ func New(ctx context.Context, opt *vfscommon.Options) *WriteBack {
 // writeBack.mu must be held to manipulate this
 type writeBackItem struct {
 	name      string             // name of the item so we don't have to read it from item
+	size      int64              // size of the item so we don't have to read it from item
 	id        Handle             // id of the item
 	index     int                // index into the priority queue for update
 	expiry    time.Time          // When this expires we will write it back
@@ -135,10 +136,11 @@ func (wb *WriteBack) _newExpiry() time.Time {
 // make a new writeBackItem
 //
 // call with the lock held
-func (wb *WriteBack) _newItem(id Handle, name string) *writeBackItem {
+func (wb *WriteBack) _newItem(id Handle, name string, size int64) *writeBackItem {
 	wb.SetID(&id)
 	wbItem := &writeBackItem{
 		name:   name,
+		size:   size,
 		expiry: wb._newExpiry(),
 		delay:  time.Duration(wb.opt.WriteBack),
 		id:     id,
@@ -256,13 +258,13 @@ func (wb *WriteBack) SetID(pid *Handle) {
 //
 // If modified is false then it it doesn't cancel a pending upload if
 // there is one as there is no need.
-func (wb *WriteBack) Add(id Handle, name string, modified bool, putFn PutFn) Handle {
+func (wb *WriteBack) Add(id Handle, name string, size int64, modified bool, putFn PutFn) Handle {
 	wb.mu.Lock()
 	defer wb.mu.Unlock()
 
 	wbItem, ok := wb.lookup[id]
 	if !ok {
-		wbItem = wb._newItem(id, name)
+		wbItem = wb._newItem(id, name, size)
 	} else {
 		if wbItem.uploading && modified {
 			// We are uploading already so cancel the upload
@@ -272,6 +274,7 @@ func (wb *WriteBack) Add(id Handle, name string, modified bool, putFn PutFn) Han
 		wb.items._update(wbItem, wb._newExpiry())
 	}
 	wbItem.putFn = putFn
+	wbItem.size = size
 	wb._resetTimer()
 	return wbItem.id
 }

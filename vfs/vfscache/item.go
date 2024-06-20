@@ -737,7 +737,7 @@ func (item *Item) Close(storeFn StoreFn) (err error) {
 			item.c.writeback.SetID(&item.writeBackID)
 			id := item.writeBackID
 			item.mu.Unlock()
-			item.c.writeback.Add(id, item.name, item.modified, func(ctx context.Context) error {
+			item.c.writeback.Add(id, item.name, item.info.Size, item.modified, func(ctx context.Context) error {
 				return item.store(ctx, storeFn)
 			})
 			item.mu.Lock()
