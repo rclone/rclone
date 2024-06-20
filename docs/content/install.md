@@ -40,6 +40,10 @@ won't re-download if not needed.
 
 ## Linux installation {#linux}
 
+### Precompiled binary, using script {#linux-precompiled-script}
+
+    sudo -v ; curl https://rclone.org/install.sh | sudo bash
+
 ### Precompiled binary {#linux-precompiled}
 
 Fetch and unpack
@@ -65,6 +69,10 @@ Run `rclone config` to setup. See [rclone config docs](/docs/) for more details.
     rclone config
 
 ## macOS installation {#macos}
+
+### Precompiled binary, using script {#macos-precompiled-script}
+
+    sudo -v ; curl https://rclone.org/install.sh | sudo bash
 
 ### Installation with brew {#macos-brew}
 
