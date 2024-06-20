@@ -147,22 +147,6 @@ func Config(ctx context.Context, name string, m configmap.Mapper, config fs.Conf
 
 	switch config.State {
 	case "":
-		// Empty state means it's the first call to the Config function
-		if password == "" {
-			return fs.ConfigPassword("password", "config_password", "Two-factor authentication: please enter your password (it won't be saved in the configuration)")
-		}
-		// password was successfully loaded from the config
-		return fs.ConfigGoto("authenticate")
-	case "password":
-		// password should be coming from the previous state (entered by the user)
-		password = config.Result
-		if password == "" {
-			return fs.ConfigError("", "Password can't be blank")
-		}
-		// save it into the configuration file and keep going
-		m.Set(configPassword, obscure.MustObscure(password))
-		return fs.ConfigGoto("authenticate")
-	case "authenticate":
 		icloud, _ := api.New(appleid, password, trustToken, cookies, nil)
 		if err := icloud.Authenticate(ctx); err != nil {
 			return nil, err
