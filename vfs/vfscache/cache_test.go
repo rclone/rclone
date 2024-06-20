@@ -741,3 +741,13 @@ func TestCacheQueue(t *testing.T) {
 	_, ok := queue.([]writeback.QueueInfo)
 	require.True(t, ok)
 }
+
+func TestCacheQueueSetExpiry(t *testing.T) {
+	_, c := newTestCache(t)
+
+	// Check this returns the correct error when called so we know
+	// it is plumbed in correctly. The actual tests are done in
+	// writeback.
+	err := c.QueueSetExpiry(123123, time.Now())
+	assert.Equal(t, writeback.ErrorIDNotFound, err)
+}

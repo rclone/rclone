@@ -511,3 +511,26 @@ func (wb *WriteBack) Queue() []QueueInfo {
 
 	return items
 }
+
+// ErrorIDNotFound is returned from SetExpiry when the item is not found
+var ErrorIDNotFound = errors.New("id not found in queue")
+
+// SetExpiry sets the expiry time for an item in the writeback queue.
+//
+// id should be as returned from the Queue call
+//
+// If the item isn't found then it will return ErrorIDNotFound
+func (wb *WriteBack) SetExpiry(id Handle, expiry time.Time) error {
+	wb.mu.Lock()
+	defer wb.mu.Unlock()
+
+	wbItem, ok := wb.lookup[id]
+	if !ok {
+		return ErrorIDNotFound
+	}
+
+	// Update the expiry with the user requested value
+	wb.items._update(wbItem, expiry)
+	wb._resetTimer()
+	return nil
+}

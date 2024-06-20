@@ -177,6 +177,11 @@ func (c *Cache) Queue() (out rc.Params) {
 	return out
 }
 
+// QueueSetExpiry updates the expiry of a single item in the upload queue
+func (c *Cache) QueueSetExpiry(id writeback.Handle, expiry time.Time) error {
+	return c.writeback.SetExpiry(id, expiry)
+}
+
 // createDir creates a directory path, along with any necessary parents
 func createDir(dir string) error {
 	return file.MkdirAll(dir, 0700)
