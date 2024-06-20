@@ -2,6 +2,7 @@ package cloudinary
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -28,16 +29,24 @@ func init() {
 		NewFs:       NewFs,
 		Options: []fs.Option{
 			{
-				Name: "api_key",
-				Help: "Cloudinary API Key",
+				Name:     "cloud_name",
+				Help:     "Cloudinary Cloud Name",
+				Required: true,
 			},
 			{
-				Name: "api_secret",
-				Help: "Cloudinary API Secret",
+				Name:     "api_key",
+				Help:     "Cloudinary API Key",
+				Required: true,
 			},
 			{
-				Name: "cloud_name",
-				Help: "Cloudinary Cloud Name",
+				Name:      "api_secret",
+				Help:      "Cloudinary API Secret",
+				Required:  true,
+				Sensitive: true,
+			},
+			{
+				Name: "upload_preset",
+				Help: "Upload Preset to use for upload",
 			},
 		},
 	})
@@ -45,9 +54,10 @@ func init() {
 
 // Options defines the configuration for this backend
 type Options struct {
-	APIKey    string `config:"api_key"`
-	APISecret string `config:"api_secret"`
-	CloudName string `config:"cloud_name"`
+	CloudName    string `config:"cloud_name"`
+	APIKey       string `config:"api_key"`
+	APISecret    string `config:"api_secret"`
+	UploadPreset string `config:"upload_preset"`
 }
 
 // Fs represents a remote cloudinary server
@@ -108,6 +118,7 @@ func NewFs(ctx context.Context, name string, root string, m configmap.Mapper) (f
 	f.features = (&fs.Features{
 		CaseInsensitive:         false,
 		CanHaveEmptyDirectories: true,
+		DuplicateFiles:          true,
 	}).Fill(ctx, f)
 
 	return f, nil
@@ -239,6 +250,10 @@ func (f *Fs) getCLDAsset(ctx context.Context, remote string) (*admin.SearchAsset
 		return nil, fs.ErrorObjectNotFound
 	}
 
+	if len(results.Assets) > 1 {
+		return nil, errors.New("duplicate objects found")
+	}
+
 	return &results.Assets[0], nil
 }
 
@@ -264,12 +279,17 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 // Put uploads content to Cloudinary
 func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
 	params := uploader.UploadParams{
-		AssetFolder: path.Join(f.Root(), path.Dir(src.Remote())),
-		DisplayName: path.Base(src.Remote()),
+		AssetFolder:  path.Join(f.Root(), path.Dir(src.Remote())),
+		DisplayName:  path.Base(src.Remote()),
+		UploadPreset: f.opt.UploadPreset,
 	}
 	uploadResult, err := f.cld.Upload.Upload(ctx, in, params)
 	if err != nil {
 		return nil, fmt.Errorf("failed to upload to Cloudinary: %w", err)
+	}
+
+	if uploadResult.Error.Message != "" {
+		return nil, fmt.Errorf(uploadResult.Error.Message)
 	}
 
 	o := &Object{
@@ -286,7 +306,7 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 // Other required methods (not fully implemented):
 
 func (f *Fs) Precision() time.Duration {
-	return time.Second
+	return fs.ModTimeNotSupported
 }
 
 func (f *Fs) Hashes() hash.Set {
@@ -372,7 +392,7 @@ func (o *Object) Storable() bool {
 }
 
 func (o *Object) SetModTime(ctx context.Context, modTime time.Time) error {
-	return nil
+	return fs.ErrorCantSetModTime
 }
 
 func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadCloser, error) {
