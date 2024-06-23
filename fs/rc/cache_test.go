@@ -22,7 +22,7 @@ func mockNewFs(t *testing.T) func() {
 	require.NoError(t, err)
 	cache.Put("mock:/", f)
 	cache.Put(":mock:/", f)
-	f, err = mockfs.NewFs(ctx, "mock", "dir/file.txt", nil)
+	f, err = mockfs.NewFs(ctx, "mock", "dir/", nil)
 	require.NoError(t, err)
 	cache.PutErr("mock:dir/file.txt", f, fs.ErrorIsFile)
 	return func() {
