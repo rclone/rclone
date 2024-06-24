@@ -32,7 +32,7 @@ func init() {
 	cmd.Annotations["status"] = "Experimental"
 	mountlib.AddRc(name, mount)
 	cmdFlags := cmd.Flags()
-	flags.BoolVarP(cmdFlags, &sudo, "sudo", "", sudo, "Use sudo to run the mount command as root.", "")
+	flags.BoolVarP(cmdFlags, &sudo, "sudo", "", sudo, "Use sudo to run the mount/umount commands as root.", "")
 	nfs.AddFlags(cmdFlags, &nfsServerOpt)
 }
 
@@ -89,7 +89,12 @@ func mount(VFS *vfs.VFS, mountpoint string, opt *mountlib.Options) (asyncerrors 
 		if runtime.GOOS == "darwin" {
 			out, umountErr = exec.Command("diskutil", "umount", "force", mountpoint).CombinedOutput()
 		} else {
-			out, umountErr = exec.Command("umount", "-f", mountpoint).CombinedOutput()
+			cmd := []string{}
+			if sudo {
+				cmd = append(cmd, "sudo")
+			}
+			cmd = append(cmd, "umount", "-f", mountpoint)
+			out, umountErr = exec.Command(cmd[0], cmd[1:]...).CombinedOutput()
 		}
 		shutdownErr := s.Shutdown()
 		VFS.Shutdown()
