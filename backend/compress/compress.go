@@ -38,6 +38,7 @@ import (
 const (
 	initialChunkSize = 262144  // Initial and max sizes of chunks when reading parts of the file. Currently
 	maxChunkSize     = 8388608 // at 256 KiB and 8 MiB.
+	chunkStreams     = 0       // Streams to use for reading
 
 	bufferSize          = 8388608
 	heuristicBytes      = 1048576
@@ -1362,7 +1363,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (rc io.Read
 		}
 	}
 	// Get a chunkedreader for the wrapped object
-	chunkedReader := chunkedreader.New(ctx, o.Object, initialChunkSize, maxChunkSize)
+	chunkedReader := chunkedreader.New(ctx, o.Object, initialChunkSize, maxChunkSize, chunkStreams)
 	// Get file handle
 	var file io.Reader
 	if offset != 0 {

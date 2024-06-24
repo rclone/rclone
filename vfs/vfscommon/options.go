@@ -24,6 +24,7 @@ type Options struct {
 	FilePerms          os.FileMode
 	ChunkSize          fs.SizeSuffix // if > 0 read files in chunks
 	ChunkSizeLimit     fs.SizeSuffix // if > ChunkSize double the chunk size after each chunk until reached
+	ChunkStreams       int           // Number of download streams to use
 	CacheMode          CacheMode
 	CacheMaxAge        time.Duration
 	CacheMaxSize       fs.SizeSuffix
@@ -59,6 +60,7 @@ var DefaultOpt = Options{
 	CachePollInterval:  60 * time.Second,
 	ChunkSize:          128 * fs.Mebi,
 	ChunkSizeLimit:     -1,
+	ChunkStreams:       0,
 	CacheMaxSize:       -1,
 	CacheMinFreeSpace:  -1,
 	CaseInsensitive:    runtime.GOOS == "windows" || runtime.GOOS == "darwin", // default to true on Windows and Mac, false otherwise

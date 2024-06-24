@@ -32,6 +32,7 @@ func AddFlags(flagSet *pflag.FlagSet) {
 	flags.FVarP(flagSet, &Opt.CacheMinFreeSpace, "vfs-cache-min-free-space", "", "Target minimum free space on the disk containing the cache", "VFS")
 	flags.FVarP(flagSet, &Opt.ChunkSize, "vfs-read-chunk-size", "", "Read the source objects in chunks", "VFS")
 	flags.FVarP(flagSet, &Opt.ChunkSizeLimit, "vfs-read-chunk-size-limit", "", "If greater than --vfs-read-chunk-size, double the chunk size after each chunk read, until the limit is reached ('off' is unlimited)", "VFS")
+	flags.IntVarP(flagSet, &Opt.ChunkStreams, "vfs-read-chunk-streams", "", Opt.ChunkStreams, "The number of parallel streams to read at once", "VFS")
 	flags.FVarP(flagSet, DirPerms, "dir-perms", "", "Directory permissions", "VFS")
 	flags.FVarP(flagSet, FilePerms, "file-perms", "", "File permissions", "VFS")
 	flags.BoolVarP(flagSet, &Opt.CaseInsensitive, "vfs-case-insensitive", "", Opt.CaseInsensitive, "If a file name not found, find a case insensitive match", "VFS")

@@ -540,7 +540,7 @@ func (dl *downloader) open(offset int64) (err error) {
 	// }
 	// in0, err := operations.NewReOpen(dl.dls.ctx, dl.dls.src, ci.LowLevelRetries, dl.dls.item.c.hashOption, rangeOption)
 
-	in0 := chunkedreader.New(context.TODO(), dl.dls.src, int64(dl.dls.opt.ChunkSize), int64(dl.dls.opt.ChunkSizeLimit))
+	in0 := chunkedreader.New(context.TODO(), dl.dls.src, int64(dl.dls.opt.ChunkSize), int64(dl.dls.opt.ChunkSizeLimit), dl.dls.opt.ChunkStreams)
 	_, err = in0.Seek(offset, 0)
 	if err != nil {
 		return fmt.Errorf("vfs reader: failed to open source file: %w", err)

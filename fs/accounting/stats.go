@@ -313,7 +313,9 @@ func (s *StatsInfo) calculateTransferStats() (ts transferStats) {
 	// note that s.bytes already includes transferringBytesDone so
 	// we take it off here to avoid double counting
 	ts.totalBytes = s.transferQueueSize + s.bytes + transferringBytesTotal - transferringBytesDone
+	s.average.mu.Lock()
 	ts.speed = s.average.speed
+	s.average.mu.Unlock()
 	dt := s._totalDuration()
 	ts.transferTime = dt.Seconds()
 
