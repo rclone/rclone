@@ -15,7 +15,7 @@ func TestWriteFileNoWrite(t *testing.T) {
 	run.skipIfNoFUSE(t)
 
 	fd, err := osCreate(run.path("testnowrite"))
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	err = fd.Close()
 	assert.NoError(t, err)
