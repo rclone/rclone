@@ -12,6 +12,7 @@ import (
 	"net/url"
 	"os"
 	"strconv"
+	"time"
 
 	"github.com/rclone/rclone/backend/pikpak/api"
 	"github.com/rclone/rclone/lib/rest"
@@ -19,7 +20,7 @@ import (
 
 // Globals
 const (
-	cachePrefix = "rclone-pikpak-sha1sum-"
+	cachePrefix = "rclone-pikpak-gcid-"
 )
 
 // requestDecompress requests decompress of compressed files
@@ -82,19 +83,21 @@ func (f *Fs) getVIPInfo(ctx context.Context) (info *api.VIP, err error) {
 // action can be one of batch{Copy,Delete,Trash,Untrash}
 func (f *Fs) requestBatchAction(ctx context.Context, action string, req *api.RequestBatch) (err error) {
 	opts := rest.Opts{
-		Method:     "POST",
-		Path:       "/drive/v1/files:" + action,
-		NoResponse: true, // Only returns `{"task_id":""}
+		Method: "POST",
+		Path:   "/drive/v1/files:" + action,
 	}
+	info := struct {
+		TaskID string `json:"task_id"`
+	}{}
 	var resp *http.Response
 	err = f.pacer.Call(func() (bool, error) {
-		resp, err = f.rst.CallJSON(ctx, &opts, &req, nil)
+		resp, err = f.rst.CallJSON(ctx, &opts, &req, &info)
 		return f.shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
 		return fmt.Errorf("batch action %q failed: %w", action, err)
 	}
-	return nil
+	return f.waitTask(ctx, info.TaskID)
 }
 
 // requestNewTask requests a new api.NewTask and returns api.Task
@@ -148,6 +151,9 @@ func (f *Fs) getFile(ctx context.Context, ID string) (info *api.File, err error)
 		}
 		return f.shouldRetry(ctx, resp, err)
 	})
+	if err == nil {
+		info.Name = f.opt.Enc.ToStandardName(info.Name)
+	}
 	return
 }
 
@@ -179,12 +185,24 @@ func (f *Fs) getTask(ctx context.Context, ID string, checkPhase bool) (info *api
 		resp, err = f.rst.CallJSON(ctx, &opts, nil, &info)
 		if checkPhase {
 			if err == nil && info.Phase != api.PhaseTypeComplete {
-				// could be pending right after file is created/uploaded.
-				return true, errors.New(info.Phase)
+				// could be pending right after the task is created
+				return true, fmt.Errorf("%s (%s) is still in %s", info.Name, info.Type, info.Phase)
 			}
 		}
 		return f.shouldRetry(ctx, resp, err)
 	})
+	return
+}
+
+// waitTask waits for async tasks to be completed
+func (f *Fs) waitTask(ctx context.Context, ID string) (err error) {
+	time.Sleep(taskWaitTime)
+	if info, err := f.getTask(ctx, ID, true); err != nil {
+		if info == nil {
+			return fmt.Errorf("can't verify the task is completed: %q", ID)
+		}
+		return fmt.Errorf("can't verify the task is completed: %#v", info)
+	}
 	return
 }
 
@@ -235,16 +253,11 @@ func (f *Fs) requestShare(ctx context.Context, req *api.RequestShare) (info *api
 	return
 }
 
-// Read the sha1 of in returning a reader which will read the same contents
+// Read the gcid of in returning a reader which will read the same contents
 //
 // The cleanup function should be called when out is finished with
 // regardless of whether this function returned an error or not.
-func readSHA1(in io.Reader, size, threshold int64) (sha1sum string, out io.Reader, cleanup func(), err error) {
-	// we need an SHA1
-	hash := sha1.New()
-	// use the teeReader to write to the local file AND calculate the SHA1 while doing so
-	teeReader := io.TeeReader(in, hash)
-
+func readGcid(in io.Reader, size, threshold int64) (gcid string, out io.Reader, cleanup func(), err error) {
 	// nothing to clean up by default
 	cleanup = func() {}
 
@@ -267,8 +280,11 @@ func readSHA1(in io.Reader, size, threshold int64) (sha1sum string, out io.Reade
 			_ = os.Remove(tempFile.Name()) // delete the cache file after we are done - may be deleted already
 		}
 
-		// copy the ENTIRE file to disc and calculate the SHA1 in the process
-		if _, err = io.Copy(tempFile, teeReader); err != nil {
+		// use the teeReader to write to the local file AND calculate the gcid while doing so
+		teeReader := io.TeeReader(in, tempFile)
+
+		// copy the ENTIRE file to disk and calculate the gcid in the process
+		if gcid, err = calcGcid(teeReader, size); err != nil {
 			return
 		}
 		// jump to the start of the local file so we can pass it along
@@ -279,15 +295,38 @@ func readSHA1(in io.Reader, size, threshold int64) (sha1sum string, out io.Reade
 		// replace the already read source with a reader of our cached file
 		out = tempFile
 	} else {
-		// that's a small file, just read it into memory
-		var inData []byte
-		inData, err = io.ReadAll(teeReader)
-		if err != nil {
+		buf := &bytes.Buffer{}
+		teeReader := io.TeeReader(in, buf)
+
+		if gcid, err = calcGcid(teeReader, size); err != nil {
 			return
 		}
-
-		// set the reader to our read memory block
-		out = bytes.NewReader(inData)
+		out = buf
 	}
-	return hex.EncodeToString(hash.Sum(nil)), out, cleanup, nil
+	return
+}
+
+func calcGcid(r io.Reader, size int64) (string, error) {
+	calcBlockSize := func(j int64) int64 {
+		var psize int64 = 0x40000
+		for float64(j)/float64(psize) > 0x200 && psize < 0x200000 {
+			psize = psize << 1
+		}
+		return psize
+	}
+
+	totalHash := sha1.New()
+	blockHash := sha1.New()
+	readSize := calcBlockSize(size)
+	for {
+		blockHash.Reset()
+		if n, err := io.CopyN(blockHash, r, readSize); err != nil && n == 0 {
+			if err != io.EOF {
+				return "", err
+			}
+			break
+		}
+		totalHash.Write(blockHash.Sum(nil))
+	}
+	return hex.EncodeToString(totalHash.Sum(nil)), nil
 }

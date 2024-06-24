@@ -865,3 +865,5 @@ put them back in again.` >}}
   * Michał Dzienisiewicz <michal.piotr.dz@gmail.com>
   * Florian Klink <flokli@flokli.de>
   * Bill Fraser <bill@wfraser.dev>
+  * Thearas <thearas850@gmail.com>
+  * Filipe Herculano <fifo_@live.com>
