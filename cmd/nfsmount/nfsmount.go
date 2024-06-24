@@ -57,6 +57,7 @@ func mount(VFS *vfs.VFS, mountpoint string, opt *mountlib.Options) (asyncerrors 
 	options := []string{
 		"-o", fmt.Sprintf("port=%s", port),
 		"-o", fmt.Sprintf("mountport=%s", port),
+		"-o", "tcp",
 	}
 	for _, option := range opt.ExtraOptions {
 		options = append(options, "-o", option)
