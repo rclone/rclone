@@ -98,7 +98,7 @@ We specify a specific port that we can use in the mount command:
 
 To mount the server under Linux/macOS, use the following command:
     
-    mount -oport=$PORT,mountport=$PORT $HOSTNAME: path/to/mountpoint
+    mount -t nfs -o port=$PORT,mountport=$PORT,tcp $HOSTNAME:/ path/to/mountpoint
 
 Where ` + "`$PORT`" + ` is the same port number we used in the serve nfs command.
 

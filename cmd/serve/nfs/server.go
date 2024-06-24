@@ -4,6 +4,7 @@ package nfs
 
 import (
 	"context"
+	"fmt"
 	"net"
 
 	nfs "github.com/willscott/go-nfs"
@@ -39,9 +40,9 @@ func NewServer(ctx context.Context, vfs *vfs.VFS, opt *Options) (s *Server, err 
 	s.handler = newHandler(vfs, opt)
 	s.listener, err = net.Listen("tcp", s.opt.ListenAddr)
 	if err != nil {
-		fs.Errorf(nil, "NFS server failed to listen: %v\n", err)
+		return nil, fmt.Errorf("failed to open listening socket: %w", err)
 	}
-	return
+	return s, nil
 }
 
 // Addr returns the listening address of the server
