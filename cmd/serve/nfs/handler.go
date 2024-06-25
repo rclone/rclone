@@ -18,8 +18,9 @@ import (
 // NewHandler creates a handler for the provided filesystem
 func NewHandler(vfs *vfs.VFS, opt *Options) nfs.Handler {
 	handler := &Handler{
-		vfs: vfs,
-		opt: opt,
+		vfs:     vfs,
+		opt:     opt,
+		billyFS: &FS{vfs: vfs},
 	}
 	handler.opt.HandleLimit = handler.opt.Limit()
 	handler.cache = cacheHelper(handler, handler.HandleLimit())
@@ -28,17 +29,16 @@ func NewHandler(vfs *vfs.VFS, opt *Options) nfs.Handler {
 
 // Handler returns a NFS backing that exposes a given file system in response to all mount requests.
 type Handler struct {
-	vfs   *vfs.VFS
-	opt   *Options
-	cache nfs.Handler
+	vfs     *vfs.VFS
+	opt     *Options
+	billyFS *FS
+	cache   nfs.Handler
 }
 
 // Mount backs Mount RPC Requests, allowing for access control policies.
 func (h *Handler) Mount(ctx context.Context, conn net.Conn, req nfs.MountRequest) (status nfs.MountStatus, hndl billy.Filesystem, auths []nfs.AuthFlavor) {
-	status = nfs.MountStatusOk
-	hndl = &FS{vfs: h.vfs}
 	auths = []nfs.AuthFlavor{nfs.AuthFlavorNull}
-	return
+	return nfs.MountStatusOk, h.billyFS, auths
 }
 
 // Change provides an interface for updating file attributes.
