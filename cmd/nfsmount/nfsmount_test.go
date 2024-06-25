@@ -28,5 +28,5 @@ func TestMount(t *testing.T) {
 		}
 		sudo = true
 	}
-	vfstest.RunTests(t, false, vfscommon.CacheModeMinimal, false, mount)
+	vfstest.RunTests(t, false, vfscommon.CacheModeWrites, false, mount)
 }
