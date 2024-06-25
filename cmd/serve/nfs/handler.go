@@ -10,29 +10,35 @@ import (
 
 	"github.com/go-git/go-billy/v5"
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/log"
 	"github.com/rclone/rclone/vfs"
 	"github.com/willscott/go-nfs"
 	nfshelper "github.com/willscott/go-nfs/helpers"
 )
-
-// NewHandler creates a handler for the provided filesystem
-func NewHandler(vfs *vfs.VFS, opt *Options) nfs.Handler {
-	handler := &Handler{
-		vfs:     vfs,
-		opt:     opt,
-		billyFS: &FS{vfs: vfs},
-	}
-	handler.opt.HandleLimit = handler.opt.Limit()
-	handler.cache = cacheHelper(handler, handler.HandleLimit())
-	return handler
-}
 
 // Handler returns a NFS backing that exposes a given file system in response to all mount requests.
 type Handler struct {
 	vfs     *vfs.VFS
 	opt     *Options
 	billyFS *FS
-	cache   nfs.Handler
+	Cache
+}
+
+// NewHandler creates a handler for the provided filesystem
+func NewHandler(vfs *vfs.VFS, opt *Options) (nfs.Handler, error) {
+	handler := &Handler{
+		vfs:     vfs,
+		opt:     opt,
+		billyFS: &FS{vfs: vfs},
+	}
+	handler.opt.HandleLimit = handler.opt.Limit()
+	err := handler.setCache()
+	if err != nil {
+		return nil, fmt.Errorf("failed to make cache: %w", err)
+	}
+	handler.Cache = nfshelper.NewCachingHandler(handler, handler.opt.HandleLimit)
+	nfs.SetLogger(&logIntercepter{Level: nfs.DebugLevel})
+	return handler, nil
 }
 
 // Mount backs Mount RPC Requests, allowing for access control policies.
@@ -58,35 +64,29 @@ func (h *Handler) FSStat(ctx context.Context, f billy.Filesystem, s *nfs.FSStat)
 	return nil
 }
 
-// ToHandle handled by CachingHandler
-func (h *Handler) ToHandle(f billy.Filesystem, s []string) []byte {
-	return h.cache.ToHandle(f, s)
+// ToHandle takes a file and represents it with an opaque handle to reference it.
+// In stateless nfs (when it's serving a unix fs) this can be the device + inode
+// but we can generalize with a stateful local cache of handed out IDs.
+func (h *Handler) ToHandle(f billy.Filesystem, s []string) (b []byte) {
+	defer log.Trace("nfs", "path=%q", s)("handle=%X", &b)
+	return h.Cache.ToHandle(f, s)
 }
 
-// FromHandle handled by CachingHandler
-func (h *Handler) FromHandle(b []byte) (billy.Filesystem, []string, error) {
-	return h.cache.FromHandle(b)
+// FromHandle converts from an opaque handle to the file it represents
+func (h *Handler) FromHandle(b []byte) (f billy.Filesystem, s []string, err error) {
+	defer log.Trace("nfs", "handle=%X", b)("path=%q, err=%v", &s, &err)
+	return h.Cache.FromHandle(b)
 }
 
-// HandleLimit handled by cachingHandler
+// HandleLimit exports how many file handles can be safely stored by this cache.
 func (h *Handler) HandleLimit() int {
-	return h.opt.HandleLimit
+	return h.Cache.HandleLimit()
 }
 
-// InvalidateHandle is called on removes or renames
-func (h *Handler) InvalidateHandle(billy.Filesystem, []byte) error {
-	return nil
-}
-
-func newHandler(vfs *vfs.VFS, opt *Options) nfs.Handler {
-	handler := NewHandler(vfs, opt)
-	nfs.SetLogger(&logIntercepter{Level: nfs.DebugLevel})
-	return handler
-}
-
-func cacheHelper(handler nfs.Handler, limit int) nfs.Handler {
-	cacheHelper := nfshelper.NewCachingHandler(handler, limit)
-	return cacheHelper
+// Invalidate the handle passed - used on rename and delete
+func (h *Handler) InvalidateHandle(f billy.Filesystem, b []byte) (err error) {
+	defer log.Trace("nfs", "handle=%X", b)("err=%v", &err)
+	return h.Cache.InvalidateHandle(f, b)
 }
 
 // Limit overrides the --nfs-cache-handle-limit value if out-of-range

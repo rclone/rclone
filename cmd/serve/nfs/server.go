@@ -37,7 +37,10 @@ func NewServer(ctx context.Context, vfs *vfs.VFS, opt *Options) (s *Server, err 
 		ctx: ctx,
 		opt: *opt,
 	}
-	s.handler = newHandler(vfs, opt)
+	s.handler, err = NewHandler(vfs, opt)
+	if err != nil {
+		return nil, fmt.Errorf("failed to make NFS handler: %w", err)
+	}
 	s.listener, err = net.Listen("tcp", s.opt.ListenAddr)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open listening socket: %w", err)
