@@ -13,32 +13,30 @@ import (
 	"github.com/rclone/rclone/fs/log"
 	"github.com/rclone/rclone/vfs"
 	"github.com/willscott/go-nfs"
-	nfshelper "github.com/willscott/go-nfs/helpers"
 )
 
 // Handler returns a NFS backing that exposes a given file system in response to all mount requests.
 type Handler struct {
 	vfs     *vfs.VFS
-	opt     *Options
+	opt     Options
 	billyFS *FS
 	Cache
 }
 
 // NewHandler creates a handler for the provided filesystem
-func NewHandler(vfs *vfs.VFS, opt *Options) (nfs.Handler, error) {
-	handler := &Handler{
+func NewHandler(vfs *vfs.VFS, opt *Options) (handler nfs.Handler, err error) {
+	h := &Handler{
 		vfs:     vfs,
-		opt:     opt,
+		opt:     *opt,
 		billyFS: &FS{vfs: vfs},
 	}
-	handler.opt.HandleLimit = handler.opt.Limit()
-	err := handler.setCache()
+	h.opt.HandleLimit = h.opt.Limit()
+	h.Cache, err = h.getCache()
 	if err != nil {
 		return nil, fmt.Errorf("failed to make cache: %w", err)
 	}
-	handler.Cache = nfshelper.NewCachingHandler(handler, handler.opt.HandleLimit)
 	nfs.SetLogger(&logIntercepter{Level: nfs.DebugLevel})
-	return handler, nil
+	return h, nil
 }
 
 // Mount backs Mount RPC Requests, allowing for access control policies.
@@ -83,7 +81,7 @@ func (h *Handler) HandleLimit() int {
 	return h.Cache.HandleLimit()
 }
 
-// Invalidate the handle passed - used on rename and delete
+// InvalidateHandle invalidates the handle passed - used on rename and delete
 func (h *Handler) InvalidateHandle(f billy.Filesystem, b []byte) (err error) {
 	defer log.Trace("nfs", "handle=%X", b)("err=%v", &err)
 	return h.Cache.InvalidateHandle(f, b)

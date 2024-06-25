@@ -9,6 +9,7 @@ import (
 
 	"github.com/rclone/rclone/vfs/vfscommon"
 	"github.com/rclone/rclone/vfs/vfstest"
+	"github.com/stretchr/testify/require"
 )
 
 // Return true if the command ran without error
@@ -28,5 +29,7 @@ func TestMount(t *testing.T) {
 		}
 		sudo = true
 	}
+	nfsServerOpt.HandleCacheDir = t.TempDir()
+	require.NoError(t, nfsServerOpt.HandleCache.Set("disk"))
 	vfstest.RunTests(t, false, vfscommon.CacheModeWrites, false, mount)
 }
