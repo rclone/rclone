@@ -68,7 +68,7 @@ require (
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.9.0
 	github.com/t3rm1n4l/go-mega v0.0.0-20240219080617-d494b6a8ace7
-	github.com/willscott/go-nfs v0.0.2
+	github.com/willscott/go-nfs v0.0.3-0.20240425122109-91bc38957cc9
 	github.com/winfsp/cgofuse v1.5.1-0.20221118130120-84c0898ad2e0
 	github.com/xanzy/ssh-agent v0.3.3
 	github.com/youmark/pkcs8 v0.0.0-20201027041543-1326539a0a0a

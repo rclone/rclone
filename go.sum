@@ -568,6 +568,8 @@ github.com/ugorji/go/codec v1.2.11 h1:BMaWp1Bb6fHwEtbplGBGJ498wD+LKlNSl25MjdZY4d
 github.com/ugorji/go/codec v1.2.11/go.mod h1:UNopzCgEMSXjBc6AOMqYvWC1ktqTAfzJZUZgYf6w6lg=
 github.com/willscott/go-nfs v0.0.2 h1:BaBp1CpGDMooCT6bCgX6h6ZwgPcTMST4yToYZ9byee0=
 github.com/willscott/go-nfs v0.0.2/go.mod h1:SvullWeHxr/924WQNbUaZqtluBt2vuZ61g6yAV+xj7w=
+github.com/willscott/go-nfs v0.0.3-0.20240425122109-91bc38957cc9 h1:IGSoH2aBagQ9VI8ZwbjHYIslta5vXfczegV1B4y9KqY=
+github.com/willscott/go-nfs v0.0.3-0.20240425122109-91bc38957cc9/go.mod h1:Ql2ebUpEFm/a1CAY884di2XZkdcddfHZ6ONrAlhFev0=
 github.com/willscott/go-nfs-client v0.0.0-20240104095149-b44639837b00 h1:U0DnHRZFzoIV1oFEZczg5XyPut9yxk9jjtax/9Bxr/o=
 github.com/willscott/go-nfs-client v0.0.0-20240104095149-b44639837b00/go.mod h1:Tq++Lr/FgiS3X48q5FETemXiSLGuYMQT2sPjYNPJSwA=
 github.com/winfsp/cgofuse v1.5.1-0.20221118130120-84c0898ad2e0 h1:j3un8DqYvvAOqKI5OPz+/RRVhDFipbPKI4t2Uk5RBJw=
