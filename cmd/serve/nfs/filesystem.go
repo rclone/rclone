@@ -122,7 +122,12 @@ func (f *FS) Chmod(name string, mode os.FileMode) (err error) {
 			fs.Logf(f, "Error while closing file: %e", err)
 		}
 	}()
-	return file.Chmod(mode)
+	err = file.Chmod(mode)
+	// Mask Chmod not implemented
+	if err == vfs.ENOSYS {
+		err = nil
+	}
+	return err
 }
 
 // Lchown changes the owner of symlink
