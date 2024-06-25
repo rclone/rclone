@@ -10,6 +10,7 @@ import (
 
 	billy "github.com/go-git/go-billy/v5"
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/log"
 	"github.com/rclone/rclone/vfs"
 	"github.com/rclone/rclone/vfs/vfscommon"
 )
@@ -21,44 +22,43 @@ type FS struct {
 
 // ReadDir implements read dir
 func (f *FS) ReadDir(path string) (dir []os.FileInfo, err error) {
-	fs.Debugf("nfs", "ReadDir %v", path)
+	defer log.Trace(path, "")("items=%d, err=%v", &dir, &err)
 	return f.vfs.ReadDir(path)
 }
 
 // Create implements creating new files
-func (f *FS) Create(filename string) (billy.File, error) {
-	fs.Debugf("nfs", "Create %v", filename)
+func (f *FS) Create(filename string) (node billy.File, err error) {
+	defer log.Trace(filename, "")("%v, err=%v", &node, &err)
 	return f.vfs.Create(filename)
 }
 
 // Open opens a file
-func (f *FS) Open(filename string) (billy.File, error) {
-	file, err := f.vfs.Open(filename)
-	fs.Debugf("nfs", "Open %v file: %v err: %v", filename, file, err)
-	return file, err
+func (f *FS) Open(filename string) (node billy.File, err error) {
+	defer log.Trace(filename, "")("%v, err=%v", &node, &err)
+	return f.vfs.Open(filename)
 }
 
 // OpenFile opens a file
-func (f *FS) OpenFile(filename string, flag int, perm os.FileMode) (billy.File, error) {
-	file, err := f.vfs.OpenFile(filename, flag, perm)
-	fs.Debugf("nfs", "OpenFile %v flag: %v perm: %v file: %v err: %v", filename, flag, perm, file, err)
-	return file, err
+func (f *FS) OpenFile(filename string, flag int, perm os.FileMode) (node billy.File, err error) {
+	defer log.Trace(filename, "flag=0x%X, perm=%v", flag, perm)("%v, err=%v", &node, &err)
+	return f.vfs.OpenFile(filename, flag, perm)
 }
 
 // Stat gets the file stat
-func (f *FS) Stat(filename string) (os.FileInfo, error) {
-	node, err := f.vfs.Stat(filename)
-	fs.Debugf("nfs", "Stat %v node: %v err: %v", filename, node, err)
-	return node, err
+func (f *FS) Stat(filename string) (fi os.FileInfo, err error) {
+	defer log.Trace(filename, "")("fi=%v, err=%v", &fi, &err)
+	return f.vfs.Stat(filename)
 }
 
 // Rename renames a file
-func (f *FS) Rename(oldpath, newpath string) error {
+func (f *FS) Rename(oldpath, newpath string) (err error) {
+	defer log.Trace(oldpath, "newpath=%q", newpath)("err=%v", &err)
 	return f.vfs.Rename(oldpath, newpath)
 }
 
 // Remove deletes a file
-func (f *FS) Remove(filename string) error {
+func (f *FS) Remove(filename string) (err error) {
+	defer log.Trace(filename, "")("err=%v", &err)
 	return f.vfs.Remove(filename)
 }
 
@@ -68,14 +68,16 @@ func (f *FS) Join(elem ...string) string {
 }
 
 // TempFile is not implemented
-func (f *FS) TempFile(dir, prefix string) (billy.File, error) {
+func (f *FS) TempFile(dir, prefix string) (node billy.File, err error) {
+	defer log.Trace(dir, "prefix=%q", prefix)("node=%v, err=%v", &node, &err)
 	return nil, os.ErrInvalid
 }
 
 // MkdirAll creates a directory and all the ones above it
 // it does not redirect to VFS.MkDirAll because that one doesn't
 // honor the permissions
-func (f *FS) MkdirAll(filename string, perm os.FileMode) error {
+func (f *FS) MkdirAll(filename string, perm os.FileMode) (err error) {
+	defer log.Trace(filename, "perm=%v", perm)("err=%v", &err)
 	parts := strings.Split(filename, "/")
 	for i := range parts {
 		current := strings.Join(parts[:i+1], "/")
@@ -91,24 +93,26 @@ func (f *FS) MkdirAll(filename string, perm os.FileMode) error {
 }
 
 // Lstat gets the stats for symlink
-func (f *FS) Lstat(filename string) (os.FileInfo, error) {
-	node, err := f.vfs.Stat(filename)
-	fs.Debugf("nfs", "Lstat %v node: %v err: %v", filename, node, err)
-	return node, err
+func (f *FS) Lstat(filename string) (fi os.FileInfo, err error) {
+	defer log.Trace(filename, "")("fi=%v, err=%v", &fi, &err)
+	return f.vfs.Stat(filename)
 }
 
 // Symlink is not supported over NFS
-func (f *FS) Symlink(target, link string) error {
+func (f *FS) Symlink(target, link string) (err error) {
+	defer log.Trace(target, "link=%q", link)("err=%v", &err)
 	return os.ErrInvalid
 }
 
 // Readlink is not supported
-func (f *FS) Readlink(link string) (string, error) {
+func (f *FS) Readlink(link string) (result string, err error) {
+	defer log.Trace(link, "")("result=%q, err=%v", &result, &err)
 	return "", os.ErrInvalid
 }
 
 // Chmod changes the file modes
-func (f *FS) Chmod(name string, mode os.FileMode) error {
+func (f *FS) Chmod(name string, mode os.FileMode) (err error) {
+	defer log.Trace(name, "mode=%v", mode)("err=%v", &err)
 	file, err := f.vfs.Open(name)
 	if err != nil {
 		return err
@@ -122,12 +126,14 @@ func (f *FS) Chmod(name string, mode os.FileMode) error {
 }
 
 // Lchown changes the owner of symlink
-func (f *FS) Lchown(name string, uid, gid int) error {
+func (f *FS) Lchown(name string, uid, gid int) (err error) {
+	defer log.Trace(name, "uid=%d, gid=%d", uid, gid)("err=%v", &err)
 	return f.Chown(name, uid, gid)
 }
 
 // Chown changes owner of the file
-func (f *FS) Chown(name string, uid, gid int) error {
+func (f *FS) Chown(name string, uid, gid int) (err error) {
+	defer log.Trace(name, "uid=%d, gid=%d", uid, gid)("err=%v", &err)
 	file, err := f.vfs.Open(name)
 	if err != nil {
 		return err
@@ -141,22 +147,26 @@ func (f *FS) Chown(name string, uid, gid int) error {
 }
 
 // Chtimes changes the acces time and modified time
-func (f *FS) Chtimes(name string, atime time.Time, mtime time.Time) error {
+func (f *FS) Chtimes(name string, atime time.Time, mtime time.Time) (err error) {
+	defer log.Trace(name, "atime=%v, mtime=%v", atime, mtime)("err=%v", &err)
 	return f.vfs.Chtimes(name, atime, mtime)
 }
 
 // Chroot is not supported in VFS
-func (f *FS) Chroot(path string) (billy.Filesystem, error) {
+func (f *FS) Chroot(path string) (FS billy.Filesystem, err error) {
+	defer log.Trace(path, "")("FS=%v, err=%v", &FS, &err)
 	return nil, os.ErrInvalid
 }
 
 // Root  returns the root of a VFS
-func (f *FS) Root() string {
+func (f *FS) Root() (root string) {
+	defer log.Trace(nil, "")("root=%q", &root)
 	return f.vfs.Fs().Root()
 }
 
 // Capabilities exports the filesystem capabilities
-func (f *FS) Capabilities() billy.Capability {
+func (f *FS) Capabilities() (caps billy.Capability) {
+	defer log.Trace(nil, "")("caps=%v", &caps)
 	if f.vfs.Opt.CacheMode == vfscommon.CacheModeOff {
 		return billy.ReadCapability | billy.SeekCapability
 	}
@@ -165,4 +175,7 @@ func (f *FS) Capabilities() billy.Capability {
 }
 
 // Interface check
-var _ billy.Filesystem = (*FS)(nil)
+var (
+	_ billy.Filesystem = (*FS)(nil)
+	_ billy.Change     = (*FS)(nil)
+)
