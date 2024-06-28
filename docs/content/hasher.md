@@ -334,6 +334,7 @@ The `rclone hashsum` (or `md5sum` or `sha1sum`) command will:
 
 ### Other operations
 
+- any time a hash is requested, follow the logic from 1-4 from `hashsum` above
 - whenever a file is uploaded or downloaded **in full**, capture the stream
   to calculate all supported hashes on the fly and update database
 - server-side `move`  will update keys of existing cache entries
