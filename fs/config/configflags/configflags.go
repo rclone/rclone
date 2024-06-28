@@ -101,6 +101,8 @@ func AddFlags(ci *fs.ConfigInfo, flagSet *pflag.FlagSet) {
 	flags.Float64VarP(flagSet, &ci.TPSLimit, "tpslimit", "", ci.TPSLimit, "Limit HTTP transactions per second to this", "Networking")
 	flags.IntVarP(flagSet, &ci.TPSLimitBurst, "tpslimit-burst", "", ci.TPSLimitBurst, "Max burst of transactions for --tpslimit", "Networking")
 	flags.StringVarP(flagSet, &bindAddr, "bind", "", "", "Local address to bind to for outgoing connections, IPv4, IPv6 or name", "Networking")
+	flags.StringVarP(flagSet, &ci.AuthAddr, "auth-addr", "", ci.AuthAddr, "Local address to bind to for OAuth 2.0 callback, IPv4, IPv6 or name", "Networking")
+	flags.StringVarP(flagSet, &ci.RedirectURL, "redirect", "", ci.RedirectURL, "Redirect URL for OAuth2.0", "Networking")
 	flags.StringVarP(flagSet, &disableFeatures, "disable", "", "", "Disable a comma separated list of features (use --disable help to see a list)", "Config")
 	flags.StringVarP(flagSet, &ci.UserAgent, "user-agent", "", ci.UserAgent, "Set the user-agent to a specified string", "Networking")
 	flags.BoolVarP(flagSet, &ci.Immutable, "immutable", "", ci.Immutable, "Do not modify files, fail if existing files have been modified", "Copy")
