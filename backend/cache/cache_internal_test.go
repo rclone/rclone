@@ -850,8 +850,8 @@ func (r *run) encryptRemoteIfNeeded(t *testing.T, remote string) string {
 func (r *run) newCacheFs(t *testing.T, remote, id string, needRemote, purge bool, flags map[string]string) (fs.Fs, *cache.Persistent) {
 	fstest.Initialise()
 	remoteExists := false
-	for _, s := range config.FileSections() {
-		if s == remote {
+	for _, s := range config.GetRemotes() {
+		if s.Name == remote {
 			remoteExists = true
 		}
 	}
@@ -875,12 +875,12 @@ func (r *run) newCacheFs(t *testing.T, remote, id string, needRemote, purge bool
 	cacheRemote := remote
 	if !remoteExists {
 		localRemote := remote + "-local"
-		config.FileSet(localRemote, "type", "local")
-		config.FileSet(localRemote, "nounc", "true")
+		config.FileSetValue(localRemote, "type", "local")
+		config.FileSetValue(localRemote, "nounc", "true")
 		m.Set("type", "cache")
 		m.Set("remote", localRemote+":"+filepath.Join(os.TempDir(), localRemote))
 	} else {
-		remoteType := config.FileGet(remote, "type")
+		remoteType := config.GetValue(remote, "type")
 		if remoteType == "" {
 			t.Skipf("skipped due to invalid remote type for %v", remote)
 			return nil, nil
@@ -891,14 +891,14 @@ func (r *run) newCacheFs(t *testing.T, remote, id string, needRemote, purge bool
 				m.Set("password", cryptPassword1)
 				m.Set("password2", cryptPassword2)
 			}
-			remoteRemote := config.FileGet(remote, "remote")
+			remoteRemote := config.GetValue(remote, "remote")
 			if remoteRemote == "" {
 				t.Skipf("skipped due to invalid remote wrapper for %v", remote)
 				return nil, nil
 			}
 			remoteRemoteParts := strings.Split(remoteRemote, ":")
 			remoteWrapping := remoteRemoteParts[0]
-			remoteType := config.FileGet(remoteWrapping, "type")
+			remoteType := config.GetValue(remoteWrapping, "type")
 			if remoteType != "cache" {
 				t.Skipf("skipped due to invalid remote type for %v: '%v'", remoteWrapping, remoteType)
 				return nil, nil

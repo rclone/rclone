@@ -419,7 +419,7 @@ func Run(t *testing.T, opt *Opt) {
 
 	// Set extra config if supplied
 	for _, item := range opt.ExtraConfig {
-		config.FileSet(item.Name, item.Key, item.Value)
+		config.FileSetValue(item.Name, item.Key, item.Value)
 	}
 	if *fstest.RemoteName != "" {
 		remoteName = *fstest.RemoteName
