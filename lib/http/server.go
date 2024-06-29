@@ -21,6 +21,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/rclone/rclone/fs/config/flags"
 	"github.com/rclone/rclone/lib/atexit"
+	sdActivation "github.com/rclone/rclone/lib/sdactivation"
 	"github.com/spf13/pflag"
 )
 
@@ -74,6 +75,14 @@ certificate authority certificate.
   values are "tls1.0", "tls1.1", "tls1.2" and "tls1.3" (default
   "tls1.0").
 
+### Socket activation
+
+Instead of the listening addresses specified above, rclone will listen to all
+FDs passed by the service manager, if any (and ignore any arguments passed by ` +
+		"--{{ .Prefix }}addr`" + `).
+
+This allows rclone to be a socket-activated service. It can be configured as described in
+https://www.freedesktop.org/software/systemd/man/latest/systemd.socket.html
 `
 	tmpl, err := template.New("server help").Parse(help)
 	if err != nil {
@@ -114,7 +123,7 @@ type Config struct {
 
 // AddFlagsPrefix adds flags for the httplib
 func (cfg *Config) AddFlagsPrefix(flagSet *pflag.FlagSet, prefix string) {
-	flags.StringArrayVarP(flagSet, &cfg.ListenAddr, prefix+"addr", "", cfg.ListenAddr, "IPaddress:Port or :Port to bind server to", prefix)
+	flags.StringArrayVarP(flagSet, &cfg.ListenAddr, prefix+"addr", "", cfg.ListenAddr, "IPaddress:Port, :Port or [unix://]/path/to/socket to bind server to", prefix)
 	flags.DurationVarP(flagSet, &cfg.ServerReadTimeout, prefix+"server-read-timeout", "", cfg.ServerReadTimeout, "Timeout for server reading data", prefix)
 	flags.DurationVarP(flagSet, &cfg.ServerWriteTimeout, prefix+"server-write-timeout", "", cfg.ServerWriteTimeout, "Timeout for server writing data", prefix)
 	flags.IntVarP(flagSet, &cfg.MaxHeaderBytes, prefix+"max-header-bytes", "", cfg.MaxHeaderBytes, "Maximum size of request header", prefix)
@@ -194,6 +203,32 @@ func WithTemplate(cfg TemplateConfig) Option {
 	}
 }
 
+// For a given listener, and optional tlsConfig, construct a instance.
+// The url string ends up in the `url` field of the `instance`.
+// This unconditionally wraps the listener with the provided TLS config if one
+// is specified, so all decision logic on whether to use TLS needs to live at
+// the callsite.
+func newInstance(ctx context.Context, s *Server, listener net.Listener, tlsCfg *tls.Config, url string) *instance {
+	if tlsCfg != nil {
+		listener = tls.NewListener(listener, tlsCfg)
+	}
+
+	return &instance{
+		url:      url,
+		listener: listener,
+		httpServer: &http.Server{
+			Handler:           s.mux,
+			ReadTimeout:       s.cfg.ServerReadTimeout,
+			WriteTimeout:      s.cfg.ServerWriteTimeout,
+			MaxHeaderBytes:    s.cfg.MaxHeaderBytes,
+			ReadHeaderTimeout: 10 * time.Second, // time to send the headers
+			IdleTimeout:       60 * time.Second, // time to keep idle connections open
+			TLSConfig:         tlsCfg,
+			BaseContext:       NewBaseContext(ctx, url),
+		},
+	}
+}
+
 // NewServer instantiates a new http server using provided listeners and options
 // This function is provided if the default http server does not meet a services requirements and should not generally be used
 // A http server can listen using multiple listeners. For example, a listener for port 80, and a listener for port 443.
@@ -242,55 +277,60 @@ func NewServer(ctx context.Context, options ...Option) (*Server, error) {
 
 	s.initAuth()
 
+	// (Only) listen on FDs provided by the service manager, if any.
+	sdListeners, err := sdActivation.ListenersWithNames()
+	if err != nil {
+		return nil, fmt.Errorf("unable to acquire listeners: %w", err)
+	}
+
+	if len(sdListeners) != 0 {
+		for listenerName, listeners := range sdListeners {
+			for i, listener := range listeners {
+				url := fmt.Sprintf("sd-listen:%s-%d/%s", listenerName, i, s.cfg.BaseURL)
+				if s.tlsConfig != nil {
+					url = fmt.Sprintf("sd-listen+tls:%s-%d/%s", listenerName, i, s.cfg.BaseURL)
+				}
+
+				instance := newInstance(ctx, s, listener, s.tlsConfig, url)
+
+				s.instances = append(s.instances, *instance)
+			}
+		}
+
+		return s, nil
+	}
+
+	// Process all listeners specified in the CLI Args.
 	for _, addr := range s.cfg.ListenAddr {
-		var url string
-		var network = "tcp"
-		var tlsCfg *tls.Config
+		var instance *instance
 
 		if strings.HasPrefix(addr, "unix://") || filepath.IsAbs(addr) {
-			network = "unix"
 			addr = strings.TrimPrefix(addr, "unix://")
-			url = addr
 
-		} else if strings.HasPrefix(addr, "tls://") || (len(s.cfg.ListenAddr) == 1 && s.tlsConfig != nil) {
-			tlsCfg = s.tlsConfig
-			addr = strings.TrimPrefix(addr, "tls://")
-		}
-
-		var listener net.Listener
-		if tlsCfg == nil {
-			listener, err = net.Listen(network, addr)
-		} else {
-			listener, err = tls.Listen(network, addr, tlsCfg)
-		}
-		if err != nil {
-			return nil, err
-		}
-
-		if network == "tcp" {
-			var secure string
-			if tlsCfg != nil {
-				secure = "s"
+			listener, err := net.Listen("unix", addr)
+			if err != nil {
+				return nil, err
 			}
-			url = fmt.Sprintf("http%s://%s%s/", secure, listener.Addr().String(), s.cfg.BaseURL)
+			instance = newInstance(ctx, s, listener, s.tlsConfig, addr)
+		} else if strings.HasPrefix(addr, "tls://") || (len(s.cfg.ListenAddr) == 1 && s.tlsConfig != nil) {
+			addr = strings.TrimPrefix(addr, "tls://")
+			listener, err := net.Listen("tcp", addr)
+			if err != nil {
+				return nil, err
+			}
+			instance = newInstance(ctx, s, listener, s.tlsConfig, fmt.Sprintf("https://%s%s/", listener.Addr().String(), s.cfg.BaseURL))
+		} else {
+			// HTTP case
+			addr = strings.TrimPrefix(addr, "http://")
+			listener, err := net.Listen("tcp", addr)
+			if err != nil {
+				return nil, err
+			}
+			instance = newInstance(ctx, s, listener, nil, fmt.Sprintf("http://%s%s/", listener.Addr().String(), s.cfg.BaseURL))
+
 		}
 
-		ii := instance{
-			url:      url,
-			listener: listener,
-			httpServer: &http.Server{
-				Handler:           s.mux,
-				ReadTimeout:       s.cfg.ServerReadTimeout,
-				WriteTimeout:      s.cfg.ServerWriteTimeout,
-				MaxHeaderBytes:    s.cfg.MaxHeaderBytes,
-				ReadHeaderTimeout: 10 * time.Second, // time to send the headers
-				IdleTimeout:       60 * time.Second, // time to keep idle connections open
-				TLSConfig:         tlsCfg,
-				BaseContext:       NewBaseContext(ctx, url),
-			},
-		}
-
-		s.instances = append(s.instances, ii)
+		s.instances = append(s.instances, *instance)
 	}
 
 	return s, nil

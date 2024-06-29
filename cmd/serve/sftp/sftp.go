@@ -94,6 +94,11 @@ directory.
 By default the server binds to localhost:2022 - if you want it to be
 reachable externally then supply ` + "`--addr :2022`" + ` for example.
 
+This also supports being run with socket activation, in which case it will
+listen on the first passed FD.
+It can be configured as described in
+https://www.freedesktop.org/software/systemd/man/latest/systemd.socket.html
+
 Note that the default of ` + "`--vfs-cache-mode off`" + ` is fine for the rclone
 sftp backend, but it may not be with other SFTP clients.
 
