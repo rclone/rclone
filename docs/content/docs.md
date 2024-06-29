@@ -671,7 +671,8 @@ which would have been updated or deleted will be stored in
 
 If running rclone from a script you might want to use today's date as
 the directory name passed to `--backup-dir` to store the old files, or
-you might want to pass `--suffix` with today's date.
+you might want to pass `--suffix` with today's date. In bash, this can
+be done with `$(date +%F)`.
 
 See `--compare-dest` and `--copy-dest`.
 
