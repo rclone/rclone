@@ -212,7 +212,7 @@ func (c *Cache) createItemDir(name string) (string, error) {
 
 // getBackend gets a backend for a cache root dir
 func getBackend(ctx context.Context, parentPath string, name string, relativeDirPath string) (fs.Fs, error) {
-	path := fmt.Sprintf("%s/%s/%s", parentPath, name, relativeDirPath)
+	path := fmt.Sprintf(":local,encoding='%v':%s/%s/%s", encoder.OS, parentPath, name, relativeDirPath)
 	return fscache.Get(ctx, path)
 }
 
