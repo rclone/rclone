@@ -154,6 +154,7 @@ type ConfigInfo struct {
 	Inplace                    bool // Download directly to destination file instead of atomic download to temp/rename
 	PartialSuffix              string
 	MetadataMapper             SpaceSepList
+	UnixSocketPath             string // Optional unix socket to connect to
 }
 
 // NewConfig creates a new config with everything set to the default
