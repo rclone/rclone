@@ -213,6 +213,14 @@ func (b *s3Backend) GetObject(ctx context.Context, bucketName, objectName string
 	}, nil
 }
 
+// storeModtime sets both "mtime" and "X-Amz-Meta-Mtime" to val in b.meta.
+// Call this whenever modtime is updated.
+func (b *s3Backend) storeModtime(fp string, meta map[string]string, val string) {
+	meta["X-Amz-Meta-Mtime"] = val
+	meta["mtime"] = val
+	b.meta.Store(fp, meta)
+}
+
 // TouchObject creates or updates meta on specified object.
 func (b *s3Backend) TouchObject(ctx context.Context, fp string, meta map[string]string) (result gofakes3.PutObjectResult, err error) {
 	_, err = b.vfs.Stat(fp)
@@ -237,6 +245,7 @@ func (b *s3Backend) TouchObject(ctx context.Context, fp string, meta map[string]
 	if val, ok := meta["X-Amz-Meta-Mtime"]; ok {
 		ti, err := swift.FloatStringToTime(val)
 		if err == nil {
+			b.storeModtime(fp, meta, val)
 			return result, b.vfs.Chtimes(fp, ti, ti)
 		}
 		// ignore error since the file is successfully created
@@ -245,6 +254,7 @@ func (b *s3Backend) TouchObject(ctx context.Context, fp string, meta map[string]
 	if val, ok := meta["mtime"]; ok {
 		ti, err := swift.FloatStringToTime(val)
 		if err == nil {
+			b.storeModtime(fp, meta, val)
 			return result, b.vfs.Chtimes(fp, ti, ti)
 		}
 		// ignore error since the file is successfully created
@@ -307,6 +317,7 @@ func (b *s3Backend) PutObject(
 	if val, ok := meta["X-Amz-Meta-Mtime"]; ok {
 		ti, err := swift.FloatStringToTime(val)
 		if err == nil {
+			b.storeModtime(fp, meta, val)
 			return result, b.vfs.Chtimes(fp, ti, ti)
 		}
 		// ignore error since the file is successfully created
@@ -315,6 +326,7 @@ func (b *s3Backend) PutObject(
 	if val, ok := meta["mtime"]; ok {
 		ti, err := swift.FloatStringToTime(val)
 		if err == nil {
+			b.storeModtime(fp, meta, val)
 			return result, b.vfs.Chtimes(fp, ti, ti)
 		}
 		// ignore error since the file is successfully created
@@ -425,6 +437,7 @@ func (b *s3Backend) CopyObject(ctx context.Context, srcBucket, srcKey, dstBucket
 		if err != nil {
 			return result, nil
 		}
+		b.storeModtime(fp, meta, val)
 
 		return result, b.vfs.Chtimes(fp, ti, ti)
 	}

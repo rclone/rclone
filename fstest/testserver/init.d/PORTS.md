@@ -25,6 +25,7 @@ They should be bound to localhost so they are not accessible externally.
 | 28629 | TestWebdavNextcloud |
 | 28630 | TestSMB |
 | 28631 | TestFTPProftpd |
+| 28632 | TestSwiftAIOsegments |
 | 38081 | TestWebdavOwncloud |
 
 ## Non localhost tests

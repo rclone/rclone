@@ -164,7 +164,7 @@ Properties:
 
 #### --opendrive-description
 
-Description of the remote
+Description of the remote.
 
 Properties:
 

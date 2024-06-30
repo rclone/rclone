@@ -628,6 +628,25 @@ func DeleteFiles(ctx context.Context, toBeDeleted fs.ObjectsChan) error {
 	return DeleteFilesWithBackupDir(ctx, toBeDeleted, nil)
 }
 
+// ReadFile reads the object into memory and accounts it
+func ReadFile(ctx context.Context, o fs.Object) (b []byte, err error) {
+	tr := accounting.Stats(ctx).NewTransfer(o, nil)
+	defer func() {
+		tr.Done(ctx, err)
+	}()
+	in0, err := Open(ctx, o)
+	if err != nil {
+		return nil, fmt.Errorf("failed to open %v: %w", o, err)
+	}
+	in := tr.Account(ctx, in0).WithBuffer() // account and buffer the transfer
+	defer fs.CheckClose(in, &err)           // closes in0 also
+	b, err = io.ReadAll(in)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read %v: %w", o, err)
+	}
+	return b, nil
+}
+
 // SameRemoteType returns true if fdst and fsrc are the same type
 func SameRemoteType(fdst, fsrc fs.Info) bool {
 	return fmt.Sprintf("%T", fdst) == fmt.Sprintf("%T", fsrc)

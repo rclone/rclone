@@ -1487,16 +1487,38 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		return nil, fs.ErrorCantMove
 	}
 
-	err := f.mkParentDir(ctx, remote)
+	meta, err := fs.GetMetadataOptions(ctx, f, src, fs.MetadataAsOpenOptions(ctx))
 	if err != nil {
+		return nil, err
+	}
+
+	if err := f.mkParentDir(ctx, remote); err != nil {
 		return nil, err
 	}
 	info, err := f.copyOrMove(ctx, "cp", srcObj.filePath(), remote)
 
-	// if destination was a trashed file then after a successful copy the copied file is still in trash (bug in api?)
-	if err == nil && bool(info.Deleted) && !f.opt.TrashedOnly && info.State == "COMPLETED" {
-		fs.Debugf(src, "Server-side copied to trashed destination, restoring")
-		info, err = f.createOrUpdate(ctx, remote, srcObj.createTime, srcObj.modTime, srcObj.size, srcObj.md5)
+	if err == nil {
+		var createTime time.Time
+		var createTimeMeta bool
+		var modTime time.Time
+		var modTimeMeta bool
+		if meta != nil {
+			createTime, createTimeMeta = srcObj.parseFsMetadataTime(meta, "btime")
+			if !createTimeMeta {
+				createTime = srcObj.createTime
+			}
+			modTime, modTimeMeta = srcObj.parseFsMetadataTime(meta, "mtime")
+			if !modTimeMeta {
+				modTime = srcObj.modTime
+			}
+		}
+		if bool(info.Deleted) && !f.opt.TrashedOnly && info.State == "COMPLETED" {
+			// Workaround necessary when destination was a trashed file, to avoid the copied file also being in trash (bug in api?)
+			fs.Debugf(src, "Server-side copied to trashed destination, restoring")
+			info, err = f.createOrUpdate(ctx, remote, createTime, modTime, info.Size, info.MD5)
+		} else if createTimeMeta || modTimeMeta {
+			info, err = f.createOrUpdate(ctx, remote, createTime, modTime, info.Size, info.MD5)
+		}
 	}
 
 	if err != nil {
@@ -1523,11 +1545,29 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		return nil, fs.ErrorCantMove
 	}
 
-	err := f.mkParentDir(ctx, remote)
+	meta, err := fs.GetMetadataOptions(ctx, f, src, fs.MetadataAsOpenOptions(ctx))
 	if err != nil {
 		return nil, err
 	}
+
+	if err := f.mkParentDir(ctx, remote); err != nil {
+		return nil, err
+	}
 	info, err := f.copyOrMove(ctx, "mv", srcObj.filePath(), remote)
+
+	if err != nil && meta != nil {
+		createTime, createTimeMeta := srcObj.parseFsMetadataTime(meta, "btime")
+		if !createTimeMeta {
+			createTime = srcObj.createTime
+		}
+		modTime, modTimeMeta := srcObj.parseFsMetadataTime(meta, "mtime")
+		if !modTimeMeta {
+			modTime = srcObj.modTime
+		}
+		if createTimeMeta || modTimeMeta {
+			info, err = f.createOrUpdate(ctx, remote, createTime, modTime, info.Size, info.MD5)
+		}
+	}
 
 	if err != nil {
 		return nil, fmt.Errorf("couldn't move file: %w", err)
@@ -1786,6 +1826,20 @@ func (o *Object) readMetaData(ctx context.Context, force bool) (err error) {
 	return o.setMetaData(info)
 }
 
+// parseFsMetadataTime parses a time string from fs.Metadata with key
+func (o *Object) parseFsMetadataTime(m fs.Metadata, key string) (t time.Time, ok bool) {
+	value, ok := m[key]
+	if ok {
+		var err error
+		t, err = time.Parse(time.RFC3339Nano, value) // metadata stores RFC3339Nano timestamps
+		if err != nil {
+			fs.Debugf(o, "failed to parse metadata %s: %q: %v", key, value, err)
+			ok = false
+		}
+	}
+	return t, ok
+}
+
 // ModTime returns the modification time of the object
 //
 // It attempts to read the objects mtime and if that isn't present the
@@ -1957,21 +2011,11 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	var createdTime string
 	var modTime string
 	if meta != nil {
-		if v, ok := meta["btime"]; ok {
-			t, err := time.Parse(time.RFC3339Nano, v) // metadata stores RFC3339Nano timestamps
-			if err != nil {
-				fs.Debugf(o, "failed to parse metadata btime: %q: %v", v, err)
-			} else {
-				createdTime = api.Rfc3339Time(t).String() // jottacloud api wants RFC3339 timestamps
-			}
+		if t, ok := o.parseFsMetadataTime(meta, "btime"); ok {
+			createdTime = api.Rfc3339Time(t).String() // jottacloud api wants RFC3339 timestamps
 		}
-		if v, ok := meta["mtime"]; ok {
-			t, err := time.Parse(time.RFC3339Nano, v)
-			if err != nil {
-				fs.Debugf(o, "failed to parse metadata mtime: %q: %v", v, err)
-			} else {
-				modTime = api.Rfc3339Time(t).String()
-			}
+		if t, ok := o.parseFsMetadataTime(meta, "mtime"); ok {
+			modTime = api.Rfc3339Time(t).String()
 		}
 	}
 	if modTime == "" { // prefer mtime in meta as Modified time, fallback to source ModTime

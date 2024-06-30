@@ -98,7 +98,7 @@ type syncCopyMove struct {
 
 // For keeping track of delayed modtime sets
 type setDirModTime struct {
-	src     fs.Directory // if set the metadata should be set too
+	src     fs.Directory
 	dst     fs.Directory
 	dir     string
 	modTime time.Time
@@ -1109,7 +1109,6 @@ func (s *syncCopyMove) copyDirMetadata(ctx context.Context, f fs.Fs, dst fs.Dire
 	if !s.setDirModTimeAfter && equal {
 		return nil
 	}
-	setMeta := true
 	if s.setDirModTimeAfter && equal {
 		newDst = dst
 	} else if s.copyEmptySrcDirs {
@@ -1126,7 +1125,6 @@ func (s *syncCopyMove) copyDirMetadata(ctx context.Context, f fs.Fs, dst fs.Dire
 			err = operations.Mkdir(ctx, f, dir)
 		}
 	} else {
-		setMeta = s.setDirMetadata
 		newDst = dst
 	}
 	// If we need to set modtime after and we created a dir, then save it for later
@@ -1145,13 +1143,11 @@ func (s *syncCopyMove) copyDirMetadata(ctx context.Context, f fs.Fs, dst fs.Dire
 			s.setDirModTimesMaxLevel = level
 		}
 		set := setDirModTime{
+			src:     src,
 			dst:     newDst,
 			dir:     dir,
 			modTime: src.ModTime(ctx),
 			level:   level,
-		}
-		if setMeta {
-			set.src = src
 		}
 		s.setDirModTimes = append(s.setDirModTimes, set)
 		s.setDirModTimeMu.Unlock()
@@ -1202,8 +1198,7 @@ func (s *syncCopyMove) setDelayedDirModTimes(ctx context.Context) error {
 			}
 			g.Go(func() error {
 				var err error
-				// if item.src is set must copy full metadata
-				if item.src != nil {
+				if s.setDirMetadata {
 					_, err = operations.CopyDirMetadata(gCtx, s.fdst, item.dst, item.dir, item.src)
 				} else {
 					_, err = operations.SetDirModTime(gCtx, s.fdst, item.dst, item.dir, item.modTime)

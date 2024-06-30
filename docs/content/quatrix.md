@@ -249,7 +249,7 @@ Properties:
 
 #### --quatrix-description
 
-Description of the remote
+Description of the remote.
 
 Properties:
 

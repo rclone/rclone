@@ -160,7 +160,7 @@ Here are the Advanced options specific to combine (Combine several remotes into 
 
 #### --combine-description
 
-Description of the remote
+Description of the remote.
 
 Properties:
 

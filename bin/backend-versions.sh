@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # This adds the version each backend was released to its docs page
 set -e
 for backend in $( find backend -maxdepth 1 -type d ); do

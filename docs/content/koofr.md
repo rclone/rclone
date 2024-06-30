@@ -159,7 +159,7 @@ Properties:
 
 #### --koofr-password
 
-Your password for rclone (generate one at https://app.koofr.net/app/admin/preferences/password).
+Your password for rclone generate one at https://app.koofr.net/app/admin/preferences/password.
 
 **NB** Input to this must be obscured - see [rclone obscure](/commands/rclone_obscure/).
 
@@ -216,7 +216,7 @@ Properties:
 
 #### --koofr-description
 
-Description of the remote
+Description of the remote.
 
 Properties:
 

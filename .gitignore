@@ -3,7 +3,9 @@ _junk/
 rclone
 rclone.exe
 build
-docs/public
+/docs/public/
+/docs/.hugo_build.lock
+/docs/static/img/logos/
 rclone.iml
 .idea
 .history
@@ -16,6 +18,5 @@ fuzz-build.zip
 Thumbs.db
 __pycache__
 .DS_Store
-/docs/static/img/logos/
 resource_windows_*.syso
 .devcontainer

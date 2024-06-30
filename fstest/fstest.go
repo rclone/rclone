@@ -48,7 +48,7 @@ var (
 	// ListRetries is the number of times to retry a listing to overcome eventual consistency
 	ListRetries = flag.Int("list-retries", 3, "Number or times to retry listing")
 	// MatchTestRemote matches the remote names used for testing
-	MatchTestRemote = regexp.MustCompile(`^rclone-test-[abcdefghijklmnopqrstuvwxyz0123456789]{24}$`)
+	MatchTestRemote = regexp.MustCompile(`^rclone-test-[abcdefghijklmnopqrstuvwxyz0123456789]{12}$`)
 )
 
 // Initialise rclone for testing
@@ -266,7 +266,7 @@ func CheckListingWithRoot(t *testing.T, f fs.Fs, dir string, items []Item, expec
 	var objs []fs.Object
 	var dirs []fs.Directory
 	var err error
-	var retries = *ListRetries
+	retries := *ListRetries
 	sleep := time.Second / 2
 	wantListing := makeListingFromItems(items)
 	gotListing := "<unset>"
@@ -431,7 +431,7 @@ func RandomRemoteName(remoteName string) (string, string, error) {
 		if !strings.HasSuffix(remoteName, ":") {
 			remoteName += "/"
 		}
-		leafName = "rclone-test-" + random.String(24)
+		leafName = "rclone-test-" + random.String(12)
 		if !MatchTestRemote.MatchString(leafName) {
 			log.Fatalf("%q didn't match the test remote name regexp", leafName)
 		}

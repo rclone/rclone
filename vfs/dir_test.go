@@ -589,6 +589,19 @@ func TestDirRename(t *testing.T) {
 	vfs.Opt.ReadOnly = true
 	err = dir.Rename("potato", "tuba", dir)
 	assert.Equal(t, EROFS, err)
+
+	// Rename a dir, check that key was correctly renamed in dir.parent.items
+	vfs.Opt.ReadOnly = false
+	_, ok := dir.parent.items["dir2"]
+	assert.True(t, ok, "dir.parent.items should have 'dir2' key before rename")
+	_, ok = dir.parent.items["dir3"]
+	assert.False(t, ok, "dir.parent.items should not have 'dir3' key before rename")
+	dir.renameTree("dir3") // rename dir2 to dir3
+	_, ok = dir.parent.items["dir2"]
+	assert.False(t, ok, "dir.parent.items should not have 'dir2' key after rename")
+	d, ok := dir.parent.items["dir3"]
+	assert.True(t, ok, fmt.Sprintf("expected to find 'dir3' key in dir.parent.items after rename, got %v", dir.parent.items))
+	assert.Equal(t, dir, d, `expected renamed dir to match value of dir.parent.items["dir3"]`)
 }
 
 func TestDirStructSize(t *testing.T) {

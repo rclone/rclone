@@ -5,6 +5,159 @@ description: "Rclone Changelog"
 
 # Changelog
 
+## v1.67.0 - 2024-06-14
+
+[See commits](https://github.com/rclone/rclone/compare/v1.66.0...v1.67.0)
+
+* New backends
+    * [uloz.to](/ulozto/) (iotmaestro)
+    * New S3 providers
+        * [Magalu Object Storage](/s3/#magalu) (Bruno Fernandes)
+* New commands
+    * [gitannex](/commands/rclone_gitannex/): Enables git-annex to store and retrieve content from an rclone remote (Dan McArdle)
+* New Features
+    * accounting: Add deleted files total size to status summary line (Kyle Reynolds)
+    * build
+        * Fix `CVE-2023-45288` by upgrading `golang.org/x/net` (Nick Craig-Wood)
+        * Fix `CVE-2024-35255` by upgrading `github.com/Azure/azure-sdk-for-go/sdk/azidentity` to 1.6.0 (dependabot)
+        * Convert source files with CRLF to LF (albertony)
+        * Update all dependencies (Nick Craig-Wood)
+    * doc updates (albertony, Alex Garel, Dave Nicolson, Dominik Joe Pantůček, Eric Wolf, Erisa A, Evan Harris, Evan McBeth, Gachoud Philippe, hidewrong, jakzoe, jumbi77, kapitainsky, Kyle Reynolds, Lewis Hook, Nick Craig-Wood, overallteach, pawsey-kbuckley, Pieter van Oostrum, psychopatt, racerole, static-moonlight, Warrentheo, yudrywet, yumeiyin )
+    * ncdu: Do not quit on Esc to aid usability (Katia Esposito)
+    * rcserver: Set `ModTime` for dirs and files served by `--rc-serve` (Nikita Shoshin)
+* Bug Fixes
+    * bisync: Add integration tests against all backends and fix many many problems (nielash)
+    * config: Fix default value for `description` (Nick Craig-Wood)
+    * copy: Fix `nil` pointer dereference when corrupted on transfer with `nil` dst (nielash)
+    * fs
+        * Improve JSON Unmarshalling for `Duration` types (Kyle Reynolds)
+        * Close the CPU profile on exit (guangwu)
+        * Replace `/bin/bash` with `/usr/bin/env bash` (Florian Klink)
+    * oauthutil: Clear client secret if client ID is set (Michael Terry)
+    * operations
+        * Rework `rcat` so that it doesn't call the `--metadata-mapper` twice (Nick Craig-Wood)
+        * Ensure `SrcFsType` is set correctly when using `--metadata-mapper` (Nick Craig-Wood)
+        * Fix "optional feature not implemented" error with a crypted sftp bug (Nick Craig-Wood)
+        * Fix very long file names when using copy with `--partial` (Nick Craig-Wood)
+        * Fix retries downloading too much data with certain backends (Nick Craig-Wood)
+        * Fix move when dst is nil and fdst is case-insensitive (nielash)
+        * Fix lsjson `--encrypted` when using `--crypt-XXX` parameters (Nick Craig-Wood)
+        * Fix missing metadata for multipart transfers to local disk (Nick Craig-Wood)
+        * Fix incorrect modtime on some multipart transfers (Nick Craig-Wood)
+        * Fix hashing problem in integration tests (Nick Craig-Wood)
+    * rc
+        * Fix stats groups being ignored in `operations/check` (Nick Craig-Wood)
+        * Fix incorrect `Content-Type` in HTTP API (Kyle Reynolds)
+    * serve s3
+        * Fix `Last-Modified` header format (Butanediol)
+        * Fix in-memory metadata storing wrong modtime (nielash)
+        * Fix XML of error message (Nick Craig-Wood)
+    * serve webdav: Fix webdav with `--baseurl` under Windows (Nick Craig-Wood)
+    * serve dlna: Make `BrowseMetadata` more compliant (albertony)
+    * serve http: Added `Content-Length` header when HTML directory is served (Sunny)
+    * sync
+        * Don't sync directories if they haven't been modified (Nick Craig-Wood)
+        * Don't test reading metadata if we can't write it (Nick Craig-Wood)
+        * Fix case normalisation (problem on on s3) (Nick Craig-Wood)
+        * Fix management of empty directories to make it more accurate (Nick Craig-Wood)
+        * Fix creation of empty directories when `--create-empty-src-dirs=false` (Nick Craig-Wood)
+        * Fix directory modification times not being set (Nick Craig-Wood)
+        * Fix "failed to update directory timestamp or metadata: directory not found" (Nick Craig-Wood)
+        * Fix expecting SFTP to have MkdirMetadata method: optional feature not implemented (Nick Craig-Wood)
+    * test info: Improve cleanup of temp files (Kyle Reynolds)
+    * touch: Fix using `-R` on certain backends (Nick Craig-Wood)
+* Mount
+    * Add `--direct-io` flag to force uncached access (Nick Craig-Wood)
+* VFS
+    * Fix download loop when file size shrunk (Nick Craig-Wood)
+    * Fix renaming a directory (nielash)
+* Local
+    * Add `--local-time-type` to use `mtime`/`atime`/`btime`/`ctime` as the time (Nick Craig-Wood)
+    * Allow `SeBackupPrivilege` and/or `SeRestorePrivilege` to work on Windows (Charles Hamilton)
+* Azure Blob
+    * Fix encoding issue with dir path comparison (nielash)
+* B2
+    * Add new [cleanup](/b2/#cleanup) and [cleanup-hidden](/b2/#cleanup-hidden) backend commands. (Pat Patterson)
+    * Update B2 URLs to new home (Nick Craig-Wood)
+* Chunker
+    * Fix startup when root points to composite multi-chunk file without metadata (nielash)
+    * Fix case-insensitive comparison on local without metadata (nielash)
+    * Fix "finalizer already set" error (nielash)
+* Drive
+    * Add [backend query](/drive/#query) command for general purpose querying of files (John-Paul Smith)
+    * Stop sending notification emails when setting permissions (Nick Craig-Wood)
+    * Fix server side copy with metadata from my drive to shared drive (Nick Craig-Wood)
+    * Set all metadata permissions and return error summary instead of stopping on the first error (Nick Craig-Wood)
+    * Make errors setting permissions into no retry errors (Nick Craig-Wood)
+    * Fix description being overwritten on server side moves (Nick Craig-Wood)
+    * Allow setting metadata to fail if `failok` flag is set (Nick Craig-Wood)
+    * Fix panic when using `--metadata-mapper` on large google doc files (Nick Craig-Wood)
+* Dropbox
+    * Add `--dropbox-root-namespace` to override the root namespace (Bill Fraser)
+* Google Cloud Storage
+    * Fix encoding issue with dir path comparison (nielash)
+* Hdfs
+    * Fix f.String() not including subpath (nielash)
+* Http
+    * Add `--http-no-escape` to not escape URL metacharacters in path names (Kyle Reynolds)
+* Jottacloud
+    * Set metadata on server side copy and move (albertony)
+* Linkbox
+    * Fix working with names longer than 8-25 Unicode chars. (Vitaly)
+    * Fix list paging and optimized synchronization. (gvitali)
+* Mailru
+    * Attempt to fix throttling by increasing min sleep to 100ms (Nick Craig-Wood)
+* Memory
+    * Fix dst mutating src after server-side copy (nielash)
+    * Fix deadlock in operations.Purge (nielash)
+    * Fix incorrect list entries when rooted at subdirectory (nielash)
+* Onedrive
+    * Add `--onedrive-hard-delete` to permanently delete files (Nick Craig-Wood)
+    * Make server-side copy work in more scenarios (YukiUnHappy)
+    * Fix "unauthenticated: Unauthenticated" errors when downloading (Nick Craig-Wood)
+    * Fix `--metadata-mapper` being called twice if writing permissions (nielash)
+    * Set all metadata permissions and return error summary instead of stopping on the first error (nielash)
+    * Make errors setting permissions into no retry errors (Nick Craig-Wood)
+    * Skip writing permissions with 'owner' role (nielash)
+    * Fix references to deprecated permissions properties (nielash)
+    * Add support for group permissions (nielash)
+    * Allow setting permissions to fail if `failok` flag is set (Nick Craig-Wood)
+* Pikpak
+    * Make getFile() usage more efficient to avoid the download limit (wiserain)
+    * Improve upload reliability and resolve potential file conflicts (wiserain)
+    * Implement configurable chunk size for multipart upload (wiserain)
+* Protondrive
+    * Don't auth with an empty access token (Michał Dzienisiewicz)
+* Qingstor
+    * Disable integration tests as test account suspended (Nick Craig-Wood)
+* Quatrix
+    * Fix f.String() not including subpath (nielash)
+* S3
+    * Add new AWS region `il-central-1` Tel Aviv (yoelvini)
+    * Update Scaleway's configuration options (Alexandre Lavigne)
+    * Ceph: fix quirks when creating buckets to fix trying to create an existing bucket (Thomas Schneider)
+    * Fix encoding issue with dir path comparison (nielash)
+    * Fix 405 error on HEAD for delete marker with versionId (nielash)
+    * Validate `--s3-copy-cutoff` size before copy (hoyho)
+* SFTP
+    * Add `--sftp-connections` to limit the maximum number of connections (Tomasz Melcer)
+* Storj
+    * Update `storj.io/uplink` to latest release (JT Olio)
+    * Update bio on request (Nick Craig-Wood)
+* Swift
+    * Implement `--swift-use-segments-container` to allow >5G files on Blomp (Nick Craig-Wood)
+* Union
+    * Fix deleting dirs when all remotes can't have empty dirs (Nick Craig-Wood)
+* WebDAV
+    * Fix setting modification times erasing checksums on owncloud and nextcloud (nielash)
+    * owncloud: Add `--webdav-owncloud-exclude-mounts` which allows excluding mounted folders when listing remote resources (Thomas Müller)
+* Zoho
+    * Fix throttling problem when uploading files (Nick Craig-Wood)
+    * Use cursor listing for improved performance (Nick Craig-Wood)
+    * Retry reading info after upload if size wasn't returned (Nick Craig-Wood)
+    * Remove simple file names complication which is no longer needed (Nick Craig-Wood)
+    * Sleep for 60 seconds if rate limit error received (Nick Craig-Wood)
+
 ## v1.66.0 - 2024-03-10
 
 [See commits](https://github.com/rclone/rclone/compare/v1.65.0...v1.66.0)

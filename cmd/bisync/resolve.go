@@ -274,7 +274,7 @@ func (ri *renamesInfo) getNames(is1to2 bool) (srcOldName, srcNewName, dstOldName
 	return ri.path2.oldName, ri.path2.newName, ri.path1.oldName, ri.path1.newName
 }
 
-// work out the lowest number that niether side has, return it for suffix
+// work out the lowest number that neither side has, return it for suffix
 func (b *bisyncRun) numerate(ctx context.Context, startnum int, file, alias string) int {
 	for i := startnum; i < math.MaxInt; i++ {
 		iStr := fmt.Sprint(i)

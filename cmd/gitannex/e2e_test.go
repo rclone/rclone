@@ -93,6 +93,7 @@ func findFileWithContents(t *testing.T, dir string, wantContents []byte) bool {
 }
 
 type e2eTestingContext struct {
+	t                *testing.T
 	tempDir          string
 	binDir           string
 	homeDir          string
@@ -126,7 +127,7 @@ func makeE2eTestingContext(t *testing.T) e2eTestingContext {
 		require.NoError(t, os.Mkdir(dir, 0700))
 	}
 
-	return e2eTestingContext{tempDir, binDir, homeDir, configDir, rcloneConfigDir, ephemeralRepoDir}
+	return e2eTestingContext{t, tempDir, binDir, homeDir, configDir, rcloneConfigDir, ephemeralRepoDir}
 }
 
 // Install the symlink that enables git-annex to invoke "rclone gitannex"
@@ -154,16 +155,17 @@ func (e *e2eTestingContext) installRcloneConfig(t *testing.T) {
 // variable to a subdirectory of the temp directory. It also ensures that the
 // git-annex-remote-rclone-builtin symlink will be found by extending the PATH.
 func (e *e2eTestingContext) runInRepo(t *testing.T, command string, args ...string) {
-	fmt.Printf("+ %s %v\n", command, args)
+	if testing.Verbose() {
+		t.Logf("Running %s %v\n", command, args)
+	}
 	cmd := exec.Command(command, args...)
 	cmd.Dir = e.ephemeralRepoDir
 	cmd.Env = []string{
 		"HOME=" + e.homeDir,
 		"PATH=" + os.Getenv("PATH") + ":" + e.binDir,
 	}
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	require.NoError(t, cmd.Run())
+	buf, err := cmd.CombinedOutput()
+	require.NoError(t, err, fmt.Sprintf("+ %s %v failed:\n%s\n", command, args, buf))
 }
 
 // createGitRepo creates an empty git repository in the ephemeral repo

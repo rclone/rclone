@@ -620,9 +620,7 @@ func (f *Fs) listDir(ctx context.Context, prefix string, filter api.SearchFilter
 		if err != nil {
 			return err
 		}
-		if entry != nil {
-			entries = append(entries, entry)
-		}
+		entries = append(entries, entry)
 		return nil
 	})
 	if err != nil {

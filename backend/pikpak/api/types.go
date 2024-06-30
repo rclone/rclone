@@ -176,7 +176,7 @@ type File struct {
 	FileCategory      string        `json:"file_category,omitempty"` // "AUDIO", "VIDEO"
 	FileExtension     string        `json:"file_extension,omitempty"`
 	FolderType        string        `json:"folder_type,omitempty"`
-	Hash              string        `json:"hash,omitempty"` // sha1 but NOT a valid file hash. looks like a torrent hash
+	Hash              string        `json:"hash,omitempty"` // custom hash with a form of sha1sum
 	IconLink          string        `json:"icon_link,omitempty"`
 	ID                string        `json:"id,omitempty"`
 	Kind              string        `json:"kind,omitempty"` // "drive#file"
@@ -251,10 +251,12 @@ type Media struct {
 
 // FileParams includes parameters for instant open
 type FileParams struct {
+	DeviceID     string `json:"device_id,omitempty"`
 	Duration     int64  `json:"duration,omitempty,string"` // in seconds
 	Height       int    `json:"height,omitempty,string"`
 	Platform     string `json:"platform,omitempty"` // "Upload"
 	PlatformIcon string `json:"platform_icon,omitempty"`
+	TaskID       string `json:"task_id"`
 	URL          string `json:"url,omitempty"`
 	Width        int    `json:"width,omitempty,string"`
 }
@@ -484,7 +486,7 @@ type RequestNewFile struct {
 	ParentID   string `json:"parent_id"`
 	FolderType string `json:"folder_type"`
 	// only when uploading a new file
-	Hash       string            `json:"hash,omitempty"`      // sha1sum
+	Hash       string            `json:"hash,omitempty"`      // gcid
 	Resumable  map[string]string `json:"resumable,omitempty"` // {"provider": "PROVIDER_ALIYUN"}
 	Size       int64             `json:"size,omitempty"`
 	UploadType string            `json:"upload_type,omitempty"` // "UPLOAD_TYPE_FORM" or "UPLOAD_TYPE_RESUMABLE"

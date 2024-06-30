@@ -336,6 +336,9 @@ Note that we don't unmount the shared folder afterwards so the
 --dropbox-shared-folders can be omitted after the first use of a particular 
 shared folder.
 
+See also --dropbox-root-namespace for an alternative way to work with shared
+folders.
+
 Properties:
 
 - Config:      shared_folders
@@ -366,6 +369,17 @@ Properties:
 - Env Var:     RCLONE_DROPBOX_ENCODING
 - Type:        Encoding
 - Default:     Slash,BackSlash,Del,RightSpace,InvalidUtf8,Dot
+
+#### --dropbox-root-namespace
+
+Specify a different Dropbox namespace ID to use as the root for all paths.
+
+Properties:
+
+- Config:      root_namespace
+- Env Var:     RCLONE_DROPBOX_ROOT_NAMESPACE
+- Type:        string
+- Required:    false
 
 #### --dropbox-batch-mode
 
@@ -455,7 +469,7 @@ Properties:
 
 #### --dropbox-description
 
-Description of the remote
+Description of the remote.
 
 Properties:
 

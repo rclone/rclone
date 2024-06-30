@@ -1,9 +1,8 @@
 ---
 title: "Oracle Object Storage Mount"
 description: "Oracle Object Storage mounting tutorial"
-slug: tutorial_mount
-url: /oracleobjectstorage/tutorial_mount/
 ---
+
 # {{< icon "fa fa-cloud" >}} Mount Buckets and Expose via NFS Tutorial 
 This runbook shows how to [mount](/commands/rclone_mount/) *Oracle Object Storage* buckets as local file system in
 OCI compute Instance using rclone tool. 
@@ -330,7 +329,7 @@ then auto-mounting.
 Content of /etc/rclone/scripts/rclone_nanny_script.sh
 ```shell
 
-#!/bin/bash
+#!/usr/bin/env bash
 erroneous_list=$(df 2>&1 | grep -i 'Transport endpoint is not connected' | awk '{print ""$2"" }' | tr -d \:)
 rclone_list=$(findmnt -t fuse.rclone -n 2>&1 | awk '{print ""$1"" }' | tr -d \:)
 IFS=$'\n'; set -f

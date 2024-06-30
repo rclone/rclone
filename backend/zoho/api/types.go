@@ -70,8 +70,17 @@ type ItemInfo struct {
 	Item Item `json:"data"`
 }
 
+// Links contains Cursor information
+type Links struct {
+	Cursor struct {
+		HasNext bool   `json:"has_next"`
+		Next    string `json:"next"`
+	} `json:"cursor"`
+}
+
 // ItemList contains multiple Zoho Items
 type ItemList struct {
+	Links Links  `json:"links"`
 	Items []Item `json:"data"`
 }
 
@@ -90,7 +99,7 @@ type UploadResponse struct {
 	Uploads []UploadInfo `json:"data"`
 }
 
-// WriteMetadataRequest is is used to write metadata for a
+// WriteMetadataRequest is used to write metadata for a
 // single item
 type WriteMetadataRequest struct {
 	Data WriteMetadata `json:"data"`

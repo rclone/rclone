@@ -121,11 +121,13 @@ func skipIfNotMultithread(ctx context.Context, t *testing.T, r *fstest.Run) int 
 		t.Skip("multithread writing not supported")
 	}
 
-	// Only support one hash otherwise we end up spending a huge amount of CPU on hashing!
-	oldHashes := hash.SupportOnly([]hash.Type{r.Fremote.Hashes().GetOne()})
-	t.Cleanup(func() {
-		_ = hash.SupportOnly(oldHashes)
-	})
+	// Only support one hash for the local backend otherwise we end up spending a huge amount of CPU on hashing!
+	if r.Fremote.Features().IsLocal {
+		oldHashes := hash.SupportOnly([]hash.Type{r.Fremote.Hashes().GetOne()})
+		t.Cleanup(func() {
+			_ = hash.SupportOnly(oldHashes)
+		})
+	}
 
 	ci := fs.GetConfig(ctx)
 	chunkSize := int(ci.MultiThreadChunkSize)

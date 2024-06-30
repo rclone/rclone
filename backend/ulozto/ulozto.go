@@ -1020,7 +1020,7 @@ func (f *Fs) CreateDir(ctx context.Context, parentSlug, leaf string) (newID stri
 	return folder.Slug, nil
 }
 
-func (f *Fs) newObjectWithInfo(ctx context.Context, remote string, info *api.File) (*Object, error) {
+func (f *Fs) newObjectWithInfo(ctx context.Context, remote string, info *api.File) (fs.Object, error) {
 	o := &Object{
 		fs:     f,
 		remote: remote,

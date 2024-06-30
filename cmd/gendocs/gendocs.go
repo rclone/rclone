@@ -29,8 +29,6 @@ type frontmatter struct {
 	Date        string
 	Title       string
 	Description string
-	Slug        string
-	URL         string
 	Source      string
 	Annotations map[string]string
 }
@@ -38,8 +36,6 @@ type frontmatter struct {
 var frontmatterTemplate = template.Must(template.New("frontmatter").Parse(`---
 title: "{{ .Title }}"
 description: "{{ .Description }}"
-slug: {{ .Slug }}
-url: {{ .URL }}
 {{- range $key, $value := .Annotations }}
 {{ $key }}: {{  $value }}
 {{- end }}
@@ -112,10 +108,14 @@ rclone.org website.`,
 				Date:        now,
 				Title:       strings.ReplaceAll(base, "_", " "),
 				Description: commands[name].Short,
-				Slug:        base,
-				URL:         "/commands/" + strings.ToLower(base) + "/",
 				Source:      strings.ReplaceAll(strings.ReplaceAll(base, "rclone", "cmd"), "_", "/") + "/",
-				Annotations: commands[name].Annotations,
+				Annotations: map[string]string{},
+			}
+			// Filter out annotations that confuse hugo from the frontmatter
+			for k, v := range commands[name].Annotations {
+				if k != "groups" {
+					data.Annotations[k] = v
+				}
 			}
 			var buf bytes.Buffer
 			err := frontmatterTemplate.Execute(&buf, data)

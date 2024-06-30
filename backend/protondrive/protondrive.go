@@ -285,6 +285,9 @@ func getConfigMap(m configmap.Mapper) (uid, accessToken, refreshToken, saltedKey
 	}
 	_saltedKeyPass = saltedKeyPass
 
+	// empty strings are considered "ok" by m.Get, which is not true business-wise
+	ok = accessToken != "" && uid != "" && refreshToken != "" && saltedKeyPass != ""
+
 	return
 }
 

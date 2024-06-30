@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 if [[ ! -z $(git status --short --untracked-files=no) ]]; then
    echo "Detected uncommitted changes - commit before running this"

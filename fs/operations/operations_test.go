@@ -492,6 +492,23 @@ func TestMaxDeleteSize(t *testing.T) {
 	assert.Equal(t, int64(1), objects) // 10 or 100 bytes
 }
 
+func TestReadFile(t *testing.T) {
+	ctx := context.Background()
+	r := fstest.NewRun(t)
+	defer r.Finalise()
+
+	contents := "A file to read the contents."
+	file := r.WriteObject(ctx, "ReadFile", contents, t1)
+	r.CheckRemoteItems(t, file)
+
+	o, err := r.Fremote.NewObject(ctx, file.Path)
+	require.NoError(t, err)
+
+	buf, err := operations.ReadFile(ctx, o)
+	require.NoError(t, err)
+	assert.Equal(t, contents, string(buf))
+}
+
 func TestRetry(t *testing.T) {
 	ctx := context.Background()
 

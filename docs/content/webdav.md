@@ -283,6 +283,17 @@ Properties:
 - Type:        bool
 - Default:     false
 
+#### --webdav-owncloud-exclude-mounts
+
+Exclude ownCloud mounted storages
+
+Properties:
+
+- Config:      owncloud_exclude_mounts
+- Env Var:     RCLONE_WEBDAV_OWNCLOUD_EXCLUDE_MOUNTS
+- Type:        bool
+- Default:     false
+
 #### --webdav-unix-socket-path
 
 Path to a unix domain socket to dial to, instead of opening a TCP connection directly
@@ -296,7 +307,7 @@ Properties:
 
 #### --webdav-description
 
-Description of the remote
+Description of the remote.
 
 Properties:
 

@@ -190,7 +190,8 @@ func TestConfigFileReload(t *testing.T) {
 	// Now write a new value on the end
 	out, err := os.OpenFile(config.GetConfigPath(), os.O_APPEND|os.O_WRONLY, 0777)
 	require.NoError(t, err)
-	fmt.Fprintln(out, "appended = what magic")
+	_, err = fmt.Fprintln(out, "appended = what magic")
+	require.NoError(t, err)
 	require.NoError(t, out.Close())
 
 	// And check we magically reloaded it
