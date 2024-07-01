@@ -379,7 +379,7 @@ func (f *Fs) putWithMeta(ctx context.Context, t *testing.T, file *fstest.Item, p
 	}
 
 	expectedMeta.Set("permissions", marshalPerms(t, perms))
-	obj := fstests.PutTestContentsMetadata(ctx, t, f, file, content, true, "plain/text", expectedMeta)
+	obj := fstests.PutTestContentsMetadata(ctx, t, f, file, false, content, true, "plain/text", expectedMeta)
 	do, ok := obj.(fs.Metadataer)
 	require.True(t, ok)
 	actualMeta, err := do.Metadata(ctx)
