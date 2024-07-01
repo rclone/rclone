@@ -244,7 +244,7 @@ func (f *Fs) Name() string {
 
 // Root of the remote (as passed into NewFs)
 func (f *Fs) Root() string {
-	return f.root
+	return f.opt.Enc.ToStandardPath(f.root)
 }
 
 // String converts this Fs to a string
@@ -284,6 +284,9 @@ func getConfigMap(m configmap.Mapper) (uid, accessToken, refreshToken, saltedKey
 		return
 	}
 	_saltedKeyPass = saltedKeyPass
+
+	// empty strings are considered "ok" by m.Get, which is not true business-wise
+	ok = accessToken != "" && uid != "" && refreshToken != "" && saltedKeyPass != ""
 
 	return
 }

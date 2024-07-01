@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # An example script to run when bisecting go with git bisect -run when
 # looking for an rclone regression

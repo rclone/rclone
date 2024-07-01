@@ -24,6 +24,7 @@ import (
 	"time"
 
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/cache"
 	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/fs/fspath"
@@ -127,24 +128,6 @@ func objsToNames(objs []fs.Object) []string {
 	return names
 }
 
-// findObject finds the object on the remote
-func findObject(ctx context.Context, t *testing.T, f fs.Fs, Name string) fs.Object {
-	var obj fs.Object
-	var err error
-	sleepTime := 1 * time.Second
-	for i := 1; i <= *fstest.ListRetries; i++ {
-		obj, err = f.NewObject(ctx, Name)
-		if err == nil {
-			break
-		}
-		t.Logf("Sleeping for %v for findObject eventual consistency: %d/%d (%v)", sleepTime, i, *fstest.ListRetries, err)
-		time.Sleep(sleepTime)
-		sleepTime = (sleepTime * 3) / 2
-	}
-	require.NoError(t, err)
-	return obj
-}
-
 // retry f() until no retriable error
 func retry(t *testing.T, what string, f func() error) {
 	const maxTries = 10
@@ -207,7 +190,7 @@ func PutTestContentsMetadata(ctx context.Context, t *testing.T, f fs.Fs, file *f
 		}
 		file.Check(t, obj, f.Precision())
 		// Re-read the object and check again
-		obj = findObject(ctx, t, f, file.Path)
+		obj = fstest.NewObject(ctx, t, f, file.Path)
 		file.Check(t, obj, f.Precision())
 	}
 	return obj
@@ -259,7 +242,7 @@ func testPutLarge(ctx context.Context, t *testing.T, f fs.Fs, file *fstest.Item,
 	file.Check(t, obj, f.Precision())
 
 	// Re-read the object and check again
-	obj = findObject(ctx, t, f, file.Path)
+	obj = fstest.NewObject(ctx, t, f, file.Path)
 	file.Check(t, obj, f.Precision())
 
 	// Download the object and check it is OK
@@ -307,19 +290,22 @@ type ExtraConfigItem struct{ Name, Key, Value string }
 
 // Opt is options for Run
 type Opt struct {
-	RemoteName                   string
-	NilObject                    fs.Object
-	ExtraConfig                  []ExtraConfigItem
-	SkipBadWindowsCharacters     bool     // skips unusable characters for windows if set
-	SkipFsMatch                  bool     // if set skip exact matching of Fs value
-	TiersToTest                  []string // List of tiers which can be tested in setTier test
-	ChunkedUpload                ChunkedUploadConfig
-	UnimplementableFsMethods     []string // List of methods which can't be implemented in this wrapping Fs
-	UnimplementableObjectMethods []string // List of methods which can't be implemented in this wrapping Fs
-	SkipFsCheckWrap              bool     // if set skip FsCheckWrap
-	SkipObjectCheckWrap          bool     // if set skip ObjectCheckWrap
-	SkipInvalidUTF8              bool     // if set skip invalid UTF-8 checks
-	QuickTestOK                  bool     // if set, run this test with make quicktest
+	RemoteName                      string
+	NilObject                       fs.Object
+	ExtraConfig                     []ExtraConfigItem
+	SkipBadWindowsCharacters        bool     // skips unusable characters for windows if set
+	SkipFsMatch                     bool     // if set skip exact matching of Fs value
+	TiersToTest                     []string // List of tiers which can be tested in setTier test
+	ChunkedUpload                   ChunkedUploadConfig
+	UnimplementableFsMethods        []string // List of Fs methods which can't be implemented in this wrapping Fs
+	UnimplementableObjectMethods    []string // List of Object methods which can't be implemented in this wrapping Fs
+	UnimplementableDirectoryMethods []string // List of Directory methods which can't be implemented in this wrapping Fs
+	SkipFsCheckWrap                 bool     // if set skip FsCheckWrap
+	SkipObjectCheckWrap             bool     // if set skip ObjectCheckWrap
+	SkipDirectoryCheckWrap          bool     // if set skip DirectoryCheckWrap
+	SkipInvalidUTF8                 bool     // if set skip invalid UTF-8 checks
+	SkipLeadingDot                  bool     // if set skip leading dot checks
+	QuickTestOK                     bool     // if set, run this test with make quicktest
 }
 
 // returns true if x is found in ss
@@ -706,6 +692,9 @@ func Run(t *testing.T, opt *Opt) {
 					if opt.SkipInvalidUTF8 && test.name == "invalid UTF-8" {
 						t.Skip("Skipping " + test.name)
 					}
+					if opt.SkipLeadingDot && test.name == "leading dot" {
+						t.Skip("Skipping " + test.name)
+					}
 					// turn raw strings into Standard encoding
 					fileName := encoder.Standard.Encode(test.path)
 					dirName := fileName
@@ -801,7 +790,7 @@ func Run(t *testing.T, opt *Opt) {
 
 			assert.NoError(t, out.Close())
 
-			obj := findObject(ctx, t, f, path)
+			obj := fstest.NewObject(ctx, t, f, path)
 			assert.Equal(t, "abcdefghi", ReadObject(ctx, t, obj, -1), "contents of file differ")
 
 			assert.NoError(t, obj.Remove(ctx))
@@ -844,7 +833,7 @@ func Run(t *testing.T, opt *Opt) {
 
 			assert.NoError(t, out.Close(ctx))
 
-			obj := findObject(ctx, t, f, path)
+			obj := fstest.NewObject(ctx, t, f, path)
 			originalContents := contents1 + contents2 + contents3
 			fileContents := ReadObject(ctx, t, obj, -1)
 			isEqual := originalContents == fileContents
@@ -1109,7 +1098,7 @@ func Run(t *testing.T, opt *Opt) {
 			// TestFsNewObject tests NewObject
 			t.Run("FsNewObject", func(t *testing.T) {
 				skipIfNotOk(t)
-				obj := findObject(ctx, t, f, file1.Path)
+				obj := fstest.NewObject(ctx, t, f, file1.Path)
 				file1.Check(t, obj, f.Precision())
 			})
 
@@ -1119,10 +1108,10 @@ func Run(t *testing.T, opt *Opt) {
 				if !f.Features().CaseInsensitive {
 					t.Skip("Not Case Insensitive")
 				}
-				obj := findObject(ctx, t, f, toUpperASCII(file1.Path))
+				obj := fstest.NewObject(ctx, t, f, toUpperASCII(file1.Path))
 				file1.Check(t, obj, f.Precision())
 				t.Run("Dir", func(t *testing.T) {
-					obj := findObject(ctx, t, f, toUpperASCII(file2.Path))
+					obj := fstest.NewObject(ctx, t, f, toUpperASCII(file2.Path))
 					file2.Check(t, obj, f.Precision())
 				})
 			})
@@ -1221,6 +1210,28 @@ func Run(t *testing.T, opt *Opt) {
 				}, fs.GetModifyWindow(ctx, f))
 			})
 
+			// TestFsListRootedSubdir tests putting and listing with an Fs that is rooted at a subdirectory 2 levels down
+			TestFsListRootedSubdir := func(t *testing.T) {
+				skipIfNotOk(t)
+				newF, err := cache.Get(ctx, subRemoteName+"/hello? sausage/êé")
+				assert.NoError(t, err)
+				nestedFile := fstest.Item{
+					ModTime: fstest.Time("2001-02-03T04:05:06.499999999Z"),
+					Path:    "a/b/c/d/e.txt",
+				}
+				_, _ = testPut(ctx, t, newF, &nestedFile)
+
+				objs, dirs, err := walk.GetAll(ctx, newF, "", true, 10)
+				require.NoError(t, err)
+				assert.Equal(t, []string{`Hello, 世界/ " ' @ < > & ? + ≠/z.txt`, nestedFile.Path}, objsToNames(objs))
+				assert.Equal(t, []string{`Hello, 世界`, `Hello, 世界/ " ' @ < > & ? + ≠`, "a", "a/b", "a/b/c", "a/b/c/d"}, dirsToNames(dirs))
+
+				// cleanup
+				err = operations.Purge(ctx, newF, "a")
+				require.NoError(t, err)
+			}
+			t.Run("FsListRootedSubdir", TestFsListRootedSubdir)
+
 			// TestFsCopy tests Copy
 			t.Run("FsCopy", func(t *testing.T) {
 				skipIfNotOk(t)
@@ -1236,7 +1247,7 @@ func Run(t *testing.T, opt *Opt) {
 				file2Copy.Path += "-copy"
 
 				// do the copy
-				src := findObject(ctx, t, f, file2.Path)
+				src := fstest.NewObject(ctx, t, f, file2.Path)
 				dst, err := doCopy(ctx, src, file2Copy.Path)
 				if err == fs.ErrorCantCopy {
 					t.Skip("FS can't copy")
@@ -1249,10 +1260,64 @@ func Run(t *testing.T, opt *Opt) {
 				// Check dst lightly - list above has checked ModTime/Hashes
 				assert.Equal(t, file2Copy.Path, dst.Remote())
 
+				// check that mutating dst does not mutate src
+				err = dst.SetModTime(ctx, fstest.Time("2004-03-03T04:05:06.499999999Z"))
+				if err != fs.ErrorCantSetModTimeWithoutDelete && err != fs.ErrorCantSetModTime {
+					assert.NoError(t, err)
+					assert.False(t, src.ModTime(ctx).Equal(dst.ModTime(ctx)), "mutating dst should not mutate src -- is it Copying by pointer?")
+				}
+
 				// Delete copy
 				err = dst.Remove(ctx)
 				require.NoError(t, err)
 
+				// Test that server side copying files does the correct thing with metadata
+				t.Run("Metadata", func(t *testing.T) {
+					if !f.Features().WriteMetadata {
+						t.Skip("Skipping test as can't write metadata")
+					}
+					ctx, ci := fs.AddConfig(ctx)
+					ci.Metadata = true
+
+					// Create file with metadata
+					const srcName = "test metadata copy.txt"
+					const dstName = "test metadata copied.txt"
+					t1 := fstest.Time("2003-02-03T04:05:06.499999999Z")
+					t2 := fstest.Time("2004-03-03T04:05:06.499999999Z")
+					fileSrc := fstest.NewItem(srcName, srcName, t1)
+					contents := random.String(100)
+					var testMetadata = fs.Metadata{
+						// System metadata supported by all backends
+						"mtime": t1.Format(time.RFC3339Nano),
+						// User metadata
+						"potato": "jersey",
+					}
+					oSrc := PutTestContentsMetadata(ctx, t, f, &fileSrc, contents, true, "text/plain", testMetadata)
+					fstest.CheckEntryMetadata(ctx, t, f, oSrc, testMetadata)
+
+					// Copy it with --metadata-set
+					ci.MetadataSet = fs.Metadata{
+						// System metadata supported by all backends
+						"mtime": t2.Format(time.RFC3339Nano),
+						// User metadata
+						"potato": "royal",
+					}
+					oDst, err := doCopy(ctx, oSrc, dstName)
+					require.NoError(t, err)
+					fileDst := fileSrc
+					fileDst.Path = dstName
+					fileDst.ModTime = t2
+					fstest.CheckListing(t, f, []fstest.Item{file1, file2, fileSrc, fileDst})
+
+					// Check metadata is correct
+					fstest.CheckEntryMetadata(ctx, t, f, oDst, ci.MetadataSet)
+					oDst = fstest.NewObject(ctx, t, f, dstName)
+					fstest.CheckEntryMetadata(ctx, t, f, oDst, ci.MetadataSet)
+
+					// Remove test files
+					require.NoError(t, oSrc.Remove(ctx))
+					require.NoError(t, oDst.Remove(ctx))
+				})
 			})
 
 			// TestFsMove tests Move
@@ -1275,7 +1340,7 @@ func Run(t *testing.T, opt *Opt) {
 				// check happy path, i.e. no naming conflicts when rename and move are two
 				// separate operations
 				file2Move.Path = "other.txt"
-				src := findObject(ctx, t, f, file2.Path)
+				src := fstest.NewObject(ctx, t, f, file2.Path)
 				dst, err := doMove(ctx, src, file2Move.Path)
 				if err == fs.ErrorCantMove {
 					t.Skip("FS can't move")
@@ -1290,7 +1355,7 @@ func Run(t *testing.T, opt *Opt) {
 
 				// Check conflict on "rename, then move"
 				file1Move.Path = "moveTest/other.txt"
-				src = findObject(ctx, t, f, file1.Path)
+				src = fstest.NewObject(ctx, t, f, file1.Path)
 				_, err = doMove(ctx, src, file1Move.Path)
 				require.NoError(t, err)
 				fstest.CheckListing(t, f, []fstest.Item{file1Move, file2Move})
@@ -1298,14 +1363,14 @@ func Run(t *testing.T, opt *Opt) {
 				// 2: other.txt
 
 				// Check conflict on "move, then rename"
-				src = findObject(ctx, t, f, file1Move.Path)
+				src = fstest.NewObject(ctx, t, f, file1Move.Path)
 				_, err = doMove(ctx, src, file1.Path)
 				require.NoError(t, err)
 				fstest.CheckListing(t, f, []fstest.Item{file1, file2Move})
 				// 1: file name.txt
 				// 2: other.txt
 
-				src = findObject(ctx, t, f, file2Move.Path)
+				src = fstest.NewObject(ctx, t, f, file2Move.Path)
 				_, err = doMove(ctx, src, file2.Path)
 				require.NoError(t, err)
 				fstest.CheckListing(t, f, []fstest.Item{file1, file2})
@@ -1314,6 +1379,52 @@ func Run(t *testing.T, opt *Opt) {
 
 				// Tidy up moveTest directory
 				require.NoError(t, f.Rmdir(ctx, "moveTest"))
+
+				// Test that server side moving files does the correct thing with metadata
+				t.Run("Metadata", func(t *testing.T) {
+					if !f.Features().WriteMetadata {
+						t.Skip("Skipping test as can't write metadata")
+					}
+					ctx, ci := fs.AddConfig(ctx)
+					ci.Metadata = true
+
+					// Create file with metadata
+					const name = "test metadata move.txt"
+					const newName = "test metadata moved.txt"
+					t1 := fstest.Time("2003-02-03T04:05:06.499999999Z")
+					t2 := fstest.Time("2004-03-03T04:05:06.499999999Z")
+					file := fstest.NewItem(name, name, t1)
+					contents := random.String(100)
+					var testMetadata = fs.Metadata{
+						// System metadata supported by all backends
+						"mtime": t1.Format(time.RFC3339Nano),
+						// User metadata
+						"potato": "jersey",
+					}
+					o := PutTestContentsMetadata(ctx, t, f, &file, contents, true, "text/plain", testMetadata)
+					fstest.CheckEntryMetadata(ctx, t, f, o, testMetadata)
+
+					// Move it with --metadata-set
+					ci.MetadataSet = fs.Metadata{
+						// System metadata supported by all backends
+						"mtime": t2.Format(time.RFC3339Nano),
+						// User metadata
+						"potato": "royal",
+					}
+					newO, err := doMove(ctx, o, newName)
+					require.NoError(t, err)
+					file.Path = newName
+					file.ModTime = t2
+					fstest.CheckListing(t, f, []fstest.Item{file1, file2, file})
+
+					// Check metadata is correct
+					fstest.CheckEntryMetadata(ctx, t, f, newO, ci.MetadataSet)
+					newO = fstest.NewObject(ctx, t, f, newName)
+					fstest.CheckEntryMetadata(ctx, t, f, newO, ci.MetadataSet)
+
+					// Remove test file
+					require.NoError(t, newO.Remove(ctx))
+				})
 			})
 
 			// Move src to this remote using server-side move operations.
@@ -1410,7 +1521,7 @@ func Run(t *testing.T, opt *Opt) {
 			// TestObjectString tests the Object String method
 			t.Run("ObjectString", func(t *testing.T) {
 				skipIfNotOk(t)
-				obj := findObject(ctx, t, f, file1.Path)
+				obj := fstest.NewObject(ctx, t, f, file1.Path)
 				assert.Equal(t, file1.Path, obj.String())
 				if opt.NilObject != nil {
 					assert.Equal(t, "<nil>", opt.NilObject.String())
@@ -1420,7 +1531,7 @@ func Run(t *testing.T, opt *Opt) {
 			// TestObjectFs tests the object can be found
 			t.Run("ObjectFs", func(t *testing.T) {
 				skipIfNotOk(t)
-				obj := findObject(ctx, t, f, file1.Path)
+				obj := fstest.NewObject(ctx, t, f, file1.Path)
 				// If this is set we don't do the direct comparison of
 				// the Fs from the object as it may be different
 				if opt.SkipFsMatch {
@@ -1439,21 +1550,21 @@ func Run(t *testing.T, opt *Opt) {
 			// TestObjectRemote tests the Remote is correct
 			t.Run("ObjectRemote", func(t *testing.T) {
 				skipIfNotOk(t)
-				obj := findObject(ctx, t, f, file1.Path)
+				obj := fstest.NewObject(ctx, t, f, file1.Path)
 				assert.Equal(t, file1.Path, obj.Remote())
 			})
 
 			// TestObjectHashes checks all the hashes the object supports
 			t.Run("ObjectHashes", func(t *testing.T) {
 				skipIfNotOk(t)
-				obj := findObject(ctx, t, f, file1.Path)
+				obj := fstest.NewObject(ctx, t, f, file1.Path)
 				file1.CheckHashes(t, obj)
 			})
 
 			// TestObjectModTime tests the ModTime of the object is correct
 			TestObjectModTime := func(t *testing.T) {
 				skipIfNotOk(t)
-				obj := findObject(ctx, t, f, file1.Path)
+				obj := fstest.NewObject(ctx, t, f, file1.Path)
 				file1.CheckModTime(t, obj, obj.ModTime(ctx), f.Precision())
 			}
 			t.Run("ObjectModTime", TestObjectModTime)
@@ -1462,7 +1573,7 @@ func Run(t *testing.T, opt *Opt) {
 			t.Run("ObjectMimeType", func(t *testing.T) {
 				skipIfNotOk(t)
 				features := f.Features()
-				obj := findObject(ctx, t, f, file1.Path)
+				obj := fstest.NewObject(ctx, t, f, file1.Path)
 				do, ok := obj.(fs.MimeTyper)
 				if !ok {
 					require.False(t, features.ReadMimeType, "Features.ReadMimeType is set but Object.MimeType method not found")
@@ -1488,7 +1599,7 @@ func Run(t *testing.T, opt *Opt) {
 				ctx, ci := fs.AddConfig(ctx)
 				ci.Metadata = true
 				features := f.Features()
-				obj := findObject(ctx, t, f, file1.Path)
+				obj := fstest.NewObject(ctx, t, f, file1.Path)
 				do, objectHasMetadata := obj.(fs.Metadataer)
 				if objectHasMetadata || features.ReadMetadata || features.WriteMetadata || features.UserMetadata {
 					fsInfo := fs.FindFromFs(f)
@@ -1513,8 +1624,8 @@ func Run(t *testing.T, opt *Opt) {
 					}
 				}
 				if !features.ReadMetadata {
-					if metadata != nil {
-						require.Equal(t, "", metadata, "Features.ReadMetadata is not set but Object.Metadata returned a non nil Metadata")
+					if metadata != nil && !features.Overlay {
+						require.Equal(t, "", metadata, "Features.ReadMetadata is not set but Object.Metadata returned a non nil Metadata: %#v", metadata)
 					}
 				} else if features.WriteMetadata {
 					require.NotNil(t, metadata)
@@ -1557,11 +1668,72 @@ func Run(t *testing.T, opt *Opt) {
 				} // else: Have some metadata here we didn't write - can't really check it!
 			})
 
+			// TestObjectSetMetadata tests the SetMetadata of the object
+			t.Run("ObjectSetMetadata", func(t *testing.T) {
+				skipIfNotOk(t)
+				ctx, ci := fs.AddConfig(ctx)
+				ci.Metadata = true
+				features := f.Features()
+
+				// Test to see if SetMetadata is supported on an existing object before creating a new one
+				obj := fstest.NewObject(ctx, t, f, file1.Path)
+				_, objectHasSetMetadata := obj.(fs.SetMetadataer)
+				if !objectHasSetMetadata {
+					t.Skip("SetMetadata method not supported")
+				}
+				if !features.Overlay {
+					require.True(t, features.WriteMetadata, "Features.WriteMetadata is false but Object.SetMetadata found")
+				}
+				if !features.ReadMetadata {
+					t.Skip("SetMetadata can't be tested without ReadMetadata")
+				}
+
+				// Create file with metadata
+				const fileName = "test set metadata.txt"
+				t1 := fstest.Time("2003-02-03T04:05:06.499999999Z")
+				t2 := fstest.Time("2004-03-03T04:05:06.499999999Z")
+				contents := random.String(100)
+				file := fstest.NewItem(fileName, contents, t1)
+				var testMetadata = fs.Metadata{
+					// System metadata supported by all backends
+					"mtime": t1.Format(time.RFC3339Nano),
+					// User metadata
+					"potato": "jersey",
+				}
+				obj = PutTestContentsMetadata(ctx, t, f, &file, contents, true, "text/plain", testMetadata)
+				fstest.CheckEntryMetadata(ctx, t, f, obj, testMetadata)
+				do, objectHasSetMetadata := obj.(fs.SetMetadataer)
+				require.True(t, objectHasSetMetadata)
+
+				// Set new metadata
+				err := do.SetMetadata(ctx, fs.Metadata{
+					// System metadata supported by all backends
+					"mtime": t2.Format(time.RFC3339Nano),
+					// User metadata
+					"potato": "royal",
+				})
+				if err == fs.ErrorNotImplemented {
+					t.Log("SetMetadata returned fs.ErrorNotImplemented")
+				} else {
+					require.NoError(t, err)
+					file.ModTime = t2
+					fstest.CheckListing(t, f, []fstest.Item{file1, file2, file})
+
+					// Check metadata is correct
+					fstest.CheckEntryMetadata(ctx, t, f, obj, ci.MetadataSet)
+					obj = fstest.NewObject(ctx, t, f, fileName)
+					fstest.CheckEntryMetadata(ctx, t, f, obj, ci.MetadataSet)
+				}
+
+				// Remove test file
+				require.NoError(t, obj.Remove(ctx))
+			})
+
 			// TestObjectSetModTime tests that SetModTime works
 			t.Run("ObjectSetModTime", func(t *testing.T) {
 				skipIfNotOk(t)
 				newModTime := fstest.Time("2011-12-13T14:15:16.999999999Z")
-				obj := findObject(ctx, t, f, file1.Path)
+				obj := fstest.NewObject(ctx, t, f, file1.Path)
 				err := obj.SetModTime(ctx, newModTime)
 				if err == fs.ErrorCantSetModTime || err == fs.ErrorCantSetModTimeWithoutDelete {
 					t.Log(err)
@@ -1577,21 +1749,21 @@ func Run(t *testing.T, opt *Opt) {
 			// TestObjectSize tests that Size works
 			t.Run("ObjectSize", func(t *testing.T) {
 				skipIfNotOk(t)
-				obj := findObject(ctx, t, f, file1.Path)
+				obj := fstest.NewObject(ctx, t, f, file1.Path)
 				assert.Equal(t, file1.Size, obj.Size())
 			})
 
 			// TestObjectOpen tests that Open works
 			t.Run("ObjectOpen", func(t *testing.T) {
 				skipIfNotOk(t)
-				obj := findObject(ctx, t, f, file1.Path)
+				obj := fstest.NewObject(ctx, t, f, file1.Path)
 				assert.Equal(t, file1Contents, ReadObject(ctx, t, obj, -1), "contents of file1 differ")
 			})
 
 			// TestObjectOpenSeek tests that Open works with SeekOption
 			t.Run("ObjectOpenSeek", func(t *testing.T) {
 				skipIfNotOk(t)
-				obj := findObject(ctx, t, f, file1.Path)
+				obj := fstest.NewObject(ctx, t, f, file1.Path)
 				assert.Equal(t, file1Contents[50:], ReadObject(ctx, t, obj, -1, &fs.SeekOption{Offset: 50}), "contents of file1 differ after seek")
 			})
 
@@ -1600,7 +1772,7 @@ func Run(t *testing.T, opt *Opt) {
 			// go test -v -run 'TestIntegration/Test(Setup|Init|FsMkdir|FsPutFile1|FsPutFile2|FsUpdateFile1|ObjectOpenRange)$'
 			t.Run("ObjectOpenRange", func(t *testing.T) {
 				skipIfNotOk(t)
-				obj := findObject(ctx, t, f, file1.Path)
+				obj := fstest.NewObject(ctx, t, f, file1.Path)
 				for _, test := range []struct {
 					ro                 fs.RangeOption
 					wantStart, wantEnd int
@@ -1621,7 +1793,7 @@ func Run(t *testing.T, opt *Opt) {
 			// TestObjectPartialRead tests that reading only part of the object does the correct thing
 			t.Run("ObjectPartialRead", func(t *testing.T) {
 				skipIfNotOk(t)
-				obj := findObject(ctx, t, f, file1.Path)
+				obj := fstest.NewObject(ctx, t, f, file1.Path)
 				assert.Equal(t, file1Contents[:50], ReadObject(ctx, t, obj, 50), "contents of file1 differ after limited read")
 			})
 
@@ -1632,7 +1804,7 @@ func Run(t *testing.T, opt *Opt) {
 				var h *hash.MultiHasher
 
 				file1.Size = int64(len(contents))
-				obj := findObject(ctx, t, f, file1.Path)
+				obj := fstest.NewObject(ctx, t, f, file1.Path)
 				remoteBefore := obj.Remote()
 				obji := object.NewStaticObjectInfo(file1.Path+"-should-be-ignored.bin", file1.ModTime, int64(len(contents)), true, nil, obj.Fs())
 				retry(t, "Update object", func() error {
@@ -1649,7 +1821,7 @@ func Run(t *testing.T, opt *Opt) {
 				file1.Check(t, obj, f.Precision())
 
 				// Re-read the object and check again
-				obj = findObject(ctx, t, f, file1.Path)
+				obj = fstest.NewObject(ctx, t, f, file1.Path)
 				file1.Check(t, obj, f.Precision())
 
 				// check contents correct
@@ -1660,7 +1832,7 @@ func Run(t *testing.T, opt *Opt) {
 			// TestObjectStorable tests that Storable works
 			t.Run("ObjectStorable", func(t *testing.T) {
 				skipIfNotOk(t)
-				obj := findObject(ctx, t, f, file1.Path)
+				obj := fstest.NewObject(ctx, t, f, file1.Path)
 				require.NotNil(t, !obj.Storable(), "Expecting object to be storable")
 			})
 
@@ -1896,7 +2068,7 @@ func Run(t *testing.T, opt *Opt) {
 			// TestSetTier tests SetTier and GetTier functionality
 			t.Run("SetTier", func(t *testing.T) {
 				skipIfNotSetTier(t)
-				obj := findObject(ctx, t, f, file1.Path)
+				obj := fstest.NewObject(ctx, t, f, file1.Path)
 				setter, ok := obj.(fs.SetTierer)
 				assert.NotNil(t, ok)
 				getter, ok := obj.(fs.GetTierer)
@@ -1924,7 +2096,7 @@ func Run(t *testing.T, opt *Opt) {
 				if ft.UnWrap == nil {
 					t.Skip("Not a wrapping Fs")
 				}
-				obj := findObject(ctx, t, f, file1.Path)
+				obj := fstest.NewObject(ctx, t, f, file1.Path)
 				_, unsupported := fs.ObjectOptionalInterfaces(obj)
 				for _, name := range unsupported {
 					if !stringsContains(name, opt.UnimplementableObjectMethods) {
@@ -1940,7 +2112,7 @@ func Run(t *testing.T, opt *Opt) {
 			t.Run("ObjectRemove", func(t *testing.T) {
 				skipIfNotOk(t)
 				// remove file1
-				obj := findObject(ctx, t, f, file1.Path)
+				obj := fstest.NewObject(ctx, t, f, file1.Path)
 				err := obj.Remove(ctx)
 				require.NoError(t, err)
 				// check listing without modtime as TestPublicLink may change the modtime
@@ -2005,7 +2177,7 @@ func Run(t *testing.T, opt *Opt) {
 						file.Size = int64(contentSize) // use correct size when checking
 						file.Check(t, obj, f.Precision())
 						// Re-read the object and check again
-						obj = findObject(ctx, t, f, file.Path)
+						obj = fstest.NewObject(ctx, t, f, file.Path)
 						file.Check(t, obj, f.Precision())
 						require.NoError(t, obj.Remove(ctx))
 					})
@@ -2269,7 +2441,7 @@ func Run(t *testing.T, opt *Opt) {
 				newContents := random.String(200)
 				in := bytes.NewBufferString(newContents)
 
-				obj := findObject(ctx, t, f, unknownSizeUpdateFile.Path)
+				obj := fstest.NewObject(ctx, t, f, unknownSizeUpdateFile.Path)
 				obji := object.NewStaticObjectInfo(unknownSizeUpdateFile.Path, unknownSizeUpdateFile.ModTime, -1, true, nil, obj.Fs())
 				err := obj.Update(ctx, in, obji)
 				if err == nil {
@@ -2299,6 +2471,190 @@ func Run(t *testing.T, opt *Opt) {
 			require.Equal(t, fs.ErrorObjectNotFound, err)
 			// If err is not fs.ErrorObjectNotFound, it means the backend is
 			// somehow confused about root and absolute root.
+		})
+
+		// FsDirSetModTime tests setting the mod time on a directory if possible
+		t.Run("FsDirSetModTime", func(t *testing.T) {
+			const name = "dir-mod-time"
+			do := f.Features().DirSetModTime
+			if do == nil {
+				t.Skip("FS has no DirSetModTime interface")
+			}
+
+			// Set ModTime on non existing directory should return error
+			t1 := fstest.Time("2001-02-03T04:05:06.499999999Z")
+			err := do(ctx, name, t1)
+			require.Error(t, err)
+
+			// Make the directory and try again
+			err = f.Mkdir(ctx, name)
+			require.NoError(t, err)
+			err = do(ctx, name, t1)
+			require.NoError(t, err)
+
+			// Check the modtime got set properly
+			dir := fstest.NewDirectory(ctx, t, f, name)
+			fstest.CheckDirModTime(ctx, t, f, dir, t1)
+
+			// Tidy up
+			err = f.Rmdir(ctx, name)
+			require.NoError(t, err)
+		})
+
+		var testMetadata = fs.Metadata{
+			// System metadata supported by all backends
+			"mtime": "2001-02-03T04:05:06.499999999Z",
+			// User metadata
+			"potato": "jersey",
+		}
+		var testMetadata2 = fs.Metadata{
+			// System metadata supported by all backends
+			"mtime": "2002-02-03T04:05:06.499999999Z",
+			// User metadata
+			"potato": "king edwards",
+		}
+
+		// FsMkdirMetadata tests creating a directory with metadata if possible
+		t.Run("FsMkdirMetadata", func(t *testing.T) {
+			ctx, ci := fs.AddConfig(ctx)
+			ci.Metadata = true
+			const name = "dir-metadata"
+			do := f.Features().MkdirMetadata
+			if do == nil {
+				t.Skip("FS has no MkdirMetadata interface")
+			}
+			assert.True(t, f.Features().WriteDirMetadata, "Backends must support Directory.SetMetadata and Fs.MkdirMetadata")
+
+			// Create the directory from fresh
+			dir, err := do(ctx, name, testMetadata)
+			require.NoError(t, err)
+			require.NotNil(t, dir)
+
+			// Check the returned directory and one read from the listing
+			fstest.CheckEntryMetadata(ctx, t, f, dir, testMetadata)
+			fstest.CheckEntryMetadata(ctx, t, f, fstest.NewDirectory(ctx, t, f, name), testMetadata)
+
+			// Now update the metadata on the existing directory
+			t.Run("Update", func(t *testing.T) {
+				dir, err := do(ctx, name, testMetadata2)
+				require.NoError(t, err)
+				require.NotNil(t, dir)
+
+				// Check the returned directory and one read from the listing
+				fstest.CheckEntryMetadata(ctx, t, f, dir, testMetadata2)
+				// The TestUnionPolicy2 has randomness in it so it sets metadata on
+				// one directory but can read a different one from the listing.
+				if f.Name() != "TestUnionPolicy2" {
+					fstest.CheckEntryMetadata(ctx, t, f, fstest.NewDirectory(ctx, t, f, name), testMetadata2)
+				}
+			})
+
+			// Now test the Directory methods
+			t.Run("CheckDirectory", func(t *testing.T) {
+				_, ok := dir.(fs.Object)
+				assert.False(t, ok, "Directory must not type assert to Object")
+				_, ok = dir.(fs.ObjectInfo)
+				assert.False(t, ok, "Directory must not type assert to ObjectInfo")
+			})
+
+			// Tidy up
+			err = f.Rmdir(ctx, name)
+			require.NoError(t, err)
+		})
+
+		// FsDirectory checks methods on the directory object
+		t.Run("FsDirectory", func(t *testing.T) {
+			ctx, ci := fs.AddConfig(ctx)
+			ci.Metadata = true
+			const name = "dir-methods"
+			features := f.Features()
+
+			if !features.CanHaveEmptyDirectories {
+				t.Skip("Can't test if can't have empty directories")
+			}
+			if !features.ReadDirMetadata &&
+				!features.WriteDirMetadata &&
+				!features.WriteDirSetModTime &&
+				!features.UserDirMetadata &&
+				!features.Overlay &&
+				features.UnWrap == nil {
+				t.Skip("FS has no Directory methods and doesn't Wrap")
+			}
+
+			// Create a directory to start with
+			err := f.Mkdir(ctx, name)
+			require.NoError(t, err)
+
+			// Get the directory object
+			dir := fstest.NewDirectory(ctx, t, f, name)
+			_, ok := dir.(fs.Object)
+			assert.False(t, ok, "Directory must not type assert to Object")
+			_, ok = dir.(fs.ObjectInfo)
+			assert.False(t, ok, "Directory must not type assert to ObjectInfo")
+
+			// Now test the directory methods
+			t.Run("ReadDirMetadata", func(t *testing.T) {
+				if !features.ReadDirMetadata {
+					t.Skip("Directories don't support ReadDirMetadata")
+				}
+				if f.Name() == "TestUnionPolicy3" {
+					t.Skipf("Test unreliable on %q", f.Name())
+				}
+				fstest.CheckEntryMetadata(ctx, t, f, dir, fs.Metadata{
+					"mtime": dir.ModTime(ctx).Format(time.RFC3339Nano),
+				})
+			})
+
+			t.Run("WriteDirMetadata", func(t *testing.T) {
+				if !features.WriteDirMetadata {
+					t.Skip("Directories don't support WriteDirMetadata")
+				}
+				assert.NotNil(t, features.MkdirMetadata, "Backends must support Directory.SetMetadata and Fs.MkdirMetadata")
+				do, ok := dir.(fs.SetMetadataer)
+				require.True(t, ok, "Expected to find SetMetadata method on Directory")
+				err := do.SetMetadata(ctx, testMetadata)
+				require.NoError(t, err)
+
+				fstest.CheckEntryMetadata(ctx, t, f, dir, testMetadata)
+				fstest.CheckEntryMetadata(ctx, t, f, fstest.NewDirectory(ctx, t, f, name), testMetadata)
+			})
+
+			t.Run("WriteDirSetModTime", func(t *testing.T) {
+				if !features.WriteDirSetModTime {
+					t.Skip("Directories don't support WriteDirSetModTime")
+				}
+				assert.NotNil(t, features.DirSetModTime, "Backends must support Directory.SetModTime and Fs.DirSetModTime")
+
+				t1 := fstest.Time("2001-02-03T04:05:10.123123123Z")
+
+				do, ok := dir.(fs.SetModTimer)
+				require.True(t, ok, "Expected to find SetMetadata method on Directory")
+				err := do.SetModTime(ctx, t1)
+				require.NoError(t, err)
+
+				fstest.CheckDirModTime(ctx, t, f, dir, t1)
+				fstest.CheckDirModTime(ctx, t, f, fstest.NewDirectory(ctx, t, f, name), t1)
+			})
+
+			// Check to see if Fs that wrap other Directories implement all the optional methods
+			t.Run("DirectoryCheckWrap", func(t *testing.T) {
+				if opt.SkipDirectoryCheckWrap {
+					t.Skip("Skipping DirectoryCheckWrap on this Fs")
+				}
+				if !features.Overlay && features.UnWrap == nil {
+					t.Skip("Not a wrapping Fs")
+				}
+				_, unsupported := fs.DirectoryOptionalInterfaces(dir)
+				for _, name := range unsupported {
+					if !stringsContains(name, opt.UnimplementableDirectoryMethods) {
+						t.Errorf("Missing Directory wrapper for %s", name)
+					}
+				}
+			})
+
+			// Tidy up
+			err = f.Rmdir(ctx, name)
+			require.NoError(t, err)
 		})
 
 		// Purge the folder

@@ -1,5 +1,4 @@
 //go:build darwin && !cmount
-// +build darwin,!cmount
 
 package nfsmount
 

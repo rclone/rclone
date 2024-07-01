@@ -1,10 +1,10 @@
 # tests whether rclone check and rclone sync output exactly the same file lists.
 
 # Filling src and dst with makefiles:
-exec rclone test makefiles $SRC --seed 0
-exec rclone test makefiles $DST --seed 1
-exec rclone test makefiles $SRC --seed 2
+exec rclone test makefiles $SRC --seed 1
 exec rclone test makefiles $DST --seed 2
+exec rclone test makefiles $SRC --seed 3
+exec rclone test makefiles $DST --seed 3
 
 # running rclone check for baseline test:
 # error is expected here:

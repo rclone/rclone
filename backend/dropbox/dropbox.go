@@ -216,7 +216,10 @@ are supported.
 
 Note that we don't unmount the shared folder afterwards so the 
 --dropbox-shared-folders can be omitted after the first use of a particular 
-shared folder.`,
+shared folder.
+
+See also --dropbox-root-namespace for an alternative way to work with shared
+folders.`,
 			Default:  false,
 			Advanced: true,
 		}, {
@@ -237,6 +240,11 @@ shared folder.`,
 				encoder.EncodeDel |
 				encoder.EncodeRightSpace |
 				encoder.EncodeInvalidUtf8,
+		}, {
+			Name:     "root_namespace",
+			Help:     "Specify a different Dropbox namespace ID to use as the root for all paths.",
+			Default:  "",
+			Advanced: true,
 		}}...), defaultBatcherOptions.FsOptions("For full info see [the main docs](https://rclone.org/dropbox/#batch-mode)\n\n")...),
 	})
 }
@@ -253,6 +261,7 @@ type Options struct {
 	AsyncBatch    bool                 `config:"async_batch"`
 	PacerMinSleep fs.Duration          `config:"pacer_min_sleep"`
 	Enc           encoder.MultiEncoder `config:"encoding"`
+	RootNsid      string               `config:"root_namespace"`
 }
 
 // Fs represents a remote dropbox server
@@ -428,15 +437,15 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		members := []*team.UserSelectorArg{&user}
 		args := team.NewMembersGetInfoArgs(members)
 
-		memberIds, err := f.team.MembersGetInfo(args)
+		memberIDs, err := f.team.MembersGetInfo(args)
 		if err != nil {
 			return nil, fmt.Errorf("invalid dropbox team member: %q: %w", opt.Impersonate, err)
 		}
-		if len(memberIds) == 0 || memberIds[0].MemberInfo == nil || memberIds[0].MemberInfo.Profile == nil {
+		if len(memberIDs) == 0 || memberIDs[0].MemberInfo == nil || memberIDs[0].MemberInfo.Profile == nil {
 			return nil, fmt.Errorf("dropbox team member not found: %q", opt.Impersonate)
 		}
 
-		cfg.AsMemberID = memberIds[0].MemberInfo.Profile.MemberProfile.TeamMemberId
+		cfg.AsMemberID = memberIDs[0].MemberInfo.Profile.MemberProfile.TeamMemberId
 	}
 
 	f.srv = files.New(cfg)
@@ -502,8 +511,11 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 
 	f.features.Fill(ctx, f)
 
-	// If root starts with / then use the actual root
-	if strings.HasPrefix(root, "/") {
+	if f.opt.RootNsid != "" {
+		f.ns = f.opt.RootNsid
+		fs.Debugf(f, "Overriding root namespace to %q", f.ns)
+	} else if strings.HasPrefix(root, "/") {
+		// If root starts with / then use the actual root
 		var acc *users.FullAccount
 		err = f.pacer.Call(func() (bool, error) {
 			acc, err = f.users.GetCurrentAccount()
@@ -644,7 +656,7 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 	return f.newObjectWithInfo(ctx, remote, nil)
 }
 
-// listSharedFoldersApi lists all available shared folders mounted and not mounted
+// listSharedFolders lists all available shared folders mounted and not mounted
 // we'll need the id later so we have to return them in original format
 func (f *Fs) listSharedFolders(ctx context.Context) (entries fs.DirEntries, err error) {
 	started := false
@@ -1231,7 +1243,7 @@ func (f *Fs) About(ctx context.Context) (usage *fs.Usage, err error) {
 		return nil, err
 	}
 	var total uint64
-	var used = q.Used
+	used := q.Used
 	if q.Allocation != nil {
 		if q.Allocation.Individual != nil {
 			total += q.Allocation.Individual.Allocated

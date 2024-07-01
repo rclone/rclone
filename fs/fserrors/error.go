@@ -296,7 +296,7 @@ type CountableError interface {
 	IsCounted() bool
 }
 
-// wrappedFatalError is an error wrapped so it will satisfy the
+// wrappedCountableError is an error wrapped so it will satisfy the
 // Retrier interface and return true
 type wrappedCountableError struct {
 	error

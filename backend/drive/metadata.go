@@ -9,6 +9,8 @@ import (
 	"sync"
 
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/fserrors"
+	"github.com/rclone/rclone/lib/errcount"
 	"golang.org/x/sync/errgroup"
 	drive "google.golang.org/api/drive/v3"
 	"google.golang.org/api/googleapi"
@@ -37,7 +39,7 @@ var systemMetadataInfo = map[string]fs.MetadataHelp{
 		Example: "true",
 	},
 	"writers-can-share": {
-		Help:    "Whether users with only writer permission can modify the file's permissions. Not populated for items in shared drives.",
+		Help:    "Whether users with only writer permission can modify the file's permissions. Not populated and ignored when setting for items in shared drives.",
 		Type:    "boolean",
 		Example: "false",
 	},
@@ -135,23 +137,30 @@ func (f *Fs) getPermission(ctx context.Context, fileID, permissionID string, use
 
 // Set the permissions on the info
 func (f *Fs) setPermissions(ctx context.Context, info *drive.File, permissions []*drive.Permission) (err error) {
+	errs := errcount.New()
 	for _, perm := range permissions {
 		if perm.Role == "owner" {
 			// ignore owner permissions - these are set with owner
 			continue
 		}
 		cleanPermissionForWrite(perm)
-		err = f.pacer.Call(func() (bool, error) {
-			_, err = f.svc.Permissions.Create(info.Id, perm).
+		err := f.pacer.Call(func() (bool, error) {
+			_, err := f.svc.Permissions.Create(info.Id, perm).
 				SupportsAllDrives(true).
+				SendNotificationEmail(false).
 				Context(ctx).Do()
 			return f.shouldRetry(ctx, err)
 		})
 		if err != nil {
-			return fmt.Errorf("failed to set permission: %w", err)
+			fs.Errorf(f, "Failed to set permission %s for %q: %v", perm.Role, perm.EmailAddress, err)
+			errs.Add(err)
 		}
 	}
-	return nil
+	err = errs.Err("failed to set permission")
+	if err != nil {
+		err = fserrors.NoRetryError(err)
+	}
+	return err
 }
 
 // Clean attributes from permissions which we can't write
@@ -253,7 +262,7 @@ func (f *Fs) setLabels(ctx context.Context, info *drive.File, labels []*drive.La
 		return f.shouldRetry(ctx, err)
 	})
 	if err != nil {
-		return fmt.Errorf("failed to set owner: %w", err)
+		return fmt.Errorf("failed to set labels: %w", err)
 	}
 	return nil
 }
@@ -363,6 +372,7 @@ func (o *baseObject) parseMetadata(ctx context.Context, info *drive.File) (err e
 		// shared drives.
 		if o.fs.isTeamDrive && !info.HasAugmentedPermissions {
 			// Don't process permissions if there aren't any specifically set
+			fs.Debugf(o, "Ignoring %d permissions and %d permissionIds as is shared drive with hasAugmentedPermissions false", len(info.Permissions), len(info.PermissionIds))
 			info.Permissions = nil
 			info.PermissionIds = nil
 		}
@@ -527,8 +537,12 @@ func (f *Fs) updateMetadata(ctx context.Context, updateInfo *drive.File, meta fs
 				return nil, err
 			}
 		case "writers-can-share":
-			if err := parseBool(&updateInfo.WritersCanShare); err != nil {
-				return nil, err
+			if !f.isTeamDrive {
+				if err := parseBool(&updateInfo.WritersCanShare); err != nil {
+					return nil, err
+				}
+			} else {
+				fs.Debugf(f, "Ignoring %s=%s as can't set on shared drives", k, v)
 			}
 		case "viewed-by-me":
 			// Can't write this
@@ -540,7 +554,12 @@ func (f *Fs) updateMetadata(ctx context.Context, updateInfo *drive.File, meta fs
 			}
 			// Can't set Owner on upload so need to set afterwards
 			callbackFns = append(callbackFns, func(ctx context.Context, info *drive.File) error {
-				return f.setOwner(ctx, info, v)
+				err := f.setOwner(ctx, info, v)
+				if err != nil && f.opt.MetadataOwner.IsSet(rwFailOK) {
+					fs.Errorf(f, "Ignoring error as failok is set: %v", err)
+					return nil
+				}
+				return err
 			})
 		case "permissions":
 			if !f.opt.MetadataPermissions.IsSet(rwWrite) {
@@ -553,7 +572,13 @@ func (f *Fs) updateMetadata(ctx context.Context, updateInfo *drive.File, meta fs
 			}
 			// Can't set Permissions on upload so need to set afterwards
 			callbackFns = append(callbackFns, func(ctx context.Context, info *drive.File) error {
-				return f.setPermissions(ctx, info, perms)
+				err := f.setPermissions(ctx, info, perms)
+				if err != nil && f.opt.MetadataPermissions.IsSet(rwFailOK) {
+					// We've already logged the permissions errors individually here
+					fs.Debugf(f, "Ignoring error as failok is set: %v", err)
+					return nil
+				}
+				return err
 			})
 		case "labels":
 			if !f.opt.MetadataLabels.IsSet(rwWrite) {
@@ -566,7 +591,12 @@ func (f *Fs) updateMetadata(ctx context.Context, updateInfo *drive.File, meta fs
 			}
 			// Can't set Labels on upload so need to set afterwards
 			callbackFns = append(callbackFns, func(ctx context.Context, info *drive.File) error {
-				return f.setLabels(ctx, info, labels)
+				err := f.setLabels(ctx, info, labels)
+				if err != nil && f.opt.MetadataLabels.IsSet(rwFailOK) {
+					fs.Errorf(f, "Ignoring error as failok is set: %v", err)
+					return nil
+				}
+				return err
 			})
 		case "folder-color-rgb":
 			updateInfo.FolderColorRgb = v

@@ -1,5 +1,4 @@
 //go:build !plan9 && !solaris && !js
-// +build !plan9,!solaris,!js
 
 package oracleobjectstorage
 
@@ -26,6 +25,7 @@ const (
 	userPrincipal     = "user_principal_auth"
 	instancePrincipal = "instance_principal_auth"
 	resourcePrincipal = "resource_principal_auth"
+	workloadIdentity  = "workload_identity_auth"
 	environmentAuth   = "env_auth"
 	noAuth            = "no_auth"
 
@@ -37,6 +37,8 @@ https://docs.oracle.com/en-us/iaas/Content/API/Concepts/sdkconfig.htm`
 each instance has its own identity, and authenticates using the certificates that are read from instance metadata. 
 https://docs.oracle.com/en-us/iaas/Content/Identity/Tasks/callingservicesfrominstances.htm`
 
+	workloadIdentityHelpText = `use workload identity to grant OCI Container Engine for Kubernetes workloads policy-driven access to OCI resources using OCI Identity and Access Management (IAM).
+https://docs.oracle.com/en-us/iaas/Content/ContEng/Tasks/contenggrantingworkloadaccesstoresources.htm`
 	resourcePrincipalHelpText = `use resource principals to make API calls`
 
 	environmentAuthHelpText = `automatically pickup the credentials from runtime(env), first one to provide auth wins`
@@ -87,6 +89,9 @@ func newOptions() []fs.Option {
 		}, {
 			Value: instancePrincipal,
 			Help:  instancePrincipalHelpText,
+		}, {
+			Value: workloadIdentity,
+			Help:  workloadIdentityHelpText,
 		}, {
 			Value: resourcePrincipal,
 			Help:  resourcePrincipalHelpText,

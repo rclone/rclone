@@ -29,6 +29,7 @@ import (
 	"github.com/rclone/rclone/fs/fspath"
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/fs/operations"
+	"github.com/rclone/rclone/lib/encoder"
 )
 
 // Chunker's composite files have one or more chunks
@@ -101,8 +102,10 @@ var (
 //
 // And still chunker's primary function is to chunk large files
 // rather than serve as a generic metadata container.
-const maxMetadataSize = 1023
-const maxMetadataSizeWritten = 255
+const (
+	maxMetadataSize        = 1023
+	maxMetadataSizeWritten = 255
+)
 
 // Current/highest supported metadata format.
 const metadataVersion = 2
@@ -305,7 +308,6 @@ func NewFs(ctx context.Context, name, rpath string, m configmap.Mapper) (fs.Fs, 
 		root: rpath,
 		opt:  *opt,
 	}
-	cache.PinUntilFinalized(f.base, f)
 	f.dirSort = true // processEntries requires that meta Objects prerun data chunks atm.
 
 	if err := f.configure(opt.NameFormat, opt.MetaFormat, opt.HashType, opt.Transactions); err != nil {
@@ -317,13 +319,15 @@ func NewFs(ctx context.Context, name, rpath string, m configmap.Mapper) (fs.Fs, 
 	// i.e. `rpath` does not exist in the wrapped remote, but chunker
 	// detects a composite file because it finds the first chunk!
 	// (yet can't satisfy fstest.CheckListing, will ignore)
-	if err == nil && !f.useMeta && strings.Contains(rpath, "/") {
+	if err == nil && !f.useMeta {
 		firstChunkPath := f.makeChunkName(remotePath, 0, "", "")
-		_, testErr := cache.Get(ctx, baseName+firstChunkPath)
+		newBase, testErr := cache.Get(ctx, baseName+firstChunkPath)
 		if testErr == fs.ErrorIsFile {
+			f.base = newBase
 			err = testErr
 		}
 	}
+	cache.PinUntilFinalized(f.base, f)
 
 	// Correct root if definitely pointing to a file
 	if err == fs.ErrorIsFile {
@@ -338,13 +342,18 @@ func NewFs(ctx context.Context, name, rpath string, m configmap.Mapper) (fs.Fs, 
 	// Note 2: features.Fill() points features.PutStream to our PutStream,
 	// but features.Mask() will nullify it if wrappedFs does not have it.
 	f.features = (&fs.Features{
-		CaseInsensitive:         true,
-		DuplicateFiles:          true,
-		ReadMimeType:            false, // Object.MimeType not supported
-		WriteMimeType:           true,
-		BucketBased:             true,
-		CanHaveEmptyDirectories: true,
-		ServerSideAcrossConfigs: true,
+		CaseInsensitive:          true,
+		DuplicateFiles:           true,
+		ReadMimeType:             false, // Object.MimeType not supported
+		WriteMimeType:            true,
+		BucketBased:              true,
+		CanHaveEmptyDirectories:  true,
+		ServerSideAcrossConfigs:  true,
+		ReadDirMetadata:          true,
+		WriteDirMetadata:         true,
+		WriteDirSetModTime:       true,
+		UserDirMetadata:          true,
+		DirModTimeUpdatesOnWrite: true,
 	}).Fill(ctx, f).Mask(ctx, baseFs).WrapsFs(f, baseFs)
 
 	f.features.Disable("ListR") // Recursive listing may cause chunker skip files
@@ -821,8 +830,7 @@ func (f *Fs) processEntries(ctx context.Context, origEntries fs.DirEntries, dirP
 			}
 		case fs.Directory:
 			isSubdir[entry.Remote()] = true
-			wrapDir := fs.NewDirCopy(ctx, entry)
-			wrapDir.SetRemote(entry.Remote())
+			wrapDir := fs.NewDirWrapper(entry.Remote(), entry)
 			tempEntries = append(tempEntries, wrapDir)
 		default:
 			if f.opt.FailHard {
@@ -955,6 +963,11 @@ func (f *Fs) scanObject(ctx context.Context, remote string, quickScan bool) (fs.
 		}
 		if caseInsensitive {
 			sameMain = strings.EqualFold(mainRemote, remote)
+			if sameMain && f.base.Features().IsLocal {
+				// on local, make sure the EqualFold still holds true when accounting for encoding.
+				// sometimes paths with special characters will only normalize the same way in Standard Encoding.
+				sameMain = strings.EqualFold(encoder.OS.FromStandardPath(mainRemote), encoder.OS.FromStandardPath(remote))
+			}
 		} else {
 			sameMain = mainRemote == remote
 		}
@@ -968,7 +981,7 @@ func (f *Fs) scanObject(ctx context.Context, remote string, quickScan bool) (fs.
 			}
 			continue
 		}
-		//fs.Debugf(f, "%q belongs to %q as chunk %d", entryRemote, mainRemote, chunkNo)
+		// fs.Debugf(f, "%q belongs to %q as chunk %d", entryRemote, mainRemote, chunkNo)
 		if err := o.addChunk(entry, chunkNo); err != nil {
 			return nil, err
 		}
@@ -1130,8 +1143,8 @@ func (o *Object) readXactID(ctx context.Context) (xactID string, err error) {
 // put implements Put, PutStream, PutUnchecked, Update
 func (f *Fs) put(
 	ctx context.Context, in io.Reader, src fs.ObjectInfo, remote string, options []fs.OpenOption,
-	basePut putFn, action string, target fs.Object) (obj fs.Object, err error) {
-
+	basePut putFn, action string, target fs.Object,
+) (obj fs.Object, err error) {
 	// Perform consistency checks
 	if err := f.forbidChunk(src, remote); err != nil {
 		return nil, fmt.Errorf("%s refused: %w", action, err)
@@ -1571,6 +1584,14 @@ func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 	return f.base.Mkdir(ctx, dir)
 }
 
+// MkdirMetadata makes the root directory of the Fs object
+func (f *Fs) MkdirMetadata(ctx context.Context, dir string, metadata fs.Metadata) (fs.Directory, error) {
+	if do := f.base.Features().MkdirMetadata; do != nil {
+		return do(ctx, dir, metadata)
+	}
+	return nil, fs.ErrorNotImplemented
+}
+
 // Rmdir removes the directory (container, bucket) if empty
 //
 // Return an error if it doesn't exist or isn't empty
@@ -1888,6 +1909,14 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 	return do(ctx, srcFs.base, srcRemote, dstRemote)
 }
 
+// DirSetModTime sets the directory modtime for dir
+func (f *Fs) DirSetModTime(ctx context.Context, dir string, modTime time.Time) error {
+	if do := f.base.Features().DirSetModTime; do != nil {
+		return do(ctx, dir, modTime)
+	}
+	return fs.ErrorNotImplemented
+}
+
 // CleanUp the trash in the Fs
 //
 // Implement this if you have a way of emptying the trash or
@@ -1936,7 +1965,7 @@ func (f *Fs) ChangeNotify(ctx context.Context, notifyFunc func(string, fs.EntryT
 		return
 	}
 	wrappedNotifyFunc := func(path string, entryType fs.EntryType) {
-		//fs.Debugf(f, "ChangeNotify: path %q entryType %d", path, entryType)
+		// fs.Debugf(f, "ChangeNotify: path %q entryType %d", path, entryType)
 		if entryType == fs.EntryObject {
 			mainPath, _, _, xactID := f.parseChunkName(path)
 			metaXactID := ""
@@ -2548,6 +2577,8 @@ var (
 	_ fs.Copier          = (*Fs)(nil)
 	_ fs.Mover           = (*Fs)(nil)
 	_ fs.DirMover        = (*Fs)(nil)
+	_ fs.DirSetModTimer  = (*Fs)(nil)
+	_ fs.MkdirMetadataer = (*Fs)(nil)
 	_ fs.PutUncheckeder  = (*Fs)(nil)
 	_ fs.PutStreamer     = (*Fs)(nil)
 	_ fs.CleanUpper      = (*Fs)(nil)

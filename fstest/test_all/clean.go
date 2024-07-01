@@ -17,7 +17,7 @@ import (
 // MatchTestRemote matches the remote names used for testing (copied
 // from fstest/fstest.go so we don't have to import that and get all
 // its flags)
-var MatchTestRemote = regexp.MustCompile(`^rclone-test-[abcdefghijklmnopqrstuvwxyz0123456789]{24}(_segments)?$`)
+var MatchTestRemote = regexp.MustCompile(`^rclone-test-[abcdefghijklmnopqrstuvwxyz0123456789]{12,24}(_segments)?$`)
 
 // cleanFs runs a single clean fs for left over directories
 func cleanFs(ctx context.Context, remote string, cleanup bool) error {

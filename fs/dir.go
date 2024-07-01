@@ -7,6 +7,7 @@ import (
 
 // Dir describes an unspecialized directory for directory/container/bucket lists
 type Dir struct {
+	f       Info      // Fs this directory is part of
 	remote  string    // name of the directory
 	modTime time.Time // modification or creation time - IsZero for unknown
 	size    int64     // size of directory and contents or -1 if unknown
@@ -20,6 +21,7 @@ type Dir struct {
 // If the modTime is unknown pass in time.Time{}
 func NewDir(remote string, modTime time.Time) *Dir {
 	return &Dir{
+		f:       Unknown,
 		remote:  remote,
 		modTime: modTime,
 		size:    -1,
@@ -30,12 +32,18 @@ func NewDir(remote string, modTime time.Time) *Dir {
 // NewDirCopy creates an unspecialized copy of the Directory object passed in
 func NewDirCopy(ctx context.Context, d Directory) *Dir {
 	return &Dir{
+		f:       d.Fs(),
 		remote:  d.Remote(),
 		modTime: d.ModTime(ctx),
 		size:    d.Size(),
 		items:   d.Items(),
 		id:      d.ID(),
 	}
+}
+
+// Fs returns the Fs that this directory is part of
+func (d *Dir) Fs() Info {
+	return d.f
 }
 
 // String returns the name

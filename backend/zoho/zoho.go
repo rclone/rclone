@@ -289,6 +289,10 @@ func shouldRetry(ctx context.Context, resp *http.Response, err error) (bool, err
 		authRetry = true
 		fs.Debugf(nil, "Should retry: %v", err)
 	}
+	if resp != nil && resp.StatusCode == 429 {
+		fs.Errorf(nil, "zoho: rate limit error received, sleeping for 60s: %v", err)
+		time.Sleep(60 * time.Second)
+	}
 	return authRetry || fserrors.ShouldRetry(err) || fserrors.ShouldRetryHTTP(resp, retryErrorCodes), err
 }
 
@@ -332,7 +336,7 @@ func parsePath(path string) (root string) {
 
 // readMetaDataForPath reads the metadata from the path
 func (f *Fs) readMetaDataForPath(ctx context.Context, path string) (info *api.Item, err error) {
-	// defer fs.Trace(f, "path=%q", path)("info=%+v, err=%v", &info, &err)
+	// defer log.Trace(f, "path=%q", path)("info=%+v, err=%v", &info, &err)
 	leaf, directoryID, err := f.dirCache.FindPath(ctx, path, false)
 	if err != nil {
 		if err == fs.ErrorDirNotFound {
@@ -454,18 +458,18 @@ type listAllFn func(*api.Item) bool
 //
 // If the user fn ever returns true then it early exits with found = true
 func (f *Fs) listAll(ctx context.Context, dirID string, directoriesOnly bool, filesOnly bool, fn listAllFn) (found bool, err error) {
+	const listItemsLimit = 1000
 	opts := rest.Opts{
 		Method:       "GET",
 		Path:         "/files/" + dirID + "/files",
 		ExtraHeaders: map[string]string{"Accept": "application/vnd.api+json"},
-		Parameters:   url.Values{},
+		Parameters: url.Values{
+			"page[limit]": {strconv.Itoa(listItemsLimit)},
+			"page[next]":  {"0"},
+		},
 	}
-	opts.Parameters.Set("page[limit]", strconv.Itoa(10))
-	offset := 0
 OUTER:
 	for {
-		opts.Parameters.Set("page[offset]", strconv.Itoa(offset))
-
 		var result api.ItemList
 		var resp *http.Response
 		err = f.pacer.Call(func() (bool, error) {
@@ -495,7 +499,15 @@ OUTER:
 				break OUTER
 			}
 		}
-		offset += 10
+		if !result.Links.Cursor.HasNext {
+			break
+		}
+		// Fetch the next from the URL in the response
+		nextURL, err := url.Parse(result.Links.Cursor.Next)
+		if err != nil {
+			return found, fmt.Errorf("failed to parse next link as URL: %w", err)
+		}
+		opts.Parameters.Set("page[next]", nextURL.Query().Get("page[next]"))
 	}
 	return
 }
@@ -631,33 +643,6 @@ func (f *Fs) createObject(ctx context.Context, remote string, size int64, modTim
 	return
 }
 
-// Put the object
-//
-// Copy the reader in to the new object which is returned.
-//
-// The new object may have been created if an error is returned
-func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
-	existingObj, err := f.newObjectWithInfo(ctx, src.Remote(), nil)
-	switch err {
-	case nil:
-		return existingObj, existingObj.Update(ctx, in, src, options...)
-	case fs.ErrorObjectNotFound:
-		// Not found so create it
-		return f.PutUnchecked(ctx, in, src)
-	default:
-		return nil, err
-	}
-}
-
-func isSimpleName(s string) bool {
-	for _, r := range s {
-		if (r < 'a' || r > 'z') && (r < 'A' || r > 'Z') && (r != '.') {
-			return false
-		}
-	}
-	return true
-}
-
 func (f *Fs) upload(ctx context.Context, name string, parent string, size int64, in io.Reader, options ...fs.OpenOption) (*api.Item, error) {
 	params := url.Values{}
 	params.Set("filename", name)
@@ -693,22 +678,32 @@ func (f *Fs) upload(ctx context.Context, name string, parent string, size int64,
 		return nil, errors.New("upload: invalid response")
 	}
 	// Received meta data is missing size so we have to read it again.
-	info, err := f.readMetaDataForID(ctx, uploadResponse.Uploads[0].Attributes.RessourceID)
-	if err != nil {
-		return nil, err
+	// It doesn't always appear on first read so try again if necessary
+	var info *api.Item
+	const maxTries = 10
+	sleepTime := 100 * time.Millisecond
+	for i := 0; i < maxTries; i++ {
+		info, err = f.readMetaDataForID(ctx, uploadResponse.Uploads[0].Attributes.RessourceID)
+		if err != nil {
+			return nil, err
+		}
+		if info.Attributes.StorageInfo.Size != 0 || size == 0 {
+			break
+		}
+		fs.Debugf(f, "Size not available yet for %q - try again in %v (try %d/%d)", name, sleepTime, i+1, maxTries)
+		time.Sleep(sleepTime)
+		sleepTime *= 2
 	}
 
 	return info, nil
 }
 
-// PutUnchecked the object into the container
-//
-// This will produce an error if the object already exists.
+// Put the object into the container
 //
 // Copy the reader in to the new object which is returned.
 //
 // The new object may have been created if an error is returned
-func (f *Fs) PutUnchecked(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
+func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
 	size := src.Size()
 	remote := src.Remote()
 
@@ -718,25 +713,12 @@ func (f *Fs) PutUnchecked(ctx context.Context, in io.Reader, src fs.ObjectInfo, 
 		return nil, err
 	}
 
-	if isSimpleName(leaf) {
-		info, err := f.upload(ctx, f.opt.Enc.FromStandardName(leaf), directoryID, size, in, options...)
-		if err != nil {
-			return nil, err
-		}
-		return f.newObjectWithInfo(ctx, remote, info)
-	}
-
-	tempName := "rcloneTemp" + random.String(8)
-	info, err := f.upload(ctx, tempName, directoryID, size, in, options...)
+	// Upload the file
+	info, err := f.upload(ctx, f.opt.Enc.FromStandardName(leaf), directoryID, size, in, options...)
 	if err != nil {
 		return nil, err
 	}
-
-	o, err := f.newObjectWithInfo(ctx, remote, info)
-	if err != nil {
-		return nil, err
-	}
-	return o, o.(*Object).rename(ctx, leaf)
+	return f.newObjectWithInfo(ctx, remote, info)
 }
 
 // Mkdir creates the container if it doesn't exist
@@ -1200,32 +1182,12 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		return err
 	}
 
-	if isSimpleName(leaf) {
-		// Simple name we can just overwrite the old file
-		info, err := o.fs.upload(ctx, o.fs.opt.Enc.FromStandardName(leaf), directoryID, size, in, options...)
-		if err != nil {
-			return err
-		}
-		return o.setMetaData(info)
-	}
-
-	// We have to fall back to upload + rename
-	tempName := "rcloneTemp" + random.String(8)
-	info, err := o.fs.upload(ctx, tempName, directoryID, size, in, options...)
+	// Overwrite the old file
+	info, err := o.fs.upload(ctx, o.fs.opt.Enc.FromStandardName(leaf), directoryID, size, in, options...)
 	if err != nil {
 		return err
 	}
-
-	// upload was successful, need to delete old object before rename
-	if err = o.Remove(ctx); err != nil {
-		return fmt.Errorf("failed to remove old object: %w", err)
-	}
-	if err = o.setMetaData(info); err != nil {
-		return err
-	}
-
-	// rename also updates metadata
-	return o.rename(ctx, leaf)
+	return o.setMetaData(info)
 }
 
 // Remove an object

@@ -437,23 +437,41 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		return nil, fs.ErrorFileNameTooLong
 	}
 
-	// Copy the object
+	moveCopyFileData := moveCopyFile{
+		SessionID:         f.session.SessionID,
+		SrcFileID:         srcObj.id,
+		DstFolderID:       directoryID,
+		Move:              "true",
+		OverwriteIfExists: "true",
+		NewFileName:       leaf,
+	}
+	opts := rest.Opts{
+		Method: "POST",
+		Path:   "/file/move_copy.json",
+	}
+	var request interface{} = moveCopyFileData
+
+	// use /file/rename.json if moving within the same directory
+	_, srcDirID, err := srcObj.fs.dirCache.FindPath(ctx, srcObj.remote, false)
+	if err != nil {
+		return nil, err
+	}
+	if srcDirID == directoryID {
+		fs.Debugf(src, "same parent dir (%v) - using file/rename instead of move_copy for %s", directoryID, remote)
+		renameFileData := renameFile{
+			SessionID:   f.session.SessionID,
+			FileID:      srcObj.id,
+			NewFileName: leaf,
+		}
+		opts.Path = "/file/rename.json"
+		request = renameFileData
+	}
+
+	// Move the object
 	var resp *http.Response
 	response := moveCopyFileResponse{}
 	err = f.pacer.Call(func() (bool, error) {
-		copyFileData := moveCopyFile{
-			SessionID:         f.session.SessionID,
-			SrcFileID:         srcObj.id,
-			DstFolderID:       directoryID,
-			Move:              "true",
-			OverwriteIfExists: "true",
-			NewFileName:       leaf,
-		}
-		opts := rest.Opts{
-			Method: "POST",
-			Path:   "/file/move_copy.json",
-		}
-		resp, err = f.srv.CallJSON(ctx, &opts, &copyFileData, &response)
+		resp, err = f.srv.CallJSON(ctx, &opts, &request, &response)
 		return f.shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
@@ -482,27 +500,47 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 		return fs.ErrorCantDirMove
 	}
 
-	srcID, _, _, dstDirectoryID, dstLeaf, err := f.dirCache.DirMove(ctx, srcFs.dirCache, srcFs.root, srcRemote, f.root, dstRemote)
+	srcID, srcDirectoryID, _, dstDirectoryID, dstLeaf, err := f.dirCache.DirMove(ctx, srcFs.dirCache, srcFs.root, srcRemote, f.root, dstRemote)
 	if err != nil {
 		return err
+	}
+
+	// move_copy will silently truncate new filenames
+	if len(dstLeaf) > 255 {
+		fs.Debugf(src, "Can't move folder: name (%q) exceeds 255 char", dstLeaf)
+		return fs.ErrorFileNameTooLong
+	}
+
+	moveFolderData := moveCopyFolder{
+		SessionID:     f.session.SessionID,
+		FolderID:      srcID,
+		DstFolderID:   dstDirectoryID,
+		Move:          "true",
+		NewFolderName: dstLeaf,
+	}
+	opts := rest.Opts{
+		Method: "POST",
+		Path:   "/folder/move_copy.json",
+	}
+	var request interface{} = moveFolderData
+
+	// use /folder/rename.json if moving within the same parent directory
+	if srcDirectoryID == dstDirectoryID {
+		fs.Debugf(dstRemote, "same parent dir (%v) - using folder/rename instead of move_copy", srcDirectoryID)
+		renameFolderData := renameFolder{
+			SessionID:  f.session.SessionID,
+			FolderID:   srcID,
+			FolderName: dstLeaf,
+		}
+		opts.Path = "/folder/rename.json"
+		request = renameFolderData
 	}
 
 	// Do the move
 	var resp *http.Response
 	response := moveCopyFolderResponse{}
 	err = f.pacer.Call(func() (bool, error) {
-		moveFolderData := moveCopyFolder{
-			SessionID:     f.session.SessionID,
-			FolderID:      srcID,
-			DstFolderID:   dstDirectoryID,
-			Move:          "true",
-			NewFolderName: dstLeaf,
-		}
-		opts := rest.Opts{
-			Method: "POST",
-			Path:   "/folder/move_copy.json",
-		}
-		resp, err = f.srv.CallJSON(ctx, &opts, &moveFolderData, &response)
+		resp, err = f.srv.CallJSON(ctx, &opts, &request, &response)
 		return f.shouldRetry(ctx, resp, err)
 	})
 	if err != nil {

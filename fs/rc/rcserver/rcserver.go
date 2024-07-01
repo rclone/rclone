@@ -200,6 +200,7 @@ func (s *Server) Serve() error {
 func writeError(path string, in rc.Params, w http.ResponseWriter, err error, status int) {
 	fs.Errorf(nil, "rc: %q: error: %v", path, err)
 	params, status := rc.Error(path, in, err, status)
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
 	err = rc.WriteJSON(w, params)
 	if err != nil {
@@ -294,6 +295,7 @@ func (s *Server) handlePost(w http.ResponseWriter, r *http.Request, path string)
 	}
 
 	fs.Debugf(nil, "rc: %q: reply %+v: %v", path, out, err)
+	w.Header().Set("Content-Type", "application/json")
 	err = rc.WriteJSON(w, out)
 	if err != nil {
 		// can't return the error at this point - but have a go anyway
@@ -340,8 +342,11 @@ func (s *Server) serveRemote(w http.ResponseWriter, r *http.Request, path string
 		directory := serve.NewDirectory(path, s.server.HTMLTemplate())
 		for _, entry := range entries {
 			_, isDir := entry.(fs.Directory)
-			//directory.AddHTMLEntry(entry.Remote(), isDir, entry.Size(), entry.ModTime(r.Context()))
-			directory.AddHTMLEntry(entry.Remote(), isDir, entry.Size(), time.Time{})
+			var modTime time.Time
+			if !s.opt.ServeNoModTime {
+				modTime = entry.ModTime(r.Context())
+			}
+			directory.AddHTMLEntry(entry.Remote(), isDir, entry.Size(), modTime)
 		}
 		sortParm := r.URL.Query().Get("sort")
 		orderParm := r.URL.Query().Get("order")

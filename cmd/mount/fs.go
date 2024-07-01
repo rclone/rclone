@@ -1,7 +1,6 @@
 // FUSE main Fs
 
 //go:build linux
-// +build linux
 
 package mount
 

@@ -89,6 +89,10 @@ that directory listings are much quicker, but rclone won't have the times or
 sizes of any files, and some files that don't exist may be in the listing.`,
 			Default:  false,
 			Advanced: true,
+		}, {
+			Name:    "no_escape",
+			Help:    "Do not escape URL metacharacters in path names.",
+			Default: false,
 		}},
 	}
 	fs.Register(fsi)
@@ -100,6 +104,7 @@ type Options struct {
 	NoSlash  bool            `config:"no_slash"`
 	NoHead   bool            `config:"no_head"`
 	Headers  fs.CommaSepList `config:"headers"`
+	NoEscape bool            `config:"no_escape"`
 }
 
 // Fs stores the interface to the remote HTTP files
@@ -326,6 +331,11 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 
 // Join's the remote onto the base URL
 func (f *Fs) url(remote string) string {
+	if f.opt.NoEscape {
+		// Directly concatenate without escaping, no_escape behavior
+		return f.endpointURL + remote
+	}
+	// Default behavior
 	return f.endpointURL + rest.URLPathEscape(remote)
 }
 

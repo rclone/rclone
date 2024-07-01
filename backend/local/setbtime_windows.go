@@ -1,10 +1,8 @@
 //go:build windows
-// +build windows
 
 package local
 
 import (
-	"os"
 	"syscall"
 	"time"
 )
@@ -13,7 +11,13 @@ const haveSetBTime = true
 
 // setBTime sets the birth time of the file passed in
 func setBTime(name string, btime time.Time) (err error) {
-	h, err := syscall.Open(name, os.O_RDWR, 0755)
+	pathp, err := syscall.UTF16PtrFromString(name)
+	if err != nil {
+		return err
+	}
+	h, err := syscall.CreateFile(pathp,
+		syscall.FILE_WRITE_ATTRIBUTES, syscall.FILE_SHARE_WRITE, nil,
+		syscall.OPEN_EXISTING, syscall.FILE_FLAG_BACKUP_SEMANTICS, 0)
 	if err != nil {
 		return err
 	}

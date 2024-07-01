@@ -22,7 +22,8 @@ var Registry []*RegInfo
 // optDescription is a basic description option
 var optDescription = Option{
 	Name:     "description",
-	Help:     "Description of the remote",
+	Help:     "Description of the remote.",
+	Default:  "",
 	Advanced: true,
 }
 

@@ -341,7 +341,7 @@ func checkIdenticalDownload(ctx context.Context, dst, src fs.Object) (differ boo
 	if err != nil {
 		return true, fmt.Errorf("failed to open %q: %w", dst, err)
 	}
-	tr1 := accounting.Stats(ctx).NewTransfer(dst)
+	tr1 := accounting.Stats(ctx).NewTransfer(dst, nil)
 	defer func() {
 		tr1.Done(ctx, nil) // error handling is done by the caller
 	}()
@@ -351,7 +351,7 @@ func checkIdenticalDownload(ctx context.Context, dst, src fs.Object) (differ boo
 	if err != nil {
 		return true, fmt.Errorf("failed to open %q: %w", src, err)
 	}
-	tr2 := accounting.Stats(ctx).NewTransfer(dst)
+	tr2 := accounting.Stats(ctx).NewTransfer(dst, nil)
 	defer func() {
 		tr2.Done(ctx, nil) // error handling is done by the caller
 	}()
@@ -380,10 +380,19 @@ func CheckDownload(ctx context.Context, opt *CheckOpt) error {
 // so that it matches behavior of Check (where it's handled by March)
 func ApplyTransforms(ctx context.Context, s string) string {
 	ci := fs.GetConfig(ctx)
-	if !ci.NoUnicodeNormalization {
+	return ToNormal(s, !ci.NoUnicodeNormalization, ci.IgnoreCaseSync)
+}
+
+// ToNormal normalizes case and unicode form and returns the transformed string.
+// It is similar to ApplyTransforms but does not use a context.
+// If normUnicode == true, s will be transformed to NFC.
+// If normCase == true, s will be transformed to lowercase.
+// If both are true, both transformations will be performed.
+func ToNormal(s string, normUnicode, normCase bool) string {
+	if normUnicode {
 		s = norm.NFC.String(s)
 	}
-	if ci.IgnoreCaseSync {
+	if normCase {
 		s = strings.ToLower(s)
 	}
 	return s
@@ -501,7 +510,7 @@ func (c *checkMarch) checkSum(ctx context.Context, obj fs.Object, download bool,
 		if in, err = Open(ctx, obj); err != nil {
 			return
 		}
-		tr := accounting.Stats(ctx).NewTransfer(obj)
+		tr := accounting.Stats(ctx).NewTransfer(obj, nil)
 		in = tr.Account(ctx, in).WithBuffer() // account and buffer the transfer
 		defer func() {
 			tr.Done(ctx, nil) // will close the stream

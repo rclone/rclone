@@ -79,6 +79,7 @@ docs = [
     "storj.md",
     "sugarsync.md",
     "tardigrade.md",            # stub only to redirect to storj.md
+    "ulozto.md",
     "uptobox.md",
     "union.md",
     "webdav.md",
@@ -121,6 +122,7 @@ ignore_docs = [
     "downloads.md",
     "privacy.md",
     "sponsor.md",
+    "amazonclouddrive.md",
 ]
 
 def read_doc(doc):

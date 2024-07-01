@@ -1,6 +1,6 @@
 // Upload large files for b2
 //
-// Docs - https://www.backblaze.com/b2/docs/large_files.html
+// Docs - https://www.backblaze.com/docs/cloud-storage-large-files
 
 package b2
 

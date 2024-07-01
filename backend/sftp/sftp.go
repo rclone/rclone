@@ -1,5 +1,4 @@
 //go:build !plan9
-// +build !plan9
 
 // Package sftp provides a filesystem interface using github.com/pkg/sftp
 package sftp
@@ -334,6 +333,25 @@ cost of using more memory.
 			Default:  64,
 			Advanced: true,
 		}, {
+			Name: "connections",
+			Help: strings.Replace(`Maximum number of SFTP simultaneous connections, 0 for unlimited.
+
+Note that setting this is very likely to cause deadlocks so it should
+be used with care.
+
+If you are doing a sync or copy then make sure connections is one more
+than the sum of |--transfers| and |--checkers|.
+
+If you use |--check-first| then it just needs to be one more than the
+maximum of |--checkers| and |--transfers|.
+
+So for |connections 3| you'd use |--checkers 2 --transfers 2
+--check-first| or |--checkers 1 --transfers 1|.
+
+`, "|", "`", -1),
+			Default:  0,
+			Advanced: true,
+		}, {
 			Name:    "set_env",
 			Default: fs.SpaceSepList{},
 			Help: `Environment variables to pass to sftp and commands
@@ -503,6 +521,7 @@ type Options struct {
 	IdleTimeout             fs.Duration     `config:"idle_timeout"`
 	ChunkSize               fs.SizeSuffix   `config:"chunk_size"`
 	Concurrency             int             `config:"concurrency"`
+	Connections             int             `config:"connections"`
 	SetEnv                  fs.SpaceSepList `config:"set_env"`
 	Ciphers                 fs.SpaceSepList `config:"ciphers"`
 	KeyExchange             fs.SpaceSepList `config:"key_exchange"`
@@ -534,6 +553,7 @@ type Fs struct {
 	pacer        *fs.Pacer   // pacer for operations
 	savedpswd    string
 	sessions     atomic.Int32 // count in use sessions
+	tokens       *pacer.TokenDispenser
 }
 
 // Object is a remote SFTP file that has been stat'd (so it exists, but is not necessarily open for reading)
@@ -696,6 +716,9 @@ func (f *Fs) newSftpClient(client sshClient, opts ...sftp.ClientOption) (*sftp.C
 // Get an SFTP connection from the pool, or open a new one
 func (f *Fs) getSftpConnection(ctx context.Context) (c *conn, err error) {
 	accounting.LimitTPS(ctx)
+	if f.opt.Connections > 0 {
+		f.tokens.Get()
+	}
 	f.poolMu.Lock()
 	for len(f.pool) > 0 {
 		c = f.pool[0]
@@ -718,6 +741,9 @@ func (f *Fs) getSftpConnection(ctx context.Context) (c *conn, err error) {
 		}
 		return false, nil
 	})
+	if f.opt.Connections > 0 && c == nil {
+		f.tokens.Put()
+	}
 	return c, err
 }
 
@@ -728,6 +754,9 @@ func (f *Fs) getSftpConnection(ctx context.Context) (c *conn, err error) {
 // if err is not nil then it checks the connection is alive using a
 // Getwd request
 func (f *Fs) putSftpConnection(pc **conn, err error) {
+	if f.opt.Connections > 0 {
+		defer f.tokens.Put()
+	}
 	c := *pc
 	if !c.sshClient.CanReuse() {
 		return
@@ -813,6 +842,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	if len(opt.SSH) != 0 && ((opt.User != currentUser && opt.User != "") || opt.Host != "" || (opt.Port != "22" && opt.Port != "")) {
 		fs.Logf(name, "--sftp-ssh is in use - ignoring user/host/port from config - set in the parameters to --sftp-ssh (remove them from the config to silence this warning)")
 	}
+	f.tokens = pacer.NewTokenDispenser(opt.Connections)
 
 	if opt.User == "" {
 		opt.User = currentUser
@@ -1066,9 +1096,10 @@ func NewFsWithConnection(ctx context.Context, f *Fs, name string, root string, m
 	}
 
 	f.features = (&fs.Features{
-		CanHaveEmptyDirectories: true,
-		SlowHash:                true,
-		PartialUploads:          true,
+		CanHaveEmptyDirectories:  true,
+		SlowHash:                 true,
+		PartialUploads:           true,
+		DirModTimeUpdatesOnWrite: true, // indicate writing files to a directory updates its modtime
 	}).Fill(ctx, f)
 	if !opt.CopyIsHardlink {
 		// Disable server side copy unless --sftp-copy-is-hardlink is set
@@ -1365,6 +1396,15 @@ func (f *Fs) mkdir(ctx context.Context, dirPath string) error {
 func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 	root := path.Join(f.absRoot, dir)
 	return f.mkdir(ctx, root)
+}
+
+// DirSetModTime sets the directory modtime for dir
+func (f *Fs) DirSetModTime(ctx context.Context, dir string, modTime time.Time) error {
+	o := Object{
+		fs:     f,
+		remote: dir,
+	}
+	return o.SetModTime(ctx, modTime)
 }
 
 // Rmdir removes the root directory of the Fs object
@@ -1985,7 +2025,7 @@ func (o *Object) SetModTime(ctx context.Context, modTime time.Time) error {
 		return fmt.Errorf("SetModTime failed: %w", err)
 	}
 	err = o.stat(ctx)
-	if err != nil {
+	if err != nil && err != fs.ErrorIsDir {
 		return fmt.Errorf("SetModTime stat failed: %w", err)
 	}
 	return nil
@@ -2179,12 +2219,13 @@ func (o *Object) Remove(ctx context.Context) error {
 
 // Check the interfaces are satisfied
 var (
-	_ fs.Fs          = &Fs{}
-	_ fs.PutStreamer = &Fs{}
-	_ fs.Mover       = &Fs{}
-	_ fs.Copier      = &Fs{}
-	_ fs.DirMover    = &Fs{}
-	_ fs.Abouter     = &Fs{}
-	_ fs.Shutdowner  = &Fs{}
-	_ fs.Object      = &Object{}
+	_ fs.Fs             = &Fs{}
+	_ fs.PutStreamer    = &Fs{}
+	_ fs.Mover          = &Fs{}
+	_ fs.Copier         = &Fs{}
+	_ fs.DirMover       = &Fs{}
+	_ fs.DirSetModTimer = &Fs{}
+	_ fs.Abouter        = &Fs{}
+	_ fs.Shutdowner     = &Fs{}
+	_ fs.Object         = &Object{}
 )

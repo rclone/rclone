@@ -101,7 +101,7 @@ INFO  : Bisyncing with Comparison Settings:
 INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
 INFO  : Copying Path2 files to Path1
 INFO  : - [34mPath2[0m    [35mResync is copying files to[0m         - [36mPath1[0m
-INFO  : file1.txt: Path2 is older. Path1: 2003-09-03 20:00:00 -0400 EDT, Path2: 2003-07-22 20:00:00 -0400 EDT, Difference: 1032h0m0s
+INFO  : file1.txt: Path2 is older. Path1: 2003-09-04 00:00:00 +0000 UTC, Path2: 2003-07-23 00:00:00 +0000 UTC, Difference: 1032h0m0s
 INFO  : - [36mPath1[0m    [35mResync is copying files to[0m         - [36mPath2[0m
 INFO  : Resync updating listings
 INFO  : Validating listings for Path1 "{path1/}" vs Path2 "{path2/}"

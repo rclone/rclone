@@ -2,7 +2,6 @@
 // anonymous memory maps.
 
 //go:build windows
-// +build windows
 
 package mmap
 

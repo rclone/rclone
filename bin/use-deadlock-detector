@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+
+if [[ ! -z $(git status --short --untracked-files=no) ]]; then
+   echo "Detected uncommitted changes - commit before running this"
+   exit 1
+fi
+
+echo "Installing deadlock detector - use 'git reset --hard HEAD' to undo"
+
+go get -v github.com/sasha-s/go-deadlock/...
+find . -type f -name "*.go" -print0 | xargs -0 sed -i~ 's/sync.RWMutex/deadlock.RWMutex/; s/sync.Mutex/deadlock.Mutex/;'
+goimports -w .
+
+echo "Done"

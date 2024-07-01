@@ -37,7 +37,27 @@ like this:
 rclone serve s3 --auth-key ACCESS_KEY_ID,SECRET_ACCESS_KEY remote:path
 ```
 
-This will be compatible with an rclone remote which is defined like this:
+For example, to use a simple folder in the filesystem, run the server
+with a command like this:
+
+```
+rclone serve s3 --auth-key ACCESS_KEY_ID,SECRET_ACCESS_KEY local:/path/to/folder
+```
+
+The `rclone.conf` for the server could look like this:
+
+```
+[local]
+type = local
+```
+
+The `local` configuration is optional though. If you run the server with a
+`remote:path` like `/path/to/folder` (without the `local:` prefix and without an
+`rclone.conf` file), rclone will fall back to a default configuration, which
+will be visible as a warning in the logs. But it will run nonetheless.
+
+This will be compatible with an rclone (client) remote configuration which
+is defined like this:
 
 ```
 [serves3]

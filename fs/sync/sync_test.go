@@ -7,6 +7,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"runtime"
@@ -18,6 +19,7 @@ import (
 	mutex "sync" // renamed as "sync" already in use
 
 	_ "github.com/rclone/rclone/backend/all" // import all backends
+	"github.com/rclone/rclone/cmd/bisync/bilib"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/accounting"
 	"github.com/rclone/rclone/fs/filter"
@@ -65,15 +67,117 @@ func TestCopy(t *testing.T) {
 	ctx := context.Background()
 	r := fstest.NewRun(t)
 	file1 := r.WriteFile("sub dir/hello world", "hello world", t1)
+	_, err := operations.SetDirModTime(ctx, r.Flocal, nil, "sub dir", t2)
+	if err != nil && !errors.Is(err, fs.ErrorNotImplemented) {
+		require.NoError(t, err)
+	}
 	r.Mkdir(ctx, r.Fremote)
 
 	ctx = predictDstFromLogger(ctx)
-	err := CopyDir(ctx, r.Fremote, r.Flocal, false)
+	err = CopyDir(ctx, r.Fremote, r.Flocal, false)
 	require.NoError(t, err)
 	testLoggerVsLsf(ctx, r.Fremote, operations.GetLoggerOpt(ctx).JSON, t)
 
 	r.CheckLocalItems(t, file1)
 	r.CheckRemoteItems(t, file1)
+
+	// Check that the modtimes of the directories are as expected
+	r.CheckDirectoryModTimes(t, "sub dir")
+}
+
+func testCopyMetadata(t *testing.T, createEmptySrcDirs bool) {
+	ctx := context.Background()
+	ctx, ci := fs.AddConfig(ctx)
+	ci.Metadata = true
+	r := fstest.NewRun(t)
+	features := r.Fremote.Features()
+
+	if !features.ReadMetadata && !features.WriteMetadata && !features.UserMetadata &&
+		!features.ReadDirMetadata && !features.WriteDirMetadata && !features.UserDirMetadata {
+		t.Skip("Skipping as metadata not supported")
+	}
+
+	if createEmptySrcDirs && !features.CanHaveEmptyDirectories {
+		t.Skip("Skipping as can't have empty directories")
+	}
+
+	const content = "hello metadata world!"
+	const dirPath = "metadata sub dir"
+	const emptyDirPath = "empty metadata sub dir"
+	const filePath = dirPath + "/hello metadata world"
+
+	fileMetadata := fs.Metadata{
+		// System metadata supported by all backends
+		"mtime": t1.Format(time.RFC3339Nano),
+		// User metadata
+		"potato": "jersey",
+	}
+
+	dirMetadata := fs.Metadata{
+		// System metadata supported by all backends
+		"mtime": t2.Format(time.RFC3339Nano),
+		// User metadata
+		"potato": "king edward",
+	}
+
+	// Make the directory with metadata - may fall back to Mkdir
+	_, err := operations.MkdirMetadata(ctx, r.Flocal, dirPath, dirMetadata)
+	require.NoError(t, err)
+
+	// Make the empty directory with metadata - may fall back to Mkdir
+	_, err = operations.MkdirMetadata(ctx, r.Flocal, emptyDirPath, dirMetadata)
+	require.NoError(t, err)
+
+	// Upload the file with metadata
+	in := io.NopCloser(bytes.NewBufferString(content))
+	_, err = operations.Rcat(ctx, r.Flocal, filePath, in, t1, fileMetadata)
+	require.NoError(t, err)
+	file1 := fstest.NewItem(filePath, content, t1)
+
+	// Reset the time of the directory
+	_, err = operations.SetDirModTime(ctx, r.Flocal, nil, dirPath, t2)
+	if err != nil && !errors.Is(err, fs.ErrorNotImplemented) {
+		require.NoError(t, err)
+	}
+
+	ctx = predictDstFromLogger(ctx)
+	err = CopyDir(ctx, r.Fremote, r.Flocal, createEmptySrcDirs)
+	require.NoError(t, err)
+	testLoggerVsLsf(ctx, r.Fremote, operations.GetLoggerOpt(ctx).JSON, t)
+
+	r.CheckLocalItems(t, file1)
+	r.CheckRemoteItems(t, file1)
+
+	// Check that the modtimes of the directories are as expected
+	r.CheckDirectoryModTimes(t, dirPath)
+
+	// Check that the metadata on the directory and file is correct
+	if features.WriteMetadata && features.ReadMetadata {
+		fstest.CheckEntryMetadata(ctx, t, r.Fremote, fstest.NewObject(ctx, t, r.Fremote, filePath), fileMetadata)
+	}
+	if features.WriteDirMetadata && features.ReadDirMetadata {
+		fstest.CheckEntryMetadata(ctx, t, r.Fremote, fstest.NewDirectory(ctx, t, r.Fremote, dirPath), dirMetadata)
+	}
+	if !createEmptySrcDirs {
+		// dir must not exist
+		_, err := fstest.NewDirectoryRetries(ctx, t, r.Fremote, emptyDirPath, 1)
+		assert.Error(t, err, "Not expecting to find empty directory")
+		assert.True(t, errors.Is(err, fs.ErrorDirNotFound), fmt.Sprintf("expecting wrapped %#v not: %#v", fs.ErrorDirNotFound, err))
+	} else {
+		// dir must exist
+		dir := fstest.NewDirectory(ctx, t, r.Fremote, emptyDirPath)
+		if features.ReadDirMetadata {
+			fstest.CheckEntryMetadata(ctx, t, r.Fremote, dir, dirMetadata)
+		}
+	}
+}
+
+func TestCopyMetadata(t *testing.T) {
+	testCopyMetadata(t, true)
+}
+
+func TestCopyMetadataNoEmptyDirs(t *testing.T) {
+	testCopyMetadata(t, false)
 }
 
 func TestCopyMissingDirectory(t *testing.T) {
@@ -205,9 +309,16 @@ func TestCopyEmptyDirectories(t *testing.T) {
 	ctx := context.Background()
 	r := fstest.NewRun(t)
 	file1 := r.WriteFile("sub dir/hello world", "hello world", t1)
-	err := operations.Mkdir(ctx, r.Flocal, "sub dir2")
+	_, err := operations.MkdirModTime(ctx, r.Flocal, "sub dir2/sub sub dir2", t2)
+	require.NoError(t, err)
+	_, err = operations.SetDirModTime(ctx, r.Flocal, nil, "sub dir2", t2)
 	require.NoError(t, err)
 	r.Mkdir(ctx, r.Fremote)
+
+	// Set the modtime on "sub dir" to something specific
+	// Without this it fails on the CI and in VirtualBox with variances of up to 10mS
+	_, err = operations.SetDirModTime(ctx, r.Flocal, nil, "sub dir", t1)
+	require.NoError(t, err)
 
 	ctx = predictDstFromLogger(ctx)
 	err = CopyDir(ctx, r.Fremote, r.Flocal, true)
@@ -222,6 +333,35 @@ func TestCopyEmptyDirectories(t *testing.T) {
 		[]string{
 			"sub dir",
 			"sub dir2",
+			"sub dir2/sub sub dir2",
+		},
+	)
+
+	// Check that the modtimes of the directories are as expected
+	r.CheckDirectoryModTimes(t, "sub dir", "sub dir2", "sub dir2/sub sub dir2")
+}
+
+// Test copy empty directories when we are configured not to create them
+func TestCopyNoEmptyDirectories(t *testing.T) {
+	ctx := context.Background()
+	r := fstest.NewRun(t)
+	file1 := r.WriteFile("sub dir/hello world", "hello world", t1)
+	err := operations.Mkdir(ctx, r.Flocal, "sub dir2")
+	require.NoError(t, err)
+	_, err = operations.MkdirModTime(ctx, r.Flocal, "sub dir2/sub sub dir2", t2)
+	require.NoError(t, err)
+	r.Mkdir(ctx, r.Fremote)
+
+	err = CopyDir(ctx, r.Fremote, r.Flocal, false)
+	require.NoError(t, err)
+
+	r.CheckRemoteListing(
+		t,
+		[]fstest.Item{
+			file1,
+		},
+		[]string{
+			"sub dir",
 		},
 	)
 }
@@ -231,8 +371,10 @@ func TestMoveEmptyDirectories(t *testing.T) {
 	ctx := context.Background()
 	r := fstest.NewRun(t)
 	file1 := r.WriteFile("sub dir/hello world", "hello world", t1)
-	err := operations.Mkdir(ctx, r.Flocal, "sub dir2")
+	_, err := operations.MkdirModTime(ctx, r.Flocal, "sub dir2", t2)
 	require.NoError(t, err)
+	subDir := fstest.NewDirectory(ctx, t, r.Flocal, "sub dir")
+	subDirT := subDir.ModTime(ctx)
 	r.Mkdir(ctx, r.Fremote)
 
 	ctx = predictDstFromLogger(ctx)
@@ -250,6 +392,75 @@ func TestMoveEmptyDirectories(t *testing.T) {
 			"sub dir2",
 		},
 	)
+
+	// Check that the modtimes of the directories are as expected
+	r.CheckDirectoryModTimes(t, "sub dir2")
+	// Note that "sub dir" mod time is updated when file1 is deleted from it
+	// So check it more manually
+	got := fstest.NewDirectory(ctx, t, r.Fremote, "sub dir")
+	fstest.CheckDirModTime(ctx, t, r.Fremote, got, subDirT)
+}
+
+// Test that --no-update-dir-modtime is working
+func TestSyncNoUpdateDirModtime(t *testing.T) {
+	r := fstest.NewRun(t)
+	if r.Fremote.Features().DirSetModTime == nil {
+		t.Skip("Skipping test as backend does not support DirSetModTime")
+	}
+
+	ctx, ci := fs.AddConfig(context.Background())
+	ci.NoUpdateDirModTime = true
+	const name = "sub dir no update dir modtime"
+
+	// Set the modtime on name to something specific
+	_, err := operations.MkdirModTime(ctx, r.Flocal, name, t1)
+	require.NoError(t, err)
+
+	// Create the remote directory with the current time
+	require.NoError(t, r.Fremote.Mkdir(ctx, name))
+
+	// Read its modification time
+	wantT := fstest.NewDirectory(ctx, t, r.Fremote, name).ModTime(ctx)
+
+	ctx = predictDstFromLogger(ctx)
+	err = Sync(ctx, r.Fremote, r.Flocal, true)
+	require.NoError(t, err)
+	testLoggerVsLsf(ctx, r.Fremote, operations.GetLoggerOpt(ctx).JSON, t)
+
+	r.CheckRemoteListing(
+		t,
+		[]fstest.Item{},
+		[]string{
+			name,
+		},
+	)
+
+	// Read the new directory modification time - it should not have changed
+	gotT := fstest.NewDirectory(ctx, t, r.Fremote, name).ModTime(ctx)
+	fstest.AssertTimeEqualWithPrecision(t, name, wantT, gotT, r.Fremote.Precision())
+}
+
+// Test move empty directories when we are not configured to create them
+func TestMoveNoEmptyDirectories(t *testing.T) {
+	ctx := context.Background()
+	r := fstest.NewRun(t)
+	file1 := r.WriteFile("sub dir/hello world", "hello world", t1)
+	err := operations.Mkdir(ctx, r.Flocal, "sub dir2")
+	require.NoError(t, err)
+	r.Mkdir(ctx, r.Fremote)
+
+	err = MoveDir(ctx, r.Fremote, r.Flocal, false, false)
+	require.NoError(t, err)
+
+	r.CheckRemoteListing(
+		t,
+		[]fstest.Item{
+			file1,
+		},
+		[]string{
+			"sub dir",
+		},
+	)
 }
 
 // Test sync empty directories
@@ -257,8 +468,14 @@ func TestSyncEmptyDirectories(t *testing.T) {
 	ctx := context.Background()
 	r := fstest.NewRun(t)
 	file1 := r.WriteFile("sub dir/hello world", "hello world", t1)
-	err := operations.Mkdir(ctx, r.Flocal, "sub dir2")
+	_, err := operations.MkdirModTime(ctx, r.Flocal, "sub dir2", t2)
 	require.NoError(t, err)
+
+	// Set the modtime on "sub dir" to something specific
+	// Without this it fails on the CI and in VirtualBox with variances of up to 10mS
+	_, err = operations.SetDirModTime(ctx, r.Flocal, nil, "sub dir", t1)
+	require.NoError(t, err)
+
 	r.Mkdir(ctx, r.Fremote)
 
 	ctx = predictDstFromLogger(ctx)
@@ -274,6 +491,88 @@ func TestSyncEmptyDirectories(t *testing.T) {
 		[]string{
 			"sub dir",
 			"sub dir2",
+		},
+	)
+
+	// Check that the modtimes of the directories are as expected
+	r.CheckDirectoryModTimes(t, "sub dir", "sub dir2")
+}
+
+// Test delayed mod time setting
+func TestSyncSetDelayedModTimes(t *testing.T) {
+	ctx := context.Background()
+	r := fstest.NewRun(t)
+
+	if !r.Fremote.Features().DirModTimeUpdatesOnWrite {
+		t.Skip("Backend doesn't have DirModTimeUpdatesOnWrite set")
+	}
+
+	// Create directories without timestamps
+	require.NoError(t, r.Flocal.Mkdir(ctx, "a1/b1/c1/d1/e1/f1"))
+	require.NoError(t, r.Flocal.Mkdir(ctx, "a1/b2/c1/d1/e1/f1"))
+	require.NoError(t, r.Flocal.Mkdir(ctx, "a1/b1/c1/d2/e1/f1"))
+	require.NoError(t, r.Flocal.Mkdir(ctx, "a1/b1/c1/d2/e1/f2"))
+
+	dirs := []string{
+		"a1",
+		"a1/b1",
+		"a1/b1/c1",
+		"a1/b1/c1/d1",
+		"a1/b1/c1/d1/e1",
+		"a1/b1/c1/d1/e1/f1",
+		"a1/b1/c1/d2",
+		"a1/b1/c1/d2/e1",
+		"a1/b1/c1/d2/e1/f1",
+		"a1/b1/c1/d2/e1/f2",
+		"a1/b2",
+		"a1/b2/c1",
+		"a1/b2/c1/d1",
+		"a1/b2/c1/d1/e1",
+		"a1/b2/c1/d1/e1/f1",
+	}
+	r.CheckLocalListing(t, []fstest.Item{}, dirs)
+
+	// Timestamp the directories in reverse order
+	ts := t1
+	for i := len(dirs) - 1; i >= 0; i-- {
+		dir := dirs[i]
+		_, err := operations.SetDirModTime(ctx, r.Flocal, nil, dir, ts)
+		require.NoError(t, err)
+		ts = ts.Add(time.Minute)
+	}
+
+	r.Mkdir(ctx, r.Fremote)
+
+	ctx = predictDstFromLogger(ctx)
+	err := Sync(ctx, r.Fremote, r.Flocal, true)
+	require.NoError(t, err)
+	testLoggerVsLsf(ctx, r.Fremote, operations.GetLoggerOpt(ctx).JSON, t)
+
+	r.CheckRemoteListing(t, []fstest.Item{}, dirs)
+
+	// Check that the modtimes of the directories are as expected
+	r.CheckDirectoryModTimes(t, dirs...)
+}
+
+// Test sync empty directories when we are not configured to create them
+func TestSyncNoEmptyDirectories(t *testing.T) {
+	ctx := context.Background()
+	r := fstest.NewRun(t)
+	file1 := r.WriteFile("sub dir/hello world", "hello world", t1)
+	err := operations.Mkdir(ctx, r.Flocal, "sub dir2")
+	require.NoError(t, err)
+	r.Mkdir(ctx, r.Fremote)
+
+	err = Sync(ctx, r.Fremote, r.Flocal, false)
+	require.NoError(t, err)
+
+	r.CheckRemoteListing(
+		t,
+		[]fstest.Item{
+			file1,
+		},
+		[]string{
+			"sub dir",
 		},
 	)
 }
@@ -2341,6 +2640,119 @@ func TestSyncConcurrentDelete(t *testing.T) {
 
 func TestSyncConcurrentTruncate(t *testing.T) {
 	testSyncConcurrent(t, "truncate")
+}
+
+// Tests that nothing is transferred when src and dst already match
+// Run the same sync twice, ensure no action is taken the second time
+func testNothingToTransfer(t *testing.T, copyEmptySrcDirs bool) {
+	accounting.GlobalStats().ResetCounters()
+	ctx, _ := fs.AddConfig(context.Background())
+	r := fstest.NewRun(t)
+	file1 := r.WriteFile("sub dir/hello world", "hello world", t1)
+	file2 := r.WriteFile("sub dir2/very/very/very/very/very/nested/subdir/hello world", "hello world", t1)
+	r.CheckLocalItems(t, file1, file2)
+	_, err := operations.SetDirModTime(ctx, r.Flocal, nil, "sub dir", t2)
+	if err != nil && !errors.Is(err, fs.ErrorNotImplemented) {
+		require.NoError(t, err)
+	}
+	r.Mkdir(ctx, r.Fremote)
+	_, err = operations.MkdirModTime(ctx, r.Fremote, "sub dir", t3)
+	require.NoError(t, err)
+
+	// set logging
+	// (this checks log output as DirModtime operations do not yet have stats, and r.CheckDirectoryModTimes also does not tell us what actions were taken)
+	oldLogLevel := fs.GetConfig(context.Background()).LogLevel
+	defer func() { fs.GetConfig(context.Background()).LogLevel = oldLogLevel }() // reset to old val after test
+	// need to do this as fs.Infof only respects the globalConfig
+	fs.GetConfig(context.Background()).LogLevel = fs.LogLevelInfo
+
+	accounting.GlobalStats().ResetCounters()
+	ctx = predictDstFromLogger(ctx)
+	output := bilib.CaptureOutput(func() {
+		err = CopyDir(ctx, r.Fremote, r.Flocal, copyEmptySrcDirs)
+		require.NoError(t, err)
+	})
+	require.NotNil(t, output)
+	testLoggerVsLsf(ctx, r.Fremote, operations.GetLoggerOpt(ctx).JSON, t)
+	r.CheckLocalItems(t, file1, file2)
+	r.CheckRemoteItems(t, file1, file2)
+	// Check that the modtimes of the directories are as expected
+	r.CheckDirectoryModTimes(t, "sub dir", "sub dir2", "sub dir2/very", "sub dir2/very/very", "sub dir2/very/very/very/very/very/nested/subdir")
+
+	// check that actions were taken
+	assert.True(t, strings.Contains(string(output), "Copied"), `expected to find at least one "Copied" log: `+string(output))
+	if r.Fremote.Features().DirSetModTime != nil || r.Fremote.Features().MkdirMetadata != nil {
+		assert.True(t, strings.Contains(string(output), "Set directory modification time"), `expected to find at least one "Set directory modification time" log: `+string(output))
+	}
+	assert.False(t, strings.Contains(string(output), "There was nothing to transfer"), `expected to find no "There was nothing to transfer" logs, but found one: `+string(output))
+	assert.True(t, accounting.GlobalStats().GetTransfers() >= 2)
+
+	// run it again and make sure no actions were taken
+	accounting.GlobalStats().ResetCounters()
+	ctx = predictDstFromLogger(ctx)
+	output = bilib.CaptureOutput(func() {
+		err = CopyDir(ctx, r.Fremote, r.Flocal, copyEmptySrcDirs)
+		require.NoError(t, err)
+	})
+	require.NotNil(t, output)
+	testLoggerVsLsf(ctx, r.Fremote, operations.GetLoggerOpt(ctx).JSON, t)
+	r.CheckLocalItems(t, file1, file2)
+	r.CheckRemoteItems(t, file1, file2)
+	// Check that the modtimes of the directories are as expected
+	r.CheckDirectoryModTimes(t, "sub dir", "sub dir2", "sub dir2/very", "sub dir2/very/very", "sub dir2/very/very/very/very/very/nested/subdir")
+
+	// check that actions were NOT taken
+	assert.False(t, strings.Contains(string(output), "Copied"), `expected to find no "Copied" logs, but found one: `+string(output))
+	if r.Fremote.Features().DirSetModTime != nil || r.Fremote.Features().MkdirMetadata != nil {
+		assert.False(t, strings.Contains(string(output), "Set directory modification time"), `expected to find no "Set directory modification time" logs, but found one: `+string(output))
+		assert.False(t, strings.Contains(string(output), "Updated directory metadata"), `expected to find no "Updated directory metadata" logs, but found one: `+string(output))
+		assert.False(t, strings.Contains(string(output), "directory"), `expected to find no "directory"-related logs, but found one: `+string(output)) // catch-all
+	}
+	assert.True(t, strings.Contains(string(output), "There was nothing to transfer"), `expected to find a "There was nothing to transfer" log: `+string(output))
+	assert.Equal(t, int64(0), accounting.GlobalStats().GetTransfers())
+
+	// check nested empty dir behavior (FIXME: probably belongs in a separate test)
+	if r.Fremote.Features().DirSetModTime == nil && r.Fremote.Features().MkdirMetadata == nil {
+		return
+	}
+	file3 := r.WriteFile("sub dir2/sub dir3/hello world", "hello again, world", t1)
+	_, err = operations.SetDirModTime(ctx, r.Flocal, nil, "sub dir2", t1)
+	assert.NoError(t, err)
+	_, err = operations.SetDirModTime(ctx, r.Fremote, nil, "sub dir2", t1)
+	assert.NoError(t, err)
+	_, err = operations.MkdirModTime(ctx, r.Flocal, "sub dirEmpty/sub dirEmpty2", t2)
+	assert.NoError(t, err)
+	_, err = operations.SetDirModTime(ctx, r.Flocal, nil, "sub dirEmpty", t2)
+	assert.NoError(t, err)
+
+	accounting.GlobalStats().ResetCounters()
+	ctx = predictDstFromLogger(ctx)
+	output = bilib.CaptureOutput(func() {
+		err = CopyDir(ctx, r.Fremote, r.Flocal, copyEmptySrcDirs)
+		require.NoError(t, err)
+	})
+	require.NotNil(t, output)
+	testLoggerVsLsf(ctx, r.Fremote, operations.GetLoggerOpt(ctx).JSON, t)
+	r.CheckLocalItems(t, file1, file2, file3)
+	r.CheckRemoteItems(t, file1, file2, file3)
+	// Check that the modtimes of the directories are as expected
+	r.CheckDirectoryModTimes(t, "sub dir", "sub dir2", "sub dir2/very", "sub dir2/very/very", "sub dir2/very/very/very/very/very/nested/subdir", "sub dir2/sub dir3")
+	if copyEmptySrcDirs {
+		r.CheckDirectoryModTimes(t, "sub dirEmpty", "sub dirEmpty/sub dirEmpty2")
+		assert.True(t, strings.Contains(string(output), "sub dirEmpty:"), `expected to find at least one "sub dirEmpty:" log: `+string(output))
+	} else {
+		assert.False(t, strings.Contains(string(output), "sub dirEmpty:"), `expected to find no "sub dirEmpty:" logs, but found one (empty dir was synced and shouldn't have been): `+string(output))
+	}
+	assert.True(t, strings.Contains(string(output), "sub dir3:"), `expected to find at least one "sub dir3:" log: `+string(output))
+	assert.False(t, strings.Contains(string(output), "sub dir2/very:"), `expected to find no "sub dir2/very:" logs, but found one (unmodified dir was marked modified): `+string(output))
+}
+
+func TestNothingToTransferWithEmptyDirs(t *testing.T) {
+	testNothingToTransfer(t, true)
+}
+
+func TestNothingToTransferWithoutEmptyDirs(t *testing.T) {
+	testNothingToTransfer(t, false)
 }
 
 // for testing logger:

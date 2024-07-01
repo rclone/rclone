@@ -60,6 +60,7 @@ const (
 	defaultChunkSize    = 96 * fs.Mebi
 	defaultUploadCutoff = 200 * fs.Mebi
 	largeFileCopyCutoff = 4 * fs.Gibi // 5E9 is the max
+	defaultMaxAge       = 24 * time.Hour
 )
 
 // Globals
@@ -101,7 +102,7 @@ below will cause b2 to return specific errors:
   * "force_cap_exceeded"
 
 These will be set in the "X-Bz-Test-Mode" header which is documented
-in the [b2 integrations checklist](https://www.backblaze.com/b2/docs/integration_checklist.html).`,
+in the [b2 integrations checklist](https://www.backblaze.com/docs/cloud-storage-integration-checklist).`,
 			Default:  "",
 			Hide:     fs.OptionHideConfigurator,
 			Advanced: true,
@@ -193,9 +194,12 @@ Example:
 			Advanced: true,
 		}, {
 			Name: "download_auth_duration",
-			Help: `Time before the authorization token will expire in s or suffix ms|s|m|h|d.
+			Help: `Time before the public link authorization token will expire in s or suffix ms|s|m|h|d.
 
-The duration before the download authorization token will expire.
+This is used in combination with "rclone link" for making files
+accessible to the public and sets the duration before the download
+authorization token will expire.
+
 The minimum value is 1 second. The maximum value is one week.`,
 			Default:  fs.Duration(7 * 24 * time.Hour),
 			Advanced: true,
@@ -240,7 +244,7 @@ See: [rclone backend lifecycle](#lifecycle) for setting lifecycles after bucket 
 			Name:     config.ConfigEncoding,
 			Help:     config.ConfigEncodingHelp,
 			Advanced: true,
-			// See: https://www.backblaze.com/b2/docs/files.html
+			// See: https://www.backblaze.com/docs/cloud-storage-files
 			// Encode invalid UTF-8 bytes as json doesn't handle them properly.
 			// FIXME: allow /, but not leading, trailing or double
 			Default: (encoder.Display |
@@ -359,7 +363,7 @@ var retryErrorCodes = []int{
 	504, // Gateway Time-out
 }
 
-// shouldRetryNoAuth returns a boolean as to whether this resp and err
+// shouldRetryNoReauth returns a boolean as to whether this resp and err
 // deserve to be retried.  It returns the err as a convenience
 func (f *Fs) shouldRetryNoReauth(ctx context.Context, resp *http.Response, err error) (bool, error) {
 	if fserrors.ContextError(ctx, &err) {
@@ -1245,7 +1249,7 @@ func (f *Fs) deleteByID(ctx context.Context, ID, Name string) error {
 // if oldOnly is true then it deletes only non current files.
 //
 // Implemented here so we can make sure we delete old versions.
-func (f *Fs) purge(ctx context.Context, dir string, oldOnly bool) error {
+func (f *Fs) purge(ctx context.Context, dir string, oldOnly bool, deleteHidden bool, deleteUnfinished bool, maxAge time.Duration) error {
 	bucket, directory := f.split(dir)
 	if bucket == "" {
 		return errors.New("can't purge from root")
@@ -1263,7 +1267,7 @@ func (f *Fs) purge(ctx context.Context, dir string, oldOnly bool) error {
 		}
 	}
 	var isUnfinishedUploadStale = func(timestamp api.Timestamp) bool {
-		return time.Since(time.Time(timestamp)).Hours() > 24
+		return time.Since(time.Time(timestamp)) > maxAge
 	}
 
 	// Delete Config.Transfers in parallel
@@ -1286,6 +1290,21 @@ func (f *Fs) purge(ctx context.Context, dir string, oldOnly bool) error {
 			}
 		}()
 	}
+	if oldOnly {
+		if deleteHidden && deleteUnfinished {
+			fs.Infof(f, "cleaning bucket %q of all hidden files, and pending multipart uploads older than %v", bucket, maxAge)
+		} else if deleteHidden {
+			fs.Infof(f, "cleaning bucket %q of all hidden files", bucket)
+		} else if deleteUnfinished {
+			fs.Infof(f, "cleaning bucket %q of pending multipart uploads older than %v", bucket, maxAge)
+		} else {
+			fs.Errorf(f, "cleaning bucket %q of nothing. This should never happen!", bucket)
+			return nil
+		}
+	} else {
+		fs.Infof(f, "cleaning bucket %q of all files", bucket)
+	}
+
 	last := ""
 	checkErr(f.list(ctx, bucket, directory, f.rootDirectory, f.rootBucket == "", true, 0, true, false, func(remote string, object *api.File, isDirectory bool) error {
 		if !isDirectory {
@@ -1296,14 +1315,14 @@ func (f *Fs) purge(ctx context.Context, dir string, oldOnly bool) error {
 			tr := accounting.Stats(ctx).NewCheckingTransfer(oi, "checking")
 			if oldOnly && last != remote {
 				// Check current version of the file
-				if object.Action == "hide" {
+				if deleteHidden && object.Action == "hide" {
 					fs.Debugf(remote, "Deleting current version (id %q) as it is a hide marker", object.ID)
 					toBeDeleted <- object
-				} else if object.Action == "start" && isUnfinishedUploadStale(object.UploadTimestamp) {
+				} else if deleteUnfinished && object.Action == "start" && isUnfinishedUploadStale(object.UploadTimestamp) {
 					fs.Debugf(remote, "Deleting current version (id %q) as it is a start marker (upload started at %s)", object.ID, time.Time(object.UploadTimestamp).Local())
 					toBeDeleted <- object
 				} else {
-					fs.Debugf(remote, "Not deleting current version (id %q) %q", object.ID, object.Action)
+					fs.Debugf(remote, "Not deleting current version (id %q) %q dated %v (%v ago)", object.ID, object.Action, time.Time(object.UploadTimestamp).Local(), time.Since(time.Time(object.UploadTimestamp)))
 				}
 			} else {
 				fs.Debugf(remote, "Deleting (id %q)", object.ID)
@@ -1325,12 +1344,17 @@ func (f *Fs) purge(ctx context.Context, dir string, oldOnly bool) error {
 
 // Purge deletes all the files and directories including the old versions.
 func (f *Fs) Purge(ctx context.Context, dir string) error {
-	return f.purge(ctx, dir, false)
+	return f.purge(ctx, dir, false, false, false, defaultMaxAge)
 }
 
-// CleanUp deletes all the hidden files.
+// CleanUp deletes all hidden files and pending multipart uploads older than 24 hours.
 func (f *Fs) CleanUp(ctx context.Context) error {
-	return f.purge(ctx, "", true)
+	return f.purge(ctx, "", true, true, true, defaultMaxAge)
+}
+
+// cleanUp deletes all hidden files and/or pending multipart uploads older than the specified age.
+func (f *Fs) cleanUp(ctx context.Context, deleteHidden bool, deleteUnfinished bool, maxAge time.Duration) (err error) {
+	return f.purge(ctx, "", true, deleteHidden, deleteUnfinished, maxAge)
 }
 
 // copy does a server-side copy from dstObj <- srcObj
@@ -1542,7 +1566,7 @@ func (o *Object) Size() int64 {
 //
 // Make sure it is lower case.
 //
-// Remove unverified prefix - see https://www.backblaze.com/b2/docs/uploading.html
+// Remove unverified prefix - see https://www.backblaze.com/docs/cloud-storage-upload-files-with-the-native-api
 // Some tools (e.g. Cyberduck) use this
 func cleanSHA1(sha1 string) string {
 	const unverified = "unverified:"
@@ -1760,14 +1784,14 @@ func (file *openFile) Close() (err error) {
 
 	// Check to see we read the correct number of bytes
 	if file.o.Size() != file.bytes {
-		return fmt.Errorf("object corrupted on transfer - length mismatch (want %d got %d)", file.o.Size(), file.bytes)
+		return fmt.Errorf("corrupted on transfer: lengths differ want %d vs got %d", file.o.Size(), file.bytes)
 	}
 
 	// Check the SHA1
 	receivedSHA1 := file.o.sha1
 	calculatedSHA1 := fmt.Sprintf("%x", file.hash.Sum(nil))
 	if receivedSHA1 != "" && receivedSHA1 != calculatedSHA1 {
-		return fmt.Errorf("object corrupted on transfer - SHA1 mismatch (want %q got %q)", receivedSHA1, calculatedSHA1)
+		return fmt.Errorf("corrupted on transfer: SHA1 hashes differ want %q vs got %q", receivedSHA1, calculatedSHA1)
 	}
 
 	return nil
@@ -2240,8 +2264,56 @@ func (f *Fs) lifecycleCommand(ctx context.Context, name string, arg []string, op
 	return bucket.LifecycleRules, nil
 }
 
+var cleanupHelp = fs.CommandHelp{
+	Name:  "cleanup",
+	Short: "Remove unfinished large file uploads.",
+	Long: `This command removes unfinished large file uploads of age greater than
+max-age, which defaults to 24 hours.
+
+Note that you can use --interactive/-i or --dry-run with this command to see what
+it would do.
+
+    rclone backend cleanup b2:bucket/path/to/object
+    rclone backend cleanup -o max-age=7w b2:bucket/path/to/object
+
+Durations are parsed as per the rest of rclone, 2h, 7d, 7w etc.
+`,
+	Opts: map[string]string{
+		"max-age": "Max age of upload to delete",
+	},
+}
+
+func (f *Fs) cleanupCommand(ctx context.Context, name string, arg []string, opt map[string]string) (out interface{}, err error) {
+	maxAge := defaultMaxAge
+	if opt["max-age"] != "" {
+		maxAge, err = fs.ParseDuration(opt["max-age"])
+		if err != nil {
+			return nil, fmt.Errorf("bad max-age: %w", err)
+		}
+	}
+	return nil, f.cleanUp(ctx, false, true, maxAge)
+}
+
+var cleanupHiddenHelp = fs.CommandHelp{
+	Name:  "cleanup-hidden",
+	Short: "Remove old versions of files.",
+	Long: `This command removes any old hidden versions of files.
+
+Note that you can use --interactive/-i or --dry-run with this command to see what
+it would do.
+
+    rclone backend cleanup-hidden b2:bucket/path/to/dir
+`,
+}
+
+func (f *Fs) cleanupHiddenCommand(ctx context.Context, name string, arg []string, opt map[string]string) (out interface{}, err error) {
+	return nil, f.cleanUp(ctx, true, false, 0)
+}
+
 var commandHelp = []fs.CommandHelp{
 	lifecycleHelp,
+	cleanupHelp,
+	cleanupHiddenHelp,
 }
 
 // Command the backend to run a named command
@@ -2257,6 +2329,10 @@ func (f *Fs) Command(ctx context.Context, name string, arg []string, opt map[str
 	switch name {
 	case "lifecycle":
 		return f.lifecycleCommand(ctx, name, arg, opt)
+	case "cleanup":
+		return f.cleanupCommand(ctx, name, arg, opt)
+	case "cleanup-hidden":
+		return f.cleanupHiddenCommand(ctx, name, arg, opt)
 	default:
 		return nil, fs.ErrorCommandNotFound
 	}

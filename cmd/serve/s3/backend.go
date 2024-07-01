@@ -10,15 +10,15 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/Mikubill/gofakes3"
 	"github.com/ncw/swift/v2"
+	"github.com/rclone/gofakes3"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/vfs"
 )
 
 var (
 	emptyPrefix = &gofakes3.Prefix{}
-	timeFormat  = "Mon, 2 Jan 2006 15:04:05.999999999 GMT"
+	timeFormat  = "Mon, 2 Jan 2006 15:04:05 GMT"
 )
 
 // s3Backend implements the gofacess3.Backend interface to make an S3
@@ -39,7 +39,7 @@ func newBackend(vfs *vfs.VFS, opt *Options) gofakes3.Backend {
 }
 
 // ListBuckets always returns the default bucket.
-func (b *s3Backend) ListBuckets() ([]gofakes3.BucketInfo, error) {
+func (b *s3Backend) ListBuckets(ctx context.Context) ([]gofakes3.BucketInfo, error) {
 	dirEntries, err := getDirEntries("/", b.vfs)
 	if err != nil {
 		return nil, err
@@ -59,7 +59,7 @@ func (b *s3Backend) ListBuckets() ([]gofakes3.BucketInfo, error) {
 }
 
 // ListBucket lists the objects in the given bucket.
-func (b *s3Backend) ListBucket(bucket string, prefix *gofakes3.Prefix, page gofakes3.ListBucketPage) (*gofakes3.ObjectList, error) {
+func (b *s3Backend) ListBucket(ctx context.Context, bucket string, prefix *gofakes3.Prefix, page gofakes3.ListBucketPage) (*gofakes3.ObjectList, error) {
 	_, err := b.vfs.Stat(bucket)
 	if err != nil {
 		return nil, gofakes3.BucketNotFound(bucket)
@@ -93,7 +93,7 @@ func (b *s3Backend) ListBucket(bucket string, prefix *gofakes3.Prefix, page gofa
 // HeadObject returns the fileinfo for the given object name.
 //
 // Note that the metadata is not supported yet.
-func (b *s3Backend) HeadObject(bucketName, objectName string) (*gofakes3.Object, error) {
+func (b *s3Backend) HeadObject(ctx context.Context, bucketName, objectName string) (*gofakes3.Object, error) {
 	_, err := b.vfs.Stat(bucketName)
 	if err != nil {
 		return nil, gofakes3.BucketNotFound(bucketName)
@@ -140,7 +140,7 @@ func (b *s3Backend) HeadObject(bucketName, objectName string) (*gofakes3.Object,
 }
 
 // GetObject fetchs the object from the filesystem.
-func (b *s3Backend) GetObject(bucketName, objectName string, rangeRequest *gofakes3.ObjectRangeRequest) (obj *gofakes3.Object, err error) {
+func (b *s3Backend) GetObject(ctx context.Context, bucketName, objectName string, rangeRequest *gofakes3.ObjectRangeRequest) (obj *gofakes3.Object, err error) {
 	_, err = b.vfs.Stat(bucketName)
 	if err != nil {
 		return nil, gofakes3.BucketNotFound(bucketName)
@@ -213,8 +213,16 @@ func (b *s3Backend) GetObject(bucketName, objectName string, rangeRequest *gofak
 	}, nil
 }
 
+// storeModtime sets both "mtime" and "X-Amz-Meta-Mtime" to val in b.meta.
+// Call this whenever modtime is updated.
+func (b *s3Backend) storeModtime(fp string, meta map[string]string, val string) {
+	meta["X-Amz-Meta-Mtime"] = val
+	meta["mtime"] = val
+	b.meta.Store(fp, meta)
+}
+
 // TouchObject creates or updates meta on specified object.
-func (b *s3Backend) TouchObject(fp string, meta map[string]string) (result gofakes3.PutObjectResult, err error) {
+func (b *s3Backend) TouchObject(ctx context.Context, fp string, meta map[string]string) (result gofakes3.PutObjectResult, err error) {
 	_, err = b.vfs.Stat(fp)
 	if err == vfs.ENOENT {
 		f, err := b.vfs.Create(fp)
@@ -222,7 +230,7 @@ func (b *s3Backend) TouchObject(fp string, meta map[string]string) (result gofak
 			return result, err
 		}
 		_ = f.Close()
-		return b.TouchObject(fp, meta)
+		return b.TouchObject(ctx, fp, meta)
 	} else if err != nil {
 		return result, err
 	}
@@ -237,6 +245,7 @@ func (b *s3Backend) TouchObject(fp string, meta map[string]string) (result gofak
 	if val, ok := meta["X-Amz-Meta-Mtime"]; ok {
 		ti, err := swift.FloatStringToTime(val)
 		if err == nil {
+			b.storeModtime(fp, meta, val)
 			return result, b.vfs.Chtimes(fp, ti, ti)
 		}
 		// ignore error since the file is successfully created
@@ -245,6 +254,7 @@ func (b *s3Backend) TouchObject(fp string, meta map[string]string) (result gofak
 	if val, ok := meta["mtime"]; ok {
 		ti, err := swift.FloatStringToTime(val)
 		if err == nil {
+			b.storeModtime(fp, meta, val)
 			return result, b.vfs.Chtimes(fp, ti, ti)
 		}
 		// ignore error since the file is successfully created
@@ -255,6 +265,7 @@ func (b *s3Backend) TouchObject(fp string, meta map[string]string) (result gofak
 
 // PutObject creates or overwrites the object with the given name.
 func (b *s3Backend) PutObject(
+	ctx context.Context,
 	bucketName, objectName string,
 	meta map[string]string,
 	input io.Reader, size int64,
@@ -306,6 +317,7 @@ func (b *s3Backend) PutObject(
 	if val, ok := meta["X-Amz-Meta-Mtime"]; ok {
 		ti, err := swift.FloatStringToTime(val)
 		if err == nil {
+			b.storeModtime(fp, meta, val)
 			return result, b.vfs.Chtimes(fp, ti, ti)
 		}
 		// ignore error since the file is successfully created
@@ -314,6 +326,7 @@ func (b *s3Backend) PutObject(
 	if val, ok := meta["mtime"]; ok {
 		ti, err := swift.FloatStringToTime(val)
 		if err == nil {
+			b.storeModtime(fp, meta, val)
 			return result, b.vfs.Chtimes(fp, ti, ti)
 		}
 		// ignore error since the file is successfully created
@@ -323,7 +336,7 @@ func (b *s3Backend) PutObject(
 }
 
 // DeleteMulti deletes multiple objects in a single request.
-func (b *s3Backend) DeleteMulti(bucketName string, objects ...string) (result gofakes3.MultiDeleteResult, rerr error) {
+func (b *s3Backend) DeleteMulti(ctx context.Context, bucketName string, objects ...string) (result gofakes3.MultiDeleteResult, rerr error) {
 	for _, object := range objects {
 		if err := b.deleteObject(bucketName, object); err != nil {
 			fs.Errorf("serve s3", "delete object failed: %v", err)
@@ -343,7 +356,7 @@ func (b *s3Backend) DeleteMulti(bucketName string, objects ...string) (result go
 }
 
 // DeleteObject deletes the object with the given name.
-func (b *s3Backend) DeleteObject(bucketName, objectName string) (result gofakes3.ObjectDeleteResult, rerr error) {
+func (b *s3Backend) DeleteObject(ctx context.Context, bucketName, objectName string) (result gofakes3.ObjectDeleteResult, rerr error) {
 	return result, b.deleteObject(bucketName, objectName)
 }
 
@@ -367,7 +380,7 @@ func (b *s3Backend) deleteObject(bucketName, objectName string) error {
 }
 
 // CreateBucket creates a new bucket.
-func (b *s3Backend) CreateBucket(name string) error {
+func (b *s3Backend) CreateBucket(ctx context.Context, name string) error {
 	_, err := b.vfs.Stat(name)
 	if err != nil && err != vfs.ENOENT {
 		return gofakes3.ErrInternal
@@ -384,7 +397,7 @@ func (b *s3Backend) CreateBucket(name string) error {
 }
 
 // DeleteBucket deletes the bucket with the given name.
-func (b *s3Backend) DeleteBucket(name string) error {
+func (b *s3Backend) DeleteBucket(ctx context.Context, name string) error {
 	_, err := b.vfs.Stat(name)
 	if err != nil {
 		return gofakes3.BucketNotFound(name)
@@ -398,7 +411,7 @@ func (b *s3Backend) DeleteBucket(name string) error {
 }
 
 // BucketExists checks if the bucket exists.
-func (b *s3Backend) BucketExists(name string) (exists bool, err error) {
+func (b *s3Backend) BucketExists(ctx context.Context, name string) (exists bool, err error) {
 	_, err = b.vfs.Stat(name)
 	if err != nil {
 		return false, nil
@@ -408,7 +421,7 @@ func (b *s3Backend) BucketExists(name string) (exists bool, err error) {
 }
 
 // CopyObject copy specified object from srcKey to dstKey.
-func (b *s3Backend) CopyObject(srcBucket, srcKey, dstBucket, dstKey string, meta map[string]string) (result gofakes3.CopyObjectResult, err error) {
+func (b *s3Backend) CopyObject(ctx context.Context, srcBucket, srcKey, dstBucket, dstKey string, meta map[string]string) (result gofakes3.CopyObjectResult, err error) {
 	fp := path.Join(srcBucket, srcKey)
 	if srcBucket == dstBucket && srcKey == dstKey {
 		b.meta.Store(fp, meta)
@@ -424,6 +437,7 @@ func (b *s3Backend) CopyObject(srcBucket, srcKey, dstBucket, dstKey string, meta
 		if err != nil {
 			return result, nil
 		}
+		b.storeModtime(fp, meta, val)
 
 		return result, b.vfs.Chtimes(fp, ti, ti)
 	}
@@ -433,7 +447,7 @@ func (b *s3Backend) CopyObject(srcBucket, srcKey, dstBucket, dstKey string, meta
 		return
 	}
 
-	c, err := b.GetObject(srcBucket, srcKey, nil)
+	c, err := b.GetObject(ctx, srcBucket, srcKey, nil)
 	if err != nil {
 		return
 	}
@@ -450,7 +464,7 @@ func (b *s3Backend) CopyObject(srcBucket, srcKey, dstBucket, dstKey string, meta
 		meta["mtime"] = swift.TimeToFloatString(cStat.ModTime())
 	}
 
-	_, err = b.PutObject(dstBucket, dstKey, meta, c.Contents, c.Size)
+	_, err = b.PutObject(ctx, dstBucket, dstKey, meta, c.Contents, c.Size)
 	if err != nil {
 		return
 	}

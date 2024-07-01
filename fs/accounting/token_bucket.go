@@ -40,7 +40,7 @@ type tokenBucket struct {
 // Return true if limit is disabled
 //
 // Call with lock held
-func (bs *buckets) _isOff() bool {
+func (bs *buckets) _isOff() bool { //nolint:unused // Don't include unused when running golangci-lint in case its on windows where this is not called
 	return bs[0] == nil
 }
 

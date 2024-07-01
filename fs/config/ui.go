@@ -495,7 +495,7 @@ func ChooseOption(o *fs.Option, name string) string {
 		case uint, byte, uint16, uint32, uint64:
 			what = "unsigned integer"
 		default:
-			what = fmt.Sprintf("%T value", o.Default)
+			what = fmt.Sprintf("value of type %s", o.Type())
 		}
 	}
 	var in string

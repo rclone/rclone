@@ -31,6 +31,11 @@ import (
 //go:embed mount.md
 var mountHelp string
 
+// help returns the help string cleaned up to simplify appending
+func help(commandName string) string {
+	return strings.TrimSpace(strings.ReplaceAll(mountHelp, "@", commandName)) + "\n\n"
+}
+
 // Options for creating the mount
 type Options struct {
 	DebugFUSE          bool
@@ -52,6 +57,7 @@ type Options struct {
 	DaemonTimeout      time.Duration // OSXFUSE only
 	AsyncRead          bool
 	NetworkMode        bool // Windows only
+	DirectIO           bool // use Direct IO for file access
 	CaseInsensitive    fs.Tristate
 }
 
@@ -145,6 +151,7 @@ func AddFlags(flagSet *pflag.FlagSet) {
 	flags.BoolVarP(flagSet, &Opt.WritebackCache, "write-back-cache", "", Opt.WritebackCache, "Makes kernel buffer writes before sending them to rclone (without this, writethrough caching is used) (not supported on Windows)", "Mount")
 	flags.StringVarP(flagSet, &Opt.DeviceName, "devname", "", Opt.DeviceName, "Set the device name - default is remote:path", "Mount")
 	flags.FVarP(flagSet, &Opt.CaseInsensitive, "mount-case-insensitive", "", "Tell the OS the mount is case insensitive (true) or sensitive (false) regardless of the backend (auto)", "Mount")
+	flags.BoolVarP(flagSet, &Opt.DirectIO, "direct-io", "", Opt.DirectIO, "Use Direct IO, disables caching of data", "Mount")
 	// Windows and OSX
 	flags.StringVarP(flagSet, &Opt.VolumeName, "volname", "", Opt.VolumeName, "Set the volume name (supported on Windows and OSX only)", "Mount")
 	// OSX only
@@ -194,7 +201,7 @@ func NewMountCommand(commandName string, hidden bool, mount MountFn) *cobra.Comm
 		Use:    commandName + " remote:path /path/to/mountpoint",
 		Hidden: hidden,
 		Short:  `Mount the remote as file system on a mountpoint.`,
-		Long:   strings.ReplaceAll(mountHelp, "@", commandName) + vfs.Help,
+		Long:   help(commandName) + vfs.Help(),
 		Annotations: map[string]string{
 			"versionIntroduced": "v1.33",
 			"groups":            "Filter",

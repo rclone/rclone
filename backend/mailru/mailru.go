@@ -46,8 +46,8 @@ import (
 
 // Global constants
 const (
-	minSleepPacer   = 10 * time.Millisecond
-	maxSleepPacer   = 2 * time.Second
+	minSleepPacer   = 100 * time.Millisecond
+	maxSleepPacer   = 5 * time.Second
 	decayConstPacer = 2          // bigger for slower decay, exponential
 	metaExpirySec   = 20 * 60    // meta server expiration time
 	serverExpirySec = 3 * 60     // download server expiration time

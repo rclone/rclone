@@ -6,11 +6,10 @@
   },
   "baseurl": "https://rclone.org",
   "title": "rclone - rsync for cloud storage",
-  "description": "rclone - rsync for cloud storage: google drive, s3, swift, cloudfiles, dropbox, memstore...",
+  "description": "rclone - rsync for cloud storage: google drive, s3, gcs, azure, dropbox, box...",
   "canonifyurls": false,
   "disableKinds": [
-    "taxonomy",
-    "taxonomyTerm"
+    "taxonomy"
   ],
   "ignoreFiles": [
     "~$",

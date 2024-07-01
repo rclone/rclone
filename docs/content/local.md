@@ -237,7 +237,7 @@ $ tree /tmp/a
 Copying the entire directory with '-l'
 
 ```
-$ rclone copyto -l /tmp/a/file1 remote:/tmp/a/
+$ rclone copy -l /tmp/a/ remote:/tmp/a/
 ```
 
 The remote files are created with a '.rclonelink' suffix
@@ -261,7 +261,7 @@ $ rclone cat remote:/tmp/a/file2.rclonelink
 Copying them back with '-l'
 
 ```
-$ rclone copyto -l remote:/tmp/a/ /tmp/b/
+$ rclone copy -l remote:/tmp/a/ /tmp/b/
 
 $ tree /tmp/b
 /tmp/b
@@ -279,6 +279,16 @@ $ tree /tmp/b
 ├── file1.rclonelink
 └── file2.rclonelink
 ````
+
+If you want to copy a single file with `-l` then you must use the `.rclonelink` suffix.
+
+```
+$ rclone copy -l remote:/tmp/a/file1.rclonelink /tmp/c
+
+$ tree /tmp/c
+/tmp/c
+└── file1 -> ./file4
+```
 
 Note that this flag is incompatible with `-copy-links` / `-L`.
 
@@ -556,6 +566,44 @@ Properties:
 - Type:        bool
 - Default:     false
 
+#### --local-time-type
+
+Set what kind of time is returned.
+
+Normally rclone does all operations on the mtime or Modification time.
+
+If you set this flag then rclone will return the Modified time as whatever
+you set here. So if you use "rclone lsl --local-time-type ctime" then
+you will see ctimes in the listing.
+
+If the OS doesn't support returning the time_type specified then rclone
+will silently replace it with the modification time which all OSes support.
+
+- mtime is supported by all OSes
+- atime is supported on all OSes except: plan9, js
+- btime is only supported on: Windows, macOS, freebsd, netbsd
+- ctime is supported on all Oses except: Windows, plan9, js
+
+Note that setting the time will still set the modified time so this is
+only useful for reading.
+
+
+Properties:
+
+- Config:      time_type
+- Env Var:     RCLONE_LOCAL_TIME_TYPE
+- Type:        mtime|atime|btime|ctime
+- Default:     mtime
+- Examples:
+    - "mtime"
+        - The last modification time.
+    - "atime"
+        - The last access time.
+    - "btime"
+        - The creation time.
+    - "ctime"
+        - The last status change time.
+
 #### --local-encoding
 
 The encoding for the backend.
@@ -569,6 +617,17 @@ Properties:
 - Type:        Encoding
 - Default:     Slash,Dot
 
+#### --local-description
+
+Description of the remote.
+
+Properties:
+
+- Config:      description
+- Env Var:     RCLONE_LOCAL_DESCRIPTION
+- Type:        string
+- Required:    false
+
 ### Metadata
 
 Depending on which OS is in use the local backend may return only some
@@ -579,6 +638,8 @@ netbsd, macOS and Solaris. It is **not** supported on Windows yet
 
 User metadata is stored as extended attributes (which may not be
 supported by all file systems) under the "user.*" prefix.
+
+Metadata is supported on files and directories.
 
 Here are the possible system metadata items for the local backend.
 

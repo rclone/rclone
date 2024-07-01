@@ -573,6 +573,15 @@ func (item *Item) open(o fs.Object) (err error) {
 	return err
 }
 
+// Calls f with mu unlocked, re-locking mu if a panic is raised
+//
+// mu must be locked when calling this function
+func unlockMutexForCall(mu *sync.Mutex, f func()) {
+	mu.Unlock()
+	defer mu.Lock()
+	f()
+}
+
 // Store stores the local cache file to the remote object, returning
 // the new remote object. objOld is the old object if known.
 //
@@ -589,9 +598,9 @@ func (item *Item) _store(ctx context.Context, storeFn StoreFn) (err error) {
 	// Object has disappeared if cacheObj == nil
 	if cacheObj != nil {
 		o, name := item.o, item.name
-		item.mu.Unlock()
-		o, err := operations.Copy(ctx, item.c.fremote, o, name, cacheObj)
-		item.mu.Lock()
+		unlockMutexForCall(&item.mu, func() {
+			o, err = operations.Copy(ctx, item.c.fremote, o, name, cacheObj)
+		})
 		if err != nil {
 			if errors.Is(err, fs.ErrorCantUploadEmptyFiles) {
 				fs.Errorf(name, "Writeback failed: %v", err)
@@ -1277,6 +1286,15 @@ func (item *Item) readAt(b []byte, off int64) (n int, err error) {
 	err = item._ensure(off, int64(len(b)))
 	if err != nil {
 		return 0, err
+	}
+
+	// Check to see if object has shrunk - if so don't read too much.
+	if item.o != nil && !item.info.Dirty && item.o.Size() != item.info.Size {
+		fs.Debugf(item.o, "Size has changed from %d to %d", item.info.Size, item.o.Size())
+		err = item._truncate(item.o.Size())
+		if err != nil {
+			return 0, err
+		}
 	}
 
 	item.info.ATime = time.Now()

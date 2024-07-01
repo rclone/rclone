@@ -73,14 +73,14 @@ Run `rclone config` to setup. See [rclone config docs](/docs/) for more details.
 NOTE: This version of rclone will not support `mount` any more (see
 [#5373](https://github.com/rclone/rclone/issues/5373)). If mounting is wanted
 on macOS, either install a precompiled binary or enable the relevant option
-when [installing from source](#install-from-source).
+when [installing from source](#source).
 
 Note that this is a third party installer not controlled by the rclone
 developers so it may be out of date. Its current version is as below.
 
 [![Homebrew package](https://repology.org/badge/version-for-repo/homebrew/rclone.svg)](https://repology.org/project/rclone/versions)
 
-### Installation with MacPorts (#macos-macports)
+### Installation with MacPorts {#macos-macports}
 
 On macOS, rclone can also be installed via [MacPorts](https://www.macports.org):
 
@@ -306,6 +306,7 @@ docker run --rm \
 ls ~/data/mount
 kill %1
 ```
+
 ## Snap installation {#snap}
 
 [![Get it from the Snap Store](https://snapcraft.io/static/images/badges/en/snap-store-black.svg)](https://snapcraft.io/rclone)

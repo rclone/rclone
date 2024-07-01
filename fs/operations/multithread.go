@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"time"
 
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/accounting"
@@ -131,6 +132,7 @@ func multiThreadCopy(ctx context.Context, f fs.Fs, remote string, src fs.Object,
 	openChunkWriter := f.Features().OpenChunkWriter
 	ci := fs.GetConfig(ctx)
 	noBuffering := false
+	usingOpenWriterAt := false
 	if openChunkWriter == nil {
 		openWriterAt := f.Features().OpenWriterAt
 		if openWriterAt == nil {
@@ -140,6 +142,7 @@ func multiThreadCopy(ctx context.Context, f fs.Fs, remote string, src fs.Object,
 		// If we are using OpenWriterAt we don't seek the chunks so don't need to buffer
 		fs.Debugf(src, "multi-thread copy: disabling buffering because destination uses OpenWriterAt")
 		noBuffering = true
+		usingOpenWriterAt = true
 	} else if src.Fs().Features().IsLocal {
 		// If the source fs is local we don't need to buffer
 		fs.Debugf(src, "multi-thread copy: disabling buffering because source is local disk")
@@ -241,12 +244,35 @@ func multiThreadCopy(ctx context.Context, f fs.Fs, remote string, src fs.Object,
 		return nil, fmt.Errorf("multi-thread copy: failed to find object after copy: %w", err)
 	}
 
-	if f.Features().PartialUploads {
-		err = obj.SetModTime(ctx, src.ModTime(ctx))
-		switch err {
-		case nil, fs.ErrorCantSetModTime, fs.ErrorCantSetModTimeWithoutDelete:
-		default:
-			return nil, fmt.Errorf("multi-thread copy: failed to set modification time: %w", err)
+	// OpenWriterAt doesn't set metadata so we need to set it on completion
+	if usingOpenWriterAt {
+		setModTime := true
+		if ci.Metadata {
+			do, ok := obj.(fs.SetMetadataer)
+			if ok {
+				meta, err := fs.GetMetadataOptions(ctx, f, src, options)
+				if err != nil {
+					return nil, fmt.Errorf("multi-thread copy: failed to read metadata from source object: %w", err)
+				}
+				if _, foundMeta := meta["mtime"]; !foundMeta {
+					meta.Set("mtime", src.ModTime(ctx).Format(time.RFC3339Nano))
+				}
+				err = do.SetMetadata(ctx, meta)
+				if err != nil {
+					return nil, fmt.Errorf("multi-thread copy: failed to set metadata: %w", err)
+				}
+				setModTime = false
+			} else {
+				fs.Errorf(obj, "multi-thread copy: can't set metadata as SetMetadata isn't implemented in: %v", f)
+			}
+		}
+		if setModTime {
+			err = obj.SetModTime(ctx, src.ModTime(ctx))
+			switch err {
+			case nil, fs.ErrorCantSetModTime, fs.ErrorCantSetModTimeWithoutDelete:
+			default:
+				return nil, fmt.Errorf("multi-thread copy: failed to set modification time: %w", err)
+			}
 		}
 	}
 

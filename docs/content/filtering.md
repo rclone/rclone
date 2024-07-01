@@ -362,7 +362,7 @@ processed in.
 E.g. `rclone ls remote: --exclude *.bak` excludes all .bak files
 from listing.
 
-E.g. `rclone size remote: "--exclude /dir/**"` returns the total size of
+E.g. `rclone size remote: --exclude "/dir/**"` returns the total size of
 all files on `remote:` excluding those in root directory `dir` and sub
 directories.
 

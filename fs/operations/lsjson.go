@@ -119,7 +119,7 @@ func newListJSON(ctx context.Context, fsrc fs.Fs, remote string, opt *ListJSONOp
 		lj.dirs = false
 	}
 	if opt.ShowEncrypted {
-		fsInfo, _, _, config, err := fs.ConfigFs(fsrc.Name() + ":" + fsrc.Root())
+		fsInfo, _, _, config, err := fs.ConfigFs(fs.ConfigStringFull(fsrc))
 		if err != nil {
 			return nil, fmt.Errorf("ListJSON failed to load config for crypt remote: %w", err)
 		}
@@ -194,6 +194,14 @@ func (lj *listJSON) entry(ctx context.Context, entry fs.DirEntry) (*ListJSONItem
 		}
 		item.Encrypted = path.Base(item.EncryptedPath)
 	}
+	if lj.opt.Metadata {
+		metadata, err := fs.GetMetadata(ctx, entry)
+		if err != nil {
+			fs.Errorf(entry, "Failed to read metadata: %v", err)
+		} else if metadata != nil {
+			item.Metadata = metadata
+		}
+	}
 	if do, ok := entry.(fs.IDer); ok {
 		item.ID = do.ID()
 	}
@@ -222,14 +230,6 @@ func (lj *listJSON) entry(ctx context.Context, entry fs.DirEntry) (*ListJSONItem
 		if lj.canGetTier {
 			if do, ok := x.(fs.GetTierer); ok {
 				item.Tier = do.GetTier()
-			}
-		}
-		if lj.opt.Metadata {
-			metadata, err := fs.GetMetadata(ctx, x)
-			if err != nil {
-				fs.Errorf(x, "Failed to read metadata: %v", err)
-			} else if metadata != nil {
-				item.Metadata = metadata
 			}
 		}
 	default:

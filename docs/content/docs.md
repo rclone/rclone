@@ -77,6 +77,7 @@ See the following for detailed instructions for
   * [Storj](/storj/)
   * [SugarSync](/sugarsync/)
   * [Union](/union/)
+  * [Uloz.to](/ulozto/)
   * [Uptobox](/uptobox/)
   * [WebDAV](/webdav/)
   * [Yandex Disk](/yandex/)
@@ -90,7 +91,24 @@ Rclone syncs a directory tree from one storage system to another.
 
 Its syntax is like this
 
-    Syntax: [options] subcommand <parameters> <parameters...>
+    rclone subcommand [options] <parameters> <parameters...>
+
+A `subcommand` is a the rclone operation required, (e.g. `sync`,
+`copy`, `ls`).
+
+An `option` is a single letter flag (e.g. `-v`) or a group of single
+letter flags (e.g. `-Pv`) or a long flag (e.g. `--progress`). No
+options are required. Options can come after the `subcommand` or in
+between parameters too or on the end, but only global options can be
+used before the `subcommand`. Anything after a `--` option will not be
+interpreted as an option so if you need to add a parameter which
+starts with a `-` then put a `--` on its own first, eg
+
+    rclone lsf -- -directory-starting-with-dash
+
+A `parameter` is usually a file path or [rclone remote](#syntax-of-remote-paths), eg
+`/path/to/file` or `remote:path/to/file` but it can be other things -
+the `subcommand` help will tell you what.
 
 Source and destination paths are specified by the name you gave the
 storage system in the config file then the sub path, e.g.
@@ -446,17 +464,20 @@ This can be used when scripting to make aged backups efficiently, e.g.
 
 ## Metadata support {#metadata}
 
-Metadata is data about a file which isn't the contents of the file.
-Normally rclone only preserves the modification time and the content
-(MIME) type where possible.
+Metadata is data about a file (or directory) which isn't the contents
+of the file (or directory). Normally rclone only preserves the
+modification time and the content (MIME) type where possible.
 
-Rclone supports preserving all the available metadata on files (not
-directories) when using the `--metadata` or `-M` flag.
+Rclone supports preserving all the available metadata on files and
+directories when using the `--metadata` or `-M` flag.
 
 Exactly what metadata is supported and what that support means depends
 on the backend. Backends that support metadata have a metadata section
 in their docs and are listed in the [features table](/overview/#features)
 (Eg [local](/local/#metadata), [s3](/s3/#metadata))
+
+Some backends don't support metadata, some only support metadata on
+files and some support metadata on both files and directories.
 
 Rclone only supports a one-time sync of metadata. This means that
 metadata will be synced from the source object to the destination
@@ -477,6 +498,14 @@ This flag can be repeated as many times as necessary.
 The [--metadata-mapper](#metadata-mapper) flag can be used to pass the
 name of a program in which can transform metadata when it is being
 copied from source to destination.
+
+Rclone supports `--metadata-set` and `--metadata-mapper` when doing
+sever side `Move` and server side `Copy`, but not when doing server
+side `DirMove` (renaming a directory) as this would involve recursing
+into the directory. Note that you can disable `DirMove` with
+`--disable DirMove` and rclone will revert back to using `Move` for
+each individual object where `--metadata-set` and `--metadata-mapper`
+are supported.
 
 ### Types of metadata
 
@@ -1560,10 +1589,10 @@ some context for the `Metadata` which may be important.
 - `SrcFsType` is the name of the source backend.
 - `DstFs` is the config string for the remote that the object is being copied to
 - `DstFsType` is the name of the destination backend.
-- `Remote` is the path of the file relative to the root.
-- `Size`, `MimeType`, `ModTime` are attributes of the file.
+- `Remote` is the path of the object relative to the root.
+- `Size`, `MimeType`, `ModTime` are attributes of the object.
 - `IsDir` is `true` if this is a directory (not yet implemented).
-- `ID` is the source `ID` of the file if known.
+- `ID` is the source `ID` of the object if known.
 - `Metadata` is the backend specific metadata as described in the backend docs.
 
 ```json
@@ -1806,6 +1835,11 @@ files if they are incorrect as it would normally.
 This can be used if the remote is being synced with another tool also
 (e.g. the Google Drive client).
 
+### --no-update-dir-modtime ###
+
+When using this flag, rclone won't update modification times of remote
+directories if they are incorrect as it would normally.
+
 ### --order-by string ###
 
 The `--order-by` flag controls the order in which files in the backlog
@@ -1908,6 +1942,10 @@ with the `--stats` flag.
 
 This can be used with the `--stats-one-line` flag for a simpler
 display.
+
+To change the display length of filenames (for different terminal widths),
+see the `--stats-file-name-length` option.  The default output is formatted
+for 80 character wide terminals.
 
 Note: On Windows until [this bug](https://github.com/Azure/go-ansiterm/issues/26)
 is fixed all non-ASCII characters will be replaced with `.` when
@@ -2747,7 +2785,7 @@ it will log a high priority message if the retry was successful.
   * `6` - Less serious errors (like 461 errors from dropbox) (NoRetry errors)
   * `7` - Fatal error (one that more retries won't fix, like account suspended) (Fatal errors)
   * `8` - Transfer exceeded - limit set by --max-transfer reached
-  * `9` - Operation successful, but no files transferred
+  * `9` - Operation successful, but no files transferred (Requires [`--error-on-no-transfer`](#error-on-no-transfer))
   * `10` - Duration exceeded - limit set by --max-duration reached
 
 Environment Variables

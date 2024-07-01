@@ -1,5 +1,4 @@
 //go:build linux || (darwin && amd64)
-// +build linux darwin,amd64
 
 package mount2
 
@@ -156,6 +155,9 @@ func (n *Node) Open(ctx context.Context, flags uint32) (fh fusefs.FileHandle, fu
 	}
 	// If size unknown then use direct io to read
 	if entry := n.node.DirEntry(); entry != nil && entry.Size() < 0 {
+		fuseFlags |= fuse.FOPEN_DIRECT_IO
+	}
+	if n.fsys.opt.DirectIO {
 		fuseFlags |= fuse.FOPEN_DIRECT_IO
 	}
 	return newFileHandle(handle, n.fsys), fuseFlags, 0

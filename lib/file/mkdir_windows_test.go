@@ -1,5 +1,4 @@
 //go:build windows
-// +build windows
 
 package file
 
@@ -35,7 +34,11 @@ func TestMkdirAll(t *testing.T) {
 	if err != nil {
 		t.Fatalf("create %q: %s", fpath, err)
 	}
-	defer f.Close()
+	defer func() {
+		if err := f.Close(); err != nil {
+			t.Fatalf("Close %q: %s", fpath, err)
+		}
+	}()
 
 	// Can't make directory named after file.
 	err = MkdirAll(fpath, 0777)

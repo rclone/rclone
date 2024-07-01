@@ -6,9 +6,14 @@ import (
 	"testing"
 )
 
+// CI returns true if we are running on the CI server
+func CI() bool {
+	return os.Getenv("CI") != ""
+}
+
 // SkipUnreliable skips this test if running on CI
 func SkipUnreliable(t *testing.T) {
-	if os.Getenv("CI") == "" {
+	if !CI() {
 		return
 	}
 	t.Skip("Skipping Unreliable Test on CI")

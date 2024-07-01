@@ -29,6 +29,10 @@ func (b *bisyncRun) indent(tag, file, msg string) {
 		logf = fs.Logf
 	}
 
+	if b.opt.DryRun {
+		logf = fs.Logf
+	}
+
 	if tag == "Path1" {
 		tag = Color(terminal.CyanFg, "Path1")
 	} else {

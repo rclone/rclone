@@ -328,7 +328,7 @@ func (opt *LoggerOpt) SetListFormat(ctx context.Context, cmdFlags *pflag.FlagSet
 // NewListJSON makes a new *listJSON for destAfter
 func (opt *LoggerOpt) NewListJSON(ctx context.Context, fdst fs.Fs, remote string) {
 	opt.LJ, _ = newListJSON(ctx, fdst, remote, &opt.JSONOpt)
-	fs.Debugf(nil, "%v", opt.LJ)
+	//fs.Debugf(nil, "%v", opt.LJ)
 }
 
 // JSONEntry returns a *ListJSONItem for destAfter
