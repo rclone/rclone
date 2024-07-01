@@ -103,7 +103,6 @@ func (w *objectChunkWriter) WriteChunk(ctx context.Context, chunkNumber int, rea
 
 		opts := rest.Opts{
 			Method:        "POST",
-			Path:          "/api/uploads/" + w.uploadInfo.uploadID,
 			Body:          reader,
 			ContentLength: &size,
 			Parameters: url.Values{
@@ -113,6 +112,13 @@ func (w *objectChunkWriter) WriteChunk(ctx context.Context, chunkNumber int, rea
 				"channelId": []string{strconv.FormatInt(w.uploadInfo.channelID, 10)},
 				"encrypted": []string{strconv.FormatBool(w.uploadInfo.encryptFile)},
 			},
+		}
+
+		if w.f.opt.UploadHost != "" {
+			opts.RootURL = w.f.opt.UploadHost + "/api/uploads/" + w.uploadInfo.uploadID
+
+		} else {
+			opts.Path = "/api/uploads/" + w.uploadInfo.uploadID
 		}
 
 		resp, err := w.f.srv.CallJSON(ctx, &opts, nil, &response)
@@ -281,7 +287,6 @@ func (o *Object) uploadMultipart(ctx context.Context, in io.Reader, src fs.Objec
 
 			opts := rest.Opts{
 				Method:        "POST",
-				Path:          "/api/uploads/" + uploadInfo.uploadID,
 				Body:          partReader,
 				ContentLength: &n,
 				Parameters: url.Values{
@@ -291,6 +296,13 @@ func (o *Object) uploadMultipart(ctx context.Context, in io.Reader, src fs.Objec
 					"channelId": []string{strconv.FormatInt(uploadInfo.channelID, 10)},
 					"encrypted": []string{strconv.FormatBool(uploadInfo.encryptFile)},
 				},
+			}
+
+			if o.fs.opt.UploadHost != "" {
+				opts.RootURL = o.fs.opt.UploadHost + "/api/uploads/" + uploadInfo.uploadID
+
+			} else {
+				opts.Path = "/api/uploads/" + uploadInfo.uploadID
 			}
 
 			var partInfo api.PartFile

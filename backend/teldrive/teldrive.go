@@ -71,6 +71,11 @@ func init() {
 			Advanced: true,
 		},
 			{
+				Help:      "Upload Api Host",
+				Name:      "upload_host",
+				Sensitive: true,
+			},
+			{
 				Name:    "encrypt_files",
 				Default: false,
 				Help:    "Enable Native Teldrive Encryption",
@@ -87,6 +92,7 @@ func init() {
 // Options defines the configuration for this backend
 type Options struct {
 	ApiHost           string               `config:"api_host"`
+	UploadHost        string               `config:"upload_host"`
 	AccessToken       string               `config:"access_token"`
 	ChunkSize         fs.SizeSuffix        `config:"chunk_size"`
 	RandomChunkName   bool                 `config:"random_chunk_name"`
