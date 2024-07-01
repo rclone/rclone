@@ -555,21 +555,8 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	}
 
 	if o.size > 0 {
+
 		opts := rest.Opts{
-			Method: "DELETE",
-			Path:   "/api/files/" + o.id + "/parts",
-		}
-
-		err = o.fs.pacer.Call(func() (bool, error) {
-			resp, err := o.fs.srv.Call(ctx, &opts)
-			return shouldRetry(ctx, resp, err)
-		})
-
-		if err != nil {
-			return err
-		}
-
-		opts = rest.Opts{
 			Method: "DELETE",
 			Path:   "/api/uploads/" + uploadInfo.uploadID,
 		}
@@ -581,6 +568,15 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		if err != nil {
 			return err
 		}
+		opts = rest.Opts{
+			Method: "DELETE",
+			Path:   "/api/files/" + o.id + "/parts",
+		}
+
+		o.fs.pacer.Call(func() (bool, error) {
+			resp, err := o.fs.srv.Call(ctx, &opts)
+			return shouldRetry(ctx, resp, err)
+		})
 
 	}
 

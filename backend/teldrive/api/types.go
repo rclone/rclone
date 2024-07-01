@@ -108,7 +108,7 @@ type PartFile struct {
 
 type FilePart struct {
 	ID   int    `json:"id"`
-	Salt string `json:"salt"`
+	Salt string `json:"salt,omitempty"`
 }
 
 type CreateFileRequest struct {
