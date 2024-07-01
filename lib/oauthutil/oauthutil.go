@@ -102,6 +102,10 @@ var SharedOptions = []fs.Option{{
 	Name:     config.ConfigTokenURL,
 	Help:     "Token server url.\n\nLeave blank to use the provider defaults.",
 	Advanced: true,
+}, {
+	Name:     config.ConfigDeviceURL,
+	Help:     "Device grant server url.\n\nLeave blank to use the provider defaults.",
+	Advanced: true,
 }}
 
 // oldToken contains an end-user's tokens.
@@ -396,6 +400,11 @@ func overrideCredentials(name string, m configmap.Mapper, origConfig *oauth2.Con
 		newConfig.Endpoint.TokenURL = TokenURL
 		changed = true
 	}
+	DeviceURL, ok := m.Get(config.ConfigDeviceURL)
+	if ok && DeviceURL != "" {
+		newConfig.Endpoint.DeviceAuthURL = DeviceURL
+		changed = true
+	}
 	return newConfig, changed
 }
 
@@ -459,11 +468,12 @@ type CheckAuthFn func(*oauth2.Config, *AuthResult) error
 
 // Options for the oauth config
 type Options struct {
-	OAuth2Config *oauth2.Config          // Basic config for oauth2
-	NoOffline    bool                    // If set then "access_type=offline" parameter is not passed
-	CheckAuth    CheckAuthFn             // When the AuthResult is known the checkAuth function is called if set
-	OAuth2Opts   []oauth2.AuthCodeOption // extra oauth2 options
-	StateBlankOK bool                    // If set, state returned as "" is deemed to be OK
+	OAuth2Config    *oauth2.Config          // Basic config for oauth2
+	NoOffline       bool                    // If set then "access_type=offline" parameter is not passed
+	CheckAuth       CheckAuthFn             // When the AuthResult is known the checkAuth function is called if set
+	OAuth2Opts      []oauth2.AuthCodeOption // extra oauth2 options
+	StateBlankOK    bool                    // If set, state returned as "" is deemed to be OK
+	DeviceGrantType string                  // If set, changes the default (rfc) grant type to the one specified
 }
 
 // ConfigOut returns a config item suitable for the backend config
@@ -537,6 +547,16 @@ func ConfigOAuth(ctx context.Context, name string, m configmap.Mapper, ri *fs.Re
 		opt, err := getOAuth()
 		if err != nil {
 			return nil, err
+		}
+		if deviceCodeAuthPossible(opt.OAuth2Config) {
+			token, err := getDeviceCodeAuthURL(name, m, opt.OAuth2Config, opt)
+
+			if err != nil {
+				return nil, err
+			}
+
+			PutToken(name, m, token, false)
+			return fs.ConfigGoto(newState("*oauth-done"))
 		}
 		if noWebserverNeeded(opt.OAuth2Config) {
 			authURL, _, err := getAuthURL(name, m, opt.OAuth2Config, opt)
@@ -650,9 +670,99 @@ func init() {
 	fs.ConfigOAuth = ConfigOAuth
 }
 
+func deviceCodeAuthPossible(oauthConfig *oauth2.Config) bool {
+	return oauthConfig.Endpoint.DeviceAuthURL != ""
+}
+
 // Return true if can run without a webserver and just entering a code
 func noWebserverNeeded(oauthConfig *oauth2.Config) bool {
 	return oauthConfig.RedirectURL == TitleBarRedirectURL
+}
+
+func getDeviceCodeAuthURL(name string, m configmap.Mapper, oauthConfig *oauth2.Config, opt *Options) (token *oauth2.Token, err error) {
+	oauthConfig, _ = overrideCredentials(name, m, oauthConfig)
+
+	ctx := context.Background()
+
+	deviceCode, err := oauthConfig.DeviceAuth(ctx)
+
+	if err != nil {
+		return nil, err
+	}
+
+	fmt.Printf("Visit: %v and enter: %v\n", deviceCode.VerificationURI, deviceCode.UserCode)
+
+	token, err = waitForDeviceAuthorization(oauthConfig, opt, deviceCode)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return token, nil
+}
+
+// A tokenOrError is either an OAuth2 Token response or an error indicating why
+// such a response failed.
+type tokenOrError struct {
+	*oauth2.Token
+	Error string `json:"error,omitempty"`
+}
+
+// WaitForDeviceAuthorization polls the token URL waiting for the user to
+// authorize the app. Upon authorization, it returns the new token. If
+// authorization fails then an error is returned. If that failure was due to a
+// user explicitly denying access, the error is ErrAccessDenied.
+func waitForDeviceAuthorization(oauthConfig *oauth2.Config, opt *Options, deviceCode *oauth2.DeviceAuthResponse) (*oauth2.Token, error) {
+	client := http.DefaultClient
+
+	grantType := opt.DeviceGrantType
+	if grantType == "" {
+		grantType = "urn:ietf:params:oauth:grant-type:device_code"
+	}
+
+	for {
+		resp, err := client.PostForm(oauthConfig.Endpoint.TokenURL,
+			url.Values{
+				"client_secret": {oauthConfig.ClientSecret},
+				"client_id":     {oauthConfig.ClientID},
+				"code":          {deviceCode.DeviceCode},
+				"grant_type":    {grantType}})
+		if err != nil {
+			return nil, err
+		}
+
+		if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusBadRequest {
+			return nil, fmt.Errorf("HTTP error %v (%v) when polling for OAuth token",
+				resp.StatusCode, http.StatusText(resp.StatusCode))
+		}
+
+		// Unmarshal response, checking for errors
+		var token tokenOrError
+
+		dec := json.NewDecoder(resp.Body)
+		if err := dec.Decode(&token); err != nil {
+			return nil, err
+		}
+
+		switch token.Error {
+		case "":
+
+			return token.Token, nil
+		case "authorization_pending":
+
+		case "slow_down":
+
+			deviceCode.Interval *= 2
+		case "access_denied":
+
+			return nil, errors.New("access denied by user")
+		default:
+
+			return nil, fmt.Errorf("authorization failed: %v", token.Error)
+		}
+
+		time.Sleep(time.Duration(deviceCode.Interval) * time.Second)
+	}
 }
 
 // get the URL we need to send the user to
