@@ -522,41 +522,12 @@ var backendFlags map[string]struct{}
 func AddBackendFlags() {
 	backendFlags = map[string]struct{}{}
 	for _, fsInfo := range fs.Registry {
-		done := map[string]struct{}{}
+		flags.AddFlagsFromOptions(pflag.CommandLine, fsInfo.Prefix, fsInfo.Options)
+		// Store the backend flag names for the help generator
 		for i := range fsInfo.Options {
 			opt := &fsInfo.Options[i]
-			// Skip if done already (e.g. with Provider options)
-			if _, doneAlready := done[opt.Name]; doneAlready {
-				continue
-			}
-			done[opt.Name] = struct{}{}
-			// Make a flag from each option
 			name := opt.FlagName(fsInfo.Prefix)
-			found := pflag.CommandLine.Lookup(name) != nil
-			if !found {
-				// Take first line of help only
-				help := strings.TrimSpace(opt.Help)
-				if nl := strings.IndexRune(help, '\n'); nl >= 0 {
-					help = help[:nl]
-				}
-				help = strings.TrimRight(strings.TrimSpace(help), ".!?")
-				if opt.IsPassword {
-					help += " (obscured)"
-				}
-				flag := pflag.CommandLine.VarPF(opt, name, opt.ShortOpt, help)
-				flags.SetDefaultFromEnv(pflag.CommandLine, name)
-				if _, isBool := opt.Default.(bool); isBool {
-					flag.NoOptDefVal = "true"
-				}
-				// Hide on the command line if requested
-				if opt.Hide&fs.OptionHideCommandLine != 0 {
-					flag.Hidden = true
-				}
-				backendFlags[name] = struct{}{}
-			} else {
-				fs.Errorf(nil, "Not adding duplicate flag --%s", name)
-			}
-			// flag.Hidden = true
+			backendFlags[name] = struct{}{}
 		}
 	}
 }

@@ -151,7 +151,7 @@ func installFlag(flags *pflag.FlagSet, name string, groupsString string) {
 	}
 
 	// Add flag to Group if it is a global flag
-	if flags == pflag.CommandLine {
+	if groupsString != "" && flags == pflag.CommandLine {
 		for _, groupName := range strings.Split(groupsString, ",") {
 			if groupName == "rc-" {
 				groupName = "RC"
@@ -162,24 +162,6 @@ func installFlag(flags *pflag.FlagSet, name string, groupsString string) {
 			}
 			group.Add(flag)
 		}
-	}
-}
-
-// SetDefaultFromEnv constructs a name from the flag passed in and
-// sets the default from the environment if possible
-//
-// Used to create backend flags like --skip-links
-func SetDefaultFromEnv(flags *pflag.FlagSet, name string) {
-	envKey := fs.OptionToEnv(name)
-	envValue, found := os.LookupEnv(envKey)
-	if found {
-		flag := flags.Lookup(name)
-		if flag == nil {
-			log.Fatalf("Couldn't find flag --%q", name)
-		}
-		fs.Debugf(nil, "Setting default for %s=%q from environment variable %s", name, envValue, envKey)
-		//err = tempValue.Set()
-		flag.DefValue = envValue
 	}
 }
 
@@ -349,4 +331,46 @@ func CountP(name, shorthand string, usage string, groups string) (out *int) {
 func CountVarP(flags *pflag.FlagSet, p *int, name, shorthand string, usage string, groups string) {
 	flags.CountVarP(p, name, shorthand, usage)
 	installFlag(flags, name, groups)
+}
+
+// AddFlagsFromOptions takes a slice of fs.Option and adds flags for all of them
+func AddFlagsFromOptions(flags *pflag.FlagSet, prefix string, options fs.Options) {
+	done := map[string]struct{}{}
+	for i := range options {
+		opt := &options[i]
+		// Skip if done already (e.g. with Provider options)
+		if _, doneAlready := done[opt.Name]; doneAlready {
+			continue
+		}
+		done[opt.Name] = struct{}{}
+		// Make a flag from each option
+		if prefix == "" {
+			opt.NoPrefix = true
+		}
+		name := opt.FlagName(prefix)
+		found := flags.Lookup(name) != nil
+		if !found {
+			// Take first line of help only
+			help := strings.TrimSpace(opt.Help)
+			if nl := strings.IndexRune(help, '\n'); nl >= 0 {
+				help = help[:nl]
+			}
+			help = strings.TrimRight(strings.TrimSpace(help), ".!?")
+			if opt.IsPassword {
+				help += " (obscured)"
+			}
+			flag := flags.VarPF(opt, name, opt.ShortOpt, help)
+			installFlag(flags, name, opt.Groups)
+			if _, isBool := opt.Default.(bool); isBool {
+				flag.NoOptDefVal = "true"
+			}
+			// Hide on the command line if requested
+			if opt.Hide&fs.OptionHideCommandLine != 0 {
+				flag.Hidden = true
+			}
+		} else {
+			fs.Errorf(nil, "Not adding duplicate flag --%s", name)
+		}
+		// flag.Hidden = true
+	}
 }
