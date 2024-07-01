@@ -1695,18 +1695,31 @@ func (o *Object) upload(ctx context.Context, in io.Reader, src fs.ObjectInfo, wi
 
 	// Calculate gcid; grabbed from package jottacloud
 	var gcid string
-	// unwrap the accounting from the input, we use wrap to put it
-	// back on after the buffering
-	var wrap accounting.WrapFn
-	in, wrap = accounting.UnWrap(in)
-	var cleanup func()
-	gcid, in, cleanup, err = readGcid(in, size, int64(o.fs.opt.HashMemoryThreshold))
-	defer cleanup()
-	if err != nil {
-		return fmt.Errorf("failed to calculate gcid: %w", err)
+	if srcObj := fs.UnWrapObjectInfo(src); srcObj != nil && srcObj.Fs().Features().IsLocal {
+		// No buffering; directly calculate gcid from source
+		rc, err := srcObj.Open(ctx)
+		if err != nil {
+			return fmt.Errorf("failed to open src: %w", err)
+		}
+		defer fs.CheckClose(rc, &err)
+
+		if gcid, err = calcGcid(rc, srcObj.Size()); err != nil {
+			return fmt.Errorf("failed to calculate gcid: %w", err)
+		}
+	} else {
+		// unwrap the accounting from the input, we use wrap to put it
+		// back on after the buffering
+		var wrap accounting.WrapFn
+		in, wrap = accounting.UnWrap(in)
+		var cleanup func()
+		gcid, in, cleanup, err = readGcid(in, size, int64(o.fs.opt.HashMemoryThreshold))
+		defer cleanup()
+		if err != nil {
+			return fmt.Errorf("failed to calculate gcid: %w", err)
+		}
+		// Wrap the accounting back onto the stream
+		in = wrap(in)
 	}
-	// Wrap the accounting back onto the stream
-	in = wrap(in)
 
 	if !withTemp {
 		info, err := o.fs.upload(ctx, in, leaf, dirID, gcid, size, options...)
