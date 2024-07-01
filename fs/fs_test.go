@@ -314,12 +314,6 @@ func TestOptionGetters(t *testing.T) {
 		}
 	}()
 
-	fsInfo := &RegInfo{
-		Name:    "local",
-		Prefix:  "local",
-		Options: testOptions,
-	}
-
 	oldConfigFileGet := ConfigFileGet
 	ConfigFileGet = func(section, key string) (string, bool) {
 		if section == "sausage" && key == "key1" {
@@ -337,16 +331,16 @@ func TestOptionGetters(t *testing.T) {
 	configEnvVarsGetter := configEnvVars("local")
 
 	// A configmap.Getter to read from the environment RCLONE_option_name
-	optionEnvVarsGetter := optionEnvVars{fsInfo}
+	optionEnvVarsGetter := optionEnvVars{"local", testOptions}
 
 	// A configmap.Getter to read either the default value or the set
 	// value from the RegInfo.Options
 	regInfoValuesGetterFalse := &regInfoValues{
-		fsInfo:     fsInfo,
+		options:    testOptions,
 		useDefault: false,
 	}
 	regInfoValuesGetterTrue := &regInfoValues{
-		fsInfo:     fsInfo,
+		options:    testOptions,
 		useDefault: true,
 	}
 

@@ -88,7 +88,7 @@ func (vol *Volume) applyOptions(volOpt VolOpts) error {
 		fsType = "local"
 		if fsName != "" {
 			var ok bool
-			fsType, ok = fs.ConfigMap(nil, fsName, nil).Get("type")
+			fsType, ok = fs.ConfigMap("", nil, fsName, nil).Get("type")
 			if !ok {
 				return fs.ErrorNotFoundInConfigFile
 			}

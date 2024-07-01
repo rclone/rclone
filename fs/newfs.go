@@ -83,7 +83,7 @@ func ConfigFs(path string) (fsInfo *RegInfo, configName, fsPath string, config *
 	if err != nil {
 		return
 	}
-	config = ConfigMap(fsInfo, configName, connectionStringConfig)
+	config = ConfigMap(fsInfo.Prefix, fsInfo.Options, configName, connectionStringConfig)
 	return
 }
 
@@ -101,7 +101,7 @@ func ParseRemote(path string) (fsInfo *RegInfo, configName, fsPath string, conne
 		if strings.HasPrefix(configName, ":") {
 			fsName = configName[1:]
 		} else {
-			m := ConfigMap(nil, configName, parsed.Config)
+			m := ConfigMap("", nil, configName, parsed.Config)
 			fsName, ok = m.Get("type")
 			if !ok {
 				return nil, "", "", nil, ErrorNotFoundInConfigFile
