@@ -232,6 +232,7 @@ func TestOptionMarshalJSON(t *testing.T) {
 	assert.NoError(t, err)
 	require.Equal(t, `{
 "Name": "case_insensitive",
+"FieldName": "",
 "Help": "",
 "Provider": "",
 "Default": false,

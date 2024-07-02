@@ -149,6 +149,8 @@ const (
 //
 // This also describes command line options and environment variables.
 //
+// It is also used to describe options for the API.
+//
 // To create a multiple-choice option, specify the possible values
 // in the Examples property. Whether the option's value is required
 // to be one of these depends on other properties:
@@ -159,7 +161,9 @@ const (
 //     and do not set Default.
 type Option struct {
 	Name       string           // name of the option in snake_case
+	FieldName  string           // name of the field used in the rc JSON - will be auto filled normally
 	Help       string           // help, start with a single sentence on a single line that will be extracted for command line help
+	Groups     string           `json:",omitempty"` // groups this option belongs to - comma separated string for options classification
 	Provider   string           // set to filter on provider
 	Default    interface{}      // default value, nil => "", if set (and not to nil or "") then Required does nothing
 	Value      interface{}      // value to be set by flags
