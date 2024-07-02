@@ -28,8 +28,8 @@ var (
 
 // Constants uses in the tests
 const (
-	writeBackDelay      = 100 * time.Millisecond // A short writeback delay for testing
-	waitForWritersDelay = 30 * time.Second       // time to wait for existing writers
+	writeBackDelay      = fs.Duration(100 * time.Millisecond) // A short writeback delay for testing
+	waitForWritersDelay = 30 * time.Second                    // time to wait for existing writers
 )
 
 // TestMain drives the tests

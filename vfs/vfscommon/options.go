@@ -10,13 +10,13 @@ import (
 
 // Options is options for creating the vfs
 type Options struct {
-	NoSeek             bool          // don't allow seeking if set
-	NoChecksum         bool          // don't check checksums if set
-	ReadOnly           bool          // if set VFS is read only
-	NoModTime          bool          // don't read mod times for files
-	DirCacheTime       time.Duration // how long to consider directory listing cache valid
-	Refresh            bool          // refreshes the directory listing recursively on start
-	PollInterval       time.Duration
+	NoSeek             bool        // don't allow seeking if set
+	NoChecksum         bool        // don't check checksums if set
+	ReadOnly           bool        // if set VFS is read only
+	NoModTime          bool        // don't read mod times for files
+	DirCacheTime       fs.Duration // how long to consider directory listing cache valid
+	Refresh            bool        // refreshes the directory listing recursively on start
+	PollInterval       fs.Duration
 	Umask              int
 	UID                uint32
 	GID                uint32
@@ -25,15 +25,15 @@ type Options struct {
 	ChunkSize          fs.SizeSuffix // if > 0 read files in chunks
 	ChunkSizeLimit     fs.SizeSuffix // if > ChunkSize double the chunk size after each chunk until reached
 	CacheMode          CacheMode
-	CacheMaxAge        time.Duration
+	CacheMaxAge        fs.Duration
 	CacheMaxSize       fs.SizeSuffix
 	CacheMinFreeSpace  fs.SizeSuffix
-	CachePollInterval  time.Duration
+	CachePollInterval  fs.Duration
 	CaseInsensitive    bool
 	BlockNormDupes     bool
-	WriteWait          time.Duration // time to wait for in-sequence write
-	ReadWait           time.Duration // time to wait for in-sequence read
-	WriteBack          time.Duration // time to wait before writing back dirty files
+	WriteWait          fs.Duration   // time to wait for in-sequence write
+	ReadWait           fs.Duration   // time to wait for in-sequence read
+	WriteBack          fs.Duration   // time to wait before writing back dirty files
 	ReadAhead          fs.SizeSuffix // bytes to read ahead in cache mode "full"
 	UsedIsSize         bool          // if true, use the `rclone size` algorithm for Used size
 	FastFingerprint    bool          // if set use fast fingerprints
@@ -45,9 +45,9 @@ var DefaultOpt = Options{
 	NoModTime:          false,
 	NoChecksum:         false,
 	NoSeek:             false,
-	DirCacheTime:       5 * 60 * time.Second,
+	DirCacheTime:       fs.Duration(5 * 60 * time.Second),
 	Refresh:            false,
-	PollInterval:       time.Minute,
+	PollInterval:       fs.Duration(time.Minute),
 	ReadOnly:           false,
 	Umask:              0,
 	UID:                ^uint32(0), // these values instruct WinFSP-FUSE to use the current user
@@ -55,16 +55,16 @@ var DefaultOpt = Options{
 	DirPerms:           os.FileMode(0777),
 	FilePerms:          os.FileMode(0666),
 	CacheMode:          CacheModeOff,
-	CacheMaxAge:        3600 * time.Second,
-	CachePollInterval:  60 * time.Second,
+	CacheMaxAge:        fs.Duration(3600 * time.Second),
+	CachePollInterval:  fs.Duration(60 * time.Second),
 	ChunkSize:          128 * fs.Mebi,
 	ChunkSizeLimit:     -1,
 	CacheMaxSize:       -1,
 	CacheMinFreeSpace:  -1,
 	CaseInsensitive:    runtime.GOOS == "windows" || runtime.GOOS == "darwin", // default to true on Windows and Mac, false otherwise
-	WriteWait:          1000 * time.Millisecond,
-	ReadWait:           20 * time.Millisecond,
-	WriteBack:          5 * time.Second,
+	WriteWait:          fs.Duration(1000 * time.Millisecond),
+	ReadWait:           fs.Duration(20 * time.Millisecond),
+	WriteBack:          fs.Duration(5 * time.Second),
 	ReadAhead:          0 * fs.Mebi,
 	UsedIsSize:         false,
 	DiskSpaceTotalSize: -1,

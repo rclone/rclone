@@ -722,7 +722,7 @@ func TestRWCacheUpdate(t *testing.T) {
 	opt := vfscommon.DefaultOpt
 	opt.CacheMode = vfscommon.CacheModeFull
 	opt.WriteBack = writeBackDelay
-	opt.DirCacheTime = 100 * time.Millisecond
+	opt.DirCacheTime = fs.Duration(100 * time.Millisecond)
 	r, vfs := newTestVFSOpt(t, &opt)
 
 	if r.Fremote.Precision() == fs.ModTimeNotSupported {
@@ -744,7 +744,7 @@ func TestRWCacheUpdate(t *testing.T) {
 		r.CheckRemoteItems(t, file1)
 
 		// Wait for directory cache to expire
-		time.Sleep(2 * opt.DirCacheTime)
+		time.Sleep(time.Duration(2 * opt.DirCacheTime))
 
 		// Check the file is OK via the VFS
 		data, err := vfs.ReadFile(filename)

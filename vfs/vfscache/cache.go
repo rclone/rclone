@@ -779,7 +779,7 @@ func (c *Cache) clean(kicked bool) {
 	c.mu.Unlock()
 
 	// Remove any files that are over age
-	c.purgeOld(c.opt.CacheMaxAge)
+	c.purgeOld(time.Duration(c.opt.CacheMaxAge))
 
 	// If have a maximum cache size...
 	if c.haveQuotas() {
@@ -830,7 +830,7 @@ func (c *Cache) cleaner(ctx context.Context) {
 	// Start cleaning the cache immediately
 	c.clean(false)
 	// Then every interval specified
-	timer := time.NewTicker(c.opt.CachePollInterval)
+	timer := time.NewTicker(time.Duration(c.opt.CachePollInterval))
 	defer timer.Stop()
 	for {
 		select {

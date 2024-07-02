@@ -231,9 +231,9 @@ func getVFSOption(vfsOpt *vfscommon.Options, opt rc.Params, key string) (ok bool
 	case "vfs-cache-mode":
 		err = getFVarP(&vfsOpt.CacheMode, opt, key)
 	case "vfs-cache-poll-interval":
-		vfsOpt.CachePollInterval, err = opt.GetDuration(key)
+		vfsOpt.CachePollInterval, err = opt.GetFsDuration(key)
 	case "vfs-cache-max-age":
-		vfsOpt.CacheMaxAge, err = opt.GetDuration(key)
+		vfsOpt.CacheMaxAge, err = opt.GetFsDuration(key)
 	case "vfs-cache-max-size":
 		err = getFVarP(&vfsOpt.CacheMaxSize, opt, key)
 	case "vfs-read-chunk-size":
@@ -243,11 +243,11 @@ func getVFSOption(vfsOpt *vfscommon.Options, opt rc.Params, key string) (ok bool
 	case "vfs-case-insensitive":
 		vfsOpt.CaseInsensitive, err = opt.GetBool(key)
 	case "vfs-write-wait":
-		vfsOpt.WriteWait, err = opt.GetDuration(key)
+		vfsOpt.WriteWait, err = opt.GetFsDuration(key)
 	case "vfs-read-wait":
-		vfsOpt.ReadWait, err = opt.GetDuration(key)
+		vfsOpt.ReadWait, err = opt.GetFsDuration(key)
 	case "vfs-write-back":
-		vfsOpt.WriteBack, err = opt.GetDuration(key)
+		vfsOpt.WriteBack, err = opt.GetFsDuration(key)
 	case "vfs-read-ahead":
 		err = getFVarP(&vfsOpt.ReadAhead, opt, key)
 	case "vfs-used-is-size":
@@ -259,9 +259,9 @@ func getVFSOption(vfsOpt *vfscommon.Options, opt rc.Params, key string) (ok bool
 	case "no-checksum":
 		vfsOpt.NoChecksum, err = opt.GetBool(key)
 	case "dir-cache-time":
-		vfsOpt.DirCacheTime, err = opt.GetDuration(key)
+		vfsOpt.DirCacheTime, err = opt.GetFsDuration(key)
 	case "poll-interval":
-		vfsOpt.PollInterval, err = opt.GetDuration(key)
+		vfsOpt.PollInterval, err = opt.GetFsDuration(key)
 	case "read-only":
 		vfsOpt.ReadOnly, err = opt.GetBool(key)
 	case "dir-perms":

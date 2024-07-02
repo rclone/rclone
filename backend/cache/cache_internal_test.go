@@ -338,7 +338,7 @@ func TestInternalCachedUpdatedContentMatches(t *testing.T) {
 
 func TestInternalWrappedWrittenContentMatches(t *testing.T) {
 	id := fmt.Sprintf("tiwwcm%v", time.Now().Unix())
-	vfsflags.Opt.DirCacheTime = time.Second
+	vfsflags.Opt.DirCacheTime = fs.Duration(time.Second)
 	rootFs, _ := runInstance.newCacheFs(t, remoteName, id, true, true, nil)
 	if runInstance.rootIsCrypt {
 		t.Skip("test skipped with crypt remote")
@@ -368,7 +368,7 @@ func TestInternalWrappedWrittenContentMatches(t *testing.T) {
 
 func TestInternalLargeWrittenContentMatches(t *testing.T) {
 	id := fmt.Sprintf("tilwcm%v", time.Now().Unix())
-	vfsflags.Opt.DirCacheTime = time.Second
+	vfsflags.Opt.DirCacheTime = fs.Duration(time.Second)
 	rootFs, _ := runInstance.newCacheFs(t, remoteName, id, true, true, nil)
 	if runInstance.rootIsCrypt {
 		t.Skip("test skipped with crypt remote")
@@ -708,7 +708,7 @@ func TestInternalMaxChunkSizeRespected(t *testing.T) {
 
 func TestInternalExpiredEntriesRemoved(t *testing.T) {
 	id := fmt.Sprintf("tieer%v", time.Now().Unix())
-	vfsflags.Opt.DirCacheTime = time.Second * 4 // needs to be lower than the defined
+	vfsflags.Opt.DirCacheTime = fs.Duration(time.Second * 4) // needs to be lower than the defined
 	rootFs, _ := runInstance.newCacheFs(t, remoteName, id, true, true, nil)
 	cfs, err := runInstance.getCacheFs(rootFs)
 	require.NoError(t, err)
@@ -743,7 +743,7 @@ func TestInternalExpiredEntriesRemoved(t *testing.T) {
 }
 
 func TestInternalBug2117(t *testing.T) {
-	vfsflags.Opt.DirCacheTime = time.Second * 10
+	vfsflags.Opt.DirCacheTime = fs.Duration(time.Second * 10)
 
 	id := fmt.Sprintf("tib2117%v", time.Now().Unix())
 	rootFs, _ := runInstance.newCacheFs(t, remoteName, id, false, true, map[string]string{"info_age": "72h", "chunk_clean_interval": "15m"})

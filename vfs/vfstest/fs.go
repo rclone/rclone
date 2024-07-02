@@ -50,13 +50,13 @@ func RunTests(t *testing.T, useVFS bool, minimumRequiredCacheMode vfscommon.Cach
 	}
 	tests := []struct {
 		cacheMode vfscommon.CacheMode
-		writeBack time.Duration
+		writeBack fs.Duration
 	}{
 		{cacheMode: vfscommon.CacheModeOff},
 		{cacheMode: vfscommon.CacheModeMinimal},
 		{cacheMode: vfscommon.CacheModeWrites},
 		{cacheMode: vfscommon.CacheModeFull},
-		{cacheMode: vfscommon.CacheModeFull, writeBack: 100 * time.Millisecond},
+		{cacheMode: vfscommon.CacheModeFull, writeBack: fs.Duration(100 * time.Millisecond)},
 	}
 	for _, test := range tests {
 		if test.cacheMode < minimumRequiredCacheMode {
