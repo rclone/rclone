@@ -215,12 +215,40 @@ func (o *Option) GetValue() interface{} {
 
 // String turns Option into a string
 func (o *Option) String() string {
-	return fmt.Sprint(o.GetValue())
+	v := o.GetValue()
+	if stringArray, isStringArray := v.([]string); isStringArray {
+		// Treat empty string array as empty string
+		// This is to make the default value of the option help nice
+		if len(stringArray) == 0 {
+			return ""
+		}
+		// Encode string arrays as JSON
+		// The default Go encoding can't be decoded uniquely
+		buf, err := json.Marshal(stringArray)
+		if err != nil {
+			Errorf(nil, "Can't encode default value for %q key - ignoring: %v", o.Name, err)
+			return "[]"
+		}
+		return string(buf)
+	}
+	return fmt.Sprint(v)
 }
 
 // Set an Option from a string
 func (o *Option) Set(s string) (err error) {
-	newValue, err := configstruct.StringToInterface(o.GetValue(), s)
+	v := o.GetValue()
+	if stringArray, isStringArray := v.([]string); isStringArray {
+		if stringArray == nil {
+			stringArray = []string{}
+		}
+		// If this is still the default value then overwrite the defaults
+		if reflect.ValueOf(o.Default).Pointer() == reflect.ValueOf(v).Pointer() {
+			stringArray = []string{}
+		}
+		o.Value = append(stringArray, s)
+		return nil
+	}
+	newValue, err := configstruct.StringToInterface(v, s)
 	if err != nil {
 		return err
 	}
@@ -239,6 +267,11 @@ func (o *Option) Type() string {
 	// Try to call Type method on non-pointer
 	if do, ok := v.(typer); ok {
 		return do.Type()
+	}
+
+	// Special case []string
+	if _, isStringArray := v.([]string); isStringArray {
+		return "stringArray"
 	}
 
 	return reflect.TypeOf(v).Name()
