@@ -25,7 +25,7 @@ var _ fusefs.Node = (*File)(nil)
 // Attr fills out the attributes for the file
 func (f *File) Attr(ctx context.Context, a *fuse.Attr) (err error) {
 	defer log.Trace(f, "")("a=%+v, err=%v", a, &err)
-	a.Valid = f.fsys.opt.AttrTimeout
+	a.Valid = time.Duration(f.fsys.opt.AttrTimeout)
 	modTime := f.File.ModTime()
 	Size := uint64(f.File.Size())
 	Blocks := (Size + 511) / 512

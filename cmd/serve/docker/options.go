@@ -185,7 +185,7 @@ func getMountOption(mntOpt *mountlib.Options, opt rc.Params, key string) (ok boo
 	case "debug-fuse":
 		mntOpt.DebugFUSE, err = opt.GetBool(key)
 	case "attr-timeout":
-		mntOpt.AttrTimeout, err = opt.GetDuration(key)
+		mntOpt.AttrTimeout, err = opt.GetFsDuration(key)
 	case "option":
 		mntOpt.ExtraOptions, err = getStringArray(opt, key)
 	case "fuse-flag":
@@ -193,7 +193,7 @@ func getMountOption(mntOpt *mountlib.Options, opt rc.Params, key string) (ok boo
 	case "daemon":
 		mntOpt.Daemon, err = opt.GetBool(key)
 	case "daemon-timeout":
-		mntOpt.DaemonTimeout, err = opt.GetDuration(key)
+		mntOpt.DaemonTimeout, err = opt.GetFsDuration(key)
 	case "default-permissions":
 		mntOpt.DefaultPermissions, err = opt.GetBool(key)
 	case "allow-non-empty":

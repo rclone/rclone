@@ -7,6 +7,7 @@ package mount2
 import (
 	"os"
 	"syscall"
+	"time"
 
 	"github.com/hanwen/go-fuse/v2/fuse"
 	"github.com/rclone/rclone/cmd/mountlib"
@@ -88,14 +89,14 @@ func setAttr(node vfs.Node, attr *fuse.Attr) {
 // fill in AttrOut from node
 func (f *FS) setAttrOut(node vfs.Node, out *fuse.AttrOut) {
 	setAttr(node, &out.Attr)
-	out.SetTimeout(f.opt.AttrTimeout)
+	out.SetTimeout(time.Duration(f.opt.AttrTimeout))
 }
 
 // fill in EntryOut from node
 func (f *FS) setEntryOut(node vfs.Node, out *fuse.EntryOut) {
 	setAttr(node, &out.Attr)
-	out.SetEntryTimeout(f.opt.AttrTimeout)
-	out.SetAttrTimeout(f.opt.AttrTimeout)
+	out.SetEntryTimeout(time.Duration(f.opt.AttrTimeout))
+	out.SetAttrTimeout(time.Duration(f.opt.AttrTimeout))
 }
 
 // Translate errors from mountlib into Syscall error numbers
