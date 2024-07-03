@@ -29,7 +29,6 @@ import (
 	"github.com/rclone/rclone/fs/config/configflags"
 	"github.com/rclone/rclone/fs/config/flags"
 	"github.com/rclone/rclone/fs/filter"
-	"github.com/rclone/rclone/fs/filter/filterflags"
 	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/fs/fspath"
 	fslog "github.com/rclone/rclone/fs/log"
@@ -383,6 +382,12 @@ func StartStats() func() {
 
 // initConfig is run by cobra after initialising the flags
 func initConfig() {
+	// Set the global options from the flags
+	err := fs.GlobalOptionsInit()
+	if err != nil {
+		log.Fatalf("Failed to initialise global options: %v", err)
+	}
+
 	ctx := context.Background()
 	ci := fs.GetConfig(ctx)
 
@@ -407,12 +412,6 @@ func initConfig() {
 		// This enables virtual terminal processing on Windows 10,
 		// adding native support for ANSI/VT100 escape sequences.
 		terminal.EnableColorsStdout()
-	}
-
-	// Load filters
-	err := filterflags.Reload(ctx)
-	if err != nil {
-		log.Fatalf("Failed to load filters: %v", err)
 	}
 
 	// Write the args for debug purposes

@@ -13,10 +13,10 @@ import (
 )
 
 func clearOptionBlock() func() {
-	oldOptionBlock := optionBlock
-	optionBlock = map[string]interface{}{}
+	oldOptionBlock := fs.OptionsRegistry
+	fs.OptionsRegistry = map[string]fs.OptionsInfo{}
 	return func() {
-		optionBlock = oldOptionBlock
+		fs.OptionsRegistry = oldOptionBlock
 	}
 }
 
@@ -30,22 +30,20 @@ var testOptions = struct {
 
 func TestAddOption(t *testing.T) {
 	defer clearOptionBlock()()
-	assert.Equal(t, len(optionBlock), 0)
+	assert.Equal(t, len(fs.OptionsRegistry), 0)
 	AddOption("potato", &testOptions)
-	assert.Equal(t, len(optionBlock), 1)
-	assert.Equal(t, len(optionReload), 0)
-	assert.Equal(t, &testOptions, optionBlock["potato"])
+	assert.Equal(t, len(fs.OptionsRegistry), 1)
+	assert.Equal(t, &testOptions, fs.OptionsRegistry["potato"].Opt)
 }
 
 func TestAddOptionReload(t *testing.T) {
 	defer clearOptionBlock()()
-	assert.Equal(t, len(optionBlock), 0)
+	assert.Equal(t, len(fs.OptionsRegistry), 0)
 	reload := func(ctx context.Context) error { return nil }
 	AddOptionReload("potato", &testOptions, reload)
-	assert.Equal(t, len(optionBlock), 1)
-	assert.Equal(t, len(optionReload), 1)
-	assert.Equal(t, &testOptions, optionBlock["potato"])
-	assert.Equal(t, fmt.Sprintf("%p", reload), fmt.Sprintf("%p", optionReload["potato"]))
+	assert.Equal(t, len(fs.OptionsRegistry), 1)
+	assert.Equal(t, &testOptions, fs.OptionsRegistry["potato"].Opt)
+	assert.Equal(t, fmt.Sprintf("%p", reload), fmt.Sprintf("%p", fs.OptionsRegistry["potato"].Reload))
 }
 
 func TestOptionsBlocks(t *testing.T) {

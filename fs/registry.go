@@ -61,6 +61,22 @@ func (ri *RegInfo) FileName() string {
 // Options is a slice of configuration Option for a backend
 type Options []Option
 
+// Add more options returning a new options slice
+func (os Options) Add(newOptions Options) Options {
+	return append(os, newOptions...)
+}
+
+// AddPrefix adds more options with a prefix returning a new options slice
+func (os Options) AddPrefix(newOptions Options, prefix string, groups string) Options {
+	for _, opt := range newOptions {
+		// opt is a copy so can modify
+		opt.Name = prefix + "_" + opt.Name
+		opt.Groups = groups
+		os = append(os, opt)
+	}
+	return os
+}
+
 // Set the default values for the options
 func (os Options) setValues() {
 	for i := range os {
@@ -89,6 +105,19 @@ func (os Options) Get(name string) *Option {
 		}
 	}
 	return nil
+}
+
+// SetDefault sets the default for the Option corresponding to name
+//
+// Writes an ERROR level log if the option is not found
+func (os Options) SetDefault(name string, def any) Options {
+	opt := os.Get(name)
+	if opt == nil {
+		Errorf(nil, "Couldn't find option %q to SetDefault on", name)
+	} else {
+		opt.Default = def
+	}
+	return os
 }
 
 // Overridden discovers which config items have been overridden in the
@@ -368,6 +397,62 @@ func MustFind(name string) *RegInfo {
 		log.Fatalf("Failed to find remote: %v", err)
 	}
 	return fs
+}
+
+// OptionsInfo holds info about an block of options
+type OptionsInfo struct {
+	Name    string                      // name of this options block for the rc
+	Opt     interface{}                 // pointer to a struct to set the options in
+	Options Options                     // description of the options
+	Reload  func(context.Context) error // if not nil, call when options changed and on init
+}
+
+// OptionsRegistry is a registry of global options
+var OptionsRegistry = map[string]OptionsInfo{}
+
+// RegisterGlobalOptions registers global options to be made into
+// command line options, rc options and environment variable reading.
+//
+// Packages which need global options should use this in an init() function
+func RegisterGlobalOptions(oi OptionsInfo) {
+	OptionsRegistry[oi.Name] = oi
+}
+
+// load the defaults from the options
+//
+// Reload the options if required
+func (oi *OptionsInfo) load() error {
+	if oi.Options == nil {
+		Errorf(nil, "No options defined for config block %q", oi.Name)
+		return nil
+	}
+
+	m := ConfigMap("", oi.Options, "", nil)
+	err := configstruct.Set(m, oi.Opt)
+	if err != nil {
+		return fmt.Errorf("failed to initialise %q options: %w", oi.Name, err)
+	}
+
+	if oi.Reload != nil {
+		err = oi.Reload(context.Background())
+		if err != nil {
+			return fmt.Errorf("failed to reload %q options: %w", oi.Name, err)
+		}
+	}
+	return nil
+}
+
+// GlobalOptionsInit initialises the defaults of global options to
+// their values read from the options, environment variables and
+// command line parameters.
+func GlobalOptionsInit() error {
+	for _, opt := range OptionsRegistry {
+		err := opt.load()
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // Type returns a textual string to identify the type of the remote

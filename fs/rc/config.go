@@ -12,21 +12,17 @@ import (
 	"github.com/rclone/rclone/fs/filter"
 )
 
-var (
-	optionBlock  = map[string]interface{}{}
-	optionReload = map[string]func(context.Context) error{}
-)
-
 // AddOption adds an option set
 func AddOption(name string, option interface{}) {
-	optionBlock[name] = option
+	// FIXME remove this function when conversion to options is complete
+	fs.RegisterGlobalOptions(fs.OptionsInfo{Name: name, Opt: option})
 }
 
 // AddOptionReload adds an option set with a reload function to be
 // called when options are changed
 func AddOptionReload(name string, option interface{}, reload func(context.Context) error) {
-	optionBlock[name] = option
-	optionReload[name] = reload
+	// FIXME remove this function when conversion to options is complete
+	fs.RegisterGlobalOptions(fs.OptionsInfo{Name: name, Opt: option, Reload: reload})
 }
 
 func init() {
@@ -42,8 +38,8 @@ func init() {
 // Show the list of all the option blocks
 func rcOptionsBlocks(ctx context.Context, in Params) (out Params, err error) {
 	options := []string{}
-	for name := range optionBlock {
-		options = append(options, name)
+	for _, opt := range fs.OptionsRegistry {
+		options = append(options, opt.Name)
 	}
 	out = make(Params)
 	out["options"] = options
@@ -71,8 +67,8 @@ map to the external options very easily with a few exceptions.
 // Show the list of all the option blocks
 func rcOptionsGet(ctx context.Context, in Params) (out Params, err error) {
 	out = make(Params)
-	for name, options := range optionBlock {
-		out[name] = options
+	for _, opt := range fs.OptionsRegistry {
+		out[opt.Name] = opt.Opt
 	}
 	return out, nil
 }
@@ -144,16 +140,16 @@ And this sets NOTICE level logs (normal without -v)
 // Set an option in an option block
 func rcOptionsSet(ctx context.Context, in Params) (out Params, err error) {
 	for name, options := range in {
-		current := optionBlock[name]
-		if current == nil {
+		opt, ok := fs.OptionsRegistry[name]
+		if !ok {
 			return nil, fmt.Errorf("unknown option block %q", name)
 		}
-		err := Reshape(current, options)
+		err := Reshape(opt.Opt, options)
 		if err != nil {
 			return nil, fmt.Errorf("failed to write options from block %q: %w", name, err)
 		}
-		if reload := optionReload[name]; reload != nil {
-			err = reload(ctx)
+		if opt.Reload != nil {
+			err = opt.Reload(ctx)
 			if err != nil {
 				return nil, fmt.Errorf("failed to reload options from block %q: %w", name, err)
 			}

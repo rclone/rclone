@@ -33,10 +33,15 @@ func (oev optionEnvVars) Get(key string) (value string, ok bool) {
 	if opt == nil {
 		return "", false
 	}
-	envKey := OptionToEnv(oev.prefix + "-" + key)
+	var envKey string
+	if oev.prefix == "" {
+		envKey = OptionToEnv(key)
+	} else {
+		envKey = OptionToEnv(oev.prefix + "-" + key)
+	}
 	value, ok = os.LookupEnv(envKey)
 	if ok {
-		Debugf(nil, "Setting %s_%s=%q from environment variable %s", oev.prefix, key, value, envKey)
+		Debugf(nil, "Setting %s %s=%q from environment variable %s", oev.prefix, key, value, envKey)
 	} else if opt.NoPrefix {
 		// For options with NoPrefix set, check without prefix too
 		envKey := OptionToEnv(key)
@@ -115,10 +120,12 @@ func ConfigMap(prefix string, options Options, configName string, connectionStri
 	}
 
 	// remote specific environment vars
-	config.AddGetter(configEnvVars(configName), configmap.PriorityNormal)
+	if configName != "" {
+		config.AddGetter(configEnvVars(configName), configmap.PriorityNormal)
+	}
 
 	// backend specific environment vars
-	if options != nil && prefix != "" {
+	if options != nil {
 		config.AddGetter(optionEnvVars{prefix: prefix, options: options}, configmap.PriorityNormal)
 	}
 
