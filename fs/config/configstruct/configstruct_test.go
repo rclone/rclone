@@ -1,6 +1,7 @@
 package configstruct_test
 
 import (
+	"fmt"
 	"testing"
 	"time"
 
@@ -113,4 +114,54 @@ func TestSetFull(t *testing.T) {
 	err := configstruct.Set(m, in)
 	require.NoError(t, err)
 	assert.Equal(t, want, in)
+}
+
+func TestStringToInterface(t *testing.T) {
+	item := struct{ A int }{2}
+	for _, test := range []struct {
+		in   string
+		def  interface{}
+		want interface{}
+		err  string
+	}{
+		{"", string(""), "", ""},
+		{"   string   ", string(""), "   string   ", ""},
+		{"123", int(0), int(123), ""},
+		{"0x123", int(0), int(0x123), ""},
+		{"   0x123   ", int(0), int(0x123), ""},
+		{"-123", int(0), int(-123), ""},
+		{"0", false, false, ""},
+		{"1", false, true, ""},
+		{"7", false, true, `parsing "7" as bool failed: strconv.ParseBool: parsing "7": invalid syntax`},
+		{"FALSE", false, false, ""},
+		{"true", false, true, ""},
+		{"123", uint(0), uint(123), ""},
+		{"123", int64(0), int64(123), ""},
+		{"123x", int64(0), nil, "parsing \"123x\" as int64 failed: expected newline"},
+		{"truth", false, nil, "parsing \"truth\" as bool failed: strconv.ParseBool: parsing \"truth\": invalid syntax"},
+		{"struct", item, nil, "parsing \"struct\" as struct { A int } failed: don't know how to parse this type"},
+		{"1s", fs.Duration(0), fs.Duration(time.Second), ""},
+		{"1m1s", fs.Duration(0), fs.Duration(61 * time.Second), ""},
+		{"1potato", fs.Duration(0), nil, `parsing "1potato" as fs.Duration failed: parsing time "1potato" as "2006-01-02": cannot parse "1potato" as "2006"`},
+		{``, []string{}, []string{}, ""},
+		{`[]`, []string(nil), []string{}, ""},
+		{`["hello"]`, []string{}, []string{"hello"}, ""},
+		{`["hello","world!"]`, []string(nil), []string{"hello", "world!"}, ""},
+		{"1s", time.Duration(0), time.Second, ""},
+		{"1m1s", time.Duration(0), 61 * time.Second, ""},
+		{"1potato", time.Duration(0), nil, `parsing "1potato" as time.Duration failed: time: unknown unit "potato" in duration "1potato"`},
+		{"1M", fs.SizeSuffix(0), fs.Mebi, ""},
+		{"1G", fs.SizeSuffix(0), fs.Gibi, ""},
+		{"1potato", fs.SizeSuffix(0), nil, `parsing "1potato" as fs.SizeSuffix failed: bad suffix 'o'`},
+	} {
+		what := fmt.Sprintf("parse %q as %T", test.in, test.def)
+		got, err := configstruct.StringToInterface(test.def, test.in)
+		if test.err == "" {
+			require.NoError(t, err, what)
+			assert.Equal(t, test.want, got, what)
+		} else {
+			assert.Nil(t, got, what)
+			assert.EqualError(t, err, test.err, what)
+		}
+	}
 }

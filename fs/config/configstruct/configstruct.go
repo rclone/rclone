@@ -6,7 +6,9 @@ import (
 	"fmt"
 	"reflect"
 	"regexp"
+	"strconv"
 	"strings"
+	"time"
 
 	"github.com/rclone/rclone/fs/config/configmap"
 )
@@ -24,22 +26,39 @@ func camelToSnake(in string) string {
 // StringToInterface turns in into an interface{} the same type as def
 func StringToInterface(def interface{}, in string) (newValue interface{}, err error) {
 	typ := reflect.TypeOf(def)
-	if typ.Kind() == reflect.String && typ.Name() == "string" {
-		// Pass strings unmodified
-		return in, nil
-	}
-	// Otherwise parse with Sscanln
-	//
-	// This means any types we use here must implement fmt.Scanner
 	o := reflect.New(typ)
-	n, err := fmt.Sscanln(in, o.Interface())
+	switch def.(type) {
+	case string:
+		// return strings unmodified
+		newValue = in
+	case int, int8, int16, int32, int64,
+		uint, uint8, uint16, uint32, uint64, uintptr,
+		float32, float64:
+		// As per Rob Pike's advice in https://github.com/golang/go/issues/43306
+		// we only use Sscan for numbers
+		var n int
+		n, err = fmt.Sscanln(in, o.Interface())
+		if err == nil && n != 1 {
+			err = errors.New("no items parsed")
+		}
+		newValue = o.Elem().Interface()
+	case bool:
+		newValue, err = strconv.ParseBool(in)
+	case time.Duration:
+		newValue, err = time.ParseDuration(in)
+	default:
+		// Try using a Set method
+		if do, ok := o.Interface().(interface{ Set(s string) error }); ok {
+			err = do.Set(in)
+		} else {
+			err = errors.New("don't know how to parse this type")
+		}
+		newValue = o.Elem().Interface()
+	}
 	if err != nil {
-		return newValue, fmt.Errorf("parsing %q as %T failed: %w", in, def, err)
+		return nil, fmt.Errorf("parsing %q as %T failed: %w", in, def, err)
 	}
-	if n != 1 {
-		return newValue, errors.New("no items parsed")
-	}
-	return o.Elem().Interface(), nil
+	return newValue, nil
 }
 
 // Item describes a single entry in the options structure
