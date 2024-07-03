@@ -228,7 +228,7 @@ func NewMountCommand(commandName string, hidden bool, mount MountFn) *cobra.Comm
 				defer cmd.StartStats()()
 			}
 
-			mnt := NewMountPoint(mount, args[1], cmd.NewFsDir(args), &Opt, &vfsflags.Opt)
+			mnt := NewMountPoint(mount, args[1], cmd.NewFsDir(args), &Opt, &vfscommon.Opt)
 			mountDaemon, err := mnt.Mount()
 
 			// Wait for foreground mount, if any...

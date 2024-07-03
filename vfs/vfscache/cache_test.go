@@ -104,7 +104,7 @@ func newTestCacheOpt(t *testing.T, opt vfscommon.Options) (r *fstest.Run, c *Cac
 }
 
 func newTestCache(t *testing.T) (r *fstest.Run, c *Cache) {
-	opt := vfscommon.DefaultOpt
+	opt := vfscommon.Opt
 
 	// Disable the cache cleaner as it interferes with these tests
 	opt.CachePollInterval = 0
@@ -627,7 +627,7 @@ func TestCacheRename(t *testing.T) {
 }
 
 func TestCacheCleaner(t *testing.T) {
-	opt := vfscommon.DefaultOpt
+	opt := vfscommon.Opt
 	opt.CachePollInterval = fs.Duration(10 * time.Millisecond)
 	opt.CacheMaxAge = fs.Duration(20 * time.Millisecond)
 	_, c := newTestCacheOpt(t, opt)

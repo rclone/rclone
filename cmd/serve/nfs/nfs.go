@@ -17,6 +17,7 @@ import (
 	"github.com/rclone/rclone/fs/config/flags"
 	"github.com/rclone/rclone/fs/rc"
 	"github.com/rclone/rclone/vfs"
+	"github.com/rclone/rclone/vfs/vfscommon"
 	"github.com/rclone/rclone/vfs/vfsflags"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
@@ -48,7 +49,7 @@ func Run(command *cobra.Command, args []string) {
 	cmd.CheckArgs(1, 1, command, args)
 	f = cmd.NewFsSrc(args)
 	cmd.Run(false, true, command, func() error {
-		s, err := NewServer(context.Background(), vfs.New(f, &vfsflags.Opt), &opt)
+		s, err := NewServer(context.Background(), vfs.New(f, &vfscommon.Opt), &opt)
 		if err != nil {
 			return err
 		}

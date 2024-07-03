@@ -27,6 +27,7 @@ import (
 	"github.com/rclone/rclone/fs/log"
 	"github.com/rclone/rclone/fs/rc"
 	"github.com/rclone/rclone/vfs"
+	"github.com/rclone/rclone/vfs/vfscommon"
 	"github.com/rclone/rclone/vfs/vfsflags"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
@@ -157,7 +158,7 @@ func newServer(ctx context.Context, f fs.Fs, opt *Options) (*driver, error) {
 		d.proxy = proxy.New(ctx, &proxyflags.Opt)
 		d.userPass = make(map[string]string, 16)
 	} else {
-		d.globalVFS = vfs.New(f, &vfsflags.Opt)
+		d.globalVFS = vfs.New(f, &vfscommon.Opt)
 	}
 	d.useTLS = d.opt.TLSKey != ""
 

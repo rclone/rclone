@@ -19,7 +19,7 @@ import (
 	"github.com/rclone/rclone/fs/config/obscure"
 	libcache "github.com/rclone/rclone/lib/cache"
 	"github.com/rclone/rclone/vfs"
-	"github.com/rclone/rclone/vfs/vfsflags"
+	"github.com/rclone/rclone/vfs/vfscommon"
 )
 
 // Help contains text describing how to use the proxy
@@ -242,7 +242,7 @@ func (p *Proxy) call(user, auth string, isPublicKey bool) (value interface{}, er
 		// need to in memory. An attacker would find it easier to go
 		// after the unencrypted password in memory most likely.
 		entry := cacheEntry{
-			vfs:    vfs.New(f, &vfsflags.Opt),
+			vfs:    vfs.New(f, &vfscommon.Opt),
 			pwHash: sha256.Sum256([]byte(auth)),
 		}
 		return entry, true, nil

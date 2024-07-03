@@ -30,7 +30,7 @@ var (
 
 // Create a file and open it with the flags passed in
 func rwHandleCreateFlags(t *testing.T, create bool, filename string, flags int) (r *fstest.Run, vfs *VFS, fh *RWFileHandle) {
-	opt := vfscommon.DefaultOpt
+	opt := vfscommon.Opt
 	opt.CacheMode = vfscommon.CacheModeFull
 	opt.WriteBack = writeBackDelay
 	r, vfs = newTestVFSOpt(t, &opt)
@@ -634,7 +634,7 @@ func testRWFileHandleOpenTest(t *testing.T, vfs *VFS, test *openTest) {
 func TestRWFileHandleOpenTests(t *testing.T) {
 	for _, cacheMode := range []vfscommon.CacheMode{vfscommon.CacheModeWrites, vfscommon.CacheModeFull} {
 		t.Run(cacheMode.String(), func(t *testing.T) {
-			opt := vfscommon.DefaultOpt
+			opt := vfscommon.Opt
 			opt.CacheMode = cacheMode
 			opt.WriteBack = writeBackDelay
 			_, vfs := newTestVFSOpt(t, &opt)
@@ -685,7 +685,7 @@ func TestRWFileModTimeWithOpenWriters(t *testing.T) {
 }
 
 func TestRWCacheRename(t *testing.T) {
-	opt := vfscommon.DefaultOpt
+	opt := vfscommon.Opt
 	opt.CacheMode = vfscommon.CacheModeFull
 	opt.WriteBack = writeBackDelay
 	r, vfs := newTestVFSOpt(t, &opt)
@@ -719,7 +719,7 @@ func TestRWCacheRename(t *testing.T) {
 //
 // See: https://github.com/rclone/rclone/issues/6053
 func TestRWCacheUpdate(t *testing.T) {
-	opt := vfscommon.DefaultOpt
+	opt := vfscommon.Opt
 	opt.CacheMode = vfscommon.CacheModeFull
 	opt.WriteBack = writeBackDelay
 	opt.DirCacheTime = fs.Duration(100 * time.Millisecond)

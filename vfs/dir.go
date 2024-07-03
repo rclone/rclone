@@ -157,7 +157,7 @@ func (d *Dir) IsDir() bool {
 
 // Mode bits of the directory - satisfies Node interface
 func (d *Dir) Mode() (mode os.FileMode) {
-	return d.vfs.Opt.DirPerms
+	return os.FileMode(d.vfs.Opt.DirPerms)
 }
 
 // Name (base) of the directory - satisfies Node interface

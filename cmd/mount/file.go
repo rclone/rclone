@@ -4,6 +4,7 @@ package mount
 
 import (
 	"context"
+	"os"
 	"syscall"
 	"time"
 
@@ -31,7 +32,7 @@ func (f *File) Attr(ctx context.Context, a *fuse.Attr) (err error) {
 	Blocks := (Size + 511) / 512
 	a.Gid = f.VFS().Opt.GID
 	a.Uid = f.VFS().Opt.UID
-	a.Mode = f.VFS().Opt.FilePerms
+	a.Mode = os.FileMode(f.VFS().Opt.FilePerms)
 	a.Size = Size
 	a.Atime = modTime
 	a.Mtime = modTime

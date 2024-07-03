@@ -33,7 +33,7 @@ func (d *Dir) Attr(ctx context.Context, a *fuse.Attr) (err error) {
 	a.Valid = time.Duration(d.fsys.opt.AttrTimeout)
 	a.Gid = d.VFS().Opt.GID
 	a.Uid = d.VFS().Opt.UID
-	a.Mode = os.ModeDir | d.VFS().Opt.DirPerms
+	a.Mode = os.ModeDir | os.FileMode(d.VFS().Opt.DirPerms)
 	modTime := d.ModTime()
 	a.Atime = modTime
 	a.Mtime = modTime

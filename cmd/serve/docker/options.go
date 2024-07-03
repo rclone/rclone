@@ -2,7 +2,6 @@ package docker
 
 import (
 	"fmt"
-	"strconv"
 	"strings"
 
 	"github.com/rclone/rclone/cmd/mountlib"
@@ -11,7 +10,6 @@ import (
 	"github.com/rclone/rclone/fs/fspath"
 	"github.com/rclone/rclone/fs/rc"
 	"github.com/rclone/rclone/vfs/vfscommon"
-	"github.com/rclone/rclone/vfs/vfsflags"
 
 	"github.com/spf13/pflag"
 )
@@ -265,22 +263,13 @@ func getVFSOption(vfsOpt *vfscommon.Options, opt rc.Params, key string) (ok bool
 	case "read-only":
 		vfsOpt.ReadOnly, err = opt.GetBool(key)
 	case "dir-perms":
-		perms := &vfsflags.FileMode{Mode: &vfsOpt.DirPerms}
-		err = getFVarP(perms, opt, key)
+		err = getFVarP(&vfsOpt.DirPerms, opt, key)
 	case "file-perms":
-		perms := &vfsflags.FileMode{Mode: &vfsOpt.FilePerms}
-		err = getFVarP(perms, opt, key)
+		err = getFVarP(&vfsOpt.FilePerms, opt, key)
 
 	// unprefixed unix-only vfs options
 	case "umask":
-		// GetInt64 doesn't support the `0octal` umask syntax - parse locally
-		var strVal string
-		if strVal, err = opt.GetString(key); err == nil {
-			var longVal int64
-			if longVal, err = strconv.ParseInt(strVal, 0, 0); err == nil {
-				vfsOpt.Umask = int(longVal)
-			}
-		}
+		err = getFVarP(&vfsOpt.Umask, opt, key)
 	case "uid":
 		intVal, err = opt.GetInt64(key)
 		vfsOpt.UID = uint32(intVal)

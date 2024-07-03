@@ -28,7 +28,7 @@ import (
 	"github.com/rclone/rclone/lib/env"
 	"github.com/rclone/rclone/lib/file"
 	"github.com/rclone/rclone/vfs"
-	"github.com/rclone/rclone/vfs/vfsflags"
+	"github.com/rclone/rclone/vfs/vfscommon"
 	"golang.org/x/crypto/ssh"
 )
 
@@ -54,7 +54,7 @@ func newServer(ctx context.Context, f fs.Fs, opt *Options) *server {
 	if proxyflags.Opt.AuthProxy != "" {
 		s.proxy = proxy.New(ctx, &proxyflags.Opt)
 	} else {
-		s.vfs = vfs.New(f, &vfsflags.Opt)
+		s.vfs = vfs.New(f, &vfscommon.Opt)
 	}
 	return s
 }
