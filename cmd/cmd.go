@@ -32,7 +32,7 @@ import (
 	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/fs/fspath"
 	fslog "github.com/rclone/rclone/fs/log"
-	"github.com/rclone/rclone/fs/rc/rcflags"
+	"github.com/rclone/rclone/fs/rc"
 	"github.com/rclone/rclone/fs/rc/rcserver"
 	fssync "github.com/rclone/rclone/fs/sync"
 	"github.com/rclone/rclone/lib/atexit"
@@ -423,7 +423,7 @@ func initConfig() {
 	}
 
 	// Start the remote control server if configured
-	_, err = rcserver.Start(context.Background(), &rcflags.Opt)
+	_, err = rcserver.Start(context.Background(), &rc.Opt)
 	if err != nil {
 		log.Fatalf("Failed to start remote control: %v", err)
 	}

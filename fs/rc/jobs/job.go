@@ -130,7 +130,7 @@ var (
 func newJobs() *Jobs {
 	return &Jobs{
 		jobs: map[int64]*Job{},
-		opt:  &rc.DefaultOpt,
+		opt:  &rc.Opt,
 	}
 }
 

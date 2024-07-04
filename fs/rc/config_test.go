@@ -77,7 +77,7 @@ func TestOptionsGetMarshal(t *testing.T) {
 
 	// Add some real options
 	AddOption("main", ci)
-	AddOption("rc", &DefaultOpt)
+	AddOption("rc", &Opt)
 
 	// get them
 	call := Calls.Get("options/get")
