@@ -19,8 +19,8 @@ import (
 // This is accessed through GetConfig and AddConfig
 var globalConfig = mustNewFilter(nil)
 
-// Opt configures the filter
-type Opt struct {
+// Options configures the filter
+type Options struct {
 	DeleteExcluded bool
 	RulesOpt       // embedded so we don't change the JSON API
 	ExcludeFile    []string
@@ -35,7 +35,7 @@ type Opt struct {
 }
 
 // DefaultOpt is the default config for the filter
-var DefaultOpt = Opt{
+var DefaultOpt = Options{
 	MinAge:  fs.DurationOff,
 	MaxAge:  fs.DurationOff,
 	MinSize: fs.SizeSuffix(-1),
@@ -47,7 +47,7 @@ type FilesMap map[string]struct{}
 
 // Filter describes any filtering in operation
 type Filter struct {
-	Opt         Opt
+	Opt         Options
 	ModTimeFrom time.Time
 	ModTimeTo   time.Time
 	fileRules   rules
@@ -59,7 +59,7 @@ type Filter struct {
 
 // NewFilter parses the command line options and creates a Filter
 // object.  If opt is nil, then DefaultOpt will be used
-func NewFilter(opt *Opt) (f *Filter, err error) {
+func NewFilter(opt *Options) (f *Filter, err error) {
 	f = &Filter{}
 
 	// Make a copy of the options
@@ -130,7 +130,7 @@ func NewFilter(opt *Opt) (f *Filter, err error) {
 	return f, nil
 }
 
-func mustNewFilter(opt *Opt) *Filter {
+func mustNewFilter(opt *Options) *Filter {
 	f, err := NewFilter(opt)
 	if err != nil {
 		panic(err)
