@@ -71,6 +71,12 @@ func init() {
 			Advanced: true,
 		},
 			{
+				Name:     "threaded_streams",
+				Default:  false,
+				Help:     "Thread Streams",
+				Advanced: true,
+			},
+			{
 				Help:      "Upload Api Host",
 				Name:      "upload_host",
 				Sensitive: true,
@@ -100,6 +106,7 @@ type Options struct {
 	ChannelID         int64                `config:"channel_id"`
 	EncryptFiles      bool                 `config:"encrypt_files"`
 	PageSize          int64                `config:"page_size"`
+	ThreadedStreams   bool                 `config:"threaded_streams"`
 	Enc               encoder.MultiEncoder `config:"encoding"`
 }
 
@@ -823,9 +830,14 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 	http := o.fs.srv
 
 	fs.FixRangeOption(options, o.size)
+
+	streamType := "download"
+	if o.fs.opt.ThreadedStreams {
+		streamType = "stream"
+	}
 	opts := rest.Opts{
 		Method:  "GET",
-		Path:    fmt.Sprintf("/api/files/%s/stream/%s", o.id, url.QueryEscape(o.name)),
+		Path:    fmt.Sprintf("/api/files/%s/%s/%s", o.id, streamType, url.QueryEscape(o.name)),
 		Options: options,
 		Parameters: url.Values{
 			"hash": []string{o.fs.authHash},
