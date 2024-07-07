@@ -1972,7 +1972,7 @@ func (o *Object) shellPath() string {
 
 // setMetadata updates the info in the object from the stat result passed in
 func (o *Object) setMetadata(info os.FileInfo) {
-	o.modTime = uint32(info.ModTime().Unix())
+	o.modTime = info.Sys().(*sftp.FileStat).Mtime
 	o.size = info.Size()
 	o.mode = info.Mode()
 }
