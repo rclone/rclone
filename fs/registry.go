@@ -8,12 +8,14 @@ import (
 	"fmt"
 	"log"
 	"reflect"
+	"regexp"
 	"sort"
 	"strings"
 	"sync"
 
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/configstruct"
+	"github.com/rclone/rclone/lib/errcount"
 )
 
 // Registry of filesystems
@@ -416,6 +418,61 @@ var OptionsRegistry = map[string]OptionsInfo{}
 // Packages which need global options should use this in an init() function
 func RegisterGlobalOptions(oi OptionsInfo) {
 	OptionsRegistry[oi.Name] = oi
+	if oi.Opt != nil && oi.Options != nil {
+		err := oi.Check()
+		if err != nil {
+			log.Fatalf("%v", err)
+		}
+	}
+}
+
+var optionName = regexp.MustCompile(`^[a-z0-9_]+$`)
+
+// Check ensures that for every element of oi.Options there is a field
+// in oi.Opt that matches it
+func (oi *OptionsInfo) Check() error {
+	errCount := errcount.New()
+	items, err := configstruct.Items(oi.Opt)
+	if err != nil {
+		return err
+	}
+	itemsByName := map[string]*configstruct.Item{}
+	for i := range items {
+		item := &items[i]
+		itemsByName[item.Name] = item
+		if !optionName.MatchString(item.Name) {
+			err = fmt.Errorf("invalid name in `config:%q` in Options struct", item.Name)
+			errCount.Add(err)
+			Errorf(nil, "%s", err)
+		}
+	}
+	for i := range oi.Options {
+		option := &oi.Options[i]
+		// Check name is correct
+		if !optionName.MatchString(option.Name) {
+			err = fmt.Errorf("invalid Name: %q", option.Name)
+			errCount.Add(err)
+			Errorf(nil, "%s", err)
+			continue
+		}
+		// Check item exists
+		item, found := itemsByName[option.Name]
+		if !found {
+			err = fmt.Errorf("key %q in OptionsInfo not found in Options struct", option.Name)
+			errCount.Add(err)
+			Errorf(nil, "%s", err)
+			continue
+		}
+		// Check type
+		optType := fmt.Sprintf("%T", option.Default)
+		itemType := fmt.Sprintf("%T", item.Value)
+		if optType != itemType {
+			err = fmt.Errorf("key %q in has type %q in OptionsInfo.Default but type %q in Options struct", option.Name, optType, itemType)
+			//errCount.Add(err)
+			Errorf(nil, "%s", err)
+		}
+	}
+	return errCount.Err(fmt.Sprintf("internal error: options block %q", oi.Name))
 }
 
 // load the defaults from the options
