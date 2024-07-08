@@ -139,8 +139,10 @@ type UpdateFileInformation struct {
 	Name      string     `json:"name,omitempty"`
 	Type      string     `json:"type,omitempty"`
 	UpdatedAt string     `json:"updatedAt,omitempty"`
+	CreatedAt string     `json:"createdAt,omitempty"`
 	Parts     []FilePart `json:"parts,omitempty"`
 	Size      int64      `json:"size,omitempty"`
+	UploadId  int64      `json:"uploadId,omitempty"`
 }
 
 // RemoveFileRequest is used for deleting a file

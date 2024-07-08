@@ -130,7 +130,8 @@ type Object struct {
 	size     int64
 	parentId string
 	name     string
-	modTime  string
+	modTime  time.Time
+	mimeType string
 }
 
 // Name of the remote (as passed into NewFs)
@@ -247,7 +248,7 @@ func NewFs(ctx context.Context, name string, root string, config configmap.Mappe
 	f.features = (&fs.Features{
 		DuplicateFiles:          false,
 		CanHaveEmptyDirectories: true,
-		ReadMimeType:            false,
+		ReadMimeType:            true,
 		ChunkWriterDoesntSeek:   true,
 	}).Fill(ctx, f)
 
@@ -422,6 +423,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 //
 // If it can't be found it returns the error fs.ErrorObjectNotFound.
 func (f *Fs) newObjectWithInfo(_ context.Context, remote string, info *api.FileInfo) (fs.Object, error) {
+	modTime, _ := time.Parse(timeFormat, info.ModTime)
 	o := &Object{
 		fs:       f,
 		remote:   remote,
@@ -429,7 +431,8 @@ func (f *Fs) newObjectWithInfo(_ context.Context, remote string, info *api.FileI
 		size:     info.Size,
 		parentId: info.ParentId,
 		name:     info.Name,
-		modTime:  info.ModTime,
+		modTime:  modTime,
+		mimeType: info.MimeType,
 	}
 	return o, nil
 }
@@ -559,7 +562,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		return errors.New("refusing to update with unknown size")
 	}
 
-	modTime := src.ModTime(ctx).UTC().Format(timeFormat)
+	modTime := src.ModTime(ctx)
 
 	uploadInfo, err := o.uploadMultipart(ctx, bufio.NewReader(in), src)
 
@@ -567,42 +570,24 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		return err
 	}
 
-	if o.size > 0 {
-		opts := rest.Opts{
-			Method: "DELETE",
-			Path:   "/api/uploads/" + uploadInfo.uploadID,
-		}
-
-		err = o.fs.pacer.Call(func() (bool, error) {
-			resp, err := o.fs.srv.Call(ctx, &opts)
-			return shouldRetry(ctx, resp, err)
-		})
-		if err != nil {
-			return err
-		}
-	}
-
-	err = o.fs.updateFileInformation(ctx, &api.UpdateFileInformation{
-		Type:      "file",
-		UpdatedAt: modTime,
+	payload := &api.UpdateFileInformation{
+		UpdatedAt: modTime.UTC().Format(timeFormat),
 		Parts:     uploadInfo.fileChunks,
 		Size:      src.Size(),
-	}, o.id)
+	}
+
+	opts := rest.Opts{
+		Method: "PUT",
+		Path:   "/api/files/" + o.id + "/parts",
+	}
+
+	err = o.fs.pacer.Call(func() (bool, error) {
+		resp, err := o.fs.srv.CallJSON(ctx, &opts, payload, nil)
+		return shouldRetry(ctx, resp, err)
+	})
 
 	if err != nil {
 		return fmt.Errorf("failed to update file information: %w", err)
-	}
-
-	if o.size > 0 {
-		opts := rest.Opts{
-			Method: "DELETE",
-			Path:   "/api/files/" + o.id + "/parts",
-		}
-
-		o.fs.pacer.Call(func() (bool, error) {
-			resp, err := o.fs.srv.Call(ctx, &opts)
-			return shouldRetry(ctx, resp, err)
-		})
 	}
 
 	o.modTime = modTime
@@ -924,12 +909,11 @@ func (o *Object) Remote() string {
 // It attempts to read the objects mtime and if that isn't present the
 // LastModified returned in the http headers
 func (o *Object) ModTime(ctx context.Context) time.Time {
-	modTime, err := time.Parse(timeFormat, o.modTime)
-	if err != nil {
-		fs.Debugf(o, "Failed to read mtime from object: %v", err)
-		return time.Now()
-	}
-	return modTime
+	return o.modTime
+}
+
+func (o *Object) MimeType(ctx context.Context) string {
+	return o.mimeType
 }
 
 // Size returns the size of an object in bytes
@@ -954,7 +938,17 @@ func (o *Object) Storable() bool {
 
 // SetModTime sets the modification time of the local fs object
 func (o *Object) SetModTime(ctx context.Context, modTime time.Time) error {
-	return fs.ErrorCantSetModTime
+	time := modTime.UTC().Format(timeFormat)
+	updateInfo := &api.UpdateFileInformation{
+		UpdatedAt: time,
+		CreatedAt: time,
+	}
+	err := o.fs.updateFileInformation(ctx, updateInfo, o.id)
+	if err != nil {
+		return fmt.Errorf("couldn't update mod time: %w", err)
+	}
+	o.modTime = modTime
+	return nil
 }
 
 // Check the interfaces are satisfied
@@ -964,5 +958,6 @@ var (
 	_ fs.Mover           = (*Fs)(nil)
 	_ fs.DirMover        = (*Fs)(nil)
 	_ fs.Object          = (*Object)(nil)
+	_ fs.MimeTyper       = &Object{}
 	_ fs.OpenChunkWriter = (*Fs)(nil)
 )
