@@ -5,6 +5,7 @@ import (
 	"html/template"
 	"log"
 
+	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config/flags"
 	"github.com/spf13/pflag"
 )
@@ -63,14 +64,37 @@ Use ` + "`--{{ .Prefix }}salt`" + ` to change the password hashing salt from the
 // If a non nil value is returned then it is added to the context under the key
 type CustomAuthFn func(user, pass string) (value interface{}, err error)
 
+// AuthConfigInfo descripts the Options in use
+var AuthConfigInfo = fs.Options{{
+	Name:    "htpasswd",
+	Default: "",
+	Help:    "A htpasswd file - if not provided no authentication is done",
+}, {
+	Name:    "realm",
+	Default: "",
+	Help:    "Realm for authentication",
+}, {
+	Name:    "user",
+	Default: "",
+	Help:    "User name for authentication",
+}, {
+	Name:    "pass",
+	Default: "",
+	Help:    "Password for authentication",
+}, {
+	Name:    "salt",
+	Default: "dlPL2MqE",
+	Help:    "Password hashing salt",
+}}
+
 // AuthConfig contains options for the http authentication
 type AuthConfig struct {
-	HtPasswd     string       // htpasswd file - if not provided no authentication is done
-	Realm        string       // realm for authentication
-	BasicUser    string       // single username for basic auth if not using Htpasswd
-	BasicPass    string       // password for BasicUser
-	Salt         string       // password hashing salt
-	CustomAuthFn CustomAuthFn `json:"-"` // custom Auth (not set by command line flags)
+	HtPasswd     string       `config:"htpasswd"`   // htpasswd file - if not provided no authentication is done
+	Realm        string       `config:"realm"`      // realm for authentication
+	BasicUser    string       `config:"user"`       // single username for basic auth if not using Htpasswd
+	BasicPass    string       `config:"pass"`       // password for BasicUser
+	Salt         string       `config:"salt"`       // password hashing salt
+	CustomAuthFn CustomAuthFn `json:"-" config:"-"` // custom Auth (not set by command line flags)
 }
 
 // AddFlagsPrefix adds flags to the flag set for AuthConfig
@@ -88,6 +112,9 @@ func AddAuthFlagsPrefix(flagSet *pflag.FlagSet, prefix string, cfg *AuthConfig) 
 }
 
 // DefaultAuthCfg returns a new config which can be customized by command line flags
+//
+// Note that this needs to be kept in sync with AuthConfigInfo above and
+// can be removed when all callers have been converted.
 func DefaultAuthCfg() AuthConfig {
 	return AuthConfig{
 		Salt: "dlPL2MqE",

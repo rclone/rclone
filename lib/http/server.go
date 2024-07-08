@@ -19,6 +19,7 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config/flags"
 	"github.com/rclone/rclone/lib/atexit"
 	"github.com/spf13/pflag"
@@ -96,20 +97,63 @@ certificate authority certificate.
 // Middleware function signature required by chi.Router.Use()
 type Middleware func(http.Handler) http.Handler
 
+// ConfigInfo descripts the Options in use
+var ConfigInfo = fs.Options{{
+	Name:    "addr",
+	Default: []string{"127.0.0.1:8080"},
+	Help:    "IPaddress:Port or :Port to bind server to",
+}, {
+	Name:    "server_read_timeout",
+	Default: 1 * time.Hour,
+	Help:    "Timeout for server reading data",
+}, {
+	Name:    "server_write_timeout",
+	Default: 1 * time.Hour,
+	Help:    "Timeout for server writing data",
+}, {
+	Name:    "max_header_bytes",
+	Default: 4096,
+	Help:    "Maximum size of request header",
+}, {
+	Name:    "cert",
+	Default: "",
+	Help:    "TLS PEM key (concatenation of certificate and CA certificate)",
+}, {
+	Name:    "key",
+	Default: "",
+	Help:    "TLS PEM Private key",
+}, {
+	Name:    "client_ca",
+	Default: "",
+	Help:    "Client certificate authority to verify clients with",
+}, {
+	Name:    "baseurl",
+	Default: "",
+	Help:    "Prefix for URLs - leave blank for root",
+}, {
+	Name:    "min_tls_version",
+	Default: "tls1.0",
+	Help:    "Minimum TLS version that is acceptable",
+}, {
+	Name:    "allow_origin",
+	Default: "",
+	Help:    "Origin which cross-domain request (CORS) can be executed from",
+}}
+
 // Config contains options for the http Server
 type Config struct {
-	ListenAddr         []string      // Port to listen on
-	BaseURL            string        // prefix to strip from URLs
-	ServerReadTimeout  time.Duration // Timeout for server reading data
-	ServerWriteTimeout time.Duration // Timeout for server writing data
-	MaxHeaderBytes     int           // Maximum size of request header
-	TLSCert            string        // Path to TLS PEM key (concatenation of certificate and CA certificate)
-	TLSKey             string        // Path to TLS PEM Private key
-	TLSCertBody        []byte        // TLS PEM key (concatenation of certificate and CA certificate) body, ignores TLSCert
-	TLSKeyBody         []byte        // TLS PEM Private key body, ignores TLSKey
-	ClientCA           string        // Client certificate authority to verify clients with
-	MinTLSVersion      string        // MinTLSVersion contains the minimum TLS version that is acceptable.
-	AllowOrigin        string        // AllowOrigin sets the Access-Control-Allow-Origin header
+	ListenAddr         []string      `config:"addr"`                 // Port to listen on
+	BaseURL            string        `config:"baseurl"`              // prefix to strip from URLs
+	ServerReadTimeout  time.Duration `config:"server_read_timeout"`  // Timeout for server reading data
+	ServerWriteTimeout time.Duration `config:"server_write_timeout"` // Timeout for server writing data
+	MaxHeaderBytes     int           `config:"max_header_bytes"`     // Maximum size of request header
+	TLSCert            string        `config:"cert"`                 // Path to TLS PEM key (concatenation of certificate and CA certificate)
+	TLSKey             string        `config:"key"`                  // Path to TLS PEM Private key
+	TLSCertBody        []byte        `config:"-"`                    // TLS PEM key (concatenation of certificate and CA certificate) body, ignores TLSCert
+	TLSKeyBody         []byte        `config:"-"`                    // TLS PEM Private key body, ignores TLSKey
+	ClientCA           string        `config:"client_ca"`            // Client certificate authority to verify clients with
+	MinTLSVersion      string        `config:"min_tls_version"`      // MinTLSVersion contains the minimum TLS version that is acceptable.
+	AllowOrigin        string        `config:"allow_origin"`         // AllowOrigin sets the Access-Control-Allow-Origin header
 }
 
 // AddFlagsPrefix adds flags for the httplib
@@ -132,6 +176,9 @@ func AddHTTPFlagsPrefix(flagSet *pflag.FlagSet, prefix string, cfg *Config) {
 }
 
 // DefaultCfg is the default values used for Config
+//
+// Note that this needs to be kept in sync with ConfigInfo above and
+// can be removed when all callers have been converted.
 func DefaultCfg() Config {
 	return Config{
 		ListenAddr:         []string{"127.0.0.1:8080"},
