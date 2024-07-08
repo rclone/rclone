@@ -1049,7 +1049,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		return nil, err
 	}
 
-	// Create temporary object
+	// Create temporary object - still missing id, mimeType, gcid, md5sum
 	dstObj, dstLeaf, dstParentID, err := f.createObject(ctx, remote, srcObj.modTime, srcObj.size)
 	if err != nil {
 		return nil, err
@@ -1061,7 +1061,12 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 			return nil, err
 		}
 	}
+	// Manually update info of moved object to save API calls
 	dstObj.id = srcObj.id
+	dstObj.mimeType = srcObj.mimeType
+	dstObj.gcid = srcObj.gcid
+	dstObj.md5sum = srcObj.md5sum
+	dstObj.hasMetaData = true
 
 	if srcLeaf != dstLeaf {
 		// Rename
@@ -1069,16 +1074,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		if err != nil {
 			return nil, fmt.Errorf("move: couldn't rename moved file: %w", err)
 		}
-		err = dstObj.setMetaData(info)
-		if err != nil {
-			return nil, err
-		}
-	} else {
-		// Update info
-		err = dstObj.readMetaData(ctx)
-		if err != nil {
-			return nil, fmt.Errorf("move: couldn't locate moved file: %w", err)
-		}
+		return dstObj, dstObj.setMetaData(info)
 	}
 	return dstObj, nil
 }
