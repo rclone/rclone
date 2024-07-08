@@ -63,9 +63,9 @@ func StringToInterface(def interface{}, in string) (newValue interface{}, err er
 
 // Item describes a single entry in the options structure
 type Item struct {
-	Name  string // snake_case
-	Field string // CamelCase
-	Num   int    // number of the field in the struct
+	Name  string            // snake_case
+	Field string            // CamelCase
+	Set   func(interface{}) // set this field
 	Value interface{}
 }
 
@@ -76,6 +76,10 @@ type Item struct {
 //
 // The config_name is looked up in a struct tag called "config" or if
 // not found is the field name converted from CamelCase to snake_case.
+//
+// Nested structs are looked up too. If the parent struct has a struct
+// tag, this will be used as a prefix for the values in the sub
+// struct, otherwise they will be embedded as they are.
 func Items(opt interface{}) (items []Item, err error) {
 	def := reflect.ValueOf(opt)
 	if def.Kind() != reflect.Ptr {
@@ -87,19 +91,38 @@ func Items(opt interface{}) (items []Item, err error) {
 	}
 	defType := def.Type()
 	for i := 0; i < def.NumField(); i++ {
-		field := defType.Field(i)
-		fieldName := field.Name
-		configName, ok := field.Tag.Lookup("config")
-		if !ok {
+		field := def.Field(i)
+		fieldType := defType.Field(i)
+		fieldName := fieldType.Name
+		configName, hasTag := fieldType.Tag.Lookup("config")
+		if !hasTag {
 			configName = camelToSnake(fieldName)
 		}
-		defaultItem := Item{
-			Name:  configName,
-			Field: fieldName,
-			Num:   i,
-			Value: def.Field(i).Interface(),
+		valuePtr := field.Addr().Interface()                   // pointer to the value as an interface
+		_, canSet := valuePtr.(interface{ Set(string) error }) // can we set this with the Option Set protocol
+		// If we have a nested struct that isn't a config item then recurse
+		if fieldType.Type.Kind() == reflect.Struct && !canSet {
+			newItems, err := Items(valuePtr)
+			if err != nil {
+				return nil, fmt.Errorf("error parsing field %q: %w", fieldName, err)
+			}
+			for _, newItem := range newItems {
+				if hasTag {
+					newItem.Name = configName + "_" + newItem.Name
+				}
+				items = append(items, newItem)
+			}
+		} else {
+			defaultItem := Item{
+				Name:  configName,
+				Field: fieldName,
+				Set: func(newValue interface{}) {
+					field.Set(reflect.ValueOf(newValue))
+				},
+				Value: field.Interface(),
+			}
+			items = append(items, defaultItem)
 		}
-		items = append(items, defaultItem)
 	}
 	return items, nil
 }
@@ -122,7 +145,6 @@ func Set(config configmap.Getter, opt interface{}) (err error) {
 	if err != nil {
 		return err
 	}
-	defStruct := reflect.ValueOf(opt).Elem()
 	for _, defaultItem := range defaultItems {
 		newValue := defaultItem.Value
 		if configValue, ok := config.Get(defaultItem.Name); ok {
@@ -139,7 +161,7 @@ func Set(config configmap.Getter, opt interface{}) (err error) {
 				newValue = newNewValue
 			}
 		}
-		defStruct.Field(defaultItem.Num).Set(reflect.ValueOf(newValue))
+		defaultItem.Set(newValue)
 	}
 	return nil
 }
