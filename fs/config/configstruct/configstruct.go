@@ -2,6 +2,7 @@
 package configstruct
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"reflect"
@@ -24,6 +25,16 @@ func camelToSnake(in string) string {
 }
 
 // StringToInterface turns in into an interface{} the same type as def
+//
+// This supports a subset of builtin types, string, integer types,
+// bool, time.Duration and []string.
+//
+// Builtin types are expected to be encoding as their natural
+// stringificatons as produced by fmt.Sprint except for []string which
+// is expected to be encoded as JSON with empty array encoded as "".
+//
+// Any other types are expected to be encoded by their String()
+// methods and decoded by their `Set(s string) error` methods.
 func StringToInterface(def interface{}, in string) (newValue interface{}, err error) {
 	typ := reflect.TypeOf(def)
 	o := reflect.New(typ)
@@ -46,6 +57,16 @@ func StringToInterface(def interface{}, in string) (newValue interface{}, err er
 		newValue, err = strconv.ParseBool(in)
 	case time.Duration:
 		newValue, err = time.ParseDuration(in)
+	case []string:
+		// JSON decode arrays of strings
+		if in != "" {
+			var out []string
+			err = json.Unmarshal([]byte(in), &out)
+			newValue = out
+		} else {
+			// Empty string we will treat as empty array
+			newValue = []string{}
+		}
 	default:
 		// Try using a Set method
 		if do, ok := o.Interface().(interface{ Set(s string) error }); ok {
