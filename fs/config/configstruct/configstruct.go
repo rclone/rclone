@@ -116,6 +116,10 @@ func Items(opt interface{}) (items []Item, err error) {
 		fieldType := defType.Field(i)
 		fieldName := fieldType.Name
 		configName, hasTag := fieldType.Tag.Lookup("config")
+		if hasTag && configName == "-" {
+			// Skip items with config:"-"
+			continue
+		}
 		if !hasTag {
 			configName = camelToSnake(fieldName)
 		}
