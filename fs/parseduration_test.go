@@ -13,8 +13,8 @@ import (
 
 // Check it satisfies the interfaces
 var (
-	_ flagger   = (*Duration)(nil)
-	_ flaggerNP = Duration(0)
+	_ Flagger   = (*Duration)(nil)
+	_ FlaggerNP = Duration(0)
 )
 
 func TestParseDuration(t *testing.T) {

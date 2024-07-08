@@ -11,8 +11,8 @@ import (
 
 // Check it satisfies the interfaces
 var (
-	_ flagger   = (*BwTimetable)(nil)
-	_ flaggerNP = BwTimetable{}
+	_ Flagger   = (*BwTimetable)(nil)
+	_ FlaggerNP = BwTimetable{}
 )
 
 func TestBwTimetableSet(t *testing.T) {

@@ -11,8 +11,8 @@ import (
 
 // Check it satisfies the interfaces
 var (
-	_ flagger   = (*Tristate)(nil)
-	_ flaggerNP = Tristate{}
+	_ Flagger   = (*Tristate)(nil)
+	_ FlaggerNP = Tristate{}
 )
 
 func TestTristateString(t *testing.T) {

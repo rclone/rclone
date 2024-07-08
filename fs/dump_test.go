@@ -10,8 +10,8 @@ import (
 
 // Check it satisfies the interfaces
 var (
-	_ flagger   = (*DumpFlags)(nil)
-	_ flaggerNP = DumpFlags(0)
+	_ Flagger   = (*DumpFlags)(nil)
+	_ FlaggerNP = DumpFlags(0)
 )
 
 func TestDumpFlagsString(t *testing.T) {
