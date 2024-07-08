@@ -122,7 +122,9 @@ func (w *objectChunkWriter) WriteChunk(ctx context.Context, chunkNumber int, rea
 		}
 
 		resp, err := w.f.srv.CallJSON(ctx, &opts, nil, &response)
+
 		retry, err := shouldRetry(ctx, resp, err)
+
 		if err != nil {
 			fs.Debugf(w.o, "Error sending chunk %d (retry=%v): %v: %#v", chunkNumber, retry, err, err)
 		}
@@ -344,8 +346,9 @@ func (o *Object) createFile(ctx context.Context, src fs.ObjectInfo, uploadInfo *
 		}
 	}
 	opts := rest.Opts{
-		Method: "POST",
-		Path:   "/api/files",
+		Method:     "POST",
+		Path:       "/api/files",
+		NoResponse: true,
 	}
 
 	payload := api.CreateFileRequest{
@@ -369,8 +372,9 @@ func (o *Object) createFile(ctx context.Context, src fs.ObjectInfo, uploadInfo *
 	}
 	if src.Size() > 0 {
 		opts = rest.Opts{
-			Method: "DELETE",
-			Path:   "/api/uploads/" + uploadInfo.uploadID,
+			Method:     "DELETE",
+			Path:       "/api/uploads/" + uploadInfo.uploadID,
+			NoResponse: true,
 		}
 
 		err = o.fs.pacer.Call(func() (bool, error) {

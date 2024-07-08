@@ -564,21 +564,32 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 
 	modTime := src.ModTime(ctx)
 
-	uploadInfo, err := o.uploadMultipart(ctx, bufio.NewReader(in), src)
+	var (
+		uploadInfo *uploadInfo
+		err        error
+	)
 
-	if err != nil {
-		return err
+	if src.Size() > 0 {
+		uploadInfo, err = o.uploadMultipart(ctx, bufio.NewReader(in), src)
+		if err != nil {
+			return err
+		}
 	}
 
 	payload := &api.UpdateFileInformation{
 		UpdatedAt: modTime.UTC().Format(timeFormat),
-		Parts:     uploadInfo.fileChunks,
 		Size:      src.Size(),
 	}
 
+	if uploadInfo != nil {
+		payload.Parts = uploadInfo.fileChunks
+		payload.UploadId = uploadInfo.uploadID
+	}
+
 	opts := rest.Opts{
-		Method: "PUT",
-		Path:   "/api/files/" + o.id + "/parts",
+		Method:     "PUT",
+		Path:       "/api/files/" + o.id + "/parts",
+		NoResponse: true,
 	}
 
 	err = o.fs.pacer.Call(func() (bool, error) {
@@ -643,10 +654,10 @@ func (f *Fs) OpenChunkWriter(
 func (f *Fs) CreateDir(ctx context.Context, base string, leaf string) (err error) {
 
 	var resp *http.Response
-	var apiErr api.Error
 	opts := rest.Opts{
-		Method: "POST",
-		Path:   "/api/files/directories",
+		Method:     "POST",
+		Path:       "/api/files/directories",
+		NoResponse: true,
 	}
 
 	dir := base
@@ -663,7 +674,7 @@ func (f *Fs) CreateDir(ctx context.Context, base string, leaf string) (err error
 		Path: f.opt.Enc.FromStandardPath(dir),
 	}
 	err = f.pacer.Call(func() (bool, error) {
-		resp, err = f.srv.CallJSON(ctx, &opts, &mkdir, &apiErr)
+		resp, err = f.srv.CallJSON(ctx, &opts, &mkdir, nil)
 		return shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
@@ -688,8 +699,9 @@ func (f *Fs) Mkdir(ctx context.Context, dir string) (err error) {
 func (f *Fs) Rmdir(ctx context.Context, dir string) (err error) {
 	var resp *http.Response
 	opts := rest.Opts{
-		Method: "POST",
-		Path:   "/api/files/delete",
+		Method:     "POST",
+		Path:       "/api/files/delete",
+		NoResponse: true,
 	}
 	rm := api.RemoveFileRequest{
 		Source: f.dirPath(dir),
@@ -771,8 +783,9 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 	srcPath := srcFs.dirPath(srcRemote)
 
 	opts := rest.Opts{
-		Method: "POST",
-		Path:   "/api/files/directories/move",
+		Method:     "POST",
+		Path:       "/api/files/directories/move",
+		NoResponse: true,
 	}
 	move := api.DirMove{
 		Source:      srcPath,
@@ -938,10 +951,8 @@ func (o *Object) Storable() bool {
 
 // SetModTime sets the modification time of the local fs object
 func (o *Object) SetModTime(ctx context.Context, modTime time.Time) error {
-	time := modTime.UTC().Format(timeFormat)
 	updateInfo := &api.UpdateFileInformation{
-		UpdatedAt: time,
-		CreatedAt: time,
+		UpdatedAt: modTime.UTC().Format(timeFormat),
 	}
 	err := o.fs.updateFileInformation(ctx, updateInfo, o.id)
 	if err != nil {
