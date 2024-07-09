@@ -216,6 +216,14 @@ func getMountOption(mntOpt *mountlib.Options, opt rc.Params, key string) (ok boo
 		mntOpt.NoAppleXattr, err = opt.GetBool(key)
 	case "network-mode":
 		mntOpt.NetworkMode, err = opt.GetBool(key)
+	case "daemon-wait":
+		mntOpt.DaemonWait, err = opt.GetDuration(key)
+	case "devname":
+		mntOpt.DeviceName, err = opt.GetString(key)
+	case "direct-io":
+		mntOpt.DirectIO, err = opt.GetBool(key)
+	case "mount-case-insensitive":
+		err = getFVarP(&mntOpt.CaseInsensitive, opt, key)
 	default:
 		ok = false
 	}
@@ -252,6 +260,16 @@ func getVFSOption(vfsOpt *vfscommon.Options, opt rc.Params, key string) (ok bool
 		err = getFVarP(&vfsOpt.ReadAhead, opt, key)
 	case "vfs-used-is-size":
 		vfsOpt.UsedIsSize, err = opt.GetBool(key)
+	case "vfs-refresh":
+		vfsOpt.Refresh, err = opt.GetBool(key)
+	case "vfs-cache-min-free-space":
+		err = getFVarP(&vfsOpt.CacheMinFreeSpace, opt, key)
+	case "vfs-block-norm-dupes":
+		vfsOpt.BlockNormDupes, err = opt.GetBool(key)
+	case "vfs-fast-fingerprint":
+		vfsOpt.FastFingerprint, err = opt.GetBool(key)
+	case "vfs-disk-space-total-size":
+		err = getFVarP(&vfsOpt.DiskSpaceTotalSize, opt, key)
 
 	// unprefixed vfs options
 	case "no-modtime":
@@ -270,6 +288,8 @@ func getVFSOption(vfsOpt *vfscommon.Options, opt rc.Params, key string) (ok bool
 	case "file-perms":
 		perms := &vfsflags.FileMode{Mode: &vfsOpt.FilePerms}
 		err = getFVarP(perms, opt, key)
+	case "no-seek":
+		vfsOpt.NoSeek, err = opt.GetBool(key)
 
 	// unprefixed unix-only vfs options
 	case "umask":
