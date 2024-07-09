@@ -14,7 +14,6 @@ import (
 	"os"
 	"os/exec"
 	"path"
-	"regexp"
 	"runtime"
 	"runtime/pprof"
 	"strconv"
@@ -49,7 +48,6 @@ var (
 	cpuProfile    = flags.StringP("cpuprofile", "", "", "Write cpu profile to file", "Debugging")
 	memProfile    = flags.StringP("memprofile", "", "", "Write memory profile to file", "Debugging")
 	statsInterval = flags.DurationP("stats", "", time.Minute*1, "Interval between printing stats, e.g. 500ms, 60s, 5m (0 to disable)", "Logging")
-	dataRateUnit  = flags.StringP("stats-unit", "", "bytes", "Show data rate in stats as either 'bits' or 'bytes' per second", "Logging")
 	version       bool
 	// Errors
 	errorCommandNotFound    = errors.New("command not found")
@@ -471,13 +469,6 @@ func initConfig() {
 				log.Fatal(err)
 			}
 		})
-	}
-
-	if m, _ := regexp.MatchString("^(bits|bytes)$", *dataRateUnit); !m {
-		fs.Errorf(nil, "Invalid unit passed to --stats-unit. Defaulting to bytes.")
-		ci.DataRateUnit = "bytes"
-	} else {
-		ci.DataRateUnit = *dataRateUnit
 	}
 }
 

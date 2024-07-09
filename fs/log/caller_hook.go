@@ -5,8 +5,42 @@ import (
 	"runtime"
 	"strings"
 
+	"github.com/rclone/rclone/fs"
 	"github.com/sirupsen/logrus"
 )
+
+var loggerInstalled = false
+
+// InstallJSONLogger installs the JSON logger at the specified log level
+func InstallJSONLogger(logLevel fs.LogLevel) {
+	if !loggerInstalled {
+		logrus.AddHook(NewCallerHook())
+		loggerInstalled = true
+	}
+	logrus.SetFormatter(&logrus.JSONFormatter{
+		TimestampFormat: "2006-01-02T15:04:05.999999-07:00",
+	})
+	logrus.SetLevel(logrus.DebugLevel)
+	switch logLevel {
+	case fs.LogLevelEmergency, fs.LogLevelAlert:
+		logrus.SetLevel(logrus.PanicLevel)
+	case fs.LogLevelCritical:
+		logrus.SetLevel(logrus.FatalLevel)
+	case fs.LogLevelError:
+		logrus.SetLevel(logrus.ErrorLevel)
+	case fs.LogLevelWarning, fs.LogLevelNotice:
+		logrus.SetLevel(logrus.WarnLevel)
+	case fs.LogLevelInfo:
+		logrus.SetLevel(logrus.InfoLevel)
+	case fs.LogLevelDebug:
+		logrus.SetLevel(logrus.DebugLevel)
+	}
+}
+
+// install hook in fs to call to avoid circular dependency
+func init() {
+	fs.InstallJSONLogger = InstallJSONLogger
+}
 
 // CallerHook for log the calling file and line of the fine
 type CallerHook struct {
