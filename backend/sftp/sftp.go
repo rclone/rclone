@@ -815,13 +815,13 @@ func (f *Fs) drainPool(ctx context.Context) (err error) {
 		if cErr := c.closed(); cErr == nil {
 			cErr = c.close()
 			if cErr != nil {
-				err = cErr
+				fs.Debugf(f, "Ignoring error closing connection: %v", cErr)
 			}
 		}
 		f.pool[i] = nil
 	}
 	f.pool = nil
-	return err
+	return nil
 }
 
 // NewFs creates a new Fs object from the name and root. It connects to
