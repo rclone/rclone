@@ -195,11 +195,11 @@ type Option struct {
 	FieldName  string           // name of the field used in the rc JSON - will be auto filled normally
 	Help       string           // help, start with a single sentence on a single line that will be extracted for command line help
 	Groups     string           `json:",omitempty"` // groups this option belongs to - comma separated string for options classification
-	Provider   string           // set to filter on provider
+	Provider   string           `json:",omitempty"` // set to filter on provider
 	Default    interface{}      // default value, nil => "", if set (and not to nil or "") then Required does nothing
 	Value      interface{}      // value to be set by flags
 	Examples   OptionExamples   `json:",omitempty"` // predefined values that can be selected from list (multiple-choice option)
-	ShortOpt   string           // the short option for this if required
+	ShortOpt   string           `json:",omitempty"` // the short option for this if required
 	Hide       OptionVisibility // set this to hide the config from the configurator or the command line
 	Required   bool             // this option is required, meaning value cannot be empty unless there is a default
 	IsPassword bool             // set if the option is a password
@@ -348,7 +348,7 @@ func (os OptionExamples) Sort() { sort.Sort(os) }
 type OptionExample struct {
 	Value    string
 	Help     string
-	Provider string
+	Provider string `json:",omitempty"`
 }
 
 // Register a filesystem
@@ -417,6 +417,7 @@ var OptionsRegistry = map[string]OptionsInfo{}
 //
 // Packages which need global options should use this in an init() function
 func RegisterGlobalOptions(oi OptionsInfo) {
+	oi.Options.setValues()
 	OptionsRegistry[oi.Name] = oi
 	if oi.Opt != nil && oi.Options != nil {
 		err := oi.Check()
@@ -429,7 +430,10 @@ func RegisterGlobalOptions(oi OptionsInfo) {
 var optionName = regexp.MustCompile(`^[a-z0-9_]+$`)
 
 // Check ensures that for every element of oi.Options there is a field
-// in oi.Opt that matches it
+// in oi.Opt that matches it.
+//
+// It also sets Option.FieldName to be the name of the field for use
+// in JSON.
 func (oi *OptionsInfo) Check() error {
 	errCount := errcount.New()
 	items, err := configstruct.Items(oi.Opt)
@@ -471,6 +475,8 @@ func (oi *OptionsInfo) Check() error {
 			//errCount.Add(err)
 			Errorf(nil, "%s", err)
 		}
+		// Set FieldName
+		option.FieldName = item.Field
 	}
 	return errCount.Err(fmt.Sprintf("internal error: options block %q", oi.Name))
 }

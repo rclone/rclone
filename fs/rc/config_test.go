@@ -20,6 +20,16 @@ func clearOptionBlock() func() {
 	}
 }
 
+var testInfo = fs.Options{{
+	Name:    "string",
+	Default: "str",
+	Help:    "It is a string",
+}, {
+	Name:    "int",
+	Default: 17,
+	Help:    "It is an int",
+}}
+
 var testOptions = struct {
 	String string
 	Int    int
@@ -28,10 +38,18 @@ var testOptions = struct {
 	Int:    42,
 }
 
+func registerTestOptions() {
+	fs.RegisterGlobalOptions(fs.OptionsInfo{Name: "potato", Opt: &testOptions, Options: testInfo})
+}
+
+func registerTestOptionsReload(reload func(context.Context) error) {
+	fs.RegisterGlobalOptions(fs.OptionsInfo{Name: "potato", Opt: &testOptions, Options: testInfo, Reload: reload})
+}
+
 func TestAddOption(t *testing.T) {
 	defer clearOptionBlock()()
 	assert.Equal(t, len(fs.OptionsRegistry), 0)
-	AddOption("potato", &testOptions)
+	registerTestOptions()
 	assert.Equal(t, len(fs.OptionsRegistry), 1)
 	assert.Equal(t, &testOptions, fs.OptionsRegistry["potato"].Opt)
 }
@@ -40,7 +58,7 @@ func TestAddOptionReload(t *testing.T) {
 	defer clearOptionBlock()()
 	assert.Equal(t, len(fs.OptionsRegistry), 0)
 	reload := func(ctx context.Context) error { return nil }
-	AddOptionReload("potato", &testOptions, reload)
+	registerTestOptionsReload(reload)
 	assert.Equal(t, len(fs.OptionsRegistry), 1)
 	assert.Equal(t, &testOptions, fs.OptionsRegistry["potato"].Opt)
 	assert.Equal(t, fmt.Sprintf("%p", reload), fmt.Sprintf("%p", fs.OptionsRegistry["potato"].Reload))
@@ -48,7 +66,7 @@ func TestAddOptionReload(t *testing.T) {
 
 func TestOptionsBlocks(t *testing.T) {
 	defer clearOptionBlock()()
-	AddOption("potato", &testOptions)
+	registerTestOptions()
 	call := Calls.Get("options/blocks")
 	require.NotNil(t, call)
 	in := Params{}
@@ -60,7 +78,7 @@ func TestOptionsBlocks(t *testing.T) {
 
 func TestOptionsGet(t *testing.T) {
 	defer clearOptionBlock()()
-	AddOption("potato", &testOptions)
+	registerTestOptions()
 	call := Calls.Get("options/get")
 	require.NotNil(t, call)
 	in := Params{}
@@ -76,8 +94,8 @@ func TestOptionsGetMarshal(t *testing.T) {
 	ci := fs.GetConfig(ctx)
 
 	// Add some real options
-	AddOption("main", ci)
-	AddOption("rc", &Opt)
+	fs.RegisterGlobalOptions(fs.OptionsInfo{Name: "main", Opt: ci, Options: nil})
+	fs.RegisterGlobalOptions(fs.OptionsInfo{Name: "rc", Opt: &Opt, Options: nil})
 
 	// get them
 	call := Calls.Get("options/get")
@@ -92,11 +110,23 @@ func TestOptionsGetMarshal(t *testing.T) {
 	require.NoError(t, err)
 }
 
+func TestOptionsInfo(t *testing.T) {
+	defer clearOptionBlock()()
+	registerTestOptions()
+	call := Calls.Get("options/info")
+	require.NotNil(t, call)
+	in := Params{}
+	out, err := call.Fn(context.Background(), in)
+	require.NoError(t, err)
+	require.NotNil(t, out)
+	assert.Equal(t, Params{"potato": testInfo}, out)
+}
+
 func TestOptionsSet(t *testing.T) {
 	defer clearOptionBlock()()
 	var reloaded int
-	AddOptionReload("potato", &testOptions, func(ctx context.Context) error {
-		if reloaded > 0 {
+	registerTestOptionsReload(func(ctx context.Context) error {
+		if reloaded > 1 {
 			return errors.New("error while reloading")
 		}
 		reloaded++
@@ -114,8 +144,8 @@ func TestOptionsSet(t *testing.T) {
 	require.NoError(t, err)
 	require.Nil(t, out)
 	assert.Equal(t, 50, testOptions.Int)
-	assert.Equal(t, "hello", testOptions.String)
-	assert.Equal(t, 1, reloaded)
+	assert.Equal(t, "str", testOptions.String)
+	assert.Equal(t, 2, reloaded)
 
 	// error from reload
 	_, err = call.Fn(context.Background(), in)

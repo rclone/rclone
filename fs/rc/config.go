@@ -12,19 +12,6 @@ import (
 	"github.com/rclone/rclone/fs/filter"
 )
 
-// AddOption adds an option set
-func AddOption(name string, option interface{}) {
-	// FIXME remove this function when conversion to options is complete
-	fs.RegisterGlobalOptions(fs.OptionsInfo{Name: name, Opt: option})
-}
-
-// AddOptionReload adds an option set with a reload function to be
-// called when options are changed
-func AddOptionReload(name string, option interface{}, reload func(context.Context) error) {
-	// FIXME remove this function when conversion to options is complete
-	fs.RegisterGlobalOptions(fs.OptionsInfo{Name: name, Opt: option, Reload: reload})
-}
-
 func init() {
 	Add(Call{
 		Path:  "options/blocks",
@@ -69,6 +56,29 @@ func rcOptionsGet(ctx context.Context, in Params) (out Params, err error) {
 	out = make(Params)
 	for _, opt := range fs.OptionsRegistry {
 		out[opt.Name] = opt.Opt
+	}
+	return out, nil
+}
+
+func init() {
+	Add(Call{
+		Path:  "options/info",
+		Fn:    rcOptionsInfo,
+		Title: "Get info about all the global options",
+		Help: `Returns an object where keys are option block names and values are an
+array of objects with info about each options.
+
+These objects are in the same format as returned by "config/providers". They are
+described in the [option blocks](#option-blocks) section.
+`,
+	})
+}
+
+// Show the info of all the option blocks
+func rcOptionsInfo(ctx context.Context, in Params) (out Params, err error) {
+	out = make(Params)
+	for _, opt := range fs.OptionsRegistry {
+		out[opt.Name] = opt.Options
 	}
 	return out, nil
 }
