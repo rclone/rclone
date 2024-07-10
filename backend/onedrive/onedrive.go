@@ -2270,7 +2270,8 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 	opts := o.fs.newOptsCall(o.id, "GET", "/content")
 	opts.Options = options
 	if o.fs.opt.AVOverride {
-		opts.Parameters = url.Values{"AVOverride": {"1"}}
+		// AVOverride=1 works normally but the browser sends avcmd=1
+		opts.Parameters = url.Values{"AVOverride": {"1"}, "avcmd": {"1"}}
 	}
 	// Make a note of the redirect target as we need to call it without Auth
 	var redirectReq *http.Request
