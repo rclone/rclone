@@ -17,9 +17,6 @@ var groups *statsGroups
 func init() {
 	// Init stats container
 	groups = newStatsGroups()
-
-	// Set the function pointer up in fs
-	fs.CountError = GlobalStats().Error
 }
 
 func rcListStats(ctx context.Context, in rc.Params) (rc.Params, error) {
