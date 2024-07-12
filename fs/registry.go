@@ -437,6 +437,17 @@ func RegisterGlobalOptions(oi OptionsInfo) {
 			log.Fatalf("%v", err)
 		}
 	}
+	// Load the default values into the options.
+	//
+	// These will be from the ultimate defaults or environment
+	// variables.
+	//
+	// The flags haven't been processed yet so this will be run
+	// again when the flags are ready.
+	err := oi.load()
+	if err != nil {
+		log.Fatalf("Failed to load %q default values: %v", oi.Name, err)
+	}
 }
 
 var optionName = regexp.MustCompile(`^[a-z0-9_]+$`)
