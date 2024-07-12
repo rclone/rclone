@@ -64,7 +64,7 @@ type regInfoValues struct {
 // the default values
 func (r *regInfoValues) Get(key string) (value string, ok bool) {
 	opt := r.options.Get(key)
-	if opt != nil && (r.useDefault || opt.Value != nil) {
+	if opt != nil && (r.useDefault || !opt.IsDefault()) {
 		return opt.String(), true
 	}
 	return "", false

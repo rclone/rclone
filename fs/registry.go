@@ -244,6 +244,18 @@ func (o *Option) GetValue() interface{} {
 	return val
 }
 
+// IsDefault returns true if the value is the default value
+func (o *Option) IsDefault() bool {
+	if o.Value == nil {
+		return true
+	}
+	Default := o.Default
+	if Default == nil {
+		Default = ""
+	}
+	return reflect.DeepEqual(o.Value, Default)
+}
+
 // String turns Option into a string
 func (o *Option) String() string {
 	v := o.GetValue()
