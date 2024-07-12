@@ -1136,6 +1136,22 @@ triggering follow-on actions if data was copied, or skipping if not.
 NB: Enabling this option turns a usually non-fatal error into a potentially
 fatal one - please check and adjust your scripts accordingly!
 
+### --file-time-format=WILDCARD~#~FORMAT ###
+
+The value provided for this flag is split into two parts (`WILDCARD` and `FORMAT`)
+at `~#~`. The `FORMAT` is a time stamp format as defined
+[here](https://pkg.go.dev/github.com/ncruces/go-strftime). The timestamp is converted
+into the provided format and all the `WILDCARD` in the filename,
+(e.g., `--log-file=FILE`, see [Log File Section](#--log-filefile-))
+will be replaced by the formatted timestamp.
+
+E.g. usage:
+
+Assume that the current time is `27 March 2024 10:00 P.M.` and the flag is used as
+`--file-time-format=:dt:~#~%Y-%m-%d` along with the flag `--log-file=C:\err_:dt:.log`.
+This means that the wildcard is `:dt:` and the time format is `%Y-%m-%d`.
+So the logs will be printed in the file `C:\err_2024-03-27.log`.
+
 ### --fix-case ###
 
 Normally, a sync to a case insensitive dest (such as macOS / Windows) will
