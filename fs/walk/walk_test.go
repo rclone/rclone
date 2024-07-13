@@ -163,7 +163,7 @@ func (ls *listDirs) WalkFn(dir string, entries fs.DirEntries, err error) error {
 // Walk does the walk and tests the expectations
 func (ls *listDirs) Walk() {
 	err := walk(context.Background(), nil, "", ls.includeAll, ls.maxLevel, ls.WalkFn, ls.ListDir)
-	assert.Equal(ls.t, ls.finalError, err)
+	assert.True(ls.t, errors.Is(ls.finalError, err))
 	ls.IsFinished()
 }
 
