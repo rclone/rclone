@@ -1347,11 +1347,12 @@ flag set) such as:
 - local
 - ftp
 - sftp
+- pcloud
 
 Without `--inplace` (the default) rclone will first upload to a
 temporary file with an extension like this, where `XXXXXX` represents a
-random string and `.partial` is [--partial-suffix](#partial-suffix) value
-(`.partial` by default).
+hash of the source file's fingerprint and `.partial` is 
+[--partial-suffix](#partial-suffix) value (`.partial` by default).
 
     original-file-name.XXXXXX.partial
 
