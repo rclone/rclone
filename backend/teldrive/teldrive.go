@@ -12,6 +12,7 @@ import (
 	"path"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/rclone/rclone/backend/teldrive/api"
@@ -25,6 +26,7 @@ import (
 	"github.com/rclone/rclone/lib/encoder"
 	"github.com/rclone/rclone/lib/pacer"
 	"github.com/rclone/rclone/lib/rest"
+	"golang.org/x/sync/errgroup"
 )
 
 const (
@@ -118,7 +120,6 @@ type Fs struct {
 	features *fs.Features
 	srv      *rest.Client
 	pacer    *fs.Pacer
-	authHash string
 	userId   int64
 }
 
@@ -275,17 +276,12 @@ func NewFs(ctx context.Context, name string, root string, config configmap.Mappe
 		return nil, err
 	}
 
-	if session.Hash == "" {
-		return nil, fmt.Errorf("invalid session token")
-	}
-
 	for _, cookie := range sessionResp.Cookies() {
 		if cookie.Name == "user-session" && cookie.Value != "" {
 			config.Set("access_token", cookie.Value)
 		}
 	}
 
-	f.authHash = session.Hash
 	f.userId = session.UserId
 
 	dir, base := f.splitPathFull("")
@@ -310,11 +306,11 @@ func (f *Fs) readMetaDataForPath(ctx context.Context, path string, options *api.
 		Method: "GET",
 		Path:   "/api/files",
 		Parameters: url.Values{
-			"path":          []string{path},
-			"perPage":       []string{strconv.FormatInt(options.PerPage, 10)},
-			"sort":          []string{"id"},
-			"op":            []string{"list"},
-			"nextPageToken": []string{options.NextPageToken},
+			"path":  []string{path},
+			"limit": []string{strconv.FormatInt(options.Limit, 10)},
+			"sort":  []string{"updatedAt"},
+			"op":    []string{"list"},
+			"page":  []string{strconv.FormatInt(options.Page, 10)},
 		},
 	}
 	var err error
@@ -380,41 +376,65 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 
 	root := f.dirPath(dir)
 
-	var nextPageToken string = ""
+	opts := &api.MetadataRequestOptions{
+		Limit: f.opt.PageSize,
+		Page:  1,
+	}
 
-	for {
-		opts := &api.MetadataRequestOptions{
-			PerPage:       f.opt.PageSize,
-			NextPageToken: nextPageToken,
+	files := []api.FileInfo{}
+
+	info, err := f.readMetaDataForPath(ctx, root, opts)
+
+	if err != nil {
+		return nil, err
+	}
+
+	files = append(files, info.Files...)
+
+	mu := sync.Mutex{}
+	if info.Meta.TotalPages > 1 {
+		g, _ := errgroup.WithContext(ctx)
+
+		g.SetLimit(8)
+
+		for i := 2; i <= info.Meta.TotalPages; i++ {
+			page := i
+			g.Go(func() error {
+				opts := &api.MetadataRequestOptions{
+					Limit: f.opt.PageSize,
+					Page:  int64(page),
+				}
+				info, err := f.readMetaDataForPath(ctx, root, opts)
+
+				if err != nil {
+					return err
+				}
+				mu.Lock()
+				files = append(files, info.Files...)
+				mu.Unlock()
+				return nil
+			})
 		}
-
-		info, err := f.readMetaDataForPath(ctx, root, opts)
-		if err != nil {
+		if err := g.Wait(); err != nil {
 			return nil, err
 		}
+	}
 
-		for _, item := range info.Files {
-			remote := path.Join(dir, f.opt.Enc.ToStandardName(item.Name))
-			if item.Type == "folder" {
-				modTime, _ := time.Parse(timeFormat, item.ModTime)
-				d := fs.NewDir(remote, modTime).SetID(item.Id).SetParentID(item.ParentId)
-				entries = append(entries, d)
+	for _, item := range files {
+		remote := path.Join(dir, f.opt.Enc.ToStandardName(item.Name))
+		if item.Type == "folder" {
+			modTime, _ := time.Parse(timeFormat, item.ModTime)
+			d := fs.NewDir(remote, modTime).SetID(item.Id).SetParentID(item.ParentId)
+			entries = append(entries, d)
+		}
+		if item.Type == "file" {
+			o, err := f.newObjectWithInfo(ctx, remote, &item)
+			if err != nil {
+				continue
 			}
-			if item.Type == "file" {
-				o, err := f.newObjectWithInfo(ctx, remote, &item)
-				if err != nil {
-					continue
-				}
-				entries = append(entries, o)
-			}
-
+			entries = append(entries, o)
 		}
 
-		nextPageToken = info.NextPageToken
-		//check if we reached end of list
-		if nextPageToken == "" {
-			break
-		}
 	}
 	return entries, nil
 }
@@ -838,9 +858,6 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 		Method:  "GET",
 		Path:    fmt.Sprintf("/api/files/%s/%s/%s", o.id, streamType, url.QueryEscape(o.name)),
 		Options: options,
-		Parameters: url.Values{
-			"hash": []string{o.fs.authHash},
-		},
 	}
 
 	err = o.fs.pacer.Call(func() (bool, error) {
