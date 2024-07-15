@@ -561,7 +561,7 @@ type Object struct {
 	fs      *Fs
 	remote  string
 	size    int64       // size of the object
-	modTime time.Time   // modification time of the object
+	modTime uint32      // modification time of the object as unix time
 	mode    os.FileMode // mode bits from the file
 	md5sum  *string     // Cached MD5 checksum
 	sha1sum *string     // Cached SHA1 checksum
@@ -815,13 +815,13 @@ func (f *Fs) drainPool(ctx context.Context) (err error) {
 		if cErr := c.closed(); cErr == nil {
 			cErr = c.close()
 			if cErr != nil {
-				err = cErr
+				fs.Debugf(f, "Ignoring error closing connection: %v", cErr)
 			}
 		}
 		f.pool[i] = nil
 	}
 	f.pool = nil
-	return err
+	return nil
 }
 
 // NewFs creates a new Fs object from the name and root. It connects to
@@ -1957,7 +1957,7 @@ func (o *Object) Size() int64 {
 
 // ModTime returns the modification time of the remote sftp file
 func (o *Object) ModTime(ctx context.Context) time.Time {
-	return o.modTime
+	return time.Unix(int64(o.modTime), 0)
 }
 
 // path returns the native SFTP path of the object
@@ -1972,7 +1972,7 @@ func (o *Object) shellPath() string {
 
 // setMetadata updates the info in the object from the stat result passed in
 func (o *Object) setMetadata(info os.FileInfo) {
-	o.modTime = info.ModTime()
+	o.modTime = info.Sys().(*sftp.FileStat).Mtime
 	o.size = info.Size()
 	o.mode = info.Mode()
 }
@@ -2195,7 +2195,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 			// In the specific case of o.fs.opt.SetModTime == false
 			// if the object wasn't found then don't return an error
 			fs.Debugf(o, "Not found after upload with set_modtime=false so returning best guess")
-			o.modTime = src.ModTime(ctx)
+			o.modTime = uint32(src.ModTime(ctx).Unix())
 			o.size = src.Size()
 			o.mode = os.FileMode(0666) // regular file
 		} else if err != nil {

@@ -14,7 +14,6 @@ import (
 	"os"
 	"os/exec"
 	"path"
-	"regexp"
 	"runtime"
 	"runtime/pprof"
 	"strconv"
@@ -29,11 +28,10 @@ import (
 	"github.com/rclone/rclone/fs/config/configflags"
 	"github.com/rclone/rclone/fs/config/flags"
 	"github.com/rclone/rclone/fs/filter"
-	"github.com/rclone/rclone/fs/filter/filterflags"
 	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/fs/fspath"
 	fslog "github.com/rclone/rclone/fs/log"
-	"github.com/rclone/rclone/fs/rc/rcflags"
+	"github.com/rclone/rclone/fs/rc"
 	"github.com/rclone/rclone/fs/rc/rcserver"
 	fssync "github.com/rclone/rclone/fs/sync"
 	"github.com/rclone/rclone/lib/atexit"
@@ -50,7 +48,6 @@ var (
 	cpuProfile    = flags.StringP("cpuprofile", "", "", "Write cpu profile to file", "Debugging")
 	memProfile    = flags.StringP("memprofile", "", "", "Write memory profile to file", "Debugging")
 	statsInterval = flags.DurationP("stats", "", time.Minute*1, "Interval between printing stats, e.g. 500ms, 60s, 5m (0 to disable)", "Logging")
-	dataRateUnit  = flags.StringP("stats-unit", "", "bytes", "Show data rate in stats as either 'bits' or 'bytes' per second", "Logging")
 	version       bool
 	// Errors
 	errorCommandNotFound    = errors.New("command not found")
@@ -383,6 +380,12 @@ func StartStats() func() {
 
 // initConfig is run by cobra after initialising the flags
 func initConfig() {
+	// Set the global options from the flags
+	err := fs.GlobalOptionsInit()
+	if err != nil {
+		log.Fatalf("Failed to initialise global options: %v", err)
+	}
+
 	ctx := context.Background()
 	ci := fs.GetConfig(ctx)
 
@@ -409,12 +412,6 @@ func initConfig() {
 		terminal.EnableColorsStdout()
 	}
 
-	// Load filters
-	err := filterflags.Reload(ctx)
-	if err != nil {
-		log.Fatalf("Failed to load filters: %v", err)
-	}
-
 	// Write the args for debug purposes
 	fs.Debugf("rclone", "Version %q starting with parameters %q", fs.Version, os.Args)
 
@@ -424,7 +421,7 @@ func initConfig() {
 	}
 
 	// Start the remote control server if configured
-	_, err = rcserver.Start(context.Background(), &rcflags.Opt)
+	_, err = rcserver.Start(context.Background(), &rc.Opt)
 	if err != nil {
 		log.Fatalf("Failed to start remote control: %v", err)
 	}
@@ -473,13 +470,6 @@ func initConfig() {
 			}
 		})
 	}
-
-	if m, _ := regexp.MatchString("^(bits|bytes)$", *dataRateUnit); !m {
-		fs.Errorf(nil, "Invalid unit passed to --stats-unit. Defaulting to bytes.")
-		ci.DataRateUnit = "bytes"
-	} else {
-		ci.DataRateUnit = *dataRateUnit
-	}
 }
 
 func resolveExitCode(err error) {
@@ -522,41 +512,12 @@ var backendFlags map[string]struct{}
 func AddBackendFlags() {
 	backendFlags = map[string]struct{}{}
 	for _, fsInfo := range fs.Registry {
-		done := map[string]struct{}{}
+		flags.AddFlagsFromOptions(pflag.CommandLine, fsInfo.Prefix, fsInfo.Options)
+		// Store the backend flag names for the help generator
 		for i := range fsInfo.Options {
 			opt := &fsInfo.Options[i]
-			// Skip if done already (e.g. with Provider options)
-			if _, doneAlready := done[opt.Name]; doneAlready {
-				continue
-			}
-			done[opt.Name] = struct{}{}
-			// Make a flag from each option
 			name := opt.FlagName(fsInfo.Prefix)
-			found := pflag.CommandLine.Lookup(name) != nil
-			if !found {
-				// Take first line of help only
-				help := strings.TrimSpace(opt.Help)
-				if nl := strings.IndexRune(help, '\n'); nl >= 0 {
-					help = help[:nl]
-				}
-				help = strings.TrimRight(strings.TrimSpace(help), ".!?")
-				if opt.IsPassword {
-					help += " (obscured)"
-				}
-				flag := pflag.CommandLine.VarPF(opt, name, opt.ShortOpt, help)
-				flags.SetDefaultFromEnv(pflag.CommandLine, name)
-				if _, isBool := opt.Default.(bool); isBool {
-					flag.NoOptDefVal = "true"
-				}
-				// Hide on the command line if requested
-				if opt.Hide&fs.OptionHideCommandLine != 0 {
-					flag.Hidden = true
-				}
-				backendFlags[name] = struct{}{}
-			} else {
-				fs.Errorf(nil, "Not adding duplicate flag --%s", name)
-			}
-			// flag.Hidden = true
+			backendFlags[name] = struct{}{}
 		}
 	}
 }

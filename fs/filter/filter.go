@@ -19,24 +19,137 @@ import (
 // This is accessed through GetConfig and AddConfig
 var globalConfig = mustNewFilter(nil)
 
-// Opt configures the filter
-type Opt struct {
-	DeleteExcluded bool
-	RulesOpt       // embedded so we don't change the JSON API
-	ExcludeFile    []string
-	FilesFrom      []string
-	FilesFromRaw   []string
-	MetaRules      RulesOpt
-	MinAge         fs.Duration
-	MaxAge         fs.Duration
-	MinSize        fs.SizeSuffix
-	MaxSize        fs.SizeSuffix
-	IgnoreCase     bool
+// OptionsInfo describes the Options in use
+var OptionsInfo = fs.Options{{
+	Name:    "delete_excluded",
+	Default: false,
+	Help:    "Delete files on dest excluded from sync",
+	Groups:  "Filter",
+}, {
+	Name:    "exclude_if_present",
+	Default: []string{},
+	Help:    "Exclude directories if filename is present",
+	Groups:  "Filter",
+}, {
+	Name:    "files_from",
+	Default: []string{},
+	Help:    "Read list of source-file names from file (use - to read from stdin)",
+	Groups:  "Filter",
+}, {
+	Name:    "files_from_raw",
+	Default: []string{},
+	Help:    "Read list of source-file names from file without any processing of lines (use - to read from stdin)",
+	Groups:  "Filter",
+}, {
+	Name:    "min_age",
+	Default: fs.DurationOff,
+	Help:    "Only transfer files older than this in s or suffix ms|s|m|h|d|w|M|y",
+	Groups:  "Filter",
+}, {
+	Name:    "max_age",
+	Default: fs.DurationOff,
+	Help:    "Only transfer files younger than this in s or suffix ms|s|m|h|d|w|M|y",
+	Groups:  "Filter",
+}, {
+	Name:    "min_size",
+	Default: fs.SizeSuffix(-1),
+	Help:    "Only transfer files bigger than this in KiB or suffix B|K|M|G|T|P",
+	Groups:  "Filter",
+}, {
+	Name:    "max_size",
+	Default: fs.SizeSuffix(-1),
+	Help:    "Only transfer files smaller than this in KiB or suffix B|K|M|G|T|P",
+	Groups:  "Filter",
+}, {
+	Name:    "ignore_case",
+	Default: false,
+	Help:    "Ignore case in filters (case insensitive)",
+	Groups:  "Filter",
+}, {
+	Name:     "filter",
+	Default:  []string{},
+	ShortOpt: "f",
+	Help:     "Add a file filtering rule",
+	Groups:   "Filter",
+}, {
+	Name:    "filter_from",
+	Default: []string{},
+	Help:    "Read file filtering patterns from a file (use - to read from stdin)",
+	Groups:  "Filter",
+}, {
+	Name:    "exclude",
+	Default: []string{},
+	Help:    "Exclude files matching pattern",
+	Groups:  "Filter",
+}, {
+	Name:    "exclude_from",
+	Default: []string{},
+	Help:    "Read file exclude patterns from file (use - to read from stdin)",
+	Groups:  "Filter",
+}, {
+	Name:    "include",
+	Default: []string{},
+	Help:    "Include files matching pattern",
+	Groups:  "Filter",
+}, {
+	Name:    "include_from",
+	Default: []string{},
+	Help:    "Read file include patterns from file (use - to read from stdin)",
+	Groups:  "Filter",
+}, {
+	Name:    "metadata_filter",
+	Default: []string{},
+	Help:    "Add a metadata filtering rule",
+	Groups:  "Filter,Metadata",
+}, {
+	Name:    "metadata_filter_from",
+	Default: []string{},
+	Help:    "Read metadata filtering patterns from a file (use - to read from stdin)",
+	Groups:  "Filter,Metadata",
+}, {
+	Name:    "metadata_exclude",
+	Default: []string{},
+	Help:    "Exclude metadatas matching pattern",
+	Groups:  "Filter,Metadata",
+}, {
+	Name:    "metadata_exclude_from",
+	Default: []string{},
+	Help:    "Read metadata exclude patterns from file (use - to read from stdin)",
+	Groups:  "Filter,Metadata",
+}, {
+	Name:    "metadata_include",
+	Default: []string{},
+	Help:    "Include metadatas matching pattern",
+	Groups:  "Filter,Metadata",
+}, {
+	Name:    "metadata_include_from",
+	Default: []string{},
+	Help:    "Read metadata include patterns from file (use - to read from stdin)",
+	Groups:  "Filter,Metadata",
+}}
+
+// Options configures the filter
+type Options struct {
+	DeleteExcluded bool          `config:"delete_excluded"`
+	RulesOpt                     // embedded so we don't change the JSON API
+	ExcludeFile    []string      `config:"exclude_if_present"`
+	FilesFrom      []string      `config:"files_from"`
+	FilesFromRaw   []string      `config:"files_from_raw"`
+	MetaRules      RulesOpt      `config:"metadata"`
+	MinAge         fs.Duration   `config:"min_age"`
+	MaxAge         fs.Duration   `config:"max_age"`
+	MinSize        fs.SizeSuffix `config:"min_size"`
+	MaxSize        fs.SizeSuffix `config:"max_size"`
+	IgnoreCase     bool          `config:"ignore_case"`
 }
 
-// DefaultOpt is the default config for the filter
-var DefaultOpt = Opt{
-	MinAge:  fs.DurationOff,
+func init() {
+	fs.RegisterGlobalOptions(fs.OptionsInfo{Name: "filter", Opt: &Opt, Options: OptionsInfo, Reload: Reload})
+}
+
+// Opt is the default config for the filter
+var Opt = Options{
+	MinAge:  fs.DurationOff, // These have to be set here as the options are parsed once before the defaults are set
 	MaxAge:  fs.DurationOff,
 	MinSize: fs.SizeSuffix(-1),
 	MaxSize: fs.SizeSuffix(-1),
@@ -47,7 +160,7 @@ type FilesMap map[string]struct{}
 
 // Filter describes any filtering in operation
 type Filter struct {
-	Opt         Opt
+	Opt         Options
 	ModTimeFrom time.Time
 	ModTimeTo   time.Time
 	fileRules   rules
@@ -59,14 +172,14 @@ type Filter struct {
 
 // NewFilter parses the command line options and creates a Filter
 // object.  If opt is nil, then DefaultOpt will be used
-func NewFilter(opt *Opt) (f *Filter, err error) {
+func NewFilter(opt *Options) (f *Filter, err error) {
 	f = &Filter{}
 
 	// Make a copy of the options
 	if opt != nil {
 		f.Opt = *opt
 	} else {
-		f.Opt = DefaultOpt
+		f.Opt = Opt
 	}
 
 	// Filter flags
@@ -77,7 +190,7 @@ func NewFilter(opt *Opt) (f *Filter, err error) {
 	if f.Opt.MaxAge.IsSet() {
 		f.ModTimeFrom = time.Now().Add(-time.Duration(f.Opt.MaxAge))
 		if !f.ModTimeTo.IsZero() && f.ModTimeTo.Before(f.ModTimeFrom) {
-			log.Fatal("filter: --min-age can't be larger than --max-age")
+			log.Fatalf("filter: --min-age %q can't be larger than --max-age %q", opt.MinAge, opt.MaxAge)
 		}
 		fs.Debugf(nil, "--max-age %v to %v", f.Opt.MaxAge, f.ModTimeFrom)
 	}
@@ -130,7 +243,7 @@ func NewFilter(opt *Opt) (f *Filter, err error) {
 	return f, nil
 }
 
-func mustNewFilter(opt *Opt) *Filter {
+func mustNewFilter(opt *Options) *Filter {
 	f, err := NewFilter(opt)
 	if err != nil {
 		panic(err)
@@ -567,4 +680,15 @@ func SetUseFilter(ctx context.Context, useFilter bool) context.Context {
 	pVal := new(bool)
 	*pVal = useFilter
 	return context.WithValue(ctx, useFlagContextKey, pVal)
+}
+
+// Reload the filters from the flags
+func Reload(ctx context.Context) (err error) {
+	fi := GetConfig(ctx)
+	newFilter, err := NewFilter(&Opt)
+	if err != nil {
+		return err
+	}
+	*fi = *newFilter
+	return nil
 }

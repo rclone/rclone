@@ -40,7 +40,7 @@ var (
 func TestSftp(t *testing.T) {
 	// Configure and start the server
 	start := func(f fs.Fs) (configmap.Simple, func()) {
-		opt := DefaultOpt
+		opt := Opt
 		opt.ListenAddr = testBindAddress
 		opt.User = testUser
 		opt.Pass = testPass

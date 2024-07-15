@@ -12,8 +12,8 @@ import (
 
 // Check it satisfies the interfaces
 var (
-	_ flagger   = (*Time)(nil)
-	_ flaggerNP = Time{}
+	_ Flagger   = (*Time)(nil)
+	_ FlaggerNP = Time{}
 )
 
 func TestParseTime(t *testing.T) {

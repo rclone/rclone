@@ -28,7 +28,7 @@ import (
 	"github.com/rclone/rclone/lib/env"
 	"github.com/rclone/rclone/lib/file"
 	"github.com/rclone/rclone/vfs"
-	"github.com/rclone/rclone/vfs/vfsflags"
+	"github.com/rclone/rclone/vfs/vfscommon"
 	"golang.org/x/crypto/ssh"
 )
 
@@ -54,7 +54,7 @@ func newServer(ctx context.Context, f fs.Fs, opt *Options) *server {
 	if proxyflags.Opt.AuthProxy != "" {
 		s.proxy = proxy.New(ctx, &proxyflags.Opt)
 	} else {
-		s.vfs = vfs.New(f, &vfsflags.Opt)
+		s.vfs = vfs.New(f, &vfscommon.Opt)
 	}
 	return s
 }
@@ -133,7 +133,7 @@ func (s *server) serve() (err error) {
 	var authorizedKeysMap map[string]struct{}
 
 	// ensure the user isn't trying to use conflicting flags
-	if proxyflags.Opt.AuthProxy != "" && s.opt.AuthorizedKeys != "" && s.opt.AuthorizedKeys != DefaultOpt.AuthorizedKeys {
+	if proxyflags.Opt.AuthProxy != "" && s.opt.AuthorizedKeys != "" && s.opt.AuthorizedKeys != Opt.AuthorizedKeys {
 		return errors.New("--auth-proxy and --authorized-keys cannot be used at the same time")
 	}
 
@@ -142,7 +142,7 @@ func (s *server) serve() (err error) {
 		authKeysFile := env.ShellExpand(s.opt.AuthorizedKeys)
 		authorizedKeysMap, err = loadAuthorizedKeys(authKeysFile)
 		// If user set the flag away from the default then report an error
-		if err != nil && s.opt.AuthorizedKeys != DefaultOpt.AuthorizedKeys {
+		if err != nil && s.opt.AuthorizedKeys != Opt.AuthorizedKeys {
 			return err
 		}
 		fs.Logf(nil, "Loaded %d authorized keys from %q", len(authorizedKeysMap), authKeysFile)

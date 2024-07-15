@@ -26,6 +26,7 @@ import (
 	"github.com/rclone/rclone/lib/http/serve"
 	"github.com/rclone/rclone/lib/systemd"
 	"github.com/rclone/rclone/vfs"
+	"github.com/rclone/rclone/vfs/vfscommon"
 	"github.com/rclone/rclone/vfs/vfsflags"
 	"github.com/spf13/cobra"
 	"golang.org/x/net/webdav"
@@ -193,7 +194,7 @@ func newWebDAV(ctx context.Context, f fs.Fs, opt *Options) (w *WebDAV, err error
 		// override auth
 		w.opt.Auth.CustomAuthFn = w.auth
 	} else {
-		w._vfs = vfs.New(f, &vfsflags.Opt)
+		w._vfs = vfs.New(f, &vfscommon.Opt)
 	}
 
 	w.Server, err = libhttp.NewServer(ctx,
@@ -365,7 +366,7 @@ func (w *WebDAV) serveDir(rw http.ResponseWriter, r *http.Request, dirRemote str
 	// Make the entries for display
 	directory := serve.NewDirectory(dirRemote, w.Server.HTMLTemplate())
 	for _, node := range dirEntries {
-		if vfsflags.Opt.NoModTime {
+		if vfscommon.Opt.NoModTime {
 			directory.AddHTMLEntry(node.Path(), node.IsDir(), node.Size(), time.Time{})
 		} else {
 			directory.AddHTMLEntry(node.Path(), node.IsDir(), node.Size(), node.ModTime().UTC())

@@ -6,6 +6,7 @@ package mount
 import (
 	"fmt"
 	"runtime"
+	"time"
 
 	"bazil.org/fuse"
 	fusefs "bazil.org/fuse/fs"
@@ -50,7 +51,7 @@ func mountOptions(VFS *vfs.VFS, device string, opt *mountlib.Options) (options [
 		options = append(options, fuse.WritebackCache())
 	}
 	if opt.DaemonTimeout != 0 {
-		options = append(options, fuse.DaemonTimeout(fmt.Sprint(int(opt.DaemonTimeout.Seconds()))))
+		options = append(options, fuse.DaemonTimeout(fmt.Sprint(int(time.Duration(opt.DaemonTimeout).Seconds()))))
 	}
 	if len(opt.ExtraOptions) > 0 {
 		fs.Errorf(nil, "-o/--option not supported with this FUSE backend")

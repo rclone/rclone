@@ -279,7 +279,7 @@ func getStatus(vfs *VFS, in rc.Params) (out rc.Params, err error) {
 		"supported": vfs.pollChan != nil,
 		"interval": map[string]interface{}{
 			"raw":     vfs.Opt.PollInterval,
-			"seconds": vfs.Opt.PollInterval / time.Second,
+			"seconds": time.Duration(vfs.Opt.PollInterval) / time.Second,
 			"string":  vfs.Opt.PollInterval.String(),
 		},
 	}, nil
@@ -347,7 +347,7 @@ func rcPollInterval(ctx context.Context, in rc.Params) (out rc.Params, err error
 	}
 	select {
 	case vfs.pollChan <- interval:
-		vfs.Opt.PollInterval = interval
+		vfs.Opt.PollInterval = fs.Duration(interval)
 	case <-timeoutChan:
 		timeoutHit = true
 	}

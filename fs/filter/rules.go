@@ -12,12 +12,12 @@ import (
 
 // RulesOpt is configuration for a rule set
 type RulesOpt struct {
-	FilterRule  []string
-	FilterFrom  []string
-	ExcludeRule []string
-	ExcludeFrom []string
-	IncludeRule []string
-	IncludeFrom []string
+	FilterRule  []string `config:"filter"`
+	FilterFrom  []string `config:"filter_from"`
+	ExcludeRule []string `config:"exclude"`
+	ExcludeFrom []string `config:"exclude_from"`
+	IncludeRule []string `config:"include"`
+	IncludeFrom []string `config:"include_from"`
 }
 
 // rule is one filter rule

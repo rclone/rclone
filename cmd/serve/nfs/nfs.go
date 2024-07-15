@@ -15,26 +15,39 @@ import (
 	"github.com/rclone/rclone/cmd"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config/flags"
-	"github.com/rclone/rclone/fs/rc"
 	"github.com/rclone/rclone/vfs"
+	"github.com/rclone/rclone/vfs/vfscommon"
 	"github.com/rclone/rclone/vfs/vfsflags"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 )
 
+// OptionsInfo descripts the Options in use
+var OptionsInfo = fs.Options{{
+	Name:    "addr",
+	Default: "",
+	Help:    "IPaddress:Port or :Port to bind server to",
+}, {
+	Name:    "nfs_cache_handle_limit",
+	Default: 1000000,
+	Help:    "max file handles cached simultaneously (min 5)",
+}}
+
+func init() {
+	fs.RegisterGlobalOptions(fs.OptionsInfo{Name: "nfs", Opt: &opt, Options: OptionsInfo})
+}
+
 // Options contains options for the NFS Server
 type Options struct {
-	ListenAddr  string // Port to listen on
-	HandleLimit int    // max file handles cached by go-nfs CachingHandler
+	ListenAddr  string `config:"addr"`                   // Port to listen on
+	HandleLimit int    `config:"nfs_cache_handle_limit"` // max file handles cached by go-nfs CachingHandler
 }
 
 var opt Options
 
 // AddFlags adds flags for serve nfs (and nfsmount)
 func AddFlags(flagSet *pflag.FlagSet, Opt *Options) {
-	rc.AddOption("nfs", &Opt)
-	flags.StringVarP(flagSet, &Opt.ListenAddr, "addr", "", Opt.ListenAddr, "IPaddress:Port or :Port to bind server to", "")
-	flags.IntVarP(flagSet, &Opt.HandleLimit, "nfs-cache-handle-limit", "", 1000000, "max file handles cached simultaneously (min 5)", "")
+	flags.AddFlagsFromOptions(flagSet, "", OptionsInfo)
 }
 
 func init() {
@@ -48,7 +61,7 @@ func Run(command *cobra.Command, args []string) {
 	cmd.CheckArgs(1, 1, command, args)
 	f = cmd.NewFsSrc(args)
 	cmd.Run(false, true, command, func() error {
-		s, err := NewServer(context.Background(), vfs.New(f, &vfsflags.Opt), &opt)
+		s, err := NewServer(context.Background(), vfs.New(f, &vfscommon.Opt), &opt)
 		if err != nil {
 			return err
 		}

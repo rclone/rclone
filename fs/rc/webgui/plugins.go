@@ -16,7 +16,7 @@ import (
 
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config"
-	"github.com/rclone/rclone/fs/rc/rcflags"
+	"github.com/rclone/rclone/fs/rc"
 )
 
 // PackageJSON is the structure of package.json of a plugin
@@ -83,7 +83,7 @@ func newPlugins(fileName string) *Plugins {
 }
 
 func initPluginsOrError() error {
-	if !rcflags.Opt.WebUI {
+	if !rc.Opt.WebUI {
 		return errors.New("WebUI needs to be enabled for plugins to work")
 	}
 	initMutex.Lock()

@@ -11,8 +11,8 @@ import (
 
 // Check it satisfies the interfaces
 var (
-	_ flagger   = (*CutoffMode)(nil)
-	_ flaggerNP = CutoffMode(0)
+	_ Flagger   = (*CutoffMode)(nil)
+	_ FlaggerNP = CutoffMode(0)
 )
 
 func TestCutoffModeString(t *testing.T) {

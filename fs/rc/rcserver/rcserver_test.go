@@ -49,7 +49,7 @@ func TestMain(m *testing.M) {
 // Test the RC server runs and we can do HTTP fetches from it.
 // We'll do the majority of the testing with the httptest framework
 func TestRcServer(t *testing.T) {
-	opt := rc.DefaultOpt
+	opt := rc.Opt
 	opt.HTTP.ListenAddr = []string{testBindAddress}
 	opt.Template.Path = defaultTestTemplate
 	opt.Enabled = true
@@ -170,7 +170,7 @@ func testServer(t *testing.T, tests []testRun, opt *rc.Options) {
 
 // return an enabled rc
 func newTestOpt() rc.Options {
-	opt := rc.DefaultOpt
+	opt := rc.Opt
 	opt.Enabled = true
 	opt.HTTP.ListenAddr = []string{testBindAddress}
 	return opt

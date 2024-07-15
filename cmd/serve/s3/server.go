@@ -13,7 +13,7 @@ import (
 	"github.com/rclone/rclone/fs/hash"
 	httplib "github.com/rclone/rclone/lib/http"
 	"github.com/rclone/rclone/vfs"
-	"github.com/rclone/rclone/vfs/vfsflags"
+	"github.com/rclone/rclone/vfs/vfscommon"
 )
 
 // Options contains options for the http Server
@@ -42,7 +42,7 @@ func newServer(ctx context.Context, f fs.Fs, opt *Options) (s *Server, err error
 	w := &Server{
 		f:   f,
 		ctx: ctx,
-		vfs: vfs.New(f, &vfsflags.Opt),
+		vfs: vfs.New(f, &vfscommon.Opt),
 	}
 
 	if len(opt.authPair) == 0 {

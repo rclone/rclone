@@ -566,7 +566,7 @@ func (f *Fs) InternalTestAgeQuery(t *testing.T) {
 	// Check set up for filtering
 	assert.True(t, f.Features().FilterAware)
 
-	opt := &filter.Opt{}
+	opt := &filter.Options{}
 	err := opt.MaxAge.Set("1h")
 	assert.NoError(t, err)
 	flt, err := filter.NewFilter(opt)

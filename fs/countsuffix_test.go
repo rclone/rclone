@@ -11,8 +11,8 @@ import (
 
 // Check it satisfies the interfaces
 var (
-	_ flagger   = (*CountSuffix)(nil)
-	_ flaggerNP = CountSuffix(0)
+	_ Flagger   = (*CountSuffix)(nil)
+	_ FlaggerNP = CountSuffix(0)
 )
 
 func TestCountSuffixString(t *testing.T) {

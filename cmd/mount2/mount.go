@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log"
 	"runtime"
+	"time"
 
 	fusefs "github.com/hanwen/go-fuse/v2/fs"
 	"github.com/hanwen/go-fuse/v2/fuse"
@@ -215,8 +216,8 @@ func mount(VFS *vfs.VFS, mountpoint string, opt *mountlib.Options) (<-chan error
 	// FIXME fill out
 	opts := fusefs.Options{
 		MountOptions: *mountOpts,
-		EntryTimeout: &opt.AttrTimeout,
-		AttrTimeout:  &opt.AttrTimeout,
+		EntryTimeout: (*time.Duration)(&opt.AttrTimeout),
+		AttrTimeout:  (*time.Duration)(&opt.AttrTimeout),
 		GID:          VFS.Opt.GID,
 		UID:          VFS.Opt.UID,
 	}

@@ -46,7 +46,7 @@ func TestRcGetVFS(t *testing.T) {
 	assert.Contains(t, err.Error(), "no VFS found with name")
 	assert.Nil(t, vfs)
 
-	opt := vfscommon.DefaultOpt
+	opt := vfscommon.Opt
 	opt.NoModTime = true
 	vfs3 := New(r.Fremote, &opt)
 	defer vfs3.Shutdown()
