@@ -18,11 +18,11 @@ import (
 	"github.com/rclone/rclone/fs/config/flags"
 	"github.com/rclone/rclone/lib/atexit"
 	"github.com/rclone/rclone/lib/daemonize"
+	"github.com/rclone/rclone/lib/systemd"
 	"github.com/rclone/rclone/vfs"
 	"github.com/rclone/rclone/vfs/vfscommon"
 	"github.com/rclone/rclone/vfs/vfsflags"
 
-	"github.com/coreos/go-systemd/v22/daemon"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 )
@@ -307,6 +307,7 @@ func NewMountCommand(commandName string, hidden bool, mount MountFn) *cobra.Comm
 			// Wait for foreground mount, if any...
 			if mountDaemon == nil {
 				if err == nil {
+					defer systemd.Notify()()
 					err = mnt.Wait()
 				}
 				if err != nil {
@@ -385,7 +386,6 @@ func (m *MountPoint) Wait() error {
 	var finaliseOnce sync.Once
 	finalise := func() {
 		finaliseOnce.Do(func() {
-			_, _ = daemon.SdNotify(false, daemon.SdNotifyStopping)
 			// Unmount only if directory was mounted by rclone, e.g. don't unmount autofs hooks.
 			if err := CheckMountReady(m.MountPoint); err != nil {
 				fs.Debugf(m.MountPoint, "Unmounted externally. Just exit now.")
@@ -400,11 +400,6 @@ func (m *MountPoint) Wait() error {
 	}
 	fnHandle := atexit.Register(finalise)
 	defer atexit.Unregister(fnHandle)
-
-	// Notify systemd
-	if _, err := daemon.SdNotify(false, daemon.SdNotifyReady); err != nil {
-		return fmt.Errorf("failed to notify systemd: %w", err)
-	}
 
 	// Reload VFS cache on SIGHUP
 	sigHup := make(chan os.Signal, 1)
