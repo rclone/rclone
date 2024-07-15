@@ -308,7 +308,7 @@ func (f *Fs) readMetaDataForPath(ctx context.Context, path string, options *api.
 		Parameters: url.Values{
 			"path":  []string{path},
 			"limit": []string{strconv.FormatInt(options.Limit, 10)},
-			"sort":  []string{"updatedAt"},
+			"sort":  []string{"id"},
 			"op":    []string{"list"},
 			"page":  []string{strconv.FormatInt(options.Page, 10)},
 		},
