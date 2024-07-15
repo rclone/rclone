@@ -458,6 +458,8 @@ github.com/rclone/gofakes3 v0.0.3-0.20240422160309-90e8e825c0c3 h1:PyMsWM61oBPU3
 github.com/rclone/gofakes3 v0.0.3-0.20240422160309-90e8e825c0c3/go.mod h1:L0VIBE0mT6ArN/5dfHsJm3UjqCpi5B/cdN+qWDNh7ko=
 github.com/rclone/gofakes3 v0.0.3-0.20240710114216-d61b9c9b56e3 h1:VV56i89SMfX/sZWvevYK6jkOEK/2mP+nRGzXcGdiICs=
 github.com/rclone/gofakes3 v0.0.3-0.20240710114216-d61b9c9b56e3/go.mod h1:L0VIBE0mT6ArN/5dfHsJm3UjqCpi5B/cdN+qWDNh7ko=
+github.com/rclone/gofakes3 v0.0.3-0.20240715104526-0c656d1755f9 h1:2R9eePKGGwhB6eiXr4r+U1UDWLeN+Yz0xeyyaodi2h0=
+github.com/rclone/gofakes3 v0.0.3-0.20240715104526-0c656d1755f9/go.mod h1:L0VIBE0mT6ArN/5dfHsJm3UjqCpi5B/cdN+qWDNh7ko=
 github.com/relvacode/iso8601 v1.3.0 h1:HguUjsGpIMh/zsTczGN3DVJFxTU/GX+MMmzcKoMO7ko=
 github.com/relvacode/iso8601 v1.3.0/go.mod h1:FlNp+jz+TXpyRqgmM7tnzHHzBnz776kmAH2h3sZCn0I=
 github.com/rfjakob/eme v1.1.2 h1:SxziR8msSOElPayZNFfQw4Tjx/Sbaeeh3eRvrHVMUs4=
