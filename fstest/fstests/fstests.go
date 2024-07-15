@@ -1709,7 +1709,7 @@ func Run(t *testing.T, opt *Opt) {
 					// User metadata
 					"potato": "jersey",
 				}
-				obj = PutTestContentsMetadata(ctx, t, f, &file, contents, true, "text/plain", testMetadata)
+				obj = PutTestContentsMetadata(ctx, t, f, &file, true, contents, true, "text/plain", testMetadata)
 				fstest.CheckEntryMetadata(ctx, t, f, obj, testMetadata)
 				do, objectHasSetMetadata := obj.(fs.SetMetadataer)
 				require.True(t, objectHasSetMetadata)
