@@ -196,6 +196,10 @@ func newWebDAV(ctx context.Context, f fs.Fs, opt *Options) (w *WebDAV, err error
 		w._vfs = vfs.New(f, &vfsflags.Opt)
 	}
 
+	// WebDAV requires specific methods and headers.
+	w.opt.HTTP.CORSMethods = "COPY, DELETE, GET, HEAD, LOCK, MKCOL, MOVE, OPTIONS, POST, PROPFIND, PROPPATCH, PUT, TRACE, UNLOCK"
+	w.opt.HTTP.CORSHeaders = "Authorization, Content-Type, Depth, Destination, If, Lock-Token, Overwrite, TimeOut, Translate"
+
 	w.Server, err = libhttp.NewServer(ctx,
 		libhttp.WithConfig(w.opt.HTTP),
 		libhttp.WithAuth(w.opt.Auth),
