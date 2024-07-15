@@ -78,11 +78,16 @@ func TestS3(t *testing.T) {
 		return config, func() {}
 	}
 
-	RunS3UnitTests(t, "s3", start)
+	fstest.Initialise()
+	t.Run("Normal", func(t *testing.T) {
+		RunS3UnitTests(t, "s3", start, false)
+	})
+	t.Run("AuthProxy", func(t *testing.T) {
+		RunS3UnitTests(t, "s3", start, true)
+	})
 }
 
-func RunS3UnitTests(t *testing.T, name string, start servetest.StartFn) {
-	fstest.Initialise()
+func RunS3UnitTests(t *testing.T, name string, start servetest.StartFn, useProxy bool) {
 	ci := fs.GetConfig(context.Background())
 	ci.DisableFeatures = append(ci.DisableFeatures, "Metadata")
 
@@ -94,6 +99,21 @@ func RunS3UnitTests(t *testing.T, name string, start servetest.StartFn) {
 	assert.NoError(t, err)
 
 	f := fremote
+	if useProxy {
+		// If using a proxy don't pass in the backend
+		f = nil
+
+		// the backend config will be made by the proxy
+		prog, err := filepath.Abs("../servetest/proxy_code.go")
+		require.NoError(t, err)
+		cmd := "go run " + prog + " " + fremote.Root()
+
+		// FIXME this is untidy setting a global variable!
+		proxyflags.Opt.AuthProxy = cmd
+		defer func() {
+			proxyflags.Opt.AuthProxy = ""
+		}()
+	}
 	config, cleanup := start(f)
 	defer cleanup()
 
@@ -359,30 +379,4 @@ func TestListBucketsAuthProxy(t *testing.T) {
 	}
 
 	testListBuckets(t, cases, true)
-}
-
-// TestS3Integration runs the s3 server then runs the unit tests for the
-// s3 remote against it.
-func TestS3Integration(t *testing.T) {
-	// Configure and start the server
-	start := func(f fs.Fs) (configmap.Simple, func()) {
-		testURL, keyid, keysec, w := serveS3(f)
-
-		// Config for the backend we'll use to connect to the server
-		config := configmap.Simple{
-			"type":              "s3",
-			"provider":          "Rclone",
-			"endpoint":          testURL,
-			"access_key_id":     keyid,
-			"secret_access_key": keysec,
-		}
-
-		// return a stop function
-		return config, func() {
-			assert.NoError(t, w.server.Shutdown())
-			w.server.Wait()
-		}
-	}
-
-	servetest.Run(t, "s3", start)
 }
