@@ -7,6 +7,7 @@ package rc
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/filter"
@@ -41,6 +42,11 @@ func init() {
 		Help: `Returns an object where keys are option block names and values are an
 object with the current option values in.
 
+Parameters:
+
+- blocks: optional string of comma separated blocks to include
+    - all are included if this is missing or ""
+
 Note that these are the global options which are unaffected by use of
 the _config and _filter parameters. If you wish to read the parameters
 set in _config then use options/config and for _filter use options/filter.
@@ -51,13 +57,33 @@ map to the external options very easily with a few exceptions.
 	})
 }
 
+// Filter the blocks according to name
+func filterBlocks(in Params, f func(oi fs.OptionsInfo)) (err error) {
+	blocksStr, err := in.GetString("blocks")
+	if err != nil && !IsErrParamNotFound(err) {
+		return err
+	}
+	blocks := map[string]struct{}{}
+	for _, name := range strings.Split(blocksStr, ",") {
+		if name != "" {
+			blocks[name] = struct{}{}
+		}
+	}
+	for _, oi := range fs.OptionsRegistry {
+		if _, found := blocks[oi.Name]; found || len(blocks) == 0 {
+			f(oi)
+		}
+	}
+	return nil
+}
+
 // Show the list of all the option blocks
 func rcOptionsGet(ctx context.Context, in Params) (out Params, err error) {
 	out = make(Params)
-	for _, opt := range fs.OptionsRegistry {
-		out[opt.Name] = opt.Opt
-	}
-	return out, nil
+	err = filterBlocks(in, func(oi fs.OptionsInfo) {
+		out[oi.Name] = oi.Opt
+	})
+	return out, err
 }
 
 func init() {
@@ -68,6 +94,11 @@ func init() {
 		Help: `Returns an object where keys are option block names and values are an
 array of objects with info about each options.
 
+Parameters:
+
+- blocks: optional string of comma separated blocks to include
+    - all are included if this is missing or ""
+
 These objects are in the same format as returned by "config/providers". They are
 described in the [option blocks](#option-blocks) section.
 `,
@@ -77,10 +108,10 @@ described in the [option blocks](#option-blocks) section.
 // Show the info of all the option blocks
 func rcOptionsInfo(ctx context.Context, in Params) (out Params, err error) {
 	out = make(Params)
-	for _, opt := range fs.OptionsRegistry {
-		out[opt.Name] = opt.Options
-	}
-	return out, nil
+	err = filterBlocks(in, func(oi fs.OptionsInfo) {
+		out[oi.Name] = oi.Options
+	})
+	return out, err
 }
 
 func init() {

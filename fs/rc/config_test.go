@@ -86,6 +86,16 @@ func TestOptionsGet(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, out)
 	assert.Equal(t, Params{"potato": &testOptions}, out)
+	in = Params{"blocks": "sausage,potato,rhubarb"}
+	out, err = call.Fn(context.Background(), in)
+	require.NoError(t, err)
+	require.NotNil(t, out)
+	assert.Equal(t, Params{"potato": &testOptions}, out)
+	in = Params{"blocks": "sausage"}
+	out, err = call.Fn(context.Background(), in)
+	require.NoError(t, err)
+	require.NotNil(t, out)
+	assert.Equal(t, Params{}, out)
 }
 
 func TestOptionsGetMarshal(t *testing.T) {
@@ -120,6 +130,16 @@ func TestOptionsInfo(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, out)
 	assert.Equal(t, Params{"potato": testInfo}, out)
+	in = Params{"blocks": "sausage,potato,rhubarb"}
+	out, err = call.Fn(context.Background(), in)
+	require.NoError(t, err)
+	require.NotNil(t, out)
+	assert.Equal(t, Params{"potato": testInfo}, out)
+	in = Params{"blocks": "sausage"}
+	out, err = call.Fn(context.Background(), in)
+	require.NoError(t, err)
+	require.NotNil(t, out)
+	assert.Equal(t, Params{}, out)
 }
 
 func TestOptionsSet(t *testing.T) {
