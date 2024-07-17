@@ -9,10 +9,8 @@ import (
 	"fmt"
 	"io"
 	"net/url"
-	"os"
-	"os/exec"
 	"path"
-	"strings"
+	"path/filepath"
 	"testing"
 	"time"
 
@@ -21,6 +19,7 @@ import (
 	"github.com/rclone/rclone/fs/object"
 
 	_ "github.com/rclone/rclone/backend/local"
+	"github.com/rclone/rclone/cmd/serve/proxy/proxyflags"
 	"github.com/rclone/rclone/cmd/serve/servetest"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config/configmap"
@@ -37,7 +36,7 @@ const (
 )
 
 // Configure and serve the server
-func serveS3(f fs.Fs) (testURL string, keyid string, keysec string) {
+func serveS3(f fs.Fs) (testURL string, keyid string, keysec string, w *Server) {
 	keyid = random.String(16)
 	keysec = random.String(16)
 	serveropt := &Options{
@@ -49,12 +48,12 @@ func serveS3(f fs.Fs) (testURL string, keyid string, keysec string) {
 	}
 
 	serveropt.HTTP.ListenAddr = []string{endpoint}
-	w, _ := newServer(context.Background(), f, serveropt)
-	router := w.Router()
+	w, _ = newServer(context.Background(), f, serveropt)
+	router := w.server.Router()
 
 	w.Bind(router)
-	w.Serve()
-	testURL = w.Server.URLs()[0]
+	_ = w.Serve()
+	testURL = w.server.URLs()[0]
 
 	return
 }
@@ -63,7 +62,7 @@ func serveS3(f fs.Fs) (testURL string, keyid string, keysec string) {
 // s3 remote against it.
 func TestS3(t *testing.T) {
 	start := func(f fs.Fs) (configmap.Simple, func()) {
-		testURL, keyid, keysec := serveS3(f)
+		testURL, keyid, keysec, _ := serveS3(f)
 		// Config for the backend we'll use to connect to the server
 		config := configmap.Simple{
 			"type":              "s3",
@@ -76,62 +75,7 @@ func TestS3(t *testing.T) {
 		return config, func() {}
 	}
 
-	RunS3UnitTests(t, "s3", start)
-}
-
-func RunS3UnitTests(t *testing.T, name string, start servetest.StartFn) {
-	fstest.Initialise()
-	ci := fs.GetConfig(context.Background())
-	ci.DisableFeatures = append(ci.DisableFeatures, "Metadata")
-
-	fremote, _, clean, err := fstest.RandomRemote()
-	assert.NoError(t, err)
-	defer clean()
-
-	err = fremote.Mkdir(context.Background(), "")
-	assert.NoError(t, err)
-
-	f := fremote
-	config, cleanup := start(f)
-	defer cleanup()
-
-	// Change directory to run the tests
-	cwd, err := os.Getwd()
-	require.NoError(t, err)
-	err = os.Chdir("../../../backend/" + name)
-	require.NoError(t, err, "failed to cd to "+name+" backend")
-	defer func() {
-		// Change back to the old directory
-		require.NoError(t, os.Chdir(cwd))
-	}()
-
-	// RunS3UnitTests the backend tests with an on the fly remote
-	args := []string{"test"}
-	if testing.Verbose() {
-		args = append(args, "-v")
-	}
-	if *fstest.Verbose {
-		args = append(args, "-verbose")
-	}
-	remoteName := "serve" + name + ":"
-	args = append(args, "-remote", remoteName)
-	args = append(args, "-run", "^TestIntegration$")
-	args = append(args, "-list-retries", fmt.Sprint(*fstest.ListRetries))
-	cmd := exec.Command("go", args...)
-
-	// Configure the backend with environment variables
-	cmd.Env = os.Environ()
-	prefix := "RCLONE_CONFIG_" + strings.ToUpper(remoteName[:len(remoteName)-1]) + "_"
-	for k, v := range config {
-		cmd.Env = append(cmd.Env, prefix+strings.ToUpper(k)+"="+v)
-	}
-
-	// RunS3UnitTests the test
-	out, err := cmd.CombinedOutput()
-	if len(out) != 0 {
-		t.Logf("\n----------\n%s----------\n", string(out))
-	}
-	assert.NoError(t, err, "Running "+name+" integration tests")
+	servetest.Run(t, "s3", start)
 }
 
 // tests using the minio client
@@ -181,7 +125,7 @@ func TestEncodingWithMinioClient(t *testing.T) {
 			_, err = f.Put(context.Background(), in, obji)
 			assert.NoError(t, err)
 
-			endpoint, keyid, keysec := serveS3(f)
+			endpoint, keyid, keysec, _ := serveS3(f)
 			testURL, _ := url.Parse(endpoint)
 			minioClient, err := minio.New(testURL.Host, &minio.Options{
 				Creds:  credentials.NewStaticV4(keyid, keysec, ""),
@@ -200,5 +144,161 @@ func TestEncodingWithMinioClient(t *testing.T) {
 			}
 		})
 	}
+}
 
+type FileStuct struct {
+	path     string
+	filename string
+}
+
+type TestCase struct {
+	description string
+	bucket      string
+	files       []FileStuct
+	keyID       string
+	keySec      string
+	shouldFail  bool
+}
+
+func testListBuckets(t *testing.T, cases []TestCase, useProxy bool) {
+	fstest.Initialise()
+
+	var f fs.Fs
+	if useProxy {
+		// the backend config will be made by the proxy
+		prog, err := filepath.Abs("../servetest/proxy_code.go")
+		require.NoError(t, err)
+		files, err := filepath.Abs("testdata")
+		require.NoError(t, err)
+		cmd := "go run " + prog + " " + files
+
+		// FIXME: this is untidy setting a global variable!
+		proxyflags.Opt.AuthProxy = cmd
+		defer func() {
+			proxyflags.Opt.AuthProxy = ""
+		}()
+
+		f = nil
+	} else {
+		// create a test Fs
+		var err error
+		f, err = fs.NewFs(context.Background(), "testdata")
+		require.NoError(t, err)
+	}
+
+	for _, tt := range cases {
+		t.Run(tt.description, func(t *testing.T) {
+			endpoint, keyid, keysec, s := serveS3(f)
+			defer func() {
+				assert.NoError(t, s.server.Shutdown())
+			}()
+
+			if tt.keyID != "" {
+				keyid = tt.keyID
+			}
+			if tt.keySec != "" {
+				keysec = tt.keySec
+			}
+
+			testURL, _ := url.Parse(endpoint)
+			minioClient, err := minio.New(testURL.Host, &minio.Options{
+				Creds:  credentials.NewStaticV4(keyid, keysec, ""),
+				Secure: false,
+			})
+			assert.NoError(t, err)
+
+			buckets, err := minioClient.ListBuckets(context.Background())
+			if tt.shouldFail {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+				require.NotEmpty(t, buckets)
+				assert.Equal(t, buckets[0].Name, tt.bucket)
+
+				o := minioClient.ListObjects(context.Background(), tt.bucket, minio.ListObjectsOptions{
+					Recursive: true,
+				})
+				// save files after reading from channel
+				objects := []string{}
+				for object := range o {
+					objects = append(objects, object.Key)
+				}
+
+				for _, tt := range tt.files {
+					file := path.Join(tt.path, tt.filename)
+					found := false
+					for _, fname := range objects {
+						if file == fname {
+							found = true
+							break
+						}
+					}
+					require.Equal(t, true, found, "Object not found: "+file)
+				}
+			}
+		})
+	}
+}
+
+func TestListBuckets(t *testing.T) {
+	var cases = []TestCase{
+		{
+			description: "list buckets",
+			bucket:      "mybucket",
+			files: []FileStuct{
+				{
+					path:     "",
+					filename: "lorem.txt",
+				},
+				{
+					path:     "foo",
+					filename: "bar.txt",
+				},
+			},
+		},
+		{
+			description: "list buckets: wrong s3 key",
+			bucket:      "mybucket",
+			keyID:       "invalid",
+			shouldFail:  true,
+		},
+		{
+			description: "list buckets: wrong s3 secret",
+			bucket:      "mybucket",
+			keySec:      "invalid",
+			shouldFail:  true,
+		},
+	}
+
+	testListBuckets(t, cases, false)
+}
+
+func TestListBucketsAuthProxy(t *testing.T) {
+	var cases = []TestCase{
+		{
+			description: "list buckets",
+			bucket:      "mybucket",
+			// request with random keyid
+			// instead of what was set in 'authPair'
+			keyID: random.String(16),
+			files: []FileStuct{
+				{
+					path:     "",
+					filename: "lorem.txt",
+				},
+				{
+					path:     "foo",
+					filename: "bar.txt",
+				},
+			},
+		},
+		{
+			description: "list buckets: wrong s3 secret",
+			bucket:      "mybucket",
+			keySec:      "invalid",
+			shouldFail:  true,
+		},
+	}
+
+	testListBuckets(t, cases, true)
 }
