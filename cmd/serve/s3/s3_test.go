@@ -80,14 +80,14 @@ func TestS3(t *testing.T) {
 
 	fstest.Initialise()
 	t.Run("Normal", func(t *testing.T) {
-		RunS3UnitTests(t, "s3", start, false)
+		runServeTests(t, "s3", start, false)
 	})
 	t.Run("AuthProxy", func(t *testing.T) {
-		RunS3UnitTests(t, "s3", start, true)
+		runServeTests(t, "s3", start, true)
 	})
 }
 
-func RunS3UnitTests(t *testing.T, name string, start servetest.StartFn, useProxy bool) {
+func runServeTests(t *testing.T, name string, start servetest.StartFn, useProxy bool) {
 	ci := fs.GetConfig(context.Background())
 	ci.DisableFeatures = append(ci.DisableFeatures, "Metadata")
 
@@ -137,7 +137,6 @@ func RunS3UnitTests(t *testing.T, name string, start servetest.StartFn, useProxy
 	}
 	remoteName := "serve" + name + ":"
 	args = append(args, "-remote", remoteName)
-	args = append(args, "-run", "^TestIntegration$")
 	args = append(args, "-list-retries", fmt.Sprint(*fstest.ListRetries))
 	cmd := exec.Command("go", args...)
 
