@@ -274,6 +274,7 @@ type Fs struct {
 	dirCache     *dircache.DirCache // Map of directory path to directory id
 	pacer        *fs.Pacer          // pacer for API calls
 	rootFolderID string             // the id of the root folder
+	deviceID     string             // device id used for api requests
 	client       *http.Client       // authorized client
 	m            configmap.Mapper
 	tokenMu      *sync.Mutex // when renewing tokens
@@ -489,6 +490,7 @@ func newFs(ctx context.Context, name, path string, m configmap.Mapper) (*Fs, err
 		CanHaveEmptyDirectories: true, // can have empty directories
 		NoMultiThreading:        true, // can't have multiple threads downloading
 	}).Fill(ctx, f)
+	f.deviceID = genDeviceID()
 
 	if err := f.newClientWithPacer(ctx); err != nil {
 		return nil, err
@@ -1694,32 +1696,36 @@ func (o *Object) upload(ctx context.Context, in io.Reader, src fs.ObjectInfo, wi
 	}
 
 	// Calculate gcid; grabbed from package jottacloud
-	var gcid string
-	if srcObj := fs.UnWrapObjectInfo(src); srcObj != nil && srcObj.Fs().Features().IsLocal {
-		// No buffering; directly calculate gcid from source
-		rc, err := srcObj.Open(ctx)
-		if err != nil {
-			return fmt.Errorf("failed to open src: %w", err)
-		}
-		defer fs.CheckClose(rc, &err)
+	gcid, err := o.fs.getGcid(ctx, src)
+	if err != nil || gcid == "" {
+		fs.Debugf(o, "calculating gcid: %v", err)
+		if srcObj := fs.UnWrapObjectInfo(src); srcObj != nil && srcObj.Fs().Features().IsLocal {
+			// No buffering; directly calculate gcid from source
+			rc, err := srcObj.Open(ctx)
+			if err != nil {
+				return fmt.Errorf("failed to open src: %w", err)
+			}
+			defer fs.CheckClose(rc, &err)
 
-		if gcid, err = calcGcid(rc, srcObj.Size()); err != nil {
-			return fmt.Errorf("failed to calculate gcid: %w", err)
+			if gcid, err = calcGcid(rc, srcObj.Size()); err != nil {
+				return fmt.Errorf("failed to calculate gcid: %w", err)
+			}
+		} else {
+			// unwrap the accounting from the input, we use wrap to put it
+			// back on after the buffering
+			var wrap accounting.WrapFn
+			in, wrap = accounting.UnWrap(in)
+			var cleanup func()
+			gcid, in, cleanup, err = readGcid(in, size, int64(o.fs.opt.HashMemoryThreshold))
+			defer cleanup()
+			if err != nil {
+				return fmt.Errorf("failed to calculate gcid: %w", err)
+			}
+			// Wrap the accounting back onto the stream
+			in = wrap(in)
 		}
-	} else {
-		// unwrap the accounting from the input, we use wrap to put it
-		// back on after the buffering
-		var wrap accounting.WrapFn
-		in, wrap = accounting.UnWrap(in)
-		var cleanup func()
-		gcid, in, cleanup, err = readGcid(in, size, int64(o.fs.opt.HashMemoryThreshold))
-		defer cleanup()
-		if err != nil {
-			return fmt.Errorf("failed to calculate gcid: %w", err)
-		}
-		// Wrap the accounting back onto the stream
-		in = wrap(in)
 	}
+	fs.Debugf(o, "gcid = %s", gcid)
 
 	if !withTemp {
 		info, err := o.fs.upload(ctx, in, leaf, dirID, gcid, size, options...)

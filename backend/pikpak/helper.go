@@ -8,13 +8,16 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"math/rand"
 	"net/http"
 	"net/url"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/rclone/rclone/backend/pikpak/api"
+	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/lib/rest"
 )
 
@@ -253,6 +256,37 @@ func (f *Fs) requestShare(ctx context.Context, req *api.RequestShare) (info *api
 	return
 }
 
+// getGcid retrieves Gcid cached in API server
+func (f *Fs) getGcid(ctx context.Context, src fs.ObjectInfo) (gcid string, err error) {
+	cid, err := calcCid(ctx, src)
+	if err != nil {
+		return
+	}
+
+	params := url.Values{}
+	params.Set("cid", cid)
+	params.Set("file_size", strconv.FormatInt(src.Size(), 10))
+	opts := rest.Opts{
+		Method:       "GET",
+		Path:         "/drive/v1/resource/cid",
+		Parameters:   params,
+		ExtraHeaders: map[string]string{"x-device-id": f.deviceID},
+	}
+
+	info := struct {
+		Gcid string `json:"gcid,omitempty"`
+	}{}
+	var resp *http.Response
+	err = f.pacer.Call(func() (bool, error) {
+		resp, err = f.rst.CallJSON(ctx, &opts, nil, &info)
+		return f.shouldRetry(ctx, resp, err)
+	})
+	if err != nil {
+		return "", err
+	}
+	return info.Gcid, nil
+}
+
 // Read the gcid of in returning a reader which will read the same contents
 //
 // The cleanup function should be called when out is finished with
@@ -306,6 +340,9 @@ func readGcid(in io.Reader, size, threshold int64) (gcid string, out io.Reader, 
 	return
 }
 
+// calcGcid calculates Gcid from reader
+//
+// Gcid is a custom hash to index a file contents
 func calcGcid(r io.Reader, size int64) (string, error) {
 	calcBlockSize := func(j int64) int64 {
 		var psize int64 = 0x40000
@@ -329,4 +366,65 @@ func calcGcid(r io.Reader, size int64) (string, error) {
 		totalHash.Write(blockHash.Sum(nil))
 	}
 	return hex.EncodeToString(totalHash.Sum(nil)), nil
+}
+
+// calcCid calculates Cid from source
+//
+// Cid is a simplified version of Gcid
+func calcCid(ctx context.Context, src fs.ObjectInfo) (cid string, err error) {
+	srcObj := fs.UnWrapObjectInfo(src)
+	if srcObj == nil {
+		return "", fmt.Errorf("failed to unwrap object from src: %s", src)
+	}
+
+	size := src.Size()
+	hash := sha1.New()
+	var rc io.ReadCloser
+
+	readHash := func(start, length int64) (err error) {
+		end := start + length - 1
+		if rc, err = srcObj.Open(ctx, &fs.RangeOption{Start: start, End: end}); err != nil {
+			return fmt.Errorf("failed to open src with range (%d, %d): %w", start, end, err)
+		}
+		defer fs.CheckClose(rc, &err)
+		_, err = io.Copy(hash, rc)
+		return err
+	}
+
+	if size <= 0xF000 { // 61440 = 60KB
+		err = readHash(0, size)
+	} else { // 20KB from three different parts
+		for _, start := range []int64{0, size / 3, size - 0x5000} {
+			err = readHash(start, 0x5000)
+			if err != nil {
+				break
+			}
+		}
+	}
+	if err != nil {
+		return "", fmt.Errorf("failed to hash: %w", err)
+	}
+	cid = strings.ToUpper(hex.EncodeToString(hash.Sum(nil)))
+	return
+}
+
+// randomly generates device id used for request header 'x-device-id'
+//
+// original javascript implementation
+//
+//	return "xxxxxxxxxxxx4xxxyxxxxxxxxxxxxxxx".replace(/[xy]/g, (e) => {
+//	    const t = (16 * Math.random()) | 0;
+//	    return ("x" == e ? t : (3 & t) | 8).toString(16);
+//	});
+func genDeviceID() string {
+	base := []byte("xxxxxxxxxxxx4xxxyxxxxxxxxxxxxxxx")
+	for i, char := range base {
+		switch char {
+		case 'x':
+			base[i] = fmt.Sprintf("%x", rand.Intn(16))[0]
+		case 'y':
+			base[i] = fmt.Sprintf("%x", rand.Intn(16)&3|8)[0]
+		}
+	}
+	return string(base)
 }
