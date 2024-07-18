@@ -868,3 +868,4 @@ put them back in again.` >}}
   * Thearas <thearas850@gmail.com>
   * Filipe Herculano <fifo_@live.com>
   * Russ Bubley <russ.bubley@googlemail.com>
+  * Paul Collins <paul.collins@canonical.com>
