@@ -1,5 +1,3 @@
-//go:build go1.21
-
 // Package dlna provides DLNA server.
 package dlna
 
