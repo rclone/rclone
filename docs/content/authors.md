@@ -867,3 +867,4 @@ put them back in again.` >}}
   * Bill Fraser <bill@wfraser.dev>
   * Thearas <thearas850@gmail.com>
   * Filipe Herculano <fifo_@live.com>
+  * Russ Bubley <russ.bubley@googlemail.com>
