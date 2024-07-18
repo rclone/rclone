@@ -869,3 +869,4 @@ put them back in again.` >}}
   * Filipe Herculano <fifo_@live.com>
   * Russ Bubley <russ.bubley@googlemail.com>
   * Paul Collins <paul.collins@canonical.com>
+  * Tomasz Melcer <liori@exroot.org>
