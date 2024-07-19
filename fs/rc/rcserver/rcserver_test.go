@@ -153,7 +153,9 @@ func testServer(t *testing.T, tests []testRun, opt *rc.Options) {
 				actualNormalized := normalizeJSON(t, string(body))
 				assert.Equal(t, expectedNormalized, actualNormalized, "Normalized JSON does not match")
 			} else if test.Contains == nil {
-				assert.Equal(t, test.Expected, string(body))
+				// go1.23 started putting an html wrapper
+				bodyNormalized := strings.TrimPrefix(string(body), "<!doctype html>\n<meta name=\"viewport\" content=\"width=device-width\">\n")
+				assert.Equal(t, test.Expected, bodyNormalized)
 			} else {
 				assert.True(t, test.Contains.Match(body), fmt.Sprintf("body didn't match: %v: %v", test.Contains, string(body)))
 			}
