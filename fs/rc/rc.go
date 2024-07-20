@@ -69,9 +69,9 @@ var OptionsInfo = fs.Options{{
 	Help:    "URL to fetch the releases for webgui",
 	Groups:  "RC",
 }, {
-	Name:    "rc_enable_metrics",
+	Name:    "rc_metrics",
 	Default: false,
-	Help:    "Enable prometheus metrics on /metrics",
+	Help:    "Enable the prometheus metrics endpoint",
 	Groups:  "RC",
 }, {
 	Name:    "rc_job_expire_duration",
@@ -87,7 +87,11 @@ var OptionsInfo = fs.Options{{
 	AddPrefix(libhttp.ConfigInfo, "rc", "RC").
 	AddPrefix(libhttp.AuthConfigInfo, "rc", "RC").
 	AddPrefix(libhttp.TemplateConfigInfo, "rc", "RC").
-	SetDefault("rc_addr", []string{"localhost:5572"})
+	AddPrefix(libhttp.ConfigInfo, "rc_metrics", "RC").
+	AddPrefix(libhttp.AuthConfigInfo, "rc_metrics", "RC").
+	AddPrefix(libhttp.TemplateConfigInfo, "rc_metrics", "RC").
+	SetDefault("rc_addr", []string{"localhost:5572"}).
+	SetDefault("rc_metrics_addr", []string{"localhost:9000"})
 
 func init() {
 	fs.RegisterGlobalOptions(fs.OptionsInfo{Name: "rc", Opt: &Opt, Options: OptionsInfo})
@@ -108,7 +112,10 @@ type Options struct {
 	WebGUIForceUpdate   bool                   `config:"rc_web_gui_force_update"`    // set to force download new update
 	WebGUINoOpenBrowser bool                   `config:"rc_web_gui_no_open_browser"` // set to disable auto opening browser
 	WebGUIFetchURL      string                 `config:"rc_web_fetch_url"`           // set the default url for fetching webgui
-	EnableMetrics       bool                   `config:"rc_enable_metrics"`          // set to disable prometheus metrics on /metrics
+	MetricsHTTP         libhttp.Config         `config:"rc_metrics"`
+	MetricsAuth         libhttp.AuthConfig     `config:"rc_metrics"`
+	MetricsTemplate     libhttp.TemplateConfig `config:"rc_metrics"`
+	MetricsEnabled      bool                   `config:"rc_metrics"` // set to disable prometheus metrics on /metrics
 	JobExpireDuration   time.Duration          `config:"rc_job_expire_duration"`
 	JobExpireInterval   time.Duration          `config:"rc_job_expire_interval"`
 }
