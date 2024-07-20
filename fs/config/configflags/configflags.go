@@ -4,6 +4,7 @@ package configflags
 
 // Options set by command line flags
 import (
+	"context"
 	"log"
 	"net"
 	"os"
@@ -202,6 +203,11 @@ func SetFlags(ci *fs.ConfigInfo) {
 	// Process --multi-thread-streams - set whether multi-thread-streams was set
 	multiThreadStreamsFlag := pflag.Lookup("multi-thread-streams")
 	ci.MultiThreadSet = multiThreadStreamsFlag != nil && multiThreadStreamsFlag.Changed
+
+	// Reload any changes
+	if err := ci.Reload(context.Background()); err != nil {
+		log.Fatalf("Failed to reload config changes: %v", err)
+	}
 }
 
 // parseHeaders converts DSCP names to value
