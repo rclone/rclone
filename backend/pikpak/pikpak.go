@@ -1248,6 +1248,12 @@ func (f *Fs) upload(ctx context.Context, in io.Reader, leaf, dirID, gcid string,
 		return nil, fmt.Errorf("invalid response: %+v", new)
 	} else if new.File.Phase == api.PhaseTypeComplete {
 		// early return; in case of zero-byte objects
+		if acc, ok := in.(*accounting.Account); ok && acc != nil {
+			// if `in io.Reader` is still in type of `*accounting.Account` (meaning that it is unused)
+			// it is considered as a server side copy as no incoming/outgoing traffic occur at all
+			acc.ServerSideTransferStart()
+			acc.ServerSideCopyEnd(size)
+		}
 		return new.File, nil
 	}
 
@@ -1711,18 +1717,12 @@ func (o *Object) upload(ctx context.Context, in io.Reader, src fs.ObjectInfo, wi
 				return fmt.Errorf("failed to calculate gcid: %w", err)
 			}
 		} else {
-			// unwrap the accounting from the input, we use wrap to put it
-			// back on after the buffering
-			var wrap accounting.WrapFn
-			in, wrap = accounting.UnWrap(in)
 			var cleanup func()
 			gcid, in, cleanup, err = readGcid(in, size, int64(o.fs.opt.HashMemoryThreshold))
 			defer cleanup()
 			if err != nil {
 				return fmt.Errorf("failed to calculate gcid: %w", err)
 			}
-			// Wrap the accounting back onto the stream
-			in = wrap(in)
 		}
 	}
 	fs.Debugf(o, "gcid = %s", gcid)
