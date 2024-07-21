@@ -150,17 +150,21 @@ type driver struct {
 	userPass   map[string]string // cache of username => password when using vfs proxy
 }
 
+func init() {
+	fs.RegisterGlobalOptions(fs.OptionsInfo{Name: "ftp", Opt: &Opt, Options: OptionsInfo})
+}
+
 var passivePortsRe = regexp.MustCompile(`^\s*\d+\s*-\s*\d+\s*$`)
 
 // Make a new FTP to serve the remote
 func newServer(ctx context.Context, f fs.Fs, opt *Options) (*driver, error) {
 	host, port, err := net.SplitHostPort(opt.ListenAddr)
 	if err != nil {
-		return nil, errors.New("failed to parse host:port")
+		return nil, fmt.Errorf("failed to parse host:port from %q", opt.ListenAddr)
 	}
 	portNum, err := strconv.Atoi(port)
 	if err != nil {
-		return nil, errors.New("failed to parse host:port")
+		return nil, fmt.Errorf("failed to parse port number from %q", port)
 	}
 
 	d := &driver{
