@@ -75,8 +75,18 @@ func init() {
 			Help:       "SSH password, leave blank to use ssh-agent.",
 			IsPassword: true,
 		}, {
-			Name:      "key_pem",
-			Help:      "Raw PEM-encoded private key.\n\nIf specified, will override key_file parameter.",
+			Name: "key_pem",
+			Help: `Raw PEM-encoded private key.
+
+Note that this should be on a single line with line endings replaced with '\n', eg
+
+    key_pem = -----BEGIN RSA PRIVATE KEY-----\nMaMbaIXtE\n0gAMbMbaSsd\nMbaass\n-----END RSA PRIVATE KEY-----
+
+This will generate the single line correctly:
+
+    awk '{printf "%s\\n", $0}' < ~/.ssh/id_rsa
+
+If specified, it will override the key_file parameter.`,
 			Sensitive: true,
 		}, {
 			Name: "key_file",
