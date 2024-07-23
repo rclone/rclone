@@ -310,8 +310,20 @@ func ClearConfigPassword() {
 // changeConfigPassword will query the user twice
 // for a password. If the same password is entered
 // twice the key is updated.
+//
+// This will use --password-command if configured to read the password.
 func changeConfigPassword() {
-	err := SetConfigPassword(ChangePassword("NEW configuration"))
+	pass, err := GetPasswordCommand(context.Background())
+	if err != nil {
+		fmt.Printf("Failed to read new password with --password-command: %v\n", err)
+		return
+	}
+	if pass == "" {
+		pass = ChangePassword("NEW configuration")
+	} else {
+		fmt.Printf("Read password using --password-command\n")
+	}
+	err = SetConfigPassword(pass)
 	if err != nil {
 		fmt.Printf("Failed to set config password: %v\n", err)
 		return

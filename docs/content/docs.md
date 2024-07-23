@@ -1929,7 +1929,8 @@ The default is `.partial`.
 
 This flag supplies a program which should supply the config password
 when run. This is an alternative to rclone prompting for the password
-or setting the `RCLONE_CONFIG_PASS` variable.
+or setting the `RCLONE_CONFIG_PASS` variable. It is also used when
+setting the config password for the first time.
 
 The argument to this should be a command with a space separated list
 of arguments. If one of the arguments has a space in then enclose it
