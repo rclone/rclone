@@ -42,6 +42,7 @@ See the following for detailed instructions for
   * [Digi Storage](/koofr/#digi-storage)
   * [Dropbox](/dropbox/)
   * [Enterprise File Fabric](/filefabric/)
+  * [Files.com](/filescom/)
   * [FTP](/ftp/)
   * [Google Cloud Storage](/googlecloudstorage/)
   * [Google Drive](/drive/)
