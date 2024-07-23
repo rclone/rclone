@@ -140,6 +140,9 @@ backends:
  - backend:  "gofile"
    remote:   "TestGoFile:"
    fastlist: true
+ - backend:  "filescom"
+   remote:   "TestFilesCom:"
+   fastlist: false
  - backend:  "googlecloudstorage"
    remote:   "TestGoogleCloudStorage:"
    fastlist: true
