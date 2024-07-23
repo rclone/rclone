@@ -2246,7 +2246,11 @@ for more info.
 
 Some providers (e.g. AWS, Aliyun OSS, Netease COS, or Tencent COS) require this set to
 false - rclone will do this automatically based on the provider
-setting.`,
+setting.
+
+Note that if your bucket isn't a valid DNS name, i.e. has '.' or '_' in,
+you'll need to set this to true.
+`,
 			Default:  true,
 			Advanced: true,
 		}, {
