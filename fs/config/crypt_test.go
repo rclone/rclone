@@ -113,3 +113,29 @@ func TestConfigLoadEncryptedFailures(t *testing.T) {
 	err = config.Data().Load()
 	assert.Equal(t, config.ErrorConfigFileNotFound, err)
 }
+
+func TestGetPasswordCommand(t *testing.T) {
+	ctx, ci := fs.AddConfig(context.Background())
+
+	// Not configured
+	ci.PasswordCommand = fs.SpaceSepList{}
+	pass, err := config.GetPasswordCommand(ctx)
+	require.NoError(t, err)
+	assert.Equal(t, "", pass)
+
+	// With password - happy path
+	ci.PasswordCommand = fs.SpaceSepList{"echo", "asdf"}
+	pass, err = config.GetPasswordCommand(ctx)
+	require.NoError(t, err)
+	assert.Equal(t, "asdf", pass)
+
+	// Empty password returned
+	ci.PasswordCommand = fs.SpaceSepList{"echo", ""}
+	_, err = config.GetPasswordCommand(ctx)
+	assert.ErrorContains(t, err, "returned empty string")
+
+	// Error when running command
+	ci.PasswordCommand = fs.SpaceSepList{"XXX non-existent command XXX", ""}
+	_, err = config.GetPasswordCommand(ctx)
+	assert.ErrorContains(t, err, "not found")
+}

@@ -78,37 +78,19 @@ func Decrypt(b io.ReadSeeker) (io.Reader, error) {
 	}
 
 	if len(configKey) == 0 {
-		if len(ci.PasswordCommand) != 0 {
-			var stdout bytes.Buffer
-			var stderr bytes.Buffer
-
-			cmd := exec.Command(ci.PasswordCommand[0], ci.PasswordCommand[1:]...)
-
-			cmd.Stdout = &stdout
-			cmd.Stderr = &stderr
-			cmd.Stdin = os.Stdin
-
-			if err := cmd.Run(); err != nil {
-				// One does not always get the stderr returned in the wrapped error.
-				fs.Errorf(nil, "Using --password-command returned: %v", err)
-				if ers := strings.TrimSpace(stderr.String()); ers != "" {
-					fs.Errorf(nil, "--password-command stderr: %s", ers)
-				}
-				return nil, fmt.Errorf("password command failed: %w", err)
+		pass, err := GetPasswordCommand(ctx)
+		if err != nil {
+			return nil, err
+		}
+		if pass != "" {
+			usingPasswordCommand = true
+			err = SetConfigPassword(pass)
+			if err != nil {
+				return nil, fmt.Errorf("incorrect password: %w", err)
 			}
-			if pass := strings.Trim(stdout.String(), "\r\n"); pass != "" {
-				err := SetConfigPassword(pass)
-				if err != nil {
-					return nil, fmt.Errorf("incorrect password: %w", err)
-				}
-			} else {
-				return nil, errors.New("password-command returned empty string")
-			}
-
 			if len(configKey) == 0 {
 				return nil, errors.New("unable to decrypt configuration: incorrect password")
 			}
-			usingPasswordCommand = true
 		} else {
 			usingPasswordCommand = false
 
@@ -181,6 +163,40 @@ func Decrypt(b io.ReadSeeker) (io.Reader, error) {
 		configKey = nil
 	}
 	return bytes.NewReader(out), nil
+}
+
+// GetPasswordCommand gets the password using the --password-command setting
+//
+// If the the --password-command flag was not in use it returns "", nil
+func GetPasswordCommand(ctx context.Context) (pass string, err error) {
+	ci := fs.GetConfig(ctx)
+	if len(ci.PasswordCommand) == 0 {
+		return "", nil
+	}
+
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+
+	cmd := exec.Command(ci.PasswordCommand[0], ci.PasswordCommand[1:]...)
+
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+	cmd.Stdin = os.Stdin
+
+	err = cmd.Run()
+	if err != nil {
+		// One does not always get the stderr returned in the wrapped error.
+		fs.Errorf(nil, "Using --password-command returned: %v", err)
+		if ers := strings.TrimSpace(stderr.String()); ers != "" {
+			fs.Errorf(nil, "--password-command stderr: %s", ers)
+		}
+		return pass, fmt.Errorf("password command failed: %w", err)
+	}
+	pass = strings.Trim(stdout.String(), "\r\n")
+	if pass == "" {
+		return pass, errors.New("--password-command returned empty string")
+	}
+	return pass, nil
 }
 
 // Encrypt the config file
