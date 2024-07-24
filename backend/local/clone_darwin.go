@@ -5,6 +5,7 @@ package local
 
 import (
 	"context"
+	"fmt"
 	"runtime"
 
 	"github.com/go-darwin/apfs"
@@ -30,9 +31,15 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		return nil, fs.ErrorCantCopy
 	}
 
+	// Fetch metadata if --metadata is in use
+	meta, err := fs.GetMetadataOptions(ctx, f, src, fs.MetadataAsOpenOptions(ctx))
+	if err != nil {
+		return nil, fmt.Errorf("copy: failed to read metadata: %w", err)
+	}
+
 	// Create destination
 	dstObj := f.newObject(remote)
-	err := dstObj.mkdirAll()
+	err = dstObj.mkdirAll()
 	if err != nil {
 		return nil, err
 	}
@@ -42,6 +49,15 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		return nil, err
 	}
 	fs.Debugf(remote, "server-side cloned!")
+
+	// Set metadata if --metadata is in use
+	if meta != nil {
+		err = dstObj.writeMetadata(meta)
+		if err != nil {
+			return nil, fmt.Errorf("copy: failed to set metadata: %w", err)
+		}
+	}
+
 	return f.NewObject(ctx, remote)
 }
 
