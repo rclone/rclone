@@ -182,16 +182,17 @@ func (f *Fs) put(
 	options []fs.OpenOption,
 ) (node FilesystemNode, err error) {
 	var params = paramsFromMetadata(meta)
+
+	// Tell the server to automatically create parent directories if they don't
+	// exist yet
 	params.Set("make_parents", "true")
 
 	resp, err := f.srv.CallJSON(
 		ctx,
 		&rest.Opts{
-			Method: "PUT",
-			Path:   f.escapePath(path),
-			Body:   body,
-			// Tell the server to automatically create parent directories if
-			// they don't exist yet
+			Method:     "PUT",
+			Path:       f.escapePath(path),
+			Body:       body,
 			Parameters: params,
 			Options:    options,
 		},
