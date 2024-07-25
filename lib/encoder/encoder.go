@@ -64,6 +64,7 @@ const (
 	EncodeDot                        // . and .. names
 	EncodeSquareBracket              // []
 	EncodeSemicolon                  // ;
+	EncodeExclamation                // !
 
 	// Synthetic
 	EncodeWin         = EncodeColon | EncodeQuestion | EncodeDoubleQuote | EncodeAsterisk | EncodeLtGt | EncodePipe // :?"*<>|
@@ -124,6 +125,7 @@ func init() {
 	alias("LtGt", EncodeLtGt)
 	alias("SquareBracket", EncodeSquareBracket)
 	alias("Semicolon", EncodeSemicolon)
+	alias("Exclamation", EncodeExclamation)
 	alias("DoubleQuote", EncodeDoubleQuote)
 	alias("SingleQuote", EncodeSingleQuote)
 	alias("BackQuote", EncodeBackQuote)
@@ -336,6 +338,12 @@ func (mask MultiEncoder) Encode(in string) string {
 					return true
 				}
 			}
+			if mask.Has(EncodeExclamation) { // !
+				switch r {
+				case '!', '！':
+					return true
+				}
+			}
 			if mask.Has(EncodeQuestion) { // ?
 				switch r {
 				case '?',
@@ -511,6 +519,17 @@ func (mask MultiEncoder) Encode(in string) string {
 				out.WriteRune(r + fullOffset)
 				continue
 			case '；':
+				out.WriteRune(QuoteRune)
+				out.WriteRune(r)
+				continue
+			}
+		}
+		if mask.Has(EncodeExclamation) { // !
+			switch r {
+			case '!':
+				out.WriteRune(r + fullOffset)
+				continue
+			case '！':
 				out.WriteRune(QuoteRune)
 				out.WriteRune(r)
 				continue
@@ -772,7 +791,12 @@ func (mask MultiEncoder) Decode(in string) string {
 					return true
 				}
 			}
-
+			if mask.Has(EncodeExclamation) { // !
+				switch r {
+				case '！':
+					return true
+				}
+			}
 			if mask.Has(EncodeQuestion) { // ?
 				switch r {
 				case '？':
@@ -931,6 +955,17 @@ func (mask MultiEncoder) Decode(in string) string {
 		if mask.Has(EncodeSemicolon) { // ;
 			switch r {
 			case '；':
+				if unquote {
+					out.WriteRune(r)
+				} else {
+					out.WriteRune(r - fullOffset)
+				}
+				continue
+			}
+		}
+		if mask.Has(EncodeExclamation) { // !
+			switch r {
+			case '！':
 				if unquote {
 					out.WriteRune(r)
 				} else {
