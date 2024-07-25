@@ -369,6 +369,7 @@ will show you the defaults for the backends.
 | Dollar | `$` | `＄` |
 | Dot | `.` or `..` as entire string | `．`, `．．` |
 | DoubleQuote | `"` | `＂` |
+| Exclamation | `!` | `！` |
 | Hash | `#` | `＃` |
 | InvalidUtf8 | An invalid UTF-8 character (e.g. latin1) | `�` |
 | LeftCrLfHtVt | CR 0x0D, LF 0x0A, HT 0x09, VT 0x0B on the left of a string | `␍`, `␊`, `␉`, `␋` |
