@@ -56,6 +56,7 @@ Rclone *("rsync for cloud storage")* is a command-line program to sync files and
   * Enterprise File Fabric [:page_facing_up:](https://rclone.org/filefabric/)
   * Fastmail Files [:page_facing_up:](https://rclone.org/webdav/#fastmail-files)
   * FTP [:page_facing_up:](https://rclone.org/ftp/)
+  * GoFile [:page_facing_up:](https://rclone.org/gofile/)
   * Google Cloud Storage [:page_facing_up:](https://rclone.org/googlecloudstorage/)
   * Google Drive [:page_facing_up:](https://rclone.org/drive/)
   * Google Photos [:page_facing_up:](https://rclone.org/googlephotos/)

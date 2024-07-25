@@ -18,6 +18,7 @@ import (
 	_ "github.com/rclone/rclone/backend/fichier"
 	_ "github.com/rclone/rclone/backend/filefabric"
 	_ "github.com/rclone/rclone/backend/ftp"
+	_ "github.com/rclone/rclone/backend/gofile"
 	_ "github.com/rclone/rclone/backend/googlecloudstorage"
 	_ "github.com/rclone/rclone/backend/googlephotos"
 	_ "github.com/rclone/rclone/backend/hasher"
