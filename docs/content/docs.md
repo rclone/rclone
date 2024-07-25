@@ -43,6 +43,7 @@ See the following for detailed instructions for
   * [Dropbox](/dropbox/)
   * [Enterprise File Fabric](/filefabric/)
   * [FTP](/ftp/)
+  * [Gofile](/gofile/)
   * [Google Cloud Storage](/googlecloudstorage/)
   * [Google Drive](/drive/)
   * [Google Photos](/googlephotos/)

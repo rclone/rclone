@@ -137,6 +137,9 @@ backends:
  #   remote:   "TestFileFabric:"
  #   fastlist: false
  #   extratime: 2.0
+ - backend:  "gofile"
+   remote:   "TestGoFile:"
+   fastlist: true
  - backend:  "googlecloudstorage"
    remote:   "TestGoogleCloudStorage:"
    fastlist: true
