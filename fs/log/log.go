@@ -11,7 +11,7 @@ import (
 	"strings"
 
 	"github.com/rclone/rclone/fs"
-	"github.com/sirupsen/logrus"
+	"github.com/rclone/rclone/fs/logrus"
 )
 
 // OptionsInfo descripts the Options in use
