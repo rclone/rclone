@@ -288,7 +288,7 @@ func SetConfigPassword(password string) error {
 	return nil
 }
 
-// ClearConfigPassword sets the current the password to empty
+// ClearConfigPassword sets the current password to empty
 func ClearConfigPassword() {
 	configKey = nil
 }
