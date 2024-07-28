@@ -87,6 +87,9 @@ type Item struct {
 	//ServerSelected string   `json:"serverSelected"`
 	//Thumbnail      string   `json:"thumbnail"`
 	//DownloadCount int      `json:"downloadCount"`
+	//TotalDownloadCount int64            `json:"totalDownloadCount"`
+	//TotalSize          int64            `json:"totalSize"`
+	Children map[string]*Item `json:"children"`
 }
 
 // ModTime returns the CreateTime as a Go time.Time
@@ -110,9 +113,6 @@ type Contents struct {
 	Error
 	Data struct {
 		Item
-		TotalDownloadCount int64            `json:"totalDownloadCount"`
-		TotalSize          int64            `json:"totalSize"`
-		Children           map[string]*Item `json:"children"`
 	} `json:"data"`
 }
 

@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"net/url"
 	"path"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -24,6 +25,7 @@ import (
 	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/fs/hash"
+	"github.com/rclone/rclone/fs/walk"
 	"github.com/rclone/rclone/lib/dircache"
 	"github.com/rclone/rclone/lib/encoder"
 	"github.com/rclone/rclone/lib/pacer"
@@ -38,6 +40,7 @@ const (
 	serversExpiry  = 60 * time.Second // check for new upload servers this often
 	serversActive  = 2                // choose this many closest upload servers to use
 	rateLimitSleep = 5 * time.Second  // penalise a goroutine by this long for making a rate limit error
+	maxDepth       = 4                // in ListR recursive list this deep (maximum is 16)
 )
 
 /*
@@ -214,7 +217,7 @@ func (f *Fs) readMetaDataForPath(ctx context.Context, path string) (info *api.It
 		return nil, err
 	}
 
-	found, err := f.listAll(ctx, directoryID, false, true, false, func(item *api.Item) bool {
+	found, err := f.listAll(ctx, directoryID, false, true, func(item *api.Item) bool {
 		if item.Name == leaf {
 			info = item
 			return true
@@ -531,7 +534,7 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 // FindLeaf finds a directory of name leaf in the folder with ID pathID
 func (f *Fs) FindLeaf(ctx context.Context, pathID, leaf string) (pathIDOut string, found bool, err error) {
 	// Find the leaf in pathID
-	found, err = f.listAll(ctx, pathID, true, false, true, func(item *api.Item) bool {
+	found, err = f.listAll(ctx, pathID, true, false, func(item *api.Item) bool {
 		if item.Name == leaf {
 			pathIDOut = item.ID
 			return true
@@ -576,7 +579,7 @@ type listAllFn func(*api.Item) bool
 // Lists the directory required calling the user function on each item found
 //
 // If the user fn ever returns true then it early exits with found = true
-func (f *Fs) listAll(ctx context.Context, dirID string, directoriesOnly bool, filesOnly bool, activeOnly bool, fn listAllFn) (found bool, err error) {
+func (f *Fs) listAll(ctx context.Context, dirID string, directoriesOnly bool, filesOnly bool, fn listAllFn) (found bool, err error) {
 	opts := rest.Opts{
 		Method: "GET",
 		Path:   "/contents/" + dirID,
@@ -619,6 +622,25 @@ OUTER:
 	return
 }
 
+// Convert a list item into a DirEntry
+func (f *Fs) itemToDirEntry(ctx context.Context, remote string, info *api.Item) (entry fs.DirEntry, err error) {
+	if info.Type == api.ItemTypeFolder {
+		// cache the directory ID for later lookups
+		f.dirCache.Put(remote, info.ID)
+		entry = fs.NewDir(remote, info.ModTime()).
+			SetID(info.ID).
+			SetItems(int64(len(info.ChildrenIDs))).
+			SetParentID(info.ParentFolder).
+			SetSize(info.Size)
+	} else if info.Type == api.ItemTypeFile {
+		entry, err = f.newObjectWithInfo(ctx, remote, info)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return entry, nil
+}
+
 // List the objects and directories in dir into entries.  The
 // entries can be returned in any order but should be for a
 // complete directory.
@@ -634,25 +656,14 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 		return nil, err
 	}
 	var iErr error
-	_, err = f.listAll(ctx, directoryID, false, false, true, func(info *api.Item) bool {
+	_, err = f.listAll(ctx, directoryID, false, false, func(info *api.Item) bool {
 		remote := path.Join(dir, info.Name)
-		if info.Type == api.ItemTypeFolder {
-			// cache the directory ID for later lookups
-			f.dirCache.Put(remote, info.ID)
-			d := fs.NewDir(remote, info.ModTime()).
-				SetID(info.ID).
-				SetItems(int64(len(info.ChildrenIDs))).
-				SetParentID(info.ParentFolder).
-				SetSize(info.Size)
-			entries = append(entries, d)
-		} else if info.Type == api.ItemTypeFile {
-			o, err := f.newObjectWithInfo(ctx, remote, info)
-			if err != nil {
-				iErr = err
-				return true
-			}
-			entries = append(entries, o)
+		entry, err := f.itemToDirEntry(ctx, remote, info)
+		if err != nil {
+			iErr = err
+			return true
 		}
+		entries = append(entries, entry)
 		return false
 	})
 	if err != nil {
@@ -662,6 +673,90 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 		return nil, iErr
 	}
 	return entries, nil
+}
+
+// implementation of ListR
+func (f *Fs) listR(ctx context.Context, dir string, list *walk.ListRHelper) (err error) {
+	directoryID, err := f.dirCache.FindDir(ctx, dir, false)
+	if err != nil {
+		return err
+	}
+	opts := rest.Opts{
+		Method:     "GET",
+		Path:       "/contents/" + directoryID,
+		Parameters: url.Values{"maxdepth": {strconv.Itoa(maxDepth)}},
+	}
+	var result api.Contents
+	var resp *http.Response
+	err = f.pacer.Call(func() (bool, error) {
+		resp, err = f.srv.CallJSON(ctx, &opts, nil, &result)
+		return shouldRetry(ctx, resp, err)
+	})
+	if err = result.Err(err); err != nil {
+		if apiErr, ok := err.(api.Error); ok {
+			if apiErr.Status == "error-notFound" {
+				return fs.ErrorDirNotFound
+			}
+		}
+		return fmt.Errorf("couldn't recursively list files: %w", err)
+	}
+	// Result.Data.Item now contains a recursive listing so we will have to decode recursively
+	var decode func(string, *api.Item) error
+	decode = func(dir string, dirItem *api.Item) error {
+		// If we have ChildrenIDs but no Children this means the recursion stopped here
+		if len(dirItem.ChildrenIDs) > 0 && len(dirItem.Children) == 0 {
+			return f.listR(ctx, dir, list)
+		}
+		for _, item := range dirItem.Children {
+			if item.Type != api.ItemTypeFolder && item.Type != api.ItemTypeFile {
+				fs.Debugf(f, "Ignoring %q - unknown type %q", item.Name, item.Type)
+				continue
+			}
+			item.Name = f.opt.Enc.ToStandardName(item.Name)
+			remote := path.Join(dir, item.Name)
+			entry, err := f.itemToDirEntry(ctx, remote, item)
+			if err != nil {
+				return err
+			}
+			err = list.Add(entry)
+			if err != nil {
+				return err
+			}
+			if item.Type == api.ItemTypeFolder {
+				err := decode(remote, item)
+				if err != nil {
+					return err
+				}
+			}
+		}
+		return nil
+	}
+	return decode(dir, &result.Data.Item)
+}
+
+// ListR lists the objects and directories of the Fs starting
+// from dir recursively into out.
+//
+// dir should be "" to start from the root, and should not
+// have trailing slashes.
+//
+// This should return ErrDirNotFound if the directory isn't
+// found.
+//
+// It should call callback for each tranche of entries read.
+// These need not be returned in any particular order.  If
+// callback returns an error then the listing will stop
+// immediately.
+//
+// Don't implement this unless you have a more efficient way
+// of listing recursively than doing a directory traversal.
+func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (err error) {
+	list := walk.NewListRHelper(callback)
+	err = f.listR(ctx, dir, list)
+	if err != nil {
+		return err
+	}
+	return list.Flush()
 }
 
 // Creates from the parameters passed in a half finished Object which
@@ -773,7 +868,7 @@ func (f *Fs) purgeCheck(ctx context.Context, dir string, check bool) error {
 
 	// Check to see if there is contents in the directory
 	if check {
-		found, err := f.listAll(ctx, rootID, false, false, false, func(item *api.Item) bool {
+		found, err := f.listAll(ctx, rootID, false, false, func(item *api.Item) bool {
 			return true
 		})
 		if err != nil {
@@ -997,7 +1092,7 @@ func (f *Fs) copyTo(ctx context.Context, srcID, srcLeaf, dstLeaf, dstDirectoryID
 	// FIXME would really like to know the ID of the resulting
 	// object but it isn't returned from copy, so attempt to look
 	// it up.
-	found, err := f.listAll(ctx, dstDirectoryID, false, true, false, func(item *api.Item) bool {
+	found, err := f.listAll(ctx, dstDirectoryID, false, true, func(item *api.Item) bool {
 		if item.Name == srcLeaf && item.ID != srcID {
 			info = item
 			return true
@@ -1149,7 +1244,7 @@ func (f *Fs) MergeDirs(ctx context.Context, dirs []fs.Directory) error {
 	for _, srcDir := range dirs[1:] {
 		// list the objects
 		infos := []*api.Item{}
-		_, err := f.listAll(ctx, srcDir.ID(), false, false, false, func(info *api.Item) bool {
+		_, err := f.listAll(ctx, srcDir.ID(), false, false, func(info *api.Item) bool {
 			infos = append(infos, info)
 			return false
 		})
@@ -1394,6 +1489,7 @@ var (
 	_ fs.DirCacheFlusher = (*Fs)(nil)
 	_ fs.PublicLinker    = (*Fs)(nil)
 	_ fs.MergeDirser     = (*Fs)(nil)
+	_ fs.ListRer         = (*Fs)(nil)
 	_ fs.Object          = (*Object)(nil)
 	_ fs.IDer            = (*Object)(nil)
 	_ fs.MimeTyper       = (*Object)(nil)

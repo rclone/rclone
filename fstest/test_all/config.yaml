@@ -139,7 +139,7 @@ backends:
  #   extratime: 2.0
  - backend:  "gofile"
    remote:   "TestGoFile:"
-   fastlist: false
+   fastlist: true
  - backend:  "googlecloudstorage"
    remote:   "TestGoogleCloudStorage:"
    fastlist: true

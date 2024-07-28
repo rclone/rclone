@@ -73,8 +73,9 @@ To copy a local directory to an Gofile directory called backup
 
 ### Modification times and hashes
 
-Gofile does not allow modification times to be set on objects. The
-modification time will read as the upload time to the nearest second.
+Gofile does not support modification times, therefore syncing will
+default to `--size-only` checking. Note that using `--update` will
+work as rclone can read the time files were uploaded.
 
 Gofile supports MD5 type hashes, so you can use the `--checksum` flag.
 
