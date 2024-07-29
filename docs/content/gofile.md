@@ -232,6 +232,11 @@ Properties:
 Gofile only supports filenames up to 255 characters in length, where a
 character is a unicode character.
 
+Directories should not be cached for more than 24h otherwise files in
+the directory may not be downloadable. In practice this means when
+using a VFS based rclone command such as `rclone mount` you should
+make sure `--dir-cache-time` is less than `24h`.
+
 ### Duplicated files
 
 Gofile is capable of having files with duplicated file names. For
