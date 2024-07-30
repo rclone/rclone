@@ -496,7 +496,7 @@ For example this JSON is equivalent to `remote:/tmp`
 ```
 {
     "_name": "remote",
-    "_path": "/tmp"
+    "_root": "/tmp"
 }
 ```
 
@@ -506,7 +506,7 @@ And this is equivalent to `:sftp,host='example.com':/tmp`
 {
     "type": "sftp",
     "host": "example.com",
-    "_path": "/tmp"
+    "_root": "/tmp"
 }
 ```
 
@@ -515,7 +515,7 @@ And this is equivalent to `/tmp/dir`
 ```
 {
     type = "local",
-    _ path = "/tmp/dir"
+    _root = "/tmp/dir"
 }
 ```
 
