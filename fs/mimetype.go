@@ -30,7 +30,7 @@ func init() {
 		{"video/webm", ".webm"},
 		{"video/x-msvideo", ".avi"},
 		{"video/x-matroska", ".mpv,.mkv"},
-		{"text/srt", ".srt"},
+		{"application/x-subrip", ".srt"},
 	} {
 		for _, ext := range strings.Split(t.extensions, ",") {
 			if mime.TypeByExtension(ext) == "" {

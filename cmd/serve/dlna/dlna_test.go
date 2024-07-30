@@ -180,8 +180,9 @@ func TestContentDirectoryBrowseDirectChildren(t *testing.T) {
 	require.Contains(t, string(body), "/r/video.srt")
 	require.Contains(t, string(body), "/r/video.en.srt")
 
-	// Then a subdirectory
-	req, err = http.NewRequest("POST", baseURL+serviceControlURL, strings.NewReader(`
+	// Then a subdirectory (subdir)
+	{
+		req, err = http.NewRequest("POST", baseURL+serviceControlURL, strings.NewReader(`
 <?xml version="1.0" encoding="utf-8"?>
 <s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/"
             s:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/">
@@ -196,14 +197,77 @@ func TestContentDirectoryBrowseDirectChildren(t *testing.T) {
         </u:Browse>
     </s:Body>
 </s:Envelope>`))
-	require.NoError(t, err)
-	req.Header.Set("SOAPACTION", `"urn:schemas-upnp-org:service:ContentDirectory:1#Browse"`)
-	resp, err = http.DefaultClient.Do(req)
-	require.NoError(t, err)
-	assert.Equal(t, http.StatusOK, resp.StatusCode)
-	body, err = io.ReadAll(resp.Body)
-	require.NoError(t, err)
-	// expect video.mp4, video.srt, URLs to be in the DIDL
-	require.Contains(t, string(body), "/r/subdir/video.mp4")
-	require.Contains(t, string(body), "/r/subdir/video.srt")
+		require.NoError(t, err)
+		req.Header.Set("SOAPACTION", `"urn:schemas-upnp-org:service:ContentDirectory:1#Browse"`)
+		resp, err = http.DefaultClient.Do(req)
+		require.NoError(t, err)
+		assert.Equal(t, http.StatusOK, resp.StatusCode)
+		body, err = io.ReadAll(resp.Body)
+		require.NoError(t, err)
+		// expect video.mp4, video.srt, URLs to be in the DIDL
+		require.Contains(t, string(body), "/r/subdir/video.mp4")
+		require.Contains(t, string(body), "/r/subdir/video.srt")
+
+	}
+
+	// Then a subdirectory with subtitles separately (subdir2)
+	{
+		req, err = http.NewRequest("POST", baseURL+serviceControlURL, strings.NewReader(`
+<?xml version="1.0" encoding="utf-8"?>
+<s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/"
+            s:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/">
+    <s:Body>
+        <u:Browse xmlns:u="urn:schemas-upnp-org:service:ContentDirectory:1">
+            <ObjectID>%2Fsubdir2</ObjectID>
+            <BrowseFlag>BrowseDirectChildren</BrowseFlag>
+            <Filter>*</Filter>
+            <StartingIndex>0</StartingIndex>
+            <RequestedCount>0</RequestedCount>
+            <SortCriteria></SortCriteria>
+        </u:Browse>
+    </s:Body>
+</s:Envelope>`))
+		require.NoError(t, err)
+		req.Header.Set("SOAPACTION", `"urn:schemas-upnp-org:service:ContentDirectory:1#Browse"`)
+		resp, err = http.DefaultClient.Do(req)
+		require.NoError(t, err)
+		assert.Equal(t, http.StatusOK, resp.StatusCode)
+		body, err = io.ReadAll(resp.Body)
+		require.NoError(t, err)
+		// expect video.mp4, Subs/video.srt, URLs to be in the DIDL
+		require.Contains(t, string(body), "/r/subdir2/video.mp4")
+		require.Contains(t, string(body), "/r/subdir2/Subs/video.srt")
+
+	}
+
+	// Then a subdirectory with subtitles in Subs/*.{idx,sub} (subdir3)
+	{
+		req, err = http.NewRequest("POST", baseURL+serviceControlURL, strings.NewReader(`
+<?xml version="1.0" encoding="utf-8"?>
+<s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/"
+            s:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/">
+    <s:Body>
+        <u:Browse xmlns:u="urn:schemas-upnp-org:service:ContentDirectory:1">
+            <ObjectID>%2Fsubdir3</ObjectID>
+            <BrowseFlag>BrowseDirectChildren</BrowseFlag>
+            <Filter>*</Filter>
+            <StartingIndex>0</StartingIndex>
+            <RequestedCount>0</RequestedCount>
+            <SortCriteria></SortCriteria>
+        </u:Browse>
+    </s:Body>
+</s:Envelope>`))
+		require.NoError(t, err)
+		req.Header.Set("SOAPACTION", `"urn:schemas-upnp-org:service:ContentDirectory:1#Browse"`)
+		resp, err = http.DefaultClient.Do(req)
+		require.NoError(t, err)
+		assert.Equal(t, http.StatusOK, resp.StatusCode)
+		body, err = io.ReadAll(resp.Body)
+		require.NoError(t, err)
+		// expect video.mp4, Subs/video.srt, URLs to be in the DIDL
+		require.Contains(t, string(body), "/r/subdir3/video.mp4")
+		require.Contains(t, string(body), "/r/subdir3/Subs/video.idx")
+		require.Contains(t, string(body), "/r/subdir3/Subs/video.sub")
+
+	}
 }
