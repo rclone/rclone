@@ -233,9 +233,11 @@ value, say `export GOGC=20`.  This will make the garbage collector
 work harder, reducing memory size at the expense of CPU usage.
 
 The most common cause of rclone using lots of memory is a single
-directory with thousands or millions of files in.  Rclone has to load
-this entirely into memory as rclone objects.  Each rclone object takes
-0.5k-1k of memory.
+directory with millions of files in. Rclone has to load this entirely
+into memory as rclone objects. Each rclone object takes 0.5k-1k of
+memory. There is
+[a workaround for this](https://github.com/rclone/rclone/wiki/Big-syncs-with-millions-of-files)
+which involves a bit of scripting.
 
 ### Rclone changes fullwidth Unicode punctuation marks in file names
 
