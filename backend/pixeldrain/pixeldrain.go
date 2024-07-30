@@ -35,8 +35,9 @@ func init() {
 				"Found on https://pixeldrain.com/user/api_keys.",
 			Sensitive: true,
 		}, {
-			Name: "directory_id",
-			Help: "Root of the filesystem to use. Set to 'me' to use your personal filesystem.\n" +
+			Name: "root_folder_id",
+			Help: "Root of the filesystem to use.\n\n" +
+				"Set to 'me' to use your personal filesystem. " +
 				"Set to a shared directory ID to use a shared directory.",
 			Default: "me",
 		}, {
@@ -72,9 +73,9 @@ func init() {
 
 // Options defines the configuration for this backend
 type Options struct {
-	APIKey      string `config:"api_key"`
-	DirectoryID string `config:"directory_id"`
-	APIURL      string `config:"api_url"`
+	APIKey       string `config:"api_key"`
+	RootFolderID string `config:"root_folder_id"`
+	APIURL       string `config:"api_url"`
 }
 
 // Fs represents a remote box
@@ -123,7 +124,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	// Set the path prefix. This is the path to the root directory on the
 	// server. We add it to each request and strip it from each response because
 	// rclone does not want to see it
-	f.pathPrefix = "/" + path.Join(opt.DirectoryID, f.root) + "/"
+	f.pathPrefix = "/" + path.Join(opt.RootFolderID, f.root) + "/"
 
 	// The root URL equates to https://pixeldrain.com/api/filesystem during
 	// normal operation. API handlers need to manually add the pathPrefix to
@@ -131,7 +132,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	f.srv.SetRoot(opt.APIURL + "/filesystem")
 
 	// If using an APIKey, set the Authorization header
-	if len(opt.APIKey) > 1 {
+	if len(opt.APIKey) > 0 {
 		f.srv.SetUserPass("", opt.APIKey)
 
 		// Check if credentials are correct
@@ -142,13 +143,13 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 
 		f.loggedIn = true
 
-		fs.Infof(nil,
+		fs.Infof(f,
 			"Logged in as '%s', subscription '%s', storage limit %d",
 			user.Username, user.Subscription.Name, user.Subscription.StorageSpace,
 		)
 	}
 
-	if !f.loggedIn && opt.DirectoryID == "me" {
+	if !f.loggedIn && opt.RootFolderID == "me" {
 		return nil, errors.New("authentication required: the 'me' directory can only be accessed while logged in")
 	}
 
@@ -163,17 +164,14 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		// The filesystem root is a file, rclone wants us to set the root to the
 		// parent directory
 		f.root = path.Dir(f.root)
-		f.pathPrefix = "/" + path.Join(opt.DirectoryID, f.root) + "/"
+		f.pathPrefix = "/" + path.Join(opt.RootFolderID, f.root) + "/"
 		return f, fs.ErrorIsFile
 	}
 
 	return f, nil
 }
 
-// =================================
 // Implementation of fs.FS interface
-// =================================
-var _ fs.Fs = (*Fs)(nil)
 
 // List the objects and directories in dir into entries.  The
 // entries can be returned in any order but should be for a
@@ -270,10 +268,7 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) (err error) {
 	return err
 }
 
-// ===================================
 // Implementation of fs.Info interface
-// ===================================
-var _ fs.Info = (*Fs)(nil)
 
 // Name of the remote (as passed into NewFs)
 func (f *Fs) Name() string { return f.name }
@@ -293,10 +288,7 @@ func (f *Fs) Hashes() hash.Set { return hash.Set(hash.SHA256) }
 // Features returns the optional features of this Fs
 func (f *Fs) Features() *fs.Features { return f.features }
 
-// ====================================
 // Implementation of fs.Purger interface
-// ====================================
-var _ fs.Purger = (*Fs)(nil)
 
 // Purge all files in the directory specified
 //
@@ -312,10 +304,7 @@ func (f *Fs) Purge(ctx context.Context, dir string) (err error) {
 	return err
 }
 
-// ====================================
 // Implementation of fs.Mover interface
-// ====================================
-var _ fs.Mover = (*Fs)(nil)
 
 // Move src to this remote using server-side move operations.
 //
@@ -343,10 +332,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	return f.nodeToObject(node), nil
 }
 
-// =======================================
 // Implementation of fs.DirMover interface
-// =======================================
-var _ fs.DirMover = (*Fs)(nil)
 
 // DirMove moves src, srcRemote to this remote at dstRemote
 // using server-side move operations.
@@ -368,10 +354,7 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 	return err
 }
 
-// =============================================
 // Implementation of fs.ChangeNotifier interface
-// =============================================
-var _ fs.ChangeNotifier = (*Fs)(nil)
 
 // ChangeNotify calls the passed function with a path
 // that has had changes. If the implementation
@@ -432,10 +415,7 @@ func (f *Fs) changeNotify(ctx context.Context, notify func(string, fs.EntryType)
 	}
 }
 
-// ==========================================
 // Implementation of fs.PutStreamer interface
-// ==========================================
-var _ fs.PutStreamer = (*Fs)(nil)
 
 // PutStream uploads to the remote path with the modTime given of indeterminate size
 //
@@ -447,10 +427,7 @@ func (f *Fs) PutStream(ctx context.Context, in io.Reader, src fs.ObjectInfo, opt
 	return f.Put(ctx, in, src, options...)
 }
 
-// ===========================================
 // Implementation of fs.PublicLinker interface
-// ===========================================
-var _ fs.PublicLinker = (*Fs)(nil)
 
 // PublicLink generates a public link to the remote path (usually readable by anyone)
 func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, unlink bool) (string, error) {
@@ -464,10 +441,7 @@ func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, 
 	return "", nil
 }
 
-// ======================================
 // Implementation of fs.Abouter interface
-// ======================================
-var _ fs.Abouter = (*Fs)(nil)
 
 // About gets quota information
 func (f *Fs) About(ctx context.Context) (usage *fs.Usage, err error) {
@@ -476,20 +450,16 @@ func (f *Fs) About(ctx context.Context) (usage *fs.Usage, err error) {
 		return nil, fmt.Errorf("failed to read user info: %w", err)
 	}
 
-	if user.Subscription.StorageSpace == -1 {
-		user.Subscription.StorageSpace = 1e15 // 1 PB
+	usage = &fs.Usage{Used: fs.NewUsageValue(user.StorageSpaceUsed)}
+
+	if user.Subscription.StorageSpace > -1 {
+		usage.Total = fs.NewUsageValue(user.Subscription.StorageSpace)
 	}
 
-	return &fs.Usage{
-		Total: fs.NewUsageValue(user.Subscription.StorageSpace),
-		Used:  fs.NewUsageValue(user.StorageSpaceUsed),
-	}, nil
+	return usage, nil
 }
 
-// =====================================
 // Implementation of fs.Object interface
-// =====================================
-var _ fs.Object = (*Object)(nil)
 
 // SetModTime sets the modification time of the local fs object
 func (o *Object) SetModTime(ctx context.Context, modTime time.Time) (err error) {
@@ -524,10 +494,7 @@ func (o *Object) Remove(ctx context.Context) error {
 	return o.fs.delete(ctx, o.base.Path, false)
 }
 
-// =========================================
 // Implementation of fs.ObjectInfo interface
-// =========================================
-var _ fs.ObjectInfo = (*Object)(nil)
 
 // Fs returns the parent Fs
 func (o *Object) Fs() fs.Info {
@@ -547,10 +514,7 @@ func (o *Object) Storable() bool {
 	return true
 }
 
-// =======================================
 // Implementation of fs.DirEntry interface
-// =======================================
-var _ fs.DirEntry = (*Object)(nil)
 
 // Return a string version
 func (o *Object) String() string {
@@ -578,20 +542,14 @@ func (o *Object) Size() int64 {
 	return o.base.FileSize
 }
 
-// ========================================
 // Implementation of fs.MimeTyper interface
-// ========================================
-var _ fs.MimeTyper = (*Object)(nil)
 
 // MimeType returns the content type of the Object if known, or "" if not
 func (o *Object) MimeType(ctx context.Context) string {
 	return o.base.FileType
 }
 
-// =========================================
 // Implementation of fs.Metadataer interface
-// =========================================
-var _ fs.Metadataer = (*Object)(nil)
 
 // Metadata returns metadata for an object
 //
@@ -603,3 +561,20 @@ func (o *Object) Metadata(ctx context.Context) (fs.Metadata, error) {
 		"btime": o.base.Created.Format(timeFormat),
 	}, nil
 }
+
+// Verify that all the interfaces are implemented correctly
+var (
+	_ fs.Fs             = (*Fs)(nil)
+	_ fs.Info           = (*Fs)(nil)
+	_ fs.Purger         = (*Fs)(nil)
+	_ fs.Mover          = (*Fs)(nil)
+	_ fs.DirMover       = (*Fs)(nil)
+	_ fs.ChangeNotifier = (*Fs)(nil)
+	_ fs.PutStreamer    = (*Fs)(nil)
+	_ fs.PublicLinker   = (*Fs)(nil)
+	_ fs.Abouter        = (*Fs)(nil)
+	_ fs.Object         = (*Object)(nil)
+	_ fs.DirEntry       = (*Object)(nil)
+	_ fs.MimeTyper      = (*Object)(nil)
+	_ fs.Metadataer     = (*Object)(nil)
+)

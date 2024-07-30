@@ -1,7 +1,7 @@
 ---
 title: "Pixeldrain"
 description: "Rclone docs for Pixeldrain"
-versionIntroduced: "v1.66"
+versionIntroduced: "v1.68"
 ---
 
 # {{< icon "fa fa-circle" >}} Pixeldrain
@@ -13,11 +13,6 @@ subscriptions](https://pixeldrain.com/#pro).
 
 An overview of the filesystem's features and limitations is available in the
 [filesystem guide](https://pixeldrain.com/filesystem) on pixeldrain.
-
-*EXPERIMENTAL*: Pixeldrain's filesystem is still in development and is
-currently in public beta. If you do run into problems, please report it on our
-[issue tracker](https://github.com/Fornaxian/pixeldrain_web/issues) or our
-[Discord forum](https://discord.gg/UDjaBGwr4p).
 
 ### Usage with account
 
@@ -122,15 +117,16 @@ Properties:
 - Type:        string
 - Required:    false
 
-#### --pixeldrain-directory-id
+#### --pixeldrain-root-folder-id
 
-Root of the filesystem to use. Set to 'me' to use your personal filesystem.
-Set to a shared directory ID to use a shared directory.
+Root of the filesystem to use.
+
+Set to 'me' to use your personal filesystem. Set to a shared directory ID to use a shared directory.
 
 Properties:
 
-- Config:      directory_id
-- Env Var:     RCLONE_PIXELDRAIN_DIRECTORY_ID
+- Config:      root_folder_id
+- Env Var:     RCLONE_PIXELDRAIN_ROOT_FOLDER_ID
 - Type:        string
 - Default:     "me"
 
@@ -152,7 +148,7 @@ Properties:
 
 #### --pixeldrain-description
 
-Description of the remote
+Description of the remote.
 
 Properties:
 

@@ -301,7 +301,7 @@ func (f *Fs) rename(ctx context.Context, src fs.Fs, from, to string, meta fs.Met
 	if !ok {
 		// This is not a pixeldrain FS, can't move
 		return node, errIncompatibleSourceFS
-	} else if srcFs.opt.DirectoryID != f.opt.DirectoryID {
+	} else if srcFs.opt.RootFolderID != f.opt.RootFolderID {
 		// Path is not in the same root dir, can't move
 		return node, errIncompatibleSourceFS
 	}
