@@ -202,7 +202,9 @@ func refreshJWTToken(ctx context.Context, jsonFile string, boxSubType string, na
 	signingHeaders := getSigningHeaders(boxConfig)
 	queryParams := getQueryParams(boxConfig)
 	client := fshttp.NewClient(ctx)
-	err = jwtutil.Config("box", name, tokenURL, *claims, signingHeaders, queryParams, privateKey, m, client)
+	//When using OAuth2.0 with JWT Box appears to expire their tokens earlier than expected.
+	//To counter this, we manually set the token to expire 2 minutes earlier than expected
+	err = jwtutil.Config("box", name, tokenURL, *claims, signingHeaders, queryParams, privateKey, m, client, time.Duration(2*time.Minute))
 	return err
 }
 

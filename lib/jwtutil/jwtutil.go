@@ -32,7 +32,7 @@ func RandomHex(n int) (string, error) {
 }
 
 // Config configures rclone using JWT
-func Config(id, name, url string, claims jwt.Claims, headerParams map[string]interface{}, queryParams map[string]string, privateKey *rsa.PrivateKey, m configmap.Mapper, client *http.Client) (err error) {
+func Config(id, name, url string, claims jwt.Claims, headerParams map[string]interface{}, queryParams map[string]string, privateKey *rsa.PrivateKey, m configmap.Mapper, client *http.Client, earlyExpire time.Duration) (err error) {
 	jwtToken := jwt.NewWithClaims(jwt.SigningMethodRS256, claims)
 	for key, value := range headerParams {
 		jwtToken.Header[key] = value
@@ -93,7 +93,7 @@ func Config(id, name, url string, claims jwt.Claims, headerParams map[string]int
 	}
 	e := result.ExpiresIn
 	if e != 0 {
-		token.Expiry = time.Now().Add(time.Duration(e) * time.Second)
+		token.Expiry = time.Now().Add(time.Duration(e) * time.Second - earlyExpire)
 	}
 	return oauthutil.PutToken(name, m, token, true)
 }
