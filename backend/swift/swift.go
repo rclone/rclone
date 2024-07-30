@@ -315,11 +315,12 @@ Reduce this if you have errors with listing large directories.`,
 			Default:  1000,
 			Advanced: true,
 		}, {
-			Name: "retry_403",
-			Help: `Retry on 403 errors.
+			Name: "retry_errors",
+			Help: `Additional comma-separated list of error codes to retry on.
 
-Blomp is known to return 403 errors on directory listing requests.`,
-			Default:  false,
+Blomp is known to return arbitrary errors on directory listing requests.
+Known ones are 400, 403 and 404.`,
+			Default:  fs.CommaSepList{},
 			Advanced: true,
 		}}, SharedOptions...),
 	})
@@ -354,7 +355,7 @@ type Options struct {
 	FetchUntilEmptyPage         bool                 `config:"fetch_until_empty_page"`
 	PartialPageFetchThreshold   int                  `config:"partial_page_fetch_threshold"`
 	ListChunks                  int                  `config:"list_chunks"`
-	Retry403                    bool                 `config:"retry_403"`
+	RetryErrors                 fs.CommaSepList      `config:"retry_errors"`
 }
 
 // Fs represents a remote swift server
@@ -426,7 +427,7 @@ var retryErrorCodes = []int{
 
 // shouldRetry returns a boolean as to whether this err deserves to be
 // retried.  It returns the err as a convenience
-func shouldRetry(ctx context.Context, err error, retry403 bool) (bool, error) {
+func shouldRetry(ctx context.Context, err error, retryErrors fs.CommaSepList) (bool, error) {
 	if fserrors.ContextError(ctx, &err) {
 		return false, err
 	}
@@ -437,8 +438,11 @@ func shouldRetry(ctx context.Context, err error, retry403 bool) (bool, error) {
 				return true, err
 			}
 		}
-		if retry403 && swiftError.StatusCode == 403 {
-			return true, err
+		for _, code := range retryErrors {
+			intCode, intError := strconv.Atoi(code)
+			if intError == nil && swiftError.StatusCode == intCode {
+				return true, err
+			}
 		}
 	}
 	// Check for generic failure conditions
@@ -448,7 +452,7 @@ func shouldRetry(ctx context.Context, err error, retry403 bool) (bool, error) {
 // shouldRetryHeaders returns a boolean as to whether this err
 // deserves to be retried.  It reads the headers passed in looking for
 // `Retry-After`. It returns the err as a convenience
-func shouldRetryHeaders(ctx context.Context, headers swift.Headers, err error, retry403 bool) (bool, error) {
+func shouldRetryHeaders(ctx context.Context, headers swift.Headers, err error, retryErrors fs.CommaSepList) (bool, error) {
 	if swiftError, ok := err.(*swift.Error); ok && swiftError.StatusCode == 429 {
 		if value := headers["Retry-After"]; value != "" {
 			retryAfter, parseErr := strconv.Atoi(value)
@@ -467,7 +471,7 @@ func shouldRetryHeaders(ctx context.Context, headers swift.Headers, err error, r
 			}
 		}
 	}
-	return shouldRetry(ctx, err, retry403)
+	return shouldRetry(ctx, err, retryErrors)
 }
 
 // parsePath parses a remote 'url'
@@ -616,7 +620,7 @@ func NewFsWithConnection(ctx context.Context, opt *Options, name, root string, c
 		err = f.pacer.Call(func() (bool, error) {
 			var rxHeaders swift.Headers
 			info, rxHeaders, err = f.c.Object(ctx, f.rootContainer, encodedDirectory)
-			return shouldRetryHeaders(ctx, rxHeaders, err, f.opt.Retry403)
+			return shouldRetryHeaders(ctx, rxHeaders, err, f.opt.RetryErrors)
 		})
 		if err == nil && info.ContentType != directoryMarkerContentType {
 			newRoot := path.Dir(f.root)
@@ -724,7 +728,7 @@ func (f *Fs) listContainerRoot(ctx context.Context, container, directory, prefix
 		var err error
 		err = f.pacer.Call(func() (bool, error) {
 			objects, err = f.c.Objects(ctx, container, opts)
-			return shouldRetry(ctx, err, f.opt.Retry403)
+			return shouldRetry(ctx, err, f.opt.RetryErrors)
 		})
 		if err == nil {
 			for i := range objects {
@@ -813,7 +817,7 @@ func (f *Fs) listContainers(ctx context.Context) (entries fs.DirEntries, err err
 	var containers []swift.Container
 	err = f.pacer.Call(func() (bool, error) {
 		containers, err = f.c.ContainersAll(ctx, nil)
-		return shouldRetry(ctx, err, f.opt.Retry403)
+		return shouldRetry(ctx, err, f.opt.RetryErrors)
 	})
 	if err != nil {
 		return nil, fmt.Errorf("container listing failed: %w", err)
@@ -906,7 +910,7 @@ func (f *Fs) About(ctx context.Context) (usage *fs.Usage, err error) {
 		var container swift.Container
 		err = f.pacer.Call(func() (bool, error) {
 			container, _, err = f.c.Container(ctx, f.rootContainer)
-			return shouldRetry(ctx, err, f.opt.Retry403)
+			return shouldRetry(ctx, err, f.opt.RetryErrors)
 		})
 		if err != nil {
 			return nil, fmt.Errorf("container info failed: %w", err)
@@ -917,7 +921,7 @@ func (f *Fs) About(ctx context.Context) (usage *fs.Usage, err error) {
 		var containers []swift.Container
 		err = f.pacer.Call(func() (bool, error) {
 			containers, err = f.c.ContainersAll(ctx, nil)
-			return shouldRetry(ctx, err, f.opt.Retry403)
+			return shouldRetry(ctx, err, f.opt.RetryErrors)
 		})
 		if err != nil {
 			return nil, fmt.Errorf("container listing failed: %w", err)
@@ -969,7 +973,7 @@ func (f *Fs) makeContainer(ctx context.Context, container string) error {
 			err = f.pacer.Call(func() (bool, error) {
 				var rxHeaders swift.Headers
 				_, rxHeaders, err = f.c.Container(ctx, container)
-				return shouldRetryHeaders(ctx, rxHeaders, err, f.opt.Retry403)
+				return shouldRetryHeaders(ctx, rxHeaders, err, f.opt.RetryErrors)
 			})
 		}
 		if err == swift.ContainerNotFound {
@@ -979,7 +983,7 @@ func (f *Fs) makeContainer(ctx context.Context, container string) error {
 			}
 			err = f.pacer.Call(func() (bool, error) {
 				err = f.c.ContainerCreate(ctx, container, headers)
-				return shouldRetry(ctx, err, f.opt.Retry403)
+				return shouldRetry(ctx, err, f.opt.RetryErrors)
 			})
 			if err == nil {
 				fs.Infof(f, "Container %q created", container)
@@ -1000,7 +1004,7 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 	err := f.cache.Remove(container, func() error {
 		err := f.pacer.Call(func() (bool, error) {
 			err := f.c.ContainerDelete(ctx, container)
-			return shouldRetry(ctx, err, f.opt.Retry403)
+			return shouldRetry(ctx, err, f.opt.RetryErrors)
 		})
 		if err == nil {
 			fs.Infof(f, "Container %q removed", container)
@@ -1078,7 +1082,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		err = f.pacer.Call(func() (bool, error) {
 			var rxHeaders swift.Headers
 			rxHeaders, err = f.c.ObjectCopy(ctx, srcContainer, srcPath, dstContainer, dstPath, nil)
-			return shouldRetryHeaders(ctx, rxHeaders, err, f.opt.Retry403)
+			return shouldRetryHeaders(ctx, rxHeaders, err, f.opt.RetryErrors)
 		})
 	}
 	if err != nil {
@@ -1173,7 +1177,7 @@ func (su *segmentedUpload) uploadManifest(ctx context.Context, contentType strin
 	err = su.f.pacer.Call(func() (bool, error) {
 		var rxHeaders swift.Headers
 		rxHeaders, err = su.f.c.ObjectPut(ctx, su.dstContainer, su.dstPath, emptyReader, true, "", contentType, headers)
-		return shouldRetryHeaders(ctx, rxHeaders, err, su.f.opt.Retry403)
+		return shouldRetryHeaders(ctx, rxHeaders, err, su.f.opt.RetryErrors)
 	})
 	return err
 }
@@ -1197,7 +1201,7 @@ func (f *Fs) copyLargeObject(ctx context.Context, src *Object, dstContainer stri
 		err = f.pacer.Call(func() (bool, error) {
 			var rxHeaders swift.Headers
 			rxHeaders, err = f.c.ObjectCopy(ctx, srcSegmentsContainer, srcSegment, su.container, dstSegment, nil)
-			return shouldRetryHeaders(ctx, rxHeaders, err, f.opt.Retry403)
+			return shouldRetryHeaders(ctx, rxHeaders, err, f.opt.RetryErrors)
 		})
 		if err != nil {
 			return err
@@ -1344,7 +1348,7 @@ func (o *Object) readMetaData(ctx context.Context) (err error) {
 	container, containerPath := o.split()
 	err = o.fs.pacer.Call(func() (bool, error) {
 		info, h, err = o.fs.c.Object(ctx, container, containerPath)
-		return shouldRetryHeaders(ctx, h, err, o.fs.opt.Retry403)
+		return shouldRetryHeaders(ctx, h, err, o.fs.opt.RetryErrors)
 	})
 	if err != nil {
 		if err == swift.ObjectNotFound {
@@ -1402,7 +1406,7 @@ func (o *Object) SetModTime(ctx context.Context, modTime time.Time) error {
 	container, containerPath := o.split()
 	return o.fs.pacer.Call(func() (bool, error) {
 		err = o.fs.c.ObjectUpdate(ctx, container, containerPath, newHeaders)
-		return shouldRetry(ctx, err, o.fs.opt.Retry403)
+		return shouldRetry(ctx, err, o.fs.opt.RetryErrors)
 	})
 }
 
@@ -1423,7 +1427,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 	err = o.fs.pacer.Call(func() (bool, error) {
 		var rxHeaders swift.Headers
 		in, rxHeaders, err = o.fs.c.ObjectOpen(ctx, container, containerPath, !isRanging, headers)
-		return shouldRetryHeaders(ctx, rxHeaders, err, o.fs.opt.Retry403)
+		return shouldRetryHeaders(ctx, rxHeaders, err, o.fs.opt.RetryErrors)
 	})
 	return
 }
@@ -1515,7 +1519,7 @@ func (o *Object) updateChunks(ctx context.Context, in0 io.Reader, headers swift.
 		err = o.fs.pacer.CallNoRetry(func() (bool, error) {
 			var rxHeaders swift.Headers
 			rxHeaders, err = o.fs.c.ObjectPut(ctx, su.container, segmentPath, segmentReader, true, "", "", headers)
-			return shouldRetryHeaders(ctx, rxHeaders, err, o.fs.opt.Retry403)
+			return shouldRetryHeaders(ctx, rxHeaders, err, o.fs.opt.RetryErrors)
 		})
 		if err != nil {
 			return err
@@ -1579,7 +1583,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		var rxHeaders swift.Headers
 		err = o.fs.pacer.CallNoRetry(func() (bool, error) {
 			rxHeaders, err = o.fs.c.ObjectPut(ctx, container, containerPath, in, true, "", contentType, headers)
-			return shouldRetryHeaders(ctx, rxHeaders, err, o.fs.opt.Retry403)
+			return shouldRetryHeaders(ctx, rxHeaders, err, o.fs.opt.RetryErrors)
 		})
 		if err != nil {
 			return err
@@ -1644,7 +1648,7 @@ func (o *Object) Remove(ctx context.Context) (err error) {
 			fs.Errorf(o, "Dangling object - ignoring: %v", err)
 			err = nil
 		}
-		return shouldRetry(ctx, err, o.fs.opt.Retry403)
+		return shouldRetry(ctx, err, o.fs.opt.RetryErrors)
 	})
 	if err != nil {
 		return err
