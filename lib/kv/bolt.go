@@ -33,6 +33,7 @@ type DB struct {
 	refs      int
 	bolt      *bbolt.DB
 	mu        sync.Mutex
+	readOnly  bool
 	canWrite  bool
 	queue     chan *request
 	lockTime  time.Duration
@@ -138,6 +139,10 @@ func (db *DB) open(ctx context.Context, forWrite bool) (err error) {
 	}
 	_ = db.close()
 
+	if db.readOnly && forWrite {
+		return ErrReadOnly
+	}
+
 	db.canWrite = forWrite
 	if !forWrite {
 		// mitigate https://github.com/etcd-io/bbolt/issues/98
@@ -226,6 +231,11 @@ func (db *DB) Do(write bool, op Op) error {
 	db.queue <- r
 	r.wg.Wait()
 	return r.err
+}
+
+// ReadOnly setter the db.readOnly
+func (db *DB) ReadOnly(b bool) {
+	db.readOnly = b
 }
 
 // request encapsulates a synchronous operation and its results
