@@ -235,6 +235,10 @@ the directory may not be downloadable. In practice this means when
 using a VFS based rclone command such as `rclone mount` you should
 make sure `--dir-cache-time` is less than `24h`.
 
+Note that Gofile is currently limited to a total of 100,000 items. If
+you attempt to upload more than that you will get
+`error-limit-100000`. This limit may be lifted in the future.
+
 ### Duplicated files
 
 Gofile is capable of having files with duplicated file names. For
