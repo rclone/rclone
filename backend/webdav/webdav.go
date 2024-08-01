@@ -15,6 +15,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
 	"net/url"
 	"os/exec"
@@ -159,6 +160,11 @@ Set to 0 to disable chunked uploading.
 			Help:     "Exclude ownCloud mounted storages",
 			Advanced: true,
 			Default:  false,
+		}, {
+			Name:     "unix_socket_path",
+			Help:     "Path to a unix domain socket to dial to, instead of opening a TCP connection directly",
+			Advanced: true,
+			Default:  "",
 		}},
 	})
 }
@@ -177,6 +183,7 @@ type Options struct {
 	ChunkSize          fs.SizeSuffix        `config:"nextcloud_chunk_size"`
 	ExcludeShares      bool                 `config:"owncloud_exclude_shares"`
 	ExcludeMounts      bool                 `config:"owncloud_exclude_mounts"`
+	UnixSocketPath     string               `config:"unix_socket_path"`
 }
 
 // Fs represents a remote webdav
@@ -458,7 +465,17 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		precision:   fs.ModTimeNotSupported,
 	}
 
-	client := fshttp.NewClient(ctx)
+	var client *http.Client
+	if opt.UnixSocketPath == "" {
+		client = fshttp.NewClient(ctx)
+	} else {
+		fs.Debugf(f, "custom unix_socket_path configured (%v), updating dialer…", opt.UnixSocketPath)
+		client = fshttp.NewClientCustom(ctx, func(t *http.Transport) {
+			t.DialContext = func(reqCtx context.Context, network, addr string) (net.Conn, error) {
+				return fshttp.NewDialer(ctx).DialContext(reqCtx, "unix", opt.UnixSocketPath)
+			}
+		})
+	}
 	if opt.Vendor == "sharepoint-ntlm" {
 		// Disable transparent HTTP/2 support as per https://golang.org/pkg/net/http/ ,
 		// otherwise any connection to IIS 10.0 fails with 'stream error: stream ID 39; HTTP_1_1_REQUIRED'
