@@ -78,6 +78,7 @@ type Item struct {
 	Size         int64                  `json:"size"`
 	Code         string                 `json:"code"`
 	CreateTime   int64                  `json:"createTime"`
+	ModTime      int64                  `json:"modTime"`
 	Link         string                 `json:"link"`
 	MD5          string                 `json:"md5"`
 	MimeType     string                 `json:"mimetype"`
@@ -92,9 +93,14 @@ type Item struct {
 	Children map[string]*Item `json:"children"`
 }
 
-// ModTime returns the CreateTime as a Go time.Time
-func (i *Item) ModTime() time.Time {
-	return time.Unix(i.CreateTime, 0)
+// Convert a go time to a native time
+func ToNativeTime(t time.Time) int64 {
+	return t.Unix()
+}
+
+// Convert native time to a go time
+func FromNativeTime(t int64) time.Time {
+	return time.Unix(t, 0)
 }
 
 // DirectLink describes a direct link to a file so it can be
@@ -162,14 +168,7 @@ type CreateFolderRequest struct {
 // CreateFolderResponse is the output from /contents/createFolder
 type CreateFolderResponse struct {
 	Error
-	Data struct {
-		FolderID     string `json:"folderId"`
-		Type         string `json:"type"`
-		Name         string `json:"name"`
-		ParentFolder string `json:"parentFolder"`
-		CreateTime   int    `json:"createTime"`
-		Code         string `json:"code"`
-	} `json:"data"`
+	Data Item `json:"data"`
 }
 
 // DeleteRequest is the input to DELETE /contents
@@ -215,14 +214,7 @@ type ServersResponse struct {
 // UploadResponse is returned by POST /contents/uploadfile
 type UploadResponse struct {
 	Error
-	Data struct {
-		Code         string `json:"code"`
-		DownloadPage string `json:"downloadPage"`
-		FileID       string `json:"fileId"`
-		FileName     string `json:"fileName"`
-		MD5          string `json:"md5"`
-		ParentFolder string `json:"parentFolder"`
-	} `json:"data"`
+	Data Item `json:"data"`
 }
 
 // DirectLinksRequest specifies the parameters for the direct link
@@ -265,6 +257,30 @@ type UpdateItemRequest struct {
 type MoveRequest struct {
 	FolderID   string `json:"folderId"`
 	ContentsID string `json:"contentsId"` // comma separated list of IDs
+}
+
+// MoveResponse is returned by POST /contents/move
+type MoveResponse struct {
+	Error
+	Data map[string]struct {
+		Error
+		Item `json:"data"`
+	} `json:"data"`
+}
+
+// CopyRequest is the input to /contents/copy
+type CopyRequest struct {
+	FolderID   string `json:"folderId"`
+	ContentsID string `json:"contentsId"` // comma separated list of IDs
+}
+
+// CopyResponse is returned by POST /contents/copy
+type CopyResponse struct {
+	Error
+	Data map[string]struct {
+		Error
+		Item `json:"data"`
+	} `json:"data"`
 }
 
 // UploadServerStatus is returned when fetching the root of an upload server

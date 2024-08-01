@@ -187,21 +187,27 @@ var retryErrorCodes = []int{
 	509, // Bandwidth Limit Exceeded
 }
 
+// Return true if the api error has the status given
+func isApiErr(err error, status string) bool {
+	var apiErr api.Error
+	if errors.As(err, &apiErr) {
+		return apiErr.Status == status
+	}
+	return false
+}
+
 // shouldRetry returns a boolean as to whether this resp and err
 // deserve to be retried.  It returns the err as a convenience
 func shouldRetry(ctx context.Context, resp *http.Response, err error) (bool, error) {
 	if fserrors.ContextError(ctx, &err) {
 		return false, err
 	}
-	var apiErr api.Error
-	if errors.As(err, &apiErr) {
-		if apiErr.Status == "error-rateLimit" {
-			// Give an immediate penalty to rate limits
-			fs.Debugf(nil, "Rate limited, sleep for %v", rateLimitSleep)
-			time.Sleep(rateLimitSleep)
-			//return true, pacer.RetryAfterError(err, 2*time.Second)
-			return true, err
-		}
+	if isApiErr(err, "error-rateLimit") {
+		// Give an immediate penalty to rate limits
+		fs.Debugf(nil, "Rate limited, sleep for %v", rateLimitSleep)
+		time.Sleep(rateLimitSleep)
+		//return true, pacer.RetryAfterError(err, 2*time.Second)
+		return true, err
 	}
 	return fserrors.ShouldRetry(err) || fserrors.ShouldRetryHTTP(resp, retryErrorCodes), err
 }
@@ -243,10 +249,8 @@ func (f *Fs) readMetaDataForID(ctx context.Context, id string) (info *api.Item, 
 	err = f.pacer.Call(func() (bool, error) {
 		resp, err := f.srv.CallJSON(ctx, &opts, nil, &result)
 		// Retry not found errors - when looking for an ID it should really exist
-		if apiErr, ok := err.(api.Error); ok {
-			if apiErr.Status == "error-notFound" {
-				return true, err
-			}
+		if isApiErr(err, "error-notFound") {
+			return true, err
 		}
 		return shouldRetry(ctx, resp, err)
 	})
@@ -459,6 +463,15 @@ func (f *Fs) bestServers(ctx context.Context, servers []api.Server, n int) (newS
 	return newServers
 }
 
+// Clear all the upload servers - call on an error
+func (f *Fs) clearServers() {
+	f.serversMu.Lock()
+	defer f.serversMu.Unlock()
+
+	fs.Debugf(f, "Clearing upload servers")
+	f.servers = nil
+}
+
 // Gets an upload server
 func (f *Fs) getServer(ctx context.Context) (server *api.Server, err error) {
 	f.serversMu.Lock()
@@ -565,7 +578,7 @@ func (f *Fs) CreateDir(ctx context.Context, pathID, leaf string) (newID string, 
 		return "", fmt.Errorf("failed to create folder: %w", err)
 	}
 	// fmt.Printf("...Id %q\n", *info.Id)
-	return result.Data.FolderID, nil
+	return result.Data.ID, nil
 }
 
 // list the objects into the function supplied
@@ -591,10 +604,8 @@ func (f *Fs) listAll(ctx context.Context, dirID string, directoriesOnly bool, fi
 		return shouldRetry(ctx, resp, err)
 	})
 	if err = result.Err(err); err != nil {
-		if apiErr, ok := err.(api.Error); ok {
-			if apiErr.Status == "error-notFound" {
-				return found, fs.ErrorDirNotFound
-			}
+		if isApiErr(err, "error-notFound") {
+			return found, fs.ErrorDirNotFound
 		}
 		return found, fmt.Errorf("couldn't list files: %w", err)
 	}
@@ -627,7 +638,7 @@ func (f *Fs) itemToDirEntry(ctx context.Context, remote string, info *api.Item) 
 	if info.Type == api.ItemTypeFolder {
 		// cache the directory ID for later lookups
 		f.dirCache.Put(remote, info.ID)
-		entry = fs.NewDir(remote, info.ModTime()).
+		entry = fs.NewDir(remote, api.FromNativeTime(info.ModTime)).
 			SetID(info.ID).
 			SetItems(int64(len(info.ChildrenIDs))).
 			SetParentID(info.ParentFolder).
@@ -693,10 +704,8 @@ func (f *Fs) listR(ctx context.Context, dir string, list *walk.ListRHelper) (err
 		return shouldRetry(ctx, resp, err)
 	})
 	if err = result.Err(err); err != nil {
-		if apiErr, ok := err.(api.Error); ok {
-			if apiErr.Status == "error-notFound" {
-				return fs.ErrorDirNotFound
-			}
+		if isApiErr(err, "error-notFound") {
+			return fs.ErrorDirNotFound
 		}
 		return fmt.Errorf("couldn't recursively list files: %w", err)
 	}
@@ -898,7 +907,7 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 
 // Precision return the precision of this Fs
 func (f *Fs) Precision() time.Duration {
-	return fs.ModTimeNotSupported
+	return time.Second
 }
 
 // Purge deletes all the files and the container
@@ -928,12 +937,12 @@ func (f *Fs) About(ctx context.Context) (usage *fs.Usage, err error) {
 	return usage, nil
 }
 
-// rename a file or a folder
-func (f *Fs) rename(ctx context.Context, id, newLeaf string) (err error) {
+// patch an attribute on an object to value
+func (f *Fs) patch(ctx context.Context, id, attribute, value string) (err error) {
 	var resp *http.Response
 	var request = api.UpdateItemRequest{
-		Attribute: "name",
-		Value:     newLeaf,
+		Attribute: attribute,
+		Value:     value,
 	}
 	var result api.Error
 	opts := rest.Opts{
@@ -945,19 +954,24 @@ func (f *Fs) rename(ctx context.Context, id, newLeaf string) (err error) {
 		return shouldRetry(ctx, resp, err)
 	})
 	if err = result.Err(err); err != nil {
-		return fmt.Errorf("failed to rename item: %w", err)
+		return fmt.Errorf("failed to patch item %q to %q: %w", attribute, value, err)
 	}
 	return nil
 }
 
+// rename a file or a folder
+func (f *Fs) rename(ctx context.Context, id, newLeaf string) (err error) {
+	return f.patch(ctx, id, "name", newLeaf)
+}
+
 // move a file or a folder to a new directory
-func (f *Fs) move(ctx context.Context, id, newDirID string) (err error) {
+func (f *Fs) move(ctx context.Context, id, newDirID string) (item *api.Item, err error) {
 	var resp *http.Response
 	var request = api.MoveRequest{
 		FolderID:   newDirID,
 		ContentsID: id,
 	}
-	var result api.Error
+	var result api.MoveResponse
 	opts := rest.Opts{
 		Method: "PUT",
 		Path:   "/contents/move",
@@ -967,9 +981,13 @@ func (f *Fs) move(ctx context.Context, id, newDirID string) (err error) {
 		return shouldRetry(ctx, resp, err)
 	})
 	if err = result.Err(err); err != nil {
-		return fmt.Errorf("failed to move item: %w", err)
+		return nil, fmt.Errorf("failed to move item: %w", err)
 	}
-	return nil
+	itemResult, ok := result.Data[id]
+	if !ok || itemResult.Item.ID == "" {
+		return nil, errors.New("failed to read result of move")
+	}
+	return &itemResult.Item, nil
 }
 
 // move and rename a file or folder to directoryID with leaf
@@ -985,12 +1003,15 @@ func (f *Fs) moveTo(ctx context.Context, id, srcLeaf, dstLeaf, srcDirectoryID, d
 	}
 	// Move if required
 	if srcDirectoryID != dstDirectoryID {
-		err = f.move(ctx, id, dstDirectoryID)
+		info, err = f.move(ctx, id, dstDirectoryID)
 		if err != nil {
 			return nil, err
 		}
 	}
-	return f.readMetaDataForID(ctx, id)
+	if info == nil {
+		return f.readMetaDataForID(ctx, id)
+	}
+	return info, nil
 }
 
 // Move src to this remote using server-side move operations.
@@ -1058,13 +1079,13 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 }
 
 // copy a file or a folder to a new directory
-func (f *Fs) copy(ctx context.Context, id, newDirID string) (err error) {
+func (f *Fs) copy(ctx context.Context, id, newDirID string) (item *api.Item, err error) {
 	var resp *http.Response
-	var request = api.MoveRequest{
+	var request = api.CopyRequest{
 		FolderID:   newDirID,
 		ContentsID: id,
 	}
-	var result api.Error
+	var result api.CopyResponse
 	opts := rest.Opts{
 		Method: "POST",
 		Path:   "/contents/copy",
@@ -1074,9 +1095,13 @@ func (f *Fs) copy(ctx context.Context, id, newDirID string) (err error) {
 		return shouldRetry(ctx, resp, err)
 	})
 	if err = result.Err(err); err != nil {
-		return fmt.Errorf("failed to copy item: %w", err)
+		return nil, fmt.Errorf("failed to copy item: %w", err)
 	}
-	return nil
+	itemResult, ok := result.Data[id]
+	if !ok || itemResult.Item.ID == "" {
+		return nil, errors.New("failed to read result of copy")
+	}
+	return &itemResult.Item, nil
 }
 
 // copy and rename a file or folder to directoryID with leaf
@@ -1084,26 +1109,9 @@ func (f *Fs) copyTo(ctx context.Context, srcID, srcLeaf, dstLeaf, dstDirectoryID
 	// Can have duplicates so don't have to be careful here
 
 	// Copy to dstDirectoryID first
-	err = f.copy(ctx, srcID, dstDirectoryID)
+	info, err = f.copy(ctx, srcID, dstDirectoryID)
 	if err != nil {
 		return nil, err
-	}
-
-	// FIXME would really like to know the ID of the resulting
-	// object but it isn't returned from copy, so attempt to look
-	// it up.
-	found, err := f.listAll(ctx, dstDirectoryID, false, true, func(item *api.Item) bool {
-		if item.Name == srcLeaf && item.ID != srcID {
-			info = item
-			return true
-		}
-		return false
-	})
-	if err != nil {
-		return nil, fmt.Errorf("failed to find file after copy: %w", err)
-	}
-	if !found {
-		return nil, fmt.Errorf("didn't find file after copy")
 	}
 
 	// Rename if required
@@ -1155,6 +1163,13 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	if err != nil {
 		return nil, err
 	}
+
+	// Reset the modification time as copy does not preserve it
+	err = dstObj.SetModTime(ctx, srcObj.modTime)
+	if err != nil {
+		return nil, err
+	}
+
 	return dstObj, nil
 }
 
@@ -1211,7 +1226,7 @@ func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, 
 	if expire != fs.DurationOff {
 		when := time.Now().Add(time.Duration(expire))
 		fs.Debugf(f, "Link expires at %v (duration %v)", when, expire)
-		request.ExpireTime = when.Unix()
+		request.ExpireTime = api.ToNativeTime(when)
 	}
 	err = f.pacer.Call(func() (bool, error) {
 		resp, err = f.srv.CallJSON(ctx, &opts, &request, &result)
@@ -1255,7 +1270,7 @@ func (f *Fs) MergeDirs(ctx context.Context, dirs []fs.Directory) error {
 		for _, info := range infos {
 			fs.Infof(srcDir, "merging %q", info.Name)
 			// Move the file into the destination
-			err = f.move(ctx, info.ID, dstDir.ID())
+			_, err = f.move(ctx, info.ID, dstDir.ID())
 			if err != nil {
 				return fmt.Errorf("MergeDirs move failed on %q in %v: %w", info.Name, srcDir, err)
 			}
@@ -1311,8 +1326,11 @@ func (o *Object) setMetaData(info *api.Item) (err error) {
 	if info.Type != api.ItemTypeFile {
 		return fmt.Errorf("%q is %q: %w", o.remote, info.Type, fs.ErrorNotAFile)
 	}
+	if info.ID == "" {
+		return fmt.Errorf("ID not found in response")
+	}
 	o.size = info.Size
-	o.modTime = info.ModTime()
+	o.modTime = api.FromNativeTime(info.ModTime)
 	o.id = info.ID
 	o.dirID = info.ParentFolder
 	o.mimeType = info.MimeType
@@ -1331,10 +1349,8 @@ func (o *Object) readMetaData(ctx context.Context) (err error) {
 		info, err = o.fs.readMetaDataForPath(ctx, o.remote)
 	}
 	if err != nil {
-		if apiErr, ok := err.(api.Error); ok {
-			if apiErr.Status == "error-notFound" {
-				return fs.ErrorObjectNotFound
-			}
+		if isApiErr(err, "error-notFound") {
+			return fs.ErrorObjectNotFound
 		}
 		return err
 	}
@@ -1351,7 +1367,12 @@ func (o *Object) ModTime(ctx context.Context) time.Time {
 
 // SetModTime sets the modification time of the local fs object
 func (o *Object) SetModTime(ctx context.Context, modTime time.Time) error {
-	return fs.ErrorCantSetModTime
+	unixModTime := api.ToNativeTime(modTime)
+	err := o.fs.patch(ctx, o.id, "modTime", strconv.FormatInt(unixModTime, 10))
+	if err == nil {
+		o.modTime = api.FromNativeTime(unixModTime)
+	}
+	return err
 }
 
 // Storable returns a boolean showing whether this object storable
@@ -1393,6 +1414,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 // The new object may have been created if an error is returned.
 func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (err error) {
 	remote := o.Remote()
+	modTime := src.ModTime(ctx)
 
 	// Create the directory for the object if it doesn't exist
 	leaf, directoryID, err := o.fs.dirCache.FindPath(ctx, remote, true)
@@ -1431,6 +1453,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		Body:   in,
 		MultipartParams: url.Values{
 			"folderId": {directoryID},
+			"modTime":  {strconv.FormatInt(modTime.Unix(), 10)},
 		},
 		MultipartContentName: "file",
 		MultipartFileName:    o.fs.opt.Enc.FromStandardName(leaf),
@@ -1442,24 +1465,13 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		return shouldRetry(ctx, resp, err)
 	})
 	if err = result.Err(err); err != nil {
+		if isApiErr(err, "error-freespace") {
+			fs.Errorf(o, "Upload server out of space - need to retry upload")
+		}
+		o.fs.clearServers()
 		return fmt.Errorf("failed to upload file: %w", err)
 	}
-	// Set some sensible defaults for the object from the upload
-	// It would be good if the upload returned a full set of metadata
-	o.id = result.Data.FileID
-	o.md5 = result.Data.MD5
-	o.mimeType = ""
-	o.url = ""
-	o.size = src.Size()
-	o.modTime = src.ModTime(ctx)
-	o.dirID = directoryID
-	// Occasionally object isn't found, so try again.
-	return o.fs.pacer.Call(func() (bool, error) {
-		err := o.readMetaData(ctx)
-		// Note that o.readMetaData has its own pacer loop so
-		// we **only** retry fs.ErrorObjectNotFound
-		return err == fs.ErrorObjectNotFound, err
-	})
+	return o.setMetaData(&result.Data)
 }
 
 // Remove an object
