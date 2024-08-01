@@ -25,7 +25,7 @@ Here is an overview of the major features of each cloud storage system.
 | Dropbox                      | DBHASH ¹          | R       | Yes              | No              | -         | -        |
 | Enterprise File Fabric       | -                 | R/W     | Yes              | No              | R/W       | -        |
 | FTP                          | -                 | R/W ¹⁰  | No               | No              | -         | -        |
-| Gofile                       | MD5               | R/W     | No               | Yes             | R         | -        |
+| Gofile                       | MD5               | DR/W    | No               | Yes             | R         | -        |
 | Google Cloud Storage         | MD5               | R/W     | No               | No              | R/W       | -        |
 | Google Drive                 | MD5, SHA1, SHA256 | DR/W    | No               | Yes             | R/W       | DRWU     |
 | Google Photos                | -                 | -       | No               | Yes             | R         | -        |

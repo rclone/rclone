@@ -149,6 +149,12 @@ type Object struct {
 	url      string    // where to download this object
 }
 
+// Directory describes a gofile directory
+type Directory struct {
+	Object
+	items int64 // number of items in the directory
+}
+
 // ------------------------------------------------------------
 
 // Name of the remote (as passed into NewFs)
@@ -188,7 +194,7 @@ var retryErrorCodes = []int{
 }
 
 // Return true if the api error has the status given
-func isApiErr(err error, status string) bool {
+func isAPIErr(err error, status string) bool {
 	var apiErr api.Error
 	if errors.As(err, &apiErr) {
 		return apiErr.Status == status
@@ -202,7 +208,7 @@ func shouldRetry(ctx context.Context, resp *http.Response, err error) (bool, err
 	if fserrors.ContextError(ctx, &err) {
 		return false, err
 	}
-	if isApiErr(err, "error-rateLimit") {
+	if isAPIErr(err, "error-rateLimit") {
 		// Give an immediate penalty to rate limits
 		fs.Debugf(nil, "Rate limited, sleep for %v", rateLimitSleep)
 		time.Sleep(rateLimitSleep)
@@ -223,7 +229,7 @@ func (f *Fs) readMetaDataForPath(ctx context.Context, path string) (info *api.It
 		return nil, err
 	}
 
-	found, err := f.listAll(ctx, directoryID, false, true, func(item *api.Item) bool {
+	found, err := f.listAll(ctx, directoryID, false, true, leaf, func(item *api.Item) bool {
 		if item.Name == leaf {
 			info = item
 			return true
@@ -249,7 +255,7 @@ func (f *Fs) readMetaDataForID(ctx context.Context, id string) (info *api.Item, 
 	err = f.pacer.Call(func() (bool, error) {
 		resp, err := f.srv.CallJSON(ctx, &opts, nil, &result)
 		// Retry not found errors - when looking for an ID it should really exist
-		if isApiErr(err, "error-notFound") {
+		if isAPIErr(err, "error-notFound") {
 			return true, err
 		}
 		return shouldRetry(ctx, resp, err)
@@ -303,11 +309,13 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		serversMu: new(sync.Mutex),
 	}
 	f.features = (&fs.Features{
-		CaseInsensitive:         false,
-		CanHaveEmptyDirectories: true,
-		DuplicateFiles:          true,
-		ReadMimeType:            true,
-		WriteMimeType:           false,
+		CaseInsensitive:          false,
+		CanHaveEmptyDirectories:  true,
+		DuplicateFiles:           true,
+		ReadMimeType:             true,
+		WriteMimeType:            false,
+		WriteDirSetModTime:       true,
+		DirModTimeUpdatesOnWrite: true,
 	}).Fill(ctx, f)
 	f.srv.SetErrorHandler(errorHandler)
 	f.srv.SetHeader("Authorization", "Bearer "+f.opt.AccessToken)
@@ -547,7 +555,7 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 // FindLeaf finds a directory of name leaf in the folder with ID pathID
 func (f *Fs) FindLeaf(ctx context.Context, pathID, leaf string) (pathIDOut string, found bool, err error) {
 	// Find the leaf in pathID
-	found, err = f.listAll(ctx, pathID, true, false, func(item *api.Item) bool {
+	found, err = f.listAll(ctx, pathID, true, false, leaf, func(item *api.Item) bool {
 		if item.Name == leaf {
 			pathIDOut = item.ID
 			return true
@@ -557,9 +565,8 @@ func (f *Fs) FindLeaf(ctx context.Context, pathID, leaf string) (pathIDOut strin
 	return pathIDOut, found, err
 }
 
-// CreateDir makes a directory with pathID as parent and name leaf
-func (f *Fs) CreateDir(ctx context.Context, pathID, leaf string) (newID string, err error) {
-	// fs.Debugf(f, "CreateDir(%q, %q)\n", pathID, leaf)
+// createDir makes a directory with pathID as parent and name leaf and modTime
+func (f *Fs) createDir(ctx context.Context, pathID, leaf string, modTime time.Time) (item *api.Item, err error) {
 	var resp *http.Response
 	var result api.CreateFolderResponse
 	opts := rest.Opts{
@@ -569,16 +576,26 @@ func (f *Fs) CreateDir(ctx context.Context, pathID, leaf string) (newID string, 
 	mkdir := api.CreateFolderRequest{
 		FolderName:     f.opt.Enc.FromStandardName(leaf),
 		ParentFolderID: pathID,
+		ModTime:        api.ToNativeTime(modTime),
 	}
 	err = f.pacer.Call(func() (bool, error) {
 		resp, err = f.srv.CallJSON(ctx, &opts, &mkdir, &result)
 		return shouldRetry(ctx, resp, err)
 	})
 	if err = result.Err(err); err != nil {
-		return "", fmt.Errorf("failed to create folder: %w", err)
+		return nil, fmt.Errorf("failed to create folder: %w", err)
 	}
-	// fmt.Printf("...Id %q\n", *info.Id)
-	return result.Data.ID, nil
+	return &result.Data, nil
+}
+
+// CreateDir makes a directory with pathID as parent and name leaf
+func (f *Fs) CreateDir(ctx context.Context, pathID, leaf string) (newID string, err error) {
+	// fs.Debugf(f, "CreateDir(%q, %q)\n", pathID, leaf)
+	item, err := f.createDir(ctx, pathID, leaf, time.Now())
+	if err != nil {
+		return "", err
+	}
+	return item.ID, nil
 }
 
 // list the objects into the function supplied
@@ -591,11 +608,18 @@ type listAllFn func(*api.Item) bool
 
 // Lists the directory required calling the user function on each item found
 //
+// If name is set then the server will limit the returned items to those
+// with that name.
+//
 // If the user fn ever returns true then it early exits with found = true
-func (f *Fs) listAll(ctx context.Context, dirID string, directoriesOnly bool, filesOnly bool, fn listAllFn) (found bool, err error) {
+func (f *Fs) listAll(ctx context.Context, dirID string, directoriesOnly bool, filesOnly bool, name string, fn listAllFn) (found bool, err error) {
 	opts := rest.Opts{
-		Method: "GET",
-		Path:   "/contents/" + dirID,
+		Method:     "GET",
+		Path:       "/contents/" + dirID,
+		Parameters: url.Values{},
+	}
+	if name != "" {
+		opts.Parameters.Add("contentname", f.opt.Enc.FromStandardName(name))
 	}
 	var result api.Contents
 	var resp *http.Response
@@ -604,7 +628,7 @@ func (f *Fs) listAll(ctx context.Context, dirID string, directoriesOnly bool, fi
 		return shouldRetry(ctx, resp, err)
 	})
 	if err = result.Err(err); err != nil {
-		if isApiErr(err, "error-notFound") {
+		if isAPIErr(err, "error-notFound") {
 			return found, fs.ErrorDirNotFound
 		}
 		return found, fmt.Errorf("couldn't list files: %w", err)
@@ -638,11 +662,15 @@ func (f *Fs) itemToDirEntry(ctx context.Context, remote string, info *api.Item) 
 	if info.Type == api.ItemTypeFolder {
 		// cache the directory ID for later lookups
 		f.dirCache.Put(remote, info.ID)
-		entry = fs.NewDir(remote, api.FromNativeTime(info.ModTime)).
-			SetID(info.ID).
-			SetItems(int64(len(info.ChildrenIDs))).
-			SetParentID(info.ParentFolder).
-			SetSize(info.Size)
+		d := &Directory{
+			Object: Object{
+				fs:     f,
+				remote: remote,
+			},
+			items: int64(len(info.ChildrenIDs)),
+		}
+		d.setMetaDataAny(info)
+		entry = d
 	} else if info.Type == api.ItemTypeFile {
 		entry, err = f.newObjectWithInfo(ctx, remote, info)
 		if err != nil {
@@ -667,7 +695,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 		return nil, err
 	}
 	var iErr error
-	_, err = f.listAll(ctx, directoryID, false, false, func(info *api.Item) bool {
+	_, err = f.listAll(ctx, directoryID, false, false, "", func(info *api.Item) bool {
 		remote := path.Join(dir, info.Name)
 		entry, err := f.itemToDirEntry(ctx, remote, info)
 		if err != nil {
@@ -704,7 +732,7 @@ func (f *Fs) listR(ctx context.Context, dir string, list *walk.ListRHelper) (err
 		return shouldRetry(ctx, resp, err)
 	})
 	if err = result.Err(err); err != nil {
-		if isApiErr(err, "error-notFound") {
+		if isAPIErr(err, "error-notFound") {
 			return fs.ErrorDirNotFound
 		}
 		return fmt.Errorf("couldn't recursively list files: %w", err)
@@ -836,6 +864,20 @@ func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 	return err
 }
 
+// DirSetModTime sets the directory modtime for dir
+func (f *Fs) DirSetModTime(ctx context.Context, dir string, modTime time.Time) error {
+	dirID, err := f.dirCache.FindDir(ctx, dir, false)
+	if err != nil {
+		return err
+	}
+	o := Object{
+		fs:     f,
+		remote: dir,
+		id:     dirID,
+	}
+	return o.SetModTime(ctx, modTime)
+}
+
 // deleteObject removes an object by ID
 func (f *Fs) deleteObject(ctx context.Context, id string) error {
 	opts := rest.Opts{
@@ -877,7 +919,7 @@ func (f *Fs) purgeCheck(ctx context.Context, dir string, check bool) error {
 
 	// Check to see if there is contents in the directory
 	if check {
-		found, err := f.listAll(ctx, rootID, false, false, func(item *api.Item) bool {
+		found, err := f.listAll(ctx, rootID, false, false, "", func(item *api.Item) bool {
 			return true
 		})
 		if err != nil {
@@ -961,7 +1003,7 @@ func (f *Fs) patch(ctx context.Context, id, attribute, value string) (err error)
 
 // rename a file or a folder
 func (f *Fs) rename(ctx context.Context, id, newLeaf string) (err error) {
-	return f.patch(ctx, id, "name", newLeaf)
+	return f.patch(ctx, id, "name", f.opt.Enc.FromStandardName(newLeaf))
 }
 
 // move a file or a folder to a new directory
@@ -1259,7 +1301,7 @@ func (f *Fs) MergeDirs(ctx context.Context, dirs []fs.Directory) error {
 	for _, srcDir := range dirs[1:] {
 		// list the objects
 		infos := []*api.Item{}
-		_, err := f.listAll(ctx, srcDir.ID(), false, false, func(info *api.Item) bool {
+		_, err := f.listAll(ctx, srcDir.ID(), false, false, "", func(info *api.Item) bool {
 			infos = append(infos, info)
 			return false
 		})
@@ -1318,6 +1360,17 @@ func (o *Object) Size() int64 {
 	return o.size
 }
 
+// setMetaDataAny sets the metadata from info but doesn't check the type
+func (o *Object) setMetaDataAny(info *api.Item) {
+	o.size = info.Size
+	o.modTime = api.FromNativeTime(info.ModTime)
+	o.id = info.ID
+	o.dirID = info.ParentFolder
+	o.mimeType = info.MimeType
+	o.md5 = info.MD5
+	o.url = info.Link
+}
+
 // setMetaData sets the metadata from info
 func (o *Object) setMetaData(info *api.Item) (err error) {
 	if info.Type == api.ItemTypeFolder {
@@ -1329,13 +1382,7 @@ func (o *Object) setMetaData(info *api.Item) (err error) {
 	if info.ID == "" {
 		return fmt.Errorf("ID not found in response")
 	}
-	o.size = info.Size
-	o.modTime = api.FromNativeTime(info.ModTime)
-	o.id = info.ID
-	o.dirID = info.ParentFolder
-	o.mimeType = info.MimeType
-	o.md5 = info.MD5
-	o.url = info.Link
+	o.setMetaDataAny(info)
 	return nil
 }
 
@@ -1349,7 +1396,7 @@ func (o *Object) readMetaData(ctx context.Context) (err error) {
 		info, err = o.fs.readMetaDataForPath(ctx, o.remote)
 	}
 	if err != nil {
-		if isApiErr(err, "error-notFound") {
+		if isAPIErr(err, "error-notFound") {
 			return fs.ErrorObjectNotFound
 		}
 		return err
@@ -1465,7 +1512,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		return shouldRetry(ctx, resp, err)
 	})
 	if err = result.Err(err); err != nil {
-		if isApiErr(err, "error-freespace") {
+		if isAPIErr(err, "error-freespace") {
 			fs.Errorf(o, "Upload server out of space - need to retry upload")
 		}
 		o.fs.clearServers()
@@ -1489,6 +1536,36 @@ func (o *Object) MimeType(ctx context.Context) string {
 	return o.mimeType
 }
 
+// ParentID returns the ID of the Object parent if known, or "" if not
+func (o *Object) ParentID() string {
+	return o.dirID
+}
+
+// Items returns the count of items in this directory or this
+// directory and subdirectories if known, -1 for unknown
+func (d *Directory) Items() int64 {
+	return d.items
+}
+
+// Hash does nothing on a directory
+//
+// This method is implemented with the incorrect type signature to
+// stop the Directory type asserting to fs.Object or fs.ObjectInfo
+func (d *Directory) Hash() {
+	// Does nothing
+}
+
+// // SetMetadata sets metadata for a Directory
+// //
+// // It should return fs.ErrorNotImplemented if it can't set metadata
+// func (d *Directory) SetMetadata(ctx context.Context, metadata fs.Metadata) error {
+// 	modTime, err := d.fs.getModTimeFromMetadata(metadata)
+// 	if err != nil {
+// 		return fmt.Errorf("failed to set metadata: %w", err)
+// 	}
+// 	return d.SetModTime(ctx, modTime)
+// }
+
 // Check the interfaces are satisfied
 var (
 	_ fs.Fs              = (*Fs)(nil)
@@ -1501,8 +1578,12 @@ var (
 	_ fs.DirCacheFlusher = (*Fs)(nil)
 	_ fs.PublicLinker    = (*Fs)(nil)
 	_ fs.MergeDirser     = (*Fs)(nil)
+	_ fs.DirSetModTimer  = (*Fs)(nil)
 	_ fs.ListRer         = (*Fs)(nil)
 	_ fs.Object          = (*Object)(nil)
 	_ fs.IDer            = (*Object)(nil)
 	_ fs.MimeTyper       = (*Object)(nil)
+	_ fs.Directory       = (*Directory)(nil)
+	_ fs.SetModTimer     = (*Directory)(nil)
+	_ fs.ParentIDer      = (*Directory)(nil)
 )

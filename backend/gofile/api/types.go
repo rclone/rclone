@@ -89,16 +89,16 @@ type Item struct {
 	//Thumbnail      string   `json:"thumbnail"`
 	//DownloadCount int      `json:"downloadCount"`
 	//TotalDownloadCount int64            `json:"totalDownloadCount"`
-	//TotalSize          int64            `json:"totalSize"`
+	//TotalSize int64            `json:"totalSize"`
 	Children map[string]*Item `json:"children"`
 }
 
-// Convert a go time to a native time
+// ToNativeTime converts a go time to a native time
 func ToNativeTime(t time.Time) int64 {
 	return t.Unix()
 }
 
-// Convert native time to a go time
+// FromNativeTime converts native time to a go time
 func FromNativeTime(t int64) time.Time {
 	return time.Unix(t, 0)
 }
@@ -163,6 +163,7 @@ type AccountsGet struct {
 type CreateFolderRequest struct {
 	ParentFolderID string `json:"parentFolderId"`
 	FolderName     string `json:"folderName"`
+	ModTime        int64  `json:"modTime,omitempty"`
 }
 
 // CreateFolderResponse is the output from /contents/createFolder
