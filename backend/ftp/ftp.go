@@ -85,7 +85,7 @@ to an encrypted one. Cannot be used in combination with implicit FTPS.`,
 			Default: false,
 		}, {
 			Name: "concurrency",
-			Help: strings.Replace(`Maximum number of FTP simultaneous connections, 0 for unlimited.
+			Help: strings.ReplaceAll(`Maximum number of FTP simultaneous connections, 0 for unlimited.
 
 Note that setting this is very likely to cause deadlocks so it should
 be used with care.
@@ -99,7 +99,7 @@ maximum of |--checkers| and |--transfers|.
 So for |concurrency 3| you'd use |--checkers 2 --transfers 2
 --check-first| or |--checkers 1 --transfers 1|.
 
-`, "|", "`", -1),
+`, "|", "`"),
 			Default:  0,
 			Advanced: true,
 		}, {

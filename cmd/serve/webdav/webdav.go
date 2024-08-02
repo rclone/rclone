@@ -244,7 +244,7 @@ func newWebDAV(ctx context.Context, f fs.Fs, opt *Options) (w *WebDAV, err error
 }
 
 // Gets the VFS in use for this request
-func (w *WebDAV) getVFS(ctx context.Context) (VFS *vfs.VFS, err error) {
+func (w *WebDAV) getVFS(ctx context.Context) (vf *vfs.VFS, err error) {
 	if w._vfs != nil {
 		return w._vfs, nil
 	}
@@ -252,11 +252,11 @@ func (w *WebDAV) getVFS(ctx context.Context) (VFS *vfs.VFS, err error) {
 	if value == nil {
 		return nil, errors.New("no VFS found in context")
 	}
-	VFS, ok := value.(*vfs.VFS)
+	vf, ok := value.(*vfs.VFS)
 	if !ok {
 		return nil, fmt.Errorf("context value is not VFS: %#v", value)
 	}
-	return VFS, nil
+	return vf, nil
 }
 
 // auth does proxy authorization

@@ -2791,7 +2791,7 @@ func predictDstFromLogger(ctx context.Context) context.Context {
 	return operations.WithSyncLogger(ctx, opt)
 }
 
-func DstLsf(ctx context.Context, Fremote fs.Fs) *bytes.Buffer {
+func DstLsf(ctx context.Context, f fs.Fs) *bytes.Buffer {
 	var opt = operations.ListJSONOpt{
 		NoModTime:  false,
 		NoMimeType: true,
@@ -2805,7 +2805,7 @@ func DstLsf(ctx context.Context, Fremote fs.Fs) *bytes.Buffer {
 	var list operations.ListFormat
 
 	list.SetSeparator(";")
-	timeFormat := operations.FormatForLSFPrecision(Fremote.Precision())
+	timeFormat := operations.FormatForLSFPrecision(f.Precision())
 	list.AddModTime(timeFormat)
 	list.AddHash(hash.MD5)
 	list.AddSize()
@@ -2813,12 +2813,12 @@ func DstLsf(ctx context.Context, Fremote fs.Fs) *bytes.Buffer {
 
 	out := new(bytes.Buffer)
 
-	err := operations.ListJSON(ctx, Fremote, "", &opt, func(item *operations.ListJSONItem) error {
+	err := operations.ListJSON(ctx, f, "", &opt, func(item *operations.ListJSONItem) error {
 		_, _ = fmt.Fprintln(out, list.Format(item))
 		return nil
 	})
 	if err != nil {
-		fs.Errorf(Fremote, "ListJSON error: %v", err)
+		fs.Errorf(f, "ListJSON error: %v", err)
 	}
 
 	return out
@@ -2847,10 +2847,10 @@ func Diff(rev1, rev2 string) {
 	_, _ = os.Stdout.Write(out)
 }
 
-func testLoggerVsLsf(ctx context.Context, Fremote fs.Fs, logger *bytes.Buffer, t *testing.T) {
+func testLoggerVsLsf(ctx context.Context, f fs.Fs, logger *bytes.Buffer, t *testing.T) {
 	var newlogger bytes.Buffer
-	canTestModtime := fs.GetModifyWindow(ctx, Fremote) != fs.ModTimeNotSupported
-	canTestHash := Fremote.Hashes().Contains(hash.MD5)
+	canTestModtime := fs.GetModifyWindow(ctx, f) != fs.ModTimeNotSupported
+	canTestHash := f.Hashes().Contains(hash.MD5)
 	if !canTestHash || !canTestModtime {
 		loggerSplit := bytes.Split(logger.Bytes(), []byte("\n"))
 		for i, line := range loggerSplit {
@@ -2871,8 +2871,8 @@ func testLoggerVsLsf(ctx context.Context, Fremote fs.Fs, logger *bytes.Buffer, t
 	}
 
 	r := fstest.NewRun(t)
-	if r.Flocal.Precision() == Fremote.Precision() && r.Flocal.Hashes().Contains(hash.MD5) && canTestHash {
-		lsf := DstLsf(ctx, Fremote)
+	if r.Flocal.Precision() == f.Precision() && r.Flocal.Hashes().Contains(hash.MD5) && canTestHash {
+		lsf := DstLsf(ctx, f)
 		err := LoggerMatchesLsf(&newlogger, lsf)
 		require.NoError(t, err)
 	}

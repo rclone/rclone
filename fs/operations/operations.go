@@ -1283,7 +1283,7 @@ func Cat(ctx context.Context, f fs.Fs, w io.Writer, offset, count int64, sep []b
 			err = fs.CountError(err)
 			fs.Errorf(o, "Failed to send to output: %v", err)
 		}
-		if len(sep) >= 0 {
+		if len(sep) > 0 {
 			_, err = w.Write(sep)
 			if err != nil {
 				err = fs.CountError(err)
@@ -1542,27 +1542,27 @@ func Rmdirs(ctx context.Context, f fs.Fs, dir string, leaveRoot bool) error {
 }
 
 // GetCompareDest sets up --compare-dest
-func GetCompareDest(ctx context.Context) (CompareDest []fs.Fs, err error) {
+func GetCompareDest(ctx context.Context) (compareDest []fs.Fs, err error) {
 	ci := fs.GetConfig(ctx)
-	CompareDest, err = cache.GetArr(ctx, ci.CompareDest)
+	compareDest, err = cache.GetArr(ctx, ci.CompareDest)
 	if err != nil {
 		return nil, fserrors.FatalError(fmt.Errorf("failed to make fs for --compare-dest %q: %w", ci.CompareDest, err))
 	}
-	return CompareDest, nil
+	return compareDest, nil
 }
 
 // compareDest checks --compare-dest to see if src needs to
 // be copied
 //
 // Returns True if src is in --compare-dest
-func compareDest(ctx context.Context, dst, src fs.Object, CompareDest fs.Fs) (NoNeedTransfer bool, err error) {
+func compareDest(ctx context.Context, dst, src fs.Object, compareDest fs.Fs) (noNeedTransfer bool, err error) {
 	var remote string
 	if dst == nil {
 		remote = src.Remote()
 	} else {
 		remote = dst.Remote()
 	}
-	CompareDestFile, err := CompareDest.NewObject(ctx, remote)
+	compareDestFile, err := compareDest.NewObject(ctx, remote)
 	switch err {
 	case fs.ErrorObjectNotFound:
 		return false, nil
@@ -1573,7 +1573,7 @@ func compareDest(ctx context.Context, dst, src fs.Object, CompareDest fs.Fs) (No
 	}
 	opt := defaultEqualOpt(ctx)
 	opt.updateModTime = false
-	if equal(ctx, src, CompareDestFile, opt) {
+	if equal(ctx, src, compareDestFile, opt) {
 		fs.Debugf(src, "Destination found in --compare-dest, skipping")
 		return true, nil
 	}
@@ -1581,36 +1581,36 @@ func compareDest(ctx context.Context, dst, src fs.Object, CompareDest fs.Fs) (No
 }
 
 // GetCopyDest sets up --copy-dest
-func GetCopyDest(ctx context.Context, fdst fs.Fs) (CopyDest []fs.Fs, err error) {
+func GetCopyDest(ctx context.Context, fdst fs.Fs) (copyDest []fs.Fs, err error) {
 	ci := fs.GetConfig(ctx)
-	CopyDest, err = cache.GetArr(ctx, ci.CopyDest)
+	copyDest, err = cache.GetArr(ctx, ci.CopyDest)
 	if err != nil {
 		return nil, fserrors.FatalError(fmt.Errorf("failed to make fs for --copy-dest %q: %w", ci.CopyDest, err))
 	}
-	if !SameConfigArr(fdst, CopyDest) {
+	if !SameConfigArr(fdst, copyDest) {
 		return nil, fserrors.FatalError(errors.New("parameter to --copy-dest has to be on the same remote as destination"))
 	}
-	for _, cf := range CopyDest {
+	for _, cf := range copyDest {
 		if cf.Features().Copy == nil {
 			return nil, fserrors.FatalError(errors.New("can't use --copy-dest on a remote which doesn't support server side copy"))
 		}
 	}
 
-	return CopyDest, nil
+	return copyDest, nil
 }
 
 // copyDest checks --copy-dest to see if src needs to
 // be copied
 //
 // Returns True if src was copied from --copy-dest
-func copyDest(ctx context.Context, fdst fs.Fs, dst, src fs.Object, CopyDest, backupDir fs.Fs) (NoNeedTransfer bool, err error) {
+func copyDest(ctx context.Context, fdst fs.Fs, dst, src fs.Object, copyDest, backupDir fs.Fs) (noNeedTransfer bool, err error) {
 	var remote string
 	if dst == nil {
 		remote = src.Remote()
 	} else {
 		remote = dst.Remote()
 	}
-	CopyDestFile, err := CopyDest.NewObject(ctx, remote)
+	copyDestFile, err := copyDest.NewObject(ctx, remote)
 	switch err {
 	case fs.ErrorObjectNotFound:
 		return false, nil
@@ -1621,7 +1621,7 @@ func copyDest(ctx context.Context, fdst fs.Fs, dst, src fs.Object, CopyDest, bac
 	}
 	opt := defaultEqualOpt(ctx)
 	opt.updateModTime = false
-	if equal(ctx, src, CopyDestFile, opt) {
+	if equal(ctx, src, copyDestFile, opt) {
 		if dst == nil || !Equal(ctx, src, dst) {
 			if dst != nil && backupDir != nil {
 				err = MoveBackupDir(ctx, backupDir, dst)
@@ -1631,7 +1631,7 @@ func copyDest(ctx context.Context, fdst fs.Fs, dst, src fs.Object, CopyDest, bac
 				// If successful zero out the dstObj as it is no longer there
 				dst = nil
 			}
-			_, err := Copy(ctx, fdst, dst, remote, CopyDestFile)
+			_, err := Copy(ctx, fdst, dst, remote, copyDestFile)
 			if err != nil {
 				fs.Errorf(src, "Destination found in --copy-dest, error copying")
 				return false, nil
@@ -1650,17 +1650,17 @@ func copyDest(ctx context.Context, fdst fs.Fs, dst, src fs.Object, CopyDest, bac
 // does not need to be copied
 //
 // Returns True if src does not need to be copied
-func CompareOrCopyDest(ctx context.Context, fdst fs.Fs, dst, src fs.Object, CompareOrCopyDest []fs.Fs, backupDir fs.Fs) (NoNeedTransfer bool, err error) {
+func CompareOrCopyDest(ctx context.Context, fdst fs.Fs, dst, src fs.Object, compareOrCopyDest []fs.Fs, backupDir fs.Fs) (noNeedTransfer bool, err error) {
 	ci := fs.GetConfig(ctx)
 	if len(ci.CompareDest) > 0 {
-		for _, compareF := range CompareOrCopyDest {
+		for _, compareF := range compareOrCopyDest {
 			NoNeedTransfer, err := compareDest(ctx, dst, src, compareF)
 			if NoNeedTransfer || err != nil {
 				return NoNeedTransfer, err
 			}
 		}
 	} else if len(ci.CopyDest) > 0 {
-		for _, copyF := range CompareOrCopyDest {
+		for _, copyF := range compareOrCopyDest {
 			NoNeedTransfer, err := copyDest(ctx, fdst, dst, src, copyF, backupDir)
 			if NoNeedTransfer || err != nil {
 				return NoNeedTransfer, err
@@ -1807,7 +1807,7 @@ func copyURLFn(ctx context.Context, dstFileName string, url string, autoFilename
 	if autoFilename {
 		if dstFileNameFromHeader {
 			_, params, err := mime.ParseMediaType(resp.Header.Get("Content-Disposition"))
-			headerFilename := path.Base(strings.Replace(params["filename"], "\\", "/", -1))
+			headerFilename := path.Base(strings.ReplaceAll(params["filename"], "\\", "/"))
 			if err != nil || headerFilename == "" {
 				return fmt.Errorf("CopyURL failed: filename not found in the Content-Disposition header")
 			}
@@ -1865,14 +1865,12 @@ func BackupDir(ctx context.Context, fdst fs.Fs, fsrc fs.Fs, srcFileName string) 
 			if OverlappingFilterCheck(ctx, backupDir, fsrc) {
 				return nil, fserrors.FatalError(errors.New("source and parameter to --backup-dir mustn't overlap"))
 			}
-		} else {
-			if ci.Suffix == "" {
-				if SameDir(fdst, backupDir) {
-					return nil, fserrors.FatalError(errors.New("destination and parameter to --backup-dir mustn't be the same"))
-				}
-				if SameDir(fsrc, backupDir) {
-					return nil, fserrors.FatalError(errors.New("source and parameter to --backup-dir mustn't be the same"))
-				}
+		} else if ci.Suffix == "" {
+			if SameDir(fdst, backupDir) {
+				return nil, fserrors.FatalError(errors.New("destination and parameter to --backup-dir mustn't be the same"))
+			}
+			if SameDir(fsrc, backupDir) {
+				return nil, fserrors.FatalError(errors.New("source and parameter to --backup-dir mustn't be the same"))
 			}
 		}
 	} else if ci.Suffix != "" {
@@ -2041,15 +2039,13 @@ func moveOrCopyFile(ctx context.Context, fdst fs.Fs, fsrc fs.Fs, dstFileName str
 		}
 
 		_, err = Op(ctx, fdst, dstObj, dstFileName, srcObj)
-	} else {
-		if !cp {
-			if ci.IgnoreExisting {
-				fs.Debugf(srcObj, "Not removing source file as destination file exists and --ignore-existing is set")
-				logger(ctx, Match, srcObj, dstObj, nil)
-			} else if !SameObject(srcObj, dstObj) {
-				err = DeleteFile(ctx, srcObj)
-				logger(ctx, Differ, srcObj, dstObj, nil)
-			}
+	} else if !cp {
+		if ci.IgnoreExisting {
+			fs.Debugf(srcObj, "Not removing source file as destination file exists and --ignore-existing is set")
+			logger(ctx, Match, srcObj, dstObj, nil)
+		} else if !SameObject(srcObj, dstObj) {
+			err = DeleteFile(ctx, srcObj)
+			logger(ctx, Differ, srcObj, dstObj, nil)
 		}
 	}
 	return err

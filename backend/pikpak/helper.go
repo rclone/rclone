@@ -141,10 +141,10 @@ func (f *Fs) requestNewFile(ctx context.Context, req *api.RequestNewFile) (info 
 // * thumbnail_link
 // * links
 // * medias
-func (f *Fs) getFile(ctx context.Context, ID string) (info *api.File, err error) {
+func (f *Fs) getFile(ctx context.Context, id string) (info *api.File, err error) {
 	opts := rest.Opts{
 		Method: "GET",
-		Path:   "/drive/v1/files/" + ID,
+		Path:   "/drive/v1/files/" + id,
 	}
 	var resp *http.Response
 	err = f.pacer.Call(func() (bool, error) {
@@ -164,10 +164,10 @@ func (f *Fs) getFile(ctx context.Context, ID string) (info *api.File, err error)
 //
 // currently known patchable fields are
 // * name
-func (f *Fs) patchFile(ctx context.Context, ID string, req *api.File) (info *api.File, err error) {
+func (f *Fs) patchFile(ctx context.Context, id string, req *api.File) (info *api.File, err error) {
 	opts := rest.Opts{
 		Method: "PATCH",
-		Path:   "/drive/v1/files/" + ID,
+		Path:   "/drive/v1/files/" + id,
 	}
 	var resp *http.Response
 	err = f.pacer.Call(func() (bool, error) {
@@ -178,10 +178,10 @@ func (f *Fs) patchFile(ctx context.Context, ID string, req *api.File) (info *api
 }
 
 // getTask gets api.Task from API for the ID passed
-func (f *Fs) getTask(ctx context.Context, ID string, checkPhase bool) (info *api.Task, err error) {
+func (f *Fs) getTask(ctx context.Context, id string, checkPhase bool) (info *api.Task, err error) {
 	opts := rest.Opts{
 		Method: "GET",
-		Path:   "/drive/v1/tasks/" + ID,
+		Path:   "/drive/v1/tasks/" + id,
 	}
 	var resp *http.Response
 	err = f.pacer.Call(func() (bool, error) {
@@ -198,11 +198,11 @@ func (f *Fs) getTask(ctx context.Context, ID string, checkPhase bool) (info *api
 }
 
 // waitTask waits for async tasks to be completed
-func (f *Fs) waitTask(ctx context.Context, ID string) (err error) {
+func (f *Fs) waitTask(ctx context.Context, id string) (err error) {
 	time.Sleep(taskWaitTime)
-	if info, err := f.getTask(ctx, ID, true); err != nil {
+	if info, err := f.getTask(ctx, id, true); err != nil {
 		if info == nil {
-			return fmt.Errorf("can't verify the task is completed: %q", ID)
+			return fmt.Errorf("can't verify the task is completed: %q", id)
 		}
 		return fmt.Errorf("can't verify the task is completed: %#v", info)
 	}
@@ -210,10 +210,10 @@ func (f *Fs) waitTask(ctx context.Context, ID string) (err error) {
 }
 
 // deleteTask remove a task having the specified ID
-func (f *Fs) deleteTask(ctx context.Context, ID string, deleteFiles bool) (err error) {
+func (f *Fs) deleteTask(ctx context.Context, id string, deleteFiles bool) (err error) {
 	params := url.Values{}
 	params.Set("delete_files", strconv.FormatBool(deleteFiles))
-	params.Set("task_ids", ID)
+	params.Set("task_ids", id)
 	opts := rest.Opts{
 		Method:     "DELETE",
 		Path:       "/drive/v1/tasks",
@@ -347,7 +347,7 @@ func calcGcid(r io.Reader, size int64) (string, error) {
 	calcBlockSize := func(j int64) int64 {
 		var psize int64 = 0x40000
 		for float64(j)/float64(psize) > 0x200 && psize < 0x200000 {
-			psize = psize << 1
+			psize <<= 1
 		}
 		return psize
 	}

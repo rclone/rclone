@@ -252,7 +252,7 @@ func mustNewFilter(opt *Options) *Filter {
 }
 
 // addDirGlobs adds directory globs from the file glob passed in
-func (f *Filter) addDirGlobs(Include bool, glob string) error {
+func (f *Filter) addDirGlobs(include bool, glob string) error {
 	for _, dirGlob := range globToDirGlobs(glob) {
 		// Don't add "/" as we always include the root
 		if dirGlob == "/" {
@@ -262,17 +262,17 @@ func (f *Filter) addDirGlobs(Include bool, glob string) error {
 		if err != nil {
 			return err
 		}
-		f.dirRules.add(Include, dirRe)
+		f.dirRules.add(include, dirRe)
 	}
 	return nil
 }
 
 // Add adds a filter rule with include or exclude status indicated
-func (f *Filter) Add(Include bool, glob string) error {
+func (f *Filter) Add(include bool, glob string) error {
 	isDirRule := strings.HasSuffix(glob, "/")
 	isFileRule := !isDirRule
 	// Make excluding "dir/" equivalent to excluding "dir/**"
-	if isDirRule && !Include {
+	if isDirRule && !include {
 		glob += "**"
 	}
 	if strings.Contains(glob, "**") {
@@ -283,20 +283,20 @@ func (f *Filter) Add(Include bool, glob string) error {
 		return err
 	}
 	if isFileRule {
-		f.fileRules.add(Include, re)
+		f.fileRules.add(include, re)
 		// If include rule work out what directories are needed to scan
 		// if exclude rule, we can't rule anything out
 		// Unless it is `*` which matches everything
 		// NB ** and /** are DirRules
-		if Include || glob == "*" {
-			err = f.addDirGlobs(Include, glob)
+		if include || glob == "*" {
+			err = f.addDirGlobs(include, glob)
 			if err != nil {
 				return err
 			}
 		}
 	}
 	if isDirRule {
-		f.dirRules.add(Include, re)
+		f.dirRules.add(include, re)
 	}
 	return nil
 }
@@ -549,7 +549,7 @@ func (f *Filter) HaveFilesFrom() bool {
 var errFilesFromNotSet = errors.New("--files-from not set so can't use Filter.ListR")
 
 // MakeListR makes function to return all the files set using --files-from
-func (f *Filter) MakeListR(ctx context.Context, NewObject func(ctx context.Context, remote string) (fs.Object, error)) fs.ListRFn {
+func (f *Filter) MakeListR(ctx context.Context, newObjectFn func(ctx context.Context, remote string) (fs.Object, error)) fs.ListRFn {
 	return func(ctx context.Context, dir string, callback fs.ListRCallback) error {
 		ci := fs.GetConfig(ctx)
 		if !f.HaveFilesFrom() {
@@ -564,7 +564,7 @@ func (f *Filter) MakeListR(ctx context.Context, NewObject func(ctx context.Conte
 			g.Go(func() (err error) {
 				var entries = make(fs.DirEntries, 1)
 				for remote := range remotes {
-					entries[0], err = NewObject(gCtx, remote)
+					entries[0], err = newObjectFn(gCtx, remote)
 					if err == fs.ErrorObjectNotFound {
 						// Skip files that are not found
 					} else if err != nil {

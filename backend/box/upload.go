@@ -55,12 +55,12 @@ func sha1Digest(digest []byte) string {
 }
 
 // uploadPart uploads a part in an upload session
-func (o *Object) uploadPart(ctx context.Context, SessionID string, offset, totalSize int64, chunk []byte, wrap accounting.WrapFn, options ...fs.OpenOption) (response *api.UploadPartResponse, err error) {
+func (o *Object) uploadPart(ctx context.Context, sessionID string, offset, totalSize int64, chunk []byte, wrap accounting.WrapFn, options ...fs.OpenOption) (response *api.UploadPartResponse, err error) {
 	chunkSize := int64(len(chunk))
 	sha1sum := sha1.Sum(chunk)
 	opts := rest.Opts{
 		Method:        "PUT",
-		Path:          "/files/upload_sessions/" + SessionID,
+		Path:          "/files/upload_sessions/" + sessionID,
 		RootURL:       uploadURL,
 		ContentType:   "application/octet-stream",
 		ContentLength: &chunkSize,
@@ -83,10 +83,10 @@ func (o *Object) uploadPart(ctx context.Context, SessionID string, offset, total
 }
 
 // commitUpload finishes an upload session
-func (o *Object) commitUpload(ctx context.Context, SessionID string, parts []api.Part, modTime time.Time, sha1sum []byte) (result *api.FolderItems, err error) {
+func (o *Object) commitUpload(ctx context.Context, sessionID string, parts []api.Part, modTime time.Time, sha1sum []byte) (result *api.FolderItems, err error) {
 	opts := rest.Opts{
 		Method:  "POST",
-		Path:    "/files/upload_sessions/" + SessionID + "/commit",
+		Path:    "/files/upload_sessions/" + sessionID + "/commit",
 		RootURL: uploadURL,
 		ExtraHeaders: map[string]string{
 			"Digest": sha1Digest(sha1sum),
@@ -157,10 +157,10 @@ outer:
 }
 
 // abortUpload cancels an upload session
-func (o *Object) abortUpload(ctx context.Context, SessionID string) (err error) {
+func (o *Object) abortUpload(ctx context.Context, sessionID string) (err error) {
 	opts := rest.Opts{
 		Method:     "DELETE",
-		Path:       "/files/upload_sessions/" + SessionID,
+		Path:       "/files/upload_sessions/" + sessionID,
 		RootURL:    uploadURL,
 		NoResponse: true,
 	}

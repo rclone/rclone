@@ -331,7 +331,7 @@ func (dc *DirCache) FoundRoot() bool {
 // RootID returns the ID of the root directory
 //
 // If create is set it will make the root directory if not found
-func (dc *DirCache) RootID(ctx context.Context, create bool) (ID string, err error) {
+func (dc *DirCache) RootID(ctx context.Context, create bool) (id string, err error) {
 	dc.mu.Lock()
 	defer dc.mu.Unlock()
 	err = dc._findRoot(ctx, create)
@@ -344,7 +344,7 @@ func (dc *DirCache) RootID(ctx context.Context, create bool) (ID string, err err
 // RootParentID returns the ID of the parent of the root directory
 //
 // If create is set it will make the root parent directory if not found (but not the root)
-func (dc *DirCache) RootParentID(ctx context.Context, create bool) (ID string, err error) {
+func (dc *DirCache) RootParentID(ctx context.Context, create bool) (id string, err error) {
 	dc.mu.Lock()
 	defer dc.mu.Unlock()
 	if !dc.foundRoot {
@@ -358,10 +358,8 @@ func (dc *DirCache) RootParentID(ctx context.Context, create bool) (ID string, e
 			return "", err
 		}
 		dc.rootParentID = rootParentID
-	} else {
-		if dc.rootID == dc.trueRootID {
-			return "", errors.New("is root directory")
-		}
+	} else if dc.rootID == dc.trueRootID {
+		return "", errors.New("is root directory")
 	}
 	if dc.rootParentID == "" {
 		return "", errors.New("internal error: didn't find rootParentID")

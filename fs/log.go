@@ -60,8 +60,8 @@ var LogPrintPid = false
 // InstallJSONLogger is a hook that --use-json-log calls
 var InstallJSONLogger = func(logLevel LogLevel) {}
 
-// LogPrint sends the text to the logger of level
-var LogPrint = func(level LogLevel, text string) {
+// LogOutput sends the text to the logger of level
+var LogOutput = func(level LogLevel, text string) {
 	text = fmt.Sprintf("%-6s: %s", level, text)
 	if LogPrintPid {
 		text = fmt.Sprintf("[%d] %s", os.Getpid(), text)
@@ -143,7 +143,7 @@ func LogPrintf(level LogLevel, o interface{}, text string, args ...interface{}) 
 		if o != nil {
 			out = fmt.Sprintf("%v: %s", o, out)
 		}
-		LogPrint(level, out)
+		LogOutput(level, out)
 	}
 }
 
@@ -154,12 +154,33 @@ func LogLevelPrintf(level LogLevel, o interface{}, text string, args ...interfac
 	}
 }
 
+// Panicf writes alert log output for this Object or Fs and calls panic().
+// It should always be seen by the user.
+func Panicf(o interface{}, text string, args ...interface{}) {
+	if GetConfig(context.TODO()).LogLevel >= LogLevelAlert {
+		LogPrintf(LogLevelAlert, o, text, args...)
+	}
+	panic(fmt.Sprintf(text, args...))
+}
+
+// Fatalf writes critical log output for this Object or Fs and calls os.Exit(1).
+// It should always be seen by the user.
+func Fatalf(o interface{}, text string, args ...interface{}) {
+	if GetConfig(context.TODO()).LogLevel >= LogLevelCritical {
+		LogPrintf(LogLevelCritical, o, text, args...)
+	}
+	os.Exit(1)
+}
+
 // Errorf writes error log output for this Object or Fs.  It
 // should always be seen by the user.
 func Errorf(o interface{}, text string, args ...interface{}) {
-	if GetConfig(context.TODO()).LogLevel >= LogLevelError {
-		LogPrintf(LogLevelError, o, text, args...)
-	}
+	LogLevelPrintf(LogLevelError, o, text, args...)
+}
+
+// Printf writes log output for this Object or Fs, same as Logf.
+func Printf(o interface{}, text string, args ...interface{}) {
+	LogLevelPrintf(LogLevelNotice, o, text, args...)
 }
 
 // Logf writes log output for this Object or Fs.  This should be
@@ -168,26 +189,20 @@ func Errorf(o interface{}, text string, args ...interface{}) {
 // important things the user should see.  The user can filter these
 // out with the -q flag.
 func Logf(o interface{}, text string, args ...interface{}) {
-	if GetConfig(context.TODO()).LogLevel >= LogLevelNotice {
-		LogPrintf(LogLevelNotice, o, text, args...)
-	}
+	LogLevelPrintf(LogLevelNotice, o, text, args...)
 }
 
 // Infof writes info on transfers for this Object or Fs.  Use this
 // level for logging transfers, deletions and things which should
 // appear with the -v flag.
 func Infof(o interface{}, text string, args ...interface{}) {
-	if GetConfig(context.TODO()).LogLevel >= LogLevelInfo {
-		LogPrintf(LogLevelInfo, o, text, args...)
-	}
+	LogLevelPrintf(LogLevelInfo, o, text, args...)
 }
 
 // Debugf writes debugging output for this Object or Fs.  Use this for
 // debug only.  The user must have to specify -vv to see this.
 func Debugf(o interface{}, text string, args ...interface{}) {
-	if GetConfig(context.TODO()).LogLevel >= LogLevelDebug {
-		LogPrintf(LogLevelDebug, o, text, args...)
-	}
+	LogLevelPrintf(LogLevelDebug, o, text, args...)
 }
 
 // LogDirName returns an object for the logger, logging a root

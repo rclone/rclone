@@ -1232,7 +1232,7 @@ func (b *bisyncTest) copyFile(ctx context.Context, src, dst, asName string) (err
 }
 
 // listSubdirs is equivalent to `rclone lsf -R [--dirs-only]`
-func (b *bisyncTest) listSubdirs(ctx context.Context, remote string, DirsOnly bool) error {
+func (b *bisyncTest) listSubdirs(ctx context.Context, remote string, dirsOnly bool) error {
 	f, err := cache.Get(ctx, remote)
 	if err != nil {
 		return err
@@ -1241,7 +1241,7 @@ func (b *bisyncTest) listSubdirs(ctx context.Context, remote string, DirsOnly bo
 	opt := operations.ListJSONOpt{
 		NoModTime:  true,
 		NoMimeType: true,
-		DirsOnly:   DirsOnly,
+		DirsOnly:   dirsOnly,
 		Recurse:    true,
 	}
 	fmt := operations.ListFormat{}
@@ -1742,8 +1742,8 @@ func (b *bisyncTest) newReplacer(mangle bool) *strings.Replacer {
 		b.path2, "{path2/}",
 		b.replaceHex(b.path1), "{path1/}",
 		b.replaceHex(b.path2), "{path2/}",
-		"//?/" + strings.TrimSuffix(strings.Replace(b.path1, slash, "/", -1), "/"), "{path1}", // fix windows-specific issue
-		"//?/" + strings.TrimSuffix(strings.Replace(b.path2, slash, "/", -1), "/"), "{path2}",
+		"//?/" + strings.TrimSuffix(strings.ReplaceAll(b.path1, slash, "/"), "/"), "{path1}", // fix windows-specific issue
+		"//?/" + strings.TrimSuffix(strings.ReplaceAll(b.path2, slash, "/"), "/"), "{path2}",
 		strings.TrimSuffix(b.path1, slash), "{path1}", // ensure it's still recognized without trailing slash
 		strings.TrimSuffix(b.path2, slash), "{path2}",
 		b.workDir, "{workdir}",

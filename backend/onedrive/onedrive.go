@@ -2048,12 +2048,12 @@ func (o *Object) deleteVersions(ctx context.Context) error {
 }
 
 // Finds and removes any old versions for o
-func (o *Object) deleteVersion(ctx context.Context, ID string) error {
-	if operations.SkipDestructive(ctx, fmt.Sprintf("%s of %s", ID, o.remote), "delete version") {
+func (o *Object) deleteVersion(ctx context.Context, id string) error {
+	if operations.SkipDestructive(ctx, fmt.Sprintf("%s of %s", id, o.remote), "delete version") {
 		return nil
 	}
-	fs.Infof(o, "removing version %q", ID)
-	opts := o.fs.newOptsCall(o.id, "DELETE", "/versions/"+ID)
+	fs.Infof(o, "removing version %q", id)
+	opts := o.fs.newOptsCall(o.id, "DELETE", "/versions/"+id)
 	opts.NoResponse = true
 	return o.fs.pacer.Call(func() (bool, error) {
 		resp, err := o.fs.srv.Call(ctx, &opts)
@@ -2618,13 +2618,13 @@ func (o *Object) ID() string {
 // parseNormalizedID parses a normalized ID (may be in the form `driveID#itemID` or just `itemID`)
 // and returns itemID, driveID, rootURL.
 // Such a normalized ID can come from (*Item).GetID()
-func (f *Fs) parseNormalizedID(ID string) (string, string, string) {
+func (f *Fs) parseNormalizedID(id string) (string, string, string) {
 	rootURL := graphAPIEndpoint[f.opt.Region] + "/v1.0/drives"
-	if strings.Contains(ID, "#") {
-		s := strings.Split(ID, "#")
+	if strings.Contains(id, "#") {
+		s := strings.Split(id, "#")
 		return s[1], s[0], rootURL
 	}
-	return ID, "", ""
+	return id, "", ""
 }
 
 // newOptsCall build the rest.Opts structure with *a normalizedID(driveID#fileID, or simply fileID)*

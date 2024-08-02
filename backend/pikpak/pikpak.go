@@ -834,8 +834,8 @@ func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, 
 }
 
 // delete a file or directory by ID w/o using trash
-func (f *Fs) deleteObjects(ctx context.Context, IDs []string, useTrash bool) (err error) {
-	if len(IDs) == 0 {
+func (f *Fs) deleteObjects(ctx context.Context, ids []string, useTrash bool) (err error) {
+	if len(ids) == 0 {
 		return nil
 	}
 	action := "batchDelete"
@@ -843,7 +843,7 @@ func (f *Fs) deleteObjects(ctx context.Context, IDs []string, useTrash bool) (er
 		action = "batchTrash"
 	}
 	req := api.RequestBatch{
-		IDs: IDs,
+		IDs: ids,
 	}
 	if err := f.requestBatchAction(ctx, action, &req); err != nil {
 		return fmt.Errorf("delete object failed: %w", err)
@@ -936,12 +936,12 @@ func (f *Fs) CleanUp(ctx context.Context) (err error) {
 }
 
 // Move the object
-func (f *Fs) moveObjects(ctx context.Context, IDs []string, dirID string) (err error) {
-	if len(IDs) == 0 {
+func (f *Fs) moveObjects(ctx context.Context, ids []string, dirID string) (err error) {
+	if len(ids) == 0 {
 		return nil
 	}
 	req := api.RequestBatch{
-		IDs: IDs,
+		IDs: ids,
 		To:  map[string]string{"parent_id": parentIDForRequest(dirID)},
 	}
 	if err := f.requestBatchAction(ctx, "batchMove", &req); err != nil {
@@ -951,11 +951,11 @@ func (f *Fs) moveObjects(ctx context.Context, IDs []string, dirID string) (err e
 }
 
 // renames the object
-func (f *Fs) renameObject(ctx context.Context, ID, newName string) (info *api.File, err error) {
+func (f *Fs) renameObject(ctx context.Context, id, newName string) (info *api.File, err error) {
 	req := api.File{
 		Name: f.opt.Enc.FromStandardName(newName),
 	}
-	info, err = f.patchFile(ctx, ID, &req)
+	info, err = f.patchFile(ctx, id, &req)
 	if err != nil {
 		return nil, fmt.Errorf("rename object failed: %w", err)
 	}
@@ -1082,12 +1082,12 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 }
 
 // copy objects
-func (f *Fs) copyObjects(ctx context.Context, IDs []string, dirID string) (err error) {
-	if len(IDs) == 0 {
+func (f *Fs) copyObjects(ctx context.Context, ids []string, dirID string) (err error) {
+	if len(ids) == 0 {
 		return nil
 	}
 	req := api.RequestBatch{
-		IDs: IDs,
+		IDs: ids,
 		To:  map[string]string{"parent_id": parentIDForRequest(dirID)},
 	}
 	if err := f.requestBatchAction(ctx, "batchCopy", &req); err != nil {

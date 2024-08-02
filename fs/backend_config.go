@@ -144,26 +144,26 @@ func ConfigResult(state, result string) (*ConfigOut, error) {
 //
 // state should be the next state required
 // Error should be the error shown to the user
-func ConfigError(state string, Error string) (*ConfigOut, error) {
+func ConfigError(state string, msg string) (*ConfigOut, error) {
 	return &ConfigOut{
 		State: state,
-		Error: Error,
+		Error: msg,
 	}, nil
 }
 
 // ConfigConfirm returns a ConfigOut structure which asks a Yes/No question
 //
 // state should be the next state required
-// Default should be the default state
+// defaultYes should be the default state
 // name is the config name for this item
 // help should be the help shown to the user
-func ConfigConfirm(state string, Default bool, name string, help string) (*ConfigOut, error) {
+func ConfigConfirm(state string, defaultYes bool, name string, help string) (*ConfigOut, error) {
 	return &ConfigOut{
 		State: state,
 		Option: &Option{
 			Name:    name,
 			Help:    help,
-			Default: Default,
+			Default: defaultYes,
 			Examples: []OptionExample{{
 				Value: "true",
 				Help:  "Yes",

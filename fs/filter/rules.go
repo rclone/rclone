@@ -49,12 +49,12 @@ type rules struct {
 type addFn func(Include bool, glob string) error
 
 // add adds a rule if it doesn't exist already
-func (rs *rules) add(Include bool, re *regexp.Regexp) {
+func (rs *rules) add(include bool, re *regexp.Regexp) {
 	if rs.existing == nil {
 		rs.existing = make(map[string]struct{})
 	}
 	newRule := rule{
-		Include: Include,
+		Include: include,
 		Regexp:  re,
 	}
 	newRuleString := newRule.String()
@@ -66,12 +66,12 @@ func (rs *rules) add(Include bool, re *regexp.Regexp) {
 }
 
 // Add adds a filter rule with include or exclude status indicated
-func (rs *rules) Add(Include bool, glob string) error {
+func (rs *rules) Add(include bool, glob string) error {
 	re, err := GlobToRegexp(glob, false /* f.Opt.IgnoreCase */)
 	if err != nil {
 		return err
 	}
-	rs.add(Include, re)
+	rs.add(include, re)
 	return nil
 }
 
