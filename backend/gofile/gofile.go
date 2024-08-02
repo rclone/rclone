@@ -870,12 +870,8 @@ func (f *Fs) DirSetModTime(ctx context.Context, dir string, modTime time.Time) e
 	if err != nil {
 		return err
 	}
-	o := Object{
-		fs:     f,
-		remote: dir,
-		id:     dirID,
-	}
-	return o.SetModTime(ctx, modTime)
+	_, err = f.setModTime(ctx, dirID, modTime)
+	return err
 }
 
 // deleteObject removes an object by ID
@@ -980,13 +976,13 @@ func (f *Fs) About(ctx context.Context) (usage *fs.Usage, err error) {
 }
 
 // patch an attribute on an object to value
-func (f *Fs) patch(ctx context.Context, id, attribute, value string) (err error) {
+func (f *Fs) patch(ctx context.Context, id, attribute string, value any) (item *api.Item, err error) {
 	var resp *http.Response
 	var request = api.UpdateItemRequest{
 		Attribute: attribute,
 		Value:     value,
 	}
-	var result api.Error
+	var result api.UpdateItemResponse
 	opts := rest.Opts{
 		Method: "PUT",
 		Path:   "/contents/" + id + "/update",
@@ -996,14 +992,19 @@ func (f *Fs) patch(ctx context.Context, id, attribute, value string) (err error)
 		return shouldRetry(ctx, resp, err)
 	})
 	if err = result.Err(err); err != nil {
-		return fmt.Errorf("failed to patch item %q to %q: %w", attribute, value, err)
+		return nil, fmt.Errorf("failed to patch item %q to %q: %w", attribute, value, err)
 	}
-	return nil
+	return &result.Data, nil
 }
 
 // rename a file or a folder
-func (f *Fs) rename(ctx context.Context, id, newLeaf string) (err error) {
+func (f *Fs) rename(ctx context.Context, id, newLeaf string) (item *api.Item, err error) {
 	return f.patch(ctx, id, "name", f.opt.Enc.FromStandardName(newLeaf))
+}
+
+// setModTime sets the modification time of a file or folder
+func (f *Fs) setModTime(ctx context.Context, id string, modTime time.Time) (item *api.Item, err error) {
+	return f.patch(ctx, id, "modTime", api.ToNativeTime(modTime))
 }
 
 // move a file or a folder to a new directory
@@ -1038,7 +1039,7 @@ func (f *Fs) moveTo(ctx context.Context, id, srcLeaf, dstLeaf, srcDirectoryID, d
 
 	// Rename if required
 	if srcLeaf != dstLeaf {
-		err = f.rename(ctx, id, dstLeaf)
+		info, err = f.rename(ctx, id, dstLeaf)
 		if err != nil {
 			return nil, err
 		}
@@ -1158,11 +1159,10 @@ func (f *Fs) copyTo(ctx context.Context, srcID, srcLeaf, dstLeaf, dstDirectoryID
 
 	// Rename if required
 	if srcLeaf != dstLeaf {
-		err = f.rename(ctx, info.ID, dstLeaf)
+		info, err = f.rename(ctx, info.ID, dstLeaf)
 		if err != nil {
 			return nil, err
 		}
-		info.Name = dstLeaf
 	}
 	return info, nil
 }
@@ -1414,12 +1414,11 @@ func (o *Object) ModTime(ctx context.Context) time.Time {
 
 // SetModTime sets the modification time of the local fs object
 func (o *Object) SetModTime(ctx context.Context, modTime time.Time) error {
-	unixModTime := api.ToNativeTime(modTime)
-	err := o.fs.patch(ctx, o.id, "modTime", strconv.FormatInt(unixModTime, 10))
-	if err == nil {
-		o.modTime = api.FromNativeTime(unixModTime)
+	info, err := o.fs.setModTime(ctx, o.id, modTime)
+	if err != nil {
+		return err
 	}
-	return err
+	return o.setMetaData(info)
 }
 
 // Storable returns a boolean showing whether this object storable
@@ -1541,6 +1540,30 @@ func (o *Object) ParentID() string {
 	return o.dirID
 }
 
+// setMetaData sets the metadata from info for a directory
+func (d *Directory) setMetaData(info *api.Item) (err error) {
+	if info.Type == api.ItemTypeFile {
+		return fs.ErrorIsFile
+	}
+	if info.Type != api.ItemTypeFolder {
+		return fmt.Errorf("%q is not a directory (type %q)", d.remote, info.Type)
+	}
+	if info.ID == "" {
+		return fmt.Errorf("ID not found in response")
+	}
+	d.setMetaDataAny(info)
+	return nil
+}
+
+// SetModTime sets the modification time of the directory
+func (d *Directory) SetModTime(ctx context.Context, modTime time.Time) error {
+	info, err := d.fs.setModTime(ctx, d.id, modTime)
+	if err != nil {
+		return err
+	}
+	return d.setMetaData(info)
+}
+
 // Items returns the count of items in this directory or this
 // directory and subdirectories if known, -1 for unknown
 func (d *Directory) Items() int64 {
@@ -1554,17 +1577,6 @@ func (d *Directory) Items() int64 {
 func (d *Directory) Hash() {
 	// Does nothing
 }
-
-// // SetMetadata sets metadata for a Directory
-// //
-// // It should return fs.ErrorNotImplemented if it can't set metadata
-// func (d *Directory) SetMetadata(ctx context.Context, metadata fs.Metadata) error {
-// 	modTime, err := d.fs.getModTimeFromMetadata(metadata)
-// 	if err != nil {
-// 		return fmt.Errorf("failed to set metadata: %w", err)
-// 	}
-// 	return d.SetModTime(ctx, modTime)
-// }
 
 // Check the interfaces are satisfied
 var (

@@ -254,6 +254,12 @@ type UpdateItemRequest struct {
 	Value     any    `json:"attributeValue"`
 }
 
+// UpdateItemResponse is returned by PUT /contents/{id}/update
+type UpdateItemResponse struct {
+	Error
+	Data Item `json:"data"`
+}
+
 // MoveRequest is the input to /contents/move
 type MoveRequest struct {
 	FolderID   string `json:"folderId"`
