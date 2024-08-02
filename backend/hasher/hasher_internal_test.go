@@ -4,10 +4,14 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strings"
 	"testing"
+	"time"
 
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/obscure"
+	"github.com/rclone/rclone/fs/object"
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/fstest"
 	"github.com/rclone/rclone/fstest/fstests"
@@ -75,6 +79,38 @@ func (f *Fs) InternalTest(t *testing.T) {
 		t.Skip("hasher is not supported on this OS")
 	}
 	t.Run("UploadFromCrypt", f.testUploadFromCrypt)
+	t.Run("ReadOnlyFlag", f.testReadOnlyFlag)
 }
 
-var _ fstests.InternalTester = (*Fs)(nil)
+type testGetter struct{}
+
+func (s *testGetter) Get(key string) (value string, ok bool) {
+	switch key {
+	case "remote":
+		return "/hasher-test", true
+	case "hashes":
+		return "md5", true
+	case "max_age":
+		return "off", true
+	case "auto_size":
+		return "0", true
+	case "read_only":
+		return "true", true
+	default:
+		return key, true
+	}
+}
+
+func (f *Fs) testReadOnlyFlag(t *testing.T) {
+	ctx := context.Background()
+	mapper := configmap.New()
+	mapper.AddGetter(&testGetter{}, 1)
+	hasherFs, err := NewFs(ctx, "hasher-test", "/hasher-test", mapper)
+	assert.NoError(t, err)
+	assert.NotNil(t, hasherFs)
+
+	fileInfo := object.NewStaticObjectInfo("hasher-test", time.Now(), 128, true, nil, nil)
+	_, err = hasherFs.Put(ctx, strings.NewReader("dogs and cats"), fileInfo)
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "read-only file system")
+}
