@@ -28,7 +28,6 @@ import (
 	"github.com/rclone/rclone/fs/list"
 	"github.com/rclone/rclone/fs/rc"
 	"github.com/rclone/rclone/fs/rc/jobs"
-	"github.com/rclone/rclone/fs/rc/rcflags"
 	"github.com/rclone/rclone/fs/rc/webgui"
 	libhttp "github.com/rclone/rclone/lib/http"
 	"github.com/rclone/rclone/lib/http/serve"
@@ -101,7 +100,7 @@ func newServer(ctx context.Context, opt *rc.Options, mux *http.ServeMux) (*Serve
 		} else {
 			if opt.Auth.BasicUser == "" && opt.Auth.HtPasswd == "" {
 				opt.Auth.BasicUser = "gui"
-				fs.Infof(nil, "No username specified. Using default username: %s \n", rcflags.Opt.Auth.BasicUser)
+				fs.Infof(nil, "No username specified. Using default username: %s \n", rc.Opt.Auth.BasicUser)
 			}
 			if opt.Auth.BasicPass == "" && opt.Auth.HtPasswd == "" {
 				randomPass, err := random.Password(128)

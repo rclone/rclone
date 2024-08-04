@@ -5,6 +5,7 @@ package fs
 
 import (
 	"context"
+	"encoding/json"
 	"io"
 	"time"
 
@@ -311,6 +312,26 @@ type ListRCallback func(entries DirEntries) error
 
 // ListRFn is defines the call used to recursively list a directory
 type ListRFn func(ctx context.Context, dir string, callback ListRCallback) error
+
+// Flagger describes the interface rclone config types flags must satisfy
+type Flagger interface {
+	// These are from pflag.Value which we don't want to pull in here
+	String() string
+	Set(string) error
+	Type() string
+	json.Unmarshaler
+}
+
+// FlaggerNP describes the interface rclone config types flags must
+// satisfy as non-pointers
+//
+// These are from pflag.Value and need to be tested against
+// non-pointer value due the the way the backend flags are inserted
+// into the flags.
+type FlaggerNP interface {
+	String() string
+	Type() string
+}
 
 // NewUsageValue makes a valid value
 func NewUsageValue(value int64) *int64 {

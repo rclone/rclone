@@ -5,12 +5,13 @@ import (
 	"strings"
 
 	"github.com/rclone/gofakes3"
+	"github.com/rclone/rclone/vfs"
 )
 
-func (b *s3Backend) entryListR(bucket, fdPath, name string, addPrefix bool, response *gofakes3.ObjectList) error {
+func (b *s3Backend) entryListR(_vfs *vfs.VFS, bucket, fdPath, name string, addPrefix bool, response *gofakes3.ObjectList) error {
 	fp := path.Join(bucket, fdPath)
 
-	dirEntries, err := getDirEntries(fp, b.vfs)
+	dirEntries, err := getDirEntries(fp, _vfs)
 	if err != nil {
 		return err
 	}
@@ -30,7 +31,7 @@ func (b *s3Backend) entryListR(bucket, fdPath, name string, addPrefix bool, resp
 				response.AddPrefix(gofakes3.URLEncode(objectPath))
 				continue
 			}
-			err := b.entryListR(bucket, path.Join(fdPath, object), "", false, response)
+			err := b.entryListR(_vfs, bucket, path.Join(fdPath, object), "", false, response)
 			if err != nil {
 				return err
 			}

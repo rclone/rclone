@@ -69,6 +69,13 @@ func NewTransportCustom(ctx context.Context, customize func(*http.Transport)) ht
 		if err != nil {
 			log.Fatalf("Failed to load --client-cert/--client-key pair: %v", err)
 		}
+		if cert.Leaf == nil {
+			// Leaf is always the first certificate
+			cert.Leaf, err = x509.ParseCertificate(cert.Certificate[0])
+			if err != nil {
+				log.Fatalf("Failed to parse the certificate")
+			}
+		}
 		t.TLSClientConfig.Certificates = []tls.Certificate{cert}
 	}
 
@@ -148,17 +155,24 @@ type Transport struct {
 	userAgent     string
 	headers       []*fs.HTTPOption
 	metrics       *Metrics
+	// Filename of the client cert in case we need to reload it
+	clientCert string
+	clientKey  string
+	// Mutex for serializing attempts at reloading the certificates
+	reloadMutex sync.Mutex
 }
 
 // newTransport wraps the http.Transport passed in and logs all
 // roundtrips including the body if logBody is set.
 func newTransport(ci *fs.ConfigInfo, transport *http.Transport) *Transport {
 	return &Transport{
-		Transport: transport,
-		dump:      ci.Dump,
-		userAgent: ci.UserAgent,
-		headers:   ci.Headers,
-		metrics:   DefaultMetrics,
+		Transport:  transport,
+		dump:       ci.Dump,
+		userAgent:  ci.UserAgent,
+		headers:    ci.Headers,
+		metrics:    DefaultMetrics,
+		clientCert: ci.ClientCert,
+		clientKey:  ci.ClientKey,
 	}
 }
 
@@ -247,8 +261,44 @@ func cleanAuths(buf []byte) []byte {
 	return buf
 }
 
+var expireWindow = 30 * time.Second
+
+func isCertificateExpired(cc *tls.Config) bool {
+	return len(cc.Certificates) > 0 && cc.Certificates[0].Leaf != nil && time.Until(cc.Certificates[0].Leaf.NotAfter) < expireWindow
+}
+
+func (t *Transport) reloadCertificates() {
+	t.reloadMutex.Lock()
+	defer t.reloadMutex.Unlock()
+	// Check that the certificate is expired before trying to reload it
+	// it might have been reloaded while we were waiting to lock the mutex
+	if !isCertificateExpired(t.TLSClientConfig) {
+		return
+	}
+
+	cert, err := tls.LoadX509KeyPair(t.clientCert, t.clientKey)
+	if err != nil {
+		log.Fatalf("Failed to load --client-cert/--client-key pair: %v", err)
+	}
+	// Check if we need to parse the certificate again, we need it
+	// for checking the expiration date
+	if cert.Leaf == nil {
+		// Leaf is always the first certificate
+		cert.Leaf, err = x509.ParseCertificate(cert.Certificate[0])
+		if err != nil {
+			log.Fatalf("Failed to parse the certificate")
+		}
+	}
+	t.TLSClientConfig.Certificates = []tls.Certificate{cert}
+}
+
 // RoundTrip implements the RoundTripper interface.
 func (t *Transport) RoundTrip(req *http.Request) (resp *http.Response, err error) {
+	// Check if certificates are being used and the certificates are expired
+	if isCertificateExpired(t.TLSClientConfig) {
+		t.reloadCertificates()
+	}
+
 	// Limit transactions per second if required
 	accounting.LimitTPS(req.Context())
 	// Force user agent

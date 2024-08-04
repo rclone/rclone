@@ -11,7 +11,6 @@ import (
 	"github.com/rclone/rclone/fs/accounting"
 	"github.com/rclone/rclone/fs/filter"
 	"github.com/rclone/rclone/fs/rc"
-	"github.com/rclone/rclone/fs/rc/rcflags"
 	"github.com/rclone/rclone/fstest/testy"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -65,7 +64,7 @@ func TestJobsExpire(t *testing.T) {
 	assert.Equal(t, 1, len(jobs.jobs))
 	jobs.mu.Lock()
 	job.mu.Lock()
-	job.EndTime = time.Now().Add(-rcflags.Opt.JobExpireDuration - 60*time.Second)
+	job.EndTime = time.Now().Add(-rc.Opt.JobExpireDuration - 60*time.Second)
 	assert.Equal(t, true, jobs.expireRunning)
 	job.mu.Unlock()
 	jobs.mu.Unlock()

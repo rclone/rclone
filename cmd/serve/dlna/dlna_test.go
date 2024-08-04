@@ -1,5 +1,3 @@
-//go:build go1.21
-
 package dlna
 
 import (
@@ -35,7 +33,7 @@ const (
 )
 
 func startServer(t *testing.T, f fs.Fs) {
-	opt := dlnaflags.DefaultOpt
+	opt := dlnaflags.Opt
 	opt.ListenAddr = testBindAddress
 	var err error
 	dlnaServer, err = newServer(f, &opt)

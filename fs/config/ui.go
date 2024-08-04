@@ -454,7 +454,7 @@ func PostConfig(ctx context.Context, name string, m configmap.Mapper, ri *fs.Reg
 func RemoteConfig(ctx context.Context, name string) error {
 	fmt.Printf("Remote config\n")
 	ri := mustFindByName(name)
-	m := fs.ConfigMap(ri, name, nil)
+	m := fs.ConfigMap(ri.Prefix, ri.Options, name, nil)
 	if ri.Config == nil {
 		return nil
 	}

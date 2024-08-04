@@ -65,7 +65,7 @@ These flags have the following meaning:
 
 This an homage to the [ncdu tool](https://dev.yorhel.nl/ncdu) but for
 rclone remotes.  It is missing lots of features at the moment
-but is useful as it stands.
+but is useful as it stands. Unlike ncdu it does not show excluded files.
 
 Note that it might take some time to delete big files/directories. The
 UI won't respond in the meantime since the deletion is done synchronously.

@@ -52,7 +52,7 @@ func findOption(name string, options []string) (found bool) {
 func mountOptions(VFS *vfs.VFS, device string, mountpoint string, opt *mountlib.Options) (options []string) {
 	// Options
 	options = []string{
-		"-o", fmt.Sprintf("attr_timeout=%g", opt.AttrTimeout.Seconds()),
+		"-o", fmt.Sprintf("attr_timeout=%g", time.Duration(opt.AttrTimeout).Seconds()),
 	}
 	if opt.DebugFUSE {
 		options = append(options, "-o", "debug")
@@ -79,7 +79,7 @@ func mountOptions(VFS *vfs.VFS, device string, mountpoint string, opt *mountlib.
 		// WinFSP so cmount must work with or without it.
 		options = append(options, "-o", "atomic_o_trunc")
 		if opt.DaemonTimeout != 0 {
-			options = append(options, "-o", fmt.Sprintf("daemon_timeout=%d", int(opt.DaemonTimeout.Seconds())))
+			options = append(options, "-o", fmt.Sprintf("daemon_timeout=%d", int(time.Duration(opt.DaemonTimeout).Seconds())))
 		}
 		if opt.AllowOther {
 			options = append(options, "-o", "allow_other")

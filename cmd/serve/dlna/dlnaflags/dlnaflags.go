@@ -4,8 +4,8 @@ package dlnaflags
 import (
 	"time"
 
+	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config/flags"
-	"github.com/rclone/rclone/fs/rc"
 	"github.com/spf13/pflag"
 )
 
@@ -24,39 +24,46 @@ logging of all UPNP traffic.
 
 `
 
-// Options is the type for DLNA serving options.
-type Options struct {
-	ListenAddr       string
-	FriendlyName     string
-	LogTrace         bool
-	InterfaceNames   []string
-	AnnounceInterval time.Duration
+// OptionsInfo descripts the Options in use
+var OptionsInfo = fs.Options{{
+	Name:    "addr",
+	Default: ":7879",
+	Help:    "The ip:port or :port to bind the DLNA http server to",
+}, {
+	Name:    "name",
+	Default: "",
+	Help:    "Name of DLNA server",
+}, {
+	Name:    "log_trace",
+	Default: false,
+	Help:    "Enable trace logging of SOAP traffic",
+}, {
+	Name:    "interface",
+	Default: []string{},
+	Help:    "The interface to use for SSDP (repeat as necessary)",
+}, {
+	Name:    "announce_interval",
+	Default: fs.Duration(12 * time.Minute),
+	Help:    "The interval between SSDP announcements",
+}}
+
+func init() {
+	fs.RegisterGlobalOptions(fs.OptionsInfo{Name: "dlna", Opt: &Opt, Options: OptionsInfo})
 }
 
-// DefaultOpt contains the defaults options for DLNA serving.
-var DefaultOpt = Options{
-	ListenAddr:       ":7879",
-	FriendlyName:     "",
-	LogTrace:         false,
-	InterfaceNames:   []string{},
-	AnnounceInterval: 12 * time.Minute,
+// Options is the type for DLNA serving options.
+type Options struct {
+	ListenAddr       string      `config:"addr"`
+	FriendlyName     string      `config:"name"`
+	LogTrace         bool        `config:"log_trace"`
+	InterfaceNames   []string    `config:"interface"`
+	AnnounceInterval fs.Duration `config:"announce_interval"`
 }
 
 // Opt contains the options for DLNA serving.
-var (
-	Opt = DefaultOpt
-)
-
-func addFlagsPrefix(flagSet *pflag.FlagSet, prefix string, Opt *Options) {
-	rc.AddOption("dlna", &Opt)
-	flags.StringVarP(flagSet, &Opt.ListenAddr, prefix+"addr", "", Opt.ListenAddr, "The ip:port or :port to bind the DLNA http server to", prefix)
-	flags.StringVarP(flagSet, &Opt.FriendlyName, prefix+"name", "", Opt.FriendlyName, "Name of DLNA server", prefix)
-	flags.BoolVarP(flagSet, &Opt.LogTrace, prefix+"log-trace", "", Opt.LogTrace, "Enable trace logging of SOAP traffic", prefix)
-	flags.StringArrayVarP(flagSet, &Opt.InterfaceNames, prefix+"interface", "", Opt.InterfaceNames, "The interface to use for SSDP (repeat as necessary)", prefix)
-	flags.DurationVarP(flagSet, &Opt.AnnounceInterval, prefix+"announce-interval", "", Opt.AnnounceInterval, "The interval between SSDP announcements", prefix)
-}
+var Opt Options
 
 // AddFlags add the command line flags for DLNA serving.
 func AddFlags(flagSet *pflag.FlagSet) {
-	addFlagsPrefix(flagSet, "", &Opt)
+	flags.AddFlagsFromOptions(flagSet, "", OptionsInfo)
 }

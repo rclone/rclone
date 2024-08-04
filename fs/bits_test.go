@@ -31,8 +31,8 @@ func (bitsChoices) Choices() []BitsChoicesInfo {
 
 // Check it satisfies the interfaces
 var (
-	_ flagger   = (*bits)(nil)
-	_ flaggerNP = bits(0)
+	_ Flagger   = (*bits)(nil)
+	_ FlaggerNP = bits(0)
 )
 
 func TestBitsString(t *testing.T) {

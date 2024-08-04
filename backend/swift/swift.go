@@ -278,6 +278,36 @@ provider.`,
 				Value: "pca",
 				Help:  "OVH Public Cloud Archive",
 			}},
+		}, {
+			Name: "fetch_until_empty_page",
+			Help: `When paginating, always fetch unless we received an empty page.
+
+Consider using this option if rclone listings show fewer objects
+than expected, or if repeated syncs copy unchanged objects.
+
+It is safe to enable this, but rclone may make more API calls than
+necessary.
+
+This is one of a pair of workarounds to handle implementations
+of the Swift API that do not implement pagination as expected.  See
+also "partial_page_fetch_threshold".`,
+			Default:  false,
+			Advanced: true,
+		}, {
+			Name: "partial_page_fetch_threshold",
+			Help: `When paginating, fetch if the current page is within this percentage of the limit.
+
+Consider using this option if rclone listings show fewer objects
+than expected, or if repeated syncs copy unchanged objects.
+
+It is safe to enable this, but rclone may make more API calls than
+necessary.
+
+This is one of a pair of workarounds to handle implementations
+of the Swift API that do not implement pagination as expected.  See
+also "fetch_until_empty_page".`,
+			Default:  0,
+			Advanced: true,
 		}}, SharedOptions...),
 	})
 }
@@ -308,6 +338,8 @@ type Options struct {
 	NoLargeObjects              bool                 `config:"no_large_objects"`
 	UseSegmentsContainer        fs.Tristate          `config:"use_segments_container"`
 	Enc                         encoder.MultiEncoder `config:"encoding"`
+	FetchUntilEmptyPage         bool                 `config:"fetch_until_empty_page"`
+	PartialPageFetchThreshold   int                  `config:"partial_page_fetch_threshold"`
 }
 
 // Fs represents a remote swift server
@@ -462,6 +494,8 @@ func swiftConnection(ctx context.Context, opt *Options, name string) (*swift.Con
 		ConnectTimeout:              10 * ci.ConnectTimeout, // Use the timeouts in the transport
 		Timeout:                     10 * ci.Timeout,        // Use the timeouts in the transport
 		Transport:                   fshttp.NewTransport(ctx),
+		FetchUntilEmptyPage:         opt.FetchUntilEmptyPage,
+		PartialPageFetchThreshold:   opt.PartialPageFetchThreshold,
 	}
 	if opt.EnvAuth {
 		err := c.ApplyEnvironment()

@@ -57,6 +57,9 @@ func (logLevelChoices) Type() string {
 // LogPrintPid enables process pid in log
 var LogPrintPid = false
 
+// InstallJSONLogger is a hook that --use-json-log calls
+var InstallJSONLogger = func(logLevel LogLevel) {}
+
 // LogPrint sends the text to the logger of level
 var LogPrint = func(level LogLevel, text string) {
 	text = fmt.Sprintf("%-6s: %s", level, text)

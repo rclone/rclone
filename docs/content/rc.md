@@ -400,6 +400,76 @@ call and taken by the [options/set](#options-set) calls as well as the
 - `BandwidthSpec` - this will be set and returned as a string, eg
   "1M".
 
+### Option blocks {#option-blocks}
+
+The calls [options/info](#options-info) (for the main config) and
+[config/providers](#config-providers) (for the backend config) may be
+used to get information on the rclone configuration options. This can
+be used to build user interfaces for displaying and setting any rclone
+option.
+
+These consist of arrays of `Option` blocks. These have the following
+format. Each block describes a single option.
+
+| Field | Type | Optional | Description |
+|-------|------|----------|-------------|
+| Name       | string     | N | name of the option in snake_case |
+| FieldName  | string     | N | name of the field used in the rc - if blank use Name |
+| Help       | string     | N | help, started with a single sentence on a single line |
+| Groups     | string     | Y | groups this option belongs to - comma separated string for options classification |
+| Provider   | string     | Y | set to filter on provider |
+| Default    | any        | N | default value, if set (and not to nil or "") then Required does nothing |
+| Value      | any        | N | value to be set by flags |
+| Examples   | Examples   | Y | predefined values that can be selected from list (multiple-choice option) |
+| ShortOpt   | string     | Y | the short command line option for this |
+| Hide       | Visibility | N | if non zero, this option is hidden from the configurator or the command line |
+| Required   | bool       | N | this option is required, meaning value cannot be empty unless there is a default |
+| IsPassword | bool       | N | set if the option is a password |
+| NoPrefix   | bool       | N | set if the option for this should not use the backend prefix |
+| Advanced   | bool       | N | set if this is an advanced config option |
+| Exclusive  | bool       | N | set if the answer can only be one of the examples (empty string allowed unless Required or Default is set) |
+| Sensitive  | bool       | N | set if this option should be redacted when using `rclone config redacted` |
+
+An example of this might be the `--log-level` flag. Note that the
+`Name` of the option becomes the command line flag with `_` replaced
+with `-`.
+
+```
+{
+    "Advanced": false,
+    "Default": 5,
+    "DefaultStr": "NOTICE",
+    "Examples": [
+        {
+            "Help": "",
+            "Value": "EMERGENCY"
+        },
+        {
+            "Help": "",
+            "Value": "ALERT"
+        },
+        ...
+    ],
+    "Exclusive": true,
+    "FieldName": "LogLevel",
+    "Groups": "Logging",
+    "Help": "Log level DEBUG|INFO|NOTICE|ERROR",
+    "Hide": 0,
+    "IsPassword": false,
+    "Name": "log_level",
+    "NoPrefix": true,
+    "Required": true,
+    "Sensitive": false,
+    "Type": "LogLevel",
+    "Value": null,
+    "ValueStr": "NOTICE"
+},
+```
+
+Note that the `Help` may be multiple lines separated by `\n`. The
+first line will always be a short sentence and this is the sentence
+shown when running `rclone help flags`.
+
 ## Specifying remotes to work on
 
 Remotes are specified with the `fs=`, `srcFs=`, `dstFs=`
@@ -426,7 +496,7 @@ For example this JSON is equivalent to `remote:/tmp`
 ```
 {
     "_name": "remote",
-    "_path": "/tmp"
+    "_root": "/tmp"
 }
 ```
 
@@ -436,7 +506,7 @@ And this is equivalent to `:sftp,host='example.com':/tmp`
 {
     "type": "sftp",
     "host": "example.com",
-    "_path": "/tmp"
+    "_root": "/tmp"
 }
 ```
 
@@ -445,7 +515,7 @@ And this is equivalent to `/tmp/dir`
 ```
 {
     type = "local",
-    _ path = "/tmp/dir"
+    _root = "/tmp/dir"
 }
 ```
 
@@ -638,7 +708,12 @@ See the [config paths](/commands/rclone_config_paths/) command for more informat
 Returns a JSON object:
 - providers - array of objects
 
-See the [config providers](/commands/rclone_config_providers/) command for more information on the above.
+See the [config providers](/commands/rclone_config_providers/) command
+for more information on the above.
+
+Note that the Options blocks are in the same format as returned by
+"options/info". They are described in the
+[option blocks](#option-blocks) section.
 
 **Authentication is required for this call.**
 
@@ -1646,6 +1721,14 @@ set in _config then use options/config and for _filter use options/filter.
 
 This shows the internal names of the option within rclone which should
 map to the external options very easily with a few exceptions.
+
+### options/info: Get info about all the global options {#options-info}
+
+Returns an object where keys are option block names and values are an
+array of objects with info about each options.
+
+These objects are in the same format as returned by "config/providers". They are
+described in the [option blocks](#option-blocks) section.
 
 ### options/local: Get the currently active config for this call {#options-local}
 

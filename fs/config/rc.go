@@ -91,7 +91,12 @@ func init() {
 Returns a JSON object:
 - providers - array of objects
 
-See the [config providers](/commands/rclone_config_providers/) command for more information on the above.
+See the [config providers](/commands/rclone_config_providers/) command
+for more information on the above.
+
+Note that the Options blocks are in the same format as returned by
+"options/info". They are described in the
+[option blocks](#option-blocks) section.
 `,
 	})
 }

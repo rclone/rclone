@@ -470,7 +470,7 @@ func updateRemote(ctx context.Context, name string, keyValues rc.Params, opt Upd
 	}
 
 	choices := configmap.Simple{}
-	m := fs.ConfigMap(ri, name, nil)
+	m := fs.ConfigMap(ri.Prefix, ri.Options, name, nil)
 
 	// Set the config
 	for k, v := range keyValues {

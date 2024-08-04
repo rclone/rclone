@@ -17,8 +17,8 @@ import (
 
 func newTestWriteBack(t *testing.T) (wb *WriteBack, cancel func()) {
 	ctx, cancel := context.WithCancel(context.Background())
-	opt := vfscommon.DefaultOpt
-	opt.WriteBack = 100 * time.Millisecond
+	opt := vfscommon.Opt
+	opt.WriteBack = fs.Duration(100 * time.Millisecond)
 	wb = New(ctx, &opt)
 	return wb, cancel
 }

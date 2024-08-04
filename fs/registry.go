@@ -8,12 +8,14 @@ import (
 	"fmt"
 	"log"
 	"reflect"
+	"regexp"
 	"sort"
 	"strings"
 	"sync"
 
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/configstruct"
+	"github.com/rclone/rclone/lib/errcount"
 )
 
 // Registry of filesystems
@@ -61,6 +63,22 @@ func (ri *RegInfo) FileName() string {
 // Options is a slice of configuration Option for a backend
 type Options []Option
 
+// Add more options returning a new options slice
+func (os Options) Add(newOptions Options) Options {
+	return append(os, newOptions...)
+}
+
+// AddPrefix adds more options with a prefix returning a new options slice
+func (os Options) AddPrefix(newOptions Options, prefix string, groups string) Options {
+	for _, opt := range newOptions {
+		// opt is a copy so can modify
+		opt.Name = prefix + "_" + opt.Name
+		opt.Groups = groups
+		os = append(os, opt)
+	}
+	return os
+}
+
 // Set the default values for the options
 func (os Options) setValues() {
 	for i := range os {
@@ -89,6 +107,19 @@ func (os Options) Get(name string) *Option {
 		}
 	}
 	return nil
+}
+
+// SetDefault sets the default for the Option corresponding to name
+//
+// Writes an ERROR level log if the option is not found
+func (os Options) SetDefault(name string, def any) Options {
+	opt := os.Get(name)
+	if opt == nil {
+		Errorf(nil, "Couldn't find option %q to SetDefault on", name)
+	} else {
+		opt.Default = def
+	}
+	return os
 }
 
 // Overridden discovers which config items have been overridden in the
@@ -149,6 +180,8 @@ const (
 //
 // This also describes command line options and environment variables.
 //
+// It is also used to describe options for the API.
+//
 // To create a multiple-choice option, specify the possible values
 // in the Examples property. Whether the option's value is required
 // to be one of these depends on other properties:
@@ -159,12 +192,14 @@ const (
 //     and do not set Default.
 type Option struct {
 	Name       string           // name of the option in snake_case
+	FieldName  string           // name of the field used in the rc JSON - will be auto filled normally
 	Help       string           // help, start with a single sentence on a single line that will be extracted for command line help
-	Provider   string           // set to filter on provider
+	Groups     string           `json:",omitempty"` // groups this option belongs to - comma separated string for options classification
+	Provider   string           `json:",omitempty"` // set to filter on provider
 	Default    interface{}      // default value, nil => "", if set (and not to nil or "") then Required does nothing
 	Value      interface{}      // value to be set by flags
 	Examples   OptionExamples   `json:",omitempty"` // predefined values that can be selected from list (multiple-choice option)
-	ShortOpt   string           // the short option for this if required
+	ShortOpt   string           `json:",omitempty"` // the short option for this if required
 	Hide       OptionVisibility // set this to hide the config from the configurator or the command line
 	Required   bool             // this option is required, meaning value cannot be empty unless there is a default
 	IsPassword bool             // set if the option is a password
@@ -209,14 +244,54 @@ func (o *Option) GetValue() interface{} {
 	return val
 }
 
+// IsDefault returns true if the value is the default value
+func (o *Option) IsDefault() bool {
+	if o.Value == nil {
+		return true
+	}
+	Default := o.Default
+	if Default == nil {
+		Default = ""
+	}
+	return reflect.DeepEqual(o.Value, Default)
+}
+
 // String turns Option into a string
 func (o *Option) String() string {
-	return fmt.Sprint(o.GetValue())
+	v := o.GetValue()
+	if stringArray, isStringArray := v.([]string); isStringArray {
+		// Treat empty string array as empty string
+		// This is to make the default value of the option help nice
+		if len(stringArray) == 0 {
+			return ""
+		}
+		// Encode string arrays as JSON
+		// The default Go encoding can't be decoded uniquely
+		buf, err := json.Marshal(stringArray)
+		if err != nil {
+			Errorf(nil, "Can't encode default value for %q key - ignoring: %v", o.Name, err)
+			return "[]"
+		}
+		return string(buf)
+	}
+	return fmt.Sprint(v)
 }
 
 // Set an Option from a string
 func (o *Option) Set(s string) (err error) {
-	newValue, err := configstruct.StringToInterface(o.GetValue(), s)
+	v := o.GetValue()
+	if stringArray, isStringArray := v.([]string); isStringArray {
+		if stringArray == nil {
+			stringArray = []string{}
+		}
+		// If this is still the default value then overwrite the defaults
+		if reflect.ValueOf(o.Default).Pointer() == reflect.ValueOf(v).Pointer() {
+			stringArray = []string{}
+		}
+		o.Value = append(stringArray, s)
+		return nil
+	}
+	newValue, err := configstruct.StringToInterface(v, s)
 	if err != nil {
 		return err
 	}
@@ -235,6 +310,11 @@ func (o *Option) Type() string {
 	// Try to call Type method on non-pointer
 	if do, ok := v.(typer); ok {
 		return do.Type()
+	}
+
+	// Special case []string
+	if _, isStringArray := v.([]string); isStringArray {
+		return "stringArray"
 	}
 
 	return reflect.TypeOf(v).Name()
@@ -280,7 +360,7 @@ func (os OptionExamples) Sort() { sort.Sort(os) }
 type OptionExample struct {
 	Value    string
 	Help     string
-	Provider string
+	Provider string `json:",omitempty"`
 }
 
 // Register a filesystem
@@ -331,6 +411,134 @@ func MustFind(name string) *RegInfo {
 		log.Fatalf("Failed to find remote: %v", err)
 	}
 	return fs
+}
+
+// OptionsInfo holds info about an block of options
+type OptionsInfo struct {
+	Name    string                      // name of this options block for the rc
+	Opt     interface{}                 // pointer to a struct to set the options in
+	Options Options                     // description of the options
+	Reload  func(context.Context) error // if not nil, call when options changed and on init
+}
+
+// OptionsRegistry is a registry of global options
+var OptionsRegistry = map[string]OptionsInfo{}
+
+// RegisterGlobalOptions registers global options to be made into
+// command line options, rc options and environment variable reading.
+//
+// Packages which need global options should use this in an init() function
+func RegisterGlobalOptions(oi OptionsInfo) {
+	oi.Options.setValues()
+	OptionsRegistry[oi.Name] = oi
+	if oi.Opt != nil && oi.Options != nil {
+		err := oi.Check()
+		if err != nil {
+			log.Fatalf("%v", err)
+		}
+	}
+	// Load the default values into the options.
+	//
+	// These will be from the ultimate defaults or environment
+	// variables.
+	//
+	// The flags haven't been processed yet so this will be run
+	// again when the flags are ready.
+	err := oi.load()
+	if err != nil {
+		log.Fatalf("Failed to load %q default values: %v", oi.Name, err)
+	}
+}
+
+var optionName = regexp.MustCompile(`^[a-z0-9_]+$`)
+
+// Check ensures that for every element of oi.Options there is a field
+// in oi.Opt that matches it.
+//
+// It also sets Option.FieldName to be the name of the field for use
+// in JSON.
+func (oi *OptionsInfo) Check() error {
+	errCount := errcount.New()
+	items, err := configstruct.Items(oi.Opt)
+	if err != nil {
+		return err
+	}
+	itemsByName := map[string]*configstruct.Item{}
+	for i := range items {
+		item := &items[i]
+		itemsByName[item.Name] = item
+		if !optionName.MatchString(item.Name) {
+			err = fmt.Errorf("invalid name in `config:%q` in Options struct", item.Name)
+			errCount.Add(err)
+			Errorf(nil, "%s", err)
+		}
+	}
+	for i := range oi.Options {
+		option := &oi.Options[i]
+		// Check name is correct
+		if !optionName.MatchString(option.Name) {
+			err = fmt.Errorf("invalid Name: %q", option.Name)
+			errCount.Add(err)
+			Errorf(nil, "%s", err)
+			continue
+		}
+		// Check item exists
+		item, found := itemsByName[option.Name]
+		if !found {
+			err = fmt.Errorf("key %q in OptionsInfo not found in Options struct", option.Name)
+			errCount.Add(err)
+			Errorf(nil, "%s", err)
+			continue
+		}
+		// Check type
+		optType := fmt.Sprintf("%T", option.Default)
+		itemType := fmt.Sprintf("%T", item.Value)
+		if optType != itemType {
+			err = fmt.Errorf("key %q in has type %q in OptionsInfo.Default but type %q in Options struct", option.Name, optType, itemType)
+			//errCount.Add(err)
+			Errorf(nil, "%s", err)
+		}
+		// Set FieldName
+		option.FieldName = item.Field
+	}
+	return errCount.Err(fmt.Sprintf("internal error: options block %q", oi.Name))
+}
+
+// load the defaults from the options
+//
+// Reload the options if required
+func (oi *OptionsInfo) load() error {
+	if oi.Options == nil {
+		Errorf(nil, "No options defined for config block %q", oi.Name)
+		return nil
+	}
+
+	m := ConfigMap("", oi.Options, "", nil)
+	err := configstruct.Set(m, oi.Opt)
+	if err != nil {
+		return fmt.Errorf("failed to initialise %q options: %w", oi.Name, err)
+	}
+
+	if oi.Reload != nil {
+		err = oi.Reload(context.Background())
+		if err != nil {
+			return fmt.Errorf("failed to reload %q options: %w", oi.Name, err)
+		}
+	}
+	return nil
+}
+
+// GlobalOptionsInit initialises the defaults of global options to
+// their values read from the options, environment variables and
+// command line parameters.
+func GlobalOptionsInit() error {
+	for _, opt := range OptionsRegistry {
+		err := opt.load()
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // Type returns a textual string to identify the type of the remote

@@ -60,7 +60,7 @@ func Authorize(ctx context.Context, args []string, noAutoBrowser bool, templateF
 	// Name used for temporary remote
 	name := "**temp-fs**"
 
-	m := fs.ConfigMap(ri, name, inM)
+	m := fs.ConfigMap(ri.Prefix, ri.Options, name, inM)
 	outM := configmap.Simple{}
 	m.ClearSetters()
 	m.AddSetter(outM)

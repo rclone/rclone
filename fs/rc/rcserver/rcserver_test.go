@@ -49,7 +49,7 @@ func TestMain(m *testing.M) {
 // Test the RC server runs and we can do HTTP fetches from it.
 // We'll do the majority of the testing with the httptest framework
 func TestRcServer(t *testing.T) {
-	opt := rc.DefaultOpt
+	opt := rc.Opt
 	opt.HTTP.ListenAddr = []string{testBindAddress}
 	opt.Template.Path = defaultTestTemplate
 	opt.Enabled = true
@@ -153,7 +153,9 @@ func testServer(t *testing.T, tests []testRun, opt *rc.Options) {
 				actualNormalized := normalizeJSON(t, string(body))
 				assert.Equal(t, expectedNormalized, actualNormalized, "Normalized JSON does not match")
 			} else if test.Contains == nil {
-				assert.Equal(t, test.Expected, string(body))
+				// go1.23 started putting an html wrapper
+				bodyNormalized := strings.TrimPrefix(string(body), "<!doctype html>\n<meta name=\"viewport\" content=\"width=device-width\">\n")
+				assert.Equal(t, test.Expected, bodyNormalized)
 			} else {
 				assert.True(t, test.Contains.Match(body), fmt.Sprintf("body didn't match: %v: %v", test.Contains, string(body)))
 			}
@@ -170,7 +172,7 @@ func testServer(t *testing.T, tests []testRun, opt *rc.Options) {
 
 // return an enabled rc
 func newTestOpt() rc.Options {
-	opt := rc.DefaultOpt
+	opt := rc.Opt
 	opt.Enabled = true
 	opt.HTTP.ListenAddr = []string{testBindAddress}
 	return opt

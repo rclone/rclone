@@ -2,7 +2,6 @@ package docker
 
 import (
 	"fmt"
-	"strconv"
 	"strings"
 
 	"github.com/rclone/rclone/cmd/mountlib"
@@ -11,7 +10,6 @@ import (
 	"github.com/rclone/rclone/fs/fspath"
 	"github.com/rclone/rclone/fs/rc"
 	"github.com/rclone/rclone/vfs/vfscommon"
-	"github.com/rclone/rclone/vfs/vfsflags"
 
 	"github.com/spf13/pflag"
 )
@@ -88,7 +86,7 @@ func (vol *Volume) applyOptions(volOpt VolOpts) error {
 		fsType = "local"
 		if fsName != "" {
 			var ok bool
-			fsType, ok = fs.ConfigMap(nil, fsName, nil).Get("type")
+			fsType, ok = fs.ConfigMap("", nil, fsName, nil).Get("type")
 			if !ok {
 				return fs.ErrorNotFoundInConfigFile
 			}
@@ -185,7 +183,7 @@ func getMountOption(mntOpt *mountlib.Options, opt rc.Params, key string) (ok boo
 	case "debug-fuse":
 		mntOpt.DebugFUSE, err = opt.GetBool(key)
 	case "attr-timeout":
-		mntOpt.AttrTimeout, err = opt.GetDuration(key)
+		mntOpt.AttrTimeout, err = opt.GetFsDuration(key)
 	case "option":
 		mntOpt.ExtraOptions, err = getStringArray(opt, key)
 	case "fuse-flag":
@@ -193,7 +191,7 @@ func getMountOption(mntOpt *mountlib.Options, opt rc.Params, key string) (ok boo
 	case "daemon":
 		mntOpt.Daemon, err = opt.GetBool(key)
 	case "daemon-timeout":
-		mntOpt.DaemonTimeout, err = opt.GetDuration(key)
+		mntOpt.DaemonTimeout, err = opt.GetFsDuration(key)
 	case "default-permissions":
 		mntOpt.DefaultPermissions, err = opt.GetBool(key)
 	case "allow-non-empty":
@@ -231,9 +229,9 @@ func getVFSOption(vfsOpt *vfscommon.Options, opt rc.Params, key string) (ok bool
 	case "vfs-cache-mode":
 		err = getFVarP(&vfsOpt.CacheMode, opt, key)
 	case "vfs-cache-poll-interval":
-		vfsOpt.CachePollInterval, err = opt.GetDuration(key)
+		vfsOpt.CachePollInterval, err = opt.GetFsDuration(key)
 	case "vfs-cache-max-age":
-		vfsOpt.CacheMaxAge, err = opt.GetDuration(key)
+		vfsOpt.CacheMaxAge, err = opt.GetFsDuration(key)
 	case "vfs-cache-max-size":
 		err = getFVarP(&vfsOpt.CacheMaxSize, opt, key)
 	case "vfs-read-chunk-size":
@@ -243,11 +241,11 @@ func getVFSOption(vfsOpt *vfscommon.Options, opt rc.Params, key string) (ok bool
 	case "vfs-case-insensitive":
 		vfsOpt.CaseInsensitive, err = opt.GetBool(key)
 	case "vfs-write-wait":
-		vfsOpt.WriteWait, err = opt.GetDuration(key)
+		vfsOpt.WriteWait, err = opt.GetFsDuration(key)
 	case "vfs-read-wait":
-		vfsOpt.ReadWait, err = opt.GetDuration(key)
+		vfsOpt.ReadWait, err = opt.GetFsDuration(key)
 	case "vfs-write-back":
-		vfsOpt.WriteBack, err = opt.GetDuration(key)
+		vfsOpt.WriteBack, err = opt.GetFsDuration(key)
 	case "vfs-read-ahead":
 		err = getFVarP(&vfsOpt.ReadAhead, opt, key)
 	case "vfs-used-is-size":
@@ -259,28 +257,19 @@ func getVFSOption(vfsOpt *vfscommon.Options, opt rc.Params, key string) (ok bool
 	case "no-checksum":
 		vfsOpt.NoChecksum, err = opt.GetBool(key)
 	case "dir-cache-time":
-		vfsOpt.DirCacheTime, err = opt.GetDuration(key)
+		vfsOpt.DirCacheTime, err = opt.GetFsDuration(key)
 	case "poll-interval":
-		vfsOpt.PollInterval, err = opt.GetDuration(key)
+		vfsOpt.PollInterval, err = opt.GetFsDuration(key)
 	case "read-only":
 		vfsOpt.ReadOnly, err = opt.GetBool(key)
 	case "dir-perms":
-		perms := &vfsflags.FileMode{Mode: &vfsOpt.DirPerms}
-		err = getFVarP(perms, opt, key)
+		err = getFVarP(&vfsOpt.DirPerms, opt, key)
 	case "file-perms":
-		perms := &vfsflags.FileMode{Mode: &vfsOpt.FilePerms}
-		err = getFVarP(perms, opt, key)
+		err = getFVarP(&vfsOpt.FilePerms, opt, key)
 
 	// unprefixed unix-only vfs options
 	case "umask":
-		// GetInt64 doesn't support the `0octal` umask syntax - parse locally
-		var strVal string
-		if strVal, err = opt.GetString(key); err == nil {
-			var longVal int64
-			if longVal, err = strconv.ParseInt(strVal, 0, 0); err == nil {
-				vfsOpt.Umask = int(longVal)
-			}
-		}
+		err = getFVarP(&vfsOpt.Umask, opt, key)
 	case "uid":
 		intVal, err = opt.GetInt64(key)
 		vfsOpt.UID = uint32(intVal)

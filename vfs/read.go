@@ -268,7 +268,7 @@ func (fh *ReadFileHandle) readAt(p []byte, off int64) (n int, err error) {
 		maxBuf = len(p)
 	}
 	if gap := off - fh.offset; gap > 0 && gap < int64(8*maxBuf) {
-		waitSequential("read", fh.remote, &fh.cond, fh.file.VFS().Opt.ReadWait, &fh.offset, off)
+		waitSequential("read", fh.remote, &fh.cond, time.Duration(fh.file.VFS().Opt.ReadWait), &fh.offset, off)
 	}
 	doSeek := off != fh.offset
 	if doSeek && fh.noSeek {

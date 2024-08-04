@@ -23,25 +23,31 @@ func (configName configEnvVars) Get(key string) (value string, ok bool) {
 
 // A configmap.Getter to read from the environment RCLONE_option_name
 type optionEnvVars struct {
-	fsInfo *RegInfo
+	prefix  string
+	options Options
 }
 
 // Get a config item from the option environment variables if possible
 func (oev optionEnvVars) Get(key string) (value string, ok bool) {
-	opt := oev.fsInfo.Options.Get(key)
+	opt := oev.options.Get(key)
 	if opt == nil {
 		return "", false
 	}
-	envKey := OptionToEnv(oev.fsInfo.Prefix + "-" + key)
+	var envKey string
+	if oev.prefix == "" {
+		envKey = OptionToEnv(key)
+	} else {
+		envKey = OptionToEnv(oev.prefix + "-" + key)
+	}
 	value, ok = os.LookupEnv(envKey)
 	if ok {
-		Debugf(nil, "Setting %s_%s=%q from environment variable %s", oev.fsInfo.Prefix, key, value, envKey)
+		Debugf(nil, "Setting %s %s=%q from environment variable %s", oev.prefix, key, value, envKey)
 	} else if opt.NoPrefix {
 		// For options with NoPrefix set, check without prefix too
 		envKey := OptionToEnv(key)
 		value, ok = os.LookupEnv(envKey)
 		if ok {
-			Debugf(nil, "Setting %s=%q for %s from environment variable %s", key, value, oev.fsInfo.Prefix, envKey)
+			Debugf(nil, "Setting %s=%q for %s from environment variable %s", key, value, oev.prefix, envKey)
 		}
 	}
 	return value, ok
@@ -50,15 +56,15 @@ func (oev optionEnvVars) Get(key string) (value string, ok bool) {
 // A configmap.Getter to read either the default value or the set
 // value from the RegInfo.Options
 type regInfoValues struct {
-	fsInfo     *RegInfo
+	options    Options
 	useDefault bool
 }
 
 // override the values in configMap with the either the flag values or
 // the default values
 func (r *regInfoValues) Get(key string) (value string, ok bool) {
-	opt := r.fsInfo.Options.Get(key)
-	if opt != nil && (r.useDefault || opt.Value != nil) {
+	opt := r.options.Get(key)
+	if opt != nil && (r.useDefault || !opt.IsDefault()) {
 		return opt.String(), true
 	}
 	return "", false
@@ -89,13 +95,15 @@ func (section getConfigFile) Get(key string) (value string, ok bool) {
 	return value, ok
 }
 
-// ConfigMap creates a configmap.Map from the *RegInfo and the
+// ConfigMap creates a configmap.Map from the Options, prefix and the
 // configName passed in. If connectionStringConfig has any entries (it may be nil),
 // then it will be added to the lookup with the highest priority.
 //
-// If fsInfo is nil then the returned configmap.Map should only be
+// If options is nil then the returned configmap.Map should only be
 // used for reading non backend specific parameters, such as "type".
-func ConfigMap(fsInfo *RegInfo, configName string, connectionStringConfig configmap.Simple) (config *configmap.Map) {
+//
+// This can be used for global settings if prefix is "" and configName is ""
+func ConfigMap(prefix string, options Options, configName string, connectionStringConfig configmap.Simple) (config *configmap.Map) {
 	// Create the config
 	config = configmap.New()
 
@@ -107,24 +115,28 @@ func ConfigMap(fsInfo *RegInfo, configName string, connectionStringConfig config
 	}
 
 	// flag values
-	if fsInfo != nil {
-		config.AddGetter(&regInfoValues{fsInfo, false}, configmap.PriorityNormal)
+	if options != nil {
+		config.AddGetter(&regInfoValues{options, false}, configmap.PriorityNormal)
 	}
 
 	// remote specific environment vars
-	config.AddGetter(configEnvVars(configName), configmap.PriorityNormal)
+	if configName != "" {
+		config.AddGetter(configEnvVars(configName), configmap.PriorityNormal)
+	}
 
 	// backend specific environment vars
-	if fsInfo != nil {
-		config.AddGetter(optionEnvVars{fsInfo: fsInfo}, configmap.PriorityNormal)
+	if options != nil {
+		config.AddGetter(optionEnvVars{prefix: prefix, options: options}, configmap.PriorityNormal)
 	}
 
 	// config file
-	config.AddGetter(getConfigFile(configName), configmap.PriorityConfig)
+	if configName != "" {
+		config.AddGetter(getConfigFile(configName), configmap.PriorityConfig)
+	}
 
 	// default values
-	if fsInfo != nil {
-		config.AddGetter(&regInfoValues{fsInfo, true}, configmap.PriorityDefault)
+	if options != nil {
+		config.AddGetter(&regInfoValues{options, true}, configmap.PriorityDefault)
 	}
 
 	// Set Config

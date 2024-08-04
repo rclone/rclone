@@ -724,12 +724,20 @@ for upload:download, e.g.`10M:1M`.
   characters. It is optional.
 - `HH:MM` is an hour from 00:00 to 23:59.
 
+Entries can be separated by spaces or semicolons.
+
+**Note:** Semicolons can be used as separators instead of spaces to avoid parsing issues in environments like Docker.
+
 An example of a typical timetable to avoid link saturation during daytime
 working hours could be:
 
+Using spaces as separators:
 `--bwlimit "08:00,512k 12:00,10M 13:00,512k 18:00,30M 23:00,off"`
 
-In this example, the transfer bandwidth will be set to 512 KiB/s
+Using semicolons as separators:
+`--bwlimit "08:00,512k;12:00,10M;13:00,512k;18:00,30M;23:00,off"`
+
+In these examples, the transfer bandwidth will be set to 512 KiB/s
 at 8am every day. At noon, it will rise to 10 MiB/s, and drop back
 to 512 KiB/sec at 1pm. At 6pm, the bandwidth limit will be set to
 30 MiB/s, and at 11pm it will be completely disabled (full speed).
@@ -737,7 +745,11 @@ Anything between 11pm and 8am will remain unlimited.
 
 An example of timetable with `WEEKDAY` could be:
 
+Using spaces as separators:
 `--bwlimit "Mon-00:00,512 Fri-23:59,10M Sat-10:00,1M Sun-20:00,off"`
+
+Using semicolons as separators:
+`--bwlimit "Mon-00:00,512;Fri-23:59,10M;Sat-10:00,1M;Sun-20:00,off"`
 
 It means that, the transfer bandwidth will be set to 512 KiB/s on
 Monday. It will rise to 10 MiB/s before the end of Friday. At 10:00

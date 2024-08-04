@@ -204,7 +204,7 @@ func New(f fs.Fs, opt *vfscommon.Options) *VFS {
 	if opt != nil {
 		vfs.Opt = *opt
 	} else {
-		vfs.Opt = vfscommon.DefaultOpt
+		vfs.Opt = vfscommon.Opt
 	}
 
 	// Fill out anything else
@@ -232,7 +232,7 @@ func New(f fs.Fs, opt *vfscommon.Options) *VFS {
 	if do := features.ChangeNotify; do != nil {
 		vfs.pollChan = make(chan time.Duration)
 		do(context.TODO(), vfs.root.changeNotify, vfs.pollChan)
-		vfs.pollChan <- vfs.Opt.PollInterval
+		vfs.pollChan <- time.Duration(vfs.Opt.PollInterval)
 	} else if vfs.Opt.PollInterval > 0 {
 		fs.Infof(f, "poll-interval is not supported by this remote")
 	}
@@ -608,7 +608,7 @@ func (vfs *VFS) Statfs() (total, used, free int64) {
 	defer vfs.usageMu.Unlock()
 	total, used, free = -1, -1, -1
 	doAbout := vfs.f.Features().About
-	if (doAbout != nil || vfs.Opt.UsedIsSize) && (vfs.usageTime.IsZero() || time.Since(vfs.usageTime) >= vfs.Opt.DirCacheTime) {
+	if (doAbout != nil || vfs.Opt.UsedIsSize) && (vfs.usageTime.IsZero() || time.Since(vfs.usageTime) >= time.Duration(vfs.Opt.DirCacheTime)) {
 		var err error
 		ctx := context.TODO()
 		if doAbout == nil {
@@ -776,7 +776,7 @@ func (vfs *VFS) AddVirtual(remote string, size int64, isDir bool) (err error) {
 	} else {
 		// Create parent of virtual directory since backend can't have empty directories
 		parent, leaf = path.Split(remote)
-		dir, err = vfs.mkdirAll(parent, vfs.Opt.DirPerms)
+		dir, err = vfs.mkdirAll(parent, os.FileMode(vfs.Opt.DirPerms))
 	}
 	if err != nil {
 		return err
