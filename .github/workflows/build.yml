@@ -30,22 +30,16 @@ jobs:
           
           - job_name: mac_amd64
             os: macos-latest
-            go: '>=1.22.0-rc.1'
+            go: '>=1.23.0-rc.1'
             gotags: 'cmount'
             build_flags: '-include "^darwin/amd64" -cgo'
 
           - job_name: mac_arm64
             os: macos-latest
-            go: '>=1.22.0-rc.1'
+            go: '>=1.23.0-rc.1'
             gotags: 'cmount'
             build_flags: '-include "^darwin/arm64" -cgo -macos-arch arm64 -cgo-cflags=-I/usr/local/include -cgo-ldflags=-L/usr/local/lib'
 
-
-          - job_name: go1.22
-            os: ubuntu-latest
-            go: '1.22'
-            quicktest: true
-            racequicktest: true
 
     name: ${{ matrix.job_name }}
 
