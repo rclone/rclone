@@ -7,7 +7,7 @@
 // (Tracked in [issue #7625].)
 //
 //  1. ✅ Minimal support for the [external special remote protocol]. Tested on
-//     "local" and "drive" backends.
+//     "local", "drive", and "dropbox" backends.
 //  2. Add support for the ASYNC protocol extension. This may improve performance.
 //  3. Support the [simple export interface]. This will enable `git-annex
 //     export` functionality.
