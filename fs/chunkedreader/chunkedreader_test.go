@@ -7,33 +7,21 @@ import (
 	"math/rand"
 	"testing"
 
-	_ "github.com/rclone/rclone/backend/local"
-	"github.com/rclone/rclone/fstest"
 	"github.com/rclone/rclone/fstest/mockobject"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-// TestMain drives the tests
-func TestMain(m *testing.M) {
-	fstest.TestMain(m)
-}
-
-func TestSequential(t *testing.T) {
+func TestChunkedReader(t *testing.T) {
 	content := makeContent(t, 1024)
 
 	for _, mode := range mockobject.SeekModes {
-		t.Run(mode.String(), testRead(content, mode, 0))
+		t.Run(mode.String(), testRead(content, mode))
 	}
 }
 
-func TestSequentialErrorAfterClose(t *testing.T) {
-	testErrorAfterClose(t, 0)
-}
-
-func testRead(content []byte, mode mockobject.SeekMode, streams int) func(*testing.T) {
+func testRead(content []byte, mode mockobject.SeekMode) func(*testing.T) {
 	return func(t *testing.T) {
-		ctx := context.Background()
 		chunkSizes := []int64{-1, 0, 1, 15, 16, 17, 1023, 1024, 1025, 2000}
 		offsets := []int64{0, 1, 2, 3, 4, 5, 7, 8, 9, 15, 16, 17, 31, 32, 33,
 			63, 64, 65, 511, 512, 513, 1023, 1024, 1025}
@@ -51,13 +39,13 @@ func testRead(content []byte, mode mockobject.SeekMode, streams int) func(*testi
 				}
 
 				t.Run(fmt.Sprintf("Chunksize_%d_%d", cs, csMax), func(t *testing.T) {
-					cr := New(ctx, o, cs, csMax, streams)
+					cr := New(context.Background(), o, cs, csMax)
 
 					for _, offset := range offsets {
 						for _, limit := range limits {
 							what := fmt.Sprintf("offset %d, limit %d", offset, limit)
 
-							p, err := cr.RangeSeek(ctx, offset, io.SeekStart, limit)
+							p, err := cr.RangeSeek(context.Background(), offset, io.SeekStart, limit)
 							if offset >= cl {
 								require.Error(t, err, what)
 								return
@@ -86,33 +74,32 @@ func testRead(content []byte, mode mockobject.SeekMode, streams int) func(*testi
 	}
 }
 
-func testErrorAfterClose(t *testing.T, streams int) {
-	ctx := context.Background()
+func TestErrorAfterClose(t *testing.T) {
 	content := makeContent(t, 1024)
 	o := mockobject.New("test.bin").WithContent(content, mockobject.SeekModeNone)
 
 	// Close
-	cr := New(ctx, o, 0, 0, streams)
+	cr := New(context.Background(), o, 0, 0)
 	require.NoError(t, cr.Close())
 	require.Error(t, cr.Close())
 
 	// Read
-	cr = New(ctx, o, 0, 0, streams)
+	cr = New(context.Background(), o, 0, 0)
 	require.NoError(t, cr.Close())
 	var buf [1]byte
 	_, err := cr.Read(buf[:])
 	require.Error(t, err)
 
 	// Seek
-	cr = New(ctx, o, 0, 0, streams)
+	cr = New(context.Background(), o, 0, 0)
 	require.NoError(t, cr.Close())
 	_, err = cr.Seek(1, io.SeekCurrent)
 	require.Error(t, err)
 
 	// RangeSeek
-	cr = New(ctx, o, 0, 0, streams)
+	cr = New(context.Background(), o, 0, 0)
 	require.NoError(t, cr.Close())
-	_, err = cr.RangeSeek(ctx, 1, io.SeekCurrent, 0)
+	_, err = cr.RangeSeek(context.Background(), 1, io.SeekCurrent, 0)
 	require.Error(t, err)
 }
 
