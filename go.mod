@@ -17,7 +17,6 @@ require (
 	github.com/anacrolix/dms v1.7.1
 	github.com/anacrolix/log v0.15.2
 	github.com/atotto/clipboard v0.1.4
-	github.com/aws/aws-sdk-go v1.54.19
 	github.com/aws/aws-sdk-go-v2 v1.30.3
 	github.com/aws/aws-sdk-go-v2/config v1.27.27
 	github.com/aws/aws-sdk-go-v2/credentials v1.17.27
@@ -105,6 +104,7 @@ require (
 	github.com/akavel/rsrc v0.10.2 // indirect
 	github.com/anacrolix/generics v0.0.1 // indirect
 	github.com/andybalholm/cascadia v1.3.2 // indirect
+	github.com/aws/aws-sdk-go v1.54.19 // indirect
 	github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.6.3 // indirect
 	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.16.11 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/configsources v1.3.15 // indirect
@@ -158,7 +158,6 @@ require (
 	github.com/jcmturner/gofork v1.7.6 // indirect
 	github.com/jcmturner/goidentity/v6 v6.0.1 // indirect
 	github.com/jcmturner/rpc/v2 v2.0.3 // indirect
-	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/jtolio/noiseconn v0.0.0-20231127013910-f6d9ecbf1de7 // indirect
 	github.com/klauspost/cpuid/v2 v2.2.8 // indirect
 	github.com/kr/fs v0.1.0 // indirect
