@@ -46,6 +46,7 @@ Here is an overview of the major features of each cloud storage system.
 | Oracle Object Storage        | MD5               | R/W     | No               | No              | R/W       | -        |
 | pCloud                       | MD5, SHA1 ⁷       | R       | No               | No              | W         | -        |
 | PikPak                       | MD5               | R       | No               | No              | R         | -        |
+| Pixeldrain                   | SHA256            | R/W     | No               | No              | R         | RW       |
 | premiumize.me                | -                 | -       | Yes              | No              | R         | -        |
 | put.io                       | CRC-32            | R/W     | No               | Yes             | R         | -        |
 | Proton Drive                 | SHA1              | R/W     | No               | No              | R         | -        |
