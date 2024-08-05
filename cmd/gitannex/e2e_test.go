@@ -15,6 +15,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fstest"
 	"github.com/rclone/rclone/lib/buildinfo"
 )
 
@@ -181,6 +182,11 @@ func (e *e2eTestingContext) createGitRepo(t *testing.T) {
 func skipE2eTestIfNecessary(t *testing.T) {
 	if testing.Short() {
 		t.Skip("Skipping due to short mode.")
+	}
+
+	// TODO(#7984): Port e2e tests to `fstest` framework.
+	if *fstest.RemoteName != "" {
+		t.Skip("Skipping because fstest remote was specified.")
 	}
 
 	// TODO: Support e2e tests on Windows. Need to evaluate the semantics of the
