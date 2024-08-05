@@ -492,6 +492,70 @@ var fstestTestCases = []testCase{
 		},
 	},
 	{
+		label: "HandlesPrepareWithNonexistentRemote",
+		testProtocolFunc: func(t *testing.T, h *testState) {
+			h.requireReadLineExact("VERSION 1")
+			h.requireWriteLine("EXTENSIONS INFO") // Advertise that we support the INFO extension
+			h.requireReadLineExact("EXTENSIONS")
+
+			if !h.server.extensionInfo {
+				t.Errorf("expected INFO extension to be enabled")
+				return
+			}
+
+			h.requireWriteLine("PREPARE")
+			h.requireReadLineExact("GETCONFIG rcloneremotename")
+			h.requireWriteLine("VALUE thisRemoteDoesNotExist")
+			h.requireReadLineExact("GETCONFIG rcloneprefix")
+			h.requireWriteLine("VALUE " + h.remotePrefix)
+			h.requireReadLineExact("GETCONFIG rclonelayout")
+			h.requireWriteLine("VALUE foo")
+			h.requireReadLineExact("PREPARE-SUCCESS")
+
+			require.Equal(t, h.server.configRcloneRemoteName, "thisRemoteDoesNotExist")
+			require.Equal(t, h.server.configPrefix, h.remotePrefix)
+			require.True(t, h.server.configsDone)
+
+			h.requireWriteLine("INITREMOTE")
+			h.requireReadLineExact("INITREMOTE-FAILURE remote does not exist")
+
+			require.NoError(t, h.mockStdinW.Close())
+		},
+		expectedError: "remote does not exist: thisRemoteDoesNotExist",
+	},
+	{
+		label: "HandlesPrepareWithPathAsRemote",
+		testProtocolFunc: func(t *testing.T, h *testState) {
+			h.requireReadLineExact("VERSION 1")
+			h.requireWriteLine("EXTENSIONS INFO") // Advertise that we support the INFO extension
+			h.requireReadLineExact("EXTENSIONS")
+
+			if !h.server.extensionInfo {
+				t.Errorf("expected INFO extension to be enabled")
+				return
+			}
+
+			h.requireWriteLine("PREPARE")
+			h.requireReadLineExact("GETCONFIG rcloneremotename")
+			h.requireWriteLine("VALUE /foo")
+			h.requireReadLineExact("GETCONFIG rcloneprefix")
+			h.requireWriteLine("VALUE " + h.remotePrefix)
+			h.requireReadLineExact("GETCONFIG rclonelayout")
+			h.requireWriteLine("VALUE foo")
+			h.requireReadLineExact("PREPARE-SUCCESS")
+
+			require.Equal(t, h.server.configRcloneRemoteName, "/foo")
+			require.Equal(t, h.server.configPrefix, h.remotePrefix)
+			require.True(t, h.server.configsDone)
+
+			h.requireWriteLine("INITREMOTE")
+			h.requireReadLineExact("INITREMOTE-FAILURE remote does not exist")
+
+			require.NoError(t, h.mockStdinW.Close())
+		},
+		expectedError: "remote does not exist: /foo",
+	},
+	{
 		label: "HandlesPrepareWithSynonyms",
 		testProtocolFunc: func(t *testing.T, h *testState) {
 			h.requireReadLineExact("VERSION 1")
@@ -1145,9 +1209,6 @@ func TestGitAnnexFstestBackendCases(t *testing.T) {
 				// is *just* the remote name. However, `r.FremoteName` is a
 				// remote name followed by a colon and a subdirectory, e.g.
 				// "myremote:dir".
-				//
-				// TODO: Make gitannex client verify that the remote name is
-				// exactly the name of an existing remote.
 				remotePieces := strings.Split(r.FremoteName, ":")
 				if len(remotePieces) != 2 {
 					panic("Unexpected remote name format")
@@ -1158,9 +1219,6 @@ func TestGitAnnexFstestBackendCases(t *testing.T) {
 				// The gitannex client constructs paths of the form
 				// "{remote}:path". If the remote's name is a local filesystem
 				// path, the colon would be interpreted as part of the path.
-				//
-				// TODO: If possible, assert in gitannex.go that the remote does
-				// not look like a file path! (Are there rules on remote names?)
 
 				// Create temp dir for an rclone remote pointing at local
 				// filesystem.

@@ -33,6 +33,7 @@ import (
 	"github.com/rclone/rclone/cmd"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/cache"
+	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/spf13/cobra"
 )
@@ -265,6 +266,18 @@ func (s *server) run() error {
 func (s *server) handleInitRemote() error {
 	if err := s.queryConfigs(); err != nil {
 		return fmt.Errorf("failed to get configs: %w", err)
+	}
+
+	var remoteExists bool
+	for _, remoteName := range config.FileSections() {
+		if remoteName == s.configRcloneRemoteName {
+			remoteExists = true
+			break
+		}
+	}
+	if !remoteExists {
+		s.sendMsg("INITREMOTE-FAILURE remote does not exist")
+		return fmt.Errorf("remote does not exist: %s", s.configRcloneRemoteName)
 	}
 
 	remoteRootFs, err := cache.Get(context.TODO(), fmt.Sprintf("%s:", s.configRcloneRemoteName))
