@@ -2931,6 +2931,76 @@ func getClient(ctx context.Context, opt *Options) *http.Client {
 	}
 }
 
+// Google Cloud Storage alters the Accept-Encoding header, which
+// breaks the v2 request signature
+//
+// It also doesn't like the x-id URL parameter SDKv2 puts in so we
+// remove that too.
+//
+// See https://github.com/aws/aws-sdk-go-v2/issues/1816.
+// Adapted from: https://github.com/aws/aws-sdk-go-v2/issues/1816#issuecomment-1927281540
+func fixupGCS(o *s3.Options) {
+	type ignoredHeadersKey struct{}
+	headers := []string{"Accept-Encoding"}
+
+	fixup := middleware.FinalizeMiddlewareFunc(
+		"FixupGCS",
+		func(ctx context.Context, in middleware.FinalizeInput, next middleware.FinalizeHandler) (out middleware.FinalizeOutput, metadata middleware.Metadata, err error) {
+			req, ok := in.Request.(*smithyhttp.Request)
+			if !ok {
+				return out, metadata, fmt.Errorf("fixupGCS: unexpected request middleware type %T", in.Request)
+			}
+
+			// Delete headers from being signed - will restore later
+			ignored := make(map[string]string, len(headers))
+			for _, h := range headers {
+				ignored[h] = req.Header.Get(h)
+				req.Header.Del(h)
+			}
+
+			// Remove x-id because Google doesn't like them
+			if query := req.URL.Query(); query.Has("x-id") {
+				query.Del("x-id")
+				req.URL.RawQuery = query.Encode()
+			}
+
+			// Store ignored on context
+			ctx = middleware.WithStackValue(ctx, ignoredHeadersKey{}, ignored)
+
+			return next.HandleFinalize(ctx, in)
+		},
+	)
+
+	// Restore headers if necessary
+	restore := middleware.FinalizeMiddlewareFunc(
+		"FixupGCSRestoreHeaders",
+		func(ctx context.Context, in middleware.FinalizeInput, next middleware.FinalizeHandler) (out middleware.FinalizeOutput, metadata middleware.Metadata, err error) {
+			req, ok := in.Request.(*smithyhttp.Request)
+			if !ok {
+				return out, metadata, fmt.Errorf("fixupGCS: unexpected request middleware type %T", in.Request)
+			}
+
+			// Restore ignored from ctx
+			ignored, _ := middleware.GetStackValue(ctx, ignoredHeadersKey{}).(map[string]string)
+			for k, v := range ignored {
+				req.Header.Set(k, v)
+			}
+
+			return next.HandleFinalize(ctx, in)
+		},
+	)
+
+	o.APIOptions = append(o.APIOptions, func(stack *middleware.Stack) error {
+		if err := stack.Finalize.Insert(fixup, "Signing", middleware.Before); err != nil {
+			return err
+		}
+		if err := stack.Finalize.Insert(restore, "Signing", middleware.After); err != nil {
+			return err
+		}
+		return nil
+	})
+}
+
 // s3Connection makes a connection to s3
 func s3Connection(ctx context.Context, opt *Options, client *http.Client) (s3Client *s3.Client, err error) {
 	ci := fs.GetConfig(ctx)
@@ -3014,6 +3084,12 @@ func s3Connection(ctx context.Context, opt *Options, client *http.Client) (s3Cli
 		fs.Debugf(nil, "Using v2 auth")
 		options = append(options, func(s3Opt *s3.Options) {
 			s3Opt.HTTPSignerV4 = &v2Signer{opt: opt}
+		})
+	}
+
+	if opt.Provider == "GCS" {
+		options = append(options, func(o *s3.Options) {
+			fixupGCS(o)
 		})
 	}
 
