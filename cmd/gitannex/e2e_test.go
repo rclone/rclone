@@ -31,9 +31,7 @@ func checkRcloneBinaryVersion(t *testing.T) error {
 
 	cmd := exec.Command("rclone", "rc", "--loopback", "core/version")
 	stdout, err := cmd.Output()
-	if err != nil {
-		return fmt.Errorf("failed to get rclone version: %w", err)
-	}
+	require.NoError(t, err)
 
 	var parsed versionInfo
 	if err := json.Unmarshal(stdout, &parsed); err != nil {
