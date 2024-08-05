@@ -470,10 +470,7 @@ var fstestTestCases = []testCase{
 			h.requireWriteLine("EXTENSIONS INFO") // Advertise that we support the INFO extension
 			h.requireReadLineExact("EXTENSIONS")
 
-			if !h.server.extensionInfo {
-				t.Errorf("expected INFO extension to be enabled")
-				return
-			}
+			require.True(t, h.server.extensionInfo)
 
 			h.requireWriteLine("PREPARE")
 			h.requireReadLineExact("GETCONFIG rcloneremotename")
@@ -498,10 +495,7 @@ var fstestTestCases = []testCase{
 			h.requireWriteLine("EXTENSIONS INFO") // Advertise that we support the INFO extension
 			h.requireReadLineExact("EXTENSIONS")
 
-			if !h.server.extensionInfo {
-				t.Errorf("expected INFO extension to be enabled")
-				return
-			}
+			require.True(t, h.server.extensionInfo)
 
 			h.requireWriteLine("PREPARE")
 			h.requireReadLineExact("GETCONFIG rcloneremotename")
@@ -530,10 +524,7 @@ var fstestTestCases = []testCase{
 			h.requireWriteLine("EXTENSIONS INFO") // Advertise that we support the INFO extension
 			h.requireReadLineExact("EXTENSIONS")
 
-			if !h.server.extensionInfo {
-				t.Errorf("expected INFO extension to be enabled")
-				return
-			}
+			require.True(t, h.server.extensionInfo)
 
 			h.requireWriteLine("PREPARE")
 			h.requireReadLineExact("GETCONFIG rcloneremotename")
@@ -562,10 +553,7 @@ var fstestTestCases = []testCase{
 			h.requireWriteLine("EXTENSIONS INFO") // Advertise that we support the INFO extension
 			h.requireReadLineExact("EXTENSIONS")
 
-			if !h.server.extensionInfo {
-				t.Errorf("expected INFO extension to be enabled")
-				return
-			}
+			require.True(t, h.server.extensionInfo)
 
 			h.requireWriteLine("PREPARE")
 			h.requireReadLineExact("GETCONFIG rcloneremotename")
@@ -594,10 +582,7 @@ var fstestTestCases = []testCase{
 			h.requireWriteLine("EXTENSIONS INFO") // Advertise that we support the INFO extension
 			h.requireReadLineExact("EXTENSIONS")
 
-			if !h.server.extensionInfo {
-				t.Errorf("expected INFO extension to be enabled")
-				return
-			}
+			require.True(t, h.server.extensionInfo)
 
 			h.requireWriteLine("PREPARE")
 			h.requireReadLineExact("GETCONFIG rcloneremotename")
