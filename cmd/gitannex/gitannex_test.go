@@ -1205,23 +1205,19 @@ func TestGitAnnexFstestBackendCases(t *testing.T) {
 			handle.fstestRun = r
 
 			if !r.Fremote.Features().IsLocal {
-				// The gitannex client assumes that the remote name it's given
-				// is *just* the remote name. However, `r.FremoteName` is a
-				// remote name followed by a colon and a subdirectory, e.g.
-				// "myremote:dir".
+				// The gitannex command assumes that the remote name it's given
+				// is *just* the remote name. However, for non-local remotes,
+				// `r.FremoteName` looks like "remoteName:tempDir". Split the
+				// pieces apart to match the gitannex command's expectations.
 				remotePieces := strings.Split(r.FremoteName, ":")
-				if len(remotePieces) != 2 {
-					panic("Unexpected remote name format")
-				}
+				require.Len(t, remotePieces, 2)
+
 				handle.remoteName = remotePieces[0]
 				handle.remotePrefix = remotePieces[1]
 			} else {
-				// The gitannex client constructs paths of the form
-				// "{remote}:path". If the remote's name is a local filesystem
-				// path, the colon would be interpreted as part of the path.
-
-				// Create temp dir for an rclone remote pointing at local
-				// filesystem.
+				// The gitannex command will reject remote names that are
+				// actually local filesystem paths. Create a temporary config
+				// that defines a remote backed by the "local" backend.
 				tempDir := t.TempDir()
 
 				localFsDir := filepath.Join(tempDir, "remoteTarget")
