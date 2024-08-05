@@ -38,7 +38,7 @@ Apple ID.
 Enter a value.
 apple_id> APPLEID  
 Option password.
-Your Apple ID password.
+Password.
 Choose an alternative below.
 y) Yes, type in my own password
 g) Generate random password
