@@ -94,10 +94,6 @@ func (s *Session) SignIn(ctx context.Context, appleID, password string) error {
 	opts.Parameters.Set("isRememberMeEnabled", "true")
 	_, err := s.Request(ctx, opts, nil, nil)
 
-	//if (resp.StatusCode < 200 || resp.StatusCode > 299) && resp.StatusCode != 409 {
-	//	return err
-	//}
-
 	return err
 
 }
@@ -146,7 +142,7 @@ func (s *Session) Validate2FACode(ctx context.Context, code string) error {
 		Body:         body,
 		NoResponse:   true,
 	}
-	// _, err := srv.CallJSON(ctx, &opts, nil, &s.AccountInfo)
+
 	_, err := s.Request(ctx, opts, nil, nil)
 	if err == nil {
 		if err := s.TrustSession(ctx); err != nil {
@@ -174,14 +170,10 @@ func (s *Session) TrustSession(ctx context.Context) error {
 		ContentLength: common.Int64(0),
 	}
 
-	// _, err := srv.CallJSON(ctx, &opts, nil, &s.AccountInfo)
 	_, err := s.Request(ctx, opts, nil, nil)
 	if err != nil {
 		return fmt.Errorf("trustSession failed: %w", err)
 	}
-	// cookies := resp.Cookies()
-	// srv.SetCookie(cookies...)
-	// s.Cookies = cookies
 
 	return s.AuthWithToken(ctx)
 }

@@ -39,7 +39,6 @@ const (
 	configAppleID    = "apple_id"
 	configPassword   = "password"
 	configCookies    = "cookies"
-	configPhotos     = "photos"
 	configTrustToken = "trust_token"
 
 	minSleep      = 10 * time.Millisecond
@@ -281,10 +280,6 @@ func (f *Fs) purgeCheck(ctx context.Context, dir string, check bool) error {
 	return nil
 }
 
-// func (f *Fs) CleanUp(ctx context.Context) error {
-// 	panic("unimplemented")
-// }
-
 // Purge all files in the directory specified
 //
 // Implement this if you have a way of deleting all the files
@@ -447,14 +442,6 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	if err != nil {
 		return nil, err
 	}
-
-	// todo remove copy if something went wrong
-	// defer func() {
-	// 	fmt.Print("defer")
-	// 	if err != nil {
-	// 		fmt.Print("ERROR")
-	// 	}
-	// }()
 
 	// cheat unit tests
 	obj.modTime = srcObj.modTime
@@ -830,7 +817,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	}
 
   if icloud.Session.Requires2FA() {
-    return nil, errors.New("Trust token expired, please reauth")
+    return nil, errors.New("trust token expired, please reauth")
   }
 
 	root = strings.Trim(root, "/")
@@ -838,7 +825,6 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		name:   name,
 		root:   root,
 		icloud: icloud,
-		// rootID: "FOLDER::com.apple.CloudDocs::root",
 		rootID: "root",
 		opt:    *opt,
 		pacer:  fs.NewPacer(ctx, pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant))),
@@ -1040,16 +1026,12 @@ func (o *Object) Remove(ctx context.Context) error {
 		return err
 	}
 
-	// flush everything from the left of the dir so we get new etags
-	//o.fs.dirCache.FlushDir("")
-
 	return nil
 }
 
 // SetModTime implements fs.Object.
 func (o *Object) SetModTime(ctx context.Context, t time.Time) error {
 	return fs.ErrorCantSetModTime
-	//return o.fs.setModTime(ctx, o.id, t)
 }
 
 // Size implements fs.Object.
@@ -1156,24 +1138,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	return nil
 }
 
-// type uploadInfo struct {
-// 	blb         *blockblob.Client
-// 	httpHeaders blob.HTTPHeaders
-// 	isDirMarker bool
-// }
-
-// func (o *Object) uploadMultipart(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (ui uploadInfo, err error) {
-// 	chunkWriter, err := multipart.UploadMultipart(ctx, src, in, multipart.UploadMultipartOptions{
-// 		Open:        o.fs,
-// 		OpenOptions: options,
-// 	})
-// 	if err != nil {
-// 		return ui, err
-// 	}
-// 	return chunkWriter.(*azChunkWriter).ui, nil
-// }
-
-// Check the interfaces are satisfied
+// Check the intergfaces are satisfied
 var (
 	_ fs.Fs              = &Fs{}
 	_ fs.Mover           = (*Fs)(nil)

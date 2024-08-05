@@ -84,11 +84,6 @@ func (d *DriveService) GetItemsByDriveID(ctx context.Context, ids []string, incl
 		return nil, resp, err
 	}
 
-	//if items[0].Status != statusOk {
-	//  	err = newRequestErrorf(items[0].Status, "unknown inner status for: %s %s", opts.Method, resp.Request.URL)
-	//return nil, resp, fmt.Errorf("%s %s failed, status %s", opts.Method, resp.Request.URL, items[0].Status)
-	//}
-
 	return items, resp, err
 }
 
@@ -305,49 +300,10 @@ func (d *DriveService) MoveItemToTrashByID(ctx context.Context, drivewsid, etag 
 		}
 
 		err = newRequestError(item.Items[0].Status, "unknown request status")
-		//return nil, resp, fmt.Errorf("%s %s failed, inner_status %s", opts.Method, resp.Request.URL, item.Items[0].Status)
 	}
 
 	return item.Items[0], resp, err
 }
-
-// func (d *DriveService) EmptyTrash(ctx context.Context, drivewsid, etag string, force bool) (*DriveItem, *http.Response, error) {
-// 	values := map[string]any{
-// 		"items": []map[string]any{{
-// 			"drivewsid": drivewsid,
-// 			"etag":      etag,
-// 			"clientId":  drivewsid,
-// 		}}}
-
-// 	body, _ := IntoReader(values)
-// 	opts := rest.Opts{
-// 		Method:       "POST",
-// 		Path:         "/moveItemsToTrash",
-// 		ExtraHeaders: d.icloud.Session.GetHeaders(map[string]string{}),
-// 		RootURL:      d.endpoint,
-// 		Body:         body,
-// 	}
-
-// 	item := struct {
-// 		Items []*DriveItem `json:"items"`
-// 	}{}
-// 	resp, err := d.icloud.Session.Request(ctx, opts, nil, &item)
-
-// 	if err != nil {
-// 		return nil, resp, err
-// 	}
-
-// 	if item.Items[0].Status != statusOk {
-// 		// rerun with latest etag
-// 		if force && item.Items[0].Status == "ETAG_CONFLICT" {
-// 			return d.MoveItemToTrashByID(ctx, drivewsid, item.Items[0].Etag, false)
-// 		}
-
-// 		return nil, resp, fmt.Errorf("%s %s failed, status %s", opts.Method, resp.Request.URL, item.Items[0].Status)
-// 	}
-
-// 	return item.Items[0], resp, err
-// }
 
 // CreateNewFolderByItemID creates a new folder by item ID.
 func (d *DriveService) CreateNewFolderByItemID(ctx context.Context, id, name string) (*DriveItem, *http.Response, error) {
@@ -606,7 +562,7 @@ func (d *DriveService) UpdateFile(ctx context.Context, r *UpdateFileInfo) (*Driv
 		Name:         doc.Name,
 		Size:         doc.Size,
 	}
-	// driveId := "FILE::com.apple.CloudDocs::" + responseInfo.Results[0].Document.DocumentID
+
 	return &item, resp, err
 }
 

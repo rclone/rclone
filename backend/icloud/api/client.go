@@ -20,7 +20,6 @@ const (
 	homeEndpoint  = "https://www.icloud.com"
 	setupEndpoint = "https://setup.icloud.com/setup/ws/1"
 	authEndpoint  = "https://idmsa.apple.com/appleauth/auth"
-	clientID      = "e9f98057fb916de2bbd755ef280d7257146a76e5118f27ab2e9a3d065c20c17e"
 )
 
 type sessionSave func(*Session)
@@ -103,27 +102,24 @@ func (c *Client) RequestNoReAuth(ctx context.Context, opts rest.Opts, request in
 
 // Authenticate authenticates the client with the iCloud API.
 func (c *Client) Authenticate(ctx context.Context) error {
-	{
-
-		if c.Session.Cookies != nil {
-			if err := c.Session.ValidateSession(ctx); err == nil {
-				fs.Debugf("icloud", "Valid session, no need to reauth")
-				return nil
-			}
-			c.Session.Cookies = nil
+	if c.Session.Cookies != nil {
+		if err := c.Session.ValidateSession(ctx); err == nil {
+			fs.Debugf("icloud", "Valid session, no need to reauth")
+			return nil
 		}
-
-		fs.Debugf("icloud", "Authenticating as %s\n", c.appleID)
-		err := c.Session.SignIn(ctx, c.appleID, c.password)
-
-		if err == nil {
-			err = c.Session.AuthWithToken(ctx)
-			if err == nil && c.sessionSaveCallback != nil {
-				c.sessionSaveCallback(c.Session)
-			}
-		}
-		return err
+		c.Session.Cookies = nil
 	}
+
+	fs.Debugf("icloud", "Authenticating as %s\n", c.appleID)
+	err := c.Session.SignIn(ctx, c.appleID, c.password)
+
+	if err == nil {
+		err = c.Session.AuthWithToken(ctx)
+		if err == nil && c.sessionSaveCallback != nil {
+			c.sessionSaveCallback(c.Session)
+		}
+	}
+	return err
 }
 
 // SignIn signs in the client using the provided context and credentials.
