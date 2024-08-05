@@ -38,7 +38,7 @@ Apple ID.
 Enter a value.
 apple_id> APPLEID  
 Option password.
-Your password for rclone (generate one at https://app.koofr.net/app/admin/preferences/password).
+Your Apple ID password.
 Choose an alternative below.
 y) Yes, type in my own password
 g) Generate random password
