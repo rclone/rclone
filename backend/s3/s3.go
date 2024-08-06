@@ -3091,6 +3091,9 @@ func (f *Fs) setUploadCutoff(cs fs.SizeSuffix) (old fs.SizeSuffix, err error) {
 }
 
 func (f *Fs) setCopyCutoff(cs fs.SizeSuffix) (old fs.SizeSuffix, err error) {
+	if f.opt.CopyCutoff == math.MaxInt64 {
+		return f.opt.CopyCutoff, fmt.Errorf("--s3-copy-cutoff not supported: %w", fs.ErrorNotImplemented)
+	}
 	err = checkUploadChunkSize(cs)
 	if err == nil {
 		old, f.opt.CopyCutoff = f.opt.CopyCutoff, cs
@@ -3234,6 +3237,10 @@ func setQuirks(opt *Options) {
 		useMultipartEtag = false
 		useAlreadyExists = false
 		// useMultipartUploads = false - set this manually
+		// rclone serve doesn't support multi-part server side copy:
+		// See: https://github.com/rclone/rclone/issues/7454
+		// So make cutoff very large which it does support
+		opt.CopyCutoff = math.MaxInt64
 	case "Scaleway":
 		// Scaleway can only have 1000 parts in an upload
 		if opt.MaxUploadParts > 1000 {
