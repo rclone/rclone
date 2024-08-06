@@ -60,6 +60,16 @@ func (f *Fs) InternalTestMetadata(t *testing.T) {
 		// "tier" - read only
 		// "btime" - read only
 	}
+	// Cloudflare insists on decompressing `Content-Encoding: gzip` unless
+	// `Cache-Control: no-transform` is supplied. This is a deviation from
+	// AWS but we fudge the tests here rather than breaking peoples
+	// expectations of what Cloudflare does.
+	//
+	// This can always be overridden by using
+	// `--header-upload "Cache-Control: no-transform"`
+	if f.opt.Provider == "Cloudflare" {
+		metadata["cache-control"] = "no-transform"
+	}
 	obj := fstests.PutTestContentsMetadata(ctx, t, f, &item, true, contents, true, "text/html", metadata)
 	defer func() {
 		assert.NoError(t, obj.Remove(ctx))
