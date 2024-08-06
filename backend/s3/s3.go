@@ -44,6 +44,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 	"github.com/aws/smithy-go"
+	"github.com/aws/smithy-go/logging"
 	"github.com/aws/smithy-go/middleware"
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 
@@ -2616,6 +2617,27 @@ knows about - please make a bug report if not.
 `,
 			Default:  fs.Tristate{},
 			Advanced: true,
+		}, {
+			Name: "sdk_log_mode",
+			Help: strings.ReplaceAll(`Set to debug the SDK
+
+This can be set to a comma separated list of the following functions:
+
+- |Signing|
+- |Retries|
+- |Request|
+- |RequestWithBody|
+- |Response|
+- |ResponseWithBody|
+- |DeprecatedUsage|
+- |RequestEventMessage|
+- |ResponseEventMessage|
+
+Use |Off| to disable and |All| to set all log levels. You will need to
+use |-vv| to see the debug level logs.
+`, "|", "`"),
+			Default:  sdkLogMode(0),
+			Advanced: true,
 		},
 		}})
 }
@@ -2634,6 +2656,27 @@ const (
 	minSleep            = 10 * time.Millisecond           // In case of error, start at 10ms sleep.
 	maxExpireDuration   = fs.Duration(7 * 24 * time.Hour) // max expiry is 1 week
 )
+
+type (
+	sdkLogMode        = fs.Bits[sdkLogModeChoices]
+	sdkLogModeChoices struct{}
+)
+
+func (sdkLogModeChoices) Choices() []fs.BitsChoicesInfo {
+	return []fs.BitsChoicesInfo{
+		{Bit: uint64(0), Name: "Off"},
+		{Bit: uint64(aws.LogSigning), Name: "Signing"},
+		{Bit: uint64(aws.LogRetries), Name: "Retries"},
+		{Bit: uint64(aws.LogRequest), Name: "Request"},
+		{Bit: uint64(aws.LogRequestWithBody), Name: "RequestWithBody"},
+		{Bit: uint64(aws.LogResponse), Name: "Response"},
+		{Bit: uint64(aws.LogResponseWithBody), Name: "ResponseWithBody"},
+		{Bit: uint64(aws.LogDeprecatedUsage), Name: "DeprecatedUsage"},
+		{Bit: uint64(aws.LogRequestEventMessage), Name: "RequestEventMessage"},
+		{Bit: uint64(aws.LogResponseEventMessage), Name: "ResponseEventMessage"},
+		{Bit: math.MaxUint64, Name: "All"},
+	}
+}
 
 // globals
 var (
@@ -2747,6 +2790,7 @@ type Options struct {
 	UseAlreadyExists      fs.Tristate          `config:"use_already_exists"`
 	UseMultipartUploads   fs.Tristate          `config:"use_multipart_uploads"`
 	UseUnsignedPayload    fs.Tristate          `config:"use_unsigned_payload"`
+	SDKLogMode            sdkLogMode           `config:"sdk_log_mode"`
 }
 
 // Fs represents a remote s3 server
@@ -3001,6 +3045,20 @@ func fixupGCS(o *s3.Options) {
 	})
 }
 
+// A logger for the S3 SDK
+type s3logger struct{}
+
+// Logf is expected to support the standard fmt package "verbs".
+func (s3logger) Logf(classification logging.Classification, format string, v ...interface{}) {
+	switch classification {
+	default:
+	case logging.Debug:
+		fs.Debugf("S3 SDK", format, v...)
+	case logging.Warn:
+		fs.Infof("S3 SDK", format, v...)
+	}
+}
+
 // s3Connection makes a connection to s3
 func s3Connection(ctx context.Context, opt *Options, client *http.Client) (s3Client *s3.Client, err error) {
 	ci := fs.GetConfig(ctx)
@@ -3091,6 +3149,12 @@ func s3Connection(ctx context.Context, opt *Options, client *http.Client) (s3Cli
 		options = append(options, func(o *s3.Options) {
 			fixupGCS(o)
 		})
+	}
+
+	// Enable SDK logging if requested
+	if opt.SDKLogMode != 0 {
+		awsConfig.ClientLogMode = aws.ClientLogMode(opt.SDKLogMode)
+		awsConfig.Logger = s3logger{}
 	}
 
 	c := s3.NewFromConfig(awsConfig, options...)
