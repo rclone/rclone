@@ -57,7 +57,7 @@ require (
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2
 	github.com/prometheus/client_golang v1.19.1
 	github.com/putdotio/go-putio/putio v0.0.0-20200123120452-16d982cac2b8
-	github.com/rclone/gofakes3 v0.0.3-0.20240716093803-d6abc178be56
+	github.com/rclone/gofakes3 v0.0.3-0.20240807151802-e80146f8de87
 	github.com/rfjakob/eme v1.1.2
 	github.com/rivo/uniseg v0.4.7
 	github.com/rogpeppe/go-internal v1.12.0
@@ -104,7 +104,6 @@ require (
 	github.com/akavel/rsrc v0.10.2 // indirect
 	github.com/anacrolix/generics v0.0.1 // indirect
 	github.com/andybalholm/cascadia v1.3.2 // indirect
-	github.com/aws/aws-sdk-go v1.54.19 // indirect
 	github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.6.3 // indirect
 	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.16.11 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/configsources v1.3.15 // indirect
