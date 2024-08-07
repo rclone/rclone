@@ -100,8 +100,6 @@ func (s *Session) SignIn(ctx context.Context, appleID, password string) error {
 
 // AuthWithToken authenticates the session
 func (s *Session) AuthWithToken(ctx context.Context) error {
-	//fmt.Printf("%s", srv);
-
 	values := map[string]any{
 		"accountCountryCode": s.AccountCountry,
 		"dsWebAuthToken":     s.SessionToken,

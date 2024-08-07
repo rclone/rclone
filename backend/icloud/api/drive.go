@@ -70,7 +70,6 @@ func (d *DriveService) GetItemsByDriveID(ctx context.Context, ids []string, incl
 		path = "/retrieveItemDetailsInFolders"
 	}
 
-	// body, _ := IntoReader(values)
 	opts := rest.Opts{
 		Method:       "POST",
 		Path:         path,
@@ -185,7 +184,7 @@ func (d *DriveService) GetItemsInFolder(ctx context.Context, id string, limit in
 		RootURL:      d.docsEndpoint,
 		Parameters:   values,
 	}
-	//var items []*DriveItem
+
 	items := struct {
 		Items []*DriveItemRaw `json:"drive_item"`
 	}{}
@@ -356,7 +355,6 @@ func (d *DriveService) RenameItemByItemID(ctx context.Context, id, etag, name st
 
 // RenameItemByDriveID renames a DriveItem by its drive ID.
 func (d *DriveService) RenameItemByDriveID(ctx context.Context, id, etag, name string, force bool) (*DriveItem, *http.Response, error) {
-	// split := strings.Split(name, ".")
 	values := map[string]any{
 		"items": []map[string]any{{
 			"drivewsid": id,

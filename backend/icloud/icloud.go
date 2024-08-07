@@ -305,14 +305,12 @@ func (f *Fs) listAll(ctx context.Context, dirID string) (items []*api.DriveItem,
 		return nil, err
 	}
 
-	// var driveItems []*api.DriveItemRaw
 	for _, i := range itemsRaw {
 		item := i.IntoDriveItem()
 		item.Name = f.opt.Enc.ToStandardName(item.Name)
 		item.Extension = f.opt.Enc.ToStandardName(item.Extension)
 		items = append(items, item)
 	}
-	//fs.PrettyPrint(items, "ERR", fs.LogLevelInfo)
 
 	return items, nil
 }
@@ -346,14 +344,12 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 
 // Mkdir implements fs.Fs.
 func (f *Fs) Mkdir(ctx context.Context, dir string) error {
-	// _, err := f.dirCache.FindDir(ctx, dir, true)
 	_, _, err := f.FindDir(ctx, dir, true)
 	return err
 }
 
 // Name implements fs.Fs.
 func (f *Fs) Name() string {
-	// fs.Debugf("Name:", f.name)
 	return f.name
 }
 
@@ -640,7 +636,7 @@ func (f *Fs) move(ctx context.Context, ID, srcDirectoryID, srcLeaf, srcEtag, dst
 	var resp *http.Response
 	var item *api.DriveItem
 	var err error
-	//fmt.Println("MOVE")
+
 	// move
 	if srcDirectoryID != dstDirectoryID {
 		if err = f.pacer.Call(func() (bool, error) {
@@ -685,8 +681,6 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	if err != nil {
 		return nil, err
 	}
-
-	//fmt.Println("MOVE", srcObj.Remote(), srcLeaf, remote, dstLeaf, f.root)
 
 	item, err := f.move(ctx, srcObj.id, srcDirectoryID, srcLeaf, srcObj.etag, dstDirectoryID, dstLeaf)
 	if err != nil {
@@ -738,8 +732,6 @@ var retryErrorCodes = []int{
 }
 
 func shouldRetry(ctx context.Context, resp *http.Response, err error) (bool, error) {
-	//PrettyPrint
-	//fs.PrettyPrint(resp, "resp", fs.LogLevelDebug)
 	if fserrors.ContextError(ctx, &err) {
 		return false, err
 	}
@@ -751,10 +743,8 @@ func ignoreResultUnknown(ctx context.Context, resp *http.Response, err error) (b
 	if requestError, ok := err.(*api.RequestError); ok {
 		if requestError.Status == "unknown" {
 			fs.Debugf(requestError, " ignoring.")
-			//time.Sleep(1 * time.Second)
 			return false, nil
 		}
-		//fs.Debugf(requestError, "Response returned not ok state.")
 	}
 	return shouldRetry(ctx, resp, err)
 }
@@ -763,20 +753,14 @@ func retryResultUnknown(ctx context.Context, resp *http.Response, err error) (bo
 	if requestError, ok := err.(*api.RequestError); ok {
 		if requestError.Status == "unknown" {
 			fs.Debugf(requestError, " retrying.")
-			//time.Sleep(1 * time.Second)
 			return true, err
 		}
-		//fs.Debugf(requestError, "Response returned not ok state.")
 	}
 	return shouldRetry(ctx, resp, err)
 }
 
 // NewFs constructs an Fs from the path, container:path
 func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, error) {
-
-	// pacer is not used in NewFs()
-	//_mapper = m
-
 	// Parse config into Options struct
 	opt := new(Options)
 	err := configstruct.Set(m, opt)
@@ -806,8 +790,6 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		opt.AppleID,
 		opt.Password,
 		opt.TrustToken,
-		//nil,
-		//nil,
 		cookies,
 		callback,
 	)
@@ -867,7 +849,6 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 			return nil, err
 		}
 
-		// f.features.Fill(ctx, &tempF)
 		f.dirCache = tempF.dirCache
 		f.root = tempF.root
 		// return an error with an fs which points to the parent
@@ -935,7 +916,6 @@ func (f *Fs) readMetaData(ctx context.Context, path string) (item *api.DriveItem
 	}
 
 	if !found {
-		//fmt.Println("nout found", path, ID, leaf)
 		return nil, fs.ErrorObjectNotFound
 	}
 
@@ -1146,7 +1126,6 @@ var (
 	_ fs.DirMover        = (*Fs)(nil)
 	_ fs.DirCacheFlusher = (*Fs)(nil)
 	_ fs.Copier          = (*Fs)(nil)
-	// _ fs.CleanUpper      = (*Fs)(nil)
 	_ fs.Object = &Object{}
 	_ fs.IDer   = (*Object)(nil)
 )
