@@ -3,17 +3,6 @@ package s3
 
 //go:generate go run gen_setfrom.go -o setfrom.go
 
-/*
-   SDK v2 conversion
-
-   Changes
-   - `--s3-sts-endpoint` is no longer supported
-
-   Untested
-   - v2auth
-   - fancy auth in ec2, kubernetes etc
-*/
-
 import (
 	"context"
 	"crypto/md5"
@@ -3515,6 +3504,9 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 			return nil, fmt.Errorf("s3: Could not decode sse_customer_key_base64: %w", err)
 		}
 		opt.SSECustomerKey = string(decoded)
+	} else {
+		// Encode the raw key as base64
+		opt.SSECustomerKeyBase64 = base64.StdEncoding.EncodeToString([]byte(opt.SSECustomerKey))
 	}
 	if opt.SSECustomerKey != "" && opt.SSECustomerKeyMD5 == "" {
 		// calculate CustomerKeyMD5 if not supplied
@@ -4594,9 +4586,9 @@ func (f *Fs) copy(ctx context.Context, req *s3.CopyObjectInput, dstBucket, dstPa
 		req.SSECustomerAlgorithm = &f.opt.SSECustomerAlgorithm
 		req.CopySourceSSECustomerAlgorithm = &f.opt.SSECustomerAlgorithm
 	}
-	if f.opt.SSECustomerKey != "" {
-		req.SSECustomerKey = &f.opt.SSECustomerKey
-		req.CopySourceSSECustomerKey = &f.opt.SSECustomerKey
+	if f.opt.SSECustomerKeyBase64 != "" {
+		req.SSECustomerKey = &f.opt.SSECustomerKeyBase64
+		req.CopySourceSSECustomerKey = &f.opt.SSECustomerKeyBase64
 	}
 	if f.opt.SSECustomerKeyMD5 != "" {
 		req.SSECustomerKeyMD5 = &f.opt.SSECustomerKeyMD5
@@ -5528,8 +5520,8 @@ func (f *Fs) headObject(ctx context.Context, req *s3.HeadObjectInput) (resp *s3.
 	if f.opt.SSECustomerAlgorithm != "" {
 		req.SSECustomerAlgorithm = &f.opt.SSECustomerAlgorithm
 	}
-	if f.opt.SSECustomerKey != "" {
-		req.SSECustomerKey = &f.opt.SSECustomerKey
+	if f.opt.SSECustomerKeyBase64 != "" {
+		req.SSECustomerKey = &f.opt.SSECustomerKeyBase64
 	}
 	if f.opt.SSECustomerKeyMD5 != "" {
 		req.SSECustomerKeyMD5 = &f.opt.SSECustomerKeyMD5
@@ -5767,8 +5759,8 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 	if o.fs.opt.SSECustomerAlgorithm != "" {
 		req.SSECustomerAlgorithm = &o.fs.opt.SSECustomerAlgorithm
 	}
-	if o.fs.opt.SSECustomerKey != "" {
-		req.SSECustomerKey = &o.fs.opt.SSECustomerKey
+	if o.fs.opt.SSECustomerKeyBase64 != "" {
+		req.SSECustomerKey = &o.fs.opt.SSECustomerKeyBase64
 	}
 	if o.fs.opt.SSECustomerKeyMD5 != "" {
 		req.SSECustomerKeyMD5 = &o.fs.opt.SSECustomerKeyMD5
@@ -6322,8 +6314,8 @@ func (o *Object) prepareUpload(ctx context.Context, src fs.ObjectInfo, options [
 	if o.fs.opt.SSECustomerAlgorithm != "" {
 		ui.req.SSECustomerAlgorithm = &o.fs.opt.SSECustomerAlgorithm
 	}
-	if o.fs.opt.SSECustomerKey != "" {
-		ui.req.SSECustomerKey = &o.fs.opt.SSECustomerKey
+	if o.fs.opt.SSECustomerKeyBase64 != "" {
+		ui.req.SSECustomerKey = &o.fs.opt.SSECustomerKeyBase64
 	}
 	if o.fs.opt.SSECustomerKeyMD5 != "" {
 		ui.req.SSECustomerKeyMD5 = &o.fs.opt.SSECustomerKeyMD5
