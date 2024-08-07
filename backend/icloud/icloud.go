@@ -820,7 +820,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	f.service, _ = icloud.DriveService()
 
 	f.dirCache = dircache.New(
-		root, /* root folder path */
+		root,
 		rootID,
 		f,
 	)
@@ -929,7 +929,6 @@ func (o *Object) setMetaData(item *api.DriveItem) (err error) {
 	o.size = item.Size
 	o.modTime = item.DateModified
 	o.createdTime = item.DateCreated
-	// we use the item id.
 	o.id = item.Itemid
 	o.itemID = item.Itemid
 	o.etag = item.Etag
@@ -961,7 +960,7 @@ func (o *Object) ModTime(context.Context) time.Time {
 func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadCloser, error) {
 	fs.FixRangeOption(options, o.size)
 
-	// drive doesnt support empty files, so we cheat
+	// Drive does not support empty files, so we cheat
 	if o.size == 0 {
 		return io.NopCloser(bytes.NewBufferString("")), nil
 	}
@@ -972,7 +971,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 	if err = o.fs.pacer.Call(func() (bool, error) {
 		var doc *api.Document
 		var url string
-		// Cant get the download url on a item to work, so do it the hard way.
+		// Can not get the download url on a item to work, so do it the hard way.
 		if o.docID == "" {
 			doc, resp, err = o.fs.service.GetDocByItemID(ctx, o.id)
 			url, _, err = o.fs.service.GetDownloadURLByDriveID(ctx, doc.DriveID())
@@ -1060,7 +1059,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	name := o.fs.opt.Enc.FromStandardName(leaf)
 	var resp *http.Response
 
-	// create a bew document
+	// Create document
 	var uploadInfo *api.UploadResponse
 	if err = o.fs.pacer.Call(func() (bool, error) {
 		uploadInfo, resp, err = o.fs.service.CreateUpload(ctx, size, name)
@@ -1069,7 +1068,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		return err
 	}
 
-	// upload content
+	// Upload content
 	var upload *api.SingleFileResponse
 	if err = o.fs.pacer.Call(func() (bool, error) {
 		upload, resp, err = o.fs.service.Upload(ctx, in, size, name, uploadInfo.URL)
@@ -1098,7 +1097,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	r.Mtime = modTime.Unix() * 1000
 	r.Btime = modTime.Unix() * 1000
 
-	// update metadata
+	// Update metadata
 	var item *api.DriveItem
 	if err = o.fs.pacer.Call(func() (bool, error) {
 		item, resp, err = o.fs.service.UpdateFile(ctx, &r)
@@ -1118,7 +1117,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	return nil
 }
 
-// Check the intergfaces are satisfied
+// Check interfaces are satisfied
 var (
 	_ fs.Fs              = &Fs{}
 	_ fs.Mover           = (*Fs)(nil)
