@@ -222,9 +222,10 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		pacer:           fs.NewPacer(ctx, pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant))),
 	}
 	f.features = (&fs.Features{
-		CaseInsensitive:         true,
-		CanHaveEmptyDirectories: true,
-		ReadMimeType:            true,
+		CaseInsensitive:          true,
+		CanHaveEmptyDirectories:  true,
+		ReadMimeType:             true,
+		DirModTimeUpdatesOnWrite: true,
 	}).Fill(ctx, f)
 
 	if f.root != "" {
@@ -431,6 +432,15 @@ func (f *Fs) mkParentDir(ctx context.Context, remote string) error {
 // Mkdir creates the container if it doesn't exist
 func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 	return f.mkdir(ctx, f.absPath(dir))
+}
+
+// DirSetModTime sets the directory modtime for dir
+func (f *Fs) DirSetModTime(ctx context.Context, dir string, modTime time.Time) error {
+	o := Object{
+		fs:     f,
+		remote: dir,
+	}
+	return o.SetModTime(ctx, modTime)
 }
 
 // purgeCheck removes the root directory, if check is set then it
@@ -714,15 +724,16 @@ func (o *Object) Size() int64 {
 }
 
 // setMetaData sets the metadata from info
-func (o *Object) setMetaData(file *files_sdk.File) (err error) {
-	if file.IsDir() {
-		return fs.ErrorIsDir
-	}
-	o.size = file.Size
-	o.crc32 = file.Crc32
-	o.md5 = file.Md5
-	o.mimeType = file.MimeType
+func (o *Object) setMetaData(file *files_sdk.File) error {
 	o.modTime = file.ModTime()
+
+	if !file.IsDir() {
+		o.size = file.Size
+		o.crc32 = file.Crc32
+		o.md5 = file.Md5
+		o.mimeType = file.MimeType
+	}
+
 	return nil
 }
 
@@ -736,6 +747,9 @@ func (o *Object) readMetaData(ctx context.Context) (err error) {
 			return fs.ErrorObjectNotFound
 		}
 		return err
+	}
+	if file.IsDir() {
+		return fs.ErrorIsDir
 	}
 	return o.setMetaData(file)
 }
