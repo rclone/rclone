@@ -5,9 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"log/slog"
 	"os"
-
-	"github.com/sirupsen/logrus"
 )
 
 // LogLevel describes rclone's logs.  These are a subset of the syslog log levels.
@@ -34,6 +33,78 @@ const (
 	LogLevelInfo   // Transfers, needs -v
 	LogLevelDebug  // Debug level, needs -vv
 )
+
+const (
+	slogLevelEmergency = slog.Level(11)
+	slogLevelAlert     = slog.Level(10)
+	slogLevelCritical  = slog.Level(9)
+	slogLevelError     = slog.LevelError
+	slogLevelWarning   = slog.LevelWarn
+	slogLevelNotice    = slog.Level(-2)
+	slogLevelInfo      = slog.LevelInfo
+	slogLevelDebug     = slog.LevelDebug
+)
+
+// getSlogLogger will return the configured slog logger for the application
+func getSlogLogger() *slog.Logger {
+	jh := slog.NewJSONHandler(
+		os.Stdout,
+		&slog.HandlerOptions{
+			AddSource: false,
+			Level:     slogLevelInfo,
+			ReplaceAttr: func(groups []string, a slog.Attr) slog.Attr {
+				if a.Key == slog.LevelKey {
+					// handle custom log levels
+					level := a.Value.Any().(slog.Level)
+
+					switch level {
+					case slogLevelEmergency, slogLevelAlert:
+						a.Value = slog.StringValue("PANIC")
+					case slogLevelCritical:
+						a.Value = slog.StringValue("FATAL")
+					case slogLevelError:
+						a.Value = slog.StringValue("ERROR")
+					case slogLevelNotice, slogLevelWarning:
+						a.Value = slog.StringValue("WARN")
+					case slogLevelInfo:
+						a.Value = slog.StringValue("INFO")
+					case slogLevelDebug:
+						a.Value = slog.StringValue("DEBUG")
+					default:
+						a.Value = slog.StringValue("PANIC")
+					}
+				}
+				return a
+			},
+		},
+	)
+	return slog.New(jh)
+}
+
+// LogLevelsToSlogLevels will convert given LogLevel to slog.Level
+// default is slog.InfoLevel
+func LogLevelsToSlogLevels(l LogLevel) slog.Level {
+	switch l {
+	case LogLevelEmergency:
+		return slogLevelEmergency
+	case LogLevelAlert:
+		return slogLevelAlert
+	case LogLevelCritical:
+		return slogLevelCritical
+	case LogLevelError:
+		return slogLevelError
+	case LogLevelWarning:
+		return slogLevelWarning
+	case LogLevelNotice:
+		return slogLevelNotice
+	case LogLevelInfo:
+		return slogLevelInfo
+	case LogLevelDebug:
+		return slogLevelDebug
+	default:
+		return slogLevelInfo
+	}
+}
 
 type logLevelChoices struct{}
 
@@ -71,9 +142,9 @@ var LogPrint = func(level LogLevel, text string) {
 
 // LogValueItem describes keyed item for a JSON log entry
 type LogValueItem struct {
-	key    string
-	value  interface{}
-	render bool
+	Key    string
+	Value  interface{}
+	Render bool
 }
 
 // LogValue should be used as an argument to any logging calls to
@@ -81,7 +152,7 @@ type LogValueItem struct {
 //
 // key is the dictionary parameter used to store value.
 func LogValue(key string, value interface{}) LogValueItem {
-	return LogValueItem{key: key, value: value, render: true}
+	return LogValueItem{Key: key, Value: value, Render: true}
 }
 
 // LogValueHide should be used as an argument to any logging calls to
@@ -92,53 +163,40 @@ func LogValue(key string, value interface{}) LogValueItem {
 // String() will return a blank string - this is useful to put items
 // in which don't print into the log.
 func LogValueHide(key string, value interface{}) LogValueItem {
-	return LogValueItem{key: key, value: value, render: false}
+	return LogValueItem{Key: key, Value: value, Render: false}
 }
 
 // String returns the representation of value. If render is fals this
 // is an empty string so LogValueItem entries won't show in the
 // textual representation of logs.
 func (j LogValueItem) String() string {
-	if !j.render {
+	if !j.Render {
 		return ""
 	}
-	if do, ok := j.value.(fmt.Stringer); ok {
+	if do, ok := j.Value.(fmt.Stringer); ok {
 		return do.String()
 	}
-	return fmt.Sprint(j.value)
+	return fmt.Sprint(j.Value)
 }
 
 // LogPrintf produces a log string from the arguments passed in
-func LogPrintf(level LogLevel, o interface{}, text string, args ...interface{}) {
+var LogPrintf = func(level LogLevel, o interface{}, text string, args ...interface{}) {
 	out := fmt.Sprintf(text, args...)
+	slog.SetDefault(getSlogLogger())
 
 	if GetConfig(context.TODO()).UseJSONLog {
-		fields := logrus.Fields{}
+		// for all the args + the 'object' and 'objectType' attr
+		fields := make([]slog.Attr, 0, len(args)+2)
 		if o != nil {
-			fields = logrus.Fields{
-				"object":     fmt.Sprintf("%+v", o),
-				"objectType": fmt.Sprintf("%T", o),
-			}
+			fields = append(fields, slog.String("object", fmt.Sprintf("%+v", o)))
+			fields = append(fields, slog.String("objectType", fmt.Sprintf("%T", o)))
 		}
 		for _, arg := range args {
 			if item, ok := arg.(LogValueItem); ok {
-				fields[item.key] = item.value
+				fields = append(fields, slog.Any(item.Key, item.Value))
 			}
 		}
-		switch level {
-		case LogLevelDebug:
-			logrus.WithFields(fields).Debug(out)
-		case LogLevelInfo:
-			logrus.WithFields(fields).Info(out)
-		case LogLevelNotice, LogLevelWarning:
-			logrus.WithFields(fields).Warn(out)
-		case LogLevelError:
-			logrus.WithFields(fields).Error(out)
-		case LogLevelCritical:
-			logrus.WithFields(fields).Fatal(out)
-		case LogLevelEmergency, LogLevelAlert:
-			logrus.WithFields(fields).Panic(out)
-		}
+		slog.LogAttrs(context.TODO(), LogLevelsToSlogLevels(level), "", fields...)
 	} else {
 		if o != nil {
 			out = fmt.Sprintf("%v: %s", o, out)
