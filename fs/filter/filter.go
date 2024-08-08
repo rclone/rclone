@@ -258,7 +258,7 @@ func (f *Filter) addDirGlobs(Include bool, glob string) error {
 		if dirGlob == "/" {
 			continue
 		}
-		dirRe, err := GlobToRegexp(dirGlob, f.Opt.IgnoreCase)
+		dirRe, err := GlobPathToRegexp(dirGlob, f.Opt.IgnoreCase)
 		if err != nil {
 			return err
 		}
@@ -278,7 +278,7 @@ func (f *Filter) Add(Include bool, glob string) error {
 	if strings.Contains(glob, "**") {
 		isDirRule, isFileRule = true, true
 	}
-	re, err := GlobToRegexp(glob, f.Opt.IgnoreCase)
+	re, err := GlobPathToRegexp(glob, f.Opt.IgnoreCase)
 	if err != nil {
 		return err
 	}

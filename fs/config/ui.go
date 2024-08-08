@@ -280,7 +280,7 @@ func ShowRemotes() {
 	fmt.Printf("%-20s %s\n", "Name", "Type")
 	fmt.Printf("%-20s %s\n", "====", "====")
 	for _, remote := range remotes {
-		fmt.Printf("%-20s %s\n", remote, FileGet(remote, "type"))
+		fmt.Printf("%-20s %s\n", remote, GetValue(remote, "type"))
 	}
 }
 
@@ -295,7 +295,7 @@ func ChooseRemote() string {
 // mustFindByName finds the RegInfo for the remote name passed in or
 // exits with a fatal error.
 func mustFindByName(name string) *fs.RegInfo {
-	fsType := FileGet(name, "type")
+	fsType := GetValue(name, "type")
 	if fsType == "" {
 		log.Fatalf("Couldn't find type of fs for %q", name)
 	}
@@ -305,7 +305,7 @@ func mustFindByName(name string) *fs.RegInfo {
 // findByName finds the RegInfo for the remote name passed in or
 // returns an error
 func findByName(name string) (*fs.RegInfo, error) {
-	fsType := FileGet(name, "type")
+	fsType := GetValue(name, "type")
 	if fsType == "" {
 		return nil, fmt.Errorf("couldn't find type of fs for %q", name)
 	}
@@ -333,7 +333,7 @@ func printRemoteOptions(name string, prefix string, sep string, redacted bool) {
 				}
 			}
 		}
-		value := FileGet(name, key)
+		value := GetValue(name, key)
 		if redacted && (isSensitive || isPassword) && value != "" {
 			fmt.Printf("%s%s%sXXX\n", prefix, key, sep)
 		} else if isPassword && value != "" {
@@ -613,7 +613,7 @@ func copyRemote(name string) string {
 	newName := NewRemoteName()
 	// Copy the keys
 	for _, key := range LoadedData().GetKeyList(name) {
-		value := getWithDefault(name, key, "")
+		value, _ := FileGetValue(name, key)
 		LoadedData().SetValue(newName, key, value)
 	}
 	return newName

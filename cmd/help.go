@@ -12,6 +12,7 @@ import (
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config/configflags"
 	"github.com/rclone/rclone/fs/config/flags"
+	"github.com/rclone/rclone/fs/filter"
 	"github.com/rclone/rclone/fs/filter/filterflags"
 	"github.com/rclone/rclone/fs/log/logflags"
 	"github.com/rclone/rclone/fs/rc/rcflags"
@@ -58,19 +59,25 @@ var helpCommand = &cobra.Command{
 }
 
 // to filter the flags with
-var flagsRe *regexp.Regexp
+var (
+	filterFlagsGroup     string
+	filterFlagsRe        *regexp.Regexp
+	filterFlagsNamesOnly bool
+)
 
 // Show the flags
 var helpFlags = &cobra.Command{
-	Use:   "flags [<regexp to match>]",
+	Use:   "flags [<filter>]",
 	Short: "Show the global flags for rclone",
 	Run: func(command *cobra.Command, args []string) {
+		command.Flags()
 		if len(args) > 0 {
-			re, err := regexp.Compile(`(?i)` + args[0])
+			re, err := filter.GlobStringToRegexp(args[0], false)
 			if err != nil {
-				log.Fatalf("Failed to compile flags regexp: %v", err)
+				log.Fatalf("Invalid flag filter: %v", err)
 			}
-			flagsRe = re
+			fs.Debugf(nil, "Flag filter: %s", re.String())
+			filterFlagsRe = re
 		}
 		if GeneratingDocs {
 			Root.SetUsageTemplate(docFlagsTemplate)
@@ -157,7 +164,7 @@ func setupRootCommand(rootCmd *cobra.Command) {
 				fs.Errorf(nil, "Flag --%s is unknown", flag.Name)
 			}
 		})
-		groups := flags.All.Filter(flagsRe).Include(cmd.Annotations["groups"])
+		groups := flags.All.Filter(filterFlagsGroup, filterFlagsRe, filterFlagsNamesOnly).Include(cmd.Annotations["groups"])
 		return groups.Groups
 	})
 	rootCmd.SetUsageTemplate(usageTemplate)
@@ -169,6 +176,9 @@ func setupRootCommand(rootCmd *cobra.Command) {
 
 	rootCmd.AddCommand(helpCommand)
 	helpCommand.AddCommand(helpFlags)
+	helpFlagsFlags := helpFlags.Flags()
+	flags.StringVarP(helpFlagsFlags, &filterFlagsGroup, "group", "", "", "Only include flags from specific group", "")
+	flags.BoolVarP(helpFlagsFlags, &filterFlagsNamesOnly, "name", "", false, "Apply filter only on flag names", "")
 	helpCommand.AddCommand(helpBackends)
 	helpCommand.AddCommand(helpBackend)
 
