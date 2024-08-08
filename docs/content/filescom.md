@@ -9,10 +9,6 @@ versionIntroduced: "v1.68"
 [Files.com](https://www.files.com/) is a cloud storage service that provides a
 secure and easy way to store and share files.
 
-Paths are specified as `remote:path`
-
-Paths may be as deep as required, e.g. `remote:directory/subdirectory`.
-
 The initial setup for filescom involves authenticating with your Files.com
 account. You can do this by providing your site subdomain, username, and
 password. Alternatively, you can authenticate using an API Key from
