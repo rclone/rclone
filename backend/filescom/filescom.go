@@ -113,14 +113,13 @@ type Fs struct {
 //
 // Will definitely have info but maybe not meta
 type Object struct {
-	fs          *Fs       // what this object is part of
-	remote      string    // The remote path
-	hasMetaData bool      // whether info below has been set
-	size        int64     // size of the object
-	crc32       string    // CRC32 of the object content
-	md5         string    // MD5 of the object content
-	mimeType    string    // Content-Type of the object
-	modTime     time.Time // modification time of the object
+	fs       *Fs       // what this object is part of
+	remote   string    // The remote path
+	size     int64     // size of the object
+	crc32    string    // CRC32 of the object content
+	md5      string    // MD5 of the object content
+	mimeType string    // Content-Type of the object
+	modTime  time.Time // modification time of the object
 }
 
 // ------------------------------------------------------------
@@ -206,12 +205,9 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		return nil, err
 	}
 
-	cliCtx, cliCfg := fs.AddConfig(ctx)
-	cliCfg.UserAgent = "Files.com rclone " + strings.TrimSpace(fs.Version)
-
 	root = strings.Trim(root, "/")
 
-	config, err := newClientConfig(cliCtx, opt)
+	config, err := newClientConfig(ctx, opt)
 	if err != nil {
 		return nil, err
 	}
@@ -714,11 +710,6 @@ func (o *Object) Hash(ctx context.Context, t hash.Type) (string, error) {
 
 // Size returns the size of an object in bytes
 func (o *Object) Size() int64 {
-	err := o.readMetaData(context.TODO())
-	if err != nil {
-		fs.Logf(o, "Failed to read metadata: %v", err)
-		return 0
-	}
 	return o.size
 }
 
@@ -727,7 +718,6 @@ func (o *Object) setMetaData(file *files_sdk.File) (err error) {
 	if file.IsDir() {
 		return fs.ErrorIsDir
 	}
-	o.hasMetaData = true
 	o.size = file.Size
 	o.crc32 = file.Crc32
 	o.md5 = file.Md5
@@ -740,9 +730,6 @@ func (o *Object) setMetaData(file *files_sdk.File) (err error) {
 //
 // it also sets the info
 func (o *Object) readMetaData(ctx context.Context) (err error) {
-	if o.hasMetaData {
-		return nil
-	}
 	file, err := o.fs.readMetaDataForPath(ctx, o.remote)
 	if err != nil {
 		if files_sdk.IsNotExist(err) {
@@ -758,11 +745,6 @@ func (o *Object) readMetaData(ctx context.Context) (err error) {
 // It attempts to read the objects mtime and if that isn't present the
 // LastModified returned in the http headers
 func (o *Object) ModTime(ctx context.Context) time.Time {
-	err := o.readMetaData(ctx)
-	if err != nil {
-		fs.Logf(o, "Failed to read metadata: %v", err)
-		return time.Now()
-	}
 	return o.modTime
 }
 
@@ -848,7 +830,7 @@ func isFolderNotEmpty(err error) bool {
 // If existing is set then it updates the object rather than creating a new one.
 //
 // The new object may have been created if an error is returned.
-func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (err error) {
+func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {
 	uploadOpts := []file.UploadOption{
 		file.UploadWithContext(ctx),
 		file.UploadWithReader(in),
@@ -860,14 +842,15 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		uploadOpts = append(uploadOpts, file.UploadWithSize(src.Size()))
 	}
 
-	err = o.fs.fileClient.Upload(uploadOpts...)
+	err := o.fs.pacer.Call(func() (bool, error) {
+		err := o.fs.fileClient.Upload(uploadOpts...)
+		return shouldRetry(ctx, err)
+	})
 	if err != nil {
 		return err
 	}
 
-	o.hasMetaData = false
-	err = o.readMetaData(ctx)
-	return
+	return o.readMetaData(ctx)
 }
 
 // Remove an object
@@ -884,11 +867,6 @@ func (o *Object) Remove(ctx context.Context) error {
 
 // MimeType of an Object if known, "" otherwise
 func (o *Object) MimeType(ctx context.Context) string {
-	err := o.readMetaData(ctx)
-	if err != nil {
-		fs.Logf(o, "Failed to read metadata: %v", err)
-		return ""
-	}
 	return o.mimeType
 }
 
