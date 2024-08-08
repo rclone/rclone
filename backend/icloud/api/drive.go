@@ -470,19 +470,12 @@ func (d *DriveService) CopyDocByItemID(ctx context.Context, itemID string) (*Dri
 
 // CreateUpload creates an url for an upload.
 func (d *DriveService) CreateUpload(ctx context.Context, size int64, name string) (*UploadResponse, *http.Response, error) {
-	// detect MIME type by looking at the filename only
-	mimeType := mime.TypeByExtension(filepath.Ext(name))
-	if mimeType == "" {
-		// api requires a mime type passed in
-		mimeType = "text/plain"
-	}
-
 	// first we need to request an upload url
 	values := map[string]any{
 		"filename":     name,
 		"type":         "FILE",
 		"size":         strconv.FormatInt(size, 10),
-		"content_type": strings.Split(mimeType, ";")[0],
+		"content_type": GetContentTypeForFile(name),
 	}
 	body, _ := IntoReader(values)
 	opts := rest.Opts{
@@ -502,12 +495,6 @@ func (d *DriveService) CreateUpload(ctx context.Context, size int64, name string
 
 // Upload uploads a file to the given url
 func (d *DriveService) Upload(ctx context.Context, in io.Reader, size int64, name, uploadURL string) (*SingleFileResponse, *http.Response, error) {
-	// detect MIME type by looking at the filename only
-	mimeType := mime.TypeByExtension(filepath.Ext(name))
-	if mimeType == "" {
-		// api requires a mime type passed in
-		mimeType = "text/plain"
-	}
 	// TODO: implement multipart upload
 	opts := rest.Opts{
 		Method:        "POST",
@@ -515,7 +502,7 @@ func (d *DriveService) Upload(ctx context.Context, in io.Reader, size int64, nam
 		RootURL:       uploadURL,
 		Body:          in,
 		ContentLength: &size,
-		ContentType:   mimeType,
+		ContentType:   GetContentTypeForFile(name),
 		// MultipartContentName: "files",
 		MultipartFileName: name,
 	}
@@ -882,4 +869,14 @@ func DeconstructDriveID(id string) (docType, zone, docid string) {
 // ConstructDriveID constructs a drive ID from the given components.
 func ConstructDriveID(id string, zone string, t string) string {
 	return strings.Join([]string{t, zone, id}, "::")
+}
+
+func GetContentTypeForFile(name string) string {
+	// detect MIME type by looking at the filename only
+	mimeType := mime.TypeByExtension(filepath.Ext(name))
+	if mimeType == "" {
+		// api requires a mime type passed in
+		mimeType = "text/plain"
+	}
+  return strings.Split(mimeType, ";")[0]
 }

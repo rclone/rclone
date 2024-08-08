@@ -202,6 +202,7 @@ func (s *Session) GetAuthHeaders(overwrite map[string]string) map[string]string 
 		// "Accept": "*.*",
 		"Accept":                           "application/json",
 		"Content-Type":                     "application/json",
+    // static value taken from the icloud web
 		"X-Apple-OAuth-Client-Id":          "d39ba9916b7251055b22c7f910e2ea796ee65e98b2ddecea8f5dde8d9d1a815d",
 		"X-Apple-OAuth-Client-Type":        "firstPartyAuth",
 		"X-Apple-OAuth-Redirect-URI":       "https://www.icloud.com",
