@@ -30,11 +30,11 @@ var (
 func init() {
 	cmd.Root.AddCommand(commandDefinition)
 	cmdFlags := commandDefinition.Flags()
-	flags.BoolVarP(cmdFlags, &listLong, "long", "", false, "Show type, source and description in addition to name", "")
+	flags.BoolVarP(cmdFlags, &listLong, "long", "", false, "Show type and description in addition to name", "")
 	flags.StringVarP(cmdFlags, &filterName, "name", "", "", "Filter remotes by name", "")
 	flags.StringVarP(cmdFlags, &filterType, "type", "", "", "Filter remotes by type", "")
-	flags.StringVarP(cmdFlags, &filterSource, "source", "", "", "filter remotes by source", "")
-	flags.StringVarP(cmdFlags, &filterDescription, "description", "", "", "filter remotes by description", "")
+	flags.StringVarP(cmdFlags, &filterSource, "source", "", "", "Filter remotes by source, e.g. 'file' or 'environment'", "")
+	flags.StringVarP(cmdFlags, &filterDescription, "description", "", "", "Filter remotes by description", "")
 	flags.StringVarP(cmdFlags, &orderBy, "order-by", "", "", "Instructions on how to order the result, e.g. 'type,name=descending'", "")
 	flags.BoolVarP(cmdFlags, &jsonOutput, "json", "", false, "Format output as JSON", "")
 }
@@ -120,9 +120,9 @@ or the remotes matching an optional filter.
 
 Prints the result in human-readable format by default, and as a simple list of
 remote names, or if used with flag ` + "`--long`" + ` a tabular format including
-all attributes of the remotes: name, type, source and description. Using flag
-` + "`--json`" + ` produces machine-readable output instead, which always includes
-all attributes.
+the remote names, types and descriptions. Using flag ` + "`--json`" + ` produces
+machine-readable output instead, which always includes all attributes - including
+the source (file or environment).
 
 Result can be filtered by a filter argument which applies to all attributes,
 and/or filter flags specific for each attribute. The values must be specified
@@ -157,7 +157,6 @@ according to regular rclone filtering pattern syntax.
 		remotes := config.GetRemotes()
 		maxName := 0
 		maxType := 0
-		maxSource := 0
 		i := 0
 		for _, remote := range remotes {
 			include := true
@@ -180,9 +179,6 @@ according to regular rclone filtering pattern syntax.
 				}
 				if len(remote.Type) > maxType {
 					maxType = len(remote.Type)
-				}
-				if len(remote.Source) > maxSource {
-					maxSource = len(remote.Source)
 				}
 				remotes[i] = remote
 				i++
@@ -225,7 +221,7 @@ according to regular rclone filtering pattern syntax.
 			fmt.Println("]")
 		} else if listLong {
 			for _, remote := range remotes {
-				fmt.Printf("%-*s %-*s %-*s %s\n", maxName+1, remote.Name+":", maxType, remote.Type, maxSource, remote.Source, remote.Description)
+				fmt.Printf("%-*s %-*s %s\n", maxName+1, remote.Name+":", maxType, remote.Type, remote.Description)
 			}
 		} else {
 			for _, remote := range remotes {
