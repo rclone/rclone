@@ -41,6 +41,7 @@ docs = [
     "combine.md",
     "dropbox.md",
     "filefabric.md",
+    "filescom.md",
     "ftp.md",
     "googlecloudstorage.md",
     "drive.md",
