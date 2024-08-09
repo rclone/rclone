@@ -8,6 +8,12 @@ tests:
  - path: fs/sync
    fastlist: true
  - path: cmd/bisync
+ - path: cmd/gitannex
+   ignore:
+     # The end-to-end tests have not been ported to `fstest`. See issue #7984.
+     - TestEndToEnd
+     - TestEndToEndMigration
+     - TestEndToEndRepoLayoutCompat
  - path: vfs
  - path: cmd/serve/restic
    localonly: true
