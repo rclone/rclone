@@ -487,3 +487,6 @@ backends:
  - backend:  "ulozto"
    remote:   "TestUlozto:"
    fastlist: false
+ - backend:  "icloud"
+   remote:   "TestICloudDrive:"
+   fastlist: false
