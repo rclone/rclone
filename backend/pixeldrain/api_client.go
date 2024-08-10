@@ -8,6 +8,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"os"
 	"strings"
 	"time"
 
@@ -129,6 +130,20 @@ func apiErrorHandler(resp *http.Response) (err error) {
 	return e
 }
 
+func apiRetry(resp *http.Response, err error) (bool, error) {
+	if resp != nil {
+		if resp.StatusCode == 429 {
+			return true, err
+		} else if resp.StatusCode == 500 {
+			return true, err
+		}
+	}
+	if os.IsTimeout(err) {
+		return true, err
+	}
+	return false, err
+}
+
 func paramsFromMetadata(meta fs.Metadata) (params url.Values) {
 	params = make(url.Values)
 
@@ -162,7 +177,7 @@ func (f *Fs) nodeToObject(node FilesystemNode) (o *Object) {
 }
 
 func (f *Fs) nodeToDirectory(node FilesystemNode) fs.DirEntry {
-	return fs.NewDir(strings.TrimPrefix(node.Path, f.pathPrefix), node.Modified)
+	return fs.NewDir(strings.TrimPrefix(node.Path, f.pathPrefix), node.Modified).SetID(node.ID)
 }
 
 func (f *Fs) escapePath(p string) (out string) {
@@ -187,29 +202,31 @@ func (f *Fs) put(
 	// exist yet
 	params.Set("make_parents", "true")
 
-	resp, err := f.srv.CallJSON(
-		ctx,
-		&rest.Opts{
-			Method:     "PUT",
-			Path:       f.escapePath(path),
-			Body:       body,
-			Parameters: params,
-			Options:    options,
-		},
-		nil,
-		&node,
-	)
-	if err != nil {
-		return node, err
-	}
-	return node, resp.Body.Close()
+	return node, f.pacer.Call(func() (bool, error) {
+		return apiRetry(f.srv.CallJSON(
+			ctx,
+			&rest.Opts{
+				Method:     "PUT",
+				Path:       f.escapePath(path),
+				Body:       body,
+				Parameters: params,
+				Options:    options,
+			},
+			nil,
+			&node,
+		))
+	})
 }
 
 func (f *Fs) read(ctx context.Context, path string, options []fs.OpenOption) (in io.ReadCloser, err error) {
-	resp, err := f.srv.Call(ctx, &rest.Opts{
-		Method:  "GET",
-		Path:    f.escapePath(path),
-		Options: options,
+	var resp *http.Response
+	err = f.pacer.Call(func() (bool, error) {
+		resp, err = f.srv.Call(ctx, &rest.Opts{
+			Method:  "GET",
+			Path:    f.escapePath(path),
+			Options: options,
+		})
+		return apiRetry(resp, err)
 	})
 	if err != nil {
 		return nil, err
@@ -218,79 +235,74 @@ func (f *Fs) read(ctx context.Context, path string, options []fs.OpenOption) (in
 }
 
 func (f *Fs) stat(ctx context.Context, path string) (fsp FilesystemPath, err error) {
-	resp, err := f.srv.CallJSON(
-		ctx,
-		&rest.Opts{
-			Method: "GET",
-			Path:   f.escapePath(path),
-			// To receive node info from the pixeldrain API you need to add the
-			// ?stat query. Without it pixeldrain will return the file contents
-			// in the URL points to a file
-			Parameters: url.Values{"stat": []string{""}},
-		},
-		nil,
-		&fsp,
-	)
-	if err != nil {
-		return fsp, err
-	}
-	return fsp, resp.Body.Close()
+	return fsp, f.pacer.Call(func() (bool, error) {
+		return apiRetry(f.srv.CallJSON(
+			ctx,
+			&rest.Opts{
+				Method: "GET",
+				Path:   f.escapePath(path),
+				// To receive node info from the pixeldrain API you need to add the
+				// ?stat query. Without it pixeldrain will return the file contents
+				// in the URL points to a file
+				Parameters: url.Values{"stat": []string{""}},
+			},
+			nil,
+			&fsp,
+		))
+	})
 }
 
 func (f *Fs) changeLog(ctx context.Context, start, end time.Time) (changeLog ChangeLog, err error) {
-	resp, err := f.srv.CallJSON(
-		ctx,
-		&rest.Opts{
-			Method: "GET",
-			Path:   f.escapePath(""),
-			Parameters: url.Values{
-				"change_log": []string{""},
-				"start":      []string{start.Format(time.RFC3339Nano)},
-				"end":        []string{end.Format(time.RFC3339Nano)},
+	return changeLog, f.pacer.Call(func() (bool, error) {
+		return apiRetry(f.srv.CallJSON(
+			ctx,
+			&rest.Opts{
+				Method: "GET",
+				Path:   f.escapePath(""),
+				Parameters: url.Values{
+					"change_log": []string{""},
+					"start":      []string{start.Format(time.RFC3339Nano)},
+					"end":        []string{end.Format(time.RFC3339Nano)},
+				},
 			},
-		},
-		nil,
-		&changeLog,
-	)
-	if err != nil {
-		return changeLog, err
-	}
-	return changeLog, resp.Body.Close()
+			nil,
+			&changeLog,
+		))
+	})
 }
 
 func (f *Fs) update(ctx context.Context, path string, fields fs.Metadata) (node FilesystemNode, err error) {
 	var params = paramsFromMetadata(fields)
 	params.Set("action", "update")
 
-	resp, err := f.srv.CallJSON(
-		ctx,
-		&rest.Opts{
-			Method:          "POST",
-			Path:            f.escapePath(path),
-			MultipartParams: params,
-		},
-		nil,
-		&node,
-	)
-	if err != nil {
-		return node, err
-	}
-	return node, resp.Body.Close()
+	return node, f.pacer.Call(func() (bool, error) {
+		return apiRetry(f.srv.CallJSON(
+			ctx,
+			&rest.Opts{
+				Method:          "POST",
+				Path:            f.escapePath(path),
+				MultipartParams: params,
+			},
+			nil,
+			&node,
+		))
+	})
 }
 
 func (f *Fs) mkdir(ctx context.Context, dir string) (err error) {
-	_, err = f.srv.CallJSON(
-		ctx,
-		&rest.Opts{
-			Method:          "POST",
-			Path:            f.escapePath(dir),
-			MultipartParams: url.Values{"action": []string{"mkdirall"}},
-			NoResponse:      true,
-		},
-		nil,
-		nil,
-	)
-	return err
+	return f.pacer.Call(func() (bool, error) {
+		return apiRetry(f.srv.CallJSON(
+			ctx,
+			&rest.Opts{
+				Method:          "POST",
+				Path:            f.escapePath(dir),
+				MultipartParams: url.Values{"action": []string{"mkdirall"}},
+				NoResponse:      true,
+			},
+			nil,
+			nil,
+		))
+	})
 }
 
 var errIncompatibleSourceFS = errors.New("source filesystem is not the same as target")
@@ -317,21 +329,19 @@ func (f *Fs) rename(ctx context.Context, src fs.Fs, from, to string, meta fs.Met
 	// does not exist yet
 	params.Set("make_parents", "true")
 
-	resp, err := f.srv.CallJSON(
-		ctx,
-		&rest.Opts{
-			Method: "POST",
-			// Important: We use the source FS path prefix here
-			Path:            srcFs.escapePath(from),
-			MultipartParams: params,
-		},
-		nil,
-		&node,
-	)
-	if err != nil {
-		return node, err
-	}
-	return node, resp.Body.Close()
+	return node, f.pacer.Call(func() (bool, error) {
+		return apiRetry(f.srv.CallJSON(
+			ctx,
+			&rest.Opts{
+				Method: "POST",
+				// Important: We use the source FS path prefix here
+				Path:            srcFs.escapePath(from),
+				MultipartParams: params,
+			},
+			nil,
+			&node,
+		))
+	})
 }
 
 func (f *Fs) delete(ctx context.Context, path string, recursive bool) (err error) {
@@ -341,34 +351,33 @@ func (f *Fs) delete(ctx context.Context, path string, recursive bool) (err error
 		params = url.Values{"recursive": []string{"true"}}
 	}
 
-	_, err = f.srv.CallJSON(
-		ctx,
-		&rest.Opts{
-			Method:     "DELETE",
-			Path:       f.escapePath(path),
-			Parameters: params,
-			NoResponse: true,
-		},
-		nil, nil,
-	)
-	return err
+	return f.pacer.Call(func() (bool, error) {
+		return apiRetry(f.srv.CallJSON(
+			ctx,
+			&rest.Opts{
+				Method:     "DELETE",
+				Path:       f.escapePath(path),
+				Parameters: params,
+				NoResponse: true,
+			},
+			nil, nil,
+		))
+	})
 }
 
 func (f *Fs) userInfo(ctx context.Context) (user UserInfo, err error) {
-	resp, err := f.srv.CallJSON(
-		ctx,
-		&rest.Opts{
-			Method: "GET",
-			// The default RootURL points at the filesystem endpoint. We can't
-			// use that to request user information. So here we override it to
-			// the user endpoint
-			RootURL: f.opt.APIURL + "/user",
-		},
-		nil,
-		&user,
-	)
-	if err != nil {
-		return user, err
-	}
-	return user, resp.Body.Close()
+	return user, f.pacer.Call(func() (bool, error) {
+		return apiRetry(f.srv.CallJSON(
+			ctx,
+			&rest.Opts{
+				Method: "GET",
+				// The default RootURL points at the filesystem endpoint. We can't
+				// use that to request user information. So here we override it to
+				// the user endpoint
+				RootURL: f.opt.APIURL + "/user",
+			},
+			nil,
+			&user,
+		))
+	})
 }

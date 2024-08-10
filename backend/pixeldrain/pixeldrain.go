@@ -17,10 +17,16 @@ import (
 	"github.com/rclone/rclone/fs/config/configstruct"
 	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/fs/hash"
+	"github.com/rclone/rclone/lib/pacer"
 	"github.com/rclone/rclone/lib/rest"
 )
 
-const timeFormat = time.RFC3339Nano
+const (
+	timeFormat    = time.RFC3339Nano
+	minSleep      = pacer.MinSleep(10 * time.Millisecond)
+	maxSleep      = pacer.MaxSleep(1 * time.Second)
+	decayConstant = pacer.DecayConstant(2) // bigger for slower decay, exponential
+)
 
 // Register with Fs
 func init() {
@@ -85,7 +91,8 @@ type Fs struct {
 	opt      Options      // parsed options
 	features *fs.Features // optional features
 	srv      *rest.Client // the connection to the server
-	loggedIn bool         // if the user is authenticated
+	pacer    *fs.Pacer
+	loggedIn bool // if the user is authenticated
 
 	// Pathprefix is the directory we're working in. The pathPrefix is stripped
 	// from every API response containing a path. The pathPrefix always begins
@@ -109,10 +116,11 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	}
 
 	f := &Fs{
-		name: name,
-		root: root,
-		opt:  *opt,
-		srv:  rest.NewClient(fshttp.NewClient(ctx)).SetErrorHandler(apiErrorHandler),
+		name:  name,
+		root:  root,
+		opt:   *opt,
+		srv:   rest.NewClient(fshttp.NewClient(ctx)).SetErrorHandler(apiErrorHandler),
+		pacer: fs.NewPacer(ctx, pacer.NewDefault(minSleep, maxSleep, decayConstant)),
 	}
 	f.features = (&fs.Features{
 		ReadMimeType:            true,
@@ -170,8 +178,6 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 
 	return f, nil
 }
-
-// Implementation of fs.FS interface
 
 // List the objects and directories in dir into entries.  The
 // entries can be returned in any order but should be for a
@@ -268,8 +274,6 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) (err error) {
 	return err
 }
 
-// Implementation of fs.Info interface
-
 // Name of the remote (as passed into NewFs)
 func (f *Fs) Name() string { return f.name }
 
@@ -288,8 +292,6 @@ func (f *Fs) Hashes() hash.Set { return hash.Set(hash.SHA256) }
 // Features returns the optional features of this Fs
 func (f *Fs) Features() *fs.Features { return f.features }
 
-// Implementation of fs.Purger interface
-
 // Purge all files in the directory specified
 //
 // Implement this if you have a way of deleting all the files
@@ -303,8 +305,6 @@ func (f *Fs) Purge(ctx context.Context, dir string) (err error) {
 	}
 	return err
 }
-
-// Implementation of fs.Mover interface
 
 // Move src to this remote using server-side move operations.
 //
@@ -332,8 +332,6 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	return f.nodeToObject(node), nil
 }
 
-// Implementation of fs.DirMover interface
-
 // DirMove moves src, srcRemote to this remote at dstRemote
 // using server-side move operations.
 //
@@ -353,8 +351,6 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 	}
 	return err
 }
-
-// Implementation of fs.ChangeNotifier interface
 
 // ChangeNotify calls the passed function with a path
 // that has had changes. If the implementation
@@ -415,8 +411,6 @@ func (f *Fs) changeNotify(ctx context.Context, notify func(string, fs.EntryType)
 	}
 }
 
-// Implementation of fs.PutStreamer interface
-
 // PutStream uploads to the remote path with the modTime given of indeterminate size
 //
 // May create the object even if it returns an error - if so
@@ -427,7 +421,11 @@ func (f *Fs) PutStream(ctx context.Context, in io.Reader, src fs.ObjectInfo, opt
 	return f.Put(ctx, in, src, options...)
 }
 
-// Implementation of fs.PublicLinker interface
+// DirSetModTime sets the mtime metadata on a directory
+func (f *Fs) DirSetModTime(ctx context.Context, dir string, modTime time.Time) (err error) {
+	_, err = f.update(ctx, dir, fs.Metadata{"mtime": modTime.Format(timeFormat)})
+	return err
+}
 
 // PublicLink generates a public link to the remote path (usually readable by anyone)
 func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, unlink bool) (string, error) {
@@ -440,8 +438,6 @@ func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, 
 	}
 	return "", nil
 }
-
-// Implementation of fs.Abouter interface
 
 // About gets quota information
 func (f *Fs) About(ctx context.Context) (usage *fs.Usage, err error) {
@@ -458,8 +454,6 @@ func (f *Fs) About(ctx context.Context) (usage *fs.Usage, err error) {
 
 	return usage, nil
 }
-
-// Implementation of fs.Object interface
 
 // SetModTime sets the modification time of the local fs object
 func (o *Object) SetModTime(ctx context.Context, modTime time.Time) (err error) {
@@ -494,8 +488,6 @@ func (o *Object) Remove(ctx context.Context) error {
 	return o.fs.delete(ctx, o.base.Path, false)
 }
 
-// Implementation of fs.ObjectInfo interface
-
 // Fs returns the parent Fs
 func (o *Object) Fs() fs.Info {
 	return o.fs
@@ -513,8 +505,6 @@ func (o *Object) Hash(ctx context.Context, t hash.Type) (string, error) {
 func (o *Object) Storable() bool {
 	return true
 }
-
-// Implementation of fs.DirEntry interface
 
 // Return a string version
 func (o *Object) String() string {
@@ -542,14 +532,10 @@ func (o *Object) Size() int64 {
 	return o.base.FileSize
 }
 
-// Implementation of fs.MimeTyper interface
-
 // MimeType returns the content type of the Object if known, or "" if not
 func (o *Object) MimeType(ctx context.Context) string {
 	return o.base.FileType
 }
-
-// Implementation of fs.Metadataer interface
 
 // Metadata returns metadata for an object
 //
@@ -571,6 +557,7 @@ var (
 	_ fs.DirMover       = (*Fs)(nil)
 	_ fs.ChangeNotifier = (*Fs)(nil)
 	_ fs.PutStreamer    = (*Fs)(nil)
+	_ fs.DirSetModTimer = (*Fs)(nil)
 	_ fs.PublicLinker   = (*Fs)(nil)
 	_ fs.Abouter        = (*Fs)(nil)
 	_ fs.Object         = (*Object)(nil)
