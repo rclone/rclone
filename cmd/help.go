@@ -74,7 +74,7 @@ var helpFlags = &cobra.Command{
 			Root.SetUsageTemplate(docFlagsTemplate)
 		} else {
 			if len(args) > 0 {
-				re, err := filter.GlobStringToRegexp(args[0], false)
+				re, err := filter.GlobStringToRegexp(args[0], false, true)
 				if err != nil {
 					log.Fatalf("Invalid flag filter: %v", err)
 				}
