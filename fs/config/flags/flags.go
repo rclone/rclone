@@ -111,19 +111,19 @@ var All *Groups
 // Groups of flags for documentation purposes
 func init() {
 	All = NewGroups()
-	All.NewGroup("Copy", "Flags for anything which can Copy a file.")
-	All.NewGroup("Sync", "Flags just used for `rclone sync`.")
-	All.NewGroup("Important", "Important flags useful for most commands.")
-	All.NewGroup("Check", "Flags used for `rclone check`.")
-	All.NewGroup("Networking", "General networking and HTTP stuff.")
-	All.NewGroup("Performance", "Flags helpful for increasing performance.")
-	All.NewGroup("Config", "General configuration of rclone.")
-	All.NewGroup("Debugging", "Flags for developers.")
-	All.NewGroup("Filter", "Flags for filtering directory listings.")
-	All.NewGroup("Listing", "Flags for listing directories.")
-	All.NewGroup("Logging", "Logging and statistics.")
-	All.NewGroup("Metadata", "Flags to control metadata.")
-	All.NewGroup("RC", "Flags to control the Remote Control API.")
+	All.NewGroup("Copy", "Flags for anything which can copy a file")
+	All.NewGroup("Sync", "Flags used for sync commands")
+	All.NewGroup("Important", "Important flags useful for most commands")
+	All.NewGroup("Check", "Flags used for check commands")
+	All.NewGroup("Networking", "Flags for general networking and HTTP stuff")
+	All.NewGroup("Performance", "Flags helpful for increasing performance")
+	All.NewGroup("Config", "Flags for general configuration of rclone")
+	All.NewGroup("Debugging", "Flags for developers")
+	All.NewGroup("Filter", "Flags for filtering directory listings")
+	All.NewGroup("Listing", "Flags for listing directories")
+	All.NewGroup("Logging", "Flags for logging and statistics")
+	All.NewGroup("Metadata", "Flags to control metadata")
+	All.NewGroup("RC", "Flags to control the Remote Control API")
 }
 
 // installFlag constructs a name from the flag passed in and
