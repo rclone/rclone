@@ -146,7 +146,7 @@ according to regular rclone filtering pattern syntax.
 			"description": filterDescription,
 		} {
 			if v != "" {
-				filterRe, err := filter.GlobStringToRegexp(v, false)
+				filterRe, err := filter.GlobStringToRegexp(v, false, true)
 				if err != nil {
 					return fmt.Errorf("invalid %s filter argument: %w", k, err)
 				}

@@ -13,67 +13,6 @@ func TestGlobStringToRegexp(t *testing.T) {
 		want  string
 		error string
 	}{
-		{``, `^$`, ``},
-		{`potato`, `^potato$`, ``},
-		{`potato,sausage`, `^potato,sausage$`, ``},
-		{`/potato`, `^/potato$`, ``},
-		{`potato?sausage`, `^potato.sausage$`, ``},
-		{`potat[oa]`, `^potat[oa]$`, ``},
-		{`potat[a-z]or`, `^potat[a-z]or$`, ``},
-		{`potat[[:alpha:]]or`, `^potat[[:alpha:]]or$`, ``},
-		{`'.' '+' '(' ')' '|' '^' '$'`, `^'\.' '\+' '\(' '\)' '\|' '\^' '\$'$`, ``},
-		{`*.jpg`, `^.*\.jpg$`, ``},
-		{`a{b,c,d}e`, `^a(b|c|d)e$`, ``},
-		{`potato**`, ``, `too many stars`},
-		{`potato**sausage`, ``, `too many stars`},
-		{`*.p[lm]`, `^.*\.p[lm]$`, ``},
-		{`[\[\]]`, `^[\[\]]$`, ``},
-		{`***potato`, ``, `too many stars`},
-		{`***`, ``, `too many stars`},
-		{`ab]c`, ``, `mismatched ']'`},
-		{`ab[c`, ``, `mismatched '[' and ']'`},
-		{`ab{x{cd`, ``, `can't nest`},
-		{`ab{}}cd`, ``, `mismatched '{' and '}'`},
-		{`ab}c`, ``, `mismatched '{' and '}'`},
-		{`ab{c`, ``, `mismatched '{' and '}'`},
-		{`*.{jpg,png,gif}`, `^.*\.(jpg|png|gif)$`, ``},
-		{`[a--b]`, ``, `bad glob pattern`},
-		{`a\*b`, `^a\*b$`, ``},
-		{`a\\b`, `^a\\b$`, ``},
-		{`a{{.*}}b`, `^a(.*)b$`, ``},
-		{`a{{.*}`, ``, `mismatched '{{' and '}}'`},
-		{`{{regexp}}`, `^(regexp)$`, ``},
-		{`\{{{regexp}}`, `^\{(regexp)$`, ``},
-		{`/{{regexp}}`, `^/(regexp)$`, ``},
-		{`/{{\d{8}}}`, `^/(\d{8})$`, ``},
-		{`/{{\}}}`, `^/(\})$`, ``},
-		{`{{(?i)regexp}}`, `^((?i)regexp)$`, ``},
-	} {
-		for _, ignoreCase := range []bool{false, true} {
-			gotRe, err := GlobStringToRegexp(test.in, ignoreCase)
-			if test.error == "" {
-				require.NoError(t, err, test.in)
-				prefix := ""
-				if ignoreCase {
-					prefix = "(?i)"
-				}
-				got := gotRe.String()
-				assert.Equal(t, prefix+test.want, got, test.in)
-			} else {
-				require.Error(t, err, test.in)
-				assert.Contains(t, err.Error(), test.error, test.in)
-				assert.Nil(t, gotRe)
-			}
-		}
-	}
-}
-
-func TestGlobStringToRegexpWithoutAnchors(t *testing.T) {
-	for _, test := range []struct {
-		in    string
-		want  string
-		error string
-	}{
 		{``, ``, ``},
 		{`potato`, `potato`, ``},
 		{`potato,sausage`, `potato,sausage`, ``},
@@ -111,19 +50,26 @@ func TestGlobStringToRegexpWithoutAnchors(t *testing.T) {
 		{`{{(?i)regexp}}`, `((?i)regexp)`, ``},
 	} {
 		for _, ignoreCase := range []bool{false, true} {
-			gotRe, err := globToRegexp(test.in, false, false, ignoreCase)
-			if test.error == "" {
-				require.NoError(t, err, test.in)
-				prefix := ""
-				if ignoreCase {
-					prefix = "(?i)"
+			for _, addAnchors := range []bool{false, true} {
+				gotRe, err := GlobStringToRegexp(test.in, addAnchors, ignoreCase)
+				if test.error == "" {
+					require.NoError(t, err, test.in)
+					prefix := ""
+					suffix := ""
+					if ignoreCase {
+						prefix += "(?i)"
+					}
+					if addAnchors {
+						prefix += "^"
+						suffix += "$"
+					}
+					got := gotRe.String()
+					assert.Equal(t, prefix+test.want+suffix, got, test.in)
+				} else {
+					require.Error(t, err, test.in)
+					assert.Contains(t, err.Error(), test.error, test.in)
+					assert.Nil(t, gotRe)
 				}
-				got := gotRe.String()
-				assert.Equal(t, prefix+test.want, got, test.in)
-			} else {
-				require.Error(t, err, test.in)
-				assert.Contains(t, err.Error(), test.error, test.in)
-				assert.Nil(t, gotRe)
 			}
 		}
 	}

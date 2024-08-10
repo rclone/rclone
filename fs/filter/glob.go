@@ -17,8 +17,18 @@ func GlobPathToRegexp(glob string, ignoreCase bool) (*regexp.Regexp, error) {
 }
 
 // GlobStringToRegexp converts an rsync style glob string to a regexp
-func GlobStringToRegexp(glob string, ignoreCase bool) (*regexp.Regexp, error) {
-	return globToRegexp(glob, false, true, ignoreCase)
+//
+// Without adding of anchors but with ignoring of case, i.e. called
+// `GlobStringToRegexp(glob, false, true)`, it takes a lenient approach
+// where the glob "sum" would match "CheckSum", more similar to text
+// search functions than strict glob filtering.
+//
+// With adding of anchors and not ignoring case, i.e. called
+// `GlobStringToRegexp(glob, true, false)`, it uses a strict glob
+// interpretation where the previous example would have to be changed to
+// "*Sum" to match "CheckSum".
+func GlobStringToRegexp(glob string, addAnchors bool, ignoreCase bool) (*regexp.Regexp, error) {
+	return globToRegexp(glob, false, addAnchors, ignoreCase)
 }
 
 // globToRegexp converts an rsync style glob to a regexp
