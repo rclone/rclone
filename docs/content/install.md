@@ -448,6 +448,11 @@ which corresponds to `~/go/bin/rclone` by default).
 go install github.com/rclone/rclone@latest
 ```
 
+In some situations, rclone executable size might be too big for deployment
+in very restricted environments when all backends with large SDKs are included.
+To limit binary size unused backends can be commented out in `backends/all/all.go`
+and unused commands in `cmd/all/all.go` before building with `go build` or `make`
+
 ## Ansible installation {#ansible}
 
 This can be done with [Stefan Weichinger's ansible
