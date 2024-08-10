@@ -97,9 +97,9 @@ style.
 
 Default Off.
 
-### --rc-enable-metrics
+### --rc-metrics
 
-Enable OpenMetrics/Prometheus compatible endpoint at `/metrics`.
+Enable OpenMetrics/Prometheus compatible endpoint at `http://localhost:9000/metrics`.
 
 Default Off.
 

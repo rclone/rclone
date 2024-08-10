@@ -61,7 +61,7 @@ See the [rc documentation](/rc/) for more info on the rc flags.
 		go func() {
 			_, err := rcserver.MetricsStart(ctx, &rc.Opt)
 			if err != nil {
-				log.Fatalf("Failed to start remote control: %v", err)
+				log.Fatalf("Failed to start metrics server: %v", err)
 			}
 		}()
 

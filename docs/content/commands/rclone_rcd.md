@@ -154,7 +154,12 @@ Flags to control the Remote Control API.
       --rc-baseurl string                  Prefix for URLs - leave blank for root
       --rc-cert string                     TLS PEM key (concatenation of certificate and CA certificate)
       --rc-client-ca string                Client certificate authority to verify clients with
-      --rc-enable-metrics                  Enable prometheus metrics on /metrics
+      --rc-metrics                         Enable prometheus metrics on /metrics
+      --rc-metrics-addr stringArray        IPaddress:Port or :Port to bind server to (default [localhost:9000])
+      --rc-metrics-allow-origin string     Origin which cross-domain request (CORS) can be executed from
+      --rc-metrics-baseurl string          Prefix for URLs - leave blank for root
+      --rc-metrics-cert string             TLS PEM key (concatenation of certificate and CA certificate)
+      --rc-metrics-client-ca string        Client certificate authority to verify clients with
       --rc-files string                    Path to local files to serve on the HTTP server
       --rc-htpasswd string                 A htpasswd file - if not provided no authentication is done
       --rc-job-expire-duration Duration    Expire finished async jobs older than this value (default 1m0s)
