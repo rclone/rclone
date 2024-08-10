@@ -70,17 +70,22 @@ var helpFlags = &cobra.Command{
 	Short: "Show the global flags for rclone",
 	Run: func(command *cobra.Command, args []string) {
 		command.Flags()
-		if len(args) > 0 {
-			re, err := filter.GlobStringToRegexp(args[0], false)
-			if err != nil {
-				log.Fatalf("Invalid flag filter: %v", err)
-			}
-			fs.Debugf(nil, "Flag filter: %s", re.String())
-			filterFlagsRe = re
-		}
 		if GeneratingDocs {
 			Root.SetUsageTemplate(docFlagsTemplate)
 		} else {
+			if len(args) > 0 {
+				re, err := filter.GlobStringToRegexp(args[0], false)
+				if err != nil {
+					log.Fatalf("Invalid flag filter: %v", err)
+				}
+				fs.Debugf(nil, "Flag filter: %s", re.String())
+				filterFlagsRe = re
+			}
+			if filterFlagsGroup != "" {
+				Root.SetUsageTemplate(filterFlagsSingleGroupTemplate)
+			} else if len(args) > 0 {
+				Root.SetUsageTemplate(filterFlagsMultiGroupTemplate)
+			}
 			Root.SetOutput(os.Stdout)
 		}
 		_ = command.Usage()
@@ -152,7 +157,7 @@ func setupRootCommand(rootCmd *cobra.Command) {
 	})
 	cobra.AddTemplateFunc("flagGroups", func(cmd *cobra.Command) []*flags.Group {
 		// Add the backend flags and check all flags
-		backendGroup := flags.All.NewGroup("Backend", "Backend only flags. These can be set in the config file also.")
+		backendGroup := flags.All.NewGroup("Backend", "Backend-only flags (these can be set in the config file also)")
 		allRegistered := flags.All.AllRegistered()
 		cmd.InheritedFlags().VisitAll(func(flag *pflag.Flag) {
 			if _, ok := backendFlags[flag.Name]; ok {
@@ -210,20 +215,16 @@ Aliases:
 Examples:
 {{.Example}}{{end}}{{if and (showCommands .) .HasAvailableSubCommands}}
 
-Available Commands:{{range .Commands}}{{if (or .IsAvailableCommand (eq .Name "help"))}}
+Available commands:{{range .Commands}}{{if (or .IsAvailableCommand (eq .Name "help"))}}
   {{rpad .Name .NamePadding }} {{.Short}}{{end}}{{end}}{{end}}{{if and (showLocalFlags .) .HasAvailableLocalFlags}}
 
 Flags:
 {{.LocalFlags.FlagUsages | trimTrailingWhitespaces}}{{end}}{{if and (showGlobalFlags .) .HasAvailableInheritedFlags}}
 
-{{ range flagGroups . }}{{ if .Flags.HasFlags }}
-# {{ .Name }} Flags
-
-{{ .Help }}
-
+{{ range flagGroups . }}{{ if .Flags.HasFlags }}{{ .Help }} (flag group {{ .Name }}):
 {{ .Flags.FlagUsages | trimTrailingWhitespaces}}
-{{ end }}{{ end }}
 
+{{ end }}{{ end }}
 Additional help topics:{{range .Commands}}{{if .IsAdditionalHelpTopicCommand}}
   {{rpad .CommandPath .CommandPathPadding}} {{.Short}}{{end}}{{end}}{{end}}
 
@@ -231,6 +232,15 @@ Use "rclone [command] --help" for more information about a command.
 Use "rclone help flags" for to see the global flags.
 Use "rclone help backends" for a list of supported services.
 `
+
+var filterFlagsSingleGroupTemplate = `{{ range flagGroups . }}{{ if .Flags.HasFlags }}{{ .Flags.FlagUsages | trimTrailingWhitespaces}}
+{{ end }}{{ end }}
+`
+
+var filterFlagsMultiGroupTemplate = `{{ range flagGroups . }}{{ if .Flags.HasFlags }}{{ .Help }} (flag group {{ .Name }}):
+{{ .Flags.FlagUsages | trimTrailingWhitespaces}}
+
+{{ end }}{{ end }}`
 
 var docFlagsTemplate = `---
 title: "Global Flags"
@@ -245,7 +255,7 @@ split into groups.
 {{ range flagGroups . }}{{ if .Flags.HasFlags }}
 ## {{ .Name }}
 
-{{ .Help }}
+{{ .Help }}.
 
 ` + "```" + `
 {{ .Flags.FlagUsages | trimTrailingWhitespaces}}
