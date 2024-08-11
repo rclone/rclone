@@ -8,11 +8,11 @@ import (
 	"io"
 	"net/http"
 	"net/url"
-	"os"
 	"strings"
 	"time"
 
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/lib/rest"
 )
 
@@ -130,20 +130,26 @@ func apiErrorHandler(resp *http.Response) (err error) {
 	return e
 }
 
-func apiRetry(resp *http.Response, err error) (bool, error) {
-	if resp != nil {
-		if resp.StatusCode == 429 {
-			return true, err
-		} else if resp.StatusCode == 500 {
-			return true, err
-		}
-	}
-	if os.IsTimeout(err) {
-		return true, err
-	}
-	return false, err
+var retryErrorCodes = []int{
+	429, // Too Many Requests.
+	500, // Internal Server Error
+	502, // Bad Gateway
+	503, // Service Unavailable
+	504, // Gateway Timeout
 }
 
+// shouldRetry returns a boolean as to whether this resp and err deserve to be
+// retried. It returns the err as a convenience so it can be used as the return
+// value in the pacer function
+func shouldRetry(ctx context.Context, resp *http.Response, err error) (bool, error) {
+	if fserrors.ContextError(ctx, &err) {
+		return false, err
+	}
+	return fserrors.ShouldRetry(err) || fserrors.ShouldRetryHTTP(resp, retryErrorCodes), err
+}
+
+// paramsFromMetadata turns the fs.Metadata into instructions the pixeldrain API
+// can understand.
 func paramsFromMetadata(meta fs.Metadata) (params url.Values) {
 	params = make(url.Values)
 
@@ -203,7 +209,7 @@ func (f *Fs) put(
 	params.Set("make_parents", "true")
 
 	return node, f.pacer.Call(func() (bool, error) {
-		return apiRetry(f.srv.CallJSON(
+		resp, err := f.srv.CallJSON(
 			ctx,
 			&rest.Opts{
 				Method:     "PUT",
@@ -214,7 +220,8 @@ func (f *Fs) put(
 			},
 			nil,
 			&node,
-		))
+		)
+		return shouldRetry(ctx, resp, err)
 	})
 }
 
@@ -226,7 +233,7 @@ func (f *Fs) read(ctx context.Context, path string, options []fs.OpenOption) (in
 			Path:    f.escapePath(path),
 			Options: options,
 		})
-		return apiRetry(resp, err)
+		return shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
 		return nil, err
@@ -236,7 +243,7 @@ func (f *Fs) read(ctx context.Context, path string, options []fs.OpenOption) (in
 
 func (f *Fs) stat(ctx context.Context, path string) (fsp FilesystemPath, err error) {
 	return fsp, f.pacer.Call(func() (bool, error) {
-		return apiRetry(f.srv.CallJSON(
+		resp, err := f.srv.CallJSON(
 			ctx,
 			&rest.Opts{
 				Method: "GET",
@@ -248,13 +255,14 @@ func (f *Fs) stat(ctx context.Context, path string) (fsp FilesystemPath, err err
 			},
 			nil,
 			&fsp,
-		))
+		)
+		return shouldRetry(ctx, resp, err)
 	})
 }
 
 func (f *Fs) changeLog(ctx context.Context, start, end time.Time) (changeLog ChangeLog, err error) {
 	return changeLog, f.pacer.Call(func() (bool, error) {
-		return apiRetry(f.srv.CallJSON(
+		resp, err := f.srv.CallJSON(
 			ctx,
 			&rest.Opts{
 				Method: "GET",
@@ -267,7 +275,8 @@ func (f *Fs) changeLog(ctx context.Context, start, end time.Time) (changeLog Cha
 			},
 			nil,
 			&changeLog,
-		))
+		)
+		return shouldRetry(ctx, resp, err)
 	})
 }
 
@@ -276,7 +285,7 @@ func (f *Fs) update(ctx context.Context, path string, fields fs.Metadata) (node 
 	params.Set("action", "update")
 
 	return node, f.pacer.Call(func() (bool, error) {
-		return apiRetry(f.srv.CallJSON(
+		resp, err := f.srv.CallJSON(
 			ctx,
 			&rest.Opts{
 				Method:          "POST",
@@ -285,13 +294,14 @@ func (f *Fs) update(ctx context.Context, path string, fields fs.Metadata) (node 
 			},
 			nil,
 			&node,
-		))
+		)
+		return shouldRetry(ctx, resp, err)
 	})
 }
 
 func (f *Fs) mkdir(ctx context.Context, dir string) (err error) {
 	return f.pacer.Call(func() (bool, error) {
-		return apiRetry(f.srv.CallJSON(
+		resp, err := f.srv.CallJSON(
 			ctx,
 			&rest.Opts{
 				Method:          "POST",
@@ -301,7 +311,8 @@ func (f *Fs) mkdir(ctx context.Context, dir string) (err error) {
 			},
 			nil,
 			nil,
-		))
+		)
+		return shouldRetry(ctx, resp, err)
 	})
 }
 
@@ -330,7 +341,7 @@ func (f *Fs) rename(ctx context.Context, src fs.Fs, from, to string, meta fs.Met
 	params.Set("make_parents", "true")
 
 	return node, f.pacer.Call(func() (bool, error) {
-		return apiRetry(f.srv.CallJSON(
+		resp, err := f.srv.CallJSON(
 			ctx,
 			&rest.Opts{
 				Method: "POST",
@@ -340,7 +351,8 @@ func (f *Fs) rename(ctx context.Context, src fs.Fs, from, to string, meta fs.Met
 			},
 			nil,
 			&node,
-		))
+		)
+		return shouldRetry(ctx, resp, err)
 	})
 }
 
@@ -352,7 +364,7 @@ func (f *Fs) delete(ctx context.Context, path string, recursive bool) (err error
 	}
 
 	return f.pacer.Call(func() (bool, error) {
-		return apiRetry(f.srv.CallJSON(
+		resp, err := f.srv.CallJSON(
 			ctx,
 			&rest.Opts{
 				Method:     "DELETE",
@@ -361,13 +373,14 @@ func (f *Fs) delete(ctx context.Context, path string, recursive bool) (err error
 				NoResponse: true,
 			},
 			nil, nil,
-		))
+		)
+		return shouldRetry(ctx, resp, err)
 	})
 }
 
 func (f *Fs) userInfo(ctx context.Context) (user UserInfo, err error) {
 	return user, f.pacer.Call(func() (bool, error) {
-		return apiRetry(f.srv.CallJSON(
+		resp, err := f.srv.CallJSON(
 			ctx,
 			&rest.Opts{
 				Method: "GET",
@@ -378,6 +391,7 @@ func (f *Fs) userInfo(ctx context.Context) (user UserInfo, err error) {
 			},
 			nil,
 			&user,
-		))
+		)
+		return shouldRetry(ctx, resp, err)
 	})
 }
