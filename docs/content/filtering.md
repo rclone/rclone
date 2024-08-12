@@ -465,10 +465,10 @@ flags with `--exclude`, `--exclude-from`, `--filter` or `--filter-from`,
 you must use include rules for all the files you want in the include
 statement. For more flexibility use the `--filter-from` flag.
 
-`--exclude-from` has no effect when combined with `--files-from` or
+`--include-from` has no effect when combined with `--files-from` or
 `--files-from-raw` flags.
 
-`--exclude-from` followed by `-` reads filter rules from standard input.
+`--include-from` followed by `-` reads filter rules from standard input.
 
 ### `--filter` - Add a file-filtering rule
 
