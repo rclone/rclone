@@ -69,6 +69,7 @@ docs = [
     "swift.md",
     "pcloud.md",
     "pikpak.md",
+    "pixeldrain.md",
     "premiumizeme.md",
     "protondrive.md",
     "putio.md",
