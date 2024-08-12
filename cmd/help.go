@@ -217,13 +217,13 @@ Examples:
 {{.Example}}{{end}}{{if and (showCommands .) .HasAvailableSubCommands}}
 
 Available commands:{{range .Commands}}{{if (or .IsAvailableCommand (eq .Name "help"))}}
-  {{rpad .Name .NamePadding }} {{.Short}}{{end}}{{end}}{{end}}{{if and (showLocalFlags .) .HasAvailableLocalFlags}}
+  {{rpad .Name .NamePadding}} {{.Short}}{{end}}{{end}}{{end}}{{if and (showLocalFlags .) .HasAvailableLocalFlags}}
 
 Flags:
-{{.LocalFlags.FlagUsages | trimTrailingWhitespaces}}{{end}}{{if and (showGlobalFlags .) .HasAvailableInheritedFlags}}{{ range flagGroups . }}{{ if .Flags.HasFlags }}
+{{.LocalFlags.FlagUsages | trimTrailingWhitespaces}}{{end}}{{if and (showGlobalFlags .) .HasAvailableInheritedFlags}}{{range flagGroups .}}{{if .Flags.HasFlags}}
 
-{{ .Help }} (flag group {{ .Name }}):
-{{ .Flags.FlagUsages | trimTrailingWhitespaces}}{{ end }}{{ end }}{{end}}{{if .HasHelpSubCommands}}
+{{.Help}} (flag group {{.Name}}):
+{{.Flags.FlagUsages | trimTrailingWhitespaces}}{{end}}{{end}}{{end}}{{if .HasHelpSubCommands}}
  
 Additional help topics:{{range .Commands}}{{if .IsAdditionalHelpTopicCommand}}
   {{rpad .CommandPath .CommandPathPadding}} {{.Short}}{{end}}{{end}}{{end}}
@@ -233,14 +233,14 @@ Use "rclone help flags" for to see the global flags.
 Use "rclone help backends" for a list of supported services.
 `
 
-var filterFlagsSingleGroupTemplate = `{{ range flagGroups . }}{{ if .Flags.HasFlags }}{{ .Flags.FlagUsages | trimTrailingWhitespaces}}
-{{ end }}{{ end }}
+var filterFlagsSingleGroupTemplate = `{{range flagGroups .}}{{if .Flags.HasFlags}}{{.Flags.FlagUsages | trimTrailingWhitespaces}}
+{{end}}{{end}}
 `
 
-var filterFlagsMultiGroupTemplate = `{{ range flagGroups . }}{{ if .Flags.HasFlags }}{{ .Help }} (flag group {{ .Name }}):
-{{ .Flags.FlagUsages | trimTrailingWhitespaces}}
+var filterFlagsMultiGroupTemplate = `{{range flagGroups .}}{{if .Flags.HasFlags}}{{.Help}} (flag group {{.Name}}):
+{{.Flags.FlagUsages | trimTrailingWhitespaces}}
 
-{{ end }}{{ end }}`
+{{end}}{{end}}`
 
 var docFlagsTemplate = `---
 title: "Global Flags"
@@ -252,16 +252,16 @@ description: "Rclone Global Flags"
 This describes the global flags available to every rclone command
 split into groups.
 
-{{ range flagGroups . }}{{ if .Flags.HasFlags }}
-## {{ .Name }}
+{{range flagGroups .}}{{if .Flags.HasFlags}}
+## {{.Name}}
 
-{{ .Help }}.
+{{.Help}}.
 
 ` + "```" + `
-{{ .Flags.FlagUsages | trimTrailingWhitespaces}}
+{{.Flags.FlagUsages | trimTrailingWhitespaces}}
 ` + "```" + `
 
-{{ end }}{{ end }}
+{{end}}{{end}}
 `
 
 // show all the backends
