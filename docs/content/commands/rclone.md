@@ -649,6 +649,39 @@ rclone [flags]
       --quatrix-maximal-summary-chunk-size SizeSuffix       The maximal summary for all chunks. It should not be less than 'transfers'*'minimal_chunk_size' (default 95.367Mi)
       --quatrix-minimal-chunk-size SizeSuffix               The minimal size for one chunk (default 9.537Mi)
       --quatrix-skip-project-folders                        Skip project folders in operations
+  -q, --quiet                                               Print as little stuff as possible
+      --rc                                                  Enable the remote control server
+      --rc-addr stringArray                                 IPaddress:Port or :Port to bind server to (default [localhost:5572])
+      --rc-allow-origin string                              Origin which cross-domain request (CORS) can be executed from
+      --rc-baseurl string                                   Prefix for URLs - leave blank for root
+      --rc-cert string                                      TLS PEM key (concatenation of certificate and CA certificate)
+      --rc-client-ca string                                 Client certificate authority to verify clients with
+      --rc-enable-metrics                                   Enable prometheus metrics on /metrics
+      --rc-files string                                     Path to local files to serve on the HTTP server
+      --rc-htpasswd string                                  A htpasswd file - if not provided no authentication is done
+      --rc-job-expire-duration Duration                     Expire finished async jobs older than this value (default 1m0s)
+      --rc-job-expire-interval Duration                     Interval to check for expired async jobs (default 10s)
+      --rc-key string                                       TLS PEM Private key
+      --rc-max-header-bytes int                             Maximum size of request header (default 4096)
+      --rc-min-tls-version string                           Minimum TLS version that is acceptable (default "tls1.0")
+      --rc-no-auth                                          Don't require auth for certain methods
+      --rc-pass string                                      Password for authentication
+      --rc-realm string                                     Realm for authentication
+      --rc-salt string                                      Password hashing salt (default "dlPL2MqE")
+      --rc-serve                                            Enable the serving of remote objects
+      --rc-serve-no-modtime                                 Don't read the modification time (can speed things up)
+      --rc-server-read-timeout Duration                     Timeout for server reading data (default 1h0m0s)
+      --rc-server-write-timeout Duration                    Timeout for server writing data (default 1h0m0s)
+      --rc-template string                                  User-specified template
+      --rc-user string                                      User name for authentication
+      --rc-web-fetch-url string                             URL to fetch the releases for webgui (default "https://api.github.com/repos/rclone/rclone-webui-react/releases/latest")
+      --rc-web-gui                                          Launch WebGUI on localhost
+      --rc-web-gui-force-update                             Force update to latest version of web gui
+      --rc-web-gui-no-open-browser                          Don't open the browser automatically
+      --rc-web-gui-update                                   Check and update to latest version of web gui
+      --refresh-times                                       Refresh the modtime of remote files
+      --retries int                                         Retry operations this many times if they fail (default 3)
+      --retries-sleep Duration                              Interval between retrying operations if they fail, e.g. 500ms, 60s, 5m (0 to disable) (default 0s)
       --s3-access-key-id string                             AWS Access Key ID
       --s3-acl string                                       Canned ACL used when creating buckets and storing or copying objects
       --s3-bucket-acl string                                Canned ACL used when creating buckets
