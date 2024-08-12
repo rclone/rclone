@@ -184,6 +184,9 @@ rclone.org website.`,
 					if name != "rclone.md" {
 						return fmt.Errorf("internal error: failed to find cut points: startCut = %d, endCut = %d", startCut, endCut)
 					}
+					if endCut >= 0 {
+						doc = doc[:endCut] + "### See Also" + doc[endCut+12:]
+					}
 				} else {
 					var out strings.Builder
 					if groupsString := cmd.Annotations["groups"]; groupsString != "" {
@@ -202,7 +205,7 @@ rclone.org website.`,
 See the [global flags page](/flags/) for global options not listed here.
 
 `)
-					doc = doc[:startCut] + out.String() + doc[endCut:]
+					doc = doc[:startCut] + out.String() + "### See Also" + doc[endCut+12:]
 				}
 
 				// outdent all the titles by one
