@@ -178,33 +178,33 @@ rclone.org website.`,
 				}
 				doc := string(b)
 
-				var out strings.Builder
-				if groupsString := cmd.Annotations["groups"]; groupsString != "" {
-					groups := flags.All.Include(groupsString)
-					for _, group := range groups.Groups {
-						if group.Flags.HasFlags() {
-							_, _ = fmt.Fprintf(&out, "\n### %s Options\n\n", group.Name)
-							_, _ = fmt.Fprintf(&out, "%s\n\n", group.Help)
-							_, _ = fmt.Fprintln(&out, "```")
-							_, _ = out.WriteString(group.Flags.FlagUsages())
-							_, _ = fmt.Fprintln(&out, "```")
-						}
-					}
-				}
-				_, _ = out.WriteString(`
-See the [global flags page](/flags/) for global options not listed here.
-
-`)
-
 				startCut := strings.Index(doc, `### Options inherited from parent commands`)
 				endCut := strings.Index(doc, `### SEE ALSO`)
 				if startCut < 0 || endCut < 0 {
-					if name == "rclone.md" {
-						return nil
+					if name != "rclone.md" {
+						return fmt.Errorf("internal error: failed to find cut points: startCut = %d, endCut = %d", startCut, endCut)
 					}
-					return fmt.Errorf("internal error: failed to find cut points: startCut = %d, endCut = %d", startCut, endCut)
+				} else {
+					var out strings.Builder
+					if groupsString := cmd.Annotations["groups"]; groupsString != "" {
+						groups := flags.All.Include(groupsString)
+						for _, group := range groups.Groups {
+							if group.Flags.HasFlags() {
+								_, _ = fmt.Fprintf(&out, "\n### %s Options\n\n", group.Name)
+								_, _ = fmt.Fprintf(&out, "%s\n\n", group.Help)
+								_, _ = fmt.Fprintln(&out, "```")
+								_, _ = out.WriteString(group.Flags.FlagUsages())
+								_, _ = fmt.Fprintln(&out, "```")
+							}
+						}
+					}
+					_, _ = out.WriteString(`
+See the [global flags page](/flags/) for global options not listed here.
+
+`)
+					doc = doc[:startCut] + out.String() + doc[endCut:]
 				}
-				doc = doc[:startCut] + out.String() + doc[endCut:]
+
 				// outdent all the titles by one
 				doc = outdentTitle.ReplaceAllString(doc, `$1`)
 				err = os.WriteFile(path, []byte(doc), 0777)
