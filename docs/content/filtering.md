@@ -562,6 +562,8 @@ Other filter flags (`--include`, `--include-from`, `--exclude`,
 trailing whitespace is stripped from the input lines. Lines starting
 with `#` or `;` are ignored.
 
+`--files-from` followed by `-` reads the list of files from standard input.
+
 Rclone commands with a `--files-from` flag traverse the remote,
 treating the names in `--files-from` as a set of filters.
 
