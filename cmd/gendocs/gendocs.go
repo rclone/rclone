@@ -178,7 +178,7 @@ See the [global flags page](/flags/) for global options not listed here.
 `)
 
 				startCut := strings.Index(doc, `### Options inherited from parent commands`)
-				endCut := strings.Index(doc, `## SEE ALSO`)
+				endCut := strings.Index(doc, `### SEE ALSO`)
 				if startCut < 0 || endCut < 0 {
 					if name == "rclone.md" {
 						return nil
