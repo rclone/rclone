@@ -219,12 +219,11 @@ Available commands:{{range .Commands}}{{if (or .IsAvailableCommand (eq .Name "he
   {{rpad .Name .NamePadding }} {{.Short}}{{end}}{{end}}{{end}}{{if and (showLocalFlags .) .HasAvailableLocalFlags}}
 
 Flags:
-{{.LocalFlags.FlagUsages | trimTrailingWhitespaces}}{{end}}{{if and (showGlobalFlags .) .HasAvailableInheritedFlags}}
+{{.LocalFlags.FlagUsages | trimTrailingWhitespaces}}{{end}}{{if and (showGlobalFlags .) .HasAvailableInheritedFlags}}{{ range flagGroups . }}{{ if .Flags.HasFlags }}
 
-{{ range flagGroups . }}{{ if .Flags.HasFlags }}{{ .Help }} (flag group {{ .Name }}):
-{{ .Flags.FlagUsages | trimTrailingWhitespaces}}
-
-{{ end }}{{ end }}
+{{ .Help }} (flag group {{ .Name }}):
+{{ .Flags.FlagUsages | trimTrailingWhitespaces}}{{ end }}{{ end }}{{end}}{{if .HasHelpSubCommands}}
+ 
 Additional help topics:{{range .Commands}}{{if .IsAdditionalHelpTopicCommand}}
   {{rpad .CommandPath .CommandPathPadding}} {{.Short}}{{end}}{{end}}{{end}}
 
