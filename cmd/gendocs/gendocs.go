@@ -171,21 +171,21 @@ rclone.org website.`,
 				} else {
 					var out strings.Builder
 					if groupsString := cmd.Annotations["groups"]; groupsString != "" {
+						_, _ = out.WriteString("Options shared with other commands are described next.\n")
+						_, _ = out.WriteString("See the [global flags page](/flags/) for global options not listed here.\n\n")
 						groups := flags.All.Include(groupsString)
 						for _, group := range groups.Groups {
 							if group.Flags.HasFlags() {
-								_, _ = fmt.Fprintf(&out, "\n#### %s Options\n\n", group.Name)
+								_, _ = fmt.Fprintf(&out, "#### %s Options\n\n", group.Name)
 								_, _ = fmt.Fprintf(&out, "%s\n\n", group.Help)
-								_, _ = fmt.Fprintln(&out, "```")
+								_, _ = out.WriteString("```\n")
 								_, _ = out.WriteString(group.Flags.FlagUsages())
-								_, _ = fmt.Fprintln(&out, "```")
+								_, _ = out.WriteString("```\n\n")
 							}
 						}
+					} else {
+						_, _ = out.WriteString("See the [global flags page](/flags/) for global options not listed here.\n\n")
 					}
-					_, _ = out.WriteString(`
-See the [global flags page](/flags/) for global options not listed here.
-
-`)
 					doc = doc[:startCut] + out.String() + "### See Also" + doc[endCut+12:]
 				}
 
