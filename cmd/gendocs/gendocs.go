@@ -193,7 +193,7 @@ rclone.org website.`,
 						groups := flags.All.Include(groupsString)
 						for _, group := range groups.Groups {
 							if group.Flags.HasFlags() {
-								_, _ = fmt.Fprintf(&out, "\n### %s Options\n\n", group.Name)
+								_, _ = fmt.Fprintf(&out, "\n#### %s Options\n\n", group.Name)
 								_, _ = fmt.Fprintf(&out, "%s\n\n", group.Help)
 								_, _ = fmt.Fprintln(&out, "```")
 								_, _ = out.WriteString(group.Flags.FlagUsages())
