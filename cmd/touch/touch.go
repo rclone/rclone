@@ -43,8 +43,7 @@ func init() {
 var commandDefinition = &cobra.Command{
 	Use:   "touch remote:path",
 	Short: `Create new file or change file modification time.`,
-	Long: `
-Set the modification time on file(s) as specified by remote:path to
+	Long: `Set the modification time on file(s) as specified by remote:path to
 have the current time.
 
 If remote:path does not exist then a zero sized file will be created,

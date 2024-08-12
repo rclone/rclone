@@ -53,8 +53,7 @@ aliases:
 var commandDefinition = &cobra.Command{
 	Use:   "gendocs output_directory",
 	Short: `Output markdown docs for rclone to the directory supplied.`,
-	Long: `
-This produces markdown docs for the rclone commands to the directory
+	Long: `This produces markdown docs for the rclone commands to the directory
 supplied.  These are in a format suitable for hugo to render into the
 rclone.org website.`,
 	Annotations: map[string]string{

@@ -17,8 +17,7 @@ func init() {
 var commandDefinition = &cobra.Command{
 	Use:   "moveto source:path dest:path",
 	Short: `Move file or directory from source to dest.`,
-	Long: `
-If source:path is a file or directory then it moves it to a file or
+	Long: `If source:path is a file or directory then it moves it to a file or
 directory named dest:path.
 
 This can be used to rename files or upload single files to other than

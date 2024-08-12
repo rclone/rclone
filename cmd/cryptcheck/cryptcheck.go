@@ -23,10 +23,9 @@ func init() {
 var commandDefinition = &cobra.Command{
 	Use:   "cryptcheck remote:path cryptedremote:path",
 	Short: `Cryptcheck checks the integrity of an encrypted remote.`,
-	Long: `
-rclone cryptcheck checks a remote against a [crypted](/crypt/) remote.
-This is the equivalent of running rclone [check](/commands/rclone_check/),
-but able to check the checksums of the encrypted remote.
+	Long: `Checks a remote against a [crypted](/crypt/) remote. This is the equivalent
+of running rclone [check](/commands/rclone_check/), but able to check the
+checksums of the encrypted remote.
 
 For it to work the underlying remote of the cryptedremote must support
 some kind of checksum.

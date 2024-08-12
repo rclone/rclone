@@ -31,8 +31,7 @@ func init() {
 var commandDefinition = &cobra.Command{
 	Use:   "ncdu remote:path",
 	Short: `Explore a remote with a text based user interface.`,
-	Long: `
-This displays a text based user interface allowing the navigation of a
+	Long: `This displays a text based user interface allowing the navigation of a
 remote. It is most useful for answering the question - "What is using
 all my disk space?".
 

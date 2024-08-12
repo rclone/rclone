@@ -39,8 +39,7 @@ var commandDefinition = &cobra.Command{
 	Use:   "cat remote:path",
 	Short: `Concatenates any files and sends them to stdout.`,
 	// Warning! "|" will be replaced by backticks below
-	Long: strings.ReplaceAll(`
-rclone cat sends any files to standard output.
+	Long: strings.ReplaceAll(`Sends any files to standard output.
 
 You can use it like this to output a single file
 
