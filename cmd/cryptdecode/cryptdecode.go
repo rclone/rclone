@@ -26,9 +26,8 @@ func init() {
 var commandDefinition = &cobra.Command{
 	Use:   "cryptdecode encryptedremote: encryptedfilename",
 	Short: `Cryptdecode returns unencrypted file names.`,
-	Long: `
-rclone cryptdecode returns unencrypted file names when provided with
-a list of encrypted file names. List limit is 10 items.
+	Long: `Returns unencrypted file names when provided with a list of encrypted file
+names. List limit is 10 items.
 
 If you supply the ` + "`--reverse`" + ` flag, it will return encrypted file names.
 

@@ -115,8 +115,8 @@ var commandDefinition = &cobra.Command{
 	Use:   "listremotes [<filter>]",
 	Short: `List all the remotes in the config file and defined in environment variables.`,
 	Long: `
-rclone listremotes lists all the available remotes from the config file,
-or the remotes matching an optional filter.
+Lists all the available remotes from the config file, or the remotes matching
+an optional filter.
 
 Prints the result in human-readable format by default, and as a simple list of
 remote names, or if used with flag ` + "`--long`" + ` a tabular format including

@@ -138,8 +138,7 @@ func GetCheckOpt(fsrc, fdst fs.Fs) (opt *operations.CheckOpt, close func(), err 
 var commandDefinition = &cobra.Command{
 	Use:   "check source:path dest:path",
 	Short: `Checks the files in the source and destination match.`,
-	Long: strings.ReplaceAll(`
-Checks the files in the source and destination match.  It compares
+	Long: strings.ReplaceAll(`Checks the files in the source and destination match.  It compares
 sizes and hashes (MD5 or SHA1) and logs a report of files that don't
 match.  It doesn't alter the source or destination.
 

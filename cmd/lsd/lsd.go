@@ -26,8 +26,7 @@ func init() {
 var commandDefinition = &cobra.Command{
 	Use:   "lsd remote:path",
 	Short: `List all directories/containers/buckets in the path.`,
-	Long: `
-Lists the directories in the source path to standard output. Does not
+	Long: `Lists the directories in the source path to standard output. Does not
 recurse by default.  Use the ` + "`-R`" + ` flag to recurse.
 
 This command lists the total size of the directory (if known, -1 if

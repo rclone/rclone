@@ -27,9 +27,7 @@ func init() {
 var commandDefinition = &cobra.Command{
 	Use:   "dedupe [mode] remote:path",
 	Short: `Interactively find duplicate filenames and delete/rename them.`,
-	Long: `
-
-By default ` + "`dedupe`" + ` interactively finds files with duplicate
+	Long: `By default ` + "`dedupe`" + ` interactively finds files with duplicate
 names and offers to delete all but one or rename them to be
 different. This is known as deduping by name.
 

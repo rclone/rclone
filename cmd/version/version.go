@@ -31,8 +31,7 @@ func init() {
 var commandDefinition = &cobra.Command{
 	Use:   "version",
 	Short: `Show the version number.`,
-	Long: `
-Show the rclone version number, the go version, the build target
+	Long: `Show the rclone version number, the go version, the build target
 OS and architecture, the runtime OS and kernel version and bitness,
 build tags and the type of executable (static or dynamic).
 

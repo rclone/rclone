@@ -46,8 +46,7 @@ func printValue(what string, uv *int64, isSize bool) {
 var commandDefinition = &cobra.Command{
 	Use:   "about remote:",
 	Short: `Get quota information from the remote.`,
-	Long: `
-` + "`rclone about`" + ` prints quota information about a remote to standard
+	Long: `Prints quota information about a remote to standard
 output. The output is typically used, free, quota and trash contents.
 
 E.g. Typical output from ` + "`rclone about remote:`" + ` is:

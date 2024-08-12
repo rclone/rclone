@@ -27,8 +27,7 @@ import (
 var Root = &cobra.Command{
 	Use:   "rclone",
 	Short: "Show help for rclone commands, flags and backends.",
-	Long: `
-Rclone syncs files to and from cloud storage providers as well as
+	Long: `Rclone syncs files to and from cloud storage providers as well as
 mounting them, listing them in lots of different ways.
 
 See the home page (https://rclone.org/) for installation, usage,

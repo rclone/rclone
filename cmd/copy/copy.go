@@ -26,8 +26,7 @@ var commandDefinition = &cobra.Command{
 	Use:   "copy source:path dest:path",
 	Short: `Copy files from source to dest, skipping identical files.`,
 	// Note: "|" will be replaced by backticks below
-	Long: strings.ReplaceAll(`
-Copy the source to the destination.  Does not transfer files that are
+	Long: strings.ReplaceAll(`Copy the source to the destination.  Does not transfer files that are
 identical on source and destination, testing by size and modification
 time or MD5SUM.  Doesn't delete files from the destination. If you
 want to also delete files from destination, to make it match source,

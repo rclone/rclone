@@ -69,9 +69,7 @@ func init() {
 var commandDefinition = &cobra.Command{
 	Use:   "tree remote:path",
 	Short: `List the contents of the remote in a tree like fashion.`,
-	Long: `
-rclone tree lists the contents of a remote in a similar way to the
-unix tree command.
+	Long: `Lists the contents of a remote in a similar way to the unix tree command.
 
 For example
 

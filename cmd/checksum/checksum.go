@@ -26,8 +26,7 @@ func init() {
 var commandDefinition = &cobra.Command{
 	Use:   "checksum <hash> sumfile dst:path",
 	Short: `Checks the files in the destination against a SUM file.`,
-	Long: strings.ReplaceAll(`
-Checks that hashsums of destination files match the SUM file.
+	Long: strings.ReplaceAll(`Checks that hashsums of destination files match the SUM file.
 It compares hashes (MD5, SHA1, etc) and logs a report of files which
 don't match.  It doesn't alter the file system.
 

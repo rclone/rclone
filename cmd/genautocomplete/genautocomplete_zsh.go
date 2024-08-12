@@ -15,8 +15,7 @@ func init() {
 var zshCommandDefinition = &cobra.Command{
 	Use:   "zsh [output_file]",
 	Short: `Output zsh completion script for rclone.`,
-	Long: `
-Generates a zsh autocompletion script for rclone.
+	Long: `Generates a zsh autocompletion script for rclone.
 
 This writes to /usr/share/zsh/vendor-completions/_rclone by default so will
 probably need to be run with sudo or as root, e.g.

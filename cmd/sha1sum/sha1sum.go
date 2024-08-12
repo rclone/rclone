@@ -20,8 +20,7 @@ func init() {
 var commandDefinition = &cobra.Command{
 	Use:   "sha1sum remote:path",
 	Short: `Produces an sha1sum file for all the objects in the path.`,
-	Long: `
-Produces an sha1sum file for all the objects in the path.  This
+	Long: `Produces an sha1sum file for all the objects in the path.  This
 is in the same format as the standard sha1sum tool produces.
 
 By default, the hash is requested from the remote.  If SHA-1 is
