@@ -22,7 +22,7 @@ import (
 //
 // If it isn't possible then return fs.ErrorCantCopy
 func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
-	if runtime.GOOS != "darwin" || f.opt.TranslateSymlinks {
+	if runtime.GOOS != "darwin" || f.opt.TranslateSymlinks || f.opt.NoClone {
 		return nil, fs.ErrorCantCopy
 	}
 	srcObj, ok := src.(*Object)
