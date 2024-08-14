@@ -987,7 +987,7 @@ func (f *Fs) scanObject(ctx context.Context, remote string, quickScan bool) (fs.
 		}
 	}
 
-	if o.main == nil && (o.chunks == nil || len(o.chunks) == 0) {
+	if o.main == nil && len(o.chunks) == 0 {
 		// Scanning hasn't found data chunks with conforming names.
 		if f.useMeta || quickScan {
 			// Metadata is required but absent and there are no chunks.

@@ -238,7 +238,7 @@ func (api *Client) Call(ctx context.Context, opts *Opts) (resp *http.Response, e
 		return nil, errors.New("RootURL not set")
 	}
 	url += opts.Path
-	if opts.Parameters != nil && len(opts.Parameters) > 0 {
+	if len(opts.Parameters) > 0 {
 		url += "?" + opts.Parameters.Encode()
 	}
 	body := readers.NoCloser(opts.Body)
