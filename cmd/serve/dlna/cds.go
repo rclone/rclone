@@ -243,13 +243,13 @@ func (cds *contentDirectoryService) Handle(action string, argsXML []byte, r *htt
 		}
 		obj, err := cds.objectFromID(browse.ObjectID)
 		if err != nil {
-			return nil, upnp.Errorf(upnpav.NoSuchObjectErrorCode, err.Error())
+			return nil, upnp.Errorf(upnpav.NoSuchObjectErrorCode, "%s", err.Error())
 		}
 		switch browse.BrowseFlag {
 		case "BrowseDirectChildren":
 			objs, err := cds.readContainer(obj, host)
 			if err != nil {
-				return nil, upnp.Errorf(upnpav.NoSuchObjectErrorCode, err.Error())
+				return nil, upnp.Errorf(upnpav.NoSuchObjectErrorCode, "%s", err.Error())
 			}
 			totalMatches := len(objs)
 			objs = objs[func() (low int) {

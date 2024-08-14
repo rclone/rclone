@@ -104,7 +104,7 @@ func cryptCheck(ctx context.Context, fdst, fsrc fs.Fs) error {
 		}
 		if cryptHash != underlyingHash {
 			err = fmt.Errorf("hashes differ (%s:%s) %q vs (%s:%s) %q", fdst.Name(), fdst.Root(), cryptHash, fsrc.Name(), fsrc.Root(), underlyingHash)
-			fs.Errorf(src, err.Error())
+			fs.Errorf(src, "%s", err.Error())
 			return true, false, nil
 		}
 		return false, false, nil

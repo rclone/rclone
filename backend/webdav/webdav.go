@@ -635,7 +635,7 @@ func (f *Fs) setQuirks(ctx context.Context, vendor string) error {
 		odrvcookie.NewRenew(12*time.Hour, func() {
 			spCookies, err := spCk.Cookies(ctx)
 			if err != nil {
-				fs.Errorf("could not renew cookies: %s", err.Error())
+				fs.Errorf(nil, "could not renew cookies: %s", err.Error())
 				return
 			}
 			f.srv.SetCookie(&spCookies.FedAuth, &spCookies.RtFa)

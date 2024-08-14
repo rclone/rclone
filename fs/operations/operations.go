@@ -568,7 +568,7 @@ func DeleteFileWithBackupDir(ctx context.Context, dst fs.Object, backupDir fs.Fs
 		fs.Errorf(dst, "Couldn't %s: %v", action, err)
 		err = fs.CountError(err)
 	} else if !skip {
-		fs.Infof(dst, actioned)
+		fs.Infof(dst, "%s", actioned)
 	}
 	return err
 }
