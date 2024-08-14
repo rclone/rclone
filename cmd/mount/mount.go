@@ -5,7 +5,6 @@ package mount
 
 import (
 	"fmt"
-	"runtime"
 	"time"
 
 	"bazil.org/fuse"
@@ -70,9 +69,6 @@ func mountOptions(VFS *vfs.VFS, device string, opt *mountlib.Options) (options [
 // report an error when fusermount is called.
 func mount(VFS *vfs.VFS, mountpoint string, opt *mountlib.Options) (<-chan error, func() error, error) {
 	f := VFS.Fs()
-	if runtime.GOOS == "darwin" {
-		fs.Logf(nil, "macOS users: please try \"rclone cmount\" as it will be the default in v1.54")
-	}
 	if err := mountlib.CheckOverlap(f, mountpoint); err != nil {
 		return nil, nil, err
 	}
