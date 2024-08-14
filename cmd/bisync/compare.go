@@ -62,42 +62,41 @@ func (b *bisyncRun) setCompareDefaults(ctx context.Context) error {
 		b.setHashType(ci)
 	}
 
-	// Checks and Warnings
 	if b.opt.Compare.SlowHashSyncOnly && b.opt.Compare.SlowHashDetected && b.opt.Resync {
-		fs.Logf(nil, Color(terminal.Dim, "Ignoring checksums during --resync as --slow-hash-sync-only is set."))
+		fs.Logf(nil, Color(terminal.Dim, "Ignoring checksums during --resync as --slow-hash-sync-only is set.")) ///nolint:govet
 		ci.CheckSum = false
 		// note not setting b.opt.Compare.Checksum = false as we still want to build listings on the non-slow side, if any
 	} else if b.opt.Compare.Checksum && !ci.CheckSum {
-		fs.Logf(nil, Color(terminal.YellowFg, "WARNING: Checksums will be compared for deltas but not during sync as --checksum is not set."))
+		fs.Logf(nil, Color(terminal.YellowFg, "WARNING: Checksums will be compared for deltas but not during sync as --checksum is not set.")) //nolint:govet
 	}
 	if b.opt.Compare.Modtime && (b.fs1.Precision() == fs.ModTimeNotSupported || b.fs2.Precision() == fs.ModTimeNotSupported) {
-		fs.Logf(nil, Color(terminal.YellowFg, "WARNING: Modtime compare was requested but at least one remote does not support it. It is recommended to use --checksum or --size-only instead."))
+		fs.Logf(nil, Color(terminal.YellowFg, "WARNING: Modtime compare was requested but at least one remote does not support it. It is recommended to use --checksum or --size-only instead.")) //nolint:govet
 	}
 	if (ci.CheckSum || b.opt.Compare.Checksum) && b.opt.IgnoreListingChecksum {
 		if (b.opt.Compare.HashType1 == hash.None || b.opt.Compare.HashType2 == hash.None) && !b.opt.Compare.DownloadHash {
 			fs.Logf(nil, Color(terminal.YellowFg, `WARNING: Checksum compare was requested but at least one remote does not support checksums (or checksums are being ignored) and --ignore-listing-checksum is set.
 			 Ignoring Checksums globally and falling back to --compare modtime,size for sync. (Use --compare size or --size-only to ignore modtime). Path1 (%s): %s, Path2 (%s): %s`),
-				b.fs1.String(), b.opt.Compare.HashType1.String(), b.fs2.String(), b.opt.Compare.HashType2.String())
+				b.fs1.String(), b.opt.Compare.HashType1.String(), b.fs2.String(), b.opt.Compare.HashType2.String()) //nolint:govet
 			b.opt.Compare.Modtime = true
 			b.opt.Compare.Size = true
 			ci.CheckSum = false
 			b.opt.Compare.Checksum = false
 		} else {
-			fs.Logf(nil, Color(terminal.YellowFg, "WARNING: Ignoring checksum for deltas as --ignore-listing-checksum is set"))
+			fs.Logf(nil, Color(terminal.YellowFg, "WARNING: Ignoring checksum for deltas as --ignore-listing-checksum is set")) //nolint:govet
 			// note: --checksum will still affect the internal sync calls
 		}
 	}
 	if !ci.CheckSum && !b.opt.Compare.Checksum && !b.opt.IgnoreListingChecksum {
-		fs.Infof(nil, Color(terminal.Dim, "Setting --ignore-listing-checksum as neither --checksum nor --compare checksum are set."))
+		fs.Infof(nil, Color(terminal.Dim, "Setting --ignore-listing-checksum as neither --checksum nor --compare checksum are set.")) //nolint:govet
 		b.opt.IgnoreListingChecksum = true
 	}
 	if !b.opt.Compare.Size && !b.opt.Compare.Modtime && !b.opt.Compare.Checksum {
-		return errors.New(Color(terminal.RedFg, "must set a Compare method. (size, modtime, and checksum can't all be false.)"))
+		return errors.New(Color(terminal.RedFg, "must set a Compare method. (size, modtime, and checksum can't all be false.)")) //nolint:govet
 	}
 
 	notSupported := func(label string, value bool, opt *bool) {
 		if value {
-			fs.Logf(nil, Color(terminal.YellowFg, "WARNING: %s is set but bisync does not support it. It will be ignored."), label)
+			fs.Logf(nil, Color(terminal.YellowFg, "WARNING: %s is set but bisync does not support it. It will be ignored."), label) //nolint:govet
 			*opt = false
 		}
 	}
@@ -124,13 +123,13 @@ func sizeDiffers(a, b int64) bool {
 func hashDiffers(a, b string, ht1, ht2 hash.Type, size1, size2 int64) bool {
 	if a == "" || b == "" {
 		if ht1 != hash.None && ht2 != hash.None && !(size1 <= 0 || size2 <= 0) {
-			fs.Logf(nil, Color(terminal.YellowFg, "WARNING: hash unexpectedly blank despite Fs support (%s, %s) (you may need to --resync!)"), a, b)
+			fs.Logf(nil, Color(terminal.YellowFg, "WARNING: hash unexpectedly blank despite Fs support (%s, %s) (you may need to --resync!)"), a, b) //nolint:govet
 		}
 		return false
 	}
 	if ht1 != ht2 {
 		if !(downloadHash && ((ht1 == hash.MD5 && ht2 == hash.None) || (ht1 == hash.None && ht2 == hash.MD5))) {
-			fs.Infof(nil, Color(terminal.YellowFg, "WARNING: Can't compare hashes of different types (%s, %s)"), ht1.String(), ht2.String())
+			fs.Infof(nil, Color(terminal.YellowFg, "WARNING: Can't compare hashes of different types (%s, %s)"), ht1.String(), ht2.String()) //nolint:govet
 			return false
 		}
 	}
@@ -152,7 +151,7 @@ func (b *bisyncRun) setHashType(ci *fs.ConfigInfo) {
 				return
 			}
 		} else if b.opt.Compare.SlowHashSyncOnly && b.opt.Compare.SlowHashDetected {
-			fs.Logf(b.fs2, Color(terminal.YellowFg, "Ignoring --slow-hash-sync-only and falling back to --no-slow-hash as Path1 and Path2 have no hashes in common."))
+			fs.Logf(b.fs2, Color(terminal.YellowFg, "Ignoring --slow-hash-sync-only and falling back to --no-slow-hash as Path1 and Path2 have no hashes in common.")) //nolint:govet
 			b.opt.Compare.SlowHashSyncOnly = false
 			b.opt.Compare.NoSlowHash = true
 			ci.CheckSum = false
@@ -160,7 +159,7 @@ func (b *bisyncRun) setHashType(ci *fs.ConfigInfo) {
 	}
 
 	if !b.opt.Compare.DownloadHash && !b.opt.Compare.SlowHashSyncOnly {
-		fs.Logf(b.fs2, Color(terminal.YellowFg, "--checksum is in use but Path1 and Path2 have no hashes in common; falling back to --compare modtime,size for sync. (Use --compare size or --size-only to ignore modtime)"))
+		fs.Logf(b.fs2, Color(terminal.YellowFg, "--checksum is in use but Path1 and Path2 have no hashes in common; falling back to --compare modtime,size for sync. (Use --compare size or --size-only to ignore modtime)")) //nolint:govet
 		fs.Infof("Path1 hashes", "%v", b.fs1.Hashes().String())
 		fs.Infof("Path2 hashes", "%v", b.fs2.Hashes().String())
 		b.opt.Compare.Modtime = true
@@ -168,25 +167,25 @@ func (b *bisyncRun) setHashType(ci *fs.ConfigInfo) {
 		ci.CheckSum = false
 	}
 	if (b.opt.Compare.NoSlowHash || b.opt.Compare.SlowHashSyncOnly) && b.fs1.Features().SlowHash {
-		fs.Infof(nil, Color(terminal.YellowFg, "Slow hash detected on Path1. Will ignore checksum due to slow-hash settings"))
+		fs.Infof(nil, Color(terminal.YellowFg, "Slow hash detected on Path1. Will ignore checksum due to slow-hash settings")) //nolint:govet
 		b.opt.Compare.HashType1 = hash.None
 	} else {
 		b.opt.Compare.HashType1 = b.fs1.Hashes().GetOne()
 		if b.opt.Compare.HashType1 != hash.None {
-			fs.Logf(b.fs1, Color(terminal.YellowFg, "will use %s for same-side diffs on Path1 only"), b.opt.Compare.HashType1)
+			fs.Logf(b.fs1, Color(terminal.YellowFg, "will use %s for same-side diffs on Path1 only"), b.opt.Compare.HashType1) //nolint:govet
 		}
 	}
 	if (b.opt.Compare.NoSlowHash || b.opt.Compare.SlowHashSyncOnly) && b.fs2.Features().SlowHash {
-		fs.Infof(nil, Color(terminal.YellowFg, "Slow hash detected on Path2. Will ignore checksum due to slow-hash settings"))
+		fs.Infof(nil, Color(terminal.YellowFg, "Slow hash detected on Path2. Will ignore checksum due to slow-hash settings")) //nolint:govet
 		b.opt.Compare.HashType1 = hash.None
 	} else {
 		b.opt.Compare.HashType2 = b.fs2.Hashes().GetOne()
 		if b.opt.Compare.HashType2 != hash.None {
-			fs.Logf(b.fs2, Color(terminal.YellowFg, "will use %s for same-side diffs on Path2 only"), b.opt.Compare.HashType2)
+			fs.Logf(b.fs2, Color(terminal.YellowFg, "will use %s for same-side diffs on Path2 only"), b.opt.Compare.HashType2) //nolint:govet
 		}
 	}
 	if b.opt.Compare.HashType1 == hash.None && b.opt.Compare.HashType2 == hash.None && !b.opt.Compare.DownloadHash {
-		fs.Logf(nil, Color(terminal.YellowFg, "WARNING: Ignoring checksums globally as hashes are ignored or unavailable on both sides."))
+		fs.Logf(nil, Color(terminal.YellowFg, "WARNING: Ignoring checksums globally as hashes are ignored or unavailable on both sides.")) //nolint:govet
 		b.opt.Compare.Checksum = false
 		ci.CheckSum = false
 		b.opt.IgnoreListingChecksum = true
@@ -233,7 +232,7 @@ func (b *bisyncRun) setFromCompareFlag(ctx context.Context) error {
 			b.opt.Compare.Checksum = true
 			CompareFlag.Checksum = true
 		default:
-			return fmt.Errorf(Color(terminal.RedFg, "unknown compare option: %s (must be size, modtime, or checksum)"), opt)
+			return fmt.Errorf(Color(terminal.RedFg, "unknown compare option: %s (must be size, modtime, or checksum)"), opt) //nolint:govet
 		}
 	}
 
@@ -285,14 +284,14 @@ func tryDownloadHash(ctx context.Context, o fs.DirEntry, hashVal string) (string
 	}
 	if o.Size() < 0 {
 		downloadHashWarn.Do(func() {
-			fs.Logf(o, Color(terminal.YellowFg, "Skipping hash download as checksum not reliable with files of unknown length."))
+			fs.Logf(o, Color(terminal.YellowFg, "Skipping hash download as checksum not reliable with files of unknown length.")) //nolint:govet
 		})
 		fs.Debugf(o, "Skipping hash download as checksum not reliable with files of unknown length.")
 		return hashVal, hash.ErrUnsupported
 	}
 
 	firstDownloadHash.Do(func() {
-		fs.Infof(obj.Fs().Name(), Color(terminal.Dim, "Downloading hashes..."))
+		fs.Infof(obj.Fs().Name(), Color(terminal.Dim, "Downloading hashes...")) //nolint:govet
 	})
 	tr := accounting.Stats(ctx).NewCheckingTransfer(o, "computing hash with --download-hash")
 	defer func() {

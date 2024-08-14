@@ -161,7 +161,7 @@ func WriteResults(ctx context.Context, sigil operations.Sigil, src, dst fs.DirEn
 		prettyprint(result, "writing result", fs.LogLevelDebug)
 		if result.Size < 0 && result.Flags != "d" && ((queueCI.CheckSum && !downloadHash) || queueCI.SizeOnly) {
 			once.Do(func() {
-				fs.Logf(result.Name, Color(terminal.YellowFg, "Files of unknown size (such as Google Docs) do not sync reliably with --checksum or --size-only. Consider using modtime instead (the default) or --drive-skip-gdocs"))
+				fs.Logf(result.Name, Color(terminal.YellowFg, "Files of unknown size (such as Google Docs) do not sync reliably with --checksum or --size-only. Consider using modtime instead (the default) or --drive-skip-gdocs")) //nolint:govet
 			})
 		}
 
