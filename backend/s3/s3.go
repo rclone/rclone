@@ -3215,7 +3215,7 @@ func setEndpointValueForIDriveE2(m configmap.Mapper) (err error) {
 	// API to get user region endpoint against the Access Key details: https://www.idrive.com/e2/guides/get_region_endpoint
 	resp, err := client.Post("https://api.idrivee2.com/api/service/get_region_end_point",
 		"application/json",
-		strings.NewReader(`{"access_key": "`+value+`"}`))
+		strings.NewReader(`{"access_key": `+strconv.Quote(value)+`}`))
 	if err != nil {
 		return
 	}
