@@ -30,12 +30,19 @@ type frontmatter struct {
 	Title       string
 	Description string
 	Source      string
+	Aliases     []string
 	Annotations map[string]string
 }
 
 var frontmatterTemplate = template.Must(template.New("frontmatter").Parse(`---
 title: "{{ .Title }}"
 description: "{{ .Description }}"
+{{- if .Aliases }}
+aliases:
+{{- range $value := .Aliases }}
+  - {{ $value }}
+{{- end }}
+{{- end }}
 {{- range $key, $value := .Annotations }}
 {{ $key }}: {{  $value }}
 {{- end }}
@@ -82,23 +89,37 @@ rclone.org website.`,
 		// Look up name => details for prepender
 		type commandDetails struct {
 			Short       string
+			Aliases     []string
 			Annotations map[string]string
 		}
 		var commands = map[string]commandDetails{}
-		var aliases []string
-		var addCommandDetails func(root *cobra.Command)
-		addCommandDetails = func(root *cobra.Command) {
+		var addCommandDetails func(root *cobra.Command, parentAliases []string)
+		addCommandDetails = func(root *cobra.Command, parentAliases []string) {
 			name := strings.ReplaceAll(root.CommandPath(), " ", "_") + ".md"
+			var aliases []string
+			for _, p := range parentAliases {
+				aliases = append(aliases, p+" "+root.Name())
+				for _, v := range root.Aliases {
+					aliases = append(aliases, p+" "+v)
+				}
+			}
+			for _, v := range root.Aliases {
+				if root.HasParent() {
+					aliases = append(aliases, root.Parent().CommandPath()+" "+v)
+				} else {
+					aliases = append(aliases, v)
+				}
+			}
 			commands[name] = commandDetails{
 				Short:       root.Short,
+				Aliases:     aliases,
 				Annotations: root.Annotations,
 			}
-			aliases = append(aliases, root.Aliases...)
 			for _, c := range root.Commands() {
-				addCommandDetails(c)
+				addCommandDetails(c, aliases)
 			}
 		}
-		addCommandDetails(cmd.Root)
+		addCommandDetails(cmd.Root, []string{})
 
 		// markup for the docs files
 		prepender := func(filename string) string {
@@ -109,7 +130,11 @@ rclone.org website.`,
 				Title:       strings.ReplaceAll(base, "_", " "),
 				Description: commands[name].Short,
 				Source:      strings.ReplaceAll(strings.ReplaceAll(base, "rclone", "cmd"), "_", "/") + "/",
+				Aliases:     []string{},
 				Annotations: map[string]string{},
+			}
+			for _, v := range commands[name].Aliases {
+				data.Aliases = append(data.Aliases, "/commands/"+strings.ReplaceAll(v, " ", "_")+"/")
 			}
 			// Filter out annotations that confuse hugo from the frontmatter
 			for k, v := range commands[name].Annotations {
@@ -145,12 +170,6 @@ rclone.org website.`,
 				name := filepath.Base(path)
 				cmd, ok := commands[name]
 				if !ok {
-					// Avoid man pages which are for aliases. This is a bit messy!
-					for _, alias := range aliases {
-						if strings.Contains(name, alias) {
-							return nil
-						}
-					}
 					return fmt.Errorf("didn't find command for %q", name)
 				}
 				b, err := os.ReadFile(path)
