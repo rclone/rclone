@@ -5007,11 +5007,11 @@ func (f *Fs) Command(ctx context.Context, name string, arg []string, opt map[str
 			RestoreRequest: &types.RestoreRequest{},
 		}
 		if lifetime := opt["lifetime"]; lifetime != "" {
-			ilifetime, err := strconv.ParseInt(lifetime, 10, 64)
-			ilifetime32 := int32(ilifetime)
+			ilifetime, err := strconv.ParseInt(lifetime, 10, 32)
 			if err != nil {
 				return nil, fmt.Errorf("bad lifetime: %w", err)
 			}
+			ilifetime32 := int32(ilifetime)
 			req.RestoreRequest.Days = &ilifetime32
 		}
 		if priority := opt["priority"]; priority != "" {
