@@ -5048,9 +5048,19 @@ func (f *Fs) Command(ctx context.Context, name string, arg []string, opt map[str
 				st.Status = "Not an S3 object"
 				return
 			}
-			if o.storageClass == nil || (*o.storageClass != "GLACIER" && *o.storageClass != "DEEP_ARCHIVE") {
-				st.Status = "Not GLACIER or DEEP_ARCHIVE storage class"
-				return
+			if !o.fs.ci.NoTraverse {
+				if o.storageClass == nil {
+					st.Status = "storageClass == nil, skipped"
+					return
+				}
+				if *o.storageClass == "STANDARD" {
+					st.Status = "storageClass == STANDARD, skipped"
+					return
+				}
+				if *o.storageClass != "GLACIER" && *o.storageClass != "DEEP_ARCHIVE" && *o.storageClass != "INTELLIGENT_TIERING" {
+					st.Status = "Not GLACIER or DEEP_ARCHIVE or INTELLIGENT_TIERING storage class, skipped"
+					return
+				}
 			}
 			bucket, bucketPath := o.split()
 			reqCopy := req
