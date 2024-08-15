@@ -190,7 +190,7 @@ func (mask *MultiEncoder) Set(in string) error {
 		if bits, ok := nameToEncoding[part]; ok {
 			out |= bits
 		} else {
-			i, err := strconv.ParseInt(part, 0, 64)
+			i, err := strconv.ParseUint(part, 0, 0)
 			if err != nil {
 				return fmt.Errorf("bad encoding %q: possible values are: %s", part, validStrings())
 			}
