@@ -762,9 +762,15 @@ func Run(t *testing.T, opt *Opt) {
 			// assert.Nil(t, obj) - FIXME some remotes return the object even on nil
 			assert.NotNil(t, err)
 
-			obj, err := f.NewObject(ctx, file2.Path)
-			assert.Nil(t, obj)
-			assert.Equal(t, fs.ErrorObjectNotFound, err)
+			retry(t, "FsPutError: test object does not exist", func() error {
+				obj, err := f.NewObject(ctx, file2.Path)
+				if err == nil {
+					return fserrors.RetryErrorf("object is present")
+				}
+				assert.Nil(t, obj)
+				assert.Equal(t, fs.ErrorObjectNotFound, err)
+				return nil
+			})
 		})
 
 		t.Run("FsPutZeroLength", func(t *testing.T) {
