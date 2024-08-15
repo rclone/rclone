@@ -72,12 +72,12 @@ func (o *Object) parseMetadataInt(m fs.Metadata, key string, base int) (result i
 	value, ok := m[key]
 	if ok {
 		var err error
-		result64, err := strconv.ParseInt(value, base, 64)
+		parsed, err := strconv.ParseInt(value, base, 0)
 		if err != nil {
 			fs.Debugf(o, "failed to parse metadata %s: %q: %v", key, value, err)
 			ok = false
 		}
-		result = int(result64)
+		result = int(parsed)
 	}
 	return result, ok
 }
