@@ -1,6 +1,8 @@
 ---
 title: "Storj"
 description: "Rclone docs for Storj"
+aliases:
+  - tardigrade
 versionIntroduced: "v1.52"
 ---
 
