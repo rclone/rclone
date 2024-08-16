@@ -11,7 +11,6 @@ import (
 	"github.com/rclone/rclone/cmd/serve/proxy/proxyflags"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config/flags"
-	"github.com/rclone/rclone/fs/rc"
 	"github.com/rclone/rclone/lib/systemd"
 	"github.com/rclone/rclone/vfs"
 	"github.com/rclone/rclone/vfs/vfsflags"
@@ -19,36 +18,58 @@ import (
 	"github.com/spf13/pflag"
 )
 
+// OptionsInfo descripts the Options in use
+var OptionsInfo = fs.Options{{
+	Name:    "addr",
+	Default: "localhost:2022",
+	Help:    "IPaddress:Port or :Port to bind server to",
+}, {
+	Name:    "key",
+	Default: []string{},
+	Help:    "SSH private host key file (Can be multi-valued, leave blank to auto generate)",
+}, {
+	Name:    "authorized_keys",
+	Default: "~/.ssh/authorized_keys",
+	Help:    "Authorized keys file",
+}, {
+	Name:    "user",
+	Default: "",
+	Help:    "User name for authentication",
+}, {
+	Name:    "pass",
+	Default: "",
+	Help:    "Password for authentication",
+}, {
+	Name:    "no_auth",
+	Default: false,
+	Help:    "Allow connections with no authentication if set",
+}, {
+	Name:    "stdio",
+	Default: false,
+	Help:    "Run an sftp server on stdin/stdout",
+}}
+
 // Options contains options for the http Server
 type Options struct {
-	ListenAddr     string   // Port to listen on
-	HostKeys       []string // Paths to private host keys
-	AuthorizedKeys string   // Path to authorized keys file
-	User           string   // single username
-	Pass           string   // password for user
-	NoAuth         bool     // allow no authentication on connections
-	Stdio          bool     // serve on stdio
+	ListenAddr     string   `config:"addr"`            // Port to listen on
+	HostKeys       []string `config:"key"`             // Paths to private host keys
+	AuthorizedKeys string   `config:"authorized_keys"` // Path to authorized keys file
+	User           string   `config:"user"`            // single username
+	Pass           string   `config:"pass"`            // password for user
+	NoAuth         bool     `config:"no_auth"`         // allow no authentication on connections
+	Stdio          bool     `config:"stdio"`           // serve on stdio
 }
 
-// DefaultOpt is the default values used for Options
-var DefaultOpt = Options{
-	ListenAddr:     "localhost:2022",
-	AuthorizedKeys: "~/.ssh/authorized_keys",
+func init() {
+	fs.RegisterGlobalOptions(fs.OptionsInfo{Name: "sftp", Opt: &Opt, Options: OptionsInfo})
 }
 
 // Opt is options set by command line flags
-var Opt = DefaultOpt
+var Opt Options
 
 // AddFlags adds flags for the sftp
 func AddFlags(flagSet *pflag.FlagSet, Opt *Options) {
-	rc.AddOption("sftp", &Opt)
-	flags.StringVarP(flagSet, &Opt.ListenAddr, "addr", "", Opt.ListenAddr, "IPaddress:Port or :Port to bind server to", "")
-	flags.StringArrayVarP(flagSet, &Opt.HostKeys, "key", "", Opt.HostKeys, "SSH private host key file (Can be multi-valued, leave blank to auto generate)", "")
-	flags.StringVarP(flagSet, &Opt.AuthorizedKeys, "authorized-keys", "", Opt.AuthorizedKeys, "Authorized keys file", "")
-	flags.StringVarP(flagSet, &Opt.User, "user", "", Opt.User, "User name for authentication", "")
-	flags.StringVarP(flagSet, &Opt.Pass, "pass", "", Opt.Pass, "Password for authentication", "")
-	flags.BoolVarP(flagSet, &Opt.NoAuth, "no-auth", "", Opt.NoAuth, "Allow connections with no authentication if set", "")
-	flags.BoolVarP(flagSet, &Opt.Stdio, "stdio", "", Opt.Stdio, "Run an sftp server on stdin/stdout", "")
+	flags.AddFlagsFromOptions(flagSet, "", OptionsInfo)
 }
 
 func init() {

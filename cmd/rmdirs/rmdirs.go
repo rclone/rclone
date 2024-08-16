@@ -21,8 +21,7 @@ func init() {
 var rmdirsCmd = &cobra.Command{
 	Use:   "rmdirs remote:path",
 	Short: `Remove empty directories under the path.`,
-	Long: `
-This recursively removes any empty directories (including directories
+	Long: `This recursively removes any empty directories (including directories
 that only contain empty directories), that it finds under the path.
 The root path itself will also be removed if it is empty, unless
 you supply the ` + "`--leave-root`" + ` flag.

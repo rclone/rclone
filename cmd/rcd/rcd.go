@@ -6,6 +6,7 @@ import (
 	"log"
 
 	"github.com/rclone/rclone/cmd"
+	"github.com/rclone/rclone/fs/rc"
 	"github.com/rclone/rclone/fs/rc/rcflags"
 	"github.com/rclone/rclone/fs/rc/rcserver"
 	libhttp "github.com/rclone/rclone/lib/http"
@@ -37,17 +38,17 @@ See the [rc documentation](/rc/) for more info on the rc flags.
 	},
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(0, 1, command, args)
-		if rcflags.Opt.Enabled {
+		if rc.Opt.Enabled {
 			log.Fatalf("Don't supply --rc flag when using rcd")
 		}
 
 		// Start the rc
-		rcflags.Opt.Enabled = true
+		rc.Opt.Enabled = true
 		if len(args) > 0 {
-			rcflags.Opt.Files = args[0]
+			rc.Opt.Files = args[0]
 		}
 
-		s, err := rcserver.Start(context.Background(), &rcflags.Opt)
+		s, err := rcserver.Start(context.Background(), &rc.Opt)
 		if err != nil {
 			log.Fatalf("Failed to start remote control: %v", err)
 		}

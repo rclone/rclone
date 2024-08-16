@@ -122,7 +122,9 @@ WebDAV or S3, that work out of the box.)
 {{< provider name="Dropbox" home="https://www.dropbox.com/" config="/dropbox/" >}}
 {{< provider name="Enterprise File Fabric" home="https://storagemadeeasy.com/about/" config="/filefabric/" >}}
 {{< provider name="Fastmail Files" home="https://www.fastmail.com/" config="/webdav/#fastmail-files" >}}
+{{< provider name="Files.com" home="https://www.files.com/" config="/filescom/" >}}
 {{< provider name="FTP" home="https://en.wikipedia.org/wiki/File_Transfer_Protocol" config="/ftp/" >}}
+{{< provider name="Gofile" home="https://gofile.io/" config="/gofile/" >}}
 {{< provider name="Google Cloud Storage" home="https://cloud.google.com/storage/" config="/googlecloudstorage/" >}}
 {{< provider name="Google Drive" home="https://www.google.com/drive/" config="/drive/" >}}
 {{< provider name="Google Photos" home="https://www.google.com/photos/about/" config="/googlephotos/" >}}
@@ -161,6 +163,7 @@ WebDAV or S3, that work out of the box.)
 {{< provider name="pCloud" home="https://www.pcloud.com/" config="/pcloud/" >}}
 {{< provider name="Petabox" home="https://petabox.io/" config="/s3/#petabox" >}}
 {{< provider name="PikPak" home="https://mypikpak.com/" config="/pikpak/" >}}
+{{< provider name="Pixeldrain" home="https://pixeldrain.com/" config="/pixeldrain/" >}}
 {{< provider name="premiumize.me" home="https://premiumize.me/" config="/premiumizeme/" >}}
 {{< provider name="put.io" home="https://put.io/" config="/putio/" >}}
 {{< provider name="Proton Drive" home="https://proton.me/drive" config="/protondrive/" >}}

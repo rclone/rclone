@@ -60,3 +60,4 @@ Thank you very much to our sponsors:
 {{< sponsor src="/img/logos/idrive_e2.svg" width="300" height="200" title="Visit our sponsor IDrive e2" link="https://www.idrive.com/e2/?refer=rclone">}}
 {{< sponsor src="/img/logos/warp.svg" width="300" height="200" title="Visit our sponsor warp.dev" link="https://www.warp.dev/?utm_source=rclone&utm_medium=referral&utm_campaign=rclone_20231103">}}
 {{< sponsor src="/img/logos/sia.svg" width="200" height="200" title="Visit our sponsor sia" link="https://sia.tech">}}
+{{< sponsor src="/img/logos/route4me.svg" width="400" height="200" title="Visit our sponsor Route4Me" link="https://route4me.com/">}}

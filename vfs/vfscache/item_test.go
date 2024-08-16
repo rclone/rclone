@@ -24,7 +24,7 @@ import (
 var zeroes = string(make([]byte, 100))
 
 func newItemTestCache(t *testing.T) (r *fstest.Run, c *Cache) {
-	opt := vfscommon.DefaultOpt
+	opt := vfscommon.Opt
 
 	// Disable the cache cleaner as it interferes with these tests
 	opt.CachePollInterval = 0

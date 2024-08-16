@@ -36,8 +36,7 @@ func init() {
 var commandDefinition = &cobra.Command{
 	Use:   "copyurl https://example.com dest:path",
 	Short: `Copy the contents of the URL supplied content to dest:path.`,
-	Long: strings.ReplaceAll(`
-Download a URL's content and copy it to the destination without saving
+	Long: strings.ReplaceAll(`Download a URL's content and copy it to the destination without saving
 it in temporary storage.
 
 Setting |--auto-filename| will attempt to automatically determine the

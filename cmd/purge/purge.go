@@ -16,8 +16,7 @@ func init() {
 var commandDefinition = &cobra.Command{
 	Use:   "purge remote:path",
 	Short: `Remove the path and all of its contents.`,
-	Long: `
-Remove the path and all of its contents.  Note that this does not obey
+	Long: `Remove the path and all of its contents.  Note that this does not obey
 include/exclude filters - everything will be removed.  Use the
 [delete](/commands/rclone_delete/) command if you want to selectively
 delete files. To delete empty directories only, use command

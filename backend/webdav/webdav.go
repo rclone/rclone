@@ -159,7 +159,9 @@ Set to 0 to disable chunked uploading.
 			Help:     "Exclude ownCloud mounted storages",
 			Advanced: true,
 			Default:  false,
-		}},
+		},
+			fshttp.UnixSocketConfig,
+		},
 	})
 }
 
@@ -177,6 +179,7 @@ type Options struct {
 	ChunkSize          fs.SizeSuffix        `config:"nextcloud_chunk_size"`
 	ExcludeShares      bool                 `config:"owncloud_exclude_shares"`
 	ExcludeMounts      bool                 `config:"owncloud_exclude_mounts"`
+	UnixSocket         string               `config:"unix_socket"`
 }
 
 // Fs represents a remote webdav
@@ -458,7 +461,12 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		precision:   fs.ModTimeNotSupported,
 	}
 
-	client := fshttp.NewClient(ctx)
+	var client *http.Client
+	if opt.UnixSocket == "" {
+		client = fshttp.NewClient(ctx)
+	} else {
+		client = fshttp.NewClientWithUnixSocket(ctx, opt.UnixSocket)
+	}
 	if opt.Vendor == "sharepoint-ntlm" {
 		// Disable transparent HTTP/2 support as per https://golang.org/pkg/net/http/ ,
 		// otherwise any connection to IIS 10.0 fails with 'stream error: stream ID 39; HTTP_1_1_REQUIRED'
@@ -635,7 +643,7 @@ func (f *Fs) setQuirks(ctx context.Context, vendor string) error {
 		odrvcookie.NewRenew(12*time.Hour, func() {
 			spCookies, err := spCk.Cookies(ctx)
 			if err != nil {
-				fs.Errorf("could not renew cookies: %s", err.Error())
+				fs.Errorf(nil, "could not renew cookies: %s", err.Error())
 				return
 			}
 			f.srv.SetCookie(&spCookies.FedAuth, &spCookies.RtFa)

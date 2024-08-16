@@ -209,7 +209,7 @@ altogether with an HTML report and test retries then from the
 project root:
 
     go install github.com/rclone/rclone/fstest/test_all
-    test_all -backend drive
+    test_all -backends drive
 
 ### Full integration testing
 
@@ -508,7 +508,7 @@ You'll need to modify the following files
 - `backend/s3/s3.go`
     - Add the provider to `providerOption` at the top of the file
     - Add endpoints and other config for your provider gated on the provider in `fs.RegInfo`.
-    - Exclude your provider from genric config questions (eg `region` and `endpoint).
+    - Exclude your provider from generic config questions (eg `region` and `endpoint).
     - Add the provider to the `setQuirks` function - see the documentation there.
 - `docs/content/s3.md`
     - Add the provider at the top of the page.

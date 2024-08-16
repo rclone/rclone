@@ -74,9 +74,9 @@ See the [listremotes](/commands/rclone_listremotes/) command for more informatio
 // Return the a list of remotes in the config file
 // including any defined by environment variables.
 func rcListRemotes(ctx context.Context, in rc.Params) (out rc.Params, err error) {
-	remotes := FileSections()
+	remoteNames := GetRemoteNames()
 	out = rc.Params{
-		"remotes": remotes,
+		"remotes": remoteNames,
 	}
 	return out, nil
 }
@@ -91,7 +91,12 @@ func init() {
 Returns a JSON object:
 - providers - array of objects
 
-See the [config providers](/commands/rclone_config_providers/) command for more information on the above.
+See the [config providers](/commands/rclone_config_providers/) command
+for more information on the above.
+
+Note that the Options blocks are in the same format as returned by
+"options/info". They are described in the
+[option blocks](#option-blocks) section.
 `,
 	})
 }

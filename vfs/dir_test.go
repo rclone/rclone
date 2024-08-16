@@ -43,7 +43,7 @@ func TestDirMethods(t *testing.T) {
 	assert.Equal(t, false, dir.IsFile())
 
 	// Mode
-	assert.Equal(t, vfs.Opt.DirPerms, dir.Mode())
+	assert.Equal(t, os.FileMode(vfs.Opt.DirPerms), dir.Mode())
 
 	// Name
 	assert.Equal(t, "dir", dir.Name())

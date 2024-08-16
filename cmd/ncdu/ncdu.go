@@ -31,8 +31,7 @@ func init() {
 var commandDefinition = &cobra.Command{
 	Use:   "ncdu remote:path",
 	Short: `Explore a remote with a text based user interface.`,
-	Long: `
-This displays a text based user interface allowing the navigation of a
+	Long: `This displays a text based user interface allowing the navigation of a
 remote. It is most useful for answering the question - "What is using
 all my disk space?".
 
@@ -65,7 +64,7 @@ These flags have the following meaning:
 
 This an homage to the [ncdu tool](https://dev.yorhel.nl/ncdu) but for
 rclone remotes.  It is missing lots of features at the moment
-but is useful as it stands.
+but is useful as it stands. Unlike ncdu it does not show excluded files.
 
 Note that it might take some time to delete big files/directories. The
 UI won't respond in the meantime since the deletion is done synchronously.

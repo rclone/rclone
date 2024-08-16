@@ -2219,7 +2219,7 @@ func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (
 		case in <- job:
 		default:
 			overflow = append(overflow, job)
-			wg.Add(-1)
+			wg.Done()
 		}
 	}
 
@@ -3965,7 +3965,7 @@ func (o *Object) Hash(ctx context.Context, t hash.Type) (string, error) {
 	return "", hash.ErrUnsupported
 }
 func (o *baseObject) Hash(ctx context.Context, t hash.Type) (string, error) {
-	if t != hash.MD5 {
+	if t != hash.MD5 && t != hash.SHA1 && t != hash.SHA256 {
 		return "", hash.ErrUnsupported
 	}
 	return "", nil

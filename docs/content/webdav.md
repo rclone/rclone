@@ -294,6 +294,17 @@ Properties:
 - Type:        bool
 - Default:     false
 
+#### --webdav-unix-socket
+
+Path to a unix domain socket to dial to, instead of opening a TCP connection directly
+
+Properties:
+
+- Config:      unix_socket
+- Env Var:     RCLONE_WEBDAV_UNIX_SOCKET
+- Type:        string
+- Required:    false
+
 #### --webdav-description
 
 Description of the remote.

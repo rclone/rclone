@@ -15,13 +15,12 @@ func init() {
 var fishCommandDefinition = &cobra.Command{
 	Use:   "fish [output_file]",
 	Short: `Output fish completion script for rclone.`,
-	Long: `
-Generates a fish autocompletion script for rclone.
+	Long: `Generates a fish autocompletion script for rclone.
 
 This writes to /etc/fish/completions/rclone.fish by default so will
 probably need to be run with sudo or as root, e.g.
 
-    sudo rclone genautocomplete fish
+    sudo rclone completion fish
 
 Logout and login again to use the autocompletion scripts, or source
 them directly

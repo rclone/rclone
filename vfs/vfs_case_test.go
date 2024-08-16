@@ -34,12 +34,12 @@ func TestCaseSensitivity(t *testing.T) {
 	file3 := r.WriteObject(ctx, "FilEb", "data3", t3)
 
 	// Create a case-Sensitive and case-INsensitive VFS
-	optCS := vfscommon.DefaultOpt
+	optCS := vfscommon.Opt
 	optCS.CaseInsensitive = false
 	vfsCS := New(r.Fremote, &optCS)
 	defer cleanupVFS(t, vfsCS)
 
-	optCI := vfscommon.DefaultOpt
+	optCI := vfscommon.Opt
 	optCI.CaseInsensitive = true
 	vfsCI := New(r.Fremote, &optCI)
 	defer cleanupVFS(t, vfsCI)
@@ -179,7 +179,7 @@ func TestUnicodeNormalization(t *testing.T) {
 	r.CheckRemoteItems(t, file1, file2)
 
 	// Create VFS
-	opt := vfscommon.DefaultOpt
+	opt := vfscommon.Opt
 	vfs := New(r.Fremote, &opt)
 	defer cleanupVFS(t, vfs)
 

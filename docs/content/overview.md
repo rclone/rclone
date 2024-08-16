@@ -24,7 +24,9 @@ Here is an overview of the major features of each cloud storage system.
 | Citrix ShareFile             | MD5               | R/W     | Yes              | No              | -         | -        |
 | Dropbox                      | DBHASH ¹          | R       | Yes              | No              | -         | -        |
 | Enterprise File Fabric       | -                 | R/W     | Yes              | No              | R/W       | -        |
+| Files.com                    | MD5, CRC32        | DR/W    | Yes              | No              | R         | -        |
 | FTP                          | -                 | R/W ¹⁰  | No               | No              | -         | -        |
+| Gofile                       | MD5               | DR/W    | No               | Yes             | R         | -        |
 | Google Cloud Storage         | MD5               | R/W     | No               | No              | R/W       | -        |
 | Google Drive                 | MD5, SHA1, SHA256 | DR/W    | No               | Yes             | R/W       | DRWU     |
 | Google Photos                | -                 | -       | No               | Yes             | R         | -        |
@@ -46,6 +48,7 @@ Here is an overview of the major features of each cloud storage system.
 | Oracle Object Storage        | MD5               | R/W     | No               | No              | R/W       | -        |
 | pCloud                       | MD5, SHA1 ⁷       | R       | No               | No              | W         | -        |
 | PikPak                       | MD5               | R       | No               | No              | R         | -        |
+| Pixeldrain                   | SHA256            | R/W     | No               | No              | R         | RW       |
 | premiumize.me                | -                 | -       | Yes              | No              | R         | -        |
 | put.io                       | CRC-32            | R/W     | No               | Yes             | R         | -        |
 | Proton Drive                 | SHA1              | R/W     | No               | No              | R         | -        |
@@ -348,8 +351,8 @@ have a Windows file system with Unicode fullwidth characters
 remote rather than being translated to regular (halfwidth) `*`, `?` and `:`.
 
 The `--backend-encoding` flags allow you to change that. You can
-disable the encoding completely with `--backend-encoding None` or set
-`encoding = None` in the config file.
+disable the encoding completely with `--backend-encoding Raw` or set
+`encoding = Raw` in the config file.
 
 Encoding takes a comma separated list of encodings. You can see the
 list of all possible values by passing an invalid value to this
@@ -368,6 +371,7 @@ will show you the defaults for the backends.
 | Dollar | `$` | `＄` |
 | Dot | `.` or `..` as entire string | `．`, `．．` |
 | DoubleQuote | `"` | `＂` |
+| Exclamation | `!` | `！` |
 | Hash | `#` | `＃` |
 | InvalidUtf8 | An invalid UTF-8 character (e.g. latin1) | `�` |
 | LeftCrLfHtVt | CR 0x0D, LF 0x0A, HT 0x09, VT 0x0B on the left of a string | `␍`, `␊`, `␉`, `␋` |
@@ -375,7 +379,7 @@ will show you the defaults for the backends.
 | LeftSpace | SPACE on the left of a string | `␠` |
 | LeftTilde | `~` on the left of a string | `～` |
 | LtGt | `<`, `>` | `＜`, `＞` |
-| None | No characters are encoded | |
+| None ¹ | NUL 0x00 | ␀ |
 | Percent | `%` | `％` |
 | Pipe | \| | `｜` |
 | Question | `?` | `？` |
@@ -386,6 +390,10 @@ will show you the defaults for the backends.
 | SingleQuote | `'` | `＇` |
 | Slash | `/` | `／` |
 | SquareBracket | `[`, `]` | `［`, `］` |
+
+¹ Encoding from NUL 0x00 to ␀ is always implicit except when using Raw.
+It was previously incorrectly documented as disabling encoding,
+and to maintain backward compatibility, its behavior has not been changed.
 
 ##### Encoding example: FTP
 
@@ -430,7 +438,7 @@ the default value but without `Colon,Question,Asterisk`:
 --local-encoding "Slash,LtGt,DoubleQuote,Pipe,BackSlash,Ctl,RightSpace,RightPeriod,InvalidUtf8,Dot"
 ```
 
-Alternatively, you can disable the conversion of any characters with `--local-encoding None`.
+Alternatively, you can disable the conversion of any characters with `--local-encoding Raw`.
 
 Instead of using command-line argument `--local-encoding`, you may also set it
 as [environment variable](/docs/#environment-variables) `RCLONE_LOCAL_ENCODING`,
@@ -494,14 +502,16 @@ upon backend-specific capabilities.
 | Citrix ShareFile             | Yes   | Yes  | Yes  | Yes     | No      | No    | No           | No                | No           | No    | Yes      |
 | Dropbox                      | Yes   | Yes  | Yes  | Yes     | No      | No    | Yes          | No                | Yes          | Yes   | Yes      |
 | Enterprise File Fabric       | Yes   | Yes  | Yes  | Yes     | Yes     | No    | No           | No                | No           | No    | Yes      |
+| Files.com                    | Yes   | Yes  | Yes  | Yes     | No      | No    | Yes          | No                | Yes          | No    | Yes      |
 | FTP                          | No    | No   | Yes  | Yes     | No      | No    | Yes          | No                | No           | No    | Yes      |
+| Gofile                       | Yes   | Yes  | Yes  | Yes     | No      | No    | Yes          | No                | Yes          | Yes   | Yes      |
 | Google Cloud Storage         | Yes   | Yes  | No   | No      | No      | Yes   | Yes          | No                | No           | No    | No       |
 | Google Drive                 | Yes   | Yes  | Yes  | Yes     | Yes     | Yes   | Yes          | No                | Yes          | Yes   | Yes      |
 | Google Photos                | No    | No   | No   | No      | No      | No    | No           | No                | No           | No    | No       |
 | HDFS                         | Yes   | No   | Yes  | Yes     | No      | No    | Yes          | No                | No           | Yes   | Yes      |
 | HiDrive                      | Yes   | Yes  | Yes  | Yes     | No      | No    | Yes          | No                | No           | No    | Yes      |
 | HTTP                         | No    | No   | No   | No      | No      | No    | No           | No                | No           | No    | Yes      |
-| ImageKit                     | Yes    | Yes  | Yes   | No      | No     | No   | No           | No                | No          | No   | Yes       |
+| ImageKit                     | Yes   | Yes  | Yes  | No      | No      | No    | No           | No                | No           | No    | Yes      |
 | Internet Archive             | No    | Yes  | No   | No      | Yes     | Yes   | No           | No                | Yes          | Yes   | No       |
 | Jottacloud                   | Yes   | Yes  | Yes  | Yes     | Yes     | Yes   | No           | No                | Yes          | Yes   | Yes      |
 | Koofr                        | Yes   | Yes  | Yes  | Yes     | No      | No    | Yes          | No                | Yes          | Yes   | Yes      |
@@ -516,6 +526,7 @@ upon backend-specific capabilities.
 | Oracle Object Storage        | No    | Yes  | No   | No      | Yes     | Yes   | Yes          | Yes               | No           | No    | No       |
 | pCloud                       | Yes   | Yes  | Yes  | Yes     | Yes     | No    | No           | No                | Yes          | Yes   | Yes      |
 | PikPak                       | Yes   | Yes  | Yes  | Yes     | Yes     | No    | No           | No                | Yes          | Yes   | Yes      |
+| Pixeldrain                   | Yes   | No   | Yes  | Yes     | No      | No    | Yes          | No                | Yes          | Yes   | Yes      |
 | premiumize.me                | Yes   | No   | Yes  | Yes     | No      | No    | No           | No                | Yes          | Yes   | Yes      |
 | put.io                       | Yes   | No   | Yes  | Yes     | Yes     | No    | Yes          | No                | No           | Yes   | Yes      |
 | Proton Drive                 | Yes   | No   | Yes  | Yes     | Yes     | No    | No           | No                | No           | Yes   | Yes      |

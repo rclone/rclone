@@ -93,7 +93,7 @@ func TestDownloaders(t *testing.T) {
 			t:    t,
 			size: size,
 		}
-		opt := vfscommon.DefaultOpt
+		opt := vfscommon.Opt
 		dls := New(item, &opt, remote, src)
 		return item, dls
 	}

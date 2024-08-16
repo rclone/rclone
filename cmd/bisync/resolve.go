@@ -142,7 +142,7 @@ func (b *bisyncRun) resolve(ctxMove context.Context, path1, path2, file, alias s
 		if winningPath > 0 {
 			fs.Infof(file, Color(terminal.GreenFg, "The winner is: Path%d"), winningPath)
 		} else {
-			fs.Infof(file, Color(terminal.RedFg, "A winner could not be determined."))
+			fs.Infof(file, Color(terminal.RedFg, "A winner could not be determined.")) //nolint:govet
 		}
 	}
 

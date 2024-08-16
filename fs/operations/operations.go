@@ -568,7 +568,7 @@ func DeleteFileWithBackupDir(ctx context.Context, dst fs.Object, backupDir fs.Fs
 		fs.Errorf(dst, "Couldn't %s: %v", action, err)
 		err = fs.CountError(err)
 	} else if !skip {
-		fs.Infof(dst, actioned)
+		fs.Infof(dst, "%s", actioned)
 	}
 	return err
 }
@@ -1283,7 +1283,7 @@ func Cat(ctx context.Context, f fs.Fs, w io.Writer, offset, count int64, sep []b
 			err = fs.CountError(err)
 			fs.Errorf(o, "Failed to send to output: %v", err)
 		}
-		if len(sep) >= 0 {
+		if len(sep) > 0 {
 			_, err = w.Write(sep)
 			if err != nil {
 				err = fs.CountError(err)
@@ -1807,7 +1807,7 @@ func copyURLFn(ctx context.Context, dstFileName string, url string, autoFilename
 	if autoFilename {
 		if dstFileNameFromHeader {
 			_, params, err := mime.ParseMediaType(resp.Header.Get("Content-Disposition"))
-			headerFilename := path.Base(strings.Replace(params["filename"], "\\", "/", -1))
+			headerFilename := path.Base(strings.ReplaceAll(params["filename"], "\\", "/"))
 			if err != nil || headerFilename == "" {
 				return fmt.Errorf("CopyURL failed: filename not found in the Content-Disposition header")
 			}
@@ -1865,14 +1865,12 @@ func BackupDir(ctx context.Context, fdst fs.Fs, fsrc fs.Fs, srcFileName string) 
 			if OverlappingFilterCheck(ctx, backupDir, fsrc) {
 				return nil, fserrors.FatalError(errors.New("source and parameter to --backup-dir mustn't overlap"))
 			}
-		} else {
-			if ci.Suffix == "" {
-				if SameDir(fdst, backupDir) {
-					return nil, fserrors.FatalError(errors.New("destination and parameter to --backup-dir mustn't be the same"))
-				}
-				if SameDir(fsrc, backupDir) {
-					return nil, fserrors.FatalError(errors.New("source and parameter to --backup-dir mustn't be the same"))
-				}
+		} else if ci.Suffix == "" {
+			if SameDir(fdst, backupDir) {
+				return nil, fserrors.FatalError(errors.New("destination and parameter to --backup-dir mustn't be the same"))
+			}
+			if SameDir(fsrc, backupDir) {
+				return nil, fserrors.FatalError(errors.New("source and parameter to --backup-dir mustn't be the same"))
 			}
 		}
 	} else if ci.Suffix != "" {
@@ -2041,15 +2039,13 @@ func moveOrCopyFile(ctx context.Context, fdst fs.Fs, fsrc fs.Fs, dstFileName str
 		}
 
 		_, err = Op(ctx, fdst, dstObj, dstFileName, srcObj)
-	} else {
-		if !cp {
-			if ci.IgnoreExisting {
-				fs.Debugf(srcObj, "Not removing source file as destination file exists and --ignore-existing is set")
-				logger(ctx, Match, srcObj, dstObj, nil)
-			} else if !SameObject(srcObj, dstObj) {
-				err = DeleteFile(ctx, srcObj)
-				logger(ctx, Differ, srcObj, dstObj, nil)
-			}
+	} else if !cp {
+		if ci.IgnoreExisting {
+			fs.Debugf(srcObj, "Not removing source file as destination file exists and --ignore-existing is set")
+			logger(ctx, Match, srcObj, dstObj, nil)
+		} else if !SameObject(srcObj, dstObj) {
+			err = DeleteFile(ctx, srcObj)
+			logger(ctx, Differ, srcObj, dstObj, nil)
 		}
 	}
 	return err

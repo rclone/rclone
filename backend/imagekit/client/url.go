@@ -56,7 +56,7 @@ func (ik *ImageKit) URL(params URLParam) (string, error) {
 		var expires = strconv.FormatInt(now+params.ExpireSeconds, 10)
 		var path = strings.Replace(resultURL, endpoint, "", 1)
 
-		path = path + expires
+		path += expires
 		mac := hmac.New(sha1.New, []byte(ik.PrivateKey))
 		mac.Write([]byte(path))
 		signature := hex.EncodeToString(mac.Sum(nil))

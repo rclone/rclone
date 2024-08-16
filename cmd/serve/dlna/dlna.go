@@ -1,5 +1,3 @@
-//go:build go1.21
-
 // Package dlna provides DLNA server.
 package dlna
 
@@ -26,6 +24,7 @@ import (
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/lib/systemd"
 	"github.com/rclone/rclone/vfs"
+	"github.com/rclone/rclone/vfs/vfscommon"
 	"github.com/rclone/rclone/vfs/vfsflags"
 	"github.com/spf13/cobra"
 )
@@ -49,6 +48,10 @@ Rclone will list all files present in the remote, without filtering
 based on media formats or file extensions. Additionally, there is no
 media transcoding support. This means that some players might show
 files that they are not able to play back correctly.
+
+Rclone will add external subtitle files (.srt) to videos if they have the same
+filename as the video file itself (except the extension), either in the same
+directory as the video, or in a "Subs" subdirectory.
 
 ` + dlnaflags.Help + vfs.Help(),
 	Annotations: map[string]string{
@@ -127,14 +130,14 @@ func newServer(f fs.Fs, opt *dlnaflags.Options) (*server, error) {
 	}
 
 	s := &server{
-		AnnounceInterval: opt.AnnounceInterval,
+		AnnounceInterval: time.Duration(opt.AnnounceInterval),
 		FriendlyName:     friendlyName,
 		RootDeviceUUID:   makeDeviceUUID(friendlyName),
 		Interfaces:       interfaces,
 		waitChan:         make(chan struct{}),
 		httpListenAddr:   opt.ListenAddr,
 		f:                f,
-		vfs:              vfs.New(f, &vfsflags.Opt),
+		vfs:              vfs.New(f, &vfscommon.Opt),
 	}
 
 	s.services = map[string]UPnPService{

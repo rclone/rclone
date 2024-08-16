@@ -283,6 +283,12 @@ func (p Params) GetDuration(key string) (time.Duration, error) {
 	return duration, nil
 }
 
+// GetFsDuration get the duration parameters from in
+func (p Params) GetFsDuration(key string) (fs.Duration, error) {
+	d, err := p.GetDuration(key)
+	return fs.Duration(d), err
+}
+
 // Error creates the standard response for an errored rc call using an
 // rc.Param from a path, input Params, error and a suggested HTTP
 // response code.

@@ -18,8 +18,7 @@ func init() {
 var commandDefinition = &cobra.Command{
 	Use:   "ls remote:path",
 	Short: `List the objects in the path with size and path.`,
-	Long: `
-Lists the objects in the source path to standard output in a human
+	Long: `Lists the objects in the source path to standard output in a human
 readable format with size and path. Recurses by default.
 
 Eg

@@ -154,7 +154,7 @@ func TestCmdTest(t *testing.T) {
 
 	// Test simple call and output from rclone
 	out, err := rclone("version")
-	t.Logf("rclone version\n" + out)
+	t.Log("rclone version\n" + out)
 	if assert.NoError(t, err) {
 		assert.Contains(t, out, "rclone v")
 		assert.Contains(t, out, "version: ")
@@ -208,7 +208,7 @@ func TestCmdTest(t *testing.T) {
 
 	// Test access to config file and simple test data
 	out, err = rclone("lsl", "myLocal:"+testFolder)
-	t.Logf("rclone lsl myLocal:testFolder\n" + out)
+	t.Log("rclone lsl myLocal:testFolder\n" + out)
 	if assert.NoError(t, err) {
 		assert.Contains(t, out, "rclone.config")
 		assert.Contains(t, out, "testdata/folderA/fileA1.txt")

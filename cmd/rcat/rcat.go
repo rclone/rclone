@@ -26,9 +26,7 @@ func init() {
 var commandDefinition = &cobra.Command{
 	Use:   "rcat remote:path",
 	Short: `Copies standard input to file on remote.`,
-	Long: `
-rclone rcat reads from standard input (stdin) and copies it to a
-single remote file.
+	Long: `Reads from standard input (stdin) and copies it to a single remote file.
 
     echo "hello world" | rclone rcat remote:path/to/file
     ffmpeg - | rclone rcat remote:path/to/file

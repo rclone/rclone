@@ -16,14 +16,13 @@ import (
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fs/config/flags"
-	"github.com/rclone/rclone/fs/rc"
 	"github.com/rclone/rclone/lib/atexit"
 	"github.com/rclone/rclone/lib/daemonize"
+	"github.com/rclone/rclone/lib/systemd"
 	"github.com/rclone/rclone/vfs"
 	"github.com/rclone/rclone/vfs/vfscommon"
 	"github.com/rclone/rclone/vfs/vfsflags"
 
-	"github.com/coreos/go-systemd/v22/daemon"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 )
@@ -36,38 +35,161 @@ func help(commandName string) string {
 	return strings.TrimSpace(strings.ReplaceAll(mountHelp, "@", commandName)) + "\n\n"
 }
 
-// Options for creating the mount
-type Options struct {
-	DebugFUSE          bool
-	AllowNonEmpty      bool
-	AllowRoot          bool
-	AllowOther         bool
-	DefaultPermissions bool
-	WritebackCache     bool
-	Daemon             bool
-	DaemonWait         time.Duration // time to wait for ready mount from daemon, maximum on Linux or constant on macOS/BSD
-	MaxReadAhead       fs.SizeSuffix
-	ExtraOptions       []string
-	ExtraFlags         []string
-	AttrTimeout        time.Duration // how long the kernel caches attribute for
-	DeviceName         string
-	VolumeName         string
-	NoAppleDouble      bool
-	NoAppleXattr       bool
-	DaemonTimeout      time.Duration // OSXFUSE only
-	AsyncRead          bool
-	NetworkMode        bool // Windows only
-	DirectIO           bool // use Direct IO for file access
-	CaseInsensitive    fs.Tristate
+// OptionsInfo describes the Options in use
+var OptionsInfo = fs.Options{{
+	Name:    "debug_fuse",
+	Default: false,
+	Help:    "Debug the FUSE internals - needs -v",
+	Groups:  "Mount",
+}, {
+	Name:    "attr_timeout",
+	Default: fs.Duration(1 * time.Second),
+	Help:    "Time for which file/directory attributes are cached",
+	Groups:  "Mount",
+}, {
+	Name:     "option",
+	Default:  []string{},
+	Help:     "Option for libfuse/WinFsp (repeat if required)",
+	Groups:   "Mount",
+	ShortOpt: "o",
+}, {
+	Name:    "fuse_flag",
+	Default: []string{},
+	Help:    "Flags or arguments to be passed direct to libfuse/WinFsp (repeat if required)",
+	Groups:  "Mount",
+}, {
+	Name:    "daemon",
+	Default: false,
+	Help:    "Run mount in background and exit parent process (as background output is suppressed, use --log-file with --log-format=pid,... to monitor) (not supported on Windows)",
+	Groups:  "Mount",
+}, {
+	Name: "daemon_timeout",
+	Default: func() fs.Duration {
+		if runtime.GOOS == "darwin" {
+			// DaemonTimeout defaults to non-zero for macOS
+			// (this is a macOS specific kernel option unrelated to DaemonWait)
+			return fs.Duration(10 * time.Minute)
+		}
+		return 0
+	}(),
+	Help:   "Time limit for rclone to respond to kernel (not supported on Windows)",
+	Groups: "Mount",
+}, {
+	Name:    "default_permissions",
+	Default: false,
+	Help:    "Makes kernel enforce access control based on the file mode (not supported on Windows)",
+	Groups:  "Mount",
+}, {
+	Name:    "allow_non_empty",
+	Default: false,
+	Help:    "Allow mounting over a non-empty directory (not supported on Windows)",
+	Groups:  "Mount",
+}, {
+	Name:    "allow_root",
+	Default: false,
+	Help:    "Allow access to root user (not supported on Windows)",
+	Groups:  "Mount",
+}, {
+	Name:    "allow_other",
+	Default: false,
+	Help:    "Allow access to other users (not supported on Windows)",
+	Groups:  "Mount",
+}, {
+	Name:    "async_read",
+	Default: true,
+	Help:    "Use asynchronous reads (not supported on Windows)",
+	Groups:  "Mount",
+}, {
+	Name:    "max_read_ahead",
+	Default: fs.SizeSuffix(128 * 1024),
+	Help:    "The number of bytes that can be prefetched for sequential reads (not supported on Windows)",
+	Groups:  "Mount",
+}, {
+	Name:    "write_back_cache",
+	Default: false,
+	Help:    "Makes kernel buffer writes before sending them to rclone (without this, writethrough caching is used) (not supported on Windows)",
+	Groups:  "Mount",
+}, {
+	Name:    "devname",
+	Default: "",
+	Help:    "Set the device name - default is remote:path",
+	Groups:  "Mount",
+}, {
+	Name:    "mount_case_insensitive",
+	Default: fs.Tristate{},
+	Help:    "Tell the OS the mount is case insensitive (true) or sensitive (false) regardless of the backend (auto)",
+	Groups:  "Mount",
+}, {
+	Name:    "direct_io",
+	Default: false,
+	Help:    "Use Direct IO, disables caching of data",
+	Groups:  "Mount",
+}, {
+	Name:    "volname",
+	Default: "",
+	Help:    "Set the volume name (supported on Windows and OSX only)",
+	Groups:  "Mount",
+}, {
+	Name:    "noappledouble",
+	Default: true,
+	Help:    "Ignore Apple Double (._) and .DS_Store files (supported on OSX only)",
+	Groups:  "Mount",
+}, {
+	Name:    "noapplexattr",
+	Default: false,
+	Help:    "Ignore all \"com.apple.*\" extended attributes (supported on OSX only)",
+	Groups:  "Mount",
+}, {
+	Name:    "network_mode",
+	Default: false,
+	Help:    "Mount as remote network drive, instead of fixed disk drive (supported on Windows only)",
+	Groups:  "Mount",
+}, {
+	Name: "daemon_wait",
+	Default: func() fs.Duration {
+		switch runtime.GOOS {
+		case "linux":
+			// Linux provides /proc/mounts to check mount status
+			// so --daemon-wait means *maximum* time to wait
+			return fs.Duration(60 * time.Second)
+		case "darwin", "openbsd", "freebsd", "netbsd":
+			// On BSD we can't check mount status yet
+			// so --daemon-wait is just a *constant* delay
+			return fs.Duration(5 * time.Second)
+		}
+		return 0
+	}(),
+	Help:   "Time to wait for ready mount from daemon (maximum time on Linux, constant sleep time on OSX/BSD) (not supported on Windows)",
+	Groups: "Mount",
+}}
+
+func init() {
+	fs.RegisterGlobalOptions(fs.OptionsInfo{Name: "mount", Opt: &Opt, Options: OptionsInfo})
 }
 
-// DefaultOpt is the default values for creating the mount
-var DefaultOpt = Options{
-	MaxReadAhead:  128 * 1024,
-	AttrTimeout:   1 * time.Second, // how long the kernel caches attribute for
-	NoAppleDouble: true,            // use noappledouble by default
-	NoAppleXattr:  false,           // do not use noapplexattr by default
-	AsyncRead:     true,            // do async reads by default
+// Options for creating the mount
+type Options struct {
+	DebugFUSE          bool          `config:"debug_fuse"`
+	AllowNonEmpty      bool          `config:"allow_non_empty"`
+	AllowRoot          bool          `config:"allow_root"`
+	AllowOther         bool          `config:"allow_other"`
+	DefaultPermissions bool          `config:"default_permissions"`
+	WritebackCache     bool          `config:"write_back_cache"`
+	Daemon             bool          `config:"daemon"`
+	DaemonWait         fs.Duration   `config:"daemon_wait"` // time to wait for ready mount from daemon, maximum on Linux or constant on macOS/BSD
+	MaxReadAhead       fs.SizeSuffix `config:"max_read_ahead"`
+	ExtraOptions       []string      `config:"option"`
+	ExtraFlags         []string      `config:"fuse_flag"`
+	AttrTimeout        fs.Duration   `config:"attr_timeout"` // how long the kernel caches attribute for
+	DeviceName         string        `config:"devname"`
+	VolumeName         string        `config:"volname"`
+	NoAppleDouble      bool          `config:"noappledouble"`
+	NoAppleXattr       bool          `config:"noapplexattr"`
+	DaemonTimeout      fs.Duration   `config:"daemon_timeout"` // OSXFUSE only
+	AsyncRead          bool          `config:"async_read"`
+	NetworkMode        bool          `config:"network_mode"` // Windows only
+	DirectIO           bool          `config:"direct_io"`    // use Direct IO for file access
+	CaseInsensitive    fs.Tristate   `config:"mount_case_insensitive"`
 }
 
 type (
@@ -106,61 +228,12 @@ const (
 	MaxLeafSize = 1024 // don't pass file names longer than this
 )
 
-func init() {
-	switch runtime.GOOS {
-	case "darwin":
-		// DaemonTimeout defaults to non-zero for macOS
-		// (this is a macOS specific kernel option unrelated to DaemonWait)
-		DefaultOpt.DaemonTimeout = 10 * time.Minute
-	}
-
-	switch runtime.GOOS {
-	case "linux":
-		// Linux provides /proc/mounts to check mount status
-		// so --daemon-wait means *maximum* time to wait
-		DefaultOpt.DaemonWait = 60 * time.Second
-	case "darwin", "openbsd", "freebsd", "netbsd":
-		// On BSD we can't check mount status yet
-		// so --daemon-wait is just a *constant* delay
-		DefaultOpt.DaemonWait = 5 * time.Second
-	}
-
-	// Opt must be assigned in the init block to ensure changes really get in
-	Opt = DefaultOpt
-}
-
 // Opt contains options set by command line flags
 var Opt Options
 
 // AddFlags adds the non filing system specific flags to the command
 func AddFlags(flagSet *pflag.FlagSet) {
-	rc.AddOption("mount", &Opt)
-	flags.BoolVarP(flagSet, &Opt.DebugFUSE, "debug-fuse", "", Opt.DebugFUSE, "Debug the FUSE internals - needs -v", "Mount")
-	flags.DurationVarP(flagSet, &Opt.AttrTimeout, "attr-timeout", "", Opt.AttrTimeout, "Time for which file/directory attributes are cached", "Mount")
-	flags.StringArrayVarP(flagSet, &Opt.ExtraOptions, "option", "o", []string{}, "Option for libfuse/WinFsp (repeat if required)", "Mount")
-	flags.StringArrayVarP(flagSet, &Opt.ExtraFlags, "fuse-flag", "", []string{}, "Flags or arguments to be passed direct to libfuse/WinFsp (repeat if required)", "Mount")
-	// Non-Windows only
-	flags.BoolVarP(flagSet, &Opt.Daemon, "daemon", "", Opt.Daemon, "Run mount in background and exit parent process (as background output is suppressed, use --log-file with --log-format=pid,... to monitor) (not supported on Windows)", "Mount")
-	flags.DurationVarP(flagSet, &Opt.DaemonTimeout, "daemon-timeout", "", Opt.DaemonTimeout, "Time limit for rclone to respond to kernel (not supported on Windows)", "Mount")
-	flags.BoolVarP(flagSet, &Opt.DefaultPermissions, "default-permissions", "", Opt.DefaultPermissions, "Makes kernel enforce access control based on the file mode (not supported on Windows)", "Mount")
-	flags.BoolVarP(flagSet, &Opt.AllowNonEmpty, "allow-non-empty", "", Opt.AllowNonEmpty, "Allow mounting over a non-empty directory (not supported on Windows)", "Mount")
-	flags.BoolVarP(flagSet, &Opt.AllowRoot, "allow-root", "", Opt.AllowRoot, "Allow access to root user (not supported on Windows)", "Mount")
-	flags.BoolVarP(flagSet, &Opt.AllowOther, "allow-other", "", Opt.AllowOther, "Allow access to other users (not supported on Windows)", "Mount")
-	flags.BoolVarP(flagSet, &Opt.AsyncRead, "async-read", "", Opt.AsyncRead, "Use asynchronous reads (not supported on Windows)", "Mount")
-	flags.FVarP(flagSet, &Opt.MaxReadAhead, "max-read-ahead", "", "The number of bytes that can be prefetched for sequential reads (not supported on Windows)", "Mount")
-	flags.BoolVarP(flagSet, &Opt.WritebackCache, "write-back-cache", "", Opt.WritebackCache, "Makes kernel buffer writes before sending them to rclone (without this, writethrough caching is used) (not supported on Windows)", "Mount")
-	flags.StringVarP(flagSet, &Opt.DeviceName, "devname", "", Opt.DeviceName, "Set the device name - default is remote:path", "Mount")
-	flags.FVarP(flagSet, &Opt.CaseInsensitive, "mount-case-insensitive", "", "Tell the OS the mount is case insensitive (true) or sensitive (false) regardless of the backend (auto)", "Mount")
-	flags.BoolVarP(flagSet, &Opt.DirectIO, "direct-io", "", Opt.DirectIO, "Use Direct IO, disables caching of data", "Mount")
-	// Windows and OSX
-	flags.StringVarP(flagSet, &Opt.VolumeName, "volname", "", Opt.VolumeName, "Set the volume name (supported on Windows and OSX only)", "Mount")
-	// OSX only
-	flags.BoolVarP(flagSet, &Opt.NoAppleDouble, "noappledouble", "", Opt.NoAppleDouble, "Ignore Apple Double (._) and .DS_Store files (supported on OSX only)", "Mount")
-	flags.BoolVarP(flagSet, &Opt.NoAppleXattr, "noapplexattr", "", Opt.NoAppleXattr, "Ignore all \"com.apple.*\" extended attributes (supported on OSX only)", "Mount")
-	// Windows only
-	flags.BoolVarP(flagSet, &Opt.NetworkMode, "network-mode", "", Opt.NetworkMode, "Mount as remote network drive, instead of fixed disk drive (supported on Windows only)", "Mount")
-	// Unix only
-	flags.DurationVarP(flagSet, &Opt.DaemonWait, "daemon-wait", "", Opt.DaemonWait, "Time to wait for ready mount from daemon (maximum time on Linux, constant sleep time on OSX/BSD) (not supported on Windows)", "Mount")
+	flags.AddFlagsFromOptions(flagSet, "", OptionsInfo)
 }
 
 const (
@@ -228,12 +301,13 @@ func NewMountCommand(commandName string, hidden bool, mount MountFn) *cobra.Comm
 				defer cmd.StartStats()()
 			}
 
-			mnt := NewMountPoint(mount, args[1], cmd.NewFsDir(args), &Opt, &vfsflags.Opt)
+			mnt := NewMountPoint(mount, args[1], cmd.NewFsDir(args), &Opt, &vfscommon.Opt)
 			mountDaemon, err := mnt.Mount()
 
 			// Wait for foreground mount, if any...
 			if mountDaemon == nil {
 				if err == nil {
+					defer systemd.Notify()()
 					err = mnt.Wait()
 				}
 				if err != nil {
@@ -258,7 +332,7 @@ func NewMountCommand(commandName string, hidden bool, mount MountFn) *cobra.Comm
 				handle := atexit.Register(func() {
 					killDaemon("Got interrupt")
 				})
-				err = WaitMountReady(mnt.MountPoint, Opt.DaemonWait, mountDaemon)
+				err = WaitMountReady(mnt.MountPoint, time.Duration(Opt.DaemonWait), mountDaemon)
 				if err != nil {
 					killDaemon("Daemon timed out")
 				}
@@ -312,7 +386,6 @@ func (m *MountPoint) Wait() error {
 	var finaliseOnce sync.Once
 	finalise := func() {
 		finaliseOnce.Do(func() {
-			_, _ = daemon.SdNotify(false, daemon.SdNotifyStopping)
 			// Unmount only if directory was mounted by rclone, e.g. don't unmount autofs hooks.
 			if err := CheckMountReady(m.MountPoint); err != nil {
 				fs.Debugf(m.MountPoint, "Unmounted externally. Just exit now.")
@@ -327,11 +400,6 @@ func (m *MountPoint) Wait() error {
 	}
 	fnHandle := atexit.Register(finalise)
 	defer atexit.Unregister(fnHandle)
-
-	// Notify systemd
-	if _, err := daemon.SdNotify(false, daemon.SdNotifyReady); err != nil {
-		return fmt.Errorf("failed to notify systemd: %w", err)
-	}
 
 	// Reload VFS cache on SIGHUP
 	sigHup := make(chan os.Signal, 1)

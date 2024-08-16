@@ -406,7 +406,7 @@ Max number of files in upload batch.
 
 This sets the batch size of files to upload. It has to be less than 50.
 
-By default this is 0 which means rclone which calculate the batch size
+By default this is 0 which means rclone will calculate the batch size
 depending on the setting of batch_mode.
 
 - batch_mode: async - default batch_size is 50

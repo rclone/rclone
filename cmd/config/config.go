@@ -268,8 +268,7 @@ as a readable demonstration.
 var configCreateCommand = &cobra.Command{
 	Use:   "create name type [key value]*",
 	Short: `Create a new remote with name, type and options.`,
-	Long: strings.ReplaceAll(`
-Create a new remote of |name| with |type| and options.  The options
+	Long: strings.ReplaceAll(`Create a new remote of |name| with |type| and options.  The options
 should be passed in pairs of |key| |value| or as |key=value|.
 
 For example, to make a swift remote of name myremote using auto config
@@ -334,8 +333,7 @@ func init() {
 var configUpdateCommand = &cobra.Command{
 	Use:   "update name [key value]+",
 	Short: `Update options in an existing remote.`,
-	Long: strings.ReplaceAll(`
-Update an existing remote's options. The options should be passed in
+	Long: strings.ReplaceAll(`Update an existing remote's options. The options should be passed in
 pairs of |key| |value| or as |key=value|.
 
 For example, to update the env_auth field of a remote of name myremote
@@ -379,8 +377,7 @@ var configDeleteCommand = &cobra.Command{
 var configPasswordCommand = &cobra.Command{
 	Use:   "password name [key value]+",
 	Short: `Update password in an existing remote.`,
-	Long: strings.ReplaceAll(`
-Update an existing remote's password. The password
+	Long: strings.ReplaceAll(`Update an existing remote's password. The password
 should be passed in pairs of |key| |password| or as |key=password|.
 The |password| should be passed in in clear (unobscured).
 
@@ -435,8 +432,7 @@ func argsToMap(args []string) (out rc.Params, err error) {
 var configReconnectCommand = &cobra.Command{
 	Use:   "reconnect remote:",
 	Short: `Re-authenticates user with remote.`,
-	Long: `
-This reconnects remote: passed in to the cloud storage system.
+	Long: `This reconnects remote: passed in to the cloud storage system.
 
 To disconnect the remote use "rclone config disconnect".
 
@@ -456,8 +452,7 @@ This normally means going through the interactive oauth flow again.
 var configDisconnectCommand = &cobra.Command{
 	Use:   "disconnect remote:",
 	Short: `Disconnects user from remote`,
-	Long: `
-This disconnects the remote: passed in to the cloud storage system.
+	Long: `This disconnects the remote: passed in to the cloud storage system.
 
 This normally means revoking the oauth token.
 
@@ -489,8 +484,7 @@ func init() {
 var configUserInfoCommand = &cobra.Command{
 	Use:   "userinfo remote:",
 	Short: `Prints info about logged in user of remote.`,
-	Long: `
-This prints the details of the person logged in to the cloud storage
+	Long: `This prints the details of the person logged in to the cloud storage
 system.
 `,
 	RunE: func(command *cobra.Command, args []string) error {

@@ -13,7 +13,8 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 )
 
 // flags
@@ -82,15 +83,18 @@ func main() {
 
 package s3
 
-import "github.com/aws/aws-sdk-go/service/s3"
+import (
+	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/aws/aws-sdk-go-v2/service/s3/types"
+)
 `)
 
 	genSetFrom(new(s3.ListObjectsInput), new(s3.ListObjectsV2Input))
 	genSetFrom(new(s3.ListObjectsV2Output), new(s3.ListObjectsOutput))
 	genSetFrom(new(s3.ListObjectVersionsInput), new(s3.ListObjectsV2Input))
-	genSetFrom(new(s3.ObjectVersion), new(s3.DeleteMarkerEntry))
+	genSetFrom(new(types.ObjectVersion), new(types.DeleteMarkerEntry))
 	genSetFrom(new(s3.ListObjectsV2Output), new(s3.ListObjectVersionsOutput))
-	genSetFrom(new(s3.Object), new(s3.ObjectVersion))
+	genSetFrom(new(types.Object), new(types.ObjectVersion))
 	genSetFrom(new(s3.CreateMultipartUploadInput), new(s3.HeadObjectOutput))
 	genSetFrom(new(s3.CreateMultipartUploadInput), new(s3.CopyObjectInput))
 	genSetFrom(new(s3.UploadPartCopyInput), new(s3.CopyObjectInput))

@@ -37,10 +37,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/credentials"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/s3/s3manager"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	awsconfig "github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/credentials"
+	"github.com/aws/aws-sdk-go-v2/feature/s3/manager"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/rclone/rclone/backend/pikpak/api"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/accounting"
@@ -70,8 +71,8 @@ const (
 	taskWaitTime                = 500 * time.Millisecond
 	decayConstant               = 2 // bigger for slower decay, exponential
 	rootURL                     = "https://api-drive.mypikpak.com"
-	minChunkSize                = fs.SizeSuffix(s3manager.MinUploadPartSize)
-	defaultUploadConcurrency    = s3manager.DefaultUploadConcurrency
+	minChunkSize                = fs.SizeSuffix(manager.MinUploadPartSize)
+	defaultUploadConcurrency    = manager.DefaultUploadConcurrency
 )
 
 // Globals
@@ -274,6 +275,7 @@ type Fs struct {
 	dirCache     *dircache.DirCache // Map of directory path to directory id
 	pacer        *fs.Pacer          // pacer for API calls
 	rootFolderID string             // the id of the root folder
+	deviceID     string             // device id used for api requests
 	client       *http.Client       // authorized client
 	m            configmap.Mapper
 	tokenMu      *sync.Mutex // when renewing tokens
@@ -489,6 +491,7 @@ func newFs(ctx context.Context, name, path string, m configmap.Mapper) (*Fs, err
 		CanHaveEmptyDirectories: true, // can have empty directories
 		NoMultiThreading:        true, // can't have multiple threads downloading
 	}).Fill(ctx, f)
+	f.deviceID = genDeviceID()
 
 	if err := f.newClientWithPacer(ctx); err != nil {
 		return nil, err
@@ -1016,6 +1019,7 @@ func (f *Fs) createObject(ctx context.Context, remote string, modTime time.Time,
 	o = &Object{
 		fs:      f,
 		remote:  remote,
+		parent:  dirID,
 		size:    size,
 		modTime: modTime,
 		linkMu:  new(sync.Mutex),
@@ -1048,7 +1052,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		return nil, err
 	}
 
-	// Create temporary object
+	// Create temporary object - still missing id, mimeType, gcid, md5sum
 	dstObj, dstLeaf, dstParentID, err := f.createObject(ctx, remote, srcObj.modTime, srcObj.size)
 	if err != nil {
 		return nil, err
@@ -1060,7 +1064,12 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 			return nil, err
 		}
 	}
+	// Manually update info of moved object to save API calls
 	dstObj.id = srcObj.id
+	dstObj.mimeType = srcObj.mimeType
+	dstObj.gcid = srcObj.gcid
+	dstObj.md5sum = srcObj.md5sum
+	dstObj.hasMetaData = true
 
 	if srcLeaf != dstLeaf {
 		// Rename
@@ -1068,16 +1077,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		if err != nil {
 			return nil, fmt.Errorf("move: couldn't rename moved file: %w", err)
 		}
-		err = dstObj.setMetaData(info)
-		if err != nil {
-			return nil, err
-		}
-	} else {
-		// Update info
-		err = dstObj.readMetaData(ctx)
-		if err != nil {
-			return nil, fmt.Errorf("move: couldn't locate moved file: %w", err)
-		}
+		return dstObj, dstObj.setMetaData(info)
 	}
 	return dstObj, nil
 }
@@ -1117,7 +1117,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		return nil, err
 	}
 
-	// Create temporary object
+	// Create temporary object - still missing id, mimeType, gcid, md5sum
 	dstObj, dstLeaf, dstParentID, err := f.createObject(ctx, remote, srcObj.modTime, srcObj.size)
 	if err != nil {
 		return nil, err
@@ -1130,6 +1130,12 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	// Copy the object
 	if err := f.copyObjects(ctx, []string{srcObj.id}, dstParentID); err != nil {
 		return nil, fmt.Errorf("couldn't copy file: %w", err)
+	}
+	// Update info of the copied object with new parent but source name
+	if info, err := dstObj.fs.readMetaDataForPath(ctx, srcObj.remote); err != nil {
+		return nil, fmt.Errorf("copy: couldn't locate copied file: %w", err)
+	} else if err = dstObj.setMetaData(info); err != nil {
+		return nil, err
 	}
 
 	// Can't copy and change name in one step so we have to check if we have
@@ -1145,16 +1151,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		if err != nil {
 			return nil, fmt.Errorf("copy: couldn't rename copied file: %w", err)
 		}
-		err = dstObj.setMetaData(info)
-		if err != nil {
-			return nil, err
-		}
-	} else {
-		// Update info
-		err = dstObj.readMetaData(ctx)
-		if err != nil {
-			return nil, fmt.Errorf("copy: couldn't locate copied file: %w", err)
-		}
+		return dstObj, dstObj.setMetaData(info)
 	}
 	return dstObj, nil
 }
@@ -1194,32 +1191,33 @@ func (f *Fs) uploadByForm(ctx context.Context, in io.Reader, name string, size i
 
 func (f *Fs) uploadByResumable(ctx context.Context, in io.Reader, name string, size int64, resumable *api.Resumable) (err error) {
 	p := resumable.Params
-	endpoint := strings.Join(strings.Split(p.Endpoint, ".")[1:], ".") // "mypikpak.com"
 
-	cfg := &aws.Config{
-		Credentials: credentials.NewStaticCredentials(p.AccessKeyID, p.AccessKeySecret, p.SecurityToken),
-		Region:      aws.String("pikpak"),
-		Endpoint:    &endpoint,
-	}
-	sess, err := session.NewSession(cfg)
+	// Create a credentials provider
+	creds := credentials.NewStaticCredentialsProvider(p.AccessKeyID, p.AccessKeySecret, p.SecurityToken)
+
+	cfg, err := awsconfig.LoadDefaultConfig(ctx,
+		awsconfig.WithCredentialsProvider(creds),
+		awsconfig.WithRegion("pikpak"))
 	if err != nil {
 		return
 	}
-	partSize := chunksize.Calculator(name, size, s3manager.MaxUploadParts, f.opt.ChunkSize)
 
-	// Create an uploader with the session and custom options
-	uploader := s3manager.NewUploader(sess, func(u *s3manager.Uploader) {
+	client := s3.NewFromConfig(cfg, func(o *s3.Options) {
+		o.BaseEndpoint = aws.String("https://mypikpak.com/")
+	})
+	partSize := chunksize.Calculator(name, size, int(manager.MaxUploadParts), f.opt.ChunkSize)
+
+	// Create an uploader with custom options
+	uploader := manager.NewUploader(client, func(u *manager.Uploader) {
 		u.PartSize = int64(partSize)
 		u.Concurrency = f.opt.UploadConcurrency
 	})
-	// Upload input parameters
-	uParams := &s3manager.UploadInput{
+	// Perform an upload
+	_, err = uploader.Upload(ctx, &s3.PutObjectInput{
 		Bucket: &p.Bucket,
 		Key:    &p.Key,
 		Body:   in,
-	}
-	// Perform an upload
-	_, err = uploader.UploadWithContext(ctx, uParams)
+	})
 	return
 }
 
@@ -1252,6 +1250,12 @@ func (f *Fs) upload(ctx context.Context, in io.Reader, leaf, dirID, gcid string,
 		return nil, fmt.Errorf("invalid response: %+v", new)
 	} else if new.File.Phase == api.PhaseTypeComplete {
 		// early return; in case of zero-byte objects
+		if acc, ok := in.(*accounting.Account); ok && acc != nil {
+			// if `in io.Reader` is still in type of `*accounting.Account` (meaning that it is unused)
+			// it is considered as a server side copy as no incoming/outgoing traffic occur at all
+			acc.ServerSideTransferStart()
+			acc.ServerSideCopyEnd(size)
+		}
 		return new.File, nil
 	}
 
@@ -1700,19 +1704,30 @@ func (o *Object) upload(ctx context.Context, in io.Reader, src fs.ObjectInfo, wi
 	}
 
 	// Calculate gcid; grabbed from package jottacloud
-	var gcid string
-	// unwrap the accounting from the input, we use wrap to put it
-	// back on after the buffering
-	var wrap accounting.WrapFn
-	in, wrap = accounting.UnWrap(in)
-	var cleanup func()
-	gcid, in, cleanup, err = readGcid(in, size, int64(o.fs.opt.HashMemoryThreshold))
-	defer cleanup()
-	if err != nil {
-		return fmt.Errorf("failed to calculate gcid: %w", err)
+	gcid, err := o.fs.getGcid(ctx, src)
+	if err != nil || gcid == "" {
+		fs.Debugf(o, "calculating gcid: %v", err)
+		if srcObj := fs.UnWrapObjectInfo(src); srcObj != nil && srcObj.Fs().Features().IsLocal {
+			// No buffering; directly calculate gcid from source
+			rc, err := srcObj.Open(ctx)
+			if err != nil {
+				return fmt.Errorf("failed to open src: %w", err)
+			}
+			defer fs.CheckClose(rc, &err)
+
+			if gcid, err = calcGcid(rc, srcObj.Size()); err != nil {
+				return fmt.Errorf("failed to calculate gcid: %w", err)
+			}
+		} else {
+			var cleanup func()
+			gcid, in, cleanup, err = readGcid(in, size, int64(o.fs.opt.HashMemoryThreshold))
+			defer cleanup()
+			if err != nil {
+				return fmt.Errorf("failed to calculate gcid: %w", err)
+			}
+		}
 	}
-	// Wrap the accounting back onto the stream
-	in = wrap(in)
+	fs.Debugf(o, "gcid = %s", gcid)
 
 	if !withTemp {
 		info, err := o.fs.upload(ctx, in, leaf, dirID, gcid, size, options...)

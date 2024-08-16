@@ -66,7 +66,7 @@ func newDir(vfs *VFS, f fs.Fs, parent *Dir, fsDir fs.Directory) *Dir {
 		inode:   newInode(),
 		items:   make(map[string]Node),
 	}
-	d.cleanupTimer = time.AfterFunc(vfs.Opt.DirCacheTime*2, d.cacheCleanup)
+	d.cleanupTimer = time.AfterFunc(time.Duration(vfs.Opt.DirCacheTime*2), d.cacheCleanup)
 	d.setHasVirtual(false)
 	return d
 }
@@ -157,7 +157,7 @@ func (d *Dir) IsDir() bool {
 
 // Mode bits of the directory - satisfies Node interface
 func (d *Dir) Mode() (mode os.FileMode) {
-	return d.vfs.Opt.DirPerms
+	return os.FileMode(d.vfs.Opt.DirPerms)
 }
 
 // Name (base) of the directory - satisfies Node interface
@@ -357,7 +357,7 @@ func (d *Dir) _age(when time.Time) (age time.Duration, stale bool) {
 		return age, true
 	}
 	age = when.Sub(d.read)
-	stale = age > d.vfs.Opt.DirCacheTime
+	stale = age > time.Duration(d.vfs.Opt.DirCacheTime)
 	return
 }
 
@@ -562,7 +562,7 @@ func (d *Dir) _readDir() error {
 	}
 
 	d.read = when
-	d.cleanupTimer.Reset(d.vfs.Opt.DirCacheTime * 2)
+	d.cleanupTimer.Reset(time.Duration(d.vfs.Opt.DirCacheTime * 2))
 
 	return nil
 }
@@ -745,7 +745,7 @@ func (d *Dir) _readDirFromEntries(entries fs.DirEntries, dirTree dirtree.DirTree
 					dir.read = time.Time{}
 				} else {
 					dir.read = when
-					dir.cleanupTimer.Reset(d.vfs.Opt.DirCacheTime * 2)
+					dir.cleanupTimer.Reset(time.Duration(d.vfs.Opt.DirCacheTime * 2))
 				}
 			}
 			dir.mu.Unlock()
@@ -783,7 +783,7 @@ func (d *Dir) readDirTree() error {
 	}
 	fs.Debugf(d.path, "Reading directory tree done in %s", time.Since(when))
 	d.read = when
-	d.cleanupTimer.Reset(d.vfs.Opt.DirCacheTime * 2)
+	d.cleanupTimer.Reset(time.Duration(d.vfs.Opt.DirCacheTime * 2))
 	return nil
 }
 

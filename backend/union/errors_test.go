@@ -1,5 +1,3 @@
-//go:build go1.20
-
 package union
 
 import (

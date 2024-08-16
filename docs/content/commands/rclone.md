@@ -123,7 +123,7 @@ rclone [flags]
       --box-token-url string                                Token server url
       --box-upload-cutoff SizeSuffix                        Cutoff for switching to multipart upload (>= 50 MiB) (default 50Mi)
       --buffer-size SizeSuffix                              In memory buffer size when reading files for each --transfer (default 16Mi)
-      --bwlimit BwTimetable                                 Bandwidth limit in KiB/s, or use suffix B|K|M|G|T|P or a full timetable
+      --bwlimit BwTimetable                                 Bandwidth limit in KiB/s, or use suffix B|K|M|G|T|P or a full timetable.
       --bwlimit-file BwTimetable                            Bandwidth limit per file in KiB/s, or use suffix B|K|M|G|T|P or a full timetable
       --ca-cert stringArray                                 CA certificate used to verify servers
       --cache-chunk-clean-interval Duration                 How often should the cache perform cleanups of the chunk storage (default 1m0s)

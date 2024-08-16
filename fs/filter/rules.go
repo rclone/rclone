@@ -12,12 +12,12 @@ import (
 
 // RulesOpt is configuration for a rule set
 type RulesOpt struct {
-	FilterRule  []string
-	FilterFrom  []string
-	ExcludeRule []string
-	ExcludeFrom []string
-	IncludeRule []string
-	IncludeFrom []string
+	FilterRule  []string `config:"filter"`
+	FilterFrom  []string `config:"filter_from"`
+	ExcludeRule []string `config:"exclude"`
+	ExcludeFrom []string `config:"exclude_from"`
+	IncludeRule []string `config:"include"`
+	IncludeFrom []string `config:"include_from"`
 }
 
 // rule is one filter rule
@@ -67,7 +67,7 @@ func (rs *rules) add(Include bool, re *regexp.Regexp) {
 
 // Add adds a filter rule with include or exclude status indicated
 func (rs *rules) Add(Include bool, glob string) error {
-	re, err := GlobToRegexp(glob, false /* f.Opt.IgnoreCase */)
+	re, err := GlobPathToRegexp(glob, false /* f.Opt.IgnoreCase */)
 	if err != nil {
 		return err
 	}

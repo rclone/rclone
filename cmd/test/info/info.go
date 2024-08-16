@@ -64,10 +64,10 @@ func init() {
 var commandDefinition = &cobra.Command{
 	Use:   "info [remote:path]+",
 	Short: `Discovers file name or other limitations for paths.`,
-	Long: `rclone info discovers what filenames and upload methods are possible
-to write to the paths passed in and how long they can be.  It can take some
-time.  It will write test files into the remote:path passed in.  It outputs
-a bit of go code for each one.
+	Long: `Discovers what filenames and upload methods are possible to write to the
+paths passed in and how long they can be.  It can take some time.  It will
+write test files into the remote:path passed in.  It outputs a bit of go
+code for each one.
 
 **NB** this can create undeletable files and other hazards - use with care
 `,

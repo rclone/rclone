@@ -923,9 +923,7 @@ func (f *Fs) netStorageStatRequest(ctx context.Context, URL string, directory bo
 		entrywanted := (directory && files[i].Type == "dir") ||
 			(!directory && files[i].Type != "dir")
 		if entrywanted {
-			filestamp := files[0]
-			files[0] = files[i]
-			files[i] = filestamp
+			files[0], files[i] = files[i], files[0]
 		}
 	}
 	return files, nil

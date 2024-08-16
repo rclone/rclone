@@ -150,7 +150,10 @@ func (x *BwTimetable) Set(s string) error {
 		return nil
 	}
 
-	for _, tok := range strings.Split(s, " ") {
+	// Split the timetable string by both spaces and semicolons
+	for _, tok := range strings.FieldsFunc(s, func(r rune) bool {
+		return r == ' ' || r == ';'
+	}) {
 		tv := strings.Split(tok, ",")
 
 		// Format must be dayOfWeek-HH:MM,BW

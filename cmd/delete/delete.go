@@ -25,8 +25,7 @@ var commandDefinition = &cobra.Command{
 	Use:   "delete remote:path",
 	Short: `Remove the files in path.`,
 	// Warning! "|" will be replaced by backticks below
-	Long: strings.ReplaceAll(`
-Remove the files in path.  Unlike [purge](/commands/rclone_purge/) it
+	Long: strings.ReplaceAll(`Remove the files in path.  Unlike [purge](/commands/rclone_purge/) it
 obeys include/exclude filters so can be used to selectively delete files.
 
 |rclone delete| only deletes files but leaves the directory structure

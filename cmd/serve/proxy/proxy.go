@@ -19,11 +19,11 @@ import (
 	"github.com/rclone/rclone/fs/config/obscure"
 	libcache "github.com/rclone/rclone/lib/cache"
 	"github.com/rclone/rclone/vfs"
-	"github.com/rclone/rclone/vfs/vfsflags"
+	"github.com/rclone/rclone/vfs/vfscommon"
 )
 
 // Help contains text describing how to use the proxy
-var Help = strings.Replace(`### Auth Proxy
+var Help = strings.ReplaceAll(`### Auth Proxy
 
 If you supply the parameter |--auth-proxy /path/to/program| then
 rclone will use that program to generate backends on the fly which
@@ -104,7 +104,7 @@ before it takes effect.
 This can be used to build general purpose proxies to any kind of
 backend that rclone supports.  
 
-`, "|", "`", -1)
+`, "|", "`")
 
 // Options is options for creating the proxy
 type Options struct {
@@ -242,7 +242,7 @@ func (p *Proxy) call(user, auth string, isPublicKey bool) (value interface{}, er
 		// need to in memory. An attacker would find it easier to go
 		// after the unencrypted password in memory most likely.
 		entry := cacheEntry{
-			vfs:    vfs.New(f, &vfsflags.Opt),
+			vfs:    vfs.New(f, &vfscommon.Opt),
 			pwHash: sha256.Sum256([]byte(auth)),
 		}
 		return entry, true, nil

@@ -31,8 +31,7 @@ func init() {
 var commandDefinition = &cobra.Command{
 	Use:   "backend <command> remote:path [opts] <args>",
 	Short: `Run a backend-specific command.`,
-	Long: `
-This runs a backend-specific command. The commands themselves (except
+	Long: `This runs a backend-specific command. The commands themselves (except
 for "help" and "features") are defined by the backends and you should
 see the backend docs for definitions.
 

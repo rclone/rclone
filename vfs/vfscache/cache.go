@@ -212,7 +212,7 @@ func (c *Cache) createItemDir(name string) (string, error) {
 
 // getBackend gets a backend for a cache root dir
 func getBackend(ctx context.Context, parentPath string, name string, relativeDirPath string) (fs.Fs, error) {
-	path := fmt.Sprintf("%s/%s/%s", parentPath, name, relativeDirPath)
+	path := fmt.Sprintf(":local,encoding='%v':%s/%s/%s", encoder.OS, parentPath, name, relativeDirPath)
 	return fscache.Get(ctx, path)
 }
 
@@ -779,7 +779,7 @@ func (c *Cache) clean(kicked bool) {
 	c.mu.Unlock()
 
 	// Remove any files that are over age
-	c.purgeOld(c.opt.CacheMaxAge)
+	c.purgeOld(time.Duration(c.opt.CacheMaxAge))
 
 	// If have a maximum cache size...
 	if c.haveQuotas() {
@@ -830,7 +830,7 @@ func (c *Cache) cleaner(ctx context.Context) {
 	// Start cleaning the cache immediately
 	c.clean(false)
 	// Then every interval specified
-	timer := time.NewTicker(c.opt.CachePollInterval)
+	timer := time.NewTicker(time.Duration(c.opt.CachePollInterval))
 	defer timer.Stop()
 	for {
 		select {

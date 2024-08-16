@@ -163,7 +163,7 @@ type BatchUpdateFilePropertiesRequest struct {
 // SendFilePayloadResponse represents the JSON API object that's received
 // in response to uploading a file's body to the CDN URL.
 type SendFilePayloadResponse struct {
-	Size        int    `json:"size"`
+	Size        int64  `json:"size"`
 	ContentType string `json:"contentType"`
 	Md5         string `json:"md5"`
 	Message     string `json:"message"`

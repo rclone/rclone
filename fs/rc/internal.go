@@ -507,7 +507,7 @@ func rcRunCommand(ctx context.Context, in Params) (out Params, err error) {
 	var httpResponse http.ResponseWriter
 	httpResponse, err = in.GetHTTPResponseWriter()
 	if err != nil {
-		return nil, fmt.Errorf("response object is required\n" + err.Error())
+		return nil, fmt.Errorf("response object is required\n%w", err)
 	}
 
 	var allArgs = []string{}

@@ -29,8 +29,7 @@ var commandDefinition = &cobra.Command{
 	Use:   "move source:path dest:path",
 	Short: `Move files from source to dest.`,
 	// Warning! "|" will be replaced by backticks below
-	Long: strings.ReplaceAll(`
-Moves the contents of the source directory to the destination
+	Long: strings.ReplaceAll(`Moves the contents of the source directory to the destination
 directory. Rclone will error if the source and destination overlap and
 the remote does not support a server-side directory move operation.
 

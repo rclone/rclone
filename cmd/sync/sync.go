@@ -139,8 +139,7 @@ func anyNotBlank(s ...string) bool {
 var commandDefinition = &cobra.Command{
 	Use:   "sync source:path dest:path",
 	Short: `Make source and dest identical, modifying destination only.`,
-	Long: `
-Sync the source to the destination, changing the destination
+	Long: `Sync the source to the destination, changing the destination
 only.  Doesn't transfer files that are identical on source and
 destination, testing by size and modification time or MD5SUM.
 Destination is updated to match source, including deleting files
