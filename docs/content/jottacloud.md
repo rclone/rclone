@@ -175,18 +175,18 @@ Press Enter for the default (Archive).
  2 > Shared
  3 > Sync
 config_mountpoint> 1
---------------------
-[remote]
-type = jottacloud
-configVersion = 1
-client_id = jottacli
-client_secret =
-tokenURL = https://id.jottacloud.com/auth/realms/jottacloud/protocol/openid-connect/token
-token = {........}
-username = 2940e57271a93d987d6f8a21
-device = Jotta
-mountpoint = Archive
---------------------
+Configuration complete.
+Options:
+- type: jottacloud
+- configVersion: 1
+- client_id: jottacli
+- client_secret:
+- tokenURL: https://id.jottacloud.com/auth/realms/jottacloud/protocol/openid-connect/token
+- token: {........}
+- username: 2940e57271a93d987d6f8a21
+- device: Jotta
+- mountpoint: Archive
+Keep this "remote" remote?
 y) Yes this is OK (default)
 e) Edit this remote
 d) Delete this remote

@@ -84,11 +84,11 @@ Embedded spaces can be added using quotes
     "dir=remote:path with space" "dir2=remote2:path with space"
 Enter a fs.SpaceSepList value.
 upstreams> images=s3:imagesbucket files=drive:important/files
---------------------
-[remote]
-type = combine
-upstreams = images=s3:imagesbucket files=drive:important/files
---------------------
+Configuration complete.
+Options:
+- type: combine
+- upstreams: images=s3:imagesbucket files=drive:important/files
+Keep this "remote" remote?
 y) Yes this is OK (default)
 e) Edit this remote
 d) Delete this remote

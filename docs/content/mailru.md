@@ -90,13 +90,13 @@ y) Yes
 n) No
 y/n> n
 Remote config
---------------------
-[remote]
-type = mailru
-user = username@mail.ru
-pass = *** ENCRYPTED ***
-speedup_enable = true
---------------------
+Configuration complete.
+Options:
+- type: mailru
+- user: username@mail.ru
+- pass: *** ENCRYPTED ***
+- speedup_enable: true
+Keep this "remote" remote?
 y) Yes this is OK
 e) Edit this remote
 d) Delete this remote

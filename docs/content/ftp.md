@@ -72,12 +72,12 @@ Use FTP over TLS (Explicit)
 Enter a boolean value (true or false). Press Enter for the default ("false").
 explicit_tls> 
 Remote config
---------------------
-[remote]
-type = ftp
-host = ftp.example.com
-pass = *** ENCRYPTED ***
---------------------
+Configuration complete.
+Options:
+- type: ftp
+- host: ftp.example.com
+- pass: *** ENCRYPTED ***
+Keep this "remote" remote?
 y) Yes this is OK
 e) Edit this remote
 d) Delete this remote

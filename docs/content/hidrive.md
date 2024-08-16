@@ -54,11 +54,11 @@ If your browser doesn't open automatically go to the following link: http://127.
 Log in and authorize rclone for access
 Waiting for code...
 Got code
---------------------
-[remote]
-type = hidrive
-token = {"access_token":"xxxxxxxxxxxxxxxxxxxx","token_type":"Bearer","refresh_token":"xxxxxxxxxxxxxxxxxxxxxxx","expiry":"xxxxxxxxxxxxxxxxxxxxxxx"}
---------------------
+Configuration complete.
+Options:
+- type: hidrive
+- token: {"access_token":"xxxxxxxxxxxxxxxxxxxx","token_type":"Bearer","refresh_token":"xxxxxxxxxxxxxxxxxxxxxxx","expiry":"xxxxxxxxxxxxxxxxxxxxxxx"}
+Keep this "remote" remote?
 y) Yes this is OK (default)
 e) Edit this remote
 d) Delete this remote

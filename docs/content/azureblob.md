@@ -40,12 +40,13 @@ key> base64encodedkey==
 Endpoint for the service - leave blank normally.
 endpoint> 
 Remote config
---------------------
-[remote]
-account = account_name
-key = base64encodedkey==
-endpoint = 
---------------------
+Configuration complete.
+Options:
+- type: azureblob
+- account: account_name
+- key: base64encodedkey==
+- endpoint:
+Keep this "remote" remote?
 y) Yes this is OK
 e) Edit this remote
 d) Delete this remote
