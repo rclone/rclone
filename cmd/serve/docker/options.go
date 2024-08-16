@@ -268,6 +268,9 @@ func getVFSOption(vfsOpt *vfscommon.Options, opt rc.Params, key string) (ok bool
 		vfsOpt.FastFingerprint, err = opt.GetBool(key)
 	case "vfs-disk-space-total-size":
 		err = getFVarP(&vfsOpt.DiskSpaceTotalSize, opt, key)
+	case "vfs-read-chunk-streams":
+		intVal, err = opt.GetInt64(key)
+		vfsOpt.ChunkStreams = int(intVal)
 
 	// unprefixed vfs options
 	case "no-modtime":

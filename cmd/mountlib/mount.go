@@ -169,6 +169,7 @@ func init() {
 
 // Options for creating the mount
 type Options struct {
+	// when modifying these options, please make sure to update getMountOption in cmd/serve/docker/options.go
 	DebugFUSE          bool          `config:"debug_fuse"`
 	AllowNonEmpty      bool          `config:"allow_non_empty"`
 	AllowRoot          bool          `config:"allow_root"`
