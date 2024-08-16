@@ -215,7 +215,7 @@ func getMountOption(mntOpt *mountlib.Options, opt rc.Params, key string) (ok boo
 	case "network-mode":
 		mntOpt.NetworkMode, err = opt.GetBool(key)
 	case "daemon-wait":
-		mntOpt.DaemonWait, err = opt.GetDuration(key)
+		mntOpt.DaemonWait, err = opt.GetFsDuration(key)
 	case "devname":
 		mntOpt.DeviceName, err = opt.GetString(key)
 	case "direct-io":
