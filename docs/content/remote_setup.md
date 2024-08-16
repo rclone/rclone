@@ -100,7 +100,7 @@ Linux and MacOS users can utilize SSH Tunnel to redirect the headless box port 5
 ```
 ssh -L localhost:53682:localhost:53682 username@remote_server
 ```
-Then on the headless box run `rclone` config and answer `Y` to the `Use web 
+Then on the headless box run `rclone config` and answer `Y` to the `Use web 
 browser to automatically authenticate?` question.
 
 ```
