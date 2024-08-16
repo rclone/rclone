@@ -53,12 +53,12 @@ password:
 Confirm the password:
 password:
 Remote config
---------------------
-[remote]
-type = mega
-user = you@example.com
-pass = *** ENCRYPTED ***
---------------------
+Configuration complete.
+Options:
+- type: mega
+- user: you@example.com
+- pass: *** ENCRYPTED ***
+Keep this "remote" remote?
 y) Yes this is OK
 e) Edit this remote
 d) Delete this remote

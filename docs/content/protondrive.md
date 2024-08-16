@@ -65,12 +65,12 @@ Option 2fa.
 Enter a value. Press Enter to leave empty.
 2fa> 123456
 Remote config
---------------------
-[remote]
-type = protondrive
-user = you@protonmail.com
-pass = *** ENCRYPTED ***
---------------------
+Configuration complete.
+Options:
+- type: protondrive
+- user: you@protonmail.com
+- pass: *** ENCRYPTED ***
+Keep this "remote" remote?
 y) Yes this is OK
 e) Edit this remote
 d) Delete this remote

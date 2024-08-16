@@ -51,12 +51,13 @@ If your browser doesn't open automatically go to the following link: http://127.
 Log in and authorize rclone for access
 Waiting for code...
 Got code
---------------------
-[remote]
-client_id = 
-client_secret = 
-token = {"access_token":"XXX","token_type":"bearer","expiry":"0001-01-01T00:00:00Z"}
---------------------
+Configuration complete.
+Options:
+- type: pcloud
+- client_id:
+- client_secret:
+- token: {"access_token":"XXX","token_type":"bearer","expiry":"0001-01-01T00:00:00Z"}
+Keep this "remote" remote?
 y) Yes this is OK
 e) Edit this remote
 d) Delete this remote
