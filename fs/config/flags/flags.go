@@ -124,6 +124,7 @@ func init() {
 	All.NewGroup("Logging", "Flags for logging and statistics")
 	All.NewGroup("Metadata", "Flags to control metadata")
 	All.NewGroup("RC", "Flags to control the Remote Control API")
+	All.NewGroup("Metrics", "Flags to control the Metrics HTTP endpoint.")
 }
 
 // installFlag constructs a name from the flag passed in and
