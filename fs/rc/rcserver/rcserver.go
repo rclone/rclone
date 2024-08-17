@@ -360,6 +360,9 @@ func (s *Server) handleGet(w http.ResponseWriter, r *http.Request, path string) 
 		// Serve /* as the remote listing
 		s.serveRoot(w, r)
 		return
+	case path == "metrics" && s.opt.MetricsEnabled && SlicesEqual(s.opt.MetricsHTTP.ListenAddr, s.opt.HTTP.ListenAddr):
+		promHandlerFunc(w, r)
+		return
 	case s.files != nil:
 		if s.opt.WebUI {
 			pluginsMatchResult := webgui.PluginsMatch.FindStringSubmatch(path)
@@ -396,4 +399,22 @@ func (s *Server) Wait() {
 // Shutdown gracefully shuts down the server
 func (s *Server) Shutdown() error {
 	return s.server.Shutdown()
+}
+
+// SlicesEqual Function to check if two slices contain the same elements
+func SlicesEqual(a, b []string) bool {
+	if len(a) != len(b) {
+		return false
+	}
+
+	// Sort both slices before comparison
+	sort.Strings(a)
+	sort.Strings(b)
+
+	for i := range a {
+		if a[i] != b[i] {
+			return false
+		}
+	}
+	return true
 }

@@ -35,15 +35,12 @@ func init() {
 // If the server wasn't configured the *Server returned may be nil
 func MetricsStart(ctx context.Context, opt *rc.Options) (*MetricsServer, error) {
 	jobs.SetOpt(opt) // set the defaults for jobs
-	if opt.MetricsEnabled {
-		// Serve on the DefaultServeMux so can have global registrations appear
-		s, err := newMetricsServer(ctx, opt)
-		if err != nil {
-			return nil, err
-		}
-		return s, s.Serve()
+	// Serve on the DefaultServeMux so can have global registrations appear
+	s, err := newMetricsServer(ctx, opt)
+	if err != nil {
+		return nil, err
 	}
-	return nil, nil
+	return s, s.Serve()
 }
 
 // MetricsServer contains everything to run the rc server

@@ -58,12 +58,14 @@ See the [rc documentation](/rc/) for more info on the rc flags.
 			log.Fatal("rc server not configured")
 		}
 
-		go func() {
-			_, err := rcserver.MetricsStart(ctx, &rc.Opt)
-			if err != nil {
-				log.Fatalf("Failed to start metrics server: %v", err)
-			}
-		}()
+		if rc.Opt.MetricsEnabled && !rcserver.SlicesEqual(rc.Opt.MetricsHTTP.ListenAddr, rc.Opt.HTTP.ListenAddr) {
+			go func() {
+				_, err := rcserver.MetricsStart(ctx, &rc.Opt)
+				if err != nil {
+					log.Fatalf("Failed to start metrics server: %v", err)
+				}
+			}()
+		}
 
 		// Notify stopping on exit
 		defer systemd.Notify()()
