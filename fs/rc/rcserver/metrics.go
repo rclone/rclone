@@ -4,6 +4,8 @@ package rcserver
 import (
 	"context"
 	"fmt"
+	"net/http"
+
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/rclone/rclone/fs/accounting"
@@ -11,7 +13,6 @@ import (
 	"github.com/rclone/rclone/fs/rc"
 	"github.com/rclone/rclone/fs/rc/jobs"
 	libhttp "github.com/rclone/rclone/lib/http"
-	"net/http"
 )
 
 var promHandlerFunc http.HandlerFunc

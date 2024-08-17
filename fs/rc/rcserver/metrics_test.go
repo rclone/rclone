@@ -3,14 +3,15 @@ package rcserver
 import (
 	"context"
 	"fmt"
+	"net/http"
+	"regexp"
+	"testing"
+
 	_ "github.com/rclone/rclone/backend/local"
 	"github.com/rclone/rclone/fs/accounting"
 	"github.com/rclone/rclone/fs/config/configfile"
 	"github.com/rclone/rclone/fs/rc"
 	"github.com/stretchr/testify/require"
-	"net/http"
-	"regexp"
-	"testing"
 )
 
 // Run a suite of tests
