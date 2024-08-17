@@ -1410,14 +1410,6 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 	return
 }
 
-// min returns the smallest of x, y
-func min(x, y int64) int64 {
-	if x < y {
-		return x
-	}
-	return y
-}
-
 // Get the segments for a large object
 //
 // It returns the names of the segments and the container that they live in
