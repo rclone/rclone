@@ -6,6 +6,7 @@ import (
 	"encoding/xml"
 	"errors"
 	"fmt"
+	"github.com/rclone/rclone/fs/rc/rcserver"
 	"mime"
 	"net/http"
 	"os"
@@ -162,6 +163,7 @@ done by the permissions on the socket.
 			if err != nil {
 				return err
 			}
+			rcserver.RunMetricsServer()
 			defer systemd.Notify()()
 			s.Wait()
 			return nil

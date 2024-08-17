@@ -3,6 +3,7 @@ package s3
 import (
 	"context"
 	_ "embed"
+	"github.com/rclone/rclone/fs/rc/rcserver"
 	"strings"
 
 	"github.com/rclone/rclone/cmd"
@@ -89,6 +90,7 @@ var Command = &cobra.Command{
 			if err != nil {
 				return err
 			}
+			rcserver.RunMetricsServer()
 			s.server.Wait()
 			return nil
 		})

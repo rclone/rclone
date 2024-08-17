@@ -58,13 +58,8 @@ See the [rc documentation](/rc/) for more info on the rc flags.
 			log.Fatal("rc server not configured")
 		}
 
-		if rc.Opt.MetricsEnabled && !rcserver.SlicesEqual(rc.Opt.MetricsHTTP.ListenAddr, rc.Opt.HTTP.ListenAddr) {
-			go func() {
-				_, err := rcserver.MetricsStart(ctx, &rc.Opt)
-				if err != nil {
-					log.Fatalf("Failed to start metrics server: %v", err)
-				}
-			}()
+		if !rcserver.SlicesEqual(rc.Opt.MetricsHTTP.ListenAddr, rc.Opt.HTTP.ListenAddr) {
+			rcserver.RunMetricsServer()
 		}
 
 		// Notify stopping on exit

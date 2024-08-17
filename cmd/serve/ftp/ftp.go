@@ -7,6 +7,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/rclone/rclone/fs/rc/rcserver"
 	"io"
 	iofs "io/fs"
 	"net"
@@ -132,6 +133,7 @@ You can set a single username and password with the --user and --pass flags.
 			if err != nil {
 				return err
 			}
+			rcserver.RunMetricsServer()
 			return s.serve()
 		})
 	},

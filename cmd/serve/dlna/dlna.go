@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"encoding/xml"
 	"fmt"
+	"github.com/rclone/rclone/fs/rc/rcserver"
 	"net"
 	"net/http"
 	"net/url"
@@ -70,6 +71,7 @@ directory as the video, or in a "Subs" subdirectory.
 			if err := s.Serve(); err != nil {
 				return err
 			}
+			rcserver.RunMetricsServer()
 			defer systemd.Notify()()
 			s.Wait()
 			return nil

@@ -11,6 +11,7 @@ package nfs
 
 import (
 	"context"
+	"github.com/rclone/rclone/fs/rc/rcserver"
 	"strings"
 
 	"github.com/rclone/rclone/cmd"
@@ -94,6 +95,7 @@ func Run(command *cobra.Command, args []string) {
 		if err != nil {
 			return err
 		}
+		rcserver.RunMetricsServer()
 		return s.Serve()
 	})
 }

@@ -4,6 +4,7 @@ package rcserver
 import (
 	"context"
 	"fmt"
+	"log"
 	"net/http"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -14,6 +15,8 @@ import (
 	"github.com/rclone/rclone/fs/rc/jobs"
 	libhttp "github.com/rclone/rclone/lib/http"
 )
+
+const path = "/metrics"
 
 var promHandlerFunc http.HandlerFunc
 
@@ -68,8 +71,10 @@ func newMetricsServer(ctx context.Context, opt *rc.Options) (*MetricsServer, err
 		return nil, fmt.Errorf("failed to init server: %w", err)
 	}
 
+	log.Printf("Metrics endpoint are accessible in the: %s%s", opt.MetricsHTTP.ListenAddr[0], path)
+
 	router := s.server.Router()
-	router.Get("/metrics", promHandlerFunc)
+	router.Get(path, promHandlerFunc)
 	return s, nil
 }
 
@@ -89,4 +94,16 @@ func (s *MetricsServer) Wait() {
 // Shutdown gracefully shuts down the server
 func (s *MetricsServer) Shutdown() error {
 	return s.server.Shutdown()
+}
+
+// RunMetricsServer created for easy start metrics server in the same way from different places
+func RunMetricsServer() {
+	if rc.Opt.MetricsEnabled {
+		go func() {
+			_, err := MetricsStart(context.Background(), &rc.Opt)
+			if err != nil {
+				log.Fatalf("Failed to start metrics server: %v", err)
+			}
+		}()
+	}
 }

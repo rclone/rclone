@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/rclone/rclone/fs/rc/rcserver"
 	"io"
 	"log"
 	"net/http"
@@ -94,6 +95,7 @@ control the stats printing.
 			if err != nil {
 				log.Fatal(err)
 			}
+			rcserver.RunMetricsServer()
 
 			defer systemd.Notify()()
 			s.server.Wait()

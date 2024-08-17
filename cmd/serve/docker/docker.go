@@ -4,6 +4,7 @@ package docker
 import (
 	"context"
 	_ "embed"
+	"github.com/rclone/rclone/fs/rc/rcserver"
 	"path/filepath"
 	"strings"
 	"syscall"
@@ -78,6 +79,7 @@ var Command = &cobra.Command{
 				// Listen on unix socket at given path
 				return srv.ServeUnix(socketAddr, socketGid)
 			}
+			rcserver.RunMetricsServer()
 			return srv.ServeTCP(socketAddr, "", nil, noSpec)
 		})
 	},

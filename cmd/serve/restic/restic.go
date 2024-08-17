@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/rclone/rclone/fs/rc/rcserver"
 	"net/http"
 	"os"
 	"path"
@@ -181,6 +182,7 @@ with a path of ` + "`/<username>/`" + `.
 			fs.Logf(s.f, "Serving restic REST API on %s", s.URLs())
 
 			defer systemd.Notify()()
+			rcserver.RunMetricsServer()
 			s.Wait()
 
 			return nil

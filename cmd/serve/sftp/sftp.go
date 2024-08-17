@@ -5,6 +5,7 @@ package sftp
 
 import (
 	"context"
+	"github.com/rclone/rclone/fs/rc/rcserver"
 
 	"github.com/rclone/rclone/cmd"
 	"github.com/rclone/rclone/cmd/serve/proxy"
@@ -156,6 +157,7 @@ provided by OpenSSH in this case.
 			if err != nil {
 				return err
 			}
+			rcserver.RunMetricsServer()
 			defer systemd.Notify()()
 			s.Wait()
 			return nil
