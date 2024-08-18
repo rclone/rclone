@@ -10,7 +10,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
 	"os"
 	"os/exec"
 	"path"
@@ -88,7 +87,7 @@ func NewFsFile(remote string) (fs.Fs, string) {
 	_, fsPath, err := fspath.SplitFs(remote)
 	if err != nil {
 		err = fs.CountError(err)
-		log.Fatalf("Failed to create file system for %q: %v", remote, err)
+		fs.Fatalf(nil, "Failed to create file system for %q: %v", remote, err)
 	}
 	f, err := cache.Get(context.Background(), remote)
 	switch err {
@@ -100,7 +99,7 @@ func NewFsFile(remote string) (fs.Fs, string) {
 		return f, ""
 	default:
 		err = fs.CountError(err)
-		log.Fatalf("Failed to create file system for %q: %v", remote, err)
+		fs.Fatalf(nil, "Failed to create file system for %q: %v", remote, err)
 	}
 	return nil, ""
 }
@@ -116,13 +115,13 @@ func newFsFileAddFilter(remote string) (fs.Fs, string) {
 		if !fi.InActive() {
 			err := fmt.Errorf("can't limit to single files when using filters: %v", remote)
 			err = fs.CountError(err)
-			log.Fatal(err.Error())
+			fs.Fatal(nil, err.Error())
 		}
 		// Limit transfers to this file
 		err := fi.AddFile(fileName)
 		if err != nil {
 			err = fs.CountError(err)
-			log.Fatalf("Failed to limit to single file %q: %v", remote, err)
+			fs.Fatalf(nil, "Failed to limit to single file %q: %v", remote, err)
 		}
 	}
 	return f, fileName
@@ -144,7 +143,7 @@ func newFsDir(remote string) fs.Fs {
 	f, err := cache.Get(context.Background(), remote)
 	if err != nil {
 		err = fs.CountError(err)
-		log.Fatalf("Failed to create file system for %q: %v", remote, err)
+		fs.Fatalf(nil, "Failed to create file system for %q: %v", remote, err)
 	}
 	cache.Pin(f) // pin indefinitely since it was on the CLI
 	return f
@@ -186,24 +185,24 @@ func NewFsSrcDstFiles(args []string) (fsrc fs.Fs, srcFileName string, fdst fs.Fs
 		var err error
 		dstRemote, dstFileName, err = fspath.Split(dstRemote)
 		if err != nil {
-			log.Fatalf("Parsing %q failed: %v", args[1], err)
+			fs.Fatalf(nil, "Parsing %q failed: %v", args[1], err)
 		}
 		if dstRemote == "" {
 			dstRemote = "."
 		}
 		if dstFileName == "" {
-			log.Fatalf("%q is a directory", args[1])
+			fs.Fatalf(nil, "%q is a directory", args[1])
 		}
 	}
 	fdst, err := cache.Get(context.Background(), dstRemote)
 	switch err {
 	case fs.ErrorIsFile:
 		_ = fs.CountError(err)
-		log.Fatalf("Source doesn't exist or is a directory and destination is a file")
+		fs.Fatalf(nil, "Source doesn't exist or is a directory and destination is a file")
 	case nil:
 	default:
 		_ = fs.CountError(err)
-		log.Fatalf("Failed to create file system for destination %q: %v", dstRemote, err)
+		fs.Fatalf(nil, "Failed to create file system for destination %q: %v", dstRemote, err)
 	}
 	cache.Pin(fdst) // pin indefinitely since it was on the CLI
 	return
@@ -213,13 +212,13 @@ func NewFsSrcDstFiles(args []string) (fsrc fs.Fs, srcFileName string, fdst fs.Fs
 func NewFsDstFile(args []string) (fdst fs.Fs, dstFileName string) {
 	dstRemote, dstFileName, err := fspath.Split(args[0])
 	if err != nil {
-		log.Fatalf("Parsing %q failed: %v", args[0], err)
+		fs.Fatalf(nil, "Parsing %q failed: %v", args[0], err)
 	}
 	if dstRemote == "" {
 		dstRemote = "."
 	}
 	if dstFileName == "" {
-		log.Fatalf("%q is a directory", args[0])
+		fs.Fatalf(nil, "%q is a directory", args[0])
 	}
 	fdst = newFsDir(dstRemote)
 	return
@@ -328,9 +327,9 @@ func Run(Retry bool, showStats bool, cmd *cobra.Command, f func() error) {
 	if cmdErr != nil {
 		nerrs := accounting.GlobalStats().GetErrors()
 		if nerrs <= 1 {
-			log.Printf("Failed to %s: %v", cmd.Name(), cmdErr)
+			fs.Logf(nil, "Failed to %s: %v", cmd.Name(), cmdErr)
 		} else {
-			log.Printf("Failed to %s with %d errors: last error was: %v", cmd.Name(), nerrs, cmdErr)
+			fs.Logf(nil, "Failed to %s with %d errors: last error was: %v", cmd.Name(), nerrs, cmdErr)
 		}
 	}
 	resolveExitCode(cmdErr)
@@ -383,7 +382,7 @@ func initConfig() {
 	// Set the global options from the flags
 	err := fs.GlobalOptionsInit()
 	if err != nil {
-		log.Fatalf("Failed to initialise global options: %v", err)
+		fs.Fatalf(nil, "Failed to initialise global options: %v", err)
 	}
 
 	ctx := context.Background()
@@ -423,7 +422,7 @@ func initConfig() {
 	// Start the remote control server if configured
 	_, err = rcserver.Start(ctx, &rc.Opt)
 	if err != nil {
-		log.Fatalf("Failed to start remote control: %v", err)
+		fs.Fatalf(nil, "Failed to start remote control: %v", err)
 	}
 
 	// Start the metrics server if configured
@@ -439,19 +438,19 @@ func initConfig() {
 		f, err := os.Create(*cpuProfile)
 		if err != nil {
 			err = fs.CountError(err)
-			log.Fatal(err)
+			fs.Fatal(nil, fmt.Sprint(err))
 		}
 		err = pprof.StartCPUProfile(f)
 		if err != nil {
 			err = fs.CountError(err)
-			log.Fatal(err)
+			fs.Fatal(nil, fmt.Sprint(err))
 		}
 		atexit.Register(func() {
 			pprof.StopCPUProfile()
 			err := f.Close()
 			if err != nil {
 				err = fs.CountError(err)
-				log.Fatal(err)
+				fs.Fatal(nil, fmt.Sprint(err))
 			}
 		})
 	}
@@ -463,17 +462,17 @@ func initConfig() {
 			f, err := os.Create(*memProfile)
 			if err != nil {
 				err = fs.CountError(err)
-				log.Fatal(err)
+				fs.Fatal(nil, fmt.Sprint(err))
 			}
 			err = pprof.WriteHeapProfile(f)
 			if err != nil {
 				err = fs.CountError(err)
-				log.Fatal(err)
+				fs.Fatal(nil, fmt.Sprint(err))
 			}
 			err = f.Close()
 			if err != nil {
 				err = fs.CountError(err)
-				log.Fatal(err)
+				fs.Fatal(nil, fmt.Sprint(err))
 			}
 		})
 	}
@@ -537,6 +536,6 @@ func Main() {
 		if strings.HasPrefix(err.Error(), "unknown command") && selfupdateEnabled {
 			Root.PrintErrf("You could use '%s selfupdate' to get latest features.\n\n", Root.CommandPath())
 		}
-		log.Fatalf("Fatal error: %v", err)
+		fs.Fatalf(nil, "Fatal error: %v", err)
 	}
 }

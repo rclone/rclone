@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"net/url"
 	"path"
@@ -283,7 +282,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		if err != nil {
 			return nil, fmt.Errorf("couldn't save OAuth token: %w", err)
 		}
-		log.Printf("Automatically upgraded OAuth config.")
+		fs.Logf(nil, "Automatically upgraded OAuth config.")
 	}
 	oAuthClient, _, err := oauthutil.NewClient(ctx, name, m, oauthConfig)
 	if err != nil {

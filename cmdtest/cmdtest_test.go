@@ -6,13 +6,13 @@
 package cmdtest
 
 import (
-	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
 
+	"github.com/rclone/rclone/fs"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -26,14 +26,14 @@ func TestMain(m *testing.M) {
 		// started by Go test => execute tests
 		err := os.Setenv(rcloneTestMain, "true")
 		if err != nil {
-			log.Fatalf("Unable to set %s: %s", rcloneTestMain, err.Error())
+			fs.Fatalf(nil, "Unable to set %s: %s", rcloneTestMain, err.Error())
 		}
 		os.Exit(m.Run())
 	} else {
 		// started by func rcloneExecMain => call rclone main in cmdtest.go
 		err := os.Unsetenv(rcloneTestMain)
 		if err != nil {
-			log.Fatalf("Unable to unset %s: %s", rcloneTestMain, err.Error())
+			fs.Fatalf(nil, "Unable to unset %s: %s", rcloneTestMain, err.Error())
 		}
 		main()
 	}
@@ -47,7 +47,7 @@ const rcloneTestMain = "RCLONE_TEST_MAIN"
 func rcloneExecMain(env string, args ...string) (string, error) {
 	_, found := os.LookupEnv(rcloneTestMain)
 	if !found {
-		log.Fatalf("Unexpected execution path: %s is missing.", rcloneTestMain)
+		fs.Fatalf(nil, "Unexpected execution path: %s is missing.", rcloneTestMain)
 	}
 	// make a call to self to execute rclone main in a predefined environment (enters TestMain above)
 	command := exec.Command(os.Args[0], args...)

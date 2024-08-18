@@ -10,7 +10,6 @@ import (
 	"flag"
 	"fmt"
 	"io"
-	"log"
 	"os"
 	"path"
 	"path/filepath"
@@ -99,7 +98,7 @@ func NewItem(Path, Content string, modTime time.Time) Item {
 	buf := bytes.NewBufferString(Content)
 	_, err := io.Copy(hash, buf)
 	if err != nil {
-		log.Fatalf("Failed to create item: %v", err)
+		fs.Fatalf(nil, "Failed to create item: %v", err)
 	}
 	i.Hashes = hash.Sums()
 	return i
@@ -398,7 +397,7 @@ func CompareItems(t *testing.T, entries fs.DirEntries, items []Item, expectedDir
 func Time(timeString string) time.Time {
 	t, err := time.Parse(time.RFC3339Nano, timeString)
 	if err != nil {
-		log.Fatalf("Failed to parse time %q: %v", timeString, err)
+		fs.Fatalf(nil, "Failed to parse time %q: %v", timeString, err)
 	}
 	return t
 }
@@ -433,7 +432,7 @@ func RandomRemoteName(remoteName string) (string, string, error) {
 		}
 		leafName = "rclone-test-" + random.String(12)
 		if !MatchTestRemote.MatchString(leafName) {
-			log.Fatalf("%q didn't match the test remote name regexp", leafName)
+			fs.Fatalf(nil, "%q didn't match the test remote name regexp", leafName)
 		}
 		remoteName += leafName
 	}
@@ -467,7 +466,7 @@ func RandomRemote() (fs.Fs, string, func(), error) {
 		if parentRemote != nil {
 			Purge(parentRemote)
 			if err != nil {
-				log.Printf("Failed to purge %v: %v", parentRemote, err)
+				fs.Logf(nil, "Failed to purge %v: %v", parentRemote, err)
 			}
 		}
 	}
@@ -499,7 +498,7 @@ func Purge(f fs.Fs) {
 				fs.Debugf(f, "Purge object %q", obj.Remote())
 				err = obj.Remove(ctx)
 				if err != nil {
-					log.Printf("purge failed to remove %q: %v", obj.Remote(), err)
+					fs.Logf(nil, "purge failed to remove %q: %v", obj.Remote(), err)
 				}
 			})
 			entries.ForDir(func(dir fs.Directory) {
@@ -513,12 +512,12 @@ func Purge(f fs.Fs) {
 			fs.Debugf(f, "Purge dir %q", dir)
 			err := f.Rmdir(ctx, dir)
 			if err != nil {
-				log.Printf("purge failed to rmdir %q: %v", dir, err)
+				fs.Logf(nil, "purge failed to rmdir %q: %v", dir, err)
 			}
 		}
 	}
 	if err != nil {
-		log.Printf("purge failed: %v", err)
+		fs.Logf(nil, "purge failed: %v", err)
 	}
 }
 

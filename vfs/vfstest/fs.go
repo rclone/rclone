@@ -8,7 +8,6 @@ import (
 	"flag"
 	"fmt"
 	"io"
-	"log"
 	"os"
 	"os/exec"
 	"path"
@@ -69,7 +68,7 @@ func RunTests(t *testing.T, useVFS bool, minimumRequiredCacheMode vfscommon.Cach
 		if test.writeBack > 0 {
 			what += fmt.Sprintf(",WriteBack=%v", test.writeBack)
 		}
-		log.Printf("Starting test run with %s", what)
+		fs.Logf(nil, "Starting test run with %s", what)
 		ok := t.Run(what, func(t *testing.T) {
 			t.Run("TestTouchAndDelete", TestTouchAndDelete)
 			t.Run("TestRenameOpenHandle", TestRenameOpenHandle)
@@ -100,7 +99,7 @@ func RunTests(t *testing.T, useVFS bool, minimumRequiredCacheMode vfscommon.Cach
 			t.Run("TestWriteFileDup", TestWriteFileDup)
 			t.Run("TestWriteFileAppend", TestWriteFileAppend)
 		})
-		log.Printf("Finished test run with %s (ok=%v)", what, ok)
+		fs.Logf(nil, "Finished test run with %s (ok=%v)", what, ok)
 		run.Finalise()
 		if !ok {
 			break
@@ -146,12 +145,12 @@ func newRun(useVFS bool, vfsOpt *vfscommon.Options, mountFn mountlib.MountFn) *R
 	var err error
 	r.fremote, r.fremoteName, r.cleanRemote, err = fstest.RandomRemote()
 	if err != nil {
-		log.Fatalf("Failed to open remote %q: %v", *fstest.RemoteName, err)
+		fs.Fatalf(nil, "Failed to open remote %q: %v", *fstest.RemoteName, err)
 	}
 
 	err = r.fremote.Mkdir(context.Background(), "")
 	if err != nil {
-		log.Fatalf("Failed to open mkdir %q: %v", *fstest.RemoteName, err)
+		fs.Fatalf(nil, "Failed to open mkdir %q: %v", *fstest.RemoteName, err)
 	}
 
 	r.startMountSubProcess()
@@ -176,14 +175,14 @@ func (r *Run) Finalise() {
 		r.sendMountCommand("exit")
 		_, err := r.cmd.Process.Wait()
 		if err != nil {
-			log.Fatalf("mount sub process failed: %v", err)
+			fs.Fatalf(nil, "mount sub process failed: %v", err)
 		}
 	}
 	r.cleanRemote()
 	if !r.useVFS {
 		err := os.RemoveAll(r.mountPath)
 		if err != nil {
-			log.Printf("Failed to clean mountPath %q: %v", r.mountPath, err)
+			fs.Logf(nil, "Failed to clean mountPath %q: %v", r.mountPath, err)
 		}
 	}
 }

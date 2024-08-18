@@ -3,11 +3,11 @@
 package cmd
 
 import (
-	"log"
 	"os"
 	"os/signal"
 	"syscall"
 
+	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/accounting"
 )
 
@@ -17,7 +17,7 @@ func SigInfoHandler() {
 	signal.Notify(signals, syscall.SIGINFO)
 	go func() {
 		for range signals {
-			log.Printf("%v\n", accounting.GlobalStats())
+			fs.Printf(nil, "%v\n", accounting.GlobalStats())
 		}
 	}()
 }

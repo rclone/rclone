@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"os"
 	"path"
@@ -92,7 +91,7 @@ control the stats printing.
 		cmd.Run(false, true, command, func() error {
 			s, err := run(context.Background(), f, Opt)
 			if err != nil {
-				log.Fatal(err)
+				fs.Fatal(nil, fmt.Sprint(err))
 			}
 
 			defer systemd.Notify()()

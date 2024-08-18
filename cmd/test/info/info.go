@@ -10,7 +10,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"os"
 	"path"
 	"regexp"
@@ -77,7 +76,7 @@ code for each one.
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(1, 1e6, command, args)
 		if !checkNormalization && !checkControl && !checkLength && !checkStreaming && !checkBase32768 && !all {
-			log.Fatalf("no tests selected - select a test or use --all")
+			fs.Fatalf(nil, "no tests selected - select a test or use --all")
 		}
 		if all {
 			checkNormalization = true
@@ -93,7 +92,7 @@ code for each one.
 			fs.Infof(f, "Created temporary directory for test files: %s", tempDirPath)
 			err := f.Mkdir(context.Background(), "")
 			if err != nil {
-				log.Fatalf("couldn't create temporary directory: %v", err)
+				fs.Fatalf(nil, "couldn't create temporary directory: %v", err)
 			}
 
 			cmd.Run(false, false, command, func() error {
