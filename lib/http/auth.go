@@ -2,8 +2,8 @@ package http
 
 import (
 	"bytes"
+	"fmt"
 	"html/template"
-	"log"
 
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config/flags"
@@ -42,7 +42,7 @@ Use ` + "`--{{ .Prefix }}salt`" + ` to change the password hashing salt from the
 `
 	tmpl, err := template.New("auth help").Parse(help)
 	if err != nil {
-		log.Fatal("Fatal error parsing template", err)
+		fs.Fatal(nil, fmt.Sprint("Fatal error parsing template", err))
 	}
 
 	data := struct {
@@ -53,7 +53,7 @@ Use ` + "`--{{ .Prefix }}salt`" + ` to change the password hashing salt from the
 	buf := &bytes.Buffer{}
 	err = tmpl.Execute(buf, data)
 	if err != nil {
-		log.Fatal("Fatal error executing template", err)
+		fs.Fatal(nil, fmt.Sprint("Fatal error executing template", err))
 	}
 	return buf.String()
 }

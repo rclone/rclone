@@ -2,10 +2,11 @@ package hash_test
 
 import (
 	"bytes"
+	"fmt"
 	"io"
-	"log"
 	"testing"
 
+	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/spf13/pflag"
 	"github.com/stretchr/testify/assert"
@@ -24,7 +25,7 @@ func TestHashSet(t *testing.T) {
 	assert.Len(t, a, 0)
 
 	h = h.Add(hash.MD5)
-	log.Println(h)
+	fs.Log(nil, fmt.Sprint(h))
 	assert.Equal(t, 1, h.Count())
 	assert.Equal(t, hash.MD5, h.GetOne())
 	a = h.Array()

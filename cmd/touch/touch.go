@@ -6,7 +6,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
 	"time"
 
 	"github.com/rclone/rclone/cmd"
@@ -86,7 +85,7 @@ then add the ` + "`--localtime`" + ` flag.
 func newFsDst(args []string) (f fs.Fs, remote string) {
 	root, remote, err := fspath.Split(args[0])
 	if err != nil {
-		log.Fatalf("Parsing %q failed: %v", args[0], err)
+		fs.Fatalf(nil, "Parsing %q failed: %v", args[0], err)
 	}
 	if root == "" {
 		root = "."

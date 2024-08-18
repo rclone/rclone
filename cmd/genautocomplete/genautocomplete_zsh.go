@@ -1,10 +1,11 @@
 package genautocomplete
 
 import (
-	"log"
+	"fmt"
 	"os"
 
 	"github.com/rclone/rclone/cmd"
+	"github.com/rclone/rclone/fs"
 	"github.com/spf13/cobra"
 )
 
@@ -39,7 +40,7 @@ If output_file is "-", then the output will be written to stdout.
 			if args[0] == "-" {
 				err := cmd.Root.GenZshCompletion(os.Stdout)
 				if err != nil {
-					log.Fatal(err)
+					fs.Fatal(nil, fmt.Sprint(err))
 				}
 				return
 			}
@@ -47,12 +48,12 @@ If output_file is "-", then the output will be written to stdout.
 		}
 		outFile, err := os.Create(out)
 		if err != nil {
-			log.Fatal(err)
+			fs.Fatal(nil, fmt.Sprint(err))
 		}
 		defer func() { _ = outFile.Close() }()
 		err = cmd.Root.GenZshCompletion(outFile)
 		if err != nil {
-			log.Fatal(err)
+			fs.Fatal(nil, fmt.Sprint(err))
 		}
 	},
 }

@@ -3,7 +3,6 @@
 package flags
 
 import (
-	"log"
 	"os"
 	"regexp"
 	"strings"
@@ -74,7 +73,7 @@ func (gs *Groups) Include(groupsString string) *Groups {
 	for _, groupName := range strings.Split(groupsString, ",") {
 		_, ok := All.ByName[groupName]
 		if !ok {
-			log.Fatalf("Couldn't find group %q in command annotation", groupName)
+			fs.Fatalf(nil, "Couldn't find group %q in command annotation", groupName)
 		}
 		want[groupName] = true
 	}
@@ -138,7 +137,7 @@ func installFlag(flags *pflag.FlagSet, name string, groupsString string) {
 	// Find flag
 	flag := flags.Lookup(name)
 	if flag == nil {
-		log.Fatalf("Couldn't find flag --%q", name)
+		fs.Fatalf(nil, "Couldn't find flag --%q", name)
 	}
 
 	// Read default from environment if possible
@@ -146,7 +145,7 @@ func installFlag(flags *pflag.FlagSet, name string, groupsString string) {
 	if envValue, envFound := os.LookupEnv(envKey); envFound {
 		err := flags.Set(name, envValue)
 		if err != nil {
-			log.Fatalf("Invalid value when setting --%s from environment variable %s=%q: %v", name, envKey, envValue, err)
+			fs.Fatalf(nil, "Invalid value when setting --%s from environment variable %s=%q: %v", name, envKey, envValue, err)
 		}
 		fs.Debugf(nil, "Setting --%s %q from environment variable %s=%q", name, flag.Value, envKey, envValue)
 		flag.DefValue = envValue
@@ -160,7 +159,7 @@ func installFlag(flags *pflag.FlagSet, name string, groupsString string) {
 			}
 			group, ok := All.ByName[groupName]
 			if !ok {
-				log.Fatalf("Couldn't find group %q for flag --%s", groupName, name)
+				fs.Fatalf(nil, "Couldn't find group %q for flag --%s", groupName, name)
 			}
 			group.Add(flag)
 		}

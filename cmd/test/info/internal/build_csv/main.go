@@ -7,12 +7,12 @@ import (
 	"flag"
 	"fmt"
 	"io"
-	"log"
 	"os"
 	"sort"
 	"strconv"
 
 	"github.com/rclone/rclone/cmd/test/info/internal"
+	"github.com/rclone/rclone/fs"
 )
 
 func main() {
@@ -24,21 +24,21 @@ func main() {
 	for _, fn := range args {
 		f, err := os.Open(fn)
 		if err != nil {
-			log.Fatalf("Unable to open %q: %s", fn, err)
+			fs.Fatalf(nil, "Unable to open %q: %s", fn, err)
 		}
 		var remote internal.InfoReport
 		dec := json.NewDecoder(f)
 		err = dec.Decode(&remote)
 		if err != nil {
-			log.Fatalf("Unable to decode %q: %s", fn, err)
+			fs.Fatalf(nil, "Unable to decode %q: %s", fn, err)
 		}
 		if remote.ControlCharacters == nil {
-			log.Printf("Skipping remote %s: no ControlCharacters", remote.Remote)
+			fs.Logf(nil, "Skipping remote %s: no ControlCharacters", remote.Remote)
 		} else {
 			remotes = append(remotes, remote)
 		}
 		if err := f.Close(); err != nil {
-			log.Fatalf("Closing %q failed: %s", fn, err)
+			fs.Fatalf(nil, "Closing %q failed: %s", fn, err)
 		}
 	}
 
@@ -117,11 +117,11 @@ func main() {
 	} else {
 		f, err := os.Create(*fOut)
 		if err != nil {
-			log.Fatalf("Unable to create %q: %s", *fOut, err)
+			fs.Fatalf(nil, "Unable to create %q: %s", *fOut, err)
 		}
 		defer func() {
 			if err := f.Close(); err != nil {
-				log.Fatalln("Error writing csv:", err)
+				fs.Fatal(nil, fmt.Sprint("Error writing csv:", err))
 			}
 		}()
 		writer = f
@@ -130,9 +130,9 @@ func main() {
 	w := csv.NewWriter(writer)
 	err := w.WriteAll(records)
 	if err != nil {
-		log.Fatalln("Error writing csv:", err)
+		fs.Fatal(nil, fmt.Sprint("Error writing csv:", err))
 	} else if err := w.Error(); err != nil {
-		log.Fatalln("Error writing csv:", err)
+		fs.Fatal(nil, fmt.Sprint("Error writing csv:", err))
 	}
 }
 

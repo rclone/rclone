@@ -3,9 +3,9 @@ package rcd
 
 import (
 	"context"
-	"log"
 
 	"github.com/rclone/rclone/cmd"
+	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/rc"
 	"github.com/rclone/rclone/fs/rc/rcflags"
 	"github.com/rclone/rclone/fs/rc/rcserver"
@@ -39,7 +39,7 @@ See the [rc documentation](/rc/) for more info on the rc flags.
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(0, 1, command, args)
 		if rc.Opt.Enabled {
-			log.Fatalf("Don't supply --rc flag when using rcd")
+			fs.Fatalf(nil, "Don't supply --rc flag when using rcd")
 		}
 
 		// Start the rc
@@ -50,10 +50,10 @@ See the [rc documentation](/rc/) for more info on the rc flags.
 
 		s, err := rcserver.Start(context.Background(), &rc.Opt)
 		if err != nil {
-			log.Fatalf("Failed to start remote control: %v", err)
+			fs.Fatalf(nil, "Failed to start remote control: %v", err)
 		}
 		if s == nil {
-			log.Fatal("rc server not configured")
+			fs.Fatal(nil, "rc server not configured")
 		}
 
 		// Notify stopping on exit
