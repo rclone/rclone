@@ -97,12 +97,6 @@ style.
 
 Default Off.
 
-### --rc-metrics
-
-Enable OpenMetrics/Prometheus compatible endpoint at `http://localhost:9000/metrics`.
-
-Default Off.
-
 ### --rc-web-gui
 
 Set this flag to serve the default web gui on the same port as rclone.
