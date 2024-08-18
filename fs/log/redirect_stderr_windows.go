@@ -5,7 +5,6 @@
 // https://play.golang.org/p/kLtct7lSUg
 
 //go:build windows
-// +build windows
 
 package log
 
@@ -21,7 +20,7 @@ var (
 )
 
 func setStdHandle(stdhandle int32, handle syscall.Handle) error {
-	r0, _, e1 := syscall.Syscall(procSetStdHandle.Addr(), 2, uintptr(stdhandle), uintptr(handle), 0)
+	r0, _, e1 := syscall.SyscallN(procSetStdHandle.Addr(), uintptr(stdhandle), uintptr(handle))
 	if r0 == 0 {
 		if e1 != 0 {
 			return error(e1)

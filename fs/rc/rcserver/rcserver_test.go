@@ -3,11 +3,13 @@ package rcserver
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"path/filepath"
 	"regexp"
 	"strings"
 	"testing"
@@ -23,10 +25,10 @@ import (
 )
 
 const (
-	testBindAddress = "localhost:0"
-	testTemplate    = "testdata/golden/testindex.html"
-	testFs          = "testdata/files"
-	remoteURL       = "[" + testFs + "]/" // initial URL path to fetch from that remote
+	testBindAddress     = "localhost:0"
+	defaultTestTemplate = "testdata/golden/testindex.html"
+	testFs              = "testdata/files"
+	remoteURL           = "[" + testFs + "]/" // initial URL path to fetch from that remote
 )
 
 func TestMain(m *testing.M) {
@@ -47,9 +49,9 @@ func TestMain(m *testing.M) {
 // Test the RC server runs and we can do HTTP fetches from it.
 // We'll do the majority of the testing with the httptest framework
 func TestRcServer(t *testing.T) {
-	opt := rc.DefaultOpt
+	opt := rc.Opt
 	opt.HTTP.ListenAddr = []string{testBindAddress}
-	opt.Template.Path = testTemplate
+	opt.Template.Path = defaultTestTemplate
 	opt.Enabled = true
 	opt.Serve = true
 	opt.Files = testFs
@@ -102,15 +104,21 @@ type testRun struct {
 
 // Run a suite of tests
 func testServer(t *testing.T, tests []testRun, opt *rc.Options) {
+	t.Helper()
+
 	ctx := context.Background()
 	configfile.Install()
-	opt.Template.Path = testTemplate
+	if opt.Template.Path == "" {
+		opt.Template.Path = defaultTestTemplate
+	}
 	rcServer, err := newServer(ctx, opt, http.DefaultServeMux)
 	require.NoError(t, err)
 	testURL := rcServer.server.URLs()[0]
 	mux := rcServer.server.Router()
 	for _, test := range tests {
 		t.Run(test.Name, func(t *testing.T) {
+			t.Helper()
+
 			method := test.Method
 			if method == "" {
 				method = "GET"
@@ -140,8 +148,14 @@ func testServer(t *testing.T, tests []testRun, opt *rc.Options) {
 			body, err := io.ReadAll(resp.Body)
 			require.NoError(t, err)
 
-			if test.Contains == nil {
-				assert.Equal(t, test.Expected, string(body))
+			if test.ContentType == "application/json" && test.Expected != "" {
+				expectedNormalized := normalizeJSON(t, test.Expected)
+				actualNormalized := normalizeJSON(t, string(body))
+				assert.Equal(t, expectedNormalized, actualNormalized, "Normalized JSON does not match")
+			} else if test.Contains == nil {
+				// go1.23 started putting an html wrapper
+				bodyNormalized := strings.TrimPrefix(string(body), "<!doctype html>\n<meta name=\"viewport\" content=\"width=device-width\">\n")
+				assert.Equal(t, test.Expected, bodyNormalized)
 			} else {
 				assert.True(t, test.Contains.Match(body), fmt.Sprintf("body didn't match: %v: %v", test.Contains, string(body)))
 			}
@@ -158,7 +172,7 @@ func testServer(t *testing.T, tests []testRun, opt *rc.Options) {
 
 // return an enabled rc
 func newTestOpt() rc.Options {
-	opt := rc.DefaultOpt
+	opt := rc.Opt
 	opt.Enabled = true
 	opt.HTTP.ListenAddr = []string{testBindAddress}
 	return opt
@@ -172,6 +186,7 @@ func TestFileServing(t *testing.T) {
 		Expected: `<pre>
 <a href="dir/">dir/</a>
 <a href="file.txt">file.txt</a>
+<a href="modtime/">modtime/</a>
 </pre>
 `,
 	}, {
@@ -243,6 +258,7 @@ func TestRemoteServing(t *testing.T) {
 <body>
 <h1>Directory listing of /</h1>
 <a href="dir/">dir/</a><br />
+<a href="modtime/">modtime/</a><br />
 <a href="file.txt">file.txt</a><br />
 </body>
 </html>
@@ -803,4 +819,84 @@ func TestRCDebug(t *testing.T) {
 	opt.Serve = true
 	opt.Files = ""
 	testServer(t, tests, &opt)
+}
+
+func TestServeModTime(t *testing.T) {
+	for file, mtime := range map[string]time.Time{
+		"dir":         time.Date(2023, 4, 12, 21, 15, 17, 0, time.UTC),
+		"modtime.txt": time.Date(2021, 1, 18, 5, 2, 28, 0, time.UTC),
+	} {
+		path := filepath.Join(testFs, "modtime", file)
+		err := os.Chtimes(path, mtime, mtime)
+		require.NoError(t, err)
+	}
+
+	opt := newTestOpt()
+	opt.Serve = true
+	opt.Template.Path = "testdata/golden/testmodtime.html"
+
+	tests := []testRun{{
+		Name:     "modtime",
+		Method:   "GET",
+		URL:      remoteURL + "modtime/",
+		Status:   http.StatusOK,
+		Expected: "* dir/ - 2023-04-12T21:15:17Z\n* modtime.txt - 2021-01-18T05:02:28Z\n",
+	}}
+	testServer(t, tests, &opt)
+
+	opt.ServeNoModTime = true
+	tests = []testRun{{
+		Name:     "no modtime",
+		Method:   "GET",
+		URL:      remoteURL + "modtime/",
+		Status:   http.StatusOK,
+		Expected: "* dir/ - 0001-01-01T00:00:00Z\n* modtime.txt - 0001-01-01T00:00:00Z\n",
+	}}
+	testServer(t, tests, &opt)
+}
+
+func TestContentTypeJSON(t *testing.T) {
+	tests := []testRun{
+		{
+			Name:        "Check Content-Type for JSON response",
+			URL:         "rc/noop",
+			Method:      "POST",
+			Body:        `{}`,
+			ContentType: "application/json",
+			Status:      http.StatusOK,
+			Expected:    "{}\n",
+			Headers: map[string]string{
+				"Content-Type": "application/json",
+			},
+		},
+		{
+			Name:        "Check Content-Type for JSON error response",
+			URL:         "rc/error",
+			Method:      "POST",
+			Body:        `{}`,
+			ContentType: "application/json",
+			Status:      http.StatusInternalServerError,
+			Expected: `{
+				"error": "arbitrary error on input map[]",
+				"input": {},
+				"path": "rc/error",
+				"status": 500
+			}
+			`,
+			Headers: map[string]string{
+				"Content-Type": "application/json",
+			},
+		},
+	}
+	opt := newTestOpt()
+	testServer(t, tests, &opt)
+}
+
+func normalizeJSON(t *testing.T, jsonStr string) string {
+	var jsonObj map[string]interface{}
+	err := json.Unmarshal([]byte(jsonStr), &jsonObj)
+	require.NoError(t, err, "JSON unmarshalling failed")
+	normalizedJSON, err := json.Marshal(jsonObj)
+	require.NoError(t, err, "JSON marshalling failed")
+	return string(normalizedJSON)
 }

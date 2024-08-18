@@ -18,6 +18,7 @@ import (
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/fs/walk"
 	"github.com/rclone/rclone/vfs/vfscommon"
+	"golang.org/x/text/unicode/norm"
 )
 
 // Dir represents a directory entry
@@ -65,7 +66,7 @@ func newDir(vfs *VFS, f fs.Fs, parent *Dir, fsDir fs.Directory) *Dir {
 		inode:   newInode(),
 		items:   make(map[string]Node),
 	}
-	d.cleanupTimer = time.AfterFunc(vfs.Opt.DirCacheTime*2, d.cacheCleanup)
+	d.cleanupTimer = time.AfterFunc(time.Duration(vfs.Opt.DirCacheTime*2), d.cacheCleanup)
 	d.setHasVirtual(false)
 	return d
 }
@@ -156,7 +157,7 @@ func (d *Dir) IsDir() bool {
 
 // Mode bits of the directory - satisfies Node interface
 func (d *Dir) Mode() (mode os.FileMode) {
-	return d.vfs.Opt.DirPerms
+	return os.FileMode(d.vfs.Opt.DirPerms)
 }
 
 // Name (base) of the directory - satisfies Node interface
@@ -356,7 +357,7 @@ func (d *Dir) _age(when time.Time) (age time.Duration, stale bool) {
 		return age, true
 	}
 	age = when.Sub(d.read)
-	stale = age > d.vfs.Opt.DirCacheTime
+	stale = age > time.Duration(d.vfs.Opt.DirCacheTime)
 	return
 }
 
@@ -370,7 +371,9 @@ func (d *Dir) renameTree(dirPath string) {
 	// Make sure the path is correct for each node
 	if d.path != dirPath {
 		fs.Debugf(d.path, "Renaming to %q", dirPath)
+		delete(d.parent.items, name(d.path))
 		d.path = dirPath
+		d.parent.items[name(d.path)] = d
 		d.entry = fs.NewDirCopy(context.TODO(), d.entry).SetRemote(dirPath)
 	}
 
@@ -403,6 +406,8 @@ func (d *Dir) rename(newParent *Dir, fsDir fs.Directory) {
 	d.entry = fsDir
 	d.path = fsDir.Remote()
 	newPath := d.path
+	delete(d.parent.items, name(oldPath))
+	d.parent.items[name(d.path)] = d
 	d.read = time.Time{}
 	d.mu.Unlock()
 
@@ -415,6 +420,15 @@ func (d *Dir) rename(newParent *Dir, fsDir fs.Directory) {
 			fs.Infof(d, "Dir.Rename failed in Cache: %v", err)
 		}
 	}
+}
+
+// convert path to name
+func name(p string) string {
+	p = path.Base(p)
+	if p == "." {
+		p = "/"
+	}
+	return p
 }
 
 // addObject adds a new object or directory to the directory
@@ -466,7 +480,6 @@ func (d *Dir) AddVirtual(leaf string, size int64, isDir bool) {
 		node = f
 	}
 	d.addObject(node)
-
 }
 
 // delObject removes an object from the directory
@@ -514,13 +527,42 @@ func (d *Dir) _readDir() error {
 		return err
 	}
 
+	if d.vfs.Opt.BlockNormDupes { // do this only if requested, as it will have a performance hit
+		ci := fs.GetConfig(context.TODO())
+
+		// sort entries such that NFD comes before NFC of same name
+		sort.Slice(entries, func(i, j int) bool {
+			if entries[i] != entries[j] && fs.DirEntryType(entries[i]) == fs.DirEntryType(entries[j]) && norm.NFC.String(entries[i].Remote()) == norm.NFC.String(entries[j].Remote()) {
+				if norm.NFD.IsNormalString(entries[i].Remote()) && !norm.NFD.IsNormalString(entries[j].Remote()) {
+					return true
+				}
+			}
+			return entries.Less(i, j)
+		})
+
+		// detect dupes, remove them from the list and log an error
+		normalizedNames := make(map[string]struct{}, entries.Len())
+		filteredEntries := make(fs.DirEntries, 0)
+		for _, e := range entries {
+			normName := fmt.Sprintf("%s-%T", operations.ToNormal(e.Remote(), !ci.NoUnicodeNormalization, (ci.IgnoreCaseSync || d.vfs.Opt.CaseInsensitive)), e) // include type to track objects and dirs separately
+			_, found := normalizedNames[normName]
+			if found {
+				fs.Errorf(e.Remote(), "duplicate normalized names detected - skipping")
+				continue
+			}
+			normalizedNames[normName] = struct{}{}
+			filteredEntries = append(filteredEntries, e)
+		}
+		entries = filteredEntries
+	}
+
 	err = d._readDirFromEntries(entries, nil, time.Time{})
 	if err != nil {
 		return err
 	}
 
 	d.read = when
-	d.cleanupTimer.Reset(d.vfs.Opt.DirCacheTime * 2)
+	d.cleanupTimer.Reset(time.Duration(d.vfs.Opt.DirCacheTime * 2))
 
 	return nil
 }
@@ -703,7 +745,7 @@ func (d *Dir) _readDirFromEntries(entries fs.DirEntries, dirTree dirtree.DirTree
 					dir.read = time.Time{}
 				} else {
 					dir.read = when
-					dir.cleanupTimer.Reset(d.vfs.Opt.DirCacheTime * 2)
+					dir.cleanupTimer.Reset(time.Duration(d.vfs.Opt.DirCacheTime * 2))
 				}
 			}
 			dir.mu.Unlock()
@@ -741,7 +783,7 @@ func (d *Dir) readDirTree() error {
 	}
 	fs.Debugf(d.path, "Reading directory tree done in %s", time.Since(when))
 	d.read = when
-	d.cleanupTimer.Reset(d.vfs.Opt.DirCacheTime * 2)
+	d.cleanupTimer.Reset(time.Duration(d.vfs.Opt.DirCacheTime * 2))
 	return nil
 }
 
@@ -767,15 +809,18 @@ func (d *Dir) stat(leaf string) (Node, error) {
 	}
 	item, ok := d.items[leaf]
 
-	if !ok && d.vfs.Opt.CaseInsensitive {
-		leafLower := strings.ToLower(leaf)
+	ci := fs.GetConfig(context.TODO())
+	normUnicode := !ci.NoUnicodeNormalization
+	normCase := ci.IgnoreCaseSync || d.vfs.Opt.CaseInsensitive
+	if !ok && (normUnicode || normCase) {
+		leafNormalized := operations.ToNormal(leaf, normUnicode, normCase) // this handles both case and unicode normalization
 		for name, node := range d.items {
-			if strings.ToLower(name) == leafLower {
+			if operations.ToNormal(name, normUnicode, normCase) == leafNormalized {
 				if ok {
-					// duplicate case insensitive match is an error
-					return nil, fmt.Errorf("duplicate filename %q detected with --vfs-case-insensitive set", leaf)
+					// duplicate normalized match is an error
+					return nil, fmt.Errorf("duplicate filename %q detected with case/unicode normalization settings", leaf)
 				}
-				// found a case insensitive match
+				// found a normalized match
 				ok = true
 				item = node
 			}

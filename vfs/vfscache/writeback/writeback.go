@@ -126,7 +126,7 @@ func (ws *writeBackItems) _update(item *writeBackItem, expiry time.Time) {
 func (wb *WriteBack) _newExpiry() time.Time {
 	expiry := time.Now()
 	if wb.opt.WriteBack > 0 {
-		expiry = expiry.Add(wb.opt.WriteBack)
+		expiry = expiry.Add(time.Duration(wb.opt.WriteBack))
 	}
 	// expiry = expiry.Round(time.Millisecond)
 	return expiry
@@ -140,7 +140,7 @@ func (wb *WriteBack) _newItem(id Handle, name string) *writeBackItem {
 	wbItem := &writeBackItem{
 		name:   name,
 		expiry: wb._newExpiry(),
-		delay:  wb.opt.WriteBack,
+		delay:  time.Duration(wb.opt.WriteBack),
 		id:     id,
 	}
 	wb._addItem(wbItem)
@@ -368,7 +368,7 @@ func (wb *WriteBack) upload(ctx context.Context, wbItem *writeBackItem) {
 		if errors.Is(err, context.Canceled) {
 			fs.Infof(wbItem.name, "vfs cache: upload canceled")
 			// Upload was cancelled so reset timer
-			wbItem.delay = wb.opt.WriteBack
+			wbItem.delay = time.Duration(wb.opt.WriteBack)
 		} else {
 			fs.Errorf(wbItem.name, "vfs cache: failed to upload try #%d, will retry in %v: %v", wbItem.tries, wbItem.delay, err)
 		}

@@ -153,16 +153,14 @@ func Decrypt(b io.ReadSeeker) (io.Reader, error) {
 			}
 			configKey = []byte(obscure.MustReveal(string(obscuredKey)))
 			fs.Debugf(nil, "using _RCLONE_CONFIG_KEY_FILE for configKey")
-		} else {
-			if len(configKey) == 0 {
-				if usingPasswordCommand {
-					return nil, errors.New("using --password-command derived password, unable to decrypt configuration")
-				}
-				if !ci.AskPassword {
-					return nil, errors.New("unable to decrypt configuration and not allowed to ask for password - set RCLONE_CONFIG_PASS to your configuration password")
-				}
-				getConfigPassword("Enter configuration password:")
+		} else if len(configKey) == 0 {
+			if usingPasswordCommand {
+				return nil, errors.New("using --password-command derived password, unable to decrypt configuration")
 			}
+			if !ci.AskPassword {
+				return nil, errors.New("unable to decrypt configuration and not allowed to ask for password - set RCLONE_CONFIG_PASS to your configuration password")
+			}
+			getConfigPassword("Enter configuration password:")
 		}
 
 		// Nonce is first 24 bytes of the ciphertext

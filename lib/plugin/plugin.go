@@ -1,6 +1,4 @@
 //go:build (darwin || linux) && !gccgo
-// +build darwin linux
-// +build !gccgo
 
 package plugin
 

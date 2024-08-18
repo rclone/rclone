@@ -2,7 +2,6 @@
 // about "no buildable Go source files "
 
 //go:build !unix
-// +build !unix
 
 // Package nfsmount implements mount command using NFS.
 package nfsmount

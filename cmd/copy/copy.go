@@ -26,8 +26,7 @@ var commandDefinition = &cobra.Command{
 	Use:   "copy source:path dest:path",
 	Short: `Copy files from source to dest, skipping identical files.`,
 	// Note: "|" will be replaced by backticks below
-	Long: strings.ReplaceAll(`
-Copy the source to the destination.  Does not transfer files that are
+	Long: strings.ReplaceAll(`Copy the source to the destination.  Does not transfer files that are
 identical on source and destination, testing by size and modification
 time or MD5SUM.  Doesn't delete files from the destination. If you
 want to also delete files from destination, to make it match source,
@@ -78,6 +77,15 @@ them change every day, you can copy all the files which have changed
 recently very efficiently like this:
 
     rclone copy --max-age 24h --no-traverse /path/to/src remote:
+
+
+Rclone will sync the modification times of files and directories if
+the backend supports it. If metadata syncing is required then use the
+|--metadata| flag.
+
+Note that the modification time and metadata for the root directory
+will **not** be synced. See https://github.com/rclone/rclone/issues/7652
+for more info.
 
 **Note**: Use the |-P|/|--progress| flag to view real-time transfer statistics.
 

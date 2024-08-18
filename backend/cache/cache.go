@@ -1,5 +1,4 @@
 //go:build !plan9 && !js
-// +build !plan9,!js
 
 // Package cache implements a virtual provider to cache existing remotes.
 package cache
@@ -410,18 +409,16 @@ func NewFs(ctx context.Context, name, rootPath string, m configmap.Mapper) (fs.F
 			if err != nil {
 				return nil, fmt.Errorf("failed to connect to the Plex API %v: %w", opt.PlexURL, err)
 			}
-		} else {
-			if opt.PlexPassword != "" && opt.PlexUsername != "" {
-				decPass, err := obscure.Reveal(opt.PlexPassword)
-				if err != nil {
-					decPass = opt.PlexPassword
-				}
-				f.plexConnector, err = newPlexConnector(f, opt.PlexURL, opt.PlexUsername, decPass, opt.PlexInsecure, func(token string) {
-					m.Set("plex_token", token)
-				})
-				if err != nil {
-					return nil, fmt.Errorf("failed to connect to the Plex API %v: %w", opt.PlexURL, err)
-				}
+		} else if opt.PlexPassword != "" && opt.PlexUsername != "" {
+			decPass, err := obscure.Reveal(opt.PlexPassword)
+			if err != nil {
+				decPass = opt.PlexPassword
+			}
+			f.plexConnector, err = newPlexConnector(f, opt.PlexURL, opt.PlexUsername, decPass, opt.PlexInsecure, func(token string) {
+				m.Set("plex_token", token)
+			})
+			if err != nil {
+				return nil, fmt.Errorf("failed to connect to the Plex API %v: %w", opt.PlexURL, err)
 			}
 		}
 	}

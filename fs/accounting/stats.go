@@ -313,7 +313,9 @@ func (s *StatsInfo) calculateTransferStats() (ts transferStats) {
 	// note that s.bytes already includes transferringBytesDone so
 	// we take it off here to avoid double counting
 	ts.totalBytes = s.transferQueueSize + s.bytes + transferringBytesTotal - transferringBytesDone
+	s.average.mu.Lock()
 	ts.speed = s.average.speed
+	s.average.mu.Unlock()
 	dt := s._totalDuration()
 	ts.transferTime = dt.Seconds()
 
@@ -464,7 +466,7 @@ func (s *StatsInfo) String() string {
 				s.checks, ts.totalChecks, percent(s.checks, ts.totalChecks))
 		}
 		if s.deletes != 0 || s.deletedDirs != 0 {
-			_, _ = fmt.Fprintf(buf, "Deleted:       %10d (files), %d (dirs)\n", s.deletes, s.deletedDirs)
+			_, _ = fmt.Fprintf(buf, "Deleted:       %10d (files), %d (dirs), %s (freed)\n", s.deletes, s.deletedDirs, fs.SizeSuffix(s.deletesSize).ByteUnit())
 		}
 		if s.renames != 0 {
 			_, _ = fmt.Fprintf(buf, "Renamed:       %10d\n", s.renames)

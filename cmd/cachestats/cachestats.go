@@ -1,5 +1,4 @@
 //go:build !plan9 && !js
-// +build !plan9,!js
 
 // Package cachestats provides the cachestats command.
 package cachestats
@@ -21,8 +20,7 @@ func init() {
 var commandDefinition = &cobra.Command{
 	Use:   "cachestats source:",
 	Short: `Print cache stats for a remote`,
-	Long: `
-Print cache stats for a remote in JSON format
+	Long: `Print cache stats for a remote in JSON format
 `,
 	Hidden: true,
 	Annotations: map[string]string{

@@ -19,7 +19,6 @@ import (
 	"github.com/rclone/rclone/lib/atexit"
 	"github.com/rclone/rclone/lib/file"
 	"github.com/rclone/rclone/vfs/vfscommon"
-	"github.com/rclone/rclone/vfs/vfsflags"
 )
 
 // Driver implements docker driver api
@@ -55,7 +54,7 @@ func NewDriver(ctx context.Context, root string, mntOpt *mountlib.Options, vfsOp
 		mntOpt = &mountlib.Opt
 	}
 	if vfsOpt == nil {
-		vfsOpt = &vfsflags.Opt
+		vfsOpt = &vfscommon.Opt
 	}
 	drv := &Driver{
 		root:      root,

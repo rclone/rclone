@@ -26,7 +26,6 @@ import (
 	"github.com/rclone/rclone/fs/walk"
 	"github.com/rclone/rclone/fstest"
 	"github.com/rclone/rclone/vfs/vfscommon"
-	"github.com/rclone/rclone/vfs/vfsflags"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -50,19 +49,19 @@ func RunTests(t *testing.T, useVFS bool, minimumRequiredCacheMode vfscommon.Cach
 	}
 	tests := []struct {
 		cacheMode vfscommon.CacheMode
-		writeBack time.Duration
+		writeBack fs.Duration
 	}{
 		{cacheMode: vfscommon.CacheModeOff},
 		{cacheMode: vfscommon.CacheModeMinimal},
 		{cacheMode: vfscommon.CacheModeWrites},
 		{cacheMode: vfscommon.CacheModeFull},
-		{cacheMode: vfscommon.CacheModeFull, writeBack: 100 * time.Millisecond},
+		{cacheMode: vfscommon.CacheModeFull, writeBack: fs.Duration(100 * time.Millisecond)},
 	}
 	for _, test := range tests {
 		if test.cacheMode < minimumRequiredCacheMode {
 			continue
 		}
-		vfsOpt := vfsflags.Opt
+		vfsOpt := vfscommon.Opt
 		vfsOpt.CacheMode = test.cacheMode
 		vfsOpt.WriteBack = test.writeBack
 		run = newRun(useVFS, &vfsOpt, mountFn)
@@ -235,10 +234,10 @@ func (r *Run) readLocal(t *testing.T, dir dirMap, filePath string) {
 		if fi.IsDir() {
 			dir[name+"/"] = struct{}{}
 			r.readLocal(t, dir, name)
-			assert.Equal(t, r.vfsOpt.DirPerms&os.ModePerm, fi.Mode().Perm())
+			assert.Equal(t, os.FileMode(r.vfsOpt.DirPerms)&os.ModePerm, fi.Mode().Perm())
 		} else {
 			dir[fmt.Sprintf("%s %d", name, fi.Size())] = struct{}{}
-			assert.Equal(t, r.vfsOpt.FilePerms&os.ModePerm, fi.Mode().Perm())
+			assert.Equal(t, os.FileMode(r.vfsOpt.FilePerms)&os.ModePerm, fi.Mode().Perm())
 		}
 	}
 }
@@ -377,5 +376,5 @@ func TestRoot(t *testing.T) {
 	fi, err := os.Lstat(run.mountPath)
 	require.NoError(t, err)
 	assert.True(t, fi.IsDir())
-	assert.Equal(t, run.vfsOpt.DirPerms&os.ModePerm, fi.Mode().Perm())
+	assert.Equal(t, os.FileMode(run.vfsOpt.DirPerms)&os.ModePerm, fi.Mode().Perm())
 }

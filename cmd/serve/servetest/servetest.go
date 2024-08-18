@@ -76,7 +76,7 @@ func run(t *testing.T, name string, start StartFn, useProxy bool) {
 	if *fstest.Verbose {
 		args = append(args, "-verbose")
 	}
-	remoteName := name + "test:"
+	remoteName := "serve" + name + "test:"
 	if *subRun != "" {
 		args = append(args, "-run", *subRun)
 	}

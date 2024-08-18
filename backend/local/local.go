@@ -32,9 +32,32 @@ import (
 )
 
 // Constants
-const devUnset = 0xdeadbeefcafebabe                                       // a device id meaning it is unset
-const linkSuffix = ".rclonelink"                                          // The suffix added to a translated symbolic link
-const useReadDir = (runtime.GOOS == "windows" || runtime.GOOS == "plan9") // these OSes read FileInfos directly
+const (
+	devUnset   = 0xdeadbeefcafebabe                                     // a device id meaning it is unset
+	linkSuffix = ".rclonelink"                                          // The suffix added to a translated symbolic link
+	useReadDir = (runtime.GOOS == "windows" || runtime.GOOS == "plan9") // these OSes read FileInfos directly
+)
+
+// timeType allows the user to choose what exactly ModTime() returns
+type timeType = fs.Enum[timeTypeChoices]
+
+const (
+	mTime timeType = iota
+	aTime
+	bTime
+	cTime
+)
+
+type timeTypeChoices struct{}
+
+func (timeTypeChoices) Choices() []string {
+	return []string{
+		mTime: "mtime",
+		aTime: "atime",
+		bTime: "btime",
+		cTime: "ctime",
+	}
+}
 
 // Register with Fs
 func init() {
@@ -53,43 +76,50 @@ netbsd, macOS and Solaris. It is **not** supported on Windows yet
 
 User metadata is stored as extended attributes (which may not be
 supported by all file systems) under the "user.*" prefix.
+
+Metadata is supported on files and directories.
 `,
 		},
-		Options: []fs.Option{{
-			Name:     "nounc",
-			Help:     "Disable UNC (long path names) conversion on Windows.",
-			Default:  false,
-			Advanced: runtime.GOOS != "windows",
-			Examples: []fs.OptionExample{{
-				Value: "true",
-				Help:  "Disables long file names.",
-			}},
-		}, {
-			Name:     "copy_links",
-			Help:     "Follow symlinks and copy the pointed to item.",
-			Default:  false,
-			NoPrefix: true,
-			ShortOpt: "L",
-			Advanced: true,
-		}, {
-			Name:     "links",
-			Help:     "Translate symlinks to/from regular files with a '" + linkSuffix + "' extension.",
-			Default:  false,
-			NoPrefix: true,
-			ShortOpt: "l",
-			Advanced: true,
-		}, {
-			Name: "skip_links",
-			Help: `Don't warn about skipped symlinks.
+		Options: []fs.Option{
+			{
+				Name:     "nounc",
+				Help:     "Disable UNC (long path names) conversion on Windows.",
+				Default:  false,
+				Advanced: runtime.GOOS != "windows",
+				Examples: []fs.OptionExample{{
+					Value: "true",
+					Help:  "Disables long file names.",
+				}},
+			},
+			{
+				Name:     "copy_links",
+				Help:     "Follow symlinks and copy the pointed to item.",
+				Default:  false,
+				NoPrefix: true,
+				ShortOpt: "L",
+				Advanced: true,
+			},
+			{
+				Name:     "links",
+				Help:     "Translate symlinks to/from regular files with a '" + linkSuffix + "' extension.",
+				Default:  false,
+				NoPrefix: true,
+				ShortOpt: "l",
+				Advanced: true,
+			},
+			{
+				Name: "skip_links",
+				Help: `Don't warn about skipped symlinks.
 
 This flag disables warning messages on skipped symlinks or junction
 points, as you explicitly acknowledge that they should be skipped.`,
-			Default:  false,
-			NoPrefix: true,
-			Advanced: true,
-		}, {
-			Name: "zero_size_links",
-			Help: `Assume the Stat size of links is zero (and read them instead) (deprecated).
+				Default:  false,
+				NoPrefix: true,
+				Advanced: true,
+			},
+			{
+				Name: "zero_size_links",
+				Help: `Assume the Stat size of links is zero (and read them instead) (deprecated).
 
 Rclone used to use the Stat size of links as the link size, but this fails in quite a few places:
 
@@ -99,11 +129,12 @@ Rclone used to use the Stat size of links as the link size, but this fails in qu
 
 So rclone now always reads the link.
 `,
-			Default:  false,
-			Advanced: true,
-		}, {
-			Name: "unicode_normalization",
-			Help: `Apply unicode NFC normalization to paths and filenames.
+				Default:  false,
+				Advanced: true,
+			},
+			{
+				Name: "unicode_normalization",
+				Help: `Apply unicode NFC normalization to paths and filenames.
 
 This flag can be used to normalize file names into unicode NFC form
 that are read from the local filesystem.
@@ -117,11 +148,12 @@ some OSes.
 
 Note that rclone compares filenames with unicode normalization in the sync
 routine so this flag shouldn't normally be used.`,
-			Default:  false,
-			Advanced: true,
-		}, {
-			Name: "no_check_updated",
-			Help: `Don't check to see if the files change during upload.
+				Default:  false,
+				Advanced: true,
+			},
+			{
+				Name: "no_check_updated",
+				Help: `Don't check to see if the files change during upload.
 
 Normally rclone checks the size and modification time of files as they
 are being uploaded and aborts with a message which starts "can't copy -
@@ -152,71 +184,137 @@ directory listing (where the initial stat value comes from on Windows)
 and when stat is called on them directly. Other copy tools always use
 the direct stat value and setting this flag will disable that.
 `,
-			Default:  false,
-			Advanced: true,
-		}, {
-			Name:     "one_file_system",
-			Help:     "Don't cross filesystem boundaries (unix/macOS only).",
-			Default:  false,
-			NoPrefix: true,
-			ShortOpt: "x",
-			Advanced: true,
-		}, {
-			Name: "case_sensitive",
-			Help: `Force the filesystem to report itself as case sensitive.
+				Default:  false,
+				Advanced: true,
+			},
+			{
+				Name:     "one_file_system",
+				Help:     "Don't cross filesystem boundaries (unix/macOS only).",
+				Default:  false,
+				NoPrefix: true,
+				ShortOpt: "x",
+				Advanced: true,
+			},
+			{
+				Name: "case_sensitive",
+				Help: `Force the filesystem to report itself as case sensitive.
 
 Normally the local backend declares itself as case insensitive on
 Windows/macOS and case sensitive for everything else.  Use this flag
 to override the default choice.`,
-			Default:  false,
-			Advanced: true,
-		}, {
-			Name: "case_insensitive",
-			Help: `Force the filesystem to report itself as case insensitive.
+				Default:  false,
+				Advanced: true,
+			},
+			{
+				Name: "case_insensitive",
+				Help: `Force the filesystem to report itself as case insensitive.
 
 Normally the local backend declares itself as case insensitive on
 Windows/macOS and case sensitive for everything else.  Use this flag
 to override the default choice.`,
-			Default:  false,
-			Advanced: true,
-		}, {
-			Name: "no_preallocate",
-			Help: `Disable preallocation of disk space for transferred files.
+				Default:  false,
+				Advanced: true,
+			},
+			{
+				Name: "no_clone",
+				Help: `Disable reflink cloning for server-side copies.
+
+Normally, for local-to-local transfers, rclone will "clone" the file when
+possible, and fall back to "copying" only when cloning is not supported.
+
+Cloning creates a shallow copy (or "reflink") which initially shares blocks with
+the original file. Unlike a "hardlink", the two files are independent and
+neither will affect the other if subsequently modified.
+
+Cloning is usually preferable to copying, as it is much faster and is
+deduplicated by default (i.e. having two identical files does not consume more
+storage than having just one.)  However, for use cases where data redundancy is
+preferable, --local-no-clone can be used to disable cloning and force "deep" copies.
+
+Currently, cloning is only supported when using APFS on macOS (support for other
+platforms may be added in the future.)`,
+				Default:  false,
+				Advanced: true,
+			},
+			{
+				Name: "no_preallocate",
+				Help: `Disable preallocation of disk space for transferred files.
 
 Preallocation of disk space helps prevent filesystem fragmentation.
 However, some virtual filesystem layers (such as Google Drive File
 Stream) may incorrectly set the actual file size equal to the
 preallocated space, causing checksum and file size checks to fail.
 Use this flag to disable preallocation.`,
-			Default:  false,
-			Advanced: true,
-		}, {
-			Name: "no_sparse",
-			Help: `Disable sparse files for multi-thread downloads.
+				Default:  false,
+				Advanced: true,
+			},
+			{
+				Name: "no_sparse",
+				Help: `Disable sparse files for multi-thread downloads.
 
 On Windows platforms rclone will make sparse files when doing
 multi-thread downloads. This avoids long pauses on large files where
 the OS zeros the file. However sparse files may be undesirable as they
 cause disk fragmentation and can be slow to work with.`,
-			Default:  false,
-			Advanced: true,
-		}, {
-			Name: "no_set_modtime",
-			Help: `Disable setting modtime.
+				Default:  false,
+				Advanced: true,
+			},
+			{
+				Name: "no_set_modtime",
+				Help: `Disable setting modtime.
 
 Normally rclone updates modification time of files after they are done
 uploading. This can cause permissions issues on Linux platforms when 
 the user rclone is running as does not own the file uploaded, such as
 when copying to a CIFS mount owned by another user. If this option is 
 enabled, rclone will no longer update the modtime after copying a file.`,
-			Default:  false,
-			Advanced: true,
-		}, {
-			Name:     config.ConfigEncoding,
-			Help:     config.ConfigEncodingHelp,
-			Advanced: true,
-			Default:  encoder.OS,
-		}},
+				Default:  false,
+				Advanced: true,
+			},
+			{
+				Name: "time_type",
+				Help: `Set what kind of time is returned.
+
+Normally rclone does all operations on the mtime or Modification time.
+
+If you set this flag then rclone will return the Modified time as whatever
+you set here. So if you use "rclone lsl --local-time-type ctime" then
+you will see ctimes in the listing.
+
+If the OS doesn't support returning the time_type specified then rclone
+will silently replace it with the modification time which all OSes support.
+
+- mtime is supported by all OSes
+- atime is supported on all OSes except: plan9, js
+- btime is only supported on: Windows, macOS, freebsd, netbsd
+- ctime is supported on all Oses except: Windows, plan9, js
+
+Note that setting the time will still set the modified time so this is
+only useful for reading.
+`,
+				Default:  mTime,
+				Advanced: true,
+				Examples: []fs.OptionExample{{
+					Value: mTime.String(),
+					Help:  "The last modification time.",
+				}, {
+					Value: aTime.String(),
+					Help:  "The last access time.",
+				}, {
+					Value: bTime.String(),
+					Help:  "The creation time.",
+				}, {
+					Value: cTime.String(),
+					Help:  "The last status change time.",
+				}},
+			},
+			{
+				Name:     config.ConfigEncoding,
+				Help:     config.ConfigEncodingHelp,
+				Advanced: true,
+				Default:  encoder.OS,
+			},
+		},
 	}
 	fs.Register(fsi)
 }
@@ -235,7 +333,9 @@ type Options struct {
 	NoPreAllocate     bool                 `config:"no_preallocate"`
 	NoSparse          bool                 `config:"no_sparse"`
 	NoSetModTime      bool                 `config:"no_set_modtime"`
+	TimeType          timeType             `config:"time_type"`
 	Enc               encoder.MultiEncoder `config:"encoding"`
+	NoClone           bool                 `config:"no_clone"`
 }
 
 // Fs represents a local filesystem rooted at root
@@ -270,6 +370,11 @@ type Object struct {
 	translatedLink bool // Is this object a translated link
 }
 
+// Directory represents a local filesystem directory
+type Directory struct {
+	Object
+}
+
 // ------------------------------------------------------------
 
 var (
@@ -301,18 +406,27 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	}
 	f.root = cleanRootPath(root, f.opt.NoUNC, f.opt.Enc)
 	f.features = (&fs.Features{
-		CaseInsensitive:         f.caseInsensitive(),
-		CanHaveEmptyDirectories: true,
-		IsLocal:                 true,
-		SlowHash:                true,
-		ReadMetadata:            true,
-		WriteMetadata:           true,
-		UserMetadata:            xattrSupported, // can only R/W general purpose metadata if xattrs are supported
-		FilterAware:             true,
-		PartialUploads:          true,
+		CaseInsensitive:          f.caseInsensitive(),
+		CanHaveEmptyDirectories:  true,
+		IsLocal:                  true,
+		SlowHash:                 true,
+		ReadMetadata:             true,
+		WriteMetadata:            true,
+		ReadDirMetadata:          true,
+		WriteDirMetadata:         true,
+		WriteDirSetModTime:       true,
+		UserDirMetadata:          xattrSupported, // can only R/W general purpose metadata if xattrs are supported
+		DirModTimeUpdatesOnWrite: true,
+		UserMetadata:             xattrSupported, // can only R/W general purpose metadata if xattrs are supported
+		FilterAware:              true,
+		PartialUploads:           true,
 	}).Fill(ctx, f)
 	if opt.FollowSymlinks {
 		f.lstat = os.Stat
+	}
+	if opt.NoClone {
+		// Disable server-side copy when --local-no-clone is set
+		f.features.Copy = nil
 	}
 
 	// Check to see if this points to a file
@@ -453,6 +567,15 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 	return f.newObjectWithInfo(remote, nil)
 }
 
+// Create new directory object from the info passed in
+func (f *Fs) newDirectory(dir string, fi os.FileInfo) *Directory {
+	o := f.newObject(dir)
+	o.setMetadata(fi)
+	return &Directory{
+		Object: *o,
+	}
+}
+
 // List the objects and directories in dir into entries.  The
 // entries can be returned in any order but should be for a
 // complete directory.
@@ -563,7 +686,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 				// Ignore directories which are symlinks.  These are junction points under windows which
 				// are kind of a souped up symlink. Unix doesn't have directories which are symlinks.
 				if (mode&os.ModeSymlink) == 0 && f.dev == readDevice(fi, f.opt.OneFileSystem) {
-					d := fs.NewDir(newRemote, fi.ModTime())
+					d := f.newDirectory(newRemote, fi)
 					entries = append(entries, d)
 				}
 			} else {
@@ -643,6 +766,58 @@ func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 	return nil
 }
 
+// DirSetModTime sets the directory modtime for dir
+func (f *Fs) DirSetModTime(ctx context.Context, dir string, modTime time.Time) error {
+	o := Object{
+		fs:     f,
+		remote: dir,
+		path:   f.localPath(dir),
+	}
+	return o.SetModTime(ctx, modTime)
+}
+
+// MkdirMetadata makes the directory passed in as dir.
+//
+// It shouldn't return an error if it already exists.
+//
+// If the metadata is not nil it is set.
+//
+// It returns the directory that was created.
+func (f *Fs) MkdirMetadata(ctx context.Context, dir string, metadata fs.Metadata) (fs.Directory, error) {
+	// Find and or create the directory
+	localPath := f.localPath(dir)
+	fi, err := f.lstat(localPath)
+	if errors.Is(err, os.ErrNotExist) {
+		err := f.Mkdir(ctx, dir)
+		if err != nil {
+			return nil, fmt.Errorf("mkdir metadata: failed make directory: %w", err)
+		}
+		fi, err = f.lstat(localPath)
+		if err != nil {
+			return nil, fmt.Errorf("mkdir metadata: failed to read info: %w", err)
+		}
+	} else if err != nil {
+		return nil, err
+	}
+
+	// Create directory object
+	d := f.newDirectory(dir, fi)
+
+	// Set metadata on the directory object if provided
+	if metadata != nil {
+		err = d.writeMetadata(metadata)
+		if err != nil {
+			return nil, fmt.Errorf("failed to set metadata on directory: %w", err)
+		}
+		// Re-read info now we have finished setting stuff
+		err = d.lstat()
+		if err != nil {
+			return nil, fmt.Errorf("mkdir metadata: failed to re-read info: %w", err)
+		}
+	}
+	return d, nil
+}
+
 // Rmdir removes the directory
 //
 // If it isn't empty it will return an error
@@ -720,27 +895,6 @@ func (f *Fs) readPrecision() (precision time.Duration) {
 	return
 }
 
-// Purge deletes all the files in the directory
-//
-// Optional interface: Only implement this if you have a way of
-// deleting all the files quicker than just running Remove() on the
-// result of List()
-func (f *Fs) Purge(ctx context.Context, dir string) error {
-	dir = f.localPath(dir)
-	fi, err := f.lstat(dir)
-	if err != nil {
-		// already purged
-		if os.IsNotExist(err) {
-			return fs.ErrorDirNotFound
-		}
-		return err
-	}
-	if !fi.Mode().IsDir() {
-		return fmt.Errorf("can't purge non directory: %q", dir)
-	}
-	return os.RemoveAll(dir)
-}
-
 // Move src to this remote using server-side move operations.
 //
 // This is stored with the remote path given.
@@ -780,6 +934,12 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		return nil, err
 	}
 
+	// Fetch metadata if --metadata is in use
+	meta, err := fs.GetMetadataOptions(ctx, f, src, fs.MetadataAsOpenOptions(ctx))
+	if err != nil {
+		return nil, fmt.Errorf("move: failed to read metadata: %w", err)
+	}
+
 	// Do the move
 	err = os.Rename(srcObj.path, dstObj.path)
 	if os.IsNotExist(err) {
@@ -793,6 +953,12 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		// boundaries. Copying might still work.
 		fs.Debugf(src, "Can't move: %v: trying copy", err)
 		return nil, fs.ErrorCantMove
+	}
+
+	// Set metadata if --metadata is in use
+	err = dstObj.writeMetadata(meta)
+	if err != nil {
+		return nil, fmt.Errorf("move: failed to set metadata: %w", err)
 	}
 
 	// Update the info
@@ -1068,7 +1234,7 @@ func (file *localOpenFile) Read(p []byte) (n int, err error) {
 		if oldsize != fi.Size() {
 			return 0, fserrors.NoLowLevelRetryError(fmt.Errorf("can't copy - source file is being updated (size changed from %d to %d)", oldsize, fi.Size()))
 		}
-		if !oldtime.Equal(fi.ModTime()) {
+		if !oldtime.Equal(readTime(file.o.fs.opt.TimeType, fi)) {
 			return 0, fserrors.NoLowLevelRetryError(fmt.Errorf("can't copy - source file is being updated (mod time changed from %v to %v)", oldtime, fi.ModTime()))
 		}
 	}
@@ -1364,7 +1530,7 @@ func (o *Object) setMetadata(info os.FileInfo) {
 	}
 	o.fs.objectMetaMu.Lock()
 	o.size = info.Size()
-	o.modTime = info.ModTime()
+	o.modTime = readTime(o.fs.opt.TimeType, info)
 	o.mode = info.Mode()
 	o.fs.objectMetaMu.Unlock()
 	// Read the size of the link.
@@ -1433,45 +1599,109 @@ func (o *Object) writeMetadata(metadata fs.Metadata) (err error) {
 	return err
 }
 
-func cleanRootPath(s string, noUNC bool, enc encoder.MultiEncoder) string {
-	if runtime.GOOS != "windows" || !strings.HasPrefix(s, "\\") {
-		if !filepath.IsAbs(s) {
-			s2, err := filepath.Abs(s)
-			if err == nil {
-				s = s2
-			}
-		} else {
-			s = filepath.Clean(s)
-		}
+// SetMetadata sets metadata for an Object
+//
+// It should return fs.ErrorNotImplemented if it can't set metadata
+func (o *Object) SetMetadata(ctx context.Context, metadata fs.Metadata) error {
+	err := o.writeMetadata(metadata)
+	if err != nil {
+		return fmt.Errorf("SetMetadata failed on Object: %w", err)
 	}
+	// Re-read info now we have finished setting stuff
+	return o.lstat()
+}
+
+func cleanRootPath(s string, noUNC bool, enc encoder.MultiEncoder) string {
+	var vol string
 	if runtime.GOOS == "windows" {
-		s = filepath.ToSlash(s)
-		vol := filepath.VolumeName(s)
+		vol = filepath.VolumeName(s)
 		if vol == `\\?` && len(s) >= 6 {
 			// `\\?\C:`
 			vol = s[:6]
 		}
-		s = vol + enc.FromStandardPath(s[len(vol):])
-		s = filepath.FromSlash(s)
-		if !noUNC {
-			// Convert to UNC
-			s = file.UNCPath(s)
-		}
-		return s
+		s = s[len(vol):]
 	}
-	s = enc.FromStandardPath(s)
+	// Don't use FromStandardPath. Make sure Dot (`.`, `..`) as name will not be reencoded
+	// Take care of the case Standard: ./．/‛． (the first dot means current directory)
+	if enc != encoder.Standard {
+		s = filepath.ToSlash(s)
+		parts := strings.Split(s, "/")
+		encoded := make([]string, len(parts))
+		changed := false
+		for i, p := range parts {
+			if (p == ".") || (p == "..") {
+				encoded[i] = p
+				continue
+			}
+			part := enc.FromStandardName(p)
+			changed = changed || part != p
+			encoded[i] = part
+		}
+		if changed {
+			s = strings.Join(encoded, "/")
+		}
+		s = filepath.FromSlash(s)
+	}
+	if runtime.GOOS == "windows" {
+		s = vol + s
+	}
+	s2, err := filepath.Abs(s)
+	if err == nil {
+		s = s2
+	}
+	if !noUNC {
+		// Convert to UNC. It does nothing on non windows platforms.
+		s = file.UNCPath(s)
+	}
 	return s
+}
+
+// Items returns the count of items in this directory or this
+// directory and subdirectories if known, -1 for unknown
+func (d *Directory) Items() int64 {
+	return -1
+}
+
+// ID returns the internal ID of this directory if known, or
+// "" otherwise
+func (d *Directory) ID() string {
+	return ""
+}
+
+// SetMetadata sets metadata for a Directory
+//
+// It should return fs.ErrorNotImplemented if it can't set metadata
+func (d *Directory) SetMetadata(ctx context.Context, metadata fs.Metadata) error {
+	err := d.writeMetadata(metadata)
+	if err != nil {
+		return fmt.Errorf("SetMetadata failed on Directory: %w", err)
+	}
+	// Re-read info now we have finished setting stuff
+	return d.lstat()
+}
+
+// Hash does nothing on a directory
+//
+// This method is implemented with the incorrect type signature to
+// stop the Directory type asserting to fs.Object or fs.ObjectInfo
+func (d *Directory) Hash() {
+	// Does nothing
 }
 
 // Check the interfaces are satisfied
 var (
-	_ fs.Fs             = &Fs{}
-	_ fs.Purger         = &Fs{}
-	_ fs.PutStreamer    = &Fs{}
-	_ fs.Mover          = &Fs{}
-	_ fs.DirMover       = &Fs{}
-	_ fs.Commander      = &Fs{}
-	_ fs.OpenWriterAter = &Fs{}
-	_ fs.Object         = &Object{}
-	_ fs.Metadataer     = &Object{}
+	_ fs.Fs              = &Fs{}
+	_ fs.PutStreamer     = &Fs{}
+	_ fs.Mover           = &Fs{}
+	_ fs.DirMover        = &Fs{}
+	_ fs.Commander       = &Fs{}
+	_ fs.OpenWriterAter  = &Fs{}
+	_ fs.DirSetModTimer  = &Fs{}
+	_ fs.MkdirMetadataer = &Fs{}
+	_ fs.Object          = &Object{}
+	_ fs.Metadataer      = &Object{}
+	_ fs.SetMetadataer   = &Object{}
+	_ fs.Directory       = &Directory{}
+	_ fs.SetModTimer     = &Directory{}
+	_ fs.SetMetadataer   = &Directory{}
 )

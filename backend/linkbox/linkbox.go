@@ -36,7 +36,7 @@ import (
 )
 
 const (
-	maxEntitiesPerPage = 1024
+	maxEntitiesPerPage = 1000
 	minSleep           = 200 * time.Millisecond
 	maxSleep           = 2 * time.Second
 	pacerBurst         = 1
@@ -219,7 +219,8 @@ type listAllFn func(*entity) bool
 // Search is a bit fussy about which characters match
 //
 // If the name doesn't match this then do an dir list instead
-var searchOK = regexp.MustCompile(`^[a-zA-Z0-9_ .]+$`)
+// N.B.: Linkbox doesn't support search by name that is longer than 50 chars
+var searchOK = regexp.MustCompile(`^[a-zA-Z0-9_ -.]{1,50}$`)
 
 // Lists the directory required calling the user function on each item found
 //
@@ -238,6 +239,7 @@ func (f *Fs) listAll(ctx context.Context, dirID string, name string, fn listAllF
 		// If name isn't good then do an unbounded search
 		name = ""
 	}
+
 OUTER:
 	for numberOfEntities == maxEntitiesPerPage {
 		pageNumber++
@@ -258,7 +260,6 @@ OUTER:
 		err = getUnmarshaledResponse(ctx, f, opts, &responseResult)
 		if err != nil {
 			return false, fmt.Errorf("getting files failed: %w", err)
-
 		}
 
 		numberOfEntities = len(responseResult.SearchData.Entities)

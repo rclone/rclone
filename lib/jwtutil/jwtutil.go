@@ -104,7 +104,7 @@ func bodyToString(responseBody io.Reader) (bodyString string, err error) {
 		return "", err
 	}
 	bodyString = string(bodyBytes)
-	fs.Debugf(nil, "jwtutil: Response Body: "+bodyString)
+	fs.Debugf(nil, "jwtutil: Response Body: %q", bodyString)
 	return bodyString, nil
 }
 

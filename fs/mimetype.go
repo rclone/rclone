@@ -30,7 +30,7 @@ func init() {
 		{"video/webm", ".webm"},
 		{"video/x-msvideo", ".avi"},
 		{"video/x-matroska", ".mpv,.mkv"},
-		{"text/srt", ".srt"},
+		{"application/x-subrip", ".srt"},
 	} {
 		for _, ext := range strings.Split(t.extensions, ",") {
 			if mime.TypeByExtension(ext) == "" {
@@ -54,7 +54,7 @@ func MimeTypeFromName(remote string) (mimeType string) {
 
 // MimeType returns the MimeType from the object, either by calling
 // the MimeTyper interface or using MimeTypeFromName
-func MimeType(ctx context.Context, o ObjectInfo) (mimeType string) {
+func MimeType(ctx context.Context, o DirEntry) (mimeType string) {
 	// Read the MimeType from the optional interface if available
 	if do, ok := o.(MimeTyper); ok {
 		mimeType = do.MimeType(ctx)

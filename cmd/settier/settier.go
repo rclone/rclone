@@ -17,10 +17,9 @@ func init() {
 var commandDefinition = &cobra.Command{
 	Use:   "settier tier remote:path",
 	Short: `Changes storage class/tier of objects in remote.`,
-	Long: `
-rclone settier changes storage tier or class at remote if supported.
-Few cloud storage services provides different storage classes on objects,
-for example AWS S3 and Glacier, Azure Blob storage - Hot, Cool and Archive,
+	Long: `Changes storage tier or class at remote if supported. Few cloud storage
+services provides different storage classes on objects, for example
+AWS S3 and Glacier, Azure Blob storage - Hot, Cool and Archive,
 Google Cloud Storage, Regional Storage, Nearline, Coldline etc.
 
 Note that, certain tier changes make objects not available to access immediately.

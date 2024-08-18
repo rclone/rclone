@@ -28,7 +28,6 @@ import (
 	"github.com/rclone/rclone/fs/list"
 	"github.com/rclone/rclone/fs/rc"
 	"github.com/rclone/rclone/fs/rc/jobs"
-	"github.com/rclone/rclone/fs/rc/rcflags"
 	"github.com/rclone/rclone/fs/rc/webgui"
 	libhttp "github.com/rclone/rclone/lib/http"
 	"github.com/rclone/rclone/lib/http/serve"
@@ -101,7 +100,7 @@ func newServer(ctx context.Context, opt *rc.Options, mux *http.ServeMux) (*Serve
 		} else {
 			if opt.Auth.BasicUser == "" && opt.Auth.HtPasswd == "" {
 				opt.Auth.BasicUser = "gui"
-				fs.Infof(nil, "No username specified. Using default username: %s \n", rcflags.Opt.Auth.BasicUser)
+				fs.Infof(nil, "No username specified. Using default username: %s \n", rc.Opt.Auth.BasicUser)
 			}
 			if opt.Auth.BasicPass == "" && opt.Auth.HtPasswd == "" {
 				randomPass, err := random.Password(128)
@@ -200,6 +199,7 @@ func (s *Server) Serve() error {
 func writeError(path string, in rc.Params, w http.ResponseWriter, err error, status int) {
 	fs.Errorf(nil, "rc: %q: error: %v", path, err)
 	params, status := rc.Error(path, in, err, status)
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
 	err = rc.WriteJSON(w, params)
 	if err != nil {
@@ -294,6 +294,7 @@ func (s *Server) handlePost(w http.ResponseWriter, r *http.Request, path string)
 	}
 
 	fs.Debugf(nil, "rc: %q: reply %+v: %v", path, out, err)
+	w.Header().Set("Content-Type", "application/json")
 	err = rc.WriteJSON(w, out)
 	if err != nil {
 		// can't return the error at this point - but have a go anyway
@@ -307,14 +308,14 @@ func (s *Server) handleOptions(w http.ResponseWriter, r *http.Request, path stri
 }
 
 func (s *Server) serveRoot(w http.ResponseWriter, r *http.Request) {
-	remotes := config.FileSections()
-	sort.Strings(remotes)
+	remoteNames := config.GetRemoteNames()
+	sort.Strings(remoteNames)
 	directory := serve.NewDirectory("", s.server.HTMLTemplate())
 	directory.Name = "List of all rclone remotes."
 	q := url.Values{}
-	for _, remote := range remotes {
-		q.Set("fs", remote)
-		directory.AddHTMLEntry("["+remote+":]", true, -1, time.Time{})
+	for _, remoteName := range remoteNames {
+		q.Set("fs", remoteName)
+		directory.AddHTMLEntry("["+remoteName+":]", true, -1, time.Time{})
 	}
 	sortParm := r.URL.Query().Get("sort")
 	orderParm := r.URL.Query().Get("order")
@@ -340,8 +341,11 @@ func (s *Server) serveRemote(w http.ResponseWriter, r *http.Request, path string
 		directory := serve.NewDirectory(path, s.server.HTMLTemplate())
 		for _, entry := range entries {
 			_, isDir := entry.(fs.Directory)
-			//directory.AddHTMLEntry(entry.Remote(), isDir, entry.Size(), entry.ModTime(r.Context()))
-			directory.AddHTMLEntry(entry.Remote(), isDir, entry.Size(), time.Time{})
+			var modTime time.Time
+			if !s.opt.ServeNoModTime {
+				modTime = entry.ModTime(r.Context())
+			}
+			directory.AddHTMLEntry(entry.Remote(), isDir, entry.Size(), modTime)
 		}
 		sortParm := r.URL.Query().Get("sort")
 		orderParm := r.URL.Query().Get("order")

@@ -697,7 +697,7 @@ func (f *Fs) list(ctx context.Context, bucket, directory, prefix string, addBuck
 			// is this a directory marker?
 			if isDirectory {
 				// Don't insert the root directory
-				if remote == directory {
+				if remote == f.opt.Enc.ToStandardPath(directory) {
 					continue
 				}
 				// process directory markers as directories

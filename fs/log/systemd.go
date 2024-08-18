@@ -1,7 +1,6 @@
 // Systemd interface for non-Unix variants only
 
 //go:build !unix
-// +build !unix
 
 package log
 

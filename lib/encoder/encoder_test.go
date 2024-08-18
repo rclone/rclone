@@ -22,7 +22,7 @@ func TestEncodeString(t *testing.T) {
 		mask MultiEncoder
 		want string
 	}{
-		{0, "None"},
+		{EncodeRaw, "Raw"},
 		{EncodeZero, "None"},
 		{EncodeDoubleQuote, "DoubleQuote"},
 		{EncodeDot, "Dot"},
@@ -44,7 +44,7 @@ func TestEncodeSet(t *testing.T) {
 		wantErr bool
 	}{
 		{"", 0, true},
-		{"None", 0, false},
+		{"Raw", EncodeRaw, false},
 		{"None", EncodeZero, false},
 		{"DoubleQuote", EncodeDoubleQuote, false},
 		{"Dot", EncodeDot, false},
@@ -178,7 +178,7 @@ func TestEncodeInvalidUnicode(t *testing.T) {
 func TestEncodeDot(t *testing.T) {
 	for i, tc := range []testCase{
 		{
-			mask: 0,
+			mask: EncodeZero,
 			in:   ".",
 			out:  ".",
 		}, {
@@ -186,7 +186,7 @@ func TestEncodeDot(t *testing.T) {
 			in:   ".",
 			out:  "．",
 		}, {
-			mask: 0,
+			mask: EncodeZero,
 			in:   "..",
 			out:  "..",
 		}, {
@@ -224,7 +224,7 @@ func TestDecodeHalf(t *testing.T) {
 			in:   "‛",
 			out:  "‛",
 		}, {
-			mask: 0,
+			mask: EncodeZero,
 			in:   "‛‛",
 			out:  "‛",
 		}, {

@@ -1,5 +1,4 @@
 //go:build darwin || dragonfly || freebsd || linux
-// +build darwin dragonfly freebsd linux
 
 package local
 
@@ -24,9 +23,9 @@ func (f *Fs) About(ctx context.Context) (*fs.Usage, error) {
 	}
 	bs := int64(s.Bsize) // nolint: unconvert
 	usage := &fs.Usage{
-		Total: fs.NewUsageValue(bs * int64(s.Blocks)),         // quota of bytes that can be used
-		Used:  fs.NewUsageValue(bs * int64(s.Blocks-s.Bfree)), // bytes in use
-		Free:  fs.NewUsageValue(bs * int64(s.Bavail)),         // bytes which can be uploaded before reaching the quota
+		Total: fs.NewUsageValue(bs * int64(s.Blocks)),         //nolint: unconvert // quota of bytes that can be used
+		Used:  fs.NewUsageValue(bs * int64(s.Blocks-s.Bfree)), //nolint: unconvert // bytes in use
+		Free:  fs.NewUsageValue(bs * int64(s.Bavail)),         //nolint: unconvert // bytes which can be uploaded before reaching the quota
 	}
 	return usage, nil
 }

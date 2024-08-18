@@ -118,6 +118,9 @@ func (f *Fs) testWithChunkFail(t *testing.T) {
 	f.opt.NoChunk = false
 	f.opt.ChunkSize = 1024 * fs.SizeSuffixBase
 	segmentContainer := f.root + "_segments"
+	if !f.opt.UseSegmentsContainer.Value {
+		segmentContainer = f.root
+	}
 	defer func() {
 		//restore config
 		f.opt.ChunkSize = preConfChunkSize
@@ -147,6 +150,9 @@ func (f *Fs) testWithChunkFail(t *testing.T) {
 	_, _, err = f.c.Object(ctx, f.rootContainer, path)
 	assert.Equal(t, swift.ObjectNotFound, err)
 	prefix := path
+	if !f.opt.UseSegmentsContainer.Value {
+		prefix = segmentsDirectory + "/" + prefix
+	}
 	objs, err := f.c.Objects(ctx, segmentContainer, &swift.ObjectsOpts{
 		Prefix: prefix,
 	})

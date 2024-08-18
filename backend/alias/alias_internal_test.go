@@ -23,8 +23,8 @@ func prepare(t *testing.T, root string) {
 	configfile.Install()
 
 	// Configure the remote
-	config.FileSet(remoteName, "type", "alias")
-	config.FileSet(remoteName, "remote", root)
+	config.FileSetValue(remoteName, "type", "alias")
+	config.FileSetValue(remoteName, "remote", root)
 }
 
 func TestNewFS(t *testing.T) {
@@ -81,10 +81,12 @@ func TestNewFS(t *testing.T) {
 		for i, gotEntry := range gotEntries {
 			what := fmt.Sprintf("%s, entry=%d", what, i)
 			wantEntry := test.entries[i]
+			_, isDir := gotEntry.(fs.Directory)
 
 			require.Equal(t, wantEntry.remote, gotEntry.Remote(), what)
-			require.Equal(t, wantEntry.size, gotEntry.Size(), what)
-			_, isDir := gotEntry.(fs.Directory)
+			if !isDir {
+				require.Equal(t, wantEntry.size, gotEntry.Size(), what)
+			}
 			require.Equal(t, wantEntry.isDir, isDir, what)
 		}
 	}

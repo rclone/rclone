@@ -66,7 +66,7 @@ func TestEnvironmentVariables(t *testing.T) {
 		assert.NotContains(t, out, "fileAA1.txt") // depth 4
 	}
 
-	// Test of debug logging while initialising flags from environment (tests #5241 Enhance1)
+	// Test of debug logging while initialising flags from environment (tests #5341 Enhance1)
 	env = "RCLONE_STATS=173ms"
 	out, err = rcloneEnv(env, "version", "-vv")
 	if assert.NoError(t, err) {
@@ -323,4 +323,25 @@ func TestEnvironmentVariables(t *testing.T) {
 		assert.NotContains(t, out, "fileB1.txt")
 	}
 
+	// Test --use-json-log and -vv combinations
+	jsonLogOK := func() {
+		t.Helper()
+		if assert.NoError(t, err) {
+			assert.Contains(t, out, `{"level":"debug",`)
+			assert.Contains(t, out, `"msg":"Version `)
+			assert.Contains(t, out, `"}`)
+		}
+	}
+	env = "RCLONE_USE_JSON_LOG=1;RCLONE_LOG_LEVEL=DEBUG"
+	out, err = rcloneEnv(env, "version")
+	jsonLogOK()
+	env = "RCLONE_USE_JSON_LOG=1"
+	out, err = rcloneEnv(env, "version", "-vv")
+	jsonLogOK()
+	env = "RCLONE_LOG_LEVEL=DEBUG"
+	out, err = rcloneEnv(env, "version", "--use-json-log")
+	jsonLogOK()
+	env = ""
+	out, err = rcloneEnv(env, "version", "-vv", "--use-json-log")
+	jsonLogOK()
 }

@@ -1,5 +1,4 @@
 //go:build windows
-// +build windows
 
 package fserrors
 
@@ -24,8 +23,8 @@ const (
 	WSAEHOSTUNREACH   syscall.Errno = 10065
 	WSAEDISCON        syscall.Errno = 10101
 	WSAEREFUSED       syscall.Errno = 10112
-	WSAHOST_NOT_FOUND syscall.Errno = 11001
-	WSATRY_AGAIN      syscall.Errno = 11002
+	WSAHOST_NOT_FOUND syscall.Errno = 11001 //nolint:revive // Don't include revive when running golangci-lint to avoid var-naming: don't use ALL_CAPS in Go names; use CamelCase (revive)
+	WSATRY_AGAIN      syscall.Errno = 11002 //nolint:revive // Don't include revive when running golangci-lint to avoid var-naming: don't use ALL_CAPS in Go names; use CamelCase (revive)
 )
 
 func init() {

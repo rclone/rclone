@@ -29,8 +29,8 @@ const (
 
 // Check it satisfies the interfaces
 var (
-	_ flagger   = (*choice)(nil)
-	_ flaggerNP = choice(0)
+	_ Flagger   = (*choice)(nil)
+	_ FlaggerNP = choice(0)
 )
 
 func TestEnumString(t *testing.T) {

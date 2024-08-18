@@ -39,6 +39,12 @@ func Start(ctx context.Context) {
 
 	// Start the transactions per second limiter
 	StartLimitTPS(ctx)
+
+	// Set the error count function pointer up in fs
+	//
+	// We can't do this in an init() method as it uses fs.Config
+	// and that isn't set up then.
+	fs.CountError = GlobalStats().Error
 }
 
 // Account limits and accounts for one transfer
@@ -521,7 +527,7 @@ func (acc *Account) String() string {
 	}
 
 	if acc.ci.DataRateUnit == "bits" {
-		cur = cur * 8
+		cur *= 8
 	}
 
 	percentageDone := 0
@@ -603,7 +609,7 @@ func (a *accountStream) SetStream(in io.Reader) {
 	a.in = in
 }
 
-// WrapStream wrap in in an accounter
+// WrapStream wrap in an accounter
 func (a *accountStream) WrapStream(in io.Reader) io.Reader {
 	return a.acc.WrapStream(in)
 }

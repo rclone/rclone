@@ -47,8 +47,7 @@ func init() {
 var commandDefinition = &cobra.Command{
 	Use:   "lsf remote:path",
 	Short: `List directories and objects in remote:path formatted for parsing.`,
-	Long: `
-List the contents of the source path (directories and objects) to
+	Long: `List the contents of the source path (directories and objects) to
 standard output in a form which is easy to parse by scripts.  By
 default this will just be the names of the objects and directories,
 one per line.  The directories will have a / suffix.
@@ -231,6 +230,10 @@ func Lsf(ctx context.Context, fsrc fs.Fs, out io.Writer) error {
 	}
 
 	return operations.ListJSON(ctx, fsrc, "", &opt, func(item *operations.ListJSONItem) error {
+		// Make size deterministic for tests
+		if item.IsDir {
+			item.Size = -1
+		}
 		_, _ = fmt.Fprintln(out, list.Format(item))
 		return nil
 	})

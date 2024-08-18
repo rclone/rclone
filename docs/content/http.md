@@ -63,10 +63,11 @@ Choose a number from below, or type in your own value
    \ "https://example.com"
 url> https://beta.rclone.org
 Remote config
---------------------
-[remote]
-url = https://beta.rclone.org
---------------------
+Configuration complete.
+Options:
+- type: http
+- url: https://beta.rclone.org
+Keep this "remote" remote?
 y) Yes this is OK
 e) Edit this remote
 d) Delete this remote
@@ -142,6 +143,17 @@ Properties:
 - Type:        string
 - Required:    true
 
+#### --http-no-escape
+
+Do not escape URL metacharacters in path names.
+
+Properties:
+
+- Config:      no_escape
+- Env Var:     RCLONE_HTTP_NO_ESCAPE
+- Type:        bool
+- Default:     false
+
 ### Advanced options
 
 Here are the Advanced options specific to http (HTTP).
@@ -211,6 +223,17 @@ Properties:
 - Env Var:     RCLONE_HTTP_NO_HEAD
 - Type:        bool
 - Default:     false
+
+#### --http-description
+
+Description of the remote.
+
+Properties:
+
+- Config:      description
+- Env Var:     RCLONE_HTTP_DESCRIPTION
+- Type:        string
+- Required:    false
 
 ## Backend commands
 

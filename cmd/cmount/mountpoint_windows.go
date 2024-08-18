@@ -1,5 +1,4 @@
 //go:build cmount && windows
-// +build cmount,windows
 
 package cmount
 

@@ -87,9 +87,10 @@ func argsToEnv(origArgs, origEnv []string) (args, env []string) {
 		}
 
 		arg = arg[2:]
-		key, val := arg, "true"
-		if idx := strings.Index(arg, "="); idx != -1 {
-			key, val = arg[:idx], arg[idx+1:]
+		var key, val string
+		var ok bool
+		if key, val, ok = strings.Cut(arg, "="); !ok {
+			val = "true"
 		}
 
 		name := "RCLONE_" + strings.ToUpper(strings.ReplaceAll(key, "-", "_"))

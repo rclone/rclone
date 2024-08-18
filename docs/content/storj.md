@@ -1,14 +1,22 @@
 ---
 title: "Storj"
 description: "Rclone docs for Storj"
+aliases:
+  - tardigrade
 versionIntroduced: "v1.52"
 ---
 
 # {{< icon "fas fa-dove" >}} Storj
 
-[Storj](https://storj.io) is an encrypted, secure, and 
-cost-effective object storage service that enables you to store, back up, and 
-archive large amounts of data in a decentralized manner.
+[Storj](https://storj.io) is redefining the cloud to support the
+future of data—sustainably and economically. Storj leverages the vast
+global supply of underutilized resources to deliver better security,
+durability, and performance services. Experience up to 90% lower costs
+and carbon reduction with Storj.
+
+Storj is an encrypted, secure, and cost-effective object storage service
+that enables you to store, back up, and archive large amounts of data
+in a decentralized manner.
 
 ## Backend options
 
@@ -144,11 +152,11 @@ Access Grant.
 Enter a string value. Press Enter for the default ("").
 access_grant> your-access-grant-received-by-someone-else
 Remote config
---------------------
-[remote]
-type = storj
-access_grant = your-access-grant-received-by-someone-else
---------------------
+Configuration complete.
+Options:
+- type: storj
+- access_grant: your-access-grant-received-by-someone-else
+Keep this "remote" remote?
 y) Yes this is OK (default)
 e) Edit this remote
 d) Delete this remote
@@ -199,14 +207,14 @@ Encryption Passphrase. To access existing objects enter passphrase used for uplo
 Enter a string value. Press Enter for the default ("").
 passphrase> your-human-readable-encryption-passphrase
 Remote config
---------------------
-[remote]
-type = storj
-satellite_address = 12EayRS2V1kEsWESU9QMRseFhdxYxKicsiFmxrsLZHeLUtdps3S@us1.storj.io:7777
-api_key = your-api-key-for-your-storj-project
-passphrase = your-human-readable-encryption-passphrase
-access_grant = the-access-grant-generated-from-the-api-key-and-passphrase
---------------------
+Configuration complete.
+Options:
+- type: storj
+- satellite_address: 12EayRS2V1kEsWESU9QMRseFhdxYxKicsiFmxrsLZHeLUtdps3S@us1.storj.io:7777
+- api_key: your-api-key-for-your-storj-project
+- passphrase: your-human-readable-encryption-passphrase
+- access_grant: the-access-grant-generated-from-the-api-key-and-passphrase
+Keep this "remote" remote?
 y) Yes this is OK (default)
 e) Edit this remote
 d) Delete this remote
@@ -290,6 +298,21 @@ Properties:
 - Config:      passphrase
 - Env Var:     RCLONE_STORJ_PASSPHRASE
 - Provider:    new
+- Type:        string
+- Required:    false
+
+### Advanced options
+
+Here are the Advanced options specific to storj (Storj Decentralized Cloud Storage).
+
+#### --storj-description
+
+Description of the remote.
+
+Properties:
+
+- Config:      description
+- Env Var:     RCLONE_STORJ_DESCRIPTION
 - Type:        string
 - Required:    false
 

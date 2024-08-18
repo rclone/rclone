@@ -64,7 +64,7 @@ func WhichCheck(ctx context.Context, opt *operations.CheckOpt) *operations.Check
 		}
 	}
 
-	// if we've gotten this far, niether check or cryptcheck will work, so use --download
+	// if we've gotten this far, neither check or cryptcheck will work, so use --download
 	fs.Infof(fdst, "Can't compare hashes, so using check --download for safety. (Use --size-only or --ignore-checksum to disable)")
 	opt.Check = DownloadCheckFn
 	return opt
@@ -107,10 +107,10 @@ func CryptCheckFn(ctx context.Context, dst, src fs.Object) (differ bool, noHash 
 	}
 	if cryptHash != underlyingHash {
 		err = fmt.Errorf("hashes differ (%s:%s) %q vs (%s:%s) %q", fdst.Name(), fdst.Root(), cryptHash, fsrc.Name(), fsrc.Root(), underlyingHash)
-		fs.Debugf(src, err.Error())
+		fs.Debugf(src, "%s", err.Error())
 		// using same error msg as CheckFn so integration tests match
 		err = fmt.Errorf("%v differ", hashType)
-		fs.Errorf(src, err.Error())
+		fs.Errorf(src, "%s", err.Error())
 		return true, false, nil
 	}
 	return false, false, nil

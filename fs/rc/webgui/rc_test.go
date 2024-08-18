@@ -7,7 +7,6 @@ import (
 	"testing"
 
 	"github.com/rclone/rclone/fs/rc"
-	"github.com/rclone/rclone/fs/rc/rcflags"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -18,7 +17,7 @@ const testPluginKey = testPluginAuthor + "/" + testPluginName
 const testPluginURL = "https://github.com/" + testPluginAuthor + "/" + testPluginName + "/"
 
 func init() {
-	rcflags.Opt.WebUI = true
+	rc.Opt.WebUI = true
 }
 
 func setCacheDir(t *testing.T) {

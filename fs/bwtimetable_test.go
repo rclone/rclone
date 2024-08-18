@@ -11,8 +11,8 @@ import (
 
 // Check it satisfies the interfaces
 var (
-	_ flagger   = (*BwTimetable)(nil)
-	_ flaggerNP = BwTimetable{}
+	_ Flagger   = (*BwTimetable)(nil)
+	_ FlaggerNP = BwTimetable{}
 )
 
 func TestBwTimetableSet(t *testing.T) {
@@ -255,6 +255,53 @@ func TestBwTimetableSet(t *testing.T) {
 			},
 			false,
 			"Mon-00:00,512Ki Sun-12:00,1Mi Mon-12:00,1Mi Tue-12:00,1Mi Wed-12:00,1Mi Thu-12:00,1Mi Fri-12:00,1Mi Sat-12:00,1Mi Sun-20:00,off",
+		},
+		{
+			"11:00,333;13:40,666;23:50,10M;23:59,off",
+			BwTimetable{
+				BwTimeSlot{DayOfTheWeek: 0, HHMM: 1100, Bandwidth: BwPair{Tx: 333 * 1024, Rx: 333 * 1024}},
+				BwTimeSlot{DayOfTheWeek: 1, HHMM: 1100, Bandwidth: BwPair{Tx: 333 * 1024, Rx: 333 * 1024}},
+				BwTimeSlot{DayOfTheWeek: 2, HHMM: 1100, Bandwidth: BwPair{Tx: 333 * 1024, Rx: 333 * 1024}},
+				BwTimeSlot{DayOfTheWeek: 3, HHMM: 1100, Bandwidth: BwPair{Tx: 333 * 1024, Rx: 333 * 1024}},
+				BwTimeSlot{DayOfTheWeek: 4, HHMM: 1100, Bandwidth: BwPair{Tx: 333 * 1024, Rx: 333 * 1024}},
+				BwTimeSlot{DayOfTheWeek: 5, HHMM: 1100, Bandwidth: BwPair{Tx: 333 * 1024, Rx: 333 * 1024}},
+				BwTimeSlot{DayOfTheWeek: 6, HHMM: 1100, Bandwidth: BwPair{Tx: 333 * 1024, Rx: 333 * 1024}},
+				BwTimeSlot{DayOfTheWeek: 0, HHMM: 1340, Bandwidth: BwPair{Tx: 666 * 1024, Rx: 666 * 1024}},
+				BwTimeSlot{DayOfTheWeek: 1, HHMM: 1340, Bandwidth: BwPair{Tx: 666 * 1024, Rx: 666 * 1024}},
+				BwTimeSlot{DayOfTheWeek: 2, HHMM: 1340, Bandwidth: BwPair{Tx: 666 * 1024, Rx: 666 * 1024}},
+				BwTimeSlot{DayOfTheWeek: 3, HHMM: 1340, Bandwidth: BwPair{Tx: 666 * 1024, Rx: 666 * 1024}},
+				BwTimeSlot{DayOfTheWeek: 4, HHMM: 1340, Bandwidth: BwPair{Tx: 666 * 1024, Rx: 666 * 1024}},
+				BwTimeSlot{DayOfTheWeek: 5, HHMM: 1340, Bandwidth: BwPair{Tx: 666 * 1024, Rx: 666 * 1024}},
+				BwTimeSlot{DayOfTheWeek: 6, HHMM: 1340, Bandwidth: BwPair{Tx: 666 * 1024, Rx: 666 * 1024}},
+				BwTimeSlot{DayOfTheWeek: 0, HHMM: 2350, Bandwidth: BwPair{Tx: 10 * 1024 * 1024, Rx: 10 * 1024 * 1024}},
+				BwTimeSlot{DayOfTheWeek: 1, HHMM: 2350, Bandwidth: BwPair{Tx: 10 * 1024 * 1024, Rx: 10 * 1024 * 1024}},
+				BwTimeSlot{DayOfTheWeek: 2, HHMM: 2350, Bandwidth: BwPair{Tx: 10 * 1024 * 1024, Rx: 10 * 1024 * 1024}},
+				BwTimeSlot{DayOfTheWeek: 3, HHMM: 2350, Bandwidth: BwPair{Tx: 10 * 1024 * 1024, Rx: 10 * 1024 * 1024}},
+				BwTimeSlot{DayOfTheWeek: 4, HHMM: 2350, Bandwidth: BwPair{Tx: 10 * 1024 * 1024, Rx: 10 * 1024 * 1024}},
+				BwTimeSlot{DayOfTheWeek: 5, HHMM: 2350, Bandwidth: BwPair{Tx: 10 * 1024 * 1024, Rx: 10 * 1024 * 1024}},
+				BwTimeSlot{DayOfTheWeek: 6, HHMM: 2350, Bandwidth: BwPair{Tx: 10 * 1024 * 1024, Rx: 10 * 1024 * 1024}},
+				BwTimeSlot{DayOfTheWeek: 0, HHMM: 2359, Bandwidth: BwPair{Tx: -1, Rx: -1}},
+				BwTimeSlot{DayOfTheWeek: 1, HHMM: 2359, Bandwidth: BwPair{Tx: -1, Rx: -1}},
+				BwTimeSlot{DayOfTheWeek: 2, HHMM: 2359, Bandwidth: BwPair{Tx: -1, Rx: -1}},
+				BwTimeSlot{DayOfTheWeek: 3, HHMM: 2359, Bandwidth: BwPair{Tx: -1, Rx: -1}},
+				BwTimeSlot{DayOfTheWeek: 4, HHMM: 2359, Bandwidth: BwPair{Tx: -1, Rx: -1}},
+				BwTimeSlot{DayOfTheWeek: 5, HHMM: 2359, Bandwidth: BwPair{Tx: -1, Rx: -1}},
+				BwTimeSlot{DayOfTheWeek: 6, HHMM: 2359, Bandwidth: BwPair{Tx: -1, Rx: -1}},
+			},
+			false,
+			"Sun-11:00,333Ki Mon-11:00,333Ki Tue-11:00,333Ki Wed-11:00,333Ki Thu-11:00,333Ki Fri-11:00,333Ki Sat-11:00,333Ki Sun-13:40,666Ki Mon-13:40,666Ki Tue-13:40,666Ki Wed-13:40,666Ki Thu-13:40,666Ki Fri-13:40,666Ki Sat-13:40,666Ki Sun-23:50,10Mi Mon-23:50,10Mi Tue-23:50,10Mi Wed-23:50,10Mi Thu-23:50,10Mi Fri-23:50,10Mi Sat-23:50,10Mi Sun-23:59,off Mon-23:59,off Tue-23:59,off Wed-23:59,off Thu-23:59,off Fri-23:59,off Sat-23:59,off",
+		},
+		{
+			"Mon-11:00,333;Tue-13:40,666:333;Fri-00:00,10M;Sat-10:00,off;Sun-23:00,666",
+			BwTimetable{
+				BwTimeSlot{DayOfTheWeek: 1, HHMM: 1100, Bandwidth: BwPair{Tx: 333 * 1024, Rx: 333 * 1024}},
+				BwTimeSlot{DayOfTheWeek: 2, HHMM: 1340, Bandwidth: BwPair{Tx: 666 * 1024, Rx: 333 * 1024}},
+				BwTimeSlot{DayOfTheWeek: 5, HHMM: 0000, Bandwidth: BwPair{Tx: 10 * 1024 * 1024, Rx: 10 * 1024 * 1024}},
+				BwTimeSlot{DayOfTheWeek: 6, HHMM: 1000, Bandwidth: BwPair{Tx: -1, Rx: -1}},
+				BwTimeSlot{DayOfTheWeek: 0, HHMM: 2300, Bandwidth: BwPair{Tx: 666 * 1024, Rx: 666 * 1024}},
+			},
+			false,
+			"Mon-11:00,333Ki Tue-13:40,666Ki:333Ki Fri-00:00,10Mi Sat-10:00,off Sun-23:00,666Ki",
 		},
 	} {
 		tt := BwTimetable{}

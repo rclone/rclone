@@ -100,33 +100,53 @@ func (r *Run) dumpOutput() {
 	log.Println("------------------------------------------------------------")
 }
 
+// trie for storing runs
+type trie map[string]trie
+
+// turn a trie into multiple regexp matches
+//
+// We can't ever have a / in a regexp as it doesn't work.
+func match(current trie) []string {
+	var names []string
+	var parts []string
+	for name, value := range current {
+		matchName := "^" + name + "$"
+		if len(value) == 0 {
+			names = append(names, name)
+		} else {
+			for _, part := range match(value) {
+				parts = append(parts, matchName+"/"+part)
+			}
+		}
+	}
+	sort.Strings(names)
+	if len(names) > 1 {
+		parts = append(parts, "^("+strings.Join(names, "|")+")$")
+	} else if len(names) == 1 {
+		parts = append(parts, "^"+names[0]+"$")
+	}
+	sort.Strings(parts)
+	return parts
+}
+
 // This converts a slice of test names into a regexp which matches
 // them.
 func testsToRegexp(tests []string) string {
-	var split []map[string]struct{}
-	// Make a slice with maps of the used parts at each level
+	var split = trie{}
+	// Make a trie showing which parts are used at each level
 	for _, test := range tests {
-		for i, name := range strings.Split(test, "/") {
-			if i >= len(split) {
-				split = append(split, make(map[string]struct{}))
+		var parent = split
+		for _, name := range strings.Split(test, "/") {
+			current := parent[name]
+			if current == nil {
+				current = trie{}
+				parent[name] = current
 			}
-			split[i][name] = struct{}{}
+			parent = current
 		}
 	}
-	var out []string
-	for _, level := range split {
-		var testsInLevel = []string{}
-		for name := range level {
-			testsInLevel = append(testsInLevel, name)
-		}
-		sort.Strings(testsInLevel)
-		if len(testsInLevel) > 1 {
-			out = append(out, "^("+strings.Join(testsInLevel, "|")+")$")
-		} else {
-			out = append(out, "^"+testsInLevel[0]+"$")
-		}
-	}
-	return strings.Join(out, "/")
+	parts := match(split)
+	return strings.Join(parts, "|")
 }
 
 var failRe = regexp.MustCompile(`(?m)^\s*--- FAIL: (Test.*?) \(`)

@@ -5,10 +5,12 @@ import (
 	"os"
 	"testing"
 
+	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fstest"
 	"github.com/rclone/rclone/vfs/vfscommon"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/text/unicode/norm"
 )
 
 func TestCaseSensitivity(t *testing.T) {
@@ -32,12 +34,12 @@ func TestCaseSensitivity(t *testing.T) {
 	file3 := r.WriteObject(ctx, "FilEb", "data3", t3)
 
 	// Create a case-Sensitive and case-INsensitive VFS
-	optCS := vfscommon.DefaultOpt
+	optCS := vfscommon.Opt
 	optCS.CaseInsensitive = false
 	vfsCS := New(r.Fremote, &optCS)
 	defer cleanupVFS(t, vfsCS)
 
-	optCI := vfscommon.DefaultOpt
+	optCI := vfscommon.Opt
 	optCI.CaseInsensitive = true
 	vfsCI := New(r.Fremote, &optCI)
 	defer cleanupVFS(t, vfsCI)
@@ -159,4 +161,37 @@ func assertFileAbsentVFS(t *testing.T, vfs *VFS, name string) {
 	assert.Nil(t, fd)
 	assert.Error(t, err)
 	assert.Equal(t, err, ENOENT)
+}
+
+func TestUnicodeNormalization(t *testing.T) {
+	r := fstest.NewRun(t)
+
+	var (
+		nfc  = norm.NFC.String(norm.NFD.String("測試_Русский___ě_áñ"))
+		nfd  = norm.NFD.String(nfc)
+		both = "normal name with no special characters.txt"
+	)
+
+	// Create test files
+	ctx := context.Background()
+	file1 := r.WriteObject(ctx, both, "data1", t1)
+	file2 := r.WriteObject(ctx, nfc, "data2", t2)
+	r.CheckRemoteItems(t, file1, file2)
+
+	// Create VFS
+	opt := vfscommon.Opt
+	vfs := New(r.Fremote, &opt)
+	defer cleanupVFS(t, vfs)
+
+	// assert that both files are found under NFD-normalized names
+	assertFileDataVFS(t, vfs, norm.NFD.String(both), "data1")
+	assertFileDataVFS(t, vfs, nfd, "data2")
+
+	// change ci.NoUnicodeNormalization to true and verify that only file1 is found
+	ci := fs.GetConfig(ctx) // need to set the global config here as the *Dir methods don't take a ctx param
+	oldVal := ci.NoUnicodeNormalization
+	defer func() { fs.GetConfig(ctx).NoUnicodeNormalization = oldVal }() // restore the prior value after the test
+	ci.NoUnicodeNormalization = true
+	assertFileDataVFS(t, vfs, norm.NFD.String(both), "data1")
+	assertFileAbsentVFS(t, vfs, nfd)
 }

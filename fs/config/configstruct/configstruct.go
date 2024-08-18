@@ -2,11 +2,14 @@
 package configstruct
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"reflect"
 	"regexp"
+	"strconv"
 	"strings"
+	"time"
 
 	"github.com/rclone/rclone/fs/config/configmap"
 )
@@ -22,31 +25,68 @@ func camelToSnake(in string) string {
 }
 
 // StringToInterface turns in into an interface{} the same type as def
+//
+// This supports a subset of builtin types, string, integer types,
+// bool, time.Duration and []string.
+//
+// Builtin types are expected to be encoding as their natural
+// stringificatons as produced by fmt.Sprint except for []string which
+// is expected to be encoded as JSON with empty array encoded as "".
+//
+// Any other types are expected to be encoded by their String()
+// methods and decoded by their `Set(s string) error` methods.
 func StringToInterface(def interface{}, in string) (newValue interface{}, err error) {
 	typ := reflect.TypeOf(def)
-	if typ.Kind() == reflect.String && typ.Name() == "string" {
-		// Pass strings unmodified
-		return in, nil
-	}
-	// Otherwise parse with Sscanln
-	//
-	// This means any types we use here must implement fmt.Scanner
 	o := reflect.New(typ)
-	n, err := fmt.Sscanln(in, o.Interface())
+	switch def.(type) {
+	case string:
+		// return strings unmodified
+		newValue = in
+	case int, int8, int16, int32, int64,
+		uint, uint8, uint16, uint32, uint64, uintptr,
+		float32, float64:
+		// As per Rob Pike's advice in https://github.com/golang/go/issues/43306
+		// we only use Sscan for numbers
+		var n int
+		n, err = fmt.Sscanln(in, o.Interface())
+		if err == nil && n != 1 {
+			err = errors.New("no items parsed")
+		}
+		newValue = o.Elem().Interface()
+	case bool:
+		newValue, err = strconv.ParseBool(in)
+	case time.Duration:
+		newValue, err = time.ParseDuration(in)
+	case []string:
+		// JSON decode arrays of strings
+		if in != "" {
+			var out []string
+			err = json.Unmarshal([]byte(in), &out)
+			newValue = out
+		} else {
+			// Empty string we will treat as empty array
+			newValue = []string{}
+		}
+	default:
+		// Try using a Set method
+		if do, ok := o.Interface().(interface{ Set(s string) error }); ok {
+			err = do.Set(in)
+		} else {
+			err = errors.New("don't know how to parse this type")
+		}
+		newValue = o.Elem().Interface()
+	}
 	if err != nil {
-		return newValue, fmt.Errorf("parsing %q as %T failed: %w", in, def, err)
+		return nil, fmt.Errorf("parsing %q as %T failed: %w", in, def, err)
 	}
-	if n != 1 {
-		return newValue, errors.New("no items parsed")
-	}
-	return o.Elem().Interface(), nil
+	return newValue, nil
 }
 
 // Item describes a single entry in the options structure
 type Item struct {
-	Name  string // snake_case
-	Field string // CamelCase
-	Num   int    // number of the field in the struct
+	Name  string            // snake_case
+	Field string            // CamelCase
+	Set   func(interface{}) // set this field
 	Value interface{}
 }
 
@@ -57,6 +97,10 @@ type Item struct {
 //
 // The config_name is looked up in a struct tag called "config" or if
 // not found is the field name converted from CamelCase to snake_case.
+//
+// Nested structs are looked up too. If the parent struct has a struct
+// tag, this will be used as a prefix for the values in the sub
+// struct, otherwise they will be embedded as they are.
 func Items(opt interface{}) (items []Item, err error) {
 	def := reflect.ValueOf(opt)
 	if def.Kind() != reflect.Ptr {
@@ -68,19 +112,42 @@ func Items(opt interface{}) (items []Item, err error) {
 	}
 	defType := def.Type()
 	for i := 0; i < def.NumField(); i++ {
-		field := defType.Field(i)
-		fieldName := field.Name
-		configName, ok := field.Tag.Lookup("config")
-		if !ok {
+		field := def.Field(i)
+		fieldType := defType.Field(i)
+		fieldName := fieldType.Name
+		configName, hasTag := fieldType.Tag.Lookup("config")
+		if hasTag && configName == "-" {
+			// Skip items with config:"-"
+			continue
+		}
+		if !hasTag {
 			configName = camelToSnake(fieldName)
 		}
-		defaultItem := Item{
-			Name:  configName,
-			Field: fieldName,
-			Num:   i,
-			Value: def.Field(i).Interface(),
+		valuePtr := field.Addr().Interface()                   // pointer to the value as an interface
+		_, canSet := valuePtr.(interface{ Set(string) error }) // can we set this with the Option Set protocol
+		// If we have a nested struct that isn't a config item then recurse
+		if fieldType.Type.Kind() == reflect.Struct && !canSet {
+			newItems, err := Items(valuePtr)
+			if err != nil {
+				return nil, fmt.Errorf("error parsing field %q: %w", fieldName, err)
+			}
+			for _, newItem := range newItems {
+				if hasTag {
+					newItem.Name = configName + "_" + newItem.Name
+				}
+				items = append(items, newItem)
+			}
+		} else {
+			defaultItem := Item{
+				Name:  configName,
+				Field: fieldName,
+				Set: func(newValue interface{}) {
+					field.Set(reflect.ValueOf(newValue))
+				},
+				Value: field.Interface(),
+			}
+			items = append(items, defaultItem)
 		}
-		items = append(items, defaultItem)
 	}
 	return items, nil
 }
@@ -103,7 +170,6 @@ func Set(config configmap.Getter, opt interface{}) (err error) {
 	if err != nil {
 		return err
 	}
-	defStruct := reflect.ValueOf(opt).Elem()
 	for _, defaultItem := range defaultItems {
 		newValue := defaultItem.Value
 		if configValue, ok := config.Get(defaultItem.Name); ok {
@@ -120,7 +186,7 @@ func Set(config configmap.Getter, opt interface{}) (err error) {
 				newValue = newNewValue
 			}
 		}
-		defStruct.Field(defaultItem.Num).Set(reflect.ValueOf(newValue))
+		defaultItem.Set(newValue)
 	}
 	return nil
 }

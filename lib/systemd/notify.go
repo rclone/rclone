@@ -9,10 +9,13 @@ import (
 	"github.com/rclone/rclone/lib/atexit"
 )
 
-// Notify systemd that the service is starting. This returns a
+// Notify systemd that the service is ready. This returns a
 // function which should be called to notify that the service is
 // stopping. This function will be called on exit if the service exits
 // on a signal.
+// NOTE: this function should only be called once, and so it
+// should generally only be used directly in a command's Run handler.
+// It should not be called as a result of rc commands. See #7540.
 func Notify() func() {
 	if _, err := daemon.SdNotify(false, daemon.SdNotifyReady); err != nil {
 		log.Printf("failed to notify ready to systemd: %v", err)
