@@ -37,15 +37,15 @@ import "github.com/quasilyte/go-ruleguard/dsl"
 //     but not sure how to avoid duplicating all checks with and without this
 //     condition so haven't bothered yet.
 func useFsLog(m dsl.Matcher) {
-	m.Match(`log.Print($x)`, `log.Println($x)`).Where(m["x"].Type.Is(`string`)).Suggest(`fs.Logf(nil, $x)`)
-	m.Match(`log.Print($*args)`, `log.Println($*args)`).Suggest(`fs.Logf(nil, fmt.Sprint($args))`)
+	m.Match(`log.Print($x)`, `log.Println($x)`).Where(m["x"].Type.Is(`string`)).Suggest(`fs.Log(nil, $x)`)
+	m.Match(`log.Print($*args)`, `log.Println($*args)`).Suggest(`fs.Log(nil, fmt.Sprint($args))`)
 	m.Match(`log.Printf($*args)`).Suggest(`fs.Logf(nil, $args)`)
 
-	m.Match(`log.Fatal($x)`, `log.Fatalln($x)`).Where(m["x"].Type.Is(`string`)).Suggest(`fs.Fatalf(nil, $x)`)
-	m.Match(`log.Fatal($*args)`, `log.Fatalln($*args)`).Suggest(`fs.Fatalf(nil, fmt.Sprint($args))`)
+	m.Match(`log.Fatal($x)`, `log.Fatalln($x)`).Where(m["x"].Type.Is(`string`)).Suggest(`fs.Fatal(nil, $x)`)
+	m.Match(`log.Fatal($*args)`, `log.Fatalln($*args)`).Suggest(`fs.Fatal(nil, fmt.Sprint($args))`)
 	m.Match(`log.Fatalf($*args)`).Suggest(`fs.Fatalf(nil, $args)`)
 
-	m.Match(`log.Panic($x)`, `log.Panicln($x)`).Where(m["x"].Type.Is(`string`)).Suggest(`fs.Panicf(nil, $x)`)
-	m.Match(`log.Panic($*args)`, `log.Panicln($*args)`).Suggest(`fs.Panicf(nil, fmt.Sprint($args))`)
+	m.Match(`log.Panic($x)`, `log.Panicln($x)`).Where(m["x"].Type.Is(`string`)).Suggest(`fs.Panic(nil, $x)`)
+	m.Match(`log.Panic($*args)`, `log.Panicln($*args)`).Suggest(`fs.Panic(nil, fmt.Sprint($args))`)
 	m.Match(`log.Panicf($*args)`).Suggest(`fs.Panicf(nil, $args)`)
 }
