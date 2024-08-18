@@ -71,8 +71,6 @@ func newMetricsServer(ctx context.Context, opt *rc.Options) (*MetricsServer, err
 		return nil, fmt.Errorf("failed to init server: %w", err)
 	}
 
-	log.Printf("Metrics endpoint are accessible in the: %s%s", opt.MetricsHTTP.ListenAddr[0], path)
-
 	router := s.server.Router()
 	router.Get(path, promHandlerFunc)
 	return s, nil
