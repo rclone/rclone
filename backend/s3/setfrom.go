@@ -2,7 +2,10 @@
 
 package s3
 
-import "github.com/aws/aws-sdk-go/service/s3"
+import (
+	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/aws/aws-sdk-go-v2/service/s3/types"
+)
 
 // setFrom_s3ListObjectsInput_s3ListObjectsV2Input copies matching elements from a to b
 func setFrom_s3ListObjectsInput_s3ListObjectsV2Input(a *s3.ListObjectsInput, b *s3.ListObjectsV2Input) {
@@ -27,6 +30,7 @@ func setFrom_s3ListObjectsV2Output_s3ListObjectsOutput(a *s3.ListObjectsV2Output
 	a.Name = b.Name
 	a.Prefix = b.Prefix
 	a.RequestCharged = b.RequestCharged
+	a.ResultMetadata = b.ResultMetadata
 }
 
 // setFrom_s3ListObjectVersionsInput_s3ListObjectsV2Input copies matching elements from a to b
@@ -41,8 +45,8 @@ func setFrom_s3ListObjectVersionsInput_s3ListObjectsV2Input(a *s3.ListObjectVers
 	a.RequestPayer = b.RequestPayer
 }
 
-// setFrom_s3ObjectVersion_s3DeleteMarkerEntry copies matching elements from a to b
-func setFrom_s3ObjectVersion_s3DeleteMarkerEntry(a *s3.ObjectVersion, b *s3.DeleteMarkerEntry) {
+// setFrom_typesObjectVersion_typesDeleteMarkerEntry copies matching elements from a to b
+func setFrom_typesObjectVersion_typesDeleteMarkerEntry(a *types.ObjectVersion, b *types.DeleteMarkerEntry) {
 	a.IsLatest = b.IsLatest
 	a.Key = b.Key
 	a.LastModified = b.LastModified
@@ -60,10 +64,11 @@ func setFrom_s3ListObjectsV2Output_s3ListObjectVersionsOutput(a *s3.ListObjectsV
 	a.Name = b.Name
 	a.Prefix = b.Prefix
 	a.RequestCharged = b.RequestCharged
+	a.ResultMetadata = b.ResultMetadata
 }
 
-// setFrom_s3Object_s3ObjectVersion copies matching elements from a to b
-func setFrom_s3Object_s3ObjectVersion(a *s3.Object, b *s3.ObjectVersion) {
+// setFrom_typesObject_typesObjectVersion copies matching elements from a to b
+func setFrom_typesObject_typesObjectVersion(a *types.Object, b *types.ObjectVersion) {
 	a.ChecksumAlgorithm = b.ChecksumAlgorithm
 	a.ETag = b.ETag
 	a.Key = b.Key
@@ -71,7 +76,6 @@ func setFrom_s3Object_s3ObjectVersion(a *s3.Object, b *s3.ObjectVersion) {
 	a.Owner = b.Owner
 	a.RestoreStatus = b.RestoreStatus
 	a.Size = b.Size
-	a.StorageClass = b.StorageClass
 }
 
 // setFrom_s3CreateMultipartUploadInput_s3HeadObjectOutput copies matching elements from a to b
@@ -82,6 +86,7 @@ func setFrom_s3CreateMultipartUploadInput_s3HeadObjectOutput(a *s3.CreateMultipa
 	a.ContentEncoding = b.ContentEncoding
 	a.ContentLanguage = b.ContentLanguage
 	a.ContentType = b.ContentType
+	a.Expires = b.Expires
 	a.Metadata = b.Metadata
 	a.ObjectLockLegalHoldStatus = b.ObjectLockLegalHoldStatus
 	a.ObjectLockMode = b.ObjectLockMode
@@ -96,8 +101,9 @@ func setFrom_s3CreateMultipartUploadInput_s3HeadObjectOutput(a *s3.CreateMultipa
 
 // setFrom_s3CreateMultipartUploadInput_s3CopyObjectInput copies matching elements from a to b
 func setFrom_s3CreateMultipartUploadInput_s3CopyObjectInput(a *s3.CreateMultipartUploadInput, b *s3.CopyObjectInput) {
-	a.ACL = b.ACL
 	a.Bucket = b.Bucket
+	a.Key = b.Key
+	a.ACL = b.ACL
 	a.BucketKeyEnabled = b.BucketKeyEnabled
 	a.CacheControl = b.CacheControl
 	a.ChecksumAlgorithm = b.ChecksumAlgorithm
@@ -111,7 +117,6 @@ func setFrom_s3CreateMultipartUploadInput_s3CopyObjectInput(a *s3.CreateMultipar
 	a.GrantRead = b.GrantRead
 	a.GrantReadACP = b.GrantReadACP
 	a.GrantWriteACP = b.GrantWriteACP
-	a.Key = b.Key
 	a.Metadata = b.Metadata
 	a.ObjectLockLegalHoldStatus = b.ObjectLockLegalHoldStatus
 	a.ObjectLockMode = b.ObjectLockMode
@@ -132,6 +137,7 @@ func setFrom_s3CreateMultipartUploadInput_s3CopyObjectInput(a *s3.CreateMultipar
 func setFrom_s3UploadPartCopyInput_s3CopyObjectInput(a *s3.UploadPartCopyInput, b *s3.CopyObjectInput) {
 	a.Bucket = b.Bucket
 	a.CopySource = b.CopySource
+	a.Key = b.Key
 	a.CopySourceIfMatch = b.CopySourceIfMatch
 	a.CopySourceIfModifiedSince = b.CopySourceIfModifiedSince
 	a.CopySourceIfNoneMatch = b.CopySourceIfNoneMatch
@@ -141,7 +147,6 @@ func setFrom_s3UploadPartCopyInput_s3CopyObjectInput(a *s3.UploadPartCopyInput, 
 	a.CopySourceSSECustomerKeyMD5 = b.CopySourceSSECustomerKeyMD5
 	a.ExpectedBucketOwner = b.ExpectedBucketOwner
 	a.ExpectedSourceBucketOwner = b.ExpectedSourceBucketOwner
-	a.Key = b.Key
 	a.RequestPayer = b.RequestPayer
 	a.SSECustomerAlgorithm = b.SSECustomerAlgorithm
 	a.SSECustomerKey = b.SSECustomerKey
@@ -166,6 +171,7 @@ func setFrom_s3HeadObjectOutput_s3GetObjectOutput(a *s3.HeadObjectOutput, b *s3.
 	a.ETag = b.ETag
 	a.Expiration = b.Expiration
 	a.Expires = b.Expires
+	a.ExpiresString = b.ExpiresString
 	a.LastModified = b.LastModified
 	a.Metadata = b.Metadata
 	a.MissingMeta = b.MissingMeta
@@ -183,12 +189,14 @@ func setFrom_s3HeadObjectOutput_s3GetObjectOutput(a *s3.HeadObjectOutput, b *s3.
 	a.StorageClass = b.StorageClass
 	a.VersionId = b.VersionId
 	a.WebsiteRedirectLocation = b.WebsiteRedirectLocation
+	a.ResultMetadata = b.ResultMetadata
 }
 
 // setFrom_s3CreateMultipartUploadInput_s3PutObjectInput copies matching elements from a to b
 func setFrom_s3CreateMultipartUploadInput_s3PutObjectInput(a *s3.CreateMultipartUploadInput, b *s3.PutObjectInput) {
-	a.ACL = b.ACL
 	a.Bucket = b.Bucket
+	a.Key = b.Key
+	a.ACL = b.ACL
 	a.BucketKeyEnabled = b.BucketKeyEnabled
 	a.CacheControl = b.CacheControl
 	a.ChecksumAlgorithm = b.ChecksumAlgorithm
@@ -202,7 +210,6 @@ func setFrom_s3CreateMultipartUploadInput_s3PutObjectInput(a *s3.CreateMultipart
 	a.GrantRead = b.GrantRead
 	a.GrantReadACP = b.GrantReadACP
 	a.GrantWriteACP = b.GrantWriteACP
-	a.Key = b.Key
 	a.Metadata = b.Metadata
 	a.ObjectLockLegalHoldStatus = b.ObjectLockLegalHoldStatus
 	a.ObjectLockMode = b.ObjectLockMode
@@ -232,6 +239,7 @@ func setFrom_s3HeadObjectOutput_s3PutObjectInput(a *s3.HeadObjectOutput, b *s3.P
 	a.ContentLanguage = b.ContentLanguage
 	a.ContentLength = b.ContentLength
 	a.ContentType = b.ContentType
+	a.Expires = b.Expires
 	a.Metadata = b.Metadata
 	a.ObjectLockLegalHoldStatus = b.ObjectLockLegalHoldStatus
 	a.ObjectLockMode = b.ObjectLockMode
@@ -246,8 +254,9 @@ func setFrom_s3HeadObjectOutput_s3PutObjectInput(a *s3.HeadObjectOutput, b *s3.P
 
 // setFrom_s3CopyObjectInput_s3PutObjectInput copies matching elements from a to b
 func setFrom_s3CopyObjectInput_s3PutObjectInput(a *s3.CopyObjectInput, b *s3.PutObjectInput) {
-	a.ACL = b.ACL
 	a.Bucket = b.Bucket
+	a.Key = b.Key
+	a.ACL = b.ACL
 	a.BucketKeyEnabled = b.BucketKeyEnabled
 	a.CacheControl = b.CacheControl
 	a.ChecksumAlgorithm = b.ChecksumAlgorithm
@@ -261,7 +270,6 @@ func setFrom_s3CopyObjectInput_s3PutObjectInput(a *s3.CopyObjectInput, b *s3.Put
 	a.GrantRead = b.GrantRead
 	a.GrantReadACP = b.GrantReadACP
 	a.GrantWriteACP = b.GrantWriteACP
-	a.Key = b.Key
 	a.Metadata = b.Metadata
 	a.ObjectLockLegalHoldStatus = b.ObjectLockLegalHoldStatus
 	a.ObjectLockMode = b.ObjectLockMode

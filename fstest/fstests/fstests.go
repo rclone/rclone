@@ -83,6 +83,7 @@ type SetUploadCutoffer interface {
 type SetCopyCutoffer interface {
 	// Change the configured CopyCutoff.
 	// Will only be called while no transfer is in progress.
+	// Return fs.ErrorNotImplemented if you can't implement this
 	SetCopyCutoff(fs.SizeSuffix) (fs.SizeSuffix, error)
 }
 
@@ -428,7 +429,7 @@ func Run(t *testing.T, opt *Opt) {
 
 	// Set extra config if supplied
 	for _, item := range opt.ExtraConfig {
-		config.FileSet(item.Name, item.Key, item.Value)
+		config.FileSetValue(item.Name, item.Key, item.Value)
 	}
 	if *fstest.RemoteName != "" {
 		remoteName = *fstest.RemoteName
@@ -761,9 +762,15 @@ func Run(t *testing.T, opt *Opt) {
 			// assert.Nil(t, obj) - FIXME some remotes return the object even on nil
 			assert.NotNil(t, err)
 
-			obj, err := f.NewObject(ctx, file2.Path)
-			assert.Nil(t, obj)
-			assert.Equal(t, fs.ErrorObjectNotFound, err)
+			retry(t, "FsPutError: test object does not exist", func() error {
+				obj, err := f.NewObject(ctx, file2.Path)
+				if err == nil {
+					return fserrors.RetryErrorf("object is present")
+				}
+				assert.Nil(t, obj)
+				assert.Equal(t, fs.ErrorObjectNotFound, err)
+				return nil
+			})
 		})
 
 		t.Run("FsPutZeroLength", func(t *testing.T) {
@@ -2345,10 +2352,6 @@ func Run(t *testing.T, opt *Opt) {
 				t.Skip("skipping as ChunkedUpload.Skip is set")
 			}
 
-			if strings.HasPrefix(f.Name(), "serves3") || strings.HasPrefix(f.Name(), "TestS3Rclone") {
-				t.Skip("FIXME skip test - see #7454")
-			}
-
 			do, _ := f.(SetCopyCutoffer)
 			if do == nil {
 				t.Skipf("%T does not implement SetCopyCutoff", f)
@@ -2361,6 +2364,13 @@ func Run(t *testing.T, opt *Opt) {
 			if opt.ChunkedUpload.CeilChunkSize != nil {
 				minChunkSize = opt.ChunkedUpload.CeilChunkSize(minChunkSize)
 			}
+
+			// Test setting the copy cutoff before we get going
+			_, err := do.SetCopyCutoff(minChunkSize)
+			if errors.Is(err, fs.ErrorNotImplemented) {
+				t.Skipf("%T does not support SetCopyCutoff: %v", f, err)
+			}
+			require.NoError(t, err)
 
 			chunkSizes := fs.SizeSuffixList{
 				minChunkSize,

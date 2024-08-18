@@ -25,8 +25,7 @@ func init() {
 var commandDefinition = &cobra.Command{
 	Use:   "authorize",
 	Short: `Remote authorization.`,
-	Long: `
-Remote authorization. Used to authorize a remote or headless
+	Long: `Remote authorization. Used to authorize a remote or headless
 rclone from a machine with a browser - use as instructed by
 rclone config.
 

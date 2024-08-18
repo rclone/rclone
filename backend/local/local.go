@@ -32,9 +32,11 @@ import (
 )
 
 // Constants
-const devUnset = 0xdeadbeefcafebabe                                       // a device id meaning it is unset
-const linkSuffix = ".rclonelink"                                          // The suffix added to a translated symbolic link
-const useReadDir = (runtime.GOOS == "windows" || runtime.GOOS == "plan9") // these OSes read FileInfos directly
+const (
+	devUnset   = 0xdeadbeefcafebabe                                     // a device id meaning it is unset
+	linkSuffix = ".rclonelink"                                          // The suffix added to a translated symbolic link
+	useReadDir = (runtime.GOOS == "windows" || runtime.GOOS == "plan9") // these OSes read FileInfos directly
+)
 
 // timeType allows the user to choose what exactly ModTime() returns
 type timeType = fs.Enum[timeTypeChoices]
@@ -78,41 +80,46 @@ supported by all file systems) under the "user.*" prefix.
 Metadata is supported on files and directories.
 `,
 		},
-		Options: []fs.Option{{
-			Name:     "nounc",
-			Help:     "Disable UNC (long path names) conversion on Windows.",
-			Default:  false,
-			Advanced: runtime.GOOS != "windows",
-			Examples: []fs.OptionExample{{
-				Value: "true",
-				Help:  "Disables long file names.",
-			}},
-		}, {
-			Name:     "copy_links",
-			Help:     "Follow symlinks and copy the pointed to item.",
-			Default:  false,
-			NoPrefix: true,
-			ShortOpt: "L",
-			Advanced: true,
-		}, {
-			Name:     "links",
-			Help:     "Translate symlinks to/from regular files with a '" + linkSuffix + "' extension.",
-			Default:  false,
-			NoPrefix: true,
-			ShortOpt: "l",
-			Advanced: true,
-		}, {
-			Name: "skip_links",
-			Help: `Don't warn about skipped symlinks.
+		Options: []fs.Option{
+			{
+				Name:     "nounc",
+				Help:     "Disable UNC (long path names) conversion on Windows.",
+				Default:  false,
+				Advanced: runtime.GOOS != "windows",
+				Examples: []fs.OptionExample{{
+					Value: "true",
+					Help:  "Disables long file names.",
+				}},
+			},
+			{
+				Name:     "copy_links",
+				Help:     "Follow symlinks and copy the pointed to item.",
+				Default:  false,
+				NoPrefix: true,
+				ShortOpt: "L",
+				Advanced: true,
+			},
+			{
+				Name:     "links",
+				Help:     "Translate symlinks to/from regular files with a '" + linkSuffix + "' extension.",
+				Default:  false,
+				NoPrefix: true,
+				ShortOpt: "l",
+				Advanced: true,
+			},
+			{
+				Name: "skip_links",
+				Help: `Don't warn about skipped symlinks.
 
 This flag disables warning messages on skipped symlinks or junction
 points, as you explicitly acknowledge that they should be skipped.`,
-			Default:  false,
-			NoPrefix: true,
-			Advanced: true,
-		}, {
-			Name: "zero_size_links",
-			Help: `Assume the Stat size of links is zero (and read them instead) (deprecated).
+				Default:  false,
+				NoPrefix: true,
+				Advanced: true,
+			},
+			{
+				Name: "zero_size_links",
+				Help: `Assume the Stat size of links is zero (and read them instead) (deprecated).
 
 Rclone used to use the Stat size of links as the link size, but this fails in quite a few places:
 
@@ -122,11 +129,12 @@ Rclone used to use the Stat size of links as the link size, but this fails in qu
 
 So rclone now always reads the link.
 `,
-			Default:  false,
-			Advanced: true,
-		}, {
-			Name: "unicode_normalization",
-			Help: `Apply unicode NFC normalization to paths and filenames.
+				Default:  false,
+				Advanced: true,
+			},
+			{
+				Name: "unicode_normalization",
+				Help: `Apply unicode NFC normalization to paths and filenames.
 
 This flag can be used to normalize file names into unicode NFC form
 that are read from the local filesystem.
@@ -140,11 +148,12 @@ some OSes.
 
 Note that rclone compares filenames with unicode normalization in the sync
 routine so this flag shouldn't normally be used.`,
-			Default:  false,
-			Advanced: true,
-		}, {
-			Name: "no_check_updated",
-			Help: `Don't check to see if the files change during upload.
+				Default:  false,
+				Advanced: true,
+			},
+			{
+				Name: "no_check_updated",
+				Help: `Don't check to see if the files change during upload.
 
 Normally rclone checks the size and modification time of files as they
 are being uploaded and aborts with a message which starts "can't copy -
@@ -175,68 +184,96 @@ directory listing (where the initial stat value comes from on Windows)
 and when stat is called on them directly. Other copy tools always use
 the direct stat value and setting this flag will disable that.
 `,
-			Default:  false,
-			Advanced: true,
-		}, {
-			Name:     "one_file_system",
-			Help:     "Don't cross filesystem boundaries (unix/macOS only).",
-			Default:  false,
-			NoPrefix: true,
-			ShortOpt: "x",
-			Advanced: true,
-		}, {
-			Name: "case_sensitive",
-			Help: `Force the filesystem to report itself as case sensitive.
+				Default:  false,
+				Advanced: true,
+			},
+			{
+				Name:     "one_file_system",
+				Help:     "Don't cross filesystem boundaries (unix/macOS only).",
+				Default:  false,
+				NoPrefix: true,
+				ShortOpt: "x",
+				Advanced: true,
+			},
+			{
+				Name: "case_sensitive",
+				Help: `Force the filesystem to report itself as case sensitive.
 
 Normally the local backend declares itself as case insensitive on
 Windows/macOS and case sensitive for everything else.  Use this flag
 to override the default choice.`,
-			Default:  false,
-			Advanced: true,
-		}, {
-			Name: "case_insensitive",
-			Help: `Force the filesystem to report itself as case insensitive.
+				Default:  false,
+				Advanced: true,
+			},
+			{
+				Name: "case_insensitive",
+				Help: `Force the filesystem to report itself as case insensitive.
 
 Normally the local backend declares itself as case insensitive on
 Windows/macOS and case sensitive for everything else.  Use this flag
 to override the default choice.`,
-			Default:  false,
-			Advanced: true,
-		}, {
-			Name: "no_preallocate",
-			Help: `Disable preallocation of disk space for transferred files.
+				Default:  false,
+				Advanced: true,
+			},
+			{
+				Name: "no_clone",
+				Help: `Disable reflink cloning for server-side copies.
+
+Normally, for local-to-local transfers, rclone will "clone" the file when
+possible, and fall back to "copying" only when cloning is not supported.
+
+Cloning creates a shallow copy (or "reflink") which initially shares blocks with
+the original file. Unlike a "hardlink", the two files are independent and
+neither will affect the other if subsequently modified.
+
+Cloning is usually preferable to copying, as it is much faster and is
+deduplicated by default (i.e. having two identical files does not consume more
+storage than having just one.)  However, for use cases where data redundancy is
+preferable, --local-no-clone can be used to disable cloning and force "deep" copies.
+
+Currently, cloning is only supported when using APFS on macOS (support for other
+platforms may be added in the future.)`,
+				Default:  false,
+				Advanced: true,
+			},
+			{
+				Name: "no_preallocate",
+				Help: `Disable preallocation of disk space for transferred files.
 
 Preallocation of disk space helps prevent filesystem fragmentation.
 However, some virtual filesystem layers (such as Google Drive File
 Stream) may incorrectly set the actual file size equal to the
 preallocated space, causing checksum and file size checks to fail.
 Use this flag to disable preallocation.`,
-			Default:  false,
-			Advanced: true,
-		}, {
-			Name: "no_sparse",
-			Help: `Disable sparse files for multi-thread downloads.
+				Default:  false,
+				Advanced: true,
+			},
+			{
+				Name: "no_sparse",
+				Help: `Disable sparse files for multi-thread downloads.
 
 On Windows platforms rclone will make sparse files when doing
 multi-thread downloads. This avoids long pauses on large files where
 the OS zeros the file. However sparse files may be undesirable as they
 cause disk fragmentation and can be slow to work with.`,
-			Default:  false,
-			Advanced: true,
-		}, {
-			Name: "no_set_modtime",
-			Help: `Disable setting modtime.
+				Default:  false,
+				Advanced: true,
+			},
+			{
+				Name: "no_set_modtime",
+				Help: `Disable setting modtime.
 
 Normally rclone updates modification time of files after they are done
 uploading. This can cause permissions issues on Linux platforms when 
 the user rclone is running as does not own the file uploaded, such as
 when copying to a CIFS mount owned by another user. If this option is 
 enabled, rclone will no longer update the modtime after copying a file.`,
-			Default:  false,
-			Advanced: true,
-		}, {
-			Name: "time_type",
-			Help: `Set what kind of time is returned.
+				Default:  false,
+				Advanced: true,
+			},
+			{
+				Name: "time_type",
+				Help: `Set what kind of time is returned.
 
 Normally rclone does all operations on the mtime or Modification time.
 
@@ -255,27 +292,29 @@ will silently replace it with the modification time which all OSes support.
 Note that setting the time will still set the modified time so this is
 only useful for reading.
 `,
-			Default:  mTime,
-			Advanced: true,
-			Examples: []fs.OptionExample{{
-				Value: mTime.String(),
-				Help:  "The last modification time.",
-			}, {
-				Value: aTime.String(),
-				Help:  "The last access time.",
-			}, {
-				Value: bTime.String(),
-				Help:  "The creation time.",
-			}, {
-				Value: cTime.String(),
-				Help:  "The last status change time.",
-			}},
-		}, {
-			Name:     config.ConfigEncoding,
-			Help:     config.ConfigEncodingHelp,
-			Advanced: true,
-			Default:  encoder.OS,
-		}},
+				Default:  mTime,
+				Advanced: true,
+				Examples: []fs.OptionExample{{
+					Value: mTime.String(),
+					Help:  "The last modification time.",
+				}, {
+					Value: aTime.String(),
+					Help:  "The last access time.",
+				}, {
+					Value: bTime.String(),
+					Help:  "The creation time.",
+				}, {
+					Value: cTime.String(),
+					Help:  "The last status change time.",
+				}},
+			},
+			{
+				Name:     config.ConfigEncoding,
+				Help:     config.ConfigEncodingHelp,
+				Advanced: true,
+				Default:  encoder.OS,
+			},
+		},
 	}
 	fs.Register(fsi)
 }
@@ -296,6 +335,7 @@ type Options struct {
 	NoSetModTime      bool                 `config:"no_set_modtime"`
 	TimeType          timeType             `config:"time_type"`
 	Enc               encoder.MultiEncoder `config:"encoding"`
+	NoClone           bool                 `config:"no_clone"`
 }
 
 // Fs represents a local filesystem rooted at root
@@ -383,6 +423,10 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	}).Fill(ctx, f)
 	if opt.FollowSymlinks {
 		f.lstat = os.Stat
+	}
+	if opt.NoClone {
+		// Disable server-side copy when --local-no-clone is set
+		f.features.Copy = nil
 	}
 
 	// Check to see if this points to a file

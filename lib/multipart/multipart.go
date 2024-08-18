@@ -17,7 +17,7 @@ import (
 )
 
 const (
-	bufferSize           = 1024 * 1024     // default size of the pages used in the reader
+	BufferSize           = 1024 * 1024     // BufferSize is the default size of the pages used in the reader
 	bufferCacheSize      = 64              // max number of buffers to keep in cache
 	bufferCacheFlushTime = 5 * time.Second // flush the cached buffers after this long
 )
@@ -33,7 +33,7 @@ func getPool() *pool.Pool {
 	bufferPoolOnce.Do(func() {
 		ci := fs.GetConfig(context.Background())
 		// Initialise the buffer pool when used
-		bufferPool = pool.New(bufferCacheFlushTime, bufferSize, bufferCacheSize, ci.UseMmap)
+		bufferPool = pool.New(bufferCacheFlushTime, BufferSize, bufferCacheSize, ci.UseMmap)
 	})
 	return bufferPool
 }

@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"math"
 )
 
 // crypt internals
@@ -47,6 +48,9 @@ func crypt(out, in, iv []byte) error {
 // This is done by encrypting with AES-CTR
 func Obscure(x string) (string, error) {
 	plaintext := []byte(x)
+	if math.MaxInt32-aes.BlockSize < len(plaintext) {
+		return "", fmt.Errorf("value too large")
+	}
 	ciphertext := make([]byte, aes.BlockSize+len(plaintext))
 	iv := ciphertext[:aes.BlockSize]
 	if _, err := io.ReadFull(cryptRand, iv); err != nil {

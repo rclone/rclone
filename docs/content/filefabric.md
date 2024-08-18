@@ -75,12 +75,12 @@ y) Yes
 n) No (default)
 y/n> n
 Remote config
---------------------
-[remote]
-type = filefabric
-url = https://yourfabric.smestorage.com/
-permanent_token = xxxxxxxxxxxxxxx-xxxxxxxxxxxxxxxx
---------------------
+Configuration complete.
+Options:
+- type: filefabric
+- url: https://yourfabric.smestorage.com/
+- permanent_token: xxxxxxxxxxxxxxx-xxxxxxxxxxxxxxxx
+Keep this "remote" remote?
 y) Yes this is OK (default)
 e) Edit this remote
 d) Delete this remote

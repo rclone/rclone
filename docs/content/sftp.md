@@ -74,14 +74,15 @@ y/g/n> n
 Path to unencrypted PEM-encoded private key file, leave blank to use ssh-agent.
 key_file>
 Remote config
---------------------
-[remote]
-host = example.com
-user = sftpuser
-port =
-pass =
-key_file =
---------------------
+Configuration complete.
+Options:
+- type: sftp
+- host: example.com
+- user: sftpuser
+- port:
+- pass:
+- key_file:
+Keep this "remote" remote?
 y) Yes this is OK
 e) Edit this remote
 d) Delete this remote

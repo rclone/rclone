@@ -77,15 +77,16 @@ Configure this as a Shared Drive (Team Drive)?
 y) Yes
 n) No
 y/n> n
---------------------
-[remote]
-client_id = 
-client_secret = 
-scope = drive
-root_folder_id = 
-service_account_file =
-token = {"access_token":"XXX","token_type":"Bearer","refresh_token":"XXX","expiry":"2014-03-16T13:57:58.955387075Z"}
---------------------
+Configuration complete.
+Options:
+type: drive
+- client_id:
+- client_secret:
+- scope: drive
+- root_folder_id:
+- service_account_file:
+- token: {"access_token":"XXX","token_type":"Bearer","refresh_token":"XXX","expiry":"2014-03-16T13:57:58.955387075Z"}
+Keep this "remote" remote?
 y) Yes this is OK
 e) Edit this remote
 d) Delete this remote
@@ -213,42 +214,49 @@ credentials file into the rclone config file, you can set
 `service_account_credentials` with the actual contents of the file
 instead, or set the equivalent environment variable.
 
-#### Use case - Google Apps/G-suite account and individual Drive
+#### Use case - Google Workspace account and individual Drive
 
-Let's say that you are the administrator of a Google Apps (old) or
-G-suite account.
-The goal is to store data on an individual's Drive account, who IS
-a member of the domain.
-We'll call the domain **example.com**, and the user
-**foo@example.com**.
+Let's say that you are the administrator of a Google Workspace. The
+goal is to read or write data on an individual's Drive account, who IS
+a member of the domain. We'll call the domain **example.com**, and the
+user **foo@example.com**.
 
 There's a few steps we need to go through to accomplish this:
 
 ##### 1. Create a service account for example.com
+
   - To create a service account and obtain its credentials, go to the
 [Google Developer Console](https://console.developers.google.com).
-  - You must have a project - create one if you don't.
+  - You must have a project - create one if you don't and make sure you are on the selected project.
   - Then go to "IAM & admin" -> "Service Accounts".
   - Use the "Create Service Account" button. Fill in "Service account name"
 and "Service account ID" with something that identifies your client.
   - Select "Create And Continue". Step 2 and 3 are optional.
-  - These credentials are what rclone will use for authentication.
+  - Click on the newly created service account
+  - Click "Keys" and then "Add Key" and then "Create new key"
+  - Choose type "JSON" and click create
+  - This will download a small JSON file that rclone will use for authentication.
+
 If you ever need to remove access, press the "Delete service
 account key" button.
 
 ##### 2. Allowing API access to example.com Google Drive
-  - Go to example.com's admin console
+
+  - Go to example.com's [Workspace Admin Console](https://admin.google.com)
   - Go into "Security" (or use the search bar)
-  - Select "Show more" and then "Advanced settings"
-  - Select "Manage API client access" in the "Authentication" section
-  - In the "Client Name" field enter the service account's
+  - Select "Access and data control" and then "API controls"
+  - Click "Manage domain-wide delegation"
+  - Click "Add new"
+  - In the "Client ID" field enter the service account's
 "Client ID" - this can be found in the Developer Console under
 "IAM & Admin" -> "Service Accounts", then "View Client ID" for
 the newly created service account.
 It is a ~21 character numerical string.
-  - In the next field, "One or More API Scopes", enter
+  - In the next field, "OAuth Scopes", enter
 `https://www.googleapis.com/auth/drive`
-to grant access to Google Drive specifically.
+to grant read/write access to Google Drive specifically.
+You can also use `https://www.googleapis.com/auth/drive.readonly` for read only access.
+  - Click "Authorise"
 
 ##### 3. Configure rclone, assuming a new install
 
@@ -257,17 +265,18 @@ rclone config
 
 n/s/q> n         # New
 name>gdrive      # Gdrive is an example name
-Storage>         # Select the number shown for Google Drive
+Storage>         # Type drive
 client_id>       # Can be left blank
 client_secret>   # Can be left blank
-scope>           # Select your scope, 1 for example
+scope>           # Select the scope use used in step 2
 root_folder_id>  # Can be left blank
-service_account_file> /home/foo/myJSONfile.json # This is where the JSON file goes!
+service_account_file> /home/foo/myJSONfile.json # Path to the JSON file you downloaded in step 1.
 y/n>             # Auto config, n
 
 ```
 
 ##### 4. Verify that it's working
+
   - `rclone -v --drive-impersonate foo@example.com lsf gdrive:backup`
   - The arguments do:
     - `-v` - verbose logging
@@ -278,7 +287,7 @@ the magic, pretending to be user foo.
 the folder named backup.
 
 Note: in case you configured a specific root folder on gdrive and rclone is unable to access the contents of that folder when using `--drive-impersonate`, do this instead:
-  - in the gdrive web interface, share your root folder with the user/email of the new Service Account you created/selected at step #1
+  - in the gdrive web interface, share your root folder with the user/email of the new Service Account you created/selected at step 1
   - use rclone without specifying the `--drive-impersonate` option, like this:
         `rclone -v lsf gdrive:backup`
 
@@ -309,13 +318,14 @@ Choose a number from below, or type in your own value
  3 / Rclone Test 3
    \ "zzzzzzzzzzzzzzzzzzzz"
 Enter a Shared Drive ID> 1
---------------------
-[remote]
-client_id =
-client_secret =
-token = {"AccessToken":"xxxx.x.xxxxx_xxxxxxxxxxx_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx","RefreshToken":"1/xxxxxxxxxxxxxxxx_xxxxxxxxxxxxxxxxxxxxxxxxxx","Expiry":"2014-03-16T13:57:58.955387075Z","Extra":null}
-team_drive = xxxxxxxxxxxxxxxxxxxx
---------------------
+Configuration complete.
+Options:
+- type: drive
+- client_id:
+- client_secret:
+- token: {"AccessToken":"xxxx.x.xxxxx_xxxxxxxxxxx_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx","RefreshToken":"1/xxxxxxxxxxxxxxxx_xxxxxxxxxxxxxxxxxxxxxxxxxx","Expiry":"2014-03-16T13:57:58.955387075Z","Extra":null}
+- team_drive: xxxxxxxxxxxxxxxxxxxx
+Keep this "remote" remote?
 y) Yes this is OK
 e) Edit this remote
 d) Delete this remote

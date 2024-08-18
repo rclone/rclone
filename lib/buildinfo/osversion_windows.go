@@ -93,5 +93,5 @@ func getRegistryVersionString(name string) string {
 		return ""
 	}
 
-	return windows.UTF16ToString(regBuf[:])
+	return windows.UTF16ToString(regBuf)
 }

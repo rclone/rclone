@@ -78,11 +78,11 @@ Got code
 *** are stored in full resolution at original quality.  These uploads
 *** will count towards storage in your Google Account.
 
---------------------
-[remote]
-type = google photos
-token = {"access_token":"XXX","token_type":"Bearer","refresh_token":"XXX","expiry":"2019-06-28T17:38:04.644930156+01:00"}
---------------------
+Configuration complete.
+Options:
+- type: google photos
+- token: {"access_token":"XXX","token_type":"Bearer","refresh_token":"XXX","expiry":"2019-06-28T17:38:04.644930156+01:00"}
+Keep this "remote" remote?
 y) Yes this is OK
 e) Edit this remote
 d) Delete this remote

@@ -26,8 +26,7 @@ func init() {
 var commandDefinition = &cobra.Command{
 	Use:   "size remote:path",
 	Short: `Prints the total size and number of objects in remote:path.`,
-	Long: `
-Counts objects in the path and calculates the total size. Prints the
+	Long: `Counts objects in the path and calculates the total size. Prints the
 result to standard output.
 
 By default the output is in human-readable format, but shows values in

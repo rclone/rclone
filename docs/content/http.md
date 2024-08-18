@@ -63,10 +63,11 @@ Choose a number from below, or type in your own value
    \ "https://example.com"
 url> https://beta.rclone.org
 Remote config
---------------------
-[remote]
-url = https://beta.rclone.org
---------------------
+Configuration complete.
+Options:
+- type: http
+- url: https://beta.rclone.org
+Keep this "remote" remote?
 y) Yes this is OK
 e) Edit this remote
 d) Delete this remote

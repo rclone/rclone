@@ -62,11 +62,11 @@ Remote config
 Username (email address)> nick@craig-wood.com
 Your Sugarsync password is only required during setup and will not be stored.
 password:
---------------------
-[remote]
-type = sugarsync
-refresh_token = https://api.sugarsync.com/app-authorization/XXXXXXXXXXXXXXXXXX
---------------------
+Configuration complete.
+Options:
+- type: sugarsync
+- refresh_token: https://api.sugarsync.com/app-authorization/XXXXXXXXXXXXXXXXXX
+Keep this "remote" remote?
 y) Yes this is OK (default)
 e) Edit this remote
 d) Delete this remote

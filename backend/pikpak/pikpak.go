@@ -37,10 +37,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/credentials"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/s3/s3manager"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	awsconfig "github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/credentials"
+	"github.com/aws/aws-sdk-go-v2/feature/s3/manager"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/rclone/rclone/backend/pikpak/api"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/accounting"
@@ -70,8 +71,8 @@ const (
 	taskWaitTime                = 500 * time.Millisecond
 	decayConstant               = 2 // bigger for slower decay, exponential
 	rootURL                     = "https://api-drive.mypikpak.com"
-	minChunkSize                = fs.SizeSuffix(s3manager.MinUploadPartSize)
-	defaultUploadConcurrency    = s3manager.DefaultUploadConcurrency
+	minChunkSize                = fs.SizeSuffix(manager.MinUploadPartSize)
+	defaultUploadConcurrency    = manager.DefaultUploadConcurrency
 )
 
 // Globals
@@ -1190,32 +1191,33 @@ func (f *Fs) uploadByForm(ctx context.Context, in io.Reader, name string, size i
 
 func (f *Fs) uploadByResumable(ctx context.Context, in io.Reader, name string, size int64, resumable *api.Resumable) (err error) {
 	p := resumable.Params
-	endpoint := strings.Join(strings.Split(p.Endpoint, ".")[1:], ".") // "mypikpak.com"
 
-	cfg := &aws.Config{
-		Credentials: credentials.NewStaticCredentials(p.AccessKeyID, p.AccessKeySecret, p.SecurityToken),
-		Region:      aws.String("pikpak"),
-		Endpoint:    &endpoint,
-	}
-	sess, err := session.NewSession(cfg)
+	// Create a credentials provider
+	creds := credentials.NewStaticCredentialsProvider(p.AccessKeyID, p.AccessKeySecret, p.SecurityToken)
+
+	cfg, err := awsconfig.LoadDefaultConfig(ctx,
+		awsconfig.WithCredentialsProvider(creds),
+		awsconfig.WithRegion("pikpak"))
 	if err != nil {
 		return
 	}
-	partSize := chunksize.Calculator(name, size, s3manager.MaxUploadParts, f.opt.ChunkSize)
 
-	// Create an uploader with the session and custom options
-	uploader := s3manager.NewUploader(sess, func(u *s3manager.Uploader) {
+	client := s3.NewFromConfig(cfg, func(o *s3.Options) {
+		o.BaseEndpoint = aws.String("https://mypikpak.com/")
+	})
+	partSize := chunksize.Calculator(name, size, int(manager.MaxUploadParts), f.opt.ChunkSize)
+
+	// Create an uploader with custom options
+	uploader := manager.NewUploader(client, func(u *manager.Uploader) {
 		u.PartSize = int64(partSize)
 		u.Concurrency = f.opt.UploadConcurrency
 	})
-	// Upload input parameters
-	uParams := &s3manager.UploadInput{
+	// Perform an upload
+	_, err = uploader.Upload(ctx, &s3.PutObjectInput{
 		Bucket: &p.Bucket,
 		Key:    &p.Key,
 		Body:   in,
-	}
-	// Perform an upload
-	_, err = uploader.UploadWithContext(ctx, uParams)
+	})
 	return
 }
 

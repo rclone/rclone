@@ -17,8 +17,7 @@ func init() {
 var commandDefinition = &cobra.Command{
 	Use:   "copyto source:path dest:path",
 	Short: `Copy files from source to dest, skipping identical files.`,
-	Long: `
-If source:path is a file or directory then it copies it to a file or
+	Long: `If source:path is a file or directory then it copies it to a file or
 directory named dest:path.
 
 This can be used to upload single files to other than their current

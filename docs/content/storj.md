@@ -1,6 +1,8 @@
 ---
 title: "Storj"
 description: "Rclone docs for Storj"
+aliases:
+  - tardigrade
 versionIntroduced: "v1.52"
 ---
 
@@ -150,11 +152,11 @@ Access Grant.
 Enter a string value. Press Enter for the default ("").
 access_grant> your-access-grant-received-by-someone-else
 Remote config
---------------------
-[remote]
-type = storj
-access_grant = your-access-grant-received-by-someone-else
---------------------
+Configuration complete.
+Options:
+- type: storj
+- access_grant: your-access-grant-received-by-someone-else
+Keep this "remote" remote?
 y) Yes this is OK (default)
 e) Edit this remote
 d) Delete this remote
@@ -205,14 +207,14 @@ Encryption Passphrase. To access existing objects enter passphrase used for uplo
 Enter a string value. Press Enter for the default ("").
 passphrase> your-human-readable-encryption-passphrase
 Remote config
---------------------
-[remote]
-type = storj
-satellite_address = 12EayRS2V1kEsWESU9QMRseFhdxYxKicsiFmxrsLZHeLUtdps3S@us1.storj.io:7777
-api_key = your-api-key-for-your-storj-project
-passphrase = your-human-readable-encryption-passphrase
-access_grant = the-access-grant-generated-from-the-api-key-and-passphrase
---------------------
+Configuration complete.
+Options:
+- type: storj
+- satellite_address: 12EayRS2V1kEsWESU9QMRseFhdxYxKicsiFmxrsLZHeLUtdps3S@us1.storj.io:7777
+- api_key: your-api-key-for-your-storj-project
+- passphrase: your-human-readable-encryption-passphrase
+- access_grant: the-access-grant-generated-from-the-api-key-and-passphrase
+Keep this "remote" remote?
 y) Yes this is OK (default)
 e) Edit this remote
 d) Delete this remote

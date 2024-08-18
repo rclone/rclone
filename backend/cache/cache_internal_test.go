@@ -417,7 +417,7 @@ func TestInternalWrappedFsChangeNotSeen(t *testing.T) {
 	if runInstance.rootIsCrypt {
 		data2, err = base64.StdEncoding.DecodeString(cryptedText3Base64)
 		require.NoError(t, err)
-		expectedSize = expectedSize + 1 // FIXME newline gets in, likely test data issue
+		expectedSize++ // FIXME newline gets in, likely test data issue
 	} else {
 		data2 = []byte("test content")
 	}
@@ -850,8 +850,8 @@ func (r *run) encryptRemoteIfNeeded(t *testing.T, remote string) string {
 func (r *run) newCacheFs(t *testing.T, remote, id string, needRemote, purge bool, flags map[string]string) (fs.Fs, *cache.Persistent) {
 	fstest.Initialise()
 	remoteExists := false
-	for _, s := range config.FileSections() {
-		if s == remote {
+	for _, s := range config.GetRemotes() {
+		if s.Name == remote {
 			remoteExists = true
 		}
 	}
@@ -875,12 +875,12 @@ func (r *run) newCacheFs(t *testing.T, remote, id string, needRemote, purge bool
 	cacheRemote := remote
 	if !remoteExists {
 		localRemote := remote + "-local"
-		config.FileSet(localRemote, "type", "local")
-		config.FileSet(localRemote, "nounc", "true")
+		config.FileSetValue(localRemote, "type", "local")
+		config.FileSetValue(localRemote, "nounc", "true")
 		m.Set("type", "cache")
 		m.Set("remote", localRemote+":"+filepath.Join(os.TempDir(), localRemote))
 	} else {
-		remoteType := config.FileGet(remote, "type")
+		remoteType := config.GetValue(remote, "type")
 		if remoteType == "" {
 			t.Skipf("skipped due to invalid remote type for %v", remote)
 			return nil, nil
@@ -891,14 +891,14 @@ func (r *run) newCacheFs(t *testing.T, remote, id string, needRemote, purge bool
 				m.Set("password", cryptPassword1)
 				m.Set("password2", cryptPassword2)
 			}
-			remoteRemote := config.FileGet(remote, "remote")
+			remoteRemote := config.GetValue(remote, "remote")
 			if remoteRemote == "" {
 				t.Skipf("skipped due to invalid remote wrapper for %v", remote)
 				return nil, nil
 			}
 			remoteRemoteParts := strings.Split(remoteRemote, ":")
 			remoteWrapping := remoteRemoteParts[0]
-			remoteType := config.FileGet(remoteWrapping, "type")
+			remoteType := config.GetValue(remoteWrapping, "type")
 			if remoteType != "cache" {
 				t.Skipf("skipped due to invalid remote type for %v: '%v'", remoteWrapping, remoteType)
 				return nil, nil
@@ -1192,7 +1192,7 @@ func (r *run) updateData(t *testing.T, rootFs fs.Fs, src, data, append string) e
 func (r *run) cleanSize(t *testing.T, size int64) int64 {
 	if r.rootIsCrypt {
 		denominator := int64(65536 + 16)
-		size = size - 32
+		size -= 32
 		quotient := size / denominator
 		remainder := size % denominator
 		return (quotient*65536 + remainder - 16)

@@ -1382,6 +1382,12 @@ func testSyncWithMaxDuration(t *testing.T, cutoffMode fs.CutoffMode) {
 	r.CheckLocalItems(t, file1, file2)
 	r.CheckRemoteItems(t)
 
+	if runtime.GOOS == "darwin" {
+		r.Flocal.Features().Disable("Copy") // macOS cloning is too fast for this test!
+		if r.Fremote.Features().IsLocal {
+			r.Fremote.Features().Disable("Copy") // macOS cloning is too fast for this test!
+		}
+	}
 	accounting.GlobalStats().ResetCounters()
 	// ctx = predictDstFromLogger(ctx) // not currently supported (but tests do pass for CutoffModeSoft)
 	startTime := time.Now()
@@ -2568,6 +2574,14 @@ func TestMaxTransfer(t *testing.T) {
 		file3 := r.WriteFile("file3", string(make([]byte, 3*1024)), t1)
 		r.CheckLocalItems(t, file1, file2, file3)
 		r.CheckRemoteItems(t)
+
+		if runtime.GOOS == "darwin" {
+			// disable server-side copies as they don't count towards transfer size stats
+			r.Flocal.Features().Disable("Copy")
+			if r.Fremote.Features().IsLocal {
+				r.Fremote.Features().Disable("Copy")
+			}
+		}
 
 		accounting.GlobalStats().ResetCounters()
 

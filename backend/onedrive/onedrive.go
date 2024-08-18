@@ -1927,7 +1927,7 @@ func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, 
 		return shareURL, nil
 	}
 
-	cnvFailMsg := "Don't know how to convert share link to direct link - returning the link as is"
+	const cnvFailMsg = "Don't know how to convert share link to direct link - returning the link as is"
 	directURL := ""
 	segments := strings.Split(shareURL, "/")
 	switch f.driveType {

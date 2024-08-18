@@ -41,11 +41,12 @@ Enter the password:
 password:
 Confirm the password:
 password:
---------------------
-[remote]
-username =
-password = *** ENCRYPTED ***
---------------------
+Configuration complete.
+Options:
+- type: opendrive
+- username:
+- password: *** ENCRYPTED ***
+Keep this "remote" remote?
 y) Yes this is OK
 e) Edit this remote
 d) Delete this remote

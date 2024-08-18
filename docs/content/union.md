@@ -68,11 +68,11 @@ Cache time of usage and free space (in seconds). This option is only useful when
 Enter a signed integer. Press Enter for the default ("120").
 cache_time>
 Remote config
---------------------
-[remote]
-type = union
-upstreams = remote1:dir1 remote2:dir2 remote3:dir3
---------------------
+Configuration complete.
+Options:
+- type: union
+- upstreams: remote1:dir1 remote2:dir2 remote3:dir3
+Keep this "remote" remote?
 y) Yes this is OK
 e) Edit this remote
 d) Delete this remote

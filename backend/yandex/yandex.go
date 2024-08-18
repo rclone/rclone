@@ -296,16 +296,14 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	//request object meta info
 	if info, err := f.readMetaDataForPath(ctx, f.diskRoot, &api.ResourceInfoRequestOptions{}); err != nil {
 
-	} else {
-		if info.ResourceType == "file" {
-			rootDir := path.Dir(root)
-			if rootDir == "." {
-				rootDir = ""
-			}
-			f.setRoot(rootDir)
-			// return an error with an fs which points to the parent
-			return f, fs.ErrorIsFile
+	} else if info.ResourceType == "file" {
+		rootDir := path.Dir(root)
+		if rootDir == "." {
+			rootDir = ""
 		}
+		f.setRoot(rootDir)
+		// return an error with an fs which points to the parent
+		return f, fs.ErrorIsFile
 	}
 	return f, nil
 }

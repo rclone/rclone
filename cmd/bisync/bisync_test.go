@@ -1304,7 +1304,7 @@ func touchFiles(ctx context.Context, dateStr string, f fs.Fs, dir, glob string) 
 		return files, fmt.Errorf("invalid date %q: %w", dateStr, err)
 	}
 
-	matcher, firstErr := filter.GlobToRegexp(glob, false)
+	matcher, firstErr := filter.GlobPathToRegexp(glob, false)
 	if firstErr != nil {
 		return files, fmt.Errorf("invalid glob %q", glob)
 	}
@@ -1742,8 +1742,8 @@ func (b *bisyncTest) newReplacer(mangle bool) *strings.Replacer {
 		b.path2, "{path2/}",
 		b.replaceHex(b.path1), "{path1/}",
 		b.replaceHex(b.path2), "{path2/}",
-		"//?/" + strings.TrimSuffix(strings.Replace(b.path1, slash, "/", -1), "/"), "{path1}", // fix windows-specific issue
-		"//?/" + strings.TrimSuffix(strings.Replace(b.path2, slash, "/", -1), "/"), "{path2}",
+		"//?/" + strings.TrimSuffix(strings.ReplaceAll(b.path1, slash, "/"), "/"), "{path1}", // fix windows-specific issue
+		"//?/" + strings.TrimSuffix(strings.ReplaceAll(b.path2, slash, "/"), "/"), "{path2}",
 		strings.TrimSuffix(b.path1, slash), "{path1}", // ensure it's still recognized without trailing slash
 		strings.TrimSuffix(b.path2, slash), "{path2}",
 		b.workDir, "{workdir}",

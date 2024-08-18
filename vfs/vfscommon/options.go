@@ -80,6 +80,11 @@ var OptionsInfo = fs.Options{{
 	Help:    "If greater than --vfs-read-chunk-size, double the chunk size after each chunk read, until the limit is reached ('off' is unlimited)",
 	Groups:  "VFS",
 }, {
+	Name:    "vfs_read_chunk_streams",
+	Default: 0,
+	Help:    "The number of parallel streams to read at once",
+	Groups:  "VFS",
+}, {
 	Name:    "dir_perms",
 	Default: FileMode(0777),
 	Help:    "Directory permissions",
@@ -171,6 +176,7 @@ type Options struct {
 	FilePerms          FileMode      `config:"file_perms"`
 	ChunkSize          fs.SizeSuffix `config:"vfs_read_chunk_size"`       // if > 0 read files in chunks
 	ChunkSizeLimit     fs.SizeSuffix `config:"vfs_read_chunk_size_limit"` // if > ChunkSize double the chunk size after each chunk until reached
+	ChunkStreams       int           `config:"vfs_read_chunk_streams"`    // Number of download streams to use
 	CacheMode          CacheMode     `config:"vfs_cache_mode"`
 	CacheMaxAge        fs.Duration   `config:"vfs_cache_max_age"`
 	CacheMaxSize       fs.SizeSuffix `config:"vfs_cache_max_size"`

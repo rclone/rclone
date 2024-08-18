@@ -72,15 +72,15 @@ password:
 Bearer token instead of user/pass (e.g. a Macaroon)
 bearer_token>
 Remote config
---------------------
-[remote]
-type = webdav
-url = https://example.com/remote.php/webdav/
-vendor = nextcloud
-user = user
-pass = *** ENCRYPTED ***
-bearer_token =
---------------------
+Configuration complete.
+Options:
+- type: webdav
+- url: https://example.com/remote.php/webdav/
+- vendor: nextcloud
+- user: user
+- pass: *** ENCRYPTED ***
+- bearer_token:
+Keep this "remote" remote?
 y) Yes this is OK
 e) Edit this remote
 d) Delete this remote
@@ -293,6 +293,17 @@ Properties:
 - Env Var:     RCLONE_WEBDAV_OWNCLOUD_EXCLUDE_MOUNTS
 - Type:        bool
 - Default:     false
+
+#### --webdav-unix-socket
+
+Path to a unix domain socket to dial to, instead of opening a TCP connection directly
+
+Properties:
+
+- Config:      unix_socket
+- Env Var:     RCLONE_WEBDAV_UNIX_SOCKET
+- Type:        string
+- Required:    false
 
 #### --webdav-description
 

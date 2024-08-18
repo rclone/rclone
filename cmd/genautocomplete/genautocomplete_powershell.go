@@ -15,8 +15,7 @@ func init() {
 var powershellCommandDefinition = &cobra.Command{
 	Use:   "powershell [output_file]",
 	Short: `Output powershell completion script for rclone.`,
-	Long: `
-Generate the autocompletion script for powershell.
+	Long: `Generate the autocompletion script for powershell.
 
 To load completions in your current shell session:
 

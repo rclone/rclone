@@ -15,12 +15,11 @@ func init() {
 var bashCommandDefinition = &cobra.Command{
 	Use:   "bash [output_file]",
 	Short: `Output bash completion script for rclone.`,
-	Long: `
-Generates a bash shell autocompletion script for rclone.
+	Long: `Generates a bash shell autocompletion script for rclone.
 
 By default, when run without any arguments, 
 
-    rclone genautocomplete bash
+    rclone completion bash
 
 the generated script will be written to
 

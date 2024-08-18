@@ -50,16 +50,17 @@ func (gs *Groups) NewGroup(name, help string) *Group {
 }
 
 // Filter makes a copy of groups filtered by flagsRe
-func (gs *Groups) Filter(flagsRe *regexp.Regexp) *Groups {
+func (gs *Groups) Filter(group string, filterRe *regexp.Regexp, filterNamesOnly bool) *Groups {
 	newGs := NewGroups()
 	for _, g := range gs.Groups {
-		newG := newGs.NewGroup(g.Name, g.Help)
-		g.Flags.VisitAll(func(f *pflag.Flag) {
-			matched := flagsRe == nil || flagsRe.MatchString(f.Name) || flagsRe.MatchString(f.Usage)
-			if matched {
-				newG.Flags.AddFlag(f)
-			}
-		})
+		if group == "" || strings.EqualFold(g.Name, group) {
+			newG := newGs.NewGroup(g.Name, g.Help)
+			g.Flags.VisitAll(func(f *pflag.Flag) {
+				if filterRe == nil || filterRe.MatchString(f.Name) || (!filterNamesOnly && filterRe.MatchString(f.Usage)) {
+					newG.Flags.AddFlag(f)
+				}
+			})
+		}
 	}
 	return newGs
 }
@@ -110,19 +111,19 @@ var All *Groups
 // Groups of flags for documentation purposes
 func init() {
 	All = NewGroups()
-	All.NewGroup("Copy", "Flags for anything which can Copy a file.")
-	All.NewGroup("Sync", "Flags just used for `rclone sync`.")
-	All.NewGroup("Important", "Important flags useful for most commands.")
-	All.NewGroup("Check", "Flags used for `rclone check`.")
-	All.NewGroup("Networking", "General networking and HTTP stuff.")
-	All.NewGroup("Performance", "Flags helpful for increasing performance.")
-	All.NewGroup("Config", "General configuration of rclone.")
-	All.NewGroup("Debugging", "Flags for developers.")
-	All.NewGroup("Filter", "Flags for filtering directory listings.")
-	All.NewGroup("Listing", "Flags for listing directories.")
-	All.NewGroup("Logging", "Logging and statistics.")
-	All.NewGroup("Metadata", "Flags to control metadata.")
-	All.NewGroup("RC", "Flags to control the Remote Control API.")
+	All.NewGroup("Copy", "Flags for anything which can copy a file")
+	All.NewGroup("Sync", "Flags used for sync commands")
+	All.NewGroup("Important", "Important flags useful for most commands")
+	All.NewGroup("Check", "Flags used for check commands")
+	All.NewGroup("Networking", "Flags for general networking and HTTP stuff")
+	All.NewGroup("Performance", "Flags helpful for increasing performance")
+	All.NewGroup("Config", "Flags for general configuration of rclone")
+	All.NewGroup("Debugging", "Flags for developers")
+	All.NewGroup("Filter", "Flags for filtering directory listings")
+	All.NewGroup("Listing", "Flags for listing directories")
+	All.NewGroup("Logging", "Flags for logging and statistics")
+	All.NewGroup("Metadata", "Flags to control metadata")
+	All.NewGroup("RC", "Flags to control the Remote Control API")
 }
 
 // installFlag constructs a name from the flag passed in and

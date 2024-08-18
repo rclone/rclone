@@ -232,10 +232,8 @@ func (tb *tokenBucket) rcBwlimit(ctx context.Context, in rc.Params) (out rc.Para
 // Remote control for the token bucket
 func init() {
 	rc.Add(rc.Call{
-		Path: "core/bwlimit",
-		Fn: func(ctx context.Context, in rc.Params) (out rc.Params, err error) {
-			return TokenBucket.rcBwlimit(ctx, in)
-		},
+		Path:  "core/bwlimit",
+		Fn:    TokenBucket.rcBwlimit,
 		Title: "Set the bandwidth limit.",
 		Help: `
 This sets the bandwidth limit to the string passed in. This should be

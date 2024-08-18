@@ -3,7 +3,6 @@ package s3
 import (
 	"context"
 	"encoding/hex"
-	"fmt"
 	"io"
 	"os"
 	"path"
@@ -127,7 +126,7 @@ func authlistResolver(list []string) map[string]string {
 	for _, v := range list {
 		parts := strings.Split(v, ",")
 		if len(parts) != 2 {
-			fs.Infof(nil, fmt.Sprintf("Ignored: invalid auth pair %s", v))
+			fs.Infof(nil, "Ignored: invalid auth pair %s", v)
 			continue
 		}
 		authList[parts[0]] = parts[1]
