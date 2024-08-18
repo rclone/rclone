@@ -5,7 +5,6 @@ package mount2
 
 import (
 	"fmt"
-	"log"
 	"runtime"
 	"time"
 
@@ -150,7 +149,7 @@ func mountOptions(fsys *FS, f fs.Fs, opt *mountlib.Options) (mountOpts *fuse.Mou
 		opts = append(opts, "ro")
 	}
 	if fsys.opt.WritebackCache {
-		log.Printf("FIXME --write-back-cache not supported")
+		fs.Printf(nil, "FIXME --write-back-cache not supported")
 		// FIXME opts = append(opts,fuse.WritebackCache())
 	}
 	// Some OS X only options

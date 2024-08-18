@@ -9,7 +9,6 @@ import (
 	"errors"
 	"fmt"
 	"html/template"
-	"log"
 	"net"
 	"net/http"
 	"os"
@@ -78,7 +77,7 @@ certificate authority certificate.
 `
 	tmpl, err := template.New("server help").Parse(help)
 	if err != nil {
-		log.Fatal("Fatal error parsing template", err)
+		fs.Fatal(nil, fmt.Sprint("Fatal error parsing template", err))
 	}
 
 	data := struct {
@@ -89,7 +88,7 @@ certificate authority certificate.
 	buf := &bytes.Buffer{}
 	err = tmpl.Execute(buf, data)
 	if err != nil {
-		log.Fatal("Fatal error executing template", err)
+		fs.Fatal(nil, fmt.Sprint("Fatal error executing template", err))
 	}
 	return buf.String()
 }
@@ -199,7 +198,7 @@ func (s instance) serve(wg *sync.WaitGroup) {
 	defer wg.Done()
 	err := s.httpServer.Serve(s.listener)
 	if err != http.ErrServerClosed && err != nil {
-		log.Printf("%s: unexpected error: %s", s.listener.Addr(), err.Error())
+		fs.Logf(nil, "%s: unexpected error: %s", s.listener.Addr(), err.Error())
 	}
 }
 
@@ -497,7 +496,7 @@ func (s *Server) Shutdown() error {
 		expiry := time.Now().Add(gracefulShutdownTime)
 		ctx, cancel := context.WithDeadline(context.Background(), expiry)
 		if err := ii.httpServer.Shutdown(ctx); err != nil {
-			log.Printf("error shutting down server: %s", err)
+			fs.Logf(nil, "error shutting down server: %s", err)
 		}
 		cancel()
 	}

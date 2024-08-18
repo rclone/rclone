@@ -3,7 +3,6 @@ package cmd
 import (
 	"context"
 	"fmt"
-	"log"
 	"os"
 	"regexp"
 	"sort"
@@ -76,7 +75,7 @@ var helpFlags = &cobra.Command{
 			if len(args) > 0 {
 				re, err := filter.GlobStringToRegexp(args[0], false, true)
 				if err != nil {
-					log.Fatalf("Invalid flag filter: %v", err)
+					fs.Fatalf(nil, "Invalid flag filter: %v", err)
 				}
 				fs.Debugf(nil, "Flag filter: %s", re.String())
 				filterFlagsRe = re
@@ -286,7 +285,7 @@ func quoteString(v interface{}) string {
 func showBackend(name string) {
 	backend, err := fs.Find(name)
 	if err != nil {
-		log.Fatal(err)
+		fs.Fatal(nil, fmt.Sprint(err))
 	}
 	var standardOptions, advancedOptions fs.Options
 	done := map[string]struct{}{}

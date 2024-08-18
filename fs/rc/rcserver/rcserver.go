@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"log"
 	"mime"
 	"net/http"
 	"net/url"
@@ -105,7 +104,7 @@ func newServer(ctx context.Context, opt *rc.Options, mux *http.ServeMux) (*Serve
 			if opt.Auth.BasicPass == "" && opt.Auth.HtPasswd == "" {
 				randomPass, err := random.Password(128)
 				if err != nil {
-					log.Fatalf("Failed to make password: %v", err)
+					fs.Fatalf(nil, "Failed to make password: %v", err)
 				}
 				opt.Auth.BasicPass = randomPass
 				fs.Infof(nil, "No password specified. Using random password: %s \n", randomPass)

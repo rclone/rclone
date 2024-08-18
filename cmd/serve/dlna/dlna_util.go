@@ -5,7 +5,6 @@ import (
 	"encoding/xml"
 	"fmt"
 	"io"
-	"log"
 	"net"
 	"net/http"
 	"net/http/httptest"
@@ -31,7 +30,7 @@ func makeDefaultFriendlyName() string {
 func makeDeviceUUID(unique string) string {
 	h := md5.New()
 	if _, err := io.WriteString(h, unique); err != nil {
-		log.Panicf("makeDeviceUUID write failed: %s", err)
+		fs.Panicf(nil, "makeDeviceUUID write failed: %s", err)
 	}
 	buf := h.Sum(nil)
 	return upnp.FormatUUID(buf)
@@ -41,7 +40,7 @@ func makeDeviceUUID(unique string) string {
 func listInterfaces() []net.Interface {
 	ifs, err := net.Interfaces()
 	if err != nil {
-		log.Printf("list network interfaces: %v", err)
+		fs.Logf(nil, "list network interfaces: %v", err)
 		return []net.Interface{}
 	}
 
@@ -71,7 +70,7 @@ func didlLite(chardata string) string {
 func mustMarshalXML(value interface{}) []byte {
 	ret, err := xml.MarshalIndent(value, "", "  ")
 	if err != nil {
-		log.Panicf("mustMarshalXML failed to marshal %v: %s", value, err)
+		fs.Panicf(nil, "mustMarshalXML failed to marshal %v: %s", value, err)
 	}
 	return ret
 }

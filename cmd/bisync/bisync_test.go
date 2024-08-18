@@ -10,7 +10,6 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"log"
 	"os"
 	"path"
 	"path/filepath"
@@ -232,7 +231,7 @@ func TestBisyncRemoteLocal(t *testing.T) {
 		t.Skip("path1 and path2 are the same remote")
 	}
 	_, remote, cleanup, err := fstest.RandomRemote()
-	log.Printf("remote: %v", remote)
+	fs.Logf(nil, "remote: %v", remote)
 	require.NoError(t, err)
 	defer cleanup()
 	testBisync(t, remote, *argRemote2)
@@ -244,7 +243,7 @@ func TestBisyncLocalRemote(t *testing.T) {
 		t.Skip("path1 and path2 are the same remote")
 	}
 	_, remote, cleanup, err := fstest.RandomRemote()
-	log.Printf("remote: %v", remote)
+	fs.Logf(nil, "remote: %v", remote)
 	require.NoError(t, err)
 	defer cleanup()
 	testBisync(t, *argRemote2, remote)
@@ -254,7 +253,7 @@ func TestBisyncLocalRemote(t *testing.T) {
 // (useful for testing server-side copy/move)
 func TestBisyncRemoteRemote(t *testing.T) {
 	_, remote, cleanup, err := fstest.RandomRemote()
-	log.Printf("remote: %v", remote)
+	fs.Logf(nil, "remote: %v", remote)
 	require.NoError(t, err)
 	defer cleanup()
 	testBisync(t, remote, remote)
@@ -450,13 +449,13 @@ func (b *bisyncTest) runTestCase(ctx context.Context, t *testing.T, testCase str
 	for _, dir := range srcDirs {
 		dirs = append(dirs, norm.NFC.String(dir.Remote()))
 	}
-	log.Printf("checking initFs %s", initFs)
+	fs.Logf(nil, "checking initFs %s", initFs)
 	fstest.CheckListingWithPrecision(b.t, initFs, items, dirs, initFs.Precision())
 	checkError(b.t, sync.CopyDir(ctxNoDsStore, b.fs1, initFs, true), "setting up path1")
-	log.Printf("checking Path1 %s", b.fs1)
+	fs.Logf(nil, "checking Path1 %s", b.fs1)
 	fstest.CheckListingWithPrecision(b.t, b.fs1, items, dirs, b.fs1.Precision())
 	checkError(b.t, sync.CopyDir(ctxNoDsStore, b.fs2, initFs, true), "setting up path2")
-	log.Printf("checking path2 %s", b.fs2)
+	fs.Logf(nil, "checking path2 %s", b.fs2)
 	fstest.CheckListingWithPrecision(b.t, b.fs2, items, dirs, b.fs2.Precision())
 
 	// Create log file
@@ -514,21 +513,21 @@ func (b *bisyncTest) runTestCase(ctx context.Context, t *testing.T, testCase str
 	require.NoError(b.t, err, "saving log file %s", savedLog)
 
 	if b.golden && !b.stopped {
-		log.Printf("Store results to golden directory")
+		fs.Logf(nil, "Store results to golden directory")
 		b.storeGolden()
 		return
 	}
 
 	errorCount := 0
 	if b.noCompare {
-		log.Printf("Skip comparing results with golden directory")
+		fs.Logf(nil, "Skip comparing results with golden directory")
 		errorCount = -2
 	} else {
 		errorCount = b.compareResults()
 	}
 
 	if b.noCleanup {
-		log.Printf("Skip cleanup")
+		fs.Logf(nil, "Skip cleanup")
 	} else {
 		b.cleanupCase(ctx)
 	}
@@ -1383,24 +1382,24 @@ func (b *bisyncTest) compareResults() int {
 	const divider = "----------------------------------------------------------"
 
 	if goldenNum != resultNum {
-		log.Print(divider)
-		log.Print(color(terminal.RedFg, "MISCOMPARE - Number of Golden and Results files do not match:"))
-		log.Printf("  Golden count: %d", goldenNum)
-		log.Printf("  Result count: %d", resultNum)
-		log.Printf("  Golden files: %s", strings.Join(goldenFiles, ", "))
-		log.Printf("  Result files: %s", strings.Join(resultFiles, ", "))
+		fs.Log(nil, divider)
+		fs.Log(nil, color(terminal.RedFg, "MISCOMPARE - Number of Golden and Results files do not match:"))
+		fs.Logf(nil, "  Golden count: %d", goldenNum)
+		fs.Logf(nil, "  Result count: %d", resultNum)
+		fs.Logf(nil, "  Golden files: %s", strings.Join(goldenFiles, ", "))
+		fs.Logf(nil, "  Result files: %s", strings.Join(resultFiles, ", "))
 	}
 
 	for _, file := range goldenFiles {
 		if !resultSet.Has(file) {
 			errorCount++
-			log.Printf("  File found in Golden but not in Results:  %s", file)
+			fs.Logf(nil, "  File found in Golden but not in Results:  %s", file)
 		}
 	}
 	for _, file := range resultFiles {
 		if !goldenSet.Has(file) {
 			errorCount++
-			log.Printf("  File found in Results but not in Golden:  %s", file)
+			fs.Logf(nil, "  File found in Results but not in Golden:  %s", file)
 		}
 	}
 
@@ -1433,15 +1432,15 @@ func (b *bisyncTest) compareResults() int {
 		text, err := difflib.GetUnifiedDiffString(diff)
 		require.NoError(b.t, err, "diff failed")
 
-		log.Print(divider)
-		log.Printf(color(terminal.RedFg, "| MISCOMPARE  -Golden vs +Results for  %s"), file)
+		fs.Log(nil, divider)
+		fs.Logf(nil, color(terminal.RedFg, "| MISCOMPARE  -Golden vs +Results for  %s"), file)
 		for _, line := range strings.Split(strings.TrimSpace(text), "\n") {
-			log.Printf("| %s", strings.TrimSpace(line))
+			fs.Logf(nil, "| %s", strings.TrimSpace(line))
 		}
 	}
 
 	if errorCount > 0 {
-		log.Print(divider)
+		fs.Log(nil, divider)
 	}
 	if errorCount == 0 && goldenNum != resultNum {
 		return -1
@@ -1464,7 +1463,7 @@ func (b *bisyncTest) storeGolden() {
 			continue
 		}
 		if fileName == "backupdirs" {
-			log.Printf("skipping: %v", fileName)
+			fs.Logf(nil, "skipping: %v", fileName)
 			continue
 		}
 		goldName := b.toGolden(fileName)
@@ -1489,7 +1488,7 @@ func (b *bisyncTest) storeGolden() {
 			continue
 		}
 		if fileName == "backupdirs" {
-			log.Printf("skipping: %v", fileName)
+			fs.Logf(nil, "skipping: %v", fileName)
 			continue
 		}
 		text := b.mangleResult(b.goldenDir, fileName, true)
@@ -1849,7 +1848,7 @@ func fileType(fileName string) string {
 // logPrintf prints a message to stdout and to the test log
 func (b *bisyncTest) logPrintf(text string, args ...interface{}) {
 	line := fmt.Sprintf(text, args...)
-	log.Print(line)
+	fs.Log(nil, line)
 	if b.logFile != nil {
 		_, err := fmt.Fprintln(b.logFile, line)
 		require.NoError(b.t, err, "writing log file")

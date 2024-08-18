@@ -1,10 +1,11 @@
 package genautocomplete
 
 import (
-	"log"
+	"fmt"
 	"os"
 
 	"github.com/rclone/rclone/cmd"
+	"github.com/rclone/rclone/fs"
 	"github.com/spf13/cobra"
 )
 
@@ -39,7 +40,7 @@ If output_file is "-", then the output will be written to stdout.
 			if args[0] == "-" {
 				err := cmd.Root.GenFishCompletion(os.Stdout, true)
 				if err != nil {
-					log.Fatal(err)
+					fs.Fatal(nil, fmt.Sprint(err))
 				}
 				return
 			}
@@ -47,7 +48,7 @@ If output_file is "-", then the output will be written to stdout.
 		}
 		err := cmd.Root.GenFishCompletionFile(out, true)
 		if err != nil {
-			log.Fatal(err)
+			fs.Fatal(nil, fmt.Sprint(err))
 		}
 	},
 }
