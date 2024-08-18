@@ -6,7 +6,6 @@ package mount
 import (
 	"fmt"
 	"github.com/rclone/rclone/fs/rc/rcserver"
-	"runtime"
 	"time"
 
 	"bazil.org/fuse"
