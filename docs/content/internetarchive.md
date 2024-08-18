@@ -148,12 +148,12 @@ Edit advanced config?
 y) Yes
 n) No (default)
 y/n> n
---------------------
-[remote]
-type = internetarchive
-access_key_id = XXXX
-secret_access_key = XXXX
---------------------
+Configuration complete.
+Options:
+- type: internetarchive
+- access_key_id: XXXX
+- secret_access_key: XXXX
+Keep this "remote" remote?
 y) Yes this is OK (default)
 e) Edit this remote
 d) Delete this remote

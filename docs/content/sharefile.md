@@ -68,12 +68,12 @@ If your browser doesn't open automatically go to the following link: http://127.
 Log in and authorize rclone for access
 Waiting for code...
 Got code
---------------------
-[remote]
-type = sharefile
-endpoint = https://XXX.sharefile.com
-token = {"access_token":"XXX","token_type":"bearer","refresh_token":"XXX","expiry":"2019-09-30T19:41:45.878561877+01:00"}
---------------------
+Configuration complete.
+Options:
+- type: sharefile
+- endpoint: https://XXX.sharefile.com
+- token: {"access_token":"XXX","token_type":"bearer","refresh_token":"XXX","expiry":"2019-09-30T19:41:45.878561877+01:00"}
+Keep this "remote" remote?
 y) Yes this is OK
 e) Edit this remote
 d) Delete this remote

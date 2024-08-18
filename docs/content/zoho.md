@@ -64,12 +64,12 @@ Choose a number from below, or type in your own value
  1 / General
    \ "4u2869d2aa6fca04f4f2f896b6539243b85b1"
 Enter a Workspace ID> 1
---------------------
-[remote]
-type = zoho
-token = {"access_token":"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx","token_type":"Zoho-oauthtoken","refresh_token":"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx","expiry":"2020-10-12T00:54:52.370275223+02:00"}
-root_folder_id = xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
---------------------
+Configuration complete.
+Options:
+- type: zoho
+- token: {"access_token":"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx","token_type":"Zoho-oauthtoken","refresh_token":"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx","expiry":"2020-10-12T00:54:52.370275223+02:00"}
+- root_folder_id: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+Keep this "remote" remote?
 y) Yes this is OK (default)
 e) Edit this remote
 d) Delete this remote

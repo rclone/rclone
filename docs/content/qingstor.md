@@ -60,15 +60,16 @@ Number of connection retry.
 Leave blank will use the default value "3".
 connection_retries>
 Remote config
---------------------
-[remote]
-env_auth = false
-access_key_id = access_key
-secret_access_key = secret_key
-endpoint =
-zone = pek3a
-connection_retries =
---------------------
+Configuration complete.
+Options:
+- type: qingstor
+- env_auth: false
+- access_key_id: access_key
+- secret_access_key: secret_key
+- endpoint:
+- zone: pek3a
+- connection_retries:
+Keep this "remote" remote?
 y) Yes this is OK
 e) Edit this remote
 d) Delete this remote

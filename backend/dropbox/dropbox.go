@@ -386,7 +386,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	oldToken = strings.TrimSpace(oldToken)
 	if ok && oldToken != "" && oldToken[0] != '{' {
 		fs.Infof(name, "Converting token to new format")
-		newToken := fmt.Sprintf(`{"access_token":"%s","token_type":"bearer","expiry":"0001-01-01T00:00:00Z"}`, oldToken)
+		newToken := fmt.Sprintf(`{"access_token":%q,"token_type":"bearer","expiry":"0001-01-01T00:00:00Z"}`, oldToken)
 		err := config.SetValueAndSave(name, config.ConfigToken, newToken)
 		if err != nil {
 			return nil, fmt.Errorf("NewFS convert token: %w", err)

@@ -88,7 +88,7 @@ require (
 	google.golang.org/api v0.188.0
 	gopkg.in/validator.v2 v2.0.1
 	gopkg.in/yaml.v2 v2.4.0
-	storj.io/uplink v1.13.0
+	storj.io/uplink v1.13.1
 )
 
 require (
@@ -212,9 +212,9 @@ require (
 	google.golang.org/protobuf v1.34.2 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	moul.io/http2curl/v2 v2.3.0 // indirect
-	storj.io/common v0.0.0-20240424123607-5f226fc92c16 // indirect
-	storj.io/drpc v0.0.33 // indirect
-	storj.io/eventkit v0.0.0-20240306141230-6cb545e5f892 // indirect
+	storj.io/common v0.0.0-20240812101423-26b53789c348 // indirect
+	storj.io/drpc v0.0.35-0.20240709171858-0075ac871661 // indirect
+	storj.io/eventkit v0.0.0-20240415002644-1d9596fee086 // indirect
 	storj.io/infectious v0.0.2 // indirect
 	storj.io/picobuf v0.0.3 // indirect
 )
