@@ -43,8 +43,10 @@ var lineRegex = regexp.MustCompile(`^(\S) +(-?\d+) (\S+) (\S+) (\d{4}-\d\d-\d\dT
 const timeFormat = "2006-01-02T15:04:05.000000000-0700"
 
 // TZ defines time zone used in listings
-var TZ = time.UTC
-var tzLocal = false
+var (
+	TZ      = time.UTC
+	tzLocal = false
+)
 
 // fileInfo describes a file
 type fileInfo struct {
@@ -83,7 +85,7 @@ func (ls *fileList) has(file string) bool {
 	}
 	_, found := ls.info[file]
 	if !found {
-		//try unquoting
+		// try unquoting
 		file, _ = strconv.Unquote(`"` + file + `"`)
 		_, found = ls.info[file]
 	}
@@ -93,7 +95,7 @@ func (ls *fileList) has(file string) bool {
 func (ls *fileList) get(file string) *fileInfo {
 	info, found := ls.info[file]
 	if !found {
-		//try unquoting
+		// try unquoting
 		file, _ = strconv.Unquote(`"` + file + `"`)
 		info = ls.info[fmt.Sprint(file)]
 	}
@@ -420,7 +422,7 @@ func (b *bisyncRun) loadListingNum(listingNum int) (*fileList, error) {
 
 func (b *bisyncRun) listDirsOnly(listingNum int) (*fileList, error) {
 	var fulllisting *fileList
-	var dirsonly = newFileList()
+	dirsonly := newFileList()
 	var err error
 
 	if !b.opt.CreateEmptySrcDirs {
@@ -448,24 +450,6 @@ func (b *bisyncRun) listDirsOnly(listingNum int) (*fileList, error) {
 	}
 
 	return dirsonly, err
-}
-
-// ConvertPrecision returns the Modtime rounded to Dest's precision if lower, otherwise unchanged
-// Need to use the other fs's precision (if lower) when copying
-// Note: we need to use Truncate rather than Round so that After() is reliable.
-// (2023-11-02 20:22:45.552679442 +0000 < UTC 2023-11-02 20:22:45.553 +0000 UTC)
-func ConvertPrecision(Modtime time.Time, dst fs.Fs) time.Time {
-	DestPrecision := dst.Precision()
-
-	// In case it's wrapping an Fs with lower precision, try unwrapping and use the lowest.
-	if Modtime.Truncate(DestPrecision).After(Modtime.Truncate(fs.UnWrapFs(dst).Precision())) {
-		DestPrecision = fs.UnWrapFs(dst).Precision()
-	}
-
-	if Modtime.After(Modtime.Truncate(DestPrecision)) {
-		return Modtime.Truncate(DestPrecision)
-	}
-	return Modtime
 }
 
 // modifyListing will modify the listing based on the results of the sync
@@ -533,13 +517,13 @@ func (b *bisyncRun) modifyListing(ctx context.Context, src fs.Fs, dst fs.Fs, res
 
 		// build src winners list
 		if result.IsSrc && result.Src != "" && (result.Winner.Err == nil || result.Flags == "d") {
-			srcWinners.put(result.Name, result.Size, ConvertPrecision(result.Modtime, src), result.Hash, "-", result.Flags)
+			srcWinners.put(result.Name, result.Size, result.Modtime, result.Hash, "-", result.Flags)
 			prettyprint(result, "winner: copy to src", fs.LogLevelDebug)
 		}
 
 		// build dst winners list
 		if result.IsWinner && result.Winner.Side != "none" && (result.Winner.Err == nil || result.Flags == "d") {
-			dstWinners.put(result.Name, result.Size, ConvertPrecision(result.Modtime, dst), result.Hash, "-", result.Flags)
+			dstWinners.put(result.Name, result.Size, result.Modtime, result.Hash, "-", result.Flags)
 			prettyprint(result, "winner: copy to dst", fs.LogLevelDebug)
 		}
 
@@ -623,7 +607,7 @@ func (b *bisyncRun) modifyListing(ctx context.Context, src fs.Fs, dst fs.Fs, res
 			}
 			if srcNewName != "" { // if it was renamed and not deleted
 				srcList.put(srcNewName, new.size, new.time, new.hash, new.id, new.flags)
-				dstList.put(srcNewName, new.size, ConvertPrecision(new.time, src), new.hash, new.id, new.flags)
+				dstList.put(srcNewName, new.size, new.time, new.hash, new.id, new.flags)
 			}
 			if srcNewName != srcOldName {
 				srcList.remove(srcOldName)
