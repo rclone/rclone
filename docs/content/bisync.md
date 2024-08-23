@@ -1812,6 +1812,12 @@ about _Unison_ and synchronization in general.
 
 ## Changelog
 
+### `v1.68`
+* Fixed an issue affecting backends that round modtimes to a lower precision.
+
+### `v1.67`
+* Added integration tests against all backends.
+
 ### `v1.66`
 * Copies and deletes are now handled in one operation instead of two
 * `--track-renames` and `--backup-dir` are now supported
