@@ -5,6 +5,7 @@ package sftp
 
 import (
 	"context"
+
 	"github.com/rclone/rclone/fs/rc/rcserver"
 
 	"github.com/rclone/rclone/cmd"

@@ -4,10 +4,11 @@ package docker
 import (
 	"context"
 	_ "embed"
-	"github.com/rclone/rclone/fs/rc/rcserver"
 	"path/filepath"
 	"strings"
 	"syscall"
+
+	"github.com/rclone/rclone/fs/rc/rcserver"
 
 	"github.com/spf13/cobra"
 

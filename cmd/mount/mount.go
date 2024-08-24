@@ -5,8 +5,9 @@ package mount
 
 import (
 	"fmt"
-	"github.com/rclone/rclone/fs/rc/rcserver"
 	"time"
+
+	"github.com/rclone/rclone/fs/rc/rcserver"
 
 	"bazil.org/fuse"
 	fusefs "bazil.org/fuse/fs"

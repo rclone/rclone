@@ -6,13 +6,14 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/rclone/rclone/fs/rc/rcserver"
 	"net/http"
 	"os"
 	"path"
 	"regexp"
 	"strings"
 	"time"
+
+	"github.com/rclone/rclone/fs/rc/rcserver"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"

@@ -5,7 +5,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/rclone/rclone/fs/rc/rcserver"
 	"io"
 	"log"
 	"net/http"
@@ -14,6 +13,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/rclone/rclone/fs/rc/rcserver"
 
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/rclone/rclone/cmd"

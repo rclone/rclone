@@ -11,8 +11,9 @@ package nfs
 
 import (
 	"context"
-	"github.com/rclone/rclone/fs/rc/rcserver"
 	"strings"
+
+	"github.com/rclone/rclone/fs/rc/rcserver"
 
 	"github.com/rclone/rclone/cmd"
 	"github.com/rclone/rclone/fs"

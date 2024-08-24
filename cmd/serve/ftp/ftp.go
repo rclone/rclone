@@ -7,7 +7,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/rclone/rclone/fs/rc/rcserver"
 	"io"
 	iofs "io/fs"
 	"net"
@@ -17,6 +16,8 @@ import (
 	"strconv"
 	"sync"
 	"time"
+
+	"github.com/rclone/rclone/fs/rc/rcserver"
 
 	"github.com/rclone/rclone/cmd"
 	"github.com/rclone/rclone/cmd/serve/proxy"

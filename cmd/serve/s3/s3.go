@@ -3,8 +3,9 @@ package s3
 import (
 	"context"
 	_ "embed"
-	"github.com/rclone/rclone/fs/rc/rcserver"
 	"strings"
+
+	"github.com/rclone/rclone/fs/rc/rcserver"
 
 	"github.com/rclone/rclone/cmd"
 	"github.com/rclone/rclone/cmd/serve/proxy/proxyflags"
