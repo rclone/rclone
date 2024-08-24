@@ -356,12 +356,12 @@ func (s *Server) handleGet(w http.ResponseWriter, r *http.Request, path string) 
 		// Serve /[fs]/remote files
 		s.serveRemote(w, r, fsMatchResult[2], fsMatchResult[1])
 		return
+	case path == "metrics" && s.opt.MetricsEnabled && SlicesEqual(s.opt.MetricsHTTP.ListenAddr, s.opt.HTTP.ListenAddr):
+		promHandlerFunc(w, r)
+		return
 	case path == "*" && s.opt.Serve:
 		// Serve /* as the remote listing
 		s.serveRoot(w, r)
-		return
-	case path == "metrics" && s.opt.MetricsEnabled && SlicesEqual(s.opt.MetricsHTTP.ListenAddr, s.opt.HTTP.ListenAddr):
-		promHandlerFunc(w, r)
 		return
 	case s.files != nil:
 		if s.opt.WebUI {
