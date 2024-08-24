@@ -17,8 +17,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/rclone/rclone/fs/rc/rcserver"
-
 	"github.com/rclone/rclone/cmd"
 	"github.com/rclone/rclone/cmd/serve/proxy"
 	"github.com/rclone/rclone/cmd/serve/proxy/proxyflags"
@@ -134,7 +132,6 @@ You can set a single username and password with the --user and --pass flags.
 			if err != nil {
 				return err
 			}
-			rcserver.RunMetricsServer()
 			return s.serve()
 		})
 	},

@@ -13,8 +13,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/rclone/rclone/fs/rc/rcserver"
-
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/rclone/rclone/cmd"
@@ -183,7 +181,6 @@ with a path of ` + "`/<username>/`" + `.
 			fs.Logf(s.f, "Serving restic REST API on %s", s.URLs())
 
 			defer systemd.Notify()()
-			rcserver.RunMetricsServer()
 			s.Wait()
 
 			return nil

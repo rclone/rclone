@@ -14,8 +14,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/rclone/rclone/fs/rc/rcserver"
-
 	chi "github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/rclone/rclone/cmd"
@@ -164,7 +162,6 @@ done by the permissions on the socket.
 			if err != nil {
 				return err
 			}
-			rcserver.RunMetricsServer()
 			defer systemd.Notify()()
 			s.Wait()
 			return nil

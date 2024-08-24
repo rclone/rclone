@@ -13,8 +13,6 @@ import (
 	"context"
 	"strings"
 
-	"github.com/rclone/rclone/fs/rc/rcserver"
-
 	"github.com/rclone/rclone/cmd"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config/flags"
@@ -96,7 +94,6 @@ func Run(command *cobra.Command, args []string) {
 		if err != nil {
 			return err
 		}
-		rcserver.RunMetricsServer()
 		return s.Serve()
 	})
 }

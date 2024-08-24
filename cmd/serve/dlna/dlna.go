@@ -13,8 +13,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/rclone/rclone/fs/rc/rcserver"
-
 	dms_dlna "github.com/anacrolix/dms/dlna"
 	"github.com/anacrolix/dms/soap"
 	"github.com/anacrolix/dms/ssdp"
@@ -72,7 +70,6 @@ directory as the video, or in a "Subs" subdirectory.
 			if err := s.Serve(); err != nil {
 				return err
 			}
-			rcserver.RunMetricsServer()
 			defer systemd.Notify()()
 			s.Wait()
 			return nil

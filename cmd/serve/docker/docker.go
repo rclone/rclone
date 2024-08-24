@@ -8,8 +8,6 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/rclone/rclone/fs/rc/rcserver"
-
 	"github.com/spf13/cobra"
 
 	"github.com/rclone/rclone/cmd"
@@ -80,7 +78,6 @@ var Command = &cobra.Command{
 				// Listen on unix socket at given path
 				return srv.ServeUnix(socketAddr, socketGid)
 			}
-			rcserver.RunMetricsServer()
 			return srv.ServeTCP(socketAddr, "", nil, noSpec)
 		})
 	},

@@ -7,8 +7,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/rclone/rclone/fs/rc/rcserver"
-
 	"bazil.org/fuse"
 	fusefs "bazil.org/fuse/fs"
 	"github.com/rclone/rclone/cmd/mountlib"
@@ -89,7 +87,6 @@ func mount(VFS *vfs.VFS, mountpoint string, opt *mountlib.Options) (<-chan error
 	if err != nil {
 		return nil, nil, err
 	}
-	rcserver.RunMetricsServer()
 
 	filesys := NewFS(VFS, opt)
 	filesys.server = fusefs.New(c, nil)

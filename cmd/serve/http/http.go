@@ -14,8 +14,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/rclone/rclone/fs/rc/rcserver"
-
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/rclone/rclone/cmd"
 	"github.com/rclone/rclone/cmd/serve/proxy"
@@ -96,7 +94,6 @@ control the stats printing.
 			if err != nil {
 				log.Fatal(err)
 			}
-			rcserver.RunMetricsServer()
 
 			defer systemd.Notify()()
 			s.server.Wait()

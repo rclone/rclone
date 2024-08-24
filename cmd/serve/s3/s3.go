@@ -5,8 +5,6 @@ import (
 	_ "embed"
 	"strings"
 
-	"github.com/rclone/rclone/fs/rc/rcserver"
-
 	"github.com/rclone/rclone/cmd"
 	"github.com/rclone/rclone/cmd/serve/proxy/proxyflags"
 	"github.com/rclone/rclone/fs"
@@ -91,7 +89,6 @@ var Command = &cobra.Command{
 			if err != nil {
 				return err
 			}
-			rcserver.RunMetricsServer()
 			s.server.Wait()
 			return nil
 		})
