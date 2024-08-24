@@ -58,10 +58,6 @@ See the [rc documentation](/rc/) for more info on the rc flags.
 			log.Fatal("rc server not configured")
 		}
 
-		if !rcserver.SlicesEqual(rc.Opt.MetricsHTTP.ListenAddr, rc.Opt.HTTP.ListenAddr) {
-			rcserver.RunMetricsServer()
-		}
-
 		// Notify stopping on exit
 		defer systemd.Notify()()
 

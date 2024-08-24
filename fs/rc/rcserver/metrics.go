@@ -4,7 +4,6 @@ package rcserver
 import (
 	"context"
 	"fmt"
-	"log"
 	"net/http"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -38,12 +37,15 @@ func init() {
 // If the server wasn't configured the *Server returned may be nil
 func MetricsStart(ctx context.Context, opt *rc.Options) (*MetricsServer, error) {
 	jobs.SetOpt(opt) // set the defaults for jobs
-	// Serve on the DefaultServeMux so can have global registrations appear
-	s, err := newMetricsServer(ctx, opt)
-	if err != nil {
-		return nil, err
+	if opt.MetricsEnabled {
+		// Serve on the DefaultServeMux so can have global registrations appear
+		s, err := newMetricsServer(ctx, opt)
+		if err != nil {
+			return nil, err
+		}
+		return s, s.Serve()
 	}
-	return s, s.Serve()
+	return nil, nil
 }
 
 // MetricsServer contains everything to run the rc server
@@ -92,16 +94,4 @@ func (s *MetricsServer) Wait() {
 // Shutdown gracefully shuts down the server
 func (s *MetricsServer) Shutdown() error {
 	return s.server.Shutdown()
-}
-
-// RunMetricsServer created for easy start metrics server in the same way from different places
-func RunMetricsServer() {
-	if rc.Opt.MetricsEnabled {
-		go func() {
-			_, err := MetricsStart(context.Background(), &rc.Opt)
-			if err != nil {
-				log.Fatalf("Failed to start metrics server: %v", err)
-			}
-		}()
-	}
 }

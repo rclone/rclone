@@ -421,9 +421,17 @@ func initConfig() {
 	}
 
 	// Start the remote control server if configured
-	_, err = rcserver.Start(context.Background(), &rc.Opt)
+	_, err = rcserver.Start(ctx, &rc.Opt)
 	if err != nil {
 		log.Fatalf("Failed to start remote control: %v", err)
+	}
+
+	// Start the metrics server if configured and has a different port from rcserver
+	if !rcserver.SlicesEqual(rc.Opt.MetricsHTTP.ListenAddr, rc.Opt.HTTP.ListenAddr) {
+		_, err = rcserver.MetricsStart(ctx, &rc.Opt)
+		if err != nil {
+			log.Fatalf("Failed to start metrics server: %v", err)
+		}
 	}
 
 	// Setup CPU profiling if desired
