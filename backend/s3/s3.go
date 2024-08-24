@@ -4811,15 +4811,16 @@ func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, 
 
 var commandHelp = []fs.CommandHelp{{
 	Name:  "restore",
-	Short: "Restore objects from GLACIER to normal storage",
-	Long: `This command can be used to restore one or more objects from GLACIER
-to normal storage.
+	Short: "Restore objects from GLACIER or INTELLIGENT-TIERING archive tier",
+	Long: `This command can be used to restore one or more objects from GLACIER to normal storage 
+or from INTELLIGENT-TIERING Archive Access / Deep Archive Access tier to the Frequent Access tier.
 
 Usage Examples:
 
     rclone backend restore s3:bucket/path/to/object -o priority=PRIORITY -o lifetime=DAYS
     rclone backend restore s3:bucket/path/to/directory -o priority=PRIORITY -o lifetime=DAYS
     rclone backend restore s3:bucket -o priority=PRIORITY -o lifetime=DAYS
+    rclone backend restore s3:bucket/path/to/directory -o priority=PRIORITY
 
 This flag also obeys the filters. Test first with --interactive/-i or --dry-run flags
 
@@ -4847,14 +4848,14 @@ if not.
 `,
 	Opts: map[string]string{
 		"priority":    "Priority of restore: Standard|Expedited|Bulk",
-		"lifetime":    "Lifetime of the active copy in days",
+		"lifetime":    "Lifetime of the active copy in days, ignored for INTELLIGENT-TIERING storage",
 		"description": "The optional description for the job.",
 	},
 }, {
 	Name:  "restore-status",
-	Short: "Show the restore status for objects being restored from GLACIER to normal storage",
-	Long: `This command can be used to show the status for objects being restored from GLACIER
-to normal storage.
+	Short: "Show the restore status for objects being restored from GLACIER or INTELLIGENT-TIERING storage",
+	Long: `This command can be used to show the status for objects being restored from GLACIER to normal storage
+or from INTELLIGENT-TIERING Archive Access / Deep Archive Access tier to the Frequent Access tier.
 
 Usage Examples:
 
@@ -4884,6 +4885,15 @@ It returns a list of status dictionaries.
                 "RestoreExpiryDate": "2023-09-06T12:29:19+01:00"
             },
             "StorageClass": "DEEP_ARCHIVE"
+        },
+        {
+            "Remote": "test.gz",
+            "VersionID": null,
+            "RestoreStatus": {
+                "IsRestoreInProgress": true,
+                "RestoreExpiryDate": "null"
+            },
+            "StorageClass": "INTELLIGENT_TIERING"
         }
     ]
 `,
@@ -5046,12 +5056,15 @@ func (f *Fs) Command(ctx context.Context, name string, arg []string, opt map[str
 				st.Status = "Not an S3 object"
 				return
 			}
-			if o.storageClass == nil || (*o.storageClass != "GLACIER" && *o.storageClass != "DEEP_ARCHIVE") {
-				st.Status = "Not GLACIER or DEEP_ARCHIVE storage class"
+			if o.storageClass == nil || (*o.storageClass != "GLACIER" && *o.storageClass != "DEEP_ARCHIVE" && *o.storageClass != "INTELLIGENT_TIERING") {
+				st.Status = "Not GLACIER or DEEP_ARCHIVE or INTELLIGENT_TIERING storage class"
 				return
 			}
 			bucket, bucketPath := o.split()
 			reqCopy := req
+			if *o.storageClass == "INTELLIGENT_TIERING" {
+				reqCopy.RestoreRequest.Days = nil
+			}
 			reqCopy.Bucket = &bucket
 			reqCopy.Key = &bucketPath
 			reqCopy.VersionId = o.versionID
