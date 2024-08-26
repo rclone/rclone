@@ -48,9 +48,7 @@ See the [rc documentation](/rc/) for more info on the rc flags.
 			rc.Opt.Files = args[0]
 		}
 
-		ctx := context.Background()
-
-		s, err := rcserver.Start(ctx, &rc.Opt)
+		s, err := rcserver.Start(context.Background(), &rc.Opt)
 		if err != nil {
 			log.Fatalf("Failed to start remote control: %v", err)
 		}

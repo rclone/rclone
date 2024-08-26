@@ -69,10 +69,10 @@ var OptionsInfo = fs.Options{{
 	Help:    "URL to fetch the releases for webgui",
 	Groups:  "RC",
 }, {
-	Name:    "metrics",
+	Name:    "rc_enable_metrics",
 	Default: false,
-	Help:    "Enable the prometheus metrics endpoint",
-	Groups:  "Metrics",
+	Help:    "Enable the Prometheus metrics path at the remote control server",
+	Groups:  "RC,Metrics",
 }, {
 	Name:    "rc_job_expire_duration",
 	Default: 60 * time.Second,
@@ -83,6 +83,11 @@ var OptionsInfo = fs.Options{{
 	Default: 10 * time.Second,
 	Help:    "Interval to check for expired async jobs",
 	Groups:  "RC",
+}, {
+	Name:    "metrics_addr",
+	Default: []string{""},
+	Help:    "IPaddress:Port or :Port to bind metrics server to",
+	Groups:  "Metrics",
 }}.
 	AddPrefix(libhttp.ConfigInfo, "rc", "RC").
 	AddPrefix(libhttp.AuthConfigInfo, "rc", "RC").
@@ -90,8 +95,7 @@ var OptionsInfo = fs.Options{{
 	AddPrefix(libhttp.ConfigInfo, "metrics", "Metrics").
 	AddPrefix(libhttp.AuthConfigInfo, "metrics", "Metrics").
 	AddPrefix(libhttp.TemplateConfigInfo, "metrics", "Metrics").
-	SetDefault("rc_addr", []string{"localhost:5572"}).
-	SetDefault("metrics_addr", []string{"localhost:5572"})
+	SetDefault("rc_addr", []string{"localhost:5572"})
 
 func init() {
 	fs.RegisterGlobalOptions(fs.OptionsInfo{Name: "rc", Opt: &Opt, Options: OptionsInfo})
@@ -112,10 +116,10 @@ type Options struct {
 	WebGUIForceUpdate   bool                   `config:"rc_web_gui_force_update"`    // set to force download new update
 	WebGUINoOpenBrowser bool                   `config:"rc_web_gui_no_open_browser"` // set to disable auto opening browser
 	WebGUIFetchURL      string                 `config:"rc_web_fetch_url"`           // set the default url for fetching webgui
+	EnableMetrics       bool                   `config:"rc_enable_metrics"`          // set to disable prometheus metrics on /metrics
 	MetricsHTTP         libhttp.Config         `config:"metrics"`
 	MetricsAuth         libhttp.AuthConfig     `config:"metrics"`
 	MetricsTemplate     libhttp.TemplateConfig `config:"metrics"`
-	MetricsEnabled      bool                   `config:"metrics"` // set to disable prometheus metrics on /metrics
 	JobExpireDuration   time.Duration          `config:"rc_job_expire_duration"`
 	JobExpireInterval   time.Duration          `config:"rc_job_expire_interval"`
 }

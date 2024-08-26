@@ -2775,13 +2775,11 @@ Metrics
 
 Rclone can publish metrics in the OpenMetrics/Prometheus format.
 
-To enable the metrics endpoint, use the `--metrics` flag.
-
-By default, for backward compatibility, metrics are published at `localhost:5572/metrics`.
+To enable the metrics endpoint, use the `--metrics-addr` flag. Metrics can also be published on the `--rc-addr` port if the `--rc` flag and `--rc-enable-metrics` flags are supplied or if using rclone rcd `--rc-enable-metrics`
 
 Rclone provides extensive configuration options for the metrics HTTP endpoint. These settings are grouped under the Metrics section and have a prefix `--metrics-*`.
 
-When metrics are enabled while using the rcd server, they will be published on the same port as the rcd server. In this case, the specific metrics parameters will be ignored, and the HTTP endpoint configuration will be managed by the `--rc-*` parameters.
+When metrics are enabled with `--rc-enable-metrics`, they will be published on the same port as the rc API. In this case, the `--metrics-*` flags will be ignored, and the HTTP endpoint configuration will be managed by the `--rc-*` parameters.
 
 Exit Code
 ---------

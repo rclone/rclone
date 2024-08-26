@@ -356,7 +356,7 @@ func (s *Server) handleGet(w http.ResponseWriter, r *http.Request, path string) 
 		// Serve /[fs]/remote files
 		s.serveRemote(w, r, fsMatchResult[2], fsMatchResult[1])
 		return
-	case path == "metrics" && s.opt.MetricsEnabled && SlicesEqual(s.opt.MetricsHTTP.ListenAddr, s.opt.HTTP.ListenAddr):
+	case path == "metrics" && s.opt.EnableMetrics:
 		promHandlerFunc(w, r)
 		return
 	case path == "*" && s.opt.Serve:
@@ -399,22 +399,4 @@ func (s *Server) Wait() {
 // Shutdown gracefully shuts down the server
 func (s *Server) Shutdown() error {
 	return s.server.Shutdown()
-}
-
-// SlicesEqual Function to check if two slices contain the same elements
-func SlicesEqual(a, b []string) bool {
-	if len(a) != len(b) {
-		return false
-	}
-
-	// Sort both slices before comparison
-	sort.Strings(a)
-	sort.Strings(b)
-
-	for i := range a {
-		if a[i] != b[i] {
-			return false
-		}
-	}
-	return true
 }

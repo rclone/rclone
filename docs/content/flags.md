@@ -263,11 +263,12 @@ Flags to control the Remote Control API.
 
 ```
       --rc                                 Enable the remote control server
-      --rc-addr stringArray                IPaddress:Port or :Port to bind server to (default ["localhost:5572"])
+      --rc-addr stringArray                IPaddress:Port or :Port to bind server to (default [localhost:5572])
       --rc-allow-origin string             Origin which cross-domain request (CORS) can be executed from
       --rc-baseurl string                  Prefix for URLs - leave blank for root
       --rc-cert string                     TLS PEM key (concatenation of certificate and CA certificate)
       --rc-client-ca string                Client certificate authority to verify clients with
+      --rc-enable-metrics                  Enable prometheus metrics on /metrics
       --rc-files string                    Path to local files to serve on the HTTP server
       --rc-htpasswd string                 A htpasswd file - if not provided no authentication is done
       --rc-job-expire-duration Duration    Expire finished async jobs older than this value (default 1m0s)
@@ -290,30 +291,6 @@ Flags to control the Remote Control API.
       --rc-web-gui-force-update            Force update to latest version of web gui
       --rc-web-gui-no-open-browser         Don't open the browser automatically
       --rc-web-gui-update                  Check and update to latest version of web gui
-```
-
-## Metrics
-
-Metrics endpoint only flags.
-
-```
-      --metrics                                 Enable the prometheus metrics endpoint
-      --metrics-addr stringArray                IPaddress:Port or :Port to bind server to (default ["localhost:5572"])
-      --metrics-allow-origin string             Origin which cross-domain request (CORS) can be executed from
-      --metrics-baseurl string                  Prefix for URLs - leave blank for root
-      --metrics-cert string                     TLS PEM key (concatenation of certificate and CA certificate)
-      --metrics-client-ca string                Client certificate authority to verify clients with
-      --metrics-htpasswd string                 A htpasswd file - if not provided no authentication is done
-      --metrics-key string                      TLS PEM Private key
-      --metrics-max-header-bytes int            Maximum size of request header (default 4096)
-      --metrics-min-tls-version string          Minimum TLS version that is acceptable (default "tls1.0")
-      --metrics-pass string                     Password for authentication
-      --metrics-realm string                    Realm for authentication
-      --metrics-salt string                     Password hashing salt (default "dlPL2MqE")
-      --metrics-server-read-timeout Duration    Timeout for server reading data (default 1h0m0s)
-      --metrics-server-write-timeout Duration   Timeout for server writing data (default 1h0m0s)
-      --metrics-template string                 User-specified template
-      --metrics-user string                     User name for authentication
 ```
 
 ## Backend

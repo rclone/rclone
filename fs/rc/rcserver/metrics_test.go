@@ -29,7 +29,6 @@ func testMetricsServer(t *testing.T, tests []testRun, opt *rc.Options) {
 // return an enabled rc
 func newMetricsTestOpt() rc.Options {
 	opt := rc.Opt
-	opt.MetricsEnabled = true
 	opt.MetricsHTTP.ListenAddr = []string{testBindAddress}
 	return opt
 }

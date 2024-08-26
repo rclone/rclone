@@ -97,6 +97,13 @@ style.
 
 Default Off.
 
+### --rc-enable-metrics
+
+Enable OpenMetrics/Prometheus compatible endpoint at `/metrics`.
+If more control over the metrics is desired (for example running them on a different port or with different auth) then metrics can be started with the `--metrics-*` flags instead.
+
+Default Off.
+
 ### --rc-web-gui
 
 Set this flag to serve the default web gui on the same port as rclone.
