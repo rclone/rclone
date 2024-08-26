@@ -37,7 +37,7 @@ func NewServer(ctx context.Context, vfs *vfs.VFS, opt *Options) (s *Server, err 
 		ctx: ctx,
 		opt: *opt,
 	}
-	s.handler, err = NewHandler(vfs, opt)
+	s.handler, err = NewHandler(ctx, vfs, opt)
 	if err != nil {
 		return nil, fmt.Errorf("failed to make NFS handler: %w", err)
 	}
