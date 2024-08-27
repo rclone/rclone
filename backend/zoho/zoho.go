@@ -677,25 +677,26 @@ func (f *Fs) upload(ctx context.Context, name string, parent string, size int64,
 	if len(uploadResponse.Uploads) != 1 {
 		return nil, errors.New("upload: invalid response")
 	}
-	// Received meta data is missing size so we have to read it again.
-	// It doesn't always appear on first read so try again if necessary
-	var info *api.Item
-	const maxTries = 10
-	sleepTime := 100 * time.Millisecond
-	for i := 0; i < maxTries; i++ {
-		info, err = f.readMetaDataForID(ctx, uploadResponse.Uploads[0].Attributes.RessourceID)
-		if err != nil {
-			return nil, err
-		}
-		if info.Attributes.StorageInfo.Size != 0 || size == 0 {
-			break
-		}
-		fs.Debugf(f, "Size not available yet for %q - try again in %v (try %d/%d)", name, sleepTime, i+1, maxTries)
-		time.Sleep(sleepTime)
-		sleepTime *= 2
+	upload := uploadResponse.Uploads[0]
+	uploadInfo, err := upload.GetUploadFileInfo()
+	if err != nil {
+		return nil, fmt.Errorf("upload error: %w", err)
 	}
 
-	return info, nil
+	// Fill in the api.Item from the api.UploadFileInfo
+	var info api.Item
+	info.ID = upload.Attributes.RessourceID
+	info.Attributes.Name = upload.Attributes.FileName
+	// info.Attributes.Type = not used
+	info.Attributes.IsFolder = false
+	// info.Attributes.CreatedTime = not used
+	info.Attributes.ModifiedTime = uploadInfo.GetModTime()
+	// info.Attributes.UploadedTime = 0 not used
+	info.Attributes.StorageInfo.Size = uploadInfo.Size
+	info.Attributes.StorageInfo.FileCount = 0
+	info.Attributes.StorageInfo.FolderCount = 0
+
+	return &info, nil
 }
 
 // Put the object into the container
