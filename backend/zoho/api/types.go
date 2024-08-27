@@ -2,6 +2,8 @@
 package api
 
 import (
+	"encoding/json"
+	"fmt"
 	"strconv"
 	"time"
 )
@@ -12,7 +14,12 @@ type Time time.Time
 
 // UnmarshalJSON turns JSON into a Time
 func (t *Time) UnmarshalJSON(data []byte) error {
-	millis, err := strconv.ParseInt(string(data), 10, 64)
+	s := string(data)
+	// If the time is a quoted string, strip quotes
+	if len(s) >= 2 && s[0] == '"' && s[len(s)-1] == '"' {
+		s = s[1 : len(s)-1]
+	}
+	millis, err := strconv.ParseInt(s, 10, 64)
 	if err != nil {
 		return err
 	}
@@ -84,6 +91,73 @@ type ItemList struct {
 	Items []Item `json:"data"`
 }
 
+// UploadFileInfo is what the FileInfo field in the UnloadInfo struct decodes to
+type UploadFileInfo struct {
+	OrgID           string `json:"ORG_ID"`
+	ResourceID      string `json:"RESOURCE_ID"`
+	LibraryID       string `json:"LIBRARY_ID"`
+	Md5Checksum     string `json:"MD5_CHECKSUM"`
+	ParentModelID   string `json:"PARENT_MODEL_ID"`
+	ParentID        string `json:"PARENT_ID"`
+	ResourceType    int    `json:"RESOURCE_TYPE"`
+	WmsSentTime     string `json:"WMS_SENT_TIME"`
+	TabID           string `json:"TAB_ID"`
+	Owner           string `json:"OWNER"`
+	ResourceGroup   string `json:"RESOURCE_GROUP"`
+	ParentModelName string `json:"PARENT_MODEL_NAME"`
+	Size            int64  `json:"size"`
+	Operation       string `json:"OPERATION"`
+	EventID         string `json:"EVENT_ID"`
+	AuditInfo       struct {
+		VersionInfo struct {
+			VersionAuthors    []string `json:"versionAuthors"`
+			VersionID         string   `json:"versionId"`
+			IsMinorVersion    bool     `json:"isMinorVersion"`
+			VersionTime       Time     `json:"versionTime"`
+			VersionAuthorZuid []string `json:"versionAuthorZuid"`
+			VersionNotes      string   `json:"versionNotes"`
+			VersionNumber     string   `json:"versionNumber"`
+		} `json:"versionInfo"`
+		Resource struct {
+			Owner            string `json:"owner"`
+			CreatedTime      Time   `json:"created_time"`
+			Creator          string `json:"creator"`
+			ServiceType      int    `json:"service_type"`
+			Extension        string `json:"extension"`
+			StatusChangeTime Time   `json:"status_change_time"`
+			ResourceType     int    `json:"resource_type"`
+			Name             string `json:"name"`
+		} `json:"resource"`
+		ParentInfo struct {
+			ParentName string `json:"parentName"`
+			ParentID   string `json:"parentId"`
+			ParentType int    `json:"parentType"`
+		} `json:"parentInfo"`
+		LibraryInfo struct {
+			LibraryName string `json:"libraryName"`
+			LibraryID   string `json:"libraryId"`
+			LibraryType int    `json:"libraryType"`
+		} `json:"libraryInfo"`
+		UpdateType string `json:"updateType"`
+		StatusCode string `json:"statusCode"`
+	} `json:"AUDIT_INFO"`
+	ZUID   int64  `json:"ZUID"`
+	TeamID string `json:"TEAM_ID"`
+}
+
+// GetModTime fetches the modification time of the upload
+//
+// This tries a few places and if all fails returns the current time
+func (ufi *UploadFileInfo) GetModTime() Time {
+	if t := ufi.AuditInfo.Resource.CreatedTime; !time.Time(t).IsZero() {
+		return t
+	}
+	if t := ufi.AuditInfo.Resource.StatusChangeTime; !time.Time(t).IsZero() {
+		return t
+	}
+	return Time(time.Now())
+}
+
 // UploadInfo is a simplified and slightly different version of
 // the Item struct only used in the response to uploads
 type UploadInfo struct {
@@ -91,7 +165,19 @@ type UploadInfo struct {
 		ParentID    string `json:"parent_id"`
 		FileName    string `json:"notes.txt"`
 		RessourceID string `json:"resource_id"`
+		Permalink   string `json:"Permalink"`
+		FileInfo    string `json:"File INFO"` // JSON encoded UploadFileInfo
 	} `json:"attributes"`
+}
+
+// GetUploadFileInfo decodes the embedded FileInfo
+func (ui *UploadInfo) GetUploadFileInfo() (*UploadFileInfo, error) {
+	var ufi UploadFileInfo
+	err := json.Unmarshal([]byte(ui.Attributes.FileInfo), &ufi)
+	if err != nil {
+		return nil, fmt.Errorf("failed to decode FileInfo: %w", err)
+	}
+	return &ufi, nil
 }
 
 // UploadResponse is the response to a file Upload
