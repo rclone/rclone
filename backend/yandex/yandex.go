@@ -266,8 +266,8 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 
 	ctx, ci := fs.AddConfig(ctx)
 	if fs.ConfigOptionsInfo.Get("user_agent").IsDefault() && opt.SpoofUserAgent {
-		randomSessionId, _ := random.Password(128)
-		ci.UserAgent = fmt.Sprintf(userAgentTemplae, randomSessionId)
+		randomSessionID, _ := random.Password(128)
+		ci.UserAgent = fmt.Sprintf(userAgentTemplae, randomSessionID)
 	}
 
 	token, err := oauthutil.GetToken(name, m)
