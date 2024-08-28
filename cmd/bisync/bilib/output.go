@@ -6,13 +6,13 @@ import (
 	"log"
 
 	"github.com/rclone/rclone/fs"
-	"github.com/sirupsen/logrus"
+	"github.com/rclone/rclone/fs/logrus"
 )
 
 // CaptureOutput runs a function capturing its output.
 func CaptureOutput(fun func()) []byte {
 	logSave := log.Writer()
-	logrusSave := logrus.StandardLogger().Writer()
+	logrusSave := logrus.GetStandardLoggerWriter()
 	defer func() {
 		err := logrusSave.Close()
 		if err != nil {
