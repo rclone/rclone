@@ -880,3 +880,4 @@ put them back in again.` >}}
   * Fornax <wimbrand96@gmail.com>
   * Sam Harrison <sam.harrison@files.com>
   * Péter Bozsó <3806723+peterbozso@users.noreply.github.com>
+  * Georg Welzel <gwelzel@mailbox.org>
