@@ -50,6 +50,7 @@ See the following for detailed instructions for
   * [Google Photos](/googlephotos/)
   * [Hasher](/hasher/) - to handle checksums for other remotes
   * [HDFS](/hdfs/)
+  * [Hetzner Storage Box](/sftp/#hetzner-storage-box)
   * [HiDrive](/hidrive/)
   * [HTTP](/http/)
   * [Internet Archive](/internetarchive/)
@@ -73,6 +74,7 @@ See the following for detailed instructions for
   * [Proton Drive](/protondrive/)
   * [QingStor](/qingstor/)
   * [Quatrix by Maytech](/quatrix/)
+  * [rsync.net](/sftp/#rsync-net)
   * [Seafile](/seafile/)
   * [SFTP](/sftp/)
   * [Sia](/sia/)
