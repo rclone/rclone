@@ -180,9 +180,36 @@ func (ui *UploadInfo) GetUploadFileInfo() (*UploadFileInfo, error) {
 	return &ufi, nil
 }
 
+// LargeUploadInfo is once again a slightly different version of UploadInfo
+// returned as part of an LargeUploadResponse by the large file upload API.
+type LargeUploadInfo struct {
+	Attributes struct {
+		ParentID    string `json:"parent_id"`
+		FileName    string `json:"file_name"`
+		RessourceID string `json:"resource_id"`
+		FileInfo    string `json:"file_info"`
+	} `json:"attributes"`
+}
+
+// GetUploadFileInfo decodes the embedded FileInfo
+func (ui *LargeUploadInfo) GetUploadFileInfo() (*UploadFileInfo, error) {
+	var ufi UploadFileInfo
+	err := json.Unmarshal([]byte(ui.Attributes.FileInfo), &ufi)
+	if err != nil {
+		return nil, fmt.Errorf("failed to decode FileInfo: %w", err)
+	}
+	return &ufi, nil
+}
+
 // UploadResponse is the response to a file Upload
 type UploadResponse struct {
 	Uploads []UploadInfo `json:"data"`
+}
+
+// LargeUploadResponse is the response returned by large file upload API.
+type LargeUploadResponse struct {
+	Uploads []LargeUploadInfo `json:"data"`
+	Status  string            `json:"status"`
 }
 
 // WriteMetadataRequest is used to write metadata for a
