@@ -26,6 +26,7 @@ import (
 	"github.com/rclone/rclone/lib/encoder"
 	"github.com/rclone/rclone/lib/oauthutil"
 	"github.com/rclone/rclone/lib/pacer"
+	"github.com/rclone/rclone/lib/random"
 	"github.com/rclone/rclone/lib/readers"
 	"github.com/rclone/rclone/lib/rest"
 	"golang.org/x/oauth2"
@@ -46,12 +47,26 @@ var (
 	// Description of how to auth for this app
 	oauthConfig = &oauth2.Config{
 		Endpoint: oauth2.Endpoint{
-			AuthURL:  "https://oauth.yandex.com/authorize", //same as https://oauth.yandex.ru/authorize
-			TokenURL: "https://oauth.yandex.com/token",     //same as https://oauth.yandex.ru/token
+			AuthURL:       "https://oauth.yandex.com/authorize", //same as https://oauth.yandex.ru/authorize
+			TokenURL:      "https://oauth.yandex.com/token",     //same as https://oauth.yandex.ru/token
+			DeviceAuthURL: "https://oauth.yandex.com/device/code",
 		},
 		ClientID:     rcloneClientID,
 		ClientSecret: obscure.MustReveal(rcloneEncryptedClientSecret),
 		RedirectURL:  oauthutil.RedirectURL,
+		Scopes: []string{
+			"cloud_api:disk.app_folder",
+			"cloud_api:disk.read",
+			"cloud_api:disk.write",
+			"cloud_api:disk.info",
+			/*"yadisk:all",
+			"cloud_api.data:app_data",
+			"cloud_api.data:user_data",*/
+			/*"messenger:telemost",
+			"telemost:all",
+			"passport:bind_phone",
+			"calendar:all",*/
+		},
 	}
 )
 
@@ -63,7 +78,8 @@ func init() {
 		NewFs:       NewFs,
 		Config: func(ctx context.Context, name string, m configmap.Mapper, config fs.ConfigIn) (*fs.ConfigOut, error) {
 			return oauthutil.ConfigOut("", &oauthutil.Options{
-				OAuth2Config: oauthConfig,
+				OAuth2Config:    oauthConfig,
+				DeviceGrantType: "device_code",
 			})
 		},
 		Options: append(oauthutil.SharedOptions, []fs.Option{{
@@ -79,6 +95,14 @@ func init() {
 			// it doesn't seem worth making an exception for this
 			Default: (encoder.Display |
 				encoder.EncodeInvalidUtf8),
+		}, {
+			Name:     "user_agent",
+			Default:  "",
+			Advanced: true,
+			Hide:     fs.OptionHideCommandLine,
+			Help: `HTTP user agent used internally by client.
+
+Defaults to a dynamically generated ID used by the official client or "--user-agent" provided on command line.`,
 		}}...),
 	})
 }
@@ -88,6 +112,7 @@ type Options struct {
 	Token      string               `config:"token"`
 	HardDelete bool                 `config:"hard_delete"`
 	Enc        encoder.MultiEncoder `config:"encoding"`
+	UserAgent  string               `config:"user_agent"`
 }
 
 // Fs represents a remote yandex
@@ -254,6 +279,21 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		return nil, err
 	}
 
+	newCtx, ci := fs.AddConfig(ctx)
+
+	randomSessionId, _ := random.Password(128)
+
+	if opt.UserAgent == "" {
+		opt.UserAgent = `Yandex.Disk {"os":"windows","dtype":"ydisk3","vsn":"3.2.37.4977","id":"6BD01244C7A94456BBCEE7EEC990AEAD","id2":"0F370CD40C594A4783BC839C846B999C","session_id":"` +
+			randomSessionId + `"}`
+	}
+
+	globalConfig := fs.GetConfig(nil)
+
+	if ci.UserAgent == globalConfig.UserAgent {
+		ci.UserAgent = opt.UserAgent
+	}
+
 	token, err := oauthutil.GetToken(name, m)
 	if err != nil {
 		return nil, fmt.Errorf("couldn't read OAuth token: %w", err)
@@ -269,12 +309,11 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		}
 		log.Printf("Automatically upgraded OAuth config.")
 	}
-	oAuthClient, _, err := oauthutil.NewClient(ctx, name, m, oauthConfig)
+	oAuthClient, _, err := oauthutil.NewClient(newCtx, name, m, oauthConfig)
 	if err != nil {
 		return nil, fmt.Errorf("failed to configure Yandex: %w", err)
 	}
 
-	ci := fs.GetConfig(ctx)
 	f := &Fs{
 		name:  name,
 		opt:   *opt,
