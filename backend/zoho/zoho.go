@@ -50,6 +50,7 @@ var (
 			"WorkDrive.team.READ",
 			"WorkDrive.workspace.READ",
 			"WorkDrive.files.ALL",
+			"ZohoFiles.files.ALL",
 		},
 		Endpoint: oauth2.Endpoint{
 			AuthURL:   "https://accounts.zoho.eu/oauth/v2/auth",
@@ -61,6 +62,7 @@ var (
 		RedirectURL:  oauthutil.RedirectLocalhostURL,
 	}
 	rootURL     = "https://workdrive.zoho.eu/api/v1"
+	downloadURL = "https://download.zoho.eu/v1/workdrive"
 	accountsURL = "https://accounts.zoho.eu"
 )
 
@@ -205,6 +207,7 @@ type Fs struct {
 	opt      Options            // parsed options
 	features *fs.Features       // optional features
 	srv      *rest.Client       // the connection to the server
+	downloadsrv *rest.Client    // the connection to the Download server
 	dirCache *dircache.DirCache // Map of directory path to directory id
 	pacer    *fs.Pacer          // pacer for API calls
 }
@@ -229,6 +232,7 @@ func setupRegion(m configmap.Mapper) error {
 		return errors.New("no region set")
 	}
 	rootURL = fmt.Sprintf("https://workdrive.zoho.%s/api/v1", region)
+	downloadURL = fmt.Sprintf("https://download.zoho.%s/v1/workdrive",region)
 	accountsURL = fmt.Sprintf("https://accounts.zoho.%s", region)
 	oauthConfig.Endpoint.AuthURL = fmt.Sprintf("https://accounts.zoho.%s/oauth/v2/auth", region)
 	oauthConfig.Endpoint.TokenURL = fmt.Sprintf("https://accounts.zoho.%s/oauth/v2/token", region)
@@ -405,6 +409,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		root:  root,
 		opt:   *opt,
 		srv:   rest.NewClient(oAuthClient).SetRoot(rootURL),
+		downloadsrv:   rest.NewClient(oAuthClient).SetRoot(downloadURL),
 		pacer: fs.NewPacer(ctx, pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant))),
 	}
 	f.features = (&fs.Features{
@@ -1159,7 +1164,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 		Options: options,
 	}
 	err = o.fs.pacer.Call(func() (bool, error) {
-		resp, err = o.fs.srv.Call(ctx, &opts)
+		resp, err = o.fs.downloadsrv.Call(ctx, &opts)
 		return shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
