@@ -482,20 +482,16 @@ func newCaptchaTokenRequest(action, oldToken string, opt *Options) (req *api.Cap
 		DeviceID:     opt.DeviceID,
 		Meta:         new(api.CaptchaTokenMeta),
 	}
-	if opt.UserID != "" {
-		req.Meta.UserID = opt.UserID
-	} else {
-		req.Meta.UserName = opt.Username
-	}
 	switch action {
 	case "POST:/v1/auth/signin":
-		return
+		req.Meta.UserName = opt.Username
 	default:
 		timestamp, captchaSign := calcCaptchaSign(opt.DeviceID)
 		req.Meta.CaptchaSign = captchaSign
 		req.Meta.Timestamp = timestamp
 		req.Meta.ClientVersion = clientVersion
 		req.Meta.PackageName = packageName
+		req.Meta.UserID = opt.UserID
 	}
 	return
 }
@@ -595,11 +591,10 @@ type pikpakClient struct {
 	captcha *CaptchaTokenSource
 }
 
-// newPikpakClient takes an (oauth) http.Client and makes a new api instance with
+// newPikpakClient takes an (oauth) http.Client and makes a new api instance for pikpak with
 // * error handler
 // * root url
 // * default headers
-// for pikpak
 func newPikpakClient(c *http.Client, opt *Options) *pikpakClient {
 	client := rest.NewClient(c).SetErrorHandler(errorHandler).SetRoot(rootURL)
 	for key, val := range map[string]string{

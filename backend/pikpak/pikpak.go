@@ -114,14 +114,19 @@ func pikpakAuthorize(ctx context.Context, opt *Options, name string, m configmap
 		RootURL: "https://user.mypikpak.com/v1/auth/signin",
 	}
 	req := map[string]string{
-		"username":   opt.Username,
-		"password":   pass,
-		"client_id":  clientID,
-		"grant_type": "refresh_token",
+		"username":  opt.Username,
+		"password":  pass,
+		"client_id": clientID,
 	}
 	var token api.Token
 	rst := newPikpakClient(getClient(ctx, opt), opt).SetCaptchaTokener(ctx, m)
 	_, err = rst.CallJSON(ctx, &opts, req, &token)
+	if apiErr, ok := err.(*api.Error); ok {
+		if apiErr.Reason == "captcha_invalid" && apiErr.Code == 4002 {
+			rst.captcha.Invalidate()
+			_, err = rst.CallJSON(ctx, &opts, req, &token)
+		}
+	}
 	if err != nil {
 		return fmt.Errorf("failed to retrieve token using username/password: %w", err)
 	}
@@ -454,7 +459,8 @@ func (f *Fs) shouldRetry(ctx context.Context, resp *http.Response, err error) (b
 			return false, fserrors.FatalError(err)
 		} else if apiErr.Reason == "captcha_invalid" && apiErr.Code == 9 {
 			// "captcha_invalid" (9): Verification code is invalid
-			// This happens when attempting to upload zero-length-file with a invalid captcha token
+			// This error occurred on the POST:/drive/v1/files endpoint
+			// when a zero-byte file was uploaded with an invalid captcha token
 			f.rst.captcha.Invalidate()
 			return true, err
 		}
