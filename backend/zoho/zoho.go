@@ -37,7 +37,7 @@ const (
 	rcloneClientID              = "1000.46MXF275FM2XV7QCHX5A7K3LGME66B"
 	rcloneEncryptedClientSecret = "U-2gxclZQBcOG9NPhjiXAhj-f0uQ137D0zar8YyNHXHkQZlTeSpIOQfmCb4oSpvosJp_SJLXmLLeUA"
 	minSleep                    = 10 * time.Millisecond
-	maxSleep                    = 2 * time.Second
+	maxSleep                    = 60 * time.Second
 	decayConstant               = 2 // bigger for slower decay, exponential
 	configRootID                = "root_folder_id"
 )
@@ -83,7 +83,7 @@ func init() {
 			getSrvs := func() (authSrv, apiSrv *rest.Client, err error) {
 				oAuthClient, _, err := oauthutil.NewClient(ctx, name, m, oauthConfig)
 				if err != nil {
-					return nil, nil, fmt.Errorf("failed to load oAuthClient: %w", err)
+					return nil, nil, fmt.Errorf("failed to load OAuth client: %w", err)
 				}
 				authSrv = rest.NewClient(oAuthClient).SetRoot(accountsURL)
 				apiSrv = rest.NewClient(oAuthClient).SetRoot(rootURL)
@@ -293,13 +293,19 @@ func shouldRetry(ctx context.Context, resp *http.Response, err error) (bool, err
 	}
 	authRetry := false
 
+	// Bail out early if we are missing OAuth Scopes.
+	if resp != nil && resp.StatusCode == 401 && strings.Contains(resp.Status, "INVALID_OAUTHSCOPE") {
+		fs.Errorf(nil, "zoho: missing OAuth Scope. Run rclone config reconnect to fix this issue.")
+		return false, err
+	}
+
 	if resp != nil && resp.StatusCode == 401 && len(resp.Header["Www-Authenticate"]) == 1 && strings.Contains(resp.Header["Www-Authenticate"][0], "expired_token") {
 		authRetry = true
 		fs.Debugf(nil, "Should retry: %v", err)
 	}
 	if resp != nil && resp.StatusCode == 429 {
 		fs.Errorf(nil, "zoho: rate limit error received, sleeping for 60s: %v", err)
-		time.Sleep(60 * time.Second)
+		time.Sleep(180 * time.Second)
 	}
 	return authRetry || fserrors.ShouldRetry(err) || fserrors.ShouldRetryHTTP(resp, retryErrorCodes), err
 }
