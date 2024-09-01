@@ -247,18 +247,16 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 
 func newClientConfig(ctx context.Context, opt *Options) (config files_sdk.Config, err error) {
 	if opt.Site != "" {
-		config.Subdomain = opt.Site
-
-		_, err = url.Parse(config.Endpoint())
-		if err != nil {
-			config.Subdomain = ""
+		if strings.Contains(opt.Site, ".") {
 			config.EndpointOverride = opt.Site
+		} else {
+			config.Subdomain = opt.Site
+		}
 
-			_, err = url.Parse(config.Endpoint())
-			if err != nil {
-				err = fmt.Errorf("invalid domain or subdomain: %v", opt.Site)
-				return
-			}
+		_, err = url.ParseRequestURI(config.Endpoint())
+		if err != nil {
+			err = fmt.Errorf("invalid domain or subdomain: %v", opt.Site)
+			return
 		}
 	}
 
@@ -353,15 +351,6 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 		remote = path.Join(dir, remote)
 		if remote == dir {
 			continue
-		}
-
-		item, err = f.readMetaDataForPath(ctx, remote)
-		if err != nil {
-			if files_sdk.IsNotExist(err) {
-				continue
-			}
-
-			return nil, err
 		}
 
 		if item.IsDir() {

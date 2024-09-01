@@ -7,6 +7,7 @@ import (
 	"runtime"
 	"testing"
 
+	"github.com/rclone/rclone/cmd/serve/nfs"
 	"github.com/rclone/rclone/vfs/vfscommon"
 	"github.com/rclone/rclone/vfs/vfstest"
 	"github.com/stretchr/testify/require"
@@ -29,7 +30,7 @@ func TestMount(t *testing.T) {
 		}
 		sudo = true
 	}
-	nfsServerOpt.HandleCacheDir = t.TempDir()
-	require.NoError(t, nfsServerOpt.HandleCache.Set("disk"))
+	nfs.Opt.HandleCacheDir = t.TempDir()
+	require.NoError(t, nfs.Opt.HandleCache.Set("disk"))
 	vfstest.RunTests(t, false, vfscommon.CacheModeWrites, false, mount)
 }

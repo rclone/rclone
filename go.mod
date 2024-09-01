@@ -11,7 +11,6 @@ require (
 	github.com/Azure/go-ntlmssp v0.0.0-20221128193559-754e69321358
 	github.com/Files-com/files-sdk-go/v3 v3.2.34
 	github.com/Max-Sum/base32768 v0.0.0-20230304063302-18e6ce5945fd
-	github.com/Unknwon/goconfig v1.0.0
 	github.com/a8m/tree v0.0.0-20240104212747-2c8764a5f17e
 	github.com/aalpar/deheap v0.0.0-20210914013432-0cc84d79dec3
 	github.com/abbot/go-http-auth v0.4.0
@@ -70,6 +69,7 @@ require (
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.9.0
 	github.com/t3rm1n4l/go-mega v0.0.0-20240219080617-d494b6a8ace7
+	github.com/unknwon/goconfig v1.0.0
 	github.com/willscott/go-nfs v0.0.3-0.20240425122109-91bc38957cc9
 	github.com/winfsp/cgofuse v1.5.1-0.20221118130120-84c0898ad2e0
 	github.com/xanzy/ssh-agent v0.3.3

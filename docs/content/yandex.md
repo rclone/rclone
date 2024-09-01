@@ -210,6 +210,17 @@ Properties:
 - Type:        Encoding
 - Default:     Slash,Del,Ctl,InvalidUtf8,Dot
 
+#### --yandex-spoof-ua
+
+Set the user agent to match an official version of the yandex disk client. May help with upload performance.
+
+Properties:
+
+- Config:      spoof_ua
+- Env Var:     RCLONE_YANDEX_SPOOF_UA
+- Type:        bool
+- Default:     true
+
 #### --yandex-description
 
 Description of the remote.

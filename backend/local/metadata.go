@@ -129,10 +129,13 @@ func (o *Object) writeMetadataToFile(m fs.Metadata) (outErr error) {
 	}
 	mode, hasMode := o.parseMetadataInt(m, "mode", 8)
 	if hasMode {
-		if mode >= 0 && uint(mode) <= math.MaxUint32 {
-			err = os.Chmod(o.path, os.FileMode(mode))
-			if err != nil {
-				outErr = fmt.Errorf("failed to change permissions: %w", err)
+		if mode >= 0 {
+			umode := uint(mode)
+			if umode <= math.MaxUint32 {
+				err = os.Chmod(o.path, os.FileMode(umode))
+				if err != nil {
+					outErr = fmt.Errorf("failed to change permissions: %w", err)
+				}
 			}
 		}
 	}

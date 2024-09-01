@@ -43,7 +43,7 @@ var OptionsInfo = fs.Options{{
 }}
 
 func init() {
-	fs.RegisterGlobalOptions(fs.OptionsInfo{Name: "nfs", Opt: &opt, Options: OptionsInfo})
+	fs.RegisterGlobalOptions(fs.OptionsInfo{Name: "nfs", Opt: &Opt, Options: OptionsInfo})
 }
 
 type handleCache = fs.Enum[handleCacheChoices]
@@ -72,16 +72,17 @@ type Options struct {
 	HandleCacheDir string      `config:"nfs_cache_dir"`          // where the handle cache should be stored
 }
 
-var opt Options
+// Opt is the default set of serve nfs options
+var Opt Options
 
 // AddFlags adds flags for serve nfs (and nfsmount)
-func AddFlags(flagSet *pflag.FlagSet, Opt *Options) {
+func AddFlags(flagSet *pflag.FlagSet) {
 	flags.AddFlagsFromOptions(flagSet, "", OptionsInfo)
 }
 
 func init() {
 	vfsflags.AddFlags(Command.Flags())
-	AddFlags(Command.Flags(), &opt)
+	AddFlags(Command.Flags())
 }
 
 // Run the command
@@ -90,7 +91,7 @@ func Run(command *cobra.Command, args []string) {
 	cmd.CheckArgs(1, 1, command, args)
 	f = cmd.NewFsSrc(args)
 	cmd.Run(false, true, command, func() error {
-		s, err := NewServer(context.Background(), vfs.New(f, &vfscommon.Opt), &opt)
+		s, err := NewServer(context.Background(), vfs.New(f, &vfscommon.Opt), &Opt)
 		if err != nil {
 			return err
 		}

@@ -878,3 +878,8 @@ put them back in again.` >}}
   * Will Miles <wmiles@sgl.com>
   * David Seifert <16636962+SoapGentoo@users.noreply.github.com>
   * Fornax <wimbrand96@gmail.com>
+  * Sam Harrison <sam.harrison@files.com>
+  * Péter Bozsó <3806723+peterbozso@users.noreply.github.com>
+  * Georg Welzel <gwelzel@mailbox.org>
+  * John Oxley <john.oxley@gmail.com> <joxley@meta.com>
+  * Pawel Palucha <pawel.palucha@aetion.com>

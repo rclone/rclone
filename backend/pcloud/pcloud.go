@@ -14,6 +14,7 @@ import (
 	"net/http"
 	"net/url"
 	"path"
+	"strconv"
 	"strings"
 	"time"
 
@@ -146,7 +147,8 @@ we have to rely on user password authentication for it.`,
 			Help:       "Your pcloud password.",
 			IsPassword: true,
 			Advanced:   true,
-		}}...),
+		},
+		}...),
 	})
 }
 
@@ -161,15 +163,16 @@ type Options struct {
 
 // Fs represents a remote pcloud
 type Fs struct {
-	name         string             // name of this remote
-	root         string             // the path we are working on
-	opt          Options            // parsed options
-	features     *fs.Features       // optional features
-	srv          *rest.Client       // the connection to the server
-	cleanupSrv   *rest.Client       // the connection used for the cleanup method
-	dirCache     *dircache.DirCache // Map of directory path to directory id
-	pacer        *fs.Pacer          // pacer for API calls
-	tokenRenewer *oauthutil.Renew   // renew the token on expiry
+	name         string                 // name of this remote
+	root         string                 // the path we are working on
+	opt          Options                // parsed options
+	features     *fs.Features           // optional features
+	ts           *oauthutil.TokenSource // the token source, used to create new clients
+	srv          *rest.Client           // the connection to the server
+	cleanupSrv   *rest.Client           // the connection used for the cleanup method
+	dirCache     *dircache.DirCache     // Map of directory path to directory id
+	pacer        *fs.Pacer              // pacer for API calls
+	tokenRenewer *oauthutil.Renew       // renew the token on expiry
 }
 
 // Object describes a pcloud object
@@ -317,6 +320,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		name:  name,
 		root:  root,
 		opt:   *opt,
+		ts:    ts,
 		srv:   rest.NewClient(oAuthClient).SetRoot("https://" + opt.Hostname),
 		pacer: fs.NewPacer(ctx, pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant))),
 	}
@@ -326,6 +330,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	f.features = (&fs.Features{
 		CaseInsensitive:         false,
 		CanHaveEmptyDirectories: true,
+		PartialUploads:          true,
 	}).Fill(ctx, f)
 	if !canCleanup {
 		f.features.CleanUp = nil
@@ -333,7 +338,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	f.srv.SetErrorHandler(errorHandler)
 
 	// Renew the token in the background
-	f.tokenRenewer = oauthutil.NewRenew(f.String(), ts, func() error {
+	f.tokenRenewer = oauthutil.NewRenew(f.String(), f.ts, func() error {
 		_, err := f.readMetaDataForPath(ctx, "")
 		return err
 	})
@@ -373,6 +378,56 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		return f, fs.ErrorIsFile
 	}
 	return f, nil
+}
+
+// OpenWriterAt opens with a handle for random access writes
+//
+// Pass in the remote desired and the size if known.
+//
+// It truncates any existing object
+func (f *Fs) OpenWriterAt(ctx context.Context, remote string, size int64) (fs.WriterAtCloser, error) {
+	client, err := f.newSingleConnClient(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("create client: %w", err)
+	}
+	// init an empty file
+	leaf, directoryID, err := f.dirCache.FindPath(ctx, remote, true)
+	if err != nil {
+		return nil, fmt.Errorf("resolve src: %w", err)
+	}
+	openResult, err := fileOpenNew(ctx, client, f, directoryID, leaf)
+	if err != nil {
+		return nil, fmt.Errorf("open file: %w", err)
+	}
+
+	writer := &writerAt{
+		ctx:    ctx,
+		client: client,
+		fs:     f,
+		size:   size,
+		remote: remote,
+		fd:     openResult.FileDescriptor,
+		fileID: openResult.Fileid,
+	}
+
+	return writer, nil
+}
+
+// Create a new http client, accepting keep-alive headers, limited to single connection.
+// Necessary for pcloud fileops API, as it binds the session to the underlying TCP connection.
+// File descriptors are only valid within the same connection and auto-closed when the connection is closed,
+// hence we need a separate client (with single connection) for each fd to avoid all sorts of errors and race conditions.
+func (f *Fs) newSingleConnClient(ctx context.Context) (*rest.Client, error) {
+	baseClient := fshttp.NewClient(ctx)
+	baseClient.Transport = fshttp.NewTransportCustom(ctx, func(t *http.Transport) {
+		t.MaxConnsPerHost = 1
+		t.DisableKeepAlives = false
+	})
+	// Set our own http client in the context
+	ctx = oauthutil.Context(ctx, baseClient)
+	// create a new oauth client, re-use the token source
+	oAuthClient := oauth2.NewClient(ctx, f.ts)
+	return rest.NewClient(oAuthClient).SetRoot("https://" + f.opt.Hostname), nil
 }
 
 // Return an Object from a path
@@ -1094,9 +1149,42 @@ func (o *Object) ModTime(ctx context.Context) time.Time {
 
 // SetModTime sets the modification time of the local fs object
 func (o *Object) SetModTime(ctx context.Context, modTime time.Time) error {
-	// Pcloud doesn't have a way of doing this so returning this
-	// error will cause the file to be re-uploaded to set the time.
-	return fs.ErrorCantSetModTime
+	filename, directoryID, err := o.fs.dirCache.FindPath(ctx, o.Remote(), true)
+	if err != nil {
+		return err
+	}
+	fileID := fileIDtoNumber(o.id)
+	filename = o.fs.opt.Enc.FromStandardName(filename)
+	opts := rest.Opts{
+		Method:           "PUT",
+		Path:             "/copyfile",
+		Parameters:       url.Values{},
+		TransferEncoding: []string{"identity"}, // pcloud doesn't like chunked encoding
+		ExtraHeaders: map[string]string{
+			"Connection": "keep-alive",
+		},
+	}
+	opts.Parameters.Set("fileid", fileID)
+	opts.Parameters.Set("folderid", dirIDtoNumber(directoryID))
+	opts.Parameters.Set("toname", filename)
+	opts.Parameters.Set("tofolderid", dirIDtoNumber(directoryID))
+	opts.Parameters.Set("ctime", strconv.FormatInt(modTime.Unix(), 10))
+	opts.Parameters.Set("mtime", strconv.FormatInt(modTime.Unix(), 10))
+
+	result := &api.ItemResult{}
+	err = o.fs.pacer.CallNoRetry(func() (bool, error) {
+		resp, err := o.fs.srv.CallJSON(ctx, &opts, nil, result)
+		err = result.Error.Update(err)
+		return shouldRetry(ctx, resp, err)
+	})
+	if err != nil {
+		return fmt.Errorf("update mtime: copyfile: %w", err)
+	}
+	if err := o.setMetaData(&result.Metadata); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // Storable returns a boolean showing whether this object storable
