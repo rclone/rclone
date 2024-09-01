@@ -40,6 +40,8 @@ const (
 	maxSleep                    = 60 * time.Second
 	decayConstant               = 2 // bigger for slower decay, exponential
 	configRootID                = "root_folder_id"
+
+	largeFileTheshold = 10 * 1024 * 1024 // 10 MiB
 )
 
 // Globals
@@ -92,12 +94,12 @@ func init() {
 
 			switch config.State {
 			case "":
-				return oauthutil.ConfigOut("teams", &oauthutil.Options{
+				return oauthutil.ConfigOut("type", &oauthutil.Options{
 					OAuth2Config: oauthConfig,
 					// No refresh token unless ApprovalForce is set
 					OAuth2Opts: []oauth2.AuthCodeOption{oauth2.ApprovalForce},
 				})
-			case "teams":
+			case "type":
 				// We need to rewrite the token type to "Zoho-oauthtoken" because Zoho wants
 				// it's own custom type
 				token, err := oauthutil.GetToken(name, m)
@@ -112,24 +114,43 @@ func init() {
 					}
 				}
 
-				authSrv, apiSrv, err := getSrvs()
+				_, apiSrv, err := getSrvs()
 				if err != nil {
 					return nil, err
 				}
 
-				// Get the user Info
-				opts := rest.Opts{
-					Method: "GET",
-					Path:   "/oauth/user/info",
+				userInfo, err := getUserInfo(ctx, apiSrv)
+				if err != nil {
+					return nil, err
 				}
-				var user api.User
-				_, err = authSrv.CallJSON(ctx, &opts, nil, &user)
+				// If personal Edition only one private Space is available. Directly configure that.
+				if userInfo.Data.Attributes.Edition == "PERSONAL" {
+					return fs.ConfigResult("private_space", userInfo.Data.ID)
+				}
+				// Otherwise go to team selection
+				return fs.ConfigResult("team", userInfo.Data.ID)
+			case "private_space":
+				_, apiSrv, err := getSrvs()
+				if err != nil {
+					return nil, err
+				}
+
+				workspaces, err := getPrivateSpaces(ctx, config.Result, apiSrv)
+				if err != nil {
+					return nil, err
+				}
+				return fs.ConfigChoose("workspace_end", "config_workspace", "Workspace ID", len(workspaces), func(i int) (string, string) {
+					workspace := workspaces[i]
+					return workspace.ID, workspace.Name
+				})
+			case "team":
+				_, apiSrv, err := getSrvs()
 				if err != nil {
 					return nil, err
 				}
 
 				// Get the teams
-				teams, err := listTeams(ctx, user.ZUID, apiSrv)
+				teams, err := listTeams(ctx, config.Result, apiSrv)
 				if err != nil {
 					return nil, err
 				}
@@ -147,9 +168,19 @@ func init() {
 				if err != nil {
 					return nil, err
 				}
+				currentTeamInfo, err := getCurrentTeamInfo(ctx, teamID, apiSrv)
+				if err != nil {
+					return nil, err
+				}
+				privateSpaces, err := getPrivateSpaces(ctx, currentTeamInfo.Data.ID, apiSrv)
+				if err != nil {
+					return nil, err
+				}
+				workspaces = append(workspaces, privateSpaces...)
+
 				return fs.ConfigChoose("workspace_end", "config_workspace", "Workspace ID", len(workspaces), func(i int) (string, string) {
 					workspace := workspaces[i]
-					return workspace.ID, workspace.Attributes.Name
+					return workspace.ID, workspace.Name
 				})
 			case "workspace_end":
 				workspaceID := config.Result
@@ -245,11 +276,63 @@ func setupRegion(m configmap.Mapper) error {
 
 // ------------------------------------------------------------
 
-func listTeams(ctx context.Context, uid int64, srv *rest.Client) ([]api.TeamWorkspace, error) {
+type workspaceInfo struct {
+	ID   string
+	Name string
+}
+
+func getUserInfo(ctx context.Context, srv *rest.Client) (*api.UserInfoResponse, error) {
+	var userInfo api.UserInfoResponse
+	opts := rest.Opts{
+		Method:       "GET",
+		Path:         "/users/me",
+		ExtraHeaders: map[string]string{"Accept": "application/vnd.api+json"},
+	}
+	_, err := srv.CallJSON(ctx, &opts, nil, &userInfo)
+	if err != nil {
+		return nil, err
+	}
+	return &userInfo, nil
+}
+
+func getCurrentTeamInfo(ctx context.Context, teamID string, srv *rest.Client) (*api.CurrentTeamInfo, error) {
+	var currentTeamInfo api.CurrentTeamInfo
+	opts := rest.Opts{
+		Method:       "GET",
+		Path:         "/teams/" + teamID + "/currentuser",
+		ExtraHeaders: map[string]string{"Accept": "application/vnd.api+json"},
+	}
+	_, err := srv.CallJSON(ctx, &opts, nil, &currentTeamInfo)
+	if err != nil {
+		return nil, err
+	}
+	return &currentTeamInfo, err
+}
+
+func getPrivateSpaces(ctx context.Context, teamUserID string, srv *rest.Client) ([]workspaceInfo, error) {
+	var privateSpaceListResponse api.TeamWorkspaceResponse
+	opts := rest.Opts{
+		Method:       "GET",
+		Path:         "/users/" + teamUserID + "/privatespace",
+		ExtraHeaders: map[string]string{"Accept": "application/vnd.api+json"},
+	}
+	_, err := srv.CallJSON(ctx, &opts, nil, &privateSpaceListResponse)
+	if err != nil {
+		return nil, err
+	}
+
+	workspaceList := make([]workspaceInfo, 0, len(privateSpaceListResponse.TeamWorkspace))
+	for _, workspace := range privateSpaceListResponse.TeamWorkspace {
+		workspaceList = append(workspaceList, workspaceInfo{ID: workspace.ID, Name: "My Space"})
+	}
+	return workspaceList, err
+}
+
+func listTeams(ctx context.Context, zuid string, srv *rest.Client) ([]api.TeamWorkspace, error) {
 	var teamList api.TeamWorkspaceResponse
 	opts := rest.Opts{
 		Method:       "GET",
-		Path:         "/users/" + strconv.FormatInt(uid, 10) + "/teams",
+		Path:         "/users/" + zuid + "/teams",
 		ExtraHeaders: map[string]string{"Accept": "application/vnd.api+json"},
 	}
 	_, err := srv.CallJSON(ctx, &opts, nil, &teamList)
@@ -259,18 +342,24 @@ func listTeams(ctx context.Context, uid int64, srv *rest.Client) ([]api.TeamWork
 	return teamList.TeamWorkspace, nil
 }
 
-func listWorkspaces(ctx context.Context, teamID string, srv *rest.Client) ([]api.TeamWorkspace, error) {
-	var workspaceList api.TeamWorkspaceResponse
+func listWorkspaces(ctx context.Context, teamID string, srv *rest.Client) ([]workspaceInfo, error) {
+	var workspaceListResponse api.TeamWorkspaceResponse
 	opts := rest.Opts{
 		Method:       "GET",
 		Path:         "/teams/" + teamID + "/workspaces",
 		ExtraHeaders: map[string]string{"Accept": "application/vnd.api+json"},
 	}
-	_, err := srv.CallJSON(ctx, &opts, nil, &workspaceList)
+	_, err := srv.CallJSON(ctx, &opts, nil, &workspaceListResponse)
 	if err != nil {
 		return nil, err
 	}
-	return workspaceList.TeamWorkspace, nil
+
+	workspaceList := make([]workspaceInfo, 0, len(workspaceListResponse.TeamWorkspace))
+	for _, workspace := range workspaceListResponse.TeamWorkspace {
+		workspaceList = append(workspaceList, workspaceInfo{ID: workspace.ID, Name: workspace.Attributes.Name})
+	}
+
+	return workspaceList, nil
 }
 
 // --------------------------------------------------------------
@@ -789,7 +878,7 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 		}
 
 		// use normal upload API for small sizes (<10MiB)
-		if size < 10*1024*1024 {
+		if size < largeFileTheshold {
 			info, err := f.upload(ctx, f.opt.Enc.FromStandardName(leaf), directoryID, size, in, options...)
 			if err != nil {
 				return nil, err
@@ -1272,7 +1361,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	}
 
 	// use normal upload API for small sizes (<10MiB)
-	if size < 10*1024*1024 {
+	if size < largeFileTheshold {
 		info, err := o.fs.upload(ctx, o.fs.opt.Enc.FromStandardName(leaf), directoryID, size, in, options...)
 		if err != nil {
 			return err

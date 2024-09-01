@@ -27,8 +27,8 @@ func (t *Time) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-// User is a Zoho user we are only interested in the ZUID here
-type User struct {
+// OAuthUser is a Zoho user we are only interested in the ZUID here
+type OAuthUser struct {
 	FirstName   string `json:"First_Name"`
 	Email       string `json:"Email"`
 	LastName    string `json:"Last_Name"`
@@ -36,12 +36,41 @@ type User struct {
 	ZUID        int64  `json:"ZUID"`
 }
 
-// TeamWorkspace represents a Zoho Team or workspace
+// UserInfoResponse is returned by the user info API.
+type UserInfoResponse struct {
+	Data struct {
+		ID         string `json:"id"`
+		Type       string `json:"users"`
+		Attributes struct {
+			EmailID string `json:"email_id"`
+			Edition string `json:"edition"`
+		} `json:"attributes"`
+	} `json:"data"`
+}
+
+// PrivateSpaceInfo gives basic information about a users private folder.
+type PrivateSpaceInfo struct {
+	Data struct {
+		ID   string `json:"id"`
+		Type string `json:"string"`
+	} `json:"data"`
+}
+
+// CurrentTeamInfo gives information about the current user in a team.
+type CurrentTeamInfo struct {
+	Data struct {
+		ID   string `json:"id"`
+		Type string `json:"string"`
+	}
+}
+
+// TeamWorkspace represents a Zoho Team, Workspace or Private Space
 // It's actually a VERY large json object that differs between
-// Team and Workspace but we are only interested in some fields
-// that both of them have so we can use the same struct for both
+// Team and Workspace and Private Space but we are only interested in some fields
+// that all of them have so we can use the same struct.
 type TeamWorkspace struct {
 	ID         string `json:"id"`
+	Type       string `json:"type"`
 	Attributes struct {
 		Name    string `json:"name"`
 		Created Time   `json:"created_time_in_millisecond"`
@@ -49,7 +78,8 @@ type TeamWorkspace struct {
 	} `json:"attributes"`
 }
 
-// TeamWorkspaceResponse is the response by the list teams api
+// TeamWorkspaceResponse is the response by the list teams API, list workspace API
+// or list team private spaces API.
 type TeamWorkspaceResponse struct {
 	TeamWorkspace []TeamWorkspace `json:"data"`
 }
