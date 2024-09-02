@@ -130,12 +130,8 @@ This format requires absolute paths and the use of prefix `\\?\`,
 e.g. `\\?\D:\some\very\long\path`. For convenience rclone will automatically
 convert regular paths into the corresponding extended-length paths,
 so in most cases you do not have to worry about this (read more [below](#long-paths)).
-
-Note that Windows supports using the same prefix `\\?\` to
-specify path to volumes identified by their GUID, e.g.
-`\\?\Volume{b75e2c83-0000-0000-0000-602f00000000}\some\path`.
-This is *not* supported in rclone, due to an [issue](https://github.com/golang/go/issues/39785)
-in go.
+Using the same prefix `\\?\` it is also possible to specify path to volumes
+identified by their GUID, e.g. `\\?\Volume{b75e2c83-0000-0000-0000-602f00000000}\some\path`.
 
 #### Long paths ####
 
