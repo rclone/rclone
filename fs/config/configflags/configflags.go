@@ -210,7 +210,7 @@ func SetFlags(ci *fs.ConfigInfo) {
 	}
 }
 
-// parseHeaders converts DSCP names to value
+// parseDSCP converts DSCP names to value
 func parseDSCP(dscp string) (uint8, bool) {
 	if s, err := strconv.ParseUint(dscp, 10, 6); err == nil {
 		return uint8(s), true
