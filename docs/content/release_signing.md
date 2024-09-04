@@ -149,7 +149,7 @@ $ rclone hashsum sha256 -C SHA256SUMS rclone-v1.63.1-windows-amd64.zip
 You can verify the signatures and hashes in one command line like this:
 
 ```
-$ gpg --decrypt SHA256SUMS | sha256sum -c --ignore-missing
+$ h=$(gpg --decrypt SHA256SUMS) && echo "$h" | sha256sum - -c --ignore-missing
 gpg: Signature made Mon 17 Jul 2023 15:03:17 BST
 gpg:                using DSA key FBF737ECE9F8AB18604BD2AC93935E02FF3B54FA
 gpg: Good signature from "Nick Craig-Wood <nick@craig-wood.com>" [ultimate]
