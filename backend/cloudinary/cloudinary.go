@@ -24,7 +24,6 @@ import (
 	"github.com/rclone/rclone/fs/config/configstruct"
 	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/fs/hash"
-	"github.com/rclone/rclone/fs/object"
 	"github.com/rclone/rclone/lib/encoder"
 	"github.com/rclone/rclone/lib/rest"
 	"github.com/zeebo/blake3"
@@ -50,14 +49,16 @@ func init() {
 		NewFs:       NewFs,
 		Options: []fs.Option{
 			{
-				Name:     "cloud_name",
-				Help:     "Cloudinary Environment Name",
-				Required: true,
+				Name:      "cloud_name",
+				Help:      "Cloudinary Environment Name",
+				Required:  true,
+				Sensitive: true,
 			},
 			{
-				Name:     "api_key",
-				Help:     "Cloudinary API Key",
-				Required: true,
+				Name:      "api_key",
+				Help:      "Cloudinary API Key",
+				Required:  true,
+				Sensitive: true,
 			},
 			{
 				Name:       "api_secret",
@@ -67,7 +68,7 @@ func init() {
 			},
 			{
 				Name: "upload_prefix",
-				Help: "Specify alternative data center",
+				Help: "Specify the API endpoint for environments out of the US",
 			},
 			{
 				Name: "upload_preset",
@@ -95,8 +96,9 @@ func init() {
 			},
 			{
 				Name:     "eventually_consistent_delay",
+				Default:  fs.Duration(0),
 				Advanced: true,
-				Help:     "Wait N seconds for eventual consistency",
+				Help:     "Wait N seconds for eventual consistency of the databases that support the backend operation",
 			},
 		},
 	})
@@ -110,7 +112,7 @@ type Options struct {
 	UploadPrefix              string               `config:"upload_prefix"`
 	UploadPreset              string               `config:"upload_preset"`
 	Enc                       encoder.MultiEncoder `config:"encoding"`
-	EventuallyConsistentDelay string               `config:"eventually_consistent_delay"`
+	EventuallyConsistentDelay fs.Duration          `config:"eventually_consistent_delay"`
 }
 
 // Fs represents a remote cloudinary server
@@ -229,16 +231,13 @@ func (f *Fs) Root() string {
 
 // Wait till the FS is eventually consistent
 func (f *Fs) WaitEventuallyConsistent() {
-	if f.opt.EventuallyConsistentDelay == "" {
+	if f.opt.EventuallyConsistentDelay == fs.Duration(0) {
 		return
 	}
+	delay := time.Duration(f.opt.EventuallyConsistentDelay)
 	timeSinceLastCRUD := time.Since(f.lastCRUD)
-	delaySeconds, err := strconv.Atoi(f.opt.EventuallyConsistentDelay)
-	if err != nil {
-		fs.Errorf(f, "failed to convert EventuallyConsistentDelay to integer from '%s'", f.opt.EventuallyConsistentDelay)
-	}
-	if delaySeconds > 0 && timeSinceLastCRUD.Seconds() < float64(delaySeconds) {
-		time.Sleep(time.Duration(delaySeconds)*time.Second - timeSinceLastCRUD)
+	if timeSinceLastCRUD < delay {
+		time.Sleep(delay - timeSinceLastCRUD)
 	}
 }
 
@@ -402,27 +401,31 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 	}
 
 	params := uploader.UploadParams{
-		AssetFolder:  f.FromStandardFullPath(cldPathDir(src.Remote())),
-		DisplayName:  api.CloudinaryEncoder.FromStandardName(f, path.Base(src.Remote())),
 		UploadPreset: f.opt.UploadPreset,
 	}
 
-	// We want to conform to the unique asset ID of rclone, which is (asset_folder,display_name,last_modified).
-	// We also want to enable customers to choose their own public_id, in case duplicate names are not a crucial use case.
-	// Upload_presets that apply randomness to the public ID would not work well with rclone duplicate assets support.
-	params.FilenameOverride = f.getSuggestedPublicID(params.AssetFolder, params.DisplayName, src.ModTime(ctx))
-
+	updateObject := false
 	for _, option := range options {
 		if updateOptions, ok := option.(*api.UpdateOptions); ok {
 			if updateOptions.PublicID != "" {
+				updateObject = true
 				params.Overwrite = SDKApi.Bool(true)
 				params.Invalidate = SDKApi.Bool(true)
 				params.PublicID = updateOptions.PublicID
 				params.ResourceType = updateOptions.ResourceType
 				params.Type = SDKApi.DeliveryType(updateOptions.DeliveryType)
-				params.FilenameOverride = ""
+				params.AssetFolder = updateOptions.AssetFolder
+				params.DisplayName = updateOptions.DisplayName
 			}
 		}
+	}
+	if !updateObject {
+		params.AssetFolder = f.FromStandardFullPath(cldPathDir(src.Remote()))
+		params.DisplayName = api.CloudinaryEncoder.FromStandardName(f, path.Base(src.Remote()))
+		// We want to conform to the unique asset ID of rclone, which is (asset_folder,display_name,last_modified).
+		// We also want to enable customers to choose their own public_id, in case duplicate names are not a crucial use case.
+		// Upload_presets that apply randomness to the public ID would not work well with rclone duplicate assets support.
+		params.FilenameOverride = f.getSuggestedPublicID(params.AssetFolder, params.DisplayName, src.ModTime(ctx))
 	}
 	uploadResult, err := f.cld.Upload.Upload(ctx, in, params)
 	f.lastCRUD = time.Now()
@@ -580,13 +583,14 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 }
 
 func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {
-	srcImmutable := object.NewStaticObjectInfo(o.Remote(), src.ModTime(ctx), src.Size(), true, nil, o.Fs())
 	options = append(options, &api.UpdateOptions{
 		PublicID:     o.publicID,
 		ResourceType: o.resourceType,
 		DeliveryType: o.deliveryType,
+		DisplayName:  api.CloudinaryEncoder.FromStandardName(o.fs, path.Base(o.Remote())),
+		AssetFolder:  o.fs.FromStandardFullPath(cldPathDir(o.Remote())),
 	})
-	updatedObj, err := o.fs.Put(ctx, in, srcImmutable, options...)
+	updatedObj, err := o.fs.Put(ctx, in, src, options...)
 	if err != nil {
 		return err
 	}

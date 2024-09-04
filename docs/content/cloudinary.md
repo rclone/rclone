@@ -1,7 +1,7 @@
 ---
 title: "Cloudinary"
 description: "Rclone docs for Cloudinary backend"
-versionIntroduced: "v1.0"
+versionIntroduced: "v1.69"
 
 ---
 # {{< icon "fa fa-cloud" >}} Cloudinary
@@ -19,50 +19,7 @@ To use this backend, you need to [create a free account](https://cloudinary.com/
 
 ## Securing Your Credentials
 
-It is recommended to use a full path to the binary of the password utility. We will first prepare the system, and later encrypt the rclone config file
-
-### Mac
-
-* Generate and store a password
-
-`security add-generic-password -a rclone -s config -w $(openssl rand -base64 40)`
-
-* Add the retrieval instruction to your .zprofile / .profile
-
-`export RCLONE_PASSWORD_COMMAND="/usr/bin/security find-generic-password -a rclone -s config -w"`
-
-### Linux
-
-* Prerequisite
-
-Linux doesn't come with a default password manager. Let's install the "pass" utility using a package manager, e.g. `apt install pass`, `yum install pass`, [etc.](https://www.passwordstore.org/#download);
-then initialize a password store:
-
-`pass init rclone`
-
-* Generate and store a password
-
-`echo $(openssl rand -base64 40) | pass insert -m rclone/config`
-
-* Add the retrieval instruction
-
-`export RCLONE_PASSWORD_COMMAND="/usr/bin/pass rclone/config"`
-
-### Windows
-
-* Generate and store a password
-
-`New-Object -TypeName PSCredential -ArgumentList "rclone", (ConvertTo-SecureString -String ([System.Web.Security.Membership]::GeneratePassword(40, 10)) -AsPlainText -Force) | Export-Clixml -Path "rclone-credential.xml"`
-
-* Add the password retrieval instruction
-
-`[Environment]::SetEnvironmentVariable("RCLONE_PASSWORD_COMMAND", "[System.Runtime.InteropServices.Marshal]::PtrToStringAuto([System.Runtime.InteropServices.Marshal]::SecureStringToBSTR((Import-Clixml -Path "rclone-credential.xml").Password))")`
-
-### Encrypt the config file (all systems)
-
-* Execute `rclone config` -> `s`
-
-* Add/update the password from previous steps
+Please refer to the [docs](https://rclone.org/docs/#configuration-encryption)
 
 ## Configuration
 

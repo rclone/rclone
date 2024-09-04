@@ -28,6 +28,8 @@ type UpdateOptions struct {
 	PublicID     string
 	ResourceType string
 	DeliveryType string
+	AssetFolder  string
+	DisplayName  string
 }
 
 func (o *UpdateOptions) Header() (string, string) {
