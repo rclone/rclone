@@ -511,10 +511,10 @@ func newCaptchaTokenSource(ctx context.Context, opt *Options, m configmap.Mapper
 	token := new(api.CaptchaToken)
 	tokenString, ok := m.Get("captcha_token")
 	if !ok || tokenString == "" {
-		fs.Debugf(nil, "failed to read token out of config file")
+		fs.Debugf(nil, "failed to read captcha token out of config file")
 	} else {
 		if err := json.Unmarshal([]byte(tokenString), token); err != nil {
-			fs.Debugf(nil, "failed to parse token out of config file: %v", err)
+			fs.Debugf(nil, "failed to parse captcha token out of config file: %v", err)
 		}
 	}
 	return &CaptchaTokenSource{

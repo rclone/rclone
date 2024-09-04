@@ -501,16 +501,18 @@ func (f *Fs) newClientWithPacer(ctx context.Context) (err error) {
 	if err != nil {
 		return fmt.Errorf("failed to create oauth client: %w", err)
 	}
+	token, err := ts.Token()
+	if err != nil {
+		return err
+	}
 	// parse user_id from oauth access token for later use
-	if token, err := ts.Token(); err == nil {
-		if parts := strings.Split(token.AccessToken, "."); len(parts) > 1 {
-			jsonStr, _ := base64.URLEncoding.DecodeString(parts[1] + "===")
-			info := struct {
-				UserID string `json:"sub,omitempty"`
-			}{}
-			if jsonErr := json.Unmarshal(jsonStr, &info); jsonErr == nil {
-				f.opt.UserID = info.UserID
-			}
+	if parts := strings.Split(token.AccessToken, "."); len(parts) > 1 {
+		jsonStr, _ := base64.URLEncoding.DecodeString(parts[1] + "===")
+		info := struct {
+			UserID string `json:"sub,omitempty"`
+		}{}
+		if jsonErr := json.Unmarshal(jsonStr, &info); jsonErr == nil {
+			f.opt.UserID = info.UserID
 		}
 	}
 	f.rst = newPikpakClient(f.client, &f.opt).SetCaptchaTokener(ctx, f.m)
@@ -555,7 +557,10 @@ func newFs(ctx context.Context, name, path string, m configmap.Mapper) (*Fs, err
 	}
 
 	if err := f.newClientWithPacer(ctx); err != nil {
-		return nil, err
+		// re-authorize if necessary
+		if strings.Contains(err.Error(), "invalid_grant") {
+			return f, f.reAuthorize(ctx)
+		}
 	}
 
 	return f, nil
