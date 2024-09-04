@@ -36,6 +36,7 @@ See the following for detailed instructions for
   * [Chunker](/chunker/) - transparently splits large files for other remotes
   * [Citrix ShareFile](/sharefile/)
   * [Compress](/compress/)
+  * [Cloudinary](/cloudinary/)
   * [Combine](/combine/)
   * [Crypt](/crypt/) - to encrypt other remotes
   * [DigitalOcean Spaces](/s3/#digitalocean-spaces)
