@@ -1925,7 +1925,7 @@ Suffix length limit is 16 characters.
 
 The default is `.partial`.
 
-### --password-command SpaceSepList ###
+### --password-command SpaceSepList {#password-command}
 
 This flag supplies a program which should supply the config password
 when run. This is an alternative to rclone prompting for the password
@@ -1943,6 +1943,11 @@ Eg
     --password-command "echo hello"
     --password-command 'echo "hello with space"'
     --password-command 'echo "hello with ""quotes"" and space"'
+
+Note that when changing the configuration password the environment
+variable `RCLONE_PASSWORD_CHANGE=1` will be set. This can be used to
+distinguish initial decryption of the config file from the new
+password.
 
 See the [Configuration Encryption](#configuration-encryption) for more info.
 
@@ -2547,6 +2552,12 @@ encryption from your configuration.
 
 There is no way to recover the configuration if you lose your password.
 
+You can also use
+
+- [rclone config encryption set](/commands/rclone_config_encryption_set/) to set the config encryption directly
+- [rclone config encryption remove](/commands/rclone_config_encryption_remove/) to remove it
+- [rclone config encryption check](/commands/rclone_config_encryption_check/) to check that it is encrypted properly.
+
 rclone uses [nacl secretbox](https://godoc.org/golang.org/x/crypto/nacl/secretbox)
 which in turn uses XSalsa20 and Poly1305 to encrypt and authenticate
 your configuration with secret-key cryptography.
@@ -2579,7 +2590,7 @@ An alternate means of supplying the password is to provide a script
 which will retrieve the password and print on standard output.  This
 script should have a fully specified path name and not rely on any
 environment variables.  The script is supplied either via
-`--password-command="..."` command line argument or via the
+[`--password-command="..."`](#password-command) command line argument or via the
 `RCLONE_PASSWORD_COMMAND` environment variable.
 
 One useful example of this is using the `passwordstore` application

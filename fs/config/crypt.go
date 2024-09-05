@@ -41,6 +41,11 @@ var (
 	PassConfigKeyForDaemonization = false
 )
 
+// IsEncrypted returns true if the config file is encrypted
+func IsEncrypted() bool {
+	return len(configKey) > 0
+}
+
 // Decrypt will automatically decrypt a reader
 func Decrypt(b io.ReadSeeker) (io.Reader, error) {
 	ctx := context.Background()
@@ -313,6 +318,11 @@ func ClearConfigPassword() {
 //
 // This will use --password-command if configured to read the password.
 func changeConfigPassword() {
+	// Set RCLONE_PASSWORD_CHANGE to "1" when calling the --password-command tool
+	_ = os.Setenv("RCLONE_PASSWORD_CHANGE", "1")
+	defer func() {
+		_ = os.Unsetenv("RCLONE_PASSWORD_CHANGE")
+	}()
 	pass, err := GetPasswordCommand(context.Background())
 	if err != nil {
 		fmt.Printf("Failed to read new password with --password-command: %v\n", err)
@@ -328,4 +338,23 @@ func changeConfigPassword() {
 		fmt.Printf("Failed to set config password: %v\n", err)
 		return
 	}
+}
+
+// ChangeConfigPasswordAndSave will query the user twice
+// for a password. If the same password is entered
+// twice the key is updated.
+//
+// This will use --password-command if configured to read the password.
+//
+// It will then save the config
+func ChangeConfigPasswordAndSave() {
+	changeConfigPassword()
+	SaveConfig()
+}
+
+// RemoveConfigPasswordAndSave will clear the config password and save
+// the unencrypted config file.
+func RemoveConfigPasswordAndSave() {
+	configKey = nil
+	SaveConfig()
 }

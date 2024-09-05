@@ -2,6 +2,8 @@ package config
 
 import (
 	"context"
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/rclone/rclone/fs"
@@ -64,8 +66,33 @@ func TestChangeConfigPassword(t *testing.T) {
 	// Get rid of any config password
 	ClearConfigPassword()
 
-	// Set correct password using --password command
-	ci.PasswordCommand = fs.SpaceSepList{"echo", "asdf"}
+	// Return the password, checking the state of the environment variable
+	checkCode := `
+package main
+
+import (
+	"fmt"
+	"os"
+	"log"
+)
+
+func main() {
+	v := os.Getenv("RCLONE_PASSWORD_CHANGE")
+	if v == "" {
+		log.Fatal("Env var not found")
+	} else if v != "1" {
+		log.Fatal("Env var wrong value")
+	} else {
+		fmt.Println("asdf")
+	}
+}
+`
+	dir := t.TempDir()
+	code := filepath.Join(dir, "file.go")
+	require.NoError(t, os.WriteFile(code, []byte(checkCode), 0777))
+
+	// Set correct password using --password-command
+	ci.PasswordCommand = fs.SpaceSepList{"go", "run", code}
 	changeConfigPassword()
 	err = Data().Load()
 	require.NoError(t, err)
