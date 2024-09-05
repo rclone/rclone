@@ -2620,6 +2620,57 @@ general, but are used without referencing a stored remote, e.g.
 listing local filesystem paths, or
 [connection strings](#connection-strings): `rclone --config="" ls .`
 
+Configuration Encryption Cheatsheet
+-----------------------------------
+You can quickly apply a configuration encryption without plain-text
+at rest or transfer. Detailed instructions for popular OSes:
+
+### Mac ###
+
+* Generate and store a password
+
+`security add-generic-password -a rclone -s config -w $(openssl rand -base64 40)`
+
+* Add the retrieval instruction to your .zprofile / .profile
+
+`export RCLONE_PASSWORD_COMMAND="/usr/bin/security find-generic-password -a rclone -s config -w"`
+
+### Linux ###
+
+* Prerequisite
+
+Linux doesn't come with a default password manager. Let's install
+the "pass" utility using a package manager, e.g. `apt install pass`,
+ `yum install pass`,
+ [etc.](https://www.passwordstore.org/#download); then initialize a
+ password store:
+
+`pass init rclone`
+
+* Generate and store a password
+
+`echo $(openssl rand -base64 40) | pass insert -m rclone/config`
+
+* Add the retrieval instruction
+
+`export RCLONE_PASSWORD_COMMAND="/usr/bin/pass rclone/config"`
+
+### Windows ###
+
+* Generate and store a password
+
+`New-Object -TypeName PSCredential -ArgumentList "rclone", (ConvertTo-SecureString -String ([System.Web.Security.Membership]::GeneratePassword(40, 10)) -AsPlainText -Force) | Export-Clixml -Path "rclone-credential.xml"`
+
+* Add the password retrieval instruction
+
+`[Environment]::SetEnvironmentVariable("RCLONE_PASSWORD_COMMAND", "[System.Runtime.InteropServices.Marshal]::PtrToStringAuto([System.Runtime.InteropServices.Marshal]::SecureStringToBSTR((Import-Clixml -Path "rclone-credential.xml").Password))")`
+
+### Encrypt the config file (all systems) ###
+
+* Execute `rclone config` -> `s`
+
+* Add/update the password from previous steps
+
 Developer options
 -----------------
 
