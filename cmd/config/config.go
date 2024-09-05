@@ -36,6 +36,7 @@ func init() {
 	configCommand.AddCommand(configReconnectCommand)
 	configCommand.AddCommand(configDisconnectCommand)
 	configCommand.AddCommand(configUserInfoCommand)
+	configCommand.AddCommand(configEncryptionCommand)
 }
 
 var configCommand = &cobra.Command{
@@ -514,6 +515,94 @@ system.
 		sort.Strings(keys)
 		for _, key := range keys {
 			fmt.Printf("%*s: %s\n", maxKeyLen, key, u[key])
+		}
+		return nil
+	},
+}
+
+func init() {
+	configEncryptionCommand.AddCommand(configEncryptionSetCommand)
+	configEncryptionCommand.AddCommand(configEncryptionRemoveCommand)
+	configEncryptionCommand.AddCommand(configEncryptionCheckCommand)
+}
+
+var configEncryptionCommand = &cobra.Command{
+	Use:   "encryption",
+	Short: `set, remove and check the encryption for the config file`,
+	Long: `This command sets, clears and checks the encryption for the config file using
+the subcommands below.
+`,
+}
+
+var configEncryptionSetCommand = &cobra.Command{
+	Use:   "set",
+	Short: `Set or change the config file encryption password`,
+	Long: strings.ReplaceAll(`This command sets or changes the config file encryption password.
+
+If there was no config password set then it sets a new one, otherwise
+it changes the existing config password.
+
+Note that if you are changing an encryption password using
+|--password-command| then this will be called once to decrypt the
+config using the old password and then again to read the new
+password to re-encrypt the config.
+
+When |--password-command| is called to change the password then the
+environment variable |RCLONE_PASSWORD_CHANGE=1| will be set. So if
+changing passwords programatically you can use the environment
+variable to distinguish which password you must supply.
+
+Alternatively you can remove the password first (with |rclone config
+encryption remove|), then set it again with this command which may be
+easier if you don't mind the unecrypted config file being on the disk
+briefly.
+`, "|", "`"),
+	RunE: func(command *cobra.Command, args []string) error {
+		cmd.CheckArgs(0, 0, command, args)
+		config.LoadedData()
+		config.ChangeConfigPasswordAndSave()
+		return nil
+	},
+}
+
+var configEncryptionRemoveCommand = &cobra.Command{
+	Use:   "remove",
+	Short: `Remove the config file encryption password`,
+	Long: strings.ReplaceAll(`Remove the config file encryption password
+
+This removes the config file encryption, returning it to un-encrypted.
+
+If |--password-command| is in use, this will be called to supply the old config
+password.
+
+If the config was not encrypted then no error will be returned and
+this command will do nothing.
+`, "|", "`"),
+	RunE: func(command *cobra.Command, args []string) error {
+		cmd.CheckArgs(0, 0, command, args)
+		config.LoadedData()
+		config.RemoveConfigPasswordAndSave()
+		return nil
+	},
+}
+
+var configEncryptionCheckCommand = &cobra.Command{
+	Use:   "check",
+	Short: `Check that the config file is encrypted`,
+	Long: strings.ReplaceAll(`This checks the config file is encrypted and that you can decrypt it.
+
+It will attempt to decrypt the config using the password you supply.
+
+If decryption fails it will return a non-zero exit code if using
+|--password-command|, otherwise it will prompt again for the password.
+
+If the config file is not encrypted it will return a non zero exit code.
+`, "|", "`"),
+	RunE: func(command *cobra.Command, args []string) error {
+		cmd.CheckArgs(0, 0, command, args)
+		config.LoadedData()
+		if !config.IsEncrypted() {
+			return errors.New("config file is NOT encrypted")
 		}
 		return nil
 	},

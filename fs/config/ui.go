@@ -797,13 +797,11 @@ func SetPassword() {
 			what := []string{"cChange Password", "uUnencrypt configuration", "qQuit to main menu"}
 			switch i := Command(what); i {
 			case 'c':
-				changeConfigPassword()
-				SaveConfig()
+				ChangeConfigPasswordAndSave()
 				fmt.Println("Password changed")
 				continue
 			case 'u':
-				configKey = nil
-				SaveConfig()
+				RemoveConfigPasswordAndSave()
 				continue
 			case 'q':
 				return
@@ -815,8 +813,7 @@ func SetPassword() {
 			what := []string{"aAdd Password", "qQuit to main menu"}
 			switch i := Command(what); i {
 			case 'a':
-				changeConfigPassword()
-				SaveConfig()
+				ChangeConfigPasswordAndSave()
 				fmt.Println("Password set")
 				continue
 			case 'q':
