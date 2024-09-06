@@ -2836,6 +2836,17 @@ Rclone prefixes all log messages with their level in capitals, e.g. INFO
 which makes it easy to grep the log file for different kinds of
 information.
 
+Metrics
+-------
+
+Rclone can publish metrics in the OpenMetrics/Prometheus format.
+
+To enable the metrics endpoint, use the `--metrics-addr` flag. Metrics can also be published on the `--rc-addr` port if the `--rc` flag and `--rc-enable-metrics` flags are supplied or if using rclone rcd `--rc-enable-metrics`
+
+Rclone provides extensive configuration options for the metrics HTTP endpoint. These settings are grouped under the Metrics section and have a prefix `--metrics-*`.
+
+When metrics are enabled with `--rc-enable-metrics`, they will be published on the same port as the rc API. In this case, the `--metrics-*` flags will be ignored, and the HTTP endpoint configuration will be managed by the `--rc-*` parameters.
+
 Exit Code
 ---------
 

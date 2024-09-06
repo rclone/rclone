@@ -100,6 +100,7 @@ Default Off.
 ### --rc-enable-metrics
 
 Enable OpenMetrics/Prometheus compatible endpoint at `/metrics`.
+If more control over the metrics is desired (for example running it on a different port or with different auth) then endpoint can be enabled with the `--metrics-*` flags instead.
 
 Default Off.
 
