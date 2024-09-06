@@ -673,7 +673,7 @@ remote or flag value. The fix then is to quote values containing spaces.
 ### `--min-size` - Don't transfer any file smaller than this
 
 Controls the minimum size file within the scope of an rclone command.
-Default units are `KiB` but abbreviations `K`, `M`, `G`, `T` or `P` are valid.
+Default units are `KiB` but abbreviations `B`, `K`, `M`, `G`, `T` or `P` are valid.
 
 E.g. `rclone ls remote: --min-size 50k` lists files on `remote:` of 50 KiB
 size or larger.
@@ -683,7 +683,7 @@ See [the size option docs](/docs/#size-option) for more info.
 ### `--max-size` - Don't transfer any file larger than this
 
 Controls the maximum size file within the scope of an rclone command.
-Default units are `KiB` but abbreviations `K`, `M`, `G`, `T` or `P` are valid.
+Default units are `KiB` but abbreviations `B`, `K`, `M`, `G`, `T` or `P` are valid.
 
 E.g. `rclone ls remote: --max-size 1G` lists files on `remote:` of 1 GiB
 size or smaller.
