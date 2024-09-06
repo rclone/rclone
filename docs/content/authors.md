@@ -884,3 +884,4 @@ put them back in again.` >}}
   * John Oxley <john.oxley@gmail.com> <joxley@meta.com>
   * Pawel Palucha <pawel.palucha@aetion.com>
   * crystalstall <crystalruby@qq.com>
+  * nipil <nipil@users.noreply.github.com>
