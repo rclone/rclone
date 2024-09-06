@@ -886,3 +886,4 @@ put them back in again.` >}}
   * crystalstall <crystalruby@qq.com>
   * nipil <nipil@users.noreply.github.com>
   * yuval-cloudinary <46710068+yuval-cloudinary@users.noreply.github.com>
+  * Mathieu Moreau <mrx23dot@users.noreply.github.com>
