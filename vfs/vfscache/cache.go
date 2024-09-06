@@ -178,8 +178,11 @@ func (c *Cache) Queue() (out rc.Params) {
 }
 
 // QueueSetExpiry updates the expiry of a single item in the upload queue
-func (c *Cache) QueueSetExpiry(id writeback.Handle, expiry time.Time) error {
-	return c.writeback.SetExpiry(id, expiry)
+//
+// The expiry time is set to expiry + relative if expiry is passed in,
+// otherwise the expiry of the item is used.
+func (c *Cache) QueueSetExpiry(id writeback.Handle, expiry time.Time, relative time.Duration) error {
+	return c.writeback.SetExpiry(id, expiry, relative)
 }
 
 // createDir creates a directory path, along with any necessary parents
