@@ -802,8 +802,9 @@ func SetPassword() {
 				fmt.Println("Password changed")
 				continue
 			case 'u':
-				configKey = nil
+				ClearConfigPassword()
 				SaveConfig()
+				fmt.Println("Configuration decrypted")
 				continue
 			case 'q':
 				return

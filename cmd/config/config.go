@@ -21,7 +21,9 @@ import (
 
 func init() {
 	cmd.Root.AddCommand(configCommand)
+	configCommand.AddCommand(configDecrypt)
 	configCommand.AddCommand(configEditCommand)
+	configCommand.AddCommand(configEncrypt)
 	configCommand.AddCommand(configFileCommand)
 	configCommand.AddCommand(configTouchCommand)
 	configCommand.AddCommand(configPathsCommand)
@@ -51,6 +53,43 @@ password to protect your configuration.
 	RunE: func(command *cobra.Command, args []string) error {
 		cmd.CheckArgs(0, 0, command, args)
 		return config.EditConfig(context.Background())
+	},
+}
+
+var configDecrypt = &cobra.Command{
+	Use:   "decrypt",
+	Short: `Decrypt the Rclone configuration file.`,
+	Run: func(command *cobra.Command, args []string) {
+		config.LoadedData()
+		config.ClearConfigPassword()
+		config.SaveConfig()
+	},
+}
+
+var configEncrypt = &cobra.Command{
+	Use:   "encrypt",
+	Short: `Encrypt the Rclone configuration file.`,
+	Long: `
+	Encrypts the config file. You can set a password via the prompt or
+	pass your password directly as an argument. After encryption you will be 
+	asked to enter a password when using Rclone. Passwords are not recoverable.
+`,
+	RunE: func(command *cobra.Command, args []string) error {
+		if len(args) == 0 {
+			passwd := config.ChangePassword("NEW configuration")
+			err := config.SetConfigPassword(passwd)
+			if err != nil {
+				return err
+			}
+		} else {
+			cmd.CheckArgs(1, 1, command, args)
+			err := config.SetConfigPassword(args[0])
+			if err != nil {
+				return err
+			}
+		}
+		config.SaveConfig()
+		return nil
 	},
 }
 

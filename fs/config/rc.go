@@ -33,6 +33,65 @@ func rcDump(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 
 func init() {
 	rc.Add(rc.Call{
+		Path:         "config/decrypt",
+		Fn:           rcDecrypt,
+		Title:        "Decrypts the Rclone config file.",
+		AuthRequired: true,
+		Help:         `Decrypt the Rclone configuration file. Requires login.`,
+	})
+}
+
+// Decrypt the Rclone config file
+func rcDecrypt(ctx context.Context, in rc.Params) (out rc.Params, err error) {
+	ClearConfigPassword()
+	SaveConfig()
+	return nil, nil
+}
+
+func init() {
+	rc.Add(rc.Call{
+		Path:         "config/encrypt",
+		Fn:           rcEncrypt,
+		Title:        "Encrypts the Rclone config file.",
+		AuthRequired: false,
+		Help: `
+Parameters:
+- password: password to use for encryption
+
+Returns nil for success or a JSON object on error:
+- error: error_message
+
+Encrypts the config file. After encryption you will need to be logged in to use Rclone. 
+Passwords are not recoverable.
+`,
+	})
+}
+
+// Encrypts the Rclone config file
+func rcEncrypt(ctx context.Context, in rc.Params) (out rc.Params, err error) {
+
+	passwd, err := in.GetString("password")
+	if err != nil {
+		out = rc.Params{
+			"error": err,
+		}
+	} else if passwd == "" {
+		out = rc.Params{
+			"error": "password paramater not supplied",
+		}
+	} else {
+		err := SetConfigPassword(passwd)
+		if err != nil {
+			return nil, err
+		}
+		SaveConfig()
+		out = nil
+	}
+	return out, nil
+}
+
+func init() {
+	rc.Add(rc.Call{
 		Path:         "config/get",
 		Fn:           rcGet,
 		Title:        "Get a remote in the config file.",
