@@ -10,7 +10,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
 	"os"
 	"os/exec"
 	"path"
@@ -429,7 +428,7 @@ func initConfig() {
 	// Start the metrics server if configured
 	_, err = rcserver.MetricsStart(ctx, &rc.Opt)
 	if err != nil {
-		log.Fatalf("Failed to start metrics server: %v", err)
+		fs.Fatalf(nil, "Failed to start metrics server: %v", err)
 
 	}
 
