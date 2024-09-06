@@ -4,6 +4,11 @@ on:
   push:
     tags:
       - '**'
+
+env:
+  IMAGE: tgdrive/rclone
+
+
 jobs:
   build:
     timeout-minutes: 60
@@ -126,6 +131,7 @@ jobs:
         with:
           name: rclone-${{ matrix.job_name }}
           path: ${{ github.workspace }}/build/**/*
+          retention-days: 1
 
   android:
     timeout-minutes: 30
@@ -210,6 +216,7 @@ jobs:
         with:
           name: rclone-android
           path: ${{ github.workspace }}/build/rclone-*.zip
+          retention-days: 1
 
   release:
    name: Create Release
@@ -224,9 +231,14 @@ jobs:
       - name: Download All Artifacts
         uses: actions/download-artifact@v4
         with:
-           path: ${{ github.workspace }}/build
+           path: /tmp/build
            pattern: rclone-*
            merge-multiple: true
+
+      - name: Copy Artifacts
+        run: |
+         mkdir build
+         cp -r /tmp/build/* build/
       
       - name: Upload Assets
         shell: bash
@@ -234,3 +246,37 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
          make upload_github
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Set Docker metadata
+        id: docker_meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.IMAGE }}
+          labels: |
+            org.opencontainers.image.version=${{ github.ref_name}}
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.title=${{ env.IMAGE }}
+            org.opencontainers.image.description=Rclone Docker Image
+      
+      - name: Publish to Docker
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          platforms: linux/amd64,linux/arm64
+          build-args: |
+            VERSION=${{ github.ref_name}}
+          labels: ${{ steps.docker_meta.outputs.labels }}
+          tags: |
+            ghcr.io/${{ env.IMAGE }}:${{ github.ref_name}}
+            ghcr.io/${{ env.IMAGE }}:latest
