@@ -10,9 +10,8 @@ Cryptdecode returns unencrypted file names.
 
 ## Synopsis
 
-
-rclone cryptdecode returns unencrypted file names when provided with
-a list of encrypted file names. List limit is 10 items.
+Returns unencrypted file names when provided with a list of encrypted file
+names. List limit is 10 items.
 
 If you supply the `--reverse` flag, it will return encrypted file names.
 
@@ -37,10 +36,9 @@ rclone cryptdecode encryptedremote: encryptedfilename [flags]
       --reverse   Reverse cryptdecode, encrypts filenames
 ```
 
-
 See the [global flags page](/flags/) for global options not listed here.
 
-# SEE ALSO
+## See Also
 
 * [rclone](/commands/rclone/)	 - Show help for rclone commands, flags and backends.
 

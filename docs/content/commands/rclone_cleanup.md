@@ -10,7 +10,6 @@ Clean up the remote if possible.
 
 ## Synopsis
 
-
 Clean up the remote if possible.  Empty the trash or delete old file
 versions. Not supported by all remotes.
 
@@ -25,10 +24,12 @@ rclone cleanup remote:path [flags]
   -h, --help   help for cleanup
 ```
 
+Options shared with other commands are described next.
+See the [global flags page](/flags/) for global options not listed here.
 
-## Important Options
+### Important Options
 
-Important flags useful for most commands.
+Important flags useful for most commands
 
 ```
   -n, --dry-run         Do a trial run with no permanent changes
@@ -36,9 +37,7 @@ Important flags useful for most commands.
   -v, --verbose count   Print lots more stuff (repeat for more)
 ```
 
-See the [global flags page](/flags/) for global options not listed here.
-
-# SEE ALSO
+## See Also
 
 * [rclone](/commands/rclone/)	 - Show help for rclone commands, flags and backends.
 

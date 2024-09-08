@@ -10,7 +10,6 @@ Create a new remote with name, type and options.
 
 ## Synopsis
 
-
 Create a new remote of `name` with `type` and options.  The options
 should be passed in pairs of `key` `value` or as `key=value`.
 
@@ -130,10 +129,9 @@ rclone config create name type [key value]* [flags]
       --state string      State - use with --continue
 ```
 
-
 See the [global flags page](/flags/) for global options not listed here.
 
-# SEE ALSO
+## See Also
 
 * [rclone config](/commands/rclone_config/)	 - Enter an interactive configuration session.
 

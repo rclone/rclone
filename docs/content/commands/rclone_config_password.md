@@ -10,7 +10,6 @@ Update password in an existing remote.
 
 ## Synopsis
 
-
 Update an existing remote's password. The password
 should be passed in pairs of `key` `password` or as `key=password`.
 The `password` should be passed in in clear (unobscured).
@@ -34,10 +33,9 @@ rclone config password name [key value]+ [flags]
   -h, --help   help for password
 ```
 
-
 See the [global flags page](/flags/) for global options not listed here.
 
-# SEE ALSO
+## See Also
 
 * [rclone config](/commands/rclone_config/)	 - Enter an interactive configuration session.
 
