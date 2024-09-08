@@ -1,3 +1,4 @@
+// Package cloudinary provides an interface to the Cloudinary DAM
 package cloudinary
 
 import (
@@ -194,31 +195,37 @@ func NewFs(ctx context.Context, name string, root string, m configmap.Mapper) (f
 
 // ------------------------------------------------------------
 
-// Implementation of the api.CloudinaryEncoder
+// FromStandardPath implementation of the api.CloudinaryEncoder
 func (f *Fs) FromStandardPath(s string) string {
 	return strings.ReplaceAll(f.opt.Enc.FromStandardPath(s), "&", "\uFF06")
 }
 
+// FromStandardName implementation of the api.CloudinaryEncoder
 func (f *Fs) FromStandardName(s string) string {
 	return strings.ReplaceAll(f.opt.Enc.FromStandardName(s), "&", "\uFF06")
 }
 
+// ToStandardPath implementation of the api.CloudinaryEncoder
 func (f *Fs) ToStandardPath(s string) string {
 	return strings.ReplaceAll(f.opt.Enc.ToStandardPath(s), "\uFF06", "&")
 }
 
+// ToStandardName implementation of the api.CloudinaryEncoder
 func (f *Fs) ToStandardName(s string) string {
 	return strings.ReplaceAll(f.opt.Enc.ToStandardName(s), "\uFF06", "&")
 }
 
+// FromStandardFullPath encodes a full path to Cloudinary standard
 func (f *Fs) FromStandardFullPath(dir string) string {
 	return path.Join(api.CloudinaryEncoder.FromStandardPath(f, f.root), api.CloudinaryEncoder.FromStandardPath(f, dir))
 }
 
-func (f *Fs) ToAssetFolderApi(dir string) string {
+// ToAssetFolderAPI encodes folders as expected by the Cloudinary SDK
+func (f *Fs) ToAssetFolderAPI(dir string) string {
 	return strings.ReplaceAll(dir, "%", "%25")
 }
 
+// ToDisplayNameElastic encodes a special case of elasticsearch
 func (f *Fs) ToDisplayNameElastic(dir string) string {
 	return strings.ReplaceAll(dir, "!", "\\!")
 }
@@ -233,7 +240,7 @@ func (f *Fs) Root() string {
 	return f.root
 }
 
-// Wait till the FS is eventually consistent
+// WaitEventuallyConsistent waits till the FS is eventually consistent
 func (f *Fs) WaitEventuallyConsistent() {
 	if f.opt.EventuallyConsistentDelay == fs.Duration(0) {
 		return
@@ -269,7 +276,7 @@ func (f *Fs) List(ctx context.Context, dir string) (fs.DirEntries, error) {
 	for {
 		// user the folders api to list folders.
 		folderParams := admin.SubFoldersParams{
-			Folder:     f.ToAssetFolderApi(remotePrefix),
+			Folder:     f.ToAssetFolderAPI(remotePrefix),
 			MaxResults: 500,
 		}
 		if nextCursor != "" {
@@ -459,16 +466,19 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 	return o, nil
 }
 
+// Precision of the remote
 func (f *Fs) Precision() time.Duration {
 	return fs.ModTimeNotSupported
 }
 
+// Hashes returns the supported hash sets
 func (f *Fs) Hashes() hash.Set {
 	return hash.Set(hash.MD5)
 }
 
+// Mkdir creates empty folders
 func (f *Fs) Mkdir(ctx context.Context, dir string) error {
-	params := admin.CreateFolderParams{Folder: f.ToAssetFolderApi(f.FromStandardFullPath(dir))}
+	params := admin.CreateFolderParams{Folder: f.ToAssetFolderAPI(f.FromStandardFullPath(dir))}
 	res, err := f.cld.Admin.CreateFolder(ctx, params)
 	f.lastCRUD = time.Now()
 	if err != nil {
@@ -481,10 +491,11 @@ func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 	return nil
 }
 
+// RmDir deletes empty folders
 func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 	// Additional test because Cloudinary will delete folders without
 	// assets, regardless of empty sub-folders
-	folder := f.ToAssetFolderApi(f.FromStandardFullPath(dir))
+	folder := f.ToAssetFolderAPI(f.FromStandardFullPath(dir))
 	folderParams := admin.SubFoldersParams{
 		Folder:     folder,
 		MaxResults: 1,
@@ -541,6 +552,7 @@ func shouldRetry(ctx context.Context, resp *http.Response, err error) (bool, err
 
 // ------------------------------------------------------------
 
+// Hash returns the MD5 of an object
 func (o *Object) Hash(ctx context.Context, ty hash.Type) (string, error) {
 	if ty != hash.MD5 {
 		return "", hash.ErrUnsupported
@@ -548,6 +560,7 @@ func (o *Object) Hash(ctx context.Context, ty hash.Type) (string, error) {
 	return o.md5sum, nil
 }
 
+// Return a string version
 func (o *Object) String() string {
 	if o == nil {
 		return "<nil>"
@@ -555,30 +568,37 @@ func (o *Object) String() string {
 	return o.remote
 }
 
+// Fs returns the parent Fs
 func (o *Object) Fs() fs.Info {
 	return o.fs
 }
 
+// Remote returns the remote path
 func (o *Object) Remote() string {
 	return o.remote
 }
 
+// ModTime returns the modification time of the object
 func (o *Object) ModTime(ctx context.Context) time.Time {
 	return o.modTime
 }
 
+// Size of object in bytes
 func (o *Object) Size() int64 {
 	return o.size
 }
 
+// Storable returns if this object is storable
 func (o *Object) Storable() bool {
 	return true
 }
 
+// SetModTime sets the modification time of the local fs object
 func (o *Object) SetModTime(ctx context.Context, modTime time.Time) error {
 	return fs.ErrorCantSetModTime
 }
 
+// Open an object for read
 func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.ReadCloser, err error) {
 	var resp *http.Response
 	opts := rest.Opts{
@@ -631,6 +651,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 	return resp.Body, err
 }
 
+// Update the object with the contents of the io.Reader
 func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {
 	options = append(options, &api.UpdateOptions{
 		PublicID:     o.publicID,
@@ -655,6 +676,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	return nil
 }
 
+// Remove an object
 func (o *Object) Remove(ctx context.Context) error {
 	params := uploader.DestroyParams{
 		PublicID:     o.publicID,
