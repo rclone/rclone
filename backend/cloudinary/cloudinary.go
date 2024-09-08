@@ -491,7 +491,7 @@ func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 	return nil
 }
 
-// RmDir deletes empty folders
+// Rmdir deletes empty folders
 func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 	// Additional test because Cloudinary will delete folders without
 	// assets, regardless of empty sub-folders
