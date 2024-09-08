@@ -196,19 +196,19 @@ func NewFs(ctx context.Context, name string, root string, m configmap.Mapper) (f
 
 // Implementation of the api.CloudinaryEncoder
 func (f *Fs) FromStandardPath(s string) string {
-	return strings.Replace(f.opt.Enc.FromStandardPath(s), "&", "\uFF06", -1)
+	return strings.ReplaceAll(f.opt.Enc.FromStandardPath(s), "&", "\uFF06", -1)
 }
 
 func (f *Fs) FromStandardName(s string) string {
-	return strings.Replace(f.opt.Enc.FromStandardName(s), "&", "\uFF06", -1)
+	return strings.ReplaceAll(f.opt.Enc.FromStandardName(s), "&", "\uFF06", -1)
 }
 
 func (f *Fs) ToStandardPath(s string) string {
-	return strings.Replace(f.opt.Enc.ToStandardPath(s), "\uFF06", "&", -1)
+	return strings.ReplaceAll(f.opt.Enc.ToStandardPath(s), "\uFF06", "&", -1)
 }
 
 func (f *Fs) ToStandardName(s string) string {
-	return strings.Replace(f.opt.Enc.ToStandardName(s), "\uFF06", "&", -1)
+	return strings.ReplaceAll(f.opt.Enc.ToStandardName(s), "\uFF06", "&", -1)
 }
 
 func (f *Fs) FromStandardFullPath(dir string) string {
@@ -216,11 +216,11 @@ func (f *Fs) FromStandardFullPath(dir string) string {
 }
 
 func (f *Fs) ToAssetFolderApi(dir string) string {
-	return strings.Replace(dir, "%", "%25", -1)
+	return strings.ReplaceAll(dir, "%", "%25", -1)
 }
 
 func (f *Fs) ToDisplayNameElastic(dir string) string {
-	return strings.Replace(dir, "!", "\\!", -1)
+	return strings.ReplaceAll(dir, "!", "\\!", -1)
 }
 
 // Name of the remote (as passed into NewFs)
