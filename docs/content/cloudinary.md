@@ -19,7 +19,7 @@ To use this backend, you need to [create a free account](https://cloudinary.com/
 
 ## Securing Your Credentials
 
-Please refer to the [docs](https://rclone.org/docs/#configuration-encryption)
+Please refer to the [docs](/docs/#configuration-encryption-cheatsheet)
 
 ## Configuration
 
