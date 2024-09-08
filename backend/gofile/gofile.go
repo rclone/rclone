@@ -1469,6 +1469,13 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 	if o.id == "" {
 		return nil, errors.New("can't download - no id")
 	}
+	if o.url == "" {
+		// On upload an Object is returned with no url, so fetch it here if needed
+		err = o.readMetaData(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("read metadata: %w", err)
+		}
+	}
 	fs.FixRangeOption(options, o.size)
 	var resp *http.Response
 	opts := rest.Opts{
