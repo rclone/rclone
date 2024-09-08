@@ -196,19 +196,19 @@ func NewFs(ctx context.Context, name string, root string, m configmap.Mapper) (f
 
 // Implementation of the api.CloudinaryEncoder
 func (f *Fs) FromStandardPath(s string) string {
-	return strings.ReplaceAll(f.opt.Enc.FromStandardPath(s), "&", "\uFF06", -1)
+	return strings.ReplaceAll(f.opt.Enc.FromStandardPath(s), "&", "\uFF06")
 }
 
 func (f *Fs) FromStandardName(s string) string {
-	return strings.ReplaceAll(f.opt.Enc.FromStandardName(s), "&", "\uFF06", -1)
+	return strings.ReplaceAll(f.opt.Enc.FromStandardName(s), "&", "\uFF06")
 }
 
 func (f *Fs) ToStandardPath(s string) string {
-	return strings.ReplaceAll(f.opt.Enc.ToStandardPath(s), "\uFF06", "&", -1)
+	return strings.ReplaceAll(f.opt.Enc.ToStandardPath(s), "\uFF06", "&")
 }
 
 func (f *Fs) ToStandardName(s string) string {
-	return strings.ReplaceAll(f.opt.Enc.ToStandardName(s), "\uFF06", "&", -1)
+	return strings.ReplaceAll(f.opt.Enc.ToStandardName(s), "\uFF06", "&")
 }
 
 func (f *Fs) FromStandardFullPath(dir string) string {
@@ -216,11 +216,11 @@ func (f *Fs) FromStandardFullPath(dir string) string {
 }
 
 func (f *Fs) ToAssetFolderApi(dir string) string {
-	return strings.ReplaceAll(dir, "%", "%25", -1)
+	return strings.ReplaceAll(dir, "%", "%25")
 }
 
 func (f *Fs) ToDisplayNameElastic(dir string) string {
-	return strings.ReplaceAll(dir, "!", "\\!", -1)
+	return strings.ReplaceAll(dir, "!", "\\!")
 }
 
 // Name of the remote (as passed into NewFs)
@@ -409,6 +409,7 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 	}
 
 	updateObject := false
+	var modTime time.Time
 	for _, option := range options {
 		if updateOptions, ok := option.(*api.UpdateOptions); ok {
 			if updateOptions.PublicID != "" {
@@ -420,6 +421,7 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 				params.Type = SDKApi.DeliveryType(updateOptions.DeliveryType)
 				params.AssetFolder = updateOptions.AssetFolder
 				params.DisplayName = updateOptions.DisplayName
+				modTime = src.ModTime(ctx)
 			}
 		}
 	}
@@ -436,6 +438,9 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 	if err != nil {
 		return nil, fmt.Errorf("failed to upload to Cloudinary: %w", err)
 	}
+	if !updateObject {
+		modTime = uploadResult.CreatedAt
+	}
 	if uploadResult.Error.Message != "" {
 		return nil, errors.New(uploadResult.Error.Message)
 	}
@@ -444,7 +449,7 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 		fs:           f,
 		remote:       src.Remote(),
 		size:         int64(uploadResult.Bytes),
-		modTime:      uploadResult.CreatedAt,
+		modTime:      modTime,
 		url:          uploadResult.SecureURL,
 		md5sum:       uploadResult.Etag,
 		publicID:     uploadResult.PublicID,
@@ -477,7 +482,22 @@ func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 }
 
 func (f *Fs) Rmdir(ctx context.Context, dir string) error {
-	params := admin.DeleteFolderParams{Folder: f.ToAssetFolderApi(f.FromStandardFullPath(dir))}
+	// Additional test because Cloudinary will delete folders without
+	// assets, regardless of empty sub-folders
+	folder := f.ToAssetFolderApi(f.FromStandardFullPath(dir))
+	folderParams := admin.SubFoldersParams{
+		Folder:     folder,
+		MaxResults: 1,
+	}
+	results, err := f.cld.Admin.SubFolders(ctx, folderParams)
+	if err != nil {
+		return err
+	}
+	if results.TotalCount > 0 {
+		return fs.ErrorDirectoryNotEmpty
+	}
+
+	params := admin.DeleteFolderParams{Folder: folder}
 	res, err := f.cld.Admin.DeleteFolder(ctx, params)
 	f.lastCRUD = time.Now()
 	if err != nil {
