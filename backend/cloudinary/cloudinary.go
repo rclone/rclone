@@ -22,9 +22,11 @@ import (
 	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/configstruct"
+	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/lib/encoder"
+	"github.com/rclone/rclone/lib/pacer"
 	"github.com/rclone/rclone/lib/rest"
 	"github.com/zeebo/blake3"
 )
@@ -121,8 +123,9 @@ type Fs struct {
 	root     string
 	opt      Options
 	features *fs.Features
-	srv      *rest.Client // the connection to the server
-	cld      *cloudinary.Cloudinary
+	pacer    *fs.Pacer
+	srv      *rest.Client           // For downloading assets via the Cloudinary CDN
+	cld      *cloudinary.Cloudinary // API calls are going through the Cloudinary SDK
 	lastCRUD time.Time
 }
 
@@ -157,11 +160,12 @@ func NewFs(ctx context.Context, name string, root string, m configmap.Mapper) (f
 	}
 	client := fshttp.NewClient(ctx)
 	f := &Fs{
-		name: name,
-		root: root,
-		opt:  *opt,
-		cld:  cld,
-		srv:  rest.NewClient(client),
+		name:  name,
+		root:  root,
+		opt:   *opt,
+		cld:   cld,
+		pacer: fs.NewPacer(ctx, pacer.NewDefault(pacer.MinSleep(1000), pacer.MaxSleep(10000), pacer.DecayConstant(2))),
+		srv:   rest.NewClient(client),
 	}
 
 	f.features = (&fs.Features{
@@ -356,17 +360,17 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 		MaxResults: 1,
 	}
 	var results *admin.SearchResult
-	var err error
-	for i := 1; i <= 4; i++ {
-		f.WaitEventuallyConsistent()
-		results, err = f.cld.Admin.Search(ctx, searchParams)
-		if err != nil {
-			return nil, err
+	f.WaitEventuallyConsistent()
+	err := f.pacer.Call(func() (bool, error) {
+		var err1 error
+		results, err1 = f.cld.Admin.Search(ctx, searchParams)
+		if err1 == nil && results.TotalCount != len(results.Assets) {
+			err1 = errors.New("partial response so waiting for eventual consistency")
 		}
-		// Eventual consistency so retrying
-		if results.TotalCount == len(results.Assets) {
-			break
-		}
+		return shouldRetry(ctx, nil, err1)
+	})
+	if err != nil {
+		return nil, fs.ErrorObjectNotFound
 	}
 	if results.TotalCount == 0 || len(results.Assets) == 0 {
 		return nil, fs.ErrorObjectNotFound
@@ -490,6 +494,31 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 	return nil
 }
 
+// retryErrorCodes is a slice of error codes that we will retry
+var retryErrorCodes = []int{
+	420, // Too Many Requests (legacy)
+	429, // Too Many Requests
+	500, // Internal Server Error
+	502, // Bad Gateway
+	503, // Service Unavailable
+	504, // Gateway Timeout
+	509, // Bandwidth Limit Exceeded
+}
+
+// shouldRetry returns a boolean as to whether this resp and err
+// deserve to be retried.  It returns the err as a convenience
+func shouldRetry(ctx context.Context, resp *http.Response, err error) (bool, error) {
+	if fserrors.ContextError(ctx, &err) {
+		return false, err
+	}
+	if err != nil {
+		fs.Debugf(nil, "Retrying API error %v", err)
+		return true, err
+	}
+
+	return fserrors.ShouldRetry(err) || fserrors.ShouldRetryHTTP(resp, retryErrorCodes), err
+}
+
 // ------------------------------------------------------------
 
 func (o *Object) Hash(ctx context.Context, ty hash.Type) (string, error) {
@@ -565,20 +594,20 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 		opts.ExtraHeaders[key] = value
 	}
 	// Make sure that the asset is fully available
-	for i := 1; i <= 4; i++ {
+	err = o.fs.pacer.Call(func() (bool, error) {
 		resp, err = o.fs.srv.Call(ctx, &opts)
-		if err != nil {
-			return nil, fmt.Errorf("failed download of \"%s\": %w", o.url, err)
+		if err == nil {
+			cl, clErr := strconv.Atoi(resp.Header.Get("content-length"))
+			if clErr == nil && count == int64(cl) {
+				return false, nil
+			}
 		}
-		if count == 0 {
-			break
-		}
-		cl, err := strconv.Atoi(resp.Header.Get("content-length"))
-		if err == nil && count == int64(cl) {
-			break
-		}
-		time.Sleep(time.Duration(i) * time.Second)
+		return shouldRetry(ctx, resp, err)
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed download of \"%s\": %w", o.url, err)
 	}
+
 	return resp.Body, err
 }
 
