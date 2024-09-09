@@ -2,17 +2,15 @@ package docker
 
 import (
 	"fmt"
-	"math"
 	"strings"
 
 	"github.com/rclone/rclone/cmd/mountlib"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config/configmap"
+	"github.com/rclone/rclone/fs/config/configstruct"
 	"github.com/rclone/rclone/fs/fspath"
 	"github.com/rclone/rclone/fs/rc"
 	"github.com/rclone/rclone/vfs/vfscommon"
-
-	"github.com/spf13/pflag"
 )
 
 // applyOptions configures volume from request options.
@@ -112,11 +110,15 @@ func (vol *Volume) applyOptions(volOpt VolOpts) error {
 	for key, val := range vol.Options {
 		opt[key] = val
 	}
+	mntMap := configmap.Simple{}
+	vfsMap := configmap.Simple{}
 	for key := range opt {
 		var ok bool
 		var err error
+		normalKey := normalOptName(key)
+		underscoreKey := strings.ReplaceAll(normalKey, "-", "_")
 
-		switch normalOptName(key) {
+		switch normalKey {
 		case "persist":
 			vol.persist, err = opt.GetBool(key)
 			ok = true
@@ -129,25 +131,24 @@ func (vol *Volume) applyOptions(volOpt VolOpts) error {
 		}
 
 		if !ok {
-			// try to use as a mount option in mntOpt
-			ok, err = getMountOption(mntOpt, opt, key)
-			if ok && err != nil {
-				return fmt.Errorf("cannot parse mount option %q: %w", key, err)
+			// try to use as a mount option in mntMap
+			if mountlib.OptionsInfo.Get(underscoreKey) != nil {
+				mntMap[underscoreKey] = vol.Options[key]
+				ok = true
 			}
 		}
 		if !ok {
-			// try as a vfs option in vfsOpt
-			ok, err = getVFSOption(vfsOpt, opt, key)
-			if ok && err != nil {
-				return fmt.Errorf("cannot parse vfs option %q: %w", key, err)
+			// try as a vfs option in vfsMap
+			if vfscommon.OptionsInfo.Get(underscoreKey) != nil {
+				vfsMap[underscoreKey] = vol.Options[key]
+				ok = true
 			}
 		}
 
 		if !ok {
 			// try as a backend option in fsOpt (backends use "_" instead of "-")
-			optWithPrefix := strings.ReplaceAll(normalOptName(key), "-", "_")
-			fsOptName := strings.TrimPrefix(optWithPrefix, fsType+"_")
-			hasFsPrefix := optWithPrefix != fsOptName
+			fsOptName := strings.TrimPrefix(underscoreKey, fsType+"_")
+			hasFsPrefix := underscoreKey != fsOptName
 			if !hasFsPrefix || fsInfo.Options.Get(fsOptName) == nil {
 				fs.Logf(nil, "Option %q is not supported by backend %q", key, fsType)
 				return fmt.Errorf("unsupported backend option %q", key)
@@ -157,6 +158,18 @@ func (vol *Volume) applyOptions(volOpt VolOpts) error {
 				return fmt.Errorf("cannot parse backend option %q: %w", key, err)
 			}
 		}
+	}
+
+	// Parse VFS options
+	err = configstruct.Set(vfsMap, vfsOpt)
+	if err != nil {
+		return fmt.Errorf("cannot parse vfs options: %w", err)
+	}
+
+	// Parse Mount options
+	err = configstruct.Set(mntMap, mntOpt)
+	if err != nil {
+		return fmt.Errorf("cannot parse mount options: %w", err)
 	}
 
 	// build remote string from fsName, fsType, fsOpt, fsPath
@@ -176,150 +189,6 @@ func (vol *Volume) applyOptions(volOpt VolOpts) error {
 	vol.fsString = fsName + comma + connString + colon + fsPath
 
 	return vol.validate()
-}
-
-func getMountOption(mntOpt *mountlib.Options, opt rc.Params, key string) (ok bool, err error) {
-	ok = true
-	switch normalOptName(key) {
-	case "debug-fuse":
-		mntOpt.DebugFUSE, err = opt.GetBool(key)
-	case "attr-timeout":
-		mntOpt.AttrTimeout, err = opt.GetFsDuration(key)
-	case "option":
-		mntOpt.ExtraOptions, err = getStringArray(opt, key)
-	case "fuse-flag":
-		mntOpt.ExtraFlags, err = getStringArray(opt, key)
-	case "daemon":
-		mntOpt.Daemon, err = opt.GetBool(key)
-	case "daemon-timeout":
-		mntOpt.DaemonTimeout, err = opt.GetFsDuration(key)
-	case "default-permissions":
-		mntOpt.DefaultPermissions, err = opt.GetBool(key)
-	case "allow-non-empty":
-		mntOpt.AllowNonEmpty, err = opt.GetBool(key)
-	case "allow-root":
-		mntOpt.AllowRoot, err = opt.GetBool(key)
-	case "allow-other":
-		mntOpt.AllowOther, err = opt.GetBool(key)
-	case "async-read":
-		mntOpt.AsyncRead, err = opt.GetBool(key)
-	case "max-read-ahead":
-		err = getFVarP(&mntOpt.MaxReadAhead, opt, key)
-	case "write-back-cache":
-		mntOpt.WritebackCache, err = opt.GetBool(key)
-	case "volname":
-		mntOpt.VolumeName, err = opt.GetString(key)
-	case "noappledouble":
-		mntOpt.NoAppleDouble, err = opt.GetBool(key)
-	case "noapplexattr":
-		mntOpt.NoAppleXattr, err = opt.GetBool(key)
-	case "network-mode":
-		mntOpt.NetworkMode, err = opt.GetBool(key)
-	default:
-		ok = false
-	}
-	return
-}
-
-func getVFSOption(vfsOpt *vfscommon.Options, opt rc.Params, key string) (ok bool, err error) {
-	var intVal int64
-	ok = true
-	switch normalOptName(key) {
-
-	// options prefixed with "vfs-"
-	case "vfs-cache-mode":
-		err = getFVarP(&vfsOpt.CacheMode, opt, key)
-	case "vfs-cache-poll-interval":
-		vfsOpt.CachePollInterval, err = opt.GetFsDuration(key)
-	case "vfs-cache-max-age":
-		vfsOpt.CacheMaxAge, err = opt.GetFsDuration(key)
-	case "vfs-cache-max-size":
-		err = getFVarP(&vfsOpt.CacheMaxSize, opt, key)
-	case "vfs-read-chunk-size":
-		err = getFVarP(&vfsOpt.ChunkSize, opt, key)
-	case "vfs-read-chunk-size-limit":
-		err = getFVarP(&vfsOpt.ChunkSizeLimit, opt, key)
-	case "vfs-case-insensitive":
-		vfsOpt.CaseInsensitive, err = opt.GetBool(key)
-	case "vfs-write-wait":
-		vfsOpt.WriteWait, err = opt.GetFsDuration(key)
-	case "vfs-read-wait":
-		vfsOpt.ReadWait, err = opt.GetFsDuration(key)
-	case "vfs-write-back":
-		vfsOpt.WriteBack, err = opt.GetFsDuration(key)
-	case "vfs-read-ahead":
-		err = getFVarP(&vfsOpt.ReadAhead, opt, key)
-	case "vfs-used-is-size":
-		vfsOpt.UsedIsSize, err = opt.GetBool(key)
-	case "vfs-read-chunk-streams":
-		intVal, err = opt.GetInt64(key)
-		if err == nil {
-			if intVal >= 0 && intVal <= math.MaxInt {
-				vfsOpt.ChunkStreams = int(intVal)
-			} else {
-				err = fmt.Errorf("key %q (%v) overflows int", key, intVal)
-			}
-		}
-
-	// unprefixed vfs options
-	case "no-modtime":
-		vfsOpt.NoModTime, err = opt.GetBool(key)
-	case "no-checksum":
-		vfsOpt.NoChecksum, err = opt.GetBool(key)
-	case "dir-cache-time":
-		vfsOpt.DirCacheTime, err = opt.GetFsDuration(key)
-	case "poll-interval":
-		vfsOpt.PollInterval, err = opt.GetFsDuration(key)
-	case "read-only":
-		vfsOpt.ReadOnly, err = opt.GetBool(key)
-	case "dir-perms":
-		err = getFVarP(&vfsOpt.DirPerms, opt, key)
-	case "file-perms":
-		err = getFVarP(&vfsOpt.FilePerms, opt, key)
-
-	// unprefixed unix-only vfs options
-	case "umask":
-		err = getFVarP(&vfsOpt.Umask, opt, key)
-	case "uid":
-		intVal, err = opt.GetInt64(key)
-		if err == nil {
-			if intVal >= 0 && intVal <= math.MaxUint32 {
-				vfsOpt.UID = uint32(intVal)
-			} else {
-				err = fmt.Errorf("key %q (%v) overflows uint32", key, intVal)
-			}
-		}
-	case "gid":
-		intVal, err = opt.GetInt64(key)
-		if err == nil {
-			if intVal >= 0 && intVal <= math.MaxUint32 {
-				vfsOpt.GID = uint32(intVal)
-			} else {
-				err = fmt.Errorf("key %q (%v) overflows uint32", key, intVal)
-			}
-		}
-
-	// non-vfs options
-	default:
-		ok = false
-	}
-	return
-}
-
-func getFVarP(pvalue pflag.Value, opt rc.Params, key string) error {
-	str, err := opt.GetString(key)
-	if err != nil {
-		return err
-	}
-	return pvalue.Set(str)
-}
-
-func getStringArray(opt rc.Params, key string) ([]string, error) {
-	str, err := opt.GetString(key)
-	if err != nil {
-		return nil, err
-	}
-	return strings.Split(str, ","), nil
 }
 
 func normalOptName(key string) string {
