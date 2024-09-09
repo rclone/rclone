@@ -32,6 +32,9 @@ def alter_doc(backend):
     """Alter the documentation for backend"""
     rclone_bin_dir = Path(sys.path[0]).parent.absolute()
     doc_file = "docs/content/"+backend+".md"
+    doc_file2 = "docs/content/"+backend+"/_index.md"
+    if not os.path.exists(doc_file) and os.path.exists(doc_file2):
+        doc_file = doc_file2
     if not os.path.exists(doc_file):
         raise ValueError("Didn't find doc file %s" % (doc_file,))
     new_file = doc_file+"~new~"

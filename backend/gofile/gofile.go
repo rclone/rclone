@@ -1105,6 +1105,12 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		return nil, fs.ErrorCantMove
 	}
 
+	// Find existing object
+	srcLeaf, srcDirectoryID, err := srcObj.fs.dirCache.FindPath(ctx, srcObj.remote, false)
+	if err != nil {
+		return nil, err
+	}
+
 	// Create temporary object
 	dstObj, dstLeaf, dstDirectoryID, err := f.createObject(ctx, remote, srcObj.modTime, srcObj.size)
 	if err != nil {
@@ -1112,7 +1118,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	}
 
 	// Do the move
-	info, err := f.moveTo(ctx, srcObj.id, path.Base(srcObj.remote), dstLeaf, srcObj.dirID, dstDirectoryID)
+	info, err := f.moveTo(ctx, srcObj.id, srcLeaf, dstLeaf, srcDirectoryID, dstDirectoryID)
 	if err != nil {
 		return nil, err
 	}
@@ -1462,6 +1468,13 @@ func (o *Object) Storable() bool {
 func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.ReadCloser, err error) {
 	if o.id == "" {
 		return nil, errors.New("can't download - no id")
+	}
+	if o.url == "" {
+		// On upload an Object is returned with no url, so fetch it here if needed
+		err = o.readMetaData(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("read metadata: %w", err)
+		}
 	}
 	fs.FixRangeOption(options, o.size)
 	var resp *http.Response

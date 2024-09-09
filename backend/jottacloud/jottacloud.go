@@ -1555,7 +1555,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	}
 	info, err := f.copyOrMove(ctx, "mv", srcObj.filePath(), remote)
 
-	if err != nil && meta != nil {
+	if err == nil && meta != nil {
 		createTime, createTimeMeta := srcObj.parseFsMetadataTime(meta, "btime")
 		if !createTimeMeta {
 			createTime = srcObj.createTime

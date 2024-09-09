@@ -24,7 +24,8 @@ type Handler struct {
 }
 
 // NewHandler creates a handler for the provided filesystem
-func NewHandler(vfs *vfs.VFS, opt *Options) (handler nfs.Handler, err error) {
+func NewHandler(ctx context.Context, vfs *vfs.VFS, opt *Options) (handler nfs.Handler, err error) {
+	ci := fs.GetConfig(ctx)
 	h := &Handler{
 		vfs:     vfs,
 		opt:     *opt,
@@ -35,7 +36,20 @@ func NewHandler(vfs *vfs.VFS, opt *Options) (handler nfs.Handler, err error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to make cache: %w", err)
 	}
-	nfs.SetLogger(&logIntercepter{Level: nfs.DebugLevel})
+	var level nfs.LogLevel
+	switch {
+	case ci.LogLevel >= fs.LogLevelDebug: // Debug level, needs -vv
+		level = nfs.TraceLevel
+	case ci.LogLevel >= fs.LogLevelInfo: // Transfers, needs -v
+		level = nfs.InfoLevel
+	case ci.LogLevel >= fs.LogLevelNotice: // Normal logging, -q suppresses
+		level = nfs.WarnLevel
+	case ci.LogLevel >= fs.LogLevelError: // Error - can't be suppressed
+		level = nfs.ErrorLevel
+	default:
+		level = nfs.WarnLevel
+	}
+	nfs.SetLogger(&logger{level: level})
 	return h, nil
 }
 
@@ -108,120 +122,167 @@ func onUnmount() {
 	}
 }
 
-// logIntercepter intercepts noisy go-nfs logs and reroutes them to DEBUG
-type logIntercepter struct {
-	Level nfs.LogLevel
+// logger handles go-nfs logs and reroutes them to rclone's logging system
+type logger struct {
+	level nfs.LogLevel
 }
 
-// Intercept intercepts go-nfs logs and calls fs.Debugf instead
-func (l *logIntercepter) Intercept(args ...interface{}) {
-	args = append([]interface{}{"[NFS DEBUG] "}, args...)
-	argsS := fmt.Sprint(args...)
-	fs.Debugf(nil, "%v", argsS)
+// logPrint intercepts go-nfs logs and calls rclone's log system instead
+func (l *logger) logPrint(level fs.LogLevel, args ...interface{}) {
+	fs.LogPrintf(level, "nfs", "%s", fmt.Sprint(args...))
 }
 
-// Interceptf intercepts go-nfs logs and calls fs.Debugf instead
-func (l *logIntercepter) Interceptf(format string, args ...interface{}) {
-	argsS := fmt.Sprint(args...)
-	// bit of a workaround... the real fix is probably https://github.com/willscott/go-nfs/pull/28
-	if strings.Contains(argsS, "mount.Umnt") {
-		onUnmount()
-	}
-
-	fs.Debugf(nil, "[NFS DEBUG] "+format, args...)
+// logPrintf intercepts go-nfs logs and calls rclone's log system instead
+func (l *logger) logPrintf(level fs.LogLevel, format string, args ...interface{}) {
+	fs.LogPrintf(level, "nfs", format, args...)
 }
 
 // Debug reroutes go-nfs Debug messages to Intercept
-func (l *logIntercepter) Debug(args ...interface{}) {
-	l.Intercept(args...)
+func (l *logger) Debug(args ...interface{}) {
+	if l.level < nfs.DebugLevel {
+		return
+	}
+	l.logPrint(fs.LogLevelDebug, args...)
 }
 
-// Debugf reroutes go-nfs Debugf messages to Interceptf
-func (l *logIntercepter) Debugf(format string, args ...interface{}) {
-	l.Interceptf(format, args...)
+// Debugf reroutes go-nfs Debugf messages to logPrintf
+func (l *logger) Debugf(format string, args ...interface{}) {
+	if l.level < nfs.DebugLevel {
+		return
+	}
+	l.logPrintf(fs.LogLevelDebug, format, args...)
 }
 
 // Error reroutes go-nfs Error messages to Intercept
-func (l *logIntercepter) Error(args ...interface{}) {
-	l.Intercept(args...)
+func (l *logger) Error(args ...interface{}) {
+	if l.level < nfs.ErrorLevel {
+		return
+	}
+	l.logPrint(fs.LogLevelError, args...)
 }
 
-// Errorf reroutes go-nfs Errorf messages to Interceptf
-func (l *logIntercepter) Errorf(format string, args ...interface{}) {
-	l.Interceptf(format, args...)
+// Errorf reroutes go-nfs Errorf messages to logPrintf
+func (l *logger) Errorf(format string, args ...interface{}) {
+	if l.level < nfs.ErrorLevel {
+		return
+	}
+	l.logPrintf(fs.LogLevelError, format, args...)
 }
 
 // Fatal reroutes go-nfs Fatal messages to Intercept
-func (l *logIntercepter) Fatal(args ...interface{}) {
-	l.Intercept(args...)
+func (l *logger) Fatal(args ...interface{}) {
+	if l.level < nfs.FatalLevel {
+		return
+	}
+	l.logPrint(fs.LogLevelError, args...)
 }
 
-// Fatalf reroutes go-nfs Fatalf messages to Interceptf
-func (l *logIntercepter) Fatalf(format string, args ...interface{}) {
-	l.Interceptf(format, args...)
+// Fatalf reroutes go-nfs Fatalf messages to logPrintf
+func (l *logger) Fatalf(format string, args ...interface{}) {
+	if l.level < nfs.FatalLevel {
+		return
+	}
+	l.logPrintf(fs.LogLevelError, format, args...)
 }
 
 // GetLevel returns the nfs.LogLevel
-func (l *logIntercepter) GetLevel() nfs.LogLevel {
-	return l.Level
+func (l *logger) GetLevel() nfs.LogLevel {
+	return l.level
 }
 
 // Info reroutes go-nfs Info messages to Intercept
-func (l *logIntercepter) Info(args ...interface{}) {
-	l.Intercept(args...)
+func (l *logger) Info(args ...interface{}) {
+	if l.level < nfs.InfoLevel {
+		return
+	}
+	l.logPrint(fs.LogLevelInfo, args...)
 }
 
-// Infof reroutes go-nfs Infof messages to Interceptf
-func (l *logIntercepter) Infof(format string, args ...interface{}) {
-	l.Interceptf(format, args...)
+// Infof reroutes go-nfs Infof messages to logPrintf
+func (l *logger) Infof(format string, args ...interface{}) {
+	if l.level < nfs.InfoLevel {
+		return
+	}
+	l.logPrintf(fs.LogLevelInfo, format, args...)
 }
 
 // Panic reroutes go-nfs Panic messages to Intercept
-func (l *logIntercepter) Panic(args ...interface{}) {
-	l.Intercept(args...)
+func (l *logger) Panic(args ...interface{}) {
+	if l.level < nfs.PanicLevel {
+		return
+	}
+	l.logPrint(fs.LogLevelError, args...)
 }
 
-// Panicf reroutes go-nfs Panicf messages to Interceptf
-func (l *logIntercepter) Panicf(format string, args ...interface{}) {
-	l.Interceptf(format, args...)
+// Panicf reroutes go-nfs Panicf messages to logPrintf
+func (l *logger) Panicf(format string, args ...interface{}) {
+	if l.level < nfs.PanicLevel {
+		return
+	}
+	l.logPrintf(fs.LogLevelError, format, args...)
 }
 
 // ParseLevel parses the nfs.LogLevel
-func (l *logIntercepter) ParseLevel(level string) (nfs.LogLevel, error) {
+func (l *logger) ParseLevel(level string) (nfs.LogLevel, error) {
 	return nfs.Log.ParseLevel(level)
 }
 
 // Print reroutes go-nfs Print messages to Intercept
-func (l *logIntercepter) Print(args ...interface{}) {
-	l.Intercept(args...)
+func (l *logger) Print(args ...interface{}) {
+	if l.level < nfs.InfoLevel {
+		return
+	}
+	l.logPrint(fs.LogLevelInfo, args...)
 }
 
 // Printf reroutes go-nfs Printf messages to Intercept
-func (l *logIntercepter) Printf(format string, args ...interface{}) {
-	l.Interceptf(format, args...)
+func (l *logger) Printf(format string, args ...interface{}) {
+	if l.level < nfs.InfoLevel {
+		return
+	}
+	l.logPrintf(fs.LogLevelInfo, format, args...)
 }
 
 // SetLevel sets the nfs.LogLevel
-func (l *logIntercepter) SetLevel(level nfs.LogLevel) {
-	l.Level = level
+func (l *logger) SetLevel(level nfs.LogLevel) {
+	l.level = level
 }
 
 // Trace reroutes go-nfs Trace messages to Intercept
-func (l *logIntercepter) Trace(args ...interface{}) {
-	l.Intercept(args...)
+func (l *logger) Trace(args ...interface{}) {
+	if l.level < nfs.DebugLevel {
+		return
+	}
+	l.logPrint(fs.LogLevelDebug, args...)
 }
 
-// Tracef reroutes go-nfs Tracef messages to Interceptf
-func (l *logIntercepter) Tracef(format string, args ...interface{}) {
-	l.Interceptf(format, args...)
+// Tracef reroutes go-nfs Tracef messages to logPrintf
+func (l *logger) Tracef(format string, args ...interface{}) {
+	// FIXME BODGE ... the real fix is probably https://github.com/willscott/go-nfs/pull/28
+	// This comes from `Log.Tracef("request: %v", w.req)` in conn.go
+	// DEBUG : nfs: request: RPC #3285799202 (mount.Umnt)
+	argsS := fmt.Sprint(args...)
+	if strings.Contains(argsS, "mount.Umnt") {
+		onUnmount()
+	}
+	if l.level < nfs.DebugLevel {
+		return
+	}
+	l.logPrintf(fs.LogLevelDebug, format, args...)
 }
 
 // Warn reroutes go-nfs Warn messages to Intercept
-func (l *logIntercepter) Warn(args ...interface{}) {
-	l.Intercept(args...)
+func (l *logger) Warn(args ...interface{}) {
+	if l.level < nfs.WarnLevel {
+		return
+	}
+	l.logPrint(fs.LogLevelNotice, args...)
 }
 
-// Warnf reroutes go-nfs Warnf messages to Interceptf
-func (l *logIntercepter) Warnf(format string, args ...interface{}) {
-	l.Interceptf(format, args...)
+// Warnf reroutes go-nfs Warnf messages to logPrintf
+func (l *logger) Warnf(format string, args ...interface{}) {
+	if l.level < nfs.WarnLevel {
+		return
+	}
+	l.logPrintf(fs.LogLevelNotice, format, args...)
 }

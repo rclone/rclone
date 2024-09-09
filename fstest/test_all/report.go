@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"html/template"
-	"log"
 	"os"
 	"os/exec"
 	"path"
@@ -77,7 +76,7 @@ func NewReport() *Report {
 	r.LogDir = path.Join(*outputDir, r.DateTime)
 	err = file.MkdirAll(r.LogDir, 0777)
 	if err != nil {
-		log.Fatalf("Failed to make log directory: %v", err)
+		fs.Fatalf(nil, "Failed to make log directory: %v", err)
 	}
 
 	// Online version
@@ -132,15 +131,15 @@ func (r *Report) Title() string {
 
 // LogSummary writes the summary to the log file
 func (r *Report) LogSummary() {
-	log.Printf("Logs in %q", r.LogDir)
+	fs.Logf(nil, "Logs in %q", r.LogDir)
 
 	// Summarise results
-	log.Printf("SUMMARY")
-	log.Println(r.Title())
+	fs.Logf(nil, "SUMMARY")
+	fs.Log(nil, r.Title())
 	if !r.AllPassed() {
 		for _, t := range r.Failed {
-			log.Printf("  * %s", toShell(t.nextCmdLine()))
-			log.Printf("    * Failed tests: %v", t.FailedTests)
+			fs.Logf(nil, "  * %s", toShell(t.nextCmdLine()))
+			fs.Logf(nil, "    * Failed tests: %v", t.FailedTests)
 		}
 	}
 }
@@ -149,11 +148,11 @@ func (r *Report) LogSummary() {
 func (r *Report) LogJSON() {
 	out, err := json.MarshalIndent(r, "", "\t")
 	if err != nil {
-		log.Fatalf("Failed to marshal data for index.json: %v", err)
+		fs.Fatalf(nil, "Failed to marshal data for index.json: %v", err)
 	}
 	err = os.WriteFile(path.Join(r.LogDir, "index.json"), out, 0666)
 	if err != nil {
-		log.Fatalf("Failed to write index.json: %v", err)
+		fs.Fatalf(nil, "Failed to write index.json: %v", err)
 	}
 }
 
@@ -162,17 +161,17 @@ func (r *Report) LogHTML() {
 	r.IndexHTML = path.Join(r.LogDir, "index.html")
 	out, err := os.Create(r.IndexHTML)
 	if err != nil {
-		log.Fatalf("Failed to open index.html: %v", err)
+		fs.Fatalf(nil, "Failed to open index.html: %v", err)
 	}
 	defer func() {
 		err := out.Close()
 		if err != nil {
-			log.Fatalf("Failed to close index.html: %v", err)
+			fs.Fatalf(nil, "Failed to close index.html: %v", err)
 		}
 	}()
 	err = reportTemplate.Execute(out, r)
 	if err != nil {
-		log.Fatalf("Failed to execute template: %v", err)
+		fs.Fatalf(nil, "Failed to execute template: %v", err)
 	}
 	_ = open.Start("file://" + r.IndexHTML)
 }
@@ -282,19 +281,19 @@ func (r *Report) EmailHTML() {
 	if *emailReport == "" || r.IndexHTML == "" {
 		return
 	}
-	log.Printf("Sending email summary to %q", *emailReport)
+	fs.Logf(nil, "Sending email summary to %q", *emailReport)
 	cmdLine := []string{"mail", "-a", "Content-Type: text/html", *emailReport, "-s", "rclone integration tests: " + r.Title()}
 	cmd := exec.Command(cmdLine[0], cmdLine[1:]...)
 	in, err := os.Open(r.IndexHTML)
 	if err != nil {
-		log.Fatalf("Failed to open index.html: %v", err)
+		fs.Fatalf(nil, "Failed to open index.html: %v", err)
 	}
 	cmd.Stdin = in
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	err = cmd.Run()
 	if err != nil {
-		log.Fatalf("Failed to send email: %v", err)
+		fs.Fatalf(nil, "Failed to send email: %v", err)
 	}
 	_ = in.Close()
 }
@@ -302,14 +301,14 @@ func (r *Report) EmailHTML() {
 // uploadTo uploads a copy of the report online to the dir given
 func (r *Report) uploadTo(uploadDir string) {
 	dst := path.Join(*uploadPath, uploadDir)
-	log.Printf("Uploading results to %q", dst)
+	fs.Logf(nil, "Uploading results to %q", dst)
 	cmdLine := []string{"rclone", "sync", "--stats-log-level", "NOTICE", r.LogDir, dst}
 	cmd := exec.Command(cmdLine[0], cmdLine[1:]...)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	err := cmd.Run()
 	if err != nil {
-		log.Fatalf("Failed to upload results: %v", err)
+		fs.Fatalf(nil, "Failed to upload results: %v", err)
 	}
 }
 

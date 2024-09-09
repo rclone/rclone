@@ -5,12 +5,13 @@
 package log
 
 import (
-	"log"
 	"runtime"
+
+	"github.com/rclone/rclone/fs"
 )
 
 // Starts syslog if configured, returns true if it was started
 func startSysLog() bool {
-	log.Fatalf("--syslog not supported on %s platform", runtime.GOOS)
+	fs.Fatalf(nil, "--syslog not supported on %s platform", runtime.GOOS)
 	return false
 }

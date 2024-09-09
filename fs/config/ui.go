@@ -7,7 +7,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
 	"os"
 	"sort"
 	"strconv"
@@ -29,7 +28,7 @@ var ReadLine = func() string {
 	buf := bufio.NewReader(os.Stdin)
 	line, err := buf.ReadString('\n')
 	if err != nil {
-		log.Fatalf("Failed to read line: %v", err)
+		fs.Fatalf(nil, "Failed to read line: %v", err)
 	}
 	return strings.TrimSpace(line)
 }
@@ -233,7 +232,7 @@ func ChoosePassword(defaultValue string, required bool) string {
 			bits := ChooseNumber("Bits", 64, 1024)
 			password, err = Password(bits)
 			if err != nil {
-				log.Fatalf("Failed to make password: %v", err)
+				fs.Fatalf(nil, "Failed to make password: %v", err)
 			}
 			fmt.Printf("Your password is: %s\n", password)
 			fmt.Printf("Use this password? Please note that an obscured version of this \npassword (and not the " +
@@ -297,7 +296,7 @@ func ChooseRemote() string {
 func mustFindByName(name string) *fs.RegInfo {
 	fsType := GetValue(name, "type")
 	if fsType == "" {
-		log.Fatalf("Couldn't find type of fs for %q", name)
+		fs.Fatalf(nil, "Couldn't find type of fs for %q", name)
 	}
 	return fs.MustFind(fsType)
 }
@@ -654,7 +653,7 @@ func ShowConfigLocation() {
 func ShowConfig() {
 	str, err := LoadedData().Serialize()
 	if err != nil {
-		log.Fatalf("Failed to serialize config: %v", err)
+		fs.Fatalf(nil, "Failed to serialize config: %v", err)
 	}
 	if str == "" {
 		str = "; empty config\n"
@@ -797,13 +796,11 @@ func SetPassword() {
 			what := []string{"cChange Password", "uUnencrypt configuration", "qQuit to main menu"}
 			switch i := Command(what); i {
 			case 'c':
-				changeConfigPassword()
-				SaveConfig()
+				ChangeConfigPasswordAndSave()
 				fmt.Println("Password changed")
 				continue
 			case 'u':
-				configKey = nil
-				SaveConfig()
+				RemoveConfigPasswordAndSave()
 				continue
 			case 'q':
 				return
@@ -815,8 +812,7 @@ func SetPassword() {
 			what := []string{"aAdd Password", "qQuit to main menu"}
 			switch i := Command(what); i {
 			case 'a':
-				changeConfigPassword()
-				SaveConfig()
+				ChangeConfigPasswordAndSave()
 				fmt.Println("Password set")
 				continue
 			case 'q':

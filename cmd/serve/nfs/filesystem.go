@@ -3,6 +3,7 @@
 package nfs
 
 import (
+	"math"
 	"os"
 	"path"
 	"strings"
@@ -13,7 +14,33 @@ import (
 	"github.com/rclone/rclone/fs/log"
 	"github.com/rclone/rclone/vfs"
 	"github.com/rclone/rclone/vfs/vfscommon"
+	"github.com/willscott/go-nfs/file"
 )
+
+// setSys sets the Sys() call up for the vfs.Node passed in
+//
+// The billy abstraction layer does not extend to exposing `uid` and `gid`
+// ownership of files. If ownership is important to your file system, you
+// will need to ensure that the `os.FileInfo` meets additional constraints.
+// In particular, the `Sys()` escape hatch is queried by this library, and
+// if your file system populates a [`syscall.Stat_t`](https://golang.org/pkg/syscall/#Stat_t)
+// concrete struct, the ownership specified in that object will be used.
+// It can also return a file.FileInfo which is easier to manage cross platform
+func setSys(fi os.FileInfo) {
+	node, ok := fi.(vfs.Node)
+	if !ok {
+		fs.Errorf(fi, "internal error: %T is not a vfs.Node", fi)
+	}
+	vfs := node.VFS()
+	// Set the UID and GID for the node passed in from the VFS defaults.
+	stat := file.FileInfo{
+		Nlink:  1,
+		UID:    vfs.Opt.UID,
+		GID:    vfs.Opt.GID,
+		Fileid: math.MaxUint64, // without this mounting doesn't work on Linux
+	}
+	node.SetSys(&stat)
+}
 
 // FS is our wrapper around the VFS to properly support billy.Filesystem interface
 type FS struct {
@@ -23,7 +50,14 @@ type FS struct {
 // ReadDir implements read dir
 func (f *FS) ReadDir(path string) (dir []os.FileInfo, err error) {
 	defer log.Trace(path, "")("items=%d, err=%v", &dir, &err)
-	return f.vfs.ReadDir(path)
+	dir, err = f.vfs.ReadDir(path)
+	if err != nil {
+		return nil, err
+	}
+	for _, fi := range dir {
+		setSys(fi)
+	}
+	return dir, nil
 }
 
 // Create implements creating new files
@@ -47,7 +81,12 @@ func (f *FS) OpenFile(filename string, flag int, perm os.FileMode) (node billy.F
 // Stat gets the file stat
 func (f *FS) Stat(filename string) (fi os.FileInfo, err error) {
 	defer log.Trace(filename, "")("fi=%v, err=%v", &fi, &err)
-	return f.vfs.Stat(filename)
+	fi, err = f.vfs.Stat(filename)
+	if err != nil {
+		return nil, err
+	}
+	setSys(fi)
+	return fi, nil
 }
 
 // Rename renames a file
@@ -95,7 +134,12 @@ func (f *FS) MkdirAll(filename string, perm os.FileMode) (err error) {
 // Lstat gets the stats for symlink
 func (f *FS) Lstat(filename string) (fi os.FileInfo, err error) {
 	defer log.Trace(filename, "")("fi=%v, err=%v", &fi, &err)
-	return f.vfs.Stat(filename)
+	fi, err = f.vfs.Stat(filename)
+	if err != nil {
+		return nil, err
+	}
+	setSys(fi)
+	return fi, nil
 }
 
 // Symlink is not supported over NFS

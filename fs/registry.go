@@ -6,7 +6,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
 	"reflect"
 	"regexp"
 	"sort"
@@ -408,7 +407,7 @@ func Find(name string) (*RegInfo, error) {
 func MustFind(name string) *RegInfo {
 	fs, err := Find(name)
 	if err != nil {
-		log.Fatalf("Failed to find remote: %v", err)
+		Fatalf(nil, "Failed to find remote: %v", err)
 	}
 	return fs
 }
@@ -434,7 +433,7 @@ func RegisterGlobalOptions(oi OptionsInfo) {
 	if oi.Opt != nil && oi.Options != nil {
 		err := oi.Check()
 		if err != nil {
-			log.Fatalf("%v", err)
+			Fatalf(nil, "%v", err)
 		}
 	}
 	// Load the default values into the options.
@@ -446,7 +445,7 @@ func RegisterGlobalOptions(oi OptionsInfo) {
 	// again when the flags are ready.
 	err := oi.load()
 	if err != nil {
-		log.Fatalf("Failed to load %q default values: %v", oi.Name, err)
+		Fatalf(nil, "Failed to load %q default values: %v", oi.Name, err)
 	}
 }
 

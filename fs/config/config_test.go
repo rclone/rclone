@@ -10,6 +10,10 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func init() {
+	configfile.Install()
+}
+
 func TestConfigLoad(t *testing.T) {
 	oldConfigPath := config.GetConfigPath()
 	assert.NoError(t, config.SetConfigPath("./testdata/plain.conf"))
@@ -17,7 +21,6 @@ func TestConfigLoad(t *testing.T) {
 		assert.NoError(t, config.SetConfigPath(oldConfigPath))
 	}()
 	config.ClearConfigPassword()
-	configfile.Install()
 	sections := config.Data().GetSectionList()
 	var expect = []string{"RCLONE_ENCRYPT_V0", "nounc", "unc"}
 	assert.Equal(t, expect, sections)

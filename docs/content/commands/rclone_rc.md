@@ -10,8 +10,6 @@ Run a command against a running rclone.
 
 ## Synopsis
 
-
-
 This runs a command against a running rclone.  Use the `--url` flag to
 specify an non default URL to connect on.  This can be either a
 ":port" which is taken to mean "http://localhost:port" or a
@@ -21,6 +19,13 @@ A username and password can be passed in with `--user` and `--pass`.
 
 Note that `--rc-addr`, `--rc-user`, `--rc-pass` will be read also for
 `--url`, `--user`, `--pass`.
+
+The `--unix-socket` flag can be used to connect over a unix socket like this
+
+    # start server on /tmp/my.socket
+    rclone rcd --rc-addr unix:///tmp/my.socket
+    # Connect to it
+    rclone rc --unix-socket /tmp/my.socket core/stats
 
 Arguments should be passed in as parameter=value.
 
@@ -68,21 +73,21 @@ rclone rc commands parameter [flags]
 ## Options
 
 ```
-  -a, --arg stringArray   Argument placed in the "arg" array
-  -h, --help              help for rc
-      --json string       Input JSON - use instead of key=value args
-      --loopback          If set connect to this rclone instance not via HTTP
-      --no-output         If set, don't output the JSON result
-  -o, --opt stringArray   Option in the form name=value or name placed in the "opt" array
-      --pass string       Password to use to connect to rclone remote control
-      --url string        URL to connect to rclone remote control (default "http://localhost:5572/")
-      --user string       Username to use to rclone remote control
+  -a, --arg stringArray      Argument placed in the "arg" array
+  -h, --help                 help for rc
+      --json string          Input JSON - use instead of key=value args
+      --loopback             If set connect to this rclone instance not via HTTP
+      --no-output            If set, don't output the JSON result
+  -o, --opt stringArray      Option in the form name=value or name placed in the "opt" array
+      --pass string          Password to use to connect to rclone remote control
+      --unix-socket string   Path to a unix domain socket to dial to, instead of opening a TCP connection directly
+      --url string           URL to connect to rclone remote control (default "http://localhost:5572/")
+      --user string          Username to use to rclone remote control
 ```
-
 
 See the [global flags page](/flags/) for global options not listed here.
 
-# SEE ALSO
+## See Also
 
 * [rclone](/commands/rclone/)	 - Show help for rclone commands, flags and backends.
 

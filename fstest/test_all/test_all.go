@@ -12,7 +12,7 @@ Make TesTrun have a []string of flags to try - that then makes it generic
 
 import (
 	"flag"
-	"log"
+	"fmt"
 	"math/rand"
 	"os"
 	"path"
@@ -21,6 +21,7 @@ import (
 	"time"
 
 	_ "github.com/rclone/rclone/backend/all" // import all fs
+	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config/configfile"
 	"github.com/rclone/rclone/lib/pacer"
 )
@@ -68,8 +69,8 @@ func main() {
 	flag.Parse()
 	conf, err := NewConfig(*configFile)
 	if err != nil {
-		log.Println("test_all should be run from the root of the rclone source code")
-		log.Fatal(err)
+		fs.Log(nil, "test_all should be run from the root of the rclone source code")
+		fs.Fatal(nil, fmt.Sprint(err))
 	}
 	configfile.Install()
 
@@ -91,7 +92,7 @@ func main() {
 	if *clean {
 		err := cleanRemotes(conf)
 		if err != nil {
-			log.Fatalf("Failed to clean: %v", err)
+			fs.Fatalf(nil, "Failed to clean: %v", err)
 		}
 		return
 	}
@@ -100,7 +101,7 @@ func main() {
 	for _, remote := range conf.Backends {
 		names = append(names, remote.Remote)
 	}
-	log.Printf("Testing remotes: %s", strings.Join(names, ", "))
+	fs.Logf(nil, "Testing remotes: %s", strings.Join(names, ", "))
 
 	// Runs we will do for this test in random order
 	runs := conf.MakeRuns()

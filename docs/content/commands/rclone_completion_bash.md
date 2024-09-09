@@ -11,12 +11,11 @@ Output bash completion script for rclone.
 
 ## Synopsis
 
-
 Generates a bash shell autocompletion script for rclone.
 
 By default, when run without any arguments, 
 
-    rclone genautocomplete bash
+    rclone completion bash
 
 the generated script will be written to
 
@@ -51,10 +50,9 @@ rclone completion bash [output_file] [flags]
   -h, --help   help for bash
 ```
 
-
 See the [global flags page](/flags/) for global options not listed here.
 
-# SEE ALSO
+## See Also
 
 * [rclone completion](/commands/rclone_completion/)	 - Output completion script for a given shell.
 

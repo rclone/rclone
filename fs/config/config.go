@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
 	mathrand "math/rand"
 	"os"
 	"path/filepath"
@@ -372,7 +371,7 @@ func LoadedData() Storage {
 			}
 			dataLoaded = true
 		} else {
-			log.Fatalf("Failed to load config file %q: %v", configPath, err)
+			fs.Fatalf(nil, "Failed to load config file %q: %v", configPath, err)
 		}
 	}
 	return data
