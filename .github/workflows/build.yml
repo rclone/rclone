@@ -273,10 +273,23 @@ jobs:
         with:
           context: .
           push: true
-          platforms: linux/amd64,linux/arm64
+          platforms: linux/amd64,linux/arm64,linux/arm/v7
           build-args: |
             VERSION=${{ github.ref_name}}
           labels: ${{ steps.docker_meta.outputs.labels }}
           tags: |
             ghcr.io/${{ env.IMAGE }}:${{ github.ref_name}}
             ghcr.io/${{ env.IMAGE }}:latest
+
+      - name: Publish Docker Plugin
+        run: |
+          VER=${GITHUB_REF_NAME}
+          PLUGIN_USER=ghcr.io/tgdrive
+          for PLUGIN_ARCH in amd64 arm64 arm/v7 ;do
+              export PLUGIN_ARCH
+              export PLUGIN_USER
+              make docker-plugin PLUGIN_TAG=${PLUGIN_ARCH/\//-}
+              make docker-plugin PLUGIN_TAG=${PLUGIN_ARCH/\//-}-${VER#v}
+          done
+          make docker-plugin PLUGIN_ARCH=amd64 PLUGIN_TAG=latest
+          make docker-plugin PLUGIN_ARCH=amd64 PLUGIN_TAG=${VER#v}

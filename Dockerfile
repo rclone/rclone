@@ -4,11 +4,16 @@ RUN apk --no-cache add ca-certificates fuse3 tzdata unzip && \
     echo "user_allow_other" >> /etc/fuse.conf
 
 ARG TARGETARCH
+
+ARG TARGETVARIANT
+
 ARG VERSION
-COPY build/rclone-${VERSION}-linux-${TARGETARCH}.zip /tmp/rclone.zip
+
+COPY build/rclone-${VERSION}-linux-${TARGETARCH}${TARGETVARIANT:+-$TARGETVARIANT}.zip /tmp/rclone.zip
+
 RUN unzip /tmp/rclone.zip -d /tmp && \
-    mv /tmp/rclone-*-linux-${TARGETARCH}/rclone /usr/bin/rclone && \
-    chmod +x /usr/bin/rclone && \
+    mv /tmp/rclone-*-linux-${TARGETARCH}${TARGETVARIANT:+-$TARGETVARIANT}/rclone /usr/local/bin/rclone && \
+    chmod +x /usr/local/bin/rclone && \
     rm -rf /tmp/rclone* && \
     apk del unzip
 
