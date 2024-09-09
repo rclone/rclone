@@ -251,6 +251,15 @@ func getVFSOption(vfsOpt *vfscommon.Options, opt rc.Params, key string) (ok bool
 		err = getFVarP(&vfsOpt.ReadAhead, opt, key)
 	case "vfs-used-is-size":
 		vfsOpt.UsedIsSize, err = opt.GetBool(key)
+	case "vfs-read-chunk-streams":
+		intVal, err = opt.GetInt64(key)
+		if err == nil {
+			if intVal >= 0 && intVal <= math.MaxInt {
+				vfsOpt.ChunkStreams = int(intVal)
+			} else {
+				err = fmt.Errorf("key %q (%v) overflows int", key, intVal)
+			}
+		}
 
 	// unprefixed vfs options
 	case "no-modtime":
