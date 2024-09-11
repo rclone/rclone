@@ -6,7 +6,9 @@ package cmdtest
 
 import (
 	"os"
+	"regexp"
 	"runtime"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -344,4 +346,42 @@ func TestEnvironmentVariables(t *testing.T) {
 	env = ""
 	out, err = rcloneEnv(env, "version", "-vv", "--use-json-log")
 	jsonLogOK()
+
+	// Find all the File filter lines in out and return them
+	parseFileFilters := func(out string) (extensions []string) {
+		// Match: - (^|/)[^/]*\.jpg$
+		find := regexp.MustCompile(`^- \(\^\|\/\)\[\^\/\]\*\\\.(.*?)\$$`)
+		for _, line := range strings.Split(out, "\n") {
+			if m := find.FindStringSubmatch(line); m != nil {
+				extensions = append(extensions, m[1])
+			}
+		}
+		return extensions
+	}
+
+	// Make sure that multiple valued (stringArray) environment variables are handled properly
+	env = ``
+	out, err = rcloneEnv(env, "version", "-vv", "--dump", "filters", "--exclude", "*.gif", "--exclude", "*.tif")
+	require.NoError(t, err)
+	assert.Equal(t, []string{"gif", "tif"}, parseFileFilters(out))
+
+	env = `RCLONE_EXCLUDE=*.jpg`
+	out, err = rcloneEnv(env, "version", "-vv", "--dump", "filters", "--exclude", "*.gif")
+	require.NoError(t, err)
+	assert.Equal(t, []string{"jpg", "gif"}, parseFileFilters(out))
+
+	env = `RCLONE_EXCLUDE=*.jpg,*.png`
+	out, err = rcloneEnv(env, "version", "-vv", "--dump", "filters", "--exclude", "*.gif", "--exclude", "*.tif")
+	require.NoError(t, err)
+	assert.Equal(t, []string{"jpg", "png", "gif", "tif"}, parseFileFilters(out))
+
+	env = `RCLONE_EXCLUDE="*.jpg","*.png"`
+	out, err = rcloneEnv(env, "version", "-vv", "--dump", "filters")
+	require.NoError(t, err)
+	assert.Equal(t, []string{"jpg", "png"}, parseFileFilters(out))
+
+	env = `RCLONE_EXCLUDE="*.,,,","*.png"`
+	out, err = rcloneEnv(env, "version", "-vv", "--dump", "filters")
+	require.NoError(t, err)
+	assert.Equal(t, []string{",,,", "png"}, parseFileFilters(out))
 }

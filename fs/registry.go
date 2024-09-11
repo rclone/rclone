@@ -264,14 +264,9 @@ func (o *Option) String() string {
 		if len(stringArray) == 0 {
 			return ""
 		}
-		// Encode string arrays as JSON
+		// Encode string arrays as CSV
 		// The default Go encoding can't be decoded uniquely
-		buf, err := json.Marshal(stringArray)
-		if err != nil {
-			Errorf(nil, "Can't encode default value for %q key - ignoring: %v", o.Name, err)
-			return "[]"
-		}
-		return string(buf)
+		return CommaSepList(stringArray).String()
 	}
 	return fmt.Sprint(v)
 }
