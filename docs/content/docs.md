@@ -2911,6 +2911,22 @@ so they take exactly the same form.
 
 The options set by environment variables can be seen with the `-vv` flag, e.g. `rclone version -vv`.
 
+Options that can appear multiple times (type `stringArray`) are
+treated slighly differently as environment variables can only be
+defined once. In order to allow a simple mechanism for adding one or
+many items, the input is treated as a [CSV encoded](https://godoc.org/encoding/csv)
+string. For example
+
+| Environment Variable | Equivalent options |
+|----------------------|--------------------|
+| `RCLONE_EXCLUDE="*.jpg"` | `--exclude "*.jpg"` |
+| `RCLONE_EXCLUDE="*.jpg,*.png"` | `--exclude "*.jpg"` `--exclude "*.png"` |
+| `RCLONE_EXCLUDE='"*.jpg","*.png"'` | `--exclude "*.jpg"` `--exclude "*.png"` |
+| `RCLONE_EXCLUDE='"/directory with comma , in it /**"'` | `--exclude "/directory with comma , in it /**" |
+
+If `stringArray` options are defined as environment variables **and**
+options on the command line then all the values will be used.
+
 ### Config file ###
 
 You can set defaults for values in the config file on an individual
