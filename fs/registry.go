@@ -531,7 +531,22 @@ func (oi *OptionsInfo) load() error {
 // their values read from the options, environment variables and
 // command line parameters.
 func GlobalOptionsInit() error {
-	for _, opt := range OptionsRegistry {
+	var keys []string
+	for key := range OptionsRegistry {
+		keys = append(keys, key)
+	}
+	sort.Slice(keys, func(i, j int) bool {
+		// Sort alphabetically, but with "main" first
+		if keys[i] == "main" {
+			return true
+		}
+		if keys[j] == "main" {
+			return false
+		}
+		return keys[i] < keys[j]
+	})
+	for _, key := range keys {
+		opt := OptionsRegistry[key]
 		err := opt.load()
 		if err != nil {
 			return err
