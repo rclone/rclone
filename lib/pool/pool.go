@@ -4,10 +4,10 @@ package pool
 
 import (
 	"fmt"
-	"log"
 	"sync"
 	"time"
 
+	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/lib/mmap"
 )
 
@@ -161,7 +161,7 @@ func (bp *Pool) Get() []byte {
 				bp.alloced++
 				break
 			}
-			log.Printf("Failed to get memory for buffer, waiting for %v: %v", waitTime, err)
+			fs.Logf(nil, "Failed to get memory for buffer, waiting for %v: %v", waitTime, err)
 			bp.mu.Unlock()
 			time.Sleep(waitTime)
 			bp.mu.Lock()
@@ -178,7 +178,7 @@ func (bp *Pool) Get() []byte {
 func (bp *Pool) freeBuffer(mem []byte) {
 	err := bp.free(mem)
 	if err != nil {
-		log.Printf("Failed to free memory: %v", err)
+		fs.Logf(nil, "Failed to free memory: %v", err)
 	}
 	bp.alloced--
 }

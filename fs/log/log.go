@@ -144,7 +144,7 @@ func InitLogging() {
 	if Opt.File != "" {
 		f, err := os.OpenFile(Opt.File, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0640)
 		if err != nil {
-			log.Fatalf("Failed to open log file: %v", err)
+			fs.Fatalf(nil, "Failed to open log file: %v", err)
 		}
 		_, err = f.Seek(0, io.SeekEnd)
 		if err != nil {
@@ -158,7 +158,7 @@ func InitLogging() {
 	// Syslog output
 	if Opt.UseSyslog {
 		if Opt.File != "" {
-			log.Fatalf("Can't use --syslog and --log-file together")
+			fs.Fatalf(nil, "Can't use --syslog and --log-file together")
 		}
 		startSysLog()
 	}

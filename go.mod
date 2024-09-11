@@ -51,13 +51,14 @@ require (
 	github.com/minio/minio-go/v7 v7.0.74
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/moby/sys/mountinfo v0.7.2
-	github.com/ncw/swift/v2 v2.0.2
+	github.com/ncw/swift/v2 v2.0.3
 	github.com/oracle/oci-go-sdk/v65 v65.69.2
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/pkg/sftp v1.13.6
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2
 	github.com/prometheus/client_golang v1.19.1
 	github.com/putdotio/go-putio/putio v0.0.0-20200123120452-16d982cac2b8
+	github.com/quasilyte/go-ruleguard/dsl v0.3.22
 	github.com/rclone/gofakes3 v0.0.3-0.20240807151802-e80146f8de87
 	github.com/rfjakob/eme v1.1.2
 	github.com/rivo/uniseg v0.4.7

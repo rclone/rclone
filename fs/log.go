@@ -60,8 +60,8 @@ var LogPrintPid = false
 // InstallJSONLogger is a hook that --use-json-log calls
 var InstallJSONLogger = func(logLevel LogLevel) {}
 
-// LogPrint sends the text to the logger of level
-var LogPrint = func(level LogLevel, text string) {
+// LogOutput sends the text to the logger of level
+var LogOutput = func(level LogLevel, text string) {
 	text = fmt.Sprintf("%-6s: %s", level, text)
 	if LogPrintPid {
 		text = fmt.Sprintf("[%d] %s", os.Getpid(), text)
@@ -108,42 +108,82 @@ func (j LogValueItem) String() string {
 	return fmt.Sprint(j.value)
 }
 
+func logLogrus(level LogLevel, text string, fields logrus.Fields) {
+	switch level {
+	case LogLevelDebug:
+		logrus.WithFields(fields).Debug(text)
+	case LogLevelInfo:
+		logrus.WithFields(fields).Info(text)
+	case LogLevelNotice, LogLevelWarning:
+		logrus.WithFields(fields).Warn(text)
+	case LogLevelError:
+		logrus.WithFields(fields).Error(text)
+	case LogLevelCritical:
+		logrus.WithFields(fields).Fatal(text)
+	case LogLevelEmergency, LogLevelAlert:
+		logrus.WithFields(fields).Panic(text)
+	}
+}
+
+func logLogrusWithObject(level LogLevel, o interface{}, text string, fields logrus.Fields) {
+	if o != nil {
+		if fields == nil {
+			fields = logrus.Fields{}
+		}
+		fields["object"] = fmt.Sprintf("%+v", o)
+		fields["objectType"] = fmt.Sprintf("%T", o)
+	}
+	logLogrus(level, text, fields)
+}
+
+func logJSON(level LogLevel, o interface{}, text string) {
+	logLogrusWithObject(level, o, text, nil)
+}
+
+func logJSONf(level LogLevel, o interface{}, text string, args ...interface{}) {
+	text = fmt.Sprintf(text, args...)
+	fields := logrus.Fields{}
+	for _, arg := range args {
+		if item, ok := arg.(LogValueItem); ok {
+			fields[item.key] = item.value
+		}
+	}
+	logLogrusWithObject(level, o, text, fields)
+}
+
+func logPlain(level LogLevel, o interface{}, text string) {
+	if o != nil {
+		text = fmt.Sprintf("%v: %s", o, text)
+	}
+	LogOutput(level, text)
+}
+
+func logPlainf(level LogLevel, o interface{}, text string, args ...interface{}) {
+	logPlain(level, o, fmt.Sprintf(text, args...))
+}
+
+// LogPrint produces a log string from the arguments passed in
+func LogPrint(level LogLevel, o interface{}, text string) {
+	if GetConfig(context.TODO()).UseJSONLog {
+		logJSON(level, o, text)
+	} else {
+		logPlain(level, o, text)
+	}
+}
+
 // LogPrintf produces a log string from the arguments passed in
 func LogPrintf(level LogLevel, o interface{}, text string, args ...interface{}) {
-	out := fmt.Sprintf(text, args...)
-
 	if GetConfig(context.TODO()).UseJSONLog {
-		fields := logrus.Fields{}
-		if o != nil {
-			fields = logrus.Fields{
-				"object":     fmt.Sprintf("%+v", o),
-				"objectType": fmt.Sprintf("%T", o),
-			}
-		}
-		for _, arg := range args {
-			if item, ok := arg.(LogValueItem); ok {
-				fields[item.key] = item.value
-			}
-		}
-		switch level {
-		case LogLevelDebug:
-			logrus.WithFields(fields).Debug(out)
-		case LogLevelInfo:
-			logrus.WithFields(fields).Info(out)
-		case LogLevelNotice, LogLevelWarning:
-			logrus.WithFields(fields).Warn(out)
-		case LogLevelError:
-			logrus.WithFields(fields).Error(out)
-		case LogLevelCritical:
-			logrus.WithFields(fields).Fatal(out)
-		case LogLevelEmergency, LogLevelAlert:
-			logrus.WithFields(fields).Panic(out)
-		}
+		logJSONf(level, o, text, args...)
 	} else {
-		if o != nil {
-			out = fmt.Sprintf("%v: %s", o, out)
-		}
-		LogPrint(level, out)
+		logPlainf(level, o, text, args...)
+	}
+}
+
+// LogLevelPrint writes logs at the given level
+func LogLevelPrint(level LogLevel, o interface{}, text string) {
+	if GetConfig(context.TODO()).LogLevel >= level {
+		LogPrint(level, o, text)
 	}
 }
 
@@ -154,12 +194,71 @@ func LogLevelPrintf(level LogLevel, o interface{}, text string, args ...interfac
 	}
 }
 
+// Panic writes alert log output for this Object or Fs and calls panic().
+// It should always be seen by the user.
+func Panic(o interface{}, text string) {
+	if GetConfig(context.TODO()).LogLevel >= LogLevelAlert {
+		LogPrint(LogLevelAlert, o, text)
+	}
+	panic(text)
+}
+
+// Panicf writes alert log output for this Object or Fs and calls panic().
+// It should always be seen by the user.
+func Panicf(o interface{}, text string, args ...interface{}) {
+	if GetConfig(context.TODO()).LogLevel >= LogLevelAlert {
+		LogPrintf(LogLevelAlert, o, text, args...)
+	}
+	panic(fmt.Sprintf(text, args...))
+}
+
+// Fatal writes critical log output for this Object or Fs and calls os.Exit(1).
+// It should always be seen by the user.
+func Fatal(o interface{}, text string) {
+	if GetConfig(context.TODO()).LogLevel >= LogLevelCritical {
+		LogPrint(LogLevelCritical, o, text)
+	}
+	os.Exit(1)
+}
+
+// Fatalf writes critical log output for this Object or Fs and calls os.Exit(1).
+// It should always be seen by the user.
+func Fatalf(o interface{}, text string, args ...interface{}) {
+	if GetConfig(context.TODO()).LogLevel >= LogLevelCritical {
+		LogPrintf(LogLevelCritical, o, text, args...)
+	}
+	os.Exit(1)
+}
+
+// Error writes error log output for this Object or Fs.  It
+// should always be seen by the user.
+func Error(o interface{}, text string) {
+	LogLevelPrint(LogLevelError, o, text)
+}
+
 // Errorf writes error log output for this Object or Fs.  It
 // should always be seen by the user.
 func Errorf(o interface{}, text string, args ...interface{}) {
-	if GetConfig(context.TODO()).LogLevel >= LogLevelError {
-		LogPrintf(LogLevelError, o, text, args...)
-	}
+	LogLevelPrintf(LogLevelError, o, text, args...)
+}
+
+// Print writes log output for this Object or Fs, same as Logf.
+func Print(o interface{}, text string) {
+	LogLevelPrint(LogLevelNotice, o, text)
+}
+
+// Printf writes log output for this Object or Fs, same as Logf.
+func Printf(o interface{}, text string, args ...interface{}) {
+	LogLevelPrintf(LogLevelNotice, o, text, args...)
+}
+
+// Log writes log output for this Object or Fs.  This should be
+// considered to be Notice level logging.  It is the default level.
+// By default rclone should not log very much so only use this for
+// important things the user should see.  The user can filter these
+// out with the -q flag.
+func Log(o interface{}, text string) {
+	LogLevelPrint(LogLevelNotice, o, text)
 }
 
 // Logf writes log output for this Object or Fs.  This should be
@@ -168,26 +267,34 @@ func Errorf(o interface{}, text string, args ...interface{}) {
 // important things the user should see.  The user can filter these
 // out with the -q flag.
 func Logf(o interface{}, text string, args ...interface{}) {
-	if GetConfig(context.TODO()).LogLevel >= LogLevelNotice {
-		LogPrintf(LogLevelNotice, o, text, args...)
-	}
+	LogLevelPrintf(LogLevelNotice, o, text, args...)
+}
+
+// Infoc writes info on transfers for this Object or Fs.  Use this
+// level for logging transfers, deletions and things which should
+// appear with the -v flag.
+// There is name class on "Info", hence the name "Infoc", "c" for constant.
+func Infoc(o interface{}, text string) {
+	LogLevelPrint(LogLevelInfo, o, text)
 }
 
 // Infof writes info on transfers for this Object or Fs.  Use this
 // level for logging transfers, deletions and things which should
 // appear with the -v flag.
 func Infof(o interface{}, text string, args ...interface{}) {
-	if GetConfig(context.TODO()).LogLevel >= LogLevelInfo {
-		LogPrintf(LogLevelInfo, o, text, args...)
-	}
+	LogLevelPrintf(LogLevelInfo, o, text, args...)
+}
+
+// Debug writes debugging output for this Object or Fs.  Use this for
+// debug only.  The user must have to specify -vv to see this.
+func Debug(o interface{}, text string) {
+	LogLevelPrint(LogLevelDebug, o, text)
 }
 
 // Debugf writes debugging output for this Object or Fs.  Use this for
 // debug only.  The user must have to specify -vv to see this.
 func Debugf(o interface{}, text string, args ...interface{}) {
-	if GetConfig(context.TODO()).LogLevel >= LogLevelDebug {
-		LogPrintf(LogLevelDebug, o, text, args...)
-	}
+	LogLevelPrintf(LogLevelDebug, o, text, args...)
 }
 
 // LogDirName returns an object for the logger, logging a root

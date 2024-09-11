@@ -5,7 +5,6 @@ package info
 import (
 	"context"
 	"fmt"
-	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -25,7 +24,7 @@ func (r *results) checkBase32768() {
 	n := 0
 	dir, err := os.MkdirTemp("", "rclone-base32768-files")
 	if err != nil {
-		log.Printf("Failed to make temp dir: %v", err)
+		fs.Logf(nil, "Failed to make temp dir: %v", err)
 		return
 	}
 	defer func() {
@@ -41,7 +40,7 @@ func (r *results) checkBase32768() {
 		fileName := filepath.Join(dir, fmt.Sprintf("%04d-%s.txt", n, out.String()))
 		err = os.WriteFile(fileName, []byte(fileName), 0666)
 		if err != nil {
-			log.Printf("write %q failed: %v", fileName, err)
+			fs.Logf(nil, "write %q failed: %v", fileName, err)
 			return
 		}
 		n++
@@ -50,7 +49,7 @@ func (r *results) checkBase32768() {
 	// Make a local fs
 	fLocal, err := fs.NewFs(ctx, dir)
 	if err != nil {
-		log.Printf("Failed to make local fs: %v", err)
+		fs.Logf(nil, "Failed to make local fs: %v", err)
 		return
 	}
 
@@ -61,14 +60,14 @@ func (r *results) checkBase32768() {
 	s = fspath.JoinRootPath(s, testDir)
 	fRemote, err := fs.NewFs(ctx, s)
 	if err != nil {
-		log.Printf("Failed to make remote fs: %v", err)
+		fs.Logf(nil, "Failed to make remote fs: %v", err)
 		return
 	}
 
 	defer func() {
 		err := operations.Purge(ctx, r.f, testDir)
 		if err != nil {
-			log.Printf("Failed to purge test directory: %v", err)
+			fs.Logf(nil, "Failed to purge test directory: %v", err)
 			return
 		}
 	}()
@@ -76,7 +75,7 @@ func (r *results) checkBase32768() {
 	// Sync local to remote
 	err = sync.Sync(ctx, fRemote, fLocal, false)
 	if err != nil {
-		log.Printf("Failed to sync remote fs: %v", err)
+		fs.Logf(nil, "Failed to sync remote fs: %v", err)
 		return
 	}
 
@@ -86,7 +85,7 @@ func (r *results) checkBase32768() {
 		Fsrc: fLocal,
 	})
 	if err != nil {
-		log.Printf("Failed to check remote fs: %v", err)
+		fs.Logf(nil, "Failed to check remote fs: %v", err)
 		return
 	}
 

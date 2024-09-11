@@ -5988,7 +5988,13 @@ func (w *s3ChunkWriter) WriteChunk(ctx context.Context, chunkNumber int, reader 
 	if do, ok := reader.(pool.DelayAccountinger); ok {
 		// To figure out this number, do a transfer and if the accounted size is 0 or a
 		// multiple of what it should be, increase or decrease this number.
-		do.DelayAccounting(3)
+		//
+		// For transfers over https the SDK does not sign the body whereas over http it does
+		if len(w.f.opt.Endpoint) >= 5 && strings.EqualFold(w.f.opt.Endpoint[:5], "http:") {
+			do.DelayAccounting(3)
+		} else {
+			do.DelayAccounting(2)
+		}
 	}
 
 	// create checksum of buffer for integrity checking

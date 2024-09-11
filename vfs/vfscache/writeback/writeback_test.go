@@ -13,6 +13,7 @@ import (
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/vfs/vfscommon"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func newTestWriteBack(t *testing.T) (wb *WriteBack, cancel func()) {
@@ -122,15 +123,15 @@ func TestWriteBackItemCRUD(t *testing.T) {
 	// _peekItem empty
 	assert.Nil(t, wb._peekItem())
 
-	wbItem1 := wb._newItem(0, "one")
+	wbItem1 := wb._newItem(0, "one", 10)
 	checkOnHeap(t, wb, wbItem1)
 	checkInLookup(t, wb, wbItem1)
 
-	wbItem2 := wb._newItem(0, "two")
+	wbItem2 := wb._newItem(0, "two", 10)
 	checkOnHeap(t, wb, wbItem2)
 	checkInLookup(t, wb, wbItem2)
 
-	wbItem3 := wb._newItem(0, "three")
+	wbItem3 := wb._newItem(0, "three", 10)
 	checkOnHeap(t, wb, wbItem3)
 	checkInLookup(t, wb, wbItem3)
 
@@ -201,7 +202,7 @@ func TestWriteBackResetTimer(t *testing.T) {
 	// Check timer is stopped
 	assertTimerRunning(t, wb, false)
 
-	_ = wb._newItem(0, "three")
+	_ = wb._newItem(0, "three", 10)
 
 	// Reset the timer on an queue with stuff
 	wb._resetTimer()
@@ -297,7 +298,7 @@ func TestWriteBackAddOK(t *testing.T) {
 	wb.SetID(&inID)
 	assert.Equal(t, Handle(1), inID)
 
-	id := wb.Add(inID, "one", true, pi.put)
+	id := wb.Add(inID, "one", 10, true, pi.put)
 	assert.Equal(t, inID, id)
 	wbItem := wb.lookup[id]
 	checkOnHeap(t, wb, wbItem)
@@ -321,7 +322,7 @@ func TestWriteBackAddFailRetry(t *testing.T) {
 
 	pi := newPutItem(t)
 
-	id := wb.Add(0, "one", true, pi.put)
+	id := wb.Add(0, "one", 10, true, pi.put)
 	wbItem := wb.lookup[id]
 	checkOnHeap(t, wb, wbItem)
 	checkInLookup(t, wb, wbItem)
@@ -354,8 +355,9 @@ func TestWriteBackAddUpdate(t *testing.T) {
 
 	pi := newPutItem(t)
 
-	id := wb.Add(0, "one", true, pi.put)
+	id := wb.Add(0, "one", 10, true, pi.put)
 	wbItem := wb.lookup[id]
+	assert.Equal(t, int64(10), wbItem.size) // check size
 	checkOnHeap(t, wb, wbItem)
 	checkInLookup(t, wb, wbItem)
 	assert.Equal(t, "one", wb.string(t))
@@ -367,9 +369,10 @@ func TestWriteBackAddUpdate(t *testing.T) {
 	// Now the upload has started add another one
 
 	pi2 := newPutItem(t)
-	id2 := wb.Add(id, "one", true, pi2.put)
+	id2 := wb.Add(id, "one", 20, true, pi2.put)
 	assert.Equal(t, id, id2)
-	checkOnHeap(t, wb, wbItem) // object awaiting writeback time
+	assert.Equal(t, int64(20), wbItem.size) // check size has changed
+	checkOnHeap(t, wb, wbItem)              // object awaiting writeback time
 	checkInLookup(t, wb, wbItem)
 
 	// check the previous transfer was cancelled
@@ -393,7 +396,7 @@ func TestWriteBackAddUpdateNotModified(t *testing.T) {
 
 	pi := newPutItem(t)
 
-	id := wb.Add(0, "one", false, pi.put)
+	id := wb.Add(0, "one", 10, false, pi.put)
 	wbItem := wb.lookup[id]
 	checkOnHeap(t, wb, wbItem)
 	checkInLookup(t, wb, wbItem)
@@ -406,7 +409,7 @@ func TestWriteBackAddUpdateNotModified(t *testing.T) {
 	// Now the upload has started add another one
 
 	pi2 := newPutItem(t)
-	id2 := wb.Add(id, "one", false, pi2.put)
+	id2 := wb.Add(id, "one", 10, false, pi2.put)
 	assert.Equal(t, id, id2)
 	checkNotOnHeap(t, wb, wbItem) // object still being transferred
 	checkInLookup(t, wb, wbItem)
@@ -432,7 +435,7 @@ func TestWriteBackAddUpdateNotStarted(t *testing.T) {
 
 	pi := newPutItem(t)
 
-	id := wb.Add(0, "one", true, pi.put)
+	id := wb.Add(0, "one", 10, true, pi.put)
 	wbItem := wb.lookup[id]
 	checkOnHeap(t, wb, wbItem)
 	checkInLookup(t, wb, wbItem)
@@ -441,7 +444,7 @@ func TestWriteBackAddUpdateNotStarted(t *testing.T) {
 	// Immediately add another upload before the first has started
 
 	pi2 := newPutItem(t)
-	id2 := wb.Add(id, "one", true, pi2.put)
+	id2 := wb.Add(id, "one", 10, true, pi2.put)
 	assert.Equal(t, id, id2)
 	checkOnHeap(t, wb, wbItem) // object still awaiting transfer
 	checkInLookup(t, wb, wbItem)
@@ -470,7 +473,7 @@ func TestWriteBackGetStats(t *testing.T) {
 
 	pi := newPutItem(t)
 
-	wb.Add(0, "one", true, pi.put)
+	wb.Add(0, "one", 10, true, pi.put)
 
 	inProgress, queued := wb.Stats()
 	assert.Equal(t, queued, 1)
@@ -491,6 +494,101 @@ func TestWriteBackGetStats(t *testing.T) {
 
 }
 
+func TestWriteBackQueue(t *testing.T) {
+	wb, cancel := newTestWriteBack(t)
+	defer cancel()
+
+	pi := newPutItem(t)
+
+	id := wb.Add(0, "one", 10, true, pi.put)
+
+	queue := wb.Queue()
+	require.Equal(t, 1, len(queue))
+	assert.Greater(t, queue[0].Expiry, 0.0)
+	assert.Less(t, queue[0].Expiry, 1.0)
+	queue[0].Expiry = 0.0
+	assert.Equal(t, []QueueInfo{
+		{
+			Name:      "one",
+			Size:      10,
+			Expiry:    0.0,
+			Tries:     0,
+			Delay:     0.1,
+			Uploading: false,
+			ID:        id,
+		},
+	}, queue)
+
+	<-pi.started
+
+	queue = wb.Queue()
+	require.Equal(t, 1, len(queue))
+	assert.Less(t, queue[0].Expiry, 0.0)
+	assert.Greater(t, queue[0].Expiry, -1.0)
+	queue[0].Expiry = 0.0
+	assert.Equal(t, []QueueInfo{
+		{
+			Name:      "one",
+			Size:      10,
+			Expiry:    0.0,
+			Tries:     1,
+			Delay:     0.1,
+			Uploading: true,
+			ID:        id,
+		},
+	}, queue)
+
+	pi.finish(nil) // transfer successful
+	waitUntilNoTransfers(t, wb)
+
+	queue = wb.Queue()
+	assert.Equal(t, []QueueInfo{}, queue)
+}
+
+func TestWriteBackSetExpiry(t *testing.T) {
+	wb, cancel := newTestWriteBack(t)
+	defer cancel()
+
+	err := wb.SetExpiry(123123123, time.Now())
+	assert.Equal(t, ErrorIDNotFound, err)
+
+	pi := newPutItem(t)
+
+	id := wb.Add(0, "one", 10, true, pi.put)
+	wbItem := wb.lookup[id]
+
+	// get the expiry time with locking so we don't cause races
+	getExpiry := func() time.Time {
+		wb.mu.Lock()
+		defer wb.mu.Unlock()
+		return wbItem.expiry
+	}
+
+	expiry := time.Until(getExpiry()).Seconds()
+	assert.Greater(t, expiry, 0.0)
+	assert.Less(t, expiry, 1.0)
+
+	newExpiry := time.Now().Add(100 * time.Second)
+	require.NoError(t, wb.SetExpiry(wbItem.id, newExpiry))
+	assert.Equal(t, newExpiry, getExpiry())
+
+	// This starts the transfer
+	newExpiry = time.Now().Add(-100 * time.Second)
+	require.NoError(t, wb.SetExpiry(wbItem.id, newExpiry))
+	assert.Equal(t, newExpiry, getExpiry())
+
+	<-pi.started
+
+	expiry = time.Until(getExpiry()).Seconds()
+	assert.LessOrEqual(t, expiry, -100.0)
+
+	pi.finish(nil) // transfer successful
+	waitUntilNoTransfers(t, wb)
+
+	expiry = time.Until(getExpiry()).Seconds()
+	assert.LessOrEqual(t, expiry, -100.0)
+}
+
 // Test queuing more than fs.Config.Transfers
 func TestWriteBackMaxQueue(t *testing.T) {
 	ctx := context.Background()
@@ -506,7 +604,7 @@ func TestWriteBackMaxQueue(t *testing.T) {
 	for i := 0; i < toTransfer; i++ {
 		pi := newPutItem(t)
 		pis = append(pis, pi)
-		wb.Add(0, fmt.Sprintf("number%d", 1), true, pi.put)
+		wb.Add(0, fmt.Sprintf("number%d", 1), 10, true, pi.put)
 	}
 
 	inProgress, queued := wb.Stats()
@@ -551,7 +649,7 @@ func TestWriteBackRename(t *testing.T) {
 
 	// add item
 	pi1 := newPutItem(t)
-	id := wb.Add(0, "one", true, pi1.put)
+	id := wb.Add(0, "one", 10, true, pi1.put)
 	wbItem := wb.lookup[id]
 	checkOnHeap(t, wb, wbItem)
 	checkInLookup(t, wb, wbItem)
@@ -566,7 +664,7 @@ func TestWriteBackRename(t *testing.T) {
 
 	// add item
 	pi2 := newPutItem(t)
-	id = wb.Add(id, "two", true, pi2.put)
+	id = wb.Add(id, "two", 10, true, pi2.put)
 	wbItem = wb.lookup[id]
 	checkOnHeap(t, wb, wbItem)
 	checkInLookup(t, wb, wbItem)
@@ -591,9 +689,9 @@ func TestWriteBackRenameDuplicates(t *testing.T) {
 	wb, cancel := newTestWriteBack(t)
 	defer cancel()
 
-	// add item "one"
+	// add item "one", 10
 	pi1 := newPutItem(t)
-	id1 := wb.Add(0, "one", true, pi1.put)
+	id1 := wb.Add(0, "one", 10, true, pi1.put)
 	wbItem1 := wb.lookup[id1]
 	checkOnHeap(t, wb, wbItem1)
 	checkInLookup(t, wb, wbItem1)
@@ -605,7 +703,7 @@ func TestWriteBackRenameDuplicates(t *testing.T) {
 
 	// add item "two"
 	pi2 := newPutItem(t)
-	id2 := wb.Add(0, "two", true, pi2.put)
+	id2 := wb.Add(0, "two", 10, true, pi2.put)
 	wbItem2 := wb.lookup[id2]
 	checkOnHeap(t, wb, wbItem2)
 	checkInLookup(t, wb, wbItem2)
@@ -641,7 +739,7 @@ func TestWriteBackCancelUpload(t *testing.T) {
 
 	// add item
 	pi := newPutItem(t)
-	id := wb.Add(0, "one", true, pi.put)
+	id := wb.Add(0, "one", 10, true, pi.put)
 	wbItem := wb.lookup[id]
 	checkOnHeap(t, wb, wbItem)
 	checkInLookup(t, wb, wbItem)

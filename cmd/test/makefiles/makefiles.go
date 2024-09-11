@@ -4,7 +4,6 @@ package makefiles
 
 import (
 	"io"
-	"log"
 	"math"
 	"math/rand"
 	"os"
@@ -117,7 +116,7 @@ var makefileCmd = &cobra.Command{
 		var size fs.SizeSuffix
 		err := size.Set(args[0])
 		if err != nil {
-			log.Fatalf("Failed to parse size %q: %v", args[0], err)
+			fs.Fatalf(nil, "Failed to parse size %q: %v", args[0], err)
 		}
 		start := time.Now()
 		fs.Logf(nil, "Creating %d files of size %v.", len(args[1:]), size)
@@ -148,7 +147,7 @@ func commonInit() {
 	}
 	randSource = rand.New(rand.NewSource(seed))
 	if bool2int(zero)+bool2int(sparse)+bool2int(ascii)+bool2int(pattern)+bool2int(chargen) > 1 {
-		log.Fatal("Can only supply one of --zero, --sparse, --ascii, --pattern or --chargen")
+		fs.Fatal(nil, "Can only supply one of --zero, --sparse, --ascii, --pattern or --chargen")
 	}
 	switch {
 	case zero, sparse:
@@ -276,12 +275,12 @@ func (d *dir) list(path string, output []string) []string {
 func writeFile(dir, name string, size int64) {
 	err := file.MkdirAll(dir, 0777)
 	if err != nil {
-		log.Fatalf("Failed to make directory %q: %v", dir, err)
+		fs.Fatalf(nil, "Failed to make directory %q: %v", dir, err)
 	}
 	path := filepath.Join(dir, name)
 	fd, err := os.Create(path)
 	if err != nil {
-		log.Fatalf("Failed to open file %q: %v", path, err)
+		fs.Fatalf(nil, "Failed to open file %q: %v", path, err)
 	}
 	if sparse {
 		err = fd.Truncate(size)
@@ -289,11 +288,11 @@ func writeFile(dir, name string, size int64) {
 		_, err = io.CopyN(fd, source, size)
 	}
 	if err != nil {
-		log.Fatalf("Failed to write %v bytes to file %q: %v", size, path, err)
+		fs.Fatalf(nil, "Failed to write %v bytes to file %q: %v", size, path, err)
 	}
 	err = fd.Close()
 	if err != nil {
-		log.Fatalf("Failed to close file %q: %v", path, err)
+		fs.Fatalf(nil, "Failed to close file %q: %v", path, err)
 	}
 	fs.Infof(path, "Written file size %v", fs.SizeSuffix(size))
 }

@@ -3,7 +3,7 @@ package dedupe
 
 import (
 	"context"
-	"log"
+	"fmt"
 
 	"github.com/rclone/rclone/cmd"
 	"github.com/rclone/rclone/fs"
@@ -142,7 +142,7 @@ Or
 		if len(args) > 1 {
 			err := dedupeMode.Set(args[0])
 			if err != nil {
-				log.Fatal(err)
+				fs.Fatal(nil, fmt.Sprint(err))
 			}
 			args = args[1:]
 		}

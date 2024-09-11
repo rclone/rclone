@@ -3,7 +3,6 @@ package mountlib
 import (
 	"context"
 	"errors"
-	"log"
 	"sort"
 	"sync"
 	"time"
@@ -123,12 +122,12 @@ func mountRc(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 	mnt := NewMountPoint(mountFn, mountPoint, fdst, &mountOpt, &vfsOpt)
 	_, err = mnt.Mount()
 	if err != nil {
-		log.Printf("mount FAILED: %v", err)
+		fs.Logf(nil, "mount FAILED: %v", err)
 		return nil, err
 	}
 	go func() {
 		if err = mnt.Wait(); err != nil {
-			log.Printf("unmount FAILED: %v", err)
+			fs.Logf(nil, "unmount FAILED: %v", err)
 			return
 		}
 		mountMu.Lock()

@@ -10,7 +10,6 @@ Show the version number.
 
 ## Synopsis
 
-
 Show the rclone version number, the go version, the build target
 OS and architecture, the runtime OS and kernel version and bitness,
 build tags and the type of executable (static or dynamic).
@@ -60,10 +59,9 @@ rclone version [flags]
   -h, --help    help for version
 ```
 
-
 See the [global flags page](/flags/) for global options not listed here.
 
-# SEE ALSO
+## See Also
 
 * [rclone](/commands/rclone/)	 - Show help for rclone commands, flags and backends.
 

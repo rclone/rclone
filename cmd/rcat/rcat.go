@@ -3,11 +3,11 @@ package rcat
 
 import (
 	"context"
-	"log"
 	"os"
 	"time"
 
 	"github.com/rclone/rclone/cmd"
+	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config/flags"
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/spf13/cobra"
@@ -64,7 +64,7 @@ destination which can use retries.`,
 
 		stat, _ := os.Stdin.Stat()
 		if (stat.Mode() & os.ModeCharDevice) != 0 {
-			log.Fatalf("nothing to read from standard input (stdin).")
+			fs.Fatalf(nil, "nothing to read from standard input (stdin).")
 		}
 
 		fdst, dstFileName := cmd.NewFsDstFile(args)

@@ -878,3 +878,15 @@ put them back in again.` >}}
   * Will Miles <wmiles@sgl.com>
   * David Seifert <16636962+SoapGentoo@users.noreply.github.com>
   * Fornax <wimbrand96@gmail.com>
+  * Sam Harrison <sam.harrison@files.com>
+  * Péter Bozsó <3806723+peterbozso@users.noreply.github.com>
+  * Georg Welzel <gwelzel@mailbox.org>
+  * John Oxley <john.oxley@gmail.com> <joxley@meta.com>
+  * Pawel Palucha <pawel.palucha@aetion.com>
+  * crystalstall <crystalruby@qq.com>
+  * nipil <nipil@users.noreply.github.com>
+  * yuval-cloudinary <46710068+yuval-cloudinary@users.noreply.github.com>
+  * Mathieu Moreau <mrx23dot@users.noreply.github.com>
+  * fsantagostinobietti <6057026+fsantagostinobietti@users.noreply.github.com>
+  * Oleg Kunitsyn <114359669+hiddenmarten@users.noreply.github.com>
+  * Divyam <47589864+divyam234@users.noreply.github.com>

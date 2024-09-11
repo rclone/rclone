@@ -35,6 +35,7 @@ or just by using an absolute path name. Note that unix sockets bypass the
 authentication - this is expected to be done with file system permissions.
 
 `--rc-addr` may be repeated to listen on multiple IPs/ports/sockets.
+Socket activation, described further below, can also be used to accomplish the same.
 
 `--rc-server-read-timeout` and `--rc-server-write-timeout` can be used to
 control the timeouts on the server.  Note that this is the total time
@@ -67,6 +68,20 @@ certificate authority certificate.
   values are "tls1.0", "tls1.1", "tls1.2" and "tls1.3" (default
   "tls1.0").
 
+## Socket activation
+
+Instead of the listening addresses specified above, rclone will listen to all
+FDs passed by the service manager, if any (and ignore any arguments passed by --rc-addr`).
+
+This allows rclone to be a socket-activated service.
+It can be configured with .socket and .service unit files as described in
+https://www.freedesktop.org/software/systemd/man/latest/systemd.socket.html
+
+Socket activation can be tested ad-hoc with the `systemd-socket-activate`command
+
+       systemd-socket-activate -l 8000 -- rclone serve
+
+This will socket-activate rclone on the first connection to port 8000 over TCP.
 ### Template
 
 `--rc-template` allows a user to specify a custom markup template for HTTP
@@ -142,19 +157,21 @@ rclone rcd <path to files to serve>* [flags]
   -h, --help   help for rcd
 ```
 
+Options shared with other commands are described next.
+See the [global flags page](/flags/) for global options not listed here.
 
-## RC Options
+### RC Options
 
-Flags to control the Remote Control API.
+Flags to control the Remote Control API
 
 ```
       --rc                                 Enable the remote control server
-      --rc-addr stringArray                IPaddress:Port or :Port to bind server to (default [localhost:5572])
+      --rc-addr stringArray                IPaddress:Port or :Port to bind server to (default ["localhost:5572"])
       --rc-allow-origin string             Origin which cross-domain request (CORS) can be executed from
       --rc-baseurl string                  Prefix for URLs - leave blank for root
       --rc-cert string                     TLS PEM key (concatenation of certificate and CA certificate)
       --rc-client-ca string                Client certificate authority to verify clients with
-      --rc-enable-metrics                  Enable prometheus metrics on /metrics
+      --rc-enable-metrics                  Enable the Prometheus metrics path at the remote control server
       --rc-files string                    Path to local files to serve on the HTTP server
       --rc-htpasswd string                 A htpasswd file - if not provided no authentication is done
       --rc-job-expire-duration Duration    Expire finished async jobs older than this value (default 1m0s)
@@ -179,9 +196,7 @@ Flags to control the Remote Control API.
       --rc-web-gui-update                  Check and update to latest version of web gui
 ```
 
-See the [global flags page](/flags/) for global options not listed here.
-
-# SEE ALSO
+## See Also
 
 * [rclone](/commands/rclone/)	 - Show help for rclone commands, flags and backends.
 

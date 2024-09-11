@@ -9,7 +9,6 @@ Checks the files in the source and destination match.
 
 ## Synopsis
 
-
 Checks the files in the source and destination match.  It compares
 sizes and hashes (MD5 or SHA1) and logs a report of files that don't
 match.  It doesn't alter the source or destination.
@@ -73,18 +72,20 @@ rclone check source:path dest:path [flags]
       --one-way                 Check one way only, source files must exist on remote
 ```
 
+Options shared with other commands are described next.
+See the [global flags page](/flags/) for global options not listed here.
 
-## Check Options
+### Check Options
 
-Flags used for `rclone check`.
+Flags used for check commands
 
 ```
       --max-backlog int   Maximum number of objects in sync or check backlog (default 10000)
 ```
 
-## Filter Options
+### Filter Options
 
-Flags for filtering directory listings.
+Flags for filtering directory listings
 
 ```
       --delete-excluded                     Delete files on dest excluded from sync
@@ -111,18 +112,16 @@ Flags for filtering directory listings.
       --min-size SizeSuffix                 Only transfer files bigger than this in KiB or suffix B|K|M|G|T|P (default off)
 ```
 
-## Listing Options
+### Listing Options
 
-Flags for listing directories.
+Flags for listing directories
 
 ```
       --default-time Time   Time to show if modtime is unknown for files and directories (default 2000-01-01T00:00:00Z)
       --fast-list           Use recursive list if available; uses more memory but fewer transactions
 ```
 
-See the [global flags page](/flags/) for global options not listed here.
-
-# SEE ALSO
+## See Also
 
 * [rclone](/commands/rclone/)	 - Show help for rclone commands, flags and backends.
 

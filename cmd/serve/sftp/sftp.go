@@ -115,6 +115,17 @@ directory.
 By default the server binds to localhost:2022 - if you want it to be
 reachable externally then supply ` + "`--addr :2022`" + ` for example.
 
+This also supports being run with socket activation, in which case it will
+listen on the first passed FD.
+It can be configured with .socket and .service unit files as described in
+https://www.freedesktop.org/software/systemd/man/latest/systemd.socket.html
+
+Socket activation can be tested ad-hoc with the ` + "`systemd-socket-activate`" + `command:
+
+	systemd-socket-activate -l 2222 -- rclone serve sftp :local:vfs/
+
+This will socket-activate rclone on the first connection to port 2222 over TCP.
+
 Note that the default of ` + "`--vfs-cache-mode off`" + ` is fine for the rclone
 sftp backend, but it may not be with other SFTP clients.
 

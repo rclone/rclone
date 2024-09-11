@@ -7,7 +7,6 @@ import (
 	"flag"
 	"fmt"
 	"io"
-	"log"
 	"os"
 	"os/exec"
 	"runtime"
@@ -48,7 +47,7 @@ func (r *Run) startMountSubProcess() {
 	}
 	r.os = realOs{}
 	r.mountPath = findMountPath()
-	log.Printf("startMountSubProcess %q (%q) %q", r.fremote, r.fremoteName, r.mountPath)
+	fs.Logf(nil, "startMountSubProcess %q (%q) %q", r.fremote, r.fremoteName, r.mountPath)
 
 	opt := runMountOpt{
 		MountPoint: r.mountPath,
@@ -59,7 +58,7 @@ func (r *Run) startMountSubProcess() {
 
 	opts, err := json.Marshal(&opt)
 	if err != nil {
-		log.Fatal(err)
+		fs.Fatal(nil, fmt.Sprint(err))
 	}
 
 	// Re-run this executable with a new option -run-mount
@@ -68,32 +67,32 @@ func (r *Run) startMountSubProcess() {
 	r.cmd.Stderr = os.Stderr
 	r.out, err = r.cmd.StdinPipe()
 	if err != nil {
-		log.Fatal(err)
+		fs.Fatal(nil, fmt.Sprint(err))
 	}
 	r.in, err = r.cmd.StdoutPipe()
 	if err != nil {
-		log.Fatal(err)
+		fs.Fatal(nil, fmt.Sprint(err))
 	}
 	err = r.cmd.Start()
 	if err != nil {
-		log.Fatal("startMountSubProcess failed", err)
+		fs.Fatal(nil, fmt.Sprint("startMountSubProcess failed", err))
 	}
 	r.scanner = bufio.NewScanner(r.in)
 
 	// Wait it for startup
-	log.Print("Waiting for mount to start")
+	fs.Log(nil, "Waiting for mount to start")
 	for r.scanner.Scan() {
 		rx := strings.TrimSpace(r.scanner.Text())
 		if rx == "STARTED" {
 			break
 		}
-		log.Printf("..Mount said: %s", rx)
+		fs.Logf(nil, "..Mount said: %s", rx)
 	}
 	if r.scanner.Err() != nil {
-		log.Printf("scanner err %v", r.scanner.Err())
+		fs.Logf(nil, "scanner err %v", r.scanner.Err())
 	}
 
-	log.Printf("startMountSubProcess: end")
+	fs.Logf(nil, "startMountSubProcess: end")
 }
 
 // Find a free path to run the mount on
@@ -101,7 +100,7 @@ func findMountPath() string {
 	if runtime.GOOS != "windows" {
 		mountPath, err := os.MkdirTemp("", "rclonefs-mount")
 		if err != nil {
-			log.Fatalf("Failed to create mount dir: %v", err)
+			fs.Fatalf(nil, "Failed to create mount dir: %v", err)
 		}
 		return mountPath
 	}
@@ -110,7 +109,7 @@ func findMountPath() string {
 	letter := file.FindUnusedDriveLetter()
 	drive := ""
 	if letter == 0 {
-		log.Fatalf("Couldn't find free drive letter for test")
+		fs.Fatalf(nil, "Couldn't find free drive letter for test")
 	} else {
 		drive = string(letter) + ":"
 	}
@@ -128,36 +127,36 @@ func isSubProcess() bool {
 // It reads commands from standard input and writes results to
 // standard output.
 func startMount(mountFn mountlib.MountFn, useVFS bool, opts string) {
-	log.Print("startMount")
+	fs.Log(nil, "startMount")
 	ctx := context.Background()
 
 	var opt runMountOpt
 	err := json.Unmarshal([]byte(opts), &opt)
 	if err != nil {
-		log.Fatalf("Unmarshal failed: %v", err)
+		fs.Fatalf(nil, "Unmarshal failed: %v", err)
 	}
 
 	fstest.Initialise()
 
 	f, err := cache.Get(ctx, opt.Remote)
 	if err != nil {
-		log.Fatalf("Failed to open remote %q: %v", opt.Remote, err)
+		fs.Fatalf(nil, "Failed to open remote %q: %v", opt.Remote, err)
 	}
 
 	err = f.Mkdir(ctx, "")
 	if err != nil {
-		log.Fatalf("Failed to mkdir %q: %v", opt.Remote, err)
+		fs.Fatalf(nil, "Failed to mkdir %q: %v", opt.Remote, err)
 	}
 
-	log.Printf("startMount: Mounting %q on %q with %q", opt.Remote, opt.MountPoint, opt.VFSOpt.CacheMode)
+	fs.Logf(nil, "startMount: Mounting %q on %q with %q", opt.Remote, opt.MountPoint, opt.VFSOpt.CacheMode)
 	mnt := mountlib.NewMountPoint(mountFn, opt.MountPoint, f, &opt.MountOpt, &opt.VFSOpt)
 
 	_, err = mnt.Mount()
 	if err != nil {
-		log.Fatalf("mount FAILED %q: %v", opt.Remote, err)
+		fs.Fatalf(nil, "mount FAILED %q: %v", opt.Remote, err)
 	}
 	defer umount(mnt)
-	log.Printf("startMount: mount OK")
+	fs.Logf(nil, "startMount: mount OK")
 	fmt.Println("STARTED") // signal to parent all is good
 
 	// Read commands from stdin
@@ -172,7 +171,7 @@ func startMount(mountFn mountlib.MountFn, useVFS bool, opts string) {
 
 	err = scanner.Err()
 	if err != nil {
-		log.Fatalf("scanner failed %q: %v", opt.Remote, err)
+		fs.Fatalf(nil, "scanner failed %q: %v", opt.Remote, err)
 	}
 }
 
@@ -221,17 +220,17 @@ func (r *Run) sendMountCommand(args ...string) {
 	} else {
 		_, err := io.WriteString(r.out, tx+"\n")
 		if err != nil {
-			log.Fatalf("WriteString err %v", err)
+			fs.Fatalf(nil, "WriteString err %v", err)
 		}
 		if !r.scanner.Scan() {
-			log.Fatalf("Mount has gone away")
+			fs.Fatalf(nil, "Mount has gone away")
 		}
 		rx = strings.Trim(r.scanner.Text(), "\r\n")
 	}
 	in := strings.Split(rx, "\t")
 	// log.Printf("Answer is %q", in)
 	if in[0] != "OK" {
-		log.Fatalf("Error from mount: %q", in[1:])
+		fs.Fatalf(nil, "Error from mount: %q", in[1:])
 	}
 }
 
@@ -254,25 +253,25 @@ func umount(mnt *mountlib.MountPoint) {
 			log.Printf("fusermount failed: %v", err)
 		}
 	*/
-	log.Printf("Unmounting %q", mnt.MountPoint)
+	fs.Logf(nil, "Unmounting %q", mnt.MountPoint)
 	err := mnt.Unmount()
 	if err != nil {
-		log.Printf("signal to umount failed - retrying: %v", err)
+		fs.Logf(nil, "signal to umount failed - retrying: %v", err)
 		time.Sleep(3 * time.Second)
 		err = mnt.Unmount()
 	}
 	if err != nil {
-		log.Fatalf("signal to umount failed: %v", err)
+		fs.Fatalf(nil, "signal to umount failed: %v", err)
 	}
-	log.Printf("Waiting for umount")
+	fs.Logf(nil, "Waiting for umount")
 	err = <-mnt.ErrChan
 	if err != nil {
-		log.Fatalf("umount failed: %v", err)
+		fs.Fatalf(nil, "umount failed: %v", err)
 	}
 
 	// Cleanup the VFS cache - umount has called Shutdown
 	err = mnt.VFS.CleanUp()
 	if err != nil {
-		log.Printf("Failed to cleanup the VFS cache: %v", err)
+		fs.Logf(nil, "Failed to cleanup the VFS cache: %v", err)
 	}
 }

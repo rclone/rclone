@@ -9,7 +9,6 @@ Prints info about logged in user of remote.
 
 ## Synopsis
 
-
 This prints the details of the person logged in to the cloud storage
 system.
 
@@ -25,10 +24,9 @@ rclone config userinfo remote: [flags]
       --json   Format output as JSON
 ```
 
-
 See the [global flags page](/flags/) for global options not listed here.
 
-# SEE ALSO
+## See Also
 
 * [rclone config](/commands/rclone_config/)	 - Enter an interactive configuration session.
 
