@@ -1,4 +1,4 @@
-module github.com/rclone/rclone
+module github.com/JMonday-byte/rclone-merge-pikpak-login-branch
 
 go 1.21
 
