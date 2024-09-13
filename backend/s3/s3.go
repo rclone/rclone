@@ -3052,9 +3052,16 @@ func (s3logger) Logf(classification logging.Classification, format string, v ...
 func s3Connection(ctx context.Context, opt *Options, client *http.Client) (s3Client *s3.Client, err error) {
 	ci := fs.GetConfig(ctx)
 	var awsConfig aws.Config
+	// Make the default static auth
+	v := aws.Credentials{
+		AccessKeyID:     opt.AccessKeyID,
+		SecretAccessKey: opt.SecretAccessKey,
+		SessionToken:    opt.SessionToken,
+	}
+	awsConfig.Credentials = &credentials.StaticCredentialsProvider{Value: v}
 
 	// Try to fill in the config from the environment if env_auth=true
-	if opt.EnvAuth {
+	if opt.EnvAuth && opt.AccessKeyID == "" && opt.SecretAccessKey == "" {
 		configOpts := []func(*awsconfig.LoadOptions) error{}
 		// Set the name of the profile if supplied
 		if opt.Profile != "" {
@@ -3079,13 +3086,7 @@ func s3Connection(ctx context.Context, opt *Options, client *http.Client) (s3Cli
 		case opt.SecretAccessKey == "":
 			return nil, errors.New("secret_access_key not found")
 		default:
-			// Make the static auth
-			v := aws.Credentials{
-				AccessKeyID:     opt.AccessKeyID,
-				SecretAccessKey: opt.SecretAccessKey,
-				SessionToken:    opt.SessionToken,
-			}
-			awsConfig.Credentials = &credentials.StaticCredentialsProvider{Value: v}
+			// static credentials are already set
 		}
 	}
 
