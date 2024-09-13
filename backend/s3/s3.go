@@ -2607,6 +2607,35 @@ knows about - please make a bug report if not.
 			Default:  fs.Tristate{},
 			Advanced: true,
 		}, {
+			Name: "directory_bucket",
+			Help: strings.ReplaceAll(`Set to use AWS Directory Buckets
+
+If you are using an AWS Directory Bucket then set this flag.
+
+This will ensure no |Content-Md5| headers are sent and ensure |ETag|
+headers are not interpreted as MD5 sums. |X-Amz-Meta-Md5chksum| will
+be set on all objects whether single or multipart uploaded.
+
+This also sets |no_check_bucket = true|.
+
+Note that Directory Buckets do not support:
+
+- Versioning
+- |Content-Encoding: gzip|
+
+Rclone limitations with Directory Buckets:
+
+- rclone does not support creating Directory Buckets with |rclone mkdir|
+- ... or removing them with |rclone rmdir| yet
+- Directory Buckets do not appear when doing |rclone lsf| at the top level.
+- Rclone can't remove auto created directories yet. In theory this should
+  work with |directory_markers = true| but it doesn't.
+- Directories don't seem to appear in recursive (ListR) listings.
+`, "|", "`"),
+			Default:  false,
+			Advanced: true,
+			Provider: "AWS",
+		}, {
 			Name: "sdk_log_mode",
 			Help: strings.ReplaceAll(`Set to debug the SDK
 
@@ -2780,6 +2809,7 @@ type Options struct {
 	UseMultipartUploads   fs.Tristate          `config:"use_multipart_uploads"`
 	UseUnsignedPayload    fs.Tristate          `config:"use_unsigned_payload"`
 	SDKLogMode            sdkLogMode           `config:"sdk_log_mode"`
+	DirectoryBucket       bool                 `config:"directory_bucket"`
 }
 
 // Fs represents a remote s3 server
@@ -3547,6 +3577,14 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		// Objects encrypted by SSE-C or SSE-KMS have ETags that are not an
 		// MD5 digest of their object data.
 		f.etagIsNotMD5 = true
+	}
+	if opt.DirectoryBucket {
+		// Objects uploaded to directory buckets appear to have random ETags
+		//
+		// This doesn't appear to be documented
+		f.etagIsNotMD5 = true
+		// The normal API doesn't work for creating directory buckets, so don't try
+		f.opt.NoCheckBucket = true
 	}
 	f.setRoot(root)
 	f.features = (&fs.Features{
@@ -6029,6 +6067,10 @@ func (w *s3ChunkWriter) WriteChunk(ctx context.Context, chunkNumber int, reader 
 		SSECustomerKey:       w.multiPartUploadInput.SSECustomerKey,
 		SSECustomerKeyMD5:    w.multiPartUploadInput.SSECustomerKeyMD5,
 	}
+	if w.f.opt.DirectoryBucket {
+		// Directory buckets do not support "Content-Md5" header
+		uploadPartReq.ContentMD5 = nil
+	}
 	var uout *s3.UploadPartOutput
 	err = w.f.pacer.Call(func() (bool, error) {
 		// rewind the reader on retry and after reading md5
@@ -6305,7 +6347,7 @@ func (o *Object) prepareUpload(ctx context.Context, src fs.ObjectInfo, options [
 				if (multipart || o.fs.etagIsNotMD5) && !o.fs.opt.DisableChecksum {
 					// Set the md5sum as metadata on the object if
 					// - a multipart upload
-					// - the Etag is not an MD5, eg when using SSE/SSE-C
+					// - the Etag is not an MD5, eg when using SSE/SSE-C or directory buckets
 					// provided checksums aren't disabled
 					ui.req.Metadata[metaMD5Hash] = md5sumBase64
 				}
@@ -6320,7 +6362,7 @@ func (o *Object) prepareUpload(ctx context.Context, src fs.ObjectInfo, options [
 	if size >= 0 {
 		ui.req.ContentLength = &size
 	}
-	if md5sumBase64 != "" {
+	if md5sumBase64 != "" && !o.fs.opt.DirectoryBucket {
 		ui.req.ContentMD5 = &md5sumBase64
 	}
 	if o.fs.opt.RequesterPays {
