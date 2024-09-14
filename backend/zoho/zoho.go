@@ -41,7 +41,7 @@ const (
 	decayConstant               = 2 // bigger for slower decay, exponential
 	configRootID                = "root_folder_id"
 
-	largeFileTheshold = 10 * 1024 * 1024 // 10 MiB
+	defaultUploadCutoff = 10 * 1024 * 1024 // 10 MiB
 )
 
 // Globals
@@ -214,7 +214,13 @@ browser.`,
 			}, {
 				Value: "com.au",
 				Help:  "Australia",
-			}}}, {
+			}},
+		}, {
+			Name:     "upload_cutoff",
+			Help:     "Cutoff for switching to large file upload api (>= 10 MiB).",
+			Default:  fs.SizeSuffix(defaultUploadCutoff),
+			Advanced: true,
+		}, {
 			Name:     config.ConfigEncoding,
 			Help:     config.ConfigEncodingHelp,
 			Advanced: true,
@@ -228,6 +234,7 @@ browser.`,
 
 // Options defines the configuration for this backend
 type Options struct {
+	UploadCutoff fs.SizeSuffix        `config:"upload_cutoff"`
 	RootFolderID string               `config:"root_folder_id"`
 	Region       string               `config:"region"`
 	Enc          encoder.MultiEncoder `config:"encoding"`
@@ -493,6 +500,11 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	if err := configstruct.Set(m, opt); err != nil {
 		return nil, err
 	}
+
+	if opt.UploadCutoff < defaultUploadCutoff {
+		return nil, fmt.Errorf("zoho: upload cutoff (%v) must be greater than equal to %v", opt.UploadCutoff, fs.SizeSuffix(defaultUploadCutoff))
+	}
+
 	err := setupRegion(m)
 	if err != nil {
 		return nil, err
@@ -878,7 +890,7 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 		}
 
 		// use normal upload API for small sizes (<10MiB)
-		if size < largeFileTheshold {
+		if size < int64(f.opt.UploadCutoff) {
 			info, err := f.upload(ctx, f.opt.Enc.FromStandardName(leaf), directoryID, size, in, options...)
 			if err != nil {
 				return nil, err
@@ -1361,7 +1373,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	}
 
 	// use normal upload API for small sizes (<10MiB)
-	if size < largeFileTheshold {
+	if size < int64(o.fs.opt.UploadCutoff) {
 		info, err := o.fs.upload(ctx, o.fs.opt.Enc.FromStandardName(leaf), directoryID, size, in, options...)
 		if err != nil {
 			return err
