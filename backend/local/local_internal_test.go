@@ -73,7 +73,6 @@ func TestUpdatingCheck(t *testing.T) {
 	r.WriteFile(filePath, "content updated", time.Now())
 	_, err = in.Read(buf)
 	require.NoError(t, err)
-
 }
 
 // Test corrupted on transfer
@@ -224,7 +223,7 @@ func TestHashOnUpdate(t *testing.T) {
 	assert.Equal(t, "9a0364b9e99bb480dd25e1f0284c8555", md5)
 
 	// Reupload it with different contents but same size and timestamp
-	var b = bytes.NewBufferString("CONTENT")
+	b := bytes.NewBufferString("CONTENT")
 	src := object.NewStaticObjectInfo(filePath, when, int64(b.Len()), true, nil, f)
 	err = o.Update(ctx, b, src)
 	require.NoError(t, err)
@@ -395,7 +394,6 @@ func TestMetadata(t *testing.T) {
 			assert.Equal(t, "wedges", m["potato"])
 		}
 	})
-
 }
 
 func TestFilter(t *testing.T) {
@@ -572,4 +570,35 @@ func TestCopySymlink(t *testing.T) {
 	linkContents, err := os.Readlink(dstPath)
 	require.NoError(t, err)
 	assert.Equal(t, "file.txt", linkContents)
+
+	// Set fs into "-L/--copy-links" mode
+	f.opt.FollowSymlinks = true
+	f.opt.TranslateSymlinks = false
+	f.lstat = os.Stat
+
+	// Create dst
+	require.NoError(t, f.Mkdir(ctx, "dst2"))
+
+	// Do copy from src into dst
+	src, err = f.NewObject(ctx, "src/link.txt")
+	require.NoError(t, err)
+	require.NotNil(t, src)
+	dst, err = operations.Copy(ctx, f, nil, "dst2/link.txt", src)
+	require.NoError(t, err)
+	require.NotNil(t, dst)
+
+	// Test that we made a NON-symlink and it has the right contents
+	dstPath = filepath.Join(r.LocalName, "dst2", "link.txt")
+	fi, err := os.Lstat(dstPath)
+	require.NoError(t, err)
+	assert.True(t, fi.Mode()&os.ModeSymlink == 0)
+	want := fstest.NewItem("dst2/link.txt", "hello world", when)
+	fstest.CompareItems(t, []fs.DirEntry{dst}, []fstest.Item{want}, nil, f.precision, "")
+
+	// Test that copying a normal file also works
+	dst, err = operations.Copy(ctx, f, nil, "dst2/file.txt", dst)
+	require.NoError(t, err)
+	require.NotNil(t, dst)
+	want = fstest.NewItem("dst2/file.txt", "hello world", when)
+	fstest.CompareItems(t, []fs.DirEntry{dst}, []fstest.Item{want}, nil, f.precision, "")
 }
