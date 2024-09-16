@@ -6,6 +6,7 @@ package local
 import (
 	"context"
 	"fmt"
+	"path/filepath"
 	"runtime"
 
 	"github.com/go-darwin/apfs"
@@ -22,12 +23,15 @@ import (
 //
 // If it isn't possible then return fs.ErrorCantCopy
 func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
-	if runtime.GOOS != "darwin" || f.opt.TranslateSymlinks || f.opt.NoClone {
+	if runtime.GOOS != "darwin" || f.opt.NoClone {
 		return nil, fs.ErrorCantCopy
 	}
 	srcObj, ok := src.(*Object)
 	if !ok {
 		fs.Debugf(src, "Can't clone - not same remote type")
+		return nil, fs.ErrorCantCopy
+	}
+	if f.opt.TranslateSymlinks && srcObj.translatedLink { // in --links mode, use cloning only for regular files
 		return nil, fs.ErrorCantCopy
 	}
 
@@ -44,11 +48,18 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		return nil, err
 	}
 
-	err = Clone(srcObj.path, f.localPath(remote))
+	srcPath := srcObj.path
+	if f.opt.FollowSymlinks { // in --copy-links mode, find the real file being pointed to and pass that in instead
+		srcPath, err = filepath.EvalSymlinks(srcPath)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	err = Clone(srcPath, f.localPath(remote))
 	if err != nil {
 		return nil, err
 	}
-	fs.Debugf(remote, "server-side cloned!")
 
 	// Set metadata if --metadata is in use
 	if meta != nil {
