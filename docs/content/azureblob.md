@@ -180,6 +180,13 @@ If the resource has multiple user-assigned identities you will need to
 unset `env_auth` and set `use_msi` instead. See the [`use_msi`
 section](#use_msi).
 
+If you are operating in disconnected clouds, or private clouds such as
+Azure Stack you may want to set `disable_instance_discovery = true`.
+This determines whether rclone requests Microsoft Entra instance
+metadata from `https://login.microsoft.com/` before authenticating.
+Setting this to `true` will skip this request, making you responsible
+for ensuring the configured authority is valid and trustworthy.
+
 ##### Env Auth: 3. Azure CLI credentials (as used by the az tool)
 
 Credentials created with the `az` tool can be picked up using `env_auth`.
