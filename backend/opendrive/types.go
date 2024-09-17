@@ -231,3 +231,10 @@ type permissions struct {
 type uploadFileChunkReply struct {
 	TotalWritten int64 `json:"TotalWritten"`
 }
+
+// usersInfoResponse describes OpenDrive users/info.json response
+type usersInfoResponse struct {
+	// This response contains many other values but these are the only ones currently in use
+	StorageUsed int64 `json:"StorageUsed,string"`
+	MaxStorage  int64 `json:"MaxStorage,string"`
+}
