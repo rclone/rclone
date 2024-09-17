@@ -160,6 +160,34 @@ Without this flag, archived media will not be visible in directory
 listings and won't be transferred.`,
 			Advanced: true,
 		}, {
+			Name:    "proxy",
+			Default: "",
+			Help: strings.ReplaceAll(`Use the gphotosdl proxy for downloading the full resolution images
+
+The Google API will deliver images and video which aren't full
+resolution, and/or have EXIF data missing.
+
+However if you ue the gphotosdl proxy tnen you can download original,
+unchanged images.
+
+This runs a headless browser in the background.
+
+Download the software from [gphotosdl](https://github.com/rclone/gphotosdl)
+
+First run with
+
+    gphotosdl -login
+
+Then once you have logged into google photos close the browser window
+and run
+
+    gphotosdl
+
+Then supply the parameter |--gphotos-proxy "http://localhost:8282"| to make
+rclone use the proxy.
+`, "|", "`"),
+			Advanced: true,
+		}, {
 			Name:     config.ConfigEncoding,
 			Help:     config.ConfigEncodingHelp,
 			Advanced: true,
@@ -180,6 +208,7 @@ type Options struct {
 	BatchMode       string               `config:"batch_mode"`
 	BatchSize       int                  `config:"batch_size"`
 	BatchTimeout    fs.Duration          `config:"batch_timeout"`
+	Proxy           string               `config:"proxy"`
 }
 
 // Fs represents a remote storage server
@@ -970,10 +999,14 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 		fs.Debugf(o, "Open: Failed to read metadata: %v", err)
 		return nil, err
 	}
+	url := o.downloadURL()
+	if o.fs.opt.Proxy != "" {
+		url = strings.TrimRight(o.fs.opt.Proxy, "/") + "/id/" + o.id
+	}
 	var resp *http.Response
 	opts := rest.Opts{
 		Method:  "GET",
-		RootURL: o.downloadURL(),
+		RootURL: url,
 		Options: options,
 	}
 	err = o.fs.pacer.Call(func() (bool, error) {
