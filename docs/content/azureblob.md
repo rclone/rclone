@@ -297,6 +297,16 @@ be explicitly specified using exactly one of the `msi_object_id`,
 If none of `msi_object_id`, `msi_client_id`, or `msi_mi_res_id` is
 set, this is is equivalent to using `env_auth`.
 
+#### Azure CLI tool `az` {#use_az}
+
+Set to use the [Azure CLI tool `az`](https://learn.microsoft.com/en-us/cli/azure/)
+as the sole means of authentication.
+
+Setting this can be useful if you wish to use the `az` CLI on a host with
+a System Managed Identity that you do not want to use.
+
+Don't set `env_auth` at the same time.
+
 #### Anonymous {#anonymous}
 
 If you want to access resources with public anonymous access then set
