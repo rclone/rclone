@@ -449,7 +449,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 			// No root so return old f
 			return f, nil
 		}
-		_, err := tempF.newObjectWithLink(ctx, remote, nil)
+		_, err := tempF.newObject(ctx, remote)
 		if err != nil {
 			if err == fs.ErrorObjectNotFound {
 				// File doesn't exist so return old f
@@ -487,7 +487,7 @@ func (f *Fs) CleanUp(ctx context.Context) error {
 // ErrorIsDir if possible without doing any extra work,
 // otherwise ErrorObjectNotFound.
 func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
-	return f.newObjectWithLink(ctx, remote, nil)
+	return f.newObject(ctx, remote)
 }
 
 func (f *Fs) getObjectLink(ctx context.Context, remote string) (*proton.Link, error) {
@@ -516,35 +516,27 @@ func (f *Fs) getObjectLink(ctx context.Context, remote string) (*proton.Link, er
 	return link, nil
 }
 
-// readMetaDataForRemote reads the metadata from the remote
-func (f *Fs) readMetaDataForRemote(ctx context.Context, remote string, _link *proton.Link) (*proton.Link, *protonDriveAPI.FileSystemAttrs, error) {
-	link, err := f.getObjectLink(ctx, remote)
-	if err != nil {
-		return nil, nil, err
-	}
-
+// readMetaDataForLink reads the metadata from the remote
+func (f *Fs) readMetaDataForLink(ctx context.Context, link *proton.Link) (*protonDriveAPI.FileSystemAttrs, error) {
 	var fileSystemAttrs *protonDriveAPI.FileSystemAttrs
+	var err error
 	if err = f.pacer.Call(func() (bool, error) {
 		fileSystemAttrs, err = f.protonDrive.GetActiveRevisionAttrs(ctx, link)
 		return shouldRetry(ctx, err)
 	}); err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
-	return link, fileSystemAttrs, nil
+	return fileSystemAttrs, nil
 }
 
-// readMetaData gets the metadata if it hasn't already been fetched
+// Return an Object from a path and link
 //
-// it also sets the info
-func (o *Object) readMetaData(ctx context.Context, link *proton.Link) (err error) {
-	if o.link != nil {
-		return nil
-	}
-
-	link, fileSystemAttrs, err := o.fs.readMetaDataForRemote(ctx, o.remote, link)
-	if err != nil {
-		return err
+// If it can't be found it returns the error fs.ErrorObjectNotFound.
+func (f *Fs) newObjectWithLink(ctx context.Context, remote string, link *proton.Link) (fs.Object, error) {
+	o := &Object{
+		fs:     f,
+		remote: remote,
 	}
 
 	o.id = link.LinkID
@@ -554,6 +546,10 @@ func (o *Object) readMetaData(ctx context.Context, link *proton.Link) (err error
 	o.mimetype = link.MIMEType
 	o.link = link
 
+	fileSystemAttrs, err := o.fs.readMetaDataForLink(ctx, link)
+	if err != nil {
+		return nil, err
+	}
 	if fileSystemAttrs != nil {
 		o.modTime = fileSystemAttrs.ModificationTime
 		o.originalSize = &fileSystemAttrs.Size
@@ -561,23 +557,18 @@ func (o *Object) readMetaData(ctx context.Context, link *proton.Link) (err error
 		o.digests = &fileSystemAttrs.Digests
 	}
 
-	return nil
+	return o, nil
 }
 
-// Return an Object from a path
+// Return an Object from a path only
 //
 // If it can't be found it returns the error fs.ErrorObjectNotFound.
-func (f *Fs) newObjectWithLink(ctx context.Context, remote string, link *proton.Link) (fs.Object, error) {
-	o := &Object{
-		fs:     f,
-		remote: remote,
-	}
-
-	err := o.readMetaData(ctx, link)
+func (f *Fs) newObject(ctx context.Context, remote string) (fs.Object, error) {
+	link, err := f.getObjectLink(ctx, remote)
 	if err != nil {
 		return nil, err
 	}
-	return o, nil
+	return f.newObjectWithLink(ctx, remote, link)
 }
 
 // List the objects and directories in dir into entries.  The
