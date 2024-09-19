@@ -171,7 +171,6 @@ func NewFs(ctx context.Context, name string, root string, m configmap.Mapper) (f
 
 	f.features = (&fs.Features{
 		CanHaveEmptyDirectories: true,
-		DuplicateFiles:          true,
 	}).Fill(ctx, f)
 
 	if root != "" {
@@ -364,7 +363,7 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 			f.FromStandardFullPath(cldPathDir(remote)),
 			f.ToDisplayNameElastic(api.CloudinaryEncoder.FromStandardName(f, path.Base(remote)))),
 		SortBy:     []search.SortByField{{"uploaded_at": "desc"}},
-		MaxResults: 1,
+		MaxResults: 2,
 	}
 	var results *admin.SearchResult
 	f.WaitEventuallyConsistent()
@@ -400,7 +399,7 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 }
 
 func (f *Fs) getSuggestedPublicID(assetFolder string, displayName string, modTime time.Time) string {
-	payload := []byte(path.Join(assetFolder, displayName, strconv.FormatInt(modTime.Unix(), 16)))
+	payload := []byte(path.Join(assetFolder, displayName))
 	hash := blake3.Sum256(payload)
 	return hex.EncodeToString(hash[:])
 }
