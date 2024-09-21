@@ -1773,7 +1773,7 @@ func (o *Object) upload(ctx context.Context, in io.Reader, src fs.ObjectInfo, wi
 	gcid, err := o.fs.getGcid(ctx, src)
 	if err != nil || gcid == "" {
 		fs.Debugf(o, "calculating gcid: %v", err)
-		if srcObj := fs.UnWrapObjectInfo(src); srcObj != nil && srcObj.Fs().Features().IsLocal {
+		if srcObj := unWrapObjectInfo(src); srcObj != nil && srcObj.Fs().Features().IsLocal {
 			// No buffering; directly calculate gcid from source
 			rc, err := srcObj.Open(ctx)
 			if err != nil {
