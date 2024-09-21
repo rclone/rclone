@@ -378,11 +378,23 @@ func calcGcid(r io.Reader, size int64) (string, error) {
 	return hex.EncodeToString(totalHash.Sum(nil)), nil
 }
 
+// unWrapObjectInfo returns the underlying Object unwrapped as much as
+// possible or nil even if it is an OverrideRemote
+func unWrapObjectInfo(oi fs.ObjectInfo) fs.Object {
+	if o, ok := oi.(fs.Object); ok {
+		return fs.UnWrapObject(o)
+	} else if do, ok := oi.(*fs.OverrideRemote); ok {
+		// Unwrap if it is an operations.OverrideRemote
+		return do.UnWrap()
+	}
+	return nil
+}
+
 // calcCid calculates Cid from source
 //
 // Cid is a simplified version of Gcid
 func calcCid(ctx context.Context, src fs.ObjectInfo) (cid string, err error) {
-	srcObj := fs.UnWrapObjectInfo(src)
+	srcObj := unWrapObjectInfo(src)
 	if srcObj == nil {
 		return "", fmt.Errorf("failed to unwrap object from src: %s", src)
 	}
