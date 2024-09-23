@@ -7,7 +7,6 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"github.com/rclone/rclone/lib/readers"
 	"io"
 	"math"
 	"path"
@@ -22,6 +21,7 @@ import (
 	"github.com/rclone/rclone/fs/config/obscure"
 	"github.com/rclone/rclone/fs/fspath"
 	"github.com/rclone/rclone/fs/hash"
+	"github.com/rclone/rclone/lib/readers"
 	"github.com/spatialcurrent/go-lazy/pkg/lazy"
 	"golang.org/x/crypto/nacl/secretbox"
 )
@@ -599,9 +599,8 @@ func (f *Fs) PutStream(ctx context.Context, in io.Reader, src fs.ObjectInfo, opt
 func (f *Fs) Hashes() hash.Set {
 	if f.cipher.version == CipherVersionV2 {
 		return hash.Set(hash.MD5)
-	} else {
-		return hash.Set(hash.None)
 	}
+	return hash.Set(hash.None)
 }
 
 // Mkdir makes the directory (container, bucket)
@@ -1124,9 +1123,9 @@ func (o *Object) Hash(ctx context.Context, ht hash.Type) (string, error) {
 	}
 
 	encryptedHashWithHeader := make([]byte, HashEncryptedSizeWithHeader)
-	n, err := readers.ReadFill(in, encryptedHashWithHeader)
+	n, _ := readers.ReadFill(in, encryptedHashWithHeader)
 	if n != int(HashEncryptedSizeWithHeader) {
-		return "", fmt.Errorf("Incorrect encrypted hash size: %d", n)
+		return "", fmt.Errorf("incorrect encrypted hash size: %d", n)
 	}
 
 	hashHeader := encryptedHashWithHeader[0:1]
@@ -1149,9 +1148,6 @@ func (o *Object) Hash(ctx context.Context, ht hash.Type) (string, error) {
 
 	decryptedHash, ok := secretbox.Open(nil, encryptedHash, d.nonce.pointer(), &d.cek)
 	if !ok {
-		if err != nil && err != io.EOF {
-			return "", err // return pending error as it is likely more accurate
-		}
 		if !d.c.passBadBlocks {
 			return "", fmt.Errorf("Hash decryption error: %s", ErrorEncryptedBadBlock)
 		}
@@ -1160,7 +1156,7 @@ func (o *Object) Hash(ctx context.Context, ht hash.Type) (string, error) {
 	}
 
 	hashString := hex.EncodeToString(decryptedHash)
-	fs.Debugf("Crypt hash %s", hashString)
+	fs.Debugf(o, "Crypt hash %s", hashString)
 
 	return hashString, nil
 }
@@ -1275,14 +1271,13 @@ func wrapReaderCalculatePlaintextHash(in io.Reader) (io.Reader, *hash.MultiHashe
 func wrapReaderAppendPlaintextHash(in io.Reader, hasher *hash.MultiHasher, encrypter *encrypter) io.Reader {
 	hashEndReaderLazy := lazy.NewLazyReader(func() (io.Reader, error) {
 		hash := hasher.Sums()[HashCryptType]
-		fs.Debugf("Hash unencrypted %s", hash)
 		byteHash, err := hex.DecodeString(hash)
 		if err != nil {
 			return nil, err
 		}
 
 		encryptedHash := secretbox.Seal(nil, byteHash, encrypter.nonce.pointer(), (*[32]byte)(&encrypter.cek))
-		encryptedHashWithHeader := append(HashHeaderMD5, encryptedHash[:]...)
+		encryptedHashWithHeader := append(HashHeaderMD5, encryptedHash...)
 		hashEndReader := io.LimitReader(bytes.NewReader(encryptedHashWithHeader), HashEncryptedSizeWithHeader)
 		return hashEndReader, nil
 	})

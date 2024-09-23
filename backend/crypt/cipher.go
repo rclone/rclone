@@ -98,11 +98,14 @@ const (
 	NameEncryptionStandard
 	NameEncryptionObfuscated
 )
+
+// CipherVersion
 const (
 	CipherVersionV1 = "1"
 	CipherVersionV2 = "2"
 )
 
+// BlockCipher
 const (
 	BlockCipherXSalsa20 = 0x01 // Used currently
 	BlockCipherAESGCM   = 0x02 // Not used, possible future use (increase web performance): https://github.com/rclone/rclone/issues/7192#issuecomment-2353617267
@@ -251,33 +254,29 @@ func (c *Cipher) setCipherVersion(cipherVersion string) {
 func (c *Cipher) getFileHeaderSize() int {
 	if c.version == CipherVersionV2 {
 		return fileHeaderSizeV2
-	} else { // CipherVersionV1
-		return fileHeaderSize
 	}
+	return fileHeaderSize
 }
 
 func (c *Cipher) getFileMagicSize() int {
 	if c.version == CipherVersionV2 {
 		return fileMagicSizeV2
-	} else { // CipherVersionV1
-		return fileMagicSize
 	}
+	return fileMagicSize
 }
 
 func (c *Cipher) getFileMagicBytes() []byte {
 	if c.version == CipherVersionV2 {
 		return fileMagicBytesV2
-	} else { // CipherVersionV1
-		return fileMagicBytes
 	}
+	return fileMagicBytes
 }
 
 func (c *Cipher) getFileNonceSize() int { // Effective nonce size. Both V1 and V2 use 24 bytes, but V2 consists 23+1 bytes nonce, where last byte is calculated dynamically depending if the processing block is last (truncation protection)
 	if c.version == CipherVersionV2 {
 		return fileNonceSizeV2
-	} else { // CipherVersionV1
-		return fileNonceSize
 	}
+	return fileNonceSize
 }
 
 // Key creates all the internal keys from the password passed in using
@@ -916,77 +915,6 @@ type decrypter struct {
 }
 
 // newDecrypter creates a new file handle decrypting on the fly
-func (c *Cipher) newDecrypter2(rc io.ReadCloser) (*decrypter, error) {
-	fh := &decrypter{
-		rc:      rc,
-		c:       c,
-		buf:     c.getBlock(),
-		readBuf: c.getBlock(),
-		limit:   -1,
-	}
-
-	// Read magic bytes to determine cipher version is used to configure valid decryption method
-	magicBuf := (*fh.readBuf)[:max(fileMagicSize, fileMagicSizeV2)] // Both fileMagicSize and fileMagicSizeV2 are the same size, however technically we need to read the longer one in order to determine cipher version
-	nMagic, err := readers.ReadFill(fh.rc, magicBuf)
-	if err != io.EOF && err != nil {
-		return nil, fh.finishAndClose(err)
-	}
-
-	isMagicHeader := bytes.Equal(magicBuf[:fileMagicSize], fileMagicBytes)
-	isMagicHeaderV2 := bytes.Equal(magicBuf[:fileMagicSizeV2], fileMagicBytesV2)
-	if !isMagicHeader && !isMagicHeaderV2 {
-		return nil, fh.finishAndClose(ErrorEncryptedBadMagic)
-	}
-
-	if isMagicHeader {
-		c.setCipherVersion(CipherVersionV1)
-		fh.cek = fh.c.dataKey
-	}
-
-	if isMagicHeaderV2 {
-		c.setCipherVersion(CipherVersionV2)
-	}
-
-	readBuf := (*fh.readBuf)[:c.getFileHeaderSize()-nMagic] // Skip magic bytes and read remaining part of the header: `nonce` (for V1); `nonce` and `cek` (for V2)
-	n, err := readers.ReadFill(fh.rc, readBuf)
-
-	totalBytesRead := nMagic + n
-	if totalBytesRead < c.getFileHeaderSize() && err == io.EOF {
-		// This read from 0..fileHeaderSize-1 bytes
-		return nil, fh.finishAndClose(ErrorEncryptedFileTooShort)
-	} else if err != io.EOF && err != nil {
-		return nil, fh.finishAndClose(err)
-	}
-	// check the magic
-
-	nonceStart := 0
-	nonceEnd := c.getFileNonceSize()
-
-	fh.nonce.fromBuf(readBuf[nonceStart:nonceEnd], c.getFileNonceSize()) // retrieve the nonce
-
-	if c.version == CipherVersionV2 {
-		var wrappedCek wrappedCek
-		wrappedCek.fromBuf(readBuf[nonceEnd:]) // retrieve wrapped file encryption key
-
-		kek := fh.c.dataKey[:]
-		cipher, err := aes.NewCipher(kek)
-		if err != nil {
-			return nil, fh.finishAndClose(err)
-		}
-
-		fileKey, err := keywrap.Unwrap(cipher, wrappedCek[:])
-		if err != nil {
-			return nil, fh.finishAndClose(ErrorEncryptedCekInvalid)
-		}
-
-		fh.cek = [32]byte(fileKey)
-	}
-
-	fh.initialNonce = fh.nonce
-	return fh, nil
-}
-
-// newDecrypter creates a new file handle decrypting on the fly
 func (c *Cipher) newDecrypter(rc io.ReadCloser) (*decrypter, error) {
 	fh := &decrypter{
 		rc:      rc,
@@ -1041,7 +969,7 @@ func (c *Cipher) newDecrypter(rc io.ReadCloser) (*decrypter, error) {
 		combinedBuffer := append(lastByte, readBuf...)
 
 		var wrappedCek wrappedCek
-		wrappedCek.fromBuf(combinedBuffer[:]) // retrieve wrapped file encryption key
+		wrappedCek.fromBuf(combinedBuffer) // retrieve wrapped file encryption key
 
 		kek := fh.c.dataKey[:]
 		cipher, err := aes.NewCipher(kek)

@@ -8,13 +8,13 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"github.com/rclone/rclone/fs/hash"
 	"io"
 	"strings"
 	"testing"
 
 	"github.com/Max-Sum/base32768"
 	"github.com/rclone/rclone/backend/crypt/pkcs7"
+	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/lib/readers"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -1206,17 +1206,17 @@ func TestNewEncrypterV2(t *testing.T) {
 	var preHasher *hash.MultiHasher
 	var wrappedIn io.Reader
 	if c.version == CipherVersionV2 {
-		wrappedIn, preHasher, err = wrapReaderCalculatePlaintextHash(in)
+		wrappedIn, preHasher, _ = wrapReaderCalculatePlaintextHash(in)
 	} else {
 		wrappedIn = in
 	}
 
 	sampleNonce := append(nonceUsed, []byte{0}...) // We append one bogus byte to match the 24 bytes nonce requirement. This byte isn't used for V2, as it's derived internally dynamically (last_block)
-	encrypter, err := c.newEncrypter(wrappedIn, (*nonce)(sampleNonce), (*cek)(unwrappedCek))
+	encrypter, _ := c.newEncrypter(wrappedIn, (*nonce)(sampleNonce), (*cek)(unwrappedCek))
 
 	// Encrypt
 	buffer := new(bytes.Buffer)
-	_, err = io.Copy(buffer, encrypter)
+	_, _ = io.Copy(buffer, encrypter)
 
 	if c.version == CipherVersionV2 { // Append hash to the end
 		emptyReader := bytes.NewReader([]byte{})
