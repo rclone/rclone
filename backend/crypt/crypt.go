@@ -2,10 +2,13 @@
 package crypt
 
 import (
+	"bytes"
 	"context"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"io"
+	"math"
 	"path"
 	"strings"
 	"time"
@@ -18,6 +21,20 @@ import (
 	"github.com/rclone/rclone/fs/config/obscure"
 	"github.com/rclone/rclone/fs/fspath"
 	"github.com/rclone/rclone/fs/hash"
+	"github.com/rclone/rclone/lib/readers"
+	"github.com/spatialcurrent/go-lazy/pkg/lazy"
+	"golang.org/x/crypto/nacl/secretbox"
+)
+
+// Footer
+var (
+	HashCryptType               = hash.MD5 // Starting from V2 version we calculate hash of plaintext and store it encrypted at the end of file contents
+	HashCryptSize               = int64(16)
+	HashEncryptedSize           = HashCryptSize + secretbox.Overhead
+	HashEncryptedSizeWithHeader = 1 + HashEncryptedSize
+
+	HashHeaderNoHash = []byte{0x00} // Future use, in case user doesn't want to store encrypted MD5 at the end of file. We would then store 16 NULL bytes (since we want to keep the decrypted/encrypted size calculations intact).
+	HashHeaderMD5    = []byte{0x01} // Used by default
 )
 
 // Globals
@@ -171,7 +188,24 @@ Setting suffix to "none" will result in an empty suffix. This may be useful
 when the path length is critical.`,
 			Default:  ".bin",
 			Advanced: true,
-		}},
+		},
+			{
+				Name:    "cipher_version",
+				Help:    `Choose cipher version. This determines cipher version used for newly written objects. Rclone will detect cipher version for existing objects when reading.`,
+				Default: CipherVersionV1,
+				Examples: []fs.OptionExample{
+					{
+						Value: CipherVersionV1,
+						Help:  "File contents encrypted using single master key.",
+					},
+					{
+						Value: CipherVersionV2,
+						Help:  "(Experimental) Each file contents encrypted using separate encryption key. Truncation protection. Hash support. Has at least 55 bytes (40 bytes cek, 16 bytes hash, 1 byte shorter nonce) overhead over cipher V1.",
+					},
+				},
+				Advanced: true,
+			},
+		},
 	})
 }
 
@@ -205,6 +239,7 @@ func newCipherForConfig(opt *Options) (*Cipher, error) {
 	}
 	cipher.setEncryptedSuffix(opt.Suffix)
 	cipher.setPassBadBlocks(opt.PassBadBlocks)
+	cipher.setCipherVersion(opt.CipherVersion)
 	return cipher, nil
 }
 
@@ -310,6 +345,7 @@ type Options struct {
 	FilenameEncoding        string `config:"filename_encoding"`
 	Suffix                  string `config:"suffix"`
 	StrictNames             bool   `config:"strict_names"`
+	CipherVersion           string `config:"cipher_version"`
 }
 
 // Fs represents a wrapped fs.Fs
@@ -458,6 +494,15 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 	return f.newObject(o), nil
 }
 
+// NewObjectEncryptedName - copy of the above: NewObject but without EncryptFileName function calls. Returns directly: *Object instead of its parent fs.Object, as we're not limited by the interface and can return more specific type
+func (f *Fs) NewObjectEncryptedName(ctx context.Context, encryptedRemote string) (*Object, error) {
+	o, err := f.Fs.NewObject(ctx, encryptedRemote)
+	if err != nil {
+		return nil, err
+	}
+	return f.newObject(o), nil
+}
+
 type putFn func(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error)
 
 // put implements Put or PutStream
@@ -465,17 +510,33 @@ func (f *Fs) put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options [
 	ci := fs.GetConfig(ctx)
 
 	if f.opt.NoDataEncryption {
-		o, err := put(ctx, in, f.newObjectInfo(src, nonce{}), options...)
+		o, err := put(ctx, in, f.newObjectInfo(src, nonce{}, cek{}), options...)
 		if err == nil && o != nil {
 			o = f.newObject(o)
 		}
 		return o, err
 	}
 
+	var plaintextHasher *hash.MultiHasher
+	var wrappedIn io.Reader
+	var err error
+	if f.cipher.version == CipherVersionV2 {
+		wrappedIn, plaintextHasher, err = wrapReaderCalculatePlaintextHash(in)
+		if err != nil {
+			return nil, fmt.Errorf("failed to wrap the reader: %w", err)
+		}
+	} else {
+		wrappedIn = in
+	}
+
 	// Encrypt the data into wrappedIn
-	wrappedIn, encrypter, err := f.cipher.encryptData(in)
+	wrappedIn, encrypter, err := f.cipher.encryptData(wrappedIn)
 	if err != nil {
 		return nil, err
+	}
+
+	if f.cipher.version == CipherVersionV2 {
+		wrappedIn = wrapReaderAppendPlaintextHash(wrappedIn, plaintextHasher, encrypter)
 	}
 
 	// Find a hash the destination supports to compute a hash of
@@ -500,7 +561,7 @@ func (f *Fs) put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options [
 	}
 
 	// Transfer the data
-	o, err := put(ctx, wrappedIn, f.newObjectInfo(src, encrypter.nonce), options...)
+	o, err := put(ctx, wrappedIn, f.newObjectInfo(src, encrypter.nonce, encrypter.cek), options...)
 	if err != nil {
 		return nil, err
 	}
@@ -545,6 +606,9 @@ func (f *Fs) PutStream(ctx context.Context, in io.Reader, src fs.ObjectInfo, opt
 
 // Hashes returns the supported hash sets.
 func (f *Fs) Hashes() hash.Set {
+	if f.cipher.version == CipherVersionV2 {
+		return hash.Set(hash.MD5)
+	}
 	return hash.Set(hash.None)
 }
 
@@ -691,7 +755,7 @@ func (f *Fs) PutUnchecked(ctx context.Context, in io.Reader, src fs.ObjectInfo, 
 	if err != nil {
 		return nil, err
 	}
-	o, err := do(ctx, wrappedIn, f.newObjectInfo(src, encrypter.nonce))
+	o, err := do(ctx, wrappedIn, f.newObjectInfo(src, encrypter.nonce, encrypter.cek))
 	if err != nil {
 		return nil, err
 	}
@@ -748,7 +812,7 @@ func (f *Fs) DecryptFileName(encryptedFileName string) (string, error) {
 // src with it, and calculates the hash given by HashType on the fly
 //
 // Note that we break lots of encapsulation in this function.
-func (f *Fs) computeHashWithNonce(ctx context.Context, nonce nonce, src fs.Object, hashType hash.Type) (hashStr string, err error) {
+func (f *Fs) computeHashWithNonce(ctx context.Context, nonce nonce, cek cek, src fs.Object, hashType hash.Type) (hashStr string, err error) {
 	// Open the src for input
 	in, err := src.Open(ctx)
 	if err != nil {
@@ -756,8 +820,19 @@ func (f *Fs) computeHashWithNonce(ctx context.Context, nonce nonce, src fs.Objec
 	}
 	defer fs.CheckClose(in, &err)
 
+	var plaintextHasher *hash.MultiHasher
+	var wrappedIn io.Reader
+	if f.cipher.version == CipherVersionV2 {
+		wrappedIn, plaintextHasher, err = wrapReaderCalculatePlaintextHash(in)
+		if err != nil {
+			return "", fmt.Errorf("failed to wrap the reader: %w", err)
+		}
+	} else {
+		wrappedIn = in
+	}
+
 	// Now encrypt the src with the nonce
-	out, err := f.cipher.newEncrypter(in, &nonce)
+	out, err := f.cipher.newEncrypter(wrappedIn, &nonce, &cek)
 	if err != nil {
 		return "", fmt.Errorf("failed to make encrypter: %w", err)
 	}
@@ -768,6 +843,13 @@ func (f *Fs) computeHashWithNonce(ctx context.Context, nonce nonce, src fs.Objec
 		return "", fmt.Errorf("failed to make hasher: %w", err)
 	}
 	_, err = io.Copy(m, out)
+
+	if f.cipher.version == CipherVersionV2 { // Append hash to the end
+		emptyReader := bytes.NewReader([]byte{})
+		hashReader := wrapReaderAppendPlaintextHash(emptyReader, plaintextHasher, out)
+		_, err = io.Copy(m, hashReader)
+	}
+
 	if err != nil {
 		return "", fmt.Errorf("failed to hash data: %w", err)
 	}
@@ -784,19 +866,15 @@ func (f *Fs) ComputeHash(ctx context.Context, o *Object, src fs.Object, hashType
 		return src.Hash(ctx, hashType)
 	}
 
-	// Read the nonce - opening the file is sufficient to read the nonce in
-	// use a limited read so we only read the header
-	in, err := o.Object.Open(ctx, &fs.RangeOption{Start: 0, End: int64(fileHeaderSize) - 1})
+	d, err := f.getDecrypter(ctx, o)
 	if err != nil {
-		return "", fmt.Errorf("failed to open object to read nonce: %w", err)
+		return "", err
 	}
-	d, err := f.cipher.newDecrypter(in)
-	if err != nil {
-		_ = in.Close()
-		return "", fmt.Errorf("failed to open object to read nonce: %w", err)
-	}
+
 	nonce := d.nonce
 	// fs.Debugf(o, "Read nonce % 2x", nonce)
+
+	cek := d.cek
 
 	// Check nonce isn't all zeros
 	isZero := true
@@ -809,13 +887,40 @@ func (f *Fs) ComputeHash(ctx context.Context, o *Object, src fs.Object, hashType
 		fs.Errorf(o, "empty nonce read")
 	}
 
+	return f.computeHashWithNonce(ctx, nonce, cek, src, hashType)
+}
+
+func (f *Fs) getDecrypter(ctx context.Context, o *Object) (*decrypter, error) {
+	// Read the nonce - opening the file is sufficient to read the nonce in
+	// use a limited read so we only read the header
+	in, err := o.Object.Open(ctx, &fs.RangeOption{Start: 0, End: int64(max(fileHeaderSize, fileHeaderSizeV2)) - 1}) // We read longer of two header we support at the moment, so we can obtain `cek` in case object is encrypted using V2
+	if err != nil {
+		return nil, fmt.Errorf("failed to open object to read nonce: %w", err)
+	}
+	d, err := f.cipher.newDecrypter(in)
+	if err != nil {
+		_ = in.Close()
+		return nil, fmt.Errorf("failed to open object to read nonce: %w", err)
+	}
+
+	// Check nonce isn't all zeros
+	isZero := true
+	for i := range d.nonce {
+		if d.nonce[i] != 0 {
+			isZero = false
+		}
+	}
+	if isZero {
+		fs.Errorf(o, "empty nonce read")
+	}
+
 	// Close d (and hence in) once we have read the nonce
 	err = d.Close()
 	if err != nil {
-		return "", fmt.Errorf("failed to close nonce read: %w", err)
+		return nil, fmt.Errorf("failed to close nonce read: %w", err)
 	}
 
-	return f.computeHashWithNonce(ctx, nonce, src, hashType)
+	return d, nil
 }
 
 // MergeDirs merges the contents of all the directories passed
@@ -1003,7 +1108,66 @@ func (o *Object) Size() int64 {
 // Hash returns the selected checksum of the file
 // If no checksum is available it returns ""
 func (o *Object) Hash(ctx context.Context, ht hash.Type) (string, error) {
-	return "", hash.ErrUnsupported
+	// Immediate ErrUnsupported if `CipherVersionV1` is used (as used in the config). We would try to detect the individual's object cipher version if cipher in the config is set to at least V2
+	if o.f.opt.CipherVersion == CipherVersionV1 {
+		return "", hash.ErrUnsupported
+	}
+
+	// This reads nonce and cek from the header
+	d, err := o.f.getDecrypter(ctx, o)
+	if err != nil {
+		return "", err
+	}
+
+	// Objects encrypted with V1 doesn't support hash. Even if V2 cipher is enabled in the config, that doesn't make existing V1 objects support hashing, so we return "" to skip hash verification.
+	if d.c.version == CipherVersionV1 {
+		return "", nil
+	}
+
+	// This reads the encrypted hash from the footer
+	encryptedSize := o.Object.Size()
+	in, err := o.Object.Open(ctx, &fs.RangeOption{Start: encryptedSize - HashEncryptedSizeWithHeader, End: encryptedSize - 1}) // We read file last HashCryptSize bytes to get the hash out
+	if err != nil {
+		return "", fmt.Errorf("failed to open object to read hash: %w", err)
+	}
+
+	encryptedHashWithHeader := make([]byte, HashEncryptedSizeWithHeader)
+	n, _ := readers.ReadFill(in, encryptedHashWithHeader)
+	if n != int(HashEncryptedSizeWithHeader) {
+		return "", fmt.Errorf("incorrect encrypted hash size: %d", n)
+	}
+
+	hashHeader := encryptedHashWithHeader[0:1]
+	encryptedHash := encryptedHashWithHeader[1:]
+
+	if bytes.Equal(hashHeader, HashHeaderNoHash) {
+		return "", hash.ErrUnsupported
+	}
+
+	// We need to get the decrypted size, to workout the amount of blocks, so we can workout the nonce that was used to encrypt the hash.
+	decryptedSize, err := o.f.cipher.DecryptedSize(encryptedSize)
+	if err != nil {
+		return "", err
+	}
+
+	// After we've read nonce from the header, we need to calculate the nonce used to encrypt the last block of the file, from which we would then derive nonce used to encrypt the hash
+	totalBlocks := uint64(math.Ceil(float64(decryptedSize) / float64(blockSize)))
+	d.nonce.add(totalBlocks)
+	d.nonce[len(d.nonce)-1] = lastBlockFlag
+
+	decryptedHash, ok := secretbox.Open(nil, encryptedHash, d.nonce.pointer(), &d.cek)
+	if !ok {
+		if !d.c.passBadBlocks {
+			return "", fmt.Errorf("Hash decryption error: %s", ErrorEncryptedBadBlock)
+		}
+
+		fs.Errorf(nil, "crypt: ignoring hash decryption error: %v", ErrorEncryptedBadBlock)
+	}
+
+	hashString := hex.EncodeToString(decryptedHash)
+	fs.Debugf(o, "Crypt hash %s", hashString)
+
+	return hashString, nil
 }
 
 // UnWrap returns the wrapped Object
@@ -1102,6 +1266,35 @@ func (f *Fs) Shutdown(ctx context.Context) error {
 	return do(ctx)
 }
 
+// This will intercept the unencrypted data and forward it to hasher, so we can calculate plaintext hash
+func wrapReaderCalculatePlaintextHash(in io.Reader) (io.Reader, *hash.MultiHasher, error) {
+	hasher, err := hash.NewMultiHasherTypes(hash.NewHashSet(HashCryptType))
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return io.TeeReader(in, hasher), hasher, nil
+}
+
+// This concatenates the ciphertext reader (in) with the plaintext hasher output. We encrypt the hash and prepend with the header identifying hash type
+func wrapReaderAppendPlaintextHash(in io.Reader, hasher *hash.MultiHasher, encrypter *encrypter) io.Reader {
+	hashEndReaderLazy := lazy.NewLazyReader(func() (io.Reader, error) {
+		hash := hasher.Sums()[HashCryptType]
+		byteHash, err := hex.DecodeString(hash)
+		if err != nil {
+			return nil, err
+		}
+
+		encrypter.nonce[len(encrypter.nonce)-1] = lastBlockFlag // Make sure last byte of nonce is set to: `lastBlockFlag`. Normally we rely on nonce being set (incremented and last block flag set) correctly by the: `(fh *encrypter) Read(...)` function, however for empty file there is no block iteration in which case we override last block setting here.
+
+		encryptedHash := secretbox.Seal(nil, byteHash, encrypter.nonce.pointer(), (*[32]byte)(&encrypter.cek))
+		encryptedHashWithHeader := append(HashHeaderMD5, encryptedHash...)
+		hashEndReader := io.LimitReader(bytes.NewReader(encryptedHashWithHeader), HashEncryptedSizeWithHeader)
+		return hashEndReader, nil
+	})
+	return io.MultiReader(in, hashEndReaderLazy)
+}
+
 // ObjectInfo describes a wrapped fs.ObjectInfo for being the source
 //
 // This encrypts the remote name and adjusts the size
@@ -1109,13 +1302,15 @@ type ObjectInfo struct {
 	fs.ObjectInfo
 	f     *Fs
 	nonce nonce
+	cek   cek
 }
 
-func (f *Fs) newObjectInfo(src fs.ObjectInfo, nonce nonce) *ObjectInfo {
+func (f *Fs) newObjectInfo(src fs.ObjectInfo, nonce nonce, cek cek) *ObjectInfo {
 	return &ObjectInfo{
 		ObjectInfo: src,
 		f:          f,
 		nonce:      nonce,
+		cek:        cek,
 	}
 }
 
@@ -1160,7 +1355,7 @@ func (o *ObjectInfo) Hash(ctx context.Context, hash hash.Type) (string, error) {
 	if srcObj.Fs().Features().IsLocal {
 		// Read the data and encrypt it to calculate the hash
 		fs.Debugf(o, "Computing %v hash of encrypted source", hash)
-		return o.f.computeHashWithNonce(ctx, o.nonce, srcObj, hash)
+		return o.f.computeHashWithNonce(ctx, o.nonce, o.cek, srcObj, hash)
 	}
 	return "", nil
 }

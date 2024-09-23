@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/base32"
 	"encoding/base64"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"io"
@@ -13,6 +14,7 @@ import (
 
 	"github.com/Max-Sum/base32768"
 	"github.com/rclone/rclone/backend/crypt/pkcs7"
+	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/lib/readers"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -734,24 +736,24 @@ func TestNoncePointer(t *testing.T) {
 func TestNonceFromReader(t *testing.T) {
 	var x nonce
 	buf := bytes.NewBufferString("123456789abcdefghijklmno")
-	err := x.fromReader(buf)
+	err := x.fromReader(buf, fileNonceSize)
 	assert.NoError(t, err)
 	assert.Equal(t, nonce{'1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o'}, x)
 	buf = bytes.NewBufferString("123456789abcdefghijklmn")
-	err = x.fromReader(buf)
+	err = x.fromReader(buf, fileNonceSize)
 	assert.EqualError(t, err, "short read of nonce: EOF")
 }
 
 func TestNonceFromBuf(t *testing.T) {
 	var x nonce
 	buf := []byte("123456789abcdefghijklmnoXXXXXXXX")
-	x.fromBuf(buf)
+	x.fromBuf(buf, fileNonceSize)
 	assert.Equal(t, nonce{'1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o'}, x)
 	buf = []byte("0123456789abcdefghijklmn")
-	x.fromBuf(buf)
+	x.fromBuf(buf, fileNonceSize)
 	assert.Equal(t, nonce{'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n'}, x)
 	buf = []byte("0123456789abcdefghijklm")
-	assert.Panics(t, func() { x.fromBuf(buf) })
+	assert.Panics(t, func() { x.fromBuf(buf, fileNonceSize) })
 }
 
 func TestNonceIncrement(t *testing.T) {
@@ -1083,7 +1085,7 @@ func testEncryptDecrypt(t *testing.T, bufSize int, copySize int64) {
 	c.cryptoRand = &zeroes{} // zero out the nonce
 	buf := make([]byte, bufSize)
 	source := newRandomSource(copySize)
-	encrypted, err := c.newEncrypter(source, nil)
+	encrypted, err := c.newEncrypter(source, nil, nil)
 	assert.NoError(t, err)
 	decrypted, err := c.newDecrypter(io.NopCloser(encrypted))
 	assert.NoError(t, err)
@@ -1177,16 +1179,88 @@ func TestNewEncrypter(t *testing.T) {
 
 	z := &zeroes{}
 
-	fh, err := c.newEncrypter(z, nil)
+	fh, err := c.newEncrypter(z, nil, nil)
 	assert.NoError(t, err)
 	assert.Equal(t, nonce{0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18}, fh.nonce)
 	assert.Equal(t, []byte{'R', 'C', 'L', 'O', 'N', 'E', 0x00, 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18}, (*fh.buf)[:32])
 
 	// Test error path
 	c.cryptoRand = bytes.NewBufferString("123456789abcdefghijklmn")
-	fh, err = c.newEncrypter(z, nil)
+	fh, err = c.newEncrypter(z, nil, nil)
 	assert.Nil(t, fh)
 	assert.EqualError(t, err, "short read of nonce: EOF")
+}
+
+func TestNewEncrypterV2(t *testing.T) {
+	unwrappedCek, _ := hex.DecodeString("a4c3b031b646ebefb79e26c6a05195a924e926e69248aec84f78a396fc979eea")
+	encryptionPassword := "potato"
+	plaintextToEncrypt := []byte{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16}
+	nonceUsed := []byte{0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17}
+
+	c, err := newCipher(NameEncryptionStandard, encryptionPassword, "", true, nil)
+	c.setCipherVersion(CipherVersionV2)
+	assert.NoError(t, err)
+
+	in := bytes.NewReader(plaintextToEncrypt)
+
+	var preHasher *hash.MultiHasher
+	var wrappedIn io.Reader
+	if c.version == CipherVersionV2 {
+		wrappedIn, preHasher, _ = wrapReaderCalculatePlaintextHash(in)
+	} else {
+		wrappedIn = in
+	}
+
+	sampleNonce := append(nonceUsed, []byte{0}...) // We append one bogus byte to match the 24 bytes nonce requirement. This byte isn't used for V2, as it's derived internally dynamically (last_block)
+	encrypter, _ := c.newEncrypter(wrappedIn, (*nonce)(sampleNonce), (*cek)(unwrappedCek))
+
+	// Encrypt
+	buffer := new(bytes.Buffer)
+	_, _ = io.Copy(buffer, encrypter)
+
+	if c.version == CipherVersionV2 { // Append hash to the end
+		emptyReader := bytes.NewReader([]byte{})
+		hashReader := wrapReaderAppendPlaintextHash(emptyReader, preHasher, encrypter)
+		_, err = io.Copy(buffer, hashReader)
+	}
+
+	assert.NoError(t, err)
+
+	expectedMagicBytes := []byte{'R', 'C', 'L', 'O', 'N', 'E', 0x00, 0x01}
+	expectedWrappedCek, _ := hex.DecodeString("4a00a0325e6a3ee54c60b6a3ae2359f8c805fcc2b56a1f9f1364aff501553ec44d522d5a84c3b4ca")
+	expectedCiphertextWithAuth, _ := hex.DecodeString("3c82b21b5311907aa26b7d77acfe01342bbb8bd5d28a0c57f04f0dfe66fc65ab")
+	expectedReservedBytes := fileReservedBytesV2
+
+	expectedHashHeader := HashHeaderMD5
+	expectedEncryptedHashWithAuth, _ := hex.DecodeString("72361bff7da6ad45fd3d63509b831e870d2d62e09684b903041b8832039a20d5")
+
+	offsetStart := 0
+	offsetEnd := offsetStart + fileMagicSizeV2
+	assert.Equal(t, expectedMagicBytes, buffer.Bytes()[offsetStart:offsetEnd])
+
+	offsetStart = offsetEnd
+	offsetEnd = offsetStart + fileNonceSizeV2
+	assert.Equal(t, nonceUsed, buffer.Bytes()[offsetStart:offsetEnd])
+
+	offsetStart = offsetEnd
+	offsetEnd = offsetStart + len(expectedWrappedCek)
+	assert.Equal(t, expectedWrappedCek, buffer.Bytes()[offsetStart:offsetEnd])
+
+	offsetStart = offsetEnd
+	offsetEnd = offsetStart + len(expectedReservedBytes)
+	assert.Equal(t, expectedReservedBytes, buffer.Bytes()[offsetStart:offsetEnd])
+
+	offsetStart = offsetEnd
+	offsetEnd = offsetStart + len(expectedCiphertextWithAuth)
+	assert.Equal(t, expectedCiphertextWithAuth, buffer.Bytes()[offsetStart:offsetEnd])
+
+	offsetStart = offsetEnd
+	offsetEnd = offsetStart + len(expectedHashHeader)
+	assert.Equal(t, expectedHashHeader, buffer.Bytes()[offsetStart:offsetEnd])
+
+	offsetStart = offsetEnd
+	offsetEnd = offsetStart + len(expectedEncryptedHashWithAuth)
+	assert.Equal(t, expectedEncryptedHashWithAuth, buffer.Bytes()[offsetStart:offsetEnd])
 }
 
 // Test the stream returning 0, io.ErrUnexpectedEOF - this used to
@@ -1196,7 +1270,7 @@ func TestNewEncrypterErrUnexpectedEOF(t *testing.T) {
 	assert.NoError(t, err)
 
 	in := &readers.ErrorReader{Err: io.ErrUnexpectedEOF}
-	fh, err := c.newEncrypter(in, nil)
+	fh, err := c.newEncrypter(in, nil, nil)
 	assert.NoError(t, err)
 
 	n, err := io.CopyN(io.Discard, fh, 1e6)
@@ -1256,7 +1330,11 @@ func TestNewDecrypter(t *testing.T) {
 		cd := newCloseDetector(bytes.NewBuffer(file0copy))
 		fh, err := c.newDecrypter(cd)
 		assert.Nil(t, fh)
-		assert.EqualError(t, err, ErrorEncryptedBadMagic.Error())
+		if i == 7 { // This test accidentally swaps last byte and converts `fileMagic` (RCLONE\x00\x00") into `fileMagicV2` ("RCLONE\x00\x01") resulting in a different than: "ErrorEncryptedBadMagic" error.
+			assert.EqualError(t, err, ErrorEncryptedFileTooShort.Error())
+		} else {
+			assert.EqualError(t, err, ErrorEncryptedBadMagic.Error())
+		}
 		file0copy[i] ^= 0x1
 		assert.Equal(t, 1, cd.closed)
 	}
@@ -1477,7 +1555,7 @@ func TestDecrypterCalculateUnderlying(t *testing.T) {
 		{blockDataSize + 1, blockDataSize + 1, int64(fileHeaderSize) + blockSize, 2 * blockSize, 1, 1},
 	} {
 		what := fmt.Sprintf("offset = %d, limit = %d", test.offset, test.limit)
-		underlyingOffset, underlyingLimit, discard, blocks := calculateUnderlying(test.offset, test.limit)
+		underlyingOffset, underlyingLimit, discard, blocks := calculateUnderlying(test.offset, test.limit, fileHeaderSize)
 		assert.Equal(t, test.wantOffset, underlyingOffset, what)
 		assert.Equal(t, test.wantLimit, underlyingLimit, what)
 		assert.Equal(t, test.wantDiscard, discard, what)
