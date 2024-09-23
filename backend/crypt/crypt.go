@@ -879,12 +879,6 @@ func (f *Fs) ComputeHash(ctx context.Context, o *Object, src fs.Object, hashType
 		fs.Errorf(o, "empty nonce read")
 	}
 
-	// Close d (and hence in) once we have read the nonce
-	err = d.Close()
-	if err != nil {
-		return "", fmt.Errorf("failed to close nonce read: %w", err)
-	}
-
 	return f.computeHashWithNonce(ctx, nonce, cek, src, hashType)
 }
 
