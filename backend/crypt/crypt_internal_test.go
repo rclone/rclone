@@ -59,7 +59,7 @@ func testObjectInfo(t *testing.T, f *Fs, wrap bool) {
 	// encrypt the data
 	inBuf := bytes.NewBufferString(contents)
 	var outBuf bytes.Buffer
-	enc, err := f.cipher.newEncrypter(inBuf, nil)
+	enc, err := f.cipher.newEncrypter(inBuf, nil, nil)
 	require.NoError(t, err)
 	nonce := enc.nonce // read the nonce at the start
 	_, err = io.Copy(&outBuf, enc)
@@ -73,7 +73,7 @@ func testObjectInfo(t *testing.T, f *Fs, wrap bool) {
 
 	// wrap the object in a crypt for upload using the nonce we
 	// saved from the encrypter
-	src := f.newObjectInfo(oi, nonce)
+	src := f.newObjectInfo(oi, nonce, cek{})
 
 	// Test ObjectInfo methods
 	if !f.opt.NoDataEncryption {
