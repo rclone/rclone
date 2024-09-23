@@ -144,7 +144,7 @@ MANUAL.txt:	MANUAL.md
 	pandoc -s --from markdown-smart --to plain MANUAL.md -o MANUAL.txt
 
 commanddocs: rclone
-	XDG_CACHE_HOME="" XDG_CONFIG_HOME="" HOME="\$$HOME" USER="\$$USER" rclone gendocs docs/content/
+	XDG_CACHE_HOME="" XDG_CONFIG_HOME="" HOME="\$$HOME" USER="\$$USER" rclone gendocs --config=/notfound docs/content/
 
 backenddocs: rclone bin/make_backend_docs.py
 	XDG_CACHE_HOME="" XDG_CONFIG_HOME="" HOME="\$$HOME" USER="\$$USER" ./bin/make_backend_docs.py

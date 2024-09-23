@@ -21,12 +21,12 @@ def find_backends():
 def output_docs(backend, out, cwd):
     """Output documentation for backend options to out"""
     out.flush()
-    subprocess.check_call(["./rclone", "help", "backend", backend], stdout=out)
+    subprocess.check_call(["./rclone", "--config=/notfound", "help", "backend", backend], stdout=out)
 
 def output_backend_tool_docs(backend, out, cwd):
     """Output documentation for backend tool to out"""
     out.flush()
-    subprocess.call(["./rclone", "backend", "help", backend], stdout=out, stderr=subprocess.DEVNULL)
+    subprocess.call(["./rclone", "--config=/notfound", "backend", "help", backend], stdout=out, stderr=subprocess.DEVNULL)
     
 def alter_doc(backend):
     """Alter the documentation for backend"""
