@@ -1018,6 +1018,18 @@ Usage Example:
     rclone rc backend/command command=decode fs=crypt: encryptedfile1 [encryptedfile2...]
 `,
 	},
+	{
+		Name:  "show-cek",
+		Short: "Displays the content encryption key (CEK) for a given encrypted filepath",
+		Long: `This queries file header to get the encrypted/wrapped CEK and then uses your master key to unwrap it. 
+Obtained CEK could be used to decrypt the encrypted resource without needing the master key.
+
+Usage Example:
+
+    rclone backend show-cek crypt: encryptedfile1 [encryptedfile2...]
+    rclone rc backend/command command=show-cek fs=crypt: encryptedfile1 [encryptedfile2...]
+`,
+	},
 }
 
 // Command the backend to run a named command
@@ -1048,6 +1060,24 @@ func (f *Fs) Command(ctx context.Context, name string, arg []string, opt map[str
 			out = append(out, encryptedFileName)
 		}
 		return out, nil
+	case "show-cek":
+		out := make([]string, 0, len(arg))
+		for _, fileName := range arg {
+			encryptedFileName := f.EncryptFileName(fileName)
+			object, err := f.Fs.NewObject(ctx, encryptedFileName)
+			if err != nil {
+				return "", err
+			}
+
+			d, err := f.getDecrypter(ctx, &Object{Object: object})
+			if err != nil {
+				return "", err
+			}
+
+			out = append(out, hex.EncodeToString(d.cek[:]))
+		}
+		return out, nil
+
 	default:
 		return nil, fs.ErrorCommandNotFound
 	}
