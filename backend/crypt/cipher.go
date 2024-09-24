@@ -951,8 +951,8 @@ func (c *Cipher) newDecrypter(rc io.ReadCloser) (*decrypter, error) {
 	fh.initialNonce = fh.nonce
 
 	if c.version == CipherVersionV2 { // V2 cipher has a longer header, so after reading V1 header, we need to read remaining bytes from the reader to finialize V2 cipher initialization
-		remainingBytesFromV1Buffer := fileNonceSize - fileNonceSizeV2 // V2 nonce is 1 byte shorter, but this byte was already read to the `readBuf`, we use: `combinedBuffer` to append it to the beginning.
-		lastByte := readBuf[:len(readBuf)-remainingBytesFromV1Buffer]
+		remainingBytesFromV1Buffer := fileNonceSize - fileNonceSizeV2 // V2 nonce is 1 byte shorter, so by reading the V1 header size (fileHeaderSize - 32 bytes), we've actually read 1 byte of wrapped CEK. We need to preserve that byte, so we prepend to next: `combinedBuffer`
+		lastByte := readBuf[len(readBuf)-remainingBytesFromV1Buffer:]
 
 		remainingBytesReadSize := fileHeaderSizeV2 - fileHeaderSize
 		offsetStart = n // Previously read: `fileHeaderSize` bytes
