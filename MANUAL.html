@@ -81,7 +81,7 @@
 <header id="title-block-header">
 <h1 class="title">rclone(1) User Manual</h1>
 <p class="author">Nick Craig-Wood</p>
-<p class="date">Sep 08, 2024</p>
+<p class="date">Sep 24, 2024</p>
 </header>
 <h1 id="rclone-syncs-your-files-to-cloud-storage">Rclone syncs your files to cloud storage</h1>
 <p><img width="50%" src="https://rclone.org/img/logo_on_light__horizontal_color.svg" alt="rclone logo" style="float:right; padding: 5px;" ></p>
@@ -2964,7 +2964,9 @@ rclone mount remote:path/to/files \\cloud\remote</code></pre>
 <p>When running in background mode the user will have to stop the mount manually:</p>
 <pre><code># Linux
 fusermount -u /path/to/local/mount
-# OS X
+#... or on some systems
+fusermount3 -u /path/to/local/mount
+# OS X or Linux when using nfsmount
 umount /path/to/local/mount</code></pre>
 <p>The umount operation can fail, for example when the mountpoint is busy. When that happens, it is the user's responsibility to stop the mount manually.</p>
 <p>The size of the mounted file system will be set according to information retrieved from the remote, the same as returned by the <a href="https://rclone.org/commands/rclone_about/">rclone about</a> command. Remotes with unlimited storage may report the used size only, then an additional 1 PiB of free space is assumed. If the remote does not <a href="https://rclone.org/overview/#optional-features">support</a> the about feature at all, then 1 PiB is set as both the total and the free size.</p>
@@ -3048,7 +3050,7 @@ sudo ln -s /opt/local/lib/libfuse.2.dylib</code></pre>
 <p>Note that all the rclone filters can be used to select a subset of the files to be visible in the mount.</p>
 <h2 id="systemd">systemd</h2>
 <p>When running rclone mount as a systemd service, it is possible to use Type=notify. In this case the service will enter the started state after the mountpoint has been successfully set up. Units having the rclone mount service specified as a requirement will see all files and folders immediately in this mode.</p>
-<p>Note that systemd runs mount units without any environment variables including <code>PATH</code> or <code>HOME</code>. This means that tilde (<code>~</code>) expansion will not work and you should provide <code>--config</code> and <code>--cache-dir</code> explicitly as absolute paths via rclone arguments. Since mounting requires the <code>fusermount</code> program, rclone will use the fallback PATH of <code>/bin:/usr/bin</code> in this scenario. Please ensure that <code>fusermount</code> is present on this PATH.</p>
+<p>Note that systemd runs mount units without any environment variables including <code>PATH</code> or <code>HOME</code>. This means that tilde (<code>~</code>) expansion will not work and you should provide <code>--config</code> and <code>--cache-dir</code> explicitly as absolute paths via rclone arguments. Since mounting requires the <code>fusermount</code> or <code>fusermount3</code> program, rclone will use the fallback PATH of <code>/bin:/usr/bin</code> in this scenario. Please ensure that <code>fusermount</code>/<code>fusermount3</code> is present on this PATH.</p>
 <h2 id="rclone-as-unix-mount-helper">Rclone as Unix mount helper</h2>
 <p>The core Unix program <code>/bin/mount</code> normally takes the <code>-t FSTYPE</code> argument then runs the <code>/sbin/mount.FSTYPE</code> helper program passing it mount options as <code>-o key=val,...</code> or <code>--opt=...</code>. Automount (classic or systemd) behaves in a similar way.</p>
 <p>rclone by default expects GNU-style flags <code>--key val</code>. To run it as a mount helper you should symlink rclone binary to <code>/sbin/mount.rclone</code> and optionally <code>/usr/bin/rclonefs</code>, e.g. <code>ln -s /usr/bin/rclone /sbin/mount.rclone</code>. rclone will detect it and translate command-line arguments appropriately.</p>
@@ -3482,7 +3484,9 @@ rclone nfsmount remote:path/to/files \\cloud\remote</code></pre>
 <p>When running in background mode the user will have to stop the mount manually:</p>
 <pre><code># Linux
 fusermount -u /path/to/local/mount
-# OS X
+#... or on some systems
+fusermount3 -u /path/to/local/mount
+# OS X or Linux when using nfsmount
 umount /path/to/local/mount</code></pre>
 <p>The umount operation can fail, for example when the mountpoint is busy. When that happens, it is the user's responsibility to stop the mount manually.</p>
 <p>The size of the mounted file system will be set according to information retrieved from the remote, the same as returned by the <a href="https://rclone.org/commands/rclone_about/">rclone about</a> command. Remotes with unlimited storage may report the used size only, then an additional 1 PiB of free space is assumed. If the remote does not <a href="https://rclone.org/overview/#optional-features">support</a> the about feature at all, then 1 PiB is set as both the total and the free size.</p>
@@ -3566,7 +3570,7 @@ sudo ln -s /opt/local/lib/libfuse.2.dylib</code></pre>
 <p>Note that all the rclone filters can be used to select a subset of the files to be visible in the mount.</p>
 <h2 id="systemd-1">systemd</h2>
 <p>When running rclone nfsmount as a systemd service, it is possible to use Type=notify. In this case the service will enter the started state after the mountpoint has been successfully set up. Units having the rclone nfsmount service specified as a requirement will see all files and folders immediately in this mode.</p>
-<p>Note that systemd runs mount units without any environment variables including <code>PATH</code> or <code>HOME</code>. This means that tilde (<code>~</code>) expansion will not work and you should provide <code>--config</code> and <code>--cache-dir</code> explicitly as absolute paths via rclone arguments. Since mounting requires the <code>fusermount</code> program, rclone will use the fallback PATH of <code>/bin:/usr/bin</code> in this scenario. Please ensure that <code>fusermount</code> is present on this PATH.</p>
+<p>Note that systemd runs mount units without any environment variables including <code>PATH</code> or <code>HOME</code>. This means that tilde (<code>~</code>) expansion will not work and you should provide <code>--config</code> and <code>--cache-dir</code> explicitly as absolute paths via rclone arguments. Since mounting requires the <code>fusermount</code> or <code>fusermount3</code> program, rclone will use the fallback PATH of <code>/bin:/usr/bin</code> in this scenario. Please ensure that <code>fusermount</code>/<code>fusermount3</code> is present on this PATH.</p>
 <h2 id="rclone-as-unix-mount-helper-1">Rclone as Unix mount helper</h2>
 <p>The core Unix program <code>/bin/mount</code> normally takes the <code>-t FSTYPE</code> argument then runs the <code>/sbin/mount.FSTYPE</code> helper program passing it mount options as <code>-o key=val,...</code> or <code>--opt=...</code>. Automount (classic or systemd) behaves in a similar way.</p>
 <p>rclone by default expects GNU-style flags <code>--key val</code>. To run it as a mount helper you should symlink rclone binary to <code>/sbin/mount.rclone</code> and optionally <code>/usr/bin/rclonefs</code>, e.g. <code>ln -s /usr/bin/rclone /sbin/mount.rclone</code>. rclone will detect it and translate command-line arguments appropriately.</p>
@@ -4056,7 +4060,7 @@ htpasswd -B htpasswd anotherUser</code></pre>
 <h3 id="rc-options">RC Options</h3>
 <p>Flags to control the Remote Control API</p>
 <pre><code>      --rc                                 Enable the remote control server
-      --rc-addr stringArray                IPaddress:Port or :Port to bind server to (default [&quot;localhost:5572&quot;])
+      --rc-addr stringArray                IPaddress:Port or :Port to bind server to (default localhost:5572)
       --rc-allow-origin string             Origin which cross-domain request (CORS) can be executed from
       --rc-baseurl string                  Prefix for URLs - leave blank for root
       --rc-cert string                     TLS PEM key (concatenation of certificate and CA certificate)
@@ -7849,6 +7853,38 @@ export RCLONE_CONFIG_PASS</code></pre>
 <p>Verbosity is slightly different, the environment variable equivalent of <code>--verbose</code> or <code>-v</code> is <code>RCLONE_VERBOSE=1</code>, or for <code>-vv</code>, <code>RCLONE_VERBOSE=2</code>.</p>
 <p>The same parser is used for the options and the environment variables so they take exactly the same form.</p>
 <p>The options set by environment variables can be seen with the <code>-vv</code> flag, e.g. <code>rclone version -vv</code>.</p>
+<p>Options that can appear multiple times (type <code>stringArray</code>) are treated slighly differently as environment variables can only be defined once. In order to allow a simple mechanism for adding one or many items, the input is treated as a <a href="https://godoc.org/encoding/csv">CSV encoded</a> string. For example</p>
+<table>
+<colgroup>
+<col style="width: 52%" />
+<col style="width: 47%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Environment Variable</th>
+<th>Equivalent options</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>RCLONE_EXCLUDE="*.jpg"</code></td>
+<td><code>--exclude "*.jpg"</code></td>
+</tr>
+<tr class="even">
+<td><code>RCLONE_EXCLUDE="*.jpg,*.png"</code></td>
+<td><code>--exclude "*.jpg"</code> <code>--exclude "*.png"</code></td>
+</tr>
+<tr class="odd">
+<td><code>RCLONE_EXCLUDE='"*.jpg","*.png"'</code></td>
+<td><code>--exclude "*.jpg"</code> <code>--exclude "*.png"</code></td>
+</tr>
+<tr class="even">
+<td><code>RCLONE_EXCLUDE='"/directory with comma , in it /**"'</code></td>
+<td>`--exclude "/directory with comma , in it /**"</td>
+</tr>
+</tbody>
+</table>
+<p>If <code>stringArray</code> options are defined as environment variables <strong>and</strong> options on the command line then all the values will be used.</p>
 <h3 id="config-file">Config file</h3>
 <p>You can set defaults for values in the config file on an individual remote basis. The names of the config items are documented in the page for each backend.</p>
 <p>To find the name of the environment variable, you need to set, take <code>RCLONE_CONFIG_</code> + name of remote + <code>_</code> + name of config file option and make it all uppercase. Note one implication here is the remote's name must be convertible into a valid environment variable name, so it can only contain letters, digits, or the <code>_</code> (underscore) character.</p>
@@ -11932,7 +11968,7 @@ Showing nodes accounting for 1537.03kB, 100% of 1537.03kB total
       --tpslimit float                     Limit HTTP transactions per second to this
       --tpslimit-burst int                 Max burst of transactions for --tpslimit (default 1)
       --use-cookies                        Enable session cookiejar
-      --user-agent string                  Set the user-agent to a specified string (default &quot;rclone/v1.68.0&quot;)</code></pre>
+      --user-agent string                  Set the user-agent to a specified string (default &quot;rclone/v1.68.1&quot;)</code></pre>
 <h2 id="performance">Performance</h2>
 <p>Flags helpful for increasing performance.</p>
 <pre><code>      --buffer-size SizeSuffix   In memory buffer size when reading files for each --transfer (default 16Mi)
@@ -12033,7 +12069,7 @@ Showing nodes accounting for 1537.03kB, 100% of 1537.03kB total
 <h2 id="rc-1">RC</h2>
 <p>Flags to control the Remote Control API.</p>
 <pre><code>      --rc                                 Enable the remote control server
-      --rc-addr stringArray                IPaddress:Port or :Port to bind server to (default [&quot;localhost:5572&quot;])
+      --rc-addr stringArray                IPaddress:Port or :Port to bind server to (default localhost:5572)
       --rc-allow-origin string             Origin which cross-domain request (CORS) can be executed from
       --rc-baseurl string                  Prefix for URLs - leave blank for root
       --rc-cert string                     TLS PEM key (concatenation of certificate and CA certificate)
@@ -12063,7 +12099,7 @@ Showing nodes accounting for 1537.03kB, 100% of 1537.03kB total
       --rc-web-gui-update                  Check and update to latest version of web gui</code></pre>
 <h2 id="metrics-1">Metrics</h2>
 <p>Flags to control the Metrics HTTP endpoint..</p>
-<pre><code>      --metrics-addr stringArray                IPaddress:Port or :Port to bind metrics server to (default [&quot;&quot;])
+<pre><code>      --metrics-addr stringArray                IPaddress:Port or :Port to bind metrics server to
       --metrics-allow-origin string             Origin which cross-domain request (CORS) can be executed from
       --metrics-baseurl string                  Prefix for URLs - leave blank for root
       --metrics-cert string                     TLS PEM key (concatenation of certificate and CA certificate)
@@ -12551,21 +12587,18 @@ Showing nodes accounting for 1537.03kB, 100% of 1537.03kB total
       --pcloud-token string                                 OAuth Access Token as a JSON blob
       --pcloud-token-url string                             Token server url
       --pcloud-username string                              Your pcloud username
-      --pikpak-auth-url string                              Auth server URL
       --pikpak-chunk-size SizeSuffix                        Chunk size for multipart uploads (default 5Mi)
-      --pikpak-client-id string                             OAuth Client Id
-      --pikpak-client-secret string                         OAuth Client Secret
       --pikpak-description string                           Description of the remote
+      --pikpak-device-id string                             Device ID used for authorization
       --pikpak-encoding Encoding                            The encoding for the backend (default Slash,LtGt,DoubleQuote,Colon,Question,Asterisk,Pipe,BackSlash,Ctl,LeftSpace,RightSpace,RightPeriod,InvalidUtf8,Dot)
       --pikpak-hash-memory-limit SizeSuffix                 Files bigger than this will be cached on disk to calculate hash if required (default 10Mi)
       --pikpak-pass string                                  Pikpak password (obscured)
       --pikpak-root-folder-id string                        ID of the root folder
-      --pikpak-token string                                 OAuth Access Token as a JSON blob
-      --pikpak-token-url string                             Token server url
       --pikpak-trashed-only                                 Only show files that are in the trash
       --pikpak-upload-concurrency int                       Concurrency for multipart uploads (default 5)
       --pikpak-use-trash                                    Send files to the trash instead of deleting permanently (default true)
       --pikpak-user string                                  Pikpak username
+      --pikpak-user-agent string                            HTTP user agent for pikpak (default &quot;Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:129.0) Gecko/20100101 Firefox/129.0&quot;)
       --pixeldrain-api-key string                           API key for your pixeldrain account
       --pixeldrain-api-url string                           The API endpoint to connect to. In the vast majority of cases it&#39;s fine to leave (default &quot;https://pixeldrain.com/api&quot;)
       --pixeldrain-description string                       Description of the remote
@@ -14529,6 +14562,18 @@ y/e/d&gt;</code></pre>
 <p>By default, rclone will HEAD every object it uploads. It does this to check the object got uploaded correctly.</p>
 <p>You can disable this with the <a href="#s3-no-head">--s3-no-head</a> option - see there for more details.</p>
 <p>Setting this flag increases the chance for undetected upload failures.</p>
+<h3 id="increasing-performance">Increasing performance</h3>
+<h4 id="using-server-side-copy">Using server-side copy</h4>
+<p>If you are copying objects between S3 buckets in the same region, you should use server-side copy. This is much faster than downloading and re-uploading the objects, as no data is transferred.</p>
+<p>For rclone to use server-side copy, you must use the same remote for the source and destination.</p>
+<pre><code>rclone copy s3:source-bucket s3:destination-bucket</code></pre>
+<p>When using server-side copy, the performance is limited by the rate at which rclone issues API requests to S3. See below for how to increase the number of API requests rclone makes.</p>
+<h4 id="increasing-the-rate-of-api-requests">Increasing the rate of API requests</h4>
+<p>You can increase the rate of API requests to S3 by increasing the parallelism using <code>--transfers</code> and <code>--checkers</code> options.</p>
+<p>Rclone uses a very conservative defaults for these settings, as not all providers support high rates of requests. Depending on your provider, you can increase significantly the number of transfers and checkers.</p>
+<p>For example, with AWS S3, if you can increase the number of checkers to values like 200. If you are doing a server-side copy, you can also increase the number of transfers to 200.</p>
+<pre><code>rclone sync --transfers 200 --checkers 200 --checksum s3:source-bucket s3:destination-bucket</code></pre>
+<p>You will need to experiment with these values to find the optimal settings for your setup.</p>
 <h3 id="versions">Versions</h3>
 <p>When bucket versioning is enabled (this can be done with rclone with the <a href="#versioning"><code>rclone backend versioning</code></a> command) when rclone uploads a new version of a file it creates a <a href="https://docs.aws.amazon.com/AmazonS3/latest/userguide/Versioning.html">new version of it</a> Likewise when you delete a file, the old version will be marked hidden and still be available.</p>
 <p>Old versions of files, where available, are visible using the <a href="#s3-versions"><code>--s3-versions</code></a> flag.</p>
@@ -18322,7 +18367,7 @@ cos                  s3</code></pre>
 <p>For Netease NOS configure as per the configurator <code>rclone config</code> setting the provider <code>Netease</code>. This will automatically set <code>force_path_style = false</code> which is necessary for it to run properly.</p>
 <h3 id="petabox">Petabox</h3>
 <p>Here is an example of making a <a href="https://petabox.io/">Petabox</a> configuration. First run:</p>
-<div class="sourceCode" id="cb967"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb967-1"><a href="#cb967-1" aria-hidden="true"></a><span class="ex">rclone</span> config</span></code></pre></div>
+<div class="sourceCode" id="cb969"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb969-1"><a href="#cb969-1" aria-hidden="true"></a><span class="ex">rclone</span> config</span></code></pre></div>
 <p>This will guide you through an interactive setup process.</p>
 <pre><code>No remotes found, make a new one?
 n) New remote
@@ -29660,75 +29705,75 @@ rclone rc vfs/refresh recursive=true</code></pre>
 <p>Permissions are also supported, if <code>--onedrive-metadata-permissions</code> is set. The accepted values for <code>--onedrive-metadata-permissions</code> are "<code>read</code>", "<code>write</code>", "<code>read,write</code>", and "<code>off</code>" (the default). "<code>write</code>" supports adding new permissions, updating the "role" of existing permissions, and removing permissions. Updating and removing require the Permission ID to be known, so it is recommended to use "<code>read,write</code>" instead of "<code>write</code>" if you wish to update/remove permissions.</p>
 <p>Permissions are read/written in JSON format using the same schema as the <a href="https://learn.microsoft.com/en-us/onedrive/developer/rest-api/resources/permission?view=odsp-graph-online">OneDrive API</a>, which differs slightly between OneDrive Personal and Business.</p>
 <p>Example for OneDrive Personal:</p>
-<div class="sourceCode" id="cb1258"><pre class="sourceCode json"><code class="sourceCode json"><span id="cb1258-1"><a href="#cb1258-1" aria-hidden="true"></a><span class="ot">[</span></span>
-<span id="cb1258-2"><a href="#cb1258-2" aria-hidden="true"></a>    <span class="fu">{</span></span>
-<span id="cb1258-3"><a href="#cb1258-3" aria-hidden="true"></a>        <span class="dt">&quot;id&quot;</span><span class="fu">:</span> <span class="st">&quot;1234567890ABC!123&quot;</span><span class="fu">,</span></span>
-<span id="cb1258-4"><a href="#cb1258-4" aria-hidden="true"></a>        <span class="dt">&quot;grantedTo&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb1258-5"><a href="#cb1258-5" aria-hidden="true"></a>            <span class="dt">&quot;user&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb1258-6"><a href="#cb1258-6" aria-hidden="true"></a>                <span class="dt">&quot;id&quot;</span><span class="fu">:</span> <span class="st">&quot;ryan@contoso.com&quot;</span></span>
-<span id="cb1258-7"><a href="#cb1258-7" aria-hidden="true"></a>            <span class="fu">},</span></span>
-<span id="cb1258-8"><a href="#cb1258-8" aria-hidden="true"></a>            <span class="dt">&quot;application&quot;</span><span class="fu">:</span> <span class="fu">{},</span></span>
-<span id="cb1258-9"><a href="#cb1258-9" aria-hidden="true"></a>            <span class="dt">&quot;device&quot;</span><span class="fu">:</span> <span class="fu">{}</span></span>
-<span id="cb1258-10"><a href="#cb1258-10" aria-hidden="true"></a>        <span class="fu">},</span></span>
-<span id="cb1258-11"><a href="#cb1258-11" aria-hidden="true"></a>        <span class="dt">&quot;invitation&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb1258-12"><a href="#cb1258-12" aria-hidden="true"></a>            <span class="dt">&quot;email&quot;</span><span class="fu">:</span> <span class="st">&quot;ryan@contoso.com&quot;</span></span>
-<span id="cb1258-13"><a href="#cb1258-13" aria-hidden="true"></a>        <span class="fu">},</span></span>
-<span id="cb1258-14"><a href="#cb1258-14" aria-hidden="true"></a>        <span class="dt">&quot;link&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb1258-15"><a href="#cb1258-15" aria-hidden="true"></a>            <span class="dt">&quot;webUrl&quot;</span><span class="fu">:</span> <span class="st">&quot;https://1drv.ms/t/s!1234567890ABC&quot;</span></span>
-<span id="cb1258-16"><a href="#cb1258-16" aria-hidden="true"></a>        <span class="fu">},</span></span>
-<span id="cb1258-17"><a href="#cb1258-17" aria-hidden="true"></a>        <span class="dt">&quot;roles&quot;</span><span class="fu">:</span> <span class="ot">[</span></span>
-<span id="cb1258-18"><a href="#cb1258-18" aria-hidden="true"></a>            <span class="st">&quot;read&quot;</span></span>
-<span id="cb1258-19"><a href="#cb1258-19" aria-hidden="true"></a>        <span class="ot">]</span><span class="fu">,</span></span>
-<span id="cb1258-20"><a href="#cb1258-20" aria-hidden="true"></a>        <span class="dt">&quot;shareId&quot;</span><span class="fu">:</span> <span class="st">&quot;s!1234567890ABC&quot;</span></span>
-<span id="cb1258-21"><a href="#cb1258-21" aria-hidden="true"></a>    <span class="fu">}</span></span>
-<span id="cb1258-22"><a href="#cb1258-22" aria-hidden="true"></a><span class="ot">]</span></span></code></pre></div>
+<div class="sourceCode" id="cb1260"><pre class="sourceCode json"><code class="sourceCode json"><span id="cb1260-1"><a href="#cb1260-1" aria-hidden="true"></a><span class="ot">[</span></span>
+<span id="cb1260-2"><a href="#cb1260-2" aria-hidden="true"></a>    <span class="fu">{</span></span>
+<span id="cb1260-3"><a href="#cb1260-3" aria-hidden="true"></a>        <span class="dt">&quot;id&quot;</span><span class="fu">:</span> <span class="st">&quot;1234567890ABC!123&quot;</span><span class="fu">,</span></span>
+<span id="cb1260-4"><a href="#cb1260-4" aria-hidden="true"></a>        <span class="dt">&quot;grantedTo&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb1260-5"><a href="#cb1260-5" aria-hidden="true"></a>            <span class="dt">&quot;user&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb1260-6"><a href="#cb1260-6" aria-hidden="true"></a>                <span class="dt">&quot;id&quot;</span><span class="fu">:</span> <span class="st">&quot;ryan@contoso.com&quot;</span></span>
+<span id="cb1260-7"><a href="#cb1260-7" aria-hidden="true"></a>            <span class="fu">},</span></span>
+<span id="cb1260-8"><a href="#cb1260-8" aria-hidden="true"></a>            <span class="dt">&quot;application&quot;</span><span class="fu">:</span> <span class="fu">{},</span></span>
+<span id="cb1260-9"><a href="#cb1260-9" aria-hidden="true"></a>            <span class="dt">&quot;device&quot;</span><span class="fu">:</span> <span class="fu">{}</span></span>
+<span id="cb1260-10"><a href="#cb1260-10" aria-hidden="true"></a>        <span class="fu">},</span></span>
+<span id="cb1260-11"><a href="#cb1260-11" aria-hidden="true"></a>        <span class="dt">&quot;invitation&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb1260-12"><a href="#cb1260-12" aria-hidden="true"></a>            <span class="dt">&quot;email&quot;</span><span class="fu">:</span> <span class="st">&quot;ryan@contoso.com&quot;</span></span>
+<span id="cb1260-13"><a href="#cb1260-13" aria-hidden="true"></a>        <span class="fu">},</span></span>
+<span id="cb1260-14"><a href="#cb1260-14" aria-hidden="true"></a>        <span class="dt">&quot;link&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb1260-15"><a href="#cb1260-15" aria-hidden="true"></a>            <span class="dt">&quot;webUrl&quot;</span><span class="fu">:</span> <span class="st">&quot;https://1drv.ms/t/s!1234567890ABC&quot;</span></span>
+<span id="cb1260-16"><a href="#cb1260-16" aria-hidden="true"></a>        <span class="fu">},</span></span>
+<span id="cb1260-17"><a href="#cb1260-17" aria-hidden="true"></a>        <span class="dt">&quot;roles&quot;</span><span class="fu">:</span> <span class="ot">[</span></span>
+<span id="cb1260-18"><a href="#cb1260-18" aria-hidden="true"></a>            <span class="st">&quot;read&quot;</span></span>
+<span id="cb1260-19"><a href="#cb1260-19" aria-hidden="true"></a>        <span class="ot">]</span><span class="fu">,</span></span>
+<span id="cb1260-20"><a href="#cb1260-20" aria-hidden="true"></a>        <span class="dt">&quot;shareId&quot;</span><span class="fu">:</span> <span class="st">&quot;s!1234567890ABC&quot;</span></span>
+<span id="cb1260-21"><a href="#cb1260-21" aria-hidden="true"></a>    <span class="fu">}</span></span>
+<span id="cb1260-22"><a href="#cb1260-22" aria-hidden="true"></a><span class="ot">]</span></span></code></pre></div>
 <p>Example for OneDrive Business:</p>
-<div class="sourceCode" id="cb1259"><pre class="sourceCode json"><code class="sourceCode json"><span id="cb1259-1"><a href="#cb1259-1" aria-hidden="true"></a><span class="ot">[</span></span>
-<span id="cb1259-2"><a href="#cb1259-2" aria-hidden="true"></a>    <span class="fu">{</span></span>
-<span id="cb1259-3"><a href="#cb1259-3" aria-hidden="true"></a>        <span class="dt">&quot;id&quot;</span><span class="fu">:</span> <span class="st">&quot;48d31887-5fad-4d73-a9f5-3c356e68a038&quot;</span><span class="fu">,</span></span>
-<span id="cb1259-4"><a href="#cb1259-4" aria-hidden="true"></a>        <span class="dt">&quot;grantedToIdentities&quot;</span><span class="fu">:</span> <span class="ot">[</span></span>
-<span id="cb1259-5"><a href="#cb1259-5" aria-hidden="true"></a>            <span class="fu">{</span></span>
-<span id="cb1259-6"><a href="#cb1259-6" aria-hidden="true"></a>                <span class="dt">&quot;user&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb1259-7"><a href="#cb1259-7" aria-hidden="true"></a>                    <span class="dt">&quot;displayName&quot;</span><span class="fu">:</span> <span class="st">&quot;ryan@contoso.com&quot;</span></span>
-<span id="cb1259-8"><a href="#cb1259-8" aria-hidden="true"></a>                <span class="fu">},</span></span>
-<span id="cb1259-9"><a href="#cb1259-9" aria-hidden="true"></a>                <span class="dt">&quot;application&quot;</span><span class="fu">:</span> <span class="fu">{},</span></span>
-<span id="cb1259-10"><a href="#cb1259-10" aria-hidden="true"></a>                <span class="dt">&quot;device&quot;</span><span class="fu">:</span> <span class="fu">{}</span></span>
-<span id="cb1259-11"><a href="#cb1259-11" aria-hidden="true"></a>            <span class="fu">}</span></span>
-<span id="cb1259-12"><a href="#cb1259-12" aria-hidden="true"></a>        <span class="ot">]</span><span class="fu">,</span></span>
-<span id="cb1259-13"><a href="#cb1259-13" aria-hidden="true"></a>        <span class="dt">&quot;link&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb1259-14"><a href="#cb1259-14" aria-hidden="true"></a>            <span class="dt">&quot;type&quot;</span><span class="fu">:</span> <span class="st">&quot;view&quot;</span><span class="fu">,</span></span>
-<span id="cb1259-15"><a href="#cb1259-15" aria-hidden="true"></a>            <span class="dt">&quot;scope&quot;</span><span class="fu">:</span> <span class="st">&quot;users&quot;</span><span class="fu">,</span></span>
-<span id="cb1259-16"><a href="#cb1259-16" aria-hidden="true"></a>            <span class="dt">&quot;webUrl&quot;</span><span class="fu">:</span> <span class="st">&quot;https://contoso.sharepoint.com/:w:/t/design/a577ghg9hgh737613bmbjf839026561fmzhsr85ng9f3hjck2t5s&quot;</span></span>
-<span id="cb1259-17"><a href="#cb1259-17" aria-hidden="true"></a>        <span class="fu">},</span></span>
-<span id="cb1259-18"><a href="#cb1259-18" aria-hidden="true"></a>        <span class="dt">&quot;roles&quot;</span><span class="fu">:</span> <span class="ot">[</span></span>
-<span id="cb1259-19"><a href="#cb1259-19" aria-hidden="true"></a>            <span class="st">&quot;read&quot;</span></span>
-<span id="cb1259-20"><a href="#cb1259-20" aria-hidden="true"></a>        <span class="ot">]</span><span class="fu">,</span></span>
-<span id="cb1259-21"><a href="#cb1259-21" aria-hidden="true"></a>        <span class="dt">&quot;shareId&quot;</span><span class="fu">:</span> <span class="st">&quot;u!LKj1lkdlals90j1nlkascl&quot;</span></span>
-<span id="cb1259-22"><a href="#cb1259-22" aria-hidden="true"></a>    <span class="fu">}</span><span class="ot">,</span></span>
-<span id="cb1259-23"><a href="#cb1259-23" aria-hidden="true"></a>    <span class="fu">{</span></span>
-<span id="cb1259-24"><a href="#cb1259-24" aria-hidden="true"></a>        <span class="dt">&quot;id&quot;</span><span class="fu">:</span> <span class="st">&quot;5D33DD65C6932946&quot;</span><span class="fu">,</span></span>
-<span id="cb1259-25"><a href="#cb1259-25" aria-hidden="true"></a>        <span class="dt">&quot;grantedTo&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb1259-26"><a href="#cb1259-26" aria-hidden="true"></a>            <span class="dt">&quot;user&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb1259-27"><a href="#cb1259-27" aria-hidden="true"></a>                <span class="dt">&quot;displayName&quot;</span><span class="fu">:</span> <span class="st">&quot;John Doe&quot;</span><span class="fu">,</span></span>
-<span id="cb1259-28"><a href="#cb1259-28" aria-hidden="true"></a>                <span class="dt">&quot;id&quot;</span><span class="fu">:</span> <span class="st">&quot;efee1b77-fb3b-4f65-99d6-274c11914d12&quot;</span></span>
-<span id="cb1259-29"><a href="#cb1259-29" aria-hidden="true"></a>            <span class="fu">},</span></span>
-<span id="cb1259-30"><a href="#cb1259-30" aria-hidden="true"></a>            <span class="dt">&quot;application&quot;</span><span class="fu">:</span> <span class="fu">{},</span></span>
-<span id="cb1259-31"><a href="#cb1259-31" aria-hidden="true"></a>            <span class="dt">&quot;device&quot;</span><span class="fu">:</span> <span class="fu">{}</span></span>
-<span id="cb1259-32"><a href="#cb1259-32" aria-hidden="true"></a>        <span class="fu">},</span></span>
-<span id="cb1259-33"><a href="#cb1259-33" aria-hidden="true"></a>        <span class="dt">&quot;roles&quot;</span><span class="fu">:</span> <span class="ot">[</span></span>
-<span id="cb1259-34"><a href="#cb1259-34" aria-hidden="true"></a>            <span class="st">&quot;owner&quot;</span></span>
-<span id="cb1259-35"><a href="#cb1259-35" aria-hidden="true"></a>        <span class="ot">]</span><span class="fu">,</span></span>
-<span id="cb1259-36"><a href="#cb1259-36" aria-hidden="true"></a>        <span class="dt">&quot;shareId&quot;</span><span class="fu">:</span> <span class="st">&quot;FWxc1lasfdbEAGM5fI7B67aB5ZMPDMmQ11U&quot;</span></span>
-<span id="cb1259-37"><a href="#cb1259-37" aria-hidden="true"></a>    <span class="fu">}</span></span>
-<span id="cb1259-38"><a href="#cb1259-38" aria-hidden="true"></a><span class="ot">]</span></span></code></pre></div>
+<div class="sourceCode" id="cb1261"><pre class="sourceCode json"><code class="sourceCode json"><span id="cb1261-1"><a href="#cb1261-1" aria-hidden="true"></a><span class="ot">[</span></span>
+<span id="cb1261-2"><a href="#cb1261-2" aria-hidden="true"></a>    <span class="fu">{</span></span>
+<span id="cb1261-3"><a href="#cb1261-3" aria-hidden="true"></a>        <span class="dt">&quot;id&quot;</span><span class="fu">:</span> <span class="st">&quot;48d31887-5fad-4d73-a9f5-3c356e68a038&quot;</span><span class="fu">,</span></span>
+<span id="cb1261-4"><a href="#cb1261-4" aria-hidden="true"></a>        <span class="dt">&quot;grantedToIdentities&quot;</span><span class="fu">:</span> <span class="ot">[</span></span>
+<span id="cb1261-5"><a href="#cb1261-5" aria-hidden="true"></a>            <span class="fu">{</span></span>
+<span id="cb1261-6"><a href="#cb1261-6" aria-hidden="true"></a>                <span class="dt">&quot;user&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb1261-7"><a href="#cb1261-7" aria-hidden="true"></a>                    <span class="dt">&quot;displayName&quot;</span><span class="fu">:</span> <span class="st">&quot;ryan@contoso.com&quot;</span></span>
+<span id="cb1261-8"><a href="#cb1261-8" aria-hidden="true"></a>                <span class="fu">},</span></span>
+<span id="cb1261-9"><a href="#cb1261-9" aria-hidden="true"></a>                <span class="dt">&quot;application&quot;</span><span class="fu">:</span> <span class="fu">{},</span></span>
+<span id="cb1261-10"><a href="#cb1261-10" aria-hidden="true"></a>                <span class="dt">&quot;device&quot;</span><span class="fu">:</span> <span class="fu">{}</span></span>
+<span id="cb1261-11"><a href="#cb1261-11" aria-hidden="true"></a>            <span class="fu">}</span></span>
+<span id="cb1261-12"><a href="#cb1261-12" aria-hidden="true"></a>        <span class="ot">]</span><span class="fu">,</span></span>
+<span id="cb1261-13"><a href="#cb1261-13" aria-hidden="true"></a>        <span class="dt">&quot;link&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb1261-14"><a href="#cb1261-14" aria-hidden="true"></a>            <span class="dt">&quot;type&quot;</span><span class="fu">:</span> <span class="st">&quot;view&quot;</span><span class="fu">,</span></span>
+<span id="cb1261-15"><a href="#cb1261-15" aria-hidden="true"></a>            <span class="dt">&quot;scope&quot;</span><span class="fu">:</span> <span class="st">&quot;users&quot;</span><span class="fu">,</span></span>
+<span id="cb1261-16"><a href="#cb1261-16" aria-hidden="true"></a>            <span class="dt">&quot;webUrl&quot;</span><span class="fu">:</span> <span class="st">&quot;https://contoso.sharepoint.com/:w:/t/design/a577ghg9hgh737613bmbjf839026561fmzhsr85ng9f3hjck2t5s&quot;</span></span>
+<span id="cb1261-17"><a href="#cb1261-17" aria-hidden="true"></a>        <span class="fu">},</span></span>
+<span id="cb1261-18"><a href="#cb1261-18" aria-hidden="true"></a>        <span class="dt">&quot;roles&quot;</span><span class="fu">:</span> <span class="ot">[</span></span>
+<span id="cb1261-19"><a href="#cb1261-19" aria-hidden="true"></a>            <span class="st">&quot;read&quot;</span></span>
+<span id="cb1261-20"><a href="#cb1261-20" aria-hidden="true"></a>        <span class="ot">]</span><span class="fu">,</span></span>
+<span id="cb1261-21"><a href="#cb1261-21" aria-hidden="true"></a>        <span class="dt">&quot;shareId&quot;</span><span class="fu">:</span> <span class="st">&quot;u!LKj1lkdlals90j1nlkascl&quot;</span></span>
+<span id="cb1261-22"><a href="#cb1261-22" aria-hidden="true"></a>    <span class="fu">}</span><span class="ot">,</span></span>
+<span id="cb1261-23"><a href="#cb1261-23" aria-hidden="true"></a>    <span class="fu">{</span></span>
+<span id="cb1261-24"><a href="#cb1261-24" aria-hidden="true"></a>        <span class="dt">&quot;id&quot;</span><span class="fu">:</span> <span class="st">&quot;5D33DD65C6932946&quot;</span><span class="fu">,</span></span>
+<span id="cb1261-25"><a href="#cb1261-25" aria-hidden="true"></a>        <span class="dt">&quot;grantedTo&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb1261-26"><a href="#cb1261-26" aria-hidden="true"></a>            <span class="dt">&quot;user&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb1261-27"><a href="#cb1261-27" aria-hidden="true"></a>                <span class="dt">&quot;displayName&quot;</span><span class="fu">:</span> <span class="st">&quot;John Doe&quot;</span><span class="fu">,</span></span>
+<span id="cb1261-28"><a href="#cb1261-28" aria-hidden="true"></a>                <span class="dt">&quot;id&quot;</span><span class="fu">:</span> <span class="st">&quot;efee1b77-fb3b-4f65-99d6-274c11914d12&quot;</span></span>
+<span id="cb1261-29"><a href="#cb1261-29" aria-hidden="true"></a>            <span class="fu">},</span></span>
+<span id="cb1261-30"><a href="#cb1261-30" aria-hidden="true"></a>            <span class="dt">&quot;application&quot;</span><span class="fu">:</span> <span class="fu">{},</span></span>
+<span id="cb1261-31"><a href="#cb1261-31" aria-hidden="true"></a>            <span class="dt">&quot;device&quot;</span><span class="fu">:</span> <span class="fu">{}</span></span>
+<span id="cb1261-32"><a href="#cb1261-32" aria-hidden="true"></a>        <span class="fu">},</span></span>
+<span id="cb1261-33"><a href="#cb1261-33" aria-hidden="true"></a>        <span class="dt">&quot;roles&quot;</span><span class="fu">:</span> <span class="ot">[</span></span>
+<span id="cb1261-34"><a href="#cb1261-34" aria-hidden="true"></a>            <span class="st">&quot;owner&quot;</span></span>
+<span id="cb1261-35"><a href="#cb1261-35" aria-hidden="true"></a>        <span class="ot">]</span><span class="fu">,</span></span>
+<span id="cb1261-36"><a href="#cb1261-36" aria-hidden="true"></a>        <span class="dt">&quot;shareId&quot;</span><span class="fu">:</span> <span class="st">&quot;FWxc1lasfdbEAGM5fI7B67aB5ZMPDMmQ11U&quot;</span></span>
+<span id="cb1261-37"><a href="#cb1261-37" aria-hidden="true"></a>    <span class="fu">}</span></span>
+<span id="cb1261-38"><a href="#cb1261-38" aria-hidden="true"></a><span class="ot">]</span></span></code></pre></div>
 <p>To write permissions, pass in a "permissions" metadata key using this same format. The <a href="https://rclone.org/docs/#metadata-mapper"><code>--metadata-mapper</code></a> tool can be very helpful for this.</p>
 <p>When adding permissions, an email address can be provided in the <code>User.ID</code> or <code>DisplayName</code> properties of <code>grantedTo</code> or <code>grantedToIdentities</code>. Alternatively, an ObjectID can be provided in <code>User.ID</code>. At least one valid recipient must be provided in order to add a permission for a user. Creating a Public Link is also supported, if <code>Link.Scope</code> is set to <code>"anonymous"</code>.</p>
 <p>Example request to add a "read" permission with <code>--metadata-mapper</code>:</p>
-<div class="sourceCode" id="cb1260"><pre class="sourceCode json"><code class="sourceCode json"><span id="cb1260-1"><a href="#cb1260-1" aria-hidden="true"></a><span class="fu">{</span></span>
-<span id="cb1260-2"><a href="#cb1260-2" aria-hidden="true"></a>    <span class="dt">&quot;Metadata&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb1260-3"><a href="#cb1260-3" aria-hidden="true"></a>        <span class="dt">&quot;permissions&quot;</span><span class="fu">:</span> <span class="st">&quot;[{</span><span class="ch">\&quot;</span><span class="st">grantedToIdentities</span><span class="ch">\&quot;</span><span class="st">:[{</span><span class="ch">\&quot;</span><span class="st">user</span><span class="ch">\&quot;</span><span class="st">:{</span><span class="ch">\&quot;</span><span class="st">id</span><span class="ch">\&quot;</span><span class="st">:</span><span class="ch">\&quot;</span><span class="st">ryan@contoso.com</span><span class="ch">\&quot;</span><span class="st">}}],</span><span class="ch">\&quot;</span><span class="st">roles</span><span class="ch">\&quot;</span><span class="st">:[</span><span class="ch">\&quot;</span><span class="st">read</span><span class="ch">\&quot;</span><span class="st">]}]&quot;</span></span>
-<span id="cb1260-4"><a href="#cb1260-4" aria-hidden="true"></a>    <span class="fu">}</span></span>
-<span id="cb1260-5"><a href="#cb1260-5" aria-hidden="true"></a><span class="fu">}</span></span></code></pre></div>
+<div class="sourceCode" id="cb1262"><pre class="sourceCode json"><code class="sourceCode json"><span id="cb1262-1"><a href="#cb1262-1" aria-hidden="true"></a><span class="fu">{</span></span>
+<span id="cb1262-2"><a href="#cb1262-2" aria-hidden="true"></a>    <span class="dt">&quot;Metadata&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb1262-3"><a href="#cb1262-3" aria-hidden="true"></a>        <span class="dt">&quot;permissions&quot;</span><span class="fu">:</span> <span class="st">&quot;[{</span><span class="ch">\&quot;</span><span class="st">grantedToIdentities</span><span class="ch">\&quot;</span><span class="st">:[{</span><span class="ch">\&quot;</span><span class="st">user</span><span class="ch">\&quot;</span><span class="st">:{</span><span class="ch">\&quot;</span><span class="st">id</span><span class="ch">\&quot;</span><span class="st">:</span><span class="ch">\&quot;</span><span class="st">ryan@contoso.com</span><span class="ch">\&quot;</span><span class="st">}}],</span><span class="ch">\&quot;</span><span class="st">roles</span><span class="ch">\&quot;</span><span class="st">:[</span><span class="ch">\&quot;</span><span class="st">read</span><span class="ch">\&quot;</span><span class="st">]}]&quot;</span></span>
+<span id="cb1262-4"><a href="#cb1262-4" aria-hidden="true"></a>    <span class="fu">}</span></span>
+<span id="cb1262-5"><a href="#cb1262-5" aria-hidden="true"></a><span class="fu">}</span></span></code></pre></div>
 <p>Note that adding a permission can fail if a conflicting permission already exists for the file/folder.</p>
 <p>To update an existing permission, include both the Permission ID and the new <code>roles</code> to be assigned. <code>roles</code> is the only property that can be changed.</p>
 <p>To remove permissions, pass in a blob containing only the permissions you wish to keep (which can be empty, to remove all.) Note that the <code>owner</code> role will be ignored, as it cannot be removed.</p>
@@ -32200,54 +32245,24 @@ y/e/d&gt; y</code></pre>
 </ul>
 <h3 id="advanced-options-42">Advanced options</h3>
 <p>Here are the Advanced options specific to pikpak (PikPak).</p>
-<h4 id="pikpak-client-id">--pikpak-client-id</h4>
-<p>OAuth Client Id.</p>
-<p>Leave blank normally.</p>
+<h4 id="pikpak-device-id">--pikpak-device-id</h4>
+<p>Device ID used for authorization.</p>
 <p>Properties:</p>
 <ul>
-<li>Config: client_id</li>
-<li>Env Var: RCLONE_PIKPAK_CLIENT_ID</li>
+<li>Config: device_id</li>
+<li>Env Var: RCLONE_PIKPAK_DEVICE_ID</li>
 <li>Type: string</li>
 <li>Required: false</li>
 </ul>
-<h4 id="pikpak-client-secret">--pikpak-client-secret</h4>
-<p>OAuth Client Secret.</p>
-<p>Leave blank normally.</p>
+<h4 id="pikpak-user-agent">--pikpak-user-agent</h4>
+<p>HTTP user agent for pikpak.</p>
+<p>Defaults to "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:129.0) Gecko/20100101 Firefox/129.0" or "--pikpak-user-agent" provided on command line.</p>
 <p>Properties:</p>
 <ul>
-<li>Config: client_secret</li>
-<li>Env Var: RCLONE_PIKPAK_CLIENT_SECRET</li>
+<li>Config: user_agent</li>
+<li>Env Var: RCLONE_PIKPAK_USER_AGENT</li>
 <li>Type: string</li>
-<li>Required: false</li>
-</ul>
-<h4 id="pikpak-token">--pikpak-token</h4>
-<p>OAuth Access Token as a JSON blob.</p>
-<p>Properties:</p>
-<ul>
-<li>Config: token</li>
-<li>Env Var: RCLONE_PIKPAK_TOKEN</li>
-<li>Type: string</li>
-<li>Required: false</li>
-</ul>
-<h4 id="pikpak-auth-url">--pikpak-auth-url</h4>
-<p>Auth server URL.</p>
-<p>Leave blank to use the provider defaults.</p>
-<p>Properties:</p>
-<ul>
-<li>Config: auth_url</li>
-<li>Env Var: RCLONE_PIKPAK_AUTH_URL</li>
-<li>Type: string</li>
-<li>Required: false</li>
-</ul>
-<h4 id="pikpak-token-url">--pikpak-token-url</h4>
-<p>Token server url.</p>
-<p>Leave blank to use the provider defaults.</p>
-<p>Properties:</p>
-<ul>
-<li>Config: token_url</li>
-<li>Env Var: RCLONE_PIKPAK_TOKEN_URL</li>
-<li>Type: string</li>
-<li>Required: false</li>
+<li>Default: "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:129.0) Gecko/20100101 Firefox/129.0"</li>
 </ul>
 <h4 id="pikpak-root-folder-id">--pikpak-root-folder-id</h4>
 <p>ID of the root folder. Leave blank normally.</p>
@@ -36949,6 +36964,34 @@ $ tree /tmp/c
 <li>"error": return an error based on option value</li>
 </ul>
 <h1 id="changelog-1">Changelog</h1>
+<h2 id="v1.68.1---2024-09-24">v1.68.1 - 2024-09-24</h2>
+<p><a href="https://github.com/rclone/rclone/compare/v1.68.0...v1.68.1">See commits</a></p>
+<ul>
+<li>Bug Fixes
+<ul>
+<li>build: Fix docker release build (ttionya)</li>
+<li>doc fixes (Nick Craig-Wood, Pawel Palucha)</li>
+<li>fs
+<ul>
+<li>Fix <code>--dump filters</code> not always appearing (Nick Craig-Wood)</li>
+<li>Fix setting <code>stringArray</code> config values from environment variables (Nick Craig-Wood)</li>
+</ul></li>
+<li>rc: Fix default value of <code>--metrics-addr</code> (Nick Craig-Wood)</li>
+<li>serve docker: Add missing <code>vfs-read-chunk-streams</code> option in docker volume driver (Divyam)</li>
+</ul></li>
+<li>Onedrive
+<ul>
+<li>Fix spurious "Couldn't decode error response: EOF" DEBUG (Nick Craig-Wood)</li>
+</ul></li>
+<li>Pikpak
+<ul>
+<li>Fix login issue where token retrieval fails (wiserain)</li>
+</ul></li>
+<li>S3
+<ul>
+<li>Fix rclone ignoring static credentials when <code>env_auth=true</code> (Nick Craig-Wood)</li>
+</ul></li>
+</ul>
 <h2 id="v1.68.0---2024-09-08">v1.68.0 - 2024-09-08</h2>
 <p><a href="https://github.com/rclone/rclone/compare/v1.67.0...v1.68.0">See commits</a></p>
 <ul>
