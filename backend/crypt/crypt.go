@@ -1141,7 +1141,7 @@ func (o *Object) Hash(ctx context.Context, ht hash.Type) (string, error) {
 		return "", err
 	}
 
-	// After we've read nonce from the header, we need to calculate the nonce used at the end of file, so we can calculate the nonce that was used to encrypt the hash
+	// After we've read nonce from the header, we need to calculate the nonce used to encrypt the last block of the file, from which we would then derive nonce used to encrypt the hash
 	totalBlocks := uint64(math.Ceil(float64(decryptedSize) / float64(blockSize)))
 	d.nonce.add(totalBlocks)
 	d.nonce[len(d.nonce)-1] = lastBlockFlag
@@ -1275,6 +1275,8 @@ func wrapReaderAppendPlaintextHash(in io.Reader, hasher *hash.MultiHasher, encry
 		if err != nil {
 			return nil, err
 		}
+
+		encrypter.nonce[len(encrypter.nonce)-1] = lastBlockFlag // Make sure last byte of nonce is set to: `lastBlockFlag`. Normally we rely on nonce being set (incremented and last block flag set) correctly by the: `(fh *encrypter) Read(...)` function, however for empty file there is no block iteration in which case we override last block setting here.
 
 		encryptedHash := secretbox.Seal(nil, byteHash, encrypter.nonce.pointer(), (*[32]byte)(&encrypter.cek))
 		encryptedHashWithHeader := append(HashHeaderMD5, encryptedHash...)
