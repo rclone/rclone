@@ -1141,8 +1141,10 @@ func (o *Object) Hash(ctx context.Context, ht hash.Type) (string, error) {
 	}
 
 	// Objects encrypted with V1 doesn't support hash
+	// Since V2 supports hashes, we would like to skip hash verifications (It seems that: `operations.go:checkHashes()` is fine with empty string.) instead of failing with hash.ErrUnsupported, so both V1 and V2 objects can be used interchangeably
+	// @TODO Shall we return "" instead of hash.ErrUnsupported only if CipherVersionV2 is enabled globally in the setting? How to detect that? It seems that: `o.f.cipher.version` returns "1" for V1 object even if V2 is enabled for remote.
 	if d.c.version == CipherVersionV1 {
-		return "", hash.ErrUnsupported
+		return "", nil
 	}
 
 	// This reads the encrypted hash from the footer
