@@ -1,6 +1,6 @@
 % rclone(1) User Manual
 % Nick Craig-Wood
-% Sep 08, 2024
+% Sep 24, 2024
 
 # Rclone syncs your files to cloud storage
 
@@ -5259,7 +5259,9 @@ When running in background mode the user will have to stop the mount manually:
 
     # Linux
     fusermount -u /path/to/local/mount
-    # OS X
+    #... or on some systems
+    fusermount3 -u /path/to/local/mount
+    # OS X or Linux when using nfsmount
     umount /path/to/local/mount
 
 The umount operation can fail, for example when the mountpoint is busy.
@@ -5603,9 +5605,9 @@ Note that systemd runs mount units without any environment variables including
 `PATH` or `HOME`. This means that tilde (`~`) expansion will not work
 and you should provide `--config` and `--cache-dir` explicitly as absolute
 paths via rclone arguments.
-Since mounting requires the `fusermount` program, rclone will use the fallback
-PATH of `/bin:/usr/bin` in this scenario. Please ensure that `fusermount`
-is present on this PATH.
+Since mounting requires the `fusermount` or `fusermount3` program,
+rclone will use the fallback PATH of `/bin:/usr/bin` in this scenario.
+Please ensure that `fusermount`/`fusermount3` is present on this PATH.
 
 ## Rclone as Unix mount helper
 
@@ -6472,7 +6474,9 @@ When running in background mode the user will have to stop the mount manually:
 
     # Linux
     fusermount -u /path/to/local/mount
-    # OS X
+    #... or on some systems
+    fusermount3 -u /path/to/local/mount
+    # OS X or Linux when using nfsmount
     umount /path/to/local/mount
 
 The umount operation can fail, for example when the mountpoint is busy.
@@ -6816,9 +6820,9 @@ Note that systemd runs mount units without any environment variables including
 `PATH` or `HOME`. This means that tilde (`~`) expansion will not work
 and you should provide `--config` and `--cache-dir` explicitly as absolute
 paths via rclone arguments.
-Since mounting requires the `fusermount` program, rclone will use the fallback
-PATH of `/bin:/usr/bin` in this scenario. Please ensure that `fusermount`
-is present on this PATH.
+Since mounting requires the `fusermount` or `fusermount3` program,
+rclone will use the fallback PATH of `/bin:/usr/bin` in this scenario.
+Please ensure that `fusermount`/`fusermount3` is present on this PATH.
 
 ## Rclone as Unix mount helper
 
@@ -7734,7 +7738,7 @@ Flags to control the Remote Control API
 
 ```
       --rc                                 Enable the remote control server
-      --rc-addr stringArray                IPaddress:Port or :Port to bind server to (default ["localhost:5572"])
+      --rc-addr stringArray                IPaddress:Port or :Port to bind server to (default localhost:5572)
       --rc-allow-origin string             Origin which cross-domain request (CORS) can be executed from
       --rc-baseurl string                  Prefix for URLs - leave blank for root
       --rc-cert string                     TLS PEM key (concatenation of certificate and CA certificate)
@@ -16254,6 +16258,22 @@ so they take exactly the same form.
 
 The options set by environment variables can be seen with the `-vv` flag, e.g. `rclone version -vv`.
 
+Options that can appear multiple times (type `stringArray`) are
+treated slighly differently as environment variables can only be
+defined once. In order to allow a simple mechanism for adding one or
+many items, the input is treated as a [CSV encoded](https://godoc.org/encoding/csv)
+string. For example
+
+| Environment Variable | Equivalent options |
+|----------------------|--------------------|
+| `RCLONE_EXCLUDE="*.jpg"` | `--exclude "*.jpg"` |
+| `RCLONE_EXCLUDE="*.jpg,*.png"` | `--exclude "*.jpg"` `--exclude "*.png"` |
+| `RCLONE_EXCLUDE='"*.jpg","*.png"'` | `--exclude "*.jpg"` `--exclude "*.png"` |
+| `RCLONE_EXCLUDE='"/directory with comma , in it /**"'` | `--exclude "/directory with comma , in it /**" |
+
+If `stringArray` options are defined as environment variables **and**
+options on the command line then all the values will be used.
+
 ### Config file ###
 
 You can set defaults for values in the config file on an individual
@@ -20474,7 +20494,7 @@ Flags for general networking and HTTP stuff.
       --tpslimit float                     Limit HTTP transactions per second to this
       --tpslimit-burst int                 Max burst of transactions for --tpslimit (default 1)
       --use-cookies                        Enable session cookiejar
-      --user-agent string                  Set the user-agent to a specified string (default "rclone/v1.68.0")
+      --user-agent string                  Set the user-agent to a specified string (default "rclone/v1.68.1")
 ```
 
 
@@ -20623,7 +20643,7 @@ Flags to control the Remote Control API.
 
 ```
       --rc                                 Enable the remote control server
-      --rc-addr stringArray                IPaddress:Port or :Port to bind server to (default ["localhost:5572"])
+      --rc-addr stringArray                IPaddress:Port or :Port to bind server to (default localhost:5572)
       --rc-allow-origin string             Origin which cross-domain request (CORS) can be executed from
       --rc-baseurl string                  Prefix for URLs - leave blank for root
       --rc-cert string                     TLS PEM key (concatenation of certificate and CA certificate)
@@ -20659,7 +20679,7 @@ Flags to control the Remote Control API.
 Flags to control the Metrics HTTP endpoint..
 
 ```
-      --metrics-addr stringArray                IPaddress:Port or :Port to bind metrics server to (default [""])
+      --metrics-addr stringArray                IPaddress:Port or :Port to bind metrics server to
       --metrics-allow-origin string             Origin which cross-domain request (CORS) can be executed from
       --metrics-baseurl string                  Prefix for URLs - leave blank for root
       --metrics-cert string                     TLS PEM key (concatenation of certificate and CA certificate)
@@ -21153,21 +21173,18 @@ Backend-only flags (these can be set in the config file also).
       --pcloud-token string                                 OAuth Access Token as a JSON blob
       --pcloud-token-url string                             Token server url
       --pcloud-username string                              Your pcloud username
-      --pikpak-auth-url string                              Auth server URL
       --pikpak-chunk-size SizeSuffix                        Chunk size for multipart uploads (default 5Mi)
-      --pikpak-client-id string                             OAuth Client Id
-      --pikpak-client-secret string                         OAuth Client Secret
       --pikpak-description string                           Description of the remote
+      --pikpak-device-id string                             Device ID used for authorization
       --pikpak-encoding Encoding                            The encoding for the backend (default Slash,LtGt,DoubleQuote,Colon,Question,Asterisk,Pipe,BackSlash,Ctl,LeftSpace,RightSpace,RightPeriod,InvalidUtf8,Dot)
       --pikpak-hash-memory-limit SizeSuffix                 Files bigger than this will be cached on disk to calculate hash if required (default 10Mi)
       --pikpak-pass string                                  Pikpak password (obscured)
       --pikpak-root-folder-id string                        ID of the root folder
-      --pikpak-token string                                 OAuth Access Token as a JSON blob
-      --pikpak-token-url string                             Token server url
       --pikpak-trashed-only                                 Only show files that are in the trash
       --pikpak-upload-concurrency int                       Concurrency for multipart uploads (default 5)
       --pikpak-use-trash                                    Send files to the trash instead of deleting permanently (default true)
       --pikpak-user string                                  Pikpak username
+      --pikpak-user-agent string                            HTTP user agent for pikpak (default "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:129.0) Gecko/20100101 Firefox/129.0")
       --pixeldrain-api-key string                           API key for your pixeldrain account
       --pixeldrain-api-url string                           The API endpoint to connect to. In the vast majority of cases it's fine to leave (default "https://pixeldrain.com/api")
       --pixeldrain-description string                       Description of the remote
@@ -24740,6 +24757,38 @@ You can disable this with the [--s3-no-head](#s3-no-head) option - see
 there for more details.
 
 Setting this flag increases the chance for undetected upload failures.
+
+### Increasing performance
+
+#### Using server-side copy
+
+If you are copying objects between S3 buckets in the same region, you should
+use server-side copy. 
+This is much faster than downloading and re-uploading the objects, as no data is transferred.
+ 
+For rclone to use server-side copy, you must use the same remote for the source and destination.
+
+    rclone copy s3:source-bucket s3:destination-bucket
+
+When using server-side copy, the performance is limited by the rate at which rclone issues
+API requests to S3. 
+See below for how to increase the number of API requests rclone makes.
+
+#### Increasing the rate of API requests
+
+You can increase the rate of API requests to S3 by increasing the parallelism using `--transfers` and `--checkers`
+options.
+
+Rclone uses a very conservative defaults for these settings, as not all providers support high rates of requests.
+Depending on your provider, you can increase significantly the number of transfers and checkers.
+
+For example, with AWS S3, if you can increase the number of checkers to values like 200.
+If you are doing a server-side copy, you can also increase the number of transfers to 200.
+
+    rclone sync --transfers 200 --checkers 200 --checksum s3:source-bucket s3:destination-bucket
+
+You will need to experiment with these values to find the optimal settings for your setup.
+
 
 ### Versions
 
@@ -48038,68 +48087,29 @@ Properties:
 
 Here are the Advanced options specific to pikpak (PikPak).
 
-#### --pikpak-client-id
+#### --pikpak-device-id
 
-OAuth Client Id.
-
-Leave blank normally.
+Device ID used for authorization.
 
 Properties:
 
-- Config:      client_id
-- Env Var:     RCLONE_PIKPAK_CLIENT_ID
+- Config:      device_id
+- Env Var:     RCLONE_PIKPAK_DEVICE_ID
 - Type:        string
 - Required:    false
 
-#### --pikpak-client-secret
+#### --pikpak-user-agent
 
-OAuth Client Secret.
+HTTP user agent for pikpak.
 
-Leave blank normally.
+Defaults to "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:129.0) Gecko/20100101 Firefox/129.0" or "--pikpak-user-agent" provided on command line.
 
 Properties:
 
-- Config:      client_secret
-- Env Var:     RCLONE_PIKPAK_CLIENT_SECRET
+- Config:      user_agent
+- Env Var:     RCLONE_PIKPAK_USER_AGENT
 - Type:        string
-- Required:    false
-
-#### --pikpak-token
-
-OAuth Access Token as a JSON blob.
-
-Properties:
-
-- Config:      token
-- Env Var:     RCLONE_PIKPAK_TOKEN
-- Type:        string
-- Required:    false
-
-#### --pikpak-auth-url
-
-Auth server URL.
-
-Leave blank to use the provider defaults.
-
-Properties:
-
-- Config:      auth_url
-- Env Var:     RCLONE_PIKPAK_AUTH_URL
-- Type:        string
-- Required:    false
-
-#### --pikpak-token-url
-
-Token server url.
-
-Leave blank to use the provider defaults.
-
-Properties:
-
-- Config:      token_url
-- Env Var:     RCLONE_PIKPAK_TOKEN_URL
-- Type:        string
-- Required:    false
+- Default:     "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:129.0) Gecko/20100101 Firefox/129.0"
 
 #### --pikpak-root-folder-id
 
@@ -54601,6 +54611,25 @@ Options:
 
 
 # Changelog
+
+## v1.68.1 - 2024-09-24
+
+[See commits](https://github.com/rclone/rclone/compare/v1.68.0...v1.68.1)
+
+* Bug Fixes
+    * build: Fix docker release build (ttionya)
+    * doc fixes (Nick Craig-Wood, Pawel Palucha)
+    * fs
+        * Fix `--dump filters` not always appearing (Nick Craig-Wood)
+        * Fix setting `stringArray` config values from environment variables (Nick Craig-Wood)
+    * rc: Fix default value of `--metrics-addr` (Nick Craig-Wood)
+    * serve docker: Add missing `vfs-read-chunk-streams` option in docker volume driver (Divyam)
+* Onedrive
+    * Fix spurious "Couldn't decode error response: EOF" DEBUG (Nick Craig-Wood)
+* Pikpak
+    * Fix login issue where token retrieval fails (wiserain)
+* S3
+    * Fix rclone ignoring static credentials when `env_auth=true` (Nick Craig-Wood)
 
 ## v1.68.0 - 2024-09-08
 
