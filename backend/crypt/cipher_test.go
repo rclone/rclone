@@ -1229,7 +1229,7 @@ func TestNewEncrypterV2(t *testing.T) {
 	expectedMagicBytes := []byte{'R', 'C', 'L', 'O', 'N', 'E', 0x00, 0x01}
 	expectedWrappedCek, _ := hex.DecodeString("4a00a0325e6a3ee54c60b6a3ae2359f8c805fcc2b56a1f9f1364aff501553ec44d522d5a84c3b4ca")
 	expectedCiphertextWithAuth, _ := hex.DecodeString("3c82b21b5311907aa26b7d77acfe01342bbb8bd5d28a0c57f04f0dfe66fc65ab")
-	expectedReservedBytes := []byte{BlockCipherXSalsa20, 0x00, 0x00, 0x00}
+	expectedReservedBytes := fileReservedBytesV2
 
 	expectedHashHeader := HashHeaderMD5
 	expectedEncryptedHashWithAuth, _ := hex.DecodeString("72361bff7da6ad45fd3d63509b831e870d2d62e09684b903041b8832039a20d5")

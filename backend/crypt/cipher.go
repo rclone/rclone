@@ -37,13 +37,13 @@ const (
 	fileNonceSize       = 24
 	fileHeaderSize      = fileMagicSize + fileNonceSize
 
-	fileMagicV2         = "RCLONE\x00\x01"
-	fileMagicSizeV2     = len(fileMagicV2)
-	fileNonceSizeV2     = 23
-	fileReservedBytesV2 = 4
-	fileHeaderSizeV2    = fileMagicSizeV2 + fileNonceSizeV2 + fileWrappedCekSize + fileReservedBytesV2
-	fileCekSize         = 32
-	fileWrappedCekSize  = fileCekSize + 8 // Some overhead of AES RFC 3394 Key Wrapping
+	fileMagicV2             = "RCLONE\x00\x01"
+	fileMagicSizeV2         = len(fileMagicV2)
+	fileNonceSizeV2         = 23
+	fileReservedBytesV2Size = 4 // Make sure it matches the: `fileReservedBytesV2`
+	fileHeaderSizeV2        = fileMagicSizeV2 + fileNonceSizeV2 + fileWrappedCekSize + fileReservedBytesV2Size
+	fileCekSize             = 32
+	fileWrappedCekSize      = fileCekSize + 8 // Some overhead of AES RFC 3394 Key Wrapping
 
 	blockHeaderSize      = secretbox.Overhead
 	blockDataSize        = 64 * 1024
@@ -74,8 +74,9 @@ var (
 
 // Global variables
 var (
-	fileMagicBytes   = []byte(fileMagic)
-	fileMagicBytesV2 = []byte(fileMagicV2)
+	fileMagicBytes      = []byte(fileMagic)
+	fileMagicBytesV2    = []byte(fileMagicV2)
+	fileReservedBytesV2 = []byte{BlockCipherXSalsa20, 0x00, 0x00, 0x00} // Make sure it matches the: `fileReservedBytesV2Size`
 )
 
 // ReadSeekCloser is the interface of the read handles
@@ -826,7 +827,7 @@ func (c *Cipher) newEncrypter(in io.Reader, nonce *nonce, cek *cek) (*encrypter,
 		//	- not used,
 		//	- not used,
 		//	- not used
-		copy((*fh.buf)[c.getFileMagicSize()+c.getFileNonceSize()+fileWrappedCekSize:], []byte{BlockCipherXSalsa20, 0x00, 0x00, 0x00})
+		copy((*fh.buf)[c.getFileMagicSize()+c.getFileNonceSize()+fileWrappedCekSize:], fileReservedBytesV2)
 	}
 
 	return fh, nil
@@ -970,6 +971,8 @@ func (c *Cipher) newDecrypter(rc io.ReadCloser) (*decrypter, error) {
 
 		var wrappedCek wrappedCek
 		wrappedCek.fromBuf(combinedBuffer) // retrieve wrapped file encryption key
+
+		// After reading wrappedCek, combinedBuffer's last 4 bytes aren't used at the moment.
 
 		kek := fh.c.dataKey[:]
 		cipher, err := aes.NewCipher(kek)
