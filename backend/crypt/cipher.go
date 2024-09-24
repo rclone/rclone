@@ -1048,8 +1048,11 @@ func (fh *decrypter) fillBuffer() (err error) {
 		return ErrorEncryptedFileBadHeader
 	}
 
-	if fh.c.version == CipherVersionV2 && n < blockDataSize { // last block
+	isLastBlock := n < blockDataSize
+
+	if fh.c.version == CipherVersionV2 && isLastBlock { // last block
 		fh.nonce[len(fh.nonce)-1] = lastBlockFlag // Set last block flag at the last byte
+		n -= int(HashEncryptedSizeWithHeader)     // Skip last bytes with encrypted hash
 	}
 
 	// Decrypt the block using the nonce
