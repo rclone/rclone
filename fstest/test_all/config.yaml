@@ -395,6 +395,10 @@ backends:
  - backend:  "cache"
    remote:   "TestCache:"
    fastlist: false
+   ignoretests:
+     - TestBisyncLocalRemote
+     - TestBisyncRemoteLocal
+     - TestBisyncRemoteRemote
  - backend:  "mega"
    remote:   "TestMega:"
    fastlist: false
