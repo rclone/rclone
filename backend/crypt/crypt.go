@@ -7,7 +7,6 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"github.com/rclone/rclone/fs/object"
 	"io"
 	"math"
 	"path"
@@ -22,7 +21,7 @@ import (
 	"github.com/rclone/rclone/fs/config/obscure"
 	"github.com/rclone/rclone/fs/fspath"
 	"github.com/rclone/rclone/fs/hash"
-	//"github.com/rclone/rclone/fs/operations"
+	"github.com/rclone/rclone/fs/object"
 	"github.com/rclone/rclone/lib/readers"
 	"github.com/spatialcurrent/go-lazy/pkg/lazy"
 	"golang.org/x/crypto/nacl/secretbox"
@@ -496,8 +495,7 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 	return f.newObject(o), nil
 }
 
-// Copy of the above: NewObject but without EncryptFileName function calls.
-// Returns directly: *Object instead of its parent fs.Object, as we're not limited by the interface and can return more specific type
+// NewObjectEncryptedName, copy of the above: NewObject but without EncryptFileName function calls. Returns directly: *Object instead of its parent fs.Object, as we're not limited by the interface and can return more specific type
 func (f *Fs) NewObjectEncryptedName(ctx context.Context, encryptedRemote string) (*Object, error) {
 	o, err := f.Fs.NewObject(ctx, encryptedRemote)
 	if err != nil {
