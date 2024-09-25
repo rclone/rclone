@@ -94,7 +94,20 @@ func (s *Storage) _load() (err error) {
 func (s *Storage) Load() (err error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	return s._load()
+	err = s._load()
+
+	// TODO: Add flag --use-ssh-config
+	if err == nil {
+		sshCfg, err := LoadSshConfig()
+		if err != nil {
+			return err
+		}
+		if err := s.MergeSshConfig(*sshCfg); err != nil {
+			return err
+		}
+	}
+
+	return err
 }
 
 // Save the config to permanent storage, encrypting if necessary
