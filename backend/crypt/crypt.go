@@ -21,6 +21,7 @@ import (
 	"github.com/rclone/rclone/fs/config/obscure"
 	"github.com/rclone/rclone/fs/fspath"
 	"github.com/rclone/rclone/fs/hash"
+	"github.com/rclone/rclone/fs/object"
 	"github.com/rclone/rclone/lib/readers"
 	"github.com/spatialcurrent/go-lazy/pkg/lazy"
 	"golang.org/x/crypto/nacl/secretbox"
@@ -866,7 +867,7 @@ func (f *Fs) ComputeHash(ctx context.Context, o *Object, src fs.Object, hashType
 		return src.Hash(ctx, hashType)
 	}
 
-	d, err := f.getDecrypter(ctx, o)
+	d, err := f.getDecrypter(ctx, o, nil)
 	if err != nil {
 		return "", err
 	}
@@ -890,14 +891,14 @@ func (f *Fs) ComputeHash(ctx context.Context, o *Object, src fs.Object, hashType
 	return f.computeHashWithNonce(ctx, nonce, cek, src, hashType)
 }
 
-func (f *Fs) getDecrypter(ctx context.Context, o *Object) (*decrypter, error) {
+func (f *Fs) getDecrypter(ctx context.Context, o *Object, overrideCek *cek) (*decrypter, error) {
 	// Read the nonce - opening the file is sufficient to read the nonce in
 	// use a limited read so we only read the header
 	in, err := o.Object.Open(ctx, &fs.RangeOption{Start: 0, End: int64(max(fileHeaderSize, fileHeaderSizeV2)) - 1}) // We read longer of two header we support at the moment, so we can obtain `cek` in case object is encrypted using V2
 	if err != nil {
 		return nil, fmt.Errorf("failed to open object to read nonce: %w", err)
 	}
-	d, err := f.cipher.newDecrypter(in)
+	d, err := f.cipher.newDecrypter(in, overrideCek)
 	if err != nil {
 		_ = in.Close()
 		return nil, fmt.Errorf("failed to open object to read nonce: %w", err)
@@ -1069,7 +1070,7 @@ func (f *Fs) Command(ctx context.Context, name string, arg []string, opt map[str
 				return "", err
 			}
 
-			d, err := f.getDecrypter(ctx, &Object{Object: object})
+			d, err := f.getDecrypter(ctx, &Object{Object: object}, nil)
 			if err != nil {
 				return "", err
 			}
@@ -1077,6 +1078,25 @@ func (f *Fs) Command(ctx context.Context, name string, arg []string, opt map[str
 			out = append(out, hex.EncodeToString(d.cek[:]))
 		}
 		return out, nil
+	case "decrypt":
+		if len(arg)%3 != 0 {
+			return nil, errors.New("need sequence of 3 arguments")
+		}
+		for len(arg) > 0 {
+			remotePath, cekHex, localPath := arg[0], arg[1], arg[2]
+			arg = arg[3:]
+
+			cekBytes, err := hex.DecodeString(cekHex)
+			if err != nil {
+				return nil, err
+			}
+
+			err = f.decryptCmd(ctx, remotePath, ([fileCekSize]byte)(cekBytes), localPath)
+			if err != nil {
+				return nil, fmt.Errorf("failed copying %q to %q: %w", remotePath, localPath, err)
+			}
+		}
+		return nil, nil
 
 	default:
 		return nil, fs.ErrorCommandNotFound
@@ -1144,7 +1164,7 @@ func (o *Object) Hash(ctx context.Context, ht hash.Type) (string, error) {
 	}
 
 	// This reads nonce and cek from the header
-	d, err := o.f.getDecrypter(ctx, o)
+	d, err := o.f.getDecrypter(ctx, o, nil)
 	if err != nil {
 		return "", err
 	}
@@ -1213,12 +1233,15 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (rc io.Read
 
 	var openOptions []fs.OpenOption
 	var offset, limit int64 = 0, -1
+	var customCek *cek
 	for _, option := range options {
 		switch x := option.(type) {
 		case *fs.SeekOption:
 			offset = x.Offset
 		case *fs.RangeOption:
 			offset, limit = x.Decode(o.Size())
+		case *fs.CekOption:
+			customCek = (*cek)(x.Cek[:])
 		default:
 			// pass on Options to underlying open if appropriate
 			openOptions = append(openOptions, option)
@@ -1239,7 +1262,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (rc io.Read
 		}
 		newOpenOptions := append(openOptions, &fs.RangeOption{Start: underlyingOffset, End: end})
 		return o.Object.Open(ctx, newOpenOptions...)
-	}, offset, limit)
+	}, offset, limit, customCek)
 	if err != nil {
 		return nil, err
 	}
@@ -1323,6 +1346,55 @@ func wrapReaderAppendPlaintextHash(in io.Reader, hasher *hash.MultiHasher, encry
 		return hashEndReader, nil
 	})
 	return io.MultiReader(in, hashEndReaderLazy)
+}
+
+func (f *Fs) decryptCmd(ctx context.Context, encryptedFileName string, cek [fileCekSize]byte, dest string) (err error) { //  cek *cek
+	//encryptedFileName := f.EncryptFileName(fileName)
+	obj, err := f.NewObjectEncryptedName(ctx, encryptedFileName)
+	if err != nil {
+		return err
+	}
+
+	destDir, destLeaf, err := fspath.Split(dest)
+	if err != nil {
+		return err
+	}
+	if destLeaf == "" {
+		destLeaf = path.Base(obj.Remote())
+	}
+	if destDir == "" {
+		destDir = "."
+	}
+	dstFs, err := cache.Get(ctx, destDir)
+	if err != nil {
+		return err
+	}
+
+	// // This doesn't take in consideration the custom CEK or custom decrypter. Any easy way to provide it here?
+	// // If we've used: `operations.Copy` here there would be cyclic reference issue.
+	//_, err = operations.Copy(ctx, dstFs, nil, destLeaf, obj)
+	//if err != nil {
+	//	return fmt.Errorf("copy failed: %w", err)
+	//}
+
+	opt := &fs.CekOption{
+		Cek: cek,
+	}
+
+	rc, err := obj.Open(ctx, opt)
+	if err != nil {
+		return err
+	}
+
+	modTime := obj.ModTime(ctx)
+	size := obj.Size()
+	objInfo := object.NewStaticObjectInfo(destLeaf, modTime, size, true, nil, nil)
+	_, err = dstFs.Put(ctx, rc, objInfo, nil)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // ObjectInfo describes a wrapped fs.ObjectInfo for being the source

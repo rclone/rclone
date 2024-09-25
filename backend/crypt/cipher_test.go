@@ -1087,7 +1087,7 @@ func testEncryptDecrypt(t *testing.T, bufSize int, copySize int64) {
 	source := newRandomSource(copySize)
 	encrypted, err := c.newEncrypter(source, nil, nil)
 	assert.NoError(t, err)
-	decrypted, err := c.newDecrypter(io.NopCloser(encrypted))
+	decrypted, err := c.newDecrypter(io.NopCloser(encrypted), nil)
 	assert.NoError(t, err)
 	sink := newRandomSource(copySize)
 	n, err := io.CopyBuffer(sink, decrypted, buf)
@@ -1300,7 +1300,7 @@ func TestNewDecrypter(t *testing.T) {
 	c.cryptoRand = newRandomSource(1e8) // nodge the crypto rand generator
 
 	cd := newCloseDetector(bytes.NewBuffer(file0))
-	fh, err := c.newDecrypter(cd)
+	fh, err := c.newDecrypter(cd, nil)
 	assert.NoError(t, err)
 	// check nonce is in place
 	assert.Equal(t, file0[8:32], fh.nonce[:])
@@ -1309,7 +1309,7 @@ func TestNewDecrypter(t *testing.T) {
 	// Test error paths
 	for i := range file0 {
 		cd := newCloseDetector(bytes.NewBuffer(file0[:i]))
-		fh, err = c.newDecrypter(cd)
+		fh, err = c.newDecrypter(cd, nil)
 		assert.Nil(t, fh)
 		assert.EqualError(t, err, ErrorEncryptedFileTooShort.Error())
 		assert.Equal(t, 1, cd.closed)
@@ -1317,7 +1317,7 @@ func TestNewDecrypter(t *testing.T) {
 
 	er := &readers.ErrorReader{Err: errors.New("potato")}
 	cd = newCloseDetector(er)
-	fh, err = c.newDecrypter(cd)
+	fh, err = c.newDecrypter(cd, nil)
 	assert.Nil(t, fh)
 	assert.EqualError(t, err, "potato")
 	assert.Equal(t, 1, cd.closed)
@@ -1328,7 +1328,7 @@ func TestNewDecrypter(t *testing.T) {
 	for i := range fileMagic {
 		file0copy[i] ^= 0x1
 		cd := newCloseDetector(bytes.NewBuffer(file0copy))
-		fh, err := c.newDecrypter(cd)
+		fh, err := c.newDecrypter(cd, nil)
 		assert.Nil(t, fh)
 		if i == 7 { // This test accidentally swaps last byte and converts `fileMagic` (RCLONE\x00\x00") into `fileMagicV2` ("RCLONE\x00\x01") resulting in a different than: "ErrorEncryptedBadMagic" error.
 			assert.EqualError(t, err, ErrorEncryptedFileTooShort.Error())
@@ -1349,7 +1349,7 @@ func TestNewDecrypterErrUnexpectedEOF(t *testing.T) {
 	in1 := bytes.NewBuffer(file16)
 	in := io.NopCloser(io.MultiReader(in1, in2))
 
-	fh, err := c.newDecrypter(in)
+	fh, err := c.newDecrypter(in, nil)
 	assert.NoError(t, err)
 
 	n, err := io.CopyN(io.Discard, fh, 1e6)
@@ -1423,7 +1423,7 @@ func TestNewDecrypterSeekLimit(t *testing.T) {
 			if offset+limit > len(plaintext) {
 				continue
 			}
-			rc, err := c.DecryptDataSeek(context.Background(), open, int64(offset), int64(limit))
+			rc, err := c.DecryptDataSeek(context.Background(), open, int64(offset), int64(limit), nil)
 			assert.NoError(t, err)
 
 			check(rc, offset, limit)
@@ -1431,7 +1431,7 @@ func TestNewDecrypterSeekLimit(t *testing.T) {
 	}
 
 	// Try decoding it with a single open and lots of seeks
-	fh, err := c.DecryptDataSeek(context.Background(), open, 0, -1)
+	fh, err := c.DecryptDataSeek(context.Background(), open, 0, -1, nil)
 	assert.NoError(t, err)
 	for _, offset := range trials {
 		for _, limit := range limits {
@@ -1503,7 +1503,7 @@ func TestNewDecrypterSeekLimit(t *testing.T) {
 			callCount++
 			return open(ctx, underlyingOffset, underlyingLimit)
 		}
-		fh, err := c.DecryptDataSeek(context.Background(), testOpen, 0, -1)
+		fh, err := c.DecryptDataSeek(context.Background(), testOpen, 0, -1, nil)
 		assert.NoError(t, err)
 		gotOffset, err := fh.RangeSeek(context.Background(), test.offset, io.SeekStart, test.limit)
 		assert.NoError(t, err)
@@ -1571,7 +1571,7 @@ func TestDecrypterRead(t *testing.T) {
 	for i := 0; i < len(file16)-1; i++ {
 		what := fmt.Sprintf("truncating to %d/%d", i, len(file16))
 		cd := newCloseDetector(bytes.NewBuffer(file16[:i]))
-		fh, err := c.newDecrypter(cd)
+		fh, err := c.newDecrypter(cd, nil)
 		if i < fileHeaderSize {
 			assert.EqualError(t, err, ErrorEncryptedFileTooShort.Error(), what)
 			continue
@@ -1604,7 +1604,7 @@ func TestDecrypterRead(t *testing.T) {
 	in2 := &readers.ErrorReader{Err: errors.New("potato")}
 	in := io.MultiReader(in1, in2)
 	cd := newCloseDetector(in)
-	fh, err := c.newDecrypter(cd)
+	fh, err := c.newDecrypter(cd, nil)
 	assert.NoError(t, err)
 	_, err = io.ReadAll(fh)
 	assert.EqualError(t, err, "potato")
@@ -1616,7 +1616,7 @@ func TestDecrypterRead(t *testing.T) {
 	copy(file16copy, file16)
 	for i := range file16copy {
 		file16copy[i] ^= 0xFF
-		fh, err := c.newDecrypter(io.NopCloser(bytes.NewBuffer(file16copy)))
+		fh, err := c.newDecrypter(io.NopCloser(bytes.NewBuffer(file16copy)), nil)
 		if i < fileMagicSize {
 			assert.EqualError(t, err, ErrorEncryptedBadMagic.Error())
 			assert.Nil(t, fh)
@@ -1633,7 +1633,7 @@ func TestDecrypterRead(t *testing.T) {
 	copy(file16copy, file16)
 	file16copy[len(file16copy)-1] ^= 0xFF
 	c.passBadBlocks = true
-	fh, err = c.newDecrypter(io.NopCloser(bytes.NewBuffer(file16copy)))
+	fh, err = c.newDecrypter(io.NopCloser(bytes.NewBuffer(file16copy)), nil)
 	assert.NoError(t, err)
 	buf, err := io.ReadAll(fh)
 	assert.NoError(t, err)
@@ -1645,7 +1645,7 @@ func TestDecrypterClose(t *testing.T) {
 	assert.NoError(t, err)
 
 	cd := newCloseDetector(bytes.NewBuffer(file16))
-	fh, err := c.newDecrypter(cd)
+	fh, err := c.newDecrypter(cd, nil)
 	assert.NoError(t, err)
 	assert.Equal(t, 0, cd.closed)
 
@@ -1663,7 +1663,7 @@ func TestDecrypterClose(t *testing.T) {
 
 	// try again reading the file this time
 	cd = newCloseDetector(bytes.NewBuffer(file1))
-	fh, err = c.newDecrypter(cd)
+	fh, err = c.newDecrypter(cd, nil)
 	assert.NoError(t, err)
 	assert.Equal(t, 0, cd.closed)
 

@@ -916,7 +916,7 @@ type decrypter struct {
 }
 
 // newDecrypter creates a new file handle decrypting on the fly
-func (c *Cipher) newDecrypter(rc io.ReadCloser) (*decrypter, error) {
+func (c *Cipher) newDecrypter(rc io.ReadCloser, customCek *cek) (*decrypter, error) {
 	fh := &decrypter{
 		rc:      rc,
 		c:       c,
@@ -969,30 +969,34 @@ func (c *Cipher) newDecrypter(rc io.ReadCloser) (*decrypter, error) {
 
 		combinedBuffer := append(lastByte, readBuf...)
 
-		var wrappedCek wrappedCek
-		wrappedCek.fromBuf(combinedBuffer) // retrieve wrapped file encryption key
+		if customCek != nil { // This satisfy requirements of `rclone backend decrypt` where cek is externally provided to a file. There is a "sharing file" use case where user may want to decrypt a file without possessing master key required to unwrap CEK. It's possible of sender provides them the unwrapped CEK.
+			fh.cek = *customCek
+		} else {
+			var wrappedCek wrappedCek
+			wrappedCek.fromBuf(combinedBuffer) // retrieve wrapped file encryption key
 
-		// After reading wrappedCek, combinedBuffer's last 4 bytes aren't used at the moment.
+			// After reading wrappedCek, combinedBuffer's last 4 bytes aren't used at the moment.
 
-		kek := fh.c.dataKey[:]
-		cipher, err := aes.NewCipher(kek)
-		if err != nil {
-			return nil, fh.finishAndClose(err)
+			kek := fh.c.dataKey[:]
+			cipher, err := aes.NewCipher(kek)
+			if err != nil {
+				return nil, fh.finishAndClose(err)
+			}
+
+			fileKey, err := keywrap.Unwrap(cipher, wrappedCek[:])
+			if err != nil {
+				return nil, fh.finishAndClose(ErrorEncryptedCekInvalid)
+			}
+
+			fh.cek = [32]byte(fileKey)
 		}
-
-		fileKey, err := keywrap.Unwrap(cipher, wrappedCek[:])
-		if err != nil {
-			return nil, fh.finishAndClose(ErrorEncryptedCekInvalid)
-		}
-
-		fh.cek = [32]byte(fileKey)
 	}
 
 	return fh, nil
 }
 
 // newDecrypterSeek creates a new file handle decrypting on the fly
-func (c *Cipher) newDecrypterSeek(ctx context.Context, open OpenRangeSeek, offset, limit int64) (fh *decrypter, err error) {
+func (c *Cipher) newDecrypterSeek(ctx context.Context, open OpenRangeSeek, offset, limit int64, customCek *cek) (fh *decrypter, err error) {
 	var rc io.ReadCloser
 	doRangeSeek := false
 	setLimit := false
@@ -1014,7 +1018,7 @@ func (c *Cipher) newDecrypterSeek(ctx context.Context, open OpenRangeSeek, offse
 		return nil, err
 	}
 	// Open the stream which fills in the nonce
-	fh, err = c.newDecrypter(rc)
+	fh, err = c.newDecrypter(rc, customCek)
 	if err != nil {
 		return nil, err
 	}
@@ -1283,7 +1287,7 @@ func (fh *decrypter) finishAndClose(err error) error {
 
 // DecryptData decrypts the data stream
 func (c *Cipher) DecryptData(rc io.ReadCloser) (io.ReadCloser, error) {
-	out, err := c.newDecrypter(rc)
+	out, err := c.newDecrypter(rc, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -1295,8 +1299,8 @@ func (c *Cipher) DecryptData(rc io.ReadCloser) (io.ReadCloser, error) {
 // The open function must return a ReadCloser opened to the offset supplied.
 //
 // You must use this form of DecryptData if you might want to Seek the file handle
-func (c *Cipher) DecryptDataSeek(ctx context.Context, open OpenRangeSeek, offset, limit int64) (ReadSeekCloser, error) {
-	out, err := c.newDecrypterSeek(ctx, open, offset, limit)
+func (c *Cipher) DecryptDataSeek(ctx context.Context, open OpenRangeSeek, offset, limit int64, customCek *cek) (ReadSeekCloser, error) {
+	out, err := c.newDecrypterSeek(ctx, open, offset, limit, customCek)
 	if err != nil {
 		return nil, err
 	}
