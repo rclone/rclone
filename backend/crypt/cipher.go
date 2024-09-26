@@ -1060,6 +1060,10 @@ func (fh *decrypter) fillBuffer() (err error) {
 	if fh.c.version == CipherVersionV2 && isLastBlock { // last block
 		fh.nonce[len(fh.nonce)-1] = lastBlockFlag // Set last block flag at the last byte
 		n -= int(HashEncryptedSizeWithHeader)     // Skip last bytes with encrypted hash
+
+		if n == 0 { // If we subtract footer and end up with no data to decrypt, let's return EOF instead
+			return err
+		}
 	}
 
 	// Decrypt the block using the nonce
