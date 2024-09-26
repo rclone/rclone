@@ -156,6 +156,8 @@ func NewFs(ctx context.Context, name string, root string, m configmap.Mapper) (f
 	if err != nil {
 		return nil, fmt.Errorf("failed to create Cloudinary client: %w", err)
 	}
+	cld.Admin.Client = *fshttp.NewClient(ctx)
+	cld.Upload.Client = *fshttp.NewClient(ctx)
 	if opt.UploadPrefix != "" {
 		cld.Config.API.UploadPrefix = opt.UploadPrefix
 	}
@@ -646,7 +648,6 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 	if err != nil {
 		return nil, fmt.Errorf("failed download of \"%s\": %w", o.url, err)
 	}
-
 	return resp.Body, err
 }
 
