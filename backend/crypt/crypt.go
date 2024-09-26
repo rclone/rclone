@@ -1158,10 +1158,10 @@ func (o *Object) Size() int64 {
 // Hash returns the selected checksum of the file
 // If no checksum is available it returns ""
 func (o *Object) Hash(ctx context.Context, ht hash.Type) (string, error) {
-	// Immediate ErrUnsupported if `CipherVersionV1` is used (as used in the config), without the HTTP call (getDecrypter). Commented out, as we want to detect cipher version of a specific object instead of relying on global config.
-	//if (o.f.cipher.version == CipherVersionV1) {
-	//	return "", hash.ErrUnsupported
-	//}
+	// Immediate ErrUnsupported if `CipherVersionV1` is used (as used in the config). We would try to detect the individual's object cipher version if cipher in the config is set to at least V2
+	if o.f.opt.CipherVersion == CipherVersionV1 {
+		return "", hash.ErrUnsupported
+	}
 
 	// This reads nonce and cek from the header
 	d, err := o.f.getDecrypter(ctx, o, nil)
@@ -1169,9 +1169,7 @@ func (o *Object) Hash(ctx context.Context, ht hash.Type) (string, error) {
 		return "", err
 	}
 
-	// Objects encrypted with V1 doesn't support hash
-	// Since V2 supports hashes, we would like to skip hash verifications (It seems that: `operations.go:checkHashes()` is fine with empty string.) instead of failing with hash.ErrUnsupported, so both V1 and V2 objects can be used interchangeably
-	// @TODO Shall we return "" instead of hash.ErrUnsupported only if CipherVersionV2 is enabled globally in the setting? How to detect that? It seems that: `o.f.cipher.version` returns "1" for V1 object even if V2 is enabled for remote.
+	// Even if V2 cipher is enabled in the config that doesn't make V1 objects support hashing, so we return "" to skip hash verification.
 	if d.c.version == CipherVersionV1 {
 		return "", nil
 	}
