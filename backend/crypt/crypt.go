@@ -495,7 +495,7 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 	return f.newObject(o), nil
 }
 
-// NewObjectEncryptedName, copy of the above: NewObject but without EncryptFileName function calls. Returns directly: *Object instead of its parent fs.Object, as we're not limited by the interface and can return more specific type
+// NewObjectEncryptedName - copy of the above: NewObject but without EncryptFileName function calls. Returns directly: *Object instead of its parent fs.Object, as we're not limited by the interface and can return more specific type
 func (f *Fs) NewObjectEncryptedName(ctx context.Context, encryptedRemote string) (*Object, error) {
 	o, err := f.Fs.NewObject(ctx, encryptedRemote)
 	if err != nil {
