@@ -1031,6 +1031,24 @@ Usage Example:
     rclone rc backend/command command=show-cek fs=crypt: encryptedfile1 [encryptedfile2...]
 `,
 	},
+	{
+		Name:  "decrypt",
+		Short: "Decrypt filepath using CEK",
+		Long: `Decrypts file given encrypted filepath and content encryption key (CEK) and saves to local path.
+'crypt:' configuration must point to remote where encrypted file is present, however password, password2 and salt 
+are irrelevant, since this command will use CEK to decrypt file. If resource was stored with name encryption enabled, 
+the encrypted filepath can be obtained using 'decode' command.
+
+In order to obtain CEK you can use: 'show-cek' command, however this needs valid password, password2 and salt configuration.
+
+In a typical scenario you would be given encrypted file path and CEK, so you can decrypt file on your end.
+
+Only V2 encrypted objects are supported.
+
+Usage Example:
+    rclone backend decrypt crypt: encryptedfilepath1 cek1 localpath1 [encryptedfilepath2...]
+`,
+	},
 }
 
 // Command the backend to run a named command
