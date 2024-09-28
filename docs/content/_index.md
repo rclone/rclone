@@ -132,6 +132,7 @@ WebDAV or S3, that work out of the box.)
 {{< provider name="Hetzner Storage Box" home="https://www.hetzner.com/storage/storage-box" config="/sftp/#hetzner-storage-box" >}}
 {{< provider name="HiDrive" home="https://www.strato.de/cloud-speicher/" config="/hidrive/" >}}
 {{< provider name="HTTP" home="https://en.wikipedia.org/wiki/Hypertext_Transfer_Protocol" config="/http/" >}}
+{{< provider name="iCloud Drive" home="https://icloud.com/" config="/iclouddrive/" >}}
 {{< provider name="ImageKit" home="https://imagekit.io" config="/imagekit/" >}}
 {{< provider name="Internet Archive" home="https://archive.org/" config="/internetarchive/" >}}
 {{< provider name="Jottacloud" home="https://www.jottacloud.com/en/" config="/jottacloud/" >}}

@@ -503,3 +503,6 @@ backends:
  - backend:  "ulozto"
    remote:   "TestUlozto:"
    fastlist: false
+ - backend:  "iclouddrive"
+   remote:   "TestICloudDrive:"
+   fastlist: false
