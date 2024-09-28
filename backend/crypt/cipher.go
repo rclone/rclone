@@ -208,6 +208,7 @@ type Cipher struct {
 	passBadBlocks   bool // if set passed bad blocks as zeroed blocks
 	encryptedSuffix string
 	version         string
+	exactSize       bool
 }
 
 // newCipher initialises the cipher.  If salt is "" then it uses a built in salt val
@@ -252,29 +253,33 @@ func (c *Cipher) setCipherVersion(cipherVersion string) {
 	c.version = cipherVersion
 }
 
-func (c *Cipher) getFileHeaderSize() int {
-	if c.version == CipherVersionV2 {
+func (c *Cipher) setExactSize(exact bool) {
+	c.exactSize = exact
+}
+
+func getFileHeaderSize(cipherVersion string) int {
+	if cipherVersion == CipherVersionV2 {
 		return fileHeaderSizeV2
 	}
 	return fileHeaderSize
 }
 
-func (c *Cipher) getFileMagicSize() int {
-	if c.version == CipherVersionV2 {
+func getFileMagicSize(cipherVersion string) int {
+	if cipherVersion == CipherVersionV2 {
 		return fileMagicSizeV2
 	}
 	return fileMagicSize
 }
 
-func (c *Cipher) getFileMagicBytes() []byte {
-	if c.version == CipherVersionV2 {
+func getFileMagicBytes(cipherVersion string) []byte {
+	if cipherVersion == CipherVersionV2 {
 		return fileMagicBytesV2
 	}
 	return fileMagicBytes
 }
 
-func (c *Cipher) getFileNonceSize() int { // Effective nonce size. Both V1 and V2 use 24 bytes, but V2 consists 23+1 bytes nonce, where last byte is calculated dynamically depending if the processing block is last (truncation protection)
-	if c.version == CipherVersionV2 {
+func getFileNonceSize(cipherVersion string) int { // Effective nonce size. Both V1 and V2 use 24 bytes, but V2 consists 23+1 bytes nonce, where last byte is calculated dynamically depending if the processing block is last (truncation protection)
+	if cipherVersion == CipherVersionV2 {
 		return fileNonceSizeV2
 	}
 	return fileNonceSize
@@ -775,22 +780,22 @@ func (c *Cipher) newEncrypter(in io.Reader, nonce *nonce, cek *cek) (*encrypter,
 		c:       c,
 		buf:     c.getBlock(),
 		readBuf: c.getBlock(),
-		bufSize: c.getFileHeaderSize(),
+		bufSize: getFileHeaderSize(c.version),
 	}
 	// Initialise nonce
 	if nonce != nil {
 		fh.nonce = *nonce
 	} else {
-		err := fh.nonce.fromReader(c.cryptoRand, c.getFileNonceSize())
+		err := fh.nonce.fromReader(c.cryptoRand, getFileNonceSize(c.version))
 		if err != nil {
 			return nil, err
 		}
 	}
 	// Copy magic into buffer
-	copy((*fh.buf)[:], c.getFileMagicBytes())
+	copy((*fh.buf)[:], getFileMagicBytes(c.version))
 
 	// Copy nonce into buffer
-	copy((*fh.buf)[c.getFileMagicSize():], fh.nonce[:c.getFileNonceSize()])
+	copy((*fh.buf)[getFileMagicSize(c.version):], fh.nonce[:getFileNonceSize(c.version)])
 
 	if c.version == CipherVersionV1 {
 		fh.cek = fh.c.dataKey
@@ -820,14 +825,14 @@ func (c *Cipher) newEncrypter(in io.Reader, nonce *nonce, cek *cek) (*encrypter,
 		// WRAP KEY - END
 
 		// Copy file encryption key
-		copy((*fh.buf)[c.getFileMagicSize()+c.getFileNonceSize():], wrappedCek)
+		copy((*fh.buf)[getFileMagicSize(c.version)+getFileNonceSize(c.version):], wrappedCek)
 
 		// Copy 4 reserved bytes:
 		//	- cipher type (XSalsa20, AES-GCM etc.),
 		//	- not used,
 		//	- not used,
 		//	- not used
-		copy((*fh.buf)[c.getFileMagicSize()+c.getFileNonceSize()+fileWrappedCekSize:], fileReservedBytesV2)
+		copy((*fh.buf)[getFileMagicSize(c.version)+getFileNonceSize(c.version)+fileWrappedCekSize:], fileReservedBytesV2)
 	}
 
 	return fh, nil
@@ -900,19 +905,20 @@ func (c *Cipher) EncryptData(in io.Reader) (io.Reader, error) {
 
 // decrypter decrypts an io.ReaderCloser on the fly
 type decrypter struct {
-	mu           sync.Mutex
-	rc           io.ReadCloser
-	nonce        nonce
-	initialNonce nonce
-	cek          [32]byte // File contents decryption key
-	c            *Cipher
-	buf          *[blockSize]byte
-	readBuf      *[blockSize]byte
-	bufIndex     int
-	bufSize      int
-	err          error
-	limit        int64 // limit of bytes to read, -1 for unlimited
-	open         OpenRangeSeek
+	mu            sync.Mutex
+	rc            io.ReadCloser
+	nonce         nonce
+	initialNonce  nonce
+	cek           [32]byte // File contents decryption key
+	c             *Cipher
+	buf           *[blockSize]byte
+	readBuf       *[blockSize]byte
+	bufIndex      int
+	bufSize       int
+	err           error
+	limit         int64 // limit of bytes to read, -1 for unlimited
+	open          OpenRangeSeek
+	cipherVersion string
 }
 
 // newDecrypter creates a new file handle decrypting on the fly
@@ -938,20 +944,20 @@ func (c *Cipher) newDecrypter(rc io.ReadCloser, customCek *cek) (*decrypter, err
 	isMagicHeaderV2 := bytes.Equal(readBuf[:fileMagicSizeV2], fileMagicBytesV2)
 
 	if isMagicHeader {
-		c.setCipherVersion(CipherVersionV1)
+		fh.cipherVersion = CipherVersionV1
 		fh.cek = fh.c.dataKey
 	} else if isMagicHeaderV2 {
-		c.setCipherVersion(CipherVersionV2)
+		fh.cipherVersion = CipherVersionV2
 	} else {
 		return nil, fh.finishAndClose(ErrorEncryptedBadMagic)
 	}
 
-	offsetStart := c.getFileMagicSize()
-	offsetEnd := offsetStart + c.getFileNonceSize()
-	fh.nonce.fromBuf(readBuf[offsetStart:offsetEnd], c.getFileNonceSize())
+	offsetStart := getFileMagicSize(fh.cipherVersion)
+	offsetEnd := offsetStart + getFileNonceSize(fh.cipherVersion)
+	fh.nonce.fromBuf(readBuf[offsetStart:offsetEnd], getFileNonceSize(fh.cipherVersion))
 	fh.initialNonce = fh.nonce
 
-	if c.version == CipherVersionV2 { // V2 cipher has a longer header, so after reading V1 header, we need to read remaining bytes from the reader to finialize V2 cipher initialization
+	if fh.cipherVersion == CipherVersionV2 { // V2 cipher has a longer header, so after reading V1 header, we need to read remaining bytes from the reader to finialize V2 cipher initialization
 		remainingBytesFromV1Buffer := fileNonceSize - fileNonceSizeV2 // V2 nonce is 1 byte shorter, so by reading the V1 header size (fileHeaderSize - 32 bytes), we've actually read 1 byte of wrapped CEK. We need to preserve that byte, so we prepend to next: `combinedBuffer`
 		lastByte := readBuf[len(readBuf)-remainingBytesFromV1Buffer:]
 
@@ -1006,12 +1012,12 @@ func (c *Cipher) newDecrypterSeek(ctx context.Context, open OpenRangeSeek, offse
 		rc, err = open(ctx, 0, -1)
 	} else if offset == 0 {
 		// If no offset open the header + limit worth of the file
-		_, underlyingLimit, _, _ := calculateUnderlying(offset, limit, c.getFileHeaderSize())
-		rc, err = open(ctx, 0, int64(c.getFileHeaderSize())+underlyingLimit)
+		_, underlyingLimit, _, _ := calculateUnderlying(offset, limit, getFileHeaderSize(c.version)) // Is `c.version` (config) right value here? We get the actual value from decrypter couple lines below: `fh.cipherVersion`
+		rc, err = open(ctx, 0, int64(getFileHeaderSize(c.version))+underlyingLimit)                  // Check `c.version` vs `fh.cipherVersion`
 		setLimit = true
 	} else {
 		// Otherwise just read the header to start with
-		rc, err = open(ctx, 0, int64(c.getFileHeaderSize()))
+		rc, err = open(ctx, 0, int64(getFileHeaderSize(c.version))) // Check `c.version` vs `fh.cipherVersion`
 		doRangeSeek = true
 	}
 	if err != nil {
@@ -1057,7 +1063,7 @@ func (fh *decrypter) fillBuffer() (err error) {
 
 	isLastBlock := n < blockDataSize
 
-	if fh.c.version == CipherVersionV2 && isLastBlock { // last block
+	if fh.cipherVersion == CipherVersionV2 && isLastBlock { // last block
 		fh.nonce[len(fh.nonce)-1] = lastBlockFlag // Set last block flag at the last byte
 		n -= int(HashEncryptedSizeWithHeader)     // Skip last bytes with encrypted hash
 
@@ -1177,7 +1183,7 @@ func (fh *decrypter) RangeSeek(ctx context.Context, offset int64, whence int, li
 		return 0, fh.err
 	}
 
-	underlyingOffset, underlyingLimit, discard, blocks := calculateUnderlying(offset, limit, fh.c.getFileHeaderSize())
+	underlyingOffset, underlyingLimit, discard, blocks := calculateUnderlying(offset, limit, getFileHeaderSize(fh.cipherVersion))
 
 	// Move the nonce on the correct number of blocks from the start
 	fh.nonce = fh.initialNonce
@@ -1310,7 +1316,7 @@ func (c *Cipher) DecryptDataSeek(ctx context.Context, open OpenRangeSeek, offset
 // EncryptedSize calculates the size of the data when encrypted
 func (c *Cipher) EncryptedSize(size int64) int64 {
 	blocks, residue := size/blockDataSize, size%blockDataSize
-	encryptedSize := int64(c.getFileHeaderSize()) + blocks*(blockHeaderSize+blockDataSize)
+	encryptedSize := int64(getFileHeaderSize(c.version)) + blocks*(blockHeaderSize+blockDataSize)
 
 	if c.version == CipherVersionV2 {
 		encryptedSize += HashEncryptedSizeWithHeader
@@ -1323,28 +1329,24 @@ func (c *Cipher) EncryptedSize(size int64) int64 {
 }
 
 // DecryptedSize calculates the size of the data when decrypted
-func (c *Cipher) DecryptedSize(size int64) (int64, error) {
-	size -= int64(c.getFileHeaderSize()) // WARNING: DecryptedSize might return invalid value before `newDecrypter()` is called if V2 cipher is enabled and user tries to read V1 object. Eventually `newDecrypter()` will be called, which will then call: `setCipherVersion()` which would then configure: `getFileHeaderSize()` effectively making subsequent calls to `DecryptedSize()` return exact value.
-	if c.version == CipherVersionV1 && size < 0 {
-		return 0, ErrorEncryptedFileTooShort
+func (c *Cipher) DecryptedSize(size int64, cipherVersion string) (int64, error) {
+
+	var headerSize int
+	if cipherVersion == CipherVersionV2 {
+		headerSize = fileHeaderSizeV2
+	} else {
+		headerSize = fileHeaderSize
 	}
 
-	if c.version == CipherVersionV2 {
+	size -= int64(headerSize)
+
+	if cipherVersion == CipherVersionV2 { // Footer
 		size -= HashEncryptedSizeWithHeader
 	}
 
-	v1CipherOverhead := int64(fileHeaderSize)
-	v2CipherOverhead := int64(fileHeaderSizeV2) + HashEncryptedSizeWithHeader
-	sizeDiff := v1CipherOverhead - v2CipherOverhead
-	// Below check was "loosened" to prevent code from return ErrorEncryptedFileTooShort when reading small `CipherVersionV1` encrypted object when `CipherVersionV2` is enabled as a config.
-	// If V2 cipher is enabled then we assume file was encrypted using V2 header (but this is just assumption we can't be sure until `setCipherVersion()` is called).
-	// V2 format has longer header and introduces concept of a footer. If we by any chance read small V1 object and assume it's a V2 header we may end up getting the negative decrypted size and trigger this check - preventing reading the file.
-	// The `setCipherVersion()` is called once we actually read the file contents.
-	// @TODO Don't use: "loosened" approach once: `setCipherVersion()` is called. Distinct implicit (assumed from config) cipher version assumption and explicit (set by setCipherVersion())
-	if c.version == CipherVersionV2 && size < sizeDiff {
+	if size < 0 {
 		return 0, ErrorEncryptedFileTooShort
 	}
-
 	blocks, residue := size/blockSize, size%blockSize
 	decryptedSize := blocks * blockDataSize
 	if residue != 0 {
@@ -1354,6 +1356,32 @@ func (c *Cipher) DecryptedSize(size int64) (int64, error) {
 		}
 	}
 	decryptedSize += residue
+	return decryptedSize, nil
+}
+
+// DecryptedSizeExact calculates the size of the data when decrypted by issuing HTTP request
+func (c *Cipher) DecryptedSizeExact(o *Object) (int64, error) {
+	ctx := context.Background() // @TODO Can we use this context or do we need to pass somehow the context from the top
+
+	// Return cached
+	if o.decryptedSize != -1 {
+		return o.decryptedSize, nil
+	}
+
+	// Get cipher version
+	d, err := o.f.getDecrypter(ctx, o, nil)
+	if err != nil {
+		return 0, err
+	}
+
+	encryptedSize := o.Object.Size()
+	decryptedSize, err := c.DecryptedSize(encryptedSize, d.cipherVersion)
+	if err != nil {
+		return 0, err
+	}
+
+	// Cache decrypted size
+	o.decryptedSize = decryptedSize
 	return decryptedSize, nil
 }
 

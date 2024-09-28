@@ -206,6 +206,22 @@ when the path length is critical.`,
 				},
 				Advanced: true,
 			},
+			{
+				Name:    "exact_size",
+				Help:    `Detect object decrypted size by reading a header. This isn't normally needed except rare cases where user would like to migrate cipher versions.'`,
+				Default: false,
+				Examples: []fs.OptionExample{
+					{
+						Value: "true",
+						Help:  "Get size according to object's cipher version. Requires HTTP call for every object",
+					},
+					{
+						Value: "false",
+						Help:  "Get size according to cipher version configuration.",
+					},
+				},
+				Advanced: true,
+			},
 		},
 	})
 }
@@ -241,6 +257,7 @@ func newCipherForConfig(opt *Options) (*Cipher, error) {
 	cipher.setEncryptedSuffix(opt.Suffix)
 	cipher.setPassBadBlocks(opt.PassBadBlocks)
 	cipher.setCipherVersion(opt.CipherVersion)
+	cipher.setExactSize(opt.ExactSize)
 	return cipher, nil
 }
 
@@ -347,6 +364,7 @@ type Options struct {
 	Suffix                  string `config:"suffix"`
 	StrictNames             bool   `config:"strict_names"`
 	CipherVersion           string `config:"cipher_version"`
+	ExactSize               bool   `config:"exact_size"`
 }
 
 // Fs represents a wrapped fs.Fs
@@ -1126,13 +1144,15 @@ func (f *Fs) Command(ctx context.Context, name string, arg []string, opt map[str
 // This decrypts the remote name and decrypts the data
 type Object struct {
 	fs.Object
-	f *Fs
+	f             *Fs
+	decryptedSize int64
 }
 
 func (f *Fs) newObject(o fs.Object) *Object {
 	return &Object{
-		Object: o,
-		f:      f,
+		Object:        o,
+		f:             f,
+		decryptedSize: -1,
 	}
 }
 
@@ -1165,7 +1185,12 @@ func (o *Object) Size() int64 {
 	size := o.Object.Size()
 	if !o.f.opt.NoDataEncryption {
 		var err error
-		size, err = o.f.cipher.DecryptedSize(size)
+		if o.f.opt.ExactSize {
+			size, err = o.f.cipher.DecryptedSizeExact(o)
+		} else {
+			size, err = o.f.cipher.DecryptedSize(size, o.f.cipher.version)
+		}
+
 		if err != nil {
 			fs.Debugf(o, "Bad size for decrypt: %v", err)
 		}
@@ -1188,7 +1213,7 @@ func (o *Object) Hash(ctx context.Context, ht hash.Type) (string, error) {
 	}
 
 	// Objects encrypted with V1 doesn't support hash. Even if V2 cipher is enabled in the config, that doesn't make existing V1 objects support hashing, so we return "" to skip hash verification.
-	if d.c.version == CipherVersionV1 {
+	if d.cipherVersion == CipherVersionV1 {
 		return "", nil
 	}
 
@@ -1213,7 +1238,13 @@ func (o *Object) Hash(ctx context.Context, ht hash.Type) (string, error) {
 	}
 
 	// We need to get the decrypted size, to workout the amount of blocks, so we can workout the nonce that was used to encrypt the hash.
-	decryptedSize, err := o.f.cipher.DecryptedSize(encryptedSize)
+	var decryptedSize int64
+	if d.c.exactSize {
+		decryptedSize, err = o.f.cipher.DecryptedSizeExact(o)
+	} else {
+		decryptedSize, err = o.f.cipher.DecryptedSize(encryptedSize, d.cipherVersion)
+	}
+
 	if err != nil {
 		return "", err
 	}

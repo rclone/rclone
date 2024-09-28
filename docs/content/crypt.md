@@ -868,6 +868,37 @@ then rclone uses an internal one.
 encrypted data.  For full protection against this you should always use
 a salt.
 
+### V2 cipher
+In `v1.69.0` Rclone introduced new cipher version (V2) which supports secure file sharing,
+protection against file truncation and support for MD5 hashes which are now calculated 
+and stored encrypted in the file footer.
+
+#### Migration
+Using two versions simultaneously in a single location isn't supported
+and may lead to unintended consequences.
+
+It is recommended to migrate data to a different remote, so in case something goes wrong, source remote
+remains unaffected and acts as a backup.
+
+Before V2 cipher is enabled in the config (`cipher_version` flag), user should migrate all of their
+existing V1 encrypted data.
+
+##### In-place migration
+It should only be used for data that's already backed up or as a last resort. There isn't much room
+for error and if something goes wrong, data loss may happen.
+
+In order to migrate objects from V1 to V2 within a same `crypt` back-end (e.g. `cryptA`):
+- clone configuration of your `cryptA` to `cryptA_clone`,
+- set `cipher_version = 2` in your `cryptA_clone`,
+- run `copy --no-check-dest --crypt-exact-size cryptA: cryptA_clone:`
+
+Command: `--no-check-dest` will make sure that file gets copied even if it's seemingly the same.
+
+Command: `--crypt-exact-size` issues calculates size based on object's cipher version detection.
+It shouldn't be used on a daily basis as it requires additional HTTP call for every single object.
+Normally cipher version is assumed from the config, but this isn't reliable during migration which 
+may already have mixed cipher versions temporarily.
+
 ## SEE ALSO
 
 * [rclone cryptdecode](/commands/rclone_cryptdecode/)    - Show forward/reverse mapping of encrypted filenames

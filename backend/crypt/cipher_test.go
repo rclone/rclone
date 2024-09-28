@@ -701,7 +701,7 @@ func TestEncryptedSize(t *testing.T) {
 	} {
 		actual := c.EncryptedSize(test.in)
 		assert.Equal(t, test.expected, actual, fmt.Sprintf("Testing %d", test.in))
-		recovered, err := c.DecryptedSize(test.expected)
+		recovered, err := c.DecryptedSize(test.expected, CipherVersionV1)
 		assert.NoError(t, err, fmt.Sprintf("Testing reverse %d", test.expected))
 		assert.Equal(t, test.in, recovered, fmt.Sprintf("Testing reverse %d", test.expected))
 	}
@@ -723,7 +723,7 @@ func TestDecryptedSize(t *testing.T) {
 		{32 + 16 + 65536 + 1, ErrorEncryptedFileBadHeader},
 		{32 + 16 + 65536 + 16, ErrorEncryptedFileBadHeader},
 	} {
-		_, actualErr := c.DecryptedSize(test.in)
+		_, actualErr := c.DecryptedSize(test.in, CipherVersionV1)
 		assert.Equal(t, test.expectedErr, actualErr, fmt.Sprintf("Testing %d", test.in))
 	}
 }
