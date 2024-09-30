@@ -120,6 +120,7 @@ var (
 		"text/html":                 ".html",
 		"text/plain":                ".txt",
 		"text/tab-separated-values": ".tsv",
+		"text/markdown":             ".md",
 	}
 	_mimeTypeToExtensionLinks = map[string]string{
 		"application/x-link-desktop": ".desktop",
