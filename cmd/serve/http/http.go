@@ -114,6 +114,16 @@ type HTTP struct {
 	ctx    context.Context // for global config
 }
 
+// Empty template for use with --disable-dir-list
+const emptyDirListTemplate = `<!DOCTYPE html>
+<html>
+<head>
+</head>
+<body>
+</body>
+</html>`
+
+
 // Gets the VFS in use for this request
 func (s *HTTP) getVFS(ctx context.Context) (VFS *vfs.VFS, err error) {
 	if s._vfs != nil {
@@ -215,6 +225,17 @@ func (s *HTTP) serveDir(w http.ResponseWriter, r *http.Request, dirRemote string
 		serve.Error(ctx, dirRemote, w, "Failed to list directory", err)
 		return
 	}
+        if Opt.DisableDirList {
+            // Render the empty template
+            w.Header().Set("Content-Type", "text/html; charset=utf-8")
+            _, err := w.Write([]byte(emptyDirListTemplate))
+            if err != nil {
+                // Handle write error
+                http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+            }
+            return
+        } else {
+
 
 	// Make the entries for display
 	directory := serve.NewDirectory(dirRemote, s.server.HTMLTemplate())
