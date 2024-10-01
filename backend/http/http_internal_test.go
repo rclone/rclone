@@ -303,6 +303,8 @@ func TestParseName(t *testing.T) {
 		{"http://example.com/", "potato", nil, "potato"},
 		{"http://example.com/dir/", "potato", nil, "potato"},
 		{"http://example.com/dir/", "potato?download=true", errFoundQuestionMark, ""},
+		{"http://example.com/dir/", "http://example.com/dir/?dir=sweet+potato", nil, "sweet potato"},
+		{"http://example.com/dir/", "?dir=sweet+potato", nil, "sweet potato"},
 		{"http://example.com/dir/", "../dir/potato", nil, "potato"},
 		{"http://example.com/dir/", "..", errNotUnderRoot, ""},
 		{"http://example.com/dir/", "http://example.com/", errNotUnderRoot, ""},
