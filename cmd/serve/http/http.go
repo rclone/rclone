@@ -30,16 +30,18 @@ import (
 
 // Options required for http server
 type Options struct {
-	Auth     libhttp.AuthConfig
-	HTTP     libhttp.Config
-	Template libhttp.TemplateConfig
+	Auth		libhttp.AuthConfig
+	HTTP		libhttp.Config
+	Template 	libhttp.TemplateConfig
+	DisableGETDir	bool
 }
 
 // DefaultOpt is the default values used for Options
 var DefaultOpt = Options{
-	Auth:     libhttp.DefaultAuthCfg(),
-	HTTP:     libhttp.DefaultCfg(),
-	Template: libhttp.DefaultTemplateCfg(),
+	Auth:		libhttp.DefaultAuthCfg(),
+	HTTP:		libhttp.DefaultCfg(),
+	Template:	libhttp.DefaultTemplateCfg(),
+	DisableGETDir:	false,
 }
 
 // Opt is options set by command line flags
@@ -56,6 +58,7 @@ func init() {
 	libhttp.AddTemplateFlagsPrefix(flagSet, flagPrefix, &Opt.Template)
 	vfsflags.AddFlags(flagSet)
 	proxyflags.AddFlags(flagSet)
+	flags.BoolVarP(flagSet, &Opt.DisableGETDir, "disable-dir-list", "", false, "Disable HTML directory list on GET request for a directory", "")
 }
 
 // Command definition for cobra
