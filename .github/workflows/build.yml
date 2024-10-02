@@ -17,7 +17,6 @@ on:
       manual:
         description: Manual run (bypass default conditions)
         type: boolean
-        required: true
         default: true
 
 jobs:
