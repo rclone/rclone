@@ -137,6 +137,9 @@ var providerOption = fs.Option{
 		Value: "Netease",
 		Help:  "Netease Object Storage (NOS)",
 	}, {
+		Value: "Outscale",
+		Help:  "OUTSCALE Object Storage (OOS)",
+	}, {
 		Value: "Petabox",
 		Help:  "Petabox Object Storage",
 	}, {
@@ -487,6 +490,26 @@ func init() {
 			}, {
 				Value: "eu-south-2",
 				Help:  "Logrono, Spain",
+			}},
+		}, {
+			Name:     "region",
+			Help:     "Region where your bucket will be created and your data stored.\n",
+			Provider: "Outscale",
+			Examples: []fs.OptionExample{{
+				Value: "eu-west-2",
+				Help:  "Paris, France",
+			}, {
+				Value: "us-east-2",
+				Help:  "New Jersey, USA",
+			}, {
+				Value: "us-west-1",
+				Help:  "California, USA",
+			}, {
+				Value: "cloudgouv-eu-west-1",
+				Help:  "SecNumCloud, Paris, France",
+			}, {
+				Value: "ap-northeast-1",
+				Help:  "Tokyo, Japan",
 			}},
 		}, {
 			Name:     "region",
@@ -1345,6 +1368,26 @@ func init() {
 				Help:     "Seagate Lyve Cloud AP Southeast 1 (Singapore)",
 				Provider: "LyveCloud",
 			}, {
+				Value:    "oos.eu-west-2.outscale.com",
+				Help:     "Outscale EU West 2 (Paris)",
+				Provider: "Outscale",
+			}, {
+				Value:    "oos.us-east-2.outscale.com",
+				Help:     "Outscale US east 2 (New Jersey)",
+				Provider: "Outscale",
+			}, {
+				Value:    "oos.us-west-1.outscale.com",
+				Help:     "Outscale EU West 1 (California)",
+				Provider: "Outscale",
+			}, {
+				Value:    "oos.cloudgouv-eu-west-1.outscale.com",
+				Help:     "Outscale SecNumCloud (Paris)",
+				Provider: "Outscale",
+			}, {
+				Value:    "oos.ap-northeast-1.outscale.com",
+				Help:     "Outscale AP Northeast 1 (Japan)",
+				Provider: "Outscale",
+			}, {
 				Value:    "s3.wasabisys.com",
 				Help:     "Wasabi US East 1 (N. Virginia)",
 				Provider: "Wasabi",
@@ -1798,7 +1841,7 @@ func init() {
 		}, {
 			Name:     "location_constraint",
 			Help:     "Location constraint - must be set to match the Region.\n\nLeave blank if not sure. Used when creating buckets only.",
-			Provider: "!AWS,Alibaba,ArvanCloud,HuaweiOBS,ChinaMobile,Cloudflare,IBMCOS,IDrive,IONOS,Leviia,Liara,Linode,Magalu,Qiniu,RackCorp,Scaleway,StackPath,Storj,TencentCOS,Petabox",
+			Provider: "!AWS,Alibaba,ArvanCloud,HuaweiOBS,ChinaMobile,Cloudflare,IBMCOS,IDrive,IONOS,Leviia,Liara,Linode,Magalu,Outscale,Qiniu,RackCorp,Scaleway,StackPath,Storj,TencentCOS,Petabox",
 		}, {
 			Name: "acl",
 			Help: `Canned ACL used when creating buckets and storing or copying objects.
@@ -3359,6 +3402,8 @@ func setQuirks(opt *Options) {
 		urlEncodeListings = false
 		useMultipartEtag = false // untested
 		useAlreadyExists = false // untested
+	case "Outscale":
+		virtualHostStyle = false
 	case "RackCorp":
 		// No quirks
 		useMultipartEtag = false // untested
