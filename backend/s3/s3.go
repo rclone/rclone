@@ -5829,7 +5829,7 @@ func (o *Object) downloadFromURL(ctx context.Context, bucketPath string, options
 		ContentEncoding:    header("Content-Encoding"),
 		ContentLanguage:    header("Content-Language"),
 		ContentType:        header("Content-Type"),
-		StorageClass:       types.StorageClass(*header("X-Amz-Storage-Class")),
+		StorageClass:       types.StorageClass(deref(header("X-Amz-Storage-Class"))),
 	}
 	o.setMetaData(&head)
 	return resp.Body, err
