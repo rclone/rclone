@@ -3,8 +3,10 @@
 package file
 
 import (
+	"errors"
 	"os"
 	"path/filepath"
+	"strings"
 	"syscall"
 )
 
@@ -17,6 +19,13 @@ import (
 // Based on source code from golang's os.MkdirAll
 // (https://github.com/golang/go/blob/master/src/os/path.go)
 func MkdirAll(path string, perm os.FileMode) error {
+	// For windows the max path length is 260 characters
+	// if the LongPathsEnabled is not set
+	// https://docs.microsoft.com/en-us/windows/win32/fileio/maximum-file-path-limitation
+	if !strings.HasPrefix(path, `\\?\`) && !IsLongPathsEnabled() && len(path) >= 260 {
+		return &os.PathError{Path: path, Op: "open", Err: errors.New("path length 260 or higher")}
+	}
+
 	// Fast path: if we can tell whether path is a directory or file, stop with success or error.
 	dir, err := os.Stat(path)
 	if err == nil {
