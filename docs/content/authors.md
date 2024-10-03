@@ -898,3 +898,4 @@ put them back in again.` >}}
   * Benjamin Legrand <benjamin.legrand@seagate.com>
   * Noam Ross <noam.ross@gmail.com>
   * lostb1t <coding-mosses0z@icloud.com>
+  * Matthias Gatto <matthias.gatto@outscale.com>
