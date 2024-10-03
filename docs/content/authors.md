@@ -899,3 +899,4 @@ put them back in again.` >}}
   * Noam Ross <noam.ross@gmail.com>
   * lostb1t <coding-mosses0z@icloud.com>
   * Matthias Gatto <matthias.gatto@outscale.com>
+  * André Tran <andre.tran@outscale.com>
