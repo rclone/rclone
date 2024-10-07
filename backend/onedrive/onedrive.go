@@ -1545,9 +1545,12 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 
 // Precision return the precision of this Fs
 func (f *Fs) Precision() time.Duration {
-	if f.driveType == driveTypePersonal {
-		return time.Millisecond
-	}
+	// While this is true for some OneDrive personal accounts, it
+	// isn't true for all of them. See #8101 for details
+	//
+	// if f.driveType == driveTypePersonal {
+	// 	return time.Millisecond
+	// }
 	return time.Second
 }
 

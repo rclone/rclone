@@ -349,6 +349,7 @@ func (w *WebDAV) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 // serveDir serves a directory index at dirRemote
 // This is similar to serveDir in serve http.
 func (w *WebDAV) serveDir(rw http.ResponseWriter, r *http.Request, dirRemote string) {
+	ctx := r.Context()
 	VFS, err := w.getVFS(r.Context())
 	if err != nil {
 		http.Error(rw, "Root directory not found", http.StatusNotFound)
@@ -361,7 +362,7 @@ func (w *WebDAV) serveDir(rw http.ResponseWriter, r *http.Request, dirRemote str
 		http.Error(rw, "Directory not found", http.StatusNotFound)
 		return
 	} else if err != nil {
-		serve.Error(dirRemote, rw, "Failed to list directory", err)
+		serve.Error(ctx, dirRemote, rw, "Failed to list directory", err)
 		return
 	}
 	if !node.IsDir() {
@@ -372,7 +373,7 @@ func (w *WebDAV) serveDir(rw http.ResponseWriter, r *http.Request, dirRemote str
 	dirEntries, err := dir.ReadDirAll()
 
 	if err != nil {
-		serve.Error(dirRemote, rw, "Failed to list directory", err)
+		serve.Error(ctx, dirRemote, rw, "Failed to list directory", err)
 		return
 	}
 

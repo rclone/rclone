@@ -28,7 +28,6 @@ import (
 	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/fs/hash"
-	"github.com/rclone/rclone/fs/log"
 	"github.com/rclone/rclone/lib/batcher"
 	"github.com/rclone/rclone/lib/encoder"
 	"github.com/rclone/rclone/lib/oauthutil"
@@ -161,6 +160,34 @@ Without this flag, archived media will not be visible in directory
 listings and won't be transferred.`,
 			Advanced: true,
 		}, {
+			Name:    "proxy",
+			Default: "",
+			Help: strings.ReplaceAll(`Use the gphotosdl proxy for downloading the full resolution images
+
+The Google API will deliver images and video which aren't full
+resolution, and/or have EXIF data missing.
+
+However if you ue the gphotosdl proxy tnen you can download original,
+unchanged images.
+
+This runs a headless browser in the background.
+
+Download the software from [gphotosdl](https://github.com/rclone/gphotosdl)
+
+First run with
+
+    gphotosdl -login
+
+Then once you have logged into google photos close the browser window
+and run
+
+    gphotosdl
+
+Then supply the parameter |--gphotos-proxy "http://localhost:8282"| to make
+rclone use the proxy.
+`, "|", "`"),
+			Advanced: true,
+		}, {
 			Name:     config.ConfigEncoding,
 			Help:     config.ConfigEncodingHelp,
 			Advanced: true,
@@ -181,6 +208,7 @@ type Options struct {
 	BatchMode       string               `config:"batch_mode"`
 	BatchSize       int                  `config:"batch_size"`
 	BatchTimeout    fs.Duration          `config:"batch_timeout"`
+	Proxy           string               `config:"proxy"`
 }
 
 // Fs represents a remote storage server
@@ -454,7 +482,7 @@ func (f *Fs) newObjectWithInfo(ctx context.Context, remote string, info *api.Med
 // NewObject finds the Object at remote.  If it can't be found
 // it returns the error fs.ErrorObjectNotFound.
 func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
-	defer log.Trace(f, "remote=%q", remote)("")
+	// defer log.Trace(f, "remote=%q", remote)("")
 	return f.newObjectWithInfo(ctx, remote, nil)
 }
 
@@ -667,7 +695,7 @@ func (f *Fs) listUploads(ctx context.Context, dir string) (entries fs.DirEntries
 // This should return ErrDirNotFound if the directory isn't
 // found.
 func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err error) {
-	defer log.Trace(f, "dir=%q", dir)("err=%v", &err)
+	// defer log.Trace(f, "dir=%q", dir)("err=%v", &err)
 	match, prefix, pattern := patterns.match(f.root, dir, false)
 	if pattern == nil || pattern.isFile {
 		return nil, fs.ErrorDirNotFound
@@ -684,7 +712,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 //
 // The new object may have been created if an error is returned
 func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
-	defer log.Trace(f, "src=%+v", src)("")
+	// defer log.Trace(f, "src=%+v", src)("")
 	// Temporary Object under construction
 	o := &Object{
 		fs:     f,
@@ -737,7 +765,7 @@ func (f *Fs) getOrCreateAlbum(ctx context.Context, albumTitle string) (album *ap
 
 // Mkdir creates the album if it doesn't exist
 func (f *Fs) Mkdir(ctx context.Context, dir string) (err error) {
-	defer log.Trace(f, "dir=%q", dir)("err=%v", &err)
+	// defer log.Trace(f, "dir=%q", dir)("err=%v", &err)
 	match, prefix, pattern := patterns.match(f.root, dir, false)
 	if pattern == nil {
 		return fs.ErrorDirNotFound
@@ -761,7 +789,7 @@ func (f *Fs) Mkdir(ctx context.Context, dir string) (err error) {
 //
 // Returns an error if it isn't empty
 func (f *Fs) Rmdir(ctx context.Context, dir string) (err error) {
-	defer log.Trace(f, "dir=%q")("err=%v", &err)
+	// defer log.Trace(f, "dir=%q")("err=%v", &err)
 	match, _, pattern := patterns.match(f.root, dir, false)
 	if pattern == nil {
 		return fs.ErrorDirNotFound
@@ -834,7 +862,7 @@ func (o *Object) Hash(ctx context.Context, t hash.Type) (string, error) {
 
 // Size returns the size of an object in bytes
 func (o *Object) Size() int64 {
-	defer log.Trace(o, "")("")
+	// defer log.Trace(o, "")("")
 	if !o.fs.opt.ReadSize || o.bytes >= 0 {
 		return o.bytes
 	}
@@ -935,7 +963,7 @@ func (o *Object) readMetaData(ctx context.Context) (err error) {
 // It attempts to read the objects mtime and if that isn't present the
 // LastModified returned in the http headers
 func (o *Object) ModTime(ctx context.Context) time.Time {
-	defer log.Trace(o, "")("")
+	// defer log.Trace(o, "")("")
 	err := o.readMetaData(ctx)
 	if err != nil {
 		fs.Debugf(o, "ModTime: Failed to read metadata: %v", err)
@@ -965,16 +993,20 @@ func (o *Object) downloadURL() string {
 
 // Open an object for read
 func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.ReadCloser, err error) {
-	defer log.Trace(o, "")("")
+	// defer log.Trace(o, "")("")
 	err = o.readMetaData(ctx)
 	if err != nil {
 		fs.Debugf(o, "Open: Failed to read metadata: %v", err)
 		return nil, err
 	}
+	url := o.downloadURL()
+	if o.fs.opt.Proxy != "" {
+		url = strings.TrimRight(o.fs.opt.Proxy, "/") + "/id/" + o.id
+	}
 	var resp *http.Response
 	opts := rest.Opts{
 		Method:  "GET",
-		RootURL: o.downloadURL(),
+		RootURL: url,
 		Options: options,
 	}
 	err = o.fs.pacer.Call(func() (bool, error) {
@@ -1067,7 +1099,7 @@ func (f *Fs) commitBatch(ctx context.Context, items []uploadedItem, results []*a
 //
 // The new object may have been created if an error is returned
 func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (err error) {
-	defer log.Trace(o, "src=%+v", src)("err=%v", &err)
+	// defer log.Trace(o, "src=%+v", src)("err=%v", &err)
 	match, _, pattern := patterns.match(o.fs.root, o.remote, true)
 	if pattern == nil || !pattern.isFile || !pattern.canUpload {
 		return errCantUpload
