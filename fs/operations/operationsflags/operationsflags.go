@@ -119,5 +119,16 @@ func ConfigureLoggers(ctx context.Context, fdst fs.Fs, command *cobra.Command, o
 		}
 	}
 
+	ci := fs.GetConfig(ctx)
+	if ci.NoTraverse && opt.Combined != nil {
+		fs.LogPrintf(fs.LogLevelWarning, nil, "--no-traverse does not list any deletes (-) in --combined output\n")
+	}
+	if ci.NoTraverse && opt.MissingOnSrc != nil {
+		fs.LogPrintf(fs.LogLevelWarning, nil, "--no-traverse makes --missing-on-src produce empty output\n")
+	}
+	if ci.NoTraverse && opt.DestAfter != nil {
+		fs.LogPrintf(fs.LogLevelWarning, nil, "--no-traverse makes --dest-after produce incomplete output\n")
+	}
+
 	return close, nil
 }
