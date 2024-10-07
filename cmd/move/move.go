@@ -3,6 +3,7 @@ package move
 
 import (
 	"context"
+	"github.com/rclone/rclone/fs/operations/operationsflags"
 	"strings"
 
 	"github.com/rclone/rclone/cmd"
@@ -16,6 +17,8 @@ import (
 var (
 	deleteEmptySrcDirs = false
 	createEmptySrcDirs = false
+	loggerOpt          = operations.LoggerOpt{}
+	loggerFlagsOpt     = operationsflags.AddLoggerFlagsOptions{}
 )
 
 func init() {
@@ -23,6 +26,8 @@ func init() {
 	cmdFlags := commandDefinition.Flags()
 	flags.BoolVarP(cmdFlags, &deleteEmptySrcDirs, "delete-empty-src-dirs", "", deleteEmptySrcDirs, "Delete empty source dirs after move", "")
 	flags.BoolVarP(cmdFlags, &createEmptySrcDirs, "create-empty-src-dirs", "", createEmptySrcDirs, "Create empty source dirs on destination after move", "")
+	operationsflags.AddLoggerFlags(cmdFlags, &loggerOpt, &loggerFlagsOpt)
+	loggerOpt.LoggerFn = operations.NewDefaultLoggerFn(&loggerOpt)
 }
 
 var commandDefinition = &cobra.Command{
@@ -75,6 +80,17 @@ for more info.
 		cmd.CheckArgs(2, 2, command, args)
 		fsrc, srcFileName, fdst := cmd.NewFsSrcFileDst(args)
 		cmd.Run(true, true, command, func() error {
+			ctx := context.Background()
+			close, err := operationsflags.ConfigureLoggers(ctx, fdst, command, &loggerOpt, loggerFlagsOpt)
+			if err != nil {
+				return err
+			}
+			defer close()
+
+			if loggerFlagsOpt.AnySet() {
+				ctx = operations.WithSyncLogger(ctx, loggerOpt)
+			}
+
 			if srcFileName == "" {
 				return sync.MoveDir(context.Background(), fdst, fsrc, deleteEmptySrcDirs, createEmptySrcDirs)
 			}
