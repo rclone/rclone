@@ -916,7 +916,7 @@ func (f *Fs) getDecrypter(ctx context.Context, o *Object, overrideCek *cek) (*de
 	if err != nil {
 		return nil, fmt.Errorf("failed to open object to read nonce: %w", err)
 	}
-	d, err := f.cipher.newDecrypter(in, overrideCek)
+	d, err := f.cipher.newDecrypter(in, overrideCek, o)
 	if err != nil {
 		_ = in.Close()
 		return nil, fmt.Errorf("failed to open object to read nonce: %w", err)
@@ -1146,6 +1146,7 @@ type Object struct {
 	fs.Object
 	f             *Fs
 	decryptedSize int64
+	cipherVersion string
 }
 
 func (f *Fs) newObject(o fs.Object) *Object {
@@ -1153,6 +1154,7 @@ func (f *Fs) newObject(o fs.Object) *Object {
 		Object:        o,
 		f:             f,
 		decryptedSize: -1,
+		cipherVersion: "",
 	}
 }
 
@@ -1185,10 +1187,18 @@ func (o *Object) Size() int64 {
 	size := o.Object.Size()
 	if !o.f.opt.NoDataEncryption {
 		var err error
-		if o.f.opt.ExactSize {
+		if o.f.opt.ExactSize && o.cipherVersion == "" { // Use `ExactSize` setting if cipherVersion isn't explicitly set on the object level. If cipherVersion is explicitly set, we deduce size correctly without reading file header.
 			size, err = o.f.cipher.DecryptedSizeExact(o)
 		} else {
-			size, err = o.f.cipher.DecryptedSize(size, o.f.cipher.version)
+
+			var cipherVersion string
+			if o.cipherVersion != "" { // Explicit cipher version (set by newDecrypter) detected from magic bytes
+				cipherVersion = o.cipherVersion
+			} else { // Assume cipher version based on config. Might not be correct if existing object was encrypted using different cipher version than currently configured.
+				cipherVersion = o.f.cipher.version
+			}
+
+			size, err = o.f.cipher.DecryptedSize(size, cipherVersion)
 		}
 
 		if err != nil {
@@ -1296,7 +1306,8 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (rc io.Read
 			openOptions = append(openOptions, option)
 		}
 	}
-	rc, err = o.f.cipher.DecryptDataSeek(ctx, func(ctx context.Context, underlyingOffset, underlyingLimit int64) (io.ReadCloser, error) {
+
+	rc, err = o.f.cipher.DecryptDataSeek(ctx, o, func(ctx context.Context, underlyingOffset, underlyingLimit int64) (io.ReadCloser, error) {
 		if underlyingOffset == 0 && underlyingLimit < 0 {
 			// Open with no seek
 			return o.Object.Open(ctx, openOptions...)
