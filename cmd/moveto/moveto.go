@@ -3,6 +3,7 @@ package moveto
 
 import (
 	"context"
+	"github.com/rclone/rclone/fs/operations/operationsflags"
 
 	"github.com/rclone/rclone/cmd"
 	"github.com/rclone/rclone/fs/operations"
@@ -10,8 +11,16 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var (
+	loggerOpt      = operations.LoggerOpt{}
+	loggerFlagsOpt = operationsflags.AddLoggerFlagsOptions{}
+)
+
 func init() {
 	cmd.Root.AddCommand(commandDefinition)
+	cmdFlags := commandDefinition.Flags()
+	operationsflags.AddLoggerFlags(cmdFlags, &loggerOpt, &loggerFlagsOpt)
+	loggerOpt.LoggerFn = operations.NewDefaultLoggerFn(&loggerOpt)
 }
 
 var commandDefinition = &cobra.Command{
@@ -57,10 +66,21 @@ successful transfer.
 		fsrc, srcFileName, fdst, dstFileName := cmd.NewFsSrcDstFiles(args)
 
 		cmd.Run(true, true, command, func() error {
-			if srcFileName == "" {
-				return sync.MoveDir(context.Background(), fdst, fsrc, false, false)
+			ctx := context.Background()
+			close, err := operationsflags.ConfigureLoggers(ctx, fdst, command, &loggerOpt, loggerFlagsOpt)
+			if err != nil {
+				return err
 			}
-			return operations.MoveFile(context.Background(), fdst, fsrc, dstFileName, srcFileName)
+			defer close()
+
+			if loggerFlagsOpt.AnySet() {
+				ctx = operations.WithSyncLogger(ctx, loggerOpt)
+			}
+
+			if srcFileName == "" {
+				return sync.MoveDir(ctx, fdst, fsrc, false, false)
+			}
+			return operations.MoveFile(ctx, fdst, fsrc, dstFileName, srcFileName)
 		})
 	},
 }

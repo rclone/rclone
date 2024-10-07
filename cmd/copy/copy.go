@@ -3,23 +3,27 @@ package copy
 
 import (
 	"context"
-	"strings"
-
 	"github.com/rclone/rclone/cmd"
 	"github.com/rclone/rclone/fs/config/flags"
 	"github.com/rclone/rclone/fs/operations"
+	"github.com/rclone/rclone/fs/operations/operationsflags"
 	"github.com/rclone/rclone/fs/sync"
 	"github.com/spf13/cobra"
+	"strings"
 )
 
 var (
 	createEmptySrcDirs = false
+	loggerOpt          = operations.LoggerOpt{}
+	loggerFlagsOpt     = operationsflags.AddLoggerFlagsOptions{}
 )
 
 func init() {
 	cmd.Root.AddCommand(commandDefinition)
 	cmdFlags := commandDefinition.Flags()
 	flags.BoolVarP(cmdFlags, &createEmptySrcDirs, "create-empty-src-dirs", "", createEmptySrcDirs, "Create empty source dirs on destination after copy", "")
+	operationsflags.AddLoggerFlags(cmdFlags, &loggerOpt, &loggerFlagsOpt)
+	loggerOpt.LoggerFn = operations.NewDefaultLoggerFn(&loggerOpt)
 }
 
 var commandDefinition = &cobra.Command{
@@ -95,14 +99,24 @@ for more info.
 		"groups": "Copy,Filter,Listing,Important",
 	},
 	Run: func(command *cobra.Command, args []string) {
-
 		cmd.CheckArgs(2, 2, command, args)
 		fsrc, srcFileName, fdst := cmd.NewFsSrcFileDst(args)
 		cmd.Run(true, true, command, func() error {
-			if srcFileName == "" {
-				return sync.CopyDir(context.Background(), fdst, fsrc, createEmptySrcDirs)
+			ctx := context.Background()
+			close, err := operationsflags.ConfigureLoggers(ctx, fdst, command, &loggerOpt, loggerFlagsOpt)
+			if err != nil {
+				return err
 			}
-			return operations.CopyFile(context.Background(), fdst, fsrc, srcFileName, srcFileName)
+			defer close()
+
+			if loggerFlagsOpt.AnySet() {
+				ctx = operations.WithSyncLogger(ctx, loggerOpt)
+			}
+
+			if srcFileName == "" {
+				return sync.CopyDir(ctx, fdst, fsrc, createEmptySrcDirs)
+			}
+			return operations.CopyFile(ctx, fdst, fsrc, srcFileName, srcFileName)
 		})
 	},
 }
