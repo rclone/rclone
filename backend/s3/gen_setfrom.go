@@ -102,4 +102,5 @@ import (
 	genSetFrom(new(s3.CreateMultipartUploadInput), new(s3.PutObjectInput))
 	genSetFrom(new(s3.HeadObjectOutput), new(s3.PutObjectInput))
 	genSetFrom(new(s3.CopyObjectInput), new(s3.PutObjectInput))
+	genSetFrom(new(types.CompletedPart), new(s3.UploadPartOutput))
 }

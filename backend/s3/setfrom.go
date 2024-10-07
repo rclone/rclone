@@ -285,3 +285,12 @@ func setFrom_s3CopyObjectInput_s3PutObjectInput(a *s3.CopyObjectInput, b *s3.Put
 	a.Tagging = b.Tagging
 	a.WebsiteRedirectLocation = b.WebsiteRedirectLocation
 }
+
+// setFrom_typesCompletedPart_s3UploadPartOutput copies matching elements from a to b
+func setFrom_typesCompletedPart_s3UploadPartOutput(a *types.CompletedPart, b *s3.UploadPartOutput) {
+	a.ChecksumCRC32 = b.ChecksumCRC32
+	a.ChecksumCRC32C = b.ChecksumCRC32C
+	a.ChecksumSHA1 = b.ChecksumSHA1
+	a.ChecksumSHA256 = b.ChecksumSHA256
+	a.ETag = b.ETag
+}
