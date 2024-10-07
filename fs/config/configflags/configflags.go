@@ -13,6 +13,7 @@ import (
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fs/config/flags"
+	"github.com/rclone/rclone/lib/sshconfig"
 	"github.com/spf13/pflag"
 )
 
@@ -35,6 +36,7 @@ var (
 	downloadHeaders []string
 	headers         []string
 	metadataSet     []string
+	useSshConfig    bool
 )
 
 // AddFlags adds the non filing system specific flags to the command
@@ -59,6 +61,7 @@ func AddFlags(ci *fs.ConfigInfo, flagSet *pflag.FlagSet) {
 	flags.StringArrayVarP(flagSet, &headers, "header", "", nil, "Set HTTP header for all transactions", "Networking")
 	flags.StringArrayVarP(flagSet, &metadataSet, "metadata-set", "", nil, "Add metadata key=value when uploading", "Metadata")
 	flags.StringVarP(flagSet, &dscp, "dscp", "", "", "Set DSCP value to connections, value or name, e.g. CS1, LE, DF, AF21", "Networking")
+	flags.BoolVarP(flagSet, &useSshConfig, "use-ssh-config", "", false, "Use ~/.ssh/config file for sftp/ssh connections", "Config")
 }
 
 // ParseHeaders converts the strings passed in via the header flags into HTTPOptions
@@ -197,6 +200,14 @@ func SetFlags(ci *fs.ConfigInfo) {
 	// Process --temp-dir path
 	if err := config.SetTempDir(tempDir); err != nil {
 		fs.Fatalf(nil, "--temp-dir: Failed to set %q as temp dir: %v", tempDir, err)
+	}
+
+	// Process --use-ssh-config
+	if useSshConfig {
+		err := sshconfig.LoadSshConfigIntoEnv()
+		if err != nil {
+			fs.Fatalf(nil, "--use-ssh-config: Failed loading ssh config: %v", err)
+		}
 	}
 
 	// Process --multi-thread-streams - set whether multi-thread-streams was set
