@@ -293,7 +293,7 @@ type ChunkOption struct {
 
 // Header formats the option as an http header
 func (o *ChunkOption) Header() (key string, value string) {
-	return "chunkSize", fmt.Sprintf("%v", o.ChunkSize)
+	return "", ""
 }
 
 // Mandatory returns whether the option must be parsed or can be ignored
