@@ -48,6 +48,7 @@ var (
 	ErrorNotImplemented              = errors.New("optional feature not implemented")
 	ErrorCommandNotFound             = errors.New("command not found")
 	ErrorFileNameTooLong             = errors.New("file name too long")
+	ErrorReadIsDirectory             = errors.New("read is a directory")
 )
 
 // CheckClose is a utility function used to check the return from
