@@ -162,6 +162,7 @@ func init() {
 
 // Options is options for creating the vfs
 type Options struct {
+	// when modifying these options, please make sure to update getVFSOption in cmd/serve/docker/options.go
 	NoSeek             bool          `config:"no_seek"`        // don't allow seeking if set
 	NoChecksum         bool          `config:"no_checksum"`    // don't check checksums if set
 	ReadOnly           bool          `config:"read_only"`      // if set VFS is read only
