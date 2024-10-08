@@ -9,7 +9,6 @@ Re-authenticates user with remote.
 
 ## Synopsis
 
-
 This reconnects remote: passed in to the cloud storage system.
 
 To disconnect the remote use "rclone config disconnect".
@@ -27,10 +26,9 @@ rclone config reconnect remote: [flags]
   -h, --help   help for reconnect
 ```
 
-
 See the [global flags page](/flags/) for global options not listed here.
 
-# SEE ALSO
+## See Also
 
 * [rclone config](/commands/rclone_config/)	 - Enter an interactive configuration session.
 

@@ -3,7 +3,6 @@
 package flags
 
 import (
-	"log"
 	"os"
 	"regexp"
 	"strings"
@@ -74,7 +73,7 @@ func (gs *Groups) Include(groupsString string) *Groups {
 	for _, groupName := range strings.Split(groupsString, ",") {
 		_, ok := All.ByName[groupName]
 		if !ok {
-			log.Fatalf("Couldn't find group %q in command annotation", groupName)
+			fs.Fatalf(nil, "Couldn't find group %q in command annotation", groupName)
 		}
 		want[groupName] = true
 	}
@@ -124,6 +123,7 @@ func init() {
 	All.NewGroup("Logging", "Flags for logging and statistics")
 	All.NewGroup("Metadata", "Flags to control metadata")
 	All.NewGroup("RC", "Flags to control the Remote Control API")
+	All.NewGroup("Metrics", "Flags to control the Metrics HTTP endpoint.")
 }
 
 // installFlag constructs a name from the flag passed in and
@@ -137,18 +137,38 @@ func installFlag(flags *pflag.FlagSet, name string, groupsString string) {
 	// Find flag
 	flag := flags.Lookup(name)
 	if flag == nil {
-		log.Fatalf("Couldn't find flag --%q", name)
+		fs.Fatalf(nil, "Couldn't find flag --%q", name)
 	}
 
 	// Read default from environment if possible
 	envKey := fs.OptionToEnv(name)
 	if envValue, envFound := os.LookupEnv(envKey); envFound {
-		err := flags.Set(name, envValue)
-		if err != nil {
-			log.Fatalf("Invalid value when setting --%s from environment variable %s=%q: %v", name, envKey, envValue, err)
+		isStringArray := false
+		opt, isOption := flag.Value.(*fs.Option)
+		if isOption {
+			_, isStringArray = opt.Default.([]string)
 		}
-		fs.Debugf(nil, "Setting --%s %q from environment variable %s=%q", name, flag.Value, envKey, envValue)
-		flag.DefValue = envValue
+		if isStringArray {
+			// Treat stringArray differently, treating the environment variable as a CSV array
+			var list fs.CommaSepList
+			err := list.Set(envValue)
+			if err != nil {
+				fs.Fatalf(nil, "Invalid value when setting stringArray --%s from environment variable %s=%q: %v", name, envKey, envValue, err)
+			}
+			// Set both the Value (so items on the command line get added) and DefValue so the help is correct
+			opt.Value = ([]string)(list)
+			flag.DefValue = list.String()
+			for _, v := range list {
+				fs.Debugf(nil, "Setting --%s %q from environment variable %s=%q", name, v, envKey, envValue)
+			}
+		} else {
+			err := flags.Set(name, envValue)
+			if err != nil {
+				fs.Fatalf(nil, "Invalid value when setting --%s from environment variable %s=%q: %v", name, envKey, envValue, err)
+			}
+			fs.Debugf(nil, "Setting --%s %q from environment variable %s=%q", name, flag.Value, envKey, envValue)
+			flag.DefValue = envValue
+		}
 	}
 
 	// Add flag to Group if it is a global flag
@@ -159,7 +179,7 @@ func installFlag(flags *pflag.FlagSet, name string, groupsString string) {
 			}
 			group, ok := All.ByName[groupName]
 			if !ok {
-				log.Fatalf("Couldn't find group %q for flag --%s", groupName, name)
+				fs.Fatalf(nil, "Couldn't find group %q for flag --%s", groupName, name)
 			}
 			group.Add(flag)
 		}

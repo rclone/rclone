@@ -4,7 +4,6 @@ package gendocs
 import (
 	"bytes"
 	"fmt"
-	"log"
 	"os"
 	"path"
 	"path/filepath"
@@ -14,6 +13,7 @@ import (
 	"time"
 
 	"github.com/rclone/rclone/cmd"
+	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config/flags"
 	"github.com/rclone/rclone/lib/file"
 	"github.com/spf13/cobra"
@@ -144,7 +144,7 @@ rclone.org website.`,
 			var buf bytes.Buffer
 			err := frontmatterTemplate.Execute(&buf, data)
 			if err != nil {
-				log.Fatalf("Failed to render frontmatter template: %v", err)
+				fs.Fatalf(nil, "Failed to render frontmatter template: %v", err)
 			}
 			return buf.String()
 		}

@@ -441,23 +441,28 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		fs.Debugf(src, "Can't move - not same remote type")
 		return nil, fs.ErrorCantMove
 	}
+	srcFs := srcObj.fs
 
 	// Find current directory ID
-	_, currentDirectoryID, err := f.dirCache.FindPath(ctx, remote, false)
+	srcLeaf, srcDirectoryID, err := srcFs.dirCache.FindPath(ctx, srcObj.remote, false)
 	if err != nil {
 		return nil, err
 	}
 
 	// Create temporary object
-	dstObj, leaf, directoryID, err := f.createObject(ctx, remote)
+	dstObj, dstLeaf, dstDirectoryID, err := f.createObject(ctx, remote)
 	if err != nil {
 		return nil, err
 	}
 
 	// If it is in the correct directory, just rename it
 	var url string
-	if currentDirectoryID == directoryID {
-		resp, err := f.renameFile(ctx, srcObj.file.URL, leaf)
+	if srcDirectoryID == dstDirectoryID {
+		// No rename needed
+		if srcLeaf == dstLeaf {
+			return src, nil
+		}
+		resp, err := f.renameFile(ctx, srcObj.file.URL, dstLeaf)
 		if err != nil {
 			return nil, fmt.Errorf("couldn't rename file: %w", err)
 		}
@@ -466,11 +471,16 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		}
 		url = resp.URLs[0].URL
 	} else {
-		folderID, err := strconv.Atoi(directoryID)
+		dstFolderID, err := strconv.Atoi(dstDirectoryID)
 		if err != nil {
 			return nil, err
 		}
-		resp, err := f.moveFile(ctx, srcObj.file.URL, folderID, leaf)
+		rename := dstLeaf
+		// No rename needed
+		if srcLeaf == dstLeaf {
+			rename = ""
+		}
+		resp, err := f.moveFile(ctx, srcObj.file.URL, dstFolderID, rename)
 		if err != nil {
 			return nil, fmt.Errorf("couldn't move file: %w", err)
 		}

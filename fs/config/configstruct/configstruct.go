@@ -2,7 +2,7 @@
 package configstruct
 
 import (
-	"encoding/json"
+	"encoding/csv"
 	"errors"
 	"fmt"
 	"reflect"
@@ -31,7 +31,7 @@ func camelToSnake(in string) string {
 //
 // Builtin types are expected to be encoding as their natural
 // stringificatons as produced by fmt.Sprint except for []string which
-// is expected to be encoded as JSON with empty array encoded as "".
+// is expected to be encoded a a CSV with empty array encoded as "".
 //
 // Any other types are expected to be encoded by their String()
 // methods and decoded by their `Set(s string) error` methods.
@@ -58,14 +58,18 @@ func StringToInterface(def interface{}, in string) (newValue interface{}, err er
 	case time.Duration:
 		newValue, err = time.ParseDuration(in)
 	case []string:
-		// JSON decode arrays of strings
-		if in != "" {
-			var out []string
-			err = json.Unmarshal([]byte(in), &out)
-			newValue = out
-		} else {
-			// Empty string we will treat as empty array
+		// CSV decode arrays of strings - ideally we would use
+		// fs.CommaSepList here but we can't as it would cause
+		// a circular import.
+		if len(in) == 0 {
 			newValue = []string{}
+		} else {
+			r := csv.NewReader(strings.NewReader(in))
+			newValue, err = r.Read()
+			switch _err := err.(type) {
+			case *csv.ParseError:
+				err = _err.Err // remove line numbers from the error message
+			}
 		}
 	default:
 		// Try using a Set method

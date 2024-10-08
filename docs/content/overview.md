@@ -33,6 +33,7 @@ Here is an overview of the major features of each cloud storage system.
 | HDFS                         | -                 | R/W     | No               | No              | -         | -        |
 | HiDrive                      | HiDrive ¹²        | R/W     | No               | No              | -         | -        |
 | HTTP                         | -                 | R       | No               | No              | R         | -        |
+| iCloud Drive                 | -                 | R       | No               | No              | -         | -        |
 | Internet Archive             | MD5, SHA1, CRC32  | R/W ¹¹  | No               | No              | -         | RWU      |
 | Jottacloud                   | MD5               | R/W     | Yes              | No              | R         | RW       |
 | Koofr                        | MD5               | -       | Yes              | No              | -         | -        |
@@ -46,7 +47,7 @@ Here is an overview of the major features of each cloud storage system.
 | OpenDrive                    | MD5               | R/W     | Yes              | Partial ⁸       | -         | -        |
 | OpenStack Swift              | MD5               | R/W     | No               | No              | R/W       | -        |
 | Oracle Object Storage        | MD5               | R/W     | No               | No              | R/W       | -        |
-| pCloud                       | MD5, SHA1 ⁷       | R       | No               | No              | W         | -        |
+| pCloud                       | MD5, SHA1 ⁷       | R/W     | No               | No              | W         | -        |
 | PikPak                       | MD5               | R       | No               | No              | R         | -        |
 | Pixeldrain                   | SHA256            | R/W     | No               | No              | R         | RW       |
 | premiumize.me                | -                 | -       | Yes              | No              | R         | -        |
@@ -505,12 +506,13 @@ upon backend-specific capabilities.
 | Files.com                    | Yes   | Yes  | Yes  | Yes     | No      | No    | Yes          | No                | Yes          | No    | Yes      |
 | FTP                          | No    | No   | Yes  | Yes     | No      | No    | Yes          | No                | No           | No    | Yes      |
 | Gofile                       | Yes   | Yes  | Yes  | Yes     | No      | No    | Yes          | No                | Yes          | Yes   | Yes      |
-| Google Cloud Storage         | Yes   | Yes  | No   | No      | No      | Yes   | Yes          | No                | No           | No    | No       |
+| Google Cloud Storage         | Yes   | Yes  | No   | No      | No      | No    | Yes          | No                | No           | No    | No       |
 | Google Drive                 | Yes   | Yes  | Yes  | Yes     | Yes     | Yes   | Yes          | No                | Yes          | Yes   | Yes      |
 | Google Photos                | No    | No   | No   | No      | No      | No    | No           | No                | No           | No    | No       |
 | HDFS                         | Yes   | No   | Yes  | Yes     | No      | No    | Yes          | No                | No           | Yes   | Yes      |
 | HiDrive                      | Yes   | Yes  | Yes  | Yes     | No      | No    | Yes          | No                | No           | No    | Yes      |
 | HTTP                         | No    | No   | No   | No      | No      | No    | No           | No                | No           | No    | Yes      |
+| iCloud Drive                 | Yes   | Yes  | Yes  | Yes     | No      | No    | No           | No                | No           | No    | Yes      |
 | ImageKit                     | Yes   | Yes  | Yes  | No      | No      | No    | No           | No                | No           | No    | Yes      |
 | Internet Archive             | No    | Yes  | No   | No      | Yes     | Yes   | No           | No                | Yes          | Yes   | No       |
 | Jottacloud                   | Yes   | Yes  | Yes  | Yes     | Yes     | Yes   | No           | No                | Yes          | Yes   | Yes      |
@@ -521,7 +523,7 @@ upon backend-specific capabilities.
 | Microsoft Azure Blob Storage | Yes   | Yes  | No   | No      | No      | Yes   | Yes          | Yes               | No           | No    | No       |
 | Microsoft Azure Files Storage | No   | Yes  | Yes  | Yes     | No      | No    | Yes          | Yes               | No           | Yes   | Yes      |
 | Microsoft OneDrive           | Yes   | Yes  | Yes  | Yes     | Yes     | Yes ⁵ | No           | No                | Yes          | Yes   | Yes      |
-| OpenDrive                    | Yes   | Yes  | Yes  | Yes     | No      | No    | No           | No                | No           | No    | Yes      |
+| OpenDrive                    | Yes   | Yes  | Yes  | Yes     | No      | No    | No           | No                | No           | Yes   | Yes      |
 | OpenStack Swift              | Yes ¹ | Yes  | No   | No      | No      | Yes   | Yes          | No                | No           | Yes   | No       |
 | Oracle Object Storage        | No    | Yes  | No   | No      | Yes     | Yes   | Yes          | Yes               | No           | No    | No       |
 | pCloud                       | Yes   | Yes  | Yes  | Yes     | Yes     | No    | No           | No                | Yes          | Yes   | Yes      |

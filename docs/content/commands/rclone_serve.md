@@ -28,10 +28,9 @@ rclone serve <protocol> [opts] <remote> [flags]
   -h, --help   help for serve
 ```
 
-
 See the [global flags page](/flags/) for global options not listed here.
 
-# SEE ALSO
+## See Also
 
 * [rclone](/commands/rclone/)	 - Show help for rclone commands, flags and backends.
 * [rclone serve dlna](/commands/rclone_serve_dlna/)	 - Serve remote:path over DLNA

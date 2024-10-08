@@ -9,9 +9,10 @@
 package log
 
 import (
-	"log"
 	"os"
 	"syscall"
+
+	"github.com/rclone/rclone/fs"
 )
 
 var (
@@ -34,6 +35,6 @@ func setStdHandle(stdhandle int32, handle syscall.Handle) error {
 func redirectStderr(f *os.File) {
 	err := setStdHandle(syscall.STD_ERROR_HANDLE, syscall.Handle(f.Fd()))
 	if err != nil {
-		log.Fatalf("Failed to redirect stderr to file: %v", err)
+		fs.Fatalf(nil, "Failed to redirect stderr to file: %v", err)
 	}
 }

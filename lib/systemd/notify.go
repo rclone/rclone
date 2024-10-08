@@ -2,10 +2,10 @@ package systemd
 
 import (
 	"fmt"
-	"log"
 	"sync"
 
 	"github.com/coreos/go-systemd/v22/daemon"
+	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/lib/atexit"
 )
 
@@ -18,13 +18,13 @@ import (
 // It should not be called as a result of rc commands. See #7540.
 func Notify() func() {
 	if _, err := daemon.SdNotify(false, daemon.SdNotifyReady); err != nil {
-		log.Printf("failed to notify ready to systemd: %v", err)
+		fs.Logf(nil, "failed to notify ready to systemd: %v", err)
 	}
 	var finaliseOnce sync.Once
 	finalise := func() {
 		finaliseOnce.Do(func() {
 			if _, err := daemon.SdNotify(false, daemon.SdNotifyStopping); err != nil {
-				log.Printf("failed to notify stopping to systemd: %v", err)
+				fs.Logf(nil, "failed to notify stopping to systemd: %v", err)
 			}
 		})
 	}

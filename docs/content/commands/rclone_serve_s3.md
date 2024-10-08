@@ -147,6 +147,33 @@ metadata which will be set as the modification time of the file.
 
 Other operations will return error `Unimplemented`.
 
+### Authentication
+
+By default this will serve files without needing a login.
+
+You can either use an htpasswd file which can take lots of users, or
+set a single username and password with the `--user` and `--pass` flags.
+
+If no static users are configured by either of the above methods, and client
+certificates are required by the `--client-ca` flag passed to the server, the
+client certificate common name will be considered as the username.
+
+Use `--htpasswd /path/to/htpasswd` to provide an htpasswd file.  This is
+in standard apache format and supports MD5, SHA1 and BCrypt for basic
+authentication.  Bcrypt is recommended.
+
+To create an htpasswd file:
+
+    touch htpasswd
+    htpasswd -B htpasswd user
+    htpasswd -B htpasswd anotherUser
+
+The password file can be updated while rclone is running.
+
+Use `--realm` to set the authentication realm.
+
+Use `--salt` to change the password hashing salt from the default.
+
 ## Server options
 
 Use `--addr` to specify which IP address and port the server should
@@ -162,6 +189,7 @@ or just by using an absolute path name. Note that unix sockets bypass the
 authentication - this is expected to be done with file system permissions.
 
 `--addr` may be repeated to listen on multiple IPs/ports/sockets.
+Socket activation, described further below, can also be used to accomplish the same.
 
 `--server-read-timeout` and `--server-write-timeout` can be used to
 control the timeouts on the server.  Note that this is the total time
@@ -194,6 +222,20 @@ certificate authority certificate.
   values are "tls1.0", "tls1.1", "tls1.2" and "tls1.3" (default
   "tls1.0").
 
+## Socket activation
+
+Instead of the listening addresses specified above, rclone will listen to all
+FDs passed by the service manager, if any (and ignore any arguments passed by --addr`).
+
+This allows rclone to be a socket-activated service.
+It can be configured with .socket and .service unit files as described in
+https://www.freedesktop.org/software/systemd/man/latest/systemd.socket.html
+
+Socket activation can be tested ad-hoc with the `systemd-socket-activate`command
+
+       systemd-socket-activate -l 8000 -- rclone serve
+
+This will socket-activate rclone on the first connection to port 8000 over TCP.
 ## VFS - Virtual File System
 
 This command uses the VFS layer. This adapts the cloud storage objects
@@ -426,6 +468,11 @@ These flags control the chunking:
 
     --vfs-read-chunk-size SizeSuffix        Read the source objects in chunks (default 128M)
     --vfs-read-chunk-size-limit SizeSuffix  Max chunk doubling size (default off)
+    --vfs-read-chunk-streams int            The number of parallel streams to read at once
+
+The chunking behaves differently depending on the `--vfs-read-chunk-streams` parameter.
+
+### `--vfs-read-chunk-streams` == 0
 
 Rclone will start reading a chunk of size `--vfs-read-chunk-size`,
 and then double the size for each read. When `--vfs-read-chunk-size-limit` is
@@ -440,6 +487,30 @@ When `--vfs-read-chunk-size-limit 500M` is specified, the result would be
 0-100M, 100M-300M, 300M-700M, 700M-1200M, 1200M-1700M and so on.
 
 Setting `--vfs-read-chunk-size` to `0` or "off" disables chunked reading.
+
+The chunks will not be buffered in memory.
+
+### `--vfs-read-chunk-streams` > 0
+
+Rclone reads `--vfs-read-chunk-streams` chunks of size
+`--vfs-read-chunk-size` concurrently. The size for each read will stay
+constant.
+
+This improves performance performance massively on high latency links
+or very high bandwidth links to high performance object stores.
+
+Some experimentation will be needed to find the optimum values of
+`--vfs-read-chunk-size` and `--vfs-read-chunk-streams` as these will
+depend on the backend in use and the latency to the backend.
+
+For high performance object stores (eg AWS S3) a reasonable place to
+start might be `--vfs-read-chunk-streams 16` and
+`--vfs-read-chunk-size 4M`. In testing with AWS S3 the performance
+scaled roughly as the `--vfs-read-chunk-streams` setting.
+
+Similar settings should work for high latency links, but depending on
+the latency they may need more `--vfs-read-chunk-streams` in order to
+get the throughput.
 
 ## VFS Performance
 
@@ -556,19 +627,21 @@ rclone serve s3 remote:path [flags]
 ## Options
 
 ```
-      --addr stringArray                       IPaddress:Port or :Port to bind server to (default [127.0.0.1:8080])
+      --addr stringArray                       IPaddress:Port, :Port or [unix://]/path/to/socket to bind server to (default [127.0.0.1:8080])
       --allow-origin string                    Origin which cross-domain request (CORS) can be executed from
       --auth-key stringArray                   Set key pair for v4 authorization: access_key_id,secret_access_key
+      --auth-proxy string                      A program to use to create the backend from the auth
       --baseurl string                         Prefix for URLs - leave blank for root
       --cert string                            TLS PEM key (concatenation of certificate and CA certificate)
       --client-ca string                       Client certificate authority to verify clients with
       --dir-cache-time Duration                Time to cache directory entries for (default 5m0s)
-      --dir-perms FileMode                     Directory permissions (default 0777)
+      --dir-perms FileMode                     Directory permissions (default 777)
       --etag-hash string                       Which hash to use for the ETag, or auto or blank for off (default "MD5")
-      --file-perms FileMode                    File permissions (default 0666)
+      --file-perms FileMode                    File permissions (default 666)
       --force-path-style                       If true use path style access if false use virtual hosted style (default true) (default true)
       --gid uint32                             Override the gid field set by the filesystem (not supported on Windows) (default 1000)
   -h, --help                                   help for s3
+      --htpasswd string                        A htpasswd file - if not provided no authentication is done
       --key string                             TLS PEM Private key
       --max-header-bytes int                   Maximum size of request header (default 4096)
       --min-tls-version string                 Minimum TLS version that is acceptable (default "tls1.0")
@@ -576,12 +649,16 @@ rclone serve s3 remote:path [flags]
       --no-cleanup                             Not to cleanup empty folder after object is deleted
       --no-modtime                             Don't read/write the modification time (can speed things up)
       --no-seek                                Don't allow seeking in files
+      --pass string                            Password for authentication
       --poll-interval Duration                 Time to wait between polling for changes, must be smaller than dir-cache-time and only on supported remotes (set 0 to disable) (default 1m0s)
       --read-only                              Only allow read-only access
+      --realm string                           Realm for authentication
+      --salt string                            Password hashing salt (default "dlPL2MqE")
       --server-read-timeout Duration           Timeout for server reading data (default 1h0m0s)
       --server-write-timeout Duration          Timeout for server writing data (default 1h0m0s)
       --uid uint32                             Override the uid field set by the filesystem (not supported on Windows) (default 1000)
-      --umask int                              Override the permission bits set by the filesystem (not supported on Windows) (default 2)
+      --umask FileMode                         Override the permission bits set by the filesystem (not supported on Windows) (default 002)
+      --user string                            User name for authentication
       --vfs-block-norm-dupes                   If duplicate filenames exist in the same directory (after normalization), log an error and hide the duplicates (may have a performance cost)
       --vfs-cache-max-age Duration             Max time since last access of objects in the cache (default 1h0m0s)
       --vfs-cache-max-size SizeSuffix          Max total size of objects in the cache (default off)
@@ -594,6 +671,7 @@ rclone serve s3 remote:path [flags]
       --vfs-read-ahead SizeSuffix              Extra read ahead over --buffer-size when using cache-mode full
       --vfs-read-chunk-size SizeSuffix         Read the source objects in chunks (default 128Mi)
       --vfs-read-chunk-size-limit SizeSuffix   If greater than --vfs-read-chunk-size, double the chunk size after each chunk read, until the limit is reached ('off' is unlimited) (default off)
+      --vfs-read-chunk-streams int             The number of parallel streams to read at once
       --vfs-read-wait Duration                 Time to wait for in-sequence read before seeking (default 20ms)
       --vfs-refresh                            Refreshes the directory cache recursively in the background on start
       --vfs-used-is-size rclone size           Use the rclone size algorithm for Used size
@@ -601,10 +679,12 @@ rclone serve s3 remote:path [flags]
       --vfs-write-wait Duration                Time to wait for in-sequence write before giving error (default 1s)
 ```
 
+Options shared with other commands are described next.
+See the [global flags page](/flags/) for global options not listed here.
 
-## Filter Options
+### Filter Options
 
-Flags for filtering directory listings.
+Flags for filtering directory listings
 
 ```
       --delete-excluded                     Delete files on dest excluded from sync
@@ -631,9 +711,7 @@ Flags for filtering directory listings.
       --min-size SizeSuffix                 Only transfer files bigger than this in KiB or suffix B|K|M|G|T|P (default off)
 ```
 
-See the [global flags page](/flags/) for global options not listed here.
-
-# SEE ALSO
+## See Also
 
 * [rclone serve](/commands/rclone_serve/)	 - Serve a remote over a protocol.
 

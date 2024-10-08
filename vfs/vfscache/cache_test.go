@@ -14,6 +14,7 @@ import (
 	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fstest"
 	"github.com/rclone/rclone/lib/diskusage"
+	"github.com/rclone/rclone/vfs/vfscache/writeback"
 	"github.com/rclone/rclone/vfs/vfscommon"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -726,4 +727,27 @@ func TestCacheStats(t *testing.T) {
 	assert.Equal(t, 0, out["files"])
 	assert.Equal(t, 0, out["uploadsInProgress"])
 	assert.Equal(t, 0, out["uploadsQueued"])
+}
+
+func TestCacheQueue(t *testing.T) {
+	_, c := newTestCache(t)
+
+	out := c.Queue()
+
+	// We've checked the contents of queue in the writeback tests
+	// Just check it is present here
+	queue, found := out["queue"]
+	require.True(t, found)
+	_, ok := queue.([]writeback.QueueInfo)
+	require.True(t, ok)
+}
+
+func TestCacheQueueSetExpiry(t *testing.T) {
+	_, c := newTestCache(t)
+
+	// Check this returns the correct error when called so we know
+	// it is plumbed in correctly. The actual tests are done in
+	// writeback.
+	err := c.QueueSetExpiry(123123, time.Now())
+	assert.Equal(t, writeback.ErrorIDNotFound, err)
 }

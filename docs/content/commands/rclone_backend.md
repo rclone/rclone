@@ -10,7 +10,6 @@ Run a backend-specific command.
 
 ## Synopsis
 
-
 This runs a backend-specific command. The commands themselves (except
 for "help" and "features") are defined by the backends and you should
 see the backend docs for definitions.
@@ -50,10 +49,12 @@ rclone backend <command> remote:path [opts] <args> [flags]
   -o, --option stringArray   Option in the form name=value or name
 ```
 
+Options shared with other commands are described next.
+See the [global flags page](/flags/) for global options not listed here.
 
-## Important Options
+### Important Options
 
-Important flags useful for most commands.
+Important flags useful for most commands
 
 ```
   -n, --dry-run         Do a trial run with no permanent changes
@@ -61,9 +62,7 @@ Important flags useful for most commands.
   -v, --verbose count   Print lots more stuff (repeat for more)
 ```
 
-See the [global flags page](/flags/) for global options not listed here.
-
-# SEE ALSO
+## See Also
 
 * [rclone](/commands/rclone/)	 - Show help for rclone commands, flags and backends.
 

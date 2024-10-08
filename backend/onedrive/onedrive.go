@@ -942,7 +942,8 @@ func errorHandler(resp *http.Response) error {
 	// Decode error response
 	errResponse := new(api.Error)
 	err := rest.DecodeJSON(resp, &errResponse)
-	if err != nil {
+	// Redirects have no body so don't report an error
+	if err != nil && resp.Header.Get("Location") == "" {
 		fs.Debugf(nil, "Couldn't decode error response: %v", err)
 	}
 	if errResponse.ErrorInfo.Code == "" {
@@ -1544,9 +1545,12 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 
 // Precision return the precision of this Fs
 func (f *Fs) Precision() time.Duration {
-	if f.driveType == driveTypePersonal {
-		return time.Millisecond
-	}
+	// While this is true for some OneDrive personal accounts, it
+	// isn't true for all of them. See #8101 for details
+	//
+	// if f.driveType == driveTypePersonal {
+	// 	return time.Millisecond
+	// }
 	return time.Second
 }
 

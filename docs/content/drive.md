@@ -77,15 +77,16 @@ Configure this as a Shared Drive (Team Drive)?
 y) Yes
 n) No
 y/n> n
---------------------
-[remote]
-client_id = 
-client_secret = 
-scope = drive
-root_folder_id = 
-service_account_file =
-token = {"access_token":"XXX","token_type":"Bearer","refresh_token":"XXX","expiry":"2014-03-16T13:57:58.955387075Z"}
---------------------
+Configuration complete.
+Options:
+type: drive
+- client_id:
+- client_secret:
+- scope: drive
+- root_folder_id:
+- service_account_file:
+- token: {"access_token":"XXX","token_type":"Bearer","refresh_token":"XXX","expiry":"2014-03-16T13:57:58.955387075Z"}
+Keep this "remote" remote?
 y) Yes this is OK
 e) Edit this remote
 d) Delete this remote
@@ -317,13 +318,14 @@ Choose a number from below, or type in your own value
  3 / Rclone Test 3
    \ "zzzzzzzzzzzzzzzzzzzz"
 Enter a Shared Drive ID> 1
---------------------
-[remote]
-client_id =
-client_secret =
-token = {"AccessToken":"xxxx.x.xxxxx_xxxxxxxxxxx_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx","RefreshToken":"1/xxxxxxxxxxxxxxxx_xxxxxxxxxxxxxxxxxxxxxxxxxx","Expiry":"2014-03-16T13:57:58.955387075Z","Extra":null}
-team_drive = xxxxxxxxxxxxxxxxxxxx
---------------------
+Configuration complete.
+Options:
+- type: drive
+- client_id:
+- client_secret:
+- token: {"AccessToken":"xxxx.x.xxxxx_xxxxxxxxxxx_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx","RefreshToken":"1/xxxxxxxxxxxxxxxx_xxxxxxxxxxxxxxxxxxxxxxxxxx","Expiry":"2014-03-16T13:57:58.955387075Z","Extra":null}
+- team_drive: xxxxxxxxxxxxxxxxxxxx
+Keep this "remote" remote?
 y) Yes this is OK
 e) Edit this remote
 d) Delete this remote
@@ -534,6 +536,7 @@ represent the currently available conversions.
 | html | text/html | An HTML Document |
 | jpg  | image/jpeg | A JPEG Image File |
 | json | application/vnd.google-apps.script+json | JSON Text Format for Google Apps scripts |
+| md   | text/markdown | Markdown Text Format |
 | odp  | application/vnd.oasis.opendocument.presentation | Openoffice Presentation |
 | ods  | application/vnd.oasis.opendocument.spreadsheet | Openoffice Spreadsheet |
 | ods  | application/x-vnd.oasis.opendocument.spreadsheet | Openoffice Spreadsheet |

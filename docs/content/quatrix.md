@@ -44,11 +44,12 @@ api_key> your_api_key
 Host name of Quatrix account.
 host> example.quatrix.it
 
---------------------
-[remote]
-api_key = your_api_key
-host = example.quatrix.it
---------------------
+Configuration complete.
+Options:
+- type: quatrix
+- api_key: your_api_key
+- host: example.quatrix.it
+Keep this "remote" remote?
 y) Yes this is OK
 e) Edit this remote
 d) Delete this remote
@@ -94,12 +95,12 @@ e/n/d/r/c/s/q> e
 Choose a number from below, or type in an existing value
  1 > remote
 remote> remote
---------------------
-[remote]
-type = quatrix
-host = some_host.quatrix.it
-api_key = your_api_key
---------------------
+Configuration complete.
+Options:
+- type: quatrix
+- host: some_host.quatrix.it
+- api_key: your_api_key
+Keep this "remote" remote?
 Edit remote
 Option api_key.
 API key for accessing Quatrix account
@@ -109,12 +110,12 @@ Option host.
 Host name of Quatrix account
 Enter a string value. Press Enter for the default (some_host.quatrix.it).
 
---------------------
-[remote]
-type = quatrix
-host = some_host.quatrix.it
-api_key = your_api_key
---------------------
+Configuration complete.
+Options:
+- type: quatrix
+- host: some_host.quatrix.it
+- api_key: your_api_key
+Keep this "remote" remote?
 y) Yes this is OK
 e) Edit this remote
 d) Delete this remote

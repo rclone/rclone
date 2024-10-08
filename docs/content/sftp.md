@@ -74,14 +74,15 @@ y/g/n> n
 Path to unencrypted PEM-encoded private key file, leave blank to use ssh-agent.
 key_file>
 Remote config
---------------------
-[remote]
-host = example.com
-user = sftpuser
-port =
-pass =
-key_file =
---------------------
+Configuration complete.
+Options:
+- type: sftp
+- host: example.com
+- user: sftpuser
+- port:
+- pass:
+- key_file:
+Keep this "remote" remote?
 y) Yes this is OK
 e) Edit this remote
 d) Delete this remote
@@ -445,7 +446,15 @@ Properties:
 
 Raw PEM-encoded private key.
 
-If specified, will override key_file parameter.
+Note that this should be on a single line with line endings replaced with '\n', eg
+
+    key_pem = -----BEGIN RSA PRIVATE KEY-----\nMaMbaIXtE\n0gAMbMbaSsd\nMbaass\n-----END RSA PRIVATE KEY-----
+
+This will generate the single line correctly:
+
+    awk '{printf "%s\\n", $0}' < ~/.ssh/id_rsa
+
+If specified, it will override the key_file parameter.
 
 Properties:
 
@@ -902,13 +911,13 @@ Maximum number of SFTP simultaneous connections, 0 for unlimited.
 Note that setting this is very likely to cause deadlocks so it should
 be used with care.
 
-If you are doing a sync or copy then make sure concurrency is one more
+If you are doing a sync or copy then make sure connections is one more
 than the sum of `--transfers` and `--checkers`.
 
 If you use `--check-first` then it just needs to be one more than the
 maximum of `--checkers` and `--transfers`.
 
-So for `concurrency 3` you'd use `--checkers 2 --transfers 2
+So for `connections 3` you'd use `--checkers 2 --transfers 2
 --check-first` or `--checkers 1 --transfers 1`.
 
 

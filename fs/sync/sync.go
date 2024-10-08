@@ -400,7 +400,7 @@ func (s *syncCopyMove) pairChecker(in *pipe, out *pipe, fraction int, wg *sync.W
 			if needTransfer {
 				// If files are treated as immutable, fail if destination exists and does not match
 				if s.ci.Immutable && pair.Dst != nil {
-					err := fs.CountError(fserrors.NoRetryError(fs.ErrorImmutableModified))
+					err := fs.CountError(s.ctx, fserrors.NoRetryError(fs.ErrorImmutableModified))
 					fs.Errorf(pair.Dst, "Source and destination exist but do not match: %v", err)
 					s.processError(err)
 				} else {
@@ -1204,7 +1204,7 @@ func (s *syncCopyMove) setDelayedDirModTimes(ctx context.Context) error {
 					_, err = operations.SetDirModTime(gCtx, s.fdst, item.dst, item.dir, item.modTime)
 				}
 				if err != nil {
-					err = fs.CountError(err)
+					err = fs.CountError(ctx, err)
 					fs.Errorf(item.dir, "Failed to update directory timestamp or metadata: %v", err)
 					errCount.Add(err)
 				}
@@ -1399,7 +1399,7 @@ func MoveDir(ctx context.Context, fdst, fsrc fs.Fs, deleteEmptySrcDirs bool, cop
 			fs.Infof(fdst, "Server side directory move succeeded")
 			return nil
 		default:
-			err = fs.CountError(err)
+			err = fs.CountError(ctx, err)
 			fs.Errorf(fdst, "Server side directory move failed: %v", err)
 			return err
 		}

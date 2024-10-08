@@ -50,11 +50,11 @@ If your browser doesn't open automatically go to the following link: http://127.
 Log in and authorize rclone for access
 Waiting for code...
 Got code
---------------------
-[remote]
-type = premiumizeme
-token = {"access_token":"XXX","token_type":"Bearer","refresh_token":"XXX","expiry":"2029-08-07T18:44:15.548915378+01:00"}
---------------------
+Configuration complete.
+Options:
+- type: premiumizeme
+- token: {"access_token":"XXX","token_type":"Bearer","refresh_token":"XXX","expiry":"2029-08-07T18:44:15.548915378+01:00"}
+Keep this "remote" remote?
 y) Yes this is OK
 e) Edit this remote
 d) Delete this remote

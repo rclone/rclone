@@ -11,7 +11,6 @@ require (
 	github.com/Azure/go-ntlmssp v0.0.0-20221128193559-754e69321358
 	github.com/Files-com/files-sdk-go/v3 v3.2.34
 	github.com/Max-Sum/base32768 v0.0.0-20230304063302-18e6ce5945fd
-	github.com/Unknwon/goconfig v1.0.0
 	github.com/a8m/tree v0.0.0-20240104212747-2c8764a5f17e
 	github.com/aalpar/deheap v0.0.0-20210914013432-0cc84d79dec3
 	github.com/abbot/go-http-auth v0.4.0
@@ -52,13 +51,14 @@ require (
 	github.com/minio/minio-go/v7 v7.0.74
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/moby/sys/mountinfo v0.7.2
-	github.com/ncw/swift/v2 v2.0.2
+	github.com/ncw/swift/v2 v2.0.3
 	github.com/oracle/oci-go-sdk/v65 v65.69.2
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/pkg/sftp v1.13.6
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2
 	github.com/prometheus/client_golang v1.19.1
 	github.com/putdotio/go-putio/putio v0.0.0-20200123120452-16d982cac2b8
+	github.com/quasilyte/go-ruleguard/dsl v0.3.22
 	github.com/rclone/gofakes3 v0.0.3-0.20240807151802-e80146f8de87
 	github.com/rfjakob/eme v1.1.2
 	github.com/rivo/uniseg v0.4.7
@@ -70,6 +70,7 @@ require (
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.9.0
 	github.com/t3rm1n4l/go-mega v0.0.0-20240219080617-d494b6a8ace7
+	github.com/unknwon/goconfig v1.0.0
 	github.com/willscott/go-nfs v0.0.3-0.20240425122109-91bc38957cc9
 	github.com/winfsp/cgofuse v1.5.1-0.20221118130120-84c0898ad2e0
 	github.com/xanzy/ssh-agent v0.3.3
@@ -78,7 +79,6 @@ require (
 	go.etcd.io/bbolt v1.3.10
 	goftp.io/server/v2 v2.0.1
 	golang.org/x/crypto v0.25.0
-	golang.org/x/exp v0.0.0-20240719175910-8a7402abbf56
 	golang.org/x/net v0.27.0
 	golang.org/x/oauth2 v0.21.0
 	golang.org/x/sync v0.8.0
@@ -88,7 +88,7 @@ require (
 	google.golang.org/api v0.188.0
 	gopkg.in/validator.v2 v2.0.1
 	gopkg.in/yaml.v2 v2.4.0
-	storj.io/uplink v1.13.0
+	storj.io/uplink v1.13.1
 )
 
 require (
@@ -204,6 +204,7 @@ require (
 	go.opentelemetry.io/otel v1.24.0 // indirect
 	go.opentelemetry.io/otel/metric v1.24.0 // indirect
 	go.opentelemetry.io/otel/trace v1.24.0 // indirect
+	golang.org/x/exp v0.0.0-20240719175910-8a7402abbf56 // indirect
 	golang.org/x/mod v0.19.0 // indirect
 	golang.org/x/tools v0.23.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20240701130421-f6361c86f094 // indirect
@@ -212,9 +213,9 @@ require (
 	google.golang.org/protobuf v1.34.2 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	moul.io/http2curl/v2 v2.3.0 // indirect
-	storj.io/common v0.0.0-20240424123607-5f226fc92c16 // indirect
-	storj.io/drpc v0.0.33 // indirect
-	storj.io/eventkit v0.0.0-20240306141230-6cb545e5f892 // indirect
+	storj.io/common v0.0.0-20240812101423-26b53789c348 // indirect
+	storj.io/drpc v0.0.35-0.20240709171858-0075ac871661 // indirect
+	storj.io/eventkit v0.0.0-20240415002644-1d9596fee086 // indirect
 	storj.io/infectious v0.0.2 // indirect
 	storj.io/picobuf v0.0.3 // indirect
 )

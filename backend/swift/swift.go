@@ -883,7 +883,7 @@ func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (
 
 // About gets quota information
 func (f *Fs) About(ctx context.Context) (usage *fs.Usage, err error) {
-	var total, objects int64
+	var used, objects, total int64
 	if f.rootContainer != "" {
 		var container swift.Container
 		err = f.pacer.Call(func() (bool, error) {
@@ -893,8 +893,9 @@ func (f *Fs) About(ctx context.Context) (usage *fs.Usage, err error) {
 		if err != nil {
 			return nil, fmt.Errorf("container info failed: %w", err)
 		}
-		total = container.Bytes
+		used = container.Bytes
 		objects = container.Count
+		total = container.QuotaBytes
 	} else {
 		var containers []swift.Container
 		err = f.pacer.Call(func() (bool, error) {
@@ -905,13 +906,18 @@ func (f *Fs) About(ctx context.Context) (usage *fs.Usage, err error) {
 			return nil, fmt.Errorf("container listing failed: %w", err)
 		}
 		for _, c := range containers {
-			total += c.Bytes
+			used += c.Bytes
 			objects += c.Count
+			total += c.QuotaBytes
 		}
 	}
 	usage = &fs.Usage{
-		Used:    fs.NewUsageValue(total),   // bytes in use
+		Used:    fs.NewUsageValue(used),    // bytes in use
 		Objects: fs.NewUsageValue(objects), // objects in use
+	}
+	if total > 0 {
+		usage.Total = fs.NewUsageValue(total)
+		usage.Free = fs.NewUsageValue(total - used)
 	}
 	return usage, nil
 }
@@ -1408,14 +1414,6 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 		return shouldRetryHeaders(ctx, rxHeaders, err)
 	})
 	return
-}
-
-// min returns the smallest of x, y
-func min(x, y int64) int64 {
-	if x < y {
-		return x
-	}
-	return y
 }
 
 // Get the segments for a large object

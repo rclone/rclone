@@ -15,37 +15,33 @@ two ways of doing it, described below.
 
 ## Configuring using rclone authorize ##
 
-On the headless box run `rclone` config but answer `N` to the `Use web browser 
-to automatically authenticate?` question.
+On the headless box run `rclone` config but answer `N` to the `Use auto config?` question.
 
 ```
-...
-Remote config
-Use web browser to automatically authenticate rclone with remote?
- * Say Y if the machine running rclone has a web browser you can use
- * Say N if running rclone on a (remote) machine without web browser access
-If not sure try Y. If Y failed, try N.
+Use auto config?
+ * Say Y if not sure
+ * Say N if you are working on a remote or headless machine
+
 y) Yes (default)
 n) No
 y/n> n
+
+Option config_token.
 For this to work, you will need rclone available on a machine that has
 a web browser available.
-
 For more help and alternate methods see: https://rclone.org/remote_setup/
-
 Execute the following on the machine with the web browser (same rclone
 version recommended):
-
-	rclone authorize "dropbox"
-
-Then paste the result below:
-result>
+	rclone authorize "onedrive"
+Then paste the result.
+Enter a value.
+config_token>
 ```
 
 Then on your main desktop machine
 
 ```
-rclone authorize "dropbox"
+rclone authorize "onedrive"
 If your browser doesn't open automatically go to the following link: http://127.0.0.1:53682/auth
 Log in and authorize rclone for access
 Waiting for code...
@@ -58,7 +54,7 @@ SECRET_TOKEN
 Then back to the headless box, paste in the code
 
 ```
-result> SECRET_TOKEN
+config_token> SECRET_TOKEN
 --------------------
 [acd12]
 client_id = 
@@ -100,16 +96,13 @@ Linux and MacOS users can utilize SSH Tunnel to redirect the headless box port 5
 ```
 ssh -L localhost:53682:localhost:53682 username@remote_server
 ```
-Then on the headless box run `rclone` config and answer `Y` to the `Use web 
-browser to automatically authenticate?` question.
+Then on the headless box run `rclone config` and answer `Y` to the `Use auto config?` question.
 
 ```
-...
-Remote config
-Use web browser to automatically authenticate rclone with remote?
- * Say Y if the machine running rclone has a web browser you can use
- * Say N if running rclone on a (remote) machine without web browser access
-If not sure try Y. If Y failed, try N.
+Use auto config?
+ * Say Y if not sure
+ * Say N if you are working on a remote or headless machine
+
 y) Yes (default)
 n) No
 y/n> y

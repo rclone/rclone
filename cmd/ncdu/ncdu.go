@@ -929,23 +929,23 @@ func (u *UI) Run() error {
 		return fmt.Errorf("screen init: %w", err)
 	}
 
-	// Hijack fs.LogPrint so that it doesn't corrupt the screen.
-	if logPrint := fs.LogPrint; !log.Redirected() {
+	// Hijack fs.LogOutput so that it doesn't corrupt the screen.
+	if logOutput := fs.LogOutput; !log.Redirected() {
 		type log struct {
 			text  string
 			level fs.LogLevel
 		}
 		var logs []log
-		fs.LogPrint = func(level fs.LogLevel, text string) {
+		fs.LogOutput = func(level fs.LogLevel, text string) {
 			if len(logs) > 100 {
 				logs = logs[len(logs)-100:]
 			}
 			logs = append(logs, log{level: level, text: text})
 		}
 		defer func() {
-			fs.LogPrint = logPrint
+			fs.LogOutput = logOutput
 			for i := range logs {
-				logPrint(logs[i].level, logs[i].text)
+				logOutput(logs[i].level, logs[i].text)
 			}
 		}()
 	}

@@ -10,7 +10,6 @@ Move files from source to dest.
 
 ## Synopsis
 
-
 Moves the contents of the source directory to the destination
 directory. Rclone will error if the source and destination overlap and
 the remote does not support a server-side directory move operation.
@@ -62,15 +61,17 @@ rclone move source:path dest:path [flags]
   -h, --help                    help for move
 ```
 
+Options shared with other commands are described next.
+See the [global flags page](/flags/) for global options not listed here.
 
-## Copy Options
+### Copy Options
 
-Flags for anything which can Copy a file.
+Flags for anything which can copy a file
 
 ```
       --check-first                                 Do all the checks before starting transfers
-  -c, --checksum                                    Check for changes with size & checksum (if available, or fallback to size only).
-      --compare-dest stringArray                    Include additional comma separated server-side paths during comparison
+  -c, --checksum                                    Check for changes with size & checksum (if available, or fallback to size only)
+      --compare-dest stringArray                    Include additional server-side paths during comparison
       --copy-dest stringArray                       Implies --compare-dest but also copies files from paths into destination
       --cutoff-mode HARD|SOFT|CAUTIOUS              Mode to stop transfers when reaching the max transfer limit HARD|SOFT|CAUTIOUS (default HARD)
       --ignore-case-sync                            Ignore case when synchronizing
@@ -102,9 +103,9 @@ Flags for anything which can Copy a file.
   -u, --update                                      Skip files that are newer on the destination
 ```
 
-## Important Options
+### Important Options
 
-Important flags useful for most commands.
+Important flags useful for most commands
 
 ```
   -n, --dry-run         Do a trial run with no permanent changes
@@ -112,9 +113,9 @@ Important flags useful for most commands.
   -v, --verbose count   Print lots more stuff (repeat for more)
 ```
 
-## Filter Options
+### Filter Options
 
-Flags for filtering directory listings.
+Flags for filtering directory listings
 
 ```
       --delete-excluded                     Delete files on dest excluded from sync
@@ -141,18 +142,16 @@ Flags for filtering directory listings.
       --min-size SizeSuffix                 Only transfer files bigger than this in KiB or suffix B|K|M|G|T|P (default off)
 ```
 
-## Listing Options
+### Listing Options
 
-Flags for listing directories.
+Flags for listing directories
 
 ```
       --default-time Time   Time to show if modtime is unknown for files and directories (default 2000-01-01T00:00:00Z)
       --fast-list           Use recursive list if available; uses more memory but fewer transactions
 ```
 
-See the [global flags page](/flags/) for global options not listed here.
-
-# SEE ALSO
+## See Also
 
 * [rclone](/commands/rclone/)	 - Show help for rclone commands, flags and backends.
 

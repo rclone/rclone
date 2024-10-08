@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"net/url"
 	"path"
@@ -26,6 +25,7 @@ import (
 	"github.com/rclone/rclone/lib/encoder"
 	"github.com/rclone/rclone/lib/oauthutil"
 	"github.com/rclone/rclone/lib/pacer"
+	"github.com/rclone/rclone/lib/random"
 	"github.com/rclone/rclone/lib/readers"
 	"github.com/rclone/rclone/lib/rest"
 	"golang.org/x/oauth2"
@@ -39,6 +39,8 @@ const (
 	minSleep                    = 10 * time.Millisecond
 	maxSleep                    = 2 * time.Second // may needs to be increased, testing needed
 	decayConstant               = 2               // bigger for slower decay, exponential
+
+	userAgentTemplae = `Yandex.Disk {"os":"windows","dtype":"ydisk3","vsn":"3.2.37.4977","id":"6BD01244C7A94456BBCEE7EEC990AEAD","id2":"0F370CD40C594A4783BC839C846B999C","session_id":"%s"}`
 )
 
 // Globals
@@ -79,15 +81,22 @@ func init() {
 			// it doesn't seem worth making an exception for this
 			Default: (encoder.Display |
 				encoder.EncodeInvalidUtf8),
+		}, {
+			Name:     "spoof_ua",
+			Help:     "Set the user agent to match an official version of the yandex disk client. May help with upload performance.",
+			Default:  true,
+			Advanced: true,
+			Hide:     fs.OptionHideConfigurator,
 		}}...),
 	})
 }
 
 // Options defines the configuration for this backend
 type Options struct {
-	Token      string               `config:"token"`
-	HardDelete bool                 `config:"hard_delete"`
-	Enc        encoder.MultiEncoder `config:"encoding"`
+	Token          string               `config:"token"`
+	HardDelete     bool                 `config:"hard_delete"`
+	Enc            encoder.MultiEncoder `config:"encoding"`
+	SpoofUserAgent bool                 `config:"spoof_ua"`
 }
 
 // Fs represents a remote yandex
@@ -254,6 +263,12 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		return nil, err
 	}
 
+	ctx, ci := fs.AddConfig(ctx)
+	if fs.ConfigOptionsInfo.Get("user_agent").IsDefault() && opt.SpoofUserAgent {
+		randomSessionID, _ := random.Password(128)
+		ci.UserAgent = fmt.Sprintf(userAgentTemplae, randomSessionID)
+	}
+
 	token, err := oauthutil.GetToken(name, m)
 	if err != nil {
 		return nil, fmt.Errorf("couldn't read OAuth token: %w", err)
@@ -267,14 +282,13 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		if err != nil {
 			return nil, fmt.Errorf("couldn't save OAuth token: %w", err)
 		}
-		log.Printf("Automatically upgraded OAuth config.")
+		fs.Logf(nil, "Automatically upgraded OAuth config.")
 	}
 	oAuthClient, _, err := oauthutil.NewClient(ctx, name, m, oauthConfig)
 	if err != nil {
 		return nil, fmt.Errorf("failed to configure Yandex: %w", err)
 	}
 
-	ci := fs.GetConfig(ctx)
 	f := &Fs{
 		name:  name,
 		opt:   *opt,

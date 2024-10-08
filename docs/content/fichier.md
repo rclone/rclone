@@ -51,11 +51,11 @@ y) Yes
 n) No
 y/n> 
 Remote config
---------------------
-[remote]
-type = fichier
-api_key = example_key
---------------------
+Configuration complete.
+Options:
+- type: fichier
+- api_key: example_key
+Keep this "remote" remote?
 y) Yes this is OK
 e) Edit this remote
 d) Delete this remote

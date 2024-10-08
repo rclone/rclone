@@ -6,7 +6,6 @@ import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
-	"log"
 	"net"
 	"net/http"
 	"net/http/cookiejar"
@@ -71,17 +70,17 @@ func NewTransportCustom(ctx context.Context, customize func(*http.Transport)) ht
 	// Load client certs
 	if ci.ClientCert != "" || ci.ClientKey != "" {
 		if ci.ClientCert == "" || ci.ClientKey == "" {
-			log.Fatalf("Both --client-cert and --client-key must be set")
+			fs.Fatalf(nil, "Both --client-cert and --client-key must be set")
 		}
 		cert, err := tls.LoadX509KeyPair(ci.ClientCert, ci.ClientKey)
 		if err != nil {
-			log.Fatalf("Failed to load --client-cert/--client-key pair: %v", err)
+			fs.Fatalf(nil, "Failed to load --client-cert/--client-key pair: %v", err)
 		}
 		if cert.Leaf == nil {
 			// Leaf is always the first certificate
 			cert.Leaf, err = x509.ParseCertificate(cert.Certificate[0])
 			if err != nil {
-				log.Fatalf("Failed to parse the certificate")
+				fs.Fatalf(nil, "Failed to parse the certificate")
 			}
 		}
 		t.TLSClientConfig.Certificates = []tls.Certificate{cert}
@@ -95,11 +94,11 @@ func NewTransportCustom(ctx context.Context, customize func(*http.Transport)) ht
 		for _, cert := range ci.CaCert {
 			caCert, err := os.ReadFile(cert)
 			if err != nil {
-				log.Fatalf("Failed to read --ca-cert file %q : %v", cert, err)
+				fs.Fatalf(nil, "Failed to read --ca-cert file %q : %v", cert, err)
 			}
 			ok := caCertPool.AppendCertsFromPEM(caCert)
 			if !ok {
-				log.Fatalf("Failed to add certificates from --ca-cert file %q", cert)
+				fs.Fatalf(nil, "Failed to add certificates from --ca-cert file %q", cert)
 			}
 		}
 		t.TLSClientConfig.RootCAs = caCertPool
@@ -303,7 +302,7 @@ func (t *Transport) reloadCertificates() {
 
 	cert, err := tls.LoadX509KeyPair(t.clientCert, t.clientKey)
 	if err != nil {
-		log.Fatalf("Failed to load --client-cert/--client-key pair: %v", err)
+		fs.Fatalf(nil, "Failed to load --client-cert/--client-key pair: %v", err)
 	}
 	// Check if we need to parse the certificate again, we need it
 	// for checking the expiration date
@@ -311,7 +310,7 @@ func (t *Transport) reloadCertificates() {
 		// Leaf is always the first certificate
 		cert.Leaf, err = x509.ParseCertificate(cert.Certificate[0])
 		if err != nil {
-			log.Fatalf("Failed to parse the certificate")
+			fs.Fatalf(nil, "Failed to parse the certificate")
 		}
 	}
 	t.TLSClientConfig.Certificates = []tls.Certificate{cert}

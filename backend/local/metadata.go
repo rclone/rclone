@@ -2,6 +2,7 @@ package local
 
 import (
 	"fmt"
+	"math"
 	"os"
 	"runtime"
 	"strconv"
@@ -72,12 +73,12 @@ func (o *Object) parseMetadataInt(m fs.Metadata, key string, base int) (result i
 	value, ok := m[key]
 	if ok {
 		var err error
-		result64, err := strconv.ParseInt(value, base, 64)
+		parsed, err := strconv.ParseInt(value, base, 0)
 		if err != nil {
 			fs.Debugf(o, "failed to parse metadata %s: %q: %v", key, value, err)
 			ok = false
 		}
-		result = int(result64)
+		result = int(parsed)
 	}
 	return result, ok
 }
@@ -128,9 +129,14 @@ func (o *Object) writeMetadataToFile(m fs.Metadata) (outErr error) {
 	}
 	mode, hasMode := o.parseMetadataInt(m, "mode", 8)
 	if hasMode {
-		err = os.Chmod(o.path, os.FileMode(mode))
-		if err != nil {
-			outErr = fmt.Errorf("failed to change permissions: %w", err)
+		if mode >= 0 {
+			umode := uint(mode)
+			if umode <= math.MaxUint32 {
+				err = os.Chmod(o.path, os.FileMode(umode))
+				if err != nil {
+					outErr = fmt.Errorf("failed to change permissions: %w", err)
+				}
+			}
 		}
 	}
 	// FIXME not parsing rdev yet

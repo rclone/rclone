@@ -9,7 +9,9 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
+	"math"
+
+	"github.com/rclone/rclone/fs"
 )
 
 // crypt internals
@@ -47,6 +49,9 @@ func crypt(out, in, iv []byte) error {
 // This is done by encrypting with AES-CTR
 func Obscure(x string) (string, error) {
 	plaintext := []byte(x)
+	if math.MaxInt32-aes.BlockSize < len(plaintext) {
+		return "", fmt.Errorf("value too large")
+	}
 	ciphertext := make([]byte, aes.BlockSize+len(plaintext))
 	iv := ciphertext[:aes.BlockSize]
 	if _, err := io.ReadFull(cryptRand, iv); err != nil {
@@ -62,7 +67,7 @@ func Obscure(x string) (string, error) {
 func MustObscure(x string) string {
 	out, err := Obscure(x)
 	if err != nil {
-		log.Fatalf("Obscure failed: %v", err)
+		fs.Fatalf(nil, "Obscure failed: %v", err)
 	}
 	return out
 }
@@ -88,7 +93,7 @@ func Reveal(x string) (string, error) {
 func MustReveal(x string) string {
 	out, err := Reveal(x)
 	if err != nil {
-		log.Fatalf("Reveal failed: %v", err)
+		fs.Fatalf(nil, "Reveal failed: %v", err)
 	}
 	return out
 }

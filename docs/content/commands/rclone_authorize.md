@@ -10,7 +10,6 @@ Remote authorization.
 
 ## Synopsis
 
-
 Remote authorization. Used to authorize a remote or headless
 rclone from a machine with a browser - use as instructed by
 rclone config.
@@ -32,10 +31,9 @@ rclone authorize [flags]
       --template string        The path to a custom Go template for generating HTML responses
 ```
 
-
 See the [global flags page](/flags/) for global options not listed here.
 
-# SEE ALSO
+## See Also
 
 * [rclone](/commands/rclone/)	 - Show help for rclone commands, flags and backends.
 

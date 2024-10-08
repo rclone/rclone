@@ -4,12 +4,12 @@ package main
 import (
 	"flag"
 	"fmt"
-	"log"
 	"math/rand"
 	"os"
 	"strconv"
 	"strings"
 
+	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/lib/encoder"
 )
 
@@ -434,13 +434,13 @@ var testCasesDoubleEdge = []testCase{
 
 func fatal(err error, s ...interface{}) {
 	if err != nil {
-		log.Fatalln(append(s, err))
+		fs.Fatal(nil, fmt.Sprint(append(s, err)))
 	}
 }
 func fatalW(_ int, err error) func(...interface{}) {
 	if err != nil {
 		return func(s ...interface{}) {
-			log.Fatalln(append(s, err))
+			fs.Fatal(nil, fmt.Sprint(append(s, err)))
 		}
 	}
 	return func(s ...interface{}) {}

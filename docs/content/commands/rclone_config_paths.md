@@ -18,10 +18,9 @@ rclone config paths [flags]
   -h, --help   help for paths
 ```
 
-
 See the [global flags page](/flags/) for global options not listed here.
 
-# SEE ALSO
+## See Also
 
 * [rclone config](/commands/rclone_config/)	 - Enter an interactive configuration session.
 

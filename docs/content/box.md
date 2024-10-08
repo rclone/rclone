@@ -68,12 +68,13 @@ If your browser doesn't open automatically go to the following link: http://127.
 Log in and authorize rclone for access
 Waiting for code...
 Got code
---------------------
-[remote]
-client_id = 
-client_secret = 
-token = {"access_token":"XXX","token_type":"bearer","refresh_token":"XXX","expiry":"XXX"}
---------------------
+Configuration complete.
+Options:
+- type: box
+- client_id:
+- client_secret:
+- token: {"access_token":"XXX","token_type":"bearer","refresh_token":"XXX","expiry":"XXX"}
+Keep this "remote" remote?
 y) Yes this is OK
 e) Edit this remote
 d) Delete this remote
@@ -156,11 +157,11 @@ e/n/d/r/c/s/q> e
 Choose a number from below, or type in an existing value
  1 > remote
 remote> remote
---------------------
-[remote]
-type = box
-token = {"access_token":"XXX","token_type":"bearer","refresh_token":"XXX","expiry":"2017-07-08T23:40:08.059167677+01:00"}
---------------------
+Configuration complete.
+Options:
+- type: box
+- token: {"access_token":"XXX","token_type":"bearer","refresh_token":"XXX","expiry":"2017-07-08T23:40:08.059167677+01:00"}
+Keep this "remote" remote?
 Edit remote
 Value "client_id" = ""
 Edit? (y/n)>
@@ -188,11 +189,11 @@ If your browser doesn't open automatically go to the following link: http://127.
 Log in and authorize rclone for access
 Waiting for code...
 Got code
---------------------
-[remote]
-type = box
-token = {"access_token":"YYY","token_type":"bearer","refresh_token":"YYY","expiry":"2017-07-23T12:22:29.259137901+01:00"}
---------------------
+Configuration complete.
+Options:
+- type: box
+- token: {"access_token":"YYY","token_type":"bearer","refresh_token":"YYY","expiry":"2017-07-23T12:22:29.259137901+01:00"}
+Keep this "remote" remote?
 y) Yes this is OK
 e) Edit this remote
 d) Delete this remote

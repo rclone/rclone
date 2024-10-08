@@ -128,16 +128,16 @@ If your browser doesn't open automatically go to the following link: http://127.
 Log in and authorize rclone for access
 Waiting for code...
 Got code
---------------------
-[remote]
-type = google cloud storage
-client_id =
-client_secret =
-token = {"AccessToken":"xxxx.xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx","RefreshToken":"x/xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx_xxxxxxxxx","Expiry":"2014-07-17T20:49:14.929208288+01:00","Extra":null}
-project_number = 12345678
-object_acl = private
-bucket_acl = private
---------------------
+Configuration complete.
+Options:
+- type: google cloud storage
+- client_id:
+- client_secret:
+- token: {"AccessToken":"xxxx.xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx","RefreshToken":"x/xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx_xxxxxxxxx","Expiry":"2014-07-17T20:49:14.929208288+01:00","Extra":null}
+- project_number: 12345678
+- object_acl: private
+- bucket_acl: private
+Keep this "remote" remote?
 y) Yes this is OK
 e) Edit this remote
 d) Delete this remote
@@ -360,6 +360,20 @@ Properties:
 
 - Config:      service_account_credentials
 - Env Var:     RCLONE_GCS_SERVICE_ACCOUNT_CREDENTIALS
+- Type:        string
+- Required:    false
+
+#### --gcs-access-token
+
+Short-lived access token.
+
+Leave blank normally.
+Needed only if you want use short-lived access tokens instead of interactive login.
+
+Properties:
+
+- Config:      access_token
+- Env Var:     RCLONE_GCS_ACCESS_TOKEN
 - Type:        string
 - Required:    false
 

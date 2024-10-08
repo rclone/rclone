@@ -10,7 +10,6 @@ import (
 	goflag "flag"
 	"fmt"
 	"io"
-	"log"
 	"math/rand"
 	"os"
 	"path"
@@ -93,7 +92,7 @@ func TestMain(m *testing.M) {
 	goflag.Parse()
 	var rc int
 
-	log.Printf("Running with the following params: \n remote: %v", remoteName)
+	fs.Logf(nil, "Running with the following params: \n remote: %v", remoteName)
 	runInstance = newRun()
 	rc = m.Run()
 	os.Exit(rc)
@@ -408,7 +407,7 @@ func TestInternalWrappedFsChangeNotSeen(t *testing.T) {
 	// update in the wrapped fs
 	originalSize, err := runInstance.size(t, rootFs, "data.bin")
 	require.NoError(t, err)
-	log.Printf("original size: %v", originalSize)
+	fs.Logf(nil, "original size: %v", originalSize)
 
 	o, err := cfs.UnWrap().NewObject(context.Background(), runInstance.encryptRemoteIfNeeded(t, "data.bin"))
 	require.NoError(t, err)
@@ -425,7 +424,7 @@ func TestInternalWrappedFsChangeNotSeen(t *testing.T) {
 	err = o.Update(context.Background(), bytes.NewReader(data2), objInfo)
 	require.NoError(t, err)
 	require.Equal(t, int64(len(data2)), o.Size())
-	log.Printf("updated size: %v", len(data2))
+	fs.Logf(nil, "updated size: %v", len(data2))
 
 	// get a new instance from the cache
 	if runInstance.wrappedIsExternal {
@@ -485,49 +484,49 @@ func TestInternalMoveWithNotify(t *testing.T) {
 	err = runInstance.retryBlock(func() error {
 		li, err := runInstance.list(t, rootFs, "test")
 		if err != nil {
-			log.Printf("err: %v", err)
+			fs.Logf(nil, "err: %v", err)
 			return err
 		}
 		if len(li) != 2 {
-			log.Printf("not expected listing /test: %v", li)
+			fs.Logf(nil, "not expected listing /test: %v", li)
 			return fmt.Errorf("not expected listing /test: %v", li)
 		}
 
 		li, err = runInstance.list(t, rootFs, "test/one")
 		if err != nil {
-			log.Printf("err: %v", err)
+			fs.Logf(nil, "err: %v", err)
 			return err
 		}
 		if len(li) != 0 {
-			log.Printf("not expected listing /test/one: %v", li)
+			fs.Logf(nil, "not expected listing /test/one: %v", li)
 			return fmt.Errorf("not expected listing /test/one: %v", li)
 		}
 
 		li, err = runInstance.list(t, rootFs, "test/second")
 		if err != nil {
-			log.Printf("err: %v", err)
+			fs.Logf(nil, "err: %v", err)
 			return err
 		}
 		if len(li) != 1 {
-			log.Printf("not expected listing /test/second: %v", li)
+			fs.Logf(nil, "not expected listing /test/second: %v", li)
 			return fmt.Errorf("not expected listing /test/second: %v", li)
 		}
 		if fi, ok := li[0].(os.FileInfo); ok {
 			if fi.Name() != "data.bin" {
-				log.Printf("not expected name: %v", fi.Name())
+				fs.Logf(nil, "not expected name: %v", fi.Name())
 				return fmt.Errorf("not expected name: %v", fi.Name())
 			}
 		} else if di, ok := li[0].(fs.DirEntry); ok {
 			if di.Remote() != "test/second/data.bin" {
-				log.Printf("not expected remote: %v", di.Remote())
+				fs.Logf(nil, "not expected remote: %v", di.Remote())
 				return fmt.Errorf("not expected remote: %v", di.Remote())
 			}
 		} else {
-			log.Printf("unexpected listing: %v", li)
+			fs.Logf(nil, "unexpected listing: %v", li)
 			return fmt.Errorf("unexpected listing: %v", li)
 		}
 
-		log.Printf("complete listing: %v", li)
+		fs.Logf(nil, "complete listing: %v", li)
 		return nil
 	}, 12, time.Second*10)
 	require.NoError(t, err)
@@ -577,43 +576,43 @@ func TestInternalNotifyCreatesEmptyParts(t *testing.T) {
 	err = runInstance.retryBlock(func() error {
 		found = boltDb.HasEntry(path.Join(cfs.Root(), runInstance.encryptRemoteIfNeeded(t, "test")))
 		if !found {
-			log.Printf("not found /test")
+			fs.Logf(nil, "not found /test")
 			return fmt.Errorf("not found /test")
 		}
 		found = boltDb.HasEntry(path.Join(cfs.Root(), runInstance.encryptRemoteIfNeeded(t, "test"), runInstance.encryptRemoteIfNeeded(t, "one")))
 		if !found {
-			log.Printf("not found /test/one")
+			fs.Logf(nil, "not found /test/one")
 			return fmt.Errorf("not found /test/one")
 		}
 		found = boltDb.HasEntry(path.Join(cfs.Root(), runInstance.encryptRemoteIfNeeded(t, "test"), runInstance.encryptRemoteIfNeeded(t, "one"), runInstance.encryptRemoteIfNeeded(t, "test2")))
 		if !found {
-			log.Printf("not found /test/one/test2")
+			fs.Logf(nil, "not found /test/one/test2")
 			return fmt.Errorf("not found /test/one/test2")
 		}
 		li, err := runInstance.list(t, rootFs, "test/one")
 		if err != nil {
-			log.Printf("err: %v", err)
+			fs.Logf(nil, "err: %v", err)
 			return err
 		}
 		if len(li) != 1 {
-			log.Printf("not expected listing /test/one: %v", li)
+			fs.Logf(nil, "not expected listing /test/one: %v", li)
 			return fmt.Errorf("not expected listing /test/one: %v", li)
 		}
 		if fi, ok := li[0].(os.FileInfo); ok {
 			if fi.Name() != "test2" {
-				log.Printf("not expected name: %v", fi.Name())
+				fs.Logf(nil, "not expected name: %v", fi.Name())
 				return fmt.Errorf("not expected name: %v", fi.Name())
 			}
 		} else if di, ok := li[0].(fs.DirEntry); ok {
 			if di.Remote() != "test/one/test2" {
-				log.Printf("not expected remote: %v", di.Remote())
+				fs.Logf(nil, "not expected remote: %v", di.Remote())
 				return fmt.Errorf("not expected remote: %v", di.Remote())
 			}
 		} else {
-			log.Printf("unexpected listing: %v", li)
+			fs.Logf(nil, "unexpected listing: %v", li)
 			return fmt.Errorf("unexpected listing: %v", li)
 		}
-		log.Printf("complete listing /test/one/test2")
+		fs.Logf(nil, "complete listing /test/one/test2")
 		return nil
 	}, 12, time.Second*10)
 	require.NoError(t, err)
@@ -771,24 +770,24 @@ func TestInternalBug2117(t *testing.T) {
 
 	di, err := runInstance.list(t, rootFs, "test/dir1/dir2")
 	require.NoError(t, err)
-	log.Printf("len: %v", len(di))
+	fs.Logf(nil, "len: %v", len(di))
 	require.Len(t, di, 1)
 
 	time.Sleep(time.Second * 30)
 
 	di, err = runInstance.list(t, rootFs, "test/dir1/dir2")
 	require.NoError(t, err)
-	log.Printf("len: %v", len(di))
+	fs.Logf(nil, "len: %v", len(di))
 	require.Len(t, di, 1)
 
 	di, err = runInstance.list(t, rootFs, "test/dir1")
 	require.NoError(t, err)
-	log.Printf("len: %v", len(di))
+	fs.Logf(nil, "len: %v", len(di))
 	require.Len(t, di, 4)
 
 	di, err = runInstance.list(t, rootFs, "test")
 	require.NoError(t, err)
-	log.Printf("len: %v", len(di))
+	fs.Logf(nil, "len: %v", len(di))
 	require.Len(t, di, 4)
 }
 
@@ -829,7 +828,7 @@ func newRun() *run {
 	} else {
 		r.tmpUploadDir = uploadDir
 	}
-	log.Printf("Temp Upload Dir: %v", r.tmpUploadDir)
+	fs.Logf(nil, "Temp Upload Dir: %v", r.tmpUploadDir)
 
 	return r
 }

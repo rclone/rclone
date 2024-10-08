@@ -3,8 +3,8 @@ package http
 import (
 	"bytes"
 	"embed"
+	"fmt"
 	"html/template"
-	"log"
 	"os"
 	"strings"
 	"time"
@@ -57,7 +57,7 @@ be used to render HTML based on specific conditions.
 
 	tmpl, err := template.New("template help").Parse(help)
 	if err != nil {
-		log.Fatal("Fatal error parsing template", err)
+		fs.Fatal(nil, fmt.Sprint("Fatal error parsing template", err))
 	}
 
 	data := struct {
@@ -68,7 +68,7 @@ be used to render HTML based on specific conditions.
 	buf := &bytes.Buffer{}
 	err = tmpl.Execute(buf, data)
 	if err != nil {
-		log.Fatal("Fatal error executing template", err)
+		fs.Fatal(nil, fmt.Sprint("Fatal error executing template", err))
 	}
 	return buf.String()
 }

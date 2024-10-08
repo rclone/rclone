@@ -11,7 +11,6 @@ Output powershell completion script for rclone.
 
 ## Synopsis
 
-
 Generate the autocompletion script for powershell.
 
 To load completions in your current shell session:
@@ -34,10 +33,9 @@ rclone completion powershell [output_file] [flags]
   -h, --help   help for powershell
 ```
 
-
 See the [global flags page](/flags/) for global options not listed here.
 
-# SEE ALSO
+## See Also
 
 * [rclone completion](/commands/rclone_completion/)	 - Output completion script for a given shell.
 

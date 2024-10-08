@@ -45,12 +45,13 @@ If your browser doesn't open automatically go to the following link: http://127.
 Log in and authorize rclone for access
 Waiting for code...
 Got code
---------------------
-[remote]
-client_id =
-client_secret =
-token = {"access_token":"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx","token_type":"OAuth","expiry":"2016-12-29T12:27:11.362788025Z"}
---------------------
+Configuration complete.
+Options:
+- type: yandex
+- client_id:
+- client_secret:
+- token: {"access_token":"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx","token_type":"OAuth","expiry":"2016-12-29T12:27:11.362788025Z"}
+Keep this "remote" remote?
 y) Yes this is OK
 e) Edit this remote
 d) Delete this remote
@@ -208,6 +209,17 @@ Properties:
 - Env Var:     RCLONE_YANDEX_ENCODING
 - Type:        Encoding
 - Default:     Slash,Del,Ctl,InvalidUtf8,Dot
+
+#### --yandex-spoof-ua
+
+Set the user agent to match an official version of the yandex disk client. May help with upload performance.
+
+Properties:
+
+- Config:      spoof_ua
+- Env Var:     RCLONE_YANDEX_SPOOF_UA
+- Type:        bool
+- Default:     true
 
 #### --yandex-description
 
