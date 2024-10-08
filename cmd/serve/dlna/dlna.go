@@ -190,16 +190,17 @@ func (s *server) ModelNumber() string {
 
 // Renders the root device descriptor.
 func (s *server) rootDescHandler(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
 	tmpl, err := data.GetTemplate()
 	if err != nil {
-		serveError(s, w, "Failed to load root descriptor template", err)
+		serveError(ctx, s, w, "Failed to load root descriptor template", err)
 		return
 	}
 
 	buffer := new(bytes.Buffer)
 	err = tmpl.Execute(buffer, s)
 	if err != nil {
-		serveError(s, w, "Failed to render root descriptor XML", err)
+		serveError(ctx, s, w, "Failed to render root descriptor XML", err)
 		return
 	}
 
@@ -215,15 +216,16 @@ func (s *server) rootDescHandler(w http.ResponseWriter, r *http.Request) {
 
 // Handle a service control HTTP request.
 func (s *server) serviceControlHandler(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
 	soapActionString := r.Header.Get("SOAPACTION")
 	soapAction, err := upnp.ParseActionHTTPHeader(soapActionString)
 	if err != nil {
-		serveError(s, w, "Could not parse SOAPACTION header", err)
+		serveError(ctx, s, w, "Could not parse SOAPACTION header", err)
 		return
 	}
 	var env soap.Envelope
 	if err := xml.NewDecoder(r.Body).Decode(&env); err != nil {
-		serveError(s, w, "Could not parse SOAP request body", err)
+		serveError(ctx, s, w, "Could not parse SOAP request body", err)
 		return
 	}
 
@@ -257,6 +259,7 @@ func (s *server) soapActionResponse(sa upnp.SoapAction, actionRequestXML []byte,
 
 // Serves actual resources (media files).
 func (s *server) resourceHandler(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
 	remotePath := r.URL.Path
 	node, err := s.vfs.Stat(r.URL.Path)
 	if err != nil {
@@ -277,7 +280,7 @@ func (s *server) resourceHandler(w http.ResponseWriter, r *http.Request) {
 	file := node.(*vfs.File)
 	in, err := file.Open(os.O_RDONLY)
 	if err != nil {
-		serveError(node, w, "Could not open resource", err)
+		serveError(ctx, node, w, "Could not open resource", err)
 		return
 	}
 	defer fs.CheckClose(in, &err)

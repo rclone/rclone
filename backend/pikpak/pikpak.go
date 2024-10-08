@@ -23,6 +23,7 @@ package pikpak
 import (
 	"bytes"
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -51,6 +52,7 @@ import (
 	"github.com/rclone/rclone/fs/config/configstruct"
 	"github.com/rclone/rclone/fs/config/obscure"
 	"github.com/rclone/rclone/fs/fserrors"
+	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/lib/atexit"
 	"github.com/rclone/rclone/lib/dircache"
@@ -64,15 +66,17 @@ import (
 
 // Constants
 const (
-	rcloneClientID              = "YNxT9w7GMdWvEOKa"
-	rcloneEncryptedClientSecret = "aqrmB6M1YJ1DWCBxVxFSjFo7wzWEky494YMmkqgAl1do1WKOe2E"
-	minSleep                    = 100 * time.Millisecond
-	maxSleep                    = 2 * time.Second
-	taskWaitTime                = 500 * time.Millisecond
-	decayConstant               = 2 // bigger for slower decay, exponential
-	rootURL                     = "https://api-drive.mypikpak.com"
-	minChunkSize                = fs.SizeSuffix(manager.MinUploadPartSize)
-	defaultUploadConcurrency    = manager.DefaultUploadConcurrency
+	clientID                 = "YUMx5nI8ZU8Ap8pm"
+	clientVersion            = "2.0.0"
+	packageName              = "mypikpak.com"
+	defaultUserAgent         = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:129.0) Gecko/20100101 Firefox/129.0"
+	minSleep                 = 100 * time.Millisecond
+	maxSleep                 = 2 * time.Second
+	taskWaitTime             = 500 * time.Millisecond
+	decayConstant            = 2 // bigger for slower decay, exponential
+	rootURL                  = "https://api-drive.mypikpak.com"
+	minChunkSize             = fs.SizeSuffix(manager.MinUploadPartSize)
+	defaultUploadConcurrency = manager.DefaultUploadConcurrency
 )
 
 // Globals
@@ -85,42 +89,52 @@ var (
 			TokenURL:  "https://user.mypikpak.com/v1/auth/token",
 			AuthStyle: oauth2.AuthStyleInParams,
 		},
-		ClientID:     rcloneClientID,
-		ClientSecret: obscure.MustReveal(rcloneEncryptedClientSecret),
-		RedirectURL:  oauthutil.RedirectURL,
+		ClientID:    clientID,
+		RedirectURL: oauthutil.RedirectURL,
 	}
 )
 
-// Returns OAuthOptions modified for pikpak
-func pikpakOAuthOptions() []fs.Option {
-	opts := []fs.Option{}
-	for _, opt := range oauthutil.SharedOptions {
-		if opt.Name == config.ConfigClientID {
-			opt.Advanced = true
-		} else if opt.Name == config.ConfigClientSecret {
-			opt.Advanced = true
-		}
-		opts = append(opts, opt)
-	}
-	return opts
-}
-
 // pikpakAutorize retrieves OAuth token using user/pass and save it to rclone.conf
 func pikpakAuthorize(ctx context.Context, opt *Options, name string, m configmap.Mapper) error {
-	// override default client id/secret
-	if id, ok := m.Get("client_id"); ok && id != "" {
-		oauthConfig.ClientID = id
-	}
-	if secret, ok := m.Get("client_secret"); ok && secret != "" {
-		oauthConfig.ClientSecret = secret
+	if opt.Username == "" {
+		return errors.New("no username")
 	}
 	pass, err := obscure.Reveal(opt.Password)
 	if err != nil {
 		return fmt.Errorf("failed to decode password - did you obscure it?: %w", err)
 	}
-	t, err := oauthConfig.PasswordCredentialsToken(ctx, opt.Username, pass)
+	// new device id if necessary
+	if len(opt.DeviceID) != 32 {
+		opt.DeviceID = genDeviceID()
+		m.Set("device_id", opt.DeviceID)
+		fs.Infof(nil, "Using new device id %q", opt.DeviceID)
+	}
+	opts := rest.Opts{
+		Method:  "POST",
+		RootURL: "https://user.mypikpak.com/v1/auth/signin",
+	}
+	req := map[string]string{
+		"username":  opt.Username,
+		"password":  pass,
+		"client_id": clientID,
+	}
+	var token api.Token
+	rst := newPikpakClient(getClient(ctx, opt), opt).SetCaptchaTokener(ctx, m)
+	_, err = rst.CallJSON(ctx, &opts, req, &token)
+	if apiErr, ok := err.(*api.Error); ok {
+		if apiErr.Reason == "captcha_invalid" && apiErr.Code == 4002 {
+			rst.captcha.Invalidate()
+			_, err = rst.CallJSON(ctx, &opts, req, &token)
+		}
+	}
 	if err != nil {
 		return fmt.Errorf("failed to retrieve token using username/password: %w", err)
+	}
+	t := &oauth2.Token{
+		AccessToken:  token.AccessToken,
+		TokenType:    token.TokenType,
+		RefreshToken: token.RefreshToken,
+		Expiry:       token.Expiry(),
 	}
 	return oauthutil.PutToken(name, m, t, false)
 }
@@ -160,7 +174,7 @@ func init() {
 			}
 			return nil, fmt.Errorf("unknown state %q", config.State)
 		},
-		Options: append(pikpakOAuthOptions(), []fs.Option{{
+		Options: []fs.Option{{
 			Name:      "user",
 			Help:      "Pikpak username.",
 			Required:  true,
@@ -170,6 +184,18 @@ func init() {
 			Help:       "Pikpak password.",
 			Required:   true,
 			IsPassword: true,
+		}, {
+			Name:      "device_id",
+			Help:      "Device ID used for authorization.",
+			Advanced:  true,
+			Sensitive: true,
+		}, {
+			Name:     "user_agent",
+			Default:  defaultUserAgent,
+			Advanced: true,
+			Help: fmt.Sprintf(`HTTP user agent for pikpak.
+
+Defaults to "%s" or "--pikpak-user-agent" provided on command line.`, defaultUserAgent),
 		}, {
 			Name: "root_folder_id",
 			Help: `ID of the root folder.
@@ -248,7 +274,7 @@ this may help to speed up the transfers.`,
 				encoder.EncodeRightSpace |
 				encoder.EncodeRightPeriod |
 				encoder.EncodeInvalidUtf8),
-		}}...),
+		}},
 	})
 }
 
@@ -256,6 +282,9 @@ this may help to speed up the transfers.`,
 type Options struct {
 	Username            string               `config:"user"`
 	Password            string               `config:"pass"`
+	UserID              string               `config:"user_id"` // only available during runtime
+	DeviceID            string               `config:"device_id"`
+	UserAgent           string               `config:"user_agent"`
 	RootFolderID        string               `config:"root_folder_id"`
 	UseTrash            bool                 `config:"use_trash"`
 	TrashedOnly         bool                 `config:"trashed_only"`
@@ -271,11 +300,10 @@ type Fs struct {
 	root         string             // the path we are working on
 	opt          Options            // parsed options
 	features     *fs.Features       // optional features
-	rst          *rest.Client       // the connection to the server
+	rst          *pikpakClient      // the connection to the server
 	dirCache     *dircache.DirCache // Map of directory path to directory id
 	pacer        *fs.Pacer          // pacer for API calls
 	rootFolderID string             // the id of the root folder
-	deviceID     string             // device id used for api requests
 	client       *http.Client       // authorized client
 	m            configmap.Mapper
 	tokenMu      *sync.Mutex // when renewing tokens
@@ -429,6 +457,12 @@ func (f *Fs) shouldRetry(ctx context.Context, resp *http.Response, err error) (b
 		} else if apiErr.Reason == "file_space_not_enough" {
 			// "file_space_not_enough" (8): Storage space is not enough
 			return false, fserrors.FatalError(err)
+		} else if apiErr.Reason == "captcha_invalid" && apiErr.Code == 9 {
+			// "captcha_invalid" (9): Verification code is invalid
+			// This error occurred on the POST:/drive/v1/files endpoint
+			// when a zero-byte file was uploaded with an invalid captcha token
+			f.rst.captcha.Invalidate()
+			return true, err
 		}
 	}
 
@@ -452,13 +486,36 @@ func errorHandler(resp *http.Response) error {
 	return errResponse
 }
 
+// getClient makes an http client according to the options
+func getClient(ctx context.Context, opt *Options) *http.Client {
+	// Override few config settings and create a client
+	newCtx, ci := fs.AddConfig(ctx)
+	ci.UserAgent = opt.UserAgent
+	return fshttp.NewClient(newCtx)
+}
+
 // newClientWithPacer sets a new http/rest client with a pacer to Fs
 func (f *Fs) newClientWithPacer(ctx context.Context) (err error) {
-	f.client, _, err = oauthutil.NewClient(ctx, f.name, f.m, oauthConfig)
+	var ts *oauthutil.TokenSource
+	f.client, ts, err = oauthutil.NewClientWithBaseClient(ctx, f.name, f.m, oauthConfig, getClient(ctx, &f.opt))
 	if err != nil {
 		return fmt.Errorf("failed to create oauth client: %w", err)
 	}
-	f.rst = rest.NewClient(f.client).SetRoot(rootURL).SetErrorHandler(errorHandler)
+	token, err := ts.Token()
+	if err != nil {
+		return err
+	}
+	// parse user_id from oauth access token for later use
+	if parts := strings.Split(token.AccessToken, "."); len(parts) > 1 {
+		jsonStr, _ := base64.URLEncoding.DecodeString(parts[1] + "===")
+		info := struct {
+			UserID string `json:"sub,omitempty"`
+		}{}
+		if jsonErr := json.Unmarshal(jsonStr, &info); jsonErr == nil {
+			f.opt.UserID = info.UserID
+		}
+	}
+	f.rst = newPikpakClient(f.client, &f.opt).SetCaptchaTokener(ctx, f.m)
 	f.pacer = fs.NewPacer(ctx, pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant)))
 	return nil
 }
@@ -491,10 +548,19 @@ func newFs(ctx context.Context, name, path string, m configmap.Mapper) (*Fs, err
 		CanHaveEmptyDirectories: true, // can have empty directories
 		NoMultiThreading:        true, // can't have multiple threads downloading
 	}).Fill(ctx, f)
-	f.deviceID = genDeviceID()
+
+	// new device id if necessary
+	if len(f.opt.DeviceID) != 32 {
+		f.opt.DeviceID = genDeviceID()
+		m.Set("device_id", f.opt.DeviceID)
+		fs.Infof(nil, "Using new device id %q", f.opt.DeviceID)
+	}
 
 	if err := f.newClientWithPacer(ctx); err != nil {
-		return nil, err
+		// re-authorize if necessary
+		if strings.Contains(err.Error(), "invalid_grant") {
+			return f, f.reAuthorize(ctx)
+		}
 	}
 
 	return f, nil
@@ -1707,7 +1773,7 @@ func (o *Object) upload(ctx context.Context, in io.Reader, src fs.ObjectInfo, wi
 	gcid, err := o.fs.getGcid(ctx, src)
 	if err != nil || gcid == "" {
 		fs.Debugf(o, "calculating gcid: %v", err)
-		if srcObj := fs.UnWrapObjectInfo(src); srcObj != nil && srcObj.Fs().Features().IsLocal {
+		if srcObj := unWrapObjectInfo(src); srcObj != nil && srcObj.Fs().Features().IsLocal {
 			// No buffering; directly calculate gcid from source
 			rc, err := srcObj.Open(ctx)
 			if err != nil {

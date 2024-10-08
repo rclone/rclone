@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"slices"
 	"testing"
 	"time"
 
@@ -16,7 +17,6 @@ import (
 	"github.com/rclone/rclone/lib/random"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"golang.org/x/exp/slices" // replace with slices after go1.21 is the minimum version
 )
 
 // go test -timeout 30m -run ^TestIntegration/FsMkdir/FsPutFiles/Internal$ github.com/rclone/rclone/backend/onedrive -remote TestOneDrive:meta -v

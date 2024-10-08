@@ -363,6 +363,20 @@ Properties:
 - Type:        string
 - Required:    false
 
+#### --gcs-access-token
+
+Short-lived access token.
+
+Leave blank normally.
+Needed only if you want use short-lived access tokens instead of interactive login.
+
+Properties:
+
+- Config:      access_token
+- Env Var:     RCLONE_GCS_ACCESS_TOKEN
+- Type:        string
+- Required:    false
+
 #### --gcs-anonymous
 
 Access public buckets and objects without credentials.

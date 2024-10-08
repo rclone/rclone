@@ -132,6 +132,7 @@ WebDAV or S3, that work out of the box.)
 {{< provider name="Hetzner Storage Box" home="https://www.hetzner.com/storage/storage-box" config="/sftp/#hetzner-storage-box" >}}
 {{< provider name="HiDrive" home="https://www.strato.de/cloud-speicher/" config="/hidrive/" >}}
 {{< provider name="HTTP" home="https://en.wikipedia.org/wiki/Hypertext_Transfer_Protocol" config="/http/" >}}
+{{< provider name="iCloud Drive" home="https://icloud.com/" config="/iclouddrive/" >}}
 {{< provider name="ImageKit" home="https://imagekit.io" config="/imagekit/" >}}
 {{< provider name="Internet Archive" home="https://archive.org/" config="/internetarchive/" >}}
 {{< provider name="Jottacloud" home="https://www.jottacloud.com/en/" config="/jottacloud/" >}}
@@ -159,6 +160,7 @@ WebDAV or S3, that work out of the box.)
 {{< provider name="OpenStack Swift" home="https://docs.openstack.org/swift/latest/" config="/swift/" >}}
 {{< provider name="Oracle Cloud Storage Swift" home="https://docs.oracle.com/en-us/iaas/integration/doc/configure-object-storage.html" config="/swift/" >}}
 {{< provider name="Oracle Object Storage" home="https://www.oracle.com/cloud/storage/object-storage" config="/oracleobjectstorage/" >}}
+{{< provider name="Outscale" home="https://en.outscale.com/storage/outscale-object-storage/" config="/s3/#outscale" >}}
 {{< provider name="ownCloud" home="https://owncloud.org/" config="/webdav/#owncloud" >}}
 {{< provider name="pCloud" home="https://www.pcloud.com/" config="/pcloud/" >}}
 {{< provider name="Petabox" home="https://petabox.io/" config="/s3/#petabox" >}}

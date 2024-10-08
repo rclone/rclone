@@ -52,6 +52,7 @@ docs = [
     "hidrive.md",
     "http.md",
     "imagekit.md",
+    "iclouddrive.md",
     "internetarchive.md",
     "jottacloud.md",
     "koofr.md",

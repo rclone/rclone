@@ -224,6 +224,17 @@ Properties:
 - Type:        string
 - Required:    false
 
+#### --zoho-upload-cutoff
+
+Cutoff for switching to large file upload api (>= 10 MiB).
+
+Properties:
+
+- Config:      upload_cutoff
+- Env Var:     RCLONE_ZOHO_UPLOAD_CUTOFF
+- Type:        SizeSuffix
+- Default:     10Mi
+
 #### --zoho-encoding
 
 The encoding for the backend.

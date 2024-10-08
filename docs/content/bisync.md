@@ -968,12 +968,15 @@ that while concurrent bisync runs are allowed, _be very cautious_
 that there is no overlap in the trees being synched between concurrent runs,
 lest there be replicated files, deleted files and general mayhem.
 
-### Return codes
+### Exit codes
 
 `rclone bisync` returns the following codes to calling program:
 - `0` on a successful run,
 - `1` for a non-critical failing run (a rerun may be successful),
-- `2` for a critically aborted run (requires a `--resync` to recover).
+- `2` on syntax or usage error,
+- `7` for a critically aborted run (requires a `--resync` to recover).
+
+See also the section about [exit codes](/docs/#exit-code) in main docs.
 
 ### Graceful Shutdown
 
