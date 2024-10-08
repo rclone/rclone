@@ -187,7 +187,7 @@ length and if it's case sensitive.`,
 
 Setting suffix to "none" will result in an empty suffix. This may be useful 
 when the path length is critical.`,
-			Default:  ".bin",
+			Default:  fileEncryptedSuffix,
 			Advanced: true,
 		},
 			{
@@ -250,13 +250,12 @@ func newCipherForConfig(opt *Options) (*Cipher, error) {
 	if err != nil {
 		return nil, err
 	}
-	cipher, err := newCipher(mode, password, salt, opt.DirectoryNameEncryption, enc)
+	cipher, err := newCipher(mode, password, salt, opt.DirectoryNameEncryption, enc, opt.CipherVersion)
 	if err != nil {
 		return nil, fmt.Errorf("failed to make cipher: %w", err)
 	}
 	cipher.setEncryptedSuffix(opt.Suffix)
 	cipher.setPassBadBlocks(opt.PassBadBlocks)
-	cipher.setCipherVersion(opt.CipherVersion)
 	cipher.setExactSize(opt.ExactSize)
 	return cipher, nil
 }

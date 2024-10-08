@@ -36,6 +36,7 @@ const (
 	fileMagicSize       = len(fileMagic)
 	fileNonceSize       = 24
 	fileHeaderSize      = fileMagicSize + fileNonceSize
+	fileEncryptedSuffix = ".bin" // V1 cipher by default sets the suffix (only if name encryption disabled), but user can disable it completely by setting it to `none`.
 
 	fileMagicV2             = "RCLONE\x00\x01"
 	fileMagicSizeV2         = len(fileMagicV2)
@@ -212,14 +213,13 @@ type Cipher struct {
 }
 
 // newCipher initialises the cipher.  If salt is "" then it uses a built in salt val
-func newCipher(mode NameEncryptionMode, password, salt string, dirNameEncrypt bool, enc fileNameEncoding) (*Cipher, error) {
+func newCipher(mode NameEncryptionMode, password, salt string, dirNameEncrypt bool, enc fileNameEncoding, version string) (*Cipher, error) {
 	c := &Cipher{
-		mode:            mode,
-		fileNameEnc:     enc,
-		cryptoRand:      rand.Reader,
-		dirNameEncrypt:  dirNameEncrypt,
-		encryptedSuffix: ".bin",
-		version:         CipherVersionV1, // Default to satisfy existing: `cipher_test.go`. For Rclone overridden by: `setCipherVersion` inside `newCipherForConfig` call.
+		mode:           mode,
+		fileNameEnc:    enc,
+		cryptoRand:     rand.Reader,
+		dirNameEncrypt: dirNameEncrypt,
+		version:        version,
 	}
 	c.buffers.New = func() interface{} {
 		return new([blockSize]byte)
