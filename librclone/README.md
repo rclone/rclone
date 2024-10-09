@@ -205,7 +205,7 @@ using something like this.
 go install golang.org/x/mobile/cmd/gobind@latest
 go install golang.org/x/mobile/cmd/gomobile@latest
 gomobile init
-# you should have nkd installed and can change the androidapi accordingly
+# you should have ndk installed and can change the androidapi accordingly
 gomobile bind -v -target=android -androidapi 30 -javapkg=org.rclone github.com/rclone/rclone/librclone/gomobile
 ```
 
