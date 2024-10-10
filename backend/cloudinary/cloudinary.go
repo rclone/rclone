@@ -544,6 +544,16 @@ func shouldRetry(ctx context.Context, resp *http.Response, err error) (bool, err
 		return false, err
 	}
 	if err != nil {
+		tryAgain := "Try again on "
+		if idx := strings.Index(err.Error(), tryAgain); idx != -1 {
+			layout := "2006-01-02 15:04:05 UTC"
+			dateStr := err.Error()[idx+len(tryAgain) : idx+len(tryAgain)+len(layout)]
+			timestamp, err2 := time.Parse(layout, dateStr)
+			if err2 == nil {
+				return true, fserrors.NewErrorRetryAfter(time.Until(timestamp))
+			}
+		}
+
 		fs.Debugf(nil, "Retrying API error %v", err)
 		return true, err
 	}
