@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"runtime"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -552,5 +553,52 @@ func TestOnFinishAlreadyFinished(t *testing.T) {
 	case <-done:
 	case <-time.After(time.Second):
 		t.Fatal("Timeout waiting for OnFinish to fire")
+	}
+}
+
+func TestOnFinishDataRace(t *testing.T) {
+	jobID.Store(0)
+	done := make(chan struct{})
+	loopCtx, loopCancel := context.WithCancel(context.Background())
+	defer loopCancel()
+	job, _, err := NewJob(context.Background(), ctxFn, rc.Params{"_async": true})
+	assert.NoError(t, err)
+	var expect uint64
+	var got atomic.Uint64
+	go func() {
+	Loop:
+		for {
+			select {
+			case <-loopCtx.Done():
+				_, err := OnFinish(job.ID, func() {
+					close(done)
+				})
+				assert.NoError(t, err)
+				break Loop
+			default:
+				_, err := OnFinish(job.ID, func() {
+					got.Add(1)
+				})
+				assert.NoError(t, err)
+				expect += 1
+			}
+		}
+	}()
+	time.Sleep(10 * time.Millisecond)
+	job.Stop()
+	for {
+		if got.Load() > 0 {
+			break
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+	loopCancel()
+	select {
+	case <-done:
+	case <-time.After(10 * time.Second):
+		t.Fatal("Timeout waiting for last OnFinish to fire")
+	}
+	if got.Load() != expect {
+		t.Fatalf("Expected %d OnFinish calls, got %d", expect, got.Load())
 	}
 }
