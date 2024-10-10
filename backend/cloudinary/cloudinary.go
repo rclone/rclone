@@ -64,10 +64,10 @@ func init() {
 				Sensitive: true,
 			},
 			{
-				Name:       "api_secret",
-				Help:       "Cloudinary API Secret",
-				Required:   true,
-				IsPassword: true,
+				Name:      "api_secret",
+				Help:      "Cloudinary API Secret",
+				Required:  true,
+				Sensitive: true,
 			},
 			{
 				Name: "upload_prefix",
