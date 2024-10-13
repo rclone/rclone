@@ -733,7 +733,9 @@ func (d *Dir) _readDirFromEntries(entries fs.DirEntries, dirTree dirtree.DirTree
 			}
 		case fs.Directory:
 			// Reuse old dir value if it exists
-			if node == nil || !node.IsDir() {
+			if dir, ok := node.(*Dir); node != nil && ok {
+				dir.setObjectNoUpdate(item)
+			} else {
 				node = newDir(d.vfs, d.f, d, item)
 			}
 			dir := node.(*Dir)
@@ -893,6 +895,17 @@ func (d *Dir) cachedNode(relativePath string) Node {
 	}
 
 	return node
+}
+
+// Update the object but don't update the directory cache - for use by
+// the directory cache
+func (d *Dir) setObjectNoUpdate(newDir fs.Directory) {
+	d.modTimeMu.Lock()
+	d.modTime = newDir.ModTime(context.TODO())
+	d.modTimeMu.Unlock()
+	d.mu.Lock()
+	d.entry = newDir
+	d.mu.Unlock()
 }
 
 // Stat looks up a specific entry in the receiver.
