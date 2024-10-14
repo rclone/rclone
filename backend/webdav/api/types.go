@@ -96,6 +96,10 @@ func (p *Prop) StatusOK() bool {
 	if err != nil {
 		return false
 	}
+	// allow status 425 "too early" for files still in postprocessing
+	if code == 425 {
+		return true
+	}
 	if code >= 200 && code < 300 {
 		return true
 	}
