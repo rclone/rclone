@@ -3,6 +3,7 @@ package sync
 
 import (
 	"context"
+
 	"github.com/rclone/rclone/cmd"
 	"github.com/rclone/rclone/fs/config/flags"
 	"github.com/rclone/rclone/fs/operations"

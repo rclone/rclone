@@ -107,6 +107,7 @@ type LoggerOpt struct {
 	Absolute  bool
 }
 
+// NewDefaultLoggerFn creates a logger function that writes the sigil and path to configured files that match the sigil
 func NewDefaultLoggerFn(opt *LoggerOpt) LoggerFn {
 	var lock mutex.Mutex
 

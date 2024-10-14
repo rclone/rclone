@@ -4,14 +4,15 @@ package operationsflags
 
 import (
 	"context"
+	"io"
+	"os"
+
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config/flags"
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
-	"io"
-	"os"
 )
 
 // AddLoggerFlagsOptions contains options for the Logger Flags
@@ -25,6 +26,7 @@ type AddLoggerFlagsOptions struct {
 	DestAfter    string // files that exist on the destination post-sync
 }
 
+// AnySet checks if any of the logger flags have a non-blank value
 func (o AddLoggerFlagsOptions) AnySet() bool {
 	return anyNotBlank(o.Combined, o.MissingOnSrc, o.MissingOnDst, o.Match, o.Differ, o.ErrFile, o.DestAfter)
 }
@@ -62,6 +64,7 @@ func AddLoggerFlags(cmdFlags *pflag.FlagSet, opt *operations.LoggerOpt, flagsOpt
 	// flags.BoolVarP(cmdFlags, &recurse, "recursive", "R", false, "Recurse into the listing", "")
 }
 
+// ConfigureLoggers verifies and sets up writers for log files requested via CLI flags
 func ConfigureLoggers(ctx context.Context, fdst fs.Fs, command *cobra.Command, opt *operations.LoggerOpt, flagsOpt AddLoggerFlagsOptions) (func(), error) {
 	closers := []io.Closer{}
 
