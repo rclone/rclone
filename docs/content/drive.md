@@ -1810,9 +1810,9 @@ then select "OAuth client ID".
 
 9. It will show you a client ID and client secret. Make a note of these.
    
-   (If you selected "External" at Step 5 continue to Step 9. 
+   (If you selected "External" at Step 5 continue to Step 10. 
    If you chose "Internal" you don't need to publish and can skip straight to
-   Step 10 but your destination drive must be part of the same Google Workspace.)
+   Step 11 but your destination drive must be part of the same Google Workspace.)
 
 10. Go to "Oauth consent screen" and then click "PUBLISH APP" button and confirm.
    You will also want to add yourself as a test user.

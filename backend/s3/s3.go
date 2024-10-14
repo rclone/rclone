@@ -1424,6 +1424,10 @@ func init() {
 				Help:     "Wasabi EU West 2 (Paris)",
 				Provider: "Wasabi",
 			}, {
+				Value:    "s3.eu-south-1.wasabisys.com",
+				Help:     "Wasabi EU South 1 (Milan)",
+				Provider: "Wasabi",
+			}, {
 				Value:    "s3.ap-northeast-1.wasabisys.com",
 				Help:     "Wasabi AP Northeast 1 (Tokyo) endpoint",
 				Provider: "Wasabi",
