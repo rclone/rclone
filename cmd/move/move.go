@@ -3,12 +3,12 @@ package move
 
 import (
 	"context"
-	"github.com/rclone/rclone/fs/operations/operationsflags"
 	"strings"
 
 	"github.com/rclone/rclone/cmd"
 	"github.com/rclone/rclone/fs/config/flags"
 	"github.com/rclone/rclone/fs/operations"
+	"github.com/rclone/rclone/fs/operations/operationsflags"
 	"github.com/rclone/rclone/fs/sync"
 	"github.com/spf13/cobra"
 )
@@ -92,9 +92,9 @@ for more info.
 			}
 
 			if srcFileName == "" {
-				return sync.MoveDir(context.Background(), fdst, fsrc, deleteEmptySrcDirs, createEmptySrcDirs)
+				return sync.MoveDir(ctx, fdst, fsrc, deleteEmptySrcDirs, createEmptySrcDirs)
 			}
-			return operations.MoveFile(context.Background(), fdst, fsrc, srcFileName, srcFileName)
+			return operations.MoveFile(ctx, fdst, fsrc, srcFileName, srcFileName)
 		})
 	},
 }

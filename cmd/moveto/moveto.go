@@ -3,10 +3,10 @@ package moveto
 
 import (
 	"context"
-	"github.com/rclone/rclone/fs/operations/operationsflags"
 
 	"github.com/rclone/rclone/cmd"
 	"github.com/rclone/rclone/fs/operations"
+	"github.com/rclone/rclone/fs/operations/operationsflags"
 	"github.com/rclone/rclone/fs/sync"
 	"github.com/spf13/cobra"
 )
