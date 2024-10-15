@@ -133,6 +133,10 @@ so in most cases you do not have to worry about this (read more [below](#long-pa
 Using the same prefix `\\?\` it is also possible to specify path to volumes
 identified by their GUID, e.g. `\\?\Volume{b75e2c83-0000-0000-0000-602f00000000}\some\path`.
 
+Also note that when specifying paths at `parameters` with `remote` at the
+[remote control API](/rc/) using `\` as path separator must be escaped,
+i.e. `\\`. Alternatively you can also use `/` as path separator.
+
 #### Long paths ####
 
 Rclone handles long paths automatically, by converting all paths to
