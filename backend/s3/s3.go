@@ -1322,7 +1322,7 @@ func init() {
 		}, {
 			Name:     "endpoint",
 			Help:     "Endpoint for S3 API.\n\nRequired when using an S3 clone.",
-			Provider: "!AWS,ArvanCloud,IBMCOS,IDrive,IONOS,TencentCOS,HuaweiOBS,Alibaba,ChinaMobile,GCS,Liara,Linode,MagaluCloud,Scaleway,StackPath,Storj,Synology,RackCorp,Qiniu,Petabox",
+			Provider: "!AWS,ArvanCloud,IBMCOS,IDrive,IONOS,TencentCOS,HuaweiOBS,Alibaba,ChinaMobile,GCS,Liara,Linode,Magalu,Scaleway,StackPath,Storj,Synology,RackCorp,Qiniu,Petabox",
 			Examples: []fs.OptionExample{{
 				Value:    "objects-us-east-1.dream.io",
 				Help:     "Dream Objects endpoint",
@@ -1455,14 +1455,6 @@ func init() {
 				Value:    "s3.ir-tbz-sh1.arvanstorage.ir",
 				Help:     "ArvanCloud Tabriz Iran (Shahriar) endpoint",
 				Provider: "ArvanCloud",
-			}, {
-				Value:    "br-se1.magaluobjects.com",
-				Help:     "Magalu BR Southeast 1 endpoint",
-				Provider: "Magalu",
-			}, {
-				Value:    "br-ne1.magaluobjects.com",
-				Help:     "Magalu BR Northeast 1 endpoint",
-				Provider: "Magalu",
 			}},
 		}, {
 			Name:     "location_constraint",
@@ -2101,13 +2093,16 @@ If you leave it blank, this is calculated automatically from the sse_customer_ke
 				Help:  "Standard storage class",
 			}},
 		}, {
-			// Mapping from here: #todo
+			// Mapping from here: https://docs.magalu.cloud/docs/storage/object-storage/Classes-de-Armazenamento/standard
 			Name:     "storage_class",
 			Help:     "The storage class to use when storing new objects in Magalu.",
 			Provider: "Magalu",
 			Examples: []fs.OptionExample{{
 				Value: "STANDARD",
 				Help:  "Standard storage class",
+			}, {
+				Value: "GLACIER_IR",
+				Help:  "Glacier Instant Retrieval storage class",
 			}},
 		}, {
 			// Mapping from here: https://intl.cloud.tencent.com/document/product/436/30925
