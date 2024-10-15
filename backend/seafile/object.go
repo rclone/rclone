@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/chunksize"
 	"github.com/rclone/rclone/fs/hash"
 )
 
@@ -89,29 +90,63 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 // But for unknown-sized objects (indicated by src.Size() == -1), Upload should either
 // return an error or update the object properly (rather than e.g. calling panic).
 func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {
-	// The upload sometimes return a temporary 500 error
-	// We cannot use the pacer to retry uploading the file as the upload link is single use only
-	for retry := 0; retry <= 3; retry++ {
-		uploadLink, err := o.fs.getUploadLink(ctx, o.libraryID)
-		if err != nil {
-			return err
-		}
-
-		uploaded, err := o.fs.upload(ctx, in, uploadLink, o.pathInLibrary)
-		if err == ErrorInternalDuringUpload {
-			// This is a temporary error, try again with a new upload link
-			continue
-		}
-		if err != nil {
-			return err
-		}
-		// Set the properties from the upload back to the object
-		o.size = uploaded.Size
-		o.id = uploaded.ID
-
-		return nil
+	size := src.Size()
+	if size <= int64(o.fs.opt.UploadCutoff) || o.fs.noChunkUpload {
+		// upload whole file in 1 request
+		return o.upload(ctx, in, src)
 	}
-	return ErrorInternalDuringUpload
+	// upload in parts
+	chunkSize := chunksize.Calculator(o, size, maxParts, o.fs.opt.ChunkSize)
+	return o.uploadLargeFile(ctx, in, src, chunkSize)
+}
+
+// upload whole file in 1 request
+func (o *Object) upload(ctx context.Context, in io.Reader, src fs.ObjectInfo) error {
+	uploadLink, err := o.fs.getUploadLink(ctx, o.libraryID)
+	if err != nil {
+		return err
+	}
+
+	uploaded, err := o.fs.upload(ctx, in, uploadLink, o.pathInLibrary, src.Size())
+	if err != nil {
+		return err
+	}
+	// Set the properties from the upload back to the object
+	o.size = uploaded.Size
+	o.id = uploaded.ID
+
+	return nil
+}
+
+func (o *Object) uploadLargeFile(ctx context.Context, in io.Reader, src fs.ObjectInfo, chunkSize fs.SizeSuffix) error {
+	uploadLink, err := o.fs.getUploadLink(ctx, o.libraryID)
+	if err != nil {
+		return err
+	}
+	size := src.Size()
+	contentRange := newChunkedContentRange(int64(chunkSize), size)
+	for {
+		fs.Debugf(nil, "uploading chunk %s", contentRange.getContentRangeHeader())
+		err = o.fs.uploadChunk(ctx, in, uploadLink, o.pathInLibrary, contentRange)
+		if err != nil {
+			return err
+		}
+		contentRange.next()
+		// the last part is a slightly different API call
+		if contentRange.isLastChunk() {
+			break
+		}
+	}
+	fs.Debugf(nil, "uploading last chunk %s", contentRange.getContentRangeHeader())
+	uploaded, err := o.fs.uploadLastChunk(ctx, in, uploadLink, o.pathInLibrary, contentRange)
+	if err != nil {
+		return err
+	}
+	// Set the properties from the upload back to the object
+	o.size = uploaded.Size
+	o.id = uploaded.ID
+
+	return nil
 }
 
 // Remove this object
