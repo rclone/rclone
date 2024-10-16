@@ -45,6 +45,12 @@ var OptionsInfo = fs.Options{{
 	Help:    "Only allow read-only access",
 	Groups:  "VFS",
 }, {
+	Name:     "links",
+	Default:  false,
+	Help:     "Translate symlinks to/from regular files with a '" + fs.LinkSuffix + "' extension",
+	Groups:   "VFS",
+	ShortOpt: "l",
+}, {
 	Name:    "vfs_cache_mode",
 	Default: CacheModeOff,
 	Help:    "Cache mode off|minimal|writes|full",
@@ -93,6 +99,11 @@ var OptionsInfo = fs.Options{{
 	Name:    "file_perms",
 	Default: FileMode(0666),
 	Help:    "File permissions",
+	Groups:  "VFS",
+}, {
+	Name:    "link_perms",
+	Default: FileMode(0666),
+	Help:    "Link permissions",
 	Groups:  "VFS",
 }, {
 	Name:    "vfs_case_insensitive",
@@ -165,6 +176,7 @@ type Options struct {
 	NoSeek             bool          `config:"no_seek"`        // don't allow seeking if set
 	NoChecksum         bool          `config:"no_checksum"`    // don't check checksums if set
 	ReadOnly           bool          `config:"read_only"`      // if set VFS is read only
+	Links              bool          `config:"links"`          // if set interpret link files
 	NoModTime          bool          `config:"no_modtime"`     // don't read mod times for files
 	DirCacheTime       fs.Duration   `config:"dir_cache_time"` // how long to consider directory listing cache valid
 	Refresh            bool          `config:"vfs_refresh"`    // refreshes the directory listing recursively on start
@@ -174,6 +186,7 @@ type Options struct {
 	GID                uint32        `config:"gid"`
 	DirPerms           FileMode      `config:"dir_perms"`
 	FilePerms          FileMode      `config:"file_perms"`
+	LinkPerms          FileMode      `config:"link_perms"`
 	ChunkSize          fs.SizeSuffix `config:"vfs_read_chunk_size"`       // if > 0 read files in chunks
 	ChunkSizeLimit     fs.SizeSuffix `config:"vfs_read_chunk_size_limit"` // if > ChunkSize double the chunk size after each chunk until reached
 	ChunkStreams       int           `config:"vfs_read_chunk_streams"`    // Number of download streams to use
@@ -201,7 +214,11 @@ func (opt *Options) Init() {
 	// Mask the permissions with the umask
 	opt.DirPerms &= ^opt.Umask
 	opt.FilePerms &= ^opt.Umask
+	opt.LinkPerms &= ^opt.Umask
 
 	// Make sure directories are returned as directories
 	opt.DirPerms |= FileMode(os.ModeDir)
+
+	// Make sure links are returned as links
+	opt.LinkPerms |= FileMode(os.ModeSymlink)
 }

@@ -41,18 +41,19 @@ type File struct {
 
 	muRW sync.Mutex // synchronize RWFileHandle.openPending(), RWFileHandle.close() and File.Remove
 
-	mu               sync.RWMutex                    // protects the following
-	d                *Dir                            // parent directory
-	dPath            string                          // path of parent directory. NB dir rename means all Files are flushed
-	o                fs.Object                       // NB o may be nil if file is being written
-	leaf             string                          // leaf name of the object
-	writers          []Handle                        // writers for this file
-	virtualModTime   *time.Time                      // modtime for backends with Precision == fs.ModTimeNotSupported
-	pendingModTime   time.Time                       // will be applied once o becomes available, i.e. after file was written
-	pendingRenameFun func(ctx context.Context) error // will be run/renamed after all writers close
-	sys              atomic.Value                    // user defined info to be attached here
-	nwriters         atomic.Int32                    // len(writers)
-	appendMode       bool                            // file was opened with O_APPEND
+	mu                   sync.RWMutex                    // protects the following
+	d                    *Dir                            // parent directory
+	dPath                string                          // path of parent directory. NB dir rename means all Files are flushed
+	o                    fs.Object                       // NB o may be nil if file is being written
+	leaf                 string                          // leaf name of the object
+	writers              []Handle                        // writers for this file
+	virtualModTime       *time.Time                      // modtime for backends with Precision == fs.ModTimeNotSupported
+	pendingModTime       time.Time                       // will be applied once o becomes available, i.e. after file was written
+	pendingRenameFun     func(ctx context.Context) error // will be run/renamed after all writers close
+	sys                  atomic.Value                    // user defined info to be attached here
+	nwriters             atomic.Int32                    // len(writers)
+	appendMode           bool                            // file was opened with O_APPEND
+	winfspPendingSymlink bool                            // windows/winfsp symlinks support - when true, this file node needs to be deleted
 }
 
 // newFile creates a new File
@@ -90,13 +91,25 @@ func (f *File) IsDir() bool {
 	return false
 }
 
+// IsSymlink returns true for symlinks when --links is enabled
+func (f *File) IsSymlink() bool {
+	f.mu.RLock()
+	defer f.mu.RUnlock()
+	return f.d.vfs.IsSymlink(f.leaf)
+}
+
 // Mode bits of the file or directory - satisfies Node interface
 func (f *File) Mode() (mode os.FileMode) {
 	f.mu.RLock()
 	defer f.mu.RUnlock()
-	mode = os.FileMode(f.d.vfs.Opt.FilePerms)
-	if f.appendMode {
-		mode |= os.ModeAppend
+	if f.IsSymlink() {
+		mode = os.FileMode(f.d.vfs.Opt.LinkPerms)
+	} else {
+		mode = os.FileMode(f.d.vfs.Opt.FilePerms)
+
+		if f.appendMode {
+			mode |= os.ModeAppend
+		}
 	}
 	return mode
 }
@@ -273,6 +286,12 @@ func (f *File) addWriter(h Handle) {
 // delWriter removes a write handle from the file
 func (f *File) delWriter(h Handle) {
 	f.mu.Lock()
+	// Special case for windows / winfsp symlinks
+	if f.d.vfs.Opt.Links && f.winfspPendingSymlink && len(f.writers) == 1 {
+		defer func() {
+			_ = f.Remove() // ignore error
+		}()
+	}
 	defer f.applyPendingRename()
 	defer f.mu.Unlock()
 	var found = -1

@@ -49,12 +49,15 @@ func RunTests(t *testing.T, useVFS bool, minimumRequiredCacheMode vfscommon.Cach
 	tests := []struct {
 		cacheMode vfscommon.CacheMode
 		writeBack fs.Duration
+		links     bool
 	}{
 		{cacheMode: vfscommon.CacheModeOff},
+		{cacheMode: vfscommon.CacheModeOff, links: true},
 		{cacheMode: vfscommon.CacheModeMinimal},
 		{cacheMode: vfscommon.CacheModeWrites},
 		{cacheMode: vfscommon.CacheModeFull},
 		{cacheMode: vfscommon.CacheModeFull, writeBack: fs.Duration(100 * time.Millisecond)},
+		{cacheMode: vfscommon.CacheModeFull, writeBack: fs.Duration(100 * time.Millisecond), links: true},
 	}
 	for _, test := range tests {
 		if test.cacheMode < minimumRequiredCacheMode {
@@ -63,10 +66,14 @@ func RunTests(t *testing.T, useVFS bool, minimumRequiredCacheMode vfscommon.Cach
 		vfsOpt := vfscommon.Opt
 		vfsOpt.CacheMode = test.cacheMode
 		vfsOpt.WriteBack = test.writeBack
+		vfsOpt.Links = test.links
 		run = newRun(useVFS, &vfsOpt, mountFn)
 		what := fmt.Sprintf("CacheMode=%v", test.cacheMode)
 		if test.writeBack > 0 {
 			what += fmt.Sprintf(",WriteBack=%v", test.writeBack)
+		}
+		if test.links {
+			what += fmt.Sprintf(",Links=%v", test.links)
 		}
 		fs.Logf(nil, "Starting test run with %s", what)
 		ok := t.Run(what, func(t *testing.T) {
@@ -98,6 +105,7 @@ func RunTests(t *testing.T, useVFS bool, minimumRequiredCacheMode vfscommon.Cach
 			t.Run("TestWriteFileFsync", TestWriteFileFsync)
 			t.Run("TestWriteFileDup", TestWriteFileDup)
 			t.Run("TestWriteFileAppend", TestWriteFileAppend)
+			t.Run("TestSymlinks", TestSymlinks)
 		})
 		fs.Logf(nil, "Finished test run with %s (ok=%v)", what, ok)
 		run.Finalise()
@@ -213,10 +221,16 @@ func newDirMap(dirString string) (dm dirMap) {
 }
 
 // Returns a dirmap with only the files in
-func (dm dirMap) filesOnly() dirMap {
+func (dm dirMap) filesOnly(stripLinksSuffix bool) dirMap {
 	newDm := make(dirMap)
 	for name := range dm {
 		if !strings.HasSuffix(name, "/") {
+			if stripLinksSuffix {
+				index := strings.LastIndex(name, " ")
+				if index != -1 {
+					name = strings.TrimSuffix(name[0:index], fs.LinkSuffix) + name[index:]
+				}
+			}
 			newDm[name] = struct{}{}
 		}
 	}
@@ -236,7 +250,11 @@ func (r *Run) readLocal(t *testing.T, dir dirMap, filePath string) {
 			assert.Equal(t, os.FileMode(r.vfsOpt.DirPerms)&os.ModePerm, fi.Mode().Perm())
 		} else {
 			dir[fmt.Sprintf("%s %d", name, fi.Size())] = struct{}{}
-			assert.Equal(t, os.FileMode(r.vfsOpt.FilePerms)&os.ModePerm, fi.Mode().Perm())
+			if fi.Mode()&os.ModeSymlink != 0 {
+				assert.Equal(t, os.FileMode(r.vfsOpt.LinkPerms)&os.ModePerm, fi.Mode().Perm())
+			} else {
+				assert.Equal(t, os.FileMode(r.vfsOpt.FilePerms)&os.ModePerm, fi.Mode().Perm())
+			}
 		}
 	}
 }
@@ -271,7 +289,7 @@ func (r *Run) checkDir(t *testing.T, dirString string) {
 		remoteDm = make(dirMap)
 		r.readRemote(t, remoteDm, "")
 		// Ignore directories for remote compare
-		remoteOK = reflect.DeepEqual(dm.filesOnly(), remoteDm.filesOnly())
+		remoteOK = reflect.DeepEqual(dm.filesOnly(false), remoteDm.filesOnly(!r.useVFS && r.vfsOpt.Links))
 		fuseOK = reflect.DeepEqual(dm, localDm)
 		if remoteOK && fuseOK {
 			return
@@ -280,7 +298,7 @@ func (r *Run) checkDir(t *testing.T, dirString string) {
 		t.Logf("Sleeping for %v for list eventual consistency: %d/%d", sleep, i, retries)
 		time.Sleep(sleep)
 	}
-	assert.Equal(t, dm.filesOnly(), remoteDm.filesOnly(), "expected vs remote")
+	assert.Equal(t, dm.filesOnly(false), remoteDm.filesOnly(!r.useVFS && r.vfsOpt.Links), "expected vs remote")
 	assert.Equal(t, dm, localDm, "expected vs fuse mount")
 }
 
@@ -351,6 +369,53 @@ func (r *Run) rmdir(t *testing.T, filepath string) {
 	filepath = r.path(filepath)
 	err := r.os.Remove(filepath)
 	require.NoError(t, err)
+}
+
+func (r *Run) relativeSymlink(t *testing.T, oldname, newname string) {
+	newname = r.path(newname)
+	err := r.os.Symlink(oldname, newname)
+	// The native code path with Links disabled would check the created file is really a symlink
+	// In this case ensure the .rclonelink file was created by stating it.
+	if err != nil && !r.vfsOpt.Links {
+		_, eerr := r.os.Stat(newname)
+
+		if eerr == nil {
+			err = nil
+		}
+	}
+	require.NoError(t, err)
+}
+
+func (r *Run) checkMode(t *testing.T, name string, lexpected os.FileMode, expected os.FileMode) {
+	if r.useVFS {
+		info, err := run.os.Stat(run.path(name))
+		require.NoError(t, err)
+		assert.Equal(t, lexpected, info.Mode())
+		assert.Equal(t, expected, info.Mode())
+		assert.Equal(t, name, info.Name())
+	} else {
+		info, err := os.Lstat(run.path(name))
+		require.NoError(t, err)
+		assert.Equal(t, lexpected, info.Mode())
+		assert.Equal(t, name, info.Name())
+
+		info, err = run.os.Stat(run.path(name))
+		require.NoError(t, err)
+		assert.Equal(t, expected, info.Mode())
+		assert.Equal(t, name, info.Name())
+	}
+}
+
+func (r *Run) readlink(t *testing.T, name string) string {
+	result, err := r.os.Readlink(r.path(name))
+	// The native code path with Links disabled would check the file is really a symlink
+	// In this case read the existing .rclonelink file.
+	if err != nil && !r.vfsOpt.Links {
+		result = r.readFile(t, name)
+		err = nil
+	}
+	require.NoError(t, err)
+	return result
 }
 
 // TestMount checks that the Fs is mounted by seeing if the mountpoint
