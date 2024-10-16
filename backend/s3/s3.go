@@ -3368,6 +3368,10 @@ func setQuirks(opt *Options) {
 			opt.ChunkSize = 64 * fs.Mebi
 		}
 		useAlreadyExists = false // returns BucketAlreadyExists
+		// Storj doesn't support multi-part server side copy:
+		// https://github.com/storj/roadmap/issues/40
+		// So make cutoff very large which it does support
+		opt.CopyCutoff = math.MaxInt64
 	case "Synology":
 		useMultipartEtag = false
 		useAlreadyExists = false // untested
