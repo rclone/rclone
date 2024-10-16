@@ -519,6 +519,7 @@ type Object struct {
 	mimeType   string            // Content-Type of the object
 	accessTier blob.AccessTier   // Blob Access Tier
 	meta       map[string]string // blob metadata - take metadataMu when accessing
+	tags       map[string]string // blob tags
 }
 
 // ------------------------------------------------------------
@@ -1876,6 +1877,14 @@ func (o *Object) decodeMetaDataFromBlob(info *container.BlobItem) (err error) {
 	return nil
 }
 
+func (o *Object) getTags() (tags map[string]string) {
+	if o.tags != nil {
+		return o.tags
+	}
+
+	return map[string]string{}
+}
+
 // getBlobSVC creates a blob client
 func (o *Object) getBlobSVC() *blob.Client {
 	container, directory := o.split()
@@ -2229,6 +2238,7 @@ func (w *azChunkWriter) Close(ctx context.Context) (err error) {
 
 	options := blockblob.CommitBlockListOptions{
 		Metadata:    w.o.getMetadata(),
+		Tags:        w.o.getTags(),
 		Tier:        parseTier(w.f.opt.AccessTier),
 		HTTPHeaders: &w.ui.httpHeaders,
 	}
@@ -2284,6 +2294,7 @@ func (o *Object) uploadSinglepart(ctx context.Context, in io.Reader, size int64,
 
 	options := blockblob.UploadOptions{
 		Metadata:    o.getMetadata(),
+		Tags:        o.getTags(),
 		Tier:        parseTier(o.fs.opt.AccessTier),
 		HTTPHeaders: &ui.httpHeaders,
 	}
@@ -2354,6 +2365,20 @@ func (o *Object) prepareUpload(ctx context.Context, src fs.ObjectInfo, options [
 		switch lowerKey {
 		case "":
 			// ignore
+		case "x-ms-tags":
+			if o.tags == nil {
+				o.tags = make(map[string]string)
+			}
+
+			tags := strings.Split(value, ",")
+			for _, tag := range tags {
+				parts := strings.SplitN(tag, "=", 2)
+				if len(parts) != 2 {
+					return ui, fmt.Errorf("invalid tag %q", tag)
+				}
+
+				o.tags[parts[0]] = parts[1]
+			}
 		case "cache-control":
 			ui.httpHeaders.BlobCacheControl = pString(value)
 		case "content-disposition":
