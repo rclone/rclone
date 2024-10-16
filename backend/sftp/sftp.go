@@ -910,7 +910,6 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 
 	keyFile := env.ShellExpand(opt.KeyFile)
 	pubkeyFile := env.ShellExpand(opt.PubKeyFile)
-	pubKey := env.ShellExpand(opt.PubKey)
 	//keyPem := env.ShellExpand(opt.KeyPem)
 	// Add ssh agent-auth if no password or file or key PEM specified
 	if (len(opt.SSH) == 0 && opt.Pass == "" && keyFile == "" && !opt.AskPassword && opt.KeyPem == "") || opt.KeyUseAgent {
@@ -1004,12 +1003,12 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		}
 
 		// If a public key has been specified then use that
-		if pubkeyFile != "" || pubKey != "" {
-			pubKeyRaw := []byte(pubKey)
+		if pubkeyFile != "" || opt.PubKey != "" {
+			pubKeyRaw := []byte(opt.PubKey)
 			// Use this error if public key is provided inline and is not a certificate
 			// if public key file is provided instead, use the err in the if block
-			notACertError := errors.New("public key provided is not a certificate: " + pubKey)
-			if pubKey == "" {
+			notACertError := errors.New("public key provided is not a certificate: " + opt.PubKey)
+			if opt.PubKey == "" {
 				notACertError = errors.New("public key file is not a certificate file: " + pubkeyFile)
 				err := error(nil)
 				pubKeyRaw, err = os.ReadFile(pubkeyFile)
