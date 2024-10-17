@@ -356,7 +356,8 @@ func (f *Fs) readMetaDataForPath(ctx context.Context, path string, depth string)
 		return nil, fs.ErrorObjectNotFound
 	}
 	item := result.Responses[0]
-	if !item.Props.StatusOK() {
+	// status code 425 is accepted here as well
+	if !(item.Props.StatusOK() || item.Props.Code() == 425) {
 		return nil, fs.ErrorObjectNotFound
 	}
 	if itemIsDir(&item) {
