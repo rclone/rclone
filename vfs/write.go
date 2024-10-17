@@ -37,6 +37,9 @@ var (
 )
 
 func newWriteFileHandle(d *Dir, f *File, remote string, flags int) (*WriteFileHandle, error) {
+	if f.IsSymlink() {
+		remote += fs.LinkSuffix
+	}
 	fh := &WriteFileHandle{
 		remote: remote,
 		flags:  flags,

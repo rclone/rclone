@@ -4,8 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"path"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -34,7 +36,7 @@ import (
 //
 // File may **not** read any members of Dir directly.
 
-// File represents a file
+// File represents a file or a symlink
 type File struct {
 	inode uint64       // inode number - read only
 	size  atomic.Int64 // size of file
@@ -53,6 +55,7 @@ type File struct {
 	sys              atomic.Value                    // user defined info to be attached here
 	nwriters         atomic.Int32                    // len(writers)
 	appendMode       bool                            // file was opened with O_APPEND
+	isLink           bool                            // file represents a symlink
 }
 
 // newFile creates a new File
@@ -69,7 +72,16 @@ func newFile(d *Dir, dPath string, o fs.Object, leaf string) *File {
 	if o != nil {
 		f.size.Store(o.Size())
 	}
+	f._setIsLink()
 	return f
+}
+
+// Set whether this is a link or not based on f.o
+func (f *File) _setIsLink() {
+	if f.o == nil {
+		return
+	}
+	f.isLink = f.d.vfs.Opt.Links && strings.HasSuffix(f.o.Remote(), fs.LinkSuffix)
 }
 
 // String converts it to printable
@@ -90,13 +102,31 @@ func (f *File) IsDir() bool {
 	return false
 }
 
+// IsSymlink returns true for symlinks when --links is enabled
+func (f *File) IsSymlink() bool {
+	f.mu.RLock()
+	defer f.mu.RUnlock()
+	return f.isLink
+}
+
+// setSymlink marks this File as being a symlink
+func (f *File) setSymlink() {
+	f.mu.RLock()
+	f.isLink = true
+	f.mu.RUnlock()
+}
+
 // Mode bits of the file or directory - satisfies Node interface
 func (f *File) Mode() (mode os.FileMode) {
 	f.mu.RLock()
 	defer f.mu.RUnlock()
-	mode = os.FileMode(f.d.vfs.Opt.FilePerms)
-	if f.appendMode {
-		mode |= os.ModeAppend
+	if f.isLink {
+		mode = os.FileMode(f.d.vfs.Opt.LinkPerms)
+	} else {
+		mode = os.FileMode(f.d.vfs.Opt.FilePerms)
+		if f.appendMode {
+			mode |= os.ModeAppend
+		}
 	}
 	return mode
 }
@@ -120,6 +150,34 @@ func (f *File) Path() string {
 	dPath, leaf := f.dPath, f.leaf
 	f.mu.RUnlock()
 	return path.Join(dPath, leaf)
+}
+
+// _fixCachePath returns fullPath with the fs.LinkSuffix added if appropriate
+// use when lock is held
+func (f *File) _fixCachePath(fullPath string) string {
+	if !f.isLink {
+		return fullPath
+	}
+	return fullPath + fs.LinkSuffix
+}
+
+// _cachePath returns the full path of the file with the fs.LinkSuffix if appropriate
+// use when lock is held
+func (f *File) _cachePath() string {
+	dPath, leaf := f.dPath, f.leaf
+	if f.isLink {
+		leaf += fs.LinkSuffix
+	}
+	return path.Join(dPath, leaf)
+}
+
+// CachePath returns the full path of the file with the fs.LinkSuffix if appropriate
+//
+// We use this path when storing files in the cache.
+func (f *File) CachePath() string {
+	f.mu.RLock()
+	defer f.mu.RUnlock()
+	return f._cachePath()
 }
 
 // Sys returns underlying data source (can be nil) - satisfies Node interface
@@ -172,6 +230,8 @@ func (f *File) rename(ctx context.Context, destDir *Dir, newName string) error {
 	f.mu.RLock()
 	d := f.d
 	oldPendingRenameFun := f.pendingRenameFun
+	oldPath := f._cachePath()
+	newCacheName := f._fixCachePath(newName)
 	f.mu.RUnlock()
 
 	if features := d.Fs().Features(); features.Move == nil && features.Copy == nil {
@@ -180,9 +240,8 @@ func (f *File) rename(ctx context.Context, destDir *Dir, newName string) error {
 		return err
 	}
 
-	oldPath := f.Path()
 	// File.mu is unlocked here to call Dir.Path()
-	newPath := path.Join(destDir.Path(), newName)
+	newPath := path.Join(destDir.Path(), newCacheName)
 
 	renameCall := func(ctx context.Context) (err error) {
 		// chain rename calls if any
@@ -231,6 +290,7 @@ func (f *File) rename(ctx context.Context, destDir *Dir, newName string) error {
 		f.mu.Lock()
 		if newObject != nil {
 			f.o = newObject
+			f._setIsLink()
 		}
 		f.pendingRenameFun = nil
 		f.mu.Unlock()
@@ -334,7 +394,7 @@ func (f *File) ModTime() (modTime time.Time) {
 	}
 	// Read the modtime from a dirty item if it exists
 	if f.d.vfs.Opt.CacheMode >= vfscommon.CacheModeMinimal {
-		if item := f.d.vfs.cache.DirtyItem(f._path()); item != nil {
+		if item := f.d.vfs.cache.DirtyItem(f._cachePath()); item != nil {
 			modTime, err := item.GetModTime()
 			if err != nil {
 				fs.Errorf(f._path(), "ModTime: Item GetModTime failed: %v", err)
@@ -371,7 +431,7 @@ func (f *File) Size() int64 {
 
 	// Read the size from a dirty item if it exists
 	if f.d.vfs.Opt.CacheMode >= vfscommon.CacheModeMinimal {
-		if item := f.d.vfs.cache.DirtyItem(f._path()); item != nil {
+		if item := f.d.vfs.cache.DirtyItem(f._cachePath()); item != nil {
 			size, err := item.GetSize()
 			if err != nil {
 				fs.Errorf(f._path(), "Size: Item GetSize failed: %v", err)
@@ -404,8 +464,8 @@ func (f *File) SetModTime(modTime time.Time) error {
 	f.pendingModTime = modTime
 
 	// set the time of the file in the cache
-	if f.d.vfs.cache != nil && f.d.vfs.cache.Exists(f._path()) {
-		f.d.vfs.cache.SetModTime(f._path(), f.pendingModTime)
+	if f.d.vfs.cache != nil && f.d.vfs.cache.Exists(f._cachePath()) {
+		f.d.vfs.cache.SetModTime(f._cachePath(), f.pendingModTime)
 	}
 
 	// Only update the ModTime when there are no writers, setObject will do it
@@ -480,6 +540,7 @@ func (f *File) setSize(n int64) {
 func (f *File) setObject(o fs.Object) {
 	f.mu.Lock()
 	f.o = o
+	f._setIsLink()
 	_ = f._applyPendingModTime()
 	d := f.d
 	f.mu.Unlock()
@@ -493,6 +554,7 @@ func (f *File) setObject(o fs.Object) {
 func (f *File) setObjectNoUpdate(o fs.Object) {
 	f.mu.Lock()
 	f.o = o
+	f._setIsLink()
 	f.virtualModTime = nil
 	fs.Debugf(f._path(), "Reset virtual modtime")
 	f.mu.Unlock()
@@ -611,8 +673,8 @@ func (f *File) Remove() (err error) {
 
 	// Remove the object from the cache
 	wasWriting := false
-	if d.vfs.cache != nil && d.vfs.cache.Exists(f.Path()) {
-		wasWriting = d.vfs.cache.Remove(f.Path())
+	if d.vfs.cache != nil && d.vfs.cache.Exists(f.CachePath()) {
+		wasWriting = d.vfs.cache.Remove(f.CachePath())
 	}
 
 	f.muRW.Lock() // muRW must be locked before mu to avoid
@@ -673,6 +735,85 @@ func (f *File) Fs() fs.Fs {
 	return f.d.Fs()
 }
 
+// MaxSymlinkIterations is the largest number of symlink evaluations EvalSymlinks will do.
+const MaxSymlinkIterations = 32
+
+// If f is a symlink then it resolves it to a new Node.
+//
+// This is a simplistic symlink resolver - it only resolves direct
+// symlinks, it will **not** resolve paths that point into a directory
+// via a symlink.
+//
+// It returns the target node after the evaluation of all symbolic
+// links.
+//
+// It returns an error if too many symlinks need to be resolved
+// (ELOOP) or there is a loop.
+func (f *File) resolveNode() (target Node, err error) {
+	defer log.Trace(f.Path(), "")("target=%v, err=%v", &target, &err)
+	seen := make(map[string]struct{})
+	for tries := 0; tries < MaxSymlinkIterations; tries++ {
+		// If f isn't a symlink, we've arrived at the target
+		if !f.IsSymlink() {
+			return f, nil
+		}
+
+		// Read the symlink
+		fd, err := f.Open(os.O_RDONLY | o_SYMLINK)
+		if err != nil {
+			return nil, err
+		}
+		b, err := io.ReadAll(fd)
+		closeErr := fd.Close()
+		if err != nil {
+			return nil, err
+		}
+		if closeErr != nil {
+			return nil, closeErr
+		}
+		targetPath := string(b)
+
+		// Convert to a path relative to the root
+		// Symlinks are relative to their file node
+		if !path.IsAbs(targetPath) {
+			basePath := path.Dir(f.Path())
+			targetPath = path.Join(basePath, targetPath)
+		}
+
+		// Clean the path, rclone style
+		targetPath = path.Clean(targetPath)
+		if targetPath == "." {
+			targetPath = ""
+		}
+
+		// Check if we've already seen this path
+		if _, ok := seen[targetPath]; ok {
+			return nil, ELOOP
+		}
+		seen[targetPath] = struct{}{}
+
+		// Resolve the targetPath into a node
+		target, err = f.d.vfs.Stat(targetPath)
+		if err != nil {
+			return nil, err
+		}
+
+		// Return node as it must be the destination if not a file
+		var ok bool
+		f, ok = target.(*File)
+		if !ok {
+			return target, nil
+		}
+	}
+	return nil, ELOOP
+}
+
+// Open also also implements the internal flag o_SYMLINK which instead
+// of opening the file a symlink points to, opens the symlink itself.
+// This is used for reading and writing the symlink and shouldn't be
+// used externally.
+const o_SYMLINK = 0x4000_0000 //nolint:revive
+
 // Open a file according to the flags provided
 //
 //	O_RDONLY open the file read-only.
@@ -693,6 +834,16 @@ func (f *File) Open(flags int) (fd Handle, err error) {
 		read     bool // if set need read support
 		rdwrMode = flags & accessModeMask
 	)
+
+	// If this is a symlink, then resolve it
+	if f.IsSymlink() && flags&o_SYMLINK == 0 {
+		target, err := f.resolveNode()
+		if err != nil {
+			return nil, err
+		}
+		return target.Open(flags)
+	}
+	flags &^= o_SYMLINK
 
 	// http://pubs.opengroup.org/onlinepubs/7908799/xsh/open.html
 	// The result of using O_TRUNC with O_RDONLY is undefined.
@@ -738,7 +889,7 @@ func (f *File) Open(flags int) (fd Handle, err error) {
 	d := f.d
 	f.mu.RUnlock()
 	CacheMode := d.vfs.Opt.CacheMode
-	if CacheMode >= vfscommon.CacheModeMinimal && (d.vfs.cache.InUse(f.Path()) || d.vfs.cache.Exists(f.Path())) {
+	if CacheMode >= vfscommon.CacheModeMinimal && (d.vfs.cache.InUse(f.CachePath()) || d.vfs.cache.Exists(f.CachePath())) {
 		fd, err = f.openRW(flags)
 	} else if read && write {
 		if CacheMode >= vfscommon.CacheModeMinimal {
