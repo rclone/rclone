@@ -505,6 +505,9 @@ processed in.
 Arrange the order of filter rules with the most restrictive first and
 work down.
 
+Avoid inline comments. These can remove the filtering action of the
+associated filter.
+
 E.g. for `filter-file.txt`:
 
     # a sample filter rule file
@@ -512,6 +515,7 @@ E.g. for `filter-file.txt`:
     + *.jpg
     + *.png
     + file2.avi
+    - /dir/tmp/** # inline comment nullifies this exclusion
     - /dir/Trash/**
     + /dir/**
     # exclude everything else
