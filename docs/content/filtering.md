@@ -505,8 +505,8 @@ processed in.
 Arrange the order of filter rules with the most restrictive first and
 work down.
 
-Avoid inline comments. These can remove the filtering action of the
-associated filter.
+Inline comments are not supported. These comments alter the filtering action of the
+associated filter. _Use `-vv --dump filters` to see how they appear in the final regexp._
 
 E.g. for `filter-file.txt`:
 
@@ -515,7 +515,7 @@ E.g. for `filter-file.txt`:
     + *.jpg
     + *.png
     + file2.avi
-    - /dir/tmp/** # inline comment nullifies this exclusion
+    - /dir/tmp/** # WARNING! The inline comment nullifies this exclusion.
     - /dir/Trash/**
     + /dir/**
     # exclude everything else
