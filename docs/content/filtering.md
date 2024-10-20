@@ -515,7 +515,7 @@ E.g. for `filter-file.txt`:
     + *.jpg
     + *.png
     + file2.avi
-    - /dir/tmp/** # WARNING! The inline comment nullifies this exclusion.
+    - /dir/tmp/** # WARNING! This text will be treated as part of the path.
     - /dir/Trash/**
     + /dir/**
     # exclude everything else
