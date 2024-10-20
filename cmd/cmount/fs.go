@@ -121,19 +121,6 @@ func (fsys *FS) lookupParentDir(filePath string) (leaf string, dir *vfs.Dir, err
 	return leaf, dir, errc
 }
 
-// lookup a File given a path
-func (fsys *FS) lookupFile(path string) (file *vfs.File, errc int) {
-	node, errc := fsys.lookupNode(path)
-	if errc != 0 {
-		return nil, errc
-	}
-	file, ok := node.(*vfs.File)
-	if !ok {
-		return nil, -fuse.EISDIR
-	}
-	return file, 0
-}
-
 // get a node and handle from the path or from the fh if not fhUnset
 //
 // handle may be nil
@@ -580,7 +567,7 @@ func (fsys *FS) Getpath(path string, fh uint64) (errc int, normalisedPath string
 		return errc, ""
 	}
 	normalisedPath = node.Path()
-	if !strings.HasPrefix("/", normalisedPath) {
+	if !strings.HasPrefix(normalisedPath, "/") {
 		normalisedPath = "/" + normalisedPath
 	}
 	return 0, normalisedPath
