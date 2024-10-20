@@ -505,8 +505,7 @@ processed in.
 Arrange the order of filter rules with the most restrictive first and
 work down.
 
-Inline comments are not supported. These comments alter the filtering action of the
-associated filter. _Use `-vv --dump filters` to see how they appear in the final regexp._
+Lines starting with # or ; are ignored, and can be used to write comments. Inline comments are not supported. _Use `-vv --dump filters` to see how they appear in the final regexp._
 
 E.g. for `filter-file.txt`:
 
