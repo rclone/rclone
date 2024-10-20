@@ -150,6 +150,12 @@ func (e *e2eTestingContext) installRcloneConfig(t *testing.T) {
 	require.NoError(t, os.WriteFile(rcloneConfigPath, []byte(rcloneConfigContents), 0600))
 }
 
+func (e *e2eTestingContext) installSymlinkToRealRcloneConfig(t *testing.T, realConfigPath string) {
+	require.NoError(t, os.Symlink(
+		realConfigPath,
+		filepath.Join(e.rcloneConfigDir, "rclone.conf")))
+}
+
 // runInRepo runs the given command from within the ephemeral repo directory. To
 // prevent accidental changes in the real home directory, it sets the HOME
 // variable to a subdirectory of the temp directory. It also ensures that the
@@ -395,4 +401,56 @@ func TestEndToEndRepoLayoutCompat(t *testing.T) {
 			require.False(t, findFileWithContents(t, remoteStorage, fooFileContents))
 		})
 	}
+}
+
+// This end-to-end test attempts to reproduce the failure described here:
+// <https://git-annex.branchable.com/bugs/Trust_but_Verify__58___RClone/>.
+//
+// Example invocation of just this test from the project's root directory:
+//
+//	go build && PATH="$(realpath .):$PATH" go test -v ./cmd/gitannex/... -run TestEndToEndAttemptToReproDropboxDataLoss
+func TestEndToEndAttemptToReproDropboxDataLoss(t *testing.T) {
+	skipE2eTestIfNecessary(t)
+
+	tc := makeE2eTestingContext(t)
+	tc.installRcloneGitannexSymlink(t)
+	tc.installSymlinkToRealRcloneConfig(t, "/Users/dan/.config/rclone/rclone.conf")
+	tc.createGitRepo(t)
+
+	// The name of the *real* rclone remote.
+	dropboxRemoteName := "dan-dropbox"
+	dropboxPrefix := "rclone-e2e-test-TestEndToEndAttemptToReproDropboxDataLoss"
+
+	tc.runInRepo(t,
+		"rclone", "mkdir", dropboxRemoteName+":"+dropboxPrefix)
+
+	tc.runInRepo(t,
+		"git", "annex", "initremote", "dropbox",
+		"type=rclone", "encryption=none",
+		"rcloneremotename="+dropboxRemoteName,
+		"rcloneprefix="+dropboxPrefix)
+
+	fooFileContents := []byte{1, 2, 3, 4}
+	fooFilePath := filepath.Join(tc.ephemeralRepoDir, "foo")
+	require.NoError(t, os.WriteFile(fooFilePath, fooFileContents, 0700))
+	tc.runInRepo(t, "git", "annex", "add", "foo")
+	tc.runInRepo(t, "git", "commit", "-m", "Add foo file")
+
+	// Git-annex objects are not writable, which prevents `testing` from
+	// cleaning up the temp directory. We can work around this by
+	// explicitly dropping any files we add to the annex.
+	t.Cleanup(func() { tc.runInRepo(t, "git", "annex", "drop", "--force", "foo") })
+
+	tc.runInRepo(t, "git", "annex", "copy", "--to", "dropbox")
+
+	expectedFileName := "SHA256E-s4--9f64a747e1b97f131fabb6b447296c9b6f0201e79fb3c5356e6c77e89b6a806a"
+	tc.runInRepo(t, "rclone", "size", "--json", fmt.Sprintf("%s:%s/%s", dropboxRemoteName, dropboxPrefix, expectedFileName))
+	tc.runInRepo(t, "rclone", "delete", fmt.Sprintf("%s:%s/%s", dropboxRemoteName, dropboxPrefix, expectedFileName))
+
+	// If we could reproduce the data loss scenario, git-annex should drop the
+	// local "foo" file. However, I'm seeing this command fail with the message
+	// "Could not verify the existence of the 1 necessary copy." Under normal
+	// circumstances, this would be a good thing, but here it means we did not
+	// successfully repro the issue.
+	tc.runInRepo(t, "git", "annex", "drop", "foo")
 }
