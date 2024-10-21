@@ -505,6 +505,8 @@ processed in.
 Arrange the order of filter rules with the most restrictive first and
 work down.
 
+Lines starting with # or ; are ignored, and can be used to write comments. Inline comments are not supported. _Use `-vv --dump filters` to see how they appear in the final regexp._
+
 E.g. for `filter-file.txt`:
 
     # a sample filter rule file
@@ -512,6 +514,7 @@ E.g. for `filter-file.txt`:
     + *.jpg
     + *.png
     + file2.avi
+    - /dir/tmp/** # WARNING! This text will be treated as part of the path.
     - /dir/Trash/**
     + /dir/**
     # exclude everything else
