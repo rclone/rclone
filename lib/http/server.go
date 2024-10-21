@@ -416,6 +416,12 @@ func (s *Server) initAuth() {
 		s.mux.Use(MiddlewareAuthBasic(s.auth.BasicUser, s.auth.BasicPass, s.auth.Realm, s.auth.Salt))
 		return
 	}
+
+	if s.auth.UserFromHeader != "" {
+		s.usingAuth = true
+		s.mux.Use(MiddlewareAuthGetUserFromHeader(s.auth.UserFromHeader))
+		return
+	}
 }
 
 func (s *Server) initTemplate() error {
