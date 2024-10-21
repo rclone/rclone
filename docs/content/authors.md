@@ -900,3 +900,4 @@ put them back in again.` >}}
   * lostb1t <coding-mosses0z@icloud.com>
   * Matthias Gatto <matthias.gatto@outscale.com>
   * André Tran <andre.tran@outscale.com>
+  * Simon Bos <simon@simonbos.be>
