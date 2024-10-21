@@ -59,10 +59,27 @@ func testObjectInfo(t *testing.T, f *Fs, wrap bool) {
 	// encrypt the data
 	inBuf := bytes.NewBufferString(contents)
 	var outBuf bytes.Buffer
-	enc, err := f.cipher.newEncrypter(inBuf, nil)
+
+	var preHasher *hash.MultiHasher
+	var wrappedIn io.Reader
+	if f.cipher.version == CipherVersionV2 {
+		wrappedIn, preHasher, _ = wrapReaderCalculatePlaintextHash(inBuf)
+	} else {
+		wrappedIn = inBuf
+	}
+
+	enc, err := f.cipher.newEncrypter(wrappedIn, nil, nil)
 	require.NoError(t, err)
 	nonce := enc.nonce // read the nonce at the start
+	cek := enc.cek
 	_, err = io.Copy(&outBuf, enc)
+
+	if f.cipher.version == CipherVersionV2 { // Append hash to the end
+		emptyReader := bytes.NewReader([]byte{})
+		hashReader := wrapReaderAppendPlaintextHash(emptyReader, preHasher, enc)
+		_, err = io.Copy(&outBuf, hashReader)
+	}
+
 	require.NoError(t, err)
 
 	var oi fs.ObjectInfo = obj
@@ -73,7 +90,7 @@ func testObjectInfo(t *testing.T, f *Fs, wrap bool) {
 
 	// wrap the object in a crypt for upload using the nonce we
 	// saved from the encrypter
-	src := f.newObjectInfo(oi, nonce)
+	src := f.newObjectInfo(oi, nonce, cek)
 
 	// Test ObjectInfo methods
 	if !f.opt.NoDataEncryption {
