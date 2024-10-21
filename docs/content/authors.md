@@ -901,3 +901,4 @@ put them back in again.` >}}
   * Matthias Gatto <matthias.gatto@outscale.com>
   * André Tran <andre.tran@outscale.com>
   * Simon Bos <simon@simonbos.be>
+  * Alexandre Hamez <199517+ahamez@users.noreply.github.com>
