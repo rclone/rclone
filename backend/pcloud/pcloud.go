@@ -10,6 +10,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	stdhash "hash"
 	"io"
 	"net/http"
 	"net/url"
@@ -58,6 +59,8 @@ var (
 		ClientSecret: obscure.MustReveal(rcloneEncryptedClientSecret),
 		RedirectURL:  oauthutil.RedirectLocalhostURL,
 	}
+	// PcloudHashType is the hash.Type for Pcloud
+	PcloudHashType hash.Type
 )
 
 // Update the TokenURL with the actual hostname
@@ -65,8 +68,45 @@ func updateTokenURL(oauthConfig *oauth2.Config, hostname string) {
 	oauthConfig.Endpoint.TokenURL = "https://" + hostname + "/oauth2_token"
 }
 
+type pcloudHash struct{}
+
+// newHash returns a new hash.Hash computing the quickXorHash checksum.
+func newHash() stdhash.Hash {
+	return &pcloudHash{}
+}
+
+// Write adds more data to the running hash.
+// It never returns an error.
+func (h *pcloudHash) Write(p []byte) (n int, err error) {
+	return len(p), nil
+}
+
+// Sum appends the current hash to b and returns the resulting slice.
+// It does not change the underlying hash state.
+func (h *pcloudHash) Sum(b []byte) []byte {
+	return []byte{}
+}
+
+// Reset resets the Hash to its initial state.
+func (h *pcloudHash) Reset() {
+}
+
+// Size returns the number of bytes Sum will return.
+func (h *pcloudHash) Size() int {
+	return 8
+}
+
+// BlockSize returns the hash's underlying block size.
+// The Write method must be able to accept any amount
+// of data, but it may operate more efficiently if all writes
+// are a multiple of the block size.
+func (h *pcloudHash) BlockSize() int {
+	return 1024
+}
+
 // Register with Fs
 func init() {
+	PcloudHashType = hash.RegisterHash("pcloud", "PcloudHash", 8, newHash)
 	updateTokenURL(oauthConfig, defaultHostname)
 	fs.Register(&fs.RegInfo{
 		Name:        "pcloud",
@@ -189,6 +229,7 @@ type Object struct {
 	sha1        string    // SHA1 if known
 	sha256      string    // SHA256 if known
 	link        *api.GetFileLinkResult
+	pcloudHash  uint64 // pcloud proprietary hash
 }
 
 // ------------------------------------------------------------
@@ -1010,15 +1051,18 @@ func (f *Fs) Shutdown(ctx context.Context) error {
 }
 
 // Hashes returns the supported hash sets.
-func (f *Fs) Hashes() hash.Set {
+func (f *Fs) Hashes() (hashes hash.Set) {
 	// EU region supports SHA1 and SHA256 (but rclone doesn't
 	// support SHA256 yet).
 	//
 	// https://forum.rclone.org/t/pcloud-to-local-no-hashes-in-common/19440
 	if f.opt.Hostname == "eapi.pcloud.com" {
-		return hash.Set(hash.SHA1 | hash.SHA256)
+		hashes = hash.Set(hash.SHA1 | hash.SHA256)
+	} else {
+		hashes = hash.Set(hash.MD5 | hash.SHA1)
 	}
-	return hash.Set(hash.MD5 | hash.SHA1)
+	hashes = hashes.Add(PcloudHashType)
+	return hashes
 }
 
 // ------------------------------------------------------------
@@ -1073,6 +1117,11 @@ func (o *Object) Hash(ctx context.Context, t hash.Type) (string, error) {
 		pHash = &o.sha1
 	case hash.SHA256:
 		pHash = &o.sha256
+	case PcloudHashType:
+		if o.pcloudHash == 0 {
+			return "", nil
+		}
+		return fmt.Sprintf("%016x", o.pcloudHash), nil
 	default:
 		return "", hash.ErrUnsupported
 	}
@@ -1104,6 +1153,7 @@ func (o *Object) setMetaData(info *api.Item) (err error) {
 	o.size = info.Size
 	o.modTime = info.ModTime()
 	o.id = info.ID
+	o.pcloudHash = info.Hash
 	return nil
 }
 
