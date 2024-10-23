@@ -51,6 +51,28 @@ func TestStandardBase32(t *testing.T) {
 	})
 }
 
+func TestStandardBase32V2(t *testing.T) {
+	if *fstest.RemoteName != "" {
+		t.Skip("Skipping as -remote set")
+	}
+	tempdir := filepath.Join(os.TempDir(), "rclone-crypt-test-standard")
+	name := "TestCrypt"
+	fstests.Run(t, &fstests.Opt{
+		RemoteName: name + ":",
+		NilObject:  (*crypt.Object)(nil),
+		ExtraConfig: []fstests.ExtraConfigItem{
+			{Name: name, Key: "type", Value: "crypt"},
+			{Name: name, Key: "remote", Value: tempdir},
+			{Name: name, Key: "password", Value: obscure.MustObscure("potato")},
+			{Name: name, Key: "filename_encryption", Value: "standard"},
+			{Name: name, Key: "cipher_version", Value: crypt.CipherVersionV2},
+		},
+		UnimplementableFsMethods:     []string{"OpenWriterAt", "OpenChunkWriter"},
+		UnimplementableObjectMethods: []string{"MimeType"},
+		QuickTestOK:                  true,
+	})
+}
+
 func TestStandardBase64(t *testing.T) {
 	if *fstest.RemoteName != "" {
 		t.Skip("Skipping as -remote set")
