@@ -635,6 +635,7 @@ type ConfigInfo struct {
 	Inplace                    bool              `config:"inplace"`      // Download directly to destination file instead of atomic download to temp/rename
 	PartialSuffix              string            `config:"partial_suffix"`
 	MetadataMapper             SpaceSepList      `config:"metadata_mapper"`
+	NoBlockRmdir               CommaSepList      `config:"no_block_rmdir"`
 }
 
 func init() {
