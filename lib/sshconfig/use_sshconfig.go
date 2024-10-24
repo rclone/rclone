@@ -1,14 +1,17 @@
+// Package sshconfig functions to convert ssh config file to rclone config and to add to temp env vars
 package sshconfig
 
 import (
 	"fmt"
-	"github.com/kevinburke/ssh_config"
 	"io"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/kevinburke/ssh_config"
 )
 
+// keyMapping defines the mapping between SSH configuration keys and Rclone configuration keys.
 var keyMapping = map[string]string{
 	"identityfile": "key_file",
 	"pubkeyfile":   "pubkey_file",
@@ -18,7 +21,49 @@ var keyMapping = map[string]string{
 	"password":     "pass",
 }
 
-func ConvertToIniKey(customKey string) string {
+// sshConfig represents the SSH configuration structure
+type sshConfig map[string]map[string]string
+
+// LoadSSHConfigIntoEnv loads SSH configuration into environment variables by mapping SSH settings to
+// rclone configuration and setting the environment accordingly.
+// Returns an error if any step fails during the process.
+// Note: type=sftp is added for each host (section), also key_use_agent=true is set, when if key_file was given.
+func LoadSSHConfigIntoEnv() error {
+	path := filepath.Join(os.Getenv("HOME"), ".ssh", "config")
+	f, err := os.Open(path) // returning file handler, so caller needs close
+
+	if err != nil {
+		return fmt.Errorf("error opening ssh config file: %w", err)
+	}
+
+	c, err := mapSSHToRcloneConfig(f)
+	if err != nil {
+		return fmt.Errorf("error mapping ssh config to rclone config: %w", err)
+	}
+
+	if err := EnvLoadSSHConfig(c); err != nil {
+		return fmt.Errorf("error setting Env with ssh config: %v", err)
+	}
+
+	return nil
+}
+
+// EnvLoadSSHConfig sets the environment variables based on the Ssh configuration.
+func EnvLoadSSHConfig(sshCfg sshConfig) error {
+	for sectionName, section := range sshCfg {
+
+		for key, value := range section {
+			s := fmt.Sprintf("RCLONE_CONFIG_%s_%s", strings.ToUpper(sectionName), strings.ToUpper(convertToIniKey(key)))
+			if err := os.Setenv(s, value); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+// convertToIniKey converts custom SSH configuration keys to Rclone configuration keys using keyMapping.
+func convertToIniKey(customKey string) string {
 	if iniKey, found := keyMapping[strings.ToLower(customKey)]; found {
 		return iniKey
 	}
@@ -26,39 +71,20 @@ func ConvertToIniKey(customKey string) string {
 	return customKey
 }
 
-type SshConfig map[string]map[string]string
-
-func LoadSshConfigIntoEnv() error {
-	if c, err := LoadSshConfig(); err != nil {
-		return fmt.Errorf("error loading ssh config: %v", err)
-	} else {
-		if err := EnvLoadSshConfig(*c); err != nil {
-			return fmt.Errorf("error setting Env with ssh config: %v", err)
-		}
-	}
-	return nil
-}
-
-func LoadSshConfig() (*SshConfig, error) {
-	path := filepath.Join(os.Getenv("HOME"), ".ssh", "config")
-	f, err := os.Open(path) // returning file handler, so caller needs close
-
-	if err != nil {
-		return nil, fmt.Errorf("error opening ssh config file: %w", err)
-	}
-	return MapSshToRcloneConfig(f)
-}
-
-func MapSshToRcloneConfig(r io.Reader) (*SshConfig, error) {
+// mapSSHToRcloneConfig maps Ssh configuration to rclone configuration.
+func mapSSHToRcloneConfig(r io.Reader) (sshConfig, error) {
 	cfg, err := ssh_config.Decode(r)
 	if err != nil {
 		return nil, fmt.Errorf("error deocing ssh config file: %w", err)
 	}
-	sections := SshConfig(map[string]map[string]string{})
+	sections := sshConfig(map[string]map[string]string{})
 
 	for _, host := range cfg.Hosts {
 		pattern := host.Patterns[0].String()
 		sections[pattern] = make(map[string]string)
+
+		// ssh configs are always type sftp
+		sections[pattern]["type"] = "sftp"
 
 		for _, node := range host.Nodes {
 			keyval := strings.Fields(strings.TrimSpace(node.String()))
@@ -66,50 +92,15 @@ func MapSshToRcloneConfig(r io.Reader) (*SshConfig, error) {
 				key := strings.ToLower(strings.TrimSpace(keyval[0]))
 				value := strings.TrimSpace(strings.Join(keyval[1:], " "))
 
-				//oldValue, containsKey := sections[pattern][key]
-				//if containsKey {
-				//	sections[pattern][key] = oldValue + "," + value
-				//}
-
-				sections[pattern][key] = value
+				sections[pattern][convertToIniKey(key)] = value
 			}
 		}
 
-		//keyFile, err := cfg.GetAll(pattern, "identityfile")
-		//fmt.Println("Identi", pattern)
-		//if err != nil {
-		//	fmt.Println("Error", err)
-		//} else {
-		//	if len(keyFile) == 2 {
-		//		//keyFile = []string{keyFile[1], keyFile[0]}
-		//	}
-		//	sections[pattern]["identityfile"] = strings.Join(keyFile, ",")
-		//}
-	}
-	return &sections, nil
-}
-
-func EnvLoadSshConfig(sshCfg SshConfig) error {
-	for sectionName, section := range sshCfg {
-		//fmt.Println(sectionName, section)
-		// check if config already exist
-		//typeValue, _ := s.gc.GetValue(sectionName, "type")
-
-		_, ok := section["identityfile"]
+		// add missing key_use_agent if there is identityfile or here mapped key_file
+		_, ok := sections[pattern]["key_file"]
 		if ok {
-			//if _, ok := section["pubkey_file"]; !ok {
-			//	section["pubkey_file"] = keyFile + ".pub"
-			//}
-			section["key_use_agent"] = "true"
-		}
-
-		section["type"] = "sftp"
-		for key, value := range section {
-			s := fmt.Sprintf("RCLONE_CONFIG_%s_%s", strings.ToUpper(sectionName), strings.ToUpper(ConvertToIniKey(key)))
-			if err := os.Setenv(s, value); err != nil {
-				return err
-			}
+			sections[pattern]["key_use_agent"] = "true"
 		}
 	}
-	return nil
+	return sections, nil
 }
