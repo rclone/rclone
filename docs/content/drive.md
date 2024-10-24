@@ -1797,7 +1797,8 @@ create and delete files with RClone.
 "Save and continue" to add test users. Be sure to add your own account to
 the test users. Once you've added yourself as a test user and saved the
 changes, click again on "Credentials" on the left panel to go back to
-the "Credentials" screen.
+the "Credentials" screen. You can add up to 100 test users, to whom you
+must share the id and secret to be able to use it.
 
    (PS: if you are a GSuite user, you could also select "Internal" instead
 of "External" above, but this will restrict API use to Google Workspace 
@@ -1814,10 +1815,7 @@ then select "OAuth client ID".
    If you chose "Internal" you don't need to publish and can skip straight to
    Step 11 but your destination drive must be part of the same Google Workspace.)
 
-10. Go to "Oauth consent screen" and then click "PUBLISH APP" button and confirm.
-   You will also want to add yourself as a test user.
-
-11. Provide the noted client ID and client secret to rclone.
+10. Provide the noted client ID and client secret to rclone.
 
 Be aware that, due to the "enhanced security" recently introduced by
 Google, you are theoretically expected to "submit your app for verification"
