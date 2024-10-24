@@ -905,3 +905,4 @@ put them back in again.` >}}
   * Randy Bush <randy@psg.com>
   * Diego Monti <diegmonti@users.noreply.github.com>
   * tgfisher <tgfisher@stanford.edu>
+  * Moises Lima <mozlima@gmail.com>

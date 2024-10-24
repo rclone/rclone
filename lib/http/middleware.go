@@ -58,11 +58,6 @@ func NewLoggedBasicAuthenticator(realm string, secrets goauth.SecretProvider) *L
 func basicAuth(authenticator *LoggedBasicAuth) func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			// skip auth for unix socket
-			if IsUnixSocket(r) {
-				next.ServeHTTP(w, r)
-				return
-			}
 			// skip auth for CORS preflight
 			if r.Method == "OPTIONS" {
 				next.ServeHTTP(w, r)
@@ -124,11 +119,6 @@ func MiddlewareAuthBasic(user, pass, realm, salt string) Middleware {
 func MiddlewareAuthCustom(fn CustomAuthFn, realm string, userFromContext bool) Middleware {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			// skip auth for unix socket
-			if IsUnixSocket(r) {
-				next.ServeHTTP(w, r)
-				return
-			}
 			// skip auth for CORS preflight
 			if r.Method == "OPTIONS" {
 				next.ServeHTTP(w, r)
@@ -196,11 +186,6 @@ func MiddlewareCORS(allowOrigin string) Middleware {
 
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			// skip cors for unix sockets
-			if IsUnixSocket(r) {
-				next.ServeHTTP(w, r)
-				return
-			}
 
 			if allowOrigin != "" {
 				w.Header().Add("Access-Control-Allow-Origin", allowOrigin)
