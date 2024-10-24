@@ -100,6 +100,11 @@ in the new OpenSSH format can't be used.`,
 			IsPassword: true,
 			Sensitive:  true,
 		}, {
+			Name: "pubkey",
+			Help: `SSH public certificate for public certificate based authentication.
+Set this if you have a signed certificate you want to use for authentication.
+If specified will override pubkey_file.`,
+		}, {
 			Name: "pubkey_file",
 			Help: `Optional path to public key file.
 
@@ -511,6 +516,7 @@ type Options struct {
 	KeyPem                  string          `config:"key_pem"`
 	KeyFile                 string          `config:"key_file"`
 	KeyFilePass             string          `config:"key_file_pass"`
+	PubKey                  string          `config:"pubkey"`
 	PubKeyFile              string          `config:"pubkey_file"`
 	KnownHostsFile          string          `config:"known_hosts_file"`
 	KeyUseAgent             bool            `config:"key_use_agent"`
@@ -997,13 +1003,21 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		}
 
 		// If a public key has been specified then use that
-		if pubkeyFile != "" {
-			certfile, err := os.ReadFile(pubkeyFile)
-			if err != nil {
-				return nil, fmt.Errorf("unable to read cert file: %w", err)
+		if pubkeyFile != "" || opt.PubKey != "" {
+			pubKeyRaw := []byte(opt.PubKey)
+			// Use this error if public key is provided inline and is not a certificate
+			// if public key file is provided instead, use the err in the if block
+			notACertError := errors.New("public key provided is not a certificate: " + opt.PubKey)
+			if opt.PubKey == "" {
+				notACertError = errors.New("public key file is not a certificate file: " + pubkeyFile)
+				err := error(nil)
+				pubKeyRaw, err = os.ReadFile(pubkeyFile)
+				if err != nil {
+					return nil, fmt.Errorf("unable to read cert file: %w", err)
+				}
 			}
 
-			pk, _, _, _, err := ssh.ParseAuthorizedKey(certfile)
+			pk, _, _, _, err := ssh.ParseAuthorizedKey(pubKeyRaw)
 			if err != nil {
 				return nil, fmt.Errorf("unable to parse cert file: %w", err)
 			}
@@ -1017,7 +1031,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 			// knows everything it needs.
 			cert, ok := pk.(*ssh.Certificate)
 			if !ok {
-				return nil, errors.New("public key file is not a certificate file: " + pubkeyFile)
+				return nil, notACertError
 			}
 			pubsigner, err := ssh.NewCertSigner(cert, signer)
 			if err != nil {
