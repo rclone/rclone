@@ -15,7 +15,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// TestCmdTest demonstrates and verifies the test functions for end-to-end testing of rclone
+// TestEnvironmentVariables demonstrates and verifies the test functions for end-to-end testing of rclone
 func TestEnvironmentVariables(t *testing.T) {
 
 	createTestEnvironment(t)
