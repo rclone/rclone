@@ -84,7 +84,10 @@ func init() {
 				Help:  "Nextcloud",
 			}, {
 				Value: "owncloud",
-				Help:  "Owncloud",
+				Help:  "Owncloud 10 PHP based WebDAV server",
+			}, {
+				Value: "InfiniteScale",
+				Help:  "ownCloud Infinite Scale",
 			}, {
 				Value: "sharepoint",
 				Help:  "Sharepoint Online, authenticated by Microsoft account",
@@ -612,6 +615,14 @@ func (f *Fs) setQuirks(ctx context.Context, vendor string) error {
 		f.propsetMtime = true
 		f.hasOCMD5 = true
 		f.hasOCSHA1 = true
+	case "Infinite Scale":
+		f.precision = time.Second
+		f.useOCMtime = true
+		f.propsetMtime = true
+		f.hasOCMD5 = false
+		f.hasOCSHA1 = true
+		f.canChunk = true
+		f.opt.ChunkSize = 10 * fs.Mebi
 	case "nextcloud":
 		f.precision = time.Second
 		f.useOCMtime = true
@@ -1478,24 +1489,38 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		return fmt.Errorf("Update mkParentDir failed: %w", err)
 	}
 
-	if o.shouldUseChunkedUpload(src) {
-		fs.Debugf(src, "Update will use the chunked upload strategy")
-		err = o.updateChunked(ctx, in, src, options...)
+	if o.fs.opt.Vendor == "Infinite Scale" {
+		// Infinite Scale always prefers tus for upload
+		fs.Debugf(src, "Update will use the tus protocol to upload")
+		contentType := fs.MimeType(ctx, src)
+		err = o.updateViaTus(ctx, in, contentType, src, options...)
 		if err != nil {
-			return err
+			fs.Debug(src, "tus update failed.")
+			return fmt.Errorf("tus update failed: %w", err)
 		}
 	} else {
-		fs.Debugf(src, "Update will use the normal upload strategy (no chunks)")
-		contentType := fs.MimeType(ctx, src)
-		filePath := o.filePath()
-		extraHeaders := o.extraHeaders(ctx, src)
-		// TODO: define getBody() to enable low-level HTTP/2 retries
-		err = o.updateSimple(ctx, in, nil, filePath, src.Size(), contentType, extraHeaders, o.fs.endpointURL, options...)
-		if err != nil {
-			return err
+		if o.shouldUseChunkedUpload(src) {
+			if o.fs.opt.Vendor == "nextcloud" {
+				fs.Debugf(src, "Update will use the chunked upload strategy")
+				err = o.updateChunked(ctx, in, src, options...)
+			} else {
+				fs.Debug(src, "Chunking - unknown vendor")
+			}
+			if err != nil {
+				return err
+			}
+		} else {
+			fs.Debugf(src, "Update will use the normal upload strategy (no chunks)")
+			contentType := fs.MimeType(ctx, src)
+			filePath := o.filePath()
+			extraHeaders := o.extraHeaders(ctx, src)
+			// TODO: define getBody() to enable low-level HTTP/2 retries
+			err = o.updateSimple(ctx, in, nil, filePath, src.Size(), contentType, extraHeaders, o.fs.endpointURL, options...)
+			if err != nil {
+				return fmt.Errorf("unchunked simple update failed: %w", err)
+			}
 		}
 	}
-
 	// read metadata from remote
 	o.hasMetaData = false
 	return o.readMetaData(ctx)
