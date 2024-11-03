@@ -47,11 +47,11 @@ func (s *sshClientExternal) Close() error {
 
 // NewSession makes a new external SSH connection
 func (s *sshClientExternal) NewSession() (sshSession, error) {
-	session := s.f.newSSHSessionExternal()
 	if s.session == nil {
+		s.session = s.f.newSSHSessionExternal()
 		fs.Debugf(s.f, "ssh external: creating additional session")
 	}
-	return session, nil
+	return s.session, nil
 }
 
 // CanReuse indicates if this client can be reused
