@@ -521,8 +521,8 @@ github.com/quic-go/quic-go v0.40.1 h1:X3AGzUNFs0jVuO3esAGnTfvdgvL4fq655WaOi1snv1
 github.com/quic-go/quic-go v0.40.1/go.mod h1:PeN7kuVJ4xZbxSv/4OX6S1USOX8MJvydwpTx31vx60c=
 github.com/rasky/go-xdr v0.0.0-20170124162913-1a41d1a06c93 h1:UVArwN/wkKjMVhh2EQGC0tEc1+FqiLlvYXY5mQ2f8Wg=
 github.com/rasky/go-xdr v0.0.0-20170124162913-1a41d1a06c93/go.mod h1:Nfe4efndBz4TibWycNE+lqyJZiMX4ycx+QKV8Ta0f/o=
-github.com/rclone/gofakes3 v0.0.3-0.20240807151802-e80146f8de87 h1:0YRo2aYhE+SCZsjWYMFe8zLD18xieXy7wQ8M9Ywcr/g=
-github.com/rclone/gofakes3 v0.0.3-0.20240807151802-e80146f8de87/go.mod h1:z7+o2VUwitO0WuVHReQlOW9jZ03LpeJ0PUFSULyTIds=
+github.com/rclone/gofakes3 v0.0.3 h1:0sKCxJ8TUUAG5KXGuc/fcDKGnzB/j6IjNQui9ntIZPo=
+github.com/rclone/gofakes3 v0.0.3/go.mod h1:z7+o2VUwitO0WuVHReQlOW9jZ03LpeJ0PUFSULyTIds=
 github.com/relvacode/iso8601 v1.3.0 h1:HguUjsGpIMh/zsTczGN3DVJFxTU/GX+MMmzcKoMO7ko=
 github.com/relvacode/iso8601 v1.3.0/go.mod h1:FlNp+jz+TXpyRqgmM7tnzHHzBnz776kmAH2h3sZCn0I=
 github.com/rfjakob/eme v1.1.2 h1:SxziR8msSOElPayZNFfQw4Tjx/Sbaeeh3eRvrHVMUs4=

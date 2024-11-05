@@ -60,7 +60,7 @@ require (
 	github.com/prometheus/client_golang v1.19.1
 	github.com/putdotio/go-putio/putio v0.0.0-20200123120452-16d982cac2b8
 	github.com/quasilyte/go-ruleguard/dsl v0.3.22
-	github.com/rclone/gofakes3 v0.0.3-0.20240807151802-e80146f8de87
+	github.com/rclone/gofakes3 v0.0.3
 	github.com/rfjakob/eme v1.1.2
 	github.com/rivo/uniseg v0.4.7
 	github.com/rogpeppe/go-internal v1.12.0
