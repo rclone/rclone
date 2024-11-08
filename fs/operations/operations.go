@@ -1188,6 +1188,57 @@ func Delete(ctx context.Context, f fs.Fs) error {
 	return err
 }
 
+// RemoveExisting removes an existing file in a safe way so that it
+// can be restored if the operation fails.
+//
+// This first detects if there is an existing file and renames it to a
+// temporary name if there is.
+//
+// The returned cleanup function should be called on a defer statement
+// with a pointer to the error returned. It will revert the changes if
+// there is an error or delete the existing file if not.
+func RemoveExisting(ctx context.Context, f fs.Fs, remote string, operation string) (cleanup func(*error), err error) {
+	existingObj, err := f.NewObject(ctx, remote)
+	if err != nil {
+		return func(*error) {}, nil
+	}
+	doMove := f.Features().Move
+	if doMove == nil {
+		return nil, fmt.Errorf("%s: destination file exists already and can't rename", operation)
+	}
+
+	// Avoid making the leaf name longer if it's already lengthy to avoid
+	// trouble with file name length limits.
+	suffix := "." + random.String(8)
+	var remoteSaved string
+	if len(path.Base(remote)) > 100 {
+		remoteSaved = TruncateString(remote, len(remote)-len(suffix)) + suffix
+	} else {
+		remoteSaved = remote + suffix
+	}
+
+	fs.Debugf(existingObj, "%s: renaming existing object to %q before starting", operation, remoteSaved)
+	existingObj, err = doMove(ctx, existingObj, remoteSaved)
+	if err != nil {
+		return nil, fmt.Errorf("%s: failed to rename existing file: %w", operation, err)
+	}
+	return func(perr *error) {
+		if *perr == nil {
+			fs.Debugf(existingObj, "%s: removing renamed existing file after operation", operation)
+			err := existingObj.Remove(ctx)
+			if err != nil {
+				*perr = fmt.Errorf("%s: failed to remove renamed existing file: %w", operation, err)
+			}
+		} else {
+			fs.Debugf(existingObj, "%s: renaming existing back after failed operation", operation)
+			_, renameErr := doMove(ctx, existingObj, remote)
+			if renameErr != nil {
+				fs.Errorf(existingObj, "%s: failed to restore existing file after failed operation: %v", operation, renameErr)
+			}
+		}
+	}, nil
+}
+
 // listToChan will transfer all objects in the listing to the output
 //
 // If an error occurs, the error will be logged, and it will close the
