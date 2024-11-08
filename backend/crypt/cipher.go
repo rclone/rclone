@@ -18,6 +18,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/Max-Sum/base32768"
+	keywrap "github.com/nickball/go-aes-key-wrap"
 	"github.com/rclone/rclone/backend/crypt/pkcs7"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/accounting"
@@ -35,9 +36,20 @@ const (
 	fileMagicSize       = len(fileMagic)
 	fileNonceSize       = 24
 	fileHeaderSize      = fileMagicSize + fileNonceSize
-	blockHeaderSize     = secretbox.Overhead
-	blockDataSize       = 64 * 1024
-	blockSize           = blockHeaderSize + blockDataSize
+	fileEncryptedSuffix = ".bin" // V1 cipher by default sets the suffix (only if name encryption disabled), but user can disable it completely by setting it to `none`.
+
+	fileMagicV2             = "RCLONE\x00\x01"
+	fileMagicSizeV2         = len(fileMagicV2)
+	fileNonceSizeV2         = 23
+	fileReservedBytesV2Size = 4 // Make sure it matches the: `fileReservedBytesV2`
+	fileHeaderSizeV2        = fileMagicSizeV2 + fileNonceSizeV2 + fileWrappedCekSize + fileReservedBytesV2Size
+	fileCekSize             = 32
+	fileWrappedCekSize      = fileCekSize + 8 // Some overhead of AES RFC 3394 Key Wrapping
+
+	blockHeaderSize      = secretbox.Overhead
+	blockDataSize        = 64 * 1024
+	blockSize            = blockHeaderSize + blockDataSize
+	lastBlockFlag   byte = 1 // Corresponds to: `last_block` https://github.com/miscreant/meta/wiki/STREAM
 )
 
 // Errors returned by cipher
@@ -47,8 +59,9 @@ var (
 	ErrorNotAMultipleOfBlocksize = errors.New("not a multiple of blocksize")
 	ErrorTooShortAfterDecode     = errors.New("too short after base32 decode")
 	ErrorTooLongAfterDecode      = errors.New("too long after base32 decode")
-	ErrorEncryptedFileTooShort   = errors.New("file is too short to be encrypted")
+	ErrorEncryptedFileTooShort   = errors.New("file is too short to be decrypted")
 	ErrorEncryptedFileBadHeader  = errors.New("file has truncated block header")
+	ErrorEncryptedCekInvalid     = errors.New("file encryption key is invalid")
 	ErrorEncryptedBadMagic       = errors.New("not an encrypted file - bad magic string")
 	ErrorEncryptedBadBlock       = errors.New("failed to authenticate decrypted block - bad password?")
 	ErrorBadBase32Encoding       = errors.New("bad base32 filename encoding")
@@ -62,7 +75,9 @@ var (
 
 // Global variables
 var (
-	fileMagicBytes = []byte(fileMagic)
+	fileMagicBytes      = []byte(fileMagic)
+	fileMagicBytesV2    = []byte(fileMagicV2)
+	fileReservedBytesV2 = []byte{BlockCipherXSalsa20, 0x00, 0x00, 0x00} // Make sure it matches the: `fileReservedBytesV2Size`
 )
 
 // ReadSeekCloser is the interface of the read handles
@@ -84,6 +99,18 @@ const (
 	NameEncryptionOff NameEncryptionMode = iota
 	NameEncryptionStandard
 	NameEncryptionObfuscated
+)
+
+// CipherVersion
+const (
+	CipherVersionV1 = "1"
+	CipherVersionV2 = "2"
+)
+
+// BlockCipher
+const (
+	BlockCipherXSalsa20 = 0x01 // Used currently
+	BlockCipherAESGCM   = 0x02 // Not used, possible future use (increase web performance): https://github.com/rclone/rclone/issues/7192#issuecomment-2353617267
 )
 
 // NewNameEncryptionMode turns a string into a NameEncryptionMode
@@ -181,16 +208,18 @@ type Cipher struct {
 	dirNameEncrypt  bool
 	passBadBlocks   bool // if set passed bad blocks as zeroed blocks
 	encryptedSuffix string
+	version         string
+	exactSize       bool
 }
 
 // newCipher initialises the cipher.  If salt is "" then it uses a built in salt val
-func newCipher(mode NameEncryptionMode, password, salt string, dirNameEncrypt bool, enc fileNameEncoding) (*Cipher, error) {
+func newCipher(mode NameEncryptionMode, password, salt string, dirNameEncrypt bool, enc fileNameEncoding, version string) (*Cipher, error) {
 	c := &Cipher{
-		mode:            mode,
-		fileNameEnc:     enc,
-		cryptoRand:      rand.Reader,
-		dirNameEncrypt:  dirNameEncrypt,
-		encryptedSuffix: ".bin",
+		mode:           mode,
+		fileNameEnc:    enc,
+		cryptoRand:     rand.Reader,
+		dirNameEncrypt: dirNameEncrypt,
+		version:        version,
 	}
 	c.buffers.New = func() interface{} {
 		return new([blockSize]byte)
@@ -218,6 +247,42 @@ func (c *Cipher) setEncryptedSuffix(suffix string) {
 // Call to set bad block pass through
 func (c *Cipher) setPassBadBlocks(passBadBlocks bool) {
 	c.passBadBlocks = passBadBlocks
+}
+
+func (c *Cipher) setCipherVersion(cipherVersion string) {
+	c.version = cipherVersion
+}
+
+func (c *Cipher) setExactSize(exact bool) {
+	c.exactSize = exact
+}
+
+func getFileHeaderSize(cipherVersion string) int {
+	if cipherVersion == CipherVersionV2 {
+		return fileHeaderSizeV2
+	}
+	return fileHeaderSize
+}
+
+func getFileMagicSize(cipherVersion string) int {
+	if cipherVersion == CipherVersionV2 {
+		return fileMagicSizeV2
+	}
+	return fileMagicSize
+}
+
+func getFileMagicBytes(cipherVersion string) []byte {
+	if cipherVersion == CipherVersionV2 {
+		return fileMagicBytesV2
+	}
+	return fileMagicBytes
+}
+
+func getFileNonceSize(cipherVersion string) int { // Effective nonce size. Both V1 and V2 use 24 bytes, but V2 consists 23+1 bytes nonce, where last byte is calculated dynamically depending if the processing block is last (truncation protection)
+	if cipherVersion == CipherVersionV2 {
+		return fileNonceSizeV2
+	}
+	return fileNonceSize
 }
 
 // Key creates all the internal keys from the password passed in using
@@ -619,6 +684,8 @@ func (c *Cipher) NameEncryptionMode() NameEncryptionMode {
 
 // nonce is an NACL secretbox nonce
 type nonce [fileNonceSize]byte
+type cek [fileCekSize]byte
+type wrappedCek [fileWrappedCekSize]byte
 
 // pointer returns the nonce as a *[24]byte for secretbox
 func (n *nonce) pointer() *[fileNonceSize]byte {
@@ -627,18 +694,33 @@ func (n *nonce) pointer() *[fileNonceSize]byte {
 
 // fromReader fills the nonce from an io.Reader - normally the OSes
 // crypto random number generator
-func (n *nonce) fromReader(in io.Reader) error {
-	read, err := readers.ReadFill(in, (*n)[:])
-	if read != fileNonceSize {
+func (n *nonce) fromReader(in io.Reader, expectedNonceSize int) error {
+	read, err := readers.ReadFill(in, (*n)[:expectedNonceSize])
+	if read != expectedNonceSize {
 		return fmt.Errorf("short read of nonce: %w", err)
 	}
 	return nil
 }
 
-// fromBuf fills the nonce from the buffer passed in
-func (n *nonce) fromBuf(buf []byte) {
+func (n *cek) fromReader(in io.Reader) error {
+	read, err := readers.ReadFill(in, (*n)[:])
+	if read != fileCekSize {
+		return fmt.Errorf("short read of CEK: %w", err)
+	}
+	return nil
+}
+
+func (n *wrappedCek) fromBuf(buf []byte) {
 	read := copy((*n)[:], buf)
-	if read != fileNonceSize {
+	if read != fileWrappedCekSize {
+		panic("buffer to short to read wrapped CEK")
+	}
+}
+
+// fromBuf fills the nonce from the buffer passed in
+func (n *nonce) fromBuf(buf []byte, expectedNonceSize int) {
+	read := copy((*n)[:], buf)
+	if read != expectedNonceSize {
 		panic("buffer to short to read nonce")
 	}
 }
@@ -681,6 +763,7 @@ func (n *nonce) add(x uint64) {
 type encrypter struct {
 	mu       sync.Mutex
 	in       io.Reader
+	cek      cek // File contents encryption key
 	c        *Cipher
 	nonce    nonce
 	buf      *[blockSize]byte
@@ -691,27 +774,67 @@ type encrypter struct {
 }
 
 // newEncrypter creates a new file handle encrypting on the fly
-func (c *Cipher) newEncrypter(in io.Reader, nonce *nonce) (*encrypter, error) {
+func (c *Cipher) newEncrypter(in io.Reader, nonce *nonce, cek *cek) (*encrypter, error) {
 	fh := &encrypter{
 		in:      in,
 		c:       c,
 		buf:     c.getBlock(),
 		readBuf: c.getBlock(),
-		bufSize: fileHeaderSize,
+		bufSize: getFileHeaderSize(c.version),
 	}
 	// Initialise nonce
 	if nonce != nil {
 		fh.nonce = *nonce
 	} else {
-		err := fh.nonce.fromReader(c.cryptoRand)
+		err := fh.nonce.fromReader(c.cryptoRand, getFileNonceSize(c.version))
 		if err != nil {
 			return nil, err
 		}
 	}
 	// Copy magic into buffer
-	copy((*fh.buf)[:], fileMagicBytes)
+	copy((*fh.buf)[:], getFileMagicBytes(c.version))
+
 	// Copy nonce into buffer
-	copy((*fh.buf)[fileMagicSize:], fh.nonce[:])
+	copy((*fh.buf)[getFileMagicSize(c.version):], fh.nonce[:getFileNonceSize(c.version)])
+
+	if c.version == CipherVersionV1 {
+		fh.cek = fh.c.dataKey
+	}
+
+	if c.version == CipherVersionV2 {
+		if cek != nil {
+			fh.cek = *cek
+		} else { // Generate random CEK
+			err := fh.cek.fromReader(c.cryptoRand)
+			if err != nil {
+				return nil, err
+			}
+		}
+
+		// WRAP KEY - START
+		kek := fh.c.dataKey[:]
+		cipher, err := aes.NewCipher(kek)
+		if err != nil {
+			return nil, err
+		}
+
+		wrappedCek, err := keywrap.Wrap(cipher, fh.cek[:]) // Wrap encryption key, 32 bytes cek, will result in 40 bytes ciphertext
+		if err != nil {
+			return nil, err
+		}
+		// WRAP KEY - END
+
+		// Copy file encryption key
+		copy((*fh.buf)[getFileMagicSize(c.version)+getFileNonceSize(c.version):], wrappedCek)
+
+		// Copy 4 reserved bytes:
+		//	- cipher type (XSalsa20, AES-GCM etc.),
+		//	- not used,
+		//	- not used,
+		//	- not used
+		copy((*fh.buf)[getFileMagicSize(c.version)+getFileNonceSize(c.version)+fileWrappedCekSize:], fileReservedBytesV2)
+	}
+
 	return fh, nil
 }
 
@@ -731,10 +854,17 @@ func (fh *encrypter) Read(p []byte) (n int, err error) {
 		if n == 0 {
 			return fh.finish(err)
 		}
+
+		isLastBlock := n < blockDataSize
+
+		if fh.c.version == CipherVersionV2 && isLastBlock {
+			fh.nonce[len(fh.nonce)-1] = lastBlockFlag // Set last block flag as the last byte of nonce
+		}
+
 		// possibly err != nil here, but we will process the
 		// data and the next call to ReadFill will return 0, err
 		// Encrypt the block using the nonce
-		secretbox.Seal((*fh.buf)[:0], readBuf[:n], fh.nonce.pointer(), &fh.c.dataKey)
+		secretbox.Seal((*fh.buf)[:0], readBuf[:n], fh.nonce.pointer(), (*[32]byte)(&fh.cek))
 		fh.bufIndex = 0
 		fh.bufSize = blockHeaderSize + n
 		fh.nonce.increment()
@@ -760,7 +890,7 @@ func (fh *encrypter) finish(err error) (int, error) {
 // Encrypt data encrypts the data stream
 func (c *Cipher) encryptData(in io.Reader) (io.Reader, *encrypter, error) {
 	in, wrap := accounting.UnWrap(in) // unwrap the accounting off the Reader
-	out, err := c.newEncrypter(in, nil)
+	out, err := c.newEncrypter(in, nil, nil)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -775,22 +905,24 @@ func (c *Cipher) EncryptData(in io.Reader) (io.Reader, error) {
 
 // decrypter decrypts an io.ReaderCloser on the fly
 type decrypter struct {
-	mu           sync.Mutex
-	rc           io.ReadCloser
-	nonce        nonce
-	initialNonce nonce
-	c            *Cipher
-	buf          *[blockSize]byte
-	readBuf      *[blockSize]byte
-	bufIndex     int
-	bufSize      int
-	err          error
-	limit        int64 // limit of bytes to read, -1 for unlimited
-	open         OpenRangeSeek
+	mu            sync.Mutex
+	rc            io.ReadCloser
+	nonce         nonce
+	initialNonce  nonce
+	cek           [32]byte // File contents decryption key
+	c             *Cipher
+	buf           *[blockSize]byte
+	readBuf       *[blockSize]byte
+	bufIndex      int
+	bufSize       int
+	err           error
+	limit         int64 // limit of bytes to read, -1 for unlimited
+	open          OpenRangeSeek
+	cipherVersion string
 }
 
 // newDecrypter creates a new file handle decrypting on the fly
-func (c *Cipher) newDecrypter(rc io.ReadCloser) (*decrypter, error) {
+func (c *Cipher) newDecrypter(rc io.ReadCloser, customCek *cek, o *Object) (*decrypter, error) {
 	fh := &decrypter{
 		rc:      rc,
 		c:       c,
@@ -799,7 +931,7 @@ func (c *Cipher) newDecrypter(rc io.ReadCloser) (*decrypter, error) {
 		limit:   -1,
 	}
 	// Read file header (magic + nonce)
-	readBuf := (*fh.readBuf)[:fileHeaderSize]
+	readBuf := (*fh.readBuf)[:fileHeaderSize] // We read the `fileHeaderSize` first to determine the cipher version and get the nonce, then if it's V2 we read remaining bytes to satisfy `fileHeaderSizeV2`
 	n, err := readers.ReadFill(fh.rc, readBuf)
 	if n < fileHeaderSize && err == io.EOF {
 		// This read from 0..fileHeaderSize-1 bytes
@@ -807,18 +939,74 @@ func (c *Cipher) newDecrypter(rc io.ReadCloser) (*decrypter, error) {
 	} else if err != io.EOF && err != nil {
 		return nil, fh.finishAndClose(err)
 	}
-	// check the magic
-	if !bytes.Equal(readBuf[:fileMagicSize], fileMagicBytes) {
+
+	isMagicHeader := bytes.Equal(readBuf[:fileMagicSize], fileMagicBytes)
+	isMagicHeaderV2 := bytes.Equal(readBuf[:fileMagicSizeV2], fileMagicBytesV2)
+
+	if isMagicHeader {
+		fh.cipherVersion = CipherVersionV1
+		fh.cek = fh.c.dataKey
+	} else if isMagicHeaderV2 {
+		fh.cipherVersion = CipherVersionV2
+	} else {
 		return nil, fh.finishAndClose(ErrorEncryptedBadMagic)
 	}
-	// retrieve the nonce
-	fh.nonce.fromBuf(readBuf[fileMagicSize:])
+
+	if o != nil { // Set cipher version on the object level
+		o.cipherVersion = fh.cipherVersion
+	}
+
+	offsetStart := getFileMagicSize(fh.cipherVersion)
+	offsetEnd := offsetStart + getFileNonceSize(fh.cipherVersion)
+	fh.nonce.fromBuf(readBuf[offsetStart:offsetEnd], getFileNonceSize(fh.cipherVersion))
 	fh.initialNonce = fh.nonce
+
+	if fh.cipherVersion == CipherVersionV2 { // V2 cipher has a longer header, so after reading V1 header, we need to read remaining bytes from the reader to finialize V2 cipher initialization
+		remainingBytesFromV1Buffer := fileNonceSize - fileNonceSizeV2 // V2 nonce is 1 byte shorter, so by reading the V1 header size (fileHeaderSize - 32 bytes), we've actually read 1 byte of wrapped CEK. We need to preserve that byte, so we prepend to next: `combinedBuffer`
+		lastByte := readBuf[len(readBuf)-remainingBytesFromV1Buffer:]
+
+		remainingBytesReadSize := fileHeaderSizeV2 - fileHeaderSize
+		offsetStart = n // Previously read: `fileHeaderSize` bytes
+		offsetEnd = offsetStart + remainingBytesReadSize
+		readBuf = (*fh.readBuf)[offsetStart:offsetEnd]
+		n, err = readers.ReadFill(fh.rc, readBuf)
+
+		if n < remainingBytesReadSize && err == io.EOF {
+			return nil, fh.finishAndClose(ErrorEncryptedFileTooShort)
+		} else if err != io.EOF && err != nil {
+			return nil, fh.finishAndClose(err)
+		}
+
+		combinedBuffer := append(lastByte, readBuf...)
+
+		if customCek != nil { // This satisfy requirements of `rclone backend decrypt` where cek is externally provided to a file. There is a "sharing file" use case where user may want to decrypt a file without possessing master key required to unwrap CEK. It's possible of sender provides them the unwrapped CEK.
+			fh.cek = *customCek
+		} else {
+			var wrappedCek wrappedCek
+			wrappedCek.fromBuf(combinedBuffer) // retrieve wrapped file encryption key
+
+			// After reading wrappedCek, combinedBuffer's last 4 bytes aren't used at the moment.
+
+			kek := fh.c.dataKey[:]
+			cipher, err := aes.NewCipher(kek)
+			if err != nil {
+				return nil, fh.finishAndClose(err)
+			}
+
+			fileKey, err := keywrap.Unwrap(cipher, wrappedCek[:])
+			if err != nil {
+				return nil, fh.finishAndClose(ErrorEncryptedCekInvalid)
+			}
+
+			fh.cek = [32]byte(fileKey)
+		}
+	}
+
 	return fh, nil
 }
 
 // newDecrypterSeek creates a new file handle decrypting on the fly
-func (c *Cipher) newDecrypterSeek(ctx context.Context, open OpenRangeSeek, offset, limit int64) (fh *decrypter, err error) {
+func (c *Cipher) newDecrypterSeek(ctx context.Context, o *Object, open OpenRangeSeek, offset, limit int64, customCek *cek) (fh *decrypter, err error) {
 	var rc io.ReadCloser
 	doRangeSeek := false
 	setLimit := false
@@ -828,19 +1016,19 @@ func (c *Cipher) newDecrypterSeek(ctx context.Context, open OpenRangeSeek, offse
 		rc, err = open(ctx, 0, -1)
 	} else if offset == 0 {
 		// If no offset open the header + limit worth of the file
-		_, underlyingLimit, _, _ := calculateUnderlying(offset, limit)
-		rc, err = open(ctx, 0, int64(fileHeaderSize)+underlyingLimit)
+		_, underlyingLimit, _, _ := calculateUnderlying(offset, limit, getFileHeaderSize(c.version)) // Is `c.version` (config) right value here? We get the actual value from decrypter couple lines below: `fh.cipherVersion`
+		rc, err = open(ctx, 0, int64(getFileHeaderSize(c.version))+underlyingLimit)                  // Check `c.version` vs `fh.cipherVersion`
 		setLimit = true
 	} else {
 		// Otherwise just read the header to start with
-		rc, err = open(ctx, 0, int64(fileHeaderSize))
+		rc, err = open(ctx, 0, int64(getFileHeaderSize(c.version))) // Check `c.version` vs `fh.cipherVersion`
 		doRangeSeek = true
 	}
 	if err != nil {
 		return nil, err
 	}
 	// Open the stream which fills in the nonce
-	fh, err = c.newDecrypter(rc)
+	fh, err = c.newDecrypter(rc, customCek, o)
 	if err != nil {
 		return nil, err
 	}
@@ -876,8 +1064,20 @@ func (fh *decrypter) fillBuffer() (err error) {
 		}
 		return ErrorEncryptedFileBadHeader
 	}
+
+	isLastBlock := n < blockDataSize
+
+	if fh.cipherVersion == CipherVersionV2 && isLastBlock { // last block
+		fh.nonce[len(fh.nonce)-1] = lastBlockFlag // Set last block flag at the last byte
+		n -= int(HashEncryptedSizeWithHeader)     // Skip last bytes with encrypted hash
+
+		if n == 0 { // If we subtract footer and end up with no data to decrypt, let's return EOF instead
+			return err
+		}
+	}
+
 	// Decrypt the block using the nonce
-	_, ok := secretbox.Open((*fh.buf)[:0], (*readBuf)[:n], fh.nonce.pointer(), &fh.c.dataKey)
+	_, ok := secretbox.Open((*fh.buf)[:0], (*readBuf)[:n], fh.nonce.pointer(), &fh.cek)
 	if !ok {
 		if err != nil && err != io.EOF {
 			return err // return pending error as it is likely more accurate
@@ -926,18 +1126,18 @@ func (fh *decrypter) Read(p []byte) (n int, err error) {
 	return n, nil
 }
 
-// calculateUnderlying converts an (offset, limit) in an encrypted file
+// calculateUnderlying converts an (offset, limit, headerSize) in an encrypted file
 // into an (underlyingOffset, underlyingLimit) for the underlying file.
 //
 // It also returns number of bytes to discard after reading the first
 // block and number of blocks this is from the start so the nonce can
 // be incremented.
-func calculateUnderlying(offset, limit int64) (underlyingOffset, underlyingLimit, discard, blocks int64) {
+func calculateUnderlying(offset, limit int64, headerSize int) (underlyingOffset, underlyingLimit, discard, blocks int64) {
 	// blocks we need to seek, plus bytes we need to discard
 	blocks, discard = offset/blockDataSize, offset%blockDataSize
 
 	// Offset in underlying stream we need to seek
-	underlyingOffset = int64(fileHeaderSize) + blocks*(blockHeaderSize+blockDataSize)
+	underlyingOffset = int64(headerSize) + blocks*(blockHeaderSize+blockDataSize)
 
 	// work out how many blocks we need to read
 	underlyingLimit = int64(-1)
@@ -987,7 +1187,7 @@ func (fh *decrypter) RangeSeek(ctx context.Context, offset int64, whence int, li
 		return 0, fh.err
 	}
 
-	underlyingOffset, underlyingLimit, discard, blocks := calculateUnderlying(offset, limit)
+	underlyingOffset, underlyingLimit, discard, blocks := calculateUnderlying(offset, limit, getFileHeaderSize(fh.cipherVersion))
 
 	// Move the nonce on the correct number of blocks from the start
 	fh.nonce = fh.initialNonce
@@ -1097,7 +1297,7 @@ func (fh *decrypter) finishAndClose(err error) error {
 
 // DecryptData decrypts the data stream
 func (c *Cipher) DecryptData(rc io.ReadCloser) (io.ReadCloser, error) {
-	out, err := c.newDecrypter(rc)
+	out, err := c.newDecrypter(rc, nil, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -1109,8 +1309,8 @@ func (c *Cipher) DecryptData(rc io.ReadCloser) (io.ReadCloser, error) {
 // The open function must return a ReadCloser opened to the offset supplied.
 //
 // You must use this form of DecryptData if you might want to Seek the file handle
-func (c *Cipher) DecryptDataSeek(ctx context.Context, open OpenRangeSeek, offset, limit int64) (ReadSeekCloser, error) {
-	out, err := c.newDecrypterSeek(ctx, open, offset, limit)
+func (c *Cipher) DecryptDataSeek(ctx context.Context, o *Object, open OpenRangeSeek, offset, limit int64, customCek *cek) (ReadSeekCloser, error) {
+	out, err := c.newDecrypterSeek(ctx, o, open, offset, limit, customCek)
 	if err != nil {
 		return nil, err
 	}
@@ -1120,7 +1320,12 @@ func (c *Cipher) DecryptDataSeek(ctx context.Context, open OpenRangeSeek, offset
 // EncryptedSize calculates the size of the data when encrypted
 func (c *Cipher) EncryptedSize(size int64) int64 {
 	blocks, residue := size/blockDataSize, size%blockDataSize
-	encryptedSize := int64(fileHeaderSize) + blocks*(blockHeaderSize+blockDataSize)
+	encryptedSize := int64(getFileHeaderSize(c.version)) + blocks*(blockHeaderSize+blockDataSize)
+
+	if c.version == CipherVersionV2 {
+		encryptedSize += HashEncryptedSizeWithHeader
+	}
+
 	if residue != 0 {
 		encryptedSize += blockHeaderSize + residue
 	}
@@ -1128,8 +1333,21 @@ func (c *Cipher) EncryptedSize(size int64) int64 {
 }
 
 // DecryptedSize calculates the size of the data when decrypted
-func (c *Cipher) DecryptedSize(size int64) (int64, error) {
-	size -= int64(fileHeaderSize)
+func (c *Cipher) DecryptedSize(size int64, cipherVersion string) (int64, error) {
+
+	var headerSize int
+	if cipherVersion == CipherVersionV2 {
+		headerSize = fileHeaderSizeV2
+	} else {
+		headerSize = fileHeaderSize
+	}
+
+	size -= int64(headerSize)
+
+	if cipherVersion == CipherVersionV2 { // Footer
+		size -= HashEncryptedSizeWithHeader
+	}
+
 	if size < 0 {
 		return 0, ErrorEncryptedFileTooShort
 	}
@@ -1142,6 +1360,32 @@ func (c *Cipher) DecryptedSize(size int64) (int64, error) {
 		}
 	}
 	decryptedSize += residue
+	return decryptedSize, nil
+}
+
+// DecryptedSizeExact calculates the size of the data when decrypted by issuing HTTP request
+func (c *Cipher) DecryptedSizeExact(o *Object) (int64, error) {
+	ctx := context.Background() // @TODO Can we use this context or do we need to pass somehow the context from the top
+
+	// Return cached
+	if o.decryptedSize != -1 {
+		return o.decryptedSize, nil
+	}
+
+	// Get cipher version
+	d, err := o.f.getDecrypter(ctx, o, nil)
+	if err != nil {
+		return 0, err
+	}
+
+	encryptedSize := o.Object.Size()
+	decryptedSize, err := c.DecryptedSize(encryptedSize, d.cipherVersion)
+	if err != nil {
+		return 0, err
+	}
+
+	// Cache decrypted size
+	o.decryptedSize = decryptedSize
 	return decryptedSize, nil
 }
 
