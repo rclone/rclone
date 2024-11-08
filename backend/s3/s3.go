@@ -36,8 +36,9 @@ import (
 	"github.com/aws/smithy-go/logging"
 	"github.com/aws/smithy-go/middleware"
 	smithyhttp "github.com/aws/smithy-go/transport/http"
-
 	"github.com/ncw/swift/v2"
+
+	"github.com/rclone/rclone/backend/ibmcos"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/accounting"
 	"github.com/rclone/rclone/fs/chunksize"
@@ -2878,6 +2879,8 @@ type Options struct {
 	UseUnsignedPayload    fs.Tristate          `config:"use_unsigned_payload"`
 	SDKLogMode            sdkLogMode           `config:"sdk_log_mode"`
 	DirectoryBucket       bool                 `config:"directory_bucket"`
+	APIKey                string               `config:"api_key"`
+	InstanceID            string               `config:"resource_instance_id"`
 }
 
 // Fs represents a remote s3 server
@@ -3160,6 +3163,7 @@ func s3Connection(ctx context.Context, opt *Options, client *http.Client) (s3Cli
 
 	// Try to fill in the config from the environment if env_auth=true
 	if opt.EnvAuth && opt.AccessKeyID == "" && opt.SecretAccessKey == "" {
+
 		configOpts := []func(*awsconfig.LoadOptions) error{}
 		// Set the name of the profile if supplied
 		if opt.Profile != "" {
@@ -3173,6 +3177,7 @@ func s3Connection(ctx context.Context, opt *Options, client *http.Client) (s3Cli
 		if err != nil {
 			return nil, fmt.Errorf("couldn't load configuration with env_auth=true: %w", err)
 		}
+
 	} else {
 		switch {
 		case opt.AccessKeyID == "" && opt.SecretAccessKey == "":
@@ -3228,9 +3233,15 @@ func s3Connection(ctx context.Context, opt *Options, client *http.Client) (s3Cli
 
 	if opt.V2Auth || opt.Region == "other-v2-signature" {
 		fs.Debugf(nil, "Using v2 auth")
-		options = append(options, func(s3Opt *s3.Options) {
-			s3Opt.HTTPSignerV4 = &v2Signer{opt: opt}
-		})
+		if opt.Provider == "IBMCOS" {
+			options = append(options, func(s3Opt *s3.Options) {
+				s3Opt.HTTPSignerV4 = &ibmcos.IbmIamSigner{APIKey: opt.APIKey, InstanceID: opt.InstanceID}
+			})
+		} else {
+			options = append(options, func(s3Opt *s3.Options) {
+				s3Opt.HTTPSignerV4 = &v2Signer{opt: opt}
+			})
+		}
 	}
 
 	if opt.Provider == "GCS" {
