@@ -1609,7 +1609,7 @@ func (f *Fs) waitForJob(ctx context.Context, location string, o *Object) error {
 // Will only be called if src.Fs().Name() == f.Name()
 //
 // If it isn't possible then return fs.ErrorCantCopy
-func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
+func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (dst fs.Object, err error) {
 	srcObj, ok := src.(*Object)
 	if !ok {
 		fs.Debugf(src, "Can't copy - not same remote type")
@@ -1624,10 +1624,17 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		return nil, fs.ErrorCantCopy
 	}
 
-	err := srcObj.readMetaData(ctx)
+	err = srcObj.readMetaData(ctx)
 	if err != nil {
 		return nil, err
 	}
+
+	// Find and remove existing object
+	cleanup, err := operations.RemoveExisting(ctx, f, remote, "server side copy")
+	if err != nil {
+		return nil, err
+	}
+	defer cleanup(&err)
 
 	// Check we aren't overwriting a file on the same remote
 	if srcObj.fs == f {
