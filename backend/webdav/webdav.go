@@ -86,7 +86,7 @@ func init() {
 				Value: "owncloud",
 				Help:  "Owncloud 10 PHP based WebDAV server",
 			}, {
-				Value: "InfiniteScale",
+				Value: "infinitescale",
 				Help:  "ownCloud Infinite Scale",
 			}, {
 				Value: "sharepoint",
@@ -615,7 +615,7 @@ func (f *Fs) setQuirks(ctx context.Context, vendor string) error {
 		f.propsetMtime = true
 		f.hasOCMD5 = true
 		f.hasOCSHA1 = true
-	case "Infinite Scale":
+	case "infinitescale":
 		f.precision = time.Second
 		f.useOCMtime = true
 		f.propsetMtime = true
@@ -1489,7 +1489,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		return fmt.Errorf("Update mkParentDir failed: %w", err)
 	}
 
-	if o.fs.opt.Vendor == "Infinite Scale" {
+	if o.fs.opt.Vendor == "infinitescale" {
 		// Infinite Scale always prefers tus for upload
 		fs.Debugf(src, "Update will use the tus protocol to upload")
 		contentType := fs.MimeType(ctx, src)
