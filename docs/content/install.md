@@ -294,7 +294,7 @@ docker run --rm \
     listremotes
 
 # perform mount inside Docker container, expose result to host
-mkdir -p ~/data/mount
+mkdir -p ~/data
 docker run --rm \
     --volume ~/.config/rclone:/config/rclone \
     --volume ~/data:/data:shared \
@@ -302,8 +302,8 @@ docker run --rm \
     --volume /etc/passwd:/etc/passwd:ro --volume /etc/group:/etc/group:ro \
     --device /dev/fuse --cap-add SYS_ADMIN --security-opt apparmor:unconfined \
     rclone/rclone \
-    mount dropbox:Photos /data/mount &
-ls ~/data/mount
+    mount dropbox:Photos /data &
+ls ~/data
 kill %1
 ```
 
