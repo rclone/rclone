@@ -18,11 +18,13 @@ var (
 	ErrFingerprintNotSet = errors.New("tus fingerprint not set")
 )
 
+// ClientError represents an error state of a client
 type ClientError struct {
 	Code int
 	Body []byte
 }
 
+// Error returns an error string containing the client error code
 func (c ClientError) Error() string {
 	return fmt.Sprintf("unexpected status code: %d", c.Code)
 }

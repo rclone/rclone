@@ -39,10 +39,10 @@ func (o *Object) updateViaTus(ctx context.Context, in io.Reader, contentType str
 	upload := NewUpload(in, src.Size(), metadata, fingerprint)
 
 	// create the uploader.
-	uploader, err := o.CreateUploader(ctx, upload)
+	uploader, err := o.CreateUploader(ctx, upload, options...)
 	if err == nil {
 		// start the uploading process.
-		err = uploader.Upload(ctx)
+		err = uploader.Upload(ctx, options...)
 	}
 
 	return err
@@ -64,8 +64,8 @@ func (f *Fs) shouldRetryCreateUpload(ctx context.Context, resp *http.Response, e
 	return f.shouldRetry(ctx, resp, err)
 }
 
-// CreateUpload creates a new upload in the server.
-func (o *Object) CreateUploader(ctx context.Context, u *Upload) (*Uploader, error) {
+// CreateUpload creates a new upload to the server.
+func (o *Object) CreateUploader(ctx context.Context, u *Upload, options ...fs.OpenOption) (*Uploader, error) {
 	if u == nil {
 		return nil, ErrNilUpload
 	}
@@ -89,6 +89,7 @@ func (o *Object) CreateUploader(ctx context.Context, u *Upload) (*Uploader, erro
 		RootURL:       o.fs.endpointURL,
 		ContentLength: &l,
 		ExtraHeaders:  o.extraHeaders(ctx, o),
+		Options:       options,
 	}
 	opts.ExtraHeaders["Upload-Length"] = strconv.FormatInt(u.size, 10)
 	opts.ExtraHeaders["Upload-Metadata"] = u.EncodedMetadata()

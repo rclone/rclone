@@ -13,6 +13,7 @@ import (
 	"github.com/rclone/rclone/lib/rest"
 )
 
+// Uploader holds all information about a currently running upload
 type Uploader struct {
 	fs                  *Fs
 	url                 string
@@ -50,7 +51,7 @@ func (f *Fs) shouldRetryChunk(ctx context.Context, resp *http.Response, err erro
 	return f.shouldRetry(ctx, resp, err)
 }
 
-func (u *Uploader) uploadChunck(ctx context.Context, body io.Reader, size int64, offset int64) (int64, error) {
+func (u *Uploader) uploadChunck(ctx context.Context, body io.Reader, size int64, offset int64, options ...fs.OpenOption) (int64, error) {
 	var method string
 
 	if !u.overridePatchMethod {
@@ -82,6 +83,7 @@ func (u *Uploader) uploadChunck(ctx context.Context, body io.Reader, size int64,
 		Body:          body,
 		ContentType:   "application/offset+octet-stream",
 		ExtraHeaders:  extraHeaders,
+		Options:       options,
 	}
 
 	var newOffset int64
@@ -100,12 +102,12 @@ func (u *Uploader) uploadChunck(ctx context.Context, body io.Reader, size int64,
 }
 
 // Upload uploads the entire body to the server.
-func (u *Uploader) Upload(ctx context.Context) error {
+func (u *Uploader) Upload(ctx context.Context, options ...fs.OpenOption) error {
 	var cnt int = 1
 
 	fs.Debug(u.fs, "Uploaded starts")
 	for u.offset < u.upload.size && !u.aborted {
-		err := u.UploadChunck(ctx, cnt)
+		err := u.UploadChunck(ctx, cnt, options...)
 		cnt++
 		if err != nil {
 			return err
@@ -117,7 +119,7 @@ func (u *Uploader) Upload(ctx context.Context) error {
 }
 
 // UploadChunck uploads a single chunck.
-func (u *Uploader) UploadChunck(ctx context.Context, cnt int) error {
+func (u *Uploader) UploadChunck(ctx context.Context, cnt int, options ...fs.OpenOption) error {
 	chunkSize := u.fs.opt.ChunkSize
 	data := make([]byte, chunkSize)
 
@@ -137,7 +139,7 @@ func (u *Uploader) UploadChunck(ctx context.Context, cnt int) error {
 
 	body := bytes.NewBuffer(data[:size])
 
-	newOffset, err := u.uploadChunck(ctx, body, int64(size), u.offset)
+	newOffset, err := u.uploadChunck(ctx, body, int64(size), u.offset, options...)
 
 	if err == nil {
 		fs.Debugf(u.fs, "Uploaded chunk no %d ok, range %d -> %d", cnt, u.offset, newOffset)
@@ -158,7 +160,7 @@ func (u *Uploader) UploadChunck(ctx context.Context, cnt int) error {
 
 // Waits for a signal to broadcast to all subscribers
 func (u *Uploader) broadcastProgress() {
-	for _ = range u.notifyChan {
+	for range u.notifyChan {
 		for _, c := range u.uploadSubs {
 			c <- *u.upload
 		}

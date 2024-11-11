@@ -8,8 +8,10 @@ import (
 	"strings"
 )
 
+// Metadata is a typedef for a string to string map to hold metadata
 type Metadata map[string]string
 
+// Upload is a struct containing the file status during upload
 type Upload struct {
 	stream io.ReadSeeker
 	size   int64
