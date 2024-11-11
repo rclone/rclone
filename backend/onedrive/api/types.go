@@ -202,9 +202,14 @@ type SharingLinkType struct {
 type LinkType string
 
 const (
-	ViewLinkType  LinkType = "view"  // ViewLinkType (role: read) A view-only sharing link, allowing read-only access.
-	EditLinkType  LinkType = "edit"  // EditLinkType (role: write) An edit sharing link, allowing read-write access.
-	EmbedLinkType LinkType = "embed" // EmbedLinkType (role: read) A view-only sharing link that can be used to embed content into a host webpage. Embed links are not available for OneDrive for Business or SharePoint.
+	// ViewLinkType (role: read) A view-only sharing link, allowing read-only access.
+	ViewLinkType LinkType = "view"
+	// EditLinkType (role: write) An edit sharing link, allowing read-write access.
+	EditLinkType LinkType = "edit"
+	// EmbedLinkType (role: read) A view-only sharing link that can be used to embed
+	// content into a host webpage. Embed links are not available for OneDrive for
+	// Business or SharePoint.
+	EmbedLinkType LinkType = "embed"
 )
 
 // LinkScope represents the scope of the link represented by this permission.
@@ -212,9 +217,12 @@ const (
 type LinkScope string
 
 const (
-	AnonymousScope    LinkScope = "anonymous"    // AnonymousScope = Anyone with the link has access, without needing to sign in. This may include people outside of your organization.
-	OrganizationScope LinkScope = "organization" // OrganizationScope = Anyone signed into your organization (tenant) can use the link to get access. Only available in OneDrive for Business and SharePoint.
-
+	// AnonymousScope = Anyone with the link has access, without needing to sign in.
+	// This may include people outside of your organization.
+	AnonymousScope LinkScope = "anonymous"
+	// OrganizationScope = Anyone signed into your organization (tenant) can use the
+	// link to get access. Only available in OneDrive for Business and SharePoint.
+	OrganizationScope LinkScope = "organization"
 )
 
 // PermissionsType provides information about a sharing permission granted for a DriveItem resource.
@@ -236,10 +244,14 @@ type PermissionsType struct {
 type Role string
 
 const (
-	ReadRole   Role = "read"   // ReadRole provides the ability to read the metadata and contents of the item.
-	WriteRole  Role = "write"  // WriteRole provides the ability to read and modify the metadata and contents of the item.
-	OwnerRole  Role = "owner"  // OwnerRole represents the owner role for SharePoint and OneDrive for Business.
-	MemberRole Role = "member" // MemberRole represents the member role for SharePoint and OneDrive for Business.
+	// ReadRole provides the ability to read the metadata and contents of the item.
+	ReadRole Role = "read"
+	// WriteRole provides the ability to read and modify the metadata and contents of the item.
+	WriteRole Role = "write"
+	// OwnerRole represents the owner role for SharePoint and OneDrive for Business.
+	OwnerRole Role = "owner"
+	// MemberRole represents the member role for SharePoint and OneDrive for Business.
+	MemberRole Role = "member"
 )
 
 // PermissionsResponse is the response to the list permissions method
