@@ -1893,7 +1893,7 @@ func TestRemoveExisting(t *testing.T) {
 	}
 
 	file1 := r.WriteObject(ctx, "sub dir/test remove existing", "hello world", t1)
-	file2 := r.WriteObject(ctx, "sub dir/test remove existing with long name 1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890", "hello long name world", t1)
+	file2 := r.WriteObject(ctx, "sub dir/test remove existing with long name 123456789012345678901234567890123456789012345678901234567890123456789", "hello long name world", t1)
 
 	r.CheckRemoteItems(t, file1, file2)
 
