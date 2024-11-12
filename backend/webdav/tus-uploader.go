@@ -31,6 +31,9 @@ func (u *Uploader) NotifyUploadProgress(c chan Upload) {
 }
 
 func (f *Fs) shouldRetryChunk(ctx context.Context, resp *http.Response, err error, newOff *int64) (bool, error) {
+	if resp == nil {
+		return true, err
+	}
 
 	switch resp.StatusCode {
 	case 204:
