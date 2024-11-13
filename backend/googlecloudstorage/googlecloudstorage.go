@@ -337,8 +337,9 @@ can't check the size and hash but the file contents will be decompressed.
 			Default:  false,
 		}, {
 			Name:     "endpoint",
-			Help:     "Endpoint for the service.\n\nLeave blank normally.",
+			Help:     "Endpoint for the service. Use a regional endpoint (storage.REGION.rep.googleapis.com) to reduce transfer fees",
 			Advanced: true,
+			Examples: getHelpForEndpoints(),
 		}, {
 			Name:     config.ConfigEncoding,
 			Help:     config.ConfigEncodingHelp,
