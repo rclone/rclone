@@ -1,4 +1,4 @@
-//go:build plan9 || js
+//go:build windows || plan9 || js
 
 package local
 

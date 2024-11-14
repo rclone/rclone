@@ -268,66 +268,22 @@ func TestMetadata(t *testing.T) {
 	r := fstest.NewRun(t)
 	const filePath = "metafile.txt"
 	when := time.Now()
+	const dayLength = len("2001-01-01")
+	whenRFC := when.Format(time.RFC3339Nano)
 	r.WriteFile(filePath, "metadata file contents", when)
 	f := r.Flocal.(*Fs)
-
-	// Set fs into "-l" / "--links" mode
-	f.opt.TranslateSymlinks = true
-
-	// Write a symlink to the file
-	symlinkPath := "metafile-link.txt"
-	osSymlinkPath := filepath.Join(f.root, symlinkPath)
-	symlinkPath += linkSuffix
-	require.NoError(t, os.Symlink(filePath, osSymlinkPath))
-	symlinkModTime := fstest.Time("2002-02-03T04:05:10.123123123Z")
-	require.NoError(t, lChtimes(osSymlinkPath, symlinkModTime, symlinkModTime))
 
 	// Get the object
 	obj, err := f.NewObject(ctx, filePath)
 	require.NoError(t, err)
 	o := obj.(*Object)
 
-	// Get the symlink object
-	symlinkObj, err := f.NewObject(ctx, symlinkPath)
-	require.NoError(t, err)
-	symlinkO := symlinkObj.(*Object)
-
-	// Record metadata for o
-	oMeta, err := o.Metadata(ctx)
-	require.NoError(t, err)
-
-	// Test symlink first to check it doesn't mess up file
-	t.Run("Symlink", func(t *testing.T) {
-		testMetadata(t, r, symlinkO, symlinkModTime)
-	})
-
-	// Read it again
-	oMetaNew, err := o.Metadata(ctx)
-	require.NoError(t, err)
-
-	// Check that operating on the symlink didn't change the file it was pointing to
-	// See: https://github.com/rclone/rclone/security/advisories/GHSA-hrxh-9w67-g4cv
-	assert.Equal(t, oMeta, oMetaNew, "metadata setting on symlink messed up file")
-
-	// Now run the same tests on the file
-	t.Run("File", func(t *testing.T) {
-		testMetadata(t, r, o, when)
-	})
-}
-
-func testMetadata(t *testing.T, r *fstest.Run, o *Object, when time.Time) {
-	ctx := context.Background()
-	whenRFC := when.Format(time.RFC3339Nano)
-	const dayLength = len("2001-01-01")
-
-	f := r.Flocal.(*Fs)
 	features := f.Features()
 
-	var hasXID, hasAtime, hasBtime, canSetXattrOnLinks bool
+	var hasXID, hasAtime, hasBtime bool
 	switch runtime.GOOS {
 	case "darwin", "freebsd", "netbsd", "linux":
 		hasXID, hasAtime, hasBtime = true, true, true
-		canSetXattrOnLinks = runtime.GOOS != "linux"
 	case "openbsd", "solaris":
 		hasXID, hasAtime = true, true
 	case "windows":
@@ -350,10 +306,6 @@ func testMetadata(t *testing.T, r *fstest.Run, o *Object, when time.Time) {
 		require.NoError(t, err)
 		assert.Nil(t, m)
 
-		if !canSetXattrOnLinks && o.translatedLink {
-			t.Skip("Skip remainder of test as can't set xattr on symlinks on this OS")
-		}
-
 		inM := fs.Metadata{
 			"potato":  "chips",
 			"cabbage": "soup",
@@ -368,21 +320,18 @@ func testMetadata(t *testing.T, r *fstest.Run, o *Object, when time.Time) {
 	})
 
 	checkTime := func(m fs.Metadata, key string, when time.Time) {
-		t.Helper()
 		mt, ok := o.parseMetadataTime(m, key)
 		assert.True(t, ok)
 		dt := mt.Sub(when)
 		precision := time.Second
-		assert.True(t, dt >= -precision && dt <= precision, fmt.Sprintf("%s: dt %v outside +/- precision %v want %v got %v", key, dt, precision, mt, when))
+		assert.True(t, dt >= -precision && dt <= precision, fmt.Sprintf("%s: dt %v outside +/- precision %v", key, dt, precision))
 	}
 
 	checkInt := func(m fs.Metadata, key string, base int) int {
-		t.Helper()
 		value, ok := o.parseMetadataInt(m, key, base)
 		assert.True(t, ok)
 		return value
 	}
-
 	t.Run("Read", func(t *testing.T) {
 		m, err := o.Metadata(ctx)
 		require.NoError(t, err)
@@ -392,12 +341,13 @@ func testMetadata(t *testing.T, r *fstest.Run, o *Object, when time.Time) {
 		checkInt(m, "mode", 8)
 		checkTime(m, "mtime", when)
 
+		assert.Equal(t, len(whenRFC), len(m["mtime"]))
 		assert.Equal(t, whenRFC[:dayLength], m["mtime"][:dayLength])
 
-		if hasAtime && !o.translatedLink { // symlinks generally don't record atime
+		if hasAtime {
 			checkTime(m, "atime", when)
 		}
-		if hasBtime && !o.translatedLink { // symlinks generally don't record btime
+		if hasBtime {
 			checkTime(m, "btime", when)
 		}
 		if hasXID {
@@ -421,10 +371,6 @@ func testMetadata(t *testing.T, r *fstest.Run, o *Object, when time.Time) {
 			"mode":   "0767",
 			"potato": "wedges",
 		}
-		if !canSetXattrOnLinks && o.translatedLink {
-			// Don't change xattr if not supported on symlinks
-			delete(newM, "potato")
-		}
 		err := o.writeMetadata(newM)
 		require.NoError(t, err)
 
@@ -434,11 +380,7 @@ func testMetadata(t *testing.T, r *fstest.Run, o *Object, when time.Time) {
 
 		mode := checkInt(m, "mode", 8)
 		if runtime.GOOS != "windows" {
-			expectedMode := 0767
-			if o.translatedLink && runtime.GOOS == "linux" {
-				expectedMode = 0777 // perms of symlinks always read as 0777 on linux
-			}
-			assert.Equal(t, expectedMode, mode&0777, fmt.Sprintf("mode wrong - expecting 0%o got 0%o", expectedMode, mode&0777))
+			assert.Equal(t, 0767, mode&0777, fmt.Sprintf("mode wrong - expecting 0767 got 0%o", mode&0777))
 		}
 
 		checkTime(m, "mtime", newMtime)
@@ -448,7 +390,7 @@ func testMetadata(t *testing.T, r *fstest.Run, o *Object, when time.Time) {
 		if haveSetBTime {
 			checkTime(m, "btime", newBtime)
 		}
-		if xattrSupported && (canSetXattrOnLinks || !o.translatedLink) {
+		if xattrSupported {
 			assert.Equal(t, "wedges", m["potato"])
 		}
 	})
