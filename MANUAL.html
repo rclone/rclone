@@ -81,7 +81,7 @@
 <header id="title-block-header">
 <h1 class="title">rclone(1) User Manual</h1>
 <p class="author">Nick Craig-Wood</p>
-<p class="date">Sep 24, 2024</p>
+<p class="date">Nov 15, 2024</p>
 </header>
 <h1 id="rclone-syncs-your-files-to-cloud-storage">Rclone syncs your files to cloud storage</h1>
 <p><img width="50%" src="https://rclone.org/img/logo_on_light__horizontal_color.svg" alt="rclone logo" style="float:right; padding: 5px;" ></p>
@@ -8323,12 +8323,14 @@ file2.avi</code></pre>
 <p>Adds path/file names to an rclone command based on rules in a named file. The file contains a list of remarks and pattern rules. Include rules start with <code>+</code> and exclude rules with <code>-</code>. <code>!</code> clears existing rules. Rules are processed in the order they are defined.</p>
 <p>This flag can be repeated. See above for the order filter flags are processed in.</p>
 <p>Arrange the order of filter rules with the most restrictive first and work down.</p>
+<p>Lines starting with # or ; are ignored, and can be used to write comments. Inline comments are not supported. <em>Use <code>-vv --dump filters</code> to see how they appear in the final regexp.</em></p>
 <p>E.g. for <code>filter-file.txt</code>:</p>
 <pre><code># a sample filter rule file
 - secret*.jpg
 + *.jpg
 + *.png
 + file2.avi
+- /dir/tmp/** # WARNING! This text will be treated as part of the path.
 - /dir/Trash/**
 + /dir/**
 # exclude everything else
@@ -10418,7 +10420,7 @@ Showing nodes accounting for 1537.03kB, 100% of 1537.03kB total
 <tr class="odd">
 <td>pCloud</td>
 <td style="text-align: center;">MD5, SHA1 ⁷</td>
-<td style="text-align: center;">R</td>
+<td style="text-align: center;">R/W</td>
 <td style="text-align: center;">No</td>
 <td style="text-align: center;">No</td>
 <td style="text-align: center;">W</td>
@@ -11968,7 +11970,7 @@ Showing nodes accounting for 1537.03kB, 100% of 1537.03kB total
       --tpslimit float                     Limit HTTP transactions per second to this
       --tpslimit-burst int                 Max burst of transactions for --tpslimit (default 1)
       --use-cookies                        Enable session cookiejar
-      --user-agent string                  Set the user-agent to a specified string (default &quot;rclone/v1.68.1&quot;)</code></pre>
+      --user-agent string                  Set the user-agent to a specified string (default &quot;rclone/v1.68.2&quot;)</code></pre>
 <h2 id="performance">Performance</h2>
 <p>Flags helpful for increasing performance.</p>
 <pre><code>      --buffer-size SizeSuffix   In memory buffer size when reading files for each --transfer (default 16Mi)
@@ -17168,7 +17170,7 @@ acl = private
 upload_cutoff = 5M
 chunk_size = 5M
 copy_cutoff = 5M</code></pre>
-<p><a href="https://www.online.net/en/storage/c14-cold-storage">C14 Cold Storage</a> is the low-cost S3 Glacier alternative from Scaleway and it works the same way as on S3 by accepting the "GLACIER" <code>storage_class</code>. So you can configure your remote with the <code>storage_class = GLACIER</code> option to upload directly to C14. Don't forget that in this state you can't read files back after, you will need to restore them to "STANDARD" storage_class first before being able to read them (see "restore" section above)</p>
+<p><a href="https://www.scaleway.com/en/glacier-cold-storage/">Scaleway Glacier</a> is the low-cost S3 Glacier alternative from Scaleway and it works the same way as on S3 by accepting the "GLACIER" <code>storage_class</code>. So you can configure your remote with the <code>storage_class = GLACIER</code> option to upload directly to Scaleway Glacier. Don't forget that in this state you can't read files back after, you will need to restore them to "STANDARD" storage_class first before being able to read them (see "restore" section above)</p>
 <h3 id="lyve">Seagate Lyve Cloud</h3>
 <p><a href="https://www.seagate.com/gb/en/services/cloud/storage/">Seagate Lyve Cloud</a> is an S3 compatible object storage platform from <a href="https://seagate.com/">Seagate</a> intended for enterprise use.</p>
 <p>Here is a config run through for a remote called <code>remote</code> - you may choose a different name of course. Note that to create an access key and secret key you will need to create a service account first.</p>
@@ -24613,7 +24615,7 @@ rclone backend copyid drive: ID1 path1 ID2 path2</code></pre>
 <li><p>Click on the "+ CREATE CREDENTIALS" button at the top of the screen, then select "OAuth client ID".</p></li>
 <li><p>Choose an application type of "Desktop app" and click "Create". (the default name is fine)</p></li>
 <li><p>It will show you a client ID and client secret. Make a note of these.</p>
-<p>(If you selected "External" at Step 5 continue to Step 9. If you chose "Internal" you don't need to publish and can skip straight to Step 10 but your destination drive must be part of the same Google Workspace.)</p></li>
+<p>(If you selected "External" at Step 5 continue to Step 10. If you chose "Internal" you don't need to publish and can skip straight to Step 11 but your destination drive must be part of the same Google Workspace.)</p></li>
 <li><p>Go to "Oauth consent screen" and then click "PUBLISH APP" button and confirm. You will also want to add yourself as a test user.</p></li>
 <li><p>Provide the noted client ID and client secret to rclone.</p></li>
 </ol>
@@ -36964,6 +36966,51 @@ $ tree /tmp/c
 <li>"error": return an error based on option value</li>
 </ul>
 <h1 id="changelog-1">Changelog</h1>
+<h2 id="v1.68.2---2024-11-15">v1.68.2 - 2024-11-15</h2>
+<p><a href="https://github.com/rclone/rclone/compare/v1.68.1...v1.68.2">See commits</a></p>
+<ul>
+<li>Security fixes
+<ul>
+<li>local backend: CVE-2024-52522: fix permission and ownership on symlinks with <code>--links</code> and <code>--metadata</code> (Nick Craig-Wood)
+<ul>
+<li>Only affects users using <code>--metadata</code> and <code>--links</code> and copying files to the local backend</li>
+<li>See https://github.com/rclone/rclone/security/advisories/GHSA-hrxh-9w67-g4cv</li>
+</ul></li>
+<li>build: bump github.com/golang-jwt/jwt/v4 from 4.5.0 to 4.5.1 (dependabot)
+<ul>
+<li>This is an issue in a dependency which is used for JWT certificates</li>
+<li>See https://github.com/golang-jwt/jwt/security/advisories/GHSA-29wx-vh33-7x7r</li>
+</ul></li>
+</ul></li>
+<li>Bug Fixes
+<ul>
+<li>accounting: Fix wrong message on SIGUSR2 to enable/disable bwlimit (Nick Craig-Wood)</li>
+<li>bisync: Fix output capture restoring the wrong output for logrus (Dimitrios Slamaris)</li>
+<li>dlna: Fix loggingResponseWriter disregarding log level (Simon Bos)</li>
+<li>serve s3: Fix excess locking which was making serve s3 single threaded (Nick Craig-Wood)</li>
+<li>doc fixes (Nick Craig-Wood, tgfisher, Alexandre Hamez, Randy Bush)</li>
+</ul></li>
+<li>Local
+<ul>
+<li>Fix permission and ownership on symlinks with <code>--links</code> and <code>--metadata</code> (Nick Craig-Wood)</li>
+<li>Fix <code>--copy-links</code> on macOS when cloning (nielash)</li>
+</ul></li>
+<li>Onedrive
+<ul>
+<li>Fix Retry-After handling to look at 503 errors also (Nick Craig-Wood)</li>
+</ul></li>
+<li>Pikpak
+<ul>
+<li>Fix cid/gcid calculations for fs.OverrideRemote (wiserain)</li>
+<li>Fix fatal crash on startup with token that can't be refreshed (Nick Craig-Wood)</li>
+</ul></li>
+<li>S3
+<ul>
+<li>Fix crash when using <code>--s3-download-url</code> after migration to SDKv2 (Nick Craig-Wood)</li>
+<li>Storj provider: fix server-side copy of files bigger than 5GB (Kaloyan Raev)</li>
+<li>Fix multitenant multipart uploads with CEPH (Nick Craig-Wood)</li>
+</ul></li>
+</ul>
 <h2 id="v1.68.1---2024-09-24">v1.68.1 - 2024-09-24</h2>
 <p><a href="https://github.com/rclone/rclone/compare/v1.68.0...v1.68.1">See commits</a></p>
 <ul>

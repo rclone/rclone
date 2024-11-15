@@ -1,6 +1,6 @@
 rclone(1) User Manual
 Nick Craig-Wood
-Sep 24, 2024
+Nov 15, 2024
 
 Rclone syncs your files to cloud storage
 
@@ -16428,6 +16428,10 @@ processed in.
 Arrange the order of filter rules with the most restrictive first and
 work down.
 
+Lines starting with # or ; are ignored, and can be used to write
+comments. Inline comments are not supported. Use -vv --dump filters to
+see how they appear in the final regexp.
+
 E.g. for filter-file.txt:
 
     # a sample filter rule file
@@ -16435,6 +16439,7 @@ E.g. for filter-file.txt:
     + *.jpg
     + *.png
     + file2.avi
+    - /dir/tmp/** # WARNING! This text will be treated as part of the path.
     - /dir/Trash/**
     + /dir/**
     # exclude everything else
@@ -19269,7 +19274,7 @@ Here is an overview of the major features of each cloud storage system.
   OpenDrive                               MD5            R/W           Yes             Partial ⁸          -          -
   OpenStack Swift                         MD5            R/W            No                No             R/W         -
   Oracle Object Storage                   MD5            R/W            No                No             R/W         -
-  pCloud                              MD5, SHA1 ⁷         R             No                No              W          -
+  pCloud                              MD5, SHA1 ⁷        R/W            No                No              W          -
   PikPak                                  MD5             R             No                No              R          -
   Pixeldrain                            SHA256           R/W            No                No              R          RW
   premiumize.me                            -              -            Yes                No              R          -
@@ -20076,7 +20081,7 @@ Flags for general networking and HTTP stuff.
           --tpslimit float                     Limit HTTP transactions per second to this
           --tpslimit-burst int                 Max burst of transactions for --tpslimit (default 1)
           --use-cookies                        Enable session cookiejar
-          --user-agent string                  Set the user-agent to a specified string (default "rclone/v1.68.1")
+          --user-agent string                  Set the user-agent to a specified string (default "rclone/v1.68.2")
 
 Performance
 
@@ -27364,13 +27369,13 @@ rclone like this:
     chunk_size = 5M
     copy_cutoff = 5M
 
-C14 Cold Storage is the low-cost S3 Glacier alternative from Scaleway
+Scaleway Glacier is the low-cost S3 Glacier alternative from Scaleway
 and it works the same way as on S3 by accepting the "GLACIER"
 storage_class. So you can configure your remote with the
-storage_class = GLACIER option to upload directly to C14. Don't forget
-that in this state you can't read files back after, you will need to
-restore them to "STANDARD" storage_class first before being able to read
-them (see "restore" section above)
+storage_class = GLACIER option to upload directly to Scaleway Glacier.
+Don't forget that in this state you can't read files back after, you
+will need to restore them to "STANDARD" storage_class first before being
+able to read them (see "restore" section above)
 
 Seagate Lyve Cloud
 
@@ -37324,9 +37329,9 @@ Here is how to create your own Google Drive client ID for rclone:
 9.  It will show you a client ID and client secret. Make a note of
     these.
 
-    (If you selected "External" at Step 5 continue to Step 9. If you
+    (If you selected "External" at Step 5 continue to Step 10. If you
     chose "Internal" you don't need to publish and can skip straight to
-    Step 10 but your destination drive must be part of the same Google
+    Step 11 but your destination drive must be part of the same Google
     Workspace.)
 
 10. Go to "Oauth consent screen" and then click "PUBLISH APP" button and
@@ -54289,6 +54294,52 @@ Options:
 -   "error": return an error based on option value
 
 Changelog
+
+v1.68.2 - 2024-11-15
+
+See commits
+
+-   Security fixes
+    -   local backend: CVE-2024-52522: fix permission and ownership on
+        symlinks with --links and --metadata (Nick Craig-Wood)
+        -   Only affects users using --metadata and --links and copying
+            files to the local backend
+        -   See
+            https://github.com/rclone/rclone/security/advisories/GHSA-hrxh-9w67-g4cv
+    -   build: bump github.com/golang-jwt/jwt/v4 from 4.5.0 to 4.5.1
+        (dependabot)
+        -   This is an issue in a dependency which is used for JWT
+            certificates
+        -   See
+            https://github.com/golang-jwt/jwt/security/advisories/GHSA-29wx-vh33-7x7r
+-   Bug Fixes
+    -   accounting: Fix wrong message on SIGUSR2 to enable/disable
+        bwlimit (Nick Craig-Wood)
+    -   bisync: Fix output capture restoring the wrong output for logrus
+        (Dimitrios Slamaris)
+    -   dlna: Fix loggingResponseWriter disregarding log level (Simon
+        Bos)
+    -   serve s3: Fix excess locking which was making serve s3 single
+        threaded (Nick Craig-Wood)
+    -   doc fixes (Nick Craig-Wood, tgfisher, Alexandre Hamez, Randy
+        Bush)
+-   Local
+    -   Fix permission and ownership on symlinks with --links and
+        --metadata (Nick Craig-Wood)
+    -   Fix --copy-links on macOS when cloning (nielash)
+-   Onedrive
+    -   Fix Retry-After handling to look at 503 errors also (Nick
+        Craig-Wood)
+-   Pikpak
+    -   Fix cid/gcid calculations for fs.OverrideRemote (wiserain)
+    -   Fix fatal crash on startup with token that can't be refreshed
+        (Nick Craig-Wood)
+-   S3
+    -   Fix crash when using --s3-download-url after migration to SDKv2
+        (Nick Craig-Wood)
+    -   Storj provider: fix server-side copy of files bigger than 5GB
+        (Kaloyan Raev)
+    -   Fix multitenant multipart uploads with CEPH (Nick Craig-Wood)
 
 v1.68.1 - 2024-09-24
 
