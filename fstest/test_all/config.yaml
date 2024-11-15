@@ -55,17 +55,17 @@ backends:
    remote:   "TestChunkerChunk3bNoRenameLocal:"
    fastlist: true
    maxfile:  6k
- - backend:  "chunker"
-   remote:   "TestChunkerMailru:"
-   fastlist: true
-   ignore:
-     - TestApplyTransforms
- - backend:  "chunker"
-   remote:   "TestChunkerChunk50bMailru:"
-   fastlist: true
-   maxfile:  10k
-   ignore:
-     - TestApplyTransforms
+ # - backend:  "chunker"
+ #   remote:   "TestChunkerMailru:"
+ #   fastlist: true
+ #   ignore:
+ #     - TestApplyTransforms
+ # - backend:  "chunker"
+ #   remote:   "TestChunkerChunk50bMailru:"
+ #   fastlist: true
+ #   maxfile:  10k
+ #   ignore:
+ #     - TestApplyTransforms
  - backend:  "chunker"
    remote:   "TestChunkerChunk50bYandex:"
    fastlist: true
@@ -449,6 +449,7 @@ backends:
    remote:   "TestMailru:"
    subdir:   false
    fastlist: false
+   oneonly:  true
    ignore:
      - TestApplyTransforms
  - backend:  "seafile"

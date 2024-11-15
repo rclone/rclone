@@ -80,6 +80,11 @@ All done. Please go back to rclone.
 `
 )
 
+// OpenURL is used when rclone wants to open a browser window
+// for user authentication. It defaults to something which
+// should work for most uses, but may be overridden.
+var OpenURL = open.Start
+
 // SharedOptions are shared between backends the utilize an OAuth flow
 var SharedOptions = []fs.Option{{
 	Name:      config.ConfigClientID,
@@ -716,8 +721,12 @@ func configSetup(ctx context.Context, id, name string, m configmap.Mapper, oauth
 
 	if !authorizeNoAutoBrowser {
 		// Open the URL for the user to visit
-		_ = open.Start(authURL)
-		fs.Logf(nil, "If your browser doesn't open automatically go to the following link: %s\n", authURL)
+		err := OpenURL(authURL)
+		if err != nil {
+			fs.Errorf(nil, "Failed to open browser automatically (%v) - please go to the following link: %s\n", err, authURL)
+		} else {
+			fs.Logf(nil, "If your browser doesn't open automatically go to the following link: %s\n", authURL)
+		}
 	} else {
 		fs.Logf(nil, "Please go to the following link: %s\n", authURL)
 	}

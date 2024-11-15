@@ -1,4 +1,4 @@
-//go:build plan9 || js
+//go:build windows
 
 package local
 
@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-const haveLChtimes = false
+const haveLChtimes = true
 
 // lChtimes changes the access and modification times of the named
 // link, similar to the Unix utime() or utimes() functions.
@@ -15,6 +15,5 @@ const haveLChtimes = false
 // less precise time unit.
 // If there is an error, it will be of type *PathError.
 func lChtimes(name string, atime time.Time, mtime time.Time) error {
-	// Does nothing
-	return nil
+	return setTimes(name, atime, mtime, time.Time{}, true)
 }

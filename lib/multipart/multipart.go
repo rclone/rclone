@@ -17,7 +17,8 @@ import (
 )
 
 const (
-	BufferSize           = 1024 * 1024     // BufferSize is the default size of the pages used in the reader
+	// BufferSize is the default size of the pages used in the reader
+	BufferSize           = 1024 * 1024
 	bufferCacheSize      = 64              // max number of buffers to keep in cache
 	bufferCacheFlushTime = 5 * time.Second // flush the cached buffers after this long
 )

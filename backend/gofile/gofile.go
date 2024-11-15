@@ -1214,7 +1214,7 @@ func (f *Fs) copyTo(ctx context.Context, srcID, srcLeaf, dstLeaf, dstDirectoryID
 // Will only be called if src.Fs().Name() == f.Name()
 //
 // If it isn't possible then return fs.ErrorCantCopy
-func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
+func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (dst fs.Object, err error) {
 	srcObj, ok := src.(*Object)
 	if !ok {
 		fs.Debugf(src, "Can't copy - not same remote type")
@@ -1226,6 +1226,19 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	dstPath := f.rootSlash() + remote
 	if srcPath == dstPath {
 		return nil, fmt.Errorf("can't copy %q -> %q as are same name", srcPath, dstPath)
+	}
+
+	// Find existing object
+	existingObj, err := f.NewObject(ctx, remote)
+	if err == nil {
+		defer func() {
+			// Don't remove existing object if returning an error
+			if err != nil {
+				return
+			}
+			fs.Debugf(existingObj, "Server side copy: removing existing object after successful copy")
+			err = existingObj.Remove(ctx)
+		}()
 	}
 
 	// Create temporary object
