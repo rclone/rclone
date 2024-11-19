@@ -236,8 +236,10 @@ Use the Google Cloud console to identify a limited role. Some relevant pre-defin
 
     ya29.c.c0ASRK0GbAFEewXD [truncated]
 
-#### 4. update rclone.conf 
-find `{access_token": "xxx"}` and replace the value with the access token from step 3
+#### 4. Update `access_token` setting
+hit `CTRL-C` when you see *waiting for code*.  This will save the config without doing oauth flow
+
+    rclone config update ${REMOTE_NAME} access_token ya29.c.c0Axxxx
 
 #### 5. Run rclone as usual
 
