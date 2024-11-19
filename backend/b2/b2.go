@@ -30,6 +30,7 @@ import (
 	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/fs/hash"
+	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/fs/walk"
 	"github.com/rclone/rclone/lib/bucket"
 	"github.com/rclone/rclone/lib/encoder"
@@ -1318,16 +1319,22 @@ func (f *Fs) purge(ctx context.Context, dir string, oldOnly bool, deleteHidden b
 				// Check current version of the file
 				if deleteHidden && object.Action == "hide" {
 					fs.Debugf(remote, "Deleting current version (id %q) as it is a hide marker", object.ID)
-					toBeDeleted <- object
+					if !operations.SkipDestructive(ctx, object.Name, "remove hide marker") {
+						toBeDeleted <- object
+					}
 				} else if deleteUnfinished && object.Action == "start" && isUnfinishedUploadStale(object.UploadTimestamp) {
 					fs.Debugf(remote, "Deleting current version (id %q) as it is a start marker (upload started at %s)", object.ID, time.Time(object.UploadTimestamp).Local())
-					toBeDeleted <- object
+					if !operations.SkipDestructive(ctx, object.Name, "remove pending upload") {
+						toBeDeleted <- object
+					}
 				} else {
 					fs.Debugf(remote, "Not deleting current version (id %q) %q dated %v (%v ago)", object.ID, object.Action, time.Time(object.UploadTimestamp).Local(), time.Since(time.Time(object.UploadTimestamp)))
 				}
 			} else {
 				fs.Debugf(remote, "Deleting (id %q)", object.ID)
-				toBeDeleted <- object
+				if !operations.SkipDestructive(ctx, object.Name, "delete") {
+					toBeDeleted <- object
+				}
 			}
 			last = remote
 			tr.Done(ctx, nil)
@@ -2293,8 +2300,10 @@ func (f *Fs) lifecycleCommand(ctx context.Context, name string, arg []string, op
 
 	}
 
+	skip := operations.SkipDestructive(ctx, name, "update lifecycle rules")
+
 	var bucket *api.Bucket
-	if newRule.DaysFromHidingToDeleting != nil || newRule.DaysFromUploadingToHiding != nil || newRule.DaysFromStartingToCancelingUnfinishedLargeFiles != nil {
+	if !skip && (newRule.DaysFromHidingToDeleting != nil || newRule.DaysFromUploadingToHiding != nil || newRule.DaysFromStartingToCancelingUnfinishedLargeFiles != nil) {
 		bucketID, err := f.getBucketID(ctx, bucketName)
 		if err != nil {
 			return nil, err
