@@ -239,15 +239,15 @@ func NewFs(ctx context.Context,name, root string, m configmap.Mapper) (fs.Fs, er
 
 // List the objects and directories in dir into entries
 func (f *Fs) List(ctx context.Context, dir string) (fs.DirEntries, error) {
-	bucketName := f.fullPath(dir)
-    // fmt.Println("from the list, full path: " + fullPath)
-
-    // // If dir is empty, list buckets (top-level directories)
-    // if fullPath == "" {
-    //     return f.listBuckets(ctx)
-    // }
-
     
+    
+    if dir == "" {
+        return f.listBuckets(ctx)
+    }
+
+
+	bucketName := f.fullPath(dir)
+
     if bucketName == "" {
         return nil, fmt.Errorf("akave: bucket name is required in path '%s'", bucketName)
     }
@@ -277,16 +277,21 @@ func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 
 // Helper function to list all buckets
 func (f *Fs) listBuckets(ctx context.Context) (fs.DirEntries, error) {
-    buckets, err := f.sdk.ListBuckets(ctx)
+    ipc, err := f.sdk.IPC()
     if err != nil {
         return nil, err
     }
 
+    // Fetch the list of buckets
+    buckets, err := ipc.ListBuckets(ctx)
+    if err != nil {
+        return nil, fmt.Errorf("akave: failed to list buckets: %w", err)
+    }
+
+    // Convert the list of buckets to fs.DirEntries
     var entries fs.DirEntries
     for _, bucket := range buckets {
-        remote := bucket.Name
-        dir := fs.NewDir(remote, bucket.CreatedAt).SetID(bucket.ID)
-        entries = append(entries, dir)
+        entries = append(entries, fs.NewDir(bucket.Name, bucket.CreatedAt))
     }
 
     return entries, nil
