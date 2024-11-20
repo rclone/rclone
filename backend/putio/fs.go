@@ -572,6 +572,17 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (o fs.Objec
 	if err != nil {
 		return nil, err
 	}
+
+	// We have successfully copied the file to random name
+	// Check to see if file already exists first and delete it if so
+	existingObj, err := f.NewObject(ctx, remote)
+	if err == nil {
+		err = existingObj.Remove(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("server side copy: failed to remove existing file: %w", err)
+		}
+	}
+
 	err = f.pacer.Call(func() (bool, error) {
 		params := url.Values{}
 		params.Set("file_id", strconv.FormatInt(resp.File.ID, 10))

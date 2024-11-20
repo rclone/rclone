@@ -22,6 +22,7 @@ import (
 	"github.com/rclone/rclone/fs/config/obscure"
 	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/fs/hash"
+	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/lib/encoder"
 	"github.com/rclone/rclone/lib/oauthutil"
 	"github.com/rclone/rclone/lib/pacer"
@@ -713,7 +714,7 @@ func (f *Fs) copyOrMove(ctx context.Context, method, src, dst string, overwrite 
 // Will only be called if src.Fs().Name() == f.Name()
 //
 // If it isn't possible then return fs.ErrorCantCopy
-func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
+func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (dst fs.Object, err error) {
 	srcObj, ok := src.(*Object)
 	if !ok {
 		fs.Debugf(src, "Can't copy - not same remote type")
@@ -721,12 +722,21 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	}
 
 	dstPath := f.filePath(remote)
-	err := f.mkParentDirs(ctx, dstPath)
+	err = f.mkParentDirs(ctx, dstPath)
 	if err != nil {
 		return nil, err
 	}
-	err = f.copyOrMove(ctx, "copy", srcObj.filePath(), dstPath, false)
 
+	// Find and remove existing object
+	//
+	// Note that the overwrite flag doesn't seem to work for server side copy
+	cleanup, err := operations.RemoveExisting(ctx, f, remote, "server side copy")
+	if err != nil {
+		return nil, err
+	}
+	defer cleanup(&err)
+
+	err = f.copyOrMove(ctx, "copy", srcObj.filePath(), dstPath, false)
 	if err != nil {
 		return nil, fmt.Errorf("couldn't copy file: %w", err)
 	}
