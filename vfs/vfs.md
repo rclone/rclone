@@ -303,6 +303,40 @@ modified files from the cache (the related global flag `--checkers` has no effec
 
     --transfers int  Number of file transfers to run in parallel (default 4)
 
+### Symlinks
+
+Be default the VFS does not support symlinks. However this may be
+enabled with the following flag:
+
+    --links           Translate symlinks to/from regular files with a '.rclonelink' extension.
+
+As most cloud storage systems do not support symlinks directly, rclone
+stores the symlink as a normal file with a special extension. So a
+file which appears as a symlink `link-to-file.txt` would be stored on
+cloud storage as `link-to-file.txt.rclonelink` and the contents would
+be the path to the symlink destination.
+
+This scheme is compatible with that used by the [local backend with the --links flag](/local/#symlinks-junction-points).
+
+The `--links` flag has been designed for `rclone mount`, `rclone
+nfsmount` and `rclone serve nfs`.
+
+It hasn't been tested with the other `rclone serve` commands yet.
+
+A limitation of the current implementation is that it expects the
+caller to resolve sub-symlinks. For example given this directory tree
+
+```
+.
+├── dir
+│   └── file.txt
+└── linked-dir -> dir
+```
+
+The VFS will correctly resolve `linked-dir` but not
+`linked-dir/file.txt`. This is not a problem for the tested commands
+but may be for other commands.
+
 ### VFS Case Sensitivity
 
 Linux file systems are case-sensitive: two files can differ only
