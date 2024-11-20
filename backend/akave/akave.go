@@ -231,6 +231,8 @@ func NewFs(ctx context.Context,name, root string, m configmap.Mapper) (fs.Fs, er
 	// TODO understahnd what is this
 	f.features = (&fs.Features{
 		CanHaveEmptyDirectories: true,
+        BucketBased:             true,  // **Enabled**
+        BucketBasedRootOK:       true,  // **Enabled**
 	}).Fill(ctx, f)
 
     return f, nil
@@ -238,20 +240,12 @@ func NewFs(ctx context.Context,name, root string, m configmap.Mapper) (fs.Fs, er
 
 
 // List the objects and directories in dir into entries
-func (f *Fs) List(ctx context.Context, dir string) (fs.DirEntries, error) {
+func (f *Fs) List(ctx context.Context, dir string) (fs.DirEntries, error) {    
     
-    
-    if dir == "" {
+    bucketName := f.root
+    if bucketName == "" {
         return f.listBuckets(ctx)
     }
-
-
-	bucketName := f.fullPath(dir)
-
-    if bucketName == "" {
-        return nil, fmt.Errorf("akave: bucket name is required in path '%s'", bucketName)
-    }
-
 
     // If subPath is not empty, list files under the subdirectory
     return f.listFilesInDirectory(ctx, bucketName)
@@ -326,17 +320,15 @@ func (f *Fs) listFilesInDirectory(ctx context.Context, dir string) (fs.DirEntrie
     if err != nil {
         return nil, err
     }
-
     // List files relative to the current directory
     files, err := ipc.ListFiles(ctx, dir)
     if err != nil {
-        return nil, fmt.Errorf("akave: failed to list files in '%s': %w", dir, err)
+        return nil, fmt.Errorf("akave: failed to list files in '%s': %w", dir, fs.ErrorDirNotFound)
     }
 
     var entries fs.DirEntries
 
     for _, file := range files {
-        // Ensure the file.Name is relative to 'dir'
         remote := file.Name
 
         fileMeta := sdk.FileMeta{
