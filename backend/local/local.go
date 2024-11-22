@@ -100,10 +100,8 @@ Metadata is supported on files and directories.
 			},
 			{
 				Name:     "links",
-				Help:     "Translate symlinks to/from regular files with a '" + fs.LinkSuffix + "' extension.",
+				Help:     "Translate symlinks to/from regular files with a '" + fs.LinkSuffix + "' extension for the local backend.",
 				Default:  false,
-				NoPrefix: true,
-				ShortOpt: "l",
 				Advanced: true,
 			},
 			{
@@ -383,11 +381,16 @@ var (
 
 // NewFs constructs an Fs from the path
 func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, error) {
+	ci := fs.GetConfig(ctx)
 	// Parse config into Options struct
 	opt := new(Options)
 	err := configstruct.Set(m, opt)
 	if err != nil {
 		return nil, err
+	}
+	// Override --local-links with --links if set
+	if ci.Links {
+		opt.TranslateSymlinks = true
 	}
 	if opt.TranslateSymlinks && opt.FollowSymlinks {
 		return nil, errLinksAndCopyLinks

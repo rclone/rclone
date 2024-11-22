@@ -1426,6 +1426,22 @@ The options mean
 
 During rmdirs it will not remove root directory, even if it's empty.
 
+### --links / -l
+
+Normally rclone will ignore symlinks or junction points (which behave
+like symlinks under Windows).
+
+If you supply this flag then rclone will copy symbolic links from any
+supported backend backend, and store them as text files, with a
+`.rclonelink` suffix in the destination.
+
+The text file will contain the target of the symbolic link.
+
+The `--links` / `-l` flag enables this feature for all supported
+backends and the VFS. There are individual flags for just enabling it
+for the VFS `--vfs-links` and the local backend `--local-links` if
+required.
+
 ### --log-file=FILE ###
 
 Log all of rclone's output to FILE.  This is not active by default.

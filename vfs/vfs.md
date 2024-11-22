@@ -305,10 +305,11 @@ modified files from the cache (the related global flag `--checkers` has no effec
 
 ### Symlinks
 
-Be default the VFS does not support symlinks. However this may be
-enabled with the following flag:
+By default the VFS does not support symlinks. However this may be
+enabled with either of the following flags:
 
-    --links           Translate symlinks to/from regular files with a '.rclonelink' extension.
+    --links      Translate symlinks to/from regular files with a '.rclonelink' extension.
+    --vfs-links  Translate symlinks to/from regular files with a '.rclonelink' extension for the VFS
 
 As most cloud storage systems do not support symlinks directly, rclone
 stores the symlink as a normal file with a special extension. So a
@@ -316,9 +317,13 @@ file which appears as a symlink `link-to-file.txt` would be stored on
 cloud storage as `link-to-file.txt.rclonelink` and the contents would
 be the path to the symlink destination.
 
-This scheme is compatible with that used by the [local backend with the --links flag](/local/#symlinks-junction-points).
+Note that `--links` enables symlink translation globally in rclone -
+this includes any backend which supports the concept (for example the
+local backend). `--vfs-links` just enables it for the VFS layer.
 
-The `--links` flag has been designed for `rclone mount`, `rclone
+This scheme is compatible with that used by the [local backend with the --local-links flag](/local/#symlinks-junction-points).
+
+The `--vfs-links` flag has been designed for `rclone mount`, `rclone
 nfsmount` and `rclone serve nfs`.
 
 It hasn't been tested with the other `rclone serve` commands yet.

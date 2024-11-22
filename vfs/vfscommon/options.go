@@ -1,6 +1,7 @@
 package vfscommon
 
 import (
+	"context"
 	"os"
 	"runtime"
 	"time"
@@ -45,11 +46,10 @@ var OptionsInfo = fs.Options{{
 	Help:    "Only allow read-only access",
 	Groups:  "VFS",
 }, {
-	Name:     "links",
-	Default:  false,
-	Help:     "Translate symlinks to/from regular files with a '" + fs.LinkSuffix + "' extension",
-	Groups:   "VFS",
-	ShortOpt: "l",
+	Name:    "vfs_links",
+	Default: false,
+	Help:    "Translate symlinks to/from regular files with a '" + fs.LinkSuffix + "' extension for the VFS",
+	Groups:  "VFS",
 }, {
 	Name:    "vfs_cache_mode",
 	Default: CacheModeOff,
@@ -176,7 +176,7 @@ type Options struct {
 	NoSeek             bool          `config:"no_seek"`        // don't allow seeking if set
 	NoChecksum         bool          `config:"no_checksum"`    // don't check checksums if set
 	ReadOnly           bool          `config:"read_only"`      // if set VFS is read only
-	Links              bool          `config:"links"`          // if set interpret link files
+	Links              bool          `config:"vfs_links"`      // if set interpret link files
 	NoModTime          bool          `config:"no_modtime"`     // don't read mod times for files
 	DirCacheTime       fs.Duration   `config:"dir_cache_time"` // how long to consider directory listing cache valid
 	Refresh            bool          `config:"vfs_refresh"`    // refreshes the directory listing recursively on start
@@ -211,6 +211,13 @@ var Opt Options
 
 // Init the options, making sure everything is within range
 func (opt *Options) Init() {
+	ci := fs.GetConfig(context.Background())
+
+	// Override --vfs-links with --links if set
+	if ci.Links {
+		opt.Links = true
+	}
+
 	// Mask the permissions with the umask
 	opt.DirPerms &= ^opt.Umask
 	opt.FilePerms &= ^opt.Umask
