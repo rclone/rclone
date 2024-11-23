@@ -53,7 +53,7 @@ var configOptions = []fs.Option{
 
 
 
-
+// TODO: go vover it and see if it make sense
 // akaveCommandHelp provides detailed help for the Akave backend.
 var akaveCommandHelp = []fs.CommandHelp{
    {
@@ -176,11 +176,6 @@ func (f *Fs) Root() string {
 	return f.root
 }
 
-// TODO: how do you update and object? are you just creating a new files(akave file is immutable)
-func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
-	return nil, errorReadOnly
-}
-
 // TODO: go over this: String converts this Fs to a string
 func (f *Fs) String() string {
 	if f.root == "" {
@@ -241,15 +236,64 @@ func NewFs(ctx context.Context,name, root string, m configmap.Mapper) (fs.Fs, er
 
 // List the objects and directories in dir into entries
 func (f *Fs) List(ctx context.Context, dir string) (fs.DirEntries, error) {    
-    
     bucketName := f.root
     if bucketName == "" {
         return f.listBuckets(ctx)
     }
 
-    // If subPath is not empty, list files under the subdirectory
     return f.listFilesInDirectory(ctx, bucketName)
 }
+
+// Put the object into the bucket
+//
+// Copy the reader in to the new object which is returned.
+//
+// The new object may have been created if an error is returned
+// Put first call NewObject to check if the object exsits in the system. If the object exists, it would call the Update method
+func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
+    ipc, err := f.sdk.IPC()
+    if err != nil {
+        return nil, err
+    }
+    
+    remote := src.Remote()
+    size := src.Size()
+    modTime := src.ModTime(ctx)
+
+
+    // Handle unknown-sized objects
+    if size < 0 {
+        return nil, errors.New("akave: unknown object size is not supported")
+    }
+   
+
+    bucketName := f.root
+    fileName := remote // Assuming 'remote' is the path within the bucket
+
+
+    fileUpload, err := ipc.CreateFileUpload(ctx, bucketName, fileName, size, in)
+    if err != nil {
+
+        fileInfo, fetchErr := f.sdk.FileInfo(ctx, bucketName, fileName)
+        if fetchErr == nil {
+            obj := f.newObject(fileName, fileInfo)
+            return obj, fmt.Errorf("akave: upload failed for '%s' but object was created: %w", fileName, err)
+        }
+        return nil, fmt.Errorf("akave: failed to upload file '%s': %w", fileName, err)
+    }
+
+   
+    fileMeta := sdk.FileMeta{
+        RootCID:   fileUpload.RootCID,
+        Name:      remote,
+        Size:      size,
+        CreatedAt: modTime,
+    }
+
+    // Return the new Object instance
+    return f.newObject(fileName, fileMeta), nil
+}
+
 
 
 // TODO: maybe add valiation that there is not file and that the bucket exists(that would take more time)
@@ -347,16 +391,18 @@ func (f *Fs) listFilesInDirectory(ctx context.Context, dir string) (fs.DirEntrie
 
 // NewObject fetches the object from the remote path.
 func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
-    // Parse the remote path to extract bucket name and file name
-    bucketName, fileName := f.split(remote)
-    if bucketName == "" || fileName == "" {
-        return nil, fmt.Errorf("akave: invalid remote path '%s', expected format 'bucketname/path/to/file'", remote)
-    }
 
-    // Fetch file information using the SDK
-    fileInfo, err := f.sdk.FileInfo(ctx, bucketName, fileName)
+
+    ipc, err := f.sdk.IPC()
     if err != nil {
-        return nil, fmt.Errorf("akave: failed to get file info for '%s': %w", remote, err)
+        return nil, err
+    }
+    
+    bucketName := f.Root()
+    // Fetch file information using the SDK
+    fileInfo, err := ipc.FileInfo(ctx, bucketName, remote)
+    if err != nil {
+        return nil, fs.ErrorObjectNotFound
     }
 
     // Create and return the Object
@@ -366,6 +412,8 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
         info:   fileInfo,
     }, nil
 }
+
+
 
 
 func (f *Fs) newObject(remote string, fileInfo sdk.FileMeta)  fs.Object {
@@ -385,16 +433,6 @@ func (f *Fs) fullPath(dir string) string {
         return f.root
     }
     return path.Join(f.root, dir)
-}
-
-// splitPath splits the full path into bucket and subpath
-func splitPath(p string) (bucket, subPath string) {
-    parts := strings.SplitN(p, "/", 2)
-    bucket = parts[0]
-    if len(parts) > 1 {
-        subPath = parts[1]
-    }
-    return
 }
 
 // RemoveDuplicateDirs removes duplicate directories from DirEntries
@@ -440,7 +478,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
     // TODO: Implement actual opening logic
     return ioutil.NopCloser(bytes.NewReader([]byte{})), nil
 }
-// Remote returns the remote path
+// Remote returns the remote path when printing the object
 func (o *Object) Remote() string {
     return o.remote
 }
@@ -488,6 +526,7 @@ func (o *Object) SetModTime(ctx context.Context, t time.Time) error {
 
 // Update updates the object with the contents of the reader (not implemented)
 func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {
+    fmt.Println("trying to execute Update!")
 	return errorReadOnly
 }
 
