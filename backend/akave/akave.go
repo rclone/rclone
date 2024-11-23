@@ -77,10 +77,6 @@ rclone lsd akave:
 rclone copy /path/to/local/file akave:bucketname
 ` + "```" + `
 
-- **Download a File:**
-` + "```" + `
-rclone copy akave:bucketname/file /path/to/local/destination
-` + "```" + `
 
 Ensure that you have the necessary permissions and that the endpoint URL is correct.`,
        Opts: map[string]string{
@@ -140,6 +136,10 @@ type Fs struct {
     features *fs.Features
     sdk      *sdk.SDK
 }
+
+var _ fs.Fs = (*Fs)(nil)
+var _ fs.CleanUpper = (*Fs)(nil)
+
 
 // Object represents a file in Akave storage
 type Object struct {
@@ -508,21 +508,7 @@ func (o *Object) SetModTime(ctx context.Context, t time.Time) error {
     return fs.ErrorCantSetModTime
 }
 
-// Open opens the object for reading
-// func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (rc.ReadSeekCloser, error) {
-//     reader, writer := rc.Pipe()
-//     go func() {
-//         defer writer.Close()
-//         err := o.fs.sdk.Download(ctx, sdk.FileDownload{
-//             BucketName: o.fs.bucketNameFromRemote(o.remote),
-//             FileName:   o.fileNameFromRemote(o.remote),
-//         }, writer)
-//         if err != nil {
-//             fs.Errorf(o, "Download failed: %v", err)
-//         }
-//     }()
-//     return reader, nil
-// }
+
 
 // Update updates the object with the contents of the reader (not implemented)
 func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {
@@ -560,4 +546,11 @@ func (f *Fs) split(remote string) (bucket, file string) {
     bucket = parts[0]
     file = parts[1]
     return
+}
+func (f *Fs) CleanUp(ctx context.Context) error {
+    fmt.Println("running close function!!")
+    if f.sdk != nil {
+        return f.sdk.Close()
+    }
+    return nil
 }
