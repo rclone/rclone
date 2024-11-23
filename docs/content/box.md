@@ -64,7 +64,7 @@ If not sure try Y. If Y failed, try N.
 y) Yes
 n) No
 y/n> y
-If your browser doesn't open automatically go to the following link: http://127.0.0.1:53682/auth
+If your browser doesn't open automatically go to the following link: http://127.0.0.1:53682/auth?state=XXXXXXXXXXXXXXXXXXXXXX
 Log in and authorize rclone for access
 Waiting for code...
 Got code
