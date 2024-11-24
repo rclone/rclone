@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/accounting"
 	"github.com/rclone/rclone/fs/filter"
 	"github.com/rclone/rclone/lib/bucket"
 )
@@ -23,6 +24,7 @@ import (
 func DirSorted(ctx context.Context, f fs.Fs, includeAll bool, dir string) (entries fs.DirEntries, err error) {
 	// Get unfiltered entries from the fs
 	entries, err = f.List(ctx, dir)
+	accounting.Stats(ctx).Listed(int64(len(entries)))
 	if err != nil {
 		return nil, err
 	}
