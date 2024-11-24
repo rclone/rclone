@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/accounting"
 	"github.com/rclone/rclone/fs/dirtree"
 	"github.com/rclone/rclone/fs/filter"
 	"github.com/rclone/rclone/fs/list"
@@ -296,6 +297,7 @@ func listR(ctx context.Context, f fs.Fs, path string, includeAll bool, listType 
 	}
 	var mu sync.Mutex
 	err := doListR(ctx, path, func(entries fs.DirEntries) (err error) {
+		accounting.Stats(ctx).Listed(int64(len(entries)))
 		if synthesizeDirs {
 			err = dm.addEntries(entries)
 			if err != nil {
@@ -465,6 +467,7 @@ func walkRDirTree(ctx context.Context, f fs.Fs, startPath string, includeAll boo
 	includeDirectory := fi.IncludeDirectory(ctx, f)
 	var mu sync.Mutex
 	err := listR(ctx, startPath, func(entries fs.DirEntries) error {
+		accounting.Stats(ctx).Listed(int64(len(entries)))
 		mu.Lock()
 		defer mu.Unlock()
 		for _, entry := range entries {

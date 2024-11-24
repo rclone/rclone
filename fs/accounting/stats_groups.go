@@ -93,6 +93,7 @@ Returns the following values:
 	"fatalError": boolean whether there has been at least one fatal error,
 	"lastError": last error string,
 	"renames" : number of files renamed,
+	"listed" : number of directory entries listed,
 	"retryError": boolean showing whether there has been at least one non-NoRetryError,
         "serverSideCopies": number of server side copies done,
         "serverSideCopyBytes": number bytes server side copied,
@@ -380,6 +381,7 @@ func (sg *statsGroups) sum(ctx context.Context) *StatsInfo {
 			sum.transfers += stats.transfers
 			sum.transferring.merge(stats.transferring)
 			sum.transferQueueSize += stats.transferQueueSize
+			sum.listed += stats.listed
 			sum.renames += stats.renames
 			sum.renameQueue += stats.renameQueue
 			sum.renameQueueSize += stats.renameQueueSize

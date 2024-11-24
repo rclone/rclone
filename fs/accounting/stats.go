@@ -45,6 +45,7 @@ type StatsInfo struct {
 	transferring        *transferMap
 	transferQueue       int
 	transferQueueSize   int64
+	listed              int64
 	renames             int64
 	renameQueue         int
 	renameQueueSize     int64
@@ -113,6 +114,7 @@ func (s *StatsInfo) RemoteStats() (out rc.Params, err error) {
 	out["deletes"] = s.deletes
 	out["deletedDirs"] = s.deletedDirs
 	out["renames"] = s.renames
+	out["listed"] = s.listed
 	out["elapsedTime"] = time.Since(s.startTime).Seconds()
 	out["serverSideCopies"] = s.serverSideCopies
 	out["serverSideCopyBytes"] = s.serverSideCopyBytes
@@ -461,9 +463,9 @@ func (s *StatsInfo) String() string {
 			_, _ = fmt.Fprintf(buf, "Errors:        %10d%s\n",
 				s.errors, errorDetails)
 		}
-		if s.checks != 0 || ts.totalChecks != 0 {
-			_, _ = fmt.Fprintf(buf, "Checks:        %10d / %d, %s\n",
-				s.checks, ts.totalChecks, percent(s.checks, ts.totalChecks))
+		if s.checks != 0 || ts.totalChecks != 0 || s.listed != 0 {
+			_, _ = fmt.Fprintf(buf, "Checks:        %10d / %d, %s, Listed %d\n",
+				s.checks, ts.totalChecks, percent(s.checks, ts.totalChecks), s.listed)
 		}
 		if s.deletes != 0 || s.deletedDirs != 0 {
 			_, _ = fmt.Fprintf(buf, "Deleted:       %10d (files), %d (dirs), %s (freed)\n", s.deletes, s.deletedDirs, fs.SizeSuffix(s.deletesSize).ByteUnit())
@@ -679,7 +681,15 @@ func (s *StatsInfo) Renames(renames int64) int64 {
 	return s.renames
 }
 
-// ResetCounters sets the counters (bytes, checks, errors, transfers, deletes, renames) to 0 and resets lastError, fatalError and retryError
+// Listed updates the stats for listed objects
+func (s *StatsInfo) Listed(listed int64) int64 {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.listed += listed
+	return s.listed
+}
+
+// ResetCounters sets the counters (bytes, checks, errors, transfers, deletes, renames, listed) to 0 and resets lastError, fatalError and retryError
 func (s *StatsInfo) ResetCounters() {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -695,6 +705,7 @@ func (s *StatsInfo) ResetCounters() {
 	s.deletesSize = 0
 	s.deletedDirs = 0
 	s.renames = 0
+	s.listed = 0
 	s.startedTransfers = nil
 	s.oldDuration = 0
 
