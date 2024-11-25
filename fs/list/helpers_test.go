@@ -1,6 +1,8 @@
 package list
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"testing"
 
@@ -87,4 +89,57 @@ func TestListRHelperFlush(t *testing.T) {
 
 	assert.True(t, callbackInvoked, "Callback should be invoked on flush")
 	assert.Len(t, helper.entries, 0, "Entries should be cleared after flush")
+}
+
+type mockListPfs struct {
+	t          *testing.T
+	entries    fs.DirEntries
+	err        error
+	errorAfter int
+}
+
+func (f *mockListPfs) ListP(ctx context.Context, dir string, callback fs.ListRCallback) (err error) {
+	assert.Equal(f.t, "dir", dir)
+	count := 0
+	for entries := f.entries; len(entries) > 0; entries = entries[2:] {
+		err = callback(entries[:2])
+		if err != nil {
+			return err
+		}
+		count += 2
+		if f.err != nil && count >= f.errorAfter {
+			return f.err
+		}
+	}
+	return nil
+}
+
+// check interface
+var _ fs.ListPer = (*mockListPfs)(nil)
+
+func TestListWithListP(t *testing.T) {
+	ctx := context.Background()
+	var entries fs.DirEntries
+	for i := 0; i < 26; i++ {
+		entries = append(entries, mockobject.New(fmt.Sprintf("%c", 'A'+i)))
+	}
+	t.Run("NoError", func(t *testing.T) {
+		f := &mockListPfs{
+			t:       t,
+			entries: entries,
+		}
+		gotEntries, err := WithListP(ctx, "dir", f)
+		require.NoError(t, err)
+		assert.Equal(t, entries, gotEntries)
+	})
+	t.Run("Error", func(t *testing.T) {
+		f := &mockListPfs{t: t,
+			entries:    entries,
+			err:        errors.New("BOOM"),
+			errorAfter: 10,
+		}
+		gotEntries, err := WithListP(ctx, "dir", f)
+		assert.Equal(t, f.err, err)
+		assert.Equal(t, entries[:10], gotEntries)
+	})
 }
