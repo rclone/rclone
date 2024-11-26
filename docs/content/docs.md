@@ -1545,9 +1545,16 @@ This option is only supported Windows platforms.
 
 ### --use-json-log ###
 
-This switches the log format to JSON for rclone. The fields of JSON
-log are `level`, `msg`, `source`, `time`. The JSON logs will be
-printed on a single line, but are shown expanded here for clarity.
+This switches the log format to JSON. The log messages are then
+streamed as individual JSON objects, with fields: `level`, `msg`, `source`,
+and `time`. The resulting format is what is sometimes referred to as
+[newline-delimited JSON](https://en.wikipedia.org/wiki/JSON_streaming#Newline-delimited_JSON)
+(NDJSON), or JSON Lines (JSONL). This is well suited for processing by
+traditional line-oriented tools and shell pipelines, but a complete log
+file is not strictly valid JSON and needs a parser that can handle it.
+
+The JSON logs will be printed on a single line, but are shown expanded
+here for clarity.
 
 ```json
 {
