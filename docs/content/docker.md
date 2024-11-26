@@ -537,6 +537,13 @@ sudo curl -H Content-Type:application/json -XPOST -d {} --unix-socket /run/docke
 ```
 though this is rarely needed.
 
+If the plugin fails to work properly, and only as a last resort after you tried diagnosing with the above methods, you can try clearing the state of the plugin. **Note that all existing rclone docker volumes will probably have to be recreated.** This might be needed because a reinstall don't cleanup existing state files to allow for easy restoration, as stated above.
+```
+docker plugin disable rclone # disable the plugin to ensure no interference
+sudo rm /var/lib/docker-plugins/rclone/cache/docker-plugin.state # removing the plugin state
+docker plugin enable rclone # re-enable the plugin afterward
+```
+
 ## Caveats
 
 Finally I'd like to mention a _caveat with updating volume settings_.
