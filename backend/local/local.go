@@ -17,6 +17,7 @@ import (
 	"time"
 	"unicode/utf8"
 
+	"github.com/brk0v/directio"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/accounting"
 	"github.com/rclone/rclone/fs/config"
@@ -272,6 +273,18 @@ enabled, rclone will no longer update the modtime after copying a file.`,
 				Advanced: true,
 			},
 			{
+				Name:     "direct_io",
+				Help:     `Using direct I/O to write files (unix only).`,
+				Default:  false,
+				Advanced: true,
+			},
+			{
+				Name:     "direct_io_block_size",
+				Help:     `If using direct I/O, this sets the block size to use.`,
+				Default:  4 * 1024 * 1024, // 4 MiB
+				Advanced: true,
+			},
+			{
 				Name: "time_type",
 				Help: `Set what kind of time is returned.
 
@@ -333,6 +346,8 @@ type Options struct {
 	NoPreAllocate     bool                 `config:"no_preallocate"`
 	NoSparse          bool                 `config:"no_sparse"`
 	NoSetModTime      bool                 `config:"no_set_modtime"`
+	DirectIO          bool                 `config:"direct_io"`
+	DirectIOBlockSize fs.SizeSuffix        `config:"direct_io_block_size"`
 	TimeType          timeType             `config:"time_type"`
 	Enc               encoder.MultiEncoder `config:"encoding"`
 	NoClone           bool                 `config:"no_clone"`
@@ -393,6 +408,9 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	if opt.TranslateSymlinks && opt.FollowSymlinks {
 		return nil, errLinksAndCopyLinks
 	}
+	if !directIOSupported && opt.DirectIO {
+		return nil, errors.New("direct IO is not supported on this platform")
+	}
 
 	f := &Fs{
 		name:   name,
@@ -427,6 +445,10 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	if opt.NoClone {
 		// Disable server-side copy when --local-no-clone is set
 		f.features.Copy = nil
+	}
+	if opt.DirectIO {
+		// Disable multi-thread copy when --local-direct-io is set
+		f.features.OpenWriterAt = nil
 	}
 
 	// Check to see if this points to a file
@@ -1382,7 +1404,13 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	// If it is a translated link, just read in the contents, and
 	// then create a symlink
 	if !o.translatedLink {
-		f, err := file.OpenFile(o.path, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0666)
+		flags := os.O_WRONLY | os.O_CREATE | os.O_TRUNC
+		var f *os.File
+		if o.fs.opt.DirectIO {
+			f, err = directIOOpenFile(o.path, flags, 0666)
+		} else {
+			f, err = file.OpenFile(o.path, flags, 0666)
+		}
 		if err != nil {
 			if runtime.GOOS == "windows" && os.IsPermission(err) {
 				// If permission denied on Windows might be trying to update a
@@ -1408,6 +1436,13 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 			}
 		}
 		out = f
+		if o.fs.opt.DirectIO {
+			out, err = directio.NewSize(f, int(o.fs.opt.DirectIOBlockSize))
+			if err != nil {
+				_ = f.Close()
+				return err
+			}
+		}
 	} else {
 		out = nopWriterCloser{&symlinkData}
 	}

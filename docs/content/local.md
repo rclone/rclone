@@ -588,6 +588,28 @@ Properties:
 - Type:        bool
 - Default:     false
 
+#### --local-direct-io
+
+Using direct I/O to write files (unix only).
+
+Properties:
+
+- Config:      direct_io
+- Env Var:     RCLONE_LOCAL_DIRECT_IO
+- Type:        bool
+- Default:     false
+
+#### --local-direct-io-block-size
+
+If using direct I/O, this sets the block size to use.
+
+Properties:
+
+- Config:      direct_io_block_size
+- Env Var:     RCLONE_LOCAL_DIRECT_IO_BLOCK_SIZE
+- Type:        SizeSuffix
+- Default:     4Mi
+
 #### --local-time-type
 
 Set what kind of time is returned.
