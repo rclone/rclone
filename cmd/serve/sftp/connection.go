@@ -95,12 +95,44 @@ func (c *conn) execCommand(ctx context.Context, out io.Writer, command string) (
 		if err != nil {
 			return fmt.Errorf("send output failed: %w", err)
 		}
-	case "md5sum", "sha1sum":
-		ht := hash.MD5
-		if binary == "sha1sum" {
-			ht = hash.SHA1
+	case "md5sum":
+		return c.handleHashsumCommand(ctx, out, hash.MD5, args)
+	case "sha1sum":
+		return c.handleHashsumCommand(ctx, out, hash.SHA1, args)
+	case "crc32":
+		return c.handleHashsumCommand(ctx, out, hash.CRC32, args)
+	case "sha256sum":
+		return c.handleHashsumCommand(ctx, out, hash.SHA256, args)
+	case "b3sum":
+		return c.handleHashsumCommand(ctx, out, hash.BLAKE3, args)
+	case "xxh128sum":
+		return c.handleHashsumCommand(ctx, out, hash.XXH128, args)
+	case "xxhsum":
+		argv := strings.SplitN(args, " ", 2)
+		if len(argv) == 0 || argv[0] != "-H2" {
+			return fmt.Errorf("%q not implemented", command)
 		}
-		return c.handleHashsumCommand(ctx, out, ht, args)
+		if len(argv) > 1 {
+			args = argv[1]
+		} else {
+			args = ""
+		}
+		return c.handleHashsumCommand(ctx, out, hash.XXH128, args)
+	case "rclone":
+		argv := strings.SplitN(args, " ", 3)
+		if len(argv) > 1 && argv[0] == "hashsum" {
+			var ht hash.Type
+			if err := ht.Set(argv[1]); err != nil {
+				return err
+			}
+			if len(argv) > 2 {
+				args = argv[2]
+			} else {
+				args = ""
+			}
+			return c.handleHashsumCommand(ctx, out, ht, args)
+		}
+		return fmt.Errorf("%q not implemented", command)
 	case "echo":
 		// Special cases for legacy rclone command detection.
 		// Before rclone v1.49.0 the sftp backend used "echo 'abc' | md5sum" when
@@ -148,10 +180,23 @@ func (c *conn) handleHashsumCommand(ctx context.Context, out io.Writer, ht hash.
 	var hashSum string
 	if args == "" {
 		// empty hash for no input
-		if ht == hash.MD5 {
+		switch ht {
+		case hash.MD5:
 			hashSum = "d41d8cd98f00b204e9800998ecf8427e"
-		} else {
+		case hash.SHA1:
 			hashSum = "da39a3ee5e6b4b0d3255bfef95601890afd80709"
+		case hash.CRC32:
+			hashSum = "00000000"
+		case hash.SHA256:
+			hashSum = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+		case hash.BLAKE3:
+			hashSum = "af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262"
+		case hash.XXH3:
+			hashSum = "2d06800538d394c2"
+		case hash.XXH128:
+			hashSum = "99aa06d3014798d86001c324468d497f"
+		default:
+			return fmt.Errorf("%v hash not implemented", ht)
 		}
 		args = "-"
 	} else {
