@@ -1756,12 +1756,11 @@ func (f *Fs) Hashes() hash.Set {
 			&f.opt.Xxh3sumCommand,
 			"2d06800538d394c2",
 			[]struct{ hashFile, hashEmpty string }{
-				// The xxhsum tool uses an alternative BSD style output format for the 64-bit variant of XXH3,
-				// otherwise optional with argument --tag, to avoid confusion with the older 64-bit algorithm XXH64.
-				// For the same reason there is no algorithm-specific alias, xxh3sum, either. We are currently not able
-				// to parse this output format. Next release of xxHash after 0.8.2 will change to GNU style, classic
-				// md5sum, output format, but will use a non-standard prefix "XXH3_" preceding the hash, so we still
-				// need additional changes to be able to support it.
+				// The xxhsum tool uses a non-standard prefix "XXH3_" preceding the hash output for the 64-bit variant
+				// of XXH3, to avoid confusion with the older 64-bit algorithm XXH64. This was introduced in version
+				// 0.8.3 released Dec 30, 2024. Older versions only supported the alternative BSD style output format,
+				// otherwise optional with argument --tag. We are currently not expecting these output formats and can
+				// therefore not use the "xxhsum -H3" command or its xxh3sum alias directly.
 				//{"xxh3sum", "xxh3sum"},
 				//{"xxhsum -H3", "xxhsum -H3"},
 				{"rclone hashsum xxh3", "rclone hashsum xxh3"},
