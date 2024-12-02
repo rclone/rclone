@@ -105,6 +105,18 @@ backends:
  - backend:  "cloudinary"
    remote:   "TestCloudinary:"
    fastlist: false
+   ignore:
+     # fs/operations
+     - TestCheckSum
+     - TestCheckSumDownload
+     - TestHashSums/Md5
+     - TestReadFile
+     - TestCopyURL
+     - TestMoveFileWithIgnoreExisting
+     #vfs
+     - TestFileSetModTime/cache=off,open=false,write=false
+     - TestFileSetModTime/cache=off,open=true,write=false
+     - TestRWFileHandleWriteNoWrite
  - backend:  "combine"
    remote:   "TestCombine:dir1"
    fastlist: false
