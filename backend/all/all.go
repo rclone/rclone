@@ -49,6 +49,7 @@ import (
 	_ "github.com/rclone/rclone/backend/qingstor"
 	_ "github.com/rclone/rclone/backend/quatrix"
 	_ "github.com/rclone/rclone/backend/s3"
+	_ "github.com/rclone/rclone/backend/torrent"
 	_ "github.com/rclone/rclone/backend/seafile"
 	_ "github.com/rclone/rclone/backend/sftp"
 	_ "github.com/rclone/rclone/backend/sharefile"
