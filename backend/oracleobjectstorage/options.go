@@ -106,9 +106,9 @@ func newOptions() []fs.Option {
 		Sensitive: true,
 	}, {
 		Name:      "compartment",
-		Help:      "Object storage compartment OCID",
+		Help:      "Specify compartment OCID, if you need to list buckets.\n\nList objects works without compartment OCID.",
 		Provider:  "!no_auth",
-		Required:  true,
+		Required:  false,
 		Sensitive: true,
 	}, {
 		Name:     "region",
