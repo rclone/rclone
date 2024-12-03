@@ -156,6 +156,7 @@ Owner is able to add custom keys. Metadata feature grabs all the keys including 
 			Help: `Metadata to be set on the IA item, this is different from file-level metadata that can be set using --metadata-set.
 Format is key=value and the 'x-archive-meta-' prefix is automatically added.`,
 			Default:  []string{},
+			Hide:     fs.OptionHideConfigurator,
 			Advanced: true,
 		}, {
 			Name: "item_derive",
