@@ -29,6 +29,7 @@ import (
 	"github.com/rclone/rclone/fs/config/configstruct"
 	"github.com/rclone/rclone/fs/fspath"
 	"github.com/rclone/rclone/fs/hash"
+	"github.com/rclone/rclone/fs/list"
 	"github.com/rclone/rclone/fs/log"
 	"github.com/rclone/rclone/fs/object"
 	"github.com/rclone/rclone/fs/operations"
@@ -208,6 +209,8 @@ func NewFs(ctx context.Context, name, rpath string, m configmap.Mapper) (fs.Fs, 
 	if !operations.CanServerSideMove(wrappedFs) {
 		f.features.Disable("PutStream")
 	}
+	// Enable ListP always
+	f.features.ListP = f.ListP
 
 	return f, err
 }
@@ -352,11 +355,39 @@ func (f *Fs) processEntries(entries fs.DirEntries) (newEntries fs.DirEntries, er
 // found.
 // List entries and process them
 func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err error) {
-	entries, err = f.Fs.List(ctx, dir)
-	if err != nil {
-		return nil, err
+	return list.WithListP(ctx, dir, f)
+}
+
+// ListP lists the objects and directories of the Fs starting
+// from dir non recursively into out.
+//
+// dir should be "" to start from the root, and should not
+// have trailing slashes.
+//
+// This should return ErrDirNotFound if the directory isn't
+// found.
+//
+// It should call callback for each tranche of entries read.
+// These need not be returned in any particular order.  If
+// callback returns an error then the listing will stop
+// immediately.
+func (f *Fs) ListP(ctx context.Context, dir string, callback fs.ListRCallback) error {
+	wrappedCallback := func(entries fs.DirEntries) error {
+		entries, err := f.processEntries(entries)
+		if err != nil {
+			return err
+		}
+		return callback(entries)
 	}
-	return f.processEntries(entries)
+	listP := f.Fs.Features().ListP
+	if listP == nil {
+		entries, err := f.Fs.List(ctx, dir)
+		if err != nil {
+			return err
+		}
+		return wrappedCallback(entries)
+	}
+	return listP(ctx, dir, wrappedCallback)
 }
 
 // ListR lists the objects and directories of the Fs starting
