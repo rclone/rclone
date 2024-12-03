@@ -1020,6 +1020,9 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		}
 	}
 
+	// Disable ListP always
+	features.ListP = nil
+
 	// show that we wrap other backends
 	features.Overlay = true
 
