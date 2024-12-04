@@ -1,7 +1,7 @@
 ---
 title: "pCloud"
 description: "Rclone docs for pCloud"
-versionIntroduced: "v1.40"
+versionIntroduced: "v1.39"
 ---
 
 # {{< icon "fa fa-cloud" >}} pCloud
