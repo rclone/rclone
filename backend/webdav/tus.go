@@ -64,7 +64,7 @@ func (f *Fs) shouldRetryCreateUpload(ctx context.Context, resp *http.Response, e
 	return f.shouldRetry(ctx, resp, err)
 }
 
-// CreateUpload creates a new upload to the server.
+// CreateUploader creates a new upload to the server.
 func (o *Object) CreateUploader(ctx context.Context, u *Upload, options ...fs.OpenOption) (*Uploader, error) {
 	if u == nil {
 		return nil, ErrNilUpload

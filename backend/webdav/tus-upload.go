@@ -26,22 +26,22 @@ func (u *Upload) updateProgress(offset int64) {
 	u.offset = offset
 }
 
-// Returns whether this upload is finished or not.
+// Finished returns whether this upload is finished or not.
 func (u *Upload) Finished() bool {
 	return u.offset >= u.size
 }
 
-// Returns the progress in a percentage.
+// Progress returns the progress in a percentage.
 func (u *Upload) Progress() int64 {
 	return (u.offset * 100) / u.size
 }
 
-// Returns the current upload offset.
+// Offset returns the current upload offset.
 func (u *Upload) Offset() int64 {
 	return u.offset
 }
 
-// Returns the size of the upload body.
+// Size returns the size of the upload body.
 func (u *Upload) Size() int64 {
 	return u.size
 }
@@ -67,7 +67,10 @@ func NewUpload(reader io.Reader, size int64, metadata Metadata, fingerprint stri
 
 	if !ok {
 		buf := new(bytes.Buffer)
-		buf.ReadFrom(reader)
+		_, err := buf.ReadFrom(reader)
+		if err != nil {
+			return nil
+		}
 		stream = bytes.NewReader(buf.Bytes())
 	}
 

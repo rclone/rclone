@@ -25,7 +25,7 @@ type Uploader struct {
 	overridePatchMethod bool
 }
 
-// Subscribes to progress updates.
+// NotifyUploadProgress subscribes to progress updates.
 func (u *Uploader) NotifyUploadProgress(c chan Upload) {
 	u.uploadSubs = append(u.uploadSubs, c)
 }
@@ -106,7 +106,7 @@ func (u *Uploader) uploadChunk(ctx context.Context, body io.Reader, size int64, 
 
 // Upload uploads the entire body to the server.
 func (u *Uploader) Upload(ctx context.Context, options ...fs.OpenOption) error {
-	var cnt int = 1
+	cnt := 1
 
 	fs.Debug(u.fs, "Uploaded starts")
 	for u.offset < u.upload.size && !u.aborted {
