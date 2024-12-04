@@ -790,7 +790,7 @@ func Run(t *testing.T, opt *Opt) {
 				t.Skip("FS has no OpenWriterAt interface")
 			}
 			path := "writer-at-subdir/writer-at-file"
-			out, err := openWriterAt(ctx, path, -1)
+			_, out, err := openWriterAt(ctx, path, -1)
 			require.NoError(t, err)
 
 			var n int
