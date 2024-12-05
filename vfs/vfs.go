@@ -626,6 +626,10 @@ func (vfs *VFS) Statfs() (total, used, free int64) {
 				return nil
 			})
 			vfs.usage.Used = &usedBySizeAlgorithm
+			// if we read a Total size then we should calculate Free from it
+			if vfs.usage.Total != nil {
+				vfs.usage.Free = nil
+			}
 		}
 		vfs.usageTime = time.Now()
 		if err != nil {
