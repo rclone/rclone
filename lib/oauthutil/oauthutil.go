@@ -813,10 +813,17 @@ func (s *authServer) handleAuth(w http.ResponseWriter, req *http.Request) {
 	// get code, error if empty
 	code := req.Form.Get("code")
 	if code == "" {
-		reply(http.StatusBadRequest, &AuthResult{
+		err := &AuthResult{
 			Name:        "Auth Error",
 			Description: "No code returned by remote server",
-		})
+		}
+		if errorCode := req.Form.Get("error"); errorCode != "" {
+			err.Description += ": " + errorCode
+		}
+		if errorMessage := req.Form.Get("error_description"); errorMessage != "" {
+			err.Description += ": " + errorMessage
+		}
+		reply(http.StatusBadRequest, err)
 		return
 	}
 
