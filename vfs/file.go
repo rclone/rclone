@@ -480,6 +480,16 @@ func (f *File) setSize(n int64) {
 func (f *File) setObject(o fs.Object) {
 	f.mu.Lock()
 	f.o = o
+	if do, ok := f.o.(fs.SetMetadataer); ok && !f.d.vfs.Opt.SkipMetadata {
+		err := do.SetMetadata(context.TODO(), fs.Metadata{
+			"uid":  fmt.Sprintf("%d", f.d.vfs.Opt.UID),
+			"gid":  fmt.Sprintf("%d", f.d.vfs.Opt.GID),
+			"mode": fmt.Sprintf("%#o", f.d.vfs.Opt.FilePerms),
+		})
+		if err != nil {
+			fs.Debugf(f._path(), "Failed to set file metadata: %v", err)
+		}
+	}
 	_ = f._applyPendingModTime()
 	d := f.d
 	f.mu.Unlock()
