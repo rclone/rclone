@@ -118,6 +118,17 @@ points, as you explicitly acknowledge that they should be skipped.`,
 				Advanced: true,
 			},
 			{
+				Name: "skip_specials",
+				Help: `Don't warn about skipped pipes, sockets and device objects.
+
+This flag disables warning messages on skipped pipes, sockets and
+device objects, as you explicitly acknowledge that they should be
+skipped.`,
+				Default:  false,
+				NoPrefix: true,
+				Advanced: true,
+			},
+			{
 				Name: "zero_size_links",
 				Help: `Assume the Stat size of links is zero (and read them instead) (deprecated).
 
@@ -324,6 +335,7 @@ type Options struct {
 	FollowSymlinks    bool                 `config:"copy_links"`
 	TranslateSymlinks bool                 `config:"links"`
 	SkipSymlinks      bool                 `config:"skip_links"`
+	SkipSpecials      bool                 `config:"skip_specials"`
 	UTFNorm           bool                 `config:"unicode_normalization"`
 	NoCheckUpdated    bool                 `config:"no_check_updated"`
 	NoUNC             bool                 `config:"nounc"`
@@ -1201,7 +1213,9 @@ func (o *Object) Storable() bool {
 		}
 		return false
 	} else if mode&(os.ModeNamedPipe|os.ModeSocket|os.ModeDevice) != 0 {
-		fs.Logf(o, "Can't transfer non file/directory")
+		if !o.fs.opt.SkipSpecials {
+			fs.Logf(o, "Can't transfer non file/directory")
+		}
 		return false
 	} else if mode&os.ModeDir != 0 {
 		// fs.Debugf(o, "Skipping directory")
