@@ -294,7 +294,7 @@ docker run --rm \
     listremotes
 
 # perform mount inside Docker container, expose result to host
-mkdir -p ~/data/mount
+mkdir -p ~/data
 docker run --rm \
     --volume ~/.config/rclone:/config/rclone \
     --volume ~/data:/data:shared \
@@ -302,9 +302,36 @@ docker run --rm \
     --volume /etc/passwd:/etc/passwd:ro --volume /etc/group:/etc/group:ro \
     --device /dev/fuse --cap-add SYS_ADMIN --security-opt apparmor:unconfined \
     rclone/rclone \
-    mount dropbox:Photos /data/mount &
-ls ~/data/mount
+    mount dropbox:Photos /data &
+ls ~/data
 kill %1
+```
+
+### Docker compose mount {#docker-compose-mount}
+
+Here is an example of how to start an rclone mount in a Docker container using Docker Compose. This example also demonstrates how to correctly share the mount with other services running in different containers. It is important to bind the rclone mount with `rshared` on the rclone container and `rslave` on the other services using the mount to prevent the fuse mount from becoming stale.
+
+```yaml
+services:
+  rclone:
+    image: rclone/rclone:latest # can also be `beta`, `1.49.1`, etc. 
+    command: mount dropbox:Photos /data
+    user: ${PUID}:${PGID} # you can find your UID and GID with `id -u` and `id -g`
+    volumes:
+      - /mnt/Photos:/data:rshared # shares the rclone mount with the host at /mnt/Photos
+      - /etc/passwd:/etc/passwd:ro # needed for fuse to work
+      - /etc/group:/etc/group:ro # needed for fuse to work
+    devices:
+      - /dev/fuse
+    cap_add:
+      - SYS_ADMIN
+    security_opt:
+      - apparmor:unconfined
+
+  some_servie_that_uses_the_mount:
+    image: some_image
+    volumes:
+      - /mnt/Photos:/mnt/Photos:rslave # note that `rslave` is necessary to prevent the fuse mount from going stale
 ```
 
 ## Snap installation {#snap}
