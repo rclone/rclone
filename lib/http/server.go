@@ -66,20 +66,21 @@ https.  You will need to supply the ` + "`--{{ .Prefix }}cert` and `--{{ .Prefix
 If you wish to do client side certificate validation then you will need to
 supply ` + "`--{{ .Prefix }}client-ca`" + ` also.
 
-` + "`--{{ .Prefix }}cert`" + ` should be a either a PEM encoded certificate or a concatenation
-of that with the CA certificate.  ` + "`--k{{ .Prefix }}ey`" + ` should be the PEM encoded
-private key and ` + "`--{{ .Prefix }}client-ca`" + ` should be the PEM encoded client
-certificate authority certificate.
+` + "`--{{ .Prefix }}cert`" + ` must be set to the path of a file containing
+either a PEM encoded certificate, or a concatenation of that with the CA
+certificate. ` + "`--{{ .Prefix }}key`" + ` must be set to the path of a file
+with the PEM encoded private key. ` + "If setting `--{{ .Prefix }}client-ca`" + `,
+it should be set to the path of a file with PEM encoded client certificate
+authority certificates.
 
 ` + "`--{{ .Prefix }}min-tls-version`" + ` is minimum TLS version that is acceptable. Valid
-  values are "tls1.0", "tls1.1", "tls1.2" and "tls1.3" (default
-  "tls1.0").
+values are "tls1.0", "tls1.1", "tls1.2" and "tls1.3" (default "tls1.0").
 
 ### Socket activation
 
 Instead of the listening addresses specified above, rclone will listen to all
-FDs passed by the service manager, if any (and ignore any arguments passed by ` +
-		"--{{ .Prefix }}addr`" + `).
+FDs passed by the service manager, if any (and ignore any arguments passed
+by ` + "`--{{ .Prefix }}addr`" + `).
 
 This allows rclone to be a socket-activated service.
 It can be configured with .socket and .service unit files as described in
@@ -162,11 +163,11 @@ type Config struct {
 	ServerReadTimeout  time.Duration `config:"server_read_timeout"`  // Timeout for server reading data
 	ServerWriteTimeout time.Duration `config:"server_write_timeout"` // Timeout for server writing data
 	MaxHeaderBytes     int           `config:"max_header_bytes"`     // Maximum size of request header
-	TLSCert            string        `config:"cert"`                 // Path to TLS PEM key (concatenation of certificate and CA certificate)
-	TLSKey             string        `config:"key"`                  // Path to TLS PEM Private key
-	TLSCertBody        []byte        `config:"-"`                    // TLS PEM key (concatenation of certificate and CA certificate) body, ignores TLSCert
-	TLSKeyBody         []byte        `config:"-"`                    // TLS PEM Private key body, ignores TLSKey
-	ClientCA           string        `config:"client_ca"`            // Client certificate authority to verify clients with
+	TLSCert            string        `config:"cert"`                 // Path to TLS PEM public key certificate file (can also include intermediate/CA certificates)
+	TLSKey             string        `config:"key"`                  // Path to TLS PEM private key file
+	TLSCertBody        []byte        `config:"-"`                    // TLS PEM public key certificate body (can also include intermediate/CA certificates), ignores TLSCert
+	TLSKeyBody         []byte        `config:"-"`                    // TLS PEM private key body, ignores TLSKey
+	ClientCA           string        `config:"client_ca"`            // Path to TLS PEM CA file with certificate authorities to verify clients with
 	MinTLSVersion      string        `config:"min_tls_version"`      // MinTLSVersion contains the minimum TLS version that is acceptable.
 	AllowOrigin        string        `config:"allow_origin"`         // AllowOrigin sets the Access-Control-Allow-Origin header
 }
@@ -177,9 +178,9 @@ func (cfg *Config) AddFlagsPrefix(flagSet *pflag.FlagSet, prefix string) {
 	flags.DurationVarP(flagSet, &cfg.ServerReadTimeout, prefix+"server-read-timeout", "", cfg.ServerReadTimeout, "Timeout for server reading data", prefix)
 	flags.DurationVarP(flagSet, &cfg.ServerWriteTimeout, prefix+"server-write-timeout", "", cfg.ServerWriteTimeout, "Timeout for server writing data", prefix)
 	flags.IntVarP(flagSet, &cfg.MaxHeaderBytes, prefix+"max-header-bytes", "", cfg.MaxHeaderBytes, "Maximum size of request header", prefix)
-	flags.StringVarP(flagSet, &cfg.TLSCert, prefix+"cert", "", cfg.TLSCert, "TLS PEM key (concatenation of certificate and CA certificate)", prefix)
-	flags.StringVarP(flagSet, &cfg.TLSKey, prefix+"key", "", cfg.TLSKey, "TLS PEM Private key", prefix)
-	flags.StringVarP(flagSet, &cfg.ClientCA, prefix+"client-ca", "", cfg.ClientCA, "Client certificate authority to verify clients with", prefix)
+	flags.StringVarP(flagSet, &cfg.TLSCert, prefix+"cert", "", cfg.TLSCert, "Path to TLS PEM public key certificate file (can also include intermediate/CA certificates)", prefix)
+	flags.StringVarP(flagSet, &cfg.TLSKey, prefix+"key", "", cfg.TLSKey, "Path to TLS PEM private key file", prefix)
+	flags.StringVarP(flagSet, &cfg.ClientCA, prefix+"client-ca", "", cfg.ClientCA, "Path to TLS PEM CA file with certificate authorities to verify clients with", prefix)
 	flags.StringVarP(flagSet, &cfg.BaseURL, prefix+"baseurl", "", cfg.BaseURL, "Prefix for URLs - leave blank for root", prefix)
 	flags.StringVarP(flagSet, &cfg.MinTLSVersion, prefix+"min-tls-version", "", cfg.MinTLSVersion, "Minimum TLS version that is acceptable", prefix)
 	flags.StringVarP(flagSet, &cfg.AllowOrigin, prefix+"allow-origin", "", cfg.AllowOrigin, "Origin which cross-domain request (CORS) can be executed from", prefix)

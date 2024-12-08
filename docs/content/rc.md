@@ -18,29 +18,31 @@ If you just want to run a remote control then see the [rcd](/commands/rclone_rcd
 
 ### --rc
 
-Flag to start the http server listen on remote requests
+Flag to start the http server listen on remote requests.
       
 ### --rc-addr=IP
 
-IPaddress:Port or :Port to bind server to. (default "localhost:5572")
+IPaddress:Port or :Port to bind server to. (default "localhost:5572").
 
 ### --rc-cert=KEY
-SSL PEM key (concatenation of certificate and CA certificate)
+
+SSL PEM key (concatenation of certificate and CA certificate).
 
 ### --rc-client-ca=PATH
-Client certificate authority to verify clients with
+
+Client certificate authority to verify clients with.
 
 ### --rc-htpasswd=PATH
 
-htpasswd file - if not provided no authentication is done
+htpasswd file - if not provided no authentication is done.
 
 ### --rc-key=PATH
 
-SSL PEM Private key
+TLS PEM private key file.
 
 ### --rc-max-header-bytes=VALUE
 
-Maximum size of request header (default 4096)
+Maximum size of request header (default 4096).
 
 ### --rc-min-tls-version=VALUE
 
@@ -57,15 +59,15 @@ Password for authentication.
 
 ### --rc-realm=VALUE
 
-Realm for authentication (default "rclone")
+Realm for authentication (default "rclone").
 
 ### --rc-server-read-timeout=DURATION
 
-Timeout for server reading data (default 1h0m0s)
+Timeout for server reading data (default 1h0m0s).
 
 ### --rc-server-write-timeout=DURATION
 
-Timeout for server writing data (default 1h0m0s)
+Timeout for server writing data (default 1h0m0s).
 
 ### --rc-serve
 
