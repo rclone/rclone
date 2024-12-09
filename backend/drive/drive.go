@@ -37,8 +37,8 @@ import (
 	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/fs/fspath"
 	"github.com/rclone/rclone/fs/hash"
+	"github.com/rclone/rclone/fs/list"
 	"github.com/rclone/rclone/fs/operations"
-	"github.com/rclone/rclone/fs/walk"
 	"github.com/rclone/rclone/lib/dircache"
 	"github.com/rclone/rclone/lib/encoder"
 	"github.com/rclone/rclone/lib/env"
@@ -2202,7 +2202,7 @@ func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (
 	wg := sync.WaitGroup{}
 	in := make(chan listREntry, listRInputBuffer)
 	out := make(chan error, f.ci.Checkers)
-	list := walk.NewListRHelper(callback)
+	list := list.NewHelper(callback)
 	overflow := []listREntry{}
 	listed := 0
 

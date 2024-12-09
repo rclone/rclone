@@ -30,6 +30,7 @@ import (
 	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/fs/hash"
+	"github.com/rclone/rclone/fs/list"
 	"github.com/rclone/rclone/fs/log"
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/fs/walk"
@@ -1396,7 +1397,7 @@ func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (
 	// So we have to filter things outside of the root which is
 	// inefficient.
 
-	list := walk.NewListRHelper(callback)
+	list := list.NewHelper(callback)
 
 	// list a folder conventionally - used for shared folders
 	var listFolder func(dir string) error

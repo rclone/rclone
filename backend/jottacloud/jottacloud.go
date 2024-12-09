@@ -31,7 +31,7 @@ import (
 	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/fs/hash"
-	"github.com/rclone/rclone/fs/walk"
+	"github.com/rclone/rclone/fs/list"
 	"github.com/rclone/rclone/lib/encoder"
 	"github.com/rclone/rclone/lib/oauthutil"
 	"github.com/rclone/rclone/lib/pacer"
@@ -1264,7 +1264,7 @@ func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (
 		Parameters: url.Values{},
 	}
 	opts.Parameters.Set("mode", "liststream")
-	list := walk.NewListRHelper(callback)
+	list := list.NewHelper(callback)
 
 	var resp *http.Response
 	err = f.pacer.Call(func() (bool, error) {
