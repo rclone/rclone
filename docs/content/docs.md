@@ -1448,6 +1448,19 @@ backends and the VFS. There are individual flags for just enabling it
 for the VFS `--vfs-links` and the local backend `--local-links` if
 required.
 
+### --list-cutoff N {#list-cutoff}
+
+When syncing rclone needs to sort directory entries before comparing
+them. Below this threshold (1,000,000) by default, rclone will store
+the directory entries in memory. 1,000,000 entries will take approx
+1GB of RAM to store. Above this threshold rclone will store directory
+entries on disk and sort them without using a lot of memory.
+
+Doing this is slightly less efficient then sorting them in memory and
+will only work well for the bucket based backends (eg s3, b2,
+azureblob, swift) but these are the only backends likely to have
+millions of entries in a directory.
+
 ### --log-file=FILE ###
 
 Log all of rclone's output to FILE.  This is not active by default.

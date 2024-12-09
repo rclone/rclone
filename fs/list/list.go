@@ -65,7 +65,7 @@ func DirSortedFn(ctx context.Context, f fs.Fs, includeAll bool, dir string, call
 	fi := filter.GetConfig(ctx)
 
 	// Sort the entries, in or out of memory
-	sorter, err := NewSorter(ctx, callback, keyFn)
+	sorter, err := NewSorter(ctx, f, callback, keyFn)
 	if err != nil {
 		return fmt.Errorf("failed to create directory sorter: %w", err)
 	}

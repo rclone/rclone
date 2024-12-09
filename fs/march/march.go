@@ -399,7 +399,7 @@ func (m *March) processJob(job listDirJob) ([]listDirJob, error) {
 	if m.NoTraverse && !m.NoCheckDest {
 		originalSrcChan := srcChan
 		srcChan = make(chan fs.DirEntry, 100)
-		ls, err := list.NewSorter(m.Ctx, list.SortToChan(dstChan), m.key)
+		ls, err := list.NewSorter(m.Ctx, m.Fdst, list.SortToChan(dstChan), m.key)
 		if err != nil {
 			return nil, err
 		}
