@@ -28,7 +28,7 @@ import (
 	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/fs/hash"
-	"github.com/rclone/rclone/fs/walk"
+	"github.com/rclone/rclone/fs/list"
 	"github.com/rclone/rclone/lib/pacer"
 	"github.com/rclone/rclone/lib/rest"
 )
@@ -516,7 +516,7 @@ func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (
 		return fs.ErrorDirNotFound
 	}
 
-	list := walk.NewListRHelper(callback)
+	list := list.NewHelper(callback)
 	for resumeStart := u.Path; resumeStart != ""; {
 		var files []File
 		files, resumeStart, err = f.netStorageListRequest(ctx, URL, u.Path)

@@ -25,7 +25,7 @@ import (
 	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/fs/hash"
-	"github.com/rclone/rclone/fs/walk"
+	"github.com/rclone/rclone/fs/list"
 	"github.com/rclone/rclone/lib/dircache"
 	"github.com/rclone/rclone/lib/encoder"
 	"github.com/rclone/rclone/lib/pacer"
@@ -734,7 +734,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 }
 
 // implementation of ListR
-func (f *Fs) listR(ctx context.Context, dir string, list *walk.ListRHelper) (err error) {
+func (f *Fs) listR(ctx context.Context, dir string, list *list.Helper) (err error) {
 	directoryID, err := f.dirCache.FindDir(ctx, dir, false)
 	if err != nil {
 		return err
@@ -820,7 +820,7 @@ func (f *Fs) listR(ctx context.Context, dir string, list *walk.ListRHelper) (err
 // Don't implement this unless you have a more efficient way
 // of listing recursively than doing a directory traversal.
 func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (err error) {
-	list := walk.NewListRHelper(callback)
+	list := list.NewHelper(callback)
 	err = f.listR(ctx, dir, list)
 	if err != nil {
 		return err

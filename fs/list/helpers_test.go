@@ -1,4 +1,4 @@
-package walk
+package list
 
 import (
 	"fmt"
@@ -18,7 +18,7 @@ func mockCallback(entries fs.DirEntries) error {
 
 func TestNewListRHelper(t *testing.T) {
 	callback := mockCallback
-	helper := NewListRHelper(callback)
+	helper := NewHelper(callback)
 
 	assert.NotNil(t, helper)
 	assert.Equal(t, fmt.Sprintf("%p", callback), fmt.Sprintf("%p", helper.callback))
@@ -32,7 +32,7 @@ func TestListRHelperAdd(t *testing.T) {
 		return nil
 	}
 
-	helper := NewListRHelper(callback)
+	helper := NewHelper(callback)
 	entry := mockobject.Object("A")
 	require.NoError(t, helper.Add(entry))
 
@@ -57,7 +57,7 @@ func TestListRHelperSend(t *testing.T) {
 		return nil
 	}
 
-	helper := NewListRHelper(callback)
+	helper := NewHelper(callback)
 
 	// Add 100 entries to force the callback to be invoked
 	for i := 0; i < 100; i++ {
@@ -80,7 +80,7 @@ func TestListRHelperFlush(t *testing.T) {
 		return nil
 	}
 
-	helper := NewListRHelper(callback)
+	helper := NewHelper(callback)
 	require.NoError(t, helper.Add(entry))
 	assert.False(t, callbackInvoked, "Callback should not have been invoked yet")
 	require.NoError(t, helper.Flush())

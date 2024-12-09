@@ -274,7 +274,7 @@ func (dm *dirMap) sendEntries(fn fs.ListRCallback) (err error) {
 	sort.Strings(dirs)
 	// Now convert to bulkier Dir in batches and send
 	now := time.Now()
-	list := NewListRHelper(fn)
+	list := list.NewHelper(fn)
 	for _, dir := range dirs {
 		err = list.Add(fs.NewDir(dir, now))
 		if err != nil {
