@@ -11,13 +11,12 @@ Output zsh completion script for rclone.
 
 ## Synopsis
 
-
 Generates a zsh autocompletion script for rclone.
 
 This writes to /usr/share/zsh/vendor-completions/_rclone by default so will
 probably need to be run with sudo or as root, e.g.
 
-    sudo rclone genautocomplete zsh
+    sudo rclone completion zsh
 
 Logout and login again to use the autocompletion scripts, or source
 them directly
@@ -40,10 +39,9 @@ rclone completion zsh [output_file] [flags]
   -h, --help   help for zsh
 ```
 
-
 See the [global flags page](/flags/) for global options not listed here.
 
-# SEE ALSO
+## See Also
 
 * [rclone completion](/commands/rclone_completion/)	 - Output completion script for a given shell.
 

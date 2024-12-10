@@ -399,14 +399,15 @@ func (f *Fs) OpenWriterAt(ctx context.Context, remote string, size int64) (fs.Wr
 	if err != nil {
 		return nil, fmt.Errorf("open file: %w", err)
 	}
+	if _, err := fileClose(ctx, client, f.pacer, openResult.FileDescriptor); err != nil {
+		return nil, fmt.Errorf("close file: %w", err)
+	}
 
 	writer := &writerAt{
 		ctx:    ctx,
-		client: client,
 		fs:     f,
 		size:   size,
 		remote: remote,
-		fd:     openResult.FileDescriptor,
 		fileID: openResult.Fileid,
 	}
 

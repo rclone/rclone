@@ -18,10 +18,9 @@ rclone test memory remote:path [flags]
   -h, --help   help for memory
 ```
 
-
 See the [global flags page](/flags/) for global options not listed here.
 
-# SEE ALSO
+## See Also
 
 * [rclone test](/commands/rclone_test/)	 - Run a test command
 

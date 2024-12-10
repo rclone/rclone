@@ -10,7 +10,6 @@ Remove a single file from remote.
 
 ## Synopsis
 
-
 Remove a single file from remote.  Unlike `delete` it cannot be used to
 remove a directory and it doesn't obey include/exclude filters - if the specified file exists,
 it will always be removed.
@@ -26,10 +25,12 @@ rclone deletefile remote:path [flags]
   -h, --help   help for deletefile
 ```
 
+Options shared with other commands are described next.
+See the [global flags page](/flags/) for global options not listed here.
 
-## Important Options
+### Important Options
 
-Important flags useful for most commands.
+Important flags useful for most commands
 
 ```
   -n, --dry-run         Do a trial run with no permanent changes
@@ -37,9 +38,7 @@ Important flags useful for most commands.
   -v, --verbose count   Print lots more stuff (repeat for more)
 ```
 
-See the [global flags page](/flags/) for global options not listed here.
-
-# SEE ALSO
+## See Also
 
 * [rclone](/commands/rclone/)	 - Show help for rclone commands, flags and backends.
 

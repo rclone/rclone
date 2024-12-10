@@ -508,6 +508,48 @@ Properties:
 - Type:        bool
 - Default:     false
 
+#### --swift-fetch-until-empty-page
+
+When paginating, always fetch unless we received an empty page.
+
+Consider using this option if rclone listings show fewer objects
+than expected, or if repeated syncs copy unchanged objects.
+
+It is safe to enable this, but rclone may make more API calls than
+necessary.
+
+This is one of a pair of workarounds to handle implementations
+of the Swift API that do not implement pagination as expected.  See
+also "partial_page_fetch_threshold".
+
+Properties:
+
+- Config:      fetch_until_empty_page
+- Env Var:     RCLONE_SWIFT_FETCH_UNTIL_EMPTY_PAGE
+- Type:        bool
+- Default:     false
+
+#### --swift-partial-page-fetch-threshold
+
+When paginating, fetch if the current page is within this percentage of the limit.
+
+Consider using this option if rclone listings show fewer objects
+than expected, or if repeated syncs copy unchanged objects.
+
+It is safe to enable this, but rclone may make more API calls than
+necessary.
+
+This is one of a pair of workarounds to handle implementations
+of the Swift API that do not implement pagination as expected.  See
+also "fetch_until_empty_page".
+
+Properties:
+
+- Config:      partial_page_fetch_threshold
+- Env Var:     RCLONE_SWIFT_PARTIAL_PAGE_FETCH_THRESHOLD
+- Type:        int
+- Default:     0
+
 #### --swift-chunk-size
 
 Above this size files will be chunked.

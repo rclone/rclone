@@ -2,6 +2,7 @@ package serve
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"html/template"
 	"net/http"
@@ -124,8 +125,8 @@ func (d *Directory) AddEntry(remote string, isDir bool) {
 }
 
 // Error logs the error and if a ResponseWriter is given it writes an http.StatusInternalServerError
-func Error(what interface{}, w http.ResponseWriter, text string, err error) {
-	err = fs.CountError(err)
+func Error(ctx context.Context, what interface{}, w http.ResponseWriter, text string, err error) {
+	err = fs.CountError(ctx, err)
 	fs.Errorf(what, "%s: %v", text, err)
 	if w != nil {
 		http.Error(w, text+".", http.StatusInternalServerError)
@@ -223,6 +224,7 @@ const (
 
 // Serve serves a directory
 func (d *Directory) Serve(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
 	// Account the transfer
 	tr := accounting.Stats(r.Context()).NewTransferRemoteSize(d.DirRemote, -1, nil, nil)
 	defer tr.Done(r.Context(), nil)
@@ -232,12 +234,12 @@ func (d *Directory) Serve(w http.ResponseWriter, r *http.Request) {
 	buf := &bytes.Buffer{}
 	err := d.HTMLTemplate.Execute(buf, d)
 	if err != nil {
-		Error(d.DirRemote, w, "Failed to render template", err)
+		Error(ctx, d.DirRemote, w, "Failed to render template", err)
 		return
 	}
 	w.Header().Set("Content-Length", fmt.Sprintf("%d", buf.Len()))
 	_, err = buf.WriteTo(w)
 	if err != nil {
-		Error(d.DirRemote, nil, "Failed to drain template buffer", err)
+		Error(ctx, d.DirRemote, nil, "Failed to drain template buffer", err)
 	}
 }

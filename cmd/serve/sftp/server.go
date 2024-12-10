@@ -143,8 +143,13 @@ func (s *server) serve() (err error) {
 		authKeysFile := env.ShellExpand(s.opt.AuthorizedKeys)
 		authorizedKeysMap, err = loadAuthorizedKeys(authKeysFile)
 		// If user set the flag away from the default then report an error
-		if err != nil && s.opt.AuthorizedKeys != Opt.AuthorizedKeys {
-			return err
+		if s.opt.AuthorizedKeys != Opt.AuthorizedKeys {
+			if err != nil {
+				return err
+			}
+			if len(authorizedKeysMap) == 0 {
+				return fmt.Errorf("failed to parse authorized keys")
+			}
 		}
 		fs.Logf(nil, "Loaded %d authorized keys from %q", len(authorizedKeysMap), authKeysFile)
 	}
@@ -349,11 +354,10 @@ func loadAuthorizedKeys(authorizedKeysPath string) (authorizedKeysMap map[string
 	authorizedKeysMap = make(map[string]struct{})
 	for len(authorizedKeysBytes) > 0 {
 		pubKey, _, _, rest, err := ssh.ParseAuthorizedKey(authorizedKeysBytes)
-		if err != nil {
-			return nil, fmt.Errorf("failed to parse authorized keys: %w", err)
+		if err == nil {
+			authorizedKeysMap[string(pubKey.Marshal())] = struct{}{}
+			authorizedKeysBytes = bytes.TrimSpace(rest)
 		}
-		authorizedKeysMap[string(pubKey.Marshal())] = struct{}{}
-		authorizedKeysBytes = bytes.TrimSpace(rest)
 	}
 	return authorizedKeysMap, nil
 }

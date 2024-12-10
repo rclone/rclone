@@ -5,6 +5,176 @@ description: "Rclone Changelog"
 
 # Changelog
 
+## v1.68.2 - 2024-11-15
+
+[See commits](https://github.com/rclone/rclone/compare/v1.68.1...v1.68.2)
+
+* Security fixes
+    * local backend: CVE-2024-52522: fix permission and ownership on symlinks with `--links` and `--metadata` (Nick Craig-Wood)
+        * Only affects users using `--metadata` and `--links` and copying files to the local backend
+        * See https://github.com/rclone/rclone/security/advisories/GHSA-hrxh-9w67-g4cv
+    * build: bump github.com/golang-jwt/jwt/v4 from 4.5.0 to 4.5.1 (dependabot)
+        * This is an issue in a dependency which is used for JWT certificates
+        * See https://github.com/golang-jwt/jwt/security/advisories/GHSA-29wx-vh33-7x7r
+* Bug Fixes
+    * accounting: Fix wrong message on SIGUSR2 to enable/disable bwlimit (Nick Craig-Wood)
+    * bisync: Fix output capture restoring the wrong output for logrus (Dimitrios Slamaris)
+    * dlna: Fix loggingResponseWriter disregarding log level (Simon Bos)
+    * serve s3: Fix excess locking which was making serve s3 single threaded (Nick Craig-Wood)
+    * doc fixes (Nick Craig-Wood, tgfisher, Alexandre Hamez, Randy Bush)
+* Local
+    * Fix permission and ownership on symlinks with `--links` and `--metadata` (Nick Craig-Wood)
+    * Fix `--copy-links` on macOS when cloning (nielash)
+* Onedrive
+    * Fix Retry-After handling to look at 503 errors also (Nick Craig-Wood)
+* Pikpak
+    * Fix cid/gcid calculations for fs.OverrideRemote (wiserain)
+    * Fix fatal crash on startup with token that can't be refreshed (Nick Craig-Wood)
+* S3
+    * Fix crash when using `--s3-download-url` after migration to SDKv2 (Nick Craig-Wood)
+    * Storj provider: fix server-side copy of files bigger than 5GB (Kaloyan Raev)
+    * Fix multitenant multipart uploads with CEPH (Nick Craig-Wood)
+
+## v1.68.1 - 2024-09-24
+
+[See commits](https://github.com/rclone/rclone/compare/v1.68.0...v1.68.1)
+
+* Bug Fixes
+    * build: Fix docker release build (ttionya)
+    * doc fixes (Nick Craig-Wood, Pawel Palucha)
+    * fs
+        * Fix `--dump filters` not always appearing (Nick Craig-Wood)
+        * Fix setting `stringArray` config values from environment variables (Nick Craig-Wood)
+    * rc: Fix default value of `--metrics-addr` (Nick Craig-Wood)
+    * serve docker: Add missing `vfs-read-chunk-streams` option in docker volume driver (Divyam)
+* Onedrive
+    * Fix spurious "Couldn't decode error response: EOF" DEBUG (Nick Craig-Wood)
+* Pikpak
+    * Fix login issue where token retrieval fails (wiserain)
+* S3
+    * Fix rclone ignoring static credentials when `env_auth=true` (Nick Craig-Wood)
+
+## v1.68.0 - 2024-09-08
+
+[See commits](https://github.com/rclone/rclone/compare/v1.67.0...v1.68.0)
+
+* New backends
+    * [Files.com](/filescom) (Sam Harrison)
+    * [Gofile](/gofile/) (Nick Craig-Wood)
+    * [Pixeldrain](/pixeldrain/) (Fornax)
+* Changed backends
+    * [S3](/s3/) backend updated to use [AWS SDKv2](https://github.com/aws/aws-sdk-go-v2) as v1 is now unsupported.
+        * The matrix of providers and auth methods is huge and there could be problems with obscure combinations.
+        * Please report problems in a [new issue](https://github.com/rclone/rclone/issues/new/choose) on Github. 
+* New commands
+    * [config encryption](/commands/rclone_config_encryption/): set, remove and check to manage config file encryption (Nick Craig-Wood)
+* New Features
+    * build
+        * Update to go1.23 and make go1.21 the minimum required version (Nick Craig-Wood)
+        * Update all dependencies (Nick Craig-Wood)
+        * Disable wasm/js build due to [go bug #64856](https://github.com/golang/go/issues/64856) (Nick Craig-Wood)
+        * Enable custom linting rules with ruleguard via gocritic (albertony)
+        * Update logging statements to make `--use-json-log` work always (albertony)
+        * Adding new code quality tests and fixing the fallout (albertony)
+    * config
+        * Internal config re-organised to be more consistent and make it available from the rc (Nick Craig-Wood)
+        * Avoid remotes with empty names from the environment (albertony)
+        * Make listing of remotes more consistent (albertony)
+        * Make getting config values more consistent (albertony)
+        * Use `--password-command` to set config file password if supplied (Nick Craig-Wood)
+    * doc fixes (albertony, crystalstall, David Seifert, Eng Zer Jun, Ernie Hershey, Florian Klink, John Oxley, kapitainsky, Mathieu Moreau, Nick Craig-Wood, nipil, Pétr Bozsó, Russ Bubley, Sam Harrison, Thearas, URenko, Will Miles, yuval-cloudinary)
+    * fs: Allow semicolons as well as spaces in `--bwlimit` timetable parsing (Kyle Reynolds)
+    * help
+        * Global flags help command now takes glob filter (albertony)
+        * Make help command output less distracting (albertony)
+    * lib/encoder: Add Raw encoding for use where no encoding at all is required, eg `--local-encoding Raw` (URenko)
+    * listremotes: Added options for filtering, ordering and json output (albertony)
+    * nfsmount
+        * Make the `--sudo` flag work for umount as well as mount (Nick Craig-Wood)
+        * Add `-o tcp` option to NFS mount options to fix mounting under Linux (Nick Craig-Wood)
+    * operations: copy: generate stable partial suffix (Georg Welzel)
+    * rc
+        * Add [options/info](/rc/#options-info) call to enumerate options (Nick Craig-Wood)
+        * Add option blocks parameter to [options/get](/rc/#options-get) and [options/info](/rc/#options-info) (Nick Craig-Wood)
+        * Add [vfs/queue](/rc/#vfs-queue) to show the status of the upload queue (Nick Craig-Wood)
+        * Add [vfs/queue-set-expiry](/rc/#vfs-queue-set-expiry) to adjust expiry of items in the VFS queue (Nick Craig-Wood)
+        * Add `--unix-socket` option to `rc` command (Florian Klink)
+        * Prevent unmount rc command from sending a `STOPPING=1` sd-notify message (AThePeanut4)
+    * rcserver: Implement [prometheus metrics](/docs/#metrics) on a dedicated port (Oleg Kunitsyn)
+    * serve dlna
+        * Also look at "Subs" subdirectory (Florian Klink)
+        * Don't swallow `video.{idx,sub}` (Florian Klink)
+        * Set more correct mime type (Florian Klink)
+    * serve nfs
+        * Implement on disk cache for file handles selected with `--nfs-cache-type` (Nick Craig-Wood)
+        * Add tracing to filesystem calls (Nick Craig-Wood)
+        * Mask unimplemented error from chmod (Nick Craig-Wood)
+        * Unify the nfs library logging with rclone's logging better (Nick Craig-Wood)
+        * Fix incorrect user id and group id exported to NFS (Nick Craig-Wood)
+    * serve s3
+        * Implement `--auth-proxy` (Sawjan Gurung)
+        * Update to AWS SDKv2 by updating `github.com/rclone/gofakes3` (Nick Craig-Wood)
+* Bug Fixes
+    * bisync: Fix sync time problems with backends that round time (eg Dropbox) (nielash)
+    * serve dlna: Fix panic: invalid argument to Int63n (Nick Craig-Wood)
+* VFS
+    * Add [--vfs-read-chunk-streams](/commands/rclone_mount/#vfs-read-chunk-streams-0-1) to parallel read chunks from files (Nick Craig-Wood)
+        * This can increase mount performance on high bandwidth or large latency links
+    * Fix cache encoding with special characters (URenko)
+* Local
+    * Fix encoding of root path fix (URenko)
+    * Add server-side copy (using clone) with xattrs on macOS (nielash)
+        * `--local-no-clone` flag to disable cloning for server-side copies (nielash)
+    * Support setting custom `--metadata` during server-side Copy (nielash)
+* Azure Blob
+    * Allow anonymous access for public resources (Nick Craig-Wood)
+* B2
+    * Include custom upload headers in large file info (Pat Patterson)
+* Drive
+    * Fix copying Google Docs to a backend which only supports SHA1 (Nick Craig-Wood)
+* Fichier
+    * Fix detection of Flood Detected error (Nick Craig-Wood)
+    * Fix server side move (Nick Craig-Wood)
+* HTTP
+    * Reload client certificates on expiry (Saleh Dindar)
+    * Support listening on passed FDs (Florian Klink)
+* Jottacloud
+    * Fix setting of metadata on server side move (albertony)
+* Onedrive
+    * Fix nil pointer error when uploading small files (Nick Craig-Wood)
+* Pcloud
+    * Implement `SetModTime` (Georg Welzel)
+    * Implement `OpenWriterAt` feature to enable multipart uploads (Georg Welzel)
+* Pikpak
+    * Improve data consistency by ensuring async tasks complete (wiserain)
+    * Implement custom hash to replace wrong sha1 (wiserain)
+    * Fix error with `copyto` command (wiserain)
+    * Optimize file move by removing unnecessary `readMetaData()` call (wiserain)
+    * Non-buffered hash calculation for local source files (wiserain)
+    * Optimize upload by pre-fetching gcid from API (wiserain)
+    * Correct file transfer progress for uploads by hash (wiserain)
+    * Update to using AWS SDK v2 (wiserain)
+* S3
+    * Update to using AWS SDK v2 (Nick Craig-Wood)
+        * Add `--s3-sdk-log-mode` to control SDKv2 debugging (Nick Craig-Wood)
+    * Fix incorrect region for Magalu provider (Filipe Herculano)
+    * Allow restoring from intelligent-tiering storage class (Pawel Palucha)
+* SFTP
+    * Use `uint32` for mtime to save memory (Tomasz Melcer)
+    * Ignore useless errors when closing the connection pool (Nick Craig-Wood)
+    * Support listening on passed FDs (Florian Klink)
+* Swift
+    * Add workarounds for bad listings in Ceph RGW (Paul Collins)
+    * Add total/free space info in `about` command. (fsantagostinobietti)
+* Ulozto
+    * Fix upload of > 2GB files on 32 bit platforms (Tobias Markus)
+* WebDAV
+    * Add `--webdav-unix-socket-path` to connect to a unix socket (Florian Klink)
+* Yandex
+    * Implement custom user agent to help with upload speeds (Sebastian Bünger)
+* Zoho
+    * Fix inefficiencies uploading with new API to avoid throttling (Nick Craig-Wood)
+
 ## v1.67.0 - 2024-06-14
 
 [See commits](https://github.com/rclone/rclone/compare/v1.66.0...v1.67.0)

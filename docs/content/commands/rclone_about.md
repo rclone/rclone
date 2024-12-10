@@ -10,8 +10,7 @@ Get quota information from the remote.
 
 ## Synopsis
 
-
-`rclone about` prints quota information about a remote to standard
+Prints quota information about a remote to standard
 output. The output is typically used, free, quota and trash contents.
 
 E.g. Typical output from `rclone about remote:` is:
@@ -70,10 +69,9 @@ rclone about remote: [flags]
       --json   Format output as JSON
 ```
 
-
 See the [global flags page](/flags/) for global options not listed here.
 
-# SEE ALSO
+## See Also
 
 * [rclone](/commands/rclone/)	 - Show help for rclone commands, flags and backends.
 

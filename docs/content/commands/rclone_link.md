@@ -10,8 +10,7 @@ Generate public link to file/folder.
 
 ## Synopsis
 
-rclone link will create, retrieve or remove a public link to the given
-file or folder.
+Create, retrieve or remove a public link to the given file or folder.
 
     rclone link remote:path/to/file
     rclone link remote:path/to/folder/
@@ -45,10 +44,9 @@ rclone link remote:path [flags]
       --unlink            Remove existing public link to file/folder
 ```
 
-
 See the [global flags page](/flags/) for global options not listed here.
 
-# SEE ALSO
+## See Also
 
 * [rclone](/commands/rclone/)	 - Show help for rclone commands, flags and backends.
 

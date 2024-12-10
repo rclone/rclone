@@ -18,10 +18,9 @@ rclone config dump [flags]
   -h, --help   help for dump
 ```
 
-
 See the [global flags page](/flags/) for global options not listed here.
 
-# SEE ALSO
+## See Also
 
 * [rclone config](/commands/rclone_config/)	 - Enter an interactive configuration session.
 

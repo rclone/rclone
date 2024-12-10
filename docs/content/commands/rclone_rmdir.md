@@ -9,7 +9,6 @@ Remove the empty directory at path.
 
 ## Synopsis
 
-
 This removes empty directory given by path. Will not remove the path if it
 has any objects in it, not even empty subdirectories. Use
 command [rmdirs](/commands/rclone_rmdirs/) (or [delete](/commands/rclone_delete/)
@@ -28,10 +27,12 @@ rclone rmdir remote:path [flags]
   -h, --help   help for rmdir
 ```
 
+Options shared with other commands are described next.
+See the [global flags page](/flags/) for global options not listed here.
 
-## Important Options
+### Important Options
 
-Important flags useful for most commands.
+Important flags useful for most commands
 
 ```
   -n, --dry-run         Do a trial run with no permanent changes
@@ -39,9 +40,7 @@ Important flags useful for most commands.
   -v, --verbose count   Print lots more stuff (repeat for more)
 ```
 
-See the [global flags page](/flags/) for global options not listed here.
-
-# SEE ALSO
+## See Also
 
 * [rclone](/commands/rclone/)	 - Show help for rclone commands, flags and backends.
 

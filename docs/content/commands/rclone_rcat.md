@@ -10,9 +10,7 @@ Copies standard input to file on remote.
 
 ## Synopsis
 
-
-rclone rcat reads from standard input (stdin) and copies it to a
-single remote file.
+Reads from standard input (stdin) and copies it to a single remote file.
 
     echo "hello world" | rclone rcat remote:path/to/file
     ffmpeg - | rclone rcat remote:path/to/file
@@ -53,10 +51,12 @@ rclone rcat remote:path [flags]
       --size int   File size hint to preallocate (default -1)
 ```
 
+Options shared with other commands are described next.
+See the [global flags page](/flags/) for global options not listed here.
 
-## Important Options
+### Important Options
 
-Important flags useful for most commands.
+Important flags useful for most commands
 
 ```
   -n, --dry-run         Do a trial run with no permanent changes
@@ -64,9 +64,7 @@ Important flags useful for most commands.
   -v, --verbose count   Print lots more stuff (repeat for more)
 ```
 
-See the [global flags page](/flags/) for global options not listed here.
-
-# SEE ALSO
+## See Also
 
 * [rclone](/commands/rclone/)	 - Show help for rclone commands, flags and backends.
 

@@ -10,7 +10,6 @@ Checks the files in the destination against a SUM file.
 
 ## Synopsis
 
-
 Checks that hashsums of destination files match the SUM file.
 It compares hashes (MD5, SHA1, etc) and logs a report of files which
 don't match.  It doesn't alter the file system.
@@ -67,10 +66,12 @@ rclone checksum <hash> sumfile dst:path [flags]
       --one-way                 Check one way only, source files must exist on remote
 ```
 
+Options shared with other commands are described next.
+See the [global flags page](/flags/) for global options not listed here.
 
-## Filter Options
+### Filter Options
 
-Flags for filtering directory listings.
+Flags for filtering directory listings
 
 ```
       --delete-excluded                     Delete files on dest excluded from sync
@@ -97,18 +98,16 @@ Flags for filtering directory listings.
       --min-size SizeSuffix                 Only transfer files bigger than this in KiB or suffix B|K|M|G|T|P (default off)
 ```
 
-## Listing Options
+### Listing Options
 
-Flags for listing directories.
+Flags for listing directories
 
 ```
       --default-time Time   Time to show if modtime is unknown for files and directories (default 2000-01-01T00:00:00Z)
       --fast-list           Use recursive list if available; uses more memory but fewer transactions
 ```
 
-See the [global flags page](/flags/) for global options not listed here.
-
-# SEE ALSO
+## See Also
 
 * [rclone](/commands/rclone/)	 - Show help for rclone commands, flags and backends.
 

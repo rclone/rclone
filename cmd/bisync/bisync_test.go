@@ -15,6 +15,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"runtime"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -207,15 +208,16 @@ type bisyncTest struct {
 	parent1  fs.Fs
 	parent2  fs.Fs
 	// global flags
-	argRemote1    string
-	argRemote2    string
-	noCompare     bool
-	noCleanup     bool
-	golden        bool
-	debug         bool
-	stopAt        int
-	TestFn        bisync.TestFunc
-	ignoreModtime bool // ignore modtimes when comparing final listings, for backends without support
+	argRemote1      string
+	argRemote2      string
+	noCompare       bool
+	noCleanup       bool
+	golden          bool
+	debug           bool
+	stopAt          int
+	TestFn          bisync.TestFunc
+	ignoreModtime   bool // ignore modtimes when comparing final listings, for backends without support
+	ignoreBlankHash bool // ignore blank hashes for backends where we allow them to be blank
 }
 
 var color = bisync.Color
@@ -946,6 +948,10 @@ func (b *bisyncTest) checkPreReqs(ctx context.Context, opt *bisync.Options) (con
 	if (!b.fs1.Features().CanHaveEmptyDirectories || !b.fs2.Features().CanHaveEmptyDirectories) && (b.testCase == "createemptysrcdirs" || b.testCase == "rmdirs") {
 		b.t.Skip("skipping test as remote does not support empty dirs")
 	}
+	ignoreHashBackends := []string{"TestWebdavNextcloud", "TestWebdavOwncloud", "TestAzureFiles"} // backends that support hashes but allow them to be blank
+	if slices.ContainsFunc(ignoreHashBackends, func(prefix string) bool { return strings.HasPrefix(b.fs1.Name(), prefix) }) || slices.ContainsFunc(ignoreHashBackends, func(prefix string) bool { return strings.HasPrefix(b.fs2.Name(), prefix) }) {
+		b.ignoreBlankHash = true
+	}
 	if b.fs1.Precision() == fs.ModTimeNotSupported || b.fs2.Precision() == fs.ModTimeNotSupported {
 		if b.testCase != "nomodtime" {
 			b.t.Skip("skipping test as at least one remote does not support setting modtime")
@@ -1550,6 +1556,12 @@ func (b *bisyncTest) mangleResult(dir, file string, golden bool) string {
 
 	if b.fs1.Hashes() == hash.Set(hash.None) || b.fs2.Hashes() == hash.Set(hash.None) {
 		logReplacements = append(logReplacements, `^.*{hashtype} differ.*$`, dropMe)
+	}
+	if b.ignoreBlankHash {
+		logReplacements = append(logReplacements,
+			`^.*hash is missing.*$`, dropMe,
+			`^.*not equal on recheck.*$`, dropMe,
+		)
 	}
 	rep := logReplacements
 	if b.testCase == "dry_run" {

@@ -7,6 +7,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/fs/rc"
 	"github.com/rclone/rclone/fstest/testy"
 	"github.com/stretchr/testify/assert"
@@ -204,6 +206,34 @@ func TestStatsGroupOperations(t *testing.T) {
 		_, err = call.Fn(ctx, rc.Params{"group": "not-found"})
 		require.NoError(t, err)
 	})
+}
+
+func TestCountError(t *testing.T) {
+	ctx := context.Background()
+	Start(ctx)
+	defer func() {
+		groups = newStatsGroups()
+	}()
+	t.Run("global stats", func(t *testing.T) {
+		GlobalStats().ResetCounters()
+		err := fs.CountError(ctx, fmt.Errorf("global err"))
+		assert.Equal(t, int64(1), GlobalStats().errors)
+
+		assert.True(t, fserrors.IsCounted(err))
+	})
+	t.Run("group stats", func(t *testing.T) {
+		statGroupName := fmt.Sprintf("%s-error_group", t.Name())
+		GlobalStats().ResetCounters()
+		stCtx := WithStatsGroup(ctx, statGroupName)
+		st := StatsGroup(stCtx, statGroupName)
+
+		err := fs.CountError(stCtx, fmt.Errorf("group err"))
+
+		assert.Equal(t, int64(0), GlobalStats().errors)
+		assert.Equal(t, int64(1), st.errors)
+		assert.True(t, fserrors.IsCounted(err))
+	})
+
 }
 
 func percentDiff(start, end uint64) uint64 {

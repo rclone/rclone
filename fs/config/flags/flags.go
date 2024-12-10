@@ -143,12 +143,32 @@ func installFlag(flags *pflag.FlagSet, name string, groupsString string) {
 	// Read default from environment if possible
 	envKey := fs.OptionToEnv(name)
 	if envValue, envFound := os.LookupEnv(envKey); envFound {
-		err := flags.Set(name, envValue)
-		if err != nil {
-			fs.Fatalf(nil, "Invalid value when setting --%s from environment variable %s=%q: %v", name, envKey, envValue, err)
+		isStringArray := false
+		opt, isOption := flag.Value.(*fs.Option)
+		if isOption {
+			_, isStringArray = opt.Default.([]string)
 		}
-		fs.Debugf(nil, "Setting --%s %q from environment variable %s=%q", name, flag.Value, envKey, envValue)
-		flag.DefValue = envValue
+		if isStringArray {
+			// Treat stringArray differently, treating the environment variable as a CSV array
+			var list fs.CommaSepList
+			err := list.Set(envValue)
+			if err != nil {
+				fs.Fatalf(nil, "Invalid value when setting stringArray --%s from environment variable %s=%q: %v", name, envKey, envValue, err)
+			}
+			// Set both the Value (so items on the command line get added) and DefValue so the help is correct
+			opt.Value = ([]string)(list)
+			flag.DefValue = list.String()
+			for _, v := range list {
+				fs.Debugf(nil, "Setting --%s %q from environment variable %s=%q", name, v, envKey, envValue)
+			}
+		} else {
+			err := flags.Set(name, envValue)
+			if err != nil {
+				fs.Fatalf(nil, "Invalid value when setting --%s from environment variable %s=%q: %v", name, envKey, envValue, err)
+			}
+			fs.Debugf(nil, "Setting --%s %q from environment variable %s=%q", name, flag.Value, envKey, envValue)
+			flag.DefValue = envValue
+		}
 	}
 
 	// Add flag to Group if it is a global flag

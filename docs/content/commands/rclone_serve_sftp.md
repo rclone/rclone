@@ -43,6 +43,17 @@ directory.
 By default the server binds to localhost:2022 - if you want it to be
 reachable externally then supply `--addr :2022` for example.
 
+This also supports being run with socket activation, in which case it will
+listen on the first passed FD.
+It can be configured with .socket and .service unit files as described in
+https://www.freedesktop.org/software/systemd/man/latest/systemd.socket.html
+
+Socket activation can be tested ad-hoc with the `systemd-socket-activate`command:
+
+	systemd-socket-activate -l 2222 -- rclone serve sftp :local:vfs/
+
+This will socket-activate rclone on the first connection to port 2222 over TCP.
+
 Note that the default of `--vfs-cache-mode off` is fine for the rclone
 sftp backend, but it may not be with other SFTP clients.
 
@@ -294,6 +305,11 @@ These flags control the chunking:
 
     --vfs-read-chunk-size SizeSuffix        Read the source objects in chunks (default 128M)
     --vfs-read-chunk-size-limit SizeSuffix  Max chunk doubling size (default off)
+    --vfs-read-chunk-streams int            The number of parallel streams to read at once
+
+The chunking behaves differently depending on the `--vfs-read-chunk-streams` parameter.
+
+### `--vfs-read-chunk-streams` == 0
 
 Rclone will start reading a chunk of size `--vfs-read-chunk-size`,
 and then double the size for each read. When `--vfs-read-chunk-size-limit` is
@@ -308,6 +324,30 @@ When `--vfs-read-chunk-size-limit 500M` is specified, the result would be
 0-100M, 100M-300M, 300M-700M, 700M-1200M, 1200M-1700M and so on.
 
 Setting `--vfs-read-chunk-size` to `0` or "off" disables chunked reading.
+
+The chunks will not be buffered in memory.
+
+### `--vfs-read-chunk-streams` > 0
+
+Rclone reads `--vfs-read-chunk-streams` chunks of size
+`--vfs-read-chunk-size` concurrently. The size for each read will stay
+constant.
+
+This improves performance performance massively on high latency links
+or very high bandwidth links to high performance object stores.
+
+Some experimentation will be needed to find the optimum values of
+`--vfs-read-chunk-size` and `--vfs-read-chunk-streams` as these will
+depend on the backend in use and the latency to the backend.
+
+For high performance object stores (eg AWS S3) a reasonable place to
+start might be `--vfs-read-chunk-streams 16` and
+`--vfs-read-chunk-size 4M`. In testing with AWS S3 the performance
+scaled roughly as the `--vfs-read-chunk-streams` setting.
+
+Similar settings should work for high latency links, but depending on
+the latency they may need more `--vfs-read-chunk-streams` in order to
+get the throughput.
 
 ## VFS Performance
 
@@ -509,8 +549,8 @@ rclone serve sftp remote:path [flags]
       --auth-proxy string                      A program to use to create the backend from the auth
       --authorized-keys string                 Authorized keys file (default "~/.ssh/authorized_keys")
       --dir-cache-time Duration                Time to cache directory entries for (default 5m0s)
-      --dir-perms FileMode                     Directory permissions (default 0777)
-      --file-perms FileMode                    File permissions (default 0666)
+      --dir-perms FileMode                     Directory permissions (default 777)
+      --file-perms FileMode                    File permissions (default 666)
       --gid uint32                             Override the gid field set by the filesystem (not supported on Windows) (default 1000)
   -h, --help                                   help for sftp
       --key stringArray                        SSH private host key file (Can be multi-valued, leave blank to auto generate)
@@ -523,7 +563,7 @@ rclone serve sftp remote:path [flags]
       --read-only                              Only allow read-only access
       --stdio                                  Run an sftp server on stdin/stdout
       --uid uint32                             Override the uid field set by the filesystem (not supported on Windows) (default 1000)
-      --umask int                              Override the permission bits set by the filesystem (not supported on Windows) (default 2)
+      --umask FileMode                         Override the permission bits set by the filesystem (not supported on Windows) (default 002)
       --user string                            User name for authentication
       --vfs-block-norm-dupes                   If duplicate filenames exist in the same directory (after normalization), log an error and hide the duplicates (may have a performance cost)
       --vfs-cache-max-age Duration             Max time since last access of objects in the cache (default 1h0m0s)
@@ -537,6 +577,7 @@ rclone serve sftp remote:path [flags]
       --vfs-read-ahead SizeSuffix              Extra read ahead over --buffer-size when using cache-mode full
       --vfs-read-chunk-size SizeSuffix         Read the source objects in chunks (default 128Mi)
       --vfs-read-chunk-size-limit SizeSuffix   If greater than --vfs-read-chunk-size, double the chunk size after each chunk read, until the limit is reached ('off' is unlimited) (default off)
+      --vfs-read-chunk-streams int             The number of parallel streams to read at once
       --vfs-read-wait Duration                 Time to wait for in-sequence read before seeking (default 20ms)
       --vfs-refresh                            Refreshes the directory cache recursively in the background on start
       --vfs-used-is-size rclone size           Use the rclone size algorithm for Used size
@@ -544,10 +585,12 @@ rclone serve sftp remote:path [flags]
       --vfs-write-wait Duration                Time to wait for in-sequence write before giving error (default 1s)
 ```
 
+Options shared with other commands are described next.
+See the [global flags page](/flags/) for global options not listed here.
 
-## Filter Options
+### Filter Options
 
-Flags for filtering directory listings.
+Flags for filtering directory listings
 
 ```
       --delete-excluded                     Delete files on dest excluded from sync
@@ -574,9 +617,7 @@ Flags for filtering directory listings.
       --min-size SizeSuffix                 Only transfer files bigger than this in KiB or suffix B|K|M|G|T|P (default off)
 ```
 
-See the [global flags page](/flags/) for global options not listed here.
-
-# SEE ALSO
+## See Also
 
 * [rclone serve](/commands/rclone_serve/)	 - Serve a remote over a protocol.
 

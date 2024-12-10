@@ -512,6 +512,32 @@ Properties:
 - Type:        bool
 - Default:     false
 
+#### --local-no-clone
+
+Disable reflink cloning for server-side copies.
+
+Normally, for local-to-local transfers, rclone will "clone" the file when
+possible, and fall back to "copying" only when cloning is not supported.
+
+Cloning creates a shallow copy (or "reflink") which initially shares blocks with
+the original file. Unlike a "hardlink", the two files are independent and
+neither will affect the other if subsequently modified.
+
+Cloning is usually preferable to copying, as it is much faster and is
+deduplicated by default (i.e. having two identical files does not consume more
+storage than having just one.)  However, for use cases where data redundancy is
+preferable, --local-no-clone can be used to disable cloning and force "deep" copies.
+
+Currently, cloning is only supported when using APFS on macOS (support for other
+platforms may be added in the future.)
+
+Properties:
+
+- Config:      no_clone
+- Env Var:     RCLONE_LOCAL_NO_CLONE
+- Type:        bool
+- Default:     false
+
 #### --local-no-preallocate
 
 Disable preallocation of disk space for transferred files.

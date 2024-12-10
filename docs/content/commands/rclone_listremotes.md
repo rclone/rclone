@@ -11,26 +11,40 @@ List all the remotes in the config file and defined in environment variables.
 ## Synopsis
 
 
-rclone listremotes lists all the available remotes from the config file.
+Lists all the available remotes from the config file, or the remotes matching
+an optional filter.
 
-When used with the `--long` flag it lists the types and the descriptions too.
+Prints the result in human-readable format by default, and as a simple list of
+remote names, or if used with flag `--long` a tabular format including
+the remote names, types and descriptions. Using flag `--json` produces
+machine-readable output instead, which always includes all attributes - including
+the source (file or environment).
+
+Result can be filtered by a filter argument which applies to all attributes,
+and/or filter flags specific for each attribute. The values must be specified
+according to regular rclone filtering pattern syntax.
 
 
 ```
-rclone listremotes [flags]
+rclone listremotes [<filter>] [flags]
 ```
 
 ## Options
 
 ```
-  -h, --help   help for listremotes
-      --long   Show the type and the description as well as names
+      --description string   Filter remotes by description
+  -h, --help                 help for listremotes
+      --json                 Format output as JSON
+      --long                 Show type and description in addition to name
+      --name string          Filter remotes by name
+      --order-by string      Instructions on how to order the result, e.g. 'type,name=descending'
+      --source string        Filter remotes by source, e.g. 'file' or 'environment'
+      --type string          Filter remotes by type
 ```
-
 
 See the [global flags page](/flags/) for global options not listed here.
 
-# SEE ALSO
+## See Also
 
 * [rclone](/commands/rclone/)	 - Show help for rclone commands, flags and backends.
 

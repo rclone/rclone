@@ -1105,6 +1105,12 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		return nil, fs.ErrorCantMove
 	}
 
+	// Find existing object
+	srcLeaf, srcDirectoryID, err := srcObj.fs.dirCache.FindPath(ctx, srcObj.remote, false)
+	if err != nil {
+		return nil, err
+	}
+
 	// Create temporary object
 	dstObj, dstLeaf, dstDirectoryID, err := f.createObject(ctx, remote, srcObj.modTime, srcObj.size)
 	if err != nil {
@@ -1112,7 +1118,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	}
 
 	// Do the move
-	info, err := f.moveTo(ctx, srcObj.id, path.Base(srcObj.remote), dstLeaf, srcObj.dirID, dstDirectoryID)
+	info, err := f.moveTo(ctx, srcObj.id, srcLeaf, dstLeaf, srcDirectoryID, dstDirectoryID)
 	if err != nil {
 		return nil, err
 	}
@@ -1208,7 +1214,7 @@ func (f *Fs) copyTo(ctx context.Context, srcID, srcLeaf, dstLeaf, dstDirectoryID
 // Will only be called if src.Fs().Name() == f.Name()
 //
 // If it isn't possible then return fs.ErrorCantCopy
-func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
+func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (dst fs.Object, err error) {
 	srcObj, ok := src.(*Object)
 	if !ok {
 		fs.Debugf(src, "Can't copy - not same remote type")
@@ -1220,6 +1226,19 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	dstPath := f.rootSlash() + remote
 	if srcPath == dstPath {
 		return nil, fmt.Errorf("can't copy %q -> %q as are same name", srcPath, dstPath)
+	}
+
+	// Find existing object
+	existingObj, err := f.NewObject(ctx, remote)
+	if err == nil {
+		defer func() {
+			// Don't remove existing object if returning an error
+			if err != nil {
+				return
+			}
+			fs.Debugf(existingObj, "Server side copy: removing existing object after successful copy")
+			err = existingObj.Remove(ctx)
+		}()
 	}
 
 	// Create temporary object
@@ -1462,6 +1481,13 @@ func (o *Object) Storable() bool {
 func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.ReadCloser, err error) {
 	if o.id == "" {
 		return nil, errors.New("can't download - no id")
+	}
+	if o.url == "" {
+		// On upload an Object is returned with no url, so fetch it here if needed
+		err = o.readMetaData(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("read metadata: %w", err)
+		}
 	}
 	fs.FixRangeOption(options, o.size)
 	var resp *http.Response

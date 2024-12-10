@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"slices"
 	"strings"
 	"time"
 
@@ -14,7 +15,6 @@ import (
 	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/lib/dircache"
 	"github.com/rclone/rclone/lib/errcount"
-	"golang.org/x/exp/slices" // replace with slices after go1.21 is the minimum version
 )
 
 const (

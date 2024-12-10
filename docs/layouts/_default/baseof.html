@@ -11,7 +11,9 @@
     <title>{{ block "title" . }}{{ .Title }}{{ end }}</title>
     <link rel="canonical" href="{{ .Permalink }}">
     <link href="/css/bootstrap.min.4.4.1.css" rel="stylesheet">
-    <link href="/css/font-awesome.min.5.10.2.css" rel="stylesheet">
+    <link href="/fontawesome/css/fontawesome.min.css" rel="stylesheet">
+    <link href="/fontawesome/css/brands.min.css" rel="stylesheet">
+    <link href="/fontawesome/css/solid.min.css" rel="stylesheet">
     <link href="/css/custom.css?r={{ .Date.Unix }}" rel="stylesheet">
     {{ $RSSLink := "" }}{{ with .OutputFormats.Get "RSS" }}{{ $RSSLink = .RelPermalink }}{{ end }}{{ if $RSSLink }}<link href="{{ $RSSLink }}" rel="alternate" type="application/rss+xml" title="{{ .Site.Title }}" />{{ end }}
   </head>

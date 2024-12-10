@@ -10,10 +10,9 @@ Changes storage class/tier of objects in remote.
 
 ## Synopsis
 
-
-rclone settier changes storage tier or class at remote if supported.
-Few cloud storage services provides different storage classes on objects,
-for example AWS S3 and Glacier, Azure Blob storage - Hot, Cool and Archive,
+Changes storage tier or class at remote if supported. Few cloud storage
+services provides different storage classes on objects, for example
+AWS S3 and Glacier, Azure Blob storage - Hot, Cool and Archive,
 Google Cloud Storage, Regional Storage, Nearline, Coldline etc.
 
 Note that, certain tier changes make objects not available to access immediately.
@@ -44,10 +43,9 @@ rclone settier tier remote:path [flags]
   -h, --help   help for settier
 ```
 
-
 See the [global flags page](/flags/) for global options not listed here.
 
-# SEE ALSO
+## See Also
 
 * [rclone](/commands/rclone/)	 - Show help for rclone commands, flags and backends.
 

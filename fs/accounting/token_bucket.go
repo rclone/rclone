@@ -41,7 +41,12 @@ type tokenBucket struct {
 //
 // Call with lock held
 func (bs *buckets) _isOff() bool { //nolint:unused // Don't include unused when running golangci-lint in case its on windows where this is not called
-	return bs[0] == nil
+	for i := range bs {
+		if bs[i] != nil {
+			return false
+		}
+	}
+	return true
 }
 
 // Disable the limits

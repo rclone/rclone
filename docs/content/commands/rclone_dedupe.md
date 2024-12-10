@@ -10,8 +10,6 @@ Interactively find duplicate filenames and delete/rename them.
 
 ## Synopsis
 
-
-
 By default `dedupe` interactively finds files with duplicate
 names and offers to delete all but one or rename them to be
 different. This is known as deduping by name.
@@ -130,10 +128,12 @@ rclone dedupe [mode] remote:path [flags]
   -h, --help                 help for dedupe
 ```
 
+Options shared with other commands are described next.
+See the [global flags page](/flags/) for global options not listed here.
 
-## Important Options
+### Important Options
 
-Important flags useful for most commands.
+Important flags useful for most commands
 
 ```
   -n, --dry-run         Do a trial run with no permanent changes
@@ -141,9 +141,7 @@ Important flags useful for most commands.
   -v, --verbose count   Print lots more stuff (repeat for more)
 ```
 
-See the [global flags page](/flags/) for global options not listed here.
-
-# SEE ALSO
+## See Also
 
 * [rclone](/commands/rclone/)	 - Show help for rclone commands, flags and backends.
 

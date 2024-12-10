@@ -23,7 +23,7 @@ import (
 	"github.com/rclone/rclone/lib/terminal"
 )
 
-// ErrBisyncAborted signals that bisync is aborted and forces exit code 2
+// ErrBisyncAborted signals that bisync is aborted and forces non-zero exit code
 var ErrBisyncAborted = errors.New("bisync aborted")
 
 // bisyncRun keeps bisync runtime state

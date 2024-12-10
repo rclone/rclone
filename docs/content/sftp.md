@@ -156,7 +156,7 @@ and the public key built into it will be used during the authentication process.
 If you have a certificate you may use it to sign your public key, creating a
 separate SSH user certificate that should be used instead of the plain public key
 extracted from the private key. Then you must provide the path to the
-user certificate public key file in `pubkey_file`.
+user certificate public key file in `pubkey_file` or the content of the file in `pubkey`.
 
 Note: This is not the traditional public key paired with your private key,
 typically saved as `/home/$USER/.ssh/id_rsa.pub`. Setting this path in
@@ -446,7 +446,15 @@ Properties:
 
 Raw PEM-encoded private key.
 
-If specified, will override key_file parameter.
+Note that this should be on a single line with line endings replaced with '\n', eg
+
+    key_pem = -----BEGIN RSA PRIVATE KEY-----\nMaMbaIXtE\n0gAMbMbaSsd\nMbaass\n-----END RSA PRIVATE KEY-----
+
+This will generate the single line correctly:
+
+    awk '{printf "%s\\n", $0}' < ~/.ssh/id_rsa
+
+If specified, it will override the key_file parameter.
 
 Properties:
 
@@ -483,6 +491,19 @@ Properties:
 
 - Config:      key_file_pass
 - Env Var:     RCLONE_SFTP_KEY_FILE_PASS
+- Type:        string
+- Required:    false
+
+#### --sftp-pubkey
+
+SSH public certificate for public certificate based authentication.
+Set this if you have a signed certificate you want to use for authentication.
+If specified will override pubkey_file.
+
+Properties:
+
+- Config:      pubkey
+- Env Var:     RCLONE_SFTP_PUBKEY
 - Type:        string
 - Required:    false
 
@@ -903,13 +924,13 @@ Maximum number of SFTP simultaneous connections, 0 for unlimited.
 Note that setting this is very likely to cause deadlocks so it should
 be used with care.
 
-If you are doing a sync or copy then make sure concurrency is one more
+If you are doing a sync or copy then make sure connections is one more
 than the sum of `--transfers` and `--checkers`.
 
 If you use `--check-first` then it just needs to be one more than the
 maximum of `--checkers` and `--transfers`.
 
-So for `concurrency 3` you'd use `--checkers 2 --transfers 2
+So for `connections 3` you'd use `--checkers 2 --transfers 2
 --check-first` or `--checkers 1 --transfers 1`.
 
 

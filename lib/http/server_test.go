@@ -3,6 +3,7 @@ package http
 import (
 	"context"
 	"crypto/tls"
+	"fmt"
 	"io"
 	"net"
 	"net/http"
@@ -63,46 +64,96 @@ func testReadTestdataFile(t *testing.T, path string) []byte {
 }
 
 func TestNewServerUnix(t *testing.T) {
-	ctx := context.Background()
-
 	tempDir := t.TempDir()
 	path := filepath.Join(tempDir, "rclone.sock")
 
-	cfg := DefaultCfg()
-	cfg.ListenAddr = []string{path}
-
-	auth := AuthConfig{
-		BasicUser: "test",
-		BasicPass: "test",
+	servers := []struct {
+		name   string
+		status int
+		result string
+		cfg    Config
+		auth   AuthConfig
+		user   string
+		pass   string
+	}{
+		{
+			name:   "ServerWithoutAuth/NoCreds",
+			status: http.StatusOK,
+			result: "hello world",
+			cfg: Config{
+				ListenAddr: []string{path},
+			},
+		}, {
+			name:   "ServerWithAuth/NoCreds",
+			status: http.StatusUnauthorized,
+			cfg: Config{
+				ListenAddr: []string{path},
+			},
+			auth: AuthConfig{
+				BasicUser: "test",
+				BasicPass: "test",
+			},
+		}, {
+			name:   "ServerWithAuth/GoodCreds",
+			status: http.StatusOK,
+			result: "hello world",
+			cfg: Config{
+				ListenAddr: []string{path},
+			},
+			auth: AuthConfig{
+				BasicUser: "test",
+				BasicPass: "test",
+			},
+			user: "test",
+			pass: "test",
+		}, {
+			name:   "ServerWithAuth/BadCreds",
+			status: http.StatusUnauthorized,
+			cfg: Config{
+				ListenAddr: []string{path},
+			},
+			auth: AuthConfig{
+				BasicUser: "test",
+				BasicPass: "test",
+			},
+			user: "testBAD",
+			pass: "testBAD",
+		},
 	}
 
-	s, err := NewServer(ctx, WithConfig(cfg), WithAuth(auth))
-	require.NoError(t, err)
-	defer func() {
-		require.NoError(t, s.Shutdown())
-		_, err := os.Stat(path)
-		require.ErrorIs(t, err, os.ErrNotExist, "shutdown should remove socket")
-	}()
+	for _, ss := range servers {
+		t.Run(ss.name, func(t *testing.T) {
+			s, err := NewServer(context.Background(), WithConfig(ss.cfg), WithAuth(ss.auth))
+			require.NoError(t, err)
+			defer func() {
+				require.NoError(t, s.Shutdown())
+				_, err := os.Stat(path)
+				require.ErrorIs(t, err, os.ErrNotExist, "shutdown should remove socket")
+			}()
 
-	require.Empty(t, s.URLs(), "unix socket should not appear in URLs")
+			require.Empty(t, s.URLs(), "unix socket should not appear in URLs")
 
-	expected := []byte("hello world")
-	s.Router().Mount("/", testEchoHandler(expected))
-	s.Serve()
+			s.Router().Mount("/", testEchoHandler([]byte(ss.result)))
+			s.Serve()
 
-	client := testNewHTTPClientUnix(path)
-	req, err := http.NewRequest("GET", "http://unix", nil)
-	require.NoError(t, err)
+			client := testNewHTTPClientUnix(path)
+			req, err := http.NewRequest("GET", "http://unix", nil)
+			require.NoError(t, err)
 
-	resp, err := client.Do(req)
-	require.NoError(t, err)
+			req.SetBasicAuth(ss.user, ss.pass)
 
-	testExpectRespBody(t, resp, expected)
+			resp, err := client.Do(req)
+			require.NoError(t, err)
+			defer func() {
+				_ = resp.Body.Close()
+			}()
 
-	require.Equal(t, http.StatusOK, resp.StatusCode, "unix sockets should ignore auth")
+			require.Equal(t, ss.status, resp.StatusCode, fmt.Sprintf("should return status %d", ss.status))
 
-	for _, key := range _testCORSHeaderKeys {
-		require.NotContains(t, resp.Header, key, "unix sockets should not be sent CORS headers")
+			if ss.result != "" {
+				testExpectRespBody(t, resp, []byte(ss.result))
+			}
+		})
 	}
 }
 

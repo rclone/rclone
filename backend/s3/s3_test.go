@@ -23,14 +23,20 @@ func SetupS3Test(t *testing.T) (context.Context, *Options, *http.Client) {
 
 // TestIntegration runs integration tests against the remote
 func TestIntegration(t *testing.T) {
-	fstests.Run(t, &fstests.Opt{
+	opt := &fstests.Opt{
 		RemoteName:  "TestS3:",
 		NilObject:   (*Object)(nil),
-		TiersToTest: []string{"STANDARD", "STANDARD_IA"},
+		TiersToTest: []string{"STANDARD"},
 		ChunkedUpload: fstests.ChunkedUploadConfig{
 			MinChunkSize: minChunkSize,
 		},
-	})
+	}
+	// Test wider range of tiers on AWS
+	if *fstest.RemoteName == "" || *fstest.RemoteName == "TestS3:" {
+		opt.TiersToTest = []string{"STANDARD", "STANDARD_IA"}
+	}
+	fstests.Run(t, opt)
+
 }
 
 func TestIntegration2(t *testing.T) {

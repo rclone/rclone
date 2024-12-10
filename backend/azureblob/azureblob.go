@@ -210,6 +210,22 @@ keys instead of setting ` + "`service_principal_file`" + `.
 `,
 			Advanced: true,
 		}, {
+			Name: "disable_instance_discovery",
+			Help: `Skip requesting Microsoft Entra instance metadata
+
+This should be set true only by applications authenticating in
+disconnected clouds, or private clouds such as Azure Stack.
+
+It determines whether rclone requests Microsoft Entra instance
+metadata from ` + "`https://login.microsoft.com/`" + ` before
+authenticating.
+
+Setting this to true will skip this request, making you responsible
+for ensuring the configured authority is valid and trustworthy.
+`,
+			Default:  false,
+			Advanced: true,
+		}, {
 			Name: "use_msi",
 			Help: `Use a managed service identity to authenticate (only works in Azure).
 
@@ -241,6 +257,20 @@ msi_client_id, or msi_mi_res_id parameters.`,
 		}, {
 			Name:     "use_emulator",
 			Help:     "Uses local storage emulator if provided as 'true'.\n\nLeave blank if using real azure storage endpoint.",
+			Default:  false,
+			Advanced: true,
+		}, {
+			Name: "use_az",
+			Help: `Use Azure CLI tool az for authentication
+
+Set to use the [Azure CLI tool az](https://learn.microsoft.com/en-us/cli/azure/)
+as the sole means of authentication.
+
+Setting this can be useful if you wish to use the az CLI on a host with
+a System Managed Identity that you do not want to use.
+
+Don't set env_auth at the same time.
+`,
 			Default:  false,
 			Advanced: true,
 		}, {
@@ -438,10 +468,12 @@ type Options struct {
 	Username                   string               `config:"username"`
 	Password                   string               `config:"password"`
 	ServicePrincipalFile       string               `config:"service_principal_file"`
+	DisableInstanceDiscovery   bool                 `config:"disable_instance_discovery"`
 	UseMSI                     bool                 `config:"use_msi"`
 	MSIObjectID                string               `config:"msi_object_id"`
 	MSIClientID                string               `config:"msi_client_id"`
 	MSIResourceID              string               `config:"msi_mi_res_id"`
+	UseAZ                      bool                 `config:"use_az"`
 	Endpoint                   string               `config:"endpoint"`
 	ChunkSize                  fs.SizeSuffix        `config:"chunk_size"`
 	UploadConcurrency          int                  `config:"upload_concurrency"`
@@ -725,7 +757,8 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		}
 		// Read credentials from the environment
 		options := azidentity.DefaultAzureCredentialOptions{
-			ClientOptions: policyClientOptions,
+			ClientOptions:            policyClientOptions,
+			DisableInstanceDiscovery: opt.DisableInstanceDiscovery,
 		}
 		cred, err = azidentity.NewDefaultAzureCredential(&options)
 		if err != nil {
@@ -874,6 +907,12 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		cred, err = azidentity.NewManagedIdentityCredential(&options)
 		if err != nil {
 			return nil, fmt.Errorf("failed to acquire MSI token: %w", err)
+		}
+	case opt.UseAZ:
+		var options = azidentity.AzureCLICredentialOptions{}
+		cred, err = azidentity.NewAzureCLICredential(&options)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create Azure CLI credentials: %w", err)
 		}
 	case opt.Account != "":
 		// Anonymous access

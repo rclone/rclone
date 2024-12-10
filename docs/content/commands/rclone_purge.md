@@ -9,7 +9,6 @@ Remove the path and all of its contents.
 
 ## Synopsis
 
-
 Remove the path and all of its contents.  Note that this does not obey
 include/exclude filters - everything will be removed.  Use the
 [delete](/commands/rclone_delete/) command if you want to selectively
@@ -30,10 +29,12 @@ rclone purge remote:path [flags]
   -h, --help   help for purge
 ```
 
+Options shared with other commands are described next.
+See the [global flags page](/flags/) for global options not listed here.
 
-## Important Options
+### Important Options
 
-Important flags useful for most commands.
+Important flags useful for most commands
 
 ```
   -n, --dry-run         Do a trial run with no permanent changes
@@ -41,9 +42,7 @@ Important flags useful for most commands.
   -v, --verbose count   Print lots more stuff (repeat for more)
 ```
 
-See the [global flags page](/flags/) for global options not listed here.
-
-# SEE ALSO
+## See Also
 
 * [rclone](/commands/rclone/)	 - Show help for rclone commands, flags and backends.
 

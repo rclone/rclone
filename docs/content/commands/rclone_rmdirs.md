@@ -10,7 +10,6 @@ Remove empty directories under the path.
 
 ## Synopsis
 
-
 This recursively removes any empty directories (including directories
 that only contain empty directories), that it finds under the path.
 The root path itself will also be removed if it is empty, unless
@@ -42,10 +41,12 @@ rclone rmdirs remote:path [flags]
       --leave-root   Do not remove root directory if empty
 ```
 
+Options shared with other commands are described next.
+See the [global flags page](/flags/) for global options not listed here.
 
-## Important Options
+### Important Options
 
-Important flags useful for most commands.
+Important flags useful for most commands
 
 ```
   -n, --dry-run         Do a trial run with no permanent changes
@@ -53,9 +54,7 @@ Important flags useful for most commands.
   -v, --verbose count   Print lots more stuff (repeat for more)
 ```
 
-See the [global flags page](/flags/) for global options not listed here.
-
-# SEE ALSO
+## See Also
 
 * [rclone](/commands/rclone/)	 - Show help for rclone commands, flags and backends.
 

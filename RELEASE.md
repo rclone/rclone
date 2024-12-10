@@ -168,6 +168,8 @@ docker buildx build -t rclone/rclone:testing --progress=plain --platform linux/a
 
 To make a full build then set the tags correctly and add `--push`
 
+Note that you can't only build one architecture - you need to build them all.
+
 ```
-docker buildx build --platform linux/amd64,linux/386,linux/arm64,linux/arm/v7 -t rclone/rclone:1.54.1 -t rclone/rclone:1.54 -t rclone/rclone:1 -t rclone/rclone:latest --push .
+docker buildx build --platform linux/amd64,linux/386,linux/arm64,linux/arm/v7,linux/arm/v6 -t rclone/rclone:1.54.1 -t rclone/rclone:1.54 -t rclone/rclone:1 -t rclone/rclone:latest --push .
 ```

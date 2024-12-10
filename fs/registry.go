@@ -264,14 +264,9 @@ func (o *Option) String() string {
 		if len(stringArray) == 0 {
 			return ""
 		}
-		// Encode string arrays as JSON
+		// Encode string arrays as CSV
 		// The default Go encoding can't be decoded uniquely
-		buf, err := json.Marshal(stringArray)
-		if err != nil {
-			Errorf(nil, "Can't encode default value for %q key - ignoring: %v", o.Name, err)
-			return "[]"
-		}
-		return string(buf)
+		return CommaSepList(stringArray).String()
 	}
 	return fmt.Sprint(v)
 }
@@ -531,7 +526,22 @@ func (oi *OptionsInfo) load() error {
 // their values read from the options, environment variables and
 // command line parameters.
 func GlobalOptionsInit() error {
-	for _, opt := range OptionsRegistry {
+	var keys []string
+	for key := range OptionsRegistry {
+		keys = append(keys, key)
+	}
+	sort.Slice(keys, func(i, j int) bool {
+		// Sort alphabetically, but with "main" first
+		if keys[i] == "main" {
+			return true
+		}
+		if keys[j] == "main" {
+			return false
+		}
+		return keys[i] < keys[j]
+	})
+	for _, key := range keys {
+		opt := OptionsRegistry[key]
 		err := opt.load()
 		if err != nil {
 			return err

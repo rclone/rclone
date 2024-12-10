@@ -55,17 +55,17 @@ backends:
    remote:   "TestChunkerChunk3bNoRenameLocal:"
    fastlist: true
    maxfile:  6k
- - backend:  "chunker"
-   remote:   "TestChunkerMailru:"
-   fastlist: true
-   ignore:
-     - TestApplyTransforms
- - backend:  "chunker"
-   remote:   "TestChunkerChunk50bMailru:"
-   fastlist: true
-   maxfile:  10k
-   ignore:
-     - TestApplyTransforms
+ # - backend:  "chunker"
+ #   remote:   "TestChunkerMailru:"
+ #   fastlist: true
+ #   ignore:
+ #     - TestApplyTransforms
+ # - backend:  "chunker"
+ #   remote:   "TestChunkerChunk50bMailru:"
+ #   fastlist: true
+ #   maxfile:  10k
+ #   ignore:
+ #     - TestApplyTransforms
  - backend:  "chunker"
    remote:   "TestChunkerChunk50bYandex:"
    fastlist: true
@@ -395,6 +395,10 @@ backends:
  - backend:  "cache"
    remote:   "TestCache:"
    fastlist: false
+   ignoretests:
+     - TestBisyncLocalRemote
+     - TestBisyncRemoteLocal
+     - TestBisyncRemoteRemote
  - backend:  "mega"
    remote:   "TestMega:"
    fastlist: false
@@ -422,6 +426,7 @@ backends:
      - TestCaseInsensitiveMoveFile
      - TestFixCase
      - TestListDirSorted        # Can't upload files starting with . - FIXME fix with encoding
+     - TestSyncOverlapWithFilter # Can't upload files starting with . - FIXME fix with encoding
  - backend:  "premiumizeme"
    remote:   "TestPremiumizeMe:"
    fastlist: false
@@ -444,6 +449,7 @@ backends:
    remote:   "TestMailru:"
    subdir:   false
    fastlist: false
+   oneonly:  true
    ignore:
      - TestApplyTransforms
  - backend:  "seafile"
@@ -497,4 +503,7 @@ backends:
    fastlist: false
  - backend:  "ulozto"
    remote:   "TestUlozto:"
+   fastlist: false
+ - backend:  "iclouddrive"
+   remote:   "TestICloudDrive:"
    fastlist: false

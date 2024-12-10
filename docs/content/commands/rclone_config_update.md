@@ -10,7 +10,6 @@ Update options in an existing remote.
 
 ## Synopsis
 
-
 Update an existing remote's options. The options should be passed in
 pairs of `key` `value` or as `key=value`.
 
@@ -130,10 +129,9 @@ rclone config update name [key value]+ [flags]
       --state string      State - use with --continue
 ```
 
-
 See the [global flags page](/flags/) for global options not listed here.
 
-# SEE ALSO
+## See Also
 
 * [rclone config](/commands/rclone_config/)	 - Enter an interactive configuration session.
 

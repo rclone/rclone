@@ -28,10 +28,9 @@ so reading their documentation first is recommended.
   -h, --help   help for test
 ```
 
-
 See the [global flags page](/flags/) for global options not listed here.
 
-# SEE ALSO
+## See Also
 
 * [rclone](/commands/rclone/)	 - Show help for rclone commands, flags and backends.
 * [rclone test changenotify](/commands/rclone_test_changenotify/)	 - Log any change notify requests for the remote passed in.

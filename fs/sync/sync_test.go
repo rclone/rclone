@@ -597,6 +597,108 @@ func TestServerSideCopy(t *testing.T) {
 	fstest.CheckItems(t, FremoteCopy, file1)
 }
 
+// Test copying a file over itself
+func TestCopyOverSelf(t *testing.T) {
+	ctx := context.Background()
+	r := fstest.NewRun(t)
+	file1 := r.WriteObject(ctx, "sub dir/hello world", "hello world", t1)
+	r.CheckRemoteItems(t, file1)
+	file2 := r.WriteFile("sub dir/hello world", "hello world again", t2)
+	r.CheckLocalItems(t, file2)
+
+	ctx = predictDstFromLogger(ctx)
+	err := CopyDir(ctx, r.Fremote, r.Flocal, false)
+	require.NoError(t, err)
+	testLoggerVsLsf(ctx, r.Fremote, operations.GetLoggerOpt(ctx).JSON, t)
+	r.CheckRemoteItems(t, file2)
+}
+
+// Test server-side copying a file over itself
+func TestServerSideCopyOverSelf(t *testing.T) {
+	ctx := context.Background()
+	r := fstest.NewRun(t)
+	file1 := r.WriteObject(ctx, "sub dir/hello world", "hello world", t1)
+	r.CheckRemoteItems(t, file1)
+
+	FremoteCopy, _, finaliseCopy, err := fstest.RandomRemote()
+	require.NoError(t, err)
+	defer finaliseCopy()
+	t.Logf("Server side copy (if possible) %v -> %v", r.Fremote, FremoteCopy)
+
+	ctx = predictDstFromLogger(ctx)
+	err = CopyDir(ctx, FremoteCopy, r.Fremote, false)
+	require.NoError(t, err)
+	testLoggerVsLsf(ctx, r.Fremote, operations.GetLoggerOpt(ctx).JSON, t)
+	fstest.CheckItems(t, FremoteCopy, file1)
+
+	file2 := r.WriteObject(ctx, "sub dir/hello world", "hello world again", t2)
+	r.CheckRemoteItems(t, file2)
+
+	ctx = predictDstFromLogger(ctx)
+	err = CopyDir(ctx, FremoteCopy, r.Fremote, false)
+	require.NoError(t, err)
+	testLoggerVsLsf(ctx, r.Fremote, operations.GetLoggerOpt(ctx).JSON, t)
+	fstest.CheckItems(t, FremoteCopy, file2)
+}
+
+// Test moving a file over itself
+func TestMoveOverSelf(t *testing.T) {
+	ctx := context.Background()
+	r := fstest.NewRun(t)
+	file1 := r.WriteObject(ctx, "sub dir/hello world", "hello world", t1)
+	r.CheckRemoteItems(t, file1)
+	file2 := r.WriteFile("sub dir/hello world", "hello world again", t2)
+	r.CheckLocalItems(t, file2)
+
+	ctx = predictDstFromLogger(ctx)
+	err := MoveDir(ctx, r.Fremote, r.Flocal, false, false)
+	require.NoError(t, err)
+	testLoggerVsLsf(ctx, r.Fremote, operations.GetLoggerOpt(ctx).JSON, t)
+	r.CheckLocalItems(t)
+	r.CheckRemoteItems(t, file2)
+}
+
+// Test server-side moving a file over itself
+func TestServerSideMoveOverSelf(t *testing.T) {
+	ctx := context.Background()
+	r := fstest.NewRun(t)
+	file1 := r.WriteObject(ctx, "sub dir/hello world", "hello world", t1)
+	r.CheckRemoteItems(t, file1)
+
+	FremoteCopy, _, finaliseCopy, err := fstest.RandomRemote()
+	require.NoError(t, err)
+	defer finaliseCopy()
+	t.Logf("Server side copy (if possible) %v -> %v", r.Fremote, FremoteCopy)
+
+	ctx = predictDstFromLogger(ctx)
+	err = CopyDir(ctx, FremoteCopy, r.Fremote, false)
+	require.NoError(t, err)
+	testLoggerVsLsf(ctx, r.Fremote, operations.GetLoggerOpt(ctx).JSON, t)
+	fstest.CheckItems(t, FremoteCopy, file1)
+
+	file2 := r.WriteObject(ctx, "sub dir/hello world", "hello world again", t2)
+	r.CheckRemoteItems(t, file2)
+
+	// ctx = predictDstFromLogger(ctx)
+	err = MoveDir(ctx, FremoteCopy, r.Fremote, false, false)
+	require.NoError(t, err)
+	// testLoggerVsLsf(ctx, r.Fremote, operations.GetLoggerOpt(ctx).JSON, t) // not currently supported
+	r.CheckRemoteItems(t)
+	fstest.CheckItems(t, FremoteCopy, file2)
+
+	// check that individual file moves also work without MoveDir
+	file3 := r.WriteObject(ctx, "sub dir/hello world", "hello world a third time", t3)
+	r.CheckRemoteItems(t, file3)
+
+	ctx = predictDstFromLogger(ctx)
+	fs.Debugf(nil, "testing file moves")
+	err = moveDir(ctx, FremoteCopy, r.Fremote, false, false)
+	require.NoError(t, err)
+	testLoggerVsLsf(ctx, FremoteCopy, operations.GetLoggerOpt(ctx).JSON, t)
+	r.CheckRemoteItems(t)
+	fstest.CheckItems(t, FremoteCopy, file3)
+}
+
 // Check that if the local file doesn't exist when we copy it up,
 // nothing happens to the remote file
 func TestCopyAfterDelete(t *testing.T) {
@@ -844,7 +946,7 @@ func TestSyncIgnoreErrors(t *testing.T) {
 
 	accounting.GlobalStats().ResetCounters()
 	ctx = predictDstFromLogger(ctx)
-	_ = fs.CountError(errors.New("boom"))
+	_ = fs.CountError(ctx, errors.New("boom"))
 	assert.NoError(t, Sync(ctx, r.Fremote, r.Flocal, false))
 	testLoggerVsLsf(ctx, r.Fremote, operations.GetLoggerOpt(ctx).JSON, t)
 
@@ -1165,7 +1267,7 @@ func TestSyncAfterRemovingAFileAndAddingAFileSubDirWithErrors(t *testing.T) {
 
 	ctx = predictDstFromLogger(ctx)
 	accounting.GlobalStats().ResetCounters()
-	_ = fs.CountError(errors.New("boom"))
+	_ = fs.CountError(ctx, errors.New("boom"))
 	err := Sync(ctx, r.Fremote, r.Flocal, false)
 	assert.Equal(t, fs.ErrorNotDeleting, err)
 	testLoggerVsLsf(ctx, r.Fremote, operations.GetLoggerOpt(ctx).JSON, t)
@@ -2320,15 +2422,19 @@ func testSyncBackupDir(t *testing.T, backupDir string, suffix string, suffixKeep
 
 	r.CheckRemoteItems(t, file1b, file2, file3a, file1a)
 }
+
 func TestSyncBackupDir(t *testing.T) {
 	testSyncBackupDir(t, "backup", "", false)
 }
+
 func TestSyncBackupDirWithSuffix(t *testing.T) {
 	testSyncBackupDir(t, "backup", ".bak", false)
 }
+
 func TestSyncBackupDirWithSuffixKeepExtension(t *testing.T) {
 	testSyncBackupDir(t, "backup", "-2019-01-01", true)
 }
+
 func TestSyncBackupDirSuffixOnly(t *testing.T) {
 	testSyncBackupDir(t, "", ".bak", false)
 }
@@ -2806,7 +2912,7 @@ func predictDstFromLogger(ctx context.Context) context.Context {
 }
 
 func DstLsf(ctx context.Context, Fremote fs.Fs) *bytes.Buffer {
-	var opt = operations.ListJSONOpt{
+	opt := operations.ListJSONOpt{
 		NoModTime:  false,
 		NoMimeType: true,
 		DirsOnly:   false,

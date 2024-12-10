@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"slices"
 
 	"github.com/rclone/rclone/fs"
 	yaml "gopkg.in/yaml.v2"
@@ -35,6 +36,7 @@ type Backend struct {
 	CleanUp     bool     // when running clean, run cleanup first
 	Ignore      []string // test names to ignore the failure of
 	Tests       []string // paths of tests to run, blank for all
+	IgnoreTests []string // paths of tests not to run, blank for none
 	ListRetries int      // -list-retries if > 0
 	ExtraTime   float64  // factor to multiply the timeout by
 }
@@ -42,15 +44,15 @@ type Backend struct {
 // includeTest returns true if this backend should be included in this
 // test
 func (b *Backend) includeTest(t *Test) bool {
+	// Is this test ignored
+	if slices.Contains(b.IgnoreTests, t.Path) {
+		return false
+	}
+	// Empty b.Tests imples do all of them except the ignored
 	if len(b.Tests) == 0 {
 		return true
 	}
-	for _, testPath := range b.Tests {
-		if testPath == t.Path {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(b.Tests, t.Path)
 }
 
 // MakeRuns creates Run objects the Backend and Test

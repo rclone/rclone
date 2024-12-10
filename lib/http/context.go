@@ -36,12 +36,6 @@ func IsAuthenticated(r *http.Request) bool {
 	return false
 }
 
-// IsUnixSocket checks if the request was received on a unix socket, used to skip auth & CORS
-func IsUnixSocket(r *http.Request) bool {
-	v, _ := r.Context().Value(ctxKeyUnixSock).(bool)
-	return v
-}
-
 // PublicURL returns the URL defined in NewBaseContext, used for logging & CORS
 func PublicURL(r *http.Request) string {
 	v, _ := r.Context().Value(ctxKeyPublicURL).(string)

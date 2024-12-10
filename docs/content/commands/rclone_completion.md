@@ -12,7 +12,6 @@ Output completion script for a given shell.
 
 ## Synopsis
 
-
 Generates a shell completion script for rclone.
 Run with `--help` to list the supported shells.
 
@@ -23,10 +22,9 @@ Run with `--help` to list the supported shells.
   -h, --help   help for completion
 ```
 
-
 See the [global flags page](/flags/) for global options not listed here.
 
-# SEE ALSO
+## See Also
 
 * [rclone](/commands/rclone/)	 - Show help for rclone commands, flags and backends.
 * [rclone completion bash](/commands/rclone_completion_bash/)	 - Output bash completion script for rclone.

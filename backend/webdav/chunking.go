@@ -14,21 +14,30 @@ import (
 	"io"
 	"net/http"
 	"path"
+	"time"
 
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/lib/readers"
 	"github.com/rclone/rclone/lib/rest"
 )
 
-func (f *Fs) shouldRetryChunkMerge(ctx context.Context, resp *http.Response, err error) (bool, error) {
+func (f *Fs) shouldRetryChunkMerge(ctx context.Context, resp *http.Response, err error, sleepTime *time.Duration, wasLocked *bool) (bool, error) {
 	// Not found. Can be returned by NextCloud when merging chunks of an upload.
 	if resp != nil && resp.StatusCode == 404 {
+		if *wasLocked {
+			// Assume a 404 error after we've received a 423 error is actually a success
+			return false, nil
+		}
 		return true, err
 	}
 
 	// 423 LOCKED
 	if resp != nil && resp.StatusCode == 423 {
-		return false, fmt.Errorf("merging the uploaded chunks failed with 423 LOCKED. This usually happens when the chunks merging is still in progress on NextCloud, but it may also indicate a failed transfer: %w", err)
+		*wasLocked = true
+		fs.Logf(f, "Sleeping for %v to wait for chunks to be merged after 423 error", *sleepTime)
+		time.Sleep(*sleepTime)
+		*sleepTime *= 2
+		return true, fmt.Errorf("merging the uploaded chunks failed with 423 LOCKED. This usually happens when the chunks merging is still in progress on NextCloud, but it may also indicate a failed transfer: %w", err)
 	}
 
 	return f.shouldRetry(ctx, resp, err)
@@ -180,9 +189,11 @@ func (o *Object) mergeChunks(ctx context.Context, uploadDir string, options []fs
 	}
 	opts.ExtraHeaders = o.extraHeaders(ctx, src)
 	opts.ExtraHeaders["Destination"] = destinationURL.String()
+	sleepTime := 5 * time.Second
+	wasLocked := false
 	err = o.fs.pacer.Call(func() (bool, error) {
 		resp, err = o.fs.srv.Call(ctx, &opts)
-		return o.fs.shouldRetryChunkMerge(ctx, resp, err)
+		return o.fs.shouldRetryChunkMerge(ctx, resp, err, &sleepTime, &wasLocked)
 	})
 	if err != nil {
 		return fmt.Errorf("finalize chunked upload failed, destinationURL: \"%s\": %w", destinationURL, err)

@@ -1,6 +1,7 @@
 package dlna
 
 import (
+	"context"
 	"crypto/md5"
 	"encoding/xml"
 	"fmt"
@@ -107,7 +108,7 @@ func (lrw *loggingResponseWriter) logRequest(code int, err interface{}) {
 		err = ""
 	}
 
-	fs.LogPrintf(level, lrw.request.URL, "%s %s %d %s %s",
+	fs.LogLevelPrintf(level, lrw.request.URL, "%s %s %d %s %s",
 		lrw.request.RemoteAddr, lrw.request.Method, code,
 		lrw.request.Header.Get("SOAPACTION"), err)
 }
@@ -142,9 +143,10 @@ func logging(next http.Handler) http.Handler {
 // Error recovery and general request logging are left to logging().
 func traceLogging(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
 		dump, err := httputil.DumpRequest(r, true)
 		if err != nil {
-			serveError(nil, w, "error dumping request", err)
+			serveError(ctx, nil, w, "error dumping request", err)
 			return
 		}
 		fs.Debugf(nil, "%s", dump)
@@ -182,8 +184,8 @@ func withHeader(name string, value string, next http.Handler) http.Handler {
 }
 
 // serveError returns an http.StatusInternalServerError and logs the error
-func serveError(what interface{}, w http.ResponseWriter, text string, err error) {
-	err = fs.CountError(err)
+func serveError(ctx context.Context, what interface{}, w http.ResponseWriter, text string, err error) {
+	err = fs.CountError(ctx, err)
 	fs.Errorf(what, "%s: %v", text, err)
 	http.Error(w, text+".", http.StatusInternalServerError)
 }

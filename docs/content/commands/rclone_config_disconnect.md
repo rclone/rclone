@@ -9,7 +9,6 @@ Disconnects user from remote
 
 ## Synopsis
 
-
 This disconnects the remote: passed in to the cloud storage system.
 
 This normally means revoking the oauth token.
@@ -27,10 +26,9 @@ rclone config disconnect remote: [flags]
   -h, --help   help for disconnect
 ```
 
-
 See the [global flags page](/flags/) for global options not listed here.
 
-# SEE ALSO
+## See Also
 
 * [rclone config](/commands/rclone_config/)	 - Enter an interactive configuration session.
 

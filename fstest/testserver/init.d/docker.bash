@@ -18,5 +18,5 @@ status() {
 }
 
 docker_ip() {
-    docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{"\n"}}{{end}}' "$NAME" | head -1
+    docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{"\n"}}{{end}}' "$NAME" | head -n 1
 }

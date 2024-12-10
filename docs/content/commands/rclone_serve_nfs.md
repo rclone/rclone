@@ -13,34 +13,69 @@ Serve the remote as an NFS mount
 
 Create an NFS server that serves the given remote over the network.
 	
-The primary purpose for this command is to enable [mount command](/commands/rclone_mount/) on recent macOS versions where
-installing FUSE is very cumbersome. 
+This implements an NFSv3 server to serve any rclone remote via NFS.
 
-Since this is running on NFSv3, no authentication method is available. Any client
-will be able to access the data. To limit access, you can use serve NFS on loopback address
-and rely on secure tunnels (such as SSH). For this reason, by default, a random TCP port is chosen and loopback interface is used for the listening address;
-meaning that it is only available to the local machine. If you want other machines to access the
-NFS mount over local network, you need to specify the listening address and port using `--addr` flag.
+The primary purpose for this command is to enable the [mount
+command](/commands/rclone_mount/) on recent macOS versions where
+installing FUSE is very cumbersome.
 
-Modifying files through NFS protocol requires VFS caching. Usually you will need to specify `--vfs-cache-mode`
-in order to be able to write to the mountpoint (full is recommended). If you don't specify VFS cache mode,
-the mount will be read-only. Note also that `--nfs-cache-handle-limit` controls the maximum number of cached file handles stored by the caching handler.
-This should not be set too low or you may experience errors when trying to access files. The default is `1000000`, but consider lowering this limit if
-the server's system resource usage causes problems.
+This server does not implement any authentication so any client will be
+able to access the data. To limit access, you can use `serve nfs` on
+the loopback address or rely on secure tunnels (such as SSH) or use
+firewalling.
+
+For this reason, by default, a random TCP port is chosen and the
+loopback interface is used for the listening address by default;
+meaning that it is only available to the local machine. If you want
+other machines to access the NFS mount over local network, you need to
+specify the listening address and port using the `--addr` flag.
+
+Modifying files through the NFS protocol requires VFS caching. Usually
+you will need to specify `--vfs-cache-mode` in order to be able to
+write to the mountpoint (`full` is recommended). If you don't specify
+VFS cache mode, the mount will be read-only.
+
+`--nfs-cache-type` controls the type of the NFS handle cache. By
+default this is `memory` where new handles will be randomly allocated
+when needed. These are stored in memory. If the server is restarted
+the handle cache will be lost and connected NFS clients will get stale
+handle errors.
+
+`--nfs-cache-type disk` uses an on disk NFS handle cache. Rclone
+hashes the path of the object and stores it in a file named after the
+hash. These hashes are stored on disk the directory controlled by
+`--cache-dir` or the exact directory may be specified with
+`--nfs-cache-dir`. Using this means that the NFS server can be
+restarted at will without affecting the connected clients.
+
+`--nfs-cache-type symlink` is similar to `--nfs-cache-type disk` in
+that it uses an on disk cache, but the cache entries are held as
+symlinks. Rclone will use the handle of the underlying file as the NFS
+handle which improves performance. This sort of cache can't be backed
+up and restored as the underlying handles will change. This is Linux
+only.
+
+`--nfs-cache-handle-limit` controls the maximum number of cached NFS
+handles stored by the caching handler. This should not be set too low
+or you may experience errors when trying to access files. The default
+is `1000000`, but consider lowering this limit if the server's system
+resource usage causes problems. This is only used by the `memory` type
+cache.
 
 To serve NFS over the network use following command:
 
     rclone serve nfs remote: --addr 0.0.0.0:$PORT --vfs-cache-mode=full
 
-We specify a specific port that we can use in the mount command:
-
-To mount the server under Linux/macOS, use the following command:
+This specifies a port that can be used in the mount command. To mount
+the server under Linux/macOS, use the following command:
     
-    mount -oport=$PORT,mountport=$PORT $HOSTNAME: path/to/mountpoint
+    mount -t nfs -o port=$PORT,mountport=$PORT,tcp $HOSTNAME:/ path/to/mountpoint
 
-Where `$PORT` is the same port number we used in the serve nfs command.
+Where `$PORT` is the same port number used in the `serve nfs` command
+and `$HOSTNAME` is the network address of the machine that `serve nfs`
+was run on.
 
-This feature is only available on Unix platforms.
+This command is only available on Unix platforms.
 
 ## VFS - Virtual File System
 
@@ -274,6 +309,11 @@ These flags control the chunking:
 
     --vfs-read-chunk-size SizeSuffix        Read the source objects in chunks (default 128M)
     --vfs-read-chunk-size-limit SizeSuffix  Max chunk doubling size (default off)
+    --vfs-read-chunk-streams int            The number of parallel streams to read at once
+
+The chunking behaves differently depending on the `--vfs-read-chunk-streams` parameter.
+
+### `--vfs-read-chunk-streams` == 0
 
 Rclone will start reading a chunk of size `--vfs-read-chunk-size`,
 and then double the size for each read. When `--vfs-read-chunk-size-limit` is
@@ -288,6 +328,30 @@ When `--vfs-read-chunk-size-limit 500M` is specified, the result would be
 0-100M, 100M-300M, 300M-700M, 700M-1200M, 1200M-1700M and so on.
 
 Setting `--vfs-read-chunk-size` to `0` or "off" disables chunked reading.
+
+The chunks will not be buffered in memory.
+
+### `--vfs-read-chunk-streams` > 0
+
+Rclone reads `--vfs-read-chunk-streams` chunks of size
+`--vfs-read-chunk-size` concurrently. The size for each read will stay
+constant.
+
+This improves performance performance massively on high latency links
+or very high bandwidth links to high performance object stores.
+
+Some experimentation will be needed to find the optimum values of
+`--vfs-read-chunk-size` and `--vfs-read-chunk-streams` as these will
+depend on the backend in use and the latency to the backend.
+
+For high performance object stores (eg AWS S3) a reasonable place to
+start might be `--vfs-read-chunk-streams 16` and
+`--vfs-read-chunk-size 4M`. In testing with AWS S3 the performance
+scaled roughly as the `--vfs-read-chunk-streams` setting.
+
+Similar settings should work for high latency links, but depending on
+the latency they may need more `--vfs-read-chunk-streams` in order to
+get the throughput.
 
 ## VFS Performance
 
@@ -406,18 +470,20 @@ rclone serve nfs remote:path [flags]
 ```
       --addr string                            IPaddress:Port or :Port to bind server to
       --dir-cache-time Duration                Time to cache directory entries for (default 5m0s)
-      --dir-perms FileMode                     Directory permissions (default 0777)
-      --file-perms FileMode                    File permissions (default 0666)
+      --dir-perms FileMode                     Directory permissions (default 777)
+      --file-perms FileMode                    File permissions (default 666)
       --gid uint32                             Override the gid field set by the filesystem (not supported on Windows) (default 1000)
   -h, --help                                   help for nfs
+      --nfs-cache-dir string                   The directory the NFS handle cache will use if set
       --nfs-cache-handle-limit int             max file handles cached simultaneously (min 5) (default 1000000)
+      --nfs-cache-type memory|disk|symlink     Type of NFS handle cache to use (default memory)
       --no-checksum                            Don't compare checksums on up/download
       --no-modtime                             Don't read/write the modification time (can speed things up)
       --no-seek                                Don't allow seeking in files
       --poll-interval Duration                 Time to wait between polling for changes, must be smaller than dir-cache-time and only on supported remotes (set 0 to disable) (default 1m0s)
       --read-only                              Only allow read-only access
       --uid uint32                             Override the uid field set by the filesystem (not supported on Windows) (default 1000)
-      --umask int                              Override the permission bits set by the filesystem (not supported on Windows) (default 2)
+      --umask FileMode                         Override the permission bits set by the filesystem (not supported on Windows) (default 002)
       --vfs-block-norm-dupes                   If duplicate filenames exist in the same directory (after normalization), log an error and hide the duplicates (may have a performance cost)
       --vfs-cache-max-age Duration             Max time since last access of objects in the cache (default 1h0m0s)
       --vfs-cache-max-size SizeSuffix          Max total size of objects in the cache (default off)
@@ -430,6 +496,7 @@ rclone serve nfs remote:path [flags]
       --vfs-read-ahead SizeSuffix              Extra read ahead over --buffer-size when using cache-mode full
       --vfs-read-chunk-size SizeSuffix         Read the source objects in chunks (default 128Mi)
       --vfs-read-chunk-size-limit SizeSuffix   If greater than --vfs-read-chunk-size, double the chunk size after each chunk read, until the limit is reached ('off' is unlimited) (default off)
+      --vfs-read-chunk-streams int             The number of parallel streams to read at once
       --vfs-read-wait Duration                 Time to wait for in-sequence read before seeking (default 20ms)
       --vfs-refresh                            Refreshes the directory cache recursively in the background on start
       --vfs-used-is-size rclone size           Use the rclone size algorithm for Used size
@@ -437,10 +504,12 @@ rclone serve nfs remote:path [flags]
       --vfs-write-wait Duration                Time to wait for in-sequence write before giving error (default 1s)
 ```
 
+Options shared with other commands are described next.
+See the [global flags page](/flags/) for global options not listed here.
 
-## Filter Options
+### Filter Options
 
-Flags for filtering directory listings.
+Flags for filtering directory listings
 
 ```
       --delete-excluded                     Delete files on dest excluded from sync
@@ -467,9 +536,7 @@ Flags for filtering directory listings.
       --min-size SizeSuffix                 Only transfer files bigger than this in KiB or suffix B|K|M|G|T|P (default off)
 ```
 
-See the [global flags page](/flags/) for global options not listed here.
-
-# SEE ALSO
+## See Also
 
 * [rclone serve](/commands/rclone_serve/)	 - Serve a remote over a protocol.
 

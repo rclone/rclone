@@ -404,6 +404,32 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	return dstObj, nil
 }
 
+// About gets quota information
+func (f *Fs) About(ctx context.Context) (usage *fs.Usage, err error) {
+	var uInfo usersInfoResponse
+	var resp *http.Response
+
+	err = f.pacer.Call(func() (bool, error) {
+		opts := rest.Opts{
+			Method: "GET",
+			Path:   "/users/info.json/" + f.session.SessionID,
+		}
+		resp, err = f.srv.CallJSON(ctx, &opts, nil, &uInfo)
+		return f.shouldRetry(ctx, resp, err)
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	usage = &fs.Usage{
+		Used:  fs.NewUsageValue(uInfo.StorageUsed),
+		Total: fs.NewUsageValue(uInfo.MaxStorage * 1024 * 1024), // MaxStorage appears to be in MB
+		Free:  fs.NewUsageValue(uInfo.MaxStorage*1024*1024 - uInfo.StorageUsed),
+	}
+	return usage, nil
+}
+
 // Move src to this remote using server-side move operations.
 //
 // This is stored with the remote path given.
@@ -1147,6 +1173,7 @@ var (
 	_ fs.Mover           = (*Fs)(nil)
 	_ fs.DirMover        = (*Fs)(nil)
 	_ fs.DirCacheFlusher = (*Fs)(nil)
+	_ fs.Abouter         = (*Fs)(nil)
 	_ fs.Object          = (*Object)(nil)
 	_ fs.IDer            = (*Object)(nil)
 	_ fs.ParentIDer      = (*Object)(nil)

@@ -85,7 +85,7 @@ var OptionsInfo = fs.Options{{
 	Groups:  "RC",
 }, {
 	Name:    "metrics_addr",
-	Default: []string{""},
+	Default: []string{},
 	Help:    "IPaddress:Port or :Port to bind metrics server to",
 	Groups:  "Metrics",
 }}.

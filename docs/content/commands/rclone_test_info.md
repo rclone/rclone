@@ -10,10 +10,10 @@ Discovers file name or other limitations for paths.
 
 ## Synopsis
 
-rclone info discovers what filenames and upload methods are possible
-to write to the paths passed in and how long they can be.  It can take some
-time.  It will write test files into the remote:path passed in.  It outputs
-a bit of go code for each one.
+Discovers what filenames and upload methods are possible to write to the
+paths passed in and how long they can be.  It can take some time.  It will
+write test files into the remote:path passed in.  It outputs a bit of go
+code for each one.
 
 **NB** this can create undeletable files and other hazards - use with care
 
@@ -37,10 +37,9 @@ rclone test info [remote:path]+ [flags]
       --write-json string      Write results to file
 ```
 
-
 See the [global flags page](/flags/) for global options not listed here.
 
-# SEE ALSO
+## See Also
 
 * [rclone test](/commands/rclone_test/)	 - Run a test command
 

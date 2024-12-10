@@ -25,10 +25,9 @@ rclone config [flags]
   -h, --help   help for config
 ```
 
-
 See the [global flags page](/flags/) for global options not listed here.
 
-# SEE ALSO
+## See Also
 
 * [rclone](/commands/rclone/)	 - Show help for rclone commands, flags and backends.
 * [rclone config create](/commands/rclone_config_create/)	 - Create a new remote with name, type and options.
@@ -36,6 +35,7 @@ See the [global flags page](/flags/) for global options not listed here.
 * [rclone config disconnect](/commands/rclone_config_disconnect/)	 - Disconnects user from remote
 * [rclone config dump](/commands/rclone_config_dump/)	 - Dump the config file as JSON.
 * [rclone config edit](/commands/rclone_config_edit/)	 - Enter an interactive configuration session.
+* [rclone config encryption](/commands/rclone_config_encryption/)	 - set, remove and check the encryption for the config file
 * [rclone config file](/commands/rclone_config_file/)	 - Show path of configuration file in use.
 * [rclone config password](/commands/rclone_config_password/)	 - Update password in an existing remote.
 * [rclone config paths](/commands/rclone_config_paths/)	 - Show paths used for configuration, cache, temp etc.

@@ -39,8 +39,7 @@ If you set ` + "`--{{ .Prefix }}addr`" + ` to listen on a public or LAN accessib
 then using Authentication is advised - see the next section for info.
 
 You can use a unix socket by setting the url to ` + "`unix:///path/to/socket`" + `
-or just by using an absolute path name. Note that unix sockets bypass the
-authentication - this is expected to be done with file system permissions.
+or just by using an absolute path name.
 
 ` + "`--{{ .Prefix }}addr`" + ` may be repeated to listen on multiple IPs/ports/sockets.
 Socket activation, described further below, can also be used to accomplish the same.

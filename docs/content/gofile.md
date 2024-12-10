@@ -202,6 +202,17 @@ Properties:
 - Type:        string
 - Required:    false
 
+#### --gofile-list-chunk
+
+Number of items to list in each call
+
+Properties:
+
+- Config:      list_chunk
+- Env Var:     RCLONE_GOFILE_LIST_CHUNK
+- Type:        int
+- Default:     1000
+
 #### --gofile-encoding
 
 The encoding for the backend.

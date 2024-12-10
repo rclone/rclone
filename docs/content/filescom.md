@@ -4,7 +4,7 @@ description: "Rclone docs for Files.com"
 versionIntroduced: "v1.68"
 ---
 
-# {{< icon "fa fa-file-alt" >}} Files.com
+# {{< icon "fa fa-brands fa-files-pinwheel" >}} Files.com
 
 [Files.com](https://www.files.com/) is a cloud storage service that provides a
 secure and easy way to store and share files.
