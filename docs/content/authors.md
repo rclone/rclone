@@ -912,3 +912,4 @@ put them back in again.` >}}
   * vintagefuture <39503528+vintagefuture@users.noreply.github.com>
   * David Seifert <soap@gentoo.org>
   * Michael R. Davis <mrdvt92@users.noreply.github.com>
+  * remygrandin <remy.gr@ndin.fr>
