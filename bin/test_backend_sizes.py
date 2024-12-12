@@ -7,15 +7,18 @@ Run with no arguments to test all backends or a supply a list of
 backends to test.
 """
 
+import os
+import re
+import sys
+import subprocess
+
 all_backends = "backend/all/all.go"
 
 # compile command which is more or less like the production builds
 compile_command = ["go", "build", "--ldflags", "-s", "-trimpath"]
 
-import os
-import re
-import sys
-import subprocess
+# disable CGO as that makes a lot of difference to binary size
+os.environ["CGO_ENABLED"]="0"
 
 match_backend = re.compile(r'"github.com/rclone/rclone/backend/(.*?)"')
 
@@ -42,6 +45,9 @@ def write_all(orig_all, backend):
             match = re.search(r'"github.com/rclone/rclone/backend/(.*?)"', line)
             # Comment out line matching backend
             if match and match.group(1) == backend:
+                line = "// " + line
+            # s3 and pikpak depend on each other
+            if backend == "s3" and "pikpak" in line:
                 line = "// " + line
             fd.write(line+"\n")
 
