@@ -232,7 +232,7 @@ Use the Google Cloud console to identify a limited role. Some relevant pre-defin
 
     $ gcloud auth application-default print-access-token  \
        --impersonate-service-account \
-           dev-gcloud-go@${PROJECT_ID}.iam.gserviceaccount.com  
+          gcs-read-only@${PROJECT_ID}.iam.gserviceaccount.com  
 
     ya29.c.c0ASRK0GbAFEewXD [truncated]
 
