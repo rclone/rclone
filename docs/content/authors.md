@@ -916,3 +916,4 @@ put them back in again.` >}}
   * Ilias Ozgur Can Leonard <iscilyas@gmail.com>
   * divinity76 <divinity76@gmail.com>
   * Martin Hassack <martin@redmaple.tech>
+  * Filipe Azevedo <pasnox@gmail.com>
