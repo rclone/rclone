@@ -65,7 +65,7 @@ func (s *server) getVFS(what string, sshConn *ssh.ServerConn) (VFS *vfs.VFS) {
 	if s.proxy == nil {
 		return s.vfs
 	}
-	if sshConn.Permissions == nil && sshConn.Permissions.Extensions == nil {
+	if sshConn.Permissions == nil || sshConn.Permissions.Extensions == nil {
 		fs.Infof(what, "SSH Permissions Extensions not found")
 		return nil
 	}
