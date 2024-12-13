@@ -393,8 +393,10 @@ func newFsFromOptions(ctx context.Context, name, root string, opt *Options) (fs.
 	policyClientOptions := policy.ClientOptions{
 		Transport: newTransporter(ctx),
 	}
+	backup := service.ShareTokenIntentBackup
 	clientOpt := service.ClientOptions{
-		ClientOptions: policyClientOptions,
+		ClientOptions:     policyClientOptions,
+		FileRequestIntent: &backup,
 	}
 
 	// Here we auth by setting one of cred, sharedKeyCred or f.client
