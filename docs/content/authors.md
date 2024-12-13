@@ -915,3 +915,4 @@ put them back in again.` >}}
   * remygrandin <remy.gr@ndin.fr>
   * Ilias Ozgur Can Leonard <iscilyas@gmail.com>
   * divinity76 <divinity76@gmail.com>
+  * Martin Hassack <martin@redmaple.tech>
