@@ -342,6 +342,11 @@ The VFS will correctly resolve `linked-dir` but not
 `linked-dir/file.txt`. This is not a problem for the tested commands
 but may be for other commands.
 
+**Note** that there is an outstanding issue with symlink support
+[issue #8245](https://github.com/rclone/rclone/issues/8245) with duplicate
+files being created when symlinks are moved into directories where
+there is a file of the same name (or vice versa).
+
 ### VFS Case Sensitivity
 
 Linux file systems are case-sensitive: two files can differ only
