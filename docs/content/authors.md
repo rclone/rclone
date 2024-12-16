@@ -911,3 +911,11 @@ put them back in again.` >}}
   * Dimitrios Slamaris <dim0x69@users.noreply.github.com>
   * vintagefuture <39503528+vintagefuture@users.noreply.github.com>
   * David Seifert <soap@gentoo.org>
+  * Michael R. Davis <mrdvt92@users.noreply.github.com>
+  * remygrandin <remy.gr@ndin.fr>
+  * Ilias Ozgur Can Leonard <iscilyas@gmail.com>
+  * divinity76 <divinity76@gmail.com>
+  * Martin Hassack <martin@redmaple.tech>
+  * Filipe Azevedo <pasnox@gmail.com>
+  * hayden.pan <hayden.pan@outlook.com>
+  * Yxxx <45665172+marsjane@users.noreply.github.com>

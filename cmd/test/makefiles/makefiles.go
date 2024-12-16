@@ -30,6 +30,7 @@ var (
 	maxFileSize              = fs.SizeSuffix(100)
 	minFileNameLength        = 4
 	maxFileNameLength        = 12
+	flat                     = false
 	seed                     = int64(1)
 	zero                     = false
 	sparse                   = false
@@ -55,6 +56,7 @@ func init() {
 	flags.FVarP(makefilesFlags, &maxFileSize, "max-file-size", "", "Maximum size of files to create", "")
 	flags.IntVarP(makefilesFlags, &minFileNameLength, "min-name-length", "", minFileNameLength, "Minimum size of file names", "")
 	flags.IntVarP(makefilesFlags, &maxFileNameLength, "max-name-length", "", maxFileNameLength, "Maximum size of file names", "")
+	flags.BoolVarP(makefilesFlags, &flat, "flat", "", false, "If set create all files in the root directory", "")
 
 	test.Command.AddCommand(makefileCmd)
 	makefileFlags := makefileCmd.Flags()
@@ -81,6 +83,9 @@ var makefilesCmd = &cobra.Command{
 		commonInit()
 		outputDirectory := args[0]
 		directoriesToCreate = numberOfFiles / averageFilesPerDirectory
+		if flat {
+			directoriesToCreate = 0
+		}
 		averageSize := (minFileSize + maxFileSize) / 2
 		start := time.Now()
 		fs.Logf(nil, "Creating %d files of average size %v in %d directories in %q.", numberOfFiles, averageSize, directoriesToCreate, outputDirectory)

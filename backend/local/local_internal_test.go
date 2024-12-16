@@ -110,7 +110,7 @@ func TestSymlink(t *testing.T) {
 	require.NoError(t, lChtimes(symlinkPath, modTime2, modTime2))
 
 	// Object viewed as symlink
-	file2 := fstest.NewItem("symlink.txt"+linkSuffix, "file.txt", modTime2)
+	file2 := fstest.NewItem("symlink.txt"+fs.LinkSuffix, "file.txt", modTime2)
 
 	// Object viewed as destination
 	file2d := fstest.NewItem("symlink.txt", "hello", modTime1)
@@ -139,7 +139,7 @@ func TestSymlink(t *testing.T) {
 
 	// Create a symlink
 	modTime3 := fstest.Time("2002-03-03T04:05:10.123123123Z")
-	file3 := r.WriteObjectTo(ctx, r.Flocal, "symlink2.txt"+linkSuffix, "file.txt", modTime3, false)
+	file3 := r.WriteObjectTo(ctx, r.Flocal, "symlink2.txt"+fs.LinkSuffix, "file.txt", modTime3, false)
 	fstest.CheckListingWithPrecision(t, r.Flocal, []fstest.Item{file1, file2, file3}, nil, fs.ModTimeNotSupported)
 	if haveLChtimes {
 		r.CheckLocalItems(t, file1, file2, file3)
@@ -155,9 +155,9 @@ func TestSymlink(t *testing.T) {
 	assert.Equal(t, "file.txt", linkText)
 
 	// Check that NewObject gets the correct object
-	o, err := r.Flocal.NewObject(ctx, "symlink2.txt"+linkSuffix)
+	o, err := r.Flocal.NewObject(ctx, "symlink2.txt"+fs.LinkSuffix)
 	require.NoError(t, err)
-	assert.Equal(t, "symlink2.txt"+linkSuffix, o.Remote())
+	assert.Equal(t, "symlink2.txt"+fs.LinkSuffix, o.Remote())
 	assert.Equal(t, int64(8), o.Size())
 
 	// Check that NewObject doesn't see the non suffixed version
@@ -165,7 +165,7 @@ func TestSymlink(t *testing.T) {
 	require.Equal(t, fs.ErrorObjectNotFound, err)
 
 	// Check that NewFs works with the suffixed version and --links
-	f2, err := NewFs(ctx, "local", filepath.Join(dir, "symlink2.txt"+linkSuffix), configmap.Simple{
+	f2, err := NewFs(ctx, "local", filepath.Join(dir, "symlink2.txt"+fs.LinkSuffix), configmap.Simple{
 		"links": "true",
 	})
 	require.Equal(t, fs.ErrorIsFile, err)
@@ -277,7 +277,7 @@ func TestMetadata(t *testing.T) {
 	// Write a symlink to the file
 	symlinkPath := "metafile-link.txt"
 	osSymlinkPath := filepath.Join(f.root, symlinkPath)
-	symlinkPath += linkSuffix
+	symlinkPath += fs.LinkSuffix
 	require.NoError(t, os.Symlink(filePath, osSymlinkPath))
 	symlinkModTime := fstest.Time("2002-02-03T04:05:10.123123123Z")
 	require.NoError(t, lChtimes(osSymlinkPath, symlinkModTime, symlinkModTime))

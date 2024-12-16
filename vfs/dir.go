@@ -459,7 +459,8 @@ func (d *Dir) addObject(node Node) {
 // This will be replaced with a real object when it is read back from the
 // remote.
 //
-// This is used to add directory entries while things are uploading
+// This is used by the vfs cache to insert objects that are uploading
+// into the directory tree.
 func (d *Dir) AddVirtual(leaf string, size int64, isDir bool) {
 	var node Node
 	d.mu.RLock()
@@ -475,7 +476,16 @@ func (d *Dir) AddVirtual(leaf string, size int64, isDir bool) {
 		entry := fs.NewDir(remote, time.Now())
 		node = newDir(d.vfs, d.f, d, entry)
 	} else {
+		isLink := false
+		if d.vfs.Opt.Links {
+			// since the path came from the cache it may have fs.LinkSuffix,
+			// so remove it and mark the *File accordingly
+			leaf, isLink = strings.CutSuffix(leaf, fs.LinkSuffix)
+		}
 		f := newFile(d, dPath, nil, leaf)
+		if isLink {
+			f.setSymlink()
+		}
 		f.setSize(size)
 		node = f
 	}
@@ -628,7 +638,7 @@ func (d *Dir) _purgeVirtual() {
 				// if writing in progress then leave virtual
 				continue
 			}
-			if d.vfs.Opt.CacheMode >= vfscommon.CacheModeMinimal && d.vfs.cache.InUse(f.Path()) {
+			if d.vfs.Opt.CacheMode >= vfscommon.CacheModeMinimal && d.vfs.cache.InUse(f.CachePath()) {
 				// if object in use or dirty then leave virtual
 				continue
 			}
@@ -717,6 +727,9 @@ func (d *Dir) _readDirFromEntries(entries fs.DirEntries, dirTree dirtree.DirTree
 		name := path.Base(entry.Remote())
 		if name == "." || name == ".." {
 			continue
+		}
+		if d.vfs.Opt.Links {
+			name, _ = strings.CutSuffix(name, fs.LinkSuffix)
 		}
 		node := d.items[name]
 		if mv.add(d, name) {

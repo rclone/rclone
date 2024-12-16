@@ -43,7 +43,7 @@ func (fh *RWFileHandle) Unlock() error {
 func newRWFileHandle(d *Dir, f *File, flags int) (fh *RWFileHandle, err error) {
 	defer log.Trace(f.Path(), "")("err=%v", &err)
 	// get an item to represent this from the cache
-	item := d.vfs.cache.Item(f.Path())
+	item := d.vfs.cache.Item(f.CachePath())
 
 	exists := f.exists() || (item.Exists() && !item.WrittenBack())
 

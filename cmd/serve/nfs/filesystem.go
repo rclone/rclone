@@ -142,16 +142,16 @@ func (f *FS) Lstat(filename string) (fi os.FileInfo, err error) {
 	return fi, nil
 }
 
-// Symlink is not supported over NFS
+// Symlink creates a link pointing to target
 func (f *FS) Symlink(target, link string) (err error) {
 	defer log.Trace(target, "link=%q", link)("err=%v", &err)
-	return os.ErrInvalid
+	return f.vfs.Symlink(target, link)
 }
 
-// Readlink is not supported
+// Readlink reads the contents of link
 func (f *FS) Readlink(link string) (result string, err error) {
 	defer log.Trace(link, "")("result=%q, err=%v", &result, &err)
-	return "", os.ErrInvalid
+	return f.vfs.Readlink(link)
 }
 
 // Chmod changes the file modes

@@ -47,7 +47,7 @@ const (
 // Globals
 var (
 	// Description of how to auth for this app
-	oauthConfig = &oauth2.Config{
+	oauthConfig = &oauthutil.Config{
 		Scopes: []string{
 			"aaaserver.profile.read",
 			"WorkDrive.team.READ",
@@ -55,11 +55,10 @@ var (
 			"WorkDrive.files.ALL",
 			"ZohoFiles.files.ALL",
 		},
-		Endpoint: oauth2.Endpoint{
-			AuthURL:   "https://accounts.zoho.eu/oauth/v2/auth",
-			TokenURL:  "https://accounts.zoho.eu/oauth/v2/token",
-			AuthStyle: oauth2.AuthStyleInParams,
-		},
+
+		AuthURL:      "https://accounts.zoho.eu/oauth/v2/auth",
+		TokenURL:     "https://accounts.zoho.eu/oauth/v2/token",
+		AuthStyle:    oauth2.AuthStyleInParams,
 		ClientID:     rcloneClientID,
 		ClientSecret: obscure.MustReveal(rcloneEncryptedClientSecret),
 		RedirectURL:  oauthutil.RedirectLocalhostURL,
@@ -276,8 +275,8 @@ func setupRegion(m configmap.Mapper) error {
 	downloadURL = fmt.Sprintf("https://download.zoho.%s/v1/workdrive", region)
 	uploadURL = fmt.Sprintf("https://upload.zoho.%s/workdrive-api/v1", region)
 	accountsURL = fmt.Sprintf("https://accounts.zoho.%s", region)
-	oauthConfig.Endpoint.AuthURL = fmt.Sprintf("https://accounts.zoho.%s/oauth/v2/auth", region)
-	oauthConfig.Endpoint.TokenURL = fmt.Sprintf("https://accounts.zoho.%s/oauth/v2/token", region)
+	oauthConfig.AuthURL = fmt.Sprintf("https://accounts.zoho.%s/oauth/v2/auth", region)
+	oauthConfig.TokenURL = fmt.Sprintf("https://accounts.zoho.%s/oauth/v2/token", region)
 	return nil
 }
 
