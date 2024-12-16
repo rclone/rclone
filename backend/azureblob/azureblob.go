@@ -1649,13 +1649,15 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 
 	copyStatus := startCopy.CopyStatus
 	getOptions := blob.GetPropertiesOptions{}
+	pollTime := 100 * time.Millisecond
 	for copyStatus != nil && string(*copyStatus) == string(container.CopyStatusTypePending) {
-		time.Sleep(1 * time.Second)
+		time.Sleep(pollTime)
 		getMetadata, err := dstBlobSVC.GetProperties(ctx, &getOptions)
 		if err != nil {
 			return nil, err
 		}
 		copyStatus = getMetadata.CopyStatus
+		pollTime = min(2*pollTime, time.Second)
 	}
 
 	return f.NewObject(ctx, remote)
