@@ -21,9 +21,9 @@ SSH installations.
 
 Paths are specified as `remote:path`. If the path does not begin with
 a `/` it is relative to the home directory of the user.  An empty path
-`remote:` refers to the user's home directory. For example, `rclone lsd remote:` 
-would list the home directory of the user configured in the rclone remote config 
-(`i.e /home/sftpuser`). However, `rclone lsd remote:/` would list the root 
+`remote:` refers to the user's home directory. For example, `rclone lsd remote:`
+would list the home directory of the user configured in the rclone remote config
+(`i.e /home/sftpuser`). However, `rclone lsd remote:/` would list the root
 directory for remote machine (i.e. `/`)
 
 Note that some SFTP servers will need the leading / - Synology is a
@@ -128,7 +128,7 @@ The SFTP remote supports three authentication methods:
 Key files should be PEM-encoded private key files. For instance `/home/$USER/.ssh/id_rsa`.
 Only unencrypted OpenSSH or PEM encrypted files are supported.
 
-The key file can be specified in either an external file (key_file) or contained within the 
+The key file can be specified in either an external file (key_file) or contained within the
 rclone config file (key_pem).  If using key_pem in the config file, the entry should be on a
 single line with new line ('\n' or '\r\n') separating lines.  i.e.
 
@@ -199,7 +199,7 @@ e.g. using the OpenSSH `known_hosts` file:
 type = sftp
 host = example.com
 user = sftpuser
-pass = 
+pass =
 known_hosts_file = ~/.ssh/known_hosts
 ````
 
@@ -614,7 +614,7 @@ Properties:
 - Config:      ssh
 - Env Var:     RCLONE_SFTP_SSH
 - Type:        SpaceSepList
-- Default:     
+- Default:
 
 ### Advanced options
 
@@ -668,13 +668,13 @@ E.g. if shared folders can be found in directories representing volumes:
 E.g. if home directory can be found in a shared folder called "home":
 
     rclone sync /home/local/directory remote:/home/directory --sftp-path-override /volume1/homes/USER/directory
-	
+
 To specify only the path to the SFTP remote's root, and allow rclone to add any relative subpaths automatically (including unwrapping/decrypting remotes as necessary), add the '@' character to the beginning of the path.
 
 E.g. the first example above could be rewritten as:
 
 	rclone sync /home/local/directory remote:/directory --sftp-path-override @/volume2
-	
+
 Note that when using this method with Synology "home" folders, the full "/homes/USER" path should be specified instead of "/home".
 
 E.g. the second example above should be rewritten as:
@@ -751,10 +751,25 @@ Properties:
 
 Set to skip any symlinks and any other non regular files.
 
+Mutually exclusive with `--sftp-links`.
+
 Properties:
 
 - Config:      skip_links
 - Env Var:     RCLONE_SFTP_SKIP_LINKS
+- Type:        bool
+- Default:     false
+
+#### --sftp-links
+
+Set to follow symlinks. Recreate or update symlinks as symlinks and not copy the underlying file/directory.
+
+Mutually exclusive with `--sftp-skip-links`.
+
+Properties:
+
+- Config:      links
+- Env Var:     RCLONE_SFTP_LINKS
 - Type:        bool
 - Default:     false
 
@@ -775,7 +790,7 @@ Specifies the path or command to run a sftp server on the remote host.
 
 The subsystem option is ignored when server_command is defined.
 
-If adding server_command to the configuration file please note that 
+If adding server_command to the configuration file please note that
 it should not be enclosed in quotes, since that will make rclone fail.
 
 A working example is:
@@ -967,7 +982,7 @@ Properties:
 - Config:      set_env
 - Env Var:     RCLONE_SFTP_SET_ENV
 - Type:        SpaceSepList
-- Default:     
+- Default:
 
 #### --sftp-ciphers
 
@@ -987,7 +1002,7 @@ Properties:
 - Config:      ciphers
 - Env Var:     RCLONE_SFTP_CIPHERS
 - Type:        SpaceSepList
-- Default:     
+- Default:
 
 #### --sftp-key-exchange
 
@@ -1007,7 +1022,7 @@ Properties:
 - Config:      key_exchange
 - Env Var:     RCLONE_SFTP_KEY_EXCHANGE
 - Type:        SpaceSepList
-- Default:     
+- Default:
 
 #### --sftp-macs
 
@@ -1025,7 +1040,7 @@ Properties:
 - Config:      macs
 - Env Var:     RCLONE_SFTP_MACS
 - Type:        SpaceSepList
-- Default:     
+- Default:
 
 #### --sftp-host-key-algorithms
 
@@ -1045,18 +1060,18 @@ Properties:
 - Config:      host_key_algorithms
 - Env Var:     RCLONE_SFTP_HOST_KEY_ALGORITHMS
 - Type:        SpaceSepList
-- Default:     
+- Default:
 
 #### --sftp-socks-proxy
 
 Socks 5 proxy host.
-	
+
 Supports the format user:pass@host:port, user@host:port, host:port.
 
 Example:
 
 	myUser:myPass@localhost:9005
-	
+
 
 Properties:
 
