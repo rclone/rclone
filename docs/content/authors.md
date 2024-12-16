@@ -917,3 +917,4 @@ put them back in again.` >}}
   * divinity76 <divinity76@gmail.com>
   * Martin Hassack <martin@redmaple.tech>
   * Filipe Azevedo <pasnox@gmail.com>
+  * hayden.pan <hayden.pan@outlook.com>
