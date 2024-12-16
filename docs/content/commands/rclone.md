@@ -834,6 +834,7 @@ rclone [flags]
       --sia-user-agent string                               Siad User Agent (default "Sia-Agent")
       --size-only                                           Skip based on size only, not modtime or checksum
       --skip-links                                          Don't warn about skipped symlinks
+      --skip-specials                                       Don't warn about skipped pipes, sockets and device objects
       --smb-case-insensitive                                Whether the server is configured to be case-insensitive (default true)
       --smb-description string                              Description of the remote
       --smb-domain string                                   Domain name for NTLM authentication (default "WORKGROUP")
