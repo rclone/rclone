@@ -2231,6 +2231,7 @@ This will dump something like this showing the lifecycle rules.
         {
             "daysFromHidingToDeleting": 1,
             "daysFromUploadingToHiding": null,
+            "daysFromStartingToCancelingUnfinishedLargeFiles": null,
             "fileNamePrefix": ""
         }
     ]
@@ -2257,8 +2258,9 @@ overwrites will still cause versions to be made.
 See: https://www.backblaze.com/docs/cloud-storage-lifecycle-rules
 `,
 	Opts: map[string]string{
-		"daysFromHidingToDeleting":  "After a file has been hidden for this many days it is deleted. 0 is off.",
-		"daysFromUploadingToHiding": "This many days after uploading a file is hidden",
+		"daysFromHidingToDeleting":                        "After a file has been hidden for this many days it is deleted. 0 is off.",
+		"daysFromUploadingToHiding":                       "This many days after uploading a file is hidden",
+		"daysFromStartingToCancelingUnfinishedLargeFiles": "Cancels any unfinished large file versions after this many days",
 	},
 }
 
@@ -2278,6 +2280,13 @@ func (f *Fs) lifecycleCommand(ctx context.Context, name string, arg []string, op
 		}
 		newRule.DaysFromUploadingToHiding = &days
 	}
+	if daysStr := opt["daysFromStartingToCancelingUnfinishedLargeFiles"]; daysStr != "" {
+		days, err := strconv.Atoi(daysStr)
+		if err != nil {
+			return nil, fmt.Errorf("bad daysFromStartingToCancelingUnfinishedLargeFiles: %w", err)
+		}
+		newRule.DaysFromStartingToCancelingUnfinishedLargeFiles = &days
+	}
 	bucketName, _ := f.split("")
 	if bucketName == "" {
 		return nil, errors.New("bucket required")
@@ -2285,7 +2294,7 @@ func (f *Fs) lifecycleCommand(ctx context.Context, name string, arg []string, op
 	}
 
 	var bucket *api.Bucket
-	if newRule.DaysFromHidingToDeleting != nil || newRule.DaysFromUploadingToHiding != nil {
+	if newRule.DaysFromHidingToDeleting != nil || newRule.DaysFromUploadingToHiding != nil || newRule.DaysFromStartingToCancelingUnfinishedLargeFiles != nil {
 		bucketID, err := f.getBucketID(ctx, bucketName)
 		if err != nil {
 			return nil, err
