@@ -1320,7 +1320,7 @@ func (o *Object) Size() int64 {
 	ctx := context.TODO()
 	err := o.readMetaData(ctx)
 	if err != nil {
-		fs.Logf(o, "Failed to read metadata: %v", err)
+		fs.Infof(o, "Failed to read metadata: %v", err)
 		return 0
 	}
 	return o.size
@@ -1364,7 +1364,7 @@ func (o *Object) readMetaData(ctx context.Context) (err error) {
 func (o *Object) ModTime(ctx context.Context) time.Time {
 	err := o.readMetaData(ctx)
 	if err != nil {
-		fs.Logf(o, "Failed to read metadata: %v", err)
+		fs.Infof(o, "Failed to read metadata: %v", err)
 		return time.Now()
 	}
 	return o.modTime
