@@ -1145,6 +1145,13 @@ func (d *Dir) Rename(oldName, newName string, destDir *Dir) error {
 			fs.Errorf(oldPath, "Dir.Rename error: %v", err)
 			return err
 		}
+		// Check to see if we are overwriting something with a directory
+		_, err := d.vfs.Stat(newPath)
+		if err == nil {
+			return EEXIST
+		} else if err != ENOENT {
+			return err
+		}
 		srcRemote := x.Remote()
 		dstRemote := newPath
 		err = operations.DirMove(context.TODO(), d.f, srcRemote, dstRemote)
