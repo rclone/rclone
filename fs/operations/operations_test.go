@@ -1452,6 +1452,47 @@ func TestDirMove(t *testing.T) {
 	)
 }
 
+func TestDirMoveOverwrite(t *testing.T) {
+	ctx := context.Background()
+	r := fstest.NewRun(t)
+
+	if !r.Fremote.Features().CanHaveEmptyDirectories {
+		t.Skip("Can't test for directory overwrite if can't have empty directories")
+	}
+
+	r.Mkdir(ctx, r.Fremote)
+
+	// Make some files and dirs
+	r.ForceMkdir(ctx, r.Fremote)
+	require.NoError(t, operations.Mkdir(ctx, r.Fremote, "dir1"))
+	require.NoError(t, operations.Mkdir(ctx, r.Fremote, "dir2"))
+
+	fstest.CheckListingWithPrecision(
+		t,
+		r.Fremote,
+		nil,
+		[]string{
+			"dir1",
+			"dir2",
+		},
+		fs.GetModifyWindow(ctx, r.Fremote),
+	)
+
+	// Check we get an error if we try to overwrite an existing directory
+	require.Error(t, operations.DirMove(ctx, r.Fremote, "dir1", "dir2"))
+
+	fstest.CheckListingWithPrecision(
+		t,
+		r.Fremote,
+		nil,
+		[]string{
+			"dir1",
+			"dir2",
+		},
+		fs.GetModifyWindow(ctx, r.Fremote),
+	)
+}
+
 func TestGetFsInfo(t *testing.T) {
 	r := fstest.NewRun(t)
 

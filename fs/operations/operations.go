@@ -2404,7 +2404,7 @@ func DirMove(ctx context.Context, f fs.Fs, srcRemote, dstRemote string) (err err
 		if err == nil {
 			accounting.Stats(ctx).Renames(1)
 		}
-		if err != fs.ErrorCantDirMove && err != fs.ErrorDirExists {
+		if err != fs.ErrorCantDirMove {
 			return err
 		}
 		fs.Infof(f, "Can't DirMove - falling back to file moves: %v", err)
