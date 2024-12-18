@@ -388,6 +388,12 @@ backends:
      - TestIntegration/FsMkdir/FsEncoding/invalid_UTF-8
    fastlist: false
  - backend:  "webdav"
+   remote:   "TestWebdavInfiniteScale:"
+   ignore:
+     - TestIntegration/FsMkdir/FsEncoding/punctuation
+     - TestIntegration/FsMkdir/FsEncoding/invalid_UTF-8
+   fastlist: false
+ - backend:  "webdav"
    remote:   "TestWebdavRclone:"
    ignore:
      - TestFileReadAtZeroLength
