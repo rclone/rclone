@@ -7,7 +7,7 @@ import (
 
 var (
 	// ErrChuckSize is returned when the chunk size is zero
-	ErrChuckSize = errors.New("tus chunk size must be greater than zero")
+	ErrChunkSize = errors.New("tus chunk size must be greater than zero")
 	// ErrNilConfig is returned when the logger is nil
 	ErrNilLogger = errors.New("tus logger can't be nil")
 	// ErrNilStore is returned when the store is nil
