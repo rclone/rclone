@@ -76,6 +76,8 @@ require (
 	github.com/xanzy/ssh-agent v0.3.3
 	github.com/youmark/pkcs8 v0.0.0-20240726163527-a2c0da244d78
 	github.com/yunify/qingstor-sdk-go/v3 v3.2.0
+	github.com/zeebo/blake3 v0.2.4
+	github.com/zeebo/xxh3 v1.0.2
 	go.etcd.io/bbolt v1.3.10
 	goftp.io/server/v2 v2.0.1
 	golang.org/x/crypto v0.31.0
@@ -197,7 +199,6 @@ require (
 	github.com/tklauser/numcpus v0.7.0 // indirect
 	github.com/willscott/go-nfs-client v0.0.0-20240104095149-b44639837b00 // indirect
 	github.com/yusufpapurcu/wmi v1.2.4 // indirect
-	github.com/zeebo/blake3 v0.2.3 // indirect
 	github.com/zeebo/errs v1.3.0 // indirect
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.54.0 // indirect
 	go.opentelemetry.io/otel v1.29.0 // indirect
