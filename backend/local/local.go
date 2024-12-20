@@ -1296,16 +1296,13 @@ func (f *Fs) ChangeNotify(ctx context.Context, notifyFunc func(string, fs.EntryT
 					return
 				}
 
-				rootSlash := strings.TrimSuffix(f.root, "/")
-				rootSlash += "/"
-
-				entryPath := strings.TrimPrefix(event.Name, rootSlash)
+				entryPath := event.Name
 				entryType := fs.EntryObject
 
 				if event.Op != fsnotify.Remove {
-					info, err := os.Stat(event.Name)
+					info, err := os.Stat(entryPath)
 					if err != nil {
-						fs.Debugf(f, "Failed to stat %s", event.Name)
+						fs.Debugf(f, "Failed to stat %s", entryPath)
 					} else if info.IsDir() {
 						entryType = fs.EntryDirectory
 					}
@@ -1315,7 +1312,7 @@ func (f *Fs) ChangeNotify(ctx context.Context, notifyFunc func(string, fs.EntryT
 				case fsnotify.Create:
 					fs.Debugf(f, "Create: %s", entryPath)
 					if entryType == fs.EntryDirectory {
-						f.watchPath(watcher, event.Name)
+						f.watchPath(watcher, entryPath)
 					}
 				case fsnotify.Write:
 					fs.Debugf(f, "Write: %s", entryPath)
