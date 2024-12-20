@@ -1277,22 +1277,7 @@ func (f *Fs) ChangeNotify(ctx context.Context, notifyFunc func(string, fs.EntryT
 			return
 		}
 		defer watcher.Close()
-
-		// Add root path, recursively
-		//
-		// For a directory, WalkDir() makes the callback before listing, so
-		// watching for changes can begin before the initial listing
-		filepath.WalkDir(f.root, func(path string, d os.DirEntry, err error) error {
-			if d.IsDir() {
-				err := watcher.Add(path)
-				if err != nil {
-					fs.Debugf(f, "Failed to start watching %s", path)
-				} else {
-					fs.Debugf(f, "Started watching %s", path)
-				}
-			}
-			return nil
-		})
+		f.watchPath(watcher, f.root)
 
 		// Process events and errors
 		for {
@@ -1318,12 +1303,7 @@ func (f *Fs) ChangeNotify(ctx context.Context, notifyFunc func(string, fs.EntryT
 				case fsnotify.Create:
 					fs.Debugf(f, "Create: %s", entryPath)
 					if entryType == fs.EntryDirectory {
-						err := watcher.Add(entryPath)
-						if err != nil {
-							fs.Debugf(f, "Failed to start watching %s", entryPath)
-						} else {
-							fs.Debugf(f, "Started watching %s", entryPath)
-						}
+						f.watchPath(watcher, entryPath)
 					}
 				case fsnotify.Write:
 					fs.Debugf(f, "Write: %s", entryPath)
@@ -1345,6 +1325,23 @@ func (f *Fs) ChangeNotify(ctx context.Context, notifyFunc func(string, fs.EntryT
 			}
 		}
 	}()
+}
+
+// Watch a path, recursively
+func (f *Fs) watchPath(watcher *fsnotify.Watcher, path string) {
+	// For a directory, WalkDir() makes the callback before listing, so the
+	// watching begins before listing and recursing into subdirectories
+	filepath.WalkDir(path, func(path string, d os.DirEntry, err error) error {
+		if d.IsDir() {
+			err := watcher.Add(path)
+			if err != nil {
+				fs.Debugf(f, "Failed to start watching %s", path)
+			} else {
+				fs.Debugf(f, "Started watching %s", path)
+			}
+		}
+		return nil
+	})
 }
 
 // Returns a ReadCloser() object that contains the contents of a symbolic link
