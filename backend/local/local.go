@@ -1279,6 +1279,9 @@ func (f *Fs) ChangeNotify(ctx context.Context, notifyFunc func(string, fs.EntryT
 		defer watcher.Close()
 
 		// Add root path, recursively
+		//
+		// For a directory, WalkDir() makes the callback before listing, so
+		// watching for changes can begin before the initial listing
 		filepath.WalkDir(f.root, func(path string, d os.DirEntry, err error) error {
 			if d.IsDir() {
 				fs.Infof(f, "watching: %s", path)
