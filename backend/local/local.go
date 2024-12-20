@@ -1302,36 +1302,44 @@ func (f *Fs) ChangeNotify(ctx context.Context, notifyFunc func(string, fs.EntryT
 					return
 				}
 
+				entryPath := event.Name
+				entryType := fs.EntryObject
+
+				info, err := os.Stat(entryPath)
+				if err != nil {
+					fs.Debugf(f, "Failed to stat %s", entryPath)
+				} else if info.IsDir() {
+					entryType = fs.EntryDirectory
+				}
+
 				switch event.Op {
 				case fsnotify.Create:
-					fs.Debugf(f, "Create: %s", event.Name)
-					info, err := os.Stat(event.Name)
-					if err != nil {
-						fs.Debugf(f, "Failed to stat %s", event.Name)
-					} else if info.IsDir() {
-						err := watcher.Add(event.Name)
+					fs.Debugf(f, "Create: %s", entryPath)
+					if entryType == fs.EntryDirectory {
+						err := watcher.Add(entryPath)
 						if err != nil {
-							fs.Debugf(f, "Failed to start watching %s", event.Name)
+							fs.Debugf(f, "Failed to start watching %s", entryPath)
 						} else {
-							fs.Debugf(f, "Started watching %s", event.Name)
+							fs.Debugf(f, "Started watching %s", entryPath)
 						}
 					}
 				case fsnotify.Write:
-					fs.Debugf(f, "Write: %s", event.Name)
+					fs.Debugf(f, "Write: %s", entryPath)
 				case fsnotify.Remove:
-					fs.Debugf(f, "Remove: %s", event.Name)
-					// No need to stop watching directories when removed, handled by
-					// fsnotify
+					// No need to stop watching removed directories, handled by fsnotify
+					fs.Debugf(f, "Remove: %s", entryPath)
 				case fsnotify.Rename:
-					fs.Debugf(f, "Rename: %s", event.Name)
+					fs.Debugf(f, "Rename: %s", entryPath)
 				case fsnotify.Chmod:
-					fs.Debugf(f, "Chmod: %s", event.Name)
+					fs.Debugf(f, "Chmod: %s", entryPath)
 				}
+				notifyFunc(entryPath, entryType)
+
 			case err, ok := <-watcher.Errors:
 				if !ok {
 					return
 				}
-				fs.Debugf(f, "Received error: %s", err.Error())
+				fs.Debugf(f, "Error: %s", err.Error())
 			}
 		}
 	}()
