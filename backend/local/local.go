@@ -1284,28 +1284,56 @@ func (f *Fs) ChangeNotify(ctx context.Context, notifyFunc func(string, fs.EntryT
 		// watching for changes can begin before the initial listing
 		filepath.WalkDir(f.root, func(path string, d os.DirEntry, err error) error {
 			if d.IsDir() {
-				fs.Infof(f, "watching: %s", path)
-				var err = watcher.Add(path)
+				err := watcher.Add(path)
 				if err != nil {
-					fs.Debugf(f, "Failed to add root path to watcher of local filesystem")
+					fs.Debugf(f, "Failed to start watching %s", path)
+				} else {
+					fs.Debugf(f, "Started watching %s", path)
 				}
 			}
 			return nil
 		})
 
-		// Process events
+		// Process events and errors
 		for {
 			select {
 			case event, ok := <-watcher.Events:
 				if !ok {
 					return
 				}
-				fs.Infof(f, "event: %s", event.Name)
+				fs.Debugf(f, "Received event: %s", event.Name)
+
+				switch event.Op {
+				case fsnotify.Create:
+					info, err := os.Stat(event.Name)
+					if err != nil {
+						fs.Debugf(f, "Failed to stat %s", event.Name)
+					} else if info.IsDir() {
+						err := watcher.Add(event.Name)
+						if err != nil {
+							fs.Debugf(f, "Failed to start watching %s", event.Name)
+						} else {
+							fs.Debugf(f, "Started watching %s", event.Name)
+						}
+					}
+				case fsnotify.Remove:
+					info, err := os.Stat(event.Name)
+					if err != nil {
+						fs.Debugf(f, "Failed to stat %s", event.Name)
+					} else if info.IsDir() {
+						err := watcher.Remove(event.Name)
+						if err != nil {
+							fs.Debugf(f, "Failed to stop watching %s", event.Name)
+						} else {
+							fs.Debugf(f, "Stopped watching %s", event.Name)
+						}
+					}
+				}
 			case err, ok := <-watcher.Errors:
 				if !ok {
 					return
 				}
-				fs.Infof(f, "error: %s", err.Error())
+				fs.Debugf(f, "Received error: %s", err.Error())
 			}
 		}
 	}()
