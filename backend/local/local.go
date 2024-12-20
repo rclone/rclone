@@ -1301,10 +1301,10 @@ func (f *Fs) ChangeNotify(ctx context.Context, notifyFunc func(string, fs.EntryT
 				if !ok {
 					return
 				}
-				fs.Debugf(f, "Received event: %s", event.Name)
 
 				switch event.Op {
 				case fsnotify.Create:
+					fs.Debugf(f, "Create: %s", event.Name)
 					info, err := os.Stat(event.Name)
 					if err != nil {
 						fs.Debugf(f, "Failed to stat %s", event.Name)
@@ -1316,18 +1316,16 @@ func (f *Fs) ChangeNotify(ctx context.Context, notifyFunc func(string, fs.EntryT
 							fs.Debugf(f, "Started watching %s", event.Name)
 						}
 					}
+				case fsnotify.Write:
+					fs.Debugf(f, "Write: %s", event.Name)
 				case fsnotify.Remove:
-					info, err := os.Stat(event.Name)
-					if err != nil {
-						fs.Debugf(f, "Failed to stat %s", event.Name)
-					} else if info.IsDir() {
-						err := watcher.Remove(event.Name)
-						if err != nil {
-							fs.Debugf(f, "Failed to stop watching %s", event.Name)
-						} else {
-							fs.Debugf(f, "Stopped watching %s", event.Name)
-						}
-					}
+					fs.Debugf(f, "Remove: %s", event.Name)
+					// No need to stop watching directories when removed, handled by
+					// fsnotify
+				case fsnotify.Rename:
+					fs.Debugf(f, "Rename: %s", event.Name)
+				case fsnotify.Chmod:
+					fs.Debugf(f, "Chmod: %s", event.Name)
 				}
 			case err, ok := <-watcher.Errors:
 				if !ok {
