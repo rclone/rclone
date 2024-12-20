@@ -1287,6 +1287,10 @@ func (f *Fs) ChangeNotify(ctx context.Context, notifyFunc func(string, fs.EntryT
 		// Process events and errors
 		for {
 			select {
+			case _, ok := <-pollIntervalChan:
+				if !ok {
+					return
+				}
 			case event, ok := <-watcher.Events:
 				if !ok {
 					return
