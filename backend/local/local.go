@@ -17,6 +17,7 @@ import (
 	"time"
 	"unicode/utf8"
 
+	"github.com/fsnotify/fsnotify"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/accounting"
 	"github.com/rclone/rclone/fs/config"
@@ -1260,6 +1261,46 @@ func (file *localOpenFile) Close() (err error) {
 		}
 	}
 	return err
+}
+
+// ChangeNotify calls the passed function with a path that has had changes.
+// The implementation does not use polling, such that the given poll interval
+// is ignored.
+//
+// Close the returned channel to stop being notified.
+func (f *Fs) ChangeNotify(ctx context.Context, notifyFunc func(string, fs.EntryType), pollIntervalChan <-chan time.Duration) {
+	go func() {
+		// Create new watcher.
+		watcher, err := fsnotify.NewWatcher()
+		if err != nil {
+			fs.Debugf(f, "Failed to create watcher for local filesystem")
+			return
+		}
+		defer watcher.Close()
+
+		// Add a path.
+		err = watcher.Add(f.root)
+		if err != nil {
+			fs.Debugf(f, "Failed to add root path to watcher of local filesystem")
+			return
+		}
+
+		// Process events
+		for {
+			select {
+			case event, ok := <-watcher.Events:
+				if !ok {
+					return
+				}
+				fs.Infof(f, "event: %s", event.Name)
+			case err, ok := <-watcher.Errors:
+				if !ok {
+					return
+				}
+				fs.Infof(f, "error: %s", err.Error())
+			}
+		}
+	}()
 }
 
 // Returns a ReadCloser() object that contains the contents of a symbolic link
