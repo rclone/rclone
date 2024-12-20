@@ -1269,20 +1269,23 @@ func (file *localOpenFile) Close() (err error) {
 //
 // Close the returned channel to stop being notified.
 func (f *Fs) ChangeNotify(ctx context.Context, notifyFunc func(string, fs.EntryType), pollIntervalChan <-chan time.Duration) {
-	go func() {
-		// Create new watcher
-		watcher, err := fsnotify.NewWatcher()
-		if err != nil {
-			fs.Errorf(f, "Failed to create watcher for local filesystem")
-			return
-		}
+	// Create new watcher, ensuring current directory hierarchy is being watched
+	// before returning
+	watcher, err := fsnotify.NewWatcher()
+	if err != nil {
+		fs.Errorf(f, "Failed to create watcher for local filesystem")
+		return
+	}
+	f.watchPath(watcher, f.root)
+
+	go func(watcher *fsnotify.Watcher) {
+		// Close watcher when done
 		defer func() {
 			err := watcher.Close()
 			if err != nil {
 				fs.Debugf(f, "Failed to close watcher: %v", err)
 			}
 		}()
-		f.watchPath(watcher, f.root)
 
 		// Process events and errors
 		for {
@@ -1336,7 +1339,7 @@ func (f *Fs) ChangeNotify(ctx context.Context, notifyFunc func(string, fs.EntryT
 				fs.Debugf(f, "Error: %s", err.Error())
 			}
 		}
-	}()
+	}(watcher)
 }
 
 // Watch a path, recursively
