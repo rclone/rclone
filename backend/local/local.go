@@ -1340,7 +1340,7 @@ func (f *Fs) watchPath(watcher *fsnotify.Watcher, path string) {
 	// For a directory, WalkDir() makes the callback before listing, so the
 	// watching begins before listing and recursing into subdirectories
 	err := filepath.WalkDir(path, func(path string, d os.DirEntry, err error) error {
-		if d.IsDir() {
+		if d != nil && d.IsDir() {
 			err := watcher.Add(path)
 			if err != nil {
 				fs.Debugf(f, "Failed to start watching %s", path)
