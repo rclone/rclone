@@ -1270,7 +1270,7 @@ func (file *localOpenFile) Close() (err error) {
 // Close the returned channel to stop being notified.
 func (f *Fs) ChangeNotify(ctx context.Context, notifyFunc func(string, fs.EntryType), pollIntervalChan <-chan time.Duration) {
 	go func() {
-		// Create new watcher.
+		// Create new watcher
 		watcher, err := fsnotify.NewWatcher()
 		if err != nil {
 			fs.Debugf(f, "Failed to create watcher for local filesystem")
@@ -1278,12 +1278,17 @@ func (f *Fs) ChangeNotify(ctx context.Context, notifyFunc func(string, fs.EntryT
 		}
 		defer watcher.Close()
 
-		// Add a path.
-		err = watcher.Add(f.root)
-		if err != nil {
-			fs.Debugf(f, "Failed to add root path to watcher of local filesystem")
-			return
-		}
+		// Add root path, recursively
+		filepath.WalkDir(f.root, func(path string, d os.DirEntry, err error) error {
+			if d.IsDir() {
+				fs.Infof(f, "watching: %s", path)
+				var err = watcher.Add(path)
+				if err != nil {
+					fs.Debugf(f, "Failed to add root path to watcher of local filesystem")
+				}
+			}
+			return nil
+		})
 
 		// Process events
 		for {
