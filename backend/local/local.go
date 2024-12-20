@@ -1305,11 +1305,13 @@ func (f *Fs) ChangeNotify(ctx context.Context, notifyFunc func(string, fs.EntryT
 				entryPath := event.Name
 				entryType := fs.EntryObject
 
-				info, err := os.Stat(entryPath)
-				if err != nil {
-					fs.Debugf(f, "Failed to stat %s", entryPath)
-				} else if info.IsDir() {
-					entryType = fs.EntryDirectory
+				if event.Op != fsnotify.Remove {
+					info, err := os.Stat(entryPath)
+					if err != nil {
+						fs.Debugf(f, "Failed to stat %s", entryPath)
+					} else if info.IsDir() {
+						entryType = fs.EntryDirectory
+					}
 				}
 
 				switch event.Op {
