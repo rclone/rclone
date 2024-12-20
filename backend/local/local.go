@@ -1273,10 +1273,15 @@ func (f *Fs) ChangeNotify(ctx context.Context, notifyFunc func(string, fs.EntryT
 		// Create new watcher
 		watcher, err := fsnotify.NewWatcher()
 		if err != nil {
-			fs.Debugf(f, "Failed to create watcher for local filesystem")
+			fs.Errorf(f, "Failed to create watcher for local filesystem")
 			return
 		}
-		defer watcher.Close()
+		defer func() {
+			err := watcher.Close()
+			if err != nil {
+				fs.Debugf(f, "Failed to close watcher: %v", err)
+			}
+		}()
 		f.watchPath(watcher, f.root)
 
 		// Process events and errors
@@ -1334,7 +1339,7 @@ func (f *Fs) ChangeNotify(ctx context.Context, notifyFunc func(string, fs.EntryT
 func (f *Fs) watchPath(watcher *fsnotify.Watcher, path string) {
 	// For a directory, WalkDir() makes the callback before listing, so the
 	// watching begins before listing and recursing into subdirectories
-	filepath.WalkDir(path, func(path string, d os.DirEntry, err error) error {
+	err := filepath.WalkDir(path, func(path string, d os.DirEntry, err error) error {
 		if d.IsDir() {
 			err := watcher.Add(path)
 			if err != nil {
@@ -1345,6 +1350,9 @@ func (f *Fs) watchPath(watcher *fsnotify.Watcher, path string) {
 		}
 		return nil
 	})
+	if err != nil {
+		fs.Debugf(f, "Failed to start watching %s: %v", path, err)
+	}
 }
 
 // Returns a ReadCloser() object that contains the contents of a symbolic link
