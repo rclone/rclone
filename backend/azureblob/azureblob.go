@@ -1897,24 +1897,46 @@ func (o *Object) clearMetaData() {
 }
 
 // readMetaData gets the metadata if it hasn't already been fetched
-func (f *Fs) readMetaData(ctx context.Context, container, containerPath string) (blobProperties blob.GetPropertiesResponse, err error) {
+func (f *Fs) readMetaData(ctx context.Context, container, containerPath string) (blobProperties *blob.GetPropertiesResponse, err error) {
 	if !f.containerOK(container) {
-		return blobProperties, fs.ErrorObjectNotFound
+		return nil, fs.ErrorObjectNotFound
 	}
 	blb := f.getBlobSVC(container, containerPath)
 
 	// Read metadata (this includes metadata)
 	options := blob.GetPropertiesOptions{}
+	var resp blob.GetPropertiesResponse
 	err = f.pacer.Call(func() (bool, error) {
-		blobProperties, err = blb.GetProperties(ctx, &options)
+		resp, err = blb.GetProperties(ctx, &options)
 		return f.shouldRetry(ctx, err)
 	})
 	if err != nil {
 		// On directories - GetProperties does not work and current SDK does not populate service code correctly hence check regular http response as well
 		if storageErr, ok := err.(*azcore.ResponseError); ok && (storageErr.ErrorCode == string(bloberror.BlobNotFound) || storageErr.StatusCode == http.StatusNotFound) {
-			return blobProperties, fs.ErrorObjectNotFound
+			return nil, fs.ErrorObjectNotFound
 		}
-		return blobProperties, err
+		return nil, err
+	}
+	return &resp, nil
+}
+
+// readMetaDataAlways gets the metadata unconditionally and also the blob properties.
+//
+// Sets
+//
+//	o.id
+//	o.modTime
+//	o.size
+//	o.md5
+func (o *Object) readMetaDataAlways(ctx context.Context) (blobProperties *blob.GetPropertiesResponse, err error) {
+	container, containerPath := o.split()
+	blobProperties, err = o.fs.readMetaData(ctx, container, containerPath)
+	if err != nil {
+		return nil, err
+	}
+	err = o.decodeMetaDataFromPropertiesResponse(blobProperties)
+	if err != nil {
+		return nil, err
 	}
 	return blobProperties, nil
 }
@@ -1931,12 +1953,8 @@ func (o *Object) readMetaData(ctx context.Context) (err error) {
 	if !o.modTime.IsZero() {
 		return nil
 	}
-	container, containerPath := o.split()
-	blobProperties, err := o.fs.readMetaData(ctx, container, containerPath)
-	if err != nil {
-		return err
-	}
-	return o.decodeMetaDataFromPropertiesResponse(&blobProperties)
+	_, err = o.readMetaDataAlways(ctx)
+	return err
 }
 
 // ModTime returns the modification time of the object
