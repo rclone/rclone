@@ -1269,84 +1269,15 @@ func (file *localOpenFile) Close() (err error) {
 //
 // Close the returned channel to stop being notified.
 func (f *Fs) ChangeNotify(ctx context.Context, notifyFunc func(string, fs.EntryType), pollIntervalChan <-chan time.Duration) {
-	// Create new watcher, ensuring current directory hierarchy is being watched
-	// before returning
+	// Create new watcher
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
-		fs.Errorf(f, "Failed to create watcher for local filesystem")
+		fs.Errorf(f, "Failed to create watcher")
 		return
 	}
-	f.watchPath(watcher, f.root)
 
-	go func(watcher *fsnotify.Watcher) {
-		// Close watcher when done
-		defer func() {
-			err := watcher.Close()
-			if err != nil {
-				fs.Debugf(f, "Failed to close watcher: %v", err)
-			}
-		}()
-
-		// Process events and errors
-		for {
-			select {
-			case _, ok := <-pollIntervalChan:
-				if !ok {
-					return
-				}
-			case event, ok := <-watcher.Events:
-				if !ok {
-					return
-				}
-
-				rootSlash := strings.TrimSuffix(f.root, "/")
-				rootSlash += "/"
-
-				entryPath := strings.TrimPrefix(event.Name, rootSlash)
-				entryType := fs.EntryObject
-
-				if event.Op != fsnotify.Remove {
-					info, err := os.Stat(event.Name)
-					if err != nil {
-						fs.Debugf(f, "Failed to stat %s", event.Name)
-					} else if info.IsDir() {
-						entryType = fs.EntryDirectory
-					}
-				}
-
-				switch event.Op {
-				case fsnotify.Create:
-					fs.Debugf(f, "Create: %s", entryPath)
-					if entryType == fs.EntryDirectory {
-						f.watchPath(watcher, event.Name)
-					}
-				case fsnotify.Write:
-					fs.Debugf(f, "Write: %s", entryPath)
-				case fsnotify.Remove:
-					// No need to stop watching removed directories, handled by fsnotify
-					fs.Debugf(f, "Remove: %s", entryPath)
-				case fsnotify.Rename:
-					fs.Debugf(f, "Rename: %s", entryPath)
-				case fsnotify.Chmod:
-					fs.Debugf(f, "Chmod: %s", entryPath)
-				}
-				notifyFunc(entryPath, entryType)
-
-			case err, ok := <-watcher.Errors:
-				if !ok {
-					return
-				}
-				fs.Debugf(f, "Error: %s", err.Error())
-			}
-		}
-	}(watcher)
-}
-
-// Watch a path, recursively
-func (f *Fs) watchPath(watcher *fsnotify.Watcher, path string) {
-	// For a directory, WalkDir() makes the callback before listing, so the
-	// watching begins before listing and recursing into subdirectories
-	err := filepath.WalkDir(path, func(path string, d os.DirEntry, err error) error {
+	// Recursively watch all subdirectories
+	err = filepath.WalkDir(f.root, func(path string, d os.DirEntry, err error) error {
 		if d != nil && d.IsDir() {
 			err := watcher.Add(path)
 			if err != nil {
@@ -1358,8 +1289,126 @@ func (f *Fs) watchPath(watcher *fsnotify.Watcher, path string) {
 		return nil
 	})
 	if err != nil {
-		fs.Debugf(f, "Failed to start watching %s: %v", path, err)
+		fs.Errorf(f, "Failed to start watching %s", f.root)
+		return
 	}
+
+	go func() {
+		// Close watcher when done
+		defer func() {
+			err := watcher.Close()
+			if err != nil {
+				fs.Debugf(f, "Failed to close watcher")
+			}
+		}()
+
+		// Process poll interval updates, events and errors
+		rootSlash := strings.TrimSuffix(f.root, "/") + "/"
+		for {
+			select {
+			case _, ok := <-pollIntervalChan:
+				if !ok {
+					return
+				}
+
+			case event, ok := <-watcher.Events:
+				if !ok {
+					return
+				}
+				if event.Has(fsnotify.Create) {
+					fs.Debugf(f, "Create: %s", event.Name)
+
+					// File or directory creation event. For a directory, recursively
+					// watch all subdirectories, as a creation event is triggered not
+					// just on a simple mkdir, but also when an existing directory is
+					// moved in.
+					err := filepath.WalkDir(event.Name, func(path string, d os.DirEntry, err error) error {
+						if d != nil {
+							entryPath := strings.TrimPrefix(path, rootSlash)
+							entryType := fs.EntryObject
+							if d.IsDir() {
+								// Watch the directory.
+								//
+								// Given the way WalkDir() handles directories (calling the
+								// callback function before listing the directory contents to
+								// continue the recursion), the watch begins before the
+								// directory listing, and events start being received
+								// immediately.
+								//
+								// There are some caveats to this approach:
+								//
+								// 1. notifyFunc() may be called twice for a file that is
+								//    created between the watch starting and the directory
+								//    listing. Consider the following sequence of operations:
+								//
+								//    1. directory a/ created,
+								//    2. directory a/ watched,
+								//    3. file a/b created and passed to notifyFunc(),
+								//    4. directory a/ listing,
+								//    5. recursing, each file in the a/ directory is passed to
+								//       notifyFunc(), including a/b from step 3, for the
+								//       second time.
+								//
+								// 2. If a file is removed before WalkDir() reaches its parent
+								//    directory, it is never passed to notifyFunc().
+								err := watcher.Add(path)
+								if err != nil {
+									fs.Debugf(f, "Failed to start watching %s", path)
+								} else {
+									fs.Debugf(f, "Started watching %s", path)
+								}
+								entryType = fs.EntryDirectory
+							}
+							notifyFunc(entryPath, entryType)
+						}
+						return nil
+					})
+					if err != nil {
+						fs.Debugf(f, "Failed to start watching %s", event.Name)
+					}
+				} else {
+					// Internally, fsnotify stops watching directories that are removed
+					// or renamed, so it is not necessary to make updates to the watch
+					// list
+					if event.Has(fsnotify.Remove) {
+						fs.Debugf(f, "Remove: %s", event.Name)
+					}
+					if event.Has(fsnotify.Rename) {
+						fs.Debugf(f, "Rename: %s", event.Name)
+					}
+					if event.Has(fsnotify.Write) {
+						fs.Debugf(f, "Write: %s", event.Name)
+					}
+					if event.Has(fsnotify.Chmod) {
+						fs.Debugf(f, "Chmod: %s", event.Name)
+					}
+
+					// Relative path
+					entryPath := strings.TrimPrefix(event.Name, rootSlash)
+
+					// Type of entry (object or directory). Because fsnotify provides no
+					// information on whether the path is a directory, Stat() is used to
+					// determine this, but this requires that the path still exists. For
+					// Remove and Rename events where the path no longer exists,
+					// EntryObject is always used
+					entryType := fs.EntryObject
+					if event.Has(fsnotify.Write) || event.Has(fsnotify.Chmod) {
+						info, err := os.Stat(event.Name)
+						if err == nil && info != nil && info.IsDir() {
+							entryType = fs.EntryDirectory
+						}
+					}
+					notifyFunc(entryPath, entryType)
+				}
+
+			case err, ok := <-watcher.Errors:
+				if !ok {
+					return
+				}
+				fs.Errorf(f, "Error: %s", err.Error())
+			}
+		}
+	}()
 }
 
 // Returns a ReadCloser() object that contains the contents of a symbolic link
