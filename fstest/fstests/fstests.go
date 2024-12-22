@@ -20,6 +20,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -876,8 +877,8 @@ func Run(t *testing.T, opt *Opt) {
 			require.NoError(t, err)
 
 			pollInterval := make(chan time.Duration)
-			dirChanges := map[string]struct{}{}
-			objChanges := map[string]struct{}{}
+			dirChanges := new(sync.Map)
+			objChanges := new(sync.Map)
 			doChangeNotify(ctx, func(x string, e fs.EntryType) {
 				fs.Debugf(nil, "doChangeNotify(%q, %+v)", x, e)
 				if strings.HasPrefix(x, file1.Path[:5]) || strings.HasPrefix(x, file2.Path[:5]) {
@@ -885,9 +886,9 @@ func Run(t *testing.T, opt *Opt) {
 					return
 				}
 				if e == fs.EntryDirectory {
-					dirChanges[x] = struct{}{}
+					dirChanges.Store(x, struct{}{})
 				} else if e == fs.EntryObject {
-					objChanges[x] = struct{}{}
+					objChanges.Store(x, struct{}{})
 				}
 			}, pollInterval)
 			defer func() { close(pollInterval) }()
@@ -913,9 +914,9 @@ func Run(t *testing.T, opt *Opt) {
 
 			// Looks for each item in wants in changes -
 			// if they are all found it returns true
-			contains := func(changes map[string]struct{}, wants []string) bool {
+			contains := func(changes *sync.Map, wants []string) bool {
 				for _, want := range wants {
-					_, ok := changes[want]
+					_, ok := changes.Load(want)
 					if !ok {
 						return false
 					}
