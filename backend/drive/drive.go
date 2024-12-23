@@ -3525,14 +3525,17 @@ func (f *Fs) unTrashDir(ctx context.Context, dir string, recurse bool) (r unTras
 	return f.unTrash(ctx, dir, directoryID, true)
 }
 
-// copy file with id to dest
-func (f *Fs) copyID(ctx context.Context, id, dest string) (err error) {
+// copy or move file with id to dest
+func (f *Fs) copyOrMoveID(ctx context.Context, operation string, id, dest string) (err error) {
+	if operation != "move" && operation != "copy" {
+		return fmt.Errorf("unknown operation %q - must be copy or move", operation)
+	}
 	info, err := f.getFile(ctx, id, f.getFileFields(ctx))
 	if err != nil {
 		return fmt.Errorf("couldn't find id: %w", err)
 	}
 	if info.MimeType == driveFolderType {
-		return fmt.Errorf("can't copy directory use: rclone copy --drive-root-folder-id %s %s %s", id, fs.ConfigString(f), dest)
+		return fmt.Errorf("can't %s directory use: rclone %s --drive-root-folder-id %s %s %s", operation, operation, id, fs.ConfigString(f), dest)
 	}
 	info.Name = f.opt.Enc.ToStandardName(info.Name)
 	o, err := f.newObjectWithInfo(ctx, info.Name, info)
@@ -3553,9 +3556,15 @@ func (f *Fs) copyID(ctx context.Context, id, dest string) (err error) {
 	if err != nil {
 		return err
 	}
-	_, err = operations.Copy(ctx, dstFs, nil, destLeaf, o)
-	if err != nil {
-		return fmt.Errorf("copy failed: %w", err)
+
+	var opErr error
+	if operation == "move" {
+		_, opErr = operations.Move(ctx, dstFs, nil, destLeaf, o)
+	} else {
+		_, opErr = operations.Copy(ctx, dstFs, nil, destLeaf, o)
+	}
+	if opErr != nil {
+		return fmt.Errorf("%s failed: %w", operation, opErr)
 	}
 	return nil
 }
@@ -3770,27 +3779,27 @@ Result:
     }
 `,
 }, {
-	Name:  "copyid",
-	Short: "Copy files by ID",
-	Long: `This command copies files by ID
+	Name:  "copyOrMoveID",
+	Short: "Copy or move files by ID",
+	Long: `This command copies or moves files by ID
 
 Usage:
 
-    rclone backend copyid drive: ID path
-    rclone backend copyid drive: ID1 path1 ID2 path2
+    rclone backend copyOrMoveID drive: move/copy ID path
+    rclone backend copyOrMoveID drive: move/copy ID1 path1 ID2 path2
 
-It copies the drive file with ID given to the path (an rclone path which
-will be passed internally to rclone copyto). The ID and path pairs can be
-repeated.
+It copies or moves the drive file with ID given to the path (an rclone path which
+will be passed internally to rclone copyto or moveto). The ID and path pairs can be
+repeated. Must pass the move or copy param to dictate the action to take.
 
-The path should end with a / to indicate copy the file as named to
+The path should end with a / to indicate copy or move the file as named to
 this directory. If it doesn't end with a / then the last path
 component will be used as the file name.
 
 If the destination is a drive backend then server-side copying will be
 attempted if possible.
 
-Use the --interactive/-i or --dry-run flag to see what would be copied before copying.
+Use the --interactive/-i or --dry-run flag to see what would be copied or moved beforehand.
 `,
 }, {
 	Name:  "exportformats",
@@ -3970,16 +3979,16 @@ func (f *Fs) Command(ctx context.Context, name string, arg []string, opt map[str
 			dir = arg[0]
 		}
 		return f.unTrashDir(ctx, dir, true)
-	case "copyid":
-		if len(arg)%2 != 0 {
-			return nil, errors.New("need an even number of arguments")
+	case "copyOrMoveID":
+		if len(arg)%2 == 0 {
+			return nil, errors.New("need an odd number of arguments")
 		}
 		for len(arg) > 0 {
-			id, dest := arg[0], arg[1]
-			arg = arg[2:]
-			err = f.copyID(ctx, id, dest)
+			operation, id, dest := arg[0], arg[1], arg[2]
+			arg = arg[3:]
+			err = f.copyOrMoveID(ctx, operation, id, dest)
 			if err != nil {
-				return nil, fmt.Errorf("failed copying %q to %q: %w", id, dest, err)
+				return nil, fmt.Errorf("failed moving %q to %q: %w", id, dest, err)
 			}
 		}
 		return nil, nil
