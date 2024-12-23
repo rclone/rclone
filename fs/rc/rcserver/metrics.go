@@ -37,7 +37,8 @@ func init() {
 // If the server wasn't configured the *Server returned may be nil
 func MetricsStart(ctx context.Context, opt *rc.Options) (*MetricsServer, error) {
 	jobs.SetOpt(opt) // set the defaults for jobs
-	if len(opt.MetricsHTTP.ListenAddr) > 0 {
+	// Avoid starting the metrics server if the main server is disabled
+	if len(opt.MetricsHTTP.ListenAddr) > 0 && opt.Enabled {
 		// Serve on the DefaultServeMux so can have global registrations appear
 		s, err := newMetricsServer(ctx, opt)
 		if err != nil {
