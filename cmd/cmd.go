@@ -429,11 +429,12 @@ func initConfig() {
 		fs.Fatalf(nil, "Failed to start remote control: %v", err)
 	}
 
-	// Start the metrics server if configured
-	_, err = rcserver.MetricsStart(ctx, &rc.Opt)
-	if err != nil {
-		fs.Fatalf(nil, "Failed to start metrics server: %v", err)
-
+	// Start the metrics server if configured and not running the "rc" command
+	if os.Args[1] != "rc" {
+		_, err = rcserver.MetricsStart(ctx, &rc.Opt)
+		if err != nil {
+			fs.Fatalf(nil, "Failed to start metrics server: %v", err)
+		}
 	}
 
 	// Setup CPU profiling if desired
