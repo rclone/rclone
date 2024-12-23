@@ -315,7 +315,7 @@ func findByName(name string) (*fs.RegInfo, error) {
 func printRemoteOptions(name string, prefix string, sep string, redacted bool) {
 	fsInfo, err := findByName(name)
 	if err != nil {
-		fmt.Printf("# %v\n", err)
+		fs.Logf(nil, "# %v", err)
 		fsInfo = nil
 	}
 	for _, key := range LoadedData().GetKeyList(name) {
@@ -334,11 +334,11 @@ func printRemoteOptions(name string, prefix string, sep string, redacted bool) {
 		}
 		value := GetValue(name, key)
 		if redacted && (isSensitive || isPassword) && value != "" {
-			fmt.Printf("%s%s%sXXX\n", prefix, key, sep)
+			fs.Logf(nil, "%s%s%sXXX", prefix, key, sep)
 		} else if isPassword && value != "" {
-			fmt.Printf("%s%s%s*** ENCRYPTED ***\n", prefix, key, sep)
+			fs.Logf(nil, "%s%s%s*** ENCRYPTED ***", prefix, key, sep)
 		} else {
-			fmt.Printf("%s%s%s%s\n", prefix, key, sep, value)
+			fs.Logf(nil, "%s%s%s%s", prefix, key, sep, value)
 		}
 	}
 }
@@ -350,13 +350,13 @@ func listRemoteOptions(name string) {
 
 // ShowRemote shows the contents of the remote in config file format
 func ShowRemote(name string) {
-	fmt.Printf("[%s]\n", name)
+	fs.Logf(nil, "[%s]", name)
 	printRemoteOptions(name, "", " = ", false)
 }
 
 // ShowRedactedRemote shows the contents of the remote in config file format
 func ShowRedactedRemote(name string) {
-	fmt.Printf("[%s]\n", name)
+	fs.Logf(nil, "[%s]", name)
 	printRemoteOptions(name, "", " = ", true)
 }
 
