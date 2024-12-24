@@ -2056,7 +2056,7 @@ If you leave it blank, this is calculated automatically from the sse_customer_ke
 				Help:  "One Zone Infrequent Access storage class",
 			}, {
 				Value: "GLACIER",
-				Help:  "Glacier storage class",
+				Help:  "Glacier Flexible Retrieval storage class",
 			}, {
 				Value: "DEEP_ARCHIVE",
 				Help:  "Glacier Deep Archive storage class",
