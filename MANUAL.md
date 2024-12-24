@@ -24582,7 +24582,7 @@ Choose a number from below, or type in your own value
    \ "STANDARD_IA"
  5 / One Zone Infrequent Access storage class
    \ "ONEZONE_IA"
- 6 / Glacier storage class
+ 6 / Glacier Flexible Retrieval storage class
    \ "GLACIER"
  7 / Glacier Deep Archive storage class
    \ "DEEP_ARCHIVE"
@@ -25436,7 +25436,7 @@ Properties:
     - "ONEZONE_IA"
         - One Zone Infrequent Access storage class
     - "GLACIER"
-        - Glacier storage class
+        - Glacier Flexible Retrieval storage class
     - "DEEP_ARCHIVE"
         - Glacier Deep Archive storage class
     - "INTELLIGENT_TIERING"
