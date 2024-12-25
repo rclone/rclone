@@ -1793,7 +1793,7 @@ including
 create and delete files with RClone. 
   - `https://www.googleapis.com/auth/drive.metadata.readonly` which you may also want to add.
   - If you want to add all at once, comma separated it would be `https://www.googleapis.com/auth/docs,https://www.googleapis.com/auth/drive,https://www.googleapis.com/auth/drive.metadata.readonly`.
-6. After adding scopes, click
+6. After adding scopes, click "Update" to close the panel. Then click
 "Save and continue" to add test users. Be sure to add your own account to
 the test users. Once you've added yourself as a test user and saved the
 changes, click again on "Credentials" on the left panel to go back to
