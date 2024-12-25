@@ -40,6 +40,7 @@ import (
 	"github.com/rclone/rclone/lib/rest"
 
 	ntlmssp "github.com/Azure/go-ntlmssp"
+	"github.com/icholy/digest"
 )
 
 const (
@@ -409,6 +410,24 @@ func (o *Object) filePath() string {
 	return o.fs.filePath(o.remote)
 }
 
+// checkForDigestAuth issues an unauthenticated request to the server to
+// determine if 'Digest' is among the supported authentication schemes.
+// Multiple challenges may be specified in a single response header
+// or provided in separate headers in the same response.
+//
+// See https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/WWW-Authenticate
+func checkForDigestAuth(url string) bool {
+	resp, err := http.Get(url)
+	if err == nil {
+		for _, challenge := range resp.Header["Www-Authenticate"] {
+			if strings.Contains(challenge, "Digest") {
+				return true
+			}
+		}
+	}
+	return false
+}
+
 // NewFs constructs an Fs from the path, container:path
 func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, error) {
 	// Parse config into Options struct
@@ -482,6 +501,18 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 			rt: ntlmssp.Negotiator{RoundTripper: t},
 		}
 	}
+	if opt.Vendor == "other" {
+		// If available, prefer Digest authentication.
+		if checkForDigestAuth(opt.URL) {
+			fs.Debugf(nil, "using Digest authentication scheme")
+			client.Transport = &digest.Transport{
+				Jar:      client.Jar,
+				Username: opt.User,
+				Password: opt.Pass,
+			}
+		}
+	}
+
 	f.srv = rest.NewClient(client).SetRoot(u.String())
 
 	f.features = (&fs.Features{
