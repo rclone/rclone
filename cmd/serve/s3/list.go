@@ -28,7 +28,7 @@ func (b *s3Backend) entryListR(_vfs *vfs.VFS, bucket, fdPath, name string, addPr
 
 		if entry.IsDir() {
 			if addPrefix {
-				response.AddPrefix(gofakes3.URLEncode(objectPath))
+				response.AddPrefix(objectPath)
 				continue
 			}
 			err := b.entryListR(_vfs, bucket, path.Join(fdPath, object), "", false, response)
@@ -37,7 +37,7 @@ func (b *s3Backend) entryListR(_vfs *vfs.VFS, bucket, fdPath, name string, addPr
 			}
 		} else {
 			item := &gofakes3.Content{
-				Key:          gofakes3.URLEncode(objectPath),
+				Key:          objectPath,
 				LastModified: gofakes3.NewContentTime(entry.ModTime()),
 				ETag:         getFileHash(entry),
 				Size:         entry.Size(),
