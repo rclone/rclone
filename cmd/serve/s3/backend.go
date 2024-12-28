@@ -52,7 +52,7 @@ func (b *s3Backend) ListBuckets(ctx context.Context) ([]gofakes3.BucketInfo, err
 	for _, entry := range dirEntries {
 		if entry.IsDir() {
 			response = append(response, gofakes3.BucketInfo{
-				Name:         gofakes3.URLEncode(entry.Name()),
+				Name:         entry.Name(),
 				CreationDate: gofakes3.NewContentTime(entry.ModTime()),
 			})
 		}
@@ -227,7 +227,7 @@ func (b *s3Backend) GetObject(ctx context.Context, bucketName, objectName string
 	}
 
 	return &gofakes3.Object{
-		Name:     gofakes3.URLEncode(objectName),
+		Name:     objectName,
 		Hash:     hash,
 		Metadata: meta,
 		Size:     size,
