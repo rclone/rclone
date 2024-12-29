@@ -53,9 +53,9 @@ export XDG_CONFIG_HOME=config
 #check installed version of rclone to determine if update is necessary
 version=$(rclone --version 2>>errors | head -n 1)
 if [ -z "$install_beta" ]; then
-    current_version=$(curl -fsS https://downloads.rclone.org/version.txt)
+    current_version=$(curl -fsSL https://downloads.rclone.org/version.txt)
 else
-    current_version=$(curl -fsS https://beta.rclone.org/version.txt)
+    current_version=$(curl -fsSL https://beta.rclone.org/version.txt)
 fi
 
 if [ "$version" = "$current_version" ]; then
@@ -131,7 +131,7 @@ else
     rclone_zip="rclone-beta-latest-${OS}-${OS_type}.zip"
 fi
 
-curl -OfsS "$download_link"
+curl -OfsSL "$download_link"
 unzip_dir="tmp_unzip_dir_for_rclone"
 # there should be an entry in this switch for each element of unzip_tools_list
 case "$unzip_tool" in
