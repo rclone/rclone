@@ -137,8 +137,10 @@ var (
 // Gets an oauth config with the right scopes
 func getOauthConfig(m configmap.Mapper) *oauthutil.Config {
 	// If not impersonating, use standard scopes
-	if impersonate, _ := m.Get("impersonate"); impersonate == "" {
-		return dropboxConfig
+	impersonate, _ := m.Get("impersonate")
+	impersonateID, _ := m.Get("impersonate_id")
+	if impersonate == "" && impersonateID == "" {
+		return dropboxConfig // Default config if neither is set
 	}
 	// Make a copy of the config
 	config := *dropboxConfig
@@ -200,7 +202,7 @@ v1.55 or later is in use everywhere.
 			Name: "shared_files",
 			Help: `Instructs rclone to work on individual shared files.
 
-In this mode rclone's features are extremely limited - only list (ls, lsl, etc.) 
+In this mode rclone's features are extremely limited - only list (ls, lsl, etc.)
 operations and read operations (e.g. downloading) are supported in this mode.
 All other operations will be disabled.`,
 			Default:  false,
@@ -208,16 +210,16 @@ All other operations will be disabled.`,
 		}, {
 			Name: "shared_folders",
 			Help: `Instructs rclone to work on shared folders.
-			
-When this flag is used with no path only the List operation is supported and 
-all available shared folders will be listed. If you specify a path the first part 
-will be interpreted as the name of shared folder. Rclone will then try to mount this 
-shared to the root namespace. On success shared folder rclone proceeds normally. 
-The shared folder is now pretty much a normal folder and all normal operations 
-are supported. 
 
-Note that we don't unmount the shared folder afterwards so the 
---dropbox-shared-folders can be omitted after the first use of a particular 
+When this flag is used with no path only the List operation is supported and
+all available shared folders will be listed. If you specify a path the first part
+will be interpreted as the name of shared folder. Rclone will then try to mount this
+shared to the root namespace. On success shared folder rclone proceeds normally.
+The shared folder is now pretty much a normal folder and all normal operations
+are supported.
+
+Note that we don't unmount the shared folder afterwards so the
+--dropbox-shared-folders can be omitted after the first use of a particular
 shared folder.
 
 See also --dropbox-root-namespace for an alternative way to work with shared
@@ -255,6 +257,7 @@ folders.`,
 type Options struct {
 	ChunkSize     fs.SizeSuffix        `config:"chunk_size"`
 	Impersonate   string               `config:"impersonate"`
+	ImpersonateID string               `config:"impersonate_id"`
 	SharedFiles   bool                 `config:"shared_files"`
 	SharedFolders bool                 `config:"shared_folders"`
 	BatchMode     string               `config:"batch_mode"`
@@ -430,7 +433,9 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	// NOTE: needs to be created pre-impersonation so we can look up the impersonated user
 	f.team = team.New(cfg)
 
-	if opt.Impersonate != "" {
+	if opt.ImpersonateID != "" {
+		cfg.AsMemberID = opt.ImpersonateID
+	} else if opt.Impersonate != "" {
 		user := team.UserSelectorArg{
 			Email: opt.Impersonate,
 		}
