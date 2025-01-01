@@ -39,60 +39,15 @@ type Meta struct {
 	CurrentPage int `json:"currentPage,omitempty"`
 }
 
-// ReadMetadataResponse is the response when listing folder contents
 type ReadMetadataResponse struct {
-	Files []FileInfo `json:"files"`
+	Files []FileInfo `json:"items"`
 	Meta  Meta       `json:"meta"`
-}
-
-// UploadInfo is the response when initiating an upload
-type UploadInfo struct {
-	ID    int64  `json:"id"`
-	Name  string `json:"name"`
-	Size  int64  `json:"size"`
-	State string `json:"state"`
-}
-
-type UploadFile struct {
-	Parts []PartFile `json:"parts,omitempty"`
-}
-
-// UploadResponse is the response to a successful upload
-type UploadResponse struct {
-	Files []struct {
-		Name      string `json:"name"`
-		Size      int64  `json:"size"`
-		URL       string `json:"url"`
-		DeleteURL string `json:"deleteUrl"`
-	} `json:"files"`
-}
-
-// UpdateResponse is a generic response to various action on files (rename/copy/move)
-type UpdateResponse struct {
-	Message string `json:"message,omitempty"`
-	Status  bool   `json:"status"`
-}
-
-// Download is the response when requesting a download link
-type Download struct {
-	StatusCode int    `json:"statusCode"`
-	Message    string `json:"message"`
-	Data       struct {
-		DownloadLink string `json:"dlLink"`
-	} `json:"data"`
 }
 
 // MetadataRequestOptions represents all the options when listing folder contents
 type MetadataRequestOptions struct {
 	Page  int64
 	Limit int64
-}
-
-// CreateFolderRequest is used for creating a folder
-type CreateFolderRequest struct {
-	Name string `json:"name"`
-	Type string `json:"type"`
-	Path string `json:"path"`
 }
 
 type CreateDirRequest struct {
@@ -128,7 +83,6 @@ type CreateFileRequest struct {
 	UpdatedAt string     `json:"updatedAt,omitempty"`
 }
 
-// MoveFolderRequest is used for moving a folder
 type MoveFileRequest struct {
 	Files       []string `json:"files"`
 	Destination string   `json:"destination"`
@@ -138,32 +92,23 @@ type DirMove struct {
 	Destination string `json:"destination"`
 }
 
-// UpdateFileInformation is used for renaming a file
 type UpdateFileInformation struct {
 	Name      string     `json:"name,omitempty"`
-	Type      string     `json:"type,omitempty"`
 	UpdatedAt string     `json:"updatedAt,omitempty"`
-	CreatedAt string     `json:"createdAt,omitempty"`
 	Parts     []FilePart `json:"parts,omitempty"`
 	Size      int64      `json:"size,omitempty"`
 	UploadId  string     `json:"uploadId,omitempty"`
 	ChannelID int64      `json:"channelId,omitempty"`
 }
 
-// RemoveFileRequest is used for deleting a file
 type RemoveFileRequest struct {
 	Source string   `json:"source,omitempty"`
 	Files  []string `json:"files,omitempty"`
 }
 type CopyFile struct {
 	ID          string `json:"id"`
-	Name        string `json:"name"`
+	Newname     string `json:"newName"`
 	Destination string `json:"destination"`
-}
-
-// Token represents the authentication token
-type Token struct {
-	Token string `json:"token"`
 }
 
 type Session struct {

@@ -254,7 +254,7 @@ func NewFs(ctx context.Context, name string, root string, config configmap.Mappe
 	}).Fill(ctx, f)
 
 	client := fshttp.NewClient(ctx)
-	authCookie := http.Cookie{Name: "user-session", Value: opt.AccessToken}
+	authCookie := http.Cookie{Name: "access_token", Value: opt.AccessToken}
 	f.srv = rest.NewClient(client).SetRoot(strings.Trim(opt.ApiHost, "/")).SetCookie(&authCookie)
 
 	opts := rest.Opts{
@@ -275,9 +275,12 @@ func NewFs(ctx context.Context, name string, root string, config configmap.Mappe
 	if err != nil {
 		return nil, err
 	}
+	if session.UserId == 0 {
+		return nil, errors.New("invalid session")
+	}
 
 	for _, cookie := range sessionResp.Cookies() {
-		if cookie.Name == "user-session" && cookie.Value != "" {
+		if cookie.Name == "access_token" && cookie.Value != "" {
 			config.Set("access_token", cookie.Value)
 		}
 	}
@@ -306,11 +309,11 @@ func (f *Fs) readMetaDataForPath(ctx context.Context, path string, options *api.
 		Method: "GET",
 		Path:   "/api/files",
 		Parameters: url.Values{
-			"path":  []string{path},
-			"limit": []string{strconv.FormatInt(options.Limit, 10)},
-			"sort":  []string{"id"},
-			"op":    []string{"list"},
-			"page":  []string{strconv.FormatInt(options.Page, 10)},
+			"path":      []string{path},
+			"limit":     []string{strconv.FormatInt(options.Limit, 10)},
+			"sort":      []string{"id"},
+			"operation": []string{"list"},
+			"page":      []string{strconv.FormatInt(options.Page, 10)},
 		},
 	}
 	var err error
@@ -339,9 +342,9 @@ func (f *Fs) findObject(ctx context.Context, path string, name string) (*api.Rea
 		Method: "GET",
 		Path:   "/api/files",
 		Parameters: url.Values{
-			"path": []string{path},
-			"op":   []string{"find"},
-			"name": []string{name},
+			"path":      []string{path},
+			"operation": []string{"find"},
+			"name":      []string{name},
 		},
 	}
 	var err error
@@ -482,8 +485,9 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 func (f *Fs) move(ctx context.Context, dstPath string, fileID string) (err error) {
 
 	opts := rest.Opts{
-		Method: "POST",
-		Path:   "/api/files/move",
+		Method:     "POST",
+		Path:       "/api/files/move",
+		NoResponse: true,
 	}
 
 	mv := api.MoveFileRequest{
@@ -492,9 +496,9 @@ func (f *Fs) move(ctx context.Context, dstPath string, fileID string) (err error
 	}
 
 	var resp *http.Response
-	var info api.UpdateResponse
+
 	err = f.pacer.Call(func() (bool, error) {
-		resp, err = f.srv.CallJSON(ctx, &opts, &mv, &info)
+		resp, err = f.srv.CallJSON(ctx, &opts, &mv, nil)
 		return shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
@@ -506,14 +510,14 @@ func (f *Fs) move(ctx context.Context, dstPath string, fileID string) (err error
 // updateFileInformation set's various file attributes most importantly it's name
 func (f *Fs) updateFileInformation(ctx context.Context, update *api.UpdateFileInformation, fileId string) (err error) {
 	opts := rest.Opts{
-		Method: "PATCH",
-		Path:   "/api/files/" + fileId,
+		Method:     "PATCH",
+		Path:       "/api/files/" + fileId,
+		NoResponse: true,
 	}
 
 	var resp *http.Response
-	var info api.UpdateResponse
 	err = f.pacer.Call(func() (bool, error) {
-		resp, err = f.srv.CallJSON(ctx, &opts, update, &info)
+		resp, err = f.srv.CallJSON(ctx, &opts, update, nil)
 		return shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
@@ -677,7 +681,7 @@ func (f *Fs) CreateDir(ctx context.Context, base string, leaf string) (err error
 	var resp *http.Response
 	opts := rest.Opts{
 		Method:     "POST",
-		Path:       "/api/files/directories",
+		Path:       "/api/files/mkdir",
 		NoResponse: true,
 	}
 
@@ -805,7 +809,7 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 
 	opts := rest.Opts{
 		Method:     "POST",
-		Path:       "/api/files/directories/move",
+		Path:       "/api/files/move",
 		NoResponse: true,
 	}
 	move := api.DirMove{
@@ -826,15 +830,15 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 
 func (o *Object) Remove(ctx context.Context) error {
 	opts := rest.Opts{
-		Method: "POST",
-		Path:   "/api/files/delete",
+		Method:     "POST",
+		Path:       "/api/files/delete",
+		NoResponse: true,
 	}
 	delete := api.RemoveFileRequest{
 		Files: []string{o.id},
 	}
-	var info api.UpdateResponse
 	err := o.fs.pacer.Call(func() (bool, error) {
-		resp, err := o.fs.srv.CallJSON(ctx, &opts, &delete, &info)
+		resp, err := o.fs.srv.CallJSON(ctx, &opts, &delete, nil)
 		return shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
@@ -903,7 +907,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	}
 	copy := api.CopyFile{
 		ID:          srcObj.id,
-		Name:        dstLeaf,
+		Newname:     dstLeaf,
 		Destination: dstBase,
 	}
 	var info api.FileInfo

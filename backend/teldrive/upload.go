@@ -186,7 +186,7 @@ func (o *Object) prepareUpload(ctx context.Context, src fs.ObjectInfo) (*uploadI
 	uploadID := getMD5Hash(fmt.Sprintf("%s:%d:%d", path.Join(base, leaf), src.Size(), o.fs.userId))
 
 	var (
-		uploadFile     api.UploadFile
+		uploadParts    []api.PartFile
 		existingChunks map[int]api.PartFile
 	)
 
@@ -199,15 +199,15 @@ func (o *Object) prepareUpload(ctx context.Context, src fs.ObjectInfo) (*uploadI
 
 	if chunkSize < src.Size() {
 		err := o.fs.pacer.Call(func() (bool, error) {
-			resp, err := o.fs.srv.CallJSON(ctx, &opts, nil, &uploadFile)
+			resp, err := o.fs.srv.CallJSON(ctx, &opts, nil, &uploadParts)
 			return shouldRetry(ctx, resp, err)
 		})
 
 		if err != nil {
 			return nil, err
 		}
-		existingChunks = make(map[int]api.PartFile, len(uploadFile.Parts))
-		for _, part := range uploadFile.Parts {
+		existingChunks = make(map[int]api.PartFile, len(uploadParts))
+		for _, part := range uploadParts {
 			existingChunks[part.PartNo] = part
 		}
 
@@ -223,9 +223,9 @@ func (o *Object) prepareUpload(ctx context.Context, src fs.ObjectInfo) (*uploadI
 
 	encryptFile := o.fs.opt.EncryptFiles
 
-	if len(uploadFile.Parts) > 0 {
-		channelID = uploadFile.Parts[0].ChannelID
-		encryptFile = uploadFile.Parts[0].Encrypted
+	if len(uploadParts) > 0 {
+		channelID = uploadParts[0].ChannelID
+		encryptFile = uploadParts[0].Encrypted
 	}
 
 	return &uploadInfo{
