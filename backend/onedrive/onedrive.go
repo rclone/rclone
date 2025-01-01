@@ -40,7 +40,6 @@ import (
 	"github.com/rclone/rclone/lib/pacer"
 	"github.com/rclone/rclone/lib/readers"
 	"github.com/rclone/rclone/lib/rest"
-	"golang.org/x/oauth2"
 )
 
 const (
@@ -65,14 +64,21 @@ const (
 
 // Globals
 var (
-	authPath  = "/common/oauth2/v2.0/authorize"
-	tokenPath = "/common/oauth2/v2.0/token"
+
+	// Define the paths used for token operations
+	commonPathPrefix = "/common" // prefix for the paths if tenant isn't known
+	authPath         = "/oauth2/v2.0/authorize"
+	tokenPath        = "/oauth2/v2.0/token"
 
 	scopeAccess             = fs.SpaceSepList{"Files.Read", "Files.ReadWrite", "Files.Read.All", "Files.ReadWrite.All", "Sites.Read.All", "offline_access"}
 	scopeAccessWithoutSites = fs.SpaceSepList{"Files.Read", "Files.ReadWrite", "Files.Read.All", "Files.ReadWrite.All", "offline_access"}
 
-	// Description of how to auth for this app for a business account
-	oauthConfig = &oauth2.Config{
+	// When using client credential OAuth flow, scope of .default is required in order
+	// to use the permissions configured for the application within the tenant
+	scopeAccessClientCred = fs.SpaceSepList{".default"}
+
+	// Base config for how to auth
+	oauthConfig = &oauthutil.Config{
 		Scopes:       scopeAccess,
 		ClientID:     rcloneClientID,
 		ClientSecret: obscure.MustReveal(rcloneEncryptedClientSecret),
@@ -183,6 +189,14 @@ Choose or manually enter a custom space separated list with all scopes, that rcl
 					Help:  "Read and write access to all resources, without the ability to browse SharePoint sites. \nSame as if disable_site_permission was set to true",
 				},
 			},
+		}, {
+			Name: "tenant",
+			Help: `ID of the service principal's tenant. Also called its directory ID.
+
+Set this if using
+- Client Credential flow
+`,
+			Sensitive: true,
 		}, {
 			Name: "disable_site_permission",
 			Help: `Disable the request for Sites.Read.All permission.
@@ -527,28 +541,54 @@ func chooseDrive(ctx context.Context, name string, m configmap.Mapper, srv *rest
 	})
 }
 
-// Config the backend
-func Config(ctx context.Context, name string, m configmap.Mapper, config fs.ConfigIn) (*fs.ConfigOut, error) {
-	region, graphURL := getRegionURL(m)
+// Make the oauth config for the backend
+func makeOauthConfig(ctx context.Context, opt *Options) (*oauthutil.Config, error) {
+	// Copy the default oauthConfig
+	oauthConfig := *oauthConfig
 
-	if config.State == "" {
-		var accessScopes fs.SpaceSepList
-		accessScopesString, _ := m.Get("access_scopes")
-		err := accessScopes.Set(accessScopesString)
+	// Set the scopes
+	oauthConfig.Scopes = opt.AccessScopes
+	if opt.DisableSitePermission {
+		oauthConfig.Scopes = scopeAccessWithoutSites
+	}
+
+	// Construct the auth URLs
+	prefix := commonPathPrefix
+	if opt.Tenant != "" {
+		prefix = "/" + opt.Tenant
+	}
+	oauthConfig.TokenURL = authEndpoint[opt.Region] + prefix + tokenPath
+	oauthConfig.AuthURL = authEndpoint[opt.Region] + prefix + authPath
+
+	// Check to see if we are using client credentials flow
+	if opt.ClientCredentials {
+		// Override scope to .default
+		oauthConfig.Scopes = scopeAccessClientCred
+		if opt.Tenant == "" {
+			return nil, fmt.Errorf("tenant parameter must be set when using %s", config.ConfigClientCredentials)
+		}
+	}
+
+	return &oauthConfig, nil
+}
+
+// Config the backend
+func Config(ctx context.Context, name string, m configmap.Mapper, conf fs.ConfigIn) (*fs.ConfigOut, error) {
+	opt := new(Options)
+	err := configstruct.Set(m, opt)
+	if err != nil {
+		return nil, err
+	}
+	_, graphURL := getRegionURL(m)
+
+	// Check to see if this is the start of the state machine execution
+	if conf.State == "" {
+		conf, err := makeOauthConfig(ctx, opt)
 		if err != nil {
-			return nil, fmt.Errorf("failed to parse access_scopes: %w", err)
-		}
-		oauthConfig.Scopes = []string(accessScopes)
-		disableSitePermission, _ := m.Get("disable_site_permission")
-		if disableSitePermission == "true" {
-			oauthConfig.Scopes = scopeAccessWithoutSites
-		}
-		oauthConfig.Endpoint = oauth2.Endpoint{
-			AuthURL:  authEndpoint[region] + authPath,
-			TokenURL: authEndpoint[region] + tokenPath,
+			return nil, err
 		}
 		return oauthutil.ConfigOut("choose_type", &oauthutil.Options{
-			OAuth2Config: oauthConfig,
+			OAuth2Config: conf,
 		})
 	}
 
@@ -556,9 +596,11 @@ func Config(ctx context.Context, name string, m configmap.Mapper, config fs.Conf
 	if err != nil {
 		return nil, fmt.Errorf("failed to configure OneDrive: %w", err)
 	}
+
+	// Create a REST client, build on the OAuth client created above
 	srv := rest.NewClient(oAuthClient)
 
-	switch config.State {
+	switch conf.State {
 	case "choose_type":
 		return fs.ConfigChooseExclusiveFixed("choose_type_done", "config_type", "Type of connection", []fs.OptionExample{{
 			Value: "onedrive",
@@ -584,7 +626,7 @@ func Config(ctx context.Context, name string, m configmap.Mapper, config fs.Conf
 		}})
 	case "choose_type_done":
 		// Jump to next state according to config chosen
-		return fs.ConfigGoto(config.Result)
+		return fs.ConfigGoto(conf.Result)
 	case "onedrive":
 		return chooseDrive(ctx, name, m, srv, chooseDriveOpt{
 			opts: rest.Opts{
@@ -602,16 +644,22 @@ func Config(ctx context.Context, name string, m configmap.Mapper, config fs.Conf
 			},
 		})
 	case "driveid":
-		return fs.ConfigInput("driveid_end", "config_driveid_fixed", "Drive ID")
+		out, err := fs.ConfigInput("driveid_end", "config_driveid_fixed", "Drive ID")
+		if err != nil {
+			return out, err
+		}
+		// Default the drive_id to the previous version in the config
+		out.Option.Default, _ = m.Get("drive_id")
+		return out, nil
 	case "driveid_end":
 		return chooseDrive(ctx, name, m, srv, chooseDriveOpt{
-			finalDriveID: config.Result,
+			finalDriveID: conf.Result,
 		})
 	case "siteid":
 		return fs.ConfigInput("siteid_end", "config_siteid", "Site ID")
 	case "siteid_end":
 		return chooseDrive(ctx, name, m, srv, chooseDriveOpt{
-			siteID: config.Result,
+			siteID: conf.Result,
 		})
 	case "url":
 		return fs.ConfigInput("url_end", "config_site_url", `Site URL
@@ -622,7 +670,7 @@ Examples:
 - "https://XXX.sharepoint.com/teams/ID"
 `)
 	case "url_end":
-		siteURL := config.Result
+		siteURL := conf.Result
 		re := regexp.MustCompile(`https://.*\.sharepoint\.com(/.*)`)
 		match := re.FindStringSubmatch(siteURL)
 		if len(match) == 2 {
@@ -637,12 +685,12 @@ Examples:
 		return fs.ConfigInput("path_end", "config_sharepoint_url", `Server-relative URL`)
 	case "path_end":
 		return chooseDrive(ctx, name, m, srv, chooseDriveOpt{
-			relativePath: config.Result,
+			relativePath: conf.Result,
 		})
 	case "search":
 		return fs.ConfigInput("search_end", "config_search_term", `Search term`)
 	case "search_end":
-		searchTerm := config.Result
+		searchTerm := conf.Result
 		opts := rest.Opts{
 			Method:  "GET",
 			RootURL: graphURL,
@@ -664,10 +712,10 @@ Examples:
 		})
 	case "search_sites":
 		return chooseDrive(ctx, name, m, srv, chooseDriveOpt{
-			siteID: config.Result,
+			siteID: conf.Result,
 		})
 	case "driveid_final":
-		finalDriveID := config.Result
+		finalDriveID := conf.Result
 
 		// Test the driveID and get drive type
 		opts := rest.Opts{
@@ -686,12 +734,12 @@ Examples:
 
 		return fs.ConfigConfirm("driveid_final_end", true, "config_drive_ok", fmt.Sprintf("Drive OK?\n\nFound drive %q of type %q\nURL: %s\n", rootItem.Name, rootItem.ParentReference.DriveType, rootItem.WebURL))
 	case "driveid_final_end":
-		if config.Result == "true" {
+		if conf.Result == "true" {
 			return nil, nil
 		}
 		return fs.ConfigGoto("choose_type")
 	}
-	return nil, fmt.Errorf("unknown state %q", config.State)
+	return nil, fmt.Errorf("unknown state %q", conf.State)
 }
 
 // Options defines the configuration for this backend
@@ -702,7 +750,9 @@ type Options struct {
 	DriveType               string               `config:"drive_type"`
 	RootFolderID            string               `config:"root_folder_id"`
 	DisableSitePermission   bool                 `config:"disable_site_permission"`
+	ClientCredentials       bool                 `config:"client_credentials"`
 	AccessScopes            fs.SpaceSepList      `config:"access_scopes"`
+	Tenant                  string               `config:"tenant"`
 	ExposeOneNoteFiles      bool                 `config:"expose_onenote_files"`
 	ServerSideAcrossConfigs bool                 `config:"server_side_across_configs"`
 	ListChunk               int64                `config:"list_chunk"`
@@ -990,13 +1040,10 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	}
 
 	rootURL := graphAPIEndpoint[opt.Region] + "/v1.0" + "/drives/" + opt.DriveID
-	oauthConfig.Scopes = opt.AccessScopes
-	if opt.DisableSitePermission {
-		oauthConfig.Scopes = scopeAccessWithoutSites
-	}
-	oauthConfig.Endpoint = oauth2.Endpoint{
-		AuthURL:  authEndpoint[opt.Region] + authPath,
-		TokenURL: authEndpoint[opt.Region] + tokenPath,
+
+	oauthConfig, err := makeOauthConfig(ctx, opt)
+	if err != nil {
+		return nil, err
 	}
 
 	client := fshttp.NewClient(ctx)
@@ -2563,8 +2610,11 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		return errors.New("can't upload content to a OneNote file")
 	}
 
-	o.fs.tokenRenewer.Start()
-	defer o.fs.tokenRenewer.Stop()
+	// Only start the renewer if we have a valid one
+	if o.fs.tokenRenewer != nil {
+		o.fs.tokenRenewer.Start()
+		defer o.fs.tokenRenewer.Stop()
+	}
 
 	size := src.Size()
 

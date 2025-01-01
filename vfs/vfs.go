@@ -242,6 +242,11 @@ func New(f fs.Fs, opt *vfscommon.Options) *VFS {
 		fs.Logf(f, "--vfs-cache-mode writes or full is recommended for this remote as it can't stream")
 	}
 
+	// Warn if we handle symlinks
+	if vfs.Opt.Links {
+		fs.Logf(f, "Symlinks support enabled")
+	}
+
 	// Pin the Fs into the cache so that when we use cache.NewFs
 	// with the same remote string we get this one. The Pin is
 	// removed when the vfs is finalized
@@ -626,6 +631,10 @@ func (vfs *VFS) Statfs() (total, used, free int64) {
 				return nil
 			})
 			vfs.usage.Used = &usedBySizeAlgorithm
+			// if we read a Total size then we should calculate Free from it
+			if vfs.usage.Total != nil {
+				vfs.usage.Free = nil
+			}
 		}
 		vfs.usageTime = time.Now()
 		if err != nil {
@@ -766,7 +775,25 @@ func (vfs *VFS) ReadFile(filename string) (b []byte, err error) {
 	return io.ReadAll(f)
 }
 
+// WriteFile writes data to the named file, creating it if necessary. If the
+// file does not exist, WriteFile creates it with permissions perm (before
+// umask); otherwise WriteFile truncates it before writing, without changing
+// permissions. Since WriteFile requires multiple system calls to complete,
+// a failure mid-operation can leave the file in a partially written state.
+func (vfs *VFS) WriteFile(name string, data []byte, perm os.FileMode) (err error) {
+	fh, err := vfs.OpenFile(name, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, perm)
+	if err != nil {
+		return err
+	}
+	defer fs.CheckClose(fh, &err)
+	_, err = fh.Write(data)
+	return err
+}
+
 // AddVirtual adds the object (file or dir) to the directory cache
+//
+// This is used by the vfs cache to insert objects that are uploading
+// into the directory tree.
 func (vfs *VFS) AddVirtual(remote string, size int64, isDir bool) (err error) {
 	remote = strings.TrimRight(remote, "/")
 	var dir *Dir
@@ -783,4 +810,86 @@ func (vfs *VFS) AddVirtual(remote string, size int64, isDir bool) (err error) {
 	}
 	dir.AddVirtual(leaf, size, false)
 	return nil
+}
+
+// Readlink returns the destination of the named symbolic link.
+// If there is an error, it will be of type *PathError.
+func (vfs *VFS) Readlink(name string) (s string, err error) {
+	if !vfs.Opt.Links {
+		fs.Errorf(nil, "symlinks not supported without the --links flag: %v", name)
+		return "", ENOSYS
+	}
+	node, err := vfs.Stat(name)
+	if err != nil {
+		return "", err
+	}
+	file, ok := node.(*File)
+	if !ok || !file.IsSymlink() {
+		return "", EINVAL // not a symlink
+	}
+	fd, err := file.Open(os.O_RDONLY | o_SYMLINK)
+	if err != nil {
+		return "", err
+	}
+	defer fs.CheckClose(fd, &err)
+	b, err := io.ReadAll(fd)
+	if err != nil {
+		return "", err
+	}
+	return string(b), nil
+}
+
+// CreateSymlink creates newname as a symbolic link to oldname.
+// On Windows, a symlink to a non-existent oldname creates a file symlink;
+// if oldname is later created as a directory the symlink will not work.
+// It returns the node created
+func (vfs *VFS) CreateSymlink(oldname, newname string) (Node, error) {
+	if !vfs.Opt.Links {
+		fs.Errorf(newname, "symlinks not supported without the --links flag")
+		return nil, ENOSYS
+	}
+
+	// Destination can't exist
+	_, err := vfs.Stat(newname)
+	if err == nil {
+		return nil, EEXIST
+	} else if err != ENOENT {
+		return nil, err
+	}
+
+	// Find the parent
+	dir, leaf, err := vfs.StatParent(newname)
+	if err != nil {
+		return nil, err
+	}
+
+	// Create the file node
+	flags := os.O_WRONLY | os.O_CREATE | os.O_TRUNC | o_SYMLINK
+	file, err := dir.Create(leaf, flags)
+	if err != nil {
+		return nil, err
+	}
+
+	// Force the file to be a link
+	file.setSymlink()
+
+	// Open the file
+	fh, err := file.Open(flags)
+	if err != nil {
+		return nil, err
+	}
+	defer fs.CheckClose(fh, &err)
+
+	// Write the symlink data
+	_, err = fh.Write([]byte(strings.ReplaceAll(oldname, "\\", "/")))
+
+	return file, nil
+}
+
+// Symlink creates newname as a symbolic link to oldname.
+// On Windows, a symlink to a non-existent oldname creates a file symlink;
+// if oldname is later created as a directory the symlink will not work.
+func (vfs *VFS) Symlink(oldname, newname string) error {
+	_, err := vfs.CreateSymlink(oldname, newname)
+	return err
 }

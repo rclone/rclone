@@ -94,7 +94,7 @@ const (
 
 var (
 	// Description of how to auth for this app
-	dropboxConfig = &oauth2.Config{
+	dropboxConfig = &oauthutil.Config{
 		Scopes: []string{
 			"files.metadata.write",
 			"files.content.write",
@@ -109,7 +109,8 @@ var (
 		// 	AuthURL:  "https://www.dropbox.com/1/oauth2/authorize",
 		// 	TokenURL: "https://api.dropboxapi.com/1/oauth2/token",
 		// },
-		Endpoint:     dropbox.OAuthEndpoint(""),
+		AuthURL:      dropbox.OAuthEndpoint("").AuthURL,
+		TokenURL:     dropbox.OAuthEndpoint("").TokenURL,
 		ClientID:     rcloneClientID,
 		ClientSecret: obscure.MustReveal(rcloneEncryptedClientSecret),
 		RedirectURL:  oauthutil.RedirectLocalhostURL,
@@ -134,7 +135,7 @@ var (
 )
 
 // Gets an oauth config with the right scopes
-func getOauthConfig(m configmap.Mapper) *oauth2.Config {
+func getOauthConfig(m configmap.Mapper) *oauthutil.Config {
 	// If not impersonating, use standard scopes
 	if impersonate, _ := m.Get("impersonate"); impersonate == "" {
 		return dropboxConfig

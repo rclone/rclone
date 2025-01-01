@@ -13,7 +13,7 @@ if [ "$1" == "" ]; then
     exit 1
 fi
 VERSION="$1"
-ANCHOR=$(grep '^## v' docs/content/changelog.md | head -1 | sed 's/^## //; s/[^A-Za-z0-9-]/-/g; s/--*/-/g')
+ANCHOR=$(grep '^## v' docs/content/changelog.md | head -n 1 | sed 's/^## //; s/[^A-Za-z0-9-]/-/g; s/--*/-/g')
 
 cat > "/tmp/${VERSION}-release-notes" <<EOF
 This is the ${VERSION} release of rclone.

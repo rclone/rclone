@@ -39,6 +39,10 @@ Pcloud App Client Id - leave blank normally.
 client_id> 
 Pcloud App Client Secret - leave blank normally.
 client_secret> 
+Edit advanced config?
+y) Yes
+n) No (default)
+y/n> n
 Remote config
 Use web browser to automatically authenticate rclone with remote?
  * Say Y if the machine running rclone has a web browser you can use
@@ -66,6 +70,10 @@ y/e/d> y
 
 See the [remote setup docs](/remote_setup/) for how to set it up on a
 machine with no Internet browser available.
+
+Note if you are using remote config with rclone authorize while your pcloud
+server is the EU region, you will need to set the hostname in 'Edit advanced
+config', otherwise you might get a token error.
 
 Note that rclone runs a webserver on your local machine to collect the
 token as returned from pCloud. This only runs from the moment it opens
