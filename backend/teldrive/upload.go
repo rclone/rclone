@@ -105,6 +105,7 @@ func (w *objectChunkWriter) WriteChunk(ctx context.Context, chunkNumber int, rea
 			Method:        "POST",
 			Body:          reader,
 			ContentLength: &size,
+			ContentType:   "application/octet-stream",
 			Parameters: url.Values{
 				"partName":  []string{partName},
 				"fileName":  []string{fileName},
@@ -291,6 +292,7 @@ func (o *Object) uploadMultipart(ctx context.Context, in io.Reader, src fs.Objec
 				Method:        "POST",
 				Body:          partReader,
 				ContentLength: &n,
+				ContentType:   "application/octet-stream",
 				Parameters: url.Values{
 					"partName":  []string{chunkName},
 					"fileName":  []string{uploadInfo.fileName},

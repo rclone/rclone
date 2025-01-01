@@ -855,14 +855,15 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 
 	fs.FixRangeOption(options, o.size)
 
-	streamType := "download"
-	if o.fs.opt.ThreadedStreams {
-		streamType = "stream"
-	}
 	opts := rest.Opts{
 		Method:  "GET",
-		Path:    fmt.Sprintf("/api/files/%s/%s/%s", o.id, streamType, url.QueryEscape(o.name)),
+		Path:    fmt.Sprintf("/api/files/%s/%s", o.id, url.QueryEscape(o.name)),
 		Options: options,
+	}
+	if !o.fs.opt.ThreadedStreams {
+		opts.Parameters = url.Values{
+			"download": []string{"1"},
+		}
 	}
 
 	err = o.fs.pacer.Call(func() (bool, error) {
