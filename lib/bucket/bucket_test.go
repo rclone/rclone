@@ -45,6 +45,24 @@ func TestJoin(t *testing.T) {
 	}
 }
 
+func TestIsAllSlashes(t *testing.T) {
+	for _, test := range []struct {
+		in   string
+		want bool
+	}{
+		{in: "", want: false},
+		{in: "/", want: true},
+		{in: "x/", want: false},
+		{in: "/x", want: false},
+		{in: "//", want: true},
+		{in: "/x/", want: false},
+		{in: "///", want: true},
+	} {
+		got := IsAllSlashes(test.in)
+		assert.Equal(t, test.want, got, test.in)
+	}
+}
+
 func TestCache(t *testing.T) {
 	c := NewCache()
 	errBoom := errors.New("boom")

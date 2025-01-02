@@ -42,6 +42,21 @@ func Join(path1, path2 string) string {
 	return strings.TrimSuffix(path1, "/") + "/" + strings.TrimPrefix(path2, "/")
 }
 
+// IsAllSlashes returns true if s is all / characters.
+//
+// It returns false if s is "".
+func IsAllSlashes(s string) bool {
+	if len(s) == 0 {
+		return false
+	}
+	for _, c := range s {
+		if c != '/' {
+			return false
+		}
+	}
+	return true
+}
+
 // Cache stores whether buckets are available and their IDs
 type Cache struct {
 	mu       sync.Mutex      // mutex to protect created and deleted
