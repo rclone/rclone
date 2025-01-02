@@ -34,10 +34,10 @@ func TestJoin(t *testing.T) {
 		{in1: "in1", in2: "", want: "in1"},
 		{in1: "", in2: "in2", want: "in2"},
 		{in1: "in1", in2: "in2", want: "in1/in2"},
-		{in1: "in1/", in2: "in2", want: "in1/in2"},
-		{in1: "in1", in2: "/in2", want: "in1/in2"},
+		{in1: "in1/", in2: "in2", want: "in1//in2"},
+		{in1: "in1", in2: "/in2", want: "in1//in2"},
 		{in1: "in1", in2: "in2/", want: "in1/in2/"},
-		{in1: "/in1", in2: "/in2", want: "/in1/in2"},
+		{in1: "/in1", in2: "/in2", want: "/in1//in2"},
 		{in1: "/in1", in2: "../in2", want: "/in1/../in2"},
 	} {
 		got := Join(test.in1, test.in2)
