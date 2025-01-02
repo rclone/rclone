@@ -790,6 +790,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		SetTier:                 true,
 		GetTier:                 true,
 		ServerSideAcrossConfigs: true,
+		DoubleSlash:             true,
 	}).Fill(ctx, f)
 	if opt.DirectoryMarkers {
 		f.features.CanHaveEmptyDirectories = true
@@ -1135,7 +1136,7 @@ func (f *Fs) list(ctx context.Context, containerName, directory, prefix string, 
 	if prefix != "" {
 		prefix += "/"
 	}
-	if directory != "" {
+	if directory != "" && (prefix == "" && !bucket.IsAllSlashes(directory) || prefix != "" && !strings.HasSuffix(directory, "/")) {
 		directory += "/"
 	}
 	delimiter := ""
@@ -1211,18 +1212,22 @@ func (f *Fs) list(ctx context.Context, containerName, directory, prefix string, 
 		}
 		// Send the subdirectories
 		foundItems += len(response.Segment.BlobPrefixes)
-		for _, remote := range response.Segment.BlobPrefixes {
-			if remote.Name == nil {
+		for _, blobPrefix := range response.Segment.BlobPrefixes {
+			if blobPrefix.Name == nil {
 				fs.Debugf(f, "Nil prefix received")
 				continue
 			}
-			remote := strings.TrimRight(*remote.Name, "/")
-			remote = f.opt.Enc.ToStandardPath(remote)
+			remote := f.opt.Enc.ToStandardPath(*blobPrefix.Name)
 			if !strings.HasPrefix(remote, prefix) {
 				fs.Debugf(f, "Odd directory name received %q", remote)
 				continue
 			}
 			remote = remote[len(prefix):]
+			// Trim one slash off the remote name
+			remote, _ = strings.CutSuffix(remote, "/")
+			if remote == "" || bucket.IsAllSlashes(remote) {
+				remote += "/"
+			}
 			if addContainer {
 				remote = path.Join(containerName, remote)
 			}
@@ -2152,6 +2157,11 @@ func (o *Object) getTags() (tags map[string]string) {
 // getBlobSVC creates a blob client
 func (o *Object) getBlobSVC() *blob.Client {
 	container, directory := o.split()
+	// If we are trying to remove an all / directory marker then
+	// this will have one / too many now.
+	if bucket.IsAllSlashes(o.remote) {
+		directory = strings.TrimSuffix(directory, "/")
+	}
 	return o.fs.getBlobSVC(container, directory)
 }
 
