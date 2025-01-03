@@ -40,7 +40,6 @@ import (
 	"github.com/rclone/rclone/lib/rest"
 
 	ntlmssp "github.com/Azure/go-ntlmssp"
-	"github.com/icholy/digest"
 )
 
 const (
@@ -505,11 +504,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		// If available, prefer Digest authentication.
 		if checkForDigestAuth(opt.URL) {
 			fs.Debugf(nil, "using Digest authentication scheme")
-			client.Transport = &digest.Transport{
-				Jar:      client.Jar,
-				Username: opt.User,
-				Password: opt.Pass,
-			}
+			client = fshttp.NewClientWithDigestAuth(ctx, opt.User, opt.Pass)
 		}
 	}
 
