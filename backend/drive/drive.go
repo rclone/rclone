@@ -3782,6 +3782,7 @@ Result:
 Usage:
 
     rclone backend copyid drive: ID path
+	rclone backend copyid drive: ID1 path1 ID2 path2
 
 It copies the drive file with ID given to the path (an rclone path which
 will be passed internally to rclone copyto).
@@ -3803,6 +3804,7 @@ Use the --interactive/-i or --dry-run flag to see what would be copied beforehan
 Usage:
 
     rclone backend moveid drive: ID path
+	rclone backend moveid drive: ID1 path1 ID2 path2
 
 It moves the drive file with ID given to the path (an rclone path which
 will be passed internally to rclone moveto).
@@ -3995,15 +3997,15 @@ func (f *Fs) Command(ctx context.Context, name string, arg []string, opt map[str
 		}
 		return f.unTrashDir(ctx, dir, true)
 	case "copyid", "moveid":
-		if len(arg)%2 == 0 {
-			return nil, errors.New("need an odd number of arguments")
+		if len(arg)%2 != 0 {
+			return nil, errors.New("need an even number of arguments")
 		}
 		for len(arg) > 0 {
 			id, dest := arg[0], arg[1]
-			arg = arg[3:]
+			arg = arg[2:]
 			err = f.copyOrMoveID(ctx, name, id, dest)
 			if err != nil {
-				return nil, fmt.Errorf("failed moving %q to %q: %w", id, dest, err)
+				return nil, fmt.Errorf("failed %s %q to %q: %w", name, id, dest, err)
 			}
 		}
 		return nil, nil
