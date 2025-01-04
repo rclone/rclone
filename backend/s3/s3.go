@@ -3677,6 +3677,9 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	if opt.Provider == "IDrive" {
 		f.features.SetTier = false
 	}
+	if opt.Provider == "AWS" {
+		f.features.DoubleSlash = true
+	}
 	if opt.DirectoryMarkers {
 		f.features.CanHaveEmptyDirectories = true
 	}
@@ -4148,7 +4151,7 @@ func (f *Fs) list(ctx context.Context, opt listOpt, fn listFn) error {
 		opt.prefix += "/"
 	}
 	if !opt.findFile {
-		if opt.directory != "" {
+		if opt.directory != "" && (opt.prefix == "" && !bucket.IsAllSlashes(opt.directory) || opt.prefix != "" && !strings.HasSuffix(opt.directory, "/")) {
 			opt.directory += "/"
 		}
 	}
@@ -4245,14 +4248,18 @@ func (f *Fs) list(ctx context.Context, opt listOpt, fn listFn) error {
 				}
 				remote = f.opt.Enc.ToStandardPath(remote)
 				if !strings.HasPrefix(remote, opt.prefix) {
-					fs.Logf(f, "Odd name received %q", remote)
+					fs.Logf(f, "Odd directory name received %q", remote)
 					continue
 				}
 				remote = remote[len(opt.prefix):]
+				// Trim one slash off the remote name
+				remote, _ = strings.CutSuffix(remote, "/")
+				if remote == "" || bucket.IsAllSlashes(remote) {
+					remote += "/"
+				}
 				if opt.addBucket {
 					remote = bucket.Join(opt.bucket, remote)
 				}
-				remote = strings.TrimSuffix(remote, "/")
 				err = fn(remote, &types.Object{Key: &remote}, nil, true)
 				if err != nil {
 					if err == errEndList {
