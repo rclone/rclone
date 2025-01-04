@@ -9,6 +9,7 @@ import (
 
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/filter"
+	"github.com/rclone/rclone/lib/bucket"
 )
 
 // DirSorted reads Object and *Dir into entries for the given Fs.
@@ -43,7 +44,10 @@ func filterAndSortDir(ctx context.Context, entries fs.DirEntries, includeAll boo
 	newEntries = entries[:0] // in place filter
 	prefix := ""
 	if dir != "" {
-		prefix = dir + "/"
+		prefix = dir
+		if !bucket.IsAllSlashes(dir) {
+			prefix += "/"
+		}
 	}
 	for _, entry := range entries {
 		ok := true
@@ -77,10 +81,10 @@ func filterAndSortDir(ctx context.Context, entries fs.DirEntries, includeAll boo
 		case !strings.HasPrefix(remote, prefix):
 			ok = false
 			fs.Errorf(entry, "Entry doesn't belong in directory %q (too short) - ignoring", dir)
-		case remote == prefix:
+		case remote == dir:
 			ok = false
 			fs.Errorf(entry, "Entry doesn't belong in directory %q (same as directory) - ignoring", dir)
-		case strings.ContainsRune(remote[len(prefix):], '/'):
+		case strings.ContainsRune(remote[len(prefix):], '/') && !bucket.IsAllSlashes(remote[len(prefix):]):
 			ok = false
 			fs.Errorf(entry, "Entry doesn't belong in directory %q (contains subdir) - ignoring", dir)
 		default:
