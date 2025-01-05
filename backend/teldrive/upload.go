@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"io"
 	"net/url"
-	"path"
 	"sort"
 	"strconv"
 	"sync"
@@ -73,10 +72,7 @@ func (w *objectChunkWriter) WriteChunk(ctx context.Context, chunkNumber int, rea
 	var (
 		response api.PartFile
 		partName string
-		fileName string
 	)
-
-	_, fileName = w.f.splitPathFull(w.src.Remote())
 
 	err = w.f.pacer.Call(func() (bool, error) {
 
@@ -95,9 +91,9 @@ func (w *objectChunkWriter) WriteChunk(ctx context.Context, chunkNumber int, rea
 		if w.f.opt.RandomChunkName {
 			partName = getMD5Hash(uuid.New().String())
 		} else {
-			partName = fileName
+			partName = w.uploadInfo.fileName
 			if w.uploadInfo.totalChunks > 1 {
-				partName = fmt.Sprintf("%s.part.%03d", fileName, chunkNumber)
+				partName = fmt.Sprintf("%s.part.%03d", w.uploadInfo.fileName, chunkNumber)
 			}
 		}
 
@@ -108,7 +104,7 @@ func (w *objectChunkWriter) WriteChunk(ctx context.Context, chunkNumber int, rea
 			ContentType:   "application/octet-stream",
 			Parameters: url.Values{
 				"partName":  []string{partName},
-				"fileName":  []string{fileName},
+				"fileName":  []string{w.uploadInfo.fileName},
 				"partNo":    []string{strconv.Itoa(chunkNumber)},
 				"channelId": []string{strconv.FormatInt(w.uploadInfo.channelID, 10)},
 				"encrypted": []string{strconv.FormatBool(w.uploadInfo.encryptFile)},
@@ -182,9 +178,13 @@ func (*objectChunkWriter) Abort(ctx context.Context) error {
 
 func (o *Object) prepareUpload(ctx context.Context, src fs.ObjectInfo) (*uploadInfo, error) {
 
-	base, leaf := o.fs.splitPathFull(src.Remote())
+	leaf, directoryID, err := o.fs.dirCache.FindPath(ctx, src.Remote(), true)
 
-	uploadID := getMD5Hash(fmt.Sprintf("%s:%d:%d", path.Join(base, leaf), src.Size(), o.fs.userId))
+	if err != nil {
+		return nil, err
+	}
+
+	uploadID := getMD5Hash(fmt.Sprintf("%s:%s:%d:%d", directoryID, leaf, src.Size(), o.fs.userId))
 
 	var (
 		uploadParts    []api.PartFile
@@ -237,7 +237,7 @@ func (o *Object) prepareUpload(ctx context.Context, src fs.ObjectInfo) (*uploadI
 		chunkSize:      chunkSize,
 		totalChunks:    totalChunks,
 		fileName:       leaf,
-		dir:            base,
+		dir:            directoryID,
 	}, nil
 }
 
@@ -341,12 +341,6 @@ func (o *Object) uploadMultipart(ctx context.Context, in io.Reader, src fs.Objec
 
 func (o *Object) createFile(ctx context.Context, src fs.ObjectInfo, uploadInfo *uploadInfo) error {
 
-	if uploadInfo.dir != "/" {
-		err := o.fs.CreateDir(ctx, uploadInfo.dir, "")
-		if err != nil {
-			return err
-		}
-	}
 	opts := rest.Opts{
 		Method:     "POST",
 		Path:       "/api/files",
@@ -356,7 +350,7 @@ func (o *Object) createFile(ctx context.Context, src fs.ObjectInfo, uploadInfo *
 	payload := api.CreateFileRequest{
 		Name:      uploadInfo.fileName,
 		Type:      "file",
-		Path:      uploadInfo.dir,
+		ParentId:  uploadInfo.dir,
 		MimeType:  fs.MimeType(ctx, src),
 		Size:      src.Size(),
 		Parts:     uploadInfo.fileChunks,

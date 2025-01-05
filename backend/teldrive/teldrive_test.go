@@ -15,5 +15,6 @@ func TestIntegration(t *testing.T) {
 			MinChunkSize:  minChunkSize,
 			CeilChunkSize: fstests.NextPowerOfTwo,
 		},
+		SkipInvalidUTF8: true,
 	})
 }

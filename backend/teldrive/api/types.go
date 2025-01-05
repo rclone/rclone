@@ -73,19 +73,20 @@ type FilePart struct {
 type CreateFileRequest struct {
 	Name      string     `json:"name"`
 	Type      string     `json:"type"`
-	Path      string     `json:"path"`
-	MimeType  string     `json:"mimeType"`
-	Size      int64      `json:"size"`
-	ChannelID int64      `json:"channelId"`
-	Encrypted bool       `json:"encrypted"`
-	Parts     []FilePart `json:"parts"`
+	Path      string     `json:"path,omitempty"`
+	MimeType  string     `json:"mimeType,omitempty"`
+	Size      int64      `json:"size,omitempty"`
+	ChannelID int64      `json:"channelId,omitempty"`
+	Encrypted bool       `json:"encrypted,omitempty"`
+	Parts     []FilePart `json:"parts,omitempty"`
+	ParentId  string     `json:"parentId,omitempty"`
 	CreatedAt string     `json:"createdAt,omitempty"`
 	UpdatedAt string     `json:"updatedAt,omitempty"`
 }
 
 type MoveFileRequest struct {
-	Files       []string `json:"files"`
-	Destination string   `json:"destination"`
+	Destination string   `json:"destination,omitempty"`
+	Files       []string `json:"ids,omitempty"`
 }
 type DirMove struct {
 	Source      string `json:"source"`
@@ -99,14 +100,14 @@ type UpdateFileInformation struct {
 	Size      int64      `json:"size,omitempty"`
 	UploadId  string     `json:"uploadId,omitempty"`
 	ChannelID int64      `json:"channelId,omitempty"`
+	ParentID  string     `json:"parentId,omitempty"`
 }
 
 type RemoveFileRequest struct {
 	Source string   `json:"source,omitempty"`
-	Files  []string `json:"files,omitempty"`
+	Files  []string `json:"ids,omitempty"`
 }
 type CopyFile struct {
-	ID          string `json:"id"`
 	Newname     string `json:"newName"`
 	Destination string `json:"destination"`
 }
