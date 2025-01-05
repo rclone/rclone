@@ -7,7 +7,9 @@ versionIntroduced: "v1.72"
 # {{< icon "fas fa-archive" >}} Archive
 
 The Archive backend allows read only access to the content of archive
-files on cloud storage without downloading them completely.
+files on cloud storage without downloading the complete archive. This
+means you could mount a large archive file and use only the parts of
+it your application requires, rather than having to extract it.
 
 The archive files are recognised by their extension.
 
@@ -18,6 +20,18 @@ The archive files are recognised by their extension.
 
 The supported archive file types are cloud friendly - a single file
 can be found and downloaded without downloading the whole archive.
+
+If you just want to create, list or extract archives and don't want to
+mount them then you may find the `rclone archive` commands more
+convenient.
+
+- [rclone archive create](/commands/rclone_archive_create/)
+- [rclone archive list](/commands/rclone_archive_list/)
+- [rclone archive extract](/commands/rclone_archive_extract/)
+
+These commands supports a wider range of non cloud friendly archives
+(but not squashfs) but can't be used for `rclone mount` or any other
+rclone commands (eg `rclone check`).
 
 ## Configuration
 
@@ -184,7 +198,9 @@ mksquashfs 100files 100files.sqfs -comp zstd -b 1M
 
 ## Limitations
 
-Files in archive are read only. It isn't possible to create archives yet.
+Files in the archive backend are read only. It isn't possible to
+create archives with the archive backend yet. However you **can** create
+archives with [rclone archive create](/commands/rclone_archive_create/).
 
 Only `.zip` and `.sqfs` archives are supported as these are the only
 common archiving formats which make it easy to read directory listings
