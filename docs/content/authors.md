@@ -923,3 +923,4 @@ put them back in again.` >}}
   * Louis Laureys <louis@laureys.me>
   * Henry Lee <contact@nynxz.com>
   * ToM <thomas.faucher@bibliosansfrontieres.org>
+  * TAKEI Yuya <853320+takei-yuya@users.noreply.github.com>
