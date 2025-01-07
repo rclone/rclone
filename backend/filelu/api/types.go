@@ -1,8 +1,8 @@
-// Package api defines types for interacting with the FileLu API
+
 package api
 
 
-// FolderListResponse represents the response from the folder/list API
+
 type FolderListResponse struct {
     Status int    `json:"status"`
     Msg    string `json:"msg"`
