@@ -25,7 +25,7 @@ require (
 	github.com/aws/smithy-go v1.22.1
 	github.com/buengese/sgzip v0.1.1
 	github.com/cloudinary/cloudinary-go/v2 v2.9.0
-	github.com/cloudsoda/go-smb2 v0.0.0-20231124195312-f3ec8ae2c891
+	github.com/cloudsoda/go-smb2 v0.0.0-20241223203758-52b943b88fd6
 	github.com/colinmarc/hdfs/v2 v2.4.0
 	github.com/coreos/go-semver v0.3.1
 	github.com/coreos/go-systemd/v22 v22.5.0
