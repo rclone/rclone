@@ -82,6 +82,7 @@ type CreateFileRequest struct {
 	Encrypted bool       `json:"encrypted,omitempty"`
 	Parts     []FilePart `json:"parts,omitempty"`
 	ParentId  string     `json:"parentId,omitempty"`
+	ModTime   time.Time  `json:"updatedAt,omitempty"`
 }
 
 type MoveFileRequest struct {
@@ -95,7 +96,7 @@ type DirMove struct {
 
 type UpdateFileInformation struct {
 	Name      string     `json:"name,omitempty"`
-	UpdatedAt *time.Time `json:"updatedAt,omitempty"`
+	ModTime   *time.Time `json:"updatedAt,omitempty"`
 	Parts     []FilePart `json:"parts,omitempty"`
 	Size      int64      `json:"size,omitempty"`
 	UploadId  string     `json:"uploadId,omitempty"`
@@ -108,8 +109,9 @@ type RemoveFileRequest struct {
 	Files  []string `json:"ids,omitempty"`
 }
 type CopyFile struct {
-	Newname     string `json:"newName"`
-	Destination string `json:"destination"`
+	Newname     string    `json:"newName"`
+	Destination string    `json:"destination"`
+	ModTime     time.Time `json:"updatedAt,omitempty"`
 }
 
 type Session struct {

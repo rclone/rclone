@@ -161,7 +161,7 @@ func (f *Fs) String() string {
 
 // Precision of the ModTimes in this Fs
 func (f *Fs) Precision() time.Duration {
-	return fs.ModTimeNotSupported
+	return time.Second
 }
 
 // Hashes returns the supported hash types of the filesystem
@@ -569,7 +569,7 @@ func (f *Fs) moveTo(ctx context.Context, id, srcLeaf, dstLeaf, srcDirectoryID, d
 	}
 
 	if srcLeaf != dstLeaf {
-		err := f.updateFileInformation(ctx, &api.UpdateFileInformation{Name: dstLeaf}, id)
+		err := f.updateFileInformation(ctx, &api.UpdateFileInformation{Name: dstLeaf}, id, true)
 		if err != nil {
 			return fmt.Errorf("move: failed rename: %w", err)
 		}
@@ -579,11 +579,14 @@ func (f *Fs) moveTo(ctx context.Context, id, srcLeaf, dstLeaf, srcDirectoryID, d
 }
 
 // updateFileInformation set's various file attributes most importantly it's name
-func (f *Fs) updateFileInformation(ctx context.Context, update *api.UpdateFileInformation, fileId string) (err error) {
+func (f *Fs) updateFileInformation(ctx context.Context, update *api.UpdateFileInformation, fileId string, skipUpdate bool) (err error) {
 	opts := rest.Opts{
 		Method:     "PATCH",
 		Path:       "/api/files/" + fileId,
 		NoResponse: true,
+	}
+	if skipUpdate {
+		opts.Parameters = url.Values{"skiputs": []string{"1"}}
 	}
 
 	err = f.pacer.Call(func() (bool, error) {
@@ -616,8 +619,11 @@ func (f *Fs) FindLeaf(ctx context.Context, pathID, leaf string) (pathIDOut strin
 	if err != nil {
 		return "", false, err
 	}
-	if len(files) == 0 || files[0].Type == "file" {
+	if len(files) == 0 {
 		return "", false, nil
+	}
+	if files[0].Type == "file" {
+		return "", false, fs.ErrorIsFile
 	}
 	return files[0].Id, true, nil
 }
@@ -689,10 +695,10 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	}
 
 	payload := &api.UpdateFileInformation{
-		UpdatedAt: Ptr(modTime.UTC()),
-		Size:      src.Size(),
-		ParentID:  directoryID,
-		Name:      leaf,
+		ModTime:  Ptr(modTime.UTC()),
+		Size:     src.Size(),
+		ParentID: directoryID,
+		Name:     leaf,
 	}
 
 	if uploadInfo != nil {
@@ -1057,6 +1063,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	copy := api.CopyFile{
 		Newname:     dstLeaf,
 		Destination: directoryID,
+		ModTime:     srcObj.ModTime(ctx).UTC(),
 	}
 	var info api.FileInfo
 	err = f.pacer.Call(func() (bool, error) {
@@ -1127,9 +1134,9 @@ func (o *Object) Storable() bool {
 // SetModTime sets the modification time of the local fs object
 func (o *Object) SetModTime(ctx context.Context, modTime time.Time) error {
 	updateInfo := &api.UpdateFileInformation{
-		UpdatedAt: Ptr(modTime.UTC()),
+		ModTime: Ptr(modTime.UTC()),
 	}
-	err := o.fs.updateFileInformation(ctx, updateInfo, o.id)
+	err := o.fs.updateFileInformation(ctx, updateInfo, o.id, false)
 	if err != nil {
 		return fmt.Errorf("couldn't update mod time: %w", err)
 	}

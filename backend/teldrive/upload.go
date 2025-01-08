@@ -356,6 +356,7 @@ func (o *Object) createFile(ctx context.Context, src fs.ObjectInfo, uploadInfo *
 		Parts:     uploadInfo.fileChunks,
 		ChannelID: uploadInfo.channelID,
 		Encrypted: uploadInfo.encryptFile,
+		ModTime:   src.ModTime(ctx).UTC(),
 	}
 
 	err := o.fs.pacer.Call(func() (bool, error) {
