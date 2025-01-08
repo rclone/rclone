@@ -5,18 +5,18 @@ package local
 import (
 	"context"
 	"fmt"
-	"syscall"
 	"unsafe"
 
 	"github.com/rclone/rclone/fs"
+	"golang.org/x/sys/windows"
 )
 
-var getFreeDiskSpace = syscall.NewLazyDLL("kernel32.dll").NewProc("GetDiskFreeSpaceExW")
+var getFreeDiskSpace = windows.NewLazySystemDLL("kernel32.dll").NewProc("GetDiskFreeSpaceExW")
 
 // About gets quota information
 func (f *Fs) About(ctx context.Context) (*fs.Usage, error) {
 	var available, total, free int64
-	root, e := syscall.UTF16PtrFromString(f.root)
+	root, e := windows.UTF16PtrFromString(f.root)
 	if e != nil {
 		return nil, fmt.Errorf("failed to read disk usage: %w", e)
 	}
@@ -26,7 +26,7 @@ func (f *Fs) About(ctx context.Context) (*fs.Usage, error) {
 		uintptr(unsafe.Pointer(&total)),     // lpTotalNumberOfBytes
 		uintptr(unsafe.Pointer(&free)),      // lpTotalNumberOfFreeBytes
 	)
-	if e1 != syscall.Errno(0) {
+	if e1 != windows.Errno(0) {
 		return nil, fmt.Errorf("failed to read disk usage: %w", e1)
 	}
 	usage := &fs.Usage{

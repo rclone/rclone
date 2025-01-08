@@ -8,7 +8,7 @@ versionIntroduced: "v1.60"
 
 SMB is [a communication protocol to share files over network](https://en.wikipedia.org/wiki/Server_Message_Block).
 
-This relies on [go-smb2 library](https://github.com/hirochachacha/go-smb2/) for communication with SMB protocol.
+This relies on [go-smb2 library](https://github.com/CloudSoda/go-smb2/) for communication with SMB protocol.
 
 Paths are specified as `remote:sharename` (or `remote:` for the `lsd`
 command.)  You may put subdirectories in too, e.g. `remote:item/path/to/dir`.

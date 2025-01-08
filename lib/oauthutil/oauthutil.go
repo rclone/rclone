@@ -480,7 +480,7 @@ func OverrideCredentials(name string, m configmap.Mapper, origConfig *Config) (n
 func NewClientWithBaseClient(ctx context.Context, name string, m configmap.Mapper, config *Config, baseClient *http.Client) (*http.Client, *TokenSource, error) {
 	config, _ = OverrideCredentials(name, m, config)
 	token, err := GetToken(name, m)
-	if err != nil {
+	if err != nil && !config.ClientCredentialFlow {
 		return nil, nil, err
 	}
 

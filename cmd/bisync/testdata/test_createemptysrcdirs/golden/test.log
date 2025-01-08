@@ -80,6 +80,7 @@ INFO  : Path2 checking for diffs
 INFO  : Applying changes
 INFO  : - [36mPath1[0m    [35m[32mQueue copy to[0m Path2[0m       - [36m{path2/}subdir[0m
 INFO  : - [36mPath1[0m    [35mDo queued copies to[0m                - [36mPath2[0m
+INFO  : subdir: Making directory
 INFO  : Updating listings
 INFO  : Validating listings for Path1 "{path1/}" vs Path2 "{path2/}"
 INFO  : [32mBisync successful[0m

@@ -35,6 +35,7 @@ docs = [
     "box.md",
     "cache.md",
     "chunker.md",
+    "cloudinary.md",
     "sharefile.md",
     "crypt.md",
     "compress.md",
