@@ -1751,6 +1751,7 @@ func (f *Fs) copyMultipart(ctx context.Context, remote, dstContainer, dstPath st
 		numParts = (srcSize-1)/partSize + 1
 		blockIDs = make([]string, numParts) // list of blocks for finalize
 		g, gCtx  = errgroup.WithContext(ctx)
+		checker  = newCheckForInvalidBlockOrBlob("copy", o)
 	)
 	g.SetLimit(f.opt.CopyConcurrency)
 
@@ -1780,8 +1781,13 @@ func (f *Fs) copyMultipart(ctx context.Context, remote, dstContainer, dstPath st
 			}
 			fs.Debugf(o, "multipart copy: starting chunk %d size %v offset %v/%v", partNum, fs.SizeSuffix(options.Range.Count), fs.SizeSuffix(options.Range.Offset), fs.SizeSuffix(srcSize))
 			err := f.pacer.Call(func() (bool, error) {
+				checker.start()
 				_, err := dstBlockBlobSVC.StageBlockFromURL(ctx, blockID, srcURL, &options)
+				checker.stop()
 				if err != nil {
+					if checker.checkErr(ctx, err) {
+						return true, err
+					}
 					return f.shouldRetry(ctx, err)
 				}
 				return false, nil
@@ -2393,6 +2399,7 @@ type azChunkWriter struct {
 	blocks    []azBlock  // list of blocks for finalize
 	o         *Object
 	bic       *blockIDCreator
+	checker   *checkForInvalidBlockOrBlob
 }
 
 // OpenChunkWriter returns the chunk size and a ChunkWriter
@@ -2449,6 +2456,7 @@ func (f *Fs) OpenChunkWriter(ctx context.Context, remote string, src fs.ObjectIn
 		f:         f,
 		ui:        ui,
 		o:         o,
+		checker:   newCheckForInvalidBlockOrBlob("upload", o),
 	}
 	info = fs.ChunkWriterInfo{
 		ChunkSize:   int64(partSize),
@@ -2461,6 +2469,81 @@ func (f *Fs) OpenChunkWriter(ctx context.Context, remote string, src fs.ObjectIn
 	}
 	fs.Debugf(o, "open chunk writer: started multipart upload")
 	return info, chunkWriter, nil
+}
+
+// isInvalidBlockOrBlob looks for the InvalidBlockOrBlob error in err
+// returning true if it is found
+func isInvalidBlockOrBlob(err error) bool {
+	var storageErr *azcore.ResponseError
+	if errors.As(err, &storageErr) {
+		return storageErr.ErrorCode == string(bloberror.InvalidBlobOrBlock)
+	}
+	return false
+}
+
+// Struct to hold state for checking for InvalidBlockOrBlob
+type checkForInvalidBlockOrBlob struct {
+	startMu  sync.Mutex     // hold when starting transactions
+	inFlight sync.WaitGroup // transactions in flight
+	what     string         // "copy" or "upload"
+	o        *Object        // object we are working on
+	cleared  bool           // set if we have cleared the uncommitted blocks - we only do this once
+}
+
+// Make InvalidBlockOrBlob checker
+func newCheckForInvalidBlockOrBlob(what string, o *Object) *checkForInvalidBlockOrBlob {
+	return &checkForInvalidBlockOrBlob{
+		what: what,
+		o:    o,
+	}
+}
+
+// start marks that there is a transaction in progress
+func (c *checkForInvalidBlockOrBlob) start() {
+	c.startMu.Lock()
+	defer c.startMu.Unlock()
+	c.inFlight.Add(1)
+}
+
+// stop marks that this transaction has finished
+func (c *checkForInvalidBlockOrBlob) stop() {
+	c.inFlight.Done()
+}
+
+// checkErr looks for the InvalidBlockOrBlob error in err, and if it
+// is found, it clears uncommitted blocks in o to clear the error.
+//
+// It returns a bool indicating whether the error was found or not.
+//
+// See https://gauravmantri.com/2013/05/18/windows-azure-blob-storage-dealing-with-the-specified-blob-or-block-content-is-invalid-error/
+func (c *checkForInvalidBlockOrBlob) checkErr(ctx context.Context, err error) (result bool) {
+	// defer log.Trace(c.o, "err=%#v, what=%q", err, c.what)("result=%v", &result)
+	if !isInvalidBlockOrBlob(err) {
+		return false
+	}
+
+	// Prevent more transactions starting
+	c.startMu.Lock()
+	defer c.startMu.Unlock()
+
+	if c.cleared {
+		fs.Debugf(c.o, "multipart %s: received %s error: already cleared", c.what, bloberror.InvalidBlobOrBlock)
+		return true
+	}
+
+	// Wait for any other outstanding transactions to finish
+	c.inFlight.Wait()
+
+	// Clear uncommitted blocks
+	fs.Debugf(c.o, "multipart %s: received %s error: clearing uncommitted blocks and retrying", c.what, bloberror.InvalidBlobOrBlock)
+	clearErr := c.o.clearUncommittedBlocks(ctx)
+	if clearErr != nil {
+		fs.Debugf(c.o, "multipart %s: error fixing %s: %v", c.what, bloberror.InvalidBlobOrBlock, clearErr)
+	}
+	fs.Debugf(c.o, "multipart %s: fixed %s", c.what, bloberror.InvalidBlobOrBlock)
+	c.cleared = true
+
+	return true
 }
 
 // WriteChunk will write chunk number with reader bytes, where chunk number >= 0
@@ -2503,8 +2586,13 @@ func (w *azChunkWriter) WriteChunk(ctx context.Context, chunkNumber int, reader 
 			// Specify the transactional md5 for the body, to be validated by the service.
 			TransactionalValidation: blob.TransferValidationTypeMD5(md5sum),
 		}
+		w.checker.start()
 		_, err = w.ui.blb.StageBlock(ctx, blockID, &readSeekCloser{Reader: reader, Seeker: reader}, &options)
+		w.checker.stop()
 		if err != nil {
+			if w.checker.checkErr(ctx, err) {
+				return true, err
+			}
 			if chunkNumber <= 8 {
 				return w.f.shouldRetry(ctx, err)
 			}
