@@ -1076,6 +1076,28 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	return f.newObjectWithInfo(ctx, remote, &info)
 }
 
+// About gets quota information
+func (f *Fs) About(ctx context.Context) (usage *fs.Usage, err error) {
+	opts := rest.Opts{
+		Method: "GET",
+		Path:   "/api/files/categories",
+	}
+	var stats []api.CategorySize
+	err = f.pacer.Call(func() (bool, error) {
+		resp, err := f.srv.CallJSON(ctx, &opts, nil, &stats)
+		return shouldRetry(ctx, resp, err)
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to read user info: %w", err)
+	}
+
+	total := int64(0)
+	for category := range stats {
+		total += stats[category].Size
+	}
+	return &fs.Usage{Used: fs.NewUsageValue(total)}, nil
+}
+
 // Fs returns the parent Fs
 func (o *Object) Fs() fs.Info {
 	return o.fs
@@ -1164,4 +1186,5 @@ var (
 	_ fs.DirCacheFlusher = (*Fs)(nil)
 	_ fs.PublicLinker    = (*Fs)(nil)
 	_ fs.ParentIDer      = (*Object)(nil)
+	_ fs.Abouter         = (*Fs)(nil)
 )

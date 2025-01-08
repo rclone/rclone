@@ -124,3 +124,7 @@ type FileShare struct {
 	ID        string     `json:"id,omitempty"`
 	ExpiresAt *time.Time `json:"expiresAt,omitempty"`
 }
+
+type CategorySize struct {
+	Size int64 `json:"totalSize"`
+}
