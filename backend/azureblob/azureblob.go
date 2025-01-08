@@ -1750,6 +1750,7 @@ func (f *Fs) copyMultipart(ctx context.Context, remote, dstContainer, dstPath st
 		numParts = (srcSize-1)/partSize + 1
 		blockIDs = make([]string, numParts) // list of blocks for finalize
 		g, gCtx  = errgroup.WithContext(ctx)
+		doClear  sync.Once
 	)
 	g.SetLimit(f.opt.CopyConcurrency)
 
@@ -1781,6 +1782,9 @@ func (f *Fs) copyMultipart(ctx context.Context, remote, dstContainer, dstPath st
 			err := f.pacer.Call(func() (bool, error) {
 				_, err = dstBlockBlobSVC.StageBlockFromURL(ctx, blockID, srcURL, &options)
 				if err != nil {
+					if invalidBlockOrBlob(ctx, err, "copy", o, &doClear) {
+						return true, err
+					}
 					return f.shouldRetry(ctx, err)
 				}
 				return false, nil
@@ -2384,6 +2388,7 @@ type azChunkWriter struct {
 	blocks    []azBlock  // list of blocks for finalize
 	o         *Object
 	bic       *blockIDCreator
+	doClear   sync.Once
 }
 
 // OpenChunkWriter returns the chunk size and a ChunkWriter
@@ -2454,6 +2459,27 @@ func (f *Fs) OpenChunkWriter(ctx context.Context, remote string, src fs.ObjectIn
 	return info, chunkWriter, nil
 }
 
+// invalidBlockOrBlob looks for the InvalidBlockOrBlob error in err,
+// and if it is found, it clears uncommitted blocks in o to clear the error.
+//
+// It returns a bool indicating whether the error was found or not.
+//
+// See https://gauravmantri.com/2013/05/18/windows-azure-blob-storage-dealing-with-the-specified-blob-or-block-content-is-invalid-error/
+func invalidBlockOrBlob(ctx context.Context, err error, what string, o *Object, clear *sync.Once) bool {
+	storageErr, ok := err.(*azcore.ResponseError)
+	if !ok || storageErr.ErrorCode != string(bloberror.InvalidBlobOrBlock) {
+		return false
+	}
+	clear.Do(func() {
+		fs.Debugf(o, "multpart %s: received %s error: clearing uncommitted blocks and retrying", what, storageErr.ErrorCode)
+		clearErr := o.clearUncomittedBlocks(ctx)
+		if clearErr != nil {
+			fs.Debugf(o, "multpart %s: fixing %s: %v", what, storageErr.ErrorCode, err)
+		}
+	})
+	return true
+}
+
 // WriteChunk will write chunk number with reader bytes, where chunk number >= 0
 func (w *azChunkWriter) WriteChunk(ctx context.Context, chunkNumber int, reader io.ReadSeeker) (int64, error) {
 	if chunkNumber < 0 {
@@ -2496,6 +2522,9 @@ func (w *azChunkWriter) WriteChunk(ctx context.Context, chunkNumber int, reader 
 		}
 		_, err = w.ui.blb.StageBlock(ctx, blockID, &readSeekCloser{Reader: reader, Seeker: reader}, &options)
 		if err != nil {
+			if invalidBlockOrBlob(ctx, err, "upload", w.o, &w.doClear) {
+				return true, err
+			}
 			if chunkNumber <= 8 {
 				return w.f.shouldRetry(ctx, err)
 			}
