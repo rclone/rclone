@@ -9,6 +9,7 @@ import (
 	"path"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/ncw/swift/v2"
 	"github.com/rclone/gofakes3"
@@ -18,7 +19,6 @@ import (
 
 var (
 	emptyPrefix = &gofakes3.Prefix{}
-	timeFormat  = "Mon, 2 Jan 2006 15:04:05 GMT"
 )
 
 // s3Backend implements the gofacess3.Backend interface to make an S3
@@ -98,6 +98,13 @@ func (b *s3Backend) ListBucket(ctx context.Context, bucket string, prefix *gofak
 	return b.pager(response, page)
 }
 
+// formatHeaderTime makes an timestamp which is the same as that used by AWS.
+//
+// This is like RFC1123 always in UTC, but has GMT instead of UTC
+func formatHeaderTime(t time.Time) string {
+	return t.UTC().Format("Mon, 02 Jan 2006 15:04:05") + " GMT"
+}
+
 // HeadObject returns the fileinfo for the given object name.
 //
 // Note that the metadata is not supported yet.
@@ -131,7 +138,7 @@ func (b *s3Backend) HeadObject(ctx context.Context, bucketName, objectName strin
 	hash := getFileHashByte(fobj)
 
 	meta := map[string]string{
-		"Last-Modified": node.ModTime().Format(timeFormat),
+		"Last-Modified": formatHeaderTime(node.ModTime()),
 		"Content-Type":  fs.MimeType(context.Background(), fobj),
 	}
 
@@ -208,7 +215,7 @@ func (b *s3Backend) GetObject(ctx context.Context, bucketName, objectName string
 	}
 
 	meta := map[string]string{
-		"Last-Modified": node.ModTime().Format(timeFormat),
+		"Last-Modified": formatHeaderTime(node.ModTime()),
 		"Content-Type":  fs.MimeType(context.Background(), fobj),
 	}
 

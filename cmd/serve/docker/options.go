@@ -293,7 +293,7 @@ func getVFSOption(vfsOpt *vfscommon.Options, opt rc.Params, key string) (ok bool
 		intVal, err = opt.GetInt64(key)
 		if err == nil {
 			if intVal >= 0 && intVal <= math.MaxUint32 {
-				vfsOpt.UID = uint32(intVal)
+				vfsOpt.GID = uint32(intVal)
 			} else {
 				err = fmt.Errorf("key %q (%v) overflows uint32", key, intVal)
 			}
