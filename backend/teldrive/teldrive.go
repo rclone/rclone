@@ -35,6 +35,7 @@ const (
 	maxChunkSize     = 2000 * fs.Mebi
 	defaultChunkSize = 500 * fs.Mebi
 	minChunkSize     = 500 * fs.Mebi
+	authCookieName   = "access_token"
 )
 
 var (
@@ -202,6 +203,10 @@ func checkUploadChunkSize(cs fs.SizeSuffix) error {
 	return nil
 }
 
+func Ptr[T any](t T) *T {
+	return &t
+}
+
 // NewFs makes a new Fs object from the path
 //
 // The path is of the form remote:path
@@ -245,7 +250,7 @@ func NewFs(ctx context.Context, name string, root string, config configmap.Mappe
 	}).Fill(ctx, f)
 
 	client := fshttp.NewClient(ctx)
-	authCookie := http.Cookie{Name: "access_token", Value: opt.AccessToken}
+	authCookie := http.Cookie{Name: authCookieName, Value: opt.AccessToken}
 	f.srv = rest.NewClient(client).SetRoot(strings.Trim(opt.ApiHost, "/")).SetCookie(&authCookie)
 
 	opts := rest.Opts{
@@ -271,8 +276,8 @@ func NewFs(ctx context.Context, name string, root string, config configmap.Mappe
 	}
 
 	for _, cookie := range sessionResp.Cookies() {
-		if cookie.Name == "access_token" && cookie.Value != "" {
-			config.Set("access_token", cookie.Value)
+		if cookie.Name == authCookieName && cookie.Value != "" {
+			config.Set(authCookieName, cookie.Value)
 		}
 	}
 
@@ -302,7 +307,7 @@ func NewFs(ctx context.Context, name string, root string, config configmap.Mappe
 		}
 		_, err := tempF.NewObject(ctx, remote)
 		if err != nil {
-			if err == fs.ErrorObjectNotFound {
+			if errors.Is(err, fs.ErrorObjectNotFound) || errors.Is(err, fs.ErrorIsDir) {
 				// File doesn't exist so return old f
 				return f, nil
 			}
@@ -379,6 +384,32 @@ func (f *Fs) getRootID(ctx context.Context) (string, error) {
 	return info.Files[0].Id, nil
 }
 
+func (f *Fs) getFileShare(ctx context.Context, id string) (*api.FileShare, error) {
+	opts := rest.Opts{
+		Method: "GET",
+		Path:   "/api/files/" + id + "/share",
+	}
+	res := api.FileShare{}
+	var (
+		resp *http.Response
+		err  error
+	)
+	err = f.pacer.Call(func() (bool, error) {
+		resp, err = f.srv.CallJSON(ctx, &opts, nil, &res)
+		return shouldRetry(ctx, resp, err)
+	})
+	if err != nil {
+		if resp.StatusCode == http.StatusNotFound {
+			return nil, fs.ErrorObjectNotFound
+		}
+		return nil, err
+	}
+	if res.ExpiresAt != nil && res.ExpiresAt.UTC().Before(time.Now().UTC()) {
+		return nil, fs.ErrorObjectNotFound
+	}
+	return &res, nil
+}
+
 // List the objects and directories in dir into entries.  The
 // entries can be returned in any order but should be for a
 // complete directory.
@@ -435,8 +466,9 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 	for _, item := range files {
 		remote := path.Join(dir, f.opt.Enc.ToStandardName(item.Name))
 		if item.Type == "folder" {
-			modTime, _ := time.Parse(timeFormat, item.ModTime)
-			d := fs.NewDir(remote, modTime).SetID(item.Id).SetParentID(item.ParentId)
+			f.dirCache.Put(remote, item.Id)
+			d := fs.NewDir(remote, item.ModTime).SetID(item.Id).SetParentID(item.ParentId).
+				SetSize(item.Size)
 			entries = append(entries, d)
 		}
 		if item.Type == "file" {
@@ -455,7 +487,9 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 //
 // If it can't be found it returns the error fs.ErrorObjectNotFound.
 func (f *Fs) newObjectWithInfo(_ context.Context, remote string, info *api.FileInfo) (fs.Object, error) {
-	modTime, _ := time.Parse(timeFormat, info.ModTime)
+	if info == nil {
+		return nil, fs.ErrorObjectNotFound
+	}
 	o := &Object{
 		fs:       f,
 		remote:   remote,
@@ -463,8 +497,11 @@ func (f *Fs) newObjectWithInfo(_ context.Context, remote string, info *api.FileI
 		size:     info.Size,
 		parentId: info.ParentId,
 		name:     info.Name,
-		modTime:  modTime,
+		modTime:  info.ModTime,
 		mimeType: info.MimeType,
+	}
+	if info.Type == "folder" {
+		return o, fs.ErrorIsDir
 	}
 	return o, nil
 }
@@ -579,11 +616,8 @@ func (f *Fs) FindLeaf(ctx context.Context, pathID, leaf string) (pathIDOut strin
 	if err != nil {
 		return "", false, err
 	}
-	if len(files) == 0 {
+	if len(files) == 0 || files[0].Type == "file" {
 		return "", false, nil
-	}
-	if files[0].Type == "file" {
-		return "", false, fs.ErrorIsFile
 	}
 	return files[0].Id, true, nil
 }
@@ -655,7 +689,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	}
 
 	payload := &api.UpdateFileInformation{
-		UpdatedAt: modTime.UTC().Format(timeFormat),
+		UpdatedAt: Ptr(modTime.UTC()),
 		Size:      src.Size(),
 		ParentID:  directoryID,
 		Name:      leaf,
@@ -901,6 +935,62 @@ func (o *Object) Remove(ctx context.Context) error {
 	return nil
 }
 
+// PublicLink adds a "readable by anyone with link" permission on the given file or folder.
+func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, unlink bool) (link string, err error) {
+	id, err := f.dirCache.FindDir(ctx, remote, false)
+	if err == nil {
+		fs.Debugf(f, "attempting to share directory '%s'", remote)
+	} else {
+		fs.Debugf(f, "attempting to share single file '%s'", remote)
+		o, err := f.NewObject(ctx, remote)
+		if err != nil {
+			return "", err
+		}
+		id = o.(fs.IDer).ID()
+	}
+	if unlink {
+		opts := rest.Opts{
+			Method:     "DELETE",
+			Path:       "/api/files/" + id + "/share",
+			NoResponse: true,
+		}
+		f.pacer.Call(func() (bool, error) {
+			resp, err := f.srv.Call(ctx, &opts)
+			return shouldRetry(ctx, resp, err)
+		})
+		return "", nil
+	}
+
+	share, err := f.getFileShare(ctx, id)
+	if err != nil {
+		if !errors.Is(err, fs.ErrorObjectNotFound) {
+			return "", err
+		}
+		opts := rest.Opts{
+			Method:     "POST",
+			Path:       "/api/files/" + id + "/share",
+			NoResponse: true,
+		}
+		payload := api.FileShare{}
+		if expire < fs.DurationOff {
+			dur := time.Now().Add(time.Duration(expire)).UTC()
+			payload.ExpiresAt = &dur
+		}
+		err = f.pacer.Call(func() (bool, error) {
+			resp, err := f.srv.CallJSON(ctx, &opts, &payload, nil)
+			return shouldRetry(ctx, resp, err)
+		})
+		if err != nil {
+			return "", err
+		}
+		share, err = f.getFileShare(ctx, id)
+		if err != nil {
+			return "", err
+		}
+	}
+	return fmt.Sprintf("%s/share/%s", f.opt.ApiHost, share.ID), nil
+}
+
 // Open an object for read
 func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.ReadCloser, err error) {
 	var resp *http.Response
@@ -1024,6 +1114,11 @@ func (o *Object) ID() string {
 	return o.id
 }
 
+// ParentID implements fs.ParentIDer.
+func (o *Object) ParentID() string {
+	return o.parentId
+}
+
 // Storable returns whether this object is storable
 func (o *Object) Storable() bool {
 	return true
@@ -1032,7 +1127,7 @@ func (o *Object) Storable() bool {
 // SetModTime sets the modification time of the local fs object
 func (o *Object) SetModTime(ctx context.Context, modTime time.Time) error {
 	updateInfo := &api.UpdateFileInformation{
-		UpdatedAt: modTime.UTC().Format(timeFormat),
+		UpdatedAt: Ptr(modTime.UTC()),
 	}
 	err := o.fs.updateFileInformation(ctx, updateInfo, o.id)
 	if err != nil {
@@ -1060,4 +1155,6 @@ var (
 	_ fs.OpenChunkWriter = (*Fs)(nil)
 	_ fs.IDer            = (*Object)(nil)
 	_ fs.DirCacheFlusher = (*Fs)(nil)
+	_ fs.PublicLinker    = (*Fs)(nil)
+	_ fs.ParentIDer      = (*Object)(nil)
 )

@@ -1,6 +1,8 @@
 // Package api provides types used by the Teldrive API.
 package api
 
+import "time"
+
 type Error struct {
 	Code    bool   `json:"code,omitempty"`
 	Message string `json:"message,omitempty"`
@@ -24,13 +26,13 @@ type Part struct {
 
 // FileInfo represents a file when listing folder contents
 type FileInfo struct {
-	Id       string `json:"id"`
-	Name     string `json:"name"`
-	MimeType string `json:"mimeType"`
-	Size     int64  `json:"size"`
-	ParentId string `json:"parentId"`
-	Type     string `json:"type"`
-	ModTime  string `json:"updatedAt"`
+	Id       string    `json:"id"`
+	Name     string    `json:"name"`
+	MimeType string    `json:"mimeType"`
+	Size     int64     `json:"size"`
+	ParentId string    `json:"parentId"`
+	Type     string    `json:"type"`
+	ModTime  time.Time `json:"updatedAt"`
 }
 
 type Meta struct {
@@ -80,8 +82,6 @@ type CreateFileRequest struct {
 	Encrypted bool       `json:"encrypted,omitempty"`
 	Parts     []FilePart `json:"parts,omitempty"`
 	ParentId  string     `json:"parentId,omitempty"`
-	CreatedAt string     `json:"createdAt,omitempty"`
-	UpdatedAt string     `json:"updatedAt,omitempty"`
 }
 
 type MoveFileRequest struct {
@@ -95,7 +95,7 @@ type DirMove struct {
 
 type UpdateFileInformation struct {
 	Name      string     `json:"name,omitempty"`
-	UpdatedAt string     `json:"updatedAt,omitempty"`
+	UpdatedAt *time.Time `json:"updatedAt,omitempty"`
 	Parts     []FilePart `json:"parts,omitempty"`
 	Size      int64      `json:"size,omitempty"`
 	UploadId  string     `json:"uploadId,omitempty"`
@@ -116,4 +116,9 @@ type Session struct {
 	UserName string `json:"userName"`
 	UserId   int64  `json:"userId"`
 	Hash     string `json:"hash"`
+}
+
+type FileShare struct {
+	ID        string     `json:"id,omitempty"`
+	ExpiresAt *time.Time `json:"expiresAt,omitempty"`
 }
