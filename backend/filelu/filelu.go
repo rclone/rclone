@@ -392,7 +392,9 @@ func (f *Fs) uploadFile(ctx context.Context, uploadURL, sessionID, fileName stri
     if err != nil {
         return "", fmt.Errorf("failed to copy file content: %w", err)
     }
-    writer.Close()
+    if err := writer.Close(); err != nil {
+    log.Printf("Failed to close writer: %v", err)
+}
 
     // Create and send request
     req, err := http.NewRequestWithContext(ctx, "POST", uploadURL, &body)
@@ -1148,7 +1150,11 @@ func (f *Fs) moveSingleFile(ctx context.Context, src fs.Object, remote string) (
     if err != nil {
         return nil, fmt.Errorf("failed to open source object: %w", err)
     }
-    defer reader.Close()
+    defer func() {
+    if err := reader.Close(); err != nil {
+        log.Printf("Failed to close reader: %v", err)
+    }
+}()
 
     // Upload the file to the destination
     obj, err := f.Put(ctx, reader, src)
@@ -1174,7 +1180,11 @@ func (f *Fs) MoveTo(ctx context.Context, src fs.Object, remote string) (fs.Objec
     if err != nil {
         return nil, fmt.Errorf("failed to open source object: %w", err)
     }
-    defer reader.Close()
+   defer func() {
+    if err := reader.Close(); err != nil {
+        log.Printf("Failed to close reader: %v", err)
+    }
+}()
 
     uploadURL, sessID, err := f.getUploadServer(ctx)
     if err != nil {
@@ -1244,13 +1254,20 @@ func (f *Fs) MoveToLocal(ctx context.Context, remote string, localPath string) e
     if err != nil {
         return fmt.Errorf("failed to open file for download: %w", err)
     }
-    defer reader.Close()
+   defer func() {
+    if err := reader.Close(); err != nil {
+        log.Printf("Failed to close reader: %v", err)
+    }
+}()
 
     outFile, err := os.Create(localPath)
     if err != nil {
         return fmt.Errorf("failed to create local file %q: %w", localPath, err)
     }
-    defer outFile.Close()
+    defer func() {
+  if err := outFile.Close(); err != nil {
+    log.Printf("Failed to close output file: %v", err)
+}}()
 
     _, err = io.Copy(outFile, reader)
     if err != nil {
