@@ -200,7 +200,7 @@ defer func() {
         }
 
         if result.Status != 200 {
-            return 0, fmt.Errorf("Error: %s", result.Msg)
+            return 0, fmt.Errorf("error: %s", result.Msg)
         }
 
         found := false
@@ -392,9 +392,10 @@ func (f *Fs) uploadFile(ctx context.Context, uploadURL, sessionID, fileName stri
     if err != nil {
         return "", fmt.Errorf("failed to copy file content: %w", err)
     }
-    if err := writer.Close(); err != nil {
-    log.Printf("Failed to close writer: %v", err)
+if err := reader.Close(); err != nil {
+    fs.Logf(nil, "Failed to close reader: %v", err)
 }
+
 
     // Create and send request
     req, err := http.NewRequestWithContext(ctx, "POST", uploadURL, &body)
@@ -1156,9 +1157,9 @@ func (f *Fs) moveSingleFile(ctx context.Context, src fs.Object, remote string) (
         return nil, fmt.Errorf("failed to open source object: %w", err)
     }
     defer func() {
-    if err := reader.Close(); err != nil {
-        log.Printf("Failed to close reader: %v", err)
-    }
+  if err := reader.Close(); err != nil {
+    fs.Logf(nil, "Failed to close reader: %v", err)
+}
 }()
 
     // Upload the file to the destination
@@ -1187,9 +1188,9 @@ func (f *Fs) MoveTo(ctx context.Context, src fs.Object, remote string) (fs.Objec
         return nil, fmt.Errorf("failed to open source object: %w", err)
     }
    defer func() {
-    if err := reader.Close(); err != nil {
-        log.Printf("Failed to close reader: %v", err)
-    }
+   if err := reader.Close(); err != nil {
+    fs.Logf(nil, "Failed to close reader: %v", err)
+}
 }()
 
     uploadURL, sessID, err := f.getUploadServer(ctx)
@@ -1262,9 +1263,9 @@ func (f *Fs) MoveToLocal(ctx context.Context, remote string, localPath string) e
         return fmt.Errorf("failed to open file for download: %w", err)
     }
    defer func() {
-    if err := reader.Close(); err != nil {
-        log.Printf("Failed to close reader: %v", err)
-    }
+   if err := reader.Close(); err != nil {
+    fs.Logf(nil, "Failed to close reader: %v", err)
+}
 }()
 
     outFile, err := os.Create(localPath)
@@ -1272,9 +1273,10 @@ func (f *Fs) MoveToLocal(ctx context.Context, remote string, localPath string) e
         return fmt.Errorf("failed to create local file %q: %w", localPath, err)
     }
     defer func() {
-  if err := outFile.Close(); err != nil {
-    log.Printf("Failed to close output file: %v", err)
-}}()
+ if err := reader.Close(); err != nil {
+    fs.Logf(nil, "Failed to close reader: %v", err)
+}
+}()
 
     _, err = io.Copy(outFile, reader)
     if err != nil {
