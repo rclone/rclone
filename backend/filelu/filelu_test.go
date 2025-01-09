@@ -1,6 +1,8 @@
-// Remove the unused import if the package is not needed
+package filelu_test
+
 import (
 	"testing"
+
 	"github.com/rclone/rclone/fstest/fstests"
 )
 
