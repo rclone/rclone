@@ -3,7 +3,7 @@ package filelu_test
 import (
 	"testing"
 
-	"github.com/filelucom/rclone/backend/filelu"
+	"github.com/rclone/rclone/backend/filelu"
 	"github.com/rclone/rclone/fstest/fstests"
 )
 
