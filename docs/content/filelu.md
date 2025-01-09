@@ -5,9 +5,24 @@ description: "Rclone docs for FileLu"
 versionIntroduced: "v1.0"
 ---
 
-# {{< icon "fa fa-archive" >}} FileLu
+# {{< icon "fa fa-folder" >}} FileLu
 
-[FileLu](https://filelu.com/) is a cloud storage and file hosting service offering features such as secure file uploads, downloads, and sharing capabilities. FileLu supports high storage limits and allows seamless integration with rclone for managing files in the cloud.
+[FileLu](https://filelu.com/) is a cloud storage and file backup service offering features such as secure file uploads, downloads, flexible storage space, and sharing capabilities. FileLu supports high storage limits and allows seamless integration with RCLONE for managing files in the cloud. FileLu offers cross-platform file backup services, allowing you to upload and back up files from any internet-connected device. Upload options include:
+• File Upload
+• Folder Upload
+• URL Remote Upload
+• FTP/FTPS
+• WebDAV
+• FileDrop
+• Mobile App
+• Create Note
+• FileLuSync
+• Upload via Email
+• Browser Extensions
+• Web App
+• Upload via API
+• Terminal CLI
+
 
 Paths are specified as `remote:path`.
 
