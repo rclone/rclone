@@ -15,6 +15,7 @@ import (
 	"path"
 	"errors"
 	"strconv"
+                   "log"
     "os"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config/configmap"
@@ -176,7 +177,11 @@ func (f *Fs) resolveFolderPath(ctx context.Context, path string) (int, error) {
         if err != nil {
             return 0, err
         }
-        defer resp.Body.Close()
+defer func() {
+    if err := resp.Body.Close(); err != nil {
+        log.Fatalf("Failed to close response body: %v", err)
+    }
+}()
 
         var result struct {
             Status int    `json:"status"`
@@ -234,7 +239,11 @@ func (f *Fs) GetAccountInfo(ctx context.Context) (string, string, error) {
     if err != nil {
         return "", "", fserrors.FsError(err)
     }
-    defer resp.Body.Close()
+defer func() {
+    if err := resp.Body.Close(); err != nil {
+        log.Fatalf("Failed to close response body: %v", err)
+    }
+}()
 
     if resp.StatusCode != http.StatusOK {
         return "", "", fmt.Errorf("received HTTP status %d", resp.StatusCode)
@@ -281,7 +290,11 @@ func (f *Fs) DeleteFile(ctx context.Context, fileCode string) error {
     if err != nil {
         return fmt.Errorf("failed to send delete request: %w", err)
     }
-    defer resp.Body.Close()
+defer func() {
+    if err := resp.Body.Close(); err != nil {
+        log.Fatalf("Failed to close response body: %v", err)
+    }
+}()
 
     var result struct {
         Status int    `json:"status"`
@@ -392,7 +405,11 @@ func (f *Fs) uploadFile(ctx context.Context, uploadURL, sessionID, fileName stri
     if err != nil {
         return "", fmt.Errorf("failed to send request: %w", err)
     }
-    defer resp.Body.Close()
+ defer func() {
+    if err := resp.Body.Close(); err != nil {
+        log.Fatalf("Failed to close response body: %v", err)
+    }
+}()
 
     // Parse the response
     var result []struct {
@@ -466,7 +483,11 @@ func (f *Fs) Mkdir(ctx context.Context, dir string) error {
     if err != nil {
         return fmt.Errorf("failed to create folder: %w", err)
     }
-    defer resp.Body.Close()
+  defer func() {
+    if err := resp.Body.Close(); err != nil {
+        log.Fatalf("Failed to close response body: %v", err)
+    }
+}()
 
     var result struct {
         Status int    `json:"status"`
@@ -513,7 +534,11 @@ func (f *Fs) Remove(ctx context.Context, dir string) error {
     if err != nil {
         return fmt.Errorf("failed to delete folder: %w", err)
     }
-    defer resp.Body.Close()
+   defer func() {
+    if err := resp.Body.Close(); err != nil {
+        log.Fatalf("Failed to close response body: %v", err)
+    }
+}()
 
     var result struct {
         Status int    `json:"status"`
@@ -570,6 +595,8 @@ func (f *Fs) List(ctx context.Context, dir string) (fs.DirEntries, error) {
         return nil, fmt.Errorf("failed to resolve folder path: %w", err)
     }
 
+  
+
     return f.listDirectory(ctx, folderID, dir)
 }
 
@@ -588,7 +615,11 @@ func (f *Fs) listDirectory(ctx context.Context, folderID int, dir string) (fs.Di
     if err != nil {
         return nil, fmt.Errorf("failed to list directory: %w", err)
     }
-    defer resp.Body.Close()
+defer func() {
+    if err := resp.Body.Close(); err != nil {
+        log.Fatalf("Failed to close response body: %v", err)
+    }
+}()
 
     var result struct {
         Status int `json:"status"`
@@ -636,7 +667,7 @@ func (f *Fs) listDirectory(ctx context.Context, folderID int, dir string) (fs.Di
     }
 
     for _, file := range result.Result.Files {
-        nameWithCode := fmt.Sprintf("%s (%s)", file.Name, file.Code)
+        nameWithCode := fmt.Sprintf("(%s) %s", file.Code, file.Name)
         // For files, combine the current path with the file name
         fullPath := nameWithCode
         if currentDir != "" {
@@ -697,7 +728,11 @@ func (f *Fs) getFolderID(ctx context.Context, dir string) (int, error) {
         if err != nil {
             return 0, fmt.Errorf("failed to list directory: %w", err)
         }
-        defer resp.Body.Close()
+defer func() {
+    if err := resp.Body.Close(); err != nil {
+        log.Fatalf("Failed to close response body: %v", err)
+    }
+}()
 
         var result struct {
             Status int `json:"status"`
@@ -758,7 +793,11 @@ func (f *Fs) getDirectLink(ctx context.Context, fileCode string) (string, int64,
     if err != nil {
         return "", 0, fmt.Errorf("failed to fetch direct link: %w", err)
     }
-    defer resp.Body.Close()
+ defer func() {
+    if err := resp.Body.Close(); err != nil {
+        log.Fatalf("Failed to close response body: %v", err)
+    }
+}()
 
     var result struct {
         Status int    `json:"status"`
@@ -880,7 +919,11 @@ func (f *Fs) getUploadServer(ctx context.Context) (string, string, error) {
     if err != nil {
         return "", "", fmt.Errorf("failed to get upload server: %w", err)
     }
-    defer resp.Body.Close()
+    defer func() {
+    if err := resp.Body.Close(); err != nil {
+        log.Fatalf("Failed to close response body: %v", err)
+    }
+}()
 
     var result struct {
         Status   int    `json:"status"`
@@ -968,7 +1011,11 @@ func (f *Fs) moveFileToFolder(ctx context.Context, fileCode string, folderID int
     if err != nil {
         return fmt.Errorf("failed to send move request: %w", err)
     }
-    defer resp.Body.Close()
+  defer func() {
+    if err := resp.Body.Close(); err != nil {
+        log.Fatalf("Failed to close response body: %v", err)
+    }
+}()
 
     var result struct {
         Status int    `json:"status"`
@@ -1004,7 +1051,11 @@ func (f *Fs) getFileHash(ctx context.Context, fileCode string) (string, error) {
     if err != nil {
         return "", fserrors.FsError(err)
     }
-    defer resp.Body.Close()
+   defer func() {
+    if err := resp.Body.Close(); err != nil {
+        log.Fatalf("Failed to close response body: %v", err)
+    }
+}()
 
     if resp.StatusCode != http.StatusOK {
         return "", fmt.Errorf("received HTTP status %d", resp.StatusCode)
@@ -1269,7 +1320,11 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
     if err != nil {
         return fserrors.NoRetryError(fmt.Errorf("failed to check directory contents: %w", err))
     }
-    defer resp.Body.Close()
+   defer func() {
+    if err := resp.Body.Close(); err != nil {
+        log.Fatalf("Failed to close response body: %v", err)
+    }
+}()
 
     var listResult api.FolderListResponse
     err = json.NewDecoder(resp.Body).Decode(&listResult)
@@ -1298,7 +1353,11 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
     if err != nil {
         return fserrors.NoRetryError(fmt.Errorf("failed to delete directory: %w", err))
     }
-    defer resp.Body.Close()
+defer func() {
+    if err := resp.Body.Close(); err != nil {
+        log.Fatalf("Failed to close response body: %v", err)
+    }
+}()
 
     // Read response body
     body, err := io.ReadAll(resp.Body)
@@ -1399,7 +1458,12 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
     }
 
     if resp.StatusCode != http.StatusOK {
-        resp.Body.Close()
+defer func() {
+    if err := resp.Body.Close(); err != nil {
+        log.Fatalf("Failed to close response body: %v", err)
+    }
+}()
+
         return nil, fmt.Errorf("failed to download file: HTTP %d", resp.StatusCode)
     }
 
@@ -1435,7 +1499,11 @@ func (f *Fs) deleteFileByCode(ctx context.Context, fileCode string) error {
     if err != nil {
         return fmt.Errorf("failed to send delete request: %w", err)
     }
-    defer resp.Body.Close()
+defer func() {
+    if err := resp.Body.Close(); err != nil {
+        log.Fatalf("Failed to close response body: %v", err)
+    }
+}()
 
     var result struct {
         Status int    `json:"status"`
@@ -1549,7 +1617,11 @@ func (o *Object) readMetaData(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
+defer func() {
+    if err := resp.Body.Close(); err != nil {
+        log.Fatalf("Failed to close response body: %v", err)
+    }
+}()
 
 	if resp.StatusCode != http.StatusOK {
 		return fs.ErrorObjectNotFound
@@ -1597,7 +1669,11 @@ func (o *Object) Hash(ctx context.Context, t hash.Type) (string, error) {
     if err != nil {
         return "", fmt.Errorf("hash request failed: %w", err)
     }
-    defer resp.Body.Close()
+defer func() {
+    if err := resp.Body.Close(); err != nil {
+        log.Fatalf("Failed to close response body: %v", err)
+    }
+}()
 
     var result struct {
         Status int    `json:"status"`
