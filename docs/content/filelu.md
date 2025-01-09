@@ -105,11 +105,11 @@ Sync files from a local directory to a FileLu directory (directory id `366238`):
     
 Mount remote to local Linux:
 
-rclone mount filelu: /root/mnt --vfs-cache-mode writes
+    rclone mount filelu: /root/mnt --vfs-cache-mode writes
 
 Mount remote to local Windows:
 
-rclone mount filelu: D:/local_mnt --vfs-cache-mode writes
+    rclone mount filelu: D:/local_mnt --vfs-cache-mode writes
 
 
 Get storage info about the FileLu account:
