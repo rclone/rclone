@@ -421,6 +421,7 @@ func (f *Fs) Hashes() hash.Set {
 }
 
 // isNumeric checks if a string contains only numeric characters
+//
 //nolint:unused
 func isNumeric(s string) bool {
 	_, err := strconv.Atoi(s)
@@ -838,6 +839,7 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 }
 
 // Helper function to handle duplicate files
+//
 //nolint:unused
 func (f *Fs) handleDuplicate(ctx context.Context, remote string) error {
 	// List files in destination
@@ -985,6 +987,7 @@ func (f *Fs) moveFileToFolder(ctx context.Context, fileCode string, folderID int
 }
 
 // getFileHash fetches the hash of the uploaded file using its file_code
+//
 //nolint:unused
 func (f *Fs) getFileHash(ctx context.Context, fileCode string) (string, error) {
 	apiURL := fmt.Sprintf("%s/file/info?file_code=%s&key=%s", f.endpoint, url.QueryEscape(fileCode), url.QueryEscape(f.opt.RcloneKey))
@@ -1087,6 +1090,7 @@ func (f *Fs) moveDirectoryContents(ctx context.Context, dir string, dest string)
 }
 
 // Helper method to move a single file
+//
 //nolint:unused
 func (f *Fs) moveSingleFile(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
 	fs.Debugf(f, "MoveSingleFile: moving %q to %q", src.Remote(), remote)
@@ -1439,6 +1443,7 @@ func extractFileName(urlStr string) string {
 }
 
 // deleteFileByCode deletes a file from FileLu by its file code
+//
 //nolint:unused
 func (f *Fs) deleteFileByCode(ctx context.Context, fileCode string) error {
 	fs.Debugf(f, "deleteFileByCode: Attempting to delete file with code=%q", fileCode)
@@ -1552,6 +1557,7 @@ func (o *Object) Remove(ctx context.Context) error {
 }
 
 // readMetaData fetches metadata for the object
+//
 //nolint:unused
 func (o *Object) readMetaData(ctx context.Context) error {
 	apiURL := fmt.Sprintf("%s/file/info?name=%s&key=%s", o.fs.endpoint, url.QueryEscape(o.remote), url.QueryEscape(o.fs.opt.RcloneKey))
