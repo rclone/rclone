@@ -130,6 +130,11 @@ func isFileCode(s string) bool {
     }
     return true
 }
+// Assuming filelu.Fs needs to implement fs.Object
+func (f *Fs) Fs() *fs.Fs {
+    // Implementation logic
+    return f
+}
 
 // resolveFolderPath takes a path and returns the folder ID, creating the folder if it doesn't exist
 func (f *Fs) resolveFolderPath(ctx context.Context, path string) (int, error) {
