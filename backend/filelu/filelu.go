@@ -257,7 +257,7 @@ defer func() {
     }
 
     if result.Status != 200 {
-        return "", "", fmt.Errorf("Error: %s", result.Msg)
+        return "", "", fmt.Errorf("error: %s", result.Msg)
     }
 
     return result.Result.Storage, result.Result.StorageUsed, nil
@@ -308,7 +308,7 @@ defer func() {
     }
 
     if result.Status != 200 {
-        return fmt.Errorf("Error while deleting file: %s", result.Msg)
+        return fmt.Errorf("error while deleting file: %s", result.Msg)
     }
 
     fs.Infof(f, "Successfully deleted file with code: %s", fileCode)
@@ -392,7 +392,10 @@ func (f *Fs) uploadFile(ctx context.Context, uploadURL, sessionID, fileName stri
     if err != nil {
         return "", fmt.Errorf("failed to copy file content: %w", err)
     }
-    writer.Close()
+   if err := writer.Close(); err != nil {
+    // Handle the error here, e.g., log it
+    fmt.Println("Error closing writer:", err)
+}
 
     // Create and send request
     req, err := http.NewRequestWithContext(ctx, "POST", uploadURL, &body)
@@ -499,7 +502,7 @@ func (f *Fs) Mkdir(ctx context.Context, dir string) error {
     }
 
     if result.Status != 200 {
-        return fmt.Errorf("Error: %s", result.Msg)
+        return fmt.Errorf("error: %s", result.Msg)
     }
 
     fs.Infof(f, "Successfully created folder %q with ID %q", dir, result.Result.FldID)
@@ -546,7 +549,7 @@ func (f *Fs) Remove(ctx context.Context, dir string) error {
     }
 
     if result.Status != 200 {
-        return fmt.Errorf("Error: %s", result.Msg)
+        return fmt.Errorf("error: %s", result.Msg)
     }
 
     fs.Infof(f, "Removed directory %q successfully", dir)
@@ -640,7 +643,7 @@ defer func() {
     }
 
     if result.Status != 200 {
-        return nil, fmt.Errorf("Error: %s", result.Msg)
+        return nil, fmt.Errorf("error: %s", result.Msg)
     }
 
     entries := fs.DirEntries{}
@@ -747,7 +750,7 @@ defer func() {
         }
 
         if result.Status != 200 {
-            return 0, fmt.Errorf("Error: %s", result.Msg)
+            return 0, fmt.Errorf("error: %s", result.Msg)
         }
 
         found := false
