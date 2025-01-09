@@ -26,7 +26,6 @@ import (
 	"github.com/rclone/rclone/fs/hash"
 )
 
-
 // Register the backend with Rclone
 func init() {
 	fs.Register(&fs.RegInfo{
