@@ -375,8 +375,14 @@ func (f *Fs) uploadFile(ctx context.Context, uploadURL, sessionID, fileName stri
 	if err != nil {
 		return "", fmt.Errorf("failed to copy file content: %w", err)
 	}
-	if err := reader.Close(); err != nil {
-		fs.Fatalf(nil, "Failed to open file: %v", err)
+
+	// Don't use reader.Close(); instead, handle fileContent closing if it's an io.ReadCloser
+	if closer, ok := fileContent.(io.ReadCloser); ok {
+		defer func() {
+			if err := closer.Close(); err != nil {
+				fs.Fatalf(nil, "Failed to close reader: %v", err)
+			}
+		}()
 	}
 
 	// Create and send request
@@ -413,6 +419,7 @@ func (f *Fs) uploadFile(ctx context.Context, uploadURL, sessionID, fileName stri
 	fs.Debugf(f, "uploadFile: File uploaded successfully with file code: %s", result[0].FileCode)
 	return result[0].FileCode, nil
 }
+
 
 // Hashes returns an empty hash set, indicating no hash support
 func (f *Fs) Hashes() hash.Set {
