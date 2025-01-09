@@ -128,6 +128,8 @@ FileLu supports modification times but does not currently support hashes.
 | /         | 0x2F  | ／          |
 
 Invalid UTF-8 bytes will also be [replaced](/overview/#invalid-utf8), as they cannot be used in JSON strings.
+FileLu only supports filenames and folder names up to 255 characters in length, where a
+character is a unicode character.
 
 ### Duplicated Files
 
