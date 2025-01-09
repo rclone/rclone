@@ -12,6 +12,6 @@ import (
 func TestIntegration(t *testing.T) {
 	fstests.Run(t, &fstests.Opt{
 		RemoteName: "TestFileLu:", 
-		NilObject:  nil, 
+		NilObject:  (*filelu.Fs)(nil),
 	})
 }
