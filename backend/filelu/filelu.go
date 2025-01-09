@@ -15,7 +15,7 @@ import (
 	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/fs/hash"
 	"io"
-	"log"
+	
 	"mime/multipart"
 	"net/http"
 	"net/url"
@@ -376,7 +376,7 @@ func (f *Fs) uploadFile(ctx context.Context, uploadURL, sessionID, fileName stri
 		return "", fmt.Errorf("failed to copy file content: %w", err)
 	}
 	if err := reader.Close(); err != nil {
-		fs.Logf(nil, "Failed to close reader: %v", err)
+		fs.Fatalf(nil, "Failed to open file: %v", err)
 	}
 
 	// Create and send request
