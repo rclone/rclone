@@ -15,6 +15,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"os"
 	
 	"github.com/rclone/rclone/backend/filelu/api"
 	"github.com/rclone/rclone/fs"
@@ -23,8 +24,7 @@ import (
 	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/fs/hash"
-	"os"
-)
+	)
 
 // Register the backend with Rclone
 func init() {
