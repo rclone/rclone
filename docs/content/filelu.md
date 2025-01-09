@@ -31,16 +31,14 @@ name> filelu
 Type of storage to configure.
 Choose a number from below, or type in your own value
 [snip]
-16 / FileLu
+xx / FileLu
    \ "filelu"
 [snip]
 Storage> filelu
 Enter your FileLu Rclone Key:
-Rclone Key> YOUR_FILELU_RCLONE_KEY
+Rclone Key> YOUR_FILELU_RCLONE_KEY RC_xxxxxxxxxxxxxxxxxxxxxxxx
 Configuration complete.
-Options:
-- type: filelu
-- Rclone Key: *** ENCRYPTED ***
+
 Keep this "filelu" remote?
 y) Yes this is OK
 e) Edit this remote
@@ -154,9 +152,7 @@ User name.
 
 - **Note:** This is not required if using an Rclone Key.
 
-#### --filelu-pass
-
-Password.
+FileLu Rclone Key RC_xxxxxxxxxxxxxxxxxxxx.
 
 - **NB:** Input to this must be obscured - see [rclone obscure](/commands/rclone_obscure/).
 
@@ -186,7 +182,3 @@ Properties:
 
 For further information, visit [FileLu's website](https://filelu.com/).
 """
-
-# Write the content to a markdown file
-with open("FileLu_rclone_docs.md", "w") as file:
-    file.write(content)
