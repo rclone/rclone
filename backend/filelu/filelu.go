@@ -408,7 +408,12 @@ func (f *Fs) uploadFile(ctx context.Context, uploadURL, sessionID, fileName stri
     if err != nil {
         return "", fmt.Errorf("failed to send request: %w", err)
     }
-    defer resp.Body.Close()
+    defer func() {
+    if err := resp.Body.Close(); err != nil {
+        fmt.Println("Error closing response body:", err)
+    }
+}()
+
 
     // Parse the response
     var result []struct {
@@ -813,7 +818,7 @@ func (f *Fs) getDirectLink(ctx context.Context, fileCode string) (string, int64,
     }
 
     if result.Status != 200 {
-        return "", 0, fmt.Errorf("Error: %s", result.Msg)
+        return "", 0, fmt.Errorf("error: %s", result.Msg)
     }
 
     fs.Debugf(f, "getDirectLink: obtained URL %q with size %d", result.Result.URL, result.Result.Size)
@@ -938,7 +943,7 @@ func (f *Fs) getUploadServer(ctx context.Context) (string, string, error) {
     }
 
     if result.Status != 200 {
-        return "", "", fmt.Errorf("Error: %s", result.Msg)
+        return "", "", fmt.Errorf("error: %s", result.Msg)
     }
 
     fs.Debugf(f, "Got upload server URL=%s and session ID=%s", result.Result, result.SessID)
@@ -1027,7 +1032,7 @@ func (f *Fs) moveFileToFolder(ctx context.Context, fileCode string, folderID int
     }
 
     if result.Status != 200 {
-        return fmt.Errorf("Error while moving file: %s", result.Msg)
+        return fmt.Errorf("error while moving file: %s", result.Msg)
     }
 
     fs.Debugf(f, "moveFileToFolder: File moved successfully to folder ID: %d", folderID)
@@ -1076,7 +1081,7 @@ func (f *Fs) getFileHash(ctx context.Context, fileCode string) (string, error) {
     }
 
     if result.Status != 200 {
-        return "", fmt.Errorf("Error: %s", result.Msg)
+        return "", fmt.Errorf("error: %s", result.Msg)
     }
 
     if len(result.Result) > 0 {
@@ -1402,7 +1407,7 @@ defer func() {
 
     // Handle API errors
     if result.Status != 200 {
-        return fserrors.NoRetryError(fmt.Errorf("Error: %s", result.Msg))
+        return fserrors.NoRetryError(fmt.Errorf("error: %s", result.Msg))
     }
 
     fs.Infof(f, "Successfully deleted directory '%s'", fullPath)
@@ -1538,7 +1543,7 @@ defer func() {
     }
 
     if result.Status != 200 {
-        return fmt.Errorf("Error while deleting file: %s", result.Msg)
+        return fmt.Errorf("error while deleting file: %s", result.Msg)
     }
 
     return nil
@@ -1709,7 +1714,7 @@ defer func() {
     }
 
     if result.Status != 200 {
-        return "", fmt.Errorf("Error: %s", result.Msg)
+        return "", fmt.Errorf("error: %s", result.Msg)
     }
 
     return result.Hash, nil
