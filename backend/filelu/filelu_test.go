@@ -3,7 +3,7 @@ package filelu_test
 import (
 	"testing"
 
-	"github.com/rclone/rclone/backend/filelu"
+	
 	"github.com/rclone/rclone/fstest/fstests"
 )
 
@@ -11,6 +11,6 @@ import (
 func TestIntegration(t *testing.T) {
 	fstests.Run(t, &fstests.Opt{
 		RemoteName: "TestFileLu:",
-		NilObject:  (*filelu.Fs)(nil),
+		NilObject:  nil,
 	})
 }
