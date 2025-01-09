@@ -178,9 +178,9 @@ func (f *Fs) resolveFolderPath(ctx context.Context, path string) (int, error) {
             return 0, err
         }
 defer func() {
-    if err := resp.Body.Close(); err != nil {
-        log.Fatalf("Failed to close response body: %v", err)
-    }
+  if err := resp.Body.Close(); err != nil {
+    fs.Fatalf(nil, "Failed to close response body: %v", err)
+}
 }()
 
         var result struct {
@@ -240,9 +240,9 @@ func (f *Fs) GetAccountInfo(ctx context.Context) (string, string, error) {
         return "", "", fserrors.FsError(err)
     }
 defer func() {
-    if err := resp.Body.Close(); err != nil {
-        log.Fatalf("Failed to close response body: %v", err)
-    }
+  if err := resp.Body.Close(); err != nil {
+    fs.Fatalf(nil, "Failed to close response body: %v", err)
+}
 }()
 
     if resp.StatusCode != http.StatusOK {
@@ -291,9 +291,9 @@ func (f *Fs) DeleteFile(ctx context.Context, fileCode string) error {
         return fmt.Errorf("failed to send delete request: %w", err)
     }
 defer func() {
-    if err := resp.Body.Close(); err != nil {
-        log.Fatalf("Failed to close response body: %v", err)
-    }
+   if err := resp.Body.Close(); err != nil {
+    fs.Fatalf(nil, "Failed to close response body: %v", err)
+}
 }()
 
     var result struct {
@@ -408,9 +408,9 @@ func (f *Fs) uploadFile(ctx context.Context, uploadURL, sessionID, fileName stri
         return "", fmt.Errorf("failed to send request: %w", err)
     }
  defer func() {
-    if err := resp.Body.Close(); err != nil {
-        log.Fatalf("Failed to close response body: %v", err)
-    }
+ if err := resp.Body.Close(); err != nil {
+    fs.Fatalf(nil, "Failed to close response body: %v", err)
+}
 }()
 
     // Parse the response
@@ -488,8 +488,8 @@ func (f *Fs) Mkdir(ctx context.Context, dir string) error {
     }
   defer func() {
     if err := resp.Body.Close(); err != nil {
-        log.Fatalf("Failed to close response body: %v", err)
-    }
+    fs.Fatalf(nil, "Failed to close response body: %v", err)
+}
 }()
 
     var result struct {
@@ -539,8 +539,8 @@ func (f *Fs) Remove(ctx context.Context, dir string) error {
     }
    defer func() {
     if err := resp.Body.Close(); err != nil {
-        log.Fatalf("Failed to close response body: %v", err)
-    }
+    fs.Fatalf(nil, "Failed to close response body: %v", err)
+}
 }()
 
     var result struct {
@@ -619,9 +619,9 @@ func (f *Fs) listDirectory(ctx context.Context, folderID int, dir string) (fs.Di
         return nil, fmt.Errorf("failed to list directory: %w", err)
     }
 defer func() {
-    if err := resp.Body.Close(); err != nil {
-        log.Fatalf("Failed to close response body: %v", err)
-    }
+  if err := resp.Body.Close(); err != nil {
+    fs.Fatalf(nil, "Failed to close response body: %v", err)
+}
 }()
 
     var result struct {
@@ -732,9 +732,9 @@ func (f *Fs) getFolderID(ctx context.Context, dir string) (int, error) {
             return 0, fmt.Errorf("failed to list directory: %w", err)
         }
 defer func() {
-    if err := resp.Body.Close(); err != nil {
-        log.Fatalf("Failed to close response body: %v", err)
-    }
+ if err := resp.Body.Close(); err != nil {
+    fs.Fatalf(nil, "Failed to close response body: %v", err)
+}
 }()
 
         var result struct {
@@ -797,9 +797,9 @@ func (f *Fs) getDirectLink(ctx context.Context, fileCode string) (string, int64,
         return "", 0, fmt.Errorf("failed to fetch direct link: %w", err)
     }
  defer func() {
-    if err := resp.Body.Close(); err != nil {
-        log.Fatalf("Failed to close response body: %v", err)
-    }
+   if err := resp.Body.Close(); err != nil {
+    fs.Fatalf(nil, "Failed to close response body: %v", err)
+}
 }()
 
     var result struct {
@@ -924,9 +924,9 @@ func (f *Fs) getUploadServer(ctx context.Context) (string, string, error) {
         return "", "", fmt.Errorf("failed to get upload server: %w", err)
     }
     defer func() {
-    if err := resp.Body.Close(); err != nil {
-        log.Fatalf("Failed to close response body: %v", err)
-    }
+  if err := resp.Body.Close(); err != nil {
+    fs.Fatalf(nil, "Failed to close response body: %v", err)
+}
 }()
 
     var result struct {
@@ -1016,9 +1016,9 @@ func (f *Fs) moveFileToFolder(ctx context.Context, fileCode string, folderID int
         return fmt.Errorf("failed to send move request: %w", err)
     }
   defer func() {
-    if err := resp.Body.Close(); err != nil {
-        log.Fatalf("Failed to close response body: %v", err)
-    }
+  if err := resp.Body.Close(); err != nil {
+    fs.Fatalf(nil, "Failed to close response body: %v", err)
+}
 }()
 
     var result struct {
@@ -1057,9 +1057,9 @@ func (f *Fs) getFileHash(ctx context.Context, fileCode string) (string, error) {
         return "", fserrors.FsError(err)
     }
    defer func() {
-    if err := resp.Body.Close(); err != nil {
-        log.Fatalf("Failed to close response body: %v", err)
-    }
+ if err := resp.Body.Close(); err != nil {
+    fs.Fatalf(nil, "Failed to close response body: %v", err)
+}
 }()
 
     if resp.StatusCode != http.StatusOK {
@@ -1177,7 +1177,8 @@ func (f *Fs) moveSingleFile(ctx context.Context, src fs.Object, remote string) (
     return obj, nil
 }
 
-// Move the objects and directories
+// MoveTo moves the file or folder to the specified location.
+// It implements the fs.Fs interface and performs the move operation.
 func (f *Fs) MoveTo(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
     fs.Debugf(f, "MoveTo: Starting move for %q to %q", src.Remote(), remote)
 
@@ -1245,7 +1246,8 @@ func (f *Fs) uploadFileWithFolder(ctx context.Context, uploadURL, sessionID, fil
 
 
 
-// Move the objects from remote directory to local directories.
+// MoveToLocal moves the file or folder to the local file system.
+// It implements the fs.Fs interface and performs the move operation locally.
 func (f *Fs) MoveToLocal(ctx context.Context, remote string, localPath string) error {
     fs.Debugf(f, "MoveToLocal: starting move from FileLu %q to local %q", remote, localPath)
 
@@ -1343,9 +1345,9 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
         return fserrors.NoRetryError(fmt.Errorf("failed to check directory contents: %w", err))
     }
    defer func() {
-    if err := resp.Body.Close(); err != nil {
-        log.Fatalf("Failed to close response body: %v", err)
-    }
+  if err := resp.Body.Close(); err != nil {
+    fs.Fatalf(nil, "Failed to close response body: %v", err)
+}
 }()
 
     var listResult api.FolderListResponse
@@ -1377,8 +1379,8 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
     }
 defer func() {
     if err := resp.Body.Close(); err != nil {
-        log.Fatalf("Failed to close response body: %v", err)
-    }
+    fs.Fatalf(nil, "Failed to close response body: %v", err)
+}
 }()
 
     // Read response body
@@ -1481,9 +1483,9 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 
     if resp.StatusCode != http.StatusOK {
 defer func() {
-    if err := resp.Body.Close(); err != nil {
-        log.Fatalf("Failed to close response body: %v", err)
-    }
+   if err := resp.Body.Close(); err != nil {
+    fs.Fatalf(nil, "Failed to close response body: %v", err)
+}
 }()
 
         return nil, fmt.Errorf("failed to download file: HTTP %d", resp.StatusCode)
@@ -1523,9 +1525,9 @@ func (f *Fs) deleteFileByCode(ctx context.Context, fileCode string) error {
         return fmt.Errorf("failed to send delete request: %w", err)
     }
 defer func() {
-    if err := resp.Body.Close(); err != nil {
-        log.Fatalf("Failed to close response body: %v", err)
-    }
+ if err := resp.Body.Close(); err != nil {
+    fs.Fatalf(nil, "Failed to close response body: %v", err)
+}
 }()
 
     var result struct {
@@ -1642,9 +1644,9 @@ func (o *Object) readMetaData(ctx context.Context) error {
 		return err
 	}
 defer func() {
-    if err := resp.Body.Close(); err != nil {
-        log.Fatalf("Failed to close response body: %v", err)
-    }
+   if err := resp.Body.Close(); err != nil {
+    fs.Fatalf(nil, "Failed to close response body: %v", err)
+}
 }()
 
 	if resp.StatusCode != http.StatusOK {
@@ -1694,9 +1696,9 @@ func (o *Object) Hash(ctx context.Context, t hash.Type) (string, error) {
         return "", fmt.Errorf("hash request failed: %w", err)
     }
 defer func() {
-    if err := resp.Body.Close(); err != nil {
-        log.Fatalf("Failed to close response body: %v", err)
-    }
+  if err := resp.Body.Close(); err != nil {
+    fs.Fatalf(nil, "Failed to close response body: %v", err)
+}
 }()
 
     var result struct {
