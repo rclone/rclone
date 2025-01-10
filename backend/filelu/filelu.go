@@ -868,7 +868,7 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
     }
   defer func() {
     if err := os.Remove("file_path"); err != nil {
-        fs.Logf("Failed to remove file: %v", err)
+       fs.Logf(nil, "Failed to remove file: %v", err.Error())
     }
 }()
 
@@ -943,7 +943,7 @@ func createTempFileFromReader(in io.Reader) (*os.File, error) {
 	if err != nil {
 		err := tempFile.Close()
 if err != nil {
-    fs.Logf("Failed to close temporary file: %v", err)
+    fs.Logf(nil, "Failed to close file: %v", err.Error())
 }
 
 	}
@@ -952,7 +952,7 @@ if err != nil {
 	_, err = tempFile.Seek(0, io.SeekStart)
 	err = tempFile.Close()
 if err != nil {
-   fs.Logf("Failed to close temporary file: %v", err)
+   fs.Logf(nil, "Failed to close temporary file: %v", err.Error())
 }
 
 
@@ -1671,7 +1671,7 @@ func (f *Fs) FetchRemoteFileHashes(ctx context.Context, folderID int) (map[strin
     }
     defer func() {
     if err := resp.Body.Close(); err != nil {
-        fs.Logf("Failed to close response body: %v", err)
+        fs.Logf(nil, "Failed to close response body: %v", err.Error())
     }
 }()
 
@@ -1714,7 +1714,7 @@ func ComputeMD5(filePath string) (string, error) {
     }
     defer func() {
     if err := file.Close(); err != nil {
-        fs.Logf("Failed to close file: %v", err)
+        fs.Logf(nil, "Failed to close file: %v", err.Error())
     }
 }()
 
