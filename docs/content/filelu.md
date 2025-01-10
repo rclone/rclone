@@ -1,4 +1,3 @@
-
 ---
 title: "FileLu"
 description: "Rclone docs for FileLu"
@@ -7,7 +6,7 @@ versionIntroduced: "v1.0"
 
 # {{< icon "fa fa-folder" >}} FileLu
 
-[FileLu](https://filelu.com/) is a cloud storage and file backup service offering features such as secure file uploads, downloads, flexible storage space, and sharing capabilities. FileLu supports high storage limits and allows seamless integration with RCLONE for managing files in the cloud. FileLu offers cross-platform file backup services, allowing you to upload and back up files from any internet-connected device. Upload options include:
+[FileLu](https://filelu.com/) is a reliable cloud storage provider offering features like secure file uploads, downloads, flexible storage options, and sharing capabilities. With support for high storage limits and seamless integration with RCLONE, FileLu makes managing files in the cloud easy. Its cross-platform file backup services let you upload and back up files from any internet-connected device. Available upload options include:
 • File Upload
 • Folder Upload
 • URL Remote Upload
@@ -15,13 +14,14 @@ versionIntroduced: "v1.0"
 • WebDAV
 • FileDrop
 • Mobile App
-• Create Note
+• Create text file
 • FileLuSync
 • Upload via Email
 • Browser Extensions
 • Web App
 • Upload via API
 • Terminal CLI
+
 
 
 Paths are specified as `remote:path`.
@@ -127,23 +127,22 @@ FileLu supports modification times but does not currently support hashes.
 | NUL       | 0x00  | ␀           |
 | /         | 0x2F  | ／          |
 
-Invalid UTF-8 bytes will also be [replaced](/overview/#invalid-utf8), as they cannot be used in JSON strings.
 FileLu only supports filenames and folder names up to 255 characters in length, where a
-character is a unicode character.
+character is a Unicode character.
 
 ### Duplicated Files
 
-FileLu can have two files with exactly the same name and path (unlike a normal file system).
+FileLu allows two files with the same name and path (unlike a traditional file system). We also offer a feature to automatically remove duplicate files, which can be enabled in the Folder settings of your FileLu account.
 
-Duplicated files cause problems with syncing, and you will see messages in the log about duplicates.
+Duplicate files may cause issues during syncing, and you might see log messages about duplicates when syncing via Rclone.
 
 Use `rclone dedupe` to fix duplicated files.
 
-### Failure to Log In
+### Failure to Log / Invalid Credentials or KEY
 
-#### Invalid Credentials
+Ensure that you have the correct Rclone key, which can be found in [My Account](https://filelu.com/account/). Every time you toggle Rclone OFF and ON in My Account, a new RC_xxxxxxxxxxxxxxxxxxxx key is generated. Be sure to update your Rclone configuration with the new key.
 
-If you are connecting to your FileLu remote for the first time and receive an error such as:
+If you are connecting to your FileLu remote for the first time and encounter an error such as:
 
 ```
 Failed to create file system for "my-filelu-remote:": couldn't login: Invalid credentials
