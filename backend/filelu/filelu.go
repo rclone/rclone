@@ -951,7 +951,7 @@ if err != nil {
 
 	// Seek back to the start of the file for further reading
 	_, err = tempFile.Seek(0, io.SeekStart)
-	err := tempFile.Close()
+	err = tempFile.Close()
 if err != nil {
     log.Printf("Failed to close temporary file: %v", err)
 }
@@ -1627,7 +1627,7 @@ type FileEntry struct {
 }
 
 // ApiResponse represents the structure of the JSON response from FileLu
-type APIResponse struct {
+type apiResponse struct {
 	Status int `json:"status"`
 	Result struct {
 		Files []FileEntry `json:"files"`
@@ -1757,7 +1757,7 @@ func (f *Fs) uploadFile(ctx context.Context, uploadURL, sessionID, fileName stri
     if err != nil {
         return "", fmt.Errorf("failed to create temp file: %w", err)
     }
-    err := os.Remove("file_path")
+    err = os.Remove("file_path")
 if err != nil {
     // Handle the error appropriately
     log.Printf("Failed to remove file: %v", err)
