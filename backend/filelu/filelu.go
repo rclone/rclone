@@ -1768,7 +1768,7 @@ func (f *Fs) uploadFile(ctx context.Context, uploadURL, sessionID, fileName stri
     err = os.Remove("file_path")
 if err != nil {
     // Handle the error appropriately
-    log.Printf("Failed to remove file: %v", err)
+    fs.Logf(nil, "Failed to remove file: %v", err.Error())
 }
 
 
