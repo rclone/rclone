@@ -24,9 +24,8 @@ versionIntroduced: "v1.0"
 
 
 
-Paths are specified as `remote:path`.
+Paths are specified as `remote:FolderID`.
 
-Paths may be as deep as required, e.g., `remote:directory/subdirectory`.
 
 ## Configuration
 
