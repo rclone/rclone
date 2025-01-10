@@ -9,8 +9,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	 "log"
-	"io"
+	 "io"
 	"mime/multipart"
 	"net/http"
 	"net/url"
@@ -858,7 +857,7 @@ func (f *Fs) getUploadServer(ctx context.Context) (string, string, error) {
 	fs.Debugf(f, "Got upload server URL=%s and session ID=%s", result.Result, result.SessID)
 	return result.Result, result.SessID, nil
 }
-//To upload file using Put command
+// Put uploads a file to the storage backend.
 func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
     fs.Debugf(f, "Put: Starting upload for %q", src.Remote())
 
@@ -869,7 +868,7 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
     }
   defer func() {
     if err := os.Remove("file_path"); err != nil {
-        log.Printf("Failed to remove file: %v", err)
+        fs.Logf("Failed to remove file: %v", err)
     }
 }()
 
@@ -944,7 +943,7 @@ func createTempFileFromReader(in io.Reader) (*os.File, error) {
 	if err != nil {
 		err := tempFile.Close()
 if err != nil {
-    log.Printf("Failed to close temporary file: %v", err)
+    fs.Logf("Failed to close temporary file: %v", err)
 }
 
 	}
@@ -953,7 +952,7 @@ if err != nil {
 	_, err = tempFile.Seek(0, io.SeekStart)
 	err = tempFile.Close()
 if err != nil {
-    log.Printf("Failed to close temporary file: %v", err)
+   fs.Logf("Failed to close temporary file: %v", err)
 }
 
 
@@ -1460,6 +1459,7 @@ func extractFileName(urlStr string) string {
 }
 
 // deleteFileByCode deletes a file from FileLu by its file code
+//lint:ignore unused
 func (f *Fs) deleteFileByCode(ctx context.Context, fileCode string) error {
 	fs.Debugf(f, "deleteFileByCode: Attempting to delete file with code=%q", fileCode)
 	defer fs.Debugf(f, "deleteFileByCode: Finished deleting file with code=%q", fileCode)
@@ -1627,12 +1627,14 @@ type FileEntry struct {
 }
 
 // ApiResponse represents the structure of the JSON response from FileLu
+//lint:ignore unused
 type apiResponse struct {
 	Status int `json:"status"`
 	Result struct {
 		Files []FileEntry `json:"files"`
 	} `json:"result"`
 }
+// ApiResponse represents the response structure from the API.
 type ApiResponse struct {
 	Status int `json:"status"`
 	Result struct {
@@ -1647,7 +1649,7 @@ type DuplicateFileError struct {
 func (e *DuplicateFileError) Error() string {
 	return fmt.Sprintf("file hash %s already exists", e.Hash)
 }
-// Error when duplicate detected
+// IsDuplicateFileError checks if the given error indicates a duplicate file.
 func IsDuplicateFileError(err error) bool {
 	_, ok := err.(*DuplicateFileError)
 	return ok
@@ -1669,7 +1671,7 @@ func (f *Fs) FetchRemoteFileHashes(ctx context.Context, folderID int) (map[strin
     }
     defer func() {
     if err := resp.Body.Close(); err != nil {
-        log.Printf("Failed to close response body: %v", err)
+        fs.Logf("Failed to close response body: %v", err)
     }
 }()
 
@@ -1712,7 +1714,7 @@ func ComputeMD5(filePath string) (string, error) {
     }
     defer func() {
     if err := file.Close(); err != nil {
-        log.Printf("Failed to close file: %v", err)
+        fs.Logf("Failed to close file: %v", err)
     }
 }()
 
