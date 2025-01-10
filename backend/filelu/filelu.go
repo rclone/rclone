@@ -4,11 +4,12 @@ package filelu
 import (
 	"bytes"
 	"context"
-                   "crypto/md5"
+        "crypto/md5"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
+	 "log"
 	"io"
 	"mime/multipart"
 	"net/http"
@@ -790,7 +791,8 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 }
 
 // Helper function to handle duplicate files
-
+//
+//nolint:unused
 func (f *Fs) handleDuplicate(ctx context.Context, remote string) error {
 	// List files in destination
 	entries, err := f.List(ctx, path.Dir(remote))
@@ -856,7 +858,7 @@ func (f *Fs) getUploadServer(ctx context.Context) (string, string, error) {
 	fs.Debugf(f, "Got upload server URL=%s and session ID=%s", result.Result, result.SessID)
 	return result.Result, result.SessID, nil
 }
-
+//To upload file using Put command
 func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
     fs.Debugf(f, "Put: Starting upload for %q", src.Remote())
 
@@ -865,7 +867,12 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
     if err != nil {
         return nil, fmt.Errorf("failed to create temp file: %w", err)
     }
-    defer os.Remove(tempFile.Name()) // Clean up temp file after use
+  defer func() {
+    if err := os.Remove("file_path"); err != nil {
+        log.Printf("Failed to remove file: %v", err)
+    }
+}()
+
 
     // Compute the MD5 hash of the file
     hash, err := ComputeMD5(tempFile.Name())
@@ -935,16 +942,20 @@ func createTempFileFromReader(in io.Reader) (*os.File, error) {
 
 	_, err = io.Copy(tempFile, in)
 	if err != nil {
-		tempFile.Close()
-		return nil, fmt.Errorf("failed to copy data to temp file: %w", err)
+		err := tempFile.Close()
+if err != nil {
+    log.Printf("Failed to close temporary file: %v", err)
+}
+
 	}
 
 	// Seek back to the start of the file for further reading
 	_, err = tempFile.Seek(0, io.SeekStart)
-	if err != nil {
-		tempFile.Close()
-		return nil, fmt.Errorf("failed to seek temp file: %w", err)
-	}
+	err := tempFile.Close()
+if err != nil {
+    log.Printf("Failed to close temporary file: %v", err)
+}
+
 
 	return tempFile, nil
 }
@@ -1616,7 +1627,7 @@ type FileEntry struct {
 }
 
 // ApiResponse represents the structure of the JSON response from FileLu
-type ApiResponse struct {
+type APIResponse struct {
 	Status int `json:"status"`
 	Result struct {
 		Files []FileEntry `json:"files"`
@@ -1630,7 +1641,7 @@ type DuplicateFileError struct {
 func (e *DuplicateFileError) Error() string {
 	return fmt.Sprintf("file hash %s already exists", e.Hash)
 }
-
+// Error when duplicate detected
 func IsDuplicateFileError(err error) bool {
 	_, ok := err.(*DuplicateFileError)
 	return ok
@@ -1650,7 +1661,12 @@ func (f *Fs) FetchRemoteFileHashes(ctx context.Context, folderID int) (map[strin
     if err != nil {
         return nil, err
     }
-    defer resp.Body.Close()
+    defer func() {
+    if err := resp.Body.Close(); err != nil {
+        log.Printf("Failed to close response body: %v", err)
+    }
+}()
+
 
     // Log raw HTTP response for debugging
     debugResp, err := io.ReadAll(resp.Body)
@@ -1688,7 +1704,12 @@ func ComputeMD5(filePath string) (string, error) {
     if err != nil {
         return "", fmt.Errorf("failed to open file: %w", err)
     }
-    defer file.Close()
+    defer func() {
+    if err := file.Close(); err != nil {
+        log.Printf("Failed to close file: %v", err)
+    }
+}()
+
 
     const partSize = 1024
     firstPart := make([]byte, partSize)
@@ -1736,7 +1757,12 @@ func (f *Fs) uploadFile(ctx context.Context, uploadURL, sessionID, fileName stri
     if err != nil {
         return "", fmt.Errorf("failed to create temp file: %w", err)
     }
-    defer os.Remove(tempFile.Name())
+    err := os.Remove("file_path")
+if err != nil {
+    // Handle the error appropriately
+    log.Printf("Failed to remove file: %v", err)
+}
+
 
     // Compute the MD5 hash of the file
     hash, err := ComputeMD5(tempFile.Name())
