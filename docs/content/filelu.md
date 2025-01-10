@@ -46,7 +46,7 @@ name> filelu
 Type of storage to configure.
 Choose a number from below, or type in your own value
 [snip]
-xx / FileLu
+xx / FileLu Cloud Storage
    \ "filelu"
 [snip]
 Storage> filelu
