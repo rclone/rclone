@@ -131,11 +131,11 @@ character is a Unicode character.
 
 ### Duplicated Files
 
-FileLu allows two files with the same name and path (unlike a traditional file system). We also offer a feature to automatically remove duplicate files, which can be enabled in the Folder settings of your FileLu account.
+FileLu allows uploading duplicate files with the same name and path (unlike a traditional file system). We also offer a feature to automatically remove duplicate files, which can be enabled in the Folder settings of your FileLu account.
 
-Duplicate files may cause issues during syncing, and you might see log messages about duplicates when syncing via Rclone.
+When you upload a single file, duplicate files are allowed. However, when you sync an entire folder, duplicate files will not be uploaded. The Sync command will prevent syncing duplicate files, and you might see log messages about duplicates when syncing via Rclone.
 
-Use `rclone dedupe` to fix duplicated files.
+
 
 ### Failure to Log / Invalid Credentials or KEY
 
