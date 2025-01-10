@@ -1633,6 +1633,12 @@ type apiResponse struct {
 		Files []FileEntry `json:"files"`
 	} `json:"result"`
 }
+type ApiResponse struct {
+	Status int `json:"status"`
+	Result struct {
+		Files []FileEntry `json:"files"`
+	} `json:"result"`
+}
 // DuplicateFileError is a custom error type for duplicate files
 type DuplicateFileError struct {
 	Hash string
@@ -1679,7 +1685,7 @@ func (f *Fs) FetchRemoteFileHashes(ctx context.Context, folderID int) (map[strin
     resp.Body = io.NopCloser(bytes.NewBuffer(debugResp))
 
     // Decode JSON response
-    var apiResponse
+    var apiResponse ApiResponse
     err = json.NewDecoder(resp.Body).Decode(&apiResponse)
     if err != nil {
         return nil, fmt.Errorf("error decoding response: %w", err)
