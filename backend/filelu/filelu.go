@@ -1688,12 +1688,18 @@ func (f *Fs) FetchRemoteFileHashes(ctx context.Context, folderID int) (map[strin
     // Reset the reader for JSON decoding
     resp.Body = io.NopCloser(bytes.NewBuffer(debugResp))
 
-    // Decode JSON response
-    var APIResponse
-    err = json.NewDecoder(resp.Body).Decode(&APIResponse)
-    if err != nil {
-        return nil, fmt.Errorf("error decoding response: %w", err)
-    }
+ // Define the response type
+type APIResponse struct {
+    Success bool   `json:"success"`
+    Message string `json:"message"`
+}
+
+// Decode JSON response
+var response APIResponse
+err = json.NewDecoder(resp.Body).Decode(&response)
+if err != nil {
+    return nil, fmt.Errorf("error decoding response: %w", err)
+}
 
     if APIResponse.Status != 200 {
         return nil, fmt.Errorf("error: non-200 status %d", APIResponse.Status)
