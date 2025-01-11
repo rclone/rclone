@@ -86,6 +86,16 @@ build.
 Once it compiles locally, push it on a test branch and commit fixes
 until the tests pass.
 
+### Major versions
+
+The above procedure will not upgrade major versions, so v2 to v3.
+However this tool can show which major versions might need to be
+upgraded:
+
+    go run github.com/icholy/gomajor@latest list -major
+
+Expect API breakage when updating major versions.
+
 ## Tidy beta
 
 At some point after the release run
