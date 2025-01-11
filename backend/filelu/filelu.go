@@ -369,15 +369,6 @@ func (f *Fs) Hashes() hash.Set {
 	return hash.NewHashSet() // Properly creates an empty hash set
 }
 
-// isNumeric checks if a string contains only numeric characters
-//
-//nolint:unused
-// Keep this function definition in one location and remove the other.
-func isNumeric(s string) bool {
-	_, err := strconv.Atoi(s)
-	return err == nil
-}
-
 // Mkdir creates a new folder on FileLu
 func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 	fs.Debugf(f, "Mkdir: Starting directory creation for dir=%q, root=%q", dir, f.root)
