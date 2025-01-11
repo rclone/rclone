@@ -365,6 +365,11 @@ func (vfs *VFS) Shutdown() {
 	activeMu.Unlock()
 
 	vfs.shutdownCache()
+
+	if vfs.pollChan != nil {
+		close(vfs.pollChan)
+		vfs.pollChan = nil
+	}
 }
 
 // CleanUp deletes the contents of the on disk cache
