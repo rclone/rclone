@@ -111,6 +111,12 @@ func NewFs(ctx context.Context, name string, root string, m configmap.Mapper) (f
 	return f, nil
 }
 
+// isNumeric checks if a string contains only numeric characters
+func isNumeric(s string) bool {
+	_, err := strconv.Atoi(s)
+	return err == nil
+}
+
 // Simplified parseFolderID function to handle direct folder ID
 func parseFolderID(root string) (folderID, parsedRoot string) {
 	// Check if the root is purely numeric, indicating a direct folder ID
