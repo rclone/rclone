@@ -942,13 +942,19 @@ func createTempFileFromReader(in io.Reader) (*os.File, error) {
     // Copy the content from the reader into the temporary file
     _, err = io.Copy(tempFile, in)
     if err != nil {
-        tempFile.Close() // Make sure to close the file even if an error occurs during copying
+        closeErr := tempFile.Close() // Ensure the file is closed if an error occurs
+        if closeErr != nil {
+            fs.Logf(nil, "Failed to close temporary file after write error: %v", closeErr)
+        }
         return nil, fmt.Errorf("failed to write to temp file: %w", err)
     }
 
     // Seek back to the start of the file for further reading
     if _, err := tempFile.Seek(0, io.SeekStart); err != nil {
-        tempFile.Close() // Close the file before returning the error
+        closeErr := tempFile.Close() // Ensure the file is closed if seeking fails
+        if closeErr != nil {
+            fs.Logf(nil, "Failed to close temporary file after seek error: %v", closeErr)
+        }
         return nil, fmt.Errorf("failed to seek file: %w", err)
     }
 
@@ -1462,51 +1468,6 @@ func extractFileName(urlStr string) string {
 	return path.Base(u.Path)
 }
 
-// deleteFileByCode deletes a object from FileLu by its file code
-//
-//lint:ignore unused
-/*func (f *Fs) deleteFileByCode(ctx context.Context, fileCode string) error {
-	fs.Debugf(f, "deleteFileByCode: Attempting to delete file with code=%q", fileCode)
-	defer fs.Debugf(f, "deleteFileByCode: Finished deleting file with code=%q", fileCode)
-
-	apiURL := fmt.Sprintf("%s/file/remove?file_code=%s&remove=1&key=%s",
-		f.endpoint,
-		url.QueryEscape(fileCode),
-		url.QueryEscape(f.opt.RcloneKey),
-	)
-
-	req, err := http.NewRequestWithContext(ctx, "GET", apiURL, nil)
-	if err != nil {
-		return fmt.Errorf("failed to create delete request: %w", err)
-	}
-
-	resp, err := f.client.Do(req)
-	if err != nil {
-		return fmt.Errorf("failed to send delete request: %w", err)
-	}
-	defer func() {
-		if err := resp.Body.Close(); err != nil {
-			fs.Fatalf(nil, "Failed to close response body: %v", err)
-		}
-	}()
-
-	var result struct {
-		Status int    `json:"status"`
-		Msg    string `json:"msg"`
-	}
-
-	err = json.NewDecoder(resp.Body).Decode(&result)
-	if err != nil {
-		return fmt.Errorf("error decoding delete response: %w", err)
-	}
-
-	if result.Status != 200 {
-		return fmt.Errorf("error while deleting file: %s", result.Msg)
-	}
-
-	return nil
-}
-*/
 // Update updates the object with new data
 func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {
 	fs.Debugf(o.fs, "Update: Starting update for %q", o.remote)
