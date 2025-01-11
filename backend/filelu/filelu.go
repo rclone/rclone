@@ -1690,7 +1690,7 @@ type APIResponse struct {
 
 // Decode JSON response
 var apiResponse APIResponse
-err := json.NewDecoder(resp.Body).Decode(&apiResponse)
+err = json.NewDecoder(resp.Body).Decode(&apiResponse)
 if err != nil {
     return nil, fmt.Errorf("error decoding response: %w", err)
 }
