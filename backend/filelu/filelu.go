@@ -4,20 +4,20 @@ package filelu
 import (
 	"bytes"
 	"context"
-        "crypto/md5"
+	"crypto/md5"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
-	 "io"
+	"io"
 	"mime/multipart"
 	"net/http"
 	"net/url"
+	"os"
 	"path"
 	"strconv"
 	"strings"
 	"time"
-                   "os"
 
 	"github.com/rclone/rclone/backend/filelu/api"
 	"github.com/rclone/rclone/fs"
@@ -26,7 +26,7 @@ import (
 	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/fs/hash"
-	)
+)
 
 // Register the backend with Rclone
 func init() {
@@ -1188,7 +1188,7 @@ func (f *Fs) uploadFileWithFolder(ctx context.Context, uploadURL, sessionID, fil
 	// Step 1: Upload the file
 	fileCode, err := f.uploadFile(ctx, uploadURL, sessionID, fileName, fileContent)
 	if err != nil {
-		//return "", fmt.Errorf("failed to upload file: %w", err)
+		return "", fmt.Errorf("failed to upload file: %w", err)
 	}
 
 	// Step 2: Move the file to the specified folder
@@ -1459,6 +1459,7 @@ func extractFileName(urlStr string) string {
 }
 
 // deleteFileByCode deletes a file from FileLu by its file code
+//
 //lint:ignore unused
 func (f *Fs) deleteFileByCode(ctx context.Context, fileCode string) error {
 	fs.Debugf(f, "deleteFileByCode: Attempting to delete file with code=%q", fileCode)
@@ -1626,16 +1627,17 @@ type FileEntry struct {
 	Hash string `json:"hash"`
 }
 
-// ApiResponse represents the structure of the JSON response from FileLu
+// APIResponse represents the structure of the JSON response from FileLu
+//
 //lint:ignore unused
-type apiResponse struct {
+type APIResponse struct {
 	Status int `json:"status"`
 	Result struct {
 		Files []FileEntry `json:"files"`
 	} `json:"result"`
 }
-// ApiResponse represents the response structure from the API.
-type ApiResponse struct {
+// APIResponse represents the response structure from the API.
+type APIResponse struct {
 	Status int `json:"status"`
 	Result struct {
 		Files []FileEntry `json:"files"`
@@ -1687,18 +1689,18 @@ func (f *Fs) FetchRemoteFileHashes(ctx context.Context, folderID int) (map[strin
     resp.Body = io.NopCloser(bytes.NewBuffer(debugResp))
 
     // Decode JSON response
-    var apiResponse ApiResponse
-    err = json.NewDecoder(resp.Body).Decode(&apiResponse)
+    var APIResponse
+    err = json.NewDecoder(resp.Body).Decode(&APIResponse)
     if err != nil {
         return nil, fmt.Errorf("error decoding response: %w", err)
     }
 
-    if apiResponse.Status != 200 {
-        return nil, fmt.Errorf("error: non-200 status %d", apiResponse.Status)
+    if APIResponse.Status != 200 {
+        return nil, fmt.Errorf("error: non-200 status %d", APIResponse.Status)
     }
 
     hashes := make(map[string]struct{})
-    for _, file := range apiResponse.Result.Files {
+    for _, file := range APIResponse.Result.Files {
         fs.Debugf(f, "Fetched remote hash: %s", file.Hash) // Log each hash fetched
         hashes[file.Hash] = struct{}{}
     }
@@ -1771,11 +1773,10 @@ if err != nil {
     fs.Logf(nil, "Failed to remove file: %v", err.Error())
 }
 
-
     // Compute the MD5 hash of the file
     hash, err := ComputeMD5(tempFile.Name())
     if err != nil {
-        //return "", fmt.Errorf("failed to compute file hash: %w", err)
+        return "", fmt.Errorf("failed to compute file hash: %w", err)
     }
 
     // Log the computed hash for debugging
