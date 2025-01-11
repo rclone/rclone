@@ -726,7 +726,7 @@ func (s *syncCopyMove) markParentNotEmpty(entry fs.DirEntry) {
 				parentDir = ""
 			}
 			delete(s.srcEmptyDirs, parentDir)
-			if parentDir == "" {
+			if parentDir == "" || parentDir == "/" {
 				break
 			}
 			parentDir = path.Dir(parentDir)
