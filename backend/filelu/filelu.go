@@ -933,33 +933,35 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 
 // createTempFileFromReader writes the content of the 'in' reader into a temporary file
 func createTempFileFromReader(in io.Reader) (*os.File, error) {
-	tempFile, err := os.CreateTemp("", "upload-*.tmp")
-	if err != nil {
-		return nil, fmt.Errorf("failed to create temp file: %w", err)
-	}
+    // Create a temporary file
+    tempFile, err := os.CreateTemp("", "upload-*.tmp")
+    if err != nil {
+        return nil, fmt.Errorf("failed to create temp file: %w", err)
+    }
 
-	_, err = io.Copy(tempFile, in)
-	if err != nil {
-		err := tempFile.Close()
-if err != nil {
-    fs.Logf(nil, "Failed to close file: %v", err.Error())
+    // Copy the content from the reader into the temporary file
+    _, err = io.Copy(tempFile, in)
+    if err != nil {
+        tempFile.Close() // Make sure to close the file even if an error occurs during copying
+        return nil, fmt.Errorf("failed to write to temp file: %w", err)
+    }
+
+    // Seek back to the start of the file for further reading
+    if _, err := tempFile.Seek(0, io.SeekStart); err != nil {
+        tempFile.Close() // Close the file before returning the error
+        return nil, fmt.Errorf("failed to seek file: %w", err)
+    }
+
+    // Ensure the file is closed when the function exits, handle errors if any
+    if err := tempFile.Close(); err != nil {
+        fs.Logf(nil, "Failed to close temporary file: %v", err)
+        return nil, fmt.Errorf("failed to close temp file: %w", err)
+    }
+
+    // Return the temporary file
+    return tempFile, nil
 }
 
-	}
-
-	// Seek back to the start of the file for further reading
-if _, err := tempFile.Seek(0, io.SeekStart); err != nil {
-    fs.Logf(nil, "Failed to seek file: %v", err.Error())
-    return err
-}
-
-if err := tempFile.Close(); err != nil {
-    fs.Logf(nil, "Failed to close temporary file: %v", err.Error())
-    return err
-}
-
-	return tempFile, nil
-}
 func (f *Fs) moveFileToFolder(ctx context.Context, fileCode string, folderID int) error {
 	if folderID == 0 {
 		return fmt.Errorf("invalid folder ID")
