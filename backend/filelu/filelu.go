@@ -872,7 +872,7 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
     }
 }()
 
- /  // Compute the MD5 hash of the file
+   // Compute the MD5 hash of the file
     hash, err := ComputeMD5(tempFile.Name())
    if err != nil {
        return nil, fmt.Errorf("failed to compute file hash: %w", err)
