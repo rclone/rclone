@@ -2,30 +2,30 @@
 package filelu
 
 import (
-	"bytes"
-	"context"
-	"crypto/md5"
-	"encoding/base64"
-	"encoding/json"
-	"errors"
-	"fmt"
-	"io"
-	"mime/multipart"
-	"net/http"
-	"net/url"
-	"os"
-	"path"
-	"strconv"
-	"strings"
-	"time"
+    "bytes"
+    "context"
+    "crypto/md5"
+    "encoding/base64"
+    "encoding/json"
+    "errors"
+    "fmt"
+    "io"
+    "mime/multipart"
+    "net/http"
+    "net/url"
+    "os"
+    "path"
+    "strconv"
+    "strings"
+    "time"
 
-	"github.com/rclone/rclone/backend/filelu/api"
-	"github.com/rclone/rclone/fs"
-	"github.com/rclone/rclone/fs/config/configmap"
-	"github.com/rclone/rclone/fs/config/configstruct"
-	"github.com/rclone/rclone/fs/fserrors"
-	"github.com/rclone/rclone/fs/fshttp"
-	"github.com/rclone/rclone/fs/hash"
+    "github.com/rclone/rclone/backend/filelu/api"
+    "github.com/rclone/rclone/fs"
+    "github.com/rclone/rclone/fs/config/configmap"
+    "github.com/rclone/rclone/fs/config/configstruct"
+    "github.com/rclone/rclone/fs/fserrors"
+    "github.com/rclone/rclone/fs/fshttp"
+    "github.com/rclone/rclone/fs/hash"
 )
 
 // Register the backend with Rclone
@@ -954,7 +954,6 @@ if err != nil {
    fs.Logf(nil, "Failed to close temporary file: %v", err.Error())
 }
 
-
 	return tempFile, nil
 }
 func (f *Fs) moveFileToFolder(ctx context.Context, fileCode string, folderID int) error {
@@ -1457,7 +1456,7 @@ func extractFileName(urlStr string) string {
 	return path.Base(u.Path)
 }
 
-// deleteFileByCode deletes a file from FileLu by its file code
+// deleteFileByCode deletes a object from FileLu by its file code
 //
 //lint:ignore unused
 /*func (f *Fs) deleteFileByCode(ctx context.Context, fileCode string) error {
@@ -1502,7 +1501,7 @@ func extractFileName(urlStr string) string {
 	return nil
 }
 */
-// Update replaces the content of the object with new data
+// Update updates the object with new data
 func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {
 	fs.Debugf(o.fs, "Update: Starting update for %q", o.remote)
 	defer fs.Debugf(o.fs, "Update: Finished update for %q", o.remote)
@@ -1626,7 +1625,7 @@ type FileEntry struct {
 	Hash string `json:"hash"`
 }
 
-// ApiResponse represents the structure of the JSON response from FileLu
+// APIResponse represents the response from the API.
 type APIResponse struct {
 	Status int `json:"status"`
 	Result struct {
