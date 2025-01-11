@@ -2,30 +2,30 @@
 package filelu
 
 import (
-    "bytes"
-    "context"
-    "crypto/md5"
-    "encoding/base64"
-    "encoding/json"
-    "errors"
-    "fmt"
-    "io"
-    "mime/multipart"
-    "net/http"
-    "net/url"
-    "os"
-    "path"
-    "strconv"
-    "strings"
-    "time"
+	"bytes"
+	"context"
+	"crypto/md5"
+	"encoding/base64"
+	"encoding/json"
+	"errors"
+	"fmt"
+	"io"
+	"mime/multipart"
+	"net/http"
+	"net/url"
+	"os"
+	"path"
+	"strconv"
+	"strings"
+	"time"
 
-    "github.com/rclone/rclone/backend/filelu/api"
-    "github.com/rclone/rclone/fs"
-    "github.com/rclone/rclone/fs/config/configmap"
-    "github.com/rclone/rclone/fs/config/configstruct"
-    "github.com/rclone/rclone/fs/fserrors"
-    "github.com/rclone/rclone/fs/fshttp"
-    "github.com/rclone/rclone/fs/hash"
+	"github.com/rclone/rclone/backend/filelu/api"
+	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/config/configmap"
+	"github.com/rclone/rclone/fs/config/configstruct"
+	"github.com/rclone/rclone/fs/fserrors"
+	"github.com/rclone/rclone/fs/fshttp"
+	"github.com/rclone/rclone/fs/hash"
 )
 
 // Register the backend with Rclone
@@ -54,7 +54,7 @@ type Options struct {
 type Fs struct {
 	name     string       // name of the remote
 	root     string       // root folder path
-                 folderID string       // folder ID for hashing
+	folderID string       // folder ID for hashing
 	opt      Options      // backend options
 	endpoint string       // FileLu endpoint
 	client   *http.Client // HTTP client
@@ -67,64 +67,63 @@ type Object struct {
 	size    int64
 	modTime time.Time
 }
+
 // NewFs creates a new Fs object for FileLu
 func NewFs(ctx context.Context, name string, root string, m configmap.Mapper) (fs.Fs, error) {
-    fs.Debugf(nil, "NewFs: Starting with root = %q, name = %q", root, name)
+	fs.Debugf(nil, "NewFs: Starting with root = %q, name = %q", root, name)
 
-    opt := new(Options)
-    err := configstruct.Set(m, opt)
-    if err != nil {
-        return nil, fmt.Errorf("failed to parse config: %w", err)
-    }
+	opt := new(Options)
+	err := configstruct.Set(m, opt)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse config: %w", err)
+	}
 
-    if opt.RcloneKey == "" {
-        return nil, fmt.Errorf("FileLu Rclone Key is required")
-    }
+	if opt.RcloneKey == "" {
+		return nil, fmt.Errorf("FileLu Rclone Key is required")
+	}
 
-    client := fshttp.NewClient(ctx)
+	client := fshttp.NewClient(ctx)
 
-    // Ensure the root is properly formatted
-    trimmedRoot := strings.Trim(root, "/")
-    folderID, parsedRoot := parseFolderID(trimmedRoot)
+	// Ensure the root is properly formatted
+	trimmedRoot := strings.Trim(root, "/")
+	folderID, parsedRoot := parseFolderID(trimmedRoot)
 
-    if folderID == "" {
-        folderID = "0"
-        fs.Debugf(nil, "NewFs: No folder ID found in path, defaulting to 0")
-    } else {
-        fs.Debugf(nil, "NewFs: Found folder ID %q", folderID)
-    }
+	if folderID == "" {
+		folderID = "0"
+		fs.Debugf(nil, "NewFs: No folder ID found in path, defaulting to 0")
+	} else {
+		fs.Debugf(nil, "NewFs: Found folder ID %q", folderID)
+	}
 
-    // Additional debugging information
-    fs.Debugf(nil, "NewFs: Parsed Root %q", parsedRoot)
+	// Additional debugging information
+	fs.Debugf(nil, "NewFs: Parsed Root %q", parsedRoot)
 
-    f := &Fs{
-        name:     name,
-        root:     parsedRoot,
-        folderID: folderID,
-        opt:      *opt,
-        endpoint: "https://filelu.com/rclone",
-        client:   client,
-    }
+	f := &Fs{
+		name:     name,
+		root:     parsedRoot,
+		folderID: folderID,
+		opt:      *opt,
+		endpoint: "https://filelu.com/rclone",
+		client:   client,
+	}
 
-    fs.Debugf(nil, "NewFs: Created filesystem with folder ID %q", f.folderID)
-    return f, nil
+	fs.Debugf(nil, "NewFs: Created filesystem with folder ID %q", f.folderID)
+	return f, nil
 }
-
 
 // Simplified parseFolderID function to handle direct folder ID
 func parseFolderID(root string) (folderID, parsedRoot string) {
-    // Check if the root is purely numeric, indicating a direct folder ID
-    if isNumeric(root) {
-        return root, "" // This assumes the root is just the folder ID
-    }
-  
-    parts := strings.Split(root, ":")
-    if len(parts) == 2 {
-        return strings.TrimSpace(parts[1]), strings.TrimSpace(parts[0])
-    }
-    return "", root
-}
+	// Check if the root is purely numeric, indicating a direct folder ID
+	if isNumeric(root) {
+		return root, "" // This assumes the root is just the folder ID
+	}
 
+	parts := strings.Split(root, ":")
+	if len(parts) == 2 {
+		return strings.TrimSpace(parts[1]), strings.TrimSpace(parts[0])
+	}
+	return "", root
+}
 
 // isFileCode checks if a string looks like a file code
 func isFileCode(s string) bool {
@@ -153,18 +152,18 @@ func (f *Fs) resolveFolderPath(ctx context.Context, path string) (int, error) {
 			continue
 		}
 
-		    // Extract folder ID from format "(id) name"
-folderID := 0
-if strings.HasPrefix(part, "(") {
-    end := strings.Index(part, ")")
-    if end != -1 {
-        idStr := part[1:end]
-        if id, err := strconv.Atoi(idStr); err == nil {
-            folderID = id
-            part = strings.TrimSpace(part[end+1:])
-        }
-    }
-}
+		// Extract folder ID from format "(id) name"
+		folderID := 0
+		if strings.HasPrefix(part, "(") {
+			end := strings.Index(part, ")")
+			if end != -1 {
+				idStr := part[1:end]
+				if id, err := strconv.Atoi(idStr); err == nil {
+					folderID = id
+					part = strings.TrimSpace(part[end+1:])
+				}
+			}
+		}
 
 		if folderID != 0 {
 			currentID = folderID
@@ -375,8 +374,8 @@ func (f *Fs) Hashes() hash.Set {
 //nolint:unused
 // Keep this function definition in one location and remove the other.
 func isNumeric(s string) bool {
-    _, err := strconv.Atoi(s)
-    return err == nil
+	_, err := strconv.Atoi(s)
+	return err == nil
 }
 
 // Mkdir creates a new folder on FileLu
@@ -857,115 +856,116 @@ func (f *Fs) getUploadServer(ctx context.Context) (string, string, error) {
 	fs.Debugf(f, "Got upload server URL=%s and session ID=%s", result.Result, result.SessID)
 	return result.Result, result.SessID, nil
 }
+
 // Put uploads a file to the storage backend.
 func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
-    fs.Debugf(f, "Put: Starting upload for %q", src.Remote())
+	fs.Debugf(f, "Put: Starting upload for %q", src.Remote())
 
-    // Convert the input reader to a temp file to compute the MD5 hash.
-    tempFile, err := createTempFileFromReader(in)
-    if err != nil {
-        return nil, fmt.Errorf("failed to create temp file: %w", err)
-    }
-  defer func() {
-    if err := os.Remove("file_path"); err != nil {
-       fs.Logf(nil, "Failed to remove file: %v", err.Error())
-    }
-}()
+	// Convert the input reader to a temp file to compute the MD5 hash.
+	tempFile, err := createTempFileFromReader(in)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create temp file: %w", err)
+	}
+	defer func() {
+		if err := os.Remove("file_path"); err != nil {
+			fs.Logf(nil, "Failed to remove file: %v", err.Error())
+		}
+	}()
 
-   // Compute the MD5 hash of the file
-    hash, err := ComputeMD5(tempFile.Name())
-   if err != nil {
-       return nil, fmt.Errorf("failed to compute file hash: %w", err)
-    }
+	// Compute the MD5 hash of the file
+	hash, err := ComputeMD5(tempFile.Name())
+	if err != nil {
+		return nil, fmt.Errorf("failed to compute file hash: %w", err)
+	}
 
-    // Print the local computed hash for debugging
-    fs.Debugf(f, "Local file hash for %q: %s", src.Remote(), hash)
+	// Print the local computed hash for debugging
+	fs.Debugf(f, "Local file hash for %q: %s", src.Remote(), hash)
 
-    // Fetch existing remote hashes for the given folder
-    folderID, err := strconv.Atoi(f.folderID)
-    if err != nil {
-        folderID = 0 // Default to root folder if conversion fails
-    }
-    fs.Debugf(f, "Folder ID: %d", folderID)
+	// Fetch existing remote hashes for the given folder
+	folderID, err := strconv.Atoi(f.folderID)
+	if err != nil {
+		folderID = 0 // Default to root folder if conversion fails
+	}
+	fs.Debugf(f, "Folder ID: %d", folderID)
 
-    // Generate the combined hash
-    combinedHash := fmt.Sprintf("%s%d", hash, folderID)
-    fs.Debugf(f, "Combined file and folder hash: %s", combinedHash)
+	// Generate the combined hash
+	combinedHash := fmt.Sprintf("%s%d", hash, folderID)
+	fs.Debugf(f, "Combined file and folder hash: %s", combinedHash)
 
-    existingHashes, err := f.FetchRemoteFileHashes(ctx, folderID)
-    if err != nil {
-        return nil, fmt.Errorf("failed to fetch remote file hashes: %w", err)
-    }
+	existingHashes, err := f.FetchRemoteFileHashes(ctx, folderID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch remote file hashes: %w", err)
+	}
 
-    // Compare the combined hash with remote hashes
-    if _, exists := existingHashes[combinedHash]; exists {
-        fs.Infof(f, "Detected duplicate file %q, skipping upload.", src.Remote())
-        //return nil, fmt.Errorf("file %q is a duplicate", src.Remote())
-    }
+	// Compare the combined hash with remote hashes
+	if _, exists := existingHashes[combinedHash]; exists {
+		fs.Infof(f, "Detected duplicate file %q, skipping upload.", src.Remote())
+		//return nil, fmt.Errorf("file %q is a duplicate", src.Remote())
+	}
 
-    // Proceed with file upload if not a duplicate
-    uploadURL, sessID, err := f.getUploadServer(ctx)
-    if err != nil {
-        return nil, fmt.Errorf("failed to retrieve upload server: %w", err)
-    }
+	// Proceed with file upload if not a duplicate
+	uploadURL, sessID, err := f.getUploadServer(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve upload server: %w", err)
+	}
 
-    fileCode, err := f.uploadFile(ctx, uploadURL, sessID, src.Remote(), tempFile)
-    if err != nil {
-        return nil, fmt.Errorf("failed to upload file: %w", err)
-    }
+	fileCode, err := f.uploadFile(ctx, uploadURL, sessID, src.Remote(), tempFile)
+	if err != nil {
+		return nil, fmt.Errorf("failed to upload file: %w", err)
+	}
 
-    // Move the file if needed
-    if folderID != 0 {
-        moveErr := f.moveFileToFolder(ctx, fileCode, folderID)
-        if moveErr != nil {
-            return nil, fmt.Errorf("failed to move file to folder ID %d: %w", folderID, moveErr)
-        }
-    }
+	// Move the file if needed
+	if folderID != 0 {
+		moveErr := f.moveFileToFolder(ctx, fileCode, folderID)
+		if moveErr != nil {
+			return nil, fmt.Errorf("failed to move file to folder ID %d: %w", folderID, moveErr)
+		}
+	}
 
-    obj := &Object{
-        fs:      f,
-        remote:  src.Remote(),
-        size:    src.Size(),
-        modTime: src.ModTime(ctx),
-    }
-    return obj, nil
+	obj := &Object{
+		fs:      f,
+		remote:  src.Remote(),
+		size:    src.Size(),
+		modTime: src.ModTime(ctx),
+	}
+	return obj, nil
 }
 
 // createTempFileFromReader writes the content of the 'in' reader into a temporary file
 func createTempFileFromReader(in io.Reader) (*os.File, error) {
-    // Create a temporary file
-    tempFile, err := os.CreateTemp("", "upload-*.tmp")
-    if err != nil {
-        return nil, fmt.Errorf("failed to create temp file: %w", err)
-    }
+	// Create a temporary file
+	tempFile, err := os.CreateTemp("", "upload-*.tmp")
+	if err != nil {
+		return nil, fmt.Errorf("failed to create temp file: %w", err)
+	}
 
-    // Copy the content from the reader into the temporary file
-    _, err = io.Copy(tempFile, in)
-    if err != nil {
-        closeErr := tempFile.Close() // Ensure the file is closed if an error occurs
-        if closeErr != nil {
-            fs.Logf(nil, "Failed to close temporary file after write error: %v", closeErr)
-        }
-        return nil, fmt.Errorf("failed to write to temp file: %w", err)
-    }
+	// Copy the content from the reader into the temporary file
+	_, err = io.Copy(tempFile, in)
+	if err != nil {
+		closeErr := tempFile.Close() // Ensure the file is closed if an error occurs
+		if closeErr != nil {
+			fs.Logf(nil, "Failed to close temporary file after write error: %v", closeErr)
+		}
+		return nil, fmt.Errorf("failed to write to temp file: %w", err)
+	}
 
-    // Seek back to the start of the file for further reading
-    if _, err := tempFile.Seek(0, io.SeekStart); err != nil {
-        closeErr := tempFile.Close() // Ensure the file is closed if seeking fails
-        if closeErr != nil {
-            fs.Logf(nil, "Failed to close temporary file after seek error: %v", closeErr)
-        }
-        return nil, fmt.Errorf("failed to seek file: %w", err)
-    }
+	// Seek back to the start of the file for further reading
+	if _, err := tempFile.Seek(0, io.SeekStart); err != nil {
+		closeErr := tempFile.Close() // Ensure the file is closed if seeking fails
+		if closeErr != nil {
+			fs.Logf(nil, "Failed to close temporary file after seek error: %v", closeErr)
+		}
+		return nil, fmt.Errorf("failed to seek file: %w", err)
+	}
 
-    // Ensure the file is closed when the function exits, handle errors if any
-    if err := tempFile.Close(); err != nil {
-        fs.Logf(nil, "Failed to close temporary file: %v", err)
-        return nil, fmt.Errorf("failed to close temp file: %w", err)
-    }
+	// Ensure the file is closed when the function exits, handle errors if any
+	if err := tempFile.Close(); err != nil {
+		fs.Logf(nil, "Failed to close temporary file: %v", err)
+		return nil, fmt.Errorf("failed to close temp file: %w", err)
+	}
 
-    // Return the temporary file
-    return tempFile, nil
+	// Return the temporary file
+	return tempFile, nil
 }
 
 func (f *Fs) moveFileToFolder(ctx context.Context, fileCode string, folderID int) error {
@@ -1514,27 +1514,27 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 
 // Remove deletes the object from FileLu
 func (o *Object) Remove(ctx context.Context) error {
-    var fileCode string
+	var fileCode string
 
-    // If the root is a valid file code, use it
-    if isFileCode(o.fs.root) {
-        fileCode = o.fs.root
-    } else {
-        // Otherwise, try to extract file code from the remote path
-        remote := o.remote
-        if strings.HasPrefix(remote, "(") {
-            end := strings.Index(remote, ")")
-            if end != -1 {
-                fileCode = strings.TrimSpace(remote[1:end])
-            }
-        }
-    }
+	// If the root is a valid file code, use it
+	if isFileCode(o.fs.root) {
+		fileCode = o.fs.root
+	} else {
+		// Otherwise, try to extract file code from the remote path
+		remote := o.remote
+		if strings.HasPrefix(remote, "(") {
+			end := strings.Index(remote, ")")
+			if end != -1 {
+				fileCode = strings.TrimSpace(remote[1:end])
+			}
+		}
+	}
 
-    if !isFileCode(fileCode) {
-        return fmt.Errorf("invalid file code: %q", fileCode)
-    }
+	if !isFileCode(fileCode) {
+		return fmt.Errorf("invalid file code: %q", fileCode)
+	}
 
-    return o.fs.DeleteFile(ctx, fileCode)
+	return o.fs.DeleteFile(ctx, fileCode)
 }
 
 // readMetaData fetches metadata for the object
@@ -1586,7 +1586,6 @@ func (o *Object) readMetaData(ctx context.Context) error {
 	return nil
 }
 
-
 // FileEntry represents a file entry in the JSON response
 type FileEntry struct {
 	Hash string `json:"hash"`
@@ -1599,6 +1598,7 @@ type APIResponse struct {
 		Files []FileEntry `json:"files"`
 	} `json:"result"`
 }
+
 // DuplicateFileError is a custom error type for duplicate files
 type DuplicateFileError struct {
 	Hash string
@@ -1607,6 +1607,7 @@ type DuplicateFileError struct {
 func (e *DuplicateFileError) Error() string {
 	return fmt.Sprintf("file hash %s already exists", e.Hash)
 }
+
 // IsDuplicateFileError checks if the given error indicates a duplicate file.
 func IsDuplicateFileError(err error) bool {
 	_, ok := err.(*DuplicateFileError)
@@ -1615,235 +1616,235 @@ func IsDuplicateFileError(err error) bool {
 
 // FetchRemoteFileHashes retrieves hashes of remote files in a folder
 func (f *Fs) FetchRemoteFileHashes(ctx context.Context, folderID int) (map[string]struct{}, error) {
-    apiURL := fmt.Sprintf("%s/folder/list?fld_id=%d&key=%s", f.endpoint, folderID, url.QueryEscape(f.opt.RcloneKey))
-    fs.Debugf(f, "Fetching remote hashes using URL: %s", apiURL) // Log the API URL for verification
+	apiURL := fmt.Sprintf("%s/folder/list?fld_id=%d&key=%s", f.endpoint, folderID, url.QueryEscape(f.opt.RcloneKey))
+	fs.Debugf(f, "Fetching remote hashes using URL: %s", apiURL) // Log the API URL for verification
 
-    req, err := http.NewRequestWithContext(ctx, "GET", apiURL, nil)
-    if err != nil {
-        return nil, err
-    }
+	req, err := http.NewRequestWithContext(ctx, "GET", apiURL, nil)
+	if err != nil {
+		return nil, err
+	}
 
-    resp, err := f.client.Do(req)
-    if err != nil {
-        return nil, err
-    }
-    defer func() {
-    if err := resp.Body.Close(); err != nil {
-        fs.Logf(nil, "Failed to close response body: %v", err.Error())
-    }
-}()
+	resp, err := f.client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			fs.Logf(nil, "Failed to close response body: %v", err.Error())
+		}
+	}()
 
+	// Log raw HTTP response for debugging
+	debugResp, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("error reading response: %w", err)
+	}
+	fs.Debugf(f, "Raw API Response: %s", string(debugResp))
 
-    // Log raw HTTP response for debugging
-    debugResp, err := io.ReadAll(resp.Body)
-    if err != nil {
-        return nil, fmt.Errorf("error reading response: %w", err)
-    }
-    fs.Debugf(f, "Raw API Response: %s", string(debugResp))
+	// Reset the reader for JSON decoding
+	resp.Body = io.NopCloser(bytes.NewBuffer(debugResp))
+	// Define the structure for the API response
+	type APIResponse struct {
+		Status int `json:"status"`
+		Result struct {
+			Files []struct {
+				Hash string `json:"hash"`
+			} `json:"files"`
+		} `json:"result"`
+	}
 
-    // Reset the reader for JSON decoding
-    resp.Body = io.NopCloser(bytes.NewBuffer(debugResp))
-// Define the structure for the API response
-type APIResponse struct {
-    Status int `json:"status"`
-    Result struct {
-        Files []struct {
-            Hash string `json:"hash"`
-        } `json:"files"`
-    } `json:"result"`
+	// Decode JSON response
+	var apiResponse APIResponse
+	err = json.NewDecoder(resp.Body).Decode(&apiResponse)
+	if err != nil {
+		return nil, fmt.Errorf("error decoding response: %w", err)
+	}
+
+	if apiResponse.Status != 200 {
+		return nil, fmt.Errorf("error: non-200 status %d", apiResponse.Status)
+	}
+
+	hashes := make(map[string]struct{})
+	for _, file := range apiResponse.Result.Files {
+		fs.Debugf(f, "Fetched remote hash: %s", file.Hash) // Log each hash fetched
+		hashes[file.Hash] = struct{}{}
+	}
+
+	fs.Debugf(f, "Total fetched remote hashes: %d", len(hashes))
+	return hashes, nil
 }
 
-// Decode JSON response
-var apiResponse APIResponse
-err = json.NewDecoder(resp.Body).Decode(&apiResponse)
-if err != nil {
-    return nil, fmt.Errorf("error decoding response: %w", err)
-}
-
-if apiResponse.Status != 200 {
-    return nil, fmt.Errorf("error: non-200 status %d", apiResponse.Status)
-}
-
-hashes := make(map[string]struct{})
-for _, file := range apiResponse.Result.Files {
-    fs.Debugf(f, "Fetched remote hash: %s", file.Hash) // Log each hash fetched
-    hashes[file.Hash] = struct{}{}
-}
-
-    fs.Debugf(f, "Total fetched remote hashes: %d", len(hashes))
-    return hashes, nil
-}
 // ComputeMD5 computes the MD5 hash of specified file parts
 func ComputeMD5(filePath string) (string, error) {
-    file, err := os.Open(filePath)
-    if err != nil {
-        return "", fmt.Errorf("failed to open file: %w", err)
-    }
-    defer func() {
-    if err := file.Close(); err != nil {
-        fs.Logf(nil, "Failed to close file: %v", err.Error())
-    }
-}()
+	file, err := os.Open(filePath)
+	if err != nil {
+		return "", fmt.Errorf("failed to open file: %w", err)
+	}
+	defer func() {
+		if err := file.Close(); err != nil {
+			fs.Logf(nil, "Failed to close file: %v", err.Error())
+		}
+	}()
 
+	const partSize = 1024
+	firstPart := make([]byte, partSize)
+	lastPart := make([]byte, partSize)
 
-    const partSize = 1024
-    firstPart := make([]byte, partSize)
-    lastPart := make([]byte, partSize)
+	// Read the first part of the file
+	_, err = io.ReadFull(file, firstPart)
+	if err != nil && err != io.EOF {
+		return "", fmt.Errorf("failed to read first part: %w", err)
+	}
 
-    // Read the first part of the file
-    _, err = io.ReadFull(file, firstPart)
-    if err != nil && err != io.EOF {
-        return "", fmt.Errorf("failed to read first part: %w", err)
-    }
+	fileStat, err := file.Stat()
+	if err != nil {
+		return "", fmt.Errorf("failed to stat file: %w", err)
+	}
 
-    fileStat, err := file.Stat()
-    if err != nil {
-        return "", fmt.Errorf("failed to stat file: %w", err)
-    }
+	if fileStat.Size() > partSize {
+		// Read the last part if file size is greater than partSize
+		_, err = file.Seek(-partSize, io.SeekEnd)
+		if err != nil {
+			return "", fmt.Errorf("failed to seek to last part: %w", err)
+		}
 
-    if fileStat.Size() > partSize {
-        // Read the last part if file size is greater than partSize
-        _, err = file.Seek(-partSize, io.SeekEnd)
-        if err != nil {
-            return "", fmt.Errorf("failed to seek to last part: %w", err)
-        }
+		_, err = io.ReadFull(file, lastPart)
+		if err != nil && err != io.EOF {
+			return "", fmt.Errorf("failed to read last part: %w", err)
+		}
+	} else {
+		// If the file is too small, use firstPart for both segments
+		copy(lastPart, firstPart)
+	}
 
-        _, err = io.ReadFull(file, lastPart)
-        if err != nil && err != io.EOF {
-            return "", fmt.Errorf("failed to read last part: %w", err)
-        }
-    } else {
-        // If the file is too small, use firstPart for both segments
-        copy(lastPart, firstPart)
-    }
+	// Create buffer containing the two parts
+	buffer := append(firstPart, lastPart...)
 
-    // Create buffer containing the two parts
-    buffer := append(firstPart, lastPart...)
+	// Compute the MD5 hash
+	fullHash := md5.Sum(buffer)
 
-    // Compute the MD5 hash
-    fullHash := md5.Sum(buffer)
-
-    // Convert the hash to a base64 string
-    return base64.RawStdEncoding.EncodeToString(fullHash[:]), nil
+	// Convert the hash to a base64 string
+	return base64.RawStdEncoding.EncodeToString(fullHash[:]), nil
 }
 func (f *Fs) uploadFile(ctx context.Context, uploadURL, sessionID, fileName string, fileContent io.Reader) (string, error) {
-    // Convert fileContent to a temporary file for hashing and further operations
-    tempFile, err := createTempFileFromReader(fileContent)
-    if err != nil {
-        return "", fmt.Errorf("failed to create temp file: %w", err)
-    }
-    err = os.Remove("file_path")
-if err != nil {
-    // Handle the error appropriately
-    fs.Logf(nil, "Failed to remove file: %v", err.Error())
+	// Convert fileContent to a temporary file for hashing and further operations
+	tempFile, err := createTempFileFromReader(fileContent)
+	if err != nil {
+		return "", fmt.Errorf("failed to create temp file: %w", err)
+	}
+	err = os.Remove("file_path")
+	if err != nil {
+		// Handle the error appropriately
+		fs.Logf(nil, "Failed to remove file: %v", err.Error())
+	}
+
+	// Compute the MD5 hash of the file
+	hash, err := ComputeMD5(tempFile.Name())
+	if err != nil {
+		return "", fmt.Errorf("failed to compute file hash: %w", err)
+	}
+
+	// Log the computed hash for debugging
+	fs.Debugf(f, "Computed local hash for file %q: %s", fileName, hash)
+
+	// Convert folderID from string to int
+	folderIDInt, err := strconv.Atoi(f.folderID)
+	if err != nil {
+		fs.Errorf(f, "Error parsing folderID (expected numerical string): %v", err)
+		return "", fmt.Errorf("invalid folder ID, cannot proceed")
+	}
+	fs.Debugf(f, "Using folder ID: %d", folderIDInt)
+
+	// Ensure folderIDInt is included in the combined hash
+	//fmt.Printf("Computed hash: %s\n", hash)
+	// fmt.Printf("Folder ID: %d\n", folderIDInt)
+
+	// Combine local hash and folderID for comparison
+	combinedHash := fmt.Sprintf("%s%d", hash, folderIDInt)
+	fs.Debugf(f, "Combined hash: %s", combinedHash)
+
+	// Fetch existing remote hashes for the given folder ID
+	existingHashes, err := f.FetchRemoteFileHashes(ctx, folderIDInt)
+	if err != nil {
+		return "", fmt.Errorf("failed to fetch remote file hashes: %w", err)
+	}
+
+	fs.Debugf(f, "Fetched remote hashes: %v", existingHashes)
+
+	// Check for duplicate file hash using the combined hash
+	if _, exists := existingHashes[combinedHash]; exists {
+		fs.Infof(f, "Duplicate file detected with combined hash %s, upload skipped.", combinedHash)
+		return "", &DuplicateFileError{Hash: combinedHash}
+	}
+
+	// Further code for file upload...
+
+	// Build the multipart request to upload the file
+	var body bytes.Buffer
+	writer := multipart.NewWriter(&body)
+
+	err = writer.WriteField("sess_id", sessionID)
+	if err != nil {
+		return "", fmt.Errorf("failed to add sess_id field: %w", err)
+	}
+	err = writer.WriteField("upload_type", "rclone")
+	if err != nil {
+		return "", fmt.Errorf("failed to add upload_type field: %w", err)
+	}
+	err = writer.WriteField("utype", "prem")
+	if err != nil {
+		return "", fmt.Errorf("failed to add utype field: %w", err)
+	}
+
+	// Create the file part for the multipart form
+	part, err := writer.CreateFormFile("file_0", fileName)
+	if err != nil {
+		return "", fmt.Errorf("failed to create form file: %w", err)
+	}
+	_, err = io.Copy(part, tempFile)
+	if err != nil {
+		return "", fmt.Errorf("failed to copy file content: %w", err)
+	}
+
+	err = writer.Close()
+	if err != nil {
+		return "", fmt.Errorf("error closing writer: %w", err)
+	}
+
+	// Send the request
+	req, err := http.NewRequestWithContext(ctx, "POST", uploadURL, &body)
+	if err != nil {
+		return "", fmt.Errorf("failed to create request: %w", err)
+	}
+	req.Header.Set("Content-Type", writer.FormDataContentType())
+
+	resp, err := f.client.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("failed to send request: %w", err)
+	}
+	defer func() {
+		if cerr := resp.Body.Close(); cerr != nil {
+			fmt.Printf("Error closing response body: %v\n", cerr)
+		}
+	}()
+
+	// Parse the response
+	var result []struct {
+		FileCode   string `json:"file_code"`
+		FileStatus string `json:"file_status"`
+	}
+	if err = json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return "", fmt.Errorf("failed to parse response: %w", err)
+	}
+
+	if len(result) == 0 || result[0].FileStatus != "OK" {
+		return "", fmt.Errorf("upload failed with status: %s", result[0].FileStatus)
+	}
+
+	fs.Debugf(f, "uploadFile: File uploaded successfully with file code: %s", result[0].FileCode)
+	return result[0].FileCode, nil
 }
 
-    // Compute the MD5 hash of the file
-    hash, err := ComputeMD5(tempFile.Name())
-    if err != nil {
-        return "", fmt.Errorf("failed to compute file hash: %w", err)
-    }
-
-    // Log the computed hash for debugging
-    fs.Debugf(f, "Computed local hash for file %q: %s", fileName, hash)
-
-    // Convert folderID from string to int
-folderIDInt, err := strconv.Atoi(f.folderID)
-if err != nil {
-    fs.Errorf(f, "Error parsing folderID (expected numerical string): %v", err)
-    return "", fmt.Errorf("invalid folder ID, cannot proceed")
-}
-fs.Debugf(f, "Using folder ID: %d", folderIDInt)
-
-    // Ensure folderIDInt is included in the combined hash
-    //fmt.Printf("Computed hash: %s\n", hash)
-   // fmt.Printf("Folder ID: %d\n", folderIDInt)
-
-    // Combine local hash and folderID for comparison
-    combinedHash := fmt.Sprintf("%s%d", hash, folderIDInt)
-    fs.Debugf(f, "Combined hash: %s", combinedHash)
-
-    // Fetch existing remote hashes for the given folder ID
-    existingHashes, err := f.FetchRemoteFileHashes(ctx, folderIDInt)
-    if err != nil {
-        return "", fmt.Errorf("failed to fetch remote file hashes: %w", err)
-    }
-
-    fs.Debugf(f, "Fetched remote hashes: %v", existingHashes)
-
-    // Check for duplicate file hash using the combined hash
-    if _, exists := existingHashes[combinedHash]; exists {
-        fs.Infof(f, "Duplicate file detected with combined hash %s, upload skipped.", combinedHash)
-        return "", &DuplicateFileError{Hash: combinedHash}
-    }
-
-    // Further code for file upload...
-
-    // Build the multipart request to upload the file
-    var body bytes.Buffer
-    writer := multipart.NewWriter(&body)
-
-    err = writer.WriteField("sess_id", sessionID)
-    if err != nil {
-        return "", fmt.Errorf("failed to add sess_id field: %w", err)
-    }
-    err = writer.WriteField("upload_type", "rclone")
-    if err != nil {
-        return "", fmt.Errorf("failed to add upload_type field: %w", err)
-    }
-    err = writer.WriteField("utype", "prem")
-    if err != nil {
-        return "", fmt.Errorf("failed to add utype field: %w", err)
-    }
-
-    // Create the file part for the multipart form
-    part, err := writer.CreateFormFile("file_0", fileName)
-    if err != nil {
-        return "", fmt.Errorf("failed to create form file: %w", err)
-    }
-    _, err = io.Copy(part, tempFile)
-    if err != nil {
-        return "", fmt.Errorf("failed to copy file content: %w", err)
-    }
-
-    err = writer.Close()
-    if err != nil {
-        return "", fmt.Errorf("error closing writer: %w", err)
-    }
-
-    // Send the request
-    req, err := http.NewRequestWithContext(ctx, "POST", uploadURL, &body)
-    if err != nil {
-        return "", fmt.Errorf("failed to create request: %w", err)
-    }
-    req.Header.Set("Content-Type", writer.FormDataContentType())
-
-    resp, err := f.client.Do(req)
-    if err != nil {
-        return "", fmt.Errorf("failed to send request: %w", err)
-    }
-    defer func() {
-        if cerr := resp.Body.Close(); cerr != nil {
-            fmt.Printf("Error closing response body: %v\n", cerr)
-        }
-    }()
-
-    // Parse the response
-    var result []struct {
-        FileCode   string `json:"file_code"`
-        FileStatus string `json:"file_status"`
-    }
-    if err = json.NewDecoder(resp.Body).Decode(&result); err != nil {
-        return "", fmt.Errorf("failed to parse response: %w", err)
-    }
-
-    if len(result) == 0 || result[0].FileStatus != "OK" {
-        return "", fmt.Errorf("upload failed with status: %s", result[0].FileStatus)
-    }
-
-    fs.Debugf(f, "uploadFile: File uploaded successfully with file code: %s", result[0].FileCode)
-    return result[0].FileCode, nil
-}
 // Hash returns the hash of an object
 func (o *Object) Hash(ctx context.Context, t hash.Type) (string, error) {
 	if t != hash.MD5 {
