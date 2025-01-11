@@ -948,10 +948,14 @@ if err != nil {
 	}
 
 	// Seek back to the start of the file for further reading
-	_, err = tempFile.Seek(0, io.SeekStart)
-	err = tempFile.Close()
-if err != nil {
-   fs.Logf(nil, "Failed to close temporary file: %v", err.Error())
+if _, err := tempFile.Seek(0, io.SeekStart); err != nil {
+    fs.Logf(nil, "Failed to seek file: %v", err.Error())
+    return err
+}
+
+if err := tempFile.Close(); err != nil {
+    fs.Logf(nil, "Failed to close temporary file: %v", err.Error())
+    return err
 }
 
 	return tempFile, nil
@@ -1447,7 +1451,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 	return resp.Body, nil
 }
 
-// Helper function to extract filename from URL
+// extractFileName helper function to extract filename from URL
 func extractFileName(urlStr string) string {
 	u, err := url.Parse(urlStr)
 	if err != nil {
