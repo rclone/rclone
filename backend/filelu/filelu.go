@@ -1678,23 +1678,32 @@ func (f *Fs) FetchRemoteFileHashes(ctx context.Context, folderID int) (map[strin
 
     // Reset the reader for JSON decoding
     resp.Body = io.NopCloser(bytes.NewBuffer(debugResp))
+// Define the structure for the API response
+type APIResponse struct {
+    Status int `json:"status"`
+    Result struct {
+        Files []struct {
+            Hash string `json:"hash"`
+        } `json:"files"`
+    } `json:"result"`
+}
 
-    // Decode JSON response
-    var apiResponse
-    err = json.NewDecoder(resp.Body).Decode(&apiResponse)
-    if err != nil {
-        return nil, fmt.Errorf("error decoding response: %w", err)
-    }
+// Decode JSON response
+var apiResponse APIResponse
+err := json.NewDecoder(resp.Body).Decode(&apiResponse)
+if err != nil {
+    return nil, fmt.Errorf("error decoding response: %w", err)
+}
 
-    if apiResponse.Status != 200 {
-        return nil, fmt.Errorf("error: non-200 status %d", apiResponse.Status)
-    }
+if apiResponse.Status != 200 {
+    return nil, fmt.Errorf("error: non-200 status %d", apiResponse.Status)
+}
 
-    hashes := make(map[string]struct{})
-    for _, file := range apiResponse.Result.Files {
-        fs.Debugf(f, "Fetched remote hash: %s", file.Hash) // Log each hash fetched
-        hashes[file.Hash] = struct{}{}
-    }
+hashes := make(map[string]struct{})
+for _, file := range apiResponse.Result.Files {
+    fs.Debugf(f, "Fetched remote hash: %s", file.Hash) // Log each hash fetched
+    hashes[file.Hash] = struct{}{}
+}
 
     fs.Debugf(f, "Total fetched remote hashes: %d", len(hashes))
     return hashes, nil
