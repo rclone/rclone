@@ -1679,7 +1679,6 @@ func (f *Fs) FetchRemoteFileHashes(ctx context.Context, folderID int) (map[strin
     // Reset the reader for JSON decoding
     resp.Body = io.NopCloser(bytes.NewBuffer(debugResp))
 
-
     // Decode JSON response
     var apiResponse
     err = json.NewDecoder(resp.Body).Decode(&apiResponse)
