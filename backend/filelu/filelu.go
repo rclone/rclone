@@ -872,13 +872,12 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
     }
 }()
 
-
-    // Compute the MD5 hash of the file
+ /*   // Compute the MD5 hash of the file
     hash, err := ComputeMD5(tempFile.Name())
-   // if err != nil {
-     //   return nil, fmt.Errorf("failed to compute file hash: %w", err)
-   // }
-
+   if err != nil {
+       return nil, fmt.Errorf("failed to compute file hash: %w", err)
+    }
+*/
     // Print the local computed hash for debugging
     fs.Debugf(f, "Local file hash for %q: %s", src.Remote(), hash)
 
@@ -1461,7 +1460,7 @@ func extractFileName(urlStr string) string {
 // deleteFileByCode deletes a file from FileLu by its file code
 //
 //lint:ignore unused
-func (f *Fs) deleteFileByCode(ctx context.Context, fileCode string) error {
+/*func (f *Fs) deleteFileByCode(ctx context.Context, fileCode string) error {
 	fs.Debugf(f, "deleteFileByCode: Attempting to delete file with code=%q", fileCode)
 	defer fs.Debugf(f, "deleteFileByCode: Finished deleting file with code=%q", fileCode)
 
@@ -1502,7 +1501,7 @@ func (f *Fs) deleteFileByCode(ctx context.Context, fileCode string) error {
 
 	return nil
 }
-
+*/
 // Update replaces the content of the object with new data
 func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {
 	fs.Debugf(o.fs, "Update: Starting update for %q", o.remote)
@@ -1628,7 +1627,7 @@ type FileEntry struct {
 }
 
 // ApiResponse represents the structure of the JSON response from FileLu
-type ApiResponse struct {
+type APIResponse struct {
 	Status int `json:"status"`
 	Result struct {
 		Files []FileEntry `json:"files"`
