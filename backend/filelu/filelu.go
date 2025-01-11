@@ -1627,8 +1627,8 @@ type FileEntry struct {
 	Hash string `json:"hash"`
 }
 
-// APIResponse represents the response structure from the API.
-type APIResponse struct {
+// ApiResponse represents the structure of the JSON response from FileLu
+type ApiResponse struct {
 	Status int `json:"status"`
 	Result struct {
 		Files []FileEntry `json:"files"`
@@ -1680,19 +1680,19 @@ func (f *Fs) FetchRemoteFileHashes(ctx context.Context, folderID int) (map[strin
     resp.Body = io.NopCloser(bytes.NewBuffer(debugResp))
 
 
-// Decode JSON response
-var response APIResponse
-err = json.NewDecoder(resp.Body).Decode(&response)
-if err != nil {
-    return nil, fmt.Errorf("error decoding response: %w", err)
-}
+    // Decode JSON response
+    var apiResponse
+    err = json.NewDecoder(resp.Body).Decode(&apiResponse)
+    if err != nil {
+        return nil, fmt.Errorf("error decoding response: %w", err)
+    }
 
-    if APIResponse.Status != 200 {
-        return nil, fmt.Errorf("error: non-200 status %d", ApiResponse.Status)
+    if apiResponse.Status != 200 {
+        return nil, fmt.Errorf("error: non-200 status %d", apiResponse.Status)
     }
 
     hashes := make(map[string]struct{})
-    for _, file := range APIResponse.Result.Files {
+    for _, file := range apiResponse.Result.Files {
         fs.Debugf(f, "Fetched remote hash: %s", file.Hash) // Log each hash fetched
         hashes[file.Hash] = struct{}{}
     }
