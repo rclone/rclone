@@ -115,6 +115,10 @@ Get storage info about the FileLu account:
 
     rclone about filelu:
 
+### FolderID instead of folder path
+
+We use the FolderID instead of the folder name to prevent errors when users have identical folder names or paths. For example, if a user has two or three folders named "test_folders," the system may become confused and won't know which folder to move. In large storage systems some clients with hundred thousands of folders and a few millions of files, duplicate folder names or path are quite common.
+
 ### Modification Times and Hashes
 
 FileLu supports modification times but does not currently support hashes.
