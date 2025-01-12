@@ -149,8 +149,6 @@ Properties:
 
 Cloudinary API Secret
 
-**NB** Input to this must be obscured - see [rclone obscure](/commands/rclone_obscure/).
-
 Properties:
 
 - Config:      api_secret

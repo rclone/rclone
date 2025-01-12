@@ -293,6 +293,19 @@ Properties:
 - Type:        string
 - Required:    false
 
+#### --mailru-client-credentials
+
+Use client credentials OAuth flow.
+
+This will use the OAUTH2 client Credentials Flow as described in RFC 6749.
+
+Properties:
+
+- Config:      client_credentials
+- Env Var:     RCLONE_MAILRU_CLIENT_CREDENTIALS
+- Type:        bool
+- Default:     false
+
 #### --mailru-speedup-file-patterns
 
 Comma separated list of file name patterns eligible for speedup (put by hash).

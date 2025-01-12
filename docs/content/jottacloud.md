@@ -377,6 +377,19 @@ Properties:
 - Type:        string
 - Required:    false
 
+#### --jottacloud-client-credentials
+
+Use client credentials OAuth flow.
+
+This will use the OAUTH2 client Credentials Flow as described in RFC 6749.
+
+Properties:
+
+- Config:      client_credentials
+- Env Var:     RCLONE_JOTTACLOUD_CLIENT_CREDENTIALS
+- Type:        bool
+- Default:     false
+
 #### --jottacloud-md5-memory-limit
 
 Files bigger than this will be cached on disk to calculate the MD5 if required.
