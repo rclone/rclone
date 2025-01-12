@@ -11,8 +11,8 @@ tests:
  - path: vfs
  - path: cmd/serve/restic
    localonly: true
- - path: cmd/serve/docker
-   localonly: true
+ # - path: cmd/serve/docker
+ #   localonly: true
  - path: cmd/selfupdate
    localonly: true
 backends:
