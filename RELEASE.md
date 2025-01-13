@@ -47,13 +47,20 @@ Early in the next release cycle update the dependencies.
   * `git commit -a -v -m "build: update all dependencies"`
 
 If the `make updatedirect` upgrades the version of go in the `go.mod`
-then go to manual mode. `go1.20` here is the lowest supported version
+
+    go 1.22.0
+    
+then go to manual mode. `go1.22` here is the lowest supported version
 in the `go.mod`.
+
+If `make updatedirect` added a `toolchain` directive then remove it.
+We don't want to force a toolchain on our users. Linux packagers are
+often using a version of Go that is a few versions out of date.
 
 ```
 go list -m -f '{{if not (or .Main .Indirect)}}{{.Path}}{{end}}' all > /tmp/potential-upgrades
 go get -d $(cat /tmp/potential-upgrades)
-go mod tidy -go=1.20 -compat=1.20
+go mod tidy -go=1.22 -compat=1.22
 ```
 
 If the `go mod tidy` fails use the output from it to remove the
