@@ -11,6 +11,7 @@ require (
 	github.com/Azure/go-ntlmssp v0.0.0-20221128193559-754e69321358
 	github.com/Files-com/files-sdk-go/v3 v3.2.242
 	github.com/Max-Sum/base32768 v0.0.0-20230304063302-18e6ce5945fd
+	github.com/NickBall/go-aes-key-wrap v0.0.0-20170929221519-1c3aa3e4dfc5
 	github.com/a8m/tree v0.0.0-20240104212747-2c8764a5f17e
 	github.com/aalpar/deheap v0.0.0-20210914013432-0cc84d79dec3
 	github.com/abbot/go-http-auth v0.4.0
@@ -51,6 +52,7 @@ require (
 	github.com/mattn/go-colorable v0.1.14
 	github.com/mattn/go-runewidth v0.0.17
 	github.com/minio/minio-go/v7 v7.0.95
+	github.com/miscreant/miscreant.go v0.0.0-20200214223636-26d376326b75
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/moby/sys/mountinfo v0.7.2
 	github.com/ncw/swift/v2 v2.0.4
@@ -94,6 +96,7 @@ require (
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1
 	gopkg.in/validator.v2 v2.0.1
 	gopkg.in/yaml.v3 v3.0.1
+	pgregory.net/rapid v1.1.0
 	storj.io/uplink v1.13.1
 )
 
