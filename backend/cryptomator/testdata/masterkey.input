@@ -1,0 +1,6 @@
+{
+    "example": {
+        "EncryptedMasterKey": "ewogICJ2ZXJzaW9uIjogOTk5LAogICJzY3J5cHRTYWx0IjogIksydnRvNzNyUlk0PSIsCiAgInNjcnlwdENvc3RQYXJhbSI6IDMyNzY4LAogICJzY3J5cHRCbG9ja1NpemUiOiA4LAogICJwcmltYXJ5TWFzdGVyS2V5IjogIjJzWXFMSWsyVGU2UDRNbEI2M0xhZUFLakVlWXhHeG9lZDJKbXdhKytkeU9idWFHeUw4WUpiZz09IiwKICAiaG1hY01hc3RlcktleSI6ICI5NkIzVFVwYW9OYlhLMzVMSDhRdVpjRzVLbXk0TWxOU2t1ZzZIQnFsUStHN094UW5CcEh5U2c9PSIsCiAgInZlcnNpb25NYWMiOiAiSFAyY2tFdGxwZ0wyckQrS2R5UElsWk9DNmdLYzB3cmhyYUdRUG1RY3ppOD0iCn0=",
+        "Passphrase": "abcdefgh"
+    }
+}
