@@ -318,32 +318,46 @@ func (f *Fs) Features() *fs.Features {
 	return f.features
 }
 
-// shouldRetry returns a boolean as to whether this err deserves to be
-// retried.  It returns the err as a convenience
-func shouldRetry(ctx context.Context, err error) (bool, error) {
-	if fserrors.ContextError(ctx, &err) {
-		return false, err
-	}
+// Some specific errors which should be excluded from retries
+func shouldRetryExclude(ctx context.Context, err error) (bool, error) {
 	if err == nil {
 		return false, err
 	}
-	errString := err.Error()
+	if fserrors.ContextError(ctx, &err) {
+		return false, err
+	}
 	// First check for specific errors
+	//
+	// These come back from the SDK in a whole host of different
+	// error types, but there doesn't seem to be a consistent way
+	// of reading the error cause, so here we just check using the
+	// error string which isn't perfect but does the job.
+	errString := err.Error()
 	if strings.Contains(errString, "insufficient_space") {
 		return false, fserrors.FatalError(err)
 	} else if strings.Contains(errString, "malformed_path") {
 		return false, fserrors.NoRetryError(err)
 	}
+	return true, err
+}
+
+// shouldRetry returns a boolean as to whether this err deserves to be
+// retried.  It returns the err as a convenience
+func shouldRetry(ctx context.Context, err error) (bool, error) {
+	if retry, err := shouldRetryExclude(ctx, err); !retry {
+		return retry, err
+	}
 	// Then handle any official Retry-After header from Dropbox's SDK
 	switch e := err.(type) {
 	case auth.RateLimitAPIError:
 		if e.RateLimitError.RetryAfter > 0 {
-			fs.Logf(errString, "Too many requests or write operations. Trying again in %d seconds.", e.RateLimitError.RetryAfter)
+			fs.Logf(nil, "Error %v. Too many requests or write operations. Trying again in %d seconds.", err, e.RateLimitError.RetryAfter)
 			err = pacer.RetryAfterError(err, time.Duration(e.RateLimitError.RetryAfter)*time.Second)
 		}
 		return true, err
 	}
 	// Keep old behavior for backward compatibility
+	errString := err.Error()
 	if strings.Contains(errString, "too_many_write_operations") || strings.Contains(errString, "too_many_requests") || errString == "" {
 		return true, err
 	}
@@ -1700,14 +1714,10 @@ func (o *Object) uploadChunked(ctx context.Context, in0 io.Reader, commitInfo *f
 
 	err = o.fs.pacer.Call(func() (bool, error) {
 		entry, err = o.fs.srv.UploadSessionFinish(args, nil)
-		// If error is insufficient space then don't retry
-		if e, ok := err.(files.UploadSessionFinishAPIError); ok {
-			if e.EndpointError != nil && e.EndpointError.Path != nil && e.EndpointError.Path.Tag == files.WriteErrorInsufficientSpace {
-				err = fserrors.NoRetryError(err)
-				return false, err
-			}
+		if retry, err := shouldRetryExclude(ctx, err); !retry {
+			return retry, err
 		}
-		// after the first chunk is uploaded, we retry everything
+		// after the first chunk is uploaded, we retry everything except the excluded errors
 		return err != nil, err
 	})
 	if err != nil {

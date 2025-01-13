@@ -514,6 +514,7 @@ This takes the following parameters
 - |fs| - select the VFS in use (optional)
 - |id| - a numeric ID as returned from |vfs/queue|
 - |expiry| - a new expiry time as floating point seconds
+- |relative| - if set, expiry is to be treated as relative to the current expiry (optional, boolean)
 
 This returns an empty result on success, or an error.
 
@@ -540,9 +541,16 @@ func rcQueueSetExpiry(ctx context.Context, in rc.Params) (out rc.Params, err err
 	if err != nil {
 		return nil, err
 	}
+	relative, err := in.GetBool("relative")
+	if err != nil && !rc.IsErrParamNotFound(err) {
+		return nil, err
+	}
 
 	// Set expiry
-	expiryTime := time.Now().Add(time.Duration(float64(time.Second) * expiry))
-	err = vfs.cache.QueueSetExpiry(writeback.Handle(id), expiryTime)
+	var refTime time.Time
+	if !relative {
+		refTime = time.Now()
+	}
+	err = vfs.cache.QueueSetExpiry(writeback.Handle(id), refTime, time.Duration(float64(time.Second)*expiry))
 	return nil, err
 }

@@ -263,6 +263,19 @@ Properties:
 - Type:        string
 - Required:    false
 
+#### --dropbox-client-credentials
+
+Use client credentials OAuth flow.
+
+This will use the OAUTH2 client Credentials Flow as described in RFC 6749.
+
+Properties:
+
+- Config:      client_credentials
+- Env Var:     RCLONE_DROPBOX_CLIENT_CREDENTIALS
+- Type:        bool
+- Default:     false
+
 #### --dropbox-chunk-size
 
 Upload chunk size (< 150Mi).

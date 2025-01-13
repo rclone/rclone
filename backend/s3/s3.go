@@ -6175,6 +6175,9 @@ func (w *s3ChunkWriter) WriteChunk(ctx context.Context, chunkNumber int, reader 
 			if chunkNumber <= 8 {
 				return w.f.shouldRetry(ctx, err)
 			}
+			if fserrors.ContextError(ctx, &err) {
+				return false, err
+			}
 			// retry all chunks once have done the first few
 			return true, err
 		}

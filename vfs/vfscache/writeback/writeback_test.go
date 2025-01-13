@@ -549,7 +549,7 @@ func TestWriteBackSetExpiry(t *testing.T) {
 	wb, cancel := newTestWriteBack(t)
 	defer cancel()
 
-	err := wb.SetExpiry(123123123, time.Now())
+	err := wb.SetExpiry(123123123, time.Now(), 0)
 	assert.Equal(t, ErrorIDNotFound, err)
 
 	pi := newPutItem(t)
@@ -569,12 +569,12 @@ func TestWriteBackSetExpiry(t *testing.T) {
 	assert.Less(t, expiry, 1.0)
 
 	newExpiry := time.Now().Add(100 * time.Second)
-	require.NoError(t, wb.SetExpiry(wbItem.id, newExpiry))
+	require.NoError(t, wb.SetExpiry(wbItem.id, newExpiry, 0))
 	assert.Equal(t, newExpiry, getExpiry())
 
 	// This starts the transfer
-	newExpiry = time.Now().Add(-100 * time.Second)
-	require.NoError(t, wb.SetExpiry(wbItem.id, newExpiry))
+	newExpiry = wbItem.expiry.Add(-200 * time.Second)
+	require.NoError(t, wb.SetExpiry(wbItem.id, time.Time{}, -200*time.Second))
 	assert.Equal(t, newExpiry, getExpiry())
 
 	<-pi.started
