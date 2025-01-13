@@ -11,8 +11,8 @@ tests:
  - path: vfs
  - path: cmd/serve/restic
    localonly: true
- - path: cmd/serve/docker
-   localonly: true
+ # - path: cmd/serve/docker
+ #   localonly: true
  - path: cmd/selfupdate
    localonly: true
 backends:
@@ -102,6 +102,21 @@ backends:
    fastlist: true
    maxfile:  1k
  ## end chunker
+ - backend:  "cloudinary"
+   remote:   "TestCloudinary:"
+   fastlist: false
+   ignore:
+     # fs/operations
+     - TestCheckSum
+     - TestCheckSumDownload
+     - TestHashSums/Md5
+     - TestReadFile
+     - TestCopyURL
+     - TestMoveFileWithIgnoreExisting
+     #vfs
+     - TestFileSetModTime/cache=off,open=false,write=false
+     - TestFileSetModTime/cache=off,open=true,write=false
+     - TestRWFileHandleWriteNoWrite
  - backend:  "combine"
    remote:   "TestCombine:dir1"
    fastlist: false

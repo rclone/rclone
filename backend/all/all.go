@@ -10,6 +10,7 @@ import (
 	_ "github.com/rclone/rclone/backend/box"
 	_ "github.com/rclone/rclone/backend/cache"
 	_ "github.com/rclone/rclone/backend/chunker"
+	_ "github.com/rclone/rclone/backend/cloudinary"
 	_ "github.com/rclone/rclone/backend/combine"
 	_ "github.com/rclone/rclone/backend/compress"
 	_ "github.com/rclone/rclone/backend/crypt"

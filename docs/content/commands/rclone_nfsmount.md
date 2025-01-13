@@ -55,7 +55,9 @@ When running in background mode the user will have to stop the mount manually:
 
     # Linux
     fusermount -u /path/to/local/mount
-    # OS X
+    #... or on some systems
+    fusermount3 -u /path/to/local/mount
+    # OS X or Linux when using nfsmount
     umount /path/to/local/mount
 
 The umount operation can fail, for example when the mountpoint is busy.
@@ -399,9 +401,9 @@ Note that systemd runs mount units without any environment variables including
 `PATH` or `HOME`. This means that tilde (`~`) expansion will not work
 and you should provide `--config` and `--cache-dir` explicitly as absolute
 paths via rclone arguments.
-Since mounting requires the `fusermount` program, rclone will use the fallback
-PATH of `/bin:/usr/bin` in this scenario. Please ensure that `fusermount`
-is present on this PATH.
+Since mounting requires the `fusermount` or `fusermount3` program,
+rclone will use the fallback PATH of `/bin:/usr/bin` in this scenario.
+Please ensure that `fusermount`/`fusermount3` is present on this PATH.
 
 ## Rclone as Unix mount helper
 
@@ -778,6 +780,50 @@ modified files from the cache (the related global flag `--checkers` has no effec
 
     --transfers int  Number of file transfers to run in parallel (default 4)
 
+## Symlinks
+
+By default the VFS does not support symlinks. However this may be
+enabled with either of the following flags:
+
+    --links      Translate symlinks to/from regular files with a '.rclonelink' extension.
+    --vfs-links  Translate symlinks to/from regular files with a '.rclonelink' extension for the VFS
+
+As most cloud storage systems do not support symlinks directly, rclone
+stores the symlink as a normal file with a special extension. So a
+file which appears as a symlink `link-to-file.txt` would be stored on
+cloud storage as `link-to-file.txt.rclonelink` and the contents would
+be the path to the symlink destination.
+
+Note that `--links` enables symlink translation globally in rclone -
+this includes any backend which supports the concept (for example the
+local backend). `--vfs-links` just enables it for the VFS layer.
+
+This scheme is compatible with that used by the [local backend with the --local-links flag](/local/#symlinks-junction-points).
+
+The `--vfs-links` flag has been designed for `rclone mount`, `rclone
+nfsmount` and `rclone serve nfs`.
+
+It hasn't been tested with the other `rclone serve` commands yet.
+
+A limitation of the current implementation is that it expects the
+caller to resolve sub-symlinks. For example given this directory tree
+
+```
+.
+├── dir
+│   └── file.txt
+└── linked-dir -> dir
+```
+
+The VFS will correctly resolve `linked-dir` but not
+`linked-dir/file.txt`. This is not a problem for the tested commands
+but may be for other commands.
+
+**Note** that there is an outstanding issue with symlink support
+[issue #8245](https://github.com/rclone/rclone/issues/8245) with duplicate
+files being created when symlinks are moved into directories where
+there is a file of the same name (or vice versa).
+
 ## VFS Case Sensitivity
 
 Linux file systems are case-sensitive: two files can differ only
@@ -883,6 +929,7 @@ rclone nfsmount remote:path /path/to/mountpoint [flags]
       --fuse-flag stringArray                  Flags or arguments to be passed direct to libfuse/WinFsp (repeat if required)
       --gid uint32                             Override the gid field set by the filesystem (not supported on Windows) (default 1000)
   -h, --help                                   help for nfsmount
+      --link-perms FileMode                    Link permissions (default 666)
       --max-read-ahead SizeSuffix              The number of bytes that can be prefetched for sequential reads (not supported on Windows) (default 128Ki)
       --mount-case-insensitive Tristate        Tell the OS the mount is case insensitive (true) or sensitive (false) regardless of the backend (auto) (default unset)
       --network-mode                           Mount as remote network drive, instead of fixed disk drive (supported on Windows only)
@@ -909,6 +956,7 @@ rclone nfsmount remote:path /path/to/mountpoint [flags]
       --vfs-case-insensitive                   If a file name not found, find a case insensitive match
       --vfs-disk-space-total-size SizeSuffix   Specify the total space of disk (default off)
       --vfs-fast-fingerprint                   Use fast (less accurate) fingerprints for change detection
+      --vfs-links                              Translate symlinks to/from regular files with a '.rclonelink' extension for the VFS
       --vfs-read-ahead SizeSuffix              Extra read ahead over --buffer-size when using cache-mode full
       --vfs-read-chunk-size SizeSuffix         Read the source objects in chunks (default 128Mi)
       --vfs-read-chunk-size-limit SizeSuffix   If greater than --vfs-read-chunk-size, double the chunk size after each chunk read, until the limit is reached ('off' is unlimited) (default off)

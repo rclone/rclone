@@ -601,9 +601,10 @@ func (o *Object) SetModTime(ctx context.Context, t time.Time) (err error) {
 	}
 
 	fi, err := cn.smbShare.Stat(reqDir)
-	if err == nil {
-		o.statResult = fi
+	if err != nil {
+		return fmt.Errorf("SetModTime: stat: %w", err)
 	}
+	o.statResult = fi
 	return err
 }
 
@@ -685,7 +686,6 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		return err
 	}
 	defer func() {
-		o.statResult, _ = cn.smbShare.Stat(filename)
 		o.fs.putConnection(&cn)
 	}()
 
@@ -723,7 +723,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		return fmt.Errorf("Update Close failed: %w", err)
 	}
 
-	// Set the modified time
+	// Set the modified time and also o.statResult
 	err = o.SetModTime(ctx, src.ModTime(ctx))
 	if err != nil {
 		return fmt.Errorf("Update SetModTime failed: %w", err)

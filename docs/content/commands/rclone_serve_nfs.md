@@ -53,7 +53,9 @@ that it uses an on disk cache, but the cache entries are held as
 symlinks. Rclone will use the handle of the underlying file as the NFS
 handle which improves performance. This sort of cache can't be backed
 up and restored as the underlying handles will change. This is Linux
-only.
+only. It requres running rclone as root or with `CAP_DAC_READ_SEARCH`.
+You can run rclone with this extra permission by doing this to the
+rclone binary `sudo setcap cap_dac_read_search+ep /path/to/rclone`.
 
 `--nfs-cache-handle-limit` controls the maximum number of cached NFS
 handles stored by the caching handler. This should not be set too low
@@ -382,6 +384,50 @@ modified files from the cache (the related global flag `--checkers` has no effec
 
     --transfers int  Number of file transfers to run in parallel (default 4)
 
+## Symlinks
+
+By default the VFS does not support symlinks. However this may be
+enabled with either of the following flags:
+
+    --links      Translate symlinks to/from regular files with a '.rclonelink' extension.
+    --vfs-links  Translate symlinks to/from regular files with a '.rclonelink' extension for the VFS
+
+As most cloud storage systems do not support symlinks directly, rclone
+stores the symlink as a normal file with a special extension. So a
+file which appears as a symlink `link-to-file.txt` would be stored on
+cloud storage as `link-to-file.txt.rclonelink` and the contents would
+be the path to the symlink destination.
+
+Note that `--links` enables symlink translation globally in rclone -
+this includes any backend which supports the concept (for example the
+local backend). `--vfs-links` just enables it for the VFS layer.
+
+This scheme is compatible with that used by the [local backend with the --local-links flag](/local/#symlinks-junction-points).
+
+The `--vfs-links` flag has been designed for `rclone mount`, `rclone
+nfsmount` and `rclone serve nfs`.
+
+It hasn't been tested with the other `rclone serve` commands yet.
+
+A limitation of the current implementation is that it expects the
+caller to resolve sub-symlinks. For example given this directory tree
+
+```
+.
+├── dir
+│   └── file.txt
+└── linked-dir -> dir
+```
+
+The VFS will correctly resolve `linked-dir` but not
+`linked-dir/file.txt`. This is not a problem for the tested commands
+but may be for other commands.
+
+**Note** that there is an outstanding issue with symlink support
+[issue #8245](https://github.com/rclone/rclone/issues/8245) with duplicate
+files being created when symlinks are moved into directories where
+there is a file of the same name (or vice versa).
+
 ## VFS Case Sensitivity
 
 Linux file systems are case-sensitive: two files can differ only
@@ -474,6 +520,7 @@ rclone serve nfs remote:path [flags]
       --file-perms FileMode                    File permissions (default 666)
       --gid uint32                             Override the gid field set by the filesystem (not supported on Windows) (default 1000)
   -h, --help                                   help for nfs
+      --link-perms FileMode                    Link permissions (default 666)
       --nfs-cache-dir string                   The directory the NFS handle cache will use if set
       --nfs-cache-handle-limit int             max file handles cached simultaneously (min 5) (default 1000000)
       --nfs-cache-type memory|disk|symlink     Type of NFS handle cache to use (default memory)
@@ -493,6 +540,7 @@ rclone serve nfs remote:path [flags]
       --vfs-case-insensitive                   If a file name not found, find a case insensitive match
       --vfs-disk-space-total-size SizeSuffix   Specify the total space of disk (default off)
       --vfs-fast-fingerprint                   Use fast (less accurate) fingerprints for change detection
+      --vfs-links                              Translate symlinks to/from regular files with a '.rclonelink' extension for the VFS
       --vfs-read-ahead SizeSuffix              Extra read ahead over --buffer-size when using cache-mode full
       --vfs-read-chunk-size SizeSuffix         Read the source objects in chunks (default 128Mi)
       --vfs-read-chunk-size-limit SizeSuffix   If greater than --vfs-read-chunk-size, double the chunk size after each chunk read, until the limit is reached ('off' is unlimited) (default off)
