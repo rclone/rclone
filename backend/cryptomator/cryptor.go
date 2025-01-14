@@ -1,15 +1,17 @@
 package cryptomator
 
 import (
+	"bytes"
 	"crypto/aes"
 	"crypto/cipher"
-	"crypto/rand"
+	"crypto/hmac"
 	"crypto/sha1"
+	"crypto/sha256"
 	"encoding/base32"
 	"encoding/base64"
 	"encoding/binary"
 	"fmt"
-	"io"
+	"hash"
 
 	"github.com/miscreant/miscreant.go"
 )
@@ -20,47 +22,32 @@ const (
 )
 
 type Cryptor struct {
-	siv *miscreant.Cipher
+	masterKey   MasterKey
+	siv         *miscreant.Cipher
+	cipherCombo string
 	contentCryptor
 }
 
 type contentCryptor interface {
-	MarshalHeader(w io.Writer, h FileHeader) (err error)
-	UnmarshalHeader(r io.Reader) (header FileHeader, err error)
+	EncryptChunk(plaintext, nonce, additionalData []byte) (ciphertext []byte)
+	DecryptChunk(ciphertext, additionalData []byte) ([]byte, error)
+	fileAssociatedData(fileNonce []byte, chunkNr uint64) []byte
 
-	HeaderNonceSize() int
-	HeaderTagSize() int
+	NonceSize() int
+	TagSize() int
 }
 
-// TODO: support both cipher combos.
-
 func NewCryptor(key MasterKey, cipherCombo string) (c Cryptor, err error) {
+	c.masterKey = key
 	c.siv, err = miscreant.NewAESCMACSIV(append(key.MacKey, key.EncryptKey...))
 	if err != nil {
 		return
 	}
-
-	aes, err := aes.NewCipher(key.EncryptKey)
+	c.cipherCombo = cipherCombo
+	c.contentCryptor, err = c.newContentCryptor(key.EncryptKey)
 	if err != nil {
 		return
 	}
-
-	switch cipherCombo {
-	default:
-		err = fmt.Errorf("unsupported cipher combo %q", cipherCombo)
-		return
-
-	case CipherComboSivGcm:
-		aesGcm, err := cipher.NewGCM(aes)
-		if err != nil {
-			return c, err
-		}
-		c.contentCryptor = &gcmCryptor{aesGcm}
-
-	case CipherComboSivCtrMac:
-		c.contentCryptor = &ctrMacCryptor{aes: aes, hmacKey: key.MacKey}
-	}
-
 	return
 }
 
@@ -93,32 +80,102 @@ func (c *Cryptor) DecryptFilename(filename string, dirID string) (string, error)
 	return string(plaintext), nil
 }
 
-type FileHeader struct {
-	Nonce      []byte
-	Reserved   []byte
-	ContentKey []byte
+func (c *Cryptor) newContentCryptor(key []byte) (contentCryptor, error) {
+	aes, err := aes.NewCipher(key)
+	if err != nil {
+		return nil, err
+	}
+
+	switch c.cipherCombo {
+	default:
+		return nil, fmt.Errorf("unsupported cipher combo %q", c.cipherCombo)
+
+	case CipherComboSivGcm:
+		aesGcm, err := cipher.NewGCM(aes)
+		if err != nil {
+			return nil, err
+		}
+		return &gcmCryptor{aesGcm}, nil
+
+	case CipherComboSivCtrMac:
+		return &ctrMacCryptor{aes: aes, hmacKey: c.masterKey.MacKey}, nil
+	}
 }
 
-const (
-	HeaderContentKeySize        = 32
-	HeaderReservedSize          = 8
-	HeaderReservedValue  uint64 = 0xFFFFFFFFFFFFFFFF
-)
+func EncryptedChunkSize(c contentCryptor, payloadSize int) int {
+	return c.NonceSize() + payloadSize + c.TagSize()
+}
 
-func (c *Cryptor) NewHeader() (header FileHeader, err error) {
-	header.Nonce = make([]byte, c.HeaderNonceSize())
-	header.ContentKey = make([]byte, HeaderContentKeySize)
-	header.Reserved = make([]byte, HeaderReservedSize)
+type gcmCryptor struct {
+	aesGcm cipher.AEAD
+}
 
-	if _, err = rand.Read(header.Nonce); err != nil {
-		return
+func (_ *gcmCryptor) NonceSize() int { return 12 }
+func (_ *gcmCryptor) TagSize() int   { return 16 }
+
+func (c *gcmCryptor) EncryptChunk(payload, nonce, additionalData []byte) (ciphertext []byte) {
+	buf := bytes.Buffer{}
+	buf.Write(nonce)
+	buf.Write(c.aesGcm.Seal(nil, nonce, payload, additionalData))
+	return buf.Bytes()
+}
+
+func (c *gcmCryptor) DecryptChunk(chunk, additionalData []byte) ([]byte, error) {
+	nonce := chunk[:c.NonceSize()]
+	return c.aesGcm.Open(nil, nonce, chunk[c.NonceSize():], additionalData)
+}
+
+func (c *gcmCryptor) fileAssociatedData(fileNonce []byte, chunkNr uint64) []byte {
+	buf := bytes.Buffer{}
+	binary.Write(&buf, binary.BigEndian, chunkNr)
+	buf.Write(fileNonce)
+	return buf.Bytes()
+}
+
+type ctrMacCryptor struct {
+	aes     cipher.Block
+	hmacKey []byte
+}
+
+func (_ *ctrMacCryptor) NonceSize() int { return 16 }
+func (_ *ctrMacCryptor) TagSize() int   { return 32 }
+
+func (c *ctrMacCryptor) newCTR(nonce []byte) cipher.Stream { return cipher.NewCTR(c.aes, nonce) }
+func (c *ctrMacCryptor) newHMAC() hash.Hash                { return hmac.New(sha256.New, c.hmacKey) }
+
+func (c *ctrMacCryptor) EncryptChunk(payload, nonce, additionalData []byte) (ciphertext []byte) {
+	c.newCTR(nonce).XORKeyStream(payload, payload)
+	buf := bytes.Buffer{}
+	buf.Write(nonce)
+	buf.Write(payload)
+	hash := c.newHMAC()
+	hash.Write(additionalData)
+	hash.Write(buf.Bytes())
+	buf.Write(hash.Sum(nil))
+	return buf.Bytes()
+}
+
+func (c *ctrMacCryptor) DecryptChunk(chunk, additionalData []byte) ([]byte, error) {
+	startMac := len(chunk) - c.TagSize()
+	mac := chunk[startMac:]
+	chunk = chunk[:startMac]
+
+	hash := c.newHMAC()
+	hash.Write(additionalData)
+	hash.Write(chunk)
+	if !hmac.Equal(mac, hash.Sum(nil)) {
+		return nil, fmt.Errorf("hmac failed")
 	}
 
-	if _, err = rand.Read(header.ContentKey); err != nil {
-		return
-	}
+	nonce := chunk[:c.NonceSize()]
+	chunk = chunk[c.NonceSize():]
+	c.newCTR(nonce).XORKeyStream(chunk, chunk)
+	return chunk, nil
+}
 
-	binary.BigEndian.PutUint64(header.Reserved, HeaderReservedValue)
-
-	return
+func (c *ctrMacCryptor) fileAssociatedData(fileNonce []byte, chunkNr uint64) []byte {
+	buf := bytes.Buffer{}
+	buf.Write(fileNonce)
+	binary.Write(&buf, binary.BigEndian, chunkNr)
+	return buf.Bytes()
 }

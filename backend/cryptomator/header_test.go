@@ -21,7 +21,7 @@ func TestHeaderNew(t *testing.T) {
 		h, err := cryptor.NewHeader()
 		assert.NoError(t, err)
 
-		assert.Len(t, h.Nonce, cryptor.HeaderNonceSize())
+		assert.Len(t, h.Nonce, cryptor.NonceSize())
 		assert.Len(t, h.ContentKey, cryptomator.HeaderContentKeySize)
 		assert.Len(t, h.Reserved, cryptomator.HeaderReservedSize)
 
@@ -40,6 +40,8 @@ func TestHeaderRoundTrip(t *testing.T) {
 		err = cryptor.MarshalHeader(buf, h1)
 		assert.NoError(t, err)
 
+		assert.Len(t, buf.Bytes(), cryptomator.EncryptedChunkSize(cryptor, cryptomator.HeaderPayloadSize))
+
 		h2, err := cryptor.UnmarshalHeader(buf)
 		assert.NoError(t, err)
 
@@ -54,7 +56,7 @@ type encHeader struct {
 	MacKey      []byte
 }
 
-func TestUnmarshalHeader(t *testing.T) {
+func TestUnmarshalReferenceHeader(t *testing.T) {
 	paths, err := filepath.Glob(filepath.Join("testdata", "header*.input"))
 	assert.NoError(t, err)
 

@@ -3,7 +3,6 @@ package cryptomator
 
 import (
 	"context"
-	"encoding/base64"
 	"errors"
 	"fmt"
 	"io"
@@ -69,7 +68,6 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		root:    root,
 		opt:     *opt,
 	}
-	f.dirCache = dircache.New(root, "", f)
 	cache.PinUntilFinalized(f.wrapped, f)
 
 	f.features = (&fs.Features{}).Fill(ctx, f).Mask(ctx, wrappedFs).WrapsFs(f, wrappedFs)
@@ -82,10 +80,41 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	if err != nil {
 		return nil, fmt.Errorf("failed to load vault config: %w", err)
 	}
-	fmt.Printf("%q %q\n", base64.StdEncoding.EncodeToString(f.masterKey.EncryptKey), base64.StdEncoding.EncodeToString(f.masterKey.MacKey))
 	f.Cryptor, err = NewCryptor(f.masterKey, f.vaultConfig.CipherCombo)
 	if err != nil {
 		return nil, err
+	}
+
+	f.dirCache = dircache.New(root, "", f)
+	err = f.dirCache.FindRoot(ctx, false)
+	if err != nil {
+		// Assume it is a file
+		newRoot, remote := dircache.SplitPath(root)
+		tempF := *f
+		tempF.dirCache = dircache.New(newRoot, "", &tempF)
+		tempF.root = newRoot
+		// Make new Fs which is the parent
+		err = tempF.dirCache.FindRoot(ctx, false)
+		if err != nil {
+			// No root so return old f
+			return f, nil
+		}
+
+		_, err := tempF.NewObject(ctx, remote)
+		if err != nil {
+			fs.Logf(f, "error!!! %q", err)
+			if err == fs.ErrorObjectNotFound {
+				// File doesn't exist so return old f
+				return f, nil
+			}
+
+			return nil, err
+		}
+
+		f.dirCache = tempF.dirCache
+		f.root = tempF.root
+		// return an error with an fs which points to the parent
+		return f, fs.ErrorIsFile
 	}
 
 	return f, nil
@@ -153,7 +182,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 	}
 	dirPath, err := f.encryptedPathForDirID(dirID)
 	if err != nil {
-		return nil, fmt.Errorf("failed to encrypt directory ID: %w", err)
+		return nil, err
 	}
 
 	encryptedEntries, err := f.wrapped.List(ctx, dirPath)
@@ -197,7 +226,28 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 }
 
 func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
-	return nil, fmt.Errorf("TODO implement Fs.NewObject")
+	leaf, dirID, err := f.dirCache.FindPath(ctx, remote, false)
+	if err != nil {
+		return nil, fmt.Errorf("failed to find ID for directory of file %q: %w", remote, err)
+	}
+	dirPath, err := f.encryptedPathForDirID(dirID)
+	if err != nil {
+		return nil, err
+	}
+	encryptedFilename, err := f.EncryptFilename(leaf, dirID)
+	if err != nil {
+		return nil, err
+	}
+	encryptedPath := path.Join(dirPath, encryptedFilename+".c9r")
+	wrappedObj, err := f.wrapped.NewObject(ctx, encryptedPath)
+	if err != nil {
+		return nil, err
+	}
+	return &Object{
+		Object: wrappedObj,
+		fs:     f,
+		remote: remote,
+	}, nil
 }
 
 func (f *Fs) Rmdir(ctx context.Context, dir string) error {
@@ -216,6 +266,7 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 
 // FindLeaf finds a child of name leaf in the directory with id pathID
 func (f *Fs) FindLeaf(ctx context.Context, pathID, leaf string) (pathIDOut string, found bool, err error) {
+	fmt.Printf("FindLeaf %q %q\n", pathID, leaf)
 	dirPath, err := f.encryptedPathForDirID(pathID)
 	if err != nil {
 		return
@@ -267,12 +318,16 @@ type Object struct {
 func (o *Object) Fs() fs.Info    { return o.fs }
 func (o *Object) Remote() string { return o.remote }
 
+func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadCloser, error) {
+	return nil, fmt.Errorf("TODO implement Open")
+}
+
 // -------- private
 
 func (f *Fs) encryptedPathForDirID(dirID string) (string, error) {
 	encryptedDirID, err := f.EncryptDirID(dirID)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("failed to encrypt directory ID: %w", err)
 	}
 	dirPath := path.Join("d", encryptedDirID[:2], encryptedDirID[2:])
 	// TODO: verify that dirid.c9r inside the directory contains dirID
@@ -294,9 +349,9 @@ func (f *Fs) openEncryptedFile(ctx context.Context, path string) (io.Reader, err
 	if err != nil {
 		return nil, err
 	}
+	_ = header
 
-	fmt.Printf("%+v\n", header)
-	return nil, fmt.Errorf("TODO")
+	return nil, fmt.Errorf("TODO implement openEncryptedFile")
 }
 
 // readMetadataFile reads a file in full from the wrapped filesystem and returns it as bytes.

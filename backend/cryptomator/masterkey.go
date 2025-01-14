@@ -126,4 +126,3 @@ func UnmarshalMasterKey(r io.Reader, passphrase string) (m MasterKey, err error)
 
 	return
 }
-
