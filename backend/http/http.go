@@ -642,9 +642,7 @@ func (o *Object) decodeMetadata(ctx context.Context, res *http.Response) error {
 	// Parse Content-Disposition header
 	contentDisposition := res.Header.Get("Content-Disposition")
 	if contentDisposition != "" {
-		o.meta = make(map[string]string)
 		o.contentDisposition = &contentDisposition
-		o.meta["content-disposition"] = contentDisposition
 	}
 
 	// If NoSlash is set then check ContentType to see if it is a directory
@@ -787,7 +785,14 @@ func (f *Fs) Command(ctx context.Context, name string, arg []string, opt map[str
 //
 // It should return nil if there is no Metadata
 func (o *Object) Metadata(ctx context.Context) (metadata fs.Metadata, err error) {
-	metadata = o.meta
+	metadata = make(fs.Metadata, 1)
+	setMetadata := func(k string, v *string) {
+		if v == nil || *v == "" {
+			return
+		}
+		metadata[k] = *v
+	}
+	setMetadata("content-disposition", o.contentDisposition)
 	return metadata, nil
 }
 

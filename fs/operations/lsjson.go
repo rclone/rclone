@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"mime"
+	"net/textproto"
 	"path"
 	"strings"
 	"time"
@@ -153,6 +155,29 @@ func newListJSON(ctx context.Context, fsrc fs.Fs, remote string, opt *ListJSONOp
 	return lj, nil
 }
 
+// parseFilenameFromContentDisposition extracts the filename from a Content-Disposition header
+func parseFilenameFromContentDisposition(header string) (string, error) {
+	// Normalize the header to canonical MIME format
+	mediaType, params, err := mime.ParseMediaType(header)
+	if err != nil {
+		return "", fmt.Errorf("failed to parse Content-Disposition header: %v", err)
+	}
+
+	// Check if the header is an attachment
+	if strings.ToLower(mediaType) != "attachment" {
+		return "", fmt.Errorf("not an attachment: %s", mediaType)
+	}
+
+	// Extract the filename from the parameters
+	filename, ok := params["filename"]
+	if !ok {
+		return "", fmt.Errorf("filename not found in Content-Disposition header")
+	}
+
+	// Decode filename if it contains special encoding
+	return textproto.TrimString(filename), nil
+}
+
 // Convert a single entry to JSON
 //
 // It may return nil if there is no entry to return
@@ -170,9 +195,27 @@ func (lj *listJSON) entry(ctx context.Context, entry fs.DirEntry) (*ListJSONItem
 		fs.Errorf(nil, "Unknown type %T in listing", entry)
 	}
 
+	// Read the metadata if required
+	entryMetadataer := entry.(fs.Metadataer)
+	meta, err := entryMetadataer.Metadata(ctx)
+	if err != nil {
+		fs.Errorf(entry, "Failed to read metadata: %v", err)
+	}
+
+	var name string
+	if meta != nil && meta["content-disposition"] != "" {
+		name, err = parseFilenameFromContentDisposition(meta["content-disposition"])
+		if err != nil {
+			fs.Errorf(entry, "Failed to parse filename from Content-Disposition: %v", err)
+			name = path.Base(entry.Remote())
+		}
+	} else {
+		name = path.Base(entry.Remote())
+	}
+
 	item := &ListJSONItem{
 		Path: entry.Remote(),
-		Name: path.Base(entry.Remote()),
+		Name: name,
 		Size: entry.Size(),
 	}
 	if entry.Remote() == "" {
