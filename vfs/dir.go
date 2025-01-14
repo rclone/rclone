@@ -66,7 +66,10 @@ func newDir(vfs *VFS, f fs.Fs, parent *Dir, fsDir fs.Directory) *Dir {
 		inode:   newInode(),
 		items:   make(map[string]Node),
 	}
-	d.cleanupTimer = time.AfterFunc(time.Duration(vfs.Opt.DirCacheTime*2), d.cacheCleanup)
+	// Set timer up like this to avoid race of d.cacheCleanup being called
+	// before d.cleanupTimer is assigned to
+	d.cleanupTimer = time.AfterFunc(time.Hour, d.cacheCleanup)
+	d.cleanupTimer.Reset(time.Duration(vfs.Opt.DirCacheTime * 2))
 	return d
 }
 
