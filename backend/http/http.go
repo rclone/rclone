@@ -125,7 +125,6 @@ type Object struct {
 	remote      string
 	size        int64
 	modTime     time.Time
-	meta        map[string]string // The object metadata if known - may be nil - with lower case keys
 	contentType string
 
 	// Metadata as pointers to strings as they often won't be present
