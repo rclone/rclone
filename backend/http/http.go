@@ -635,6 +635,7 @@ func (o *Object) decodeMetadata(ctx context.Context, res *http.Response) error {
 	// Parse Content-Disposition header
 	contentDisposition := res.Header.Get("Content-Disposition")
 	if contentDisposition != "" {
+		o.meta = make(map[string]string)
 		o.contentDisposition = &contentDisposition
 		o.meta["content-disposition"] = contentDisposition
 	}
