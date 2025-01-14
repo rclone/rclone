@@ -31,13 +31,29 @@ func (f *Fs) dial(ctx context.Context, network, addr string) (*conn, error) {
 		}
 	}
 
-	d := &smb2.Dialer{
-		Initiator: &smb2.NTLMInitiator{
+	d := &smb2.Dialer{}
+	if f.opt.UseKerberos {
+		cl, err := getKerberosClient()
+		if err != nil {
+			return nil, err
+		}
+
+		spn := f.opt.SPN
+		if spn == "" {
+			spn = "cifs/" + f.opt.Host
+		}
+
+		d.Initiator = &smb2.Krb5Initiator{
+			Client:    cl,
+			TargetSPN: spn,
+		}
+	} else {
+		d.Initiator = &smb2.NTLMInitiator{
 			User:      f.opt.User,
 			Password:  pass,
 			Domain:    f.opt.Domain,
 			TargetSPN: f.opt.SPN,
-		},
+		}
 	}
 
 	session, err := d.DialConn(ctx, tconn, addr)

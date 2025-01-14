@@ -484,6 +484,9 @@ backends:
  - backend:  "smb"
    remote:   "TestSMB:rclone"
    fastlist: false
+ - backend:  "smb"
+   remote:   "TestSMBKerberos:rclone"
+   fastlist: false
  - backend:  "storj"
    remote:   "TestStorj:"
    fastlist: true
