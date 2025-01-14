@@ -15,14 +15,21 @@ import (
 )
 
 const (
-	MasterEncryptKeySize         = 32
-	MasterMacKeySize             = MasterEncryptKeySize
-	MasterVersion                = 999
+	// MasterEncryptKeySize is the size of the MasterKey's EncryptKey.
+	MasterEncryptKeySize = 32
+	// MasterMacKeySize is the size of the MasterKey's MacKey.
+	MasterMacKeySize = MasterEncryptKeySize
+	// MasterDefaultVersion is the default value for the version in the master key file.
+	MasterDefaultVersion = 999
+	// MasterDefaultScryptCostParam is the default scrypt cost param for a new master key.
 	MasterDefaultScryptCostParam = 32 * 1024
+	// MasterDefaultScryptBlockSize is the default scrypt block size for a new master key.
 	MasterDefaultScryptBlockSize = 8
-	MasterDefaultScryptSaltSize  = 32
+	// MasterDefaultScryptSaltSize is the default scrypt salt size for a new master key.
+	MasterDefaultScryptSaltSize = 32
 )
 
+// MasterKey is the master key for a Cryptomator vault, typically saved in masterkey.cryptomator at the root of the vault.
 type MasterKey struct {
 	EncryptKey []byte
 	MacKey     []byte
@@ -42,6 +49,7 @@ type encryptedMasterKey struct {
 	VersionMac []byte `json:"versionMac"`
 }
 
+// NewMasterKey creates a new randomly initialized MasterKey.
 func NewMasterKey() (m MasterKey, err error) {
 	m.EncryptKey = make([]byte, MasterEncryptKeySize)
 	m.MacKey = make([]byte, MasterMacKeySize)
@@ -55,9 +63,10 @@ func NewMasterKey() (m MasterKey, err error) {
 	return
 }
 
+// Marshal encrypts the MasterKey with a passphrase and writes it.
 func (m MasterKey) Marshal(w io.Writer, passphrase string) (err error) {
 	encKey := encryptedMasterKey{
-		Version:         MasterVersion,
+		Version:         MasterDefaultVersion,
 		ScryptCostParam: MasterDefaultScryptCostParam,
 		ScryptBlockSize: MasterDefaultScryptBlockSize,
 	}
@@ -97,6 +106,7 @@ func (m MasterKey) Marshal(w io.Writer, passphrase string) (err error) {
 	return
 }
 
+// UnmarshalMasterKey reads the master key and decrypts it with a passphrase.
 func UnmarshalMasterKey(r io.Reader, passphrase string) (m MasterKey, err error) {
 	encKey := &encryptedMasterKey{}
 

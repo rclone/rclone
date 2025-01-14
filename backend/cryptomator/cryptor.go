@@ -17,10 +17,13 @@ import (
 )
 
 const (
+	// CipherComboSivGcm uses AES-SIV for filenames and AES-GCM for contents. It is the current Cryptomator default.
+	CipherComboSivGcm = "SIV_GCM"
+	// CipherComboSivCtrMac uses AES-SIV for filenames and AES-CTR plus an HMAC for contents. It was the default until Cryptomator 1.7.
 	CipherComboSivCtrMac = "SIV_CTRMAC"
-	CipherComboSivGcm    = "SIV_GCM"
 )
 
+// Cryptor implements encryption operations for Cryptomator vaults.
 type Cryptor struct {
 	masterKey   MasterKey
 	siv         *miscreant.Cipher
@@ -37,6 +40,7 @@ type contentCryptor interface {
 	TagSize() int
 }
 
+// NewCryptor creates a new cryptor from vault configuration.
 func NewCryptor(key MasterKey, cipherCombo string) (c Cryptor, err error) {
 	c.masterKey = key
 	c.siv, err = miscreant.NewAESCMACSIV(append(key.MacKey, key.EncryptKey...))
@@ -51,6 +55,7 @@ func NewCryptor(key MasterKey, cipherCombo string) (c Cryptor, err error) {
 	return
 }
 
+// EncryptDirID encrypts a directory ID.
 func (c *Cryptor) EncryptDirID(dirID string) (string, error) {
 	ciphertext, err := c.siv.Seal(nil, []byte(dirID))
 	if err != nil {
@@ -60,6 +65,7 @@ func (c *Cryptor) EncryptDirID(dirID string) (string, error) {
 	return base32.StdEncoding.EncodeToString(hash[:]), nil
 }
 
+// EncryptFilename encrypts a filename.
 func (c *Cryptor) EncryptFilename(filename string, dirID string) (string, error) {
 	ciphertext, err := c.siv.Seal(nil, []byte(filename), []byte(dirID))
 	if err != nil {
@@ -68,6 +74,7 @@ func (c *Cryptor) EncryptFilename(filename string, dirID string) (string, error)
 	return base64.URLEncoding.EncodeToString(ciphertext), nil
 }
 
+// DecryptFilename decrypts a filename.
 func (c *Cryptor) DecryptFilename(filename string, dirID string) (string, error) {
 	filenameBytes, err := base64.URLEncoding.DecodeString(filename)
 	if err != nil {
@@ -102,6 +109,7 @@ func (c *Cryptor) newContentCryptor(key []byte) (contentCryptor, error) {
 	}
 }
 
+// EncryptedChunkSize calculates the size of the encrypted blob that would be returned by EncryptChunk with a payload of the given size.
 func EncryptedChunkSize(c contentCryptor, payloadSize int) int {
 	return c.NonceSize() + payloadSize + c.TagSize()
 }
@@ -110,8 +118,8 @@ type gcmCryptor struct {
 	aesGcm cipher.AEAD
 }
 
-func (_ *gcmCryptor) NonceSize() int { return 12 }
-func (_ *gcmCryptor) TagSize() int   { return 16 }
+func (*gcmCryptor) NonceSize() int { return 12 }
+func (*gcmCryptor) TagSize() int   { return 16 }
 
 func (c *gcmCryptor) EncryptChunk(payload, nonce, additionalData []byte) (ciphertext []byte) {
 	buf := bytes.Buffer{}
@@ -127,7 +135,7 @@ func (c *gcmCryptor) DecryptChunk(chunk, additionalData []byte) ([]byte, error) 
 
 func (c *gcmCryptor) fileAssociatedData(fileNonce []byte, chunkNr uint64) []byte {
 	buf := bytes.Buffer{}
-	binary.Write(&buf, binary.BigEndian, chunkNr)
+	_ = binary.Write(&buf, binary.BigEndian, chunkNr)
 	buf.Write(fileNonce)
 	return buf.Bytes()
 }
@@ -137,8 +145,8 @@ type ctrMacCryptor struct {
 	hmacKey []byte
 }
 
-func (_ *ctrMacCryptor) NonceSize() int { return 16 }
-func (_ *ctrMacCryptor) TagSize() int   { return 32 }
+func (*ctrMacCryptor) NonceSize() int { return 16 }
+func (*ctrMacCryptor) TagSize() int   { return 32 }
 
 func (c *ctrMacCryptor) newCTR(nonce []byte) cipher.Stream { return cipher.NewCTR(c.aes, nonce) }
 func (c *ctrMacCryptor) newHMAC() hash.Hash                { return hmac.New(sha256.New, c.hmacKey) }
@@ -176,6 +184,6 @@ func (c *ctrMacCryptor) DecryptChunk(chunk, additionalData []byte) ([]byte, erro
 func (c *ctrMacCryptor) fileAssociatedData(fileNonce []byte, chunkNr uint64) []byte {
 	buf := bytes.Buffer{}
 	buf.Write(fileNonce)
-	binary.Write(&buf, binary.BigEndian, chunkNr)
+	_ = binary.Write(&buf, binary.BigEndian, chunkNr)
 	return buf.Bytes()
 }

@@ -8,6 +8,7 @@ import (
 )
 
 const (
+	// ChunkPayloadSize is the size of the encrypted payload of each file chunk.
 	ChunkPayloadSize = 32 * 1024
 )
 
@@ -16,6 +17,7 @@ const (
 	notLastChunk = false
 )
 
+// Reader decrypts a Cryptomator file as it is read from.
 type Reader struct {
 	cryptor contentCryptor
 	header  FileHeader
@@ -29,6 +31,7 @@ type Reader struct {
 	err error
 }
 
+// NewReader creates a new Reader using the file header.
 func (c *Cryptor) NewReader(src io.Reader, header FileHeader) (*Reader, error) {
 	cryptor, err := c.newContentCryptor(header.ContentKey)
 	if err != nil {
@@ -83,7 +86,7 @@ func (r *Reader) readChunk() (last bool, err error) {
 		panic("stream: internal error: readChunk called with dirty buffer")
 	}
 
-	in := r.buf[:]
+	in := r.buf
 	n, err := io.ReadFull(r.src, in)
 
 	switch {
@@ -105,16 +108,11 @@ func (r *Reader) readChunk() (last bool, err error) {
 	}
 
 	r.chunkNr++
-	r.unread = r.buf[:copy(r.buf[:], payload)]
+	r.unread = r.buf[:copy(r.buf, payload)]
 	return last, nil
 }
 
-func (r *Reader) Close() {
-	if src, ok := r.src.(io.ReadCloser); ok {
-		src.Close()
-	}
-}
-
+// Writer encrypts a Cryptomator file as it is written to.
 type Writer struct {
 	cryptor contentCryptor
 	header  FileHeader
@@ -128,6 +126,7 @@ type Writer struct {
 	chunkNr uint64
 }
 
+// NewWriter creates a new Writer using the file header.
 func (c *Cryptor) NewWriter(dst io.Writer, header FileHeader) (*Writer, error) {
 	cryptor, err := c.newContentCryptor(header.ContentKey)
 	if err != nil {

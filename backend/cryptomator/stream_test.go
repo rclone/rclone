@@ -40,10 +40,12 @@ func TestDecryptReferenceStream(t *testing.T) {
 		assert.NoError(t, err)
 
 		var encFiles map[string]encryptedFile
-		json.Unmarshal(input, &encFiles)
+		err = json.Unmarshal(input, &encFiles)
+		assert.NoError(t, err)
 
 		var plainTexts map[string][]byte
-		json.Unmarshal(golden, &plainTexts)
+		err = json.Unmarshal(golden, &plainTexts)
+		assert.NoError(t, err)
 
 		for name, encFile := range encFiles {
 			t.Run(fmt.Sprintf("%s:%s", testname, name), func(t *testing.T) {

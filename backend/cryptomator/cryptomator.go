@@ -126,6 +126,9 @@ type Options struct {
 	Password string `config:"password"`
 }
 
+// Fs wraps another fs and encrypts the directory
+// structure, filenames, and file contents as outlined
+// in https://docs.cryptomator.org/en/latest/security/architecture/
 type Fs struct {
 	wrapped  fs.Fs
 	name     string
@@ -138,8 +141,6 @@ type Fs struct {
 	Cryptor
 
 	dirCache *dircache.DirCache
-
-	wrapper fs.Fs
 }
 
 // -------- fs.Info
@@ -154,10 +155,12 @@ func (f *Fs) Root() string {
 	return f.root
 }
 
+// String returns a description of the FS
 func (f *Fs) String() string {
 	return fmt.Sprintf("Cryptomator vault of %s", f.wrapped.String())
 }
 
+// Precision of the remote
 func (f *Fs) Precision() time.Duration {
 	return f.wrapped.Precision()
 }
@@ -175,6 +178,15 @@ func (f *Fs) Features() *fs.Features {
 
 // -------- fs.Fs
 
+// List the objects and directories in dir into entries.  The
+// entries can be returned in any order but should be for a
+// complete directory.
+//
+// dir should be "" to list the root, and should not have
+// trailing slashes.
+//
+// This should return ErrDirNotFound if the directory isn't
+// found.
 func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err error) {
 	dirID, err := f.dirCache.FindDir(ctx, dir, false)
 	if err != nil {
@@ -202,19 +214,18 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 		if err != nil {
 			return nil, fmt.Errorf("failed to decrypt filename %q: %w", encryptedFilename, err)
 		}
-		path.Ext(filename)
 		remote := path.Join(dir, filename)
 
-		switch entry.(type) {
+		switch entry := entry.(type) {
 		case fs.Directory:
 			entries = append(entries, &Directory{
-				Directory: entry.(fs.Directory),
+				Directory: entry,
 				fs:        f,
 				remote:    remote,
 			})
 		case fs.Object:
 			entries = append(entries, &Object{
-				Object: entry.(fs.Object),
+				Object: entry,
 				fs:     f,
 				remote: remote,
 			})
@@ -225,6 +236,12 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 	return
 }
 
+// NewObject finds the Object at remote.  If it can't be found
+// it returns the error ErrorObjectNotFound.
+//
+// If remote points to a directory then it should return
+// ErrorIsDir if possible without doing any extra work,
+// otherwise ErrorObjectNotFound.
 func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 	leaf, dirID, err := f.dirCache.FindPath(ctx, remote, false)
 	if err != nil {
@@ -250,14 +267,29 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 	}, nil
 }
 
+// Rmdir removes the directory (container, bucket) if empty
+//
+// Return an error if it doesn't exist or isn't empty
 func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 	return fmt.Errorf("TODO implement Fs.Rmdir")
 }
 
+// Mkdir makes the directory (container, bucket)
+//
+// Shouldn't return an error if it already exists
 func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 	return fmt.Errorf("TODO implement Fs.Mkdir")
 }
 
+// Put in to the remote path with the modTime given of the given size
+//
+// When called from outside an Fs by rclone, src.Size() will always be >= 0.
+// But for unknown-sized objects (indicated by src.Size() == -1), Put should either
+// return an error or upload it properly (rather than e.g. calling panic).
+//
+// May create the object even if it returns an error - if so
+// will return the object and the error, otherwise will return
+// nil and the error
 func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
 	return nil, fmt.Errorf("TODO implement Fs.Put")
 }
@@ -291,30 +323,39 @@ func (f *Fs) FindLeaf(ctx context.Context, pathID, leaf string) (pathIDOut strin
 	return
 }
 
+// CreateDir creates a directory at the request of the DirCache
 func (f *Fs) CreateDir(context.Context, string, string) (string, error) {
 	return "", fmt.Errorf("TODO implement DirCacher.CreateDir")
 }
 
 // -------- fs.Directory
 
+// Directory wraps the underlying fs.Directory and handles filename encryption and so on
 type Directory struct {
 	fs.Directory
 	fs     *Fs
 	remote string
 }
 
-func (d *Directory) Fs() fs.Info    { return d.fs }
+// Fs returns read only access to the Fs that this object is part of
+func (d *Directory) Fs() fs.Info { return d.fs }
+
+// Remote returns the decrypted remote path
 func (d *Directory) Remote() string { return d.remote }
 
 // -------- fs.Object
 
+// Object wraps the underlying fs.Object and handles encryption
 type Object struct {
 	fs.Object
 	fs     *Fs
 	remote string
 }
 
-func (o *Object) Fs() fs.Info    { return o.fs }
+// Fs returns read only access to the Fs that this object is part of
+func (o *Object) Fs() fs.Info { return o.fs }
+
+// Remote returns the decrypted remote path
 func (o *Object) Remote() string { return o.remote }
 
 // Open opens the file for read.  Call Close() on the returned io.ReadCloser
@@ -352,12 +393,16 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 
 	header, err := o.fs.UnmarshalHeader(reader)
 	if err != nil {
-		reader.Close()
+		_ = reader.Close()
 		return nil, err
 	}
 
 	var decryptReader io.Reader
 	decryptReader, err = o.fs.NewReader(reader, header)
+	if err != nil {
+		_ = reader.Close()
+		return nil, err
+	}
 
 	if _, err = io.CopyN(io.Discard, decryptReader, offset); err != nil {
 		return nil, err
@@ -401,7 +446,7 @@ func (f *Fs) readSmallFile(ctx context.Context, path string, maxLen int64) ([]by
 	if err != nil {
 		return nil, err
 	}
-	defer reader.Close()
+	_ = reader.Close()
 	data, err := io.ReadAll(reader)
 	return data, err
 }

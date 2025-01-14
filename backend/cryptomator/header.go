@@ -9,19 +9,27 @@ import (
 	"unsafe"
 )
 
+// FileHeader is the header of an encrypted Cryptomator file.
 type FileHeader struct {
-	Nonce      []byte
-	Reserved   []byte
+	// The nonce used to encrypt the file header. Each file content chunk, while encrypted with its own nonce, also mixes the file header nonce into the MAC.
+	Nonce    []byte
+	Reserved []byte
+	// The AES key used to encrypt the file contents.
 	ContentKey []byte
 }
 
 const (
-	HeaderContentKeySize        = 32
-	HeaderReservedSize          = 8
-	HeaderPayloadSize           = HeaderContentKeySize + HeaderReservedSize
-	HeaderReservedValue  uint64 = 0xFFFFFFFFFFFFFFFF
+	// HeaderContentKeySize is the size of the ContentKey in the FileHeader.
+	HeaderContentKeySize = 32
+	// HeaderReservedSize is the size of the Reserved data in the FileHeader.
+	HeaderReservedSize = 8
+	// HeaderPayloadSize is the size of the encrypted part of the file header.
+	HeaderPayloadSize = HeaderContentKeySize + HeaderReservedSize
+	// HeaderReservedValue is the expected value of the Reserved data.
+	HeaderReservedValue uint64 = 0xFFFFFFFFFFFFFFFF
 )
 
+// NewHeader creates a new randomly initialized FileHeader
 func (c *Cryptor) NewHeader() (header FileHeader, err error) {
 	header.Nonce = make([]byte, c.NonceSize())
 	header.ContentKey = make([]byte, HeaderContentKeySize)
@@ -55,6 +63,7 @@ func copySameLength(dst, src []byte, name string) error {
 	return nil
 }
 
+// MarshalHeader encrypts the header and writes it in encrypted form to the writer.
 func (c *Cryptor) MarshalHeader(w io.Writer, h FileHeader) (err error) {
 	var payload headerPayload
 	if err = copySameLength(payload.Reserved[:], h.Reserved, "Reserved"); err != nil {
@@ -69,10 +78,11 @@ func (c *Cryptor) MarshalHeader(w io.Writer, h FileHeader) (err error) {
 		return
 	}
 	encPayload := c.EncryptChunk(encBuffer.Bytes(), h.Nonce, nil)
-	w.Write(encPayload)
+	_, err = w.Write(encPayload)
 	return
 }
 
+// UnmarshalHeader reads an encrypted header from the reader and decrypts it.
 func (c *Cryptor) UnmarshalHeader(r io.Reader) (header FileHeader, err error) {
 	encHeader := make([]byte, c.NonceSize()+HeaderPayloadSize+c.TagSize())
 	_, err = io.ReadFull(r, encHeader)
