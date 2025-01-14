@@ -95,7 +95,7 @@ func UnmarshalUnverifiedVaultConfig(r io.Reader) (c VaultConfig, err error) {
 }
 
 func loadVault(ctx context.Context, fs *Fs, password string) error {
-	configData, err := fs.readMetadataFile(ctx, "vault.cryptomator", 1024)
+	configData, err := fs.readSmallFile(ctx, "vault.cryptomator", 1024)
 	if err != nil {
 		return fmt.Errorf("failed to read config at vault.cryptomator: %w", err)
 	}
@@ -112,7 +112,7 @@ func loadVault(ctx context.Context, fs *Fs, password string) error {
 		if !ok {
 			return nil, fmt.Errorf("vault.cryptomator key url does not start with masterkeyfile:")
 		}
-		masterKeyData, err := fs.readMetadataFile(ctx, masterKeyPath, 1024)
+		masterKeyData, err := fs.readSmallFile(ctx, masterKeyPath, 1024)
 		if err != nil {
 			return nil, fmt.Errorf("failed to read master key: %w", err)
 		}

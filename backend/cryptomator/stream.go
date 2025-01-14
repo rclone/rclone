@@ -109,6 +109,12 @@ func (r *Reader) readChunk() (last bool, err error) {
 	return last, nil
 }
 
+func (r *Reader) Close() {
+	if src, ok := r.src.(io.ReadCloser); ok {
+		src.Close()
+	}
+}
+
 type Writer struct {
 	cryptor contentCryptor
 	header  FileHeader

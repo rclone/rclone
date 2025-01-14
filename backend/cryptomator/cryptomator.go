@@ -266,7 +266,6 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 
 // FindLeaf finds a child of name leaf in the directory with id pathID
 func (f *Fs) FindLeaf(ctx context.Context, pathID, leaf string) (pathIDOut string, found bool, err error) {
-	fmt.Printf("FindLeaf %q %q\n", pathID, leaf)
 	dirPath, err := f.encryptedPathForDirID(pathID)
 	if err != nil {
 		return
@@ -276,7 +275,7 @@ func (f *Fs) FindLeaf(ctx context.Context, pathID, leaf string) (pathIDOut strin
 		return
 	}
 	subdirIDFile := path.Join(dirPath, encryptedFilename+".c9r", "dir.c9r")
-	subdirID, err := f.readMetadataFile(ctx, subdirIDFile, 100)
+	subdirID, err := f.readSmallFile(ctx, subdirIDFile, 100)
 	if errors.Is(err, fs.ErrorDirNotFound) {
 		err = nil
 		return
@@ -318,8 +317,63 @@ type Object struct {
 func (o *Object) Fs() fs.Info    { return o.fs }
 func (o *Object) Remote() string { return o.remote }
 
+// Open opens the file for read.  Call Close() on the returned io.ReadCloser
+//
+// This calls Open on the object of the underlying remote with fs.SeekOption
+// and fs.RangeOption removes. This is strictly necessary as the file header
+// contains all the information to decrypt the file.
+//
+// TODO: Since the files are encrypted in 32kb chunks, it would be possible to
+// support real seek and range requests. However, it would be necessary to make
+// two requests, one for the file header and one for the requested range.
+//
+// We wrap the reader of the underlying object to decrypt the data.
+// - For fs.SeekOption we just discard all the bytes until we reach the Offset
+// - For fs.RangeOption we do the same and then wrap the reader in io.LimitReader
 func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadCloser, error) {
-	return nil, fmt.Errorf("TODO implement Open")
+	var offset, limit int64 = 0, -1
+	var newOptions []fs.OpenOption
+	for _, option := range options {
+		switch x := option.(type) {
+		case *fs.SeekOption:
+			offset = x.Offset
+		case *fs.RangeOption:
+			offset, limit = x.Decode(o.Size())
+		default:
+			newOptions = append(newOptions, option)
+		}
+	}
+	options = newOptions
+
+	reader, err := o.Object.Open(ctx, options...)
+	if err != nil {
+		return nil, err
+	}
+
+	header, err := o.fs.UnmarshalHeader(reader)
+	if err != nil {
+		reader.Close()
+		return nil, err
+	}
+
+	var decryptReader io.Reader
+	decryptReader, err = o.fs.NewReader(reader, header)
+
+	if _, err = io.CopyN(io.Discard, decryptReader, offset); err != nil {
+		return nil, err
+	}
+
+	if limit != -1 {
+		decryptReader = io.LimitReader(decryptReader, limit)
+	}
+
+	return struct {
+		io.Reader
+		io.Closer
+	}{
+		Reader: decryptReader,
+		Closer: reader,
+	}, nil
 }
 
 // -------- private
@@ -334,28 +388,8 @@ func (f *Fs) encryptedPathForDirID(dirID string) (string, error) {
 	return dirPath, nil
 }
 
-func (f *Fs) openEncryptedFile(ctx context.Context, path string) (io.Reader, error) {
-	obj, err := f.wrapped.NewObject(ctx, path)
-	if err != nil {
-		return nil, err
-	}
-	reader, err := obj.Open(ctx)
-	if err != nil {
-		return nil, err
-	}
-	defer reader.Close()
-
-	header, err := f.UnmarshalHeader(reader)
-	if err != nil {
-		return nil, err
-	}
-	_ = header
-
-	return nil, fmt.Errorf("TODO implement openEncryptedFile")
-}
-
-// readMetadataFile reads a file in full from the wrapped filesystem and returns it as bytes.
-func (f *Fs) readMetadataFile(ctx context.Context, path string, maxLen int64) ([]byte, error) {
+// readSmallFile reads a file in full from the wrapped filesystem and returns it as bytes.
+func (f *Fs) readSmallFile(ctx context.Context, path string, maxLen int64) ([]byte, error) {
 	obj, err := f.wrapped.NewObject(ctx, path)
 	if err != nil {
 		return nil, err
