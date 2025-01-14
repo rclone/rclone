@@ -195,10 +195,13 @@ func (lj *listJSON) entry(ctx context.Context, entry fs.DirEntry) (*ListJSONItem
 	}
 
 	// Read the metadata if required
-	entryMetadataer := entry.(fs.Metadataer)
-	meta, err := entryMetadataer.Metadata(ctx)
-	if err != nil {
-		fs.Errorf(entry, "Failed to read metadata: %v", err)
+	var meta fs.Metadata
+	var err error
+	if entryMetadataer, ok := entry.(fs.Metadataer); ok {
+		meta, err = entryMetadataer.Metadata(ctx)
+		if err != nil {
+			fs.Errorf(entry, "Failed to read metadata: %v", err)
+		}
 	}
 
 	var name string
