@@ -204,6 +204,7 @@ func (lj *listJSON) entry(ctx context.Context, entry fs.DirEntry) (*ListJSONItem
 		}
 	}
 
+	// Extract the name from the metadata if possible
 	var name string
 	if meta != nil && meta["content-disposition"] != "" {
 		name, err = parseFilenameFromContentDisposition(meta["content-disposition"])
