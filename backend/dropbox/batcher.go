@@ -11,7 +11,6 @@ import (
 	"fmt"
 
 	"github.com/dropbox/dropbox-sdk-go-unofficial/v6/dropbox/files"
-	"github.com/rclone/rclone/fs/fserrors"
 )
 
 // finishBatch commits the batch, returning a batch status to poll or maybe complete
@@ -21,14 +20,10 @@ func (f *Fs) finishBatch(ctx context.Context, items []*files.UploadSessionFinish
 	}
 	err = f.pacer.Call(func() (bool, error) {
 		complete, err = f.srv.UploadSessionFinishBatchV2(arg)
-		// If error is insufficient space then don't retry
-		if e, ok := err.(files.UploadSessionFinishAPIError); ok {
-			if e.EndpointError != nil && e.EndpointError.Path != nil && e.EndpointError.Path.Tag == files.WriteErrorInsufficientSpace {
-				err = fserrors.NoRetryError(err)
-				return false, err
-			}
+		if retry, err := shouldRetryExclude(ctx, err); !retry {
+			return retry, err
 		}
-		// after the first chunk is uploaded, we retry everything
+		// after the first chunk is uploaded, we retry everything except the excluded errors
 		return err != nil, err
 	})
 	if err != nil {

@@ -340,7 +340,9 @@ Properties:
 
 #### --oos-compartment
 
-Object storage compartment OCID
+Specify compartment OCID, if you need to list buckets.
+
+List objects works without compartment OCID.
 
 Properties:
 
@@ -348,7 +350,7 @@ Properties:
 - Env Var:     RCLONE_OOS_COMPARTMENT
 - Provider:    !no_auth
 - Type:        string
-- Required:    true
+- Required:    false
 
 #### --oos-region
 

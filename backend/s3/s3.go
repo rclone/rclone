@@ -2056,7 +2056,7 @@ If you leave it blank, this is calculated automatically from the sse_customer_ke
 				Help:  "One Zone Infrequent Access storage class",
 			}, {
 				Value: "GLACIER",
-				Help:  "Glacier storage class",
+				Help:  "Glacier Flexible Retrieval storage class",
 			}, {
 				Value: "DEEP_ARCHIVE",
 				Help:  "Glacier Deep Archive storage class",
@@ -6174,6 +6174,9 @@ func (w *s3ChunkWriter) WriteChunk(ctx context.Context, chunkNumber int, reader 
 		if err != nil {
 			if chunkNumber <= 8 {
 				return w.f.shouldRetry(ctx, err)
+			}
+			if fserrors.ContextError(ctx, &err) {
+				return false, err
 			}
 			// retry all chunks once have done the first few
 			return true, err

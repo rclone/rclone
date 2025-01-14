@@ -309,8 +309,7 @@ func TestParseSumFile(t *testing.T) {
 		}
 
 		_ = r.WriteObject(ctx, sumFile, data.String(), t1)
-		file, err := r.Fremote.NewObject(ctx, sumFile)
-		assert.NoError(t, err)
+		file := fstest.NewObject(ctx, t, r.Fremote, sumFile)
 		sums, err := operations.ParseSumFile(ctx, file)
 		assert.NoError(t, err)
 
