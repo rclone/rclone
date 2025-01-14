@@ -11,6 +11,7 @@ import (
 // The following is the StandardClaims implementation from jwt-go v4,
 // where it was marked as deprecated before removed in v5. Some small
 // adjustments the original code have been made, to satisfy linters etc.
+// The type has also been renamed to LegacyStandardClaims to avoid confusion.
 // Source: https://github.com/golang-jwt/jwt/blob/v4/claims.go
 
 // Copyright (c) 2012 Dave Grijalva
@@ -35,14 +36,14 @@ import (
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-// StandardClaims are a structured version of the JWT Claims Set, as referenced at
+// LegacyStandardClaims are a structured version of the JWT Claims Set, as referenced at
 // https://datatracker.ietf.org/doc/html/rfc7519#section-4. They do not follow the
 // specification exactly, since they were based on an earlier draft of the
 // specification and not updated. The main difference is that they only
 // support integer-based date fields and singular audiences. This might lead to
 // incompatibilities with other JWT implementations. The use of this is discouraged, instead
 // the newer RegisteredClaims struct should be used.
-type StandardClaims struct {
+type LegacyStandardClaims struct {
 	Audience  string `json:"aud,omitempty"`
 	ExpiresAt int64  `json:"exp,omitempty"`
 	ID        string `json:"jti,omitempty"`
@@ -55,7 +56,7 @@ type StandardClaims struct {
 // Valid validates time based claims "exp, iat, nbf". There is no accounting for clock skew.
 // As well, if any of the above claims are not in the token, it will still
 // be considered a valid claim.
-func (c StandardClaims) Valid() error {
+func (c LegacyStandardClaims) Valid() error {
 	vErr := new(jwt.ValidationError)
 	now := jwt.TimeFunc().Unix()
 
@@ -86,13 +87,13 @@ func (c StandardClaims) Valid() error {
 
 // VerifyAudience compares the aud claim against cmp.
 // If required is false, this method will return true if the value matches or is unset
-func (c *StandardClaims) VerifyAudience(cmp string, req bool) bool {
+func (c *LegacyStandardClaims) VerifyAudience(cmp string, req bool) bool {
 	return verifyAud([]string{c.Audience}, cmp, req)
 }
 
 // VerifyExpiresAt compares the exp claim against cmp (cmp < exp).
 // If req is false, it will return true, if exp is unset.
-func (c *StandardClaims) VerifyExpiresAt(cmp int64, req bool) bool {
+func (c *LegacyStandardClaims) VerifyExpiresAt(cmp int64, req bool) bool {
 	if c.ExpiresAt == 0 {
 		return verifyExp(nil, time.Unix(cmp, 0), req)
 	}
@@ -103,7 +104,7 @@ func (c *StandardClaims) VerifyExpiresAt(cmp int64, req bool) bool {
 
 // VerifyIssuedAt compares the iat claim against cmp (cmp >= iat).
 // If req is false, it will return true, if iat is unset.
-func (c *StandardClaims) VerifyIssuedAt(cmp int64, req bool) bool {
+func (c *LegacyStandardClaims) VerifyIssuedAt(cmp int64, req bool) bool {
 	if c.IssuedAt == 0 {
 		return verifyIat(nil, time.Unix(cmp, 0), req)
 	}
@@ -114,7 +115,7 @@ func (c *StandardClaims) VerifyIssuedAt(cmp int64, req bool) bool {
 
 // VerifyNotBefore compares the nbf claim against cmp (cmp >= nbf).
 // If req is false, it will return true, if nbf is unset.
-func (c *StandardClaims) VerifyNotBefore(cmp int64, req bool) bool {
+func (c *LegacyStandardClaims) VerifyNotBefore(cmp int64, req bool) bool {
 	if c.NotBefore == 0 {
 		return verifyNbf(nil, time.Unix(cmp, 0), req)
 	}
@@ -125,7 +126,7 @@ func (c *StandardClaims) VerifyNotBefore(cmp int64, req bool) bool {
 
 // VerifyIssuer compares the iss claim against cmp.
 // If required is false, this method will return true if the value matches or is unset
-func (c *StandardClaims) VerifyIssuer(cmp string, req bool) bool {
+func (c *LegacyStandardClaims) VerifyIssuer(cmp string, req bool) bool {
 	return verifyIss(c.Issuer, cmp, req)
 }
 

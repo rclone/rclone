@@ -74,7 +74,7 @@ var (
 )
 
 type boxCustomClaims struct {
-	jwtutil.StandardClaims
+	jwtutil.LegacyStandardClaims
 	BoxSubType string `json:"box_sub_type,omitempty"`
 }
 
@@ -222,7 +222,7 @@ func getClaims(boxConfig *api.ConfigJSON, boxSubType string) (claims *boxCustomC
 	}
 
 	claims = &boxCustomClaims{
-		StandardClaims: jwtutil.StandardClaims{
+		LegacyStandardClaims: jwtutil.LegacyStandardClaims{
 			ID:        val,
 			Issuer:    boxConfig.BoxAppSettings.ClientID,
 			Subject:   boxConfig.EnterpriseID,
