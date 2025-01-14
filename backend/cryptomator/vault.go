@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"io"
 	"strings"
 
 	"github.com/golang-jwt/jwt/v4"
@@ -26,34 +25,26 @@ func (kid keyID) URI() string {
 	return strings.Split(string(kid), ":")[1]
 }
 
+func (m MasterKey) jwtKey() []byte {
+	return append(m.EncryptKey, m.MacKey...)
+}
+
 // VaultConfig is the configuration for the vault, saved in vault.cryptomator at the root of the vault.
 type VaultConfig struct {
 	Format              int    `json:"format"`
 	ShorteningThreshold int    `json:"shorteningThreshold"`
 	Jti                 string `json:"jti"`
 	CipherCombo         string `json:"cipherCombo"`
-
-	KeyID    keyID  `json:"-"`
-	rawToken string `json:"-"`
 }
 
 // NewVaultConfig creates a new VaultConfig with the default settings and signs it.
-func NewVaultConfig(encKey, macKey []byte) (c VaultConfig, err error) {
-	masterKeyFileName := "masterkey.cryptomator"
-	c = VaultConfig{
+func NewVaultConfig() VaultConfig {
+	return VaultConfig{
 		Format:              8,
 		ShorteningThreshold: 220,
 		Jti:                 uuid.NewString(),
 		CipherCombo:         CipherComboSivGcm,
-		KeyID:               keyID("masterkeyfile:" + masterKeyFileName),
 	}
-
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, &c)
-	token.Header[configKeyIDTag] = string(c.KeyID)
-
-	c.rawToken, err = token.SignedString(append(encKey, macKey...))
-
-	return
 }
 
 // Valid tests the validity of the VaultConfig during JWT parsing.
@@ -65,41 +56,28 @@ func (c *VaultConfig) Valid() error {
 	return nil
 }
 
-// Marshal writes the VaultConfig as a JWT.
-func (c VaultConfig) Marshal(w io.Writer, encKey, macKey []byte) error {
-	_, err := w.Write([]byte(c.rawToken))
-
-	return err
+// Marshal makes a signed JWT from the VaultConfig.
+func (c VaultConfig) Marshal(masterKey MasterKey) ([]byte, error) {
+	masterKeyFileName := "masterkey.cryptomator"
+	keyID := keyID("masterkeyfile:" + masterKeyFileName)
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, &c)
+	token.Header[configKeyIDTag] = string(keyID)
+	rawToken, err := token.SignedString(masterKey.jwtKey())
+	if err != nil {
+		return nil, err
+	}
+	return []byte(rawToken), nil
 }
 
-// Verify validates the JWT
-func (c VaultConfig) Verify(encKey, macKey []byte) error {
-	_, err := jwt.Parse(c.rawToken, func(t *jwt.Token) (interface{}, error) {
-		return append(encKey, macKey...), nil
-	})
-
-	return err
-}
-
-// UnmarshalUnverifiedVaultConfig reads and parses the JWT without verifying it
-func UnmarshalUnverifiedVaultConfig(r io.Reader) (c VaultConfig, err error) {
-	tokenBytes, err := io.ReadAll(r)
-	if err != nil {
-		return
-	}
-
-	token, _, err := jwt.NewParser().ParseUnverified(string(tokenBytes), &c)
-	if err != nil {
-		return
-	}
-
-	if err = token.Claims.Valid(); err != nil {
-		return
-	}
-
-	c.KeyID = keyID(token.Header[configKeyIDTag].(string))
-	c.rawToken = token.Raw
-
+// UnmarshalVaultConfig parses the JWT without verifying it
+func UnmarshalVaultConfig(tokenBytes []byte, keyFunc func(token *jwt.Token) (*MasterKey, error)) (c VaultConfig, err error) {
+	_, err = jwt.ParseWithClaims(string(tokenBytes), &c, func(token *jwt.Token) (any, error) {
+		masterKey, err := keyFunc(token)
+		if err != nil {
+			return nil, err
+		}
+		return masterKey.jwtKey(), nil
+	}, jwt.WithValidMethods([]string{"HS256", "HS384", "HS512"}))
 	return
 }
 
@@ -108,7 +86,7 @@ func loadVault(ctx context.Context, fs *Fs, passphrase string) error {
 	if err != nil {
 		return fmt.Errorf("failed to read config at vault.cryptomator: %w", err)
 	}
-	token, err := jwt.ParseWithClaims(string(configData), &fs.vaultConfig, func(token *jwt.Token) (any, error) {
+	fs.vaultConfig, err = UnmarshalVaultConfig(configData, func(token *jwt.Token) (*MasterKey, error) {
 		kidObj, ok := token.Header["kid"]
 		if !ok {
 			return nil, fmt.Errorf("no key url in vault.cryptomator jwt")
@@ -129,13 +107,10 @@ func loadVault(ctx context.Context, fs *Fs, passphrase string) error {
 		if err != nil {
 			return nil, err
 		}
-		return append(append([]byte{}, fs.masterKey.EncryptKey...), fs.masterKey.MacKey...), nil
-	}, jwt.WithValidMethods([]string{"HS256", "HS384", "HS512"}))
+		return &fs.masterKey, nil
+	})
 	if err != nil {
 		return fmt.Errorf("failed to parse jwt: %w", err)
-	}
-	if !token.Valid {
-		return fmt.Errorf("invalid jwt")
 	}
 	return nil
 }
