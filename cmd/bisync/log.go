@@ -78,6 +78,15 @@ func Color(style string, s string) string {
 	return style + s + terminal.Reset
 }
 
+// ColorX handles terminal colors for bisync
+func ColorX(style string, s string) string {
+	if !Colors {
+		return s
+	}
+	terminal.Start()
+	return style + s + terminal.Reset
+}
+
 func encode(s string) string {
 	return encoder.OS.ToStandardPath(encoder.OS.FromStandardPath(s))
 }
