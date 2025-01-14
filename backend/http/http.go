@@ -125,7 +125,11 @@ type Object struct {
 	remote      string
 	size        int64
 	modTime     time.Time
+	meta        map[string]string // The object metadata if known - may be nil - with lower case keys
 	contentType string
+
+	// Metadata as pointers to strings as they often won't be present
+	contentDisposition *string // Content-Disposition: header
 }
 
 // statusError returns an error if the res contained an error
@@ -627,6 +631,13 @@ func (o *Object) decodeMetadata(ctx context.Context, res *http.Response) error {
 	o.contentType = res.Header.Get("Content-Type")
 	o.size = rest.ParseSizeFromHeaders(res.Header)
 
+	// Parse Content-Disposition header
+	contentDisposition := res.Header.Get("Content-Disposition")
+	if contentDisposition != "" {
+		o.contentDisposition = &contentDisposition
+		o.meta["content-disposition"] = contentDisposition
+	}
+
 	// If NoSlash is set then check ContentType to see if it is a directory
 	if o.fs.opt.NoSlash {
 		mediaType, _, err := mime.ParseMediaType(o.contentType)
@@ -763,6 +774,14 @@ func (f *Fs) Command(ctx context.Context, name string, arg []string, opt map[str
 	}
 }
 
+// Metadata returns metadata for an object
+//
+// It should return nil if there is no Metadata
+func (o *Object) Metadata(ctx context.Context) (metadata fs.Metadata, err error) {
+	metadata = o.meta
+	return metadata, nil
+}
+
 // Check the interfaces are satisfied
 var (
 	_ fs.Fs          = &Fs{}
@@ -770,4 +789,5 @@ var (
 	_ fs.Object      = &Object{}
 	_ fs.MimeTyper   = &Object{}
 	_ fs.Commander   = &Fs{}
+	_ fs.Metadataer  = &Object{}
 )
