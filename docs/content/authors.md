@@ -927,3 +927,4 @@ put them back in again.` >}}
   * Francesco Frassinelli <fraph24@gmail.com> <francesco.frassinelli@nina.no>
   * Matt Ickstadt <mattico8@gmail.com> <matt@beckenterprises.com>
   * Spencer McCullough <mccullough.spencer@gmail.com>
+  * Jonathan Giannuzzi <jonathan@giannuzzi.me>
