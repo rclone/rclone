@@ -112,6 +112,7 @@ func (r *Reader) readChunk() (last bool, err error) {
 	return last, nil
 }
 
+// Writer encrypts a Cryptomator file as it is written to.
 type Writer struct {
 	cryptor contentCryptor
 	header  FileHeader
