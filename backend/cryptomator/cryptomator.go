@@ -2,6 +2,7 @@
 package cryptomator
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -16,6 +17,7 @@ import (
 	"github.com/rclone/rclone/fs/config/configstruct"
 	"github.com/rclone/rclone/fs/config/obscure"
 	"github.com/rclone/rclone/fs/hash"
+	"github.com/rclone/rclone/fs/object"
 	"github.com/rclone/rclone/lib/dircache"
 )
 
@@ -76,9 +78,9 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	if err != nil {
 		return nil, fmt.Errorf("failed to decrypt password: %w", err)
 	}
-	err = loadVault(ctx, f, password)
+	err = f.loadOrCreateVault(ctx, password)
 	if err != nil {
-		return nil, fmt.Errorf("failed to load vault config: %w", err)
+		return nil, err
 	}
 	f.Cryptor, err = NewCryptor(f.masterKey, f.vaultConfig.CipherCombo)
 	if err != nil {
@@ -405,6 +407,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 	}
 
 	if _, err = io.CopyN(io.Discard, decryptReader, offset); err != nil {
+		_ = reader.Close()
 		return nil, err
 	}
 
@@ -446,9 +449,15 @@ func (f *Fs) readSmallFile(ctx context.Context, path string, maxLen int64) ([]by
 	if err != nil {
 		return nil, err
 	}
-	_ = reader.Close()
 	data, err := io.ReadAll(reader)
+	_ = reader.Close()
 	return data, err
+}
+
+func (f *Fs) writeSmallFile(ctx context.Context, path string, data []byte) error {
+	info := object.NewStaticObjectInfo(path, time.Now(), int64(len(data)), true, nil, nil)
+	_, err := f.wrapped.Put(ctx, bytes.NewReader(data), info)
+	return err
 }
 
 // Check the interfaces are satisfied

@@ -3,7 +3,6 @@ package cryptomator_test
 import (
 	"testing"
 
-	"github.com/golang-jwt/jwt/v4"
 	"github.com/rclone/rclone/backend/cryptomator"
 	"github.com/stretchr/testify/assert"
 	"pgregory.net/rapid"
@@ -22,7 +21,7 @@ func TestVaultConfigRoundTrip(t *testing.T) {
 		token, err := c1.Marshal(masterKey)
 		assert.NoError(t, err)
 
-		c2, err := cryptomator.UnmarshalVaultConfig(token, func(*jwt.Token) (*cryptomator.MasterKey, error) {
+		c2, err := cryptomator.UnmarshalVaultConfig(token, func(string) (*cryptomator.MasterKey, error) {
 			return &masterKey, nil
 		})
 		assert.NoError(t, err)

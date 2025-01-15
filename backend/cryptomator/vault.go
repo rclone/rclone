@@ -3,16 +3,19 @@ package cryptomator
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/google/uuid"
+	"github.com/rclone/rclone/fs"
 )
 
 const (
-	configKeyIDTag = "kid"
-	configFileName = "vault.cryptomator"
+	configKeyIDTag    = "kid"
+	configFileName    = "vault.cryptomator"
+	masterKeyFileName = "masterkey.cryptomator"
 )
 
 type keyID string
@@ -58,7 +61,6 @@ func (c *VaultConfig) Valid() error {
 
 // Marshal makes a signed JWT from the VaultConfig.
 func (c VaultConfig) Marshal(masterKey MasterKey) ([]byte, error) {
-	masterKeyFileName := "masterkey.cryptomator"
 	keyID := keyID("masterkeyfile:" + masterKeyFileName)
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, &c)
 	token.Header[configKeyIDTag] = string(keyID)
@@ -70,9 +72,18 @@ func (c VaultConfig) Marshal(masterKey MasterKey) ([]byte, error) {
 }
 
 // UnmarshalVaultConfig parses the JWT without verifying it
-func UnmarshalVaultConfig(tokenBytes []byte, keyFunc func(token *jwt.Token) (*MasterKey, error)) (c VaultConfig, err error) {
+func UnmarshalVaultConfig(tokenBytes []byte, keyFunc func(masterKeyPath string) (*MasterKey, error)) (c VaultConfig, err error) {
 	_, err = jwt.ParseWithClaims(string(tokenBytes), &c, func(token *jwt.Token) (any, error) {
-		masterKey, err := keyFunc(token)
+		kidObj, ok := token.Header[configKeyIDTag]
+		if !ok {
+			return nil, fmt.Errorf("no key url in vault.cryptomator jwt")
+		}
+		kid, ok := kidObj.(string)
+		if !ok {
+			return nil, fmt.Errorf("key url in vault.cryptomator jwt is not a string")
+		}
+		keyID := keyID(kid)
+		masterKey, err := keyFunc(keyID.URI())
 		if err != nil {
 			return nil, err
 		}
@@ -81,36 +92,64 @@ func UnmarshalVaultConfig(tokenBytes []byte, keyFunc func(token *jwt.Token) (*Ma
 	return
 }
 
-func loadVault(ctx context.Context, fs *Fs, passphrase string) error {
-	configData, err := fs.readSmallFile(ctx, "vault.cryptomator", 1024)
+func (f *Fs) loadOrCreateVault(ctx context.Context, passphrase string) error {
+	configData, err := f.readSmallFile(ctx, configFileName, 1024)
 	if err != nil {
-		return fmt.Errorf("failed to read config at vault.cryptomator: %w", err)
+		if !errors.Is(err, fs.ErrorObjectNotFound) {
+			return fmt.Errorf("failed to read config at %s: %w", configFileName, err)
+		}
+		// Vault does not exist, so create it
+		err = f.createVault(ctx, passphrase)
+		if err != nil {
+			return fmt.Errorf("failed to create new vault: %w", err)
+		}
+		configData, err = f.readSmallFile(ctx, "vault.cryptomator", 1024)
+		if err != nil {
+			return fmt.Errorf("failed to read vault config after creating new vault: %w", err)
+		}
 	}
-	fs.vaultConfig, err = UnmarshalVaultConfig(configData, func(token *jwt.Token) (*MasterKey, error) {
-		kidObj, ok := token.Header["kid"]
-		if !ok {
-			return nil, fmt.Errorf("no key url in vault.cryptomator jwt")
-		}
-		kid, ok := kidObj.(string)
-		if !ok {
-			return nil, fmt.Errorf("key url in vault.cryptomator jwt is not a string")
-		}
-		masterKeyPath, ok := strings.CutPrefix(kid, "masterkeyfile:")
-		if !ok {
-			return nil, fmt.Errorf("vault.cryptomator key url does not start with \"masterkeyfile:\"")
-		}
-		masterKeyData, err := fs.readSmallFile(ctx, masterKeyPath, 1024)
+
+	f.vaultConfig, err = UnmarshalVaultConfig(configData, func(masterKeyPath string) (*MasterKey, error) {
+		masterKeyData, err := f.readSmallFile(ctx, masterKeyPath, 1024)
 		if err != nil {
 			return nil, fmt.Errorf("failed to read master key: %w", err)
 		}
-		fs.masterKey, err = UnmarshalMasterKey(bytes.NewReader(masterKeyData), passphrase)
+		f.masterKey, err = UnmarshalMasterKey(bytes.NewReader(masterKeyData), passphrase)
 		if err != nil {
 			return nil, err
 		}
-		return &fs.masterKey, nil
+		return &f.masterKey, nil
 	})
 	if err != nil {
 		return fmt.Errorf("failed to parse jwt: %w", err)
 	}
+	return nil
+}
+
+func (f *Fs) createVault(ctx context.Context, passphrase string) error {
+	masterKey, err := NewMasterKey()
+	if err != nil {
+		return fmt.Errorf("failed to create master key: %w", err)
+	}
+	buf := bytes.Buffer{}
+	err = masterKey.Marshal(&buf, passphrase)
+	if err != nil {
+		return fmt.Errorf("failed to encrypt master key: %w", err)
+	}
+	err = f.writeSmallFile(ctx, masterKeyFileName, buf.Bytes())
+	if err != nil {
+		return fmt.Errorf("failed to save master key: %w", err)
+	}
+
+	vaultConfig := NewVaultConfig()
+	configBytes, err := vaultConfig.Marshal(masterKey)
+	if err != nil {
+		return fmt.Errorf("failed to encrypt vault config: %w", err)
+	}
+	err = f.writeSmallFile(ctx, configFileName, configBytes)
+	if err != nil {
+		return fmt.Errorf("failed to save master key: %w", err)
+	}
+
 	return nil
 }
