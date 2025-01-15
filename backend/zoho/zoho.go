@@ -14,6 +14,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/rclone/rclone/lib/encoder"
 	"github.com/rclone/rclone/lib/pacer"
 	"github.com/rclone/rclone/lib/random"
@@ -36,31 +37,35 @@ const (
 	rcloneClientID              = "1000.46MXF275FM2XV7QCHX5A7K3LGME66B"
 	rcloneEncryptedClientSecret = "U-2gxclZQBcOG9NPhjiXAhj-f0uQ137D0zar8YyNHXHkQZlTeSpIOQfmCb4oSpvosJp_SJLXmLLeUA"
 	minSleep                    = 10 * time.Millisecond
-	maxSleep                    = 2 * time.Second
+	maxSleep                    = 60 * time.Second
 	decayConstant               = 2 // bigger for slower decay, exponential
 	configRootID                = "root_folder_id"
+
+	defaultUploadCutoff = 10 * 1024 * 1024 // 10 MiB
 )
 
 // Globals
 var (
 	// Description of how to auth for this app
-	oauthConfig = &oauth2.Config{
+	oauthConfig = &oauthutil.Config{
 		Scopes: []string{
 			"aaaserver.profile.read",
 			"WorkDrive.team.READ",
 			"WorkDrive.workspace.READ",
 			"WorkDrive.files.ALL",
+			"ZohoFiles.files.ALL",
 		},
-		Endpoint: oauth2.Endpoint{
-			AuthURL:   "https://accounts.zoho.eu/oauth/v2/auth",
-			TokenURL:  "https://accounts.zoho.eu/oauth/v2/token",
-			AuthStyle: oauth2.AuthStyleInParams,
-		},
+
+		AuthURL:      "https://accounts.zoho.eu/oauth/v2/auth",
+		TokenURL:     "https://accounts.zoho.eu/oauth/v2/token",
+		AuthStyle:    oauth2.AuthStyleInParams,
 		ClientID:     rcloneClientID,
 		ClientSecret: obscure.MustReveal(rcloneEncryptedClientSecret),
 		RedirectURL:  oauthutil.RedirectLocalhostURL,
 	}
 	rootURL     = "https://workdrive.zoho.eu/api/v1"
+	downloadURL = "https://download.zoho.eu/v1/workdrive"
+	uploadURL   = "http://upload.zoho.eu/workdrive-api/v1/"
 	accountsURL = "https://accounts.zoho.eu"
 )
 
@@ -79,7 +84,7 @@ func init() {
 			getSrvs := func() (authSrv, apiSrv *rest.Client, err error) {
 				oAuthClient, _, err := oauthutil.NewClient(ctx, name, m, oauthConfig)
 				if err != nil {
-					return nil, nil, fmt.Errorf("failed to load oAuthClient: %w", err)
+					return nil, nil, fmt.Errorf("failed to load OAuth client: %w", err)
 				}
 				authSrv = rest.NewClient(oAuthClient).SetRoot(accountsURL)
 				apiSrv = rest.NewClient(oAuthClient).SetRoot(rootURL)
@@ -88,12 +93,12 @@ func init() {
 
 			switch config.State {
 			case "":
-				return oauthutil.ConfigOut("teams", &oauthutil.Options{
+				return oauthutil.ConfigOut("type", &oauthutil.Options{
 					OAuth2Config: oauthConfig,
 					// No refresh token unless ApprovalForce is set
 					OAuth2Opts: []oauth2.AuthCodeOption{oauth2.ApprovalForce},
 				})
-			case "teams":
+			case "type":
 				// We need to rewrite the token type to "Zoho-oauthtoken" because Zoho wants
 				// it's own custom type
 				token, err := oauthutil.GetToken(name, m)
@@ -108,24 +113,43 @@ func init() {
 					}
 				}
 
-				authSrv, apiSrv, err := getSrvs()
+				_, apiSrv, err := getSrvs()
 				if err != nil {
 					return nil, err
 				}
 
-				// Get the user Info
-				opts := rest.Opts{
-					Method: "GET",
-					Path:   "/oauth/user/info",
+				userInfo, err := getUserInfo(ctx, apiSrv)
+				if err != nil {
+					return nil, err
 				}
-				var user api.User
-				_, err = authSrv.CallJSON(ctx, &opts, nil, &user)
+				// If personal Edition only one private Space is available. Directly configure that.
+				if userInfo.Data.Attributes.Edition == "PERSONAL" {
+					return fs.ConfigResult("private_space", userInfo.Data.ID)
+				}
+				// Otherwise go to team selection
+				return fs.ConfigResult("team", userInfo.Data.ID)
+			case "private_space":
+				_, apiSrv, err := getSrvs()
+				if err != nil {
+					return nil, err
+				}
+
+				workspaces, err := getPrivateSpaces(ctx, config.Result, apiSrv)
+				if err != nil {
+					return nil, err
+				}
+				return fs.ConfigChoose("workspace_end", "config_workspace", "Workspace ID", len(workspaces), func(i int) (string, string) {
+					workspace := workspaces[i]
+					return workspace.ID, workspace.Name
+				})
+			case "team":
+				_, apiSrv, err := getSrvs()
 				if err != nil {
 					return nil, err
 				}
 
 				// Get the teams
-				teams, err := listTeams(ctx, user.ZUID, apiSrv)
+				teams, err := listTeams(ctx, config.Result, apiSrv)
 				if err != nil {
 					return nil, err
 				}
@@ -143,9 +167,19 @@ func init() {
 				if err != nil {
 					return nil, err
 				}
+				currentTeamInfo, err := getCurrentTeamInfo(ctx, teamID, apiSrv)
+				if err != nil {
+					return nil, err
+				}
+				privateSpaces, err := getPrivateSpaces(ctx, currentTeamInfo.Data.ID, apiSrv)
+				if err != nil {
+					return nil, err
+				}
+				workspaces = append(workspaces, privateSpaces...)
+
 				return fs.ConfigChoose("workspace_end", "config_workspace", "Workspace ID", len(workspaces), func(i int) (string, string) {
 					workspace := workspaces[i]
-					return workspace.ID, workspace.Attributes.Name
+					return workspace.ID, workspace.Name
 				})
 			case "workspace_end":
 				workspaceID := config.Result
@@ -179,7 +213,13 @@ browser.`,
 			}, {
 				Value: "com.au",
 				Help:  "Australia",
-			}}}, {
+			}},
+		}, {
+			Name:     "upload_cutoff",
+			Help:     "Cutoff for switching to large file upload api (>= 10 MiB).",
+			Default:  fs.SizeSuffix(defaultUploadCutoff),
+			Advanced: true,
+		}, {
 			Name:     config.ConfigEncoding,
 			Help:     config.ConfigEncodingHelp,
 			Advanced: true,
@@ -193,6 +233,7 @@ browser.`,
 
 // Options defines the configuration for this backend
 type Options struct {
+	UploadCutoff fs.SizeSuffix        `config:"upload_cutoff"`
 	RootFolderID string               `config:"root_folder_id"`
 	Region       string               `config:"region"`
 	Enc          encoder.MultiEncoder `config:"encoding"`
@@ -200,13 +241,15 @@ type Options struct {
 
 // Fs represents a remote workdrive
 type Fs struct {
-	name     string             // name of this remote
-	root     string             // the path we are working on
-	opt      Options            // parsed options
-	features *fs.Features       // optional features
-	srv      *rest.Client       // the connection to the server
-	dirCache *dircache.DirCache // Map of directory path to directory id
-	pacer    *fs.Pacer          // pacer for API calls
+	name        string             // name of this remote
+	root        string             // the path we are working on
+	opt         Options            // parsed options
+	features    *fs.Features       // optional features
+	srv         *rest.Client       // the connection to the server
+	downloadsrv *rest.Client       // the connection to the download server
+	uploadsrv   *rest.Client       // the connection to the upload server
+	dirCache    *dircache.DirCache // Map of directory path to directory id
+	pacer       *fs.Pacer          // pacer for API calls
 }
 
 // Object describes a Zoho WorkDrive object
@@ -229,19 +272,73 @@ func setupRegion(m configmap.Mapper) error {
 		return errors.New("no region set")
 	}
 	rootURL = fmt.Sprintf("https://workdrive.zoho.%s/api/v1", region)
+	downloadURL = fmt.Sprintf("https://download.zoho.%s/v1/workdrive", region)
+	uploadURL = fmt.Sprintf("https://upload.zoho.%s/workdrive-api/v1", region)
 	accountsURL = fmt.Sprintf("https://accounts.zoho.%s", region)
-	oauthConfig.Endpoint.AuthURL = fmt.Sprintf("https://accounts.zoho.%s/oauth/v2/auth", region)
-	oauthConfig.Endpoint.TokenURL = fmt.Sprintf("https://accounts.zoho.%s/oauth/v2/token", region)
+	oauthConfig.AuthURL = fmt.Sprintf("https://accounts.zoho.%s/oauth/v2/auth", region)
+	oauthConfig.TokenURL = fmt.Sprintf("https://accounts.zoho.%s/oauth/v2/token", region)
 	return nil
 }
 
 // ------------------------------------------------------------
 
-func listTeams(ctx context.Context, uid int64, srv *rest.Client) ([]api.TeamWorkspace, error) {
+type workspaceInfo struct {
+	ID   string
+	Name string
+}
+
+func getUserInfo(ctx context.Context, srv *rest.Client) (*api.UserInfoResponse, error) {
+	var userInfo api.UserInfoResponse
+	opts := rest.Opts{
+		Method:       "GET",
+		Path:         "/users/me",
+		ExtraHeaders: map[string]string{"Accept": "application/vnd.api+json"},
+	}
+	_, err := srv.CallJSON(ctx, &opts, nil, &userInfo)
+	if err != nil {
+		return nil, err
+	}
+	return &userInfo, nil
+}
+
+func getCurrentTeamInfo(ctx context.Context, teamID string, srv *rest.Client) (*api.CurrentTeamInfo, error) {
+	var currentTeamInfo api.CurrentTeamInfo
+	opts := rest.Opts{
+		Method:       "GET",
+		Path:         "/teams/" + teamID + "/currentuser",
+		ExtraHeaders: map[string]string{"Accept": "application/vnd.api+json"},
+	}
+	_, err := srv.CallJSON(ctx, &opts, nil, &currentTeamInfo)
+	if err != nil {
+		return nil, err
+	}
+	return &currentTeamInfo, err
+}
+
+func getPrivateSpaces(ctx context.Context, teamUserID string, srv *rest.Client) ([]workspaceInfo, error) {
+	var privateSpaceListResponse api.TeamWorkspaceResponse
+	opts := rest.Opts{
+		Method:       "GET",
+		Path:         "/users/" + teamUserID + "/privatespace",
+		ExtraHeaders: map[string]string{"Accept": "application/vnd.api+json"},
+	}
+	_, err := srv.CallJSON(ctx, &opts, nil, &privateSpaceListResponse)
+	if err != nil {
+		return nil, err
+	}
+
+	workspaceList := make([]workspaceInfo, 0, len(privateSpaceListResponse.TeamWorkspace))
+	for _, workspace := range privateSpaceListResponse.TeamWorkspace {
+		workspaceList = append(workspaceList, workspaceInfo{ID: workspace.ID, Name: "My Space"})
+	}
+	return workspaceList, err
+}
+
+func listTeams(ctx context.Context, zuid string, srv *rest.Client) ([]api.TeamWorkspace, error) {
 	var teamList api.TeamWorkspaceResponse
 	opts := rest.Opts{
 		Method:       "GET",
-		Path:         "/users/" + strconv.FormatInt(uid, 10) + "/teams",
+		Path:         "/users/" + zuid + "/teams",
 		ExtraHeaders: map[string]string{"Accept": "application/vnd.api+json"},
 	}
 	_, err := srv.CallJSON(ctx, &opts, nil, &teamList)
@@ -251,18 +348,24 @@ func listTeams(ctx context.Context, uid int64, srv *rest.Client) ([]api.TeamWork
 	return teamList.TeamWorkspace, nil
 }
 
-func listWorkspaces(ctx context.Context, teamID string, srv *rest.Client) ([]api.TeamWorkspace, error) {
-	var workspaceList api.TeamWorkspaceResponse
+func listWorkspaces(ctx context.Context, teamID string, srv *rest.Client) ([]workspaceInfo, error) {
+	var workspaceListResponse api.TeamWorkspaceResponse
 	opts := rest.Opts{
 		Method:       "GET",
 		Path:         "/teams/" + teamID + "/workspaces",
 		ExtraHeaders: map[string]string{"Accept": "application/vnd.api+json"},
 	}
-	_, err := srv.CallJSON(ctx, &opts, nil, &workspaceList)
+	_, err := srv.CallJSON(ctx, &opts, nil, &workspaceListResponse)
 	if err != nil {
 		return nil, err
 	}
-	return workspaceList.TeamWorkspace, nil
+
+	workspaceList := make([]workspaceInfo, 0, len(workspaceListResponse.TeamWorkspace))
+	for _, workspace := range workspaceListResponse.TeamWorkspace {
+		workspaceList = append(workspaceList, workspaceInfo{ID: workspace.ID, Name: workspace.Attributes.Name})
+	}
+
+	return workspaceList, nil
 }
 
 // --------------------------------------------------------------
@@ -285,9 +388,20 @@ func shouldRetry(ctx context.Context, resp *http.Response, err error) (bool, err
 	}
 	authRetry := false
 
+	// Bail out early if we are missing OAuth Scopes.
+	if resp != nil && resp.StatusCode == 401 && strings.Contains(resp.Status, "INVALID_OAUTHSCOPE") {
+		fs.Errorf(nil, "zoho: missing OAuth Scope. Run rclone config reconnect to fix this issue.")
+		return false, err
+	}
+
 	if resp != nil && resp.StatusCode == 401 && len(resp.Header["Www-Authenticate"]) == 1 && strings.Contains(resp.Header["Www-Authenticate"][0], "expired_token") {
 		authRetry = true
 		fs.Debugf(nil, "Should retry: %v", err)
+	}
+	if resp != nil && resp.StatusCode == 429 {
+		err = pacer.RetryAfterError(err, 60*time.Second)
+		fs.Debugf(nil, "Too many requests. Trying again in %d seconds.", 60)
+		return true, err
 	}
 	return authRetry || fserrors.ShouldRetry(err) || fserrors.ShouldRetryHTTP(resp, retryErrorCodes), err
 }
@@ -332,7 +446,7 @@ func parsePath(path string) (root string) {
 
 // readMetaDataForPath reads the metadata from the path
 func (f *Fs) readMetaDataForPath(ctx context.Context, path string) (info *api.Item, err error) {
-	// defer fs.Trace(f, "path=%q", path)("info=%+v, err=%v", &info, &err)
+	// defer log.Trace(f, "path=%q", path)("info=%+v, err=%v", &info, &err)
 	leaf, directoryID, err := f.dirCache.FindPath(ctx, path, false)
 	if err != nil {
 		if err == fs.ErrorDirNotFound {
@@ -385,6 +499,11 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	if err := configstruct.Set(m, opt); err != nil {
 		return nil, err
 	}
+
+	if opt.UploadCutoff < defaultUploadCutoff {
+		return nil, fmt.Errorf("zoho: upload cutoff (%v) must be greater than equal to %v", opt.UploadCutoff, fs.SizeSuffix(defaultUploadCutoff))
+	}
+
 	err := setupRegion(m)
 	if err != nil {
 		return nil, err
@@ -397,11 +516,13 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	}
 
 	f := &Fs{
-		name:  name,
-		root:  root,
-		opt:   *opt,
-		srv:   rest.NewClient(oAuthClient).SetRoot(rootURL),
-		pacer: fs.NewPacer(ctx, pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant))),
+		name:        name,
+		root:        root,
+		opt:         *opt,
+		srv:         rest.NewClient(oAuthClient).SetRoot(rootURL),
+		downloadsrv: rest.NewClient(oAuthClient).SetRoot(downloadURL),
+		uploadsrv:   rest.NewClient(oAuthClient).SetRoot(uploadURL),
+		pacer:       fs.NewPacer(ctx, pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant))),
 	}
 	f.features = (&fs.Features{
 		CanHaveEmptyDirectories: true,
@@ -454,18 +575,18 @@ type listAllFn func(*api.Item) bool
 //
 // If the user fn ever returns true then it early exits with found = true
 func (f *Fs) listAll(ctx context.Context, dirID string, directoriesOnly bool, filesOnly bool, fn listAllFn) (found bool, err error) {
+	const listItemsLimit = 1000
 	opts := rest.Opts{
 		Method:       "GET",
 		Path:         "/files/" + dirID + "/files",
 		ExtraHeaders: map[string]string{"Accept": "application/vnd.api+json"},
-		Parameters:   url.Values{},
+		Parameters: url.Values{
+			"page[limit]": {strconv.Itoa(listItemsLimit)},
+			"page[next]":  {"0"},
+		},
 	}
-	opts.Parameters.Set("page[limit]", strconv.Itoa(10))
-	offset := 0
 OUTER:
 	for {
-		opts.Parameters.Set("page[offset]", strconv.Itoa(offset))
-
 		var result api.ItemList
 		var resp *http.Response
 		err = f.pacer.Call(func() (bool, error) {
@@ -495,7 +616,15 @@ OUTER:
 				break OUTER
 			}
 		}
-		offset += 10
+		if !result.Links.Cursor.HasNext {
+			break
+		}
+		// Fetch the next from the URL in the response
+		nextURL, err := url.Parse(result.Links.Cursor.Next)
+		if err != nil {
+			return found, fmt.Errorf("failed to parse next link as URL: %w", err)
+		}
+		opts.Parameters.Set("page[next]", nextURL.Query().Get("page[next]"))
 	}
 	return
 }
@@ -631,36 +760,61 @@ func (f *Fs) createObject(ctx context.Context, remote string, size int64, modTim
 	return
 }
 
-// Put the object
-//
-// Copy the reader in to the new object which is returned.
-//
-// The new object may have been created if an error is returned
-func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
-	existingObj, err := f.newObjectWithInfo(ctx, src.Remote(), nil)
-	switch err {
-	case nil:
-		return existingObj, existingObj.Update(ctx, in, src, options...)
-	case fs.ErrorObjectNotFound:
-		// Not found so create it
-		return f.PutUnchecked(ctx, in, src)
-	default:
-		return nil, err
+func (f *Fs) uploadLargeFile(ctx context.Context, name string, parent string, size int64, in io.Reader, options ...fs.OpenOption) (*api.Item, error) {
+	opts := rest.Opts{
+		Method:        "POST",
+		Path:          "/stream/upload",
+		Body:          in,
+		ContentLength: &size,
+		ContentType:   "application/octet-stream",
+		Options:       options,
+		ExtraHeaders: map[string]string{
+			"x-filename":          url.QueryEscape(name),
+			"x-parent_id":         parent,
+			"override-name-exist": "true",
+			"upload-id":           uuid.New().String(),
+			"x-streammode":        "1",
+		},
 	}
-}
 
-func isSimpleName(s string) bool {
-	for _, r := range s {
-		if (r < 'a' || r > 'z') && (r < 'A' || r > 'Z') && (r != '.') {
-			return false
-		}
+	var err error
+	var resp *http.Response
+	var uploadResponse *api.LargeUploadResponse
+	err = f.pacer.CallNoRetry(func() (bool, error) {
+		resp, err = f.uploadsrv.CallJSON(ctx, &opts, nil, &uploadResponse)
+		return shouldRetry(ctx, resp, err)
+	})
+	if err != nil {
+		return nil, fmt.Errorf("upload large error: %v", err)
 	}
-	return true
+	if len(uploadResponse.Uploads) != 1 {
+		return nil, errors.New("upload: invalid response")
+	}
+	upload := uploadResponse.Uploads[0]
+	uploadInfo, err := upload.GetUploadFileInfo()
+	if err != nil {
+		return nil, fmt.Errorf("upload error: %w", err)
+	}
+
+	// Fill in the api.Item from the api.UploadFileInfo
+	var info api.Item
+	info.ID = upload.Attributes.RessourceID
+	info.Attributes.Name = upload.Attributes.FileName
+	// info.Attributes.Type = not used
+	info.Attributes.IsFolder = false
+	// info.Attributes.CreatedTime = not used
+	info.Attributes.ModifiedTime = uploadInfo.GetModTime()
+	// info.Attributes.UploadedTime = 0 not used
+	info.Attributes.StorageInfo.Size = uploadInfo.Size
+	info.Attributes.StorageInfo.FileCount = 0
+	info.Attributes.StorageInfo.FolderCount = 0
+
+	return &info, nil
 }
 
 func (f *Fs) upload(ctx context.Context, name string, parent string, size int64, in io.Reader, options ...fs.OpenOption) (*api.Item, error) {
 	params := url.Values{}
-	params.Set("filename", name)
+	params.Set("filename", url.QueryEscape(name))
 	params.Set("parent_id", parent)
 	params.Set("override-name-exist", strconv.FormatBool(true))
 	formReader, contentType, overhead, err := rest.MultipartUpload(ctx, in, nil, "content", name)
@@ -692,51 +846,68 @@ func (f *Fs) upload(ctx context.Context, name string, parent string, size int64,
 	if len(uploadResponse.Uploads) != 1 {
 		return nil, errors.New("upload: invalid response")
 	}
-	// Received meta data is missing size so we have to read it again.
-	info, err := f.readMetaDataForID(ctx, uploadResponse.Uploads[0].Attributes.RessourceID)
+	upload := uploadResponse.Uploads[0]
+	uploadInfo, err := upload.GetUploadFileInfo()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("upload error: %w", err)
 	}
 
-	return info, nil
+	// Fill in the api.Item from the api.UploadFileInfo
+	var info api.Item
+	info.ID = upload.Attributes.RessourceID
+	info.Attributes.Name = upload.Attributes.FileName
+	// info.Attributes.Type = not used
+	info.Attributes.IsFolder = false
+	// info.Attributes.CreatedTime = not used
+	info.Attributes.ModifiedTime = uploadInfo.GetModTime()
+	// info.Attributes.UploadedTime = 0 not used
+	info.Attributes.StorageInfo.Size = uploadInfo.Size
+	info.Attributes.StorageInfo.FileCount = 0
+	info.Attributes.StorageInfo.FolderCount = 0
+
+	return &info, nil
 }
 
-// PutUnchecked the object into the container
-//
-// This will produce an error if the object already exists.
+// Put the object into the container
 //
 // Copy the reader in to the new object which is returned.
 //
 // The new object may have been created if an error is returned
-func (f *Fs) PutUnchecked(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
-	size := src.Size()
-	remote := src.Remote()
+func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
+	existingObj, err := f.NewObject(ctx, src.Remote())
+	switch err {
+	case nil:
+		return existingObj, existingObj.Update(ctx, in, src, options...)
+	case fs.ErrorObjectNotFound:
+		size := src.Size()
+		remote := src.Remote()
 
-	// Create the directory for the object if it doesn't exist
-	leaf, directoryID, err := f.dirCache.FindPath(ctx, remote, true)
-	if err != nil {
-		return nil, err
-	}
-
-	if isSimpleName(leaf) {
-		info, err := f.upload(ctx, f.opt.Enc.FromStandardName(leaf), directoryID, size, in, options...)
+		// Create the directory for the object if it doesn't exist
+		leaf, directoryID, err := f.dirCache.FindPath(ctx, remote, true)
 		if err != nil {
 			return nil, err
 		}
+
+		// use normal upload API for small sizes (<10MiB)
+		if size < int64(f.opt.UploadCutoff) {
+			info, err := f.upload(ctx, f.opt.Enc.FromStandardName(leaf), directoryID, size, in, options...)
+			if err != nil {
+				return nil, err
+			}
+
+			return f.newObjectWithInfo(ctx, remote, info)
+		}
+
+		// large file API otherwise
+		info, err := f.uploadLargeFile(ctx, f.opt.Enc.FromStandardName(leaf), directoryID, size, in, options...)
+		if err != nil {
+			return nil, err
+		}
+
 		return f.newObjectWithInfo(ctx, remote, info)
-	}
-
-	tempName := "rcloneTemp" + random.String(8)
-	info, err := f.upload(ctx, tempName, directoryID, size, in, options...)
-	if err != nil {
+	default:
 		return nil, err
 	}
-
-	o, err := f.newObjectWithInfo(ctx, remote, info)
-	if err != nil {
-		return nil, err
-	}
-	return o, o.(*Object).rename(ctx, leaf)
 }
 
 // Mkdir creates the container if it doesn't exist
@@ -1176,7 +1347,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 		Options: options,
 	}
 	err = o.fs.pacer.Call(func() (bool, error) {
-		resp, err = o.fs.srv.Call(ctx, &opts)
+		resp, err = o.fs.downloadsrv.Call(ctx, &opts)
 		return shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
@@ -1200,32 +1371,23 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		return err
 	}
 
-	if isSimpleName(leaf) {
-		// Simple name we can just overwrite the old file
+	// use normal upload API for small sizes (<10MiB)
+	if size < int64(o.fs.opt.UploadCutoff) {
 		info, err := o.fs.upload(ctx, o.fs.opt.Enc.FromStandardName(leaf), directoryID, size, in, options...)
 		if err != nil {
 			return err
 		}
+
 		return o.setMetaData(info)
 	}
 
-	// We have to fall back to upload + rename
-	tempName := "rcloneTemp" + random.String(8)
-	info, err := o.fs.upload(ctx, tempName, directoryID, size, in, options...)
+	// large file API otherwise
+	info, err := o.fs.uploadLargeFile(ctx, o.fs.opt.Enc.FromStandardName(leaf), directoryID, size, in, options...)
 	if err != nil {
 		return err
 	}
 
-	// upload was successful, need to delete old object before rename
-	if err = o.Remove(ctx); err != nil {
-		return fmt.Errorf("failed to remove old object: %w", err)
-	}
-	if err = o.setMetaData(info); err != nil {
-		return err
-	}
-
-	// rename also updates metadata
-	return o.rename(ctx, leaf)
+	return o.setMetaData(info)
 }
 
 // Remove an object

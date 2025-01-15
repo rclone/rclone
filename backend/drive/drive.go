@@ -80,9 +80,10 @@ const (
 // Globals
 var (
 	// Description of how to auth for this app
-	driveConfig = &oauth2.Config{
+	driveConfig = &oauthutil.Config{
 		Scopes:       []string{scopePrefix + "drive"},
-		Endpoint:     google.Endpoint,
+		AuthURL:      google.Endpoint.AuthURL,
+		TokenURL:     google.Endpoint.TokenURL,
 		ClientID:     rcloneClientID,
 		ClientSecret: obscure.MustReveal(rcloneEncryptedClientSecret),
 		RedirectURL:  oauthutil.RedirectURL,
@@ -120,6 +121,7 @@ var (
 		"text/html":                 ".html",
 		"text/plain":                ".txt",
 		"text/tab-separated-values": ".tsv",
+		"text/markdown":             ".md",
 	}
 	_mimeTypeToExtensionLinks = map[string]string{
 		"application/x-link-desktop": ".desktop",
@@ -151,6 +153,7 @@ func (rwChoices) Choices() []fs.BitsChoicesInfo {
 		{Bit: uint64(rwOff), Name: "off"},
 		{Bit: uint64(rwRead), Name: "read"},
 		{Bit: uint64(rwWrite), Name: "write"},
+		{Bit: uint64(rwFailOK), Name: "failok"},
 	}
 }
 
@@ -160,6 +163,7 @@ type rwChoice = fs.Bits[rwChoices]
 const (
 	rwRead rwChoice = 1 << iota
 	rwWrite
+	rwFailOK
 	rwOff rwChoice = 0
 )
 
@@ -173,6 +177,9 @@ var rwExamples = fs.OptionExamples{{
 }, {
 	Value: rwWrite.String(),
 	Help:  "Write the value only",
+}, {
+	Value: rwFailOK.String(),
+	Help:  "If writing fails log errors only, don't fail the transfer",
 }, {
 	Value: (rwRead | rwWrite).String(),
 	Help:  "Read and Write the value.",
@@ -287,7 +294,10 @@ func init() {
 		},
 		MetadataInfo: &fs.MetadataInfo{
 			System: systemMetadataInfo,
-			Help:   `User metadata is stored in the properties field of the drive object.`,
+			Help: `User metadata is stored in the properties field of the drive object.
+
+Metadata is supported on files and directories.
+`,
 		},
 		Options: append(driveOAuthOptions(), []fs.Option{{
 			Name: "scope",
@@ -870,6 +880,11 @@ type Object struct {
 	v2Download bool   // generate v2 download link ondemand
 }
 
+// Directory describes a drive directory
+type Directory struct {
+	baseObject
+}
+
 // ------------------------------------------------------------
 
 // Name of the remote (as passed into NewFs)
@@ -1374,15 +1389,20 @@ func newFs(ctx context.Context, name, path string, m configmap.Mapper) (*Fs, err
 	}
 	f.isTeamDrive = opt.TeamDriveID != ""
 	f.features = (&fs.Features{
-		DuplicateFiles:          true,
-		ReadMimeType:            true,
-		WriteMimeType:           true,
-		CanHaveEmptyDirectories: true,
-		ServerSideAcrossConfigs: opt.ServerSideAcrossConfigs,
-		FilterAware:             true,
-		ReadMetadata:            true,
-		WriteMetadata:           true,
-		UserMetadata:            true,
+		DuplicateFiles:           true,
+		ReadMimeType:             true,
+		WriteMimeType:            true,
+		CanHaveEmptyDirectories:  true,
+		ServerSideAcrossConfigs:  opt.ServerSideAcrossConfigs,
+		FilterAware:              true,
+		ReadMetadata:             true,
+		WriteMetadata:            true,
+		UserMetadata:             true,
+		ReadDirMetadata:          true,
+		WriteDirMetadata:         true,
+		WriteDirSetModTime:       true,
+		UserDirMetadata:          true,
+		DirModTimeUpdatesOnWrite: false, // FIXME need to check!
 	}).Fill(ctx, f)
 
 	// Create a new authorized Drive client.
@@ -1729,26 +1749,72 @@ func (f *Fs) FindLeaf(ctx context.Context, pathID, leaf string) (pathIDOut strin
 	return pathIDOut, found, err
 }
 
-// CreateDir makes a directory with pathID as parent and name leaf
-func (f *Fs) CreateDir(ctx context.Context, pathID, leaf string) (newID string, err error) {
+// createDir makes a directory with pathID as parent and name leaf with optional metadata
+func (f *Fs) createDir(ctx context.Context, pathID, leaf string, metadata fs.Metadata) (info *drive.File, err error) {
 	leaf = f.opt.Enc.FromStandardName(leaf)
-	// fmt.Println("Making", path)
-	// Define the metadata for the directory we are going to create.
 	pathID = actualID(pathID)
 	createInfo := &drive.File{
-		Name:        leaf,
-		Description: leaf,
-		MimeType:    driveFolderType,
-		Parents:     []string{pathID},
+		Name:     leaf,
+		MimeType: driveFolderType,
+		Parents:  []string{pathID},
 	}
-	var info *drive.File
+	var updateMetadata updateMetadataFn
+	if len(metadata) > 0 {
+		updateMetadata, err = f.updateMetadata(ctx, createInfo, metadata, true)
+		if err != nil {
+			return nil, fmt.Errorf("create dir: failed to update metadata: %w", err)
+		}
+	}
 	err = f.pacer.Call(func() (bool, error) {
 		info, err = f.svc.Files.Create(createInfo).
-			Fields("id").
+			Fields(f.getFileFields(ctx)).
 			SupportsAllDrives(true).
 			Context(ctx).Do()
 		return f.shouldRetry(ctx, err)
 	})
+	if err != nil {
+		return nil, err
+	}
+	if updateMetadata != nil {
+		err = updateMetadata(ctx, info)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return info, nil
+}
+
+// updateDir updates an existing a directory with the metadata passed in
+func (f *Fs) updateDir(ctx context.Context, dirID string, metadata fs.Metadata) (info *drive.File, err error) {
+	if len(metadata) == 0 {
+		return f.getFile(ctx, dirID, f.getFileFields(ctx))
+	}
+	dirID = actualID(dirID)
+	updateInfo := &drive.File{}
+	updateMetadata, err := f.updateMetadata(ctx, updateInfo, metadata, true)
+	if err != nil {
+		return nil, fmt.Errorf("update dir: failed to update metadata from source object: %w", err)
+	}
+	err = f.pacer.Call(func() (bool, error) {
+		info, err = f.svc.Files.Update(dirID, updateInfo).
+			Fields(f.getFileFields(ctx)).
+			SupportsAllDrives(true).
+			Context(ctx).Do()
+		return f.shouldRetry(ctx, err)
+	})
+	if err != nil {
+		return nil, err
+	}
+	err = updateMetadata(ctx, info)
+	if err != nil {
+		return nil, err
+	}
+	return info, nil
+}
+
+// CreateDir makes a directory with pathID as parent and name leaf
+func (f *Fs) CreateDir(ctx context.Context, pathID, leaf string) (newID string, err error) {
+	info, err := f.createDir(ctx, pathID, leaf, nil)
 	if err != nil {
 		return "", err
 	}
@@ -1859,7 +1925,7 @@ func (f *Fs) findExportFormatByMimeType(ctx context.Context, itemMimeType string
 	return "", "", isDocument
 }
 
-// findExportFormatByMimeType works out the optimum export settings
+// findExportFormat works out the optimum export settings
 // for the given drive.File.
 //
 // Look through the exportExtensions and find the first format that can be
@@ -2155,13 +2221,13 @@ func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (
 		case in <- job:
 		default:
 			overflow = append(overflow, job)
-			wg.Add(-1)
+			wg.Done()
 		}
 	}
 
 	// Send the entry to the caller, queueing any directories as new jobs
 	cb := func(entry fs.DirEntry) error {
-		if d, isDir := entry.(*fs.Dir); isDir {
+		if d, isDir := entry.(fs.Directory); isDir {
 			job := listREntry{actualID(d.ID()), d.Remote()}
 			sendJob(job)
 		}
@@ -2338,11 +2404,11 @@ func (f *Fs) itemToDirEntry(ctx context.Context, remote string, item *drive.File
 		if item.ResourceKey != "" {
 			f.dirResourceKeys.Store(item.Id, item.ResourceKey)
 		}
-		when, _ := time.Parse(timeFormatIn, item.ModifiedTime)
-		d := fs.NewDir(remote, when).SetID(item.Id)
-		if len(item.Parents) > 0 {
-			d.SetParentID(item.Parents[0])
+		baseObject, err := f.newBaseObject(ctx, remote, item)
+		if err != nil {
+			return nil, err
 		}
+		d := &Directory{baseObject: baseObject}
 		return d, nil
 	case f.opt.AuthOwnerOnly && !isAuthOwned(item):
 		// ignore object
@@ -2370,7 +2436,6 @@ func (f *Fs) createFileInfo(ctx context.Context, remote string, modTime time.Tim
 	// Define the metadata for the file we are going to create.
 	createInfo := &drive.File{
 		Name:         leaf,
-		Description:  leaf,
 		Parents:      []string{directoryID},
 		ModifiedTime: modTime.Format(timeFormatOut),
 	}
@@ -2535,6 +2600,59 @@ func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 	return err
 }
 
+// MkdirMetadata makes the directory passed in as dir.
+//
+// It shouldn't return an error if it already exists.
+//
+// If the metadata is not nil it is set.
+//
+// It returns the directory that was created.
+func (f *Fs) MkdirMetadata(ctx context.Context, dir string, metadata fs.Metadata) (fs.Directory, error) {
+	var info *drive.File
+	dirID, err := f.dirCache.FindDir(ctx, dir, false)
+	if err == fs.ErrorDirNotFound {
+		// Directory does not exist so create it
+		var leaf, parentID string
+		leaf, parentID, err = f.dirCache.FindPath(ctx, dir, true)
+		if err != nil {
+			return nil, err
+		}
+		info, err = f.createDir(ctx, parentID, leaf, metadata)
+	} else if err == nil {
+		// Directory exists and needs updating
+		info, err = f.updateDir(ctx, dirID, metadata)
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	// Convert the info into a directory entry
+	entry, err := f.itemToDirEntry(ctx, dir, info)
+	if err != nil {
+		return nil, err
+	}
+	dirEntry, ok := entry.(fs.Directory)
+	if !ok {
+		return nil, fmt.Errorf("internal error: expecting %T to be an fs.Directory", entry)
+	}
+
+	return dirEntry, nil
+}
+
+// DirSetModTime sets the directory modtime for dir
+func (f *Fs) DirSetModTime(ctx context.Context, dir string, modTime time.Time) error {
+	dirID, err := f.dirCache.FindDir(ctx, dir, false)
+	if err != nil {
+		return err
+	}
+	o := baseObject{
+		fs:     f,
+		remote: dir,
+		id:     dirID,
+	}
+	return o.SetModTime(ctx, modTime)
+}
+
 // delete a file or directory unconditionally by ID
 func (f *Fs) delete(ctx context.Context, id string, useTrash bool) error {
 	return f.pacer.Call(func() (bool, error) {
@@ -2678,6 +2796,12 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		createInfo.Description = ""
 	}
 
+	// Adjust metadata if required
+	updateMetadata, err := f.fetchAndUpdateMetadata(ctx, src, fs.MetadataAsOpenOptions(ctx), createInfo, false)
+	if err != nil {
+		return nil, err
+	}
+
 	// get the ID of the thing to copy
 	// copy the contents if CopyShortcutContent
 	// else copy the shortcut only
@@ -2691,7 +2815,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	var info *drive.File
 	err = f.pacer.Call(func() (bool, error) {
 		copy := f.svc.Files.Copy(id, createInfo).
-			Fields(partialFields).
+			Fields(f.getFileFields(ctx)).
 			SupportsAllDrives(true).
 			KeepRevisionForever(f.opt.KeepRevisionForever)
 		srcObj.addResourceKey(copy.Header())
@@ -2711,7 +2835,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	// FIXME remove this when google fixes the problem!
 	if isDoc {
 		// A short sleep is needed here in order to make the
-		// change effective, without it is is ignored. This is
+		// change effective, without it is ignored. This is
 		// probably some eventual consistency nastiness.
 		sleepTime := 2 * time.Second
 		fs.Debugf(f, "Sleeping for %v before setting the modtime to work around drive bug - see #4517", sleepTime)
@@ -2726,6 +2850,11 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		if err != nil {
 			fs.Errorf(existingObject, "Failed to remove existing object after copy: %v", err)
 		}
+	}
+	// Finalise metadata
+	err = updateMetadata(ctx, info)
+	if err != nil {
+		return nil, err
 	}
 	return newObject, nil
 }
@@ -2900,13 +3029,19 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	dstParents := strings.Join(dstInfo.Parents, ",")
 	dstInfo.Parents = nil
 
+	// Adjust metadata if required
+	updateMetadata, err := f.fetchAndUpdateMetadata(ctx, src, fs.MetadataAsOpenOptions(ctx), dstInfo, true)
+	if err != nil {
+		return nil, err
+	}
+
 	// Do the move
 	var info *drive.File
 	err = f.pacer.Call(func() (bool, error) {
 		info, err = f.svc.Files.Update(shortcutID(srcObj.id), dstInfo).
 			RemoveParents(srcParentID).
 			AddParents(dstParents).
-			Fields(partialFields).
+			Fields(f.getFileFields(ctx)).
 			SupportsAllDrives(true).
 			Context(ctx).Do()
 		return f.shouldRetry(ctx, err)
@@ -2915,6 +3050,11 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		return nil, err
 	}
 
+	// Finalise metadata
+	err = updateMetadata(ctx, info)
+	if err != nil {
+		return nil, err
+	}
 	return f.newObjectWithInfo(ctx, remote, info)
 }
 
@@ -3385,14 +3525,14 @@ func (f *Fs) unTrashDir(ctx context.Context, dir string, recurse bool) (r unTras
 	return f.unTrash(ctx, dir, directoryID, true)
 }
 
-// copy file with id to dest
-func (f *Fs) copyID(ctx context.Context, id, dest string) (err error) {
+// copy or move file with id to dest
+func (f *Fs) copyOrMoveID(ctx context.Context, operation string, id, dest string) (err error) {
 	info, err := f.getFile(ctx, id, f.getFileFields(ctx))
 	if err != nil {
 		return fmt.Errorf("couldn't find id: %w", err)
 	}
 	if info.MimeType == driveFolderType {
-		return fmt.Errorf("can't copy directory use: rclone copy --drive-root-folder-id %s %s %s", id, fs.ConfigString(f), dest)
+		return fmt.Errorf("can't %s directory use: rclone %s --drive-root-folder-id %s %s %s", operation, operation, id, fs.ConfigString(f), dest)
 	}
 	info.Name = f.opt.Enc.ToStandardName(info.Name)
 	o, err := f.newObjectWithInfo(ctx, info.Name, info)
@@ -3413,11 +3553,105 @@ func (f *Fs) copyID(ctx context.Context, id, dest string) (err error) {
 	if err != nil {
 		return err
 	}
-	_, err = operations.Copy(ctx, dstFs, nil, destLeaf, o)
-	if err != nil {
-		return fmt.Errorf("copy failed: %w", err)
+
+	var opErr error
+	if operation == "moveid" {
+		_, opErr = operations.Move(ctx, dstFs, nil, destLeaf, o)
+	} else {
+		_, opErr = operations.Copy(ctx, dstFs, nil, destLeaf, o)
+	}
+	if opErr != nil {
+		return fmt.Errorf("%s failed: %w", operation, opErr)
 	}
 	return nil
+}
+
+// Run the drive query calling fn on each entry found
+func (f *Fs) queryFn(ctx context.Context, query string, fn func(*drive.File)) (err error) {
+	list := f.svc.Files.List()
+	if query != "" {
+		list.Q(query)
+	}
+
+	if f.opt.ListChunk > 0 {
+		list.PageSize(f.opt.ListChunk)
+	}
+	list.SupportsAllDrives(true)
+	list.IncludeItemsFromAllDrives(true)
+	if f.isTeamDrive && !f.opt.SharedWithMe {
+		list.DriveId(f.opt.TeamDriveID)
+		list.Corpora("drive")
+	}
+	// If using appDataFolder then need to add Spaces
+	if f.rootFolderID == "appDataFolder" {
+		list.Spaces("appDataFolder")
+	}
+	fields := fmt.Sprintf("files(%s),nextPageToken,incompleteSearch", f.getFileFields(ctx))
+	for {
+		var files *drive.FileList
+		err = f.pacer.Call(func() (bool, error) {
+			files, err = list.Fields(googleapi.Field(fields)).Context(ctx).Do()
+			return f.shouldRetry(ctx, err)
+		})
+		if err != nil {
+			return fmt.Errorf("failed to execute query: %w", err)
+		}
+		if files.IncompleteSearch {
+			fs.Errorf(f, "search result INCOMPLETE")
+		}
+		for _, item := range files.Files {
+			fn(item)
+		}
+		if files.NextPageToken == "" {
+			break
+		}
+		list.PageToken(files.NextPageToken)
+	}
+	return nil
+}
+
+// Run the drive query returning the entries found
+func (f *Fs) query(ctx context.Context, query string) (entries []*drive.File, err error) {
+	var results []*drive.File
+	err = f.queryFn(ctx, query, func(item *drive.File) {
+		results = append(results, item)
+	})
+	if err != nil {
+		return nil, err
+	}
+	return results, nil
+}
+
+// Rescue, list or delete orphaned files
+func (f *Fs) rescue(ctx context.Context, dirID string, delete bool) (err error) {
+	return f.queryFn(ctx, "'me' in owners and trashed=false", func(item *drive.File) {
+		if len(item.Parents) != 0 {
+			return
+		}
+		// Have found an orphaned entry
+		if delete {
+			fs.Infof(item.Name, "Deleting orphan %q into trash", item.Id)
+			err = f.delete(ctx, item.Id, true)
+			if err != nil {
+				fs.Errorf(item.Name, "Failed to delete orphan %q: %v", item.Id, err)
+			}
+		} else if dirID == "" {
+			operations.SyncPrintf("%q, %q\n", item.Name, item.Id)
+		} else {
+			fs.Infof(item.Name, "Rescuing orphan %q", item.Id)
+			err = f.pacer.Call(func() (bool, error) {
+				_, err = f.svc.Files.Update(item.Id, nil).
+					AddParents(dirID).
+					Fields(f.getFileFields(ctx)).
+					SupportsAllDrives(true).
+					Context(ctx).Do()
+				return f.shouldRetry(ctx, err)
+			})
+			if err != nil {
+				fs.Errorf(item.Name, "Failed to rescue orphan %q: %v", item.Id, err)
+			}
+		}
+	})
 }
 
 var commandHelp = []fs.CommandHelp{{
@@ -3565,11 +3799,105 @@ attempted if possible.
 Use the --interactive/-i or --dry-run flag to see what would be copied before copying.
 `,
 }, {
+	Name:  "moveid",
+	Short: "Move files by ID",
+	Long: `This command moves files by ID
+
+Usage:
+
+    rclone backend moveid drive: ID path
+    rclone backend moveid drive: ID1 path1 ID2 path2
+
+It moves the drive file with ID given to the path (an rclone path which
+will be passed internally to rclone moveto).
+
+The path should end with a / to indicate move the file as named to
+this directory. If it doesn't end with a / then the last path
+component will be used as the file name.
+
+If the destination is a drive backend then server-side moving will be
+attempted if possible.
+
+Use the --interactive/-i or --dry-run flag to see what would be moved beforehand.
+`,
+}, {
 	Name:  "exportformats",
 	Short: "Dump the export formats for debug purposes",
 }, {
 	Name:  "importformats",
 	Short: "Dump the import formats for debug purposes",
+}, {
+	Name:  "query",
+	Short: "List files using Google Drive query language",
+	Long: `This command lists files based on a query
+
+Usage:
+
+    rclone backend query drive: query
+    
+The query syntax is documented at [Google Drive Search query terms and 
+operators](https://developers.google.com/drive/api/guides/ref-search-terms).
+
+For example:
+
+	rclone backend query drive: "'0ABc9DEFGHIJKLMNop0QRatUVW3X' in parents and name contains 'foo'"
+
+If the query contains literal ' or \ characters, these need to be escaped with
+\ characters. "'" becomes "\'" and "\" becomes "\\\", for example to match a 
+file named "foo ' \.txt":
+
+	rclone backend query drive: "name = 'foo \' \\\.txt'"
+
+The result is a JSON array of matches, for example:
+
+    [
+	{
+		"createdTime": "2017-06-29T19:58:28.537Z",
+		"id": "0AxBe_CDEF4zkGHI4d0FjYko2QkD",
+		"md5Checksum": "68518d16be0c6fbfab918be61d658032",
+		"mimeType": "text/plain",
+		"modifiedTime": "2024-02-02T10:40:02.874Z",
+		"name": "foo ' \\.txt",
+		"parents": [
+			"0BxAe_BCDE4zkFGZpcWJGek0xbzC"
+		],
+		"resourceKey": "0-ABCDEFGHIXJQpIGqBJq3MC",
+		"sha1Checksum": "8f284fa768bfb4e45d076a579ab3905ab6bfa893",
+		"size": "311",
+		"webViewLink": "https://drive.google.com/file/d/0AxBe_CDEF4zkGHI4d0FjYko2QkD/view?usp=drivesdk\u0026resourcekey=0-ABCDEFGHIXJQpIGqBJq3MC"
+	}
+    ]`,
+}, {
+	Name:  "rescue",
+	Short: "Rescue or delete any orphaned files",
+	Long: `This command rescues or deletes any orphaned files or directories.
+
+Sometimes files can get orphaned in Google Drive. This means that they
+are no longer in any folder in Google Drive.
+
+This command finds those files and either rescues them to a directory
+you specify or deletes them.
+
+Usage:
+
+This can be used in 3 ways.
+
+First, list all orphaned files
+
+    rclone backend rescue drive:
+
+Second rescue all orphaned files to the directory indicated
+
+    rclone backend rescue drive: "relative/path/to/rescue/directory"
+
+e.g. To rescue all orphans to a directory called "Orphans" in the top level
+
+    rclone backend rescue drive: Orphans
+
+Third delete all orphaned files to the trash
+
+    rclone backend rescue drive: -o delete
+`,
 }}
 
 // Command the backend to run a named command
@@ -3670,16 +3998,16 @@ func (f *Fs) Command(ctx context.Context, name string, arg []string, opt map[str
 			dir = arg[0]
 		}
 		return f.unTrashDir(ctx, dir, true)
-	case "copyid":
+	case "copyid", "moveid":
 		if len(arg)%2 != 0 {
 			return nil, errors.New("need an even number of arguments")
 		}
 		for len(arg) > 0 {
 			id, dest := arg[0], arg[1]
 			arg = arg[2:]
-			err = f.copyID(ctx, id, dest)
+			err = f.copyOrMoveID(ctx, name, id, dest)
 			if err != nil {
-				return nil, fmt.Errorf("failed copying %q to %q: %w", id, dest, err)
+				return nil, fmt.Errorf("failed %s %q to %q: %w", name, id, dest, err)
 			}
 		}
 		return nil, nil
@@ -3687,6 +4015,33 @@ func (f *Fs) Command(ctx context.Context, name string, arg []string, opt map[str
 		return f.exportFormats(ctx), nil
 	case "importformats":
 		return f.importFormats(ctx), nil
+	case "query":
+		if len(arg) == 1 {
+			query := arg[0]
+			var results, err = f.query(ctx, query)
+			if err != nil {
+				return nil, fmt.Errorf("failed to execute query: %q, error: %w", query, err)
+			}
+			return results, nil
+		} else {
+			return nil, errors.New("need a query argument")
+		}
+	case "rescue":
+		dirID := ""
+		_, delete := opt["delete"]
+		if len(arg) == 0 {
+			// no arguments - list only
+		} else if !delete && len(arg) == 1 {
+			dir := arg[0]
+			dirID, err = f.dirCache.FindDir(ctx, dir, true)
+			if err != nil {
+				return nil, fmt.Errorf("failed to find or create rescue directory %q: %w", dir, err)
+			}
+			fs.Infof(f, "Rescuing orphans into %q", dir)
+		} else {
+			return nil, errors.New("syntax error: need 0 or 1 args or -o delete")
+		}
+		return nil, f.rescue(ctx, dirID, delete)
 	default:
 		return nil, fs.ErrorCommandNotFound
 	}
@@ -3731,7 +4086,7 @@ func (o *Object) Hash(ctx context.Context, t hash.Type) (string, error) {
 	return "", hash.ErrUnsupported
 }
 func (o *baseObject) Hash(ctx context.Context, t hash.Type) (string, error) {
-	if t != hash.MD5 {
+	if t != hash.MD5 && t != hash.SHA1 && t != hash.SHA256 {
 		return "", hash.ErrUnsupported
 	}
 	return "", nil
@@ -4193,6 +4548,37 @@ func (o *linkObject) ext() string {
 	return o.baseObject.remote[len(o.baseObject.remote)-o.extLen:]
 }
 
+// Items returns the count of items in this directory or this
+// directory and subdirectories if known, -1 for unknown
+func (d *Directory) Items() int64 {
+	return -1
+}
+
+// SetMetadata sets metadata for a Directory
+//
+// It should return fs.ErrorNotImplemented if it can't set metadata
+func (d *Directory) SetMetadata(ctx context.Context, metadata fs.Metadata) error {
+	info, err := d.fs.updateDir(ctx, d.id, metadata)
+	if err != nil {
+		return fmt.Errorf("failed to update directory info: %w", err)
+	}
+	// Update directory from info returned
+	baseObject, err := d.fs.newBaseObject(ctx, d.remote, info)
+	if err != nil {
+		return fmt.Errorf("failed to process directory info: %w", err)
+	}
+	d.baseObject = baseObject
+	return err
+}
+
+// Hash does nothing on a directory
+//
+// This method is implemented with the incorrect type signature to
+// stop the Directory type asserting to fs.Object or fs.ObjectInfo
+func (d *Directory) Hash() {
+	// Does nothing
+}
+
 // templates for document link files
 const (
 	urlTemplate = `[InternetShortcut]{{"\r"}}
@@ -4242,6 +4628,8 @@ var (
 	_ fs.PublicLinker    = (*Fs)(nil)
 	_ fs.ListRer         = (*Fs)(nil)
 	_ fs.MergeDirser     = (*Fs)(nil)
+	_ fs.DirSetModTimer  = (*Fs)(nil)
+	_ fs.MkdirMetadataer = (*Fs)(nil)
 	_ fs.Abouter         = (*Fs)(nil)
 	_ fs.Object          = (*Object)(nil)
 	_ fs.MimeTyper       = (*Object)(nil)
@@ -4256,4 +4644,8 @@ var (
 	_ fs.MimeTyper       = (*linkObject)(nil)
 	_ fs.IDer            = (*linkObject)(nil)
 	_ fs.ParentIDer      = (*linkObject)(nil)
+	_ fs.Directory       = (*Directory)(nil)
+	_ fs.SetModTimer     = (*Directory)(nil)
+	_ fs.SetMetadataer   = (*Directory)(nil)
+	_ fs.ParentIDer      = (*Directory)(nil)
 )

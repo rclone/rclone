@@ -53,7 +53,7 @@ const (
 	PhaseTypePending    = "PHASE_TYPE_PENDING"
 	UploadTypeForm      = "UPLOAD_TYPE_FORM"
 	UploadTypeResumable = "UPLOAD_TYPE_RESUMABLE"
-	ListLimit           = 100
+	ListLimit           = 500
 )
 
 // ------------------------------------------------------------
@@ -156,6 +156,7 @@ type FileList struct {
 	NextPageToken   string  `json:"next_page_token"`
 	Version         string  `json:"version,omitempty"`
 	VersionOutdated bool    `json:"version_outdated,omitempty"`
+	SyncTime        Time    `json:"sync_time"`
 }
 
 // File is a basic element representing a single file object
@@ -165,17 +166,17 @@ type FileList struct {
 // 2) the other from File.Medias[].Link.URL.
 // Empirically, 2) is less restrictive to multiple concurrent range-requests
 // for a single file, i.e. supports for higher `--multi-thread-streams=N`.
-// However, it is not generally applicable as it is only for meadia.
+// However, it is not generally applicable as it is only for media.
 type File struct {
 	Apps              []*FileApp    `json:"apps,omitempty"`
 	Audit             *FileAudit    `json:"audit,omitempty"`
 	Collection        string        `json:"collection,omitempty"` // TODO
 	CreatedTime       Time          `json:"created_time,omitempty"`
 	DeleteTime        Time          `json:"delete_time,omitempty"`
-	FileCategory      string        `json:"file_category,omitempty"`
+	FileCategory      string        `json:"file_category,omitempty"` // "AUDIO", "VIDEO"
 	FileExtension     string        `json:"file_extension,omitempty"`
 	FolderType        string        `json:"folder_type,omitempty"`
-	Hash              string        `json:"hash,omitempty"` // sha1 but NOT a valid file hash. looks like a torrent hash
+	Hash              string        `json:"hash,omitempty"` // custom hash with a form of sha1sum
 	IconLink          string        `json:"icon_link,omitempty"`
 	ID                string        `json:"id,omitempty"`
 	Kind              string        `json:"kind,omitempty"` // "drive#file"
@@ -191,11 +192,14 @@ type File struct {
 	ParentID          string        `json:"parent_id,omitempty"`
 	Phase             string        `json:"phase,omitempty"`
 	Revision          int           `json:"revision,omitempty,string"`
+	ReferenceEvents   []interface{} `json:"reference_events"`
+	ReferenceResource interface{}   `json:"reference_resource"`
 	Size              int64         `json:"size,omitempty,string"`
 	SortName          string        `json:"sort_name,omitempty"`
 	Space             string        `json:"space,omitempty"`
 	SpellName         []interface{} `json:"spell_name,omitempty"` // TODO maybe list of something?
 	Starred           bool          `json:"starred,omitempty"`
+	Tags              []interface{} `json:"tags"`
 	ThumbnailLink     string        `json:"thumbnail_link,omitempty"`
 	Trashed           bool          `json:"trashed,omitempty"`
 	UserID            string        `json:"user_id,omitempty"`
@@ -241,15 +245,18 @@ type Media struct {
 	IsOrigin       bool          `json:"is_origin,omitempty"`
 	ResolutionName string        `json:"resolution_name,omitempty"`
 	IsVisible      bool          `json:"is_visible,omitempty"`
-	Category       string        `json:"category,omitempty"`
+	Category       string        `json:"category,omitempty"` // "category_origin"
+	Audio          interface{}   `json:"audio"`              // TODO: undiscovered yet
 }
 
 // FileParams includes parameters for instant open
 type FileParams struct {
+	DeviceID     string `json:"device_id,omitempty"`
 	Duration     int64  `json:"duration,omitempty,string"` // in seconds
 	Height       int    `json:"height,omitempty,string"`
 	Platform     string `json:"platform,omitempty"` // "Upload"
 	PlatformIcon string `json:"platform_icon,omitempty"`
+	TaskID       string `json:"task_id"`
 	URL          string `json:"url,omitempty"`
 	Width        int    `json:"width,omitempty,string"`
 }
@@ -395,6 +402,7 @@ type Quota struct {
 	UsageInTrash   int64  `json:"usage_in_trash,omitempty,string"` // bytes in trash but this seems not working
 	PlayTimesLimit string `json:"play_times_limit,omitempty"`      // maybe in seconds
 	PlayTimesUsage string `json:"play_times_usage,omitempty"`      // maybe in seconds
+	IsUnlimited    bool   `json:"is_unlimited,omitempty"`
 }
 
 // Share is a response to RequestShare
@@ -478,7 +486,7 @@ type RequestNewFile struct {
 	ParentID   string `json:"parent_id"`
 	FolderType string `json:"folder_type"`
 	// only when uploading a new file
-	Hash       string            `json:"hash,omitempty"`      // sha1sum
+	Hash       string            `json:"hash,omitempty"`      // gcid
 	Resumable  map[string]string `json:"resumable,omitempty"` // {"provider": "PROVIDER_ALIYUN"}
 	Size       int64             `json:"size,omitempty"`
 	UploadType string            `json:"upload_type,omitempty"` // "UPLOAD_TYPE_FORM" or "UPLOAD_TYPE_RESUMABLE"
@@ -503,6 +511,72 @@ type RequestDecompress struct {
 	FileID        string           `json:"file_id,omitempty"`
 	Files         []*FileInArchive `json:"files,omitempty"` // can request selected files to be decompressed
 	DefaultParent bool             `json:"default_parent,omitempty"`
+}
+
+// ------------------------------------------------------------ authorization
+
+// CaptchaToken is a response to requestCaptchaToken api call
+type CaptchaToken struct {
+	CaptchaToken string `json:"captcha_token"`
+	ExpiresIn    int64  `json:"expires_in"` // currently 300s
+	// API doesn't provide Expiry field and thus it should be populated from ExpiresIn on retrieval
+	Expiry time.Time `json:"expiry,omitempty"`
+	URL    string    `json:"url,omitempty"` // a link for users to solve captcha
+}
+
+// expired reports whether the token is expired.
+// t must be non-nil.
+func (t *CaptchaToken) expired() bool {
+	if t.Expiry.IsZero() {
+		return false
+	}
+
+	expiryDelta := time.Duration(10) * time.Second // same as oauth2's defaultExpiryDelta
+	return t.Expiry.Round(0).Add(-expiryDelta).Before(time.Now())
+}
+
+// Valid reports whether t is non-nil, has an AccessToken, and is not expired.
+func (t *CaptchaToken) Valid() bool {
+	return t != nil && t.CaptchaToken != "" && !t.expired()
+}
+
+// CaptchaTokenRequest is to request for captcha token
+type CaptchaTokenRequest struct {
+	Action       string            `json:"action,omitempty"`
+	CaptchaToken string            `json:"captcha_token,omitempty"`
+	ClientID     string            `json:"client_id,omitempty"`
+	DeviceID     string            `json:"device_id,omitempty"`
+	Meta         *CaptchaTokenMeta `json:"meta,omitempty"`
+}
+
+// CaptchaTokenMeta contains meta info for CaptchaTokenRequest
+type CaptchaTokenMeta struct {
+	CaptchaSign   string `json:"captcha_sign,omitempty"`
+	ClientVersion string `json:"client_version,omitempty"`
+	PackageName   string `json:"package_name,omitempty"`
+	Timestamp     string `json:"timestamp,omitempty"`
+	UserID        string `json:"user_id,omitempty"` // webdrive uses this instead of UserName
+	UserName      string `json:"username,omitempty"`
+	Email         string `json:"email,omitempty"`
+	PhoneNumber   string `json:"phone_number,omitempty"`
+}
+
+// Token represents oauth2 token used for pikpak which needs to be converted to be compatible with oauth2.Token
+type Token struct {
+	TokenType    string `json:"token_type"`
+	AccessToken  string `json:"access_token"`
+	RefreshToken string `json:"refresh_token"`
+	ExpiresIn    int    `json:"expires_in"`
+	Sub          string `json:"sub"`
+}
+
+// Expiry returns expiry from expires in, so it should be called on retrieval
+// e must be non-nil.
+func (e *Token) Expiry() (t time.Time) {
+	if v := e.ExpiresIn; v != 0 {
+		return time.Now().Add(time.Duration(v) * time.Second)
+	}
+	return
 }
 
 // ------------------------------------------------------------

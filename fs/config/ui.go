@@ -7,7 +7,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
 	"os"
 	"sort"
 	"strconv"
@@ -29,7 +28,7 @@ var ReadLine = func() string {
 	buf := bufio.NewReader(os.Stdin)
 	line, err := buf.ReadString('\n')
 	if err != nil {
-		log.Fatalf("Failed to read line: %v", err)
+		fs.Fatalf(nil, "Failed to read line: %v", err)
 	}
 	return strings.TrimSpace(line)
 }
@@ -233,7 +232,7 @@ func ChoosePassword(defaultValue string, required bool) string {
 			bits := ChooseNumber("Bits", 64, 1024)
 			password, err = Password(bits)
 			if err != nil {
-				log.Fatalf("Failed to make password: %v", err)
+				fs.Fatalf(nil, "Failed to make password: %v", err)
 			}
 			fmt.Printf("Your password is: %s\n", password)
 			fmt.Printf("Use this password? Please note that an obscured version of this \npassword (and not the " +
@@ -280,7 +279,7 @@ func ShowRemotes() {
 	fmt.Printf("%-20s %s\n", "Name", "Type")
 	fmt.Printf("%-20s %s\n", "====", "====")
 	for _, remote := range remotes {
-		fmt.Printf("%-20s %s\n", remote, FileGet(remote, "type"))
+		fmt.Printf("%-20s %s\n", remote, GetValue(remote, "type"))
 	}
 }
 
@@ -295,9 +294,9 @@ func ChooseRemote() string {
 // mustFindByName finds the RegInfo for the remote name passed in or
 // exits with a fatal error.
 func mustFindByName(name string) *fs.RegInfo {
-	fsType := FileGet(name, "type")
+	fsType := GetValue(name, "type")
 	if fsType == "" {
-		log.Fatalf("Couldn't find type of fs for %q", name)
+		fs.Fatalf(nil, "Couldn't find type of fs for %q", name)
 	}
 	return fs.MustFind(fsType)
 }
@@ -305,7 +304,7 @@ func mustFindByName(name string) *fs.RegInfo {
 // findByName finds the RegInfo for the remote name passed in or
 // returns an error
 func findByName(name string) (*fs.RegInfo, error) {
-	fsType := FileGet(name, "type")
+	fsType := GetValue(name, "type")
 	if fsType == "" {
 		return nil, fmt.Errorf("couldn't find type of fs for %q", name)
 	}
@@ -333,7 +332,7 @@ func printRemoteOptions(name string, prefix string, sep string, redacted bool) {
 				}
 			}
 		}
-		value := FileGet(name, key)
+		value := GetValue(name, key)
 		if redacted && (isSensitive || isPassword) && value != "" {
 			fmt.Printf("%s%s%sXXX\n", prefix, key, sep)
 		} else if isPassword && value != "" {
@@ -454,7 +453,7 @@ func PostConfig(ctx context.Context, name string, m configmap.Mapper, ri *fs.Reg
 func RemoteConfig(ctx context.Context, name string) error {
 	fmt.Printf("Remote config\n")
 	ri := mustFindByName(name)
-	m := fs.ConfigMap(ri, name, nil)
+	m := fs.ConfigMap(ri.Prefix, ri.Options, name, nil)
 	if ri.Config == nil {
 		return nil
 	}
@@ -495,7 +494,7 @@ func ChooseOption(o *fs.Option, name string) string {
 		case uint, byte, uint16, uint32, uint64:
 			what = "unsigned integer"
 		default:
-			what = fmt.Sprintf("%T value", o.Default)
+			what = fmt.Sprintf("value of type %s", o.Type())
 		}
 	}
 	var in string
@@ -613,7 +612,7 @@ func copyRemote(name string) string {
 	newName := NewRemoteName()
 	// Copy the keys
 	for _, key := range LoadedData().GetKeyList(name) {
-		value := getWithDefault(name, key, "")
+		value, _ := FileGetValue(name, key)
 		LoadedData().SetValue(newName, key, value)
 	}
 	return newName
@@ -654,7 +653,7 @@ func ShowConfigLocation() {
 func ShowConfig() {
 	str, err := LoadedData().Serialize()
 	if err != nil {
-		log.Fatalf("Failed to serialize config: %v", err)
+		fs.Fatalf(nil, "Failed to serialize config: %v", err)
 	}
 	if str == "" {
 		str = "; empty config\n"
@@ -797,13 +796,11 @@ func SetPassword() {
 			what := []string{"cChange Password", "uUnencrypt configuration", "qQuit to main menu"}
 			switch i := Command(what); i {
 			case 'c':
-				changeConfigPassword()
-				SaveConfig()
+				ChangeConfigPasswordAndSave()
 				fmt.Println("Password changed")
 				continue
 			case 'u':
-				configKey = nil
-				SaveConfig()
+				RemoveConfigPasswordAndSave()
 				continue
 			case 'q':
 				return
@@ -815,8 +812,7 @@ func SetPassword() {
 			what := []string{"aAdd Password", "qQuit to main menu"}
 			switch i := Command(what); i {
 			case 'a':
-				changeConfigPassword()
-				SaveConfig()
+				ChangeConfigPasswordAndSave()
 				fmt.Println("Password set")
 				continue
 			case 'q':

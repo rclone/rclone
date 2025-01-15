@@ -1,13 +1,13 @@
 // FUSE main Fs
 
 //go:build linux || (darwin && amd64)
-// +build linux darwin,amd64
 
 package mount2
 
 import (
 	"os"
 	"syscall"
+	"time"
 
 	"github.com/hanwen/go-fuse/v2/fuse"
 	"github.com/rclone/rclone/cmd/mountlib"
@@ -51,9 +51,14 @@ func (f *FS) SetDebug(debug bool) {
 
 // get the Mode from a vfs Node
 func getMode(node os.FileInfo) uint32 {
-	Mode := node.Mode().Perm()
-	if node.IsDir() {
+	vfsMode := node.Mode()
+	Mode := vfsMode.Perm()
+	if vfsMode&os.ModeDir != 0 {
 		Mode |= fuse.S_IFDIR
+	} else if vfsMode&os.ModeSymlink != 0 {
+		Mode |= fuse.S_IFLNK
+	} else if vfsMode&os.ModeNamedPipe != 0 {
+		Mode |= fuse.S_IFIFO
 	} else {
 		Mode |= fuse.S_IFREG
 	}
@@ -89,14 +94,14 @@ func setAttr(node vfs.Node, attr *fuse.Attr) {
 // fill in AttrOut from node
 func (f *FS) setAttrOut(node vfs.Node, out *fuse.AttrOut) {
 	setAttr(node, &out.Attr)
-	out.SetTimeout(f.opt.AttrTimeout)
+	out.SetTimeout(time.Duration(f.opt.AttrTimeout))
 }
 
 // fill in EntryOut from node
 func (f *FS) setEntryOut(node vfs.Node, out *fuse.EntryOut) {
 	setAttr(node, &out.Attr)
-	out.SetEntryTimeout(f.opt.AttrTimeout)
-	out.SetAttrTimeout(f.opt.AttrTimeout)
+	out.SetEntryTimeout(time.Duration(f.opt.AttrTimeout))
+	out.SetAttrTimeout(time.Duration(f.opt.AttrTimeout))
 }
 
 // Translate errors from mountlib into Syscall error numbers
@@ -128,6 +133,8 @@ func translateError(err error) syscall.Errno {
 		return syscall.ENOSYS
 	case vfs.EINVAL:
 		return syscall.EINVAL
+	case vfs.ELOOP:
+		return syscall.ELOOP
 	}
 	fs.Errorf(nil, "IO error: %v", err)
 	return syscall.EIO

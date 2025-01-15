@@ -43,6 +43,9 @@ func NewStaticObjectInfo(remote string, modTime time.Time, size int64, storable 
 			info.hashes[ht] = ""
 		}
 	}
+	if f == nil {
+		info.fs = MemoryFs
+	}
 	return info
 }
 
@@ -192,6 +195,7 @@ type MemoryObject struct {
 	modTime time.Time
 	content []byte
 	meta    fs.Metadata
+	fs      fs.Fs
 }
 
 // NewMemoryObject returns an in memory Object with the modTime and content passed in
@@ -200,6 +204,7 @@ func NewMemoryObject(remote string, modTime time.Time, content []byte) *MemoryOb
 		remote:  remote,
 		modTime: modTime,
 		content: content,
+		fs:      MemoryFs,
 	}
 }
 
@@ -216,7 +221,16 @@ func (o *MemoryObject) Content() []byte {
 
 // Fs returns read only access to the Fs that this object is part of
 func (o *MemoryObject) Fs() fs.Info {
-	return MemoryFs
+	return o.fs
+}
+
+// SetFs sets the Fs that this memory object thinks it is part of
+// It will ignore nil f
+func (o *MemoryObject) SetFs(f fs.Fs) *MemoryObject {
+	if f != nil {
+		o.fs = f
+	}
+	return o
 }
 
 // Remote returns the remote path

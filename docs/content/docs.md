@@ -36,20 +36,25 @@ See the following for detailed instructions for
   * [Chunker](/chunker/) - transparently splits large files for other remotes
   * [Citrix ShareFile](/sharefile/)
   * [Compress](/compress/)
+  * [Cloudinary](/cloudinary/)
   * [Combine](/combine/)
   * [Crypt](/crypt/) - to encrypt other remotes
   * [DigitalOcean Spaces](/s3/#digitalocean-spaces)
   * [Digi Storage](/koofr/#digi-storage)
   * [Dropbox](/dropbox/)
   * [Enterprise File Fabric](/filefabric/)
+  * [Files.com](/filescom/)
   * [FTP](/ftp/)
+  * [Gofile](/gofile/)
   * [Google Cloud Storage](/googlecloudstorage/)
   * [Google Drive](/drive/)
   * [Google Photos](/googlephotos/)
   * [Hasher](/hasher/) - to handle checksums for other remotes
   * [HDFS](/hdfs/)
+  * [Hetzner Storage Box](/sftp/#hetzner-storage-box)
   * [HiDrive](/hidrive/)
   * [HTTP](/http/)
+  * [iCloud Drive](/iclouddrive/)
   * [Internet Archive](/internetarchive/)
   * [Jottacloud](/jottacloud/)
   * [Koofr](/koofr/)
@@ -65,11 +70,13 @@ See the following for detailed instructions for
   * [Oracle Object Storage](/oracleobjectstorage/)
   * [Pcloud](/pcloud/)
   * [PikPak](/pikpak/)
+  * [Pixeldrain](/pixeldrain/)
   * [premiumize.me](/premiumizeme/)
   * [put.io](/putio/)
   * [Proton Drive](/protondrive/)
   * [QingStor](/qingstor/)
   * [Quatrix by Maytech](/quatrix/)
+  * [rsync.net](/sftp/#rsync-net)
   * [Seafile](/seafile/)
   * [SFTP](/sftp/)
   * [Sia](/sia/)
@@ -77,6 +84,7 @@ See the following for detailed instructions for
   * [Storj](/storj/)
   * [SugarSync](/sugarsync/)
   * [Union](/union/)
+  * [Uloz.to](/ulozto/)
   * [Uptobox](/uptobox/)
   * [WebDAV](/webdav/)
   * [Yandex Disk](/yandex/)
@@ -90,7 +98,24 @@ Rclone syncs a directory tree from one storage system to another.
 
 Its syntax is like this
 
-    Syntax: [options] subcommand <parameters> <parameters...>
+    rclone subcommand [options] <parameters> <parameters...>
+
+A `subcommand` is a the rclone operation required, (e.g. `sync`,
+`copy`, `ls`).
+
+An `option` is a single letter flag (e.g. `-v`) or a group of single
+letter flags (e.g. `-Pv`) or a long flag (e.g. `--progress`). No
+options are required. Options can come after the `subcommand` or in
+between parameters too or on the end, but only global options can be
+used before the `subcommand`. Anything after a `--` option will not be
+interpreted as an option so if you need to add a parameter which
+starts with a `-` then put a `--` on its own first, eg
+
+    rclone lsf -- -directory-starting-with-dash
+
+A `parameter` is usually a file path or [rclone remote](#syntax-of-remote-paths), eg
+`/path/to/file` or `remote:path/to/file` but it can be other things -
+the `subcommand` help will tell you what.
 
 Source and destination paths are specified by the name you gave the
 storage system in the config file then the sub path, e.g.
@@ -135,7 +160,7 @@ The main rclone commands with most used first
 * [rclone authorize](/commands/rclone_authorize/)	- Remote authorization.
 * [rclone cat](/commands/rclone_cat/)		- Concatenate any files and send them to stdout.
 * [rclone copyto](/commands/rclone_copyto/)	- Copy files from source to dest, skipping already copied.
-* [rclone genautocomplete](/commands/rclone_genautocomplete/)	- Output shell completion scripts for rclone.
+* [rclone completion](/commands/rclone_completion/)	- Output shell completion scripts for rclone.
 * [rclone gendocs](/commands/rclone_gendocs/)	- Output markdown docs for rclone to the directory supplied.
 * [rclone listremotes](/commands/rclone_listremotes/)	- List all the remotes in the config file.
 * [rclone mount](/commands/rclone_mount/)	- Mount the remote as a mountpoint.
@@ -446,17 +471,20 @@ This can be used when scripting to make aged backups efficiently, e.g.
 
 ## Metadata support {#metadata}
 
-Metadata is data about a file which isn't the contents of the file.
-Normally rclone only preserves the modification time and the content
-(MIME) type where possible.
+Metadata is data about a file (or directory) which isn't the contents
+of the file (or directory). Normally rclone only preserves the
+modification time and the content (MIME) type where possible.
 
-Rclone supports preserving all the available metadata on files (not
-directories) when using the `--metadata` or `-M` flag.
+Rclone supports preserving all the available metadata on files and
+directories when using the `--metadata` or `-M` flag.
 
 Exactly what metadata is supported and what that support means depends
 on the backend. Backends that support metadata have a metadata section
 in their docs and are listed in the [features table](/overview/#features)
 (Eg [local](/local/#metadata), [s3](/s3/#metadata))
+
+Some backends don't support metadata, some only support metadata on
+files and some support metadata on both files and directories.
 
 Rclone only supports a one-time sync of metadata. This means that
 metadata will be synced from the source object to the destination
@@ -477,6 +505,14 @@ This flag can be repeated as many times as necessary.
 The [--metadata-mapper](#metadata-mapper) flag can be used to pass the
 name of a program in which can transform metadata when it is being
 copied from source to destination.
+
+Rclone supports `--metadata-set` and `--metadata-mapper` when doing
+sever side `Move` and server side `Copy`, but not when doing server
+side `DirMove` (renaming a directory) as this would involve recursing
+into the directory. Note that you can disable `DirMove` with
+`--disable DirMove` and rclone will revert back to using `Move` for
+each individual object where `--metadata-set` and `--metadata-mapper`
+are supported.
 
 ### Types of metadata
 
@@ -701,12 +737,20 @@ for upload:download, e.g.`10M:1M`.
   characters. It is optional.
 - `HH:MM` is an hour from 00:00 to 23:59.
 
+Entries can be separated by spaces or semicolons.
+
+**Note:** Semicolons can be used as separators instead of spaces to avoid parsing issues in environments like Docker.
+
 An example of a typical timetable to avoid link saturation during daytime
 working hours could be:
 
+Using spaces as separators:
 `--bwlimit "08:00,512k 12:00,10M 13:00,512k 18:00,30M 23:00,off"`
 
-In this example, the transfer bandwidth will be set to 512 KiB/s
+Using semicolons as separators:
+`--bwlimit "08:00,512k;12:00,10M;13:00,512k;18:00,30M;23:00,off"`
+
+In these examples, the transfer bandwidth will be set to 512 KiB/s
 at 8am every day. At noon, it will rise to 10 MiB/s, and drop back
 to 512 KiB/sec at 1pm. At 6pm, the bandwidth limit will be set to
 30 MiB/s, and at 11pm it will be completely disabled (full speed).
@@ -714,7 +758,11 @@ Anything between 11pm and 8am will remain unlimited.
 
 An example of timetable with `WEEKDAY` could be:
 
+Using spaces as separators:
 `--bwlimit "Mon-00:00,512 Fri-23:59,10M Sat-10:00,1M Sun-20:00,off"`
+
+Using semicolons as separators:
+`--bwlimit "Mon-00:00,512;Fri-23:59,10M;Sat-10:00,1M;Sun-20:00,off"`
 
 It means that, the transfer bandwidth will be set to 512 KiB/s on
 Monday. It will rise to 10 MiB/s before the end of Friday. At 10:00
@@ -1307,11 +1355,12 @@ flag set) such as:
 - local
 - ftp
 - sftp
+- pcloud
 
 Without `--inplace` (the default) rclone will first upload to a
 temporary file with an extension like this, where `XXXXXX` represents a
-random string and `.partial` is [--partial-suffix](#partial-suffix) value
-(`.partial` by default).
+hash of the source file's fingerprint and `.partial` is 
+[--partial-suffix](#partial-suffix) value (`.partial` by default).
 
     original-file-name.XXXXXX.partial
 
@@ -1383,6 +1432,22 @@ The options mean
 ### --leave-root ####
 
 During rmdirs it will not remove root directory, even if it's empty.
+
+### --links / -l
+
+Normally rclone will ignore symlinks or junction points (which behave
+like symlinks under Windows).
+
+If you supply this flag then rclone will copy symbolic links from any
+supported backend backend, and store them as text files, with a
+`.rclonelink` suffix in the destination.
+
+The text file will contain the target of the symbolic link.
+
+The `--links` / `-l` flag enables this feature for all supported
+backends and the VFS. There are individual flags for just enabling it
+for the VFS `--vfs-links` and the local backend `--local-links` if
+required.
 
 ### --log-file=FILE ###
 
@@ -1566,10 +1631,10 @@ some context for the `Metadata` which may be important.
 - `SrcFsType` is the name of the source backend.
 - `DstFs` is the config string for the remote that the object is being copied to
 - `DstFsType` is the name of the destination backend.
-- `Remote` is the path of the file relative to the root.
-- `Size`, `MimeType`, `ModTime` are attributes of the file.
+- `Remote` is the path of the object relative to the root.
+- `Size`, `MimeType`, `ModTime` are attributes of the object.
 - `IsDir` is `true` if this is a directory (not yet implemented).
-- `ID` is the source `ID` of the file if known.
+- `ID` is the source `ID` of the object if known.
 - `Metadata` is the backend specific metadata as described in the backend docs.
 
 ```json
@@ -1812,6 +1877,11 @@ files if they are incorrect as it would normally.
 This can be used if the remote is being synced with another tool also
 (e.g. the Google Drive client).
 
+### --no-update-dir-modtime ###
+
+When using this flag, rclone won't update modification times of remote
+directories if they are incorrect as it would normally.
+
 ### --order-by string ###
 
 The `--order-by` flag controls the order in which files in the backlog
@@ -1878,11 +1948,12 @@ Suffix length limit is 16 characters.
 
 The default is `.partial`.
 
-### --password-command SpaceSepList ###
+### --password-command SpaceSepList {#password-command}
 
 This flag supplies a program which should supply the config password
 when run. This is an alternative to rclone prompting for the password
-or setting the `RCLONE_CONFIG_PASS` variable.
+or setting the `RCLONE_CONFIG_PASS` variable. It is also used when
+setting the config password for the first time.
 
 The argument to this should be a command with a space separated list
 of arguments. If one of the arguments has a space in then enclose it
@@ -1895,6 +1966,11 @@ Eg
     --password-command "echo hello"
     --password-command 'echo "hello with space"'
     --password-command 'echo "hello with ""quotes"" and space"'
+
+Note that when changing the configuration password the environment
+variable `RCLONE_PASSWORD_CHANGE=1` will be set. This can be used to
+distinguish initial decryption of the config file from the new
+password.
 
 See the [Configuration Encryption](#configuration-encryption) for more info.
 
@@ -1914,6 +1990,10 @@ with the `--stats` flag.
 
 This can be used with the `--stats-one-line` flag for a simpler
 display.
+
+To change the display length of filenames (for different terminal widths),
+see the `--stats-file-name-length` option.  The default output is formatted
+for 80 character wide terminals.
 
 Note: On Windows until [this bug](https://github.com/Azure/go-ansiterm/issues/26)
 is fixed all non-ASCII characters will be replaced with `.` when
@@ -2502,6 +2582,12 @@ encryption from your configuration.
 
 There is no way to recover the configuration if you lose your password.
 
+You can also use
+
+- [rclone config encryption set](/commands/rclone_config_encryption_set/) to set the config encryption directly
+- [rclone config encryption remove](/commands/rclone_config_encryption_remove/) to remove it
+- [rclone config encryption check](/commands/rclone_config_encryption_check/) to check that it is encrypted properly.
+
 rclone uses [nacl secretbox](https://godoc.org/golang.org/x/crypto/nacl/secretbox)
 which in turn uses XSalsa20 and Poly1305 to encrypt and authenticate
 your configuration with secret-key cryptography.
@@ -2534,7 +2620,7 @@ An alternate means of supplying the password is to provide a script
 which will retrieve the password and print on standard output.  This
 script should have a fully specified path name and not rely on any
 environment variables.  The script is supplied either via
-`--password-command="..."` command line argument or via the
+[`--password-command="..."`](#password-command) command line argument or via the
 `RCLONE_PASSWORD_COMMAND` environment variable.
 
 One useful example of this is using the `passwordstore` application
@@ -2571,11 +2657,62 @@ a configuration file, you can avoid it being loaded by overriding the
 location, e.g. with one of the documented special values for
 memory-only configuration. Since only backend options can be stored
 in configuration files, this is normally unnecessary for commands
-that do not operate on backends, e.g. `genautocomplete`. However,
+that do not operate on backends, e.g. `completion`. However,
 it will be relevant for commands that do operate on backends in
 general, but are used without referencing a stored remote, e.g.
 listing local filesystem paths, or
 [connection strings](#connection-strings): `rclone --config="" ls .`
+
+Configuration Encryption Cheatsheet
+-----------------------------------
+You can quickly apply a configuration encryption without plain-text
+at rest or transfer. Detailed instructions for popular OSes:
+
+### Mac ###
+
+* Generate and store a password
+
+`security add-generic-password -a rclone -s config -w $(openssl rand -base64 40)`
+
+* Add the retrieval instruction to your .zprofile / .profile
+
+`export RCLONE_PASSWORD_COMMAND="/usr/bin/security find-generic-password -a rclone -s config -w"`
+
+### Linux ###
+
+* Prerequisite
+
+Linux doesn't come with a default password manager. Let's install
+the "pass" utility using a package manager, e.g. `apt install pass`,
+ `yum install pass`,
+ [etc.](https://www.passwordstore.org/#download); then initialize a
+ password store:
+
+`pass init rclone`
+
+* Generate and store a password
+
+`echo $(openssl rand -base64 40) | pass insert -m rclone/config`
+
+* Add the retrieval instruction
+
+`export RCLONE_PASSWORD_COMMAND="/usr/bin/pass rclone/config"`
+
+### Windows ###
+
+* Generate and store a password
+
+`New-Object -TypeName PSCredential -ArgumentList "rclone", (ConvertTo-SecureString -String ([System.Web.Security.Membership]::GeneratePassword(40, 10)) -AsPlainText -Force) | Export-Clixml -Path "rclone-credential.xml"`
+
+* Add the password retrieval instruction
+
+`[Environment]::SetEnvironmentVariable("RCLONE_PASSWORD_COMMAND", "[System.Runtime.InteropServices.Marshal]::PtrToStringAuto([System.Runtime.InteropServices.Marshal]::SecureStringToBSTR((Import-Clixml -Path "rclone-credential.xml").Password))")`
+
+### Encrypt the config file (all systems) ###
+
+* Execute `rclone config` -> `s`
+
+* Add/update the password from previous steps
 
 Developer options
 -----------------
@@ -2730,6 +2867,17 @@ Rclone prefixes all log messages with their level in capitals, e.g. INFO
 which makes it easy to grep the log file for different kinds of
 information.
 
+Metrics
+-------
+
+Rclone can publish metrics in the OpenMetrics/Prometheus format.
+
+To enable the metrics endpoint, use the `--metrics-addr` flag. Metrics can also be published on the `--rc-addr` port if the `--rc` flag and `--rc-enable-metrics` flags are supplied or if using rclone rcd `--rc-enable-metrics`
+
+Rclone provides extensive configuration options for the metrics HTTP endpoint. These settings are grouped under the Metrics section and have a prefix `--metrics-*`.
+
+When metrics are enabled with `--rc-enable-metrics`, they will be published on the same port as the rc API. In this case, the `--metrics-*` flags will be ignored, and the HTTP endpoint configuration will be managed by the `--rc-*` parameters.
+
 Exit Code
 ---------
 
@@ -2751,16 +2899,16 @@ messages may not be valid after the retry. If rclone has done a retry
 it will log a high priority message if the retry was successful.
 
 ### List of exit codes ###
-  * `0` - success
-  * `1` - Syntax or usage error
-  * `2` - Error not otherwise categorised
+  * `0` - Success
+  * `1` - Error not otherwise categorised
+  * `2` - Syntax or usage error
   * `3` - Directory not found
   * `4` - File not found
   * `5` - Temporary error (one that more retries might fix) (Retry errors)
   * `6` - Less serious errors (like 461 errors from dropbox) (NoRetry errors)
   * `7` - Fatal error (one that more retries won't fix, like account suspended) (Fatal errors)
   * `8` - Transfer exceeded - limit set by --max-transfer reached
-  * `9` - Operation successful, but no files transferred
+  * `9` - Operation successful, but no files transferred (Requires [`--error-on-no-transfer`](#error-on-no-transfer))
   * `10` - Duration exceeded - limit set by --max-duration reached
 
 Environment Variables
@@ -2793,6 +2941,22 @@ The same parser is used for the options and the environment variables
 so they take exactly the same form.
 
 The options set by environment variables can be seen with the `-vv` flag, e.g. `rclone version -vv`.
+
+Options that can appear multiple times (type `stringArray`) are
+treated slighly differently as environment variables can only be
+defined once. In order to allow a simple mechanism for adding one or
+many items, the input is treated as a [CSV encoded](https://godoc.org/encoding/csv)
+string. For example
+
+| Environment Variable | Equivalent options |
+|----------------------|--------------------|
+| `RCLONE_EXCLUDE="*.jpg"` | `--exclude "*.jpg"` |
+| `RCLONE_EXCLUDE="*.jpg,*.png"` | `--exclude "*.jpg"` `--exclude "*.png"` |
+| `RCLONE_EXCLUDE='"*.jpg","*.png"'` | `--exclude "*.jpg"` `--exclude "*.png"` |
+| `RCLONE_EXCLUDE='"/directory with comma , in it /**"'` | `--exclude "/directory with comma , in it /**" |
+
+If `stringArray` options are defined as environment variables **and**
+options on the command line then all the values will be used.
 
 ### Config file ###
 

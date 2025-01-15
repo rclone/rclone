@@ -26,6 +26,7 @@ import (
 	"github.com/rclone/rclone/lib/http/serve"
 	"github.com/rclone/rclone/lib/systemd"
 	"github.com/rclone/rclone/vfs"
+	"github.com/rclone/rclone/vfs/vfscommon"
 	"github.com/rclone/rclone/vfs/vfsflags"
 	"github.com/spf13/cobra"
 	"golang.org/x/net/webdav"
@@ -89,6 +90,7 @@ supported hash on the backend or you can use a named hash such as
 to see the full list.
 
 ### Access WebDAV on Windows
+
 WebDAV shared folder can be mapped as a drive on Windows, however the default settings prevent it.
 Windows will fail to connect to the server using insecure Basic authentication.
 It will not even display any login dialog. Windows requires SSL / HTTPS connection to be used with Basic.
@@ -104,6 +106,7 @@ If required, increase the FileSizeLimitInBytes to a higher value.
 Navigate to the Services interface, then restart the WebClient service.
 
 ### Access Office applications on WebDAV
+
 Navigate to following registry HKEY_CURRENT_USER\Software\Microsoft\Office\[14.0/15.0/16.0]\Common\Internet
 Create a new DWORD BasicAuthLevel with value 2.
     0 - Basic authentication disabled
@@ -112,7 +115,20 @@ Create a new DWORD BasicAuthLevel with value 2.
 
 https://learn.microsoft.com/en-us/office/troubleshoot/powerpoint/office-opens-blank-from-sharepoint
 
-` + libhttp.Help(flagPrefix) + libhttp.TemplateHelp(flagPrefix) + libhttp.AuthHelp(flagPrefix) + vfs.Help + proxy.Help,
+### Serving over a unix socket
+
+You can serve the webdav on a unix socket like this:
+
+    rclone serve webdav --addr unix:///tmp/my.socket remote:path
+
+and connect to it like this using rclone and the webdav backend:
+
+    rclone --webdav-unix-socket /tmp/my.socket --webdav-url http://localhost lsf :webdav:
+
+Note that there is no authentication on http protocol - this is expected to be
+done by the permissions on the socket.
+
+` + libhttp.Help(flagPrefix) + libhttp.TemplateHelp(flagPrefix) + libhttp.AuthHelp(flagPrefix) + vfs.Help() + proxy.Help,
 	Annotations: map[string]string{
 		"versionIntroduced": "v1.39",
 		"groups":            "Filter",
@@ -191,7 +207,7 @@ func newWebDAV(ctx context.Context, f fs.Fs, opt *Options) (w *WebDAV, err error
 		// override auth
 		w.opt.Auth.CustomAuthFn = w.auth
 	} else {
-		w._vfs = vfs.New(f, &vfsflags.Opt)
+		w._vfs = vfs.New(f, &vfscommon.Opt)
 	}
 
 	w.Server, err = libhttp.NewServer(ctx,
@@ -202,6 +218,9 @@ func newWebDAV(ctx context.Context, f fs.Fs, opt *Options) (w *WebDAV, err error
 	if err != nil {
 		return nil, fmt.Errorf("failed to init server: %w", err)
 	}
+
+	// Make sure BaseURL starts with a / and doesn't end with one
+	w.opt.HTTP.BaseURL = "/" + strings.Trim(w.opt.HTTP.BaseURL, "/")
 
 	webdavHandler := &webdav.Handler{
 		Prefix:     w.opt.HTTP.BaseURL,
@@ -330,6 +349,7 @@ func (w *WebDAV) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 // serveDir serves a directory index at dirRemote
 // This is similar to serveDir in serve http.
 func (w *WebDAV) serveDir(rw http.ResponseWriter, r *http.Request, dirRemote string) {
+	ctx := r.Context()
 	VFS, err := w.getVFS(r.Context())
 	if err != nil {
 		http.Error(rw, "Root directory not found", http.StatusNotFound)
@@ -342,7 +362,7 @@ func (w *WebDAV) serveDir(rw http.ResponseWriter, r *http.Request, dirRemote str
 		http.Error(rw, "Directory not found", http.StatusNotFound)
 		return
 	} else if err != nil {
-		serve.Error(dirRemote, rw, "Failed to list directory", err)
+		serve.Error(ctx, dirRemote, rw, "Failed to list directory", err)
 		return
 	}
 	if !node.IsDir() {
@@ -353,14 +373,14 @@ func (w *WebDAV) serveDir(rw http.ResponseWriter, r *http.Request, dirRemote str
 	dirEntries, err := dir.ReadDirAll()
 
 	if err != nil {
-		serve.Error(dirRemote, rw, "Failed to list directory", err)
+		serve.Error(ctx, dirRemote, rw, "Failed to list directory", err)
 		return
 	}
 
 	// Make the entries for display
 	directory := serve.NewDirectory(dirRemote, w.Server.HTMLTemplate())
 	for _, node := range dirEntries {
-		if vfsflags.Opt.NoModTime {
+		if vfscommon.Opt.NoModTime {
 			directory.AddHTMLEntry(node.Path(), node.IsDir(), node.Size(), time.Time{})
 		} else {
 			directory.AddHTMLEntry(node.Path(), node.IsDir(), node.Size(), node.ModTime().UTC())

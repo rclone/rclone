@@ -4,12 +4,12 @@ package main
 import (
 	"flag"
 	"fmt"
-	"log"
 	"math/rand"
 	"os"
 	"strconv"
 	"strings"
 
+	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/lib/encoder"
 )
 
@@ -45,6 +45,7 @@ var maskBits = []struct {
 	{encoder.EncodeLtGt, "EncodeLtGt"},
 	{encoder.EncodeSquareBracket, "EncodeSquareBracket"},
 	{encoder.EncodeSemicolon, "EncodeSemicolon"},
+	{encoder.EncodeExclamation, "EncodeExclamation"},
 	{encoder.EncodeDollar, "EncodeDollar"},
 	{encoder.EncodeDoubleQuote, "EncodeDoubleQuote"},
 	{encoder.EncodeColon, "EncodeColon"},
@@ -117,6 +118,11 @@ var allMappings = []mapping{{
 		';',
 	}, []rune{
 		'；',
+	}}, {
+	encoder.EncodeExclamation, []rune{
+		'!',
+	}, []rune{
+		'！',
 	}}, {
 	encoder.EncodeDoubleQuote, []rune{
 		'"',
@@ -229,8 +235,8 @@ func main() {
 			fatalW(fd.WriteString(" "))("Write:")
 		}
 		in, out := buildTestString(
-			[]mapping{getMapping(m.mask)},                               // pick
-			[]mapping{getMapping(0)},                                    // quote
+			[]mapping{getMapping(m.mask)},             // pick
+			[]mapping{getMapping(encoder.EncodeZero)}, // quote
 			printables, fullwidthPrintables, encodables, encoded, greek) // fill
 		fatalW(fmt.Fprintf(fd, `{ // %d
 		mask: %s,
@@ -262,7 +268,7 @@ var testCasesSingleEdge = []testCase{
 			for idx, orig := range e.orig {
 				replace := e.replace[idx]
 				pairs := buildEdgeTestString(
-					[]edge{e}, []mapping{getMapping(0), getMapping(m.mask)}, // quote
+					[]edge{e}, []mapping{getMapping(encoder.EncodeZero), getMapping(m.mask)}, // quote
 					[][]rune{printables, fullwidthPrintables, encodables, encoded, greek}, // fill
 					func(rIn, rOut []rune, quoteOut []bool, testMappings []mapping) (out []stringPair) {
 						testL := len(rIn)
@@ -386,7 +392,7 @@ var testCasesDoubleEdge = []testCase{
 				orig, replace := e1.orig[0], e1.replace[0]
 				edges := []edge{e1, e2}
 				pairs := buildEdgeTestString(
-					edges, []mapping{getMapping(0), getMapping(m.mask)}, // quote
+					edges, []mapping{getMapping(encoder.EncodeZero), getMapping(m.mask)}, // quote
 					[][]rune{printables, fullwidthPrintables, encodables, encoded, greek}, // fill
 					func(rIn, rOut []rune, quoteOut []bool, testMappings []mapping) (out []stringPair) {
 						testL := len(rIn)
@@ -428,13 +434,13 @@ var testCasesDoubleEdge = []testCase{
 
 func fatal(err error, s ...interface{}) {
 	if err != nil {
-		log.Fatalln(append(s, err))
+		fs.Fatal(nil, fmt.Sprint(append(s, err)))
 	}
 }
 func fatalW(_ int, err error) func(...interface{}) {
 	if err != nil {
 		return func(s ...interface{}) {
-			log.Fatalln(append(s, err))
+			fs.Fatal(nil, fmt.Sprint(append(s, err)))
 		}
 	}
 	return func(s ...interface{}) {}

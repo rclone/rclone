@@ -29,14 +29,18 @@ func (b *bisyncRun) indent(tag, file, msg string) {
 		logf = fs.Logf
 	}
 
+	if b.opt.DryRun {
+		logf = fs.Logf
+	}
+
 	if tag == "Path1" {
 		tag = Color(terminal.CyanFg, "Path1")
 	} else {
 		tag = Color(terminal.BlueFg, tag)
 	}
 	msg = Color(terminal.MagentaFg, msg)
-	msg = strings.Replace(msg, "Queue copy to", Color(terminal.GreenFg, "Queue copy to"), -1)
-	msg = strings.Replace(msg, "Queue delete", Color(terminal.RedFg, "Queue delete"), -1)
+	msg = strings.ReplaceAll(msg, "Queue copy to", Color(terminal.GreenFg, "Queue copy to"))
+	msg = strings.ReplaceAll(msg, "Queue delete", Color(terminal.RedFg, "Queue delete"))
 	file = Color(terminal.CyanFg, escapePath(file, false))
 	logf(nil, "- %-18s%-43s - %s", tag, msg, file)
 }
@@ -62,10 +66,20 @@ func quotePath(path string) string {
 	return escapePath(path, true)
 }
 
-var Colors bool // Colors controls whether terminal colors are enabled
+// Colors controls whether terminal colors are enabled
+var Colors bool
 
 // Color handles terminal colors for bisync
 func Color(style string, s string) string {
+	if !Colors {
+		return s
+	}
+	terminal.Start()
+	return style + s + terminal.Reset
+}
+
+// ColorX handles terminal colors for bisync
+func ColorX(style string, s string) string {
 	if !Colors {
 		return s
 	}

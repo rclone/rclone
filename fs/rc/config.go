@@ -7,27 +7,11 @@ package rc
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/filter"
 )
-
-var (
-	optionBlock  = map[string]interface{}{}
-	optionReload = map[string]func(context.Context) error{}
-)
-
-// AddOption adds an option set
-func AddOption(name string, option interface{}) {
-	optionBlock[name] = option
-}
-
-// AddOptionReload adds an option set with a reload function to be
-// called when options are changed
-func AddOptionReload(name string, option interface{}, reload func(context.Context) error) {
-	optionBlock[name] = option
-	optionReload[name] = reload
-}
 
 func init() {
 	Add(Call{
@@ -42,8 +26,8 @@ func init() {
 // Show the list of all the option blocks
 func rcOptionsBlocks(ctx context.Context, in Params) (out Params, err error) {
 	options := []string{}
-	for name := range optionBlock {
-		options = append(options, name)
+	for _, opt := range fs.OptionsRegistry {
+		options = append(options, opt.Name)
 	}
 	out = make(Params)
 	out["options"] = options
@@ -58,6 +42,11 @@ func init() {
 		Help: `Returns an object where keys are option block names and values are an
 object with the current option values in.
 
+Parameters:
+
+- blocks: optional string of comma separated blocks to include
+    - all are included if this is missing or ""
+
 Note that these are the global options which are unaffected by use of
 the _config and _filter parameters. If you wish to read the parameters
 set in _config then use options/config and for _filter use options/filter.
@@ -68,13 +57,61 @@ map to the external options very easily with a few exceptions.
 	})
 }
 
+// Filter the blocks according to name
+func filterBlocks(in Params, f func(oi fs.OptionsInfo)) (err error) {
+	blocksStr, err := in.GetString("blocks")
+	if err != nil && !IsErrParamNotFound(err) {
+		return err
+	}
+	blocks := map[string]struct{}{}
+	for _, name := range strings.Split(blocksStr, ",") {
+		if name != "" {
+			blocks[name] = struct{}{}
+		}
+	}
+	for _, oi := range fs.OptionsRegistry {
+		if _, found := blocks[oi.Name]; found || len(blocks) == 0 {
+			f(oi)
+		}
+	}
+	return nil
+}
+
 // Show the list of all the option blocks
 func rcOptionsGet(ctx context.Context, in Params) (out Params, err error) {
 	out = make(Params)
-	for name, options := range optionBlock {
-		out[name] = options
-	}
-	return out, nil
+	err = filterBlocks(in, func(oi fs.OptionsInfo) {
+		out[oi.Name] = oi.Opt
+	})
+	return out, err
+}
+
+func init() {
+	Add(Call{
+		Path:  "options/info",
+		Fn:    rcOptionsInfo,
+		Title: "Get info about all the global options",
+		Help: `Returns an object where keys are option block names and values are an
+array of objects with info about each options.
+
+Parameters:
+
+- blocks: optional string of comma separated blocks to include
+    - all are included if this is missing or ""
+
+These objects are in the same format as returned by "config/providers". They are
+described in the [option blocks](#option-blocks) section.
+`,
+	})
+}
+
+// Show the info of all the option blocks
+func rcOptionsInfo(ctx context.Context, in Params) (out Params, err error) {
+	out = make(Params)
+	err = filterBlocks(in, func(oi fs.OptionsInfo) {
+		out[oi.Name] = oi.Options
+	})
+	return out, err
 }
 
 func init() {
@@ -144,16 +181,16 @@ And this sets NOTICE level logs (normal without -v)
 // Set an option in an option block
 func rcOptionsSet(ctx context.Context, in Params) (out Params, err error) {
 	for name, options := range in {
-		current := optionBlock[name]
-		if current == nil {
+		opt, ok := fs.OptionsRegistry[name]
+		if !ok {
 			return nil, fmt.Errorf("unknown option block %q", name)
 		}
-		err := Reshape(current, options)
+		err := Reshape(opt.Opt, options)
 		if err != nil {
 			return nil, fmt.Errorf("failed to write options from block %q: %w", name, err)
 		}
-		if reload := optionReload[name]; reload != nil {
-			err = reload(ctx)
+		if opt.Reload != nil {
+			err = opt.Reload(ctx)
 			if err != nil {
 				return nil, fmt.Errorf("failed to reload options from block %q: %w", name, err)
 			}

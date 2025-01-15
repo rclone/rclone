@@ -4,7 +4,6 @@
 // We skip tests on platforms with troublesome character mappings
 
 //go:build !windows && !darwin
-// +build !windows,!darwin
 
 package webdav
 

@@ -8,7 +8,6 @@
 // Run with go generate (defined in vfs.go)
 //
 //go:build none
-// +build none
 
 // FIXME include read too?
 

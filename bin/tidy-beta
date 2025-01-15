@@ -18,4 +18,4 @@ rclone ${dry_run} -vv -P --checkers 16 --transfers 16 delete \
        --fast-list \
        --include "/${version}**" \
        --include "/branch/*/${version}**" \
-       memstore:beta-rclone-org
+       beta.rclone.org:

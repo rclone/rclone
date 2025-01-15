@@ -18,6 +18,7 @@ import (
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/fs/walk"
 	"github.com/rclone/rclone/vfs/vfscommon"
+	"golang.org/x/text/unicode/norm"
 )
 
 // Dir represents a directory entry
@@ -39,7 +40,7 @@ type Dir struct {
 	modTimeMu sync.Mutex // protects the following
 	modTime   time.Time
 
-	_hasVirtual atomic.Bool // shows if the directory has virtual entries
+	_virtuals atomic.Int32 // number of virtual directory entries in this directory and children
 }
 
 //go:generate stringer -type=vState
@@ -65,8 +66,10 @@ func newDir(vfs *VFS, f fs.Fs, parent *Dir, fsDir fs.Directory) *Dir {
 		inode:   newInode(),
 		items:   make(map[string]Node),
 	}
-	d.cleanupTimer = time.AfterFunc(vfs.Opt.DirCacheTime*2, d.cacheCleanup)
-	d.setHasVirtual(false)
+	// Set timer up like this to avoid race of d.cacheCleanup being called
+	// before d.cleanupTimer is assigned to
+	d.cleanupTimer = time.AfterFunc(time.Hour, d.cacheCleanup)
+	d.cleanupTimer.Reset(time.Duration(vfs.Opt.DirCacheTime * 2))
 	return d
 }
 
@@ -156,7 +159,7 @@ func (d *Dir) IsDir() bool {
 
 // Mode bits of the directory - satisfies Node interface
 func (d *Dir) Mode() (mode os.FileMode) {
-	return d.vfs.Opt.DirPerms
+	return os.FileMode(d.vfs.Opt.DirPerms)
 }
 
 // Name (base) of the directory - satisfies Node interface
@@ -197,36 +200,41 @@ func (d *Dir) Node() Node {
 	return d
 }
 
-// hasVirtual returns whether the directory has virtual entries
+// hasVirtual returns whether the directory or children has virtual entries
 func (d *Dir) hasVirtual() bool {
-	return d._hasVirtual.Load()
+	return d._virtuals.Load() != 0
 }
 
-// setHasVirtual sets the hasVirtual flag for the directory
-func (d *Dir) setHasVirtual(hasVirtual bool) {
-	d._hasVirtual.Store(hasVirtual)
+// addVirtual adds n virtual items to this directory and all of its parents
+func (d *Dir) addVirtual(n int32) {
+	for d != nil {
+		d._virtuals.Add(n)
+		d = d.parent
+	}
 }
 
 // ForgetAll forgets directory entries for this directory and any children.
 //
 // It does not invalidate or clear the cache of the parent directory.
 //
-// It returns true if the directory or any of its children had virtual entries
-// so could not be forgotten. Children which didn't have virtual entries and
-// children with virtual entries will be forgotten even if true is returned.
+// It returns true if the directory or any of its children had virtual
+// entries so could not be forgotten. Children which didn't have
+// virtual entries will be forgotten even if true is returned.
 func (d *Dir) ForgetAll() (hasVirtual bool) {
+	// We run this part with RLock only to avoid deadlocks in the recursion
+
 	d.mu.RLock()
 
 	fs.Debugf(d.path, "forgetting directory cache")
 	for _, node := range d.items {
 		if dir, ok := node.(*Dir); ok {
-			if dir.ForgetAll() {
-				d.setHasVirtual(true)
-			}
+			dir.ForgetAll()
 		}
 	}
 
 	d.mu.RUnlock()
+
+	// We run this part with Lock so we can modify the Dir
 
 	d.mu.Lock()
 	defer d.mu.Unlock()
@@ -234,21 +242,18 @@ func (d *Dir) ForgetAll() (hasVirtual bool) {
 	// Purge any unnecessary virtual entries
 	d._purgeVirtual()
 
-	d.read = time.Time{}
-
-	// Check if this dir has virtual entries
-	if len(d.virtual) != 0 {
-		d.setHasVirtual(true)
-	}
-
 	// Don't clear directory entries if there are virtual entries in this
 	// directory or any children
-	if !d.hasVirtual() {
+	hasVirtual = d.hasVirtual()
+	if !hasVirtual {
+		d.read = time.Time{}
 		d.items = make(map[string]Node)
 		d.cleanupTimer.Stop()
+	} else {
+		d.cleanupTimer.Reset(time.Duration(d.vfs.Opt.DirCacheTime * 2))
 	}
 
-	return d.hasVirtual()
+	return hasVirtual
 }
 
 // forgetDirPath clears the cache for itself and all subdirectories if
@@ -356,7 +361,7 @@ func (d *Dir) _age(when time.Time) (age time.Duration, stale bool) {
 		return age, true
 	}
 	age = when.Sub(d.read)
-	stale = age > d.vfs.Opt.DirCacheTime
+	stale = age > time.Duration(d.vfs.Opt.DirCacheTime)
 	return
 }
 
@@ -370,7 +375,9 @@ func (d *Dir) renameTree(dirPath string) {
 	// Make sure the path is correct for each node
 	if d.path != dirPath {
 		fs.Debugf(d.path, "Renaming to %q", dirPath)
+		delete(d.parent.items, name(d.path))
 		d.path = dirPath
+		d.parent.items[name(d.path)] = d
 		d.entry = fs.NewDirCopy(context.TODO(), d.entry).SetRemote(dirPath)
 	}
 
@@ -403,6 +410,8 @@ func (d *Dir) rename(newParent *Dir, fsDir fs.Directory) {
 	d.entry = fsDir
 	d.path = fsDir.Remote()
 	newPath := d.path
+	delete(d.parent.items, name(oldPath))
+	d.parent.items[name(d.path)] = d
 	d.read = time.Time{}
 	d.mu.Unlock()
 
@@ -415,6 +424,15 @@ func (d *Dir) rename(newParent *Dir, fsDir fs.Directory) {
 			fs.Infof(d, "Dir.Rename failed in Cache: %v", err)
 		}
 	}
+}
+
+// convert path to name
+func name(p string) string {
+	p = path.Base(p)
+	if p == "." {
+		p = "/"
+	}
+	return p
 }
 
 // addObject adds a new object or directory to the directory
@@ -434,8 +452,10 @@ func (d *Dir) addObject(node Node) {
 	if node.IsDir() {
 		vAdd = vAddDir
 	}
+	if _, found := d.virtual[leaf]; !found {
+		d.addVirtual(1)
+	}
 	d.virtual[leaf] = vAdd
-	d.setHasVirtual(true)
 	fs.Debugf(d.path, "Added virtual directory entry %v: %q", vAdd, leaf)
 	d.mu.Unlock()
 }
@@ -445,7 +465,8 @@ func (d *Dir) addObject(node Node) {
 // This will be replaced with a real object when it is read back from the
 // remote.
 //
-// This is used to add directory entries while things are uploading
+// This is used by the vfs cache to insert objects that are uploading
+// into the directory tree.
 func (d *Dir) AddVirtual(leaf string, size int64, isDir bool) {
 	var node Node
 	d.mu.RLock()
@@ -461,12 +482,20 @@ func (d *Dir) AddVirtual(leaf string, size int64, isDir bool) {
 		entry := fs.NewDir(remote, time.Now())
 		node = newDir(d.vfs, d.f, d, entry)
 	} else {
+		isLink := false
+		if d.vfs.Opt.Links {
+			// since the path came from the cache it may have fs.LinkSuffix,
+			// so remove it and mark the *File accordingly
+			leaf, isLink = strings.CutSuffix(leaf, fs.LinkSuffix)
+		}
 		f := newFile(d, dPath, nil, leaf)
+		if isLink {
+			f.setSymlink()
+		}
 		f.setSize(size)
 		node = f
 	}
 	d.addObject(node)
-
 }
 
 // delObject removes an object from the directory
@@ -479,8 +508,10 @@ func (d *Dir) delObject(leaf string) {
 	if d.virtual == nil {
 		d.virtual = make(map[string]vState)
 	}
+	if _, found := d.virtual[leaf]; !found {
+		d.addVirtual(1)
+	}
 	d.virtual[leaf] = vDel
-	d.setHasVirtual(true)
 	fs.Debugf(d.path, "Added virtual directory entry %v: %q", vDel, leaf)
 	d.mu.Unlock()
 }
@@ -514,13 +545,42 @@ func (d *Dir) _readDir() error {
 		return err
 	}
 
+	if d.vfs.Opt.BlockNormDupes { // do this only if requested, as it will have a performance hit
+		ci := fs.GetConfig(context.TODO())
+
+		// sort entries such that NFD comes before NFC of same name
+		sort.Slice(entries, func(i, j int) bool {
+			if entries[i] != entries[j] && fs.DirEntryType(entries[i]) == fs.DirEntryType(entries[j]) && norm.NFC.String(entries[i].Remote()) == norm.NFC.String(entries[j].Remote()) {
+				if norm.NFD.IsNormalString(entries[i].Remote()) && !norm.NFD.IsNormalString(entries[j].Remote()) {
+					return true
+				}
+			}
+			return entries.Less(i, j)
+		})
+
+		// detect dupes, remove them from the list and log an error
+		normalizedNames := make(map[string]struct{}, entries.Len())
+		filteredEntries := make(fs.DirEntries, 0)
+		for _, e := range entries {
+			normName := fmt.Sprintf("%s-%T", operations.ToNormal(e.Remote(), !ci.NoUnicodeNormalization, (ci.IgnoreCaseSync || d.vfs.Opt.CaseInsensitive)), e) // include type to track objects and dirs separately
+			_, found := normalizedNames[normName]
+			if found {
+				fs.Errorf(e.Remote(), "duplicate normalized names detected - skipping")
+				continue
+			}
+			normalizedNames[normName] = struct{}{}
+			filteredEntries = append(filteredEntries, e)
+		}
+		entries = filteredEntries
+	}
+
 	err = d._readDirFromEntries(entries, nil, time.Time{})
 	if err != nil {
 		return err
 	}
 
 	d.read = when
-	d.cleanupTimer.Reset(d.vfs.Opt.DirCacheTime * 2)
+	d.cleanupTimer.Reset(time.Duration(d.vfs.Opt.DirCacheTime * 2))
 
 	return nil
 }
@@ -538,9 +598,9 @@ func (d *Dir) _deleteVirtual(name string) {
 		return
 	}
 	delete(d.virtual, name)
+	d.addVirtual(-1)
 	if len(d.virtual) == 0 {
 		d.virtual = nil
-		d.setHasVirtual(false)
 	}
 	fs.Debugf(d.path, "Removed virtual directory entry %v: %q", virtualState, name)
 }
@@ -586,7 +646,7 @@ func (d *Dir) _purgeVirtual() {
 				// if writing in progress then leave virtual
 				continue
 			}
-			if d.vfs.Opt.CacheMode >= vfscommon.CacheModeMinimal && d.vfs.cache.InUse(f.Path()) {
+			if d.vfs.Opt.CacheMode >= vfscommon.CacheModeMinimal && d.vfs.cache.InUse(f.CachePath()) {
 				// if object in use or dirty then leave virtual
 				continue
 			}
@@ -676,6 +736,9 @@ func (d *Dir) _readDirFromEntries(entries fs.DirEntries, dirTree dirtree.DirTree
 		if name == "." || name == ".." {
 			continue
 		}
+		if d.vfs.Opt.Links {
+			name, _ = strings.CutSuffix(name, fs.LinkSuffix)
+		}
 		node := d.items[name]
 		if mv.add(d, name) {
 			continue
@@ -703,7 +766,7 @@ func (d *Dir) _readDirFromEntries(entries fs.DirEntries, dirTree dirtree.DirTree
 					dir.read = time.Time{}
 				} else {
 					dir.read = when
-					dir.cleanupTimer.Reset(d.vfs.Opt.DirCacheTime * 2)
+					dir.cleanupTimer.Reset(time.Duration(d.vfs.Opt.DirCacheTime * 2))
 				}
 			}
 			dir.mu.Unlock()
@@ -741,7 +804,7 @@ func (d *Dir) readDirTree() error {
 	}
 	fs.Debugf(d.path, "Reading directory tree done in %s", time.Since(when))
 	d.read = when
-	d.cleanupTimer.Reset(d.vfs.Opt.DirCacheTime * 2)
+	d.cleanupTimer.Reset(time.Duration(d.vfs.Opt.DirCacheTime * 2))
 	return nil
 }
 
@@ -767,15 +830,18 @@ func (d *Dir) stat(leaf string) (Node, error) {
 	}
 	item, ok := d.items[leaf]
 
-	if !ok && d.vfs.Opt.CaseInsensitive {
-		leafLower := strings.ToLower(leaf)
+	ci := fs.GetConfig(context.TODO())
+	normUnicode := !ci.NoUnicodeNormalization
+	normCase := ci.IgnoreCaseSync || d.vfs.Opt.CaseInsensitive
+	if !ok && (normUnicode || normCase) {
+		leafNormalized := operations.ToNormal(leaf, normUnicode, normCase) // this handles both case and unicode normalization
 		for name, node := range d.items {
-			if strings.ToLower(name) == leafLower {
+			if operations.ToNormal(name, normUnicode, normCase) == leafNormalized {
 				if ok {
-					// duplicate case insensitive match is an error
-					return nil, fmt.Errorf("duplicate filename %q detected with --vfs-case-insensitive set", leaf)
+					// duplicate normalized match is an error
+					return nil, fmt.Errorf("duplicate filename %q detected with case/unicode normalization settings", leaf)
 				}
-				// found a case insensitive match
+				// found a normalized match
 				ok = true
 				item = node
 			}

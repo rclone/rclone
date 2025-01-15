@@ -100,6 +100,13 @@ type moveCopyFolder struct {
 	NewFolderName string `json:"new_folder_name"` // New name for destination folder.
 }
 
+type renameFolder struct {
+	SessionID  string `json:"session_id"`
+	FolderID   string `json:"folder_id"`
+	FolderName string `json:"folder_name"` // New name for destination folder (max 255).
+	SharingID  string `json:"sharing_id"`
+}
+
 type moveCopyFolderResponse struct {
 	FolderID string `json:"FolderID"`
 }
@@ -144,6 +151,14 @@ type moveCopyFile struct {
 type moveCopyFileResponse struct {
 	FileID string `json:"FileID"`
 	Size   string `json:"Size"`
+}
+
+type renameFile struct {
+	SessionID      string `json:"session_id"`
+	NewFileName    string `json:"new_file_name"` // New name for destination file.
+	FileID         string `json:"file_id"`
+	AccessFolderID string `json:"access_folder_id"`
+	SharingID      string `json:"sharing_id"`
 }
 
 type createFile struct {
@@ -215,4 +230,11 @@ type permissions struct {
 
 type uploadFileChunkReply struct {
 	TotalWritten int64 `json:"TotalWritten"`
+}
+
+// usersInfoResponse describes OpenDrive users/info.json response
+type usersInfoResponse struct {
+	// This response contains many other values but these are the only ones currently in use
+	StorageUsed int64 `json:"StorageUsed,string"`
+	MaxStorage  int64 `json:"MaxStorage,string"`
 }

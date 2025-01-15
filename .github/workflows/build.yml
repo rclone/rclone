@@ -17,22 +17,21 @@ on:
       manual:
         description: Manual run (bypass default conditions)
         type: boolean
-        required: true
         default: true
 
 jobs:
   build:
-    if: ${{ github.event.inputs.manual == 'true' || (github.repository == 'rclone/rclone' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name != github.event.pull_request.base.repo.full_name)) }}
+    if: inputs.manual || (github.repository == 'rclone/rclone' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name != github.event.pull_request.base.repo.full_name))
     timeout-minutes: 60
     strategy:
       fail-fast: false
       matrix:
-        job_name: ['linux', 'linux_386', 'mac_amd64', 'mac_arm64', 'windows', 'other_os', 'go1.20', 'go1.21']
+        job_name: ['linux', 'linux_386', 'mac_amd64', 'mac_arm64', 'windows', 'other_os', 'go1.22', 'go1.23']
 
         include:
           - job_name: linux
             os: ubuntu-latest
-            go: '>=1.22.0-rc.1'
+            go: '>=1.24.0-rc.1'
             gotags: cmount
             build_flags: '-include "^linux/"'
             check: true
@@ -43,14 +42,14 @@ jobs:
 
           - job_name: linux_386
             os: ubuntu-latest
-            go: '>=1.22.0-rc.1'
+            go: '>=1.24.0-rc.1'
             goarch: 386
             gotags: cmount
             quicktest: true
 
           - job_name: mac_amd64
-            os: macos-11
-            go: '>=1.22.0-rc.1'
+            os: macos-latest
+            go: '>=1.24.0-rc.1'
             gotags: 'cmount'
             build_flags: '-include "^darwin/amd64" -cgo'
             quicktest: true
@@ -58,15 +57,15 @@ jobs:
             deploy: true
 
           - job_name: mac_arm64
-            os: macos-11
-            go: '>=1.22.0-rc.1'
+            os: macos-latest
+            go: '>=1.24.0-rc.1'
             gotags: 'cmount'
             build_flags: '-include "^darwin/arm64" -cgo -macos-arch arm64 -cgo-cflags=-I/usr/local/include -cgo-ldflags=-L/usr/local/lib'
             deploy: true
 
           - job_name: windows
             os: windows-latest
-            go: '>=1.22.0-rc.1'
+            go: '>=1.24.0-rc.1'
             gotags: cmount
             cgo: '0'
             build_flags: '-include "^windows/"'
@@ -76,20 +75,20 @@ jobs:
 
           - job_name: other_os
             os: ubuntu-latest
-            go: '>=1.22.0-rc.1'
+            go: '>=1.24.0-rc.1'
             build_flags: '-exclude "^(windows/|darwin/|linux/)"'
             compile_all: true
             deploy: true
 
-          - job_name: go1.20
+          - job_name: go1.22
             os: ubuntu-latest
-            go: '1.20'
+            go: '1.22'
             quicktest: true
             racequicktest: true
 
-          - job_name: go1.21
+          - job_name: go1.23
             os: ubuntu-latest
-            go: '1.21'
+            go: '1.23'
             quicktest: true
             racequicktest: true
 
@@ -124,7 +123,8 @@ jobs:
           sudo modprobe fuse
           sudo chmod 666 /dev/fuse
           sudo chown root:$USER /etc/fuse.conf
-          sudo apt-get install fuse3 libfuse-dev rpm pkg-config
+          sudo apt-get update
+          sudo apt-get install -y fuse3 libfuse-dev rpm pkg-config git-annex git-annex-remote-rclone nfs-common
         if: matrix.os == 'ubuntu-latest'
 
       - name: Install Libraries on macOS
@@ -137,7 +137,8 @@ jobs:
           brew untap --force homebrew/cask
           brew update
           brew install --cask macfuse
-        if: matrix.os == 'macos-11'
+          brew install git-annex git-annex-remote-rclone
+        if: matrix.os == 'macos-latest'
 
       - name: Install Libraries on Windows
         shell: powershell
@@ -166,14 +167,6 @@ jobs:
           make vars
           printf "\n\nSystem environment:\n\n"
           env
-
-      - name: Go module cache
-        uses: actions/cache@v4
-        with:
-          path: ~/go/pkg/mod
-          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-go-
 
       - name: Build rclone
         shell: bash
@@ -224,27 +217,77 @@ jobs:
         if: env.RCLONE_CONFIG_PASS != '' && matrix.deploy && github.head_ref == '' && github.repository == 'rclone/rclone'
 
   lint:
-    if: ${{ github.event.inputs.manual == 'true' || (github.repository == 'rclone/rclone' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name != github.event.pull_request.base.repo.full_name)) }}
+    if: inputs.manual || (github.repository == 'rclone/rclone' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name != github.event.pull_request.base.repo.full_name))
     timeout-minutes: 30
     name: "lint"
     runs-on: ubuntu-latest
 
     steps:
+      - name: Get runner parameters
+        id: get-runner-parameters
+        shell: bash
+        run: |
+          echo "year-week=$(/bin/date -u "+%Y%V")" >> $GITHUB_OUTPUT
+          echo "runner-os-version=$ImageOS" >> $GITHUB_OUTPUT
+
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Code quality test
-        uses: golangci/golangci-lint-action@v4
-        with:
-          # Optional: version of golangci-lint to use in form of v1.2 or v1.2.3 or `latest` to use the latest version
-          version: latest
-
-      # Run govulncheck on the latest go version, the one we build binaries with
       - name: Install Go
+        id: setup-go
         uses: actions/setup-go@v5
         with:
-          go-version: '>=1.22.0-rc.1'
+          go-version: '>=1.23.0-rc.1'
           check-latest: true
+          cache: false
+
+      - name: Cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/go/pkg/mod
+            ~/.cache/go-build
+            ~/.cache/golangci-lint
+          key: golangci-lint-${{ steps.get-runner-parameters.outputs.runner-os-version }}-go${{ steps.setup-go.outputs.go-version }}-${{ steps.get-runner-parameters.outputs.year-week }}-${{ hashFiles('go.sum') }}
+          restore-keys: golangci-lint-${{ steps.get-runner-parameters.outputs.runner-os-version }}-go${{ steps.setup-go.outputs.go-version }}-${{ steps.get-runner-parameters.outputs.year-week }}-
+
+      - name: Code quality test (Linux)
+        uses: golangci/golangci-lint-action@v6
+        with:
+          version: latest
+          skip-cache: true
+
+      - name: Code quality test (Windows)
+        uses: golangci/golangci-lint-action@v6
+        env:
+          GOOS: "windows"
+        with:
+          version: latest
+          skip-cache: true
+
+      - name: Code quality test (macOS)
+        uses: golangci/golangci-lint-action@v6
+        env:
+          GOOS: "darwin"
+        with:
+          version: latest
+          skip-cache: true
+
+      - name: Code quality test (FreeBSD)
+        uses: golangci/golangci-lint-action@v6
+        env:
+          GOOS: "freebsd"
+        with:
+          version: latest
+          skip-cache: true
+
+      - name: Code quality test (OpenBSD)
+        uses: golangci/golangci-lint-action@v6
+        env:
+          GOOS: "openbsd"
+        with:
+          version: latest
+          skip-cache: true
 
       - name: Install govulncheck
         run: go install golang.org/x/vuln/cmd/govulncheck@latest
@@ -253,7 +296,7 @@ jobs:
         run: govulncheck ./...
 
   android:
-    if: ${{ github.event.inputs.manual == 'true' || (github.repository == 'rclone/rclone' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name != github.event.pull_request.base.repo.full_name)) }}
+    if: inputs.manual || (github.repository == 'rclone/rclone' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name != github.event.pull_request.base.repo.full_name))
     timeout-minutes: 30
     name: "android-all"
     runs-on: ubuntu-latest
@@ -268,15 +311,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: '>=1.22.0-rc.1'
-
-      - name: Go module cache
-        uses: actions/cache@v4
-        with:
-          path: ~/go/pkg/mod
-          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-go-
+          go-version: '>=1.24.0-rc.1'
 
       - name: Set global environment variables
         shell: bash

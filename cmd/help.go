@@ -3,7 +3,6 @@ package cmd
 import (
 	"context"
 	"fmt"
-	"log"
 	"os"
 	"regexp"
 	"sort"
@@ -12,6 +11,7 @@ import (
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config/configflags"
 	"github.com/rclone/rclone/fs/config/flags"
+	"github.com/rclone/rclone/fs/filter"
 	"github.com/rclone/rclone/fs/filter/filterflags"
 	"github.com/rclone/rclone/fs/log/logflags"
 	"github.com/rclone/rclone/fs/rc/rcflags"
@@ -26,8 +26,7 @@ import (
 var Root = &cobra.Command{
 	Use:   "rclone",
 	Short: "Show help for rclone commands, flags and backends.",
-	Long: `
-Rclone syncs files to and from cloud storage providers as well as
+	Long: `Rclone syncs files to and from cloud storage providers as well as
 mounting them, listing them in lots of different ways.
 
 See the home page (https://rclone.org/) for installation, usage,
@@ -38,57 +37,9 @@ documentation, changelog and configuration walkthroughs.
 		fs.Debugf("rclone", "Version %q finishing with parameters %q", fs.Version, os.Args)
 		atexit.Run()
 	},
-	BashCompletionFunction: bashCompletionFunc,
-	DisableAutoGenTag:      true,
+	ValidArgsFunction: validArgs,
+	DisableAutoGenTag: true,
 }
-
-const (
-	bashCompletionFunc = `
-__rclone_custom_func() {
-    if [[ ${#COMPREPLY[@]} -eq 0 ]]; then
-        local cur cword prev words
-        if declare -F _init_completion > /dev/null; then
-            _init_completion -n : || return
-        else
-            __rclone_init_completion -n : || return
-        fi
-	local rclone=(command rclone --ask-password=false)
-        if [[ $cur != *:* ]]; then
-            local ifs=$IFS
-            IFS=$'\n'
-            local remotes=($("${rclone[@]}" listremotes 2> /dev/null))
-            IFS=$ifs
-            local remote
-            for remote in "${remotes[@]}"; do
-                [[ $remote != $cur* ]] || COMPREPLY+=("$remote")
-            done
-            if [[ ${COMPREPLY[@]} ]]; then
-                local paths=("$cur"*)
-                [[ ! -f ${paths[0]} ]] || COMPREPLY+=("${paths[@]}")
-            fi
-        else
-            local path=${cur#*:}
-            if [[ $path == */* ]]; then
-                local prefix=$(eval printf '%s' "${path%/*}")
-            else
-                local prefix=
-            fi
-            local ifs=$IFS
-            IFS=$'\n'
-            local lines=($("${rclone[@]}" lsf "${cur%%:*}:$prefix" 2> /dev/null))
-            IFS=$ifs
-            local line
-            for line in "${lines[@]}"; do
-                local reply=${prefix:+$prefix/}$line
-                [[ $reply != $path* ]] || COMPREPLY+=("$reply")
-            done
-	    [[ ! ${COMPREPLY[@]} || $(type -t compopt) != builtin ]] || compopt -o filenames
-        fi
-        [[ ! ${COMPREPLY[@]} || $(type -t compopt) != builtin ]] || compopt -o nospace
-    fi
-}
-`
-)
 
 // GeneratingDocs is set by rclone gendocs to alter the format of the
 // output suitable for the documentation.
@@ -106,23 +57,34 @@ var helpCommand = &cobra.Command{
 }
 
 // to filter the flags with
-var flagsRe *regexp.Regexp
+var (
+	filterFlagsGroup     string
+	filterFlagsRe        *regexp.Regexp
+	filterFlagsNamesOnly bool
+)
 
 // Show the flags
 var helpFlags = &cobra.Command{
-	Use:   "flags [<regexp to match>]",
+	Use:   "flags [<filter>]",
 	Short: "Show the global flags for rclone",
 	Run: func(command *cobra.Command, args []string) {
-		if len(args) > 0 {
-			re, err := regexp.Compile(`(?i)` + args[0])
-			if err != nil {
-				log.Fatalf("Failed to compile flags regexp: %v", err)
-			}
-			flagsRe = re
-		}
+		command.Flags()
 		if GeneratingDocs {
 			Root.SetUsageTemplate(docFlagsTemplate)
 		} else {
+			if len(args) > 0 {
+				re, err := filter.GlobStringToRegexp(args[0], false, true)
+				if err != nil {
+					fs.Fatalf(nil, "Invalid flag filter: %v", err)
+				}
+				fs.Debugf(nil, "Flag filter: %s", re.String())
+				filterFlagsRe = re
+			}
+			if filterFlagsGroup != "" {
+				Root.SetUsageTemplate(filterFlagsSingleGroupTemplate)
+			} else if len(args) > 0 {
+				Root.SetUsageTemplate(filterFlagsMultiGroupTemplate)
+			}
 			Root.SetOutput(os.Stdout)
 		}
 		_ = command.Usage()
@@ -194,7 +156,7 @@ func setupRootCommand(rootCmd *cobra.Command) {
 	})
 	cobra.AddTemplateFunc("flagGroups", func(cmd *cobra.Command) []*flags.Group {
 		// Add the backend flags and check all flags
-		backendGroup := flags.All.NewGroup("Backend", "Backend only flags. These can be set in the config file also.")
+		backendGroup := flags.All.NewGroup("Backend", "Backend-only flags (these can be set in the config file also)")
 		allRegistered := flags.All.AllRegistered()
 		cmd.InheritedFlags().VisitAll(func(flag *pflag.Flag) {
 			if _, ok := backendFlags[flag.Name]; ok {
@@ -205,7 +167,7 @@ func setupRootCommand(rootCmd *cobra.Command) {
 				fs.Errorf(nil, "Flag --%s is unknown", flag.Name)
 			}
 		})
-		groups := flags.All.Filter(flagsRe).Include(cmd.Annotations["groups"])
+		groups := flags.All.Filter(filterFlagsGroup, filterFlagsRe, filterFlagsNamesOnly).Include(cmd.Annotations["groups"])
 		return groups.Groups
 	})
 	rootCmd.SetUsageTemplate(usageTemplate)
@@ -217,11 +179,29 @@ func setupRootCommand(rootCmd *cobra.Command) {
 
 	rootCmd.AddCommand(helpCommand)
 	helpCommand.AddCommand(helpFlags)
+	helpFlagsFlags := helpFlags.Flags()
+	flags.StringVarP(helpFlagsFlags, &filterFlagsGroup, "group", "", "", "Only include flags from specific group", "")
+	flags.BoolVarP(helpFlagsFlags, &filterFlagsNamesOnly, "name", "", false, "Apply filter only on flag names", "")
 	helpCommand.AddCommand(helpBackends)
 	helpCommand.AddCommand(helpBackend)
 
+	// Set command completion for all functions to be the same
+	traverseCommands(rootCmd, func(cmd *cobra.Command) {
+		cmd.ValidArgsFunction = validArgs
+	})
+
 	cobra.OnInitialize(initConfig)
 
+}
+
+// Traverse the tree of commands running fn on each
+//
+// I was surprised there wasn't a cobra command to do this
+func traverseCommands(cmd *cobra.Command, fn func(*cobra.Command)) {
+	fn(cmd)
+	for _, childCmd := range cmd.Commands() {
+		traverseCommands(childCmd, fn)
+	}
 }
 
 var usageTemplate = `Usage:{{if .Runnable}}
@@ -234,20 +214,15 @@ Aliases:
 Examples:
 {{.Example}}{{end}}{{if and (showCommands .) .HasAvailableSubCommands}}
 
-Available Commands:{{range .Commands}}{{if (or .IsAvailableCommand (eq .Name "help"))}}
-  {{rpad .Name .NamePadding }} {{.Short}}{{end}}{{end}}{{end}}{{if and (showLocalFlags .) .HasAvailableLocalFlags}}
+Available commands:{{range .Commands}}{{if (or .IsAvailableCommand (eq .Name "help"))}}
+  {{rpad .Name .NamePadding}} {{.Short}}{{end}}{{end}}{{end}}{{if and (showLocalFlags .) .HasAvailableLocalFlags}}
 
 Flags:
-{{.LocalFlags.FlagUsages | trimTrailingWhitespaces}}{{end}}{{if and (showGlobalFlags .) .HasAvailableInheritedFlags}}
+{{.LocalFlags.FlagUsages | trimTrailingWhitespaces}}{{end}}{{if and (showGlobalFlags .) .HasAvailableInheritedFlags}}{{range flagGroups .}}{{if .Flags.HasFlags}}
 
-{{ range flagGroups . }}{{ if .Flags.HasFlags }}
-# {{ .Name }} Flags
-
-{{ .Help }}
-
-{{ .Flags.FlagUsages | trimTrailingWhitespaces}}
-{{ end }}{{ end }}
-
+{{.Help}} (flag group {{.Name}}):
+{{.Flags.FlagUsages | trimTrailingWhitespaces}}{{end}}{{end}}{{end}}{{if .HasHelpSubCommands}}
+ 
 Additional help topics:{{range .Commands}}{{if .IsAdditionalHelpTopicCommand}}
   {{rpad .CommandPath .CommandPathPadding}} {{.Short}}{{end}}{{end}}{{end}}
 
@@ -256,9 +231,19 @@ Use "rclone help flags" for to see the global flags.
 Use "rclone help backends" for a list of supported services.
 `
 
+var filterFlagsSingleGroupTemplate = `{{range flagGroups .}}{{if .Flags.HasFlags}}{{.Flags.FlagUsages | trimTrailingWhitespaces}}
+{{end}}{{end}}
+`
+
+var filterFlagsMultiGroupTemplate = `{{range flagGroups .}}{{if .Flags.HasFlags}}{{.Help}} (flag group {{.Name}}):
+{{.Flags.FlagUsages | trimTrailingWhitespaces}}
+
+{{end}}{{end}}`
+
 var docFlagsTemplate = `---
 title: "Global Flags"
 description: "Rclone Global Flags"
+# autogenerated - DO NOT EDIT
 ---
 
 # Global Flags
@@ -266,16 +251,16 @@ description: "Rclone Global Flags"
 This describes the global flags available to every rclone command
 split into groups.
 
-{{ range flagGroups . }}{{ if .Flags.HasFlags }}
-## {{ .Name }}
+{{range flagGroups .}}{{if .Flags.HasFlags}}
+## {{.Name}}
 
-{{ .Help }}
+{{.Help}}.
 
 ` + "```" + `
-{{ .Flags.FlagUsages | trimTrailingWhitespaces}}
+{{.Flags.FlagUsages | trimTrailingWhitespaces}}
 ` + "```" + `
 
-{{ end }}{{ end }}
+{{end}}{{end}}
 `
 
 // show all the backends
@@ -300,7 +285,7 @@ func quoteString(v interface{}) string {
 func showBackend(name string) {
 	backend, err := fs.Find(name)
 	if err != nil {
-		log.Fatal(err)
+		fs.Fatal(nil, fmt.Sprint(err))
 	}
 	var standardOptions, advancedOptions fs.Options
 	done := map[string]struct{}{}

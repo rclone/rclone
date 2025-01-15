@@ -11,7 +11,7 @@ import (
 // CaptureOutput runs a function capturing its output.
 func CaptureOutput(fun func()) []byte {
 	logSave := log.Writer()
-	logrusSave := logrus.StandardLogger().Writer()
+	logrusSave := logrus.StandardLogger().Out
 	buf := &bytes.Buffer{}
 	log.SetOutput(buf)
 	logrus.SetOutput(buf)

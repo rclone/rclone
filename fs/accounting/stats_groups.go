@@ -17,9 +17,6 @@ var groups *statsGroups
 func init() {
 	// Init stats container
 	groups = newStatsGroups()
-
-	// Set the function pointer up in fs
-	fs.CountError = GlobalStats().Error
 }
 
 func rcListStats(ctx context.Context, in rc.Params) (rc.Params, error) {
@@ -325,7 +322,7 @@ func (sg *statsGroups) set(ctx context.Context, group string, stats *StatsInfo) 
 	// Limit number of groups kept in memory.
 	if len(sg.order) >= ci.MaxStatsGroups {
 		group := sg.order[0]
-		fs.LogPrintf(fs.LogLevelDebug, nil, "Max number of stats groups reached removing %s", group)
+		fs.Debugf(nil, "Max number of stats groups reached removing %s", group)
 		delete(sg.m, group)
 		r := (len(sg.order) - ci.MaxStatsGroups) + 1
 		sg.order = sg.order[r:]

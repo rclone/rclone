@@ -43,7 +43,7 @@ func testFile(t *testing.T, contents string) string {
 }
 
 func TestNewFilterForbiddenMixOfFilesFromAndFilterRule(t *testing.T) {
-	Opt := DefaultOpt
+	Opt := Opt
 
 	// Set up the input
 	Opt.FilterRule = []string{"- filter1", "- filter1b"}
@@ -66,7 +66,7 @@ func TestNewFilterForbiddenMixOfFilesFromAndFilterRule(t *testing.T) {
 }
 
 func TestNewFilterForbiddenMixOfFilesFromRawAndFilterRule(t *testing.T) {
-	Opt := DefaultOpt
+	Opt := Opt
 
 	// Set up the input
 	Opt.FilterRule = []string{"- filter1", "- filter1b"}
@@ -89,7 +89,7 @@ func TestNewFilterForbiddenMixOfFilesFromRawAndFilterRule(t *testing.T) {
 }
 
 func TestNewFilterWithFilesFromAlone(t *testing.T) {
-	Opt := DefaultOpt
+	Opt := Opt
 
 	// Set up the input
 	Opt.FilesFrom = []string{testFile(t, "#comment\nfiles1\nfiles2\n")}
@@ -117,7 +117,7 @@ func TestNewFilterWithFilesFromAlone(t *testing.T) {
 }
 
 func TestNewFilterWithFilesFromRaw(t *testing.T) {
-	Opt := DefaultOpt
+	Opt := Opt
 
 	// Set up the input
 	Opt.FilesFromRaw = []string{testFile(t, "#comment\nfiles1\nfiles2\n")}
@@ -145,7 +145,7 @@ func TestNewFilterWithFilesFromRaw(t *testing.T) {
 }
 
 func TestNewFilterFullExceptFilesFromOpt(t *testing.T) {
-	Opt := DefaultOpt
+	Opt := Opt
 
 	mins := fs.SizeSuffix(100 * 1024)
 	maxs := fs.SizeSuffix(1000 * 1024)

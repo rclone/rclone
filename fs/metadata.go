@@ -63,10 +63,10 @@ func (m *Metadata) MergeOptions(options []OpenOption) {
 	}
 }
 
-// GetMetadata from an ObjectInfo
+// GetMetadata from an DirEntry
 //
 // If the object has no metadata then metadata will be nil
-func GetMetadata(ctx context.Context, o ObjectInfo) (metadata Metadata, err error) {
+func GetMetadata(ctx context.Context, o DirEntry) (metadata Metadata, err error) {
 	do, ok := o.(Metadataer)
 	if !ok {
 		return nil, nil
@@ -91,7 +91,7 @@ type mapItem struct {
 
 // This runs an external program on the metadata which can be used to
 // map it from one form to another.
-func metadataMapper(ctx context.Context, cmdLine SpaceSepList, dstFs Fs, o ObjectInfo, metadata Metadata) (newMetadata Metadata, err error) {
+func metadataMapper(ctx context.Context, cmdLine SpaceSepList, dstFs Fs, o DirEntry, metadata Metadata) (newMetadata Metadata, err error) {
 	ci := GetConfig(ctx)
 	cmd := exec.Command(cmdLine[0], cmdLine[1:]...)
 	in := mapItem{
@@ -145,14 +145,14 @@ func metadataMapper(ctx context.Context, cmdLine SpaceSepList, dstFs Fs, o Objec
 	return out.Metadata, nil
 }
 
-// GetMetadataOptions from an ObjectInfo and merge it with any in options
+// GetMetadataOptions from an DirEntry and merge it with any in options
 //
 // If --metadata isn't in use it will return nil.
 //
 // If the object has no metadata then metadata will be nil.
 //
 // This should be passed the destination Fs for the metadata mapper
-func GetMetadataOptions(ctx context.Context, dstFs Fs, o ObjectInfo, options []OpenOption) (metadata Metadata, err error) {
+func GetMetadataOptions(ctx context.Context, dstFs Fs, o DirEntry, options []OpenOption) (metadata Metadata, err error) {
 	ci := GetConfig(ctx)
 	if !ci.Metadata {
 		return nil, nil

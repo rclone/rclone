@@ -1,5 +1,3 @@
-//go:build go1.21
-
 package dlna
 
 import (
@@ -7,13 +5,13 @@ import (
 	"encoding/xml"
 	"errors"
 	"fmt"
-	"log"
 	"net/http"
 	"net/url"
 	"os"
 	"path"
 	"path/filepath"
 	"regexp"
+	"sort"
 	"strings"
 
 	"github.com/anacrolix/dms/dlna"
@@ -103,9 +101,24 @@ func (cds *contentDirectoryService) cdsObjectToUpnpavObject(cdsObject object, fi
 			Host:   host,
 			Path:   path.Join(resPath, resource.Path()),
 		}).String()
+
+		// Read the mime type from the fs.Object if possible,
+		// otherwise fall back to working out what it is from the file path.
+		var mimeType string
+		if o, ok := resource.DirEntry().(fs.Object); ok {
+			mimeType = fs.MimeType(context.TODO(), o)
+			// If backend doesn't know what the mime type is then
+			// try getting it from the file name
+			if mimeType == "application/octet-stream" {
+				mimeType = fs.MimeTypeFromName(resource.Name())
+			}
+		} else {
+			mimeType = fs.MimeTypeFromName(resource.Name())
+		}
+
 		item.Res = append(item.Res, upnpav.Resource{
 			URL:          subtitleURL,
-			ProtocolInfo: fmt.Sprintf("http-get:*:%s:*", "text/srt"),
+			ProtocolInfo: fmt.Sprintf("http-get:*:%s:*", mimeType),
 		})
 	}
 
@@ -131,6 +144,32 @@ func (cds *contentDirectoryService) readContainer(o object, host string) (ret []
 		err = errors.New("failed to list directory")
 		return
 	}
+
+	// if there's a "Subs" child directory, add its children to the list as well,
+	// so mediaWithResources is able to find them.
+	for _, node := range dirEntries {
+		if strings.EqualFold(node.Name(), "Subs") && node.IsDir() {
+			subtitleDir := node.(*vfs.Dir)
+			subtitleEntries, err := subtitleDir.ReadDirAll()
+			if err != nil {
+				err = errors.New("failed to list subtitle directory")
+				return nil, err
+			}
+			dirEntries = append(dirEntries, subtitleEntries...)
+		}
+	}
+
+	// Sort the directory entries by directories first then alphabetically by name
+	sort.Slice(dirEntries, func(i, j int) bool {
+		iNode, jNode := dirEntries[i], dirEntries[j]
+		iIsDir, jIsDir := iNode.IsDir(), jNode.IsDir()
+		if iIsDir && !jIsDir {
+			return true
+		} else if !iIsDir && jIsDir {
+			return false
+		}
+		return strings.ToLower(iNode.Name()) < strings.ToLower(jNode.Name())
+	})
 
 	dirEntries, mediaResources := mediaWithResources(dirEntries)
 	for _, de := range dirEntries {
@@ -161,14 +200,14 @@ func mediaWithResources(nodes vfs.Nodes) (vfs.Nodes, map[vfs.Node]vfs.Nodes) {
 	media, mediaResources := vfs.Nodes{}, make(map[vfs.Node]vfs.Nodes)
 
 	// First, separate out the subtitles and media into maps, keyed by their lowercase base names.
-	mediaByName, subtitlesByName := make(map[string]vfs.Nodes), make(map[string]vfs.Node)
+	mediaByName, subtitlesByName := make(map[string]vfs.Nodes), make(map[string]vfs.Nodes)
 	for _, node := range nodes {
 		baseName, ext := splitExt(strings.ToLower(node.Name()))
 		switch ext {
 		case ".srt", ".ass", ".ssa", ".sub", ".idx", ".sup", ".jss", ".txt", ".usf", ".cue", ".vtt", ".css":
 			// .idx should be with .sub, .css should be with vtt otherwise they should be culled,
 			// and their mimeTypes are not consistent, but anyway these negatives don't throw errors.
-			subtitlesByName[baseName] = node
+			subtitlesByName[baseName] = append(subtitlesByName[baseName], node)
 		default:
 			mediaByName[baseName] = append(mediaByName[baseName], node)
 			media = append(media, node)
@@ -176,25 +215,26 @@ func mediaWithResources(nodes vfs.Nodes) (vfs.Nodes, map[vfs.Node]vfs.Nodes) {
 	}
 
 	// Find the associated media file for each subtitle
-	for baseName, node := range subtitlesByName {
+	for baseName, nodes := range subtitlesByName {
 		// Find a media file with the same basename (video.mp4 for video.srt)
 		mediaNodes, found := mediaByName[baseName]
 		if !found {
 			// Or basename of the basename (video.mp4 for video.en.srt)
-			baseName, _ = splitExt(baseName)
+			baseName, _ := splitExt(baseName)
 			mediaNodes, found = mediaByName[baseName]
 		}
 
 		// Just advise if no match found
 		if !found {
-			fs.Infof(node, "could not find associated media for subtitle: %s", node.Name())
+			fs.Infof(nodes, "could not find associated media for subtitle: %s", baseName)
+			fs.Infof(mediaByName, "mediaByName is this, baseName is %s", baseName)
 			continue
 		}
 
 		// Associate with all potential media nodes
-		fs.Debugf(mediaNodes, "associating subtitle: %s", node.Name())
+		fs.Debugf(mediaNodes, "associating subtitle: %s", baseName)
 		for _, mediaNode := range mediaNodes {
-			mediaResources[mediaNode] = append(mediaResources[mediaNode], node)
+			mediaResources[mediaNode] = append(mediaResources[mediaNode], nodes...)
 		}
 	}
 
@@ -245,13 +285,13 @@ func (cds *contentDirectoryService) Handle(action string, argsXML []byte, r *htt
 		}
 		obj, err := cds.objectFromID(browse.ObjectID)
 		if err != nil {
-			return nil, upnp.Errorf(upnpav.NoSuchObjectErrorCode, err.Error())
+			return nil, upnp.Errorf(upnpav.NoSuchObjectErrorCode, "%s", err.Error())
 		}
 		switch browse.BrowseFlag {
 		case "BrowseDirectChildren":
 			objs, err := cds.readContainer(obj, host)
 			if err != nil {
-				return nil, upnp.Errorf(upnpav.NoSuchObjectErrorCode, err.Error())
+				return nil, upnp.Errorf(upnpav.NoSuchObjectErrorCode, "%s", err.Error())
 			}
 			totalMatches := len(objs)
 			objs = objs[func() (low int) {
@@ -289,7 +329,10 @@ func (cds *contentDirectoryService) Handle(action string, argsXML []byte, r *htt
 				return nil, err
 			}
 			return map[string]string{
-				"Result": didlLite(string(result)),
+				"TotalMatches":   "1",
+				"NumberReturned": "1",
+				"Result":         didlLite(string(result)),
+				"UpdateID":       cds.updateIDString(),
 			}, nil
 		default:
 			return nil, upnp.Errorf(upnp.ArgumentValueInvalidErrorCode, "unhandled browse flag: %v", browse.BrowseFlag)
@@ -329,7 +372,7 @@ func (o *object) FilePath() string {
 // Returns the ObjectID for the object. This is used in various ContentDirectory actions.
 func (o object) ID() string {
 	if !path.IsAbs(o.Path) {
-		log.Panicf("Relative object path: %s", o.Path)
+		fs.Panicf(nil, "Relative object path: %s", o.Path)
 	}
 	if len(o.Path) == 1 {
 		return "0"

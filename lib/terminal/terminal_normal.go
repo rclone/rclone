@@ -1,5 +1,4 @@
 //go:build !js
-// +build !js
 
 package terminal
 
@@ -34,5 +33,5 @@ func ReadPassword(fd int) ([]byte, error) {
 
 // WriteTerminalTitle writes a string to the terminal title
 func WriteTerminalTitle(title string) {
-	fmt.Printf(ChangeTitle + title + BEL)
+	fmt.Print(ChangeTitle + title + BEL)
 }

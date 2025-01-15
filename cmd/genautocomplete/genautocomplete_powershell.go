@@ -1,10 +1,11 @@
 package genautocomplete
 
 import (
-	"log"
+	"fmt"
 	"os"
 
 	"github.com/rclone/rclone/cmd"
+	"github.com/rclone/rclone/fs"
 	"github.com/spf13/cobra"
 )
 
@@ -15,8 +16,7 @@ func init() {
 var powershellCommandDefinition = &cobra.Command{
 	Use:   "powershell [output_file]",
 	Short: `Output powershell completion script for rclone.`,
-	Long: `
-Generate the autocompletion script for powershell.
+	Long: `Generate the autocompletion script for powershell.
 
 To load completions in your current shell session:
 
@@ -32,13 +32,13 @@ If output_file is "-" or missing, then the output will be written to stdout.
 		if len(args) == 0 || (len(args) > 0 && args[0] == "-") {
 			err := cmd.Root.GenPowerShellCompletion(os.Stdout)
 			if err != nil {
-				log.Fatal(err)
+				fs.Fatal(nil, fmt.Sprint(err))
 			}
 			return
 		}
 		err := cmd.Root.GenPowerShellCompletionFile(args[0])
 		if err != nil {
-			log.Fatal(err)
+			fs.Fatal(nil, fmt.Sprint(err))
 		}
 	},
 }

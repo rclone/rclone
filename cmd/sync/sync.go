@@ -139,8 +139,7 @@ func anyNotBlank(s ...string) bool {
 var commandDefinition = &cobra.Command{
 	Use:   "sync source:path dest:path",
 	Short: `Make source and dest identical, modifying destination only.`,
-	Long: `
-Sync the source to the destination, changing the destination
+	Long: `Sync the source to the destination, changing the destination
 only.  Doesn't transfer files that are identical on source and
 destination, testing by size and modification time or MD5SUM.
 Destination is updated to match source, including deleting files
@@ -169,6 +168,14 @@ It is not possible to sync overlapping remotes. However, you may exclude
 the destination from the sync with a filter rule or by putting an 
 exclude-if-present file inside the destination directory and sync to a
 destination that is inside the source directory.
+
+Rclone will sync the modification times of files and directories if
+the backend supports it. If metadata syncing is required then use the
+` + "`--metadata`" + ` flag.
+
+Note that the modification time and metadata for the root directory
+will **not** be synced. See https://github.com/rclone/rclone/issues/7652
+for more info.
 
 **Note**: Use the ` + "`-P`" + `/` + "`--progress`" + ` flag to view real-time transfer statistics
 

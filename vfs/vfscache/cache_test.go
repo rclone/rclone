@@ -14,6 +14,7 @@ import (
 	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fstest"
 	"github.com/rclone/rclone/lib/diskusage"
+	"github.com/rclone/rclone/vfs/vfscache/writeback"
 	"github.com/rclone/rclone/vfs/vfscommon"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -104,7 +105,7 @@ func newTestCacheOpt(t *testing.T, opt vfscommon.Options) (r *fstest.Run, c *Cac
 }
 
 func newTestCache(t *testing.T) (r *fstest.Run, c *Cache) {
-	opt := vfscommon.DefaultOpt
+	opt := vfscommon.Opt
 
 	// Disable the cache cleaner as it interferes with these tests
 	opt.CachePollInterval = 0
@@ -627,12 +628,12 @@ func TestCacheRename(t *testing.T) {
 }
 
 func TestCacheCleaner(t *testing.T) {
-	opt := vfscommon.DefaultOpt
-	opt.CachePollInterval = 10 * time.Millisecond
-	opt.CacheMaxAge = 20 * time.Millisecond
+	opt := vfscommon.Opt
+	opt.CachePollInterval = fs.Duration(10 * time.Millisecond)
+	opt.CacheMaxAge = fs.Duration(20 * time.Millisecond)
 	_, c := newTestCacheOpt(t, opt)
 
-	time.Sleep(2 * opt.CachePollInterval)
+	time.Sleep(time.Duration(2 * opt.CachePollInterval))
 
 	potato := c.Item("potato")
 	potato2, found := c.get("potato")
@@ -640,7 +641,7 @@ func TestCacheCleaner(t *testing.T) {
 	assert.True(t, found)
 
 	for i := 0; i < 100; i++ {
-		time.Sleep(10 * opt.CachePollInterval)
+		time.Sleep(time.Duration(10 * opt.CachePollInterval))
 		potato2, found = c.get("potato")
 		if !found {
 			break
@@ -726,4 +727,27 @@ func TestCacheStats(t *testing.T) {
 	assert.Equal(t, 0, out["files"])
 	assert.Equal(t, 0, out["uploadsInProgress"])
 	assert.Equal(t, 0, out["uploadsQueued"])
+}
+
+func TestCacheQueue(t *testing.T) {
+	_, c := newTestCache(t)
+
+	out := c.Queue()
+
+	// We've checked the contents of queue in the writeback tests
+	// Just check it is present here
+	queue, found := out["queue"]
+	require.True(t, found)
+	_, ok := queue.([]writeback.QueueInfo)
+	require.True(t, ok)
+}
+
+func TestCacheQueueSetExpiry(t *testing.T) {
+	_, c := newTestCache(t)
+
+	// Check this returns the correct error when called so we know
+	// it is plumbed in correctly. The actual tests are done in
+	// writeback.
+	err := c.QueueSetExpiry(123123, time.Now(), 0)
+	assert.Equal(t, writeback.ErrorIDNotFound, err)
 }

@@ -7,11 +7,12 @@ tests:
    fastlist: true
  - path: fs/sync
    fastlist: true
+ - path: cmd/bisync
  - path: vfs
  - path: cmd/serve/restic
    localonly: true
- - path: cmd/serve/docker
-   localonly: true
+ # - path: cmd/serve/docker
+ #   localonly: true
  - path: cmd/selfupdate
    localonly: true
 backends:
@@ -54,13 +55,17 @@ backends:
    remote:   "TestChunkerChunk3bNoRenameLocal:"
    fastlist: true
    maxfile:  6k
- - backend:  "chunker"
-   remote:   "TestChunkerMailru:"
-   fastlist: true
- - backend:  "chunker"
-   remote:   "TestChunkerChunk50bMailru:"
-   fastlist: true
-   maxfile:  10k
+ # - backend:  "chunker"
+ #   remote:   "TestChunkerMailru:"
+ #   fastlist: true
+ #   ignore:
+ #     - TestApplyTransforms
+ # - backend:  "chunker"
+ #   remote:   "TestChunkerChunk50bMailru:"
+ #   fastlist: true
+ #   maxfile:  10k
+ #   ignore:
+ #     - TestApplyTransforms
  - backend:  "chunker"
    remote:   "TestChunkerChunk50bYandex:"
    fastlist: true
@@ -97,6 +102,21 @@ backends:
    fastlist: true
    maxfile:  1k
  ## end chunker
+ - backend:  "cloudinary"
+   remote:   "TestCloudinary:"
+   fastlist: false
+   ignore:
+     # fs/operations
+     - TestCheckSum
+     - TestCheckSumDownload
+     - TestHashSums/Md5
+     - TestReadFile
+     - TestCopyURL
+     - TestMoveFileWithIgnoreExisting
+     #vfs
+     - TestFileSetModTime/cache=off,open=false,write=false
+     - TestFileSetModTime/cache=off,open=true,write=false
+     - TestRWFileHandleWriteNoWrite
  - backend:  "combine"
    remote:   "TestCombine:dir1"
    fastlist: false
@@ -132,6 +152,12 @@ backends:
  #   remote:   "TestFileFabric:"
  #   fastlist: false
  #   extratime: 2.0
+ - backend:  "gofile"
+   remote:   "TestGoFile:"
+   fastlist: true
+ - backend:  "filescom"
+   remote:   "TestFilesCom:"
+   fastlist: false
  - backend:  "googlecloudstorage"
    remote:   "TestGoogleCloudStorage:"
    fastlist: true
@@ -210,6 +236,23 @@ backends:
      - TestIntegration/FsMkdir/FsEncoding/leading_HT
      - TestIntegration/FsMkdir/FsEncoding/leading_VT
      - TestIntegration/FsMkdir/FsPutFiles/FsPutStream/0
+ - backend:  "s3"
+   remote:   "TestS3GCS:"
+   fastlist: true
+   ignore:
+     - TestIntegration/FsMkdir/FsEncoding/control_chars
+     - TestIntegration/FsMkdir/FsEncoding/leading_CR
+     - TestIntegration/FsMkdir/FsEncoding/leading_LF
+     - TestIntegration/FsMkdir/FsEncoding/trailing_CR
+     - TestIntegration/FsMkdir/FsEncoding/trailing_LF
+     - TestIntegration/FsMkdir/FsPutFiles/PublicLink
+     - TestIntegration/FsMkdir/FsPutFiles/SetTier
+     - TestIntegration/FsMkdir/FsPutFiles/Internal/Metadata/GzipEncoding
+     - TestIntegration/FsMkdir/FsPutFiles/Internal/Versions/VersionAt/AfterDelete/List
+     - TestIntegration/FsMkdir/FsPutFiles/Internal/Versions/VersionAt/AfterDelete/NewObject
+     - TestIntegration/FsMkdir/FsPutFiles/Internal/Versions/VersionAt/AfterTwo/List
+     - TestIntegration/FsMkdir/FsPutFiles/Internal/Versions/VersionAt/AfterTwo/NewObject
+     - TestBisyncRemoteRemote/extended_filenames
  # Disabled due to excessive rate limiting at DO which cause the tests never to pass
  # This hits the rate limit as documented here: https://www.digitalocean.com/docs/spaces/#limits
  # 2 COPYs per 5 minutes on any individual object in a Space
@@ -274,6 +317,9 @@ backends:
    remote:   "TestSwiftAIO:"
    fastlist: true
  - backend:  "swift"
+   remote:   "TestSwiftAIOsegments:"
+   fastlist: true
+ - backend:  "swift"
    remote:   "TestSwift:"
    fastlist: true
  # - backend:  "swift"
@@ -305,14 +351,15 @@ backends:
    listretries: 5
    tests:
      - backend
- - backend:  "qingstor"
-   remote:   "TestQingStor:"
-   fastlist: false
-   oneonly:  true
-   cleanup:  true
-   ignore:
-     # This test fails because of a broken bucket in the account!
-     - TestIntegration/FsMkdir/FsPutFiles/FromRoot/ListR
+ # Disabled due to account cancellation - no longer available to me
+ # - backend:  "qingstor"
+ #   remote:   "TestQingStor:"
+ #   fastlist: false
+ #   oneonly:  true
+ #   cleanup:  true
+ #   ignore:
+ #     # This test fails because of a broken bucket in the account!
+ #     - TestIntegration/FsMkdir/FsPutFiles/FromRoot/ListR
  - backend:  "azureblob"
    remote:   "TestAzureBlob:"
    fastlist: true
@@ -335,6 +382,14 @@ backends:
      - TestSyncWithTrackRenames
     # integration
      - TestIntegration/FsMkdir/FsPutFiles/ObjectMimeType
+    # This test fails with message
+    # "share_status_prohibited" (9): Sorry, the sharing service is under maintenance in the current region.
+     - TestIntegration/FsMkdir/FsPutFiles/PublicLink
+ - backend:  "pixeldrain"
+   remote: "TestPixeldrain:"
+   ignore:
+     - TestIntegration/FsMkdir/FsEncoding/invalid_UTF-8
+   fastlist: false
  - backend:  "webdav"
    remote:   "TestWebdavNextcloud:"
    ignore:
@@ -355,6 +410,10 @@ backends:
  - backend:  "cache"
    remote:   "TestCache:"
    fastlist: false
+   ignoretests:
+     - TestBisyncLocalRemote
+     - TestBisyncRemoteLocal
+     - TestBisyncRemoteRemote
  - backend:  "mega"
    remote:   "TestMega:"
    fastlist: false
@@ -380,6 +439,9 @@ backends:
      - TestIntegration/FsMkdir/FsEncoding/invalid_UTF-8
      - TestRWFileHandleWriteNoWrite
      - TestCaseInsensitiveMoveFile
+     - TestFixCase
+     - TestListDirSorted        # Can't upload files starting with . - FIXME fix with encoding
+     - TestSyncOverlapWithFilter # Can't upload files starting with . - FIXME fix with encoding
  - backend:  "premiumizeme"
    remote:   "TestPremiumizeMe:"
    fastlist: false
@@ -402,6 +464,9 @@ backends:
    remote:   "TestMailru:"
    subdir:   false
    fastlist: false
+   oneonly:  true
+   ignore:
+     - TestApplyTransforms
  - backend:  "seafile"
    remote:   "TestSeafileV6:"
    fastlist: false
@@ -418,6 +483,9 @@ backends:
    fastlist: false
  - backend:  "smb"
    remote:   "TestSMB:rclone"
+   fastlist: false
+ - backend:  "smb"
+   remote:   "TestSMBKerberos:rclone"
    fastlist: false
  - backend:  "storj"
    remote:   "TestStorj:"
@@ -450,4 +518,10 @@ backends:
      - TestIntegration/FsMkdir/FsPutFiles/FsPutStream/0
  - backend:  "quatrix"
    remote:   "TestQuatrix:"
+   fastlist: false
+ - backend:  "ulozto"
+   remote:   "TestUlozto:"
+   fastlist: false
+ - backend:  "iclouddrive"
+   remote:   "TestICloudDrive:"
    fastlist: false

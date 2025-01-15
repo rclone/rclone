@@ -2,7 +2,6 @@
 // Unix specific functions.
 
 //go:build darwin || dragonfly || freebsd || linux || netbsd || openbsd || solaris
-// +build darwin dragonfly freebsd linux netbsd openbsd solaris
 
 package accounting
 
@@ -36,12 +35,13 @@ func (tb *tokenBucket) startSignalHandler() {
 
 				tb.toggledOff = !tb.toggledOff
 				tb.curr, tb.prev = tb.prev, tb.curr
-				s := "disabled"
+				s, limit := "disabled", "off"
 				if !tb.curr._isOff() {
 					s = "enabled"
+					limit = tb.currLimit.Bandwidth.String()
 				}
 
-				fs.Logf(nil, "Bandwidth limit %s by user", s)
+				fs.Logf(nil, "Bandwidth limit %s by user (now %s)", s, limit)
 			}()
 		}
 	}()

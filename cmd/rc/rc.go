@@ -23,14 +23,15 @@ import (
 )
 
 var (
-	noOutput  = false
-	url       = "http://localhost:5572/"
-	jsonInput = ""
-	authUser  = ""
-	authPass  = ""
-	loopback  = false
-	options   []string
-	arguments []string
+	noOutput   = false
+	url        = "http://localhost:5572/"
+	unixSocket = ""
+	jsonInput  = ""
+	authUser   = ""
+	authPass   = ""
+	loopback   = false
+	options    []string
+	arguments  []string
 )
 
 func init() {
@@ -38,6 +39,7 @@ func init() {
 	cmdFlags := commandDefinition.Flags()
 	flags.BoolVarP(cmdFlags, &noOutput, "no-output", "", noOutput, "If set, don't output the JSON result", "")
 	flags.StringVarP(cmdFlags, &url, "url", "", url, "URL to connect to rclone remote control", "")
+	flags.StringVarP(cmdFlags, &unixSocket, "unix-socket", "", unixSocket, "Path to a unix domain socket to dial to, instead of opening a TCP connection directly", "")
 	flags.StringVarP(cmdFlags, &jsonInput, "json", "", jsonInput, "Input JSON - use instead of key=value args", "")
 	flags.StringVarP(cmdFlags, &authUser, "user", "", "", "Username to use to rclone remote control", "")
 	flags.StringVarP(cmdFlags, &authPass, "pass", "", "", "Password to use to connect to rclone remote control", "")
@@ -49,28 +51,33 @@ func init() {
 var commandDefinition = &cobra.Command{
 	Use:   "rc commands parameter",
 	Short: `Run a command against a running rclone.`,
-	Long: `
-
-This runs a command against a running rclone.  Use the ` + "`--url`" + ` flag to
+	Long: strings.ReplaceAll(`This runs a command against a running rclone.  Use the |--url| flag to
 specify an non default URL to connect on.  This can be either a
 ":port" which is taken to mean "http://localhost:port" or a
 "host:port" which is taken to mean "http://host:port"
 
-A username and password can be passed in with ` + "`--user`" + ` and ` + "`--pass`" + `.
+A username and password can be passed in with |--user| and |--pass|.
 
-Note that ` + "`--rc-addr`, `--rc-user`, `--rc-pass`" + ` will be read also for
-` + "`--url`, `--user`, `--pass`" + `.
+Note that |--rc-addr|, |--rc-user|, |--rc-pass| will be read also for
+|--url|, |--user|, |--pass|.
+
+The |--unix-socket| flag can be used to connect over a unix socket like this
+
+    # start server on /tmp/my.socket
+    rclone rcd --rc-addr unix:///tmp/my.socket
+    # Connect to it
+    rclone rc --unix-socket /tmp/my.socket core/stats
 
 Arguments should be passed in as parameter=value.
 
 The result will be returned as a JSON object by default.
 
-The ` + "`--json`" + ` parameter can be used to pass in a JSON blob as an input
+The |--json| parameter can be used to pass in a JSON blob as an input
 instead of key=value arguments.  This is the only way of passing in
 more complicated values.
 
-The ` + "`-o`/`--opt`" + ` option can be used to set a key "opt" with key, value
-options in the form ` + "`-o key=value` or `-o key`" + `. It can be repeated as
+The |-o|/|--opt| option can be used to set a key "opt" with key, value
+options in the form |-o key=value| or |-o key|. It can be repeated as
 many times as required. This is useful for rc commands which take the
 "opt" parameter which by convention is a dictionary of strings.
 
@@ -81,7 +88,7 @@ Will place this in the "opt" value
     {"key":"value", "key2","")
 
 
-The ` + "`-a`/`--arg`" + ` option can be used to set strings in the "arg" value. It
+The |-a|/|--arg| option can be used to set strings in the "arg" value. It
 can be repeated as many times as required. This is useful for rc
 commands which take the "arg" parameter which by convention is a list
 of strings.
@@ -92,13 +99,13 @@ Will place this in the "arg" value
 
     ["value", "value2"]
 
-Use ` + "`--loopback`" + ` to connect to the rclone instance running ` + "`rclone rc`" + `.
+Use |--loopback| to connect to the rclone instance running |rclone rc|.
 This is very useful for testing commands without having to run an
 rclone rc server, e.g.:
 
     rclone rc --loopback operations/about fs=/
 
-Use ` + "`rclone rc`" + ` to see a list of all possible commands.`,
+Use |rclone rc| to see a list of all possible commands.`, "|", "`"),
 	Annotations: map[string]string{
 		"versionIntroduced": "v1.40",
 	},
@@ -201,7 +208,12 @@ func doCall(ctx context.Context, path string, in rc.Params) (out rc.Params, err 
 	}
 
 	// Do HTTP request
-	client := fshttp.NewClient(ctx)
+	var client *http.Client
+	if unixSocket == "" {
+		client = fshttp.NewClient(ctx)
+	} else {
+		client = fshttp.NewClientWithUnixSocket(ctx, unixSocket)
+	}
 	url += path
 	data, err := json.Marshal(in)
 	if err != nil {

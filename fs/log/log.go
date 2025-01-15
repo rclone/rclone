@@ -14,23 +14,49 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+// OptionsInfo descripts the Options in use
+var OptionsInfo = fs.Options{{
+	Name:    "log_file",
+	Default: "",
+	Help:    "Log everything to this file",
+	Groups:  "Logging",
+}, {
+	Name:    "log_format",
+	Default: "date,time",
+	Help:    "Comma separated list of log format options",
+	Groups:  "Logging",
+}, {
+	Name:    "syslog",
+	Default: false,
+	Help:    "Use Syslog for logging",
+	Groups:  "Logging",
+}, {
+	Name:    "syslog_facility",
+	Default: "DAEMON",
+	Help:    "Facility for syslog, e.g. KERN,USER",
+	Groups:  "Logging",
+}, {
+	Name:    "log_systemd",
+	Default: false,
+	Help:    "Activate systemd integration for the logger",
+	Groups:  "Logging",
+}}
+
 // Options contains options for controlling the logging
 type Options struct {
-	File              string // Log everything to this file
-	Format            string // Comma separated list of log format options
-	UseSyslog         bool   // Use Syslog for logging
-	SyslogFacility    string // Facility for syslog, e.g. KERN,USER,...
-	LogSystemdSupport bool   // set if using systemd logging
+	File              string `config:"log_file"`        // Log everything to this file
+	Format            string `config:"log_format"`      // Comma separated list of log format options
+	UseSyslog         bool   `config:"syslog"`          // Use Syslog for logging
+	SyslogFacility    string `config:"syslog_facility"` // Facility for syslog, e.g. KERN,USER,...
+	LogSystemdSupport bool   `config:"log_systemd"`     // set if using systemd logging
 }
 
-// DefaultOpt is the default values used for Opt
-var DefaultOpt = Options{
-	Format:         "date,time",
-	SyslogFacility: "DAEMON",
+func init() {
+	fs.RegisterGlobalOptions(fs.OptionsInfo{Name: "log", Opt: &Opt, Options: OptionsInfo})
 }
 
 // Opt is the options for the logger
-var Opt = DefaultOpt
+var Opt Options
 
 // fnName returns the name of the calling +2 function
 func fnName() string {
@@ -118,7 +144,7 @@ func InitLogging() {
 	if Opt.File != "" {
 		f, err := os.OpenFile(Opt.File, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0640)
 		if err != nil {
-			log.Fatalf("Failed to open log file: %v", err)
+			fs.Fatalf(nil, "Failed to open log file: %v", err)
 		}
 		_, err = f.Seek(0, io.SeekEnd)
 		if err != nil {
@@ -132,7 +158,7 @@ func InitLogging() {
 	// Syslog output
 	if Opt.UseSyslog {
 		if Opt.File != "" {
-			log.Fatalf("Can't use --syslog and --log-file together")
+			fs.Fatalf(nil, "Can't use --syslog and --log-file together")
 		}
 		startSysLog()
 	}

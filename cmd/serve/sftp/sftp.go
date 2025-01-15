@@ -1,5 +1,4 @@
 //go:build !plan9
-// +build !plan9
 
 // Package sftp implements an SFTP server to serve an rclone VFS
 package sftp
@@ -12,7 +11,6 @@ import (
 	"github.com/rclone/rclone/cmd/serve/proxy/proxyflags"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config/flags"
-	"github.com/rclone/rclone/fs/rc"
 	"github.com/rclone/rclone/lib/systemd"
 	"github.com/rclone/rclone/vfs"
 	"github.com/rclone/rclone/vfs/vfsflags"
@@ -20,36 +18,58 @@ import (
 	"github.com/spf13/pflag"
 )
 
+// OptionsInfo descripts the Options in use
+var OptionsInfo = fs.Options{{
+	Name:    "addr",
+	Default: "localhost:2022",
+	Help:    "IPaddress:Port or :Port to bind server to",
+}, {
+	Name:    "key",
+	Default: []string{},
+	Help:    "SSH private host key file (Can be multi-valued, leave blank to auto generate)",
+}, {
+	Name:    "authorized_keys",
+	Default: "~/.ssh/authorized_keys",
+	Help:    "Authorized keys file",
+}, {
+	Name:    "user",
+	Default: "",
+	Help:    "User name for authentication",
+}, {
+	Name:    "pass",
+	Default: "",
+	Help:    "Password for authentication",
+}, {
+	Name:    "no_auth",
+	Default: false,
+	Help:    "Allow connections with no authentication if set",
+}, {
+	Name:    "stdio",
+	Default: false,
+	Help:    "Run an sftp server on stdin/stdout",
+}}
+
 // Options contains options for the http Server
 type Options struct {
-	ListenAddr     string   // Port to listen on
-	HostKeys       []string // Paths to private host keys
-	AuthorizedKeys string   // Path to authorized keys file
-	User           string   // single username
-	Pass           string   // password for user
-	NoAuth         bool     // allow no authentication on connections
-	Stdio          bool     // serve on stdio
+	ListenAddr     string   `config:"addr"`            // Port to listen on
+	HostKeys       []string `config:"key"`             // Paths to private host keys
+	AuthorizedKeys string   `config:"authorized_keys"` // Path to authorized keys file
+	User           string   `config:"user"`            // single username
+	Pass           string   `config:"pass"`            // password for user
+	NoAuth         bool     `config:"no_auth"`         // allow no authentication on connections
+	Stdio          bool     `config:"stdio"`           // serve on stdio
 }
 
-// DefaultOpt is the default values used for Options
-var DefaultOpt = Options{
-	ListenAddr:     "localhost:2022",
-	AuthorizedKeys: "~/.ssh/authorized_keys",
+func init() {
+	fs.RegisterGlobalOptions(fs.OptionsInfo{Name: "sftp", Opt: &Opt, Options: OptionsInfo})
 }
 
 // Opt is options set by command line flags
-var Opt = DefaultOpt
+var Opt Options
 
 // AddFlags adds flags for the sftp
 func AddFlags(flagSet *pflag.FlagSet, Opt *Options) {
-	rc.AddOption("sftp", &Opt)
-	flags.StringVarP(flagSet, &Opt.ListenAddr, "addr", "", Opt.ListenAddr, "IPaddress:Port or :Port to bind server to", "")
-	flags.StringArrayVarP(flagSet, &Opt.HostKeys, "key", "", Opt.HostKeys, "SSH private host key file (Can be multi-valued, leave blank to auto generate)", "")
-	flags.StringVarP(flagSet, &Opt.AuthorizedKeys, "authorized-keys", "", Opt.AuthorizedKeys, "Authorized keys file", "")
-	flags.StringVarP(flagSet, &Opt.User, "user", "", Opt.User, "User name for authentication", "")
-	flags.StringVarP(flagSet, &Opt.Pass, "pass", "", Opt.Pass, "Password for authentication", "")
-	flags.BoolVarP(flagSet, &Opt.NoAuth, "no-auth", "", Opt.NoAuth, "Allow connections with no authentication if set", "")
-	flags.BoolVarP(flagSet, &Opt.Stdio, "stdio", "", Opt.Stdio, "Run an sftp server on stdin/stdout", "")
+	flags.AddFlagsFromOptions(flagSet, "", OptionsInfo)
 }
 
 func init() {
@@ -95,6 +115,17 @@ directory.
 By default the server binds to localhost:2022 - if you want it to be
 reachable externally then supply ` + "`--addr :2022`" + ` for example.
 
+This also supports being run with socket activation, in which case it will
+listen on the first passed FD.
+It can be configured with .socket and .service unit files as described in
+https://www.freedesktop.org/software/systemd/man/latest/systemd.socket.html
+
+Socket activation can be tested ad-hoc with the ` + "`systemd-socket-activate`" + `command:
+
+	systemd-socket-activate -l 2222 -- rclone serve sftp :local:vfs/
+
+This will socket-activate rclone on the first connection to port 2222 over TCP.
+
 Note that the default of ` + "`--vfs-cache-mode off`" + ` is fine for the rclone
 sftp backend, but it may not be with other SFTP clients.
 
@@ -114,7 +145,7 @@ used. Omitting "restrict" and using  ` + "`--sftp-path-override`" + ` to enable
 checksumming is possible but less secure and you could use the SFTP server
 provided by OpenSSH in this case.
 
-` + vfs.Help + proxy.Help,
+` + vfs.Help() + proxy.Help,
 	Annotations: map[string]string{
 		"versionIntroduced": "v1.48",
 		"groups":            "Filter",

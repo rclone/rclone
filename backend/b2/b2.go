@@ -60,6 +60,7 @@ const (
 	defaultChunkSize    = 96 * fs.Mebi
 	defaultUploadCutoff = 200 * fs.Mebi
 	largeFileCopyCutoff = 4 * fs.Gibi // 5E9 is the max
+	defaultMaxAge       = 24 * time.Hour
 )
 
 // Globals
@@ -101,7 +102,7 @@ below will cause b2 to return specific errors:
   * "force_cap_exceeded"
 
 These will be set in the "X-Bz-Test-Mode" header which is documented
-in the [b2 integrations checklist](https://www.backblaze.com/b2/docs/integration_checklist.html).`,
+in the [b2 integrations checklist](https://www.backblaze.com/docs/cloud-storage-integration-checklist).`,
 			Default:  "",
 			Hide:     fs.OptionHideConfigurator,
 			Advanced: true,
@@ -243,7 +244,7 @@ See: [rclone backend lifecycle](#lifecycle) for setting lifecycles after bucket 
 			Name:     config.ConfigEncoding,
 			Help:     config.ConfigEncodingHelp,
 			Advanced: true,
-			// See: https://www.backblaze.com/b2/docs/files.html
+			// See: https://www.backblaze.com/docs/cloud-storage-files
 			// Encode invalid UTF-8 bytes as json doesn't handle them properly.
 			// FIXME: allow /, but not leading, trailing or double
 			Default: (encoder.Display |
@@ -298,13 +299,14 @@ type Fs struct {
 
 // Object describes a b2 object
 type Object struct {
-	fs       *Fs       // what this object is part of
-	remote   string    // The remote path
-	id       string    // b2 id of the file
-	modTime  time.Time // The modified time of the object if known
-	sha1     string    // SHA-1 hash if known
-	size     int64     // Size of the object
-	mimeType string    // Content-Type of the object
+	fs       *Fs               // what this object is part of
+	remote   string            // The remote path
+	id       string            // b2 id of the file
+	modTime  time.Time         // The modified time of the object if known
+	sha1     string            // SHA-1 hash if known
+	size     int64             // Size of the object
+	mimeType string            // Content-Type of the object
+	meta     map[string]string // The object metadata if known - may be nil - with lower case keys
 }
 
 // ------------------------------------------------------------
@@ -362,7 +364,7 @@ var retryErrorCodes = []int{
 	504, // Gateway Time-out
 }
 
-// shouldRetryNoAuth returns a boolean as to whether this resp and err
+// shouldRetryNoReauth returns a boolean as to whether this resp and err
 // deserve to be retried.  It returns the err as a convenience
 func (f *Fs) shouldRetryNoReauth(ctx context.Context, resp *http.Response, err error) (bool, error) {
 	if fserrors.ContextError(ctx, &err) {
@@ -1248,7 +1250,7 @@ func (f *Fs) deleteByID(ctx context.Context, ID, Name string) error {
 // if oldOnly is true then it deletes only non current files.
 //
 // Implemented here so we can make sure we delete old versions.
-func (f *Fs) purge(ctx context.Context, dir string, oldOnly bool) error {
+func (f *Fs) purge(ctx context.Context, dir string, oldOnly bool, deleteHidden bool, deleteUnfinished bool, maxAge time.Duration) error {
 	bucket, directory := f.split(dir)
 	if bucket == "" {
 		return errors.New("can't purge from root")
@@ -1266,7 +1268,7 @@ func (f *Fs) purge(ctx context.Context, dir string, oldOnly bool) error {
 		}
 	}
 	var isUnfinishedUploadStale = func(timestamp api.Timestamp) bool {
-		return time.Since(time.Time(timestamp)).Hours() > 24
+		return time.Since(time.Time(timestamp)) > maxAge
 	}
 
 	// Delete Config.Transfers in parallel
@@ -1289,6 +1291,21 @@ func (f *Fs) purge(ctx context.Context, dir string, oldOnly bool) error {
 			}
 		}()
 	}
+	if oldOnly {
+		if deleteHidden && deleteUnfinished {
+			fs.Infof(f, "cleaning bucket %q of all hidden files, and pending multipart uploads older than %v", bucket, maxAge)
+		} else if deleteHidden {
+			fs.Infof(f, "cleaning bucket %q of all hidden files", bucket)
+		} else if deleteUnfinished {
+			fs.Infof(f, "cleaning bucket %q of pending multipart uploads older than %v", bucket, maxAge)
+		} else {
+			fs.Errorf(f, "cleaning bucket %q of nothing. This should never happen!", bucket)
+			return nil
+		}
+	} else {
+		fs.Infof(f, "cleaning bucket %q of all files", bucket)
+	}
+
 	last := ""
 	checkErr(f.list(ctx, bucket, directory, f.rootDirectory, f.rootBucket == "", true, 0, true, false, func(remote string, object *api.File, isDirectory bool) error {
 		if !isDirectory {
@@ -1299,14 +1316,14 @@ func (f *Fs) purge(ctx context.Context, dir string, oldOnly bool) error {
 			tr := accounting.Stats(ctx).NewCheckingTransfer(oi, "checking")
 			if oldOnly && last != remote {
 				// Check current version of the file
-				if object.Action == "hide" {
+				if deleteHidden && object.Action == "hide" {
 					fs.Debugf(remote, "Deleting current version (id %q) as it is a hide marker", object.ID)
 					toBeDeleted <- object
-				} else if object.Action == "start" && isUnfinishedUploadStale(object.UploadTimestamp) {
+				} else if deleteUnfinished && object.Action == "start" && isUnfinishedUploadStale(object.UploadTimestamp) {
 					fs.Debugf(remote, "Deleting current version (id %q) as it is a start marker (upload started at %s)", object.ID, time.Time(object.UploadTimestamp).Local())
 					toBeDeleted <- object
 				} else {
-					fs.Debugf(remote, "Not deleting current version (id %q) %q", object.ID, object.Action)
+					fs.Debugf(remote, "Not deleting current version (id %q) %q dated %v (%v ago)", object.ID, object.Action, time.Time(object.UploadTimestamp).Local(), time.Since(time.Time(object.UploadTimestamp)))
 				}
 			} else {
 				fs.Debugf(remote, "Deleting (id %q)", object.ID)
@@ -1328,12 +1345,17 @@ func (f *Fs) purge(ctx context.Context, dir string, oldOnly bool) error {
 
 // Purge deletes all the files and directories including the old versions.
 func (f *Fs) Purge(ctx context.Context, dir string) error {
-	return f.purge(ctx, dir, false)
+	return f.purge(ctx, dir, false, false, false, defaultMaxAge)
 }
 
-// CleanUp deletes all the hidden files.
+// CleanUp deletes all hidden files and pending multipart uploads older than 24 hours.
 func (f *Fs) CleanUp(ctx context.Context) error {
-	return f.purge(ctx, "", true)
+	return f.purge(ctx, "", true, true, true, defaultMaxAge)
+}
+
+// cleanUp deletes all hidden files and/or pending multipart uploads older than the specified age.
+func (f *Fs) cleanUp(ctx context.Context, deleteHidden bool, deleteUnfinished bool, maxAge time.Duration) (err error) {
+	return f.purge(ctx, "", true, deleteHidden, deleteUnfinished, maxAge)
 }
 
 // copy does a server-side copy from dstObj <- srcObj
@@ -1545,7 +1567,7 @@ func (o *Object) Size() int64 {
 //
 // Make sure it is lower case.
 //
-// Remove unverified prefix - see https://www.backblaze.com/b2/docs/uploading.html
+// Remove unverified prefix - see https://www.backblaze.com/docs/cloud-storage-upload-files-with-the-native-api
 // Some tools (e.g. Cyberduck) use this
 func cleanSHA1(sha1 string) string {
 	const unverified = "unverified:"
@@ -1572,7 +1594,14 @@ func (o *Object) decodeMetaDataRaw(ID, SHA1 string, Size int64, UploadTimestamp 
 	o.size = Size
 	// Use the UploadTimestamp if can't get file info
 	o.modTime = time.Time(UploadTimestamp)
-	return o.parseTimeString(Info[timeKey])
+	err = o.parseTimeString(Info[timeKey])
+	if err != nil {
+		return err
+	}
+	// For now, just set "mtime" in metadata
+	o.meta = make(map[string]string, 1)
+	o.meta["mtime"] = o.modTime.Format(time.RFC3339Nano)
+	return nil
 }
 
 // decodeMetaData sets the metadata in the object from an api.File
@@ -1674,6 +1703,16 @@ func timeString(modTime time.Time) string {
 	return strconv.FormatInt(modTime.UnixNano()/1e6, 10)
 }
 
+// parseTimeStringHelper converts a decimal string number of milliseconds
+// elapsed since January 1, 1970 UTC into a time.Time
+func parseTimeStringHelper(timeString string) (time.Time, error) {
+	unixMilliseconds, err := strconv.ParseInt(timeString, 10, 64)
+	if err != nil {
+		return time.Time{}, err
+	}
+	return time.Unix(unixMilliseconds/1e3, (unixMilliseconds%1e3)*1e6).UTC(), nil
+}
+
 // parseTimeString converts a decimal string number of milliseconds
 // elapsed since January 1, 1970 UTC into a time.Time and stores it in
 // the modTime variable.
@@ -1681,12 +1720,12 @@ func (o *Object) parseTimeString(timeString string) (err error) {
 	if timeString == "" {
 		return nil
 	}
-	unixMilliseconds, err := strconv.ParseInt(timeString, 10, 64)
+	modTime, err := parseTimeStringHelper(timeString)
 	if err != nil {
 		fs.Debugf(o, "Failed to parse mod time string %q: %v", timeString, err)
 		return nil
 	}
-	o.modTime = time.Unix(unixMilliseconds/1e3, (unixMilliseconds%1e3)*1e6).UTC()
+	o.modTime = modTime
 	return nil
 }
 
@@ -1763,14 +1802,14 @@ func (file *openFile) Close() (err error) {
 
 	// Check to see we read the correct number of bytes
 	if file.o.Size() != file.bytes {
-		return fmt.Errorf("object corrupted on transfer - length mismatch (want %d got %d)", file.o.Size(), file.bytes)
+		return fmt.Errorf("corrupted on transfer: lengths differ want %d vs got %d", file.o.Size(), file.bytes)
 	}
 
 	// Check the SHA1
 	receivedSHA1 := file.o.sha1
 	calculatedSHA1 := fmt.Sprintf("%x", file.hash.Sum(nil))
 	if receivedSHA1 != "" && receivedSHA1 != calculatedSHA1 {
-		return fmt.Errorf("object corrupted on transfer - SHA1 mismatch (want %q got %q)", receivedSHA1, calculatedSHA1)
+		return fmt.Errorf("corrupted on transfer: SHA1 hashes differ want %q vs got %q", receivedSHA1, calculatedSHA1)
 	}
 
 	return nil
@@ -1840,6 +1879,14 @@ func (o *Object) getOrHead(ctx context.Context, method string, options []fs.Open
 		ContentType:     resp.Header.Get("Content-Type"),
 		Info:            Info,
 	}
+
+	// Embryonic metadata support - just mtime
+	o.meta = make(map[string]string, 1)
+	modTime, err := parseTimeStringHelper(info.Info[timeKey])
+	if err == nil {
+		o.meta["mtime"] = modTime.Format(time.RFC3339Nano)
+	}
+
 	// When reading files from B2 via cloudflare using
 	// --b2-download-url cloudflare strips the Content-Length
 	// headers (presumably so it can inject stuff) so use the old
@@ -1937,7 +1984,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 
 		if err == nil {
 			fs.Debugf(o, "File is big enough for chunked streaming")
-			up, err := o.fs.newLargeUpload(ctx, o, in, src, o.fs.opt.ChunkSize, false, nil)
+			up, err := o.fs.newLargeUpload(ctx, o, in, src, o.fs.opt.ChunkSize, false, nil, options...)
 			if err != nil {
 				o.fs.putRW(rw)
 				return err
@@ -1969,7 +2016,10 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		return o.decodeMetaDataFileInfo(up.info)
 	}
 
-	modTime := src.ModTime(ctx)
+	modTime, err := o.getModTime(ctx, src, options)
+	if err != nil {
+		return err
+	}
 
 	calculatedSha1, _ := src.Hash(ctx, hash.SHA1)
 	if calculatedSha1 == "" {
@@ -2074,6 +2124,36 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	return o.decodeMetaDataFileInfo(&response)
 }
 
+// Get modTime from the source; if --metadata is set, fetch the src metadata and get it from there.
+// When metadata support is added to b2, this method will need a more generic name
+func (o *Object) getModTime(ctx context.Context, src fs.ObjectInfo, options []fs.OpenOption) (time.Time, error) {
+	modTime := src.ModTime(ctx)
+
+	// Fetch metadata if --metadata is in use
+	meta, err := fs.GetMetadataOptions(ctx, o.fs, src, options)
+	if err != nil {
+		return time.Time{}, fmt.Errorf("failed to read metadata from source object: %w", err)
+	}
+	// merge metadata into request and user metadata
+	for k, v := range meta {
+		k = strings.ToLower(k)
+		// For now, the only metadata we're concerned with is "mtime"
+		switch k {
+		case "mtime":
+			// mtime in meta overrides source ModTime
+			metaModTime, err := time.Parse(time.RFC3339Nano, v)
+			if err != nil {
+				fs.Debugf(o, "failed to parse metadata %s: %q: %v", k, v, err)
+			} else {
+				modTime = metaModTime
+			}
+		default:
+			// Do nothing for now
+		}
+	}
+	return modTime, nil
+}
+
 // OpenChunkWriter returns the chunk size and a ChunkWriter
 //
 // Pass in the remote and the src object
@@ -2105,7 +2185,7 @@ func (f *Fs) OpenChunkWriter(ctx context.Context, remote string, src fs.ObjectIn
 		Concurrency: o.fs.opt.UploadConcurrency,
 		//LeavePartsOnError: o.fs.opt.LeavePartsOnError,
 	}
-	up, err := f.newLargeUpload(ctx, o, nil, src, f.opt.ChunkSize, false, nil)
+	up, err := f.newLargeUpload(ctx, o, nil, src, f.opt.ChunkSize, false, nil, options...)
 	return info, up, err
 }
 
@@ -2151,6 +2231,7 @@ This will dump something like this showing the lifecycle rules.
         {
             "daysFromHidingToDeleting": 1,
             "daysFromUploadingToHiding": null,
+            "daysFromStartingToCancelingUnfinishedLargeFiles": null,
             "fileNamePrefix": ""
         }
     ]
@@ -2177,8 +2258,9 @@ overwrites will still cause versions to be made.
 See: https://www.backblaze.com/docs/cloud-storage-lifecycle-rules
 `,
 	Opts: map[string]string{
-		"daysFromHidingToDeleting":  "After a file has been hidden for this many days it is deleted. 0 is off.",
-		"daysFromUploadingToHiding": "This many days after uploading a file is hidden",
+		"daysFromHidingToDeleting":                        "After a file has been hidden for this many days it is deleted. 0 is off.",
+		"daysFromUploadingToHiding":                       "This many days after uploading a file is hidden",
+		"daysFromStartingToCancelingUnfinishedLargeFiles": "Cancels any unfinished large file versions after this many days",
 	},
 }
 
@@ -2198,6 +2280,13 @@ func (f *Fs) lifecycleCommand(ctx context.Context, name string, arg []string, op
 		}
 		newRule.DaysFromUploadingToHiding = &days
 	}
+	if daysStr := opt["daysFromStartingToCancelingUnfinishedLargeFiles"]; daysStr != "" {
+		days, err := strconv.Atoi(daysStr)
+		if err != nil {
+			return nil, fmt.Errorf("bad daysFromStartingToCancelingUnfinishedLargeFiles: %w", err)
+		}
+		newRule.DaysFromStartingToCancelingUnfinishedLargeFiles = &days
+	}
 	bucketName, _ := f.split("")
 	if bucketName == "" {
 		return nil, errors.New("bucket required")
@@ -2205,7 +2294,7 @@ func (f *Fs) lifecycleCommand(ctx context.Context, name string, arg []string, op
 	}
 
 	var bucket *api.Bucket
-	if newRule.DaysFromHidingToDeleting != nil || newRule.DaysFromUploadingToHiding != nil {
+	if newRule.DaysFromHidingToDeleting != nil || newRule.DaysFromUploadingToHiding != nil || newRule.DaysFromStartingToCancelingUnfinishedLargeFiles != nil {
 		bucketID, err := f.getBucketID(ctx, bucketName)
 		if err != nil {
 			return nil, err
@@ -2243,8 +2332,56 @@ func (f *Fs) lifecycleCommand(ctx context.Context, name string, arg []string, op
 	return bucket.LifecycleRules, nil
 }
 
+var cleanupHelp = fs.CommandHelp{
+	Name:  "cleanup",
+	Short: "Remove unfinished large file uploads.",
+	Long: `This command removes unfinished large file uploads of age greater than
+max-age, which defaults to 24 hours.
+
+Note that you can use --interactive/-i or --dry-run with this command to see what
+it would do.
+
+    rclone backend cleanup b2:bucket/path/to/object
+    rclone backend cleanup -o max-age=7w b2:bucket/path/to/object
+
+Durations are parsed as per the rest of rclone, 2h, 7d, 7w etc.
+`,
+	Opts: map[string]string{
+		"max-age": "Max age of upload to delete",
+	},
+}
+
+func (f *Fs) cleanupCommand(ctx context.Context, name string, arg []string, opt map[string]string) (out interface{}, err error) {
+	maxAge := defaultMaxAge
+	if opt["max-age"] != "" {
+		maxAge, err = fs.ParseDuration(opt["max-age"])
+		if err != nil {
+			return nil, fmt.Errorf("bad max-age: %w", err)
+		}
+	}
+	return nil, f.cleanUp(ctx, false, true, maxAge)
+}
+
+var cleanupHiddenHelp = fs.CommandHelp{
+	Name:  "cleanup-hidden",
+	Short: "Remove old versions of files.",
+	Long: `This command removes any old hidden versions of files.
+
+Note that you can use --interactive/-i or --dry-run with this command to see what
+it would do.
+
+    rclone backend cleanup-hidden b2:bucket/path/to/dir
+`,
+}
+
+func (f *Fs) cleanupHiddenCommand(ctx context.Context, name string, arg []string, opt map[string]string) (out interface{}, err error) {
+	return nil, f.cleanUp(ctx, true, false, 0)
+}
+
 var commandHelp = []fs.CommandHelp{
 	lifecycleHelp,
+	cleanupHelp,
+	cleanupHiddenHelp,
 }
 
 // Command the backend to run a named command
@@ -2260,6 +2397,10 @@ func (f *Fs) Command(ctx context.Context, name string, arg []string, opt map[str
 	switch name {
 	case "lifecycle":
 		return f.lifecycleCommand(ctx, name, arg, opt)
+	case "cleanup":
+		return f.cleanupCommand(ctx, name, arg, opt)
+	case "cleanup-hidden":
+		return f.cleanupHiddenCommand(ctx, name, arg, opt)
 	default:
 		return nil, fs.ErrorCommandNotFound
 	}

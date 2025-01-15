@@ -81,6 +81,22 @@ func TestGetError(t *testing.T) {
 	assert.Equal(t, 0, len(c.cache))
 }
 
+func TestPutErr(t *testing.T) {
+	c, create := setup(t)
+
+	assert.Equal(t, 0, len(c.cache))
+
+	c.PutErr("/alien", "slime", errSentinel)
+
+	assert.Equal(t, 1, len(c.cache))
+
+	fNew, err := c.Get("/alien", create)
+	require.Equal(t, errSentinel, err)
+	require.Equal(t, "slime", fNew)
+
+	assert.Equal(t, 1, len(c.cache))
+}
+
 func TestPut(t *testing.T) {
 	c, create := setup(t)
 

@@ -230,6 +230,11 @@ These flags control the chunking:
 
     --vfs-read-chunk-size SizeSuffix        Read the source objects in chunks (default 128M)
     --vfs-read-chunk-size-limit SizeSuffix  Max chunk doubling size (default off)
+    --vfs-read-chunk-streams int            The number of parallel streams to read at once
+
+The chunking behaves differently depending on the `--vfs-read-chunk-streams` parameter.
+
+#### `--vfs-read-chunk-streams` == 0
 
 Rclone will start reading a chunk of size `--vfs-read-chunk-size`,
 and then double the size for each read. When `--vfs-read-chunk-size-limit` is
@@ -244,6 +249,30 @@ When `--vfs-read-chunk-size-limit 500M` is specified, the result would be
 0-100M, 100M-300M, 300M-700M, 700M-1200M, 1200M-1700M and so on.
 
 Setting `--vfs-read-chunk-size` to `0` or "off" disables chunked reading.
+
+The chunks will not be buffered in memory.
+
+#### `--vfs-read-chunk-streams` > 0
+
+Rclone reads `--vfs-read-chunk-streams` chunks of size
+`--vfs-read-chunk-size` concurrently. The size for each read will stay
+constant.
+
+This improves performance performance massively on high latency links
+or very high bandwidth links to high performance object stores.
+
+Some experimentation will be needed to find the optimum values of
+`--vfs-read-chunk-size` and `--vfs-read-chunk-streams` as these will
+depend on the backend in use and the latency to the backend.
+
+For high performance object stores (eg AWS S3) a reasonable place to
+start might be `--vfs-read-chunk-streams 16` and
+`--vfs-read-chunk-size 4M`. In testing with AWS S3 the performance
+scaled roughly as the `--vfs-read-chunk-streams` setting.
+
+Similar settings should work for high latency links, but depending on
+the latency they may need more `--vfs-read-chunk-streams` in order to
+get the throughput.
 
 ### VFS Performance
 
@@ -273,6 +302,50 @@ the global flag `--transfers` can be set to adjust the number of parallel upload
 modified files from the cache (the related global flag `--checkers` has no effect on the VFS).
 
     --transfers int  Number of file transfers to run in parallel (default 4)
+
+### Symlinks
+
+By default the VFS does not support symlinks. However this may be
+enabled with either of the following flags:
+
+    --links      Translate symlinks to/from regular files with a '.rclonelink' extension.
+    --vfs-links  Translate symlinks to/from regular files with a '.rclonelink' extension for the VFS
+
+As most cloud storage systems do not support symlinks directly, rclone
+stores the symlink as a normal file with a special extension. So a
+file which appears as a symlink `link-to-file.txt` would be stored on
+cloud storage as `link-to-file.txt.rclonelink` and the contents would
+be the path to the symlink destination.
+
+Note that `--links` enables symlink translation globally in rclone -
+this includes any backend which supports the concept (for example the
+local backend). `--vfs-links` just enables it for the VFS layer.
+
+This scheme is compatible with that used by the [local backend with the --local-links flag](/local/#symlinks-junction-points).
+
+The `--vfs-links` flag has been designed for `rclone mount`, `rclone
+nfsmount` and `rclone serve nfs`.
+
+It hasn't been tested with the other `rclone serve` commands yet.
+
+A limitation of the current implementation is that it expects the
+caller to resolve sub-symlinks. For example given this directory tree
+
+```
+.
+├── dir
+│   └── file.txt
+└── linked-dir -> dir
+```
+
+The VFS will correctly resolve `linked-dir` but not
+`linked-dir/file.txt`. This is not a problem for the tested commands
+but may be for other commands.
+
+**Note** that there is an outstanding issue with symlink support
+[issue #8245](https://github.com/rclone/rclone/issues/8245) with duplicate
+files being created when symlinks are moved into directories where
+there is a file of the same name (or vice versa).
 
 ### VFS Case Sensitivity
 
@@ -308,6 +381,28 @@ The flag controls whether "fixup" is performed to satisfy the target.
 If the flag is not provided on the command line, then its default value depends
 on the operating system where rclone runs: "true" on Windows and macOS, "false"
 otherwise. If the flag is provided without a value, then it is "true".
+
+The `--no-unicode-normalization` flag controls whether a similar "fixup" is
+performed for filenames that differ but are [canonically
+equivalent](https://en.wikipedia.org/wiki/Unicode_equivalence) with respect to
+unicode. Unicode normalization can be particularly helpful for users of macOS,
+which prefers form NFD instead of the NFC used by most other platforms. It is
+therefore highly recommended to keep the default of `false` on macOS, to avoid
+encoding compatibility issues.
+
+In the (probably unlikely) event that a directory has multiple duplicate
+filenames after applying case and unicode normalization, the `--vfs-block-norm-dupes`
+flag allows hiding these duplicates. This comes with a performance tradeoff, as
+rclone will have to scan the entire directory for duplicates when listing a
+directory. For this reason, it is recommended to leave this disabled if not
+needed. However, macOS users may wish to consider using it, as otherwise, if a
+remote directory contains both NFC and NFD versions of the same filename, an odd
+situation will occur: both versions of the file will be visible in the mount,
+and both will appear to be editable, however, editing either version will
+actually result in only the NFD version getting edited under the hood. `--vfs-block-
+norm-dupes` prevents this confusion by detecting this scenario, hiding the
+duplicates, and logging an error, similar to how this is handled in `rclone
+sync`.
 
 ### VFS Disk Options
 

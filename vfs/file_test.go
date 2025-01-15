@@ -19,7 +19,7 @@ import (
 )
 
 func fileCreate(t *testing.T, mode vfscommon.CacheMode) (r *fstest.Run, vfs *VFS, fh *File, item fstest.Item) {
-	opt := vfscommon.DefaultOpt
+	opt := vfscommon.Opt
 	opt.CacheMode = mode
 	opt.WriteBack = writeBackDelay
 	r, vfs = newTestVFSOpt(t, &opt)
@@ -48,7 +48,7 @@ func TestFileMethods(t *testing.T) {
 	assert.Equal(t, true, file.IsFile())
 
 	// Mode
-	assert.Equal(t, vfs.Opt.FilePerms, file.Mode())
+	assert.Equal(t, os.FileMode(vfs.Opt.FilePerms), file.Mode())
 
 	// Name
 	assert.Equal(t, "file1", file.Name())

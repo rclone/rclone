@@ -9,7 +9,6 @@ import (
 	"errors"
 	"fmt"
 	"html/template"
-	"log"
 	"net"
 	"net/http"
 	"os"
@@ -19,16 +18,17 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config/flags"
 	"github.com/rclone/rclone/lib/atexit"
+	sdActivation "github.com/rclone/rclone/lib/sdactivation"
 	"github.com/spf13/pflag"
 )
 
 // Help returns text describing the http server to add to the command
 // help.
 func Help(prefix string) string {
-	help := `
-### Server options
+	help := `### Server options
 
 Use ` + "`--{{ .Prefix }}addr`" + ` to specify which IP address and port the server should
 listen on, eg ` + "`--{{ .Prefix }}addr 1.2.3.4:8000` or `--{{ .Prefix }}addr :8080`" + ` to listen to all
@@ -39,10 +39,10 @@ If you set ` + "`--{{ .Prefix }}addr`" + ` to listen on a public or LAN accessib
 then using Authentication is advised - see the next section for info.
 
 You can use a unix socket by setting the url to ` + "`unix:///path/to/socket`" + `
-or just by using an absolute path name. Note that unix sockets bypass the
-authentication - this is expected to be done with file system permissions.
+or just by using an absolute path name.
 
 ` + "`--{{ .Prefix }}addr`" + ` may be repeated to listen on multiple IPs/ports/sockets.
+Socket activation, described further below, can also be used to accomplish the same.
 
 ` + "`--{{ .Prefix }}server-read-timeout` and `--{{ .Prefix }}server-write-timeout`" + ` can be used to
 control the timeouts on the server.  Note that this is the total time
@@ -66,18 +66,35 @@ https.  You will need to supply the ` + "`--{{ .Prefix }}cert` and `--{{ .Prefix
 If you wish to do client side certificate validation then you will need to
 supply ` + "`--{{ .Prefix }}client-ca`" + ` also.
 
-` + "`--{{ .Prefix }}cert`" + ` should be a either a PEM encoded certificate or a concatenation
-of that with the CA certificate.  ` + "`--k{{ .Prefix }}ey`" + ` should be the PEM encoded
-private key and ` + "`--{{ .Prefix }}client-ca`" + ` should be the PEM encoded client
-certificate authority certificate.
+` + "`--{{ .Prefix }}cert`" + ` must be set to the path of a file containing
+either a PEM encoded certificate, or a concatenation of that with the CA
+certificate. ` + "`--{{ .Prefix }}key`" + ` must be set to the path of a file
+with the PEM encoded private key. ` + "If setting `--{{ .Prefix }}client-ca`" + `,
+it should be set to the path of a file with PEM encoded client certificate
+authority certificates.
 
---{{ .Prefix }}min-tls-version is minimum TLS version that is acceptable. Valid
-  values are "tls1.0", "tls1.1", "tls1.2" and "tls1.3" (default
-  "tls1.0").
+` + "`--{{ .Prefix }}min-tls-version`" + ` is minimum TLS version that is acceptable. Valid
+values are "tls1.0", "tls1.1", "tls1.2" and "tls1.3" (default "tls1.0").
+
+### Socket activation
+
+Instead of the listening addresses specified above, rclone will listen to all
+FDs passed by the service manager, if any (and ignore any arguments passed
+by ` + "`--{{ .Prefix }}addr`" + `).
+
+This allows rclone to be a socket-activated service.
+It can be configured with .socket and .service unit files as described in
+https://www.freedesktop.org/software/systemd/man/latest/systemd.socket.html
+
+Socket activation can be tested ad-hoc with the ` + "`systemd-socket-activate`" + `command
+
+       systemd-socket-activate -l 8000 -- rclone serve
+
+This will socket-activate rclone on the first connection to port 8000 over TCP.
 `
 	tmpl, err := template.New("server help").Parse(help)
 	if err != nil {
-		log.Fatal("Fatal error parsing template", err)
+		fs.Fatal(nil, fmt.Sprint("Fatal error parsing template", err))
 	}
 
 	data := struct {
@@ -88,7 +105,7 @@ certificate authority certificate.
 	buf := &bytes.Buffer{}
 	err = tmpl.Execute(buf, data)
 	if err != nil {
-		log.Fatal("Fatal error executing template", err)
+		fs.Fatal(nil, fmt.Sprint("Fatal error executing template", err))
 	}
 	return buf.String()
 }
@@ -96,31 +113,74 @@ certificate authority certificate.
 // Middleware function signature required by chi.Router.Use()
 type Middleware func(http.Handler) http.Handler
 
+// ConfigInfo descripts the Options in use
+var ConfigInfo = fs.Options{{
+	Name:    "addr",
+	Default: []string{"127.0.0.1:8080"},
+	Help:    "IPaddress:Port or :Port to bind server to",
+}, {
+	Name:    "server_read_timeout",
+	Default: 1 * time.Hour,
+	Help:    "Timeout for server reading data",
+}, {
+	Name:    "server_write_timeout",
+	Default: 1 * time.Hour,
+	Help:    "Timeout for server writing data",
+}, {
+	Name:    "max_header_bytes",
+	Default: 4096,
+	Help:    "Maximum size of request header",
+}, {
+	Name:    "cert",
+	Default: "",
+	Help:    "TLS PEM key (concatenation of certificate and CA certificate)",
+}, {
+	Name:    "key",
+	Default: "",
+	Help:    "TLS PEM Private key",
+}, {
+	Name:    "client_ca",
+	Default: "",
+	Help:    "Client certificate authority to verify clients with",
+}, {
+	Name:    "baseurl",
+	Default: "",
+	Help:    "Prefix for URLs - leave blank for root",
+}, {
+	Name:    "min_tls_version",
+	Default: "tls1.0",
+	Help:    "Minimum TLS version that is acceptable",
+}, {
+	Name:    "allow_origin",
+	Default: "",
+	Help:    "Origin which cross-domain request (CORS) can be executed from",
+}}
+
 // Config contains options for the http Server
 type Config struct {
-	ListenAddr         []string      // Port to listen on
-	BaseURL            string        // prefix to strip from URLs
-	ServerReadTimeout  time.Duration // Timeout for server reading data
-	ServerWriteTimeout time.Duration // Timeout for server writing data
-	MaxHeaderBytes     int           // Maximum size of request header
-	TLSCert            string        // Path to TLS PEM key (concatenation of certificate and CA certificate)
-	TLSKey             string        // Path to TLS PEM Private key
-	TLSCertBody        []byte        // TLS PEM key (concatenation of certificate and CA certificate) body, ignores TLSCert
-	TLSKeyBody         []byte        // TLS PEM Private key body, ignores TLSKey
-	ClientCA           string        // Client certificate authority to verify clients with
-	MinTLSVersion      string        // MinTLSVersion contains the minimum TLS version that is acceptable.
-	AllowOrigin        string        // AllowOrigin sets the Access-Control-Allow-Origin header
+	ListenAddr         []string      `config:"addr"`                 // Port to listen on
+	BaseURL            string        `config:"baseurl"`              // prefix to strip from URLs
+	ServerReadTimeout  time.Duration `config:"server_read_timeout"`  // Timeout for server reading data
+	ServerWriteTimeout time.Duration `config:"server_write_timeout"` // Timeout for server writing data
+	MaxHeaderBytes     int           `config:"max_header_bytes"`     // Maximum size of request header
+	TLSCert            string        `config:"cert"`                 // Path to TLS PEM public key certificate file (can also include intermediate/CA certificates)
+	TLSKey             string        `config:"key"`                  // Path to TLS PEM private key file
+	TLSCertBody        []byte        `config:"-"`                    // TLS PEM public key certificate body (can also include intermediate/CA certificates), ignores TLSCert
+	TLSKeyBody         []byte        `config:"-"`                    // TLS PEM private key body, ignores TLSKey
+	ClientCA           string        `config:"client_ca"`            // Path to TLS PEM CA file with certificate authorities to verify clients with
+	MinTLSVersion      string        `config:"min_tls_version"`      // MinTLSVersion contains the minimum TLS version that is acceptable.
+	AllowOrigin        string        `config:"allow_origin"`         // AllowOrigin sets the Access-Control-Allow-Origin header
 }
 
 // AddFlagsPrefix adds flags for the httplib
 func (cfg *Config) AddFlagsPrefix(flagSet *pflag.FlagSet, prefix string) {
-	flags.StringArrayVarP(flagSet, &cfg.ListenAddr, prefix+"addr", "", cfg.ListenAddr, "IPaddress:Port or :Port to bind server to", prefix)
+	flags.StringArrayVarP(flagSet, &cfg.ListenAddr, prefix+"addr", "", cfg.ListenAddr, "IPaddress:Port, :Port or [unix://]/path/to/socket to bind server to", prefix)
 	flags.DurationVarP(flagSet, &cfg.ServerReadTimeout, prefix+"server-read-timeout", "", cfg.ServerReadTimeout, "Timeout for server reading data", prefix)
 	flags.DurationVarP(flagSet, &cfg.ServerWriteTimeout, prefix+"server-write-timeout", "", cfg.ServerWriteTimeout, "Timeout for server writing data", prefix)
 	flags.IntVarP(flagSet, &cfg.MaxHeaderBytes, prefix+"max-header-bytes", "", cfg.MaxHeaderBytes, "Maximum size of request header", prefix)
-	flags.StringVarP(flagSet, &cfg.TLSCert, prefix+"cert", "", cfg.TLSCert, "TLS PEM key (concatenation of certificate and CA certificate)", prefix)
-	flags.StringVarP(flagSet, &cfg.TLSKey, prefix+"key", "", cfg.TLSKey, "TLS PEM Private key", prefix)
-	flags.StringVarP(flagSet, &cfg.ClientCA, prefix+"client-ca", "", cfg.ClientCA, "Client certificate authority to verify clients with", prefix)
+	flags.StringVarP(flagSet, &cfg.TLSCert, prefix+"cert", "", cfg.TLSCert, "Path to TLS PEM public key certificate file (can also include intermediate/CA certificates)", prefix)
+	flags.StringVarP(flagSet, &cfg.TLSKey, prefix+"key", "", cfg.TLSKey, "Path to TLS PEM private key file", prefix)
+	flags.StringVarP(flagSet, &cfg.ClientCA, prefix+"client-ca", "", cfg.ClientCA, "Path to TLS PEM CA file with certificate authorities to verify clients with", prefix)
 	flags.StringVarP(flagSet, &cfg.BaseURL, prefix+"baseurl", "", cfg.BaseURL, "Prefix for URLs - leave blank for root", prefix)
 	flags.StringVarP(flagSet, &cfg.MinTLSVersion, prefix+"min-tls-version", "", cfg.MinTLSVersion, "Minimum TLS version that is acceptable", prefix)
 	flags.StringVarP(flagSet, &cfg.AllowOrigin, prefix+"allow-origin", "", cfg.AllowOrigin, "Origin which cross-domain request (CORS) can be executed from", prefix)
@@ -132,6 +192,9 @@ func AddHTTPFlagsPrefix(flagSet *pflag.FlagSet, prefix string, cfg *Config) {
 }
 
 // DefaultCfg is the default values used for Config
+//
+// Note that this needs to be kept in sync with ConfigInfo above and
+// can be removed when all callers have been converted.
 func DefaultCfg() Config {
 	return Config{
 		ListenAddr:         []string{"127.0.0.1:8080"},
@@ -152,7 +215,7 @@ func (s instance) serve(wg *sync.WaitGroup) {
 	defer wg.Done()
 	err := s.httpServer.Serve(s.listener)
 	if err != http.ErrServerClosed && err != nil {
-		log.Printf("%s: unexpected error: %s", s.listener.Addr(), err.Error())
+		fs.Logf(nil, "%s: unexpected error: %s", s.listener.Addr(), err.Error())
 	}
 }
 
@@ -191,6 +254,32 @@ func WithConfig(cfg Config) Option {
 func WithTemplate(cfg TemplateConfig) Option {
 	return func(s *Server) {
 		s.template = &cfg
+	}
+}
+
+// For a given listener, and optional tlsConfig, construct a instance.
+// The url string ends up in the `url` field of the `instance`.
+// This unconditionally wraps the listener with the provided TLS config if one
+// is specified, so all decision logic on whether to use TLS needs to live at
+// the callsite.
+func newInstance(ctx context.Context, s *Server, listener net.Listener, tlsCfg *tls.Config, url string) *instance {
+	if tlsCfg != nil {
+		listener = tls.NewListener(listener, tlsCfg)
+	}
+
+	return &instance{
+		url:      url,
+		listener: listener,
+		httpServer: &http.Server{
+			Handler:           s.mux,
+			ReadTimeout:       s.cfg.ServerReadTimeout,
+			WriteTimeout:      s.cfg.ServerWriteTimeout,
+			MaxHeaderBytes:    s.cfg.MaxHeaderBytes,
+			ReadHeaderTimeout: 10 * time.Second, // time to send the headers
+			IdleTimeout:       60 * time.Second, // time to keep idle connections open
+			TLSConfig:         tlsCfg,
+			BaseContext:       NewBaseContext(ctx, url),
+		},
 	}
 }
 
@@ -242,55 +331,60 @@ func NewServer(ctx context.Context, options ...Option) (*Server, error) {
 
 	s.initAuth()
 
+	// (Only) listen on FDs provided by the service manager, if any.
+	sdListeners, err := sdActivation.ListenersWithNames()
+	if err != nil {
+		return nil, fmt.Errorf("unable to acquire listeners: %w", err)
+	}
+
+	if len(sdListeners) != 0 {
+		for listenerName, listeners := range sdListeners {
+			for i, listener := range listeners {
+				url := fmt.Sprintf("sd-listen:%s-%d/%s", listenerName, i, s.cfg.BaseURL)
+				if s.tlsConfig != nil {
+					url = fmt.Sprintf("sd-listen+tls:%s-%d/%s", listenerName, i, s.cfg.BaseURL)
+				}
+
+				instance := newInstance(ctx, s, listener, s.tlsConfig, url)
+
+				s.instances = append(s.instances, *instance)
+			}
+		}
+
+		return s, nil
+	}
+
+	// Process all listeners specified in the CLI Args.
 	for _, addr := range s.cfg.ListenAddr {
-		var url string
-		var network = "tcp"
-		var tlsCfg *tls.Config
+		var instance *instance
 
 		if strings.HasPrefix(addr, "unix://") || filepath.IsAbs(addr) {
-			network = "unix"
 			addr = strings.TrimPrefix(addr, "unix://")
-			url = addr
 
-		} else if strings.HasPrefix(addr, "tls://") || (len(s.cfg.ListenAddr) == 1 && s.tlsConfig != nil) {
-			tlsCfg = s.tlsConfig
-			addr = strings.TrimPrefix(addr, "tls://")
-		}
-
-		var listener net.Listener
-		if tlsCfg == nil {
-			listener, err = net.Listen(network, addr)
-		} else {
-			listener, err = tls.Listen(network, addr, tlsCfg)
-		}
-		if err != nil {
-			return nil, err
-		}
-
-		if network == "tcp" {
-			var secure string
-			if tlsCfg != nil {
-				secure = "s"
+			listener, err := net.Listen("unix", addr)
+			if err != nil {
+				return nil, err
 			}
-			url = fmt.Sprintf("http%s://%s%s/", secure, listener.Addr().String(), s.cfg.BaseURL)
+			instance = newInstance(ctx, s, listener, s.tlsConfig, addr)
+		} else if strings.HasPrefix(addr, "tls://") || (len(s.cfg.ListenAddr) == 1 && s.tlsConfig != nil) {
+			addr = strings.TrimPrefix(addr, "tls://")
+			listener, err := net.Listen("tcp", addr)
+			if err != nil {
+				return nil, err
+			}
+			instance = newInstance(ctx, s, listener, s.tlsConfig, fmt.Sprintf("https://%s%s/", listener.Addr().String(), s.cfg.BaseURL))
+		} else {
+			// HTTP case
+			addr = strings.TrimPrefix(addr, "http://")
+			listener, err := net.Listen("tcp", addr)
+			if err != nil {
+				return nil, err
+			}
+			instance = newInstance(ctx, s, listener, nil, fmt.Sprintf("http://%s%s/", listener.Addr().String(), s.cfg.BaseURL))
+
 		}
 
-		ii := instance{
-			url:      url,
-			listener: listener,
-			httpServer: &http.Server{
-				Handler:           s.mux,
-				ReadTimeout:       s.cfg.ServerReadTimeout,
-				WriteTimeout:      s.cfg.ServerWriteTimeout,
-				MaxHeaderBytes:    s.cfg.MaxHeaderBytes,
-				ReadHeaderTimeout: 10 * time.Second, // time to send the headers
-				IdleTimeout:       60 * time.Second, // time to keep idle connections open
-				TLSConfig:         tlsCfg,
-				BaseContext:       NewBaseContext(ctx, url),
-			},
-		}
-
-		s.instances = append(s.instances, ii)
+		s.instances = append(s.instances, *instance)
 	}
 
 	return s, nil
@@ -450,7 +544,7 @@ func (s *Server) Shutdown() error {
 		expiry := time.Now().Add(gracefulShutdownTime)
 		ctx, cancel := context.WithDeadline(context.Background(), expiry)
 		if err := ii.httpServer.Shutdown(ctx); err != nil {
-			log.Printf("error shutting down server: %s", err)
+			fs.Logf(nil, "error shutting down server: %s", err)
 		}
 		cancel()
 	}

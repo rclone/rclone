@@ -1,5 +1,4 @@
 //go:build !plan9 && !js
-// +build !plan9,!js
 
 // Package ncdu implements a text based user interface for exploring a remote
 package ncdu
@@ -32,8 +31,7 @@ func init() {
 var commandDefinition = &cobra.Command{
 	Use:   "ncdu remote:path",
 	Short: `Explore a remote with a text based user interface.`,
-	Long: `
-This displays a text based user interface allowing the navigation of a
+	Long: `This displays a text based user interface allowing the navigation of a
 remote. It is most useful for answering the question - "What is using
 all my disk space?".
 
@@ -66,7 +64,7 @@ These flags have the following meaning:
 
 This an homage to the [ncdu tool](https://dev.yorhel.nl/ncdu) but for
 rclone remotes.  It is missing lots of features at the moment
-but is useful as it stands.
+but is useful as it stands. Unlike ncdu it does not show excluded files.
 
 Note that it might take some time to delete big files/directories. The
 UI won't respond in the meantime since the deletion is done synchronously.
@@ -114,7 +112,8 @@ func helpText() (tr []string) {
 		" ^L refresh screen (fix screen corruption)",
 		" r recalculate file sizes",
 		" ? to toggle help on and off",
-		" q/ESC/^c to quit",
+		" ESC to close the menu box",
+		" q/^c to quit",
 	}...)
 	return
 }
@@ -930,23 +929,23 @@ func (u *UI) Run() error {
 		return fmt.Errorf("screen init: %w", err)
 	}
 
-	// Hijack fs.LogPrint so that it doesn't corrupt the screen.
-	if logPrint := fs.LogPrint; !log.Redirected() {
+	// Hijack fs.LogOutput so that it doesn't corrupt the screen.
+	if logOutput := fs.LogOutput; !log.Redirected() {
 		type log struct {
 			text  string
 			level fs.LogLevel
 		}
 		var logs []log
-		fs.LogPrint = func(level fs.LogLevel, text string) {
+		fs.LogOutput = func(level fs.LogLevel, text string) {
 			if len(logs) > 100 {
 				logs = logs[len(logs)-100:]
 			}
 			logs = append(logs, log{level: level, text: text})
 		}
 		defer func() {
-			fs.LogPrint = logPrint
+			fs.LogOutput = logOutput
 			for i := range logs {
-				logPrint(logs[i].level, logs[i].text)
+				logOutput(logs[i].level, logs[i].text)
 			}
 		}()
 	}
@@ -990,7 +989,7 @@ outer:
 				}
 				switch c {
 				case key(tcell.KeyEsc), key(tcell.KeyCtrlC), 'q':
-					if u.showBox {
+					if u.showBox || c == key(tcell.KeyEsc) {
 						u.showBox = false
 					} else {
 						break outer

@@ -1,8 +1,12 @@
 package config
 
 import (
+	"context"
+	"os"
+	"path/filepath"
 	"testing"
 
+	"github.com/rclone/rclone/fs"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -45,4 +49,58 @@ func TestPassword(t *testing.T) {
 	// Check that passwords preserves case
 	hashedKeyCompare(t, "abcdef", "ABCDEF", false)
 
+}
+
+func TestChangeConfigPassword(t *testing.T) {
+	ci := fs.GetConfig(context.Background())
+
+	var err error
+	oldConfigPath := GetConfigPath()
+	assert.NoError(t, SetConfigPath("./testdata/encrypted.conf"))
+	defer func() {
+		assert.NoError(t, SetConfigPath(oldConfigPath))
+		ClearConfigPassword()
+		ci.PasswordCommand = nil
+	}()
+
+	// Get rid of any config password
+	ClearConfigPassword()
+
+	// Return the password, checking the state of the environment variable
+	checkCode := `
+package main
+
+import (
+	"fmt"
+	"os"
+	"log"
+)
+
+func main() {
+	v := os.Getenv("RCLONE_PASSWORD_CHANGE")
+	if v == "" {
+		log.Fatal("Env var not found")
+	} else if v != "1" {
+		log.Fatal("Env var wrong value")
+	} else {
+		fmt.Println("asdf")
+	}
+}
+`
+	dir := t.TempDir()
+	code := filepath.Join(dir, "file.go")
+	require.NoError(t, os.WriteFile(code, []byte(checkCode), 0777))
+
+	// Set correct password using --password-command
+	ci.PasswordCommand = fs.SpaceSepList{"go", "run", code}
+	changeConfigPassword()
+	err = Data().Load()
+	require.NoError(t, err)
+	sections := Data().GetSectionList()
+	var expect = []string{"nounc", "unc"}
+	assert.Equal(t, expect, sections)
+
+	keys := Data().GetKeyList("nounc")
+	expect = []string{"type", "nounc"}
+	assert.Equal(t, expect, keys)
 }

@@ -1,13 +1,11 @@
-//go:build go1.21
-
 package dlna
 
 import (
+	"context"
 	"crypto/md5"
 	"encoding/xml"
 	"fmt"
 	"io"
-	"log"
 	"net"
 	"net/http"
 	"net/http/httptest"
@@ -33,7 +31,7 @@ func makeDefaultFriendlyName() string {
 func makeDeviceUUID(unique string) string {
 	h := md5.New()
 	if _, err := io.WriteString(h, unique); err != nil {
-		log.Panicf("makeDeviceUUID write failed: %s", err)
+		fs.Panicf(nil, "makeDeviceUUID write failed: %s", err)
 	}
 	buf := h.Sum(nil)
 	return upnp.FormatUUID(buf)
@@ -43,7 +41,7 @@ func makeDeviceUUID(unique string) string {
 func listInterfaces() []net.Interface {
 	ifs, err := net.Interfaces()
 	if err != nil {
-		log.Printf("list network interfaces: %v", err)
+		fs.Logf(nil, "list network interfaces: %v", err)
 		return []net.Interface{}
 	}
 
@@ -73,7 +71,7 @@ func didlLite(chardata string) string {
 func mustMarshalXML(value interface{}) []byte {
 	ret, err := xml.MarshalIndent(value, "", "  ")
 	if err != nil {
-		log.Panicf("mustMarshalXML failed to marshal %v: %s", value, err)
+		fs.Panicf(nil, "mustMarshalXML failed to marshal %v: %s", value, err)
 	}
 	return ret
 }
@@ -110,7 +108,7 @@ func (lrw *loggingResponseWriter) logRequest(code int, err interface{}) {
 		err = ""
 	}
 
-	fs.LogPrintf(level, lrw.request.URL, "%s %s %d %s %s",
+	fs.LogLevelPrintf(level, lrw.request.URL, "%s %s %d %s %s",
 		lrw.request.RemoteAddr, lrw.request.Method, code,
 		lrw.request.Header.Get("SOAPACTION"), err)
 }
@@ -145,9 +143,10 @@ func logging(next http.Handler) http.Handler {
 // Error recovery and general request logging are left to logging().
 func traceLogging(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
 		dump, err := httputil.DumpRequest(r, true)
 		if err != nil {
-			serveError(nil, w, "error dumping request", err)
+			serveError(ctx, nil, w, "error dumping request", err)
 			return
 		}
 		fs.Debugf(nil, "%s", dump)
@@ -185,8 +184,8 @@ func withHeader(name string, value string, next http.Handler) http.Handler {
 }
 
 // serveError returns an http.StatusInternalServerError and logs the error
-func serveError(what interface{}, w http.ResponseWriter, text string, err error) {
-	err = fs.CountError(err)
+func serveError(ctx context.Context, what interface{}, w http.ResponseWriter, text string, err error) {
+	err = fs.CountError(ctx, err)
 	fs.Errorf(what, "%s: %v", text, err)
 	http.Error(w, text+".", http.StatusInternalServerError)
 }

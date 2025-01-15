@@ -1,5 +1,4 @@
 //go:build !plan9 && !js && !race
-// +build !plan9,!js,!race
 
 package cache_test
 
@@ -11,7 +10,6 @@ import (
 	goflag "flag"
 	"fmt"
 	"io"
-	"log"
 	"math/rand"
 	"os"
 	"path"
@@ -30,10 +28,11 @@ import (
 	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/object"
+	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/fstest"
 	"github.com/rclone/rclone/fstest/testy"
 	"github.com/rclone/rclone/lib/random"
-	"github.com/rclone/rclone/vfs/vfsflags"
+	"github.com/rclone/rclone/vfs/vfscommon"
 	"github.com/stretchr/testify/require"
 )
 
@@ -93,7 +92,7 @@ func TestMain(m *testing.M) {
 	goflag.Parse()
 	var rc int
 
-	log.Printf("Running with the following params: \n remote: %v", remoteName)
+	fs.Logf(nil, "Running with the following params: \n remote: %v", remoteName)
 	runInstance = newRun()
 	rc = m.Run()
 	os.Exit(rc)
@@ -123,10 +122,10 @@ func TestInternalListRootAndInnerRemotes(t *testing.T) {
 
 /* TODO: is this testing something?
 func TestInternalVfsCache(t *testing.T) {
-	vfsflags.Opt.DirCacheTime = time.Second * 30
+	vfscommon.Opt.DirCacheTime = time.Second * 30
 	testSize := int64(524288000)
 
-	vfsflags.Opt.CacheMode = vfs.CacheModeWrites
+	vfscommon.Opt.CacheMode = vfs.CacheModeWrites
 	id := "tiuufo"
 	rootFs, boltDb := runInstance.newCacheFs(t, remoteName, id, true, true, nil, map[string]string{"writes": "true", "info_age": "1h"})
 	defer runInstance.cleanupFs(t, rootFs, boltDb)
@@ -338,7 +337,7 @@ func TestInternalCachedUpdatedContentMatches(t *testing.T) {
 
 func TestInternalWrappedWrittenContentMatches(t *testing.T) {
 	id := fmt.Sprintf("tiwwcm%v", time.Now().Unix())
-	vfsflags.Opt.DirCacheTime = time.Second
+	vfscommon.Opt.DirCacheTime = fs.Duration(time.Second)
 	rootFs, _ := runInstance.newCacheFs(t, remoteName, id, true, true, nil)
 	if runInstance.rootIsCrypt {
 		t.Skip("test skipped with crypt remote")
@@ -368,7 +367,7 @@ func TestInternalWrappedWrittenContentMatches(t *testing.T) {
 
 func TestInternalLargeWrittenContentMatches(t *testing.T) {
 	id := fmt.Sprintf("tilwcm%v", time.Now().Unix())
-	vfsflags.Opt.DirCacheTime = time.Second
+	vfscommon.Opt.DirCacheTime = fs.Duration(time.Second)
 	rootFs, _ := runInstance.newCacheFs(t, remoteName, id, true, true, nil)
 	if runInstance.rootIsCrypt {
 		t.Skip("test skipped with crypt remote")
@@ -408,7 +407,7 @@ func TestInternalWrappedFsChangeNotSeen(t *testing.T) {
 	// update in the wrapped fs
 	originalSize, err := runInstance.size(t, rootFs, "data.bin")
 	require.NoError(t, err)
-	log.Printf("original size: %v", originalSize)
+	fs.Logf(nil, "original size: %v", originalSize)
 
 	o, err := cfs.UnWrap().NewObject(context.Background(), runInstance.encryptRemoteIfNeeded(t, "data.bin"))
 	require.NoError(t, err)
@@ -417,7 +416,7 @@ func TestInternalWrappedFsChangeNotSeen(t *testing.T) {
 	if runInstance.rootIsCrypt {
 		data2, err = base64.StdEncoding.DecodeString(cryptedText3Base64)
 		require.NoError(t, err)
-		expectedSize = expectedSize + 1 // FIXME newline gets in, likely test data issue
+		expectedSize++ // FIXME newline gets in, likely test data issue
 	} else {
 		data2 = []byte("test content")
 	}
@@ -425,7 +424,7 @@ func TestInternalWrappedFsChangeNotSeen(t *testing.T) {
 	err = o.Update(context.Background(), bytes.NewReader(data2), objInfo)
 	require.NoError(t, err)
 	require.Equal(t, int64(len(data2)), o.Size())
-	log.Printf("updated size: %v", len(data2))
+	fs.Logf(nil, "updated size: %v", len(data2))
 
 	// get a new instance from the cache
 	if runInstance.wrappedIsExternal {
@@ -485,49 +484,49 @@ func TestInternalMoveWithNotify(t *testing.T) {
 	err = runInstance.retryBlock(func() error {
 		li, err := runInstance.list(t, rootFs, "test")
 		if err != nil {
-			log.Printf("err: %v", err)
+			fs.Logf(nil, "err: %v", err)
 			return err
 		}
 		if len(li) != 2 {
-			log.Printf("not expected listing /test: %v", li)
+			fs.Logf(nil, "not expected listing /test: %v", li)
 			return fmt.Errorf("not expected listing /test: %v", li)
 		}
 
 		li, err = runInstance.list(t, rootFs, "test/one")
 		if err != nil {
-			log.Printf("err: %v", err)
+			fs.Logf(nil, "err: %v", err)
 			return err
 		}
 		if len(li) != 0 {
-			log.Printf("not expected listing /test/one: %v", li)
+			fs.Logf(nil, "not expected listing /test/one: %v", li)
 			return fmt.Errorf("not expected listing /test/one: %v", li)
 		}
 
 		li, err = runInstance.list(t, rootFs, "test/second")
 		if err != nil {
-			log.Printf("err: %v", err)
+			fs.Logf(nil, "err: %v", err)
 			return err
 		}
 		if len(li) != 1 {
-			log.Printf("not expected listing /test/second: %v", li)
+			fs.Logf(nil, "not expected listing /test/second: %v", li)
 			return fmt.Errorf("not expected listing /test/second: %v", li)
 		}
 		if fi, ok := li[0].(os.FileInfo); ok {
 			if fi.Name() != "data.bin" {
-				log.Printf("not expected name: %v", fi.Name())
+				fs.Logf(nil, "not expected name: %v", fi.Name())
 				return fmt.Errorf("not expected name: %v", fi.Name())
 			}
 		} else if di, ok := li[0].(fs.DirEntry); ok {
 			if di.Remote() != "test/second/data.bin" {
-				log.Printf("not expected remote: %v", di.Remote())
+				fs.Logf(nil, "not expected remote: %v", di.Remote())
 				return fmt.Errorf("not expected remote: %v", di.Remote())
 			}
 		} else {
-			log.Printf("unexpected listing: %v", li)
+			fs.Logf(nil, "unexpected listing: %v", li)
 			return fmt.Errorf("unexpected listing: %v", li)
 		}
 
-		log.Printf("complete listing: %v", li)
+		fs.Logf(nil, "complete listing: %v", li)
 		return nil
 	}, 12, time.Second*10)
 	require.NoError(t, err)
@@ -577,43 +576,43 @@ func TestInternalNotifyCreatesEmptyParts(t *testing.T) {
 	err = runInstance.retryBlock(func() error {
 		found = boltDb.HasEntry(path.Join(cfs.Root(), runInstance.encryptRemoteIfNeeded(t, "test")))
 		if !found {
-			log.Printf("not found /test")
+			fs.Logf(nil, "not found /test")
 			return fmt.Errorf("not found /test")
 		}
 		found = boltDb.HasEntry(path.Join(cfs.Root(), runInstance.encryptRemoteIfNeeded(t, "test"), runInstance.encryptRemoteIfNeeded(t, "one")))
 		if !found {
-			log.Printf("not found /test/one")
+			fs.Logf(nil, "not found /test/one")
 			return fmt.Errorf("not found /test/one")
 		}
 		found = boltDb.HasEntry(path.Join(cfs.Root(), runInstance.encryptRemoteIfNeeded(t, "test"), runInstance.encryptRemoteIfNeeded(t, "one"), runInstance.encryptRemoteIfNeeded(t, "test2")))
 		if !found {
-			log.Printf("not found /test/one/test2")
+			fs.Logf(nil, "not found /test/one/test2")
 			return fmt.Errorf("not found /test/one/test2")
 		}
 		li, err := runInstance.list(t, rootFs, "test/one")
 		if err != nil {
-			log.Printf("err: %v", err)
+			fs.Logf(nil, "err: %v", err)
 			return err
 		}
 		if len(li) != 1 {
-			log.Printf("not expected listing /test/one: %v", li)
+			fs.Logf(nil, "not expected listing /test/one: %v", li)
 			return fmt.Errorf("not expected listing /test/one: %v", li)
 		}
 		if fi, ok := li[0].(os.FileInfo); ok {
 			if fi.Name() != "test2" {
-				log.Printf("not expected name: %v", fi.Name())
+				fs.Logf(nil, "not expected name: %v", fi.Name())
 				return fmt.Errorf("not expected name: %v", fi.Name())
 			}
 		} else if di, ok := li[0].(fs.DirEntry); ok {
 			if di.Remote() != "test/one/test2" {
-				log.Printf("not expected remote: %v", di.Remote())
+				fs.Logf(nil, "not expected remote: %v", di.Remote())
 				return fmt.Errorf("not expected remote: %v", di.Remote())
 			}
 		} else {
-			log.Printf("unexpected listing: %v", li)
+			fs.Logf(nil, "unexpected listing: %v", li)
 			return fmt.Errorf("unexpected listing: %v", li)
 		}
-		log.Printf("complete listing /test/one/test2")
+		fs.Logf(nil, "complete listing /test/one/test2")
 		return nil
 	}, 12, time.Second*10)
 	require.NoError(t, err)
@@ -708,7 +707,7 @@ func TestInternalMaxChunkSizeRespected(t *testing.T) {
 
 func TestInternalExpiredEntriesRemoved(t *testing.T) {
 	id := fmt.Sprintf("tieer%v", time.Now().Unix())
-	vfsflags.Opt.DirCacheTime = time.Second * 4 // needs to be lower than the defined
+	vfscommon.Opt.DirCacheTime = fs.Duration(time.Second * 4) // needs to be lower than the defined
 	rootFs, _ := runInstance.newCacheFs(t, remoteName, id, true, true, nil)
 	cfs, err := runInstance.getCacheFs(rootFs)
 	require.NoError(t, err)
@@ -743,7 +742,7 @@ func TestInternalExpiredEntriesRemoved(t *testing.T) {
 }
 
 func TestInternalBug2117(t *testing.T) {
-	vfsflags.Opt.DirCacheTime = time.Second * 10
+	vfscommon.Opt.DirCacheTime = fs.Duration(time.Second * 10)
 
 	id := fmt.Sprintf("tib2117%v", time.Now().Unix())
 	rootFs, _ := runInstance.newCacheFs(t, remoteName, id, false, true, map[string]string{"info_age": "72h", "chunk_clean_interval": "15m"})
@@ -771,24 +770,24 @@ func TestInternalBug2117(t *testing.T) {
 
 	di, err := runInstance.list(t, rootFs, "test/dir1/dir2")
 	require.NoError(t, err)
-	log.Printf("len: %v", len(di))
+	fs.Logf(nil, "len: %v", len(di))
 	require.Len(t, di, 1)
 
 	time.Sleep(time.Second * 30)
 
 	di, err = runInstance.list(t, rootFs, "test/dir1/dir2")
 	require.NoError(t, err)
-	log.Printf("len: %v", len(di))
+	fs.Logf(nil, "len: %v", len(di))
 	require.Len(t, di, 1)
 
 	di, err = runInstance.list(t, rootFs, "test/dir1")
 	require.NoError(t, err)
-	log.Printf("len: %v", len(di))
+	fs.Logf(nil, "len: %v", len(di))
 	require.Len(t, di, 4)
 
 	di, err = runInstance.list(t, rootFs, "test")
 	require.NoError(t, err)
-	log.Printf("len: %v", len(di))
+	fs.Logf(nil, "len: %v", len(di))
 	require.Len(t, di, 4)
 }
 
@@ -829,7 +828,7 @@ func newRun() *run {
 	} else {
 		r.tmpUploadDir = uploadDir
 	}
-	log.Printf("Temp Upload Dir: %v", r.tmpUploadDir)
+	fs.Logf(nil, "Temp Upload Dir: %v", r.tmpUploadDir)
 
 	return r
 }
@@ -850,8 +849,8 @@ func (r *run) encryptRemoteIfNeeded(t *testing.T, remote string) string {
 func (r *run) newCacheFs(t *testing.T, remote, id string, needRemote, purge bool, flags map[string]string) (fs.Fs, *cache.Persistent) {
 	fstest.Initialise()
 	remoteExists := false
-	for _, s := range config.FileSections() {
-		if s == remote {
+	for _, s := range config.GetRemotes() {
+		if s.Name == remote {
 			remoteExists = true
 		}
 	}
@@ -875,12 +874,12 @@ func (r *run) newCacheFs(t *testing.T, remote, id string, needRemote, purge bool
 	cacheRemote := remote
 	if !remoteExists {
 		localRemote := remote + "-local"
-		config.FileSet(localRemote, "type", "local")
-		config.FileSet(localRemote, "nounc", "true")
+		config.FileSetValue(localRemote, "type", "local")
+		config.FileSetValue(localRemote, "nounc", "true")
 		m.Set("type", "cache")
 		m.Set("remote", localRemote+":"+filepath.Join(os.TempDir(), localRemote))
 	} else {
-		remoteType := config.FileGet(remote, "type")
+		remoteType := config.GetValue(remote, "type")
 		if remoteType == "" {
 			t.Skipf("skipped due to invalid remote type for %v", remote)
 			return nil, nil
@@ -891,14 +890,14 @@ func (r *run) newCacheFs(t *testing.T, remote, id string, needRemote, purge bool
 				m.Set("password", cryptPassword1)
 				m.Set("password2", cryptPassword2)
 			}
-			remoteRemote := config.FileGet(remote, "remote")
+			remoteRemote := config.GetValue(remote, "remote")
 			if remoteRemote == "" {
 				t.Skipf("skipped due to invalid remote wrapper for %v", remote)
 				return nil, nil
 			}
 			remoteRemoteParts := strings.Split(remoteRemote, ":")
 			remoteWrapping := remoteRemoteParts[0]
-			remoteType := config.FileGet(remoteWrapping, "type")
+			remoteType := config.GetValue(remoteWrapping, "type")
 			if remoteType != "cache" {
 				t.Skipf("skipped due to invalid remote type for %v: '%v'", remoteWrapping, remoteType)
 				return nil, nil
@@ -935,8 +934,7 @@ func (r *run) newCacheFs(t *testing.T, remote, id string, needRemote, purge bool
 	}
 
 	if purge {
-		_ = f.Features().Purge(context.Background(), "")
-		require.NoError(t, err)
+		_ = operations.Purge(context.Background(), f, "")
 	}
 	err = f.Mkdir(context.Background(), "")
 	require.NoError(t, err)
@@ -949,7 +947,7 @@ func (r *run) newCacheFs(t *testing.T, remote, id string, needRemote, purge bool
 }
 
 func (r *run) cleanupFs(t *testing.T, f fs.Fs) {
-	err := f.Features().Purge(context.Background(), "")
+	err := operations.Purge(context.Background(), f, "")
 	require.NoError(t, err)
 	cfs, err := r.getCacheFs(f)
 	require.NoError(t, err)
@@ -1193,7 +1191,7 @@ func (r *run) updateData(t *testing.T, rootFs fs.Fs, src, data, append string) e
 func (r *run) cleanSize(t *testing.T, size int64) int64 {
 	if r.rootIsCrypt {
 		denominator := int64(65536 + 16)
-		size = size - 32
+		size -= 32
 		quotient := size / denominator
 		remainder := size % denominator
 		return (quotient*65536 + remainder - 16)

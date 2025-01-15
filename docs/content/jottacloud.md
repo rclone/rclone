@@ -175,18 +175,18 @@ Press Enter for the default (Archive).
  2 > Shared
  3 > Sync
 config_mountpoint> 1
---------------------
-[remote]
-type = jottacloud
-configVersion = 1
-client_id = jottacli
-client_secret =
-tokenURL = https://id.jottacloud.com/auth/realms/jottacloud/protocol/openid-connect/token
-token = {........}
-username = 2940e57271a93d987d6f8a21
-device = Jotta
-mountpoint = Archive
---------------------
+Configuration complete.
+Options:
+- type: jottacloud
+- configVersion: 1
+- client_id: jottacli
+- client_secret:
+- tokenURL: https://id.jottacloud.com/auth/realms/jottacloud/protocol/openid-connect/token
+- token: {........}
+- username: 2940e57271a93d987d6f8a21
+- device: Jotta
+- mountpoint: Archive
+Keep this "remote" remote?
 y) Yes this is OK (default)
 e) Edit this remote
 d) Delete this remote
@@ -377,6 +377,19 @@ Properties:
 - Type:        string
 - Required:    false
 
+#### --jottacloud-client-credentials
+
+Use client credentials OAuth flow.
+
+This will use the OAUTH2 client Credentials Flow as described in RFC 6749.
+
+Properties:
+
+- Config:      client_credentials
+- Env Var:     RCLONE_JOTTACLOUD_CLIENT_CREDENTIALS
+- Type:        bool
+- Default:     false
+
 #### --jottacloud-md5-memory-limit
 
 Files bigger than this will be cached on disk to calculate the MD5 if required.
@@ -446,6 +459,17 @@ Properties:
 - Env Var:     RCLONE_JOTTACLOUD_ENCODING
 - Type:        Encoding
 - Default:     Slash,LtGt,DoubleQuote,Colon,Question,Asterisk,Pipe,Del,Ctl,InvalidUtf8,Dot
+
+#### --jottacloud-description
+
+Description of the remote.
+
+Properties:
+
+- Config:      description
+- Env Var:     RCLONE_JOTTACLOUD_DESCRIPTION
+- Type:        string
+- Required:    false
 
 ### Metadata
 

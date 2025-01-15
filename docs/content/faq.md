@@ -71,7 +71,7 @@ support partially uploading an object. You can't take an existing
 object, and change some bytes in the middle of it.
 
 It would be possible to make a sync system which stored binary diffs
-instead of whole objects like rclone does, but that would break the
+like rsync does, instead of whole objects, but that would break the
 1:1 mapping of files on your hard disk to objects in the remote cloud
 storage system.
 
@@ -233,9 +233,11 @@ value, say `export GOGC=20`.  This will make the garbage collector
 work harder, reducing memory size at the expense of CPU usage.
 
 The most common cause of rclone using lots of memory is a single
-directory with thousands or millions of files in.  Rclone has to load
-this entirely into memory as rclone objects.  Each rclone object takes
-0.5k-1k of memory.
+directory with millions of files in. Rclone has to load this entirely
+into memory as rclone objects. Each rclone object takes 0.5k-1k of
+memory. There is
+[a workaround for this](https://github.com/rclone/rclone/wiki/Big-syncs-with-millions-of-files)
+which involves a bit of scripting.
 
 ### Rclone changes fullwidth Unicode punctuation marks in file names
 

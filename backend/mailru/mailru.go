@@ -46,8 +46,8 @@ import (
 
 // Global constants
 const (
-	minSleepPacer   = 10 * time.Millisecond
-	maxSleepPacer   = 2 * time.Second
+	minSleepPacer   = 100 * time.Millisecond
+	maxSleepPacer   = 5 * time.Second
 	decayConstPacer = 2          // bigger for slower decay, exponential
 	metaExpirySec   = 20 * 60    // meta server expiration time
 	serverExpirySec = 3 * 60     // download server expiration time
@@ -68,14 +68,12 @@ var (
 )
 
 // Description of how to authorize
-var oauthConfig = &oauth2.Config{
+var oauthConfig = &oauthutil.Config{
 	ClientID:     api.OAuthClientID,
 	ClientSecret: "",
-	Endpoint: oauth2.Endpoint{
-		AuthURL:   api.OAuthURL,
-		TokenURL:  api.OAuthURL,
-		AuthStyle: oauth2.AuthStyleInParams,
-	},
+	AuthURL:      api.OAuthURL,
+	TokenURL:     api.OAuthURL,
+	AuthStyle:    oauth2.AuthStyleInParams,
 }
 
 // Register with Fs
@@ -438,7 +436,9 @@ func (f *Fs) authorize(ctx context.Context, force bool) (err error) {
 	if err != nil || !tokenIsValid(t) {
 		fs.Infof(f, "Valid token not found, authorizing.")
 		ctx := oauthutil.Context(ctx, f.cli)
-		t, err = oauthConfig.PasswordCredentialsToken(ctx, f.opt.Username, f.opt.Password)
+
+		oauth2Conf := oauthConfig.MakeOauth2Config()
+		t, err = oauth2Conf.PasswordCredentialsToken(ctx, f.opt.Username, f.opt.Password)
 	}
 	if err == nil && !tokenIsValid(t) {
 		err = errors.New("invalid token")

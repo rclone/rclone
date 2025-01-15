@@ -3,11 +3,11 @@ package rcat
 
 import (
 	"context"
-	"log"
 	"os"
 	"time"
 
 	"github.com/rclone/rclone/cmd"
+	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config/flags"
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/spf13/cobra"
@@ -26,9 +26,7 @@ func init() {
 var commandDefinition = &cobra.Command{
 	Use:   "rcat remote:path",
 	Short: `Copies standard input to file on remote.`,
-	Long: `
-rclone rcat reads from standard input (stdin) and copies it to a
-single remote file.
+	Long: `Reads from standard input (stdin) and copies it to a single remote file.
 
     echo "hello world" | rclone rcat remote:path/to/file
     ffmpeg - | rclone rcat remote:path/to/file
@@ -66,7 +64,7 @@ destination which can use retries.`,
 
 		stat, _ := os.Stdin.Stat()
 		if (stat.Mode() & os.ModeCharDevice) != 0 {
-			log.Fatalf("nothing to read from standard input (stdin).")
+			fs.Fatalf(nil, "nothing to read from standard input (stdin).")
 		}
 
 		fdst, dstFileName := cmd.NewFsDstFile(args)

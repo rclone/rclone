@@ -111,68 +111,29 @@ Properties:
 
 Here are the Advanced options specific to pikpak (PikPak).
 
-#### --pikpak-client-id
+#### --pikpak-device-id
 
-OAuth Client Id.
-
-Leave blank normally.
+Device ID used for authorization.
 
 Properties:
 
-- Config:      client_id
-- Env Var:     RCLONE_PIKPAK_CLIENT_ID
+- Config:      device_id
+- Env Var:     RCLONE_PIKPAK_DEVICE_ID
 - Type:        string
 - Required:    false
 
-#### --pikpak-client-secret
+#### --pikpak-user-agent
 
-OAuth Client Secret.
+HTTP user agent for pikpak.
 
-Leave blank normally.
+Defaults to "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:129.0) Gecko/20100101 Firefox/129.0" or "--pikpak-user-agent" provided on command line.
 
 Properties:
 
-- Config:      client_secret
-- Env Var:     RCLONE_PIKPAK_CLIENT_SECRET
+- Config:      user_agent
+- Env Var:     RCLONE_PIKPAK_USER_AGENT
 - Type:        string
-- Required:    false
-
-#### --pikpak-token
-
-OAuth Access Token as a JSON blob.
-
-Properties:
-
-- Config:      token
-- Env Var:     RCLONE_PIKPAK_TOKEN
-- Type:        string
-- Required:    false
-
-#### --pikpak-auth-url
-
-Auth server URL.
-
-Leave blank to use the provider defaults.
-
-Properties:
-
-- Config:      auth_url
-- Env Var:     RCLONE_PIKPAK_AUTH_URL
-- Type:        string
-- Required:    false
-
-#### --pikpak-token-url
-
-Token server url.
-
-Leave blank to use the provider defaults.
-
-Properties:
-
-- Config:      token_url
-- Env Var:     RCLONE_PIKPAK_TOKEN_URL
-- Type:        string
-- Required:    false
+- Default:     "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:129.0) Gecko/20100101 Firefox/129.0"
 
 #### --pikpak-root-folder-id
 
@@ -216,6 +177,19 @@ Properties:
 - Type:        bool
 - Default:     false
 
+#### --pikpak-no-media-link
+
+Use original file links instead of media links.
+
+This avoids issues caused by invalid media links, but may reduce download speeds.
+
+Properties:
+
+- Config:      no_media_link
+- Env Var:     RCLONE_PIKPAK_NO_MEDIA_LINK
+- Type:        bool
+- Default:     false
+
 #### --pikpak-hash-memory-limit
 
 Files bigger than this will be cached on disk to calculate hash if required.
@@ -226,6 +200,54 @@ Properties:
 - Env Var:     RCLONE_PIKPAK_HASH_MEMORY_LIMIT
 - Type:        SizeSuffix
 - Default:     10Mi
+
+#### --pikpak-chunk-size
+
+Chunk size for multipart uploads.
+	
+Large files will be uploaded in chunks of this size.
+
+Note that this is stored in memory and there may be up to
+"--transfers" * "--pikpak-upload-concurrency" chunks stored at once
+in memory.
+
+If you are transferring large files over high-speed links and you have
+enough memory, then increasing this will speed up the transfers.
+
+Rclone will automatically increase the chunk size when uploading a
+large file of known size to stay below the 10,000 chunks limit.
+
+Increasing the chunk size decreases the accuracy of the progress
+statistics displayed with "-P" flag.
+
+Properties:
+
+- Config:      chunk_size
+- Env Var:     RCLONE_PIKPAK_CHUNK_SIZE
+- Type:        SizeSuffix
+- Default:     5Mi
+
+#### --pikpak-upload-concurrency
+
+Concurrency for multipart uploads.
+
+This is the number of chunks of the same file that are uploaded
+concurrently for multipart uploads.
+
+Note that chunks are stored in memory and there may be up to
+"--transfers" * "--pikpak-upload-concurrency" chunks stored at once
+in memory.
+
+If you are uploading small numbers of large files over high-speed links
+and these uploads do not fully utilize your bandwidth, then increasing
+this may help to speed up the transfers.
+
+Properties:
+
+- Config:      upload_concurrency
+- Env Var:     RCLONE_PIKPAK_UPLOAD_CONCURRENCY
+- Type:        int
+- Default:     5
 
 #### --pikpak-encoding
 
@@ -239,6 +261,17 @@ Properties:
 - Env Var:     RCLONE_PIKPAK_ENCODING
 - Type:        Encoding
 - Default:     Slash,LtGt,DoubleQuote,Colon,Question,Asterisk,Pipe,BackSlash,Ctl,LeftSpace,RightSpace,RightPeriod,InvalidUtf8,Dot
+
+#### --pikpak-description
+
+Description of the remote.
+
+Properties:
+
+- Config:      description
+- Env Var:     RCLONE_PIKPAK_DESCRIPTION
+- Type:        string
+- Required:    false
 
 ## Backend commands
 

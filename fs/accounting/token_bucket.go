@@ -40,8 +40,13 @@ type tokenBucket struct {
 // Return true if limit is disabled
 //
 // Call with lock held
-func (bs *buckets) _isOff() bool {
-	return bs[0] == nil
+func (bs *buckets) _isOff() bool { //nolint:unused // Don't include unused when running golangci-lint in case its on windows where this is not called
+	for i := range bs {
+		if bs[i] != nil {
+			return false
+		}
+	}
+	return true
 }
 
 // Disable the limits
@@ -232,10 +237,8 @@ func (tb *tokenBucket) rcBwlimit(ctx context.Context, in rc.Params) (out rc.Para
 // Remote control for the token bucket
 func init() {
 	rc.Add(rc.Call{
-		Path: "core/bwlimit",
-		Fn: func(ctx context.Context, in rc.Params) (out rc.Params, err error) {
-			return TokenBucket.rcBwlimit(ctx, in)
-		},
+		Path:  "core/bwlimit",
+		Fn:    TokenBucket.rcBwlimit,
 		Title: "Set the bandwidth limit.",
 		Help: `
 This sets the bandwidth limit to the string passed in. This should be

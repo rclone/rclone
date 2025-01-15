@@ -174,7 +174,7 @@ func TestListJSON(t *testing.T) {
 		}, {
 			name: "Metadata",
 			opt: operations.ListJSONOpt{
-				FilesOnly: true,
+				FilesOnly: false,
 				Metadata:  true,
 			},
 			want: []*operations.ListJSONItem{{
@@ -183,6 +183,10 @@ func TestListJSON(t *testing.T) {
 				Size:    5,
 				ModTime: operations.Timestamp{When: t1},
 				IsDir:   false,
+			}, {
+				Path:  "sub",
+				Name:  "sub",
+				IsDir: true,
 			}},
 		},
 	} {
@@ -202,6 +206,15 @@ func TestListJSON(t *testing.T) {
 					assert.Equal(t, "", got[i].MimeType)
 				} else {
 					assert.NotEqual(t, "", got[i].MimeType)
+				}
+				if test.opt.Metadata {
+					features := r.Fremote.Features()
+					if features.ReadMetadata && !got[i].IsDir {
+						assert.Greater(t, len(got[i].Metadata), 0, "Expecting metadata for file")
+					}
+					if features.ReadDirMetadata && got[i].IsDir {
+						assert.Greater(t, len(got[i].Metadata), 0, "Expecting metadata for dir")
+					}
 				}
 				if test.opt.ShowHash {
 					hashes := got[i].Hashes

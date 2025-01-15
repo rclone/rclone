@@ -66,12 +66,13 @@ so it is easy to tweak stuff.
 └── static                        - static content for the website
     ├── css
     │   ├── bootstrap.css
-    │   ├── custom.css            - custom css goes here
-    │   └── font-awesome.css
+    │   └── custom.css            - custom css goes here
+    ├── fontawesome
+    │   ├── css
+    │   └── webfonts
     ├── img                       - images used
     ├── js
     │   ├── bootstrap.js
     │   ├── custom.js             - custom javascript goes here
     │   └── jquery.js
-    └── webfonts
 ```

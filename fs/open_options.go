@@ -3,6 +3,7 @@
 package fs
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net/http"
@@ -276,6 +277,15 @@ func (o MetadataOption) Mandatory() bool {
 	return false
 }
 
+// MetadataAsOpenOptions fetch any metadata to set as open options
+func MetadataAsOpenOptions(ctx context.Context) (options []OpenOption) {
+	ci := GetConfig(ctx)
+	if ci.MetadataSet != nil {
+		options = append(options, MetadataOption(ci.MetadataSet))
+	}
+	return options
+}
+
 // ChunkOption defines an Option which returns a preferred chunk size
 type ChunkOption struct {
 	ChunkSize int64
@@ -283,7 +293,7 @@ type ChunkOption struct {
 
 // Header formats the option as an http header
 func (o *ChunkOption) Header() (key string, value string) {
-	return "chunkSize", fmt.Sprintf("%v", o.ChunkSize)
+	return "", ""
 }
 
 // Mandatory returns whether the option must be parsed or can be ignored

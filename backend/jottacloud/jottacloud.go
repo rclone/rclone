@@ -277,11 +277,9 @@ machines.`)
 		m.Set(configClientID, teliaseCloudClientID)
 		m.Set(configTokenURL, teliaseCloudTokenURL)
 		return oauthutil.ConfigOut("choose_device", &oauthutil.Options{
-			OAuth2Config: &oauth2.Config{
-				Endpoint: oauth2.Endpoint{
-					AuthURL:  teliaseCloudAuthURL,
-					TokenURL: teliaseCloudTokenURL,
-				},
+			OAuth2Config: &oauthutil.Config{
+				AuthURL:     teliaseCloudAuthURL,
+				TokenURL:    teliaseCloudTokenURL,
 				ClientID:    teliaseCloudClientID,
 				Scopes:      []string{"openid", "jotta-default", "offline_access"},
 				RedirectURL: oauthutil.RedirectLocalhostURL,
@@ -292,11 +290,9 @@ machines.`)
 		m.Set(configClientID, telianoCloudClientID)
 		m.Set(configTokenURL, telianoCloudTokenURL)
 		return oauthutil.ConfigOut("choose_device", &oauthutil.Options{
-			OAuth2Config: &oauth2.Config{
-				Endpoint: oauth2.Endpoint{
-					AuthURL:  telianoCloudAuthURL,
-					TokenURL: telianoCloudTokenURL,
-				},
+			OAuth2Config: &oauthutil.Config{
+				AuthURL:     telianoCloudAuthURL,
+				TokenURL:    telianoCloudTokenURL,
 				ClientID:    telianoCloudClientID,
 				Scopes:      []string{"openid", "jotta-default", "offline_access"},
 				RedirectURL: oauthutil.RedirectLocalhostURL,
@@ -307,11 +303,9 @@ machines.`)
 		m.Set(configClientID, tele2CloudClientID)
 		m.Set(configTokenURL, tele2CloudTokenURL)
 		return oauthutil.ConfigOut("choose_device", &oauthutil.Options{
-			OAuth2Config: &oauth2.Config{
-				Endpoint: oauth2.Endpoint{
-					AuthURL:  tele2CloudAuthURL,
-					TokenURL: tele2CloudTokenURL,
-				},
+			OAuth2Config: &oauthutil.Config{
+				AuthURL:     tele2CloudAuthURL,
+				TokenURL:    tele2CloudTokenURL,
 				ClientID:    tele2CloudClientID,
 				Scopes:      []string{"openid", "jotta-default", "offline_access"},
 				RedirectURL: oauthutil.RedirectLocalhostURL,
@@ -322,11 +316,9 @@ machines.`)
 		m.Set(configClientID, onlimeCloudClientID)
 		m.Set(configTokenURL, onlimeCloudTokenURL)
 		return oauthutil.ConfigOut("choose_device", &oauthutil.Options{
-			OAuth2Config: &oauth2.Config{
-				Endpoint: oauth2.Endpoint{
-					AuthURL:  onlimeCloudAuthURL,
-					TokenURL: onlimeCloudTokenURL,
-				},
+			OAuth2Config: &oauthutil.Config{
+				AuthURL:     onlimeCloudAuthURL,
+				TokenURL:    onlimeCloudTokenURL,
 				ClientID:    onlimeCloudClientID,
 				Scopes:      []string{"openid", "jotta-default", "offline_access"},
 				RedirectURL: oauthutil.RedirectLocalhostURL,
@@ -924,19 +916,17 @@ func getOAuthClient(ctx context.Context, name string, m configmap.Mapper) (oAuth
 	}
 
 	baseClient := fshttp.NewClient(ctx)
-	oauthConfig := &oauth2.Config{
-		Endpoint: oauth2.Endpoint{
-			AuthURL:  defaultTokenURL,
-			TokenURL: defaultTokenURL,
-		},
+	oauthConfig := &oauthutil.Config{
+		AuthURL:  defaultTokenURL,
+		TokenURL: defaultTokenURL,
 	}
 	if ver == configVersion {
 		oauthConfig.ClientID = defaultClientID
 		// if custom endpoints are set use them else stick with defaults
 		if tokenURL, ok := m.Get(configTokenURL); ok {
-			oauthConfig.Endpoint.TokenURL = tokenURL
+			oauthConfig.TokenURL = tokenURL
 			// jottacloud is weird. we need to use the tokenURL as authURL
-			oauthConfig.Endpoint.AuthURL = tokenURL
+			oauthConfig.AuthURL = tokenURL
 		}
 	} else if ver == legacyConfigVersion {
 		clientID, ok := m.Get(configClientID)
@@ -950,8 +940,8 @@ func getOAuthClient(ctx context.Context, name string, m configmap.Mapper) (oAuth
 		oauthConfig.ClientID = clientID
 		oauthConfig.ClientSecret = obscure.MustReveal(clientSecret)
 
-		oauthConfig.Endpoint.TokenURL = legacyTokenURL
-		oauthConfig.Endpoint.AuthURL = legacyTokenURL
+		oauthConfig.TokenURL = legacyTokenURL
+		oauthConfig.AuthURL = legacyTokenURL
 
 		// add the request filter to fix token refresh
 		if do, ok := baseClient.Transport.(interface {
@@ -1487,16 +1477,38 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		return nil, fs.ErrorCantMove
 	}
 
-	err := f.mkParentDir(ctx, remote)
+	meta, err := fs.GetMetadataOptions(ctx, f, src, fs.MetadataAsOpenOptions(ctx))
 	if err != nil {
+		return nil, err
+	}
+
+	if err := f.mkParentDir(ctx, remote); err != nil {
 		return nil, err
 	}
 	info, err := f.copyOrMove(ctx, "cp", srcObj.filePath(), remote)
 
-	// if destination was a trashed file then after a successful copy the copied file is still in trash (bug in api?)
-	if err == nil && bool(info.Deleted) && !f.opt.TrashedOnly && info.State == "COMPLETED" {
-		fs.Debugf(src, "Server-side copied to trashed destination, restoring")
-		info, err = f.createOrUpdate(ctx, remote, srcObj.createTime, srcObj.modTime, srcObj.size, srcObj.md5)
+	if err == nil {
+		var createTime time.Time
+		var createTimeMeta bool
+		var modTime time.Time
+		var modTimeMeta bool
+		if meta != nil {
+			createTime, createTimeMeta = srcObj.parseFsMetadataTime(meta, "btime")
+			if !createTimeMeta {
+				createTime = srcObj.createTime
+			}
+			modTime, modTimeMeta = srcObj.parseFsMetadataTime(meta, "mtime")
+			if !modTimeMeta {
+				modTime = srcObj.modTime
+			}
+		}
+		if bool(info.Deleted) && !f.opt.TrashedOnly && info.State == "COMPLETED" {
+			// Workaround necessary when destination was a trashed file, to avoid the copied file also being in trash (bug in api?)
+			fs.Debugf(src, "Server-side copied to trashed destination, restoring")
+			info, err = f.createOrUpdate(ctx, remote, createTime, modTime, info.Size, info.MD5)
+		} else if createTimeMeta || modTimeMeta {
+			info, err = f.createOrUpdate(ctx, remote, createTime, modTime, info.Size, info.MD5)
+		}
 	}
 
 	if err != nil {
@@ -1523,11 +1535,29 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		return nil, fs.ErrorCantMove
 	}
 
-	err := f.mkParentDir(ctx, remote)
+	meta, err := fs.GetMetadataOptions(ctx, f, src, fs.MetadataAsOpenOptions(ctx))
 	if err != nil {
 		return nil, err
 	}
+
+	if err := f.mkParentDir(ctx, remote); err != nil {
+		return nil, err
+	}
 	info, err := f.copyOrMove(ctx, "mv", srcObj.filePath(), remote)
+
+	if err == nil && meta != nil {
+		createTime, createTimeMeta := srcObj.parseFsMetadataTime(meta, "btime")
+		if !createTimeMeta {
+			createTime = srcObj.createTime
+		}
+		modTime, modTimeMeta := srcObj.parseFsMetadataTime(meta, "mtime")
+		if !modTimeMeta {
+			modTime = srcObj.modTime
+		}
+		if createTimeMeta || modTimeMeta {
+			info, err = f.createOrUpdate(ctx, remote, createTime, modTime, info.Size, info.MD5)
+		}
+	}
 
 	if err != nil {
 		return nil, fmt.Errorf("couldn't move file: %w", err)
@@ -1786,6 +1816,20 @@ func (o *Object) readMetaData(ctx context.Context, force bool) (err error) {
 	return o.setMetaData(info)
 }
 
+// parseFsMetadataTime parses a time string from fs.Metadata with key
+func (o *Object) parseFsMetadataTime(m fs.Metadata, key string) (t time.Time, ok bool) {
+	value, ok := m[key]
+	if ok {
+		var err error
+		t, err = time.Parse(time.RFC3339Nano, value) // metadata stores RFC3339Nano timestamps
+		if err != nil {
+			fs.Debugf(o, "failed to parse metadata %s: %q: %v", key, value, err)
+			ok = false
+		}
+	}
+	return t, ok
+}
+
 // ModTime returns the modification time of the object
 //
 // It attempts to read the objects mtime and if that isn't present the
@@ -1957,21 +2001,11 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	var createdTime string
 	var modTime string
 	if meta != nil {
-		if v, ok := meta["btime"]; ok {
-			t, err := time.Parse(time.RFC3339Nano, v) // metadata stores RFC3339Nano timestamps
-			if err != nil {
-				fs.Debugf(o, "failed to parse metadata btime: %q: %v", v, err)
-			} else {
-				createdTime = api.Rfc3339Time(t).String() // jottacloud api wants RFC3339 timestamps
-			}
+		if t, ok := o.parseFsMetadataTime(meta, "btime"); ok {
+			createdTime = api.Rfc3339Time(t).String() // jottacloud api wants RFC3339 timestamps
 		}
-		if v, ok := meta["mtime"]; ok {
-			t, err := time.Parse(time.RFC3339Nano, v)
-			if err != nil {
-				fs.Debugf(o, "failed to parse metadata mtime: %q: %v", v, err)
-			} else {
-				modTime = api.Rfc3339Time(t).String()
-			}
+		if t, ok := o.parseFsMetadataTime(meta, "mtime"); ok {
+			modTime = api.Rfc3339Time(t).String()
 		}
 	}
 	if modTime == "" { // prefer mtime in meta as Modified time, fallback to source ModTime

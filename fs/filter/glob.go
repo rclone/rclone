@@ -11,30 +11,69 @@ import (
 	"github.com/rclone/rclone/fs"
 )
 
-// GlobToRegexp converts an rsync style glob to a regexp
+// GlobPathToRegexp converts an rsync style glob path to a regexp
+func GlobPathToRegexp(glob string, ignoreCase bool) (*regexp.Regexp, error) {
+	return globToRegexp(glob, true, true, ignoreCase)
+}
+
+// GlobStringToRegexp converts an rsync style glob string to a regexp
 //
-// documented in filtering.md
-func GlobToRegexp(glob string, ignoreCase bool) (*regexp.Regexp, error) {
+// Without adding of anchors but with ignoring of case, i.e. called
+// `GlobStringToRegexp(glob, false, true)`, it takes a lenient approach
+// where the glob "sum" would match "CheckSum", more similar to text
+// search functions than strict glob filtering.
+//
+// With adding of anchors and not ignoring case, i.e. called
+// `GlobStringToRegexp(glob, true, false)`, it uses a strict glob
+// interpretation where the previous example would have to be changed to
+// "*Sum" to match "CheckSum".
+func GlobStringToRegexp(glob string, addAnchors bool, ignoreCase bool) (*regexp.Regexp, error) {
+	return globToRegexp(glob, false, addAnchors, ignoreCase)
+}
+
+// globToRegexp converts an rsync style glob to a regexp
+//
+// Set pathMode true for matching of path/file names, e.g.
+// special treatment of path separator `/` and double asterisk `**`,
+// see filtering.md for details.
+//
+// Set addAnchors true to add start of string `^` and end of string `$` anchors.
+func globToRegexp(glob string, pathMode bool, addAnchors bool, ignoreCase bool) (*regexp.Regexp, error) {
 	var re bytes.Buffer
 	if ignoreCase {
 		_, _ = re.WriteString("(?i)")
 	}
-	if strings.HasPrefix(glob, "/") {
-		glob = glob[1:]
-		_ = re.WriteByte('^')
-	} else {
-		_, _ = re.WriteString("(^|/)")
+	if addAnchors {
+		if pathMode {
+			if strings.HasPrefix(glob, "/") {
+				glob = glob[1:]
+				_ = re.WriteByte('^')
+			} else {
+				_, _ = re.WriteString("(^|/)")
+			}
+		} else {
+			_, _ = re.WriteString("^")
+		}
 	}
 	consecutiveStars := 0
 	insertStars := func() error {
 		if consecutiveStars > 0 {
-			switch consecutiveStars {
-			case 1:
-				_, _ = re.WriteString(`[^/]*`)
-			case 2:
-				_, _ = re.WriteString(`.*`)
-			default:
-				return fmt.Errorf("too many stars in %q", glob)
+			if pathMode {
+				switch consecutiveStars {
+				case 1:
+					_, _ = re.WriteString(`[^/]*`)
+				case 2:
+					_, _ = re.WriteString(`.*`)
+				default:
+					return fmt.Errorf("too many stars in %q", glob)
+				}
+			} else {
+				switch consecutiveStars {
+				case 1:
+					_, _ = re.WriteString(`.*`)
+				default:
+					return fmt.Errorf("too many stars in %q", glob)
+				}
 			}
 		}
 		consecutiveStars = 0
@@ -102,7 +141,11 @@ func GlobToRegexp(glob string, ignoreCase bool) (*regexp.Regexp, error) {
 		case '*':
 			consecutiveStars++
 		case '?':
-			_, _ = re.WriteString(`[^/]`)
+			if pathMode {
+				_, _ = re.WriteString(`[^/]`)
+			} else {
+				_, _ = re.WriteString(`.`)
+			}
 		case '[':
 			_, _ = re.WriteRune(c)
 			inBrackets++
@@ -152,7 +195,9 @@ func GlobToRegexp(glob string, ignoreCase bool) (*regexp.Regexp, error) {
 	if inRegexp {
 		return nil, fmt.Errorf("mismatched '{{' and '}}' in glob %q", glob)
 	}
-	_ = re.WriteByte('$')
+	if addAnchors {
+		_ = re.WriteByte('$')
+	}
 	result, err := regexp.Compile(re.String())
 	if err != nil {
 		return nil, fmt.Errorf("bad glob pattern %q (regexp %q): %w", glob, re.String(), err)

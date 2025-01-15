@@ -11,7 +11,6 @@ import (
 	"github.com/rclone/rclone/fs/accounting"
 	"github.com/rclone/rclone/fs/filter"
 	"github.com/rclone/rclone/fs/rc"
-	"github.com/rclone/rclone/fs/rc/rcflags"
 	"github.com/rclone/rclone/fstest/testy"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -65,7 +64,7 @@ func TestJobsExpire(t *testing.T) {
 	assert.Equal(t, 1, len(jobs.jobs))
 	jobs.mu.Lock()
 	job.mu.Lock()
-	job.EndTime = time.Now().Add(-rcflags.Opt.JobExpireDuration - 60*time.Second)
+	job.EndTime = time.Now().Add(-rc.Opt.JobExpireDuration - 60*time.Second)
 	assert.Equal(t, true, jobs.expireRunning)
 	job.mu.Unlock()
 	jobs.mu.Unlock()
@@ -553,5 +552,54 @@ func TestOnFinishAlreadyFinished(t *testing.T) {
 	case <-done:
 	case <-time.After(time.Second):
 		t.Fatal("Timeout waiting for OnFinish to fire")
+	}
+}
+
+func TestOnFinishDataRace(t *testing.T) {
+	jobID.Store(0)
+	job, _, err := NewJob(context.Background(), ctxFn, rc.Params{"_async": true})
+	assert.NoError(t, err)
+	var expect, got uint64
+	finished := make(chan struct{})
+	stop, stopped := make(chan struct{}), make(chan struct{})
+	go func() {
+	Loop:
+		for {
+			select {
+			case <-stop:
+				break Loop
+			default:
+				_, err := OnFinish(job.ID, func() {
+					finished <- struct{}{}
+				})
+				assert.NoError(t, err)
+				expect += 1
+			}
+		}
+		close(stopped)
+	}()
+
+	time.Sleep(10 * time.Millisecond)
+	job.Stop()
+
+	// Wait for the first OnFinish to fire
+	<-finished
+	got += 1
+
+	// Stop the OnFinish producer
+	close(stop)
+	<-stopped
+
+	timeout := time.After(5 * time.Second)
+	for {
+		if got == expect {
+			break
+		}
+		select {
+		case <-finished:
+			got += 1
+		case <-timeout:
+			t.Fatal("Timeout waiting for all OnFinish calls to fire")
+		}
 	}
 }

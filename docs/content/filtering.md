@@ -362,7 +362,7 @@ processed in.
 E.g. `rclone ls remote: --exclude *.bak` excludes all .bak files
 from listing.
 
-E.g. `rclone size remote: "--exclude /dir/**"` returns the total size of
+E.g. `rclone size remote: --exclude "/dir/**"` returns the total size of
 all files on `remote:` excluding those in root directory `dir` and sub
 directories.
 
@@ -465,10 +465,10 @@ flags with `--exclude`, `--exclude-from`, `--filter` or `--filter-from`,
 you must use include rules for all the files you want in the include
 statement. For more flexibility use the `--filter-from` flag.
 
-`--exclude-from` has no effect when combined with `--files-from` or
+`--include-from` has no effect when combined with `--files-from` or
 `--files-from-raw` flags.
 
-`--exclude-from` followed by `-` reads filter rules from standard input.
+`--include-from` followed by `-` reads filter rules from standard input.
 
 ### `--filter` - Add a file-filtering rule
 
@@ -505,6 +505,8 @@ processed in.
 Arrange the order of filter rules with the most restrictive first and
 work down.
 
+Lines starting with # or ; are ignored, and can be used to write comments. Inline comments are not supported. _Use `-vv --dump filters` to see how they appear in the final regexp._
+
 E.g. for `filter-file.txt`:
 
     # a sample filter rule file
@@ -512,6 +514,7 @@ E.g. for `filter-file.txt`:
     + *.jpg
     + *.png
     + file2.avi
+    - /dir/tmp/** # WARNING! This text will be treated as part of the path.
     - /dir/Trash/**
     + /dir/**
     # exclude everything else
@@ -558,6 +561,8 @@ Other filter flags (`--include`, `--include-from`, `--exclude`,
 `--files-from` expects a list of files as its input. Leading or
 trailing whitespace is stripped from the input lines. Lines starting
 with `#` or `;` are ignored.
+
+`--files-from` followed by `-` reads the list of files from standard input.
 
 Rclone commands with a `--files-from` flag traverse the remote,
 treating the names in `--files-from` as a set of filters.
@@ -673,7 +678,7 @@ remote or flag value. The fix then is to quote values containing spaces.
 ### `--min-size` - Don't transfer any file smaller than this
 
 Controls the minimum size file within the scope of an rclone command.
-Default units are `KiB` but abbreviations `K`, `M`, `G`, `T` or `P` are valid.
+Default units are `KiB` but abbreviations `B`, `K`, `M`, `G`, `T` or `P` are valid.
 
 E.g. `rclone ls remote: --min-size 50k` lists files on `remote:` of 50 KiB
 size or larger.
@@ -683,7 +688,7 @@ See [the size option docs](/docs/#size-option) for more info.
 ### `--max-size` - Don't transfer any file larger than this
 
 Controls the maximum size file within the scope of an rclone command.
-Default units are `KiB` but abbreviations `K`, `M`, `G`, `T` or `P` are valid.
+Default units are `KiB` but abbreviations `B`, `K`, `M`, `G`, `T` or `P` are valid.
 
 E.g. `rclone ls remote: --max-size 1G` lists files on `remote:` of 1 GiB
 size or smaller.

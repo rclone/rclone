@@ -36,13 +36,14 @@ ifdef BETA_SUBDIR
 endif
 BETA_PATH := $(BRANCH_PATH)$(TAG)$(BETA_SUBDIR)
 BETA_URL := https://beta.rclone.org/$(BETA_PATH)/
-BETA_UPLOAD_ROOT := memstore:beta-rclone-org
+BETA_UPLOAD_ROOT := beta.rclone.org:
 BETA_UPLOAD := $(BETA_UPLOAD_ROOT)/$(BETA_PATH)
 # Pass in GOTAGS=xyz on the make command line to set build tags
 ifdef GOTAGS
 BUILDTAGS=-tags "$(GOTAGS)"
 LINTTAGS=--build-tags "$(GOTAGS)"
 endif
+LDFLAGS=--ldflags "-s -X github.com/rclone/rclone/fs.Version=$(TAG)"
 
 .PHONY: rclone test_all vars version
 
@@ -50,7 +51,7 @@ rclone:
 ifeq ($(GO_OS),windows)
 	go run bin/resource_windows.go -version $(TAG) -syso resource_windows_`go env GOARCH`.syso
 endif
-	go build -v --ldflags "-s -X github.com/rclone/rclone/fs.Version=$(TAG)" $(BUILDTAGS) $(BUILD_ARGS)
+	go build -v $(LDFLAGS) $(BUILDTAGS) $(BUILD_ARGS)
 ifeq ($(GO_OS),windows)
 	rm resource_windows_`go env GOARCH`.syso
 endif
@@ -59,7 +60,7 @@ endif
 	mv -v `go env GOPATH`/bin/rclone`go env GOEXE`.new `go env GOPATH`/bin/rclone`go env GOEXE`
 
 test_all:
-	go install --ldflags "-s -X github.com/rclone/rclone/fs.Version=$(TAG)" $(BUILDTAGS) $(BUILD_ARGS) github.com/rclone/rclone/fstest/test_all
+	go install $(LDFLAGS) $(BUILDTAGS) $(BUILD_ARGS) github.com/rclone/rclone/fstest/test_all
 
 vars:
 	@echo SHELL="'$(SHELL)'"
@@ -87,13 +88,13 @@ test:	rclone test_all
 
 # Quick test
 quicktest:
-	RCLONE_CONFIG="/notfound" go test $(BUILDTAGS) ./...
+	RCLONE_CONFIG="/notfound" go test $(LDFLAGS) $(BUILDTAGS) ./...
 
 racequicktest:
-	RCLONE_CONFIG="/notfound" go test $(BUILDTAGS) -cpu=2 -race ./...
+	RCLONE_CONFIG="/notfound" go test $(LDFLAGS) $(BUILDTAGS) -cpu=2 -race ./...
 
 compiletest:
-	RCLONE_CONFIG="/notfound" go test $(BUILDTAGS) -run XXX ./...
+	RCLONE_CONFIG="/notfound" go test $(LDFLAGS) $(BUILDTAGS) -run XXX ./...
 
 # Do source code quality checks
 check:	rclone
@@ -143,10 +144,14 @@ MANUAL.txt:	MANUAL.md
 	pandoc -s --from markdown-smart --to plain MANUAL.md -o MANUAL.txt
 
 commanddocs: rclone
-	XDG_CACHE_HOME="" XDG_CONFIG_HOME="" HOME="\$$HOME" USER="\$$USER" rclone gendocs docs/content/
+	-@rmdir -p '$$HOME/.config/rclone'
+	XDG_CACHE_HOME="" XDG_CONFIG_HOME="" HOME="\$$HOME" USER="\$$USER" rclone gendocs --config=/notfound docs/content/
+	@[ ! -e '$$HOME' ] || (echo 'Error: created unwanted directory named $$HOME' && exit 1)
 
 backenddocs: rclone bin/make_backend_docs.py
+	-@rmdir -p '$$HOME/.config/rclone'
 	XDG_CACHE_HOME="" XDG_CONFIG_HOME="" HOME="\$$HOME" USER="\$$USER" ./bin/make_backend_docs.py
+	@[ ! -e '$$HOME' ] || (echo 'Error: created unwanted directory named $$HOME' && exit 1)
 
 rcdocs: rclone
 	bin/make_rc_docs.sh
@@ -167,7 +172,7 @@ website:
 	@if grep -R "raw HTML omitted" docs/public ; then echo "ERROR: found unescaped HTML - fix the markdown source" ; fi
 
 upload_website:	website
-	rclone -v sync docs/public memstore:www-rclone-org
+	rclone -v sync docs/public www.rclone.org:
 
 upload_test_website:	website
 	rclone -P sync docs/public test-rclone-org:
@@ -194,8 +199,8 @@ check_sign:
 	cd build && gpg --verify SHA256SUMS && gpg --decrypt SHA256SUMS | sha256sum -c
 
 upload:
-	rclone -P copy build/ memstore:downloads-rclone-org/$(TAG)
-	rclone lsf build --files-only --include '*.{zip,deb,rpm}' --include version.txt | xargs -i bash -c 'i={}; j="$$i"; [[ $$i =~ (.*)(-v[0-9\.]+-)(.*) ]] && j=$${BASH_REMATCH[1]}-current-$${BASH_REMATCH[3]}; rclone copyto -v "memstore:downloads-rclone-org/$(TAG)/$$i" "memstore:downloads-rclone-org/$$j"'
+	rclone -P copy build/ downloads.rclone.org:/$(TAG)
+	rclone lsf build --files-only --include '*.{zip,deb,rpm}' --include version.txt | xargs -i bash -c 'i={}; j="$$i"; [[ $$i =~ (.*)(-v[0-9\.]+-)(.*) ]] && j=$${BASH_REMATCH[1]}-current-$${BASH_REMATCH[3]}; rclone copyto -v "downloads.rclone.org:/$(TAG)/$$i" "downloads.rclone.org:/$$j"'
 
 upload_github:
 	./bin/upload-github $(TAG)
@@ -205,7 +210,7 @@ cross:	doc
 
 beta:
 	go run bin/cross-compile.go $(BUILD_FLAGS) $(BUILDTAGS) $(BUILD_ARGS) $(TAG)
-	rclone -v copy build/ memstore:pub-rclone-org/$(TAG)
+	rclone -v copy build/ pub.rclone.org:/$(TAG)
 	@echo Beta release ready at https://pub.rclone.org/$(TAG)/
 
 log_since_last_release:
@@ -218,18 +223,18 @@ ci_upload:
 	sudo chown -R $$USER build
 	find build -type l -delete
 	gzip -r9v build
-	./rclone --config bin/travis.rclone.conf -v copy build/ $(BETA_UPLOAD)/testbuilds
+	./rclone --no-check-dest --config bin/ci.rclone.conf -v copy build/ $(BETA_UPLOAD)/testbuilds
 ifeq ($(or $(BRANCH_PATH),$(RELEASE_TAG)),)
-	./rclone --config bin/travis.rclone.conf -v copy build/ $(BETA_UPLOAD_ROOT)/test/testbuilds-latest
+	./rclone --no-check-dest --config bin/ci.rclone.conf -v copy build/ $(BETA_UPLOAD_ROOT)/test/testbuilds-latest
 endif
 	@echo Beta release ready at $(BETA_URL)/testbuilds
 
 ci_beta:
 	git log $(LAST_TAG).. > /tmp/git-log.txt
 	go run bin/cross-compile.go -release beta-latest -git-log /tmp/git-log.txt $(BUILD_FLAGS) $(BUILDTAGS) $(BUILD_ARGS) $(TAG)
-	rclone --config bin/travis.rclone.conf -v copy --exclude '*beta-latest*' build/ $(BETA_UPLOAD)
+	rclone --no-check-dest --config bin/ci.rclone.conf -v copy --exclude '*beta-latest*' build/ $(BETA_UPLOAD)
 ifeq ($(or $(BRANCH_PATH),$(RELEASE_TAG)),)
-	rclone --config bin/travis.rclone.conf -v copy --include '*beta-latest*' --include version.txt build/ $(BETA_UPLOAD_ROOT)$(BETA_SUBDIR)
+	rclone --no-check-dest --config bin/ci.rclone.conf -v copy --include '*beta-latest*' --include version.txt build/ $(BETA_UPLOAD_ROOT)$(BETA_SUBDIR)
 endif
 	@echo Beta release ready at $(BETA_URL)
 
@@ -238,7 +243,7 @@ fetch_binaries:
 	rclone -P sync --exclude "/testbuilds/**" --delete-excluded $(BETA_UPLOAD) build/
 
 serve:	website
-	cd docs && hugo server -v -w --disableFastRender
+	cd docs && hugo server --logLevel info -w --disableFastRender
 
 tag:	retag doc
 	bin/make_changelog.py $(LAST_TAG) $(VERSION) > docs/content/changelog.md.new

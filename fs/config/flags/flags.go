@@ -3,7 +3,6 @@
 package flags
 
 import (
-	"log"
 	"os"
 	"regexp"
 	"strings"
@@ -50,16 +49,17 @@ func (gs *Groups) NewGroup(name, help string) *Group {
 }
 
 // Filter makes a copy of groups filtered by flagsRe
-func (gs *Groups) Filter(flagsRe *regexp.Regexp) *Groups {
+func (gs *Groups) Filter(group string, filterRe *regexp.Regexp, filterNamesOnly bool) *Groups {
 	newGs := NewGroups()
 	for _, g := range gs.Groups {
-		newG := newGs.NewGroup(g.Name, g.Help)
-		g.Flags.VisitAll(func(f *pflag.Flag) {
-			matched := flagsRe == nil || flagsRe.MatchString(f.Name) || flagsRe.MatchString(f.Usage)
-			if matched {
-				newG.Flags.AddFlag(f)
-			}
-		})
+		if group == "" || strings.EqualFold(g.Name, group) {
+			newG := newGs.NewGroup(g.Name, g.Help)
+			g.Flags.VisitAll(func(f *pflag.Flag) {
+				if filterRe == nil || filterRe.MatchString(f.Name) || (!filterNamesOnly && filterRe.MatchString(f.Usage)) {
+					newG.Flags.AddFlag(f)
+				}
+			})
+		}
 	}
 	return newGs
 }
@@ -73,7 +73,7 @@ func (gs *Groups) Include(groupsString string) *Groups {
 	for _, groupName := range strings.Split(groupsString, ",") {
 		_, ok := All.ByName[groupName]
 		if !ok {
-			log.Fatalf("Couldn't find group %q in command annotation", groupName)
+			fs.Fatalf(nil, "Couldn't find group %q in command annotation", groupName)
 		}
 		want[groupName] = true
 	}
@@ -110,19 +110,20 @@ var All *Groups
 // Groups of flags for documentation purposes
 func init() {
 	All = NewGroups()
-	All.NewGroup("Copy", "Flags for anything which can Copy a file.")
-	All.NewGroup("Sync", "Flags just used for `rclone sync`.")
-	All.NewGroup("Important", "Important flags useful for most commands.")
-	All.NewGroup("Check", "Flags used for `rclone check`.")
-	All.NewGroup("Networking", "General networking and HTTP stuff.")
-	All.NewGroup("Performance", "Flags helpful for increasing performance.")
-	All.NewGroup("Config", "General configuration of rclone.")
-	All.NewGroup("Debugging", "Flags for developers.")
-	All.NewGroup("Filter", "Flags for filtering directory listings.")
-	All.NewGroup("Listing", "Flags for listing directories.")
-	All.NewGroup("Logging", "Logging and statistics.")
-	All.NewGroup("Metadata", "Flags to control metadata.")
-	All.NewGroup("RC", "Flags to control the Remote Control API.")
+	All.NewGroup("Copy", "Flags for anything which can copy a file")
+	All.NewGroup("Sync", "Flags used for sync commands")
+	All.NewGroup("Important", "Important flags useful for most commands")
+	All.NewGroup("Check", "Flags used for check commands")
+	All.NewGroup("Networking", "Flags for general networking and HTTP stuff")
+	All.NewGroup("Performance", "Flags helpful for increasing performance")
+	All.NewGroup("Config", "Flags for general configuration of rclone")
+	All.NewGroup("Debugging", "Flags for developers")
+	All.NewGroup("Filter", "Flags for filtering directory listings")
+	All.NewGroup("Listing", "Flags for listing directories")
+	All.NewGroup("Logging", "Flags for logging and statistics")
+	All.NewGroup("Metadata", "Flags to control metadata")
+	All.NewGroup("RC", "Flags to control the Remote Control API")
+	All.NewGroup("Metrics", "Flags to control the Metrics HTTP endpoint.")
 }
 
 // installFlag constructs a name from the flag passed in and
@@ -136,50 +137,52 @@ func installFlag(flags *pflag.FlagSet, name string, groupsString string) {
 	// Find flag
 	flag := flags.Lookup(name)
 	if flag == nil {
-		log.Fatalf("Couldn't find flag --%q", name)
+		fs.Fatalf(nil, "Couldn't find flag --%q", name)
 	}
 
 	// Read default from environment if possible
 	envKey := fs.OptionToEnv(name)
 	if envValue, envFound := os.LookupEnv(envKey); envFound {
-		err := flags.Set(name, envValue)
-		if err != nil {
-			log.Fatalf("Invalid value when setting --%s from environment variable %s=%q: %v", name, envKey, envValue, err)
+		isStringArray := false
+		opt, isOption := flag.Value.(*fs.Option)
+		if isOption {
+			_, isStringArray = opt.Default.([]string)
 		}
-		fs.Debugf(nil, "Setting --%s %q from environment variable %s=%q", name, flag.Value, envKey, envValue)
-		flag.DefValue = envValue
+		if isStringArray {
+			// Treat stringArray differently, treating the environment variable as a CSV array
+			var list fs.CommaSepList
+			err := list.Set(envValue)
+			if err != nil {
+				fs.Fatalf(nil, "Invalid value when setting stringArray --%s from environment variable %s=%q: %v", name, envKey, envValue, err)
+			}
+			// Set both the Value (so items on the command line get added) and DefValue so the help is correct
+			opt.Value = ([]string)(list)
+			flag.DefValue = list.String()
+			for _, v := range list {
+				fs.Debugf(nil, "Setting --%s %q from environment variable %s=%q", name, v, envKey, envValue)
+			}
+		} else {
+			err := flags.Set(name, envValue)
+			if err != nil {
+				fs.Fatalf(nil, "Invalid value when setting --%s from environment variable %s=%q: %v", name, envKey, envValue, err)
+			}
+			fs.Debugf(nil, "Setting --%s %q from environment variable %s=%q", name, flag.Value, envKey, envValue)
+			flag.DefValue = envValue
+		}
 	}
 
 	// Add flag to Group if it is a global flag
-	if flags == pflag.CommandLine {
+	if groupsString != "" && flags == pflag.CommandLine {
 		for _, groupName := range strings.Split(groupsString, ",") {
 			if groupName == "rc-" {
 				groupName = "RC"
 			}
 			group, ok := All.ByName[groupName]
 			if !ok {
-				log.Fatalf("Couldn't find group %q for flag --%s", groupName, name)
+				fs.Fatalf(nil, "Couldn't find group %q for flag --%s", groupName, name)
 			}
 			group.Add(flag)
 		}
-	}
-}
-
-// SetDefaultFromEnv constructs a name from the flag passed in and
-// sets the default from the environment if possible
-//
-// Used to create backend flags like --skip-links
-func SetDefaultFromEnv(flags *pflag.FlagSet, name string) {
-	envKey := fs.OptionToEnv(name)
-	envValue, found := os.LookupEnv(envKey)
-	if found {
-		flag := flags.Lookup(name)
-		if flag == nil {
-			log.Fatalf("Couldn't find flag --%q", name)
-		}
-		fs.Debugf(nil, "Setting default for %s=%q from environment variable %s", name, envValue, envKey)
-		//err = tempValue.Set()
-		flag.DefValue = envValue
 	}
 }
 
@@ -349,4 +352,46 @@ func CountP(name, shorthand string, usage string, groups string) (out *int) {
 func CountVarP(flags *pflag.FlagSet, p *int, name, shorthand string, usage string, groups string) {
 	flags.CountVarP(p, name, shorthand, usage)
 	installFlag(flags, name, groups)
+}
+
+// AddFlagsFromOptions takes a slice of fs.Option and adds flags for all of them
+func AddFlagsFromOptions(flags *pflag.FlagSet, prefix string, options fs.Options) {
+	done := map[string]struct{}{}
+	for i := range options {
+		opt := &options[i]
+		// Skip if done already (e.g. with Provider options)
+		if _, doneAlready := done[opt.Name]; doneAlready {
+			continue
+		}
+		done[opt.Name] = struct{}{}
+		// Make a flag from each option
+		if prefix == "" {
+			opt.NoPrefix = true
+		}
+		name := opt.FlagName(prefix)
+		found := flags.Lookup(name) != nil
+		if !found {
+			// Take first line of help only
+			help := strings.TrimSpace(opt.Help)
+			if nl := strings.IndexRune(help, '\n'); nl >= 0 {
+				help = help[:nl]
+			}
+			help = strings.TrimRight(strings.TrimSpace(help), ".!?")
+			if opt.IsPassword {
+				help += " (obscured)"
+			}
+			flag := flags.VarPF(opt, name, opt.ShortOpt, help)
+			installFlag(flags, name, opt.Groups)
+			if _, isBool := opt.Default.(bool); isBool {
+				flag.NoOptDefVal = "true"
+			}
+			// Hide on the command line if requested
+			if opt.Hide&fs.OptionHideCommandLine != 0 {
+				flag.Hidden = true
+			}
+		} else {
+			fs.Errorf(nil, "Not adding duplicate flag --%s", name)
+		}
+		// flag.Hidden = true
+	}
 }

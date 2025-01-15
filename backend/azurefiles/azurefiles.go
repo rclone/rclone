@@ -1,5 +1,4 @@
 //go:build !plan9 && !js
-// +build !plan9,!js
 
 // Package azurefiles provides an interface to Microsoft Azure Files
 package azurefiles
@@ -394,8 +393,10 @@ func newFsFromOptions(ctx context.Context, name, root string, opt *Options) (fs.
 	policyClientOptions := policy.ClientOptions{
 		Transport: newTransporter(ctx),
 	}
+	backup := service.ShareTokenIntentBackup
 	clientOpt := service.ClientOptions{
-		ClientOptions: policyClientOptions,
+		ClientOptions:     policyClientOptions,
+		FileRequestIntent: &backup,
 	}
 
 	// Here we auth by setting one of cred, sharedKeyCred or f.client
@@ -1036,12 +1037,10 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		if _, createErr := fc.Create(ctx, size, nil); createErr != nil {
 			return fmt.Errorf("update: unable to create file: %w", createErr)
 		}
-	} else {
+	} else if size != o.Size() {
 		// Resize the file if needed
-		if size != o.Size() {
-			if _, resizeErr := fc.Resize(ctx, size, nil); resizeErr != nil {
-				return fmt.Errorf("update: unable to resize while trying to update: %w ", resizeErr)
-			}
+		if _, resizeErr := fc.Resize(ctx, size, nil); resizeErr != nil {
+			return fmt.Errorf("update: unable to resize while trying to update: %w ", resizeErr)
 		}
 	}
 

@@ -301,6 +301,11 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 			}
 			return f, err
 		}
+		// Correct root if definitely pointing to a file
+		f.root = path.Dir(f.root)
+		if f.root == "." || f.root == "/" {
+			f.root = ""
+		}
 		// return an error with an fs which points to the parent
 		return f, fs.ErrorIsFile
 	}

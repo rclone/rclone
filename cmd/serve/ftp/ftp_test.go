@@ -4,7 +4,6 @@
 // We skip tests on platforms with troublesome character mappings
 
 //go:build !windows && !darwin && !plan9
-// +build !windows,!darwin,!plan9
 
 package ftp
 
@@ -34,7 +33,7 @@ const (
 func TestFTP(t *testing.T) {
 	// Configure and start the server
 	start := func(f fs.Fs) (configmap.Simple, func()) {
-		opt := DefaultOpt
+		opt := Opt
 		opt.ListenAddr = testHOST + ":" + testPORT
 		opt.PassivePorts = testPASSIVEPORTRANGE
 		opt.BasicUser = testUSER

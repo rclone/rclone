@@ -77,6 +77,16 @@ Leave blank if not sure.
 `,
 			Sensitive: true,
 		}, {
+			Name: "use_kerberos",
+			Help: `Use Kerberos authentication.
+
+If set, rclone will use Kerberos authentication instead of NTLM. This
+requires a valid Kerberos configuration and credentials cache to be
+available, either in the default locations or as specified by the
+KRB5_CONFIG and KRB5CCNAME environment variables.
+`,
+			Default: false,
+		}, {
 			Name:    "idle_timeout",
 			Default: fs.Duration(60 * time.Second),
 			Help: `Max time before closing idle connections.
@@ -126,6 +136,7 @@ type Options struct {
 	Pass            string      `config:"pass"`
 	Domain          string      `config:"domain"`
 	SPN             string      `config:"spn"`
+	UseKerberos     bool        `config:"use_kerberos"`
 	HideSpecial     bool        `config:"hide_special_share"`
 	CaseInsensitive bool        `config:"case_insensitive"`
 	IdleTimeout     fs.Duration `config:"idle_timeout"`
@@ -601,9 +612,10 @@ func (o *Object) SetModTime(ctx context.Context, t time.Time) (err error) {
 	}
 
 	fi, err := cn.smbShare.Stat(reqDir)
-	if err == nil {
-		o.statResult = fi
+	if err != nil {
+		return fmt.Errorf("SetModTime: stat: %w", err)
 	}
+	o.statResult = fi
 	return err
 }
 
@@ -685,7 +697,6 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		return err
 	}
 	defer func() {
-		o.statResult, _ = cn.smbShare.Stat(filename)
 		o.fs.putConnection(&cn)
 	}()
 
@@ -723,7 +734,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		return fmt.Errorf("Update Close failed: %w", err)
 	}
 
-	// Set the modified time
+	// Set the modified time and also o.statResult
 	err = o.SetModTime(ctx, src.ModTime(ctx))
 	if err != nil {
 		return fmt.Errorf("Update SetModTime failed: %w", err)

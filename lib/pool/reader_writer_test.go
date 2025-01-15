@@ -2,12 +2,15 @@ package pool
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"io"
+	"sync"
 	"testing"
 	"time"
 
 	"github.com/rclone/rclone/lib/random"
+	"github.com/rclone/rclone/lib/readers"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -488,4 +491,127 @@ func TestRWBoundaryConditions(t *testing.T) {
 			}
 		})
 	}
+}
+
+// The RW should be thread safe for reading and writing concurrently
+func TestRWConcurrency(t *testing.T) {
+	const bufSize = 1024
+
+	// Write data of size using Write
+	write := func(rw *RW, size int64) {
+		in := readers.NewPatternReader(size)
+		buf := make([]byte, bufSize)
+		nn := int64(0)
+		for {
+			nr, inErr := in.Read(buf)
+			if inErr != nil && inErr != io.EOF {
+				require.NoError(t, inErr)
+			}
+			nw, rwErr := rw.Write(buf[:nr])
+			require.NoError(t, rwErr)
+			assert.Equal(t, nr, nw)
+			nn += int64(nw)
+			if inErr == io.EOF {
+				break
+			}
+		}
+		assert.Equal(t, size, nn)
+	}
+
+	// Write the data using ReadFrom
+	readFrom := func(rw *RW, size int64) {
+		in := readers.NewPatternReader(size)
+		nn, err := rw.ReadFrom(in)
+		assert.NoError(t, err)
+		assert.Equal(t, size, nn)
+	}
+
+	// Read the data back from inP and check it is OK
+	check := func(in io.Reader, size int64, rw *RW) {
+		ck := readers.NewPatternReader(size)
+		ckBuf := make([]byte, bufSize)
+		rwBuf := make([]byte, bufSize)
+		nn := int64(0)
+		for {
+			nck, ckErr := ck.Read(ckBuf)
+			if ckErr != io.EOF {
+				require.NoError(t, ckErr)
+			}
+			var nin int
+			var inErr error
+			for {
+				var nnin int
+				nnin, inErr = in.Read(rwBuf[nin:])
+				if inErr != io.EOF {
+					require.NoError(t, inErr)
+				}
+				nin += nnin
+				nn += int64(nnin)
+				if nin >= len(rwBuf) || nn >= size || inErr != io.EOF {
+					break
+				}
+				rw.WaitWrite(context.Background())
+			}
+			require.Equal(t, ckBuf[:nck], rwBuf[:nin])
+			if ckErr == io.EOF && inErr == io.EOF {
+				break
+			}
+		}
+		assert.Equal(t, size, nn)
+	}
+
+	// Read the data back and check it is OK
+	read := func(rw *RW, size int64) {
+		check(rw, size, rw)
+	}
+
+	// Read the data back and check it is OK in using WriteTo
+	writeTo := func(rw *RW, size int64) {
+		in, out := io.Pipe()
+		var wg sync.WaitGroup
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			check(in, size, rw)
+		}()
+		var n int64
+		for n < size {
+			nn, err := rw.WriteTo(out)
+			assert.NoError(t, err)
+			n += nn
+		}
+		assert.Equal(t, size, n)
+		require.NoError(t, out.Close())
+		wg.Wait()
+	}
+
+	type test struct {
+		name string
+		fn   func(*RW, int64)
+	}
+
+	const size = blockSize*255 + 255
+
+	// Read and Write the data with a range of block sizes and functions
+	for _, write := range []test{{"Write", write}, {"ReadFrom", readFrom}} {
+		t.Run(write.name, func(t *testing.T) {
+			for _, read := range []test{{"Read", read}, {"WriteTo", writeTo}} {
+				t.Run(read.name, func(t *testing.T) {
+					var wg sync.WaitGroup
+					wg.Add(2)
+					rw := NewRW(rwPool)
+					go func() {
+						defer wg.Done()
+						read.fn(rw, size)
+					}()
+					go func() {
+						defer wg.Done()
+						write.fn(rw, size)
+					}()
+					wg.Wait()
+				})
+			}
+		})
+	}
+
 }

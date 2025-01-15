@@ -13,6 +13,7 @@ linters:
     - stylecheck
     - unused
     - misspell
+    - gocritic
     #- prealloc
     #- maligned
   disable-all: true
@@ -98,3 +99,46 @@ linters-settings:
     # Only enable the checks performed by the staticcheck stand-alone tool,
     # as documented here: https://staticcheck.io/docs/configuration/options/#checks
     checks: ["all", "-ST1000", "-ST1003", "-ST1016", "-ST1020", "-ST1021", "-ST1022", "-ST1023"]
+  gocritic:
+    # Enable all default checks with some exceptions and some additions (commented).
+    # Cannot use both enabled-checks and disabled-checks, so must specify all to be used.
+    disable-all: true
+    enabled-checks:
+      #- appendAssign # Enabled by default
+      - argOrder
+      - assignOp
+      - badCall
+      - badCond
+      #- captLocal # Enabled by default
+      - caseOrder
+      - codegenComment
+      #- commentFormatting # Enabled by default
+      - defaultCaseOrder
+      - deprecatedComment
+      - dupArg
+      - dupBranchBody
+      - dupCase
+      - dupSubExpr
+      - elseif
+      #- exitAfterDefer # Enabled by default
+      - flagDeref
+      - flagName
+      #- ifElseChain # Enabled by default
+      - mapKey
+      - newDeref
+      - offBy1
+      - regexpMust
+      - ruleguard # Not enabled by default
+      #- singleCaseSwitch # Enabled by default
+      - sloppyLen
+      - sloppyTypeAssert
+      - switchTrue
+      - typeSwitchVar
+      - underef
+      - unlambda
+      - unslice
+      - valSwap
+      - wrapperFunc
+    settings:
+      ruleguard:
+        rules: "${configDir}/bin/rules.go"

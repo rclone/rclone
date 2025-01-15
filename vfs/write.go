@@ -37,6 +37,9 @@ var (
 )
 
 func newWriteFileHandle(d *Dir, f *File, remote string, flags int) (*WriteFileHandle, error) {
+	if f.IsSymlink() {
+		remote += fs.LinkSuffix
+	}
 	fh := &WriteFileHandle{
 		remote: remote,
 		flags:  flags,
@@ -130,7 +133,7 @@ func (fh *WriteFileHandle) writeAt(p []byte, off int64) (n int, err error) {
 		return 0, ECLOSED
 	}
 	if fh.offset != off {
-		waitSequential("write", fh.remote, &fh.cond, fh.file.VFS().Opt.WriteWait, &fh.offset, off)
+		waitSequential("write", fh.remote, &fh.cond, time.Duration(fh.file.VFS().Opt.WriteWait), &fh.offset, off)
 	}
 	if fh.offset != off {
 		fs.Errorf(fh.remote, "WriteFileHandle.Write: can't seek in file without --vfs-cache-mode >= writes")
@@ -203,11 +206,9 @@ func (fh *WriteFileHandle) close() (err error) {
 	if err == nil {
 		fh.file.setObject(fh.o)
 		err = writeCloseErr
-	} else {
+	} else if fh.file.getObject() == nil {
 		// Remove vfs file entry when no object is present
-		if fh.file.getObject() == nil {
-			_ = fh.file.Remove()
-		}
+		_ = fh.file.Remove()
 	}
 	return err
 }

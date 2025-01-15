@@ -6,6 +6,7 @@ import (
 	"container/heap"
 	"context"
 	"errors"
+	"sort"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -62,6 +63,7 @@ func New(ctx context.Context, opt *vfscommon.Options) *WriteBack {
 // writeBack.mu must be held to manipulate this
 type writeBackItem struct {
 	name      string             // name of the item so we don't have to read it from item
+	size      int64              // size of the item so we don't have to read it from item
 	id        Handle             // id of the item
 	index     int                // index into the priority queue for update
 	expiry    time.Time          // When this expires we will write it back
@@ -126,7 +128,7 @@ func (ws *writeBackItems) _update(item *writeBackItem, expiry time.Time) {
 func (wb *WriteBack) _newExpiry() time.Time {
 	expiry := time.Now()
 	if wb.opt.WriteBack > 0 {
-		expiry = expiry.Add(wb.opt.WriteBack)
+		expiry = expiry.Add(time.Duration(wb.opt.WriteBack))
 	}
 	// expiry = expiry.Round(time.Millisecond)
 	return expiry
@@ -135,12 +137,13 @@ func (wb *WriteBack) _newExpiry() time.Time {
 // make a new writeBackItem
 //
 // call with the lock held
-func (wb *WriteBack) _newItem(id Handle, name string) *writeBackItem {
+func (wb *WriteBack) _newItem(id Handle, name string, size int64) *writeBackItem {
 	wb.SetID(&id)
 	wbItem := &writeBackItem{
 		name:   name,
+		size:   size,
 		expiry: wb._newExpiry(),
-		delay:  wb.opt.WriteBack,
+		delay:  time.Duration(wb.opt.WriteBack),
 		id:     id,
 	}
 	wb._addItem(wbItem)
@@ -256,13 +259,13 @@ func (wb *WriteBack) SetID(pid *Handle) {
 //
 // If modified is false then it it doesn't cancel a pending upload if
 // there is one as there is no need.
-func (wb *WriteBack) Add(id Handle, name string, modified bool, putFn PutFn) Handle {
+func (wb *WriteBack) Add(id Handle, name string, size int64, modified bool, putFn PutFn) Handle {
 	wb.mu.Lock()
 	defer wb.mu.Unlock()
 
 	wbItem, ok := wb.lookup[id]
 	if !ok {
-		wbItem = wb._newItem(id, name)
+		wbItem = wb._newItem(id, name, size)
 	} else {
 		if wbItem.uploading && modified {
 			// We are uploading already so cancel the upload
@@ -272,6 +275,7 @@ func (wb *WriteBack) Add(id Handle, name string, modified bool, putFn PutFn) Han
 		wb.items._update(wbItem, wb._newExpiry())
 	}
 	wbItem.putFn = putFn
+	wbItem.size = size
 	wb._resetTimer()
 	return wbItem.id
 }
@@ -368,7 +372,7 @@ func (wb *WriteBack) upload(ctx context.Context, wbItem *writeBackItem) {
 		if errors.Is(err, context.Canceled) {
 			fs.Infof(wbItem.name, "vfs cache: upload canceled")
 			// Upload was cancelled so reset timer
-			wbItem.delay = wb.opt.WriteBack
+			wbItem.delay = time.Duration(wb.opt.WriteBack)
 		} else {
 			fs.Errorf(wbItem.name, "vfs cache: failed to upload try #%d, will retry in %v: %v", wbItem.tries, wbItem.delay, err)
 		}
@@ -462,4 +466,80 @@ func (wb *WriteBack) Stats() (uploadsInProgress, uploadsQueued int) {
 	wb.mu.Lock()
 	defer wb.mu.Unlock()
 	return wb.uploads, len(wb.items)
+}
+
+// QueueInfo is information about an item queued for upload, returned
+// by Queue
+type QueueInfo struct {
+	Name      string  `json:"name"`      // name (full path) of the file,
+	ID        Handle  `json:"id"`        // id of queue item
+	Size      int64   `json:"size"`      // integer size of the file in bytes
+	Expiry    float64 `json:"expiry"`    // seconds from now which the file is eligible for transfer, oldest goes first
+	Tries     int     `json:"tries"`     // number of times we have tried to upload
+	Delay     float64 `json:"delay"`     // delay between upload attempts (s)
+	Uploading bool    `json:"uploading"` // true if item is being uploaded
+}
+
+// Queue return info about the current upload queue
+func (wb *WriteBack) Queue() []QueueInfo {
+	wb.mu.Lock()
+	defer wb.mu.Unlock()
+
+	items := make([]QueueInfo, 0, len(wb.lookup))
+	now := time.Now()
+
+	// Lookup all the items in no particular order
+	for _, wbItem := range wb.lookup {
+		items = append(items, QueueInfo{
+			Name:      wbItem.name,
+			ID:        wbItem.id,
+			Size:      wbItem.size,
+			Expiry:    wbItem.expiry.Sub(now).Seconds(),
+			Tries:     wbItem.tries,
+			Delay:     wbItem.delay.Seconds(),
+			Uploading: wbItem.uploading,
+		})
+	}
+
+	// Sort by Uploading first then Expiry
+	sort.Slice(items, func(i, j int) bool {
+		if items[i].Uploading != items[j].Uploading {
+			return items[i].Uploading
+		}
+		return items[i].Expiry < items[j].Expiry
+	})
+
+	return items
+}
+
+// ErrorIDNotFound is returned from SetExpiry when the item is not found
+var ErrorIDNotFound = errors.New("id not found in queue")
+
+// SetExpiry sets the expiry time for an item in the writeback queue.
+//
+// id should be as returned from the Queue call
+//
+// The expiry time is set to expiry + relative if expiry is passed in,
+// otherwise the expiry of the item is used.
+//
+// If the item isn't found then it will return ErrorIDNotFound
+func (wb *WriteBack) SetExpiry(id Handle, expiry time.Time, relative time.Duration) error {
+	wb.mu.Lock()
+	defer wb.mu.Unlock()
+
+	wbItem, ok := wb.lookup[id]
+	if !ok {
+		return ErrorIDNotFound
+	}
+
+	// If expiry is not supplied, use expiry of item
+	if expiry.IsZero() {
+		expiry = wbItem.expiry
+	}
+	expiry = expiry.Add(relative)
+
+	// Update the expiry with the user requested value
+	wb.items._update(wbItem, expiry)
+	wb._resetTimer()
+	return nil
 }

@@ -1,7 +1,6 @@
 // Syslog interface for Unix variants only
 
 //go:build !windows && !nacl && !plan9
-// +build !windows,!nacl,!plan9
 
 package log
 
@@ -43,16 +42,16 @@ var (
 func startSysLog() bool {
 	facility, ok := syslogFacilityMap[Opt.SyslogFacility]
 	if !ok {
-		log.Fatalf("Unknown syslog facility %q - man syslog for list", Opt.SyslogFacility)
+		fs.Fatalf(nil, "Unknown syslog facility %q - man syslog for list", Opt.SyslogFacility)
 	}
 	Me := path.Base(os.Args[0])
 	w, err := syslog.New(syslog.LOG_NOTICE|facility, Me)
 	if err != nil {
-		log.Fatalf("Failed to start syslog: %v", err)
+		fs.Fatalf(nil, "Failed to start syslog: %v", err)
 	}
 	log.SetFlags(0)
 	log.SetOutput(w)
-	fs.LogPrint = func(level fs.LogLevel, text string) {
+	fs.LogOutput = func(level fs.LogLevel, text string) {
 		switch level {
 		case fs.LogLevelEmergency:
 			_ = w.Emerg(text)

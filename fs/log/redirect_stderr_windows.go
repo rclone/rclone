@@ -5,14 +5,14 @@
 // https://play.golang.org/p/kLtct7lSUg
 
 //go:build windows
-// +build windows
 
 package log
 
 import (
-	"log"
 	"os"
 	"syscall"
+
+	"github.com/rclone/rclone/fs"
 )
 
 var (
@@ -21,7 +21,7 @@ var (
 )
 
 func setStdHandle(stdhandle int32, handle syscall.Handle) error {
-	r0, _, e1 := syscall.Syscall(procSetStdHandle.Addr(), 2, uintptr(stdhandle), uintptr(handle), 0)
+	r0, _, e1 := syscall.SyscallN(procSetStdHandle.Addr(), uintptr(stdhandle), uintptr(handle))
 	if r0 == 0 {
 		if e1 != 0 {
 			return error(e1)
@@ -35,6 +35,6 @@ func setStdHandle(stdhandle int32, handle syscall.Handle) error {
 func redirectStderr(f *os.File) {
 	err := setStdHandle(syscall.STD_ERROR_HANDLE, syscall.Handle(f.Fd()))
 	if err != nil {
-		log.Fatalf("Failed to redirect stderr to file: %v", err)
+		fs.Fatalf(nil, "Failed to redirect stderr to file: %v", err)
 	}
 }

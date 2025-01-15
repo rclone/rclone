@@ -99,7 +99,10 @@ func (b *bisyncRun) lockFileIsExpired() bool {
 		b.handleErr(b.lockFile, "error reading lock file", err, true, true)
 		dec := json.NewDecoder(rdf)
 		for {
-			if err := dec.Decode(&data); err == io.EOF {
+			if err := dec.Decode(&data); err != nil {
+				if err != io.EOF {
+					fs.Errorf(b.lockFile, "err: %v", err)
+				}
 				break
 			}
 		}

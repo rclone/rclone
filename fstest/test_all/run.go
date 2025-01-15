@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"go/build"
 	"io"
-	"log"
 	"os"
 	"os/exec"
 	"path"
@@ -94,39 +93,59 @@ func (rs Runs) Less(i, j int) bool {
 
 // dumpOutput prints the error output
 func (r *Run) dumpOutput() {
-	log.Println("------------------------------------------------------------")
-	log.Printf("---- %q ----", r.CmdString)
-	log.Println(string(r.output))
-	log.Println("------------------------------------------------------------")
+	fs.Log(nil, "------------------------------------------------------------")
+	fs.Logf(nil, "---- %q ----", r.CmdString)
+	fs.Log(nil, string(r.output))
+	fs.Log(nil, "------------------------------------------------------------")
+}
+
+// trie for storing runs
+type trie map[string]trie
+
+// turn a trie into multiple regexp matches
+//
+// We can't ever have a / in a regexp as it doesn't work.
+func match(current trie) []string {
+	var names []string
+	var parts []string
+	for name, value := range current {
+		matchName := "^" + name + "$"
+		if len(value) == 0 {
+			names = append(names, name)
+		} else {
+			for _, part := range match(value) {
+				parts = append(parts, matchName+"/"+part)
+			}
+		}
+	}
+	sort.Strings(names)
+	if len(names) > 1 {
+		parts = append(parts, "^("+strings.Join(names, "|")+")$")
+	} else if len(names) == 1 {
+		parts = append(parts, "^"+names[0]+"$")
+	}
+	sort.Strings(parts)
+	return parts
 }
 
 // This converts a slice of test names into a regexp which matches
 // them.
 func testsToRegexp(tests []string) string {
-	var split []map[string]struct{}
-	// Make a slice with maps of the used parts at each level
+	var split = trie{}
+	// Make a trie showing which parts are used at each level
 	for _, test := range tests {
-		for i, name := range strings.Split(test, "/") {
-			if i >= len(split) {
-				split = append(split, make(map[string]struct{}))
+		var parent = split
+		for _, name := range strings.Split(test, "/") {
+			current := parent[name]
+			if current == nil {
+				current = trie{}
+				parent[name] = current
 			}
-			split[i][name] = struct{}{}
+			parent = current
 		}
 	}
-	var out []string
-	for _, level := range split {
-		var testsInLevel = []string{}
-		for name := range level {
-			testsInLevel = append(testsInLevel, name)
-		}
-		sort.Strings(testsInLevel)
-		if len(testsInLevel) > 1 {
-			out = append(out, "^("+strings.Join(testsInLevel, "|")+")$")
-		} else {
-			out = append(out, "^"+testsInLevel[0]+"$")
-		}
-	}
-	return strings.Join(out, "/")
+	parts := match(split)
+	return strings.Join(parts, "|")
 }
 
 var failRe = regexp.MustCompile(`(?m)^\s*--- FAIL: (Test.*?) \(`)
@@ -160,7 +179,7 @@ func (r *Run) findFailures() {
 	}
 	r.FailedTests = newTests
 	if len(r.FailedTests) == 0 && ignored > 0 {
-		log.Printf("%q - Found %d ignored errors only - marking as good", r.CmdString, ignored)
+		fs.Logf(nil, "%q - Found %d ignored errors only - marking as good", r.CmdString, ignored)
 		r.err = nil
 		r.dumpOutput()
 		return
@@ -171,10 +190,10 @@ func (r *Run) findFailures() {
 		r.RunFlag = ""
 	}
 	if r.passed() && len(r.FailedTests) != 0 {
-		log.Printf("%q - Expecting no errors but got: %v", r.CmdString, r.FailedTests)
+		fs.Logf(nil, "%q - Expecting no errors but got: %v", r.CmdString, r.FailedTests)
 		r.dumpOutput()
 	} else if !r.passed() && len(r.FailedTests) == 0 {
-		log.Printf("%q - Expecting errors but got none: %v", r.CmdString, r.FailedTests)
+		fs.Logf(nil, "%q - Expecting errors but got none: %v", r.CmdString, r.FailedTests)
 		r.dumpOutput()
 		r.FailedTests = oldFailedTests
 	}
@@ -194,23 +213,23 @@ func (r *Run) trial() {
 	CmdLine := r.nextCmdLine()
 	CmdString := toShell(CmdLine)
 	msg := fmt.Sprintf("%q - Starting (try %d/%d)", CmdString, r.Try, *maxTries)
-	log.Println(msg)
+	fs.Log(nil, msg)
 	logName := path.Join(r.LogDir, r.TrialName)
 	out, err := os.Create(logName)
 	if err != nil {
-		log.Fatalf("Couldn't create log file: %v", err)
+		fs.Fatalf(nil, "Couldn't create log file: %v", err)
 	}
 	defer func() {
 		err := out.Close()
 		if err != nil {
-			log.Fatalf("Failed to close log file: %v", err)
+			fs.Fatalf(nil, "Failed to close log file: %v", err)
 		}
 	}()
 	_, _ = fmt.Fprintln(out, msg)
 
 	// Early exit if --try-run
 	if *dryRun {
-		log.Printf("Not executing as --dry-run: %v", CmdLine)
+		fs.Logf(nil, "Not executing as --dry-run: %v", CmdLine)
 		_, _ = fmt.Fprintln(out, "--dry-run is set - not running")
 		return
 	}
@@ -218,7 +237,7 @@ func (r *Run) trial() {
 	// Start the test server if required
 	finish, err := testserver.Start(r.Remote)
 	if err != nil {
-		log.Printf("%s: Failed to start test server: %v", r.Remote, err)
+		fs.Logf(nil, "%s: Failed to start test server: %v", r.Remote, err)
 		_, _ = fmt.Fprintf(out, "%s: Failed to start test server: %v\n", r.Remote, err)
 		r.err = err
 		return
@@ -243,7 +262,7 @@ func (r *Run) trial() {
 	} else {
 		msg = fmt.Sprintf("%q - Finished ERROR in %v (try %d/%d): %v: Failed %v", CmdString, duration, r.Try, *maxTries, r.err, r.FailedTests)
 	}
-	log.Println(msg)
+	fs.Log(nil, msg)
 	_, _ = fmt.Fprintln(out, msg)
 }
 
@@ -284,23 +303,23 @@ func (r *Run) PackagePath() string {
 func (r *Run) MakeTestBinary() {
 	binary := r.BinaryPath()
 	binaryName := r.BinaryName()
-	log.Printf("%s: Making test binary %q", r.Path, binaryName)
+	fs.Logf(nil, "%s: Making test binary %q", r.Path, binaryName)
 	CmdLine := []string{"go", "test", "-c"}
 	if *race {
 		CmdLine = append(CmdLine, "-race")
 	}
 	if *dryRun {
-		log.Printf("Not executing: %v", CmdLine)
+		fs.Logf(nil, "Not executing: %v", CmdLine)
 		return
 	}
 	cmd := exec.Command(CmdLine[0], CmdLine[1:]...)
 	cmd.Dir = r.Path
 	err := cmd.Run()
 	if err != nil {
-		log.Fatalf("Failed to make test binary: %v", err)
+		fs.Fatalf(nil, "Failed to make test binary: %v", err)
 	}
 	if _, err := os.Stat(binary); err != nil {
-		log.Fatalf("Couldn't find test binary %q", binary)
+		fs.Fatalf(nil, "Couldn't find test binary %q", binary)
 	}
 }
 
@@ -312,7 +331,7 @@ func (r *Run) RemoveTestBinary() {
 	binary := r.BinaryPath()
 	err := os.Remove(binary) // Delete the binary when finished
 	if err != nil {
-		log.Printf("Error removing test binary %q: %v", binary, err)
+		fs.Logf(nil, "Error removing test binary %q: %v", binary, err)
 	}
 }
 
@@ -408,7 +427,7 @@ func (r *Run) Run(LogDir string, result chan<- *Run) {
 	for r.Try = 1; r.Try <= *maxTries; r.Try++ {
 		r.TrialName = r.Name() + ".txt"
 		r.TrialNames = append(r.TrialNames, r.TrialName)
-		log.Printf("Starting run with log %q", r.TrialName)
+		fs.Logf(nil, "Starting run with log %q", r.TrialName)
 		r.trial()
 		if r.passed() || r.NoRetries {
 			break

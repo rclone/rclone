@@ -1,5 +1,4 @@
 //go:build linux || darwin || freebsd
-// +build linux darwin freebsd
 
 package vfstest
 
@@ -9,6 +8,7 @@ import (
 
 	"github.com/rclone/rclone/vfs/vfscommon"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"golang.org/x/sys/unix"
 )
 
@@ -21,7 +21,7 @@ func TestWriteFileDoubleClose(t *testing.T) {
 	}
 
 	out, err := osCreate(run.path("testdoubleclose"))
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	fd := out.Fd()
 
 	fd1, err := unix.Dup(int(fd))

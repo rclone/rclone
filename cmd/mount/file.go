@@ -1,10 +1,10 @@
 //go:build linux
-// +build linux
 
 package mount
 
 import (
 	"context"
+	"os"
 	"syscall"
 	"time"
 
@@ -26,13 +26,13 @@ var _ fusefs.Node = (*File)(nil)
 // Attr fills out the attributes for the file
 func (f *File) Attr(ctx context.Context, a *fuse.Attr) (err error) {
 	defer log.Trace(f, "")("a=%+v, err=%v", a, &err)
-	a.Valid = f.fsys.opt.AttrTimeout
+	a.Valid = time.Duration(f.fsys.opt.AttrTimeout)
 	modTime := f.File.ModTime()
 	Size := uint64(f.File.Size())
 	Blocks := (Size + 511) / 512
 	a.Gid = f.VFS().Opt.GID
 	a.Uid = f.VFS().Opt.UID
-	a.Mode = f.VFS().Opt.FilePerms
+	a.Mode = f.File.Mode() &^ os.ModeAppend
 	a.Size = Size
 	a.Atime = modTime
 	a.Mtime = modTime
@@ -76,6 +76,9 @@ func (f *File) Open(ctx context.Context, req *fuse.OpenRequest, resp *fuse.OpenR
 
 	// If size unknown then use direct io to read
 	if entry := handle.Node().DirEntry(); entry != nil && entry.Size() < 0 {
+		resp.Flags |= fuse.OpenDirectIO
+	}
+	if f.fsys.opt.DirectIO {
 		resp.Flags |= fuse.OpenDirectIO
 	}
 
@@ -126,3 +129,11 @@ func (f *File) Removexattr(ctx context.Context, req *fuse.RemovexattrRequest) er
 }
 
 var _ fusefs.NodeRemovexattrer = (*File)(nil)
+
+var _ fusefs.NodeReadlinker = (*File)(nil)
+
+// Readlink read symbolic link target.
+func (f *File) Readlink(ctx context.Context, req *fuse.ReadlinkRequest) (ret string, err error) {
+	defer log.Trace(f, "")("ret=%v, err=%v", &ret, &err)
+	return f.VFS().Readlink(f.Path())
+}

@@ -6,13 +6,13 @@
 package cmdtest
 
 import (
-	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
 
+	"github.com/rclone/rclone/fs"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -26,14 +26,14 @@ func TestMain(m *testing.M) {
 		// started by Go test => execute tests
 		err := os.Setenv(rcloneTestMain, "true")
 		if err != nil {
-			log.Fatalf("Unable to set %s: %s", rcloneTestMain, err.Error())
+			fs.Fatalf(nil, "Unable to set %s: %s", rcloneTestMain, err.Error())
 		}
 		os.Exit(m.Run())
 	} else {
 		// started by func rcloneExecMain => call rclone main in cmdtest.go
 		err := os.Unsetenv(rcloneTestMain)
 		if err != nil {
-			log.Fatalf("Unable to unset %s: %s", rcloneTestMain, err.Error())
+			fs.Fatalf(nil, "Unable to unset %s: %s", rcloneTestMain, err.Error())
 		}
 		main()
 	}
@@ -47,7 +47,7 @@ const rcloneTestMain = "RCLONE_TEST_MAIN"
 func rcloneExecMain(env string, args ...string) (string, error) {
 	_, found := os.LookupEnv(rcloneTestMain)
 	if !found {
-		log.Fatalf("Unexpected execution path: %s is missing.", rcloneTestMain)
+		fs.Fatalf(nil, "Unexpected execution path: %s is missing.", rcloneTestMain)
 	}
 	// make a call to self to execute rclone main in a predefined environment (enters TestMain above)
 	command := exec.Command(os.Args[0], args...)
@@ -154,7 +154,7 @@ func TestCmdTest(t *testing.T) {
 
 	// Test simple call and output from rclone
 	out, err := rclone("version")
-	t.Logf("rclone version\n" + out)
+	t.Log("rclone version\n" + out)
 	if assert.NoError(t, err) {
 		assert.Contains(t, out, "rclone v")
 		assert.Contains(t, out, "version: ")
@@ -174,7 +174,7 @@ func TestCmdTest(t *testing.T) {
 	// Test error and error output
 	out, err = rclone("version", "--provoke-an-error")
 	if assert.Error(t, err) {
-		assert.Contains(t, err.Error(), "exit status 1")
+		assert.Contains(t, err.Error(), "exit status 2")
 		assert.Contains(t, out, "Error: unknown flag")
 	}
 
@@ -208,7 +208,7 @@ func TestCmdTest(t *testing.T) {
 
 	// Test access to config file and simple test data
 	out, err = rclone("lsl", "myLocal:"+testFolder)
-	t.Logf("rclone lsl myLocal:testFolder\n" + out)
+	t.Log("rclone lsl myLocal:testFolder\n" + out)
 	if assert.NoError(t, err) {
 		assert.Contains(t, out, "rclone.config")
 		assert.Contains(t, out, "testdata/folderA/fileA1.txt")

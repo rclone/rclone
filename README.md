@@ -1,7 +1,23 @@
+<div align="center">
+<sup>Special thanks to our sponsor:</sup>
+<br>
+<br>
+<a href="https://www.warp.dev/?utm_source=github&utm_medium=referral&utm_campaign=rclone_20231103">
+  <div>
+    <img src="https://rclone.org/img/logos/warp-github.svg" width="300" alt="Warp">
+  </div>
+  <b>Warp is a modern, Rust-based terminal with AI built in so you and your team can build great software, faster.</b>
+  <div>
+    <sup>Visit warp.dev to learn more.</sup>
+  </div>
+</a>
+<br>
+<hr>
+</div>
+<br>
+
 [<img src="https://rclone.org/img/logo_on_light__horizontal_color.svg" width="50%" alt="rclone logo">](https://rclone.org/#gh-light-mode-only)
 [<img src="https://rclone.org/img/logo_on_dark__horizontal_color.svg" width="50%" alt="rclone logo">](https://rclone.org/#gh-dark-mode-only)
-[<img src="https://rclone.org/img/logos/warp-github-light.svg" title="Visit warp.dev to learn more." align="right">](https://www.warp.dev/?utm_source=github&utm_medium=referral&utm_campaign=rclone_20231103#gh-light-mode-only)
-[<img src="https://rclone.org/img/logos/warp-github-dark.svg" title="Visit warp.dev to learn more." align="right">](https://www.warp.dev/?utm_source=github&utm_medium=referral&utm_campaign=rclone_20231103#gh-dark-mode-only)
 
 [Website](https://rclone.org) |
 [Documentation](https://rclone.org/docs/) |
@@ -39,14 +55,18 @@ Rclone *("rsync for cloud storage")* is a command-line program to sync files and
   * Dropbox [:page_facing_up:](https://rclone.org/dropbox/)
   * Enterprise File Fabric [:page_facing_up:](https://rclone.org/filefabric/)
   * Fastmail Files [:page_facing_up:](https://rclone.org/webdav/#fastmail-files)
+  * Files.com [:page_facing_up:](https://rclone.org/filescom/)
   * FTP [:page_facing_up:](https://rclone.org/ftp/)
+  * GoFile [:page_facing_up:](https://rclone.org/gofile/)
   * Google Cloud Storage [:page_facing_up:](https://rclone.org/googlecloudstorage/)
   * Google Drive [:page_facing_up:](https://rclone.org/drive/)
   * Google Photos [:page_facing_up:](https://rclone.org/googlephotos/)
   * HDFS (Hadoop Distributed Filesystem) [:page_facing_up:](https://rclone.org/hdfs/)
+  * Hetzner Storage Box [:page_facing_up:](https://rclone.org/sftp/#hetzner-storage-box)
   * HiDrive [:page_facing_up:](https://rclone.org/hidrive/)
   * HTTP [:page_facing_up:](https://rclone.org/http/)
   * Huawei Cloud Object Storage Service(OBS) [:page_facing_up:](https://rclone.org/s3/#huawei-obs)
+  * iCloud Drive [:page_facing_up:](https://rclone.org/iclouddrive/)
   * ImageKit [:page_facing_up:](https://rclone.org/imagekit/)
   * Internet Archive [:page_facing_up:](https://rclone.org/internetarchive/)
   * Jottacloud [:page_facing_up:](https://rclone.org/jottacloud/)
@@ -57,6 +77,7 @@ Rclone *("rsync for cloud storage")* is a command-line program to sync files and
   * Liara Object Storage [:page_facing_up:](https://rclone.org/s3/#liara-object-storage)
   * Linkbox [:page_facing_up:](https://rclone.org/linkbox)
   * Linode Object Storage [:page_facing_up:](https://rclone.org/s3/#linode)
+  * Magalu Object Storage [:page_facing_up:](https://rclone.org/s3/#magalu)
   * Mail.ru Cloud [:page_facing_up:](https://rclone.org/mailru/)
   * Memset Memstore [:page_facing_up:](https://rclone.org/swift/)
   * Mega [:page_facing_up:](https://rclone.org/mega/)
@@ -72,10 +93,12 @@ Rclone *("rsync for cloud storage")* is a command-line program to sync files and
   * OpenStack Swift [:page_facing_up:](https://rclone.org/swift/)
   * Oracle Cloud Storage [:page_facing_up:](https://rclone.org/swift/)
   * Oracle Object Storage [:page_facing_up:](https://rclone.org/oracleobjectstorage/)
+  * Outscale [:page_facing_up:](https://rclone.org/s3/#outscale)
   * ownCloud [:page_facing_up:](https://rclone.org/webdav/#owncloud)
   * pCloud [:page_facing_up:](https://rclone.org/pcloud/)
   * Petabox [:page_facing_up:](https://rclone.org/s3/#petabox)
   * PikPak [:page_facing_up:](https://rclone.org/pikpak/)
+  * Pixeldrain [:page_facing_up:](https://rclone.org/pixeldrain/)
   * premiumize.me [:page_facing_up:](https://rclone.org/premiumizeme/)
   * put.io [:page_facing_up:](https://rclone.org/putio/)
   * Proton Drive [:page_facing_up:](https://rclone.org/protondrive/)
@@ -84,9 +107,11 @@ Rclone *("rsync for cloud storage")* is a command-line program to sync files and
   * Quatrix [:page_facing_up:](https://rclone.org/quatrix/)
   * Rackspace Cloud Files [:page_facing_up:](https://rclone.org/swift/)
   * RackCorp Object Storage [:page_facing_up:](https://rclone.org/s3/#RackCorp)
+  * rsync.net [:page_facing_up:](https://rclone.org/sftp/#rsync-net)
   * Scaleway [:page_facing_up:](https://rclone.org/s3/#scaleway)
   * Seafile [:page_facing_up:](https://rclone.org/seafile/)
   * SeaweedFS [:page_facing_up:](https://rclone.org/s3/#seaweedfs)
+  * Selectel Object Storage [:page_facing_up:](https://rclone.org/s3/#selectel)
   * SFTP [:page_facing_up:](https://rclone.org/sftp/)
   * SMB / CIFS [:page_facing_up:](https://rclone.org/smb/)
   * StackPath [:page_facing_up:](https://rclone.org/s3/#stackpath)
@@ -94,6 +119,7 @@ Rclone *("rsync for cloud storage")* is a command-line program to sync files and
   * SugarSync [:page_facing_up:](https://rclone.org/sugarsync/)
   * Synology C2 Object Storage [:page_facing_up:](https://rclone.org/s3/#synology-c2)
   * Tencent Cloud Object Storage (COS) [:page_facing_up:](https://rclone.org/s3/#tencent-cos)
+  * Uloz.to [:page_facing_up:](https://rclone.org/ulozto/)
   * Wasabi [:page_facing_up:](https://rclone.org/s3/#wasabi)
   * WebDAV [:page_facing_up:](https://rclone.org/webdav/)
   * Yandex Disk [:page_facing_up:](https://rclone.org/yandex/)

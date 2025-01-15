@@ -85,7 +85,7 @@ to an encrypted one. Cannot be used in combination with implicit FTPS.`,
 			Default: false,
 		}, {
 			Name: "concurrency",
-			Help: strings.Replace(`Maximum number of FTP simultaneous connections, 0 for unlimited.
+			Help: strings.ReplaceAll(`Maximum number of FTP simultaneous connections, 0 for unlimited.
 
 Note that setting this is very likely to cause deadlocks so it should
 be used with care.
@@ -99,7 +99,7 @@ maximum of |--checkers| and |--transfers|.
 So for |concurrency 3| you'd use |--checkers 2 --transfers 2
 --check-first| or |--checkers 1 --transfers 1|.
 
-`, "|", "`", -1),
+`, "|", "`"),
 			Default:  0,
 			Advanced: true,
 		}, {
@@ -180,12 +180,28 @@ If this is set and no password is supplied then rclone will ask for a password
 			Default: "",
 			Help: `Socks 5 proxy host.
 		
-		Supports the format user:pass@host:port, user@host:port, host:port.
+Supports the format user:pass@host:port, user@host:port, host:port.
 		
-		Example:
+Example:
 		
-			myUser:myPass@localhost:9005
-		`,
+    myUser:myPass@localhost:9005
+`,
+			Advanced: true,
+		}, {
+			Name:    "no_check_upload",
+			Default: false,
+			Help: `Don't check the upload is OK
+
+Normally rclone will try to check the upload exists after it has
+uploaded a file to make sure the size and modification time are as
+expected.
+
+This flag stops rclone doing these checks. This enables uploading to
+folders which are write only.
+
+You will likely need to use the --inplace flag also if uploading to
+a write only folder.
+`,
 			Advanced: true,
 		}, {
 			Name:     config.ConfigEncoding,
@@ -232,6 +248,7 @@ type Options struct {
 	AskPassword       bool                 `config:"ask_password"`
 	Enc               encoder.MultiEncoder `config:"encoding"`
 	SocksProxy        string               `config:"socks_proxy"`
+	NoCheckUpload     bool                 `config:"no_check_upload"`
 }
 
 // Fs represents a remote FTP server
@@ -1303,6 +1320,16 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		return fmt.Errorf("update stor: %w", err)
 	}
 	o.fs.putFtpConnection(&c, nil)
+	if o.fs.opt.NoCheckUpload {
+		o.info = &FileInfo{
+			Name:    o.remote,
+			Size:    uint64(src.Size()),
+			ModTime: src.ModTime(ctx),
+			precise: true,
+			IsDir:   false,
+		}
+		return nil
+	}
 	if err = o.SetModTime(ctx, src.ModTime(ctx)); err != nil {
 		return fmt.Errorf("SetModTime: %w", err)
 	}

@@ -59,7 +59,7 @@ func (f *Fs) InternalTestMetadata(t *testing.T) {
 		//"utime" - read-only
 		//"content-type" - read-only
 	}
-	obj := fstests.PutTestContentsMetadata(ctx, t, f, &item, contents, true, "text/html", metadata)
+	obj := fstests.PutTestContentsMetadata(ctx, t, f, &item, false, contents, true, "text/html", metadata)
 	defer func() {
 		assert.NoError(t, obj.Remove(ctx))
 	}()

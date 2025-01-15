@@ -1,5 +1,4 @@
 //go:build windows
-// +build windows
 
 package file
 
@@ -62,7 +61,7 @@ func OpenFile(path string, mode int, perm os.FileMode) (*os.File, error) {
 	default:
 		createmode = syscall.OPEN_EXISTING
 	}
-	h, e := syscall.CreateFile(pathp, access, sharemode, nil, createmode, syscall.FILE_ATTRIBUTE_NORMAL, 0)
+	h, e := syscall.CreateFile(pathp, access, sharemode, nil, createmode, syscall.FILE_ATTRIBUTE_NORMAL|syscall.FILE_FLAG_BACKUP_SEMANTICS, 0)
 	if e != nil {
 		return nil, e
 	}

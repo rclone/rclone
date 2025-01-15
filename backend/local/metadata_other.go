@@ -1,13 +1,19 @@
-//go:build plan9 || js
-// +build plan9 js
+//go:build dragonfly || plan9 || js
 
 package local
 
 import (
 	"fmt"
+	"os"
+	"time"
 
 	"github.com/rclone/rclone/fs"
 )
+
+// Read the time specified from the os.FileInfo
+func readTime(t timeType, fi os.FileInfo) time.Time {
+	return fi.ModTime()
+}
 
 // Read the metadata from the file into metadata where possible
 func (o *Object) readMetadataFromFile(m *fs.Metadata) (err error) {

@@ -1,5 +1,4 @@
 //go:build !plan9
-// +build !plan9
 
 // Package ftp implements an FTP server for rclone
 package ftp
@@ -26,48 +25,63 @@ import (
 	"github.com/rclone/rclone/fs/config/flags"
 	"github.com/rclone/rclone/fs/config/obscure"
 	"github.com/rclone/rclone/fs/log"
-	"github.com/rclone/rclone/fs/rc"
 	"github.com/rclone/rclone/vfs"
+	"github.com/rclone/rclone/vfs/vfscommon"
 	"github.com/rclone/rclone/vfs/vfsflags"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	ftp "goftp.io/server/v2"
 )
 
+// OptionsInfo descripts the Options in use
+var OptionsInfo = fs.Options{{
+	Name:    "addr",
+	Default: "localhost:2121",
+	Help:    "IPaddress:Port or :Port to bind server to",
+}, {
+	Name:    "public_ip",
+	Default: "",
+	Help:    "Public IP address to advertise for passive connections",
+}, {
+	Name:    "passive_port",
+	Default: "30000-32000",
+	Help:    "Passive port range to use",
+}, {
+	Name:    "user",
+	Default: "anonymous",
+	Help:    "User name for authentication",
+}, {
+	Name:    "pass",
+	Default: "",
+	Help:    "Password for authentication (empty value allow every password)",
+}, {
+	Name:    "cert",
+	Default: "",
+	Help:    "TLS PEM key (concatenation of certificate and CA certificate)",
+}, {
+	Name:    "key",
+	Default: "",
+	Help:    "TLS PEM Private key",
+}}
+
 // Options contains options for the http Server
 type Options struct {
 	//TODO add more options
-	ListenAddr   string // Port to listen on
-	PublicIP     string // Passive ports range
-	PassivePorts string // Passive ports range
-	BasicUser    string // single username for basic auth if not using Htpasswd
-	BasicPass    string // password for BasicUser
-	TLSCert      string // TLS PEM key (concatenation of certificate and CA certificate)
-	TLSKey       string // TLS PEM Private key
-}
-
-// DefaultOpt is the default values used for Options
-var DefaultOpt = Options{
-	ListenAddr:   "localhost:2121",
-	PublicIP:     "",
-	PassivePorts: "30000-32000",
-	BasicUser:    "anonymous",
-	BasicPass:    "",
+	ListenAddr   string `config:"addr"`         // Port to listen on
+	PublicIP     string `config:"public_ip"`    // Passive ports range
+	PassivePorts string `config:"passive_port"` // Passive ports range
+	BasicUser    string `config:"user"`         // single username for basic auth if not using Htpasswd
+	BasicPass    string `config:"pass"`         // password for BasicUser
+	TLSCert      string `config:"cert"`         // TLS PEM key (concatenation of certificate and CA certificate)
+	TLSKey       string `config:"key"`          // TLS PEM Private key
 }
 
 // Opt is options set by command line flags
-var Opt = DefaultOpt
+var Opt Options
 
 // AddFlags adds flags for ftp
 func AddFlags(flagSet *pflag.FlagSet) {
-	rc.AddOption("ftp", &Opt)
-	flags.StringVarP(flagSet, &Opt.ListenAddr, "addr", "", Opt.ListenAddr, "IPaddress:Port or :Port to bind server to", "")
-	flags.StringVarP(flagSet, &Opt.PublicIP, "public-ip", "", Opt.PublicIP, "Public IP address to advertise for passive connections", "")
-	flags.StringVarP(flagSet, &Opt.PassivePorts, "passive-port", "", Opt.PassivePorts, "Passive port range to use", "")
-	flags.StringVarP(flagSet, &Opt.BasicUser, "user", "", Opt.BasicUser, "User name for authentication", "")
-	flags.StringVarP(flagSet, &Opt.BasicPass, "pass", "", Opt.BasicPass, "Password for authentication (empty value allow every password)", "")
-	flags.StringVarP(flagSet, &Opt.TLSCert, "cert", "", Opt.TLSCert, "TLS PEM key (concatenation of certificate and CA certificate)", "")
-	flags.StringVarP(flagSet, &Opt.TLSKey, "key", "", Opt.TLSKey, "TLS PEM Private key", "")
+	flags.AddFlagsFromOptions(flagSet, "", OptionsInfo)
 }
 
 func init() {
@@ -80,8 +94,7 @@ func init() {
 var Command = &cobra.Command{
 	Use:   "ftp remote:path",
 	Short: `Serve remote:path over FTP.`,
-	Long: `
-Run a basic FTP server to serve a remote over FTP protocol.
+	Long: `Run a basic FTP server to serve a remote over FTP protocol.
 This can be viewed with a FTP client or you can make a remote of
 type FTP to read and write it.
 
@@ -100,7 +113,8 @@ then using Authentication is advised - see the next section for info.
 By default this will serve files without needing a login.
 
 You can set a single username and password with the --user and --pass flags.
-` + vfs.Help + proxy.Help,
+
+` + vfs.Help() + proxy.Help,
 	Annotations: map[string]string{
 		"versionIntroduced": "v1.44",
 		"groups":            "Filter",
@@ -136,17 +150,21 @@ type driver struct {
 	userPass   map[string]string // cache of username => password when using vfs proxy
 }
 
+func init() {
+	fs.RegisterGlobalOptions(fs.OptionsInfo{Name: "ftp", Opt: &Opt, Options: OptionsInfo})
+}
+
 var passivePortsRe = regexp.MustCompile(`^\s*\d+\s*-\s*\d+\s*$`)
 
 // Make a new FTP to serve the remote
 func newServer(ctx context.Context, f fs.Fs, opt *Options) (*driver, error) {
 	host, port, err := net.SplitHostPort(opt.ListenAddr)
 	if err != nil {
-		return nil, errors.New("failed to parse host:port")
+		return nil, fmt.Errorf("failed to parse host:port from %q", opt.ListenAddr)
 	}
 	portNum, err := strconv.Atoi(port)
 	if err != nil {
-		return nil, errors.New("failed to parse host:port")
+		return nil, fmt.Errorf("failed to parse port number from %q", port)
 	}
 
 	d := &driver{
@@ -158,7 +176,7 @@ func newServer(ctx context.Context, f fs.Fs, opt *Options) (*driver, error) {
 		d.proxy = proxy.New(ctx, &proxyflags.Opt)
 		d.userPass = make(map[string]string, 16)
 	} else {
-		d.globalVFS = vfs.New(f, &vfsflags.Opt)
+		d.globalVFS = vfs.New(f, &vfscommon.Opt)
 	}
 	d.useTLS = d.opt.TLSKey != ""
 

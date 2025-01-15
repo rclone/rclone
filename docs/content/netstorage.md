@@ -242,6 +242,17 @@ Properties:
     - "https"
         - HTTPS protocol
 
+#### --netstorage-description
+
+Description of the remote.
+
+Properties:
+
+- Config:      description
+- Env Var:     RCLONE_NETSTORAGE_DESCRIPTION
+- Type:        string
+- Required:    false
+
 ## Backend commands
 
 Here are the commands specific to the netstorage backend.

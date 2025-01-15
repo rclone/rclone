@@ -4,12 +4,14 @@ package s3
 import (
 	"context"
 	"net/http"
-	"strings"
 	"testing"
 
+	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fstest"
 	"github.com/rclone/rclone/fstest/fstests"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func SetupS3Test(t *testing.T) (context.Context, *Options, *http.Client) {
@@ -21,14 +23,20 @@ func SetupS3Test(t *testing.T) (context.Context, *Options, *http.Client) {
 
 // TestIntegration runs integration tests against the remote
 func TestIntegration(t *testing.T) {
-	fstests.Run(t, &fstests.Opt{
+	opt := &fstests.Opt{
 		RemoteName:  "TestS3:",
 		NilObject:   (*Object)(nil),
-		TiersToTest: []string{"STANDARD", "STANDARD_IA"},
+		TiersToTest: []string{"STANDARD"},
 		ChunkedUpload: fstests.ChunkedUploadConfig{
 			MinChunkSize: minChunkSize,
 		},
-	})
+	}
+	// Test wider range of tiers on AWS
+	if *fstest.RemoteName == "" || *fstest.RemoteName == "TestS3:" {
+		opt.TiersToTest = []string{"STANDARD", "STANDARD_IA"}
+	}
+	fstests.Run(t, opt)
+
 }
 
 func TestIntegration2(t *testing.T) {
@@ -54,20 +62,16 @@ func TestAWSDualStackOption(t *testing.T) {
 		// test enabled
 		ctx, opt, client := SetupS3Test(t)
 		opt.UseDualStack = true
-		s3Conn, _, _ := s3Connection(ctx, opt, client)
-		if !strings.Contains(s3Conn.Endpoint, "dualstack") {
-			t.Errorf("dualstack failed got: %s, wanted: dualstack", s3Conn.Endpoint)
-			t.Fail()
-		}
+		s3Conn, err := s3Connection(ctx, opt, client)
+		require.NoError(t, err)
+		assert.Equal(t, aws.DualStackEndpointStateEnabled, s3Conn.Options().EndpointOptions.UseDualStackEndpoint)
 	}
 	{
 		// test default case
 		ctx, opt, client := SetupS3Test(t)
-		s3Conn, _, _ := s3Connection(ctx, opt, client)
-		if strings.Contains(s3Conn.Endpoint, "dualstack") {
-			t.Errorf("dualstack failed got: %s, NOT wanted: dualstack", s3Conn.Endpoint)
-			t.Fail()
-		}
+		s3Conn, err := s3Connection(ctx, opt, client)
+		require.NoError(t, err)
+		assert.Equal(t, aws.DualStackEndpointStateDisabled, s3Conn.Options().EndpointOptions.UseDualStackEndpoint)
 	}
 }
 

@@ -13,27 +13,32 @@ import (
 // Features describe the optional features of the Fs
 type Features struct {
 	// Feature flags, whether Fs
-	CaseInsensitive         bool // has case insensitive files
-	DuplicateFiles          bool // allows duplicate files
-	ReadMimeType            bool // can read the mime type of objects
-	WriteMimeType           bool // can set the mime type of objects
-	CanHaveEmptyDirectories bool // can have empty directories
-	BucketBased             bool // is bucket based (like s3, swift, etc.)
-	BucketBasedRootOK       bool // is bucket based and can use from root
-	SetTier                 bool // allows set tier functionality on objects
-	GetTier                 bool // allows to retrieve storage tier of objects
-	ServerSideAcrossConfigs bool // can server-side copy between different remotes of the same type
-	IsLocal                 bool // is the local backend
-	SlowModTime             bool // if calling ModTime() generally takes an extra transaction
-	SlowHash                bool // if calling Hash() generally takes an extra transaction
-	ReadMetadata            bool // can read metadata from objects
-	WriteMetadata           bool // can write metadata to objects
-	UserMetadata            bool // can read/write general purpose metadata
-	FilterAware             bool // can make use of filters if provided for listing
-	PartialUploads          bool // uploaded file can appear incomplete on the fs while it's being uploaded
-	NoMultiThreading        bool // set if can't have multiplethreads on one download open
-	Overlay                 bool // this wraps one or more backends to add functionality
-	ChunkWriterDoesntSeek   bool // set if the chunk writer doesn't need to read the data more than once
+	CaseInsensitive          bool // has case insensitive files
+	DuplicateFiles           bool // allows duplicate files
+	ReadMimeType             bool // can read the mime type of objects
+	WriteMimeType            bool // can set the mime type of objects
+	CanHaveEmptyDirectories  bool // can have empty directories
+	BucketBased              bool // is bucket based (like s3, swift, etc.)
+	BucketBasedRootOK        bool // is bucket based and can use from root
+	SetTier                  bool // allows set tier functionality on objects
+	GetTier                  bool // allows to retrieve storage tier of objects
+	ServerSideAcrossConfigs  bool // can server-side copy between different remotes of the same type
+	IsLocal                  bool // is the local backend
+	SlowModTime              bool // if calling ModTime() generally takes an extra transaction
+	SlowHash                 bool // if calling Hash() generally takes an extra transaction
+	ReadMetadata             bool // can read metadata from objects
+	WriteMetadata            bool // can write metadata to objects
+	UserMetadata             bool // can read/write general purpose metadata
+	ReadDirMetadata          bool // can read metadata from directories (implements Directory.Metadata)
+	WriteDirMetadata         bool // can write metadata to directories (implements Directory.SetMetadata)
+	WriteDirSetModTime       bool // can write metadata to directories (implements Directory.SetModTime)
+	UserDirMetadata          bool // can read/write general purpose metadata to/from directories
+	DirModTimeUpdatesOnWrite bool // indicate writing files to a directory updates its modtime
+	FilterAware              bool // can make use of filters if provided for listing
+	PartialUploads           bool // uploaded file can appear incomplete on the fs while it's being uploaded
+	NoMultiThreading         bool // set if can't have multiplethreads on one download open
+	Overlay                  bool // this wraps one or more backends to add functionality
+	ChunkWriterDoesntSeek    bool // set if the chunk writer doesn't need to read the data more than once
 
 	// Purge all files in the directory specified
 	//
@@ -74,6 +79,15 @@ type Features struct {
 	//
 	// If destination exists then return fs.ErrorDirExists
 	DirMove func(ctx context.Context, src Fs, srcRemote, dstRemote string) error
+
+	// MkdirMetadata makes the directory passed in as dir.
+	//
+	// It shouldn't return an error if it already exists.
+	//
+	// If the metadata is not nil it is set.
+	//
+	// It returns the directory that was created.
+	MkdirMetadata func(ctx context.Context, dir string, metadata Metadata) (Directory, error)
 
 	// ChangeNotify calls the passed function with a path
 	// that has had changes. If the implementation
@@ -116,6 +130,9 @@ type Features struct {
 	// MergeDirs merges the contents of all the directories passed
 	// in into the first one and rmdirs the other directories.
 	MergeDirs func(ctx context.Context, dirs []Directory) error
+
+	// DirSetModTime sets the metadata on the directory to set the modification date
+	DirSetModTime func(ctx context.Context, dir string, modTime time.Time) error
 
 	// CleanUp the trash in the Fs
 	//
@@ -271,6 +288,9 @@ func (ft *Features) Fill(ctx context.Context, f Fs) *Features {
 	if do, ok := f.(DirMover); ok {
 		ft.DirMove = do.DirMove
 	}
+	if do, ok := f.(MkdirMetadataer); ok {
+		ft.MkdirMetadata = do.MkdirMetadata
+	}
 	if do, ok := f.(ChangeNotifier); ok {
 		ft.ChangeNotify = do.ChangeNotify
 	}
@@ -296,6 +316,9 @@ func (ft *Features) Fill(ctx context.Context, f Fs) *Features {
 	}
 	if do, ok := f.(MergeDirser); ok {
 		ft.MergeDirs = do.MergeDirs
+	}
+	if do, ok := f.(DirSetModTimer); ok {
+		ft.DirSetModTime = do.DirSetModTime
 	}
 	if do, ok := f.(CleanUpper); ok {
 		ft.CleanUp = do.CleanUp
@@ -342,6 +365,11 @@ func (ft *Features) Mask(ctx context.Context, f Fs) *Features {
 	ft.ReadMetadata = ft.ReadMetadata && mask.ReadMetadata
 	ft.WriteMetadata = ft.WriteMetadata && mask.WriteMetadata
 	ft.UserMetadata = ft.UserMetadata && mask.UserMetadata
+	ft.ReadDirMetadata = ft.ReadDirMetadata && mask.ReadDirMetadata
+	ft.WriteDirMetadata = ft.WriteDirMetadata && mask.WriteDirMetadata
+	ft.WriteDirSetModTime = ft.WriteDirSetModTime && mask.WriteDirSetModTime
+	ft.UserDirMetadata = ft.UserDirMetadata && mask.UserDirMetadata
+	ft.DirModTimeUpdatesOnWrite = ft.DirModTimeUpdatesOnWrite && mask.DirModTimeUpdatesOnWrite
 	ft.CanHaveEmptyDirectories = ft.CanHaveEmptyDirectories && mask.CanHaveEmptyDirectories
 	ft.BucketBased = ft.BucketBased && mask.BucketBased
 	ft.BucketBasedRootOK = ft.BucketBasedRootOK && mask.BucketBasedRootOK
@@ -368,6 +396,9 @@ func (ft *Features) Mask(ctx context.Context, f Fs) *Features {
 	if mask.DirMove == nil {
 		ft.DirMove = nil
 	}
+	if mask.MkdirMetadata == nil {
+		ft.MkdirMetadata = nil
+	}
 	if mask.ChangeNotify == nil {
 		ft.ChangeNotify = nil
 	}
@@ -391,6 +422,9 @@ func (ft *Features) Mask(ctx context.Context, f Fs) *Features {
 	}
 	if mask.MergeDirs == nil {
 		ft.MergeDirs = nil
+	}
+	if mask.DirSetModTime == nil {
+		ft.DirSetModTime = nil
 	}
 	if mask.CleanUp == nil {
 		ft.CleanUp = nil
@@ -496,6 +530,18 @@ type DirMover interface {
 	DirMove(ctx context.Context, src Fs, srcRemote, dstRemote string) error
 }
 
+// MkdirMetadataer is an optional interface for Fs
+type MkdirMetadataer interface {
+	// MkdirMetadata makes the directory passed in as dir.
+	//
+	// It shouldn't return an error if it already exists.
+	//
+	// If the metadata is not nil it is set.
+	//
+	// It returns the directory that was created.
+	MkdirMetadata(ctx context.Context, dir string, metadata Metadata) (Directory, error)
+}
+
 // ChangeNotifier is an optional interface for Fs
 type ChangeNotifier interface {
 	// ChangeNotify calls the passed function with a path
@@ -576,6 +622,12 @@ type MergeDirser interface {
 	// MergeDirs merges the contents of all the directories passed
 	// in into the first one and rmdirs the other directories.
 	MergeDirs(ctx context.Context, dirs []Directory) error
+}
+
+// DirSetModTimer is an optional interface for Fs
+type DirSetModTimer interface {
+	// DirSetModTime sets the metadata on the directory to set the modification date
+	DirSetModTime(ctx context.Context, dir string, modTime time.Time) error
 }
 
 // CleanUpper is an optional interfaces for Fs

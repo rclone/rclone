@@ -149,6 +149,9 @@ type Opts struct {
 	Trailer               *http.Header // set the request trailer
 	Close                 bool         // set to close the connection after this transaction
 	NoRedirect            bool         // if this is set then the client won't follow redirects
+	// On Redirects, call this function - see the http.Client docs: https://pkg.go.dev/net/http#Client
+	CheckRedirect func(req *http.Request, via []*http.Request) error
+	AuthRedirect  bool // if this is set then the client will redirect with Auth
 }
 
 // Copy creates a copy of the options
@@ -209,6 +212,39 @@ func ClientWithNoRedirects(c *http.Client) *http.Client {
 	return &clientCopy
 }
 
+// Do calls the internal http.Client.Do method
+func (api *Client) Do(req *http.Request) (*http.Response, error) {
+	return api.c.Do(req)
+}
+
+// ClientWithAuthRedirects makes a new http client which will re-apply Auth on redirects
+func ClientWithAuthRedirects(c *http.Client) *http.Client {
+	clientCopy := *c
+	clientCopy.CheckRedirect = func(req *http.Request, via []*http.Request) error {
+		if len(via) >= 10 {
+			return errors.New("stopped after 10 redirects")
+		} else if len(via) == 0 {
+			return nil
+		}
+		prevReq := via[len(via)-1]
+		resp := req.Response
+		if resp == nil {
+			return nil
+		}
+		// Look at previous response to see if it was a redirect and preserve auth if so
+		switch resp.StatusCode {
+		case http.StatusMovedPermanently, http.StatusFound, http.StatusSeeOther, http.StatusTemporaryRedirect, http.StatusPermanentRedirect:
+			// Reapply Auth (if any) from previous request on redirect
+			auth := prevReq.Header.Get("Authorization")
+			if auth != "" {
+				req.Header.Add("Authorization", auth)
+			}
+		}
+		return nil
+	}
+	return &clientCopy
+}
+
 // Call makes the call and returns the http.Response
 //
 // if err == nil then resp.Body will need to be closed unless
@@ -231,7 +267,7 @@ func (api *Client) Call(ctx context.Context, opts *Opts) (resp *http.Response, e
 		return nil, errors.New("RootURL not set")
 	}
 	url += opts.Path
-	if opts.Parameters != nil && len(opts.Parameters) > 0 {
+	if len(opts.Parameters) > 0 {
 		url += "?" + opts.Parameters.Encode()
 	}
 	body := readers.NoCloser(opts.Body)
@@ -299,6 +335,12 @@ func (api *Client) Call(ctx context.Context, opts *Opts) (resp *http.Response, e
 	var c *http.Client
 	if opts.NoRedirect {
 		c = ClientWithNoRedirects(api.c)
+	} else if opts.CheckRedirect != nil {
+		clientCopy := *api.c
+		clientCopy.CheckRedirect = opts.CheckRedirect
+		c = &clientCopy
+	} else if opts.AuthRedirect {
+		c = ClientWithAuthRedirects(api.c)
 	} else {
 		c = api.c
 	}

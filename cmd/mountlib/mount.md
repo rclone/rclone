@@ -1,6 +1,5 @@
-rclone @ allows Linux, FreeBSD, macOS and Windows to
-mount any of Rclone's cloud storage systems as a file system with
-FUSE.
+Rclone @ allows Linux, FreeBSD, macOS and Windows to
+mount any of Rclone's cloud storage systems as a file system with FUSE.
 
 First set up your remote using `rclone config`.  Check it works with `rclone ls` etc.
 
@@ -43,7 +42,9 @@ When running in background mode the user will have to stop the mount manually:
 
     # Linux
     fusermount -u /path/to/local/mount
-    # OS X
+    #... or on some systems
+    fusermount3 -u /path/to/local/mount
+    # OS X or Linux when using nfsmount
     umount /path/to/local/mount
 
 The umount operation can fail, for example when the mountpoint is busy.
@@ -257,7 +258,12 @@ Mounting on macOS can be done either via [built-in NFS server](/commands/rclone_
 FUSE driver utilizing a macOS kernel extension (kext). FUSE-T is an alternative FUSE system
 which "mounts" via an NFSv4 local server.
 
-## NFS mount
+##### Unicode Normalization
+
+It is highly recommended to keep the default of `--no-unicode-normalization=false`
+for all `mount` and `serve` commands on macOS. For details, see [vfs-case-sensitivity](https://rclone.org/commands/rclone_mount/#vfs-case-sensitivity).
+
+#### NFS mount
 
 This method spins up an NFS server using [serve nfs](/commands/rclone_serve_nfs/) command and mounts
 it to the specified mountpoint. If you run this in background mode using |--daemon|, you will need to
@@ -294,15 +300,6 @@ As per the [FUSE-T wiki](https://github.com/macos-fuse-t/fuse-t/wiki#caveats):
 This means that viewing files with various tools, notably macOS Finder, will cause rlcone
 to update the modification time of the file. This may make rclone upload a full new copy
 of the file.
-
-##### Unicode Normalization
-
-Rclone includes flags for unicode normalization with macFUSE that should be updated
-for FUSE-T. See [this forum post](https://forum.rclone.org/t/some-unicode-forms-break-mount-on-macos-with-fuse-t/36403)
-and [FUSE-T issue #16](https://github.com/macos-fuse-t/fuse-t/issues/16). The following
-flag should be added to the `rclone mount` command.
-
-    -o modules=iconv,from_code=UTF-8,to_code=UTF-8
     
 ##### Read Only mounts
 
@@ -391,9 +388,9 @@ Note that systemd runs mount units without any environment variables including
 `PATH` or `HOME`. This means that tilde (`~`) expansion will not work
 and you should provide `--config` and `--cache-dir` explicitly as absolute
 paths via rclone arguments.
-Since mounting requires the `fusermount` program, rclone will use the fallback
-PATH of `/bin:/usr/bin` in this scenario. Please ensure that `fusermount`
-is present on this PATH.
+Since mounting requires the `fusermount` or `fusermount3` program,
+rclone will use the fallback PATH of `/bin:/usr/bin` in this scenario.
+Please ensure that `fusermount`/`fusermount3` is present on this PATH.
 
 ### Rclone as Unix mount helper
 

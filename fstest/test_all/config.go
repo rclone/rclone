@@ -4,12 +4,12 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"path"
+	"slices"
 
 	"github.com/rclone/rclone/fs"
-	yaml "gopkg.in/yaml.v2"
+	yaml "gopkg.in/yaml.v3"
 )
 
 // Test describes an integration test to run with `go test`
@@ -36,6 +36,7 @@ type Backend struct {
 	CleanUp     bool     // when running clean, run cleanup first
 	Ignore      []string // test names to ignore the failure of
 	Tests       []string // paths of tests to run, blank for all
+	IgnoreTests []string // paths of tests not to run, blank for none
 	ListRetries int      // -list-retries if > 0
 	ExtraTime   float64  // factor to multiply the timeout by
 }
@@ -43,15 +44,15 @@ type Backend struct {
 // includeTest returns true if this backend should be included in this
 // test
 func (b *Backend) includeTest(t *Test) bool {
+	// Is this test ignored
+	if slices.Contains(b.IgnoreTests, t.Path) {
+		return false
+	}
+	// Empty b.Tests imples do all of them except the ignored
 	if len(b.Tests) == 0 {
 		return true
 	}
-	for _, testPath := range b.Tests {
-		if testPath == t.Path {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(b.Tests, t.Path)
 }
 
 // MakeRuns creates Run objects the Backend and Test
@@ -65,7 +66,7 @@ func (b *Backend) MakeRuns(t *Test) (runs []*Run) {
 	maxSize := fs.SizeSuffix(0)
 	if b.MaxFile != "" {
 		if err := maxSize.Set(b.MaxFile); err != nil {
-			log.Printf("Invalid maxfile value %q: %v", b.MaxFile, err)
+			fs.Logf(nil, "Invalid maxfile value %q: %v", b.MaxFile, err)
 		}
 	}
 	fastlists := []bool{false}
@@ -152,11 +153,11 @@ func (c *Config) filterBackendsByRemotes(remotes []string) {
 			}
 		}
 		if !found {
-			log.Printf("Remote %q not found - inserting with default flags", name)
+			fs.Logf(nil, "Remote %q not found - inserting with default flags", name)
 			// Lookup which backend
 			fsInfo, _, _, _, err := fs.ConfigFs(name)
 			if err != nil {
-				log.Fatalf("couldn't find remote %q: %v", name, err)
+				fs.Fatalf(nil, "couldn't find remote %q: %v", name, err)
 			}
 			newBackends = append(newBackends, Backend{Backend: fsInfo.FileName(), Remote: name})
 		}

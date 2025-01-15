@@ -88,7 +88,7 @@ func testConfigFile(t *testing.T, options []fs.Option, configFileName string) fu
 func makeReadLine(answers []string) func() string {
 	i := 0
 	return func() string {
-		i = i + 1
+		i++
 		return answers[i-1]
 	}
 }
@@ -110,9 +110,9 @@ func TestCRUD(t *testing.T) {
 	require.NoError(t, config.NewRemote(ctx, "test"))
 
 	assert.Equal(t, []string{"test"}, config.Data().GetSectionList())
-	assert.Equal(t, "config_test_remote", config.FileGet("test", "type"))
-	assert.Equal(t, "true", config.FileGet("test", "bool"))
-	assert.Equal(t, "secret", obscure.MustReveal(config.FileGet("test", "pass")))
+	assert.Equal(t, "config_test_remote", config.GetValue("test", "type"))
+	assert.Equal(t, "true", config.GetValue("test", "bool"))
+	assert.Equal(t, "secret", obscure.MustReveal(config.GetValue("test", "pass")))
 
 	// normal rename, test → asdf
 	config.ReadLine = makeReadLine([]string{
@@ -123,9 +123,9 @@ func TestCRUD(t *testing.T) {
 	config.RenameRemote("test")
 
 	assert.Equal(t, []string{"asdf"}, config.Data().GetSectionList())
-	assert.Equal(t, "config_test_remote", config.FileGet("asdf", "type"))
-	assert.Equal(t, "true", config.FileGet("asdf", "bool"))
-	assert.Equal(t, "secret", obscure.MustReveal(config.FileGet("asdf", "pass")))
+	assert.Equal(t, "config_test_remote", config.GetValue("asdf", "type"))
+	assert.Equal(t, "true", config.GetValue("asdf", "bool"))
+	assert.Equal(t, "secret", obscure.MustReveal(config.GetValue("asdf", "pass")))
 
 	// delete remote
 	config.DeleteRemote("asdf")
@@ -152,8 +152,8 @@ func TestChooseOption(t *testing.T) {
 	}
 	require.NoError(t, config.NewRemote(ctx, "test"))
 
-	assert.Equal(t, "", config.FileGet("test", "bool")) // this is the default now
-	assert.Equal(t, "not very random password", obscure.MustReveal(config.FileGet("test", "pass")))
+	assert.Equal(t, "", config.GetValue("test", "bool")) // this is the default now
+	assert.Equal(t, "not very random password", obscure.MustReveal(config.GetValue("test", "pass")))
 
 	// script for creating remote
 	config.ReadLine = makeReadLine([]string{
@@ -164,8 +164,8 @@ func TestChooseOption(t *testing.T) {
 	})
 	require.NoError(t, config.NewRemote(ctx, "test"))
 
-	assert.Equal(t, "true", config.FileGet("test", "bool"))
-	assert.Equal(t, "", config.FileGet("test", "pass"))
+	assert.Equal(t, "true", config.GetValue("test", "bool"))
+	assert.Equal(t, "", config.GetValue("test", "pass"))
 }
 
 func TestNewRemoteName(t *testing.T) {
@@ -212,9 +212,9 @@ func TestCreateUpdatePasswordRemote(t *testing.T) {
 				require.NoError(t, err)
 
 				assert.Equal(t, []string{"test2"}, config.Data().GetSectionList())
-				assert.Equal(t, "config_test_remote", config.FileGet("test2", "type"))
-				assert.Equal(t, "true", config.FileGet("test2", "bool"))
-				gotPw := config.FileGet("test2", "pass")
+				assert.Equal(t, "config_test_remote", config.GetValue("test2", "type"))
+				assert.Equal(t, "true", config.GetValue("test2", "bool"))
+				gotPw := config.GetValue("test2", "pass")
 				if !noObscure {
 					gotPw = obscure.MustReveal(gotPw)
 				}
@@ -229,9 +229,9 @@ func TestCreateUpdatePasswordRemote(t *testing.T) {
 				require.NoError(t, err)
 
 				assert.Equal(t, []string{"test2"}, config.Data().GetSectionList())
-				assert.Equal(t, "config_test_remote", config.FileGet("test2", "type"))
-				assert.Equal(t, "false", config.FileGet("test2", "bool"))
-				gotPw = config.FileGet("test2", "pass")
+				assert.Equal(t, "config_test_remote", config.GetValue("test2", "type"))
+				assert.Equal(t, "false", config.GetValue("test2", "bool"))
+				gotPw = config.GetValue("test2", "pass")
 				if doObscure {
 					gotPw = obscure.MustReveal(gotPw)
 				}
@@ -242,9 +242,9 @@ func TestCreateUpdatePasswordRemote(t *testing.T) {
 				}))
 
 				assert.Equal(t, []string{"test2"}, config.Data().GetSectionList())
-				assert.Equal(t, "config_test_remote", config.FileGet("test2", "type"))
-				assert.Equal(t, "false", config.FileGet("test2", "bool"))
-				assert.Equal(t, "potato3", obscure.MustReveal(config.FileGet("test2", "pass")))
+				assert.Equal(t, "config_test_remote", config.GetValue("test2", "type"))
+				assert.Equal(t, "false", config.GetValue("test2", "bool"))
+				assert.Equal(t, "potato3", obscure.MustReveal(config.GetValue("test2", "pass")))
 			})
 		}
 	}
@@ -280,10 +280,10 @@ func TestDefaultRequired(t *testing.T) {
 	require.NoError(t, config.NewRemote(ctx, "test"))
 
 	assert.Equal(t, []string{"test"}, config.Data().GetSectionList())
-	assert.Equal(t, "config_test_remote", config.FileGet("test", "type"))
-	assert.Equal(t, "111", config.FileGet("test", "string_required"))
-	assert.Equal(t, "222", config.FileGet("test", "string_default"))
-	assert.Equal(t, "333", config.FileGet("test", "string_required_default"))
+	assert.Equal(t, "config_test_remote", config.GetValue("test", "type"))
+	assert.Equal(t, "111", config.GetValue("test", "string_required"))
+	assert.Equal(t, "222", config.GetValue("test", "string_default"))
+	assert.Equal(t, "333", config.GetValue("test", "string_required_default"))
 
 	// delete remote
 	config.DeleteRemote("test")
@@ -301,10 +301,10 @@ func TestDefaultRequired(t *testing.T) {
 	require.NoError(t, config.NewRemote(ctx, "test"))
 
 	assert.Equal(t, []string{"test"}, config.Data().GetSectionList())
-	assert.Equal(t, "config_test_remote", config.FileGet("test", "type"))
-	assert.Equal(t, "111", config.FileGet("test", "string_required"))
-	assert.Equal(t, "", config.FileGet("test", "string_default"))
-	assert.Equal(t, "", config.FileGet("test", "string_required_default"))
+	assert.Equal(t, "config_test_remote", config.GetValue("test", "type"))
+	assert.Equal(t, "111", config.GetValue("test", "string_required"))
+	assert.Equal(t, "", config.GetValue("test", "string_default"))
+	assert.Equal(t, "", config.GetValue("test", "string_required_default"))
 }
 
 func TestMultipleChoice(t *testing.T) {
@@ -383,11 +383,11 @@ func TestMultipleChoice(t *testing.T) {
 	require.NoError(t, config.NewRemote(ctx, "test"))
 
 	assert.Equal(t, []string{"test"}, config.Data().GetSectionList())
-	assert.Equal(t, "config_test_remote", config.FileGet("test", "type"))
-	assert.Equal(t, "CCC", config.FileGet("test", "multiple_choice"))
-	assert.Equal(t, "CCC", config.FileGet("test", "multiple_choice_required"))
-	assert.Equal(t, "CCC", config.FileGet("test", "multiple_choice_default"))
-	assert.Equal(t, "CCC", config.FileGet("test", "multiple_choice_required_default"))
+	assert.Equal(t, "config_test_remote", config.GetValue("test", "type"))
+	assert.Equal(t, "CCC", config.GetValue("test", "multiple_choice"))
+	assert.Equal(t, "CCC", config.GetValue("test", "multiple_choice_required"))
+	assert.Equal(t, "CCC", config.GetValue("test", "multiple_choice_default"))
+	assert.Equal(t, "CCC", config.GetValue("test", "multiple_choice_required_default"))
 
 	// delete remote
 	config.DeleteRemote("test")
@@ -405,11 +405,11 @@ func TestMultipleChoice(t *testing.T) {
 	require.NoError(t, config.NewRemote(ctx, "test"))
 
 	assert.Equal(t, []string{"test"}, config.Data().GetSectionList())
-	assert.Equal(t, "config_test_remote", config.FileGet("test", "type"))
-	assert.Equal(t, "XXX", config.FileGet("test", "multiple_choice"))
-	assert.Equal(t, "XXX", config.FileGet("test", "multiple_choice_required"))
-	assert.Equal(t, "XXX", config.FileGet("test", "multiple_choice_default"))
-	assert.Equal(t, "XXX", config.FileGet("test", "multiple_choice_required_default"))
+	assert.Equal(t, "config_test_remote", config.GetValue("test", "type"))
+	assert.Equal(t, "XXX", config.GetValue("test", "multiple_choice"))
+	assert.Equal(t, "XXX", config.GetValue("test", "multiple_choice_required"))
+	assert.Equal(t, "XXX", config.GetValue("test", "multiple_choice_default"))
+	assert.Equal(t, "XXX", config.GetValue("test", "multiple_choice_required_default"))
 
 	// delete remote
 	config.DeleteRemote("test")
@@ -428,11 +428,11 @@ func TestMultipleChoice(t *testing.T) {
 	require.NoError(t, config.NewRemote(ctx, "test"))
 
 	assert.Equal(t, []string{"test"}, config.Data().GetSectionList())
-	assert.Equal(t, "config_test_remote", config.FileGet("test", "type"))
-	assert.Equal(t, "", config.FileGet("test", "multiple_choice"))
-	assert.Equal(t, "XXX", config.FileGet("test", "multiple_choice_required"))
-	assert.Equal(t, "", config.FileGet("test", "multiple_choice_default"))
-	assert.Equal(t, "", config.FileGet("test", "multiple_choice_required_default"))
+	assert.Equal(t, "config_test_remote", config.GetValue("test", "type"))
+	assert.Equal(t, "", config.GetValue("test", "multiple_choice"))
+	assert.Equal(t, "XXX", config.GetValue("test", "multiple_choice_required"))
+	assert.Equal(t, "", config.GetValue("test", "multiple_choice_default"))
+	assert.Equal(t, "", config.GetValue("test", "multiple_choice_required_default"))
 }
 
 func TestMultipleChoiceExclusive(t *testing.T) {
@@ -483,9 +483,9 @@ func TestMultipleChoiceExclusive(t *testing.T) {
 	require.NoError(t, config.NewRemote(ctx, "test"))
 
 	assert.Equal(t, []string{"test"}, config.Data().GetSectionList())
-	assert.Equal(t, "config_test_remote", config.FileGet("test", "type"))
-	assert.Equal(t, "", config.FileGet("test", "multiple_choice_exclusive"))
-	assert.Equal(t, "", config.FileGet("test", "multiple_choice_exclusive_default"))
+	assert.Equal(t, "config_test_remote", config.GetValue("test", "type"))
+	assert.Equal(t, "", config.GetValue("test", "multiple_choice_exclusive"))
+	assert.Equal(t, "", config.GetValue("test", "multiple_choice_exclusive_default"))
 }
 
 func TestMultipleChoiceExclusiveRequired(t *testing.T) {
@@ -539,7 +539,7 @@ func TestMultipleChoiceExclusiveRequired(t *testing.T) {
 	require.NoError(t, config.NewRemote(ctx, "test"))
 
 	assert.Equal(t, []string{"test"}, config.Data().GetSectionList())
-	assert.Equal(t, "config_test_remote", config.FileGet("test", "type"))
-	assert.Equal(t, "CCC", config.FileGet("test", "multiple_choice_exclusive_required"))
-	assert.Equal(t, "", config.FileGet("test", "multiple_choice_exclusive_required_default"))
+	assert.Equal(t, "config_test_remote", config.GetValue("test", "type"))
+	assert.Equal(t, "CCC", config.GetValue("test", "multiple_choice_exclusive_required"))
+	assert.Equal(t, "", config.GetValue("test", "multiple_choice_exclusive_required_default"))
 }

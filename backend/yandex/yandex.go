@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"net/url"
 	"path"
@@ -23,12 +22,13 @@ import (
 	"github.com/rclone/rclone/fs/config/obscure"
 	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/fs/hash"
+	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/lib/encoder"
 	"github.com/rclone/rclone/lib/oauthutil"
 	"github.com/rclone/rclone/lib/pacer"
+	"github.com/rclone/rclone/lib/random"
 	"github.com/rclone/rclone/lib/readers"
 	"github.com/rclone/rclone/lib/rest"
-	"golang.org/x/oauth2"
 )
 
 // oAuth
@@ -39,16 +39,16 @@ const (
 	minSleep                    = 10 * time.Millisecond
 	maxSleep                    = 2 * time.Second // may needs to be increased, testing needed
 	decayConstant               = 2               // bigger for slower decay, exponential
+
+	userAgentTemplae = `Yandex.Disk {"os":"windows","dtype":"ydisk3","vsn":"3.2.37.4977","id":"6BD01244C7A94456BBCEE7EEC990AEAD","id2":"0F370CD40C594A4783BC839C846B999C","session_id":"%s"}`
 )
 
 // Globals
 var (
 	// Description of how to auth for this app
-	oauthConfig = &oauth2.Config{
-		Endpoint: oauth2.Endpoint{
-			AuthURL:  "https://oauth.yandex.com/authorize", //same as https://oauth.yandex.ru/authorize
-			TokenURL: "https://oauth.yandex.com/token",     //same as https://oauth.yandex.ru/token
-		},
+	oauthConfig = &oauthutil.Config{
+		AuthURL:      "https://oauth.yandex.com/authorize", //same as https://oauth.yandex.ru/authorize
+		TokenURL:     "https://oauth.yandex.com/token",     //same as https://oauth.yandex.ru/token
 		ClientID:     rcloneClientID,
 		ClientSecret: obscure.MustReveal(rcloneEncryptedClientSecret),
 		RedirectURL:  oauthutil.RedirectURL,
@@ -79,15 +79,22 @@ func init() {
 			// it doesn't seem worth making an exception for this
 			Default: (encoder.Display |
 				encoder.EncodeInvalidUtf8),
+		}, {
+			Name:     "spoof_ua",
+			Help:     "Set the user agent to match an official version of the yandex disk client. May help with upload performance.",
+			Default:  true,
+			Advanced: true,
+			Hide:     fs.OptionHideConfigurator,
 		}}...),
 	})
 }
 
 // Options defines the configuration for this backend
 type Options struct {
-	Token      string               `config:"token"`
-	HardDelete bool                 `config:"hard_delete"`
-	Enc        encoder.MultiEncoder `config:"encoding"`
+	Token          string               `config:"token"`
+	HardDelete     bool                 `config:"hard_delete"`
+	Enc            encoder.MultiEncoder `config:"encoding"`
+	SpoofUserAgent bool                 `config:"spoof_ua"`
 }
 
 // Fs represents a remote yandex
@@ -254,6 +261,12 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		return nil, err
 	}
 
+	ctx, ci := fs.AddConfig(ctx)
+	if fs.ConfigOptionsInfo.Get("user_agent").IsDefault() && opt.SpoofUserAgent {
+		randomSessionID, _ := random.Password(128)
+		ci.UserAgent = fmt.Sprintf(userAgentTemplae, randomSessionID)
+	}
+
 	token, err := oauthutil.GetToken(name, m)
 	if err != nil {
 		return nil, fmt.Errorf("couldn't read OAuth token: %w", err)
@@ -267,14 +280,13 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		if err != nil {
 			return nil, fmt.Errorf("couldn't save OAuth token: %w", err)
 		}
-		log.Printf("Automatically upgraded OAuth config.")
+		fs.Logf(nil, "Automatically upgraded OAuth config.")
 	}
 	oAuthClient, _, err := oauthutil.NewClient(ctx, name, m, oauthConfig)
 	if err != nil {
 		return nil, fmt.Errorf("failed to configure Yandex: %w", err)
 	}
 
-	ci := fs.GetConfig(ctx)
 	f := &Fs{
 		name:  name,
 		opt:   *opt,
@@ -296,16 +308,14 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	//request object meta info
 	if info, err := f.readMetaDataForPath(ctx, f.diskRoot, &api.ResourceInfoRequestOptions{}); err != nil {
 
-	} else {
-		if info.ResourceType == "file" {
-			rootDir := path.Dir(root)
-			if rootDir == "." {
-				rootDir = ""
-			}
-			f.setRoot(rootDir)
-			// return an error with an fs which points to the parent
-			return f, fs.ErrorIsFile
+	} else if info.ResourceType == "file" {
+		rootDir := path.Dir(root)
+		if rootDir == "." {
+			rootDir = ""
 		}
+		f.setRoot(rootDir)
+		// return an error with an fs which points to the parent
+		return f, fs.ErrorIsFile
 	}
 	return f, nil
 }
@@ -701,7 +711,7 @@ func (f *Fs) copyOrMove(ctx context.Context, method, src, dst string, overwrite 
 // Will only be called if src.Fs().Name() == f.Name()
 //
 // If it isn't possible then return fs.ErrorCantCopy
-func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
+func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (dst fs.Object, err error) {
 	srcObj, ok := src.(*Object)
 	if !ok {
 		fs.Debugf(src, "Can't copy - not same remote type")
@@ -709,12 +719,21 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	}
 
 	dstPath := f.filePath(remote)
-	err := f.mkParentDirs(ctx, dstPath)
+	err = f.mkParentDirs(ctx, dstPath)
 	if err != nil {
 		return nil, err
 	}
-	err = f.copyOrMove(ctx, "copy", srcObj.filePath(), dstPath, false)
 
+	// Find and remove existing object
+	//
+	// Note that the overwrite flag doesn't seem to work for server side copy
+	cleanup, err := operations.RemoveExisting(ctx, f, remote, "server side copy")
+	if err != nil {
+		return nil, err
+	}
+	defer cleanup(&err)
+
+	err = f.copyOrMove(ctx, "copy", srcObj.filePath(), dstPath, false)
 	if err != nil {
 		return nil, fmt.Errorf("couldn't copy file: %w", err)
 	}

@@ -664,6 +664,17 @@ Properties:
 - Type:        Duration
 - Default:     1s
 
+#### --cache-description
+
+Description of the remote.
+
+Properties:
+
+- Config:      description
+- Env Var:     RCLONE_CACHE_DESCRIPTION
+- Type:        string
+- Required:    false
+
 ## Backend commands
 
 Here are the commands specific to the cache backend.

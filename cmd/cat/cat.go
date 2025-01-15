@@ -4,11 +4,11 @@ package cat
 import (
 	"context"
 	"io"
-	"log"
 	"os"
 	"strings"
 
 	"github.com/rclone/rclone/cmd"
+	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config/flags"
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/spf13/cobra"
@@ -39,8 +39,7 @@ var commandDefinition = &cobra.Command{
 	Use:   "cat remote:path",
 	Short: `Concatenates any files and sends them to stdout.`,
 	// Warning! "|" will be replaced by backticks below
-	Long: strings.ReplaceAll(`
-rclone cat sends any files to standard output.
+	Long: strings.ReplaceAll(`Sends any files to standard output.
 
 You can use it like this to output a single file
 
@@ -80,7 +79,7 @@ files, use:
 		usedHead := head > 0
 		usedTail := tail > 0
 		if usedHead && usedTail || usedHead && usedOffset || usedTail && usedOffset {
-			log.Fatalf("Can only use one of  --head, --tail or --offset with --count")
+			fs.Fatalf(nil, "Can only use one of  --head, --tail or --offset with --count")
 		}
 		if head > 0 {
 			offset = 0

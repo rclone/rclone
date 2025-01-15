@@ -124,8 +124,8 @@ func (c *Cache) Unpin(key string) {
 	c.addPin(key, -1)
 }
 
-// Put puts a value named key into the cache
-func (c *Cache) Put(key string, value interface{}) {
+// PutErr puts a value named key with err into the cache
+func (c *Cache) PutErr(key string, value interface{}, err error) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	if c.noCache() {
@@ -134,9 +134,15 @@ func (c *Cache) Put(key string, value interface{}) {
 	entry := &cacheEntry{
 		value: value,
 		key:   key,
+		err:   err,
 	}
 	c.used(entry)
 	c.cache[key] = entry
+}
+
+// Put puts a value named key into the cache
+func (c *Cache) Put(key string, value interface{}) {
+	c.PutErr(key, value, nil)
 }
 
 // GetMaybe returns the key and true if found, nil and false if not
@@ -253,4 +259,20 @@ func (c *Cache) SetFinalizer(finalize func(interface{})) {
 	c.mu.Lock()
 	c.finalize = finalize
 	c.mu.Unlock()
+}
+
+// EntriesWithPinCount returns the number of pinned and unpinned entries in the cache
+//
+// Each entry is counted only once, regardless of entry.pinCount
+func (c *Cache) EntriesWithPinCount() (pinned, unpinned int) {
+	c.mu.Lock()
+	for _, entry := range c.cache {
+		if entry.pinCount <= 0 {
+			unpinned++
+		} else {
+			pinned++
+		}
+	}
+	c.mu.Unlock()
+	return pinned, unpinned
 }

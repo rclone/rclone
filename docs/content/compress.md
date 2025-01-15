@@ -158,6 +158,17 @@ Properties:
 - Type:        SizeSuffix
 - Default:     20Mi
 
+#### --compress-description
+
+Description of the remote.
+
+Properties:
+
+- Config:      description
+- Env Var:     RCLONE_COMPRESS_DESCRIPTION
+- Type:        string
+- Required:    false
+
 ### Metadata
 
 Any metadata supported by the underlying remote is read and written.

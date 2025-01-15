@@ -62,9 +62,10 @@ const (
 
 var (
 	// Description of how to auth for this app
-	storageConfig = &oauth2.Config{
+	storageConfig = &oauthutil.Config{
 		Scopes:       []string{storage.DevstorageReadWriteScope},
-		Endpoint:     google.Endpoint,
+		AuthURL:      google.Endpoint.AuthURL,
+		TokenURL:     google.Endpoint.TokenURL,
 		ClientID:     rcloneClientID,
 		ClientSecret: obscure.MustReveal(rcloneEncryptedClientSecret),
 		RedirectURL:  oauthutil.RedirectURL,
@@ -106,6 +107,12 @@ func init() {
 			Help:      "Service Account Credentials JSON blob.\n\nLeave blank normally.\nNeeded only if you want use SA instead of interactive login.",
 			Hide:      fs.OptionHideBoth,
 			Sensitive: true,
+		}, {
+			Name:      "access_token",
+			Help:      "Short-lived access token.\n\nLeave blank normally.\nNeeded only if you want use short-lived access token instead of interactive login.",
+			Hide:      fs.OptionHideConfigurator,
+			Sensitive: true,
+			Advanced:  true,
 		}, {
 			Name:    "anonymous",
 			Help:    "Access public buckets and objects without credentials.\n\nSet to 'true' if you just want to download files and don't configure credentials.",
@@ -379,6 +386,7 @@ type Options struct {
 	Enc                       encoder.MultiEncoder `config:"encoding"`
 	EnvAuth                   bool                 `config:"env_auth"`
 	DirectoryMarkers          bool                 `config:"directory_markers"`
+	AccessToken               string               `config:"access_token"`
 }
 
 // Fs represents a remote storage server
@@ -535,6 +543,9 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		if err != nil {
 			return nil, fmt.Errorf("failed to configure Google Cloud Storage: %w", err)
 		}
+	} else if opt.AccessToken != "" {
+		ts := oauth2.Token{AccessToken: opt.AccessToken}
+		oAuthClient = oauth2.NewClient(ctx, oauth2.StaticTokenSource(&ts))
 	} else {
 		oAuthClient, _, err = oauthutil.NewClient(ctx, name, m, storageConfig)
 		if err != nil {
@@ -697,7 +708,7 @@ func (f *Fs) list(ctx context.Context, bucket, directory, prefix string, addBuck
 			// is this a directory marker?
 			if isDirectory {
 				// Don't insert the root directory
-				if remote == directory {
+				if remote == f.opt.Enc.ToStandardPath(directory) {
 					continue
 				}
 				// process directory markers as directories
@@ -944,7 +955,6 @@ func (f *Fs) Mkdir(ctx context.Context, dir string) (err error) {
 		return e
 	}
 	return f.createDirectoryMarker(ctx, bucket, dir)
-
 }
 
 // mkdirParent creates the parent bucket/directory if it doesn't exist
