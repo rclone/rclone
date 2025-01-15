@@ -459,7 +459,7 @@ func Run(t *testing.T, opt *Opt) {
 	subRemoteName, subRemoteLeaf, err = fstest.RandomRemoteName(remoteName)
 	require.NoError(t, err)
 	f, err = fs.NewFs(context.Background(), subRemoteName)
-	if err == fs.ErrorNotFoundInConfigFile {
+	if errors.Is(err, fs.ErrorNotFoundInConfigFile) {
 		t.Logf("Didn't find %q in config file - skipping tests", remoteName)
 		return
 	}
