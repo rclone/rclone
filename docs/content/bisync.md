@@ -487,7 +487,7 @@ See the [bisync filters](#filtering) section and generic
 [--filter-from](/filtering/#filter-from-read-filtering-patterns-from-a-file)
 documentation.
 An [example filters file](#example-filters-file) contains filters for
-non-allowed files for synching with Dropbox.
+non-allowed files for syncing with Dropbox.
 
 If you make changes to your filters file then bisync requires a run
 with `--resync`. This is a safety feature, which prevents existing files
@@ -664,7 +664,7 @@ Using `--check-sync=false` will disable it and may significantly reduce the
 sync run times for very large numbers of files.
 
 The check may be run manually with `--check-sync=only`. It runs only the
-integrity check and terminates without actually synching.
+integrity check and terminates without actually syncing.
 
 Note that currently, `--check-sync` **only checks listing snapshots and NOT the
 actual files on the remotes.** Note also that the listing snapshots will not
@@ -1141,7 +1141,7 @@ The `--include*`, `--exclude*`, and `--filter` flags are also supported.
 
 ### How to filter directories
 
-Filtering portions of the directory tree is a critical feature for synching.
+Filtering portions of the directory tree is a critical feature for syncing.
 
 Examples of directory trees (always beneath the Path1/Path2 root level)
 you may want to exclude from your sync:
@@ -1250,7 +1250,7 @@ quashed by adding `--quiet` to the bisync command line.
 
 ## Example exclude-style filters files for use with Dropbox {#exclude-filters}
 
-- Dropbox disallows synching the listed temporary and configuration/data files.
+- Dropbox disallows syncing the listed temporary and configuration/data files.
   The `- <filename>` filters exclude these files where ever they may occur
   in the sync tree. Consider adding similar exclusions for file types
   you don't need to sync, such as core dump and software build files.
@@ -1584,7 +1584,7 @@ test command flags can be equally prefixed by a single `-` or double dash.
 
 - `go test . -case basic -remote local -remote2 local`
   runs the `test_basic` test case using only the local filesystem,
-  synching one local directory with another local directory.
+  syncing one local directory with another local directory.
   Test script output is to the console, while commands within scenario.txt
   have their output sent to the `.../workdir/test.log` file,
   which is finally compared to the golden copy.

@@ -218,7 +218,7 @@ func (b *bisyncRun) setFromCompareFlag(ctx context.Context) error {
 	if b.opt.CompareFlag == "" {
 		return nil
 	}
-	var CompareFlag CompareOpt // for exlcusions
+	var CompareFlag CompareOpt // for exclusions
 	opts := strings.Split(b.opt.CompareFlag, ",")
 	for _, opt := range opts {
 		switch strings.ToLower(strings.TrimSpace(opt)) {

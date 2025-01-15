@@ -424,7 +424,7 @@ func (f *Fs) newSingleConnClient(ctx context.Context) (*rest.Client, error) {
 	})
 	// Set our own http client in the context
 	ctx = oauthutil.Context(ctx, baseClient)
-	// create a new oauth client, re-use the token source
+	// create a new oauth client, reuse the token source
 	oAuthClient := oauth2.NewClient(ctx, f.ts)
 	return rest.NewClient(oAuthClient).SetRoot("https://" + f.opt.Hostname), nil
 }
