@@ -95,7 +95,7 @@ func LogValueHide(key string, value interface{}) LogValueItem {
 	return LogValueItem{key: key, value: value, render: false}
 }
 
-// String returns the representation of value. If render is fals this
+// String returns the representation of value. If render is false this
 // is an empty string so LogValueItem entries won't show in the
 // textual representation of logs.
 func (j LogValueItem) String() string {

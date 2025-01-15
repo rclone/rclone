@@ -3344,7 +3344,7 @@ func setQuirks(opt *Options) {
 		listObjectsV2         = true // Always use ListObjectsV2 instead of ListObjects
 		virtualHostStyle      = true // Use bucket.provider.com instead of putting the bucket in the URL
 		urlEncodeListings     = true // URL encode the listings to help with control characters
-		useMultipartEtag      = true // Set if Etags for multpart uploads are compatible with AWS
+		useMultipartEtag      = true // Set if Etags for multipart uploads are compatible with AWS
 		useAcceptEncodingGzip = true // Set Accept-Encoding: gzip
 		mightGzip             = true // assume all providers might use content encoding gzip until proven otherwise
 		useAlreadyExists      = true // Set if provider returns AlreadyOwnedByYou or no error if you try to remake your own bucket
@@ -6057,7 +6057,7 @@ func (f *Fs) OpenChunkWriter(ctx context.Context, remote string, src fs.ObjectIn
 			if mOut == nil {
 				err = fserrors.RetryErrorf("internal error: no info from multipart upload")
 			} else if mOut.UploadId == nil {
-				err = fserrors.RetryErrorf("internal error: no UploadId in multpart upload: %#v", *mOut)
+				err = fserrors.RetryErrorf("internal error: no UploadId in multipart upload: %#v", *mOut)
 			}
 		}
 		return f.shouldRetry(ctx, err)
