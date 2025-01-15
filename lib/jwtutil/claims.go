@@ -1,18 +1,18 @@
 package jwtutil
 
 import (
-	"crypto/subtle"
-	"fmt"
 	"time"
 
-	"github.com/golang-jwt/jwt/v4"
+	"github.com/golang-jwt/jwt/v5"
 )
 
-// The following is the StandardClaims implementation from jwt-go v4,
-// where it was marked as deprecated before removed in v5. Some small
-// adjustments the original code have been made, to satisfy linters etc.
-// The type has also been renamed to LegacyStandardClaims to avoid confusion.
-// Source: https://github.com/golang-jwt/jwt/blob/v4/claims.go
+// The following is the declaration of the StandardClaims type from jwt-go v4
+// (https://github.com/golang-jwt/jwt/blob/v4/claims.go), where it was marked
+// as deprecated before later removed in v5. It was distributed under the terms
+// of the MIT License (https://github.com/golang-jwt/jwt/blob/v4/LICENSE), with
+// the copy right notice included below. We have renamed the type to
+// LegacyStandardClaims to avoid confusion, and made it compatible with
+// jwt-go v5 by implementing functions to satisfy the changed Claims interface.
 
 // Copyright (c) 2012 Dave Grijalva
 // Copyright (c) 2021 golang-jwt maintainers
@@ -53,132 +53,32 @@ type LegacyStandardClaims struct {
 	Subject   string `json:"sub,omitempty"`
 }
 
-// Valid validates time based claims "exp, iat, nbf". There is no accounting for clock skew.
-// As well, if any of the above claims are not in the token, it will still
-// be considered a valid claim.
-func (c LegacyStandardClaims) Valid() error {
-	vErr := new(jwt.ValidationError)
-	now := jwt.TimeFunc().Unix()
-
-	// The claims below are optional, by default, so if they are set to the
-	// default value in Go, let's not fail the verification for them.
-	if !c.VerifyExpiresAt(now, false) {
-		delta := time.Unix(now, 0).Sub(time.Unix(c.ExpiresAt, 0))
-		vErr.Inner = fmt.Errorf("%s by %s", jwt.ErrTokenExpired, delta)
-		vErr.Errors |= jwt.ValidationErrorExpired
-	}
-
-	if !c.VerifyIssuedAt(now, false) {
-		vErr.Inner = jwt.ErrTokenUsedBeforeIssued
-		vErr.Errors |= jwt.ValidationErrorIssuedAt
-	}
-
-	if !c.VerifyNotBefore(now, false) {
-		vErr.Inner = jwt.ErrTokenNotValidYet
-		vErr.Errors |= jwt.ValidationErrorNotValidYet
-	}
-
-	if vErr.Errors == 0 {
-		return nil
-	}
-
-	return vErr
+// GetExpirationTime implements the Claims interface.
+func (c LegacyStandardClaims) GetExpirationTime() (*jwt.NumericDate, error) {
+	return jwt.NewNumericDate(time.Unix(c.ExpiresAt, 0)), nil
 }
 
-// VerifyAudience compares the aud claim against cmp.
-// If required is false, this method will return true if the value matches or is unset
-func (c *LegacyStandardClaims) VerifyAudience(cmp string, req bool) bool {
-	return verifyAud([]string{c.Audience}, cmp, req)
+// GetIssuedAt implements the Claims interface.
+func (c LegacyStandardClaims) GetIssuedAt() (*jwt.NumericDate, error) {
+	return jwt.NewNumericDate(time.Unix(c.IssuedAt, 0)), nil
 }
 
-// VerifyExpiresAt compares the exp claim against cmp (cmp < exp).
-// If req is false, it will return true, if exp is unset.
-func (c *LegacyStandardClaims) VerifyExpiresAt(cmp int64, req bool) bool {
-	if c.ExpiresAt == 0 {
-		return verifyExp(nil, time.Unix(cmp, 0), req)
-	}
-
-	t := time.Unix(c.ExpiresAt, 0)
-	return verifyExp(&t, time.Unix(cmp, 0), req)
+// GetNotBefore implements the Claims interface.
+func (c LegacyStandardClaims) GetNotBefore() (*jwt.NumericDate, error) {
+	return jwt.NewNumericDate(time.Unix(c.NotBefore, 0)), nil
 }
 
-// VerifyIssuedAt compares the iat claim against cmp (cmp >= iat).
-// If req is false, it will return true, if iat is unset.
-func (c *LegacyStandardClaims) VerifyIssuedAt(cmp int64, req bool) bool {
-	if c.IssuedAt == 0 {
-		return verifyIat(nil, time.Unix(cmp, 0), req)
-	}
-
-	t := time.Unix(c.IssuedAt, 0)
-	return verifyIat(&t, time.Unix(cmp, 0), req)
+// GetIssuer implements the Claims interface.
+func (c LegacyStandardClaims) GetIssuer() (string, error) {
+	return c.Issuer, nil
 }
 
-// VerifyNotBefore compares the nbf claim against cmp (cmp >= nbf).
-// If req is false, it will return true, if nbf is unset.
-func (c *LegacyStandardClaims) VerifyNotBefore(cmp int64, req bool) bool {
-	if c.NotBefore == 0 {
-		return verifyNbf(nil, time.Unix(cmp, 0), req)
-	}
-
-	t := time.Unix(c.NotBefore, 0)
-	return verifyNbf(&t, time.Unix(cmp, 0), req)
+// GetSubject implements the Claims interface.
+func (c LegacyStandardClaims) GetSubject() (string, error) {
+	return c.Subject, nil
 }
 
-// VerifyIssuer compares the iss claim against cmp.
-// If required is false, this method will return true if the value matches or is unset
-func (c *LegacyStandardClaims) VerifyIssuer(cmp string, req bool) bool {
-	return verifyIss(c.Issuer, cmp, req)
-}
-
-// ----- helpers
-
-func verifyAud(aud []string, cmp string, required bool) bool {
-	if len(aud) == 0 {
-		return !required
-	}
-	// use a var here to keep constant time compare when looping over a number of claims
-	result := false
-
-	var stringClaims string
-	for _, a := range aud {
-		if subtle.ConstantTimeCompare([]byte(a), []byte(cmp)) != 0 {
-			result = true
-		}
-		stringClaims += a
-	}
-
-	// case where "" is sent in one or many aud claims
-	if len(stringClaims) == 0 {
-		return !required
-	}
-
-	return result
-}
-
-func verifyExp(exp *time.Time, now time.Time, required bool) bool {
-	if exp == nil {
-		return !required
-	}
-	return now.Before(*exp)
-}
-
-func verifyIat(iat *time.Time, now time.Time, required bool) bool {
-	if iat == nil {
-		return !required
-	}
-	return now.After(*iat) || now.Equal(*iat)
-}
-
-func verifyNbf(nbf *time.Time, now time.Time, required bool) bool {
-	if nbf == nil {
-		return !required
-	}
-	return now.After(*nbf) || now.Equal(*nbf)
-}
-
-func verifyIss(iss string, cmp string, required bool) bool {
-	if iss == "" {
-		return !required
-	}
-	return subtle.ConstantTimeCompare([]byte(iss), []byte(cmp)) != 0
+// GetAudience implements the Claims interface.
+func (c LegacyStandardClaims) GetAudience() (jwt.ClaimStrings, error) {
+	return []string{c.Audience}, nil
 }
