@@ -1,6 +1,6 @@
 test resync
 # 1. Resync with empty Path1, resulting in copying all content FROM Path2
-# 2. Resync with empty Path2, resulting in synching all content TO Path2
+# 2. Resync with empty Path2, resulting in syncing all content TO Path2
 # 3. Exercise all of the various file difference scenarios during a resync:
 #    File       Path1       Path2           Expected action     Who wins
 #  - file1.txt  Exists      Missing         Sync Path1 >Path2   Path1
@@ -17,7 +17,7 @@ purge-children {path1/}
 bisync resync
 move-listings empty-path1
 
-test 2. resync with empty path2, resulting in synching all content to path2.
+test 2. resync with empty path2, resulting in syncing all content to path2.
 purge-children {path2/}
 bisync resync
 move-listings empty-path2

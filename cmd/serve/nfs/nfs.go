@@ -145,7 +145,7 @@ that it uses an on disk cache, but the cache entries are held as
 symlinks. Rclone will use the handle of the underlying file as the NFS
 handle which improves performance. This sort of cache can't be backed
 up and restored as the underlying handles will change. This is Linux
-only. It requres running rclone as root or with |CAP_DAC_READ_SEARCH|.
+only. It requires running rclone as root or with |CAP_DAC_READ_SEARCH|.
 You can run rclone with this extra permission by doing this to the
 rclone binary |sudo setcap cap_dac_read_search+ep /path/to/rclone|.
 

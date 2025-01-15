@@ -19,7 +19,7 @@ func (b *s3Backend) entryListR(_vfs *vfs.VFS, bucket, fdPath, name string, addPr
 	for _, entry := range dirEntries {
 		object := entry.Name()
 
-		// workround for control-chars detect
+		// workaround for control-chars detect
 		objectPath := path.Join(fdPath, object)
 
 		if !strings.HasPrefix(object, name) {

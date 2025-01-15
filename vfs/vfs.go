@@ -216,7 +216,7 @@ func New(f fs.Fs, opt *vfscommon.Options) *VFS {
 	configName := fs.ConfigString(f)
 	for _, activeVFS := range active[configName] {
 		if vfs.Opt == activeVFS.Opt {
-			fs.Debugf(f, "Re-using VFS from active cache")
+			fs.Debugf(f, "Reusing VFS from active cache")
 			activeVFS.inUse.Add(1)
 			return activeVFS
 		}

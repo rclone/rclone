@@ -2391,7 +2391,7 @@ func Run(t *testing.T, opt *Opt) {
 					var itemCopy = item
 					itemCopy.Path += ".copy"
 
-					// Set copy cutoff to mininum value so we make chunks
+					// Set copy cutoff to minimum value so we make chunks
 					origCutoff, err := do.SetCopyCutoff(minChunkSize)
 					require.NoError(t, err)
 					defer func() {

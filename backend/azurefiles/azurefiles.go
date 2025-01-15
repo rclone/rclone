@@ -899,7 +899,7 @@ func (o *Object) getMetadata(ctx context.Context) error {
 
 // Hash returns the MD5 of an object returning a lowercase hex string
 //
-// May make a network request becaue the [fs.List] method does not
+// May make a network request because the [fs.List] method does not
 // return MD5 hashes for DirEntry
 func (o *Object) Hash(ctx context.Context, ty hash.Type) (string, error) {
 	if ty != hash.MD5 {
