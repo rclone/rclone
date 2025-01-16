@@ -324,7 +324,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 			_, err := f.fetchMetadataForPath(ctx, resolvedRoot, api.HiDriveObjectNoMetadataFields)
 			return err
 		}
-		f.tokenRenewer = oauthutil.NewRenew(f.String(), ts, transaction)
+		f.tokenRenewer = oauthutil.NewRenewOnExpiry(f.String(), ts, transaction)
 	}
 
 	// Do not allow the root-prefix to be nonexistent nor a directory,
