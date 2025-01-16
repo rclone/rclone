@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/cache"
 	"github.com/rclone/rclone/fs/config/configmap"
@@ -24,6 +25,11 @@ import (
 // Errors
 var (
 	errorMetaTooBig = errors.New("metadata file is too big")
+)
+
+const (
+	dirIDC9r       = "dir.c9r"
+	dirIDBackupC9r = "dirid.c9r"
 )
 
 // Register with Fs
@@ -87,6 +93,16 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		return nil, err
 	}
 
+	// Make sure the root directory exists
+	rootDirID, err := f.dirIDPath("")
+	if err != nil {
+		return nil, fmt.Errorf("failed to encrypt root dir id: %w", err)
+	}
+	err = f.wrapped.Mkdir(ctx, rootDirID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create root dir at %q: %s", rootDirID, err)
+	}
+
 	f.dirCache = dircache.New(root, "", f)
 	err = f.dirCache.FindRoot(ctx, false)
 	if err != nil {
@@ -104,7 +120,6 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 
 		_, err := tempF.NewObject(ctx, remote)
 		if err != nil {
-			fs.Logf(f, "error!!! %q", err)
 			if err == fs.ErrorObjectNotFound {
 				// File doesn't exist so return old f
 				return f, nil
@@ -178,7 +193,7 @@ func (f *Fs) Features() *fs.Features {
 	return f.features
 }
 
-// -------- fs.Fs
+// -------- Directories
 
 // List the objects and directories in dir into entries.  The
 // entries can be returned in any order but should be for a
@@ -192,9 +207,9 @@ func (f *Fs) Features() *fs.Features {
 func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err error) {
 	dirID, err := f.dirCache.FindDir(ctx, dir, false)
 	if err != nil {
-		return nil, fmt.Errorf("failed to find ID for directory %q: %w", dir, err)
+		return nil, err
 	}
-	dirPath, err := f.encryptedPathForDirID(dirID)
+	dirPath, err := f.dirIDPath(dirID)
 	if err != nil {
 		return nil, err
 	}
@@ -238,84 +253,19 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 	return
 }
 
-// NewObject finds the Object at remote.  If it can't be found
-// it returns the error ErrorObjectNotFound.
-//
-// If remote points to a directory then it should return
-// ErrorIsDir if possible without doing any extra work,
-// otherwise ErrorObjectNotFound.
-func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
-	leaf, dirID, err := f.dirCache.FindPath(ctx, remote, false)
-	if err != nil {
-		return nil, fmt.Errorf("failed to find ID for directory of file %q: %w", remote, err)
-	}
-	dirPath, err := f.encryptedPathForDirID(dirID)
-	if err != nil {
-		return nil, err
-	}
-	encryptedFilename, err := f.EncryptFilename(leaf, dirID)
-	if err != nil {
-		return nil, err
-	}
-	encryptedPath := path.Join(dirPath, encryptedFilename+".c9r")
-	wrappedObj, err := f.wrapped.NewObject(ctx, encryptedPath)
-	if err != nil {
-		return nil, err
-	}
-	return &Object{
-		Object: wrappedObj,
-		fs:     f,
-		remote: remote,
-	}, nil
-}
-
-// Rmdir removes the directory (container, bucket) if empty
-//
-// Return an error if it doesn't exist or isn't empty
-func (f *Fs) Rmdir(ctx context.Context, dir string) error {
-	return fmt.Errorf("TODO implement Fs.Rmdir")
-}
-
-// Mkdir makes the directory (container, bucket)
-//
-// Shouldn't return an error if it already exists
-func (f *Fs) Mkdir(ctx context.Context, dir string) error {
-	return fmt.Errorf("TODO implement Fs.Mkdir")
-}
-
-// Put in to the remote path with the modTime given of the given size
-//
-// When called from outside an Fs by rclone, src.Size() will always be >= 0.
-// But for unknown-sized objects (indicated by src.Size() == -1), Put should either
-// return an error or upload it properly (rather than e.g. calling panic).
-//
-// May create the object even if it returns an error - if so
-// will return the object and the error, otherwise will return
-// nil and the error
-func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
-	return nil, fmt.Errorf("TODO implement Fs.Put")
-}
-
-// -------- fs.DirCacher
-
 // FindLeaf finds a child of name leaf in the directory with id pathID
 func (f *Fs) FindLeaf(ctx context.Context, pathID, leaf string) (pathIDOut string, found bool, err error) {
-	dirPath, err := f.encryptedPathForDirID(pathID)
+	encryptedPath, err := f.leafPath(leaf, pathID)
 	if err != nil {
 		return
 	}
-	encryptedFilename, err := f.EncryptFilename(leaf, pathID)
-	if err != nil {
-		return
-	}
-	subdirIDFile := path.Join(dirPath, encryptedFilename+".c9r", "dir.c9r")
+	subdirIDFile := path.Join(encryptedPath, dirIDC9r)
 	subdirID, err := f.readSmallFile(ctx, subdirIDFile, 100)
-	if errors.Is(err, fs.ErrorDirNotFound) {
+	if errors.Is(err, fs.ErrorObjectNotFound) {
+		// If the directory doesn't exist, return found=false and no error to let the DirCache create the directory if it wants.
 		err = nil
 		return
 	}
-	// ErrorObjectNotFound should stay an error, that would mean that the directory exists but the dir.c9r file inside is somehow missing.
-	// TODO: add an explicit message for that case
 	if err != nil {
 		err = fmt.Errorf("failed to read ID of subdir from %q: %w", subdirIDFile, err)
 		return
@@ -326,8 +276,142 @@ func (f *Fs) FindLeaf(ctx context.Context, pathID, leaf string) (pathIDOut strin
 }
 
 // CreateDir creates a directory at the request of the DirCache
-func (f *Fs) CreateDir(context.Context, string, string) (string, error) {
-	return "", fmt.Errorf("TODO implement DirCacher.CreateDir")
+func (f *Fs) CreateDir(ctx context.Context, pathID string, leaf string) (newID string, err error) {
+	leafPath, err := f.leafPath(leaf, pathID)
+	if err != nil {
+		return
+	}
+	newID = uuid.NewString()
+	dirPath, err := f.dirIDPath(newID)
+	if err != nil {
+		return
+	}
+
+	// Make directory
+	err = f.wrapped.Mkdir(ctx, dirPath)
+	if err != nil {
+		return
+	}
+	// ...including directory id backup file
+	data := f.encryptReader(bytes.NewBuffer([]byte(newID)))
+	info := object.NewStaticObjectInfo(path.Join(dirPath, dirIDBackupC9r), time.Now(), -1, true, nil, nil)
+	_, err = f.wrapped.Put(ctx, data, info)
+	if err != nil {
+		return
+	}
+
+	// Write pointer to directory
+	// XXX if someone else attempts to create the same directory at the same time, one of them will win and the other will get an orphaned directory.
+	// Without an atomic "create if not exists" for this next writeSmallFile operation, this can't be fixed.
+	err = f.wrapped.Mkdir(ctx, leafPath)
+	if err != nil {
+		return
+	}
+	err = f.writeSmallFile(ctx, path.Join(leafPath, dirIDC9r), []byte(newID))
+	if err != nil {
+		return
+	}
+
+	return
+}
+
+// Mkdir makes the directory (container, bucket)
+//
+// Shouldn't return an error if it already exists
+func (f *Fs) Mkdir(ctx context.Context, dir string) error {
+	_, err := f.dirCache.FindDir(ctx, dir, true)
+	return err
+}
+
+// Rmdir removes the directory (container, bucket) if empty
+//
+// Return an error if it doesn't exist or isn't empty
+func (f *Fs) Rmdir(ctx context.Context, dir string) error {
+	dirID, err := f.dirCache.FindDir(ctx, dir, false)
+	if err != nil {
+		return fmt.Errorf("failed to find ID for directory %q: %w", dir, err)
+	}
+	var parentID string
+	leaf, parentID, err := f.dirCache.FindPath(ctx, dir, false)
+	if err != nil {
+		return fmt.Errorf("failed to find ID for parent of directory %q: %w", dir, err)
+	}
+
+	// These need to get deleted, in this order
+	var (
+		// The dirid.c9r backup is likely in every directory and needs to be deleted before the directory.
+		dirIDBackup string
+		// Now the directory. But, if this fails (e.g. due to the directory not being empty), we need to go recreate the dir ID backup!
+		dirPath string
+		// Finally the pointer to the directory. First the file
+		dirPointerFile string
+		// Then the directory containing the pointer
+		dirPointerPath string
+	)
+	dirPath, err = f.dirIDPath(dirID)
+	if err != nil {
+		return err
+	}
+	dirIDBackup = path.Join(dirPath, dirIDBackupC9r)
+	dirPointerPath, err = f.leafPath(leaf, parentID)
+	if err != nil {
+		return err
+	}
+	dirPointerFile = path.Join(dirPointerPath, dirIDC9r)
+
+	// Quick check for if the directory is empty - someone else could create a file between this and the final rmdir, so we still need that code that recreates the dir ID backup!
+	entries, err := f.wrapped.List(ctx, dirPath)
+	if err != nil {
+		return err
+	}
+	empty := true
+	for _, entry := range entries {
+		if path.Base(entry.Remote()) != dirIDBackupC9r {
+			empty = false
+			break
+		}
+	}
+	if !empty {
+		return fs.ErrorDirectoryNotEmpty
+	}
+
+	// Now delete them
+	// dirIDBackup
+	obj, err := f.wrapped.NewObject(ctx, dirIDBackup)
+	if err == nil {
+		err = obj.Remove(ctx)
+	}
+	if err != nil {
+		return fmt.Errorf("couldn't remove dir id backup: %w", err)
+	}
+	// dirPath
+	err = f.wrapped.Rmdir(ctx, dirPath)
+	if err != nil {
+		err = fmt.Errorf("failed to rmdir: %w", err)
+		// put the directory ID backup back!
+		data := f.encryptReader(bytes.NewBuffer([]byte(dirID)))
+		info := object.NewStaticObjectInfo(path.Join(dirPath, dirIDBackupC9r), time.Now(), -1, true, nil, nil)
+		_, err2 := f.wrapped.Put(ctx, data, info)
+		if err2 != nil {
+			err = fmt.Errorf("%w (also failed to restore dir id backup: %w)", err, err2)
+		}
+		return err
+	}
+	// dirPointerFile
+	obj, err = f.wrapped.NewObject(ctx, dirPointerFile)
+	if err == nil {
+		err = obj.Remove(ctx)
+	}
+	// dirPointerPath
+	if err == nil {
+		err = f.wrapped.Rmdir(ctx, dirPointerPath)
+	}
+	if err != nil {
+		return fmt.Errorf("couldn't rmdir dir pointer %q: %w", dirPointerFile, err)
+	}
+
+	f.dirCache.FlushDir(dir)
+	return nil
 }
 
 // -------- fs.Directory
@@ -344,6 +428,47 @@ func (d *Directory) Fs() fs.Info { return d.fs }
 
 // Remote returns the decrypted remote path
 func (d *Directory) Remote() string { return d.remote }
+
+// -------- Objects
+
+// NewObject finds the Object at remote.  If it can't be found
+// it returns the error ErrorObjectNotFound.
+//
+// If remote points to a directory then it should return
+// ErrorIsDir if possible without doing any extra work,
+// otherwise ErrorObjectNotFound.
+func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
+	leaf, dirID, err := f.dirCache.FindPath(ctx, remote, false)
+	if err != nil {
+		return nil, fmt.Errorf("failed to find ID for directory of file %q: %w", remote, err)
+	}
+	encryptedPath, err := f.leafPath(leaf, dirID)
+	if err != nil {
+		return nil, err
+	}
+	wrappedObj, err := f.wrapped.NewObject(ctx, encryptedPath)
+	if err != nil {
+		return nil, err
+	}
+	return &Object{
+		Object: wrappedObj,
+		fs:     f,
+		remote: remote,
+	}, nil
+}
+
+// Put in to the remote path with the modTime given of the given size
+//
+// When called from outside an Fs by rclone, src.Size() will always be >= 0.
+// But for unknown-sized objects (indicated by src.Size() == -1), Put should either
+// return an error or upload it properly (rather than e.g. calling panic).
+//
+// May create the object even if it returns an error - if so
+// will return the object and the error, otherwise will return
+// nil and the error
+func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
+	return nil, fmt.Errorf("TODO implement Fs.Put")
+}
 
 // -------- fs.Object
 
@@ -389,25 +514,22 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 	options = newOptions
 
 	reader, err := o.Object.Open(ctx, options...)
+	defer func() {
+		if err != nil && reader != nil {
+			_ = reader.Close()
+		}
+	}()
 	if err != nil {
-		return nil, err
-	}
-
-	header, err := o.fs.UnmarshalHeader(reader)
-	if err != nil {
-		_ = reader.Close()
 		return nil, err
 	}
 
 	var decryptReader io.Reader
-	decryptReader, err = o.fs.NewReader(reader, header)
+	decryptReader, err = o.fs.NewReader(reader)
 	if err != nil {
-		_ = reader.Close()
 		return nil, err
 	}
 
 	if _, err = io.CopyN(io.Discard, decryptReader, offset); err != nil {
-		_ = reader.Close()
 		return nil, err
 	}
 
@@ -426,7 +548,8 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 
 // -------- private
 
-func (f *Fs) encryptedPathForDirID(dirID string) (string, error) {
+// dirIDPath returns the encrypted path to the directory with a given ID.
+func (f *Fs) dirIDPath(dirID string) (string, error) {
 	encryptedDirID, err := f.EncryptDirID(dirID)
 	if err != nil {
 		return "", fmt.Errorf("failed to encrypt directory ID: %w", err)
@@ -434,6 +557,41 @@ func (f *Fs) encryptedPathForDirID(dirID string) (string, error) {
 	dirPath := path.Join("d", encryptedDirID[:2], encryptedDirID[2:])
 	// TODO: verify that dirid.c9r inside the directory contains dirID
 	return dirPath, nil
+}
+
+// leafPath returns the encrypted path to a leaf node with the given name in the directory with the given ID.
+func (f *Fs) leafPath(leaf, dirID string) (p string, err error) {
+	dirPath, err := f.dirIDPath(dirID)
+	if err != nil {
+		return
+	}
+	encryptedFilename, err := f.EncryptFilename(leaf, dirID)
+	if err != nil {
+		return
+	}
+	return path.Join(dirPath, encryptedFilename+".c9r"), nil
+}
+
+// encryptReader returns a reader that produces an encrypted version of the data in r, suitable for storing directly in the wrapped filesystem.
+func (f *Fs) encryptReader(r io.Reader) io.Reader {
+	pipeReader, pipeWriter := io.Pipe()
+
+	go func() {
+		encWriter, err := f.NewWriter(pipeWriter)
+		if err != nil {
+			pipeWriter.CloseWithError(err)
+			return
+		}
+
+		if _, err = io.Copy(encWriter, r); err != nil {
+			pipeWriter.CloseWithError(err)
+			return
+		}
+
+		pipeWriter.CloseWithError(encWriter.Close())
+	}()
+
+	return pipeReader
 }
 
 // readSmallFile reads a file in full from the wrapped filesystem and returns it as bytes.
@@ -454,6 +612,7 @@ func (f *Fs) readSmallFile(ctx context.Context, path string, maxLen int64) ([]by
 	return data, err
 }
 
+// writeSmallFile writes a byte slice to a file in the wrapped filesystem.
 func (f *Fs) writeSmallFile(ctx context.Context, path string, data []byte) error {
 	info := object.NewStaticObjectInfo(path, time.Now(), int64(len(data)), true, nil, nil)
 	_, err := f.wrapped.Put(ctx, bytes.NewReader(data), info)

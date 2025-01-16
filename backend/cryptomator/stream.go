@@ -31,8 +31,8 @@ type Reader struct {
 	err error
 }
 
-// NewReader creates a new Reader using the file header.
-func (c *Cryptor) NewReader(src io.Reader, header FileHeader) (*Reader, error) {
+// NewContentReader creates a new Reader for the file content using the previously file header.
+func (c *Cryptor) NewContentReader(src io.Reader, header FileHeader) (*Reader, error) {
 	cryptor, err := c.newContentCryptor(header.ContentKey)
 	if err != nil {
 		return nil, err
@@ -43,6 +43,15 @@ func (c *Cryptor) NewReader(src io.Reader, header FileHeader) (*Reader, error) {
 		src:     src,
 		buf:     make([]byte, EncryptedChunkSize(c, ChunkPayloadSize)),
 	}, nil
+}
+
+// NewReader reads the file header and returns a Reader for the content.
+func (c *Cryptor) NewReader(src io.Reader) (r *Reader, err error) {
+	header, err := c.UnmarshalHeader(src)
+	if err != nil {
+		return
+	}
+	return c.NewContentReader(src, header)
 }
 
 func (r *Reader) Read(p []byte) (int, error) {
@@ -126,8 +135,8 @@ type Writer struct {
 	chunkNr uint64
 }
 
-// NewWriter creates a new Writer using the file header.
-func (c *Cryptor) NewWriter(dst io.Writer, header FileHeader) (*Writer, error) {
+// NewContentWriter creates a new Writer for the file content using the already written file header.
+func (c *Cryptor) NewContentWriter(dst io.Writer, header FileHeader) (*Writer, error) {
 	cryptor, err := c.newContentCryptor(header.ContentKey)
 	if err != nil {
 		return nil, err
@@ -141,6 +150,19 @@ func (c *Cryptor) NewWriter(dst io.Writer, header FileHeader) (*Writer, error) {
 
 	w.unwritten = w.buf[:0]
 	return w, nil
+}
+
+// NewWriter creates and writes a random file header and returns a writer for the file content.
+func (c *Cryptor) NewWriter(dst io.Writer) (w *Writer, err error) {
+	header, err := c.NewHeader()
+	if err != nil {
+		return
+	}
+	err = c.MarshalHeader(dst, header)
+	if err != nil {
+		return
+	}
+	return c.NewContentWriter(dst, header)
 }
 
 func (w *Writer) Write(p []byte) (n int, err error) {

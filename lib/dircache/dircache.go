@@ -361,9 +361,11 @@ func (dc *DirCache) RootParentID(ctx context.Context, create bool) (ID string, e
 	} else if dc.rootID == dc.trueRootID {
 		return "", errors.New("is root directory")
 	}
-	if dc.rootParentID == "" {
-		return "", errors.New("internal error: didn't find rootParentID")
-	}
+	// By this point, either dc.foundRoot was set to true by _findRoot which also set dc.rootParentID,
+	// or dc.foundRoot is false, and the if statement above juset set rootParentID.
+	// There used to be an explicit check here that dc.rootParentID != "",
+	// but there is a backend (cryptomator) whose root ID is actually "",
+	// conflicting with the zero value.
 	return dc.rootParentID, nil
 }
 
