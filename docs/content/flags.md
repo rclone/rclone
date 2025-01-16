@@ -9,7 +9,8 @@ description: "Rclone Global Flags"
 This describes the global flags available to every rclone command
 split into groups.
 
-Note: The parameter descriptor `stringArray` means that the flag can be used multiple times, for example: `--exclude a --exclude b`. 
+See the [Options section](/docs/#options) for syntax and usage advice.
+
 
 ## Copy
 

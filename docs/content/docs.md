@@ -619,6 +619,11 @@ it to `false`.  It is also possible to specify `--boolean=false` or
 parsed as `--boolean` and the `false` is parsed as an extra command
 line argument for rclone.
 
+Options documented to take a `stringArray` parameter accept multiple 
+values. To pass more than one value, repeat the option; for example: 
+`--include value1 --include value2`.
+
+
 ### Time or duration options {#time-option}
 
 TIME or DURATION options can be specified as a duration string or a
