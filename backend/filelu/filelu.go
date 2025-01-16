@@ -1035,7 +1035,8 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 
 	// Compare the combined hash with remote hashes
 	if _, exists := existingHashes[combinedHash]; exists {
-		return nil, nil
+		fs.Infof(f, "Detected duplicate file %q, skipping upload.", src.Remote())
+		return nil, fmt.Errorf("file %q is a duplicate", src.Remote())
 	}
 
 	// Proceed with file upload if not a duplicate
