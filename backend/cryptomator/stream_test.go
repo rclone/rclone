@@ -55,7 +55,7 @@ func TestDecryptReferenceStream(t *testing.T) {
 				assert.NoError(t, err)
 
 				header := cryptomator.FileHeader{ContentKey: encFile.ContentKey, Nonce: encFile.Nonce}
-				r, err := cryptor.NewReader(buf, header)
+				r, err := cryptor.NewContentReader(buf, header)
 				assert.NoError(t, err)
 
 				output, err := io.ReadAll(r)
@@ -83,7 +83,7 @@ func TestStreamRoundTrip(t *testing.T) {
 
 		buf := &bytes.Buffer{}
 
-		w, err := cryptor.NewWriter(buf, header)
+		w, err := cryptor.NewContentWriter(buf, header)
 		assert.NoError(t, err)
 
 		n := 0
@@ -109,7 +109,7 @@ func TestStreamRoundTrip(t *testing.T) {
 
 		t.Logf("buffer size: %d", buf.Len())
 
-		r, err := cryptor.NewReader(buf, header)
+		r, err := cryptor.NewContentReader(buf, header)
 		assert.NoError(t, err)
 
 		n = 0
@@ -125,5 +125,65 @@ func TestStreamRoundTrip(t *testing.T) {
 			}
 			n += nn
 		}
+	})
+}
+
+func TestHeaderWriter(t *testing.T) {
+	rapid.Check(t, func(t *rapid.T) {
+		maxLength := 10000
+		length := rapid.IntRange(0, maxLength).Draw(t, "length")
+		data := fixedSizeByteArray(length).Draw(t, "src")
+
+		cryptor := drawTestCryptor(t)
+
+		buf := &bytes.Buffer{}
+		w, err := cryptor.NewWriter(buf)
+		assert.NoError(t, err)
+
+		_, err = w.Write(data)
+		assert.NoError(t, err)
+		err = w.Close()
+		assert.NoError(t, err)
+
+		header, err := cryptor.UnmarshalHeader(buf)
+		assert.NoError(t, err)
+		r, err := cryptor.NewContentReader(buf, header)
+		assert.NoError(t, err)
+
+		readBuf := make([]byte, length)
+		_, err = io.ReadFull(r, readBuf)
+		assert.NoError(t, err)
+		assert.Equal(t, data, readBuf)
+	})
+}
+
+func TestHeaderReader(t *testing.T) {
+	rapid.Check(t, func(t *rapid.T) {
+		maxLength := 10000
+		length := rapid.IntRange(0, maxLength).Draw(t, "length")
+		data := fixedSizeByteArray(length).Draw(t, "src")
+
+		cryptor := drawTestCryptor(t)
+
+		buf := &bytes.Buffer{}
+		header, err := cryptor.NewHeader()
+		assert.NoError(t, err)
+		err = cryptor.MarshalHeader(buf, header)
+		assert.NoError(t, err)
+		w, err := cryptor.NewContentWriter(buf, header)
+		assert.NoError(t, err)
+
+		_, err = w.Write(data)
+		assert.NoError(t, err)
+		err = w.Close()
+		assert.NoError(t, err)
+
+		r, err := cryptor.NewReader(buf)
+		assert.NoError(t, err)
+
+		readBuf := make([]byte, length)
+		_, err = io.ReadFull(r, readBuf)
+		assert.NoError(t, err)
+		assert.Equal(t, data, readBuf)
 	})
 }
