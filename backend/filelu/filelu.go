@@ -1075,9 +1075,11 @@ func createTempFileFromReader(in io.Reader) (*os.File, error) {
 	}
 
 	defer func() {
-		if closeErr := tempFile.Close(); closeErr != nil {
-				}
-	}()
+	if closeErr := tempFile.Close(); closeErr != nil {
+		// Log the error or handle it in some way
+		fs.Logf(nil, "Failed to close temp file: %v", closeErr)
+	}
+}()
 
 	_, err = io.Copy(tempFile, in)
 	if err != nil {
