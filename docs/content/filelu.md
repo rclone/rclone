@@ -125,21 +125,46 @@ FileLu supports modification times but does not currently support hashes.
 
 ### Restricted Filename Characters
 
-| Character | Value | Replacement |
-| --------- |:-----:|:-----------:|
-| NUL       | 0x00  | ␀           |
-| /         | 0x2F  | ／          |
+Character | Value   | Replacement
+--------------------------------
+@         | 0x40    | _
+!         | 0x21    | _
+~         | 0x7E    | _
+`         | 0x60    | _
+%         | 0x25    | _
+&         | 0x26    | _
+^         | 0x5E    | _
+(         | 0x28    | _
+)         | 0x29    | _
+{         | 0x7B    | _
+}         | 0x7D    | _
+;         | 0x3B    | _
+'         | 0x27    | _
+,         | 0x2C    | _
+[         | 0x5B    | _
+]         | 0x5D    | _
++         | 0x2B    | _
+=         | 0x3D    | _
+{         | 0x7B    | _
+$         | 0x24    | _
+*         | 0x2A    | _
+?         | 0x3F    | _
+<         | 0x3C    | _
+>         | 0x3E    | _
+:         | 0x3A    | _
+\         | 0x5C    | _
+/         | 0x2F    | _
+"         | 0x22    | _
+#         | 0x23    | _
+(         | 0x28    | _
+
 
 FileLu only supports filenames and folder names up to 255 characters in length, where a
 character is a Unicode character.
 
 ### Duplicated Files
 
-FileLu allows uploading duplicate files with the same name and path (unlike a traditional file system). We also offer a feature to automatically remove duplicate files, which can be enabled in the Folder settings of your FileLu account.
-
-When you upload a single file, duplicate files are allowed. However, when you sync an entire folder, duplicate files will not be uploaded. The Sync command will prevent syncing duplicate files, and you might see log messages about duplicates when syncing via Rclone.
-
-
+When uploading and syncing via Rclone, FileLu does not allow uploading duplicate files within the same directory. However, you can upload duplicate files, provided they are in different directories (folders). 
 
 ### Failure to Log / Invalid Credentials or KEY
 
@@ -165,13 +190,11 @@ This backend uses a custom library implementing the FileLu API. While it support
 
 Here are the standard options specific to FileLu:
 
-#### --filelu-user
+#### --filelu-rclone-key
 
-User name. 
+You can get the key in [My Account](https://filelu.com/account/).
 
-- **Note:** This is not required if using an Rclone Key.
-
-FileLu Rclone Key RC_xxxxxxxxxxxxxxxxxxxx.
+FileLu Rclone Key format: RC_xxxxxxxxxxxxxxxxxxxx.
 
 - **NB:** Input to this must be obscured - see [rclone obscure](/commands/rclone_obscure/).
 
