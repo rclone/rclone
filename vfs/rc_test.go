@@ -95,6 +95,9 @@ func TestRcPollInterval(t *testing.T) {
 	if r.Fremote.Features().ChangeNotify == nil {
 		t.Skip("ChangeNotify not supported")
 	}
+	if r.Fremote.Name() == "local" {
+		t.Skip("Local ChangeNotify does not use polling")
+	}
 	out, err := call.Fn(context.Background(), nil)
 	require.NoError(t, err)
 	assert.Equal(t, rc.Params{}, out)
