@@ -175,6 +175,12 @@ func TestDirCacheFlush(t *testing.T) {
 	require.NoError(t, err)
 
 	// expect newly created "subdir" on remote to not show up
+	if run.fremote.Name() == "local" {
+		// ...unless using the local backend, where ChangeNotify does not use
+		// polling, and so will invalidate the cache immediately
+		dm["dir/subdir/"] = struct{}{}
+	}
+
 	run.forget("otherdir")
 	run.readLocal(t, localDm, "")
 	assert.Equal(t, dm, localDm, "expected vs fuse mount")
@@ -204,6 +210,11 @@ func TestDirCacheFlushOnDirRename(t *testing.T) {
 	assert.Equal(t, dm, localDm, "expected vs fuse mount")
 
 	// expect remotely created directory to not show up
+	if run.fremote.Name() == "local" {
+		// ...unless using the local backend, where ChangeNotify does not use
+		// polling, and so will invalidate the cache immediately
+		dm["dir/subdir/"] = struct{}{}
+	}
 	err := run.fremote.Mkdir(context.Background(), "dir/subdir")
 	require.NoError(t, err)
 	run.readLocal(t, localDm, "")
