@@ -14,10 +14,10 @@ import (
 	"net/url"
 	"os"
 	"path"
-                    "regexp"
-               	"strconv"
+	"regexp"
+	"strconv"
 	"strings"
-                 	"time"
+	"time"
 
 	"github.com/rclone/rclone/backend/filelu/api"
 	"github.com/rclone/rclone/fs"
@@ -119,19 +119,19 @@ func isNumeric(s string) bool {
 
 // Simplified parseFolderID function to handle direct folder ID
 func parseFolderID(root string) (folderID, parsedRoot string) {
-    // Check if root is purely numeric (direct folder ID)
-    if isNumeric(root) {
-        return root, "" // If it's numeric, use it as folder ID directly
-    }
+	// Check if root is purely numeric (direct folder ID)
+	if isNumeric(root) {
+		return root, "" // If it's numeric, use it as folder ID directly
+	}
 
-    // Check if root contains the format `remote:folderID`
-    parts := strings.SplitN(root, ":", 2)
-    if len(parts) == 2 && isNumeric(parts[1]) {
-        return parts[1], ""
-    }
+	// Check if root contains the format `remote:folderID`
+	parts := strings.SplitN(root, ":", 2)
+	if len(parts) == 2 && isNumeric(parts[1]) {
+		return parts[1], ""
+	}
 
-    // Default: No folder ID found
-    return "", root
+	// Default: No folder ID found
+	return "", root
 }
 
 // isFileCode checks if a string looks like a file code
@@ -191,10 +191,10 @@ func (f *Fs) resolveFolderPath(ctx context.Context, path string) (int, error) {
 		}
 		defer resp.Body.Close()
 		defer func() {
-    if err := resp.Body.Close(); err != nil {
-        fs.Logf(nil, "Failed to close response body: %v", err)
-    }
-}()
+			if err := resp.Body.Close(); err != nil {
+				fs.Logf(nil, "Failed to close response body: %v", err)
+			}
+		}()
 		if resp.StatusCode != 200 {
 			return 0, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
 		}
@@ -237,36 +237,35 @@ func (f *Fs) resolveFolderPath(ctx context.Context, path string) (int, error) {
 }
 
 func (f *Fs) parseOrResolveFolderID(ctx context.Context, dir string) (int, error) {
-    dir = strings.TrimSpace(dir)
+	dir = strings.TrimSpace(dir)
 
-    // Check if `dir` is empty, implying the root directory
-    if dir == "" {
-        if folderID, err := strconv.Atoi(f.folderID); err == nil {
-            return folderID, nil // Use the root folder ID initialized
-        }
-        return 0, fmt.Errorf("invalid root folder ID")
-    }
+	// Check if `dir` is empty, implying the root directory
+	if dir == "" {
+		if folderID, err := strconv.Atoi(f.folderID); err == nil {
+			return folderID, nil // Use the root folder ID initialized
+		}
+		return 0, fmt.Errorf("invalid root folder ID")
+	}
 
-    // Check if dir is a valid numeric folder ID
-    if folderID, err := strconv.Atoi(dir); err == nil {
-        return folderID, nil
-    }
+	// Check if dir is a valid numeric folder ID
+	if folderID, err := strconv.Atoi(dir); err == nil {
+		return folderID, nil
+	}
 
-    // Extract folder ID from "(ID)" format, if applicable
-    if strings.HasPrefix(dir, "(") {
-        end := strings.Index(dir, ")")
-        if end != -1 {
-            idStr := dir[1:end]
-            if id, err := strconv.Atoi(idStr); err == nil {
-                return id, nil
-            }
-        }
-    }
+	// Extract folder ID from "(ID)" format, if applicable
+	if strings.HasPrefix(dir, "(") {
+		end := strings.Index(dir, ")")
+		if end != -1 {
+			idStr := dir[1:end]
+			if id, err := strconv.Atoi(idStr); err == nil {
+				return id, nil
+			}
+		}
+	}
 
-    // Attempt to resolve full folder path to an ID
-    return f.resolveFolderPath(ctx, dir)
+	// Attempt to resolve full folder path to an ID
+	return f.resolveFolderPath(ctx, dir)
 }
-
 
 // File: filelu.go
 
@@ -526,74 +525,72 @@ func (f *Fs) Precision() time.Duration {
 
 // List lists the objects and directories in a remote directory.
 func (f *Fs) List(ctx context.Context, dir string) (fs.DirEntries, error) {
-    fs.Debugf(f, "List: Starting for directory %q", dir)
+	fs.Debugf(f, "List: Starting for directory %q", dir)
 
-    // Check if the root is a file code
-    if isFileCode(f.root) {
-        fs.Debugf(f, "List: root is a file code %q, returning file object", f.root)
+	// Check if the root is a file code
+	if isFileCode(f.root) {
+		fs.Debugf(f, "List: root is a file code %q, returning file object", f.root)
 
-        // Fetch the direct link and file size
-        directLink, size, err := f.getDirectLink(ctx, f.root)
-        if err != nil {
-            return nil, fmt.Errorf("failed to get direct link: %w", err)
-        }
+		// Fetch the direct link and file size
+		directLink, size, err := f.getDirectLink(ctx, f.root)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get direct link: %w", err)
+		}
 
-        // Create an Object for the file
-        fileObject := &Object{
-            fs:      f,
-            remote:  extractFileName(directLink),
-            size:    size,
-            modTime: time.Now(), // Optionally fetch the actual mod time if available
-        }
+		// Create an Object for the file
+		fileObject := &Object{
+			fs:      f,
+			remote:  extractFileName(directLink),
+			size:    size,
+			modTime: time.Now(), // Optionally fetch the actual mod time if available
+		}
 
-        return fs.DirEntries{fileObject}, nil
-    }
+		return fs.DirEntries{fileObject}, nil
+	}
 
-    // Check if `dir` is a file code
-    if dir != "" && isFileCode(dir) {
-        fs.Debugf(f, "List: dir is a file code %q, returning file object", dir)
+	// Check if `dir` is a file code
+	if dir != "" && isFileCode(dir) {
+		fs.Debugf(f, "List: dir is a file code %q, returning file object", dir)
 
-        // Fetch the direct link and file size
-        directLink, size, err := f.getDirectLink(ctx, dir)
-        if err != nil {
-            return nil, fmt.Errorf("failed to get direct link: %w", err)
-        }
+		// Fetch the direct link and file size
+		directLink, size, err := f.getDirectLink(ctx, dir)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get direct link: %w", err)
+		}
 
-        // Create an Object for the file
-        fileObject := &Object{
-            fs:      f,
-            remote:  extractFileName(directLink),
-            size:    size,
-            modTime: time.Now(), // Optionally fetch the actual mod time if available
-        }
+		// Create an Object for the file
+		fileObject := &Object{
+			fs:      f,
+			remote:  extractFileName(directLink),
+			size:    size,
+			modTime: time.Now(), // Optionally fetch the actual mod time if available
+		}
 
-        return fs.DirEntries{fileObject}, nil
-    }
+		return fs.DirEntries{fileObject}, nil
+	}
 
-    // Use the root folder ID or resolve a specific folder ID if `dir` is provided
-    folderID := f.folderID
-    if dir != "" && isNumeric(dir) {
-        fs.Debugf(f, "List: dir is a numeric folder ID %q", dir)
-        folderID = dir
-    } else if dir != "" {
-        fs.Debugf(f, "List: Resolving folder ID for path %q", dir)
-        resolvedID, err := f.resolveFolderPath(ctx, dir)
-        if err != nil {
-            return nil, fmt.Errorf("failed to resolve folder path: %w", err)
-        }
-        folderID = strconv.Itoa(resolvedID)
-    }
+	// Use the root folder ID or resolve a specific folder ID if `dir` is provided
+	folderID := f.folderID
+	if dir != "" && isNumeric(dir) {
+		fs.Debugf(f, "List: dir is a numeric folder ID %q", dir)
+		folderID = dir
+	} else if dir != "" {
+		fs.Debugf(f, "List: Resolving folder ID for path %q", dir)
+		resolvedID, err := f.resolveFolderPath(ctx, dir)
+		if err != nil {
+			return nil, fmt.Errorf("failed to resolve folder path: %w", err)
+		}
+		folderID = strconv.Itoa(resolvedID)
+	}
 
-    // List the directory contents for the resolved folder ID
-    folderIDInt, err := strconv.Atoi(folderID)
-    if err != nil {
-        return nil, fmt.Errorf("invalid folder ID: %w", err)
-    }
+	// List the directory contents for the resolved folder ID
+	folderIDInt, err := strconv.Atoi(folderID)
+	if err != nil {
+		return nil, fmt.Errorf("invalid folder ID: %w", err)
+	}
 
-    return f.listDirectory(ctx, folderIDInt, dir)
+	return f.listDirectory(ctx, folderIDInt, dir)
 }
-
-
 
 func (f *Fs) listDirectory(ctx context.Context, folderID int, dir string) (fs.DirEntries, error) {
 	apiURL := fmt.Sprintf("%s/folder/list?fld_id=%d&key=%s", f.endpoint, folderID, url.QueryEscape(f.opt.RcloneKey))
@@ -661,7 +658,7 @@ func (f *Fs) listDirectory(ctx context.Context, folderID int, dir string) (fs.Di
 	// Process files
 	for _, file := range result.Result.Files {
 		//nameWithCode := fmt.Sprintf("(%s) %s", file.Code, file.Name)
-                                      nameWithCode := fmt.Sprintf("(%s)%s", file.Code, file.Name)
+		nameWithCode := fmt.Sprintf("(%s)%s", file.Code, file.Name)
 		fullPath := nameWithCode
 		if currentDir != "" {
 			fullPath = path.Join(currentDir, nameWithCode)
@@ -685,7 +682,6 @@ func (f *Fs) listDirectory(ctx context.Context, folderID int, dir string) (fs.Di
 	fs.Debugf(f, "listDirectory: Successfully listed contents for folder ID: %d", folderID)
 	return entries, nil
 }
-
 
 func (f *Fs) getFileSize(ctx context.Context, fileCode string) (int64, error) {
 	apiURL := fmt.Sprintf("%s/file/info?file_code=%s&key=%s", f.endpoint, url.QueryEscape(fileCode), url.QueryEscape(f.opt.RcloneKey))
@@ -733,8 +729,6 @@ func (f *Fs) getFileSize(ctx context.Context, fileCode string) (int64, error) {
 
 	return fileSize, nil
 }
-
-
 
 // getFolderID resolves and returns the folder ID for a given directory name or path
 func (f *Fs) getFolderID(ctx context.Context, dir string) (int, error) {
@@ -1002,18 +996,18 @@ func (f *Fs) getUploadServer(ctx context.Context) (string, string, error) {
 // Put uploads a file to the storage backend.
 func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
 	fs.Debugf(f, "Put: Starting upload for %q", src.Remote())
-               duplicateCounter := 0 // Initialize a duplicate counter
+	duplicateCounter := 0 // Initialize a duplicate counter
 	// Convert the input reader to a temp file to compute the MD5 hash.
 	tempFile, err := createTempFileFromReader(in)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create temp file: %w", err)
 	}
-	
- defer func() {
-        if err := os.Remove(tempFile.Name()); err != nil {
-            fs.Logf(nil, "Failed to remove temp file: %v", err)
-        }
-    }()
+
+	defer func() {
+		if err := os.Remove(tempFile.Name()); err != nil {
+			fs.Logf(nil, "Failed to remove temp file: %v", err)
+		}
+	}()
 	// Compute the MD5 hash of the file
 	hash, err := ComputeMD5(tempFile.Name())
 	if err != nil {
@@ -1041,8 +1035,8 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 
 	// Compare the combined hash with remote hashes
 	if _, exists := existingHashes[combinedHash]; exists {
-		  duplicateCounter++
-      
+		duplicateCounter++
+
 	}
 
 	// Proceed with file upload if not a duplicate
@@ -1061,7 +1055,7 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 		moveErr := f.moveFileToFolder(ctx, fileCode, folderID)
 		if moveErr != nil {
 			return nil, fmt.Errorf("failed to move file to folder ID %d: %w", folderID, moveErr)
-                                                              
+
 		}
 	}
 
@@ -1076,29 +1070,29 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 
 // createTempFileFromReader writes the content of the 'in' reader into a temporary file
 func createTempFileFromReader(in io.Reader) (*os.File, error) {
-    tempFile, err := os.CreateTemp("", "upload-*.tmp")
-    if err != nil {
-        return nil, fmt.Errorf("failed to create temp file: %w", err)
-    }
+	tempFile, err := os.CreateTemp("", "upload-*.tmp")
+	if err != nil {
+		return nil, fmt.Errorf("failed to create temp file: %w", err)
+	}
 
-    defer func() {
-        if closeErr := tempFile.Close(); closeErr != nil {
-            // Log the error if needed
-        }
-    }()
+	defer func() {
+		if closeErr := tempFile.Close(); closeErr != nil {
+			// Log the error if needed
+		}
+	}()
 
-    _, err = io.Copy(tempFile, in)
-    if err != nil {
-        return nil, fmt.Errorf("failed to copy data to temp file: %w", err)
-    }
+	_, err = io.Copy(tempFile, in)
+	if err != nil {
+		return nil, fmt.Errorf("failed to copy data to temp file: %w", err)
+	}
 
-    // Seek back to the start of the file for further reading
-    _, err = tempFile.Seek(0, io.SeekStart)
-    if err != nil {
-        return nil, fmt.Errorf("failed to seek temp file: %w", err)
-    }
+	// Seek back to the start of the file for further reading
+	_, err = tempFile.Seek(0, io.SeekStart)
+	if err != nil {
+		return nil, fmt.Errorf("failed to seek temp file: %w", err)
+	}
 
-    return tempFile, nil
+	return tempFile, nil
 }
 
 func (f *Fs) moveFileToFolder(ctx context.Context, fileCode string, folderID int) error {
@@ -1402,73 +1396,74 @@ func DeleteLocalFile(localPath string) error {
 }
 
 func (f *Fs) Rmdir(ctx context.Context, dir string) error {
-    fs.Debugf(f, "Rmdir: Starting with dir=%q", dir)
+	fs.Debugf(f, "Rmdir: Starting with dir=%q", dir)
 
-    // Extract folder ID directly if present
-    folderID, err := f.parseOrResolveFolderID(ctx, dir)
-    if err != nil {
-        return fserrors.NoRetryError(fmt.Errorf("failed to resolve folder ID for %q: %w", dir, err))
-    }
+	// Extract folder ID directly if present
+	folderID, err := f.parseOrResolveFolderID(ctx, dir)
+	if err != nil {
+		return fserrors.NoRetryError(fmt.Errorf("failed to resolve folder ID for %q: %w", dir, err))
+	}
 
-    fs.Debugf(f, "Rmdir: Resolved folder ID: %d for dir=%q", folderID, dir)
+	fs.Debugf(f, "Rmdir: Resolved folder ID: %d for dir=%q", folderID, dir)
 
-    // Check if the folder is empty
-    apiURL := fmt.Sprintf("%s/folder/list?fld_id=%d&key=%s", f.endpoint, folderID, url.QueryEscape(f.opt.RcloneKey))
-    req, err := http.NewRequestWithContext(ctx, "GET", apiURL, nil)
-    if err != nil {
-        return fserrors.NoRetryError(fmt.Errorf("failed to create list request: %w", err))
-    }
+	// Check if the folder is empty
+	apiURL := fmt.Sprintf("%s/folder/list?fld_id=%d&key=%s", f.endpoint, folderID, url.QueryEscape(f.opt.RcloneKey))
+	req, err := http.NewRequestWithContext(ctx, "GET", apiURL, nil)
+	if err != nil {
+		return fserrors.NoRetryError(fmt.Errorf("failed to create list request: %w", err))
+	}
 
-    resp, err := f.client.Do(req)
-    if err != nil {
-        return fserrors.NoRetryError(fmt.Errorf("failed to check directory contents: %w", err))
-    }
-    defer resp.Body.Close()
+	resp, err := f.client.Do(req)
+	if err != nil {
+		return fserrors.NoRetryError(fmt.Errorf("failed to check directory contents: %w", err))
+	}
+	defer resp.Body.Close()
 
-    var listResult struct {
-        Status int    `json:"status"`
-        Msg    string `json:"msg"`
-        Result struct {
-            Files   []interface{} `json:"files"`
-            Folders []interface{} `json:"folders"`
-        } `json:"result"`
-    }
-    if err := json.NewDecoder(resp.Body).Decode(&listResult); err != nil {
-        return fserrors.NoRetryError(fmt.Errorf("error decoding list response: %w", err))
-    }
+	var listResult struct {
+		Status int    `json:"status"`
+		Msg    string `json:"msg"`
+		Result struct {
+			Files   []interface{} `json:"files"`
+			Folders []interface{} `json:"folders"`
+		} `json:"result"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&listResult); err != nil {
+		return fserrors.NoRetryError(fmt.Errorf("error decoding list response: %w", err))
+	}
 
-    if len(listResult.Result.Files) > 0 || len(listResult.Result.Folders) > 0 {
-        return fserrors.NoRetryError(fmt.Errorf("directory is not empty"))
-    }
+	if len(listResult.Result.Files) > 0 || len(listResult.Result.Folders) > 0 {
+		return fserrors.NoRetryError(fmt.Errorf("directory is not empty"))
+	}
 
-    // Delete the folder
-    deleteURL := fmt.Sprintf("%s/folder/delete?fld_id=%d&key=%s", f.endpoint, folderID, url.QueryEscape(f.opt.RcloneKey))
-    req, err = http.NewRequestWithContext(ctx, "GET", deleteURL, nil)
-    if err != nil {
-        return fserrors.NoRetryError(fmt.Errorf("failed to create delete request: %w", err))
-    }
+	// Delete the folder
+	deleteURL := fmt.Sprintf("%s/folder/delete?fld_id=%d&key=%s", f.endpoint, folderID, url.QueryEscape(f.opt.RcloneKey))
+	req, err = http.NewRequestWithContext(ctx, "GET", deleteURL, nil)
+	if err != nil {
+		return fserrors.NoRetryError(fmt.Errorf("failed to create delete request: %w", err))
+	}
 
-    resp, err = f.client.Do(req)
-    if err != nil {
-        return fserrors.NoRetryError(fmt.Errorf("failed to delete directory: %w", err))
-    }
-    defer resp.Body.Close()
+	resp, err = f.client.Do(req)
+	if err != nil {
+		return fserrors.NoRetryError(fmt.Errorf("failed to delete directory: %w", err))
+	}
+	defer resp.Body.Close()
 
-    var result struct {
-        Status int    `json:"status"`
-        Msg    string `json:"msg"`
-    }
-    if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-        return fserrors.NoRetryError(fmt.Errorf("error decoding delete response: %w", err))
-    }
+	var result struct {
+		Status int    `json:"status"`
+		Msg    string `json:"msg"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return fserrors.NoRetryError(fmt.Errorf("error decoding delete response: %w", err))
+	}
 
-    if result.Status != 200 {
-        return fserrors.NoRetryError(fmt.Errorf("API error: %s", result.Msg))
-    }
+	if result.Status != 200 {
+		return fserrors.NoRetryError(fmt.Errorf("API error: %s", result.Msg))
+	}
 
-    fs.Infof(f, "Successfully deleted directory '%s'", dir)
-    return nil
+	fs.Infof(f, "Successfully deleted directory '%s'", dir)
+	return nil
 }
+
 // Name returns the remote name
 func (f *Fs) Name() string {
 	return f.name
@@ -1562,48 +1557,49 @@ func extractFileName(urlStr string) string {
 
 // Update updates the object with new data
 func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {
-    fs.Debugf(o.fs, "Update: Starting update for %q", o.remote)
+	fs.Debugf(o.fs, "Update: Starting update for %q", o.remote)
 
-    // Step 1: Get upload server details
-    uploadURL, sessID, err := o.fs.getUploadServer(ctx)
-    if err != nil {
-        return fmt.Errorf("failed to get upload server: %w", err)
-    }
-    fs.Debugf(o.fs, "Update: Got upload server URL=%q and session ID=%q", uploadURL, sessID)
+	// Step 1: Get upload server details
+	uploadURL, sessID, err := o.fs.getUploadServer(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get upload server: %w", err)
+	}
+	fs.Debugf(o.fs, "Update: Got upload server URL=%q and session ID=%q", uploadURL, sessID)
 
-    // Step 2: Upload the file
-    fileCode, err := o.fs.uploadFile(ctx, uploadURL, sessID, o.remote, in)
-    if err != nil {
-        return fmt.Errorf("failed to upload file: %w", err)
-    }
-    fs.Debugf(o.fs, "Update: File uploaded with file code %q", fileCode)
+	// Step 2: Upload the file
+	fileCode, err := o.fs.uploadFile(ctx, uploadURL, sessID, o.remote, in)
+	if err != nil {
+		return fmt.Errorf("failed to upload file: %w", err)
+	}
+	fs.Debugf(o.fs, "Update: File uploaded with file code %q", fileCode)
 
-    // Step 3: Move the file to the specified folder if folderID exists
-    if o.fs.folderID != "" && o.fs.folderID != "0" {
-        folderID, err := strconv.Atoi(o.fs.folderID)
-        if err != nil {
-            return fmt.Errorf("invalid folder ID in root: %w", err)
-        }
+	// Step 3: Move the file to the specified folder if folderID exists
+	if o.fs.folderID != "" && o.fs.folderID != "0" {
+		folderID, err := strconv.Atoi(o.fs.folderID)
+		if err != nil {
+			return fmt.Errorf("invalid folder ID in root: %w", err)
+		}
 
-        fs.Debugf(o.fs, "Update: Moving file %q to folder ID %d", o.remote, folderID)
+		fs.Debugf(o.fs, "Update: Moving file %q to folder ID %d", o.remote, folderID)
 
-        // Call the moveFileToFolder method
-        err = o.fs.moveFileToFolder(ctx, fileCode, folderID)
-        if err != nil {
-            return fmt.Errorf("failed to move file to folder ID %d: %w", folderID, err)
-        }
-        fs.Debugf(o.fs, "Update: Successfully moved file to folder ID %d", folderID)
-    } else {
-        fs.Debugf(o.fs, "Update: No folder ID specified, keeping file in root directory")
-    }
+		// Call the moveFileToFolder method
+		err = o.fs.moveFileToFolder(ctx, fileCode, folderID)
+		if err != nil {
+			return fmt.Errorf("failed to move file to folder ID %d: %w", folderID, err)
+		}
+		fs.Debugf(o.fs, "Update: Successfully moved file to folder ID %d", folderID)
+	} else {
+		fs.Debugf(o.fs, "Update: No folder ID specified, keeping file in root directory")
+	}
 
-    // Step 4: Update the object metadata
-    o.size = src.Size()
-    o.modTime = src.ModTime(ctx)
+	// Step 4: Update the object metadata
+	o.size = src.Size()
+	o.modTime = src.ModTime(ctx)
 
-    fs.Debugf(o.fs, "Update: Finished update for %q", o.remote)
-    return nil
+	fs.Debugf(o.fs, "Update: Finished update for %q", o.remote)
+	return nil
 }
+
 // Remove deletes the object from FileLu
 func (o *Object) Remove(ctx context.Context) error {
 	var fileCode string
@@ -1690,15 +1686,14 @@ type APIResponse struct {
 		Files []FileEntry `json:"files"`
 	} `json:"result"`
 }
+
 // DuplicateFileError is a custom error type for duplicate files
 type DuplicateFileError struct {
-
 	Hash string
-
 }
 
 func (e *DuplicateFileError) Error() string {
-    return "Duplicate file skipped."
+	return "Duplicate file skipped."
 }
 
 // IsDuplicateFileError checks if the given error indicates a duplicate file.
@@ -1820,19 +1815,19 @@ func ComputeMD5(filePath string) (string, error) {
 	return base64.RawStdEncoding.EncodeToString(fullHash[:]), nil
 }
 func (f *Fs) uploadFile(ctx context.Context, uploadURL, sessionID, fileName string, fileContent io.Reader) (string, error) {
-// Initialize the duplicate counter
-    var duplicateCounter int
+	// Initialize the duplicate counter
+	var duplicateCounter int
 	// Convert fileContent to a temporary file for hashing and further operations
 	tempFile, err := createTempFileFromReader(fileContent)
 	if err != nil {
 		return "", fmt.Errorf("failed to create temp file: %w", err)
 	}
-	
-defer func() {
-        if err := os.Remove(tempFile.Name()); err != nil {
-            fs.Logf(nil, "Failed to remove temp file: %v", err)
-        }
-    }()
+
+	defer func() {
+		if err := os.Remove(tempFile.Name()); err != nil {
+			fs.Logf(nil, "Failed to remove temp file: %v", err)
+		}
+	}()
 
 	// Compute the MD5 hash of the file
 	hash, err := ComputeMD5(tempFile.Name())
@@ -1868,10 +1863,10 @@ defer func() {
 	fs.Debugf(f, "Fetched remote hashes: %v", existingHashes)
 
 	// Check for duplicate file hash using the combined hash
-	 if _, exists := existingHashes[combinedHash]; exists {
-        duplicateCounter++
-        return "", &DuplicateFileError{Hash: combinedHash}
-    }
+	if _, exists := existingHashes[combinedHash]; exists {
+		duplicateCounter++
+		return "", &DuplicateFileError{Hash: combinedHash}
+	}
 
 	// Build the multipart request to upload the file
 	var body bytes.Buffer
@@ -1941,89 +1936,90 @@ defer func() {
 
 // Hash returns the MD5 hash of an object
 func (o *Object) Hash(ctx context.Context, t hash.Type) (string, error) {
-    if t != hash.MD5 {
-        return "", hash.ErrUnsupported
-    }
+	if t != hash.MD5 {
+		return "", hash.ErrUnsupported
+	}
 
-    var fileCode string
+	var fileCode string
 
-    // Function to check if the extracted code is a valid file code (non-numeric and 12 characters long)
-    isValidFileCode := func(code string) bool {
-        if len(code) != 12 {
-            return false
-        }
-        // Check if the code contains any non-numeric character
-        for _, c := range code {
-            if (c < '0' || c > '9') {
-                return true // Alphanumeric (contains at least one non-numeric character)
-            }
-        }
-        return false // It's purely numeric, not a file code
-    }
+	// Function to check if the extracted code is a valid file code (non-numeric and 12 characters long)
+	isValidFileCode := func(code string) bool {
+		if len(code) != 12 {
+			return false
+		}
+		// Check if the code contains any non-numeric character
+		for _, c := range code {
+			if c < '0' || c > '9' {
+				return true // Alphanumeric (contains at least one non-numeric character)
+			}
+		}
+		return false // It's purely numeric, not a file code
+	}
 
-    // Extract file code directly if available, otherwise from the remote path
-    if isFileCode(o.fs.root) {
-        fileCode = o.fs.root
-    } else {
-        // Attempt to extract file code from the remote path
-        remote := o.remote
-        // Find all substrings inside parentheses
-        matches := regexp.MustCompile(`\((.*?)\)`).FindAllStringSubmatch(remote, -1)
+	// Extract file code directly if available, otherwise from the remote path
+	if isFileCode(o.fs.root) {
+		fileCode = o.fs.root
+	} else {
+		// Attempt to extract file code from the remote path
+		remote := o.remote
+		// Find all substrings inside parentheses
+		matches := regexp.MustCompile(`\((.*?)\)`).FindAllStringSubmatch(remote, -1)
 
-        // Loop through all matched substrings and check for a valid file code
-        for _, match := range matches {
-            if len(match) > 1 {
-                extractedCode := match[1]
-                if isValidFileCode(extractedCode) {
-                    fileCode = extractedCode
-                    break // Found a valid file code, no need to continue
-                }
-            }
-        }
-    }
+		// Loop through all matched substrings and check for a valid file code
+		for _, match := range matches {
+			if len(match) > 1 {
+				extractedCode := match[1]
+				if isValidFileCode(extractedCode) {
+					fileCode = extractedCode
+					break // Found a valid file code, no need to continue
+				}
+			}
+		}
+	}
 
-    // If no valid file code was found, return an error
-    if fileCode == "" {
-        return "", fmt.Errorf("no valid file code found in the remote path")
-    }
+	// If no valid file code was found, return an error
+	if fileCode == "" {
+		return "", fmt.Errorf("no valid file code found in the remote path")
+	}
 
-    // Use the file_code for API queries
-    apiURL := fmt.Sprintf("%s/file/info?file_code=%s&key=%s", 
-        o.fs.endpoint, url.QueryEscape(fileCode), url.QueryEscape(o.fs.opt.RcloneKey))
+	// Use the file_code for API queries
+	apiURL := fmt.Sprintf("%s/file/info?file_code=%s&key=%s",
+		o.fs.endpoint, url.QueryEscape(fileCode), url.QueryEscape(o.fs.opt.RcloneKey))
 
-    req, err := http.NewRequestWithContext(ctx, "GET", apiURL, nil)
-    if err != nil {
-        return "", fmt.Errorf("failed to create hash request: %w", err)
-    }
+	req, err := http.NewRequestWithContext(ctx, "GET", apiURL, nil)
+	if err != nil {
+		return "", fmt.Errorf("failed to create hash request: %w", err)
+	}
 
-    resp, err := o.fs.client.Do(req)
-    if err != nil {
-        return "", fmt.Errorf("hash request failed: %w", err)
-    }
-    defer func() {
-        if err := resp.Body.Close(); err != nil {
-            fs.Fatalf(nil, "Failed to close response body: %v", err)
-        }
-    }()
+	resp, err := o.fs.client.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("hash request failed: %w", err)
+	}
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			fs.Fatalf(nil, "Failed to close response body: %v", err)
+		}
+	}()
 
-    var result struct {
-        Status int    `json:"status"`
-        Msg    string `json:"msg"`
-        Result []struct {
-            Hash string `json:"hash"` // Assuming the hash is here
-        } `json:"result"`
-    }
-    err = json.NewDecoder(resp.Body).Decode(&result)
-    if err != nil {
-        return "", fmt.Errorf("error decoding hash response: %w", err)
-    }
+	var result struct {
+		Status int    `json:"status"`
+		Msg    string `json:"msg"`
+		Result []struct {
+			Hash string `json:"hash"` // Assuming the hash is here
+		} `json:"result"`
+	}
+	err = json.NewDecoder(resp.Body).Decode(&result)
+	if err != nil {
+		return "", fmt.Errorf("error decoding hash response: %w", err)
+	}
 
-    if result.Status != 200 || len(result.Result) == 0 {
-        return "", fmt.Errorf("error: unable to fetch hash: %s", result.Msg)
-    }
+	if result.Status != 200 || len(result.Result) == 0 {
+		return "", fmt.Errorf("error: unable to fetch hash: %s", result.Msg)
+	}
 
-    return result.Result[0].Hash, nil
+	return result.Result[0].Hash, nil
 }
+
 // String returns a string representation of the object
 func (o *Object) String() string {
 	return o.remote
