@@ -189,7 +189,7 @@ func (f *Fs) resolveFolderPath(ctx context.Context, path string) (int, error) {
 		if err != nil {
 			return 0, err
 		}
-		
+
 		defer func() {
 			if err := resp.Body.Close(); err != nil {
 				fs.Logf(nil, "Failed to close response body: %v", err)
@@ -996,7 +996,7 @@ func (f *Fs) getUploadServer(ctx context.Context) (string, string, error) {
 // Put uploads a file to the storage backend.
 func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
 	fs.Debugf(f, "Put: Starting upload for %q", src.Remote())
-	
+
 	// Convert the input reader to a temp file to compute the MD5 hash.
 	tempFile, err := createTempFileFromReader(in)
 	if err != nil {
@@ -1075,11 +1075,11 @@ func createTempFileFromReader(in io.Reader) (*os.File, error) {
 	}
 
 	defer func() {
-	if closeErr := tempFile.Close(); closeErr != nil {
-		// Log the error or handle it in some way
-		fs.Logf(nil, "Failed to close temp file: %v", closeErr)
-	}
-}()
+		if closeErr := tempFile.Close(); closeErr != nil {
+			// Log the error or handle it in some way
+			fs.Logf(nil, "Failed to close temp file: %v", closeErr)
+		}
+	}()
 
 	_, err = io.Copy(tempFile, in)
 	if err != nil {
@@ -1094,6 +1094,7 @@ func createTempFileFromReader(in io.Reader) (*os.File, error) {
 
 	return tempFile, nil
 }
+
 // moveFileToFolder to move object to the directory.
 func (f *Fs) moveFileToFolder(ctx context.Context, fileCode string, folderID int) error {
 	if folderID == 0 {
@@ -1394,6 +1395,7 @@ func DeleteLocalFile(localPath string) error {
 	fs.Debugf(nil, "DeleteLocalFile: successfully deleted local file %q", localPath)
 	return nil
 }
+
 // Rmdir removes a directory.
 func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 	fs.Debugf(f, "Rmdir: Starting with dir=%q", dir)
@@ -1417,12 +1419,12 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 	if err != nil {
 		return fserrors.NoRetryError(fmt.Errorf("failed to check directory contents: %w", err))
 	}
-	
+
 	defer func() {
-			if err := resp.Body.Close(); err != nil {
-				fs.Logf(nil, "Failed to close response body: %v", err)
-			}
-		}()
+		if err := resp.Body.Close(); err != nil {
+			fs.Logf(nil, "Failed to close response body: %v", err)
+		}
+	}()
 
 	var listResult struct {
 		Status int    `json:"status"`
@@ -1452,10 +1454,10 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 		return fserrors.NoRetryError(fmt.Errorf("failed to delete directory: %w", err))
 	}
 	defer func() {
-			if err := resp.Body.Close(); err != nil {
-				fs.Logf(nil, "Failed to close response body: %v", err)
-			}
-		}()
+		if err := resp.Body.Close(); err != nil {
+			fs.Logf(nil, "Failed to close response body: %v", err)
+		}
+	}()
 
 	var result struct {
 		Status int    `json:"status"`
@@ -1824,7 +1826,7 @@ func ComputeMD5(filePath string) (string, error) {
 	return base64.RawStdEncoding.EncodeToString(fullHash[:]), nil
 }
 func (f *Fs) uploadFile(ctx context.Context, uploadURL, sessionID, fileName string, fileContent io.Reader) (string, error) {
-		
+
 	// Convert fileContent to a temporary file for hashing and further operations
 	tempFile, err := createTempFileFromReader(fileContent)
 	if err != nil {
