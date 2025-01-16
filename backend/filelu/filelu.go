@@ -1076,8 +1076,7 @@ func createTempFileFromReader(in io.Reader) (*os.File, error) {
 
 	defer func() {
 		if closeErr := tempFile.Close(); closeErr != nil {
-			// Log the error if needed
-		}
+				}
 	}()
 
 	_, err = io.Copy(tempFile, in)
@@ -1093,7 +1092,7 @@ func createTempFileFromReader(in io.Reader) (*os.File, error) {
 
 	return tempFile, nil
 }
-
+// moveFileToFolder to move object to the directory.
 func (f *Fs) moveFileToFolder(ctx context.Context, fileCode string, folderID int) error {
 	if folderID == 0 {
 		return fmt.Errorf("invalid folder ID")
