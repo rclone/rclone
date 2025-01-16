@@ -1283,7 +1283,7 @@ func (f *Fs) ChangeNotify(ctx context.Context, notifyFunc func(string, fs.EntryT
 			if err != nil {
 				fs.Errorf(f, "Failed to start watching %s: %s\n", path, err)
 			} else {
-				fs.Errorf(f, "Started watching %s\n", path)
+				fs.Debugf(f, "Started watching %s\n", path)
 			}
 		}
 		return nil
