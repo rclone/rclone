@@ -104,59 +104,60 @@ Sync files from a local directory to a FileLu directory (directory id `366238`):
     
 Mount remote to local Linux:
 
-    rclone mount filelu: /root/mnt --vfs-cache-mode writes
+    rclone mount filelu: /root/mnt --vfs-cache-mode full
 
 Mount remote to local Windows:
 
-    rclone mount filelu: D:/local_mnt --vfs-cache-mode writes
+    rclone mount filelu: D:/local_mnt --vfs-cache-mode full
 
 
 Get storage info about the FileLu account:
 
     rclone about filelu:
 
+And many other commands are supported by Rclone.
+
 ### FolderID instead of folder path
 
-We use the FolderID instead of the folder name to prevent errors when users have identical folder names or paths. For example, if a user has two or three folders named "test_folders," the system may become confused and won't know which folder to move. In large storage systems some clients with hundred thousands of folders and a few millions of files, duplicate folder names or paths are quite common.
+We use the FolderID instead of the folder name to prevent errors when users have identical folder names or paths. For example, if a user has two or three folders named "test_folders," the system may become confused and won't know which folder to move. In large storage systems, some clients have hundred of thousands of folders and a few millions of files, duplicate folder names or paths are quite common.
 
 ### Modification Times and Hashes
 
-FileLu supports modification times but does not currently support hashes.
+FileLu supports both modification times and MD5 hashes.
 
 ### Restricted Filename Characters
 
-Character | Value   | Replacement
---------------------------------
-@         | 0x40    | _
-!         | 0x21    | _
-~         | 0x7E    | _
-`         | 0x60    | _
-%         | 0x25    | _
-&         | 0x26    | _
-^         | 0x5E    | _
-(         | 0x28    | _
-)         | 0x29    | _
-{         | 0x7B    | _
-}         | 0x7D    | _
-;         | 0x3B    | _
-'         | 0x27    | _
-,         | 0x2C    | _
-[         | 0x5B    | _
-]         | 0x5D    | _
-+         | 0x2B    | _
-=         | 0x3D    | _
-{         | 0x7B    | _
-$         | 0x24    | _
-*         | 0x2A    | _
-?         | 0x3F    | _
-<         | 0x3C    | _
->         | 0x3E    | _
-:         | 0x3A    | _
-\         | 0x5C    | _
-/         | 0x2F    | _
-"         | 0x22    | _
-#         | 0x23    | _
-(         | 0x28    | _
+| Character | Value   | Replacement |
+|-----------|---------|-------------|
+| @         | 0x40    | _           |
+| !         | 0x21    | _           |
+| ~         | 0x7E    | _           |
+| `         | 0x60    | _           |
+| %         | 0x25    | _           |
+| &         | 0x26    | _           |
+| ^         | 0x5E    | _           |
+| (         | 0x28    | _           |
+| )         | 0x29    | _           |
+| {         | 0x7B    | _           |
+| }         | 0x7D    | _           |
+| ;         | 0x3B    | _           |
+| '         | 0x27    | _           |
+| ,         | 0x2C    | _           |
+| [         | 0x5B    | _           |
+| ]         | 0x5D    | _           |
+| +         | 0x2B    | _           |
+| =         | 0x3D    | _           |
+| $         | 0x24    | _           |
+| *         | 0x2A    | _           |
+| ?         | 0x3F    | _           |
+| <         | 0x3C    | _           |
+| >         | 0x3E    | _           |
+| :         | 0x3A    | _           |
+| \         | 0x5C    | _           |
+| /         | 0x2F    | _           |
+| "         | 0x22    | _           |
+| #         | 0x23    | _           |
+
 
 
 FileLu only supports filenames and folder names up to 255 characters in length, where a
