@@ -24,6 +24,12 @@ import (
 	nfshelper "github.com/willscott/go-nfs/helpers"
 )
 
+// Errors on cache initialisation
+var (
+	ErrorSymlinkCacheNotSupported = errors.New("symlink cache not supported on " + runtime.GOOS)
+	ErrorSymlinkCacheNoPermission = errors.New("symlink cache must be run as root or with CAP_DAC_READ_SEARCH")
+)
+
 // Cache controls the file handle cache implementation
 type Cache interface {
 	// ToHandle takes a file and represents it with an opaque handle to reference it.
@@ -43,25 +49,35 @@ type Cache interface {
 
 // Set the cache of the handler to the type required by the user
 func (h *Handler) getCache() (c Cache, err error) {
+	fs.Debugf("nfs", "Starting %v handle cache", h.opt.HandleCache)
 	switch h.opt.HandleCache {
 	case cacheMemory:
 		return nfshelper.NewCachingHandler(h, h.opt.HandleLimit), nil
 	case cacheDisk:
 		return newDiskHandler(h)
 	case cacheSymlink:
-		if runtime.GOOS != "linux" {
-			return nil, errors.New("can only use symlink cache on Linux")
+		dh, err := newDiskHandler(h)
+		if err != nil {
+			return nil, err
 		}
-		return nil, errors.New("FIXME not implemented yet")
+		err = dh.makeSymlinkCache()
+		if err != nil {
+			return nil, err
+		}
+		return dh, nil
 	}
 	return nil, errors.New("unknown handle cache type")
 }
 
 // diskHandler implements an on disk NFS file handle cache
 type diskHandler struct {
-	mu       sync.RWMutex
-	cacheDir string
-	billyFS  billy.Filesystem
+	mu         sync.RWMutex
+	cacheDir   string
+	billyFS    billy.Filesystem
+	write      func(fh []byte, cachePath string, fullPath string) ([]byte, error)
+	read       func(fh []byte, cachePath string) ([]byte, error)
+	remove     func(fh []byte, cachePath string) error
+	handleType int32 //nolint:unused // used by the symlink cache
 }
 
 // Create a new disk handler
@@ -83,6 +99,9 @@ func newDiskHandler(h *Handler) (dh *diskHandler, err error) {
 	dh = &diskHandler{
 		cacheDir: cacheDir,
 		billyFS:  h.billyFS,
+		write:    dh.diskCacheWrite,
+		read:     dh.diskCacheRead,
+		remove:   dh.diskCacheRemove,
 	}
 	fs.Infof("nfs", "Storing handle cache in %q", dh.cacheDir)
 	return dh, nil
@@ -120,12 +139,17 @@ func (dh *diskHandler) ToHandle(f billy.Filesystem, splitPath []string) (fh []by
 		fs.Errorf("nfs", "Couldn't create cache file handle directory: %v", err)
 		return fh
 	}
-	err = os.WriteFile(cachePath, []byte(fullPath), 0600)
+	fh, err = dh.write(fh, cachePath, fullPath)
 	if err != nil {
 		fs.Errorf("nfs", "Couldn't create cache file handle: %v", err)
 		return fh
 	}
 	return fh
+}
+
+// Write the fullPath into cachePath returning the possibly updated fh
+func (dh *diskHandler) diskCacheWrite(fh []byte, cachePath string, fullPath string) ([]byte, error) {
+	return fh, os.WriteFile(cachePath, []byte(fullPath), 0600)
 }
 
 var errStaleHandle = &nfs.NFSStatusError{NFSStatus: nfs.NFSStatusStale}
@@ -135,7 +159,7 @@ func (dh *diskHandler) FromHandle(fh []byte) (f billy.Filesystem, splitPath []st
 	dh.mu.RLock()
 	defer dh.mu.RUnlock()
 	cachePath := dh.handleToPath(fh)
-	fullPathBytes, err := os.ReadFile(cachePath)
+	fullPathBytes, err := dh.read(fh, cachePath)
 	if err != nil {
 		fs.Errorf("nfs", "Stale handle %q: %v", cachePath, err)
 		return nil, nil, errStaleHandle
@@ -144,16 +168,26 @@ func (dh *diskHandler) FromHandle(fh []byte) (f billy.Filesystem, splitPath []st
 	return dh.billyFS, splitPath, nil
 }
 
+// Read the contents of (fh, cachePath)
+func (dh *diskHandler) diskCacheRead(fh []byte, cachePath string) ([]byte, error) {
+	return os.ReadFile(cachePath)
+}
+
 // Invalidate the handle passed - used on rename and delete
 func (dh *diskHandler) InvalidateHandle(f billy.Filesystem, fh []byte) error {
 	dh.mu.Lock()
 	defer dh.mu.Unlock()
 	cachePath := dh.handleToPath(fh)
-	err := os.Remove(cachePath)
+	err := dh.remove(fh, cachePath)
 	if err != nil {
 		fs.Errorf("nfs", "Failed to remove handle %q: %v", cachePath, err)
 	}
 	return nil
+}
+
+// Remove the (fh, cachePath) file
+func (dh *diskHandler) diskCacheRemove(fh []byte, cachePath string) error {
+	return os.Remove(cachePath)
 }
 
 // HandleLimit exports how many file handles can be safely stored by this cache.

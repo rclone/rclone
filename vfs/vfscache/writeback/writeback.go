@@ -519,8 +519,11 @@ var ErrorIDNotFound = errors.New("id not found in queue")
 //
 // id should be as returned from the Queue call
 //
+// The expiry time is set to expiry + relative if expiry is passed in,
+// otherwise the expiry of the item is used.
+//
 // If the item isn't found then it will return ErrorIDNotFound
-func (wb *WriteBack) SetExpiry(id Handle, expiry time.Time) error {
+func (wb *WriteBack) SetExpiry(id Handle, expiry time.Time, relative time.Duration) error {
 	wb.mu.Lock()
 	defer wb.mu.Unlock()
 
@@ -528,6 +531,12 @@ func (wb *WriteBack) SetExpiry(id Handle, expiry time.Time) error {
 	if !ok {
 		return ErrorIDNotFound
 	}
+
+	// If expiry is not supplied, use expiry of item
+	if expiry.IsZero() {
+		expiry = wbItem.expiry
+	}
+	expiry = expiry.Add(relative)
 
 	// Update the expiry with the user requested value
 	wb.items._update(wbItem, expiry)

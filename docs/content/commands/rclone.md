@@ -41,6 +41,7 @@ rclone [flags]
       --azureblob-description string                        Description of the remote
       --azureblob-directory-markers                         Upload an empty object with a trailing slash when a new directory is created
       --azureblob-disable-checksum                          Don't store MD5 checksum with object metadata
+      --azureblob-disable-instance-discovery                Skip requesting Microsoft Entra instance metadata
       --azureblob-encoding Encoding                         The encoding for the backend (default Slash,BackSlash,Del,Ctl,RightPeriod,InvalidUtf8)
       --azureblob-endpoint string                           Endpoint for the service
       --azureblob-env-auth                                  Read credentials from runtime (environment variables, CLI or MSI)
@@ -58,6 +59,7 @@ rclone [flags]
       --azureblob-tenant string                             ID of the service principal's tenant. Also called its directory ID
       --azureblob-upload-concurrency int                    Concurrency for multipart uploads (default 16)
       --azureblob-upload-cutoff string                      Cutoff for switching to chunked upload (<= 256 MiB) (deprecated)
+      --azureblob-use-az                                    Use Azure CLI tool az for authentication
       --azureblob-use-emulator                              Uses local storage emulator if provided as 'true'
       --azureblob-use-msi                                   Use a managed service identity to authenticate (only works in Azure)
       --azureblob-username string                           User name (usually an email address)
@@ -109,6 +111,7 @@ rclone [flags]
       --box-auth-url string                                 Auth server URL
       --box-box-config-file string                          Box App config.json location
       --box-box-sub-type string                              (default "user")
+      --box-client-credentials                              Use client credentials OAuth flow
       --box-client-id string                                OAuth Client Id
       --box-client-secret string                            OAuth Client Secret
       --box-commit-retries int                              Max number of times to try committing a multipart file (default 100)
@@ -157,6 +160,14 @@ rclone [flags]
       --chunker-remote string                               Remote to chunk/unchunk
       --client-cert string                                  Client SSL certificate (PEM) for mutual TLS auth
       --client-key string                                   Client SSL private key (PEM) for mutual TLS auth
+      --cloudinary-api-key string                           Cloudinary API Key
+      --cloudinary-api-secret string                        Cloudinary API Secret
+      --cloudinary-cloud-name string                        Cloudinary Environment Name
+      --cloudinary-description string                       Description of the remote
+      --cloudinary-encoding Encoding                        The encoding for the backend (default Slash,LtGt,DoubleQuote,Question,Asterisk,Pipe,Hash,Percent,BackSlash,Del,Ctl,RightSpace,InvalidUtf8,Dot)
+      --cloudinary-eventually-consistent-delay Duration     Wait N seconds for eventual consistency of the databases that support the backend operation (default 0s)
+      --cloudinary-upload-prefix string                     Specify the API endpoint for environments out of the US
+      --cloudinary-upload-preset string                     Upload Preset to select asset manipulation on upload
       --color AUTO|NEVER|ALWAYS                             When to show colors (and other ANSI codes) AUTO|NEVER|ALWAYS (default AUTO)
       --combine-description string                          Description of the remote
       --combine-upstreams SpaceSepList                      Upstreams for combining
@@ -198,6 +209,7 @@ rclone [flags]
       --drive-auth-owner-only                               Only consider files owned by the authenticated user
       --drive-auth-url string                               Auth server URL
       --drive-chunk-size SizeSuffix                         Upload chunk size (default 8Mi)
+      --drive-client-credentials                            Use client credentials OAuth flow
       --drive-client-id string                              Google Application Client Id
       --drive-client-secret string                          OAuth Client Secret
       --drive-copy-shortcut-content                         Server side copy contents of shortcuts instead of the shortcut
@@ -248,6 +260,7 @@ rclone [flags]
       --dropbox-batch-size int                              Max number of files in upload batch
       --dropbox-batch-timeout Duration                      Max time to allow an idle upload batch before uploading (default 0s)
       --dropbox-chunk-size SizeSuffix                       Upload chunk size (< 150Mi) (default 48Mi)
+      --dropbox-client-credentials                          Use client credentials OAuth flow
       --dropbox-client-id string                            OAuth Client Id
       --dropbox-client-secret string                        OAuth Client Secret
       --dropbox-description string                          Description of the remote
@@ -312,6 +325,7 @@ rclone [flags]
       --ftp-host string                                     FTP host to connect to
       --ftp-idle-timeout Duration                           Max time before closing idle connections (default 1m0s)
       --ftp-no-check-certificate                            Do not verify the TLS certificate of the server
+      --ftp-no-check-upload                                 Don't check the upload is OK
       --ftp-pass string                                     FTP password (obscured)
       --ftp-port int                                        FTP port number (default 21)
       --ftp-shut-timeout Duration                           Maximum time to wait for data connection closing status (default 1m0s)
@@ -320,10 +334,12 @@ rclone [flags]
       --ftp-tls-cache-size int                              Size of TLS session cache for all control and data connections (default 32)
       --ftp-user string                                     FTP username (default "$USER")
       --ftp-writing-mdtm                                    Use MDTM to set modification time (VsFtpd quirk)
+      --gcs-access-token string                             Short-lived access token
       --gcs-anonymous                                       Access public buckets and objects without credentials
       --gcs-auth-url string                                 Auth server URL
       --gcs-bucket-acl string                               Access Control List for new buckets
       --gcs-bucket-policy-only                              Access checks should use bucket-level IAM policies
+      --gcs-client-credentials                              Use client credentials OAuth flow
       --gcs-client-id string                                OAuth Client Id
       --gcs-client-secret string                            OAuth Client Secret
       --gcs-decompress                                      If set this will decompress gzip encoded objects
@@ -352,11 +368,13 @@ rclone [flags]
       --gphotos-batch-mode string                           Upload file batching sync|async|off (default "sync")
       --gphotos-batch-size int                              Max number of files in upload batch
       --gphotos-batch-timeout Duration                      Max time to allow an idle upload batch before uploading (default 0s)
+      --gphotos-client-credentials                          Use client credentials OAuth flow
       --gphotos-client-id string                            OAuth Client Id
       --gphotos-client-secret string                        OAuth Client Secret
       --gphotos-description string                          Description of the remote
       --gphotos-encoding Encoding                           The encoding for the backend (default Slash,CrLf,InvalidUtf8,Dot)
       --gphotos-include-archived                            Also view and download archived media
+      --gphotos-proxy string                                Use the gphotosdl proxy for downloading the full resolution images
       --gphotos-read-only                                   Set to make the Google Photos backend read only
       --gphotos-read-size                                   Set to read the size of media items
       --gphotos-start-year int                              Year limits the photos to be downloaded to those which are uploaded after the given year (default 2000)
@@ -379,6 +397,7 @@ rclone [flags]
   -h, --help                                                help for rclone
       --hidrive-auth-url string                             Auth server URL
       --hidrive-chunk-size SizeSuffix                       Chunksize for chunked uploads (default 48Mi)
+      --hidrive-client-credentials                          Use client credentials OAuth flow
       --hidrive-client-id string                            OAuth Client Id
       --hidrive-client-secret string                        OAuth Client Secret
       --hidrive-description string                          Description of the remote
@@ -399,6 +418,11 @@ rclone [flags]
       --http-no-slash                                       Set this if the site doesn't end directories with /
       --http-url string                                     URL of HTTP host to connect to
       --human-readable                                      Print numbers in a human-readable format, sizes with suffix Ki|Mi|Gi|Ti|Pi
+      --iclouddrive-apple-id string                         Apple ID
+      --iclouddrive-client-id string                        Client id (default "d39ba9916b7251055b22c7f910e2ea796ee65e98b2ddecea8f5dde8d9d1a815d")
+      --iclouddrive-description string                      Description of the remote
+      --iclouddrive-encoding Encoding                       The encoding for the backend (default Slash,BackSlash,Del,Ctl,InvalidUtf8,Dot)
+      --iclouddrive-password string                         Password (obscured)
       --ignore-case                                         Ignore case in filters (case insensitive)
       --ignore-case-sync                                    Ignore case when synchronizing
       --ignore-checksum                                     Skip post copy check of checksums
@@ -428,6 +452,7 @@ rclone [flags]
       --internetarchive-secret-access-key string            IAS3 Secret Key (password)
       --internetarchive-wait-archive Duration               Timeout for waiting the server's processing tasks (specifically archive and book_op) to finish (default 0s)
       --jottacloud-auth-url string                          Auth server URL
+      --jottacloud-client-credentials                       Use client credentials OAuth flow
       --jottacloud-client-id string                         OAuth Client Id
       --jottacloud-client-secret string                     OAuth Client Secret
       --jottacloud-description string                       Description of the remote
@@ -455,6 +480,7 @@ rclone [flags]
       --local-case-sensitive                                Force the filesystem to report itself as case sensitive
       --local-description string                            Description of the remote
       --local-encoding Encoding                             The encoding for the backend (default Slash,Dot)
+      --local-links                                         Translate symlinks to/from regular files with a '.rclonelink' extension for the local backend
       --local-no-check-updated                              Don't check to see if the files change during upload
       --local-no-clone                                      Disable reflink cloning for server-side copies
       --local-no-preallocate                                Disable preallocation of disk space for transferred files
@@ -471,6 +497,7 @@ rclone [flags]
       --low-level-retries int                               Number of low level retries to do (default 10)
       --mailru-auth-url string                              Auth server URL
       --mailru-check-hash                                   What should copy do if file checksum is mismatched or invalid (default true)
+      --mailru-client-credentials                           Use client credentials OAuth flow
       --mailru-client-id string                             OAuth Client Id
       --mailru-client-secret string                         OAuth Client Secret
       --mailru-description string                           Description of the remote
@@ -510,7 +537,7 @@ rclone [flags]
       --metadata-include-from stringArray                   Read metadata include patterns from file (use - to read from stdin)
       --metadata-mapper SpaceSepList                        Program to run to transforming metadata before upload
       --metadata-set stringArray                            Add metadata key=value when uploading
-      --metrics-addr stringArray                            IPaddress:Port or :Port to bind metrics server to (default [""])
+      --metrics-addr stringArray                            IPaddress:Port or :Port to bind metrics server to
       --metrics-allow-origin string                         Origin which cross-domain request (CORS) can be executed from
       --metrics-baseurl string                              Prefix for URLs - leave blank for root
       --metrics-cert string                                 TLS PEM key (concatenation of certificate and CA certificate)
@@ -551,6 +578,7 @@ rclone [flags]
       --onedrive-auth-url string                            Auth server URL
       --onedrive-av-override                                Allows download of files the server thinks has a virus
       --onedrive-chunk-size SizeSuffix                      Chunk size to upload files with - must be multiple of 320k (327,680 bytes) (default 10Mi)
+      --onedrive-client-credentials                         Use client credentials OAuth flow
       --onedrive-client-id string                           OAuth Client Id
       --onedrive-client-secret string                       OAuth Client Secret
       --onedrive-delta                                      If set rclone will use delta listing to implement recursive listings
@@ -570,11 +598,12 @@ rclone [flags]
       --onedrive-region string                              Choose national cloud region for OneDrive (default "global")
       --onedrive-root-folder-id string                      ID of the root folder
       --onedrive-server-side-across-configs                 Deprecated: use --server-side-across-configs instead
+      --onedrive-tenant string                              ID of the service principal's tenant. Also called its directory ID
       --onedrive-token string                               OAuth Access Token as a JSON blob
       --onedrive-token-url string                           Token server url
       --oos-attempt-resume-upload                           If true attempt to resume previously started multipart upload for the object
       --oos-chunk-size SizeSuffix                           Chunk size to use for uploading (default 5Mi)
-      --oos-compartment string                              Object storage compartment OCID
+      --oos-compartment string                              Specify compartment OCID, if you need to list buckets
       --oos-config-file string                              Path to OCI config file (default "~/.oci/config")
       --oos-config-profile string                           Profile name inside the oci config file (default "Default")
       --oos-copy-cutoff SizeSuffix                          Cutoff for switching to multipart copy (default 4.656Gi)
@@ -606,6 +635,7 @@ rclone [flags]
       --partial-suffix string                               Add partial-suffix to temporary file name when --inplace is not used (default ".partial")
       --password-command SpaceSepList                       Command for supplying password for encrypted configuration
       --pcloud-auth-url string                              Auth server URL
+      --pcloud-client-credentials                           Use client credentials OAuth flow
       --pcloud-client-id string                             OAuth Client Id
       --pcloud-client-secret string                         OAuth Client Secret
       --pcloud-description string                           Description of the remote
@@ -616,26 +646,25 @@ rclone [flags]
       --pcloud-token string                                 OAuth Access Token as a JSON blob
       --pcloud-token-url string                             Token server url
       --pcloud-username string                              Your pcloud username
-      --pikpak-auth-url string                              Auth server URL
       --pikpak-chunk-size SizeSuffix                        Chunk size for multipart uploads (default 5Mi)
-      --pikpak-client-id string                             OAuth Client Id
-      --pikpak-client-secret string                         OAuth Client Secret
       --pikpak-description string                           Description of the remote
+      --pikpak-device-id string                             Device ID used for authorization
       --pikpak-encoding Encoding                            The encoding for the backend (default Slash,LtGt,DoubleQuote,Colon,Question,Asterisk,Pipe,BackSlash,Ctl,LeftSpace,RightSpace,RightPeriod,InvalidUtf8,Dot)
       --pikpak-hash-memory-limit SizeSuffix                 Files bigger than this will be cached on disk to calculate hash if required (default 10Mi)
+      --pikpak-no-media-link                                Use original file links instead of media links
       --pikpak-pass string                                  Pikpak password (obscured)
       --pikpak-root-folder-id string                        ID of the root folder
-      --pikpak-token string                                 OAuth Access Token as a JSON blob
-      --pikpak-token-url string                             Token server url
       --pikpak-trashed-only                                 Only show files that are in the trash
       --pikpak-upload-concurrency int                       Concurrency for multipart uploads (default 5)
       --pikpak-use-trash                                    Send files to the trash instead of deleting permanently (default true)
       --pikpak-user string                                  Pikpak username
+      --pikpak-user-agent string                            HTTP user agent for pikpak (default "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:129.0) Gecko/20100101 Firefox/129.0")
       --pixeldrain-api-key string                           API key for your pixeldrain account
       --pixeldrain-api-url string                           The API endpoint to connect to. In the vast majority of cases it's fine to leave (default "https://pixeldrain.com/api")
       --pixeldrain-description string                       Description of the remote
       --pixeldrain-root-folder-id string                    Root of the filesystem to use (default "me")
       --premiumizeme-auth-url string                        Auth server URL
+      --premiumizeme-client-credentials                     Use client credentials OAuth flow
       --premiumizeme-client-id string                       OAuth Client Id
       --premiumizeme-client-secret string                   OAuth Client Secret
       --premiumizeme-description string                     Description of the remote
@@ -655,6 +684,7 @@ rclone [flags]
       --protondrive-replace-existing-draft                  Create a new revision when filename conflict is detected
       --protondrive-username string                         The username of your proton account
       --putio-auth-url string                               Auth server URL
+      --putio-client-credentials                            Use client credentials OAuth flow
       --putio-client-id string                              OAuth Client Id
       --putio-client-secret string                          OAuth Client Secret
       --putio-description string                            Description of the remote
@@ -683,7 +713,7 @@ rclone [flags]
       --quatrix-skip-project-folders                        Skip project folders in operations
   -q, --quiet                                               Print as little stuff as possible
       --rc                                                  Enable the remote control server
-      --rc-addr stringArray                                 IPaddress:Port or :Port to bind server to (default ["localhost:5572"])
+      --rc-addr stringArray                                 IPaddress:Port or :Port to bind server to (default localhost:5572)
       --rc-allow-origin string                              Origin which cross-domain request (CORS) can be executed from
       --rc-baseurl string                                   Prefix for URLs - leave blank for root
       --rc-cert string                                      TLS PEM key (concatenation of certificate and CA certificate)
@@ -721,6 +751,7 @@ rclone [flags]
       --s3-copy-cutoff SizeSuffix                           Cutoff for switching to multipart copy (default 4.656Gi)
       --s3-decompress                                       If set this will decompress gzip encoded objects
       --s3-description string                               Description of the remote
+      --s3-directory-bucket                                 Set to use AWS Directory Buckets
       --s3-directory-markers                                Upload an empty object with a trailing slash when a new directory is created
       --s3-disable-checksum                                 Don't store MD5 checksum with object metadata
       --s3-disable-http2                                    Disable usage of http2 for S3 backends
@@ -803,6 +834,7 @@ rclone [flags]
       --sftp-pass string                                    SSH password, leave blank to use ssh-agent (obscured)
       --sftp-path-override string                           Override path used by SSH shell commands
       --sftp-port int                                       SSH port number (default 22)
+      --sftp-pubkey string                                  SSH public certificate for public certificate based authentication
       --sftp-pubkey-file string                             Optional path to public key file
       --sftp-server-command string                          Specifies the path or command to run a sftp server on the remote host
       --sftp-set-env SpaceSepList                           Environment variables to pass to sftp and commands
@@ -818,6 +850,7 @@ rclone [flags]
       --sftp-user string                                    SSH username (default "$USER")
       --sharefile-auth-url string                           Auth server URL
       --sharefile-chunk-size SizeSuffix                     Upload chunk size (default 64Mi)
+      --sharefile-client-credentials                        Use client credentials OAuth flow
       --sharefile-client-id string                          OAuth Client Id
       --sharefile-client-secret string                      OAuth Client Secret
       --sharefile-description string                        Description of the remote
@@ -932,9 +965,10 @@ rclone [flags]
       --use-json-log                                        Use json log format
       --use-mmap                                            Use mmap allocator (see docs)
       --use-server-modtime                                  Use server modified time instead of object metadata
-      --user-agent string                                   Set the user-agent to a specified string (default "rclone/v1.68.0")
+      --user-agent string                                   Set the user-agent to a specified string (default "rclone/v1.69.0")
   -v, --verbose count                                       Print lots more stuff (repeat for more)
   -V, --version                                             Print the version number
+      --webdav-auth-redirect                                Preserve authentication on redirect
       --webdav-bearer-token string                          Bearer token instead of user/pass (e.g. a Macaroon)
       --webdav-bearer-token-command string                  Command to run to get a bearer token
       --webdav-description string                           Description of the remote
@@ -950,6 +984,7 @@ rclone [flags]
       --webdav-user string                                  User name
       --webdav-vendor string                                Name of the WebDAV site/service/software you are using
       --yandex-auth-url string                              Auth server URL
+      --yandex-client-credentials                           Use client credentials OAuth flow
       --yandex-client-id string                             OAuth Client Id
       --yandex-client-secret string                         OAuth Client Secret
       --yandex-description string                           Description of the remote
@@ -959,6 +994,7 @@ rclone [flags]
       --yandex-token string                                 OAuth Access Token as a JSON blob
       --yandex-token-url string                             Token server url
       --zoho-auth-url string                                Auth server URL
+      --zoho-client-credentials                             Use client credentials OAuth flow
       --zoho-client-id string                               OAuth Client Id
       --zoho-client-secret string                           OAuth Client Secret
       --zoho-description string                             Description of the remote
@@ -966,6 +1002,7 @@ rclone [flags]
       --zoho-region string                                  Zoho region to connect to
       --zoho-token string                                   OAuth Access Token as a JSON blob
       --zoho-token-url string                               Token server url
+      --zoho-upload-cutoff SizeSuffix                       Cutoff for switching to large file upload api (>= 10 MiB) (default 10Mi)
 ```
 
 ## See Also

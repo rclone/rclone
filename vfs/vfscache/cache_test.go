@@ -748,6 +748,6 @@ func TestCacheQueueSetExpiry(t *testing.T) {
 	// Check this returns the correct error when called so we know
 	// it is plumbed in correctly. The actual tests are done in
 	// writeback.
-	err := c.QueueSetExpiry(123123, time.Now())
+	err := c.QueueSetExpiry(123123, time.Now(), 0)
 	assert.Equal(t, writeback.ErrorIDNotFound, err)
 }

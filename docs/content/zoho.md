@@ -224,6 +224,19 @@ Properties:
 - Type:        string
 - Required:    false
 
+#### --zoho-client-credentials
+
+Use client credentials OAuth flow.
+
+This will use the OAUTH2 client Credentials Flow as described in RFC 6749.
+
+Properties:
+
+- Config:      client_credentials
+- Env Var:     RCLONE_ZOHO_CLIENT_CREDENTIALS
+- Type:        bool
+- Default:     false
+
 #### --zoho-upload-cutoff
 
 Cutoff for switching to large file upload api (>= 10 MiB).

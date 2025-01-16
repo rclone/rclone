@@ -209,7 +209,7 @@ but is arguably easier to parameterize in scripts.
 The `path` part is optional.
 
 [Mount and VFS options](/commands/rclone_serve_docker/#options)
-as well as [backend parameters](/flags/#backend-flags) are named
+as well as [backend parameters](/flags/#backend) are named
 like their twin command-line flags without the `--` CLI prefix.
 Optionally you can use underscores instead of dashes in option names.
 For example, `--vfs-cache-mode full` becomes

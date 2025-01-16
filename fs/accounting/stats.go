@@ -360,8 +360,8 @@ func (s *StatsInfo) averageLoop() {
 
 // Start the average loop
 func (s *StatsInfo) startAverageLoop() {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
+	s.mu.Lock()
+	defer s.mu.Unlock()
 	s.average.startOnce.Do(func() {
 		s.average.stopped.Add(1)
 		go s.averageLoop()
@@ -380,8 +380,8 @@ func (s *StatsInfo) _stopAverageLoop() {
 
 // Stop the average loop
 func (s *StatsInfo) stopAverageLoop() {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
+	s.mu.Lock()
+	defer s.mu.Unlock()
 	s._stopAverageLoop()
 }
 

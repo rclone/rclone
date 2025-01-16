@@ -1168,7 +1168,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		errors := make([]error, 1)
 		results := make([]*api.MediaItem, 1)
 		err = o.fs.commitBatch(ctx, []uploadedItem{uploaded}, results, errors)
-		if err != nil {
+		if err == nil {
 			err = errors[0]
 			info = results[0]
 		}

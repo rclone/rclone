@@ -1050,7 +1050,7 @@ func Mkdir(ctx context.Context, f fs.Fs, dir string) error {
 	if SkipDestructive(ctx, fs.LogDirName(f, dir), "make directory") {
 		return nil
 	}
-	fs.Debugf(fs.LogDirName(f, dir), "Making directory")
+	fs.Infof(fs.LogDirName(f, dir), "Making directory")
 	err := f.Mkdir(ctx, dir)
 	if err != nil {
 		err = fs.CountError(ctx, err)

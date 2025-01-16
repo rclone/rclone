@@ -161,7 +161,24 @@ Set to 0 to disable chunked uploading.
 			Default:  false,
 		},
 			fshttp.UnixSocketConfig,
-		},
+			{
+				Name: "auth_redirect",
+				Help: `Preserve authentication on redirect.
+
+If the server redirects rclone to a new domain when it is trying to
+read a file then normally rclone will drop the Authorization: header
+from the request.
+
+This is standard security practice to avoid sending your credentials
+to an unknown webserver.
+
+However this is desirable in some circumstances. If you are getting
+an error like "401 Unauthorized" when rclone is attempting to read
+files from the webdav server then you can try this option.
+`,
+				Advanced: true,
+				Default:  false,
+			}},
 	})
 }
 
@@ -180,6 +197,7 @@ type Options struct {
 	ExcludeShares      bool                 `config:"owncloud_exclude_shares"`
 	ExcludeMounts      bool                 `config:"owncloud_exclude_mounts"`
 	UnixSocket         string               `config:"unix_socket"`
+	AuthRedirect       bool                 `config:"auth_redirect"`
 }
 
 // Fs represents a remote webdav
@@ -1456,6 +1474,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 		ExtraHeaders: map[string]string{
 			"Depth": "0",
 		},
+		AuthRedirect: o.fs.opt.AuthRedirect, // allow redirects to preserve Auth
 	}
 	err = o.fs.pacer.Call(func() (bool, error) {
 		resp, err = o.fs.srv.Call(ctx, &opts)

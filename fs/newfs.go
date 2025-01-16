@@ -6,6 +6,7 @@ import (
 	"context"
 	"crypto/md5"
 	"encoding/base64"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -104,7 +105,7 @@ func ParseRemote(path string) (fsInfo *RegInfo, configName, fsPath string, conne
 			m := ConfigMap("", nil, configName, parsed.Config)
 			fsName, ok = m.Get("type")
 			if !ok {
-				return nil, "", "", nil, ErrorNotFoundInConfigFile
+				return nil, "", "", nil, fmt.Errorf("%w (%q)", ErrorNotFoundInConfigFile, configName)
 			}
 		}
 	} else {

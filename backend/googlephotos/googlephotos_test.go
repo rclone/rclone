@@ -2,6 +2,7 @@ package googlephotos
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -35,7 +36,7 @@ func TestIntegration(t *testing.T) {
 		*fstest.RemoteName = "TestGooglePhotos:"
 	}
 	f, err := fs.NewFs(ctx, *fstest.RemoteName)
-	if err == fs.ErrorNotFoundInConfigFile {
+	if errors.Is(err, fs.ErrorNotFoundInConfigFile) {
 		t.Skipf("Couldn't create google photos backend - skipping tests: %v", err)
 	}
 	require.NoError(t, err)

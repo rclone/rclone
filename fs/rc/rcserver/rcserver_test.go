@@ -358,7 +358,7 @@ func TestRemoteServing(t *testing.T) {
 			URL:    "[notfoundremote:]/",
 			Status: http.StatusInternalServerError,
 			Expected: `{
-	"error": "failed to make Fs: didn't find section in config file",
+	"error": "failed to make Fs: didn't find section in config file (\"notfoundremote\")",
 	"input": null,
 	"path": "/",
 	"status": 500

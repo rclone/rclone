@@ -11,6 +11,7 @@ import (
 	"path"
 	"path/filepath"
 	"regexp"
+	"sort"
 	"strings"
 
 	"github.com/anacrolix/dms/dlna"
@@ -157,6 +158,18 @@ func (cds *contentDirectoryService) readContainer(o object, host string) (ret []
 			dirEntries = append(dirEntries, subtitleEntries...)
 		}
 	}
+
+	// Sort the directory entries by directories first then alphabetically by name
+	sort.Slice(dirEntries, func(i, j int) bool {
+		iNode, jNode := dirEntries[i], dirEntries[j]
+		iIsDir, jIsDir := iNode.IsDir(), jNode.IsDir()
+		if iIsDir && !jIsDir {
+			return true
+		} else if !iIsDir && jIsDir {
+			return false
+		}
+		return strings.ToLower(iNode.Name()) < strings.ToLower(jNode.Name())
+	})
 
 	dirEntries, mediaResources := mediaWithResources(dirEntries)
 	for _, de := range dirEntries {

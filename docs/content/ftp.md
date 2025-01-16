@@ -419,12 +419,12 @@ Properties:
 
 Socks 5 proxy host.
 		
-		Supports the format user:pass@host:port, user@host:port, host:port.
+Supports the format user:pass@host:port, user@host:port, host:port.
 		
-		Example:
+Example:
 		
-			myUser:myPass@localhost:9005
-		
+    myUser:myPass@localhost:9005
+
 
 Properties:
 
@@ -432,6 +432,28 @@ Properties:
 - Env Var:     RCLONE_FTP_SOCKS_PROXY
 - Type:        string
 - Required:    false
+
+#### --ftp-no-check-upload
+
+Don't check the upload is OK
+
+Normally rclone will try to check the upload exists after it has
+uploaded a file to make sure the size and modification time are as
+expected.
+
+This flag stops rclone doing these checks. This enables uploading to
+folders which are write only.
+
+You will likely need to use the --inplace flag also if uploading to
+a write only folder.
+
+
+Properties:
+
+- Config:      no_check_upload
+- Env Var:     RCLONE_FTP_NO_CHECK_UPLOAD
+- Type:        bool
+- Default:     false
 
 #### --ftp-encoding
 

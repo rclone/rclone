@@ -323,6 +323,21 @@ Properties:
     - "cn"
         - Azure and Office 365 operated by Vnet Group in China
 
+#### --onedrive-tenant
+
+ID of the service principal's tenant. Also called its directory ID.
+
+Set this if using
+- Client Credential flow
+
+
+Properties:
+
+- Config:      tenant
+- Env Var:     RCLONE_ONEDRIVE_TENANT
+- Type:        string
+- Required:    false
+
 ### Advanced options
 
 Here are the Advanced options specific to onedrive (Microsoft OneDrive).
@@ -363,6 +378,19 @@ Properties:
 - Env Var:     RCLONE_ONEDRIVE_TOKEN_URL
 - Type:        string
 - Required:    false
+
+#### --onedrive-client-credentials
+
+Use client credentials OAuth flow.
+
+This will use the OAUTH2 client Credentials Flow as described in RFC 6749.
+
+Properties:
+
+- Config:      client_credentials
+- Env Var:     RCLONE_ONEDRIVE_CLIENT_CREDENTIALS
+- Type:        bool
+- Default:     false
 
 #### --onedrive-chunk-size
 

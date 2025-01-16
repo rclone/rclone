@@ -412,20 +412,6 @@ Properties:
 - Type:        string
 - Required:    false
 
-#### --gcs-access-token
-
-Short-lived access token.
-
-Leave blank normally.
-Needed only if you want use short-lived access tokens instead of interactive login.
-
-Properties:
-
-- Config:      access_token
-- Env Var:     RCLONE_GCS_ACCESS_TOKEN
-- Type:        string
-- Required:    false
-
 #### --gcs-anonymous
 
 Access public buckets and objects without credentials.
@@ -684,6 +670,33 @@ Properties:
 
 - Config:      token_url
 - Env Var:     RCLONE_GCS_TOKEN_URL
+- Type:        string
+- Required:    false
+
+#### --gcs-client-credentials
+
+Use client credentials OAuth flow.
+
+This will use the OAUTH2 client Credentials Flow as described in RFC 6749.
+
+Properties:
+
+- Config:      client_credentials
+- Env Var:     RCLONE_GCS_CLIENT_CREDENTIALS
+- Type:        bool
+- Default:     false
+
+#### --gcs-access-token
+
+Short-lived access token.
+
+Leave blank normally.
+Needed only if you want use short-lived access token instead of interactive login.
+
+Properties:
+
+- Config:      access_token
+- Env Var:     RCLONE_GCS_ACCESS_TOKEN
 - Type:        string
 - Required:    false
 

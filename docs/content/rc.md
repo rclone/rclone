@@ -2104,6 +2104,7 @@ This takes the following parameters
 - `fs` - select the VFS in use (optional)
 - `id` - a numeric ID as returned from `vfs/queue`
 - `expiry` - a new expiry time as floating point seconds
+- `relative` - if set, expiry is to be treated as relative to the current expiry (optional, boolean)
 
 This returns an empty result on success, or an error.
 

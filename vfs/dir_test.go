@@ -607,3 +607,51 @@ func TestDirRename(t *testing.T) {
 func TestDirStructSize(t *testing.T) {
 	t.Logf("Dir struct has size %d bytes", unsafe.Sizeof(Dir{}))
 }
+
+// Check that open files appear in the directory listing properly after a forget
+func TestDirFileOpen(t *testing.T) {
+	_, vfs, dir, _ := dirCreate(t)
+
+	assert.False(t, dir.hasVirtual())
+	assert.False(t, dir.parent.hasVirtual())
+
+	_, err := dir.Mkdir("sub")
+	require.NoError(t, err)
+
+	assert.True(t, dir.hasVirtual())
+	assert.True(t, dir.parent.hasVirtual())
+
+	fd0, err := vfs.Create("dir/sub/file0")
+	require.NoError(t, err)
+	_, err = fd0.Write([]byte("hello"))
+	require.NoError(t, err)
+	defer func() {
+		require.NoError(t, fd0.Close())
+	}()
+
+	fd2, err := vfs.Create("dir/sub/file2")
+	require.NoError(t, err)
+	_, err = fd2.Write([]byte("hello world!"))
+	require.NoError(t, err)
+	require.NoError(t, fd2.Close())
+	assert.True(t, dir.hasVirtual())
+
+	assert.True(t, dir.hasVirtual())
+	assert.True(t, dir.parent.hasVirtual())
+
+	// Now forget the directory
+	hasVirtual := dir.parent.ForgetAll()
+	assert.True(t, hasVirtual)
+
+	assert.True(t, dir.hasVirtual())
+	assert.True(t, dir.parent.hasVirtual())
+
+	// Check the files can still be found
+	fi, err := vfs.Stat("dir/sub/file0")
+	require.NoError(t, err)
+	assert.Equal(t, int64(5), fi.Size())
+
+	fi, err = vfs.Stat("dir/sub/file2")
+	require.NoError(t, err)
+	assert.Equal(t, int64(12), fi.Size())
+}

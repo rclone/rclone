@@ -3,7 +3,6 @@
 package nfs
 
 import (
-	"math"
 	"os"
 	"path"
 	"strings"
@@ -37,7 +36,7 @@ func setSys(fi os.FileInfo) {
 		Nlink:  1,
 		UID:    vfs.Opt.UID,
 		GID:    vfs.Opt.GID,
-		Fileid: math.MaxUint64, // without this mounting doesn't work on Linux
+		Fileid: node.Inode(), // without this mounting doesn't work on Linux
 	}
 	node.SetSys(&stat)
 }
