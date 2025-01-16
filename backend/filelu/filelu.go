@@ -190,7 +190,11 @@ func (f *Fs) resolveFolderPath(ctx context.Context, path string) (int, error) {
 			return 0, err
 		}
 		defer resp.Body.Close()
-
+		defer func() {
+    if err := resp.Body.Close(); err != nil {
+        fs.Logf(nil, "Failed to close response body: %v", err)
+    }
+}()
 		if resp.StatusCode != 200 {
 			return 0, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
 		}
@@ -1040,9 +1044,7 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 		  duplicateCounter++
       
 	}
- if duplicateCounter > 0 {
-        fs.Infof(f, "Files already exist: %d files skipped due to duplication.", duplicateCounter)
-    }
+
 	// Proceed with file upload if not a duplicate
 	uploadURL, sessID, err := f.getUploadServer(ctx)
 	if err != nil {
@@ -1074,25 +1076,29 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 
 // createTempFileFromReader writes the content of the 'in' reader into a temporary file
 func createTempFileFromReader(in io.Reader) (*os.File, error) {
-	tempFile, err := os.CreateTemp("", "upload-*.tmp")
-	if err != nil {
-		return nil, fmt.Errorf("failed to create temp file: %w", err)
-	}
+    tempFile, err := os.CreateTemp("", "upload-*.tmp")
+    if err != nil {
+        return nil, fmt.Errorf("failed to create temp file: %w", err)
+    }
 
-	_, err = io.Copy(tempFile, in)
-	if err != nil {
-		tempFile.Close()
-		return nil, fmt.Errorf("failed to copy data to temp file: %w", err)
-	}
+    defer func() {
+        if closeErr := tempFile.Close(); closeErr != nil {
+            // Log the error if needed
+        }
+    }()
 
-	// Seek back to the start of the file for further reading
-	_, err = tempFile.Seek(0, io.SeekStart)
-	if err != nil {
-		tempFile.Close()
-		return nil, fmt.Errorf("failed to seek temp file: %w", err)
-	}
+    _, err = io.Copy(tempFile, in)
+    if err != nil {
+        return nil, fmt.Errorf("failed to copy data to temp file: %w", err)
+    }
 
-	return tempFile, nil
+    // Seek back to the start of the file for further reading
+    _, err = tempFile.Seek(0, io.SeekStart)
+    if err != nil {
+        return nil, fmt.Errorf("failed to seek temp file: %w", err)
+    }
+
+    return tempFile, nil
 }
 
 func (f *Fs) moveFileToFolder(ctx context.Context, fileCode string, folderID int) error {
