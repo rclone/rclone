@@ -1272,7 +1272,7 @@ func (f *Fs) ChangeNotify(ctx context.Context, notifyFunc func(string, fs.EntryT
 	// Create new watcher
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
-		fs.Errorf(f, "Failed to create watcher")
+		fs.Errorf(f, "Failed to create watcher: %s", err)
 		return
 	}
 
@@ -1281,15 +1281,15 @@ func (f *Fs) ChangeNotify(ctx context.Context, notifyFunc func(string, fs.EntryT
 		if d != nil && d.IsDir() {
 			err := watcher.Add(path)
 			if err != nil {
-				fs.Debugf(f, "Failed to start watching %s", path)
+				fs.Errorf(f, "Failed to start watching %s: %s\n", path, err)
 			} else {
-				fs.Debugf(f, "Started watching %s", path)
+				fs.Errorf(f, "Started watching %s\n", path)
 			}
 		}
 		return nil
 	})
 	if err != nil {
-		fs.Errorf(f, "Failed to start watching %s", f.root)
+		fs.Errorf(f, "Failed to start watching %s: %s", f.root, err)
 		return
 	}
 
@@ -1298,7 +1298,7 @@ func (f *Fs) ChangeNotify(ctx context.Context, notifyFunc func(string, fs.EntryT
 		defer func() {
 			err := watcher.Close()
 			if err != nil {
-				fs.Debugf(f, "Failed to close watcher")
+				fs.Errorf(f, "Failed to close watcher: %s", err)
 			}
 		}()
 
