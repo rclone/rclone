@@ -189,7 +189,7 @@ func (f *Fs) resolveFolderPath(ctx context.Context, path string) (int, error) {
 		if err != nil {
 			return 0, err
 		}
-		defer resp.Body.Close()
+		
 		defer func() {
 			if err := resp.Body.Close(); err != nil {
 				fs.Logf(nil, "Failed to close response body: %v", err)
@@ -996,7 +996,7 @@ func (f *Fs) getUploadServer(ctx context.Context) (string, string, error) {
 // Put uploads a file to the storage backend.
 func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
 	fs.Debugf(f, "Put: Starting upload for %q", src.Remote())
-	duplicateCounter := 0 // Initialize a duplicate counter
+	
 	// Convert the input reader to a temp file to compute the MD5 hash.
 	tempFile, err := createTempFileFromReader(in)
 	if err != nil {
@@ -1035,8 +1035,7 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 
 	// Compare the combined hash with remote hashes
 	if _, exists := existingHashes[combinedHash]; exists {
-		duplicateCounter++
-
+		return nil, nil
 	}
 
 	// Proceed with file upload if not a duplicate
@@ -1394,7 +1393,7 @@ func DeleteLocalFile(localPath string) error {
 	fs.Debugf(nil, "DeleteLocalFile: successfully deleted local file %q", localPath)
 	return nil
 }
-
+// Rmdir removes a directory.
 func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 	fs.Debugf(f, "Rmdir: Starting with dir=%q", dir)
 
@@ -1417,7 +1416,12 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 	if err != nil {
 		return fserrors.NoRetryError(fmt.Errorf("failed to check directory contents: %w", err))
 	}
-	defer resp.Body.Close()
+	
+	defer func() {
+			if err := resp.Body.Close(); err != nil {
+				fs.Logf(nil, "Failed to close response body: %v", err)
+			}
+		}()
 
 	var listResult struct {
 		Status int    `json:"status"`
@@ -1446,7 +1450,11 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 	if err != nil {
 		return fserrors.NoRetryError(fmt.Errorf("failed to delete directory: %w", err))
 	}
-	defer resp.Body.Close()
+	defer func() {
+			if err := resp.Body.Close(); err != nil {
+				fs.Logf(nil, "Failed to close response body: %v", err)
+			}
+		}()
 
 	var result struct {
 		Status int    `json:"status"`
@@ -1815,8 +1823,7 @@ func ComputeMD5(filePath string) (string, error) {
 	return base64.RawStdEncoding.EncodeToString(fullHash[:]), nil
 }
 func (f *Fs) uploadFile(ctx context.Context, uploadURL, sessionID, fileName string, fileContent io.Reader) (string, error) {
-	// Initialize the duplicate counter
-	var duplicateCounter int
+		
 	// Convert fileContent to a temporary file for hashing and further operations
 	tempFile, err := createTempFileFromReader(fileContent)
 	if err != nil {
@@ -1864,7 +1871,6 @@ func (f *Fs) uploadFile(ctx context.Context, uploadURL, sessionID, fileName stri
 
 	// Check for duplicate file hash using the combined hash
 	if _, exists := existingHashes[combinedHash]; exists {
-		duplicateCounter++
 		return "", &DuplicateFileError{Hash: combinedHash}
 	}
 
