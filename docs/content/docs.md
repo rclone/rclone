@@ -633,8 +633,8 @@ interpreted as a list.
 
 ### Time or duration options {#time-option}
 
-TIME or DURATION options can be specified as a duration string or a
-time string.
+Options that take a `Duration` can be specified as a duration string
+or a time string.
 
 A duration string is a possibly signed sequence of decimal numbers,
 each with optional fraction and a unit suffix, such as "300ms",
@@ -1046,7 +1046,7 @@ of the resolved configuration file, but if this directory is also a
 symbolic link it will not be resolved and the temporary files will be
 written to the location of the directory symbolic link.
 
-### --contimeout=TIME
+### --contimeout=Duration
 
 Set the connection timeout. This should be in go time format which
 looks like `5s` for 5 seconds, `10m` for 10 minutes, or `3h30m`.
@@ -1074,7 +1074,7 @@ Mode to run dedupe command in.  One of `interactive`, `skip`, `first`,
 `newest`, `oldest`, `rename`.  The default is `interactive`.  
 See the dedupe command for more information as to what these options mean.
 
-### --default-time TIME
+### --default-time Time
 
 If a file or directory does have a modification time rclone can read
 then rclone will display this fixed time instead.
@@ -1150,7 +1150,7 @@ Do a trial run with no permanent changes.  Use this to see what rclone
 would do without actually doing it.  Useful when setting up the `sync`
 command which deletes files in the destination.
 
-### --expect-continue-timeout=TIME
+### --expect-continue-timeout=Duration
 
 This specifies the amount of time to wait for a server's first
 response headers after fully writing the request headers if the
@@ -1194,7 +1194,7 @@ which does not respect [`--ignore-case`](/filtering/#ignore-case-make-searches-c
 - on remotes that do not support server-side move, `--fix-case` will require
 downloading the file and re-uploading it. To avoid this, do not use `--fix-case`.
 
-### --fs-cache-expire-duration=TIME
+### --fs-cache-expire-duration=Duration
 
 When using rclone via the API rclone caches created remotes for 5
 minutes by default in the "fs cache". This means that if you do
@@ -1209,7 +1209,7 @@ to `0` rclone may build two remotes (one for the source or destination
 and one for the `--backup-dir` where it may have only built one
 before.
 
-### --fs-cache-expire-interval=TIME
+### --fs-cache-expire-interval=Duration
 
 This controls how often rclone checks for cached remotes to expire.
 See the `--fs-cache-expire-duration` documentation above for more
@@ -1725,7 +1725,7 @@ files not recursed through are considered excluded and will be deleted
 on the destination.  Test first with `--dry-run` if you are not sure
 what will happen.
 
-### --max-duration=TIME
+### --max-duration=Duration
 
 Rclone will stop transferring when it has run for the
 duration specified.
@@ -1883,7 +1883,7 @@ Add metadata `key` = `value` when uploading. This can be repeated as
 many times as required. See the [metadata section](#metadata) for more
 info.
 
-### --modify-window=TIME
+### --modify-window=Duration
 
 When checking whether a file has been modified, this is the maximum
 allowed time difference that a file can have and still be considered
@@ -2233,7 +2233,7 @@ files which didn't get transferred because of errors.
 
 Disable retries with `--retries 1`.
 
-### --retries-sleep=TIME
+### --retries-sleep=Duration
 
 This sets the interval between each retry specified by `--retries`
 
@@ -2261,7 +2261,7 @@ This can be useful transferring files from Dropbox which have been
 modified by the desktop sync client which doesn't set checksums of
 modification times in the same way as rclone.
 
-### --stats=TIME
+### --stats=Duration
 
 Commands which transfer data (`sync`, `copy`, `copyto`, `move`,
 `moveto`) will print data transfer stats at regular intervals to show
@@ -2569,7 +2569,7 @@ very big sync to do, then don't use `--fast-list`, otherwise you will run out
 of memory. Run some tests and compare before you decide, and if in doubt then
 just leave the default, let rclone decide, i.e. not use `--fast-list`.
 
-### --timeout=TIME
+### --timeout=Duration
 
 This sets the IO idle timeout.  If a transfer has started but then
 becomes idle for this long it is considered broken and disconnected.
