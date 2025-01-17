@@ -436,7 +436,7 @@ or
 
     rclone sync --interactive /full/path/to/sync:me remote:path
 
-Server Side Copy
+Server side copy
 ----------------
 
 Most remotes (but not all - see [the
@@ -1138,7 +1138,7 @@ need to escape with single quotes or a backslash on unix like
 platforms.)
 
 This flag can be useful for debugging and in exceptional circumstances
-(e.g. Google Drive limiting the total volume of Server Side Copies to
+(e.g. Google Drive limiting the total volume of server side copies to
 100 GiB/day).
 
 ### --disable-http2
@@ -2724,7 +2724,7 @@ This option defaults to `false`.
 
 **This should be used only for testing.**
 
-Configuration Encryption
+Configuration encryption
 ------------------------
 Your configuration file contains information for logging in to
 your cloud services. This means that you should keep your
@@ -2856,7 +2856,7 @@ general, but are used without referencing a stored remote, e.g.
 listing local filesystem paths, or
 [connection strings](#connection-strings): `rclone --config="" ls .`
 
-### Configuration Encryption Cheatsheet
+### Configuration encryption cheatsheet
 
 You can quickly apply a configuration encryption without plain-text
 at rest or transfer. Detailed instructions for popular OSes:
@@ -3079,7 +3079,7 @@ Rclone provides extensive configuration options for the metrics HTTP endpoint. T
 
 When metrics are enabled with `--rc-enable-metrics`, they will be published on the same port as the rc API. In this case, the `--metrics-*` flags will be ignored, and the HTTP endpoint configuration will be managed by the `--rc-*` parameters.
 
-Exit Code
+Exit code
 ---------
 
 If any errors occur during the command execution, rclone will exit with a
@@ -3112,7 +3112,7 @@ it will log a high priority message if the retry was successful.
 - `9` - Operation successful, but no files transferred (Requires [`--error-on-no-transfer`](#error-on-no-transfer))
 - `10` - Duration exceeded - limit set by --max-duration reached
 
-Environment Variables
+Environment variables
 ---------------------
 
 Rclone can be configured entirely using environment variables.  These
@@ -3149,7 +3149,7 @@ defined once. In order to allow a simple mechanism for adding one or
 many items, the input is treated as a [CSV encoded](https://godoc.org/encoding/csv)
 string. For example
 
-| Environment Variable | Equivalent options |
+| Environment variable | Equivalent options |
 |----------------------|--------------------|
 | `RCLONE_EXCLUDE="*.jpg"` | `--exclude "*.jpg"` |
 | `RCLONE_EXCLUDE="*.jpg,*.png"` | `--exclude "*.jpg"` `--exclude "*.png"` |
