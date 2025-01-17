@@ -1446,7 +1446,7 @@ The options mean
 
 During rmdirs it will not remove root directory, even if it's empty.
 
-### --links / -l
+### -l, --links
 
 Normally rclone will ignore symlinks or junction points (which behave
 like symlinks under Windows).
