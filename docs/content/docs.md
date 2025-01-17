@@ -393,7 +393,7 @@ an OS specific way.
 
 Here are some gotchas which may help users unfamiliar with the shell rules
 
-### Linux / OSX ###
+### Linux / OSX
 
 If your names have spaces or shell metacharacters (e.g. `*`, `?`, `$`,
 `'`, `"`, etc.) then you must quote them.  Use single quotes `'` by default.
@@ -408,7 +408,7 @@ The rules for quoting metacharacters are complicated and if you want
 the full details you'll have to consult the manual page for your
 shell.
 
-### Windows ###
+### Windows
 
 If your names have spaces in you need to put them in `"`, e.g.
 
@@ -665,7 +665,7 @@ However, a suffix of `B` for Byte, `K` for KiB, `M` for MiB,
 `G` for GiB, `T` for TiB and `P` for PiB may be used. These are
 the binary units, e.g. 1, 2\*\*10, 2\*\*20, 2\*\*30 respectively.
 
-### --backup-dir=DIR ###
+### --backup-dir=DIR
 
 When using `sync`, `copy` or `move` any files which would have been
 overwritten or deleted are moved in their original hierarchy into this
@@ -694,7 +694,7 @@ you might want to pass `--suffix` with today's date.
 
 See `--compare-dest` and `--copy-dest`.
 
-### --bind string ###
+### --bind string
 
 Local address to bind to for outgoing connections.  This can be an
 IPv4 address (1.2.3.4), an IPv6 address (1234::789A) or host name.  If
@@ -704,7 +704,7 @@ it will give an error.
 You can use `--bind 0.0.0.0` to force rclone to use IPv4 addresses and
 `--bind ::0` to force rclone to use IPv6 addresses.
 
-### --bwlimit=BANDWIDTH_SPEC ###
+### --bwlimit=BANDWIDTH_SPEC
 
 This option controls the bandwidth limit. For example
 
@@ -807,7 +807,7 @@ change the bwlimit dynamically:
 
     rclone rc core/bwlimit rate=1M
 
-### --bwlimit-file=BANDWIDTH_SPEC ###
+### --bwlimit-file=BANDWIDTH_SPEC
 
 This option controls per file bandwidth limit. For the options see the
 `--bwlimit` flag.
@@ -821,7 +821,7 @@ This can be used in conjunction with `--bwlimit`.
 Note that if a schedule is provided the file will use the schedule in
 effect at the start of the transfer.
 
-### --buffer-size=SIZE ###
+### --buffer-size=SIZE
 
 Use this sized buffer to speed up file transfers.  Each `--transfer`
 will use this much memory for buffering.
@@ -835,7 +835,7 @@ Set to `0` to disable the buffering for the minimum memory usage.
 Note that the memory allocation of the buffers is influenced by the
 [--use-mmap](#use-mmap) flag.
 
-### --cache-dir=DIR ###
+### --cache-dir=DIR
 
 Specify the directory rclone will use for caching, to override
 the default.
@@ -852,7 +852,7 @@ command to see the current value.
 Cache directory is heavily used by the [VFS File Caching](/commands/rclone_mount/#vfs-file-caching)
 mount feature, but also by [serve](/commands/rclone_serve/), [GUI](/gui) and other parts of rclone.
 
-### --check-first ###
+### --check-first
 
 If this flag is set then in a `sync`, `copy` or `move`, rclone will do
 all the checks to see whether files need to be transferred before
@@ -875,7 +875,7 @@ Using this flag can use more memory as it effectively sets
 `--max-backlog` to infinite. This means that all the info on the
 objects to transfer is held in memory before the transfers start.
 
-### --checkers=N ###
+### --checkers=N
 
 Originally controlling just the number of file checkers to run in parallel, 
 e.g. by `rclone copy`. Now a fairly universal parallelism control 
@@ -894,7 +894,7 @@ where little or no file copying is done and checking takes up
 most of the time). Increase this setting only with utmost care, 
 while monitoring your server health and file checking throughput.
 
-### -c, --checksum ###
+### -c, --checksum
 
 Normally rclone will look at modification time and size of files to
 see if they are equal.  If you set this flag then rclone will check
@@ -914,7 +914,7 @@ quicker than without the `--checksum` flag.
 When using this flag, rclone won't update mtimes of remote files if
 they are incorrect as it would normally.
 
-### --color WHEN ###
+### --color WHEN
 
 Specify when colors (and other ANSI codes) should be added to the output.
 
@@ -924,7 +924,7 @@ Specify when colors (and other ANSI codes) should be added to the output.
 
 `ALWAYS` always add ANSI codes, regardless of the output format (terminal or file)
 
-### --compare-dest=DIR ###
+### --compare-dest=DIR
 
 When using `sync`, `copy` or `move` DIR is checked in addition to the
 destination for files. If a file identical to the source is found that
@@ -936,7 +936,7 @@ compare directory must not overlap the destination directory.
 
 See `--copy-dest` and `--backup-dir`.
 
-### --config=CONFIG_FILE ###
+### --config=CONFIG_FILE
 
 Specify the location of the rclone configuration file, to override
 the default. E.g. `rclone config --config="rclone.conf"`.
@@ -1046,7 +1046,7 @@ of the resolved configuration file, but if this directory is also a
 symbolic link it will not be resolved and the temporary files will be
 written to the location of the directory symbolic link.
 
-### --contimeout=TIME ###
+### --contimeout=TIME
 
 Set the connection timeout. This should be in go time format which
 looks like `5s` for 5 seconds, `10m` for 10 minutes, or `3h30m`.
@@ -1055,7 +1055,7 @@ The connection timeout is the amount of time rclone will wait for a
 connection to go through to a remote object storage system.  It is
 `1m` by default.
 
-### --copy-dest=DIR ###
+### --copy-dest=DIR
 
 When using `sync`, `copy` or `move` DIR is checked in addition to the
 destination for files. If a file identical to the source is found that
@@ -1068,13 +1068,13 @@ directory must not overlap the destination directory.
 
 See `--compare-dest` and `--backup-dir`.
 
-### --dedupe-mode MODE ###
+### --dedupe-mode MODE
 
 Mode to run dedupe command in.  One of `interactive`, `skip`, `first`, 
 `newest`, `oldest`, `rename`.  The default is `interactive`.  
 See the dedupe command for more information as to what these options mean.
 
-### --default-time TIME ###
+### --default-time TIME
 
 If a file or directory does have a modification time rclone can read
 then rclone will display this fixed time instead.
@@ -1086,7 +1086,7 @@ For example `--default-time 2020-06-01` to set the default time to the
 1st of June 2020 or `--default-time 0s` to set the default time to the
 time rclone started up.
 
-### --disable FEATURE,FEATURE,... ###
+### --disable FEATURE,FEATURE,...
 
 This disables a comma separated list of optional features. For example
 to disable server-side move and server-side copy use:
@@ -1127,7 +1127,7 @@ This stops rclone from trying to use HTTP/2 if available. This can
 sometimes speed up transfers due to a
 [problem in the Go standard library](https://github.com/golang/go/issues/37373).
 
-### --dscp VALUE ###
+### --dscp VALUE
 
 Specify a DSCP value or name to use in connections. This could help QoS
 system to identify traffic class. BE, EF, DF, LE, CSx and AFxx are allowed.
@@ -1144,13 +1144,13 @@ would make the priority lower than usual internet flows.
 
 This option has no effect on Windows (see [golang/go#42728](https://github.com/golang/go/issues/42728)).
 
-### -n, --dry-run ###
+### -n, --dry-run
 
 Do a trial run with no permanent changes.  Use this to see what rclone
 would do without actually doing it.  Useful when setting up the `sync`
 command which deletes files in the destination.
 
-### --expect-continue-timeout=TIME ###
+### --expect-continue-timeout=TIME
 
 This specifies the amount of time to wait for a server's first
 response headers after fully writing the request headers if the
@@ -1163,7 +1163,7 @@ the time to send the request header.
 
 The default is `1s`.  Set to `0` to disable.
 
-### --error-on-no-transfer ###
+### --error-on-no-transfer
 
 By default, rclone will exit with return code 0 if there were no errors.
 
@@ -1174,7 +1174,7 @@ triggering follow-on actions if data was copied, or skipping if not.
 NB: Enabling this option turns a usually non-fatal error into a potentially
 fatal one - please check and adjust your scripts accordingly!
 
-### --fix-case ###
+### --fix-case
 
 Normally, a sync to a case insensitive dest (such as macOS / Windows) will
 not result in a matching filename if the source and dest filenames have
@@ -1215,7 +1215,7 @@ This controls how often rclone checks for cached remotes to expire.
 See the `--fs-cache-expire-duration` documentation above for more
 info. The default is 60s, set to 0 to disable expiry.
 
-### --header ###
+### --header
 
 Add an HTTP header for all transactions. The flag can be repeated to
 add multiple headers.
@@ -1231,7 +1231,7 @@ as a workaround for those with care.
 rclone ls remote:test --header "X-Rclone: Foo" --header "X-LetMeIn: Yes"
 ```
 
-### --header-download ###
+### --header-download
 
 Add an HTTP header for all download transactions. The flag can be repeated to
 add multiple headers.
@@ -1243,7 +1243,7 @@ rclone sync --interactive s3:test/src ~/dst --header-download "X-Amz-Meta-Test: 
 See the GitHub issue [here](https://github.com/rclone/rclone/issues/59) for
 currently supported backends.
 
-### --header-upload ###
+### --header-upload
 
 Add an HTTP header for all upload transactions. The flag can be repeated to add
 multiple headers.
@@ -1255,7 +1255,7 @@ rclone sync --interactive ~/src s3:test/dst --header-upload "Content-Disposition
 See the GitHub issue [here](https://github.com/rclone/rclone/issues/59) for
 currently supported backends.
 
-### --human-readable ###
+### --human-readable
 
 Rclone commands output values for sizes (e.g. number of bytes) and
 counts (e.g. number of files) either as *raw* numbers, or
@@ -1288,13 +1288,13 @@ this is that it relies on an external library.
 The interactive command [ncdu](/commands/rclone_ncdu/) shows human-readable by
 default, and responds to key `u` for toggling human-readable format.
 
-### --ignore-case-sync ###
+### --ignore-case-sync
 
 Using this option will cause rclone to ignore the case of the files
 when synchronizing so files will not be copied/synced when the
 existing filenames are the same, even if the casing is different.
 
-### --ignore-checksum ###
+### --ignore-checksum
 
 Normally rclone will check that the checksums of transferred files
 match, and give an error "corrupted on transfer" if they don't.
@@ -1303,7 +1303,7 @@ You can use this option to skip that check.  You should only use it if
 you have had the "corrupted on transfer" error message and you are
 sure you might want to transfer potentially corrupted data.
 
-### --ignore-existing ###
+### --ignore-existing
 
 Using this option will make rclone unconditionally skip all files
 that exist on the destination, no matter the content of these files.
@@ -1316,7 +1316,7 @@ When performing a `move`/`moveto` command, this flag will leave skipped
 files in the source location unchanged when a file with the same name
 exists on the destination.
 
-### --ignore-size ###
+### --ignore-size
 
 Normally rclone will look at modification time and size of files to
 see if they are equal.  If you set this flag then rclone will check
@@ -1330,7 +1330,7 @@ This can be useful for transferring files to and from OneDrive which
 occasionally misreports the size of image files (see
 [#399](https://github.com/rclone/rclone/issues/399) for more info).
 
-### -I, --ignore-times ###
+### -I, --ignore-times
 
 Using this option will cause rclone to unconditionally upload all
 files regardless of the state of files on the destination.
@@ -1339,7 +1339,7 @@ Normally rclone would skip any files that have the same
 modification time and are the same size (or have the same checksum if
 using `--checksum`).
 
-### --immutable ###
+### --immutable
 
 Treat source and destination files as immutable and disallow
 modification.
@@ -1442,7 +1442,7 @@ The options mean
   them.
 - `q`: **Quit** rclone now, just in case!
 
-### --leave-root ####
+### --leave-root
 
 During rmdirs it will not remove root directory, even if it's empty.
 
@@ -1475,7 +1475,7 @@ will only work well for the bucket based backends (eg s3, b2,
 azureblob, swift) but these are the only backends likely to have
 millions of entries in a directory.
 
-### --log-file=FILE ###
+### --log-file=FILE
 
 Log all of rclone's output to FILE.  This is not active by default.
 This can be useful for tracking down problems with syncs in
@@ -1488,7 +1488,7 @@ Note that if you are using the `logrotate` program to manage rclone's
 logs, then you should use the `copytruncate` option as rclone doesn't
 have a signal to rotate logs.
 
-### --log-format LIST ###
+### --log-format LIST
 
 Comma separated list of log format options. The accepted options are:
 
@@ -1506,7 +1506,7 @@ They are added to the log line in the order above.
 
 The default log format is `"date,time"`.
 
-### --log-level LEVEL ###
+### --log-level LEVEL
 
 This sets the log level for rclone.  The default log level is `NOTICE`.
 
@@ -1522,7 +1522,7 @@ warnings and significant events.
 
 `ERROR` is equivalent to `-q`. It only outputs error messages.
 
-### --windows-event-log LEVEL ###
+### --windows-event-log LEVEL
 
 If this is configured (the default is `OFF`) then logs of this level
 and above will be logged to the Windows event log in **addition** to
@@ -1549,7 +1549,7 @@ to a log file but ERRORs to the event log you would use
 
 This option is only supported Windows platforms.
 
-### --use-json-log ###
+### --use-json-log
 
 This switches the log format to JSON. The log messages are then
 streamed as individual JSON objects, with fields: `level`, `msg`, `source`,
@@ -1614,7 +1614,7 @@ returned from the rc call [core/stats](/rc/#core-stats).
 
 
 
-### --low-level-retries NUMBER ###
+### --low-level-retries NUMBER
 
 This controls the number of low level retries rclone does.
 
@@ -1630,7 +1630,7 @@ to reduce the value so rclone moves on to a high level retry (see the
 
 Disable low level retries with `--low-level-retries 1`.
 
-### --max-backlog=N ###
+### --max-backlog=N
 
 This is the maximum allowable backlog of files in a sync/copy/move
 queued for being checked or transferred.
@@ -1667,7 +1667,7 @@ Setting `--max-buffer-memory` allows the buffer memory to be
 controlled so that it doesn't overwhelm the machine and allows
 `--transfers` to be set large.
 
-### --max-connections=N ###
+### --max-connections=N
 
 This sets the maximum number of concurrent calls to the backend API.
 It may not map 1:1 to TCP or HTTP connections depending on the backend
@@ -1693,13 +1693,13 @@ So for  `--max-connections 3` you'd use `--checkers 2 --transfers 2
 Setting this flag can be useful for backends which do multipart
 uploads to limit the number of simultaneous parts being transferred.
 
-### --max-delete=N ###
+### --max-delete=N
 
 This tells rclone not to delete more than N files.  If that limit is
 exceeded then a fatal error will be generated and rclone will stop the
 operation in progress.
 
-### --max-delete-size=SIZE ###
+### --max-delete-size=SIZE
 
 Rclone will stop deleting files when the total size of deletions has
 reached the size specified. It defaults to off.
@@ -1707,7 +1707,7 @@ reached the size specified. It defaults to off.
 If that limit is exceeded then a fatal error will be generated and
 rclone will stop the operation in progress.
 
-### --max-depth=N ###
+### --max-depth=N
 
 This modifies the recursion depth for all the commands except purge.
 
@@ -1725,7 +1725,7 @@ files not recursed through are considered excluded and will be deleted
 on the destination.  Test first with `--dry-run` if you are not sure
 what will happen.
 
-### --max-duration=TIME ###
+### --max-duration=TIME
 
 Rclone will stop transferring when it has run for the
 duration specified.
@@ -1736,7 +1736,7 @@ Use `--cutoff-mode` to modify this behaviour.
 
 Rclone will exit with exit code 10 if the duration limit is reached.
 
-### --max-transfer=SIZE ###
+### --max-transfer=SIZE
 
 Rclone will stop transferring when it has reached the size specified.
 Defaults to off.
@@ -1746,7 +1746,7 @@ Use `--cutoff-mode` to modify this behaviour.
 
 Rclone will exit with exit code 8 if the transfer limit is reached.
 
-### --cutoff-mode=hard|soft|cautious ###
+### --cutoff-mode=hard|soft|cautious
 
 This modifies the behavior of `--max-transfer` and `--max-duration`
 Defaults to `--cutoff-mode=hard`.
@@ -1883,7 +1883,7 @@ Add metadata `key` = `value` when uploading. This can be repeated as
 many times as required. See the [metadata section](#metadata) for more
 info.
 
-### --modify-window=TIME ###
+### --modify-window=TIME
 
 When checking whether a file has been modified, this is the maximum
 allowed time difference that a file can have and still be considered
@@ -1896,7 +1896,7 @@ if you are reading and writing to an OS X filing system this will be
 
 This command line flag allows you to override that computed default.
 
-### --multi-thread-write-buffer-size=SIZE ###
+### --multi-thread-write-buffer-size=SIZE
 
 When transferring with multiple threads, rclone will buffer SIZE bytes
 in memory before writing to disk for each thread.
@@ -1915,7 +1915,7 @@ As a final hint, size is not the only factor: block size (or similar
 concept) can have an impact. In one case, we observed that exact
 multiples of 16k performed much better than other values.
 
-### --multi-thread-chunk-size=SizeSuffix ###
+### --multi-thread-chunk-size=SizeSuffix
 
 Normally the chunk size for multi thread transfers is set by the backend.
 However some backends such as `local` and `smb` (which implement `OpenWriterAt`
@@ -1973,7 +1973,7 @@ Use `--local-no-sparse` to disable sparse files (which may cause long
 delays at the start of transfers) or disable multi-thread transfers
 with `--multi-thread-streams 0`
 
-### --multi-thread-streams=N ###
+### --multi-thread-streams=N
 
 When using multi thread transfers (see above `--multi-thread-cutoff`)
 this sets the number of streams to use. Set to `0` to disable multi
@@ -1984,14 +1984,14 @@ If the backend has a `--backend-upload-concurrency` setting (eg
 number of transfers instead if it is larger than the value of
 `--multi-thread-streams` or `--multi-thread-streams` isn't set.
 
-### --name-transform COMMAND[=XXXX] ###
+### --name-transform COMMAND[=XXXX]
 `--name-transform` introduces path name transformations for
 `rclone copy`, `rclone sync`, and `rclone move`. These transformations
 enable modifications to source and destination file names by applying
 prefixes, suffixes, and other alterations during transfer operations.
 For detailed docs and examples, see [`convmv`](/commands/rclone_convmv/).
 
-### --no-check-dest ###
+### --no-check-dest
 
 The `--no-check-dest` can be used with `move` or `copy` and it causes
 rclone not to check the destination at all when copying files.
@@ -2008,7 +2008,7 @@ of the files are on the destination.
 
 This is a specialized flag which should be ignored by most users!
 
-### --no-gzip-encoding ###
+### --no-gzip-encoding
 
 Don't set `Accept-Encoding: gzip`.  This means that rclone won't ask
 the server for compressed files automatically. Useful if you've set
@@ -2018,7 +2018,7 @@ uploaded compressed files.
 There is no need to set this in normal operation, and doing so will
 decrease the network transfer efficiency of rclone.
 
-### --no-traverse ###
+### --no-traverse
 
 The `--no-traverse` flag controls whether the destination file system
 is traversed when using the `copy` or `move` commands.
@@ -2036,7 +2036,7 @@ changed and won't need copying then you shouldn't use `--no-traverse`.
 
 See [rclone copy](/commands/rclone_copy/) for an example of how to use it.
 
-### --no-unicode-normalization ###
+### --no-unicode-normalization
 
 Don't normalize unicode characters in filenames during the sync routine.
 
@@ -2050,7 +2050,7 @@ character as unique. For example, by default é and é will be normalized
 into the same character. With `--no-unicode-normalization` they will be
 treated as unique characters.
 
-### --no-update-modtime ###
+### --no-update-modtime
 
 When using this flag, rclone won't update modification times of remote
 files if they are incorrect as it would normally.
@@ -2058,12 +2058,12 @@ files if they are incorrect as it would normally.
 This can be used if the remote is being synced with another tool also
 (e.g. the Google Drive client).
 
-### --no-update-dir-modtime ###
+### --no-update-dir-modtime
 
 When using this flag, rclone won't update modification times of remote
 directories if they are incorrect as it would normally.
 
-### --order-by string ###
+### --order-by string
 
 The `--order-by` flag controls the order in which files in the backlog
 are processed in `rclone sync`, `rclone copy` and `rclone move`.
@@ -2157,7 +2157,7 @@ See the [Configuration Encryption](#configuration-encryption) for more info.
 
 See a [Windows PowerShell example on the Wiki](https://github.com/rclone/rclone/wiki/Windows-Powershell-use-rclone-password-command-for-Config-file-password).
 
-### -P, --progress ###
+### -P, --progress
 
 This flag makes rclone update the stats in a static block in the
 terminal providing a realtime overview of the transfer.
@@ -2180,16 +2180,16 @@ Note: On Windows until [this bug](https://github.com/Azure/go-ansiterm/issues/26
 is fixed all non-ASCII characters will be replaced with `.` when
 `--progress` is in use.
 
-### --progress-terminal-title ###
+### --progress-terminal-title
 
 This flag, when used with `-P/--progress`, will print the string `ETA: %s`
 to the terminal title.
 
-### -q, --quiet ###
+### -q, --quiet
 
 This flag will limit rclone's output to error messages only.
 
-### --refresh-times ###
+### --refresh-times
 
 The `--refresh-times` flag can be used to update modification times of
 existing files when they are out of sync on backends which don't
@@ -2224,7 +2224,7 @@ supports checksums **and** the checksums match on the file. However if the
 checksums are absent then rclone will upload the file rather than
 setting the timestamp as this is the safe behaviour.
 
-### --retries int ###
+### --retries int
 
 Retry the entire sync if it fails this many times it fails (default 3).
 
@@ -2233,13 +2233,13 @@ files which didn't get transferred because of errors.
 
 Disable retries with `--retries 1`.
 
-### --retries-sleep=TIME ###
+### --retries-sleep=TIME
 
 This sets the interval between each retry specified by `--retries`
 
 The default is `0`. Use `0` to disable.
 
-### --server-side-across-configs ###
+### --server-side-across-configs
 
 Allow server-side operations (e.g. copy or move) to work across
 different configurations.
@@ -2251,7 +2251,7 @@ differently.
 Note that this isn't enabled by default because it isn't easy for
 rclone to tell if it will work between any two configurations.
 
-### --size-only ###
+### --size-only
 
 Normally rclone will look at modification time and size of files to
 see if they are equal.  If you set this flag then rclone will check
@@ -2261,7 +2261,7 @@ This can be useful transferring files from Dropbox which have been
 modified by the desktop sync client which doesn't set checksums of
 modification times in the same way as rclone.
 
-### --stats=TIME ###
+### --stats=TIME
 
 Commands which transfer data (`sync`, `copy`, `copyto`, `move`,
 `moveto`) will print data transfer stats at regular intervals to show
@@ -2283,13 +2283,13 @@ info on log levels.
 Note that on macOS you can send a SIGINFO (which is normally ctrl-T in
 the terminal) to make the stats print immediately.
 
-### --stats-file-name-length integer ###
+### --stats-file-name-length integer
 By default, the `--stats` output will truncate file names and paths longer
 than 40 characters.  This is equivalent to providing
 `--stats-file-name-length 40`. Use `--stats-file-name-length 0` to disable
 any truncation of file names printed by stats.
 
-### --stats-log-level string ###
+### --stats-log-level string
 
 Log level to show `--stats` output at.  This can be `DEBUG`, `INFO`,
 `NOTICE`, or `ERROR`.  The default is `INFO`.  This means at the
@@ -2297,24 +2297,24 @@ default level of logging which is `NOTICE` the stats won't show - if
 you want them to then use `--stats-log-level NOTICE`.  See the [Logging
 section](#logging) for more info on log levels.
 
-### --stats-one-line ###
+### --stats-one-line
 
 When this is specified, rclone condenses the stats into a single line
 showing the most important stats only.
 
-### --stats-one-line-date ###
+### --stats-one-line-date
 
 When this is specified, rclone enables the single-line stats and prepends
 the display with a date string. The default is `2006/01/02 15:04:05 - `
 
-### --stats-one-line-date-format ###
+### --stats-one-line-date-format
 
 When this is specified, rclone enables the single-line stats and prepends
 the display with a user-supplied date string. The date string MUST be
 enclosed in quotes. Follow [golang specs](https://golang.org/pkg/time/#Time.Format) for
 date formatting syntax.
 
-### --stats-unit=bits|bytes ###
+### --stats-unit=bits|bytes
 
 By default, data transfer rates will be printed in bytes per second.
 
@@ -2327,7 +2327,7 @@ equals 1,048,576 bit/s and not 1,000,000 bit/s.
 
 The default is `bytes`.
 
-### --suffix=SUFFIX ###
+### --suffix=SUFFIX
 
 When using `sync`, `copy` or `move` any files which would have been
 overwritten or deleted will have the suffix added to them.  If there
@@ -2353,7 +2353,7 @@ otherwise the `sync` will delete the backup files.
 
     rclone sync --interactive /path/to/local/file remote:current --suffix .bak --exclude "*.bak"
 
-### --suffix-keep-extension ###
+### --suffix-keep-extension
 
 When using `--suffix`, setting this causes rclone put the SUFFIX
 before the extension of the files that it backs up rather than after.
@@ -2369,19 +2369,19 @@ before that extension. So `file.tar.gz` would be backed up to
 `file-2019-01-01.tar.gz` whereas `file.badextension.gz` would be
 backed up to `file.badextension-2019-01-01.gz`.
 
-### --syslog ###
+### --syslog
 
 On capable OSes (not Windows or Plan9) send all log output to syslog.
 
 This can be useful for running rclone in a script or `rclone mount`.
 
-### --syslog-facility string ###
+### --syslog-facility string
 
 If using `--syslog` this sets the syslog facility (e.g. `KERN`, `USER`).
 See `man syslog` for a list of possible facilities.  The default
 facility is `DAEMON`.
 
-### --temp-dir=DIR ###
+### --temp-dir=DIR
 
 Specify the directory rclone will use for temporary files, to override
 the default. Make sure the directory exists and have accessible permissions.
@@ -2397,7 +2397,7 @@ and `TMP` and `TEMP` on Windows.
 You can use the [config paths](/commands/rclone_config_paths/)
 command to see the current value.
 
-### --tpslimit float ###
+### --tpslimit float
 
 Limit transactions per second to this number. Default is 0 which is
 used to mean unlimited transactions per second.
@@ -2423,7 +2423,7 @@ backends. It does not apply to the local backend or the Storj backend.
 
 See also `--tpslimit-burst`.
 
-### --tpslimit-burst int ###
+### --tpslimit-burst int
 
 Max burst of transactions for `--tpslimit` (default `1`).
 
@@ -2439,7 +2439,7 @@ very quickly before they are limited again.
 This may be used to increase performance of `--tpslimit` without
 changing the long term average number of transactions per second.
 
-### --track-renames ###
+### --track-renames
 
 By default, rclone doesn't keep track of renamed files, so if you
 rename a file locally then sync it to a remote, rclone will delete the
@@ -2476,7 +2476,7 @@ Note also that `--track-renames` is incompatible with
 `--delete-before` and will select `--delete-after` instead of
 `--delete-during`.
 
-### --track-renames-strategy (hash,modtime,leaf,size) ###
+### --track-renames-strategy (hash,modtime,leaf,size)
 
 This option changes the file matching criteria for `--track-renames`.
 
@@ -2498,7 +2498,7 @@ Using `--track-renames-strategy modtime` or `leaf` can enable
 
 Note that the `hash` strategy is not supported with encrypted destinations.
 
-### --delete-(before,during,after) ###
+### --delete-(before,during,after)
 
 This option allows you to specify when files on your destination are
 deleted when you sync folders.
@@ -2521,7 +2521,7 @@ errors subsequent to that.  If there have been errors before the
 deletions start then you will get the message `not deleting files as
 there were IO errors`.
 
-### --fast-list ###
+### --fast-list
 
 When doing anything which involves a directory listing (e.g. `sync`,
 `copy`, `ls` - in fact nearly every command), rclone has different
@@ -2569,14 +2569,14 @@ very big sync to do, then don't use `--fast-list`, otherwise you will run out
 of memory. Run some tests and compare before you decide, and if in doubt then
 just leave the default, let rclone decide, i.e. not use `--fast-list`.
 
-### --timeout=TIME ###
+### --timeout=TIME
 
 This sets the IO idle timeout.  If a transfer has started but then
 becomes idle for this long it is considered broken and disconnected.
 
 The default is `5m`.  Set to `0` to disable.
 
-### --transfers=N ###
+### --transfers=N
 
 The number of file transfers to run in parallel.  It can sometimes be
 useful to set this to a smaller number if the remote is giving a lot
@@ -2586,7 +2586,7 @@ The default is to run 4 file transfers in parallel.
 
 Look at --multi-thread-streams if you would like to control single file transfers.
 
-### -u, --update ###
+### -u, --update
 
 This forces rclone to skip any files which exist on the destination
 and have a modified time that is newer than the source file.
@@ -2616,7 +2616,7 @@ mod times, and instead use uploaded times. However, if the backend
 does not support checksums, note that syncing or copying within the
 time skew window may still result in additional transfers for safety.
 
-### --use-mmap ###
+### --use-mmap
 
 If this flag is set then rclone will use anonymous memory allocated by
 mmap on Unix based platforms and VirtualAlloc on Windows for its
@@ -2631,7 +2631,7 @@ pages are returned less aggressively to the OS.
 It is possible this does not work well on all platforms so it is
 disabled by default; in the future it may be enabled by default.
 
-### --use-server-modtime ###
+### --use-server-modtime
 
 Some object-store backends (e.g, Swift, S3) do not preserve file modification
 times (modtime). On these backends, rclone stores the original modtime as
@@ -2648,7 +2648,7 @@ Using this flag on a sync operation without also using `--update` would cause
 all files modified at any time other than the last upload time to be uploaded
 again, which is probably not what you want.
 
-### -v, -vv, --verbose ###
+### -v, -vv, --verbose
 
 With `-v` rclone will tell you about each file that is transferred and
 a small number of significant events.
@@ -2660,7 +2660,7 @@ with this setting.
 When setting verbosity as an environment variable, use
 `RCLONE_VERBOSE=1` or `RCLONE_VERBOSE=2` for `-v` and `-vv` respectively.
 
-### -V, --version ###
+### -V, --version
 
 Prints the version number
 
@@ -2693,7 +2693,7 @@ The `--client-key` flag is required too when using this.
 This loads the PEM encoded client side private key used for mutual TLS
 authentication.  Used in conjunction with `--client-cert`.
 
-### --no-check-certificate=true/false ###
+### --no-check-certificate=true/false
 
 `--no-check-certificate` controls whether a client verifies the
 server's certificate chain and host name.
@@ -2842,7 +2842,7 @@ Configuration Encryption Cheatsheet
 You can quickly apply a configuration encryption without plain-text
 at rest or transfer. Detailed instructions for popular OSes:
 
-### Mac ###
+### Mac
 
 * Generate and store a password
 
@@ -2852,7 +2852,7 @@ at rest or transfer. Detailed instructions for popular OSes:
 
 `export RCLONE_PASSWORD_COMMAND="/usr/bin/security find-generic-password -a rclone -s config -w"`
 
-### Linux ###
+### Linux
 
 * Prerequisite
 
@@ -2872,7 +2872,7 @@ the "pass" utility using a package manager, e.g. `apt install pass`,
 
 `export RCLONE_PASSWORD_COMMAND="/usr/bin/pass rclone/config"`
 
-### Windows ###
+### Windows
 
 * Generate and store a password
 
@@ -2882,7 +2882,7 @@ the "pass" utility using a package manager, e.g. `apt install pass`,
 
 `[Environment]::SetEnvironmentVariable("RCLONE_PASSWORD_COMMAND", "[System.Runtime.InteropServices.Marshal]::PtrToStringAuto([System.Runtime.InteropServices.Marshal]::SecureStringToBSTR((Import-Clixml -Path "rclone-credential.xml").Password))")`
 
-### Encrypt the config file (all systems) ###
+### Encrypt the config file (all systems)
 
 * Execute `rclone config` -> `s`
 
@@ -2896,11 +2896,11 @@ are also some more remote specific options which aren't documented
 here which are used for testing.  These start with remote name e.g.
 `--drive-test-option` - see the docs for the remote in question.
 
-### --cpuprofile=FILE ###
+### --cpuprofile=FILE
 
 Write CPU profile to file.  This can be analysed with `go tool pprof`.
 
-#### --dump flag,flag,flag ####
+#### --dump flag,flag,flag
 
 The `--dump` flag takes a comma separated list of flags to dump info
 about.
@@ -2912,7 +2912,7 @@ the body of the request will be gunzipped before showing it.
 
 The available flags are:
 
-#### --dump headers ####
+#### --dump headers
 
 Dump HTTP headers with `Authorization:` lines removed. May still
 contain sensitive info.  Can be very verbose.  Useful for debugging
@@ -2920,7 +2920,7 @@ only.
 
 Use `--dump auth` if you do want the `Authorization:` headers.
 
-#### --dump bodies ####
+#### --dump bodies
 
 Dump HTTP headers and bodies - may contain sensitive info.  Can be
 very verbose.  Useful for debugging only.
@@ -2928,46 +2928,46 @@ very verbose.  Useful for debugging only.
 Note that the bodies are buffered in memory so don't use this for
 enormous files.
 
-#### --dump requests ####
+#### --dump requests
 
 Like `--dump bodies` but dumps the request bodies and the response
 headers.  Useful for debugging download problems.
 
-#### --dump responses ####
+#### --dump responses
 
 Like `--dump bodies` but dumps the response bodies and the request
 headers. Useful for debugging upload problems.
 
-#### --dump auth ####
+#### --dump auth
 
 Dump HTTP headers - will contain sensitive info such as
 `Authorization:` headers - use `--dump headers` to dump without
 `Authorization:` headers.  Can be very verbose.  Useful for debugging
 only.
 
-#### --dump filters ####
+#### --dump filters
 
 Dump the filters to the output.  Useful to see exactly what include
 and exclude options are filtering on.
 
-#### --dump goroutines ####
+#### --dump goroutines
 
 This dumps a list of the running go-routines at the end of the command
 to standard output.
 
-#### --dump openfiles ####
+#### --dump openfiles
 
 This dumps a list of the open files at the end of the command.  It
 uses the `lsof` command to do that so you'll need that installed to
 use it.
 
-#### --dump mapper ####
+#### --dump mapper
 
 This shows the JSON blobs being sent to the program supplied with
 `--metadata-mapper` and received from it. It can be useful for
 debugging the metadata mapper interface.
 
-### --memprofile=FILE ###
+### --memprofile=FILE
 
 Write memory profile to file. This can be analysed with `go tool pprof`.
 
@@ -3073,7 +3073,7 @@ when starting a retry so the user can see that any previous error
 messages may not be valid after the retry. If rclone has done a retry
 it will log a high priority message if the retry was successful.
 
-### List of exit codes ###
+### List of exit codes
   * `0` - Success
   * `1` - Error not otherwise categorised
   * `2` - Syntax or usage error
@@ -3092,7 +3092,7 @@ Environment Variables
 Rclone can be configured entirely using environment variables.  These
 can be used to set defaults for options or config file entries.
 
-### Options ###
+### Options
 
 Every option in rclone can have its default set by environment
 variable.
@@ -3133,7 +3133,7 @@ string. For example
 If `stringArray` options are defined as environment variables **and**
 options on the command line then all the values will be used.
 
-### Config file ###
+### Config file
 
 You can set defaults for values in the config file on an individual
 remote basis. The names of the config items are documented in the page
@@ -3211,7 +3211,7 @@ For non backend configuration the order is as follows:
 - Environment vars, e.g. `RCLONE_STATS=5s`.
 - Default values, e.g. `1m` - these can't be changed.
 
-### Other environment variables ###
+### Other environment variables
 
 - `RCLONE_CONFIG_PASS` set to contain your config file password (see [Configuration Encryption](#configuration-encryption) section)
 - `HTTP_PROXY`, `HTTPS_PROXY` and `NO_PROXY` (or the lowercase versions thereof).
