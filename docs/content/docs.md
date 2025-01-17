@@ -2798,7 +2798,7 @@ used for decrypting the configuration.
 You can set this for a session from a script.  For unix like systems
 save this to a file called `set-rclone-password`:
 
-```
+```sh
 #!/bin/echo Source this file don't run it
 
 read -s RCLONE_CONFIG_PASS
@@ -2819,7 +2819,7 @@ environment variables.  The script is supplied either via
 One useful example of this is using the `passwordstore` application
 to retrieve the password:
 
-```
+```sh
 export RCLONE_PASSWORD_COMMAND="pass rclone/config"
 ```
 
@@ -2856,56 +2856,63 @@ general, but are used without referencing a stored remote, e.g.
 listing local filesystem paths, or
 [connection strings](#connection-strings): `rclone --config="" ls .`
 
-Configuration Encryption Cheatsheet
------------------------------------
+### Configuration Encryption Cheatsheet
+
 You can quickly apply a configuration encryption without plain-text
 at rest or transfer. Detailed instructions for popular OSes:
 
-### Mac
+#### Mac
 
-* Generate and store a password
+- Generate and store a password
 
-`security add-generic-password -a rclone -s config -w $(openssl rand -base64 40)`
+  ```sh
+  security add-generic-password -a rclone -s config -w $(openssl rand -base64 40)
+  ```
 
-* Add the retrieval instruction to your .zprofile / .profile
+- Add the retrieval instruction to your `.zprofile` / `.profile`
 
-`export RCLONE_PASSWORD_COMMAND="/usr/bin/security find-generic-password -a rclone -s config -w"`
+  ```sh
+  export RCLONE_PASSWORD_COMMAND="/usr/bin/security find-generic-password -a rclone -s config -w"
+  ```
 
-### Linux
+#### Linux
 
-* Prerequisite
+- Prerequisite: Linux doesn't come with a default password manager. Let's install
+    the "pass" utility using a package manager, e.g. `apt install pass`,
+    `yum install pass`, [etc.](https://www.passwordstore.org/#download);
+    then initialize a password store: `pass init rclone`.
 
-Linux doesn't come with a default password manager. Let's install
-the "pass" utility using a package manager, e.g. `apt install pass`,
- `yum install pass`,
- [etc.](https://www.passwordstore.org/#download); then initialize a
- password store:
+- Generate and store a password
 
-`pass init rclone`
+  ```sh
+  echo $(openssl rand -base64 40) | pass insert -m rclone/config
+  ```
 
-* Generate and store a password
+- Add the retrieval instruction
 
-`echo $(openssl rand -base64 40) | pass insert -m rclone/config`
+  ```sh
+  export RCLONE_PASSWORD_COMMAND="/usr/bin/pass rclone/config"
+  ```
 
-* Add the retrieval instruction
+#### Windows
 
-`export RCLONE_PASSWORD_COMMAND="/usr/bin/pass rclone/config"`
+- Generate and store a password
 
-### Windows
+  ```pwsh
+  New-Object -TypeName PSCredential -ArgumentList "rclone", (ConvertTo-SecureString -String ([System.Web.Security.Membership]::GeneratePassword(40, 10)) -AsPlainText -Force) | Export-Clixml -Path "rclone-credential.xml"
+  ```
 
-* Generate and store a password
+- Add the password retrieval instruction
 
-`New-Object -TypeName PSCredential -ArgumentList "rclone", (ConvertTo-SecureString -String ([System.Web.Security.Membership]::GeneratePassword(40, 10)) -AsPlainText -Force) | Export-Clixml -Path "rclone-credential.xml"`
+  ```pwsh
+  [Environment]::SetEnvironmentVariable("RCLONE_PASSWORD_COMMAND", "[System.Runtime.InteropServices.Marshal]::PtrToStringAuto([System.Runtime.InteropServices.Marshal]::SecureStringToBSTR((Import-Clixml -Path "rclone-credential.xml").Password))")
+  ```
 
-* Add the password retrieval instruction
+#### Encrypt the config file (all systems)
 
-`[Environment]::SetEnvironmentVariable("RCLONE_PASSWORD_COMMAND", "[System.Runtime.InteropServices.Marshal]::PtrToStringAuto([System.Runtime.InteropServices.Marshal]::SecureStringToBSTR((Import-Clixml -Path "rclone-credential.xml").Password))")`
+- Execute `rclone config`, and select option `s) Set configuration password`
 
-### Encrypt the config file (all systems)
-
-* Execute `rclone config` -> `s`
-
-* Add/update the password from previous steps
+- Add/update the password from previous steps
 
 Developer options
 -----------------
