@@ -75,12 +75,12 @@ var OptionsInfo = fs.Options{{
 	Groups:  "RC,Metrics",
 }, {
 	Name:    "rc_job_expire_duration",
-	Default: 60 * time.Second,
+	Default: fs.Duration(60 * time.Second),
 	Help:    "Expire finished async jobs older than this value",
 	Groups:  "RC",
 }, {
 	Name:    "rc_job_expire_interval",
-	Default: 10 * time.Second,
+	Default: fs.Duration(10 * time.Second),
 	Help:    "Interval to check for expired async jobs",
 	Groups:  "RC",
 }, {
@@ -120,8 +120,8 @@ type Options struct {
 	MetricsHTTP         libhttp.Config         `config:"metrics"`
 	MetricsAuth         libhttp.AuthConfig     `config:"metrics"`
 	MetricsTemplate     libhttp.TemplateConfig `config:"metrics"`
-	JobExpireDuration   time.Duration          `config:"rc_job_expire_duration"`
-	JobExpireInterval   time.Duration          `config:"rc_job_expire_interval"`
+	JobExpireDuration   fs.Duration            `config:"rc_job_expire_duration"`
+	JobExpireInterval   fs.Duration            `config:"rc_job_expire_interval"`
 }
 
 // Opt is the default values used for Options
