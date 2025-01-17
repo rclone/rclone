@@ -692,9 +692,9 @@ Main options
 
 ### --backup-dir string
 
-When using `sync`, `copy` or `move` any files which would have been
-overwritten or deleted are moved in their original hierarchy into this
-directory.
+When using [sync](/commands/rclone_sync/), [copy](/commands/rclone_copy/) or
+[move](/commands/rclone_move/), any files which would have been overwritten
+or deleted are moved in their original hierarchy into this directory.
 
 If `--suffix` is set, then the moved files will have the suffix added
 to them. If there is a file with the same path (after the suffix has
@@ -879,8 +879,9 @@ mount feature, but also by [serve](/commands/rclone_serve/), [GUI](/gui) and oth
 
 ### --check-first
 
-If this flag is set then in a `sync`, `copy` or `move`, rclone will do
-all the checks to see whether files need to be transferred before
+If this flag is set then in a [sync](/commands/rclone_sync/),
+[copy](/commands/rclone_copy/) or [move](/commands/rclone_move/), rclone
+will do all the checks to see whether files need to be transferred before
 doing any of the transfers. Normally rclone would start running
 transfers as soon as possible.
 
@@ -943,18 +944,19 @@ they are incorrect as it would normally.
 
 Specify when colors (and other ANSI codes) should be added to the output.
 
-`AUTO` (default) only allows ANSI codes when the output is a terminal
+`AUTO` only allows ANSI codes when the output is a terminal. This is the default.
 
-`NEVER` never allow ANSI codes
+`NEVER` never allow ANSI codes.
 
-`ALWAYS` always add ANSI codes, regardless of the output format (terminal or file)
+`ALWAYS` always add ANSI codes, regardless of the output format (terminal or file).
 
-### --compare-dest
+### --compare-dest stringArray
 
-When using `sync`, `copy` or `move`, check a given directory in addition
-to the destination for files. If a file identical to the source is found
-that file is NOT copied from source. This is useful to copy just files
-that have changed since the last backup.
+When using [sync](/commands/rclone_sync/), [copy](/commands/rclone_copy/) or
+[move](/commands/rclone_move/), the specified paths are checked in addition
+to the destination for files. If a file identical to the source is found, that
+file is **not** copied from source. This is useful to copy just files that
+have changed since the last backup.
 
 You must use the same remote as the destination of the sync. The
 compare directory must not overlap the destination directory.
@@ -1082,10 +1084,12 @@ connection to go through to a remote object storage system.  It is
 
 ### --copy-dest stringArray
 
-When using `sync`, `copy` or `move`, check a given directory in addition
-to the destination for files. If a file identical to the source is found,
-that file is server-side copied from the directory to the destination.
-This is useful for incremental backup.
+When using [sync](/commands/rclone_sync/), [copy](/commands/rclone_copy/) or
+[move](/commands/rclone_move/), the specified paths are checked in addition
+to the destination for files. This part is the same as `--compare-dest`, but
+the difference is that with `--copy-dest`, if a file identical to the source
+is found, that file is server-side copied from the specified paths to the
+destination. This is useful for incremental backup.
 
 The remote in use must support server-side copy and you must
 use the same remote as the destination of the sync.  The compare
@@ -1173,8 +1177,8 @@ This option has no effect on Windows (see [golang/go#42728](https://github.com/g
 ### -n, --dry-run
 
 Do a trial run with no permanent changes.  Use this to see what rclone
-would do without actually doing it.  Useful when setting up the `sync`
-command which deletes files in the destination.
+would do without actually doing it.  Useful when setting up the
+[sync](/commands/rclone_sync/) command which deletes files in the destination.
 
 ### --expect-continue-timeout Duration
 
@@ -1375,11 +1379,12 @@ but existing files will never be updated.  If an existing file does
 not match between the source and destination, rclone will give the error
 `Source and destination exist but do not match: immutable file modified`.
 
-Note that only commands which transfer files (e.g. `sync`, `copy`,
-`move`) are affected by this behavior, and only modification is
-disallowed.  Files may still be deleted explicitly (e.g. `delete`,
-`purge`) or implicitly (e.g. `sync`, `move`).  Use `copy --immutable`
-if it is desired to avoid deletion as well as modification.
+Note that only commands which transfer files (e.g. [sync](/commands/rclone_sync/),
+[copy](/commands/rclone_copy/) or [move](/commands/rclone_move/)) are affected
+by this behavior, and only modification is disallowed.  Files may still be deleted
+explicitly (e.g. [delete](/commands/rclone_delete/), [purge](/commands/rclone_purge/))
+or implicitly (e.g. [sync](/commands/rclone_sync/), [move](/commands/rclone_move/)).
+Use `copy --immutable` if it is desired to avoid deletion as well as modification.
 
 This can be useful as an additional layer of protection for immutable
 or append-only data sets (notably backup archives), where modification
@@ -1505,7 +1510,7 @@ millions of entries in a directory.
 
 Log all of rclone's output to a file. This is not active by default.
 This can be useful for tracking down problems with syncs in
-combination with the `-v` flag.  See the [Logging section](#logging)
+combination with the `-v` flag.  See the [logging](#logging) section
 for more info.
 
 If the file exists, then rclone will append to it.
@@ -1776,17 +1781,15 @@ Rclone will exit with exit code 8 if the transfer limit is reached.
 
 ### --cutoff-mode HARD|SOFT|CAUTIOUS
 
-Set to value `hard`, `soft` or `cautious` to configure the behavior
-of `--max-transfer` and `--max-duration`.
+Configure the behavior of `--max-transfer` and `--max-duration`.
 
-Specifying `--cutoff-mode=hard` will stop transferring immediately
-when rclone reaches the limit. This is the default.
+`HARD` will stop transferring immediately when rclone reaches the limit.
+This is the default.
 
-Specifying `--cutoff-mode=soft` will stop starting new transfers
-when rclone reaches the limit.
+`SOFT` will stop starting new transfers when rclone reaches the limit.
 
-Specifying `--cutoff-mode=cautious` will try to prevent rclone
-from reaching the limit. Only applicable for `--max-transfer`
+`CAUTIOUS` will try to prevent rclone from reaching the limit. Only applicable
+for `--max-transfer`.
 
 ## -M, --metadata
 
@@ -1975,10 +1978,11 @@ The number of threads used to transfer is controlled by
 
 Use `-vv` if you wish to see info about the threads.
 
-This will work with the `sync`/`copy`/`move` commands and friends
-`copyto`/`moveto`. Multi thread transfers will be used with `rclone
-mount` and `rclone serve` if `--vfs-cache-mode` is set to `writes` or
-above.
+This will work with the [sync](/commands/rclone_sync/), [copy](/commands/rclone_copy/)
+and [move](/commands/rclone_move/) commands, and friends
+[copyto](/commands/rclone_copyto/), [moveto](/commands/rclone_moveto/).
+Multi thread transfers will be used with `rclone mount` and `rclone serve`
+if `--vfs-cache-mode` is set to `writes` or above.
 
 Most multi-thread transfers do not take additional memory, but some do
 (for example uploading to s3). In the worst case memory usage can be
@@ -2229,7 +2233,8 @@ you now wish to correct them.
 This flag is **only** useful for destinations which don't support
 hashes (e.g. `crypt`).
 
-This can be used any of the sync commands `sync`, `copy` or `move`.
+This can be used any of the sync commands [sync](/commands/rclone_sync/),
+[copy](/commands/rclone_copy/) or [move](/commands/rclone_move/).
 
 To use this flag you will need to be doing a modification time sync
 (so not using `--size-only` or `--checksum`). The flag will have no
@@ -2291,9 +2296,11 @@ modification times in the same way as rclone.
 
 ### --stats Duration
 
-Commands which transfer data (`sync`, `copy`, `copyto`, `move`,
-`moveto`) will print data transfer stats at regular intervals to show
-their progress.
+Commands which transfer data
+([sync](/commands/rclone_sync/), [copy](/commands/rclone_copy/),
+[copyto](/commands/rclone_copyto/), [move](/commands/rclone_move/),
+[moveto](/commands/rclone_moveto/)) will print data transfer stats at
+regular intervals to show their progress.
 
 This sets the interval.
 
@@ -2305,7 +2312,7 @@ example.
 
 Stats are logged at `INFO` level by default which means they won't
 show at default log level `NOTICE`.  Use `--stats-log-level NOTICE` or
-`-v` to make them show.  See the [Logging section](#logging) for more
+`-v` to make them show.  See the [logging](#logging) section for more
 info on log levels.
 
 Note that on macOS you can send a SIGINFO (which is normally ctrl-T in
@@ -2356,7 +2363,8 @@ equals 1,048,576 bit/s and not 1,000,000 bit/s.
 
 ### --suffix string
 
-When using `sync`, `copy` or `move` any files which would have been
+When using [sync](/commands/rclone_sync/), [copy](/commands/rclone_copy/) or
+[move](/commands/rclone_move/) any files which would have been
 overwritten or deleted will have the suffix added to them.  If there
 is a file with the same path (after the suffix has been added), then
 it will be overwritten.
