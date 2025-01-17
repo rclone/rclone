@@ -1475,14 +1475,14 @@ will only work well for the bucket based backends (eg s3, b2,
 azureblob, swift) but these are the only backends likely to have
 millions of entries in a directory.
 
-### --log-file=FILE
+### --log-file
 
-Log all of rclone's output to FILE.  This is not active by default.
+Log all of rclone's output to a file. This is not active by default.
 This can be useful for tracking down problems with syncs in
 combination with the `-v` flag.  See the [Logging section](#logging)
 for more info.
 
-If FILE exists then rclone will append to it.
+If the file exists, then rclone will append to it.
 
 Note that if you are using the `logrotate` program to manage rclone's
 logs, then you should use the `copytruncate` option as rclone doesn't
@@ -2896,9 +2896,9 @@ are also some more remote specific options which aren't documented
 here which are used for testing.  These start with remote name e.g.
 `--drive-test-option` - see the docs for the remote in question.
 
-### --cpuprofile=FILE
+### --cpuprofile
 
-Write CPU profile to file.  This can be analysed with `go tool pprof`.
+Write CPU profile to a file. This can be analysed with `go tool pprof`.
 
 #### --dump flag,flag,flag
 
@@ -2967,9 +2967,9 @@ This shows the JSON blobs being sent to the program supplied with
 `--metadata-mapper` and received from it. It can be useful for
 debugging the metadata mapper interface.
 
-### --memprofile=FILE
+### --memprofile
 
-Write memory profile to file. This can be analysed with `go tool pprof`.
+Write memory profile to a file. This can be analysed with `go tool pprof`.
 
 Filtering
 ---------
@@ -3032,8 +3032,8 @@ If you use the `-vv` flag, rclone will produce `Error`, `Notice`,
 
 You can also control the log levels with the `--log-level` flag.
 
-If you use the `--log-file=FILE` option, rclone will redirect `Error`,
-`Info` and `Debug` messages along with standard error to FILE.
+If you use the `--log-file` option, rclone will redirect `Error`,
+`Info` and `Debug` messages along with standard error to a file.
 
 If you use the `--syslog` flag then rclone will log to syslog and the
 `--syslog-facility` control which facility it uses.
