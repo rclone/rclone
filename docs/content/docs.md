@@ -17,7 +17,7 @@ Configure
 
 First, you'll need to configure rclone.  As the object storage systems
 have quite complicated authentication these are kept in a config file.
-(See the [`--config`](#config-config-file) entry for how to find the config
+(See the [`--config`](#config) entry for how to find the config
 file and choose its location.)
 
 The easiest way to make the config is to run rclone with the config
@@ -936,7 +936,7 @@ compare directory must not overlap the destination directory.
 
 See `--copy-dest` and `--backup-dir`.
 
-### --config=CONFIG_FILE
+### --config
 
 Specify the location of the rclone configuration file, to override
 the default. E.g. `rclone config --config="rclone.conf"`.
@@ -2823,7 +2823,7 @@ a valid password, and `--password-command` has not been supplied.
 
 Whenever running commands that may be affected by options in a
 configuration file, rclone will look for an existing file according
-to the rules described [above](#config-config-file), and load any it
+to the rules described [above](#config), and load any it
 finds. If an encrypted file is found, this includes decrypting it,
 with the possible consequence of a password prompt. When executing
 a command line that you know are not actually using anything from such
