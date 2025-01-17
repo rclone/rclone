@@ -704,7 +704,7 @@ it will give an error.
 You can use `--bind 0.0.0.0` to force rclone to use IPv4 addresses and
 `--bind ::0` to force rclone to use IPv6 addresses.
 
-### --bwlimit=BwTimetable
+### --bwlimit BwTimetable
 
 This option controls the bandwidth limit. For example
 
@@ -807,7 +807,7 @@ change the bwlimit dynamically:
 
     rclone rc core/bwlimit rate=1M
 
-### --bwlimit-file=BwTimetable
+### --bwlimit-file BwTimetable
 
 This option controls per file bandwidth limit. For the options see the
 `--bwlimit` flag.
@@ -821,7 +821,7 @@ This can be used in conjunction with `--bwlimit`.
 Note that if a schedule is provided the file will use the schedule in
 effect at the start of the transfer.
 
-### --buffer-size=SizeSuffix
+### --buffer-size SizeSuffix
 
 Use this sized buffer to speed up file transfers.  Each `--transfer`
 will use this much memory for buffering.
@@ -875,7 +875,7 @@ Using this flag can use more memory as it effectively sets
 `--max-backlog` to infinite. This means that all the info on the
 objects to transfer is held in memory before the transfers start.
 
-### --checkers=int
+### --checkers int
 
 Originally controlling just the number of file checkers to run in parallel, 
 e.g. by `rclone copy`. Now a fairly universal parallelism control 
@@ -1046,7 +1046,7 @@ of the resolved configuration file, but if this directory is also a
 symbolic link it will not be resolved and the temporary files will be
 written to the location of the directory symbolic link.
 
-### --contimeout=Duration
+### --contimeout Duration
 
 Set the connection timeout. This should be in go time format which
 looks like `5s` for 5 seconds, `10m` for 10 minutes, or `3h30m`.
@@ -1150,7 +1150,7 @@ Do a trial run with no permanent changes.  Use this to see what rclone
 would do without actually doing it.  Useful when setting up the `sync`
 command which deletes files in the destination.
 
-### --expect-continue-timeout=Duration
+### --expect-continue-timeout Duration
 
 This specifies the amount of time to wait for a server's first
 response headers after fully writing the request headers if the
@@ -1194,7 +1194,7 @@ which does not respect [`--ignore-case`](/filtering/#ignore-case-make-searches-c
 - on remotes that do not support server-side move, `--fix-case` will require
 downloading the file and re-uploading it. To avoid this, do not use `--fix-case`.
 
-### --fs-cache-expire-duration=Duration
+### --fs-cache-expire-duration Duration
 
 When using rclone via the API rclone caches created remotes for 5
 minutes by default in the "fs cache". This means that if you do
@@ -1209,7 +1209,7 @@ to `0` rclone may build two remotes (one for the source or destination
 and one for the `--backup-dir` where it may have only built one
 before.
 
-### --fs-cache-expire-interval=Duration
+### --fs-cache-expire-interval Duration
 
 This controls how often rclone checks for cached remotes to expire.
 See the `--fs-cache-expire-duration` documentation above for more
@@ -1614,7 +1614,7 @@ returned from the rc call [core/stats](/rc/#core-stats).
 
 
 
-### --low-level-retries=int
+### --low-level-retries int
 
 This controls the number of low level retries rclone does.
 
@@ -1630,7 +1630,7 @@ to reduce the value so rclone moves on to a high level retry (see the
 
 Disable low level retries with `--low-level-retries 1`.
 
-### --max-backlog=int
+### --max-backlog int
 
 This is the maximum allowable backlog of files in a sync/copy/move
 queued for being checked or transferred.
@@ -1649,7 +1649,7 @@ of the remote which may be desirable.
 Setting this to a negative number will make the backlog as large as
 possible.
 
-### --max-buffer-memory=SizeSuffix {#max-buffer-memory}
+### --max-buffer-memory SizeSuffix {#max-buffer-memory}
 
 If set, don't allocate more than given amount of memory as buffers. If
 not set or set to `0` or `off` this will not limit the amount of memory
@@ -1667,7 +1667,7 @@ Setting `--max-buffer-memory` allows the buffer memory to be
 controlled so that it doesn't overwhelm the machine and allows
 `--transfers` to be set large.
 
-### --max-connections=int
+### --max-connections int
 
 This sets the maximum number of concurrent calls to the backend API.
 It may not map 1:1 to TCP or HTTP connections depending on the backend
@@ -1693,13 +1693,13 @@ So for  `--max-connections 3` you'd use `--checkers 2 --transfers 2
 Setting this flag can be useful for backends which do multipart
 uploads to limit the number of simultaneous parts being transferred.
 
-### --max-delete=int
+### --max-delete int
 
 This tells rclone not to delete more than N files.  If that limit is
 exceeded then a fatal error will be generated and rclone will stop the
 operation in progress.
 
-### --max-delete-size=SizeSuffix
+### --max-delete-size SizeSuffix
 
 Rclone will stop deleting files when the total size of deletions has
 reached the size specified. It defaults to off.
@@ -1707,7 +1707,7 @@ reached the size specified. It defaults to off.
 If that limit is exceeded then a fatal error will be generated and
 rclone will stop the operation in progress.
 
-### --max-depth=int
+### --max-depth int
 
 This modifies the recursion depth for all the commands except purge.
 
@@ -1725,7 +1725,7 @@ files not recursed through are considered excluded and will be deleted
 on the destination.  Test first with `--dry-run` if you are not sure
 what will happen.
 
-### --max-duration=Duration
+### --max-duration Duration
 
 Rclone will stop transferring when it has run for the
 duration specified.
@@ -1736,7 +1736,7 @@ Use `--cutoff-mode` to modify this behaviour.
 
 Rclone will exit with exit code 10 if the duration limit is reached.
 
-### --max-transfer=SizeSuffix
+### --max-transfer SizeSuffix
 
 Rclone will stop transferring when it has reached the size specified.
 Defaults to off.
@@ -1883,7 +1883,7 @@ Specify value as string in format `key=value` to add metadata `key`
 with value `value` when uploading. This can be repeated as many times
 as required. See the [metadata section](#metadata) for more info.
 
-### --modify-window=Duration
+### --modify-window Duration
 
 When checking whether a file has been modified, this is the maximum
 allowed time difference that a file can have and still be considered
@@ -1896,7 +1896,7 @@ if you are reading and writing to an OS X filing system this will be
 
 This command line flag allows you to override that computed default.
 
-### --multi-thread-write-buffer-size=SizeSuffix
+### --multi-thread-write-buffer-size SizeSuffix
 
 When transferring with multiple threads, rclone will buffer the specified
 number of bytes in memory before writing to disk for each thread.
@@ -1915,7 +1915,7 @@ As a final hint, size is not the only factor: block size (or similar
 concept) can have an impact. In one case, we observed that exact
 multiples of 16k performed much better than other values.
 
-### --multi-thread-chunk-size=SizeSuffix
+### --multi-thread-chunk-size SizeSuffix
 
 Normally the chunk size for multi thread transfers is set by the backend.
 However some backends such as `local` and `smb` (which implement `OpenWriterAt`
@@ -1923,7 +1923,7 @@ but not `OpenChunkWriter`) don't have a natural chunk size.
 
 In this case the value of this option is used (default 64Mi).
 
-### --multi-thread-cutoff=SizeSuffix {#multi-thread-cutoff}
+### --multi-thread-cutoff SizeSuffix {#multi-thread-cutoff}
 
 When transferring files above specified size  to capable backends,
 rclone will use multiple threads to transfer the file (default 256M).
@@ -1973,7 +1973,7 @@ Use `--local-no-sparse` to disable sparse files (which may cause long
 delays at the start of transfers) or disable multi-thread transfers
 with `--multi-thread-streams 0`
 
-### --multi-thread-streams=int
+### --multi-thread-streams int
 
 When using multi thread transfers (see above `--multi-thread-cutoff`)
 this sets the number of streams to use. Set to `0` to disable multi
@@ -2233,7 +2233,7 @@ files which didn't get transferred because of errors.
 
 Disable retries with `--retries 1`.
 
-### --retries-sleep=Duration
+### --retries-sleep Duration
 
 This sets the interval between each retry specified by `--retries`
 
@@ -2261,7 +2261,7 @@ This can be useful transferring files from Dropbox which have been
 modified by the desktop sync client which doesn't set checksums of
 modification times in the same way as rclone.
 
-### --stats=Duration
+### --stats Duration
 
 Commands which transfer data (`sync`, `copy`, `copyto`, `move`,
 `moveto`) will print data transfer stats at regular intervals to show
@@ -2568,14 +2568,14 @@ very big sync to do, then don't use `--fast-list`, otherwise you will run out
 of memory. Run some tests and compare before you decide, and if in doubt then
 just leave the default, let rclone decide, i.e. not use `--fast-list`.
 
-### --timeout=Duration
+### --timeout Duration
 
 This sets the IO idle timeout.  If a transfer has started but then
 becomes idle for this long it is considered broken and disconnected.
 
 The default is `5m`.  Set to `0` to disable.
 
-### --transfers=int
+### --transfers int
 
 The number of file transfers to run in parallel.  It can sometimes be
 useful to set this to a smaller number if the remote is giving a lot
