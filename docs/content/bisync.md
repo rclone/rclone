@@ -635,7 +635,7 @@ directory separators.) To address this particular issue, an additional
 `2006-01-02 0304PM`.
 
 Note that `--conflict-suffix` is entirely separate from rclone's main
-[`--sufix`](/docs/#suffix) flag. This is intentional, as users may wish
+[`--sufix`](/docs/#suffix-string) flag. This is intentional, as users may wish
 to use both flags simultaneously, if also using
 [`--backup-dir`](#backup-dir1-and-backup-dir2).
 
@@ -810,7 +810,7 @@ without requiring the user to get involved and run a `--resync`. (See also:
 
 ### --backup-dir1 and --backup-dir2
 
-As of `v1.66`, [`--backup-dir`](/docs/#backup-dir) is supported in bisync.
+As of `v1.66`, [`--backup-dir`](/docs/#backup-dir-string) is supported in bisync.
 Because `--backup-dir` must be a non-overlapping path on the same remote,
 Bisync has introduced new `--backup-dir1` and `--backup-dir2` flags to support
 separate backup-dirs for `Path1` and `Path2` (bisyncing between different
@@ -841,7 +841,7 @@ In the event of a [rename due to a sync conflict](#conflict-loser), the
 rename is not considered a delete, unless a previous conflict with the same
 name already exists and would get overwritten.
 
-See also: [`--suffix`](/docs/#suffix),
+See also: [`--suffix`](/docs/#suffix-string),
 [`--suffix-keep-extension`](/docs/#suffix-keep-extension)
 
 ## Operation
