@@ -622,8 +622,14 @@ line argument for rclone.
 
 Options documented to take a `stringArray` parameter accept multiple 
 values. To pass more than one value, repeat the option; for example: 
-`--include value1 --include value2`.
-
+`--include value1 --include value2`. Other options may only accept a
+single value, and should only be specified once, but where the
+specified parameter may indicate a list of values separated by space
+or comma. Such options are documented to take a `CommaSepList`
+parameter, if comma separated, and `SpaceSepList` if space separated,
+although some may also have different parameters such as `DumpFlags`
+or just `string` and the help text explains that this will be
+interpreted as a list.
 
 ### Time or duration options {#time-option}
 
