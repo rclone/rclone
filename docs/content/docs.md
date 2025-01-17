@@ -436,7 +436,7 @@ or
 
     rclone sync --interactive /full/path/to/sync:me remote:path
 
-Server side copy
+Server-side copy
 ----------------
 
 Most remotes (but not all - see [the
@@ -456,13 +456,13 @@ downloading and re-uploading.
 Remotes which don't support server-side copy **will** download and
 re-upload in this case.
 
-Server side copies are used with `sync` and `copy` and will be
+Server-side copies are used with `sync` and `copy` and will be
 identified in the log when using the `-v` flag.  The `move` command
 may also use them if remote doesn't support server-side move directly.
 This is done by issuing a server-side copy then a delete which is much
 quicker than a download and re-upload.
 
-Server side copies will only be attempted if the remote names are the
+Server-side copies will only be attempted if the remote names are the
 same.
 
 This can be used when scripting to make aged backups efficiently, e.g.
@@ -508,7 +508,7 @@ name of a program in which can transform metadata when it is being
 copied from source to destination.
 
 Rclone supports `--metadata-set` and `--metadata-mapper` when doing
-sever side `Move` and server side `Copy`, but not when doing server
+server-side `Move` and server-side `Copy`, but not when doing server
 side `DirMove` (renaming a directory) as this would involve recursing
 into the directory. Note that you can disable `DirMove` with
 `--disable DirMove` and rclone will revert back to using `Move` for
@@ -1138,7 +1138,7 @@ need to escape with single quotes or a backslash on unix like
 platforms.)
 
 This flag can be useful for debugging and in exceptional circumstances
-(e.g. Google Drive limiting the total volume of server side copies to
+(e.g. Google Drive limiting the total volume of server-side copies to
 100 GiB/day).
 
 ### --disable-http2
