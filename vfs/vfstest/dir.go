@@ -2,12 +2,26 @@ package vfstest
 
 import (
 	"context"
+	"reflect"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+// retry f() for success up to maximum number of tries
+func retry(f func() bool) {
+	const maxTries = 5
+	var success bool
+	for tries := 1; tries <= maxTries; tries++ {
+		success = f()
+		if success {
+			break
+		}
+		time.Sleep(2 * time.Second)
+	}
+}
 
 // TestDirLs checks out listing
 func TestDirLs(t *testing.T) {
@@ -174,8 +188,20 @@ func TestDirCacheFlush(t *testing.T) {
 	err := run.fremote.Mkdir(context.Background(), "dir/subdir")
 	require.NoError(t, err)
 
-	// expect newly created "subdir" on remote to not show up
 	run.forget("otherdir")
+
+	// expect newly created "subdir" on remote to not show up, unless using the
+	// local backend, where ChangeNotify may invalidate the cache before the
+	// check
+	if run.fremote.Name() == "local" {
+		dm["dir/subdir/"] = struct{}{}
+
+		// ChangeNotify may take some time, so wait for it
+		retry(func() bool {
+			run.readLocal(t, localDm, "")
+			return reflect.DeepEqual(dm, localDm)
+		})
+	}
 	run.readLocal(t, localDm, "")
 	assert.Equal(t, dm, localDm, "expected vs fuse mount")
 
@@ -203,9 +229,21 @@ func TestDirCacheFlushOnDirRename(t *testing.T) {
 	run.readLocal(t, localDm, "")
 	assert.Equal(t, dm, localDm, "expected vs fuse mount")
 
-	// expect remotely created directory to not show up
 	err := run.fremote.Mkdir(context.Background(), "dir/subdir")
 	require.NoError(t, err)
+
+	// expect remotely created directory to not show up, unless using the
+	// local backend, where ChangeNotify may invalidate the cache before the
+	// check
+	if run.fremote.Name() == "local" {
+		dm["dir/subdir/"] = struct{}{}
+
+		// ChangeNotify may take some time, so wait for it
+		retry(func() bool {
+			run.readLocal(t, localDm, "")
+			return reflect.DeepEqual(dm, localDm)
+		})
+	}
 	run.readLocal(t, localDm, "")
 	assert.Equal(t, dm, localDm, "expected vs fuse mount")
 
