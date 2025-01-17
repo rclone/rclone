@@ -40,7 +40,7 @@ var (
 	checkStreaming     bool
 	checkBase32768     bool
 	all                bool
-	uploadWait         time.Duration
+	uploadWait         fs.Duration
 	positionLeftRe     = regexp.MustCompile(`(?s)^(.*)-position-left-([[:xdigit:]]+)$`)
 	positionMiddleRe   = regexp.MustCompile(`(?s)^position-middle-([[:xdigit:]]+)-(.*)-$`)
 	positionRightRe    = regexp.MustCompile(`(?s)^position-right-([[:xdigit:]]+)-(.*)$`)
@@ -52,7 +52,7 @@ func init() {
 	flags.StringVarP(cmdFlags, &writeJSON, "write-json", "", "", "Write results to file", "")
 	flags.BoolVarP(cmdFlags, &checkNormalization, "check-normalization", "", false, "Check UTF-8 Normalization", "")
 	flags.BoolVarP(cmdFlags, &checkControl, "check-control", "", false, "Check control characters", "")
-	flags.DurationVarP(cmdFlags, &uploadWait, "upload-wait", "", 0, "Wait after writing a file", "")
+	flags.FVarP(cmdFlags, &uploadWait, "upload-wait", "", "Wait after writing a file", "")
 	flags.BoolVarP(cmdFlags, &checkLength, "check-length", "", false, "Check max filename length", "")
 	flags.BoolVarP(cmdFlags, &checkStreaming, "check-streaming", "", false, "Check uploads with indeterminate file size", "")
 	flags.BoolVarP(cmdFlags, &checkBase32768, "check-base32768", "", false, "Check can store all possible base32768 characters", "")
@@ -204,7 +204,7 @@ func (r *results) writeFile(path string) (fs.Object, error) {
 	src := object.NewStaticObjectInfo(path, time.Now(), int64(len(contents)), true, nil, r.f)
 	obj, err := r.f.Put(r.ctx, bytes.NewBufferString(contents), src)
 	if uploadWait > 0 {
-		time.Sleep(uploadWait)
+		time.Sleep(time.Duration(uploadWait))
 	}
 	return obj, err
 }
