@@ -7,7 +7,7 @@
 // (Tracked in [issue #7625].)
 //
 //  1. ✅ Minimal support for the [external special remote protocol]. Tested on
-//     "local" and "drive" backends.
+//     "local", "drive", and "dropbox" backends.
 //  2. Add support for the ASYNC protocol extension. This may improve performance.
 //  3. Support the [simple export interface]. This will enable `git-annex
 //     export` functionality.
@@ -33,6 +33,7 @@ import (
 	"github.com/rclone/rclone/cmd"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/cache"
+	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/spf13/cobra"
 )
@@ -267,21 +268,33 @@ func (s *server) handleInitRemote() error {
 		return fmt.Errorf("failed to get configs: %w", err)
 	}
 
-	remoteRootFs, err := cache.Get(context.TODO(), fmt.Sprintf("%s:", s.configRcloneRemoteName))
-	if err != nil {
-		s.sendMsg("INITREMOTE-FAILURE failed to open root directory of rclone remote")
-		return fmt.Errorf("failed to open root directory of rclone remote: %w", err)
+	// Explicitly check that a remote with the given name exists. If we just
+	// relied on `cache.Get()` to return `fs.ErrorNotFoundInConfigFile`, this
+	// function would incorrectly succeed when the given remote name is actually
+	// a file path.
+	//
+	// The :local: backend does not correspond to a remote named by the rclone
+	// config, but is permitted to enable testing. Technically, a user might hit
+	// this code path, but it would be a strange choice because git-annex
+	// natively supports a "directory" special remote.
+
+	trimmedName := strings.TrimSuffix(s.configRcloneRemoteName, ":")
+
+	if s.configRcloneRemoteName != ":local" {
+		var remoteExists bool
+		for _, remoteName := range config.FileSections() {
+			if remoteName == trimmedName {
+				remoteExists = true
+				break
+			}
+		}
+		if !remoteExists {
+			s.sendMsg("INITREMOTE-FAILURE remote does not exist: " + s.configRcloneRemoteName)
+			return fmt.Errorf("remote does not exist: %s", s.configRcloneRemoteName)
+		}
 	}
 
-	if !remoteRootFs.Features().CanHaveEmptyDirectories {
-		s.sendMsg("INITREMOTE-FAILURE this rclone remote does not support empty directories")
-		return fmt.Errorf("rclone remote does not support empty directories")
-	}
-
-	if err := operations.Mkdir(context.TODO(), remoteRootFs, s.configPrefix); err != nil {
-		s.sendMsg("INITREMOTE-FAILURE failed to mkdir")
-		return fmt.Errorf("failed to mkdir: %w", err)
-	}
+	s.configRcloneRemoteName = trimmedName + ":"
 
 	s.sendMsg("INITREMOTE-SUCCESS")
 	return nil
