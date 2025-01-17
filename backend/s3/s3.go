@@ -2635,7 +2635,7 @@ The parameter should be a date, "2006-01-02", datetime "2006-01-02
 Note that when using this no file write operations are permitted,
 so you can't upload files or delete them.
 
-See [the time option docs](/docs/#time-option) for valid formats.
+See [the time option docs](/docs/#time-options) for valid formats.
 `,
 			Default:  fs.Time{},
 			Advanced: true,

@@ -609,7 +609,8 @@ way of reading those already.
 Options
 -------
 
-Rclone has a number of options to control its behaviour.
+Rclone has a number of options to control its behaviour. These are
+documented below, and in the [flags](/flags) page.
 
 Options that take parameters can have the values passed in two ways,
 `--option=value` or `--option value`. However boolean (true/false)
@@ -631,15 +632,33 @@ although some may also have different parameters such as `DumpFlags`
 or just `string` and the help text explains that this will be
 interpreted as a list.
 
-### Time or duration options {#time-option}
+Floating-point values with fractional part must use period (`.`)
+as decimal separator, common in English-speaking countries, regardless
+of your configured system locale. Parameter type `float` accepts decimal
+and hexadecimal floating-point numbers as defined by the Go syntax for
+[floating-point literals](https://go.dev/ref/spec#Floating-point_literals).
 
-Options that take a `Duration` can be specified as a duration string
-or a time string.
+### Time and duration options {#time-options}
 
-A duration string is a possibly signed sequence of decimal numbers,
-each with optional fraction and a unit suffix, such as "300ms",
-"-1.5h" or "2h45m". Default units are seconds or the following
-abbreviations are valid:
+Options that take a `Time` or `Duration` parameter must be specified
+as a formatted string describing an absolute or relative time. Note
+that both `Time` and `Duration` parameter types can be expressed as
+either absolute or relative time, just with different interpretations,
+e.g. a relative time will be treated as an offset from the current time
+when passed as a `Time` value.
+
+An absolute time can be specified as a string in one of the following formats:
+
+- RFC3339 - e.g. `2006-01-02T15:04:05Z` or `2006-01-02T15:04:05+07:00`
+- ISO8601 Date and time, local timezone - `2006-01-02T15:04:05`
+- ISO8601 Date and time, local timezone - `2006-01-02 15:04:05`
+- ISO8601 Date - `2006-01-02` (YYYY-MM-DD)
+
+A relative time is a string with a, possibly signed, sequence of decimal
+numbers, each with optional fraction, and each with a unit suffix. If
+the string only contains a single number, then the unit suffix is optional
+and will default to seconds, i.e. a plain decimal value will be treated
+as a number of seconds. The following suffixes are valid:
 
   * `ms` - Milliseconds
   * `s`  - Seconds
@@ -650,20 +669,18 @@ abbreviations are valid:
   * `M`  - Months
   * `y`  - Years
 
-These can also be specified as an absolute time in the following
-formats:
+Examples: "10", "300ms", "-1.5h" or "2h45m".
 
-- RFC3339 - e.g. `2006-01-02T15:04:05Z` or `2006-01-02T15:04:05+07:00`
-- ISO8601 Date and time, local timezone - `2006-01-02T15:04:05`
-- ISO8601 Date and time, local timezone - `2006-01-02 15:04:05`
-- ISO8601 Date - `2006-01-02` (YYYY-MM-DD)
+### Size options
 
-### Size options {#size-option}
-
-Options which use SizeSuffix use KiB (multiples of 1024 bytes) by default.
-However, a suffix of `B` for Byte, `K` for KiB, `M` for MiB,
-`G` for GiB, `T` for TiB and `P` for PiB may be used. These are
+Options that take a SizeSuffix parameter can be specified as an
+integer value, which will then be assumed to represent a KiB
+value (multiples of 1024 bytes) by default. The interpretation
+can be changed by appending a suffix: `B` for Byte, `K` for KiB,
+`M` for MiB, `G` for GiB, `T` for TiB and `P` for PiB. These are
 the binary units, e.g. 1, 2\*\*10, 2\*\*20, 2\*\*30 respectively.
+
+See also [--human-readable](#human-readable).
 
 ### --backup-dir
 
@@ -1080,7 +1097,7 @@ If a file or directory does have a modification time rclone can read
 then rclone will display this fixed time instead.
 
 The default is `2000-01-01 00:00:00 UTC`. This can be configured in
-any of the ways shown in [the time or duration options](#time-option).
+any of the ways shown in [time options](#time-options).
 
 For example `--default-time 2020-06-01` to set the default time to the
 1st of June 2020 or `--default-time 0s` to set the default time to the
