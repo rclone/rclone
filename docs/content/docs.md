@@ -704,7 +704,7 @@ it will give an error.
 You can use `--bind 0.0.0.0` to force rclone to use IPv4 addresses and
 `--bind ::0` to force rclone to use IPv6 addresses.
 
-### --bwlimit=BANDWIDTH_SPEC
+### --bwlimit=BwTimetable
 
 This option controls the bandwidth limit. For example
 
@@ -807,7 +807,7 @@ change the bwlimit dynamically:
 
     rclone rc core/bwlimit rate=1M
 
-### --bwlimit-file=BANDWIDTH_SPEC
+### --bwlimit-file=BwTimetable
 
 This option controls per file bandwidth limit. For the options see the
 `--bwlimit` flag.
