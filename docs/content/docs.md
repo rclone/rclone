@@ -2926,7 +2926,7 @@ here which are used for testing.  These start with remote name e.g.
 
 Write CPU profile to a file. This can be analysed with `go tool pprof`.
 
-#### --dump
+#### --dump DumpFlags
 
 The `--dump` flag takes a comma separated list of flags to dump info
 about.
@@ -2938,7 +2938,7 @@ the body of the request will be gunzipped before showing it.
 
 The available flags are:
 
-#### --dump headers
+##### `--dump headers`
 
 Dump HTTP headers with `Authorization:` lines removed. May still
 contain sensitive info.  Can be very verbose.  Useful for debugging
@@ -2946,7 +2946,7 @@ only.
 
 Use `--dump auth` if you do want the `Authorization:` headers.
 
-#### --dump bodies
+##### `--dump bodies`
 
 Dump HTTP headers and bodies - may contain sensitive info.  Can be
 very verbose.  Useful for debugging only.
@@ -2954,40 +2954,40 @@ very verbose.  Useful for debugging only.
 Note that the bodies are buffered in memory so don't use this for
 enormous files.
 
-#### --dump requests
+##### `--dump requests`
 
 Like `--dump bodies` but dumps the request bodies and the response
 headers.  Useful for debugging download problems.
 
-#### --dump responses
+##### `--dump responses`
 
 Like `--dump bodies` but dumps the response bodies and the request
 headers. Useful for debugging upload problems.
 
-#### --dump auth
+##### `--dump auth`
 
 Dump HTTP headers - will contain sensitive info such as
 `Authorization:` headers - use `--dump headers` to dump without
 `Authorization:` headers.  Can be very verbose.  Useful for debugging
 only.
 
-#### --dump filters
+##### `--dump filters`
 
 Dump the filters to the output.  Useful to see exactly what include
 and exclude options are filtering on.
 
-#### --dump goroutines
+##### `--dump goroutines`
 
 This dumps a list of the running go-routines at the end of the command
 to standard output.
 
-#### --dump openfiles
+##### `--dump openfiles`
 
 This dumps a list of the open files at the end of the command.  It
 uses the `lsof` command to do that so you'll need that installed to
 use it.
 
-#### --dump mapper
+##### `--dump mapper`
 
 This shows the JSON blobs being sent to the program supplied with
 `--metadata-mapper` and received from it. It can be useful for
