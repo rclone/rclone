@@ -682,6 +682,9 @@ the binary units, e.g. 1, 2\*\*10, 2\*\*20, 2\*\*30 respectively.
 
 See also [--human-readable](#human-readable).
 
+Main options
+------------
+
 ### --backup-dir
 
 When using `sync`, `copy` or `move` any files which would have been
