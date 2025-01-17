@@ -3021,7 +3021,7 @@ instead of of `--size-only`, when `check` is not available.
 * New Features
     * The [VFS layer](/commands/rclone_mount/#vfs-virtual-file-system) was heavily reworked for this release - see below for more details
     * Interactive mode [-i/--interactive](/docs/#interactive) for destructive operations (fishbullet)
-    * Add [--bwlimit-file](/docs/#bwlimit-file-bandwidth-spec) flag to limit speeds of individual file transfers (Nick Craig-Wood)
+    * Add [--bwlimit-file](/docs/#bwlimit-file-bwtimetable) flag to limit speeds of individual file transfers (Nick Craig-Wood)
     * Transfers are sorted by start time in the stats and progress output (Max Sum)
     * Make sure backends expand `~` and environment vars in file names they use (Nick Craig-Wood)
     * Add [--refresh-times](/docs/#refresh-times) flag to set modtimes on hashless backends (Nick Craig-Wood)
