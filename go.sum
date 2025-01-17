@@ -181,8 +181,8 @@ github.com/cloudflare/circl v1.3.7 h1:qlCDlTPz2n9fu58M0Nh1J/JzcFpfgkFHHX3O35r5vc
 github.com/cloudflare/circl v1.3.7/go.mod h1:sRTcRWXGLrKw6yIGJ+l7amYJFfAXbZG0kBSc8r4zxgA=
 github.com/cloudinary/cloudinary-go/v2 v2.9.0 h1:8C76QklmuV4qmKAC7cUnu9D68X9kCkFMuLspPikECCo=
 github.com/cloudinary/cloudinary-go/v2 v2.9.0/go.mod h1:ireC4gqVetsjVhYlwjUJwKTbZuWjEIynbR9zQTlqsvo=
-github.com/cloudsoda/go-smb2 v0.0.0-20241223203758-52b943b88fd6 h1:mLY/79N73URZ2J/oRKTxmfhCgxThzBmjQ6XOjX5tYjI=
-github.com/cloudsoda/go-smb2 v0.0.0-20241223203758-52b943b88fd6/go.mod h1:0aLYPsmguHbok591y6hI5yAqU0drbUzrPEO10ZpgTTw=
+github.com/cloudsoda/go-smb2 v0.0.0-20250124173933-e6bbeea507ed h1:KrdJUJWhJ1UWhvaP6SBsvG356KjqfdDjcS/4xTswAU4=
+github.com/cloudsoda/go-smb2 v0.0.0-20250124173933-e6bbeea507ed/go.mod h1:0aLYPsmguHbok591y6hI5yAqU0drbUzrPEO10ZpgTTw=
 github.com/cloudwego/base64x v0.1.4 h1:jwCgWpFanWmN8xoIUHa2rtzmkd5J2plF/dnLS6Xd/0Y=
 github.com/cloudwego/base64x v0.1.4/go.mod h1:0zlkT4Wn5C6NdauXdJRhSKRlJvmclQ1hhJgA0rcu/8w=
 github.com/cloudwego/iasm v0.2.0 h1:1KNIy1I1H9hNNFEEH3DVnI4UujN+1zjpuk6gwHLTssg=
