@@ -621,6 +621,11 @@ it to `false`.  It is also possible to specify `--boolean=false` or
 parsed as `--boolean` and the `false` is parsed as an extra command
 line argument for rclone.
 
+String values that are recognized as special identifiers, e.g. the
+name of the log level to set with option `--log-level`, are case
+insensitive, e.g. `--log-level ERROR` and `--log-level error` are
+identical.
+
 Options documented to take a `stringArray` parameter accept multiple 
 values. To pass more than one value, repeat the option; for example: 
 `--include value1 --include value2`. Other options may only accept a
