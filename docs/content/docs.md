@@ -3051,11 +3051,19 @@ Metrics
 
 Rclone can publish metrics in the OpenMetrics/Prometheus format.
 
-To enable the metrics endpoint, use the `--metrics-addr` flag. Metrics can also be published on the `--rc-addr` port if the `--rc` flag and `--rc-enable-metrics` flags are supplied or if using rclone rcd `--rc-enable-metrics`
+To enable the metrics endpoint, use the `--metrics-addr` flag. Metrics can
+also be published on the `--rc-addr` port if the `--rc` flag and
+`--rc-enable-metrics` flags are supplied or if using rclone rcd
+`--rc-enable-metrics`
 
-Rclone provides extensive configuration options for the metrics HTTP endpoint. These settings are grouped under the Metrics section and have a prefix `--metrics-*`.
+Rclone provides extensive configuration options for the metrics HTTP endpoint.
+These settings are grouped under the Metrics section and have a prefix
+`--metrics-*`.
 
-When metrics are enabled with `--rc-enable-metrics`, they will be published on the same port as the rc API. In this case, the `--metrics-*` flags will be ignored, and the HTTP endpoint configuration will be managed by the `--rc-*` parameters.
+When metrics are enabled with `--rc-enable-metrics`, they will be published on
+the same port as the rc API. In this case, the `--metrics-*` flags will be
+ignored, and the HTTP endpoint configuration will be managed by the `--rc-*`
+parameters.
 
 Exit code
 ---------
@@ -3207,7 +3215,8 @@ So if both `--skip-links` is supplied on the command line and an
 environment variable `RCLONE_LOCAL_SKIP_LINKS` is set, the command line
 flag will take preference.
 
-The backend configurations set by environment variables can be seen with the `-vv` flag, e.g. `rclone about myRemote: -vv`.
+The backend configurations set by environment variables can be seen with the
+`-vv` flag, e.g. `rclone about myRemote: -vv`.
 
 For non backend configuration the order is as follows:
 
@@ -3217,11 +3226,18 @@ For non backend configuration the order is as follows:
 
 ### Other environment variables
 
-- `RCLONE_CONFIG_PASS` set to contain your config file password (see [Configuration Encryption](#configuration-encryption) section)
+- `RCLONE_CONFIG_PASS` set to contain your config file password (see
+  [Configuration Encryption](#configuration-encryption) section)
 - `HTTP_PROXY`, `HTTPS_PROXY` and `NO_PROXY` (or the lowercase versions thereof).
     - `HTTPS_PROXY` takes precedence over `HTTP_PROXY` for https requests.
-    - The environment values may be either a complete URL or a "host[:port]" for, in which case the "http" scheme is assumed.
-- `USER` and `LOGNAME` values are used as fallbacks for current username. The primary method for looking up username is OS-specific: Windows API on Windows, real user ID in /etc/passwd on Unix systems. In the documentation the current username is simply referred to as `$USER`.
-- `RCLONE_CONFIG_DIR` - rclone **sets** this variable for use in config files and sub processes to point to the directory holding the config file.
+    - The environment values may be either a complete URL or a "host[:port]"
+      for, in which case the "http" scheme is assumed.
+- `USER` and `LOGNAME` values are used as fallbacks for current username.
+  The primary method for looking up username is OS-specific: Windows API on
+  Windows, real user ID in /etc/passwd on Unix systems. In the documentation
+  the current username is simply referred to as `$USER`.
+- `RCLONE_CONFIG_DIR` - rclone **sets** this variable for use in config files
+  and sub processes to point to the directory holding the config file.
 
-The options set by environment variables can be seen with the `-vv` and `--log-level=DEBUG` flags, e.g. `rclone version -vv`.
+The options set by environment variables can be seen with the `-vv` and
+`--log-level=DEBUG` flags, e.g. `rclone version -vv`.
