@@ -14,6 +14,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/icholy/digest"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/accounting"
 	"github.com/rclone/rclone/lib/structs"
@@ -166,6 +167,27 @@ func NewClientWithUnixSocket(ctx context.Context, path string) *http.Client {
 			return NewDialer(ctx).DialContext(reqCtx, "unix", path)
 		}
 	})
+}
+
+// NewClientWithDigestAuth returns an http.Client that supports the Digest authentication scheme.
+func NewClientWithDigestAuth(ctx context.Context, username, password string) *http.Client {
+	ci := fs.GetConfig(ctx)
+
+	dt := &digest.Transport{
+		Username: username,
+		Password: password,
+	}
+	// override the default transport with the custom implementation.
+	dt.Transport = NewTransport(ctx)
+
+	client := &http.Client{
+		Transport: dt,
+	}
+	if ci.Cookie {
+		client.Jar = cookieJar
+		dt.Jar = cookieJar
+	}
+	return client
 }
 
 // Transport is our http Transport which wraps an http.Transport
