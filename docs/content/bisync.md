@@ -810,7 +810,7 @@ without requiring the user to get involved and run a `--resync`. (See also:
 
 ### --backup-dir1 and --backup-dir2
 
-As of `v1.66`, [`--backup-dir`](/docs/#backup-dir-dir) is supported in bisync.
+As of `v1.66`, [`--backup-dir`](/docs/#backup-dir) is supported in bisync.
 Because `--backup-dir` must be a non-overlapping path on the same remote,
 Bisync has introduced new `--backup-dir1` and `--backup-dir2` flags to support
 separate backup-dirs for `Path1` and `Path2` (bisyncing between different

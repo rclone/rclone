@@ -492,8 +492,8 @@ the locations that rclone will use.
 To override them set the corresponding options (as command-line arguments, or as
 [environment variables](https://rclone.org/docs/#environment-variables)):
   - [--config](https://rclone.org/docs/#config)
-  - [--cache-dir](https://rclone.org/docs/#cache-dir-dir)
-  - [--temp-dir](https://rclone.org/docs/#temp-dir-dir)
+  - [--cache-dir](https://rclone.org/docs/#cache-dir)
+  - [--temp-dir](https://rclone.org/docs/#temp-dir)
 
 ## Autostart
 
