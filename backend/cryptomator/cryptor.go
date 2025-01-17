@@ -109,9 +109,9 @@ func (c *Cryptor) newContentCryptor(key []byte) (contentCryptor, error) {
 	}
 }
 
-// EncryptedChunkSize calculates the size of the encrypted blob that would be returned by EncryptChunk with a payload of the given size.
-func EncryptedChunkSize(c contentCryptor, payloadSize int) int {
-	return c.NonceSize() + payloadSize + c.TagSize()
+// EncryptionOverhead returns how much longer a payload of the given size would be made by EncryptChunk.
+func (c *Cryptor) EncryptionOverhead() int {
+	return c.NonceSize() + c.TagSize()
 }
 
 type gcmCryptor struct {

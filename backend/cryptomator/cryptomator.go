@@ -241,10 +241,10 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 				remote:    remote,
 			})
 		case fs.Object:
-			entries = append(entries, &Object{
-				Object: entry,
-				fs:     f,
-				remote: remote,
+			entries = append(entries, &DecryptingObject{
+				Object:    entry,
+				f:         f,
+				decRemote: remote,
 			})
 		default:
 			return nil, fmt.Errorf("unknown entry type %T", entry)
@@ -303,10 +303,6 @@ func (f *Fs) CreateDir(ctx context.Context, pathID string, leaf string) (newID s
 	// Write pointer to directory
 	// XXX if someone else attempts to create the same directory at the same time, one of them will win and the other will get an orphaned directory.
 	// Without an atomic "create if not exists" for this next writeSmallFile operation, this can't be fixed.
-	err = f.wrapped.Mkdir(ctx, leafPath)
-	if err != nil {
-		return
-	}
 	err = f.writeSmallFile(ctx, path.Join(leafPath, dirIDC9r), []byte(newID))
 	if err != nil {
 		return
@@ -440,6 +436,9 @@ func (d *Directory) Remote() string { return d.remote }
 func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 	leaf, dirID, err := f.dirCache.FindPath(ctx, remote, false)
 	if err != nil {
+		if errors.Is(err, fs.ErrorDirNotFound) {
+			return nil, fs.ErrorObjectNotFound
+		}
 		return nil, fmt.Errorf("failed to find ID for directory of file %q: %w", remote, err)
 	}
 	encryptedPath, err := f.leafPath(leaf, dirID)
@@ -450,40 +449,40 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &Object{
-		Object: wrappedObj,
-		fs:     f,
-		remote: remote,
+	return &DecryptingObject{
+		Object:    wrappedObj,
+		f:         f,
+		decRemote: remote,
 	}, nil
 }
 
-// Put in to the remote path with the modTime given of the given size
-//
-// When called from outside an Fs by rclone, src.Size() will always be >= 0.
-// But for unknown-sized objects (indicated by src.Size() == -1), Put should either
-// return an error or upload it properly (rather than e.g. calling panic).
-//
-// May create the object even if it returns an error - if so
-// will return the object and the error, otherwise will return
-// nil and the error
-func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
-	return nil, fmt.Errorf("TODO implement Fs.Put")
-}
-
-// -------- fs.Object
-
-// Object wraps the underlying fs.Object and handles encryption
-type Object struct {
+// DecryptingObject wraps the underlying fs.Object and handles decrypting it
+type DecryptingObject struct {
 	fs.Object
-	fs     *Fs
-	remote string
+	f         *Fs
+	decRemote string
 }
+
+// TODO: override all relevant methods
 
 // Fs returns read only access to the Fs that this object is part of
-func (o *Object) Fs() fs.Info { return o.fs }
+func (o *DecryptingObject) Fs() fs.Info { return o.f }
 
 // Remote returns the decrypted remote path
-func (o *Object) Remote() string { return o.remote }
+func (o *DecryptingObject) Remote() string { return o.decRemote }
+
+// String returns a description of the object
+func (o *DecryptingObject) String() string {
+	if o == nil {
+		return "<nil>"
+	}
+	return o.Remote()
+}
+
+// Size returns the size of the object after being decrypted
+func (o *DecryptingObject) Size() int64 {
+	return o.f.DecryptedFileSize(o.Object.Size())
+}
 
 // Open opens the file for read.  Call Close() on the returned io.ReadCloser
 //
@@ -498,7 +497,7 @@ func (o *Object) Remote() string { return o.remote }
 // We wrap the reader of the underlying object to decrypt the data.
 // - For fs.SeekOption we just discard all the bytes until we reach the Offset
 // - For fs.RangeOption we do the same and then wrap the reader in io.LimitReader
-func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadCloser, error) {
+func (o *DecryptingObject) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadCloser, error) {
 	var offset, limit int64 = 0, -1
 	var newOptions []fs.OpenOption
 	for _, option := range options {
@@ -524,7 +523,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 	}
 
 	var decryptReader io.Reader
-	decryptReader, err = o.fs.NewReader(reader)
+	decryptReader, err = o.f.NewReader(reader)
 	if err != nil {
 		return nil, err
 	}
@@ -544,6 +543,77 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 		Reader: decryptReader,
 		Closer: reader,
 	}, nil
+}
+
+// Update in to the object with the modTime given of the given size
+//
+// When called from outside an Fs by rclone, src.Size() will always be >= 0.
+// But for unknown-sized objects (indicated by src.Size() == -1), Upload should either
+// return an error or update the object properly (rather than e.g. calling panic).
+func (o *DecryptingObject) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {
+	encIn := o.f.encryptReader(in)
+	encSrc := &EncryptingObjectInfo{
+		ObjectInfo: src,
+		f:          o.f,
+		encRemote:  o.Object.Remote(),
+	}
+	return o.Object.Update(ctx, encIn, encSrc, options...)
+}
+
+// -------- Put
+
+// Put in to the remote path with the modTime given of the given size
+//
+// When called from outside an Fs by rclone, src.Size() will always be >= 0.
+// But for unknown-sized objects (indicated by src.Size() == -1), Put should either
+// return an error or upload it properly (rather than e.g. calling panic).
+//
+// May create the object even if it returns an error - if so
+// will return the object and the error, otherwise will return
+// nil and the error
+func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
+	encIn := f.encryptReader(in)
+	leaf, dirID, err := f.dirCache.FindPath(ctx, src.Remote(), true)
+	if err != nil {
+		return nil, err
+	}
+	encRemotePath, err := f.leafPath(leaf, dirID)
+	if err != nil {
+		return nil, err
+	}
+	encSrc := &EncryptingObjectInfo{
+		ObjectInfo: src,
+		f:          f,
+		encRemote:  encRemotePath,
+	}
+
+	obj, err := f.wrapped.Put(ctx, encIn, encSrc, options...)
+	if obj != nil {
+		obj = &DecryptingObject{
+			Object:    obj,
+			f:         f,
+			decRemote: src.Remote(),
+		}
+	}
+	return obj, err
+}
+
+// EncryptingObjectInfo wraps the ObjectInfo provided to Put and transforms its attributes to match the encrypted version of the file.
+type EncryptingObjectInfo struct {
+	fs.ObjectInfo
+	f         *Fs
+	encRemote string
+}
+
+// Fs returns read only access to the Fs that this object is part of
+func (i *EncryptingObjectInfo) Fs() fs.Info { return i.f }
+
+// Remote returns the encrypted remote path
+func (i *EncryptingObjectInfo) Remote() string { return i.encRemote }
+
+// Size returns the size of the object after being encrypted
+func (i *EncryptingObjectInfo) Size() int64 {
+	return i.f.EncryptedFileSize(i.ObjectInfo.Size())
 }
 
 // -------- private
