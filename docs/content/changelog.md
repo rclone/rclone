@@ -758,7 +758,7 @@ description: "Rclone Changelog"
     * Final listings are now generated from sync results, to avoid needing to re-list (nielash)
     * Bisync is now much more resilient to changes that happen during a bisync run, and far less prone to critical errors / undetected changes (nielash)
     * Bisync is now capable of rolling a file listing back in cases of uncertainty, essentially marking the file as needing to be rechecked next time. (nielash)
-    * A few basic terminal colors are now supported, controllable with [`--color`](/docs/#color-when) (`AUTO`|`NEVER`|`ALWAYS`) (nielash)
+    * A few basic terminal colors are now supported, controllable with [`--color`](/docs/#color) (`AUTO`|`NEVER`|`ALWAYS`) (nielash)
     * Initial listing snapshots of Path1 and Path2 are now generated concurrently, using the same "march" infrastructure as `check` and `sync`, for performance improvements and less risk of error. (nielash)
     * `--resync` is now much more efficient (especially for users of `--create-empty-src-dirs`) (nielash)
     * Google Docs (and other files of unknown size) are now supported (with the same options as in `sync`) (nielash)

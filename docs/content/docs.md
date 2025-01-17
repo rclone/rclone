@@ -914,7 +914,7 @@ quicker than without the `--checksum` flag.
 When using this flag, rclone won't update mtimes of remote files if
 they are incorrect as it would normally.
 
-### --color WHEN
+### --color
 
 Specify when colors (and other ANSI codes) should be added to the output.
 
@@ -1068,7 +1068,7 @@ directory must not overlap the destination directory.
 
 See `--compare-dest` and `--backup-dir`.
 
-### --dedupe-mode MODE
+### --dedupe-mode
 
 Mode to run dedupe command in.  One of `interactive`, `skip`, `first`, 
 `newest`, `oldest`, `rename`.  The default is `interactive`.  
@@ -1086,7 +1086,7 @@ For example `--default-time 2020-06-01` to set the default time to the
 1st of June 2020 or `--default-time 0s` to set the default time to the
 time rclone started up.
 
-### --disable FEATURE,FEATURE,...
+### --disable
 
 This disables a comma separated list of optional features. For example
 to disable server-side move and server-side copy use:
@@ -1127,7 +1127,7 @@ This stops rclone from trying to use HTTP/2 if available. This can
 sometimes speed up transfers due to a
 [problem in the Go standard library](https://github.com/golang/go/issues/37373).
 
-### --dscp VALUE
+### --dscp
 
 Specify a DSCP value or name to use in connections. This could help QoS
 system to identify traffic class. BE, EF, DF, LE, CSx and AFxx are allowed.
@@ -1488,7 +1488,7 @@ Note that if you are using the `logrotate` program to manage rclone's
 logs, then you should use the `copytruncate` option as rclone doesn't
 have a signal to rotate logs.
 
-### --log-format LIST
+### --log-format
 
 Comma separated list of log format options. The accepted options are:
 
@@ -1506,7 +1506,7 @@ They are added to the log line in the order above.
 
 The default log format is `"date,time"`.
 
-### --log-level LEVEL
+### --log-level
 
 This sets the log level for rclone.  The default log level is `NOTICE`.
 
@@ -1746,18 +1746,18 @@ Use `--cutoff-mode` to modify this behaviour.
 
 Rclone will exit with exit code 8 if the transfer limit is reached.
 
-### --cutoff-mode=hard|soft|cautious
+### --cutoff-mode
 
-This modifies the behavior of `--max-transfer` and `--max-duration`
-Defaults to `--cutoff-mode=hard`.
+Set to value `hard`, `soft` or `cautious` to configure the behavior
+of `--max-transfer` and `--max-duration`.
 
 Specifying `--cutoff-mode=hard` will stop transferring immediately
-when Rclone reaches the limit.
+when rclone reaches the limit. This is the default.
 
 Specifying `--cutoff-mode=soft` will stop starting new transfers
-when Rclone reaches the limit.
+when rclone reaches the limit.
 
-Specifying `--cutoff-mode=cautious` will try to prevent Rclone
+Specifying `--cutoff-mode=cautious` will try to prevent rclone
 from reaching the limit. Only applicable for `--max-transfer`
 
 ## -M, --metadata
@@ -1877,11 +1877,11 @@ returned from it in the log you can use `-vv --dump mapper`.
 
 See the [metadata section](#metadata) for more info.
 
-### --metadata-set key=value
+### --metadata-set stringArray
 
-Add metadata `key` = `value` when uploading. This can be repeated as
-many times as required. See the [metadata section](#metadata) for more
-info.
+Specify value as string in format `key=value` to add metadata `key`
+with value `value` when uploading. This can be repeated as many times
+as required. See the [metadata section](#metadata) for more info.
 
 ### --modify-window=Duration
 
@@ -2283,13 +2283,13 @@ info on log levels.
 Note that on macOS you can send a SIGINFO (which is normally ctrl-T in
 the terminal) to make the stats print immediately.
 
-### --stats-file-name-length integer
+### --stats-file-name-length
 By default, the `--stats` output will truncate file names and paths longer
 than 40 characters.  This is equivalent to providing
 `--stats-file-name-length 40`. Use `--stats-file-name-length 0` to disable
 any truncation of file names printed by stats.
 
-### --stats-log-level string
+### --stats-log-level
 
 Log level to show `--stats` output at.  This can be `DEBUG`, `INFO`,
 `NOTICE`, or `ERROR`.  The default is `INFO`.  This means at the
@@ -2314,20 +2314,19 @@ the display with a user-supplied date string. The date string MUST be
 enclosed in quotes. Follow [golang specs](https://golang.org/pkg/time/#Time.Format) for
 date formatting syntax.
 
-### --stats-unit=bits|bytes
+### --stats-unit
 
-By default, data transfer rates will be printed in bytes per second.
+By default, data transfer rates will be printed in bytes per second,
+corresponding to `--stats-unit bytes`.
 
-This option allows the data rate to be printed in bits per second.
-
-Data transfer volume will still be reported in bytes.
+This option allows the data rate to be printed in bits per second,
+by specifying `--stats-unit bits`. Data transfer volume will still be
+reported in bytes.
 
 The rate is reported as a binary unit, not SI unit. So 1 Mbit/s
 equals 1,048,576 bit/s and not 1,000,000 bit/s.
 
-The default is `bytes`.
-
-### --suffix=SUFFIX
+### --suffix
 
 When using `sync`, `copy` or `move` any files which would have been
 overwritten or deleted will have the suffix added to them.  If there
@@ -2476,7 +2475,7 @@ Note also that `--track-renames` is incompatible with
 `--delete-before` and will select `--delete-after` instead of
 `--delete-during`.
 
-### --track-renames-strategy (hash,modtime,leaf,size)
+### --track-renames-strategy
 
 This option changes the file matching criteria for `--track-renames`.
 
@@ -2556,7 +2555,7 @@ may be a huge advantage.
 Rclone is not able to take all relevant parameters into account for deciding
 the best strategy, and therefore allows you to influence the choice in two ways:
 You can stop rclone from using `ListR` by disabling the feature, using the
-[--disable](#disable-feature-feature) option (`--disable ListR`), or you can
+[--disable](#disable) option (`--disable ListR`), or you can
 allow rclone to use `ListR` where it would normally choose not to do so due to
 higher memory usage, using the `--fast-list` option. Rclone should always
 produce identical results either way. Using `--disable ListR` or `--fast-list`
@@ -2693,7 +2692,7 @@ The `--client-key` flag is required too when using this.
 This loads the PEM encoded client side private key used for mutual TLS
 authentication.  Used in conjunction with `--client-cert`.
 
-### --no-check-certificate=true/false
+### --no-check-certificate
 
 `--no-check-certificate` controls whether a client verifies the
 server's certificate chain and host name.
@@ -2900,7 +2899,7 @@ here which are used for testing.  These start with remote name e.g.
 
 Write CPU profile to a file. This can be analysed with `go tool pprof`.
 
-#### --dump flag,flag,flag
+#### --dump
 
 The `--dump` flag takes a comma separated list of flags to dump info
 about.
