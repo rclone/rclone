@@ -187,3 +187,14 @@ func TestHeaderReader(t *testing.T) {
 		assert.Equal(t, data, readBuf)
 	})
 }
+
+func TestEncryptedSize(t *testing.T) {
+	rapid.Check(t, func(t *rapid.T) {
+		key := drawMasterKey(t)
+		cryptor, err := cryptomator.NewCryptor(key, cryptomator.CipherComboSivGcm)
+		assert.NoError(t, err)
+
+		assert.EqualValues(t, 196, cryptor.EncryptedFileSize(100))
+		assert.EqualValues(t, 100, cryptor.DecryptedFileSize(196))
+	})
+}

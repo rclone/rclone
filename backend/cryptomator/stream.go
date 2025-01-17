@@ -12,6 +12,36 @@ const (
 	ChunkPayloadSize = 32 * 1024
 )
 
+// EncryptedFileSize returns the size of the file after encrypting it
+func (c *Cryptor) EncryptedFileSize(size int64) int64 {
+	overhead := int64(c.EncryptionOverhead())
+
+	fullChunksSize := (size / ChunkPayloadSize) * (ChunkPayloadSize + overhead)
+
+	rest := size % ChunkPayloadSize
+	if rest > 0 {
+		rest += overhead
+	}
+
+	return HeaderPayloadSize + overhead + fullChunksSize + rest
+}
+
+// DecryptedFileSize returns the size of the file after decrypting it
+func (c *Cryptor) DecryptedFileSize(size int64) int64 {
+	overhead := int64(c.EncryptionOverhead())
+
+	size = size - HeaderPayloadSize - overhead
+
+	fullChunksSize := (size / (ChunkPayloadSize + overhead)) * ChunkPayloadSize
+
+	rest := size % (ChunkPayloadSize + overhead)
+	if rest > 0 {
+		rest -= overhead
+	}
+
+	return fullChunksSize + rest
+}
+
 const (
 	lastChunk    = true
 	notLastChunk = false
@@ -41,7 +71,7 @@ func (c *Cryptor) NewContentReader(src io.Reader, header FileHeader) (*Reader, e
 		cryptor: cryptor,
 		header:  header,
 		src:     src,
-		buf:     make([]byte, EncryptedChunkSize(c, ChunkPayloadSize)),
+		buf:     make([]byte, ChunkPayloadSize+c.EncryptionOverhead()),
 	}, nil
 }
 
@@ -145,7 +175,7 @@ func (c *Cryptor) NewContentWriter(dst io.Writer, header FileHeader) (*Writer, e
 		cryptor: cryptor,
 		header:  header,
 		dst:     dst,
-		buf:     make([]byte, EncryptedChunkSize(c, ChunkPayloadSize)),
+		buf:     make([]byte, ChunkPayloadSize+c.EncryptionOverhead()),
 	}
 
 	w.unwritten = w.buf[:0]

@@ -28,7 +28,7 @@ func TestIntegration(t *testing.T) {
 	}
 	fstests.Run(t, &fstests.Opt{
 		RemoteName:                      *fstest.RemoteName,
-		NilObject:                       (*cryptomator.Object)(nil),
+		NilObject:                       (*cryptomator.DecryptingObject)(nil),
 		TiersToTest:                     []string{"REDUCED_REDUNDANCY", "STANDARD"},
 		UnimplementableFsMethods:        UnimplementableFsMethods,
 		UnimplementableObjectMethods:    UnimplementableObjectMethods,
@@ -45,7 +45,7 @@ func TestStandard(t *testing.T) {
 	name := "TestCryptomator"
 	fstests.Run(t, &fstests.Opt{
 		RemoteName: name + ":",
-		NilObject:  (*cryptomator.Object)(nil),
+		NilObject:  (*cryptomator.DecryptingObject)(nil),
 		ExtraConfig: []fstests.ExtraConfigItem{
 			{Name: name, Key: "type", Value: "cryptomator"},
 			{Name: name, Key: "remote", Value: tempdir},

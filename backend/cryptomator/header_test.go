@@ -40,7 +40,7 @@ func TestHeaderRoundTrip(t *testing.T) {
 		err = cryptor.MarshalHeader(buf, h1)
 		assert.NoError(t, err)
 
-		assert.Len(t, buf.Bytes(), cryptomator.EncryptedChunkSize(cryptor, cryptomator.HeaderPayloadSize))
+		assert.Len(t, buf.Bytes(), cryptomator.HeaderPayloadSize+cryptor.EncryptionOverhead())
 
 		h2, err := cryptor.UnmarshalHeader(buf)
 		assert.NoError(t, err)
