@@ -53,7 +53,7 @@ var (
 // ConfigOptionsInfo describes the Options in use
 var ConfigOptionsInfo = Options{{
 	Name:    "modify_window",
-	Default: time.Nanosecond,
+	Default: Duration(time.Nanosecond),
 	Help:    "Max time diff to be considered the same",
 	Groups:  "Copy",
 }, {
@@ -113,17 +113,17 @@ var ConfigOptionsInfo = Options{{
 	Groups:   "Copy",
 }, {
 	Name:    "contimeout",
-	Default: 60 * time.Second,
+	Default: Duration(60 * time.Second),
 	Help:    "Connect timeout",
 	Groups:  "Networking",
 }, {
 	Name:    "timeout",
-	Default: 5 * 60 * time.Second,
+	Default: Duration(5 * 60 * time.Second),
 	Help:    "IO idle timeout",
 	Groups:  "Networking",
 }, {
 	Name:    "expect_continue_timeout",
-	Default: 1 * time.Second,
+	Default: Duration(1 * time.Second),
 	Help:    "Timeout when using expect / 100-continue in HTTP",
 	Groups:  "Networking",
 }, {
@@ -168,7 +168,7 @@ var ConfigOptionsInfo = Options{{
 	Groups:  "Config",
 }, {
 	Name:    "retries_sleep",
-	Default: time.Duration(0),
+	Default: Duration(0),
 	Help:    "Interval between retrying operations if they fail, e.g. 500ms, 60s, 5m (0 to disable)",
 	Groups:  "Config",
 }, {
@@ -359,7 +359,7 @@ var ConfigOptionsInfo = Options{{
 	Groups:  "Copy",
 }, {
 	Name:    "max_duration",
-	Default: time.Duration(0),
+	Default: Duration(0),
 	Help:    "Maximum duration rclone will transfer data for",
 	Groups:  "Copy",
 }, {
@@ -480,12 +480,12 @@ var ConfigOptionsInfo = Options{{
 	Groups:  "Config",
 }, {
 	Name:    "fs_cache_expire_duration",
-	Default: 300 * time.Second,
+	Default: Duration(300 * time.Second),
 	Help:    "Cache remotes for this long (0 to disable caching)",
 	Groups:  "Config",
 }, {
 	Name:    "fs_cache_expire_interval",
-	Default: 60 * time.Second,
+	Default: Duration(60 * time.Second),
 	Help:    "Interval to check for expired remotes",
 	Groups:  "Config",
 }, {
@@ -500,7 +500,7 @@ var ConfigOptionsInfo = Options{{
 	Groups:  "Config",
 }, {
 	Name:    "kv_lock_time",
-	Default: 1 * time.Second,
+	Default: Duration(1 * time.Second),
 	Help:    "Maximum time to keep key-value database locked by process",
 	Groups:  "Config",
 }, {
