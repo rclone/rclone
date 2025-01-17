@@ -138,7 +138,7 @@ func Bisync(ctx context.Context, fs1, fs2 fs.Fs, optArg *Options) (err error) {
 					if b.SyncCI != nil {
 						fs.Infoc(nil, Color(terminal.YellowFg, "Telling Sync to wrap up early."))
 						b.SyncCI.MaxTransfer = 1
-						b.SyncCI.MaxDuration = 1 * time.Second
+						b.SyncCI.MaxDuration = fs.Duration(1 * time.Second)
 						b.SyncCI.CutoffMode = fs.CutoffModeSoft
 						gracePeriod := 30 * time.Second // TODO: flag to customize this?
 						if !waitFor("Canceling Sync if not done in", gracePeriod, func() bool { return b.CleanupCompleted }) {

@@ -491,8 +491,8 @@ func swiftConnection(ctx context.Context, opt *Options, name string) (*swift.Con
 		ApplicationCredentialName:   opt.ApplicationCredentialName,
 		ApplicationCredentialSecret: opt.ApplicationCredentialSecret,
 		EndpointType:                swift.EndpointType(opt.EndpointType),
-		ConnectTimeout:              10 * ci.ConnectTimeout, // Use the timeouts in the transport
-		Timeout:                     10 * ci.Timeout,        // Use the timeouts in the transport
+		ConnectTimeout:              time.Duration(10 * ci.ConnectTimeout), // Use the timeouts in the transport
+		Timeout:                     time.Duration(10 * ci.Timeout),        // Use the timeouts in the transport
 		Transport:                   fshttp.NewTransport(ctx),
 		FetchUntilEmptyPage:         opt.FetchUntilEmptyPage,
 		PartialPageFetchThreshold:   opt.PartialPageFetchThreshold,
