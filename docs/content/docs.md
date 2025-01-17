@@ -27,70 +27,70 @@ option:
 
 See the following for detailed instructions for
 
-  * [1Fichier](/fichier/)
-  * [Akamai Netstorage](/netstorage/)
-  * [Alias](/alias/)
-  * [Amazon S3](/s3/)
-  * [Backblaze B2](/b2/)
-  * [Box](/box/)
-  * [Chunker](/chunker/) - transparently splits large files for other remotes
-  * [Citrix ShareFile](/sharefile/)
-  * [Compress](/compress/)
-  * [Cloudinary](/cloudinary/)
-  * [Combine](/combine/)
-  * [Crypt](/crypt/) - to encrypt other remotes
-  * [DigitalOcean Spaces](/s3/#digitalocean-spaces)
-  * [Digi Storage](/koofr/#digi-storage)
-  * [Dropbox](/dropbox/)
-  * [Enterprise File Fabric](/filefabric/)
-  * [FileLu Cloud Storage](/filelu/)
-  * [Files.com](/filescom/)
-  * [FTP](/ftp/)
-  * [Gofile](/gofile/)
-  * [Google Cloud Storage](/googlecloudstorage/)
-  * [Google Drive](/drive/)
-  * [Google Photos](/googlephotos/)
-  * [Hasher](/hasher/) - to handle checksums for other remotes
-  * [HDFS](/hdfs/)
-  * [Hetzner Storage Box](/sftp/#hetzner-storage-box)
-  * [HiDrive](/hidrive/)
-  * [HTTP](/http/)
-  * [iCloud Drive](/iclouddrive/)
-  * [Internet Archive](/internetarchive/)
-  * [Jottacloud](/jottacloud/)
-  * [Koofr](/koofr/)
-  * [Linkbox](/linkbox/)
-  * [Mail.ru Cloud](/mailru/)
-  * [Mega](/mega/)
-  * [Memory](/memory/)
-  * [Microsoft Azure Blob Storage](/azureblob/)
-  * [Microsoft Azure Files Storage](/azurefiles/)
-  * [Microsoft OneDrive](/onedrive/)
-  * [OpenStack Swift / Rackspace Cloudfiles / Blomp Cloud Storage / Memset Memstore](/swift/)
-  * [OpenDrive](/opendrive/)
-  * [Oracle Object Storage](/oracleobjectstorage/)
-  * [Pcloud](/pcloud/)
-  * [PikPak](/pikpak/)
-  * [Pixeldrain](/pixeldrain/)
-  * [premiumize.me](/premiumizeme/)
-  * [put.io](/putio/)
-  * [Proton Drive](/protondrive/)
-  * [QingStor](/qingstor/)
-  * [Quatrix by Maytech](/quatrix/)
-  * [rsync.net](/sftp/#rsync-net)
-  * [Seafile](/seafile/)
-  * [SFTP](/sftp/)
-  * [Sia](/sia/)
-  * [SMB](/smb/)
-  * [Storj](/storj/)
-  * [SugarSync](/sugarsync/)
-  * [Union](/union/)
-  * [Uloz.to](/ulozto/)
-  * [Uptobox](/uptobox/)
-  * [WebDAV](/webdav/)
-  * [Yandex Disk](/yandex/)
-  * [Zoho WorkDrive](/zoho/)
-  * [The local filesystem](/local/)
+- [1Fichier](/fichier/)
+- [Akamai Netstorage](/netstorage/)
+- [Alias](/alias/)
+- [Amazon S3](/s3/)
+- [Backblaze B2](/b2/)
+- [Box](/box/)
+- [Chunker](/chunker/) - transparently splits large files for other remotes
+- [Citrix ShareFile](/sharefile/)
+- [Compress](/compress/)
+- [Cloudinary](/cloudinary/)
+- [Combine](/combine/)
+- [Crypt](/crypt/) - to encrypt other remotes
+- [DigitalOcean Spaces](/s3/#digitalocean-spaces)
+- [Digi Storage](/koofr/#digi-storage)
+- [Dropbox](/dropbox/)
+- [Enterprise File Fabric](/filefabric/)
+- [FileLu Cloud Storage](/filelu/)
+- [Files.com](/filescom/)
+- [FTP](/ftp/)
+- [Gofile](/gofile/)
+- [Google Cloud Storage](/googlecloudstorage/)
+- [Google Drive](/drive/)
+- [Google Photos](/googlephotos/)
+- [Hasher](/hasher/) - to handle checksums for other remotes
+- [HDFS](/hdfs/)
+- [Hetzner Storage Box](/sftp/#hetzner-storage-box)
+- [HiDrive](/hidrive/)
+- [HTTP](/http/)
+- [iCloud Drive](/iclouddrive/)
+- [Internet Archive](/internetarchive/)
+- [Jottacloud](/jottacloud/)
+- [Koofr](/koofr/)
+- [Linkbox](/linkbox/)
+- [Mail.ru Cloud](/mailru/)
+- [Mega](/mega/)
+- [Memory](/memory/)
+- [Microsoft Azure Blob Storage](/azureblob/)
+- [Microsoft Azure Files Storage](/azurefiles/)
+- [Microsoft OneDrive](/onedrive/)
+- [OpenStack Swift / Rackspace Cloudfiles / Blomp Cloud Storage / Memset Memstore](/swift/)
+- [OpenDrive](/opendrive/)
+- [Oracle Object Storage](/oracleobjectstorage/)
+- [Pcloud](/pcloud/)
+- [PikPak](/pikpak/)
+- [Pixeldrain](/pixeldrain/)
+- [premiumize.me](/premiumizeme/)
+- [put.io](/putio/)
+- [Proton Drive](/protondrive/)
+- [QingStor](/qingstor/)
+- [Quatrix by Maytech](/quatrix/)
+- [rsync.net](/sftp/#rsync-net)
+- [Seafile](/seafile/)
+- [SFTP](/sftp/)
+- [Sia](/sia/)
+- [SMB](/smb/)
+- [Storj](/storj/)
+- [SugarSync](/sugarsync/)
+- [Union](/union/)
+- [Uloz.to](/ulozto/)
+- [Uptobox](/uptobox/)
+- [WebDAV](/webdav/)
+- [Yandex Disk](/yandex/)
+- [Zoho WorkDrive](/zoho/)
+- [The local filesystem](/local/)
 
 Basic syntax
 -----
@@ -138,37 +138,37 @@ rclone uses a system of subcommands.  For example
 
 The main rclone commands with most used first
 
-* [rclone config](/commands/rclone_config/)	- Enter an interactive configuration session.
-* [rclone copy](/commands/rclone_copy/)		- Copy files from source to dest, skipping already copied.
-* [rclone sync](/commands/rclone_sync/)		- Make source and dest identical, modifying destination only.
-* [rclone bisync](/commands/rclone_bisync/)	- [Bidirectional synchronization](/bisync/) between two paths.
-* [rclone move](/commands/rclone_move/)		- Move files from source to dest.
-* [rclone delete](/commands/rclone_delete/)	- Remove the contents of path.
-* [rclone purge](/commands/rclone_purge/)	- Remove the path and all of its contents.
-* [rclone mkdir](/commands/rclone_mkdir/)	- Make the path if it doesn't already exist.
-* [rclone rmdir](/commands/rclone_rmdir/)	- Remove the path.
-* [rclone rmdirs](/commands/rclone_rmdirs/)	- Remove any empty directories under the path.
-* [rclone check](/commands/rclone_check/)	- Check if the files in the source and destination match.
-* [rclone ls](/commands/rclone_ls/)		- List all the objects in the path with size and path.
-* [rclone lsd](/commands/rclone_lsd/)		- List all directories/containers/buckets in the path.
-* [rclone lsl](/commands/rclone_lsl/)		- List all the objects in the path with size, modification time and path.
-* [rclone md5sum](/commands/rclone_md5sum/)	- Produce an md5sum file for all the objects in the path.
-* [rclone sha1sum](/commands/rclone_sha1sum/)	- Produce a sha1sum file for all the objects in the path.
-* [rclone size](/commands/rclone_size/)		- Return the total size and number of objects in remote:path.
-* [rclone version](/commands/rclone_version/)	- Show the version number.
-* [rclone cleanup](/commands/rclone_cleanup/)	- Clean up the remote if possible.
-* [rclone dedupe](/commands/rclone_dedupe/)	- Interactively find duplicate files and delete/rename them.
-* [rclone authorize](/commands/rclone_authorize/)	- Remote authorization.
-* [rclone cat](/commands/rclone_cat/)		- Concatenate any files and send them to stdout.
-* [rclone copyto](/commands/rclone_copyto/)	- Copy files from source to dest, skipping already copied.
-* [rclone completion](/commands/rclone_completion/)	- Output shell completion scripts for rclone.
-* [rclone gendocs](/commands/rclone_gendocs/)	- Output markdown docs for rclone to the directory supplied.
-* [rclone listremotes](/commands/rclone_listremotes/)	- List all the remotes in the config file.
-* [rclone mount](/commands/rclone_mount/)	- Mount the remote as a mountpoint.
-* [rclone moveto](/commands/rclone_moveto/)	- Move file or directory from source to dest.
-* [rclone obscure](/commands/rclone_obscure/)	- Obscure password for use in the rclone.conf
-* [rclone cryptcheck](/commands/rclone_cryptcheck/)	- Check the integrity of an encrypted remote.
-* [rclone about](/commands/rclone_about/)	- Get quota information from the remote.
+- [rclone config](/commands/rclone_config/) - Enter an interactive configuration session.
+- [rclone copy](/commands/rclone_copy/) - Copy files from source to dest, skipping already copied.
+- [rclone sync](/commands/rclone_sync/) - Make source and dest identical, modifying destination only.
+- [rclone bisync](/commands/rclone_bisync/) - [Bidirectional synchronization](/bisync/) between two paths.
+- [rclone move](/commands/rclone_move/) - Move files from source to dest.
+- [rclone delete](/commands/rclone_delete/) - Remove the contents of path.
+- [rclone purge](/commands/rclone_purge/) - Remove the path and all of its contents.
+- [rclone mkdir](/commands/rclone_mkdir/) - Make the path if it doesn't already exist.
+- [rclone rmdir](/commands/rclone_rmdir/) - Remove the path.
+- [rclone rmdirs](/commands/rclone_rmdirs/) - Remove any empty directories under the path.
+- [rclone check](/commands/rclone_check/) - Check if the files in the source and destination match.
+- [rclone ls](/commands/rclone_ls/) - List all the objects in the path with size and path.
+- [rclone lsd](/commands/rclone_lsd/) - List all directories/containers/buckets in the path.
+- [rclone lsl](/commands/rclone_lsl/) - List all the objects in the path with size, modification time and path.
+- [rclone md5sum](/commands/rclone_md5sum/) - Produce an md5sum file for all the objects in the path.
+- [rclone sha1sum](/commands/rclone_sha1sum/) - Produce a sha1sum file for all the objects in the path.
+- [rclone size](/commands/rclone_size/) - Return the total size and number of objects in remote:path.
+- [rclone version](/commands/rclone_version/) - Show the version number.
+- [rclone cleanup](/commands/rclone_cleanup/) - Clean up the remote if possible.
+- [rclone dedupe](/commands/rclone_dedupe/) - Interactively find duplicate files and delete/rename them.
+- [rclone authorize](/commands/rclone_authorize/) - Remote authorization.
+- [rclone cat](/commands/rclone_cat/) - Concatenate any files and send them to stdout.
+- [rclone copyto](/commands/rclone_copyto/) - Copy files from source to dest, skipping already copied.
+- [rclone completion](/commands/rclone_completion/) - Output shell completion scripts for rclone.
+- [rclone gendocs](/commands/rclone_gendocs/) - Output markdown docs for rclone to the directory supplied.
+- [rclone listremotes](/commands/rclone_listremotes/) - List all the remotes in the config file.
+- [rclone mount](/commands/rclone_mount/) - Mount the remote as a mountpoint.
+- [rclone moveto](/commands/rclone_moveto/) - Move file or directory from source to dest.
+- [rclone obscure](/commands/rclone_obscure/) - Obscure password for use in the rclone.conf
+- [rclone cryptcheck](/commands/rclone_cryptcheck/) - Check the integrity of an encrypted remote.
+- [rclone about](/commands/rclone_about/) - Get quota information from the remote.
 
 See the [commands index](/commands/) for the full list.
 
@@ -368,9 +368,9 @@ Will get their own names
 ### Valid remote names
 
 Remote names are case sensitive, and must adhere to the following rules:
- - May contain number, letter, `_`, `-`, `.`, `+`, `@` and space.
- - May not start with `-` or space.
- - May not end with space.
+- May contain number, letter, `_`, `-`, `.`, `+`, `@` and space.
+- May not start with `-` or space.
+- May not end with space.
 
 Starting with rclone version 1.61, any Unicode numbers and letters are allowed,
 while in older versions it was limited to plain ASCII (0-9, A-Z, a-z). If you use
@@ -660,14 +660,14 @@ the string only contains a single number, then the unit suffix is optional
 and will default to seconds, i.e. a plain decimal value will be treated
 as a number of seconds. The following suffixes are valid:
 
-  * `ms` - Milliseconds
-  * `s`  - Seconds
-  * `m`  - Minutes
-  * `h`  - Hours
-  * `d`  - Days
-  * `w`  - Weeks
-  * `M`  - Months
-  * `y`  - Years
+- `ms` - Milliseconds
+- `s`  - Seconds
+- `m`  - Minutes
+- `h`  - Hours
+- `d`  - Days
+- `w`  - Weeks
+- `M`  - Months
+- `y`  - Years
 
 Examples: "10", "300ms", "-1.5h" or "2h45m".
 
@@ -965,17 +965,17 @@ The exact default is a bit complex to describe, due to changes
 introduced through different versions of rclone while preserving
 backwards compatibility, but in most cases it is as simple as:
 
- - `%APPDATA%/rclone/rclone.conf` on Windows
- - `~/.config/rclone/rclone.conf` on other
+- `%APPDATA%/rclone/rclone.conf` on Windows
+- `~/.config/rclone/rclone.conf` on other
 
 The complete logic is as follows: Rclone will look for an existing
 configuration file in any of the following locations, in priority order:
 
-  1. `rclone.conf` (in program directory, where rclone executable is)
-  2. `%APPDATA%/rclone/rclone.conf` (only on Windows)
-  3. `$XDG_CONFIG_HOME/rclone/rclone.conf` (on all systems, including Windows)
-  4. `~/.config/rclone/rclone.conf` (see below for explanation of ~ symbol)
-  5. `~/.rclone.conf`
+1. `rclone.conf` (in program directory, where rclone executable is)
+2. `%APPDATA%/rclone/rclone.conf` (only on Windows)
+3. `$XDG_CONFIG_HOME/rclone/rclone.conf` (on all systems, including Windows)
+4. `~/.config/rclone/rclone.conf` (see below for explanation of ~ symbol)
+5. `~/.rclone.conf`
 
 If no existing configuration file is found, then a new one will be created
 in the following location:
@@ -991,9 +991,9 @@ in the following location:
 The `~` symbol in paths above represent the home directory of the current user
 on any OS, and the value is defined as following:
 
-  - On Windows: `%HOME%` if defined, else `%USERPROFILE%`, or else `%HOMEDRIVE%\%HOMEPATH%`.
-  - On Unix: `$HOME` if defined, else by looking up current user in OS-specific user database
-    (e.g. passwd file), or else use the result from shell command `cd && pwd`.
+- On Windows: `%HOME%` if defined, else `%USERPROFILE%`, or else `%HOMEDRIVE%\%HOMEPATH%`.
+- On Unix: `$HOME` if defined, else by looking up current user in OS-specific user database
+  (e.g. passwd file), or else use the result from shell command `cd && pwd`.
 
 If you run `rclone config file` you will see where the default location is for
 you. Running `rclone config touch` will ensure a configuration file exists,
@@ -2995,38 +2995,38 @@ Filtering
 
 For the filtering options
 
-  * `--delete-excluded`
-  * `--filter`
-  * `--filter-from`
-  * `--exclude`
-  * `--exclude-from`
-  * `--exclude-if-present`
-  * `--include`
-  * `--include-from`
-  * `--files-from`
-  * `--files-from-raw`
-  * `--min-size`
-  * `--max-size`
-  * `--min-age`
-  * `--max-age`
-  * `--hash-filter`
-  * `--dump filters`
-  * `--metadata-include`
-  * `--metadata-include-from`
-  * `--metadata-exclude`
-  * `--metadata-exclude-from`
-  * `--metadata-filter`
-  * `--metadata-filter-from`
+- `--delete-excluded`
+- `--filter`
+- `--filter-from`
+- `--exclude`
+- `--exclude-from`
+- `--exclude-if-present`
+- `--include`
+- `--include-from`
+- `--files-from`
+- `--files-from-raw`
+- `--min-size`
+- `--max-size`
+- `--min-age`
+- `--max-age`
+- `--hash-filter`
+- `--dump filters`
+- `--metadata-include`
+- `--metadata-include-from`
+- `--metadata-exclude`
+- `--metadata-exclude-from`
+- `--metadata-filter`
+- `--metadata-filter-from`
 
 See the [filtering section](/filtering/).
 
 Remote control
 --------------
 
-For the remote control options and for instructions on how to remote control rclone
+For the remote control options and for instructions on how to remote control rclone:
 
-  * `--rc`
-  * and anything starting with `--rc-`
+- `--rc`
+- Anything starting with `--rc-`
 
 See [the remote control section](/rc/).
 
@@ -3093,17 +3093,17 @@ messages may not be valid after the retry. If rclone has done a retry
 it will log a high priority message if the retry was successful.
 
 ### List of exit codes
-  * `0` - Success
-  * `1` - Error not otherwise categorised
-  * `2` - Syntax or usage error
-  * `3` - Directory not found
-  * `4` - File not found
-  * `5` - Temporary error (one that more retries might fix) (Retry errors)
-  * `6` - Less serious errors (like 461 errors from dropbox) (NoRetry errors)
-  * `7` - Fatal error (one that more retries won't fix, like account suspended) (Fatal errors)
-  * `8` - Transfer exceeded - limit set by --max-transfer reached
-  * `9` - Operation successful, but no files transferred (Requires [`--error-on-no-transfer`](#error-on-no-transfer))
-  * `10` - Duration exceeded - limit set by --max-duration reached
+- `0` - Success
+- `1` - Error not otherwise categorised
+- `2` - Syntax or usage error
+- `3` - Directory not found
+- `4` - File not found
+- `5` - Temporary error (one that more retries might fix) (Retry errors)
+- `6` - Less serious errors (like 461 errors from dropbox) (NoRetry errors)
+- `7` - Fatal error (one that more retries won't fix, like account suspended) (Fatal errors)
+- `8` - Transfer exceeded - limit set by --max-transfer reached
+- `9` - Operation successful, but no files transferred (Requires [`--error-on-no-transfer`](#error-on-no-transfer))
+- `10` - Duration exceeded - limit set by --max-duration reached
 
 Environment Variables
 ---------------------
