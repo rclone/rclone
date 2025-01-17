@@ -2926,76 +2926,46 @@ here which are used for testing.  These start with remote name e.g.
 
 Write CPU profile to a file. This can be analysed with `go tool pprof`.
 
+### --memprofile
+
+Write memory profile to a file. This can be analysed with `go tool pprof`.
+
 #### --dump DumpFlags
 
 The `--dump` flag takes a comma separated list of flags to dump info
 about.
 
-Note that some headers including `Accept-Encoding` as shown may not
-be correct in the request and the response may not show `Content-Encoding`
+Note that some headers, such as `Accept-Encoding`, may not be correct
+as shown in the request, and the response may not show `Content-Encoding`
 if the go standard libraries auto gzip encoding was in effect. In this case
 the body of the request will be gunzipped before showing it.
 
 The available flags are:
 
-##### `--dump headers`
-
-Dump HTTP headers with `Authorization:` lines removed. May still
-contain sensitive info.  Can be very verbose.  Useful for debugging
-only.
-
-Use `--dump auth` if you do want the `Authorization:` headers.
-
-##### `--dump bodies`
-
-Dump HTTP headers and bodies - may contain sensitive info.  Can be
-very verbose.  Useful for debugging only.
-
-Note that the bodies are buffered in memory so don't use this for
-enormous files.
-
-##### `--dump requests`
-
-Like `--dump bodies` but dumps the request bodies and the response
-headers.  Useful for debugging download problems.
-
-##### `--dump responses`
-
-Like `--dump bodies` but dumps the response bodies and the request
-headers. Useful for debugging upload problems.
-
-##### `--dump auth`
-
-Dump HTTP headers - will contain sensitive info such as
-`Authorization:` headers - use `--dump headers` to dump without
-`Authorization:` headers.  Can be very verbose.  Useful for debugging
-only.
-
-##### `--dump filters`
-
-Dump the filters to the output.  Useful to see exactly what include
-and exclude options are filtering on.
-
-##### `--dump goroutines`
-
-This dumps a list of the running go-routines at the end of the command
-to standard output.
-
-##### `--dump openfiles`
-
-This dumps a list of the open files at the end of the command.  It
-uses the `lsof` command to do that so you'll need that installed to
-use it.
-
-##### `--dump mapper`
-
-This shows the JSON blobs being sent to the program supplied with
-`--metadata-mapper` and received from it. It can be useful for
-debugging the metadata mapper interface.
-
-### --memprofile
-
-Write memory profile to a file. This can be analysed with `go tool pprof`.
+- `headers` dumps HTTP headers. Any `Authorization:` headers will be excluded,
+  but output may still contain sensitive information.  Can be very verbose.
+  Useful for debugging only. Use `auth` if you do want the `Authorization:` headers.
+- `auth` dumps HTTP headers like `headers`, but also includes any `Authorization:`
+  headers. This means the output will probably contain sensitive information.
+  Use `headers` to dump without `Authorization:` headers. Can be very verbose.
+  Useful for debugging only.
+- `bodies` dumps HTTP headers and bodies. May contain sensitive info.
+  Can be very verbose.  Useful for debugging only. Note that the bodies
+  are buffered in memory so don't use this for enormous files.
+- `requests` is similar to `bodies`, but dumps the request bodies and the
+  response headers.  Useful for debugging download problems.
+- `responses` is similar to `bodies`, but dumps the response bodies and the
+  request headers. Useful for debugging upload problems.
+- `filters` dumps the filters.  Useful to see exactly what include
+  and exclude options are filtering on.
+- `goroutines` dumps a list of the running go-routines at the end of
+  the command.
+- `openfiles` dumps a list of the open files at the end of the command.
+  It uses the `lsof` Unix command to do that, so you'll need that installed
+  to use it.
+- `mapper` dumps the JSON blobs being sent to the program supplied with
+  `--metadata-mapper` and received from it. It can be useful for debugging
+  the metadata mapper interface.
 
 Filtering
 ---------
