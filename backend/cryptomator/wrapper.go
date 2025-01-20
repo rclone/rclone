@@ -104,6 +104,15 @@ func (f *Fs) Shutdown(ctx context.Context) error {
 	return do(ctx)
 }
 
+// MimeType returns the content type of the Object if
+// known, or "" if not
+//
+// This is deliberately unsupported so we don't leak mime type info by
+// default.
+func (o *DecryptingObject) MimeType(ctx context.Context) string {
+	return ""
+}
+
 // ID returns the ID of the Object if known, or "" if not
 func (o *DecryptingObject) ID() string {
 	do, ok := o.Object.(fs.IDer)
@@ -173,6 +182,15 @@ func (i *EncryptingObjectInfo) UnWrap() fs.Object {
 	return fs.UnWrapObjectInfo(i.ObjectInfo)
 }
 
+// MimeType returns the content type of the Object if
+// known, or "" if not
+//
+// This is deliberately unsupported so we don't leak mime type info by
+// default.
+func (i *EncryptingObjectInfo) MimeType(ctx context.Context) string {
+	return ""
+}
+
 // ID returns the ID of the Object if known, or "" if not
 func (i *EncryptingObjectInfo) ID() string {
 	do, ok := i.ObjectInfo.(fs.IDer)
@@ -215,20 +233,7 @@ var (
 	_ fs.Disconnecter    = (*Fs)(nil)
 	_ fs.Shutdowner      = (*Fs)(nil)
 
-	_ fs.IDer            = (*DecryptingObject)(nil)
-	_ fs.ParentIDer      = (*DecryptingObject)(nil)
-	_ fs.ObjectUnWrapper = (*DecryptingObject)(nil)
-	_ fs.SetTierer       = (*DecryptingObject)(nil)
-	_ fs.GetTierer       = (*DecryptingObject)(nil)
-	_ fs.Metadataer      = (*DecryptingObject)(nil)
-	_ fs.SetMetadataer   = (*DecryptingObject)(nil)
-
-	_ fs.IDer            = (*EncryptingObjectInfo)(nil)
-	_ fs.ObjectUnWrapper = (*EncryptingObjectInfo)(nil)
-	_ fs.GetTierer       = (*EncryptingObjectInfo)(nil)
-	_ fs.Metadataer      = (*EncryptingObjectInfo)(nil)
-
-	//_ fs.FullObject = (*DecryptingObject)(nil)
-	//_ fs.FullObjectInfo = (*EncryptingObjectInfo)(nil)
-	_ fs.FullDirectory = (*Directory)(nil)
+	_ fs.FullObject     = (*DecryptingObject)(nil)
+	_ fs.FullObjectInfo = (*EncryptingObjectInfo)(nil)
+	_ fs.FullDirectory  = (*Directory)(nil)
 )
