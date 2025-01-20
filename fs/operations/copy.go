@@ -230,14 +230,6 @@ func (c *copy) updateOrPut(ctx context.Context, in io.ReadCloser, uploadOptions 
 
 // Do a manual copy by reading the bytes and writing them
 func (c *copy) manualCopy(ctx context.Context) (actionTaken string, newDst fs.Object, err error) {
-	// Remove partial files on premature exit
-	if !c.inplace {
-		defer atexit.Unregister(atexit.Register(func() {
-			ctx := context.Background()
-			c.removeFailedPartialCopy(ctx, c.f, c.remoteForCopy)
-		}))
-	}
-
 	// Options for the upload
 	uploadOptions := []fs.OpenOption{c.hashOption}
 	for _, option := range c.ci.UploadHeaders {
@@ -253,8 +245,18 @@ func (c *copy) manualCopy(ctx context.Context) (actionTaken string, newDst fs.Ob
 		downloadOptions = append(downloadOptions, option)
 	}
 
+	// Do multi-thread copy if possible
 	if doMultiThreadCopy(ctx, c.f, c.src) {
 		return c.multiThreadCopy(ctx, uploadOptions)
+	}
+
+	// Remove partial files on premature exit
+	// This is not needed for inplace and/or multi-threaded copies
+	if !c.inplace {
+		defer atexit.Unregister(atexit.Register(func() {
+			ctx := context.Background()
+			c.removeFailedPartialCopy(ctx, c.f, c.remoteForCopy)
+		}))
 	}
 
 	var in io.ReadCloser
