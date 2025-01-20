@@ -28,30 +28,30 @@ func (kid keyID) URI() string {
 	return strings.Split(string(kid), ":")[1]
 }
 
-func (m MasterKey) jwtKey() []byte {
+func (m masterKey) jwtKey() []byte {
 	return append(m.EncryptKey, m.MacKey...)
 }
 
-// VaultConfig is the configuration for the vault, saved in vault.cryptomator at the root of the vault.
-type VaultConfig struct {
+// vaultConfig is the configuration for the vault, saved in vault.cryptomator at the root of the vault.
+type vaultConfig struct {
 	Format              int    `json:"format"`
 	ShorteningThreshold int    `json:"shorteningThreshold"`
 	Jti                 string `json:"jti"`
 	CipherCombo         string `json:"cipherCombo"`
 }
 
-// NewVaultConfig creates a new VaultConfig with the default settings and signs it.
-func NewVaultConfig() VaultConfig {
-	return VaultConfig{
+// newVaultConfig creates a new VaultConfig with the default settings and signs it.
+func newVaultConfig() vaultConfig {
+	return vaultConfig{
 		Format:              8,
 		ShorteningThreshold: 220,
 		Jti:                 uuid.NewString(),
-		CipherCombo:         CipherComboSivGcm,
+		CipherCombo:         cipherComboSivGcm,
 	}
 }
 
 // Valid tests the validity of the VaultConfig during JWT parsing.
-func (c *VaultConfig) Valid() error {
+func (c *vaultConfig) Valid() error {
 	if c.Format != 8 {
 		return fmt.Errorf("unsupported vault format: %d", c.Format)
 	}
@@ -60,7 +60,7 @@ func (c *VaultConfig) Valid() error {
 }
 
 // Marshal makes a signed JWT from the VaultConfig.
-func (c VaultConfig) Marshal(masterKey MasterKey) ([]byte, error) {
+func (c vaultConfig) Marshal(masterKey masterKey) ([]byte, error) {
 	keyID := keyID("masterkeyfile:" + masterKeyFileName)
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, &c)
 	token.Header[configKeyIDTag] = string(keyID)
@@ -71,8 +71,8 @@ func (c VaultConfig) Marshal(masterKey MasterKey) ([]byte, error) {
 	return []byte(rawToken), nil
 }
 
-// UnmarshalVaultConfig parses the JWT without verifying it
-func UnmarshalVaultConfig(tokenBytes []byte, keyFunc func(masterKeyPath string) (*MasterKey, error)) (c VaultConfig, err error) {
+// unmarshalVaultConfig parses the JWT without verifying it
+func unmarshalVaultConfig(tokenBytes []byte, keyFunc func(masterKeyPath string) (*masterKey, error)) (c vaultConfig, err error) {
 	_, err = jwt.ParseWithClaims(string(tokenBytes), &c, func(token *jwt.Token) (any, error) {
 		kidObj, ok := token.Header[configKeyIDTag]
 		if !ok {
@@ -109,12 +109,12 @@ func (f *Fs) loadOrCreateVault(ctx context.Context, passphrase string) error {
 		}
 	}
 
-	f.vaultConfig, err = UnmarshalVaultConfig(configData, func(masterKeyPath string) (*MasterKey, error) {
+	f.vaultConfig, err = unmarshalVaultConfig(configData, func(masterKeyPath string) (*masterKey, error) {
 		masterKeyData, err := f.readSmallFile(ctx, masterKeyPath, 1024)
 		if err != nil {
 			return nil, fmt.Errorf("failed to read master key: %w", err)
 		}
-		f.masterKey, err = UnmarshalMasterKey(bytes.NewReader(masterKeyData), passphrase)
+		f.masterKey, err = unmarshalMasterKey(bytes.NewReader(masterKeyData), passphrase)
 		if err != nil {
 			return nil, err
 		}
@@ -127,7 +127,7 @@ func (f *Fs) loadOrCreateVault(ctx context.Context, passphrase string) error {
 }
 
 func (f *Fs) createVault(ctx context.Context, passphrase string) error {
-	masterKey, err := NewMasterKey()
+	masterKey, err := newMasterKey()
 	if err != nil {
 		return fmt.Errorf("failed to create master key: %w", err)
 	}
@@ -141,7 +141,7 @@ func (f *Fs) createVault(ctx context.Context, passphrase string) error {
 		return fmt.Errorf("failed to save master key: %w", err)
 	}
 
-	vaultConfig := NewVaultConfig()
+	vaultConfig := newVaultConfig()
 	configBytes, err := vaultConfig.Marshal(masterKey)
 	if err != nil {
 		return fmt.Errorf("failed to encrypt vault config: %w", err)

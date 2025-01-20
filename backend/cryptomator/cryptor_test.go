@@ -1,27 +1,26 @@
-package cryptomator_test
+package cryptomator
 
 import (
 	"testing"
 
-	"github.com/rclone/rclone/backend/cryptomator"
 	"github.com/stretchr/testify/assert"
 	"pgregory.net/rapid"
 )
 
-var cipherCombos = []string{cryptomator.CipherComboSivCtrMac, cryptomator.CipherComboSivGcm}
+var cipherCombos = []string{cipherComboSivCtrMac, cipherComboSivGcm}
 
 func drawCipherCombo(t *rapid.T) string {
 	return rapid.SampledFrom(cipherCombos).Draw(t, "cipherCombo")
 }
 
-func drawMasterKey(t *rapid.T) cryptomator.MasterKey {
-	encKey := fixedSizeByteArray(cryptomator.MasterEncryptKeySize).Draw(t, "encKey")
-	macKey := fixedSizeByteArray(cryptomator.MasterMacKeySize).Draw(t, "macKey")
-	return cryptomator.MasterKey{EncryptKey: encKey, MacKey: macKey}
+func drawMasterKey(t *rapid.T) masterKey {
+	encKey := fixedSizeByteArray(masterEncryptKeySize).Draw(t, "encKey")
+	macKey := fixedSizeByteArray(masterMacKeySize).Draw(t, "macKey")
+	return masterKey{EncryptKey: encKey, MacKey: macKey}
 }
 
-func drawTestCryptor(t *rapid.T) *cryptomator.Cryptor {
-	cryptor, err := cryptomator.NewCryptor(drawMasterKey(t), drawCipherCombo(t))
+func drawTestCryptor(t *rapid.T) *cryptor {
+	cryptor, err := newCryptor(drawMasterKey(t), drawCipherCombo(t))
 	assert.NoError(t, err, "creating cryptor")
 	return &cryptor
 }
@@ -32,8 +31,8 @@ func TestEncryptDecryptFilename(t *testing.T) {
 		dirID := rapid.String().Draw(t, "dirID")
 		cryptor := drawTestCryptor(t)
 
-		encName := cryptor.EncryptFilename(name, dirID)
-		decName, err := cryptor.DecryptFilename(encName, dirID)
+		encName := cryptor.encryptFilename(name, dirID)
+		decName, err := cryptor.decryptFilename(encName, dirID)
 		assert.NoError(t, err, "decryption error")
 
 		assert.Equal(t, name, decName)

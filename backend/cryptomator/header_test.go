@@ -1,4 +1,4 @@
-package cryptomator_test
+package cryptomator
 
 import (
 	"bytes"
@@ -10,7 +10,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/rclone/rclone/backend/cryptomator"
 	"github.com/stretchr/testify/assert"
 	"pgregory.net/rapid"
 )
@@ -21,11 +20,11 @@ func TestHeaderNew(t *testing.T) {
 		h, err := cryptor.NewHeader()
 		assert.NoError(t, err)
 
-		assert.Len(t, h.Nonce, cryptor.NonceSize())
-		assert.Len(t, h.ContentKey, cryptomator.HeaderContentKeySize)
-		assert.Len(t, h.Reserved, cryptomator.HeaderReservedSize)
+		assert.Len(t, h.Nonce, cryptor.nonceSize())
+		assert.Len(t, h.ContentKey, headerContentKeySize)
+		assert.Len(t, h.Reserved, headerReservedSize)
 
-		assert.Equal(t, cryptomator.HeaderReservedValue, binary.BigEndian.Uint64(h.Reserved))
+		assert.Equal(t, headerReservedValue, binary.BigEndian.Uint64(h.Reserved))
 	})
 }
 
@@ -37,12 +36,12 @@ func TestHeaderRoundTrip(t *testing.T) {
 		h1, err := cryptor.NewHeader()
 		assert.NoError(t, err)
 
-		err = cryptor.MarshalHeader(buf, h1)
+		err = cryptor.marshalHeader(buf, h1)
 		assert.NoError(t, err)
 
-		assert.Len(t, buf.Bytes(), cryptomator.HeaderPayloadSize+cryptor.EncryptionOverhead())
+		assert.Len(t, buf.Bytes(), headerPayloadSize+cryptor.encryptionOverhead())
 
-		h2, err := cryptor.UnmarshalHeader(buf)
+		h2, err := cryptor.unmarshalHeader(buf)
 		assert.NoError(t, err)
 
 		assert.Equal(t, h1, h2)
@@ -74,19 +73,19 @@ func TestUnmarshalReferenceHeader(t *testing.T) {
 		err = json.Unmarshal(input, &encHeaders)
 		assert.NoError(t, err)
 
-		var headers map[string]cryptomator.FileHeader
+		var headers map[string]fileHeader
 		err = json.Unmarshal(golden, &headers)
 		assert.NoError(t, err)
 
 		for name, encHeader := range encHeaders {
 			t.Run(fmt.Sprintf("%s:%s", testname, name), func(t *testing.T) {
-				key := cryptomator.MasterKey{EncryptKey: encHeader.EncKey, MacKey: encHeader.MacKey}
-				cryptor, err := cryptomator.NewCryptor(key, encHeader.CipherCombo)
+				key := masterKey{EncryptKey: encHeader.EncKey, MacKey: encHeader.MacKey}
+				cryptor, err := newCryptor(key, encHeader.CipherCombo)
 				assert.NoError(t, err)
 
 				buf := bytes.NewBuffer(encHeader.Header)
 
-				h, err := cryptor.UnmarshalHeader(buf)
+				h, err := cryptor.unmarshalHeader(buf)
 				assert.NoError(t, err)
 
 				assert.Equal(t, headers[name], h)

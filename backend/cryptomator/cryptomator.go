@@ -108,7 +108,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	if err != nil {
 		return nil, err
 	}
-	f.Cryptor, err = NewCryptor(f.masterKey, f.vaultConfig.CipherCombo)
+	f.cryptor, err = newCryptor(f.masterKey, f.vaultConfig.CipherCombo)
 	if err != nil {
 		return nil, err
 	}
@@ -172,9 +172,9 @@ type Fs struct {
 	features *fs.Features
 	wrapper  fs.Fs
 
-	masterKey   MasterKey
-	vaultConfig VaultConfig
-	Cryptor
+	masterKey   masterKey
+	vaultConfig vaultConfig
+	cryptor
 
 	dirCache *dircache.DirCache
 }
@@ -233,7 +233,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 		if encryptedFilename == "dirid" {
 			continue
 		}
-		filename, err := f.DecryptFilename(encryptedFilename, dirID)
+		filename, err := f.decryptFilename(encryptedFilename, dirID)
 		if err != nil {
 			return nil, fmt.Errorf("failed to decrypt filename %q: %w", encryptedFilename, err)
 		}
@@ -508,7 +508,7 @@ func (o *DecryptingObject) String() string {
 
 // Size returns the size of the object after being decrypted
 func (o *DecryptingObject) Size() int64 {
-	return o.f.DecryptedFileSize(o.Object.Size())
+	return o.f.decryptedFileSize(o.Object.Size())
 }
 
 // Open opens the file for read.  Call Close() on the returned io.ReadCloser
@@ -550,7 +550,7 @@ func (o *DecryptingObject) Open(ctx context.Context, options ...fs.OpenOption) (
 	}
 
 	var decryptReader io.Reader
-	decryptReader, err = o.f.NewReader(reader)
+	decryptReader, err = o.f.newReader(reader)
 	if err != nil {
 		return nil, err
 	}
@@ -677,7 +677,7 @@ func (i *EncryptingObjectInfo) String() string {
 
 // Size returns the size of the object after being encrypted
 func (i *EncryptingObjectInfo) Size() int64 {
-	return i.f.EncryptedFileSize(i.ObjectInfo.Size())
+	return i.f.encryptedFileSize(i.ObjectInfo.Size())
 }
 
 // Hash returns no checksum as it is not possible to quickly obtain a hash of the plaintext of an encrypted file
@@ -786,7 +786,7 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 
 // dirIDPath returns the encrypted path to the directory with a given ID.
 func (f *Fs) dirIDPath(dirID string) string {
-	encryptedDirID := f.EncryptDirID(dirID)
+	encryptedDirID := f.encryptDirID(dirID)
 	dirPath := path.Join("d", encryptedDirID[:2], encryptedDirID[2:])
 	// TODO: verify that dirid.c9r inside the directory contains dirID
 	return dirPath
@@ -795,7 +795,7 @@ func (f *Fs) dirIDPath(dirID string) string {
 // leafPath returns the encrypted path to a leaf node with the given name in the directory with the given ID.
 func (f *Fs) leafPath(leaf, dirID string) string {
 	dirPath := f.dirIDPath(dirID)
-	encryptedFilename := f.EncryptFilename(leaf, dirID)
+	encryptedFilename := f.encryptFilename(leaf, dirID)
 	return path.Join(dirPath, encryptedFilename+".c9r")
 }
 
@@ -804,7 +804,7 @@ func (f *Fs) encryptReader(r io.Reader) io.Reader {
 	pipeReader, pipeWriter := io.Pipe()
 
 	go func() {
-		encWriter, err := f.NewWriter(pipeWriter)
+		encWriter, err := f.newWriter(pipeWriter)
 		if err != nil {
 			pipeWriter.CloseWithError(err)
 			return

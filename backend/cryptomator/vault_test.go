@@ -1,9 +1,8 @@
-package cryptomator_test
+package cryptomator
 
 import (
 	"testing"
 
-	"github.com/rclone/rclone/backend/cryptomator"
 	"github.com/stretchr/testify/assert"
 	"pgregory.net/rapid"
 )
@@ -14,15 +13,15 @@ func fixedSizeByteArray(constant int) *rapid.Generator[[]byte] {
 
 func TestVaultConfigRoundTrip(t *testing.T) {
 	rapid.Check(t, func(t *rapid.T) {
-		masterKey := drawMasterKey(t)
+		key := drawMasterKey(t)
 
-		c1 := cryptomator.NewVaultConfig()
+		c1 := newVaultConfig()
 
-		token, err := c1.Marshal(masterKey)
+		token, err := c1.Marshal(key)
 		assert.NoError(t, err)
 
-		c2, err := cryptomator.UnmarshalVaultConfig(token, func(string) (*cryptomator.MasterKey, error) {
-			return &masterKey, nil
+		c2, err := unmarshalVaultConfig(token, func(string) (*masterKey, error) {
+			return &key, nil
 		})
 		assert.NoError(t, err)
 

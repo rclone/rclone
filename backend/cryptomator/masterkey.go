@@ -15,22 +15,16 @@ import (
 )
 
 const (
-	// MasterEncryptKeySize is the size of the MasterKey's EncryptKey.
-	MasterEncryptKeySize = 32
-	// MasterMacKeySize is the size of the MasterKey's MacKey.
-	MasterMacKeySize = MasterEncryptKeySize
-	// MasterDefaultVersion is the default value for the version in the master key file.
-	MasterDefaultVersion = 999
-	// MasterDefaultScryptCostParam is the default scrypt cost param for a new master key.
-	MasterDefaultScryptCostParam = 32 * 1024
-	// MasterDefaultScryptBlockSize is the default scrypt block size for a new master key.
-	MasterDefaultScryptBlockSize = 8
-	// MasterDefaultScryptSaltSize is the default scrypt salt size for a new master key.
-	MasterDefaultScryptSaltSize = 32
+	masterEncryptKeySize         = 32
+	masterMacKeySize             = masterEncryptKeySize
+	masterDefaultVersion         = 999
+	masterDefaultScryptCostParam = 32 * 1024
+	masterDefaultScryptBlockSize = 8
+	masterDefaultScryptSaltSize  = 32
 )
 
-// MasterKey is the master key for a Cryptomator vault, typically saved in masterkey.cryptomator at the root of the vault.
-type MasterKey struct {
+// masterKey is the master key for a Cryptomator vault, typically saved in masterkey.cryptomator at the root of the vault.
+type masterKey struct {
 	EncryptKey []byte
 	MacKey     []byte
 }
@@ -49,10 +43,10 @@ type encryptedMasterKey struct {
 	VersionMac []byte `json:"versionMac"`
 }
 
-// NewMasterKey creates a new randomly initialized MasterKey.
-func NewMasterKey() (m MasterKey, err error) {
-	m.EncryptKey = make([]byte, MasterEncryptKeySize)
-	m.MacKey = make([]byte, MasterMacKeySize)
+// newMasterKey creates a new randomly initialized MasterKey.
+func newMasterKey() (m masterKey, err error) {
+	m.EncryptKey = make([]byte, masterEncryptKeySize)
+	m.MacKey = make([]byte, masterMacKeySize)
 
 	if _, err = rand.Read(m.EncryptKey); err != nil {
 		return
@@ -64,20 +58,19 @@ func NewMasterKey() (m MasterKey, err error) {
 }
 
 // Marshal encrypts the MasterKey with a passphrase and writes it.
-func (m MasterKey) Marshal(w io.Writer, passphrase string) (err error) {
+func (m masterKey) Marshal(w io.Writer, passphrase string) (err error) {
 	encKey := encryptedMasterKey{
-		Version:         MasterDefaultVersion,
-		ScryptCostParam: MasterDefaultScryptCostParam,
-		ScryptBlockSize: MasterDefaultScryptBlockSize,
+		Version:         masterDefaultVersion,
+		ScryptCostParam: masterDefaultScryptCostParam,
+		ScryptBlockSize: masterDefaultScryptBlockSize,
 	}
 
-	encKey.ScryptSalt = make([]byte, MasterDefaultScryptSaltSize)
-
+	encKey.ScryptSalt = make([]byte, masterDefaultScryptSaltSize)
 	if _, err = rand.Read(encKey.ScryptSalt); err != nil {
 		return
 	}
 
-	kek, err := scrypt.Key([]byte(passphrase), encKey.ScryptSalt, encKey.ScryptCostParam, encKey.ScryptBlockSize, 1, MasterEncryptKeySize)
+	kek, err := scrypt.Key([]byte(passphrase), encKey.ScryptSalt, encKey.ScryptCostParam, encKey.ScryptBlockSize, 1, masterEncryptKeySize)
 	if err != nil {
 		return
 	}
@@ -106,8 +99,8 @@ func (m MasterKey) Marshal(w io.Writer, passphrase string) (err error) {
 	return
 }
 
-// UnmarshalMasterKey reads the master key and decrypts it with a passphrase.
-func UnmarshalMasterKey(r io.Reader, passphrase string) (m MasterKey, err error) {
+// unmarshalMasterKey reads the master key and decrypts it with a passphrase.
+func unmarshalMasterKey(r io.Reader, passphrase string) (m masterKey, err error) {
 	encKey := &encryptedMasterKey{}
 
 	if err = json.NewDecoder(r).Decode(encKey); err != nil {
@@ -115,7 +108,7 @@ func UnmarshalMasterKey(r io.Reader, passphrase string) (m MasterKey, err error)
 		return
 	}
 
-	kek, err := scrypt.Key([]byte(passphrase), encKey.ScryptSalt, encKey.ScryptCostParam, encKey.ScryptBlockSize, 1, MasterEncryptKeySize)
+	kek, err := scrypt.Key([]byte(passphrase), encKey.ScryptSalt, encKey.ScryptCostParam, encKey.ScryptBlockSize, 1, masterEncryptKeySize)
 	if err != nil {
 		return
 	}

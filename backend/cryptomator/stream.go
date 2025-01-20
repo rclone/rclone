@@ -12,9 +12,9 @@ const (
 	ChunkPayloadSize = 32 * 1024
 )
 
-// EncryptedFileSize returns the size of the file after encrypting it
-func (c *Cryptor) EncryptedFileSize(size int64) int64 {
-	overhead := int64(c.EncryptionOverhead())
+// encryptedFileSize returns the size of the file after encrypting it
+func (c *cryptor) encryptedFileSize(size int64) int64 {
+	overhead := int64(c.encryptionOverhead())
 
 	fullChunksSize := (size / ChunkPayloadSize) * (ChunkPayloadSize + overhead)
 
@@ -23,14 +23,14 @@ func (c *Cryptor) EncryptedFileSize(size int64) int64 {
 		rest += overhead
 	}
 
-	return HeaderPayloadSize + overhead + fullChunksSize + rest
+	return headerPayloadSize + overhead + fullChunksSize + rest
 }
 
-// DecryptedFileSize returns the size of the file after decrypting it
-func (c *Cryptor) DecryptedFileSize(size int64) int64 {
-	overhead := int64(c.EncryptionOverhead())
+// decryptedFileSize returns the size of the file after decrypting it
+func (c *cryptor) decryptedFileSize(size int64) int64 {
+	overhead := int64(c.encryptionOverhead())
 
-	size = size - HeaderPayloadSize - overhead
+	size = size - headerPayloadSize - overhead
 
 	fullChunksSize := (size / (ChunkPayloadSize + overhead)) * ChunkPayloadSize
 
@@ -47,10 +47,10 @@ const (
 	notLastChunk = false
 )
 
-// Reader decrypts a Cryptomator file as it is read from.
-type Reader struct {
+// reader decrypts a Cryptomator file as it is read from.
+type reader struct {
 	cryptor contentCryptor
-	header  FileHeader
+	header  fileHeader
 	src     io.Reader
 
 	unread []byte
@@ -61,30 +61,30 @@ type Reader struct {
 	err error
 }
 
-// NewContentReader creates a new Reader for the file content using the previously file header.
-func (c *Cryptor) NewContentReader(src io.Reader, header FileHeader) (*Reader, error) {
+// newContentReader creates a new Reader for the file content using the previously file header.
+func (c *cryptor) newContentReader(src io.Reader, header fileHeader) (*reader, error) {
 	cryptor, err := c.newContentCryptor(header.ContentKey)
 	if err != nil {
 		return nil, err
 	}
-	return &Reader{
+	return &reader{
 		cryptor: cryptor,
 		header:  header,
 		src:     src,
-		buf:     make([]byte, ChunkPayloadSize+c.EncryptionOverhead()),
+		buf:     make([]byte, ChunkPayloadSize+c.encryptionOverhead()),
 	}, nil
 }
 
-// NewReader reads the file header and returns a Reader for the content.
-func (c *Cryptor) NewReader(src io.Reader) (r *Reader, err error) {
-	header, err := c.UnmarshalHeader(src)
+// newReader reads the file header and returns a Reader for the content.
+func (c *cryptor) newReader(src io.Reader) (r *reader, err error) {
+	header, err := c.unmarshalHeader(src)
 	if err != nil {
 		return
 	}
-	return c.NewContentReader(src, header)
+	return c.newContentReader(src, header)
 }
 
-func (r *Reader) Read(p []byte) (int, error) {
+func (r *reader) Read(p []byte) (int, error) {
 	if len(r.unread) > 0 {
 		n := copy(p, r.unread)
 		r.unread = r.unread[n:]
@@ -120,7 +120,7 @@ func (r *Reader) Read(p []byte) (int, error) {
 	return n, nil
 }
 
-func (r *Reader) readChunk() (last bool, err error) {
+func (r *reader) readChunk() (last bool, err error) {
 	if len(r.unread) != 0 {
 		panic("stream: internal error: readChunk called with dirty buffer")
 	}
@@ -141,7 +141,7 @@ func (r *Reader) readChunk() (last bool, err error) {
 	}
 
 	ad := r.cryptor.fileAssociatedData(r.header.Nonce, r.chunkNr)
-	payload, err := r.cryptor.DecryptChunk(in, ad)
+	payload, err := r.cryptor.decryptChunk(in, ad)
 	if err != nil {
 		return
 	}
@@ -151,10 +151,10 @@ func (r *Reader) readChunk() (last bool, err error) {
 	return last, nil
 }
 
-// Writer encrypts a Cryptomator file as it is written to.
-type Writer struct {
+// writer encrypts a Cryptomator file as it is written to.
+type writer struct {
 	cryptor contentCryptor
-	header  FileHeader
+	header  fileHeader
 
 	dst       io.Writer
 	unwritten []byte
@@ -165,37 +165,37 @@ type Writer struct {
 	chunkNr uint64
 }
 
-// NewContentWriter creates a new Writer for the file content using the already written file header.
-func (c *Cryptor) NewContentWriter(dst io.Writer, header FileHeader) (*Writer, error) {
+// newContentWriter creates a new Writer for the file content using the already written file header.
+func (c *cryptor) newContentWriter(dst io.Writer, header fileHeader) (*writer, error) {
 	cryptor, err := c.newContentCryptor(header.ContentKey)
 	if err != nil {
 		return nil, err
 	}
-	w := &Writer{
+	w := &writer{
 		cryptor: cryptor,
 		header:  header,
 		dst:     dst,
-		buf:     make([]byte, ChunkPayloadSize+c.EncryptionOverhead()),
+		buf:     make([]byte, ChunkPayloadSize+c.encryptionOverhead()),
 	}
 
 	w.unwritten = w.buf[:0]
 	return w, nil
 }
 
-// NewWriter creates and writes a random file header and returns a writer for the file content.
-func (c *Cryptor) NewWriter(dst io.Writer) (w *Writer, err error) {
+// newWriter creates and writes a random file header and returns a writer for the file content.
+func (c *cryptor) newWriter(dst io.Writer) (w *writer, err error) {
 	header, err := c.NewHeader()
 	if err != nil {
 		return
 	}
-	err = c.MarshalHeader(dst, header)
+	err = c.marshalHeader(dst, header)
 	if err != nil {
 		return
 	}
-	return c.NewContentWriter(dst, header)
+	return c.newContentWriter(dst, header)
 }
 
-func (w *Writer) Write(p []byte) (n int, err error) {
+func (w *writer) Write(p []byte) (n int, err error) {
 	if w.err != nil {
 		return 0, w.err
 	}
@@ -221,7 +221,7 @@ func (w *Writer) Write(p []byte) (n int, err error) {
 }
 
 // Close flushes the last chunk. It doesn't close the underlying Writer.
-func (w *Writer) Close() error {
+func (w *writer) Close() error {
 	if w.err != nil {
 		return w.err
 	}
@@ -235,7 +235,7 @@ func (w *Writer) Close() error {
 	return nil
 }
 
-func (w *Writer) flushChunk(last bool) error {
+func (w *writer) flushChunk(last bool) error {
 	if !last && len(w.unwritten) != ChunkPayloadSize {
 		panic("stream: internal error: flush called with partial chunk")
 	}
@@ -244,13 +244,13 @@ func (w *Writer) flushChunk(last bool) error {
 		return nil
 	}
 
-	nonce := make([]byte, w.cryptor.NonceSize())
+	nonce := make([]byte, w.cryptor.nonceSize())
 	_, err := rand.Read(nonce)
 	if err != nil {
 		return fmt.Errorf("stream: generating nonce failed: %w", err)
 	}
 	ad := w.cryptor.fileAssociatedData(w.header.Nonce, w.chunkNr)
-	out := w.cryptor.EncryptChunk(w.unwritten, nonce, ad)
+	out := w.cryptor.encryptChunk(w.unwritten, nonce, ad)
 
 	_, err = w.dst.Write(out)
 
