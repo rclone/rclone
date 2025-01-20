@@ -61,22 +61,24 @@ func (c *Cryptor) newSIV() *miscreant.Cipher {
 }
 
 // EncryptDirID encrypts a directory ID.
-func (c *Cryptor) EncryptDirID(dirID string) (string, error) {
+func (c *Cryptor) EncryptDirID(dirID string) string {
 	ciphertext, err := c.newSIV().Seal(nil, []byte(dirID))
 	if err != nil {
-		return "", err
+		// Seal can only actually fail if you pass in more than 126 associated data items.
+		panic(err)
 	}
 	hash := sha1.Sum(ciphertext)
-	return base32.StdEncoding.EncodeToString(hash[:]), nil
+	return base32.StdEncoding.EncodeToString(hash[:])
 }
 
 // EncryptFilename encrypts a filename.
-func (c *Cryptor) EncryptFilename(filename string, dirID string) (string, error) {
+func (c *Cryptor) EncryptFilename(filename string, dirID string) string {
 	ciphertext, err := c.newSIV().Seal(nil, []byte(filename), []byte(dirID))
 	if err != nil {
-		return "", err
+		// Seal can only actually fail if you pass in more than 126 associated data items.
+		panic(err)
 	}
-	return base64.URLEncoding.EncodeToString(ciphertext), nil
+	return base64.URLEncoding.EncodeToString(ciphertext)
 }
 
 // DecryptFilename decrypts a filename.
