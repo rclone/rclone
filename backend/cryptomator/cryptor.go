@@ -26,7 +26,7 @@ const (
 // Cryptor implements encryption operations for Cryptomator vaults.
 type Cryptor struct {
 	masterKey   MasterKey
-	siv         *miscreant.Cipher
+	sivKey      []byte
 	cipherCombo string
 	contentCryptor
 }
@@ -43,10 +43,7 @@ type contentCryptor interface {
 // NewCryptor creates a new cryptor from vault configuration.
 func NewCryptor(key MasterKey, cipherCombo string) (c Cryptor, err error) {
 	c.masterKey = key
-	c.siv, err = miscreant.NewAESCMACSIV(append(key.MacKey, key.EncryptKey...))
-	if err != nil {
-		return
-	}
+	c.sivKey = append(key.MacKey, key.EncryptKey...)
 	c.cipherCombo = cipherCombo
 	c.contentCryptor, err = c.newContentCryptor(key.EncryptKey)
 	if err != nil {
@@ -55,9 +52,17 @@ func NewCryptor(key MasterKey, cipherCombo string) (c Cryptor, err error) {
 	return
 }
 
+func (c *Cryptor) newSIV() *miscreant.Cipher {
+	siv, err := miscreant.NewAESCMACSIV(c.sivKey)
+	if err != nil {
+		panic(err)
+	}
+	return siv
+}
+
 // EncryptDirID encrypts a directory ID.
 func (c *Cryptor) EncryptDirID(dirID string) (string, error) {
-	ciphertext, err := c.siv.Seal(nil, []byte(dirID))
+	ciphertext, err := c.newSIV().Seal(nil, []byte(dirID))
 	if err != nil {
 		return "", err
 	}
@@ -67,7 +72,7 @@ func (c *Cryptor) EncryptDirID(dirID string) (string, error) {
 
 // EncryptFilename encrypts a filename.
 func (c *Cryptor) EncryptFilename(filename string, dirID string) (string, error) {
-	ciphertext, err := c.siv.Seal(nil, []byte(filename), []byte(dirID))
+	ciphertext, err := c.newSIV().Seal(nil, []byte(filename), []byte(dirID))
 	if err != nil {
 		return "", err
 	}
@@ -80,7 +85,7 @@ func (c *Cryptor) DecryptFilename(filename string, dirID string) (string, error)
 	if err != nil {
 		return "", err
 	}
-	plaintext, err := c.siv.Open(nil, filenameBytes, []byte(dirID))
+	plaintext, err := c.newSIV().Open(nil, filenameBytes, []byte(dirID))
 	if err != nil {
 		return "", err
 	}

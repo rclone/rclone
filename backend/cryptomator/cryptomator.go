@@ -70,6 +70,9 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		return nil, fmt.Errorf("failed to make remote %q to wrap: %w", remote, err)
 	}
 
+	// Remove slashes on start or end, which would otherwise confuse the dirCache (as is documented on dircache.SplitPath).
+	root = strings.Trim(root, "/")
+
 	f := &Fs{
 		wrapped: wrappedFs,
 		name:    name,
@@ -79,6 +82,8 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	cache.PinUntilFinalized(f.wrapped, f)
 
 	f.features = (&fs.Features{}).Fill(ctx, f).Mask(ctx, wrappedFs).WrapsFs(f, wrappedFs)
+	// Cryptomator's obfuscated directory structure can always support empty directories
+	f.features.CanHaveEmptyDirectories = true
 
 	password, err := obscure.Reveal(opt.Password)
 	if err != nil {
@@ -98,6 +103,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	if err != nil {
 		return nil, fmt.Errorf("failed to encrypt root dir id: %w", err)
 	}
+	// TODO: make directory ID backup
 	err = f.wrapped.Mkdir(ctx, rootDirID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create root dir at %q: %s", rootDirID, err)
@@ -125,7 +131,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 				return f, nil
 			}
 
-			return nil, err
+			return nil, fmt.Errorf("incomprehensible error while checking for whether the root at %q is a file: %w", root, err)
 		}
 
 		f.dirCache = tempF.dirCache
@@ -174,7 +180,7 @@ func (f *Fs) Root() string {
 
 // String returns a description of the FS
 func (f *Fs) String() string {
-	return fmt.Sprintf("Cryptomator vault of %s", f.wrapped.String())
+	return fmt.Sprintf("Cryptomator vault '%s:%s'", f.Name(), f.Root())
 }
 
 // Precision of the remote
@@ -287,12 +293,7 @@ func (f *Fs) CreateDir(ctx context.Context, pathID string, leaf string) (newID s
 		return
 	}
 
-	// Make directory
-	err = f.wrapped.Mkdir(ctx, dirPath)
-	if err != nil {
-		return
-	}
-	// ...including directory id backup file
+	// Put directory ID backup file, thus creating the directory
 	data := f.encryptReader(bytes.NewBuffer([]byte(newID)))
 	info := object.NewStaticObjectInfo(path.Join(dirPath, dirIDBackupC9r), time.Now(), -1, true, nil, nil)
 	_, err = f.wrapped.Put(ctx, data, info)
@@ -377,7 +378,7 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 	if err == nil {
 		err = obj.Remove(ctx)
 	}
-	if err != nil {
+	if err != nil && !errors.Is(err, fs.ErrorObjectNotFound) {
 		return fmt.Errorf("couldn't remove dir id backup: %w", err)
 	}
 	// dirPath
@@ -424,6 +425,14 @@ func (d *Directory) Fs() fs.Info { return d.fs }
 
 // Remote returns the decrypted remote path
 func (d *Directory) Remote() string { return d.remote }
+
+// String returns a description of the Object
+func (d *Directory) String() string {
+	if d == nil {
+		return "<nil>"
+	}
+	return d.remote
+}
 
 // -------- Objects
 
@@ -560,6 +569,11 @@ func (o *DecryptingObject) Update(ctx context.Context, in io.Reader, src fs.Obje
 	return o.Object.Update(ctx, encIn, encSrc, options...)
 }
 
+// Hash returns no checksum as it is not possible to quickly obtain a hash of the plaintext of an encrypted file
+func (o *DecryptingObject) Hash(ctx context.Context, ty hash.Type) (string, error) {
+	return "", hash.ErrUnsupported
+}
+
 // -------- Put
 
 // Put in to the remote path with the modTime given of the given size
@@ -611,9 +625,22 @@ func (i *EncryptingObjectInfo) Fs() fs.Info { return i.f }
 // Remote returns the encrypted remote path
 func (i *EncryptingObjectInfo) Remote() string { return i.encRemote }
 
+// String returns a description of the Object
+func (i *EncryptingObjectInfo) String() string {
+	if i == nil {
+		return "<nil>"
+	}
+	return i.encRemote
+}
+
 // Size returns the size of the object after being encrypted
 func (i *EncryptingObjectInfo) Size() int64 {
 	return i.f.EncryptedFileSize(i.ObjectInfo.Size())
+}
+
+// Hash returns no checksum as it is not possible to quickly obtain a hash of the plaintext of an encrypted file
+func (i *EncryptingObjectInfo) Hash(ctx context.Context, ty hash.Type) (string, error) {
+	return "", hash.ErrUnsupported
 }
 
 // -------- private
