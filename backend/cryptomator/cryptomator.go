@@ -38,6 +38,9 @@ func init() {
 		Name:        "cryptomator",
 		Description: "Encrypt/Decrypt Cryptomator-format vaults",
 		NewFs:       NewFs,
+		MetadataInfo: &fs.MetadataInfo{
+			Help: `Any metadata supported by the underlying remote is read and written`,
+		},
 		Options: []fs.Option{{
 			Name:     "remote",
 			Help:     "Remote to use as a Cryptomator vault.\n\nNormally should contain a ':' and a path, e.g. \"myremote:path/to/dir\",\n\"myremote:bucket\" or maybe \"myremote:\" (not recommended).",
@@ -81,7 +84,19 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	}
 	cache.PinUntilFinalized(f.wrapped, f)
 
-	f.features = (&fs.Features{}).Fill(ctx, f).Mask(ctx, wrappedFs).WrapsFs(f, wrappedFs)
+	f.features = (&fs.Features{
+		CanHaveEmptyDirectories:  true,
+		SetTier:                  true,
+		GetTier:                  true,
+		ReadMetadata:             true,
+		WriteMetadata:            true,
+		UserMetadata:             true,
+		ReadDirMetadata:          true,
+		WriteDirMetadata:         true,
+		UserDirMetadata:          true,
+		DirModTimeUpdatesOnWrite: true,
+		PartialUploads:           true,
+	}).Fill(ctx, f).Mask(ctx, wrappedFs).WrapsFs(f, wrappedFs)
 	// Cryptomator's obfuscated directory structure can always support empty directories
 	f.features.CanHaveEmptyDirectories = true
 
@@ -155,6 +170,7 @@ type Fs struct {
 	root     string
 	opt      Options
 	features *fs.Features
+	wrapper  fs.Fs
 
 	masterKey   MasterKey
 	vaultConfig VaultConfig
@@ -166,14 +182,10 @@ type Fs struct {
 // -------- fs.Info
 
 // Name of the remote (as passed into NewFs)
-func (f *Fs) Name() string {
-	return f.name
-}
+func (f *Fs) Name() string { return f.name }
 
 // Root of the remote (as passed into NewFs)
-func (f *Fs) Root() string {
-	return f.root
-}
+func (f *Fs) Root() string { return f.root }
 
 // String returns a description of the FS
 func (f *Fs) String() string {
@@ -181,20 +193,14 @@ func (f *Fs) String() string {
 }
 
 // Precision of the remote
-func (f *Fs) Precision() time.Duration {
-	return f.wrapped.Precision()
-}
+func (f *Fs) Precision() time.Duration { return f.wrapped.Precision() }
 
 // Hashes returns nothing as the hashes returned by the backend would be of encrypted data, not plaintext
 // TODO: does cryptomator have plaintext hashes readily available?
-func (f *Fs) Hashes() hash.Set {
-	return hash.NewHashSet()
-}
+func (f *Fs) Hashes() hash.Set { return hash.NewHashSet() }
 
 // Features returns the optional features of this Fs
-func (f *Fs) Features() *fs.Features {
-	return f.features
-}
+func (f *Fs) Features() *fs.Features { return f.features }
 
 // -------- Directories
 
@@ -235,17 +241,36 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 
 		switch entry := entry.(type) {
 		case fs.Directory:
-			entries = append(entries, &Directory{
-				Directory: entry,
-				fs:        f,
-				remote:    remote,
-			})
+			// Get the path of the real directory from dir.c9r.
+			dirID, err := f.readSmallFile(ctx, path.Join(entry.Remote(), dirIDC9r), 100)
+			if err != nil {
+				return nil, err
+			}
+			dirIDPath := f.dirIDPath(string(dirID))
+
+			// Turning that path into an fs.Directory is really annoying. The only thing in the standard Fs interface that returns fs.Directory objects is List, so We have to list the parent.
+			dirIDParent, dirIDLeaf := path.Split(dirIDPath)
+			subEntries, err := f.wrapped.List(ctx, dirIDParent)
+			if err != nil {
+				return nil, err
+			}
+			var realDir fs.Directory
+			for i := range subEntries {
+				dir, ok := subEntries[i].(fs.Directory)
+				if ok && path.Base(dir.Remote()) == dirIDLeaf {
+					realDir = dir
+					break
+				}
+			}
+			if realDir == nil {
+				err = fmt.Errorf("couldn't find %q in listing of %q (has directory been removed?)", dirIDLeaf, dirIDParent)
+			}
+			if err != nil {
+				return nil, err
+			}
+			entries = append(entries, &Directory{DirWrapper: fs.NewDirWrapper(remote, realDir), f: f})
 		case fs.Object:
-			entries = append(entries, &DecryptingObject{
-				Object:    entry,
-				f:         f,
-				decRemote: remote,
-			})
+			entries = append(entries, &DecryptingObject{Object: entry, f: f, decRemote: remote})
 		default:
 			return nil, fmt.Errorf("unknown entry type %T", entry)
 		}
@@ -272,8 +297,8 @@ func (f *Fs) FindLeaf(ctx context.Context, pathID, leaf string) (pathIDOut strin
 }
 
 // CreateDir creates a directory at the request of the DirCache
-func (f *Fs) CreateDir(ctx context.Context, pathID string, leaf string) (newID string, err error) {
-	leafPath := f.leafPath(leaf, pathID)
+func (f *Fs) CreateDir(ctx context.Context, parentID string, leaf string) (newID string, err error) {
+	leafPath := f.leafPath(leaf, parentID)
 	newID = uuid.NewString()
 	dirPath := f.dirIDPath(newID)
 
@@ -289,10 +314,6 @@ func (f *Fs) CreateDir(ctx context.Context, pathID string, leaf string) (newID s
 	// XXX if someone else attempts to create the same directory at the same time, one of them will win and the other will get an orphaned directory.
 	// Without an atomic "create if not exists" for this next writeSmallFile operation, this can't be fixed.
 	err = f.writeSmallFile(ctx, path.Join(leafPath, dirIDC9r), []byte(newID))
-	if err != nil {
-		return
-	}
-
 	return
 }
 
@@ -304,6 +325,37 @@ func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 	return err
 }
 
+// MkdirMetadata makes the directory passed in as dir.
+//
+// It shouldn't return an error if it already exists.
+//
+// If the metadata is not nil it is set.
+//
+// It returns the directory that was created.
+func (f *Fs) MkdirMetadata(ctx context.Context, dirPath string, metadata fs.Metadata) (dir fs.Directory, err error) {
+	do := f.wrapped.Features().MkdirMetadata
+	if do == nil {
+		return nil, errorNotSupportedByUnderlyingRemote
+	}
+
+	// First create the directory normally, then call MkdirMetadata to update its metadata.
+	// This is for a really silly reason: if you call MkdirMetadata first, creating dirid.c9r will reset the mtime! which is one of the things that can be set in the metadata.
+	dirID, err := f.dirCache.FindDir(ctx, dirPath, true)
+	if err != nil {
+		return nil, err
+	}
+
+	dir, err = do(ctx, f.dirIDPath(dirID), metadata)
+	if dir != nil {
+		dir = &Directory{DirWrapper: fs.NewDirWrapper(dirPath, dir), f: f}
+	}
+	if err != nil {
+		return
+	}
+
+	return
+}
+
 // Rmdir removes the directory (container, bucket) if empty
 //
 // Return an error if it doesn't exist or isn't empty
@@ -312,7 +364,6 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 	if err != nil {
 		return fmt.Errorf("failed to find ID for directory %q: %w", dir, err)
 	}
-	var parentID string
 	leaf, parentID, err := f.dirCache.FindPath(ctx, dir, false)
 	if err != nil {
 		return fmt.Errorf("failed to find ID for parent of directory %q: %w", dir, err)
@@ -391,26 +442,14 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 
 // -------- fs.Directory
 
-// Directory wraps the underlying fs.Directory and handles filename encryption and so on
+// Directory wraps the underlying fs.Directory, the one named with a hash of the encrypted directory ID that contains the subnodes and the dirid.c9r backup, not the little directory in its parent that just has dir.c9r.
 type Directory struct {
-	fs.Directory
-	fs     *Fs
-	remote string
+	*fs.DirWrapper
+	f *Fs
 }
 
 // Fs returns read only access to the Fs that this object is part of
-func (d *Directory) Fs() fs.Info { return d.fs }
-
-// Remote returns the decrypted remote path
-func (d *Directory) Remote() string { return d.remote }
-
-// String returns a description of the Object
-func (d *Directory) String() string {
-	if d == nil {
-		return "<nil>"
-	}
-	return d.remote
-}
+func (d *Directory) Fs() fs.Info { return d.f }
 
 // -------- Objects
 
@@ -433,11 +472,7 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &DecryptingObject{
-		Object:    wrappedObj,
-		f:         f,
-		decRemote: remote,
-	}, nil
+	return f.newDecryptingObject(wrappedObj, remote), nil
 }
 
 // DecryptingObject wraps the underlying fs.Object and handles decrypting it
@@ -445,6 +480,14 @@ type DecryptingObject struct {
 	fs.Object
 	f         *Fs
 	decRemote string
+}
+
+func (f *Fs) newDecryptingObject(o fs.Object, decRemote string) *DecryptingObject {
+	return &DecryptingObject{
+		Object:    o,
+		f:         f,
+		decRemote: decRemote,
+	}
 }
 
 // TODO: override all relevant methods
@@ -551,16 +594,9 @@ func (o *DecryptingObject) Hash(ctx context.Context, ty hash.Type) (string, erro
 
 // -------- Put
 
-// Put in to the remote path with the modTime given of the given size
-//
-// When called from outside an Fs by rclone, src.Size() will always be >= 0.
-// But for unknown-sized objects (indicated by src.Size() == -1), Put should either
-// return an error or upload it properly (rather than e.g. calling panic).
-//
-// May create the object even if it returns an error - if so
-// will return the object and the error, otherwise will return
-// nil and the error
-func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
+type putFn func(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error)
+
+func (f *Fs) put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options []fs.OpenOption, put putFn) (fs.Object, error) {
 	encIn := f.encryptReader(in)
 	leaf, dirID, err := f.dirCache.FindPath(ctx, src.Remote(), true)
 	if err != nil {
@@ -573,15 +609,49 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 		encRemote:  encRemotePath,
 	}
 
-	obj, err := f.wrapped.Put(ctx, encIn, encSrc, options...)
+	obj, err := put(ctx, encIn, encSrc, options...)
 	if obj != nil {
-		obj = &DecryptingObject{
-			Object:    obj,
-			f:         f,
-			decRemote: src.Remote(),
-		}
+		obj = f.newDecryptingObject(obj, src.Remote())
 	}
 	return obj, err
+}
+
+// Put in to the remote path with the modTime given of the given size
+//
+// When called from outside an Fs by rclone, src.Size() will always be >= 0.
+// But for unknown-sized objects (indicated by src.Size() == -1), Put should either
+// return an error or upload it properly (rather than e.g. calling panic).
+//
+// May create the object even if it returns an error - if so
+// will return the object and the error, otherwise will return
+// nil and the error
+func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
+	return f.put(ctx, in, src, options, f.wrapped.Put)
+}
+
+// PutUnchecked uploads to the remote path with the modTime given of the given size
+//
+// May create the object even if it returns an error - if so
+// will return the object and the error, otherwise will return
+// nil and the error
+//
+// May create duplicates or return errors if src already
+// exists.
+func (f *Fs) PutUnchecked(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
+	do := f.wrapped.Features().PutUnchecked
+	if do == nil {
+		return nil, errorNotSupportedByUnderlyingRemote
+	}
+	return f.put(ctx, in, src, options, do)
+}
+
+// PutStream uploads to the remote path with the modTime given of indeterminate size
+func (f *Fs) PutStream(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
+	do := f.wrapped.Features().PutStream
+	if do == nil {
+		return nil, errorNotSupportedByUnderlyingRemote
+	}
+	return f.put(ctx, in, src, options, do)
 }
 
 // EncryptingObjectInfo wraps the ObjectInfo provided to Put and transforms its attributes to match the encrypted version of the file.
@@ -613,6 +683,103 @@ func (i *EncryptingObjectInfo) Size() int64 {
 // Hash returns no checksum as it is not possible to quickly obtain a hash of the plaintext of an encrypted file
 func (i *EncryptingObjectInfo) Hash(ctx context.Context, ty hash.Type) (string, error) {
 	return "", hash.ErrUnsupported
+}
+
+// Copy src to this remote using server-side copy operations.
+//
+// # This is stored with the remote path given
+//
+// # It returns the destination Object and a possible error
+//
+// Will only be called if src.Fs().Name() == f.Name()
+//
+// If it isn't possible then return fs.ErrorCantCopy
+//
+// Cryptomator: Can just pass through the copy operation, since the encryption of file contents is independent of the directory.
+func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
+	do := f.wrapped.Features().Copy
+	if do == nil {
+		return nil, fs.ErrorCantCopy
+	}
+	o, ok := src.(*DecryptingObject)
+	if !ok {
+		return nil, fs.ErrorCantCopy
+	}
+	leaf, dirID, err := f.dirCache.FindPath(ctx, remote, true)
+	if err != nil {
+		return nil, err
+	}
+	encryptedPath := f.leafPath(leaf, dirID)
+	obj, err := do(ctx, o.Object, encryptedPath)
+	if obj != nil {
+		obj = f.newDecryptingObject(obj, remote)
+	}
+	return obj, err
+}
+
+// Move src to this remote using server-side move operations.
+//
+// # This is stored with the remote path given
+//
+// # It returns the destination Object and a possible error
+//
+// Will only be called if src.Fs().Name() == f.Name()
+//
+// If it isn't possible then return fs.ErrorCantMove
+//
+// Cryptomator: Can just pass through the move operation, since the encryption of file contents is independent of the directory.
+func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
+	do := f.wrapped.Features().Move
+	if do == nil {
+		return nil, fs.ErrorCantMove
+	}
+	o, ok := src.(*DecryptingObject)
+	if !ok {
+		return nil, fs.ErrorCantMove
+	}
+	leaf, dirID, err := f.dirCache.FindPath(ctx, remote, true)
+	if err != nil {
+		return nil, err
+	}
+	encryptedPath := f.leafPath(leaf, dirID)
+	obj, err := do(ctx, o.Object, encryptedPath)
+	if obj != nil {
+		obj = f.newDecryptingObject(obj, remote)
+	}
+	return obj, err
+}
+
+// DirMove moves src, srcRemote to this remote at dstRemote
+// using server-side move operations.
+//
+// Will only be called if src.Fs().Name() == f.Name()
+//
+// If it isn't possible then return fs.ErrorCantDirMove
+//
+// If destination exists then return fs.ErrorDirExists
+func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string) error {
+	do := f.wrapped.Features().DirMove
+	if do == nil {
+		return fs.ErrorCantDirMove
+	}
+	srcFs, ok := src.(*Fs)
+	if !ok {
+		fs.Debugf(srcFs, "Can't move directory - not same remote type")
+		return fs.ErrorCantDirMove
+	}
+	// TODO: It would be almost as easy to implement this operation without server-side support, by deleting and recreating the dir.c9r file (though it wouldn't be atomic.)
+	_, srcDirectoryID, srcLeaf, dstDirectoryID, dstLeaf, err := f.dirCache.DirMove(ctx, srcFs.dirCache, srcFs.root, srcRemote, f.root, dstRemote)
+	if err != nil {
+		return err
+	}
+	srcEncPath := f.leafPath(srcLeaf, srcDirectoryID)
+	dstEncPath := f.leafPath(dstLeaf, dstDirectoryID)
+	err = do(ctx, srcFs.wrapped, srcEncPath, dstEncPath)
+	if err != nil {
+		return err
+	}
+	srcFs.dirCache.FlushDir(srcRemote)
+	return nil
 }
 
 // -------- private
@@ -681,5 +848,12 @@ func (f *Fs) writeSmallFile(ctx context.Context, path string, data []byte) error
 
 // Check the interfaces are satisfied
 var (
-	_ fs.Fs = (*Fs)(nil)
+	_ fs.Fs              = (*Fs)(nil)
+	_ fs.Copier          = (*Fs)(nil)
+	_ fs.Mover           = (*Fs)(nil)
+	_ fs.DirMover        = (*Fs)(nil)
+	_ fs.PutUncheckeder  = (*Fs)(nil)
+	_ fs.PutStreamer     = (*Fs)(nil)
+	_ fs.MkdirMetadataer = (*Fs)(nil)
+	// TODO: implement OpenChunkWriter. It's entirely possible to encrypt chunks of a file in parallel.
 )

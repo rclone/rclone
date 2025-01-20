@@ -1475,8 +1475,8 @@ func Run(t *testing.T, opt *Opt) {
 
 				// check remotes
 				// remote should not exist here
-				_, err = f.List(ctx, "")
-				assert.True(t, errors.Is(err, fs.ErrorDirNotFound))
+				listing, err := f.List(ctx, "")
+				assert.ErrorIs(t, err, fs.ErrorDirNotFound, "got listing: %+v", listing)
 				//fstest.CheckListingWithPrecision(t, remote, []fstest.Item{}, []string{}, remote.Precision())
 				file1Copy := file1
 				file1Copy.Path = path.Join(newName, file1.Path)

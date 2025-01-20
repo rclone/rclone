@@ -17,9 +17,10 @@ import (
 )
 
 var (
-	UnimplementableFsMethods        = []string{"Purge", "ChangeNotify", "MergeDirs", "ListR", "OpenWriterAt", "MkdirMetadata", "DirSetModTime", "OpenChunkWriter"}
+	// TODO: check this list, see if we can't implement some of them actually
+	UnimplementableFsMethods        = []string{"Purge", "ChangeNotify", "MergeDirs", "ListR", "OpenWriterAt", "DirSetModTime", "OpenChunkWriter"}
 	UnimplementableObjectMethods    = []string{"MimeType"}
-	UnimplementableDirectoryMethods = []string{"Metadata", "SetMetadata", "SetModTime"}
+	UnimplementableDirectoryMethods = []string{"SetModTime"}
 )
 
 // TestIntegration runs integration tests against the remote
