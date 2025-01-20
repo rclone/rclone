@@ -1751,7 +1751,7 @@ multiples of 16k performed much better than other values.
 ### --multi-thread-chunk-size=SizeSuffix ###
 
 Normally the chunk size for multi thread transfers is set by the backend.
-However some backends such as `local` and `smb` (which implement `OpenWriterAt`
+However some backends such as `local` and `pcloud` (which implement `OpenWriterAt`
 but not `OpenChunkWriter`) don't have a natural chunk size.
 
 In this case the value of this option is used (default 64Mi).

@@ -1,11 +1,11 @@
 // Test smb filesystem interface
-package smb_test
+package smb
 
 import (
 	"path/filepath"
 	"testing"
 
-	"github.com/rclone/rclone/backend/smb"
+	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fstest/fstests"
 )
 
@@ -13,7 +13,7 @@ import (
 func TestIntegration(t *testing.T) {
 	fstests.Run(t, &fstests.Opt{
 		RemoteName: "TestSMB:rclone",
-		NilObject:  (*smb.Object)(nil),
+		NilObject:  (*Object)(nil),
 	})
 }
 
@@ -23,6 +23,19 @@ func TestIntegration2(t *testing.T) {
 	t.Setenv("KRB5CCNAME", filepath.Join(krb5Dir, "ccache"))
 	fstests.Run(t, &fstests.Opt{
 		RemoteName: "TestSMBKerberos:rclone",
-		NilObject:  (*smb.Object)(nil),
+		NilObject:  (*Object)(nil),
 	})
 }
+
+func (f *Fs) SetUploadChunkSize(cs fs.SizeSuffix) (fs.SizeSuffix, error) {
+	return f.setUploadChunkSize(cs)
+}
+
+func (f *Fs) SetUploadCutoff(cs fs.SizeSuffix) (fs.SizeSuffix, error) {
+	return f.setUploadCutoff(cs)
+}
+
+var (
+	_ fstests.SetUploadChunkSizer = (*Fs)(nil)
+	_ fstests.SetUploadCutoffer   = (*Fs)(nil)
+)
