@@ -1,4 +1,4 @@
-package cryptomator_test
+package cryptomator
 
 import (
 	"bytes"
@@ -10,12 +10,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/rclone/rclone/backend/cryptomator"
 	"github.com/stretchr/testify/assert"
 	"pgregory.net/rapid"
 )
-
-const cs = cryptomator.ChunkPayloadSize
 
 type encryptedFile struct {
 	CipherCombo string
@@ -50,12 +47,12 @@ func TestDecryptReferenceStream(t *testing.T) {
 		for name, encFile := range encFiles {
 			t.Run(fmt.Sprintf("%s:%s", testname, name), func(t *testing.T) {
 				buf := bytes.NewBuffer(encFile.Ciphertext)
-				key := cryptomator.MasterKey{EncryptKey: make([]byte, cryptomator.MasterEncryptKeySize), MacKey: encFile.MacKey}
-				cryptor, err := cryptomator.NewCryptor(key, encFile.CipherCombo)
+				key := masterKey{EncryptKey: make([]byte, masterEncryptKeySize), MacKey: encFile.MacKey}
+				cryptor, err := newCryptor(key, encFile.CipherCombo)
 				assert.NoError(t, err)
 
-				header := cryptomator.FileHeader{ContentKey: encFile.ContentKey, Nonce: encFile.Nonce}
-				r, err := cryptor.NewContentReader(buf, header)
+				header := fileHeader{ContentKey: encFile.ContentKey, Nonce: encFile.Nonce}
+				r, err := cryptor.newContentReader(buf, header)
 				assert.NoError(t, err)
 
 				output, err := io.ReadAll(r)
@@ -69,7 +66,7 @@ func TestDecryptReferenceStream(t *testing.T) {
 
 func TestStreamRoundTrip(t *testing.T) {
 	rapid.Check(t, func(t *rapid.T) {
-		stepSize := rapid.SampledFrom([]int{512, 600, 1000, cs}).Draw(t, "stepSize")
+		stepSize := rapid.SampledFrom([]int{512, 600, 1000, ChunkPayloadSize}).Draw(t, "stepSize")
 		// Maxlength due to memory problems when using math.MaxInt
 		// maxLength := 1000000
 		maxLength := 10000
@@ -77,13 +74,13 @@ func TestStreamRoundTrip(t *testing.T) {
 
 		src := fixedSizeByteArray(length).Draw(t, "src")
 		cryptor := drawTestCryptor(t)
-		nonce := fixedSizeByteArray(cryptor.NonceSize()).Draw(t, "nonce")
-		contentKey := fixedSizeByteArray(cryptomator.HeaderContentKeySize).Draw(t, "contentKey")
-		header := cryptomator.FileHeader{ContentKey: contentKey, Nonce: nonce}
+		nonce := fixedSizeByteArray(cryptor.nonceSize()).Draw(t, "nonce")
+		contentKey := fixedSizeByteArray(headerContentKeySize).Draw(t, "contentKey")
+		header := fileHeader{ContentKey: contentKey, Nonce: nonce}
 
 		buf := &bytes.Buffer{}
 
-		w, err := cryptor.NewContentWriter(buf, header)
+		w, err := cryptor.newContentWriter(buf, header)
 		assert.NoError(t, err)
 
 		n := 0
@@ -109,7 +106,7 @@ func TestStreamRoundTrip(t *testing.T) {
 
 		t.Logf("buffer size: %d", buf.Len())
 
-		r, err := cryptor.NewContentReader(buf, header)
+		r, err := cryptor.newContentReader(buf, header)
 		assert.NoError(t, err)
 
 		n = 0
@@ -137,7 +134,7 @@ func TestHeaderWriter(t *testing.T) {
 		cryptor := drawTestCryptor(t)
 
 		buf := &bytes.Buffer{}
-		w, err := cryptor.NewWriter(buf)
+		w, err := cryptor.newWriter(buf)
 		assert.NoError(t, err)
 
 		_, err = w.Write(data)
@@ -145,9 +142,9 @@ func TestHeaderWriter(t *testing.T) {
 		err = w.Close()
 		assert.NoError(t, err)
 
-		header, err := cryptor.UnmarshalHeader(buf)
+		header, err := cryptor.unmarshalHeader(buf)
 		assert.NoError(t, err)
-		r, err := cryptor.NewContentReader(buf, header)
+		r, err := cryptor.newContentReader(buf, header)
 		assert.NoError(t, err)
 
 		readBuf := make([]byte, length)
@@ -168,9 +165,9 @@ func TestHeaderReader(t *testing.T) {
 		buf := &bytes.Buffer{}
 		header, err := cryptor.NewHeader()
 		assert.NoError(t, err)
-		err = cryptor.MarshalHeader(buf, header)
+		err = cryptor.marshalHeader(buf, header)
 		assert.NoError(t, err)
-		w, err := cryptor.NewContentWriter(buf, header)
+		w, err := cryptor.newContentWriter(buf, header)
 		assert.NoError(t, err)
 
 		_, err = w.Write(data)
@@ -178,7 +175,7 @@ func TestHeaderReader(t *testing.T) {
 		err = w.Close()
 		assert.NoError(t, err)
 
-		r, err := cryptor.NewReader(buf)
+		r, err := cryptor.newReader(buf)
 		assert.NoError(t, err)
 
 		readBuf := make([]byte, length)
@@ -191,10 +188,10 @@ func TestHeaderReader(t *testing.T) {
 func TestEncryptedSize(t *testing.T) {
 	rapid.Check(t, func(t *rapid.T) {
 		key := drawMasterKey(t)
-		cryptor, err := cryptomator.NewCryptor(key, cryptomator.CipherComboSivGcm)
+		cryptor, err := newCryptor(key, cipherComboSivGcm)
 		assert.NoError(t, err)
 
-		assert.EqualValues(t, 196, cryptor.EncryptedFileSize(100))
-		assert.EqualValues(t, 100, cryptor.DecryptedFileSize(196))
+		assert.EqualValues(t, 196, cryptor.encryptedFileSize(100))
+		assert.EqualValues(t, 100, cryptor.decryptedFileSize(196))
 	})
 }

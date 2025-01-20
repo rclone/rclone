@@ -9,8 +9,8 @@ import (
 	"unsafe"
 )
 
-// FileHeader is the header of an encrypted Cryptomator file.
-type FileHeader struct {
+// fileHeader is the header of an encrypted Cryptomator file.
+type fileHeader struct {
 	// The nonce used to encrypt the file header. Each file content chunk, while encrypted with its own nonce, also mixes the file header nonce into the MAC.
 	Nonce    []byte
 	Reserved []byte
@@ -19,21 +19,21 @@ type FileHeader struct {
 }
 
 const (
-	// HeaderContentKeySize is the size of the ContentKey in the FileHeader.
-	HeaderContentKeySize = 32
-	// HeaderReservedSize is the size of the Reserved data in the FileHeader.
-	HeaderReservedSize = 8
-	// HeaderPayloadSize is the size of the encrypted part of the file header.
-	HeaderPayloadSize = HeaderContentKeySize + HeaderReservedSize
-	// HeaderReservedValue is the expected value of the Reserved data.
-	HeaderReservedValue uint64 = 0xFFFFFFFFFFFFFFFF
+	// headerContentKeySize is the size of the ContentKey in the FileHeader.
+	headerContentKeySize = 32
+	// headerReservedSize is the size of the Reserved data in the FileHeader.
+	headerReservedSize = 8
+	// headerPayloadSize is the size of the encrypted part of the file header.
+	headerPayloadSize = headerContentKeySize + headerReservedSize
+	// headerReservedValue is the expected value of the Reserved data.
+	headerReservedValue uint64 = 0xFFFFFFFFFFFFFFFF
 )
 
 // NewHeader creates a new randomly initialized FileHeader
-func (c *Cryptor) NewHeader() (header FileHeader, err error) {
-	header.Nonce = make([]byte, c.NonceSize())
-	header.ContentKey = make([]byte, HeaderContentKeySize)
-	header.Reserved = make([]byte, HeaderReservedSize)
+func (c *cryptor) NewHeader() (header fileHeader, err error) {
+	header.Nonce = make([]byte, c.nonceSize())
+	header.ContentKey = make([]byte, headerContentKeySize)
+	header.Reserved = make([]byte, headerReservedSize)
 
 	if _, err = rand.Read(header.Nonce); err != nil {
 		return
@@ -43,17 +43,17 @@ func (c *Cryptor) NewHeader() (header FileHeader, err error) {
 		return
 	}
 
-	binary.BigEndian.PutUint64(header.Reserved, HeaderReservedValue)
+	binary.BigEndian.PutUint64(header.Reserved, headerReservedValue)
 
 	return
 }
 
 type headerPayload struct {
-	Reserved   [HeaderReservedSize]byte
-	ContentKey [HeaderContentKeySize]byte
+	Reserved   [headerReservedSize]byte
+	ContentKey [headerContentKeySize]byte
 }
 
-var _ [0]struct{} = [unsafe.Sizeof(headerPayload{}) - HeaderPayloadSize]struct{}{}
+var _ [0]struct{} = [unsafe.Sizeof(headerPayload{}) - headerPayloadSize]struct{}{}
 
 func copySameLength(dst, src []byte, name string) error {
 	if len(dst) != len(src) {
@@ -63,8 +63,8 @@ func copySameLength(dst, src []byte, name string) error {
 	return nil
 }
 
-// MarshalHeader encrypts the header and writes it in encrypted form to the writer.
-func (c *Cryptor) MarshalHeader(w io.Writer, h FileHeader) (err error) {
+// marshalHeader encrypts the header and writes it in encrypted form to the writer.
+func (c *cryptor) marshalHeader(w io.Writer, h fileHeader) (err error) {
 	var payload headerPayload
 	if err = copySameLength(payload.Reserved[:], h.Reserved, "Reserved"); err != nil {
 		return
@@ -77,20 +77,20 @@ func (c *Cryptor) MarshalHeader(w io.Writer, h FileHeader) (err error) {
 	if err = binary.Write(&encBuffer, binary.BigEndian, &payload); err != nil {
 		return
 	}
-	encPayload := c.EncryptChunk(encBuffer.Bytes(), h.Nonce, nil)
+	encPayload := c.encryptChunk(encBuffer.Bytes(), h.Nonce, nil)
 	_, err = w.Write(encPayload)
 	return
 }
 
-// UnmarshalHeader reads an encrypted header from the reader and decrypts it.
-func (c *Cryptor) UnmarshalHeader(r io.Reader) (header FileHeader, err error) {
-	encHeader := make([]byte, c.NonceSize()+HeaderPayloadSize+c.TagSize())
+// unmarshalHeader reads an encrypted header from the reader and decrypts it.
+func (c *cryptor) unmarshalHeader(r io.Reader) (header fileHeader, err error) {
+	encHeader := make([]byte, c.nonceSize()+headerPayloadSize+c.tagSize())
 	_, err = io.ReadFull(r, encHeader)
 	if err != nil {
 		return
 	}
-	nonce := encHeader[:c.NonceSize()]
-	encHeader, err = c.DecryptChunk(encHeader, nil)
+	nonce := encHeader[:c.nonceSize()]
+	encHeader, err = c.decryptChunk(encHeader, nil)
 	if err != nil {
 		return
 	}
