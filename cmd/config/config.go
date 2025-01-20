@@ -303,6 +303,9 @@ func doConfig(name string, in rc.Params, do func(config.UpdateRemoteOpt) (*fs.Co
 	if err != nil {
 		return err
 	}
+	if updateRemoteOpt.NoOutput {
+		return nil
+	}
 	if !(updateRemoteOpt.NonInteractive || updateRemoteOpt.Continue) {
 		config.ShowRemote(name)
 	} else {
@@ -323,6 +326,7 @@ func init() {
 	for _, cmdFlags := range []*pflag.FlagSet{configCreateCommand.Flags(), configUpdateCommand.Flags()} {
 		flags.BoolVarP(cmdFlags, &updateRemoteOpt.Obscure, "obscure", "", false, "Force any passwords to be obscured", "Config")
 		flags.BoolVarP(cmdFlags, &updateRemoteOpt.NoObscure, "no-obscure", "", false, "Force any passwords not to be obscured", "Config")
+		flags.BoolVarP(cmdFlags, &updateRemoteOpt.NoOutput, "no-output", "", false, "Don't provide any output", "Config")
 		flags.BoolVarP(cmdFlags, &updateRemoteOpt.NonInteractive, "non-interactive", "", false, "Don't interact with user and return questions", "Config")
 		flags.BoolVarP(cmdFlags, &updateRemoteOpt.Continue, "continue", "", false, "Continue the configuration process with an answer", "Config")
 		flags.BoolVarP(cmdFlags, &updateRemoteOpt.All, "all", "", false, "Ask the full set of config questions", "Config")
