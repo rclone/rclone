@@ -99,10 +99,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	}
 
 	// Make sure the root directory exists
-	rootDirID, err := f.dirIDPath("")
-	if err != nil {
-		return nil, fmt.Errorf("failed to encrypt root dir id: %w", err)
-	}
+	rootDirID := f.dirIDPath("")
 	// TODO: make directory ID backup
 	err = f.wrapped.Mkdir(ctx, rootDirID)
 	if err != nil {
@@ -215,10 +212,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 	if err != nil {
 		return nil, err
 	}
-	dirPath, err := f.dirIDPath(dirID)
-	if err != nil {
-		return nil, err
-	}
+	dirPath := f.dirIDPath(dirID)
 
 	encryptedEntries, err := f.wrapped.List(ctx, dirPath)
 	if err != nil {
@@ -261,11 +255,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 
 // FindLeaf finds a child of name leaf in the directory with id pathID
 func (f *Fs) FindLeaf(ctx context.Context, pathID, leaf string) (pathIDOut string, found bool, err error) {
-	encryptedPath, err := f.leafPath(leaf, pathID)
-	if err != nil {
-		return
-	}
-	subdirIDFile := path.Join(encryptedPath, dirIDC9r)
+	subdirIDFile := path.Join(f.leafPath(leaf, pathID), dirIDC9r)
 	subdirID, err := f.readSmallFile(ctx, subdirIDFile, 100)
 	if errors.Is(err, fs.ErrorObjectNotFound) {
 		// If the directory doesn't exist, return found=false and no error to let the DirCache create the directory if it wants.
@@ -283,15 +273,9 @@ func (f *Fs) FindLeaf(ctx context.Context, pathID, leaf string) (pathIDOut strin
 
 // CreateDir creates a directory at the request of the DirCache
 func (f *Fs) CreateDir(ctx context.Context, pathID string, leaf string) (newID string, err error) {
-	leafPath, err := f.leafPath(leaf, pathID)
-	if err != nil {
-		return
-	}
+	leafPath := f.leafPath(leaf, pathID)
 	newID = uuid.NewString()
-	dirPath, err := f.dirIDPath(newID)
-	if err != nil {
-		return
-	}
+	dirPath := f.dirIDPath(newID)
 
 	// Put directory ID backup file, thus creating the directory
 	data := f.encryptReader(bytes.NewBuffer([]byte(newID)))
@@ -345,15 +329,9 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 		// Then the directory containing the pointer
 		dirPointerPath string
 	)
-	dirPath, err = f.dirIDPath(dirID)
-	if err != nil {
-		return err
-	}
+	dirPath = f.dirIDPath(dirID)
 	dirIDBackup = path.Join(dirPath, dirIDBackupC9r)
-	dirPointerPath, err = f.leafPath(leaf, parentID)
-	if err != nil {
-		return err
-	}
+	dirPointerPath = f.leafPath(leaf, parentID)
 	dirPointerFile = path.Join(dirPointerPath, dirIDC9r)
 
 	// Quick check for if the directory is empty - someone else could create a file between this and the final rmdir, so we still need that code that recreates the dir ID backup!
@@ -450,10 +428,7 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 		}
 		return nil, fmt.Errorf("failed to find ID for directory of file %q: %w", remote, err)
 	}
-	encryptedPath, err := f.leafPath(leaf, dirID)
-	if err != nil {
-		return nil, err
-	}
+	encryptedPath := f.leafPath(leaf, dirID)
 	wrappedObj, err := f.wrapped.NewObject(ctx, encryptedPath)
 	if err != nil {
 		return nil, err
@@ -591,10 +566,7 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 	if err != nil {
 		return nil, err
 	}
-	encRemotePath, err := f.leafPath(leaf, dirID)
-	if err != nil {
-		return nil, err
-	}
+	encRemotePath := f.leafPath(leaf, dirID)
 	encSrc := &EncryptingObjectInfo{
 		ObjectInfo: src,
 		f:          f,
@@ -646,27 +618,18 @@ func (i *EncryptingObjectInfo) Hash(ctx context.Context, ty hash.Type) (string, 
 // -------- private
 
 // dirIDPath returns the encrypted path to the directory with a given ID.
-func (f *Fs) dirIDPath(dirID string) (string, error) {
-	encryptedDirID, err := f.EncryptDirID(dirID)
-	if err != nil {
-		return "", fmt.Errorf("failed to encrypt directory ID: %w", err)
-	}
+func (f *Fs) dirIDPath(dirID string) string {
+	encryptedDirID := f.EncryptDirID(dirID)
 	dirPath := path.Join("d", encryptedDirID[:2], encryptedDirID[2:])
 	// TODO: verify that dirid.c9r inside the directory contains dirID
-	return dirPath, nil
+	return dirPath
 }
 
 // leafPath returns the encrypted path to a leaf node with the given name in the directory with the given ID.
-func (f *Fs) leafPath(leaf, dirID string) (p string, err error) {
-	dirPath, err := f.dirIDPath(dirID)
-	if err != nil {
-		return
-	}
-	encryptedFilename, err := f.EncryptFilename(leaf, dirID)
-	if err != nil {
-		return
-	}
-	return path.Join(dirPath, encryptedFilename+".c9r"), nil
+func (f *Fs) leafPath(leaf, dirID string) string {
+	dirPath := f.dirIDPath(dirID)
+	encryptedFilename := f.EncryptFilename(leaf, dirID)
+	return path.Join(dirPath, encryptedFilename+".c9r")
 }
 
 // encryptReader returns a reader that produces an encrypted version of the data in r, suitable for storing directly in the wrapped filesystem.

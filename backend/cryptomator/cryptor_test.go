@@ -32,9 +32,7 @@ func TestEncryptDecryptFilename(t *testing.T) {
 		dirID := rapid.String().Draw(t, "dirID")
 		cryptor := drawTestCryptor(t)
 
-		encName, err := cryptor.EncryptFilename(name, dirID)
-		assert.NoError(t, err, "encryption error")
-
+		encName := cryptor.EncryptFilename(name, dirID)
 		decName, err := cryptor.DecryptFilename(encName, dirID)
 		assert.NoError(t, err, "decryption error")
 
