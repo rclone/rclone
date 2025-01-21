@@ -20,6 +20,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -878,17 +879,20 @@ func Run(t *testing.T, opt *Opt) {
 			pollInterval := make(chan time.Duration)
 			dirChanges := map[string]struct{}{}
 			objChanges := map[string]struct{}{}
+			var mutex sync.Mutex
 			doChangeNotify(ctx, func(x string, e fs.EntryType) {
 				fs.Debugf(nil, "doChangeNotify(%q, %+v)", x, e)
 				if strings.HasPrefix(x, file1.Path[:5]) || strings.HasPrefix(x, file2.Path[:5]) {
 					fs.Debugf(nil, "Ignoring notify for file1 or file2: %q, %v", x, e)
 					return
 				}
+				mutex.Lock()
 				if e == fs.EntryDirectory {
 					dirChanges[x] = struct{}{}
 				} else if e == fs.EntryObject {
 					objChanges[x] = struct{}{}
 				}
+				mutex.Unlock()
 			}, pollInterval)
 			defer func() { close(pollInterval) }()
 			pollInterval <- time.Second
@@ -928,7 +932,9 @@ func Run(t *testing.T, opt *Opt) {
 			wantObjChanges := []string{"dir/file2", "dir/file4", "dir/file3"}
 			ok := false
 			for tries := 1; tries < 10; tries++ {
+				mutex.Lock()
 				ok = contains(dirChanges, wantDirChanges) && contains(objChanges, wantObjChanges)
+				mutex.Unlock()
 				if ok {
 					break
 				}
