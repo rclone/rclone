@@ -39,7 +39,7 @@ func init() {
 		Description: "Encrypt/Decrypt Cryptomator-format vaults",
 		NewFs:       NewFs,
 		MetadataInfo: &fs.MetadataInfo{
-			Help: `Any metadata supported by the underlying remote is read and written`,
+			Help: `Any metadata supported by the underlying remote is read and written.`,
 		},
 		Options: []fs.Option{{
 			Name:     "remote",
