@@ -41,6 +41,7 @@ See the following for detailed instructions for
 - [Cloudinary](/cloudinary/)
 - [Combine](/combine/)
 - [Crypt](/crypt/) - to encrypt other remotes
+- [Cryptomator](/cryptomator/) - to access Cryptomator vaults on other remotes
 - [DigitalOcean Spaces](/s3/#digitalocean-spaces)
 - [Digi Storage](/koofr/#digi-storage)
 - [dosya.dev](/dosya/)
