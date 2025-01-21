@@ -459,7 +459,7 @@ func Run(t *testing.T, opt *Opt) {
 	subRemoteName, subRemoteLeaf, err = fstest.RandomRemoteName(remoteName)
 	require.NoError(t, err)
 	f, err = fs.NewFs(context.Background(), subRemoteName)
-	if err == fs.ErrorNotFoundInConfigFile {
+	if errors.Is(err, fs.ErrorNotFoundInConfigFile) {
 		t.Logf("Didn't find %q in config file - skipping tests", remoteName)
 		return
 	}
@@ -2391,7 +2391,7 @@ func Run(t *testing.T, opt *Opt) {
 					var itemCopy = item
 					itemCopy.Path += ".copy"
 
-					// Set copy cutoff to mininum value so we make chunks
+					// Set copy cutoff to minimum value so we make chunks
 					origCutoff, err := do.SetCopyCutoff(minChunkSize)
 					require.NoError(t, err)
 					defer func() {

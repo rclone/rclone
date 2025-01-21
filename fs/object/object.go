@@ -297,7 +297,7 @@ func (o *MemoryObject) Open(ctx context.Context, options ...fs.OpenOption) (io.R
 
 // Update in to the object with the modTime given of the given size
 //
-// This re-uses the internal buffer if at all possible.
+// This reuses the internal buffer if at all possible.
 func (o *MemoryObject) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (err error) {
 	size := src.Size()
 	if size == 0 {

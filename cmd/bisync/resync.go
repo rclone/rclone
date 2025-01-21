@@ -15,7 +15,7 @@ import (
 // and either flag is sufficient without the other.
 func (b *bisyncRun) setResyncDefaults() {
 	if b.opt.Resync && b.opt.ResyncMode == PreferNone {
-		fs.Debugf(nil, Color(terminal.Dim, "defaulting to --resync-mode path1 as --resync is set")) //nolint:govet
+		fs.Debug(nil, Color(terminal.Dim, "defaulting to --resync-mode path1 as --resync is set"))
 		b.opt.ResyncMode = PreferPath1
 	}
 	if b.opt.ResyncMode != PreferNone {

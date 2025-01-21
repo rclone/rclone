@@ -938,8 +938,9 @@ You can set custom upload headers with the `--header-upload` flag.
 - Content-Encoding
 - Content-Language
 - Content-Type
+- X-MS-Tags
 
-Eg `--header-upload "Content-Type: text/potato"`
+Eg `--header-upload "Content-Type: text/potato"` or `--header-upload "X-MS-Tags: foo=bar"`
 
 ## Limitations
 

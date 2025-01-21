@@ -131,18 +131,18 @@ func Bisync(ctx context.Context, fs1, fs2 fs.Fs, optArg *Options) (err error) {
 		finaliseOnce.Do(func() {
 			if atexit.Signalled() {
 				if b.opt.Resync {
-					fs.Logf(nil, Color(terminal.GreenFg, "No need to gracefully shutdown during --resync (just run it again.)")) //nolint:govet
+					fs.Log(nil, Color(terminal.GreenFg, "No need to gracefully shutdown during --resync (just run it again.)"))
 				} else {
-					fs.Logf(nil, Color(terminal.YellowFg, "Attempting to gracefully shutdown. (Send exit signal again for immediate un-graceful shutdown.)")) //nolint:govet
+					fs.Log(nil, Color(terminal.YellowFg, "Attempting to gracefully shutdown. (Send exit signal again for immediate un-graceful shutdown.)"))
 					b.InGracefulShutdown = true
 					if b.SyncCI != nil {
-						fs.Infof(nil, Color(terminal.YellowFg, "Telling Sync to wrap up early.")) //nolint:govet
+						fs.Infoc(nil, Color(terminal.YellowFg, "Telling Sync to wrap up early."))
 						b.SyncCI.MaxTransfer = 1
 						b.SyncCI.MaxDuration = 1 * time.Second
 						b.SyncCI.CutoffMode = fs.CutoffModeSoft
 						gracePeriod := 30 * time.Second // TODO: flag to customize this?
 						if !waitFor("Canceling Sync if not done in", gracePeriod, func() bool { return b.CleanupCompleted }) {
-							fs.Logf(nil, Color(terminal.YellowFg, "Canceling sync and cleaning up")) //nolint:govet
+							fs.Log(nil, Color(terminal.YellowFg, "Canceling sync and cleaning up"))
 							b.CancelSync()
 							waitFor("Aborting Bisync if not done in", 60*time.Second, func() bool { return b.CleanupCompleted })
 						}
@@ -150,13 +150,13 @@ func Bisync(ctx context.Context, fs1, fs2 fs.Fs, optArg *Options) (err error) {
 						// we haven't started to sync yet, so we're good.
 						// no need to worry about the listing files, as we haven't overwritten them yet.
 						b.CleanupCompleted = true
-						fs.Logf(nil, Color(terminal.GreenFg, "Graceful shutdown completed successfully.")) //nolint:govet
+						fs.Log(nil, Color(terminal.GreenFg, "Graceful shutdown completed successfully."))
 					}
 				}
 				if !b.CleanupCompleted {
 					if !b.opt.Resync {
-						fs.Logf(nil, Color(terminal.HiRedFg, "Graceful shutdown failed."))                       //nolint:govet
-						fs.Logf(nil, Color(terminal.RedFg, "Bisync interrupted. Must run --resync to recover.")) //nolint:govet
+						fs.Log(nil, Color(terminal.HiRedFg, "Graceful shutdown failed."))
+						fs.Log(nil, Color(terminal.RedFg, "Bisync interrupted. Must run --resync to recover."))
 					}
 					markFailed(b.listing1)
 					markFailed(b.listing2)
@@ -180,14 +180,14 @@ func Bisync(ctx context.Context, fs1, fs2 fs.Fs, optArg *Options) (err error) {
 			b.critical = false
 		}
 		if err == nil {
-			fs.Logf(nil, Color(terminal.GreenFg, "Graceful shutdown completed successfully.")) //nolint:govet
+			fs.Log(nil, Color(terminal.GreenFg, "Graceful shutdown completed successfully."))
 		}
 	}
 
 	if b.critical {
 		if b.retryable && b.opt.Resilient {
-			fs.Errorf(nil, Color(terminal.RedFg, "Bisync critical error: %v"), err)                                                  //nolint:govet
-			fs.Errorf(nil, Color(terminal.YellowFg, "Bisync aborted. Error is retryable without --resync due to --resilient mode.")) //nolint:govet
+			fs.Errorf(nil, Color(terminal.RedFg, "Bisync critical error: %v"), err)
+			fs.Error(nil, Color(terminal.YellowFg, "Bisync aborted. Error is retryable without --resync due to --resilient mode."))
 		} else {
 			if bilib.FileExists(b.listing1) {
 				_ = os.Rename(b.listing1, b.listing1+"-err")
@@ -196,15 +196,15 @@ func Bisync(ctx context.Context, fs1, fs2 fs.Fs, optArg *Options) (err error) {
 				_ = os.Rename(b.listing2, b.listing2+"-err")
 			}
 			fs.Errorf(nil, Color(terminal.RedFg, "Bisync critical error: %v"), err)
-			fs.Errorf(nil, Color(terminal.RedFg, "Bisync aborted. Must run --resync to recover.")) //nolint:govet
+			fs.Error(nil, Color(terminal.RedFg, "Bisync aborted. Must run --resync to recover."))
 		}
 		return ErrBisyncAborted
 	}
 	if b.abort && !b.InGracefulShutdown {
-		fs.Logf(nil, Color(terminal.RedFg, "Bisync aborted. Please try again.")) //nolint:govet
+		fs.Log(nil, Color(terminal.RedFg, "Bisync aborted. Please try again."))
 	}
 	if err == nil {
-		fs.Infof(nil, Color(terminal.GreenFg, "Bisync successful")) //nolint:govet
+		fs.Infoc(nil, Color(terminal.GreenFg, "Bisync successful"))
 	}
 	return err
 }
@@ -270,7 +270,7 @@ func (b *bisyncRun) runLocked(octx context.Context) (err error) {
 		if b.opt.Recover && bilib.FileExists(b.listing1+"-old") && bilib.FileExists(b.listing2+"-old") {
 			errTip := fmt.Sprintf(Color(terminal.CyanFg, "Path1: %s\n"), Color(terminal.HiBlueFg, b.listing1))
 			errTip += fmt.Sprintf(Color(terminal.CyanFg, "Path2: %s"), Color(terminal.HiBlueFg, b.listing2))
-			fs.Logf(nil, Color(terminal.YellowFg, "Listings not found. Reverting to prior backup as --recover is set. \n")+errTip) //nolint:govet
+			fs.Log(nil, Color(terminal.YellowFg, "Listings not found. Reverting to prior backup as --recover is set. \n")+errTip)
 			if opt.CheckSync != CheckSyncFalse {
 				// Run CheckSync to ensure old listing is valid (garbage in, garbage out!)
 				fs.Infof(nil, "Validating backup listings for Path1 %s vs Path2 %s", quotePath(path1), quotePath(path2))
@@ -279,7 +279,7 @@ func (b *bisyncRun) runLocked(octx context.Context) (err error) {
 					b.retryable = true
 					return err
 				}
-				fs.Infof(nil, Color(terminal.GreenFg, "Backup listing is valid.")) //nolint:govet
+				fs.Infoc(nil, Color(terminal.GreenFg, "Backup listing is valid."))
 			}
 			b.revertToOldListings()
 		} else {
@@ -299,7 +299,7 @@ func (b *bisyncRun) runLocked(octx context.Context) (err error) {
 	fs.Infof(nil, "Building Path1 and Path2 listings")
 	ls1, ls2, err = b.makeMarchListing(fctx)
 	if err != nil || accounting.Stats(fctx).Errored() {
-		fs.Errorf(nil, Color(terminal.RedFg, "There were errors while building listings. Aborting as it is too dangerous to continue.")) //nolint:govet
+		fs.Error(nil, Color(terminal.RedFg, "There were errors while building listings. Aborting as it is too dangerous to continue."))
 		b.critical = true
 		b.retryable = true
 		return err
@@ -623,7 +623,7 @@ func (b *bisyncRun) checkSyntax() error {
 
 func (b *bisyncRun) debug(nametocheck, msgiftrue string) {
 	if b.DebugName != "" && b.DebugName == nametocheck {
-		fs.Infof(Color(terminal.MagentaBg, "DEBUGNAME "+b.DebugName), Color(terminal.MagentaBg, msgiftrue)) //nolint:govet
+		fs.Infoc(Color(terminal.MagentaBg, "DEBUGNAME "+b.DebugName), Color(terminal.MagentaBg, msgiftrue))
 	}
 }
 

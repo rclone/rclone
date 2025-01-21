@@ -77,6 +77,16 @@ Leave blank if not sure.
 `,
 			Sensitive: true,
 		}, {
+			Name: "use_kerberos",
+			Help: `Use Kerberos authentication.
+
+If set, rclone will use Kerberos authentication instead of NTLM. This
+requires a valid Kerberos configuration and credentials cache to be
+available, either in the default locations or as specified by the
+KRB5_CONFIG and KRB5CCNAME environment variables.
+`,
+			Default: false,
+		}, {
 			Name:    "idle_timeout",
 			Default: fs.Duration(60 * time.Second),
 			Help: `Max time before closing idle connections.
@@ -126,6 +136,7 @@ type Options struct {
 	Pass            string      `config:"pass"`
 	Domain          string      `config:"domain"`
 	SPN             string      `config:"spn"`
+	UseKerberos     bool        `config:"use_kerberos"`
 	HideSpecial     bool        `config:"hide_special_share"`
 	CaseInsensitive bool        `config:"case_insensitive"`
 	IdleTimeout     fs.Duration `config:"idle_timeout"`

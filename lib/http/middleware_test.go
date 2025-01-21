@@ -14,11 +14,13 @@ import (
 
 func TestMiddlewareAuth(t *testing.T) {
 	servers := []struct {
-		name string
-		http Config
-		auth AuthConfig
-		user string
-		pass string
+		name         string
+		expectedUser string
+		remoteUser   string
+		http         Config
+		auth         AuthConfig
+		user         string
+		pass         string
 	}{
 		{
 			name: "Basic",
@@ -85,9 +87,32 @@ func TestMiddlewareAuth(t *testing.T) {
 			},
 			user: "custom",
 			pass: "custom",
+		}, {
+			name:         "UserFromHeader",
+			remoteUser:   "remoteUser",
+			expectedUser: "remoteUser",
+			http: Config{
+				ListenAddr: []string{"127.0.0.1:0"},
+			},
+			auth: AuthConfig{
+				UserFromHeader: "X-Remote-User",
+			},
+		}, {
+			name:         "UserFromHeader/MixedWithHtPasswd",
+			remoteUser:   "remoteUser",
+			expectedUser: "md5",
+			http: Config{
+				ListenAddr: []string{"127.0.0.1:0"},
+			},
+			auth: AuthConfig{
+				UserFromHeader: "X-Remote-User",
+				Realm:          "test",
+				HtPasswd:       "./testdata/.htpasswd",
+			},
+			user: "md5",
+			pass: "md5",
 		},
 	}
-
 	for _, ss := range servers {
 		t.Run(ss.name, func(t *testing.T) {
 			s, err := NewServer(context.Background(), WithConfig(ss.http), WithAuth(ss.auth))
@@ -97,7 +122,12 @@ func TestMiddlewareAuth(t *testing.T) {
 			}()
 
 			expected := []byte("secret-page")
-			s.Router().Mount("/", testEchoHandler(expected))
+			if ss.expectedUser != "" {
+				s.Router().Mount("/", testAuthUserHandler())
+			} else {
+				s.Router().Mount("/", testEchoHandler(expected))
+			}
+
 			s.Serve()
 
 			url := testGetServerURL(t, s)
@@ -114,18 +144,24 @@ func TestMiddlewareAuth(t *testing.T) {
 				}()
 
 				require.Equal(t, http.StatusUnauthorized, resp.StatusCode, "using no creds should return unauthorized")
-
-				wwwAuthHeader := resp.Header.Get("WWW-Authenticate")
-				require.NotEmpty(t, wwwAuthHeader, "resp should contain WWW-Authtentication header")
-				require.Contains(t, wwwAuthHeader, fmt.Sprintf("realm=%q", ss.auth.Realm), "WWW-Authtentication header should contain relam")
+				if ss.auth.UserFromHeader == "" {
+					wwwAuthHeader := resp.Header.Get("WWW-Authenticate")
+					require.NotEmpty(t, wwwAuthHeader, "resp should contain WWW-Authtentication header")
+					require.Contains(t, wwwAuthHeader, fmt.Sprintf("realm=%q", ss.auth.Realm), "WWW-Authtentication header should contain relam")
+				}
 			})
-
 			t.Run("BadCreds", func(t *testing.T) {
 				client := &http.Client{}
 				req, err := http.NewRequest("GET", url, nil)
 				require.NoError(t, err)
 
-				req.SetBasicAuth(ss.user+"BAD", ss.pass+"BAD")
+				if ss.user != "" {
+					req.SetBasicAuth(ss.user+"BAD", ss.pass+"BAD")
+				}
+
+				if ss.auth.UserFromHeader != "" {
+					req.Header.Set(ss.auth.UserFromHeader, "/test:")
+				}
 
 				resp, err := client.Do(req)
 				require.NoError(t, err)
@@ -134,10 +170,11 @@ func TestMiddlewareAuth(t *testing.T) {
 				}()
 
 				require.Equal(t, http.StatusUnauthorized, resp.StatusCode, "using bad creds should return unauthorized")
-
-				wwwAuthHeader := resp.Header.Get("WWW-Authenticate")
-				require.NotEmpty(t, wwwAuthHeader, "resp should contain WWW-Authtentication header")
-				require.Contains(t, wwwAuthHeader, fmt.Sprintf("realm=%q", ss.auth.Realm), "WWW-Authtentication header should contain relam")
+				if ss.auth.UserFromHeader == "" {
+					wwwAuthHeader := resp.Header.Get("WWW-Authenticate")
+					require.NotEmpty(t, wwwAuthHeader, "resp should contain WWW-Authtentication header")
+					require.Contains(t, wwwAuthHeader, fmt.Sprintf("realm=%q", ss.auth.Realm), "WWW-Authtentication header should contain relam")
+				}
 			})
 
 			t.Run("GoodCreds", func(t *testing.T) {
@@ -145,7 +182,13 @@ func TestMiddlewareAuth(t *testing.T) {
 				req, err := http.NewRequest("GET", url, nil)
 				require.NoError(t, err)
 
-				req.SetBasicAuth(ss.user, ss.pass)
+				if ss.user != "" {
+					req.SetBasicAuth(ss.user, ss.pass)
+				}
+
+				if ss.auth.UserFromHeader != "" {
+					req.Header.Set(ss.auth.UserFromHeader, ss.remoteUser)
+				}
 
 				resp, err := client.Do(req)
 				require.NoError(t, err)
@@ -155,7 +198,11 @@ func TestMiddlewareAuth(t *testing.T) {
 
 				require.Equal(t, http.StatusOK, resp.StatusCode, "using good creds should return ok")
 
-				testExpectRespBody(t, resp, expected)
+				if ss.expectedUser != "" {
+					testExpectRespBody(t, resp, []byte(ss.expectedUser))
+				} else {
+					testExpectRespBody(t, resp, expected)
+				}
 			})
 		})
 	}

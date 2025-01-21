@@ -5,6 +5,7 @@ import (
 	"crypto/sha1"
 	"fmt"
 	"path"
+	"sort"
 	"strings"
 	"testing"
 	"time"
@@ -13,6 +14,7 @@ import (
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/cache"
 	"github.com/rclone/rclone/fs/hash"
+	"github.com/rclone/rclone/fs/object"
 	"github.com/rclone/rclone/fstest"
 	"github.com/rclone/rclone/fstest/fstests"
 	"github.com/rclone/rclone/lib/bucket"
@@ -463,24 +465,161 @@ func (f *Fs) InternalTestVersions(t *testing.T) {
 	})
 
 	t.Run("Cleanup", func(t *testing.T) {
-		require.NoError(t, f.cleanUp(ctx, true, false, 0))
-		items := append([]fstest.Item{newItem}, fstests.InternalTestFiles...)
-		fstest.CheckListing(t, f, items)
-		// Set --b2-versions for this test
-		f.opt.Versions = true
-		defer func() {
-			f.opt.Versions = false
-		}()
-		fstest.CheckListing(t, f, items)
+		t.Run("DryRun", func(t *testing.T) {
+			f.opt.Versions = true
+			defer func() {
+				f.opt.Versions = false
+			}()
+			// Listing should be unchanged after dry run
+			before := listAllFiles(ctx, t, f, dirName)
+			ctx, ci := fs.AddConfig(ctx)
+			ci.DryRun = true
+			require.NoError(t, f.cleanUp(ctx, true, false, 0))
+			after := listAllFiles(ctx, t, f, dirName)
+			assert.Equal(t, before, after)
+		})
+
+		t.Run("RealThing", func(t *testing.T) {
+			f.opt.Versions = true
+			defer func() {
+				f.opt.Versions = false
+			}()
+			// Listing should reflect current state after cleanup
+			require.NoError(t, f.cleanUp(ctx, true, false, 0))
+			items := append([]fstest.Item{newItem}, fstests.InternalTestFiles...)
+			fstest.CheckListing(t, f, items)
+		})
 	})
 
 	// Purge gets tested later
+}
+
+func (f *Fs) InternalTestCleanupUnfinished(t *testing.T) {
+	ctx := context.Background()
+
+	// B2CleanupHidden tests cleaning up hidden files
+	t.Run("CleanupUnfinished", func(t *testing.T) {
+		dirName := "unfinished"
+		fileCount := 5
+		expectedFiles := []string{}
+		for i := 1; i < fileCount; i++ {
+			fileName := fmt.Sprintf("%s/unfinished-%d", dirName, i)
+			expectedFiles = append(expectedFiles, fileName)
+			obj := &Object{
+				fs:     f,
+				remote: fileName,
+			}
+			objInfo := object.NewStaticObjectInfo(fileName, fstest.Time("2002-02-03T04:05:06.499999999Z"), -1, true, nil, nil)
+			_, err := f.newLargeUpload(ctx, obj, nil, objInfo, f.opt.ChunkSize, false, nil)
+			require.NoError(t, err)
+		}
+		checkListing(ctx, t, f, dirName, expectedFiles)
+
+		t.Run("DryRun", func(t *testing.T) {
+			// Listing should not change after dry run
+			ctx, ci := fs.AddConfig(ctx)
+			ci.DryRun = true
+			require.NoError(t, f.cleanUp(ctx, false, true, 0))
+			checkListing(ctx, t, f, dirName, expectedFiles)
+		})
+
+		t.Run("RealThing", func(t *testing.T) {
+			// Listing should be empty after real cleanup
+			require.NoError(t, f.cleanUp(ctx, false, true, 0))
+			checkListing(ctx, t, f, dirName, []string{})
+		})
+	})
+}
+
+func listAllFiles(ctx context.Context, t *testing.T, f *Fs, dirName string) []string {
+	bucket, directory := f.split(dirName)
+	foundFiles := []string{}
+	require.NoError(t, f.list(ctx, bucket, directory, "", false, true, 0, true, false, func(remote string, object *api.File, isDirectory bool) error {
+		if !isDirectory {
+			foundFiles = append(foundFiles, object.Name)
+		}
+		return nil
+	}))
+	sort.Strings(foundFiles)
+	return foundFiles
+}
+
+func checkListing(ctx context.Context, t *testing.T, f *Fs, dirName string, expectedFiles []string) {
+	foundFiles := listAllFiles(ctx, t, f, dirName)
+	sort.Strings(expectedFiles)
+	assert.Equal(t, expectedFiles, foundFiles)
+}
+
+func (f *Fs) InternalTestLifecycleRules(t *testing.T) {
+	ctx := context.Background()
+
+	opt := map[string]string{}
+
+	t.Run("InitState", func(t *testing.T) {
+		// There should be no lifecycle rules at the outset
+		lifecycleRulesIf, err := f.lifecycleCommand(ctx, "lifecycle", nil, opt)
+		lifecycleRules := lifecycleRulesIf.([]api.LifecycleRule)
+		require.NoError(t, err)
+		assert.Equal(t, 0, len(lifecycleRules))
+	})
+
+	t.Run("DryRun", func(t *testing.T) {
+		// There should still be no lifecycle rules after each dry run operation
+		ctx, ci := fs.AddConfig(ctx)
+		ci.DryRun = true
+
+		opt["daysFromHidingToDeleting"] = "30"
+		lifecycleRulesIf, err := f.lifecycleCommand(ctx, "lifecycle", nil, opt)
+		lifecycleRules := lifecycleRulesIf.([]api.LifecycleRule)
+		require.NoError(t, err)
+		assert.Equal(t, 0, len(lifecycleRules))
+
+		delete(opt, "daysFromHidingToDeleting")
+		opt["daysFromUploadingToHiding"] = "40"
+		lifecycleRulesIf, err = f.lifecycleCommand(ctx, "lifecycle", nil, opt)
+		lifecycleRules = lifecycleRulesIf.([]api.LifecycleRule)
+		require.NoError(t, err)
+		assert.Equal(t, 0, len(lifecycleRules))
+
+		opt["daysFromHidingToDeleting"] = "30"
+		lifecycleRulesIf, err = f.lifecycleCommand(ctx, "lifecycle", nil, opt)
+		lifecycleRules = lifecycleRulesIf.([]api.LifecycleRule)
+		require.NoError(t, err)
+		assert.Equal(t, 0, len(lifecycleRules))
+	})
+
+	t.Run("RealThing", func(t *testing.T) {
+		opt["daysFromHidingToDeleting"] = "30"
+		lifecycleRulesIf, err := f.lifecycleCommand(ctx, "lifecycle", nil, opt)
+		lifecycleRules := lifecycleRulesIf.([]api.LifecycleRule)
+		require.NoError(t, err)
+		assert.Equal(t, 1, len(lifecycleRules))
+		assert.Equal(t, 30, *lifecycleRules[0].DaysFromHidingToDeleting)
+
+		delete(opt, "daysFromHidingToDeleting")
+		opt["daysFromUploadingToHiding"] = "40"
+		lifecycleRulesIf, err = f.lifecycleCommand(ctx, "lifecycle", nil, opt)
+		lifecycleRules = lifecycleRulesIf.([]api.LifecycleRule)
+		require.NoError(t, err)
+		assert.Equal(t, 1, len(lifecycleRules))
+		assert.Equal(t, 40, *lifecycleRules[0].DaysFromUploadingToHiding)
+
+		opt["daysFromHidingToDeleting"] = "30"
+		lifecycleRulesIf, err = f.lifecycleCommand(ctx, "lifecycle", nil, opt)
+		lifecycleRules = lifecycleRulesIf.([]api.LifecycleRule)
+		require.NoError(t, err)
+		assert.Equal(t, 1, len(lifecycleRules))
+		assert.Equal(t, 30, *lifecycleRules[0].DaysFromHidingToDeleting)
+		assert.Equal(t, 40, *lifecycleRules[0].DaysFromUploadingToHiding)
+	})
 }
 
 // -run TestIntegration/FsMkdir/FsPutFiles/Internal
 func (f *Fs) InternalTest(t *testing.T) {
 	t.Run("Metadata", f.InternalTestMetadata)
 	t.Run("Versions", f.InternalTestVersions)
+	t.Run("CleanupUnfinished", f.InternalTestCleanupUnfinished)
+	t.Run("LifecycleRules", f.InternalTestLifecycleRules)
 }
 
 var _ fstests.InternalTester = (*Fs)(nil)

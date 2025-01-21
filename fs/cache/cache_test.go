@@ -131,7 +131,7 @@ func TestPutErr(t *testing.T) {
 	assert.Equal(t, 1, Entries())
 
 	fNew, err := GetFn(context.Background(), "mock:/", create)
-	require.Equal(t, fs.ErrorNotFoundInConfigFile, err)
+	require.True(t, errors.Is(err, fs.ErrorNotFoundInConfigFile))
 	require.Equal(t, f, fNew)
 
 	assert.Equal(t, 1, Entries())
@@ -141,7 +141,7 @@ func TestPutErr(t *testing.T) {
 	PutErr("mock:/file.txt", f, fs.ErrorNotFoundInConfigFile)
 
 	fNew, err = GetFn(context.Background(), "mock:/file.txt", create)
-	require.Equal(t, fs.ErrorNotFoundInConfigFile, err)
+	require.True(t, errors.Is(err, fs.ErrorNotFoundInConfigFile))
 	require.Equal(t, f, fNew)
 
 	assert.Equal(t, 1, Entries())
