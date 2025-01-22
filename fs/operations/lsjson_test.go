@@ -404,23 +404,3 @@ func TestStatJSON(t *testing.T) {
 		assert.True(t, err != nil || f.Features().BucketBased, "Need an error for non bucket based backends")
 	})
 }
-
-//func TestAutoFilename(t *testing.T) {
-//	ctx := context.Background()
-//	r := fstest.NewRun(t)
-//	file1 := r.WriteBoth(ctx, "file1", "file1", t1)
-//	r.CheckRemoteItems(t, file1)
-//
-//	// Metadata update for "AutoFilename" test case
-//	if item.Metadata == nil {
-//		item.Metadata = fs.Metadata{}
-//	}
-//	item.Metadata["Content-Disposition"] = "attachment; filename=\"file_name_from_metadata\""
-//
-//	got, err := operations.StatJSON(ctx, r.Fremote, "file1", &operations.ListJSONOpt{
-//		AutoFilename: true,
-//	})
-//	require.NoError(t, err)
-//	require.NotNil(t, got)
-//	assert.Equal(t, "file_name_from_metadata", got.Name)
-//}
