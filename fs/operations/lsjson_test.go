@@ -2,6 +2,7 @@ package operations_test
 
 import (
 	"context"
+	"github.com/rclone/rclone/fstest/fstests"
 	"sort"
 	"testing"
 	"time"
@@ -403,4 +404,16 @@ func TestStatJSON(t *testing.T) {
 		// This should return an error except for bucket based remotes
 		assert.True(t, err != nil || f.Features().BucketBased, "Need an error for non bucket based backends")
 	})
+}
+
+func TestStatJsonAutoFilename(t *testing.T) {
+	ctx := context.Background()
+	r := fstest.NewRun(t)
+	file1 := fstest.Item{Path: "file1", ModTime: t1, Size: 5}
+	metadata := fs.Metadata{"content-disposition": "Attachment; filename=file1.txt"}
+	fstests.PutTestContentsMetadata(ctx, t, r.Fremote, &file1, false, "file1", true, "", metadata)
+	got, err := operations.StatJSON(ctx, r.Fremote, "file1", &operations.ListJSONOpt{AutoFilename: true})
+	require.NoError(t, err)
+	require.NotNil(t, got)
+	assert.Equal(t, "file1.txt", got.Name)
 }
