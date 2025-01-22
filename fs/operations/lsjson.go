@@ -207,6 +207,9 @@ func (lj *listJSON) entry(ctx context.Context, entry fs.DirEntry) (*ListJSONItem
 		var parsedName string
 		if metadata != nil && metadata["content-disposition"] != "" {
 			parsedName, err = parseFilenameFromContentDisposition(metadata["content-disposition"])
+			if err != nil {
+				fs.Errorf(entry, "Failed to parse filename from content-disposition: %v", err)
+			}
 		}
 		if parsedName != "" {
 			name = parsedName
