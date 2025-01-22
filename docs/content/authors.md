@@ -936,3 +936,4 @@ put them back in again.` >}}
   * Bruno Fernandes <bruno.fernandes1996@hotmail.com>
   * Corentin Barreau <corentin@archive.org>
   * hiddenmarten <hiddenmarten@gmail.com>
+  * Trevor Starick <trevor.starick@gmail.com>
