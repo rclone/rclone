@@ -39,6 +39,7 @@ type Features struct {
 	NoMultiThreading         bool // set if can't have multiplethreads on one download open
 	Overlay                  bool // this wraps one or more backends to add functionality
 	ChunkWriterDoesntSeek    bool // set if the chunk writer doesn't need to read the data more than once
+	DoubleSlash              bool // set if backend supports double slashes in paths
 
 	// Purge all files in the directory specified
 	//
@@ -383,6 +384,8 @@ func (ft *Features) Mask(ctx context.Context, f Fs) *Features {
 	ft.PartialUploads = ft.PartialUploads && mask.PartialUploads
 	ft.NoMultiThreading = ft.NoMultiThreading && mask.NoMultiThreading
 	// ft.Overlay = ft.Overlay && mask.Overlay don't propagate Overlay
+	ft.ChunkWriterDoesntSeek = ft.ChunkWriterDoesntSeek && mask.ChunkWriterDoesntSeek
+	ft.DoubleSlash = ft.DoubleSlash && mask.DoubleSlash
 
 	if mask.Purge == nil {
 		ft.Purge = nil
