@@ -2,14 +2,14 @@ package serve
 
 import (
 	"context"
-	"github.com/rclone/rclone/fs"
-	"github.com/rclone/rclone/fs/object"
 	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 	"time"
 
+	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/object"
 	"github.com/rclone/rclone/fstest/mockobject"
 	"github.com/stretchr/testify/assert"
 )
