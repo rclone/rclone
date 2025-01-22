@@ -39,6 +39,15 @@ func Object(w http.ResponseWriter, r *http.Request, o fs.Object) {
 	modTime := o.ModTime(r.Context())
 	w.Header().Set("Last-Modified", modTime.UTC().Format(http.TimeFormat))
 
+	// Set content disposition if available
+	metadata, err := fs.GetMetadata(r.Context(), o)
+	if err != nil {
+		fs.Debugf(o, "Request get metadata error: %v", err)
+	}
+	if metadata != nil && metadata["content-disposition"] != "" {
+		w.Header().Set("Content-Disposition", metadata["content-disposition"])
+	}
+
 	if r.Method == "HEAD" {
 		return
 	}
