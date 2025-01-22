@@ -932,3 +932,4 @@ put them back in again.` >}}
   * Tim White <tim.white@su.org.au>
   * Robin Schneider <robin.schneider@stackit.cloud>
   * izouxv <izouxv@users.noreply.github.com>
+  * Moises Lima <mozlima@users.noreply.github.com>
