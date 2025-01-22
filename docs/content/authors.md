@@ -929,3 +929,4 @@ put them back in again.` >}}
   * Spencer McCullough <mccullough.spencer@gmail.com>
   * Jonathan Giannuzzi <jonathan@giannuzzi.me>
   * Christoph Berger <github@christophberger.com>
+  * Tim White <tim.white@su.org.au>
