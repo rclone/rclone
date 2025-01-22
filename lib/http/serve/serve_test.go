@@ -2,6 +2,8 @@ package serve
 
 import (
 	"context"
+	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/object"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -81,4 +83,14 @@ func TestObjectBadRange(t *testing.T) {
 	}
 	body, _ := io.ReadAll(resp.Body)
 	assert.Equal(t, "Bad Request\n", string(body))
+}
+
+func TestObjectHEADContentDisposition(t *testing.T) {
+	w := httptest.NewRecorder()
+	r := httptest.NewRequest("HEAD", "http://example.com/aFile", nil)
+	m := fs.Metadata{"content-disposition": "inline"}
+	o := object.NewMemoryObject("aFile", time.Now(), []byte("")).WithMetadata(m)
+	Object(w, r, o)
+	resp := w.Result()
+	assert.Equal(t, "inline", resp.Header.Get("Content-Disposition"))
 }
