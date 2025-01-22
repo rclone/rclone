@@ -935,3 +935,4 @@ put them back in again.` >}}
   * Moises Lima <mozlima@users.noreply.github.com>
   * Bruno Fernandes <bruno.fernandes1996@hotmail.com>
   * Corentin Barreau <corentin@archive.org>
+  * hiddenmarten <hiddenmarten@gmail.com>
