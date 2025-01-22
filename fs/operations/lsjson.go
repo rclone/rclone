@@ -85,6 +85,7 @@ type ListJSONOpt struct {
 	DirsOnly      bool     `json:"dirsOnly"`
 	FilesOnly     bool     `json:"filesOnly"`
 	Metadata      bool     `json:"metadata"`
+	AutoFilename  bool     `json:"autoFilename"`
 	HashTypes     []string `json:"hashTypes"` // hash types to show if ShowHash is set, e.g. "MD5", "SHA-1"
 }
 
@@ -195,22 +196,22 @@ func (lj *listJSON) entry(ctx context.Context, entry fs.DirEntry) (*ListJSONItem
 		fs.Errorf(nil, "Unknown type %T in listing", entry)
 	}
 
-	// Read the metadata if required
-	meta, err := fs.GetMetadata(ctx, entry)
-	if err != nil {
-		fs.Errorf(entry, "Failed to read metadata: %v", err)
-	}
-
-	// Extract the name from the metadata if possible
-	var name string
-	if meta != nil && meta["content-disposition"] != "" {
-		name, err = parseFilenameFromContentDisposition(meta["content-disposition"])
+	// Extract the name from the metadata if requested
+	name := path.Base(entry.Remote())
+	if lj.opt.AutoFilename {
+		// Get metadata
+		metadata, err := fs.GetMetadata(ctx, entry)
 		if err != nil {
-			fs.Errorf(entry, "Failed to parse filename from Content-Disposition: %v", err)
-			name = path.Base(entry.Remote())
+			fs.Errorf(entry, "Failed to read metadata: %v", err)
 		}
-	} else {
-		name = path.Base(entry.Remote())
+		// Parse the filename from the metadata
+		var parsedName string
+		if metadata != nil && metadata["content-disposition"] != "" {
+			parsedName, err = parseFilenameFromContentDisposition(metadata["content-disposition"])
+		}
+		if parsedName != "" {
+			name = parsedName
+		}
 	}
 
 	item := &ListJSONItem{
