@@ -2,7 +2,6 @@ package operations_test
 
 import (
 	"context"
-	"github.com/rclone/rclone/fstest/fstests"
 	"sort"
 	"testing"
 	"time"
@@ -10,6 +9,7 @@ import (
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/fstest"
+	"github.com/rclone/rclone/fstest/fstests"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
