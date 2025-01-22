@@ -347,7 +347,7 @@ type Options struct {
 	UseMSI                     bool                 `config:"use_msi"`
 	MSIObjectID                string               `config:"msi_object_id"`
 	MSIClientID                string               `config:"msi_client_id"`
-	MSIResourceID              string               `config:"msi_mi_res_id"`	
+	MSIResourceID              string               `config:"msi_mi_res_id"`
 	UseAZ                      bool                 `config:"use_az"`
 	Endpoint                   string               `config:"endpoint"`
 	ChunkSize                  fs.SizeSuffix        `config:"chunk_size"`
