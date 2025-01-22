@@ -193,6 +193,7 @@ func TestListJSON(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			var got []*operations.ListJSONItem
 			require.NoError(t, operations.ListJSON(ctx, r.Fremote, test.remote, &test.opt, func(item *operations.ListJSONItem) error {
+				got = append(got, item)
 				return nil
 			}))
 			sort.Slice(got, func(i, j int) bool {
@@ -384,7 +385,6 @@ func TestStatJSON(t *testing.T) {
 		},
 	} {
 		t.Run(test.name, func(t *testing.T) {
-			// Metadata update for "AutoFilename" test case
 			got, err := operations.StatJSON(ctx, r.Fremote, test.remote, &test.opt)
 			require.NoError(t, err)
 			if test.want == nil {
