@@ -85,7 +85,6 @@ type ListJSONOpt struct {
 	DirsOnly      bool     `json:"dirsOnly"`
 	FilesOnly     bool     `json:"filesOnly"`
 	Metadata      bool     `json:"metadata"`
-	AutoFilename  bool     `json:"autoFilename"`
 	HashTypes     []string `json:"hashTypes"` // hash types to show if ShowHash is set, e.g. "MD5", "SHA-1"
 }
 
@@ -196,9 +195,11 @@ func (lj *listJSON) entry(ctx context.Context, entry fs.DirEntry) (*ListJSONItem
 		fs.Errorf(nil, "Unknown type %T in listing", entry)
 	}
 
-	// Extract the name from the metadata if requested
+	// Get default name
 	name := path.Base(entry.Remote())
-	if lj.opt.AutoFilename {
+
+	// Extract the name from the metadata if requested
+	if lj.opt.Metadata {
 		// Get metadata
 		metadata, err := fs.GetMetadata(ctx, entry)
 		if err != nil {
