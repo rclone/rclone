@@ -213,8 +213,34 @@ func (s *HTTP) serveDir(w http.ResponseWriter, r *http.Request, dirRemote string
 		return
 	}
 
+	template := s.server.HTMLTemplate()
+	if s.opt.Template.InTreePath != "" {
+		node, err := VFS.Stat(dirRemote + "/" + s.opt.Template.InTreePath)
+
+
+		if err == nil && node.IsFile() {
+			// in-tree template
+			// open the object
+			file := node.(*vfs.File)
+			in, err := file.Open(os.O_RDONLY)
+			defer func() {
+				err := in.Close()
+				if err != nil {
+				}
+			}()
+
+			b, err := io.ReadAll(in)
+			if err == nil {
+				_template, err := libhttp.GetTemplateFromData(b)
+				if err == nil {
+					template = _template
+				}
+			}
+		}
+	}
+
 	// Make the entries for display
-	directory := serve.NewDirectory(dirRemote, s.server.HTMLTemplate())
+	directory := serve.NewDirectory(dirRemote, template)
 	for _, node := range dirEntries {
 		if vfscommon.Opt.NoModTime {
 			directory.AddHTMLEntry(node.Path(), node.IsDir(), node.Size(), time.Time{})

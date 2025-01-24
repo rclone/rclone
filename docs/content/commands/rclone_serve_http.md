@@ -87,9 +87,15 @@ Socket activation can be tested ad-hoc with the `systemd-socket-activate`command
 This will socket-activate rclone on the first connection to port 8000 over TCP.
 ### Template
 
-`--template` allows a user to specify a custom markup template for HTTP
-and WebDAV serve functions.  The server exports the following markup
-to be used within the template to server pages:
+Both `--template` and `--in-tree-template` allow a user to specify a custom markup
+template for HTTP and WebDAV serve functions. `--template` takes a local file, whereas
+``--in-tree-template`` takes a filename that will be searched for in the directory that
+is being served.
+
+If both parameters are set, ``--in-tree-template`` will be searched first and if the
+file is not found, ``--template`` will be served
+
+The server exports the following markup to be used within the template to server pages:
 
 | Parameter   | Description |
 | :---------- | :---------- |

@@ -29,6 +29,7 @@ const (
 	testUser        = "user"
 	testPass        = "pass"
 	testTemplate    = "testdata/golden/testindex.html"
+	inTreeTemplate    = "index.html"
 )
 
 func start(ctx context.Context, t *testing.T, f fs.Fs) (s *HTTP, testURL string) {
@@ -36,6 +37,7 @@ func start(ctx context.Context, t *testing.T, f fs.Fs) (s *HTTP, testURL string)
 		HTTP: libhttp.DefaultCfg(),
 		Template: libhttp.TemplateConfig{
 			Path: testTemplate,
+			InTreePath: inTreeTemplate,
 		},
 	}
 	opts.HTTP.ListenAddr = []string{testBindAddress}
@@ -174,6 +176,11 @@ func testGET(t *testing.T, useProxy bool) {
 			URL:    "three/",
 			Status: http.StatusOK,
 			Golden: "testdata/golden/three.html",
+		},
+		{
+			URL:    "four/",
+			Status: http.StatusOK,
+			Golden: "testdata/golden/four.html",
 		},
 		{
 			URL:    "three/a.txt",

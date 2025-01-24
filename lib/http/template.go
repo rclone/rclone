@@ -19,7 +19,8 @@ import (
 func TemplateHelp(prefix string) string {
 	help := `#### Template
 
-` + "`--{{ .Prefix }}template`" + ` allows a user to specify a custom markup template for HTTP
+` + "`--{{ .Prefix }}in-tree-template`" + ` and ` + "`--{{ .Prefix }}template`" + `
+allow an user to specify a custom markup template for HTTP
 and WebDAV serve functions.  The server exports the following markup
 to be used within the template to server pages:
 
@@ -78,16 +79,22 @@ var TemplateConfigInfo = fs.Options{{
 	Name:    "template",
 	Default: "",
 	Help:    "User-specified template",
+}, {
+	Name:    "in_tree_template",
+	Default: "",
+	Help:    "Template inside fs tree",
 }}
 
 // TemplateConfig for the templating functionality
 type TemplateConfig struct {
-	Path string `config:"template"`
+	Path       string `config:"template"`
+	InTreePath string `config:"in_tree_template"`
 }
 
 // AddFlagsPrefix for the templating functionality
 func (cfg *TemplateConfig) AddFlagsPrefix(flagSet *pflag.FlagSet, prefix string) {
 	flags.StringVarP(flagSet, &cfg.Path, prefix+"template", "", cfg.Path, "User-specified template", prefix)
+	flags.StringVarP(flagSet, &cfg.InTreePath, prefix+"in_tree_template", "", cfg.InTreePath, "Template inside fs tree", prefix)
 }
 
 // AddTemplateFlagsPrefix for the templating functionality
@@ -126,6 +133,10 @@ func GetTemplate(tmpl string) (*template.Template, error) {
 		return nil, err
 	}
 
+	return GetTemplateFromData(data)
+}
+
+func GetTemplateFromData(data[]byte) (*template.Template, error) {
 	funcMap := template.FuncMap{
 		"afterEpoch": AfterEpoch,
 		"contains":   strings.Contains,
