@@ -10,7 +10,6 @@ import (
 	"net/http"
 	"net/url"
 	"path"
-	"sort"
 	"strconv"
 	"strings"
 	"sync"
@@ -524,12 +523,7 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 	if res[0].Type == "folder" {
 		return nil, fs.ErrorIsDir
 	}
-	//In case of duplicates take the latest one
-	if len(res) > 1 {
-		sort.Slice(res, func(i, j int) bool {
-			return res[i].ModTime.After(res[j].ModTime)
-		})
-	}
+
 	return f.newObjectWithInfo(ctx, remote, &res[0])
 }
 
@@ -541,6 +535,8 @@ func (f *Fs) findObject(ctx context.Context, pathID, leaf string) ([]api.FileInf
 			"parentId":  []string{pathID},
 			"operation": []string{"find"},
 			"name":      []string{leaf},
+			"sort":      []string{"id"},
+			"order":     []string{"desc"},
 		},
 	}
 	var info api.ReadMetadataResponse
