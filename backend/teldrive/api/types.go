@@ -86,8 +86,9 @@ type CreateFileRequest struct {
 }
 
 type MoveFileRequest struct {
-	Destination string   `json:"destination,omitempty"`
-	Files       []string `json:"ids,omitempty"`
+	Destination     string   `json:"destinationParent,omitempty"`
+	DestinationLeaf string   `json:"destinationName,omitempty"`
+	Files           []string `json:"ids,omitempty"`
 }
 type DirMove struct {
 	Source      string `json:"source"`

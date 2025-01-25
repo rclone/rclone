@@ -243,7 +243,7 @@ func NewFs(ctx context.Context, name string, root string, config configmap.Mappe
 	f.root = strings.Trim(root, "/")
 
 	f.features = (&fs.Features{
-		DuplicateFiles:          true,
+		DuplicateFiles:          false,
 		CanHaveEmptyDirectories: true,
 		ReadMimeType:            true,
 		ChunkWriterDoesntSeek:   true,
@@ -550,7 +550,7 @@ func (f *Fs) findObject(ctx context.Context, pathID, leaf string) ([]api.FileInf
 	return info.Files, nil
 }
 
-func (f *Fs) moveTo(ctx context.Context, id, srcLeaf, dstLeaf, srcDirectoryID, dstDirectoryID string) error {
+func (f *Fs) moveTo(ctx context.Context, id, _, dstLeaf, srcDirectoryID, dstDirectoryID string) error {
 
 	if srcDirectoryID != dstDirectoryID {
 		opts := rest.Opts{
@@ -559,8 +559,9 @@ func (f *Fs) moveTo(ctx context.Context, id, srcLeaf, dstLeaf, srcDirectoryID, d
 			NoResponse: true,
 		}
 		mv := api.MoveFileRequest{
-			Destination: dstDirectoryID,
-			Files:       []string{id},
+			Destination:     dstDirectoryID,
+			Files:           []string{id},
+			DestinationLeaf: dstLeaf,
 		}
 		err := f.pacer.Call(func() (bool, error) {
 			resp, err := f.srv.CallJSON(ctx, &opts, &mv, nil)
@@ -571,25 +572,15 @@ func (f *Fs) moveTo(ctx context.Context, id, srcLeaf, dstLeaf, srcDirectoryID, d
 		}
 	}
 
-	if srcLeaf != dstLeaf {
-		err := f.updateFileInformation(ctx, &api.UpdateFileInformation{Name: dstLeaf}, id, true)
-		if err != nil {
-			return fmt.Errorf("move: failed rename: %w", err)
-		}
-	}
-
 	return nil
 }
 
 // updateFileInformation set's various file attributes most importantly it's name
-func (f *Fs) updateFileInformation(ctx context.Context, update *api.UpdateFileInformation, fileId string, skipUpdate bool) (err error) {
+func (f *Fs) updateFileInformation(ctx context.Context, update *api.UpdateFileInformation, fileId string) (err error) {
 	opts := rest.Opts{
 		Method:     "PATCH",
 		Path:       "/api/files/" + fileId,
 		NoResponse: true,
-	}
-	if skipUpdate {
-		opts.Parameters = url.Values{"skiputs": []string{"1"}}
 	}
 
 	err = f.pacer.Call(func() (bool, error) {
@@ -1161,7 +1152,7 @@ func (o *Object) SetModTime(ctx context.Context, modTime time.Time) error {
 	updateInfo := &api.UpdateFileInformation{
 		ModTime: Ptr(modTime.UTC()),
 	}
-	err := o.fs.updateFileInformation(ctx, updateInfo, o.id, false)
+	err := o.fs.updateFileInformation(ctx, updateInfo, o.id)
 	if err != nil {
 		return fmt.Errorf("couldn't update mod time: %w", err)
 	}
