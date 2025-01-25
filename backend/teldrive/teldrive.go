@@ -243,7 +243,6 @@ func NewFs(ctx context.Context, name string, root string, config configmap.Mappe
 	f.root = strings.Trim(root, "/")
 
 	f.features = (&fs.Features{
-		DuplicateFiles:          false,
 		CanHaveEmptyDirectories: true,
 		ReadMimeType:            true,
 		ChunkWriterDoesntSeek:   true,
@@ -537,6 +536,7 @@ func (f *Fs) findObject(ctx context.Context, pathID, leaf string) ([]api.FileInf
 			"name":      []string{leaf},
 			"sort":      []string{"id"},
 			"order":     []string{"desc"},
+			"limit":     []string{"1"},
 		},
 	}
 	var info api.ReadMetadataResponse
