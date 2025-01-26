@@ -235,6 +235,16 @@ Properties:
 - Type:        string
 - Required:    false
 
+### Metadata
+
+Here are the possible system metadata items for the http backend.
+
+| Name | Help | Type | Example | Read Only |
+|------|------|------|---------|-----------|
+| content-disposition | Content-Disposition header | string | inline | N |
+
+See the [metadata](/docs/#metadata) docs for more info.
+
 ## Backend commands
 
 Here are the commands specific to the http backend.
