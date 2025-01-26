@@ -18,7 +18,7 @@ import (
 )
 
 /**
- * Namecrane Storage Backend
+ * NameCrane Mail File Storage
  * Copyright (c) 2025 Namecrane LLC
  * PSA: No cranes harmed in the development of this module.
  */
@@ -56,21 +56,21 @@ type Options struct {
 func init() {
 	fs.Register(&fs.RegInfo{
 		Name:        "namecrane",
-		Description: "Namecrane File Storage API Backend",
+		Description: "NameCrane Mail File Storage",
 		NewFs:       NewFs,
 		Options: []fs.Option{{
 			Name:      "api_url",
-			Help:      `Namecrane API URL, like https://us1.workspace.org`,
+			Help:      `NameCrane API URL, like https://us1.workspace.org`,
 			Default:   "https://us1.workspace.org",
 			Sensitive: true,
 		}, {
 			Name:      "username",
-			Help:      `Namecrane username`,
+			Help:      `NameCrane username`,
 			Required:  true,
 			Sensitive: true,
 		}, {
 			Name:       "password",
-			Help:       `Namecrane password`,
+			Help:       `NameCrane password`,
 			Required:   true,
 			IsPassword: true,
 		}},
