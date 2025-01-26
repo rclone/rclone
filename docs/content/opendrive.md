@@ -163,6 +163,17 @@ Properties:
 - Type:        SizeSuffix
 - Default:     10Mi
 
+#### --opendrive-access
+
+Files and folders will be uploaded with this access permission.
+
+Properties:
+
+- Config:      access
+- Env Var:     RCLONE_OPENDRIVE_ACCESS
+- Type:        string
+- Default:     private
+
 #### --opendrive-description
 
 Description of the remote.
