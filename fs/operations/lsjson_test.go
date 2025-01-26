@@ -409,7 +409,7 @@ func TestStatJSON(t *testing.T) {
 
 func TestStatJsonMetadataContentDisposition(t *testing.T) {
 	if runtime.GOOS == "windows" {
-		t.Skip("Custom metadata not supported on Windows")
+		t.Skip("Custom metadata is not supported on Windows")
 	}
 	ctx := context.Background()
 	r := fstest.NewRun(t)
