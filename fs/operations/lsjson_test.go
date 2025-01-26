@@ -2,6 +2,7 @@ package operations_test
 
 import (
 	"context"
+	"runtime"
 	"sort"
 	"testing"
 	"time"
@@ -407,17 +408,14 @@ func TestStatJSON(t *testing.T) {
 }
 
 func TestStatJsonMetadataContentDisposition(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("Custom metadata not supported on Windows")
+	}
 	ctx := context.Background()
 	r := fstest.NewRun(t)
 	file1 := fstest.Item{Path: "file1", ModTime: t1, Size: 5}
 	metadata := fs.Metadata{"content-disposition": "Attachment; filename=file1.txt"}
 	fstests.PutTestContentsMetadata(ctx, t, r.Fremote, &file1, false, "file1", true, "", metadata)
-	// Skip the test if the remote doesn't support SetMetadata
-	obj := fstest.NewObject(ctx, t, r.Fremote, file1.Path)
-	_, objectHasSetMetadata := obj.(fs.SetMetadataer)
-	if !objectHasSetMetadata {
-		t.Skip("SetMetadata method not supported")
-	}
 	got, err := operations.StatJSON(ctx, r.Fremote, "file1", &operations.ListJSONOpt{Metadata: true})
 	require.NoError(t, err)
 	require.NotNil(t, got)
