@@ -1357,6 +1357,10 @@ func init() {
 				Help:     "DigitalOcean Spaces San Francisco 3",
 				Provider: "DigitalOcean",
 			}, {
+				Value:    "sfo2.digitaloceanspaces.com",
+				Help:     "DigitalOcean Spaces San Francisco 2",
+				Provider: "DigitalOcean",
+			}, {
 				Value:    "fra1.digitaloceanspaces.com",
 				Help:     "DigitalOcean Spaces Frankfurt 1",
 				Provider: "DigitalOcean",
@@ -1371,6 +1375,18 @@ func init() {
 			}, {
 				Value:    "sgp1.digitaloceanspaces.com",
 				Help:     "DigitalOcean Spaces Singapore 1",
+				Provider: "DigitalOcean",
+			}, {
+				Value:    "lon1.digitaloceanspaces.com",
+				Help:     "DigitalOcean Spaces London 1",
+				Provider: "DigitalOcean",
+			}, {
+				Value:    "tor1.digitaloceanspaces.com",
+				Help:     "DigitalOcean Spaces Toronto 1",
+				Provider: "DigitalOcean",
+			}, {
+				Value:    "blr1.digitaloceanspaces.com",
+				Help:     "DigitalOcean Spaces Bangalore 1",
 				Provider: "DigitalOcean",
 			}, {
 				Value:    "localhost:8333",
