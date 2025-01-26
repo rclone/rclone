@@ -514,6 +514,8 @@ type UpdateRemoteOpt struct {
 	Obscure bool `json:"obscure"`
 	// Treat all passwords as obscured
 	NoObscure bool `json:"noObscure"`
+	// Don't provide any output
+	NoOutput bool `json:"noOutput"`
 	// Don't interact with the user - return questions
 	NonInteractive bool `json:"nonInteractive"`
 	// If set then supply state and result parameters to continue the process
