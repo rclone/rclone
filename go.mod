@@ -230,3 +230,7 @@ require (
 	golang.org/x/mobile v0.0.0-20250106192035-c31d5b91ecc3
 	golang.org/x/term v0.28.0
 )
+
+replace github.com/go-resty/resty/v2 => github.com/LBeernaertProton/resty/v2 v2.0.0-20231129100320-dddf8030d93a
+
+replace github.com/ProtonMail/go-proton-api => github.com/henrybear327/go-proton-api v0.0.0-20250127204557-9ee38cb0a689
