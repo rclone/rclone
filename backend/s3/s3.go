@@ -104,6 +104,9 @@ var providerOption = fs.Option{
 		Value: "GCS",
 		Help:  "Google Cloud Storage",
 	}, {
+		Value: "Hetzner",
+		Help:  "Hetzner Object Storage",
+	}, {
 		Value: "HuaweiOBS",
 		Help:  "Huawei Object Storage Service",
 	}, {
@@ -396,6 +399,20 @@ func init() {
 			}},
 		}, {
 			Name:     "region",
+			Help:     "Region to connect to.",
+			Provider: "Hetzner",
+			Examples: []fs.OptionExample{{
+				Value: "fsn1",
+				Help:  "Falkenstein",
+			}, {
+				Value: "nbg1",
+				Help:  "Nuremberg",
+			}, {
+				Value: "hel1",
+				Help:  "Helsinki",
+			}},
+		}, {
+			Name:     "region",
 			Help:     "Region to connect to. - the location where your bucket will be created and your data stored. Need bo be same with your endpoint.\n",
 			Provider: "HuaweiOBS",
 			Examples: []fs.OptionExample{{
@@ -566,7 +583,7 @@ func init() {
 		}, {
 			Name:     "region",
 			Help:     "Region to connect to.\n\nLeave blank if you are using an S3 clone and you don't have a region.",
-			Provider: "!AWS,Alibaba,ArvanCloud,ChinaMobile,Cloudflare,IONOS,Petabox,Liara,Linode,Magalu,Qiniu,RackCorp,Scaleway,Selectel,Storj,Synology,TencentCOS,HuaweiOBS,IDrive",
+			Provider: "!AWS,Alibaba,ArvanCloud,ChinaMobile,Cloudflare,Hetzner,IONOS,Petabox,Liara,Linode,Magalu,Qiniu,RackCorp,Scaleway,Selectel,Storj,Synology,TencentCOS,HuaweiOBS,IDrive",
 			Examples: []fs.OptionExample{{
 				Value: "",
 				Help:  "Use this if unsure.\nWill use v4 signatures and an empty region.",
@@ -685,6 +702,21 @@ func init() {
 			}, {
 				Value: "s3.ir-tbz-sh1.arvanstorage.ir",
 				Help:  "Tabriz Iran (Shahriar)",
+			}},
+		}, {
+			// Hetzner endpoints: https://docs.hetzner.com/storage/object-storage/overview#available-endpoints
+			Name:     "endpoint",
+			Help:     "Endpoint for Hetzner Object Storage.",
+			Provider: "Hetzner",
+			Examples: []fs.OptionExample{{
+				Value: "fsn1.your-objectstorage.com",
+				Help:  "Falkenstein",
+			}, {
+				Value: "nbg1.your-objectstorage.com",
+				Help:  "Nuremberg",
+			}, {
+				Value: "hel1.your-objectstorage.com",
+				Help:  "Helsinki",
 			}},
 		}, {
 			Name:     "endpoint",
@@ -1343,7 +1375,7 @@ func init() {
 		}, {
 			Name:     "endpoint",
 			Help:     "Endpoint for S3 API.\n\nRequired when using an S3 clone.",
-			Provider: "!AWS,ArvanCloud,IBMCOS,IDrive,IONOS,TencentCOS,HuaweiOBS,Alibaba,ChinaMobile,GCS,Liara,Linode,Magalu,Scaleway,Selectel,StackPath,Storj,Synology,RackCorp,Qiniu,Petabox",
+			Provider: "!AWS,ArvanCloud,IBMCOS,IDrive,IONOS,TencentCOS,Hetzner,HuaweiOBS,Alibaba,ChinaMobile,GCS,Liara,Linode,Magalu,Scaleway,Selectel,StackPath,Storj,Synology,RackCorp,Qiniu,Petabox",
 			Examples: []fs.OptionExample{{
 				Value:    "objects-us-east-1.dream.io",
 				Help:     "Dream Objects endpoint",
@@ -1874,7 +1906,7 @@ func init() {
 		}, {
 			Name:     "location_constraint",
 			Help:     "Location constraint - must be set to match the Region.\n\nLeave blank if not sure. Used when creating buckets only.",
-			Provider: "!AWS,Alibaba,ArvanCloud,HuaweiOBS,ChinaMobile,Cloudflare,IBMCOS,IDrive,IONOS,Leviia,Liara,Linode,Magalu,Outscale,Qiniu,RackCorp,Scaleway,Selectel,StackPath,Storj,TencentCOS,Petabox",
+			Provider: "!AWS,Alibaba,ArvanCloud,HuaweiOBS,ChinaMobile,Cloudflare,Hetzner,IBMCOS,IDrive,IONOS,Leviia,Liara,Linode,Magalu,Outscale,Qiniu,RackCorp,Scaleway,Selectel,StackPath,Storj,TencentCOS,Petabox",
 		}, {
 			Name: "acl",
 			Help: `Canned ACL used when creating buckets and storing or copying objects.
@@ -3370,6 +3402,13 @@ func setQuirks(opt *Options) {
 	case "Alibaba":
 		useMultipartEtag = false // Alibaba seems to calculate multipart Etags differently from AWS
 		useAlreadyExists = true  // returns 200 OK
+	case "Hetzner":
+		// untested
+		listObjectsV2 = false
+		virtualHostStyle = false
+		urlEncodeListings = false
+		useMultipartEtag = false
+		useAlreadyExists = false
 	case "HuaweiOBS":
 		// Huawei OBS PFS is not support listObjectV2, and if turn on the urlEncodeListing, marker will not work and keep list same page forever.
 		urlEncodeListings = false
