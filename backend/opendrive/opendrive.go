@@ -92,6 +92,21 @@ Note that these chunks are buffered in memory so increasing them will
 increase memory use.`,
 			Default:  10 * fs.Mebi,
 			Advanced: true,
+		}, {
+			Name:     "access",
+			Help:     "Files and folders will be uploaded with this access permission (default private)",
+			Default:  "private",
+			Advanced: true,
+			Examples: []fs.OptionExample{{
+				Value: "private",
+				Help:  "The file or folder access can be granted in a way that will allow select users to view, read or write what is absolutely essential for them.",
+			}, {
+				Value: "public",
+				Help:  "The file or folder can be downloaded by anyone from a web browser. The link can be shared in any way,",
+			}, {
+				Value: "hidden",
+				Help:  "The file or folder can be accessed has the same restrictions as  Public if the user knows the URL of the file or folder link in order to access the contents",
+			}},
 		}},
 	})
 }
@@ -102,6 +117,7 @@ type Options struct {
 	Password  string               `config:"password"`
 	Enc       encoder.MultiEncoder `config:"encoding"`
 	ChunkSize fs.SizeSuffix        `config:"chunk_size"`
+	Access    string               `config:"access"`
 }
 
 // Fs represents a remote server
@@ -735,6 +751,23 @@ func (f *Fs) shouldRetry(ctx context.Context, resp *http.Response, err error) (b
 	return fserrors.ShouldRetry(err) || fserrors.ShouldRetryHTTP(resp, retryErrorCodes), err
 }
 
+// getAccessLevel is a helper function to determine access level integer
+func getAccessLevel(access string) int64 {
+	var accessLevel int64
+	switch access {
+	case "private":
+		accessLevel = 0
+	case "public":
+		accessLevel = 1
+	case "hidden":
+		accessLevel = 2
+	default:
+		fmt.Printf("Invalid access level: %s, defaulting to 'private'\n", access)
+		accessLevel = 0
+	}
+	return accessLevel
+}
+
 // DirCacher methods
 
 // CreateDir makes a directory with pathID as parent and name leaf
@@ -747,7 +780,7 @@ func (f *Fs) CreateDir(ctx context.Context, pathID, leaf string) (newID string, 
 			SessionID:           f.session.SessionID,
 			FolderName:          f.opt.Enc.FromStandardName(leaf),
 			FolderSubParent:     pathID,
-			FolderIsPublic:      0,
+			FolderIsPublic:      getAccessLevel(f.opt.Access),
 			FolderPublicUpl:     0,
 			FolderPublicDisplay: 0,
 			FolderPublicDnl:     0,
@@ -1080,7 +1113,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 
 	// Set permissions
 	err = o.fs.pacer.Call(func() (bool, error) {
-		update := permissions{SessionID: o.fs.session.SessionID, FileID: o.id, FileIsPublic: 0}
+		update := permissions{SessionID: o.fs.session.SessionID, FileID: o.id, FileIsPublic: getAccessLevel(o.fs.opt.Access)}
 		// fs.Debugf(nil, "Permissions : %#v", update)
 		opts := rest.Opts{
 			Method:     "POST",
