@@ -90,7 +90,8 @@ func TestRun(t *testing.T) {
 		require.NotNil(t, entry.vfs)
 		f := entry.vfs.Fs()
 		require.NotNil(t, f)
-		assert.Equal(t, "proxy-"+testUser, f.Name())
+		assert.True(t, strings.HasPrefix(f.Name(), "proxy-"+testUser+"-"))
+		assert.Equal(t, len("proxy-"+testUser+"-")+5, len(f.Name()))
 		assert.True(t, strings.HasPrefix(f.String(), "Local file system"))
 
 		// check it is in the cache
@@ -108,7 +109,7 @@ func TestRun(t *testing.T) {
 		vfs, vfsKey, err := p.Call(testUser, testPass, false)
 		require.NoError(t, err)
 		require.NotNil(t, vfs)
-		assert.Equal(t, "proxy-"+testUser, vfs.Fs().Name())
+		assert.True(t, strings.HasPrefix(vfs.Fs().Name(), "proxy-"+testUser+"-"))
 		assert.Equal(t, testUser, vfsKey)
 
 		// check it is in the cache
@@ -129,7 +130,7 @@ func TestRun(t *testing.T) {
 		vfs, vfsKey, err = p.Call(testUser, testPass, false)
 		require.NoError(t, err)
 		require.NotNil(t, vfs)
-		assert.Equal(t, "proxy-"+testUser, vfs.Fs().Name())
+		assert.True(t, strings.HasPrefix(vfs.Fs().Name(), "proxy-"+testUser+"-"))
 		assert.Equal(t, testUser, vfsKey)
 
 		// check cache is at the same level
@@ -173,7 +174,7 @@ func TestRun(t *testing.T) {
 		require.NotNil(t, entry.vfs)
 		f := entry.vfs.Fs()
 		require.NotNil(t, f)
-		assert.Equal(t, "proxy-"+testUser, f.Name())
+		assert.True(t, strings.HasPrefix(f.Name(), "proxy-"+testUser+"-"))
 		assert.True(t, strings.HasPrefix(f.String(), "Local file system"))
 
 		// check it is in the cache
@@ -195,7 +196,7 @@ func TestRun(t *testing.T) {
 		)
 		require.NoError(t, err)
 		require.NotNil(t, vfs)
-		assert.Equal(t, "proxy-"+testUser, vfs.Fs().Name())
+		assert.True(t, strings.HasPrefix(vfs.Fs().Name(), "proxy-"+testUser+"-"))
 		assert.Equal(t, testUser, vfsKey)
 
 		// check it is in the cache
@@ -216,7 +217,7 @@ func TestRun(t *testing.T) {
 		vfs, vfsKey, err = p.Call(testUser, publicKeyString, true)
 		require.NoError(t, err)
 		require.NotNil(t, vfs)
-		assert.Equal(t, "proxy-"+testUser, vfs.Fs().Name())
+		assert.True(t, strings.HasPrefix(vfs.Fs().Name(), "proxy-"+testUser+"-"))
 		assert.Equal(t, testUser, vfsKey)
 
 		// check cache is at the same level

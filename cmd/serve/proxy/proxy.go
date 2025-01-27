@@ -4,8 +4,10 @@ package proxy
 import (
 	"bytes"
 	"context"
+	"crypto/md5"
 	"crypto/sha256"
 	"crypto/subtle"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -217,8 +219,13 @@ func (p *Proxy) call(user, auth string, isPublicKey bool) (value interface{}, er
 		return nil, fmt.Errorf("proxy: couldn't find backend for %q: %w", fsName, err)
 	}
 
+	// Add a config hash to ensure configs with different values have different names.
+	// 5 characters length is 5*6 = 30 bits of base64
+	md5sumBinary := md5.Sum([]byte(config.String()))
+	configHash := base64.RawURLEncoding.EncodeToString(md5sumBinary[:])[:5]
+
 	// base name of config on user name.  This may appear in logs
-	name := "proxy-" + user
+	name := "proxy-" + user + "-" + configHash
 	fsString := name + ":" + root
 
 	// Look for fs in the VFS cache
