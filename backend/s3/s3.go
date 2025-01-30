@@ -3408,7 +3408,9 @@ func setQuirks(opt *Options) {
 		virtualHostStyle = false
 		urlEncodeListings = false
 		useMultipartEtag = false
+		mightGzip = false
 		useAlreadyExists = false
+		useUnsignedPayload = false
 	case "HuaweiOBS":
 		// Huawei OBS PFS is not support listObjectV2, and if turn on the urlEncodeListing, marker will not work and keep list same page forever.
 		urlEncodeListings = false
