@@ -299,14 +299,13 @@ type Fs struct {
 
 // Object describes a b2 object
 type Object struct {
-	fs       *Fs               // what this object is part of
-	remote   string            // The remote path
-	id       string            // b2 id of the file
-	modTime  time.Time         // The modified time of the object if known
-	sha1     string            // SHA-1 hash if known
-	size     int64             // Size of the object
-	mimeType string            // Content-Type of the object
-	meta     map[string]string // The object metadata if known - may be nil - with lower case keys
+	fs       *Fs       // what this object is part of
+	remote   string    // The remote path
+	id       string    // b2 id of the file
+	modTime  time.Time // The modified time of the object if known
+	sha1     string    // SHA-1 hash if known
+	size     int64     // Size of the object
+	mimeType string    // Content-Type of the object
 }
 
 // ------------------------------------------------------------
@@ -1598,9 +1597,6 @@ func (o *Object) decodeMetaDataRaw(ID, SHA1 string, Size int64, UploadTimestamp 
 	if err != nil {
 		return err
 	}
-	// For now, just set "mtime" in metadata
-	o.meta = make(map[string]string, 1)
-	o.meta["mtime"] = o.modTime.Format(time.RFC3339Nano)
 	return nil
 }
 
@@ -1878,13 +1874,6 @@ func (o *Object) getOrHead(ctx context.Context, method string, options []fs.Open
 		SHA1:            resp.Header.Get(sha1Header),
 		ContentType:     resp.Header.Get("Content-Type"),
 		Info:            Info,
-	}
-
-	// Embryonic metadata support - just mtime
-	o.meta = make(map[string]string, 1)
-	modTime, err := parseTimeStringHelper(info.Info[timeKey])
-	if err == nil {
-		o.meta["mtime"] = modTime.Format(time.RFC3339Nano)
 	}
 
 	// When reading files from B2 via cloudflare using

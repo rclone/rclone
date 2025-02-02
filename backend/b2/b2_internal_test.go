@@ -256,12 +256,6 @@ func (f *Fs) internalTestMetadata(t *testing.T, size string, uploadCutoff string
 			assert.Equal(t, v, got, k)
 		}
 
-		// mtime
-		for k, v := range metadata {
-			got := o.meta[k]
-			assert.Equal(t, v, got, k)
-		}
-
 		assert.Equal(t, mimeType, gotMetadata.ContentType, "Content-Type")
 
 		// Modification time from the x-bz-info-src_last_modified_millis header
