@@ -939,3 +939,4 @@ put them back in again.` >}}
   * Trevor Starick <trevor.starick@gmail.com>
   * b-wimmer <132347192+b-wimmer@users.noreply.github.com>
   * Jess <jess@jessie.cafe>
+  * Zachary Vorhies <zachvorhies@protonmail.com>
