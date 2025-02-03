@@ -940,3 +940,4 @@ put them back in again.` >}}
   * b-wimmer <132347192+b-wimmer@users.noreply.github.com>
   * Jess <jess@jessie.cafe>
   * Zachary Vorhies <zachvorhies@protonmail.com>
+  * Alexander Minbaev <minbaev@gmail.com>
