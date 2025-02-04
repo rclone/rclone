@@ -36,8 +36,8 @@ import (
 	"github.com/aws/smithy-go/logging"
 	"github.com/aws/smithy-go/middleware"
 	smithyhttp "github.com/aws/smithy-go/transport/http"
-
 	"github.com/ncw/swift/v2"
+
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/accounting"
 	"github.com/rclone/rclone/fs/chunksize"
@@ -2736,6 +2736,16 @@ use |-vv| to see the debug level logs.
 			Default:  sdkLogMode(0),
 			Advanced: true,
 		},
+			{
+				Name:     "ibm_api_key",
+				Help:     "IBM API Key to be used to obtain IAM token",
+				Provider: "IBMCOS",
+			},
+			{
+				Name:     "ibm_resource_instance_id",
+				Help:     "IBM service instance id",
+				Provider: "IBMCOS",
+			},
 		}})
 }
 
@@ -2889,6 +2899,8 @@ type Options struct {
 	UseUnsignedPayload    fs.Tristate          `config:"use_unsigned_payload"`
 	SDKLogMode            sdkLogMode           `config:"sdk_log_mode"`
 	DirectoryBucket       bool                 `config:"directory_bucket"`
+	IBMAPIKey             string               `config:"ibm_api_key"`
+	IBMInstanceID         string               `config:"ibm_resource_instance_id"`
 }
 
 // Fs represents a remote s3 server
@@ -3171,6 +3183,7 @@ func s3Connection(ctx context.Context, opt *Options, client *http.Client) (s3Cli
 
 	// Try to fill in the config from the environment if env_auth=true
 	if opt.EnvAuth && opt.AccessKeyID == "" && opt.SecretAccessKey == "" {
+
 		configOpts := []func(*awsconfig.LoadOptions) error{}
 		// Set the name of the profile if supplied
 		if opt.Profile != "" {
@@ -3184,8 +3197,12 @@ func s3Connection(ctx context.Context, opt *Options, client *http.Client) (s3Cli
 		if err != nil {
 			return nil, fmt.Errorf("couldn't load configuration with env_auth=true: %w", err)
 		}
+
 	} else {
 		switch {
+		case opt.Provider == "IBMCOS" && opt.V2Auth:
+			awsConfig.Credentials = &NoOpCredentialsProvider{}
+			fs.Debugf(nil, "Using IBM IAM")
 		case opt.AccessKeyID == "" && opt.SecretAccessKey == "":
 			// if no access key/secret and iam is explicitly disabled then fall back to anon interaction
 			awsConfig.Credentials = aws.AnonymousCredentials{}
@@ -3239,9 +3256,15 @@ func s3Connection(ctx context.Context, opt *Options, client *http.Client) (s3Cli
 
 	if opt.V2Auth || opt.Region == "other-v2-signature" {
 		fs.Debugf(nil, "Using v2 auth")
-		options = append(options, func(s3Opt *s3.Options) {
-			s3Opt.HTTPSignerV4 = &v2Signer{opt: opt}
-		})
+		if opt.Provider == "IBMCOS" && opt.IBMAPIKey != "" && opt.IBMInstanceID != "" {
+			options = append(options, func(s3Opt *s3.Options) {
+				s3Opt.HTTPSignerV4 = &IbmIamSigner{APIKey: opt.IBMAPIKey, InstanceID: opt.IBMInstanceID}
+			})
+		} else {
+			options = append(options, func(s3Opt *s3.Options) {
+				s3Opt.HTTPSignerV4 = &v2Signer{opt: opt}
+			})
+		}
 	}
 
 	if opt.Provider == "GCS" {
