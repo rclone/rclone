@@ -2383,6 +2383,10 @@ may be set manually here.
 			Default:  0,
 			Advanced: true,
 		}, {
+			Name:     "list_prefix",
+			Help:     `Limits the response to keys that begin with the specified prefix for ListObjects and ListObjectsV2`,
+			Advanced: true,
+		}, {
 			Name: "list_url_encode",
 			Help: `Whether to url encode listings: true/false/unset
 
@@ -2856,6 +2860,7 @@ type Options struct {
 	LeavePartsOnError     bool                 `config:"leave_parts_on_error"`
 	ListChunk             int32                `config:"list_chunk"`
 	ListVersion           int                  `config:"list_version"`
+	ListPrefix            string               `config:"list_prefix"`
 	ListURLEncode         fs.Tristate          `config:"list_url_encode"`
 	NoCheckBucket         bool                 `config:"no_check_bucket"`
 	NoHead                bool                 `config:"no_head"`
@@ -4177,10 +4182,11 @@ func (f *Fs) list(ctx context.Context, opt listOpt, fn listFn) error {
 	// So we enable only on providers we know supports it properly, all others can retry when a
 	// XML Syntax error is detected.
 	urlEncodeListings := f.opt.ListURLEncode.Value
+	fullPrefix := opt.directory + f.opt.ListPrefix
 	req := s3.ListObjectsV2Input{
 		Bucket:    &opt.bucket,
 		Delimiter: &delimiter,
-		Prefix:    &opt.directory,
+		Prefix:    &fullPrefix,
 		MaxKeys:   &f.opt.ListChunk,
 	}
 	if opt.restoreStatus {
