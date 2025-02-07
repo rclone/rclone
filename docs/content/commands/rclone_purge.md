@@ -7,6 +7,8 @@ description: "Remove the path and all of its contents."
 
 Remove the path and all of its contents.
 
+The concurrency of this operation is controlled by the `--transfers` global flag.
+
 ## Synopsis
 
 Remove the path and all of its contents.  Note that this does not obey
