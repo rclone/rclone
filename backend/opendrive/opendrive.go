@@ -762,7 +762,7 @@ func getAccessLevel(access string) int64 {
 	case "hidden":
 		accessLevel = 2
 	default:
-		fmt.Printf("Invalid access level: %s, defaulting to 'private'\n", access)
+		fs.Errorf(nil, "Invalid access level: %s, defaulting to 'private'\n", access)
 		accessLevel = 0
 	}
 	return accessLevel
