@@ -1815,6 +1815,9 @@ about _Unison_ and synchronization in general.
 
 ## Changelog
 
+### `v1.69.1`
+* Fixed an issue causing listings to not capture concurrent modifications under certain conditions
+
 ### `v1.68`
 * Fixed an issue affecting backends that round modtimes to a lower precision.
 
