@@ -247,7 +247,13 @@ folders.`,
 			Help:     "Specify a different Dropbox namespace ID to use as the root for all paths.",
 			Default:  "",
 			Advanced: true,
-		}}...), defaultBatcherOptions.FsOptions("For full info see [the main docs](https://rclone.org/dropbox/#batch-mode)\n\n")...),
+		}, {
+			Name:     "export_formats",
+			Help:     "Comma separated list of preferred formats for exporting files",
+			Default:  "",
+			Advanced: true,
+		},
+		}...), defaultBatcherOptions.FsOptions("For full info see [the main docs](https://rclone.org/dropbox/#batch-mode)\n\n")...),
 	})
 }
 
@@ -264,6 +270,7 @@ type Options struct {
 	PacerMinSleep fs.Duration          `config:"pacer_min_sleep"`
 	Enc           encoder.MultiEncoder `config:"encoding"`
 	RootNsid      string               `config:"root_namespace"`
+	ExportFormats string               `config:"export_formats"`
 }
 
 // Fs represents a remote dropbox server
@@ -283,6 +290,7 @@ type Fs struct {
 	pacer          *fs.Pacer      // To pace the API calls
 	ns             string         // The namespace we are using or "" for none
 	batcher        *batcher.Batcher[*files.UploadSessionFinishArg, *files.FileMetadata]
+	export_formats []string
 }
 
 // Object describes a dropbox object
@@ -296,6 +304,9 @@ type Object struct {
 	bytes   int64     // size of the object
 	modTime time.Time // time it was last modified
 	hash    string    // content_hash of the object
+
+	non_downloadable bool
+	export_format    string
 }
 
 // Name of the remote (as passed into NewFs)
@@ -473,6 +484,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		ReadMimeType:            false,
 		CanHaveEmptyDirectories: true,
 	})
+	f.export_formats = strings.Split(f.opt.ExportFormats, ",")
 
 	// do not fill features yet
 	if f.opt.SharedFiles {
@@ -836,16 +848,15 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 	var res *files.ListFolderResult
 	for {
 		if !started {
-			arg := files.ListFolderArg{
-				Path:      f.opt.Enc.FromStandardPath(root),
-				Recursive: false,
-				Limit:     1000,
-			}
+			arg := files.NewListFolderArg(f.opt.Enc.FromStandardPath(root))
+			arg.Recursive = false
+			arg.Limit = 1000
+
 			if root == "/" {
 				arg.Path = "" // Specify root folder as empty string
 			}
 			err = f.pacer.Call(func() (bool, error) {
-				res, err = f.srv.ListFolder(&arg)
+				res, err = f.srv.ListFolder(arg)
 				return shouldRetry(ctx, err)
 			})
 			if err != nil {
@@ -984,16 +995,14 @@ func (f *Fs) purgeCheck(ctx context.Context, dir string, check bool) (err error)
 		}
 
 		// check directory empty
-		arg := files.ListFolderArg{
-			Path:      encRoot,
-			Recursive: false,
-		}
+		arg := files.NewListFolderArg(encRoot)
+		arg.Recursive = false
 		if root == "/" {
 			arg.Path = "" // Specify root folder as empty string
 		}
 		var res *files.ListFolderResult
 		err = f.pacer.Call(func() (bool, error) {
-			res, err = f.srv.ListFolder(&arg)
+			res, err = f.srv.ListFolder(arg)
 			return shouldRetry(ctx, err)
 		})
 		if err != nil {
@@ -1338,16 +1347,14 @@ func (f *Fs) changeNotifyCursor(ctx context.Context) (cursor string, err error) 
 	var startCursor *files.ListFolderGetLatestCursorResult
 
 	err = f.pacer.Call(func() (bool, error) {
-		arg := files.ListFolderArg{
-			Path:      f.opt.Enc.FromStandardPath(f.slashRoot),
-			Recursive: true,
-		}
+		arg := files.NewListFolderArg(f.opt.Enc.FromStandardPath(f.slashRoot))
+		arg.Recursive = true
 
 		if arg.Path == "/" {
 			arg.Path = ""
 		}
 
-		startCursor, err = f.srv.ListFolderGetLatestCursor(&arg)
+		startCursor, err = f.srv.ListFolderGetLatestCursor(arg)
 
 		return shouldRetry(ctx, err)
 	})
@@ -1451,6 +1458,23 @@ func (f *Fs) Shutdown(ctx context.Context) error {
 	return nil
 }
 
+func (f *Fs) chooseExportFormat(info *files.FileMetadata) string {
+	valid := map[string]bool{}
+	// Sometimes Dropbox lists a format in ExportAs but not ExportOptions
+	valid[info.ExportInfo.ExportAs] = true
+	for _, format := range info.ExportInfo.ExportOptions {
+		valid[format] = true
+	}
+
+	for _, format := range f.export_formats {
+		if valid[format] {
+			return format
+		}
+	}
+
+	return info.ExportInfo.ExportAs
+}
+
 // ------------------------------------------------------------
 
 // Fs returns the parent Fs
@@ -1504,6 +1528,13 @@ func (o *Object) setMetadataFromEntry(info *files.FileMetadata) error {
 	o.bytes = int64(info.Size)
 	o.modTime = info.ClientModified
 	o.hash = info.ContentHash
+	o.non_downloadable = !info.IsDownloadable
+
+	if o.non_downloadable {
+		o.bytes = -1
+		o.hash = ""
+		o.export_format = o.fs.chooseExportFormat(info)
+	}
 	return nil
 }
 
@@ -1583,6 +1614,18 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 		if err != nil {
 			return nil, err
 		}
+		return
+	}
+
+	if o.non_downloadable {
+		arg := files.ExportArg{Path: o.id, ExportFormat: o.export_format}
+		err = o.fs.pacer.Call(func() (bool, error) {
+			var exportResult *files.ExportResult
+			exportResult, in, err = o.fs.srv.Export(&arg)
+			o.bytes = int64(exportResult.ExportMetadata.Size)
+			o.hash = exportResult.ExportMetadata.ExportHash
+			return shouldRetry(ctx, err)
+		})
 		return
 	}
 
