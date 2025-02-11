@@ -1,6 +1,6 @@
 ---
 # Github Actions release for rclone
-# -*- compile-command: "yamllint -f build_publish_docker_image.yml" -*-
+# -*- compile-command: "yamllint -f parsable build_publish_docker_image.yml" -*-
 
 name: Build & Push Docker Images
 
@@ -11,7 +11,6 @@ on:
       - '**'
     tags:
       - '**'
-  pull_request:
   workflow_dispatch:
     inputs:
       manual:
@@ -21,7 +20,7 @@ on:
 
 jobs:
   build-image:
-    if: inputs.manual || (github.repository == 'rclone/rclone' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name != github.event.pull_request.base.repo.full_name))
+    if: inputs.manual || (github.repository == 'rclone/rclone' && github.event_name != 'pull_request')
     timeout-minutes: 60
     strategy:
       fail-fast: false
@@ -192,6 +191,7 @@ jobs:
           if-no-files-found: error
 
   merge-image:
+    name: Merge & Push Final Docker Image
     runs-on: ubuntu-24.04
     needs:
       - build-image
