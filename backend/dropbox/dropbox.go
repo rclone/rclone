@@ -290,7 +290,7 @@ type Fs struct {
 	pacer          *fs.Pacer      // To pace the API calls
 	ns             string         // The namespace we are using or "" for none
 	batcher        *batcher.Batcher[*files.UploadSessionFinishArg, *files.FileMetadata]
-	export_formats []string
+	exportFormats  []string
 }
 
 // Object describes a dropbox object
@@ -305,8 +305,8 @@ type Object struct {
 	modTime time.Time // time it was last modified
 	hash    string    // content_hash of the object
 
-	non_downloadable bool
-	export_format    string
+	nonDownloadable bool
+	exportFormat    string
 }
 
 // Name of the remote (as passed into NewFs)
@@ -484,7 +484,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		ReadMimeType:            false,
 		CanHaveEmptyDirectories: true,
 	})
-	f.export_formats = strings.Split(f.opt.ExportFormats, ",")
+	f.exportFormats = strings.Split(f.opt.ExportFormats, ",")
 
 	// do not fill features yet
 	if f.opt.SharedFiles {
@@ -1466,7 +1466,7 @@ func (f *Fs) chooseExportFormat(info *files.FileMetadata) string {
 		valid[format] = true
 	}
 
-	for _, format := range f.export_formats {
+	for _, format := range f.exportFormats {
 		if valid[format] {
 			return format
 		}
@@ -1528,12 +1528,12 @@ func (o *Object) setMetadataFromEntry(info *files.FileMetadata) error {
 	o.bytes = int64(info.Size)
 	o.modTime = info.ClientModified
 	o.hash = info.ContentHash
-	o.non_downloadable = !info.IsDownloadable
+	o.nonDownloadable = !info.IsDownloadable
 
-	if o.non_downloadable {
+	if o.nonDownloadable {
 		o.bytes = -1
 		o.hash = ""
-		o.export_format = o.fs.chooseExportFormat(info)
+		o.exportFormat = o.fs.chooseExportFormat(info)
 	}
 	return nil
 }
@@ -1617,8 +1617,8 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 		return
 	}
 
-	if o.non_downloadable {
-		arg := files.ExportArg{Path: o.id, ExportFormat: o.export_format}
+	if o.nonDownloadable {
+		arg := files.ExportArg{Path: o.id, ExportFormat: o.exportFormat}
 		err = o.fs.pacer.Call(func() (bool, error) {
 			var exportResult *files.ExportResult
 			exportResult, in, err = o.fs.srv.Export(&arg)
