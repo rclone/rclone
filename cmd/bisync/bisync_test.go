@@ -108,6 +108,8 @@ var logReplacements = []string{
 	`^.*?Can't compare hashes, so using check --download.*?$`, dropMe,
 	// ignore timestamps in directory time updates
 	`^(INFO  : .*?: (Made directory with|Set directory) (metadata|modification time)).*$`, dropMe,
+	// ignore equivalent log for backends lacking dir modtime support
+	`^(INFO  : .*?: Making directory).*$`, dropMe,
 	// ignore sizes in directory time updates
 	`^(NOTICE: .*?: Skipped set directory modification time as --dry-run is set).*$`, dropMe,
 	// ignore sizes in directory metadata updates
