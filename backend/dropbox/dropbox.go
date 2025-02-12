@@ -1625,13 +1625,13 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 
 	if o.nonDownloadable {
 		arg := files.ExportArg{Path: o.id, ExportFormat: o.exportFormat}
+		var exportResult *files.ExportResult
 		err = o.fs.pacer.Call(func() (bool, error) {
-			var exportResult *files.ExportResult
 			exportResult, in, err = o.fs.srv.Export(&arg)
-			o.bytes = int64(exportResult.ExportMetadata.Size)
-			o.hash = exportResult.ExportMetadata.ExportHash
 			return shouldRetry(ctx, err)
 		})
+		o.bytes = int64(exportResult.ExportMetadata.Size)
+		o.hash = exportResult.ExportMetadata.ExportHash
 		return
 	}
 
