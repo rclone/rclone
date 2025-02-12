@@ -161,9 +161,7 @@ func (b *bisyncRun) findDeltas(fctx context.Context, f fs.Fs, oldListing string,
 		return
 	}
 
-	if err == nil {
-		err = b.checkListing(now, newListing, "current "+msg)
-	}
+	err = b.checkListing(now, newListing, "current "+msg)
 	if err != nil {
 		return
 	}
