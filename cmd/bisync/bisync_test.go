@@ -746,6 +746,16 @@ func (b *bisyncTest) runTestStep(ctx context.Context, line string) (err error) {
 	case "test-func":
 		b.TestFn = testFunc
 		return
+	case "concurrent-func":
+		b.TestFn = func() {
+			src := filepath.Join(b.dataDir, "file7.txt")
+			dst := "file1.txt"
+			err := b.copyFile(ctx, src, b.replaceHex(b.path2), dst)
+			if err != nil {
+				fs.Errorf(src, "error copying file: %v", err)
+			}
+		}
+		return
 	case "fix-names":
 		// in case the local os converted any filenames
 		ci.NoUnicodeNormalization = true
