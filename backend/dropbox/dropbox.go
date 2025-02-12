@@ -132,6 +132,11 @@ var (
 		DefaultTimeoutAsync:   10 * time.Second,
 		DefaultBatchSizeAsync: 100,
 	}
+
+	knownExportFormats = map[string]bool{
+		"markdown": true,
+		"html":     true,
+	}
 )
 
 // Gets an oauth config with the right scopes
@@ -258,7 +263,7 @@ For each such file, rclone will choose the first format on this list that Dropbo
 considers valid. If none is valid, it will choose Dropbox's default format.
 
 Known formats include: "html", "markdown"`,
-			Default:  fs.CommaSepList{},
+			Default:  fs.CommaSepList{"html", "markdown"},
 			Advanced: true,
 		},
 		}...), defaultBatcherOptions.FsOptions("For full info see [the main docs](https://rclone.org/dropbox/#batch-mode)\n\n")...),
@@ -412,6 +417,12 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	err = checkUploadChunkSize(opt.ChunkSize)
 	if err != nil {
 		return nil, fmt.Errorf("dropbox: chunk size: %w", err)
+	}
+
+	for _, format := range opt.ExportFormats {
+		if !knownExportFormats[format] {
+			return nil, fmt.Errorf("dropbox: unknown export format '%s'", format)
+		}
 	}
 
 	// Convert the old token if it exists.  The old token was just
@@ -915,7 +926,9 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 				if err != nil {
 					return nil, err
 				}
-				entries = append(entries, o)
+				if o.(*Object).visible() {
+					entries = append(entries, o)
+				}
 			}
 		}
 		if !res.HasMore {
@@ -1465,20 +1478,31 @@ func (f *Fs) Shutdown(ctx context.Context) error {
 }
 
 func (f *Fs) chooseExportFormat(info *files.FileMetadata) string {
+	// Sometimes Dropbox lists a format in ExportAs but not ExportOptions, so check both
+	ei := info.ExportInfo
+	dropboxFormats := append([]string{ei.ExportAs}, ei.ExportOptions...)
+
+	// Filter out formats we don't know about
 	valid := map[string]bool{}
-	// Sometimes Dropbox lists a format in ExportAs but not ExportOptions
-	valid[info.ExportInfo.ExportAs] = true
-	for _, format := range info.ExportInfo.ExportOptions {
-		valid[format] = true
+	first := ""
+	for _, format := range dropboxFormats {
+		if knownExportFormats[format] {
+			if first == "" {
+				first = format
+			}
+			valid[format] = true
+		}
 	}
 
+	// Prefer formats the user specified
 	for _, format := range f.opt.ExportFormats {
 		if valid[format] {
 			return format
 		}
 	}
 
-	return info.ExportInfo.ExportAs
+	// If no matches, prefer the first valid format Dropbox lists
+	return first
 }
 
 // ------------------------------------------------------------
@@ -1524,6 +1548,11 @@ func (o *Object) Hash(ctx context.Context, t hash.Type) (string, error) {
 // Size returns the size of an object in bytes
 func (o *Object) Size() int64 {
 	return o.bytes
+}
+
+// Non-downloadable files are only visible if we have an export format for them
+func (o *Object) visible() bool {
+	return !o.nonDownloadable || o.exportFormat != ""
 }
 
 // setMetadataFromEntry sets the fs data from a files.FileMetadata
@@ -1624,6 +1653,10 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 	}
 
 	if o.nonDownloadable {
+		if !o.visible() {
+			return nil, fmt.Errorf("dropbox: no download format available for '%s'", o.String())
+		}
+
 		arg := files.ExportArg{Path: o.id, ExportFormat: o.exportFormat}
 		var exportResult *files.ExportResult
 		err = o.fs.pacer.Call(func() (bool, error) {
