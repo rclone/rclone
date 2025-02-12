@@ -27,6 +27,7 @@ import (
 	"fmt"
 	"io"
 	"path"
+	"path/filepath"
 	"regexp"
 	"strings"
 	"time"
@@ -133,10 +134,11 @@ var (
 		DefaultBatchSizeAsync: 100,
 	}
 
-	knownExportFormats = map[string]bool{
-		"markdown": true,
-		"html":     true,
+	knownExportFormats = map[string]string{
+		"markdown": ".md",
+		"html":     ".html",
 	}
+	exportExtensions = map[string]bool{} // populated later based on knownExportFormats
 )
 
 // Gets an oauth config with the right scopes
@@ -268,6 +270,10 @@ Known formats include: "html", "markdown"`,
 		},
 		}...), defaultBatcherOptions.FsOptions("For full info see [the main docs](https://rclone.org/dropbox/#batch-mode)\n\n")...),
 	})
+
+	for _, ext := range knownExportFormats {
+		exportExtensions[ext] = true
+	}
 }
 
 // Options defines the configuration for this backend
@@ -420,7 +426,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	}
 
 	for _, format := range opt.ExportFormats {
-		if !knownExportFormats[format] {
+		if knownExportFormats[format] == "" {
 			return nil, fmt.Errorf("dropbox: unknown export format '%s'", format)
 		}
 	}
@@ -617,20 +623,26 @@ func (f *Fs) setRoot(root string) {
 	}
 }
 
+type getMetadataResult struct {
+	entry    files.IsMetadata
+	notFound bool
+	err      error
+}
+
 // getMetadata gets the metadata for a file or directory
-func (f *Fs) getMetadata(ctx context.Context, objPath string) (entry files.IsMetadata, notFound bool, err error) {
-	err = f.pacer.Call(func() (bool, error) {
-		entry, err = f.srv.GetMetadata(&files.GetMetadataArg{
+func (f *Fs) getMetadata(ctx context.Context, objPath string) (res getMetadataResult) {
+	res.err = f.pacer.Call(func() (bool, error) {
+		res.entry, res.err = f.srv.GetMetadata(&files.GetMetadataArg{
 			Path: f.opt.Enc.FromStandardPath(objPath),
 		})
-		return shouldRetry(ctx, err)
+		return shouldRetry(ctx, res.err)
 	})
-	if err != nil {
-		switch e := err.(type) {
+	if res.err != nil {
+		switch e := res.err.(type) {
 		case files.GetMetadataAPIError:
 			if e.EndpointError != nil && e.EndpointError.Path != nil && e.EndpointError.Path.Tag == files.LookupErrorNotFound {
-				notFound = true
-				err = nil
+				res.notFound = true
+				res.err = nil
 			}
 		}
 	}
@@ -638,17 +650,44 @@ func (f *Fs) getMetadata(ctx context.Context, objPath string) (entry files.IsMet
 }
 
 // getFileMetadata gets the metadata for a file
-func (f *Fs) getFileMetadata(ctx context.Context, filePath string) (fileInfo *files.FileMetadata, err error) {
-	entry, notFound, err := f.getMetadata(ctx, filePath)
-	if err != nil {
-		return nil, err
+func (f *Fs) getFileMetadata(ctx context.Context, filePath string) (*files.FileMetadata, error) {
+	// Look up both the exact path, and the path without an export extension
+	exact := make(chan getMetadataResult)
+	export := make(chan getMetadataResult)
+
+	go func() {
+		defer close(exact)
+		exact <- f.getMetadata(ctx, filePath)
+	}()
+	go func() {
+		defer close(export)
+		ext := filepath.Ext(filePath)
+		if exportExtensions[ext] {
+			origPath := strings.TrimSuffix(filePath, ext)
+			export <- f.getMetadata(ctx, origPath)
+		} else {
+			export <- getMetadataResult{notFound: true}
+		}
+	}()
+
+	res := <-exact
+	if res.err != nil {
+		return nil, res.err
 	}
-	if notFound {
-		return nil, fs.ErrorObjectNotFound
+	if res.notFound {
+		// Maybe it's an export
+		res = <-export
+		if res.err != nil {
+			return nil, res.err
+		}
+		if res.notFound {
+			return nil, fs.ErrorObjectNotFound
+		}
 	}
-	fileInfo, ok := entry.(*files.FileMetadata)
+
+	fileInfo, ok := res.entry.(*files.FileMetadata)
 	if !ok {
-		if _, ok = entry.(*files.FolderMetadata); ok {
+		if _, ok = res.entry.(*files.FolderMetadata); ok {
 			return nil, fs.ErrorIsDir
 		}
 		return nil, fs.ErrorNotAFile
@@ -657,15 +696,15 @@ func (f *Fs) getFileMetadata(ctx context.Context, filePath string) (fileInfo *fi
 }
 
 // getDirMetadata gets the metadata for a directory
-func (f *Fs) getDirMetadata(ctx context.Context, dirPath string) (dirInfo *files.FolderMetadata, err error) {
-	entry, notFound, err := f.getMetadata(ctx, dirPath)
-	if err != nil {
-		return nil, err
+func (f *Fs) getDirMetadata(ctx context.Context, dirPath string) (*files.FolderMetadata, error) {
+	res := f.getMetadata(ctx, dirPath)
+	if res.err != nil {
+		return nil, res.err
 	}
-	if notFound {
+	if res.notFound {
 		return nil, fs.ErrorDirNotFound
 	}
-	dirInfo, ok := entry.(*files.FolderMetadata)
+	dirInfo, ok := res.entry.(*files.FolderMetadata)
 	if !ok {
 		return nil, fs.ErrorIsFile
 	}
@@ -1486,7 +1525,7 @@ func (f *Fs) chooseExportFormat(info *files.FileMetadata) string {
 	valid := map[string]bool{}
 	first := ""
 	for _, format := range dropboxFormats {
-		if knownExportFormats[format] {
+		if knownExportFormats[format] != "" {
 			if first == "" {
 				first = format
 			}
@@ -1569,6 +1608,7 @@ func (o *Object) setMetadataFromEntry(info *files.FileMetadata) error {
 		o.bytes = -1
 		o.hash = ""
 		o.exportFormat = o.fs.chooseExportFormat(info)
+		o.remote += knownExportFormats[o.exportFormat]
 	}
 	return nil
 }
