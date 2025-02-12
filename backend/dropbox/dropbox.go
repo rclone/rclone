@@ -248,9 +248,17 @@ folders.`,
 			Default:  "",
 			Advanced: true,
 		}, {
-			Name:     "export_formats",
-			Help:     "Comma separated list of preferred formats for exporting files",
-			Default:  "",
+			Name: "export_formats",
+			Help: `Comma separated list of preferred formats for exporting files
+
+Certain Dropbox files can only be accessed by exporting them to another format.
+These include Dropbox Paper documents.
+
+For each such file, rclone will choose the first format on this list that Dropbox
+considers valid. If none is valid, it will choose Dropbox's default format.
+
+Known formats include: "html", "markdown"`,
+			Default:  fs.CommaSepList{},
 			Advanced: true,
 		},
 		}...), defaultBatcherOptions.FsOptions("For full info see [the main docs](https://rclone.org/dropbox/#batch-mode)\n\n")...),
@@ -270,7 +278,7 @@ type Options struct {
 	PacerMinSleep fs.Duration          `config:"pacer_min_sleep"`
 	Enc           encoder.MultiEncoder `config:"encoding"`
 	RootNsid      string               `config:"root_namespace"`
-	ExportFormats string               `config:"export_formats"`
+	ExportFormats fs.CommaSepList      `config:"export_formats"`
 }
 
 // Fs represents a remote dropbox server
@@ -290,7 +298,6 @@ type Fs struct {
 	pacer          *fs.Pacer      // To pace the API calls
 	ns             string         // The namespace we are using or "" for none
 	batcher        *batcher.Batcher[*files.UploadSessionFinishArg, *files.FileMetadata]
-	exportFormats  []string
 }
 
 // Object describes a dropbox object
@@ -484,7 +491,6 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		ReadMimeType:            false,
 		CanHaveEmptyDirectories: true,
 	})
-	f.exportFormats = strings.Split(f.opt.ExportFormats, ",")
 
 	// do not fill features yet
 	if f.opt.SharedFiles {
@@ -1466,7 +1472,7 @@ func (f *Fs) chooseExportFormat(info *files.FileMetadata) string {
 		valid[format] = true
 	}
 
-	for _, format := range f.exportFormats {
+	for _, format := range f.opt.ExportFormats {
 		if valid[format] {
 			return format
 		}
