@@ -38,8 +38,6 @@ var (
 			"user:base",
 			"file:all:read",
 			"file:all:write",
-			"album:shared:read",
-			"file:share:write",
 		},
 		AuthURL:      "https://openapi.alipan.com/oauth/authorize",
 		TokenURL:     "https://openapi.alipan.com/oauth/access_token ",
