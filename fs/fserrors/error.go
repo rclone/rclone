@@ -378,14 +378,15 @@ func Cause(cause error) (retriable bool, err error) {
 // This is incredibly ugly - if only errors.Cause worked for all
 // errors and all errors were exported from the stdlib.
 var retriableErrorStrings = []string{
-	"use of closed network connection", // internal/poll/fd.go
-	"unexpected EOF reading trailer",   // net/http/transfer.go
-	"transport connection broken",      // net/http/transport.go
-	"http: ContentLength=",             // net/http/transfer.go
-	"server closed idle connection",    // net/http/transport.go
-	"bad record MAC",                   // crypto/tls/alert.go
-	"stream error:",                    // net/http/h2_bundle.go
-	"tls: use of closed connection",    // crypto/tls/conn.go
+	"use of closed network connection",                     // internal/poll/fd.go
+	"unexpected EOF reading trailer",                       // net/http/transfer.go
+	"transport connection broken",                          // net/http/transport.go
+	"http: ContentLength=",                                 // net/http/transfer.go
+	"server closed idle connection",                        // net/http/transport.go
+	"bad record MAC",                                       // crypto/tls/alert.go
+	"stream error:",                                        // net/http/h2_bundle.go
+	"tls: use of closed connection",                        // crypto/tls/conn.go
+	"invalid character '<' looking for beginning of value", // From Zach Vorhies
 }
 
 // Errors which indicate networking errors which should be retried
