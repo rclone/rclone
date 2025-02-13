@@ -1516,34 +1516,6 @@ func (f *Fs) Shutdown(ctx context.Context) error {
 	return nil
 }
 
-func (f *Fs) chooseExportFormat(info *files.FileMetadata) string {
-	// Sometimes Dropbox lists a format in ExportAs but not ExportOptions, so check both
-	ei := info.ExportInfo
-	dropboxFormats := append([]string{ei.ExportAs}, ei.ExportOptions...)
-
-	// Filter out formats we don't know about
-	valid := map[string]bool{}
-	first := ""
-	for _, format := range dropboxFormats {
-		if knownExportFormats[format] != "" {
-			if first == "" {
-				first = format
-			}
-			valid[format] = true
-		}
-	}
-
-	// Prefer formats the user specified
-	for _, format := range f.opt.ExportFormats {
-		if valid[format] {
-			return format
-		}
-	}
-
-	// If no matches, prefer the first valid format Dropbox lists
-	return first
-}
-
 // ------------------------------------------------------------
 
 // Fs returns the parent Fs
@@ -1594,6 +1566,41 @@ func (o *Object) visible() bool {
 	return !o.nonDownloadable || o.exportFormat != ""
 }
 
+func (o *Object) chooseExportFormat(info *files.FileMetadata) string {
+	// Sometimes Dropbox lists a format in ExportAs but not ExportOptions, so check both
+	ei := info.ExportInfo
+	dropboxFormats := append([]string{ei.ExportAs}, ei.ExportOptions...)
+
+	// Filter out formats we don't know about
+	valid := map[string]bool{}
+	first := ""
+	for _, format := range dropboxFormats {
+		if knownExportFormats[format] != "" {
+			if first == "" {
+				first = format
+			}
+			valid[format] = true
+		}
+	}
+
+	// Prefer formats the user specified
+	for _, format := range o.fs.opt.ExportFormats {
+		if valid[format] {
+			return format
+		}
+	}
+
+	// If no matches, prefer the first valid format Dropbox lists
+	return first
+}
+
+func (o *Object) setMetadataForExport(info *files.FileMetadata) {
+	o.bytes = -1
+	o.hash = ""
+	o.exportFormat = o.chooseExportFormat(info)
+	o.remote += knownExportFormats[o.exportFormat]
+}
+
 // setMetadataFromEntry sets the fs data from a files.FileMetadata
 //
 // This isn't a complete set of metadata and has an inaccurate date
@@ -1605,10 +1612,7 @@ func (o *Object) setMetadataFromEntry(info *files.FileMetadata) error {
 	o.nonDownloadable = !info.IsDownloadable
 
 	if o.nonDownloadable {
-		o.bytes = -1
-		o.hash = ""
-		o.exportFormat = o.fs.chooseExportFormat(info)
-		o.remote += knownExportFormats[o.exportFormat]
+		o.setMetadataForExport(info)
 	}
 	return nil
 }
