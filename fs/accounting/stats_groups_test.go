@@ -237,5 +237,14 @@ func TestCountError(t *testing.T) {
 }
 
 func percentDiff(start, end uint64) uint64 {
-	return (start - end) * 100 / start
+	if start == 0 {
+		return 0 // Handle zero start value to avoid division by zero
+	}
+	var diff uint64
+	if end > start {
+		diff = end - start // Handle case where end is larger than start
+	} else {
+		diff = start - end
+	}
+	return (diff * 100) / start
 }
