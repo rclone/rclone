@@ -17,6 +17,7 @@ import (
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/accounting"
 	"github.com/rclone/rclone/lib/structs"
+	"golang.org/x/net/http2"
 	"golang.org/x/net/publicsuffix"
 )
 
@@ -120,6 +121,29 @@ func NewTransportCustom(ctx context.Context, customize func(*http.Transport)) ht
 
 	if ci.DisableHTTP2 {
 		t.TLSNextProto = map[string]func(string, *tls.Conn) http.RoundTripper{}
+	} else {
+		// Enable HTTP/2
+		err := http2.ConfigureTransport(t)
+		if err != nil {
+			fs.Errorf(nil, "Failed to configure HTTP2: %v", err)
+		} else {
+			// Create a new HTTP/2 transport - use HTTP/1 defaults where appropriate
+			t2 := &http2.Transport{
+				DisableCompression: t.DisableCompression,
+				IdleConnTimeout:    t.IdleConnTimeout,
+				TLSClientConfig:    t.TLSClientConfig,
+				MaxReadFrameSize:   8 * 1024 * 1024, // 16k (default) to 16M.
+				//ReadIdleTimeout:            10 * time.Second, // Check idle connections every 10s
+				//WriteByteTimeout:           5 * time.Second,  // Custom setting
+				//AllowHTTP:                  false,            // Ensure HTTPS-only HTTP/2
+				//StrictMaxConcurrentStreams: true,             // Example setting
+			}
+
+			// Override HTTP/2 handling while keeping existing HTTP/1 support
+			t.TLSNextProto[http2.NextProtoTLS] = func(authority string, c *tls.Conn) http.RoundTripper {
+				return t2
+			}
+		}
 	}
 
 	// customize the transport if required
