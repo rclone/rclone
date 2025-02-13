@@ -10,10 +10,10 @@ import (
 	"strings"
 	"time"
 
-	_ "github.com/mattn/go-sqlite3"
 	"github.com/rclone/rclone/fs"
 )
 
+// An Fs is a representation of a remote SQLite Fs
 type Fs struct {
 	name     string
 	root     string
@@ -22,6 +22,7 @@ type Fs struct {
 	db       *sql.DB
 }
 
+// An File is a representation of an actual file row in the database
 type File struct {
 	Filename string
 	Type     string
@@ -31,6 +32,7 @@ type File struct {
 	SHA1     string
 }
 
+// An Object on the remote SQLite Fs
 type Object struct {
 	fs      *Fs       // what this object is part of
 	info    File      // info about the object
@@ -40,6 +42,7 @@ type Object struct {
 	sha1    string    // SHA-1 of the object content
 }
 
+// Options represent the configuration of the SQLite backend
 type Options struct {
 	SqliteFile string
 }
@@ -61,7 +64,7 @@ CREATE INDEX IF NOT EXISTS idx_filename_prefix ON files(filename);
 `
 
 func getConnection(dbPath string) (*sql.DB, error) {
-	db, err := sql.Open("sqlite3", dbPath)
+	db, err := sql.Open("sqlite3", "file:"+dbPath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open database: %w", err)
 	}
@@ -89,7 +92,7 @@ func initSqlite(db *sql.DB) error {
 
 func (f *Fs) findFile(fullPath string) (*File, error) {
 	fs.Debugf(nil, "[findFile] fullPath: %q", fullPath)
-	var err error = nil
+	var err error
 	if f.db == nil {
 		f.db, err = getConnection(f.opt.SqliteFile)
 		if err != nil {
@@ -123,7 +126,7 @@ func (f *Fs) fileExists(fullPath string) bool {
 }
 
 func (f *Fs) getFiles(fullPath string) (*[]File, error) {
-	var err error = nil
+	var err error
 	if f.db == nil {
 		f.db, err = getConnection(f.opt.SqliteFile)
 		if err != nil {
@@ -134,7 +137,6 @@ func (f *Fs) getFiles(fullPath string) (*[]File, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to query files: %w", err)
 	}
-	defer rows.Close()
 
 	var files []File
 	fileOrDirExists := false
@@ -154,6 +156,10 @@ func (f *Fs) getFiles(fullPath string) (*[]File, error) {
 	}
 	if err = rows.Err(); err != nil {
 		return nil, fmt.Errorf("error iterating rows: %w", err)
+	}
+	err = rows.Close()
+	if err != nil {
+		return nil, fmt.Errorf("failed to close rows: %w", err)
 	}
 	if !fileOrDirExists {
 		return nil, fs.ErrorDirNotFound
@@ -193,7 +199,7 @@ func (f *Fs) mkDir(fullPath string) error {
 
 func (f *Fs) rmDir(fullPath string) error {
 	fs.Debugf(nil, "[rmdir] fullPath: %q", fullPath)
-	var err error = nil
+	var err error
 	// Check if directory is empty
 	result, err := f.hasFiles(fullPath)
 	if err != nil {

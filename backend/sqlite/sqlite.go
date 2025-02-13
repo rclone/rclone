@@ -1,3 +1,4 @@
+// Package sqlite provides an interface to the sqlite backend.
 package sqlite
 
 import (
@@ -8,7 +9,9 @@ import (
 	"strings"
 	"time"
 
-	_ "github.com/mattn/go-sqlite3" // SQLite driver
+	// SQLite driver
+	_ "github.com/ncruces/go-sqlite3/driver"
+	_ "github.com/ncruces/go-sqlite3/embed"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/configstruct"
@@ -32,7 +35,6 @@ func init() {
 			if err != nil {
 				return nil, fmt.Errorf("failed to get connection: %w", err)
 			}
-			defer db.Close()
 
 			if err := initSqlite(db); err != nil {
 				return nil, fmt.Errorf("failed to initialize tables: %w", err)
@@ -52,6 +54,7 @@ func init() {
 	})
 }
 
+// NewFs constructs a new filesystem given a root path and rclone configuration options
 func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (ff fs.Fs, err error) {
 	fs.Debugf(nil, "[NewFs] name: %q root: %q", name, root)
 	opt := new(Options)
@@ -191,7 +194,7 @@ func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 // Return an error if it doesn't exist or isn't empty
 func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 	fullPath := f.fullPath(dir)
-	fs.Debugf(nil, "[Rmdir] attemting removing dir: %q", fullPath)
+	fs.Debugf(nil, "[Rmdir] attempting removing dir: %q", fullPath)
 	return f.rmDir(fullPath)
 }
 
@@ -255,7 +258,10 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 // Remove deletes the remote Object
 func (o *Object) Remove(ctx context.Context) error {
 	fs.Debugf(nil, "[Remove] removing object: %q", o.info.Filename)
-	o.fs.remove(o.info.Filename)
+	err := o.fs.remove(o.info.Filename)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -293,6 +299,7 @@ func (f *Fs) String() string {
 	return fmt.Sprintf("['%s']", f.root)
 }
 
+// Precision denotes that setting modification times is not supported
 func (f *Fs) Precision() time.Duration {
 	return time.Millisecond
 }
