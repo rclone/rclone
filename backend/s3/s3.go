@@ -934,13 +934,19 @@ func init() {
 				Help:  "The default endpoint\nIran",
 			}},
 		}, {
-			// Linode endpoints: https://www.linode.com/docs/products/storage/object-storage/guides/urls/#cluster-url-s3-endpoint
+			// Linode endpoints: https://techdocs.akamai.com/cloud-computing/docs/object-storage-product-limits#supported-endpoint-types-by-region
 			Name:     "endpoint",
 			Help:     "Endpoint for Linode Object Storage API.",
 			Provider: "Linode",
 			Examples: []fs.OptionExample{{
+				Value: "nl-ams-1.linodeobjects.com",
+				Help:  "Amsterdam (Netherlands), nl-ams-1",
+			}, {
 				Value: "us-southeast-1.linodeobjects.com",
 				Help:  "Atlanta, GA (USA), us-southeast-1",
+			}, {
+				Value: "in-maa-1.linodeobjects.com",
+				Help:  "Chennai (India), in-maa-1",
 			}, {
 				Value: "us-ord-1.linodeobjects.com",
 				Help:  "Chicago, IL (USA), us-ord-1",
@@ -948,20 +954,47 @@ func init() {
 				Value: "eu-central-1.linodeobjects.com",
 				Help:  "Frankfurt (Germany), eu-central-1",
 			}, {
+				Value: "id-cgk-1.linodeobjects.com",
+				Help:  "Jakarta (Indonesia), id-cgk-1",
+			}, {
+				Value: "gb-lon-1.linodeobjects.com",
+				Help:  "London 2 (Great Britain), gb-lon-1",
+			}, {
+				Value: "us-lax-1.linodeobjects.com",
+				Help:  "Los Angeles, CA (USA), us-lax-1",
+			}, {
+				Value: "es-mad-1.linodeobjects.com",
+				Help:  "Madrid (Spain), es-mad-1",
+			}, {
+				Value: "au-mel-1.linodeobjects.com",
+				Help:  "Melbourne (Australia), au-mel-1",
+			}, {
+				Value: "us-mia-1.linodeobjects.com",
+				Help:  "Miami, FL (USA), us-mia-1",
+			}, {
 				Value: "it-mil-1.linodeobjects.com",
 				Help:  "Milan (Italy), it-mil-1",
 			}, {
 				Value: "us-east-1.linodeobjects.com",
 				Help:  "Newark, NJ (USA), us-east-1",
 			}, {
+				Value: "jp-osa-1.linodeobjects.com",
+				Help:  "Osaka (Japan), jp-osa-1",
+			}, {
 				Value: "fr-par-1.linodeobjects.com",
 				Help:  "Paris (France), fr-par-1",
+			}, {
+				Value: "br-gru-1.linodeobjects.com",
+				Help:  "São Paulo (Brazil), br-gru-1",
 			}, {
 				Value: "us-sea-1.linodeobjects.com",
 				Help:  "Seattle, WA (USA), us-sea-1",
 			}, {
 				Value: "ap-south-1.linodeobjects.com",
-				Help:  "Singapore ap-south-1",
+				Help:  "Singapore, ap-south-1",
+			}, {
+				Value: "sg-sin-1.linodeobjects.com",
+				Help:  "Singapore 2, sg-sin-1",
 			}, {
 				Value: "se-sto-1.linodeobjects.com",
 				Help:  "Stockholm (Sweden), se-sto-1",
