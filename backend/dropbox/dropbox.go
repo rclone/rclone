@@ -275,17 +275,15 @@ considers valid. If none is valid, it will choose Dropbox's default format.
 Known formats include: "html", "md" (markdown)`,
 			Default:  fs.CommaSepList{"html", "md"},
 			Advanced: true,
-		},
-			{
-				Name:     "skip_exports",
-				Help:     "Skip exportable files in all listings.\n\nIf given, exportable files practically become invisible to rclone.",
-				Default:  false,
-				Advanced: true,
-			},
-			{
-				Name:    "show_all_exports",
-				Default: false,
-				Help: `Show all exportable files in listings.
+		}, {
+			Name:     "skip_exports",
+			Help:     "Skip exportable files in all listings.\n\nIf given, exportable files practically become invisible to rclone.",
+			Default:  false,
+			Advanced: true,
+		}, {
+			Name:    "show_all_exports",
+			Default: false,
+			Help: `Show all exportable files in listings.
 
 Adding this flag will allow all exportable files to be server side copied.
 Note that rclone doesn't add extensions to the Google Docs file names in this mode.
@@ -293,7 +291,8 @@ Note that rclone doesn't add extensions to the Google Docs file names in this mo
 Do **not** use this flag when trying to download exportable files - rclone
 will fail to download them.
 `,
-			},
+			Advanced: true,
+		},
 		}...), defaultBatcherOptions.FsOptions("For full info see [the main docs](https://rclone.org/dropbox/#batch-mode)\n\n")...),
 	})
 
