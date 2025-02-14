@@ -81,8 +81,74 @@
 <header id="title-block-header">
 <h1 class="title">rclone(1) User Manual</h1>
 <p class="author">Nick Craig-Wood</p>
-<p class="date">Jan 12, 2025</p>
+<p class="date">Feb 14, 2025</p>
 </header>
+<h1 id="name">NAME</h1>
+<p>rclone - manage files on cloud storage</p>
+<h1 id="synopsis">SYNOPSIS</h1>
+<pre><code>Usage:
+  rclone [flags]
+  rclone [command]
+
+Available commands:
+  about       Get quota information from the remote.
+  authorize   Remote authorization.
+  backend     Run a backend-specific command.
+  bisync      Perform bidirectional synchronization between two paths.
+  cat         Concatenates any files and sends them to stdout.
+  check       Checks the files in the source and destination match.
+  checksum    Checks the files in the destination against a SUM file.
+  cleanup     Clean up the remote if possible.
+  completion  Output completion script for a given shell.
+  config      Enter an interactive configuration session.
+  copy        Copy files from source to dest, skipping identical files.
+  copyto      Copy files from source to dest, skipping identical files.
+  copyurl     Copy the contents of the URL supplied content to dest:path.
+  cryptcheck  Cryptcheck checks the integrity of an encrypted remote.
+  cryptdecode Cryptdecode returns unencrypted file names.
+  dedupe      Interactively find duplicate filenames and delete/rename them.
+  delete      Remove the files in path.
+  deletefile  Remove a single file from remote.
+  gendocs     Output markdown docs for rclone to the directory supplied.
+  gitannex    Speaks with git-annex over stdin/stdout.
+  hashsum     Produces a hashsum file for all the objects in the path.
+  help        Show help for rclone commands, flags and backends.
+  link        Generate public link to file/folder.
+  listremotes List all the remotes in the config file and defined in environment variables.
+  ls          List the objects in the path with size and path.
+  lsd         List all directories/containers/buckets in the path.
+  lsf         List directories and objects in remote:path formatted for parsing.
+  lsjson      List directories and objects in the path in JSON format.
+  lsl         List the objects in path with modification time, size and path.
+  md5sum      Produces an md5sum file for all the objects in the path.
+  mkdir       Make the path if it doesn&#39;t already exist.
+  mount       Mount the remote as file system on a mountpoint.
+  move        Move files from source to dest.
+  moveto      Move file or directory from source to dest.
+  ncdu        Explore a remote with a text based user interface.
+  nfsmount    Mount the remote as file system on a mountpoint.
+  obscure     Obscure password for use in the rclone config file.
+  purge       Remove the path and all of its contents.
+  rc          Run a command against a running rclone.
+  rcat        Copies standard input to file on remote.
+  rcd         Run rclone listening to remote control commands only.
+  rmdir       Remove the empty directory at path.
+  rmdirs      Remove empty directories under the path.
+  selfupdate  Update the rclone binary.
+  serve       Serve a remote over a protocol.
+  settier     Changes storage class/tier of objects in remote.
+  sha1sum     Produces an sha1sum file for all the objects in the path.
+  size        Prints the total size and number of objects in remote:path.
+  sync        Make source and dest identical, modifying destination only.
+  test        Run a test command
+  touch       Create new file or change file modification time.
+  tree        List the contents of the remote in a tree like fashion.
+  version     Show the version number.
+
+Use &quot;rclone [command] --help&quot; for more information about a command.
+Use &quot;rclone help flags&quot; for to see the global flags.
+Use &quot;rclone help backends&quot; for a list of supported services.
+</code></pre>
 <h1 id="rclone-syncs-your-files-to-cloud-storage">Rclone syncs your files to cloud storage</h1>
 <p><img width="50%" src="https://rclone.org/img/logo_on_light__horizontal_color.svg" alt="rclone logo" style="float:right; padding: 5px;" ></p>
 <ul>
@@ -411,7 +477,7 @@ kill %1</code></pre>
 <h2 id="snap">Snap installation</h2>
 <p><a href="https://snapcraft.io/rclone"><img src="https://snapcraft.io/static/images/badges/en/snap-store-black.svg" alt="Get it from the Snap Store" /></a></p>
 <p>Make sure you have <a href="https://snapcraft.io/docs/installing-snapd">Snapd installed</a></p>
-<div class="sourceCode" id="cb23"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true"></a>$ <span class="fu">sudo</span> snap install rclone</span></code></pre></div>
+<div class="sourceCode" id="cb24"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true"></a>$ <span class="fu">sudo</span> snap install rclone</span></code></pre></div>
 <p>Due to the strict confinement of Snap, rclone snap cannot access real /home/$USER/.config/rclone directory, default config path is as below.</p>
 <ul>
 <li>Default config directory:
@@ -585,7 +651,7 @@ rclone copy /local/path remote:path # copies /local/path to the remote
 rclone sync --interactive /local/path remote:path # syncs /local/path to the remote</code></pre>
 <h1 id="rclone-config">rclone config</h1>
 <p>Enter an interactive configuration session.</p>
-<h2 id="synopsis">Synopsis</h2>
+<h2 id="synopsis-1">Synopsis</h2>
 <p>Enter an interactive configuration session where you can setup new remotes and manage existing ones. You may also set or remove a password to protect your configuration.</p>
 <pre><code>rclone config [flags]</code></pre>
 <h2 id="options">Options</h2>
@@ -613,7 +679,7 @@ rclone sync --interactive /local/path remote:path # syncs /local/path to the rem
 </ul>
 <h1 id="rclone-copy">rclone copy</h1>
 <p>Copy files from source to dest, skipping identical files.</p>
-<h2 id="synopsis-1">Synopsis</h2>
+<h2 id="synopsis-2">Synopsis</h2>
 <p>Copy the source to the destination. Does not transfer files that are identical on source and destination, testing by size and modification time or MD5SUM. Doesn't delete files from the destination. If you want to also delete files from destination, to make it match source, use the <a href="https://rclone.org/commands/rclone_sync/">sync</a> command instead.</p>
 <p>Note that it is always the contents of the directory that is synced, not the directory itself. So when source:path is a directory, it's the contents of source:path that are copied, not the directory name and contents.</p>
 <p>To copy single files, use the <a href="https://rclone.org/commands/rclone_copyto/">copyto</a> command instead.</p>
@@ -716,7 +782,7 @@ destpath/sourcepath/two.txt</code></pre>
 </ul>
 <h1 id="rclone-sync">rclone sync</h1>
 <p>Make source and dest identical, modifying destination only.</p>
-<h2 id="synopsis-2">Synopsis</h2>
+<h2 id="synopsis-3">Synopsis</h2>
 <p>Sync the source to the destination, changing the destination only. Doesn't transfer files that are identical on source and destination, testing by size and modification time or MD5SUM. Destination is updated to match source, including deleting files if necessary (except duplicate objects, see below). If you don't want to delete files from destination, use the <a href="https://rclone.org/commands/rclone_copy/">copy</a> command instead.</p>
 <p><strong>Important</strong>: Since this can cause data loss, test first with the <code>--dry-run</code> or the <code>--interactive</code>/<code>-i</code> flag.</p>
 <pre><code>rclone sync --interactive SOURCE remote:DESTINATION</code></pre>
@@ -857,7 +923,7 @@ destpath/sourcepath/two.txt</code></pre>
 </ul>
 <h1 id="rclone-move">rclone move</h1>
 <p>Move files from source to dest.</p>
-<h2 id="synopsis-3">Synopsis</h2>
+<h2 id="synopsis-4">Synopsis</h2>
 <p>Moves the contents of the source directory to the destination directory. Rclone will error if the source and destination overlap and the remote does not support a server-side directory move operation.</p>
 <p>To move single files, use the <a href="https://rclone.org/commands/rclone_moveto/">moveto</a> command instead.</p>
 <p>If no filters are in use and if possible this will server-side move <code>source:path</code> into <code>dest:path</code>. After this <code>source:path</code> will no longer exist.</p>
@@ -948,7 +1014,7 @@ destpath/sourcepath/two.txt</code></pre>
 </ul>
 <h1 id="rclone-delete">rclone delete</h1>
 <p>Remove the files in path.</p>
-<h2 id="synopsis-4">Synopsis</h2>
+<h2 id="synopsis-5">Synopsis</h2>
 <p>Remove the files in path. Unlike <a href="https://rclone.org/commands/rclone_purge/">purge</a> it obeys include/exclude filters so can be used to selectively delete files.</p>
 <p><code>rclone delete</code> only deletes files but leaves the directory structure alone. If you want to delete a directory and all of its contents use the <a href="https://rclone.org/commands/rclone_purge/">purge</a> command.</p>
 <p>If you supply the <code>--rmdirs</code> flag, it will remove all empty directories along with it. You can also use the separate command <a href="https://rclone.org/commands/rclone_rmdir/">rmdir</a> or <a href="https://rclone.org/commands/rclone_rmdirs/">rmdirs</a> to delete empty directories only.</p>
@@ -1003,8 +1069,9 @@ rclone --dry-run --min-size 100M delete remote:path</code></pre>
 </ul>
 <h1 id="rclone-purge">rclone purge</h1>
 <p>Remove the path and all of its contents.</p>
-<h2 id="synopsis-5">Synopsis</h2>
+<h2 id="synopsis-6">Synopsis</h2>
 <p>Remove the path and all of its contents. Note that this does not obey include/exclude filters - everything will be removed. Use the <a href="https://rclone.org/commands/rclone_delete/">delete</a> command if you want to selectively delete files. To delete empty directories only, use command <a href="https://rclone.org/commands/rclone_rmdir/">rmdir</a> or <a href="https://rclone.org/commands/rclone_rmdirs/">rmdirs</a>.</p>
+<p>The concurrency of this operation is controlled by the <code>--checkers</code> global flag. However, some backends will implement this command directly, in which case <code>--checkers</code> will be ignored.</p>
 <p><strong>Important</strong>: Since this can cause data loss, test first with the <code>--dry-run</code> or the <code>--interactive</code>/<code>-i</code> flag.</p>
 <pre><code>rclone purge remote:path [flags]</code></pre>
 <h2 id="options-5">Options</h2>
@@ -1036,7 +1103,7 @@ rclone --dry-run --min-size 100M delete remote:path</code></pre>
 </ul>
 <h1 id="rclone-rmdir">rclone rmdir</h1>
 <p>Remove the empty directory at path.</p>
-<h2 id="synopsis-6">Synopsis</h2>
+<h2 id="synopsis-7">Synopsis</h2>
 <p>This removes empty directory given by path. Will not remove the path if it has any objects in it, not even empty subdirectories. Use command <a href="https://rclone.org/commands/rclone_rmdirs/">rmdirs</a> (or <a href="https://rclone.org/commands/rclone_delete/">delete</a> with option <code>--rmdirs</code>) to do that.</p>
 <p>To delete a path and any objects in it, use <a href="https://rclone.org/commands/rclone_purge/">purge</a> command.</p>
 <pre><code>rclone rmdir remote:path [flags]</code></pre>
@@ -1054,7 +1121,7 @@ rclone --dry-run --min-size 100M delete remote:path</code></pre>
 </ul>
 <h1 id="rclone-check">rclone check</h1>
 <p>Checks the files in the source and destination match.</p>
-<h2 id="synopsis-7">Synopsis</h2>
+<h2 id="synopsis-8">Synopsis</h2>
 <p>Checks the files in the source and destination match. It compares sizes and hashes (MD5 or SHA1) and logs a report of files that don't match. It doesn't alter the source or destination.</p>
 <p>For the <a href="https://rclone.org/crypt/">crypt</a> remote there is a dedicated command, <a href="https://rclone.org/commands/rclone_cryptcheck/">cryptcheck</a>, that are able to check the checksums of the encrypted files.</p>
 <p>If you supply the <code>--size-only</code> flag, it will only compare the sizes not the hashes as well. Use this for a quick check.</p>
@@ -1121,7 +1188,7 @@ rclone --dry-run --min-size 100M delete remote:path</code></pre>
 </ul>
 <h1 id="rclone-ls">rclone ls</h1>
 <p>List the objects in the path with size and path.</p>
-<h2 id="synopsis-8">Synopsis</h2>
+<h2 id="synopsis-9">Synopsis</h2>
 <p>Lists the objects in the source path to standard output in a human readable format with size and path. Recurses by default.</p>
 <p>Eg</p>
 <pre><code>$ rclone ls swift:bucket
@@ -1180,7 +1247,7 @@ rclone --dry-run --min-size 100M delete remote:path</code></pre>
 </ul>
 <h1 id="rclone-lsd">rclone lsd</h1>
 <p>List all directories/containers/buckets in the path.</p>
-<h2 id="synopsis-9">Synopsis</h2>
+<h2 id="synopsis-10">Synopsis</h2>
 <p>Lists the directories in the source path to standard output. Does not recurse by default. Use the <code>-R</code> flag to recurse.</p>
 <p>This command lists the total size of the directory (if known, -1 if not), the modification time (if known, the current time if not), the number of objects in the directory (if known, -1 if not) and the name of the directory, Eg</p>
 <pre><code>$ rclone lsd swift:
@@ -1244,7 +1311,7 @@ rclone --dry-run --min-size 100M delete remote:path</code></pre>
 </ul>
 <h1 id="rclone-lsl">rclone lsl</h1>
 <p>List the objects in path with modification time, size and path.</p>
-<h2 id="synopsis-10">Synopsis</h2>
+<h2 id="synopsis-11">Synopsis</h2>
 <p>Lists the objects in the source path to standard output in a human readable format with modification time, size and path. Recurses by default.</p>
 <p>Eg</p>
 <pre><code>$ rclone lsl swift:bucket
@@ -1303,7 +1370,7 @@ rclone --dry-run --min-size 100M delete remote:path</code></pre>
 </ul>
 <h1 id="rclone-md5sum">rclone md5sum</h1>
 <p>Produces an md5sum file for all the objects in the path.</p>
-<h2 id="synopsis-11">Synopsis</h2>
+<h2 id="synopsis-12">Synopsis</h2>
 <p>Produces an md5sum file for all the objects in the path. This is in the same format as the standard md5sum tool produces.</p>
 <p>By default, the hash is requested from the remote. If MD5 is not supported by the remote, no hash will be returned. With the download flag, the file will be downloaded from the remote and hashed locally enabling MD5 for any remote.</p>
 <p>For other algorithms, see the <a href="https://rclone.org/commands/rclone_hashsum/">hashsum</a> command. Running <code>rclone md5sum remote:path</code> is equivalent to running <code>rclone hashsum MD5 remote:path</code>.</p>
@@ -1350,7 +1417,7 @@ rclone --dry-run --min-size 100M delete remote:path</code></pre>
 </ul>
 <h1 id="rclone-sha1sum">rclone sha1sum</h1>
 <p>Produces an sha1sum file for all the objects in the path.</p>
-<h2 id="synopsis-12">Synopsis</h2>
+<h2 id="synopsis-13">Synopsis</h2>
 <p>Produces an sha1sum file for all the objects in the path. This is in the same format as the standard sha1sum tool produces.</p>
 <p>By default, the hash is requested from the remote. If SHA-1 is not supported by the remote, no hash will be returned. With the download flag, the file will be downloaded from the remote and hashed locally enabling SHA-1 for any remote.</p>
 <p>For other algorithms, see the <a href="https://rclone.org/commands/rclone_hashsum/">hashsum</a> command. Running <code>rclone sha1sum remote:path</code> is equivalent to running <code>rclone hashsum SHA1 remote:path</code>.</p>
@@ -1398,7 +1465,7 @@ rclone --dry-run --min-size 100M delete remote:path</code></pre>
 </ul>
 <h1 id="rclone-size">rclone size</h1>
 <p>Prints the total size and number of objects in remote:path.</p>
-<h2 id="synopsis-13">Synopsis</h2>
+<h2 id="synopsis-14">Synopsis</h2>
 <p>Counts objects in the path and calculates the total size. Prints the result to standard output.</p>
 <p>By default the output is in human-readable format, but shows values in both human-readable format as well as the raw numbers (global option <code>--human-readable</code> is not considered). Use option <code>--json</code> to format output as JSON instead.</p>
 <p>Recurses by default, use <code>--max-depth 1</code> to stop the recursion.</p>
@@ -1442,7 +1509,7 @@ rclone --dry-run --min-size 100M delete remote:path</code></pre>
 </ul>
 <h1 id="rclone-version">rclone version</h1>
 <p>Show the version number.</p>
-<h2 id="synopsis-14">Synopsis</h2>
+<h2 id="synopsis-15">Synopsis</h2>
 <p>Show the rclone version number, the go version, the build target OS and architecture, the runtime OS and kernel version and bitness, build tags and the type of executable (static or dynamic).</p>
 <p>For example:</p>
 <pre><code>$ rclone version
@@ -1478,7 +1545,7 @@ beta:   1.42.0.5      (released 2018-06-17)
 </ul>
 <h1 id="rclone-cleanup">rclone cleanup</h1>
 <p>Clean up the remote if possible.</p>
-<h2 id="synopsis-15">Synopsis</h2>
+<h2 id="synopsis-16">Synopsis</h2>
 <p>Clean up the remote if possible. Empty the trash or delete old file versions. Not supported by all remotes.</p>
 <pre><code>rclone cleanup remote:path [flags]</code></pre>
 <h2 id="options-16">Options</h2>
@@ -1495,7 +1562,7 @@ beta:   1.42.0.5      (released 2018-06-17)
 </ul>
 <h1 id="rclone-dedupe">rclone dedupe</h1>
 <p>Interactively find duplicate filenames and delete/rename them.</p>
-<h2 id="synopsis-16">Synopsis</h2>
+<h2 id="synopsis-17">Synopsis</h2>
 <p>By default <code>dedupe</code> interactively finds files with duplicate names and offers to delete all but one or rename them to be different. This is known as deduping by name.</p>
 <p>Deduping by name is only useful with a small group of backends (e.g. Google Drive, Opendrive) that can have duplicate file names. It can be run on wrapping backends (e.g. crypt) if they wrap a backend which supports duplicate file names.</p>
 <p>However if <code>--by-hash</code> is passed in then dedupe will find files with duplicate hashes instead which will work on any backend which supports at least one hash. This can be used to find files with duplicate content. This is known as deduping by hash.</p>
@@ -1579,7 +1646,7 @@ two-3.txt: renamed from: two.txt</code></pre>
 </ul>
 <h1 id="rclone-about">rclone about</h1>
 <p>Get quota information from the remote.</p>
-<h2 id="synopsis-17">Synopsis</h2>
+<h2 id="synopsis-18">Synopsis</h2>
 <p>Prints quota information about a remote to standard output. The output is typically used, free, quota and trash contents.</p>
 <p>E.g. Typical output from <code>rclone about remote:</code> is:</p>
 <pre><code>Total:   17 GiB
@@ -1625,7 +1692,7 @@ Other:   8849156022</code></pre>
 </ul>
 <h1 id="rclone-authorize">rclone authorize</h1>
 <p>Remote authorization.</p>
-<h2 id="synopsis-18">Synopsis</h2>
+<h2 id="synopsis-19">Synopsis</h2>
 <p>Remote authorization. Used to authorize a remote or headless rclone from a machine with a browser - use as instructed by rclone config.</p>
 <p>Use --auth-no-open-browser to prevent rclone to open auth link in default browser automatically.</p>
 <p>Use --template to generate HTML output via a custom Go template. If a blank string is provided as an argument to this flag, the default template is used.</p>
@@ -1641,7 +1708,7 @@ Other:   8849156022</code></pre>
 </ul>
 <h1 id="rclone-backend">rclone backend</h1>
 <p>Run a backend-specific command.</p>
-<h2 id="synopsis-19">Synopsis</h2>
+<h2 id="synopsis-20">Synopsis</h2>
 <p>This runs a backend-specific command. The commands themselves (except for "help" and "features") are defined by the backends and you should see the backend docs for definitions.</p>
 <p>You can discover what commands a backend implements by using</p>
 <pre><code>rclone backend help remote:
@@ -1670,7 +1737,7 @@ rclone backend help &lt;backendname&gt;</code></pre>
 </ul>
 <h1 id="rclone-bisync">rclone bisync</h1>
 <p>Perform bidirectional synchronization between two paths.</p>
-<h2 id="synopsis-20">Synopsis</h2>
+<h2 id="synopsis-21">Synopsis</h2>
 <p>Perform bidirectional synchronization between two paths.</p>
 <p><a href="https://rclone.org/bisync/">Bisync</a> provides a bidirectional cloud sync solution in rclone. It retains the Path1 and Path2 filesystem listings from the prior run. On each successive run it will: - list files on Path1 and Path2, and check for changes on each side. Changes include <code>New</code>, <code>Newer</code>, <code>Older</code>, and <code>Deleted</code> files. - Propagate changes on Path1 to Path2, and vice-versa.</p>
 <p>Bisync is <strong>in beta</strong> and is considered an <strong>advanced command</strong>, so use with care. Make sure you have read and understood the entire <a href="https://rclone.org/bisync">manual</a> (especially the <a href="https://rclone.org/bisync/#limitations">Limitations</a> section) before using, or data loss can result. Questions can be asked in the <a href="https://forum.rclone.org/">Rclone Forum</a>.</p>
@@ -1773,7 +1840,7 @@ rclone backend help &lt;backendname&gt;</code></pre>
 </ul>
 <h1 id="rclone-cat">rclone cat</h1>
 <p>Concatenates any files and sends them to stdout.</p>
-<h2 id="synopsis-21">Synopsis</h2>
+<h2 id="synopsis-22">Synopsis</h2>
 <p>Sends any files to standard output.</p>
 <p>You can use it like this to output a single file</p>
 <pre><code>rclone cat remote:path/to/file</code></pre>
@@ -1833,7 +1900,7 @@ rclone backend help &lt;backendname&gt;</code></pre>
 </ul>
 <h1 id="rclone-checksum">rclone checksum</h1>
 <p>Checks the files in the destination against a SUM file.</p>
-<h2 id="synopsis-22">Synopsis</h2>
+<h2 id="synopsis-23">Synopsis</h2>
 <p>Checks that hashsums of destination files match the SUM file. It compares hashes (MD5, SHA1, etc) and logs a report of files which don't match. It doesn't alter the file system.</p>
 <p>The sumfile is treated as the source and the dst:path is treated as the destination for the purposes of the output.</p>
 <p>If you supply the <code>--download</code> flag, it will download the data from the remote and calculate the content hash on the fly. This can be useful for remotes that don't support hashes or if you really want to check all the data.</p>
@@ -1895,7 +1962,7 @@ rclone backend help &lt;backendname&gt;</code></pre>
 </ul>
 <h1 id="rclone-completion">rclone completion</h1>
 <p>Output completion script for a given shell.</p>
-<h2 id="synopsis-23">Synopsis</h2>
+<h2 id="synopsis-24">Synopsis</h2>
 <p>Generates a shell completion script for rclone. Run with <code>--help</code> to list the supported shells.</p>
 <h2 id="options-24">Options</h2>
 <pre><code>  -h, --help   help for completion</code></pre>
@@ -1910,7 +1977,7 @@ rclone backend help &lt;backendname&gt;</code></pre>
 </ul>
 <h1 id="rclone-completion-bash">rclone completion bash</h1>
 <p>Output bash completion script for rclone.</p>
-<h2 id="synopsis-24">Synopsis</h2>
+<h2 id="synopsis-25">Synopsis</h2>
 <p>Generates a bash shell autocompletion script for rclone.</p>
 <p>By default, when run without any arguments,</p>
 <pre><code>rclone completion bash</code></pre>
@@ -1933,7 +2000,7 @@ rclone backend help &lt;backendname&gt;</code></pre>
 </ul>
 <h1 id="rclone-completion-fish">rclone completion fish</h1>
 <p>Output fish completion script for rclone.</p>
-<h2 id="synopsis-25">Synopsis</h2>
+<h2 id="synopsis-26">Synopsis</h2>
 <p>Generates a fish autocompletion script for rclone.</p>
 <p>This writes to /etc/fish/completions/rclone.fish by default so will probably need to be run with sudo or as root, e.g.</p>
 <pre><code>sudo rclone completion fish</code></pre>
@@ -1951,7 +2018,7 @@ rclone backend help &lt;backendname&gt;</code></pre>
 </ul>
 <h1 id="rclone-completion-powershell">rclone completion powershell</h1>
 <p>Output powershell completion script for rclone.</p>
-<h2 id="synopsis-26">Synopsis</h2>
+<h2 id="synopsis-27">Synopsis</h2>
 <p>Generate the autocompletion script for powershell.</p>
 <p>To load completions in your current shell session:</p>
 <pre><code>rclone completion powershell | Out-String | Invoke-Expression</code></pre>
@@ -1967,7 +2034,7 @@ rclone backend help &lt;backendname&gt;</code></pre>
 </ul>
 <h1 id="rclone-completion-zsh">rclone completion zsh</h1>
 <p>Output zsh completion script for rclone.</p>
-<h2 id="synopsis-27">Synopsis</h2>
+<h2 id="synopsis-28">Synopsis</h2>
 <p>Generates a zsh autocompletion script for rclone.</p>
 <p>This writes to /usr/share/zsh/vendor-completions/_rclone by default so will probably need to be run with sudo or as root, e.g.</p>
 <pre><code>sudo rclone completion zsh</code></pre>
@@ -1985,7 +2052,7 @@ rclone backend help &lt;backendname&gt;</code></pre>
 </ul>
 <h1 id="rclone-config-create">rclone config create</h1>
 <p>Create a new remote with name, type and options.</p>
-<h2 id="synopsis-28">Synopsis</h2>
+<h2 id="synopsis-29">Synopsis</h2>
 <p>Create a new remote of <code>name</code> with <code>type</code> and options. The options should be passed in pairs of <code>key</code> <code>value</code> or as <code>key=value</code>.</p>
 <p>For example, to make a swift remote of name myremote using auto config you would do:</p>
 <pre><code>rclone config create myremote swift env_auth true
@@ -2066,7 +2133,7 @@ rclone config create myremote swift env_auth=true</code></pre>
 </ul>
 <h1 id="rclone-config-disconnect">rclone config disconnect</h1>
 <p>Disconnects user from remote</p>
-<h2 id="synopsis-29">Synopsis</h2>
+<h2 id="synopsis-30">Synopsis</h2>
 <p>This disconnects the remote: passed in to the cloud storage system.</p>
 <p>This normally means revoking the oauth token.</p>
 <p>To reconnect use "rclone config reconnect".</p>
@@ -2090,7 +2157,7 @@ rclone config create myremote swift env_auth=true</code></pre>
 </ul>
 <h1 id="rclone-config-edit">rclone config edit</h1>
 <p>Enter an interactive configuration session.</p>
-<h2 id="synopsis-30">Synopsis</h2>
+<h2 id="synopsis-31">Synopsis</h2>
 <p>Enter an interactive configuration session where you can setup new remotes and manage existing ones. You may also set or remove a password to protect your configuration.</p>
 <pre><code>rclone config edit [flags]</code></pre>
 <h2 id="options-33">Options</h2>
@@ -2102,7 +2169,7 @@ rclone config create myremote swift env_auth=true</code></pre>
 </ul>
 <h1 id="rclone-config-encryption">rclone config encryption</h1>
 <p>set, remove and check the encryption for the config file</p>
-<h2 id="synopsis-31">Synopsis</h2>
+<h2 id="synopsis-32">Synopsis</h2>
 <p>This command sets, clears and checks the encryption for the config file using the subcommands below.</p>
 <h2 id="options-34">Options</h2>
 <pre><code>  -h, --help   help for encryption</code></pre>
@@ -2116,7 +2183,7 @@ rclone config create myremote swift env_auth=true</code></pre>
 </ul>
 <h1 id="rclone-config-encryption-check">rclone config encryption check</h1>
 <p>Check that the config file is encrypted</p>
-<h2 id="synopsis-32">Synopsis</h2>
+<h2 id="synopsis-33">Synopsis</h2>
 <p>This checks the config file is encrypted and that you can decrypt it.</p>
 <p>It will attempt to decrypt the config using the password you supply.</p>
 <p>If decryption fails it will return a non-zero exit code if using <code>--password-command</code>, otherwise it will prompt again for the password.</p>
@@ -2131,7 +2198,7 @@ rclone config create myremote swift env_auth=true</code></pre>
 </ul>
 <h1 id="rclone-config-encryption-remove">rclone config encryption remove</h1>
 <p>Remove the config file encryption password</p>
-<h2 id="synopsis-33">Synopsis</h2>
+<h2 id="synopsis-34">Synopsis</h2>
 <p>Remove the config file encryption password</p>
 <p>This removes the config file encryption, returning it to un-encrypted.</p>
 <p>If <code>--password-command</code> is in use, this will be called to supply the old config password.</p>
@@ -2146,12 +2213,12 @@ rclone config create myremote swift env_auth=true</code></pre>
 </ul>
 <h1 id="rclone-config-encryption-set">rclone config encryption set</h1>
 <p>Set or change the config file encryption password</p>
-<h2 id="synopsis-34">Synopsis</h2>
+<h2 id="synopsis-35">Synopsis</h2>
 <p>This command sets or changes the config file encryption password.</p>
 <p>If there was no config password set then it sets a new one, otherwise it changes the existing config password.</p>
 <p>Note that if you are changing an encryption password using <code>--password-command</code> then this will be called once to decrypt the config using the old password and then again to read the new password to re-encrypt the config.</p>
-<p>When <code>--password-command</code> is called to change the password then the environment variable <code>RCLONE_PASSWORD_CHANGE=1</code> will be set. So if changing passwords programatically you can use the environment variable to distinguish which password you must supply.</p>
-<p>Alternatively you can remove the password first (with <code>rclone config encryption remove</code>), then set it again with this command which may be easier if you don't mind the unecrypted config file being on the disk briefly.</p>
+<p>When <code>--password-command</code> is called to change the password then the environment variable <code>RCLONE_PASSWORD_CHANGE=1</code> will be set. So if changing passwords programmatically you can use the environment variable to distinguish which password you must supply.</p>
+<p>Alternatively you can remove the password first (with <code>rclone config encryption remove</code>), then set it again with this command which may be easier if you don't mind the unencrypted config file being on the disk briefly.</p>
 <pre><code>rclone config encryption set [flags]</code></pre>
 <h2 id="options-37">Options</h2>
 <pre><code>  -h, --help   help for set</code></pre>
@@ -2172,7 +2239,7 @@ rclone config create myremote swift env_auth=true</code></pre>
 </ul>
 <h1 id="rclone-config-password">rclone config password</h1>
 <p>Update password in an existing remote.</p>
-<h2 id="synopsis-35">Synopsis</h2>
+<h2 id="synopsis-36">Synopsis</h2>
 <p>Update an existing remote's password. The password should be passed in pairs of <code>key</code> <code>password</code> or as <code>key=password</code>. The <code>password</code> should be passed in in clear (unobscured).</p>
 <p>For example, to set password of a remote of name myremote you would do:</p>
 <pre><code>rclone config password myremote fieldname mypassword
@@ -2208,7 +2275,7 @@ rclone config password myremote fieldname=mypassword</code></pre>
 </ul>
 <h1 id="rclone-config-reconnect">rclone config reconnect</h1>
 <p>Re-authenticates user with remote.</p>
-<h2 id="synopsis-36">Synopsis</h2>
+<h2 id="synopsis-37">Synopsis</h2>
 <p>This reconnects remote: passed in to the cloud storage system.</p>
 <p>To disconnect the remote use "rclone config disconnect".</p>
 <p>This normally means going through the interactive oauth flow again.</p>
@@ -2222,7 +2289,7 @@ rclone config password myremote fieldname=mypassword</code></pre>
 </ul>
 <h1 id="rclone-config-redacted">rclone config redacted</h1>
 <p>Print redacted (decrypted) config file, or the redacted config for a single remote.</p>
-<h2 id="synopsis-37">Synopsis</h2>
+<h2 id="synopsis-38">Synopsis</h2>
 <p>This prints a redacted copy of the config file, either the whole config file or for a given remote.</p>
 <p>The config file will be redacted by replacing all passwords and other sensitive info with XXX.</p>
 <p>This makes the config file suitable for posting online for support.</p>
@@ -2257,7 +2324,7 @@ rclone config password myremote fieldname=mypassword</code></pre>
 </ul>
 <h1 id="rclone-config-update">rclone config update</h1>
 <p>Update options in an existing remote.</p>
-<h2 id="synopsis-38">Synopsis</h2>
+<h2 id="synopsis-39">Synopsis</h2>
 <p>Update an existing remote's options. The options should be passed in pairs of <code>key</code> <code>value</code> or as <code>key=value</code>.</p>
 <p>For example, to update the env_auth field of a remote of name myremote you would do:</p>
 <pre><code>rclone config update myremote env_auth true
@@ -2328,7 +2395,7 @@ rclone config update myremote env_auth=true</code></pre>
 </ul>
 <h1 id="rclone-config-userinfo">rclone config userinfo</h1>
 <p>Prints info about logged in user of remote.</p>
-<h2 id="synopsis-39">Synopsis</h2>
+<h2 id="synopsis-40">Synopsis</h2>
 <p>This prints the details of the person logged in to the cloud storage system.</p>
 <pre><code>rclone config userinfo remote: [flags]</code></pre>
 <h2 id="options-47">Options</h2>
@@ -2341,7 +2408,7 @@ rclone config update myremote env_auth=true</code></pre>
 </ul>
 <h1 id="rclone-copyto">rclone copyto</h1>
 <p>Copy files from source to dest, skipping identical files.</p>
-<h2 id="synopsis-40">Synopsis</h2>
+<h2 id="synopsis-41">Synopsis</h2>
 <p>If source:path is a file or directory then it copies it to a file or directory named dest:path.</p>
 <p>This can be used to upload single files to other than their current name. If the source is a directory then it acts exactly like the <a href="https://rclone.org/commands/rclone_copy/">copy</a> command.</p>
 <p>So</p>
@@ -2433,13 +2500,13 @@ if src is directory
 </ul>
 <h1 id="rclone-copyurl">rclone copyurl</h1>
 <p>Copy the contents of the URL supplied content to dest:path.</p>
-<h2 id="synopsis-41">Synopsis</h2>
+<h2 id="synopsis-42">Synopsis</h2>
 <p>Download a URL's content and copy it to the destination without saving it in temporary storage.</p>
 <p>Setting <code>--auto-filename</code> will attempt to automatically determine the filename from the URL (after any redirections) and used in the destination path.</p>
 <p>With <code>--auto-filename-header</code> in addition, if a specific filename is set in HTTP headers, it will be used instead of the name from the URL. With <code>--print-filename</code> in addition, the resulting file name will be printed.</p>
 <p>Setting <code>--no-clobber</code> will prevent overwriting file on the destination if there is one with the same name.</p>
 <p>Setting <code>--stdout</code> or making the output file name <code>-</code> will cause the output to be written to standard output.</p>
-<h2 id="troublshooting">Troublshooting</h2>
+<h2 id="troubleshooting">Troubleshooting</h2>
 <p>If you can't get <code>rclone copyurl</code> to work then here are some things you can try:</p>
 <ul>
 <li><code>--disable-http2</code> rclone will use HTTP2 if available - try disabling it</li>
@@ -2468,7 +2535,7 @@ if src is directory
 </ul>
 <h1 id="rclone-cryptcheck">rclone cryptcheck</h1>
 <p>Cryptcheck checks the integrity of an encrypted remote.</p>
-<h2 id="synopsis-42">Synopsis</h2>
+<h2 id="synopsis-43">Synopsis</h2>
 <p>Checks a remote against a <a href="https://rclone.org/crypt/">crypted</a> remote. This is the equivalent of running rclone <a href="https://rclone.org/commands/rclone_check/">check</a>, but able to check the checksums of the encrypted remote.</p>
 <p>For it to work the underlying remote of the cryptedremote must support some kind of checksum.</p>
 <p>It works by reading the nonce from each file on the cryptedremote: and using that to encrypt each file on the remote:. It then checks the checksum of the underlying file on the cryptedremote: against the checksum of the file it has just encrypted.</p>
@@ -2536,7 +2603,7 @@ if src is directory
 </ul>
 <h1 id="rclone-cryptdecode">rclone cryptdecode</h1>
 <p>Cryptdecode returns unencrypted file names.</p>
-<h2 id="synopsis-43">Synopsis</h2>
+<h2 id="synopsis-44">Synopsis</h2>
 <p>Returns unencrypted file names when provided with a list of encrypted file names. List limit is 10 items.</p>
 <p>If you supply the <code>--reverse</code> flag, it will return encrypted file names.</p>
 <p>use it like this</p>
@@ -2555,7 +2622,7 @@ rclone cryptdecode --reverse encryptedremote: filename1 filename2</code></pre>
 </ul>
 <h1 id="rclone-deletefile">rclone deletefile</h1>
 <p>Remove a single file from remote.</p>
-<h2 id="synopsis-44">Synopsis</h2>
+<h2 id="synopsis-45">Synopsis</h2>
 <p>Remove a single file from remote. Unlike <code>delete</code> it cannot be used to remove a directory and it doesn't obey include/exclude filters - if the specified file exists, it will always be removed.</p>
 <pre><code>rclone deletefile remote:path [flags]</code></pre>
 <h2 id="options-52">Options</h2>
@@ -2572,7 +2639,7 @@ rclone cryptdecode --reverse encryptedremote: filename1 filename2</code></pre>
 </ul>
 <h1 id="rclone-gendocs">rclone gendocs</h1>
 <p>Output markdown docs for rclone to the directory supplied.</p>
-<h2 id="synopsis-45">Synopsis</h2>
+<h2 id="synopsis-46">Synopsis</h2>
 <p>This produces markdown docs for the rclone commands to the directory supplied. These are in a format suitable for hugo to render into the rclone.org website.</p>
 <pre><code>rclone gendocs output_directory [flags]</code></pre>
 <h2 id="options-53">Options</h2>
@@ -2584,36 +2651,36 @@ rclone cryptdecode --reverse encryptedremote: filename1 filename2</code></pre>
 </ul>
 <h1 id="rclone-gitannex">rclone gitannex</h1>
 <p>Speaks with git-annex over stdin/stdout.</p>
-<h2 id="synopsis-46">Synopsis</h2>
+<h2 id="synopsis-47">Synopsis</h2>
 <p>Rclone's <code>gitannex</code> subcommand enables <a href="https://git-annex.branchable.com/">git-annex</a> to store and retrieve content from an rclone remote. It is meant to be run by git-annex, not directly by users.</p>
 <h2 id="installation-on-linux">Installation on Linux</h2>
 <ol type="1">
 <li><p>Skip this step if your version of git-annex is <a href="https://git-annex.branchable.com/news/version_10.20240430/">10.20240430</a> or newer. Otherwise, you must create a symlink somewhere on your PATH with a particular name. This symlink helps git-annex tell rclone it wants to run the "gitannex" subcommand.</p>
-<div class="sourceCode" id="cb253"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb253-1"><a href="#cb253-1" aria-hidden="true"></a><span class="co"># Create the helper symlink in &quot;$HOME/bin&quot;.</span></span>
-<span id="cb253-2"><a href="#cb253-2" aria-hidden="true"></a><span class="fu">ln</span> -s <span class="st">&quot;</span><span class="va">$(</span><span class="ex">realpath</span> rclone<span class="va">)</span><span class="st">&quot;</span> <span class="st">&quot;</span><span class="va">$HOME</span><span class="st">/bin/git-annex-remote-rclone-builtin&quot;</span></span>
-<span id="cb253-3"><a href="#cb253-3" aria-hidden="true"></a></span>
-<span id="cb253-4"><a href="#cb253-4" aria-hidden="true"></a><span class="co"># Verify the new symlink is on your PATH.</span></span>
-<span id="cb253-5"><a href="#cb253-5" aria-hidden="true"></a><span class="fu">which</span> git-annex-remote-rclone-builtin</span></code></pre></div></li>
+<div class="sourceCode" id="cb254"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb254-1"><a href="#cb254-1" aria-hidden="true"></a><span class="co"># Create the helper symlink in &quot;$HOME/bin&quot;.</span></span>
+<span id="cb254-2"><a href="#cb254-2" aria-hidden="true"></a><span class="fu">ln</span> -s <span class="st">&quot;</span><span class="va">$(</span><span class="ex">realpath</span> rclone<span class="va">)</span><span class="st">&quot;</span> <span class="st">&quot;</span><span class="va">$HOME</span><span class="st">/bin/git-annex-remote-rclone-builtin&quot;</span></span>
+<span id="cb254-3"><a href="#cb254-3" aria-hidden="true"></a></span>
+<span id="cb254-4"><a href="#cb254-4" aria-hidden="true"></a><span class="co"># Verify the new symlink is on your PATH.</span></span>
+<span id="cb254-5"><a href="#cb254-5" aria-hidden="true"></a><span class="fu">which</span> git-annex-remote-rclone-builtin</span></code></pre></div></li>
 <li><p>Add a new remote to your git-annex repo. This new remote will connect git-annex with the <code>rclone gitannex</code> subcommand.</p>
 <p>Start by asking git-annex to describe the remote's available configuration parameters.</p>
-<div class="sourceCode" id="cb254"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb254-1"><a href="#cb254-1" aria-hidden="true"></a><span class="co"># If you skipped step 1:</span></span>
-<span id="cb254-2"><a href="#cb254-2" aria-hidden="true"></a><span class="fu">git</span> annex initremote MyRemote type=rclone --whatelse</span>
-<span id="cb254-3"><a href="#cb254-3" aria-hidden="true"></a></span>
-<span id="cb254-4"><a href="#cb254-4" aria-hidden="true"></a><span class="co"># If you created a symlink in step 1:</span></span>
-<span id="cb254-5"><a href="#cb254-5" aria-hidden="true"></a><span class="fu">git</span> annex initremote MyRemote type=external externaltype=rclone-builtin --whatelse</span></code></pre></div>
+<div class="sourceCode" id="cb255"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb255-1"><a href="#cb255-1" aria-hidden="true"></a><span class="co"># If you skipped step 1:</span></span>
+<span id="cb255-2"><a href="#cb255-2" aria-hidden="true"></a><span class="fu">git</span> annex initremote MyRemote type=rclone --whatelse</span>
+<span id="cb255-3"><a href="#cb255-3" aria-hidden="true"></a></span>
+<span id="cb255-4"><a href="#cb255-4" aria-hidden="true"></a><span class="co"># If you created a symlink in step 1:</span></span>
+<span id="cb255-5"><a href="#cb255-5" aria-hidden="true"></a><span class="fu">git</span> annex initremote MyRemote type=external externaltype=rclone-builtin --whatelse</span></code></pre></div>
 <blockquote>
 <p><strong>NOTE</strong>: If you're porting an existing <a href="https://github.com/git-annex-remote-rclone/git-annex-remote-rclone">git-annex-remote-rclone</a> remote to use <code>rclone gitannex</code>, you can probably reuse the configuration parameters verbatim without renaming them. Check parameter synonyms with <code>--whatelse</code> as shown above.</p>
 </blockquote>
 <p>The following example creates a new git-annex remote named "MyRemote" that will use the rclone remote named "SomeRcloneRemote". That rclone remote must be one configured in your rclone.conf file, which can be located with <code>rclone config file</code>.</p>
-<div class="sourceCode" id="cb255"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb255-1"><a href="#cb255-1" aria-hidden="true"></a><span class="fu">git</span> annex initremote MyRemote         <span class="kw">\</span></span>
-<span id="cb255-2"><a href="#cb255-2" aria-hidden="true"></a>    <span class="va">type=</span>external                     <span class="kw">\</span></span>
-<span id="cb255-3"><a href="#cb255-3" aria-hidden="true"></a>    <span class="va">externaltype=</span>rclone-builtin       <span class="kw">\</span></span>
-<span id="cb255-4"><a href="#cb255-4" aria-hidden="true"></a>    <span class="va">encryption=</span>none                   <span class="kw">\</span></span>
-<span id="cb255-5"><a href="#cb255-5" aria-hidden="true"></a>    <span class="va">rcloneremotename=</span>SomeRcloneRemote <span class="kw">\</span></span>
-<span id="cb255-6"><a href="#cb255-6" aria-hidden="true"></a>    <span class="va">rcloneprefix=</span>git-annex-content    <span class="kw">\</span></span>
-<span id="cb255-7"><a href="#cb255-7" aria-hidden="true"></a>    <span class="va">rclonelayout=</span>nodir</span></code></pre></div></li>
+<div class="sourceCode" id="cb256"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb256-1"><a href="#cb256-1" aria-hidden="true"></a><span class="fu">git</span> annex initremote MyRemote         <span class="kw">\</span></span>
+<span id="cb256-2"><a href="#cb256-2" aria-hidden="true"></a>    <span class="va">type=</span>external                     <span class="kw">\</span></span>
+<span id="cb256-3"><a href="#cb256-3" aria-hidden="true"></a>    <span class="va">externaltype=</span>rclone-builtin       <span class="kw">\</span></span>
+<span id="cb256-4"><a href="#cb256-4" aria-hidden="true"></a>    <span class="va">encryption=</span>none                   <span class="kw">\</span></span>
+<span id="cb256-5"><a href="#cb256-5" aria-hidden="true"></a>    <span class="va">rcloneremotename=</span>SomeRcloneRemote <span class="kw">\</span></span>
+<span id="cb256-6"><a href="#cb256-6" aria-hidden="true"></a>    <span class="va">rcloneprefix=</span>git-annex-content    <span class="kw">\</span></span>
+<span id="cb256-7"><a href="#cb256-7" aria-hidden="true"></a>    <span class="va">rclonelayout=</span>nodir</span></code></pre></div></li>
 <li><p>Before you trust this command with your precious data, be sure to <strong>test the remote</strong>. This command is very new and has not been tested on many rclone backends. Caveat emptor!</p>
-<div class="sourceCode" id="cb256"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb256-1"><a href="#cb256-1" aria-hidden="true"></a><span class="fu">git</span> annex testremote MyRemote</span></code></pre></div></li>
+<div class="sourceCode" id="cb257"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb257-1"><a href="#cb257-1" aria-hidden="true"></a><span class="fu">git</span> annex testremote MyRemote</span></code></pre></div></li>
 </ol>
 <p>Happy annexing!</p>
 <pre><code>rclone gitannex [flags]</code></pre>
@@ -2626,7 +2693,7 @@ rclone cryptdecode --reverse encryptedremote: filename1 filename2</code></pre>
 </ul>
 <h1 id="rclone-hashsum">rclone hashsum</h1>
 <p>Produces a hashsum file for all the objects in the path.</p>
-<h2 id="synopsis-47">Synopsis</h2>
+<h2 id="synopsis-48">Synopsis</h2>
 <p>Produces a hash file for all the objects in the path using the hash named. The output is in the same format as the standard md5sum/sha1sum tool.</p>
 <p>By default, the hash is requested from the remote. If the hash is not supported by the remote, no hash will be returned. With the download flag, the file will be downloaded from the remote and hashed locally enabling any hash for any remote.</p>
 <p>For the MD5 and SHA1 algorithms there are also dedicated commands, <a href="https://rclone.org/commands/rclone_md5sum/">md5sum</a> and <a href="https://rclone.org/commands/rclone_sha1sum/">sha1sum</a>.</p>
@@ -2684,7 +2751,7 @@ Supported hashes are:
 </ul>
 <h1 id="rclone-link">rclone link</h1>
 <p>Generate public link to file/folder.</p>
-<h2 id="synopsis-48">Synopsis</h2>
+<h2 id="synopsis-49">Synopsis</h2>
 <p>Create, retrieve or remove a public link to the given file or folder.</p>
 <pre><code>rclone link remote:path/to/file
 rclone link remote:path/to/folder/
@@ -2705,7 +2772,7 @@ rclone link --expire 1d remote:path/to/file</code></pre>
 </ul>
 <h1 id="rclone-listremotes">rclone listremotes</h1>
 <p>List all the remotes in the config file and defined in environment variables.</p>
-<h2 id="synopsis-49">Synopsis</h2>
+<h2 id="synopsis-50">Synopsis</h2>
 <p>Lists all the available remotes from the config file, or the remotes matching an optional filter.</p>
 <p>Prints the result in human-readable format by default, and as a simple list of remote names, or if used with flag <code>--long</code> a tabular format including the remote names, types and descriptions. Using flag <code>--json</code> produces machine-readable output instead, which always includes all attributes - including the source (file or environment).</p>
 <p>Result can be filtered by a filter argument which applies to all attributes, and/or filter flags specific for each attribute. The values must be specified according to regular rclone filtering pattern syntax.</p>
@@ -2726,7 +2793,7 @@ rclone link --expire 1d remote:path/to/file</code></pre>
 </ul>
 <h1 id="rclone-lsf">rclone lsf</h1>
 <p>List directories and objects in remote:path formatted for parsing.</p>
-<h2 id="synopsis-50">Synopsis</h2>
+<h2 id="synopsis-51">Synopsis</h2>
 <p>List the contents of the source path (directories and objects) to standard output in a form which is easy to parse by scripts. By default this will just be the names of the objects and directories, one per line. The directories will have a / suffix.</p>
 <p>Eg</p>
 <pre><code>$ rclone lsf swift:bucket
@@ -2852,7 +2919,7 @@ rclone lsf remote:path --format pt --time-format max</code></pre>
 </ul>
 <h1 id="rclone-lsjson">rclone lsjson</h1>
 <p>List directories and objects in the path in JSON format.</p>
-<h2 id="synopsis-51">Synopsis</h2>
+<h2 id="synopsis-52">Synopsis</h2>
 <p>List directories and objects in the path in JSON format.</p>
 <p>The output is an array of Items, where each Item looks like this:</p>
 <pre><code>{
@@ -2958,7 +3025,7 @@ rclone lsf remote:path --format pt --time-format max</code></pre>
 </ul>
 <h1 id="rclone-mount">rclone mount</h1>
 <p>Mount the remote as file system on a mountpoint.</p>
-<h2 id="synopsis-52">Synopsis</h2>
+<h2 id="synopsis-53">Synopsis</h2>
 <p>Rclone mount allows Linux, FreeBSD, macOS and Windows to mount any of Rclone's cloud storage systems as a file system with FUSE.</p>
 <p>First set up your remote using <code>rclone config</code>. Check it works with <code>rclone ls</code> etc.</p>
 <p>On Linux and macOS, you can run mount in either foreground or background (aka daemon) mode. Mount runs in foreground mode by default. Use the <code>--daemon</code> flag to force background mode. On Windows you can run mount in foreground only, the flag is ignored.</p>
@@ -3328,7 +3395,7 @@ WantedBy=multi-user.target</code></pre>
 </ul>
 <h1 id="rclone-moveto">rclone moveto</h1>
 <p>Move file or directory from source to dest.</p>
-<h2 id="synopsis-53">Synopsis</h2>
+<h2 id="synopsis-54">Synopsis</h2>
 <p>If source:path is a file or directory then it moves it to a file or directory named dest:path.</p>
 <p>This can be used to rename files or upload single files to other than their existing name. If the source is a directory then it acts exactly like the <a href="https://rclone.org/commands/rclone_move/">move</a> command.</p>
 <p>So</p>
@@ -3421,7 +3488,7 @@ if src is directory
 </ul>
 <h1 id="rclone-ncdu">rclone ncdu</h1>
 <p>Explore a remote with a text based user interface.</p>
-<h2 id="synopsis-54">Synopsis</h2>
+<h2 id="synopsis-55">Synopsis</h2>
 <p>This displays a text based user interface allowing the navigation of a remote. It is most useful for answering the question - "What is using all my disk space?".</p>
 <p>To make the user interface it first scans the entire remote given and builds an in memory representation. rclone ncdu can be used during this scanning phase and you will see it building up the directory structure as it goes along.</p>
 <p>You can interact with the user interface using key presses, press '?' to toggle the help on and off. The supported keys are:</p>
@@ -3497,7 +3564,7 @@ if src is directory
 </ul>
 <h1 id="rclone-nfsmount">rclone nfsmount</h1>
 <p>Mount the remote as file system on a mountpoint.</p>
-<h2 id="synopsis-55">Synopsis</h2>
+<h2 id="synopsis-56">Synopsis</h2>
 <p>Rclone nfsmount allows Linux, FreeBSD, macOS and Windows to mount any of Rclone's cloud storage systems as a file system with FUSE.</p>
 <p>First set up your remote using <code>rclone config</code>. Check it works with <code>rclone ls</code> etc.</p>
 <p>On Linux and macOS, you can run mount in either foreground or background (aka daemon) mode. Mount runs in foreground mode by default. Use the <code>--daemon</code> flag to force background mode. On Windows you can run mount in foreground only, the flag is ignored.</p>
@@ -3872,7 +3939,7 @@ WantedBy=multi-user.target</code></pre>
 </ul>
 <h1 id="rclone-obscure">rclone obscure</h1>
 <p>Obscure password for use in the rclone config file.</p>
-<h2 id="synopsis-56">Synopsis</h2>
+<h2 id="synopsis-57">Synopsis</h2>
 <p>In the rclone config file, human-readable passwords are obscured. Obscuring them is done by encrypting them and writing them out in base64. This is <strong>not</strong> a secure way of encrypting these passwords as rclone can decrypt them - it is to prevent "eyedropping" - namely someone seeing a password in the rclone config file by accident.</p>
 <p>Many equally important things (like access tokens) are not obscured in the config file. However it is very hard to shoulder surf a 64 character hex token.</p>
 <p>This command can also accept a password through STDIN instead of an argument by passing a hyphen as an argument. This will use the first line of STDIN as the password not including the trailing newline.</p>
@@ -3889,7 +3956,7 @@ WantedBy=multi-user.target</code></pre>
 </ul>
 <h1 id="rclone-rc">rclone rc</h1>
 <p>Run a command against a running rclone.</p>
-<h2 id="synopsis-57">Synopsis</h2>
+<h2 id="synopsis-58">Synopsis</h2>
 <p>This runs a command against a running rclone. Use the <code>--url</code> flag to specify an non default URL to connect on. This can be either a ":port" which is taken to mean "http://localhost:port" or a "host:port" which is taken to mean "http://host:port"</p>
 <p>A username and password can be passed in with <code>--user</code> and <code>--pass</code>.</p>
 <p>Note that <code>--rc-addr</code>, <code>--rc-user</code>, <code>--rc-pass</code> will be read also for <code>--url</code>, <code>--user</code>, <code>--pass</code>.</p>
@@ -3931,7 +3998,7 @@ rclone rc --unix-socket /tmp/my.socket core/stats</code></pre>
 </ul>
 <h1 id="rclone-rcat">rclone rcat</h1>
 <p>Copies standard input to file on remote.</p>
-<h2 id="synopsis-58">Synopsis</h2>
+<h2 id="synopsis-59">Synopsis</h2>
 <p>Reads from standard input (stdin) and copies it to a single remote file.</p>
 <pre><code>echo &quot;hello world&quot; | rclone rcat remote:path/to/file
 ffmpeg - | rclone rcat remote:path/to/file</code></pre>
@@ -3956,7 +4023,7 @@ ffmpeg - | rclone rcat remote:path/to/file</code></pre>
 </ul>
 <h1 id="rclone-rcd">rclone rcd</h1>
 <p>Run rclone listening to remote control commands only.</p>
-<h2 id="synopsis-59">Synopsis</h2>
+<h2 id="synopsis-60">Synopsis</h2>
 <p>This runs rclone so that it only listens to remote control commands.</p>
 <p>This is useful if you are controlling rclone via the rc API.</p>
 <p>If you pass in a path to a directory, rclone will serve that directory for GET requests on the URL passed in. It will also open the URL in the browser when rclone is run.</p>
@@ -4142,7 +4209,7 @@ htpasswd -B htpasswd anotherUser</code></pre>
 </ul>
 <h1 id="rclone-rmdirs">rclone rmdirs</h1>
 <p>Remove empty directories under the path.</p>
-<h2 id="synopsis-60">Synopsis</h2>
+<h2 id="synopsis-61">Synopsis</h2>
 <p>This recursively removes any empty directories (including directories that only contain empty directories), that it finds under the path. The root path itself will also be removed if it is empty, unless you supply the <code>--leave-root</code> flag.</p>
 <p>Use command <a href="https://rclone.org/commands/rclone_rmdir/">rmdir</a> to delete just the empty directory given by path, not recurse.</p>
 <p>This is useful for tidying up remotes that rclone has left a lot of empty directories in. For example the <a href="https://rclone.org/commands/rclone_delete/">delete</a> command will delete files but leave the directory structure (unless used with option <code>--rmdirs</code>).</p>
@@ -4164,7 +4231,7 @@ htpasswd -B htpasswd anotherUser</code></pre>
 </ul>
 <h1 id="rclone-selfupdate">rclone selfupdate</h1>
 <p>Update the rclone binary.</p>
-<h2 id="synopsis-61">Synopsis</h2>
+<h2 id="synopsis-62">Synopsis</h2>
 <p>This command downloads the latest release of rclone and replaces the currently running binary. The download is verified with a hashsum and cryptographically signed signature; see <a href="https://rclone.org/release_signing/">the release signing docs</a> for details.</p>
 <p>If used without flags (or with implied <code>--stable</code> flag), this command will install the latest stable release. However, some issues may be fixed (or features added) only in the latest beta release. In such cases you should run the command with the <code>--beta</code> flag, i.e. <code>rclone selfupdate --beta</code>. You can check in advance what version would be installed by adding the <code>--check</code> flag, then repeat the command without it when you are satisfied.</p>
 <p>Sometimes the rclone team may recommend you a concrete beta or stable rclone release to troubleshoot your issue or add a bleeding edge feature. The <code>--version VER</code> flag, if given, will update to the concrete version instead of the latest one. If you omit micro version from <code>VER</code> (for example <code>1.53</code>), the latest matching micro version will be used.</p>
@@ -4189,7 +4256,7 @@ htpasswd -B htpasswd anotherUser</code></pre>
 </ul>
 <h1 id="rclone-serve">rclone serve</h1>
 <p>Serve a remote over a protocol.</p>
-<h2 id="synopsis-62">Synopsis</h2>
+<h2 id="synopsis-63">Synopsis</h2>
 <p>Serve a remote over a given protocol. Requires the use of a subcommand to specify the protocol, e.g.</p>
 <pre><code>rclone serve http remote:</code></pre>
 <p>Each subcommand has its own options which you can see in their help.</p>
@@ -4212,7 +4279,7 @@ htpasswd -B htpasswd anotherUser</code></pre>
 </ul>
 <h1 id="rclone-serve-dlna">rclone serve dlna</h1>
 <p>Serve remote:path over DLNA</p>
-<h2 id="synopsis-63">Synopsis</h2>
+<h2 id="synopsis-64">Synopsis</h2>
 <p>Run a DLNA media server for media stored in an rclone remote. Many devices, such as the Xbox and PlayStation, can automatically discover this server in the LAN and play audio/video from it. VLC is also supported. Service discovery uses UDP multicast packets (SSDP) and will thus only work on LANs.</p>
 <p>Rclone will list all files present in the remote, without filtering based on media formats or file extensions. Additionally, there is no media transcoding support. This means that some players might show files that they are not able to play back correctly.</p>
 <p>Rclone will add external subtitle files (.srt) to videos if they have the same filename as the video file itself (except the extension), either in the same directory as the video, or in a "Subs" subdirectory.</p>
@@ -4435,7 +4502,7 @@ htpasswd -B htpasswd anotherUser</code></pre>
 </ul>
 <h1 id="rclone-serve-docker">rclone serve docker</h1>
 <p>Serve any remote on docker's volume plugin API.</p>
-<h2 id="synopsis-64">Synopsis</h2>
+<h2 id="synopsis-65">Synopsis</h2>
 <p>This command implements the Docker volume plugin API allowing docker to use rclone as a data storage mechanism for various cloud providers. rclone provides <a href="/docker">docker volume plugin</a> based on it.</p>
 <p>To create a docker plugin, one must create a Unix or TCP socket that Docker will look for when you use the plugin and then it listens for commands from docker daemon and runs the corresponding code when necessary. Docker plugins can run as a managed plugin under control of the docker daemon or as an independent native service. For testing, you can just run it directly from the command line, for example:</p>
 <pre><code>sudo rclone serve docker --base-dir /tmp/rclone-volumes --socket-addr localhost:8787 -vv</code></pre>
@@ -4679,7 +4746,7 @@ htpasswd -B htpasswd anotherUser</code></pre>
 </ul>
 <h1 id="rclone-serve-ftp">rclone serve ftp</h1>
 <p>Serve remote:path over FTP.</p>
-<h2 id="synopsis-65">Synopsis</h2>
+<h2 id="synopsis-66">Synopsis</h2>
 <p>Run a basic FTP server to serve a remote over FTP protocol. This can be viewed with a FTP client or you can make a remote of type FTP to read and write it.</p>
 <h2 id="server-options-2">Server options</h2>
 <p>Use --addr to specify which IP address and port the server should listen on, e.g. --addr 1.2.3.4:8000 or --addr :8080 to listen to all IPs. By default it only listens on localhost. You can use port :0 to let the OS choose an available port.</p>
@@ -4935,7 +5002,7 @@ htpasswd -B htpasswd anotherUser</code></pre>
 </ul>
 <h1 id="rclone-serve-http">rclone serve http</h1>
 <p>Serve the remote over HTTP.</p>
-<h2 id="synopsis-66">Synopsis</h2>
+<h2 id="synopsis-67">Synopsis</h2>
 <p>Run a basic web server to serve a remote over HTTP. This can be viewed in a web browser or you can make a remote of type http read from it.</p>
 <p>You can use the filter flags (e.g. <code>--include</code>, <code>--exclude</code>) to control what is served.</p>
 <p>The server will log errors. Use <code>-v</code> to see access logs.</p>
@@ -5337,7 +5404,7 @@ htpasswd -B htpasswd anotherUser</code></pre>
 </ul>
 <h1 id="rclone-serve-nfs">rclone serve nfs</h1>
 <p>Serve the remote as an NFS mount</p>
-<h2 id="synopsis-67">Synopsis</h2>
+<h2 id="synopsis-68">Synopsis</h2>
 <p>Create an NFS server that serves the given remote over the network.</p>
 <p>This implements an NFSv3 server to serve any rclone remote via NFS.</p>
 <p>The primary purpose for this command is to enable the <a href="https://rclone.org/commands/rclone_mount/">mount command</a> on recent macOS versions where installing FUSE is very cumbersome.</p>
@@ -5346,7 +5413,7 @@ htpasswd -B htpasswd anotherUser</code></pre>
 <p>Modifying files through the NFS protocol requires VFS caching. Usually you will need to specify <code>--vfs-cache-mode</code> in order to be able to write to the mountpoint (<code>full</code> is recommended). If you don't specify VFS cache mode, the mount will be read-only.</p>
 <p><code>--nfs-cache-type</code> controls the type of the NFS handle cache. By default this is <code>memory</code> where new handles will be randomly allocated when needed. These are stored in memory. If the server is restarted the handle cache will be lost and connected NFS clients will get stale handle errors.</p>
 <p><code>--nfs-cache-type disk</code> uses an on disk NFS handle cache. Rclone hashes the path of the object and stores it in a file named after the hash. These hashes are stored on disk the directory controlled by <code>--cache-dir</code> or the exact directory may be specified with <code>--nfs-cache-dir</code>. Using this means that the NFS server can be restarted at will without affecting the connected clients.</p>
-<p><code>--nfs-cache-type symlink</code> is similar to <code>--nfs-cache-type disk</code> in that it uses an on disk cache, but the cache entries are held as symlinks. Rclone will use the handle of the underlying file as the NFS handle which improves performance. This sort of cache can't be backed up and restored as the underlying handles will change. This is Linux only. It requres running rclone as root or with <code>CAP_DAC_READ_SEARCH</code>. You can run rclone with this extra permission by doing this to the rclone binary <code>sudo setcap cap_dac_read_search+ep /path/to/rclone</code>.</p>
+<p><code>--nfs-cache-type symlink</code> is similar to <code>--nfs-cache-type disk</code> in that it uses an on disk cache, but the cache entries are held as symlinks. Rclone will use the handle of the underlying file as the NFS handle which improves performance. This sort of cache can't be backed up and restored as the underlying handles will change. This is Linux only. It requires running rclone as root or with <code>CAP_DAC_READ_SEARCH</code>. You can run rclone with this extra permission by doing this to the rclone binary <code>sudo setcap cap_dac_read_search+ep /path/to/rclone</code>.</p>
 <p><code>--nfs-cache-handle-limit</code> controls the maximum number of cached NFS handles stored by the caching handler. This should not be set too low or you may experience errors when trying to access files. The default is <code>1000000</code>, but consider lowering this limit if the server's system resource usage causes problems. This is only used by the <code>memory</code> type cache.</p>
 <p>To serve NFS over the network use following command:</p>
 <pre><code>rclone serve nfs remote: --addr 0.0.0.0:$PORT --vfs-cache-mode=full</code></pre>
@@ -5568,7 +5635,7 @@ htpasswd -B htpasswd anotherUser</code></pre>
 </ul>
 <h1 id="rclone-serve-restic">rclone serve restic</h1>
 <p>Serve the remote for restic's REST API.</p>
-<h2 id="synopsis-68">Synopsis</h2>
+<h2 id="synopsis-69">Synopsis</h2>
 <p>Run a basic web server to serve a remote over restic's REST backend API over HTTP. This allows restic to use rclone as a data storage mechanism for cloud providers that restic does not support directly.</p>
 <p><a href="https://restic.net/">Restic</a> is a command-line program for doing backups.</p>
 <p>The server will log errors. Use -v to see access logs.</p>
@@ -5667,7 +5734,7 @@ htpasswd -B htpasswd anotherUser</code></pre>
 </ul>
 <h1 id="rclone-serve-s3">rclone serve s3</h1>
 <p>Serve remote:path over s3.</p>
-<h2 id="synopsis-69">Synopsis</h2>
+<h2 id="synopsis-70">Synopsis</h2>
 <p><code>serve s3</code> implements a basic s3 server that serves a remote via s3. This can be viewed with an s3 client, or you can make an <a href="https://rclone.org/s3/">s3 type remote</a> to read and write to it with rclone.</p>
 <p><code>serve s3</code> is considered <strong>Experimental</strong> so use with care.</p>
 <p>S3 server supports Signature Version 4 authentication. Just use <code>--auth-key accessKey,secretKey</code> and set the <code>Authorization</code> header correctly in the request. (See the <a href="https://docs.aws.amazon.com/general/latest/gr/signature-version-4.html">AWS docs</a>).</p>
@@ -5693,7 +5760,7 @@ endpoint = http://127.0.0.1:8080/
 access_key_id = ACCESS_KEY_ID
 secret_access_key = SECRET_ACCESS_KEY
 use_multipart_uploads = false</code></pre>
-<p>Note that setting <code>disable_multipart_uploads = true</code> is to work around <a href="#bugs">a bug</a> which will be fixed in due course.</p>
+<p>Note that setting <code>use_multipart_uploads = false</code> is to work around <a href="#bugs">a bug</a> which will be fixed in due course.</p>
 <h2 id="bugs">Bugs</h2>
 <p>When uploading multipart files <code>serve s3</code> holds all the parts in memory (see <a href="https://github.com/rclone/rclone/issues/7453">#7453</a>). This is a limitaton of the library rclone uses for serving S3 and will hopefully be fixed at some point.</p>
 <p>Multipart server side copies do not work (see <a href="https://github.com/rclone/rclone/issues/7454">#7454</a>). These take a very long time and eventually fail. The default threshold for multipart server side copies is 5G which is the maximum it can be, so files above this side will fail to be server side copied.</p>
@@ -5988,7 +6055,7 @@ htpasswd -B htpasswd anotherUser</code></pre>
 </ul>
 <h1 id="rclone-serve-sftp">rclone serve sftp</h1>
 <p>Serve the remote over SFTP.</p>
-<h2 id="synopsis-70">Synopsis</h2>
+<h2 id="synopsis-71">Synopsis</h2>
 <p>Run an SFTP server to serve a remote over SFTP. This can be used with an SFTP client or you can make a remote of type <a href="/sftp">sftp</a> to use with it.</p>
 <p>You can use the <a href="/filtering">filter</a> flags (e.g. <code>--include</code>, <code>--exclude</code>) to control what is served.</p>
 <p>The server will respond to a small number of shell commands, mainly md5sum, sha1sum and df, which enable it to provide support for checksums and the about feature when accessed from an sftp remote.</p>
@@ -6255,7 +6322,7 @@ htpasswd -B htpasswd anotherUser</code></pre>
 </ul>
 <h1 id="rclone-serve-webdav">rclone serve webdav</h1>
 <p>Serve remote:path over WebDAV.</p>
-<h2 id="synopsis-71">Synopsis</h2>
+<h2 id="synopsis-72">Synopsis</h2>
 <p>Run a basic WebDAV server to serve a remote over HTTP via the WebDAV protocol. This can be viewed with a WebDAV client, through a web browser, or you can make a remote of type WebDAV to read and write it.</p>
 <h2 id="webdav-options">WebDAV options</h2>
 <h3 id="etag-hash">--etag-hash</h3>
@@ -6671,7 +6738,7 @@ htpasswd -B htpasswd anotherUser</code></pre>
 </ul>
 <h1 id="rclone-settier">rclone settier</h1>
 <p>Changes storage class/tier of objects in remote.</p>
-<h2 id="synopsis-72">Synopsis</h2>
+<h2 id="synopsis-73">Synopsis</h2>
 <p>Changes storage tier or class at remote if supported. Few cloud storage services provides different storage classes on objects, for example AWS S3 and Glacier, Azure Blob storage - Hot, Cool and Archive, Google Cloud Storage, Regional Storage, Nearline, Coldline etc.</p>
 <p>Note that, certain tier changes make objects not available to access immediately. For example tiering to archive in azure blob storage makes objects in frozen state, user can restore by setting tier to Hot/Cool, similarly S3 to Glacier makes object inaccessible.true</p>
 <p>You can use it to tier single object</p>
@@ -6690,7 +6757,7 @@ htpasswd -B htpasswd anotherUser</code></pre>
 </ul>
 <h1 id="rclone-test">rclone test</h1>
 <p>Run a test command</p>
-<h2 id="synopsis-73">Synopsis</h2>
+<h2 id="synopsis-74">Synopsis</h2>
 <p>Rclone test is used to run test commands.</p>
 <p>Select which test command you want with the subcommand, eg</p>
 <pre><code>rclone test memory remote:</code></pre>
@@ -6722,7 +6789,7 @@ htpasswd -B htpasswd anotherUser</code></pre>
 </ul>
 <h1 id="rclone-test-histogram">rclone test histogram</h1>
 <p>Makes a histogram of file name characters.</p>
-<h2 id="synopsis-74">Synopsis</h2>
+<h2 id="synopsis-75">Synopsis</h2>
 <p>This command outputs JSON which shows the histogram of characters used in filenames in the remote:path specified.</p>
 <p>The data doesn't contain any identifying information but is useful for the rclone developers when developing filename compression.</p>
 <pre><code>rclone test histogram [remote:path] [flags]</code></pre>
@@ -6735,7 +6802,7 @@ htpasswd -B htpasswd anotherUser</code></pre>
 </ul>
 <h1 id="rclone-test-info">rclone test info</h1>
 <p>Discovers file name or other limitations for paths.</p>
-<h2 id="synopsis-75">Synopsis</h2>
+<h2 id="synopsis-76">Synopsis</h2>
 <p>Discovers what filenames and upload methods are possible to write to the paths passed in and how long they can be. It can take some time. It will write test files into the remote:path passed in. It outputs a bit of go code for each one.</p>
 <p><strong>NB</strong> this can create undeletable files and other hazards - use with care</p>
 <pre><code>rclone test info [remote:path]+ [flags]</code></pre>
@@ -6807,7 +6874,7 @@ htpasswd -B htpasswd anotherUser</code></pre>
 </ul>
 <h1 id="rclone-touch">rclone touch</h1>
 <p>Create new file or change file modification time.</p>
-<h2 id="synopsis-76">Synopsis</h2>
+<h2 id="synopsis-77">Synopsis</h2>
 <p>Set the modification time on file(s) as specified by remote:path to have the current time.</p>
 <p>If remote:path does not exist then a zero sized file will be created, unless <code>--no-create</code> or <code>--recursive</code> is provided.</p>
 <p>If <code>--recursive</code> is used then recursively sets the modification time on all existing files that is found under the path. Filters are supported, and you can test with the <code>--dry-run</code> or the <code>--interactive</code>/<code>-i</code> flag.</p>
@@ -6865,7 +6932,7 @@ htpasswd -B htpasswd anotherUser</code></pre>
 </ul>
 <h1 id="rclone-tree">rclone tree</h1>
 <p>List the contents of the remote in a tree like fashion.</p>
-<h2 id="synopsis-77">Synopsis</h2>
+<h2 id="synopsis-78">Synopsis</h2>
 <p>Lists the contents of a remote in a similar way to the unix tree command.</p>
 <p>For example</p>
 <pre><code>$ rclone tree remote:path
@@ -7168,6 +7235,7 @@ rclone sync --interactive /path/to/files remote:current-backup</code></pre>
 <h2 id="options-90">Options</h2>
 <p>Rclone has a number of options to control its behaviour.</p>
 <p>Options that take parameters can have the values passed in two ways, <code>--option=value</code> or <code>--option value</code>. However boolean (true/false) options behave slightly differently to the other options in that <code>--boolean</code> sets the option to <code>true</code> and the absence of the flag sets it to <code>false</code>. It is also possible to specify <code>--boolean=false</code> or <code>--boolean=true</code>. Note that <code>--boolean false</code> is not valid - this is parsed as <code>--boolean</code> and the <code>false</code> is parsed as an extra command line argument for rclone.</p>
+<p>Options documented to take a <code>stringArray</code> parameter accept multiple values. To pass more than one value, repeat the option; for example: <code>--include value1 --include value2</code>.</p>
 <h3 id="time-option">Time or duration options</h3>
 <p>TIME or DURATION options can be specified as a duration string or a time string.</p>
 <p>A duration string is a possibly signed sequence of decimal numbers, each with optional fraction and a unit suffix, such as "300ms", "-1.5h" or "2h45m". Default units are seconds or the following abbreviations are valid:</p>
@@ -7530,55 +7598,55 @@ y/n/s/!/q&gt; n</code></pre>
 <li><code>ID</code> is the source <code>ID</code> of the object if known.</li>
 <li><code>Metadata</code> is the backend specific metadata as described in the backend docs.</li>
 </ul>
-<div class="sourceCode" id="cb618"><pre class="sourceCode json"><code class="sourceCode json"><span id="cb618-1"><a href="#cb618-1" aria-hidden="true"></a><span class="fu">{</span></span>
-<span id="cb618-2"><a href="#cb618-2" aria-hidden="true"></a>    <span class="dt">&quot;SrcFs&quot;</span><span class="fu">:</span> <span class="st">&quot;gdrive:&quot;</span><span class="fu">,</span></span>
-<span id="cb618-3"><a href="#cb618-3" aria-hidden="true"></a>    <span class="dt">&quot;SrcFsType&quot;</span><span class="fu">:</span> <span class="st">&quot;drive&quot;</span><span class="fu">,</span></span>
-<span id="cb618-4"><a href="#cb618-4" aria-hidden="true"></a>    <span class="dt">&quot;DstFs&quot;</span><span class="fu">:</span> <span class="st">&quot;newdrive:user&quot;</span><span class="fu">,</span></span>
-<span id="cb618-5"><a href="#cb618-5" aria-hidden="true"></a>    <span class="dt">&quot;DstFsType&quot;</span><span class="fu">:</span> <span class="st">&quot;onedrive&quot;</span><span class="fu">,</span></span>
-<span id="cb618-6"><a href="#cb618-6" aria-hidden="true"></a>    <span class="dt">&quot;Remote&quot;</span><span class="fu">:</span> <span class="st">&quot;test.txt&quot;</span><span class="fu">,</span></span>
-<span id="cb618-7"><a href="#cb618-7" aria-hidden="true"></a>    <span class="dt">&quot;Size&quot;</span><span class="fu">:</span> <span class="dv">6</span><span class="fu">,</span></span>
-<span id="cb618-8"><a href="#cb618-8" aria-hidden="true"></a>    <span class="dt">&quot;MimeType&quot;</span><span class="fu">:</span> <span class="st">&quot;text/plain; charset=utf-8&quot;</span><span class="fu">,</span></span>
-<span id="cb618-9"><a href="#cb618-9" aria-hidden="true"></a>    <span class="dt">&quot;ModTime&quot;</span><span class="fu">:</span> <span class="st">&quot;2022-10-11T17:53:10.286745272+01:00&quot;</span><span class="fu">,</span></span>
-<span id="cb618-10"><a href="#cb618-10" aria-hidden="true"></a>    <span class="dt">&quot;IsDir&quot;</span><span class="fu">:</span> <span class="kw">false</span><span class="fu">,</span></span>
-<span id="cb618-11"><a href="#cb618-11" aria-hidden="true"></a>    <span class="dt">&quot;ID&quot;</span><span class="fu">:</span> <span class="st">&quot;xyz&quot;</span><span class="fu">,</span></span>
-<span id="cb618-12"><a href="#cb618-12" aria-hidden="true"></a>    <span class="dt">&quot;Metadata&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb618-13"><a href="#cb618-13" aria-hidden="true"></a>        <span class="dt">&quot;btime&quot;</span><span class="fu">:</span> <span class="st">&quot;2022-10-11T16:53:11Z&quot;</span><span class="fu">,</span></span>
-<span id="cb618-14"><a href="#cb618-14" aria-hidden="true"></a>        <span class="dt">&quot;content-type&quot;</span><span class="fu">:</span> <span class="st">&quot;text/plain; charset=utf-8&quot;</span><span class="fu">,</span></span>
-<span id="cb618-15"><a href="#cb618-15" aria-hidden="true"></a>        <span class="dt">&quot;mtime&quot;</span><span class="fu">:</span> <span class="st">&quot;2022-10-11T17:53:10.286745272+01:00&quot;</span><span class="fu">,</span></span>
-<span id="cb618-16"><a href="#cb618-16" aria-hidden="true"></a>        <span class="dt">&quot;owner&quot;</span><span class="fu">:</span> <span class="st">&quot;user1@domain1.com&quot;</span><span class="fu">,</span></span>
-<span id="cb618-17"><a href="#cb618-17" aria-hidden="true"></a>        <span class="dt">&quot;permissions&quot;</span><span class="fu">:</span> <span class="st">&quot;...&quot;</span><span class="fu">,</span></span>
-<span id="cb618-18"><a href="#cb618-18" aria-hidden="true"></a>        <span class="dt">&quot;description&quot;</span><span class="fu">:</span> <span class="st">&quot;my nice file&quot;</span><span class="fu">,</span></span>
-<span id="cb618-19"><a href="#cb618-19" aria-hidden="true"></a>        <span class="dt">&quot;starred&quot;</span><span class="fu">:</span> <span class="st">&quot;false&quot;</span></span>
-<span id="cb618-20"><a href="#cb618-20" aria-hidden="true"></a>    <span class="fu">}</span></span>
-<span id="cb618-21"><a href="#cb618-21" aria-hidden="true"></a><span class="fu">}</span></span></code></pre></div>
-<p>The program should then modify the input as desired and send it to STDOUT. The returned <code>Metadata</code> field will be used in its entirety for the destination object. Any other fields will be ignored. Note in this example we translate user names and permissions and add something to the description:</p>
 <div class="sourceCode" id="cb619"><pre class="sourceCode json"><code class="sourceCode json"><span id="cb619-1"><a href="#cb619-1" aria-hidden="true"></a><span class="fu">{</span></span>
-<span id="cb619-2"><a href="#cb619-2" aria-hidden="true"></a>    <span class="dt">&quot;Metadata&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb619-3"><a href="#cb619-3" aria-hidden="true"></a>        <span class="dt">&quot;btime&quot;</span><span class="fu">:</span> <span class="st">&quot;2022-10-11T16:53:11Z&quot;</span><span class="fu">,</span></span>
-<span id="cb619-4"><a href="#cb619-4" aria-hidden="true"></a>        <span class="dt">&quot;content-type&quot;</span><span class="fu">:</span> <span class="st">&quot;text/plain; charset=utf-8&quot;</span><span class="fu">,</span></span>
-<span id="cb619-5"><a href="#cb619-5" aria-hidden="true"></a>        <span class="dt">&quot;mtime&quot;</span><span class="fu">:</span> <span class="st">&quot;2022-10-11T17:53:10.286745272+01:00&quot;</span><span class="fu">,</span></span>
-<span id="cb619-6"><a href="#cb619-6" aria-hidden="true"></a>        <span class="dt">&quot;owner&quot;</span><span class="fu">:</span> <span class="st">&quot;user1@domain2.com&quot;</span><span class="fu">,</span></span>
-<span id="cb619-7"><a href="#cb619-7" aria-hidden="true"></a>        <span class="dt">&quot;permissions&quot;</span><span class="fu">:</span> <span class="st">&quot;...&quot;</span><span class="fu">,</span></span>
-<span id="cb619-8"><a href="#cb619-8" aria-hidden="true"></a>        <span class="dt">&quot;description&quot;</span><span class="fu">:</span> <span class="st">&quot;my nice file [migrated from domain1]&quot;</span><span class="fu">,</span></span>
-<span id="cb619-9"><a href="#cb619-9" aria-hidden="true"></a>        <span class="dt">&quot;starred&quot;</span><span class="fu">:</span> <span class="st">&quot;false&quot;</span></span>
-<span id="cb619-10"><a href="#cb619-10" aria-hidden="true"></a>    <span class="fu">}</span></span>
-<span id="cb619-11"><a href="#cb619-11" aria-hidden="true"></a><span class="fu">}</span></span></code></pre></div>
+<span id="cb619-2"><a href="#cb619-2" aria-hidden="true"></a>    <span class="dt">&quot;SrcFs&quot;</span><span class="fu">:</span> <span class="st">&quot;gdrive:&quot;</span><span class="fu">,</span></span>
+<span id="cb619-3"><a href="#cb619-3" aria-hidden="true"></a>    <span class="dt">&quot;SrcFsType&quot;</span><span class="fu">:</span> <span class="st">&quot;drive&quot;</span><span class="fu">,</span></span>
+<span id="cb619-4"><a href="#cb619-4" aria-hidden="true"></a>    <span class="dt">&quot;DstFs&quot;</span><span class="fu">:</span> <span class="st">&quot;newdrive:user&quot;</span><span class="fu">,</span></span>
+<span id="cb619-5"><a href="#cb619-5" aria-hidden="true"></a>    <span class="dt">&quot;DstFsType&quot;</span><span class="fu">:</span> <span class="st">&quot;onedrive&quot;</span><span class="fu">,</span></span>
+<span id="cb619-6"><a href="#cb619-6" aria-hidden="true"></a>    <span class="dt">&quot;Remote&quot;</span><span class="fu">:</span> <span class="st">&quot;test.txt&quot;</span><span class="fu">,</span></span>
+<span id="cb619-7"><a href="#cb619-7" aria-hidden="true"></a>    <span class="dt">&quot;Size&quot;</span><span class="fu">:</span> <span class="dv">6</span><span class="fu">,</span></span>
+<span id="cb619-8"><a href="#cb619-8" aria-hidden="true"></a>    <span class="dt">&quot;MimeType&quot;</span><span class="fu">:</span> <span class="st">&quot;text/plain; charset=utf-8&quot;</span><span class="fu">,</span></span>
+<span id="cb619-9"><a href="#cb619-9" aria-hidden="true"></a>    <span class="dt">&quot;ModTime&quot;</span><span class="fu">:</span> <span class="st">&quot;2022-10-11T17:53:10.286745272+01:00&quot;</span><span class="fu">,</span></span>
+<span id="cb619-10"><a href="#cb619-10" aria-hidden="true"></a>    <span class="dt">&quot;IsDir&quot;</span><span class="fu">:</span> <span class="kw">false</span><span class="fu">,</span></span>
+<span id="cb619-11"><a href="#cb619-11" aria-hidden="true"></a>    <span class="dt">&quot;ID&quot;</span><span class="fu">:</span> <span class="st">&quot;xyz&quot;</span><span class="fu">,</span></span>
+<span id="cb619-12"><a href="#cb619-12" aria-hidden="true"></a>    <span class="dt">&quot;Metadata&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb619-13"><a href="#cb619-13" aria-hidden="true"></a>        <span class="dt">&quot;btime&quot;</span><span class="fu">:</span> <span class="st">&quot;2022-10-11T16:53:11Z&quot;</span><span class="fu">,</span></span>
+<span id="cb619-14"><a href="#cb619-14" aria-hidden="true"></a>        <span class="dt">&quot;content-type&quot;</span><span class="fu">:</span> <span class="st">&quot;text/plain; charset=utf-8&quot;</span><span class="fu">,</span></span>
+<span id="cb619-15"><a href="#cb619-15" aria-hidden="true"></a>        <span class="dt">&quot;mtime&quot;</span><span class="fu">:</span> <span class="st">&quot;2022-10-11T17:53:10.286745272+01:00&quot;</span><span class="fu">,</span></span>
+<span id="cb619-16"><a href="#cb619-16" aria-hidden="true"></a>        <span class="dt">&quot;owner&quot;</span><span class="fu">:</span> <span class="st">&quot;user1@domain1.com&quot;</span><span class="fu">,</span></span>
+<span id="cb619-17"><a href="#cb619-17" aria-hidden="true"></a>        <span class="dt">&quot;permissions&quot;</span><span class="fu">:</span> <span class="st">&quot;...&quot;</span><span class="fu">,</span></span>
+<span id="cb619-18"><a href="#cb619-18" aria-hidden="true"></a>        <span class="dt">&quot;description&quot;</span><span class="fu">:</span> <span class="st">&quot;my nice file&quot;</span><span class="fu">,</span></span>
+<span id="cb619-19"><a href="#cb619-19" aria-hidden="true"></a>        <span class="dt">&quot;starred&quot;</span><span class="fu">:</span> <span class="st">&quot;false&quot;</span></span>
+<span id="cb619-20"><a href="#cb619-20" aria-hidden="true"></a>    <span class="fu">}</span></span>
+<span id="cb619-21"><a href="#cb619-21" aria-hidden="true"></a><span class="fu">}</span></span></code></pre></div>
+<p>The program should then modify the input as desired and send it to STDOUT. The returned <code>Metadata</code> field will be used in its entirety for the destination object. Any other fields will be ignored. Note in this example we translate user names and permissions and add something to the description:</p>
+<div class="sourceCode" id="cb620"><pre class="sourceCode json"><code class="sourceCode json"><span id="cb620-1"><a href="#cb620-1" aria-hidden="true"></a><span class="fu">{</span></span>
+<span id="cb620-2"><a href="#cb620-2" aria-hidden="true"></a>    <span class="dt">&quot;Metadata&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb620-3"><a href="#cb620-3" aria-hidden="true"></a>        <span class="dt">&quot;btime&quot;</span><span class="fu">:</span> <span class="st">&quot;2022-10-11T16:53:11Z&quot;</span><span class="fu">,</span></span>
+<span id="cb620-4"><a href="#cb620-4" aria-hidden="true"></a>        <span class="dt">&quot;content-type&quot;</span><span class="fu">:</span> <span class="st">&quot;text/plain; charset=utf-8&quot;</span><span class="fu">,</span></span>
+<span id="cb620-5"><a href="#cb620-5" aria-hidden="true"></a>        <span class="dt">&quot;mtime&quot;</span><span class="fu">:</span> <span class="st">&quot;2022-10-11T17:53:10.286745272+01:00&quot;</span><span class="fu">,</span></span>
+<span id="cb620-6"><a href="#cb620-6" aria-hidden="true"></a>        <span class="dt">&quot;owner&quot;</span><span class="fu">:</span> <span class="st">&quot;user1@domain2.com&quot;</span><span class="fu">,</span></span>
+<span id="cb620-7"><a href="#cb620-7" aria-hidden="true"></a>        <span class="dt">&quot;permissions&quot;</span><span class="fu">:</span> <span class="st">&quot;...&quot;</span><span class="fu">,</span></span>
+<span id="cb620-8"><a href="#cb620-8" aria-hidden="true"></a>        <span class="dt">&quot;description&quot;</span><span class="fu">:</span> <span class="st">&quot;my nice file [migrated from domain1]&quot;</span><span class="fu">,</span></span>
+<span id="cb620-9"><a href="#cb620-9" aria-hidden="true"></a>        <span class="dt">&quot;starred&quot;</span><span class="fu">:</span> <span class="st">&quot;false&quot;</span></span>
+<span id="cb620-10"><a href="#cb620-10" aria-hidden="true"></a>    <span class="fu">}</span></span>
+<span id="cb620-11"><a href="#cb620-11" aria-hidden="true"></a><span class="fu">}</span></span></code></pre></div>
 <p>Metadata can be removed here too.</p>
 <p>An example python program might look something like this to implement the above transformations.</p>
-<div class="sourceCode" id="cb620"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb620-1"><a href="#cb620-1" aria-hidden="true"></a><span class="im">import</span> sys, json</span>
-<span id="cb620-2"><a href="#cb620-2" aria-hidden="true"></a></span>
-<span id="cb620-3"><a href="#cb620-3" aria-hidden="true"></a>i <span class="op">=</span> json.load(sys.stdin)</span>
-<span id="cb620-4"><a href="#cb620-4" aria-hidden="true"></a>metadata <span class="op">=</span> i[<span class="st">&quot;Metadata&quot;</span>]</span>
-<span id="cb620-5"><a href="#cb620-5" aria-hidden="true"></a><span class="co"># Add tag to description</span></span>
-<span id="cb620-6"><a href="#cb620-6" aria-hidden="true"></a><span class="cf">if</span> <span class="st">&quot;description&quot;</span> <span class="kw">in</span> metadata:</span>
-<span id="cb620-7"><a href="#cb620-7" aria-hidden="true"></a>    metadata[<span class="st">&quot;description&quot;</span>] <span class="op">+=</span> <span class="st">&quot; [migrated from domain1]&quot;</span></span>
-<span id="cb620-8"><a href="#cb620-8" aria-hidden="true"></a><span class="cf">else</span>:</span>
-<span id="cb620-9"><a href="#cb620-9" aria-hidden="true"></a>    metadata[<span class="st">&quot;description&quot;</span>] <span class="op">=</span> <span class="st">&quot;[migrated from domain1]&quot;</span></span>
-<span id="cb620-10"><a href="#cb620-10" aria-hidden="true"></a><span class="co"># Modify owner</span></span>
-<span id="cb620-11"><a href="#cb620-11" aria-hidden="true"></a><span class="cf">if</span> <span class="st">&quot;owner&quot;</span> <span class="kw">in</span> metadata:</span>
-<span id="cb620-12"><a href="#cb620-12" aria-hidden="true"></a>    metadata[<span class="st">&quot;owner&quot;</span>] <span class="op">=</span> metadata[<span class="st">&quot;owner&quot;</span>].replace(<span class="st">&quot;domain1.com&quot;</span>, <span class="st">&quot;domain2.com&quot;</span>)</span>
-<span id="cb620-13"><a href="#cb620-13" aria-hidden="true"></a>o <span class="op">=</span> { <span class="st">&quot;Metadata&quot;</span>: metadata }</span>
-<span id="cb620-14"><a href="#cb620-14" aria-hidden="true"></a>json.dump(o, sys.stdout, indent<span class="op">=</span><span class="st">&quot;</span><span class="ch">\t</span><span class="st">&quot;</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb621"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb621-1"><a href="#cb621-1" aria-hidden="true"></a><span class="im">import</span> sys, json</span>
+<span id="cb621-2"><a href="#cb621-2" aria-hidden="true"></a></span>
+<span id="cb621-3"><a href="#cb621-3" aria-hidden="true"></a>i <span class="op">=</span> json.load(sys.stdin)</span>
+<span id="cb621-4"><a href="#cb621-4" aria-hidden="true"></a>metadata <span class="op">=</span> i[<span class="st">&quot;Metadata&quot;</span>]</span>
+<span id="cb621-5"><a href="#cb621-5" aria-hidden="true"></a><span class="co"># Add tag to description</span></span>
+<span id="cb621-6"><a href="#cb621-6" aria-hidden="true"></a><span class="cf">if</span> <span class="st">&quot;description&quot;</span> <span class="kw">in</span> metadata:</span>
+<span id="cb621-7"><a href="#cb621-7" aria-hidden="true"></a>    metadata[<span class="st">&quot;description&quot;</span>] <span class="op">+=</span> <span class="st">&quot; [migrated from domain1]&quot;</span></span>
+<span id="cb621-8"><a href="#cb621-8" aria-hidden="true"></a><span class="cf">else</span>:</span>
+<span id="cb621-9"><a href="#cb621-9" aria-hidden="true"></a>    metadata[<span class="st">&quot;description&quot;</span>] <span class="op">=</span> <span class="st">&quot;[migrated from domain1]&quot;</span></span>
+<span id="cb621-10"><a href="#cb621-10" aria-hidden="true"></a><span class="co"># Modify owner</span></span>
+<span id="cb621-11"><a href="#cb621-11" aria-hidden="true"></a><span class="cf">if</span> <span class="st">&quot;owner&quot;</span> <span class="kw">in</span> metadata:</span>
+<span id="cb621-12"><a href="#cb621-12" aria-hidden="true"></a>    metadata[<span class="st">&quot;owner&quot;</span>] <span class="op">=</span> metadata[<span class="st">&quot;owner&quot;</span>].replace(<span class="st">&quot;domain1.com&quot;</span>, <span class="st">&quot;domain2.com&quot;</span>)</span>
+<span id="cb621-13"><a href="#cb621-13" aria-hidden="true"></a>o <span class="op">=</span> { <span class="st">&quot;Metadata&quot;</span>: metadata }</span>
+<span id="cb621-14"><a href="#cb621-14" aria-hidden="true"></a>json.dump(o, sys.stdout, indent<span class="op">=</span><span class="st">&quot;</span><span class="ch">\t</span><span class="st">&quot;</span>)</span></code></pre></div>
 <p>You can find this example (slightly expanded) in the rclone source code at <a href="https://github.com/rclone/rclone/blob/master/bin/test_metadata_mapper.py">bin/test_metadata_mapper.py</a>.</p>
 <p>If you want to see the input to the metadata mapper and the output returned from it in the log you can use <code>-vv --dump mapper</code>.</p>
 <p>See the <a href="#metadata">metadata section</a> for more info.</p>
@@ -8051,7 +8119,7 @@ export RCLONE_CONFIG_PASS</code></pre>
 <p>Verbosity is slightly different, the environment variable equivalent of <code>--verbose</code> or <code>-v</code> is <code>RCLONE_VERBOSE=1</code>, or for <code>-vv</code>, <code>RCLONE_VERBOSE=2</code>.</p>
 <p>The same parser is used for the options and the environment variables so they take exactly the same form.</p>
 <p>The options set by environment variables can be seen with the <code>-vv</code> flag, e.g. <code>rclone version -vv</code>.</p>
-<p>Options that can appear multiple times (type <code>stringArray</code>) are treated slighly differently as environment variables can only be defined once. In order to allow a simple mechanism for adding one or many items, the input is treated as a <a href="https://godoc.org/encoding/csv">CSV encoded</a> string. For example</p>
+<p>Options that can appear multiple times (type <code>stringArray</code>) are treated slightly differently as environment variables can only be defined once. In order to allow a simple mechanism for adding one or many items, the input is treated as a <a href="https://godoc.org/encoding/csv">CSV encoded</a> string. For example</p>
 <table>
 <colgroup>
 <col style="width: 52%" />
@@ -10160,7 +10228,7 @@ rclone rc options/set --json &#39;{&quot;main&quot;: {&quot;LogLevel&quot;: 8}}&
         },
    ],
 }</code></pre>
-<p>The <code>expiry</code> time is the time until the file is elegible for being uploaded in floating point seconds. This may go negative. As rclone only transfers <code>--transfers</code> files at once, only the lowest <code>--transfers</code> expiry times will have <code>uploading</code> as <code>true</code>. So there may be files with negative expiry times for which <code>uploading</code> is <code>false</code>.</p>
+<p>The <code>expiry</code> time is the time until the file is eligible for being uploaded in floating point seconds. This may go negative. As rclone only transfers <code>--transfers</code> files at once, only the lowest <code>--transfers</code> expiry times will have <code>uploading</code> as <code>true</code>. So there may be files with negative expiry times for which <code>uploading</code> is <code>false</code>.</p>
 <p>This command takes an "fs" parameter. If this parameter is not supplied and if there is only one VFS in use then that VFS will be used. If there is more than one VFS in use then the "fs" parameter must be supplied.</p>
 <h3 id="vfs-queue-set-expiry">vfs/queue-set-expiry: Set the expiry time for an item queued for upload.</h3>
 <p>Use this to adjust the <code>expiry</code> time for an item in the upload queue. You will need to read the <code>id</code> of the item using <code>vfs/queue</code> before using this call.</p>
@@ -12221,7 +12289,7 @@ Showing nodes accounting for 1537.03kB, 100% of 1537.03kB total
       --tpslimit float                     Limit HTTP transactions per second to this
       --tpslimit-burst int                 Max burst of transactions for --tpslimit (default 1)
       --use-cookies                        Enable session cookiejar
-      --user-agent string                  Set the user-agent to a specified string (default &quot;rclone/v1.69.0&quot;)</code></pre>
+      --user-agent string                  Set the user-agent to a specified string (default &quot;rclone/v1.69.1&quot;)</code></pre>
 <h2 id="performance">Performance</h2>
 <p>Flags helpful for increasing performance.</p>
 <pre><code>      --buffer-size SizeSuffix   In memory buffer size when reading files for each --transfer (default 16Mi)
@@ -13319,7 +13387,7 @@ systemctl start docker-volume-rclone.socket
 systemctl restart docker</code></pre>
 <p>Or run the service directly: - run <code>systemctl daemon-reload</code> to let systemd pick up new config - run <code>systemctl enable docker-volume-rclone.service</code> to make the new service start automatically when you power on your machine. - run <code>systemctl start docker-volume-rclone.service</code> to start the service now. - run <code>systemctl restart docker</code> to restart docker daemon and let it detect the new plugin socket. Note that this step is not needed in managed mode where docker knows about plugin state changes.</p>
 <p>The two methods are equivalent from the user perspective, but I personally prefer socket activation.</p>
-<h2 id="troubleshooting">Troubleshooting</h2>
+<h2 id="troubleshooting-1">Troubleshooting</h2>
 <p>You can <a href="https://docs.docker.com/engine/extend/#debugging-plugins">see managed plugin settings</a> with</p>
 <pre><code>docker plugin list
 docker plugin inspect rclone</code></pre>
@@ -13516,7 +13584,7 @@ rclone copy Path1 Path2 [--create-empty-src-dirs]</code></pre>
 <p>As a safety check, if greater than the <code>--max-delete</code> percent of files were deleted on either the Path1 or Path2 filesystem, then bisync will abort with a warning message, without making any changes. The default <code>--max-delete</code> is <code>50%</code>. One way to trigger this limit is to rename a directory that contains more than half of your files. This will appear to bisync as a bunch of deleted files and a bunch of new files. This safety check is intended to block bisync from deleting all of the files on both filesystems due to a temporary network access issue, or if the user had inadvertently deleted the files on one side or the other. To force the sync, either set a different delete percentage limit, e.g. <code>--max-delete 75</code> (allows up to 75% deletion), or use <code>--force</code> to bypass the check.</p>
 <p>Also see the <a href="#all-files-changed">all files changed</a> check.</p>
 <h3 id="filters-file">--filters-file</h3>
-<p>By using rclone filter features you can exclude file types or directory sub-trees from the sync. See the <a href="#filtering">bisync filters</a> section and generic <a href="https://rclone.org/filtering/#filter-from-read-filtering-patterns-from-a-file">--filter-from</a> documentation. An <a href="#example-filters-file">example filters file</a> contains filters for non-allowed files for synching with Dropbox.</p>
+<p>By using rclone filter features you can exclude file types or directory sub-trees from the sync. See the <a href="#filtering">bisync filters</a> section and generic <a href="https://rclone.org/filtering/#filter-from-read-filtering-patterns-from-a-file">--filter-from</a> documentation. An <a href="#example-filters-file">example filters file</a> contains filters for non-allowed files for syncing with Dropbox.</p>
 <p>If you make changes to your filters file then bisync requires a run with <code>--resync</code>. This is a safety feature, which prevents existing files on the Path1 and/or Path2 side from seeming to disappear from view (since they are excluded in the new listings), which would fool bisync into seeing them as deleted (as compared to the prior run listings), and then bisync would proceed to delete them for real.</p>
 <p>To block this from happening, bisync calculates an MD5 hash of the filters file and stores the hash in a <code>.md5</code> file in the same place as your filters file. On the next run with <code>--filters-file</code> set, bisync re-calculates the MD5 hash of the current filters file and compares it to the hash stored in the <code>.md5</code> file. If they don't match, the run aborts with a critical error and thus forces you to do a <code>--resync</code>, likely avoiding a disaster.</p>
 <h3 id="conflict-resolve">--conflict-resolve CHOICE</h3>
@@ -13556,7 +13624,7 @@ rclone copy Path1 Path2 [--create-empty-src-dirs]</code></pre>
 <h3 id="check-sync">--check-sync</h3>
 <p>Enabled by default, the check-sync function checks that all of the same files exist in both the Path1 and Path2 history listings. This <em>check-sync</em> integrity check is performed at the end of the sync run by default. Any untrapped failing copy/deletes between the two paths might result in differences between the two listings and in the untracked file content differences between the two paths. A resync run would correct the error.</p>
 <p>Note that the default-enabled integrity check locally executes a load of both the final Path1 and Path2 listings, and thus adds to the run time of a sync. Using <code>--check-sync=false</code> will disable it and may significantly reduce the sync run times for very large numbers of files.</p>
-<p>The check may be run manually with <code>--check-sync=only</code>. It runs only the integrity check and terminates without actually synching.</p>
+<p>The check may be run manually with <code>--check-sync=only</code>. It runs only the integrity check and terminates without actually syncing.</p>
 <p>Note that currently, <code>--check-sync</code> <strong>only checks listing snapshots and NOT the actual files on the remotes.</strong> Note also that the listing snapshots will not know about any changes that happened during or after the latest bisync run, as those will be discovered on the next run. Therefore, while listings should always match <em>each other</em> at the end of a bisync run, it is <em>expected</em> that they will not match the underlying remotes, nor will the remotes match each other, if there were changes during or after the run. This is normal, and any differences will be detected and synced on the next run.</p>
 <p>For a robust integrity check of the current state of the remotes (as opposed to just their listing snapshots), consider using <a href="commands/rclone_check/"><code>check</code></a> (or <a href="https://rclone.org/commands/rclone_cryptcheck/"><code>cryptcheck</code></a>, if at least one path is a <code>crypt</code> remote) instead of <code>--check-sync</code>, keeping in mind that differences are expected if files changed during or after your last bisync run.</p>
 <p>For example, a possible sequence could look like this:</p>
@@ -13786,7 +13854,7 @@ rclone copy Path1 Path2 [--create-empty-src-dirs]</code></pre>
 <p>See <a href="https://rclone.org/filtering/">filtering documentation</a> for how filter rules are written and interpreted.</p>
 <p>Bisync's <a href="#filters-file"><code>--filters-file</code></a> flag slightly extends the rclone's <a href="https://rclone.org/filtering/#filter-from-read-filtering-patterns-from-a-file">--filter-from</a> filtering mechanism. For a given bisync run you may provide <em>only one</em> <code>--filters-file</code>. The <code>--include*</code>, <code>--exclude*</code>, and <code>--filter</code> flags are also supported.</p>
 <h3 id="how-to-filter-directories">How to filter directories</h3>
-<p>Filtering portions of the directory tree is a critical feature for synching.</p>
+<p>Filtering portions of the directory tree is a critical feature for syncing.</p>
 <p>Examples of directory trees (always beneath the Path1/Path2 root level) you may want to exclude from your sync: - Directory trees containing only software build intermediate files. - Directory trees containing application temporary files and data such as the Windows <code>C:\Users\MyLogin\AppData\</code> tree. - Directory trees containing files that are large, less important, or are getting thrashed continuously by ongoing processes.</p>
 <p>On the other hand, there may be only select directories that you actually want to sync, and exclude all others. See the <a href="#include-filters">Example include-style filters for Windows user directories</a> below.</p>
 <h3 id="filters-file-writing-guidelines">Filters file writing guidelines</h3>
@@ -13853,7 +13921,7 @@ rclone copy Path1 Path2 [--create-empty-src-dirs]</code></pre>
 <p>Note also that Windows implements several "library" links such as <code>C:\Users\MyLogin\My Documents\My Music</code> pointing to <code>C:\Users\MyLogin\Music</code>. rclone sees these as links, so you must add <code>--links</code> to the bisync command line if you which to follow these links. I find that I get permission errors in trying to follow the links, so I don't include the rclone <code>--links</code> flag, but then you get lots of <code>Can't follow symlink…</code> noise from rclone about not following the links. This noise can be quashed by adding <code>--quiet</code> to the bisync command line.</p>
 <h2 id="exclude-filters">Example exclude-style filters files for use with Dropbox</h2>
 <ul>
-<li>Dropbox disallows synching the listed temporary and configuration/data files. The `- <filename>` filters exclude these files where ever they may occur in the sync tree. Consider adding similar exclusions for file types you don't need to sync, such as core dump and software build files.</li>
+<li>Dropbox disallows syncing the listed temporary and configuration/data files. The `- <filename>` filters exclude these files where ever they may occur in the sync tree. Consider adding similar exclusions for file types you don't need to sync, such as core dump and software build files.</li>
 <li>bisync testing creates <code>/testdir/</code> at the top level of the sync tree, and usually deletes the tree after the test. If a normal sync should run while the <code>/testdir/</code> tree exists the <code>--check-access</code> phase may fail due to unbalanced RCLONE_TEST files. The `- /testdir/` filter blocks this tree from being synched. You don't need this exclusion if you are not doing bisync development testing.</li>
 <li>Everything else beneath the Path1/Path2 root will be synched.</li>
 <li>RCLONE_TEST files may be placed anywhere within the tree, including the root.</li>
@@ -14013,7 +14081,7 @@ Options:
 <p>Note: unlike rclone flags which must be prefixed by double dash (<code>--</code>), the test command flags can be equally prefixed by a single <code>-</code> or double dash.</p>
 <h3 id="running-tests">Running tests</h3>
 <ul>
-<li><code>go test . -case basic -remote local -remote2 local</code> runs the <code>test_basic</code> test case using only the local filesystem, synching one local directory with another local directory. Test script output is to the console, while commands within scenario.txt have their output sent to the <code>.../workdir/test.log</code> file, which is finally compared to the golden copy.</li>
+<li><code>go test . -case basic -remote local -remote2 local</code> runs the <code>test_basic</code> test case using only the local filesystem, syncing one local directory with another local directory. Test script output is to the console, while commands within scenario.txt have their output sent to the <code>.../workdir/test.log</code> file, which is finally compared to the golden copy.</li>
 <li>The first argument after <code>go test</code> should be a relative name of the directory containing bisync source code. If you run tests right from there, the argument will be <code>.</code> (current directory) as in most examples below. If you run bisync tests from the rclone source directory, the command should be <code>go test ./cmd/bisync ...</code>.</li>
 <li>The test engine will mangle rclone output to ensure comparability with golden listings and logs.</li>
 <li>Test scenarios are located in <code>./cmd/bisync/testdata</code>. The test <code>-case</code> argument should match the full name of a subdirectory under that directory. Every test subdirectory name on disk must start with <code>test_</code>, this prefix can be omitted on command line for brevity. Also, underscores in the name can be replaced by dashes for convenience.</li>
@@ -14150,6 +14218,10 @@ Options:
 <p>Bisync adopts the differential synchronization technique, which is based on keeping history of changes performed by both synchronizing sides. See the <em>Dual Shadow Method</em> section in <a href="https://neil.fraser.name/writing/sync/">Neil Fraser's article</a>.</p>
 <p>Also note a number of academic publications by <a href="http://www.cis.upenn.edu/%7Ebcpierce/papers/index.shtml#File%20Synchronization">Benjamin Pierce</a> about <em>Unison</em> and synchronization in general.</p>
 <h2 id="changelog">Changelog</h2>
+<h3 id="v1.69.1"><code>v1.69.1</code></h3>
+<ul>
+<li>Fixed an issue causing listings to not capture concurrent modifications under certain conditions</li>
+</ul>
 <h3 id="v1.68"><code>v1.68</code></h3>
 <ul>
 <li>Fixed an issue affecting backends that round modtimes to a lower precision.</li>
@@ -15072,7 +15144,7 @@ $ rclone -q --s3-versions ls s3:cleanup-test
 <ol type="1">
 <li>This is a policy that can be used when creating bucket. It assumes that <code>USER_NAME</code> has been created.</li>
 <li>The Resource entry must include both resource ARNs, as one implies the bucket and the other implies the bucket's objects.</li>
-<li>When using <a href="#s3-no-check-bucket">s3-no-check-bucket</a> and the bucket already exsits, the <code>"arn:aws:s3:::BUCKET_NAME"</code> doesn't have to be included.</li>
+<li>When using <a href="#s3-no-check-bucket">s3-no-check-bucket</a> and the bucket already exists, the <code>"arn:aws:s3:::BUCKET_NAME"</code> doesn't have to be included.</li>
 </ol>
 <p>For reference, <a href="https://gist.github.com/ebridges/ebfc9042dd7c756cd101cfa807b7ae2b">here's an Ansible script</a> that will generate one or more buckets that will work with <code>rclone sync</code>.</p>
 <h3 id="key-management-system-kms">Key Management System (KMS)</h3>
@@ -17632,7 +17704,7 @@ region = au-nsw
 endpoint = s3.rackcorp.com
 location_constraint = au-nsw</code></pre>
 <h3 id="rclone">Rclone Serve S3</h3>
-<p>Rclone can serve any remote over the S3 protocol. For details see the <a href="https://rclone.org/commands/rclone_serve_http/">rclone serve s3</a> documentation.</p>
+<p>Rclone can serve any remote over the S3 protocol. For details see the <a href="https://rclone.org/commands/rclone_serve_s3/">rclone serve s3</a> documentation.</p>
 <p>For example, to serve <code>remote:path</code> over s3, run the server like this:</p>
 <pre><code>rclone serve s3 --auth-key ACCESS_KEY_ID,SECRET_ACCESS_KEY remote:path</code></pre>
 <p>This will be compatible with an rclone remote which is defined like this:</p>
@@ -17643,7 +17715,7 @@ endpoint = http://127.0.0.1:8080/
 access_key_id = ACCESS_KEY_ID
 secret_access_key = SECRET_ACCESS_KEY
 use_multipart_uploads = false</code></pre>
-<p>Note that setting <code>disable_multipart_uploads = true</code> is to work around <a href="https://rclone.org/commands/rclone_serve_http/#bugs">a bug</a> which will be fixed in due course.</p>
+<p>Note that setting <code>use_multipart_uploads = false</code> is to work around <a href="https://rclone.org/commands/rclone_serve_s3/#bugs">a bug</a> which will be fixed in due course.</p>
 <h3 id="scaleway">Scaleway</h3>
 <p><a href="https://www.scaleway.com/object-storage/">Scaleway</a> The Object Storage platform allows you to store anything from backups, logs and web assets to documents and photos. Files can be dropped from the Scaleway console or transferred through our API and CLI or using any S3-compatible tool.</p>
 <p>Scaleway provides an S3 interface which can be configured for use with rclone like this:</p>
@@ -18581,27 +18653,49 @@ Option endpoint.
 Endpoint for Linode Object Storage API.
 Choose a number from below, or type in your own value.
 Press Enter to leave empty.
- 1 / Atlanta, GA (USA), us-southeast-1
+ 1 / Amsterdam (Netherlands), nl-ams-1
+   \ (nl-ams-1.linodeobjects.com)
+ 2 / Atlanta, GA (USA), us-southeast-1
    \ (us-southeast-1.linodeobjects.com)
- 2 / Chicago, IL (USA), us-ord-1
+ 3 / Chennai (India), in-maa-1
+   \ (in-maa-1.linodeobjects.com)
+ 4 / Chicago, IL (USA), us-ord-1
    \ (us-ord-1.linodeobjects.com)
- 3 / Frankfurt (Germany), eu-central-1
+ 5 / Frankfurt (Germany), eu-central-1
    \ (eu-central-1.linodeobjects.com)
- 4 / Milan (Italy), it-mil-1
+ 6 / Jakarta (Indonesia), id-cgk-1
+   \ (id-cgk-1.linodeobjects.com)
+ 7 / London 2 (Great Britain), gb-lon-1
+   \ (gb-lon-1.linodeobjects.com)
+ 8 / Los Angeles, CA (USA), us-lax-1
+   \ (us-lax-1.linodeobjects.com)
+ 9 / Madrid (Spain), es-mad-1
+   \ (es-mad-1.linodeobjects.com)
+10 / Melbourne (Australia), au-mel-1
+   \ (au-mel-1.linodeobjects.com)
+11 / Miami, FL (USA), us-mia-1
+   \ (us-mia-1.linodeobjects.com)
+12 / Milan (Italy), it-mil-1
    \ (it-mil-1.linodeobjects.com)
- 5 / Newark, NJ (USA), us-east-1
+13 / Newark, NJ (USA), us-east-1
    \ (us-east-1.linodeobjects.com)
- 6 / Paris (France), fr-par-1
+14 / Osaka (Japan), jp-osa-1
+   \ (jp-osa-1.linodeobjects.com)
+15 / Paris (France), fr-par-1
    \ (fr-par-1.linodeobjects.com)
- 7 / Seattle, WA (USA), us-sea-1
+16 / São Paulo (Brazil), br-gru-1
+   \ (br-gru-1.linodeobjects.com)
+17 / Seattle, WA (USA), us-sea-1
    \ (us-sea-1.linodeobjects.com)
- 8 / Singapore ap-south-1
+18 / Singapore, ap-south-1
    \ (ap-south-1.linodeobjects.com)
- 9 / Stockholm (Sweden), se-sto-1
+19 / Singapore 2, sg-sin-1
+   \ (sg-sin-1.linodeobjects.com)
+20 / Stockholm (Sweden), se-sto-1
    \ (se-sto-1.linodeobjects.com)
-10 / Washington, DC, (USA), us-iad-1
+21 / Washington, DC, (USA), us-iad-1
    \ (us-iad-1.linodeobjects.com)
-endpoint&gt; 3
+endpoint&gt; 5
 
 Option acl.
 Canned ACL used when creating buckets and storing or copying objects.
@@ -18958,7 +19052,7 @@ cos                  s3</code></pre>
 <p>For Netease NOS configure as per the configurator <code>rclone config</code> setting the provider <code>Netease</code>. This will automatically set <code>force_path_style = false</code> which is necessary for it to run properly.</p>
 <h3 id="petabox">Petabox</h3>
 <p>Here is an example of making a <a href="https://petabox.io/">Petabox</a> configuration. First run:</p>
-<div class="sourceCode" id="cb1007"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb1007-1"><a href="#cb1007-1" aria-hidden="true"></a><span class="ex">rclone</span> config</span></code></pre></div>
+<div class="sourceCode" id="cb1008"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb1008-1"><a href="#cb1008-1" aria-hidden="true"></a><span class="ex">rclone</span> config</span></code></pre></div>
 <p>This will guide you through an interactive setup process.</p>
 <pre><code>No remotes found, make a new one?
 n) New remote
@@ -21755,7 +21849,7 @@ rclone rc backend/command command=decode fs=crypt: encryptedfile1 [encryptedfile
 <li>8 bytes magic string <code>RCLONE\x00\x00</code></li>
 <li>24 bytes Nonce (IV)</li>
 </ul>
-<p>The initial nonce is generated from the operating systems crypto strong random number generator. The nonce is incremented for each chunk read making sure each nonce is unique for each block written. The chance of a nonce being reused is minuscule. If you wrote an exabyte of data (10¹⁸ bytes) you would have a probability of approximately 2×10⁻³² of re-using a nonce.</p>
+<p>The initial nonce is generated from the operating systems crypto strong random number generator. The nonce is incremented for each chunk read making sure each nonce is unique for each block written. The chance of a nonce being reused is minuscule. If you wrote an exabyte of data (10¹⁸ bytes) you would have a probability of approximately 2×10⁻³² of reusing a nonce.</p>
 <h4 id="chunk">Chunk</h4>
 <p>Each chunk will contain 64 KiB of data, except for the last one which may have less data. The data chunk is in standard NaCl SecretBox format. SecretBox uses XSalsa20 and Poly1305 to encrypt and authenticate messages.</p>
 <p>Each chunk contains:</p>
@@ -27047,7 +27141,7 @@ Enter a value.
 config_2fa&gt; 2FACODE
 Remote config
 --------------------
-[koofr]
+[iclouddrive]
 - type: iclouddrive
 - apple_id: APPLEID
 - password: *** ENCRYPTED ***
@@ -27060,6 +27154,13 @@ d) Delete this remote
 y/e/d&gt; y</code></pre>
 <h2 id="advanced-data-protection">Advanced Data Protection</h2>
 <p>ADP is currently unsupported and need to be disabled</p>
+<p>On iPhone, Settings <code>&gt;</code> Apple Account <code>&gt;</code> iCloud <code>&gt;</code> 'Access iCloud Data on the Web' must be ON, and 'Advanced Data Protection' OFF.</p>
+<h2 id="troubleshooting-2">Troubleshooting</h2>
+<h3 id="missing-pcs-cookies-from-the-request">Missing PCS cookies from the request</h3>
+<p>This means you have Advanced Data Protection (ADP) turned on. This is not supported at the moment. If you want to use rclone you will have to turn it off. See above for how to turn it off.</p>
+<p>You will need to clear the <code>cookies</code> and the <code>trust_token</code> fields in the config. Or you can delete the remote config and start again.</p>
+<p>You should then run <code>rclone reconnect remote:</code>.</p>
+<p>Note that changing the ADP setting may not take effect immediately - you may need to wait a few hours or a day before you can get rclone to work - keep clearing the config entry and running <code>rclone reconnect remote:</code> until rclone functions properly.</p>
 <h3 id="standard-options-25">Standard options</h3>
 <p>Here are the Standard options specific to iclouddrive (iCloud Drive).</p>
 <h4 id="iclouddrive-apple-id">--iclouddrive-apple-id</h4>
@@ -27801,7 +27902,7 @@ y/e/d&gt; y</code></pre>
 <p>Note that Jottacloud is case insensitive so you can't have a file called "Hello.doc" and one called "hello.doc".</p>
 <p>There are quite a few characters that can't be in Jottacloud file names. Rclone will map these names to and from an identical looking unicode equivalent. For example if a file has a ? in it will be mapped to ？ instead.</p>
 <p>Jottacloud only supports filenames up to 255 characters in length.</p>
-<h2 id="troubleshooting-1">Troubleshooting</h2>
+<h2 id="troubleshooting-3">Troubleshooting</h2>
 <p>Jottacloud exhibits some inconsistent behaviours regarding deleted files and folders which may cause Copy, Move and DirMove operations to previously deleted paths to fail. Emptying the trash should help in such cases.</p>
 <h1 id="koofr">Koofr</h1>
 <p>Paths are specified as <code>remote:path</code></p>
@@ -30461,7 +30562,7 @@ y/e/d&gt; y</code></pre>
 </ul></li>
 <li>"de"
 <ul>
-<li>Microsoft Cloud Germany</li>
+<li>Microsoft Cloud Germany (deprecated - try global region first).</li>
 </ul></li>
 <li>"cn"
 <ul>
@@ -30834,75 +30935,75 @@ rclone rc vfs/refresh recursive=true</code></pre>
 <p>Permissions are also supported, if <code>--onedrive-metadata-permissions</code> is set. The accepted values for <code>--onedrive-metadata-permissions</code> are "<code>read</code>", "<code>write</code>", "<code>read,write</code>", and "<code>off</code>" (the default). "<code>write</code>" supports adding new permissions, updating the "role" of existing permissions, and removing permissions. Updating and removing require the Permission ID to be known, so it is recommended to use "<code>read,write</code>" instead of "<code>write</code>" if you wish to update/remove permissions.</p>
 <p>Permissions are read/written in JSON format using the same schema as the <a href="https://learn.microsoft.com/en-us/onedrive/developer/rest-api/resources/permission?view=odsp-graph-online">OneDrive API</a>, which differs slightly between OneDrive Personal and Business.</p>
 <p>Example for OneDrive Personal:</p>
-<div class="sourceCode" id="cb1313"><pre class="sourceCode json"><code class="sourceCode json"><span id="cb1313-1"><a href="#cb1313-1" aria-hidden="true"></a><span class="ot">[</span></span>
-<span id="cb1313-2"><a href="#cb1313-2" aria-hidden="true"></a>    <span class="fu">{</span></span>
-<span id="cb1313-3"><a href="#cb1313-3" aria-hidden="true"></a>        <span class="dt">&quot;id&quot;</span><span class="fu">:</span> <span class="st">&quot;1234567890ABC!123&quot;</span><span class="fu">,</span></span>
-<span id="cb1313-4"><a href="#cb1313-4" aria-hidden="true"></a>        <span class="dt">&quot;grantedTo&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb1313-5"><a href="#cb1313-5" aria-hidden="true"></a>            <span class="dt">&quot;user&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb1313-6"><a href="#cb1313-6" aria-hidden="true"></a>                <span class="dt">&quot;id&quot;</span><span class="fu">:</span> <span class="st">&quot;ryan@contoso.com&quot;</span></span>
-<span id="cb1313-7"><a href="#cb1313-7" aria-hidden="true"></a>            <span class="fu">},</span></span>
-<span id="cb1313-8"><a href="#cb1313-8" aria-hidden="true"></a>            <span class="dt">&quot;application&quot;</span><span class="fu">:</span> <span class="fu">{},</span></span>
-<span id="cb1313-9"><a href="#cb1313-9" aria-hidden="true"></a>            <span class="dt">&quot;device&quot;</span><span class="fu">:</span> <span class="fu">{}</span></span>
-<span id="cb1313-10"><a href="#cb1313-10" aria-hidden="true"></a>        <span class="fu">},</span></span>
-<span id="cb1313-11"><a href="#cb1313-11" aria-hidden="true"></a>        <span class="dt">&quot;invitation&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb1313-12"><a href="#cb1313-12" aria-hidden="true"></a>            <span class="dt">&quot;email&quot;</span><span class="fu">:</span> <span class="st">&quot;ryan@contoso.com&quot;</span></span>
-<span id="cb1313-13"><a href="#cb1313-13" aria-hidden="true"></a>        <span class="fu">},</span></span>
-<span id="cb1313-14"><a href="#cb1313-14" aria-hidden="true"></a>        <span class="dt">&quot;link&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb1313-15"><a href="#cb1313-15" aria-hidden="true"></a>            <span class="dt">&quot;webUrl&quot;</span><span class="fu">:</span> <span class="st">&quot;https://1drv.ms/t/s!1234567890ABC&quot;</span></span>
-<span id="cb1313-16"><a href="#cb1313-16" aria-hidden="true"></a>        <span class="fu">},</span></span>
-<span id="cb1313-17"><a href="#cb1313-17" aria-hidden="true"></a>        <span class="dt">&quot;roles&quot;</span><span class="fu">:</span> <span class="ot">[</span></span>
-<span id="cb1313-18"><a href="#cb1313-18" aria-hidden="true"></a>            <span class="st">&quot;read&quot;</span></span>
-<span id="cb1313-19"><a href="#cb1313-19" aria-hidden="true"></a>        <span class="ot">]</span><span class="fu">,</span></span>
-<span id="cb1313-20"><a href="#cb1313-20" aria-hidden="true"></a>        <span class="dt">&quot;shareId&quot;</span><span class="fu">:</span> <span class="st">&quot;s!1234567890ABC&quot;</span></span>
-<span id="cb1313-21"><a href="#cb1313-21" aria-hidden="true"></a>    <span class="fu">}</span></span>
-<span id="cb1313-22"><a href="#cb1313-22" aria-hidden="true"></a><span class="ot">]</span></span></code></pre></div>
-<p>Example for OneDrive Business:</p>
 <div class="sourceCode" id="cb1314"><pre class="sourceCode json"><code class="sourceCode json"><span id="cb1314-1"><a href="#cb1314-1" aria-hidden="true"></a><span class="ot">[</span></span>
 <span id="cb1314-2"><a href="#cb1314-2" aria-hidden="true"></a>    <span class="fu">{</span></span>
-<span id="cb1314-3"><a href="#cb1314-3" aria-hidden="true"></a>        <span class="dt">&quot;id&quot;</span><span class="fu">:</span> <span class="st">&quot;48d31887-5fad-4d73-a9f5-3c356e68a038&quot;</span><span class="fu">,</span></span>
-<span id="cb1314-4"><a href="#cb1314-4" aria-hidden="true"></a>        <span class="dt">&quot;grantedToIdentities&quot;</span><span class="fu">:</span> <span class="ot">[</span></span>
-<span id="cb1314-5"><a href="#cb1314-5" aria-hidden="true"></a>            <span class="fu">{</span></span>
-<span id="cb1314-6"><a href="#cb1314-6" aria-hidden="true"></a>                <span class="dt">&quot;user&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb1314-7"><a href="#cb1314-7" aria-hidden="true"></a>                    <span class="dt">&quot;displayName&quot;</span><span class="fu">:</span> <span class="st">&quot;ryan@contoso.com&quot;</span></span>
-<span id="cb1314-8"><a href="#cb1314-8" aria-hidden="true"></a>                <span class="fu">},</span></span>
-<span id="cb1314-9"><a href="#cb1314-9" aria-hidden="true"></a>                <span class="dt">&quot;application&quot;</span><span class="fu">:</span> <span class="fu">{},</span></span>
-<span id="cb1314-10"><a href="#cb1314-10" aria-hidden="true"></a>                <span class="dt">&quot;device&quot;</span><span class="fu">:</span> <span class="fu">{}</span></span>
-<span id="cb1314-11"><a href="#cb1314-11" aria-hidden="true"></a>            <span class="fu">}</span></span>
-<span id="cb1314-12"><a href="#cb1314-12" aria-hidden="true"></a>        <span class="ot">]</span><span class="fu">,</span></span>
-<span id="cb1314-13"><a href="#cb1314-13" aria-hidden="true"></a>        <span class="dt">&quot;link&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb1314-14"><a href="#cb1314-14" aria-hidden="true"></a>            <span class="dt">&quot;type&quot;</span><span class="fu">:</span> <span class="st">&quot;view&quot;</span><span class="fu">,</span></span>
-<span id="cb1314-15"><a href="#cb1314-15" aria-hidden="true"></a>            <span class="dt">&quot;scope&quot;</span><span class="fu">:</span> <span class="st">&quot;users&quot;</span><span class="fu">,</span></span>
-<span id="cb1314-16"><a href="#cb1314-16" aria-hidden="true"></a>            <span class="dt">&quot;webUrl&quot;</span><span class="fu">:</span> <span class="st">&quot;https://contoso.sharepoint.com/:w:/t/design/a577ghg9hgh737613bmbjf839026561fmzhsr85ng9f3hjck2t5s&quot;</span></span>
-<span id="cb1314-17"><a href="#cb1314-17" aria-hidden="true"></a>        <span class="fu">},</span></span>
-<span id="cb1314-18"><a href="#cb1314-18" aria-hidden="true"></a>        <span class="dt">&quot;roles&quot;</span><span class="fu">:</span> <span class="ot">[</span></span>
-<span id="cb1314-19"><a href="#cb1314-19" aria-hidden="true"></a>            <span class="st">&quot;read&quot;</span></span>
-<span id="cb1314-20"><a href="#cb1314-20" aria-hidden="true"></a>        <span class="ot">]</span><span class="fu">,</span></span>
-<span id="cb1314-21"><a href="#cb1314-21" aria-hidden="true"></a>        <span class="dt">&quot;shareId&quot;</span><span class="fu">:</span> <span class="st">&quot;u!LKj1lkdlals90j1nlkascl&quot;</span></span>
-<span id="cb1314-22"><a href="#cb1314-22" aria-hidden="true"></a>    <span class="fu">}</span><span class="ot">,</span></span>
-<span id="cb1314-23"><a href="#cb1314-23" aria-hidden="true"></a>    <span class="fu">{</span></span>
-<span id="cb1314-24"><a href="#cb1314-24" aria-hidden="true"></a>        <span class="dt">&quot;id&quot;</span><span class="fu">:</span> <span class="st">&quot;5D33DD65C6932946&quot;</span><span class="fu">,</span></span>
-<span id="cb1314-25"><a href="#cb1314-25" aria-hidden="true"></a>        <span class="dt">&quot;grantedTo&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb1314-26"><a href="#cb1314-26" aria-hidden="true"></a>            <span class="dt">&quot;user&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb1314-27"><a href="#cb1314-27" aria-hidden="true"></a>                <span class="dt">&quot;displayName&quot;</span><span class="fu">:</span> <span class="st">&quot;John Doe&quot;</span><span class="fu">,</span></span>
-<span id="cb1314-28"><a href="#cb1314-28" aria-hidden="true"></a>                <span class="dt">&quot;id&quot;</span><span class="fu">:</span> <span class="st">&quot;efee1b77-fb3b-4f65-99d6-274c11914d12&quot;</span></span>
-<span id="cb1314-29"><a href="#cb1314-29" aria-hidden="true"></a>            <span class="fu">},</span></span>
-<span id="cb1314-30"><a href="#cb1314-30" aria-hidden="true"></a>            <span class="dt">&quot;application&quot;</span><span class="fu">:</span> <span class="fu">{},</span></span>
-<span id="cb1314-31"><a href="#cb1314-31" aria-hidden="true"></a>            <span class="dt">&quot;device&quot;</span><span class="fu">:</span> <span class="fu">{}</span></span>
-<span id="cb1314-32"><a href="#cb1314-32" aria-hidden="true"></a>        <span class="fu">},</span></span>
-<span id="cb1314-33"><a href="#cb1314-33" aria-hidden="true"></a>        <span class="dt">&quot;roles&quot;</span><span class="fu">:</span> <span class="ot">[</span></span>
-<span id="cb1314-34"><a href="#cb1314-34" aria-hidden="true"></a>            <span class="st">&quot;owner&quot;</span></span>
-<span id="cb1314-35"><a href="#cb1314-35" aria-hidden="true"></a>        <span class="ot">]</span><span class="fu">,</span></span>
-<span id="cb1314-36"><a href="#cb1314-36" aria-hidden="true"></a>        <span class="dt">&quot;shareId&quot;</span><span class="fu">:</span> <span class="st">&quot;FWxc1lasfdbEAGM5fI7B67aB5ZMPDMmQ11U&quot;</span></span>
-<span id="cb1314-37"><a href="#cb1314-37" aria-hidden="true"></a>    <span class="fu">}</span></span>
-<span id="cb1314-38"><a href="#cb1314-38" aria-hidden="true"></a><span class="ot">]</span></span></code></pre></div>
+<span id="cb1314-3"><a href="#cb1314-3" aria-hidden="true"></a>        <span class="dt">&quot;id&quot;</span><span class="fu">:</span> <span class="st">&quot;1234567890ABC!123&quot;</span><span class="fu">,</span></span>
+<span id="cb1314-4"><a href="#cb1314-4" aria-hidden="true"></a>        <span class="dt">&quot;grantedTo&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb1314-5"><a href="#cb1314-5" aria-hidden="true"></a>            <span class="dt">&quot;user&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb1314-6"><a href="#cb1314-6" aria-hidden="true"></a>                <span class="dt">&quot;id&quot;</span><span class="fu">:</span> <span class="st">&quot;ryan@contoso.com&quot;</span></span>
+<span id="cb1314-7"><a href="#cb1314-7" aria-hidden="true"></a>            <span class="fu">},</span></span>
+<span id="cb1314-8"><a href="#cb1314-8" aria-hidden="true"></a>            <span class="dt">&quot;application&quot;</span><span class="fu">:</span> <span class="fu">{},</span></span>
+<span id="cb1314-9"><a href="#cb1314-9" aria-hidden="true"></a>            <span class="dt">&quot;device&quot;</span><span class="fu">:</span> <span class="fu">{}</span></span>
+<span id="cb1314-10"><a href="#cb1314-10" aria-hidden="true"></a>        <span class="fu">},</span></span>
+<span id="cb1314-11"><a href="#cb1314-11" aria-hidden="true"></a>        <span class="dt">&quot;invitation&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb1314-12"><a href="#cb1314-12" aria-hidden="true"></a>            <span class="dt">&quot;email&quot;</span><span class="fu">:</span> <span class="st">&quot;ryan@contoso.com&quot;</span></span>
+<span id="cb1314-13"><a href="#cb1314-13" aria-hidden="true"></a>        <span class="fu">},</span></span>
+<span id="cb1314-14"><a href="#cb1314-14" aria-hidden="true"></a>        <span class="dt">&quot;link&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb1314-15"><a href="#cb1314-15" aria-hidden="true"></a>            <span class="dt">&quot;webUrl&quot;</span><span class="fu">:</span> <span class="st">&quot;https://1drv.ms/t/s!1234567890ABC&quot;</span></span>
+<span id="cb1314-16"><a href="#cb1314-16" aria-hidden="true"></a>        <span class="fu">},</span></span>
+<span id="cb1314-17"><a href="#cb1314-17" aria-hidden="true"></a>        <span class="dt">&quot;roles&quot;</span><span class="fu">:</span> <span class="ot">[</span></span>
+<span id="cb1314-18"><a href="#cb1314-18" aria-hidden="true"></a>            <span class="st">&quot;read&quot;</span></span>
+<span id="cb1314-19"><a href="#cb1314-19" aria-hidden="true"></a>        <span class="ot">]</span><span class="fu">,</span></span>
+<span id="cb1314-20"><a href="#cb1314-20" aria-hidden="true"></a>        <span class="dt">&quot;shareId&quot;</span><span class="fu">:</span> <span class="st">&quot;s!1234567890ABC&quot;</span></span>
+<span id="cb1314-21"><a href="#cb1314-21" aria-hidden="true"></a>    <span class="fu">}</span></span>
+<span id="cb1314-22"><a href="#cb1314-22" aria-hidden="true"></a><span class="ot">]</span></span></code></pre></div>
+<p>Example for OneDrive Business:</p>
+<div class="sourceCode" id="cb1315"><pre class="sourceCode json"><code class="sourceCode json"><span id="cb1315-1"><a href="#cb1315-1" aria-hidden="true"></a><span class="ot">[</span></span>
+<span id="cb1315-2"><a href="#cb1315-2" aria-hidden="true"></a>    <span class="fu">{</span></span>
+<span id="cb1315-3"><a href="#cb1315-3" aria-hidden="true"></a>        <span class="dt">&quot;id&quot;</span><span class="fu">:</span> <span class="st">&quot;48d31887-5fad-4d73-a9f5-3c356e68a038&quot;</span><span class="fu">,</span></span>
+<span id="cb1315-4"><a href="#cb1315-4" aria-hidden="true"></a>        <span class="dt">&quot;grantedToIdentities&quot;</span><span class="fu">:</span> <span class="ot">[</span></span>
+<span id="cb1315-5"><a href="#cb1315-5" aria-hidden="true"></a>            <span class="fu">{</span></span>
+<span id="cb1315-6"><a href="#cb1315-6" aria-hidden="true"></a>                <span class="dt">&quot;user&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb1315-7"><a href="#cb1315-7" aria-hidden="true"></a>                    <span class="dt">&quot;displayName&quot;</span><span class="fu">:</span> <span class="st">&quot;ryan@contoso.com&quot;</span></span>
+<span id="cb1315-8"><a href="#cb1315-8" aria-hidden="true"></a>                <span class="fu">},</span></span>
+<span id="cb1315-9"><a href="#cb1315-9" aria-hidden="true"></a>                <span class="dt">&quot;application&quot;</span><span class="fu">:</span> <span class="fu">{},</span></span>
+<span id="cb1315-10"><a href="#cb1315-10" aria-hidden="true"></a>                <span class="dt">&quot;device&quot;</span><span class="fu">:</span> <span class="fu">{}</span></span>
+<span id="cb1315-11"><a href="#cb1315-11" aria-hidden="true"></a>            <span class="fu">}</span></span>
+<span id="cb1315-12"><a href="#cb1315-12" aria-hidden="true"></a>        <span class="ot">]</span><span class="fu">,</span></span>
+<span id="cb1315-13"><a href="#cb1315-13" aria-hidden="true"></a>        <span class="dt">&quot;link&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb1315-14"><a href="#cb1315-14" aria-hidden="true"></a>            <span class="dt">&quot;type&quot;</span><span class="fu">:</span> <span class="st">&quot;view&quot;</span><span class="fu">,</span></span>
+<span id="cb1315-15"><a href="#cb1315-15" aria-hidden="true"></a>            <span class="dt">&quot;scope&quot;</span><span class="fu">:</span> <span class="st">&quot;users&quot;</span><span class="fu">,</span></span>
+<span id="cb1315-16"><a href="#cb1315-16" aria-hidden="true"></a>            <span class="dt">&quot;webUrl&quot;</span><span class="fu">:</span> <span class="st">&quot;https://contoso.sharepoint.com/:w:/t/design/a577ghg9hgh737613bmbjf839026561fmzhsr85ng9f3hjck2t5s&quot;</span></span>
+<span id="cb1315-17"><a href="#cb1315-17" aria-hidden="true"></a>        <span class="fu">},</span></span>
+<span id="cb1315-18"><a href="#cb1315-18" aria-hidden="true"></a>        <span class="dt">&quot;roles&quot;</span><span class="fu">:</span> <span class="ot">[</span></span>
+<span id="cb1315-19"><a href="#cb1315-19" aria-hidden="true"></a>            <span class="st">&quot;read&quot;</span></span>
+<span id="cb1315-20"><a href="#cb1315-20" aria-hidden="true"></a>        <span class="ot">]</span><span class="fu">,</span></span>
+<span id="cb1315-21"><a href="#cb1315-21" aria-hidden="true"></a>        <span class="dt">&quot;shareId&quot;</span><span class="fu">:</span> <span class="st">&quot;u!LKj1lkdlals90j1nlkascl&quot;</span></span>
+<span id="cb1315-22"><a href="#cb1315-22" aria-hidden="true"></a>    <span class="fu">}</span><span class="ot">,</span></span>
+<span id="cb1315-23"><a href="#cb1315-23" aria-hidden="true"></a>    <span class="fu">{</span></span>
+<span id="cb1315-24"><a href="#cb1315-24" aria-hidden="true"></a>        <span class="dt">&quot;id&quot;</span><span class="fu">:</span> <span class="st">&quot;5D33DD65C6932946&quot;</span><span class="fu">,</span></span>
+<span id="cb1315-25"><a href="#cb1315-25" aria-hidden="true"></a>        <span class="dt">&quot;grantedTo&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb1315-26"><a href="#cb1315-26" aria-hidden="true"></a>            <span class="dt">&quot;user&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb1315-27"><a href="#cb1315-27" aria-hidden="true"></a>                <span class="dt">&quot;displayName&quot;</span><span class="fu">:</span> <span class="st">&quot;John Doe&quot;</span><span class="fu">,</span></span>
+<span id="cb1315-28"><a href="#cb1315-28" aria-hidden="true"></a>                <span class="dt">&quot;id&quot;</span><span class="fu">:</span> <span class="st">&quot;efee1b77-fb3b-4f65-99d6-274c11914d12&quot;</span></span>
+<span id="cb1315-29"><a href="#cb1315-29" aria-hidden="true"></a>            <span class="fu">},</span></span>
+<span id="cb1315-30"><a href="#cb1315-30" aria-hidden="true"></a>            <span class="dt">&quot;application&quot;</span><span class="fu">:</span> <span class="fu">{},</span></span>
+<span id="cb1315-31"><a href="#cb1315-31" aria-hidden="true"></a>            <span class="dt">&quot;device&quot;</span><span class="fu">:</span> <span class="fu">{}</span></span>
+<span id="cb1315-32"><a href="#cb1315-32" aria-hidden="true"></a>        <span class="fu">},</span></span>
+<span id="cb1315-33"><a href="#cb1315-33" aria-hidden="true"></a>        <span class="dt">&quot;roles&quot;</span><span class="fu">:</span> <span class="ot">[</span></span>
+<span id="cb1315-34"><a href="#cb1315-34" aria-hidden="true"></a>            <span class="st">&quot;owner&quot;</span></span>
+<span id="cb1315-35"><a href="#cb1315-35" aria-hidden="true"></a>        <span class="ot">]</span><span class="fu">,</span></span>
+<span id="cb1315-36"><a href="#cb1315-36" aria-hidden="true"></a>        <span class="dt">&quot;shareId&quot;</span><span class="fu">:</span> <span class="st">&quot;FWxc1lasfdbEAGM5fI7B67aB5ZMPDMmQ11U&quot;</span></span>
+<span id="cb1315-37"><a href="#cb1315-37" aria-hidden="true"></a>    <span class="fu">}</span></span>
+<span id="cb1315-38"><a href="#cb1315-38" aria-hidden="true"></a><span class="ot">]</span></span></code></pre></div>
 <p>To write permissions, pass in a "permissions" metadata key using this same format. The <a href="https://rclone.org/docs/#metadata-mapper"><code>--metadata-mapper</code></a> tool can be very helpful for this.</p>
 <p>When adding permissions, an email address can be provided in the <code>User.ID</code> or <code>DisplayName</code> properties of <code>grantedTo</code> or <code>grantedToIdentities</code>. Alternatively, an ObjectID can be provided in <code>User.ID</code>. At least one valid recipient must be provided in order to add a permission for a user. Creating a Public Link is also supported, if <code>Link.Scope</code> is set to <code>"anonymous"</code>.</p>
 <p>Example request to add a "read" permission with <code>--metadata-mapper</code>:</p>
-<div class="sourceCode" id="cb1315"><pre class="sourceCode json"><code class="sourceCode json"><span id="cb1315-1"><a href="#cb1315-1" aria-hidden="true"></a><span class="fu">{</span></span>
-<span id="cb1315-2"><a href="#cb1315-2" aria-hidden="true"></a>    <span class="dt">&quot;Metadata&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb1315-3"><a href="#cb1315-3" aria-hidden="true"></a>        <span class="dt">&quot;permissions&quot;</span><span class="fu">:</span> <span class="st">&quot;[{</span><span class="ch">\&quot;</span><span class="st">grantedToIdentities</span><span class="ch">\&quot;</span><span class="st">:[{</span><span class="ch">\&quot;</span><span class="st">user</span><span class="ch">\&quot;</span><span class="st">:{</span><span class="ch">\&quot;</span><span class="st">id</span><span class="ch">\&quot;</span><span class="st">:</span><span class="ch">\&quot;</span><span class="st">ryan@contoso.com</span><span class="ch">\&quot;</span><span class="st">}}],</span><span class="ch">\&quot;</span><span class="st">roles</span><span class="ch">\&quot;</span><span class="st">:[</span><span class="ch">\&quot;</span><span class="st">read</span><span class="ch">\&quot;</span><span class="st">]}]&quot;</span></span>
-<span id="cb1315-4"><a href="#cb1315-4" aria-hidden="true"></a>    <span class="fu">}</span></span>
-<span id="cb1315-5"><a href="#cb1315-5" aria-hidden="true"></a><span class="fu">}</span></span></code></pre></div>
+<div class="sourceCode" id="cb1316"><pre class="sourceCode json"><code class="sourceCode json"><span id="cb1316-1"><a href="#cb1316-1" aria-hidden="true"></a><span class="fu">{</span></span>
+<span id="cb1316-2"><a href="#cb1316-2" aria-hidden="true"></a>    <span class="dt">&quot;Metadata&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb1316-3"><a href="#cb1316-3" aria-hidden="true"></a>        <span class="dt">&quot;permissions&quot;</span><span class="fu">:</span> <span class="st">&quot;[{</span><span class="ch">\&quot;</span><span class="st">grantedToIdentities</span><span class="ch">\&quot;</span><span class="st">:[{</span><span class="ch">\&quot;</span><span class="st">user</span><span class="ch">\&quot;</span><span class="st">:{</span><span class="ch">\&quot;</span><span class="st">id</span><span class="ch">\&quot;</span><span class="st">:</span><span class="ch">\&quot;</span><span class="st">ryan@contoso.com</span><span class="ch">\&quot;</span><span class="st">}}],</span><span class="ch">\&quot;</span><span class="st">roles</span><span class="ch">\&quot;</span><span class="st">:[</span><span class="ch">\&quot;</span><span class="st">read</span><span class="ch">\&quot;</span><span class="st">]}]&quot;</span></span>
+<span id="cb1316-4"><a href="#cb1316-4" aria-hidden="true"></a>    <span class="fu">}</span></span>
+<span id="cb1316-5"><a href="#cb1316-5" aria-hidden="true"></a><span class="fu">}</span></span></code></pre></div>
 <p>Note that adding a permission can fail if a conflicting permission already exists for the file/folder.</p>
 <p>To update an existing permission, include both the Permission ID and the new <code>roles</code> to be assigned. <code>roles</code> is the only property that can be changed.</p>
 <p>To remove permissions, pass in a blob containing only the permissions you wish to keep (which can be empty, to remove all.) Note that the <code>owner</code> role will be ignored, as it cannot be removed.</p>
@@ -31052,6 +31153,26 @@ rclone rc vfs/refresh recursive=true</code></pre>
 </tbody>
 </table>
 <p>See the <a href="https://rclone.org/docs/#metadata">metadata</a> docs for more info.</p>
+<h3 id="impersonate-other-users-as-admin">Impersonate other users as Admin</h3>
+<p>Unlike Google Drive and impersonating any domain user via service accounts, OneDrive requires you to authenticate as an admin account, and manually setup a remote per user you wish to impersonate.</p>
+<ol type="1">
+<li>In <a href="https://admin.microsoft.com">Microsoft 365 Admin Center</a>, open each user you need to "impersonate" and go to the OneDrive section. There is a heading called "Get access to files", you need to click to create the link, this creates the link of the format <code>https://{tenant}-my.sharepoint.com/personal/{user_name_domain_tld}/</code> but also changes the permissions so you your admin user has access.</li>
+<li>Then in powershell run the following commands:</li>
+</ol>
+<pre class="console"><code>Install-Module Microsoft.Graph -Scope CurrentUser -Repository PSGallery -Force
+Import-Module Microsoft.Graph.Files
+Connect-MgGraph -Scopes &quot;Files.ReadWrite.All&quot;
+# Follow the steps to allow access to your admin user
+# Then run this for each user you want to impersonate to get the Drive ID
+Get-MgUserDefaultDrive -UserId &#39;{emailaddress}&#39;
+# This will give you output of the format:
+# Name     Id                                                                 DriveType CreatedDateTime
+# ----     --                                                                 --------- ---------------
+# OneDrive b!XYZ123                                                           business  14/10/2023 1:00:58 pm
+</code></pre>
+<ol start="3" type="1">
+<li>Then in rclone add a onedrive remote type, and use the <code>Type in driveID</code> with the DriveID you got in the previous step. One remote per user. It will then confirm the drive ID, and hopefully give you a message of <code>Found drive "root" of type "business"</code> and then include the URL of the format <code>https://{tenant}-my.sharepoint.com/personal/{user_name_domain_tld}/Documents</code></li>
+</ol>
 <h2 id="limitations-26">Limitations</h2>
 <p>If you don't use rclone for 90 days the refresh token will expire. This will result in authorization problems. This is easy to fix by running the <code>rclone config reconnect remote:</code> command to get a new token and refresh token.</p>
 <h3 id="naming">Naming</h3>
@@ -31097,7 +31218,7 @@ rclone rc vfs/refresh recursive=true</code></pre>
 <pre><code>rclone cleanup --interactive remote:path/subdir # interactively remove all old version for path/subdir
 rclone cleanup remote:path/subdir               # unconditionally remove all old version for path/subdir</code></pre>
 <p><strong>NB</strong> Onedrive personal can't currently delete versions</p>
-<h2 id="troubleshooting-2">Troubleshooting</h2>
+<h2 id="troubleshooting-4">Troubleshooting</h2>
 <h3 id="excessive-throttling-or-blocked-on-sharepoint">Excessive throttling or blocked on SharePoint</h3>
 <p>If you experience excessive throttling or is being blocked on SharePoint then it may help to set the user agent explicitly with a flag like this: <code>--user-agent "ISV|rclone.org|rclone/v1.55.1"</code></p>
 <p>The specific details can be found in the Microsoft document: <a href="https://docs.microsoft.com/en-us/sharepoint/dev/general-development/how-to-avoid-getting-throttled-or-blocked-in-sharepoint-online#how-to-decorate-your-http-traffic-to-avoid-throttling">Avoid getting throttled or blocked in SharePoint Online</a></p>
@@ -33067,7 +33188,7 @@ rclone lsd myremote:</code></pre>
 </ul>
 <h2 id="limitations-30">Limitations</h2>
 <p>The Swift API doesn't return a correct MD5SUM for segmented files (Dynamic or Static Large Objects) so rclone won't check or use the MD5SUM for these.</p>
-<h2 id="troubleshooting-3">Troubleshooting</h2>
+<h2 id="troubleshooting-5">Troubleshooting</h2>
 <h3 id="rclone-gives-failed-to-create-file-system-for-remote-bad-request">Rclone gives Failed to create file system for "remote:": Bad Request</h3>
 <p>Due to an oddity of the underlying swift library, it gives a "Bad Request" error rather than a more sensible error when the authentication fails for Swift.</p>
 <p>So this most likely means your username / password is wrong. You can investigate further with the <code>--dump-bodies</code> flag.</p>
@@ -38190,6 +38311,43 @@ $ tree /tmp/c
 <li>"error": return an error based on option value</li>
 </ul>
 <h1 id="changelog-1">Changelog</h1>
+<h2 id="v1.69.1---2025-02-14">v1.69.1 - 2025-02-14</h2>
+<p><a href="https://github.com/rclone/rclone/compare/v1.69.0...v1.69.1">See commits</a></p>
+<ul>
+<li>Bug Fixes
+<ul>
+<li>lib/oauthutil: Fix redirect URL mismatch errors (Nick Craig-Wood)</li>
+<li>bisync: Fix listings missing concurrent modifications (nielash)</li>
+<li>serve s3: Fix list objects encoding-type (Nick Craig-Wood)</li>
+<li>fs: Fix confusing "didn't find section in config file" error (Nick Craig-Wood)</li>
+<li>doc fixes (Christoph Berger, Dimitri Papadopoulos, Matt Ickstadt, Nick Craig-Wood, Tim White, Zachary Vorhies)</li>
+<li>build: Added parallel docker builds and caching for go build in the container (Anagh Kumar Baranwal)</li>
+</ul></li>
+<li>VFS
+<ul>
+<li>Fix the cache failing to upload symlinks when <code>--links</code> was specified (Nick Craig-Wood)</li>
+<li>Fix race detected by race detector (Nick Craig-Wood)</li>
+<li>Close the change notify channel on Shutdown (izouxv)</li>
+</ul></li>
+<li>B2
+<ul>
+<li>Fix "fatal error: concurrent map writes" (Nick Craig-Wood)</li>
+</ul></li>
+<li>Iclouddrive
+<ul>
+<li>Add notes on ADP and Missing PCS cookies (Nick Craig-Wood)</li>
+</ul></li>
+<li>Onedrive
+<ul>
+<li>Mark German (de) region as deprecated (Nick Craig-Wood)</li>
+</ul></li>
+<li>S3
+<ul>
+<li>Added new storage class to magalu provider (Bruno Fernandes)</li>
+<li>Add DigitalOcean regions SFO2, LON1, TOR1, BLR1 (jkpe)</li>
+<li>Add latest Linode Object Storage endpoints (jbagwell-akamai)</li>
+</ul></li>
+</ul>
 <h2 id="v1.69.0---2025-01-12">v1.69.0 - 2025-01-12</h2>
 <p><a href="https://github.com/rclone/rclone/compare/v1.68.0...v1.69.0">See commits</a></p>
 <ul>

@@ -1,6 +1,75 @@
 rclone(1) User Manual
 Nick Craig-Wood
-Jan 12, 2025
+Feb 14, 2025
+
+NAME
+
+rclone - manage files on cloud storage
+
+SYNOPSIS
+
+    Usage:
+      rclone [flags]
+      rclone [command]
+
+    Available commands:
+      about       Get quota information from the remote.
+      authorize   Remote authorization.
+      backend     Run a backend-specific command.
+      bisync      Perform bidirectional synchronization between two paths.
+      cat         Concatenates any files and sends them to stdout.
+      check       Checks the files in the source and destination match.
+      checksum    Checks the files in the destination against a SUM file.
+      cleanup     Clean up the remote if possible.
+      completion  Output completion script for a given shell.
+      config      Enter an interactive configuration session.
+      copy        Copy files from source to dest, skipping identical files.
+      copyto      Copy files from source to dest, skipping identical files.
+      copyurl     Copy the contents of the URL supplied content to dest:path.
+      cryptcheck  Cryptcheck checks the integrity of an encrypted remote.
+      cryptdecode Cryptdecode returns unencrypted file names.
+      dedupe      Interactively find duplicate filenames and delete/rename them.
+      delete      Remove the files in path.
+      deletefile  Remove a single file from remote.
+      gendocs     Output markdown docs for rclone to the directory supplied.
+      gitannex    Speaks with git-annex over stdin/stdout.
+      hashsum     Produces a hashsum file for all the objects in the path.
+      help        Show help for rclone commands, flags and backends.
+      link        Generate public link to file/folder.
+      listremotes List all the remotes in the config file and defined in environment variables.
+      ls          List the objects in the path with size and path.
+      lsd         List all directories/containers/buckets in the path.
+      lsf         List directories and objects in remote:path formatted for parsing.
+      lsjson      List directories and objects in the path in JSON format.
+      lsl         List the objects in path with modification time, size and path.
+      md5sum      Produces an md5sum file for all the objects in the path.
+      mkdir       Make the path if it doesn't already exist.
+      mount       Mount the remote as file system on a mountpoint.
+      move        Move files from source to dest.
+      moveto      Move file or directory from source to dest.
+      ncdu        Explore a remote with a text based user interface.
+      nfsmount    Mount the remote as file system on a mountpoint.
+      obscure     Obscure password for use in the rclone config file.
+      purge       Remove the path and all of its contents.
+      rc          Run a command against a running rclone.
+      rcat        Copies standard input to file on remote.
+      rcd         Run rclone listening to remote control commands only.
+      rmdir       Remove the empty directory at path.
+      rmdirs      Remove empty directories under the path.
+      selfupdate  Update the rclone binary.
+      serve       Serve a remote over a protocol.
+      settier     Changes storage class/tier of objects in remote.
+      sha1sum     Produces an sha1sum file for all the objects in the path.
+      size        Prints the total size and number of objects in remote:path.
+      sync        Make source and dest identical, modifying destination only.
+      test        Run a test command
+      touch       Create new file or change file modification time.
+      tree        List the contents of the remote in a tree like fashion.
+      version     Show the version number.
+
+    Use "rclone [command] --help" for more information about a command.
+    Use "rclone help flags" for to see the global flags.
+    Use "rclone help backends" for a list of supported services.
 
 Rclone syncs your files to cloud storage
 
@@ -1599,6 +1668,10 @@ Remove the path and all of its contents. Note that this does not obey
 include/exclude filters - everything will be removed. Use the delete
 command if you want to selectively delete files. To delete empty
 directories only, use command rmdir or rmdirs.
+
+The concurrency of this operation is controlled by the --checkers global
+flag. However, some backends will implement this command directly, in
+which case --checkers will be ignored.
 
 Important: Since this can cause data loss, test first with the --dry-run
 or the --interactive/-i flag.
@@ -3467,12 +3540,12 @@ re-encrypt the config.
 
 When --password-command is called to change the password then the
 environment variable RCLONE_PASSWORD_CHANGE=1 will be set. So if
-changing passwords programatically you can use the environment variable
+changing passwords programmatically you can use the environment variable
 to distinguish which password you must supply.
 
 Alternatively you can remove the password first (with
 rclone config encryption remove), then set it again with this command
-which may be easier if you don't mind the unecrypted config file being
+which may be easier if you don't mind the unencrypted config file being
 on the disk briefly.
 
     rclone config encryption set [flags]
@@ -3949,7 +4022,7 @@ there is one with the same name.
 Setting --stdout or making the output file name - will cause the output
 to be written to standard output.
 
-Troublshooting
+Troubleshooting
 
 If you can't get rclone copyurl to work then here are some things you
 can try:
@@ -10102,7 +10175,7 @@ uses an on disk cache, but the cache entries are held as symlinks.
 Rclone will use the handle of the underlying file as the NFS handle
 which improves performance. This sort of cache can't be backed up and
 restored as the underlying handles will change. This is Linux only. It
-requres running rclone as root or with CAP_DAC_READ_SEARCH. You can run
+requires running rclone as root or with CAP_DAC_READ_SEARCH. You can run
 rclone with this extra permission by doing this to the rclone binary
 sudo setcap cap_dac_read_search+ep /path/to/rclone.
 
@@ -10903,8 +10976,8 @@ which is defined like this:
     secret_access_key = SECRET_ACCESS_KEY
     use_multipart_uploads = false
 
-Note that setting disable_multipart_uploads = true is to work around a
-bug which will be fixed in due course.
+Note that setting use_multipart_uploads = false is to work around a bug
+which will be fixed in due course.
 
 Bugs
 
@@ -13895,6 +13968,10 @@ also possible to specify --boolean=false or --boolean=true. Note that
 --boolean false is not valid - this is parsed as --boolean and the false
 is parsed as an extra command line argument for rclone.
 
+Options documented to take a stringArray parameter accept multiple
+values. To pass more than one value, repeat the option; for example:
+--include value1 --include value2.
+
 Time or duration options
 
 TIME or DURATION options can be specified as a duration string or a time
@@ -16177,7 +16254,7 @@ The options set by environment variables can be seen with the -vv flag,
 e.g. rclone version -vv.
 
 Options that can appear multiple times (type stringArray) are treated
-slighly differently as environment variables can only be defined once.
+slightly differently as environment variables can only be defined once.
 In order to allow a simple mechanism for adding one or many items, the
 input is treated as a CSV encoded string. For example
 
@@ -19420,7 +19497,7 @@ This is only useful if --vfs-cache-mode > off. If you call it when the
        ],
     }
 
-The expiry time is the time until the file is elegible for being
+The expiry time is the time until the file is eligible for being
 uploaded in floating point seconds. This may go negative. As rclone only
 transfers --transfers files at once, only the lowest --transfers expiry
 times will have uploading as true. So there may be files with negative
@@ -20569,7 +20646,7 @@ Flags for general networking and HTTP stuff.
           --tpslimit float                     Limit HTTP transactions per second to this
           --tpslimit-burst int                 Max burst of transactions for --tpslimit (default 1)
           --use-cookies                        Enable session cookiejar
-          --user-agent string                  Set the user-agent to a specified string (default "rclone/v1.69.0")
+          --user-agent string                  Set the user-agent to a specified string (default "rclone/v1.69.1")
 
 Performance
 
@@ -22531,7 +22608,7 @@ Also see the all files changed check.
 By using rclone filter features you can exclude file types or directory
 sub-trees from the sync. See the bisync filters section and generic
 --filter-from documentation. An example filters file contains filters
-for non-allowed files for synching with Dropbox.
+for non-allowed files for syncing with Dropbox.
 
 If you make changes to your filters file then bisync requires a run with
 --resync. This is a safety feature, which prevents existing files on the
@@ -22704,7 +22781,7 @@ of a sync. Using --check-sync=false will disable it and may
 significantly reduce the sync run times for very large numbers of files.
 
 The check may be run manually with --check-sync=only. It runs only the
-integrity check and terminates without actually synching.
+integrity check and terminates without actually syncing.
 
 Note that currently, --check-sync only checks listing snapshots and NOT
 the actual files on the remotes. Note also that the listing snapshots
@@ -23237,7 +23314,7 @@ supported.
 How to filter directories
 
 Filtering portions of the directory tree is a critical feature for
-synching.
+syncing.
 
 Examples of directory trees (always beneath the Path1/Path2 root level)
 you may want to exclude from your sync: - Directory trees containing
@@ -23348,7 +23425,7 @@ This noise can be quashed by adding --quiet to the bisync command line.
 
 Example exclude-style filters files for use with Dropbox
 
--   Dropbox disallows synching the listed temporary and
+-   Dropbox disallows syncing the listed temporary and
     configuration/data files. The `- ` filters exclude these files where
     ever they may occur in the sync tree. Consider adding similar
     exclusions for file types you don't need to sync, such as core dump
@@ -23668,7 +23745,7 @@ dash.
 Running tests
 
 -   go test . -case basic -remote local -remote2 local runs the
-    test_basic test case using only the local filesystem, synching one
+    test_basic test case using only the local filesystem, syncing one
     local directory with another local directory. Test script output is
     to the console, while commands within scenario.txt have their output
     sent to the .../workdir/test.log file, which is finally compared to
@@ -23900,6 +23977,11 @@ Also note a number of academic publications by Benjamin Pierce about
 Unison and synchronization in general.
 
 Changelog
+
+v1.69.1
+
+-   Fixed an issue causing listings to not capture concurrent
+    modifications under certain conditions
 
 v1.68
 
@@ -25192,7 +25274,7 @@ Notes on above:
     that USER_NAME has been created.
 2.  The Resource entry must include both resource ARNs, as one implies
     the bucket and the other implies the bucket's objects.
-3.  When using s3-no-check-bucket and the bucket already exsits, the
+3.  When using s3-no-check-bucket and the bucket already exists, the
     "arn:aws:s3:::BUCKET_NAME" doesn't have to be included.
 
 For reference, here's an Ansible script that will generate one or more
@@ -28155,8 +28237,8 @@ this:
     secret_access_key = SECRET_ACCESS_KEY
     use_multipart_uploads = false
 
-Note that setting disable_multipart_uploads = true is to work around a
-bug which will be fixed in due course.
+Note that setting use_multipart_uploads = false is to work around a bug
+which will be fixed in due course.
 
 Scaleway
 
@@ -29203,27 +29285,49 @@ This will guide you through an interactive setup process.
     Endpoint for Linode Object Storage API.
     Choose a number from below, or type in your own value.
     Press Enter to leave empty.
-     1 / Atlanta, GA (USA), us-southeast-1
+     1 / Amsterdam (Netherlands), nl-ams-1
+       \ (nl-ams-1.linodeobjects.com)
+     2 / Atlanta, GA (USA), us-southeast-1
        \ (us-southeast-1.linodeobjects.com)
-     2 / Chicago, IL (USA), us-ord-1
+     3 / Chennai (India), in-maa-1
+       \ (in-maa-1.linodeobjects.com)
+     4 / Chicago, IL (USA), us-ord-1
        \ (us-ord-1.linodeobjects.com)
-     3 / Frankfurt (Germany), eu-central-1
+     5 / Frankfurt (Germany), eu-central-1
        \ (eu-central-1.linodeobjects.com)
-     4 / Milan (Italy), it-mil-1
+     6 / Jakarta (Indonesia), id-cgk-1
+       \ (id-cgk-1.linodeobjects.com)
+     7 / London 2 (Great Britain), gb-lon-1
+       \ (gb-lon-1.linodeobjects.com)
+     8 / Los Angeles, CA (USA), us-lax-1
+       \ (us-lax-1.linodeobjects.com)
+     9 / Madrid (Spain), es-mad-1
+       \ (es-mad-1.linodeobjects.com)
+    10 / Melbourne (Australia), au-mel-1
+       \ (au-mel-1.linodeobjects.com)
+    11 / Miami, FL (USA), us-mia-1
+       \ (us-mia-1.linodeobjects.com)
+    12 / Milan (Italy), it-mil-1
        \ (it-mil-1.linodeobjects.com)
-     5 / Newark, NJ (USA), us-east-1
+    13 / Newark, NJ (USA), us-east-1
        \ (us-east-1.linodeobjects.com)
-     6 / Paris (France), fr-par-1
+    14 / Osaka (Japan), jp-osa-1
+       \ (jp-osa-1.linodeobjects.com)
+    15 / Paris (France), fr-par-1
        \ (fr-par-1.linodeobjects.com)
-     7 / Seattle, WA (USA), us-sea-1
+    16 / São Paulo (Brazil), br-gru-1
+       \ (br-gru-1.linodeobjects.com)
+    17 / Seattle, WA (USA), us-sea-1
        \ (us-sea-1.linodeobjects.com)
-     8 / Singapore ap-south-1
+    18 / Singapore, ap-south-1
        \ (ap-south-1.linodeobjects.com)
-     9 / Stockholm (Sweden), se-sto-1
+    19 / Singapore 2, sg-sin-1
+       \ (sg-sin-1.linodeobjects.com)
+    20 / Stockholm (Sweden), se-sto-1
        \ (se-sto-1.linodeobjects.com)
-    10 / Washington, DC, (USA), us-iad-1
+    21 / Washington, DC, (USA), us-iad-1
        \ (us-iad-1.linodeobjects.com)
-    endpoint> 3
+    endpoint> 5
 
     Option acl.
     Canned ACL used when creating buckets and storing or copying objects.
@@ -33757,7 +33861,7 @@ The initial nonce is generated from the operating systems crypto strong
 random number generator. The nonce is incremented for each chunk read
 making sure each nonce is unique for each block written. The chance of a
 nonce being reused is minuscule. If you wrote an exabyte of data (10¹⁸
-bytes) you would have a probability of approximately 2×10⁻³² of re-using
+bytes) you would have a probability of approximately 2×10⁻³² of reusing
 a nonce.
 
 Chunk
@@ -40978,7 +41082,7 @@ This will guide you through an interactive setup process:
     config_2fa> 2FACODE
     Remote config
     --------------------
-    [koofr]
+    [iclouddrive]
     - type: iclouddrive
     - apple_id: APPLEID
     - password: *** ENCRYPTED ***
@@ -40993,6 +41097,27 @@ This will guide you through an interactive setup process:
 Advanced Data Protection
 
 ADP is currently unsupported and need to be disabled
+
+On iPhone, Settings > Apple Account > iCloud > 'Access iCloud Data on
+the Web' must be ON, and 'Advanced Data Protection' OFF.
+
+Troubleshooting
+
+Missing PCS cookies from the request
+
+This means you have Advanced Data Protection (ADP) turned on. This is
+not supported at the moment. If you want to use rclone you will have to
+turn it off. See above for how to turn it off.
+
+You will need to clear the cookies and the trust_token fields in the
+config. Or you can delete the remote config and start again.
+
+You should then run rclone reconnect remote:.
+
+Note that changing the ADP setting may not take effect immediately - you
+may need to wait a few hours or a day before you can get rclone to work
+- keep clearing the config entry and running rclone reconnect remote:
+until rclone functions properly.
 
 Standard options
 
@@ -45589,7 +45714,8 @@ Properties:
     -   "us"
         -   Microsoft Cloud for US Government
     -   "de"
-        -   Microsoft Cloud Germany
+        -   Microsoft Cloud Germany (deprecated - try global region
+            first).
     -   "cn"
         -   Azure and Office 365 operated by Vnet Group in China
 
@@ -46247,6 +46373,38 @@ Here are the possible system metadata items for the onedrive backend.
   ------------------------------------------------------------------------------------------------------------------------------------------
 
 See the metadata docs for more info.
+
+Impersonate other users as Admin
+
+Unlike Google Drive and impersonating any domain user via service
+accounts, OneDrive requires you to authenticate as an admin account, and
+manually setup a remote per user you wish to impersonate.
+
+1.  In Microsoft 365 Admin Center, open each user you need to
+    "impersonate" and go to the OneDrive section. There is a heading
+    called "Get access to files", you need to click to create the link,
+    this creates the link of the format
+    https://{tenant}-my.sharepoint.com/personal/{user_name_domain_tld}/
+    but also changes the permissions so you your admin user has access.
+2.  Then in powershell run the following commands:
+
+    Install-Module Microsoft.Graph -Scope CurrentUser -Repository PSGallery -Force
+    Import-Module Microsoft.Graph.Files
+    Connect-MgGraph -Scopes "Files.ReadWrite.All"
+    # Follow the steps to allow access to your admin user
+    # Then run this for each user you want to impersonate to get the Drive ID
+    Get-MgUserDefaultDrive -UserId '{emailaddress}'
+    # This will give you output of the format:
+    # Name     Id                                                                 DriveType CreatedDateTime
+    # ----     --                                                                 --------- ---------------
+    # OneDrive b!XYZ123                                                           business  14/10/2023 1:00:58 pm
+
+3.  Then in rclone add a onedrive remote type, and use the
+    Type in driveID with the DriveID you got in the previous step. One
+    remote per user. It will then confirm the drive ID, and hopefully
+    give you a message of Found drive "root" of type "business" and then
+    include the URL of the format
+    https://{tenant}-my.sharepoint.com/personal/{user_name_domain_tld}/Documents
 
 Limitations
 
@@ -56156,6 +56314,37 @@ Options:
 -   "error": return an error based on option value
 
 Changelog
+
+v1.69.1 - 2025-02-14
+
+See commits
+
+-   Bug Fixes
+    -   lib/oauthutil: Fix redirect URL mismatch errors (Nick
+        Craig-Wood)
+    -   bisync: Fix listings missing concurrent modifications (nielash)
+    -   serve s3: Fix list objects encoding-type (Nick Craig-Wood)
+    -   fs: Fix confusing "didn't find section in config file" error
+        (Nick Craig-Wood)
+    -   doc fixes (Christoph Berger, Dimitri Papadopoulos, Matt
+        Ickstadt, Nick Craig-Wood, Tim White, Zachary Vorhies)
+    -   build: Added parallel docker builds and caching for go build in
+        the container (Anagh Kumar Baranwal)
+-   VFS
+    -   Fix the cache failing to upload symlinks when --links was
+        specified (Nick Craig-Wood)
+    -   Fix race detected by race detector (Nick Craig-Wood)
+    -   Close the change notify channel on Shutdown (izouxv)
+-   B2
+    -   Fix "fatal error: concurrent map writes" (Nick Craig-Wood)
+-   Iclouddrive
+    -   Add notes on ADP and Missing PCS cookies (Nick Craig-Wood)
+-   Onedrive
+    -   Mark German (de) region as deprecated (Nick Craig-Wood)
+-   S3
+    -   Added new storage class to magalu provider (Bruno Fernandes)
+    -   Add DigitalOcean regions SFO2, LON1, TOR1, BLR1 (jkpe)
+    -   Add latest Linode Object Storage endpoints (jbagwell-akamai)
 
 v1.69.0 - 2025-01-12
 

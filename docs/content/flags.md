@@ -9,8 +9,6 @@ description: "Rclone Global Flags"
 This describes the global flags available to every rclone command
 split into groups.
 
-See the [Options section](/docs/#options) for syntax and usage advice.
-
 
 ## Copy
 
@@ -118,7 +116,7 @@ Flags for general networking and HTTP stuff.
       --tpslimit float                     Limit HTTP transactions per second to this
       --tpslimit-burst int                 Max burst of transactions for --tpslimit (default 1)
       --use-cookies                        Enable session cookiejar
-      --user-agent string                  Set the user-agent to a specified string (default "rclone/v1.69.0")
+      --user-agent string                  Set the user-agent to a specified string (default "rclone/v1.69.1")
 ```
 
 

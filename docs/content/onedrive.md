@@ -319,7 +319,7 @@ Properties:
     - "us"
         - Microsoft Cloud for US Government
     - "de"
-        - Microsoft Cloud Germany
+        - Microsoft Cloud Germany (deprecated - try global region first).
     - "cn"
         - Azure and Office 365 operated by Vnet Group in China
 
