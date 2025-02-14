@@ -92,7 +92,7 @@ const (
 	maxFileNameLength = 255
 )
 
-type exportApiFormat string
+type exportAPIFormat string
 type exportExtension string // dotless
 
 var (
@@ -136,12 +136,12 @@ var (
 		DefaultBatchSizeAsync: 100,
 	}
 
-	exportKnownApiFormats = map[exportApiFormat]exportExtension{
+	exportKnownAPIFormats = map[exportAPIFormat]exportExtension{
 		"markdown": "md",
 		"html":     "html",
 	}
 	// Populated based on knownAPIExportFormats
-	exportKnownExtensions = map[exportExtension]exportApiFormat{}
+	exportKnownExtensions = map[exportExtension]exportAPIFormat{}
 
 	paperExtensions = map[string]bool{
 		".paper":  true,
@@ -272,7 +272,7 @@ These include Dropbox Paper documents.
 For each such file, rclone will choose the first format on this list that Dropbox
 considers valid. If none is valid, it will choose Dropbox's default format.
 
-Known formats include: "html", "md"`,
+Known formats include: "html", "md" (markdown)`,
 			Default:  fs.CommaSepList{"html", "md"},
 			Advanced: true,
 		},
@@ -287,6 +287,9 @@ Known formats include: "html", "md"`,
 				Default: false,
 				Help: `Show all exportable files in listings.
 
+Adding this flag will allow all exportable files to be server side copied.
+Note that rclone doesn't add extensions to the Google Docs file names in this mode.
+
 Do **not** use this flag when trying to download exportable files - rclone
 will fail to download them.
 `,
@@ -294,8 +297,8 @@ will fail to download them.
 		}...), defaultBatcherOptions.FsOptions("For full info see [the main docs](https://rclone.org/dropbox/#batch-mode)\n\n")...),
 	})
 
-	for api_format, ext := range exportKnownApiFormats {
-		exportKnownExtensions[ext] = api_format
+	for apiFormat, ext := range exportKnownAPIFormats {
+		exportKnownExtensions[ext] = apiFormat
 	}
 }
 
@@ -359,7 +362,7 @@ type Object struct {
 	hash    string    // content_hash of the object
 
 	exportType      exportType
-	exportApiFormat exportApiFormat
+	exportAPIFormat exportAPIFormat
 }
 
 // Name of the remote (as passed into NewFs)
@@ -1602,22 +1605,22 @@ func (f *Fs) Shutdown(ctx context.Context) error {
 	return nil
 }
 
-func (f *Fs) chooseExportFormat(info *files.FileMetadata) (exportApiFormat, exportExtension) {
+func (f *Fs) chooseExportFormat(info *files.FileMetadata) (exportAPIFormat, exportExtension) {
 	// Find API export formats Dropbox supports for this file
 	// Sometimes Dropbox lists a format in ExportAs but not ExportOptions, so check both
 	ei := info.ExportInfo
 	dropboxFormatStrings := append([]string{ei.ExportAs}, ei.ExportOptions...)
 
 	// Find which extensions these correspond to
-	exportExtensions := map[exportExtension]exportApiFormat{}
-	var dropboxPreferredApiFormat exportApiFormat
+	exportExtensions := map[exportExtension]exportAPIFormat{}
+	var dropboxPreferredAPIFormat exportAPIFormat
 	var dropboxPreferredExtension exportExtension
 	for _, format := range dropboxFormatStrings {
-		apiFormat := exportApiFormat(format)
+		apiFormat := exportAPIFormat(format)
 		// Only consider formats we know about
-		if ext, ok := exportKnownApiFormats[apiFormat]; ok {
-			if dropboxPreferredApiFormat == "" {
-				dropboxPreferredApiFormat = apiFormat
+		if ext, ok := exportKnownAPIFormats[apiFormat]; ok {
+			if dropboxPreferredAPIFormat == "" {
+				dropboxPreferredAPIFormat = apiFormat
 				dropboxPreferredExtension = ext
 			}
 			exportExtensions[ext] = apiFormat
@@ -1632,7 +1635,7 @@ func (f *Fs) chooseExportFormat(info *files.FileMetadata) (exportApiFormat, expo
 	}
 
 	// If no matches, prefer the first valid format Dropbox lists
-	return dropboxPreferredApiFormat, dropboxPreferredExtension
+	return dropboxPreferredAPIFormat, dropboxPreferredExtension
 }
 
 // ------------------------------------------------------------
@@ -1703,8 +1706,8 @@ func (o *Object) setMetadataForExport(info *files.FileMetadata) {
 	}
 
 	var exportExt exportExtension
-	o.exportApiFormat, exportExt = o.fs.chooseExportFormat(info)
-	if o.exportApiFormat == "" {
+	o.exportAPIFormat, exportExt = o.fs.chooseExportFormat(info)
+	if o.exportAPIFormat == "" {
 		o.exportType = exportHide
 	} else {
 		o.exportType = exportExportable
@@ -1796,12 +1799,12 @@ func (o *Object) Storable() bool {
 }
 
 func (o *Object) export(ctx context.Context) (in io.ReadCloser, err error) {
-	if o.exportType == exportListOnly || o.exportApiFormat == "" {
+	if o.exportType == exportListOnly || o.exportAPIFormat == "" {
 		fs.Debugf(o.remote, "No export format found")
 		return nil, fs.ErrorObjectNotFound
 	}
 
-	arg := files.ExportArg{Path: o.id, ExportFormat: string(o.exportApiFormat)}
+	arg := files.ExportArg{Path: o.id, ExportFormat: string(o.exportAPIFormat)}
 	var exportResult *files.ExportResult
 	err = o.fs.pacer.Call(func() (bool, error) {
 		exportResult, in, err = o.fs.srv.Export(&arg)
