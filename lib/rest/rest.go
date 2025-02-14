@@ -17,6 +17,7 @@ import (
 	"sync"
 
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/lib/readers"
 )
 
@@ -189,7 +190,13 @@ func checkDrainAndClose(r io.ReadCloser, err *error) {
 func DecodeJSON(resp *http.Response, result interface{}) (err error) {
 	defer checkDrainAndClose(resp.Body, &err)
 	decoder := json.NewDecoder(resp.Body)
-	return decoder.Decode(result)
+	err = decoder.Decode(result)
+	if err != nil {
+		// Retry this as it is likely some overloaded server sending HTML instead of JSON
+		contentType := resp.Header.Get("Content-Type")
+		err = fserrors.RetryError(fmt.Errorf("failed to decode JSON from Content-Type: %q: %v", contentType, err))
+	}
+	return err
 }
 
 // DecodeXML decodes resp.Body into result
