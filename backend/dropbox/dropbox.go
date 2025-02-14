@@ -27,7 +27,6 @@ import (
 	"fmt"
 	"io"
 	"path"
-	"path/filepath"
 	"regexp"
 	"strings"
 	"time"
@@ -93,6 +92,9 @@ const (
 	maxFileNameLength = 255
 )
 
+type exportApiFormat string
+type exportExtension string // dotless
+
 var (
 	// Description of how to auth for this app
 	dropboxConfig = &oauthutil.Config{
@@ -134,11 +136,17 @@ var (
 		DefaultBatchSizeAsync: 100,
 	}
 
-	knownExportFormats = map[string]string{
-		"markdown": ".md",
-		"html":     ".html",
+	exportKnownApiFormats = map[exportApiFormat]exportExtension{
+		"markdown": "md",
+		"html":     "html",
 	}
-	exportExtensions = map[string]bool{} // populated later based on knownExportFormats
+	// Populated based on knownAPIExportFormats
+	exportKnownExtensions = map[exportExtension]exportApiFormat{}
+
+	paperExtensions = map[string]bool{
+		".paper":  true,
+		".papert": true,
+	}
 )
 
 // Gets an oauth config with the right scopes
@@ -264,32 +272,49 @@ These include Dropbox Paper documents.
 For each such file, rclone will choose the first format on this list that Dropbox
 considers valid. If none is valid, it will choose Dropbox's default format.
 
-Known formats include: "html", "markdown"`,
-			Default:  fs.CommaSepList{"html", "markdown"},
+Known formats include: "html", "md"`,
+			Default:  fs.CommaSepList{"html", "md"},
 			Advanced: true,
 		},
+			{
+				Name:     "skip_exports",
+				Help:     "Skip exportable files in all listings.\n\nIf given, exportable files practically become invisible to rclone.",
+				Default:  false,
+				Advanced: true,
+			},
+			{
+				Name:    "show_all_exports",
+				Default: false,
+				Help: `Show all exportable files in listings.
+
+Do **not** use this flag when trying to download exportable files - rclone
+will fail to download them.
+`,
+			},
 		}...), defaultBatcherOptions.FsOptions("For full info see [the main docs](https://rclone.org/dropbox/#batch-mode)\n\n")...),
 	})
 
-	for _, ext := range knownExportFormats {
-		exportExtensions[ext] = true
+	for api_format, ext := range exportKnownApiFormats {
+		exportKnownExtensions[ext] = api_format
 	}
 }
 
 // Options defines the configuration for this backend
 type Options struct {
-	ChunkSize     fs.SizeSuffix        `config:"chunk_size"`
-	Impersonate   string               `config:"impersonate"`
-	SharedFiles   bool                 `config:"shared_files"`
-	SharedFolders bool                 `config:"shared_folders"`
-	BatchMode     string               `config:"batch_mode"`
-	BatchSize     int                  `config:"batch_size"`
-	BatchTimeout  fs.Duration          `config:"batch_timeout"`
-	AsyncBatch    bool                 `config:"async_batch"`
-	PacerMinSleep fs.Duration          `config:"pacer_min_sleep"`
-	Enc           encoder.MultiEncoder `config:"encoding"`
-	RootNsid      string               `config:"root_namespace"`
-	ExportFormats fs.CommaSepList      `config:"export_formats"`
+	ChunkSize      fs.SizeSuffix        `config:"chunk_size"`
+	Impersonate    string               `config:"impersonate"`
+	SharedFiles    bool                 `config:"shared_files"`
+	SharedFolders  bool                 `config:"shared_folders"`
+	BatchMode      string               `config:"batch_mode"`
+	BatchSize      int                  `config:"batch_size"`
+	BatchTimeout   fs.Duration          `config:"batch_timeout"`
+	AsyncBatch     bool                 `config:"async_batch"`
+	PacerMinSleep  fs.Duration          `config:"pacer_min_sleep"`
+	Enc            encoder.MultiEncoder `config:"encoding"`
+	RootNsid       string               `config:"root_namespace"`
+	ExportFormats  fs.CommaSepList      `config:"export_formats"`
+	SkipExports    bool                 `config:"skip_exports"`
+	ShowAllExports bool                 `config:"show_all_exports"`
 }
 
 // Fs represents a remote dropbox server
@@ -309,7 +334,17 @@ type Fs struct {
 	pacer          *fs.Pacer      // To pace the API calls
 	ns             string         // The namespace we are using or "" for none
 	batcher        *batcher.Batcher[*files.UploadSessionFinishArg, *files.FileMetadata]
+	exportExts     []exportExtension
 }
+
+type exportType int
+
+const (
+	notExport        exportType = iota // a regular file
+	exportHide                         // should be hidden
+	exportListOnly                     // listable, but can't export
+	exportExportable                   // can export
+)
 
 // Object describes a dropbox object
 //
@@ -323,8 +358,8 @@ type Object struct {
 	modTime time.Time // time it was last modified
 	hash    string    // content_hash of the object
 
-	nonDownloadable bool
-	exportFormat    string
+	exportType      exportType
+	exportApiFormat exportApiFormat
 }
 
 // Name of the remote (as passed into NewFs)
@@ -425,12 +460,6 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		return nil, fmt.Errorf("dropbox: chunk size: %w", err)
 	}
 
-	for _, format := range opt.ExportFormats {
-		if knownExportFormats[format] == "" {
-			return nil, fmt.Errorf("dropbox: unknown export format '%s'", format)
-		}
-	}
-
 	// Convert the old token if it exists.  The old token was just
 	// just a string, the new one is a JSON blob
 	oldToken, ok := m.Get(config.ConfigToken)
@@ -469,6 +498,14 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		LogLevel:        dropbox.LogOff, // logging in the SDK: LogOff, LogDebug, LogInfo
 		Client:          oAuthClient,    // maybe???
 		HeaderGenerator: f.headerGenerator,
+	}
+
+	for _, e := range opt.ExportFormats {
+		ext := exportExtension(e)
+		if exportKnownExtensions[ext] == "" {
+			return nil, fmt.Errorf("dropbox: unknown export format '%s'", e)
+		}
+		f.exportExts = append(f.exportExts, ext)
 	}
 
 	// unauthorized config for endpoints that fail with auth
@@ -649,40 +686,89 @@ func (f *Fs) getMetadata(ctx context.Context, objPath string) (res getMetadataRe
 	return
 }
 
+// Get metadata such that the result would be exported with the given extension
+// Return a channel that will eventually receive the metadata
+func (f *Fs) getMetadataForExt(ctx context.Context, filePath string, wantExportExtension exportExtension) chan getMetadataResult {
+	ch := make(chan getMetadataResult, 1)
+	wantDownloadable := (wantExportExtension == "")
+	go func() {
+		defer close(ch)
+
+		res := f.getMetadata(ctx, filePath)
+		info, ok := res.entry.(*files.FileMetadata)
+		if !ok { // Can't check anything about file, just return what we have
+			ch <- res
+			return
+		}
+
+		// Return notFound if downloadability or extension doesn't match
+		if wantDownloadable != info.IsDownloadable {
+			ch <- getMetadataResult{notFound: true}
+			return
+		}
+		if !info.IsDownloadable {
+			_, ext := f.chooseExportFormat(info)
+			if ext != wantExportExtension {
+				ch <- getMetadataResult{notFound: true}
+				return
+			}
+		}
+
+		// Return our real result or error
+		ch <- res
+	}()
+	return ch
+}
+
+// For a given rclone-path, figure out what the Dropbox-path may be, in order of preference.
+// Multiple paths might be plausible, due to export path munging.
+func (f *Fs) possibleMetadatas(ctx context.Context, filePath string) (ret []<-chan getMetadataResult) {
+	ret = []<-chan getMetadataResult{}
+
+	// Prefer an exact match
+	ret = append(ret, f.getMetadataForExt(ctx, filePath, ""))
+
+	// Check if we're plausibly an export path, otherwise we're done
+	if f.opt.SkipExports || f.opt.ShowAllExports {
+		return
+	}
+	dotted := path.Ext(filePath)
+	if dotted == "" {
+		return
+	}
+	ext := exportExtension(dotted[1:])
+	if exportKnownExtensions[ext] == "" {
+		return
+	}
+
+	// We might be an export path! Try all possibilities
+	base := strings.TrimSuffix(filePath, dotted)
+	ret = append(ret, f.getMetadataForExt(ctx, base, ext)) // just missing extension
+	for paperExt := range paperExtensions {
+		ret = append(ret, f.getMetadataForExt(ctx, base+paperExt, ext)) // with a paper extension too
+	}
+	return
+}
+
 // getFileMetadata gets the metadata for a file
 func (f *Fs) getFileMetadata(ctx context.Context, filePath string) (*files.FileMetadata, error) {
-	// Look up both the exact path, and the path without an export extension
-	exact := make(chan getMetadataResult)
-	export := make(chan getMetadataResult)
+	var res getMetadataResult
 
-	go func() {
-		defer close(exact)
-		exact <- f.getMetadata(ctx, filePath)
-	}()
-	go func() {
-		defer close(export)
-		ext := filepath.Ext(filePath)
-		if exportExtensions[ext] {
-			origPath := strings.TrimSuffix(filePath, ext)
-			export <- f.getMetadata(ctx, origPath)
-		} else {
-			export <- getMetadataResult{notFound: true}
-		}
-	}()
+	// Try all possible metadatas
+	possibleMetadatas := f.possibleMetadatas(ctx, filePath)
+	for _, ch := range possibleMetadatas {
+		res = <-ch
 
-	res := <-exact
-	if res.err != nil {
-		return nil, res.err
-	}
-	if res.notFound {
-		// Maybe it's an export
-		res = <-export
 		if res.err != nil {
 			return nil, res.err
 		}
-		if res.notFound {
-			return nil, fs.ErrorObjectNotFound
+		if !res.notFound {
+			break
 		}
+	}
+
+	if res.notFound {
+		return nil, fs.ErrorObjectNotFound
 	}
 
 	fileInfo, ok := res.entry.(*files.FileMetadata)
@@ -965,7 +1051,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 				if err != nil {
 					return nil, err
 				}
-				if o.(*Object).visible() {
+				if o.(*Object).exportType.listable() {
 					entries = append(entries, o)
 				}
 			}
@@ -1516,7 +1602,49 @@ func (f *Fs) Shutdown(ctx context.Context) error {
 	return nil
 }
 
+func (f *Fs) chooseExportFormat(info *files.FileMetadata) (exportApiFormat, exportExtension) {
+	// Find API export formats Dropbox supports for this file
+	// Sometimes Dropbox lists a format in ExportAs but not ExportOptions, so check both
+	ei := info.ExportInfo
+	dropboxFormatStrings := append([]string{ei.ExportAs}, ei.ExportOptions...)
+
+	// Find which extensions these correspond to
+	exportExtensions := map[exportExtension]exportApiFormat{}
+	var dropboxPreferredApiFormat exportApiFormat
+	var dropboxPreferredExtension exportExtension
+	for _, format := range dropboxFormatStrings {
+		apiFormat := exportApiFormat(format)
+		// Only consider formats we know about
+		if ext, ok := exportKnownApiFormats[apiFormat]; ok {
+			if dropboxPreferredApiFormat == "" {
+				dropboxPreferredApiFormat = apiFormat
+				dropboxPreferredExtension = ext
+			}
+			exportExtensions[ext] = apiFormat
+		}
+	}
+
+	// See if the user picked a valid extension
+	for _, ext := range f.exportExts {
+		if apiFormat, ok := exportExtensions[ext]; ok {
+			return apiFormat, ext
+		}
+	}
+
+	// If no matches, prefer the first valid format Dropbox lists
+	return dropboxPreferredApiFormat, dropboxPreferredExtension
+}
+
 // ------------------------------------------------------------
+
+func (et exportType) listable() bool {
+	return et != exportHide
+}
+
+// something we should _try_ to export
+func (et exportType) exportable() bool {
+	return et == exportExportable || et == exportListOnly
+}
 
 // Fs returns the parent Fs
 func (o *Object) Fs() fs.Info {
@@ -1561,44 +1689,35 @@ func (o *Object) Size() int64 {
 	return o.bytes
 }
 
-// Non-downloadable files are only visible if we have an export format for them
-func (o *Object) visible() bool {
-	return !o.nonDownloadable || o.exportFormat != ""
-}
-
-func (o *Object) chooseExportFormat(info *files.FileMetadata) string {
-	// Sometimes Dropbox lists a format in ExportAs but not ExportOptions, so check both
-	ei := info.ExportInfo
-	dropboxFormats := append([]string{ei.ExportAs}, ei.ExportOptions...)
-
-	// Filter out formats we don't know about
-	valid := map[string]bool{}
-	first := ""
-	for _, format := range dropboxFormats {
-		if knownExportFormats[format] != "" {
-			if first == "" {
-				first = format
-			}
-			valid[format] = true
-		}
-	}
-
-	// Prefer formats the user specified
-	for _, format := range o.fs.opt.ExportFormats {
-		if valid[format] {
-			return format
-		}
-	}
-
-	// If no matches, prefer the first valid format Dropbox lists
-	return first
-}
-
 func (o *Object) setMetadataForExport(info *files.FileMetadata) {
 	o.bytes = -1
 	o.hash = ""
-	o.exportFormat = o.chooseExportFormat(info)
-	o.remote += knownExportFormats[o.exportFormat]
+
+	if o.fs.opt.SkipExports {
+		o.exportType = exportHide
+		return
+	}
+	if o.fs.opt.ShowAllExports {
+		o.exportType = exportListOnly
+		return
+	}
+
+	var exportExt exportExtension
+	o.exportApiFormat, exportExt = o.fs.chooseExportFormat(info)
+	if o.exportApiFormat == "" {
+		o.exportType = exportHide
+	} else {
+		o.exportType = exportExportable
+
+		// get rid of any paper extension, if present
+		ext := path.Ext(o.remote)
+		if paperExtensions[ext] {
+			o.remote = strings.TrimSuffix(o.remote, ext)
+		}
+
+		// add the export extension
+		o.remote += "." + string(exportExt)
+	}
 }
 
 // setMetadataFromEntry sets the fs data from a files.FileMetadata
@@ -1609,9 +1728,8 @@ func (o *Object) setMetadataFromEntry(info *files.FileMetadata) error {
 	o.bytes = int64(info.Size)
 	o.modTime = info.ClientModified
 	o.hash = info.ContentHash
-	o.nonDownloadable = !info.IsDownloadable
 
-	if o.nonDownloadable {
+	if !info.IsDownloadable {
 		o.setMetadataForExport(info)
 	}
 	return nil
@@ -1677,6 +1795,27 @@ func (o *Object) Storable() bool {
 	return true
 }
 
+func (o *Object) export(ctx context.Context) (in io.ReadCloser, err error) {
+	if o.exportType == exportListOnly || o.exportApiFormat == "" {
+		fs.Debugf(o.remote, "No export format found")
+		return nil, fs.ErrorObjectNotFound
+	}
+
+	arg := files.ExportArg{Path: o.id, ExportFormat: string(o.exportApiFormat)}
+	var exportResult *files.ExportResult
+	err = o.fs.pacer.Call(func() (bool, error) {
+		exportResult, in, err = o.fs.srv.Export(&arg)
+		return shouldRetry(ctx, err)
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	o.bytes = int64(exportResult.ExportMetadata.Size)
+	o.hash = exportResult.ExportMetadata.ExportHash
+	return
+}
+
 // Open an object for read
 func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.ReadCloser, err error) {
 	if o.fs.opt.SharedFiles {
@@ -1696,20 +1835,8 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 		return
 	}
 
-	if o.nonDownloadable {
-		if !o.visible() {
-			return nil, fmt.Errorf("dropbox: no download format available for '%s'", o.String())
-		}
-
-		arg := files.ExportArg{Path: o.id, ExportFormat: o.exportFormat}
-		var exportResult *files.ExportResult
-		err = o.fs.pacer.Call(func() (bool, error) {
-			exportResult, in, err = o.fs.srv.Export(&arg)
-			return shouldRetry(ctx, err)
-		})
-		o.bytes = int64(exportResult.ExportMetadata.Size)
-		o.hash = exportResult.ExportMetadata.ExportHash
-		return
+	if o.exportType.exportable() {
+		return o.export(ctx)
 	}
 
 	fs.FixRangeOption(options, o.bytes)
