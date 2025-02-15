@@ -16,10 +16,10 @@ import (
 )
 
 const (
-	baseEndpoint  = "https://www.icloud.com"
-	homeEndpoint  = "https://www.icloud.com"
-	setupEndpoint = "https://setup.icloud.com/setup/ws/1"
-	authEndpoint  = "https://idmsa.apple.com/appleauth/auth"
+	baseEndpoint  = "https://www.icloud.com.cn"
+	homeEndpoint  = "https://www.icloud.com.cn"
+	setupEndpoint = "https://setup.icloud.com.cn/setup/ws/1"
+	authEndpoint  = "https://idmsa.apple.com.cn/appleauth/auth"
 )
 
 type sessionSave func(*Session)
