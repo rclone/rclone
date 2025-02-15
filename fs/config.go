@@ -414,6 +414,11 @@ var ConfigOptionsInfo = Options{{
 	Help:    "Use mmap allocator (see docs)",
 	Groups:  "Config",
 }, {
+	Name:    "max_buffer_memory",
+	Default: SizeSuffix(-1),
+	Help:    "If set, don't allocate more than this amount of memory as buffers",
+	Groups:  "Config",
+}, {
 	Name:    "ca_cert",
 	Default: []string{},
 	Help:    "CA certificate used to verify servers",
@@ -613,6 +618,7 @@ type ConfigInfo struct {
 	ProgressTerminalTitle      bool              `config:"progress_terminal_title"`
 	Cookie                     bool              `config:"use_cookies"`
 	UseMmap                    bool              `config:"use_mmap"`
+	MaxBufferMemory            SizeSuffix        `config:"max_buffer_memory"`
 	CaCert                     []string          `config:"ca_cert"`     // Client Side CA
 	ClientCert                 string            `config:"client_cert"` // Client Side Cert
 	ClientKey                  string            `config:"client_key"`  // Client Side Key

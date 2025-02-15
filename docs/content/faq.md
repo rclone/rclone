@@ -239,6 +239,10 @@ memory. There is
 [a workaround for this](https://github.com/rclone/rclone/wiki/Big-syncs-with-millions-of-files)
 which involves a bit of scripting.
 
+From v1.70 rclone also has the [--max-buffer-memory](/docs/#max-buffer-memory)
+flag which helps particularly when multi-thread transfers are using
+too much memory.
+
 ### Rclone changes fullwidth Unicode punctuation marks in file names
 
 For example: On a Windows system, you have a file with name `Test：1.jpg`,
