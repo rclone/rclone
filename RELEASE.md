@@ -124,8 +124,8 @@ Now
 
   * git co ${BASE_TAG}-stable
   * git cherry-pick any fixes
-  * Do the steps as above
   * make startstable
+  * Do the steps as above
   * git co master
   * `#` cherry pick the changes to the changelog - check the diff to make sure it is correct
   * git checkout ${BASE_TAG}-stable docs/content/changelog.md
