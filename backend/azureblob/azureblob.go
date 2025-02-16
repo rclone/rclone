@@ -19,6 +19,7 @@ import (
 	"net/url"
 	"os"
 	"path"
+	"regexp"
 	"sort"
 	"strconv"
 	"strings"
@@ -1097,6 +1098,37 @@ func (o *Object) updateMetadataWithModTime(modTime time.Time) {
 
 	// Set modTimeKey in it
 	o.meta[modTimeKey] = modTime.Format(timeFormatOut)
+}
+
+// update meta data
+func (o *Object) updateMetadata(ctx context.Context, src fs.ObjectInfo, options []fs.OpenOption) (ui uploadInfo, err error) {
+	metadataMu.Lock()
+	defer metadataMu.Unlock()
+
+	// Make sure o.meta is not nil
+	if o.meta == nil {
+		o.meta = make(map[string]string, 1)
+	}
+
+	meta, err := fs.GetMetadataOptions(ctx, o.fs, src, options)
+	if err != nil {
+		return ui, fmt.Errorf("failed to read metadata from source object: %w", err)
+	}
+
+	for k, v := range meta {
+		// Azure does not allow special characters in key, so we replace all of them by empty string
+		var fixedKey = RemoveUnwantedChars(k, "a-zA-Z0-9")
+		o.meta[fixedKey] = v
+	}
+
+	return ui, nil
+}
+
+// Remove unwanted characters
+func RemoveUnwantedChars(input string, allowedChars string) string {
+	pattern := fmt.Sprintf("[^%s]", allowedChars)
+	re := regexp.MustCompile(pattern)
+	return re.ReplaceAllString(input, "")
 }
 
 // Returns whether file is a directory marker or not
@@ -2847,6 +2879,12 @@ func (o *Object) prepareUpload(ctx context.Context, src fs.ObjectInfo, options [
 
 	// Update Mod time
 	o.updateMetadataWithModTime(src.ModTime(ctx))
+	if err != nil {
+		return ui, err
+	}
+
+	// Update other metadata
+	ui, err = o.updateMetadata(ctx, src, options)
 	if err != nil {
 		return ui, err
 	}
