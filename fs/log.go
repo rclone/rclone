@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"runtime/debug"
 
 	"github.com/sirupsen/logrus"
 )
@@ -268,6 +269,14 @@ func Log(o interface{}, text string) {
 // out with the -q flag.
 func Logf(o interface{}, text string, args ...interface{}) {
 	LogLevelPrintf(LogLevelNotice, o, text, args...)
+}
+
+func LogMe(text string) {
+	LogLevelPrint(LogLevelInfo, nil, text)
+}
+
+func LogCallStack() {
+	debug.PrintStack()
 }
 
 // Infoc writes info on transfers for this Object or Fs.  Use this
