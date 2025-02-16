@@ -140,7 +140,7 @@ var (
 		"markdown": "md",
 		"html":     "html",
 	}
-	// Populated based on knownAPIExportFormats
+	// Populated based on exportKnownAPIFormats
 	exportKnownExtensions = map[exportExtension]exportAPIFormat{}
 
 	paperExtensions = map[string]bool{
@@ -286,7 +286,7 @@ Known formats include: "html", "md" (markdown)`,
 			Help: `Show all exportable files in listings.
 
 Adding this flag will allow all exportable files to be server side copied.
-Note that rclone doesn't add extensions to the Google Docs file names in this mode.
+Note that rclone doesn't add extensions to the exportable file names in this mode.
 
 Do **not** use this flag when trying to download exportable files - rclone
 will fail to download them.
