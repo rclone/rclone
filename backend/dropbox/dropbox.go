@@ -143,10 +143,8 @@ var (
 	// Populated based on exportKnownAPIFormats
 	exportKnownExtensions = map[exportExtension]exportAPIFormat{}
 
-	paperExtensions = map[string]bool{
-		".paper":  true,
-		".papert": true,
-	}
+	paperExtension         = ".paper"
+	paperTemplateExtension = ".papert"
 )
 
 // Gets an oauth config with the right scopes
@@ -745,10 +743,16 @@ func (f *Fs) possibleMetadatas(ctx context.Context, filePath string) (ret []<-ch
 
 	// We might be an export path! Try all possibilities
 	base := strings.TrimSuffix(filePath, dotted)
-	ret = append(ret, f.getMetadataForExt(ctx, base, ext)) // just missing extension
-	for paperExt := range paperExtensions {
-		ret = append(ret, f.getMetadataForExt(ctx, base+paperExt, ext)) // with a paper extension too
+
+	// `foo.papert.md` will only come from `foo.papert`. Never check something like `foo.papert.paper`
+	if strings.HasSuffix(base, paperTemplateExtension) {
+		ret = append(ret, f.getMetadataForExt(ctx, base, ext))
+		return
 	}
+
+	// Otherwise, try both `foo.md` coming from `foo`, or from `foo.paper`
+	ret = append(ret, f.getMetadataForExt(ctx, base, ext))
+	ret = append(ret, f.getMetadataForExt(ctx, base+paperExtension, ext))
 	return
 }
 
@@ -1710,13 +1714,8 @@ func (o *Object) setMetadataForExport(info *files.FileMetadata) {
 		o.exportType = exportHide
 	} else {
 		o.exportType = exportExportable
-
 		// get rid of any paper extension, if present
-		ext := path.Ext(o.remote)
-		if paperExtensions[ext] {
-			o.remote = strings.TrimSuffix(o.remote, ext)
-		}
-
+		o.remote = strings.TrimSuffix(o.remote, paperExtension)
 		// add the export extension
 		o.remote += "." + string(exportExt)
 	}
