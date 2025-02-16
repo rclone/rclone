@@ -809,7 +809,6 @@ put them back in again.` >}}
   * ben-ba <benjamin.brauner@gmx.de>
   * Eli Orzitzer <e_orz@yahoo.com>
   * Anthony Metzidis <anthony.metzidis@gmail.com>
-  * emyarod <afw5059@gmail.com>
   * keongalvin <keongalvin@gmail.com>
   * rarspace01 <rarspace01@users.noreply.github.com>
   * Paul Stern <paulstern45@gmail.com>
