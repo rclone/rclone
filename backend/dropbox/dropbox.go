@@ -1174,6 +1174,16 @@ func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, 
 		return shouldRetry(ctx, err)
 	})
 
+	if err != nil && createArg.Settings.Expires != nil && strings.Contains(err.Error(), sharing.SharedLinkSettingsErrorNotAuthorized) {
+		// Some plans can't create links with expiry
+		fs.Debugf(absPath, "can't create link with expiry, trying without")
+		createArg.Settings.Expires = nil
+		err = f.pacer.Call(func() (bool, error) {
+			linkRes, err = f.sharing.CreateSharedLinkWithSettings(&createArg)
+			return shouldRetry(ctx, err)
+		})
+	}
+
 	if err != nil && strings.Contains(err.Error(),
 		sharing.CreateSharedLinkWithSettingsErrorSharedLinkAlreadyExists) {
 		fs.Debugf(absPath, "has a public link already, attempting to retrieve it")
