@@ -476,7 +476,7 @@ func (d *DriveService) MoveItemByDriveID(ctx context.Context, id, etag, dstID st
 
 // CopyDocByItemID copies a document by its item ID.
 func (d *DriveService) CopyDocByItemID(ctx context.Context, itemID string) (*DriveItemRaw, *http.Response, error) {
-	// putting name in info doesnt work. extension does work so assume this is a bug in the endpoint
+	// putting name in info doesn't work. extension does work so assume this is a bug in the endpoint
 	values := map[string]any{
 		"info_to_update": map[string]any{},
 	}
