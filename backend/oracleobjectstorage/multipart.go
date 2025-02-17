@@ -22,6 +22,7 @@ import (
 	"github.com/oracle/oci-go-sdk/v65/objectstorage"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/chunksize"
+	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/fs/hash"
 )
 
@@ -182,6 +183,9 @@ func (w *objectChunkWriter) WriteChunk(ctx context.Context, chunkNumber int, rea
 		if err != nil {
 			if ossPartNumber <= 8 {
 				return shouldRetry(ctx, resp.HTTPResponse(), err)
+			}
+			if fserrors.ContextError(ctx, &err) {
+				return false, err
 			}
 			// retry all chunks once have done the first few
 			return true, err

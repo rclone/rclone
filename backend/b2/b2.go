@@ -30,6 +30,7 @@ import (
 	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/fs/hash"
+	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/fs/walk"
 	"github.com/rclone/rclone/lib/bucket"
 	"github.com/rclone/rclone/lib/encoder"
@@ -299,14 +300,13 @@ type Fs struct {
 
 // Object describes a b2 object
 type Object struct {
-	fs       *Fs               // what this object is part of
-	remote   string            // The remote path
-	id       string            // b2 id of the file
-	modTime  time.Time         // The modified time of the object if known
-	sha1     string            // SHA-1 hash if known
-	size     int64             // Size of the object
-	mimeType string            // Content-Type of the object
-	meta     map[string]string // The object metadata if known - may be nil - with lower case keys
+	fs       *Fs       // what this object is part of
+	remote   string    // The remote path
+	id       string    // b2 id of the file
+	modTime  time.Time // The modified time of the object if known
+	sha1     string    // SHA-1 hash if known
+	size     int64     // Size of the object
+	mimeType string    // Content-Type of the object
 }
 
 // ------------------------------------------------------------
@@ -1318,16 +1318,22 @@ func (f *Fs) purge(ctx context.Context, dir string, oldOnly bool, deleteHidden b
 				// Check current version of the file
 				if deleteHidden && object.Action == "hide" {
 					fs.Debugf(remote, "Deleting current version (id %q) as it is a hide marker", object.ID)
-					toBeDeleted <- object
+					if !operations.SkipDestructive(ctx, object.Name, "remove hide marker") {
+						toBeDeleted <- object
+					}
 				} else if deleteUnfinished && object.Action == "start" && isUnfinishedUploadStale(object.UploadTimestamp) {
 					fs.Debugf(remote, "Deleting current version (id %q) as it is a start marker (upload started at %s)", object.ID, time.Time(object.UploadTimestamp).Local())
-					toBeDeleted <- object
+					if !operations.SkipDestructive(ctx, object.Name, "remove pending upload") {
+						toBeDeleted <- object
+					}
 				} else {
 					fs.Debugf(remote, "Not deleting current version (id %q) %q dated %v (%v ago)", object.ID, object.Action, time.Time(object.UploadTimestamp).Local(), time.Since(time.Time(object.UploadTimestamp)))
 				}
 			} else {
 				fs.Debugf(remote, "Deleting (id %q)", object.ID)
-				toBeDeleted <- object
+				if !operations.SkipDestructive(ctx, object.Name, "delete") {
+					toBeDeleted <- object
+				}
 			}
 			last = remote
 			tr.Done(ctx, nil)
@@ -1598,9 +1604,6 @@ func (o *Object) decodeMetaDataRaw(ID, SHA1 string, Size int64, UploadTimestamp 
 	if err != nil {
 		return err
 	}
-	// For now, just set "mtime" in metadata
-	o.meta = make(map[string]string, 1)
-	o.meta["mtime"] = o.modTime.Format(time.RFC3339Nano)
 	return nil
 }
 
@@ -1878,13 +1881,6 @@ func (o *Object) getOrHead(ctx context.Context, method string, options []fs.Open
 		SHA1:            resp.Header.Get(sha1Header),
 		ContentType:     resp.Header.Get("Content-Type"),
 		Info:            Info,
-	}
-
-	// Embryonic metadata support - just mtime
-	o.meta = make(map[string]string, 1)
-	modTime, err := parseTimeStringHelper(info.Info[timeKey])
-	if err == nil {
-		o.meta["mtime"] = modTime.Format(time.RFC3339Nano)
 	}
 
 	// When reading files from B2 via cloudflare using
@@ -2231,6 +2227,7 @@ This will dump something like this showing the lifecycle rules.
         {
             "daysFromHidingToDeleting": 1,
             "daysFromUploadingToHiding": null,
+            "daysFromStartingToCancelingUnfinishedLargeFiles": null,
             "fileNamePrefix": ""
         }
     ]
@@ -2257,8 +2254,9 @@ overwrites will still cause versions to be made.
 See: https://www.backblaze.com/docs/cloud-storage-lifecycle-rules
 `,
 	Opts: map[string]string{
-		"daysFromHidingToDeleting":  "After a file has been hidden for this many days it is deleted. 0 is off.",
-		"daysFromUploadingToHiding": "This many days after uploading a file is hidden",
+		"daysFromHidingToDeleting":                        "After a file has been hidden for this many days it is deleted. 0 is off.",
+		"daysFromUploadingToHiding":                       "This many days after uploading a file is hidden",
+		"daysFromStartingToCancelingUnfinishedLargeFiles": "Cancels any unfinished large file versions after this many days",
 	},
 }
 
@@ -2278,14 +2276,23 @@ func (f *Fs) lifecycleCommand(ctx context.Context, name string, arg []string, op
 		}
 		newRule.DaysFromUploadingToHiding = &days
 	}
+	if daysStr := opt["daysFromStartingToCancelingUnfinishedLargeFiles"]; daysStr != "" {
+		days, err := strconv.Atoi(daysStr)
+		if err != nil {
+			return nil, fmt.Errorf("bad daysFromStartingToCancelingUnfinishedLargeFiles: %w", err)
+		}
+		newRule.DaysFromStartingToCancelingUnfinishedLargeFiles = &days
+	}
 	bucketName, _ := f.split("")
 	if bucketName == "" {
 		return nil, errors.New("bucket required")
 
 	}
 
+	skip := operations.SkipDestructive(ctx, name, "update lifecycle rules")
+
 	var bucket *api.Bucket
-	if newRule.DaysFromHidingToDeleting != nil || newRule.DaysFromUploadingToHiding != nil {
+	if !skip && (newRule.DaysFromHidingToDeleting != nil || newRule.DaysFromUploadingToHiding != nil || newRule.DaysFromStartingToCancelingUnfinishedLargeFiles != nil) {
 		bucketID, err := f.getBucketID(ctx, bucketName)
 		if err != nil {
 			return nil, err

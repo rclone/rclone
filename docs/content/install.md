@@ -333,7 +333,7 @@ Note that this is controlled by [community maintainer](https://github.com/bouken
 ## Source installation {#source}
 
 Make sure you have git and [Go](https://golang.org/) installed.
-Go version 1.18 or newer is required, the latest release is recommended.
+Go version 1.22 or newer is required, the latest release is recommended.
 You can get it from your package manager, or download it from
 [golang.org/dl](https://golang.org/dl/). Then you can run the following:
 

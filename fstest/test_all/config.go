@@ -9,7 +9,7 @@ import (
 	"slices"
 
 	"github.com/rclone/rclone/fs"
-	yaml "gopkg.in/yaml.v2"
+	yaml "gopkg.in/yaml.v3"
 )
 
 // Test describes an integration test to run with `go test`

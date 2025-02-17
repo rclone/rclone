@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"runtime"
 	"sort"
 	"testing"
 	"time"
@@ -606,4 +607,83 @@ func TestDirRename(t *testing.T) {
 
 func TestDirStructSize(t *testing.T) {
 	t.Logf("Dir struct has size %d bytes", unsafe.Sizeof(Dir{}))
+}
+
+// Check that open files appear in the directory listing properly after a forget
+func TestDirFileOpen(t *testing.T) {
+	_, vfs, dir, _ := dirCreate(t)
+
+	assert.False(t, dir.hasVirtual())
+	assert.False(t, dir.parent.hasVirtual())
+
+	_, err := dir.Mkdir("sub")
+	require.NoError(t, err)
+
+	assert.True(t, dir.hasVirtual())
+	assert.True(t, dir.parent.hasVirtual())
+
+	fd0, err := vfs.Create("dir/sub/file0")
+	require.NoError(t, err)
+	_, err = fd0.Write([]byte("hello"))
+	require.NoError(t, err)
+	defer func() {
+		require.NoError(t, fd0.Close())
+	}()
+
+	fd2, err := vfs.Create("dir/sub/file2")
+	require.NoError(t, err)
+	_, err = fd2.Write([]byte("hello world!"))
+	require.NoError(t, err)
+	require.NoError(t, fd2.Close())
+	assert.True(t, dir.hasVirtual())
+
+	assert.True(t, dir.hasVirtual())
+	assert.True(t, dir.parent.hasVirtual())
+
+	// Now forget the directory
+	hasVirtual := dir.parent.ForgetAll()
+	assert.True(t, hasVirtual)
+
+	assert.True(t, dir.hasVirtual())
+	assert.True(t, dir.parent.hasVirtual())
+
+	// Check the files can still be found
+	fi, err := vfs.Stat("dir/sub/file0")
+	require.NoError(t, err)
+	assert.Equal(t, int64(5), fi.Size())
+
+	fi, err = vfs.Stat("dir/sub/file2")
+	require.NoError(t, err)
+	assert.Equal(t, int64(12), fi.Size())
+}
+
+func TestDirEntryModTimeInvalidation(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("dirent modtime is unreliable on Windows filesystems")
+	}
+	r, vfs := newTestVFS(t)
+
+	// Needs to be less than 2x the wait time below, othewrwise the entry
+	// gets cleared out before it had a chance to be updated.
+	vfs.Opt.DirCacheTime = fs.Duration(50 * time.Millisecond)
+
+	r.WriteObject(context.Background(), "dir/file1", "file1 contents", t1)
+
+	node, err := vfs.Stat("dir")
+	require.NoError(t, err)
+	modTime1 := node.(*Dir).DirEntry().ModTime(context.Background())
+
+	// Wait some time, then write another file which must update ModTime of
+	// the directory.
+	time.Sleep(75 * time.Millisecond)
+	r.WriteObject(context.Background(), "dir/file2", "file2 contents", t2)
+
+	node2, err := vfs.Stat("dir")
+	require.NoError(t, err)
+	modTime2 := node2.(*Dir).DirEntry().ModTime(context.Background())
+
+	// ModTime of directory must be different after second file was written.
+	if modTime1.Equal(modTime2) {
+		t.Error("ModTime not invalidated")
+	}
 }

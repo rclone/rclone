@@ -331,12 +331,13 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 
 // Join's the remote onto the base URL
 func (f *Fs) url(remote string) string {
+	trimmedRemote := strings.TrimLeft(remote, "/") // remove leading "/" since we always have it in f.endpointURL
 	if f.opt.NoEscape {
 		// Directly concatenate without escaping, no_escape behavior
-		return f.endpointURL + remote
+		return f.endpointURL + trimmedRemote
 	}
 	// Default behavior
-	return f.endpointURL + rest.URLPathEscape(remote)
+	return f.endpointURL + rest.URLPathEscape(trimmedRemote)
 }
 
 // Errors returned by parseName

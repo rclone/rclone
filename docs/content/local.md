@@ -209,13 +209,13 @@ $ rclone -L ls /tmp/a
         6 b/one
 ```
 
-#### --links, -l 
+#### --local-links, --links, -l 
 
 Normally rclone will ignore symlinks or junction points (which behave
 like symlinks under Windows).
 
 If you supply this flag then rclone will copy symbolic links from the local storage,
-and store them as text files, with a '.rclonelink' suffix in the remote storage.
+and store them as text files, with a `.rclonelink` suffix in the remote storage.
 
 The text file will contain the target of the symbolic link (see example).
 
@@ -236,7 +236,7 @@ Copying the entire directory with '-l'
 $ rclone copy -l /tmp/a/ remote:/tmp/a/
 ```
 
-The remote files are created with a '.rclonelink' suffix
+The remote files are created with a `.rclonelink` suffix
 
 ```
 $ rclone ls remote:/tmp/a
@@ -274,7 +274,7 @@ $ tree /tmp/b
 /tmp/b
 ├── file1.rclonelink
 └── file2.rclonelink
-````
+```
 
 If you want to copy a single file with `-l` then you must use the `.rclonelink` suffix.
 
@@ -285,6 +285,10 @@ $ tree /tmp/c
 /tmp/c
 └── file1 -> ./file4
 ```
+
+Note that `--local-links` just enables this feature for the local
+backend. `--links` and `-l` enable the feature for all supported
+backends and the VFS.
 
 Note that this flag is incompatible with `-copy-links` / `-L`.
 
@@ -361,9 +365,9 @@ Properties:
 - Type:        bool
 - Default:     false
 
-#### --links / -l
+#### --local-links
 
-Translate symlinks to/from regular files with a '.rclonelink' extension.
+Translate symlinks to/from regular files with a '.rclonelink' extension for the local backend.
 
 Properties:
 

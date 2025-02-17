@@ -215,11 +215,11 @@ func (f *Fs) TestDirectoryMetadata(t *testing.T, r *fstest.Run) {
 	compareDirMeta(expectedMeta, actualMeta, false)
 
 	// modtime
-	assert.Equal(t, t1.Truncate(f.Precision()), newDst.ModTime(ctx))
+	fstest.AssertTimeEqualWithPrecision(t, newDst.Remote(), t1, newDst.ModTime(ctx), f.Precision())
 	// try changing it and re-check it
 	newDst, err = operations.SetDirModTime(ctx, f, newDst, "", t2)
 	assert.NoError(t, err)
-	assert.Equal(t, t2.Truncate(f.Precision()), newDst.ModTime(ctx))
+	fstest.AssertTimeEqualWithPrecision(t, newDst.Remote(), t2, newDst.ModTime(ctx), f.Precision())
 	// ensure that f.DirSetModTime also works
 	err = f.DirSetModTime(ctx, "subdir", t3)
 	assert.NoError(t, err)
@@ -227,7 +227,7 @@ func (f *Fs) TestDirectoryMetadata(t *testing.T, r *fstest.Run) {
 	assert.NoError(t, err)
 	entries.ForDir(func(dir fs.Directory) {
 		if dir.Remote() == "subdir" {
-			assert.True(t, t3.Truncate(f.Precision()).Equal(dir.ModTime(ctx)), fmt.Sprintf("got %v", dir.ModTime(ctx)))
+			fstest.AssertTimeEqualWithPrecision(t, dir.Remote(), t3, dir.ModTime(ctx), f.Precision())
 		}
 	})
 

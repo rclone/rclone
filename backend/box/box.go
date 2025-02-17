@@ -46,7 +46,6 @@ import (
 	"github.com/rclone/rclone/lib/random"
 	"github.com/rclone/rclone/lib/rest"
 	"github.com/youmark/pkcs8"
-	"golang.org/x/oauth2"
 )
 
 const (
@@ -65,12 +64,10 @@ const (
 // Globals
 var (
 	// Description of how to auth for this app
-	oauthConfig = &oauth2.Config{
-		Scopes: nil,
-		Endpoint: oauth2.Endpoint{
-			AuthURL:  "https://app.box.com/api/oauth2/authorize",
-			TokenURL: "https://app.box.com/api/oauth2/token",
-		},
+	oauthConfig = &oauthutil.Config{
+		Scopes:       nil,
+		AuthURL:      "https://app.box.com/api/oauth2/authorize",
+		TokenURL:     "https://app.box.com/api/oauth2/token",
 		ClientID:     rcloneClientID,
 		ClientSecret: obscure.MustReveal(rcloneEncryptedClientSecret),
 		RedirectURL:  oauthutil.RedirectURL,
@@ -258,6 +255,9 @@ func getQueryParams(boxConfig *api.ConfigJSON) map[string]string {
 
 func getDecryptedPrivateKey(boxConfig *api.ConfigJSON) (key *rsa.PrivateKey, err error) {
 	block, rest := pem.Decode([]byte(boxConfig.BoxAppSettings.AppAuth.PrivateKey))
+	if block == nil {
+		return nil, errors.New("box: failed to PEM decode private key")
+	}
 	if len(rest) > 0 {
 		return nil, fmt.Errorf("box: extra data included in private key: %w", err)
 	}

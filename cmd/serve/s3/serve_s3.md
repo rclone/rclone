@@ -69,7 +69,7 @@ secret_access_key = SECRET_ACCESS_KEY
 use_multipart_uploads = false
 ```
 
-Note that setting `disable_multipart_uploads = true` is to work around
+Note that setting `use_multipart_uploads = false` is to work around
 [a bug](#bugs) which will be fixed in due course.
 
 ### Bugs

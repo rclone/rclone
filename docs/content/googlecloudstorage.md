@@ -201,6 +201,55 @@ the rclone config file, you can set `service_account_credentials` with
 the actual contents of the file instead, or set the equivalent
 environment variable.
 
+### Service Account Authentication with Access Tokens
+
+Another option for service account authentication is to use access tokens via *gcloud impersonate-service-account*. Access tokens protect security by avoiding the use of the JSON
+key file, which can be breached. They also bypass oauth login flow, which is simpler 
+on remote VMs that lack a web browser.
+
+If you already have a working service account, skip to step 3. 
+
+#### 1. Create a service account using 
+
+    gcloud iam service-accounts create gcs-read-only 
+
+You can re-use an existing service account as well (like the one created above)
+
+#### 2. Attach a Viewer (read-only) or User (read-write) role to the service account 
+     $ PROJECT_ID=my-project
+     $ gcloud --verbose iam service-accounts add-iam-policy-binding \
+        gcs-read-only@${PROJECT_ID}.iam.gserviceaccount.com  \
+        --member=serviceAccount:gcs-read-only@${PROJECT_ID}.iam.gserviceaccount.com \
+        --role=roles/storage.objectViewer
+
+Use the Google Cloud console to identify a limited role. Some relevant pre-defined roles:
+
+* *roles/storage.objectUser* -- read-write access but no admin privileges
+* *roles/storage.objectViewer* -- read-only access to objects
+* *roles/storage.admin*  -- create buckets & administrative roles
+
+#### 3. Get a temporary access key for the service account
+
+    $ gcloud auth application-default print-access-token  \
+       --impersonate-service-account \
+          gcs-read-only@${PROJECT_ID}.iam.gserviceaccount.com  
+
+    ya29.c.c0ASRK0GbAFEewXD [truncated]
+
+#### 4. Update `access_token` setting
+hit `CTRL-C` when you see *waiting for code*.  This will save the config without doing oauth flow
+
+    rclone config update ${REMOTE_NAME} access_token ya29.c.c0Axxxx
+
+#### 5. Run rclone as usual
+
+    rclone ls dev-gcs:${MY_BUCKET}/
+
+### More Info on Service Accounts
+
+* [Official GCS Docs](https://cloud.google.com/compute/docs/access/service-accounts)
+* [Guide on Service Accounts using Key Files (less secure, but similar concepts)](https://forum.rclone.org/t/access-using-google-service-account/24822/2)
+
 ### Anonymous Access
 
 For downloads of objects that permit public access you can configure rclone
@@ -360,20 +409,6 @@ Properties:
 
 - Config:      service_account_credentials
 - Env Var:     RCLONE_GCS_SERVICE_ACCOUNT_CREDENTIALS
-- Type:        string
-- Required:    false
-
-#### --gcs-access-token
-
-Short-lived access token.
-
-Leave blank normally.
-Needed only if you want use short-lived access tokens instead of interactive login.
-
-Properties:
-
-- Config:      access_token
-- Env Var:     RCLONE_GCS_ACCESS_TOKEN
 - Type:        string
 - Required:    false
 
@@ -635,6 +670,33 @@ Properties:
 
 - Config:      token_url
 - Env Var:     RCLONE_GCS_TOKEN_URL
+- Type:        string
+- Required:    false
+
+#### --gcs-client-credentials
+
+Use client credentials OAuth flow.
+
+This will use the OAUTH2 client Credentials Flow as described in RFC 6749.
+
+Properties:
+
+- Config:      client_credentials
+- Env Var:     RCLONE_GCS_CLIENT_CREDENTIALS
+- Type:        bool
+- Default:     false
+
+#### --gcs-access-token
+
+Short-lived access token.
+
+Leave blank normally.
+Needed only if you want use short-lived access token instead of interactive login.
+
+Properties:
+
+- Config:      access_token
+- Env Var:     RCLONE_GCS_ACCESS_TOKEN
 - Type:        string
 - Required:    false
 

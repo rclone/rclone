@@ -31,7 +31,9 @@ func Split(absPath string) (bucket, bucketPath string) {
 
 // Join path1 and path2
 //
-// Like path.Join but does not clean the path - useful to preserve trailing /
+// Like path.Join but does not clean the path - useful to preserve trailing /.
+//
+// It also does not clean multiple // in the path.
 func Join(path1, path2 string) string {
 	if path1 == "" {
 		return path2
@@ -39,7 +41,22 @@ func Join(path1, path2 string) string {
 	if path2 == "" {
 		return path1
 	}
-	return strings.TrimSuffix(path1, "/") + "/" + strings.TrimPrefix(path2, "/")
+	return path1 + "/" + path2
+}
+
+// IsAllSlashes returns true if s is all / characters.
+//
+// It returns false if s is "".
+func IsAllSlashes(s string) bool {
+	if len(s) == 0 {
+		return false
+	}
+	for _, c := range s {
+		if c != '/' {
+			return false
+		}
+	}
+	return true
 }
 
 // Cache stores whether buckets are available and their IDs

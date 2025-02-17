@@ -2480,7 +2480,7 @@ func unmarshalSimpleJSON(ctx context.Context, metaObject fs.Object, data []byte)
 	if len(data) > maxMetadataSizeWritten {
 		return nil, false, ErrMetaTooBig
 	}
-	if data == nil || len(data) < 2 || data[0] != '{' || data[len(data)-1] != '}' {
+	if len(data) < 2 || data[0] != '{' || data[len(data)-1] != '}' {
 		return nil, false, errors.New("invalid json")
 	}
 	var metadata metaSimpleJSON

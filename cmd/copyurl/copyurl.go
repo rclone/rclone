@@ -54,7 +54,7 @@ destination if there is one with the same name.
 Setting |--stdout| or making the output file name |-|
 will cause the output to be written to standard output.
 
-### Troublshooting
+### Troubleshooting
 
 If you can't get |rclone copyurl| to work then here are some things you can try:
 

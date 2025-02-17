@@ -35,6 +35,7 @@ import (
 	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/fs/hash"
+	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/lib/dircache"
 	"github.com/rclone/rclone/lib/encoder"
 	"github.com/rclone/rclone/lib/pacer"
@@ -119,7 +120,7 @@ func init() {
 				srv := rest.NewClient(fshttp.NewClient(ctx)).SetRoot(rootURL) //  FIXME
 
 				// FIXME
-				//err = f.pacer.Call(func() (bool, error) {
+				// err = f.pacer.Call(func() (bool, error) {
 				resp, err = srv.CallXML(context.Background(), &opts, &authRequest, nil)
 				//	return shouldRetry(ctx, resp, err)
 				//})
@@ -326,7 +327,7 @@ func (f *Fs) readMetaDataForID(ctx context.Context, ID string) (info *api.File, 
 func (f *Fs) getAuthToken(ctx context.Context) error {
 	fs.Debugf(f, "Renewing token")
 
-	var authRequest = api.TokenAuthRequest{
+	authRequest := api.TokenAuthRequest{
 		AccessKeyID:      withDefault(f.opt.AccessKeyID, accessKeyID),
 		PrivateAccessKey: withDefault(f.opt.PrivateAccessKey, obscure.MustReveal(encryptedPrivateAccessKey)),
 		RefreshToken:     f.opt.RefreshToken,
@@ -508,7 +509,7 @@ func errorHandler(resp *http.Response) (err error) {
 		return fmt.Errorf("error reading error out of body: %w", err)
 	}
 	match := findError.FindSubmatch(body)
-	if match == nil || len(match) < 2 || len(match[1]) == 0 {
+	if len(match) < 2 || len(match[1]) == 0 {
 		return fmt.Errorf("HTTP error %v (%v) returned body: %q", resp.StatusCode, resp.Status, body)
 	}
 	return fmt.Errorf("HTTP error %v (%v): %s", resp.StatusCode, resp.Status, match[1])
@@ -551,7 +552,7 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 
 // FindLeaf finds a directory of name leaf in the folder with ID pathID
 func (f *Fs) FindLeaf(ctx context.Context, pathID, leaf string) (pathIDOut string, found bool, err error) {
-	//fs.Debugf(f, "FindLeaf(%q, %q)", pathID, leaf)
+	// fs.Debugf(f, "FindLeaf(%q, %q)", pathID, leaf)
 	// Find the leaf in pathID
 	found, err = f.listAll(ctx, pathID, nil, func(item *api.Collection) bool {
 		if strings.EqualFold(item.Name, leaf) {
@@ -867,13 +868,13 @@ func (f *Fs) Precision() time.Duration {
 // Will only be called if src.Fs().Name() == f.Name()
 //
 // If it isn't possible then return fs.ErrorCantCopy
-func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
+func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (dst fs.Object, err error) {
 	srcObj, ok := src.(*Object)
 	if !ok {
 		fs.Debugf(src, "Can't copy - not same remote type")
 		return nil, fs.ErrorCantCopy
 	}
-	err := srcObj.readMetaData(ctx)
+	err = srcObj.readMetaData(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -889,6 +890,13 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	if err != nil {
 		return nil, err
 	}
+
+	// Find and remove existing object
+	cleanup, err := operations.RemoveExisting(ctx, f, remote, "server side copy")
+	if err != nil {
+		return nil, err
+	}
+	defer cleanup(&err)
 
 	// Copy the object
 	opts := rest.Opts{

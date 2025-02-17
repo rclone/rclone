@@ -106,6 +106,12 @@ var ConfigOptionsInfo = Options{{
 	Help:     "Enable interactive mode",
 	Groups:   "Config,Important",
 }, {
+	Name:     "links",
+	Help:     "Translate symlinks to/from regular files with a '" + LinkSuffix + "' extension.",
+	Default:  false,
+	ShortOpt: "l",
+	Groups:   "Copy",
+}, {
 	Name:    "contimeout",
 	Default: 60 * time.Second,
 	Help:    "Connect timeout",
@@ -537,6 +543,7 @@ type ConfigInfo struct {
 	UseJSONLog                 bool              `config:"use_json_log"`
 	DryRun                     bool              `config:"dry_run"`
 	Interactive                bool              `config:"interactive"`
+	Links                      bool              `config:"links"`
 	CheckSum                   bool              `config:"checksum"`
 	SizeOnly                   bool              `config:"size_only"`
 	IgnoreTimes                bool              `config:"ignore_times"`

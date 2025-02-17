@@ -47,6 +47,7 @@ import (
 	"github.com/rclone/rclone/fs/config/obscure"
 	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/fs/hash"
+	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/lib/batcher"
 	"github.com/rclone/rclone/lib/encoder"
 	"github.com/rclone/rclone/lib/oauthutil"
@@ -93,7 +94,7 @@ const (
 
 var (
 	// Description of how to auth for this app
-	dropboxConfig = &oauth2.Config{
+	dropboxConfig = &oauthutil.Config{
 		Scopes: []string{
 			"files.metadata.write",
 			"files.content.write",
@@ -108,7 +109,8 @@ var (
 		// 	AuthURL:  "https://www.dropbox.com/1/oauth2/authorize",
 		// 	TokenURL: "https://api.dropboxapi.com/1/oauth2/token",
 		// },
-		Endpoint:     dropbox.OAuthEndpoint(""),
+		AuthURL:      dropbox.OAuthEndpoint("").AuthURL,
+		TokenURL:     dropbox.OAuthEndpoint("").TokenURL,
 		ClientID:     rcloneClientID,
 		ClientSecret: obscure.MustReveal(rcloneEncryptedClientSecret),
 		RedirectURL:  oauthutil.RedirectLocalhostURL,
@@ -133,7 +135,7 @@ var (
 )
 
 // Gets an oauth config with the right scopes
-func getOauthConfig(m configmap.Mapper) *oauth2.Config {
+func getOauthConfig(m configmap.Mapper) *oauthutil.Config {
 	// If not impersonating, use standard scopes
 	if impersonate, _ := m.Get("impersonate"); impersonate == "" {
 		return dropboxConfig
@@ -316,32 +318,46 @@ func (f *Fs) Features() *fs.Features {
 	return f.features
 }
 
-// shouldRetry returns a boolean as to whether this err deserves to be
-// retried.  It returns the err as a convenience
-func shouldRetry(ctx context.Context, err error) (bool, error) {
-	if fserrors.ContextError(ctx, &err) {
-		return false, err
-	}
+// Some specific errors which should be excluded from retries
+func shouldRetryExclude(ctx context.Context, err error) (bool, error) {
 	if err == nil {
 		return false, err
 	}
-	errString := err.Error()
+	if fserrors.ContextError(ctx, &err) {
+		return false, err
+	}
 	// First check for specific errors
+	//
+	// These come back from the SDK in a whole host of different
+	// error types, but there doesn't seem to be a consistent way
+	// of reading the error cause, so here we just check using the
+	// error string which isn't perfect but does the job.
+	errString := err.Error()
 	if strings.Contains(errString, "insufficient_space") {
 		return false, fserrors.FatalError(err)
 	} else if strings.Contains(errString, "malformed_path") {
 		return false, fserrors.NoRetryError(err)
 	}
+	return true, err
+}
+
+// shouldRetry returns a boolean as to whether this err deserves to be
+// retried.  It returns the err as a convenience
+func shouldRetry(ctx context.Context, err error) (bool, error) {
+	if retry, err := shouldRetryExclude(ctx, err); !retry {
+		return retry, err
+	}
 	// Then handle any official Retry-After header from Dropbox's SDK
 	switch e := err.(type) {
 	case auth.RateLimitAPIError:
 		if e.RateLimitError.RetryAfter > 0 {
-			fs.Logf(errString, "Too many requests or write operations. Trying again in %d seconds.", e.RateLimitError.RetryAfter)
+			fs.Logf(nil, "Error %v. Too many requests or write operations. Trying again in %d seconds.", err, e.RateLimitError.RetryAfter)
 			err = pacer.RetryAfterError(err, time.Duration(e.RateLimitError.RetryAfter)*time.Second)
 		}
 		return true, err
 	}
 	// Keep old behavior for backward compatibility
+	errString := err.Error()
 	if strings.Contains(errString, "too_many_write_operations") || strings.Contains(errString, "too_many_requests") || errString == "" {
 		return true, err
 	}
@@ -1020,12 +1036,19 @@ func (f *Fs) Precision() time.Duration {
 // Will only be called if src.Fs().Name() == f.Name()
 //
 // If it isn't possible then return fs.ErrorCantCopy
-func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
+func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (dst fs.Object, err error) {
 	srcObj, ok := src.(*Object)
 	if !ok {
 		fs.Debugf(src, "Can't copy - not same remote type")
 		return nil, fs.ErrorCantCopy
 	}
+
+	// Find and remove existing object
+	cleanup, err := operations.RemoveExisting(ctx, f, remote, "server side copy")
+	if err != nil {
+		return nil, err
+	}
+	defer cleanup(&err)
 
 	// Temporary Object under construction
 	dstObj := &Object{
@@ -1040,7 +1063,6 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 			ToPath:   f.opt.Enc.FromStandardPath(dstObj.remotePath()),
 		},
 	}
-	var err error
 	var result *files.RelocationResult
 	err = f.pacer.Call(func() (bool, error) {
 		result, err = f.srv.CopyV2(&arg)
@@ -1692,14 +1714,10 @@ func (o *Object) uploadChunked(ctx context.Context, in0 io.Reader, commitInfo *f
 
 	err = o.fs.pacer.Call(func() (bool, error) {
 		entry, err = o.fs.srv.UploadSessionFinish(args, nil)
-		// If error is insufficient space then don't retry
-		if e, ok := err.(files.UploadSessionFinishAPIError); ok {
-			if e.EndpointError != nil && e.EndpointError.Path != nil && e.EndpointError.Path.Tag == files.WriteErrorInsufficientSpace {
-				err = fserrors.NoRetryError(err)
-				return false, err
-			}
+		if retry, err := shouldRetryExclude(ctx, err); !retry {
+			return retry, err
 		}
-		// after the first chunk is uploaded, we retry everything
+		// after the first chunk is uploaded, we retry everything except the excluded errors
 		return err != nil, err
 	})
 	if err != nil {

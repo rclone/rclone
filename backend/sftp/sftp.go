@@ -2101,10 +2101,10 @@ func (file *objectReader) Read(p []byte) (n int, err error) {
 
 // Close a reader of a remote sftp file
 func (file *objectReader) Close() (err error) {
-	// Close the sftpFile - this will likely cause the WriteTo to error
-	err = file.sftpFile.Close()
 	// Close the pipeReader so writes to the pipeWriter fail
 	_ = file.pipeReader.Close()
+	// Close the sftpFile - this will likely cause the WriteTo to error
+	err = file.sftpFile.Close()
 	// Wait for the background process to finish
 	<-file.done
 	// Show connection no longer in use

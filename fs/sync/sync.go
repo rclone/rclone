@@ -726,7 +726,7 @@ func (s *syncCopyMove) markParentNotEmpty(entry fs.DirEntry) {
 				parentDir = ""
 			}
 			delete(s.srcEmptyDirs, parentDir)
-			if parentDir == "" {
+			if parentDir == "" || parentDir == "/" {
 				break
 			}
 			parentDir = path.Dir(parentDir)
@@ -1109,23 +1109,17 @@ func (s *syncCopyMove) copyDirMetadata(ctx context.Context, f fs.Fs, dst fs.Dire
 	if !s.setDirModTimeAfter && equal {
 		return nil
 	}
-	if s.setDirModTimeAfter && equal {
-		newDst = dst
-	} else if s.copyEmptySrcDirs {
-		if s.setDirMetadata {
+	newDst = dst
+	if !equal {
+		if s.setDirMetadata && s.copyEmptySrcDirs {
 			newDst, err = operations.CopyDirMetadata(ctx, f, dst, dir, src)
-		} else if s.setDirModTime {
-			if dst == nil {
-				newDst, err = operations.MkdirModTime(ctx, f, dir, src.ModTime(ctx))
-			} else {
-				newDst, err = operations.SetDirModTime(ctx, f, dst, dir, src.ModTime(ctx))
-			}
-		} else if dst == nil {
-			// Create the directory if it doesn't exist
+		} else if dst == nil && s.setDirModTime && s.copyEmptySrcDirs {
+			newDst, err = operations.MkdirModTime(ctx, f, dir, src.ModTime(ctx))
+		} else if dst == nil && s.copyEmptySrcDirs {
 			err = operations.Mkdir(ctx, f, dir)
+		} else if dst != nil && s.setDirModTime {
+			newDst, err = operations.SetDirModTime(ctx, f, dst, dir, src.ModTime(ctx))
 		}
-	} else {
-		newDst = dst
 	}
 	// If we need to set modtime after and we created a dir, then save it for later
 	if s.setDirModTime && s.setDirModTimeAfter && err == nil {

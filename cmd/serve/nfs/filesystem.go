@@ -3,7 +3,6 @@
 package nfs
 
 import (
-	"math"
 	"os"
 	"path"
 	"strings"
@@ -37,7 +36,7 @@ func setSys(fi os.FileInfo) {
 		Nlink:  1,
 		UID:    vfs.Opt.UID,
 		GID:    vfs.Opt.GID,
-		Fileid: math.MaxUint64, // without this mounting doesn't work on Linux
+		Fileid: node.Inode(), // without this mounting doesn't work on Linux
 	}
 	node.SetSys(&stat)
 }
@@ -142,16 +141,16 @@ func (f *FS) Lstat(filename string) (fi os.FileInfo, err error) {
 	return fi, nil
 }
 
-// Symlink is not supported over NFS
+// Symlink creates a link pointing to target
 func (f *FS) Symlink(target, link string) (err error) {
 	defer log.Trace(target, "link=%q", link)("err=%v", &err)
-	return os.ErrInvalid
+	return f.vfs.Symlink(target, link)
 }
 
-// Readlink is not supported
+// Readlink reads the contents of link
 func (f *FS) Readlink(link string) (result string, err error) {
 	defer log.Trace(link, "")("result=%q, err=%v", &result, &err)
-	return "", os.ErrInvalid
+	return f.vfs.Readlink(link)
 }
 
 // Chmod changes the file modes
@@ -195,7 +194,7 @@ func (f *FS) Chown(name string, uid, gid int) (err error) {
 	return file.Chown(uid, gid)
 }
 
-// Chtimes changes the acces time and modified time
+// Chtimes changes the access time and modified time
 func (f *FS) Chtimes(name string, atime time.Time, mtime time.Time) (err error) {
 	defer log.Trace(name, "atime=%v, mtime=%v", atime, mtime)("err=%v", &err)
 	return f.vfs.Chtimes(name, atime, mtime)

@@ -42,9 +42,10 @@ type Bucket struct {
 
 // LifecycleRule is a single lifecycle rule
 type LifecycleRule struct {
-	DaysFromHidingToDeleting  *int   `json:"daysFromHidingToDeleting"`
-	DaysFromUploadingToHiding *int   `json:"daysFromUploadingToHiding"`
-	FileNamePrefix            string `json:"fileNamePrefix"`
+	DaysFromHidingToDeleting                        *int   `json:"daysFromHidingToDeleting"`
+	DaysFromUploadingToHiding                       *int   `json:"daysFromUploadingToHiding"`
+	DaysFromStartingToCancelingUnfinishedLargeFiles *int   `json:"daysFromStartingToCancelingUnfinishedLargeFiles"`
+	FileNamePrefix                                  string `json:"fileNamePrefix"`
 }
 
 // Timestamp is a UTC time when this file was uploaded. It is a base

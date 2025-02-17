@@ -428,7 +428,7 @@ func TestItemReloadCacheStale(t *testing.T) {
 	assert.Equal(t, int64(110), fi.Size())
 
 	// Write to the file to make it dirty
-	// This checks we aren't re-using stale data
+	// This checks we aren't reusing stale data
 	n, err := item.WriteAt([]byte("HELLO"), 0)
 	require.NoError(t, err)
 	assert.Equal(t, 5, n)

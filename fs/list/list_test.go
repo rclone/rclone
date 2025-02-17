@@ -49,7 +49,8 @@ func TestFilterAndSortIncludeAll(t *testing.T) {
 
 func TestFilterAndSortCheckDir(t *testing.T) {
 	// Check the different kinds of error when listing "dir"
-	da := mockdir.New("dir/")
+	da := mockdir.New("dir")
+	da2 := mockdir.New("dir/") // double slash dir - allowed for bucket based remotes
 	oA := mockobject.Object("diR/a")
 	db := mockdir.New("dir/b")
 	oB := mockobject.Object("dir/B/sub")
@@ -57,18 +58,19 @@ func TestFilterAndSortCheckDir(t *testing.T) {
 	oC := mockobject.Object("dir/C")
 	dd := mockdir.New("dir/d")
 	oD := mockobject.Object("dir/D")
-	entries := fs.DirEntries{da, oA, db, oB, dc, oC, dd, oD}
+	entries := fs.DirEntries{da, da2, oA, db, oB, dc, oC, dd, oD}
 	newEntries, err := filterAndSortDir(context.Background(), entries, true, "dir", nil, nil)
 	require.NoError(t, err)
 	assert.Equal(t,
+		fs.DirEntries{da2, oC, oD, db, dc, dd},
 		newEntries,
-		fs.DirEntries{oC, oD, db, dc, dd},
 	)
 }
 
 func TestFilterAndSortCheckDirRoot(t *testing.T) {
 	// Check the different kinds of error when listing the root ""
 	da := mockdir.New("")
+	da2 := mockdir.New("/") // doubleslash dir allowed on bucket based remotes
 	oA := mockobject.Object("A")
 	db := mockdir.New("b")
 	oB := mockobject.Object("B/sub")
@@ -76,12 +78,12 @@ func TestFilterAndSortCheckDirRoot(t *testing.T) {
 	oC := mockobject.Object("C")
 	dd := mockdir.New("d")
 	oD := mockobject.Object("D")
-	entries := fs.DirEntries{da, oA, db, oB, dc, oC, dd, oD}
+	entries := fs.DirEntries{da, da2, oA, db, oB, dc, oC, dd, oD}
 	newEntries, err := filterAndSortDir(context.Background(), entries, true, "", nil, nil)
 	require.NoError(t, err)
 	assert.Equal(t,
+		fs.DirEntries{da2, oA, oC, oD, db, dc, dd},
 		newEntries,
-		fs.DirEntries{oA, oC, oD, db, dc, dd},
 	)
 }
 
