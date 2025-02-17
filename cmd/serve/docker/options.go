@@ -1,6 +1,7 @@
 package docker
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -112,6 +113,7 @@ func (vol *Volume) applyOptions(volOpt VolOpts) error {
 	}
 	mntMap := configmap.Simple{}
 	vfsMap := configmap.Simple{}
+	globalMap := configmap.Simple{}
 	for key := range opt {
 		var ok bool
 		var err error
@@ -144,6 +146,13 @@ func (vol *Volume) applyOptions(volOpt VolOpts) error {
 				ok = true
 			}
 		}
+		if !ok {
+			// try as a global option in globalMap
+			if fs.ConfigOptionsInfo.Get(underscoreKey) != nil {
+				globalMap[underscoreKey] = vol.Options[key]
+				ok = true
+			}
+		}
 
 		if !ok {
 			// try as a backend option in fsOpt (backends use "_" instead of "-")
@@ -170,6 +179,20 @@ func (vol *Volume) applyOptions(volOpt VolOpts) error {
 	err = configstruct.Set(mntMap, mntOpt)
 	if err != nil {
 		return fmt.Errorf("cannot parse mount options: %w", err)
+	}
+
+	// Parse Global options
+	if len(globalMap) > 0 {
+		ctx := context.Background()
+		ci := fs.GetConfig(ctx)
+		err = configstruct.Set(globalMap, ci)
+		if err != nil {
+			return fmt.Errorf("cannot parse global options: %w", err)
+		}
+		err = ci.Reload(ctx)
+		if err != nil {
+			return fmt.Errorf("failed to reload global options: %w", err)
+		}
 	}
 
 	// build remote string from fsName, fsType, fsOpt, fsPath
