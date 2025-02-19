@@ -1,0 +1,104 @@
+---
+# Github Actions build for rclone
+# -*- compile-command: "yamllint -f parsable lint.yml" -*-
+
+name: Lint & Vulnerability Check
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref || github.run_id }}
+  cancel-in-progress: true
+
+# Trigger the workflow on push or pull request
+on:
+  push:
+    branches:
+      - '**'
+    tags:
+      - '**'
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      manual:
+        description: Manual run (bypass default conditions)
+        type: boolean
+        default: true
+
+jobs:
+  lint:
+    if: inputs.manual || (github.repository == 'rclone/rclone' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name != github.event.pull_request.base.repo.full_name))
+    timeout-minutes: 30
+    name: "lint"
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Get runner parameters
+        id: get-runner-parameters
+        shell: bash
+        run: |
+          echo "year-week=$(/bin/date -u "+%Y%V")" >> $GITHUB_OUTPUT
+          echo "runner-os-version=$ImageOS" >> $GITHUB_OUTPUT
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Go
+        id: setup-go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '>=1.23.0-rc.1'
+          check-latest: true
+          cache: false
+
+      - name: Cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/go/pkg/mod
+            ~/.cache/go-build
+            ~/.cache/golangci-lint
+          key: golangci-lint-${{ steps.get-runner-parameters.outputs.runner-os-version }}-go${{ steps.setup-go.outputs.go-version }}-${{ steps.get-runner-parameters.outputs.year-week }}-${{ hashFiles('go.sum') }}
+          restore-keys: golangci-lint-${{ steps.get-runner-parameters.outputs.runner-os-version }}-go${{ steps.setup-go.outputs.go-version }}-${{ steps.get-runner-parameters.outputs.year-week }}-
+
+      - name: Code quality test (Linux)
+        uses: golangci/golangci-lint-action@v6
+        with:
+          version: latest
+          skip-cache: true
+
+      - name: Code quality test (Windows)
+        uses: golangci/golangci-lint-action@v6
+        env:
+          GOOS: "windows"
+        with:
+          version: latest
+          skip-cache: true
+
+      - name: Code quality test (macOS)
+        uses: golangci/golangci-lint-action@v6
+        env:
+          GOOS: "darwin"
+        with:
+          version: latest
+          skip-cache: true
+
+      - name: Code quality test (FreeBSD)
+        uses: golangci/golangci-lint-action@v6
+        env:
+          GOOS: "freebsd"
+        with:
+          version: latest
+          skip-cache: true
+
+      - name: Code quality test (OpenBSD)
+        uses: golangci/golangci-lint-action@v6
+        env:
+          GOOS: "openbsd"
+        with:
+          version: latest
+          skip-cache: true
+
+      - name: Install govulncheck
+        run: go install golang.org/x/vuln/cmd/govulncheck@latest
+
+      - name: Scan for vulnerabilities
+        run: govulncheck ./...
