@@ -68,9 +68,7 @@ var (
 	// Description of how to auth for this app
 	oauthConfig = &oauthutil.Config{
 		Scopes: []string{
-			"user:base",
-			"file:all:read",
-			"file:all:write",
+			"user:base,file:all:read,file:all:write",
 		},
 		AuthURL:     authURL,
 		TokenURL:    tokenURL,
@@ -163,7 +161,19 @@ var retryErrorCodes = []int{
 }
 
 func errorHandler(resp *http.Response) error {
-	return nil
+	// Decode error response
+	errResponse := new(api.Error)
+	err := rest.DecodeJSON(resp, &errResponse)
+	if err != nil {
+		fs.Debugf(nil, "Couldn't decode error response: %v", err)
+	}
+	if errResponse.Message == "" {
+		errResponse.Message = resp.Status
+	}
+	if errResponse.Code == "" {
+		errResponse.Code = strconv.Itoa(resp.StatusCode)
+	}
+	return errResponse
 }
 
 // shouldRetry returns a boolean as to whether this resp and err
@@ -172,17 +182,7 @@ func shouldRetry(ctx context.Context, resp *http.Response, err error) (bool, err
 	if fserrors.ContextError(ctx, &err) {
 		return false, err
 	}
-	if err == nil {
-		return false, nil
-	}
-	if fserrors.ShouldRetry(err) {
-		return true, err
-	}
-	authRetry := false
-
-	// TODO: Handle Errors That Should be Retried
-
-	return authRetry || fserrors.ShouldRetry(err) || fserrors.ShouldRetryHTTP(resp, retryErrorCodes), err
+	return fserrors.ShouldRetry(err) || fserrors.ShouldRetryHTTP(resp, retryErrorCodes), err
 }
 
 // list the objects into the function supplied
@@ -198,9 +198,8 @@ type listAllFn func(*api.Item) bool
 // If the user fn ever returns true then it early exits with found = true
 func (f *Fs) listAll(ctx context.Context, directoryID string, fn listAllFn) (found bool, err error) {
 	opts := rest.Opts{
-		Method:  "POST",
-		Path:    "/adrive/v1.0/openFile/list",
-		RootURL: rootURL,
+		Method: "POST",
+		Path:   "/adrive/v1.0/openFile/list",
 	}
 
 	request := api.ListRequest{
@@ -208,7 +207,6 @@ func (f *Fs) listAll(ctx context.Context, directoryID string, fn listAllFn) (fou
 		ParentFileID: directoryID,
 	}
 
-	var marker *string
 OUTER:
 	for {
 		var result api.List
@@ -231,11 +229,6 @@ OUTER:
 				found = true
 				break OUTER
 			}
-		}
-
-		marker = result.NextMarker
-		if marker == nil {
-			break
 		}
 	}
 	return
@@ -363,9 +356,8 @@ func (f *Fs) readMetaDataForPath(ctx context.Context, path string) (info *api.It
 // getUserInfo gets UserInfo from API
 func (f *Fs) getUserInfo(ctx context.Context) (info *api.User, err error) {
 	opts := rest.Opts{
-		Method:  "GET",
-		Path:    "/oauth/users/info",
-		RootURL: rootURL,
+		Method: "GET",
+		Path:   "/oauth/users/info",
 	}
 	var resp *http.Response
 	err = f.pacer.Call(func() (bool, error) {
@@ -379,29 +371,32 @@ func (f *Fs) getUserInfo(ctx context.Context) (info *api.User, err error) {
 }
 
 // getDriveInfo gets DriveInfo from API
-func (f *Fs) getDriveInfo(ctx context.Context) (info *api.DriveInfo, err error) {
+func (f *Fs) getDriveInfo(ctx context.Context) error {
 	opts := rest.Opts{
-		Method:  "POST",
-		Path:    "/adrive/v1.0/user/getDriveInfo",
-		RootURL: rootURL,
+		Method: "POST",
+		Path:   "/adrive/v1.0/user/getDriveInfo",
 	}
 	var resp *http.Response
+	var info *api.DriveInfo
+	var err error
 	err = f.pacer.Call(func() (bool, error) {
 		resp, err = f.srv.CallJSON(ctx, &opts, nil, &info)
 		return shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to get driveinfo: %w", err)
+		return fmt.Errorf("failed to get driveinfo: %w", err)
 	}
-	return
+
+	f.driveID = info.DefaultDriveID
+
+	return nil
 }
 
 // getSpaceInfo gets SpaceInfo from API
 func (f *Fs) getSpaceInfo(ctx context.Context) (info *api.SpaceInfo, err error) {
 	opts := rest.Opts{
-		Method:  "POST",
-		Path:    "/adrive/v1.0/user/getSpaceInfo",
-		RootURL: rootURL,
+		Method: "POST",
+		Path:   "/adrive/v1.0/user/getSpaceInfo",
 	}
 	var resp *http.Response
 	err = f.pacer.Call(func() (bool, error) {
@@ -417,9 +412,8 @@ func (f *Fs) getSpaceInfo(ctx context.Context) (info *api.SpaceInfo, err error) 
 // getVipInfo gets VipInfo from API
 func (f *Fs) getVipInfo(ctx context.Context) (info *api.VipInfo, err error) {
 	opts := rest.Opts{
-		Method:  "POST",
-		Path:    "/business/v1.0/user/getVipInfo",
-		RootURL: rootURL,
+		Method: "POST",
+		Path:   "/business/v1.0/user/getVipInfo",
 	}
 	var resp *http.Response
 	err = f.pacer.Call(func() (bool, error) {
@@ -434,9 +428,8 @@ func (f *Fs) getVipInfo(ctx context.Context) (info *api.VipInfo, err error) {
 
 func (f *Fs) move(ctx context.Context, id, leaf, directoryID string) (info *api.Item, err error) {
 	opts := rest.Opts{
-		Method:  "POST",
-		Path:    "/adrive/v1.0/openFile/move",
-		RootURL: rootURL,
+		Method: "POST",
+		Path:   "/adrive/v1.0/openFile/move",
 	}
 
 	move := api.FileMoveCopy{
@@ -552,9 +545,8 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	}
 
 	opts := rest.Opts{
-		Method:  "POST",
-		Path:    "/adrive/v1.0/openFile/copy",
-		RootURL: rootURL,
+		Method: "POST",
+		Path:   "/adrive/v1.0/openFile/copy",
 	}
 
 	var resp *http.Response
@@ -615,9 +607,8 @@ func (f *Fs) CreateDir(ctx context.Context, pathID string, leaf string) (newID s
 	var info *api.Item
 
 	opts := rest.Opts{
-		Method:  "POST",
-		Path:    "/adrive/v1.0/openFile/create",
-		RootURL: rootURL,
+		Method: "POST",
+		Path:   "/adrive/v1.0/openFile/create",
 	}
 
 	req := api.CreateFolder{
@@ -652,12 +643,12 @@ func (f *Fs) FindLeaf(ctx context.Context, pathID, leaf string) (pathIDOut strin
 
 // List implements fs.Fs.
 func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err error) {
-	// TODO
 	directoryID, err := f.dirCache.FindDir(ctx, dir, false)
 	if err != nil {
 		return nil, err
 	}
 	var iErr error
+
 	_, err = f.listAll(ctx, directoryID, func(info *api.Item) bool {
 		remote := path.Join(dir, info.Name)
 		switch info.Type {
@@ -869,12 +860,9 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 
 	root = parsePath(root)
 
-	var ts *oauthutil.TokenSource
-	var token *oauth2.Token
-
 	client := fshttp.NewClient(ctx)
+	var ts *oauthutil.TokenSource
 
-	// If not using an accessToken, create an oauth client and tokensource
 	if opt.AccessToken == "" {
 		client, ts, err = oauthutil.NewClient(ctx, name, m, oauthConfig)
 		if err != nil {
@@ -894,57 +882,40 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 			pacer.DecayConstant(decayConstant),
 		)),
 	}
+
 	f.features = (&fs.Features{
 		CaseInsensitive:         true,
 		CanHaveEmptyDirectories: true,
 	}).Fill(ctx, f)
 	f.srv.SetErrorHandler(errorHandler)
-	f.srv.SetRoot(rootURL)
 
-	// Set up OAuth or access token
-	switch {
-	case opt.AccessToken != "":
-		// Using a static access token
-		f.srv.SetHeader("Authorization", "Bearer "+opt.AccessToken)
-	default:
-		// Using OAuth2 with token refresh
-		client, ts, err = oauthutil.NewClient(ctx, name, m, oauthConfig)
-		if err != nil {
-			return nil, fmt.Errorf("failed to configure adrive: %w", err)
-		}
-		f.srv = rest.NewClient(client).SetRoot(rootURL)
+	if f.opt.AccessToken != "" {
+		f.srv.SetHeader("Authorization", "Bearer "+f.opt.AccessToken)
+	}
+
+	if ts != nil {
 		f.tokenRenewer = oauthutil.NewRenew(f.String(), ts, func() error {
-			token, err = ts.Token()
-			if err != nil {
-				return fmt.Errorf("failed to get token: %w", err)
-			}
-			f.srv.SetHeader("Authorization", "Bearer "+token.AccessToken)
-			return nil
+			_, err = f.readMetaDataForPath(ctx, "")
+			return err
 		})
 	}
 
-	// Get rootFolderID
 	rootID := f.opt.RootFolderID
 	f.dirCache = dircache.New(root, rootID, f)
 
-	// Find the current root
 	err = f.dirCache.FindRoot(ctx, false)
 	if err != nil {
-		// Assume it is a file
 		newRoot, remote := dircache.SplitPath(root)
 		tempF := *f
 		tempF.dirCache = dircache.New(newRoot, rootID, &tempF)
 		tempF.root = newRoot
-		// Make new Fs which is the parent
 		err = tempF.dirCache.FindRoot(ctx, false)
 		if err != nil {
-			// No root so return old f
 			return f, nil
 		}
-		_, err := tempF.newObjectWithInfo(ctx, remote, nil)
+		_, err = tempF.newObjectWithInfo(ctx, remote, nil)
 		if err != nil {
 			if err == fs.ErrorObjectNotFound {
-				// File doesn't exist so return old f
 				return f, nil
 			}
 			return nil, err
@@ -958,6 +929,8 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		// return an error with an fs which points to the parent
 		return f, fs.ErrorIsFile
 	}
+
+	f.getDriveInfo(ctx)
 
 	return f, nil
 }
