@@ -945,3 +945,4 @@ put them back in again.` >}}
   * jbagwell-akamai <113531113+jbagwell-akamai@users.noreply.github.com>
   * Michael Kebe <michael.kebe@gmail.com>
   * Lorenz Brun <lorenz@brun.one>
+  * Dave Vasilevsky <djvasi@gmail.com> <dave@vasilevsky.ca>
