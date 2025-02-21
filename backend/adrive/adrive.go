@@ -109,7 +109,7 @@ type Fs struct {
 	root         string             // the path we are working on
 	opt          Options            // parsed options
 	features     *fs.Features       // optional features
-	client       *Client            // Aliyun Drive client
+	client       *AdriveClient      // Aliyun Drive client
 	dirCache     *dircache.DirCache // Map of directory path to directory id
 	pacer        *fs.Pacer          // pacer for API calls
 	tokenRenewer *oauthutil.Renew   // renew the token on expiry
@@ -148,18 +148,18 @@ type Options struct {
 // Lists the directory required calling the user function on each item found
 //
 // If the user fn ever returns true then it early exits with found = true
-func (f *Fs) listAll(ctx context.Context, directoryID string) (items []api.Item, err error) {
+func (f *Fs) listAll(ctx context.Context, directoryID string) (items []api.FileItem, err error) {
 	opts := rest.Opts{
 		Method: "POST",
 		Path:   "/adrive/v1.0/openFile/list",
 	}
 
-	request := api.FileListReq{
+	request := api.ListFileRequest{
 		DriveID:      f.driveID,
 		ParentFileID: directoryID,
 	}
 
-	var result api.FileListResp
+	var result api.ListFileResponse
 	_, err = f.client.CallJSON(ctx, &opts, &request, &result)
 	if err != nil {
 		return nil, err
@@ -183,7 +183,7 @@ func (f *Fs) deleteObject(ctx context.Context, id string) error {
 		NoResponse: true,
 	}
 
-	req := api.DeleteFile{
+	req := api.DeleteFileRequest{
 		DriveID: f.driveID,
 		FileID:  id,
 	}
@@ -239,7 +239,7 @@ func (f *Fs) purgeCheck(ctx context.Context, dir string) error {
 // Return an Object from a path
 //
 // If it can't be found it returns the error fs.ErrorObjectNotFound.
-func (f *Fs) newObjectWithInfo(ctx context.Context, remote string, info *api.Item) (fs.Object, error) {
+func (f *Fs) newObjectWithInfo(ctx context.Context, remote string, info *api.FileItem) (fs.Object, error) {
 	o := &Object{
 		fs:     f,
 		remote: remote,
@@ -257,7 +257,7 @@ func (f *Fs) newObjectWithInfo(ctx context.Context, remote string, info *api.Ite
 }
 
 // getUserInfo gets UserInfo from API
-func (f *Fs) getUserInfo(ctx context.Context) (info *api.User, err error) {
+func (f *Fs) getUserInfo(ctx context.Context) (info *api.UserInfo, err error) {
 	opts := rest.Opts{
 		Method: "GET",
 		Path:   "/oauth/users/info",
@@ -329,18 +329,18 @@ func (f *Fs) getVipInfo(ctx context.Context) (info *api.VipInfo, err error) {
 	return
 }
 
-func (f *Fs) move(ctx context.Context, id, leaf, directoryID string) (info *api.Item, err error) {
+func (f *Fs) move(ctx context.Context, id, leaf, directoryID string) (info *api.FileItem, err error) {
 	opts := rest.Opts{
 		Method: "POST",
 		Path:   "/adrive/v1.0/openFile/move",
 	}
 
-	move := api.FileMoveCopy{
+	move := api.CopyFileRequest{
 		DriveID:        f.driveID,
 		FileID:         id,
 		ToParentFileID: directoryID,
-		NewName:        &leaf,
-		CheckNameMode:  &f.opt.CheckNameMode,
+		NewName:        leaf,
+		CheckNameMode:  f.opt.CheckNameMode,
 	}
 
 	var resp *http.Response
@@ -356,7 +356,7 @@ func (f *Fs) move(ctx context.Context, id, leaf, directoryID string) (info *api.
 }
 
 // setMetaData sets the metadata from info
-func (o *Object) setMetaData(info *api.Item) (err error) {
+func (o *Object) setMetaData(info *api.FileItem) (err error) {
 	if info.Type == ItemTypeFolder {
 		return fs.ErrorIsDir
 	}
@@ -391,7 +391,7 @@ func (o *Object) readMetaData(ctx context.Context) (err error) {
 	if err != nil {
 		return err
 	}
-	var info api.Item
+	var info api.FileItem
 	for _, item := range list {
 		if item.Type == ItemTypeFile && strings.EqualFold(item.Name, leaf) {
 			info = item
@@ -412,9 +412,9 @@ func (f *Fs) About(ctx context.Context) (usage *fs.Usage, err error) {
 	}
 
 	usage = &fs.Usage{
-		Used:  fs.NewUsageValue(about.UsedSize),
-		Total: fs.NewUsageValue(about.TotalSize),
-		Free:  fs.NewUsageValue(about.TotalSize - about.UsedSize),
+		Used:  fs.NewUsageValue(about.PersonalSpaceInfo.UsedSize),
+		Total: fs.NewUsageValue(about.PersonalSpaceInfo.TotalSize),
+		Free:  fs.NewUsageValue(about.PersonalSpaceInfo.TotalSize - about.PersonalSpaceInfo.UsedSize),
 	}
 
 	return usage, nil
@@ -444,7 +444,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		return nil, err
 	}
 
-	request := api.FileMoveCopy{
+	request := api.CopyFileRequest{
 		DriveID:        f.driveID,
 		FileID:         srcObj.id,
 		ToParentFileID: directoryID,
@@ -456,7 +456,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	}
 
 	var resp *http.Response
-	var copyResp api.FileCopyResp
+	var copyResp api.CopyFileResponse
 	err = f.pacer.Call(func() (bool, error) {
 		resp, err = f.client.CallJSON(ctx, &opts, &request, &copyResp)
 		return shouldRetry(ctx, resp, err)
@@ -510,14 +510,14 @@ func (f *Fs) Features() *fs.Features {
 // CreateDir implements dircache.DirCacher.
 func (f *Fs) CreateDir(ctx context.Context, pathID string, leaf string) (newID string, err error) {
 	var resp *http.Response
-	var info *api.Item
+	var info *api.FileItem
 
 	opts := rest.Opts{
 		Method: "POST",
 		Path:   "/adrive/v1.0/openFile/create",
 	}
 
-	req := api.CreateFolder{
+	req := api.CreateFileRequest{
 		DriveID:       f.driveID,
 		ParentFileID:  pathID,
 		Name:          leaf,
@@ -568,8 +568,8 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 			d := fs.NewDir(remote, info.UpdatedAt).SetID(info.FileID).SetParentID(dir)
 			entries = append(entries, d)
 		} else {
-			o, err := f.newObjectWithInfo(ctx, remote, &info)
-			if err == nil {
+			o, createErr := f.newObjectWithInfo(ctx, remote, &info)
+			if createErr == nil {
 				entries = append(entries, o)
 			}
 		}
@@ -659,15 +659,15 @@ func (f *Fs) UserInfo(ctx context.Context) (userInfo map[string]string, err erro
 	userInfo = map[string]string{
 		"Name":   user.Name,
 		"Avatar": user.Avatar,
-		"Phone":  *user.Phone,
+		"Phone":  user.Phone,
 	}
 
 	if vip, err := f.getVipInfo(ctx); err == nil {
-		userInfo["Identity"] = vip.Identity
-		userInfo["Level"] = *vip.Level
+		userInfo["Identity"] = string(vip.Identity)
+		userInfo["Level"] = vip.Level
 		userInfo["Expire"] = time.Time(vip.Expire).String()
 		userInfo["ThirdPartyVip"] = strconv.FormatBool(vip.ThirdPartyVip)
-		userInfo["ThirdPartyVipExpire"] = *vip.ThirdPartyVipExpire
+		userInfo["ThirdPartyVipExpire"] = strconv.Itoa(int(vip.ThirdPartyVipExpire))
 	}
 
 	return userInfo, nil
@@ -747,13 +747,13 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 		Path:   "/adrive/v1.0/openFile/getDownloadUrl",
 	}
 
-	req := api.DownloadReq{
+	req := api.GetDownloadURLRequest{
 		DriveID: o.fs.driveID,
 		FileID:  o.id,
 	}
 
 	var resp *http.Response
-	var download api.DownloadResp
+	var download api.GetDownloadURLResponse
 	err = o.fs.pacer.Call(func() (bool, error) {
 		resp, err = o.fs.client.CallJSON(ctx, &opts, &req, &download)
 		return shouldRetry(ctx, resp, err)
@@ -766,7 +766,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 
 	opts = rest.Opts{
 		Method:  download.Method,
-		RootURL: download.Url,
+		RootURL: download.URL,
 		Options: options,
 	}
 	err = o.fs.pacer.Call(func() (bool, error) {
@@ -819,7 +819,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		name:   name,
 		root:   root,
 		opt:    *opt,
-		client: NewClient(client, rootURL),
+		client: NewAdriveClient(client, rootURL),
 		m:      m,
 		pacer:  fs.NewPacer(ctx, pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant))),
 	}

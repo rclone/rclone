@@ -115,7 +115,7 @@ const (
 type VipInfo struct {
 	Identity            VipIdentity `json:"identity"`            // VIP status: member, vip, or svip
 	Level               string      `json:"level,omitempty"`     // Storage level (e.g., "20TB", "8TB")
-	Expire              int64       `json:"expire"`              // Expiration timestamp in seconds
+	Expire              Time        `json:"expire"`              // Expiration timestamp in seconds
 	ThirdPartyVip       bool        `json:"thirdPartyVip"`       // Whether third-party VIP benefits are active
 	ThirdPartyVipExpire int64       `json:"thirdPartyVipExpire"` // Third-party VIP benefits expiration timestamp
 }
@@ -257,8 +257,8 @@ type FileItem struct {
 	Type                 FileType              `json:"type"`                             // File type (file/folder)
 	Thumbnail            string                `json:"thumbnail,omitempty"`              // Thumbnail URL
 	URL                  string                `json:"url,omitempty"`                    // Preview/download URL for files under 5MB
-	CreatedAt            Time                  `json:"created_at"`                       // Creation time
-	UpdatedAt            Time                  `json:"updated_at"`                       // Last update time
+	CreatedAt            time.Time             `json:"created_at"`                       // Creation time
+	UpdatedAt            time.Time             `json:"updated_at"`                       // Last update time
 	PlayCursor           string                `json:"play_cursor,omitempty"`            // Playback progress
 	VideoMediaMetadata   *VideoMediaMetadata   `json:"video_media_metadata,omitempty"`   // Video metadata
 	VideoPreviewMetadata *VideoPreviewMetadata `json:"video_preview_metadata,omitempty"` // Video preview metadata
@@ -533,11 +533,11 @@ type MoveFileResponse struct {
 
 // CopyFileRequest represents the request body for /adrive/v1.0/openFile/copy endpoint
 type CopyFileRequest struct {
-	DriveID        string `json:"drive_id"`              // Drive ID
-	FileID         string `json:"file_id"`               // File ID to copy
-	ToDriveID      string `json:"to_drive_id,omitempty"` // Target drive ID (defaults to current drive_id)
-	ToParentFileID string `json:"to_parent_file_id"`     // Target parent folder ID (root for root directory)
-	AutoRename     bool   `json:"auto_rename,omitempty"` // Whether to auto rename on conflict (default: false)
+	DriveID        string `json:"drive_id"`                  // Drive ID
+	FileID         string `json:"file_id"`                   // File ID to copy
+	ToParentFileID string `json:"to_parent_file_id"`         // Target parent folder ID (root for root directory)
+	CheckNameMode  string `json:"check_name_mode,omitempty"` // The process mode when exists file/directory with the same name
+	NewName        string `json:"auto_rename,omitempty"`     // New name when there's a conflict
 }
 
 // CopyFileResponse represents the response from the file copy endpoint

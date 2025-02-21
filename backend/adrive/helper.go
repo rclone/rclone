@@ -2,9 +2,8 @@ package adrive
 
 import (
 	"context"
-	"fmt"
-	"io"
 	"net/http"
+	"strings"
 	"sync"
 
 	"github.com/rclone/rclone/backend/adrive/api"
@@ -19,6 +18,7 @@ type AdriveClient struct {
 	mu           sync.RWMutex // Protecting read/writes
 	c            *rest.Client // The REST client
 	rootURL      string       // API root URL
+	driveID      string       // Drive ID
 	errorHandler func(resp *http.Response) error
 	pacer        *fs.Pacer // To pace the API calls
 }
@@ -86,35 +86,23 @@ var retryErrorCodes = []int{
 
 // shouldRetry returns true if err is nil, or if it's a retryable error
 func shouldRetry(ctx context.Context, resp *http.Response, err error) (bool, error) {
-	if err != nil {
-		// Check for context cancellation first
-		if ctx.Err() != nil {
-			return false, ctx.Err()
-		}
-		// Retry network errors
-		if fserrors.ShouldRetry(err) {
-			return true, err
-		}
+	if fserrors.ContextError(ctx, &err) {
 		return false, err
 	}
+	authRetry := false
 
-	if resp == nil {
-		return false, nil
+	if resp != nil && resp.StatusCode == 401 && strings.Contains(resp.Header.Get("Www-Authenticate"), "expired_token") {
+		authRetry = true
+		fs.Debugf(nil, "Should retry: %v", err)
 	}
 
-	// Check if we have an API error
-	if resp.StatusCode >= 400 {
-		apiErr := new(api.Error)
-		decodeErr := rest.DecodeJSON(resp, &apiErr)
-		if decodeErr != nil {
-			fs.Debugf(nil, "Failed to decode error response: %v", decodeErr)
-			// If we can't decode the error, retry server errors
-			return resp.StatusCode >= 500, fmt.Errorf("HTTP error %s", resp.Status)
-		}
-		return apiErr.ShouldRetry(1), apiErr
+	// TODO
+	if _, ok := err.(*api.Error); ok {
+		fs.Debugf(nil, "Retrying API error %v", err)
+		return true, err
 	}
 
-	return false, nil
+	return authRetry || fserrors.ShouldRetry(err) || fserrors.ShouldRetryHTTP(resp, retryErrorCodes), err
 }
 
 // errorHandler parses a non 2xx error response into an error
@@ -136,11 +124,6 @@ func errorHandler(resp *http.Response) error {
 	}
 	if apiErr.Message == "" {
 		apiErr.Message = resp.Status
-	}
-
-	// Add response body as details if present
-	if body, err := io.ReadAll(resp.Body); err == nil && len(body) > 0 {
-		apiErr.Details = string(body)
 	}
 
 	return apiErr
