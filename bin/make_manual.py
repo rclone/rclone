@@ -82,6 +82,7 @@ docs = [
     "seafile.md",
     "sftp.md",
     "smb.md",
+    "sqlite.md",
     "storj.md",
     "sugarsync.md",
     "ulozto.md",
