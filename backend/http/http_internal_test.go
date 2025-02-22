@@ -60,6 +60,13 @@ func prepareServer(t *testing.T) configmap.Simple {
 		what := fmt.Sprintf("%s %s: Header ", r.Method, r.URL.Path)
 		assert.Equal(t, headers[1], r.Header.Get(headers[0]), what+headers[0])
 		assert.Equal(t, headers[3], r.Header.Get(headers[2]), what+headers[2])
+
+		// Set the content disposition header for the file under four
+		// later we will check if it is set using the metadata method
+		if r.URL.Path == "/four/under four.txt" {
+			w.Header().Set("Content-Disposition", "inline")
+		}
+
 		fileServer.ServeHTTP(w, r)
 	})
 
@@ -216,6 +223,18 @@ func TestNewObjectWithLeadingSlash(t *testing.T) {
 	o, err = f.NewObject(context.Background(), "/not found.txt")
 	assert.Nil(t, o)
 	assert.Equal(t, fs.ErrorObjectNotFound, err)
+}
+
+func TestNewObjectWithMetadata(t *testing.T) {
+	f := prepare(t)
+	o, err := f.NewObject(context.Background(), "/four/under four.txt")
+	require.NoError(t, err)
+	assert.Equal(t, "/four/under four.txt", o.Remote())
+	ho, ok := o.(*Object)
+	assert.True(t, ok)
+	metadata, err := ho.Metadata(context.Background())
+	require.NoError(t, err)
+	assert.Equal(t, "inline", metadata["content-disposition"])
 }
 
 func TestOpen(t *testing.T) {
