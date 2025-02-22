@@ -44,6 +44,7 @@ require (
 	github.com/jlaffaye/ftp v0.2.1-0.20240918233326-1b970516f5d3
 	github.com/josephspurrier/goversioninfo v1.4.1
 	github.com/jzelinskie/whirlpool v0.0.0-20201016144138-0675e54bb004
+	github.com/kevinburke/ssh_config v1.2.0
 	github.com/klauspost/compress v1.17.11
 	github.com/koofr/go-httpclient v0.0.0-20240520111329-e20f8f203988
 	github.com/koofr/go-koofrclient v0.0.0-20221207135200-cbd7fc9ad6a6
@@ -65,7 +66,7 @@ require (
 	github.com/rivo/uniseg v0.4.7
 	github.com/rogpeppe/go-internal v1.13.1
 	github.com/shirou/gopsutil/v4 v4.24.12
-	github.com/sirupsen/logrus v1.9.3
+	github.com/sirupsen/logrus v1.9.4
 	github.com/skratchdot/open-golang v0.0.0-20200116055534-eef842397966
 	github.com/spf13/cobra v1.8.1
 	github.com/spf13/pflag v1.0.5
