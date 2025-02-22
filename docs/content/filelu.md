@@ -1,0 +1,243 @@
+---
+title: "FileLu"
+description: "Rclone docs for FileLu"
+versionIntroduced: "v1.0"
+---
+
+# {{< icon "fa fa-folder" >}} FileLu
+
+[FileLu](https://filelu.com/) is a reliable cloud storage provider offering features like secure file uploads, downloads, flexible storage options, and sharing capabilities. With support for high storage limits and seamless integration with RCLONE, FileLu makes managing files in the cloud easy. Its cross-platform file backup services let you upload and back up files from any internet-connected device. Available upload options include:
+• File Upload
+• Folder Upload
+• URL Remote Upload
+• FTP/FTPS
+• WebDAV
+• FileDrop
+• Mobile App
+• Create text file
+• FileLuSync
+• Upload via Email
+• Browser Extensions
+• Web App
+• Upload via API
+• Terminal CLI
+
+
+
+Paths are specified as `remote:FolderID`.
+
+
+## Configuration
+
+Here is an example of how to make a remote called `filelu`. First, run:
+
+     rclone config
+
+This will guide you through an interactive setup process:
+
+```
+No remotes found, make a new one?
+n) New remote
+s) Set configuration password
+q) Quit config
+n/s/q> n
+name> filelu
+Type of storage to configure.
+Choose a number from below, or type in your own value
+[snip]
+xx / FileLu Cloud Storage
+   \ "filelu"
+[snip]
+Storage> filelu
+Enter your FileLu Rclone Key:
+Rclone Key> YOUR_FILELU_RCLONE_KEY RC_xxxxxxxxxxxxxxxxxxxxxxxx
+Configuration complete.
+
+Keep this "filelu" remote?
+y) Yes this is OK
+e) Edit this remote
+d) Delete this remote
+y/e/d> y
+```
+
+### Example Commands
+
+Create a new folder named `foldername`:
+
+    rclone mkdir filelu:foldername
+
+Delete a folder on FileLu:
+
+    rclone rmdir filelu:/folder/path/
+
+Rename a folder on FileLu:
+
+    rclone backend renamefolder filelu:/folder-path/folder-name "new-folder-name"
+
+Move a folder on remote FileLu:    
+
+    rclone backend movefolder filelu:/sorce-fld-path/hello-folder/ /destication-fld-path/hello-folder/
+
+Delete a file on FileLu:
+
+    rclone delete filelu:/hello.txt
+
+List files from your FileLu account:
+
+    rclone ls filelu:
+
+List all folders:
+
+    rclone lsd filelu:
+
+Copy a specific file to the FileLu root:
+
+    rclone copy D:\\hello.txt filelu:
+
+Copy files from a local directory to a FileLu directory:
+
+    rclone copy D:/local-folder filelu:/remote-folder/path/
+    
+Rename file on remote FileLu directory:
+
+    rclone backend rename filelu:/file-path/hello.txt "hello_new_name.txt"
+
+Download a file from FileLu into a local directory:
+
+    rclone copy filelu:/file-path/hello.txt D:/local-folder
+
+Move files from a local directory to a FileLu directory:
+
+    rclone move D:\\local-folder filelu:/remote-path/
+
+Move file within the remote FileLu directory:
+
+    rclone backend movefile filelu:/source-path/hello.txt /destination-path/
+
+Sync files from a local directory to a FileLu directory (directory id `366238`):
+
+    rclone sync D:/local-folder filelu:/remote-path/
+    
+Mount remote to local Linux:
+
+    rclone mount filelu: /root/mnt --vfs-cache-mode full
+
+Mount remote to local Windows:
+
+    rclone mount filelu: D:/local_mnt --vfs-cache-mode full
+
+
+Get storage info about the FileLu account:
+
+    rclone about filelu:
+
+And many other commands are supported by Rclone.
+
+### FolderID instead of folder path
+
+We use the FolderID instead of the folder name to prevent errors when users have identical folder names or paths. For example, if a user has two or three folders named "test_folders," the system may become confused and won't know which folder to move. In large storage systems, some clients have hundred of thousands of folders and a few millions of files, duplicate folder names or paths are quite common.
+
+### Modification Times and Hashes
+
+FileLu supports both modification times and MD5 hashes.
+
+### Restricted Filename Characters
+
+| Character | Value   | Replacement |
+|-----------|---------|-------------|
+| @         | 0x40    | _           |
+| !         | 0x21    | _           |
+| ~         | 0x7E    | _           |
+| `         | 0x60    | _           |
+| %         | 0x25    | _           |
+| &         | 0x26    | _           |
+| ^         | 0x5E    | _           |
+| (         | 0x28    | _           |
+| )         | 0x29    | _           |
+| {         | 0x7B    | _           |
+| }         | 0x7D    | _           |
+| ;         | 0x3B    | _           |
+| '         | 0x27    | _           |
+| ,         | 0x2C    | _           |
+| [         | 0x5B    | _           |
+| ]         | 0x5D    | _           |
+| +         | 0x2B    | _           |
+| =         | 0x3D    | _           |
+| $         | 0x24    | _           |
+| *         | 0x2A    | _           |
+| ?         | 0x3F    | _           |
+| <         | 0x3C    | _           |
+| >         | 0x3E    | _           |
+| :         | 0x3A    | _           |
+| \         | 0x5C    | _           |
+| /         | 0x2F    | _           |
+| "         | 0x22    | _           |
+| #         | 0x23    | _           |
+
+
+
+FileLu only supports filenames and folder names up to 255 characters in length, where a
+character is a Unicode character.
+
+### Duplicated Files
+
+When uploading and syncing via Rclone, FileLu does not allow uploading duplicate files within the same directory. However, you can upload duplicate files, provided they are in different directories (folders). 
+
+### Failure to Log / Invalid Credentials or KEY
+
+Ensure that you have the correct Rclone key, which can be found in [My Account](https://filelu.com/account/). Every time you toggle Rclone OFF and ON in My Account, a new RC_xxxxxxxxxxxxxxxxxxxx key is generated. Be sure to update your Rclone configuration with the new key.
+
+If you are connecting to your FileLu remote for the first time and encounter an error such as:
+
+```
+Failed to create file system for "my-filelu-remote:": couldn't login: Invalid credentials
+```
+
+Ensure your Rclone Key is correct.
+
+### Process `killed`
+
+Accounts with large files or extensive metadata may experience significant memory usage during list/sync operations. Ensure the system running `rclone` has sufficient memory and CPU to handle these operations.
+
+## Limitations
+
+This backend uses a custom library implementing the FileLu API. While it supports file transfers, some advanced features may not yet be available. Please report any issues to the [rclone forum](https://forum.rclone.org/) for troubleshooting and updates.
+
+### Standard Options
+
+Here are the standard options specific to FileLu:
+
+#### --filelu-rclone-key
+
+You can get the key in [My Account](https://filelu.com/account/).
+
+FileLu Rclone Key format: RC_xxxxxxxxxxxxxxxxxxxx.
+
+- **NB:** Input to this must be obscured - see [rclone obscure](/commands/rclone_obscure/).
+
+#### --filelu-debug
+
+Output more debug information.
+
+Properties:
+
+- Config:      debug
+- Env Var:     RCLONE_FILELU_DEBUG
+- Type:        bool
+- Default:     false
+
+#### --filelu-use-https
+
+Use HTTPS for transfers.
+
+Properties:
+
+- Config:      use_https
+- Env Var:     RCLONE_FILELU_USE_HTTPS
+- Type:        bool
+- Default:     true
+
+---
+
+For further information, visit [FileLu's website](https://filelu.com/).
+"""
