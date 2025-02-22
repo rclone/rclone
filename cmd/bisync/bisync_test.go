@@ -278,7 +278,7 @@ func testBisync(t *testing.T, path1, path2 string) {
 	}
 	bisync.Colors = true
 	time.Local = bisync.TZ
-	ci.FsCacheExpireDuration = 5 * time.Hour
+	ci.FsCacheExpireDuration = fs.Duration(5 * time.Hour)
 
 	baseDir, err := os.Getwd()
 	require.NoError(t, err, "get current directory")
