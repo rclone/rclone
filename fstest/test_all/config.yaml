@@ -8,6 +8,7 @@ tests:
  - path: fs/sync
    fastlist: true
  - path: cmd/bisync
+ - path: cmd/gitannex
  - path: vfs
  - path: cmd/serve/restic
    localonly: true
