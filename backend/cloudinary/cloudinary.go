@@ -246,10 +246,10 @@ func (f *Fs) ToStandardPath(s string) string {
 }
 
 // ToStandardName implementation of the api.CloudinaryEncoder
-func (f *Fs) ToStandardName(s string, assetUrl string) string {
+func (f *Fs) ToStandardName(s string, assetURL string) string {
 	ext := ""
 	if f.opt.AdjustMediaFilesExtensions {
-		parsedURL, err := url.Parse(assetUrl)
+		parsedURL, err := url.Parse(assetURL)
 		if err != nil {
 			fs.Logf(nil, "Error parsing URL: %v", err)
 		} else {
