@@ -24,7 +24,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.72.2
 	github.com/aws/smithy-go v1.22.1
 	github.com/buengese/sgzip v0.1.1
-	github.com/cloudinary/cloudinary-go/v2 v2.9.0
+	github.com/cloudinary/cloudinary-go/v2 v2.9.1
 	github.com/cloudsoda/go-smb2 v0.0.0-20250124173933-e6bbeea507ed
 	github.com/colinmarc/hdfs/v2 v2.4.0
 	github.com/coreos/go-semver v0.3.1
