@@ -167,7 +167,9 @@ var commandDefinition = &cobra.Command{
 	Short: `Convert file and directory names`,
 	// Warning! "|" will be replaced by backticks below
 	Long: strings.ReplaceAll(`
-Docs todo!
+This command renames files and directory names according a user supplied conversion.
+
+It is useful for renaming a lot of files in an automated way.
 
 `+sprintList()+`
 
@@ -459,27 +461,42 @@ func toASCII(s string) string {
 }
 
 func sprintList() string {
-	s := fmt.Sprintln("Conversion modes:  ")
+	var out strings.Builder
+
+	_, _ = out.WriteString(`### Conversion modes
+
+The conversion mode |-t| or |--conv| flag must be specified. This
+defines what transformation the |convmv| command will make.
+
+`)
 	for _, v := range Opt.ConvertAlgo.Choices() {
-		s += fmt.Sprintln(v + "  ")
+		_, _ = fmt.Fprintf(&out, "- `%s`\n", v)
 	}
-	s += fmt.Sprintln()
+	_, _ = out.WriteRune('\n')
 
-	s += fmt.Sprintln("Char maps:  ")
+	_, _ = out.WriteString(`### Char maps
+
+These are the choices for the |--charmap| flag.
+
+`)
 	for _, v := range Opt.CmapFlag.Choices() {
-		s += fmt.Sprintln(v + "  ")
+		_, _ = fmt.Fprintf(&out, "- `%s`\n", v)
 	}
-	s += fmt.Sprintln()
+	_, _ = out.WriteRune('\n')
 
-	s += fmt.Sprintln("Encoding masks:  ")
-	for _, v := range strings.Split(encoder.ValidStrings(), ",") {
-		s += fmt.Sprintln(v + "  ")
+	_, _ = out.WriteString(`### Encoding masks
+
+These are the valid options for the --encoding flag.
+
+`)
+	for _, v := range strings.Split(encoder.ValidStrings(), ", ") {
+		_, _ = fmt.Fprintf(&out, "- `%s`\n", v)
 	}
-	s += fmt.Sprintln()
+	_, _ = out.WriteRune('\n')
 
-	s += sprintExamples()
+	sprintExamples(&out)
 
-	return s
+	return out.String()
 }
 
 func printList() {

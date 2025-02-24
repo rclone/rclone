@@ -2,6 +2,7 @@ package convmv
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/lib/encoder"
@@ -59,14 +60,17 @@ func (e example) output() string {
 }
 
 // go run ./ convmv --help
-func sprintExamples() string {
-	s := "Examples: \n\n"
+func sprintExamples(out *strings.Builder) {
+	_, _ = fmt.Fprintf(out, `### Examples:
+
+Here are some examples of rclone convmv in action.
+
+`)
 	for _, e := range examples {
-		s += fmt.Sprintf("```\n%s\n", e.command())
-		s += fmt.Sprintf("// Output: %s\n```\n\n", e.output())
+		_, _ = fmt.Fprintf(out, "```\n%s\n", e.command())
+		_, _ = fmt.Fprintf(out, "// Output: %s\n```\n\n", e.output())
 	}
 	Opt = ConvOpt{} // reset
-	return s
 }
 
 /* func sprintAllCharmapExamples() string {
