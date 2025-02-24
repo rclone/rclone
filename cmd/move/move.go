@@ -8,6 +8,7 @@ import (
 	"github.com/rclone/rclone/cmd"
 	"github.com/rclone/rclone/fs/config/flags"
 	"github.com/rclone/rclone/fs/operations"
+	"github.com/rclone/rclone/fs/operations/operationsflags"
 	"github.com/rclone/rclone/fs/sync"
 	"github.com/spf13/cobra"
 )
@@ -16,6 +17,8 @@ import (
 var (
 	deleteEmptySrcDirs = false
 	createEmptySrcDirs = false
+	loggerOpt          = operations.LoggerOpt{}
+	loggerFlagsOpt     = operationsflags.AddLoggerFlagsOptions{}
 )
 
 func init() {
@@ -23,6 +26,8 @@ func init() {
 	cmdFlags := commandDefinition.Flags()
 	flags.BoolVarP(cmdFlags, &deleteEmptySrcDirs, "delete-empty-src-dirs", "", deleteEmptySrcDirs, "Delete empty source dirs after move", "")
 	flags.BoolVarP(cmdFlags, &createEmptySrcDirs, "create-empty-src-dirs", "", createEmptySrcDirs, "Create empty source dirs on destination after move", "")
+	operationsflags.AddLoggerFlags(cmdFlags, &loggerOpt, &loggerFlagsOpt)
+	loggerOpt.LoggerFn = operations.NewDefaultLoggerFn(&loggerOpt)
 }
 
 var commandDefinition = &cobra.Command{
@@ -66,6 +71,46 @@ for more info.
 |--dry-run| or the |--interactive|/|-i| flag.
 
 **Note**: Use the |-P|/|--progress| flag to view real-time transfer statistics.
+
+## Logger Flags
+
+The |--differ|, |--missing-on-dst|, |--missing-on-src|, |--match| and |--error| flags write paths,
+one per line, to the file name (or stdout if it is |-|) supplied. What they write is described
+in the help below. For example |--differ| will write all paths which are present
+on both the source and destination but different.
+
+The |--combined| flag will write a file (or stdout) which contains all
+file paths with a symbol and then a space and then the path to tell
+you what happened to it. These are reminiscent of diff files.
+
+- |= path| means path was found in source and destination and was identical
+- |- path| means path was missing on the source, so only in the destination
+- |+ path| means path was missing on the destination, so only in the source
+- |* path| means path was present in source and destination but different.
+- |! path| means there was an error reading or hashing the source or dest.
+
+The |--dest-after| flag writes a list file using the same format flags
+as [|lsf|](/commands/rclone_lsf/#synopsis) (including [customizable options
+for hash, modtime, etc.](/commands/rclone_lsf/#synopsis))
+Conceptually it is similar to rsync's |--itemize-changes|, but not identical
+-- it should output an accurate list of what will be on the destination
+after the move.
+
+When the |--no-traverse| flag is set, all logs involving files that exist only
+on the destination will be incomplete or completely missing.
+
+Note that these logger flags have a few limitations, and certain scenarios
+are not currently supported:
+
+- |--max-duration| / |CutoffModeHard|
+- |--compare-dest| / |--copy-dest|
+- server-side moves of an entire dir at once
+- High-level retries, because there would be duplicates (use |--retries 1| to disable)
+- Possibly some unusual error scenarios
+
+Note also that each file is logged during the move, as opposed to after, so it
+is most useful as a predictor of what SHOULD happen to each file
+(which may or may not match what actually DID.)
 `, "|", "`"),
 	Annotations: map[string]string{
 		"versionIntroduced": "v1.19",
@@ -75,10 +120,21 @@ for more info.
 		cmd.CheckArgs(2, 2, command, args)
 		fsrc, srcFileName, fdst := cmd.NewFsSrcFileDst(args)
 		cmd.Run(true, true, command, func() error {
-			if srcFileName == "" {
-				return sync.MoveDir(context.Background(), fdst, fsrc, deleteEmptySrcDirs, createEmptySrcDirs)
+			ctx := context.Background()
+			close, err := operationsflags.ConfigureLoggers(ctx, fdst, command, &loggerOpt, loggerFlagsOpt)
+			if err != nil {
+				return err
 			}
-			return operations.MoveFile(context.Background(), fdst, fsrc, srcFileName, srcFileName)
+			defer close()
+
+			if loggerFlagsOpt.AnySet() {
+				ctx = operations.WithSyncLogger(ctx, loggerOpt)
+			}
+
+			if srcFileName == "" {
+				return sync.MoveDir(ctx, fdst, fsrc, deleteEmptySrcDirs, createEmptySrcDirs)
+			}
+			return operations.MoveFile(ctx, fdst, fsrc, srcFileName, srcFileName)
 		})
 	},
 }

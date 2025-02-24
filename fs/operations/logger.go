@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	mutex "sync"
 
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/hash"
@@ -104,6 +105,43 @@ type LoggerOpt struct {
 	DirsOnly  bool
 	Csv       bool
 	Absolute  bool
+}
+
+// NewDefaultLoggerFn creates a logger function that writes the sigil and path to configured files that match the sigil
+func NewDefaultLoggerFn(opt *LoggerOpt) LoggerFn {
+	var lock mutex.Mutex
+
+	return func(ctx context.Context, sigil Sigil, src, dst fs.DirEntry, err error) {
+		lock.Lock()
+		defer lock.Unlock()
+
+		if err == fs.ErrorIsDir && !opt.FilesOnly && opt.DestAfter != nil {
+			opt.PrintDestAfter(ctx, sigil, src, dst, err)
+			return
+		}
+
+		_, srcOk := src.(fs.Object)
+		_, dstOk := dst.(fs.Object)
+		var filename string
+		if !srcOk && !dstOk {
+			return
+		} else if srcOk && !dstOk {
+			filename = src.String()
+		} else {
+			filename = dst.String()
+		}
+
+		if sigil.Writer(*opt) != nil {
+			SyncFprintf(sigil.Writer(*opt), "%s\n", filename)
+		}
+		if opt.Combined != nil {
+			SyncFprintf(opt.Combined, "%c %s\n", sigil, filename)
+			fs.Debugf(nil, "Sync Logger: %s: %c %s\n", sigil.String(), sigil, filename)
+		}
+		if opt.DestAfter != nil {
+			opt.PrintDestAfter(ctx, sigil, src, dst, err)
+		}
+	}
 }
 
 // WithLogger stores logger in ctx and returns a copy of ctx in which loggerKey = logger
