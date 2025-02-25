@@ -206,6 +206,28 @@ Properties:
 - Type:        Duration
 - Default:     0s
 
+#### --cloudinary-adjust-media-files-extensions
+
+Cloudinary handles media formats as a file attribute and strips it from the name, which is unlike most other file systems
+
+Properties:
+
+- Config:      adjust_media_files_extensions
+- Env Var:     RCLONE_CLOUDINARY_ADJUST_MEDIA_FILES_EXTENSIONS
+- Type:        bool
+- Default:     true
+
+#### --cloudinary-media-extensions
+
+Cloudinary supported media extensions
+
+Properties:
+
+- Config:      media_extensions
+- Env Var:     RCLONE_CLOUDINARY_MEDIA_EXTENSIONS
+- Type:        stringArray
+- Default:     [3ds 3g2 3gp ai arw avi avif bmp bw cr2 cr3 djvu dng eps3 fbx flif flv gif glb gltf hdp heic heif ico indd jp2 jpe jpeg jpg jxl jxr m2ts mov mp4 mpeg mts mxf obj ogv pdf ply png psd svg tga tif tiff ts u3ma usdz wdp webm webp wmv]
+
 #### --cloudinary-description
 
 Description of the remote.
