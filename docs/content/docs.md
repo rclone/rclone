@@ -2808,6 +2808,7 @@ For the filtering options
   * `--max-size`
   * `--min-age`
   * `--max-age`
+  * `--hash-filter`
   * `--dump filters`
   * `--metadata-include`
   * `--metadata-include-from`
