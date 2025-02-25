@@ -1888,7 +1888,11 @@ func (f *Fs) copySinglepart(ctx context.Context, remote, dstContainer, dstPath s
 	pollTime := 100 * time.Millisecond
 	for copyStatus != nil && string(*copyStatus) == string(container.CopyStatusTypePending) {
 		time.Sleep(pollTime)
-		getMetadata, err := dstBlobSVC.GetProperties(ctx, &getOptions)
+		var getMetadata blob.GetPropertiesResponse
+		err = f.pacer.Call(func() (bool, error) {
+			getMetadata, err = dstBlobSVC.GetProperties(ctx, &getOptions)
+			return f.shouldRetry(ctx, err)
+		})
 		if err != nil {
 			return nil, err
 		}
