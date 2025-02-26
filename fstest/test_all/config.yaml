@@ -521,3 +521,6 @@ backends:
  - backend:  "iclouddrive"
    remote:   "TestICloudDrive:"
    fastlist: false
+ - backend:  "sqlite"
+   remote:   "TestSqlite:"
+   fastlist: false
