@@ -658,10 +658,14 @@ func TestDirFileOpen(t *testing.T) {
 }
 
 func TestDirEntryModTimeInvalidation(t *testing.T) {
-	if runtime.GOOS == "windows" {
+	r, vfs := newTestVFS(t)
+	features := r.Fremote.Features()
+	if !features.DirModTimeUpdatesOnWrite {
+		t.Skip("Need DirModTimeUpdatesOnWrite")
+	}
+	if features.IsLocal && runtime.GOOS == "windows" {
 		t.Skip("dirent modtime is unreliable on Windows filesystems")
 	}
-	r, vfs := newTestVFS(t)
 
 	// Needs to be less than 2x the wait time below, othewrwise the entry
 	// gets cleared out before it had a chance to be updated.
