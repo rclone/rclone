@@ -18,7 +18,7 @@ type CloudinaryEncoder interface {
 	ToStandardPath(string) string
 	// ToStandardName takes name in this encoding and converts
 	// it in Standard encoding.
-	ToStandardName(string) string
+	ToStandardName(string, string) string
 	// Encoded root of the remote (as passed into NewFs)
 	FromStandardFullPath(string) string
 }
