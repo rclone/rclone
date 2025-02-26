@@ -19,6 +19,7 @@ import (
 	"net/url"
 	"path"
 	"regexp"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -3097,10 +3098,8 @@ func (f *Fs) shouldRetry(ctx context.Context, err error) (bool, error) {
 				return true, err
 			}
 		}
-		for _, e := range retryErrorCodes {
-			if httpStatusCode == e {
-				return true, err
-			}
+		if slices.Contains(retryErrorCodes, httpStatusCode) {
+			return true, err
 		}
 	}
 	// Ok, not an awserr, check for generic failure conditions
@@ -3230,7 +3229,7 @@ func fixupRequest(o *s3.Options, opt *Options) {
 type s3logger struct{}
 
 // Logf is expected to support the standard fmt package "verbs".
-func (s3logger) Logf(classification logging.Classification, format string, v ...interface{}) {
+func (s3logger) Logf(classification logging.Classification, format string, v ...any) {
 	switch classification {
 	default:
 	case logging.Debug:
@@ -5253,7 +5252,7 @@ It doesn't return anything.
 // The result should be capable of being JSON encoded
 // If it is a string or a []string it will be shown to the user
 // otherwise it will be JSON encoded and shown to the user like that
-func (f *Fs) Command(ctx context.Context, name string, arg []string, opt map[string]string) (out interface{}, err error) {
+func (f *Fs) Command(ctx context.Context, name string, arg []string, opt map[string]string) (out any, err error) {
 	switch name {
 	case "restore":
 		req := s3.RestoreObjectInput{

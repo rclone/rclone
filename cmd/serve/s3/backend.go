@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/hex"
 	"io"
+	"maps"
 	"os"
 	"path"
 	"strings"
@@ -144,9 +145,7 @@ func (b *s3Backend) HeadObject(ctx context.Context, bucketName, objectName strin
 
 	if val, ok := b.meta.Load(fp); ok {
 		metaMap := val.(map[string]string)
-		for k, v := range metaMap {
-			meta[k] = v
-		}
+		maps.Copy(meta, metaMap)
 	}
 
 	return &gofakes3.Object{
@@ -221,9 +220,7 @@ func (b *s3Backend) GetObject(ctx context.Context, bucketName, objectName string
 
 	if val, ok := b.meta.Load(fp); ok {
 		metaMap := val.(map[string]string)
-		for k, v := range metaMap {
-			meta[k] = v
-		}
+		maps.Copy(meta, metaMap)
 	}
 
 	return &gofakes3.Object{

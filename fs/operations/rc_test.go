@@ -530,12 +530,12 @@ func TestRcFsInfo(t *testing.T) {
 	assert.Equal(t, want.Root, got["Root"])
 	assert.Equal(t, want.String, got["String"])
 	assert.Equal(t, float64(want.Precision), got["Precision"])
-	var hashes []interface{}
+	var hashes []any
 	for _, hash := range want.Hashes {
 		hashes = append(hashes, hash)
 	}
 	assert.Equal(t, hashes, got["Hashes"])
-	var features = map[string]interface{}{}
+	var features = map[string]any{}
 	for k, v := range want.Features {
 		features[k] = v
 	}
@@ -627,7 +627,7 @@ func TestRcCommand(t *testing.T) {
 		assert.Contains(t, err.Error(), "command not found")
 		return
 	}
-	want := rc.Params{"result": map[string]interface{}{
+	want := rc.Params{"result": map[string]any{
 		"arg": []string{
 			"path1",
 			"path2",

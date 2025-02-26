@@ -104,11 +104,11 @@ func TestStatsGroupOperations(t *testing.T) {
 		runtime.GC()
 		runtime.ReadMemStats(&start)
 
-		for i := 0; i < count; i++ {
+		for i := range count {
 			sg.set(ctx, fmt.Sprintf("test-%d", i), NewStats(ctx))
 		}
 
-		for i := 0; i < count; i++ {
+		for i := range count {
 			sg.delete(fmt.Sprintf("test-%d", i))
 		}
 
@@ -124,7 +124,7 @@ func TestStatsGroupOperations(t *testing.T) {
 
 	testGroupStatsInfo := NewStatsGroup(ctx, "test-group")
 	require.NoError(t, testGroupStatsInfo.DeleteFile(ctx, 0))
-	for i := 0; i < 41; i++ {
+	for range 41 {
 		require.NoError(t, GlobalStats().DeleteFile(ctx, 0))
 	}
 

@@ -733,8 +733,8 @@ type DocumentUpdateResponse struct {
 			StatusCode   int    `json:"status_code"`
 			ErrorMessage string `json:"error_message"`
 		} `json:"status"`
-		OperationID interface{} `json:"operation_id"`
-		Document    *Document   `json:"document"`
+		OperationID any       `json:"operation_id"`
+		Document    *Document `json:"document"`
 	} `json:"results"`
 }
 
@@ -765,9 +765,9 @@ type Document struct {
 		IsWritable   bool `json:"is_writable"`
 		IsHidden     bool `json:"is_hidden"`
 	} `json:"file_flags"`
-	LastOpenedTime   int64       `json:"lastOpenedTime"`
-	RestorePath      interface{} `json:"restorePath"`
-	HasChainedParent bool        `json:"hasChainedParent"`
+	LastOpenedTime   int64 `json:"lastOpenedTime"`
+	RestorePath      any   `json:"restorePath"`
+	HasChainedParent bool  `json:"hasChainedParent"`
 }
 
 // DriveID returns the drive ID of the Document.

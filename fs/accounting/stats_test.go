@@ -453,7 +453,7 @@ func TestPruneTransfers(t *testing.T) {
 			assert.Equal(t, test.Transfers, len(s.startedTransfers))
 			s.mu.Unlock()
 
-			for i := 0; i < test.Transfers; i++ {
+			for range test.Transfers {
 				s.PruneTransfers()
 			}
 

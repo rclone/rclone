@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"slices"
 	"strconv"
 	"time"
 
@@ -142,12 +143,7 @@ func shouldRetryHTTP(resp *http.Response, retryErrorCodes []int) bool {
 	if resp == nil {
 		return false
 	}
-	for _, e := range retryErrorCodes {
-		if resp.StatusCode == e {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(retryErrorCodes, resp.StatusCode)
 }
 
 func (f *Fs) shouldRetry(ctx context.Context, resp *http.Response, err error) (bool, error) {

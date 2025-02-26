@@ -16,7 +16,7 @@ type Cache struct {
 	expireRunning  bool
 	expireDuration time.Duration // expire the cache entry when it is older than this
 	expireInterval time.Duration // interval to run the cache expire
-	finalize       func(value interface{})
+	finalize       func(value any)
 }
 
 // New creates a new cache with the default expire duration and interval
@@ -26,7 +26,7 @@ func New() *Cache {
 		expireRunning:  false,
 		expireDuration: 300 * time.Second,
 		expireInterval: 60 * time.Second,
-		finalize:       func(_ interface{}) {},
+		finalize:       func(_ any) {},
 	}
 }
 
@@ -56,17 +56,17 @@ func (c *Cache) SetExpireInterval(d time.Duration) *Cache {
 
 // cacheEntry is stored in the cache
 type cacheEntry struct {
-	value    interface{} // cached item
-	err      error       // creation error
-	key      string      // key
-	lastUsed time.Time   // time used for expiry
-	pinCount int         // non zero if the entry should not be removed
+	value    any       // cached item
+	err      error     // creation error
+	key      string    // key
+	lastUsed time.Time // time used for expiry
+	pinCount int       // non zero if the entry should not be removed
 }
 
 // CreateFunc is called to create new values.  If the create function
 // returns an error it will be cached if ok is true, otherwise the
 // error will just be returned, allowing negative caching if required.
-type CreateFunc func(key string) (value interface{}, ok bool, error error)
+type CreateFunc func(key string) (value any, ok bool, error error)
 
 // used marks an entry as accessed now and kicks the expire timer off
 // should be called with the lock held
@@ -80,7 +80,7 @@ func (c *Cache) used(entry *cacheEntry) {
 
 // Get gets a value named key either from the cache or creates it
 // afresh with the create function.
-func (c *Cache) Get(key string, create CreateFunc) (value interface{}, err error) {
+func (c *Cache) Get(key string, create CreateFunc) (value any, err error) {
 	c.mu.Lock()
 	entry, ok := c.cache[key]
 	if !ok {
@@ -125,7 +125,7 @@ func (c *Cache) Unpin(key string) {
 }
 
 // PutErr puts a value named key with err into the cache
-func (c *Cache) PutErr(key string, value interface{}, err error) {
+func (c *Cache) PutErr(key string, value any, err error) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	if c.noCache() {
@@ -141,12 +141,12 @@ func (c *Cache) PutErr(key string, value interface{}, err error) {
 }
 
 // Put puts a value named key into the cache
-func (c *Cache) Put(key string, value interface{}) {
+func (c *Cache) Put(key string, value any) {
 	c.PutErr(key, value, nil)
 }
 
 // GetMaybe returns the key and true if found, nil and false if not
-func (c *Cache) GetMaybe(key string) (value interface{}, found bool) {
+func (c *Cache) GetMaybe(key string) (value any, found bool) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	entry, found := c.cache[key]
@@ -192,7 +192,7 @@ func (c *Cache) DeletePrefix(prefix string) (deleted int) {
 //
 // If there was an existing item at newKey then it takes precedence
 // and is returned otherwise the item (if any) at oldKey is returned.
-func (c *Cache) Rename(oldKey, newKey string) (value interface{}, found bool) {
+func (c *Cache) Rename(oldKey, newKey string) (value any, found bool) {
 	c.mu.Lock()
 	if newEntry, newFound := c.cache[newKey]; newFound {
 		// If new entry is found use that
@@ -255,7 +255,7 @@ func (c *Cache) Entries() int {
 }
 
 // SetFinalizer sets a function to be called when a value drops out of the cache
-func (c *Cache) SetFinalizer(finalize func(interface{})) {
+func (c *Cache) SetFinalizer(finalize func(any)) {
 	c.mu.Lock()
 	c.finalize = finalize
 	c.mu.Unlock()

@@ -729,7 +729,7 @@ func (o *Object) Storable() bool {
 	return true
 }
 
-func (o *Object) updateFileProperties(ctx context.Context, req interface{}) (err error) {
+func (o *Object) updateFileProperties(ctx context.Context, req any) (err error) {
 	var resp *api.File
 
 	opts := rest.Opts{
@@ -887,7 +887,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 
 // Remove implements the mandatory method fs.Object.Remove
 func (o *Object) Remove(ctx context.Context) error {
-	for i := 0; i < 2; i++ {
+	for range 2 {
 		// First call moves the item to recycle bin, second deletes it for good
 		var err error
 		opts := rest.Opts{

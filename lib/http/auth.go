@@ -66,7 +66,7 @@ Use ` + "`--{{ .Prefix }}salt`" + ` to change the password hashing salt from the
 // is returned then the user is not authenticated.
 //
 // If a non nil value is returned then it is added to the context under the key
-type CustomAuthFn func(user, pass string) (value interface{}, err error)
+type CustomAuthFn func(user, pass string) (value any, err error)
 
 // AuthConfigInfo descripts the Options in use
 var AuthConfigInfo = fs.Options{{

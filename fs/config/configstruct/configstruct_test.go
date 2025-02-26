@@ -180,8 +180,8 @@ func TestStringToInterface(t *testing.T) {
 	item := struct{ A int }{2}
 	for _, test := range []struct {
 		in   string
-		def  interface{}
-		want interface{}
+		def  any
+		want any
 		err  string
 	}{
 		{"", string(""), "", ""},

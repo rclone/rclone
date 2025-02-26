@@ -273,7 +273,7 @@ func showBackends() {
 	fmt.Printf("  rclone help backend <name>\n")
 }
 
-func quoteString(v interface{}) string {
+func quoteString(v any) string {
 	switch v.(type) {
 	case string:
 		return fmt.Sprintf("%q", v)
