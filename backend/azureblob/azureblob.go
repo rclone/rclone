@@ -982,7 +982,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 			return nil, fmt.Errorf("failed to acquire MSI token: %w", err)
 		}
 	case opt.ClientID != "" && opt.Tenant != "" && opt.MSIClientID != "":
-		// Client assertion based authentication
+		// Workload Identity based authentication
 		var options azidentity.ManagedIdentityCredentialOptions
 		options.ID = azidentity.ClientID(opt.MSIClientID)
 
