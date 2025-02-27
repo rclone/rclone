@@ -656,12 +656,28 @@ func (f *Fs) shouldRetry(ctx context.Context, err error) (bool, error) {
 	if fserrors.ContextError(ctx, &err) {
 		return false, err
 	}
-	// FIXME interpret special errors - more to do here
-	if storageErr, ok := err.(*azcore.ResponseError); ok {
+	var storageErr *azcore.ResponseError
+	if errors.As(err, &storageErr) {
+		// General errors from:
+		// https://learn.microsoft.com/en-us/rest/api/storageservices/common-rest-api-error-codes
+		// Blob specific errors from:
+		// https://learn.microsoft.com/en-us/rest/api/storageservices/blob-service-error-codes
 		switch storageErr.ErrorCode {
 		case "InvalidBlobOrBlock":
 			// These errors happen sometimes in multipart uploads
 			// because of block concurrency issues
+			return true, err
+		case "InternalError":
+			// The server encountered an internal error. Please retry the request.
+			return true, err
+		case "OperationTimedOut":
+			// The operation could not be completed within the permitted time. The
+			// operation may or may not have succeeded on the server side. Please query
+			// the server state before retrying the operation.
+			return true, err
+		case "ServerBusy":
+			// The server is currently unable to receive requests. Please retry your
+			// request.
 			return true, err
 		}
 		statusCode := storageErr.StatusCode
@@ -1904,7 +1920,11 @@ func (f *Fs) copySinglepart(ctx context.Context, remote, dstContainer, dstPath s
 	pollTime := 100 * time.Millisecond
 	for copyStatus != nil && string(*copyStatus) == string(container.CopyStatusTypePending) {
 		time.Sleep(pollTime)
-		getMetadata, err := dstBlobSVC.GetProperties(ctx, &getOptions)
+		var getMetadata blob.GetPropertiesResponse
+		err = f.pacer.Call(func() (bool, error) {
+			getMetadata, err = dstBlobSVC.GetProperties(ctx, &getOptions)
+			return f.shouldRetry(ctx, err)
+		})
 		if err != nil {
 			return nil, err
 		}

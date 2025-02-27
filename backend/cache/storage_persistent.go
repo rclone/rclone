@@ -18,6 +18,7 @@ import (
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/walk"
 	bolt "go.etcd.io/bbolt"
+	"go.etcd.io/bbolt/errors"
 )
 
 // Constants
@@ -597,7 +598,7 @@ func (b *Persistent) CleanChunksBySize(maxSize int64) {
 	})
 
 	if err != nil {
-		if err == bolt.ErrDatabaseNotOpen {
+		if err == errors.ErrDatabaseNotOpen {
 			// we're likely a late janitor and we need to end quietly as there's no guarantee of what exists anymore
 			return
 		}
