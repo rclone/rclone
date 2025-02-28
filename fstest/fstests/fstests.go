@@ -879,6 +879,7 @@ func Run(t *testing.T, opt *Opt) {
 			pollInterval := make(chan time.Duration)
 			dirChanges := map[string]struct{}{}
 			objChanges := map[string]struct{}{}
+			uncChanges := map[string]struct{}{}
 			var mutex sync.Mutex
 			doChangeNotify(ctx, func(x string, e fs.EntryType) {
 				fs.Debugf(nil, "doChangeNotify(%q, %+v)", x, e)
@@ -891,6 +892,8 @@ func Run(t *testing.T, opt *Opt) {
 					dirChanges[x] = struct{}{}
 				} else if e == fs.EntryObject {
 					objChanges[x] = struct{}{}
+				} else if e == fs.EntryUncertain {
+					uncChanges[x] = struct{}{}
 				}
 				mutex.Unlock()
 			}, pollInterval)
@@ -930,19 +933,20 @@ func Run(t *testing.T, opt *Opt) {
 			// Wait a little while for the changes to come in
 			wantDirChanges := []string{"dir/subdir1", "dir/subdir3", "dir/subdir2"}
 			wantObjChanges := []string{"dir/file2", "dir/file4", "dir/file3"}
+			wantUncChanges := append(wantDirChanges, wantObjChanges...)
 			ok := false
 			for tries := 1; tries < 10; tries++ {
 				mutex.Lock()
-				ok = contains(dirChanges, wantDirChanges) && contains(objChanges, wantObjChanges)
+				ok = (contains(dirChanges, wantDirChanges) && contains(objChanges, wantObjChanges)) || contains(uncChanges, wantUncChanges)
 				mutex.Unlock()
 				if ok {
 					break
 				}
-				t.Logf("Try %d/10 waiting for dirChanges and objChanges", tries)
+				t.Logf("Try %d/10 waiting for dirChanges, objChanges, and uncChanges", tries)
 				time.Sleep(3 * time.Second)
 			}
 			if !ok {
-				t.Errorf("%+v does not contain %+v or \n%+v does not contain %+v", dirChanges, wantDirChanges, objChanges, wantObjChanges)
+				t.Errorf("%+v does not contain %+v or \n%+v does not contain %+v, and %+v does not contain %+v", dirChanges, wantDirChanges, objChanges, wantObjChanges, uncChanges, wantUncChanges)
 			}
 
 			// tidy up afterwards

@@ -35,12 +35,9 @@ func (f *Fs) ChangeNotify(ctx context.Context, notifyFunc func(string, fs.EntryT
 		return
 	}
 
-	// All known files and directories, used to call notifyFunc() with correct
-	// entry type even on remove and rename events.
-	known := make(map[string]fs.EntryType)
-
-	// Files and directories that have changed in the last poll window.
-	changed := make(map[string]fs.EntryType)
+	// Files and directories changed in the last poll window, mapped to the
+	// time at which notification of the change was received.
+	changed := make(map[string]time.Time)
 
 	// Channel to handle new paths. Buffered ensures filesystem events keep
 	// being consumed.
@@ -81,11 +78,17 @@ func (f *Fs) ChangeNotify(ctx context.Context, notifyFunc func(string, fs.EntryT
 					tickerC = ticker.C
 				}
 			case <-tickerC:
-				// notify for all changed paths since last tick
-				for entryPath, entryType := range changed {
-					notifyFunc(filepath.ToSlash(entryPath), entryType)
+				// Notify for all paths that have changed since the last sync, and
+				// which were changed at least 1/10 of a second (1e8 nanoseconds)
+				// ago. The lag is for de-duping purposes during long writes, which
+				// can consist of multiple write notifications in quick succession.
+				cutoff := time.Now().Add(-1e8)
+				for entryPath, entryTime := range changed {
+					if entryTime.Before(cutoff) {
+						notifyFunc(filepath.ToSlash(entryPath), fs.EntryUncertain)
+						delete(changed, entryPath)
+					}
 				}
-				changed = make(map[string]fs.EntryType)
 			case event, ok := <-watcher.Events:
 				if !ok {
 					break loop
@@ -109,26 +112,10 @@ func (f *Fs) ChangeNotify(ctx context.Context, notifyFunc func(string, fs.EntryT
 				if event.Has(fsnotify.Create) {
 					fs.Debugf(f, "Create: %s", event.Name)
 					watchChan <- event.Name
-					<-replyChan // implies mutex on 'known' and 'changed'
+					<-replyChan // implies mutex on 'changed'
 				} else {
-					// Determine the entry type (file or directory) using 'known'. This
-					// is instead of Stat(), say, which is both expensive (a system
-					// call) and does not work if the entry has been removed (including
-					// removed before a creation or write event is handled).
 					entryPath, _ := filepath.Rel(f.root, event.Name)
-					entryType, ok := known[entryPath]
-					if !ok {
-						// By the time the create event was handled for this entry, it was
-						// already deleted, and it could not be determined whether it was
-						// a file or directory. It is ignored, as it does not affect the
-						// state of the filesystem between the previous tick and the next
-						// tick.
-					} else {
-						changed[entryPath] = entryType
-						if event.Has(fsnotify.Remove) || event.Has(fsnotify.Rename) {
-							delete(known, entryPath)
-						}
-					}
+					changed[entryPath] = time.Now()
 
 					// Internally, fsnotify stops watching directories that are removed
 					// or renamed, so it is not necessary to make updates to the watch
@@ -153,7 +140,7 @@ func (f *Fs) ChangeNotify(ctx context.Context, notifyFunc func(string, fs.EntryT
 		}
 	}()
 
-	// Start goroutine to establish watchers and update 'known'
+	// Start goroutine to establish watchers
 	go func() {
 		for {
 			path, ok := <-watchChan
@@ -189,16 +176,11 @@ func (f *Fs) ChangeNotify(ctx context.Context, notifyFunc func(string, fs.EntryT
 				} else if info.IsDir() {
 					entryType = fs.EntryDirectory
 				}
-			}
-
-			// Record known and possibly changed
-			known[entryPath] = entryType
-			if !initial {
-				changed[entryPath] = entryType
+				changed[entryPath] = time.Now()
 			}
 
 			if entryType == fs.EntryDirectory {
-				// Recursively watch the directory and populate 'known'
+				// Recursively watch the directory
 				err := watcher.Add(path)
 				if err != nil {
 					fs.Errorf(f, "Failed to start watching %s, already removed? %s", path, err)
@@ -215,20 +197,14 @@ func (f *Fs) ChangeNotify(ctx context.Context, notifyFunc func(string, fs.EntryT
 					}
 					for _, d := range entries {
 						entryPath := d.Remote()
-						entryType := fs.EntryObject
 						path := filepath.Join(f.root, entryPath)
 						info, err := os.Lstat(path)
 						if err != nil {
 							fs.Errorf(f, "Failed to stat %s, already removed? %s", path, err)
 							continue
 						}
-						if info.IsDir() {
-							entryType = fs.EntryDirectory
-						}
-
-						known[entryPath] = entryType
 						if !initial {
-							changed[entryPath] = entryType
+							changed[entryPath] = time.Now()
 						}
 						if info.IsDir() {
 							// Watch the directory.

@@ -4,7 +4,6 @@ package local
 
 import (
 	"context"
-	"os"
 	"path/filepath"
 	"time"
 	_ "unsafe" // use go:linkname
@@ -46,36 +45,9 @@ func (f *Fs) ChangeNotify(ctx context.Context, notifyFunc func(string, fs.EntryT
 		fs.Debugf(f, "Started watching %s", f.root)
 	}
 
-	// All known files and directories, used to call notifyFunc() with correct
-	// entry type even on remove and rename events.
-	known := make(map[string]fs.EntryType)
-
-	// Files and directories that have changed in the last poll window.
-	changed := make(map[string]fs.EntryType)
-
-	// Walk the root directory to populate 'known'
-	known[""] = fs.EntryDirectory
-	err = walk.Walk(ctx, f, "", false, -1, func(entryPath string, entries fs.DirEntries, err error) error {
-		if err != nil {
-			fs.Errorf(f, "Failed to walk %s, already removed? %s", entryPath, err)
-		} else {
-			entryType := fs.EntryObject
-			path := filepath.Join(f.root, entryPath)
-			info, err := os.Lstat(path)
-			if err != nil {
-				fs.Errorf(f, "Failed to stat %s, already removed? %s", path, err)
-			} else {
-				if info.IsDir() {
-					entryType = fs.EntryDirectory
-				}
-				known[entryPath] = entryType
-			}
-		}
-		return nil
-	})
-	if err != nil {
-		fs.Errorf(f, "Failed to walk root, already removed? %s", err)
-	}
+	// Files and directories changed in the last poll window, mapped to the
+	// time at which notification of the change was received.
+	changed := make(map[string]time.Time)
 
 	// Start goroutine to handle filesystem events
 	go func() {
@@ -109,11 +81,17 @@ func (f *Fs) ChangeNotify(ctx context.Context, notifyFunc func(string, fs.EntryT
 					tickerC = ticker.C
 				}
 			case <-tickerC:
-				// notify for all changed paths since last tick
-				for entryPath, entryType := range changed {
-					notifyFunc(filepath.ToSlash(entryPath), entryType)
+				// Notify for all paths that have changed since the last sync, and
+				// which were changed at least 1/10 of a second (1e8 nanoseconds)
+				// ago. The lag is for de-duping purposes during long writes, which
+				// can consist of multiple write notifications in quick succession.
+				cutoff := time.Now().Add(-1e8)
+				for entryPath, entryTime := range changed {
+					if entryTime.Before(cutoff) {
+						notifyFunc(filepath.ToSlash(entryPath), fs.EntryUncertain)
+						delete(changed, entryPath)
+					}
 				}
-				changed = make(map[string]fs.EntryType)
 			case event, ok := <-watcher.Events:
 				if !ok {
 					break loop
@@ -133,77 +111,27 @@ func (f *Fs) ChangeNotify(ctx context.Context, notifyFunc func(string, fs.EntryT
 				if event.Has(fsnotify.Chmod) {
 					fs.Debugf(f, "Chmod: %s", event.Name)
 				}
-
-				// Determine the entry type (file or directory) using 'known'. This
-				// is instead of Stat(), say, which is both expensive (a system
-				// call) and does not work if the entry has been removed (including
-				// removed before a creation or write event is handled).
 				entryPath, _ := filepath.Rel(f.root, event.Name)
-				entryType := fs.EntryObject
+				changed[entryPath] = time.Now()
 
 				if event.Has(fsnotify.Create) {
-					// Stat to determine whether entry is a file or directory
-					info, err := os.Lstat(event.Name)
-					if err != nil {
-						// Entry has already been deleted, so cannot determine whether it
-						// was a file or directory. It is ignored, as it does not affect
-						// the diff at the next tick.
-					} else if info.IsDir() {
-						entryType = fs.EntryDirectory
-						known[entryPath] = entryType
-						changed[entryPath] = entryType
-
-						// TODO: Recursively add to 'known' and 'changed'
-						//
-						// The issue here is that the walk triggers errors, "The
-						// process cannot access the file because it is being
-						// used by another process."
-						//
-						// err = walk.Walk(ctx, f, entryPath, false, -1, func(entryPath string, entries fs.DirEntries, err error) error {
-						// 	if err != nil {
-						// 		fs.Errorf(f, "Failed to walk %s, already removed? %s", entryPath, err)
-						// 	} else {
-						// 		entryType := fs.EntryObject
-						// 		path := filepath.Join(f.root, entryPath)
-						// 		info, err := os.Lstat(path)
-						// 		if err != nil {
-						// 			fs.Errorf(f, "Failed to stat %s, already removed? %s", path, err)
-						// 		} else {
-						// 			if info.IsDir() {
-						// 				entryType = fs.EntryDirectory
-						// 			}
-						// 			known[entryPath] = entryType
-						// 		}
-						// 	}
-						// 	return nil
-						// })
-						// if err != nil {
-						// 	fs.Errorf(f, "Failed to walk %s, already removed? %s", entryPath, err)
-						// }
-					} else {
-						known[entryPath] = entryType
-						changed[entryPath] = entryType
-					}
-				} else {
-					entryType, ok := known[entryPath]
-					if !ok {
-						// By the time the create event was handled for this
-						// entry, it was already removed, and it could not be
-						// determined whether it was a file or directory. It is
-						// ignored, as it does not affect the diff at the next
-						// tick.
-					} else {
-						changed[entryPath] = entryType
-						if event.Has(fsnotify.Remove) || event.Has(fsnotify.Rename) {
-							delete(known, entryPath)
-							// TODO: Recursively remove from 'known' and
-							// add to 'changed'.
+					err = walk.Walk(ctx, f, entryPath, false, -1, func(entryPath string, entries fs.DirEntries, err error) error {
+						if err != nil {
+							// The entry has already been removed, and we do not know what
+							// type it was. It can be ignored, as this means it has been both
+							// created and removed since the last tick, which will not change
+							// the diff at the next tick.
+							fs.Errorf(f, "Failed to walk %s, already removed? %s", entryPath, err)
 						}
+						for _, d := range entries {
+							entryPath := d.Remote()
+							changed[entryPath] = time.Now()
+						}
+						return nil
+					})
+					if err != nil {
+						fs.Errorf(f, "Failed to walk %s, already removed? %s", entryPath, err)
 					}
-
-					// Internally, fsnotify stops watching directories that are
-					// removed or renamed, so it is not necessary to make
-					// updates to the watch list.
 				}
 			case err, ok := <-watcher.Errors:
 				if !ok {

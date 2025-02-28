@@ -271,6 +271,21 @@ func isMetadataFile(filename string) bool {
 	return strings.HasSuffix(filename, metaFileExt)
 }
 
+// Checks whether a file is a compressed file
+func isCompressedFile(filename string) bool {
+	return strings.HasSuffix(filename, gzFileExt)
+}
+
+// Checks whether a file is an uncompressed file
+func isUncompressedFile(filename string) bool {
+	return strings.HasSuffix(filename, uncompressedFileExt)
+}
+
+// Checks whether a path is a file, all of which must have one of the special file extensions
+func isFile(filename string) bool {
+	return isMetadataFile(filename) || isCompressedFile(filename) || isUncompressedFile(filename)
+}
+
 // Checks whether a file is a metadata file and returns the original
 // file name and a flag indicating whether it was a metadata file or
 // not.
@@ -1022,6 +1037,17 @@ func (f *Fs) ChangeNotify(ctx context.Context, notifyFunc func(string, fs.EntryT
 			wrappedPath    string
 			isMetadataFile bool
 		)
+
+		// Uncertain entry types can be resolved by the fact that all files in the compressed
+		// backend have a special file extension
+		if entryType == fs.EntryUncertain {
+			if isFile(path) {
+				entryType = fs.EntryObject
+			} else {
+				entryType = fs.EntryDirectory
+			}
+		}
+
 		switch entryType {
 		case fs.EntryDirectory:
 			wrappedPath = path
