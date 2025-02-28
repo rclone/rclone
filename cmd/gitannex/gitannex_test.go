@@ -140,7 +140,6 @@ var messageParserTestCases = []messageParserTestCase{
 		"OneLongFinalParameter",
 		func(t *testing.T) {
 			for _, lineEnding := range []string{"", "\n", "\r", "\r\n", "\n\r"} {
-				lineEnding := lineEnding
 				testName := fmt.Sprintf("lineEnding%x", lineEnding)
 
 				t.Run(testName, func(t *testing.T) {
@@ -184,7 +183,6 @@ var messageParserTestCases = []messageParserTestCase{
 
 func TestMessageParser(t *testing.T) {
 	for _, testCase := range messageParserTestCases {
-		testCase := testCase
 		t.Run(testCase.label, func(t *testing.T) {
 			t.Parallel()
 			testCase.testFunc(t)
@@ -1171,11 +1169,6 @@ func TestMain(m *testing.M) {
 func TestGitAnnexFstestBackendCases(t *testing.T) {
 
 	for _, testCase := range fstestTestCases {
-		// TODO: Remove this when rclone requires a Go version >= 1.22. Future
-		// versions of Go fix the semantics of capturing a range variable.
-		// https://go.dev/blog/loopvar-preview
-		testCase := testCase
-
 		t.Run(testCase.label, func(t *testing.T) {
 			r := fstest.NewRun(t)
 			t.Cleanup(func() { r.Finalise() })
