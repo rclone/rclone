@@ -535,6 +535,127 @@ var fstestTestCases = []testCase{
 		expectedError: "remote does not exist:",
 	},
 	{
+		label: "HandlesPrepareWithNonexistentBackendAsRemote",
+		testProtocolFunc: func(t *testing.T, h *testState) {
+			h.requireReadLineExact("VERSION 1")
+			h.requireWriteLine("PREPARE")
+			h.requireReadLineExact("GETCONFIG rcloneremotename")
+			h.requireWriteLine("VALUE :nonexistentBackend:")
+			h.requireReadLineExact("GETCONFIG rcloneprefix")
+			h.requireWriteLine("VALUE /foo")
+			h.requireReadLineExact("GETCONFIG rclonelayout")
+			h.requireWriteLine("VALUE foo")
+			h.requireReadLineExact("PREPARE-SUCCESS")
+
+			require.Equal(t, ":nonexistentBackend:", h.server.configRcloneRemoteName)
+			require.Equal(t, "/foo", h.server.configPrefix)
+			require.True(t, h.server.configsDone)
+
+			h.requireWriteLine("INITREMOTE")
+			h.requireReadLineExact("INITREMOTE-FAILURE backend does not exist: nonexistentBackend")
+
+			require.NoError(t, h.mockStdinW.Close())
+		},
+		expectedError: "backend does not exist:",
+	},
+	{
+		label: "HandlesPrepareWithBackendAsRemote",
+		testProtocolFunc: func(t *testing.T, h *testState) {
+			h.requireReadLineExact("VERSION 1")
+			h.requireWriteLine("PREPARE")
+			h.requireReadLineExact("GETCONFIG rcloneremotename")
+			h.requireWriteLine("VALUE :local:")
+			h.requireReadLineExact("GETCONFIG rcloneprefix")
+			h.requireWriteLine("VALUE /foo")
+			h.requireReadLineExact("GETCONFIG rclonelayout")
+			h.requireWriteLine("VALUE foo")
+			h.requireReadLineExact("PREPARE-SUCCESS")
+
+			require.Equal(t, ":local:", h.server.configRcloneRemoteName)
+			require.Equal(t, "/foo", h.server.configPrefix)
+			require.True(t, h.server.configsDone)
+
+			h.requireWriteLine("INITREMOTE")
+			h.requireReadLineExact("INITREMOTE-SUCCESS")
+
+			require.NoError(t, h.mockStdinW.Close())
+		},
+	},
+	{
+		label: "HandlesPrepareWithBackendMissingTrailingColonAsRemote",
+		testProtocolFunc: func(t *testing.T, h *testState) {
+			h.requireReadLineExact("VERSION 1")
+			h.requireWriteLine("PREPARE")
+			h.requireReadLineExact("GETCONFIG rcloneremotename")
+			h.requireWriteLine("VALUE :local")
+			h.requireReadLineExact("GETCONFIG rcloneprefix")
+			h.requireWriteLine("VALUE /foo")
+			h.requireReadLineExact("GETCONFIG rclonelayout")
+			h.requireWriteLine("VALUE foo")
+			h.requireReadLineExact("PREPARE-SUCCESS")
+
+			require.Equal(t, ":local", h.server.configRcloneRemoteName)
+			require.Equal(t, "/foo", h.server.configPrefix)
+			require.True(t, h.server.configsDone)
+
+			h.requireWriteLine("INITREMOTE")
+			h.requireReadLineExact("INITREMOTE-FAILURE remote could not be parsed as a backend: :local")
+
+			require.NoError(t, h.mockStdinW.Close())
+		},
+		expectedError: "remote could not be parsed as a backend:",
+	},
+	{
+		label: "HandlesPrepareWithBackendContainingOptionsAsRemote",
+		testProtocolFunc: func(t *testing.T, h *testState) {
+			h.requireReadLineExact("VERSION 1")
+			h.requireWriteLine("PREPARE")
+			h.requireReadLineExact("GETCONFIG rcloneremotename")
+			h.requireWriteLine("VALUE :local,description=banana:")
+			h.requireReadLineExact("GETCONFIG rcloneprefix")
+			h.requireWriteLine("VALUE /foo")
+			h.requireReadLineExact("GETCONFIG rclonelayout")
+			h.requireWriteLine("VALUE foo")
+			h.requireReadLineExact("PREPARE-SUCCESS")
+
+			require.Equal(t, ":local,description=banana:", h.server.configRcloneRemoteName)
+			require.Equal(t, "/foo", h.server.configPrefix)
+			require.True(t, h.server.configsDone)
+
+			h.requireWriteLine("INITREMOTE")
+			h.requireReadLineExact("INITREMOTE-SUCCESS")
+
+			require.NoError(t, h.mockStdinW.Close())
+		},
+	},
+	{
+		label: "HandlesPrepareWithBackendContainingOptionsAndIllegalPathAsRemote",
+		testProtocolFunc: func(t *testing.T, h *testState) {
+			h.requireReadLineExact("VERSION 1")
+			h.requireWriteLine("PREPARE")
+			h.requireReadLineExact("GETCONFIG rcloneremotename")
+			h.requireWriteLine("VALUE :local,description=banana:/bad/path")
+			h.requireReadLineExact("GETCONFIG rcloneprefix")
+			h.requireWriteLine("VALUE /foo")
+			h.requireReadLineExact("GETCONFIG rclonelayout")
+			h.requireWriteLine("VALUE foo")
+			h.requireReadLineExact("PREPARE-SUCCESS")
+
+			require.Equal(t, ":local,description=banana:/bad/path", h.server.configRcloneRemoteName)
+			require.Equal(t, "/foo", h.server.configPrefix)
+			require.True(t, h.server.configsDone)
+
+			h.requireWriteLine("INITREMOTE")
+			require.Regexp(t,
+				regexp.MustCompile("^INITREMOTE-FAILURE backend must not have a path: "),
+				h.requireReadLine(),
+			)
+
+			require.NoError(t, h.mockStdinW.Close())
+		},
+		expectedError: "backend must not have a path:",
+	},
+	{
 		label: "HandlesPrepareWithSynonyms",
 		testProtocolFunc: func(t *testing.T, h *testState) {
 			h.requireReadLineExact("VERSION 1")
@@ -1178,11 +1299,11 @@ func TestGitAnnexFstestBackendCases(t *testing.T) {
 			require.NoError(t, err)
 
 			// The gitannex command requires the `rcloneremotename` is the name
-			// of a remote or exactly ":local", so the empty string will not
-			// suffice.
+			// of a remote or a colon-prefixed backend name like ":local:", so
+			// the empty string will not suffice.
 			if remoteName == "" {
 				require.True(t, r.Fremote.Features().IsLocal)
-				remoteName = ":local"
+				remoteName = ":local:"
 			}
 
 			handle := makeTestState(t)
