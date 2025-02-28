@@ -165,6 +165,11 @@ var OptionsInfo = fs.Options{{
 	Default: getGID(),
 	Help:    "Override the gid field set by the filesystem (not supported on Windows)",
 	Groups:  "VFS",
+}, {
+	Name:    "vfs_metadata_extension",
+	Default: "",
+	Help:    "Set the extension to read metadata from.",
+	Groups:  "VFS",
 }}
 
 func init() {
@@ -204,6 +209,7 @@ type Options struct {
 	UsedIsSize         bool          `config:"vfs_used_is_size"`     // if true, use the `rclone size` algorithm for Used size
 	FastFingerprint    bool          `config:"vfs_fast_fingerprint"` // if set use fast fingerprints
 	DiskSpaceTotalSize fs.SizeSuffix `config:"vfs_disk_space_total_size"`
+	MetadataExtension  string        `config:"vfs_metadata_extension"` // if set respond to files with this extension with metadata
 }
 
 // Opt is the default options modified by the environment variables and command line flags

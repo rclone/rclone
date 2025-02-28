@@ -423,3 +423,43 @@ and compute the total used space itself.
 _WARNING._ Contrary to `rclone size`, this flag ignores filters so that the
 result is accurate. However, this is very inefficient and may cost lots of API
 calls resulting in extra charges. Use it as a last resort and only with caching.
+
+### VFS Metadata
+
+If you use the `--vfs-metadata-extension` flag you can get the VFS to
+expose files which contain the [metadata](/docs/#metadata) as a JSON
+blob. These files will not appear in the directory listing, but can be
+`stat`-ed and opened and once they have been they **will** appear in
+directory listings until the directory cache expires.
+
+Note that some backends won't create metadata unless you pass in the
+`--metadata` flag.
+
+For example, using `rclone mount` with `--metadata --vfs-metadata-extension .metadata`
+we get
+
+```
+$ ls -l /mnt/
+total 1048577
+-rw-rw-r-- 1 user user 1073741824 Mar  3 16:03 1G
+
+$ cat /mnt/1G.metadata
+{
+        "atime": "2025-03-04T17:34:22.317069787Z",
+        "btime": "2025-03-03T16:03:37.708253808Z",
+        "gid": "1000",
+        "mode": "100664",
+        "mtime": "2025-03-03T16:03:39.640238323Z",
+        "uid": "1000"
+}
+
+$ ls -l /mnt/
+total 1048578
+-rw-rw-r-- 1 user user 1073741824 Mar  3 16:03 1G
+-rw-rw-r-- 1 user user        185 Mar  3 16:03 1G.metadata
+```
+
+If the file has no metadata it will be returned as `{}` and if there
+is an error reading the metadata the error will be returned as
+`{"error":"error string"}`.
+
