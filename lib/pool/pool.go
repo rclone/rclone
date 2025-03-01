@@ -82,7 +82,7 @@ func (bp *Pool) put(buf []byte) {
 // flush n entries from the entire buffer pool
 // Call with mu held
 func (bp *Pool) flush(n int) {
-	for i := 0; i < n; i++ {
+	for range n {
 		bp.freeBuffer(bp.get())
 	}
 	bp.minFill = len(bp.cache)

@@ -424,7 +424,7 @@ func (f *Fs) newSingleConnClient(ctx context.Context) (*rest.Client, error) {
 	})
 	// Set our own http client in the context
 	ctx = oauthutil.Context(ctx, baseClient)
-	// create a new oauth client, re-use the token source
+	// create a new oauth client, reuse the token source
 	oAuthClient := oauth2.NewClient(ctx, f.ts)
 	return rest.NewClient(oAuthClient).SetRoot("https://" + f.opt.Hostname), nil
 }
@@ -990,10 +990,7 @@ func (f *Fs) About(ctx context.Context) (usage *fs.Usage, err error) {
 	if err != nil {
 		return nil, err
 	}
-	free := q.Quota - q.UsedQuota
-	if free < 0 {
-		free = 0
-	}
+	free := max(q.Quota-q.UsedQuota, 0)
 	usage = &fs.Usage{
 		Total: fs.NewUsageValue(q.Quota),     // quota of bytes that can be used
 		Used:  fs.NewUsageValue(q.UsedQuota), // bytes in use
@@ -1324,7 +1321,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	if err != nil {
 		// sometimes pcloud leaves a half complete file on
 		// error, so delete it if it exists, trying a few times
-		for i := 0; i < 5; i++ {
+		for range 5 {
 			delObj, delErr := o.fs.NewObject(ctx, o.remote)
 			if delErr == nil && delObj != nil {
 				_ = delObj.Remove(ctx)

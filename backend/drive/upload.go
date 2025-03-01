@@ -177,10 +177,7 @@ func (rx *resumableUpload) Upload(ctx context.Context) (*drive.File, error) {
 			if start >= rx.ContentLength {
 				break
 			}
-			reqSize = rx.ContentLength - start
-			if reqSize >= int64(rx.f.opt.ChunkSize) {
-				reqSize = int64(rx.f.opt.ChunkSize)
-			}
+			reqSize = min(rx.ContentLength-start, int64(rx.f.opt.ChunkSize))
 			chunk = readers.NewRepeatableLimitReaderBuffer(rx.Media, buf, reqSize)
 		} else {
 			// If size unknown read into buffer

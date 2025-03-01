@@ -638,7 +638,7 @@ func (c *pikpakClient) SetCaptchaTokener(ctx context.Context, m configmap.Mapper
 	return c
 }
 
-func (c *pikpakClient) CallJSON(ctx context.Context, opts *rest.Opts, request interface{}, response interface{}) (resp *http.Response, err error) {
+func (c *pikpakClient) CallJSON(ctx context.Context, opts *rest.Opts, request any, response any) (resp *http.Response, err error) {
 	if c.captcha != nil {
 		token, err := c.captcha.Token(opts)
 		if err != nil || token == "" {

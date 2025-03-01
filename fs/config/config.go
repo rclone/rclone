@@ -386,7 +386,7 @@ func SaveConfig() {
 	ctx := context.Background()
 	ci := fs.GetConfig(ctx)
 	var err error
-	for i := 0; i < ci.LowLevelRetries+1; i++ {
+	for range ci.LowLevelRetries + 1 {
 		if err = LoadedData().Save(); err == nil {
 			return
 		}
@@ -514,6 +514,8 @@ type UpdateRemoteOpt struct {
 	Obscure bool `json:"obscure"`
 	// Treat all passwords as obscured
 	NoObscure bool `json:"noObscure"`
+	// Don't provide any output
+	NoOutput bool `json:"noOutput"`
 	// Don't interact with the user - return questions
 	NonInteractive bool `json:"nonInteractive"`
 	// If set then supply state and result parameters to continue the process

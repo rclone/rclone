@@ -51,7 +51,7 @@ var helpCommand = &cobra.Command{
 	Short: Root.Short,
 	Long:  Root.Long,
 	Run: func(command *cobra.Command, args []string) {
-		Root.SetOutput(os.Stdout)
+		Root.SetOut(os.Stdout)
 		_ = Root.Usage()
 	},
 }
@@ -85,7 +85,7 @@ var helpFlags = &cobra.Command{
 			} else if len(args) > 0 {
 				Root.SetUsageTemplate(filterFlagsMultiGroupTemplate)
 			}
-			Root.SetOutput(os.Stdout)
+			Root.SetOut(os.Stdout)
 		}
 		_ = command.Usage()
 	},
@@ -106,7 +106,7 @@ var helpBackend = &cobra.Command{
 	Short: "List full info about a backend",
 	Run: func(command *cobra.Command, args []string) {
 		if len(args) == 0 {
-			Root.SetOutput(os.Stdout)
+			Root.SetOut(os.Stdout)
 			_ = command.Usage()
 			return
 		}
@@ -273,7 +273,7 @@ func showBackends() {
 	fmt.Printf("  rclone help backend <name>\n")
 }
 
-func quoteString(v interface{}) string {
+func quoteString(v any) string {
 	switch v.(type) {
 	case string:
 		return fmt.Sprintf("%q", v)

@@ -228,7 +228,7 @@ func rcForget(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 	return out, nil
 }
 
-func getDuration(k string, v interface{}) (time.Duration, error) {
+func getDuration(k string, v any) (time.Duration, error) {
 	s, ok := v.(string)
 	if !ok {
 		return 0, fmt.Errorf("value must be string %q=%v", k, v)
@@ -278,7 +278,7 @@ func getStatus(vfs *VFS, in rc.Params) (out rc.Params, err error) {
 	return rc.Params{
 		"enabled":   vfs.Opt.PollInterval != 0,
 		"supported": vfs.pollChan != nil,
-		"interval": map[string]interface{}{
+		"interval": map[string]any{
 			"raw":     vfs.Opt.PollInterval,
 			"seconds": time.Duration(vfs.Opt.PollInterval) / time.Second,
 			"string":  vfs.Opt.PollInterval.String(),
@@ -464,7 +464,7 @@ the |--vfs-cache-mode| is off, it will return an empty result.
        ],
     }
 
-The |expiry| time is the time until the file is elegible for being
+The |expiry| time is the time until the file is eligible for being
 uploaded in floating point seconds. This may go negative. As rclone
 only transfers |--transfers| files at once, only the lowest
 |--transfers| expiry times will have |uploading| as |true|. So there

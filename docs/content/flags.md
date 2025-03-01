@@ -9,6 +9,8 @@ description: "Rclone Global Flags"
 This describes the global flags available to every rclone command
 split into groups.
 
+See the [Options section](/docs/#options) for syntax and usage advice.
+
 
 ## Copy
 

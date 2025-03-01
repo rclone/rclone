@@ -15,12 +15,16 @@ import (
 
 // TestIntegration runs integration tests against the remote
 func TestIntegration(t *testing.T) {
+	name := "TestAzureBlob"
 	fstests.Run(t, &fstests.Opt{
-		RemoteName:  "TestAzureBlob:",
+		RemoteName:  name + ":",
 		NilObject:   (*Object)(nil),
 		TiersToTest: []string{"Hot", "Cool", "Cold"},
 		ChunkedUpload: fstests.ChunkedUploadConfig{
 			MinChunkSize: defaultChunkSize,
+		},
+		ExtraConfig: []fstests.ExtraConfigItem{
+			{Name: name, Key: "use_copy_blob", Value: "false"},
 		},
 	})
 }
@@ -40,6 +44,7 @@ func TestIntegration2(t *testing.T) {
 		},
 		ExtraConfig: []fstests.ExtraConfigItem{
 			{Name: name, Key: "directory_markers", Value: "true"},
+			{Name: name, Key: "use_copy_blob", Value: "false"},
 		},
 	})
 }
@@ -48,8 +53,13 @@ func (f *Fs) SetUploadChunkSize(cs fs.SizeSuffix) (fs.SizeSuffix, error) {
 	return f.setUploadChunkSize(cs)
 }
 
+func (f *Fs) SetCopyCutoff(cs fs.SizeSuffix) (fs.SizeSuffix, error) {
+	return f.setCopyCutoff(cs)
+}
+
 var (
 	_ fstests.SetUploadChunkSizer = (*Fs)(nil)
+	_ fstests.SetCopyCutoffer     = (*Fs)(nil)
 )
 
 func TestValidateAccessTier(t *testing.T) {

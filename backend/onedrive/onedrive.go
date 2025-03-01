@@ -131,7 +131,7 @@ func init() {
 					Help:  "Microsoft Cloud for US Government",
 				}, {
 					Value: regionDE,
-					Help:  "Microsoft Cloud Germany",
+					Help:  "Microsoft Cloud Germany (deprecated - try " + regionGlobal + " region first).",
 				}, {
 					Value: regionCN,
 					Help:  "Azure and Office 365 operated by Vnet Group in China",
@@ -2532,10 +2532,7 @@ func (o *Object) uploadMultipart(ctx context.Context, in io.Reader, src fs.Objec
 	remaining := size
 	position := int64(0)
 	for remaining > 0 {
-		n := int64(o.fs.opt.ChunkSize)
-		if remaining < n {
-			n = remaining
-		}
+		n := min(remaining, int64(o.fs.opt.ChunkSize))
 		seg := readers.NewRepeatableReader(io.LimitReader(in, n))
 		fs.Debugf(o, "Uploading segment %d/%d size %d", position, size, n)
 		info, err = o.uploadFragment(ctx, uploadURL, position, size, seg, n, options...)

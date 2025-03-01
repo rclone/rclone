@@ -619,6 +619,11 @@ it to `false`.  It is also possible to specify `--boolean=false` or
 parsed as `--boolean` and the `false` is parsed as an extra command
 line argument for rclone.
 
+Options documented to take a `stringArray` parameter accept multiple 
+values. To pass more than one value, repeat the option; for example: 
+`--include value1 --include value2`.
+
+
 ### Time or duration options {#time-option}
 
 TIME or DURATION options can be specified as a duration string or a
@@ -2930,7 +2935,7 @@ so they take exactly the same form.
 The options set by environment variables can be seen with the `-vv` flag, e.g. `rclone version -vv`.
 
 Options that can appear multiple times (type `stringArray`) are
-treated slighly differently as environment variables can only be
+treated slightly differently as environment variables can only be
 defined once. In order to allow a simple mechanism for adding one or
 many items, the input is treated as a [CSV encoded](https://godoc.org/encoding/csv)
 string. For example

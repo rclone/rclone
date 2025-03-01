@@ -7,6 +7,8 @@ versionIntroduced: v1.65
 ---
 # rclone serve nfs
 
+*Not available in Windows.*
+
 Serve the remote as an NFS mount
 
 ## Synopsis

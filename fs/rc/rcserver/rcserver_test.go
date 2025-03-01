@@ -69,7 +69,7 @@ func TestRcServer(t *testing.T) {
 	// Do the simplest possible test to check the server is alive
 	// Do it a few times to wait for the server to start
 	var resp *http.Response
-	for i := 0; i < 10; i++ {
+	for range 10 {
 		resp, err = http.Get(testURL + "file.txt")
 		if err == nil {
 			break
@@ -358,7 +358,7 @@ func TestRemoteServing(t *testing.T) {
 			URL:    "[notfoundremote:]/",
 			Status: http.StatusInternalServerError,
 			Expected: `{
-	"error": "failed to make Fs: didn't find section in config file",
+	"error": "failed to make Fs: didn't find section in config file (\"notfoundremote\")",
 	"input": null,
 	"path": "/",
 	"status": 500
@@ -843,7 +843,7 @@ func TestContentTypeJSON(t *testing.T) {
 }
 
 func normalizeJSON(t *testing.T, jsonStr string) string {
-	var jsonObj map[string]interface{}
+	var jsonObj map[string]any
 	err := json.Unmarshal([]byte(jsonStr), &jsonObj)
 	require.NoError(t, err, "JSON unmarshalling failed")
 	normalizedJSON, err := json.Marshal(jsonObj)

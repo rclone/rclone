@@ -118,7 +118,7 @@ func testFlusher(t *testing.T, useMmap bool, unreliable bool) {
 
 	checkFlushHasHappened := func(desired int) {
 		var n int
-		for i := 0; i < 10; i++ {
+		for range 10 {
 			time.Sleep(100 * time.Millisecond)
 			n = bp.InPool()
 			if n <= desired {

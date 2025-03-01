@@ -537,7 +537,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 // Fill up (or reset) the buffer tokens
 func (f *Fs) fillBufferTokens() {
 	f.bufferTokens = make(chan []byte, f.ci.Transfers)
-	for i := 0; i < f.ci.Transfers; i++ {
+	for range f.ci.Transfers {
 		f.bufferTokens <- nil
 	}
 }

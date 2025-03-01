@@ -108,7 +108,7 @@ func (conf *Config) MakeOauth2Config() *oauth2.Config {
 	return &oauth2.Config{
 		ClientID:     conf.ClientID,
 		ClientSecret: conf.ClientSecret,
-		RedirectURL:  RedirectLocalhostURL,
+		RedirectURL:  conf.RedirectURL,
 		Scopes:       conf.Scopes,
 		Endpoint: oauth2.Endpoint{
 			AuthURL:   conf.AuthURL,

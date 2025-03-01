@@ -809,7 +809,6 @@ put them back in again.` >}}
   * ben-ba <benjamin.brauner@gmx.de>
   * Eli Orzitzer <e_orz@yahoo.com>
   * Anthony Metzidis <anthony.metzidis@gmail.com>
-  * emyarod <afw5059@gmail.com>
   * keongalvin <keongalvin@gmail.com>
   * rarspace01 <rarspace01@users.noreply.github.com>
   * Paul Stern <paulstern45@gmail.com>
@@ -925,3 +924,26 @@ put them back in again.` >}}
   * ToM <thomas.faucher@bibliosansfrontieres.org>
   * TAKEI Yuya <853320+takei-yuya@users.noreply.github.com>
   * Francesco Frassinelli <fraph24@gmail.com> <francesco.frassinelli@nina.no>
+  * Matt Ickstadt <mattico8@gmail.com> <matt@beckenterprises.com>
+  * Spencer McCullough <mccullough.spencer@gmail.com>
+  * Jonathan Giannuzzi <jonathan@giannuzzi.me>
+  * Christoph Berger <github@christophberger.com>
+  * Tim White <tim.white@su.org.au>
+  * Robin Schneider <robin.schneider@stackit.cloud>
+  * izouxv <izouxv@users.noreply.github.com>
+  * Moises Lima <mozlima@users.noreply.github.com>
+  * Bruno Fernandes <bruno.fernandes1996@hotmail.com>
+  * Corentin Barreau <corentin@archive.org>
+  * hiddenmarten <hiddenmarten@gmail.com>
+  * Trevor Starick <trevor.starick@gmail.com>
+  * b-wimmer <132347192+b-wimmer@users.noreply.github.com>
+  * Jess <jess@jessie.cafe>
+  * Zachary Vorhies <zachvorhies@protonmail.com>
+  * Alexander Minbaev <minbaev@gmail.com>
+  * Joel K Biju <joelkbiju18@gmail.com>
+  * ll3006 <doublel3006@gmail.com>
+  * jbagwell-akamai <113531113+jbagwell-akamai@users.noreply.github.com>
+  * Michael Kebe <michael.kebe@gmail.com>
+  * Lorenz Brun <lorenz@brun.one>
+  * Dave Vasilevsky <djvasi@gmail.com> <dave@vasilevsky.ca>
+  * luzpaz <luzpaz@users.noreply.github.com>

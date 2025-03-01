@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"runtime"
+	"slices"
 	"sort"
 	"testing"
 	"time"
@@ -316,7 +318,7 @@ func TestDirReadDirAll(t *testing.T) {
 		features := r.Fremote.Features()
 		if features.CanHaveEmptyDirectories {
 			// snip out virtualDir2 which will only be present if can't have empty dirs
-			want = append(want[:2], want[3:]...)
+			want = slices.Delete(want, 2, 3)
 		}
 		checkListing(t, dir, want)
 
@@ -654,4 +656,39 @@ func TestDirFileOpen(t *testing.T) {
 	fi, err = vfs.Stat("dir/sub/file2")
 	require.NoError(t, err)
 	assert.Equal(t, int64(12), fi.Size())
+}
+
+func TestDirEntryModTimeInvalidation(t *testing.T) {
+	r, vfs := newTestVFS(t)
+	features := r.Fremote.Features()
+	if !features.DirModTimeUpdatesOnWrite {
+		t.Skip("Need DirModTimeUpdatesOnWrite")
+	}
+	if features.IsLocal && runtime.GOOS == "windows" {
+		t.Skip("dirent modtime is unreliable on Windows filesystems")
+	}
+
+	// Needs to be less than 2x the wait time below, othewrwise the entry
+	// gets cleared out before it had a chance to be updated.
+	vfs.Opt.DirCacheTime = fs.Duration(50 * time.Millisecond)
+
+	r.WriteObject(context.Background(), "dir/file1", "file1 contents", t1)
+
+	node, err := vfs.Stat("dir")
+	require.NoError(t, err)
+	modTime1 := node.(*Dir).DirEntry().ModTime(context.Background())
+
+	// Wait some time, then write another file which must update ModTime of
+	// the directory.
+	time.Sleep(75 * time.Millisecond)
+	r.WriteObject(context.Background(), "dir/file2", "file2 contents", t2)
+
+	node2, err := vfs.Stat("dir")
+	require.NoError(t, err)
+	modTime2 := node2.(*Dir).DirEntry().ModTime(context.Background())
+
+	// ModTime of directory must be different after second file was written.
+	if modTime1.Equal(modTime2) {
+		t.Error("ModTime not invalidated")
+	}
 }

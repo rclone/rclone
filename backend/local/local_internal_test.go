@@ -86,7 +86,7 @@ func TestVerifyCopy(t *testing.T) {
 	require.NoError(t, err)
 	src.(*Object).fs.opt.NoCheckUpdated = true
 
-	for i := 0; i < 100; i++ {
+	for i := range 100 {
 		go r.WriteFile(src.Remote(), fmt.Sprintf("some new content %d", i), src.ModTime(context.Background()))
 	}
 	_, err = operations.Copy(context.Background(), r.Fremote, nil, filePath+"2", src)

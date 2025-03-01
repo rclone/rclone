@@ -11,7 +11,7 @@ import (
 type logger struct{}
 
 // print log message
-func (l logger) Print(level gofakes3.LogLevel, v ...interface{}) {
+func (l logger) Print(level gofakes3.LogLevel, v ...any) {
 	var s string
 	if len(v) == 0 {
 		s = ""

@@ -4,6 +4,7 @@ package googlephotos
 
 import (
 	"path"
+	"slices"
 	"strings"
 	"sync"
 
@@ -119,7 +120,7 @@ func (as *albums) _del(album *api.Album) {
 		dirs := as.path[dir]
 		for i, dir := range dirs {
 			if dir == leaf {
-				dirs = append(dirs[:i], dirs[i+1:]...)
+				dirs = slices.Delete(dirs, i, i+1)
 				break
 			}
 		}

@@ -25,7 +25,7 @@ import (
 )
 
 const (
-	minSleep      = 100 * time.Millisecond
+	minSleep      = 10 * time.Millisecond
 	maxSleep      = 2 * time.Second
 	decayConstant = 2 // bigger for slower decay, exponential
 )
@@ -77,6 +77,16 @@ Leave blank if not sure.
 `,
 			Sensitive: true,
 		}, {
+			Name: "use_kerberos",
+			Help: `Use Kerberos authentication.
+
+If set, rclone will use Kerberos authentication instead of NTLM. This
+requires a valid Kerberos configuration and credentials cache to be
+available, either in the default locations or as specified by the
+KRB5_CONFIG and KRB5CCNAME environment variables.
+`,
+			Default: false,
+		}, {
 			Name:    "idle_timeout",
 			Default: fs.Duration(60 * time.Second),
 			Help: `Max time before closing idle connections.
@@ -126,6 +136,7 @@ type Options struct {
 	Pass            string      `config:"pass"`
 	Domain          string      `config:"domain"`
 	SPN             string      `config:"spn"`
+	UseKerberos     bool        `config:"use_kerberos"`
 	HideSpecial     bool        `config:"hide_special_share"`
 	CaseInsensitive bool        `config:"case_insensitive"`
 	IdleTimeout     fs.Duration `config:"idle_timeout"`
@@ -196,7 +207,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		return nil, err
 	}
 	stat, err := cn.smbShare.Stat(f.toSambaPath(dir))
-	f.putConnection(&cn)
+	f.putConnection(&cn, err)
 	if err != nil {
 		// ignore stat error here
 		return f, nil
@@ -257,7 +268,7 @@ func (f *Fs) findObjectSeparate(ctx context.Context, share, path string) (fs.Obj
 		return nil, err
 	}
 	stat, err := cn.smbShare.Stat(f.toSambaPath(path))
-	f.putConnection(&cn)
+	f.putConnection(&cn, err)
 	if err != nil {
 		return nil, translateError(err, false)
 	}
@@ -279,7 +290,7 @@ func (f *Fs) Mkdir(ctx context.Context, dir string) (err error) {
 		return err
 	}
 	err = cn.smbShare.MkdirAll(f.toSambaPath(path), 0o755)
-	f.putConnection(&cn)
+	f.putConnection(&cn, err)
 	return err
 }
 
@@ -294,7 +305,7 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 		return err
 	}
 	err = cn.smbShare.Remove(f.toSambaPath(path))
-	f.putConnection(&cn)
+	f.putConnection(&cn, err)
 	return err
 }
 
@@ -364,7 +375,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (_ fs.Objec
 		return nil, err
 	}
 	err = cn.smbShare.Rename(f.toSambaPath(srcPath), f.toSambaPath(dstPath))
-	f.putConnection(&cn)
+	f.putConnection(&cn, err)
 	if err != nil {
 		return nil, translateError(err, false)
 	}
@@ -401,7 +412,7 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 	if err != nil {
 		return err
 	}
-	defer f.putConnection(&cn)
+	defer f.putConnection(&cn, err)
 
 	_, err = cn.smbShare.Stat(dstPath)
 	if os.IsNotExist(err) {
@@ -419,7 +430,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 	if err != nil {
 		return nil, err
 	}
-	defer f.putConnection(&cn)
+	defer f.putConnection(&cn, err)
 
 	if share == "" {
 		shares, err := cn.smbSession.ListSharenames()
@@ -463,7 +474,7 @@ func (f *Fs) About(ctx context.Context) (_ *fs.Usage, err error) {
 		return nil, err
 	}
 	stat, err := cn.smbShare.Statfs(dir)
-	f.putConnection(&cn)
+	f.putConnection(&cn, err)
 	if err != nil {
 		return nil, err
 	}
@@ -545,7 +556,7 @@ func (f *Fs) ensureDirectory(ctx context.Context, share, _path string) error {
 		return err
 	}
 	err = cn.smbShare.MkdirAll(f.toSambaPath(dir), 0o755)
-	f.putConnection(&cn)
+	f.putConnection(&cn, err)
 	return err
 }
 
@@ -593,7 +604,7 @@ func (o *Object) SetModTime(ctx context.Context, t time.Time) (err error) {
 	if err != nil {
 		return err
 	}
-	defer o.fs.putConnection(&cn)
+	defer o.fs.putConnection(&cn, err)
 
 	err = cn.smbShare.Chtimes(reqDir, t, t)
 	if err != nil {
@@ -639,24 +650,25 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 	}
 	fl, err := cn.smbShare.OpenFile(filename, os.O_RDONLY, 0)
 	if err != nil {
-		o.fs.putConnection(&cn)
+		o.fs.putConnection(&cn, err)
 		return nil, fmt.Errorf("failed to open: %w", err)
 	}
 	pos, err := fl.Seek(offset, io.SeekStart)
 	if err != nil {
-		o.fs.putConnection(&cn)
+		o.fs.putConnection(&cn, err)
 		return nil, fmt.Errorf("failed to seek: %w", err)
 	}
 	if pos != offset {
-		o.fs.putConnection(&cn)
-		return nil, fmt.Errorf("failed to seek: wrong position (expected=%d, reported=%d)", offset, pos)
+		err = fmt.Errorf("failed to seek: wrong position (expected=%d, reported=%d)", offset, pos)
+		o.fs.putConnection(&cn, err)
+		return nil, err
 	}
 
 	in = readers.NewLimitedReadCloser(fl, limit)
 	in = &boundReadCloser{
 		rc: in,
 		close: func() error {
-			o.fs.putConnection(&cn)
+			o.fs.putConnection(&cn, nil)
 			return nil
 		},
 	}
@@ -686,7 +698,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		return err
 	}
 	defer func() {
-		o.fs.putConnection(&cn)
+		o.fs.putConnection(&cn, err)
 	}()
 
 	fl, err := cn.smbShare.OpenFile(filename, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0o644)
@@ -746,7 +758,7 @@ func (o *Object) Remove(ctx context.Context) (err error) {
 	}
 
 	err = cn.smbShare.Remove(filename)
-	o.fs.putConnection(&cn)
+	o.fs.putConnection(&cn, err)
 
 	return err
 }

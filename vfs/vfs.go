@@ -33,6 +33,8 @@ import (
 	"sync/atomic"
 	"time"
 
+	"slices"
+
 	"github.com/go-git/go-billy/v5"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/cache"
@@ -65,7 +67,7 @@ type Node interface {
 	Open(flags int) (Handle, error)
 	Truncate(size int64) error
 	Path() string
-	SetSys(interface{})
+	SetSys(any)
 }
 
 // Check interfaces
@@ -216,7 +218,7 @@ func New(f fs.Fs, opt *vfscommon.Options) *VFS {
 	configName := fs.ConfigString(f)
 	for _, activeVFS := range active[configName] {
 		if vfs.Opt == activeVFS.Opt {
-			fs.Debugf(f, "Re-using VFS from active cache")
+			fs.Debugf(f, "Reusing VFS from active cache")
 			activeVFS.inUse.Add(1)
 			return activeVFS
 		}
@@ -358,13 +360,18 @@ func (vfs *VFS) Shutdown() {
 	for i, activeVFS := range activeVFSes {
 		if activeVFS == vfs {
 			activeVFSes[i] = nil
-			active[configName] = append(activeVFSes[:i], activeVFSes[i+1:]...)
+			active[configName] = slices.Delete(activeVFSes, i, i+1)
 			break
 		}
 	}
 	activeMu.Unlock()
 
 	vfs.shutdownCache()
+
+	if vfs.pollChan != nil {
+		close(vfs.pollChan)
+		vfs.pollChan = nil
+	}
 }
 
 // CleanUp deletes the contents of the on disk cache

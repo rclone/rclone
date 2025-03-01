@@ -76,7 +76,7 @@ func (c *Client) DriveService() (*DriveService, error) {
 // This function is the main entry point for making requests to the iCloud
 // API. If the initial request returns a 401 (Unauthorized), it will try to
 // reauthenticate and retry the request.
-func (c *Client) Request(ctx context.Context, opts rest.Opts, request interface{}, response interface{}) (resp *http.Response, err error) {
+func (c *Client) Request(ctx context.Context, opts rest.Opts, request any, response any) (resp *http.Response, err error) {
 	resp, err = c.Session.Request(ctx, opts, request, response)
 	if err != nil && resp != nil {
 		// try to reauth
@@ -100,7 +100,7 @@ func (c *Client) Request(ctx context.Context, opts rest.Opts, request interface{
 // This function is useful when you have a session that is already
 // authenticated, but you need to make a request without triggering
 // a re-authentication.
-func (c *Client) RequestNoReAuth(ctx context.Context, opts rest.Opts, request interface{}, response interface{}) (resp *http.Response, err error) {
+func (c *Client) RequestNoReAuth(ctx context.Context, opts rest.Opts, request any, response any) (resp *http.Response, err error) {
 	// Make the request without re-authenticating
 	resp, err = c.Session.Request(ctx, opts, request, response)
 	return resp, err
@@ -161,6 +161,6 @@ func newRequestError(Status string, Text string) *RequestError {
 }
 
 // newErr orf makes a new error from sprintf parameters.
-func newRequestErrorf(Status string, Text string, Parameters ...interface{}) *RequestError {
+func newRequestErrorf(Status string, Text string, Parameters ...any) *RequestError {
 	return newRequestError(strings.ToLower(Status), fmt.Sprintf(Text, Parameters...))
 }
