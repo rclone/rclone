@@ -24,6 +24,9 @@ import (
 	"github.com/rclone/rclone/lib/oauthutil"
 	"github.com/rclone/rclone/lib/pacer"
 	"github.com/rclone/rclone/lib/rest"
+	"github.com/tickstep/aliyunpan-api/aliyunpan"
+	"github.com/tickstep/aliyunpan-api/aliyunpan_open"
+	"github.com/tickstep/aliyunpan-api/aliyunpan_open/openapi"
 	"golang.org/x/oauth2"
 )
 
@@ -100,6 +103,66 @@ func init() {
 					encoder.EncodeBackSlash |
 					encoder.EncodeInvalidUtf8, //  /*?:<>\"|
 			},
+			{
+				Name:     "root_folder_id",
+				Help:     "Root folder ID",
+				Advanced: true,
+				Default:  "",
+			},
+			{
+				Name:     "client_id",
+				Help:     "Client ID (OpenAPI)",
+				Advanced: true,
+				Default:  "",
+			},
+			{
+				Name:     "client_secret",
+				Help:     "Client Secret (OpenAPI)",
+				Advanced: true,
+				Default:  "",
+			},
+			{
+				Name:     "chunk_size",
+				Help:     "Chunk size for uploads",
+				Advanced: true,
+				Default:  defaultChunkSize,
+			},
+			{
+				Name:     "remove_way",
+				Help:     "Way to remove files: delete or trash",
+				Advanced: true,
+				Default:  RemoveWayTrash,
+				Examples: []fs.OptionExample{
+					{
+						Value: RemoveWayDelete,
+						Help:  "Delete files permanently",
+					},
+					{
+						Value: RemoveWayTrash,
+						Help:  "Move files to the trash",
+					},
+				},
+			},
+			{
+				Name:     "check_name_mode",
+				Help:     "How to handle duplicate file names",
+				Advanced: true,
+				Default:  CheckNameModeRefuse,
+				Examples: []fs.OptionExample{
+					{
+						Value: CheckNameModeRefuse,
+						Help:  "Refuse to create duplicates",
+					},
+					{
+						Value: CheckNameModeAutoRename,
+						Help:  "Auto rename duplicates",
+					},
+					{
+						Value: CheckNameModeIgnore,
+						Help:  "Ignore duplicates",
+					},
+				},
+			},
 		}...),
 	})
 }
@@ -117,6 +180,7 @@ type Fs struct {
 	m            configmap.Mapper
 	driveID      string
 	rootID       string // the id of the root folder
+	openClient   *aliyunpan_open.OpenPanClient
 }
 
 // Object describes a adrive object
@@ -133,39 +197,50 @@ type Object struct {
 	sha1        string    // SHA-1 of the object content
 }
 
-// Options defines the configuration for this backend
-type Options struct {
-	Enc           encoder.MultiEncoder `config:"encoding"`
-	RootFolderID  string               `config:"root_folder_id"`
-	ChunkSize     fs.SizeSuffix        `config:"chunk_size"`
-	RemoveWay     string               `config:"remove_way"`
-	CheckNameMode string               `config:"check_name_mode"`
-	AccessToken   string               `config:"access_token"`
-	RefreshToken  string               `config:"refresh_token"`
-	ExpiresAt     string               `config:"expires_at"`
-}
-
 // Lists the directory required calling the user function on each item found
 //
 // If the user fn ever returns true then it early exits with found = true
 func (f *Fs) listAll(ctx context.Context, directoryID string) (items []api.FileItem, err error) {
-	opts := rest.Opts{
-		Method: "POST",
-		Path:   "/adrive/v1.0/openFile/list",
+	// Convert to API items
+	param := &openapi.FileListParam{
+		DriveId:      f.driveID,
+		ParentFileId: directoryID,
+		OrderBy:      "name",
+		Limit:        100,
 	}
 
-	request := api.ListFileRequest{
-		DriveID:      f.driveID,
-		ParentFileID: directoryID,
+	result, apiErr := f.openClient.FileList(param)
+	if apiErr != nil {
+		return nil, fmt.Errorf("error listing directory: %v", apiErr)
 	}
 
-	var result api.ListFileResponse
-	_, err = f.client.CallJSON(ctx, &opts, &request, &result)
+	// Convert openapi.FileItem to api.FileItem
+	for _, item := range result.Items {
+		fileItem := api.FileItem{
+			DriveID:      item.DriveId,
+			ParentFileID: item.ParentFileId,
+			FileID:       item.FileId,
+			Name:         item.Name,
+			Type:         item.Type,
+			Size:         item.Size,
+			CreatedAt:    parseTime(item.CreatedAt),
+			UpdatedAt:    parseTime(item.UpdatedAt),
+		}
+		items = append(items, fileItem)
+	}
+
+	return items, nil
+}
+
+func parseTime(timeStr string) time.Time {
+	if timeStr == "" {
+		return time.Time{}
+	}
+	t, err := time.Parse(time.RFC3339, timeStr)
 	if err != nil {
-		return nil, err
+		return time.Time{}
 	}
-
-	return result.Items, nil
+	return t
 }
 
 // deleteObject removes an object by ID
@@ -257,78 +332,35 @@ func (f *Fs) newObjectWithInfo(ctx context.Context, remote string, info *api.Fil
 }
 
 // getUserInfo gets UserInfo from API
-func (f *Fs) getUserInfo(ctx context.Context) (info *api.UserInfo, err error) {
-	opts := rest.Opts{
-		Method: "GET",
-		Path:   "/oauth/users/info",
+func (f *Fs) getUserInfo(ctx context.Context) (info *aliyunpan.UserInfo, err error) {
+	info, apiErr := f.openClient.GetUserInfo()
+	if apiErr != nil {
+		return nil, fmt.Errorf("failed to get userinfo: %v", apiErr)
 	}
-	var resp *http.Response
-	err = f.pacer.Call(func() (bool, error) {
-		resp, err = f.client.CallJSON(ctx, &opts, nil, &info)
-		return shouldRetry(ctx, resp, err)
-	})
-	if err != nil {
-		return nil, fmt.Errorf("failed to get userinfo: %w", err)
-	}
-	return
+	return info, nil
 }
 
 // getDriveInfo gets DriveInfo from API
 func (f *Fs) getDriveInfo(ctx context.Context) error {
-	opts := rest.Opts{
-		Method: "POST",
-		Path:   "/adrive/v1.0/user/getDriveInfo",
-	}
-	var resp *http.Response
-	var info *api.DriveInfo
-	var err error
-	err = f.pacer.Call(func() (bool, error) {
-		resp, err = f.client.CallJSON(ctx, &opts, nil, &info)
-		return shouldRetry(ctx, resp, err)
-	})
+	userInfo, err := f.getUserInfo(ctx)
 	if err != nil {
-		return fmt.Errorf("failed to get driveinfo: %w", err)
+		return fmt.Errorf("failed to get drive info: %w", err)
 	}
-
-	f.driveID = info.DefaultDriveID
-
+	f.driveID = userInfo.FileDriveId
 	return nil
 }
 
 // getSpaceInfo gets SpaceInfo from API
-func (f *Fs) getSpaceInfo(ctx context.Context) (info *api.SpaceInfo, err error) {
-	opts := rest.Opts{
-		Method: "POST",
-		Path:   "/adrive/v1.0/user/getSpaceInfo",
-	}
-	var resp *http.Response
-	err = f.pacer.Call(func() (bool, error) {
-		resp, err = f.client.CallJSON(ctx, &opts, nil, &info)
-		return shouldRetry(ctx, resp, err)
-	})
-	if err != nil {
-		return nil, fmt.Errorf("failed to get spaceinfo: %w", err)
-	}
-	return
+func (f *Fs) getSpaceInfo(ctx context.Context) (info *aliyunpan.UserInfo, err error) {
+	return f.getUserInfo(ctx)
 }
 
 // getVipInfo gets VipInfo from API
-func (f *Fs) getVipInfo(ctx context.Context) (info *api.VipInfo, err error) {
-	opts := rest.Opts{
-		Method: "POST",
-		Path:   "/business/v1.0/user/getVipInfo",
-	}
-	var resp *http.Response
-	err = f.pacer.Call(func() (bool, error) {
-		resp, err = f.client.CallJSON(ctx, &opts, nil, &info)
-		return shouldRetry(ctx, resp, err)
-	})
-	if err != nil {
-		return nil, fmt.Errorf("failed to get vipinfo: %w", err)
-	}
-	return
+func (f *Fs) getVipInfo(ctx context.Context) (info *aliyunpan.UserInfo, err error) {
+	return f.getUserInfo(ctx)
 }
 
+// moveObject moves an object by ID
 func (f *Fs) move(ctx context.Context, id, leaf, directoryID string) (info *api.FileItem, err error) {
 	opts := rest.Opts{
 		Method: "POST",
@@ -412,9 +444,9 @@ func (f *Fs) About(ctx context.Context) (usage *fs.Usage, err error) {
 	}
 
 	usage = &fs.Usage{
-		Used:  fs.NewUsageValue(about.PersonalSpaceInfo.UsedSize),
-		Total: fs.NewUsageValue(about.PersonalSpaceInfo.TotalSize),
-		Free:  fs.NewUsageValue(about.PersonalSpaceInfo.TotalSize - about.PersonalSpaceInfo.UsedSize),
+		Used:  fs.NewUsageValue(about.TotalSize),
+		Total: fs.NewUsageValue(about.TotalSize),
+		Free:  fs.NewUsageValue(about.TotalSize - about.UsedSize),
 	}
 
 	return usage, nil
@@ -792,6 +824,20 @@ func (o *Object) ParentID() string {
 	return o.parentID
 }
 
+// Options defines the configuration for this backend
+type Options struct {
+	Enc           encoder.MultiEncoder `config:"encoding"`
+	RootFolderID  string               `config:"root_folder_id"`
+	ChunkSize     fs.SizeSuffix        `config:"chunk_size"`
+	RemoveWay     string               `config:"remove_way"`
+	CheckNameMode string               `config:"check_name_mode"`
+	AccessToken   string               `config:"access_token"`
+	RefreshToken  string               `config:"refresh_token"`
+	ExpiresAt     string               `config:"expires_at"`
+	ClientID      string               `config:"client_id"`
+	ClientSecret  string               `config:"client_secret"`
+}
+
 func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, error) {
 	// Parse config
 	opt := new(Options)
@@ -804,11 +850,47 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	client := fshttp.NewClient(ctx)
 
 	var ts *oauthutil.TokenSource
+	var apiToken openapi.ApiToken
+	var apiConfig openapi.ApiConfig
 
-	if opt.AccessToken == "" {
+	if opt.ClientID != "" && opt.ClientSecret != "" {
+		// Use OpenAPI with client credentials
+		if opt.AccessToken == "" {
+			return nil, fmt.Errorf("access_token is required for OpenAPI authentication")
+		}
+
+		apiToken = openapi.ApiToken{
+			AccessToken: opt.AccessToken,
+		}
+
+		if opt.ExpiresAt != "" {
+			expireSec, err := strconv.ParseInt(opt.ExpiresAt, 10, 64)
+			if err == nil {
+				apiToken.ExpiredAt = expireSec
+			}
+		}
+
+		apiConfig = openapi.ApiConfig{
+			ClientId:     opt.ClientID,
+			ClientSecret: opt.ClientSecret,
+		}
+	} else if opt.AccessToken == "" {
+		// Standard OAuth2 flow
 		client, ts, err = oauthutil.NewClient(ctx, name, m, oauthConfig)
 		if err != nil {
 			return nil, fmt.Errorf("failed to configure Aliyun Drive: %w", err)
+		}
+	} else {
+		// Direct token usage (legacy)
+		apiToken = openapi.ApiToken{
+			AccessToken: opt.AccessToken,
+		}
+
+		if opt.ExpiresAt != "" {
+			expireSec, err := strconv.ParseInt(opt.ExpiresAt, 10, 64)
+			if err == nil {
+				apiToken.ExpiredAt = expireSec
+			}
 		}
 	}
 
@@ -841,9 +923,30 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		f.client.SetHeader("Authorization", "Bearer "+f.opt.AccessToken)
 	}
 
+	// Set up OpenAPI client
+	f.openClient = aliyunpan_open.NewOpenPanClient(apiConfig, apiToken, func(userId string, newToken openapi.ApiToken) error {
+		// Update token in config
+		m.Set("access_token", newToken.AccessToken)
+		m.Set("expires_at", fmt.Sprintf("%d", newToken.ExpiredAt))
+		return nil
+	})
+
+	// Set up token renewal if using OAuth2
 	if ts != nil {
 		f.tokenRenewer = oauthutil.NewRenew(f.String(), ts, func() error {
-			return err
+			token, err := ts.Token()
+			if err != nil {
+				return err
+			}
+
+			// Update the OpenAPI client with the new token
+			newToken := openapi.ApiToken{
+				AccessToken: token.AccessToken,
+				ExpiredAt:   time.Now().Add(time.Duration(token.Expiry.Unix()-time.Now().Unix()) * time.Second).Unix(),
+			}
+			f.openClient.RefreshNewAccessToken()
+
+			return nil
 		})
 	}
 
@@ -885,11 +988,14 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		return f, fs.ErrorIsFile
 	}
 
-	// Get drive info
-	err = f.getDriveInfo(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get drive info: %w", err)
+	// Get drive info using the OpenAPI client
+	userInfo, apiErr := f.openClient.GetUserInfo()
+	if apiErr != nil {
+		return nil, fmt.Errorf("failed to get user info: %v", apiErr)
 	}
+
+	// Set drive ID
+	f.driveID = userInfo.FileDriveId
 
 	return f, nil
 }
