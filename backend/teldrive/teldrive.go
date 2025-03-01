@@ -34,7 +34,7 @@ const (
 	timeFormat       = time.RFC3339
 	maxChunkSize     = 2000 * fs.Mebi
 	defaultChunkSize = 500 * fs.Mebi
-	minChunkSize     = 500 * fs.Mebi
+	minChunkSize     = 100 * fs.Mebi
 	authCookieName   = "access_token"
 )
 
