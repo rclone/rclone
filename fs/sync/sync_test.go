@@ -2723,7 +2723,7 @@ func testSyncConcurrent(t *testing.T, subtest string) {
 
 	itemsBefore := []fstest.Item{}
 	itemsAfter := []fstest.Item{}
-	for i := 0; i < NFILES; i++ {
+	for i := range NFILES {
 		nameBoth := fmt.Sprintf("both%d", i)
 		nameOnly := fmt.Sprintf("only%d", i)
 		switch subtest {

@@ -18,6 +18,7 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -199,12 +200,7 @@ func driveScopes(scopesString string) (scopes []string) {
 
 // Returns true if one of the scopes was "drive.appfolder"
 func driveScopesContainsAppFolder(scopes []string) bool {
-	for _, scope := range scopes {
-		if scope == scopePrefix+"drive.appfolder" {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(scopes, scopePrefix+"drive.appfolder")
 }
 
 func driveOAuthOptions() []fs.Option {
@@ -958,12 +954,7 @@ func parseDrivePath(path string) (root string, err error) {
 type listFn func(*drive.File) bool
 
 func containsString(slice []string, s string) bool {
-	for _, e := range slice {
-		if e == s {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(slice, s)
 }
 
 // getFile returns drive.File for the ID passed and fields passed in
@@ -1152,13 +1143,7 @@ OUTER:
 			// Check the case of items is correct since
 			// the `=` operator is case insensitive.
 			if title != "" && title != item.Name {
-				found := false
-				for _, stem := range stems {
-					if stem == item.Name {
-						found = true
-						break
-					}
-				}
+				found := slices.Contains(stems, item.Name)
 				if !found {
 					continue
 				}
@@ -1561,13 +1546,10 @@ func (f *Fs) getFileFields(ctx context.Context) (fields googleapi.Field) {
 func (f *Fs) newRegularObject(ctx context.Context, remote string, info *drive.File) (obj fs.Object, err error) {
 	// wipe checksum if SkipChecksumGphotos and file is type Photo or Video
 	if f.opt.SkipChecksumGphotos {
-		for _, space := range info.Spaces {
-			if space == "photos" {
-				info.Md5Checksum = ""
-				info.Sha1Checksum = ""
-				info.Sha256Checksum = ""
-				break
-			}
+		if slices.Contains(info.Spaces, "photos") {
+			info.Md5Checksum = ""
+			info.Sha1Checksum = ""
+			info.Sha256Checksum = ""
 		}
 	}
 	o := &Object{
@@ -2245,7 +2227,7 @@ func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (
 	wg.Add(1)
 	in <- listREntry{directoryID, dir}
 
-	for i := 0; i < f.ci.Checkers; i++ {
+	for range f.ci.Checkers {
 		go f.listRRunner(ctx, &wg, in, out, cb, sendJob)
 	}
 	go func() {
@@ -2254,11 +2236,8 @@ func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (
 		// if the input channel overflowed add the collected entries to the channel now
 		for len(overflow) > 0 {
 			mu.Lock()
-			l := len(overflow)
 			// only fill half of the channel to prevent entries being put into overflow again
-			if l > listRInputBuffer/2 {
-				l = listRInputBuffer / 2
-			}
+			l := min(len(overflow), listRInputBuffer/2)
 			wg.Add(l)
 			for _, d := range overflow[:l] {
 				in <- d
@@ -2278,7 +2257,7 @@ func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (
 		mu.Unlock()
 	}()
 	// wait until the all workers to finish
-	for i := 0; i < f.ci.Checkers; i++ {
+	for range f.ci.Checkers {
 		e := <-out
 		mu.Lock()
 		// if one worker returns an error early, close the input so all other workers exit
@@ -3914,7 +3893,7 @@ Third delete all orphaned files to the trash
 // The result should be capable of being JSON encoded
 // If it is a string or a []string it will be shown to the user
 // otherwise it will be JSON encoded and shown to the user like that
-func (f *Fs) Command(ctx context.Context, name string, arg []string, opt map[string]string) (out interface{}, err error) {
+func (f *Fs) Command(ctx context.Context, name string, arg []string, opt map[string]string) (out any, err error) {
 	switch name {
 	case "get":
 		out := make(map[string]string)

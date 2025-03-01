@@ -57,7 +57,7 @@ type Run struct {
 	Precision    time.Duration
 	cleanRemote  func()
 	mkdir        map[string]bool // whether the remote has been made yet for the fs name
-	Logf, Fatalf func(text string, args ...interface{})
+	Logf, Fatalf func(text string, args ...any)
 }
 
 // TestMain drives the tests

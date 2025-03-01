@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"maps"
 	"math"
 	"net/http"
 	"strconv"
@@ -15,7 +16,7 @@ import (
 )
 
 // Params is the input and output type for the Func
-type Params map[string]interface{}
+type Params map[string]any
 
 // ErrParamNotFound - this is returned from the Get* functions if the
 // parameter isn't found along with a zero value of the requested
@@ -70,7 +71,7 @@ func IsErrParamInvalid(err error) bool {
 // out should be a pointer type
 //
 // This isn't a very efficient way of dealing with this!
-func Reshape(out interface{}, in interface{}) error {
+func Reshape(out any, in any) error {
 	b, err := json.Marshal(in)
 	if err != nil {
 		return fmt.Errorf("Reshape failed to Marshal: %w", err)
@@ -85,9 +86,7 @@ func Reshape(out interface{}, in interface{}) error {
 // Copy shallow copies the Params
 func (p Params) Copy() (out Params) {
 	out = make(Params, len(p))
-	for k, v := range p {
-		out[k] = v
-	}
+	maps.Copy(out, p)
 	return out
 }
 
@@ -95,7 +94,7 @@ func (p Params) Copy() (out Params) {
 //
 // If the parameter isn't found then error will be of type
 // ErrParamNotFound and the returned value will be nil.
-func (p Params) Get(key string) (interface{}, error) {
+func (p Params) Get(key string) (any, error) {
 	value, ok := p[key]
 	if !ok {
 		return nil, ErrParamNotFound(key)
@@ -241,7 +240,7 @@ func (p Params) GetBool(key string) (bool, error) {
 //
 // If the parameter isn't found then error will be of type
 // ErrParamNotFound and out will be unchanged.
-func (p Params) GetStruct(key string, out interface{}) error {
+func (p Params) GetStruct(key string, out any) error {
 	value, err := p.Get(key)
 	if err != nil {
 		return err
@@ -262,7 +261,7 @@ func (p Params) GetStruct(key string, out interface{}) error {
 
 // GetStructMissingOK works like GetStruct but doesn't return an error
 // if the key is missing
-func (p Params) GetStructMissingOK(key string, out interface{}) error {
+func (p Params) GetStructMissingOK(key string, out any) error {
 	_, ok := p[key]
 	if !ok {
 		return nil

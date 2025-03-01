@@ -29,7 +29,7 @@ func testPurgeListDeadlock(t *testing.T) {
 	r.Fremote.Features().Disable("Purge") // force fallback-purge
 
 	// make a lot of files to prevent it from finishing too quickly
-	for i := 0; i < 100; i++ {
+	for i := range 100 {
 		dst := "file" + fmt.Sprint(i) + ".txt"
 		r.WriteObject(ctx, dst, "hello", t1)
 	}

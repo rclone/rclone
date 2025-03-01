@@ -73,7 +73,7 @@ rclone.org website.`,
 
 		// Write the flags page
 		var buf bytes.Buffer
-		cmd.Root.SetOutput(&buf)
+		cmd.Root.SetOut(&buf)
 		cmd.Root.SetArgs([]string{"help", "flags"})
 		cmd.GeneratingDocs = true
 		err = cmd.Root.Execute()

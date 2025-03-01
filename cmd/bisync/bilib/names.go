@@ -10,7 +10,7 @@ import (
 )
 
 // Names comprises a set of file names
-type Names map[string]interface{}
+type Names map[string]any
 
 // ToNames converts string slice to a set of names
 func ToNames(list []string) Names {

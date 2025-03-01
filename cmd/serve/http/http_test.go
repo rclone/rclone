@@ -54,7 +54,7 @@ func start(ctx context.Context, t *testing.T, f fs.Fs) (s *HTTP, testURL string)
 
 	// try to connect to the test server
 	pause := time.Millisecond
-	for i := 0; i < 10; i++ {
+	for range 10 {
 		resp, err := http.Head(testURL)
 		if err == nil {
 			_ = resp.Body.Close()

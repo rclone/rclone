@@ -78,7 +78,7 @@ func TestMiddlewareAuth(t *testing.T) {
 			},
 			auth: AuthConfig{
 				Realm: "test",
-				CustomAuthFn: func(user, pass string) (value interface{}, err error) {
+				CustomAuthFn: func(user, pass string) (value any, err error) {
 					if user == "custom" && pass == "custom" {
 						return true, nil
 					}
@@ -294,7 +294,7 @@ func TestMiddlewareAuthCertificateUser(t *testing.T) {
 			},
 			auth: AuthConfig{
 				Realm: "test",
-				CustomAuthFn: func(user, pass string) (value interface{}, err error) {
+				CustomAuthFn: func(user, pass string) (value any, err error) {
 					if user == "custom" && pass == "custom" {
 						return true, nil
 					}
@@ -316,7 +316,7 @@ func TestMiddlewareAuthCertificateUser(t *testing.T) {
 			},
 			auth: AuthConfig{
 				Realm: "test",
-				CustomAuthFn: func(user, pass string) (value interface{}, err error) {
+				CustomAuthFn: func(user, pass string) (value any, err error) {
 					fmt.Println("CUSTOMAUTH", user, pass)
 					if user == "rclone-dev-client" && pass == "" {
 						return true, nil

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"runtime"
+	"slices"
 	"sort"
 	"testing"
 	"time"
@@ -317,7 +318,7 @@ func TestDirReadDirAll(t *testing.T) {
 		features := r.Fremote.Features()
 		if features.CanHaveEmptyDirectories {
 			// snip out virtualDir2 which will only be present if can't have empty dirs
-			want = append(want[:2], want[3:]...)
+			want = slices.Delete(want, 2, 3)
 		}
 		checkListing(t, dir, want)
 
@@ -658,10 +659,14 @@ func TestDirFileOpen(t *testing.T) {
 }
 
 func TestDirEntryModTimeInvalidation(t *testing.T) {
-	if runtime.GOOS == "windows" {
+	r, vfs := newTestVFS(t)
+	features := r.Fremote.Features()
+	if !features.DirModTimeUpdatesOnWrite {
+		t.Skip("Need DirModTimeUpdatesOnWrite")
+	}
+	if features.IsLocal && runtime.GOOS == "windows" {
 		t.Skip("dirent modtime is unreliable on Windows filesystems")
 	}
-	r, vfs := newTestVFS(t)
 
 	// Needs to be less than 2x the wait time below, othewrwise the entry
 	// gets cleared out before it had a chance to be updated.

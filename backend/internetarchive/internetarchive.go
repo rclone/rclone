@@ -13,6 +13,7 @@ import (
 	"net/url"
 	"path"
 	"regexp"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -200,7 +201,7 @@ Only enable if you need to be guaranteed to be reflected after write operations.
 const iaItemMaxSize int64 = 1099511627776
 
 // metadata keys that are not writeable
-var roMetadataKey = map[string]interface{}{
+var roMetadataKey = map[string]any{
 	// do not add mtime here, it's a documented exception
 	"name": nil, "source": nil, "size": nil, "md5": nil,
 	"crc32": nil, "sha1": nil, "format": nil, "old_version": nil,
@@ -991,10 +992,8 @@ func (o *Object) Metadata(ctx context.Context) (m fs.Metadata, err error) {
 
 func (f *Fs) shouldRetry(resp *http.Response, err error) (bool, error) {
 	if resp != nil {
-		for _, e := range retryErrorCodes {
-			if resp.StatusCode == e {
-				return true, err
-			}
+		if slices.Contains(retryErrorCodes, resp.StatusCode) {
+			return true, err
 		}
 	}
 	// Ok, not an awserr, check for generic failure conditions
@@ -1147,13 +1146,7 @@ func (f *Fs) waitFileUpload(ctx context.Context, reqPath, tracker string, newSiz
 			}
 
 			fileTrackers, _ := listOrString(iaFile.UpdateTrack)
-			trackerMatch := false
-			for _, v := range fileTrackers {
-				if v == tracker {
-					trackerMatch = true
-					break
-				}
-			}
+			trackerMatch := slices.Contains(fileTrackers, tracker)
 			if !trackerMatch {
 				continue
 			}

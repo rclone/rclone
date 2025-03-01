@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 	"sort"
 	"strings"
 	"sync"
@@ -899,7 +900,7 @@ func (s *StatsInfo) _removeTransfer(transfer *Transfer, i int) {
 	s.oldTimeRanges.merge()
 
 	// remove the found entry
-	s.startedTransfers = append(s.startedTransfers[:i], s.startedTransfers[i+1:]...)
+	s.startedTransfers = slices.Delete(s.startedTransfers, i, i+1)
 
 	// Find youngest active transfer
 	oldestStart := now

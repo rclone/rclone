@@ -35,7 +35,7 @@ type Volume struct {
 	Path       string    `json:"path,omitempty"` // for "remote:path" or ":backend:path"
 	Options    VolOpts   `json:"options"`        // all options together
 	Mounts     []string  `json:"mounts"`         // mountReqs as a string list
-	mountReqs  map[string]interface{}
+	mountReqs  map[string]any
 	fsString   string // result of merging Fs, Type and Options
 	persist    bool
 	mountType  string
@@ -49,9 +49,9 @@ type VolOpts map[string]string
 // VolInfo represents a volume for Get and List requests
 type VolInfo struct {
 	Name       string
-	Mountpoint string                 `json:",omitempty"`
-	CreatedAt  string                 `json:",omitempty"`
-	Status     map[string]interface{} `json:",omitempty"`
+	Mountpoint string         `json:",omitempty"`
+	CreatedAt  string         `json:",omitempty"`
+	Status     map[string]any `json:",omitempty"`
 }
 
 func newVolume(ctx context.Context, name string, volOpt VolOpts, drv *Driver) (*Volume, error) {
@@ -65,7 +65,7 @@ func newVolume(ctx context.Context, name string, volOpt VolOpts, drv *Driver) (*
 		CreatedAt:  time.Now(),
 		drv:        drv,
 		mnt:        mnt,
-		mountReqs:  make(map[string]interface{}),
+		mountReqs:  make(map[string]any),
 	}
 	err := vol.applyOptions(volOpt)
 	if err == nil {
@@ -141,7 +141,7 @@ func (vol *Volume) validate() error {
 		return errors.New("mount point is required")
 	}
 	if vol.mountReqs == nil {
-		vol.mountReqs = make(map[string]interface{})
+		vol.mountReqs = make(map[string]any)
 	}
 	return nil
 }

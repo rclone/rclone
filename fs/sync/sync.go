@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"path"
+	"slices"
 	"sort"
 	"strings"
 	"sync"
@@ -510,7 +511,7 @@ func (s *syncCopyMove) pairCopyOrMove(ctx context.Context, in *pipe, fdst fs.Fs,
 // This starts the background checkers.
 func (s *syncCopyMove) startCheckers() {
 	s.checkerWg.Add(s.ci.Checkers)
-	for i := 0; i < s.ci.Checkers; i++ {
+	for i := range s.ci.Checkers {
 		fraction := (100 * i) / s.ci.Checkers
 		go s.pairChecker(s.toBeChecked, s.toBeUploaded, fraction, &s.checkerWg)
 	}
@@ -526,7 +527,7 @@ func (s *syncCopyMove) stopCheckers() {
 // This starts the background transfers
 func (s *syncCopyMove) startTransfers() {
 	s.transfersWg.Add(s.ci.Transfers)
-	for i := 0; i < s.ci.Transfers; i++ {
+	for i := range s.ci.Transfers {
 		fraction := (100 * i) / s.ci.Transfers
 		go s.pairCopyOrMove(s.ctx, s.toBeUploaded, s.fdst, fraction, &s.transfersWg)
 	}
@@ -545,7 +546,7 @@ func (s *syncCopyMove) startRenamers() {
 		return
 	}
 	s.renamerWg.Add(s.ci.Checkers)
-	for i := 0; i < s.ci.Checkers; i++ {
+	for i := range s.ci.Checkers {
 		fraction := (100 * i) / s.ci.Checkers
 		go s.pairRenamer(s.toBeRenamed, s.toBeUploaded, fraction, &s.renamerWg)
 	}
@@ -827,7 +828,7 @@ func (s *syncCopyMove) popRenameMap(hash string, src fs.Object) (dst fs.Object) 
 
 		// Remove the entry and return it
 		dst = dsts[i]
-		dsts = append(dsts[:i], dsts[i+1:]...)
+		dsts = slices.Delete(dsts, i, i+1)
 		if len(dsts) > 0 {
 			s.renameMap[hash] = dsts
 		} else {
@@ -856,7 +857,7 @@ func (s *syncCopyMove) makeRenameMap() {
 	s.renameMap = make(map[string][]fs.Object)
 	var wg sync.WaitGroup
 	wg.Add(s.ci.Checkers)
-	for i := 0; i < s.ci.Checkers; i++ {
+	for range s.ci.Checkers {
 		go func() {
 			defer wg.Done()
 			for obj := range in {
