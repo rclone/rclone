@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
 	"path"
 	"strconv"
 	"strings"
@@ -47,25 +48,6 @@ const (
 
 	ItemTypeFile   = "file"
 	ItemTypeFolder = "folder"
-
-	VipIdentityMember = "member"
-	VipIdentityVip    = "vip"
-	VipIdentitySVip   = "svip"
-
-	FeatureCode1080p = "hd.1080p"
-	FeatureCode1440p = "hd.1080p.plus"
-
-	TrialStatusNoTrial    = "noTrial"
-	TrialStatusOnTrial    = "onTrial"
-	TrialStatusEndTrial   = "endTrial"
-	TrialStatusAllowTrial = "allowTrial"
-
-	CheckNameModeIgnore     = "ignore"
-	CheckNameModeAutoRename = "auto_rename"
-	CheckNameModeRefuse     = "refuse"
-
-	RemoveWayDelete = "delete"
-	RemoveWayTrash  = "trash"
 )
 
 // Globals
@@ -102,66 +84,6 @@ func init() {
 					encoder.EncodeSlash |
 					encoder.EncodeBackSlash |
 					encoder.EncodeInvalidUtf8, //  /*?:<>\"|
-			},
-			{
-				Name:     "root_folder_id",
-				Help:     "Root folder ID",
-				Advanced: true,
-				Default:  "",
-			},
-			{
-				Name:     "client_id",
-				Help:     "Client ID (OpenAPI)",
-				Advanced: true,
-				Default:  "",
-			},
-			{
-				Name:     "client_secret",
-				Help:     "Client Secret (OpenAPI)",
-				Advanced: true,
-				Default:  "",
-			},
-			{
-				Name:     "chunk_size",
-				Help:     "Chunk size for uploads",
-				Advanced: true,
-				Default:  defaultChunkSize,
-			},
-			{
-				Name:     "remove_way",
-				Help:     "Way to remove files: delete or trash",
-				Advanced: true,
-				Default:  RemoveWayTrash,
-				Examples: []fs.OptionExample{
-					{
-						Value: RemoveWayDelete,
-						Help:  "Delete files permanently",
-					},
-					{
-						Value: RemoveWayTrash,
-						Help:  "Move files to the trash",
-					},
-				},
-			},
-			{
-				Name:     "check_name_mode",
-				Help:     "How to handle duplicate file names",
-				Advanced: true,
-				Default:  CheckNameModeRefuse,
-				Examples: []fs.OptionExample{
-					{
-						Value: CheckNameModeRefuse,
-						Help:  "Refuse to create duplicates",
-					},
-					{
-						Value: CheckNameModeAutoRename,
-						Help:  "Auto rename duplicates",
-					},
-					{
-						Value: CheckNameModeIgnore,
-						Help:  "Ignore duplicates",
-					},
-				},
 			},
 		}...),
 	})
@@ -200,9 +122,9 @@ type Object struct {
 // Lists the directory required calling the user function on each item found
 //
 // If the user fn ever returns true then it early exits with found = true
-func (f *Fs) listAll(ctx context.Context, directoryID string) (items []api.FileItem, err error) {
+func (f *Fs) listAll(ctx context.Context, directoryID string) (items aliyunpan.FileList, err error) {
 	// Convert to API items
-	param := &openapi.FileListParam{
+	param := &aliyunpan.FileListParam{
 		DriveId:      f.driveID,
 		ParentFileId: directoryID,
 		OrderBy:      "name",
@@ -214,22 +136,7 @@ func (f *Fs) listAll(ctx context.Context, directoryID string) (items []api.FileI
 		return nil, fmt.Errorf("error listing directory: %v", apiErr)
 	}
 
-	// Convert openapi.FileItem to api.FileItem
-	for _, item := range result.Items {
-		fileItem := api.FileItem{
-			DriveID:      item.DriveId,
-			ParentFileID: item.ParentFileId,
-			FileID:       item.FileId,
-			Name:         item.Name,
-			Type:         item.Type,
-			Size:         item.Size,
-			CreatedAt:    parseTime(item.CreatedAt),
-			UpdatedAt:    parseTime(item.UpdatedAt),
-		}
-		items = append(items, fileItem)
-	}
-
-	return items, nil
+	return result.FileList, nil
 }
 
 func parseTime(timeStr string) time.Time {
@@ -245,25 +152,11 @@ func parseTime(timeStr string) time.Time {
 
 // deleteObject removes an object by ID
 func (f *Fs) deleteObject(ctx context.Context, id string) error {
-	path := "/adrive/v1.0/openFile"
-	if f.opt.RemoveWay == RemoveWayTrash {
-		path += "/recyclebin/trash"
-	} else if f.opt.RemoveWay == RemoveWayDelete {
-		path += "/delete"
-	}
+	_, err := f.openClient.FileDelete(&aliyunpan.FileBatchActionParam{
+		DriveId: f.driveID,
+		FileId:  id,
+	})
 
-	opts := rest.Opts{
-		Method:     "DELETE",
-		Path:       path,
-		NoResponse: true,
-	}
-
-	req := api.DeleteFileRequest{
-		DriveID: f.driveID,
-		FileID:  id,
-	}
-
-	_, err := f.client.CallJSON(ctx, &opts, &req, nil)
 	return err
 }
 
@@ -273,21 +166,22 @@ func (f *Fs) deleteObject(ctx context.Context, id string) error {
 // Returns the object, leaf, dirID and error.
 //
 // Used to create new objects
-func (f *Fs) createObject(ctx context.Context, remote string, modTime time.Time, size int64) (o *Object, leaf string, dirID string, err error) {
+func (f *Fs) createObject(ctx context.Context, remote string, modTime time.Time, size int64) (o *Object, leaf string, directoryID string, err error) {
 	// Create the directory for the object if it doesn't exist
-	leaf, dirID, err = f.dirCache.FindPath(ctx, remote, true)
+	leaf, directoryID, err = f.dirCache.FindPath(ctx, remote, true)
 	if err != nil {
 		return
 	}
-	// Temporary Object under construction
+	// Create a new object
 	o = &Object{
 		fs:       f,
 		remote:   remote,
-		parentID: dirID,
 		size:     size,
 		modTime:  modTime,
+		parentID: directoryID,
 	}
-	return o, leaf, dirID, nil
+
+	return o, leaf, directoryID, nil
 }
 
 // purgeCheck removes the root directory, if check is set then it
@@ -314,13 +208,16 @@ func (f *Fs) purgeCheck(ctx context.Context, dir string) error {
 // Return an Object from a path
 //
 // If it can't be found it returns the error fs.ErrorObjectNotFound.
-func (f *Fs) newObjectWithInfo(ctx context.Context, remote string, info *api.FileItem) (fs.Object, error) {
+func (f *Fs) newObjectWithInfo(ctx context.Context, remote string, info *aliyunpan.FileEntity) (fs.Object, error) {
 	o := &Object{
-		fs:     f,
-		remote: remote,
+		fs:       f,
+		remote:   remote,
+		id:       info.FileId,
+		parentID: info.ParentFileId,
 	}
 	var err error
 	if info != nil {
+		// Set info
 		err = o.setMetaData(info)
 	} else {
 		err = o.readMetaData(ctx) // reads info and meta, returning an error
@@ -331,75 +228,43 @@ func (f *Fs) newObjectWithInfo(ctx context.Context, remote string, info *api.Fil
 	return o, nil
 }
 
-// getUserInfo gets UserInfo from API
-func (f *Fs) getUserInfo(ctx context.Context) (info *aliyunpan.UserInfo, err error) {
-	info, apiErr := f.openClient.GetUserInfo()
-	if apiErr != nil {
-		return nil, fmt.Errorf("failed to get userinfo: %v", apiErr)
-	}
-	return info, nil
-}
-
-// getDriveInfo gets DriveInfo from API
-func (f *Fs) getDriveInfo(ctx context.Context) error {
-	userInfo, err := f.getUserInfo(ctx)
-	if err != nil {
-		return fmt.Errorf("failed to get drive info: %w", err)
-	}
-	f.driveID = userInfo.FileDriveId
-	return nil
-}
-
-// getSpaceInfo gets SpaceInfo from API
-func (f *Fs) getSpaceInfo(ctx context.Context) (info *aliyunpan.UserInfo, err error) {
-	return f.getUserInfo(ctx)
-}
-
-// getVipInfo gets VipInfo from API
-func (f *Fs) getVipInfo(ctx context.Context) (info *aliyunpan.UserInfo, err error) {
-	return f.getUserInfo(ctx)
-}
-
 // moveObject moves an object by ID
-func (f *Fs) move(ctx context.Context, id, leaf, directoryID string) (info *api.FileItem, err error) {
-	opts := rest.Opts{
-		Method: "POST",
-		Path:   "/adrive/v1.0/openFile/move",
+func (f *Fs) move(ctx context.Context, id, leaf, directoryID string) (info *aliyunpan.FileEntity, err error) {
+	// Use OpenAPI client for file move operation
+	moveFileParam := &aliyunpan.FileMoveParam{
+		DriveId:        f.driveID,
+		FileId:         id,
+		ToParentFileId: directoryID,
 	}
 
-	move := api.CopyFileRequest{
-		DriveID:        f.driveID,
-		FileID:         id,
-		ToParentFileID: directoryID,
-		NewName:        leaf,
-		CheckNameMode:  f.opt.CheckNameMode,
+	result, apiErr := f.openClient.FileMove(moveFileParam)
+	if apiErr != nil {
+		return nil, fmt.Errorf("error moving file: %v", apiErr)
 	}
 
-	var resp *http.Response
-	err = f.pacer.Call(func() (bool, error) {
-		resp, err = f.client.CallJSON(ctx, &opts, &move, &info)
-		return shouldRetry(ctx, resp, err)
-	})
-	if err != nil {
-		return nil, err
+	// Convert to FileEntity
+	fileEntity, apiErr := f.openClient.FileInfoById(f.driveID, result.FileId)
+	if apiErr != nil {
+		return nil, fmt.Errorf("error getting moved file: %v", apiErr)
 	}
 
-	return info, nil
+	return fileEntity, nil
 }
 
 // setMetaData sets the metadata from info
-func (o *Object) setMetaData(info *api.FileItem) (err error) {
-	if info.Type == ItemTypeFolder {
+func (o *Object) setMetaData(info *aliyunpan.FileEntity) (err error) {
+	if info.FileType == ItemTypeFolder {
 		return fs.ErrorIsDir
 	}
-	if info.Type != ItemTypeFile {
-		return fmt.Errorf("%q is %q: %w", o.remote, info.Type, fs.ErrorNotAFile)
+	if info.FileType != ItemTypeFile {
+		return fmt.Errorf("%q is %q: %w", o.remote, info.FileType, fs.ErrorNotAFile)
 	}
 	o.hasMetaData = true
-	o.size = int64(info.Size)
-	o.modTime = info.CreatedAt
-	o.id = info.FileID
-	o.parentID = info.ParentFileID
+	o.size = int64(info.FileSize)
+	o.sha1 = info.ContentHash
+	o.modTime = parseTime(info.CreatedAt)
+	o.id = info.FileId
+	o.parentID = info.ParentFileId
 	return nil
 }
 
@@ -423,10 +288,10 @@ func (o *Object) readMetaData(ctx context.Context) (err error) {
 	if err != nil {
 		return err
 	}
-	var info api.FileItem
+	var info aliyunpan.FileEntity
 	for _, item := range list {
-		if item.Type == ItemTypeFile && strings.EqualFold(item.Name, leaf) {
-			info = item
+		if item.FileType == ItemTypeFile && strings.EqualFold(item.FileName, leaf) {
+			info = *item
 			break
 		}
 	}
@@ -436,23 +301,31 @@ func (o *Object) readMetaData(ctx context.Context) (err error) {
 
 // ------------------------------------------------------------
 
-// About implements fs.Abouter.
+// About gets quota information
 func (f *Fs) About(ctx context.Context) (usage *fs.Usage, err error) {
-	about, err := f.getSpaceInfo(ctx)
+	about, err := f.openClient.GetUserInfo()
 	if err != nil {
 		return nil, err
 	}
 
 	usage = &fs.Usage{
-		Used:  fs.NewUsageValue(about.TotalSize),
-		Total: fs.NewUsageValue(about.TotalSize),
-		Free:  fs.NewUsageValue(about.TotalSize - about.UsedSize),
+		Used:  fs.NewUsageValue(int64(about.UsedSize)),
+		Total: fs.NewUsageValue(int64(about.TotalSize)),
+		Free:  fs.NewUsageValue(int64(about.TotalSize - about.UsedSize)),
 	}
 
 	return usage, nil
 }
 
-// Copy implements fs.Copier.
+// Copy src to this remote using server-side copy operations.
+//
+// This is stored with the remote path given.
+//
+// It returns the destination Object and a possible error.
+//
+// Will only be called if src.Fs().Name() == f.Name()
+//
+// If it isn't possible then return fs.ErrorCantCopy
 func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
 	srcObj, ok := src.(*Object)
 	if !ok {
@@ -476,27 +349,21 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		return nil, err
 	}
 
-	request := api.CopyFileRequest{
-		DriveID:        f.driveID,
-		FileID:         srcObj.id,
-		ToParentFileID: directoryID,
-	}
-
-	opts := rest.Opts{
-		Method: "POST",
-		Path:   "/adrive/v1.0/openFile/copy",
-	}
-
-	var resp *http.Response
-	var copyResp api.CopyFileResponse
-	err = f.pacer.Call(func() (bool, error) {
-		resp, err = f.client.CallJSON(ctx, &opts, &request, &copyResp)
-		return shouldRetry(ctx, resp, err)
+	item, err := f.openClient.FileCopy(&aliyunpan.FileCopyParam{
+		DriveId:        f.driveID,
+		ToParentFileId: directoryID,
+		FileId:         srcObj.id,
 	})
 	if err != nil {
 		return nil, err
 	}
-	if err := dstObj.readMetaData(ctx); err != nil {
+
+	info, err := f.openClient.FileInfoById(f.driveID, item.FileId)
+	if err != nil {
+		return nil, err
+	}
+	err = dstObj.setMetaData(info)
+	if err != nil {
 		return nil, err
 	}
 	return dstObj, nil
@@ -541,29 +408,35 @@ func (f *Fs) Features() *fs.Features {
 
 // CreateDir implements dircache.DirCacher.
 func (f *Fs) CreateDir(ctx context.Context, pathID string, leaf string) (newID string, err error) {
-	var resp *http.Response
-	var info *api.FileItem
+	var info *aliyunpan.FileEntity
 
-	opts := rest.Opts{
-		Method: "POST",
-		Path:   "/adrive/v1.0/openFile/create",
-	}
-
-	req := api.CreateFileRequest{
-		DriveID:       f.driveID,
-		ParentFileID:  pathID,
+	// TODO
+	_, err = f.openClient.CreateUploadFile(&aliyunpan.CreateFileUploadParam{
+		DriveId:       f.driveID,
+		ParentFileId:  pathID,
 		Name:          leaf,
 		Type:          ItemTypeFolder,
 		CheckNameMode: "refuse",
-	}
-	err = f.pacer.Call(func() (bool, error) {
-		resp, err = f.client.CallJSON(ctx, &opts, &req, &info)
-		return shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
 		return "", err
 	}
-	return info.FileID, nil
+
+	// req := api.CreateFileRequest{
+	// 	DriveID:       f.driveID,
+	// 	ParentFileID:  pathID,
+	// 	Name:          leaf,
+	// 	Type:          ItemTypeFolder,
+	// 	CheckNameMode: "refuse",
+	// }
+	// err = f.pacer.Call(func() (bool, error) {
+	// 	resp, err = f.client.CallJSON(ctx, &opts, &req, &info)
+	// 	return shouldRetry(ctx, resp, err)
+	// })
+	// if err != nil {
+	// 	return "", err
+	// }
+	return info.FileId, nil
 }
 
 // FindLeaf finds a directory of name leaf in the folder with ID pathID
@@ -574,8 +447,8 @@ func (f *Fs) FindLeaf(ctx context.Context, pathID, leaf string) (pathIDOut strin
 		return "", false, err
 	}
 	for _, item := range items {
-		if strings.EqualFold(item.Name, leaf) {
-			pathIDOut = item.FileID
+		if strings.EqualFold(item.FileName, leaf) {
+			pathIDOut = item.FileId
 			found = true
 			break
 		}
@@ -591,15 +464,36 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 		return nil, err
 	}
 
-	list, err := f.listAll(ctx, directoryID)
-	for _, info := range list {
-		remote := path.Join(dir, info.Name)
-		if info.Type == ItemTypeFolder {
-			f.dirCache.Put(remote, info.FileID)
-			d := fs.NewDir(remote, info.UpdatedAt).SetID(info.FileID).SetParentID(dir)
+	// Get directory entries from the dirID
+	fileList, err := f.openClient.FileListGetAll(&aliyunpan.FileListParam{
+		DriveId:        f.driveID,
+		ParentFileId:   directoryID,
+		OrderBy:        "name",
+		OrderDirection: "ASC",
+	}, -1)
+	if err != nil {
+		return nil, err
+	}
+
+	entries = make(fs.DirEntries, 0, len(fileList))
+	for _, item := range fileList {
+		remote := path.Join(dir, item.FileName)
+		if item.FileType == ItemTypeFolder {
+			// Parse UpdatedAt time
+			modTime := time.Now()
+			if item.UpdatedAt != "" {
+				parsedTime, err := time.Parse(time.RFC3339, item.UpdatedAt)
+				if err == nil {
+					modTime = parsedTime.UTC()
+				} else {
+					fs.Debugf(remote, "Failed to parse UpdatedAt time %q: %v", item.UpdatedAt, err)
+				}
+			}
+
+			d := fs.NewDir(remote, modTime).SetID(item.FileId).SetParentID(directoryID)
 			entries = append(entries, d)
 		} else {
-			o, createErr := f.newObjectWithInfo(ctx, remote, &info)
+			o, createErr := f.newObjectWithInfo(ctx, remote, item)
 			if createErr == nil {
 				entries = append(entries, o)
 			}
@@ -623,6 +517,17 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 	// TODO
 	o := &Object{}
 	return o, o.Update(ctx, in, src, options...)
+
+	// 	existingObj, err := f.NewObject(ctx, src.Remote())
+	// switch {
+	// case err == nil:
+	// 	return existingObj.Update(ctx, in, src, options...)
+	// case errors.Is(err, fs.ErrorObjectNotFound):
+	// 	// Not found so create it
+	// 	return f.PutUnchecked(ctx, in, src, options...)
+	// default:
+	// 	return nil, err
+	// }
 }
 
 // PutStream uploads to the remote path with the modTime given of indeterminate size
@@ -630,10 +535,125 @@ func (f *Fs) PutStream(ctx context.Context, in io.Reader, src fs.ObjectInfo, opt
 	return f.Put(ctx, in, src, options...)
 }
 
+// PutUnchecked uploads the object
+func (f *Fs) PutUnchecked(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
+	remote := src.Remote()
+	modTime := src.ModTime(ctx)
+	size := src.Size()
+
+	// Create a new object
+	o, leaf, directoryID, err := f.createObject(ctx, remote, modTime, size)
+	if err != nil {
+		return nil, err
+	}
+
+	// Save the object in the parent directory
+	tempFile, err := os.CreateTemp("", "rclone-adrive-*")
+	if err != nil {
+		return nil, fmt.Errorf("failed to create temp file: %w", err)
+	}
+	defer func() {
+		_ = tempFile.Close()
+		_ = os.Remove(tempFile.Name())
+	}()
+
+	// Copy the contents to the temp file
+	_, err = io.Copy(tempFile, in)
+	if err != nil {
+		return nil, fmt.Errorf("failed to write to temp file: %w", err)
+	}
+
+	// Seek to the beginning for reading
+	_, err = tempFile.Seek(0, io.SeekStart)
+	if err != nil {
+		return nil, fmt.Errorf("failed to seek temp file: %w", err)
+	}
+
+	// Create the file upload param
+	// uploadParam := aliyunpan.FileUploadParam{
+	// 	DriveId:       f.driveID,
+	// 	Name:          leaf,
+	// 	Size:          size,
+	// 	ContentHash:   "", // Will be calculated by the SDK
+	// 	ParentFileId:  directoryID,
+	// 	CheckNameMode: f.opt.CheckNameMode,
+	// 	CreateTime:    modTime,
+	// 	LocalFilePath: tempFile.Name(),
+	// 	Content:       nil, // Not using content directly to avoid memory issues
+	// }
+
+	// Upload the file
+	// TODO
+	result, apiErr := f.openClient.CreateUploadFile(&aliyunpan.CreateFileUploadParam{
+		DriveId:       f.driveID,
+		Name:          leaf,
+		Size:          size,
+		ContentHash:   "", // Will be calculated by the SDK
+		ParentFileId:  directoryID,
+		CheckNameMode: f.opt.CheckNameMode,
+	})
+	if apiErr != nil {
+		return nil, fmt.Errorf("error uploading file: %v", apiErr)
+	}
+
+	// Get file metadata
+	FileEntity, apiErr := o.fs.openClient.FileInfoById(o.fs.driveID, result.FileId)
+	if apiErr != nil {
+		return nil, fmt.Errorf("error getting file metadata after upload: %v", apiErr)
+	}
+
+	// Set metadata of object
+	o.id = FileEntity.FileId
+	o.sha1 = FileEntity.ContentHash
+	o.size = size
+	o.modTime = modTime
+	o.parentID = directoryID
+	o.hasMetaData = true
+
+	return o, nil
+}
+
 // Mkdir creates the container if it doesn't exist
 func (f *Fs) Mkdir(ctx context.Context, dir string) error {
-	_, err := f.dirCache.FindDir(ctx, dir, true)
-	return err
+	if dir == "" || dir == "." {
+		return nil
+	}
+
+	parts := strings.Split(strings.Trim(dir, "/"), "/")
+	parentID := f.opt.RootFolderID
+
+	// Create each directory in the path if it doesn't exist
+	for i, part := range parts {
+		currentPath := strings.Join(parts[:i+1], "/")
+
+		// Try to get the directory first
+		info, err := f.openClient.FileInfoByPath(f.driveID, currentPath)
+		if err != nil {
+			// Directory doesn't exist, create it
+			createParam := &aliyunpan.FileCreateFolderParam{
+				DriveId:       f.driveID,
+				Name:          part,
+				ParentFileId:  parentID,
+				CheckNameMode: f.opt.CheckNameMode,
+			}
+
+			result, apiErr := f.openClient.FileCreateFolder(createParam)
+			if apiErr != nil {
+				return fmt.Errorf("error creating directory %q: %v", part, apiErr)
+			}
+
+			// Use the new directory ID as parent for the next iteration
+			parentID = result.FileId
+		} else {
+			// Directory exists, use its ID as parent for the next iteration
+			if info.FileType != ItemTypeFolder {
+				return fmt.Errorf("%q already exists but is not a directory", currentPath)
+			}
+			parentID = info.FileId
+		}
+	}
+
+	return nil
 }
 
 // Rmdir implements fs.Fs.
@@ -680,24 +700,23 @@ func (f *Fs) Shutdown(ctx context.Context) error {
 
 // UserInfo implements fs.UserInfoer.
 func (f *Fs) UserInfo(ctx context.Context) (userInfo map[string]string, err error) {
-	user, err := f.getUserInfo(ctx)
+	user, err := f.openClient.GetUserInfo()
 	if err != nil {
 		return nil, err
 	}
 
 	userInfo = map[string]string{
-		"Name":   user.Name,
-		"Avatar": user.Avatar,
-		"Phone":  user.Phone,
+		"UserName": user.UserName,
+		"Email":    user.Email,
+		"Phone":    user.Phone,
+		"Role":     string(user.Role),
+		"Status":   string(user.Status),
+		"Nickname": user.Nickname,
 	}
 
-	if vip, err := f.getVipInfo(ctx); err == nil {
-		userInfo["Identity"] = string(vip.Identity)
-		userInfo["Level"] = vip.Level
-		userInfo["Expire"] = time.Time(vip.Expire).String()
-		userInfo["ThirdPartyVip"] = strconv.FormatBool(vip.ThirdPartyVip)
-		userInfo["ThirdPartyVipExpire"] = strconv.Itoa(int(vip.ThirdPartyVipExpire))
-	}
+	userInfo["Expire"] = user.ThirdPartyVipExpire
+	userInfo["ThirdPartyVip"] = strconv.FormatBool(user.ThirdPartyVip)
+	userInfo["ThirdPartyVipExpire"] = user.ThirdPartyVipExpire
 
 	return userInfo, nil
 }
@@ -770,47 +789,141 @@ func (o *Object) SetModTime(ctx context.Context, t time.Time) error {
 }
 
 // Open implements fs.Object.
-func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.ReadCloser, err error) {
-	opts := rest.Opts{
-		Method: "POST",
-		Path:   "/adrive/v1.0/openFile/getDownloadUrl",
+func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadCloser, error) {
+	if o.id == "" {
+		return nil, errors.New("can't open without object ID")
 	}
 
-	req := api.GetDownloadURLRequest{
-		DriveID: o.fs.driveID,
-		FileID:  o.id,
-	}
-
-	var resp *http.Response
-	var download api.GetDownloadURLResponse
-	err = o.fs.pacer.Call(func() (bool, error) {
-		resp, err = o.fs.client.CallJSON(ctx, &opts, &req, &download)
-		return shouldRetry(ctx, resp, err)
+	// Get download URL from OpenAPI
+	downloadUrl, apiErr := o.fs.openClient.GetFileDownloadUrl(&aliyunpan.GetFileDownloadUrlParam{
+		DriveId: o.fs.driveID,
+		FileId:  o.id,
 	})
-	if err != nil {
-		return nil, err
+	if apiErr != nil {
+		return nil, fmt.Errorf("error getting download URL: %v", apiErr)
 	}
 
-	fs.FixRangeOption(options, o.size)
+	if downloadUrl == nil || downloadUrl.Url == "" {
+		return nil, errors.New("empty download URL")
+	}
 
-	opts = rest.Opts{
-		Method:  download.Method,
-		RootURL: download.URL,
-		Options: options,
-	}
-	err = o.fs.pacer.Call(func() (bool, error) {
-		resp, err = o.fs.client.Call(ctx, &opts)
-		return shouldRetry(ctx, resp, err)
-	})
-	if err != nil {
-		return nil, err
-	}
+	// TODO
+	resp, err := http.Get(downloadUrl.Url)
+
+	fs.FixRangeOption(options, o.Size())
+
 	return resp.Body, err
 }
 
 // Update implements fs.Object.
-func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {
-	// return o.upload(ctx, in, src, options...)
+// TODO
+func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (err error) {
+	size := src.Size()
+	modTime := src.ModTime(ctx)
+	remote := o.Remote()
+
+	// Save the object in the parent directory
+	tempFile, err := os.CreateTemp("", "rclone-adrive-*")
+	if err != nil {
+		return fmt.Errorf("failed to create temp file: %w", err)
+	}
+	defer func() {
+		_ = tempFile.Close()
+		_ = os.Remove(tempFile.Name())
+	}()
+
+	// Copy the contents to the temp file
+	_, err = io.Copy(tempFile, in)
+	if err != nil {
+		return fmt.Errorf("failed to write to temp file: %w", err)
+	}
+
+	// Seek to the beginning for reading
+	_, err = tempFile.Seek(0, io.SeekStart)
+	if err != nil {
+		return fmt.Errorf("failed to seek temp file: %w", err)
+	}
+
+	// Get leaf name and parent ID
+	var leaf, directoryID string
+	if o.id != "" {
+		// Try to get the current parent directory from the existing object
+		info, err := o.Stat(ctx)
+		if err != nil {
+			if errors.Is(err, fs.ErrorObjectNotFound) {
+				// If the object doesn't exist, we need to find the directory to create it in
+				remoteDir := path.Dir(remote)
+				remoteName := path.Base(remote)
+				leaf, directoryID, err = o.fs.resolvePath(ctx, remoteDir)
+				if err != nil {
+					return fmt.Errorf("error resolving path: %w", err)
+				}
+				leaf = remoteName
+			} else {
+				return fmt.Errorf("error getting current object info: %w", err)
+			}
+		} else {
+			// Use the existing parent ID and name
+			directoryID = info.ParentFileId
+			leaf = info.FileName
+		}
+	} else {
+		// Find the directory for this object
+		remoteDir := path.Dir(remote)
+		remoteName := path.Base(remote)
+		leaf, directoryID, err = o.fs.resolvePath(ctx, remoteDir)
+		if err != nil {
+			return fmt.Errorf("error resolving path: %w", err)
+		}
+		leaf = remoteName
+	}
+
+	// Create the file upload param
+	uploadParam := &aliyunpan.FileUploadParam{
+		DriveId:       o.fs.driveID,
+		Name:          leaf,
+		Size:          size,
+		ContentHash:   "", // Will be calculated by the SDK
+		ParentFileId:  directoryID,
+		CheckNameMode: o.fs.opt.CheckNameMode,
+		CreateTime:    modTime,
+		LocalFilePath: tempFile.Name(),
+		Content:       nil, // Not using content directly to avoid memory issues
+	}
+
+	var fileID string
+	var apiErr *aliyunpan.ApiError
+
+	// If updating an existing file
+	if o.id != "" {
+		// Set the file ID for update
+		uploadParam.FileId = o.id
+
+		// Update existing file
+		fileID, apiErr = o.fs.openClient.FileUpload(uploadParam)
+	} else {
+		// Upload new file
+		fileID, apiErr = o.fs.openClient.FileUpload(uploadParam)
+	}
+
+	if apiErr != nil {
+		return fmt.Errorf("error uploading file: %v", apiErr)
+	}
+
+	// Get file metadata
+	FileEntity, apiErr := o.fs.openClient.FileInfoById(o.fs.driveID, fileID)
+	if apiErr != nil {
+		return fmt.Errorf("error getting file metadata after upload: %v", apiErr)
+	}
+
+	// Set metadata of object
+	o.id = FileEntity.FileId
+	o.sha1 = FileEntity.ContentHash
+	o.size = size
+	o.modTime = modTime
+	o.parentID = directoryID
+	o.hasMetaData = true
+
 	return nil
 }
 
@@ -822,6 +935,62 @@ func (o *Object) Remove(ctx context.Context) error {
 // ParentID implements fs.ParentIDer.
 func (o *Object) ParentID() string {
 	return o.parentID
+}
+
+// Stat returns the stat info of the object
+func (o *Object) Stat(ctx context.Context) (info *aliyunpan.FileEntity, err error) {
+	// Try to get from id
+	if o.id != "" {
+		info, err = o.fs.openClient.FileInfoById(o.fs.driveID, o.id)
+		if err != nil {
+			// Check for file not found type errors
+			return nil, fs.ErrorObjectNotFound
+		}
+		return info, nil
+	}
+
+	// Otherwise get by path
+	leaf, directoryID, err := o.fs.resolvePath(ctx, o.remote)
+	if err != nil {
+		return nil, fmt.Errorf("error resolving path: %w", err)
+	}
+
+	info, err = o.fs.openClient.FileInfoByPath(o.fs.driveID, path.Join(directoryID, leaf))
+	if err != nil {
+		// Check for file not found type errors
+		return nil, fs.ErrorObjectNotFound
+	}
+
+	return info, nil
+}
+
+// resolvePath resolves a remote path to its leaf and directory ID
+func (f *Fs) resolvePath(ctx context.Context, remote string) (leaf, directoryID string, err error) {
+	// Find the parent directory
+	if remote == "" {
+		return "", f.opt.RootFolderID, nil
+	}
+
+	// Split the path into directory and leaf name
+	dir, leaf := path.Split(remote)
+	if dir == "" {
+		// No directory, so use root
+		return leaf, f.opt.RootFolderID, nil
+	}
+
+	// Find the directory ID
+	dir = strings.TrimSuffix(dir, "/")
+	info, err := f.openClient.FileInfoByPath(f.driveID, dir)
+	if err != nil {
+		// Directory not found
+		return "", "", fs.ErrorDirNotFound
+	}
+
+	if info.FileType != ItemTypeFolder {
+		return "", "", fs.ErrorIsFile
+	}
+
+	return leaf, info.FileId, nil
 }
 
 // Options defines the configuration for this backend
@@ -940,7 +1109,8 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 			}
 
 			// Update the OpenAPI client with the new token
-			newToken := openapi.ApiToken{
+			// TODO
+			_ = openapi.ApiToken{
 				AccessToken: token.AccessToken,
 				ExpiredAt:   time.Now().Add(time.Duration(token.Expiry.Unix()-time.Now().Unix()) * time.Second).Unix(),
 			}
@@ -1009,20 +1179,6 @@ func (f *Fs) Call(ctx context.Context, opts *rest.Opts) (resp *http.Response, er
 func (f *Fs) CallWithPacer(ctx context.Context, opts *rest.Opts, pacer *fs.Pacer) (resp *http.Response, err error) {
 	err = pacer.Call(func() (bool, error) {
 		resp, err = f.client.Call(ctx, opts)
-		return shouldRetry(ctx, resp, err)
-	})
-	return resp, err
-}
-
-// CallJSON makes an API call and decodes the JSON return packet into response
-func (f *Fs) CallJSON(ctx context.Context, opts *rest.Opts, request interface{}, response interface{}) (resp *http.Response, err error) {
-	return f.CallJSONWithPacer(ctx, opts, f.pacer, request, response)
-}
-
-// CallJSONWithPacer makes an API call and decodes the JSON return packet into response using the pacer passed in
-func (f *Fs) CallJSONWithPacer(ctx context.Context, opts *rest.Opts, pacer *fs.Pacer, request interface{}, response interface{}) (resp *http.Response, err error) {
-	err = pacer.Call(func() (bool, error) {
-		resp, err = f.client.CallJSON(ctx, opts, request, response)
 		return shouldRetry(ctx, resp, err)
 	})
 	return resp, err
