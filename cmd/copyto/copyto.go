@@ -43,6 +43,8 @@ This doesn't transfer files that are identical on src and dst, testing
 by size and modification time or MD5SUM.  It doesn't delete files from
 the destination.
 
+*If you are looking to copy just a byte range of a file, please see 'rclone cat --offset X --count Y'*
+
 **Note**: Use the ` + "`-P`" + `/` + "`--progress`" + ` flag to view real-time transfer statistics
 `,
 	Annotations: map[string]string{
