@@ -113,6 +113,19 @@ func (fh *RWFileHandle) openPending() (err error) {
 	}
 	fh.opened = true
 	fh.d.addObject(fh.file) // make sure the directory has this object in it now
+
+	// If we are downloading the file first, then do that here
+	if fh.d.vfs.Opt.DownloadFirst {
+		go func() {
+			fs.Infof(fh.logPrefix(), "downloading %v file completely to cache", fs.SizeSuffix(size))
+			err = fh.item.Ensure()
+			if err != nil {
+				fs.Errorf(fh.logPrefix(), "failed to download file to cache: %v", err)
+				return //fmt.Errorf("failed to download file to cache: %w", err)
+			}
+			fs.Infof(fh.logPrefix(), "downloaded %v file completely to cache", fs.SizeSuffix(size))
+		}()
+	}
 	return nil
 }
 

@@ -146,6 +146,11 @@ var OptionsInfo = fs.Options{{
 	Help:    "Use fast (less accurate) fingerprints for change detection",
 	Groups:  "VFS",
 }, {
+	Name:    "vfs_download_first",
+	Default: false,
+	Help:    "If set and --vfs-cache-mode full then download files completely on first access.",
+	Groups:  "VFS",
+}, {
 	Name:    "vfs_disk_space_total_size",
 	Default: fs.SizeSuffix(-1),
 	Help:    "Specify the total space of disk",
@@ -208,6 +213,7 @@ type Options struct {
 	ReadAhead          fs.SizeSuffix `config:"vfs_read_ahead"`       // bytes to read ahead in cache mode "full"
 	UsedIsSize         bool          `config:"vfs_used_is_size"`     // if true, use the `rclone size` algorithm for Used size
 	FastFingerprint    bool          `config:"vfs_fast_fingerprint"` // if set use fast fingerprints
+	DownloadFirst      bool          `config:"vfs_download_first"`   // if set download files to VFS cache first
 	DiskSpaceTotalSize fs.SizeSuffix `config:"vfs_disk_space_total_size"`
 	MetadataExtension  string        `config:"vfs_metadata_extension"` // if set respond to files with this extension with metadata
 }

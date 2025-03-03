@@ -642,6 +642,16 @@ func (item *Item) store(ctx context.Context, storeFn StoreFn) (err error) {
 	return item._store(ctx, storeFn)
 }
 
+// Ensure item is entirely on disk
+func (item *Item) Ensure() (err error) {
+	item.mu.Lock()
+	defer item.mu.Unlock()
+	if item.o == nil {
+		return nil
+	}
+	return item._ensure(0, item.info.Size)
+}
+
 // Close the cache file
 func (item *Item) Close(storeFn StoreFn) (err error) {
 	// defer log.Trace(item.o, "Item.Close")("err=%v", &err)
