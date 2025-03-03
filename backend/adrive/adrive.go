@@ -1,6 +1,7 @@
 package adrive
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -406,37 +407,14 @@ func (f *Fs) Features() *fs.Features {
 	return f.features
 }
 
-// CreateDir implements dircache.DirCacher.
+// CreateDir makes a directory with pathID as parent and name leaf
 func (f *Fs) CreateDir(ctx context.Context, pathID string, leaf string) (newID string, err error) {
-	var info *aliyunpan.FileEntity
-
-	// TODO
-	_, err = f.openClient.CreateUploadFile(&aliyunpan.CreateFileUploadParam{
-		DriveId:       f.driveID,
-		ParentFileId:  pathID,
-		Name:          leaf,
-		Type:          ItemTypeFolder,
-		CheckNameMode: "refuse",
-	})
+	result, err := f.openClient.Mkdir(f.driveID, pathID, leaf)
 	if err != nil {
 		return "", err
 	}
 
-	// req := api.CreateFileRequest{
-	// 	DriveID:       f.driveID,
-	// 	ParentFileID:  pathID,
-	// 	Name:          leaf,
-	// 	Type:          ItemTypeFolder,
-	// 	CheckNameMode: "refuse",
-	// }
-	// err = f.pacer.Call(func() (bool, error) {
-	// 	resp, err = f.client.CallJSON(ctx, &opts, &req, &info)
-	// 	return shouldRetry(ctx, resp, err)
-	// })
-	// if err != nil {
-	// 	return "", err
-	// }
-	return info.FileId, nil
+	return result.FileId, nil
 }
 
 // FindLeaf finds a directory of name leaf in the folder with ID pathID
@@ -512,22 +490,26 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 	return f.newObjectWithInfo(ctx, remote, nil)
 }
 
-// Put implements fs.Fs.
+// Put the object
+//
+// Copy the reader in to the new object which is returned.
+//
+// The new object may have been created if an error is returned
 func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
-	// TODO
-	o := &Object{}
-	return o, o.Update(ctx, in, src, options...)
-
-	// 	existingObj, err := f.NewObject(ctx, src.Remote())
-	// switch {
-	// case err == nil:
-	// 	return existingObj.Update(ctx, in, src, options...)
-	// case errors.Is(err, fs.ErrorObjectNotFound):
-	// 	// Not found so create it
-	// 	return f.PutUnchecked(ctx, in, src, options...)
-	// default:
-	// 	return nil, err
-	// }
+	existingObj, err := f.NewObject(ctx, src.Remote())
+	switch err {
+	case nil:
+		return existingObj, existingObj.Update(ctx, in, src, options...)
+	case fs.ErrorObjectNotFound:
+		// Not found so create it
+		newObj := &Object{
+			fs:     f,
+			remote: src.Remote(),
+		}
+		return newObj, newObj.upload(ctx, in, src, false, options...)
+	default:
+		return nil, err
+	}
 }
 
 // PutStream uploads to the remote path with the modTime given of indeterminate size
@@ -615,45 +597,8 @@ func (f *Fs) PutUnchecked(ctx context.Context, in io.Reader, src fs.ObjectInfo, 
 
 // Mkdir creates the container if it doesn't exist
 func (f *Fs) Mkdir(ctx context.Context, dir string) error {
-	if dir == "" || dir == "." {
-		return nil
-	}
-
-	parts := strings.Split(strings.Trim(dir, "/"), "/")
-	parentID := f.opt.RootFolderID
-
-	// Create each directory in the path if it doesn't exist
-	for i, part := range parts {
-		currentPath := strings.Join(parts[:i+1], "/")
-
-		// Try to get the directory first
-		info, err := f.openClient.FileInfoByPath(f.driveID, currentPath)
-		if err != nil {
-			// Directory doesn't exist, create it
-			createParam := &aliyunpan.FileCreateFolderParam{
-				DriveId:       f.driveID,
-				Name:          part,
-				ParentFileId:  parentID,
-				CheckNameMode: f.opt.CheckNameMode,
-			}
-
-			result, apiErr := f.openClient.FileCreateFolder(createParam)
-			if apiErr != nil {
-				return fmt.Errorf("error creating directory %q: %v", part, apiErr)
-			}
-
-			// Use the new directory ID as parent for the next iteration
-			parentID = result.FileId
-		} else {
-			// Directory exists, use its ID as parent for the next iteration
-			if info.FileType != ItemTypeFolder {
-				return fmt.Errorf("%q already exists but is not a directory", currentPath)
-			}
-			parentID = info.FileId
-		}
-	}
-
-	return nil
+	_, err := f.dirCache.FindDir(ctx, dir, true)
+	return err
 }
 
 // Rmdir implements fs.Fs.
@@ -788,10 +733,40 @@ func (o *Object) SetModTime(ctx context.Context, t time.Time) error {
 	return fs.ErrorCantSetModTime
 }
 
+// httpResponse gets an http.Response object for the object
+// using the url and method passed in
+func (o *Object) httpResponse(ctx context.Context, url, method string, options []fs.OpenOption) (res *http.Response, err error) {
+	if url == "" {
+		return nil, errors.New("forbidden to download - check sharing permission")
+	}
+	req, err := http.NewRequestWithContext(ctx, method, url, nil)
+	if err != nil {
+		return nil, err
+	}
+	fs.FixRangeOption(options, o.size)
+	fs.OpenOptionAddHTTPHeaders(req.Header, options)
+	if o.size == 0 {
+		// Don't supply range requests for 0 length objects as they always fail
+		delete(req.Header, "Range")
+	}
+	err = o.fs.pacer.Call(func() (bool, error) {
+		res, err = o.fs.client.Do(req)
+		return shouldRetry(ctx, res, err)
+	})
+	if err != nil {
+		return nil, err
+	}
+	return res, nil
+}
+
 // Open implements fs.Object.
 func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadCloser, error) {
 	if o.id == "" {
-		return nil, errors.New("can't open without object ID")
+		return nil, errors.New("can't download: no id")
+	}
+	if o.size == 0 {
+		// zero-byte objects may have no download link
+		return io.NopCloser(bytes.NewBuffer([]byte(nil))), nil
 	}
 
 	// Get download URL from OpenAPI
@@ -807,122 +782,122 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 		return nil, errors.New("empty download URL")
 	}
 
-	// TODO
-	resp, err := http.Get(downloadUrl.Url)
+	res, err := o.httpResponse(ctx, downloadUrl.Url, "GET", options)
+	if err != nil {
+		return nil, fmt.Errorf("open file failed: %w", err)
+	}
 
-	fs.FixRangeOption(options, o.Size())
-
-	return resp.Body, err
+	return res.Body, err
 }
 
 // Update implements fs.Object.
 // TODO
 func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (err error) {
-	size := src.Size()
-	modTime := src.ModTime(ctx)
-	remote := o.Remote()
+	// size := src.Size()
+	// modTime := src.ModTime(ctx)
+	// remote := o.Remote()
 
-	// Save the object in the parent directory
-	tempFile, err := os.CreateTemp("", "rclone-adrive-*")
-	if err != nil {
-		return fmt.Errorf("failed to create temp file: %w", err)
-	}
-	defer func() {
-		_ = tempFile.Close()
-		_ = os.Remove(tempFile.Name())
-	}()
+	// // Save the object in the parent directory
+	// tempFile, err := os.CreateTemp("", "rclone-adrive-*")
+	// if err != nil {
+	// 	return fmt.Errorf("failed to create temp file: %w", err)
+	// }
+	// defer func() {
+	// 	_ = tempFile.Close()
+	// 	_ = os.Remove(tempFile.Name())
+	// }()
 
-	// Copy the contents to the temp file
-	_, err = io.Copy(tempFile, in)
-	if err != nil {
-		return fmt.Errorf("failed to write to temp file: %w", err)
-	}
+	// // Copy the contents to the temp file
+	// _, err = io.Copy(tempFile, in)
+	// if err != nil {
+	// 	return fmt.Errorf("failed to write to temp file: %w", err)
+	// }
 
-	// Seek to the beginning for reading
-	_, err = tempFile.Seek(0, io.SeekStart)
-	if err != nil {
-		return fmt.Errorf("failed to seek temp file: %w", err)
-	}
+	// // Seek to the beginning for reading
+	// _, err = tempFile.Seek(0, io.SeekStart)
+	// if err != nil {
+	// 	return fmt.Errorf("failed to seek temp file: %w", err)
+	// }
 
-	// Get leaf name and parent ID
-	var leaf, directoryID string
-	if o.id != "" {
-		// Try to get the current parent directory from the existing object
-		info, err := o.Stat(ctx)
-		if err != nil {
-			if errors.Is(err, fs.ErrorObjectNotFound) {
-				// If the object doesn't exist, we need to find the directory to create it in
-				remoteDir := path.Dir(remote)
-				remoteName := path.Base(remote)
-				leaf, directoryID, err = o.fs.resolvePath(ctx, remoteDir)
-				if err != nil {
-					return fmt.Errorf("error resolving path: %w", err)
-				}
-				leaf = remoteName
-			} else {
-				return fmt.Errorf("error getting current object info: %w", err)
-			}
-		} else {
-			// Use the existing parent ID and name
-			directoryID = info.ParentFileId
-			leaf = info.FileName
-		}
-	} else {
-		// Find the directory for this object
-		remoteDir := path.Dir(remote)
-		remoteName := path.Base(remote)
-		leaf, directoryID, err = o.fs.resolvePath(ctx, remoteDir)
-		if err != nil {
-			return fmt.Errorf("error resolving path: %w", err)
-		}
-		leaf = remoteName
-	}
+	// // Get leaf name and parent ID
+	// var leaf, directoryID string
+	// if o.id != "" {
+	// 	// Try to get the current parent directory from the existing object
+	// 	info, err := o.Stat(ctx)
+	// 	if err != nil {
+	// 		if errors.Is(err, fs.ErrorObjectNotFound) {
+	// 			// If the object doesn't exist, we need to find the directory to create it in
+	// 			remoteDir := path.Dir(remote)
+	// 			remoteName := path.Base(remote)
+	// 			leaf, directoryID, err = o.fs.resolvePath(ctx, remoteDir)
+	// 			if err != nil {
+	// 				return fmt.Errorf("error resolving path: %w", err)
+	// 			}
+	// 			leaf = remoteName
+	// 		} else {
+	// 			return fmt.Errorf("error getting current object info: %w", err)
+	// 		}
+	// 	} else {
+	// 		// Use the existing parent ID and name
+	// 		directoryID = info.ParentFileId
+	// 		leaf = info.FileName
+	// 	}
+	// } else {
+	// 	// Find the directory for this object
+	// 	remoteDir := path.Dir(remote)
+	// 	remoteName := path.Base(remote)
+	// 	leaf, directoryID, err = o.fs.resolvePath(ctx, remoteDir)
+	// 	if err != nil {
+	// 		return fmt.Errorf("error resolving path: %w", err)
+	// 	}
+	// 	leaf = remoteName
+	// }
 
-	// Create the file upload param
-	uploadParam := &aliyunpan.FileUploadParam{
-		DriveId:       o.fs.driveID,
-		Name:          leaf,
-		Size:          size,
-		ContentHash:   "", // Will be calculated by the SDK
-		ParentFileId:  directoryID,
-		CheckNameMode: o.fs.opt.CheckNameMode,
-		CreateTime:    modTime,
-		LocalFilePath: tempFile.Name(),
-		Content:       nil, // Not using content directly to avoid memory issues
-	}
+	// // Create the file upload param
+	// uploadParam := &aliyunpan.FileUploadParam{
+	// 	DriveId:       o.fs.driveID,
+	// 	Name:          leaf,
+	// 	Size:          size,
+	// 	ContentHash:   "", // Will be calculated by the SDK
+	// 	ParentFileId:  directoryID,
+	// 	CheckNameMode: o.fs.opt.CheckNameMode,
+	// 	CreateTime:    modTime,
+	// 	LocalFilePath: tempFile.Name(),
+	// 	Content:       nil, // Not using content directly to avoid memory issues
+	// }
 
-	var fileID string
-	var apiErr *aliyunpan.ApiError
+	// var fileID string
+	// var apiErr *aliyunpan.ApiError
 
-	// If updating an existing file
-	if o.id != "" {
-		// Set the file ID for update
-		uploadParam.FileId = o.id
+	// // If updating an existing file
+	// if o.id != "" {
+	// 	// Set the file ID for update
+	// 	uploadParam.FileId = o.id
 
-		// Update existing file
-		fileID, apiErr = o.fs.openClient.FileUpload(uploadParam)
-	} else {
-		// Upload new file
-		fileID, apiErr = o.fs.openClient.FileUpload(uploadParam)
-	}
+	// 	// Update existing file
+	// 	fileID, apiErr = o.fs.openClient.FileUpload(uploadParam)
+	// } else {
+	// 	// Upload new file
+	// 	fileID, apiErr = o.fs.openClient.FileUpload(uploadParam)
+	// }
 
-	if apiErr != nil {
-		return fmt.Errorf("error uploading file: %v", apiErr)
-	}
+	// if apiErr != nil {
+	// 	return fmt.Errorf("error uploading file: %v", apiErr)
+	// }
 
-	// Get file metadata
-	FileEntity, apiErr := o.fs.openClient.FileInfoById(o.fs.driveID, fileID)
-	if apiErr != nil {
-		return fmt.Errorf("error getting file metadata after upload: %v", apiErr)
-	}
+	// // Get file metadata
+	// FileEntity, apiErr := o.fs.openClient.FileInfoById(o.fs.driveID, fileID)
+	// if apiErr != nil {
+	// 	return fmt.Errorf("error getting file metadata after upload: %v", apiErr)
+	// }
 
-	// Set metadata of object
-	o.id = FileEntity.FileId
-	o.sha1 = FileEntity.ContentHash
-	o.size = size
-	o.modTime = modTime
-	o.parentID = directoryID
-	o.hasMetaData = true
+	// // Set metadata of object
+	// o.id = FileEntity.FileId
+	// o.sha1 = FileEntity.ContentHash
+	// o.size = size
+	// o.modTime = modTime
+	// o.parentID = directoryID
+	// o.hasMetaData = true
 
 	return nil
 }
@@ -950,7 +925,7 @@ func (o *Object) Stat(ctx context.Context) (info *aliyunpan.FileEntity, err erro
 	}
 
 	// Otherwise get by path
-	leaf, directoryID, err := o.fs.resolvePath(ctx, o.remote)
+	leaf, directoryID, err := o.fs.resolvePath(o.remote)
 	if err != nil {
 		return nil, fmt.Errorf("error resolving path: %w", err)
 	}
@@ -965,7 +940,7 @@ func (o *Object) Stat(ctx context.Context) (info *aliyunpan.FileEntity, err erro
 }
 
 // resolvePath resolves a remote path to its leaf and directory ID
-func (f *Fs) resolvePath(ctx context.Context, remote string) (leaf, directoryID string, err error) {
+func (f *Fs) resolvePath(remote string) (leaf, directoryID string, err error) {
 	// Find the parent directory
 	if remote == "" {
 		return "", f.opt.RootFolderID, nil
@@ -1010,8 +985,7 @@ type Options struct {
 func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, error) {
 	// Parse config
 	opt := new(Options)
-	err := configstruct.Set(m, opt)
-	if err != nil {
+	if err := configstruct.Set(m, opt); err != nil {
 		return nil, err
 	}
 
@@ -1045,6 +1019,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		}
 	} else if opt.AccessToken == "" {
 		// Standard OAuth2 flow
+		var err error
 		client, ts, err = oauthutil.NewClient(ctx, name, m, oauthConfig)
 		if err != nil {
 			return nil, fmt.Errorf("failed to configure Aliyun Drive: %w", err)
@@ -1129,7 +1104,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	f.dirCache = dircache.New(root, f.rootID, f)
 
 	// Find the current root
-	err = f.dirCache.FindRoot(ctx, false)
+	err := f.dirCache.FindRoot(ctx, false)
 	if err != nil {
 		// Assume it is a file
 		newRoot, remote := dircache.SplitPath(root)
@@ -1170,19 +1145,10 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	return f, nil
 }
 
-// Call makes a call to the API using the params passed in
-func (f *Fs) Call(ctx context.Context, opts *rest.Opts) (resp *http.Response, err error) {
-	return f.CallWithPacer(ctx, opts, f.pacer)
-}
+func (f *Fs) upload(ctx context.Context, in io.Reader, leaf, dirID, gcid string, size int64, options ...fs.OpenOption) (info *aliyunpan.FileEntity, err error)
 
-// CallWithPacer makes a call to the API using the params passed in using the pacer passed in
-func (f *Fs) CallWithPacer(ctx context.Context, opts *rest.Opts, pacer *fs.Pacer) (resp *http.Response, err error) {
-	err = pacer.Call(func() (bool, error) {
-		resp, err = f.client.Call(ctx, opts)
-		return shouldRetry(ctx, resp, err)
-	})
-	return resp, err
-}
+// upload uploads the object with or without using a temporary file name
+func (o *Object) upload(ctx context.Context, in io.Reader, src fs.ObjectInfo, withTemp bool, options ...fs.OpenOption) (err error)
 
 var retryErrorCodes = []int{
 	403,
