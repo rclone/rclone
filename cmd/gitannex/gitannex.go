@@ -28,6 +28,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 
 	"github.com/rclone/rclone/cmd"
@@ -282,11 +283,8 @@ func (s *server) handleInitRemote() error {
 
 	if s.configRcloneRemoteName != ":local" {
 		var remoteExists bool
-		for _, remoteName := range config.FileSections() {
-			if remoteName == trimmedName {
-				remoteExists = true
-				break
-			}
+		if slices.Contains(config.FileSections(), trimmedName) {
+			remoteExists = true
 		}
 		if !remoteExists {
 			s.sendMsg("INITREMOTE-FAILURE remote does not exist: " + s.configRcloneRemoteName)

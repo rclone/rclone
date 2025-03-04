@@ -632,7 +632,7 @@ func (f *Fs) parseChunkName(filePath string) (parentPath string, chunkNo int, ct
 
 // forbidChunk prints error message or raises error if file is chunk.
 // First argument sets log prefix, use `false` to suppress message.
-func (f *Fs) forbidChunk(o interface{}, filePath string) error {
+func (f *Fs) forbidChunk(o any, filePath string) error {
 	if parentPath, _, _, _ := f.parseChunkName(filePath); parentPath != "" {
 		if f.opt.FailHard {
 			return fmt.Errorf("chunk overlap with %q", parentPath)
@@ -680,7 +680,7 @@ func (f *Fs) newXactID(ctx context.Context, filePath string) (xactID string, err
 	circleSec := unixSec % closestPrimeZzzzSeconds
 	first4chars := strconv.FormatInt(circleSec, 36)
 
-	for tries := 0; tries < maxTransactionProbes; tries++ {
+	for range maxTransactionProbes {
 		f.xactIDMutex.Lock()
 		randomness := f.xactIDRand.Int63n(maxTwoBase36Digits + 1)
 		f.xactIDMutex.Unlock()
@@ -1189,10 +1189,7 @@ func (f *Fs) put(
 		}
 
 		tempRemote := f.makeChunkName(baseRemote, c.chunkNo, "", xactID)
-		size := c.sizeLeft
-		if size > c.chunkSize {
-			size = c.chunkSize
-		}
+		size := min(c.sizeLeft, c.chunkSize)
 		savedReadCount := c.readCount
 
 		// If a single chunk is expected, avoid the extra rename operation
@@ -1477,10 +1474,7 @@ func (c *chunkingReader) dummyRead(in io.Reader, size int64) error {
 	const bufLen = 1048576 // 1 MiB
 	buf := make([]byte, bufLen)
 	for size > 0 {
-		n := size
-		if n > bufLen {
-			n = bufLen
-		}
+		n := min(size, bufLen)
 		if _, err := io.ReadFull(in, buf[0:n]); err != nil {
 			return err
 		}

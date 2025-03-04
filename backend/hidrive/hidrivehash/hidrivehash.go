@@ -52,10 +52,7 @@ func writeByBlock(p []byte, writer io.Writer, blockSize uint32, bytesInBlock *ui
 	total := len(p)
 	nullBytes := make([]byte, blockSize)
 	for len(p) > 0 {
-		toWrite := int(blockSize - *bytesInBlock)
-		if toWrite > len(p) {
-			toWrite = len(p)
-		}
+		toWrite := min(int(blockSize-*bytesInBlock), len(p))
 		c, err := writer.Write(p[:toWrite])
 		*bytesInBlock += uint32(c)
 		*onlyNullBytesInBlock = *onlyNullBytesInBlock && bytes.Equal(nullBytes[:toWrite], p[:toWrite])
@@ -276,7 +273,7 @@ func (h *hidriveHash) Sum(b []byte) []byte {
 	}
 
 	checksum := zeroSum
-	for i := 0; i < len(h.levels); i++ {
+	for i := range h.levels {
 		level := h.levels[i]
 		if i < len(h.levels)-1 {
 			// Aggregate non-empty non-final levels.

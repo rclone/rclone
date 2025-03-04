@@ -627,7 +627,7 @@ func (b *bisyncTest) runTestStep(ctx context.Context, line string) (err error) {
 	testFunc := func() {
 		src := filepath.Join(b.dataDir, "file7.txt")
 
-		for i := 0; i < 50; i++ {
+		for i := range 50 {
 			dst := "file" + fmt.Sprint(i) + ".txt"
 			err := b.copyFile(ctx, src, b.replaceHex(b.path2), dst)
 			if err != nil {
@@ -1606,7 +1606,7 @@ func (b *bisyncTest) mangleResult(dir, file string, golden bool) string {
 		s = pathReplacer.Replace(strings.TrimSpace(s))
 
 		// Apply regular expression replacements
-		for i := 0; i < len(repFrom); i++ {
+		for i := range repFrom {
 			s = repFrom[i].ReplaceAllString(s, repTo[i])
 		}
 		s = strings.TrimSpace(s)
@@ -1621,7 +1621,7 @@ func (b *bisyncTest) mangleResult(dir, file string, golden bool) string {
 		// Sort consecutive groups of naturally unordered lines.
 		// Any such group must end before the log ends or it might be lost.
 		absorbed := false
-		for i := 0; i < len(dampers); i++ {
+		for i := range dampers {
 			match := false
 			if s != "" && !absorbed {
 				match = hoppers[i].MatchString(s)
@@ -1869,7 +1869,7 @@ func fileType(fileName string) string {
 }
 
 // logPrintf prints a message to stdout and to the test log
-func (b *bisyncTest) logPrintf(text string, args ...interface{}) {
+func (b *bisyncTest) logPrintf(text string, args ...any) {
 	line := fmt.Sprintf(text, args...)
 	fs.Log(nil, line)
 	if b.logFile != nil {
@@ -1936,7 +1936,7 @@ func ctxNoDsStore(ctx context.Context, t *testing.T) (context.Context, *filter.F
 	return ctxNoDsStore, fi
 }
 
-func checkError(t *testing.T, err error, msgAndArgs ...interface{}) {
+func checkError(t *testing.T, err error, msgAndArgs ...any) {
 	if errors.Is(err, fs.ErrorCantUploadEmptyFiles) {
 		t.Skipf("Skip test because remote cannot upload empty files")
 	}

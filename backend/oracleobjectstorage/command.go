@@ -131,7 +131,7 @@ If it is a string or a []string it will be shown to the user
 otherwise it will be JSON encoded and shown to the user like that
 */
 func (f *Fs) Command(ctx context.Context, commandName string, args []string,
-	opt map[string]string) (result interface{}, err error) {
+	opt map[string]string) (result any, err error) {
 	// fs.Debugf(f, "command %v, args: %v, opts:%v", commandName, args, opt)
 	switch commandName {
 	case operationRename:
@@ -159,7 +159,7 @@ func (f *Fs) Command(ctx context.Context, commandName string, args []string,
 	}
 }
 
-func (f *Fs) rename(ctx context.Context, remote, newName string) (interface{}, error) {
+func (f *Fs) rename(ctx context.Context, remote, newName string) (any, error) {
 	if remote == "" {
 		return nil, fmt.Errorf("path to object file cannot be empty")
 	}
@@ -332,7 +332,7 @@ func (f *Fs) listMultipartUploadParts(ctx context.Context, bucketName, bucketPat
 	return uploadedParts, nil
 }
 
-func (f *Fs) restore(ctx context.Context, opt map[string]string) (interface{}, error) {
+func (f *Fs) restore(ctx context.Context, opt map[string]string) (any, error) {
 	req := objectstorage.RestoreObjectsRequest{
 		NamespaceName:         common.String(f.opt.Namespace),
 		RestoreObjectsDetails: objectstorage.RestoreObjectsDetails{},

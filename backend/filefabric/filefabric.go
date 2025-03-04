@@ -371,7 +371,7 @@ func (f *Fs) getToken(ctx context.Context) (token string, err error) {
 }
 
 // params for rpc
-type params map[string]interface{}
+type params map[string]any
 
 // rpc calls the rpc.php method of the SME file fabric
 //

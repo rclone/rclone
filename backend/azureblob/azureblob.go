@@ -19,6 +19,7 @@ import (
 	"net/url"
 	"os"
 	"path"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -681,10 +682,8 @@ func (f *Fs) shouldRetry(ctx context.Context, err error) (bool, error) {
 			return true, err
 		}
 		statusCode := storageErr.StatusCode
-		for _, e := range retryErrorCodes {
-			if statusCode == e {
-				return true, err
-			}
+		if slices.Contains(retryErrorCodes, statusCode) {
+			return true, err
 		}
 	}
 	return fserrors.ShouldRetry(err), err

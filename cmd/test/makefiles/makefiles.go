@@ -95,7 +95,7 @@ var makefilesCmd = &cobra.Command{
 		}
 		dirs := root.list("", []string{})
 		totalBytes := int64(0)
-		for i := 0; i < numberOfFiles; i++ {
+		for range numberOfFiles {
 			dir := dirs[randSource.Intn(len(dirs))]
 			size := int64(minFileSize)
 			if maxFileSize > minFileSize {

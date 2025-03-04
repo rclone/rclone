@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"runtime"
+	"slices"
 	"sort"
 	"testing"
 	"time"
@@ -317,7 +318,7 @@ func TestDirReadDirAll(t *testing.T) {
 		features := r.Fremote.Features()
 		if features.CanHaveEmptyDirectories {
 			// snip out virtualDir2 which will only be present if can't have empty dirs
-			want = append(want[:2], want[3:]...)
+			want = slices.Delete(want, 2, 3)
 		}
 		checkListing(t, dir, want)
 

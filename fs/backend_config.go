@@ -8,6 +8,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -75,11 +76,11 @@ type ConfigIn struct {
 // Error is displayed to the user before asking a question
 // Result is passed to the next call to Config if Option/OAuth isn't set
 type ConfigOut struct {
-	State  string      // State to jump to after this
-	Option *Option     // Option to query user about
-	OAuth  interface{} `json:"-"` // Do OAuth if set
-	Error  string      // error to be displayed to the user
-	Result string      // if Option/OAuth not set then this is passed to the next state
+	State  string  // State to jump to after this
+	Option *Option // Option to query user about
+	OAuth  any     `json:"-"` // Do OAuth if set
+	Error  string  // error to be displayed to the user
+	Result string  // if Option/OAuth not set then this is passed to the next state
 }
 
 // ConfigInputOptional asks the user for a string which may be empty
@@ -555,13 +556,7 @@ func MatchProvider(providerConfig, provider string) bool {
 		negate = true
 	}
 	providers := strings.Split(providerConfig, ",")
-	matched := false
-	for _, p := range providers {
-		if p == provider {
-			matched = true
-			break
-		}
-	}
+	matched := slices.Contains(providers, provider)
 	if negate {
 		return !matched
 	}

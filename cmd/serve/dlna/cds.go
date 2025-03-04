@@ -34,7 +34,7 @@ var mediaMimeTypeRegexp = regexp.MustCompile("^(video|audio|image)/")
 
 // Turns the given entry and DMS host into a UPnP object. A nil object is
 // returned if the entry is not of interest.
-func (cds *contentDirectoryService) cdsObjectToUpnpavObject(cdsObject object, fileInfo vfs.Node, resources vfs.Nodes, host string) (ret interface{}, err error) {
+func (cds *contentDirectoryService) cdsObjectToUpnpavObject(cdsObject object, fileInfo vfs.Node, resources vfs.Nodes, host string) (ret any, err error) {
 	obj := upnpav.Object{
 		ID:         cdsObject.ID(),
 		Restricted: 1,
@@ -127,7 +127,7 @@ func (cds *contentDirectoryService) cdsObjectToUpnpavObject(cdsObject object, fi
 }
 
 // Returns all the upnpav objects in a directory.
-func (cds *contentDirectoryService) readContainer(o object, host string) (ret []interface{}, err error) {
+func (cds *contentDirectoryService) readContainer(o object, host string) (ret []any, err error) {
 	node, err := cds.vfs.Stat(o.Path)
 	if err != nil {
 		return
@@ -295,10 +295,7 @@ func (cds *contentDirectoryService) Handle(action string, argsXML []byte, r *htt
 			}
 			totalMatches := len(objs)
 			objs = objs[func() (low int) {
-				low = browse.StartingIndex
-				if low > len(objs) {
-					low = len(objs)
-				}
+				low = min(browse.StartingIndex, len(objs))
 				return
 			}():]
 			if browse.RequestedCount != 0 && browse.RequestedCount < len(objs) {

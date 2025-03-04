@@ -193,7 +193,7 @@ func (o *Object) set(e *entity) {
 // Call linkbox with the query in opts and return result
 //
 // This will be checked for error and an error will be returned if Status != 1
-func getUnmarshaledResponse(ctx context.Context, f *Fs, opts *rest.Opts, result interface{}) error {
+func getUnmarshaledResponse(ctx context.Context, f *Fs, opts *rest.Opts, result any) error {
 	err := f.pacer.Call(func() (bool, error) {
 		resp, err := f.srv.CallJSON(ctx, opts, nil, &result)
 		return f.shouldRetry(ctx, resp, err)

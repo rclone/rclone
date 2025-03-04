@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"path"
+	"slices"
 	"strings"
 	"time"
 
@@ -388,10 +389,8 @@ func (f *Filter) ListContainsExcludeFile(entries fs.DirEntries) bool {
 		obj, ok := entry.(fs.Object)
 		if ok {
 			basename := path.Base(obj.Remote())
-			for _, excludeFile := range f.Opt.ExcludeFile {
-				if basename == excludeFile {
-					return true
-				}
+			if slices.Contains(f.Opt.ExcludeFile, basename) {
+				return true
 			}
 		}
 	}
@@ -559,7 +558,7 @@ func (f *Filter) MakeListR(ctx context.Context, NewObject func(ctx context.Conte
 			remotes  = make(chan string, checkers)
 			g, gCtx  = errgroup.WithContext(ctx)
 		)
-		for i := 0; i < checkers; i++ {
+		for range checkers {
 			g.Go(func() (err error) {
 				var entries = make(fs.DirEntries, 1)
 				for remote := range remotes {

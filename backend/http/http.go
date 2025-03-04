@@ -505,7 +505,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 		entries = append(entries, entry)
 		entriesMu.Unlock()
 	}
-	for i := 0; i < checkers; i++ {
+	for range checkers {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
@@ -740,7 +740,7 @@ It doesn't return anything.
 // The result should be capable of being JSON encoded
 // If it is a string or a []string it will be shown to the user
 // otherwise it will be JSON encoded and shown to the user like that
-func (f *Fs) Command(ctx context.Context, name string, arg []string, opt map[string]string) (out interface{}, err error) {
+func (f *Fs) Command(ctx context.Context, name string, arg []string, opt map[string]string) (out any, err error) {
 	switch name {
 	case "set":
 		newOpt := f.opt

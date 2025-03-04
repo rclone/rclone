@@ -82,8 +82,8 @@ type File struct {
 	ContentType              string `json:"content_type"`
 	Format                   struct {
 	} `json:"format"`
-	DownloadTypes []interface{} `json:"download_types"`
-	ThumbnailInfo []interface{} `json:"thumbnail_info"`
+	DownloadTypes []any `json:"download_types"`
+	ThumbnailInfo []any `json:"thumbnail_info"`
 	PreviewInfo   struct {
 	} `json:"preview_info"`
 	Privacy          string    `json:"privacy"`

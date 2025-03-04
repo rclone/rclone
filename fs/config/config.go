@@ -386,7 +386,7 @@ func SaveConfig() {
 	ctx := context.Background()
 	ci := fs.GetConfig(ctx)
 	var err error
-	for i := 0; i < ci.LowLevelRetries+1; i++ {
+	for range ci.LowLevelRetries + 1 {
 		if err = LoadedData().Save(); err == nil {
 			return
 		}

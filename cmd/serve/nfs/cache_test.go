@@ -50,7 +50,7 @@ func testCacheCRUD(t *testing.T, h *Handler, c Cache, fileName string) {
 // Thrash the cache operations in parallel on different files
 func testCacheThrashDifferent(t *testing.T, h *Handler, c Cache) {
 	var wg sync.WaitGroup
-	for i := 0; i < 100; i++ {
+	for i := range 100 {
 		i := i
 		wg.Add(1)
 		go func() {
@@ -64,7 +64,7 @@ func testCacheThrashDifferent(t *testing.T, h *Handler, c Cache) {
 // Thrash the cache operations in parallel on the same file
 func testCacheThrashSame(t *testing.T, h *Handler, c Cache) {
 	var wg sync.WaitGroup
-	for i := 0; i < 100; i++ {
+	for range 100 {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()

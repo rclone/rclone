@@ -524,7 +524,7 @@ func (b *bisyncRun) testFn() {
 	}
 }
 
-func (b *bisyncRun) handleErr(o interface{}, msg string, err error, critical, retryable bool) {
+func (b *bisyncRun) handleErr(o any, msg string, err error, critical, retryable bool) {
 	if err != nil {
 		if retryable {
 			b.retryable = true
@@ -624,7 +624,7 @@ func (b *bisyncRun) debugFn(nametocheck string, fn func()) {
 // waitFor runs fn() until it returns true or the timeout expires
 func waitFor(msg string, totalWait time.Duration, fn func() bool) (ok bool) {
 	const individualWait = 1 * time.Second
-	for i := 0; i < int(totalWait/individualWait); i++ {
+	for i := range int(totalWait / individualWait) {
 		ok = fn()
 		if ok {
 			return ok

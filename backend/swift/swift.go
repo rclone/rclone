@@ -8,8 +8,10 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"maps"
 	"path"
 	"regexp"
+	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -417,10 +419,8 @@ func shouldRetry(ctx context.Context, err error) (bool, error) {
 	}
 	// If this is a swift.Error object extract the HTTP error code
 	if swiftError, ok := err.(*swift.Error); ok {
-		for _, e := range retryErrorCodes {
-			if swiftError.StatusCode == e {
-				return true, err
-			}
+		if slices.Contains(retryErrorCodes, swiftError.StatusCode) {
+			return true, err
 		}
 	}
 	// Check for generic failure conditions
@@ -701,7 +701,7 @@ func (f *Fs) listContainerRoot(ctx context.Context, container, directory, prefix
 	if !recurse {
 		opts.Delimiter = '/'
 	}
-	return f.c.ObjectsWalk(ctx, container, &opts, func(ctx context.Context, opts *swift.ObjectsOpts) (interface{}, error) {
+	return f.c.ObjectsWalk(ctx, container, &opts, func(ctx context.Context, opts *swift.ObjectsOpts) (any, error) {
 		var objects []swift.Object
 		var err error
 		err = f.pacer.Call(func() (bool, error) {
@@ -1378,9 +1378,7 @@ func (o *Object) SetModTime(ctx context.Context, modTime time.Time) error {
 	meta := o.headers.ObjectMetadata()
 	meta.SetModTime(modTime)
 	newHeaders := meta.ObjectHeaders()
-	for k, v := range newHeaders {
-		o.headers[k] = v
-	}
+	maps.Copy(o.headers, newHeaders)
 	// Include any other metadata from request
 	for k, v := range o.headers {
 		if strings.HasPrefix(k, "X-Object-") {
@@ -1450,7 +1448,7 @@ func (o *Object) removeSegmentsLargeObject(ctx context.Context, container string
 // encoded but we need '&' encoded.
 func urlEncode(str string) string {
 	var buf bytes.Buffer
-	for i := 0; i < len(str); i++ {
+	for i := range len(str) {
 		c := str[i]
 		if (c >= '0' && c <= '9') || (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '/' || c == '.' || c == '_' || c == '-' {
 			_ = buf.WriteByte(c)

@@ -574,7 +574,7 @@ func (f *Fs) CreateDir(ctx context.Context, pathID, leaf string) (newID string, 
 		RootURL:    pathID,
 		NoResponse: true,
 	}
-	var mkdir interface{}
+	var mkdir any
 	if pathID == f.opt.RootID {
 		// folders at the root are syncFolders
 		mkdir = &api.CreateSyncFolder{
