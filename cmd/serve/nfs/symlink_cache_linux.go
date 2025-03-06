@@ -82,6 +82,7 @@ func (dh *diskHandler) makeSymlinkCache() error {
 	dh.read = dh.symlinkCacheRead
 	dh.write = dh.symlinkCacheWrite
 	dh.remove = dh.symlinkCacheRemove
+	dh.suffix = dh.symlinkCacheSuffix
 
 	return nil
 }
@@ -207,4 +208,16 @@ func (dh *diskHandler) symlinkCacheRemove(fh []byte, cachePath string) error {
 	cachePath = dh.handleToPath(fh)
 
 	return os.Remove(cachePath)
+}
+
+// Return a suffix for the file handle or nil
+func (dh *diskHandler) symlinkCacheSuffix(fh []byte) []byte {
+	if len(fh) < 4 {
+		return nil
+	}
+	length := int(binary.BigEndian.Uint32(fh[:4])) + 4
+	if len(fh) <= length {
+		return nil
+	}
+	return fh[length:]
 }

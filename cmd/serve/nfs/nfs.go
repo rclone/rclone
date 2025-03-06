@@ -169,6 +169,12 @@ Where |$PORT| is the same port number used in the |serve nfs| command
 and |$HOSTNAME| is the network address of the machine that |serve nfs|
 was run on.
 
+If |--vfs-metadata-extension| is in use then for the |--nfs-cache-type disk|
+and |--nfs-cache-type cache| the metadata files will have the file
+handle of their parent file suffixed with |0x00, 0x00, 0x00, 0x01|.
+This means they can be looked up directly from the parent file handle
+is desired.
+
 This command is only available on Unix platforms.
 
 `, "|", "`") + vfs.Help(),

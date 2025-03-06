@@ -3,6 +3,7 @@
 package nfs
 
 import (
+	"bytes"
 	"crypto/md5"
 	"encoding/hex"
 	"errors"
@@ -29,6 +30,15 @@ var (
 	ErrorSymlinkCacheNotSupported = errors.New("symlink cache not supported on " + runtime.GOOS)
 	ErrorSymlinkCacheNoPermission = errors.New("symlink cache must be run as root or with CAP_DAC_READ_SEARCH")
 )
+
+// Metadata files have the file handle of their source file with this
+// suffixed so we can look them up directly from the file handle.
+//
+// Note that this is 4 bytes - using a non multiple of 4 will cause
+// the Linux NFS client not to be able to read any files.
+//
+// The value is big endian 0x00000001
+var metadataSuffix = []byte{0x00, 0x00, 0x00, 0x01}
 
 // Cache controls the file handle cache implementation
 type Cache interface {
@@ -77,7 +87,9 @@ type diskHandler struct {
 	write      func(fh []byte, cachePath string, fullPath string) ([]byte, error)
 	read       func(fh []byte, cachePath string) ([]byte, error)
 	remove     func(fh []byte, cachePath string) error
-	handleType int32 //nolint:unused // used by the symlink cache
+	suffix     func(fh []byte) []byte // returns nil for no suffix or the suffix
+	handleType int32                  //nolint:unused // used by the symlink cache
+	metadata   string                 // extension for metadata
 }
 
 // Create a new disk handler
@@ -102,6 +114,8 @@ func newDiskHandler(h *Handler) (dh *diskHandler, err error) {
 		write:    dh.diskCacheWrite,
 		read:     dh.diskCacheRead,
 		remove:   dh.diskCacheRemove,
+		suffix:   dh.diskCacheSuffix,
+		metadata: h.vfs.Opt.MetadataExtension,
 	}
 	fs.Infof("nfs", "Storing handle cache in %q", dh.cacheDir)
 	return dh, nil
@@ -124,6 +138,17 @@ func (dh *diskHandler) handleToPath(fh []byte) (cachePath string) {
 	return cachePath
 }
 
+// Return true if name represents a metadata file
+//
+// It returns the underlying path
+func (dh *diskHandler) isMetadataFile(name string) (rawName string, found bool) {
+	if dh.metadata == "" {
+		return name, false
+	}
+	rawName, found = strings.CutSuffix(name, dh.metadata)
+	return rawName, found
+}
+
 // ToHandle takes a file and represents it with an opaque handle to reference it.
 // In stateless nfs (when it's serving a unix fs) this can be the device + inode
 // but we can generalize with a stateful local cache of handed out IDs.
@@ -131,6 +156,8 @@ func (dh *diskHandler) ToHandle(f billy.Filesystem, splitPath []string) (fh []by
 	dh.mu.Lock()
 	defer dh.mu.Unlock()
 	fullPath := path.Join(splitPath...)
+	// metadata file has file handle of original file
+	fullPath, isMetadataFile := dh.isMetadataFile(fullPath)
 	fh = hashPath(fullPath)
 	cachePath := dh.handleToPath(fh)
 	cacheDir := filepath.Dir(cachePath)
@@ -144,6 +171,10 @@ func (dh *diskHandler) ToHandle(f billy.Filesystem, splitPath []string) (fh []by
 		fs.Errorf("nfs", "Couldn't create cache file handle: %v", err)
 		return fh
 	}
+	// metadata file handle is suffixed with metadataSuffix
+	if isMetadataFile {
+		fh = append(fh, metadataSuffix...)
+	}
 	return fh
 }
 
@@ -152,17 +183,42 @@ func (dh *diskHandler) diskCacheWrite(fh []byte, cachePath string, fullPath stri
 	return fh, os.WriteFile(cachePath, []byte(fullPath), 0600)
 }
 
-var errStaleHandle = &nfs.NFSStatusError{NFSStatus: nfs.NFSStatusStale}
+var (
+	errStaleHandle = &nfs.NFSStatusError{NFSStatus: nfs.NFSStatusStale}
+)
+
+// Test to see if a fh is a metadata handle and if so return the underlying handle
+func (dh *diskHandler) isMetadataHandle(fh []byte) (isMetadata bool, newFh []byte, err error) {
+	if dh.metadata == "" {
+		return false, fh, nil
+	}
+	suffix := dh.suffix(fh)
+	if len(suffix) == 0 {
+		// OK
+		return false, fh, nil
+	} else if bytes.Equal(suffix, metadataSuffix) {
+		return true, fh[:len(fh)-len(suffix)], nil
+	}
+	fs.Errorf("nfs", "Bad file handle suffix %X", suffix)
+	return false, nil, errStaleHandle
+}
 
 // FromHandle converts from an opaque handle to the file it represents
 func (dh *diskHandler) FromHandle(fh []byte) (f billy.Filesystem, splitPath []string, err error) {
 	dh.mu.RLock()
 	defer dh.mu.RUnlock()
+	isMetadata, fh, err := dh.isMetadataHandle(fh)
+	if err != nil {
+		return nil, nil, err
+	}
 	cachePath := dh.handleToPath(fh)
 	fullPathBytes, err := dh.read(fh, cachePath)
 	if err != nil {
 		fs.Errorf("nfs", "Stale handle %q: %v", cachePath, err)
 		return nil, nil, errStaleHandle
+	}
+	if isMetadata {
+		fullPathBytes = append(fullPathBytes, []byte(dh.metadata)...)
 	}
 	splitPath = strings.Split(string(fullPathBytes), "/")
 	return dh.billyFS, splitPath, nil
@@ -177,8 +233,16 @@ func (dh *diskHandler) diskCacheRead(fh []byte, cachePath string) ([]byte, error
 func (dh *diskHandler) InvalidateHandle(f billy.Filesystem, fh []byte) error {
 	dh.mu.Lock()
 	defer dh.mu.Unlock()
+	isMetadata, fh, err := dh.isMetadataHandle(fh)
+	if err != nil {
+		return err
+	}
+	if isMetadata {
+		// Can't invalidate a metadata handle as it is synthetic
+		return nil
+	}
 	cachePath := dh.handleToPath(fh)
-	err := dh.remove(fh, cachePath)
+	err = dh.remove(fh, cachePath)
 	if err != nil {
 		fs.Errorf("nfs", "Failed to remove handle %q: %v", cachePath, err)
 	}
@@ -188,6 +252,14 @@ func (dh *diskHandler) InvalidateHandle(f billy.Filesystem, fh []byte) error {
 // Remove the (fh, cachePath) file
 func (dh *diskHandler) diskCacheRemove(fh []byte, cachePath string) error {
 	return os.Remove(cachePath)
+}
+
+// Return a suffix for the file handle or nil
+func (dh *diskHandler) diskCacheSuffix(fh []byte) []byte {
+	if len(fh) <= md5.Size {
+		return nil
+	}
+	return fh[md5.Size:]
 }
 
 // HandleLimit exports how many file handles can be safely stored by this cache.
