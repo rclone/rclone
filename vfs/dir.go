@@ -248,7 +248,9 @@ func (d *Dir) ForgetAll() (hasVirtual bool) {
 	if !hasVirtual {
 		d.read = time.Time{}
 		d.items = make(map[string]Node)
-		d.cleanupTimer.Stop()
+		if d.cleanupTimer != nil {
+			d.cleanupTimer.Stop()
+		}
 	} else {
 		d.cleanupTimer.Reset(time.Duration(d.vfs.Opt.DirCacheTime * 2))
 	}
