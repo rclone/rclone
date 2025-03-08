@@ -10,7 +10,6 @@ import (
 	"regexp"
 	"runtime"
 	"strings"
-	"sync"
 	"testing"
 	"time"
 
@@ -1393,23 +1392,27 @@ func TestGitAnnexFstestBackendCases(t *testing.T) {
 			handle.remoteName = remoteName
 			handle.remotePrefix = remotePath
 
-			var wg sync.WaitGroup
-			wg.Add(1)
+			serverErrorChan := make(chan error)
 
 			go func() {
-				err := handle.server.run()
-
-				if testCase.expectedError == "" {
-					require.NoError(t, err)
-				} else {
-					require.ErrorContains(t, err, testCase.expectedError)
-				}
-
-				wg.Done()
+				// Run the gitannex server and send the result back to the
+				// goroutine associated with `t`. We can't use `require` here
+				// because it could call `t.FailNow()`, which says it must be
+				// called on the goroutine associated with the test.
+				serverErrorChan <- handle.server.run()
 			}()
-			defer wg.Wait()
 
 			testCase.testProtocolFunc(t, &handle)
+
+			serverError, ok := <-serverErrorChan
+			require.True(t, ok, "Should receive one error/nil from server")
+			require.Empty(t, serverErrorChan)
+
+			if testCase.expectedError == "" {
+				require.NoError(t, serverError)
+			} else {
+				require.ErrorContains(t, serverError, testCase.expectedError)
+			}
 		})
 	}
 }
