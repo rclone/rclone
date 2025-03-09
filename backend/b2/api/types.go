@@ -48,6 +48,7 @@ type LifecycleRule struct {
 	FileNamePrefix                                  string `json:"fileNamePrefix"`
 }
 
+// ServerSideEncryption is a configuration object for B2 Server-Side Encryption
 type ServerSideEncryption struct {
 	Mode           string `json:"mode"`
 	Algorithm      string `json:"algorithm"`      // Encryption algorith to use
