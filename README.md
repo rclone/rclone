@@ -62,6 +62,7 @@ Rclone *("rsync for cloud storage")* is a command-line program to sync files and
   * Google Drive [:page_facing_up:](https://rclone.org/drive/)
   * Google Photos [:page_facing_up:](https://rclone.org/googlephotos/)
   * HDFS (Hadoop Distributed Filesystem) [:page_facing_up:](https://rclone.org/hdfs/)
+  * Hetzner Object Storage [:page_facing_up:](https://rclone.org/s3/#hetzner-object-storage)
   * Hetzner Storage Box [:page_facing_up:](https://rclone.org/sftp/#hetzner-storage-box)
   * HiDrive [:page_facing_up:](https://rclone.org/hidrive/)
   * HTTP [:page_facing_up:](https://rclone.org/http/)
