@@ -15,6 +15,11 @@ import (
 // TokenBucket holds the global token bucket limiter
 var TokenBucket tokenBucket
 
+type TokenBucketWrapperPerContextKeyType struct{}
+
+// Context key for per context token bucket
+var TokenBucketWrapperPerContextKey = TokenBucketWrapperPerContextKeyType{}
+
 // TokenBucketSlot is the type to select which token bucket to use
 type TokenBucketSlot int
 
@@ -35,6 +40,16 @@ type tokenBucket struct {
 	prev       buckets
 	toggledOff bool
 	currLimit  fs.BwTimeSlot
+}
+
+type TokenBucketWrapper struct {
+	tokenBucket
+}
+
+func NewTokenBucketWrapper() *TokenBucketWrapper {
+	return &TokenBucketWrapper{
+		tokenBucket: tokenBucket{},
+	}
 }
 
 // Return true if limit is disabled
