@@ -20,6 +20,8 @@ Here is an example of how to make a remote called `remote`.  First run:
 
      rclone config
 
+OK OK OK
+
 This will guide you through an interactive setup process:
 
 ```

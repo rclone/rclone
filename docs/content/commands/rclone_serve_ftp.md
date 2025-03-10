@@ -620,6 +620,8 @@ Flags for filtering directory listings
       --min-size SizeSuffix                 Only transfer files bigger than this in KiB or suffix B|K|M|G|T|P (default off)
 ```
 
+Shouldn't be editing this file
+
 ## See Also
 
 * [rclone serve](/commands/rclone_serve/)	 - Serve a remote over a protocol.
