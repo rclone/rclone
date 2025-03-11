@@ -180,7 +180,6 @@ func getFsEndpoint(ctx context.Context, client *http.Client, url string, opt *Op
 	}
 	addHeaders(req, opt)
 	res, err := noRedir.Do(req)
-
 	if err != nil {
 		fs.Debugf(nil, "Assuming path is a file as HEAD request could not be sent: %v", err)
 		return createFileResult()
@@ -249,6 +248,14 @@ func (f *Fs) httpConnection(ctx context.Context, opt *Options) (isFile bool, err
 	f.httpClient = client
 	f.endpoint = u
 	f.endpointURL = u.String()
+
+	if isFile {
+		// Correct root if definitely pointing to a file
+		f.root = path.Dir(f.root)
+		if f.root == "." || f.root == "/" {
+			f.root = ""
+		}
+	}
 	return isFile, nil
 }
 
