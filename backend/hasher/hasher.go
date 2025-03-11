@@ -14,6 +14,7 @@ import (
 
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/cache"
+	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/configstruct"
 	"github.com/rclone/rclone/fs/fspath"
@@ -157,7 +158,7 @@ func NewFs(ctx context.Context, fsname, rpath string, cmap configmap.Mapper) (fs
 
 	if f.opt.MaxAge > 0 {
 		gob.Register(hashRecord{})
-		db, err := kv.Start(ctx, "hasher", f.Fs)
+		db, err := kv.Start(ctx, "hasher", config.GetCacheDir(), f.Fs)
 		if err != nil {
 			return nil, err
 		}
