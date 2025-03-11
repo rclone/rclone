@@ -528,3 +528,6 @@ backends:
  - backend:  "iclouddrive"
    remote:   "TestICloudDrive:"
    fastlist: false
+ - backend:  "kvfs"
+   remote:   "TestKvfs:"
+   fastlist: false
