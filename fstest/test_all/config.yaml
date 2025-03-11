@@ -646,3 +646,6 @@ backends:
    ignoretests:
      - cmd/bisync
      - cmd/gitannex
+ - backend:  "kvfs"
+   remote:   "TestKvfs:"
+   fastlist: false
