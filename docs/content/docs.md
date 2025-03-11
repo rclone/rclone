@@ -2466,6 +2466,13 @@ Using this flag on a sync operation without also using `--update` would cause
 all files modified at any time other than the last upload time to be uploaded
 again, which is probably not what you want.
 
+### --use-ssh-config ###
+
+When set, then settings from ~/.ssh/config will also be considered for the
+sftp backend. Any setting in ~/.ssh/config will have precedence over the
+rclone config file.
+
+
 ### -v, -vv, --verbose ###
 
 With `-v` rclone will tell you about each file that is transferred and
