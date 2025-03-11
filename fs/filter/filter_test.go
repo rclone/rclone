@@ -180,7 +180,9 @@ func TestNewFilterFullExceptFilesFromOpt(t *testing.T) {
 	assert.Equal(t, f.Opt.MinSize, mins)
 	assert.Equal(t, f.Opt.MaxSize, maxs)
 	got := f.DumpFilters()
-	want := `--- File filter rules ---
+	want := `Minimum size is: 100 KiB
+Maximum size is: 1000 KiB
+--- File filter rules ---
 + (^|/)include1$
 + (^|/)include2$
 + (^|/)include3$

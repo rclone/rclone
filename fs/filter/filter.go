@@ -522,6 +522,12 @@ func (f *Filter) DumpFilters() string {
 	if !f.ModTimeTo.IsZero() {
 		rules = append(rules, fmt.Sprintf("Last-modified date must be equal or less than: %s", f.ModTimeTo.String()))
 	}
+	if f.Opt.MinSize >= 0 {
+		rules = append(rules, fmt.Sprintf("Minimum size is: %s", f.Opt.MinSize.ByteUnit()))
+	}
+	if f.Opt.MaxSize >= 0 {
+		rules = append(rules, fmt.Sprintf("Maximum size is: %s", f.Opt.MaxSize.ByteUnit()))
+	}
 	rules = append(rules, "--- File filter rules ---")
 	for _, rule := range f.fileRules.rules {
 		rules = append(rules, rule.String())
