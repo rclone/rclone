@@ -1,4 +1,4 @@
-// Package kv provides an interface to the kv backend.
+// Package kvfs provides an interface to the kv backend.
 package kvfs
 
 import (
