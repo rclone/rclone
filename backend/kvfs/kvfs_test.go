@@ -13,7 +13,8 @@ import (
 // TestIntegration runs integration tests against the remote
 func TestIntegration(t *testing.T) {
 	fstests.Run(t, &fstests.Opt{
-		RemoteName: "TestKvfs:",
-		NilObject:  (*kvfs.Object)(nil),
+		RemoteName:      "TestKvfs:",
+		NilObject:       (*kvfs.Object)(nil),
+		SkipInvalidUTF8: true,
 	})
 }
