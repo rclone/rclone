@@ -82,13 +82,11 @@ const (
 // Globals
 var (
 	// Description of how to auth for this app
-	oauthConfig = &oauth2.Config{
-		Scopes: nil,
-		Endpoint: oauth2.Endpoint{
-			AuthURL:   "https://user.mypikpak.com/v1/auth/signin",
-			TokenURL:  "https://user.mypikpak.com/v1/auth/token",
-			AuthStyle: oauth2.AuthStyleInParams,
-		},
+	oauthConfig = &oauthutil.Config{
+		Scopes:      nil,
+		AuthURL:     "https://user.mypikpak.com/v1/auth/signin",
+		TokenURL:    "https://user.mypikpak.com/v1/auth/token",
+		AuthStyle:   oauth2.AuthStyleInParams,
 		ClientID:    clientID,
 		RedirectURL: oauthutil.RedirectURL,
 	}
@@ -216,6 +214,11 @@ Fill in for rclone to use a non root folder as its starting point.
 			Help:     "Only show files that are in the trash.\n\nThis will show trashed files in their original directory structure.",
 			Advanced: true,
 		}, {
+			Name:     "no_media_link",
+			Default:  false,
+			Help:     "Use original file links instead of media links.\n\nThis avoids issues caused by invalid media links, but may reduce download speeds.",
+			Advanced: true,
+		}, {
 			Name:     "hash_memory_limit",
 			Help:     "Files bigger than this will be cached on disk to calculate hash if required.",
 			Default:  fs.SizeSuffix(10 * 1024 * 1024),
@@ -288,6 +291,7 @@ type Options struct {
 	RootFolderID        string               `config:"root_folder_id"`
 	UseTrash            bool                 `config:"use_trash"`
 	TrashedOnly         bool                 `config:"trashed_only"`
+	NoMediaLink         bool                 `config:"no_media_link"`
 	HashMemoryThreshold fs.SizeSuffix        `config:"hash_memory_limit"`
 	ChunkSize           fs.SizeSuffix        `config:"chunk_size"`
 	UploadConcurrency   int                  `config:"upload_concurrency"`
@@ -1228,7 +1232,7 @@ func (f *Fs) uploadByForm(ctx context.Context, in io.Reader, name string, size i
 	params := url.Values{}
 	iVal := reflect.ValueOf(&form.MultiParts).Elem()
 	iTyp := iVal.Type()
-	for i := 0; i < iVal.NumField(); i++ {
+	for i := range iVal.NumField() {
 		params.Set(iTyp.Field(i).Tag.Get("json"), iVal.Field(i).String())
 	}
 	formReader, contentType, overhead, err := rest.MultipartUpload(ctx, in, params, "file", name)
@@ -1516,7 +1520,7 @@ Result:
 // The result should be capable of being JSON encoded
 // If it is a string or a []string it will be shown to the user
 // otherwise it will be JSON encoded and shown to the user like that
-func (f *Fs) Command(ctx context.Context, name string, arg []string, opt map[string]string) (out interface{}, err error) {
+func (f *Fs) Command(ctx context.Context, name string, arg []string, opt map[string]string) (out any, err error) {
 	switch name {
 	case "addurl":
 		if len(arg) != 1 {
@@ -1577,15 +1581,14 @@ func (o *Object) setMetaData(info *api.File) (err error) {
 	o.md5sum = info.Md5Checksum
 	if info.Links.ApplicationOctetStream != nil {
 		o.link = info.Links.ApplicationOctetStream
-		if fid := parseFileID(o.link.URL); fid != "" {
-			for mid, media := range info.Medias {
-				if media.Link == nil {
-					continue
-				}
-				if mfid := parseFileID(media.Link.URL); fid == mfid {
-					fs.Debugf(o, "Using a media link from Medias[%d]", mid)
-					o.link = media.Link
-					break
+		if !o.fs.opt.NoMediaLink {
+			if fid := parseFileID(o.link.URL); fid != "" {
+				for _, media := range info.Medias {
+					if media.Link != nil && parseFileID(media.Link.URL) == fid {
+						fs.Debugf(o, "Using a media link")
+						o.link = media.Link
+						break
+					}
 				}
 			}
 		}

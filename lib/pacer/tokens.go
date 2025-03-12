@@ -13,7 +13,7 @@ func NewTokenDispenser(n int) *TokenDispenser {
 		tokens: make(chan struct{}, n),
 	}
 	// Fill up the upload tokens
-	for i := 0; i < n; i++ {
+	for range n {
 		td.tokens <- struct{}{}
 	}
 	return td

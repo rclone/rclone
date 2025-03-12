@@ -17,6 +17,7 @@ import (
 	"path"
 	"path/filepath"
 	"reflect"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -320,12 +321,7 @@ type Opt struct {
 
 // returns true if x is found in ss
 func stringsContains(x string, ss []string) bool {
-	for _, s := range ss {
-		if x == s {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(ss, x)
 }
 
 // toUpperASCII returns a copy of the string s with all Unicode
@@ -459,7 +455,7 @@ func Run(t *testing.T, opt *Opt) {
 	subRemoteName, subRemoteLeaf, err = fstest.RandomRemoteName(remoteName)
 	require.NoError(t, err)
 	f, err = fs.NewFs(context.Background(), subRemoteName)
-	if err == fs.ErrorNotFoundInConfigFile {
+	if errors.Is(err, fs.ErrorNotFoundInConfigFile) {
 		t.Logf("Didn't find %q in config file - skipping tests", remoteName)
 		return
 	}
@@ -484,7 +480,7 @@ func Run(t *testing.T, opt *Opt) {
 		}
 		v := reflect.ValueOf(ft).Elem()
 		vType := v.Type()
-		for i := 0; i < v.NumField(); i++ {
+		for i := range v.NumField() {
 			vName := vType.Field(i).Name
 			if stringsContains(vName, opt.UnimplementableFsMethods) {
 				continue
@@ -1068,7 +1064,7 @@ func Run(t *testing.T, opt *Opt) {
 				var err error
 				var objs []fs.Object
 				var dirs []fs.Directory
-				for i := 0; i < 2; i++ {
+				for range 2 {
 					dir, _ := path.Split(fileName)
 					dir = dir[:len(dir)-1]
 					objs, dirs, err = walk.GetAll(ctx, f, dir, true, -1)
@@ -2121,6 +2117,144 @@ func Run(t *testing.T, opt *Opt) {
 				}
 			})
 
+			// Run tests for bucket based Fs
+			// TestIntegration/FsMkdir/FsPutFiles/Bucket
+			t.Run("Bucket", func(t *testing.T) {
+				// Test if this Fs is bucket based - this test won't work for wrapped bucket based backends.
+				if !f.Features().BucketBased {
+					t.Skip("Not a bucket based backend")
+				}
+				if f.Features().CanHaveEmptyDirectories {
+					t.Skip("Can have empty directories")
+				}
+				if !f.Features().DoubleSlash {
+					t.Skip("Can't have // in paths")
+				}
+				// Create some troublesome file names
+				fileNames := []string{
+					file1.Path,
+					file2.Path,
+					".leadingdot",
+					"/.leadingdot",
+					"///tripleslash",
+					"//doubleslash",
+					"dir/.leadingdot",
+					"dir///tripleslash",
+					"dir//doubleslash",
+				}
+				dirNames := []string{
+					"hello? sausage",
+					"hello? sausage/êé",
+					"hello? sausage/êé/Hello, 世界",
+					"hello? sausage/êé/Hello, 世界/ \" ' @ < > & ? + ≠",
+					"/",
+					"//",
+					"///",
+					"dir",
+					"dir/",
+					"dir//",
+				}
+				t1 := fstest.Time("2003-02-03T04:05:06.499999999Z")
+				var objs []fs.Object
+				for _, fileName := range fileNames[2:] {
+					contents := "bad file name: " + fileName
+					file := fstest.NewItem(fileName, contents, t1)
+					objs = append(objs, PutTestContents(ctx, t, f, &file, contents, true))
+				}
+
+				// Check they arrived
+				// This uses walk.Walk with a max size set to make sure we don't use ListR
+				check := func(f fs.Fs, dir string, wantFileNames, wantDirNames []string) {
+					t.Helper()
+					var gotFileNames, gotDirNames []string
+					require.NoError(t, walk.Walk(ctx, f, dir, true, 100, func(path string, entries fs.DirEntries, err error) error {
+						if err != nil {
+							return err
+						}
+						for _, entry := range entries {
+							if _, isObj := entry.(fs.Object); isObj {
+								gotFileNames = append(gotFileNames, entry.Remote())
+							} else {
+								gotDirNames = append(gotDirNames, entry.Remote())
+							}
+						}
+						return nil
+					}))
+					sort.Strings(wantDirNames)
+					sort.Strings(wantFileNames)
+					sort.Strings(gotDirNames)
+					sort.Strings(gotFileNames)
+					assert.Equal(t, wantFileNames, gotFileNames)
+					assert.Equal(t, wantDirNames, gotDirNames)
+				}
+				check(f, "", fileNames, dirNames)
+				check(f, "/", []string{
+					"/.leadingdot",
+					"///tripleslash",
+					"//doubleslash",
+				}, []string{
+					"//",
+					"///",
+				})
+				check(f, "//", []string{
+					"///tripleslash",
+					"//doubleslash",
+				}, []string{
+					"///",
+				})
+				check(f, "dir", []string{
+					"dir/.leadingdot",
+					"dir///tripleslash",
+					"dir//doubleslash",
+				}, []string{
+					"dir/",
+					"dir//",
+				})
+				check(f, "dir/", []string{
+					"dir///tripleslash",
+					"dir//doubleslash",
+				}, []string{
+					"dir//",
+				})
+				check(f, "dir//", []string{
+					"dir///tripleslash",
+				}, nil)
+
+				// Now create a backend not at the root of a bucket
+				f2, err := fs.NewFs(ctx, subRemoteName+"/dir")
+				require.NoError(t, err)
+				check(f2, "", []string{
+					".leadingdot",
+					"//tripleslash",
+					"/doubleslash",
+				}, []string{
+					"/",
+					"//",
+				})
+				check(f2, "/", []string{
+					"//tripleslash",
+					"/doubleslash",
+				}, []string{
+					"//",
+				})
+				check(f2, "//", []string{
+					"//tripleslash",
+				}, []string(nil))
+
+				// Remove the objects
+				for _, obj := range objs {
+					assert.NoError(t, obj.Remove(ctx))
+				}
+
+				// Check they are gone
+				fstest.CheckListingWithPrecision(t, f, []fstest.Item{file1, file2}, []string{
+					"hello? sausage",
+					"hello? sausage/êé",
+					"hello? sausage/êé/Hello, 世界",
+					"hello? sausage/êé/Hello, 世界/ \" ' @ < > & ? + ≠",
+				}, fs.GetModifyWindow(ctx, f))
+			})
+
 			// State of remote at the moment the internal tests are called
 			InternalTestFiles = []fstest.Item{file1, file2}
 
@@ -2232,18 +2366,12 @@ func Run(t *testing.T, opt *Opt) {
 
 			setUploadCutoffer, _ := f.(SetUploadCutoffer)
 
-			minChunkSize := opt.ChunkedUpload.MinChunkSize
-			if minChunkSize < 100 {
-				minChunkSize = 100
-			}
+			minChunkSize := max(opt.ChunkedUpload.MinChunkSize, 100)
 			if opt.ChunkedUpload.CeilChunkSize != nil {
 				minChunkSize = opt.ChunkedUpload.CeilChunkSize(minChunkSize)
 			}
 
-			maxChunkSize := 2 * fs.Mebi
-			if maxChunkSize < 2*minChunkSize {
-				maxChunkSize = 2 * minChunkSize
-			}
+			maxChunkSize := max(2*fs.Mebi, 2*minChunkSize)
 			if opt.ChunkedUpload.MaxChunkSize > 0 && maxChunkSize > opt.ChunkedUpload.MaxChunkSize {
 				maxChunkSize = opt.ChunkedUpload.MaxChunkSize
 			}
@@ -2357,10 +2485,7 @@ func Run(t *testing.T, opt *Opt) {
 				t.Skipf("%T does not implement SetCopyCutoff", f)
 			}
 
-			minChunkSize := opt.ChunkedUpload.MinChunkSize
-			if minChunkSize < 100 {
-				minChunkSize = 100
-			}
+			minChunkSize := max(opt.ChunkedUpload.MinChunkSize, 100)
 			if opt.ChunkedUpload.CeilChunkSize != nil {
 				minChunkSize = opt.ChunkedUpload.CeilChunkSize(minChunkSize)
 			}
@@ -2391,7 +2516,7 @@ func Run(t *testing.T, opt *Opt) {
 					var itemCopy = item
 					itemCopy.Path += ".copy"
 
-					// Set copy cutoff to mininum value so we make chunks
+					// Set copy cutoff to minimum value so we make chunks
 					origCutoff, err := do.SetCopyCutoff(minChunkSize)
 					require.NoError(t, err)
 					defer func() {

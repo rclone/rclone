@@ -33,7 +33,6 @@ import (
 	"github.com/rclone/rclone/lib/oauthutil"
 	"github.com/rclone/rclone/lib/pacer"
 	"github.com/rclone/rclone/lib/rest"
-	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
 )
 
@@ -60,13 +59,14 @@ const (
 
 var (
 	// Description of how to auth for this app
-	oauthConfig = &oauth2.Config{
+	oauthConfig = &oauthutil.Config{
 		Scopes: []string{
 			"openid",
 			"profile",
 			scopeReadWrite, // this must be at position scopeAccess
 		},
-		Endpoint:     google.Endpoint,
+		AuthURL:      google.Endpoint.AuthURL,
+		TokenURL:     google.Endpoint.TokenURL,
 		ClientID:     rcloneClientID,
 		ClientSecret: obscure.MustReveal(rcloneEncryptedClientSecret),
 		RedirectURL:  oauthutil.RedirectURL,
@@ -388,7 +388,7 @@ func (f *Fs) fetchEndpoint(ctx context.Context, name string) (endpoint string, e
 		Method:  "GET",
 		RootURL: "https://accounts.google.com/.well-known/openid-configuration",
 	}
-	var openIDconfig map[string]interface{}
+	var openIDconfig map[string]any
 	err = f.pacer.Call(func() (bool, error) {
 		resp, err := f.unAuth.CallJSON(ctx, &opts, nil, &openIDconfig)
 		return shouldRetry(ctx, resp, err)
@@ -448,7 +448,7 @@ func (f *Fs) Disconnect(ctx context.Context) (err error) {
 			"token_type_hint": []string{"access_token"},
 		},
 	}
-	var res interface{}
+	var res any
 	err = f.pacer.Call(func() (bool, error) {
 		resp, err := f.srv.CallJSON(ctx, &opts, nil, &res)
 		return shouldRetry(ctx, resp, err)
@@ -1168,7 +1168,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		errors := make([]error, 1)
 		results := make([]*api.MediaItem, 1)
 		err = o.fs.commitBatch(ctx, []uploadedItem{uploaded}, results, errors)
-		if err != nil {
+		if err == nil {
 			err = errors[0]
 			info = results[0]
 		}

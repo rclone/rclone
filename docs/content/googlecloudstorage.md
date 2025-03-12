@@ -232,7 +232,7 @@ Use the Google Cloud console to identify a limited role. Some relevant pre-defin
 
     $ gcloud auth application-default print-access-token  \
        --impersonate-service-account \
-           dev-gcloud-go@${PROJECT_ID}.iam.gserviceaccount.com  
+          gcs-read-only@${PROJECT_ID}.iam.gserviceaccount.com  
 
     ya29.c.c0ASRK0GbAFEewXD [truncated]
 
@@ -409,20 +409,6 @@ Properties:
 
 - Config:      service_account_credentials
 - Env Var:     RCLONE_GCS_SERVICE_ACCOUNT_CREDENTIALS
-- Type:        string
-- Required:    false
-
-#### --gcs-access-token
-
-Short-lived access token.
-
-Leave blank normally.
-Needed only if you want use short-lived access tokens instead of interactive login.
-
-Properties:
-
-- Config:      access_token
-- Env Var:     RCLONE_GCS_ACCESS_TOKEN
 - Type:        string
 - Required:    false
 
@@ -684,6 +670,33 @@ Properties:
 
 - Config:      token_url
 - Env Var:     RCLONE_GCS_TOKEN_URL
+- Type:        string
+- Required:    false
+
+#### --gcs-client-credentials
+
+Use client credentials OAuth flow.
+
+This will use the OAUTH2 client Credentials Flow as described in RFC 6749.
+
+Properties:
+
+- Config:      client_credentials
+- Env Var:     RCLONE_GCS_CLIENT_CREDENTIALS
+- Type:        bool
+- Default:     false
+
+#### --gcs-access-token
+
+Short-lived access token.
+
+Leave blank normally.
+Needed only if you want use short-lived access token instead of interactive login.
+
+Properties:
+
+- Config:      access_token
+- Env Var:     RCLONE_GCS_ACCESS_TOKEN
 - Type:        string
 - Required:    false
 

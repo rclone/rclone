@@ -312,12 +312,12 @@ func list(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("failed to list: %w", err)
 	}
-	commands, ok := list["commands"].([]interface{})
+	commands, ok := list["commands"].([]any)
 	if !ok {
 		return errors.New("bad JSON")
 	}
 	for _, command := range commands {
-		info, ok := command.(map[string]interface{})
+		info, ok := command.(map[string]any)
 		if !ok {
 			return errors.New("bad JSON")
 		}

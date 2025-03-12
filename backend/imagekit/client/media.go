@@ -75,7 +75,7 @@ type MoveFolderParam struct {
 	DestinationPath  string `validate:"nonzero" json:"destinationPath"`
 }
 
-// JobIDResponse respresents response struct with JobID for folder operations
+// JobIDResponse represents response struct with JobID for folder operations
 type JobIDResponse struct {
 	JobID string `json:"jobId"`
 }

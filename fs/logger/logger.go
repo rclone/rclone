@@ -11,7 +11,6 @@ import (
 // Main enables the testscript package. See:
 // https://bitfieldconsulting.com/golang/cli-testing
 // https://pkg.go.dev/github.com/rogpeppe/go-internal@v1.11.0/testscript
-func Main() int {
+func Main() {
 	cmd.Main()
-	return 0
 }

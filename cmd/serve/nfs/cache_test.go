@@ -13,6 +13,9 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// NB to test the symlink cache, running with elevated permissions is needed
+const testSymlinkCache = "go test -c && sudo setcap cap_dac_read_search+ep ./nfs.test && ./nfs.test -test.v -test.run TestCache/symlink"
+
 // Check basic CRUD operations
 func testCacheCRUD(t *testing.T, h *Handler, c Cache, fileName string) {
 	// Check reading a non existent handle returns an error
@@ -47,7 +50,7 @@ func testCacheCRUD(t *testing.T, h *Handler, c Cache, fileName string) {
 // Thrash the cache operations in parallel on different files
 func testCacheThrashDifferent(t *testing.T, h *Handler, c Cache) {
 	var wg sync.WaitGroup
-	for i := 0; i < 100; i++ {
+	for i := range 100 {
 		i := i
 		wg.Add(1)
 		go func() {
@@ -61,7 +64,7 @@ func testCacheThrashDifferent(t *testing.T, h *Handler, c Cache) {
 // Thrash the cache operations in parallel on the same file
 func testCacheThrashSame(t *testing.T, h *Handler, c Cache) {
 	var wg sync.WaitGroup
-	for i := 0; i < 100; i++ {
+	for range 100 {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
@@ -101,11 +104,12 @@ func TestCache(t *testing.T) {
 	ci := fs.GetConfig(context.Background())
 	oldLogLevel := ci.LogLevel
 	ci.LogLevel = fs.LogLevelEmergency
+	//ci.LogLevel = fs.LogLevelDebug
 	defer func() {
 		ci.LogLevel = oldLogLevel
 	}()
 	billyFS := &FS{nil} // place holder billyFS
-	for _, cacheType := range []handleCache{cacheMemory, cacheDisk} {
+	for _, cacheType := range []handleCache{cacheMemory, cacheDisk, cacheSymlink} {
 		cacheType := cacheType
 		t.Run(cacheType.String(), func(t *testing.T) {
 			h := &Handler{
@@ -115,8 +119,27 @@ func TestCache(t *testing.T) {
 			h.opt.HandleCache = cacheType
 			h.opt.HandleCacheDir = t.TempDir()
 			c, err := h.getCache()
+			if err == ErrorSymlinkCacheNotSupported {
+				t.Skip(err.Error())
+			}
+			if err == ErrorSymlinkCacheNoPermission {
+				t.Skip("Need more permissions to run symlink cache tests: " + testSymlinkCache)
+			}
 			require.NoError(t, err)
 
+			t.Run("Empty", func(t *testing.T) {
+				// Write a handle
+				splitPath := []string{""}
+				fh := c.ToHandle(h.billyFS, splitPath)
+				assert.True(t, len(fh) > 0)
+
+				// Read the handle back
+				newFs, newSplitPath, err := c.FromHandle(fh)
+				require.NoError(t, err)
+				assert.Equal(t, h.billyFS, newFs)
+				assert.Equal(t, splitPath, newSplitPath)
+				testCacheCRUD(t, h, c, "file")
+			})
 			t.Run("CRUD", func(t *testing.T) {
 				testCacheCRUD(t, h, c, "file")
 			})

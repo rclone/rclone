@@ -185,7 +185,7 @@ func (u *UI) Print(x, y int, style tcell.Style, msg string) {
 }
 
 // Printf a string
-func (u *UI) Printf(x, y int, style tcell.Style, format string, args ...interface{}) {
+func (u *UI) Printf(x, y int, style tcell.Style, format string, args ...any) {
 	s := fmt.Sprintf(format, args...)
 	u.Print(x, y, style, s)
 }
@@ -207,7 +207,7 @@ func (u *UI) Line(x, y, xmax int, style tcell.Style, spacer rune, msg string) {
 }
 
 // Linef a string
-func (u *UI) Linef(x, y, xmax int, style tcell.Style, spacer rune, format string, args ...interface{}) {
+func (u *UI) Linef(x, y, xmax int, style tcell.Style, spacer rune, format string, args ...any) {
 	s := fmt.Sprintf(format, args...)
 	u.Line(x, y, xmax, style, spacer, s)
 }
@@ -273,11 +273,7 @@ func (u *UI) Box() {
 	xmax := x + boxWidth
 	if len(u.boxMenu) != 0 {
 		count := lineOptionLength(u.boxMenu)
-		if x+boxWidth > x+count {
-			xmax = x + boxWidth
-		} else {
-			xmax = x + count
-		}
+		xmax = max(x+boxWidth, x+count)
 	}
 	ymax := y + len(u.boxText)
 

@@ -120,6 +120,7 @@ func init() {
 			extraHelp += `- opt - a dictionary of options to control the configuration
     - obscure - declare passwords are plain and need obscuring
     - noObscure - declare passwords are already obscured and don't need obscuring
+    - noOutput - don't print anything to stdout
     - nonInteractive - don't interact with a user, return questions
     - continue - continue the config process with an answer
     - all - ask all the config questions not just the post config ones

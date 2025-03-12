@@ -46,7 +46,6 @@ import (
 	"github.com/rclone/rclone/lib/random"
 	"github.com/rclone/rclone/lib/rest"
 	"github.com/youmark/pkcs8"
-	"golang.org/x/oauth2"
 )
 
 const (
@@ -65,12 +64,10 @@ const (
 // Globals
 var (
 	// Description of how to auth for this app
-	oauthConfig = &oauth2.Config{
-		Scopes: nil,
-		Endpoint: oauth2.Endpoint{
-			AuthURL:  "https://app.box.com/api/oauth2/authorize",
-			TokenURL: "https://app.box.com/api/oauth2/token",
-		},
+	oauthConfig = &oauthutil.Config{
+		Scopes:       nil,
+		AuthURL:      "https://app.box.com/api/oauth2/authorize",
+		TokenURL:     "https://app.box.com/api/oauth2/token",
 		ClientID:     rcloneClientID,
 		ClientSecret: obscure.MustReveal(rcloneEncryptedClientSecret),
 		RedirectURL:  oauthutil.RedirectURL,
@@ -240,8 +237,8 @@ func getClaims(boxConfig *api.ConfigJSON, boxSubType string) (claims *boxCustomC
 	return claims, nil
 }
 
-func getSigningHeaders(boxConfig *api.ConfigJSON) map[string]interface{} {
-	signingHeaders := map[string]interface{}{
+func getSigningHeaders(boxConfig *api.ConfigJSON) map[string]any {
+	signingHeaders := map[string]any{
 		"kid": boxConfig.BoxAppSettings.AppAuth.PublicKeyID,
 	}
 	return signingHeaders
@@ -258,6 +255,9 @@ func getQueryParams(boxConfig *api.ConfigJSON) map[string]string {
 
 func getDecryptedPrivateKey(boxConfig *api.ConfigJSON) (key *rsa.PrivateKey, err error) {
 	block, rest := pem.Decode([]byte(boxConfig.BoxAppSettings.AppAuth.PrivateKey))
+	if block == nil {
+		return nil, errors.New("box: failed to PEM decode private key")
+	}
 	if len(rest) > 0 {
 		return nil, fmt.Errorf("box: extra data included in private key: %w", err)
 	}
@@ -1343,12 +1343,8 @@ func (f *Fs) changeNotifyRunner(ctx context.Context, notifyFunc func(string, fs.
 	nextStreamPosition = streamPosition
 
 	for {
-		limit := f.opt.ListChunk
-
 		// box only allows a max of 500 events
-		if limit > 500 {
-			limit = 500
-		}
+		limit := min(f.opt.ListChunk, 500)
 
 		opts := rest.Opts{
 			Method:     "GET",

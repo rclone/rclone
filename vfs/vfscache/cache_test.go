@@ -640,7 +640,7 @@ func TestCacheCleaner(t *testing.T) {
 	assert.Equal(t, fmt.Sprintf("%p", potato), fmt.Sprintf("%p", potato2))
 	assert.True(t, found)
 
-	for i := 0; i < 100; i++ {
+	for range 100 {
 		time.Sleep(time.Duration(10 * opt.CachePollInterval))
 		potato2, found = c.get("potato")
 		if !found {
@@ -748,6 +748,6 @@ func TestCacheQueueSetExpiry(t *testing.T) {
 	// Check this returns the correct error when called so we know
 	// it is plumbed in correctly. The actual tests are done in
 	// writeback.
-	err := c.QueueSetExpiry(123123, time.Now())
+	err := c.QueueSetExpiry(123123, time.Now(), 0)
 	assert.Equal(t, writeback.ErrorIDNotFound, err)
 }

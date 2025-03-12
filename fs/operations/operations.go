@@ -593,7 +593,7 @@ func DeleteFilesWithBackupDir(ctx context.Context, toBeDeleted fs.ObjectsChan, b
 	var errorCount atomic.Int32
 	var fatalErrorCount atomic.Int32
 
-	for i := 0; i < ci.Checkers; i++ {
+	for range ci.Checkers {
 		go func() {
 			defer wg.Done()
 			for dst := range toBeDeleted {
@@ -732,7 +732,7 @@ func SameDir(fdst, fsrc fs.Info) bool {
 }
 
 // Retry runs fn up to maxTries times if it returns a retriable error
-func Retry(ctx context.Context, o interface{}, maxTries int, fn func() error) (err error) {
+func Retry(ctx context.Context, o any, maxTries int, fn func() error) (err error) {
 	for tries := 1; tries <= maxTries; tries++ {
 		// Call the function which might error
 		err = fn()
@@ -777,7 +777,7 @@ var StdoutMutex sync.Mutex
 // This writes to stdout holding the StdoutMutex. If you are going to
 // override it and write to os.Stdout then you should hold the
 // StdoutMutex too.
-var SyncPrintf = func(format string, a ...interface{}) {
+var SyncPrintf = func(format string, a ...any) {
 	StdoutMutex.Lock()
 	defer StdoutMutex.Unlock()
 	fmt.Printf(format, a...)
@@ -788,7 +788,7 @@ var SyncPrintf = func(format string, a ...interface{}) {
 // Ignores errors from Fprintf.
 //
 // Prints to stdout if w is nil
-func SyncFprintf(w io.Writer, format string, a ...interface{}) {
+func SyncFprintf(w io.Writer, format string, a ...any) {
 	if w == nil || w == os.Stdout {
 		SyncPrintf(format, a...)
 	} else {
@@ -1050,7 +1050,7 @@ func Mkdir(ctx context.Context, f fs.Fs, dir string) error {
 	if SkipDestructive(ctx, fs.LogDirName(f, dir), "make directory") {
 		return nil
 	}
-	fs.Debugf(fs.LogDirName(f, dir), "Making directory")
+	fs.Infof(fs.LogDirName(f, dir), "Making directory")
 	err := f.Mkdir(ctx, dir)
 	if err != nil {
 		err = fs.CountError(ctx, err)
@@ -2140,20 +2140,28 @@ func SetTierFile(ctx context.Context, o fs.Object, tier string) error {
 
 // TouchDir touches every file in directory with time t
 func TouchDir(ctx context.Context, f fs.Fs, remote string, t time.Time, recursive bool) error {
-	return walk.ListR(ctx, f, remote, false, ConfigMaxDepth(ctx, recursive), walk.ListObjects, func(entries fs.DirEntries) error {
+	ci := fs.GetConfig(ctx)
+	g, gCtx := errgroup.WithContext(ctx)
+	g.SetLimit(ci.Transfers)
+	err := walk.ListR(ctx, f, remote, false, ConfigMaxDepth(ctx, recursive), walk.ListObjects, func(entries fs.DirEntries) error {
 		entries.ForObject(func(o fs.Object) {
 			if !SkipDestructive(ctx, o, "touch") {
-				fs.Debugf(f, "Touching %q", o.Remote())
-				err := o.SetModTime(ctx, t)
-				if err != nil {
-					err = fmt.Errorf("failed to touch: %w", err)
-					err = fs.CountError(ctx, err)
-					fs.Errorf(o, "%v", err)
-				}
+				g.Go(func() error {
+					fs.Debugf(f, "Touching %q", o.Remote())
+					err := o.SetModTime(gCtx, t)
+					if err != nil {
+						err = fmt.Errorf("failed to touch: %w", err)
+						err = fs.CountError(gCtx, err)
+						fs.Errorf(o, "%v", err)
+					}
+					return nil
+				})
 			}
 		})
 		return nil
 	})
+	_ = g.Wait()
+	return err
 }
 
 // ListFormat defines files information print format
@@ -2435,7 +2443,7 @@ func DirMove(ctx context.Context, f fs.Fs, srcRemote, dstRemote string) (err err
 	}
 	renames := make(chan rename, ci.Checkers)
 	g, gCtx := errgroup.WithContext(context.Background())
-	for i := 0; i < ci.Checkers; i++ {
+	for range ci.Checkers {
 		g.Go(func() error {
 			for job := range renames {
 				dstOverwritten, _ := f.NewObject(gCtx, job.newPath)
@@ -2543,7 +2551,7 @@ var (
 // skipDestructiveChoose asks the user which action to take
 //
 // Call with interactiveMu held
-func skipDestructiveChoose(ctx context.Context, subject interface{}, action string) (skip bool) {
+func skipDestructiveChoose(ctx context.Context, subject any, action string) (skip bool) {
 	// Lock the StdoutMutex - must not call fs.Log anything
 	// otherwise it will deadlock with --interactive --progress
 	StdoutMutex.Lock()
@@ -2593,7 +2601,7 @@ func skipDestructiveChoose(ctx context.Context, subject interface{}, action stri
 //
 // Together they should make sense in this sentence: "Rclone is about
 // to action subject".
-func SkipDestructive(ctx context.Context, subject interface{}, action string) (skip bool) {
+func SkipDestructive(ctx context.Context, subject any, action string) (skip bool) {
 	var flag string
 	ci := fs.GetConfig(ctx)
 	switch {

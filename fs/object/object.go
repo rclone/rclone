@@ -279,25 +279,32 @@ func (o *MemoryObject) SetModTime(ctx context.Context, modTime time.Time) error 
 
 // Open opens the file for read.  Call Close() on the returned io.ReadCloser
 func (o *MemoryObject) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadCloser, error) {
-	content := o.content
+	var offset, limit int64 = 0, -1
 	for _, option := range options {
 		switch x := option.(type) {
 		case *fs.RangeOption:
-			content = o.content[x.Start:x.End]
+			offset, limit = x.Decode(o.Size())
 		case *fs.SeekOption:
-			content = o.content[x.Offset:]
+			offset = x.Offset
 		default:
 			if option.Mandatory() {
 				fs.Logf(o, "Unsupported mandatory option: %v", option)
 			}
 		}
 	}
+	content := o.content
+	offset = max(offset, 0)
+	if limit < 0 {
+		content = content[offset:]
+	} else {
+		content = content[offset:min(offset+limit, int64(len(content)))]
+	}
 	return io.NopCloser(bytes.NewBuffer(content)), nil
 }
 
 // Update in to the object with the modTime given of the given size
 //
-// This re-uses the internal buffer if at all possible.
+// This reuses the internal buffer if at all possible.
 func (o *MemoryObject) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (err error) {
 	size := src.Size()
 	if size == 0 {

@@ -39,6 +39,7 @@ type Features struct {
 	NoMultiThreading         bool // set if can't have multiplethreads on one download open
 	Overlay                  bool // this wraps one or more backends to add functionality
 	ChunkWriterDoesntSeek    bool // set if the chunk writer doesn't need to read the data more than once
+	DoubleSlash              bool // set if backend supports double slashes in paths
 
 	// Purge all files in the directory specified
 	//
@@ -190,7 +191,7 @@ type Features struct {
 	// The result should be capable of being JSON encoded
 	// If it is a string or a []string it will be shown to the user
 	// otherwise it will be JSON encoded and shown to the user like that
-	Command func(ctx context.Context, name string, arg []string, opt map[string]string) (interface{}, error)
+	Command func(ctx context.Context, name string, arg []string, opt map[string]string) (any, error)
 
 	// Shutdown the backend, closing any background tasks and any
 	// cached connections.
@@ -208,7 +209,7 @@ func (ft *Features) Disable(name string) *Features {
 	}
 	v := reflect.ValueOf(ft).Elem()
 	vType := v.Type()
-	for i := 0; i < v.NumField(); i++ {
+	for i := range v.NumField() {
 		vName := vType.Field(i).Name
 		field := v.Field(i)
 		if strings.EqualFold(name, vName) {
@@ -237,7 +238,7 @@ func (ft *Features) Disable(name string) *Features {
 func (ft *Features) List() (out []string) {
 	v := reflect.ValueOf(ft).Elem()
 	vType := v.Type()
-	for i := 0; i < v.NumField(); i++ {
+	for i := range v.NumField() {
 		out = append(out, vType.Field(i).Name)
 	}
 	return out
@@ -249,7 +250,7 @@ func (ft *Features) Enabled() (features map[string]bool) {
 	v := reflect.ValueOf(ft).Elem()
 	vType := v.Type()
 	features = make(map[string]bool, v.NumField())
-	for i := 0; i < v.NumField(); i++ {
+	for i := range v.NumField() {
 		vName := vType.Field(i).Name
 		field := v.Field(i)
 		if field.Kind() == reflect.Func {
@@ -383,6 +384,8 @@ func (ft *Features) Mask(ctx context.Context, f Fs) *Features {
 	ft.PartialUploads = ft.PartialUploads && mask.PartialUploads
 	ft.NoMultiThreading = ft.NoMultiThreading && mask.NoMultiThreading
 	// ft.Overlay = ft.Overlay && mask.Overlay don't propagate Overlay
+	ft.ChunkWriterDoesntSeek = ft.ChunkWriterDoesntSeek && mask.ChunkWriterDoesntSeek
+	ft.DoubleSlash = ft.DoubleSlash && mask.DoubleSlash
 
 	if mask.Purge == nil {
 		ft.Purge = nil
@@ -758,7 +761,7 @@ type Commander interface {
 	// The result should be capable of being JSON encoded
 	// If it is a string or a []string it will be shown to the user
 	// otherwise it will be JSON encoded and shown to the user like that
-	Command(ctx context.Context, name string, arg []string, opt map[string]string) (interface{}, error)
+	Command(ctx context.Context, name string, arg []string, opt map[string]string) (any, error)
 }
 
 // Shutdowner is an interface to wrap the Shutdown function

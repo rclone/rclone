@@ -12,7 +12,7 @@ import (
 	"github.com/rclone/rclone/lib/terminal"
 )
 
-func (b *bisyncRun) indentf(tag, file, format string, args ...interface{}) {
+func (b *bisyncRun) indentf(tag, file, format string, args ...any) {
 	b.indent(tag, file, fmt.Sprintf(format, args...))
 }
 
@@ -71,6 +71,15 @@ var Colors bool
 
 // Color handles terminal colors for bisync
 func Color(style string, s string) string {
+	if !Colors {
+		return s
+	}
+	terminal.Start()
+	return style + s + terminal.Reset
+}
+
+// ColorX handles terminal colors for bisync
+func ColorX(style string, s string) string {
 	if !Colors {
 		return s
 	}

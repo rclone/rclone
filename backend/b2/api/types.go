@@ -42,9 +42,10 @@ type Bucket struct {
 
 // LifecycleRule is a single lifecycle rule
 type LifecycleRule struct {
-	DaysFromHidingToDeleting  *int   `json:"daysFromHidingToDeleting"`
-	DaysFromUploadingToHiding *int   `json:"daysFromUploadingToHiding"`
-	FileNamePrefix            string `json:"fileNamePrefix"`
+	DaysFromHidingToDeleting                        *int   `json:"daysFromHidingToDeleting"`
+	DaysFromUploadingToHiding                       *int   `json:"daysFromUploadingToHiding"`
+	DaysFromStartingToCancelingUnfinishedLargeFiles *int   `json:"daysFromStartingToCancelingUnfinishedLargeFiles"`
+	FileNamePrefix                                  string `json:"fileNamePrefix"`
 }
 
 // Timestamp is a UTC time when this file was uploaded. It is a base
@@ -129,10 +130,10 @@ type AuthorizeAccountResponse struct {
 	AbsoluteMinimumPartSize int      `json:"absoluteMinimumPartSize"` // The smallest possible size of a part of a large file.
 	AccountID               string   `json:"accountId"`               // The identifier for the account.
 	Allowed                 struct { // An object (see below) containing the capabilities of this auth token, and any restrictions on using it.
-		BucketID     string      `json:"bucketId"`     // When present, access is restricted to one bucket.
-		BucketName   string      `json:"bucketName"`   // When present, name of bucket - may be empty
-		Capabilities []string    `json:"capabilities"` // A list of strings, each one naming a capability the key has.
-		NamePrefix   interface{} `json:"namePrefix"`   // When present, access is restricted to files whose names start with the prefix
+		BucketID     string   `json:"bucketId"`     // When present, access is restricted to one bucket.
+		BucketName   string   `json:"bucketName"`   // When present, name of bucket - may be empty
+		Capabilities []string `json:"capabilities"` // A list of strings, each one naming a capability the key has.
+		NamePrefix   any      `json:"namePrefix"`   // When present, access is restricted to files whose names start with the prefix
 	} `json:"allowed"`
 	APIURL              string `json:"apiUrl"`              // The base URL to use for all API calls except for uploading and downloading files.
 	AuthorizationToken  string `json:"authorizationToken"`  // An authorization token to use with all calls, other than b2_authorize_account, that need an Authorization header.

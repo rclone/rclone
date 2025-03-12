@@ -19,6 +19,7 @@ rclone test makefiles <dir> [flags]
       --chargen                    Fill files with a ASCII chargen pattern
       --files int                  Number of files to create (default 1000)
       --files-per-directory int    Average number of files per directory (default 10)
+      --flat                       If set create all files in the root directory
   -h, --help                       help for makefiles
       --max-depth int              Maximum depth of directory hierarchy (default 10)
       --max-file-size SizeSuffix   Maximum size of files to create (default 100)

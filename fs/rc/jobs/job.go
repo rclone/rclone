@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"runtime/debug"
+	"slices"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -74,18 +75,12 @@ func (job *Job) finish(out rc.Params, err error) {
 	running.kickExpire() // make sure this job gets expired
 }
 
-func (job *Job) addListener(fn *func()) {
-	job.mu.Lock()
-	defer job.mu.Unlock()
-	job.listeners = append(job.listeners, fn)
-}
-
 func (job *Job) removeListener(fn *func()) {
 	job.mu.Lock()
 	defer job.mu.Unlock()
 	for i, ln := range job.listeners {
 		if ln == fn {
-			job.listeners = append(job.listeners[:i], job.listeners[i+1:]...)
+			job.listeners = slices.Delete(job.listeners, i, i+1)
 			return
 		}
 	}
@@ -94,10 +89,12 @@ func (job *Job) removeListener(fn *func()) {
 // OnFinish adds listener to job that will be triggered when job is finished.
 // It returns a function to cancel listening.
 func (job *Job) OnFinish(fn func()) func() {
+	job.mu.Lock()
+	defer job.mu.Unlock()
 	if job.Finished {
-		fn()
+		go fn()
 	} else {
-		job.addListener(&fn)
+		job.listeners = append(job.listeners, &fn)
 	}
 	return func() { job.removeListener(&fn) }
 }

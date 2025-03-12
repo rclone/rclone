@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"path"
+	"slices"
 	"sync"
 	"time"
 
@@ -111,7 +112,7 @@ func newDir(parent *Dir, dirPath string, entries fs.DirEntries, err error) *Dir 
 
 // Entries returns a copy of the entries in the directory
 func (d *Dir) Entries() fs.DirEntries {
-	return append(fs.DirEntries(nil), d.entries...)
+	return slices.Clone(d.entries)
 }
 
 // Remove removes the i-th entry from the
@@ -146,7 +147,7 @@ func (d *Dir) remove(i int) {
 	d.size -= size
 	d.count -= count
 	d.countUnknownSize -= countUnknownSize
-	d.entries = append(d.entries[:i], d.entries[i+1:]...)
+	d.entries = slices.Delete(d.entries, i, i+1)
 
 	dir := d
 	// populate changed size and count to parent(s)

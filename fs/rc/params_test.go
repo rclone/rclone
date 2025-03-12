@@ -109,7 +109,7 @@ func TestParamsGetString(t *testing.T) {
 
 func TestParamsGetInt64(t *testing.T) {
 	for _, test := range []struct {
-		value     interface{}
+		value     any
 		result    int64
 		errString string
 	}{
@@ -152,7 +152,7 @@ func TestParamsGetInt64(t *testing.T) {
 
 func TestParamsGetFloat64(t *testing.T) {
 	for _, test := range []struct {
-		value     interface{}
+		value     any
 		result    float64
 		errString string
 	}{
@@ -193,7 +193,7 @@ func TestParamsGetFloat64(t *testing.T) {
 
 func TestParamsGetDuration(t *testing.T) {
 	for _, test := range []struct {
-		value     interface{}
+		value     any
 		result    time.Duration
 		errString string
 	}{
@@ -244,7 +244,7 @@ func TestParamsGetDuration(t *testing.T) {
 
 func TestParamsGetBool(t *testing.T) {
 	for _, test := range []struct {
-		value     interface{}
+		value     any
 		result    bool
 		errString string
 	}{

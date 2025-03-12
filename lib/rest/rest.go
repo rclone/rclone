@@ -11,6 +11,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"maps"
 	"mime/multipart"
 	"net/http"
 	"net/url"
@@ -151,6 +152,7 @@ type Opts struct {
 	NoRedirect            bool         // if this is set then the client won't follow redirects
 	// On Redirects, call this function - see the http.Client docs: https://pkg.go.dev/net/http#Client
 	CheckRedirect func(req *http.Request, via []*http.Request) error
+	AuthRedirect  bool // if this is set then the client will redirect with Auth
 }
 
 // Copy creates a copy of the options
@@ -185,14 +187,14 @@ func checkDrainAndClose(r io.ReadCloser, err *error) {
 }
 
 // DecodeJSON decodes resp.Body into result
-func DecodeJSON(resp *http.Response, result interface{}) (err error) {
+func DecodeJSON(resp *http.Response, result any) (err error) {
 	defer checkDrainAndClose(resp.Body, &err)
 	decoder := json.NewDecoder(resp.Body)
 	return decoder.Decode(result)
 }
 
 // DecodeXML decodes resp.Body into result
-func DecodeXML(resp *http.Response, result interface{}) (err error) {
+func DecodeXML(resp *http.Response, result any) (err error) {
 	defer checkDrainAndClose(resp.Body, &err)
 	decoder := xml.NewDecoder(resp.Body)
 	// MEGAcmd has included escaped HTML entities in its XML output, so we have to be able to
@@ -214,6 +216,34 @@ func ClientWithNoRedirects(c *http.Client) *http.Client {
 // Do calls the internal http.Client.Do method
 func (api *Client) Do(req *http.Request) (*http.Response, error) {
 	return api.c.Do(req)
+}
+
+// ClientWithAuthRedirects makes a new http client which will re-apply Auth on redirects
+func ClientWithAuthRedirects(c *http.Client) *http.Client {
+	clientCopy := *c
+	clientCopy.CheckRedirect = func(req *http.Request, via []*http.Request) error {
+		if len(via) >= 10 {
+			return errors.New("stopped after 10 redirects")
+		} else if len(via) == 0 {
+			return nil
+		}
+		prevReq := via[len(via)-1]
+		resp := req.Response
+		if resp == nil {
+			return nil
+		}
+		// Look at previous response to see if it was a redirect and preserve auth if so
+		switch resp.StatusCode {
+		case http.StatusMovedPermanently, http.StatusFound, http.StatusSeeOther, http.StatusTemporaryRedirect, http.StatusPermanentRedirect:
+			// Reapply Auth (if any) from previous request on redirect
+			auth := prevReq.Header.Get("Authorization")
+			if auth != "" {
+				req.Header.Add("Authorization", auth)
+			}
+		}
+		return nil
+	}
+	return &clientCopy
 }
 
 // Call makes the call and returns the http.Response
@@ -257,9 +287,7 @@ func (api *Client) Call(ctx context.Context, opts *Opts) (resp *http.Response, e
 	}
 	headers := make(map[string]string)
 	// Set default headers
-	for k, v := range api.headers {
-		headers[k] = v
-	}
+	maps.Copy(headers, api.headers)
 	if opts.ContentType != "" {
 		headers["Content-Type"] = opts.ContentType
 	}
@@ -282,9 +310,7 @@ func (api *Client) Call(ctx context.Context, opts *Opts) (resp *http.Response, e
 		req.Close = true
 	}
 	// Set any extra headers
-	for k, v := range opts.ExtraHeaders {
-		headers[k] = v
-	}
+	maps.Copy(headers, opts.ExtraHeaders)
 	// add any options to the headers
 	fs.OpenOptionAddHeaders(opts.Options, headers)
 	// Now set the headers
@@ -310,6 +336,8 @@ func (api *Client) Call(ctx context.Context, opts *Opts) (resp *http.Response, e
 		clientCopy := *api.c
 		clientCopy.CheckRedirect = opts.CheckRedirect
 		c = &clientCopy
+	} else if opts.AuthRedirect {
+		c = ClientWithAuthRedirects(api.c)
 	} else {
 		c = api.c
 	}
@@ -461,7 +489,7 @@ func MultipartUpload(ctx context.Context, in io.Reader, params url.Values, conte
 // parameter name MultipartMetadataName.
 //
 // It will return resp if at all possible, even if err is set
-func (api *Client) CallJSON(ctx context.Context, opts *Opts, request interface{}, response interface{}) (resp *http.Response, err error) {
+func (api *Client) CallJSON(ctx context.Context, opts *Opts, request any, response any) (resp *http.Response, err error) {
 	return api.callCodec(ctx, opts, request, response, json.Marshal, DecodeJSON, "application/json")
 }
 
@@ -478,14 +506,14 @@ func (api *Client) CallJSON(ctx context.Context, opts *Opts, request interface{}
 // See CallJSON for a description of MultipartParams and related opts.
 //
 // It will return resp if at all possible, even if err is set
-func (api *Client) CallXML(ctx context.Context, opts *Opts, request interface{}, response interface{}) (resp *http.Response, err error) {
+func (api *Client) CallXML(ctx context.Context, opts *Opts, request any, response any) (resp *http.Response, err error) {
 	return api.callCodec(ctx, opts, request, response, xml.Marshal, DecodeXML, "application/xml")
 }
 
-type marshalFn func(v interface{}) ([]byte, error)
-type decodeFn func(resp *http.Response, result interface{}) (err error)
+type marshalFn func(v any) ([]byte, error)
+type decodeFn func(resp *http.Response, result any) (err error)
 
-func (api *Client) callCodec(ctx context.Context, opts *Opts, request interface{}, response interface{}, marshal marshalFn, decode decodeFn, contentType string) (resp *http.Response, err error) {
+func (api *Client) callCodec(ctx context.Context, opts *Opts, request any, response any, marshal marshalFn, decode decodeFn, contentType string) (resp *http.Response, err error) {
 	var requestBody []byte
 	// Marshal the request if given
 	if request != nil {

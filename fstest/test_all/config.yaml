@@ -8,11 +8,12 @@ tests:
  - path: fs/sync
    fastlist: true
  - path: cmd/bisync
+ - path: cmd/gitannex
  - path: vfs
  - path: cmd/serve/restic
    localonly: true
- - path: cmd/serve/docker
-   localonly: true
+ # - path: cmd/serve/docker
+ #   localonly: true
  - path: cmd/selfupdate
    localonly: true
 backends:
@@ -102,6 +103,21 @@ backends:
    fastlist: true
    maxfile:  1k
  ## end chunker
+ - backend:  "cloudinary"
+   remote:   "TestCloudinary:"
+   fastlist: false
+   ignore:
+     # fs/operations
+     - TestCheckSum
+     - TestCheckSumDownload
+     - TestHashSums/Md5
+     - TestReadFile
+     - TestCopyURL
+     - TestMoveFileWithIgnoreExisting
+     #vfs
+     - TestFileSetModTime/cache=off,open=false,write=false
+     - TestFileSetModTime/cache=off,open=true,write=false
+     - TestRWFileHandleWriteNoWrite
  - backend:  "combine"
    remote:   "TestCombine:dir1"
    fastlist: false
@@ -129,10 +145,6 @@ backends:
  - backend:  "dropbox"
    remote:   "TestDropbox:"
    fastlist: false
-   ignore:
-     # This test doesn't work on a standard dropbox account because it
-     # tries to set the expiry of the link
-     - TestIntegration/FsMkdir/FsPutFiles/PublicLink
  # - backend:  "filefabric"
  #   remote:   "TestFileFabric:"
  #   fastlist: false
@@ -474,6 +486,9 @@ backends:
    fastlist: false
  - backend:  "smb"
    remote:   "TestSMB:rclone"
+   fastlist: false
+ - backend:  "smb"
+   remote:   "TestSMBKerberos:rclone"
    fastlist: false
  - backend:  "storj"
    remote:   "TestStorj:"

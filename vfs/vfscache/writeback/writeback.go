@@ -97,14 +97,14 @@ func (ws writeBackItems) Swap(i, j int) {
 	ws[j].index = j
 }
 
-func (ws *writeBackItems) Push(x interface{}) {
+func (ws *writeBackItems) Push(x any) {
 	n := len(*ws)
 	item := x.(*writeBackItem)
 	item.index = n
 	*ws = append(*ws, item)
 }
 
-func (ws *writeBackItems) Pop() interface{} {
+func (ws *writeBackItems) Pop() any {
 	old := *ws
 	n := len(old)
 	item := old[n-1]
@@ -227,10 +227,7 @@ func (wb *WriteBack) _resetTimer() {
 			return
 		}
 		wb.expiry = wbItem.expiry
-		dt := time.Until(wbItem.expiry)
-		if dt < 0 {
-			dt = 0
-		}
+		dt := max(time.Until(wbItem.expiry), 0)
 		// fs.Debugf(nil, "resetTimer dt=%v", dt)
 		if wb.timer != nil {
 			wb.timer.Stop()
@@ -519,8 +516,11 @@ var ErrorIDNotFound = errors.New("id not found in queue")
 //
 // id should be as returned from the Queue call
 //
+// The expiry time is set to expiry + relative if expiry is passed in,
+// otherwise the expiry of the item is used.
+//
 // If the item isn't found then it will return ErrorIDNotFound
-func (wb *WriteBack) SetExpiry(id Handle, expiry time.Time) error {
+func (wb *WriteBack) SetExpiry(id Handle, expiry time.Time, relative time.Duration) error {
 	wb.mu.Lock()
 	defer wb.mu.Unlock()
 
@@ -528,6 +528,12 @@ func (wb *WriteBack) SetExpiry(id Handle, expiry time.Time) error {
 	if !ok {
 		return ErrorIDNotFound
 	}
+
+	// If expiry is not supplied, use expiry of item
+	if expiry.IsZero() {
+		expiry = wbItem.expiry
+	}
+	expiry = expiry.Add(relative)
 
 	// Update the expiry with the user requested value
 	wb.items._update(wbItem, expiry)

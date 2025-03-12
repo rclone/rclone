@@ -246,6 +246,19 @@ Properties:
 - Type:        string
 - Required:    false
 
+#### --sharefile-client-credentials
+
+Use client credentials OAuth flow.
+
+This will use the OAUTH2 client Credentials Flow as described in RFC 6749.
+
+Properties:
+
+- Config:      client_credentials
+- Env Var:     RCLONE_SHAREFILE_CLIENT_CREDENTIALS
+- Type:        bool
+- Default:     false
+
 #### --sharefile-upload-cutoff
 
 Cutoff for switching to multipart upload.

@@ -29,7 +29,6 @@ import (
 	"github.com/rclone/rclone/lib/random"
 	"github.com/rclone/rclone/lib/readers"
 	"github.com/rclone/rclone/lib/rest"
-	"golang.org/x/oauth2"
 )
 
 // oAuth
@@ -47,11 +46,9 @@ const (
 // Globals
 var (
 	// Description of how to auth for this app
-	oauthConfig = &oauth2.Config{
-		Endpoint: oauth2.Endpoint{
-			AuthURL:  "https://oauth.yandex.com/authorize", //same as https://oauth.yandex.ru/authorize
-			TokenURL: "https://oauth.yandex.com/token",     //same as https://oauth.yandex.ru/token
-		},
+	oauthConfig = &oauthutil.Config{
+		AuthURL:      "https://oauth.yandex.com/authorize", //same as https://oauth.yandex.ru/authorize
+		TokenURL:     "https://oauth.yandex.com/token",     //same as https://oauth.yandex.ru/token
 		ClientID:     rcloneClientID,
 		ClientSecret: obscure.MustReveal(rcloneEncryptedClientSecret),
 		RedirectURL:  oauthutil.RedirectURL,
@@ -1027,7 +1024,7 @@ func (o *Object) setCustomProperty(ctx context.Context, property string, value s
 	}
 
 	opts.Parameters.Set("path", o.fs.opt.Enc.FromStandardPath(o.filePath()))
-	rcm := map[string]interface{}{
+	rcm := map[string]any{
 		property: value,
 	}
 	cpr := api.CustomPropertyResponse{CustomProperties: rcm}

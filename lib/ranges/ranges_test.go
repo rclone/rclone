@@ -3,6 +3,7 @@ package ranges
 import (
 	"fmt"
 	"math/rand"
+	"slices"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -139,7 +140,7 @@ func checkRanges(t *testing.T, rs Ranges, what string) bool {
 		return true
 	}
 	ok := true
-	for i := 0; i < len(rs)-1; i++ {
+	for i := range len(rs) - 1 {
 		a := rs[i]
 		b := rs[i+1]
 		if a.Pos >= b.Pos {
@@ -207,7 +208,7 @@ func TestRangeCoalesce(t *testing.T) {
 			i:    1,
 		},
 	} {
-		got := append(Ranges{}, test.rs...)
+		got := slices.Clone(test.rs)
 		got.coalesce(test.i)
 		what := fmt.Sprintf("test rs=%v, i=%d", test.rs, test.i)
 		assert.Equal(t, test.want, got, what)
@@ -224,7 +225,7 @@ func TestRangeInsert(t *testing.T) {
 		{
 			new:  Range{Pos: 1, Size: 0},
 			rs:   Ranges{},
-			want: Ranges(nil),
+			want: Ranges{},
 		},
 		{
 			new: Range{Pos: 1, Size: 1}, // .N.......
@@ -269,7 +270,7 @@ func TestRangeInsert(t *testing.T) {
 			want: Ranges{{38, 8}, {51, 12}},
 		},
 	} {
-		got := append(Ranges(nil), test.rs...)
+		got := slices.Clone(test.rs)
 		got.Insert(test.new)
 		what := fmt.Sprintf("test new=%v, rs=%v", test.new, test.rs)
 		assert.Equal(t, test.want, got, what)
@@ -279,9 +280,9 @@ func TestRangeInsert(t *testing.T) {
 }
 
 func TestRangeInsertRandom(t *testing.T) {
-	for i := 0; i < 100; i++ {
+	for range 100 {
 		var rs Ranges
-		for j := 0; j < 100; j++ {
+		for range 100 {
 			var r = Range{
 				Pos:  rand.Int63n(100),
 				Size: rand.Int63n(10) + 1,

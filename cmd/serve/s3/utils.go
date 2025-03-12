@@ -36,7 +36,7 @@ func getDirEntries(prefix string, VFS *vfs.VFS) (vfs.Nodes, error) {
 	return dirEntries, nil
 }
 
-func getFileHashByte(node interface{}) []byte {
+func getFileHashByte(node any) []byte {
 	b, err := hex.DecodeString(getFileHash(node))
 	if err != nil {
 		return nil
@@ -44,7 +44,7 @@ func getFileHashByte(node interface{}) []byte {
 	return b
 }
 
-func getFileHash(node interface{}) string {
+func getFileHash(node any) string {
 	var o fs.Object
 
 	switch b := node.(type) {

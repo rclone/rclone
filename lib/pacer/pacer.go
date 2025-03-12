@@ -112,7 +112,7 @@ func (p *Pacer) SetMaxConnections(n int) {
 		p.connTokens = nil
 	} else {
 		p.connTokens = make(chan struct{}, n)
-		for i := 0; i < n; i++ {
+		for range n {
 			p.connTokens <- struct{}{}
 		}
 	}

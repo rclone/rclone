@@ -51,9 +51,14 @@ func (f *FS) SetDebug(debug bool) {
 
 // get the Mode from a vfs Node
 func getMode(node os.FileInfo) uint32 {
-	Mode := node.Mode().Perm()
-	if node.IsDir() {
+	vfsMode := node.Mode()
+	Mode := vfsMode.Perm()
+	if vfsMode&os.ModeDir != 0 {
 		Mode |= fuse.S_IFDIR
+	} else if vfsMode&os.ModeSymlink != 0 {
+		Mode |= fuse.S_IFLNK
+	} else if vfsMode&os.ModeNamedPipe != 0 {
+		Mode |= fuse.S_IFIFO
 	} else {
 		Mode |= fuse.S_IFREG
 	}
@@ -128,6 +133,8 @@ func translateError(err error) syscall.Errno {
 		return syscall.ENOSYS
 	case vfs.EINVAL:
 		return syscall.EINVAL
+	case vfs.ELOOP:
+		return syscall.ELOOP
 	}
 	fs.Errorf(nil, "IO error: %v", err)
 	return syscall.EIO
