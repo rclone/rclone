@@ -258,15 +258,27 @@ func (o *Option) IsDefault() bool {
 // String turns Option into a string
 func (o *Option) String() string {
 	v := o.GetValue()
-	if stringArray, isStringArray := v.([]string); isStringArray {
+	switch x := v.(type) {
+	case []string:
 		// Treat empty string array as empty string
 		// This is to make the default value of the option help nice
-		if len(stringArray) == 0 {
+		if len(x) == 0 {
 			return ""
 		}
 		// Encode string arrays as CSV
 		// The default Go encoding can't be decoded uniquely
-		return CommaSepList(stringArray).String()
+		return CommaSepList(x).String()
+	case SizeSuffix:
+		str := x.String()
+		// Suffix bare numbers with "B" unless they are 0
+		//
+		// This makes sure that fs.SizeSuffix roundtrips through string
+		if len(str) > 0 && str != "0" {
+			if lastDigit := str[len(str)-1]; lastDigit >= '0' && lastDigit <= '9' {
+				str += "B"
+			}
+		}
+		return str
 	}
 	return fmt.Sprint(v)
 }
