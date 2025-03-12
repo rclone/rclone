@@ -1,4 +1,4 @@
-// Package kv provides an interface to the kv backend.
+// Package kvfs provides an interface to the kv backend.
 package kvfs
 
 import (
@@ -10,9 +10,11 @@ import (
 	"time"
 
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/configstruct"
 	"github.com/rclone/rclone/fs/hash"
+	"github.com/rclone/rclone/lib/encoder"
 )
 
 // Register Fs with rclone
@@ -31,6 +33,18 @@ func init() {
 				Required:  true,
 				Sensitive: true,
 				Default:   "~/.config/rclone/kvfs",
+			}, {
+				Name:     config.ConfigEncoding,
+				Help:     config.ConfigEncodingHelp,
+				Advanced: true,
+				// Encode invalid UTF-8 bytes as json doesn't handle them properly.
+				// Don't encode / as it's a valid name character in drive.
+				Default: (encoder.EncodeInvalidUtf8 |
+					encoder.EncodeSlash |
+					encoder.EncodeCtl |
+					encoder.EncodeDel |
+					encoder.EncodeBackSlash |
+					encoder.EncodeRightPeriod),
 			},
 		},
 	})
@@ -203,11 +217,17 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 			}
 		case *fs.RangeOption:
 			sOff = int(x.Start)
-			if sOff < 0 {
-				sOff = eOff - (1 * sOff)
-			}
 			eOff = int(x.End) + 1
-			if eOff <= 0 {
+			fmt.Printf("[Open][RangeOption] sOff: %d eOff: %d\n", sOff, eOff)
+			if x.End < 0 {
+				eOff = len(o.info.Content)
+			}
+			if sOff < 0 {
+				sOff = len(o.info.Content) - eOff + 1
+				eOff = len(o.info.Content)
+			}
+
+			if eOff > len(o.info.Content) {
 				eOff = len(o.info.Content)
 			}
 		default:
