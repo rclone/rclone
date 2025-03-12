@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/lib/encoder"
 	"github.com/rclone/rclone/lib/kv"
 )
 
@@ -47,7 +48,8 @@ type Object struct {
 
 // Options represent the configuration of the KVFS backend
 type Options struct {
-	ConfigDir string
+	ConfigDir string               `config:"config_dir"`
+	Enc       encoder.MultiEncoder `config:"encoding"`
 }
 
 func (f *Fs) getDb() (*kv.DB, error) {
@@ -55,7 +57,7 @@ func (f *Fs) getDb() (*kv.DB, error) {
 	if f.db == nil {
 		f.db, err = kv.Start(context.Background(), "kvfs", filepath.Join(f.opt.ConfigDir, "db"), f)
 		if err != nil {
-			return nil, fmt.Errorf("failed to insert file: %w", err)
+			return nil, fmt.Errorf("failed to start kvfs db: %w", err)
 		}
 		if err != nil {
 			return nil, err
@@ -68,7 +70,7 @@ func (f *Fs) findFile(fullPath string) (*File, error) {
 	fs.Debugf(nil, "[findFile] fullPath: %q", fullPath)
 	var file File
 	err := f.db.Do(false, &opGet{
-		key:   fullPath,
+		key:   f.opt.Enc.FromStandardPath(fullPath),
 		value: &file,
 	})
 	if err == kv.ErrEmpty {
@@ -89,12 +91,24 @@ func (f *Fs) fileExists(fullPath string) bool {
 	return file != nil
 }
 
+func dir(fullpath string) string {
+	splitted := strings.Split(fullpath, "/")
+	// If the path is empty, return empty string
+	if len(splitted) == 0 {
+		return ""
+	}
+	splitted = splitted[:len(splitted)-1]
+
+	// Return all elements except the last one joined by "/"
+	return strings.Join(splitted, "/")
+}
+
 func (f *Fs) getFiles(fullPath string) (*[]File, error) {
-	dirExists := fullPath == "/"
+	dirExists := fullPath == "/" || fullPath == ""
 
 	var files []File
 	err := f.db.Do(false, &opList{
-		prefix: fullPath,
+		prefix: f.opt.Enc.FromStandardPath(fullPath),
 		fn: func(key string, value []byte) error {
 			var file File
 			if key == "NewFs" {
@@ -107,7 +121,8 @@ func (f *Fs) getFiles(fullPath string) (*[]File, error) {
 				dirExists = true
 				return nil
 			}
-			dir := path.Dir(file.Filename)
+			dir := dir(file.Filename)
+			fmt.Printf("[getFiles]f.root: %q dir: %q fullPath: %q\n", f.root, dir, fullPath)
 			if dir == fullPath {
 				files = append(files, file)
 			}
@@ -158,7 +173,7 @@ func (f *Fs) mkDir(fullPath string) error {
 		}
 
 		err = f.db.Do(true, &opPut{
-			key:   dir,
+			key:   f.opt.Enc.FromStandardPath(dir),
 			value: data,
 		})
 		if err != nil {
@@ -190,7 +205,7 @@ func (f *Fs) rmDir(fullPath string) error {
 	}
 
 	err = f.db.Do(true, &opDelete{
-		key: fullPath,
+		key: f.opt.Enc.FromStandardPath(fullPath),
 	})
 	if err != nil {
 		return fmt.Errorf("failed to delete directory: %w", err)
@@ -227,7 +242,7 @@ func (f *Fs) putFile(in io.Reader, fullPath string, modTime time.Time) (*File, e
 	}
 
 	err = f.db.Do(true, &opPut{
-		key:   fullPath,
+		key:   f.opt.Enc.FromStandardPath(fullPath),
 		value: data,
 	})
 	if err != nil {
@@ -240,7 +255,7 @@ func (f *Fs) putFile(in io.Reader, fullPath string, modTime time.Time) (*File, e
 func (f *Fs) remove(fullPath string) error {
 	fs.Debugf(nil, "[remove] fullPath: %q", fullPath)
 	err := f.db.Do(true, &opDelete{
-		key: fullPath,
+		key: f.opt.Enc.FromStandardPath(fullPath),
 	})
 	if err != nil {
 		return fmt.Errorf("failed to delete file: %w", err)
