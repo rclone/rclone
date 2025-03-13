@@ -150,6 +150,9 @@ var providerOption = fs.Option{
 		Value: "Outscale",
 		Help:  "OUTSCALE Object Storage (OOS)",
 	}, {
+		Value: "OVHcloud",
+		Help:  "OVHcloud Object Storage",
+	}, {
 		Value: "Petabox",
 		Help:  "Petabox Object Storage",
 	}, {
@@ -536,6 +539,59 @@ func init() {
 				Help:  "Tokyo, Japan",
 			}},
 		}, {
+			// References:
+			// https://help.ovhcloud.com/csm/en-public-cloud-storage-s3-location?id=kb_article_view&sysparm_article=KB0047384
+			// https://support.us.ovhcloud.com/hc/en-us/articles/10667991081107-Endpoints-and-Object-Storage-Geoavailability
+			Name:     "region",
+			Help:     "Region where your bucket will be created and your data stored.\n",
+			Provider: "OVHcloud",
+			Examples: []fs.OptionExample{{
+				Value: "gra",
+				Help:  "Gravelines, France",
+			}, {
+				Value: "rbx",
+				Help:  "Roubaix, France",
+			}, {
+				Value: "sbg",
+				Help:  "Strasbourg, France",
+			}, {
+				Value: "eu-west-par",
+				Help:  "Paris, France (3AZ)",
+			}, {
+				Value: "de",
+				Help:  "Frankfurt, Germany",
+			}, {
+				Value: "uk",
+				Help:  "London, United Kingdom",
+			}, {
+				Value: "waw",
+				Help:  "Warsaw, Poland",
+			}, {
+				Value: "bhs",
+				Help:  "Beauharnois, Canada",
+			}, {
+				Value: "ca-east-tor",
+				Help:  "Toronto, Canada",
+			}, {
+				Value: "sgp",
+				Help:  "Singapore",
+			}, {
+				Value: "ap-southeast-syd",
+				Help:  "Sydney, Australia",
+			}, {
+				Value: "ap-south-mum",
+				Help:  "Mumbai, India",
+			}, {
+				Value: "us-east-va",
+				Help:  "Vint Hill, Virginia, USA",
+			}, {
+				Value: "us-west-or",
+				Help:  "Hillsboro, Oregon, USA",
+			}, {
+				Value: "rbx-archive",
+				Help:  "Roubaix, France (Cold Archive)",
+			}},
+		}, {
 			Name:     "region",
 			Help:     "Region where your bucket will be created and your data stored.\n",
 			Provider: "Petabox",
@@ -587,7 +643,7 @@ func init() {
 		}, {
 			Name:     "region",
 			Help:     "Region to connect to.\n\nLeave blank if you are using an S3 clone and you don't have a region.",
-			Provider: "!AWS,Alibaba,ArvanCloud,ChinaMobile,Cloudflare,FlashBlade,IONOS,Petabox,Liara,Linode,Magalu,Qiniu,RackCorp,Scaleway,Selectel,Storj,Synology,TencentCOS,HuaweiOBS,IDrive,Mega,Zata",
+			Provider: "!AWS,Alibaba,ArvanCloud,ChinaMobile,Cloudflare,FlashBlade,IONOS,Petabox,Liara,Linode,Magalu,OVHcloud,Qiniu,RackCorp,Scaleway,Selectel,Storj,Synology,TencentCOS,HuaweiOBS,IDrive,Mega,Zata",
 			Examples: []fs.OptionExample{{
 				Value: "",
 				Help:  "Use this if unsure.\nWill use v4 signatures and an empty region.",
@@ -1176,6 +1232,71 @@ func init() {
 			}},
 		}, {
 			Name:     "endpoint",
+			Help:     "Endpoint for OVHcloud Object Storage.",
+			Provider: "OVHcloud",
+			Examples: []fs.OptionExample{{
+				Value:    "s3.gra.io.cloud.ovh.net",
+				Help:     "OVHcloud Gravelines, France",
+				Provider: "OVHcloud",
+			}, {
+				Value:    "s3.rbx.io.cloud.ovh.net",
+				Help:     "OVHcloud Roubaix, France",
+				Provider: "OVHcloud",
+			}, {
+				Value:    "s3.sbg.io.cloud.ovh.net",
+				Help:     "OVHcloud Strasbourg, France",
+				Provider: "OVHcloud",
+			}, {
+				Value:    "s3.eu-west-par.io.cloud.ovh.net",
+				Help:     "OVHcloud Paris, France (3AZ)",
+				Provider: "OVHcloud",
+			}, {
+				Value:    "s3.de.io.cloud.ovh.net",
+				Help:     "OVHcloud Frankfurt, Germany",
+				Provider: "OVHcloud",
+			}, {
+				Value:    "s3.uk.io.cloud.ovh.net",
+				Help:     "OVHcloud London, United Kingdom",
+				Provider: "OVHcloud",
+			}, {
+				Value:    "s3.waw.io.cloud.ovh.net",
+				Help:     "OVHcloud Warsaw, Poland",
+				Provider: "OVHcloud",
+			}, {
+				Value:    "s3.bhs.io.cloud.ovh.net",
+				Help:     "OVHcloud Beauharnois, Canada",
+				Provider: "OVHcloud",
+			}, {
+				Value:    "s3.ca-east-tor.io.cloud.ovh.net",
+				Help:     "OVHcloud Toronto, Canada",
+				Provider: "OVHcloud",
+			}, {
+				Value:    "s3.sgp.io.cloud.ovh.net",
+				Help:     "OVHcloud Singapore",
+				Provider: "OVHcloud",
+			}, {
+				Value:    "s3.ap-southeast-syd.io.cloud.ovh.net",
+				Help:     "OVHcloud Sydney, Australia",
+				Provider: "OVHcloud",
+			}, {
+				Value:    "s3.ap-south-mum.io.cloud.ovh.net",
+				Help:     "OVHcloud Mumbai, India",
+				Provider: "OVHcloud",
+			}, {
+				Value:    "s3.us-east-va.io.cloud.ovh.us",
+				Help:     "OVHcloud Vint Hill, Virginia, USA",
+				Provider: "OVHcloud",
+			}, {
+				Value:    "s3.us-west-or.io.cloud.ovh.us",
+				Help:     "OVHcloud Hillsboro, Oregon, USA",
+				Provider: "OVHcloud",
+			}, {
+				Value:    "s3.rbx-archive.io.cloud.ovh.net",
+				Help:     "OVHcloud Roubaix, France (Cold Archive)",
+				Provider: "OVHcloud",
+			}},
+		}, {
+			Name:     "endpoint",
 			Help:     "Endpoint for Scaleway Object Storage.",
 			Provider: "Scaleway",
 			Examples: []fs.OptionExample{{
@@ -1411,7 +1532,7 @@ func init() {
 		}, {
 			Name:     "endpoint",
 			Help:     "Endpoint for S3 API.\n\nRequired when using an S3 clone.",
-			Provider: "!AWS,ArvanCloud,IBMCOS,IDrive,IONOS,TencentCOS,HuaweiOBS,Alibaba,ChinaMobile,GCS,Liara,Linode,LyveCloud,Magalu,Scaleway,Selectel,StackPath,Storj,Synology,RackCorp,Qiniu,Petabox,Zata",
+			Provider: "!AWS,ArvanCloud,IBMCOS,IDrive,IONOS,TencentCOS,HuaweiOBS,Alibaba,ChinaMobile,GCS,Liara,Linode,LyveCloud,Magalu,OVHcloud,Scaleway,Selectel,StackPath,Storj,Synology,RackCorp,Qiniu,Petabox,Zata",
 			Examples: []fs.OptionExample{{
 				Value:    "objects-us-east-1.dream.io",
 				Help:     "Dream Objects endpoint",
@@ -1946,7 +2067,7 @@ func init() {
 		}, {
 			Name:     "location_constraint",
 			Help:     "Location constraint - must be set to match the Region.\n\nLeave blank if not sure. Used when creating buckets only.",
-			Provider: "!AWS,Alibaba,ArvanCloud,HuaweiOBS,ChinaMobile,Cloudflare,FlashBlade,IBMCOS,IDrive,IONOS,Leviia,Liara,Linode,Magalu,Outscale,Qiniu,RackCorp,Scaleway,Selectel,StackPath,Storj,TencentCOS,Petabox,Mega",
+			Provider: "!AWS,Alibaba,ArvanCloud,HuaweiOBS,ChinaMobile,Cloudflare,FlashBlade,IBMCOS,IDrive,IONOS,Leviia,Liara,Linode,Magalu,Outscale,OVHcloud,Qiniu,RackCorp,Scaleway,Selectel,StackPath,Storj,TencentCOS,Petabox,Mega",
 		}, {
 			Name: "acl",
 			Help: `Canned ACL used when creating buckets and storing or copying objects.
@@ -3589,6 +3710,8 @@ func setQuirks(opt *Options) {
 		useAlreadyExists = false // untested
 	case "Outscale":
 		virtualHostStyle = false
+	case "OVHcloud":
+		// No quirks
 	case "RackCorp":
 		// No quirks
 		useMultipartEtag = false // untested
