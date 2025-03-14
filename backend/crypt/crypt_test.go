@@ -95,6 +95,49 @@ func TestStandardBase32768(t *testing.T) {
 	})
 }
 
+func TestPasswordCommand(t *testing.T) {
+	if *fstest.RemoteName != "" {
+		t.Skip("Skipping as -remote set")
+	}
+	tempdir := filepath.Join(os.TempDir(), "rclone-crypt-test-standard")
+	name := "TestCrypt"
+	fstests.Run(t, &fstests.Opt{
+		RemoteName: name + ":",
+		NilObject:  (*crypt.Object)(nil),
+		ExtraConfig: []fstests.ExtraConfigItem{
+			{Name: name, Key: "type", Value: "crypt"},
+			{Name: name, Key: "remote", Value: tempdir},
+			{Name: name, Key: "password_command", Value: "echo potato"},
+			{Name: name, Key: "filename_encryption", Value: "standard"},
+		},
+		UnimplementableFsMethods:     []string{"OpenWriterAt", "OpenChunkWriter"},
+		UnimplementableObjectMethods: []string{"MimeType"},
+		QuickTestOK:                  true,
+	})
+}
+
+func TestPassword2Command(t *testing.T) {
+	if *fstest.RemoteName != "" {
+		t.Skip("Skipping as -remote set")
+	}
+	tempdir := filepath.Join(os.TempDir(), "rclone-crypt-test-standard")
+	name := "TestCrypt"
+	fstests.Run(t, &fstests.Opt{
+		RemoteName: name + ":",
+		NilObject:  (*crypt.Object)(nil),
+		ExtraConfig: []fstests.ExtraConfigItem{
+			{Name: name, Key: "type", Value: "crypt"},
+			{Name: name, Key: "remote", Value: tempdir},
+			{Name: name, Key: "password_command", Value: "echo potato"},
+			{Name: name, Key: "password2_command", Value: "echo potato"},
+			{Name: name, Key: "filename_encryption", Value: "standard"},
+		},
+		UnimplementableFsMethods:     []string{"OpenWriterAt", "OpenChunkWriter"},
+		UnimplementableObjectMethods: []string{"MimeType"},
+		QuickTestOK:                  true,
+	})
+}
+
 // TestOff runs integration tests against the remote
 func TestOff(t *testing.T) {
 	if *fstest.RemoteName != "" {
