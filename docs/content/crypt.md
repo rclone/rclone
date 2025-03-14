@@ -478,6 +478,8 @@ Properties:
 
 Password or pass phrase for encryption.
 
+crypt-password or crypt-password-command is required.
+
 **NB** Input to this must be obscured - see [rclone obscure](/commands/rclone_obscure/).
 
 Properties:
@@ -485,7 +487,22 @@ Properties:
 - Config:      password
 - Env Var:     RCLONE_CRYPT_PASSWORD
 - Type:        string
-- Required:    true
+- Required:    false
+
+#### --crypt-password-command
+
+Command to retrieve the password or pass phrase for encryption.
+
+crypt-password or crypt-password-command is required.
+
+**NB** The command output must not be obscured.
+
+Properties:
+
+- Config:      password_command
+- Env Var:     RCLONE_CRYPT_PASSWORD_COMMAND
+- Type:        string
+- Required:    false
 
 #### --crypt-password2
 
@@ -500,6 +517,22 @@ Properties:
 
 - Config:      password2
 - Env Var:     RCLONE_CRYPT_PASSWORD2
+- Type:        string
+- Required:    false
+
+#### --crypt-password2-command
+
+Command to retrieve the password or pass phrase for salt.
+
+Optional but recommended.
+Should be different to the previous password.
+
+**NB** The command output must not be obscured.
+
+Properties:
+
+- Config:      password2_command
+- Env Var:     RCLONE_CRYPT_PASSWORD2_COMMAND
 - Type:        string
 - Required:    false
 
