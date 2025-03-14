@@ -2,11 +2,15 @@
 package crypt
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
 	"io"
+	"os"
+	"os/exec"
 	"path"
+	"runtime"
 	"strings"
 	"time"
 
@@ -69,13 +73,20 @@ NB If filename_encryption is "off" then this option will do nothing.`,
 			},
 		}, {
 			Name:       "password",
-			Help:       "Password or pass phrase for encryption.",
+			Help:       "Password or pass phrase for encryption.\n\npassword or password command is required.",
 			IsPassword: true,
-			Required:   true,
+		}, {
+			Name:       "password_command",
+			Help:       "Command to retrieve the password or pass phrase for encryption.\n\npassword or password command is required.",
+			IsPassword: false,
 		}, {
 			Name:       "password2",
 			Help:       "Password or pass phrase for salt.\n\nOptional but recommended.\nShould be different to the previous password.",
 			IsPassword: true,
+		}, {
+			Name:       "password2_command",
+			Help:       "Command to retrieve the password or pass phrase for salt.\n\nOptional but recommended.\nShould be different to the previous password.",
+			IsPassword: false,
 		}, {
 			Name:    "server_side_across_configs",
 			Default: false,
@@ -181,19 +192,20 @@ func newCipherForConfig(opt *Options) (*Cipher, error) {
 	if err != nil {
 		return nil, err
 	}
-	if opt.Password == "" {
-		return nil, errors.New("password not set in config file")
-	}
-	password, err := obscure.Reveal(opt.Password)
+	password, err := evalPassword(opt.Password, opt.PasswordCommand)
 	if err != nil {
-		return nil, fmt.Errorf("failed to decrypt password: %w", err)
+		return nil, fmt.Errorf("failed to eval password: %w", err)
+	}
+	if password == "" {
+		return nil, errors.New("password or password_command not set in config file")
 	}
 	var salt string
-	if opt.Password2 != "" {
-		salt, err = obscure.Reveal(opt.Password2)
-		if err != nil {
-			return nil, fmt.Errorf("failed to decrypt password2: %w", err)
-		}
+	password2, err := evalPassword(opt.Password2, opt.Password2Command)
+	if err != nil {
+		return nil, fmt.Errorf("failed to eval password2: %w", err)
+	}
+	if password2 != "" {
+		salt = password2
 	}
 	enc, err := NewNameEncoding(opt.FilenameEncoding)
 	if err != nil {
@@ -206,6 +218,38 @@ func newCipherForConfig(opt *Options) (*Cipher, error) {
 	cipher.setEncryptedSuffix(opt.Suffix)
 	cipher.setPassBadBlocks(opt.PassBadBlocks)
 	return cipher, nil
+}
+
+func evalPassword(password string, passwordCommand string) (string, error) {
+	if password != "" {
+		revealed, err := obscure.Reveal(password)
+		if err != nil {
+			return "", fmt.Errorf("failed to decrypt password: %w", err)
+		}
+		return revealed, nil
+	}
+	if passwordCommand != "" {
+		var stdout bytes.Buffer
+		var cmd *exec.Cmd
+		switch runtime.GOOS {
+		case "windows":
+			cmd = exec.Command("cmd", "/c", passwordCommand)
+		default:
+			cmd = exec.Command("sh", "-c", passwordCommand)
+		}
+		cmd.Stdout = &stdout
+		cmd.Stderr = os.Stderr
+		cmd.Stdin = os.Stdin
+		if err := cmd.Run(); err != nil {
+			return "", fmt.Errorf("failed to run password command: %w", err)
+		}
+		pass := strings.TrimSpace(stdout.String())
+		if pass == "" {
+			return "", errors.New("password command returned empty string")
+		}
+		return pass, nil
+	}
+	return "", nil
 }
 
 // NewCipher constructs a Cipher for the given config
@@ -303,7 +347,9 @@ type Options struct {
 	DirectoryNameEncryption bool   `config:"directory_name_encryption"`
 	NoDataEncryption        bool   `config:"no_data_encryption"`
 	Password                string `config:"password"`
+	PasswordCommand         string `config:"password_command"`
 	Password2               string `config:"password2"`
+	Password2Command        string `config:"password2_command"`
 	ServerSideAcrossConfigs bool   `config:"server_side_across_configs"`
 	ShowMapping             bool   `config:"show_mapping"`
 	PassBadBlocks           bool   `config:"pass_bad_blocks"`
