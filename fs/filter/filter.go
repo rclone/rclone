@@ -36,6 +36,11 @@ var OptionsInfo = fs.Options{{
 	Help:    "Read list of source-file names from file (use - to read from stdin)",
 	Groups:  "Filter",
 }, {
+	Name:    "files_from_strict",
+	Default: false,
+	Help:    "Fail if at least one of the files does not exist",
+	Groups:  "Filter",
+}, {
 	Name:    "files_from_raw",
 	Default: []string{},
 	Help:    "Read list of source-file names from file without any processing of lines (use - to read from stdin)",
@@ -130,17 +135,18 @@ var OptionsInfo = fs.Options{{
 
 // Options configures the filter
 type Options struct {
-	DeleteExcluded bool          `config:"delete_excluded"`
-	RulesOpt                     // embedded so we don't change the JSON API
-	ExcludeFile    []string      `config:"exclude_if_present"`
-	FilesFrom      []string      `config:"files_from"`
-	FilesFromRaw   []string      `config:"files_from_raw"`
-	MetaRules      RulesOpt      `config:"metadata"`
-	MinAge         fs.Duration   `config:"min_age"`
-	MaxAge         fs.Duration   `config:"max_age"`
-	MinSize        fs.SizeSuffix `config:"min_size"`
-	MaxSize        fs.SizeSuffix `config:"max_size"`
-	IgnoreCase     bool          `config:"ignore_case"`
+	DeleteExcluded  bool          `config:"delete_excluded"`
+	RulesOpt                      // embedded so we don't change the JSON API
+	ExcludeFile     []string      `config:"exclude_if_present"`
+	FilesFrom       []string      `config:"files_from"`
+	FilesFromStrict bool          `config:"files_from_strict"`
+	FilesFromRaw    []string      `config:"files_from_raw"`
+	MetaRules       RulesOpt      `config:"metadata"`
+	MinAge          fs.Duration   `config:"min_age"`
+	MaxAge          fs.Duration   `config:"max_age"`
+	MinSize         fs.SizeSuffix `config:"min_size"`
+	MaxSize         fs.SizeSuffix `config:"max_size"`
+	IgnoreCase      bool          `config:"ignore_case"`
 }
 
 func init() {
@@ -209,7 +215,7 @@ func NewFilter(opt *Options) (f *Filter, err error) {
 
 	for _, rule := range f.Opt.FilesFrom {
 		if !inActive {
-			return nil, fmt.Errorf("the usage of --files-from overrides all other filters, it should be used alone or with --files-from-raw")
+			return nil, fmt.Errorf("the usage of --files-from overrides all other filters, it should be used alone or with --files-from-raw, or optionally, --files-from-strict")
 		}
 		f.initAddFile() // init to show --files-from set even if no files within
 		err := forEachLine(rule, false, func(line string) error {
@@ -224,7 +230,7 @@ func NewFilter(opt *Options) (f *Filter, err error) {
 		// --files-from-raw can be used with --files-from, hence we do
 		// not need to get the value of f.InActive again
 		if !inActive {
-			return nil, fmt.Errorf("the usage of --files-from-raw overrides all other filters, it should be used alone or with --files-from")
+			return nil, fmt.Errorf("the usage of --files-from-raw overrides all other filters, it should be used alone or with --files-from, or optionally, --files-from-strict")
 		}
 		f.initAddFile() // init to show --files-from set even if no files within
 		err := forEachLine(rule, true, func(line string) error {
@@ -564,7 +570,9 @@ func (f *Filter) MakeListR(ctx context.Context, NewObject func(ctx context.Conte
 				for remote := range remotes {
 					entries[0], err = NewObject(gCtx, remote)
 					if err == fs.ErrorObjectNotFound {
-						// Skip files that are not found
+						if f.Opt.FilesFromStrict {
+							return err
+						}
 					} else if err != nil {
 						return err
 					} else {

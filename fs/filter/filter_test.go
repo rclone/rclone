@@ -116,6 +116,40 @@ func TestNewFilterWithFilesFromAlone(t *testing.T) {
 	}
 }
 
+func TestMakeListRFilesFromStrict(t *testing.T) {
+	f, err := NewFilter(nil)
+	require.NoError(t, err)
+
+	// Add two files: one that will "exist" and one that will simulate a missing file.
+	err = f.AddFile("existing")
+	require.NoError(t, err)
+	err = f.AddFile("notfound")
+	require.NoError(t, err)
+
+	// Enable strict mode so that missing files cause an error.
+	f.Opt.FilesFromStrict = true
+
+	NewObject := func(ctx context.Context, remote string) (fs.Object, error) {
+		if remote == "notfound" {
+			return nil, fs.ErrorObjectNotFound
+		}
+		return mockobject.New(remote), nil
+	}
+
+	// Define a callback which just ignores the entries.
+	callback := func(entries fs.DirEntries) error {
+		return nil
+	}
+
+	listR := f.MakeListR(context.Background(), NewObject)
+
+	// When running ListR, since "notfound" will trigger an error in strict mode,
+	// we expect ListR to return fs.ErrorObjectNotFound, if it doesn't, the test isn't working.
+	err = listR(context.Background(), "", callback)
+	require.Error(t, err)
+	require.Equal(t, fs.ErrorObjectNotFound, err)
+}
+
 func TestNewFilterWithFilesFromRaw(t *testing.T) {
 	Opt := Opt
 
