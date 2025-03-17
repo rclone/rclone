@@ -118,7 +118,7 @@ func ExecCommand(l SpaceSepList) (pass string, err error) {
 	}
 	pass = strings.Trim(stdout.String(), "\r\n")
 	if pass == "" {
-		return pass, errors.New("executing command %q failed: no output")
+		return pass, errors.New("executing command %q failed: returned empty string")
 	}
 	return pass, nil
 
