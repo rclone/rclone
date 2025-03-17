@@ -242,7 +242,9 @@ Any path/file included at that stage is processed by the rclone
 command.
 
 `--files-from` and `--files-from-raw` flags over-ride and cannot be
-combined with other filter options.
+combined with other filter options, with the exception of the flag
+`--files-from--strict`, which makes the operation fail if at least
+one of the files does not exist.
 
 To see the internal combined rule list, in regular expression form,
 for a command add the `--dump filters` flag. Running an rclone command
