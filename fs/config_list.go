@@ -97,6 +97,8 @@ func (gl *genericList) scan(sep rune, s fmt.ScanState, ch rune) error {
 	return gl.set(sep, bytes.TrimSpace(token))
 }
 
+// ExecCommand executes a command and returns the output as a string
+// It returns an error if the command fails or the output is empty
 func ExecCommand(l SpaceSepList) (pass string, err error) {
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
