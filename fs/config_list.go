@@ -3,7 +3,11 @@ package fs
 import (
 	"bytes"
 	"encoding/csv"
+	"errors"
 	"fmt"
+	"os"
+	"os/exec"
+	"strings"
 )
 
 // CommaSepList is a comma separated config value
@@ -91,4 +95,31 @@ func (gl *genericList) scan(sep rune, s fmt.ScanState, ch rune) error {
 		return err
 	}
 	return gl.set(sep, bytes.TrimSpace(token))
+}
+
+func ExecCommand(l SpaceSepList) (pass string, err error) {
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+
+	cmd := exec.Command(l[0], l[1:]...)
+
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+	cmd.Stdin = os.Stdin
+
+	err = cmd.Run()
+	if err != nil {
+		// One does not always get the stderr returned in the wrapped error.
+		Errorf(nil, "Executing command %q failed: %v", l, err)
+		if ers := strings.TrimSpace(stderr.String()); ers != "" {
+			Errorf(nil, "stderr: %q", ers)
+		}
+		return pass, fmt.Errorf("executing command %q failed: %w", l, err)
+	}
+	pass = strings.Trim(stdout.String(), "\r\n")
+	if pass == "" {
+		return pass, errors.New("executing command %q failed: no output")
+	}
+	return pass, nil
+
 }

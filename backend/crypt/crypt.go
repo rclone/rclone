@@ -2,15 +2,11 @@
 package crypt
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"fmt"
 	"io"
-	"os"
-	"os/exec"
 	"path"
-	"runtime"
 	"strings"
 	"time"
 
@@ -192,20 +188,31 @@ func newCipherForConfig(opt *Options) (*Cipher, error) {
 	if err != nil {
 		return nil, err
 	}
-	password, err := evalPassword(opt.Password, opt.PasswordCommand)
-	if err != nil {
-		return nil, fmt.Errorf("failed to eval password: %w", err)
-	}
-	if password == "" {
-		return nil, errors.New("password or password_command not set in config file")
+	var password string
+	if opt.Password != "" {
+		password, err = obscure.Reveal(opt.Password)
+		if err != nil {
+			return nil, fmt.Errorf("failed to decrypt password: %w", err)
+		}
+	} else if len(opt.PasswordCommand) != 0 {
+		password, err = fs.ExecCommand(opt.PasswordCommand)
+		if err != nil {
+			return nil, fmt.Errorf("--crypt-password-command failed: %w", err)
+		}
+	} else {
+		return nil, errors.New("--crypt-password or --crypt-password-command is required")
 	}
 	var salt string
-	password2, err := evalPassword(opt.Password2, opt.Password2Command)
-	if err != nil {
-		return nil, fmt.Errorf("failed to eval password2: %w", err)
-	}
-	if password2 != "" {
-		salt = password2
+	if opt.Password2 != "" {
+		salt, err = obscure.Reveal(opt.Password2)
+		if err != nil {
+			return nil, fmt.Errorf("failed to decrypt salt: %w", err)
+		}
+	} else if len(opt.Password2Command) != 0 {
+		salt, err = fs.ExecCommand(opt.Password2Command)
+		if err != nil {
+			return nil, fmt.Errorf("--crypt-password2-command failed: %w", err)
+		}
 	}
 	enc, err := NewNameEncoding(opt.FilenameEncoding)
 	if err != nil {
@@ -218,38 +225,6 @@ func newCipherForConfig(opt *Options) (*Cipher, error) {
 	cipher.setEncryptedSuffix(opt.Suffix)
 	cipher.setPassBadBlocks(opt.PassBadBlocks)
 	return cipher, nil
-}
-
-func evalPassword(password string, passwordCommand string) (string, error) {
-	if password != "" {
-		revealed, err := obscure.Reveal(password)
-		if err != nil {
-			return "", fmt.Errorf("failed to decrypt password: %w", err)
-		}
-		return revealed, nil
-	}
-	if passwordCommand != "" {
-		var stdout bytes.Buffer
-		var cmd *exec.Cmd
-		switch runtime.GOOS {
-		case "windows":
-			cmd = exec.Command("cmd", "/c", passwordCommand)
-		default:
-			cmd = exec.Command("sh", "-c", passwordCommand)
-		}
-		cmd.Stdout = &stdout
-		cmd.Stderr = os.Stderr
-		cmd.Stdin = os.Stdin
-		if err := cmd.Run(); err != nil {
-			return "", fmt.Errorf("failed to run password command: %w", err)
-		}
-		pass := strings.TrimSpace(stdout.String())
-		if pass == "" {
-			return "", errors.New("password command returned empty string")
-		}
-		return pass, nil
-	}
-	return "", nil
 }
 
 // NewCipher constructs a Cipher for the given config
@@ -342,20 +317,20 @@ func NewFs(ctx context.Context, name, rpath string, m configmap.Mapper) (fs.Fs, 
 
 // Options defines the configuration for this backend
 type Options struct {
-	Remote                  string `config:"remote"`
-	FilenameEncryption      string `config:"filename_encryption"`
-	DirectoryNameEncryption bool   `config:"directory_name_encryption"`
-	NoDataEncryption        bool   `config:"no_data_encryption"`
-	Password                string `config:"password"`
-	PasswordCommand         string `config:"password_command"`
-	Password2               string `config:"password2"`
-	Password2Command        string `config:"password2_command"`
-	ServerSideAcrossConfigs bool   `config:"server_side_across_configs"`
-	ShowMapping             bool   `config:"show_mapping"`
-	PassBadBlocks           bool   `config:"pass_bad_blocks"`
-	FilenameEncoding        string `config:"filename_encoding"`
-	Suffix                  string `config:"suffix"`
-	StrictNames             bool   `config:"strict_names"`
+	Remote                  string          `config:"remote"`
+	FilenameEncryption      string          `config:"filename_encryption"`
+	DirectoryNameEncryption bool            `config:"directory_name_encryption"`
+	NoDataEncryption        bool            `config:"no_data_encryption"`
+	Password                string          `config:"password"`
+	PasswordCommand         fs.SpaceSepList `config:"password_command"`
+	Password2               string          `config:"password2"`
+	Password2Command        fs.SpaceSepList `config:"password2_command"`
+	ServerSideAcrossConfigs bool            `config:"server_side_across_configs"`
+	ShowMapping             bool            `config:"show_mapping"`
+	PassBadBlocks           bool            `config:"pass_bad_blocks"`
+	FilenameEncoding        string          `config:"filename_encoding"`
+	Suffix                  string          `config:"suffix"`
+	StrictNames             bool            `config:"strict_names"`
 }
 
 // Fs represents a wrapped fs.Fs
