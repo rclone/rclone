@@ -53,6 +53,8 @@ func AddFlags(ci *fs.ConfigInfo, flagSet *pflag.FlagSet) {
 	flags.BoolVarP(flagSet, &deleteDuring, "delete-during", "", false, "When synchronizing, delete files during transfer", "Sync")
 	flags.BoolVarP(flagSet, &deleteAfter, "delete-after", "", false, "When synchronizing, delete files on destination after transferring (default)", "Sync")
 	flags.StringVarP(flagSet, &bindAddr, "bind", "", "", "Local address to bind to for outgoing connections, IPv4, IPv6 or name", "Networking")
+	flags.StringVarP(flagSet, &ci.AuthAddr, "auth-addr", "", ci.AuthAddr, "Local address to bind to for OAuth 2.0 callback, IPv4, IPv6 or name", "Networking")
+	flags.StringVarP(flagSet, &ci.RedirectURL, "redirect", "", ci.RedirectURL, "Redirect URL for OAuth2.0", "Networking")
 	flags.StringVarP(flagSet, &disableFeatures, "disable", "", "", "Disable a comma separated list of features (use --disable help to see a list)", "Config")
 	flags.StringArrayVarP(flagSet, &uploadHeaders, "header-upload", "", nil, "Set HTTP header for upload transactions", "Networking")
 	flags.StringArrayVarP(flagSet, &downloadHeaders, "header-download", "", nil, "Set HTTP header for download transactions", "Networking")

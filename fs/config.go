@@ -543,59 +543,61 @@ var ConfigOptionsInfo = Options{{
 
 // ConfigInfo is filesystem config options
 type ConfigInfo struct {
-	LogLevel                   LogLevel          `config:"log_level"`
-	StatsLogLevel              LogLevel          `config:"stats_log_level"`
-	UseJSONLog                 bool              `config:"use_json_log"`
-	DryRun                     bool              `config:"dry_run"`
-	Interactive                bool              `config:"interactive"`
-	Links                      bool              `config:"links"`
-	CheckSum                   bool              `config:"checksum"`
-	SizeOnly                   bool              `config:"size_only"`
-	IgnoreTimes                bool              `config:"ignore_times"`
-	IgnoreExisting             bool              `config:"ignore_existing"`
-	IgnoreErrors               bool              `config:"ignore_errors"`
-	ModifyWindow               time.Duration     `config:"modify_window"`
-	Checkers                   int               `config:"checkers"`
-	Transfers                  int               `config:"transfers"`
-	ConnectTimeout             time.Duration     `config:"contimeout"` // Connect timeout
-	Timeout                    time.Duration     `config:"timeout"`    // Data channel timeout
-	ExpectContinueTimeout      time.Duration     `config:"expect_continue_timeout"`
-	Dump                       DumpFlags         `config:"dump"`
-	InsecureSkipVerify         bool              `config:"no_check_certificate"` // Skip server certificate verification
-	DeleteMode                 DeleteMode        `config:"delete_mode"`
-	MaxDelete                  int64             `config:"max_delete"`
-	MaxDeleteSize              SizeSuffix        `config:"max_delete_size"`
-	TrackRenames               bool              `config:"track_renames"`          // Track file renames.
-	TrackRenamesStrategy       string            `config:"track_renames_strategy"` // Comma separated list of strategies used to track renames
-	Retries                    int               `config:"retries"`                // High-level retries
-	RetriesInterval            time.Duration     `config:"retries_sleep"`
-	LowLevelRetries            int               `config:"low_level_retries"`
-	UpdateOlder                bool              `config:"update"`           // Skip files that are newer on the destination
-	NoGzip                     bool              `config:"no_gzip_encoding"` // Disable compression
-	MaxDepth                   int               `config:"max_depth"`
-	IgnoreSize                 bool              `config:"ignore_size"`
-	IgnoreChecksum             bool              `config:"ignore_checksum"`
-	IgnoreCaseSync             bool              `config:"ignore_case_sync"`
-	FixCase                    bool              `config:"fix_case"`
-	NoTraverse                 bool              `config:"no_traverse"`
-	CheckFirst                 bool              `config:"check_first"`
-	NoCheckDest                bool              `config:"no_check_dest"`
-	NoUnicodeNormalization     bool              `config:"no_unicode_normalization"`
-	NoUpdateModTime            bool              `config:"no_update_modtime"`
-	NoUpdateDirModTime         bool              `config:"no_update_dir_modtime"`
-	DataRateUnit               string            `config:"stats_unit"`
-	CompareDest                []string          `config:"compare_dest"`
-	CopyDest                   []string          `config:"copy_dest"`
-	BackupDir                  string            `config:"backup_dir"`
-	Suffix                     string            `config:"suffix"`
-	SuffixKeepExtension        bool              `config:"suffix_keep_extension"`
-	UseListR                   bool              `config:"fast_list"`
-	BufferSize                 SizeSuffix        `config:"buffer_size"`
-	BwLimit                    BwTimetable       `config:"bwlimit"`
-	BwLimitFile                BwTimetable       `config:"bwlimit_file"`
-	TPSLimit                   float64           `config:"tpslimit"`
-	TPSLimitBurst              int               `config:"tpslimit_burst"`
-	BindAddr                   net.IP            `config:"bind_addr"`
+	LogLevel                   LogLevel      `config:"log_level"`
+	StatsLogLevel              LogLevel      `config:"stats_log_level"`
+	UseJSONLog                 bool          `config:"use_json_log"`
+	DryRun                     bool          `config:"dry_run"`
+	Interactive                bool          `config:"interactive"`
+	Links                      bool          `config:"links"`
+	CheckSum                   bool          `config:"checksum"`
+	SizeOnly                   bool          `config:"size_only"`
+	IgnoreTimes                bool          `config:"ignore_times"`
+	IgnoreExisting             bool          `config:"ignore_existing"`
+	IgnoreErrors               bool          `config:"ignore_errors"`
+	ModifyWindow               time.Duration `config:"modify_window"`
+	Checkers                   int           `config:"checkers"`
+	Transfers                  int           `config:"transfers"`
+	ConnectTimeout             time.Duration `config:"contimeout"` // Connect timeout
+	Timeout                    time.Duration `config:"timeout"`    // Data channel timeout
+	ExpectContinueTimeout      time.Duration `config:"expect_continue_timeout"`
+	Dump                       DumpFlags     `config:"dump"`
+	InsecureSkipVerify         bool          `config:"no_check_certificate"` // Skip server certificate verification
+	DeleteMode                 DeleteMode    `config:"delete_mode"`
+	MaxDelete                  int64         `config:"max_delete"`
+	MaxDeleteSize              SizeSuffix    `config:"max_delete_size"`
+	TrackRenames               bool          `config:"track_renames"`          // Track file renames.
+	TrackRenamesStrategy       string        `config:"track_renames_strategy"` // Comma separated list of strategies used to track renames
+	Retries                    int           `config:"retries"`                // High-level retries
+	RetriesInterval            time.Duration `config:"retries_sleep"`
+	LowLevelRetries            int           `config:"low_level_retries"`
+	UpdateOlder                bool          `config:"update"`           // Skip files that are newer on the destination
+	NoGzip                     bool          `config:"no_gzip_encoding"` // Disable compression
+	MaxDepth                   int           `config:"max_depth"`
+	IgnoreSize                 bool          `config:"ignore_size"`
+	IgnoreChecksum             bool          `config:"ignore_checksum"`
+	IgnoreCaseSync             bool          `config:"ignore_case_sync"`
+	FixCase                    bool          `config:"fix_case"`
+	NoTraverse                 bool          `config:"no_traverse"`
+	CheckFirst                 bool          `config:"check_first"`
+	NoCheckDest                bool          `config:"no_check_dest"`
+	NoUnicodeNormalization     bool          `config:"no_unicode_normalization"`
+	NoUpdateModTime            bool          `config:"no_update_modtime"`
+	NoUpdateDirModTime         bool          `config:"no_update_dir_modtime"`
+	DataRateUnit               string        `config:"stats_unit"`
+	CompareDest                []string      `config:"compare_dest"`
+	CopyDest                   []string      `config:"copy_dest"`
+	BackupDir                  string        `config:"backup_dir"`
+	Suffix                     string        `config:"suffix"`
+	SuffixKeepExtension        bool          `config:"suffix_keep_extension"`
+	UseListR                   bool          `config:"fast_list"`
+	BufferSize                 SizeSuffix    `config:"buffer_size"`
+	BwLimit                    BwTimetable   `config:"bwlimit"`
+	BwLimitFile                BwTimetable   `config:"bwlimit_file"`
+	TPSLimit                   float64       `config:"tpslimit"`
+	TPSLimitBurst              int           `config:"tpslimit_burst"`
+	BindAddr                   net.IP        `config:"bind_addr"`
+	AuthAddr                   string
+	RedirectURL                string
 	DisableFeatures            []string          `config:"disable"`
 	UserAgent                  string            `config:"user_agent"`
 	Immutable                  bool              `config:"immutable"`

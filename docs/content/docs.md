@@ -658,6 +658,12 @@ However, a suffix of `B` for Byte, `K` for KiB, `M` for MiB,
 `G` for GiB, `T` for TiB and `P` for PiB may be used. These are
 the binary units, e.g. 1, 2\*\*10, 2\*\*20, 2\*\*30 respectively.
 
+### --auth-addr=ADDR:PORT
+
+Specify the address and port to be used for binding the oauth callback
+listener. By default rclone will use localhost:53682. In Docker, for
+example, you would want to use 0.0.0.0:53682
+
 ### --backup-dir=DIR ###
 
 When using `sync`, `copy` or `move` any files which would have been
@@ -2032,6 +2038,13 @@ to the terminal title.
 ### -q, --quiet ###
 
 This flag will limit rclone's output to error messages only.
+
+### --redirect=URL
+
+The `--redirect` flag allows to specify a custom redirect URL used for
+OAuth 2.0 calls in the case that rclone is running in an environment
+with a reverse proxy configured to route authentication calls back to
+rclone.
 
 ### --refresh-times ###
 
