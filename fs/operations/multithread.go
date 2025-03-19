@@ -135,7 +135,9 @@ func multiThreadCopy(ctx context.Context, f fs.Fs, remote string, src fs.Object,
 		if openWriterAt == nil {
 			return nil, errors.New("multi-thread copy: neither OpenChunkWriter nor OpenWriterAt supported")
 		}
-		openChunkWriter = openChunkWriterFromOpenWriterAt(openWriterAt, int64(ci.MultiThreadChunkSize), int64(ci.MultiThreadWriteBufferSize), f)
+
+		openChunkWriter = openChunkWriterFromOpenWriterAt(openWriterAt, f)
+
 		// If we are using OpenWriterAt we don't seek the chunks so don't need to buffer
 		fs.Debugf(src, "multi-thread copy: disabling buffering because destination uses OpenWriterAt")
 		noBuffering = true
@@ -343,31 +345,44 @@ func (w *writerAtChunkWriter) Abort(ctx context.Context) error {
 }
 
 // openChunkWriterFromOpenWriterAt adapts an OpenWriterAtFn into an OpenChunkWriterFn using chunkSize and writeBufferSize
-func openChunkWriterFromOpenWriterAt(openWriterAt fs.OpenWriterAtFn, chunkSize int64, writeBufferSize int64, f fs.Fs) fs.OpenChunkWriterFn {
+func openChunkWriterFromOpenWriterAt(openWriterAt fs.OpenWriterAtFn, f fs.Fs) fs.OpenChunkWriterFn {
 	return func(ctx context.Context, remote string, src fs.ObjectInfo, options ...fs.OpenOption) (info fs.ChunkWriterInfo, writer fs.ChunkWriter, err error) {
 		ci := fs.GetConfig(ctx)
 
-		writerAt, err := openWriterAt(ctx, remote, src.Size())
+		writerAtInfo, writerAt, err := openWriterAt(ctx, remote, src.Size())
 		if err != nil {
 			return info, nil, err
 		}
+		if !fs.ConfigOptionsInfo.Get("multi_thread_chunk_size").IsDefault() || writerAtInfo.ChunkSize == 0 {
+			// if user did provided a specifc value or the backend didn't provide hint, use config value
+			writerAtInfo.ChunkSize = int64(ci.MultiThreadChunkSize)
+		}
+		if !fs.ConfigOptionsInfo.Get("multi_thread_write_buffer_size").IsDefault() || writerAtInfo.BufferSize == 0 {
+			// if user did provided a specifc value or the backend didn't provide hint, use config value
+			writerAtInfo.BufferSize = int64(ci.MultiThreadWriteBufferSize)
+		}
+		if !fs.ConfigOptionsInfo.Get("multi_thread_streams").IsDefault() || writerAtInfo.Concurrency == 0 {
+			// if user did provided a specifc value or the backend didn't provide hint, use config value
+			writerAtInfo.Concurrency = ci.MultiThreadStreams
+		}
 
-		if writeBufferSize > 0 {
-			fs.Debugf(src.Remote(), "multi-thread copy: write buffer set to %v", writeBufferSize)
+		if writerAtInfo.BufferSize > 0 {
+			fs.Debugf(src.Remote(), "multi-thread copy: write buffer set to %v", writerAtInfo.BufferSize)
 		}
 
 		chunkWriter := &writerAtChunkWriter{
 			remote:          remote,
 			size:            src.Size(),
-			chunkSize:       chunkSize,
-			chunks:          calculateNumChunks(src.Size(), chunkSize),
+			chunkSize:       writerAtInfo.ChunkSize,
+			chunks:          calculateNumChunks(src.Size(), writerAtInfo.ChunkSize),
 			writerAt:        writerAt,
-			writeBufferSize: writeBufferSize,
+			writeBufferSize: writerAtInfo.BufferSize,
 			f:               f,
 		}
 		info = fs.ChunkWriterInfo{
-			ChunkSize:   chunkSize,
-			Concurrency: ci.MultiThreadStreams,
+			ChunkSize:         writerAtInfo.ChunkSize,
+			Concurrency:       writerAtInfo.Concurrency,
+			LeavePartsOnError: writerAtInfo.LeavePartsOnError,
 		}
 		return info, chunkWriter, nil
 	}
