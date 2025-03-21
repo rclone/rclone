@@ -274,48 +274,64 @@ func (s *server) handleInitRemote() error {
 		return fmt.Errorf("failed to get configs: %w", err)
 	}
 
-	// Explicitly check whether [server.configRcloneRemoteName] names a remote.
-	//
-	// - We do not permit file paths in the remote name; that's what
-	//   [s.configPrefix] is for. If we simply checked whether [cache.Get]
-	//   returns [fs.ErrorNotFoundInConfigFile], we would incorrectly identify
-	//   file names as valid remote names.
-	//
-	// - In order to support remotes defined by environment variables, we must
-	//   use [config.GetRemoteNames] instead of [config.FileSections].
-	trimmedName := strings.TrimSuffix(s.configRcloneRemoteName, ":")
-	if slices.Contains(config.GetRemoteNames(), trimmedName) {
-		s.sendMsg("INITREMOTE-SUCCESS")
-		return nil
+	if err := validateRemoteName(s.configRcloneRemoteName); err != nil {
+		s.sendMsg(fmt.Sprintf("INITREMOTE-FAILURE %s", err))
+		return fmt.Errorf("failed to init remote: %w", err)
 	}
 
-	// Otherwise, check whether [server.configRcloneRemoteName] is actually a
-	// backend string such as ":local:". These are not remote names, per se, but
-	// they are permitted for compatibility with [fstest]. We could guard this
-	// behavior behind [testing.Testing] to prevent users from specifying
-	// backend strings, but there's no obvious harm in permitting it.
-	maybeBackend := strings.HasPrefix(s.configRcloneRemoteName, ":")
-	if !maybeBackend {
-		s.sendMsg("INITREMOTE-FAILURE remote does not exist: " + s.configRcloneRemoteName)
-		return fmt.Errorf("remote does not exist: %s", s.configRcloneRemoteName)
+	s.sendMsg("INITREMOTE-SUCCESS")
+	return nil
+}
+
+// validateRemoteName validates the "rcloneremotename" config that we receive
+// from git-annex. It returns nil iff `value` is valid. Otherwise, it returns a
+// descriptive error suitable for sending back to git-annex via stdout.
+//
+// The value is only valid when:
+//  1. It is the exact name of an existing remote.
+//  2. It is an fspath string that names an existing remote or a backend. The
+//     string may include options, but it must not include a path. (That's what
+//     the "rcloneprefix" config is for.)
+//
+// While backends are not remote names, per se, they are permitted for
+// compatibility with [fstest]. We could guard this behavior behind
+// [testing.Testing] to prevent users from specifying backend strings, but
+// there's no obvious harm in permitting it.
+func validateRemoteName(value string) error {
+	remoteNames := config.GetRemoteNames()
+	// Check whether `value` is an exact match for an existing remote.
+	//
+	// If we checked whether [cache.Get] returns [fs.ErrorNotFoundInConfigFile],
+	// we would incorrectly identify file names as valid remote names. We also
+	// avoid [config.FileSections] because it will miss remotes that are defined
+	// by environment variables.
+	if slices.Contains(remoteNames, value) {
+		return nil
 	}
-	parsed, err := fspath.Parse(s.configRcloneRemoteName)
+	parsed, err := fspath.Parse(value)
 	if err != nil {
-		s.sendMsg("INITREMOTE-FAILURE remote could not be parsed as a backend: " + s.configRcloneRemoteName)
-		return fmt.Errorf("remote could not be parsed as a backend: %s", s.configRcloneRemoteName)
+		return fmt.Errorf("remote could not be parsed: %s", value)
 	}
 	if parsed.Path != "" {
-		s.sendMsg("INITREMOTE-FAILURE backend must not have a path: " + s.configRcloneRemoteName)
-		return fmt.Errorf("backend must not have a path: %s", s.configRcloneRemoteName)
+		return fmt.Errorf("remote does not exist or incorrectly contains a path: %s", value)
 	}
-	// Strip the leading colon and options before searching for the backend,
-	// i.e. search for "local" instead of ":local,description=hello:/tmp/foo".
+	// Now that we've established `value` is an fspath string that does not
+	// include a path component, we only need to check whether it names an
+	// existing remote or backend.
+	if slices.Contains(remoteNames, parsed.Name) {
+		return nil
+	}
+	maybeBackend := strings.HasPrefix(value, ":")
+	if !maybeBackend {
+		return fmt.Errorf("remote does not exist: %s", value)
+	}
+	// Strip the leading colon before searching for the backend. For instance,
+	// search for "local" instead of ":local". Note that `parsed.Name` already
+	// omits any config options baked into the string.
 	trimmedBackendName := strings.TrimPrefix(parsed.Name, ":")
 	if _, err = fs.Find(trimmedBackendName); err != nil {
-		s.sendMsg("INITREMOTE-FAILURE backend does not exist: " + trimmedBackendName)
 		return fmt.Errorf("backend does not exist: %s", trimmedBackendName)
 	}
-	s.sendMsg("INITREMOTE-SUCCESS")
 	return nil
 }
 
