@@ -539,6 +539,32 @@ var ConfigOptionsInfo = Options{{
 	Default: ".partial",
 	Help:    "Add partial-suffix to temporary file name when --inplace is not used",
 	Groups:  "Copy",
+}, {
+	Name: "max_connections",
+	Help: strings.ReplaceAll(`Maximum number of simultaneous connections, 0 for unlimited.
+
+This sets the maximum number of connections made to the backend on a
+per backend basis. Connections in this case are calls to the backend
+API and may not map 1:1 to TCP or HTTP connections depending on the
+backend in use.
+
+Note that it is possible to cause deadlocks with this setting so it
+should be used with care.
+
+If you are doing a sync or copy then make sure |--max-connections| is
+one more than the sum of |--transfers| and |--checkers|.
+
+If you use |--check-first| then |--max-connections| just needs to be
+one more than the maximum of |--checkers| and |--transfers|.
+
+So for  |--max-connections 3| you'd use |--checkers 2 --transfers 2
+--check-first| or |--checkers 1 --transfers 1|.
+
+Setting this flag can be useful for backends which do multipart
+uploads or downloads to limit the number of total connections.
+`, "|", "`"),
+	Default:  0,
+	Advanced: true,
 }}
 
 // ConfigInfo is filesystem config options
@@ -648,6 +674,7 @@ type ConfigInfo struct {
 	Inplace                    bool              `config:"inplace"`      // Download directly to destination file instead of atomic download to temp/rename
 	PartialSuffix              string            `config:"partial_suffix"`
 	MetadataMapper             SpaceSepList      `config:"metadata_mapper"`
+	MaxConnections             int               `config:"max_connections"`
 }
 
 func init() {
