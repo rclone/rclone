@@ -536,11 +536,11 @@ var fstestTestCases = []testCase{
 			require.True(t, h.server.configsDone)
 
 			h.requireWriteLine("INITREMOTE")
-			h.requireReadLineExact("INITREMOTE-FAILURE remote does not exist: thisRemoteDoesNotExist")
+			h.requireReadLineExact("INITREMOTE-FAILURE remote does not exist or incorrectly contains a path: thisRemoteDoesNotExist")
 
 			require.NoError(t, h.mockStdinW.Close())
 		},
-		expectedError: "remote does not exist: thisRemoteDoesNotExist",
+		expectedError: "remote does not exist or incorrectly contains a path: thisRemoteDoesNotExist",
 	},
 	{
 		label: "HandlesPrepareWithPathAsRemote",
@@ -567,13 +567,13 @@ var fstestTestCases = []testCase{
 			h.requireWriteLine("INITREMOTE")
 
 			require.Regexp(t,
-				regexp.MustCompile("^INITREMOTE-FAILURE remote does not exist: "),
+				regexp.MustCompile("^INITREMOTE-FAILURE remote does not exist or incorrectly contains a path: "),
 				h.requireReadLine(),
 			)
 
 			require.NoError(t, h.mockStdinW.Close())
 		},
-		expectedError: "remote does not exist:",
+		expectedError: "remote does not exist or incorrectly contains a path:",
 	},
 	{
 		label: "HandlesPrepareWithNonexistentBackendAsRemote",
@@ -640,11 +640,11 @@ var fstestTestCases = []testCase{
 			require.True(t, h.server.configsDone)
 
 			h.requireWriteLine("INITREMOTE")
-			h.requireReadLineExact("INITREMOTE-FAILURE remote could not be parsed as a backend: :local")
+			h.requireReadLineExact("INITREMOTE-FAILURE remote could not be parsed: :local")
 
 			require.NoError(t, h.mockStdinW.Close())
 		},
-		expectedError: "remote could not be parsed as a backend:",
+		expectedError: "remote could not be parsed:",
 	},
 	{
 		label: "HandlesPrepareWithBackendContainingOptionsAsRemote",
@@ -687,14 +687,38 @@ var fstestTestCases = []testCase{
 			require.True(t, h.server.configsDone)
 
 			h.requireWriteLine("INITREMOTE")
-			require.Regexp(t,
-				regexp.MustCompile("^INITREMOTE-FAILURE backend must not have a path: "),
-				h.requireReadLine(),
-			)
+			h.requireReadLineExact("INITREMOTE-FAILURE remote does not exist or incorrectly contains a path: :local,description=banana:/bad/path")
 
 			require.NoError(t, h.mockStdinW.Close())
 		},
-		expectedError: "backend must not have a path:",
+		expectedError: "remote does not exist or incorrectly contains a path:",
+	},
+	{
+		label: "HandlesPrepareWithRemoteContainingOptions",
+		testProtocolFunc: func(t *testing.T, h *testState) {
+			const envVar = "RCLONE_CONFIG_fake_remote_TYPE"
+			require.NoError(t, os.Setenv(envVar, "memory"))
+			t.Cleanup(func() { require.NoError(t, os.Unsetenv(envVar)) })
+
+			h.requireReadLineExact("VERSION 1")
+			h.requireWriteLine("PREPARE")
+			h.requireReadLineExact("GETCONFIG rcloneremotename")
+			h.requireWriteLine("VALUE fake_remote,banana=yes:")
+			h.requireReadLineExact("GETCONFIG rcloneprefix")
+			h.requireWriteLine("VALUE /foo")
+			h.requireReadLineExact("GETCONFIG rclonelayout")
+			h.requireWriteLine("VALUE foo")
+			h.requireReadLineExact("PREPARE-SUCCESS")
+
+			require.Equal(t, "fake_remote,banana=yes:", h.server.configRcloneRemoteName)
+			require.Equal(t, "/foo", h.server.configPrefix)
+			require.True(t, h.server.configsDone)
+
+			h.requireWriteLine("INITREMOTE")
+			h.requireReadLineExact("INITREMOTE-SUCCESS")
+
+			require.NoError(t, h.mockStdinW.Close())
+		},
 	},
 	{
 		label: "HandlesPrepareWithSynonyms",
