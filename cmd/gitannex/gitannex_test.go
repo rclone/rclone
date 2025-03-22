@@ -192,14 +192,10 @@ func TestMessageParser(t *testing.T) {
 }
 
 func TestConfigDefinitionOneName(t *testing.T) {
-	var parsed string
-	var defaultValue = "abc"
-
 	configFoo := configDefinition{
 		names:        []string{"foo"},
 		description:  "The foo config is utterly useless.",
-		destination:  &parsed,
-		defaultValue: &defaultValue,
+		defaultValue: "abc",
 	}
 
 	assert.Equal(t, "foo",
@@ -211,14 +207,10 @@ func TestConfigDefinitionOneName(t *testing.T) {
 }
 
 func TestConfigDefinitionTwoNames(t *testing.T) {
-	var parsed string
-	var defaultValue = "abc"
-
 	configFoo := configDefinition{
 		names:        []string{"foo", "bar"},
 		description:  "The foo config is utterly useless.",
-		destination:  &parsed,
-		defaultValue: &defaultValue,
+		defaultValue: "abc",
 	}
 
 	assert.Equal(t, "foo",
@@ -230,14 +222,10 @@ func TestConfigDefinitionTwoNames(t *testing.T) {
 }
 
 func TestConfigDefinitionThreeNames(t *testing.T) {
-	var parsed string
-	var defaultValue = "abc"
-
 	configFoo := configDefinition{
 		names:        []string{"foo", "bar", "baz"},
 		description:  "The foo config is utterly useless.",
-		destination:  &parsed,
-		defaultValue: &defaultValue,
+		defaultValue: "abc",
 	}
 
 	assert.Equal(t, "foo",
