@@ -247,6 +247,12 @@ func (s *server) handleInitRemote() error {
 		return fmt.Errorf("failed to init remote: %w", err)
 	}
 
+	if mode := parseLayoutMode(s.configRcloneLayout); mode == layoutModeUnknown {
+		err := fmt.Errorf("unknown layout mode: %s", s.configRcloneLayout)
+		s.sendMsg(fmt.Sprintf("INITREMOTE-FAILURE %s", err))
+		return fmt.Errorf("failed to init remote: %w", err)
+	}
+
 	s.sendMsg("INITREMOTE-SUCCESS")
 	return nil
 }
