@@ -2537,6 +2537,70 @@ The `--client-key` flag is required too when using this.
 This loads the PEM encoded client side private key used for mutual TLS
 authentication.  Used in conjunction with `--client-cert`.
 
+### --wincrypt string
+
+Available on Windows only.
+
+Load certificate/key pairs from Windows certificate store using
+Cryptography API: Next Generation (CNG) for
+[mutual TLS authentication](https://en.wikipedia.org/wiki/Mutual_authentication),
+mainly designed for Smartcard scenario.
+
+Certificates expired or not yet valid will be filtered out.
+
+The input string is case-insensitive in most cases except said otherwise.
+Spaces at the beginning and end of the string will be discarded.
+The string must be one of the following format:
+
+  - `all`
+
+    Means load all possible certificate/key pair from user personal
+    certificate store.
+
+  - `select`
+
+    Means open a certificate selection menu for user to choose one of
+    certificates desired.
+
+  - `hash:`*`hashstr1`*`,`*`hashstr2`*`,...`
+
+    Means choose certificates using the specified hex hash strings. May not
+    be a empty hex hash string. Multiple hash strings are sperated with `,`
+    character. Hash strings referring to the same certificates are ignored.
+    Spaces at the beginning and end of a single hash string are discarded.
+    Hash strings with spaces in the middle of them will not be accepted.
+    Supported hash algorithms are  MD5, SHA-1, SHA-256, SHA-384 and SHA-512.
+    Any hash string specified other than the supported one will not be accepted.
+    Hash string matches no certificate is accepted. If any unaccepted string
+    found, no certificate/key pair will be loaded and result in error.
+
+  - *OpenSSL style certificate subject string*
+
+    Match certificate by specified subject string in OpenSSL style. Attribute
+    values are case sensitive. Special characters `/+\=` among the string can
+    be escaped by `\` character. Spaces in the subject string is keeped as is.
+    Attributes with multiple value can be specified by sperating them
+    with `+` character. Since spaces in begin and end of the input string are
+    discarded, if the last value of the last attribute value has spaces in the
+    end, you should add postfix `/` at the end of the input string. Attribute
+    name can not be empty but values can be. The matching rules described as
+    follows:
+
+    - Unknown attribute is ignored.
+    - Empty attribute means the attribute always matches regardless of whether
+    it's present and the value in the certificate.
+    - For non-empty single value attribute, it matches if the attribute value
+    of the certificate contains the value specified in the subject string.
+    - For non-empty attribute with multiple values, it matches if all values
+    of the attribute specified in the subject string can be found and correspond
+    to one of the values in the corresponding certificate fields. For example,
+    let there be a certificate with subject `/OU=O1+O2` and the specified subject
+    string is `/OU=O1+O1` it will not match as one of the values of organization
+    unit specified (the second "O1") does not correspond to one of organization
+    unit values in the certificate subject.
+    - If a attribute is specified multiple times, if any of its value
+    (or values, if it can have multiple values) matches, the attribute matches.
+
 ### --no-check-certificate=true/false ###
 
 `--no-check-certificate` controls whether a client verifies the
