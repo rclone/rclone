@@ -56,8 +56,7 @@ Different options may also affect which properties are included:
   properties will be omitted - even for encrypted remotes.
 - If `--metadata` is set then an additional Metadata property will be
   returned. This will have [metadata](/docs/#metadata) in rclone standard format
-  as a JSON object. Also, if `--metadata` is set then name of the file can be
-  taken from the metadata field "content-disposition" if the remote supports it.
+  as a JSON object.
 
 The default is to list directories and files/objects, but this can be changed
 with the following options:
