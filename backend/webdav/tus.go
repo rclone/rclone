@@ -17,12 +17,6 @@ import (
 	"github.com/rclone/rclone/lib/rest"
 )
 
-// set the chunk size for testing
-func (f *Fs) setUploadTusSize(cs fs.SizeSuffix) (old fs.SizeSuffix, err error) {
-	old, f.opt.ChunkSize = f.opt.ChunkSize, cs
-	return
-}
-
 func (o *Object) updateViaTus(ctx context.Context, in io.Reader, contentType string, src fs.ObjectInfo, options ...fs.OpenOption) (err error) {
 
 	fn := filepath.Base(src.Remote())

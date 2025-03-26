@@ -40,9 +40,9 @@ func (f *Fs) shouldRetryChunk(ctx context.Context, resp *http.Response, err erro
 		if off, err := strconv.ParseInt(resp.Header.Get("Upload-Offset"), 10, 64); err == nil {
 			*newOff = off
 			return false, nil
-		} else {
-			return false, err
 		}
+		return false, err
+
 	case 409:
 		return false, ErrOffsetMismatch
 	case 412:

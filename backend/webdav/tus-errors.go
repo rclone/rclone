@@ -6,9 +6,9 @@ import (
 )
 
 var (
-	// ErrChuckSize is returned when the chunk size is zero
+	// ErrChunkSize is returned when the chunk size is zero
 	ErrChunkSize = errors.New("tus chunk size must be greater than zero")
-	// ErrNilConfig is returned when the logger is nil
+	// ErrNilLogger is returned when the logger is nil
 	ErrNilLogger = errors.New("tus logger can't be nil")
 	// ErrNilStore is returned when the store is nil
 	ErrNilStore = errors.New("tus store can't be nil if resume is enable")
