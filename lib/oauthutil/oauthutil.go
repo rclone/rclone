@@ -80,6 +80,11 @@ All done. Please go back to rclone.
 </body>
 </html>
 `
+
+	// BeforeExpiryDelta determines how long before a token's actual expiry
+	// that OnBeforeExpiry signals. This provides time for refreshing the token,
+	// when the refresh is handled outside of this package.
+	BeforeExpiryDelta = 60 * time.Second
 )
 
 // OpenURL is used when rclone wants to open a browser window
@@ -223,14 +228,15 @@ func PutToken(name string, m configmap.Mapper, token *oauth2.Token, newSection b
 
 // TokenSource stores updated tokens in the config file
 type TokenSource struct {
-	mu          sync.Mutex
-	name        string
-	m           configmap.Mapper
-	tokenSource oauth2.TokenSource
-	token       *oauth2.Token
-	config      *Config
-	ctx         context.Context
-	expiryTimer *time.Timer // signals whenever the token expires
+	mu                sync.Mutex
+	name              string
+	m                 configmap.Mapper
+	tokenSource       oauth2.TokenSource
+	token             *oauth2.Token
+	config            *Config
+	ctx               context.Context
+	expiryTimer       *time.Timer // signals whenever the token expires
+	beforeExpiryTimer *time.Timer // signals shortly before the token expires
 }
 
 // If token has expired then first try re-reading it (and its refresh token)
@@ -359,9 +365,12 @@ func (ts *TokenSource) Token() (*oauth2.Token, error) {
 	changed = changed || ts.token == nil || token.AccessToken != ts.token.AccessToken || token.RefreshToken != ts.token.RefreshToken || token.Expiry != ts.token.Expiry
 	ts.token = token
 	if changed {
-		// Bump on the expiry timer if it is set
+		// Bump the expiry timers if they are set
 		if ts.expiryTimer != nil {
 			ts.expiryTimer.Reset(ts.timeToExpiry())
+		}
+		if ts.beforeExpiryTimer != nil {
+			ts.beforeExpiryTimer.Reset(ts.timeToExpiry() - BeforeExpiryDelta)
 		}
 		err = PutToken(ts.name, ts.m, token, false)
 		if err != nil {
@@ -419,6 +428,18 @@ func (ts *TokenSource) OnExpiry() <-chan time.Time {
 		ts.expiryTimer = time.NewTimer(ts.timeToExpiry())
 	}
 	return ts.expiryTimer.C
+}
+
+// OnBeforeExpiry returns a channel which has the time written to it shortly
+// before the token expires.  Note that there is only one channel so if
+// attaching multiple go routines it will only signal to one of them.
+func (ts *TokenSource) OnBeforeExpiry() <-chan time.Time {
+	ts.mu.Lock()
+	defer ts.mu.Unlock()
+	if ts.beforeExpiryTimer == nil {
+		ts.beforeExpiryTimer = time.NewTimer(ts.timeToExpiry() - BeforeExpiryDelta)
+	}
+	return ts.beforeExpiryTimer.C
 }
 
 // Check interface satisfied
