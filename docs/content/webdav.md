@@ -47,17 +47,15 @@ Choose a number from below, or type in your own value
    \ (fastmail)
  2 / Nextcloud
    \ (nextcloud)
- 3 / ownCloud 10 PHP based WebDAV server
+ 3 / Owncloud
    \ (owncloud)
- 4 / ownCloud Infinite Scale
-   \ (infinitescale)
- 5 / Sharepoint Online, authenticated by Microsoft account
+ 4 / Sharepoint Online, authenticated by Microsoft account
    \ (sharepoint)
- 6 / Sharepoint with NTLM authentication, usually self-hosted or on-premises
+ 5 / Sharepoint with NTLM authentication, usually self-hosted or on-premises
    \ (sharepoint-ntlm)
- 7 / rclone WebDAV server to serve a remote over HTTP via the WebDAV protocol
+ 6 / rclone WebDAV server to serve a remote over HTTP via the WebDAV protocol
    \ (rclone)
- 8 / Other site/service or software
+ 7 / Other site/service or software
    \ (other)
 vendor> 2
 User name
