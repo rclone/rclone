@@ -15,6 +15,7 @@ import (
 
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/rclone/rclone/cmd"
+	cmdserve "github.com/rclone/rclone/cmd/serve"
 	"github.com/rclone/rclone/cmd/serve/proxy"
 	"github.com/rclone/rclone/cmd/serve/proxy/proxyflags"
 	"github.com/rclone/rclone/fs"
@@ -56,6 +57,7 @@ func init() {
 	libhttp.AddTemplateFlagsPrefix(flagSet, flagPrefix, &Opt.Template)
 	vfsflags.AddFlags(flagSet)
 	proxyflags.AddFlags(flagSet)
+	cmdserve.Command.AddCommand(Command)
 }
 
 // Command definition for cobra

@@ -7,6 +7,7 @@ import (
 	"context"
 
 	"github.com/rclone/rclone/cmd"
+	"github.com/rclone/rclone/cmd/serve"
 	"github.com/rclone/rclone/cmd/serve/proxy"
 	"github.com/rclone/rclone/cmd/serve/proxy/proxyflags"
 	"github.com/rclone/rclone/fs"
@@ -76,6 +77,7 @@ func init() {
 	vfsflags.AddFlags(Command.Flags())
 	proxyflags.AddFlags(Command.Flags())
 	AddFlags(Command.Flags(), &Opt)
+	serve.Command.AddCommand(Command)
 }
 
 // Command definition for cobra
