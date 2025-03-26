@@ -266,6 +266,7 @@ func (f *Fs) Features() *fs.Features {
 // retryErrorCodes is a slice of error codes that we will retry
 var retryErrorCodes = []int{
 	423, // Locked
+	425, // Too Early
 	429, // Too Many Requests.
 	500, // Internal Server Error
 	502, // Bad Gateway
@@ -377,7 +378,8 @@ func (f *Fs) readMetaDataForPath(ctx context.Context, path string, depth string)
 		return nil, fs.ErrorObjectNotFound
 	}
 	item := result.Responses[0]
-	if !item.Props.StatusOK() {
+	// status code 425 is accepted here as well
+	if !(item.Props.StatusOK() || item.Props.Code() == 425) {
 		return nil, fs.ErrorObjectNotFound
 	}
 	if itemIsDir(&item) {

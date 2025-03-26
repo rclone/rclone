@@ -10,7 +10,6 @@ import (
 	"regexp"
 	"runtime"
 	"strings"
-	"sync"
 	"testing"
 	"time"
 
@@ -252,6 +251,9 @@ type testState struct {
 	server           *server
 	mockStdinW       *io.PipeWriter
 	mockStdoutReader *bufio.Reader
+	// readLineTimeout is the maximum duration of time to wait for [server] to
+	// write a line to be written to the mock stdout.
+	readLineTimeout time.Duration
 
 	fstestRun    *fstest.Run
 	remoteName   string
@@ -270,6 +272,11 @@ func makeTestState(t *testing.T) testState {
 		},
 		mockStdinW:       stdinW,
 		mockStdoutReader: bufio.NewReader(stdoutR),
+
+		// The default readLineTimeout must be large enough to accommodate slow
+		// operations on real remotes. Without a timeout, attempts to read a
+		// line that's never written would block indefinitely.
+		readLineTimeout: time.Second * 30,
 	}
 }
 
@@ -277,18 +284,52 @@ func (h *testState) requireRemoteIsEmpty() {
 	h.fstestRun.CheckRemoteItems(h.t)
 }
 
-func (h *testState) requireReadLineExact(line string) {
-	receivedLine, err := h.mockStdoutReader.ReadString('\n')
-	require.NoError(h.t, err)
-	require.Equal(h.t, line+"\n", receivedLine)
+// readLineWithTimeout attempts to read a line from the mock stdout. Returns an
+// error if the read operation times out or fails for any reason.
+func (h *testState) readLineWithTimeout() (string, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), h.readLineTimeout)
+	defer cancel()
+
+	lineChan := make(chan string)
+	errChan := make(chan error)
+
+	go func() {
+		line, err := h.mockStdoutReader.ReadString('\n')
+		if err != nil {
+			errChan <- err
+		} else {
+			lineChan <- line
+		}
+	}()
+
+	select {
+	case line := <-lineChan:
+		return line, nil
+	case err := <-errChan:
+		return "", err
+	case <-ctx.Done():
+		return "", fmt.Errorf("attempt to read line timed out: %w", ctx.Err())
+	}
 }
 
+// requireReadLineExact requires that a line matching wantLine can be read from
+// the mock stdout.
+func (h *testState) requireReadLineExact(wantLine string) {
+	receivedLine, err := h.readLineWithTimeout()
+	require.NoError(h.t, err)
+	require.Equal(h.t, wantLine+"\n", receivedLine)
+}
+
+// requireReadLine requires that a line can be read from the mock stdout and
+// returns the line.
 func (h *testState) requireReadLine() string {
-	receivedLine, err := h.mockStdoutReader.ReadString('\n')
+	receivedLine, err := h.readLineWithTimeout()
 	require.NoError(h.t, err)
 	return receivedLine
 }
 
+// requireWriteLine requires that the given line is successfully written to the
+// mock stdin.
 func (h *testState) requireWriteLine(line string) {
 	_, err := h.mockStdinW.Write([]byte(line + "\n"))
 	require.NoError(h.t, err)
@@ -1281,6 +1322,46 @@ var fstestTestCases = []testCase{
 	},
 }
 
+// TestReadLineHasShortDeadline verifies that [testState.readLineWithTimeout]
+// does not block indefinitely when a line is never written.
+func TestReadLineHasShortDeadline(t *testing.T) {
+	const timeoutForRead = time.Millisecond * 50
+	const timeoutForTest = time.Millisecond * 100
+	const tickDuration = time.Millisecond * 10
+
+	type readLineResult struct {
+		line string
+		err  error
+	}
+
+	resultChan := make(chan readLineResult)
+
+	go func() {
+		defer close(resultChan)
+
+		h := makeTestState(t)
+		h.readLineTimeout = timeoutForRead
+
+		line, err := h.readLineWithTimeout()
+		resultChan <- readLineResult{line, err}
+	}()
+
+	// This closure will be run periodically until time runs out or until all of
+	// its assertions pass.
+	idempotentConditionFunc := func(c *assert.CollectT) {
+		result, ok := <-resultChan
+		require.True(c, ok, "The goroutine should send a result")
+
+		require.Empty(c, result.line, "No line should be read")
+		require.ErrorIs(c, result.err, context.DeadlineExceeded)
+
+		_, ok = <-resultChan
+		require.False(c, ok, "The channel should be closed")
+	}
+
+	require.EventuallyWithT(t, idempotentConditionFunc, timeoutForTest, tickDuration)
+}
+
 // TestMain drives the tests
 func TestMain(m *testing.M) {
 	fstest.TestMain(m)
@@ -1311,23 +1392,27 @@ func TestGitAnnexFstestBackendCases(t *testing.T) {
 			handle.remoteName = remoteName
 			handle.remotePrefix = remotePath
 
-			var wg sync.WaitGroup
-			wg.Add(1)
+			serverErrorChan := make(chan error)
 
 			go func() {
-				err := handle.server.run()
-
-				if testCase.expectedError == "" {
-					require.NoError(t, err)
-				} else {
-					require.ErrorContains(t, err, testCase.expectedError)
-				}
-
-				wg.Done()
+				// Run the gitannex server and send the result back to the
+				// goroutine associated with `t`. We can't use `require` here
+				// because it could call `t.FailNow()`, which says it must be
+				// called on the goroutine associated with the test.
+				serverErrorChan <- handle.server.run()
 			}()
-			defer wg.Wait()
 
 			testCase.testProtocolFunc(t, &handle)
+
+			serverError, ok := <-serverErrorChan
+			require.True(t, ok, "Should receive one error/nil from server")
+			require.Empty(t, serverErrorChan)
+
+			if testCase.expectedError == "" {
+				require.NoError(t, serverError)
+			} else {
+				require.ErrorContains(t, serverError, testCase.expectedError)
+			}
 		})
 	}
 }

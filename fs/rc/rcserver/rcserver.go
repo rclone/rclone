@@ -123,7 +123,7 @@ func newServer(ctx context.Context, opt *rc.Options, mux *http.ServeMux) (*Serve
 	)
 
 	// Add the debug handler which is installed in the default mux
-	router.Handle("/debug/*", mux)
+	router.Handle("/debug/pprof/*", mux)
 
 	// FIXME split these up into individual functions
 	router.Get("/*", s.handler)

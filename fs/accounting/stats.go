@@ -92,7 +92,9 @@ func NewStats(ctx context.Context) *StatsInfo {
 }
 
 // RemoteStats returns stats for rc
-func (s *StatsInfo) RemoteStats() (out rc.Params, err error) {
+//
+// If short is true then the transfers and checkers won't be added.
+func (s *StatsInfo) RemoteStats(short bool) (out rc.Params, err error) {
 	// NB if adding values here - make sure you update the docs in
 	// stats_groups.go
 
@@ -128,10 +130,10 @@ func (s *StatsInfo) RemoteStats() (out rc.Params, err error) {
 	}
 	s.mu.RUnlock()
 
-	if !s.checking.empty() {
+	if !short && !s.checking.empty() {
 		out["checking"] = s.checking.remotes()
 	}
-	if !s.transferring.empty() {
+	if !short && !s.transferring.empty() {
 		out["transferring"] = s.transferring.rcStats(s.inProgress)
 	}
 	if s.errors > 0 {
@@ -561,7 +563,7 @@ func (s *StatsInfo) Transferred() []TransferSnapshot {
 // Log outputs the StatsInfo to the log
 func (s *StatsInfo) Log() {
 	if s.ci.UseJSONLog {
-		out, _ := s.RemoteStats()
+		out, _ := s.RemoteStats(false)
 		fs.LogLevelPrintf(s.ci.StatsLogLevel, nil, "%v%v\n", s, fs.LogValueHide("stats", out))
 	} else {
 		fs.LogLevelPrintf(s.ci.StatsLogLevel, nil, "%v\n", s)
