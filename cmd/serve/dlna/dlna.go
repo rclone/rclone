@@ -19,6 +19,7 @@ import (
 	"github.com/anacrolix/dms/upnp"
 	"github.com/anacrolix/log"
 	"github.com/rclone/rclone/cmd"
+	"github.com/rclone/rclone/cmd/serve"
 	"github.com/rclone/rclone/cmd/serve/dlna/data"
 	"github.com/rclone/rclone/cmd/serve/dlna/dlnaflags"
 	"github.com/rclone/rclone/fs"
@@ -32,6 +33,7 @@ import (
 func init() {
 	dlnaflags.AddFlags(Command.Flags())
 	vfsflags.AddFlags(Command.Flags())
+	serve.Command.AddCommand(Command)
 }
 
 // Command definition for cobra.

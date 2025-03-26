@@ -17,6 +17,7 @@ import (
 	chi "github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/rclone/rclone/cmd"
+	cmdserve "github.com/rclone/rclone/cmd/serve"
 	"github.com/rclone/rclone/cmd/serve/proxy"
 	"github.com/rclone/rclone/cmd/serve/proxy/proxyflags"
 	"github.com/rclone/rclone/fs"
@@ -67,6 +68,7 @@ func init() {
 	proxyflags.AddFlags(flagSet)
 	flags.StringVarP(flagSet, &Opt.HashName, "etag-hash", "", "", "Which hash to use for the ETag, or auto or blank for off", "")
 	flags.BoolVarP(flagSet, &Opt.DisableGETDir, "disable-dir-list", "", false, "Disable HTML directory list on GET request for a directory", "")
+	cmdserve.Command.AddCommand(Command)
 }
 
 // Command definition for cobra
