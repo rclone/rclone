@@ -14,6 +14,7 @@ import (
 	"strings"
 
 	"github.com/rclone/rclone/cmd"
+	"github.com/rclone/rclone/cmd/serve"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config/flags"
 	"github.com/rclone/rclone/vfs"
@@ -83,6 +84,7 @@ func AddFlags(flagSet *pflag.FlagSet) {
 func init() {
 	vfsflags.AddFlags(Command.Flags())
 	AddFlags(Command.Flags())
+	serve.Command.AddCommand(Command)
 }
 
 // Run the command
