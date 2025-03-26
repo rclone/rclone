@@ -146,9 +146,7 @@ Properties:
     - "nextcloud"
         - Nextcloud
     - "owncloud"
-        - ownCloud
-    - "infinitescale"
-        - ownCloud Infinite Scale
+        - Owncloud
     - "sharepoint"
         - Sharepoint Online, authenticated by Microsoft account
     - "sharepoint-ntlm"
