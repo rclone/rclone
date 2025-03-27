@@ -190,14 +190,10 @@ func TestMessageParser(t *testing.T) {
 }
 
 func TestConfigDefinitionOneName(t *testing.T) {
-	var parsed string
-	var defaultValue = "abc"
-
 	configFoo := configDefinition{
 		names:        []string{"foo"},
 		description:  "The foo config is utterly useless.",
-		destination:  &parsed,
-		defaultValue: &defaultValue,
+		defaultValue: "abc",
 	}
 
 	assert.Equal(t, "foo",
@@ -209,14 +205,10 @@ func TestConfigDefinitionOneName(t *testing.T) {
 }
 
 func TestConfigDefinitionTwoNames(t *testing.T) {
-	var parsed string
-	var defaultValue = "abc"
-
 	configFoo := configDefinition{
 		names:        []string{"foo", "bar"},
 		description:  "The foo config is utterly useless.",
-		destination:  &parsed,
-		defaultValue: &defaultValue,
+		defaultValue: "abc",
 	}
 
 	assert.Equal(t, "foo",
@@ -228,14 +220,10 @@ func TestConfigDefinitionTwoNames(t *testing.T) {
 }
 
 func TestConfigDefinitionThreeNames(t *testing.T) {
-	var parsed string
-	var defaultValue = "abc"
-
 	configFoo := configDefinition{
 		names:        []string{"foo", "bar", "baz"},
 		description:  "The foo config is utterly useless.",
-		destination:  &parsed,
-		defaultValue: &defaultValue,
+		defaultValue: "abc",
 	}
 
 	assert.Equal(t, "foo",
@@ -503,7 +491,7 @@ var fstestTestCases = []testCase{
 			h.requireReadLineExact("GETCONFIG rcloneprefix")
 			h.requireWriteLine("VALUE " + h.remotePrefix)
 			h.requireReadLineExact("GETCONFIG rclonelayout")
-			h.requireWriteLine("VALUE foo")
+			h.requireWriteLine("VALUE frankencase")
 			h.requireReadLineExact("PREPARE-SUCCESS")
 
 			require.Equal(t, h.server.configRcloneRemoteName, h.remoteName)
@@ -512,6 +500,35 @@ var fstestTestCases = []testCase{
 
 			require.NoError(t, h.mockStdinW.Close())
 		},
+	},
+	{
+		label: "HandlesPrepareWithUnknownLayout",
+		testProtocolFunc: func(t *testing.T, h *testState) {
+			h.requireReadLineExact("VERSION 1")
+			h.requireWriteLine("EXTENSIONS INFO") // Advertise that we support the INFO extension
+			h.requireReadLineExact("EXTENSIONS")
+
+			require.True(t, h.server.extensionInfo)
+
+			h.requireWriteLine("PREPARE")
+			h.requireReadLineExact("GETCONFIG rcloneremotename")
+			h.requireWriteLine("VALUE " + h.remoteName)
+			h.requireReadLineExact("GETCONFIG rcloneprefix")
+			h.requireWriteLine("VALUE " + h.remotePrefix)
+			h.requireReadLineExact("GETCONFIG rclonelayout")
+			h.requireWriteLine("VALUE nonexistentLayoutMode")
+			h.requireReadLineExact("PREPARE-SUCCESS")
+
+			require.Equal(t, h.server.configRcloneRemoteName, h.remoteName)
+			require.Equal(t, h.server.configPrefix, h.remotePrefix)
+			require.True(t, h.server.configsDone)
+
+			h.requireWriteLine("INITREMOTE")
+			h.requireReadLineExact("INITREMOTE-FAILURE unknown layout mode: nonexistentLayoutMode")
+
+			require.NoError(t, h.mockStdinW.Close())
+		},
+		expectedError: "unknown layout mode: nonexistentLayoutMode",
 	},
 	{
 		label: "HandlesPrepareWithNonexistentRemote",
@@ -528,7 +545,7 @@ var fstestTestCases = []testCase{
 			h.requireReadLineExact("GETCONFIG rcloneprefix")
 			h.requireWriteLine("VALUE " + h.remotePrefix)
 			h.requireReadLineExact("GETCONFIG rclonelayout")
-			h.requireWriteLine("VALUE foo")
+			h.requireWriteLine("VALUE frankencase")
 			h.requireReadLineExact("PREPARE-SUCCESS")
 
 			require.Equal(t, h.server.configRcloneRemoteName, "thisRemoteDoesNotExist")
@@ -536,11 +553,11 @@ var fstestTestCases = []testCase{
 			require.True(t, h.server.configsDone)
 
 			h.requireWriteLine("INITREMOTE")
-			h.requireReadLineExact("INITREMOTE-FAILURE remote does not exist: thisRemoteDoesNotExist")
+			h.requireReadLineExact("INITREMOTE-FAILURE remote does not exist or incorrectly contains a path: thisRemoteDoesNotExist")
 
 			require.NoError(t, h.mockStdinW.Close())
 		},
-		expectedError: "remote does not exist: thisRemoteDoesNotExist",
+		expectedError: "remote does not exist or incorrectly contains a path: thisRemoteDoesNotExist",
 	},
 	{
 		label: "HandlesPrepareWithPathAsRemote",
@@ -557,7 +574,7 @@ var fstestTestCases = []testCase{
 			h.requireReadLineExact("GETCONFIG rcloneprefix")
 			h.requireWriteLine("VALUE /foo")
 			h.requireReadLineExact("GETCONFIG rclonelayout")
-			h.requireWriteLine("VALUE foo")
+			h.requireWriteLine("VALUE frankencase")
 			h.requireReadLineExact("PREPARE-SUCCESS")
 
 			require.Equal(t, h.server.configRcloneRemoteName, h.remotePrefix)
@@ -567,13 +584,13 @@ var fstestTestCases = []testCase{
 			h.requireWriteLine("INITREMOTE")
 
 			require.Regexp(t,
-				regexp.MustCompile("^INITREMOTE-FAILURE remote does not exist: "),
+				regexp.MustCompile("^INITREMOTE-FAILURE remote does not exist or incorrectly contains a path: "),
 				h.requireReadLine(),
 			)
 
 			require.NoError(t, h.mockStdinW.Close())
 		},
-		expectedError: "remote does not exist:",
+		expectedError: "remote does not exist or incorrectly contains a path:",
 	},
 	{
 		label: "HandlesPrepareWithNonexistentBackendAsRemote",
@@ -585,7 +602,7 @@ var fstestTestCases = []testCase{
 			h.requireReadLineExact("GETCONFIG rcloneprefix")
 			h.requireWriteLine("VALUE /foo")
 			h.requireReadLineExact("GETCONFIG rclonelayout")
-			h.requireWriteLine("VALUE foo")
+			h.requireWriteLine("VALUE frankencase")
 			h.requireReadLineExact("PREPARE-SUCCESS")
 
 			require.Equal(t, ":nonexistentBackend:", h.server.configRcloneRemoteName)
@@ -609,7 +626,7 @@ var fstestTestCases = []testCase{
 			h.requireReadLineExact("GETCONFIG rcloneprefix")
 			h.requireWriteLine("VALUE /foo")
 			h.requireReadLineExact("GETCONFIG rclonelayout")
-			h.requireWriteLine("VALUE foo")
+			h.requireWriteLine("VALUE frankencase")
 			h.requireReadLineExact("PREPARE-SUCCESS")
 
 			require.Equal(t, ":local:", h.server.configRcloneRemoteName)
@@ -632,7 +649,7 @@ var fstestTestCases = []testCase{
 			h.requireReadLineExact("GETCONFIG rcloneprefix")
 			h.requireWriteLine("VALUE /foo")
 			h.requireReadLineExact("GETCONFIG rclonelayout")
-			h.requireWriteLine("VALUE foo")
+			h.requireWriteLine("VALUE frankencase")
 			h.requireReadLineExact("PREPARE-SUCCESS")
 
 			require.Equal(t, ":local", h.server.configRcloneRemoteName)
@@ -640,11 +657,11 @@ var fstestTestCases = []testCase{
 			require.True(t, h.server.configsDone)
 
 			h.requireWriteLine("INITREMOTE")
-			h.requireReadLineExact("INITREMOTE-FAILURE remote could not be parsed as a backend: :local")
+			h.requireReadLineExact("INITREMOTE-FAILURE remote could not be parsed: :local")
 
 			require.NoError(t, h.mockStdinW.Close())
 		},
-		expectedError: "remote could not be parsed as a backend:",
+		expectedError: "remote could not be parsed:",
 	},
 	{
 		label: "HandlesPrepareWithBackendContainingOptionsAsRemote",
@@ -656,7 +673,7 @@ var fstestTestCases = []testCase{
 			h.requireReadLineExact("GETCONFIG rcloneprefix")
 			h.requireWriteLine("VALUE /foo")
 			h.requireReadLineExact("GETCONFIG rclonelayout")
-			h.requireWriteLine("VALUE foo")
+			h.requireWriteLine("VALUE frankencase")
 			h.requireReadLineExact("PREPARE-SUCCESS")
 
 			require.Equal(t, ":local,description=banana:", h.server.configRcloneRemoteName)
@@ -679,7 +696,7 @@ var fstestTestCases = []testCase{
 			h.requireReadLineExact("GETCONFIG rcloneprefix")
 			h.requireWriteLine("VALUE /foo")
 			h.requireReadLineExact("GETCONFIG rclonelayout")
-			h.requireWriteLine("VALUE foo")
+			h.requireWriteLine("VALUE frankencase")
 			h.requireReadLineExact("PREPARE-SUCCESS")
 
 			require.Equal(t, ":local,description=banana:/bad/path", h.server.configRcloneRemoteName)
@@ -687,14 +704,38 @@ var fstestTestCases = []testCase{
 			require.True(t, h.server.configsDone)
 
 			h.requireWriteLine("INITREMOTE")
-			require.Regexp(t,
-				regexp.MustCompile("^INITREMOTE-FAILURE backend must not have a path: "),
-				h.requireReadLine(),
-			)
+			h.requireReadLineExact("INITREMOTE-FAILURE remote does not exist or incorrectly contains a path: :local,description=banana:/bad/path")
 
 			require.NoError(t, h.mockStdinW.Close())
 		},
-		expectedError: "backend must not have a path:",
+		expectedError: "remote does not exist or incorrectly contains a path:",
+	},
+	{
+		label: "HandlesPrepareWithRemoteContainingOptions",
+		testProtocolFunc: func(t *testing.T, h *testState) {
+			const envVar = "RCLONE_CONFIG_fake_remote_TYPE"
+			require.NoError(t, os.Setenv(envVar, "memory"))
+			t.Cleanup(func() { require.NoError(t, os.Unsetenv(envVar)) })
+
+			h.requireReadLineExact("VERSION 1")
+			h.requireWriteLine("PREPARE")
+			h.requireReadLineExact("GETCONFIG rcloneremotename")
+			h.requireWriteLine("VALUE fake_remote,banana=yes:")
+			h.requireReadLineExact("GETCONFIG rcloneprefix")
+			h.requireWriteLine("VALUE /foo")
+			h.requireReadLineExact("GETCONFIG rclonelayout")
+			h.requireWriteLine("VALUE frankencase")
+			h.requireReadLineExact("PREPARE-SUCCESS")
+
+			require.Equal(t, "fake_remote,banana=yes:", h.server.configRcloneRemoteName)
+			require.Equal(t, "/foo", h.server.configPrefix)
+			require.True(t, h.server.configsDone)
+
+			h.requireWriteLine("INITREMOTE")
+			h.requireReadLineExact("INITREMOTE-SUCCESS")
+
+			require.NoError(t, h.mockStdinW.Close())
+		},
 	},
 	{
 		label: "HandlesPrepareWithSynonyms",
@@ -715,7 +756,7 @@ var fstestTestCases = []testCase{
 			h.requireReadLineExact("GETCONFIG rcloneprefix")
 			h.requireWriteLine("VALUE " + h.remotePrefix)
 			h.requireReadLineExact("GETCONFIG rclonelayout")
-			h.requireWriteLine("VALUE foo")
+			h.requireWriteLine("VALUE frankencase")
 			h.requireReadLineExact("PREPARE-SUCCESS")
 
 			require.Equal(t, h.server.configRcloneRemoteName, h.remoteName)
