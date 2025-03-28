@@ -12,7 +12,7 @@ import (
 	"time"
 
 	_ "github.com/rclone/rclone/backend/local"
-	"github.com/rclone/rclone/cmd/serve/proxy/proxyflags"
+	"github.com/rclone/rclone/cmd/serve/proxy"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/filter"
 	libhttp "github.com/rclone/rclone/lib/http"
@@ -39,7 +39,7 @@ func start(ctx context.Context, t *testing.T, f fs.Fs) (s *HTTP, testURL string)
 		},
 	}
 	opts.HTTP.ListenAddr = []string{testBindAddress}
-	if proxyflags.Opt.AuthProxy == "" {
+	if proxy.Opt.AuthProxy == "" {
 		opts.Auth.BasicUser = testUser
 		opts.Auth.BasicPass = testPass
 	}
@@ -110,9 +110,9 @@ func testGET(t *testing.T, useProxy bool) {
 		cmd := "go run " + prog + " " + files
 
 		// FIXME this is untidy setting a global variable!
-		proxyflags.Opt.AuthProxy = cmd
+		proxy.Opt.AuthProxy = cmd
 		defer func() {
-			proxyflags.Opt.AuthProxy = ""
+			proxy.Opt.AuthProxy = ""
 		}()
 
 		f = nil

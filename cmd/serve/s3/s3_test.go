@@ -18,7 +18,7 @@ import (
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
 	_ "github.com/rclone/rclone/backend/local"
-	"github.com/rclone/rclone/cmd/serve/proxy/proxyflags"
+	"github.com/rclone/rclone/cmd/serve/proxy"
 	"github.com/rclone/rclone/cmd/serve/servetest"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config/configmap"
@@ -173,9 +173,9 @@ func testListBuckets(t *testing.T, cases []TestCase, useProxy bool) {
 		cmd := "go run " + prog + " " + files
 
 		// FIXME: this is untidy setting a global variable!
-		proxyflags.Opt.AuthProxy = cmd
+		proxy.Opt.AuthProxy = cmd
 		defer func() {
-			proxyflags.Opt.AuthProxy = ""
+			proxy.Opt.AuthProxy = ""
 		}()
 
 		f = nil

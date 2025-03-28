@@ -137,7 +137,7 @@ done by the permissions on the socket.
 	},
 	RunE: func(command *cobra.Command, args []string) error {
 		var f fs.Fs
-		if proxyflags.Opt.AuthProxy == "" {
+		if proxy.Opt.AuthProxy == "" {
 			cmd.CheckArgs(1, 1, command, args)
 			f = cmd.NewFsSrc(args)
 		} else {
@@ -204,8 +204,8 @@ func newWebDAV(ctx context.Context, f fs.Fs, opt *Options) (w *WebDAV, err error
 		ctx: ctx,
 		opt: *opt,
 	}
-	if proxyflags.Opt.AuthProxy != "" {
-		w.proxy = proxy.New(ctx, &proxyflags.Opt, &vfscommon.Opt)
+	if proxy.Opt.AuthProxy != "" {
+		w.proxy = proxy.New(ctx, &proxy.Opt, &vfscommon.Opt)
 		// override auth
 		w.opt.Auth.CustomAuthFn = w.auth
 	} else {
