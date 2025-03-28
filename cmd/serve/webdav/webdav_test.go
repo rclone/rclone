@@ -23,7 +23,6 @@ import (
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/obscure"
 	"github.com/rclone/rclone/fs/filter"
-	"github.com/rclone/rclone/fs/hash"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/net/webdav"
@@ -48,13 +47,13 @@ var (
 func TestWebDav(t *testing.T) {
 	// Configure and start the server
 	start := func(f fs.Fs) (configmap.Simple, func()) {
-		opt := DefaultOpt
+		opt := Opt
 		opt.HTTP.ListenAddr = []string{testBindAddress}
 		opt.HTTP.BaseURL = "/prefix"
 		opt.Auth.BasicUser = testUser
 		opt.Auth.BasicPass = testPass
 		opt.Template.Path = testTemplate
-		opt.HashType = hash.MD5
+		opt.EtagHash = "MD5"
 
 		// Start the server
 		w, err := newWebDAV(context.Background(), f, &opt)
@@ -98,7 +97,7 @@ func TestHTTPFunction(t *testing.T) {
 	f, err := fs.NewFs(context.Background(), "../http/testdata/files")
 	assert.NoError(t, err)
 
-	opt := DefaultOpt
+	opt := Opt
 	opt.HTTP.ListenAddr = []string{testBindAddress}
 	opt.Template.Path = testTemplate
 
