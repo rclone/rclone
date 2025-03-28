@@ -53,7 +53,7 @@ func newServer(ctx context.Context, f fs.Fs, opt *Options) *server {
 		waitChan: make(chan struct{}),
 	}
 	if proxyflags.Opt.AuthProxy != "" {
-		s.proxy = proxy.New(ctx, &proxyflags.Opt)
+		s.proxy = proxy.New(ctx, &proxyflags.Opt, &vfscommon.Opt)
 	} else {
 		s.vfs = vfs.New(f, &vfscommon.Opt)
 	}
