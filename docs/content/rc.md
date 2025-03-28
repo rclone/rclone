@@ -432,7 +432,7 @@ format. Each block describes a single option.
 | Field | Type | Optional | Description |
 |-------|------|----------|-------------|
 | Name       | string     | N | name of the option in snake_case |
-| FieldName  | string     | N | name of the field used in the rc - if blank use Name |
+| FieldName  | string     | N | name of the field used in the rc - if blank use Name. May contain "." for nested fields. |
 | Help       | string     | N | help, started with a single sentence on a single line |
 | Groups     | string     | Y | groups this option belongs to - comma separated string for options classification |
 | Provider   | string     | Y | set to filter on provider |
