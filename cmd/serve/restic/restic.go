@@ -30,37 +30,48 @@ import (
 	"golang.org/x/net/http2"
 )
 
+// OptionsInfo describes the Options in use
+var OptionsInfo = fs.Options{{
+	Name:    "stdio",
+	Default: false,
+	Help:    "Run an HTTP2 server on stdin/stdout",
+}, {
+	Name:    "append_only",
+	Default: false,
+	Help:    "Disallow deletion of repository data",
+}, {
+	Name:    "private_repos",
+	Default: false,
+	Help:    "Users can only access their private repo",
+}, {
+	Name:    "cache_objects",
+	Default: true,
+	Help:    "Cache listed objects",
+}}.
+	Add(libhttp.ConfigInfo).
+	Add(libhttp.AuthConfigInfo)
+
 // Options required for http server
 type Options struct {
 	Auth         libhttp.AuthConfig
 	HTTP         libhttp.Config
-	Stdio        bool
-	AppendOnly   bool
-	PrivateRepos bool
-	CacheObjects bool
-}
-
-// DefaultOpt is the default values used for Options
-var DefaultOpt = Options{
-	Auth: libhttp.DefaultAuthCfg(),
-	HTTP: libhttp.DefaultCfg(),
+	Stdio        bool `config:"stdio"`
+	AppendOnly   bool `config:"append_only"`
+	PrivateRepos bool `config:"private_repos"`
+	CacheObjects bool `config:"cache_objects"`
 }
 
 // Opt is options set by command line flags
-var Opt = DefaultOpt
+var Opt Options
 
 // flagPrefix is the prefix used to uniquely identify command line flags.
 // It is intentionally empty for this package.
 const flagPrefix = ""
 
 func init() {
+	fs.RegisterGlobalOptions(fs.OptionsInfo{Name: "restic", Opt: &Opt, Options: OptionsInfo})
 	flagSet := Command.Flags()
-	libhttp.AddAuthFlagsPrefix(flagSet, flagPrefix, &Opt.Auth)
-	libhttp.AddHTTPFlagsPrefix(flagSet, flagPrefix, &Opt.HTTP)
-	flags.BoolVarP(flagSet, &Opt.Stdio, "stdio", "", false, "Run an HTTP2 server on stdin/stdout", "")
-	flags.BoolVarP(flagSet, &Opt.AppendOnly, "append-only", "", false, "Disallow deletion of repository data", "")
-	flags.BoolVarP(flagSet, &Opt.PrivateRepos, "private-repos", "", false, "Users can only access their private repo", "")
-	flags.BoolVarP(flagSet, &Opt.CacheObjects, "cache-objects", "", true, "Cache listed objects", "")
+	flags.AddFlagsFromOptions(flagSet, "", OptionsInfo)
 	cmdserve.Command.AddCommand(Command)
 }
 
