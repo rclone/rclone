@@ -100,17 +100,17 @@ func TestItemsNested(t *testing.T) {
 	got, err := configstruct.Items(&in)
 	require.NoError(t, err)
 	want := []configstruct.Item{
-		{Name: "a", Field: "A", Value: string("1")},
-		{Name: "b", Field: "B", Value: string("2")},
-		{Name: "sub_a", Field: "A", Value: string("3")},
-		{Name: "sub_b", Field: "B", Value: string("4")},
-		{Name: "spud_pie", Field: "PotatoPie", Value: string("yum")},
-		{Name: "bean_stew", Field: "BeanStew", Value: true},
-		{Name: "raisin_roll", Field: "RaisinRoll", Value: int(42)},
-		{Name: "sausage_on_stick", Field: "SausageOnStick", Value: int64(101)},
-		{Name: "forbidden_fruit", Field: "ForbiddenFruit", Value: uint(6)},
-		{Name: "cooking_time", Field: "CookingTime", Value: fs.Duration(42 * time.Second)},
-		{Name: "total_weight", Field: "TotalWeight", Value: fs.SizeSuffix(17 << 20)},
+		{Name: "a", Field: "Conf.A", Value: string("1")},
+		{Name: "b", Field: "Conf.B", Value: string("2")},
+		{Name: "sub_a", Field: "Sub1.A", Value: string("3")},
+		{Name: "sub_b", Field: "Sub1.B", Value: string("4")},
+		{Name: "spud_pie", Field: "Sub2.PotatoPie", Value: string("yum")},
+		{Name: "bean_stew", Field: "Sub2.BeanStew", Value: true},
+		{Name: "raisin_roll", Field: "Sub2.RaisinRoll", Value: int(42)},
+		{Name: "sausage_on_stick", Field: "Sub2.SausageOnStick", Value: int64(101)},
+		{Name: "forbidden_fruit", Field: "Sub2.ForbiddenFruit", Value: uint(6)},
+		{Name: "cooking_time", Field: "Sub2.CookingTime", Value: fs.Duration(42 * time.Second)},
+		{Name: "total_weight", Field: "Sub2.TotalWeight", Value: fs.SizeSuffix(17 << 20)},
 		{Name: "c", Field: "C", Value: string("normal")},
 		{Name: "d", Field: "D", Value: fs.Tristate{Value: true, Valid: true}},
 	}
