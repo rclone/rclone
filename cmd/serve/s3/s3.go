@@ -7,6 +7,7 @@ import (
 
 	"github.com/rclone/rclone/cmd"
 	"github.com/rclone/rclone/cmd/serve"
+	"github.com/rclone/rclone/cmd/serve/proxy"
 	"github.com/rclone/rclone/cmd/serve/proxy/proxyflags"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config/flags"
@@ -65,7 +66,7 @@ var Command = &cobra.Command{
 	Long:  help() + httplib.AuthHelp(flagPrefix) + httplib.Help(flagPrefix) + vfs.Help(),
 	RunE: func(command *cobra.Command, args []string) error {
 		var f fs.Fs
-		if proxyflags.Opt.AuthProxy == "" {
+		if proxy.Opt.AuthProxy == "" {
 			cmd.CheckArgs(1, 1, command, args)
 			f = cmd.NewFsSrc(args)
 		} else {

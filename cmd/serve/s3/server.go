@@ -15,7 +15,6 @@ import (
 	"github.com/rclone/gofakes3"
 	"github.com/rclone/gofakes3/signature"
 	"github.com/rclone/rclone/cmd/serve/proxy"
-	"github.com/rclone/rclone/cmd/serve/proxy/proxyflags"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/hash"
 	httplib "github.com/rclone/rclone/lib/http"
@@ -80,8 +79,8 @@ func newServer(ctx context.Context, f fs.Fs, opt *Options) (s *Server, err error
 	w.handler = http.NewServeMux()
 	w.handler = w.faker.Server()
 
-	if proxyflags.Opt.AuthProxy != "" {
-		w.proxy = proxy.New(ctx, &proxyflags.Opt, &vfscommon.Opt)
+	if proxy.Opt.AuthProxy != "" {
+		w.proxy = proxy.New(ctx, &proxy.Opt, &vfscommon.Opt)
 		// proxy auth middleware
 		w.handler = proxyAuthMiddleware(w.handler, w)
 		w.handler = authPairMiddleware(w.handler, w)

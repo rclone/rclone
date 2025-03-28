@@ -123,7 +123,7 @@ You can set a single username and password with the --user and --pass flags.
 	},
 	Run: func(command *cobra.Command, args []string) {
 		var f fs.Fs
-		if proxyflags.Opt.AuthProxy == "" {
+		if proxy.Opt.AuthProxy == "" {
 			cmd.CheckArgs(1, 1, command, args)
 			f = cmd.NewFsSrc(args)
 		} else {
@@ -174,8 +174,8 @@ func newServer(ctx context.Context, f fs.Fs, opt *Options) (*driver, error) {
 		ctx: ctx,
 		opt: *opt,
 	}
-	if proxyflags.Opt.AuthProxy != "" {
-		d.proxy = proxy.New(ctx, &proxyflags.Opt, &vfscommon.Opt)
+	if proxy.Opt.AuthProxy != "" {
+		d.proxy = proxy.New(ctx, &proxy.Opt, &vfscommon.Opt)
 		d.userPass = make(map[string]string, 16)
 	} else {
 		d.globalVFS = vfs.New(f, &vfscommon.Opt)
