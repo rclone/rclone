@@ -33,41 +33,42 @@ import (
 	"golang.org/x/net/webdav"
 )
 
+// OptionsInfo describes the Options in use
+var OptionsInfo = fs.Options{{
+	Name:    "etag_hash",
+	Default: "",
+	Help:    "Which hash to use for the ETag, or auto or blank for off",
+}, {
+	Name:    "disable_dir_list",
+	Default: false,
+	Help:    "Disable HTML directory list on GET request for a directory",
+}}.
+	Add(libhttp.ConfigInfo).
+	Add(libhttp.AuthConfigInfo).
+	Add(libhttp.TemplateConfigInfo)
+
 // Options required for http server
 type Options struct {
-	Auth          libhttp.AuthConfig
-	HTTP          libhttp.Config
-	Template      libhttp.TemplateConfig
-	HashName      string
-	HashType      hash.Type
-	DisableGETDir bool
-}
-
-// DefaultOpt is the default values used for Options
-var DefaultOpt = Options{
-	Auth:          libhttp.DefaultAuthCfg(),
-	HTTP:          libhttp.DefaultCfg(),
-	Template:      libhttp.DefaultTemplateCfg(),
-	HashType:      hash.None,
-	DisableGETDir: false,
+	Auth           libhttp.AuthConfig
+	HTTP           libhttp.Config
+	Template       libhttp.TemplateConfig
+	EtagHash       string `config:"etag_hash"`
+	DisableDirList bool   `config:"disable_dir_list"`
 }
 
 // Opt is options set by command line flags
-var Opt = DefaultOpt
+var Opt Options
 
 // flagPrefix is the prefix used to uniquely identify command line flags.
 // It is intentionally empty for this package.
 const flagPrefix = ""
 
 func init() {
+	fs.RegisterGlobalOptions(fs.OptionsInfo{Name: "webdav", Opt: &Opt, Options: OptionsInfo})
 	flagSet := Command.Flags()
-	libhttp.AddAuthFlagsPrefix(flagSet, flagPrefix, &Opt.Auth)
-	libhttp.AddHTTPFlagsPrefix(flagSet, flagPrefix, &Opt.HTTP)
-	libhttp.AddTemplateFlagsPrefix(flagSet, "", &Opt.Template)
+	flags.AddFlagsFromOptions(flagSet, "", OptionsInfo)
 	vfsflags.AddFlags(flagSet)
 	proxyflags.AddFlags(flagSet)
-	flags.StringVarP(flagSet, &Opt.HashName, "etag-hash", "", "", "Which hash to use for the ETag, or auto or blank for off", "")
-	flags.BoolVarP(flagSet, &Opt.DisableGETDir, "disable-dir-list", "", false, "Disable HTML directory list on GET request for a directory", "")
 	cmdserve.Command.AddCommand(Command)
 }
 
@@ -143,18 +144,6 @@ done by the permissions on the socket.
 		} else {
 			cmd.CheckArgs(0, 0, command, args)
 		}
-		Opt.HashType = hash.None
-		if Opt.HashName == "auto" {
-			Opt.HashType = f.Hashes().GetOne()
-		} else if Opt.HashName != "" {
-			err := Opt.HashType.Set(Opt.HashName)
-			if err != nil {
-				return err
-			}
-		}
-		if Opt.HashType != hash.None {
-			fs.Debugf(f, "Using hash %v for ETag", Opt.HashType)
-		}
 		cmd.Run(false, false, command, func() error {
 			s, err := newWebDAV(context.Background(), f, &Opt)
 			if err != nil {
@@ -192,6 +181,7 @@ type WebDAV struct {
 	webdavhandler *webdav.Handler
 	proxy         *proxy.Proxy
 	ctx           context.Context // for global config
+	etagHashType  hash.Type
 }
 
 // check interface
@@ -200,9 +190,21 @@ var _ webdav.FileSystem = (*WebDAV)(nil)
 // Make a new WebDAV to serve the remote
 func newWebDAV(ctx context.Context, f fs.Fs, opt *Options) (w *WebDAV, err error) {
 	w = &WebDAV{
-		f:   f,
-		ctx: ctx,
-		opt: *opt,
+		f:            f,
+		ctx:          ctx,
+		opt:          *opt,
+		etagHashType: hash.None,
+	}
+	if opt.EtagHash == "auto" {
+		w.etagHashType = f.Hashes().GetOne()
+	} else if opt.EtagHash != "" {
+		err := w.etagHashType.Set(opt.EtagHash)
+		if err != nil {
+			return nil, err
+		}
+	}
+	if w.etagHashType != hash.None {
+		fs.Debugf(f, "Using hash %v for ETag", w.etagHashType)
 	}
 	if proxy.Opt.AuthProxy != "" {
 		w.proxy = proxy.New(ctx, &proxy.Opt, &vfscommon.Opt)
@@ -333,7 +335,7 @@ func (w *WebDAV) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	urlPath := r.URL.Path
 	isDir := strings.HasSuffix(urlPath, "/")
 	remote := strings.Trim(urlPath, "/")
-	if !w.opt.DisableGETDir && (r.Method == "GET" || r.Method == "HEAD") && isDir {
+	if !w.opt.DisableDirList && (r.Method == "GET" || r.Method == "HEAD") && isDir {
 		w.serveDir(rw, r, remote)
 		return
 	}
@@ -517,16 +519,16 @@ func (h Handle) DeadProps() (map[xml.Name]webdav.Property, error) {
 		property   webdav.Property
 		properties = make(map[xml.Name]webdav.Property)
 	)
-	if h.w.opt.HashType != hash.None {
+	if h.w.etagHashType != hash.None {
 		entry := h.Handle.Node().DirEntry()
 		if o, ok := entry.(fs.Object); ok {
-			hash, err := o.Hash(h.ctx, h.w.opt.HashType)
+			hash, err := o.Hash(h.ctx, h.w.etagHashType)
 			if err == nil {
 				xmlName.Space = "http://owncloud.org/ns"
 				xmlName.Local = "checksums"
 				property.XMLName = xmlName
 				property.InnerXML = append(property.InnerXML, "<checksum xmlns=\"http://owncloud.org/ns\">"...)
-				property.InnerXML = append(property.InnerXML, strings.ToUpper(h.w.opt.HashType.String())...)
+				property.InnerXML = append(property.InnerXML, strings.ToUpper(h.w.etagHashType.String())...)
 				property.InnerXML = append(property.InnerXML, ':')
 				property.InnerXML = append(property.InnerXML, hash...)
 				property.InnerXML = append(property.InnerXML, "</checksum>"...)
@@ -579,7 +581,7 @@ type FileInfo struct {
 // ETag returns an ETag for the FileInfo
 func (fi FileInfo) ETag(ctx context.Context) (etag string, err error) {
 	// defer log.Trace(fi, "")("etag=%q, err=%v", &etag, &err)
-	if fi.w.opt.HashType == hash.None {
+	if fi.w.etagHashType == hash.None {
 		return "", webdav.ErrNotImplemented
 	}
 	node, ok := (fi.FileInfo).(vfs.Node)
@@ -592,7 +594,7 @@ func (fi FileInfo) ETag(ctx context.Context) (etag string, err error) {
 	if !ok {
 		return "", webdav.ErrNotImplemented
 	}
-	hash, err := o.Hash(ctx, fi.w.opt.HashType)
+	hash, err := o.Hash(ctx, fi.w.etagHashType)
 	if err != nil || hash == "" {
 		return "", webdav.ErrNotImplemented
 	}
