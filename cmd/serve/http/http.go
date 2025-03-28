@@ -30,16 +30,18 @@ import (
 
 // Options required for http server
 type Options struct {
-	Auth     libhttp.AuthConfig
-	HTTP     libhttp.Config
-	Template libhttp.TemplateConfig
+	Auth		libhttp.AuthConfig
+	HTTP		libhttp.Config
+	Template 	libhttp.TemplateConfig
+	DisableDirList	bool
 }
 
 // DefaultOpt is the default values used for Options
 var DefaultOpt = Options{
-	Auth:     libhttp.DefaultAuthCfg(),
-	HTTP:     libhttp.DefaultCfg(),
-	Template: libhttp.DefaultTemplateCfg(),
+	Auth:		libhttp.DefaultAuthCfg(),
+	HTTP:		libhttp.DefaultCfg(),
+	Template:	libhttp.DefaultTemplateCfg(),
+	DisableDirList:	false,
 }
 
 // Opt is options set by command line flags
@@ -56,6 +58,7 @@ func init() {
 	libhttp.AddTemplateFlagsPrefix(flagSet, flagPrefix, &Opt.Template)
 	vfsflags.AddFlags(flagSet)
 	proxyflags.AddFlags(flagSet)
+	flagSet.BoolVarP(&Opt.DisableDirList, "disable-dir-list", "", false, "Disable HTML directory list on GET request for a directory")
 }
 
 // Command definition for cobra
@@ -110,6 +113,16 @@ type HTTP struct {
 	proxy  *proxy.Proxy
 	ctx    context.Context // for global config
 }
+
+// Empty template for use with --disable-dir-list
+const emptyDirListTemplate = `<!DOCTYPE html>
+<html>
+<head>
+</head>
+<body>
+</body>
+</html>`
+
 
 // Gets the VFS in use for this request
 func (s *HTTP) getVFS(ctx context.Context) (VFS *vfs.VFS, err error) {
@@ -212,6 +225,17 @@ func (s *HTTP) serveDir(w http.ResponseWriter, r *http.Request, dirRemote string
 		serve.Error(ctx, dirRemote, w, "Failed to list directory", err)
 		return
 	}
+        if Opt.DisableDirList {
+            // Render the empty template
+            w.Header().Set("Content-Type", "text/html; charset=utf-8")
+            _, err := w.Write([]byte(emptyDirListTemplate))
+            if err != nil {
+                // Handle write error
+                http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+            }
+            return
+        } 
+
 
 	// Make the entries for display
 	directory := serve.NewDirectory(dirRemote, s.server.HTMLTemplate())
