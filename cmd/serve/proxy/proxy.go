@@ -122,6 +122,7 @@ type Proxy struct {
 	vfsCache *libcache.Cache
 	ctx      context.Context // for global config
 	Opt      Options
+	vfsOpt   vfscommon.Options
 }
 
 // cacheEntry is what is stored in the vfsCache
@@ -131,12 +132,15 @@ type cacheEntry struct {
 }
 
 // New creates a new proxy with the Options passed in
-func New(ctx context.Context, opt *Options) *Proxy {
+//
+// Any VFS are created with the vfsOpt passed in.
+func New(ctx context.Context, opt *Options, vfsOpt *vfscommon.Options) *Proxy {
 	return &Proxy{
 		ctx:      ctx,
 		Opt:      *opt,
 		cmdLine:  strings.Fields(opt.AuthProxy),
 		vfsCache: libcache.New(),
+		vfsOpt:   *vfsOpt,
 	}
 }
 
@@ -242,7 +246,7 @@ func (p *Proxy) call(user, auth string, isPublicKey bool) (value any, err error)
 		// need to in memory. An attacker would find it easier to go
 		// after the unencrypted password in memory most likely.
 		entry := cacheEntry{
-			vfs:    vfs.New(f, &vfscommon.Opt),
+			vfs:    vfs.New(f, &p.vfsOpt),
 			pwHash: sha256.Sum256([]byte(auth)),
 		}
 		return entry, true, nil

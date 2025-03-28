@@ -146,7 +146,7 @@ func run(ctx context.Context, f fs.Fs, opt Options) (s *HTTP, err error) {
 	}
 
 	if proxyflags.Opt.AuthProxy != "" {
-		s.proxy = proxy.New(ctx, &proxyflags.Opt)
+		s.proxy = proxy.New(ctx, &proxyflags.Opt, &vfscommon.Opt)
 		// override auth
 		s.opt.Auth.CustomAuthFn = s.auth
 	} else {

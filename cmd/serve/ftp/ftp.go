@@ -175,7 +175,7 @@ func newServer(ctx context.Context, f fs.Fs, opt *Options) (*driver, error) {
 		opt: *opt,
 	}
 	if proxyflags.Opt.AuthProxy != "" {
-		d.proxy = proxy.New(ctx, &proxyflags.Opt)
+		d.proxy = proxy.New(ctx, &proxyflags.Opt, &vfscommon.Opt)
 		d.userPass = make(map[string]string, 16)
 	} else {
 		d.globalVFS = vfs.New(f, &vfscommon.Opt)

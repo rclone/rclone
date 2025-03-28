@@ -205,7 +205,7 @@ func newWebDAV(ctx context.Context, f fs.Fs, opt *Options) (w *WebDAV, err error
 		opt: *opt,
 	}
 	if proxyflags.Opt.AuthProxy != "" {
-		w.proxy = proxy.New(ctx, &proxyflags.Opt)
+		w.proxy = proxy.New(ctx, &proxyflags.Opt, &vfscommon.Opt)
 		// override auth
 		w.opt.Auth.CustomAuthFn = w.auth
 	} else {

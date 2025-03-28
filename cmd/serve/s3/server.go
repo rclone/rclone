@@ -81,7 +81,7 @@ func newServer(ctx context.Context, f fs.Fs, opt *Options) (s *Server, err error
 	w.handler = w.faker.Server()
 
 	if proxyflags.Opt.AuthProxy != "" {
-		w.proxy = proxy.New(ctx, &proxyflags.Opt)
+		w.proxy = proxy.New(ctx, &proxyflags.Opt, &vfscommon.Opt)
 		// proxy auth middleware
 		w.handler = proxyAuthMiddleware(w.handler, w)
 		w.handler = authPairMiddleware(w.handler, w)
