@@ -22,7 +22,6 @@ import (
 	"strings"
 
 	"github.com/rclone/rclone/cmd/serve/proxy"
-	"github.com/rclone/rclone/cmd/serve/proxy/proxyflags"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/lib/env"
@@ -52,8 +51,8 @@ func newServer(ctx context.Context, f fs.Fs, opt *Options) *server {
 		opt:      *opt,
 		waitChan: make(chan struct{}),
 	}
-	if proxyflags.Opt.AuthProxy != "" {
-		s.proxy = proxy.New(ctx, &proxyflags.Opt, &vfscommon.Opt)
+	if proxy.Opt.AuthProxy != "" {
+		s.proxy = proxy.New(ctx, &proxy.Opt, &vfscommon.Opt)
 	} else {
 		s.vfs = vfs.New(f, &vfscommon.Opt)
 	}
@@ -134,12 +133,12 @@ func (s *server) serve() (err error) {
 	var authorizedKeysMap map[string]struct{}
 
 	// ensure the user isn't trying to use conflicting flags
-	if proxyflags.Opt.AuthProxy != "" && s.opt.AuthorizedKeys != "" && s.opt.AuthorizedKeys != Opt.AuthorizedKeys {
+	if proxy.Opt.AuthProxy != "" && s.opt.AuthorizedKeys != "" && s.opt.AuthorizedKeys != Opt.AuthorizedKeys {
 		return errors.New("--auth-proxy and --authorized-keys cannot be used at the same time")
 	}
 
 	// Load the authorized keys
-	if s.opt.AuthorizedKeys != "" && proxyflags.Opt.AuthProxy == "" {
+	if s.opt.AuthorizedKeys != "" && proxy.Opt.AuthProxy == "" {
 		authKeysFile := env.ShellExpand(s.opt.AuthorizedKeys)
 		authorizedKeysMap, err = loadAuthorizedKeys(authKeysFile)
 		// If user set the flag away from the default then report an error

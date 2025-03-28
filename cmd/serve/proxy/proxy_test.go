@@ -20,7 +20,7 @@ import (
 )
 
 func TestRun(t *testing.T) {
-	opt := DefaultOpt
+	opt := Opt
 	cmd := "go run proxy_code.go"
 	opt.AuthProxy = cmd
 	p := New(context.Background(), &opt, &vfscommon.Opt)

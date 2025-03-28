@@ -83,7 +83,7 @@ control the stats printing.
 	},
 	Run: func(command *cobra.Command, args []string) {
 		var f fs.Fs
-		if proxyflags.Opt.AuthProxy == "" {
+		if proxy.Opt.AuthProxy == "" {
 			cmd.CheckArgs(1, 1, command, args)
 			f = cmd.NewFsSrc(args)
 		} else {
@@ -145,8 +145,8 @@ func run(ctx context.Context, f fs.Fs, opt Options) (s *HTTP, err error) {
 		opt: opt,
 	}
 
-	if proxyflags.Opt.AuthProxy != "" {
-		s.proxy = proxy.New(ctx, &proxyflags.Opt, &vfscommon.Opt)
+	if proxy.Opt.AuthProxy != "" {
+		s.proxy = proxy.New(ctx, &proxy.Opt, &vfscommon.Opt)
 		// override auth
 		s.opt.Auth.CustomAuthFn = s.auth
 	} else {

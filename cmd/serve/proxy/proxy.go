@@ -106,14 +106,23 @@ backend that rclone supports.
 
 `, "|", "`")
 
+// OptionsInfo descripts the Options in use
+var OptionsInfo = fs.Options{{
+	Name:    "auth_proxy",
+	Default: "",
+	Help:    "A program to use to create the backend from the auth",
+}}
+
 // Options is options for creating the proxy
 type Options struct {
-	AuthProxy string
+	AuthProxy string `config:"auth_proxy"`
 }
 
-// DefaultOpt is the default values uses for Opt
-var DefaultOpt = Options{
-	AuthProxy: "",
+// Opt is the default options
+var Opt Options
+
+func init() {
+	fs.RegisterGlobalOptions(fs.OptionsInfo{Name: "proxy", Opt: &Opt, Options: OptionsInfo})
 }
 
 // Proxy represents a proxy to turn auth requests into a VFS
