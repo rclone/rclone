@@ -25,7 +25,6 @@ import (
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/fs/object"
 	"github.com/rclone/rclone/fstest"
-	httplib "github.com/rclone/rclone/lib/http"
 	"github.com/rclone/rclone/lib/random"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -39,16 +38,10 @@ const (
 func serveS3(f fs.Fs) (testURL string, keyid string, keysec string, w *Server) {
 	keyid = random.String(16)
 	keysec = random.String(16)
-	serveropt := &Options{
-		HTTP:           httplib.DefaultCfg(),
-		pathBucketMode: true,
-		hashName:       "",
-		hashType:       hash.None,
-		authPair:       []string{fmt.Sprintf("%s,%s", keyid, keysec)},
-	}
-
-	serveropt.HTTP.ListenAddr = []string{endpoint}
-	w, _ = newServer(context.Background(), f, serveropt)
+	opt := Opt // copy default options
+	opt.AuthKey = []string{fmt.Sprintf("%s,%s", keyid, keysec)}
+	opt.HTTP.ListenAddr = []string{endpoint}
+	w, _ = newServer(context.Background(), f, &opt)
 	router := w.server.Router()
 
 	w.Bind(router)

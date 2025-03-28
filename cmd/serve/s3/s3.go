@@ -11,38 +11,55 @@ import (
 	"github.com/rclone/rclone/cmd/serve/proxy/proxyflags"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config/flags"
-	"github.com/rclone/rclone/fs/hash"
 	httplib "github.com/rclone/rclone/lib/http"
 	"github.com/rclone/rclone/vfs"
 	"github.com/rclone/rclone/vfs/vfsflags"
 	"github.com/spf13/cobra"
 )
 
-// DefaultOpt is the default values used for Options
-var DefaultOpt = Options{
-	pathBucketMode: true,
-	hashName:       "MD5",
-	hashType:       hash.MD5,
-	noCleanup:      false,
-	Auth:           httplib.DefaultAuthCfg(),
-	HTTP:           httplib.DefaultCfg(),
+// OptionsInfo describes the Options in use
+var OptionsInfo = fs.Options{{
+	Name:    "force_path_style",
+	Default: true,
+	Help:    "If true use path style access if false use virtual hosted style",
+}, {
+	Name:    "etag_hash",
+	Default: "MD5",
+	Help:    "Which hash to use for the ETag, or auto or blank for off",
+}, {
+	Name:    "auth_key",
+	Default: []string{},
+	Help:    "Set key pair for v4 authorization: access_key_id,secret_access_key",
+}, {
+	Name:    "no_cleanup",
+	Default: false,
+	Help:    "Not to cleanup empty folder after object is deleted",
+}}.
+	Add(httplib.ConfigInfo).
+	Add(httplib.AuthConfigInfo)
+
+// Options contains options for the s3 Server
+type Options struct {
+	//TODO add more options
+	ForcePathStyle bool     `config:"force_path_style"`
+	EtagHash       string   `config:"etag_hash"`
+	AuthKey        []string `config:"auth_key"`
+	NoCleanup      bool     `config:"no_cleanup"`
+	Auth           httplib.AuthConfig
+	HTTP           httplib.Config
 }
 
 // Opt is options set by command line flags
-var Opt = DefaultOpt
+var Opt Options
 
 const flagPrefix = ""
 
 func init() {
+	fs.RegisterGlobalOptions(fs.OptionsInfo{Name: "s3", Opt: &Opt, Options: OptionsInfo})
 	flagSet := Command.Flags()
-	httplib.AddAuthFlagsPrefix(flagSet, flagPrefix, &Opt.Auth)
-	httplib.AddHTTPFlagsPrefix(flagSet, flagPrefix, &Opt.HTTP)
+	flags.AddFlagsFromOptions(flagSet, "", OptionsInfo)
 	vfsflags.AddFlags(flagSet)
 	proxyflags.AddFlags(flagSet)
-	flags.BoolVarP(flagSet, &Opt.pathBucketMode, "force-path-style", "", Opt.pathBucketMode, "If true use path style access if false use virtual hosted style (default true)", "")
-	flags.StringVarP(flagSet, &Opt.hashName, "etag-hash", "", Opt.hashName, "Which hash to use for the ETag, or auto or blank for off", "")
-	flags.StringArrayVarP(flagSet, &Opt.authPair, "auth-key", "", Opt.authPair, "Set key pair for v4 authorization: access_key_id,secret_access_key", "")
-	flags.BoolVarP(flagSet, &Opt.noCleanup, "no-cleanup", "", Opt.noCleanup, "Not to cleanup empty folder after object is deleted", "")
 	serve.Command.AddCommand(Command)
 }
 
@@ -73,14 +90,6 @@ var Command = &cobra.Command{
 			cmd.CheckArgs(0, 0, command, args)
 		}
 
-		if Opt.hashName == "auto" {
-			Opt.hashType = f.Hashes().GetOne()
-		} else if Opt.hashName != "" {
-			err := Opt.hashType.Set(Opt.hashName)
-			if err != nil {
-				return err
-			}
-		}
 		cmd.Run(false, false, command, func() error {
 			s, err := newServer(context.Background(), f, &Opt)
 			if err != nil {

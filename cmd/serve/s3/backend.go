@@ -25,15 +25,13 @@ var (
 // s3Backend implements the gofacess3.Backend interface to make an S3
 // backend for gofakes3
 type s3Backend struct {
-	opt  *Options
 	s    *Server
 	meta *sync.Map
 }
 
 // newBackend creates a new SimpleBucketBackend.
-func newBackend(s *Server, opt *Options) gofakes3.Backend {
+func newBackend(s *Server) gofakes3.Backend {
 	return &s3Backend{
-		opt:  opt,
 		s:    s,
 		meta: new(sync.Map),
 	}
@@ -136,7 +134,7 @@ func (b *s3Backend) HeadObject(ctx context.Context, bucketName, objectName strin
 
 	fobj := entry.(fs.Object)
 	size := node.Size()
-	hash := getFileHashByte(fobj)
+	hash := getFileHashByte(fobj, b.s.etagHashType)
 
 	meta := map[string]string{
 		"Last-Modified": formatHeaderTime(node.ModTime()),
@@ -187,7 +185,7 @@ func (b *s3Backend) GetObject(ctx context.Context, bucketName, objectName string
 	file := node.(*vfs.File)
 
 	size := node.Size()
-	hash := getFileHashByte(fobj)
+	hash := getFileHashByte(fobj, b.s.etagHashType)
 
 	in, err := file.Open(os.O_RDONLY)
 	if err != nil {
