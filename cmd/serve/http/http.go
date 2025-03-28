@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
 	"os"
 	"path"
@@ -22,6 +23,7 @@ import (
 	"github.com/rclone/rclone/fs/accounting"
 	"github.com/rclone/rclone/fs/config/configstruct"
 	"github.com/rclone/rclone/fs/config/flags"
+	"github.com/rclone/rclone/fs/rc"
 	libhttp "github.com/rclone/rclone/lib/http"
 	"github.com/rclone/rclone/lib/http/serve"
 	"github.com/rclone/rclone/lib/systemd"
@@ -68,6 +70,28 @@ func init() {
 	vfsflags.AddFlags(flagSet)
 	proxyflags.AddFlags(flagSet)
 	cmdserve.Command.AddCommand(Command)
+	cmdserve.AddRc("http", func(ctx context.Context, f fs.Fs, in rc.Params) (cmdserve.Handle, error) {
+		// Read VFS Opts
+		var vfsOpt = vfscommon.Opt // set default opts
+		err := configstruct.SetAny(in, &vfsOpt)
+		if err != nil {
+			return nil, err
+		}
+		// Read Proxy Opts
+		var proxyOpt = proxy.Opt // set default opts
+		err = configstruct.SetAny(in, &proxyOpt)
+		if err != nil {
+			return nil, err
+		}
+		// Read opts
+		var opt = Opt // set default opts
+		err = configstruct.SetAny(in, &opt)
+		if err != nil {
+			return nil, err
+		}
+		// Create server
+		return newServer(ctx, f, &opt, &vfsOpt, &proxyOpt)
+	})
 }
 
 // Command definition for cobra
@@ -101,14 +125,12 @@ control the stats printing.
 		}
 
 		cmd.Run(false, true, command, func() error {
-			s, err := run(context.Background(), f, Opt)
+			s, err := newServer(context.Background(), f, &Opt, &vfscommon.Opt, &proxy.Opt)
 			if err != nil {
 				fs.Fatal(nil, fmt.Sprint(err))
 			}
-
 			defer systemd.Notify()()
-			s.server.Wait()
-			return nil
+			return s.Serve()
 		})
 	},
 }
@@ -148,19 +170,19 @@ func (s *HTTP) auth(user, pass string) (value any, err error) {
 	return VFS, err
 }
 
-func run(ctx context.Context, f fs.Fs, opt Options) (s *HTTP, err error) {
+func newServer(ctx context.Context, f fs.Fs, opt *Options, vfsOpt *vfscommon.Options, proxyOpt *proxy.Options) (s *HTTP, err error) {
 	s = &HTTP{
 		f:   f,
 		ctx: ctx,
-		opt: opt,
+		opt: *opt,
 	}
 
-	if proxy.Opt.AuthProxy != "" {
-		s.proxy = proxy.New(ctx, &proxy.Opt, &vfscommon.Opt)
+	if proxyOpt.AuthProxy != "" {
+		s.proxy = proxy.New(ctx, proxyOpt, vfsOpt)
 		// override auth
 		s.opt.Auth.CustomAuthFn = s.auth
 	} else {
-		s._vfs = vfs.New(f, &vfscommon.Opt)
+		s._vfs = vfs.New(f, vfsOpt)
 	}
 
 	s.server, err = libhttp.NewServer(ctx,
@@ -180,9 +202,24 @@ func run(ctx context.Context, f fs.Fs, opt Options) (s *HTTP, err error) {
 	router.Get("/*", s.handler)
 	router.Head("/*", s.handler)
 
-	s.server.Serve()
-
 	return s, nil
+}
+
+// Serve HTTP until the server is shutdown
+func (s *HTTP) Serve() error {
+	s.server.Serve()
+	s.server.Wait()
+	return nil
+}
+
+// Addr returns the first address of the server
+func (s *HTTP) Addr() net.Addr {
+	return s.server.Addr()
+}
+
+// Shutdown the server
+func (s *HTTP) Shutdown() error {
+	return s.server.Shutdown()
 }
 
 // handler reads incoming requests and dispatches them

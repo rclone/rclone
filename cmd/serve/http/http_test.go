@@ -13,9 +13,12 @@ import (
 
 	_ "github.com/rclone/rclone/backend/local"
 	"github.com/rclone/rclone/cmd/serve/proxy"
+	"github.com/rclone/rclone/cmd/serve/servetest"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/filter"
+	"github.com/rclone/rclone/fs/rc"
 	libhttp "github.com/rclone/rclone/lib/http"
+	"github.com/rclone/rclone/vfs/vfscommon"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -44,8 +47,11 @@ func start(ctx context.Context, t *testing.T, f fs.Fs) (s *HTTP, testURL string)
 		opts.Auth.BasicPass = testPass
 	}
 
-	s, err := run(ctx, f, opts)
+	s, err := newServer(ctx, f, &opts, &vfscommon.Opt, &proxy.Opt)
 	require.NoError(t, err, "failed to start server")
+	go func() {
+		require.NoError(t, s.Serve())
+	}()
 
 	urls := s.server.URLs()
 	require.Len(t, urls, 1, "expected one URL")
@@ -266,4 +272,11 @@ func TestGET(t *testing.T) {
 
 func TestAuthProxy(t *testing.T) {
 	testGET(t, true)
+}
+
+func TestRc(t *testing.T) {
+	servetest.TestRc(t, rc.Params{
+		"type":           "http",
+		"vfs_cache_mode": "off",
+	})
 }
