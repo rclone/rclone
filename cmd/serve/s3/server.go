@@ -28,51 +28,55 @@ const (
 	ctxKeyID ctxKey = iota
 )
 
-// Options contains options for the http Server
-type Options struct {
-	//TODO add more options
-	pathBucketMode bool
-	hashName       string
-	hashType       hash.Type
-	authPair       []string
-	noCleanup      bool
-	Auth           httplib.AuthConfig
-	HTTP           httplib.Config
-}
-
 // Server is a s3.FileSystem interface
 type Server struct {
-	server   *httplib.Server
-	f        fs.Fs
-	_vfs     *vfs.VFS // don't use directly, use getVFS
-	faker    *gofakes3.GoFakeS3
-	handler  http.Handler
-	proxy    *proxy.Proxy
-	ctx      context.Context // for global config
-	s3Secret string
+	server       *httplib.Server
+	opt          Options
+	f            fs.Fs
+	_vfs         *vfs.VFS // don't use directly, use getVFS
+	faker        *gofakes3.GoFakeS3
+	handler      http.Handler
+	proxy        *proxy.Proxy
+	ctx          context.Context // for global config
+	s3Secret     string
+	etagHashType hash.Type
 }
 
 // Make a new S3 Server to serve the remote
 func newServer(ctx context.Context, f fs.Fs, opt *Options) (s *Server, err error) {
 	w := &Server{
-		f:   f,
-		ctx: ctx,
+		f:            f,
+		ctx:          ctx,
+		opt:          *opt,
+		etagHashType: hash.None,
 	}
 
-	if len(opt.authPair) == 0 {
+	if w.opt.EtagHash == "auto" {
+		w.etagHashType = f.Hashes().GetOne()
+	} else if w.opt.EtagHash != "" {
+		err := w.etagHashType.Set(w.opt.EtagHash)
+		if err != nil {
+			return nil, err
+		}
+	}
+	if w.etagHashType != hash.None {
+		fs.Debugf(f, "Using hash %v for ETag", w.etagHashType)
+	}
+
+	if len(opt.AuthKey) == 0 {
 		fs.Logf("serve s3", "No auth provided so allowing anonymous access")
 	} else {
-		w.s3Secret = getAuthSecret(opt.authPair)
+		w.s3Secret = getAuthSecret(opt.AuthKey)
 	}
 
 	var newLogger logger
 	w.faker = gofakes3.New(
-		newBackend(w, opt),
-		gofakes3.WithHostBucket(!opt.pathBucketMode),
+		newBackend(w),
+		gofakes3.WithHostBucket(!opt.ForcePathStyle),
 		gofakes3.WithLogger(newLogger),
 		gofakes3.WithRequestID(rand.Uint64()),
 		gofakes3.WithoutVersioning(),
-		gofakes3.WithV4Auth(authlistResolver(opt.authPair)),
+		gofakes3.WithV4Auth(authlistResolver(opt.AuthKey)),
 		gofakes3.WithIntegrityCheck(true), // Check Content-MD5 if supplied
 	)
 
@@ -87,8 +91,8 @@ func newServer(ctx context.Context, f fs.Fs, opt *Options) (s *Server, err error
 	} else {
 		w._vfs = vfs.New(f, &vfscommon.Opt)
 
-		if len(opt.authPair) > 0 {
-			w.faker.AddAuthKeys(authlistResolver(opt.authPair))
+		if len(opt.AuthKey) > 0 {
+			w.faker.AddAuthKeys(authlistResolver(opt.AuthKey))
 		}
 	}
 
