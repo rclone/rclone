@@ -139,6 +139,7 @@ func Items(opt any) (items []Item, err error) {
 				if hasTag {
 					newItem.Name = configName + "_" + newItem.Name
 				}
+				newItem.Field = fieldName + "." + newItem.Field
 				items = append(items, newItem)
 			}
 		} else {
