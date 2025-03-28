@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"mime"
+	"net"
 	"net/http"
 	"os"
 	"path"
@@ -21,8 +22,10 @@ import (
 	"github.com/rclone/rclone/cmd/serve/proxy"
 	"github.com/rclone/rclone/cmd/serve/proxy/proxyflags"
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/config/configstruct"
 	"github.com/rclone/rclone/fs/config/flags"
 	"github.com/rclone/rclone/fs/hash"
+	"github.com/rclone/rclone/fs/rc"
 	libhttp "github.com/rclone/rclone/lib/http"
 	"github.com/rclone/rclone/lib/http/serve"
 	"github.com/rclone/rclone/lib/systemd"
@@ -70,6 +73,28 @@ func init() {
 	vfsflags.AddFlags(flagSet)
 	proxyflags.AddFlags(flagSet)
 	cmdserve.Command.AddCommand(Command)
+	cmdserve.AddRc("webdav", func(ctx context.Context, f fs.Fs, in rc.Params) (cmdserve.Handle, error) {
+		// Read VFS Opts
+		var vfsOpt = vfscommon.Opt // set default opts
+		err := configstruct.SetAny(in, &vfsOpt)
+		if err != nil {
+			return nil, err
+		}
+		// Read Proxy Opts
+		var proxyOpt = proxy.Opt // set default opts
+		err = configstruct.SetAny(in, &proxyOpt)
+		if err != nil {
+			return nil, err
+		}
+		// Read opts
+		var opt = Opt // set default opts
+		err = configstruct.SetAny(in, &opt)
+		if err != nil {
+			return nil, err
+		}
+		// Create server
+		return newWebDAV(ctx, f, &opt, &vfsOpt, &proxyOpt)
+	})
 }
 
 // Command definition for cobra
@@ -145,17 +170,12 @@ done by the permissions on the socket.
 			cmd.CheckArgs(0, 0, command, args)
 		}
 		cmd.Run(false, false, command, func() error {
-			s, err := newWebDAV(context.Background(), f, &Opt)
-			if err != nil {
-				return err
-			}
-			err = s.serve()
+			s, err := newWebDAV(context.Background(), f, &Opt, &vfscommon.Opt, &proxy.Opt)
 			if err != nil {
 				return err
 			}
 			defer systemd.Notify()()
-			s.Wait()
-			return nil
+			return s.Serve()
 		})
 		return nil
 	},
@@ -174,7 +194,7 @@ done by the permissions on the socket.
 // might apply". In particular, whether or not renaming a file or directory
 // overwriting another existing file or directory is an error is OS-dependent.
 type WebDAV struct {
-	*libhttp.Server
+	server        *libhttp.Server
 	opt           Options
 	f             fs.Fs
 	_vfs          *vfs.VFS // don't use directly, use getVFS
@@ -188,7 +208,7 @@ type WebDAV struct {
 var _ webdav.FileSystem = (*WebDAV)(nil)
 
 // Make a new WebDAV to serve the remote
-func newWebDAV(ctx context.Context, f fs.Fs, opt *Options) (w *WebDAV, err error) {
+func newWebDAV(ctx context.Context, f fs.Fs, opt *Options, vfsOpt *vfscommon.Options, proxyOpt *proxy.Options) (w *WebDAV, err error) {
 	w = &WebDAV{
 		f:            f,
 		ctx:          ctx,
@@ -206,15 +226,15 @@ func newWebDAV(ctx context.Context, f fs.Fs, opt *Options) (w *WebDAV, err error
 	if w.etagHashType != hash.None {
 		fs.Debugf(f, "Using hash %v for ETag", w.etagHashType)
 	}
-	if proxy.Opt.AuthProxy != "" {
-		w.proxy = proxy.New(ctx, &proxy.Opt, &vfscommon.Opt)
+	if proxyOpt.AuthProxy != "" {
+		w.proxy = proxy.New(ctx, proxyOpt, vfsOpt)
 		// override auth
 		w.opt.Auth.CustomAuthFn = w.auth
 	} else {
-		w._vfs = vfs.New(f, &vfscommon.Opt)
+		w._vfs = vfs.New(f, vfsOpt)
 	}
 
-	w.Server, err = libhttp.NewServer(ctx,
+	w.server, err = libhttp.NewServer(ctx,
 		libhttp.WithConfig(w.opt.HTTP),
 		libhttp.WithAuth(w.opt.Auth),
 		libhttp.WithTemplate(w.opt.Template),
@@ -234,7 +254,7 @@ func newWebDAV(ctx context.Context, f fs.Fs, opt *Options) (w *WebDAV, err error
 	}
 	w.webdavhandler = webdavHandler
 
-	router := w.Server.Router()
+	router := w.server.Router()
 	router.Use(
 		middleware.SetHeader("Accept-Ranges", "bytes"),
 		middleware.SetHeader("Server", "rclone/"+fs.Version),
@@ -382,7 +402,7 @@ func (w *WebDAV) serveDir(rw http.ResponseWriter, r *http.Request, dirRemote str
 	}
 
 	// Make the entries for display
-	directory := serve.NewDirectory(dirRemote, w.Server.HTMLTemplate())
+	directory := serve.NewDirectory(dirRemote, w.server.HTMLTemplate())
 	for _, node := range dirEntries {
 		if vfscommon.Opt.NoModTime {
 			directory.AddHTMLEntry(node.Path(), node.IsDir(), node.Size(), time.Time{})
@@ -398,13 +418,24 @@ func (w *WebDAV) serveDir(rw http.ResponseWriter, r *http.Request, dirRemote str
 	directory.Serve(rw, r)
 }
 
-// serve runs the http server in the background.
+// Serve HTTP until the server is shutdown
 //
 // Use s.Close() and s.Wait() to shutdown server
-func (w *WebDAV) serve() error {
-	w.Serve()
-	fs.Logf(w.f, "WebDav Server started on %s", w.URLs())
+func (w *WebDAV) Serve() error {
+	w.server.Serve()
+	fs.Logf(w.f, "WebDav Server started on %s", w.server.URLs())
+	w.server.Wait()
 	return nil
+}
+
+// Addr returns the first address of the server
+func (w *WebDAV) Addr() net.Addr {
+	return w.server.Addr()
+}
+
+// Shutdown the server
+func (w *WebDAV) Shutdown() error {
+	return w.server.Shutdown()
 }
 
 // logRequest is called by the webdav module on every request
