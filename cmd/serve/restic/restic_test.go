@@ -26,7 +26,7 @@ const (
 )
 
 func newOpt() Options {
-	opt := DefaultOpt
+	opt := Opt
 	opt.HTTP.ListenAddr = []string{testBindAddress}
 	return opt
 }
