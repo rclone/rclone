@@ -576,6 +576,14 @@ func (s *Server) URLs() []string {
 	return out
 }
 
+// Addr returns the first configured address
+func (s *Server) Addr() net.Addr {
+	if len(s.instances) == 0 || s.instances[0].listener == nil {
+		return nil
+	}
+	return s.instances[0].listener.Addr()
+}
+
 // UsingAuth returns true if authentication is required
 func (s *Server) UsingAuth() bool {
 	return s.usingAuth
