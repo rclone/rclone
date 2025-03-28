@@ -20,6 +20,8 @@ import (
 	"github.com/rclone/rclone/cmd/serve/proxy/proxyflags"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/accounting"
+	"github.com/rclone/rclone/fs/config/configstruct"
+	"github.com/rclone/rclone/fs/config/flags"
 	libhttp "github.com/rclone/rclone/lib/http"
 	"github.com/rclone/rclone/lib/http/serve"
 	"github.com/rclone/rclone/lib/systemd"
@@ -28,6 +30,12 @@ import (
 	"github.com/rclone/rclone/vfs/vfsflags"
 	"github.com/spf13/cobra"
 )
+
+// OptionsInfo describes the Options in use
+var OptionsInfo = fs.Options{}.
+	Add(libhttp.ConfigInfo).
+	Add(libhttp.AuthConfigInfo).
+	Add(libhttp.TemplateConfigInfo)
 
 // Options required for http server
 type Options struct {
@@ -46,15 +54,17 @@ var DefaultOpt = Options{
 // Opt is options set by command line flags
 var Opt = DefaultOpt
 
+func init() {
+	fs.RegisterGlobalOptions(fs.OptionsInfo{Name: "http", Opt: &Opt, Options: OptionsInfo})
+}
+
 // flagPrefix is the prefix used to uniquely identify command line flags.
 // It is intentionally empty for this package.
 const flagPrefix = ""
 
 func init() {
 	flagSet := Command.Flags()
-	libhttp.AddAuthFlagsPrefix(flagSet, flagPrefix, &Opt.Auth)
-	libhttp.AddHTTPFlagsPrefix(flagSet, flagPrefix, &Opt.HTTP)
-	libhttp.AddTemplateFlagsPrefix(flagSet, flagPrefix, &Opt.Template)
+	flags.AddFlagsFromOptions(flagSet, "", OptionsInfo)
 	vfsflags.AddFlags(flagSet)
 	proxyflags.AddFlags(flagSet)
 	cmdserve.Command.AddCommand(Command)
