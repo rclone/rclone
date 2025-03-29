@@ -7,6 +7,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"sort"
 	"strconv"
@@ -27,7 +28,7 @@ import (
 var ReadLine = func() string {
 	buf := bufio.NewReader(os.Stdin)
 	line, err := buf.ReadString('\n')
-	if err != nil {
+	if err != nil && (line == "" || err != io.EOF) {
 		fs.Fatalf(nil, "Failed to read line: %v", err)
 	}
 	return strings.TrimSpace(line)
