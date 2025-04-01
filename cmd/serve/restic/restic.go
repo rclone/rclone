@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net"
 	"net/http"
 	"os"
 	"path"
@@ -19,8 +20,10 @@ import (
 	cmdserve "github.com/rclone/rclone/cmd/serve"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/accounting"
+	"github.com/rclone/rclone/fs/config/configstruct"
 	"github.com/rclone/rclone/fs/config/flags"
 	"github.com/rclone/rclone/fs/operations"
+	"github.com/rclone/rclone/fs/rc"
 	"github.com/rclone/rclone/fs/walk"
 	libhttp "github.com/rclone/rclone/lib/http"
 	"github.com/rclone/rclone/lib/http/serve"
@@ -73,6 +76,20 @@ func init() {
 	flagSet := Command.Flags()
 	flags.AddFlagsFromOptions(flagSet, "", OptionsInfo)
 	cmdserve.Command.AddCommand(Command)
+	cmdserve.AddRc("restic", func(ctx context.Context, f fs.Fs, in rc.Params) (cmdserve.Handle, error) {
+		// Read opts
+		var opt = Opt // set default opts
+		err := configstruct.SetAny(in, &opt)
+		if err != nil {
+			return nil, err
+		}
+		if opt.Stdio {
+			return nil, errors.New("can't use --stdio via the rc")
+		}
+		// Create server
+		return newServer(ctx, f, &opt)
+	})
+
 }
 
 // Command definition for cobra
@@ -186,17 +203,15 @@ with a path of ` + "`/<username>/`" + `.
 
 				httpSrv := &http2.Server{}
 				opts := &http2.ServeConnOpts{
-					Handler: s.Server.Router(),
+					Handler: s.server.Router(),
 				}
 				httpSrv.ServeConn(conn, opts)
 				return nil
 			}
-			fs.Logf(s.f, "Serving restic REST API on %s", s.URLs())
+			fs.Logf(s.f, "Serving restic REST API on %s", s.server.URLs())
 
 			defer systemd.Notify()()
-			s.Wait()
-
-			return nil
+			return s.Serve()
 		})
 	},
 }
@@ -252,10 +267,10 @@ func checkPrivate(next http.Handler) http.Handler {
 
 // server contains everything to run the server
 type server struct {
-	*libhttp.Server
-	f     fs.Fs
-	cache *cache
-	opt   Options
+	server *libhttp.Server
+	f      fs.Fs
+	cache  *cache
+	opt    Options
 }
 
 func newServer(ctx context.Context, f fs.Fs, opt *Options) (s *server, err error) {
@@ -268,17 +283,33 @@ func newServer(ctx context.Context, f fs.Fs, opt *Options) (s *server, err error
 	if opt.Stdio {
 		opt.HTTP.ListenAddr = nil
 	}
-	s.Server, err = libhttp.NewServer(ctx,
+	s.server, err = libhttp.NewServer(ctx,
 		libhttp.WithConfig(opt.HTTP),
 		libhttp.WithAuth(opt.Auth),
 	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to init server: %w", err)
 	}
-	router := s.Router()
+	router := s.server.Router()
 	s.Bind(router)
-	s.Server.Serve()
 	return s, nil
+}
+
+// Serve restic until the server is shutdown
+func (s *server) Serve() error {
+	s.server.Serve()
+	s.server.Wait()
+	return nil
+}
+
+// Return the first address of the server
+func (s *server) Addr() net.Addr {
+	return s.server.Addr()
+}
+
+// Shutdown the server
+func (s *server) Shutdown() error {
+	return s.server.Shutdown()
 }
 
 // bind helper for main Bind method
