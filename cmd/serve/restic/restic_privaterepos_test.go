@@ -41,7 +41,7 @@ func TestResticPrivateRepositories(t *testing.T) {
 	f := cmd.NewFsSrc([]string{tempdir})
 	s, err := newServer(ctx, f, &opt)
 	require.NoError(t, err)
-	router := s.Server.Router()
+	router := s.server.Router()
 
 	// Requesting /test/ should allow access
 	reqs := []*http.Request{
