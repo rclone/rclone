@@ -1874,6 +1874,13 @@ If the backend has a `--backend-upload-concurrency` setting (eg
 number of transfers instead if it is larger than the value of
 `--multi-thread-streams` or `--multi-thread-streams` isn't set.
 
+### --name-transform COMMAND[=XXXX] ###
+`--name-transform` introduces path name transformations for
+`rclone copy`, `rclone sync`, and `rclone move`. These transformations
+enable modifications to source and destination file names by applying
+prefixes, suffixes, and other alterations during transfer operations.
+For detailed docs and examples, see [`convmv`](/commands/rclone_convmv/).
+
 ### --no-check-dest ###
 
 The `--no-check-dest` can be used with `move` or `copy` and it causes
