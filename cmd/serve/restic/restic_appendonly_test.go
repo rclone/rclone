@@ -119,7 +119,7 @@ func TestResticHandler(t *testing.T) {
 	f := cmd.NewFsSrc([]string{tempdir})
 	s, err := newServer(ctx, f, &opt)
 	require.NoError(t, err)
-	router := s.Server.Router()
+	router := s.server.Router()
 
 	// create the repo
 	checkRequest(t, router.ServeHTTP,
