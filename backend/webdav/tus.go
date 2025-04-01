@@ -42,20 +42,20 @@ func (o *Object) updateViaTus(ctx context.Context, in io.Reader, contentType str
 	return err
 }
 
-func (f *Fs) shouldRetryCreateUpload(ctx context.Context, resp *http.Response, err error) (bool, error) {
+func (f *Fs) getTusLocationOrRetry(ctx context.Context, resp *http.Response, err error) (bool, string, error) {
 
 	switch resp.StatusCode {
 	case 201:
 		location := resp.Header.Get("Location")
-		f.chunksUploadURL = location
-		return false, nil
+		return false, location, nil
 	case 412:
-		return false, ErrVersionMismatch
+		return false, "", ErrVersionMismatch
 	case 413:
-		return false, ErrLargeUpload
+		return false, "", ErrLargeUpload
 	}
 
-	return f.shouldRetry(ctx, resp, err)
+	retry, err := f.shouldRetry(ctx, resp, err)
+	return retry, "", err
 }
 
 // CreateUploader creates a new upload to the server.
@@ -90,16 +90,19 @@ func (o *Object) CreateUploader(ctx context.Context, u *Upload, options ...fs.Op
 	opts.ExtraHeaders["Tus-Resumable"] = "1.0.0"
 	// opts.ExtraHeaders["mtime"] = strconv.FormatInt(src.ModTime(ctx).Unix(), 10)
 
+	var tusLocation string
 	// rclone http call
 	err := o.fs.pacer.CallNoRetry(func() (bool, error) {
+		var retry bool
 		res, err := o.fs.srv.Call(ctx, &opts)
-		return o.fs.shouldRetryCreateUpload(ctx, res, err)
+		retry, tusLocation, err = o.fs.getTusLocationOrRetry(ctx, res, err)
+		return retry, err
 	})
 	if err != nil {
 		return nil, fmt.Errorf("making upload directory failed: %w", err)
 	}
 
-	uploader := NewUploader(o.fs, o.fs.chunksUploadURL, u, 0)
+	uploader := NewUploader(o.fs, tusLocation, u, 0)
 
 	return uploader, nil
 }
