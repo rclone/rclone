@@ -10,9 +10,12 @@ import (
 	"github.com/rclone/rclone/cmd/serve/proxy"
 	"github.com/rclone/rclone/cmd/serve/proxy/proxyflags"
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/config/configstruct"
 	"github.com/rclone/rclone/fs/config/flags"
+	"github.com/rclone/rclone/fs/rc"
 	httplib "github.com/rclone/rclone/lib/http"
 	"github.com/rclone/rclone/vfs"
+	"github.com/rclone/rclone/vfs/vfscommon"
 	"github.com/rclone/rclone/vfs/vfsflags"
 	"github.com/spf13/cobra"
 )
@@ -61,6 +64,28 @@ func init() {
 	vfsflags.AddFlags(flagSet)
 	proxyflags.AddFlags(flagSet)
 	serve.Command.AddCommand(Command)
+	serve.AddRc("s3", func(ctx context.Context, f fs.Fs, in rc.Params) (serve.Handle, error) {
+		// Read VFS Opts
+		var vfsOpt = vfscommon.Opt // set default opts
+		err := configstruct.SetAny(in, &vfsOpt)
+		if err != nil {
+			return nil, err
+		}
+		// Read Proxy Opts
+		var proxyOpt = proxy.Opt // set default opts
+		err = configstruct.SetAny(in, &proxyOpt)
+		if err != nil {
+			return nil, err
+		}
+		// Read opts
+		var opt = Opt // set default opts
+		err = configstruct.SetAny(in, &opt)
+		if err != nil {
+			return nil, err
+		}
+		// Create server
+		return newServer(ctx, f, &opt, &vfsOpt, &proxyOpt)
+	})
 }
 
 //go:embed serve_s3.md
@@ -91,18 +116,11 @@ var Command = &cobra.Command{
 		}
 
 		cmd.Run(false, false, command, func() error {
-			s, err := newServer(context.Background(), f, &Opt)
+			s, err := newServer(context.Background(), f, &Opt, &vfscommon.Opt, &proxy.Opt)
 			if err != nil {
 				return err
 			}
-			router := s.server.Router()
-			s.Bind(router)
-			err = s.Serve()
-			if err != nil {
-				return err
-			}
-			s.server.Wait()
-			return nil
+			return s.Serve()
 		})
 		return nil
 	},

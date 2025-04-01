@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"math/rand"
+	"net"
 	"net/http"
 	"strings"
 
@@ -43,7 +44,7 @@ type Server struct {
 }
 
 // Make a new S3 Server to serve the remote
-func newServer(ctx context.Context, f fs.Fs, opt *Options) (s *Server, err error) {
+func newServer(ctx context.Context, f fs.Fs, opt *Options, vfsOpt *vfscommon.Options, proxyOpt *proxy.Options) (s *Server, err error) {
 	w := &Server{
 		f:            f,
 		ctx:          ctx,
@@ -84,12 +85,12 @@ func newServer(ctx context.Context, f fs.Fs, opt *Options) (s *Server, err error
 	w.handler = w.faker.Server()
 
 	if proxy.Opt.AuthProxy != "" {
-		w.proxy = proxy.New(ctx, &proxy.Opt, &vfscommon.Opt)
+		w.proxy = proxy.New(ctx, proxyOpt, vfsOpt)
 		// proxy auth middleware
 		w.handler = proxyAuthMiddleware(w.handler, w)
 		w.handler = authPairMiddleware(w.handler, w)
 	} else {
-		w._vfs = vfs.New(f, &vfscommon.Opt)
+		w._vfs = vfs.New(f, vfsOpt)
 
 		if len(opt.AuthKey) > 0 {
 			w.faker.AddAuthKeys(authlistResolver(opt.AuthKey))
@@ -103,6 +104,9 @@ func newServer(ctx context.Context, f fs.Fs, opt *Options) (s *Server, err error
 	if err != nil {
 		return nil, fmt.Errorf("failed to init server: %w", err)
 	}
+
+	router := w.server.Router()
+	w.Bind(router)
 
 	return w, nil
 }
@@ -138,11 +142,22 @@ func (w *Server) Bind(router chi.Router) {
 	router.Handle("/*", w.handler)
 }
 
-// Serve serves the s3 server
+// Serve serves the s3 server until the server is shutdown
 func (w *Server) Serve() error {
 	w.server.Serve()
 	fs.Logf(w.f, "Starting s3 server on %s", w.server.URLs())
+	w.server.Wait()
 	return nil
+}
+
+// Addr returns the first address of the server
+func (w *Server) Addr() net.Addr {
+	return w.server.Addr()
+}
+
+// Shutdown the server
+func (w *Server) Shutdown() error {
+	return w.server.Shutdown()
 }
 
 func authPairMiddleware(next http.Handler, ws *Server) http.Handler {
