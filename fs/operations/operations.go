@@ -456,6 +456,8 @@ func move(ctx context.Context, fdst fs.Fs, dst fs.Object, remote string, src fs.
 				if err != nil {
 					return newDst, err
 				}
+			} else if src.Remote() == remote {
+				return newDst, nil
 			} else if needsMoveCaseInsensitive(fdst, fdst, remote, src.Remote(), false) {
 				doMove = func(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
 					return MoveCaseInsensitive(ctx, fdst, fdst, remote, src.Remote(), false, src)
@@ -1980,12 +1982,12 @@ func MoveCaseInsensitive(ctx context.Context, fdst fs.Fs, fsrc fs.Fs, dstFileNam
 }
 
 // moveOrCopyFile moves or copies a single file possibly to a new name
-func moveOrCopyFile(ctx context.Context, fdst fs.Fs, fsrc fs.Fs, dstFileName string, srcFileName string, cp bool) (err error) {
+func moveOrCopyFile(ctx context.Context, fdst fs.Fs, fsrc fs.Fs, dstFileName string, srcFileName string, cp bool, allowOverlap bool) (err error) {
 	ci := fs.GetConfig(ctx)
 	logger, usingLogger := GetLogger(ctx)
 	dstFilePath := path.Join(fdst.Root(), dstFileName)
 	srcFilePath := path.Join(fsrc.Root(), srcFileName)
-	if fdst.Name() == fsrc.Name() && dstFilePath == srcFilePath {
+	if fdst.Name() == fsrc.Name() && dstFilePath == srcFilePath && !allowOverlap {
 		fs.Debugf(fdst, "don't need to copy/move %s, it is already at target location", dstFileName)
 		if usingLogger {
 			srcObj, _ := fsrc.NewObject(ctx, srcFileName)
@@ -2092,7 +2094,14 @@ func moveOrCopyFile(ctx context.Context, fdst fs.Fs, fsrc fs.Fs, dstFileName str
 //
 // This is treated as a transfer.
 func MoveFile(ctx context.Context, fdst fs.Fs, fsrc fs.Fs, dstFileName string, srcFileName string) (err error) {
-	return moveOrCopyFile(ctx, fdst, fsrc, dstFileName, srcFileName, false)
+	return moveOrCopyFile(ctx, fdst, fsrc, dstFileName, srcFileName, false, false)
+}
+
+// TransformFile transforms a file in place using --name-transform
+//
+// This is treated as a transfer.
+func TransformFile(ctx context.Context, fdst fs.Fs, srcFileName string) (err error) {
+	return moveOrCopyFile(ctx, fdst, fdst, srcFileName, srcFileName, false, true)
 }
 
 // SetTier changes tier of object in remote
