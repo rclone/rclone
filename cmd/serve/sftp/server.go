@@ -16,6 +16,7 @@ import (
 	"encoding/pem"
 	"errors"
 	"fmt"
+	"io"
 	"net"
 	"os"
 	"path/filepath"
@@ -40,23 +41,27 @@ type server struct {
 	ctx      context.Context // for global config
 	config   *ssh.ServerConfig
 	listener net.Listener
-	waitChan chan struct{} // for waiting on the listener to close
+	stopped  chan struct{} // for waiting on the listener to stop
 	proxy    *proxy.Proxy
 }
 
-func newServer(ctx context.Context, f fs.Fs, opt *Options) *server {
+func newServer(ctx context.Context, f fs.Fs, opt *Options, vfsOpt *vfscommon.Options, proxyOpt *proxy.Options) (*server, error) {
 	s := &server{
-		f:        f,
-		ctx:      ctx,
-		opt:      *opt,
-		waitChan: make(chan struct{}),
+		f:       f,
+		ctx:     ctx,
+		opt:     *opt,
+		stopped: make(chan struct{}),
 	}
 	if proxy.Opt.AuthProxy != "" {
-		s.proxy = proxy.New(ctx, &proxy.Opt, &vfscommon.Opt)
+		s.proxy = proxy.New(ctx, proxyOpt, vfsOpt)
 	} else {
-		s.vfs = vfs.New(f, &vfscommon.Opt)
+		s.vfs = vfs.New(f, vfsOpt)
 	}
-	return s
+	err := s.configure()
+	if err != nil {
+		return nil, fmt.Errorf("sftp configuration failed: %w", err)
+	}
+	return s, nil
 }
 
 // getVFS gets the vfs from s or the proxy
@@ -128,8 +133,10 @@ func (s *server) acceptConnections() {
 	}
 }
 
+// configure the server
+//
 // Based on example server code from golang.org/x/crypto/ssh and server_standalone
-func (s *server) serve() (err error) {
+func (s *server) configure() (err error) {
 	var authorizedKeysMap map[string]struct{}
 
 	// ensure the user isn't trying to use conflicting flags
@@ -292,42 +299,35 @@ func (s *server) serve() (err error) {
 		}
 	}
 	s.listener = listener
+	return nil
+}
+
+// Serve SFTP until the server is Shutdown
+func (s *server) Serve() (err error) {
 	fs.Logf(nil, "SFTP server listening on %v\n", s.listener.Addr())
-
-	go s.acceptConnections()
-
+	s.acceptConnections()
+	close(s.stopped)
 	return nil
 }
 
 // Addr returns the address the server is listening on
-func (s *server) Addr() string {
-	return s.listener.Addr().String()
-}
-
-// Serve runs the sftp server in the background.
-//
-// Use s.Close() and s.Wait() to shutdown server
-func (s *server) Serve() error {
-	err := s.serve()
-	if err != nil {
-		return err
-	}
-	return nil
+func (s *server) Addr() net.Addr {
+	return s.listener.Addr()
 }
 
 // Wait blocks while the listener is open.
 func (s *server) Wait() {
-	<-s.waitChan
+	<-s.stopped
 }
 
-// Close shuts the running server down
-func (s *server) Close() {
+// Shutdown shuts the running server down
+func (s *server) Shutdown() error {
 	err := s.listener.Close()
-	if err != nil {
-		fs.Errorf(nil, "Error on closing SFTP server: %v", err)
-		return
+	if errors.Is(err, io.ErrUnexpectedEOF) {
+		err = nil
 	}
-	close(s.waitChan)
+	s.Wait()
+	return err
 }
 
 func loadPrivateKey(keyPath string) (ssh.Signer, error) {
