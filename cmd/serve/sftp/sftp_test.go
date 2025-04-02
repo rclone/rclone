@@ -14,10 +14,14 @@ import (
 
 	"github.com/pkg/sftp"
 	_ "github.com/rclone/rclone/backend/local"
+	"github.com/rclone/rclone/cmd/serve/proxy"
 	"github.com/rclone/rclone/cmd/serve/servetest"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/obscure"
+	"github.com/rclone/rclone/fs/rc"
+	"github.com/rclone/rclone/vfs/vfscommon"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -45,11 +49,14 @@ func TestSftp(t *testing.T) {
 		opt.User = testUser
 		opt.Pass = testPass
 
-		w := newServer(context.Background(), f, &opt)
-		require.NoError(t, w.serve())
+		w, err := newServer(context.Background(), f, &opt, &vfscommon.Opt, &proxy.Opt)
+		require.NoError(t, err)
+		go func() {
+			require.NoError(t, w.Serve())
+		}()
 
 		// Read the host and port we started on
-		addr := w.Addr()
+		addr := w.Addr().String()
 		colon := strings.LastIndex(addr, ":")
 
 		// Config for the backend we'll use to connect to the server
@@ -63,10 +70,18 @@ func TestSftp(t *testing.T) {
 
 		// return a stop function
 		return config, func() {
-			w.Close()
-			w.Wait()
+			assert.NoError(t, w.Shutdown())
 		}
 	}
 
 	servetest.Run(t, "sftp", start)
+}
+
+func TestRc(t *testing.T) {
+	servetest.TestRc(t, rc.Params{
+		"type":           "sftp",
+		"user":           "test",
+		"pass":           obscure.MustObscure("test"),
+		"vfs_cache_mode": "off",
+	})
 }

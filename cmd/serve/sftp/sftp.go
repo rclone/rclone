@@ -5,15 +5,19 @@ package sftp
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/rclone/rclone/cmd"
 	"github.com/rclone/rclone/cmd/serve"
 	"github.com/rclone/rclone/cmd/serve/proxy"
 	"github.com/rclone/rclone/cmd/serve/proxy/proxyflags"
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/config/configstruct"
 	"github.com/rclone/rclone/fs/config/flags"
+	"github.com/rclone/rclone/fs/rc"
 	"github.com/rclone/rclone/lib/systemd"
 	"github.com/rclone/rclone/vfs"
+	"github.com/rclone/rclone/vfs/vfscommon"
 	"github.com/rclone/rclone/vfs/vfsflags"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
@@ -78,6 +82,28 @@ func init() {
 	proxyflags.AddFlags(Command.Flags())
 	AddFlags(Command.Flags(), &Opt)
 	serve.Command.AddCommand(Command)
+	serve.AddRc("sftp", func(ctx context.Context, f fs.Fs, in rc.Params) (serve.Handle, error) {
+		// Read VFS Opts
+		var vfsOpt = vfscommon.Opt // set default opts
+		err := configstruct.SetAny(in, &vfsOpt)
+		if err != nil {
+			return nil, err
+		}
+		// Read Proxy Opts
+		var proxyOpt = proxy.Opt // set default opts
+		err = configstruct.SetAny(in, &proxyOpt)
+		if err != nil {
+			return nil, err
+		}
+		// Read opts
+		var opt = Opt // set default opts
+		err = configstruct.SetAny(in, &opt)
+		if err != nil {
+			return nil, err
+		}
+		// Create server
+		return newServer(ctx, f, &opt, &vfsOpt, &proxyOpt)
+	})
 }
 
 // Command definition for cobra
@@ -164,14 +190,12 @@ provided by OpenSSH in this case.
 			if Opt.Stdio {
 				return serveStdio(f)
 			}
-			s := newServer(context.Background(), f, &Opt)
-			err := s.Serve()
+			s, err := newServer(context.Background(), f, &Opt, &vfscommon.Opt, &proxy.Opt)
 			if err != nil {
-				return err
+				fs.Fatal(nil, fmt.Sprint(err))
 			}
 			defer systemd.Notify()()
-			s.Wait()
-			return nil
+			return s.Serve()
 		})
 	},
 }
