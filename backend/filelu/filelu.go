@@ -844,7 +844,6 @@ func (f *Fs) List(ctx context.Context, dir string) (fs.DirEntries, error) {
 		remote := path.Join(dir, file.Name)
 		filePath := path.Join(fullPath, file.Name)
 
-		// Convert FldID from json.Number to int if required
 		if file.FldID.String() != "" {
 			fldID, err := file.FldID.Int64()
 			if err != nil {
@@ -869,18 +868,16 @@ func (f *Fs) List(ctx context.Context, dir string) (fs.DirEntries, error) {
 		entries = append(entries, obj)
 	}
 
-	// Add folders if not in single-file mode
-	if !f.isFile {
-		for _, folder := range result.Result.Folders {
-			remote := path.Join(dir, folder.Name)
-			if folder.FldID.String() != "" {
-				fldID, err := folder.FldID.Int64()
-				if err == nil {
-					fs.Debugf(f, "Parsed fld_id for custom directory logic: %d", fldID)
-				}
+	// Add folders
+	for _, folder := range result.Result.Folders {
+		remote := path.Join(dir, folder.Name)
+		if folder.FldID.String() != "" {
+			fldID, err := folder.FldID.Int64()
+			if err == nil {
+				fs.Debugf(f, "Parsed fld_id for custom directory logic: %d", fldID)
 			}
-			entries = append(entries, fs.NewDir(remote, time.Now()))
 		}
+		entries = append(entries, fs.NewDir(remote, time.Now()))
 	}
 
 	return entries, nil
