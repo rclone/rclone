@@ -762,7 +762,23 @@ func (f *Fs) Precision() time.Duration {
 	return time.Second
 }
 
-// List lists the objects and directories in a remote directory
+// Define the response structure from your API
+type FolderListResponse struct {
+	Status int    `json:"status"`
+	Msg    string `json:"msg"`
+	Result struct {
+		Files []struct {
+			Name  string `json:"name"`
+			FldID json.Number `json:"fld_id"` // Adjust to json.Number for flexibility in decoding
+		} `json:"files"`
+		Folders []struct {
+			Name  string `json:"name"`
+			FldID json.Number `json:"fld_id"` // Adjust this as well
+		} `json:"folders"`
+	} `json:"result"`
+}
+
+// Update the List function to use json.Number instead of int
 func (f *Fs) List(ctx context.Context, dir string) (fs.DirEntries, error) {
 	fs.Debugf(f, "List: Starting for directory %q with root %q", dir, f.root)
 
@@ -811,7 +827,7 @@ func (f *Fs) List(ctx context.Context, dir string) (fs.DirEntries, error) {
 	}
 	fs.Debugf(f, "List: Response body: %s", string(body))
 
-	var result api.FolderListResponse
+	var result FolderListResponse
 	err = json.NewDecoder(bytes.NewReader(body)).Decode(&result)
 	if err != nil {
 		return nil, fmt.Errorf("error decoding response: %w", err)
@@ -828,7 +844,16 @@ func (f *Fs) List(ctx context.Context, dir string) (fs.DirEntries, error) {
 		remote := path.Join(dir, file.Name)
 		filePath := path.Join(fullPath, file.Name)
 
-		// Get file size using the file info API
+		// Convert FldID from json.Number to int if required
+		if file.FldID.String() != "" {
+			fldID, err := file.FldID.Int64()
+			if err != nil {
+				fs.Debugf(f, "Error converting fld_id for %q: %v", filePath, err)
+			} else {
+				fs.Debugf(f, "Parsed fld_id for %q: %d", filePath, fldID)
+			}
+		}
+
 		size, err := f.getFileSize(ctx, filePath)
 		if err != nil {
 			fs.Debugf(f, "Error getting file size for %q: %v", filePath, err)
@@ -839,7 +864,7 @@ func (f *Fs) List(ctx context.Context, dir string) (fs.DirEntries, error) {
 			fs:      f,
 			remote:  remote,
 			size:    size,
-			modTime: time.Now(), // Consider parsing file.Uploaded if available
+			modTime: time.Now(),
 		}
 		entries = append(entries, obj)
 	}
@@ -848,6 +873,12 @@ func (f *Fs) List(ctx context.Context, dir string) (fs.DirEntries, error) {
 	if !f.isFile {
 		for _, folder := range result.Result.Folders {
 			remote := path.Join(dir, folder.Name)
+			if folder.FldID.String() != "" {
+				fldID, err := folder.FldID.Int64()
+				if err == nil {
+					fs.Debugf(f, "Parsed fld_id for custom directory logic: %d", fldID)
+				}
+			}
 			entries = append(entries, fs.NewDir(remote, time.Now()))
 		}
 	}
@@ -1214,68 +1245,144 @@ func (f *Fs) getUploadServer(ctx context.Context) (string, string, error) {
 	return result.Result, result.SessID, nil
 }
 
-// Put uploads a file to the storage backend.
+// ensureFolderExists checks if a folder exists at the given path and creates it if it doesn't exist.
+func (f *Fs) ensureFolderExists(ctx context.Context, destinationPath string) error {
+    if destinationPath == "" {
+        return nil // Root always exists
+    }
+
+    // Split and iterate over each part of the path
+    parts := strings.Split(strings.Trim(destinationPath, "/"), "/")
+
+    for i := range parts {
+        segmentPath := path.Join("/", strings.Join(parts[:i+1], "/"))
+
+        fs.Debugf(f, "ensureFolderExists: Checking existing or creating segment %s", segmentPath)
+        _, err := f.resolveFolderPath(ctx, segmentPath)
+
+        switch err {
+        case nil:
+            fs.Debugf(f, "ensureFolderExists: Segment %s exists", segmentPath)
+
+        case fs.ErrorDirNotFound:
+            fs.Debugf(f, "ensureFolderExists: Segment %s not found, creating", segmentPath)
+            createErr := f.Mkdir(ctx, segmentPath)
+            if createErr != nil {
+                return fmt.Errorf("failed to create folder at %s: %w", segmentPath, createErr)
+            }
+
+        default:
+            if strings.Contains(err.Error(), "not yours") {
+                fs.Debugf(f, "ensureFolderExists: Permission issue during check for %s", segmentPath)
+            } else {
+                fs.Debugf(f, "Unexpected error for segment %s: %v", segmentPath, err)
+            }
+            return err
+        }
+    }
+    return nil
+}
+
+// Put uploads a file directly to the destination folder in the FileLu storage system.
 func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
-	fs.Debugf(f, "Put: Starting upload for %q", src.Remote())
+    fs.Debugf(f, "Put: Starting upload for %q", src.Remote())
 
-	// Create temporary file and get its path
-	tempPath, err := createTempFileFromReader(in)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create temp file: %w", err)
-	}
-	// Error handling for os.Remove
-	defer func() {
-		if err := os.Remove(tempPath); err != nil {
-			fs.Logf(nil, "Failed to remove temporary file %q: %v", tempPath, err)
-		}
-	}()
-	// Open the temporary file for reading
-	tempFile, err := os.Open(tempPath)
-	if err != nil {
-		return nil, fmt.Errorf("failed to open temp file: %w", err)
-	}
-	// Checking error for tempFile.Close
-	defer func() {
-		if err := tempFile.Close(); err != nil {
-			fs.Logf(nil, "Failed to close temporary file: %v", err)
-		}
-	}()
-	// Get upload server details
-	uploadURL, sessID, err := f.getUploadServer(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to retrieve upload server: %w", err)
-	}
+    // Prepare the full destination folder path
+    destinationFolderPath := path.Join(f.root, path.Dir(src.Remote()))
+    destinationFolderPath = "/" + strings.Trim(destinationFolderPath, "/")
 
-	// Use the original filename for upload
-	fileName := path.Base(src.Remote())
-	fs.Debugf(f, "Put: Using filename %q for upload", fileName)
+    // Log the full path for debugging purposes
+    fs.Debugf(f, "Put: Uploading file to full path: %s", destinationFolderPath)
 
-	// Upload the file to root first
-	fileCode, err := f.uploadFile(ctx, uploadURL, sessID, fileName, tempFile)
-	if err != nil {
-		return nil, fmt.Errorf("failed to upload file: %w", err)
-	}
-	fs.Debugf(f, "Put: File uploaded successfully with code: %s", fileCode)
+    // Get upload server details
+    uploadURL, sessID, err := f.getUploadServer(ctx)
+    if err != nil {
+        return nil, fmt.Errorf("failed to retrieve upload server: %w", err)
+    }
 
-	// If we have a destination path, move the file there
-	if f.root != "" {
-		sourcePath := "/" + fileName
-		destinationPath := "/" + strings.Trim(f.root, "/")
+    fileName := path.Base(src.Remote())
+    fs.Debugf(f, "Put: Using filename %q for upload", fileName)
 
-		fs.Debugf(f, "Put: Moving file from %q to folder %q", sourcePath, destinationPath)
-		err = f.moveFileToFolder(ctx, sourcePath, destinationPath)
-		if err != nil {
-			return nil, fmt.Errorf("failed to move file to destination folder: %w", err)
-		}
-	}
+    // Now upload the file directly to the full destination path
+    fileCode, err := f.uploadFileWithDestination(ctx, uploadURL, sessID, fileName, in, destinationFolderPath)
+    if err != nil {
+        return nil, fmt.Errorf("failed to upload file: %w", err)
+    }
+    fs.Debugf(f, "Put: File uploaded successfully with code: %s", fileCode)
 
-	// Create and return the object
-	return &Object{
-		fs:      f,
-		remote:  src.Remote(),
-		size:    src.Size(),
-		modTime: src.ModTime(ctx),
-	}, nil
+    return &Object{
+        fs:      f,
+        remote:  src.Remote(),
+        size:    src.Size(),
+        modTime: src.ModTime(ctx),
+    }, nil
+}
+
+// uploadFileWithDestination uploads a file directly to a specified folder using file content reader.
+func (f *Fs) uploadFileWithDestination(ctx context.Context, uploadURL, sessID, fileName string, fileContent io.Reader, destinationPath string) (string, error) {
+    // Prepare multipart form data
+    var body bytes.Buffer
+    writer := multipart.NewWriter(&body)
+
+    // Add form fields for session and upload type
+    if err := writer.WriteField("sess_id", sessID); err != nil {
+        return "", fmt.Errorf("failed to add sess_id field: %w", err)
+    }
+    if err := writer.WriteField("utype", "prem"); err != nil {
+        return "", fmt.Errorf("failed to add utype field: %w", err)
+    }
+    // Add the full path to the form
+    if err := writer.WriteField("fld_path", destinationPath); err != nil {
+        return "", fmt.Errorf("failed to add fld_path field: %w", err)
+    }
+
+    // Create the file part
+    part, err := writer.CreateFormFile("file_0", fileName)
+    if err != nil {
+        return "", fmt.Errorf("failed to create form file: %w", err)
+    }
+
+    // Copy file content to form
+    if _, err = io.Copy(part, fileContent); err != nil {
+        return "", fmt.Errorf("failed to copy file content to form: %w", err)
+    }
+
+    if err = writer.Close(); err != nil {
+        return "", fmt.Errorf("error closing writer: %w", err)
+    }
+
+    // Send the request
+    req, err := http.NewRequestWithContext(ctx, "POST", uploadURL, &body)
+    if err != nil {
+        return "", fmt.Errorf("failed to create request: %w", err)
+    }
+    req.Header.Set("Content-Type", writer.FormDataContentType())
+
+    resp, err := f.client.Do(req)
+    if err != nil {
+        return "", fmt.Errorf("failed to send request: %w", err)
+    }
+    defer func() {
+        if cerr := resp.Body.Close(); cerr != nil {
+            fs.Debugf(f, "Error closing response body: %v", cerr)
+        }
+    }()
+
+    // Parse the response
+    var result []struct {
+        FileCode   string `json:"file_code"`
+        FileStatus string `json:"file_status"`
+    }
+    if err = json.NewDecoder(resp.Body).Decode(&result); err != nil {
+        return "", fmt.Errorf("failed to parse response: %w", err)
+    }
+
+    if len(result) == 0 || result[0].FileStatus != "OK" {
+        return "", fmt.Errorf("upload failed with status: %s", result[0].FileStatus)
+    }
+
+    fs.Debugf(f, "uploadFileWithDestination: File uploaded successfully with file code: %s", result[0].FileCode)
+    return result[0].FileCode, nil
 }
 
 // createTempFileFromReader writes the content of the 'in' reader into a temporary file
