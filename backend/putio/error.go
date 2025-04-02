@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"slices"
 	"strconv"
 	"time"
 
@@ -13,10 +14,8 @@ import (
 )
 
 func checkStatusCode(resp *http.Response, expected ...int) error {
-	for _, code := range expected {
-		if resp.StatusCode == code {
-			return nil
-		}
+	if slices.Contains(expected, resp.StatusCode) {
+		return nil
 	}
 	return &statusCodeError{response: resp}
 }

@@ -63,8 +63,8 @@ type UserInfoResponse struct {
 				Prolong      bool   `json:"prolong"`
 				Promocodes   struct {
 				} `json:"promocodes"`
-				Subscription []interface{} `json:"subscription"`
-				Version      string        `json:"version"`
+				Subscription []any  `json:"subscription"`
+				Version      string `json:"version"`
 			} `json:"billing"`
 			Bonuses struct {
 				CameraUpload bool `json:"camera_upload"`

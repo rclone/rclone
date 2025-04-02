@@ -7,7 +7,7 @@
 // (Tracked in [issue #7625].)
 //
 //  1. ✅ Minimal support for the [external special remote protocol]. Tested on
-//     "local" and "drive" backends.
+//     "local", "drive", and "dropbox" backends.
 //  2. Add support for the ASYNC protocol extension. This may improve performance.
 //  3. Support the [simple export interface]. This will enable `git-annex
 //     export` functionality.
@@ -28,11 +28,14 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 
 	"github.com/rclone/rclone/cmd"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/cache"
+	"github.com/rclone/rclone/fs/config"
+	"github.com/rclone/rclone/fs/fspath"
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/spf13/cobra"
 )
@@ -260,29 +263,58 @@ func (s *server) run() error {
 }
 
 // Idempotently handle an incoming INITREMOTE message. This should perform
-// one-time setup operations, but we may receive the command again, e.g. when
-// this git-annex remote is initialized in a different repository.
+// one-time setup operations for the remote, such as validating or rejecting
+// config values. We may receive the INITREMOTE message again in later sessions,
+// e.g. when the same git-annex remote is initialized in a different repository.
+// However, we are *not* guaranteed to receive the INITREMOTE message once per
+// session, so do not mutate state here and expect it to always be available in
+// other handler functions.
 func (s *server) handleInitRemote() error {
 	if err := s.queryConfigs(); err != nil {
 		return fmt.Errorf("failed to get configs: %w", err)
 	}
 
-	remoteRootFs, err := cache.Get(context.TODO(), fmt.Sprintf("%s:", s.configRcloneRemoteName))
+	// Explicitly check whether [server.configRcloneRemoteName] names a remote.
+	//
+	// - We do not permit file paths in the remote name; that's what
+	//   [s.configPrefix] is for. If we simply checked whether [cache.Get]
+	//   returns [fs.ErrorNotFoundInConfigFile], we would incorrectly identify
+	//   file names as valid remote names.
+	//
+	// - In order to support remotes defined by environment variables, we must
+	//   use [config.GetRemoteNames] instead of [config.FileSections].
+	trimmedName := strings.TrimSuffix(s.configRcloneRemoteName, ":")
+	if slices.Contains(config.GetRemoteNames(), trimmedName) {
+		s.sendMsg("INITREMOTE-SUCCESS")
+		return nil
+	}
+
+	// Otherwise, check whether [server.configRcloneRemoteName] is actually a
+	// backend string such as ":local:". These are not remote names, per se, but
+	// they are permitted for compatibility with [fstest]. We could guard this
+	// behavior behind [testing.Testing] to prevent users from specifying
+	// backend strings, but there's no obvious harm in permitting it.
+	maybeBackend := strings.HasPrefix(s.configRcloneRemoteName, ":")
+	if !maybeBackend {
+		s.sendMsg("INITREMOTE-FAILURE remote does not exist: " + s.configRcloneRemoteName)
+		return fmt.Errorf("remote does not exist: %s", s.configRcloneRemoteName)
+	}
+	parsed, err := fspath.Parse(s.configRcloneRemoteName)
 	if err != nil {
-		s.sendMsg("INITREMOTE-FAILURE failed to open root directory of rclone remote")
-		return fmt.Errorf("failed to open root directory of rclone remote: %w", err)
+		s.sendMsg("INITREMOTE-FAILURE remote could not be parsed as a backend: " + s.configRcloneRemoteName)
+		return fmt.Errorf("remote could not be parsed as a backend: %s", s.configRcloneRemoteName)
 	}
-
-	if !remoteRootFs.Features().CanHaveEmptyDirectories {
-		s.sendMsg("INITREMOTE-FAILURE this rclone remote does not support empty directories")
-		return fmt.Errorf("rclone remote does not support empty directories")
+	if parsed.Path != "" {
+		s.sendMsg("INITREMOTE-FAILURE backend must not have a path: " + s.configRcloneRemoteName)
+		return fmt.Errorf("backend must not have a path: %s", s.configRcloneRemoteName)
 	}
-
-	if err := operations.Mkdir(context.TODO(), remoteRootFs, s.configPrefix); err != nil {
-		s.sendMsg("INITREMOTE-FAILURE failed to mkdir")
-		return fmt.Errorf("failed to mkdir: %w", err)
+	// Strip the leading colon and options before searching for the backend,
+	// i.e. search for "local" instead of ":local,description=hello:/tmp/foo".
+	trimmedBackendName := strings.TrimPrefix(parsed.Name, ":")
+	if _, err = fs.Find(trimmedBackendName); err != nil {
+		s.sendMsg("INITREMOTE-FAILURE backend does not exist: " + trimmedBackendName)
+		return fmt.Errorf("backend does not exist: %s", trimmedBackendName)
 	}
-
 	s.sendMsg("INITREMOTE-SUCCESS")
 	return nil
 }

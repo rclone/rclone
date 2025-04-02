@@ -2,6 +2,7 @@ package accounting
 
 import (
 	"context"
+	"maps"
 	"sync"
 
 	"github.com/rclone/rclone/fs"
@@ -48,7 +49,5 @@ func (ip *inProgress) merge(m *inProgress) {
 	defer ip.mu.Unlock()
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	for key, val := range m.m {
-		ip.m[key] = val
-	}
+	maps.Copy(ip.m, m.m)
 }

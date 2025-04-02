@@ -112,7 +112,7 @@ func copyObjectWaitForWorkRequest(ctx context.Context, wID *string, entityType s
 			string(objectstorage.WorkRequestSummaryStatusCanceled),
 			string(objectstorage.WorkRequestStatusFailed),
 		},
-		Refresh: func() (interface{}, string, error) {
+		Refresh: func() (any, string, error) {
 			getWorkRequestRequest := objectstorage.GetWorkRequestRequest{}
 			getWorkRequestRequest.WorkRequestId = wID
 			workRequestResponse, err := client.GetWorkRequest(context.Background(), getWorkRequestRequest)

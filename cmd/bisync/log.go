@@ -12,7 +12,7 @@ import (
 	"github.com/rclone/rclone/lib/terminal"
 )
 
-func (b *bisyncRun) indentf(tag, file, format string, args ...interface{}) {
+func (b *bisyncRun) indentf(tag, file, format string, args ...any) {
 	b.indent(tag, file, fmt.Sprintf(format, args...))
 }
 

@@ -154,7 +154,7 @@ func (m *March) Run(ctx context.Context) error {
 	var traversing sync.WaitGroup // running directory traversals
 	checkers := ci.Checkers
 	in := make(chan listDirJob, checkers)
-	for i := 0; i < checkers; i++ {
+	for range checkers {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()

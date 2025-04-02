@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"math/rand"
 	"os"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -289,9 +290,9 @@ var testCasesSingleEdge = []testCase{
 								if j < i {
 									continue
 								}
-								rIn := append([]rune{}, rIn...)
-								rOut := append([]rune{}, rOut...)
-								quoteOut := append([]bool{}, quoteOut...)
+								rIn := slices.Clone(rIn)
+								rOut := slices.Clone(rOut)
+								quoteOut := slices.Clone(quoteOut)
 
 								for _, in := range []rune{orig, replace} {
 									expect, quote := in, false
@@ -398,9 +399,9 @@ var testCasesDoubleEdge = []testCase{
 						testL := len(rIn)
 						for _, i := range []int{0, testL - 1} {
 							for _, secondOrig := range e2.orig {
-								rIn := append([]rune{}, rIn...)
-								rOut := append([]rune{}, rOut...)
-								quoteOut := append([]bool{}, quoteOut...)
+								rIn := slices.Clone(rIn)
+								rOut := slices.Clone(rOut)
+								quoteOut := slices.Clone(quoteOut)
 
 								rIn[1], rOut[1], quoteOut[1] = secondOrig, secondOrig, false
 								rIn[testL-2], rOut[testL-2], quoteOut[testL-2] = secondOrig, secondOrig, false
@@ -432,18 +433,18 @@ var testCasesDoubleEdge = []testCase{
 	fatalW(fmt.Fprint(fd, "\n}\n"))("Error writing test case:")
 }
 
-func fatal(err error, s ...interface{}) {
+func fatal(err error, s ...any) {
 	if err != nil {
 		fs.Fatal(nil, fmt.Sprint(append(s, err)))
 	}
 }
-func fatalW(_ int, err error) func(...interface{}) {
+func fatalW(_ int, err error) func(...any) {
 	if err != nil {
-		return func(s ...interface{}) {
+		return func(s ...any) {
 			fs.Fatal(nil, fmt.Sprint(append(s, err)))
 		}
 	}
-	return func(s ...interface{}) {}
+	return func(s ...any) {}
 }
 
 func invalidMask(mask encoder.MultiEncoder) bool {
@@ -497,10 +498,7 @@ func buildTestString(mappings, testMappings []mapping, fill ...[]rune) (string, 
 		rOut = append(rOut, m.dst...)
 	}
 	inL := len(rIn)
-	testL := inL * 3
-	if testL < 30 {
-		testL = 30
-	}
+	testL := max(inL*3, 30)
 	rIn = append(rIn, make([]rune, testL-inL)...)
 	rOut = append(rOut, make([]rune, testL-inL)...)
 	quoteOut := make([]bool, testL)
@@ -563,7 +561,7 @@ func buildEdgeTestString(edges []edge, testMappings []mapping, fill [][]rune,
 
 	// populate test strings with values from the `fill` set
 outer:
-	for pos := 0; pos < testL; pos++ {
+	for pos := range testL {
 		m := pos % len(fill)
 		i := rng.Intn(len(fill[m]))
 		r := fill[m][i]

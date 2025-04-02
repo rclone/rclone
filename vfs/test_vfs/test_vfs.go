@@ -91,14 +91,14 @@ func (t *Test) randomTest() {
 }
 
 // logf logs things - not shown unless -v
-func (t *Test) logf(format string, a ...interface{}) {
+func (t *Test) logf(format string, a ...any) {
 	if *verbose {
 		fs.Logf(nil, t.prefix+format, a)
 	}
 }
 
 // errorf logs errors
-func (t *Test) errorf(format string, a ...interface{}) {
+func (t *Test) errorf(format string, a ...any) {
 	fs.Logf(nil, t.prefix+"ERROR: "+format, a)
 }
 
@@ -267,7 +267,7 @@ func (t *Test) Tidy() {
 func (t *Test) RandomTests(iterations int, quit chan struct{}) {
 	var finished = make(chan struct{})
 	go func() {
-		for i := 0; i < iterations; i++ {
+		for range iterations {
 			t.randomTest()
 		}
 		close(finished)
@@ -295,7 +295,7 @@ func main() {
 		wg   sync.WaitGroup
 		quit = make(chan struct{}, *iterations)
 	)
-	for i := 0; i < *number; i++ {
+	for range *number {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()

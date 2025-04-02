@@ -24,7 +24,7 @@ import (
 // The result should be capable of being JSON encoded
 // If it is a string or a []string it will be shown to the user
 // otherwise it will be JSON encoded and shown to the user like that
-func (f *Fs) Command(ctx context.Context, name string, arg []string, opt map[string]string) (out interface{}, err error) {
+func (f *Fs) Command(ctx context.Context, name string, arg []string, opt map[string]string) (out any, err error) {
 	switch name {
 	case "drop":
 		return nil, f.db.Stop(true)

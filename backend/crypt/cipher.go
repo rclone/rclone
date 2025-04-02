@@ -192,7 +192,7 @@ func newCipher(mode NameEncryptionMode, password, salt string, dirNameEncrypt bo
 		dirNameEncrypt:  dirNameEncrypt,
 		encryptedSuffix: ".bin",
 	}
-	c.buffers.New = func() interface{} {
+	c.buffers.New = func() any {
 		return new([blockSize]byte)
 	}
 	err := c.Key(password, salt)
@@ -336,7 +336,7 @@ func (c *Cipher) obfuscateSegment(plaintext string) string {
 	_, _ = result.WriteString(strconv.Itoa(dir) + ".")
 
 	// but we'll augment it with the nameKey for real calculation
-	for i := 0; i < len(c.nameKey); i++ {
+	for i := range len(c.nameKey) {
 		dir += int(c.nameKey[i])
 	}
 
@@ -418,7 +418,7 @@ func (c *Cipher) deobfuscateSegment(ciphertext string) (string, error) {
 	}
 
 	// add the nameKey to get the real rotate distance
-	for i := 0; i < len(c.nameKey); i++ {
+	for i := range len(c.nameKey) {
 		dir += int(c.nameKey[i])
 	}
 
@@ -664,7 +664,7 @@ func (n *nonce) increment() {
 // add a uint64 to the nonce
 func (n *nonce) add(x uint64) {
 	carry := uint16(0)
-	for i := 0; i < 8; i++ {
+	for i := range 8 {
 		digit := (*n)[i]
 		xDigit := byte(x)
 		x >>= 8

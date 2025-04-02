@@ -17,7 +17,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-type settings map[string]interface{}
+type settings map[string]any
 
 func deriveFs(ctx context.Context, t *testing.T, f fs.Fs, opts settings) fs.Fs {
 	fsName := strings.Split(f.Name(), "{")[0] // strip off hash

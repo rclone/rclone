@@ -19,6 +19,7 @@ import (
 	"net/url"
 	"path"
 	"regexp"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -934,13 +935,19 @@ func init() {
 				Help:  "The default endpoint\nIran",
 			}},
 		}, {
-			// Linode endpoints: https://www.linode.com/docs/products/storage/object-storage/guides/urls/#cluster-url-s3-endpoint
+			// Linode endpoints: https://techdocs.akamai.com/cloud-computing/docs/object-storage-product-limits#supported-endpoint-types-by-region
 			Name:     "endpoint",
 			Help:     "Endpoint for Linode Object Storage API.",
 			Provider: "Linode",
 			Examples: []fs.OptionExample{{
+				Value: "nl-ams-1.linodeobjects.com",
+				Help:  "Amsterdam (Netherlands), nl-ams-1",
+			}, {
 				Value: "us-southeast-1.linodeobjects.com",
 				Help:  "Atlanta, GA (USA), us-southeast-1",
+			}, {
+				Value: "in-maa-1.linodeobjects.com",
+				Help:  "Chennai (India), in-maa-1",
 			}, {
 				Value: "us-ord-1.linodeobjects.com",
 				Help:  "Chicago, IL (USA), us-ord-1",
@@ -948,20 +955,47 @@ func init() {
 				Value: "eu-central-1.linodeobjects.com",
 				Help:  "Frankfurt (Germany), eu-central-1",
 			}, {
+				Value: "id-cgk-1.linodeobjects.com",
+				Help:  "Jakarta (Indonesia), id-cgk-1",
+			}, {
+				Value: "gb-lon-1.linodeobjects.com",
+				Help:  "London 2 (Great Britain), gb-lon-1",
+			}, {
+				Value: "us-lax-1.linodeobjects.com",
+				Help:  "Los Angeles, CA (USA), us-lax-1",
+			}, {
+				Value: "es-mad-1.linodeobjects.com",
+				Help:  "Madrid (Spain), es-mad-1",
+			}, {
+				Value: "au-mel-1.linodeobjects.com",
+				Help:  "Melbourne (Australia), au-mel-1",
+			}, {
+				Value: "us-mia-1.linodeobjects.com",
+				Help:  "Miami, FL (USA), us-mia-1",
+			}, {
 				Value: "it-mil-1.linodeobjects.com",
 				Help:  "Milan (Italy), it-mil-1",
 			}, {
 				Value: "us-east-1.linodeobjects.com",
 				Help:  "Newark, NJ (USA), us-east-1",
 			}, {
+				Value: "jp-osa-1.linodeobjects.com",
+				Help:  "Osaka (Japan), jp-osa-1",
+			}, {
 				Value: "fr-par-1.linodeobjects.com",
 				Help:  "Paris (France), fr-par-1",
+			}, {
+				Value: "br-gru-1.linodeobjects.com",
+				Help:  "São Paulo (Brazil), br-gru-1",
 			}, {
 				Value: "us-sea-1.linodeobjects.com",
 				Help:  "Seattle, WA (USA), us-sea-1",
 			}, {
 				Value: "ap-south-1.linodeobjects.com",
-				Help:  "Singapore ap-south-1",
+				Help:  "Singapore, ap-south-1",
+			}, {
+				Value: "sg-sin-1.linodeobjects.com",
+				Help:  "Singapore 2, sg-sin-1",
 			}, {
 				Value: "se-sto-1.linodeobjects.com",
 				Help:  "Stockholm (Sweden), se-sto-1",
@@ -2686,6 +2720,34 @@ knows about - please make a bug report if not.
 			Default:  fs.Tristate{},
 			Advanced: true,
 		}, {
+			Name: "use_x_id",
+			Help: `Set if rclone should add x-id URL parameters.
+
+You can change this if you want to disable the AWS SDK from
+adding x-id URL parameters.
+
+This shouldn't be necessary in normal operation.
+
+This should be automatically set correctly for all providers rclone
+knows about - please make a bug report if not.
+`,
+			Default:  fs.Tristate{},
+			Advanced: true,
+		}, {
+			Name: "sign_accept_encoding",
+			Help: `Set if rclone should include Accept-Encoding as part of the signature.
+
+You can change this if you want to stop rclone including
+Accept-Encoding as part of the signature.
+
+This shouldn't be necessary in normal operation.
+
+This should be automatically set correctly for all providers rclone
+knows about - please make a bug report if not.
+`,
+			Default:  fs.Tristate{},
+			Advanced: true,
+		}, {
 			Name: "directory_bucket",
 			Help: strings.ReplaceAll(`Set to use AWS Directory Buckets
 
@@ -2901,6 +2963,8 @@ type Options struct {
 	DirectoryBucket       bool                 `config:"directory_bucket"`
 	IBMAPIKey             string               `config:"ibm_api_key"`
 	IBMInstanceID         string               `config:"ibm_resource_instance_id"`
+	UseXID                fs.Tristate          `config:"use_x_id"`
+	SignAcceptEncoding    fs.Tristate          `config:"sign_accept_encoding"`
 }
 
 // Fs represents a remote s3 server
@@ -3034,10 +3098,8 @@ func (f *Fs) shouldRetry(ctx context.Context, err error) (bool, error) {
 				return true, err
 			}
 		}
-		for _, e := range retryErrorCodes {
-			if httpStatusCode == e {
-				return true, err
-			}
+		if slices.Contains(retryErrorCodes, httpStatusCode) {
+			return true, err
 		}
 	}
 	// Ok, not an awserr, check for generic failure conditions
@@ -3085,41 +3147,47 @@ func getClient(ctx context.Context, opt *Options) *http.Client {
 	}
 }
 
+// Fixup the request if needed.
+//
 // Google Cloud Storage alters the Accept-Encoding header, which
-// breaks the v2 request signature
+// breaks the v2 request signature. This is set with opt.SignAcceptEncoding.
 //
 // It also doesn't like the x-id URL parameter SDKv2 puts in so we
-// remove that too.
+// remove that too. This is set with opt.UseXID.Value.
 //
 // See https://github.com/aws/aws-sdk-go-v2/issues/1816.
 // Adapted from: https://github.com/aws/aws-sdk-go-v2/issues/1816#issuecomment-1927281540
-func fixupGCS(o *s3.Options) {
+func fixupRequest(o *s3.Options, opt *Options) {
 	type ignoredHeadersKey struct{}
 	headers := []string{"Accept-Encoding"}
 
 	fixup := middleware.FinalizeMiddlewareFunc(
-		"FixupGCS",
+		"FixupRequest",
 		func(ctx context.Context, in middleware.FinalizeInput, next middleware.FinalizeHandler) (out middleware.FinalizeOutput, metadata middleware.Metadata, err error) {
 			req, ok := in.Request.(*smithyhttp.Request)
 			if !ok {
-				return out, metadata, fmt.Errorf("fixupGCS: unexpected request middleware type %T", in.Request)
+				return out, metadata, fmt.Errorf("fixupRequest: unexpected request middleware type %T", in.Request)
 			}
 
-			// Delete headers from being signed - will restore later
-			ignored := make(map[string]string, len(headers))
-			for _, h := range headers {
-				ignored[h] = req.Header.Get(h)
-				req.Header.Del(h)
+			if !opt.SignAcceptEncoding.Value {
+				// Delete headers from being signed - will restore later
+				ignored := make(map[string]string, len(headers))
+				for _, h := range headers {
+					ignored[h] = req.Header.Get(h)
+					req.Header.Del(h)
+				}
+
+				// Store ignored on context
+				ctx = middleware.WithStackValue(ctx, ignoredHeadersKey{}, ignored)
 			}
 
-			// Remove x-id because Google doesn't like them
-			if query := req.URL.Query(); query.Has("x-id") {
-				query.Del("x-id")
-				req.URL.RawQuery = query.Encode()
+			if !opt.UseXID.Value {
+				// Remove x-id
+				if query := req.URL.Query(); query.Has("x-id") {
+					query.Del("x-id")
+					req.URL.RawQuery = query.Encode()
+				}
 			}
-
-			// Store ignored on context
-			ctx = middleware.WithStackValue(ctx, ignoredHeadersKey{}, ignored)
 
 			return next.HandleFinalize(ctx, in)
 		},
@@ -3127,17 +3195,19 @@ func fixupGCS(o *s3.Options) {
 
 	// Restore headers if necessary
 	restore := middleware.FinalizeMiddlewareFunc(
-		"FixupGCSRestoreHeaders",
+		"FixupRequestRestoreHeaders",
 		func(ctx context.Context, in middleware.FinalizeInput, next middleware.FinalizeHandler) (out middleware.FinalizeOutput, metadata middleware.Metadata, err error) {
 			req, ok := in.Request.(*smithyhttp.Request)
 			if !ok {
-				return out, metadata, fmt.Errorf("fixupGCS: unexpected request middleware type %T", in.Request)
+				return out, metadata, fmt.Errorf("fixupRequest: unexpected request middleware type %T", in.Request)
 			}
 
-			// Restore ignored from ctx
-			ignored, _ := middleware.GetStackValue(ctx, ignoredHeadersKey{}).(map[string]string)
-			for k, v := range ignored {
-				req.Header.Set(k, v)
+			if !opt.SignAcceptEncoding.Value {
+				// Restore ignored from ctx
+				ignored, _ := middleware.GetStackValue(ctx, ignoredHeadersKey{}).(map[string]string)
+				for k, v := range ignored {
+					req.Header.Set(k, v)
+				}
 			}
 
 			return next.HandleFinalize(ctx, in)
@@ -3159,7 +3229,7 @@ func fixupGCS(o *s3.Options) {
 type s3logger struct{}
 
 // Logf is expected to support the standard fmt package "verbs".
-func (s3logger) Logf(classification logging.Classification, format string, v ...interface{}) {
+func (s3logger) Logf(classification logging.Classification, format string, v ...any) {
 	switch classification {
 	default:
 	case logging.Debug:
@@ -3267,9 +3337,10 @@ func s3Connection(ctx context.Context, opt *Options, client *http.Client) (s3Cli
 		}
 	}
 
-	if opt.Provider == "GCS" {
+	// Fixup the request if needed
+	if !opt.UseXID.Value || !opt.SignAcceptEncoding.Value {
 		options = append(options, func(o *s3.Options) {
-			fixupGCS(o)
+			fixupRequest(o, opt)
 		})
 	}
 
@@ -3384,6 +3455,8 @@ func setQuirks(opt *Options) {
 		useAlreadyExists      = true // Set if provider returns AlreadyOwnedByYou or no error if you try to remake your own bucket
 		useMultipartUploads   = true // Set if provider supports multipart uploads
 		useUnsignedPayload    = true // Do we need to use unsigned payloads to avoid seeking in PutObject
+		useXID                = true // Add x-id URL parameter into requests
+		signAcceptEncoding    = true // If we should include AcceptEncoding in the signature
 	)
 	switch opt.Provider {
 	case "AWS":
@@ -3528,11 +3601,14 @@ func setQuirks(opt *Options) {
 		// Google break request Signature by mutating accept-encoding HTTP header
 		// https://github.com/rclone/rclone/issues/6670
 		useAcceptEncodingGzip = false
+		signAcceptEncoding = false
 		useAlreadyExists = true // returns BucketNameUnavailable instead of BucketAlreadyExists but good enough!
 		// GCS S3 doesn't support multi-part server side copy:
 		// See: https://issuetracker.google.com/issues/323465186
 		// So make cutoff very large which it does seem to support
 		opt.CopyCutoff = math.MaxInt64
+		// GCS doesn't like the x-id URL parameter the SDKv2 inserts
+		useXID = false
 	default: //nolint:gocritic // Don't include gocritic when running golangci-lint to avoid defaultCaseOrder: consider to make `default` case as first or as last case
 		fs.Logf("s3", "s3 provider %q not known - please set correctly", opt.Provider)
 		fallthrough
@@ -3601,6 +3677,18 @@ func setQuirks(opt *Options) {
 	if !opt.UseUnsignedPayload.Valid {
 		opt.UseUnsignedPayload.Valid = true
 		opt.UseUnsignedPayload.Value = useUnsignedPayload
+	}
+
+	// Set the correct use UseXID if not manually set
+	if !opt.UseXID.Valid {
+		opt.UseXID.Valid = true
+		opt.UseXID.Value = useXID
+	}
+
+	// Set the correct SignAcceptEncoding if not manually set
+	if !opt.SignAcceptEncoding.Valid {
+		opt.SignAcceptEncoding.Valid = true
+		opt.SignAcceptEncoding.Value = signAcceptEncoding
 	}
 }
 
@@ -5164,7 +5252,7 @@ It doesn't return anything.
 // The result should be capable of being JSON encoded
 // If it is a string or a []string it will be shown to the user
 // otherwise it will be JSON encoded and shown to the user like that
-func (f *Fs) Command(ctx context.Context, name string, arg []string, opt map[string]string) (out interface{}, err error) {
+func (f *Fs) Command(ctx context.Context, name string, arg []string, opt map[string]string) (out any, err error) {
 	switch name {
 	case "restore":
 		req := s3.RestoreObjectInput{

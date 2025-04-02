@@ -355,10 +355,7 @@ func (r *testReader) Read(p []byte) (n int, err error) {
 	if len(r.data) == 0 {
 		return 0, io.EOF
 	}
-	chunkSize := r.chunkSize
-	if chunkSize > len(r.data) {
-		chunkSize = len(r.data)
-	}
+	chunkSize := min(r.chunkSize, len(r.data))
 	n = copy(p, r.data[:chunkSize])
 	r.data = r.data[n:]
 	return n, nil
@@ -405,10 +402,7 @@ func TestRWBoundaryConditions(t *testing.T) {
 	write := func(rw *RW, data []byte, chunkSize int) {
 		writeData := data
 		for len(writeData) > 0 {
-			i := chunkSize
-			if i > len(writeData) {
-				i = len(writeData)
-			}
+			i := min(chunkSize, len(writeData))
 			nn, err := rw.Write(writeData[:i])
 			assert.NoError(t, err)
 			assert.Equal(t, len(writeData[:i]), nn)

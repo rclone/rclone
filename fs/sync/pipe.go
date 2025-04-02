@@ -66,12 +66,12 @@ func (p *pipe) Swap(i, j int) {
 }
 
 // Push satisfy heap.Interface - must be called with lock held
-func (p *pipe) Push(item interface{}) {
+func (p *pipe) Push(item any) {
 	p.queue = append(p.queue, item.(fs.ObjectPair))
 }
 
 // Pop satisfy heap.Interface - must be called with lock held
-func (p *pipe) Pop() interface{} {
+func (p *pipe) Pop() any {
 	old := p.queue
 	n := len(old)
 	item := old[n-1]

@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"runtime/debug"
+	"slices"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -79,7 +80,7 @@ func (job *Job) removeListener(fn *func()) {
 	defer job.mu.Unlock()
 	for i, ln := range job.listeners {
 		if ln == fn {
-			job.listeners = append(job.listeners[:i], job.listeners[i+1:]...)
+			job.listeners = slices.Delete(job.listeners, i, i+1)
 			return
 		}
 	}

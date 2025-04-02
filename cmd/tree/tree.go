@@ -192,7 +192,7 @@ func (to *FileInfo) IsDir() bool {
 }
 
 // Sys is underlying data source (can return nil)
-func (to *FileInfo) Sys() interface{} {
+func (to *FileInfo) Sys() any {
 	return nil
 }
 

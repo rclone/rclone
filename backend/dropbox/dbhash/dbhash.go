@@ -55,10 +55,7 @@ func (d *digest) Write(p []byte) (n int, err error) {
 	n = len(p)
 	for len(p) > 0 {
 		d.writtenMore = true
-		toWrite := bytesPerBlock - d.n
-		if toWrite > len(p) {
-			toWrite = len(p)
-		}
+		toWrite := min(bytesPerBlock-d.n, len(p))
 		_, err = d.blockHash.Write(p[:toWrite])
 		if err != nil {
 			panic(hashReturnedError)

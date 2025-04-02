@@ -3,6 +3,7 @@ package accounting
 import (
 	"context"
 	"fmt"
+	"maps"
 	"sort"
 	"strings"
 	"sync"
@@ -47,9 +48,7 @@ func (tm *transferMap) del(remote string) bool {
 func (tm *transferMap) merge(m *transferMap) {
 	tm.mu.Lock()
 	m.mu.Lock()
-	for name, tr := range m.items {
-		tm.items[name] = tr
-	}
+	maps.Copy(tm.items, m.items)
 	m.mu.Unlock()
 	tm.mu.Unlock()
 }

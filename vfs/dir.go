@@ -181,12 +181,12 @@ func (d *Dir) Path() (name string) {
 }
 
 // Sys returns underlying data source (can be nil) - satisfies Node interface
-func (d *Dir) Sys() interface{} {
+func (d *Dir) Sys() any {
 	return d.sys.Load()
 }
 
 // SetSys sets the underlying data source (can be nil) - satisfies Node interface
-func (d *Dir) SetSys(x interface{}) {
+func (d *Dir) SetSys(x any) {
 	d.sys.Store(x)
 }
 
@@ -760,6 +760,7 @@ func (d *Dir) _readDirFromEntries(entries fs.DirEntries, dirTree dirtree.DirTree
 			dir := node.(*Dir)
 			dir.mu.Lock()
 			dir.modTime = item.ModTime(context.TODO())
+			dir.entry = item
 			if dirTree != nil {
 				err = dir._readDirFromDirTree(dirTree, when)
 				if err != nil {

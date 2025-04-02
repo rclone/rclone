@@ -97,10 +97,7 @@ func (c *Default) Calculate(state State) time.Duration {
 		}
 		return sleepTime
 	}
-	sleepTime := (state.SleepTime<<c.decayConstant - state.SleepTime) >> c.decayConstant
-	if sleepTime < c.minSleep {
-		sleepTime = c.minSleep
-	}
+	sleepTime := max((state.SleepTime<<c.decayConstant-state.SleepTime)>>c.decayConstant, c.minSleep)
 	return sleepTime
 }
 
@@ -286,10 +283,7 @@ func (c *S3) Calculate(state State) time.Duration {
 		if state.SleepTime == 0 {
 			return c.minSleep
 		}
-		sleepTime := (state.SleepTime << c.attackConstant) / ((1 << c.attackConstant) - 1)
-		if sleepTime > c.maxSleep {
-			sleepTime = c.maxSleep
-		}
+		sleepTime := min((state.SleepTime<<c.attackConstant)/((1<<c.attackConstant)-1), c.maxSleep)
 		return sleepTime
 	}
 	sleepTime := (state.SleepTime<<c.decayConstant - state.SleepTime) >> c.decayConstant

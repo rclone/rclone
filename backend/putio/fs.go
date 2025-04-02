@@ -332,10 +332,7 @@ func (f *Fs) sendUpload(ctx context.Context, location string, size int64, in io.
 	var offsetMismatch bool
 	buf := make([]byte, defaultChunkSize)
 	for clientOffset < size {
-		chunkSize := size - clientOffset
-		if chunkSize >= int64(defaultChunkSize) {
-			chunkSize = int64(defaultChunkSize)
-		}
+		chunkSize := min(size-clientOffset, int64(defaultChunkSize))
 		chunk := readers.NewRepeatableLimitReaderBuffer(in, buf, chunkSize)
 		chunkStart := clientOffset
 		reqSize := chunkSize

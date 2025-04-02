@@ -118,7 +118,7 @@ func TestBatcherCommit(t *testing.T) {
 	require.NoError(t, err)
 	defer b.Shutdown()
 
-	for i := 0; i < 10; i++ {
+	for i := range 10 {
 		wg.Add(1)
 		s := fmt.Sprintf("%d", i)
 		go func() {
@@ -162,7 +162,7 @@ func TestBatcherCommitFail(t *testing.T) {
 	require.NoError(t, err)
 	defer b.Shutdown()
 
-	for i := 0; i < 10; i++ {
+	for i := range 10 {
 		wg.Add(1)
 		s := fmt.Sprintf("%d", i)
 		go func() {
@@ -202,7 +202,7 @@ func TestBatcherCommitShutdown(t *testing.T) {
 	b, err := New[Item, Result](ctx, nil, commitBatch, opt)
 	require.NoError(t, err)
 
-	for i := 0; i < 10; i++ {
+	for i := range 10 {
 		wg.Add(1)
 		s := fmt.Sprintf("%d", i)
 		go func() {
@@ -256,7 +256,7 @@ func TestBatcherCommitAsync(t *testing.T) {
 	require.NoError(t, err)
 	defer b.Shutdown()
 
-	for i := 0; i < 10; i++ {
+	for i := range 10 {
 		wg.Add(1)
 		s := fmt.Sprintf("%d", i)
 		go func() {

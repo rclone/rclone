@@ -261,6 +261,34 @@ func TestOptionString(t *testing.T) {
 	assert.Equal(t, "true", caseInsensitiveOption.String())
 }
 
+func TestOptionStringStringArray(t *testing.T) {
+	opt := Option{
+		Name:    "string_array",
+		Default: []string(nil),
+	}
+	assert.Equal(t, "", opt.String())
+	opt.Default = []string{}
+	assert.Equal(t, "", opt.String())
+	opt.Default = []string{"a", "b"}
+	assert.Equal(t, "a,b", opt.String())
+	opt.Default = []string{"hello, world!", "goodbye, world!"}
+	assert.Equal(t, `"hello, world!","goodbye, world!"`, opt.String())
+}
+
+func TestOptionStringSizeSuffix(t *testing.T) {
+	opt := Option{
+		Name:    "size_suffix",
+		Default: SizeSuffix(0),
+	}
+	assert.Equal(t, "0", opt.String())
+	opt.Default = SizeSuffix(-1)
+	assert.Equal(t, "off", opt.String())
+	opt.Default = SizeSuffix(100)
+	assert.Equal(t, "100B", opt.String())
+	opt.Default = SizeSuffix(1024)
+	assert.Equal(t, "1Ki", opt.String())
+}
+
 func TestOptionSet(t *testing.T) {
 	o := caseInsensitiveOption
 	assert.Equal(t, true, o.Value)

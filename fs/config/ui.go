@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -148,10 +149,8 @@ func Choose(what string, kind string, choices, help []string, defaultValue strin
 		result := ReadLine()
 		i, err := strconv.Atoi(result)
 		if err != nil {
-			for _, v := range choices {
-				if result == v {
-					return result
-				}
+			if slices.Contains(choices, result) {
+				return result
 			}
 			if result == "" {
 				// If empty string is in the predefined list of choices it has already been returned above.

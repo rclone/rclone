@@ -78,7 +78,7 @@ func mount(VFS *vfs.VFS, mountpoint string, opt *mountlib.Options) (<-chan error
 	fs.Debugf(f, "Mounting on %q", mountpoint)
 
 	if opt.DebugFUSE {
-		fuse.Debug = func(msg interface{}) {
+		fuse.Debug = func(msg any) {
 			fs.Debugf("fuse", "%v", msg)
 		}
 	}

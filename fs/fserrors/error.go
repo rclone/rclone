@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"slices"
 	"strings"
 	"time"
 
@@ -44,7 +45,7 @@ func (r retryError) Retry() bool {
 var _ Retrier = retryError("")
 
 // RetryErrorf makes an error which indicates it would like to be retried
-func RetryErrorf(format string, a ...interface{}) error {
+func RetryErrorf(format string, a ...any) error {
 	return retryError(fmt.Sprintf(format, a...))
 }
 
@@ -417,10 +418,8 @@ func ShouldRetry(err error) bool {
 	}
 
 	// Check if it is a retriable error
-	for _, retriableErr := range retriableErrors {
-		if err == retriableErr {
-			return true
-		}
+	if slices.Contains(retriableErrors, err) {
+		return true
 	}
 
 	// Check error strings (yuch!) too
@@ -441,12 +440,7 @@ func ShouldRetryHTTP(resp *http.Response, retryErrorCodes []int) bool {
 	if resp == nil {
 		return false
 	}
-	for _, e := range retryErrorCodes {
-		if resp.StatusCode == e {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(retryErrorCodes, resp.StatusCode)
 }
 
 // ContextError checks to see if ctx is in error.

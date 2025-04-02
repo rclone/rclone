@@ -29,6 +29,7 @@ func setSys(fi os.FileInfo) {
 	node, ok := fi.(vfs.Node)
 	if !ok {
 		fs.Errorf(fi, "internal error: %T is not a vfs.Node", fi)
+		return
 	}
 	vfs := node.VFS()
 	// Set the UID and GID for the node passed in from the VFS defaults.

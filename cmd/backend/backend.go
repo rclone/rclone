@@ -82,7 +82,7 @@ Note to run these commands on a running backend then see
 				return err
 			}
 			// Run the command
-			var out interface{}
+			var out any
 			switch name {
 			case "help":
 				return showHelp(fsInfo)

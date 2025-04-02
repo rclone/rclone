@@ -1313,7 +1313,7 @@ func (f *Fs) getCachedLibraries(ctx context.Context) ([]api.Library, error) {
 	f.librariesMutex.Lock()
 	defer f.librariesMutex.Unlock()
 
-	libraries, err := f.libraries.Get(librariesCacheKey, func(key string) (value interface{}, ok bool, error error) {
+	libraries, err := f.libraries.Get(librariesCacheKey, func(key string) (value any, ok bool, error error) {
 		// Load the libraries if not present in the cache
 		libraries, err := f.getLibraries(ctx)
 		if err != nil {

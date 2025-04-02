@@ -123,7 +123,7 @@ func newServer(ctx context.Context, opt *rc.Options, mux *http.ServeMux) (*Serve
 	)
 
 	// Add the debug handler which is installed in the default mux
-	router.Handle("/debug/*", mux)
+	router.Handle("/debug/pprof/*", mux)
 
 	// FIXME split these up into individual functions
 	router.Get("/*", s.handler)
@@ -209,8 +209,21 @@ func (s *Server) handlePost(w http.ResponseWriter, r *http.Request, path string)
 	ctx := r.Context()
 	contentType := r.Header.Get("Content-Type")
 
+	var (
+		contentTypeMediaType string
+		contentTypeParams    map[string]string
+	)
+	if contentType != "" {
+		var err error
+		contentTypeMediaType, contentTypeParams, err = mime.ParseMediaType(contentType)
+		if err != nil {
+			writeError(path, nil, w, fmt.Errorf("failed to parse Content-Type: %w", err), http.StatusBadRequest)
+			return
+		}
+	}
+
 	values := r.URL.Query()
-	if contentType == "application/x-www-form-urlencoded" {
+	if contentTypeMediaType == "application/x-www-form-urlencoded" {
 		// Parse the POST and URL parameters into r.Form, for others r.Form will be empty value
 		err := r.ParseForm()
 		if err != nil {
@@ -229,7 +242,13 @@ func (s *Server) handlePost(w http.ResponseWriter, r *http.Request, path string)
 	}
 
 	// Parse a JSON blob from the input
-	if contentType == "application/json" {
+	if contentTypeMediaType == "application/json" {
+		// Check the charset is utf-8 or unset
+		if charset, ok := contentTypeParams["charset"]; ok && !strings.EqualFold(charset, "utf-8") {
+			writeError(path, in, w, fmt.Errorf("unsupported charset %q for JSON input", charset), http.StatusBadRequest)
+			return
+		}
+
 		err := json.NewDecoder(r.Body).Decode(&in)
 		if err != nil {
 			writeError(path, in, w, fmt.Errorf("failed to read input JSON: %w", err), http.StatusBadRequest)

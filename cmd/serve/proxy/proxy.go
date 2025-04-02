@@ -182,7 +182,7 @@ func (p *Proxy) run(in map[string]string) (config configmap.Simple, err error) {
 }
 
 // call runs the auth proxy and returns a cacheEntry and an error
-func (p *Proxy) call(user, auth string, isPublicKey bool) (value interface{}, err error) {
+func (p *Proxy) call(user, auth string, isPublicKey bool) (value any, err error) {
 	var config configmap.Simple
 	// Contact the proxy
 	if isPublicKey {
@@ -222,7 +222,7 @@ func (p *Proxy) call(user, auth string, isPublicKey bool) (value interface{}, er
 	fsString := name + ":" + root
 
 	// Look for fs in the VFS cache
-	value, err = p.vfsCache.Get(user, func(key string) (value interface{}, ok bool, err error) {
+	value, err = p.vfsCache.Get(user, func(key string) (value any, ok bool, err error) {
 		// Create the Fs from the cache
 		f, err := cache.GetFn(p.ctx, fsString, func(ctx context.Context, fsString string) (fs.Fs, error) {
 			// Update the config with the default values

@@ -47,7 +47,7 @@ func BenchmarkAllocFree(b *testing.B) {
 func BenchmarkAllocFreeWithLotsOfAllocations(b *testing.B) {
 	const size = 4096
 	alloc := func(n int) (allocs [][]byte) {
-		for i := 0; i < n; i++ {
+		for range n {
 			mem := MustAlloc(size)
 			mem[0] ^= 0xFF
 			allocs = append(allocs, mem)
@@ -76,7 +76,7 @@ func BenchmarkAllocFreeWithLotsOfAllocations(b *testing.B) {
 func BenchmarkAllocFreeForLotsOfAllocations(b *testing.B) {
 	const size = 4096
 	alloc := func(n int) (allocs [][]byte) {
-		for i := 0; i < n; i++ {
+		for range n {
 			mem := MustAlloc(size)
 			mem[0] ^= 0xFF
 			allocs = append(allocs, mem)

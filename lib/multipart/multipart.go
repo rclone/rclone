@@ -62,10 +62,7 @@ func UploadMultipart(ctx context.Context, src fs.ObjectInfo, in io.Reader, opt U
 	}
 
 	// make concurrency machinery
-	concurrency := info.Concurrency
-	if concurrency < 1 {
-		concurrency = 1
-	}
+	concurrency := max(info.Concurrency, 1)
 	tokens := pacer.NewTokenDispenser(concurrency)
 
 	uploadCtx, cancel := context.WithCancel(ctx)

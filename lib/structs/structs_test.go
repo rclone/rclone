@@ -9,7 +9,7 @@ import (
 )
 
 // returns the "%p" representation of the thing passed in
-func ptr(p interface{}) string {
+func ptr(p any) string {
 	return fmt.Sprintf("%p", p)
 }
 

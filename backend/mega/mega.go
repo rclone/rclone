@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"io"
 	"path"
+	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -218,11 +219,11 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		srv = mega.New().SetClient(fshttp.NewClient(ctx))
 		srv.SetRetries(ci.LowLevelRetries) // let mega do the low level retries
 		srv.SetHTTPS(opt.UseHTTPS)
-		srv.SetLogger(func(format string, v ...interface{}) {
+		srv.SetLogger(func(format string, v ...any) {
 			fs.Infof("*go-mega*", format, v...)
 		})
 		if opt.Debug {
-			srv.SetDebugger(func(format string, v ...interface{}) {
+			srv.SetDebugger(func(format string, v ...any) {
 				fs.Debugf("*go-mega*", format, v...)
 			})
 		}
@@ -498,11 +499,8 @@ func (f *Fs) list(ctx context.Context, dir *mega.Node, fn listFn) (found bool, e
 	if err != nil {
 		return false, fmt.Errorf("list failed: %w", err)
 	}
-	for _, item := range nodes {
-		if fn(item) {
-			found = true
-			break
-		}
+	if slices.ContainsFunc(nodes, fn) {
+		found = true
 	}
 	return
 }
@@ -1156,7 +1154,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 
 	// Upload the chunks
 	// FIXME do this in parallel
-	for id := 0; id < u.Chunks(); id++ {
+	for id := range u.Chunks() {
 		_, chunkSize, err := u.ChunkLocation(id)
 		if err != nil {
 			return fmt.Errorf("upload failed to read chunk location: %w", err)

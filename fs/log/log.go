@@ -78,13 +78,13 @@ func fnName() string {
 // function that logs the exit parameters.
 //
 // Any pointers in the exit function will be dereferenced
-func Trace(o interface{}, format string, a ...interface{}) func(string, ...interface{}) {
+func Trace(o any, format string, a ...any) func(string, ...any) {
 	if fs.GetConfig(context.Background()).LogLevel < fs.LogLevelDebug {
-		return func(format string, a ...interface{}) {}
+		return func(format string, a ...any) {}
 	}
 	name := fnName()
 	fs.LogPrintf(fs.LogLevelDebug, o, name+": "+format, a...)
-	return func(format string, a ...interface{}) {
+	return func(format string, a ...any) {
 		for i := range a {
 			// read the values of the pointed to items
 			typ := reflect.TypeOf(a[i])
@@ -103,7 +103,7 @@ func Trace(o interface{}, format string, a ...interface{}) func(string, ...inter
 }
 
 // Stack logs a stack trace of callers with the o and info passed in
-func Stack(o interface{}, info string) {
+func Stack(o any, info string) {
 	if fs.GetConfig(context.Background()).LogLevel < fs.LogLevelDebug {
 		return
 	}

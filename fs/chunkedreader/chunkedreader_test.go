@@ -80,10 +80,7 @@ func testRead(content []byte, mode mockobject.SeekMode, streams int) func(*testi
 							require.Equal(t, offset, p, what)
 
 							n, err := cr.Read(buf)
-							end := offset + int64(bl)
-							if end > cl {
-								end = cl
-							}
+							end := min(offset+int64(bl), cl)
 							l := int(end - offset)
 							if l < bl {
 								require.Equal(t, io.EOF, err, what)

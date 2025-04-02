@@ -73,10 +73,7 @@ func (mc *multiThreadCopyState) copyChunk(ctx context.Context, chunk int, writer
 	if start >= mc.size {
 		return nil
 	}
-	end := start + mc.partSize
-	if end > mc.size {
-		end = mc.size
-	}
+	end := min(start+mc.partSize, mc.size)
 	size := end - start
 
 	fs.Debugf(mc.src, "multi-thread copy: chunk %d/%d (%d-%d) size %v starting", chunk+1, mc.numChunks, start, end, fs.SizeSuffix(size))
@@ -218,7 +215,7 @@ func multiThreadCopy(ctx context.Context, f fs.Fs, remote string, src fs.Object,
 	mc.acc = tr.Account(gCtx, nil)
 
 	fs.Debugf(src, "Starting multi-thread copy with %d chunks of size %v with %v parallel streams", mc.numChunks, fs.SizeSuffix(mc.partSize), concurrency)
-	for chunk := 0; chunk < mc.numChunks; chunk++ {
+	for chunk := range mc.numChunks {
 		// Fail fast, in case an errgroup managed function returns an error
 		if gCtx.Err() != nil {
 			break

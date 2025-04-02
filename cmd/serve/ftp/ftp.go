@@ -226,12 +226,12 @@ func (d *driver) close() error {
 type Logger struct{}
 
 // Print log simple text message
-func (l *Logger) Print(sessionID string, message interface{}) {
+func (l *Logger) Print(sessionID string, message any) {
 	fs.Infof(sessionID, "%s", message)
 }
 
 // Printf log formatted text message
-func (l *Logger) Printf(sessionID string, format string, v ...interface{}) {
+func (l *Logger) Printf(sessionID string, format string, v ...any) {
 	fs.Infof(sessionID, format, v...)
 }
 

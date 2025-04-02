@@ -2723,7 +2723,7 @@ func testSyncConcurrent(t *testing.T, subtest string) {
 
 	itemsBefore := []fstest.Item{}
 	itemsAfter := []fstest.Item{}
-	for i := 0; i < NFILES; i++ {
+	for i := range NFILES {
 		nameBoth := fmt.Sprintf("both%d", i)
 		nameOnly := fmt.Sprintf("only%d", i)
 		switch subtest {
@@ -2760,6 +2760,81 @@ func TestSyncConcurrentDelete(t *testing.T) {
 
 func TestSyncConcurrentTruncate(t *testing.T) {
 	testSyncConcurrent(t, "truncate")
+}
+
+// Test that sync replaces dir modtimes in dst if they've changed
+func testSyncReplaceDirModTime(t *testing.T, copyEmptySrcDirs bool) {
+	accounting.GlobalStats().ResetCounters()
+	ctx, _ := fs.AddConfig(context.Background())
+	r := fstest.NewRun(t)
+
+	file1 := r.WriteFile("file1", "file1", t2)
+	file2 := r.WriteFile("test_dir1/file2", "file2", t2)
+	file3 := r.WriteFile("test_dir2/sub_dir/file3", "file3", t2)
+	r.CheckLocalItems(t, file1, file2, file3)
+
+	_, err := operations.MkdirModTime(ctx, r.Flocal, "empty_dir", t2)
+	require.NoError(t, err)
+
+	// A directory that's empty on both src and dst
+	_, err = operations.MkdirModTime(ctx, r.Flocal, "empty_on_remote", t2)
+	require.NoError(t, err)
+	_, err = operations.MkdirModTime(ctx, r.Fremote, "empty_on_remote", t2)
+	require.NoError(t, err)
+
+	// set logging
+	// (this checks log output as DirModtime operations do not yet have stats, and r.CheckDirectoryModTimes also does not tell us what actions were taken)
+	oldLogLevel := fs.GetConfig(context.Background()).LogLevel
+	defer func() { fs.GetConfig(context.Background()).LogLevel = oldLogLevel }() // reset to old val after test
+	// need to do this as fs.Infof only respects the globalConfig
+	fs.GetConfig(context.Background()).LogLevel = fs.LogLevelInfo
+
+	// First run
+	accounting.GlobalStats().ResetCounters()
+	ctx = predictDstFromLogger(ctx)
+	output := bilib.CaptureOutput(func() {
+		err := CopyDir(ctx, r.Fremote, r.Flocal, copyEmptySrcDirs)
+		require.NoError(t, err)
+	})
+	require.NotNil(t, output)
+	testLoggerVsLsf(ctx, r.Fremote, operations.GetLoggerOpt(ctx).JSON, t)
+
+	// Save all dirs
+	dirs := []string{"test_dir1", "test_dir2", "test_dir2/sub_dir", "empty_on_remote"}
+	if copyEmptySrcDirs {
+		dirs = append(dirs, "empty_dir")
+	}
+
+	// Change dir modtimes
+	for _, dir := range dirs {
+		_, err := operations.SetDirModTime(ctx, r.Flocal, nil, dir, t1)
+		if err != nil && !errors.Is(err, fs.ErrorNotImplemented) {
+			require.NoError(t, err)
+		}
+	}
+
+	// Run again
+	accounting.GlobalStats().ResetCounters()
+	ctx = predictDstFromLogger(ctx)
+	output = bilib.CaptureOutput(func() {
+		err := CopyDir(ctx, r.Fremote, r.Flocal, copyEmptySrcDirs)
+		require.NoError(t, err)
+	})
+	require.NotNil(t, output)
+	testLoggerVsLsf(ctx, r.Fremote, operations.GetLoggerOpt(ctx).JSON, t)
+	r.CheckLocalItems(t, file1, file2, file3)
+	r.CheckRemoteItems(t, file1, file2, file3)
+
+	// Check that the modtimes of the directories are as expected
+	r.CheckDirectoryModTimes(t, dirs...)
+}
+
+func TestSyncReplaceDirModTime(t *testing.T) {
+	testSyncReplaceDirModTime(t, false)
+}
+
+func TestSyncReplaceDirModTimeWithEmptyDirs(t *testing.T) {
+	testSyncReplaceDirModTime(t, true)
 }
 
 // Tests that nothing is transferred when src and dst already match

@@ -3,14 +3,20 @@ package filter
 
 import (
 	"context"
+	"crypto/md5"
+	"encoding/binary"
 	"errors"
 	"fmt"
+	"math/rand/v2"
 	"path"
+	"slices"
+	"strconv"
 	"strings"
 	"time"
 
 	"github.com/rclone/rclone/fs"
 	"golang.org/x/sync/errgroup"
+	"golang.org/x/text/unicode/norm"
 )
 
 // This is the globally active filter
@@ -63,6 +69,11 @@ var OptionsInfo = fs.Options{{
 	Name:    "ignore_case",
 	Default: false,
 	Help:    "Ignore case in filters (case insensitive)",
+	Groups:  "Filter",
+}, {
+	Name:    "hash_filter",
+	Default: "",
+	Help:    "Partition filenames by hash k/n or randomly @/n",
 	Groups:  "Filter",
 }, {
 	Name:     "filter",
@@ -140,6 +151,7 @@ type Options struct {
 	MinSize        fs.SizeSuffix `config:"min_size"`
 	MaxSize        fs.SizeSuffix `config:"max_size"`
 	IgnoreCase     bool          `config:"ignore_case"`
+	HashFilter     string        `config:"hash_filter"`
 }
 
 func init() {
@@ -167,6 +179,8 @@ type Filter struct {
 	metaRules   rules
 	files       FilesMap // files if filesFrom
 	dirs        FilesMap // dirs from filesFrom
+	hashFilterN uint64   // if non 0 do hash filtering
+	hashFilterK uint64   // select partition K/N
 }
 
 // NewFilter parses the command line options and creates a Filter
@@ -189,9 +203,16 @@ func NewFilter(opt *Options) (f *Filter, err error) {
 	if f.Opt.MaxAge.IsSet() {
 		f.ModTimeFrom = time.Now().Add(-time.Duration(f.Opt.MaxAge))
 		if !f.ModTimeTo.IsZero() && f.ModTimeTo.Before(f.ModTimeFrom) {
-			fs.Fatalf(nil, "filter: --min-age %q can't be larger than --max-age %q", opt.MinAge, opt.MaxAge)
+			return nil, fmt.Errorf("filter: --min-age %q can't be larger than --max-age %q", opt.MinAge, opt.MaxAge)
 		}
 		fs.Debugf(nil, "--max-age %v to %v", f.Opt.MaxAge, f.ModTimeFrom)
+	}
+	if f.Opt.HashFilter != "" {
+		f.hashFilterK, f.hashFilterN, err = parseHashFilter(f.Opt.HashFilter)
+		if err != nil {
+			return nil, err
+		}
+		fs.Debugf(nil, "Using --hash-filter %d/%d", f.hashFilterK, f.hashFilterN)
 	}
 
 	err = parseRules(&f.Opt.RulesOpt, f.Add, f.Clear)
@@ -240,6 +261,32 @@ func NewFilter(opt *Options) (f *Filter, err error) {
 		fmt.Println("--- end filters ---")
 	}
 	return f, nil
+}
+
+// Parse the --hash-filter arguments into k/n
+func parseHashFilter(hashFilter string) (k, n uint64, err error) {
+	slash := strings.IndexRune(hashFilter, '/')
+	if slash < 0 {
+		return 0, 0, fmt.Errorf("filter: --hash-filter: no / found")
+	}
+	kStr, nStr := hashFilter[:slash], hashFilter[slash+1:]
+	n, err = strconv.ParseUint(nStr, 10, 64)
+	if err != nil {
+		return 0, 0, fmt.Errorf("filter: --hash-filter: can't parse N=%q: %v", nStr, err)
+	}
+	if n == 0 {
+		return 0, 0, fmt.Errorf("filter: --hash-filter: N must be greater than 0")
+	}
+	if kStr == "@" {
+		k = rand.Uint64N(n)
+	} else {
+		k, err = strconv.ParseUint(kStr, 10, 64)
+		if err != nil {
+			return 0, 0, fmt.Errorf("filter: --hash-filter: can't parse K=%q: %v", kStr, err)
+		}
+		k %= n
+	}
+	return k, n, nil
 }
 
 func mustNewFilter(opt *Options) *Filter {
@@ -366,7 +413,8 @@ func (f *Filter) InActive() bool {
 		f.fileRules.len() == 0 &&
 		f.dirRules.len() == 0 &&
 		f.metaRules.len() == 0 &&
-		len(f.Opt.ExcludeFile) == 0)
+		len(f.Opt.ExcludeFile) == 0 &&
+		f.hashFilterN == 0)
 }
 
 // IncludeRemote returns whether this remote passes the filter rules.
@@ -375,6 +423,21 @@ func (f *Filter) IncludeRemote(remote string) bool {
 	if f.files != nil {
 		_, include := f.files[remote]
 		return include
+	}
+	if f.hashFilterN != 0 {
+		// Normalise the remote first in case we are using a
+		// case insensitive remote or a remote which needs
+		// unicode normalisation. This means all the remotes
+		// which could be normalised together will be in the
+		// same partition.
+		normalized := norm.NFC.String(remote)
+		normalized = strings.ToLower(normalized)
+		hashBytes := md5.Sum([]byte(normalized))
+		hash := binary.LittleEndian.Uint64(hashBytes[:])
+		partition := hash % f.hashFilterN
+		if partition != f.hashFilterK {
+			return false
+		}
 	}
 	return f.fileRules.include(remote)
 }
@@ -388,10 +451,8 @@ func (f *Filter) ListContainsExcludeFile(entries fs.DirEntries) bool {
 		obj, ok := entry.(fs.Object)
 		if ok {
 			basename := path.Base(obj.Remote())
-			for _, excludeFile := range f.Opt.ExcludeFile {
-				if basename == excludeFile {
-					return true
-				}
+			if slices.Contains(f.Opt.ExcludeFile, basename) {
+				return true
 			}
 		}
 	}
@@ -523,6 +584,12 @@ func (f *Filter) DumpFilters() string {
 	if !f.ModTimeTo.IsZero() {
 		rules = append(rules, fmt.Sprintf("Last-modified date must be equal or less than: %s", f.ModTimeTo.String()))
 	}
+	if f.Opt.MinSize >= 0 {
+		rules = append(rules, fmt.Sprintf("Minimum size is: %s", f.Opt.MinSize.ByteUnit()))
+	}
+	if f.Opt.MaxSize >= 0 {
+		rules = append(rules, fmt.Sprintf("Maximum size is: %s", f.Opt.MaxSize.ByteUnit()))
+	}
 	rules = append(rules, "--- File filter rules ---")
 	for _, rule := range f.fileRules.rules {
 		rules = append(rules, rule.String())
@@ -559,7 +626,7 @@ func (f *Filter) MakeListR(ctx context.Context, NewObject func(ctx context.Conte
 			remotes  = make(chan string, checkers)
 			g, gCtx  = errgroup.WithContext(ctx)
 		)
-		for i := 0; i < checkers; i++ {
+		for range checkers {
 			g.Go(func() (err error) {
 				var entries = make(fs.DirEntries, 1)
 				for remote := range remotes {

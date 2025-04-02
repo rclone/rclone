@@ -130,10 +130,7 @@ func TestQuickXorHashByBlock(t *testing.T) {
 			require.NoError(t, err, what)
 			h := New()
 			for i := 0; i < len(in); i += blockSize {
-				end := i + blockSize
-				if end > len(in) {
-					end = len(in)
-				}
+				end := min(i+blockSize, len(in))
 				n, err := h.Write(in[i:end])
 				require.Equal(t, end-i, n, what)
 				require.NoError(t, err, what)

@@ -494,7 +494,7 @@ func (item *Item) _createFile(osPath string) (err error) {
 // Open the local file from the object passed in.  Wraps open()
 // to provide recovery from out of space error.
 func (item *Item) Open(o fs.Object) (err error) {
-	for retries := 0; retries < fs.GetConfig(context.TODO()).LowLevelRetries; retries++ {
+	for range fs.GetConfig(context.TODO()).LowLevelRetries {
 		item.preAccess()
 		err = item.open(o)
 		item.postAccess()
@@ -1246,7 +1246,7 @@ func (item *Item) GetModTime() (modTime time.Time, err error) {
 func (item *Item) ReadAt(b []byte, off int64) (n int, err error) {
 	n = 0
 	var expBackOff int
-	for retries := 0; retries < fs.GetConfig(context.TODO()).LowLevelRetries; retries++ {
+	for retries := range fs.GetConfig(context.TODO()).LowLevelRetries {
 		item.preAccess()
 		n, err = item.readAt(b, off)
 		item.postAccess()

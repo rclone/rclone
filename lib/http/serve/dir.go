@@ -125,7 +125,7 @@ func (d *Directory) AddEntry(remote string, isDir bool) {
 }
 
 // Error logs the error and if a ResponseWriter is given it writes an http.StatusInternalServerError
-func Error(ctx context.Context, what interface{}, w http.ResponseWriter, text string, err error) {
+func Error(ctx context.Context, what any, w http.ResponseWriter, text string, err error) {
 	err = fs.CountError(ctx, err)
 	fs.Errorf(what, "%s: %v", text, err)
 	if w != nil {

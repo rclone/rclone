@@ -3,12 +3,14 @@
 package pool
 
 import (
+	"context"
 	"fmt"
 	"sync"
 	"time"
 
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/lib/mmap"
+	"golang.org/x/sync/semaphore"
 )
 
 // Pool of internal buffers
@@ -32,6 +34,14 @@ type Pool struct {
 	alloc        func(int) ([]byte, error)
 	free         func([]byte) error
 }
+
+// totalMemory is a semaphore used to control total buffer usage of
+// all Pools. It it may be nil in which case the total buffer usage
+// will not be controlled.
+var totalMemory *semaphore.Weighted
+
+// Make sure we initialise the totalMemory semaphore once
+var totalMemoryInit sync.Once
 
 // New makes a buffer pool
 //
@@ -82,7 +92,7 @@ func (bp *Pool) put(buf []byte) {
 // flush n entries from the entire buffer pool
 // Call with mu held
 func (bp *Pool) flush(n int) {
-	for i := 0; i < n; i++ {
+	for range n {
 		bp.freeBuffer(bp.get())
 	}
 	bp.minFill = len(bp.cache)
@@ -145,6 +155,33 @@ func (bp *Pool) updateMinFill() {
 	}
 }
 
+// acquire mem bytes of memory
+func (bp *Pool) acquire(mem int64) error {
+	ctx := context.Background()
+
+	totalMemoryInit.Do(func() {
+		ci := fs.GetConfig(ctx)
+
+		// Set max buffer memory limiter
+		if ci.MaxBufferMemory > 0 {
+			totalMemory = semaphore.NewWeighted(int64(ci.MaxBufferMemory))
+		}
+	})
+
+	if totalMemory == nil {
+		return nil
+	}
+	return totalMemory.Acquire(ctx, mem)
+}
+
+// release mem bytes of memory
+func (bp *Pool) release(mem int64) {
+	if totalMemory == nil {
+		return
+	}
+	totalMemory.Release(mem)
+}
+
 // Get a buffer from the pool or allocate one
 func (bp *Pool) Get() []byte {
 	bp.mu.Lock()
@@ -156,10 +193,16 @@ func (bp *Pool) Get() []byte {
 			break
 		} else {
 			var err error
-			buf, err = bp.alloc(bp.bufferSize)
+			bp.mu.Unlock()
+			err = bp.acquire(int64(bp.bufferSize))
+			bp.mu.Lock()
 			if err == nil {
-				bp.alloced++
-				break
+				buf, err = bp.alloc(bp.bufferSize)
+				if err == nil {
+					bp.alloced++
+					break
+				}
+				bp.release(int64(bp.bufferSize))
 			}
 			fs.Logf(nil, "Failed to get memory for buffer, waiting for %v: %v", waitTime, err)
 			bp.mu.Unlock()
@@ -179,6 +222,8 @@ func (bp *Pool) freeBuffer(mem []byte) {
 	err := bp.free(mem)
 	if err != nil {
 		fs.Logf(nil, "Failed to free memory: %v", err)
+	} else {
+		bp.release(int64(bp.bufferSize))
 	}
 	bp.alloced--
 }

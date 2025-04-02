@@ -11,6 +11,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"maps"
 	"mime/multipart"
 	"net/http"
 	"net/url"
@@ -186,14 +187,14 @@ func checkDrainAndClose(r io.ReadCloser, err *error) {
 }
 
 // DecodeJSON decodes resp.Body into result
-func DecodeJSON(resp *http.Response, result interface{}) (err error) {
+func DecodeJSON(resp *http.Response, result any) (err error) {
 	defer checkDrainAndClose(resp.Body, &err)
 	decoder := json.NewDecoder(resp.Body)
 	return decoder.Decode(result)
 }
 
 // DecodeXML decodes resp.Body into result
-func DecodeXML(resp *http.Response, result interface{}) (err error) {
+func DecodeXML(resp *http.Response, result any) (err error) {
 	defer checkDrainAndClose(resp.Body, &err)
 	decoder := xml.NewDecoder(resp.Body)
 	// MEGAcmd has included escaped HTML entities in its XML output, so we have to be able to
@@ -286,9 +287,7 @@ func (api *Client) Call(ctx context.Context, opts *Opts) (resp *http.Response, e
 	}
 	headers := make(map[string]string)
 	// Set default headers
-	for k, v := range api.headers {
-		headers[k] = v
-	}
+	maps.Copy(headers, api.headers)
 	if opts.ContentType != "" {
 		headers["Content-Type"] = opts.ContentType
 	}
@@ -311,9 +310,7 @@ func (api *Client) Call(ctx context.Context, opts *Opts) (resp *http.Response, e
 		req.Close = true
 	}
 	// Set any extra headers
-	for k, v := range opts.ExtraHeaders {
-		headers[k] = v
-	}
+	maps.Copy(headers, opts.ExtraHeaders)
 	// add any options to the headers
 	fs.OpenOptionAddHeaders(opts.Options, headers)
 	// Now set the headers
@@ -492,7 +489,7 @@ func MultipartUpload(ctx context.Context, in io.Reader, params url.Values, conte
 // parameter name MultipartMetadataName.
 //
 // It will return resp if at all possible, even if err is set
-func (api *Client) CallJSON(ctx context.Context, opts *Opts, request interface{}, response interface{}) (resp *http.Response, err error) {
+func (api *Client) CallJSON(ctx context.Context, opts *Opts, request any, response any) (resp *http.Response, err error) {
 	return api.callCodec(ctx, opts, request, response, json.Marshal, DecodeJSON, "application/json")
 }
 
@@ -509,14 +506,14 @@ func (api *Client) CallJSON(ctx context.Context, opts *Opts, request interface{}
 // See CallJSON for a description of MultipartParams and related opts.
 //
 // It will return resp if at all possible, even if err is set
-func (api *Client) CallXML(ctx context.Context, opts *Opts, request interface{}, response interface{}) (resp *http.Response, err error) {
+func (api *Client) CallXML(ctx context.Context, opts *Opts, request any, response any) (resp *http.Response, err error) {
 	return api.callCodec(ctx, opts, request, response, xml.Marshal, DecodeXML, "application/xml")
 }
 
-type marshalFn func(v interface{}) ([]byte, error)
-type decodeFn func(resp *http.Response, result interface{}) (err error)
+type marshalFn func(v any) ([]byte, error)
+type decodeFn func(resp *http.Response, result any) (err error)
 
-func (api *Client) callCodec(ctx context.Context, opts *Opts, request interface{}, response interface{}, marshal marshalFn, decode decodeFn, contentType string) (resp *http.Response, err error) {
+func (api *Client) callCodec(ctx context.Context, opts *Opts, request any, response any, marshal marshalFn, decode decodeFn, contentType string) (resp *http.Response, err error) {
 	var requestBody []byte
 	// Marshal the request if given
 	if request != nil {

@@ -1092,7 +1092,7 @@ func (f *Fs) recurse(ctx context.Context, dir string, list *walk.ListRHelper) er
 		return err
 	}
 
-	for i := 0; i < len(entries); i++ {
+	for i := range entries {
 		innerDir, ok := entries[i].(fs.Directory)
 		if ok {
 			err := f.recurse(ctx, innerDir.Remote(), list)
@@ -1428,7 +1428,7 @@ func (f *Fs) cacheReader(u io.Reader, src fs.ObjectInfo, originalRead func(inn i
 	}()
 
 	// wait until both are done
-	for c := 0; c < 2; c++ {
+	for range 2 {
 		<-done
 	}
 }
@@ -1753,7 +1753,7 @@ func (f *Fs) About(ctx context.Context) (*fs.Usage, error) {
 }
 
 // Stats returns stats about the cache storage
-func (f *Fs) Stats() (map[string]map[string]interface{}, error) {
+func (f *Fs) Stats() (map[string]map[string]any, error) {
 	return f.cache.Stats()
 }
 
@@ -1933,7 +1933,7 @@ var commandHelp = []fs.CommandHelp{
 // The result should be capable of being JSON encoded
 // If it is a string or a []string it will be shown to the user
 // otherwise it will be JSON encoded and shown to the user like that
-func (f *Fs) Command(ctx context.Context, name string, arg []string, opt map[string]string) (interface{}, error) {
+func (f *Fs) Command(ctx context.Context, name string, arg []string, opt map[string]string) (any, error) {
 	switch name {
 	case "stats":
 		return f.Stats()

@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 	"sort"
 	"strings"
 	"sync"
@@ -65,32 +66,35 @@ type StatsInfo struct {
 }
 
 type averageValues struct {
-	mu        sync.Mutex
-	lpBytes   int64
-	lpTime    time.Time
-	speed     float64
-	stop      chan bool
-	stopped   sync.WaitGroup
-	startOnce sync.Once
-	stopOnce  sync.Once
+	mu      sync.Mutex
+	lpBytes int64
+	lpTime  time.Time
+	speed   float64
+	stop    chan bool
+	stopped sync.WaitGroup
+	started bool
 }
 
 // NewStats creates an initialised StatsInfo
 func NewStats(ctx context.Context) *StatsInfo {
 	ci := fs.GetConfig(ctx)
-	return &StatsInfo{
+	s := &StatsInfo{
 		ctx:          ctx,
 		ci:           ci,
 		checking:     newTransferMap(ci.Checkers, "checking"),
 		transferring: newTransferMap(ci.Transfers, "transferring"),
 		inProgress:   newInProgress(ctx),
 		startTime:    time.Now(),
-		average:      averageValues{stop: make(chan bool)},
+		average:      averageValues{},
 	}
+	s.startAverageLoop()
+	return s
 }
 
 // RemoteStats returns stats for rc
-func (s *StatsInfo) RemoteStats() (out rc.Params, err error) {
+//
+// If short is true then the transfers and checkers won't be added.
+func (s *StatsInfo) RemoteStats(short bool) (out rc.Params, err error) {
 	// NB if adding values here - make sure you update the docs in
 	// stats_groups.go
 
@@ -126,10 +130,10 @@ func (s *StatsInfo) RemoteStats() (out rc.Params, err error) {
 	}
 	s.mu.RUnlock()
 
-	if !s.checking.empty() {
+	if !short && !s.checking.empty() {
 		out["checking"] = s.checking.remotes()
 	}
-	if !s.transferring.empty() {
+	if !short && !s.transferring.empty() {
 		out["transferring"] = s.transferring.rcStats(s.inProgress)
 	}
 	if s.errors > 0 {
@@ -328,33 +332,78 @@ func (s *StatsInfo) averageLoop() {
 	ticker := time.NewTicker(averagePeriodLength)
 	defer ticker.Stop()
 
-	startTime := time.Now()
 	a := &s.average
 	defer a.stopped.Done()
+
+	shouldRun := false
+
 	for {
 		select {
 		case now := <-ticker.C:
 			a.mu.Lock()
-			var elapsed float64
-			if a.lpTime.IsZero() {
-				elapsed = now.Sub(startTime).Seconds()
-			} else {
-				elapsed = now.Sub(a.lpTime).Seconds()
+
+			if !shouldRun {
+				a.mu.Unlock()
+				continue
 			}
+
 			avg := 0.0
+			elapsed := now.Sub(a.lpTime).Seconds()
 			if elapsed > 0 {
 				avg = float64(a.lpBytes) / elapsed
 			}
+
 			if period < averagePeriod {
 				period++
 			}
+
 			a.speed = (avg + a.speed*(period-1)) / period
 			a.lpBytes = 0
 			a.lpTime = now
+
 			a.mu.Unlock()
-		case <-a.stop:
-			return
+
+		case stop, ok := <-a.stop:
+			if !ok {
+				return // Channel closed, exit the loop
+			}
+
+			a.mu.Lock()
+
+			// If we are resuming, store the current time
+			if !shouldRun && !stop {
+				a.lpTime = time.Now()
+			}
+			shouldRun = !stop
+
+			a.mu.Unlock()
 		}
+	}
+}
+
+// Resume the average loop
+func (s *StatsInfo) resumeAverageLoop() {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.average.stop <- false
+}
+
+// Pause the average loop
+func (s *StatsInfo) pauseAverageLoop() {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.average.stop <- true
+}
+
+// Start the average loop
+//
+// Call with the mutex held
+func (s *StatsInfo) _startAverageLoop() {
+	if !s.average.started {
+		s.average.stop = make(chan bool)
+		s.average.started = true
+		s.average.stopped.Add(1)
+		go s.averageLoop()
 	}
 }
 
@@ -362,27 +411,17 @@ func (s *StatsInfo) averageLoop() {
 func (s *StatsInfo) startAverageLoop() {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	s.average.startOnce.Do(func() {
-		s.average.stopped.Add(1)
-		go s.averageLoop()
-	})
+	s._startAverageLoop()
 }
 
 // Stop the average loop
 //
 // Call with the mutex held
 func (s *StatsInfo) _stopAverageLoop() {
-	s.average.stopOnce.Do(func() {
+	if s.average.started {
 		close(s.average.stop)
 		s.average.stopped.Wait()
-	})
-}
-
-// Stop the average loop
-func (s *StatsInfo) stopAverageLoop() {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	s._stopAverageLoop()
+	}
 }
 
 // String convert the StatsInfo to a string for printing
@@ -524,7 +563,7 @@ func (s *StatsInfo) Transferred() []TransferSnapshot {
 // Log outputs the StatsInfo to the log
 func (s *StatsInfo) Log() {
 	if s.ci.UseJSONLog {
-		out, _ := s.RemoteStats()
+		out, _ := s.RemoteStats(false)
 		fs.LogLevelPrintf(s.ci.StatsLogLevel, nil, "%v%v\n", s, fs.LogValueHide("stats", out))
 	} else {
 		fs.LogLevelPrintf(s.ci.StatsLogLevel, nil, "%v\n", s)
@@ -564,9 +603,9 @@ func (s *StatsInfo) GetBytesWithPending() int64 {
 	pending := int64(0)
 	for _, tr := range s.startedTransfers {
 		if tr.acc != nil {
-			bytes, size := tr.acc.progress()
-			if bytes < size {
-				pending += size - bytes
+			bytesRead, size := tr.acc.progress()
+			if bytesRead < size {
+				pending += size - bytesRead
 			}
 		}
 	}
@@ -699,7 +738,8 @@ func (s *StatsInfo) ResetCounters() {
 	s.oldDuration = 0
 
 	s._stopAverageLoop()
-	s.average = averageValues{stop: make(chan bool)}
+	s.average = averageValues{}
+	s._startAverageLoop()
 }
 
 // ResetErrors sets the errors count to 0 and resets lastError, fatalError and retryError
@@ -788,7 +828,7 @@ func (s *StatsInfo) NewTransfer(obj fs.DirEntry, dstFs fs.Fs) *Transfer {
 	}
 	tr := newTransfer(s, obj, srcFs, dstFs)
 	s.transferring.add(tr)
-	s.startAverageLoop()
+	s.resumeAverageLoop()
 	return tr
 }
 
@@ -796,7 +836,7 @@ func (s *StatsInfo) NewTransfer(obj fs.DirEntry, dstFs fs.Fs) *Transfer {
 func (s *StatsInfo) NewTransferRemoteSize(remote string, size int64, srcFs, dstFs fs.Fs) *Transfer {
 	tr := newTransferRemoteSize(s, remote, size, false, "", srcFs, dstFs)
 	s.transferring.add(tr)
-	s.startAverageLoop()
+	s.resumeAverageLoop()
 	return tr
 }
 
@@ -811,7 +851,7 @@ func (s *StatsInfo) DoneTransferring(remote string, ok bool) {
 		s.mu.Unlock()
 	}
 	if s.transferring.empty() && s.checking.empty() {
-		time.AfterFunc(averageStopAfter, s.stopAverageLoop)
+		s.pauseAverageLoop()
 	}
 }
 
@@ -862,7 +902,7 @@ func (s *StatsInfo) _removeTransfer(transfer *Transfer, i int) {
 	s.oldTimeRanges.merge()
 
 	// remove the found entry
-	s.startedTransfers = append(s.startedTransfers[:i], s.startedTransfers[i+1:]...)
+	s.startedTransfers = slices.Delete(s.startedTransfers, i, i+1)
 
 	// Find youngest active transfer
 	oldestStart := now

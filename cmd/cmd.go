@@ -430,7 +430,7 @@ func initConfig() {
 	}
 
 	// Start the metrics server if configured and not running the "rc" command
-	if os.Args[1] != "rc" {
+	if len(os.Args) >= 2 && os.Args[1] != "rc" {
 		_, err = rcserver.MetricsStart(ctx, &rc.Opt)
 		if err != nil {
 			fs.Fatalf(nil, "Failed to start metrics server: %v", err)

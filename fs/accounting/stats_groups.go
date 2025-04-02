@@ -56,11 +56,13 @@ func rcRemoteStats(ctx context.Context, in rc.Params) (rc.Params, error) {
 	if rc.NotErrParamNotFound(err) {
 		return rc.Params{}, err
 	}
+	short, _ := in.GetBool("short")
+
 	if group != "" {
-		return StatsGroup(ctx, group).RemoteStats()
+		return StatsGroup(ctx, group).RemoteStats(short)
 	}
 
-	return groups.sum(ctx).RemoteStats()
+	return groups.sum(ctx).RemoteStats(short)
 }
 
 func init() {
@@ -78,7 +80,8 @@ returned.
 
 Parameters
 
-- group - name of the stats group (string)
+- group - name of the stats group (string, optional)
+- short - if true will not return the transferring and checking arrays (boolean, optional)
 
 Returns the following values:
 

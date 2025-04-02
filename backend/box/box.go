@@ -237,8 +237,8 @@ func getClaims(boxConfig *api.ConfigJSON, boxSubType string) (claims *boxCustomC
 	return claims, nil
 }
 
-func getSigningHeaders(boxConfig *api.ConfigJSON) map[string]interface{} {
-	signingHeaders := map[string]interface{}{
+func getSigningHeaders(boxConfig *api.ConfigJSON) map[string]any {
+	signingHeaders := map[string]any{
 		"kid": boxConfig.BoxAppSettings.AppAuth.PublicKeyID,
 	}
 	return signingHeaders
@@ -1343,12 +1343,8 @@ func (f *Fs) changeNotifyRunner(ctx context.Context, notifyFunc func(string, fs.
 	nextStreamPosition = streamPosition
 
 	for {
-		limit := f.opt.ListChunk
-
 		// box only allows a max of 500 events
-		if limit > 500 {
-			limit = 500
-		}
+		limit := min(f.opt.ListChunk, 500)
 
 		opts := rest.Opts{
 			Method:     "GET",

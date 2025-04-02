@@ -40,7 +40,7 @@ func startProgress() func() {
 	}
 
 	// Intercept output from functions such as HashLister to stdout
-	operations.SyncPrintf = func(format string, a ...interface{}) {
+	operations.SyncPrintf = func(format string, a ...any) {
 		printProgress(fmt.Sprintf(format, a...))
 	}
 
@@ -97,7 +97,7 @@ func printProgress(logMessage string) {
 		out(terminal.MoveUp)
 	}
 	// Move to the start of the block we wrote erasing all the previous lines
-	for i := 0; i < nlines-1; i++ {
+	for range nlines - 1 {
 		out(terminal.EraseLine)
 		out(terminal.MoveUp)
 	}

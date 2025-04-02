@@ -265,10 +265,7 @@ func (fh *ReadFileHandle) readAt(p []byte, off int64) (n int, err error) {
 		fs.Errorf(fh.remote, "ReadFileHandle.Read error: %v", EBADF)
 		return 0, ECLOSED
 	}
-	maxBuf := 1024 * 1024
-	if len(p) < maxBuf {
-		maxBuf = len(p)
-	}
+	maxBuf := min(len(p), 1024*1024)
 	if gap := off - fh.offset; gap > 0 && gap < int64(8*maxBuf) {
 		waitSequential("read", fh.remote, &fh.cond, time.Duration(fh.file.VFS().Opt.ReadWait), &fh.offset, off)
 	}

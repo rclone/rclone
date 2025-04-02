@@ -30,7 +30,7 @@ var (
 // Assume we are run somewhere within the rclone root
 func findConfig() (string, error) {
 	dir := filepath.Join("fstest", "testserver", "init.d")
-	for i := 0; i < 5; i++ {
+	for range 5 {
 		fi, err := os.Stat(dir)
 		if err == nil && fi.IsDir() {
 			return filepath.Abs(dir)

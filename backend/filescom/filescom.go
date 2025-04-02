@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"net/url"
 	"path"
+	"slices"
 	"strings"
 	"time"
 
@@ -169,11 +170,9 @@ func shouldRetry(ctx context.Context, err error) (bool, error) {
 	}
 
 	if apiErr, ok := err.(files_sdk.ResponseError); ok {
-		for _, e := range retryErrorCodes {
-			if apiErr.HttpCode == e {
-				fs.Debugf(nil, "Retrying API error %v", err)
-				return true, err
-			}
+		if slices.Contains(retryErrorCodes, apiErr.HttpCode) {
+			fs.Debugf(nil, "Retrying API error %v", err)
+			return true, err
 		}
 	}
 

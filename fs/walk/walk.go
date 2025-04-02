@@ -388,7 +388,7 @@ func walk(ctx context.Context, f fs.Fs, path string, includeAll bool, maxLevel i
 			}()
 		})
 	}
-	for i := 0; i < ci.Checkers; i++ {
+	for range ci.Checkers {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()

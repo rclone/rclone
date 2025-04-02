@@ -529,10 +529,7 @@ func TestItemReadWrite(t *testing.T) {
 		assert.False(t, item.present())
 		for !item.present() {
 			blockSize := rand.Intn(len(buf))
-			offset := rand.Int63n(size+2*int64(blockSize)) - int64(blockSize)
-			if offset < 0 {
-				offset = 0
-			}
+			offset := max(rand.Int63n(size+2*int64(blockSize))-int64(blockSize), 0)
 			_, _ = readCheck(t, item, offset, blockSize)
 		}
 		require.NoError(t, item.Close(nil))
@@ -544,7 +541,7 @@ func TestItemReadWrite(t *testing.T) {
 		require.NoError(t, item.Open(obj))
 		assert.False(t, item.present())
 		var wg sync.WaitGroup
-		for i := 0; i < 8; i++ {
+		for range 8 {
 			wg.Add(1)
 			go func() {
 				defer wg.Done()
@@ -553,10 +550,7 @@ func TestItemReadWrite(t *testing.T) {
 				buf2 := make([]byte, 1024*1024)
 				for !item.present() {
 					blockSize := rand.Intn(len(buf))
-					offset := rand.Int63n(size+2*int64(blockSize)) - int64(blockSize)
-					if offset < 0 {
-						offset = 0
-					}
+					offset := max(rand.Int63n(size+2*int64(blockSize))-int64(blockSize), 0)
 					_, _ = readCheckBuf(t, in, buf, buf2, item, offset, blockSize)
 				}
 			}()

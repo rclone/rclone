@@ -11,19 +11,19 @@ import (
 	"net/url"
 	"path"
 	"path/filepath"
+	"slices"
 	"testing"
 	"time"
 
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
-	"github.com/rclone/rclone/fs/object"
-
 	_ "github.com/rclone/rclone/backend/local"
 	"github.com/rclone/rclone/cmd/serve/proxy/proxyflags"
 	"github.com/rclone/rclone/cmd/serve/servetest"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/hash"
+	"github.com/rclone/rclone/fs/object"
 	"github.com/rclone/rclone/fstest"
 	httplib "github.com/rclone/rclone/lib/http"
 	"github.com/rclone/rclone/lib/random"
@@ -226,13 +226,7 @@ func testListBuckets(t *testing.T, cases []TestCase, useProxy bool) {
 
 				for _, tt := range tt.files {
 					file := path.Join(tt.path, tt.filename)
-					found := false
-					for _, fname := range objects {
-						if file == fname {
-							found = true
-							break
-						}
-					}
+					found := slices.Contains(objects, file)
 					require.Equal(t, true, found, "Object not found: "+file)
 				}
 			}

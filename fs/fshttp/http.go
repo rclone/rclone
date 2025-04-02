@@ -245,10 +245,7 @@ func checkServerTime(req *http.Request, resp *http.Response) {
 // cleanAuth gets rid of one authBuf header within the first 4k
 func cleanAuth(buf, authBuf []byte) []byte {
 	// Find how much buffer to check
-	n := 4096
-	if len(buf) < n {
-		n = len(buf)
-	}
+	n := min(len(buf), 4096)
 	// See if there is an Authorization: header
 	i := bytes.Index(buf[:n], authBuf)
 	if i < 0 {

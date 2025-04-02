@@ -358,7 +358,7 @@ func (mu *multiUploader) multiPartUpload(firstBuf io.ReadSeeker) (err error) {
 	})()
 
 	ch := make(chan chunk, mu.cfg.concurrency)
-	for i := 0; i < mu.cfg.concurrency; i++ {
+	for range mu.cfg.concurrency {
 		mu.wg.Add(1)
 		go mu.readChunk(ch)
 	}

@@ -1516,7 +1516,7 @@ func TestRcat(t *testing.T) {
 		r.CheckRemoteItems(t, file1, file2)
 	}
 
-	for i := 0; i < 4; i++ {
+	for i := range 4 {
 		withChecksum := (i & 1) != 0
 		ignoreChecksum := (i & 2) != 0
 		t.Run(fmt.Sprintf("withChecksum=%v,ignoreChecksum=%v", withChecksum, ignoreChecksum), func(t *testing.T) {

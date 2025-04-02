@@ -22,7 +22,7 @@ func TestApplyOptions(t *testing.T) {
 		mnt: &mountlib.MountPoint{
 			MountPoint: "testPath",
 		},
-		mountReqs: make(map[string]interface{}),
+		mountReqs: make(map[string]any),
 	}
 
 	// Happy path

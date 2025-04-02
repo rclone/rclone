@@ -114,11 +114,11 @@ func TestPipeConcurrent(t *testing.T) {
 	ctx := context.Background()
 	var count atomic.Int64
 
-	for j := 0; j < readWriters; j++ {
+	for range readWriters {
 		wg.Add(2)
 		go func() {
 			defer wg.Done()
-			for i := 0; i < N; i++ {
+			for range N {
 				// Read from pipe
 				pair2, ok := p.Get(ctx)
 				assert.Equal(t, pair1, pair2)
@@ -128,7 +128,7 @@ func TestPipeConcurrent(t *testing.T) {
 		}()
 		go func() {
 			defer wg.Done()
-			for i := 0; i < N; i++ {
+			for range N {
 				// Put an object
 				ok := p.Put(ctx, pair1)
 				assert.Equal(t, true, ok)

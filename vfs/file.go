@@ -12,6 +12,8 @@ import (
 	"sync/atomic"
 	"time"
 
+	"slices"
+
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/log"
 	"github.com/rclone/rclone/fs/operations"
@@ -181,12 +183,12 @@ func (f *File) CachePath() string {
 }
 
 // Sys returns underlying data source (can be nil) - satisfies Node interface
-func (f *File) Sys() interface{} {
+func (f *File) Sys() any {
 	return f.sys.Load()
 }
 
 // SetSys sets the underlying data source (can be nil) - satisfies Node interface
-func (f *File) SetSys(x interface{}) {
+func (f *File) SetSys(x any) {
 	f.sys.Store(x)
 }
 
@@ -343,7 +345,7 @@ func (f *File) delWriter(h Handle) {
 		}
 	}
 	if found >= 0 {
-		f.writers = append(f.writers[:found], f.writers[found+1:]...)
+		f.writers = slices.Delete(f.writers, found, found+1)
 		f.nwriters.Add(-1)
 	} else {
 		fs.Debugf(f._path(), "File.delWriter couldn't find handle")
@@ -579,7 +581,7 @@ func (f *File) exists() bool {
 //
 // Call without the mutex held
 func (f *File) waitForValidObject() (o fs.Object, err error) {
-	for i := 0; i < 50; i++ {
+	for range 50 {
 		f.mu.RLock()
 		o = f.o
 		nwriters := len(f.writers)
@@ -752,7 +754,7 @@ const MaxSymlinkIterations = 32
 func (f *File) resolveNode() (target Node, err error) {
 	defer log.Trace(f.Path(), "")("target=%v, err=%v", &target, &err)
 	seen := make(map[string]struct{})
-	for tries := 0; tries < MaxSymlinkIterations; tries++ {
+	for range MaxSymlinkIterations {
 		// If f isn't a symlink, we've arrived at the target
 		if !f.IsSymlink() {
 			return f, nil

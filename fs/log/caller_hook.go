@@ -77,7 +77,7 @@ func (h *CallerHook) Fire(entry *logrus.Entry) error {
 func findCaller(skip int) string {
 	file := ""
 	line := 0
-	for i := 0; i < 10; i++ {
+	for i := range 10 {
 		file, line = getCaller(skip + i)
 		if !strings.HasPrefix(file, "logrus") && !strings.Contains(file, "log.go") {
 			break

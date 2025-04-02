@@ -19,6 +19,8 @@ import (
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/lib/oauthutil"
 
+	"maps"
+
 	"golang.org/x/oauth2"
 )
 
@@ -32,11 +34,9 @@ func RandomHex(n int) (string, error) {
 }
 
 // Config configures rclone using JWT
-func Config(id, name, url string, claims jwt.Claims, headerParams map[string]interface{}, queryParams map[string]string, privateKey *rsa.PrivateKey, m configmap.Mapper, client *http.Client) (err error) {
+func Config(id, name, url string, claims jwt.Claims, headerParams map[string]any, queryParams map[string]string, privateKey *rsa.PrivateKey, m configmap.Mapper, client *http.Client) (err error) {
 	jwtToken := jwt.NewWithClaims(jwt.SigningMethodRS256, claims)
-	for key, value := range headerParams {
-		jwtToken.Header[key] = value
-	}
+	maps.Copy(jwtToken.Header, headerParams)
 	payload, err := jwtToken.SignedString(privateKey)
 	if err != nil {
 		return fmt.Errorf("jwtutil: failed to encode payload: %w", err)

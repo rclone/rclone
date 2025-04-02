@@ -1024,7 +1024,7 @@ func (o *Object) setCustomProperty(ctx context.Context, property string, value s
 	}
 
 	opts.Parameters.Set("path", o.fs.opt.Enc.FromStandardPath(o.filePath()))
-	rcm := map[string]interface{}{
+	rcm := map[string]any{
 		property: value,
 	}
 	cpr := api.CustomPropertyResponse{CustomProperties: rcm}

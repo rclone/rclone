@@ -41,7 +41,7 @@ func TestMetrics(t *testing.T) {
 
 	// Test changing a couple options
 	stats.Bytes(500)
-	for i := 0; i < 30; i++ {
+	for range 30 {
 		require.NoError(t, stats.DeleteFile(context.Background(), 0))
 	}
 	stats.Errors(2)

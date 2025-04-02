@@ -359,8 +359,6 @@ func (b *bisyncRun) runLocked(octx context.Context) (err error) {
 
 	// Determine and apply changes to Path1 and Path2
 	noChanges := ds1.empty() && ds2.empty()
-	changes1 := false // 2to1
-	changes2 := false // 1to2
 	results2to1 := []Results{}
 	results1to2 := []Results{}
 
@@ -370,7 +368,7 @@ func (b *bisyncRun) runLocked(octx context.Context) (err error) {
 		fs.Infof(nil, "No changes found")
 	} else {
 		fs.Infof(nil, "Applying changes")
-		changes1, changes2, results2to1, results1to2, queues, err = b.applyDeltas(octx, ds1, ds2)
+		results2to1, results1to2, queues, err = b.applyDeltas(octx, ds1, ds2)
 		if err != nil {
 			if b.InGracefulShutdown && (err == context.Canceled || err == accounting.ErrorMaxTransferLimitReachedGraceful || strings.Contains(err.Error(), "context canceled")) {
 				fs.Infof(nil, "Ignoring sync error due to Graceful Shutdown: %v", err)
@@ -395,21 +393,11 @@ func (b *bisyncRun) runLocked(octx context.Context) (err error) {
 	}
 	b.saveOldListings()
 	// save new listings
-	// NOTE: "changes" in this case does not mean this run vs. last run, it means start of this run vs. end of this run.
-	// i.e. whether we can use the March lst-new as this side's lst without modifying it.
 	if noChanges {
 		b.replaceCurrentListings()
 	} else {
-		if changes1 || b.InGracefulShutdown { // 2to1
-			err1 = b.modifyListing(fctx, b.fs2, b.fs1, results2to1, queues, false)
-		} else {
-			err1 = bilib.CopyFileIfExists(b.newListing1, b.listing1)
-		}
-		if changes2 || b.InGracefulShutdown { // 1to2
-			err2 = b.modifyListing(fctx, b.fs1, b.fs2, results1to2, queues, true)
-		} else {
-			err2 = bilib.CopyFileIfExists(b.newListing2, b.listing2)
-		}
+		err1 = b.modifyListing(fctx, b.fs2, b.fs1, results2to1, queues, false) // 2to1
+		err2 = b.modifyListing(fctx, b.fs1, b.fs2, results1to2, queues, true)  // 1to2
 	}
 	if b.DebugName != "" {
 		l1, _ := b.loadListing(b.listing1)
@@ -536,7 +524,7 @@ func (b *bisyncRun) testFn() {
 	}
 }
 
-func (b *bisyncRun) handleErr(o interface{}, msg string, err error, critical, retryable bool) {
+func (b *bisyncRun) handleErr(o any, msg string, err error, critical, retryable bool) {
 	if err != nil {
 		if retryable {
 			b.retryable = true
@@ -636,7 +624,7 @@ func (b *bisyncRun) debugFn(nametocheck string, fn func()) {
 // waitFor runs fn() until it returns true or the timeout expires
 func waitFor(msg string, totalWait time.Duration, fn func() bool) (ok bool) {
 	const individualWait = 1 * time.Second
-	for i := 0; i < int(totalWait/individualWait); i++ {
+	for i := range int(totalWait / individualWait) {
 		ok = fn()
 		if ok {
 			return ok

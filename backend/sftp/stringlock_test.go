@@ -20,13 +20,13 @@ func TestStringLock(t *testing.T) {
 		inner = 100
 		total = outer * inner
 	)
-	for k := 0; k < outer; k++ {
+	for range outer {
 		for j := range counter {
 			wg.Add(1)
 			go func(j int) {
 				defer wg.Done()
 				ID := fmt.Sprintf("%d", j)
-				for i := 0; i < inner; i++ {
+				for range inner {
 					lock.Lock(ID)
 					n := counter[j]
 					time.Sleep(1 * time.Millisecond)

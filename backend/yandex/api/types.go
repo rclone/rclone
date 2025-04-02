@@ -23,20 +23,20 @@ type ResourceInfoRequestOptions struct {
 
 // ResourceInfoResponse struct is returned by the API for metadata requests.
 type ResourceInfoResponse struct {
-	PublicKey        string                 `json:"public_key"`
-	Name             string                 `json:"name"`
-	Created          string                 `json:"created"`
-	CustomProperties map[string]interface{} `json:"custom_properties"`
-	Preview          string                 `json:"preview"`
-	PublicURL        string                 `json:"public_url"`
-	OriginPath       string                 `json:"origin_path"`
-	Modified         string                 `json:"modified"`
-	Path             string                 `json:"path"`
-	Md5              string                 `json:"md5"`
-	ResourceType     string                 `json:"type"`
-	MimeType         string                 `json:"mime_type"`
-	Size             int64                  `json:"size"`
-	Embedded         *ResourceListResponse  `json:"_embedded"`
+	PublicKey        string                `json:"public_key"`
+	Name             string                `json:"name"`
+	Created          string                `json:"created"`
+	CustomProperties map[string]any        `json:"custom_properties"`
+	Preview          string                `json:"preview"`
+	PublicURL        string                `json:"public_url"`
+	OriginPath       string                `json:"origin_path"`
+	Modified         string                `json:"modified"`
+	Path             string                `json:"path"`
+	Md5              string                `json:"md5"`
+	ResourceType     string                `json:"type"`
+	MimeType         string                `json:"mime_type"`
+	Size             int64                 `json:"size"`
+	Embedded         *ResourceListResponse `json:"_embedded"`
 }
 
 // ResourceListResponse struct
@@ -64,7 +64,7 @@ type AsyncStatus struct {
 
 // CustomPropertyResponse struct we send and is returned by the API for CustomProperty request.
 type CustomPropertyResponse struct {
-	CustomProperties map[string]interface{} `json:"custom_properties"`
+	CustomProperties map[string]any `json:"custom_properties"`
 }
 
 // SortMode struct - sort mode

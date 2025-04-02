@@ -75,7 +75,7 @@ func (a *AsyncReader) init(rd io.ReadCloser, buffers int) {
 	a.size = softStartInitial
 
 	// Create tokens
-	for i := 0; i < buffers; i++ {
+	for range buffers {
 		a.token <- struct{}{}
 	}
 
@@ -249,10 +249,7 @@ func (a *AsyncReader) SkipBytes(skip int) (ok bool) {
 			}
 		}
 
-		n := len(a.cur.buffer())
-		if n > skip {
-			n = skip
-		}
+		n := min(len(a.cur.buffer()), skip)
 		a.cur.increment(n)
 		skip -= n
 		if skip == 0 {

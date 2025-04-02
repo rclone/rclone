@@ -122,7 +122,7 @@ func (w *Server) getVFS(ctx context.Context) (VFS *vfs.VFS, err error) {
 }
 
 // auth does proxy authorization
-func (w *Server) auth(accessKeyID string) (value interface{}, err error) {
+func (w *Server) auth(accessKeyID string) (value any, err error) {
 	VFS, _, err := w.proxy.Call(stringToMd5Hash(accessKeyID), accessKeyID, false)
 	if err != nil {
 		return nil, err

@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"maps"
 	"strconv"
 	"strings"
 	"sync"
@@ -324,9 +325,7 @@ func (o *baseObject) parseMetadata(ctx context.Context, info *drive.File) (err e
 	metadata := make(fs.Metadata, 16)
 
 	// Dump user metadata first as it overrides system metadata
-	for k, v := range info.Properties {
-		metadata[k] = v
-	}
+	maps.Copy(metadata, info.Properties)
 
 	// System metadata
 	metadata["copy-requires-writer-permission"] = fmt.Sprint(info.CopyRequiresWriterPermission)

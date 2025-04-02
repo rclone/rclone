@@ -86,7 +86,7 @@ func (q *quickXorHash) Write(p []byte) (n int, err error) {
 
 // Calculate the current checksum
 func (q *quickXorHash) checkSum() (h [Size + 1]byte) {
-	for i := 0; i < dataSize; i++ {
+	for i := range dataSize {
 		shift := (i * 11) % 160
 		shiftBytes := shift / 8
 		shiftBits := shift % 8
