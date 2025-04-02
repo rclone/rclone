@@ -762,23 +762,23 @@ func (f *Fs) Precision() time.Duration {
 	return time.Second
 }
 
-// Define the response structure from your API
+// FolderListResponse represents the response for listing folders.
 type FolderListResponse struct {
 	Status int    `json:"status"`
 	Msg    string `json:"msg"`
 	Result struct {
 		Files []struct {
-			Name  string `json:"name"`
+			Name  string      `json:"name"`
 			FldID json.Number `json:"fld_id"` // Adjust to json.Number for flexibility in decoding
 		} `json:"files"`
 		Folders []struct {
-			Name  string `json:"name"`
+			Name  string      `json:"name"`
 			FldID json.Number `json:"fld_id"` // Adjust this as well
 		} `json:"folders"`
 	} `json:"result"`
 }
 
-// Update the List function to use json.Number instead of int
+// List function to use json.Number instead of int
 func (f *Fs) List(ctx context.Context, dir string) (fs.DirEntries, error) {
 	fs.Debugf(f, "List: Starting for directory %q with root %q", dir, f.root)
 
@@ -1245,144 +1245,106 @@ func (f *Fs) getUploadServer(ctx context.Context) (string, string, error) {
 	return result.Result, result.SessID, nil
 }
 
-// ensureFolderExists checks if a folder exists at the given path and creates it if it doesn't exist.
-func (f *Fs) ensureFolderExists(ctx context.Context, destinationPath string) error {
-    if destinationPath == "" {
-        return nil // Root always exists
-    }
-
-    // Split and iterate over each part of the path
-    parts := strings.Split(strings.Trim(destinationPath, "/"), "/")
-
-    for i := range parts {
-        segmentPath := path.Join("/", strings.Join(parts[:i+1], "/"))
-
-        fs.Debugf(f, "ensureFolderExists: Checking existing or creating segment %s", segmentPath)
-        _, err := f.resolveFolderPath(ctx, segmentPath)
-
-        switch err {
-        case nil:
-            fs.Debugf(f, "ensureFolderExists: Segment %s exists", segmentPath)
-
-        case fs.ErrorDirNotFound:
-            fs.Debugf(f, "ensureFolderExists: Segment %s not found, creating", segmentPath)
-            createErr := f.Mkdir(ctx, segmentPath)
-            if createErr != nil {
-                return fmt.Errorf("failed to create folder at %s: %w", segmentPath, createErr)
-            }
-
-        default:
-            if strings.Contains(err.Error(), "not yours") {
-                fs.Debugf(f, "ensureFolderExists: Permission issue during check for %s", segmentPath)
-            } else {
-                fs.Debugf(f, "Unexpected error for segment %s: %v", segmentPath, err)
-            }
-            return err
-        }
-    }
-    return nil
-}
-
 // Put uploads a file directly to the destination folder in the FileLu storage system.
 func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
-    fs.Debugf(f, "Put: Starting upload for %q", src.Remote())
+	fs.Debugf(f, "Put: Starting upload for %q", src.Remote())
 
-    // Prepare the full destination folder path
-    destinationFolderPath := path.Join(f.root, path.Dir(src.Remote()))
-    destinationFolderPath = "/" + strings.Trim(destinationFolderPath, "/")
+	// Prepare the full destination folder path
+	destinationFolderPath := path.Join(f.root, path.Dir(src.Remote()))
+	destinationFolderPath = "/" + strings.Trim(destinationFolderPath, "/")
 
-    // Log the full path for debugging purposes
-    fs.Debugf(f, "Put: Uploading file to full path: %s", destinationFolderPath)
+	// Log the full path for debugging purposes
+	fs.Debugf(f, "Put: Uploading file to full path: %s", destinationFolderPath)
 
-    // Get upload server details
-    uploadURL, sessID, err := f.getUploadServer(ctx)
-    if err != nil {
-        return nil, fmt.Errorf("failed to retrieve upload server: %w", err)
-    }
+	// Get upload server details
+	uploadURL, sessID, err := f.getUploadServer(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve upload server: %w", err)
+	}
 
-    fileName := path.Base(src.Remote())
-    fs.Debugf(f, "Put: Using filename %q for upload", fileName)
+	fileName := path.Base(src.Remote())
+	fs.Debugf(f, "Put: Using filename %q for upload", fileName)
 
-    // Now upload the file directly to the full destination path
-    fileCode, err := f.uploadFileWithDestination(ctx, uploadURL, sessID, fileName, in, destinationFolderPath)
-    if err != nil {
-        return nil, fmt.Errorf("failed to upload file: %w", err)
-    }
-    fs.Debugf(f, "Put: File uploaded successfully with code: %s", fileCode)
+	// Now upload the file directly to the full destination path
+	fileCode, err := f.uploadFileWithDestination(ctx, uploadURL, sessID, fileName, in, destinationFolderPath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to upload file: %w", err)
+	}
+	fs.Debugf(f, "Put: File uploaded successfully with code: %s", fileCode)
 
-    return &Object{
-        fs:      f,
-        remote:  src.Remote(),
-        size:    src.Size(),
-        modTime: src.ModTime(ctx),
-    }, nil
+	return &Object{
+		fs:      f,
+		remote:  src.Remote(),
+		size:    src.Size(),
+		modTime: src.ModTime(ctx),
+	}, nil
 }
 
 // uploadFileWithDestination uploads a file directly to a specified folder using file content reader.
 func (f *Fs) uploadFileWithDestination(ctx context.Context, uploadURL, sessID, fileName string, fileContent io.Reader, destinationPath string) (string, error) {
-    // Prepare multipart form data
-    var body bytes.Buffer
-    writer := multipart.NewWriter(&body)
+	// Prepare multipart form data
+	var body bytes.Buffer
+	writer := multipart.NewWriter(&body)
 
-    // Add form fields for session and upload type
-    if err := writer.WriteField("sess_id", sessID); err != nil {
-        return "", fmt.Errorf("failed to add sess_id field: %w", err)
-    }
-    if err := writer.WriteField("utype", "prem"); err != nil {
-        return "", fmt.Errorf("failed to add utype field: %w", err)
-    }
-    // Add the full path to the form
-    if err := writer.WriteField("fld_path", destinationPath); err != nil {
-        return "", fmt.Errorf("failed to add fld_path field: %w", err)
-    }
+	// Add form fields for session and upload type
+	if err := writer.WriteField("sess_id", sessID); err != nil {
+		return "", fmt.Errorf("failed to add sess_id field: %w", err)
+	}
+	if err := writer.WriteField("utype", "prem"); err != nil {
+		return "", fmt.Errorf("failed to add utype field: %w", err)
+	}
+	// Add the full path to the form
+	if err := writer.WriteField("fld_path", destinationPath); err != nil {
+		return "", fmt.Errorf("failed to add fld_path field: %w", err)
+	}
 
-    // Create the file part
-    part, err := writer.CreateFormFile("file_0", fileName)
-    if err != nil {
-        return "", fmt.Errorf("failed to create form file: %w", err)
-    }
+	// Create the file part
+	part, err := writer.CreateFormFile("file_0", fileName)
+	if err != nil {
+		return "", fmt.Errorf("failed to create form file: %w", err)
+	}
 
-    // Copy file content to form
-    if _, err = io.Copy(part, fileContent); err != nil {
-        return "", fmt.Errorf("failed to copy file content to form: %w", err)
-    }
+	// Copy file content to form
+	if _, err = io.Copy(part, fileContent); err != nil {
+		return "", fmt.Errorf("failed to copy file content to form: %w", err)
+	}
 
-    if err = writer.Close(); err != nil {
-        return "", fmt.Errorf("error closing writer: %w", err)
-    }
+	if err = writer.Close(); err != nil {
+		return "", fmt.Errorf("error closing writer: %w", err)
+	}
 
-    // Send the request
-    req, err := http.NewRequestWithContext(ctx, "POST", uploadURL, &body)
-    if err != nil {
-        return "", fmt.Errorf("failed to create request: %w", err)
-    }
-    req.Header.Set("Content-Type", writer.FormDataContentType())
+	// Send the request
+	req, err := http.NewRequestWithContext(ctx, "POST", uploadURL, &body)
+	if err != nil {
+		return "", fmt.Errorf("failed to create request: %w", err)
+	}
+	req.Header.Set("Content-Type", writer.FormDataContentType())
 
-    resp, err := f.client.Do(req)
-    if err != nil {
-        return "", fmt.Errorf("failed to send request: %w", err)
-    }
-    defer func() {
-        if cerr := resp.Body.Close(); cerr != nil {
-            fs.Debugf(f, "Error closing response body: %v", cerr)
-        }
-    }()
+	resp, err := f.client.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("failed to send request: %w", err)
+	}
+	defer func() {
+		if cerr := resp.Body.Close(); cerr != nil {
+			fs.Debugf(f, "Error closing response body: %v", cerr)
+		}
+	}()
 
-    // Parse the response
-    var result []struct {
-        FileCode   string `json:"file_code"`
-        FileStatus string `json:"file_status"`
-    }
-    if err = json.NewDecoder(resp.Body).Decode(&result); err != nil {
-        return "", fmt.Errorf("failed to parse response: %w", err)
-    }
+	// Parse the response
+	var result []struct {
+		FileCode   string `json:"file_code"`
+		FileStatus string `json:"file_status"`
+	}
+	if err = json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return "", fmt.Errorf("failed to parse response: %w", err)
+	}
 
-    if len(result) == 0 || result[0].FileStatus != "OK" {
-        return "", fmt.Errorf("upload failed with status: %s", result[0].FileStatus)
-    }
+	if len(result) == 0 || result[0].FileStatus != "OK" {
+		return "", fmt.Errorf("upload failed with status: %s", result[0].FileStatus)
+	}
 
-    fs.Debugf(f, "uploadFileWithDestination: File uploaded successfully with file code: %s", result[0].FileCode)
-    return result[0].FileCode, nil
+	fs.Debugf(f, "uploadFileWithDestination: File uploaded successfully with file code: %s", result[0].FileCode)
+	return result[0].FileCode, nil
 }
 
 // createTempFileFromReader writes the content of the 'in' reader into a temporary file
