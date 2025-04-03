@@ -126,7 +126,6 @@ func isFileCode(s string) bool {
 	return true
 }
 
-// resolveFolderPath takes a path and returns the folder ID, creating the folder if it doesn't exist
 // resolveFolderPath takes a path and returns the folder ID, verifying the ID if provided.
 func (f *Fs) resolveFolderPath(ctx context.Context, path string) (int, error) {
 	if path == "" {
@@ -213,6 +212,63 @@ func (f *Fs) resolveFolderPath(ctx context.Context, path string) (int, error) {
 	}
 
 	return currentID, nil
+}
+// Mkdir creates a new folder on FileLu
+func (f *Fs) Mkdir(ctx context.Context, dir string) error {
+	fs.Debugf(f, "Mkdir: Starting directory creation for dir=%q, root=%q", dir, f.root)
+
+	// Assume root directory if dir is empty, preventing empty directory creation
+	if dir == "" {
+		dir = f.root
+		if dir == "" {
+			return fmt.Errorf("directory name cannot be empty")
+		}
+	}
+
+	// Prepare full path with root verified and normalized
+	fullPath := path.Clean("/" + dir)
+
+	// Construct the API URL
+	apiURL := fmt.Sprintf("%s/folder/create?folder_path=%s&key=%s",
+		f.endpoint,
+		url.QueryEscape(fullPath), // Ensure correct path format
+		url.QueryEscape(f.opt.RcloneKey), // Escape Rclone key for safety
+	)
+
+	req, err := http.NewRequestWithContext(ctx, "GET", apiURL, nil)
+	if err != nil {
+		return fmt.Errorf("failed to create request: %w", err)
+	}
+
+	resp, err := f.client.Do(req)
+	if err != nil {
+		return fmt.Errorf("failed to create folder: %w", err)
+	}
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			fs.Fatalf(nil, "Failed to close response body: %v", err)
+		}
+	}()
+
+	var result struct {
+		Status int    `json:"status"`
+		Msg    string `json:"msg"`
+		Result struct {
+			FldID int `json:"fld_id"`
+		} `json:"result"`
+	}
+
+	err = json.NewDecoder(resp.Body).Decode(&result)
+	if err != nil {
+		return fmt.Errorf("error decoding response: %w", err)
+	}
+
+	if result.Status != 200 {
+		return fmt.Errorf("error: %s", result.Msg)
+	}
+
+	fs.Infof(f, "Successfully created folder %q with ID %d", dir, result.Result.FldID)
+	return nil
 }
 
 // GetAccountInfo fetches the account information including storage usage
@@ -646,73 +702,6 @@ func (f *Fs) About(ctx context.Context) (*fs.Usage, error) {
 // Hashes returns an empty hash set, indicating no hash support
 func (f *Fs) Hashes() hash.Set {
 	return hash.NewHashSet() // Properly creates an empty hash set
-}
-
-// Mkdir creates a new folder on FileLu
-func (f *Fs) Mkdir(ctx context.Context, dir string) error {
-	fs.Debugf(f, "Mkdir: Starting directory creation for dir=%q, root=%q", dir, f.root)
-
-	// If dir is empty, assume root directory
-	if dir == "" {
-		dir = f.root
-		if dir == "" {
-			return fmt.Errorf("directory name cannot be empty")
-		}
-	}
-
-	// Resolve parent folder ID
-	parentID := 0
-	parentDir := path.Dir(dir) // Get the parent directory path
-	if parentDir != "." && parentDir != "/" {
-		var err error
-		parentID, err = f.resolveFolderPath(ctx, parentDir)
-		if err != nil {
-			return fmt.Errorf("failed to resolve parent folder path: %w", err)
-		}
-	}
-
-	// Create the directory
-	apiURL := fmt.Sprintf("%s/folder/create?parent_id=%d&name=%s&key=%s",
-		f.endpoint,
-		parentID,
-		url.QueryEscape(path.Base(dir)), // Use the base name of the path
-		url.QueryEscape(f.opt.RcloneKey),
-	)
-
-	req, err := http.NewRequestWithContext(ctx, "GET", apiURL, nil)
-	if err != nil {
-		return fmt.Errorf("failed to create request: %w", err)
-	}
-
-	resp, err := f.client.Do(req)
-	if err != nil {
-		return fmt.Errorf("failed to create folder: %w", err)
-	}
-	defer func() {
-		if err := resp.Body.Close(); err != nil {
-			fs.Fatalf(nil, "Failed to close response body: %v", err)
-		}
-	}()
-
-	var result struct {
-		Status int    `json:"status"`
-		Msg    string `json:"msg"`
-		Result struct {
-			FldID string `json:"fld_id"`
-		} `json:"result"`
-	}
-
-	err = json.NewDecoder(resp.Body).Decode(&result)
-	if err != nil {
-		return fmt.Errorf("error decoding response: %w", err)
-	}
-
-	if result.Status != 200 {
-		return fmt.Errorf("error: %s", result.Msg)
-	}
-
-	fs.Infof(f, "Successfully created folder %q with ID %q", dir, result.Result.FldID)
-	return nil
 }
 
 // Remove deletes the object from FileLu
