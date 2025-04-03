@@ -1143,6 +1143,7 @@ func (f *Fs) getUploadServer(ctx context.Context) (string, string, error) {
 	fs.Debugf(f, "Got upload server URL=%s and session ID=%s", result.Result, result.SessID)
 	return result.Result, result.SessID, nil
 }
+
 // Put uploads a file directly to the destination folder in the FileLu storage system.
 func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
 	fs.Debugf(f, "Put: Starting upload for %q", src.Remote())
@@ -1160,16 +1161,16 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 		return nil, fmt.Errorf("failed to list existing files: %w", err)
 	}
 
-for _, entry := range existingEntries {
-    if entry.Remote() == src.Remote() {
-        obj, ok := entry.(fs.Object)
-        if !ok || obj.Size() != src.Size() || !obj.ModTime(ctx).Equal(src.ModTime(ctx)) {
-            continue // Ensure proper attributes comparison
-        }
-        fs.Infof(f, "Skipping upload for %q, an identical file exists.", src.Remote())
-        return obj, nil
-    }
-}
+	for _, entry := range existingEntries {
+		if entry.Remote() == src.Remote() {
+			obj, ok := entry.(fs.Object)
+			if !ok || obj.Size() != src.Size() || !obj.ModTime(ctx).Equal(src.ModTime(ctx)) {
+				continue // Ensure proper attributes comparison
+			}
+			fs.Infof(f, "Skipping upload for %q, an identical file exists.", src.Remote())
+			return obj, nil
+		}
+	}
 
 	// Get upload server details
 	uploadURL, sessID, err := f.getUploadServer(ctx)
@@ -1828,63 +1829,63 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 
 // Update updates the object with new data
 func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {
-    fs.Debugf(o.fs, "Update: Starting update for %q", o.remote)
+	fs.Debugf(o.fs, "Update: Starting update for %q", o.remote)
 
-    // Fetch existing object on remote
-    existingObject, err := o.fs.NewObject(ctx, o.remote)
-    if err == nil {
-        // Compare size
-        if existingObject.Size() == src.Size() {
-            fs.Infof(o.fs, "Update: File %q already exists with the same size, skipping upload.", o.remote)
-            return nil
-        }
-    } else {
-        fs.Debugf(o.fs, "No existing object found for %q, proceeding with upload...", o.remote)
-    }
+	// Fetch existing object on remote
+	existingObject, err := o.fs.NewObject(ctx, o.remote)
+	if err == nil {
+		// Compare size
+		if existingObject.Size() == src.Size() {
+			fs.Infof(o.fs, "Update: File %q already exists with the same size, skipping upload.", o.remote)
+			return nil
+		}
+	} else {
+		fs.Debugf(o.fs, "No existing object found for %q, proceeding with upload...", o.remote)
+	}
 
-    // Proceed with the upload if no match is found
-    tempPath, err := createTempFileFromReader(in)
-    if err != nil {
-        return fmt.Errorf("failed to create temp file: %w", err)
-    }
-    defer func() {
-        if err := os.Remove(tempPath); err != nil {
-            fs.Logf(nil, "Failed to remove file %q: %v", tempPath, err)
-        }
-    }()
+	// Proceed with the upload if no match is found
+	tempPath, err := createTempFileFromReader(in)
+	if err != nil {
+		return fmt.Errorf("failed to create temp file: %w", err)
+	}
+	defer func() {
+		if err := os.Remove(tempPath); err != nil {
+			fs.Logf(nil, "Failed to remove file %q: %v", tempPath, err)
+		}
+	}()
 
-    tempFile, err := os.Open(tempPath)
-    if err != nil {
-        return fmt.Errorf("failed to open temp file: %w", err)
-    }
-    defer func() {
-        if err := tempFile.Close(); err != nil {
-            fs.Logf(nil, "Failed to close temporary file: %v", err)
-        }
-    }()
+	tempFile, err := os.Open(tempPath)
+	if err != nil {
+		return fmt.Errorf("failed to open temp file: %w", err)
+	}
+	defer func() {
+		if err := tempFile.Close(); err != nil {
+			fs.Logf(nil, "Failed to close temporary file: %v", err)
+		}
+	}()
 
-    uploadURL, sessID, err := o.fs.getUploadServer(ctx)
-    if err != nil {
-        return fmt.Errorf("failed to get upload server: %w", err)
-    }
-    fs.Debugf(o.fs, "Update: Got upload server URL=%q and session ID=%q", uploadURL, sessID)
+	uploadURL, sessID, err := o.fs.getUploadServer(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get upload server: %w", err)
+	}
+	fs.Debugf(o.fs, "Update: Got upload server URL=%q and session ID=%q", uploadURL, sessID)
 
-    fileName := path.Base(o.remote)
-    destinationFolderPath := path.Join(o.fs.root, path.Dir(o.remote))
-    destinationFolderPath = "/" + strings.Trim(destinationFolderPath, "/")
-    fs.Debugf(o.fs, "Update: Uploading file to folder path: %s", destinationFolderPath)
+	fileName := path.Base(o.remote)
+	destinationFolderPath := path.Join(o.fs.root, path.Dir(o.remote))
+	destinationFolderPath = "/" + strings.Trim(destinationFolderPath, "/")
+	fs.Debugf(o.fs, "Update: Uploading file to folder path: %s", destinationFolderPath)
 
-    fileCode, err := o.fs.uploadFileWithDestination(ctx, uploadURL, sessID, fileName, tempFile, destinationFolderPath)
-    if err != nil {
-        return fmt.Errorf("failed to upload file: %w", err)
-    }
-    fs.Debugf(o.fs, "Update: File uploaded successfully with code: %s", fileCode)
+	fileCode, err := o.fs.uploadFileWithDestination(ctx, uploadURL, sessID, fileName, tempFile, destinationFolderPath)
+	if err != nil {
+		return fmt.Errorf("failed to upload file: %w", err)
+	}
+	fs.Debugf(o.fs, "Update: File uploaded successfully with code: %s", fileCode)
 
-    o.size = src.Size()
-    o.modTime = src.ModTime(ctx)
+	o.size = src.Size()
+	o.modTime = src.ModTime(ctx)
 
-    fs.Debugf(o.fs, "Update: Finished update for %q", o.remote)
-    return nil
+	fs.Debugf(o.fs, "Update: Finished update for %q", o.remote)
+	return nil
 }
 
 // Remove deletes the object from FileLu
