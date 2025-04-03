@@ -144,8 +144,8 @@ func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 	// Construct the API URL
 	apiURL := fmt.Sprintf("%s/folder/create?folder_path=%s&key=%s",
 		f.endpoint,
-		url.QueryEscape(fullPath), // Ensure correct path format
-		url.QueryEscape(f.opt.RcloneKey), // Escape Rclone key for safety
+		url.QueryEscape(fullPath),
+		url.QueryEscape(f.opt.RcloneKey),
 	)
 
 	req, err := http.NewRequestWithContext(ctx, "GET", apiURL, nil)
