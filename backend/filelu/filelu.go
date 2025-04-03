@@ -1143,7 +1143,6 @@ func (f *Fs) getUploadServer(ctx context.Context) (string, string, error) {
 	fs.Debugf(f, "Got upload server URL=%s and session ID=%s", result.Result, result.SessID)
 	return result.Result, result.SessID, nil
 }
-
 // Put uploads a file directly to the destination folder in the FileLu storage system.
 func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
 	fs.Debugf(f, "Put: Starting upload for %q", src.Remote())
@@ -1153,7 +1152,24 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 	destinationFolderPath = "/" + strings.Trim(destinationFolderPath, "/")
 
 	// Log the full path for debugging purposes
-	fs.Debugf(f, "Put: Uploading file to full path: %s", destinationFolderPath)
+	fs.Debugf(f, "Put: Checking for existing file in path: %s", destinationFolderPath)
+
+	// Check for duplicate files
+	existingEntries, err := f.List(ctx, path.Dir(src.Remote()))
+	if err != nil {
+		return nil, fmt.Errorf("failed to list existing files: %w", err)
+	}
+
+for _, entry := range existingEntries {
+    if entry.Remote() == src.Remote() {
+        obj, ok := entry.(fs.Object)
+        if !ok || obj.Size() != src.Size() || !obj.ModTime(ctx).Equal(src.ModTime(ctx)) {
+            continue // Ensure proper attributes comparison
+        }
+        fs.Infof(f, "Skipping upload for %q, an identical file exists.", src.Remote())
+        return obj, nil
+    }
+}
 
 	// Get upload server details
 	uploadURL, sessID, err := f.getUploadServer(ctx)
@@ -1171,12 +1187,14 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 	}
 	fs.Debugf(f, "Put: File uploaded successfully with code: %s", fileCode)
 
-	return &Object{
+	newObject := &Object{
 		fs:      f,
 		remote:  src.Remote(),
 		size:    src.Size(),
 		modTime: src.ModTime(ctx),
-	}, nil
+	}
+	fs.Infof(f, "Put: Successfully uploaded new file %q", src.Remote())
+	return newObject, nil
 }
 
 // uploadFileWithDestination uploads a file directly to a specified folder using file content reader.
@@ -1810,67 +1828,63 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 
 // Update updates the object with new data
 func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {
-	fs.Debugf(o.fs, "Update: Starting update for %q", o.remote)
+    fs.Debugf(o.fs, "Update: Starting update for %q", o.remote)
 
-	// Create temporary file and get its path
-	tempPath, err := createTempFileFromReader(in)
-	if err != nil {
-		return fmt.Errorf("failed to create temp file: %w", err)
-	}
+    // Fetch existing object on remote
+    existingObject, err := o.fs.NewObject(ctx, o.remote)
+    if err == nil {
+        // Compare size
+        if existingObject.Size() == src.Size() {
+            fs.Infof(o.fs, "Update: File %q already exists with the same size, skipping upload.", o.remote)
+            return nil
+        }
+    } else {
+        fs.Debugf(o.fs, "No existing object found for %q, proceeding with upload...", o.remote)
+    }
 
-	// Defer removal of the temporary file
-	defer func() {
-		if err := os.Remove(tempPath); err != nil {
-			fs.Logf(nil, "Failed to remove file %q: %v", tempPath, err)
-		}
-	}()
+    // Proceed with the upload if no match is found
+    tempPath, err := createTempFileFromReader(in)
+    if err != nil {
+        return fmt.Errorf("failed to create temp file: %w", err)
+    }
+    defer func() {
+        if err := os.Remove(tempPath); err != nil {
+            fs.Logf(nil, "Failed to remove file %q: %v", tempPath, err)
+        }
+    }()
 
-	// Open the temporary file for reading
-	tempFile, err := os.Open(tempPath)
-	if err != nil {
-		return fmt.Errorf("failed to open temp file: %w", err)
-	}
-	defer func() {
-		if err := tempFile.Close(); err != nil {
-			fs.Logf(nil, "Failed to close temporary file: %v", err)
-		}
-	}()
-	// Get upload server details
-	uploadURL, sessID, err := o.fs.getUploadServer(ctx)
-	if err != nil {
-		return fmt.Errorf("failed to get upload server: %w", err)
-	}
-	fs.Debugf(o.fs, "Update: Got upload server URL=%q and session ID=%q", uploadURL, sessID)
+    tempFile, err := os.Open(tempPath)
+    if err != nil {
+        return fmt.Errorf("failed to open temp file: %w", err)
+    }
+    defer func() {
+        if err := tempFile.Close(); err != nil {
+            fs.Logf(nil, "Failed to close temporary file: %v", err)
+        }
+    }()
 
-	// Use the original filename for upload
-	fileName := path.Base(o.remote)
-	fs.Debugf(o.fs, "Update: Using filename %q for upload", fileName)
+    uploadURL, sessID, err := o.fs.getUploadServer(ctx)
+    if err != nil {
+        return fmt.Errorf("failed to get upload server: %w", err)
+    }
+    fs.Debugf(o.fs, "Update: Got upload server URL=%q and session ID=%q", uploadURL, sessID)
 
-	// Upload the file to root first
-	fileCode, err := o.fs.uploadFile(ctx, uploadURL, sessID, fileName, tempFile)
-	if err != nil {
-		return fmt.Errorf("failed to upload file: %w", err)
-	}
-	fs.Debugf(o.fs, "Update: File uploaded with file code %q", fileCode)
+    fileName := path.Base(o.remote)
+    destinationFolderPath := path.Join(o.fs.root, path.Dir(o.remote))
+    destinationFolderPath = "/" + strings.Trim(destinationFolderPath, "/")
+    fs.Debugf(o.fs, "Update: Uploading file to folder path: %s", destinationFolderPath)
 
-	// If we have a destination path, move the file there
-	if o.fs.root != "" {
-		sourcePath := "/" + fileName
-		destinationPath := "/" + strings.Trim(o.fs.root, "/")
+    fileCode, err := o.fs.uploadFileWithDestination(ctx, uploadURL, sessID, fileName, tempFile, destinationFolderPath)
+    if err != nil {
+        return fmt.Errorf("failed to upload file: %w", err)
+    }
+    fs.Debugf(o.fs, "Update: File uploaded successfully with code: %s", fileCode)
 
-		fs.Debugf(o.fs, "Update: Moving file from %q to folder %q", sourcePath, destinationPath)
-		err = o.fs.moveFileToFolder(ctx, sourcePath, destinationPath)
-		if err != nil {
-			return fmt.Errorf("failed to move file to destination folder: %w", err)
-		}
-	}
+    o.size = src.Size()
+    o.modTime = src.ModTime(ctx)
 
-	// Update the object metadata
-	o.size = src.Size()
-	o.modTime = src.ModTime(ctx)
-
-	fs.Debugf(o.fs, "Update: Finished update for %q", o.remote)
-	return nil
+    fs.Debugf(o.fs, "Update: Finished update for %q", o.remote)
+    return nil
 }
 
 // Remove deletes the object from FileLu
