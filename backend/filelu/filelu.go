@@ -125,7 +125,7 @@ func isFileCode(s string) bool {
 	}
 	return true
 }
-
+//nolint:unused
 // resolveFolderPath takes a path and returns the folder ID, verifying the ID if provided.
 func (f *Fs) resolveFolderPath(ctx context.Context, path string) (int, error) {
 	if path == "" {
