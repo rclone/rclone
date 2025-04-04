@@ -194,35 +194,6 @@ type DeleteResponse struct {
 	Data map[string]Error
 }
 
-// Server is an upload server
-type Server struct {
-	Name string `json:"name"`
-	Zone string `json:"zone"`
-}
-
-// String returns a string representation of the Server
-func (s *Server) String() string {
-	return fmt.Sprintf("%s (%s)", s.Name, s.Zone)
-}
-
-// Root returns the root URL for the server
-func (s *Server) Root() string {
-	return fmt.Sprintf("https://%s.gofile.io/", s.Name)
-}
-
-// URL returns the upload URL for the server
-func (s *Server) URL() string {
-	return fmt.Sprintf("https://%s.gofile.io/contents/uploadfile", s.Name)
-}
-
-// ServersResponse is the output from /servers
-type ServersResponse struct {
-	Error
-	Data struct {
-		Servers []Server `json:"servers"`
-	} `json:"data"`
-}
-
 // UploadResponse is returned by POST /contents/uploadfile
 type UploadResponse struct {
 	Error
@@ -298,14 +269,5 @@ type CopyResponse struct {
 	Data map[string]struct {
 		Error
 		Item `json:"data"`
-	} `json:"data"`
-}
-
-// UploadServerStatus is returned when fetching the root of an upload server
-type UploadServerStatus struct {
-	Error
-	Data struct {
-		Server string `json:"server"`
-		Test   string `json:"test"`
 	} `json:"data"`
 }
