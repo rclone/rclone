@@ -86,6 +86,62 @@ func StringToInterface(def any, in string) (newValue any, err error) {
 	return newValue, nil
 }
 
+// InterfaceToString turns in into a string
+//
+// This supports a subset of builtin types, string, integer types,
+// bool, time.Duration and []string.
+//
+// Builtin types are expected to be encoding as their natural
+// stringificatons as produced by fmt.Sprint except for []string which
+// is expected to be encoded a a CSV with empty array encoded as "".
+//
+// Any other types are expected to be encoded by their String()
+// methods and decoded by their `Set(s string) error` methods.
+func InterfaceToString(in any) (strValue string, err error) {
+	switch x := in.(type) {
+	case string:
+		// return strings unmodified
+		strValue = x
+	case int, int8, int16, int32, int64,
+		uint, uint8, uint16, uint32, uint64, uintptr,
+		float32, float64:
+		strValue = fmt.Sprint(in)
+	case bool:
+		strValue = fmt.Sprint(in)
+	case time.Duration:
+		strValue = fmt.Sprint(in)
+	case []string:
+		// CSV encode arrays of strings - ideally we would use
+		// fs.CommaSepList here but we can't as it would cause
+		// a circular import.
+		if len(x) == 0 {
+			strValue = ""
+		} else if len(x) == 1 && len(x[0]) == 0 {
+			strValue = `""`
+		} else {
+			var buf strings.Builder
+			w := csv.NewWriter(&buf)
+			err := w.Write(x)
+			if err != nil {
+				return "", err
+			}
+			w.Flush()
+			strValue = strings.TrimSpace(buf.String())
+		}
+	default:
+		// Try using a String method
+		if do, ok := in.(fmt.Stringer); ok {
+			strValue = do.String()
+		} else {
+			err = errors.New("don't know how to convert this")
+		}
+	}
+	if err != nil {
+		return "", fmt.Errorf("interpreting %T as string failed: %w", in, err)
+	}
+	return strValue, nil
+}
+
 // Item describes a single entry in the options structure
 type Item struct {
 	Name  string    // snake_case
@@ -157,6 +213,22 @@ func Items(opt any) (items []Item, err error) {
 	return items, nil
 }
 
+// setValue sets newValue to configValue returning an updated newValue
+func setValue(newValue any, configValue string) (any, error) {
+	newNewValue, err := StringToInterface(newValue, configValue)
+	if err != nil {
+		// Mask errors if setting an empty string as
+		// it isn't valid for all types.  This makes
+		// empty string be the equivalent of unset.
+		if configValue != "" {
+			return nil, err
+		}
+	} else {
+		newValue = newNewValue
+	}
+	return newValue, nil
+}
+
 // Set interprets the field names in defaults and looks up config
 // values in the config passed in.  Any values found in config will be
 // set in the opt structure.
@@ -178,17 +250,60 @@ func Set(config configmap.Getter, opt any) (err error) {
 	for _, defaultItem := range defaultItems {
 		newValue := defaultItem.Value
 		if configValue, ok := config.Get(defaultItem.Name); ok {
-			var newNewValue any
-			newNewValue, err = StringToInterface(newValue, configValue)
+			newValue, err = setValue(newValue, configValue)
 			if err != nil {
-				// Mask errors if setting an empty string as
-				// it isn't valid for all types.  This makes
-				// empty string be the equivalent of unset.
-				if configValue != "" {
-					return fmt.Errorf("couldn't parse config item %q = %q as %T: %w", defaultItem.Name, configValue, defaultItem.Value, err)
+				return fmt.Errorf("couldn't parse config item %q = %q as %T: %w", defaultItem.Name, configValue, defaultItem.Value, err)
+			}
+		}
+		defaultItem.Set(newValue)
+	}
+	return nil
+}
+
+// setIfSameType set aPtr with b if they are the same type or returns false.
+func setIfSameType(aPtr interface{}, b interface{}) bool {
+	aVal := reflect.ValueOf(aPtr).Elem()
+	bVal := reflect.ValueOf(b)
+
+	if aVal.Type() != bVal.Type() {
+		return false
+	}
+	aVal.Set(bVal)
+	return true
+}
+
+// SetAny interprets the field names in defaults and looks up config
+// values in the config passed in.  Any values found in config will be
+// set in the opt structure.
+//
+// opt must be a pointer to a struct.  The struct should have entirely
+// public fields.  The field names are converted from CamelCase to
+// snake_case and looked up in the config supplied or a
+// `config:"field_name"` is looked up.
+//
+// If items are found then they are set directly if the correct type,
+// otherwise they are converted to string and then converted from
+// string to native types and set in opt.
+//
+// All the field types in the struct must implement fmt.Scanner.
+func SetAny(config map[string]any, opt any) (err error) {
+	defaultItems, err := Items(opt)
+	if err != nil {
+		return err
+	}
+	for _, defaultItem := range defaultItems {
+		newValue := defaultItem.Value
+		if configValue, ok := config[defaultItem.Name]; ok {
+			if !setIfSameType(&newValue, configValue) {
+				// Convert the config value to be a string
+				stringConfigValue, err := InterfaceToString(configValue)
+				if err != nil {
+					return err
 				}
-			} else {
-				newValue = newNewValue
+				newValue, err = setValue(newValue, stringConfigValue)
+				if err != nil {
+					return fmt.Errorf("couldn't parse config item %q = %q as %T: %w", defaultItem.Name, stringConfigValue, defaultItem.Value, err)
+				}
 			}
 		}
 		defaultItem.Set(newValue)

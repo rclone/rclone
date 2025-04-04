@@ -176,6 +176,39 @@ func TestSetFull(t *testing.T) {
 	assert.Equal(t, want, in)
 }
 
+func TestSetAnyFull(t *testing.T) {
+	in := &Conf2{
+		PotatoPie:      "yum",
+		BeanStew:       true,
+		RaisinRoll:     42,
+		SausageOnStick: 101,
+		ForbiddenFruit: 6,
+		CookingTime:    fs.Duration(42 * time.Second),
+		TotalWeight:    fs.SizeSuffix(17 << 20),
+	}
+	m := map[string]any{
+		"spud_pie":         "YUM",
+		"bean_stew":        false,
+		"raisin_roll":      "43 ",
+		"sausage_on_stick": " 102 ",
+		"forbidden_fruit":  "0x7",
+		"cooking_time":     43 * time.Second,
+		"total_weight":     "18M",
+	}
+	want := &Conf2{
+		PotatoPie:      "YUM",
+		BeanStew:       false,
+		RaisinRoll:     43,
+		SausageOnStick: 102,
+		ForbiddenFruit: 7,
+		CookingTime:    fs.Duration(43 * time.Second),
+		TotalWeight:    fs.SizeSuffix(18 << 20),
+	}
+	err := configstruct.SetAny(m, in)
+	require.NoError(t, err)
+	assert.Equal(t, want, in)
+}
+
 func TestStringToInterface(t *testing.T) {
 	item := struct{ A int }{2}
 	for _, test := range []struct {
@@ -223,6 +256,50 @@ func TestStringToInterface(t *testing.T) {
 			assert.Equal(t, test.want, got, what)
 		} else {
 			assert.Nil(t, got, what)
+			assert.EqualError(t, err, test.err, what)
+		}
+	}
+}
+
+func TestInterfaceToString(t *testing.T) {
+	item := struct{ A int }{2}
+	for _, test := range []struct {
+		in   any
+		want string
+		err  string
+	}{
+		{nil, "", "interpreting <nil> as string failed: don't know how to convert this"},
+		{"", "", ""},
+		{"   string   ", "   string   ", ""},
+		{int(123), "123", ""},
+		{int(0x123), "291", ""},
+		{int(-123), "-123", ""},
+		{false, "false", ""},
+		{true, "true", ""},
+		{uint(123), "123", ""},
+		{int64(123), "123", ""},
+		{item, "", "interpreting struct { A int } as string failed: don't know how to convert this"},
+		{fs.Duration(time.Second), "1s", ""},
+		{fs.Duration(61 * time.Second), "1m1s", ""},
+		{[]string{}, ``, ""},
+		{[]string{""}, `""`, ""},
+		{[]string{"", ""}, `,`, ""},
+		{[]string{"hello"}, `hello`, ""},
+		{[]string{"hello", "world"}, `hello,world`, ""},
+		{[]string{"hello", "", "world"}, `hello,,world`, ""},
+		{[]string{`hello, world`, `goodbye, world!`}, `"hello, world","goodbye, world!"`, ""},
+		{time.Second, "1s", ""},
+		{61 * time.Second, "1m1s", ""},
+		{fs.Mebi, "1Mi", ""},
+		{fs.Gibi, "1Gi", ""},
+	} {
+		what := fmt.Sprintf("interpret %#v as string", test.in)
+		got, err := configstruct.InterfaceToString(test.in)
+		if test.err == "" {
+			require.NoError(t, err, what)
+			assert.Equal(t, test.want, got, what)
+		} else {
+			assert.Equal(t, "", got)
 			assert.EqualError(t, err, test.err, what)
 		}
 	}
