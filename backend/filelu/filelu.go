@@ -1201,64 +1201,65 @@ func respBodyClose(responseBody io.Closer) {
 
 // uploadFileWithDestination uploads a file directly to a specified folder using file content reader.
 func (f *Fs) uploadFileWithDestination(ctx context.Context, uploadURL, sessID, fileName string, fileContent io.Reader, destinationPath string) (string, error) {
-    pr, pw := io.Pipe()
-    writer := multipart.NewWriter(pw)
+	pr, pw := io.Pipe()
+	writer := multipart.NewWriter(pw)
 
-    go func() {
-        defer func() {
-            if cerr := pw.Close(); cerr != nil {
-                fmt.Printf("Error closing pipe writer: %v\n", cerr)
-            }
-        }()
-        _ = writer.WriteField("sess_id", sessID)
-        _ = writer.WriteField("utype", "prem")
-        _ = writer.WriteField("fld_path", destinationPath)
+	go func() {
+		defer func() {
+			if cerr := pw.Close(); cerr != nil {
+				fmt.Printf("Error closing pipe writer: %v\n", cerr)
+			}
+		}()
+		_ = writer.WriteField("sess_id", sessID)
+		_ = writer.WriteField("utype", "prem")
+		_ = writer.WriteField("fld_path", destinationPath)
 
-        part, err := writer.CreateFormFile("file_0", fileName)
-        if err != nil {
-            pw.CloseWithError(fmt.Errorf("failed to create form file: %w", err))
-            return
-        }
+		part, err := writer.CreateFormFile("file_0", fileName)
+		if err != nil {
+			pw.CloseWithError(fmt.Errorf("failed to create form file: %w", err))
+			return
+		}
 
-        _, err = io.Copy(part, fileContent)
-        if err != nil {
-            pw.CloseWithError(fmt.Errorf("failed to copy file content: %w", err))
-            return
-        }
+		_, err = io.Copy(part, fileContent)
+		if err != nil {
+			pw.CloseWithError(fmt.Errorf("failed to copy file content: %w", err))
+			return
+		}
 
-        if cerr := writer.Close(); cerr != nil {
-            pw.CloseWithError(fmt.Errorf("failed to close writer: %w", cerr))
-            return
-        }
-    }()
+		if cerr := writer.Close(); cerr != nil {
+			pw.CloseWithError(fmt.Errorf("failed to close writer: %w", cerr))
+			return
+		}
+	}()
 
-    req, err := http.NewRequestWithContext(ctx, "POST", uploadURL, pr)
-    if err != nil {
-        return "", fmt.Errorf("failed to create request: %w", err)
-    }
-    req.Header.Set("Content-Type", writer.FormDataContentType())
+	req, err := http.NewRequestWithContext(ctx, "POST", uploadURL, pr)
+	if err != nil {
+		return "", fmt.Errorf("failed to create request: %w", err)
+	}
+	req.Header.Set("Content-Type", writer.FormDataContentType())
 
-    resp, err := f.client.Do(req)
-    if err != nil {
-        return "", fmt.Errorf("failed to send request: %w", err)
-    }
-    // Use the custom respBodyClose function to handle error
-    defer respBodyClose(resp.Body)
+	resp, err := f.client.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("failed to send request: %w", err)
+	}
+	// Use the custom respBodyClose function to handle error
+	defer respBodyClose(resp.Body)
 
-    var result []struct {
-        FileCode   string `json:"file_code"`
-        FileStatus string `json:"file_status"`
-    }
-    if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-        return "", fmt.Errorf("failed to parse response: %w", err)
-    }
+	var result []struct {
+		FileCode   string `json:"file_code"`
+		FileStatus string `json:"file_status"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return "", fmt.Errorf("failed to parse response: %w", err)
+	}
 
-    if len(result) == 0 || result[0].FileStatus != "OK" {
-        return "", fmt.Errorf("upload failed with status: %s", result[0].FileStatus)
-    }
+	if len(result) == 0 || result[0].FileStatus != "OK" {
+		return "", fmt.Errorf("upload failed with status: %s", result[0].FileStatus)
+	}
 
-    return result[0].FileCode, nil
+	return result[0].FileCode, nil
 }
+
 // createTempFileFromReader writes the content of the 'in' reader into a temporary file
 func createTempFileFromReader(in io.Reader) (string, error) {
 	// Create a temporary file
