@@ -85,7 +85,7 @@ func NewFs(ctx context.Context, name string, root string, m configmap.Mapper) (f
 
 	client := fshttp.NewClient(ctx)
 
-                  if strings.TrimSpace(root) == "." || strings.TrimSpace(root) == "" {
+	if strings.TrimSpace(root) == "." || strings.TrimSpace(root) == "" {
 		root = "Rclone"
 	}
 	// If the root points to a specific file, extract just the directory part
@@ -1149,97 +1149,94 @@ func (f *Fs) getUploadServer(ctx context.Context) (string, string, error) {
 
 // Put uploads a file directly to the destination folder in the FileLu storage system.
 func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
-    fs.Debugf(f, "Put: Starting upload for %q", src.Remote())
+	fs.Debugf(f, "Put: Starting upload for %q", src.Remote())
 
-    destinationFolderPath := path.Join(f.root, path.Dir(src.Remote()))
-    destinationFolderPath = "/" + strings.Trim(destinationFolderPath, "/")
+	destinationFolderPath := path.Join(f.root, path.Dir(src.Remote()))
+	destinationFolderPath = "/" + strings.Trim(destinationFolderPath, "/")
 
-    existingEntries, err := f.List(ctx, path.Dir(src.Remote()))
-    if err != nil {
-        return nil, fmt.Errorf("failed to list existing files: %w", err)
-    }
+	existingEntries, err := f.List(ctx, path.Dir(src.Remote()))
+	if err != nil {
+		return nil, fmt.Errorf("failed to list existing files: %w", err)
+	}
 
-    for _, entry := range existingEntries {
-        if entry.Remote() == src.Remote() {
-            obj, ok := entry.(fs.Object)
-            if !ok || obj.Size() != src.Size() || !obj.ModTime(ctx).Equal(src.ModTime(ctx)) {
-                continue
-            }
-            fs.Infof(f, "Skipping upload for %q, an identical file exists.", src.Remote())
-            return obj, nil
-        }
-    }
+	for _, entry := range existingEntries {
+		if entry.Remote() == src.Remote() {
+			obj, ok := entry.(fs.Object)
+			if !ok || obj.Size() != src.Size() || !obj.ModTime(ctx).Equal(src.ModTime(ctx)) {
+				continue
+			}
+			fs.Infof(f, "Skipping upload for %q, an identical file exists.", src.Remote())
+			return obj, nil
+		}
+	}
 
-    uploadURL, sessID, err := f.getUploadServer(ctx)
-    if err != nil {
-        return nil, fmt.Errorf("failed to retrieve upload server: %w", err)
-    }
+	uploadURL, sessID, err := f.getUploadServer(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve upload server: %w", err)
+	}
 
-    fileName := path.Base(src.Remote())
+	fileName := path.Base(src.Remote())
 
-    // Since the fileCode isn't used, just handle the error
-    if _, err := f.uploadFileWithDestination(ctx, uploadURL, sessID, fileName, in, destinationFolderPath); err != nil {
-        return nil, fmt.Errorf("failed to upload file: %w", err)
-    }
+	// Since the fileCode isn't used, just handle the error
+	if _, err := f.uploadFileWithDestination(ctx, uploadURL, sessID, fileName, in, destinationFolderPath); err != nil {
+		return nil, fmt.Errorf("failed to upload file: %w", err)
+	}
 
-    newObject := &Object{
-        fs:      f,
-        remote:  src.Remote(),
-        size:    src.Size(),
-        modTime: src.ModTime(ctx),
-    }
-    fs.Infof(f, "Put: Successfully uploaded new file %q", src.Remote())
-    return newObject, nil
+	newObject := &Object{
+		fs:      f,
+		remote:  src.Remote(),
+		size:    src.Size(),
+		modTime: src.ModTime(ctx),
+	}
+	fs.Infof(f, "Put: Successfully uploaded new file %q", src.Remote())
+	return newObject, nil
 }
 
 // uploadFileWithDestination uploads a file directly to a specified folder using file content reader.
 func (f *Fs) uploadFileWithDestination(ctx context.Context, uploadURL, sessID, fileName string, fileContent io.Reader, destinationPath string) (string, error) {
-    // Set up a pipe to stream the data directly
     pr, pw := io.Pipe()
     writer := multipart.NewWriter(pw)
 
     go func() {
-        defer pw.Close()
-        // Write form fields
+        defer func() {
+            if cerr := pw.Close(); cerr != nil {
+                fmt.Printf("Error closing pipe writer: %v\n", cerr)
+            }
+        }()
         _ = writer.WriteField("sess_id", sessID)
         _ = writer.WriteField("utype", "prem")
         _ = writer.WriteField("fld_path", destinationPath)
 
-        // Create the form file part where the file content goes
         part, err := writer.CreateFormFile("file_0", fileName)
         if err != nil {
-            // Close the writer on error
             pw.CloseWithError(fmt.Errorf("failed to create form file: %w", err))
             return
         }
 
-        // Stream the file content to the multipart writer
         _, err = io.Copy(part, fileContent)
         if err != nil {
-            // Close with error if copy fails
             pw.CloseWithError(fmt.Errorf("failed to copy file content: %w", err))
             return
         }
 
-        // Close the multipart writer after all data is written
-        if err := writer.Close(); err != nil {
-            pw.CloseWithError(fmt.Errorf("failed to close writer: %w", err))
+        if cerr := writer.Close(); cerr != nil {
+            pw.CloseWithError(fmt.Errorf("failed to close writer: %w", cerr))
+            return
         }
     }()
 
-    // Use the pipe reader as the body of the HTTP POST request
     req, err := http.NewRequestWithContext(ctx, "POST", uploadURL, pr)
     if err != nil {
         return "", fmt.Errorf("failed to create request: %w", err)
     }
     req.Header.Set("Content-Type", writer.FormDataContentType())
 
-    // Execute the request
     resp, err := f.client.Do(req)
     if err != nil {
         return "", fmt.Errorf("failed to send request: %w", err)
     }
-    defer resp.Body.Close()
+    // Use the custom respBodyClose function to handle error
+    defer respBodyClose(resp.Body)
 
     var result []struct {
         FileCode   string `json:"file_code"`
@@ -1255,7 +1252,6 @@ func (f *Fs) uploadFileWithDestination(ctx context.Context, uploadURL, sessID, f
 
     return result[0].FileCode, nil
 }
-
 // createTempFileFromReader writes the content of the 'in' reader into a temporary file
 func createTempFileFromReader(in io.Reader) (string, error) {
 	// Create a temporary file
