@@ -314,7 +314,7 @@ func (w *writerAtChunkWriter) WriteChunk(ctx context.Context, chunkNumber int, r
 	case *bufio.Writer:
 		er2 := w.Flush()
 		if er2 != nil {
-			return -1, fmt.Errorf("multi-thread copy: flush failed: %w", err)
+			return -1, fmt.Errorf("multi-thread copy: flush failed: %w", er2)
 		}
 	}
 	return n, nil
