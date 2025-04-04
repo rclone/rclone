@@ -1191,7 +1191,12 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 	fs.Infof(f, "Put: Successfully uploaded new file %q", src.Remote())
 	return newObject, nil
 }
-
+// respBodyClose to check body response.
+func respBodyClose(responseBody io.Closer) {
+	if cerr := responseBody.Close(); cerr != nil {
+		fmt.Printf("Error closing response body: %v\n", cerr)
+	}
+}
 // uploadFileWithDestination uploads a file directly to a specified folder using file content reader.
 func (f *Fs) uploadFileWithDestination(ctx context.Context, uploadURL, sessID, fileName string, fileContent io.Reader, destinationPath string) (string, error) {
     pr, pw := io.Pipe()
