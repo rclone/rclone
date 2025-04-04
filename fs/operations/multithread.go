@@ -312,7 +312,7 @@ func (w *writerAtChunkWriter) WriteChunk(ctx context.Context, chunkNumber int, r
 	// if we were buffering, flush to disk
 	switch w := writer.(type) {
 	case *bufio.Writer:
-		err := w.Flush()
+		err = w.Flush()
 		if err != nil {
 			return -1, fmt.Errorf("multi-thread copy: flush failed: %w", err)
 		}
