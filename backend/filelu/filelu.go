@@ -85,6 +85,9 @@ func NewFs(ctx context.Context, name string, root string, m configmap.Mapper) (f
 
 	client := fshttp.NewClient(ctx)
 
+                  if strings.TrimSpace(root) == "." || strings.TrimSpace(root) == "" {
+		root = "Rclone"
+	}
 	// If the root points to a specific file, extract just the directory part
 	isFile := false
 	filename := ""
@@ -1146,123 +1149,111 @@ func (f *Fs) getUploadServer(ctx context.Context) (string, string, error) {
 
 // Put uploads a file directly to the destination folder in the FileLu storage system.
 func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
-	fs.Debugf(f, "Put: Starting upload for %q", src.Remote())
+    fs.Debugf(f, "Put: Starting upload for %q", src.Remote())
 
-	// Prepare the full destination folder path
-	destinationFolderPath := path.Join(f.root, path.Dir(src.Remote()))
-	destinationFolderPath = "/" + strings.Trim(destinationFolderPath, "/")
+    destinationFolderPath := path.Join(f.root, path.Dir(src.Remote()))
+    destinationFolderPath = "/" + strings.Trim(destinationFolderPath, "/")
 
-	// Log the full path for debugging purposes
-	fs.Debugf(f, "Put: Checking for existing file in path: %s", destinationFolderPath)
+    existingEntries, err := f.List(ctx, path.Dir(src.Remote()))
+    if err != nil {
+        return nil, fmt.Errorf("failed to list existing files: %w", err)
+    }
 
-	// Check for duplicate files
-	existingEntries, err := f.List(ctx, path.Dir(src.Remote()))
-	if err != nil {
-		return nil, fmt.Errorf("failed to list existing files: %w", err)
-	}
+    for _, entry := range existingEntries {
+        if entry.Remote() == src.Remote() {
+            obj, ok := entry.(fs.Object)
+            if !ok || obj.Size() != src.Size() || !obj.ModTime(ctx).Equal(src.ModTime(ctx)) {
+                continue
+            }
+            fs.Infof(f, "Skipping upload for %q, an identical file exists.", src.Remote())
+            return obj, nil
+        }
+    }
 
-	for _, entry := range existingEntries {
-		if entry.Remote() == src.Remote() {
-			obj, ok := entry.(fs.Object)
-			if !ok || obj.Size() != src.Size() || !obj.ModTime(ctx).Equal(src.ModTime(ctx)) {
-				continue // Ensure proper attributes comparison
-			}
-			fs.Infof(f, "Skipping upload for %q, an identical file exists.", src.Remote())
-			return obj, nil
-		}
-	}
+    uploadURL, sessID, err := f.getUploadServer(ctx)
+    if err != nil {
+        return nil, fmt.Errorf("failed to retrieve upload server: %w", err)
+    }
 
-	// Get upload server details
-	uploadURL, sessID, err := f.getUploadServer(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to retrieve upload server: %w", err)
-	}
+    fileName := path.Base(src.Remote())
 
-	fileName := path.Base(src.Remote())
-	fs.Debugf(f, "Put: Using filename %q for upload", fileName)
+    // Since the fileCode isn't used, just handle the error
+    if _, err := f.uploadFileWithDestination(ctx, uploadURL, sessID, fileName, in, destinationFolderPath); err != nil {
+        return nil, fmt.Errorf("failed to upload file: %w", err)
+    }
 
-	// Now upload the file directly to the full destination path
-	fileCode, err := f.uploadFileWithDestination(ctx, uploadURL, sessID, fileName, in, destinationFolderPath)
-	if err != nil {
-		return nil, fmt.Errorf("failed to upload file: %w", err)
-	}
-	fs.Debugf(f, "Put: File uploaded successfully with code: %s", fileCode)
-
-	newObject := &Object{
-		fs:      f,
-		remote:  src.Remote(),
-		size:    src.Size(),
-		modTime: src.ModTime(ctx),
-	}
-	fs.Infof(f, "Put: Successfully uploaded new file %q", src.Remote())
-	return newObject, nil
+    newObject := &Object{
+        fs:      f,
+        remote:  src.Remote(),
+        size:    src.Size(),
+        modTime: src.ModTime(ctx),
+    }
+    fs.Infof(f, "Put: Successfully uploaded new file %q", src.Remote())
+    return newObject, nil
 }
 
 // uploadFileWithDestination uploads a file directly to a specified folder using file content reader.
 func (f *Fs) uploadFileWithDestination(ctx context.Context, uploadURL, sessID, fileName string, fileContent io.Reader, destinationPath string) (string, error) {
-	// Prepare multipart form data
-	var body bytes.Buffer
-	writer := multipart.NewWriter(&body)
+    // Set up a pipe to stream the data directly
+    pr, pw := io.Pipe()
+    writer := multipart.NewWriter(pw)
 
-	// Add form fields for session and upload type
-	if err := writer.WriteField("sess_id", sessID); err != nil {
-		return "", fmt.Errorf("failed to add sess_id field: %w", err)
-	}
-	if err := writer.WriteField("utype", "prem"); err != nil {
-		return "", fmt.Errorf("failed to add utype field: %w", err)
-	}
-	// Add the full path to the form
-	if err := writer.WriteField("fld_path", destinationPath); err != nil {
-		return "", fmt.Errorf("failed to add fld_path field: %w", err)
-	}
+    go func() {
+        defer pw.Close()
+        // Write form fields
+        _ = writer.WriteField("sess_id", sessID)
+        _ = writer.WriteField("utype", "prem")
+        _ = writer.WriteField("fld_path", destinationPath)
 
-	// Create the file part
-	part, err := writer.CreateFormFile("file_0", fileName)
-	if err != nil {
-		return "", fmt.Errorf("failed to create form file: %w", err)
-	}
+        // Create the form file part where the file content goes
+        part, err := writer.CreateFormFile("file_0", fileName)
+        if err != nil {
+            // Close the writer on error
+            pw.CloseWithError(fmt.Errorf("failed to create form file: %w", err))
+            return
+        }
 
-	// Copy file content to form
-	if _, err = io.Copy(part, fileContent); err != nil {
-		return "", fmt.Errorf("failed to copy file content to form: %w", err)
-	}
+        // Stream the file content to the multipart writer
+        _, err = io.Copy(part, fileContent)
+        if err != nil {
+            // Close with error if copy fails
+            pw.CloseWithError(fmt.Errorf("failed to copy file content: %w", err))
+            return
+        }
 
-	if err = writer.Close(); err != nil {
-		return "", fmt.Errorf("error closing writer: %w", err)
-	}
+        // Close the multipart writer after all data is written
+        if err := writer.Close(); err != nil {
+            pw.CloseWithError(fmt.Errorf("failed to close writer: %w", err))
+        }
+    }()
 
-	// Send the request
-	req, err := http.NewRequestWithContext(ctx, "POST", uploadURL, &body)
-	if err != nil {
-		return "", fmt.Errorf("failed to create request: %w", err)
-	}
-	req.Header.Set("Content-Type", writer.FormDataContentType())
+    // Use the pipe reader as the body of the HTTP POST request
+    req, err := http.NewRequestWithContext(ctx, "POST", uploadURL, pr)
+    if err != nil {
+        return "", fmt.Errorf("failed to create request: %w", err)
+    }
+    req.Header.Set("Content-Type", writer.FormDataContentType())
 
-	resp, err := f.client.Do(req)
-	if err != nil {
-		return "", fmt.Errorf("failed to send request: %w", err)
-	}
-	defer func() {
-		if cerr := resp.Body.Close(); cerr != nil {
-			fs.Debugf(f, "Error closing response body: %v", cerr)
-		}
-	}()
+    // Execute the request
+    resp, err := f.client.Do(req)
+    if err != nil {
+        return "", fmt.Errorf("failed to send request: %w", err)
+    }
+    defer resp.Body.Close()
 
-	// Parse the response
-	var result []struct {
-		FileCode   string `json:"file_code"`
-		FileStatus string `json:"file_status"`
-	}
-	if err = json.NewDecoder(resp.Body).Decode(&result); err != nil {
-		return "", fmt.Errorf("failed to parse response: %w", err)
-	}
+    var result []struct {
+        FileCode   string `json:"file_code"`
+        FileStatus string `json:"file_status"`
+    }
+    if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+        return "", fmt.Errorf("failed to parse response: %w", err)
+    }
 
-	if len(result) == 0 || result[0].FileStatus != "OK" {
-		return "", fmt.Errorf("upload failed with status: %s", result[0].FileStatus)
-	}
+    if len(result) == 0 || result[0].FileStatus != "OK" {
+        return "", fmt.Errorf("upload failed with status: %s", result[0].FileStatus)
+    }
 
-	fs.Debugf(f, "uploadFileWithDestination: File uploaded successfully with file code: %s", result[0].FileCode)
-	return result[0].FileCode, nil
+    return result[0].FileCode, nil
 }
 
 // createTempFileFromReader writes the content of the 'in' reader into a temporary file
