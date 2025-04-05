@@ -69,6 +69,7 @@ func init() {
 	})
 }
 
+// NewFs constructs an Fs from the path
 func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, error) {
 
 	f := &Fs{
@@ -180,6 +181,15 @@ func (f *Fs) Features() *fs.Features {
 	return f.features
 }
 
+// List the objects and directories in dir into entries.  The
+// entries can be returned in any order but should be for a
+// complete directory.
+//
+// dir should be "" to list the root, and should not have
+// trailing slashes.
+//
+// This should return ErrDirNotFound if the directory isn't
+// found.
 func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err error) {
 	remotepath := path.Join(f.root, dir)
 	level := len(strings.Split(strings.TrimSuffix(remotepath, "/"), "/"))
@@ -272,6 +282,11 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (o fs.Object, err err
 	}, nil
 }
 
+// Put the object
+//
+// Copy the reader in to the new object which is returned.
+//
+// The new object may have been created if an error is returned
 func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
 	for _, option := range options {
 		if option.Mandatory() {
@@ -292,10 +307,12 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 	return obj, nil
 }
 
+// PutStream uploads to the remote path with the modTime given of indeterminate size
 func (f *Fs) PutStream(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
 	return f.Put(ctx, in, src, options...)
 }
 
+// Mkdir creates the directory if it doesn't exist
 func (f *Fs) Mkdir(ctx context.Context, dir string) (err error) {
 	remotepath := path.Join(f.root, dir)
 	opRequest := sdk.OperationRequest{
@@ -306,6 +323,9 @@ func (f *Fs) Mkdir(ctx context.Context, dir string) (err error) {
 	return err
 }
 
+// Rmdir deletes the given folder
+//
+// Returns an error if it isn't empty
 func (f *Fs) Rmdir(ctx context.Context, dir string) (err error) {
 	remotepath := path.Join(f.root, dir)
 	level := len(strings.Split(strings.TrimSuffix(remotepath, "/"), "/"))
@@ -334,6 +354,11 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) (err error) {
 	return err
 }
 
+// Purge deletes all the files and the container
+//
+// Optional interface: Only implement this if you have a way of
+// deleting all the files quicker than just running Remove() on the
+// result of List()
 func (f *Fs) Purge(ctx context.Context, dir string) error {
 	remotepath := path.Join(f.root, dir)
 	level := len(strings.Split(strings.TrimSuffix(remotepath, "/"), "/"))
@@ -353,6 +378,219 @@ func (f *Fs) Purge(ctx context.Context, dir string) error {
 	}
 	err = f.alloc.DoMultiOperation([]sdk.OperationRequest{opRequest})
 	return err
+}
+
+type Object struct {
+	fs        *Fs
+	remote    string
+	modTime   time.Time
+	size      int64
+	encrypted bool
+}
+
+// String returns a description of the Object
+func (o *Object) String() string {
+	if o == nil {
+		return "<nil>"
+	}
+
+	return o.Remote()
+}
+
+// Remote returns the remote path
+func (o *Object) Remote() string {
+	if o.fs.root == "/" {
+		return o.remote
+	}
+
+	return strings.TrimPrefix(o.remote, o.fs.root+"/")
+}
+
+// ModTime returns the modification date of the file
+// It should return a best guess if one isn't available
+func (o *Object) ModTime(ctx context.Context) time.Time {
+	return o.modTime
+}
+
+// Size returns the size of the file
+func (o *Object) Size() int64 {
+	return o.size
+}
+
+// Fs returns read only access to the Fs that this object is part of
+func (o *Object) Fs() fs.Info {
+	return o.fs
+}
+
+// Hash returns the selected checksum of the file
+// If no checksum is available it returns ""
+func (o *Object) Hash(ctx context.Context, ty hash.Type) (_ string, err error) {
+	return "", hash.ErrUnsupported
+}
+
+// Storable says whether this object can be stored
+func (o *Object) Storable() bool {
+	return true
+}
+
+// SetModTime sets the metadata on the object to set the modification date
+func (o *Object) SetModTime(ctx context.Context, t time.Time) (err error) {
+	return fs.ErrorCantSetModTime
+}
+
+// Open an object for read
+func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadCloser, error) {
+	var (
+		rangeStart int64
+		rangeEnd   int64 = -1
+	)
+
+	for _, option := range options {
+		switch opt := option.(type) {
+		case *fs.RangeOption:
+			rangeStart = opt.Start
+			rangeEnd = opt.End
+		case *fs.SeekOption:
+			if opt.Offset > 0 {
+				rangeStart = opt.Offset
+			} else {
+				rangeStart = o.size + opt.Offset
+			}
+		default:
+			if option.Mandatory() {
+				fs.Errorf(o, "Unsupported mandatory option: %v", option)
+
+				return nil, errors.New("unsupported mandatory option")
+			}
+
+		}
+	}
+	return o.fs.alloc.DownloadObject(ctx, o.remote, rangeStart, rangeEnd)
+}
+
+// Update the object with the contents of the io.Reader, modTime and size
+//
+// If existing is set then it updates the object rather than creating a new one.
+//
+// The new object may have been created if an error is returned.
+func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (err error) {
+	for _, option := range options {
+		if option.Mandatory() {
+			fs.Errorf(o.fs, "Unsupported mandatory option: %v", option)
+
+			return errors.New("unsupported mandatory option")
+		}
+	}
+	mp := make(map[string]string)
+	modified := src.ModTime(ctx)
+	mp["rclone:mtime"] = modified.Format(time.RFC3339)
+	marshal, err := json.Marshal(mp)
+	if err != nil {
+		return err
+	}
+	fileMeta := sdk.FileMeta{
+		Path:       "",
+		RemotePath: o.remote,
+		ActualSize: src.Size(),
+		RemoteName: path.Base(o.remote),
+		CustomMeta: string(marshal),
+	}
+	isStreamUpload := src.Size() == -1
+	if isStreamUpload {
+		fileMeta.ActualSize = 0
+	}
+	rb := &ReaderBytes{
+		reader: in,
+	}
+	opRequest := sdk.OperationRequest{
+		OperationType: constants.FileOperationUpdate,
+		FileReader:    rb,
+		Workdir:       o.fs.opts.WorkDir,
+		RemotePath:    o.remote,
+		FileMeta:      fileMeta,
+		Opts: []sdk.ChunkedUploadOption{
+			sdk.WithChunkNumber(120),
+			sdk.WithEncrypt(o.fs.opts.Encrypt),
+		},
+		StreamUpload: isStreamUpload,
+	}
+	err = o.fs.alloc.DoMultiOperation([]sdk.OperationRequest{opRequest})
+	if err != nil {
+		return err
+	}
+	o.modTime = modified
+	o.size = rb.size
+	o.encrypted = o.fs.opts.Encrypt
+
+	return nil
+}
+
+func (o *Object) put(ctx context.Context, in io.Reader, src fs.ObjectInfo, toUpdate bool) (err error) {
+	mp := make(map[string]string)
+	modified := src.ModTime(ctx)
+	mp["rclone:mtime"] = modified.Format(time.RFC3339)
+	marshal, err := json.Marshal(mp)
+	if err != nil {
+		return err
+	}
+	fileMeta := sdk.FileMeta{
+		Path:       "",
+		RemotePath: o.remote,
+		ActualSize: src.Size(),
+		RemoteName: path.Base(o.remote),
+		CustomMeta: string(marshal),
+	}
+	isStreamUpload := src.Size() == -1
+	if isStreamUpload {
+		fileMeta.ActualSize = 0
+	}
+	rb := &ReaderBytes{
+		reader: in,
+	}
+	opRequest := sdk.OperationRequest{
+		OperationType: constants.FileOperationInsert,
+		FileReader:    rb,
+		Workdir:       o.fs.opts.WorkDir,
+		RemotePath:    o.remote,
+		FileMeta:      fileMeta,
+		Opts: []sdk.ChunkedUploadOption{
+			sdk.WithChunkNumber(120),
+			sdk.WithEncrypt(o.fs.opts.Encrypt),
+		},
+		StreamUpload: isStreamUpload,
+	}
+	if toUpdate {
+		opRequest.OperationType = constants.FileOperationUpdate
+	}
+	err = o.fs.alloc.DoMultiOperation([]sdk.OperationRequest{opRequest})
+	if err != nil {
+		return err
+	}
+	o.modTime = modified
+	o.size = rb.size
+	o.encrypted = o.fs.opts.Encrypt
+	return nil
+}
+
+// Remove an object
+func (o *Object) Remove(ctx context.Context) (err error) {
+	opRequest := sdk.OperationRequest{
+		OperationType: constants.FileOperationDelete,
+		RemotePath:    o.remote,
+	}
+	err = o.fs.alloc.DoMultiOperation([]sdk.OperationRequest{opRequest})
+	return err
+}
+
+type ReaderBytes struct {
+	reader io.Reader
+	size   int64
+}
+
+func (r *ReaderBytes) Read(p []byte) (n int, err error) {
+	n, err = r.reader.Read(p)
+	r.size += int64(n)
+	return n, nil
 }
 
 func getDefaultConfigDir() (string, error) {
