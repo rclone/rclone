@@ -51,6 +51,7 @@ type Options struct {
 	ApiURL   string `config:"api_url"`
 	Username string `config:"username"`
 	Password string `config:"password"`
+	TwoFA    string `config:"2fa"`
 }
 
 func init() {
@@ -59,20 +60,56 @@ func init() {
 		Description: "NameCrane Mail File Storage",
 		NewFs:       NewFs,
 		Options: []fs.Option{{
-			Name:      "api_url",
-			Help:      `NameCrane API URL, like https://us1.workspace.org`,
-			Default:   "https://us1.workspace.org",
-			Sensitive: true,
+			Name:    "api_url",
+			Help:    `NameCrane API URL, like https://us1.workspace.org`,
+			Default: "https://us1.workspace.org",
 		}, {
-			Name:      "username",
-			Help:      `NameCrane username`,
-			Required:  true,
-			Sensitive: true,
+			Name:     "username",
+			Help:     `NameCrane username`,
+			Required: true,
 		}, {
-			Name:       "password",
-			Help:       `NameCrane password`,
+			Name: "password",
+			Help: `NameCrane password
+
+Only required for the first auth, subsequent requests re-use the access/refresh token`,
 			Required:   true,
 			IsPassword: true,
+		}, {
+			Name: "2fa",
+			Help: `Two Factor Authentication Code
+
+Can be supplied with --namecrane-2fa=CODE when using any command for the first auth`,
+			Required: false,
+		}, {
+			Name:       accessTokenKey,
+			Help:       "Access token (internal only)",
+			Required:   false,
+			Advanced:   true,
+			Sensitive:  true,
+			IsPassword: true,
+			Hide:       fs.OptionHideBoth,
+		}, {
+			Name:      accessTokenExpireKey,
+			Help:      "Access token expiration (internal only)",
+			Required:  false,
+			Advanced:  true,
+			Sensitive: true,
+			Hide:      fs.OptionHideBoth,
+		}, {
+			Name:       refreshTokenKey,
+			Help:       "Refresh token (internal only)",
+			Required:   false,
+			Advanced:   true,
+			Sensitive:  true,
+			IsPassword: true,
+			Hide:       fs.OptionHideBoth,
+		}, {
+			Name:      refreshTokenExpireKey,
+			Help:      "Refresh token expiration (internal only)",
+			Required:  false,
+			Advanced:  true,
+			Sensitive: true,
+			Hide:      fs.OptionHideBoth,
 		}},
 	})
 }
@@ -96,9 +133,20 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		root = "/"
 	}
 
-	authManager := NewAuthManager(http.DefaultClient, opt.ApiURL, opt.Username, opt.Password)
+	authManager := NewAuthManager(http.DefaultClient, m, opt.ApiURL)
 
-	if _, err := authManager.GetToken(ctx); err != nil {
+	authManager.fillFromConfigMapper()
+
+	if _, err := authManager.GetToken(ctx); errors.Is(err, ErrNoToken) {
+		if opt.Username != "" && opt.Password != "" {
+			err = authManager.Authenticate(ctx, opt.Username, opt.Password, opt.TwoFA)
+
+			if err != nil {
+				return nil, fmt.Errorf("unable to authenticate: %w", err)
+			}
+		}
+	} else if err != nil {
+		// Other error occurred, potentially needing a re-login
 		return nil, err
 	}
 
