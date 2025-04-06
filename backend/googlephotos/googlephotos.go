@@ -167,7 +167,7 @@ listings and won't be transferred.`,
 The Google API will deliver images and video which aren't full
 resolution, and/or have EXIF data missing.
 
-However if you ue the gphotosdl proxy tnen you can download original,
+However if you use the gphotosdl proxy then you can download original,
 unchanged images.
 
 This runs a headless browser in the background.
