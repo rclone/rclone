@@ -170,7 +170,7 @@ func (n *Namecrane) Upload(ctx context.Context, in io.Reader, filePath string, f
 	fileName := path.Base(filePath)
 
 	// encode brackets, fixing bug within uploader
-//	fileName = url.PathEscape(fileName)
+	//	fileName = url.PathEscape(fileName)
 
 	basePath := path.Dir(filePath)
 
@@ -560,19 +560,7 @@ func WithHeader(key, value string) RequestOpt {
 	}
 }
 
-func (n *Namecrane) doRequest(ctx context.Context, method, path string, body any, opts ...RequestOpt) (*Response, error) {
-	token, err := n.authManager.GetToken(ctx)
-
-	if err != nil {
-		return nil, fmt.Errorf("failed to retrieve token: %w", err)
-	}
-
-	apiUrl, err := n.apiUrl(path)
-
-	if err != nil {
-		return nil, err
-	}
-
+func doHttpRequest(ctx context.Context, client *http.Client, method, u string, body any, opts ...RequestOpt) (*Response, error) {
 	var bodyReader io.Reader
 	var jsonBody bool
 
@@ -600,19 +588,17 @@ func (n *Namecrane) doRequest(ctx context.Context, method, path string, body any
 		case http.MethodGet:
 			switch v := body.(type) {
 			case *url.Values:
-				apiUrl += "?" + v.Encode()
+				u += "?" + v.Encode()
 			}
 		}
 	}
 
 	// Create the HTTP request
-	req, err := http.NewRequestWithContext(ctx, method, apiUrl, bodyReader)
+	req, err := http.NewRequestWithContext(ctx, method, u, bodyReader)
 
 	if err != nil {
 		return nil, fmt.Errorf("failed to create rmdir request: %w", err)
 	}
-
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
 
 	if jsonBody {
 		req.Header.Set("Content-Type", "application/json")
@@ -624,7 +610,7 @@ func (n *Namecrane) doRequest(ctx context.Context, method, path string, body any
 	}
 
 	// Execute the HTTP request
-	resp, err := n.client.Do(req)
+	resp, err := client.Do(req)
 
 	if err != nil {
 		return nil, fmt.Errorf("failed to execute rmdir request: %w", err)
@@ -633,6 +619,26 @@ func (n *Namecrane) doRequest(ctx context.Context, method, path string, body any
 	return &Response{
 		Response: resp,
 	}, err
+}
+
+func (n *Namecrane) doRequest(ctx context.Context, method, path string, body any, opts ...RequestOpt) (*Response, error) {
+	ctx = context.WithValue(ctx, "httpClient", n.client)
+
+	token, err := n.authManager.GetToken(ctx)
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve token: %w", err)
+	}
+
+	opts = append(opts, WithHeader("Authorization", "Bearer "+token))
+
+	apiUrl, err := n.apiUrl(path)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return doHttpRequest(ctx, n.client, method, apiUrl, body, opts...)
 }
 
 // parsePath parses the last segment off the specified path, representing either a file or directory
