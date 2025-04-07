@@ -69,6 +69,10 @@ func init() {
 			Required:   true,
 			IsPassword: true,
 		}, {
+			Name:     "mfac",
+			Help:     "Multi-factor authentication code.",
+			Required: false,
+		}, {
 			Name: "debug",
 			Help: `Output more debug from Mega.
 
@@ -111,6 +115,7 @@ Enabling it will increase CPU usage and add network overhead.`,
 type Options struct {
 	User       string               `config:"user"`
 	Pass       string               `config:"pass"`
+	MFAC       string               `config:"mfac"`
 	Debug      bool                 `config:"debug"`
 	HardDelete bool                 `config:"hard_delete"`
 	UseHTTPS   bool                 `config:"use_https"`
@@ -228,7 +233,14 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 			})
 		}
 
-		err := srv.Login(opt.User, opt.Pass)
+		// Login to mega
+		if opt.MFAC != "" {
+			// Login with MFA if set in the config by the user
+			err = srv.MultiFactorLogin(opt.User, opt.Pass, opt.MFAC)
+		} else {
+			err = srv.Login(opt.User, opt.Pass)
+		}
+
 		if err != nil {
 			return nil, fmt.Errorf("couldn't login: %w", err)
 		}
