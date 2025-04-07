@@ -67,11 +67,44 @@ func (m *Metadata) MergeOptions(options []OpenOption) {
 //
 // If the object has no metadata then metadata will be nil
 func GetMetadata(ctx context.Context, o DirEntry) (metadata Metadata, err error) {
-	do, ok := o.(Metadataer)
-	if !ok {
-		return nil, nil
+	if do, ok := o.(Metadataer); ok {
+		metadata, err = do.Metadata(ctx)
+		if err != nil {
+			return nil, err
+		}
 	}
-	return do.Metadata(ctx)
+	if f, ok := o.Fs().(Fs); ok {
+		Debugf(o, "GetMetadata")
+		features := f.Features()
+		if _, isDir := o.(Directory); isDir {
+			// if bucket-based remote listing the root mark directories as buckets
+			isBucket := features.BucketBased && o.Remote() == "" && f.Root() == ""
+			if isBucket {
+				if metadata == nil {
+					metadata = make(Metadata, 1)
+				}
+				metadata["content-type"] = "inode/bucket"
+			}
+		} else if obj, isObj := o.(Object); isObj && !features.SlowHash {
+			// If have hashes and they are not slow then add them here
+			hashes := f.Hashes()
+			if hashes.Count() > 0 {
+				if metadata == nil {
+					metadata = make(Metadata, hashes.Count())
+				}
+				for _, hashType := range hashes.Array() {
+					hash, err := obj.Hash(ctx, hashType)
+					if err != nil {
+						Errorf(obj, "failed to read hash: %v", err)
+					} else if hash != "" {
+						metadata["hash:"+hashType.String()] = hash
+					}
+				}
+			}
+
+		}
+	}
+	return metadata, err
 }
 
 // mapItem descripts the item to be mapped
