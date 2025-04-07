@@ -343,10 +343,16 @@ func (f *Fs) Sortable() bool {
 func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 	fs.Debugf(f, "New object %s", remote)
 
+	remote = path.Join(f.root, remote)
+
 	folder, file, err := f.client.Find(ctx, remote)
 
 	if err != nil {
-		fs.Debugf(f, "Unable to find existing file, not necessarily a bad thing: %s", err.Error())
+		if errors.Is(err, ErrNoFile) {
+			return nil, fs.ErrorObjectNotFound
+		}
+
+		fs.Debugf(f, "Unable to find existing file at %s, not necessarily a bad thing: %s", remote, err.Error())
 	}
 
 	return &Object{
@@ -355,6 +361,13 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 		folder: folder,
 		file:   file,
 	}, nil
+}
+
+func (f *Fs) newObject(remote string) *Object {
+	return &Object{
+		fs:     f,
+		remote: remote,
+	}
 }
 
 func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
@@ -379,6 +392,181 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 		fs:   f,
 		file: file,
 	}, nil
+}
+
+// DirMove moves src, srcRemote to this remote at dstRemote
+// using server-side move operations.
+//
+// Will only be called if src.Fs().Name() == f.Name()
+//
+// If it isn't possible then return fs.ErrorCantDirMove
+//
+// If destination exists then return fs.ErrorDirExists
+func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string) error {
+	srcFs, ok := src.(*Fs)
+	if !ok {
+		fs.Debugf(srcFs, "Can't move directory - not same remote type")
+		return fs.ErrorCantDirMove
+	}
+
+	fs.Debugf(f, "Moving directory %s to %s", srcRemote, dstRemote)
+
+	srcRemote = path.Join(srcFs.root, srcRemote)
+	dstRemote = path.Join(f.root, dstRemote)
+
+	// Check source remote for the folder to move
+	folder, _, err := f.client.Find(ctx, srcRemote)
+
+	if err != nil || folder == nil {
+		return fs.ErrorDirNotFound
+	}
+
+	// Confirm that the parent folder exists in the destination path
+	parent, _, err := f.client.Find(ctx, dstRemote)
+
+	if errors.Is(err, ErrNoFile) {
+		// If the parent does not exist, create it (equivalent to MkdirAll)
+		parent, err = f.client.CreateFolder(ctx, dstRemote)
+
+		if err != nil {
+			return fs.ErrorDirNotFound
+		}
+	} else if err != nil {
+		return err
+	}
+
+	// Check dest path for existing folder (dstRemote + folder.Name)
+	existing, _, _ := f.client.Find(ctx, path.Join(dstRemote, folder.Name))
+
+	if existing != nil {
+		return fs.ErrorDirExists
+	}
+
+	// Use server side move
+	err = f.client.MoveFolder(ctx, folder.Path, parent.Path)
+
+	if err != nil {
+		// not quite clear, but probably trying to move directory across file system
+		// boundaries. Copying might still work.
+		fs.Debugf(src, "Can't move dir: %v: trying copy", err)
+		return fs.ErrorCantDirMove
+	}
+
+	return nil
+}
+
+// Move src to this remote using server-side move operations.
+//
+// This is stored with the remote path given.
+//
+// It returns the destination Object and a possible error.
+//
+// Will only be called if src.Fs().Name() == f.Name()
+//
+// If it isn't possible then return fs.ErrorCantMove
+func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
+	srcObj, ok := src.(*Object)
+	if !ok {
+		fs.Debugf(src, "Can't move - not same remote type")
+		return nil, fs.ErrorCantMove
+	}
+
+	remote = path.Join(f.root, remote)
+
+	// Temporary Object under construction
+	dstObj := f.newObject(remote)
+
+	// Check if the destination is a folder
+	_, err := dstObj.Stat(ctx)
+
+	if errors.Is(err, ErrNoFile) {
+		// OK
+	} else if err != nil {
+		return nil, err
+	}
+
+	if dstObj.folder != nil {
+		return nil, errors.New("can't move file onto non-file")
+	}
+
+	newFolder, _ := f.client.parsePath(remote)
+
+	baseFolder, _, err := f.client.Find(ctx, newFolder)
+
+	if err != nil && errors.Is(err, ErrNoFile) {
+		baseFolder, err = f.client.CreateFolder(ctx, newFolder)
+
+		if err != nil {
+			fs.Debugf(f, "Unable to create parent directory due to error %s", err.Error())
+			return nil, fs.ErrorDirNotFound
+		}
+	} else if err != nil {
+		fs.Debugf(f, "Unable to get parent directory due to error %s", err.Error())
+		return nil, err
+	}
+
+	err = f.client.MoveFiles(ctx, baseFolder.Path, srcObj.file.ID)
+
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = dstObj.Stat(ctx)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return dstObj, nil
+}
+
+// PublicLink generates a public link to the remote path (usually readable by anyone)
+func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, unlink bool) (string, error) {
+	remote = path.Join(f.root, remote)
+
+	_, file, err := f.client.Find(ctx, remote)
+
+	if errors.Is(err, ErrNoFile) {
+		return "", fs.ErrorObjectNotFound
+	}
+
+	// Unlink just sets published to false
+	if unlink {
+		err = f.client.EditFile(ctx, file.ID, EditFileParams{
+			Published:      false,
+			PublishedUntil: time.Time{},
+		})
+
+		return "", nil
+	}
+
+	// Generate the link
+	shortLink, publicLink, err := f.client.GetLink(ctx, file.ID)
+
+	if err != nil {
+		return "", err
+	}
+
+	publicLink = strings.TrimRight(f.apiURL, "/") + "/" + publicLink
+
+	params := EditFileParams{
+		ShortLink:          shortLink,
+		PublicDownloadLink: publicLink,
+		Published:          true,
+	}
+
+	if expire.IsSet() {
+		params.PublishedUntil = time.Now().Add(time.Duration(expire))
+	}
+
+	// Set the file to public
+	err = f.client.EditFile(ctx, file.ID, params)
+
+	if err != nil {
+		return "", err
+	}
+
+	return publicLink, nil
 }
 
 func (o *Object) ModTime(ctx context.Context) time.Time {
@@ -508,6 +696,9 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 
 // Remove deletes the file represented by the object from the remote.
 func (o *Object) Remove(ctx context.Context) error {
+	if o.file == nil {
+		return fs.ErrorNotAFile
+	}
 	return o.fs.client.DeleteFiles(ctx, o.file.ID)
 }
 
