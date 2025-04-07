@@ -92,6 +92,10 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		return nil, err
 	}
 
+	f.features = (&fs.Features{
+		CanHaveEmptyDirectories: true,
+	}).Fill(ctx, f)
+
 	if f.opts.ConfigDir == "" {
 		f.opts.ConfigDir, err = getDefaultConfigDir()
 		if err != nil {
