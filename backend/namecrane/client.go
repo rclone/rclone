@@ -33,10 +33,14 @@ const (
 
 	apiUpload       = "api/upload"
 	apiFiles        = "api/v1/filestorage/files"
+	apiMoveFiles    = "api/v1/filestorage/move-files"
+	apiEditFile     = "api/v1/filestorage/{fileId}/edit"
+	apiGetFileLink  = "api/v1/filestorage/{fileId}/getlink"
 	apiFolder       = "api/v1/filestorage/folder"
 	apiFolders      = "api/v1/filestorage/folders"
 	apiPutFolder    = "api/v1/filestorage/folder-put"
 	apiDeleteFolder = "api/v1/filestorage/delete-folder"
+	apiPatchFolder  = "api/v1/filestorage/folder-patch"
 	apiFileDownload = "api/v1/filestorage/%s/download"
 )
 
@@ -439,6 +443,10 @@ func (n *Namecrane) Find(ctx context.Context, file string) (*Folder, *File, erro
 		}
 
 		folder = &folders[0]
+
+		if name == "" {
+			return folder, nil, nil
+		}
 	} else {
 		var err error
 
@@ -530,6 +538,175 @@ func (n *Namecrane) DeleteFolder(ctx context.Context, folder string) error {
 	return nil
 }
 
+type moveFilesRequest struct {
+	NewFolder string   `json:"newFolder"`
+	FileIDs   []string `json:"fileIDs"`
+}
+
+// MoveFiles moves files to the specified folder
+func (n *Namecrane) MoveFiles(ctx context.Context, folder string, fileIDs ...string) error {
+	res, err := n.doRequest(ctx, http.MethodPost, apiMoveFiles, moveFilesRequest{
+		NewFolder: folder,
+		FileIDs:   fileIDs,
+	})
+
+	if err != nil {
+		return err
+	}
+
+	if res.StatusCode != http.StatusOK {
+		return fmt.Errorf("%w: %d", ErrUnexpectedStatus, res.StatusCode)
+	}
+
+	var response FolderResponse
+
+	if err := res.Decode(&response); err != nil {
+		return err
+	}
+
+	if !response.Success {
+		return fmt.Errorf("failed to create directory, status: %d, response: %s", res.StatusCode, response.Message)
+	}
+
+	return nil
+}
+
+type editFileRequest struct {
+	NewFilename string `json:"newFilename"`
+}
+
+// RenameFile will rename the specified file to the new name
+func (n *Namecrane) RenameFile(ctx context.Context, fileID string, name string) error {
+	res, err := n.doRequest(ctx, http.MethodPost, apiEditFile, editFileRequest{
+		NewFilename: name,
+	}, WithURLParameter("fileId", fileID))
+
+	if err != nil {
+		return err
+	}
+
+	if res.StatusCode != http.StatusOK {
+		return fmt.Errorf("%w: %d", ErrUnexpectedStatus, res.StatusCode)
+	}
+
+	var response defaultResponse
+
+	if err := res.Decode(&response); err != nil {
+		return err
+	}
+
+	if !response.Success {
+		return fmt.Errorf("failed to create directory, status: %d, response: %s", res.StatusCode, response.Message)
+	}
+
+	return nil
+}
+
+type EditFileParams struct {
+	Password           string    `json:"password"`
+	Published          bool      `json:"published"`
+	PublishedUntil     time.Time `json:"publishedUntil"`
+	ShortLink          string    `json:"shortLink"`
+	PublicDownloadLink string    `json:"publicDownloadLink"`
+}
+
+// EditFile updates a file on the backend
+func (n *Namecrane) EditFile(ctx context.Context, fileID string, params EditFileParams) error {
+	res, err := n.doRequest(ctx, http.MethodPost, apiEditFile, params, WithURLParameter("fileId", fileID))
+
+	if err != nil {
+		return err
+	}
+
+	if res.StatusCode != http.StatusOK {
+		return fmt.Errorf("%w: %d", ErrUnexpectedStatus, res.StatusCode)
+	}
+
+	var response defaultResponse
+
+	if err := res.Decode(&response); err != nil {
+		return err
+	}
+
+	if !response.Success {
+		return fmt.Errorf("failed to create directory, status: %d, response: %s", res.StatusCode, response.Message)
+	}
+
+	return nil
+}
+
+type linkResponse struct {
+	defaultResponse
+	PublicLink string `json:"publicLink"`
+	ShortLink  string `json:"shortLink"`
+	IsPublic   bool   `json:"isPublic"`
+}
+
+// GetLink creates a short link and public link to a file
+// This is combined with EditFile to make it public
+func (n *Namecrane) GetLink(ctx context.Context, fileID string) (string, string, error) {
+	res, err := n.doRequest(ctx, http.MethodGet, apiGetFileLink, nil, WithURLParameter("fileId", fileID))
+
+	if err != nil {
+		return "", "", err
+	}
+
+	if res.StatusCode != http.StatusOK {
+		return "", "", fmt.Errorf("%w: %d", ErrUnexpectedStatus, res.StatusCode)
+	}
+
+	var response linkResponse
+
+	if err := res.Decode(&response); err != nil {
+		return "", "", err
+	}
+
+	if !response.Success {
+		return "", "", fmt.Errorf("failed to create directory, status: %d, response: %s", res.StatusCode, response.Message)
+	}
+
+	return response.ShortLink, response.PublicLink, nil
+}
+
+type patchFolderRequest struct {
+	folderRequest
+	ParentFolder    string `json:"parentFolder"`
+	Folder          string `json:"folder"`
+	NewFolderName   string `json:"newFolderName,omitempty"`
+	NewParentFolder string `json:"newParentFolder,omitempty"`
+}
+
+func (n *Namecrane) MoveFolder(ctx context.Context, folder, newParentFolder string) error {
+	_, subfolder := n.parsePath(folder)
+
+	res, err := n.doRequest(ctx, http.MethodPost, apiPatchFolder, patchFolderRequest{
+		//ParentFolder:    parent,
+		Folder:          folder,
+		NewParentFolder: newParentFolder,
+		NewFolderName:   subfolder,
+	})
+
+	if err != nil {
+		return err
+	}
+
+	if res.StatusCode != http.StatusOK {
+		return fmt.Errorf("%w: %d (%s)", ErrUnexpectedStatus, res.StatusCode, string(res.Data()))
+	}
+
+	var response defaultResponse
+
+	if err := res.Decode(&response); err != nil {
+		return err
+	}
+
+	if !response.Success {
+		return fmt.Errorf("failed to move directory, status: %d, response: %s", res.StatusCode, response.Message)
+	}
+
+	return nil
+}
+
 // apiUrl joins the base API URL with the path specified
 func (n *Namecrane) apiUrl(subPath string) (string, error) {
 	u, err := url.Parse(n.apiURL)
@@ -560,6 +737,23 @@ func WithHeader(key, value string) RequestOpt {
 	}
 }
 
+// WithURLParameter replaces a URL parameter encased in {} with the value
+func WithURLParameter(key string, value any) RequestOpt {
+	return func(r *http.Request) {
+		var valStr string
+		switch v := value.(type) {
+		case string:
+			valStr = v
+		case int:
+			valStr = strconv.Itoa(v)
+		default:
+			valStr = fmt.Sprintf("%v", v)
+		}
+
+		r.URL.Path = strings.Replace(r.URL.Path, "{"+key+"}", valStr, -1)
+	}
+}
+
 func doHttpRequest(ctx context.Context, client *http.Client, method, u string, body any, opts ...RequestOpt) (*Response, error) {
 	var bodyReader io.Reader
 	var jsonBody bool
@@ -580,6 +774,8 @@ func doHttpRequest(ctx context.Context, client *http.Client, method, u string, b
 				if err != nil {
 					return nil, err
 				}
+
+				fs.Debugf(nil, "body: %s", string(b))
 
 				bodyReader = bytes.NewReader(b)
 
