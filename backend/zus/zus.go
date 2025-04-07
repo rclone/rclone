@@ -72,6 +72,15 @@ func init() {
 // NewFs constructs an Fs from the path
 func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, error) {
 
+	if root == "" {
+		root = "/"
+	}
+
+	if root[0] != '/' {
+		return nil, errors.New("root must start with '/'")
+	}
+	root = path.Clean(root)
+
 	f := &Fs{
 		name: name,
 		root: root,
