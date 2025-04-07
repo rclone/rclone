@@ -952,3 +952,4 @@ put them back in again.` >}}
   * alingse <alingse@foxmail.com>
   * Fernando Fernández <ferferga@hotmail.com>
   * eccoisle <167755281+eccoisle@users.noreply.github.com>
+  * Klaas Freitag <kraft@freisturz.de>
