@@ -29,6 +29,7 @@ type Options struct {
 	ConfigDir    string `config:"config_dir"`
 	Encrypt      bool   `config:"encrypt"`
 	WorkDir      string `config:"work_dir"`
+	SdkLogLevel  int    `config:"sdk_log_level"`
 }
 
 type Fs struct {
@@ -65,6 +66,12 @@ func init() {
 				Help:    "Encrypt the data before uploading",
 				Default: false,
 			},
+			{
+				Name:     "sdk_log_level",
+				Help:     "Log level for the SDK",
+				Default:  0,
+				Advanced: true,
+			},
 		},
 	})
 }
@@ -94,6 +101,8 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 
 	f.features = (&fs.Features{
 		CanHaveEmptyDirectories: true,
+		ReadMimeType:            true,
+		WriteMimeType:           true,
 	}).Fill(ctx, f)
 
 	if f.opts.ConfigDir == "" {
@@ -156,6 +165,8 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		zcncore.RegisterZauthServer(cfg.ZauthServer)
 	}
 	sdk.SetNumBlockDownloads(100)
+	sdk.SetSaveProgress(false)
+	sdk.SetLogLevel(f.opts.SdkLogLevel)
 	allocation, err := sdk.GetAllocation(f.opts.AllocationID)
 	if err != nil {
 		return nil, err
@@ -176,20 +187,20 @@ func (f *Fs) Root() string {
 
 // String returns a description of the FS
 func (f *Fs) String() string {
-	return fmt.Sprintf("FS zus://%s", f.root)
+	return fmt.Sprintf("FS zus:%s", f.root)
 }
 
 // Precision of the ModTimes in this Fs
 func (f *Fs) Precision() time.Duration {
-	return time.Nanosecond
+	return time.Second
 }
 
 // Hashes are not exposed anywhere
 func (f *Fs) Hashes() hash.Set {
-	return hash.Set(hash.None)
+	return hash.Set(hash.MD5)
 }
 
-// Features returns the optional features of this Fs
+// Features returns the optional features of thxis Fs
 func (f *Fs) Features() *fs.Features {
 	return f.features
 }
@@ -238,17 +249,20 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 			t, ok := mp["rclone:mtime"]
 			if ok {
 				// try to parse the time
-				tm, err := time.Parse(time.RFC3339Nano, t)
+				tm, err := time.Parse(time.RFC3339, t)
 				if err == nil {
 					modTime = tm
 				}
 			}
+
 			entry = &Object{
 				fs:        f,
 				remote:    child.Path,
 				modTime:   modTime,
-				size:      child.Size,
+				size:      child.ActualFileSize,
 				encrypted: child.EncryptedKey != "",
+				md5:       child.ActualFileHash,
+				mimeType:  child.MimeType,
 			}
 		}
 		entries = append(entries, entry)
@@ -258,41 +272,18 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 
 // NewObject finds the Object at remote.  If it can't be found
 // it returns the error fs.ErrorObjectNotFound.
-func (f *Fs) NewObject(ctx context.Context, remote string) (o fs.Object, err error) {
+func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 	remote = strings.TrimPrefix(remote, "/")
 	remotepath := path.Join(f.root, remote)
-	level := len(strings.Split(strings.TrimSuffix(remotepath, "/"), "/"))
-	oREsult, err := f.alloc.GetRefs(remotepath, "", "", "", "", "regular", level, 1)
+	o := &Object{
+		fs:     f,
+		remote: remotepath,
+	}
+	err := o.readMetaData(ctx)
 	if err != nil {
 		return nil, err
 	}
-	if len(oREsult.Refs) == 0 {
-		return nil, fs.ErrorObjectNotFound
-	}
-	ref := oREsult.Refs[0]
-	modTime := ref.UpdatedAt.ToTime()
-	mp := make(map[string]string)
-	if ref.CustomMeta != "" {
-		err = json.Unmarshal([]byte(ref.CustomMeta), &mp)
-		if err != nil {
-			return nil, err
-		}
-		t, ok := mp["rclone:mtime"]
-		if ok {
-			// try to parse the time
-			tm, err := time.Parse(time.RFC3339Nano, t)
-			if err == nil {
-				modTime = tm
-			}
-		}
-	}
-	return &Object{
-		fs:        f,
-		remote:    remote,
-		modTime:   modTime,
-		size:      ref.ActualFileSize,
-		encrypted: ref.EncryptedKey != "",
-	}, nil
+	return o, nil
 }
 
 // Put the object
@@ -395,10 +386,12 @@ func (f *Fs) Purge(ctx context.Context, dir string) error {
 
 type Object struct {
 	fs        *Fs
-	remote    string
 	modTime   time.Time
 	size      int64
 	encrypted bool
+	remote    string
+	md5       string
+	mimeType  string
 }
 
 // String returns a description of the Object
@@ -413,7 +406,7 @@ func (o *Object) String() string {
 // Remote returns the remote path
 func (o *Object) Remote() string {
 	if o.fs.root == "/" {
-		return o.remote
+		return strings.TrimPrefix(o.remote, "/")
 	}
 
 	return strings.TrimPrefix(o.remote, o.fs.root+"/")
@@ -437,8 +430,17 @@ func (o *Object) Fs() fs.Info {
 
 // Hash returns the selected checksum of the file
 // If no checksum is available it returns ""
-func (o *Object) Hash(ctx context.Context, ty hash.Type) (_ string, err error) {
-	return "", hash.ErrUnsupported
+func (o *Object) Hash(ctx context.Context, t hash.Type) (_ string, err error) {
+	if t != hash.MD5 {
+		return "", hash.ErrUnsupported
+	}
+	if o.md5 == "" {
+		err = o.readMetaData(ctx)
+		if err != nil {
+			return "", err
+		}
+	}
+	return o.md5, nil
 }
 
 // Storable says whether this object can be stored
@@ -552,6 +554,7 @@ func (o *Object) put(ctx context.Context, in io.Reader, src fs.ObjectInfo, toUpd
 		ActualSize: src.Size(),
 		RemoteName: path.Base(o.remote),
 		CustomMeta: string(marshal),
+		MimeType:   fs.MimeType(ctx, src),
 	}
 	isStreamUpload := src.Size() == -1
 	if isStreamUpload {
@@ -582,6 +585,7 @@ func (o *Object) put(ctx context.Context, in io.Reader, src fs.ObjectInfo, toUpd
 	o.modTime = modified
 	o.size = rb.size
 	o.encrypted = o.fs.opts.Encrypt
+	o.mimeType = fileMeta.MimeType
 	return nil
 }
 
@@ -595,6 +599,40 @@ func (o *Object) Remove(ctx context.Context) (err error) {
 	return err
 }
 
+func (o *Object) readMetaData(ctx context.Context) (err error) {
+	level := len(strings.Split(strings.TrimSuffix(o.remote, "/"), "/"))
+	oREsult, err := o.fs.alloc.GetRefs(o.remote, "", "", "", "", "regular", level, 1)
+	if err != nil {
+		return err
+	}
+	if len(oREsult.Refs) == 0 {
+		return fs.ErrorObjectNotFound
+	}
+	ref := oREsult.Refs[0]
+	modTime := ref.UpdatedAt.ToTime()
+	mp := make(map[string]string)
+	if ref.CustomMeta != "" {
+		err = json.Unmarshal([]byte(ref.CustomMeta), &mp)
+		if err != nil {
+			return err
+		}
+		t, ok := mp["rclone:mtime"]
+		if ok {
+			// try to parse the time
+			tm, err := time.Parse(time.RFC3339, t)
+			if err == nil {
+				modTime = tm
+			}
+		}
+	}
+	o.modTime = modTime
+	o.size = ref.ActualFileSize
+	o.encrypted = ref.EncryptedKey != ""
+	o.md5 = ref.ActualFileHash
+	o.mimeType = ref.MimeType
+	return nil
+}
+
 type ReaderBytes struct {
 	reader io.Reader
 	size   int64
@@ -603,7 +641,7 @@ type ReaderBytes struct {
 func (r *ReaderBytes) Read(p []byte) (n int, err error) {
 	n, err = r.reader.Read(p)
 	r.size += int64(n)
-	return n, nil
+	return n, err
 }
 
 func getDefaultConfigDir() (string, error) {
