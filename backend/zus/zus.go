@@ -15,6 +15,7 @@ import (
 	"github.com/0chain/gosdk/constants"
 	"github.com/0chain/gosdk/core/client"
 	"github.com/0chain/gosdk/core/conf"
+	"github.com/0chain/gosdk/zboxcore/fileref"
 	"github.com/0chain/gosdk/zboxcore/sdk"
 	"github.com/0chain/gosdk/zcncore"
 	"github.com/mitchellh/go-homedir"
@@ -82,9 +83,9 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	if root == "" {
 		root = "/"
 	}
-
+	fs.Debug("root: ", root)
 	if root[0] != '/' {
-		return nil, errors.New("root must start with '/'")
+		root = "/" + root
 	}
 	root = path.Clean(root)
 
@@ -216,6 +217,7 @@ func (f *Fs) Features() *fs.Features {
 // found.
 func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err error) {
 	remotepath := path.Join(f.root, dir)
+	fs.Debug("List: ", remotepath)
 	level := len(strings.Split(strings.TrimSuffix(remotepath, "/"), "/"))
 	oREsult, err := f.alloc.GetRefs(remotepath, "", "", "", "", "regular", level, 1)
 	if err != nil {
@@ -224,6 +226,18 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 	if len(oREsult.Refs) == 0 {
 		return nil, fs.ErrorDirNotFound
 	}
+	if oREsult.Refs[0].Type != fileref.DIRECTORY {
+		child := oREsult.Refs[0]
+		o := &Object{
+			fs: f,
+		}
+		err = o.readFromRef(&child)
+		if err != nil {
+			return nil, err
+		}
+		entries = append(entries, o)
+		return entries, nil
+	}
 	res := f.alloc.ListObjects(ctx, remotepath, "", "", "", "", "regular", level+1, 1000)
 
 	for child := range res {
@@ -231,39 +245,21 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 		if child.Err != nil {
 			return nil, child.Err
 		}
-		if child.Type == "d" {
+		if child.Type == fileref.DIRECTORY {
 			sep := "/"
 			if f.root == "/" {
 				sep = ""
 			}
 			entry = fs.NewDir(strings.TrimPrefix(child.Path, f.root+sep), child.UpdatedAt.ToTime())
 		} else {
-			mp := make(map[string]string)
-			if child.CustomMeta != "" {
-				err = json.Unmarshal([]byte(child.CustomMeta), &mp)
-				if err != nil {
-					return nil, err
-				}
+			o := &Object{
+				fs: f,
 			}
-			modTime := child.UpdatedAt.ToTime()
-			t, ok := mp["rclone:mtime"]
-			if ok {
-				// try to parse the time
-				tm, err := time.Parse(time.RFC3339, t)
-				if err == nil {
-					modTime = tm
-				}
+			err = o.readFromRef(&child)
+			if err != nil {
+				return nil, err
 			}
-
-			entry = &Object{
-				fs:        f,
-				remote:    child.Path,
-				modTime:   modTime,
-				size:      child.ActualFileSize,
-				encrypted: child.EncryptedKey != "",
-				md5:       child.ActualFileHash,
-				mimeType:  child.MimeType,
-			}
+			entry = o
 		}
 		entries = append(entries, entry)
 	}
@@ -275,6 +271,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 	remote = strings.TrimPrefix(remote, "/")
 	remotepath := path.Join(f.root, remote)
+	fs.Debug("NewObject: ", remotepath)
 	o := &Object{
 		fs:     f,
 		remote: remotepath,
@@ -340,7 +337,7 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) (err error) {
 	if len(oREsult.Refs) == 0 {
 		return fs.ErrorDirNotFound
 	}
-	if oREsult.Refs[0].Type != "d" {
+	if oREsult.Refs[0].Type != fileref.DIRECTORY {
 		return fs.ErrorDirNotFound
 	}
 	oREsult, err = f.alloc.GetRefs(remotepath, "", "", "", "", "regular", level+1, 1)
@@ -373,7 +370,7 @@ func (f *Fs) Purge(ctx context.Context, dir string) error {
 	if len(oREsult.Refs) == 0 {
 		return fs.ErrorDirNotFound
 	}
-	if oREsult.Refs[0].Type != "d" {
+	if oREsult.Refs[0].Type != fileref.DIRECTORY {
 		return fs.ErrorDirNotFound
 	}
 	opRequest := sdk.OperationRequest{
@@ -405,7 +402,7 @@ func (o *Object) String() string {
 
 // Remote returns the remote path
 func (o *Object) Remote() string {
-	if o.fs.root == "/" {
+	if o.fs.root == "/" || o.fs.root == o.remote {
 		return strings.TrimPrefix(o.remote, "/")
 	}
 
@@ -625,6 +622,33 @@ func (o *Object) readMetaData(ctx context.Context) (err error) {
 			}
 		}
 	}
+	o.modTime = modTime
+	o.size = ref.ActualFileSize
+	o.encrypted = ref.EncryptedKey != ""
+	o.md5 = ref.ActualFileHash
+	o.mimeType = ref.MimeType
+	return nil
+}
+
+func (o *Object) readFromRef(ref *sdk.ORef) error {
+	mp := make(map[string]string)
+	if ref.CustomMeta != "" {
+		err := json.Unmarshal([]byte(ref.CustomMeta), &mp)
+		if err != nil {
+			return err
+		}
+	}
+	modTime := ref.UpdatedAt.ToTime()
+	t, ok := mp["rclone:mtime"]
+	if ok {
+		// try to parse the time
+		tm, err := time.Parse(time.RFC3339, t)
+		if err == nil {
+			modTime = tm
+		}
+	}
+
+	o.remote = ref.Path
 	o.modTime = modTime
 	o.size = ref.ActualFileSize
 	o.encrypted = ref.EncryptedKey != ""
