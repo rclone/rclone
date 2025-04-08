@@ -18,6 +18,8 @@ import (
 	"time"
 
 	"github.com/rclone/rclone/backend/filelu/api"
+	"github.com/rclone/rclone/lib/rest"
+	"github.com/rclone/rclone/lib/pacer"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/configstruct"
@@ -37,7 +39,7 @@ func init() {
 			Name:      "key",
 			Help:      "Your FileLu Rclone key from My Account",
 			Required:  true,
-			Sensitive: true, // Hides the key when displayed
+			Sensitive: true,
 		}},
 	})
 }
@@ -49,14 +51,16 @@ type Options struct {
 
 // Fs represents the FileLu file system
 type Fs struct {
-	name       string       // name of the remote
-	root       string       // root folder path
-	opt        Options      // backend options
-	features   *fs.Features // optional features
-	endpoint   string       // FileLu endpoint
-	client     *http.Client // HTTP client
-	isFile     bool         // whether this fs points to a specific file
-	targetFile string       // specific file being targeted in single-file operations
+	name       string
+	root       string
+	opt        Options
+	features   *fs.Features
+	endpoint   string
+	pacer      *pacer.Pacer
+	srv        *rest.Client
+	client     *http.Client
+	isFile     bool
+	targetFile string
 }
 
 // Object describes a FileLu object
@@ -83,10 +87,10 @@ func NewFs(ctx context.Context, name string, root string, m configmap.Mapper) (f
 
 	client := fshttp.NewClient(ctx)
 
-	if strings.TrimSpace(root) == "." || strings.TrimSpace(root) == "" {
-		root = "Rclone"
-	}
-	// If the root points to a specific file, extract just the directory part
+	if strings.TrimSpace(root) == "" {
+    root = ""
+}
+
 	isFile := false
 	filename := ""
 	cleanRoot := strings.Trim(root, "/")
@@ -106,11 +110,15 @@ func NewFs(ctx context.Context, name string, root string, m configmap.Mapper) (f
 		opt:        *opt,
 		endpoint:   "https://filelu.com/rclone",
 		client:     client,
+		srv:        rest.NewClient(client).SetRoot("https://filelu.com/rclone"),
+		pacer: pacer.New(),
 		isFile:     isFile,
 		targetFile: filename,
 	}
+
 	f.features = (&fs.Features{
 		CanHaveEmptyDirectories: true,
+                                      ListR:                   f.ListR,
 	}).Fill(ctx, f)
 
 	fs.Debugf(nil, "NewFs: Created filesystem with root path %q, isFile=%v, targetFile=%q", f.root, isFile, filename)
@@ -130,11 +138,15 @@ func isFileCode(s string) bool {
 	return true
 }
 
-// Mkdir creates a new folder on FileLu
+// Features returns the optional features of this Fs
+func (f *Fs) Features() *fs.Features {
+	return f.features
+}
+
+// Mkdir to create directory on remote server.
 func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 	fs.Debugf(f, "Mkdir: Starting directory creation for dir=%q, root=%q", dir, f.root)
 
-	// Assume root directory if dir is empty, preventing empty directory creation
 	if dir == "" {
 		dir = f.root
 		if dir == "" {
@@ -142,14 +154,11 @@ func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 		}
 	}
 
-	// Prepare full path with root verified and normalized
 	fullPath := path.Clean("/" + dir)
-
-	// Construct the API URL
 	apiURL := fmt.Sprintf("%s/folder/create?folder_path=%s&key=%s",
 		f.endpoint,
 		url.QueryEscape(fullPath),
-		url.QueryEscape(f.opt.Key),
+		url.QueryEscape(f.opt.Key), // assuming f.opt.Key is the correct field
 	)
 
 	req, err := http.NewRequestWithContext(ctx, "GET", apiURL, nil)
@@ -157,13 +166,18 @@ func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 		return fmt.Errorf("failed to create request: %w", err)
 	}
 
-	resp, err := f.client.Do(req)
+	var resp *http.Response
+	err = f.pacer.Call(func() (bool, error) {
+		var innerErr error
+		resp, innerErr = f.client.Do(req)
+		return fserrors.ShouldRetry(innerErr), innerErr
+	})
 	if err != nil {
-		return fmt.Errorf("failed to create folder: %w", err)
+		return fmt.Errorf("request failed: %w", err)
 	}
 	defer func() {
 		if err := resp.Body.Close(); err != nil {
-			fs.Fatalf(nil, "Failed to close response body: %v", err)
+			fs.Logf(nil, "Failed to close response body: %v", err)
 		}
 	}()
 
@@ -174,12 +188,10 @@ func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 			FldID int `json:"fld_id"`
 		} `json:"result"`
 	}
-
 	err = json.NewDecoder(resp.Body).Decode(&result)
 	if err != nil {
 		return fmt.Errorf("error decoding response: %w", err)
 	}
-
 	if result.Status != 200 {
 		return fmt.Errorf("error: %s", result.Msg)
 	}
@@ -190,31 +202,22 @@ func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 
 // GetAccountInfo fetches the account information including storage usage
 func (f *Fs) GetAccountInfo(ctx context.Context) (string, string, error) {
-	apiURL := fmt.Sprintf("%s/account/info?key=%s", f.endpoint, url.QueryEscape(f.opt.Key))
-
-	req, err := http.NewRequestWithContext(ctx, "GET", apiURL, nil)
-	if err != nil {
-		return "", "", fmt.Errorf("failed to create request: %w", err)
-	}
-
-	resp, err := f.client.Do(req)
-	if err != nil {
-		return "", "", fserrors.FsError(err)
-	}
-	defer func() {
-		if err := resp.Body.Close(); err != nil {
-			fs.Fatalf(nil, "Failed to close response body: %v", err)
-		}
-	}()
-
-	if resp.StatusCode != http.StatusOK {
-		return "", "", fmt.Errorf("received HTTP status %d", resp.StatusCode)
+	opts := rest.Opts{
+		Method: "GET",
+		Path:   "/account/info",
+		Parameters: url.Values{
+			"key": {f.opt.Key},
+		},
 	}
 
 	var result api.AccountInfoResponse
-	err = json.NewDecoder(resp.Body).Decode(&result)
+	err := f.pacer.Call(func() (bool, error) {
+		_, callErr := f.srv.CallJSON(ctx, &opts, nil, &result)
+		return fserrors.ShouldRetry(callErr), callErr
+	})
+
 	if err != nil {
-		return "", "", fmt.Errorf("error decoding response: %w", err)
+		return "", "", err
 	}
 
 	if result.Status != 200 {
@@ -224,64 +227,37 @@ func (f *Fs) GetAccountInfo(ctx context.Context) (string, string, error) {
 	return result.Result.Storage, result.Result.StorageUsed, nil
 }
 
-// Features returns the optional features of this Fs
-func (f *Fs) Features() *fs.Features {
-	return f.features
-}
-
 // DeleteFile sends an API request to remove a file from FileLu
 func (f *Fs) DeleteFile(ctx context.Context, filePath string) error {
 	fs.Debugf(f, "DeleteFile: Attempting to delete file at path %q", filePath)
 
-	// Ensure filePath starts with a forward slash and remove any trailing slashes
 	filePath = "/" + strings.Trim(filePath, "/")
 
-	// Construct the API URL for deletion
-	apiURL := fmt.Sprintf("%s/file/remove?file_path=%s&restore=1&key=%s",
-		f.endpoint,
-		url.QueryEscape(filePath),
-		url.QueryEscape(f.opt.Key),
-	)
-
-	fs.Debugf(f, "DeleteFile: Sending DELETE request to %s", apiURL)
-
-	// Create HTTP request
-	req, err := http.NewRequestWithContext(ctx, "GET", apiURL, nil)
-	if err != nil {
-		return fmt.Errorf("failed to create delete request: %w", err)
+	opts := rest.Opts{
+		Method: "GET",
+		Path:   "/file/remove",
+		Parameters: url.Values{
+			"file_path": {filePath},
+			"restore":   {"1"},
+			"key":       {f.opt.Key},
+		},
 	}
 
-	// Execute request
-	resp, err := f.client.Do(req)
-	if err != nil {
-		return fmt.Errorf("failed to send delete request: %w", err)
-	}
-	defer func() {
-		if err := resp.Body.Close(); err != nil {
-			fs.Fatalf(nil, "Failed to close response body: %v", err)
-		}
-	}()
-
-	// Read and log the full response body for debugging
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return fmt.Errorf("error reading response body: %w", err)
-	}
-	fs.Debugf(f, "DeleteFile: Response body: %s", string(body))
-
-	// Parse response
 	var result struct {
 		Status int    `json:"status"`
 		Msg    string `json:"msg"`
 	}
-	err = json.NewDecoder(bytes.NewReader(body)).Decode(&result)
-	if err != nil {
-		return fmt.Errorf("error decoding delete response: %w", err)
-	}
 
-	// Check API response status
+	err := f.pacer.Call(func() (bool, error) {
+	_, err := f.srv.CallJSON(ctx, &opts, nil, &result)
+	return fserrors.ShouldRetry(err), err
+})
+
+	if err != nil {
+		return fmt.Errorf("DeleteFile failed: %w", err)
+	}
 	if result.Status != 200 {
-		return fmt.Errorf("error while deleting file: %s", result.Msg)
+		return fmt.Errorf("DeleteFile API error: %s", result.Msg)
 	}
 
 	fs.Infof(f, "Successfully deleted file: %s", filePath)
@@ -290,32 +266,17 @@ func (f *Fs) DeleteFile(ctx context.Context, filePath string) error {
 
 // Rename a file using file path
 func (f *Fs) renameFile(ctx context.Context, filePath, newName string) error {
-	// Ensure filePath starts with a forward slash
 	filePath = "/" + strings.Trim(filePath, "/")
 
-	apiURL := fmt.Sprintf("%s/file/rename?file_path=%s&name=%s&key=%s",
-		f.endpoint,
-		url.QueryEscape(filePath),
-		url.QueryEscape(newName),
-		url.QueryEscape(f.opt.Key),
-	)
-
-	fs.Debugf(f, "renameFile: Sending rename request to %s", apiURL)
-
-	req, err := http.NewRequestWithContext(ctx, "GET", apiURL, nil)
-	if err != nil {
-		return fmt.Errorf("failed to create rename request: %w", err)
+	opts := rest.Opts{
+		Method: "GET",
+		Path:   "/file/rename",
+		Parameters: url.Values{
+			"file_path": {filePath},
+			"name":      {newName},
+			"key":       {f.opt.Key},
+		},
 	}
-
-	resp, err := f.client.Do(req)
-	if err != nil {
-		return fmt.Errorf("failed to send rename request: %w", err)
-	}
-	defer func() {
-		if err := resp.Body.Close(); err != nil {
-			fs.Fatalf(nil, "Failed to close response body: %v", err)
-		}
-	}()
 
 	var result struct {
 		Status int    `json:"status"`
@@ -323,13 +284,16 @@ func (f *Fs) renameFile(ctx context.Context, filePath, newName string) error {
 		Msg    string `json:"msg"`
 	}
 
-	err = json.NewDecoder(resp.Body).Decode(&result)
-	if err != nil {
-		return fmt.Errorf("error decoding rename response: %w", err)
-	}
+	err := f.pacer.Call(func() (bool, error) {
+		_, err := f.srv.CallJSON(ctx, &opts, nil, &result)
+		return fserrors.ShouldRetry(err), err
+	})
 
+	if err != nil {
+		return fmt.Errorf("renameFile failed: %w", err)
+	}
 	if result.Status != 200 {
-		return fmt.Errorf("error while renaming file: %s", result.Msg)
+		return fmt.Errorf("renameFile API error: %s", result.Msg)
 	}
 
 	fs.Infof(f, "Successfully renamed file at path: %s to %s", filePath, newName)
@@ -337,33 +301,18 @@ func (f *Fs) renameFile(ctx context.Context, filePath, newName string) error {
 }
 
 // renameFolder handles folder renaming using folder paths
-func (f *Fs) renameFolder(ctx context.Context, folderPath string, newName string) error {
-	// Ensure the folder path starts with a forward slash
+func (f *Fs) renameFolder(ctx context.Context, folderPath, newName string) error {
 	folderPath = "/" + strings.Trim(folderPath, "/")
 
-	apiURL := fmt.Sprintf("%s/folder/rename?folder_path=%s&name=%s&key=%s",
-		f.endpoint,
-		url.QueryEscape(folderPath),
-		url.QueryEscape(newName),
-		url.QueryEscape(f.opt.Key),
-	)
-
-	fs.Debugf(f, "renameFolder: Sending rename request to %s", apiURL)
-
-	req, err := http.NewRequestWithContext(ctx, "GET", apiURL, nil)
-	if err != nil {
-		return fmt.Errorf("failed to create rename folder request: %w", err)
+	opts := rest.Opts{
+		Method: "GET",
+		Path:   "/folder/rename",
+		Parameters: url.Values{
+			"folder_path": {folderPath},
+			"name":        {newName},
+			"key":         {f.opt.Key},
+		},
 	}
-
-	resp, err := f.client.Do(req)
-	if err != nil {
-		return fmt.Errorf("failed to send rename folder request: %w", err)
-	}
-	defer func() {
-		if err := resp.Body.Close(); err != nil {
-			fs.Fatalf(nil, "Failed to close response body: %v", err)
-		}
-	}()
 
 	var result struct {
 		Status int    `json:"status"`
@@ -371,13 +320,16 @@ func (f *Fs) renameFolder(ctx context.Context, folderPath string, newName string
 		Msg    string `json:"msg"`
 	}
 
-	err = json.NewDecoder(resp.Body).Decode(&result)
-	if err != nil {
-		return fmt.Errorf("error decoding rename folder response: %w", err)
-	}
+	err := f.pacer.Call(func() (bool, error) {
+		_, err := f.srv.CallJSON(ctx, &opts, nil, &result)
+		return fserrors.ShouldRetry(err), err
+	})
 
+	if err != nil {
+		return fmt.Errorf("renameFolder failed: %w", err)
+	}
 	if result.Status != 200 {
-		return fmt.Errorf("error while renaming folder: %s", result.Msg)
+		return fmt.Errorf("renameFolder API error: %s", result.Msg)
 	}
 
 	fs.Infof(f, "Successfully renamed folder at path: %s to %s", folderPath, newName)
@@ -525,7 +477,6 @@ func (f *Fs) Command(ctx context.Context, name string, args []string, opt map[st
 
 // moveFolderToDestination moves a folder to a different location within FileLu
 func (f *Fs) moveFolderToDestination(ctx context.Context, folderPath string, destFolderPath string) error {
-	// Ensure paths start with forward slashes
 	folderPath = "/" + strings.Trim(folderPath, "/")
 	destFolderPath = "/" + strings.Trim(destFolderPath, "/")
 
@@ -543,9 +494,17 @@ func (f *Fs) moveFolderToDestination(ctx context.Context, folderPath string, des
 		return fmt.Errorf("failed to create move folder request: %w", err)
 	}
 
-	resp, err := f.client.Do(req)
+	var resp *http.Response
+	err = f.pacer.Call(func() (bool, error) {
+		var err error
+		resp, err = f.client.Do(req)
+		if err != nil {
+			return shouldRetry(err), fmt.Errorf("failed to send move folder request: %w", err)
+		}
+		return shouldRetryHTTP(resp.StatusCode), nil
+	})
 	if err != nil {
-		return fmt.Errorf("failed to send move folder request: %w", err)
+		return err
 	}
 	defer func() {
 		if err := resp.Body.Close(); err != nil {
@@ -575,7 +534,6 @@ func (f *Fs) moveFolderToDestination(ctx context.Context, folderPath string, des
 
 // moveFileToDestination moves a file to a different folder using file paths
 func (f *Fs) moveFileToDestination(ctx context.Context, filePath string, destinationFolderPath string) error {
-	// Ensure paths start with forward slashes
 	filePath = "/" + strings.Trim(filePath, "/")
 	destinationFolderPath = "/" + strings.Trim(destinationFolderPath, "/")
 
@@ -593,9 +551,17 @@ func (f *Fs) moveFileToDestination(ctx context.Context, filePath string, destina
 		return fmt.Errorf("failed to create move request: %w", err)
 	}
 
-	resp, err := f.client.Do(req)
+	var resp *http.Response
+	err = f.pacer.Call(func() (bool, error) {
+		var err error
+		resp, err = f.client.Do(req)
+		if err != nil {
+			return shouldRetry(err), fmt.Errorf("failed to send move request: %w", err)
+		}
+		return shouldRetryHTTP(resp.StatusCode), nil
+	})
 	if err != nil {
-		return fmt.Errorf("failed to send move request: %w", err)
+		return err
 	}
 	defer func() {
 		if err := resp.Body.Close(); err != nil {
@@ -652,22 +618,28 @@ func (f *Fs) Hashes() hash.Set {
 
 // Remove deletes the object from FileLu
 func (f *Fs) Remove(ctx context.Context, dir string) error {
-	// Check if the path is a file or directory and remove accordingly
 	fldID, err := f.getFolderID(ctx, dir)
 	if err != nil {
 		return fmt.Errorf("failed to get folder ID for %q: %w", dir, err)
 	}
 
-	// Delete folder
 	apiURL := fmt.Sprintf("%s/folder/delete?fld_id=%d&key=%s", f.endpoint, fldID, url.QueryEscape(f.opt.Key))
 	req, err := http.NewRequestWithContext(ctx, "GET", apiURL, nil)
 	if err != nil {
 		return fmt.Errorf("failed to create delete request: %w", err)
 	}
 
-	resp, err := f.client.Do(req)
+	var resp *http.Response
+	err = f.pacer.Call(func() (bool, error) {
+		var err error
+		resp, err = f.client.Do(req)
+		if err != nil {
+			return shouldRetry(err), fmt.Errorf("failed to delete folder: %w", err)
+		}
+		return shouldRetryHTTP(resp.StatusCode), nil
+	})
 	if err != nil {
-		return fmt.Errorf("failed to delete folder: %w", err)
+		return err
 	}
 	defer func() {
 		if err := resp.Body.Close(); err != nil {
@@ -691,7 +663,6 @@ func (f *Fs) Remove(ctx context.Context, dir string) error {
 	fs.Infof(f, "Removed directory %q successfully", dir)
 	return nil
 }
-
 // Precision returns the precision of the remote
 func (f *Fs) Precision() time.Duration {
 	return time.Second
@@ -704,22 +675,21 @@ type FolderListResponse struct {
 	Result struct {
 		Files []struct {
 			Name  string      `json:"name"`
-			FldID json.Number `json:"fld_id"` // Adjust to json.Number for flexibility in decoding
+			FldID json.Number `json:"fld_id"`
 		} `json:"files"`
 		Folders []struct {
 			Name  string      `json:"name"`
-			FldID json.Number `json:"fld_id"` // Adjust this as well
+			FldID json.Number `json:"fld_id"`
 		} `json:"folders"`
 	} `json:"result"`
 }
 
-// List function to use json.Number instead of int
+// List returns a list of files and folders
+// List returns a list of files and folders for the given directory
 func (f *Fs) List(ctx context.Context, dir string) (fs.DirEntries, error) {
 	fs.Debugf(f, "List: Starting for directory %q with root %q", dir, f.root)
 
-	// If we're targeting a specific file, we should only list that file
 	if f.isFile {
-		fs.Debugf(f, "List: Single file mode, targeting file %q", f.targetFile)
 		obj, err := f.NewObject(ctx, f.targetFile)
 		if err != nil {
 			return nil, err
@@ -727,10 +697,11 @@ func (f *Fs) List(ctx context.Context, dir string) (fs.DirEntries, error) {
 		return []fs.DirEntry{obj}, nil
 	}
 
-	// Construct the full path for directory listing
+	// Compose full path for API call
 	fullPath := path.Join(f.root, dir)
-	if fullPath != "" {
-		fullPath = "/" + strings.Trim(fullPath, "/")
+	fullPath = "/" + strings.Trim(fullPath, "/")
+	if fullPath == "/" {
+		fullPath = ""
 	}
 
 	apiURL := fmt.Sprintf("%s/folder/list?folder_path=%s&key=%s",
@@ -739,59 +710,56 @@ func (f *Fs) List(ctx context.Context, dir string) (fs.DirEntries, error) {
 		url.QueryEscape(f.opt.Key),
 	)
 
-	fs.Debugf(f, "List: Fetching folder contents from URL: %s", apiURL)
+	fs.Debugf(f, "List: Fetching from URL: %s", apiURL)
 
-	req, err := http.NewRequestWithContext(ctx, "GET", apiURL, nil)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create request: %w", err)
-	}
-
-	resp, err := f.client.Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("failed to list directory: %w", err)
-	}
-	defer func() {
-		if err := resp.Body.Close(); err != nil {
-			fs.Fatalf(nil, "Failed to close response body: %v", err)
+	var body []byte
+	err := f.pacer.Call(func() (bool, error) {
+		req, err := http.NewRequestWithContext(ctx, "GET", apiURL, nil)
+		if err != nil {
+			return false, fmt.Errorf("failed to create request: %w", err)
 		}
-	}()
 
-	body, err := io.ReadAll(resp.Body)
+		resp, err := f.client.Do(req)
+		if err != nil {
+			return shouldRetry(err), fmt.Errorf("failed to list directory: %w", err)
+		}
+		defer resp.Body.Close()
+
+		body, err = io.ReadAll(resp.Body)
+		if err != nil {
+			return false, fmt.Errorf("error reading response body: %w", err)
+		}
+
+		return shouldRetryHTTP(resp.StatusCode), nil
+	})
 	if err != nil {
-		return nil, fmt.Errorf("error reading response body: %w", err)
+		return nil, err
 	}
+
 	fs.Debugf(f, "List: Response body: %s", string(body))
 
 	var result FolderListResponse
-	err = json.NewDecoder(bytes.NewReader(body)).Decode(&result)
-	if err != nil {
+	if err := json.NewDecoder(bytes.NewReader(body)).Decode(&result); err != nil {
 		return nil, fmt.Errorf("error decoding response: %w", err)
 	}
-
 	if result.Status != 200 {
 		return nil, fmt.Errorf("API error: %s", result.Msg)
 	}
 
-	entries := make([]fs.DirEntry, 0)
+	var entries fs.DirEntries
 
-	// Add files
+	for _, folder := range result.Result.Folders {
+		remote := path.Join(dir, folder.Name)
+		entries = append(entries, fs.NewDir(remote, time.Now()))
+	}
+
 	for _, file := range result.Result.Files {
 		remote := path.Join(dir, file.Name)
+		size := int64(0)
+
 		filePath := path.Join(fullPath, file.Name)
-
-		if file.FldID.String() != "" {
-			fldID, err := file.FldID.Int64()
-			if err != nil {
-				fs.Debugf(f, "Error converting fld_id for %q: %v", filePath, err)
-			} else {
-				fs.Debugf(f, "Parsed fld_id for %q: %d", filePath, fldID)
-			}
-		}
-
-		size, err := f.getFileSize(ctx, filePath)
-		if err != nil {
-			fs.Debugf(f, "Error getting file size for %q: %v", filePath, err)
-			size = 0 // Set default size to 0 if there's an error
+		if sz, err := f.getFileSize(ctx, filePath); err == nil {
+			size = sz
 		}
 
 		obj := &Object{
@@ -803,35 +771,84 @@ func (f *Fs) List(ctx context.Context, dir string) (fs.DirEntries, error) {
 		entries = append(entries, obj)
 	}
 
-	// Add folders
-	for _, folder := range result.Result.Folders {
-		remote := path.Join(dir, folder.Name)
-		if folder.FldID.String() != "" {
-			fldID, err := folder.FldID.Int64()
-			if err == nil {
-				fs.Debugf(f, "Parsed fld_id for custom directory logic: %d", fldID)
-			}
-		}
-		entries = append(entries, fs.NewDir(remote, time.Now()))
+	return entries, nil
+}
+
+// ListR lists the objects and directories of the Fs recursively
+func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) error {
+	fs.Debugf(f, "ListR: Starting recursive listing from %q", dir)
+
+	return f.walkDir(ctx, dir, callback)
+}
+
+func (f *Fs) walkDir(ctx context.Context, dir string, callback fs.ListRCallback) error {
+	entries, err := f.List(ctx, dir)
+	if err != nil {
+		return err
 	}
 
-	return entries, nil
+	if err := callback(entries); err != nil {
+		return err
+	}
+
+	for _, entry := range entries {
+		if d, ok := entry.(fs.Directory); ok {
+			err := f.walkDir(ctx, path.Join(dir, d.Remote()), callback)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
+// listFolderRaw to list folder with its full path.
+func (f *Fs) listFolderRaw(ctx context.Context, folderPath string) (*FolderListResponse, error) {
+	apiURL := fmt.Sprintf("%s/folder/list?folder_path=%s&&key=%s",
+		f.endpoint,
+		url.QueryEscape(folderPath),
+		url.QueryEscape(f.opt.Key),
+	)
+
+	var body []byte
+	err := f.pacer.Call(func() (bool, error) {
+		req, err := http.NewRequestWithContext(ctx, "GET", apiURL, nil)
+		if err != nil {
+			return false, err
+		}
+		resp, err := f.client.Do(req)
+		if err != nil {
+			return shouldRetry(err), err
+		}
+		defer resp.Body.Close()
+		body, err = io.ReadAll(resp.Body)
+		return shouldRetryHTTP(resp.StatusCode), err
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	var result FolderListResponse
+	if err := json.NewDecoder(bytes.NewReader(body)).Decode(&result); err != nil {
+		return nil, err
+	}
+
+	return &result, nil
 }
 
 // ConvertSizeStringToInt64 parses a string size to int64, returning 0 if the parsing fails.
 func ConvertSizeStringToInt64(sizeStr string) int64 {
 	size, err := strconv.ParseInt(sizeStr, 10, 64)
 	if err != nil {
-		// Handle the error gracefully by logging it once
 		fs.Debugf(nil, "Error parsing size '%s': %v", sizeStr, err)
-		return 0 // Return default value when there's an error
+		return 0
 	}
 	return size
 }
 
-// getFileSize to get the file size of objects on the remote
+// getFileSize retrieves the size of a file
 func (f *Fs) getFileSize(ctx context.Context, filePath string) (int64, error) {
-	// Ensure filePath starts with a forward slash
 	filePath = "/" + strings.Trim(filePath, "/")
 
 	apiURL := fmt.Sprintf("%s/file/info?file_path=%s&key=%s",
@@ -842,50 +859,55 @@ func (f *Fs) getFileSize(ctx context.Context, filePath string) (int64, error) {
 
 	fs.Debugf(f, "getFileSize: Fetching file info from %s", apiURL)
 
-	req, err := http.NewRequestWithContext(ctx, "GET", apiURL, nil)
-	if err != nil {
-		return 0, fmt.Errorf("failed to create request: %w", err)
-	}
-
-	resp, err := f.client.Do(req)
-	if err != nil {
-		return 0, fmt.Errorf("failed to fetch file info: %w", err)
-	}
-	defer func() {
-		if err := resp.Body.Close(); err != nil {
-			fs.Fatalf(nil, "Failed to close response body: %v", err)
+	var sizeStr string
+	err := f.pacer.Call(func() (bool, error) {
+		req, err := http.NewRequestWithContext(ctx, "GET", apiURL, nil)
+		if err != nil {
+			return false, fmt.Errorf("failed to create request: %w", err)
 		}
-	}()
 
-	var result struct {
-		Status int    `json:"status"`
-		Msg    string `json:"msg"`
-		Result []struct {
-			Size string `json:"size"` // Size is still a string here
-		} `json:"result"`
-	}
+		resp, err := f.client.Do(req)
+		if err != nil {
+			return shouldRetry(err), fmt.Errorf("failed to fetch file info: %w", err)
+		}
+		defer resp.Body.Close()
 
-	err = json.NewDecoder(resp.Body).Decode(&result)
+		var result struct {
+			Status int    `json:"status"`
+			Msg    string `json:"msg"`
+			Result []struct {
+				Size string `json:"size"`
+			} `json:"result"`
+		}
+
+		if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+			return false, fmt.Errorf("error decoding response: %w", err)
+		}
+
+		if result.Status != 200 || len(result.Result) == 0 {
+			return false, fmt.Errorf("error fetching file info: %s", result.Msg)
+		}
+
+		sizeStr = result.Result[0].Size
+		return shouldRetryHTTP(resp.StatusCode), nil
+	})
 	if err != nil {
-		return 0, fmt.Errorf("error decoding response: %w", err)
+		return 0, err
 	}
 
-	if result.Status != 200 || len(result.Result) == 0 {
-		return 0, fmt.Errorf("error fetching file info: %s", result.Msg)
-	}
+	return ConvertSizeStringToInt64(sizeStr), nil
+}
 
-	// Convert size from string to int64
-	fileSize, err := strconv.ParseInt(result.Result[0].Size, 10, 64)
-	if err != nil {
-		return 0, fmt.Errorf("failed to parse file size: %w", err)
-	}
+func shouldRetry(err error) bool {
+	return fserrors.ShouldRetry(err)
+}
 
-	return fileSize, nil
+func shouldRetryHTTP(code int) bool {
+	return code == 429 || code >= 500
 }
 
 // getFolderID resolves and returns the folder ID for a given directory name or path
 func (f *Fs) getFolderID(ctx context.Context, dir string) (int, error) {
-	// If the directory is empty, return the root directory ID
 	if dir == "" {
 		rootID, err := strconv.Atoi(f.root)
 		if err != nil {
@@ -894,38 +916,45 @@ func (f *Fs) getFolderID(ctx context.Context, dir string) (int, error) {
 		return rootID, nil
 	}
 
-	// If the directory is a valid numeric ID, return it directly
 	if folderID, err := strconv.Atoi(dir); err == nil {
 		return folderID, nil
 	}
 
 	fs.Debugf(f, "getFolderID: Resolving folder ID for directory=%q", dir)
 
-	// Fallback: Resolve folder ID based on folder name/path
 	parts := strings.Split(dir, "/")
-	currentID := 0 // Start from the root directory
+	currentID := 0
 
 	for _, part := range parts {
 		if part == "" {
 			continue
 		}
 
-		// Fetch folders in the current directory
 		apiURL := fmt.Sprintf("%s/folder/list?fld_id=%d&key=%s", f.endpoint, currentID, url.QueryEscape(f.opt.Key))
-		req, err := http.NewRequestWithContext(ctx, "GET", apiURL, nil)
-		if err != nil {
-			return 0, fmt.Errorf("failed to create request: %w", err)
-		}
 
-		resp, err := f.client.Do(req)
-		if err != nil {
-			return 0, fmt.Errorf("failed to list directory: %w", err)
-		}
-		defer func() {
-			if err := resp.Body.Close(); err != nil {
-				fs.Fatalf(nil, "Failed to close response body: %v", err)
+		var body []byte
+		err := f.pacer.Call(func() (bool, error) {
+			req, err := http.NewRequestWithContext(ctx, "GET", apiURL, nil)
+			if err != nil {
+				return false, fmt.Errorf("failed to create request: %w", err)
 			}
-		}()
+
+			resp, err := f.client.Do(req)
+			if err != nil {
+				return shouldRetry(err), fmt.Errorf("failed to list directory: %w", err)
+			}
+			defer resp.Body.Close()
+
+			body, err = io.ReadAll(resp.Body)
+			if err != nil {
+				return false, fmt.Errorf("failed to read response body: %w", err)
+			}
+
+			return shouldRetryHTTP(resp.StatusCode), nil
+		})
+		if err != nil {
+			return 0, err
+		}
 
 		var result struct {
 			Status int    `json:"status"`
@@ -938,8 +967,7 @@ func (f *Fs) getFolderID(ctx context.Context, dir string) (int, error) {
 			} `json:"result"`
 		}
 
-		err = json.NewDecoder(resp.Body).Decode(&result)
-		if err != nil {
+		if err := json.Unmarshal(body, &result); err != nil {
 			return 0, fmt.Errorf("error decoding response: %w", err)
 		}
 
@@ -965,11 +993,10 @@ func (f *Fs) getFolderID(ctx context.Context, dir string) (int, error) {
 	return currentID, nil
 }
 
+//getDirectLink of files from FileLu to download.
 func (f *Fs) getDirectLink(ctx context.Context, filePath string) (string, int64, error) {
-	// Ensure filePath starts with a forward slash
 	filePath = "/" + strings.Trim(filePath, "/")
 
-	// Construct the API URL with file_path parameter
 	apiURL := fmt.Sprintf("%s/file/direct_link?file_path=%s&key=%s",
 		f.endpoint,
 		url.QueryEscape(filePath),
@@ -977,21 +1004,6 @@ func (f *Fs) getDirectLink(ctx context.Context, filePath string) (string, int64,
 	)
 
 	fs.Debugf(f, "getDirectLink: fetching direct link for file path %q", filePath)
-
-	req, err := http.NewRequestWithContext(ctx, "GET", apiURL, nil)
-	if err != nil {
-		return "", 0, fmt.Errorf("failed to create request: %w", err)
-	}
-
-	resp, err := f.client.Do(req)
-	if err != nil {
-		return "", 0, fmt.Errorf("failed to fetch direct link: %w", err)
-	}
-	defer func() {
-		if err := resp.Body.Close(); err != nil {
-			fs.Fatalf(nil, "Failed to close response body: %v", err)
-		}
-	}()
 
 	var result struct {
 		Status int    `json:"status"`
@@ -1002,13 +1014,30 @@ func (f *Fs) getDirectLink(ctx context.Context, filePath string) (string, int64,
 		} `json:"result"`
 	}
 
-	err = json.NewDecoder(resp.Body).Decode(&result)
-	if err != nil {
-		return "", 0, fmt.Errorf("error decoding response: %w", err)
-	}
+	err := f.pacer.Call(func() (bool, error) {
+		req, err := http.NewRequestWithContext(ctx, "GET", apiURL, nil)
+		if err != nil {
+			return false, fmt.Errorf("failed to create request: %w", err)
+		}
 
-	if result.Status != 200 {
-		return "", 0, fmt.Errorf("error: %s", result.Msg)
+		resp, err := f.client.Do(req)
+		if err != nil {
+			return shouldRetry(err), fmt.Errorf("failed to fetch direct link: %w", err)
+		}
+		defer resp.Body.Close()
+
+		if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+			return false, fmt.Errorf("error decoding response: %w", err)
+		}
+
+		if result.Status != 200 {
+			return false, fmt.Errorf("API error: %s", result.Msg)
+		}
+
+		return shouldRetryHTTP(resp.StatusCode), nil
+	})
+	if err != nil {
+		return "", 0, err
 	}
 
 	fs.Debugf(f, "getDirectLink: obtained URL %q with size %d", result.Result.URL, result.Result.Size)
@@ -1019,20 +1048,14 @@ func (f *Fs) getDirectLink(ctx context.Context, filePath string) (string, int64,
 func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 	fs.Debugf(f, "NewObject: called with remote=%q", remote)
 
-	// Determine the proper remote path
 	var filePath string
 	if f.isFile {
-		// If we're in single file mode, use the target file path
 		filePath = path.Join(f.root, f.targetFile)
 	} else {
-		// Otherwise use the provided remote path
 		filePath = path.Join(f.root, remote)
 	}
 	filePath = "/" + strings.Trim(filePath, "/")
 
-	fs.Debugf(f, "NewObject: Using file path %q", filePath)
-
-	// Use the FileLu API to fetch file info
 	apiURL := fmt.Sprintf("%s/file/info?file_path=%s&key=%s",
 		f.endpoint,
 		url.QueryEscape(filePath),
@@ -1041,34 +1064,37 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 
 	fs.Debugf(f, "NewObject: Fetching file info from %s", apiURL)
 
-	req, err := http.NewRequestWithContext(ctx, "GET", apiURL, nil)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create request: %w", err)
-	}
-
-	resp, err := f.client.Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("failed to fetch file info: %w", err)
-	}
-	defer func() {
-		if err := resp.Body.Close(); err != nil {
-			fs.Fatalf(nil, "Failed to close response body: %v", err)
+	var body []byte
+	err := f.pacer.Call(func() (bool, error) {
+		req, err := http.NewRequestWithContext(ctx, "GET", apiURL, nil)
+		if err != nil {
+			return false, fmt.Errorf("failed to create request: %w", err)
 		}
-	}()
 
-	// Read and log the response body for debugging
-	body, err := io.ReadAll(resp.Body)
+		resp, err := f.client.Do(req)
+		if err != nil {
+			return shouldRetry(err), fmt.Errorf("failed to fetch file info: %w", err)
+		}
+		defer resp.Body.Close()
+
+		body, err = io.ReadAll(resp.Body)
+		if err != nil {
+			return false, fmt.Errorf("error reading response body: %w", err)
+		}
+
+		return shouldRetryHTTP(resp.StatusCode), nil
+	})
 	if err != nil {
-		return nil, fmt.Errorf("error reading response body: %w", err)
+		return nil, err
 	}
+
 	fs.Debugf(f, "NewObject: Response body: %s", string(body))
 
-	// Parse response
 	var result struct {
 		Status int    `json:"status"`
 		Msg    string `json:"msg"`
 		Result []struct {
-			Size     string `json:"size"` // API returns size as string
+			Size     string `json:"size"`
 			Name     string `json:"name"`
 			FileCode string `json:"filecode"`
 			Hash     string `json:"hash"`
@@ -1076,8 +1102,7 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 		} `json:"result"`
 	}
 
-	err = json.NewDecoder(bytes.NewReader(body)).Decode(&result)
-	if err != nil {
+	if err := json.NewDecoder(bytes.NewReader(body)).Decode(&result); err != nil {
 		return nil, fmt.Errorf("error decoding response: %w", err)
 	}
 
@@ -1085,16 +1110,14 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 		return nil, fs.ErrorObjectNotFound
 	}
 
-	// Get the first matching file
 	fileInfo := result.Result[0]
 	size, err := strconv.ParseInt(fileInfo.Size, 10, 64)
 	if err != nil {
 		fs.Debugf(f, "Error parsing file size %q: %v", fileInfo.Size, err)
-		size = 0 // Set default size to 0 if parsing fails
+		size = 0
 	}
 	fs.Debugf(f, "File %q size parsed: %d from string: %q", filePath, size, fileInfo.Size)
 
-	// Use the correct remote path for the object
 	returnedRemote := remote
 	if f.isFile {
 		returnedRemote = f.targetFile
@@ -1104,7 +1127,7 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 		fs:      f,
 		remote:  returnedRemote,
 		size:    size,
-		modTime: time.Now(), // Consider parsing upload time if available in API response
+		modTime: time.Now(),
 	}, nil
 }
 
@@ -1139,23 +1162,7 @@ func (f *Fs) handleDuplicate(ctx context.Context, remote string) error {
 
 // getUploadServer gets the upload server URL with proper key authentication
 func (f *Fs) getUploadServer(ctx context.Context) (string, string, error) {
-	// Step 1: Get upload server
 	apiURL := fmt.Sprintf("%s/upload/server?key=%s", f.endpoint, url.QueryEscape(f.opt.Key))
-
-	req, err := http.NewRequestWithContext(ctx, "GET", apiURL, nil)
-	if err != nil {
-		return "", "", fmt.Errorf("failed to create request: %w", err)
-	}
-
-	resp, err := f.client.Do(req)
-	if err != nil {
-		return "", "", fmt.Errorf("failed to get upload server: %w", err)
-	}
-	defer func() {
-		if err := resp.Body.Close(); err != nil {
-			fs.Fatalf(nil, "Failed to close response body: %v", err)
-		}
-	}()
 
 	var result struct {
 		Status int    `json:"status"`
@@ -1164,13 +1171,31 @@ func (f *Fs) getUploadServer(ctx context.Context) (string, string, error) {
 		Msg    string `json:"msg"`
 	}
 
-	err = json.NewDecoder(resp.Body).Decode(&result)
-	if err != nil {
-		return "", "", fmt.Errorf("error decoding response: %w", err)
-	}
+	err := f.pacer.Call(func() (bool, error) {
+		req, err := http.NewRequestWithContext(ctx, "GET", apiURL, nil)
+		if err != nil {
+			return false, fmt.Errorf("failed to create request: %w", err)
+		}
 
-	if result.Status != 200 {
-		return "", "", fmt.Errorf("error: %s", result.Msg)
+		resp, err := f.client.Do(req)
+		if err != nil {
+			return shouldRetry(err), fmt.Errorf("failed to get upload server: %w", err)
+		}
+		defer resp.Body.Close()
+
+		if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+			return false, fmt.Errorf("error decoding response: %w", err)
+		}
+
+		if result.Status != 200 {
+			return false, fmt.Errorf("API error: %s", result.Msg)
+		}
+
+		return shouldRetryHTTP(resp.StatusCode), nil
+	})
+
+	if err != nil {
+		return "", "", err
 	}
 
 	fs.Debugf(f, "Got upload server URL=%s and session ID=%s", result.Result, result.SessID)
@@ -1181,8 +1206,14 @@ func (f *Fs) getUploadServer(ctx context.Context) (string, string, error) {
 func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
 	fs.Debugf(f, "Put: Starting upload for %q", src.Remote())
 
-	destinationFolderPath := path.Join(f.root, path.Dir(src.Remote()))
+	destPath := path.Dir(src.Remote())
+if destPath == "." {
+	destPath = ""
+}
+destinationFolderPath := path.Join(f.root, destPath)
+if destinationFolderPath != "" {
 	destinationFolderPath = "/" + strings.Trim(destinationFolderPath, "/")
+}
 
 	existingEntries, err := f.List(ctx, path.Dir(src.Remote()))
 	if err != nil {
@@ -1235,11 +1266,7 @@ func (f *Fs) uploadFileWithDestination(ctx context.Context, uploadURL, sessID, f
 	writer := multipart.NewWriter(pw)
 
 	go func() {
-		defer func() {
-			if cerr := pw.Close(); cerr != nil {
-				fmt.Printf("Error closing pipe writer: %v\n", cerr)
-			}
-		}()
+		defer pw.Close()
 		_ = writer.WriteField("sess_id", sessID)
 		_ = writer.WriteField("utype", "prem")
 		_ = writer.WriteField("fld_path", destinationPath)
@@ -1250,44 +1277,47 @@ func (f *Fs) uploadFileWithDestination(ctx context.Context, uploadURL, sessID, f
 			return
 		}
 
-		_, err = io.Copy(part, fileContent)
-		if err != nil {
+		if _, err := io.Copy(part, fileContent); err != nil {
 			pw.CloseWithError(fmt.Errorf("failed to copy file content: %w", err))
 			return
 		}
 
-		if cerr := writer.Close(); cerr != nil {
-			pw.CloseWithError(fmt.Errorf("failed to close writer: %w", cerr))
-			return
+		if err := writer.Close(); err != nil {
+			pw.CloseWithError(fmt.Errorf("failed to close writer: %w", err))
 		}
 	}()
 
-	req, err := http.NewRequestWithContext(ctx, "POST", uploadURL, pr)
-	if err != nil {
-		return "", fmt.Errorf("failed to create request: %w", err)
-	}
-	req.Header.Set("Content-Type", writer.FormDataContentType())
+	var fileCode string
+	err := f.pacer.Call(func() (bool, error) {
+		req, err := http.NewRequestWithContext(ctx, "POST", uploadURL, pr)
+		if err != nil {
+			return false, fmt.Errorf("failed to create upload request: %w", err)
+		}
+		req.Header.Set("Content-Type", writer.FormDataContentType())
 
-	resp, err := f.client.Do(req)
-	if err != nil {
-		return "", fmt.Errorf("failed to send request: %w", err)
-	}
-	// Use the custom respBodyClose function to handle error
-	defer respBodyClose(resp.Body)
+		resp, err := f.client.Do(req)
+		if err != nil {
+			return shouldRetry(err), fmt.Errorf("failed to send upload request: %w", err)
+		}
+		defer respBodyClose(resp.Body)
 
-	var result []struct {
-		FileCode   string `json:"file_code"`
-		FileStatus string `json:"file_status"`
-	}
-	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-		return "", fmt.Errorf("failed to parse response: %w", err)
-	}
+		var result []struct {
+			FileCode   string `json:"file_code"`
+			FileStatus string `json:"file_status"`
+		}
+		if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+			return false, fmt.Errorf("failed to parse upload response: %w", err)
+		}
 
-	if len(result) == 0 || result[0].FileStatus != "OK" {
-		return "", fmt.Errorf("upload failed with status: %s", result[0].FileStatus)
-	}
+		if len(result) == 0 || result[0].FileStatus != "OK" {
+			return false, fmt.Errorf("upload failed with status: %s", result[0].FileStatus)
+		}
 
-	return result[0].FileCode, nil
+		fileCode = result[0].FileCode
+		return shouldRetryHTTP(resp.StatusCode), nil
+	})
+
+	return fileCode, err
 }
 
 // createTempFileFromReader writes the content of the 'in' reader into a temporary file
@@ -1324,7 +1354,6 @@ func createTempFileFromReader(in io.Reader) (string, error) {
 
 // moveFileToFolder moves a file to a different folder using file paths
 func (f *Fs) moveFileToFolder(ctx context.Context, filePath string, destinationPath string) error {
-	// Ensure paths start with forward slashes
 	filePath = "/" + strings.Trim(filePath, "/")
 	destinationPath = "/" + strings.Trim(destinationPath, "/")
 
@@ -1337,33 +1366,36 @@ func (f *Fs) moveFileToFolder(ctx context.Context, filePath string, destinationP
 
 	fs.Debugf(f, "moveFileToFolder: Sending move request to %s", apiURL)
 
-	req, err := http.NewRequestWithContext(ctx, "GET", apiURL, nil)
-	if err != nil {
-		return fmt.Errorf("failed to create move request: %w", err)
-	}
-
-	resp, err := f.client.Do(req)
-	if err != nil {
-		return fmt.Errorf("failed to send move request: %w", err)
-	}
-	defer func() {
-		if err := resp.Body.Close(); err != nil {
-			fs.Fatalf(nil, "Failed to close response body: %v", err)
-		}
-	}()
-
 	var result struct {
 		Status int    `json:"status"`
 		Msg    string `json:"msg"`
 	}
 
-	err = json.NewDecoder(resp.Body).Decode(&result)
-	if err != nil {
-		return fmt.Errorf("error decoding move response: %w", err)
-	}
+	err := f.pacer.Call(func() (bool, error) {
+		req, err := http.NewRequestWithContext(ctx, "GET", apiURL, nil)
+		if err != nil {
+			return false, fmt.Errorf("failed to create move request: %w", err)
+		}
 
-	if result.Status != 200 {
-		return fmt.Errorf("error while moving file: %s", result.Msg)
+		resp, err := f.client.Do(req)
+		if err != nil {
+			return shouldRetry(err), fmt.Errorf("failed to send move request: %w", err)
+		}
+		defer resp.Body.Close()
+
+		if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+			return false, fmt.Errorf("error decoding move response: %w", err)
+		}
+
+		if result.Status != 200 {
+			return false, fmt.Errorf("error while moving file: %s", result.Msg)
+		}
+
+		return shouldRetryHTTP(resp.StatusCode), nil
+	})
+
+	if err != nil {
+		return err
 	}
 
 	fs.Debugf(f, "moveFileToFolder: Successfully moved file %q to folder %q", filePath, destinationPath)
@@ -1510,96 +1542,75 @@ func (f *Fs) moveSingleFile(ctx context.Context, src fs.Object, remote string) (
 func (f *Fs) MoveTo(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
 	fs.Debugf(f, "MoveTo: Starting move for %q to %q", src.Remote(), remote)
 
-	// Check if this is a remote-to-local move
 	if strings.HasPrefix(remote, "/") || strings.Contains(remote, ":\\") {
-		// This is a remote-to-local move
-		// Create the destination directory if it doesn't exist
 		dir := path.Dir(remote)
-		err := os.MkdirAll(dir, 0755)
-		if err != nil {
+		if err := os.MkdirAll(dir, 0755); err != nil {
 			return nil, fmt.Errorf("failed to create destination directory: %w", err)
 		}
 
-		// Open source file for reading
 		reader, err := src.Open(ctx)
 		if err != nil {
 			return nil, fmt.Errorf("failed to open source file: %w", err)
 		}
-		defer func() {
-			if err := reader.Close(); err != nil {
-				fs.Logf(nil, "Failed to close reader: %v", err)
-			}
-		}()
+		defer reader.Close()
 
-		// Create destination file
 		dest, err := os.Create(remote)
 		if err != nil {
 			return nil, fmt.Errorf("failed to create destination file: %w", err)
 		}
-		defer func() {
-			if err := dest.Close(); err != nil {
-				fs.Logf(nil, "Failed to close destination file: %v", err)
-			}
-		}()
-		// Copy the content
-		_, err = io.Copy(dest, reader)
-		if err != nil {
+		defer dest.Close()
+
+		if _, err := io.Copy(dest, reader); err != nil {
 			return nil, fmt.Errorf("failed to copy file content: %w", err)
 		}
 
-		// Delete the source file after successful copy
-		err = src.Remove(ctx)
-		if err != nil {
+		if err := src.Remove(ctx); err != nil {
 			return nil, fmt.Errorf("failed to remove source file: %w", err)
 		}
 
 		return nil, nil
 	}
 
-	// This is a local-to-remote move
 	reader, err := src.Open(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open source object: %w", err)
 	}
-	defer func() {
-		if err := reader.Close(); err != nil {
-			fs.Logf(nil, "Failed to close reader: %v", err)
-		}
-	}()
-	// Get upload server details
+	defer reader.Close()
+
 	uploadURL, sessID, err := f.getUploadServer(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to retrieve upload server: %w", err)
 	}
 
-	// Use the original filename for upload
 	fileName := path.Base(src.Remote())
 	fs.Debugf(f, "MoveTo: Using filename %q for upload", fileName)
 
-	// Upload file to root directory first
-	fileCode, err := f.uploadFile(ctx, uploadURL, sessID, fileName, reader)
+	var fileCode string
+	err = f.pacer.Call(func() (bool, error) {
+		var uploadErr error
+		fileCode, uploadErr = f.uploadFile(ctx, uploadURL, sessID, fileName, reader)
+		if uploadErr != nil {
+			return shouldRetry(uploadErr), uploadErr
+		}
+		return false, nil
+	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to upload file: %w", err)
 	}
 	fs.Debugf(f, "MoveTo: File uploaded with code: %s", fileCode)
 
-	// Move the file to destination folder
 	sourcePath := "/" + fileName
 	destinationPath := "/" + strings.Trim(f.root, "/")
 
 	fs.Debugf(f, "MoveTo: Moving file from %q to folder %q", sourcePath, destinationPath)
-	err = f.moveFileToFolder(ctx, sourcePath, destinationPath)
-	if err != nil {
+	if err := f.moveFileToFolder(ctx, sourcePath, destinationPath); err != nil {
 		return nil, fmt.Errorf("failed to move file to destination folder: %w", err)
 	}
 
-	// Delete the source file after successful move
-	err = src.Remove(ctx)
-	if err != nil {
+	if err := src.Remove(ctx); err != nil {
 		return nil, fmt.Errorf("failed to delete source file: %w", err)
 	}
 
-	// Create and return the destination object
 	return &Object{
 		fs:      f,
 		remote:  path.Join(remote, fileName),
@@ -1613,40 +1624,33 @@ func (f *Fs) MoveTo(ctx context.Context, src fs.Object, remote string) (fs.Objec
 func (f *Fs) MoveToLocal(ctx context.Context, remote string, localPath string) error {
 	fs.Debugf(f, "MoveToLocal: starting move from FileLu %q to local %q", remote, localPath)
 
-	// Download file from FileLu
 	obj, err := f.NewObject(ctx, remote)
 	if err != nil {
 		return fmt.Errorf("failed to find object in FileLu: %w", err)
 	}
 
-	reader, err := obj.Open(ctx)
+	var reader io.ReadCloser
+	err = f.pacer.Call(func() (bool, error) {
+		var openErr error
+		reader, openErr = obj.Open(ctx)
+		return shouldRetry(openErr), openErr
+	})
 	if err != nil {
 		return fmt.Errorf("failed to open file for download: %w", err)
 	}
-	defer func() {
-		if err := reader.Close(); err != nil {
-			fs.Logf(nil, "Failed to close reader: %v", err)
-		}
-	}()
+	defer reader.Close()
 
 	outFile, err := os.Create(localPath)
 	if err != nil {
 		return fmt.Errorf("failed to create local file %q: %w", localPath, err)
 	}
-	defer func() {
-		if err := reader.Close(); err != nil {
-			fs.Logf(nil, "Failed to close reader: %v", err)
-		}
-	}()
+	defer outFile.Close()
 
-	_, err = io.Copy(outFile, reader)
-	if err != nil {
+	if _, err := io.Copy(outFile, reader); err != nil {
 		return fmt.Errorf("failed to copy data to local file: %w", err)
 	}
 
-	// Verify download and delete file from FileLu
-	err = obj.Remove(ctx)
-	if err != nil {
+	if err := obj.Remove(ctx); err != nil {
 		return fmt.Errorf("failed to delete file from FileLu after move: %w", err)
 	}
 
@@ -1666,45 +1670,22 @@ func DeleteLocalFile(localPath string) error {
 
 // Rmdir removes a directory
 func (f *Fs) Rmdir(ctx context.Context, dir string) error {
-	fs.Debugf(f, "Rmdir: Starting with dir=%q", dir)
+	fs.Debugf(f, "Rmdir: Starting for dir=%q", dir)
 
-	// Construct the full folder path
 	fullPath := path.Join(f.root, dir)
 	if fullPath != "" {
 		fullPath = "/" + strings.Trim(fullPath, "/")
 	}
-	fs.Debugf(f, "Rmdir: Using folder path %q", fullPath)
+	fs.Debugf(f, "Rmdir: Using folder_path = %q", fullPath)
 
-	// First check if the folder is empty using folder/list
+	// Step 1: Check if folder is empty
 	listURL := fmt.Sprintf("%s/folder/list?folder_path=%s&key=%s",
 		f.endpoint,
 		url.QueryEscape(fullPath),
 		url.QueryEscape(f.opt.Key),
 	)
 
-	req, err := http.NewRequestWithContext(ctx, "GET", listURL, nil)
-	if err != nil {
-		return fserrors.NoRetryError(fmt.Errorf("failed to create list request: %w", err))
-	}
-
-	resp, err := f.client.Do(req)
-	if err != nil {
-		return fserrors.NoRetryError(fmt.Errorf("failed to check directory contents: %w", err))
-	}
-	defer func() {
-		if err := resp.Body.Close(); err != nil {
-			fs.Logf(nil, "Failed to close response body: %v", err)
-		}
-	}()
-
-	// Read and log response for debugging
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return fserrors.NoRetryError(fmt.Errorf("error reading list response body: %w", err))
-	}
-	fs.Debugf(f, "Rmdir: List response: %s", string(body))
-
-	var listResult struct {
+	var listResp struct {
 		Status int    `json:"status"`
 		Msg    string `json:"msg"`
 		Result struct {
@@ -1712,66 +1693,83 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 			Folders []interface{} `json:"folders"`
 		} `json:"result"`
 	}
-	if err := json.NewDecoder(bytes.NewReader(body)).Decode(&listResult); err != nil {
-		return fserrors.NoRetryError(fmt.Errorf("error decoding list response: %w", err))
+
+	err := f.pacer.Call(func() (bool, error) {
+		req, err := http.NewRequestWithContext(ctx, "GET", listURL, nil)
+		if err != nil {
+			return false, err
+		}
+		resp, err := f.client.Do(req)
+		if err != nil {
+			return fserrors.ShouldRetry(err), err
+		}
+		defer resp.Body.Close()
+
+		body, err := io.ReadAll(resp.Body)
+		if err != nil {
+			return false, err
+		}
+		fs.Debugf(f, "Rmdir: folder/list response: %s", string(body))
+
+		if err := json.Unmarshal(body, &listResp); err != nil {
+			return false, fmt.Errorf("error decoding list response: %w", err)
+		}
+		if listResp.Status != 200 {
+			return false, fmt.Errorf("API error: %s", listResp.Msg)
+		}
+		return false, nil
+	})
+	if err != nil {
+		return err
+	}
+	if len(listResp.Result.Files) > 0 || len(listResp.Result.Folders) > 0 {
+		return fmt.Errorf("Rmdir: directory %q is not empty", fullPath)
 	}
 
-	// Check if folder exists and is empty
-	if listResult.Status != 200 {
-		return fserrors.NoRetryError(fmt.Errorf("folder not found: %s", listResult.Msg))
-	}
-
-	if len(listResult.Result.Files) > 0 || len(listResult.Result.Folders) > 0 {
-		return fserrors.NoRetryError(fmt.Errorf("directory is not empty"))
-	}
-
-	// Delete the folder using the new folder_path API
+	// Step 2: Delete the folder
 	deleteURL := fmt.Sprintf("%s/folder/delete?folder_path=%s&key=%s",
 		f.endpoint,
 		url.QueryEscape(fullPath),
 		url.QueryEscape(f.opt.Key),
 	)
 
-	fs.Debugf(f, "Rmdir: Sending delete request to %s", deleteURL)
-
-	req, err = http.NewRequestWithContext(ctx, "GET", deleteURL, nil)
-	if err != nil {
-		return fserrors.NoRetryError(fmt.Errorf("failed to create delete request: %w", err))
-	}
-
-	resp, err = f.client.Do(req)
-	if err != nil {
-		return fserrors.NoRetryError(fmt.Errorf("failed to delete directory: %w", err))
-	}
-	defer func() {
-		if err := resp.Body.Close(); err != nil {
-			fs.Logf(nil, "Failed to close response body: %v", err)
-		}
-	}()
-
-	// Read and log response for debugging
-	body, err = io.ReadAll(resp.Body)
-	if err != nil {
-		return fserrors.NoRetryError(fmt.Errorf("error reading delete response body: %w", err))
-	}
-	fs.Debugf(f, "Rmdir: Delete response: %s", string(body))
-
-	var result struct {
+	var delResp struct {
 		Status int    `json:"status"`
 		Msg    string `json:"msg"`
 	}
-	if err := json.NewDecoder(bytes.NewReader(body)).Decode(&result); err != nil {
-		return fserrors.NoRetryError(fmt.Errorf("error decoding delete response: %w", err))
+
+	err = f.pacer.Call(func() (bool, error) {
+		req, err := http.NewRequestWithContext(ctx, "GET", deleteURL, nil)
+		if err != nil {
+			return false, err
+		}
+		resp, err := f.client.Do(req)
+		if err != nil {
+			return fserrors.ShouldRetry(err), err
+		}
+		defer resp.Body.Close()
+
+		body, err := io.ReadAll(resp.Body)
+		if err != nil {
+			return false, err
+		}
+		fs.Debugf(f, "Rmdir: folder/delete response: %s", string(body))
+
+		if err := json.Unmarshal(body, &delResp); err != nil {
+			return false, fmt.Errorf("error decoding delete response: %w", err)
+		}
+		if delResp.Status != 200 {
+			return false, fmt.Errorf("delete error: %s", delResp.Msg)
+		}
+		return false, nil
+	})
+	if err != nil {
+		return err
 	}
 
-	if result.Status != 200 {
-		return fserrors.NoRetryError(fmt.Errorf("error deleting directory: %s", result.Msg))
-	}
-
-	fs.Infof(f, "Successfully deleted directory %q", fullPath)
+	fs.Infof(f, "Rmdir: successfully deleted %q", fullPath)
 	return nil
 }
-
 // Name returns the remote name
 func (f *Fs) Name() string {
 	return f.name
@@ -1820,7 +1818,6 @@ func (o *Object) Storable() bool {
 
 // Open opens the object for reading
 func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadCloser, error) {
-	// Construct the full file path
 	filePath := path.Join(o.fs.root, o.remote)
 
 	directLink, size, err := o.fs.getDirectLink(ctx, filePath)
@@ -1828,66 +1825,66 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 		return nil, fmt.Errorf("failed to get direct link: %w", err)
 	}
 
-	o.size = size // Update the object size with the value from API
+	o.size = size
 
-	req, err := http.NewRequestWithContext(ctx, "GET", directLink, nil)
+	var reader io.ReadCloser
+	err = o.fs.pacer.Call(func() (bool, error) {
+		req, err := http.NewRequestWithContext(ctx, "GET", directLink, nil)
+		if err != nil {
+			return false, fmt.Errorf("failed to create download request: %w", err)
+		}
+
+		resp, err := o.fs.client.Do(req)
+		if err != nil {
+			return shouldRetry(err), fmt.Errorf("failed to download file: %w", err)
+		}
+
+		if resp.StatusCode != http.StatusOK {
+			defer resp.Body.Close()
+			return false, fmt.Errorf("failed to download file: HTTP %d", resp.StatusCode)
+		}
+
+		reader = resp.Body
+		return false, nil
+	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to create download request: %w", err)
+		return nil, err
 	}
 
-	resp, err := o.fs.client.Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("failed to download file: %w", err)
-	}
-
-	if resp.StatusCode != http.StatusOK {
-		defer func() {
-			if err := resp.Body.Close(); err != nil {
-				fs.Fatalf(nil, "Failed to close response body: %v", err)
-			}
-		}()
-		return nil, fmt.Errorf("failed to download file: HTTP %d", resp.StatusCode)
-	}
-
-	return resp.Body, nil
+	return reader, nil
 }
 
 // Update updates the object with new data
 func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {
 	fs.Debugf(o.fs, "Update: Starting update for %q", o.remote)
 
-	// Fetch existing object on remote
-	existingObject, err := o.fs.NewObject(ctx, o.remote)
-	if err == nil {
-		// Compare size
-		if existingObject.Size() == src.Size() {
-			fs.Infof(o.fs, "Update: File %q already exists with the same size, skipping upload.", o.remote)
-			return nil
-		}
-	} else {
-		fs.Debugf(o.fs, "No existing object found for %q, proceeding with upload...", o.remote)
+	var existingObject fs.Object
+	err := o.fs.pacer.Call(func() (bool, error) {
+		var err error
+		existingObject, err = o.fs.NewObject(ctx, o.remote)
+		return shouldRetry(err), err
+	})
+
+	if err == nil && existingObject.Size() == src.Size() {
+		fs.Infof(o.fs, "Update: File %q already exists with same size, skipping upload.", o.remote)
+		return nil
 	}
 
-	// Proceed with the upload if no match is found
 	tempPath, err := createTempFileFromReader(in)
 	if err != nil {
 		return fmt.Errorf("failed to create temp file: %w", err)
 	}
-	defer func() {
-		if err := os.Remove(tempPath); err != nil {
-			fs.Logf(nil, "Failed to remove file %q: %v", tempPath, err)
-		}
-	}()
+	defer os.Remove(tempPath)
 
-	tempFile, err := os.Open(tempPath)
+	var tempFile *os.File
+	err = o.fs.pacer.Call(func() (bool, error) {
+		tempFile, err = os.Open(tempPath)
+		return shouldRetry(err), err
+	})
 	if err != nil {
 		return fmt.Errorf("failed to open temp file: %w", err)
 	}
-	defer func() {
-		if err := tempFile.Close(); err != nil {
-			fs.Logf(nil, "Failed to close temporary file: %v", err)
-		}
-	}()
+	defer tempFile.Close()
 
 	uploadURL, sessID, err := o.fs.getUploadServer(ctx)
 	if err != nil {
@@ -1896,77 +1893,60 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	fs.Debugf(o.fs, "Update: Got upload server URL=%q and session ID=%q", uploadURL, sessID)
 
 	fileName := path.Base(o.remote)
-	destinationFolderPath := path.Join(o.fs.root, path.Dir(o.remote))
-	destinationFolderPath = "/" + strings.Trim(destinationFolderPath, "/")
-	fs.Debugf(o.fs, "Update: Uploading file to folder path: %s", destinationFolderPath)
+	destPath := "/" + strings.Trim(path.Join(o.fs.root, path.Dir(o.remote)), "/")
+	fs.Debugf(o.fs, "Update: Uploading to folder path: %s", destPath)
 
-	fileCode, err := o.fs.uploadFileWithDestination(ctx, uploadURL, sessID, fileName, tempFile, destinationFolderPath)
+	fileCode, err := o.fs.uploadFileWithDestination(ctx, uploadURL, sessID, fileName, tempFile, destPath)
 	if err != nil {
 		return fmt.Errorf("failed to upload file: %w", err)
 	}
-	fs.Debugf(o.fs, "Update: File uploaded successfully with code: %s", fileCode)
+	fs.Debugf(o.fs, "Update: Upload complete with code: %s", fileCode)
 
 	o.size = src.Size()
 	o.modTime = src.ModTime(ctx)
-
-	fs.Debugf(o.fs, "Update: Finished update for %q", o.remote)
 	return nil
 }
 
 // Remove deletes the object from FileLu
 func (o *Object) Remove(ctx context.Context) error {
 	fs.Debugf(o.fs, "Remove: Deleting file %q", o.remote)
+	fullPath := "/" + strings.Trim(path.Join(o.fs.root, o.remote), "/")
 
-	// Construct full path
-	fullPath := path.Join(o.fs.root, o.remote)
-	if fullPath != "" {
-		fullPath = "/" + strings.Trim(fullPath, "/")
-	}
-
-	// Construct the API URL for deletion
 	apiURL := fmt.Sprintf("%s/file/remove?file_path=%s&restore=1&key=%s",
-		o.fs.endpoint,
-		url.QueryEscape(fullPath),
-		url.QueryEscape(o.fs.opt.Key),
-	)
+		o.fs.endpoint, url.QueryEscape(fullPath), url.QueryEscape(o.fs.opt.Key))
 
-	fs.Debugf(o.fs, "Remove: Sending delete request to %s", apiURL)
-
-	// Create HTTP request
-	req, err := http.NewRequestWithContext(ctx, "GET", apiURL, nil)
-	if err != nil {
-		return fmt.Errorf("failed to create delete request: %w", err)
-	}
-
-	// Execute request
-	resp, err := o.fs.client.Do(req)
-	if err != nil {
-		return fmt.Errorf("failed to send delete request: %w", err)
-	}
-	defer func() {
-		if err := resp.Body.Close(); err != nil {
-			fs.Fatalf(nil, "Failed to close response body: %v", err)
-		}
-	}()
-
-	// Read and log the full response body for debugging
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return fmt.Errorf("error reading response body: %w", err)
-	}
-	fs.Debugf(o.fs, "Remove: Response body: %s", string(body))
-
-	// Parse response
 	var result struct {
 		Status int    `json:"status"`
 		Msg    string `json:"msg"`
 	}
-	err = json.NewDecoder(bytes.NewReader(body)).Decode(&result)
+	var body []byte
+
+	err := o.fs.pacer.Call(func() (bool, error) {
+		req, err := http.NewRequestWithContext(ctx, "GET", apiURL, nil)
+		if err != nil {
+			return false, fmt.Errorf("failed to create delete request: %w", err)
+		}
+		resp, err := o.fs.client.Do(req)
+		if err != nil {
+			return shouldRetry(err), fmt.Errorf("failed to send delete request: %w", err)
+		}
+		defer resp.Body.Close()
+
+		body, err = io.ReadAll(resp.Body)
+		if err != nil {
+			return false, fmt.Errorf("error reading response body: %w", err)
+		}
+
+		return shouldRetryHTTP(resp.StatusCode), nil
+	})
 	if err != nil {
-		return fmt.Errorf("error decoding delete response: %w", err)
+		return err
 	}
 
-	// Check API response status
+	fs.Debugf(o.fs, "Remove: Response body: %s", string(body))
+	if err := json.Unmarshal(body, &result); err != nil {
+		return fmt.Errorf("error decoding delete response: %w", err)
+	}
 	if result.Status != 200 {
 		return fmt.Errorf("error while deleting file: %s", result.Msg)
 	}
@@ -1979,26 +1959,8 @@ func (o *Object) Remove(ctx context.Context) error {
 //
 //nolint:unused
 func (o *Object) readMetaData(ctx context.Context) error {
-	apiURL := fmt.Sprintf("%s/file/info?name=%s&key=%s", o.fs.endpoint, url.QueryEscape(o.remote), url.QueryEscape(o.fs.opt.Key))
-
-	req, err := http.NewRequestWithContext(ctx, "GET", apiURL, nil)
-	if err != nil {
-		return err
-	}
-
-	resp, err := o.fs.client.Do(req)
-	if err != nil {
-		return err
-	}
-	defer func() {
-		if err := resp.Body.Close(); err != nil {
-			fs.Fatalf(nil, "Failed to close response body: %v", err)
-		}
-	}()
-
-	if resp.StatusCode != http.StatusOK {
-		return fs.ErrorObjectNotFound
-	}
+	apiURL := fmt.Sprintf("%s/file/info?name=%s&key=%s",
+		o.fs.endpoint, url.QueryEscape(o.remote), url.QueryEscape(o.fs.opt.Key))
 
 	var result struct {
 		Status  int    `json:"status"`
@@ -2006,12 +1968,29 @@ func (o *Object) readMetaData(ctx context.Context) error {
 		Size    int64  `json:"size"`
 		ModTime string `json:"mod_time"`
 	}
-	err = json.NewDecoder(resp.Body).Decode(&result)
-	if err != nil {
-		return fmt.Errorf("error decoding response: %w", err)
-	}
 
-	if result.Status != 200 {
+	err := o.fs.pacer.Call(func() (bool, error) {
+		req, err := http.NewRequestWithContext(ctx, "GET", apiURL, nil)
+		if err != nil {
+			return false, err
+		}
+		resp, err := o.fs.client.Do(req)
+		if err != nil {
+			return shouldRetry(err), err
+		}
+		defer resp.Body.Close()
+
+		if resp.StatusCode != http.StatusOK {
+			return false, fs.ErrorObjectNotFound
+		}
+
+		if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+			return false, err
+		}
+
+		return shouldRetryHTTP(resp.StatusCode), nil
+	})
+	if err != nil || result.Status != 200 {
 		return fs.ErrorObjectNotFound
 	}
 
@@ -2020,10 +1999,8 @@ func (o *Object) readMetaData(ctx context.Context) error {
 	if err != nil {
 		o.modTime = time.Now()
 	}
-
 	return nil
 }
-
 // FileEntry represents a file entry in the JSON response
 type FileEntry struct {
 	Hash string `json:"hash"`
@@ -2057,34 +2034,8 @@ func IsDuplicateFileError(err error) bool {
 //nolint:unused
 func (f *Fs) fetchRemoteFileHashes(ctx context.Context, folderID int) (map[string]struct{}, error) {
 	apiURL := fmt.Sprintf("%s/folder/list?fld_id=%d&key=%s", f.endpoint, folderID, url.QueryEscape(f.opt.Key))
-	fs.Debugf(f, "Fetching remote hashes using URL: %s", apiURL) // Log the API URL for verification
-
-	req, err := http.NewRequestWithContext(ctx, "GET", apiURL, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	resp, err := f.client.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer func() {
-		if err := resp.Body.Close(); err != nil {
-			fs.Logf(nil, "Failed to close response body: %v", err.Error())
-		}
-	}()
-
-	// Log raw HTTP response for debugging
-	debugResp, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, fmt.Errorf("error reading response: %w", err)
-	}
-	fs.Debugf(f, "Raw API Response: %s", string(debugResp))
-
-	// Reset the reader for JSON decoding
-	resp.Body = io.NopCloser(bytes.NewBuffer(debugResp))
-	// Define the structure for the API response
-	type APIResponse struct {
+	var debugResp []byte
+	var result struct {
 		Status int `json:"status"`
 		Result struct {
 			Files []struct {
@@ -2093,110 +2044,112 @@ func (f *Fs) fetchRemoteFileHashes(ctx context.Context, folderID int) (map[strin
 		} `json:"result"`
 	}
 
-	// Decode JSON response
-	var apiResponse APIResponse
-	err = json.NewDecoder(resp.Body).Decode(&apiResponse)
+	err := f.pacer.Call(func() (bool, error) {
+		req, err := http.NewRequestWithContext(ctx, "GET", apiURL, nil)
+		if err != nil {
+			return false, err
+		}
+		resp, err := f.client.Do(req)
+		if err != nil {
+			return shouldRetry(err), err
+		}
+		defer resp.Body.Close()
+
+		debugResp, err = io.ReadAll(resp.Body)
+		return shouldRetryHTTP(resp.StatusCode), err
+	})
 	if err != nil {
-		return nil, fmt.Errorf("error decoding response: %w", err)
+		return nil, err
 	}
 
-	if apiResponse.Status != 200 {
-		return nil, fmt.Errorf("error: non-200 status %d", apiResponse.Status)
+	fs.Debugf(f, "Raw API Response: %s", string(debugResp))
+
+	if err := json.Unmarshal(debugResp, &result); err != nil {
+		return nil, err
+	}
+	if result.Status != 200 {
+		return nil, fmt.Errorf("error: non-200 status %d", result.Status)
 	}
 
 	hashes := make(map[string]struct{})
-	for _, file := range apiResponse.Result.Files {
-		fs.Debugf(f, "Fetched remote hash: %s", file.Hash) // Log each hash fetched
+	for _, file := range result.Result.Files {
+		fs.Debugf(f, "Fetched remote hash: %s", file.Hash)
 		hashes[file.Hash] = struct{}{}
 	}
-
 	fs.Debugf(f, "Total fetched remote hashes: %d", len(hashes))
 	return hashes, nil
 }
 
 // uploadFile to upload objects from local to remote
 func (f *Fs) uploadFile(ctx context.Context, uploadURL, sessionID, fileName string, fileContent io.Reader) (string, error) {
-	// Create temporary file and get its path
 	tempPath, err := createTempFileFromReader(fileContent)
 	if err != nil {
 		return "", fmt.Errorf("failed to create temp file: %w", err)
 	}
-	defer func() {
-		if err := os.Remove(tempPath); err != nil {
-			fs.Logf(nil, "Failed to remove temp file %q: %v", tempPath, err)
-		}
-	}()
+	defer os.Remove(tempPath)
 
-	// Open the temporary file for the multipart upload
 	file, err := os.Open(tempPath)
 	if err != nil {
 		return "", fmt.Errorf("failed to open temp file for upload: %w", err)
 	}
-	defer func() {
-		if err := file.Close(); err != nil {
-			fs.Logf(nil, "Failed to close temp file %q: %v", tempPath, err)
+	defer file.Close()
+
+	var fileCode string
+	err = f.pacer.Call(func() (bool, error) {
+		var body bytes.Buffer
+		writer := multipart.NewWriter(&body)
+
+		if err = writer.WriteField("sess_id", sessionID); err != nil {
+			return false, err
 		}
-	}()
-
-	// Prepare multipart form data
-	var body bytes.Buffer
-	writer := multipart.NewWriter(&body)
-
-	// Add form fields
-	if err = writer.WriteField("sess_id", sessionID); err != nil {
-		return "", fmt.Errorf("failed to add sess_id field: %w", err)
-	}
-	if err = writer.WriteField("utype", "prem"); err != nil {
-		return "", fmt.Errorf("failed to add utype field: %w", err)
-	}
-
-	// Create the file part
-	part, err := writer.CreateFormFile("file_0", fileName)
-	if err != nil {
-		return "", fmt.Errorf("failed to create form file: %w", err)
-	}
-
-	// Copy file content to form
-	if _, err = io.Copy(part, file); err != nil {
-		return "", fmt.Errorf("failed to copy file content to form: %w", err)
-	}
-
-	if err = writer.Close(); err != nil {
-		return "", fmt.Errorf("error closing writer: %w", err)
-	}
-
-	// Send the request
-	req, err := http.NewRequestWithContext(ctx, "POST", uploadURL, &body)
-	if err != nil {
-		return "", fmt.Errorf("failed to create request: %w", err)
-	}
-	req.Header.Set("Content-Type", writer.FormDataContentType())
-
-	resp, err := f.client.Do(req)
-	if err != nil {
-		return "", fmt.Errorf("failed to send request: %w", err)
-	}
-	defer func() {
-		if cerr := resp.Body.Close(); cerr != nil {
-			fs.Debugf(f, "Error closing response body: %v", cerr)
+		if err = writer.WriteField("utype", "prem"); err != nil {
+			return false, err
 		}
-	}()
 
-	// Parse the response
-	var result []struct {
-		FileCode   string `json:"file_code"`
-		FileStatus string `json:"file_status"`
-	}
-	if err = json.NewDecoder(resp.Body).Decode(&result); err != nil {
-		return "", fmt.Errorf("failed to parse response: %w", err)
+		part, err := writer.CreateFormFile("file_0", fileName)
+		if err != nil {
+			return false, err
+		}
+		if _, err = io.Copy(part, file); err != nil {
+			return false, err
+		}
+		if err = writer.Close(); err != nil {
+			return false, err
+		}
+
+		req, err := http.NewRequestWithContext(ctx, "POST", uploadURL, &body)
+		if err != nil {
+			return false, err
+		}
+		req.Header.Set("Content-Type", writer.FormDataContentType())
+
+		resp, err := f.client.Do(req)
+		if err != nil {
+			return shouldRetry(err), err
+		}
+		defer resp.Body.Close()
+
+		var result []struct {
+			FileCode   string `json:"file_code"`
+			FileStatus string `json:"file_status"`
+		}
+		if err = json.NewDecoder(resp.Body).Decode(&result); err != nil {
+			return false, err
+		}
+		if len(result) == 0 || result[0].FileStatus != "OK" {
+			return false, fmt.Errorf("upload failed with status: %s", result[0].FileStatus)
+		}
+
+		fileCode = result[0].FileCode
+		return shouldRetryHTTP(resp.StatusCode), nil
+	})
+
+	if err != nil {
+		return "", err
 	}
 
-	if len(result) == 0 || result[0].FileStatus != "OK" {
-		return "", fmt.Errorf("upload failed with status: %s", result[0].FileStatus)
-	}
-
-	fs.Debugf(f, "uploadFile: File uploaded successfully with file code: %s", result[0].FileCode)
-	return result[0].FileCode, nil
+	fs.Debugf(f, "uploadFile: File uploaded successfully with file code: %s", fileCode)
+	return fileCode, nil
 }
 
 // Hash returns the MD5 hash of an object
@@ -2206,78 +2159,50 @@ func (o *Object) Hash(ctx context.Context, t hash.Type) (string, error) {
 	}
 
 	var fileCode string
-
-	// Function to check if the extracted code is a valid file code (non-numeric and 12 characters long)
-	isValidFileCode := func(code string) bool {
-		if len(code) != 12 {
-			return false
-		}
-		// Check if the code contains any non-numeric character
-		for _, c := range code {
-			if c < '0' || c > '9' {
-				return true // Alphanumeric (contains at least one non-numeric character)
-			}
-		}
-		return false // It's purely numeric, not a file code
-	}
-
-	// Extract file code directly if available, otherwise from the remote path
 	if isFileCode(o.fs.root) {
 		fileCode = o.fs.root
 	} else {
-		// Attempt to extract file code from the remote path
-		remote := o.remote
-		// Find all substrings inside parentheses
-		matches := regexp.MustCompile(`\((.*?)\)`).FindAllStringSubmatch(remote, -1)
-
-		// Loop through all matched substrings and check for a valid file code
+		matches := regexp.MustCompile(`\((.*?)\)`).FindAllStringSubmatch(o.remote, -1)
 		for _, match := range matches {
-			if len(match) > 1 {
-				extractedCode := match[1]
-				if isValidFileCode(extractedCode) {
-					fileCode = extractedCode
-					break // Found a valid file code, no need to continue
-				}
+			if len(match) > 1 && len(match[1]) == 12 {
+				fileCode = match[1]
+				break
 			}
 		}
 	}
-
-	// If no valid file code was found, return an error
 	if fileCode == "" {
 		return "", fmt.Errorf("no valid file code found in the remote path")
 	}
 
-	// Use the file_code for API queries
 	apiURL := fmt.Sprintf("%s/file/info?file_code=%s&key=%s",
 		o.fs.endpoint, url.QueryEscape(fileCode), url.QueryEscape(o.fs.opt.Key))
-
-	req, err := http.NewRequestWithContext(ctx, "GET", apiURL, nil)
-	if err != nil {
-		return "", fmt.Errorf("failed to create hash request: %w", err)
-	}
-
-	resp, err := o.fs.client.Do(req)
-	if err != nil {
-		return "", fmt.Errorf("hash request failed: %w", err)
-	}
-	defer func() {
-		if err := resp.Body.Close(); err != nil {
-			fs.Fatalf(nil, "Failed to close response body: %v", err)
-		}
-	}()
 
 	var result struct {
 		Status int    `json:"status"`
 		Msg    string `json:"msg"`
 		Result []struct {
-			Hash string `json:"hash"` // Assuming the hash is here
+			Hash string `json:"hash"`
 		} `json:"result"`
 	}
-	err = json.NewDecoder(resp.Body).Decode(&result)
-	if err != nil {
-		return "", fmt.Errorf("error decoding hash response: %w", err)
-	}
+	err := o.fs.pacer.Call(func() (bool, error) {
+		req, err := http.NewRequestWithContext(ctx, "GET", apiURL, nil)
+		if err != nil {
+			return false, err
+		}
+		resp, err := o.fs.client.Do(req)
+		if err != nil {
+			return shouldRetry(err), err
+		}
+		defer resp.Body.Close()
 
+		if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+			return false, err
+		}
+		return shouldRetryHTTP(resp.StatusCode), nil
+	})
+	if err != nil {
+		return "", err
+	}
 	if result.Status != 200 || len(result.Result) == 0 {
 		return "", fmt.Errorf("error: unable to fetch hash: %s", result.Msg)
 	}
@@ -2301,4 +2226,5 @@ var (
 	// _ fs.DirMover        = (*Fs)(nil)
 	_ fs.Object = (*Object)(nil)
 	// _ fs.IDer            = (*Object)(nil)
+                 _ fs.ListRer  = (*Fs)(nil) 
 )
