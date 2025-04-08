@@ -5,6 +5,8 @@ import (
 	"context"
 
 	"github.com/rclone/rclone/cmd"
+	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/filter"
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/spf13/cobra"
 )
@@ -35,6 +37,11 @@ implement this command directly, in which case ` + "`--checkers`" + ` will be ig
 		cmd.CheckArgs(1, 1, command, args)
 		fdst := cmd.NewFsDir(args)
 		cmd.Run(true, false, command, func() error {
+			ctx := context.Background()
+			fi := filter.GetConfig(ctx)
+			if !fi.InActive() {
+				fs.Fatalf(nil, "filters are not supported with purge (purge will delete everything unconditionally)")
+			}
 			return operations.Purge(context.Background(), fdst, "")
 		})
 	},
