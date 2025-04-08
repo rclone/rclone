@@ -138,6 +138,9 @@ var providerOption = fs.Option{
 		Value: "Magalu",
 		Help:  "Magalu Object Storage",
 	}, {
+		Value: "Mega",
+		Help:  "MEGA S4 Object Storage",
+	}, {
 		Value: "Minio",
 		Help:  "Minio Object Storage",
 	}, {
@@ -573,7 +576,7 @@ func init() {
 		}, {
 			Name:     "region",
 			Help:     "Region to connect to.\n\nLeave blank if you are using an S3 clone and you don't have a region.",
-			Provider: "!AWS,Alibaba,ArvanCloud,ChinaMobile,Cloudflare,FlashBlade,IONOS,Petabox,Liara,Linode,Magalu,Qiniu,RackCorp,Scaleway,Selectel,Storj,Synology,TencentCOS,HuaweiOBS,IDrive",
+			Provider: "!AWS,Alibaba,ArvanCloud,ChinaMobile,Cloudflare,FlashBlade,IONOS,Petabox,Liara,Linode,Magalu,Qiniu,RackCorp,Scaleway,Selectel,Storj,Synology,TencentCOS,HuaweiOBS,IDrive,Mega",
 			Examples: []fs.OptionExample{{
 				Value: "",
 				Help:  "Use this if unsure.\nWill use v4 signatures and an empty region.",
@@ -1526,6 +1529,22 @@ func init() {
 				Value:    "s3.ir-tbz-sh1.arvanstorage.ir",
 				Help:     "ArvanCloud Tabriz Iran (Shahriar) endpoint",
 				Provider: "ArvanCloud",
+			}, {
+				Value:    "s3.eu-central-1.s4.mega.io",
+				Help:     "Mega S4 eu-central-1 (Amsterdam)",
+				Provider: "Mega",
+			}, {
+				Value:    "s3.eu-central-2.s4.mega.io",
+				Help:     "Mega S4 eu-central-2 (Bettembourg)",
+				Provider: "Mega",
+			}, {
+				Value:    "s3.ca-central-1.s4.mega.io",
+				Help:     "Mega S4 ca-central-1 (Montreal)",
+				Provider: "Mega",
+			}, {
+				Value:    "s3.ca-west-1.s4.mega.io",
+				Help:     "Mega S4 ca-west-1 (Vancouver)",
+				Provider: "Mega",
 			}},
 		}, {
 			Name:     "location_constraint",
@@ -1908,7 +1927,7 @@ func init() {
 		}, {
 			Name:     "location_constraint",
 			Help:     "Location constraint - must be set to match the Region.\n\nLeave blank if not sure. Used when creating buckets only.",
-			Provider: "!AWS,Alibaba,ArvanCloud,HuaweiOBS,ChinaMobile,Cloudflare,FlashBlade,IBMCOS,IDrive,IONOS,Leviia,Liara,Linode,Magalu,Outscale,Qiniu,RackCorp,Scaleway,Selectel,StackPath,Storj,TencentCOS,Petabox",
+			Provider: "!AWS,Alibaba,ArvanCloud,HuaweiOBS,ChinaMobile,Cloudflare,FlashBlade,IBMCOS,IDrive,IONOS,Leviia,Liara,Linode,Magalu,Outscale,Qiniu,RackCorp,Scaleway,Selectel,StackPath,Storj,TencentCOS,Petabox,Mega",
 		}, {
 			Name: "acl",
 			Help: `Canned ACL used when creating buckets and storing or copying objects.
@@ -1923,7 +1942,7 @@ doesn't copy the ACL from the source but rather writes a fresh one.
 If the acl is an empty string then no X-Amz-Acl: header is added and
 the default (private) will be used.
 `,
-			Provider: "!Storj,Selectel,Synology,Cloudflare,FlashBlade",
+			Provider: "!Storj,Selectel,Synology,Cloudflare,FlashBlade,Mega",
 			Examples: []fs.OptionExample{{
 				Value:    "default",
 				Help:     "Owner gets Full_CONTROL.\nNo one else has access rights (default).",
@@ -3531,6 +3550,14 @@ func setQuirks(opt *Options) {
 		urlEncodeListings = false
 		useMultipartEtag = false
 		useAlreadyExists = false
+	case "Mega":
+		listObjectsV2 = true
+		virtualHostStyle = false
+		urlEncodeListings = true
+		useMultipartEtag = false
+		useAlreadyExists = false
+		// Multipart server side copies not supported
+		opt.CopyCutoff = math.MaxInt64
 	case "Minio":
 		virtualHostStyle = false
 	case "Netease":

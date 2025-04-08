@@ -150,7 +150,8 @@ WebDAV or S3, that work out of the box.)
 {{< provider name="Magalu" home="https://magalu.cloud/object-storage/" config="/s3/#magalu" >}}
 {{< provider name="Mail.ru Cloud" home="https://cloud.mail.ru/" config="/mailru/" >}}
 {{< provider name="Memset Memstore" home="https://www.memset.com/cloud/storage/" config="/swift/" >}}
-{{< provider name="Mega" home="https://mega.nz/" config="/mega/" >}}
+{{< provider name="MEGA" home="https://mega.nz/" config="/mega/" >}}
+{{< provider name="MEGA S4" home="https://mega.io/objectstorage" config="/s3/#mega" >}}
 {{< provider name="Memory" home="/memory/" config="/memory/" >}}
 {{< provider name="Microsoft Azure Blob Storage" home="https://azure.microsoft.com/en-us/services/storage/blobs/" config="/azureblob/" >}}
 {{< provider name="Microsoft Azure Files Storage" home="https://azure.microsoft.com/en-us/services/storage/files/" config="/azurefiles/" >}}
