@@ -4,8 +4,6 @@ package filelu
 import (
 	"bytes"
 	"context"
-	"crypto/md5"
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -34,20 +32,19 @@ func init() {
 		Name:        "filelu",
 		Description: "FileLu Cloud Storage",
 		NewFs:       NewFs,
-		Options: []fs.Option{
-			{
-				Name:      "FileLu Rclone Key",
-				Help:      "Get your FileLu Rclone key in My Account",
-				Required:  true,
-				Sensitive: true, // Hides the key when displayed
-			},
-		},
+		CommandHelp: commandHelp,
+		Options: []fs.Option{{
+			Name:      "key",
+			Help:      "Your FileLu Rclone key from My Account",
+			Required:  true,
+			Sensitive: true, // Hides the key when displayed
+		}},
 	})
 }
 
 // Options defines the configuration for the FileLu backend
 type Options struct {
-	RcloneKey string `config:"FileLu Rclone Key"`
+	Key string `config:"key"`
 }
 
 // Fs represents the FileLu file system
@@ -55,6 +52,7 @@ type Fs struct {
 	name       string       // name of the remote
 	root       string       // root folder path
 	opt        Options      // backend options
+	features   *fs.Features // optional features
 	endpoint   string       // FileLu endpoint
 	client     *http.Client // HTTP client
 	isFile     bool         // whether this fs points to a specific file
@@ -79,7 +77,7 @@ func NewFs(ctx context.Context, name string, root string, m configmap.Mapper) (f
 		return nil, fmt.Errorf("failed to parse config: %w", err)
 	}
 
-	if opt.RcloneKey == "" {
+	if opt.Key == "" {
 		return nil, fmt.Errorf("FileLu Rclone Key is required")
 	}
 
@@ -111,6 +109,9 @@ func NewFs(ctx context.Context, name string, root string, m configmap.Mapper) (f
 		isFile:     isFile,
 		targetFile: filename,
 	}
+	f.features = (&fs.Features{
+		CanHaveEmptyDirectories: true,
+	}).Fill(ctx, f)
 
 	fs.Debugf(nil, "NewFs: Created filesystem with root path %q, isFile=%v, targetFile=%q", f.root, isFile, filename)
 	return f, nil
@@ -148,7 +149,7 @@ func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 	apiURL := fmt.Sprintf("%s/folder/create?folder_path=%s&key=%s",
 		f.endpoint,
 		url.QueryEscape(fullPath),
-		url.QueryEscape(f.opt.RcloneKey),
+		url.QueryEscape(f.opt.Key),
 	)
 
 	req, err := http.NewRequestWithContext(ctx, "GET", apiURL, nil)
@@ -189,7 +190,7 @@ func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 
 // GetAccountInfo fetches the account information including storage usage
 func (f *Fs) GetAccountInfo(ctx context.Context) (string, string, error) {
-	apiURL := fmt.Sprintf("%s/account/info?key=%s", f.endpoint, url.QueryEscape(f.opt.RcloneKey))
+	apiURL := fmt.Sprintf("%s/account/info?key=%s", f.endpoint, url.QueryEscape(f.opt.Key))
 
 	req, err := http.NewRequestWithContext(ctx, "GET", apiURL, nil)
 	if err != nil {
@@ -225,12 +226,7 @@ func (f *Fs) GetAccountInfo(ctx context.Context) (string, string, error) {
 
 // Features returns the optional features of this Fs
 func (f *Fs) Features() *fs.Features {
-	return &fs.Features{
-		About:                   f.About,
-		Command:                 f.Command,
-		DirMove:                 nil,
-		CanHaveEmptyDirectories: true,
-	}
+	return f.features
 }
 
 // DeleteFile sends an API request to remove a file from FileLu
@@ -244,7 +240,7 @@ func (f *Fs) DeleteFile(ctx context.Context, filePath string) error {
 	apiURL := fmt.Sprintf("%s/file/remove?file_path=%s&restore=1&key=%s",
 		f.endpoint,
 		url.QueryEscape(filePath),
-		url.QueryEscape(f.opt.RcloneKey),
+		url.QueryEscape(f.opt.Key),
 	)
 
 	fs.Debugf(f, "DeleteFile: Sending DELETE request to %s", apiURL)
@@ -301,7 +297,7 @@ func (f *Fs) renameFile(ctx context.Context, filePath, newName string) error {
 		f.endpoint,
 		url.QueryEscape(filePath),
 		url.QueryEscape(newName),
-		url.QueryEscape(f.opt.RcloneKey),
+		url.QueryEscape(f.opt.Key),
 	)
 
 	fs.Debugf(f, "renameFile: Sending rename request to %s", apiURL)
@@ -349,7 +345,7 @@ func (f *Fs) renameFolder(ctx context.Context, folderPath string, newName string
 		f.endpoint,
 		url.QueryEscape(folderPath),
 		url.QueryEscape(newName),
-		url.QueryEscape(f.opt.RcloneKey),
+		url.QueryEscape(f.opt.Key),
 	)
 
 	fs.Debugf(f, "renameFolder: Sending rename request to %s", apiURL)
@@ -387,6 +383,40 @@ func (f *Fs) renameFolder(ctx context.Context, folderPath string, newName string
 	fs.Infof(f, "Successfully renamed folder at path: %s to %s", folderPath, newName)
 	return nil
 }
+
+var commandHelp = []fs.CommandHelp{{
+	Name:  "rename",
+	Short: "Rename a file in a FileLu directory",
+	Long: `
+For example:
+
+    rclone backend rename filelu:/file-path/hello.txt "hello_new_name.txt"
+`,
+}, {
+	Name:  "movefile",
+	Short: "Move file within the remote FileLu directory",
+	Long: `
+For example:
+
+    rclone backend movefile filelu:/source-path/hello.txt /destination-path/
+`,
+}, {
+	Name:  "movefolder",
+	Short: "Move a folder on remote FileLu",
+	Long: `
+For example:
+
+    rclone backend movefolder filelu:/sorce-fld-path/hello-folder/ /destication-fld-path/hello-folder/
+`,
+}, {
+	Name:  "renamefolder",
+	Short: "Rename a folder on FileLu",
+	Long: `
+For example:
+
+    rclone backend renamefolder filelu:/folder-path/folder-name "new-folder-name"
+`,
+}}
 
 // Command method to handle file and folder rename
 func (f *Fs) Command(ctx context.Context, name string, args []string, opt map[string]string) (interface{}, error) {
@@ -503,7 +533,7 @@ func (f *Fs) moveFolderToDestination(ctx context.Context, folderPath string, des
 		f.endpoint,
 		url.QueryEscape(folderPath),
 		url.QueryEscape(destFolderPath),
-		url.QueryEscape(f.opt.RcloneKey),
+		url.QueryEscape(f.opt.Key),
 	)
 
 	fs.Debugf(f, "moveFolderToDestination: Sending move request to %s", apiURL)
@@ -553,7 +583,7 @@ func (f *Fs) moveFileToDestination(ctx context.Context, filePath string, destina
 		f.endpoint,
 		url.QueryEscape(filePath),
 		url.QueryEscape(destinationFolderPath),
-		url.QueryEscape(f.opt.RcloneKey),
+		url.QueryEscape(f.opt.Key),
 	)
 
 	fs.Debugf(f, "moveFileToDestination: Sending move request to %s", apiURL)
@@ -629,7 +659,7 @@ func (f *Fs) Remove(ctx context.Context, dir string) error {
 	}
 
 	// Delete folder
-	apiURL := fmt.Sprintf("%s/folder/delete?fld_id=%d&key=%s", f.endpoint, fldID, url.QueryEscape(f.opt.RcloneKey))
+	apiURL := fmt.Sprintf("%s/folder/delete?fld_id=%d&key=%s", f.endpoint, fldID, url.QueryEscape(f.opt.Key))
 	req, err := http.NewRequestWithContext(ctx, "GET", apiURL, nil)
 	if err != nil {
 		return fmt.Errorf("failed to create delete request: %w", err)
@@ -706,7 +736,7 @@ func (f *Fs) List(ctx context.Context, dir string) (fs.DirEntries, error) {
 	apiURL := fmt.Sprintf("%s/folder/list?folder_path=%s&key=%s",
 		f.endpoint,
 		url.QueryEscape(fullPath),
-		url.QueryEscape(f.opt.RcloneKey),
+		url.QueryEscape(f.opt.Key),
 	)
 
 	fs.Debugf(f, "List: Fetching folder contents from URL: %s", apiURL)
@@ -807,7 +837,7 @@ func (f *Fs) getFileSize(ctx context.Context, filePath string) (int64, error) {
 	apiURL := fmt.Sprintf("%s/file/info?file_path=%s&key=%s",
 		f.endpoint,
 		url.QueryEscape(filePath),
-		url.QueryEscape(f.opt.RcloneKey),
+		url.QueryEscape(f.opt.Key),
 	)
 
 	fs.Debugf(f, "getFileSize: Fetching file info from %s", apiURL)
@@ -881,7 +911,7 @@ func (f *Fs) getFolderID(ctx context.Context, dir string) (int, error) {
 		}
 
 		// Fetch folders in the current directory
-		apiURL := fmt.Sprintf("%s/folder/list?fld_id=%d&key=%s", f.endpoint, currentID, url.QueryEscape(f.opt.RcloneKey))
+		apiURL := fmt.Sprintf("%s/folder/list?fld_id=%d&key=%s", f.endpoint, currentID, url.QueryEscape(f.opt.Key))
 		req, err := http.NewRequestWithContext(ctx, "GET", apiURL, nil)
 		if err != nil {
 			return 0, fmt.Errorf("failed to create request: %w", err)
@@ -943,7 +973,7 @@ func (f *Fs) getDirectLink(ctx context.Context, filePath string) (string, int64,
 	apiURL := fmt.Sprintf("%s/file/direct_link?file_path=%s&key=%s",
 		f.endpoint,
 		url.QueryEscape(filePath),
-		url.QueryEscape(f.opt.RcloneKey),
+		url.QueryEscape(f.opt.Key),
 	)
 
 	fs.Debugf(f, "getDirectLink: fetching direct link for file path %q", filePath)
@@ -1006,7 +1036,7 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 	apiURL := fmt.Sprintf("%s/file/info?file_path=%s&key=%s",
 		f.endpoint,
 		url.QueryEscape(filePath),
-		url.QueryEscape(f.opt.RcloneKey),
+		url.QueryEscape(f.opt.Key),
 	)
 
 	fs.Debugf(f, "NewObject: Fetching file info from %s", apiURL)
@@ -1110,7 +1140,7 @@ func (f *Fs) handleDuplicate(ctx context.Context, remote string) error {
 // getUploadServer gets the upload server URL with proper key authentication
 func (f *Fs) getUploadServer(ctx context.Context) (string, string, error) {
 	// Step 1: Get upload server
-	apiURL := fmt.Sprintf("%s/upload/server?key=%s", f.endpoint, url.QueryEscape(f.opt.RcloneKey))
+	apiURL := fmt.Sprintf("%s/upload/server?key=%s", f.endpoint, url.QueryEscape(f.opt.Key))
 
 	req, err := http.NewRequestWithContext(ctx, "GET", apiURL, nil)
 	if err != nil {
@@ -1302,7 +1332,7 @@ func (f *Fs) moveFileToFolder(ctx context.Context, filePath string, destinationP
 		f.endpoint,
 		url.QueryEscape(filePath),
 		url.QueryEscape(destinationPath),
-		url.QueryEscape(f.opt.RcloneKey),
+		url.QueryEscape(f.opt.Key),
 	)
 
 	fs.Debugf(f, "moveFileToFolder: Sending move request to %s", apiURL)
@@ -1344,7 +1374,7 @@ func (f *Fs) moveFileToFolder(ctx context.Context, filePath string, destinationP
 //
 //nolint:unused
 func (f *Fs) getFileHash(ctx context.Context, fileCode string) (string, error) {
-	apiURL := fmt.Sprintf("%s/file/info?file_code=%s&key=%s", f.endpoint, url.QueryEscape(fileCode), url.QueryEscape(f.opt.RcloneKey))
+	apiURL := fmt.Sprintf("%s/file/info?file_code=%s&key=%s", f.endpoint, url.QueryEscape(fileCode), url.QueryEscape(f.opt.Key))
 
 	fmt.Printf("DEBUG: Making API call to get file hash for fileCode: %s\n", fileCode)
 	req, err := http.NewRequestWithContext(ctx, "GET", apiURL, nil)
@@ -1649,7 +1679,7 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 	listURL := fmt.Sprintf("%s/folder/list?folder_path=%s&key=%s",
 		f.endpoint,
 		url.QueryEscape(fullPath),
-		url.QueryEscape(f.opt.RcloneKey),
+		url.QueryEscape(f.opt.Key),
 	)
 
 	req, err := http.NewRequestWithContext(ctx, "GET", listURL, nil)
@@ -1699,7 +1729,7 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 	deleteURL := fmt.Sprintf("%s/folder/delete?folder_path=%s&key=%s",
 		f.endpoint,
 		url.QueryEscape(fullPath),
-		url.QueryEscape(f.opt.RcloneKey),
+		url.QueryEscape(f.opt.Key),
 	)
 
 	fs.Debugf(f, "Rmdir: Sending delete request to %s", deleteURL)
@@ -1897,7 +1927,7 @@ func (o *Object) Remove(ctx context.Context) error {
 	apiURL := fmt.Sprintf("%s/file/remove?file_path=%s&restore=1&key=%s",
 		o.fs.endpoint,
 		url.QueryEscape(fullPath),
-		url.QueryEscape(o.fs.opt.RcloneKey),
+		url.QueryEscape(o.fs.opt.Key),
 	)
 
 	fs.Debugf(o.fs, "Remove: Sending delete request to %s", apiURL)
@@ -1949,7 +1979,7 @@ func (o *Object) Remove(ctx context.Context) error {
 //
 //nolint:unused
 func (o *Object) readMetaData(ctx context.Context) error {
-	apiURL := fmt.Sprintf("%s/file/info?name=%s&key=%s", o.fs.endpoint, url.QueryEscape(o.remote), url.QueryEscape(o.fs.opt.RcloneKey))
+	apiURL := fmt.Sprintf("%s/file/info?name=%s&key=%s", o.fs.endpoint, url.QueryEscape(o.remote), url.QueryEscape(o.fs.opt.Key))
 
 	req, err := http.NewRequestWithContext(ctx, "GET", apiURL, nil)
 	if err != nil {
@@ -2022,9 +2052,11 @@ func IsDuplicateFileError(err error) bool {
 	return ok
 }
 
-// FetchRemoteFileHashes retrieves hashes of remote files in a folder
-func (f *Fs) FetchRemoteFileHashes(ctx context.Context, folderID int) (map[string]struct{}, error) {
-	apiURL := fmt.Sprintf("%s/folder/list?fld_id=%d&key=%s", f.endpoint, folderID, url.QueryEscape(f.opt.RcloneKey))
+// fetchRemoteFileHashes retrieves hashes of remote files in a folder
+//
+//nolint:unused
+func (f *Fs) fetchRemoteFileHashes(ctx context.Context, folderID int) (map[string]struct{}, error) {
+	apiURL := fmt.Sprintf("%s/folder/list?fld_id=%d&key=%s", f.endpoint, folderID, url.QueryEscape(f.opt.Key))
 	fs.Debugf(f, "Fetching remote hashes using URL: %s", apiURL) // Log the API URL for verification
 
 	req, err := http.NewRequestWithContext(ctx, "GET", apiURL, nil)
@@ -2080,61 +2112,6 @@ func (f *Fs) FetchRemoteFileHashes(ctx context.Context, folderID int) (map[strin
 
 	fs.Debugf(f, "Total fetched remote hashes: %d", len(hashes))
 	return hashes, nil
-}
-
-// ComputeMD5 computes the MD5 hash of specified file parts
-func ComputeMD5(filePath string) (string, error) {
-	file, err := os.Open(filePath)
-	if err != nil {
-		return "", fmt.Errorf("failed to open file: %w", err)
-	}
-	defer func() {
-		if err := file.Close(); err != nil {
-			fs.Logf(nil, "Failed to close file: %v", err)
-		}
-	}()
-
-	const partSize = 1024
-	firstPart := make([]byte, partSize)
-	lastPart := make([]byte, partSize)
-
-	// Get file size
-	stat, err := file.Stat()
-	if err != nil {
-		return "", fmt.Errorf("failed to stat file: %w", err)
-	}
-	fileSize := stat.Size()
-
-	// Read first part
-	n, err := io.ReadFull(file, firstPart)
-	if err != nil && err != io.EOF && err != io.ErrUnexpectedEOF {
-		return "", fmt.Errorf("failed to read first part: %w", err)
-	}
-	firstPart = firstPart[:n] // Truncate to actual bytes read
-
-	// If file is smaller than partSize, use only the first part
-	if fileSize <= int64(partSize) {
-		buffer := firstPart
-		hash := md5.Sum(buffer)
-		return base64.RawStdEncoding.EncodeToString(hash[:]), nil
-	}
-
-	// Read last part
-	_, err = file.Seek(-int64(partSize), io.SeekEnd)
-	if err != nil {
-		return "", fmt.Errorf("failed to seek to last part: %w", err)
-	}
-
-	n, err = io.ReadFull(file, lastPart)
-	if err != nil && err != io.EOF && err != io.ErrUnexpectedEOF {
-		return "", fmt.Errorf("failed to read last part: %w", err)
-	}
-	lastPart = lastPart[:n] // Truncate to actual bytes read
-
-	// Combine parts and compute hash
-	buffer := append(firstPart, lastPart...)
-	hash := md5.Sum(buffer)
-	return base64.RawStdEncoding.EncodeToString(hash[:]), nil
 }
 
 // uploadFile to upload objects from local to remote
@@ -2272,7 +2249,7 @@ func (o *Object) Hash(ctx context.Context, t hash.Type) (string, error) {
 
 	// Use the file_code for API queries
 	apiURL := fmt.Sprintf("%s/file/info?file_code=%s&key=%s",
-		o.fs.endpoint, url.QueryEscape(fileCode), url.QueryEscape(o.fs.opt.RcloneKey))
+		o.fs.endpoint, url.QueryEscape(fileCode), url.QueryEscape(o.fs.opt.Key))
 
 	req, err := http.NewRequestWithContext(ctx, "GET", apiURL, nil)
 	if err != nil {
@@ -2312,3 +2289,16 @@ func (o *Object) Hash(ctx context.Context, t hash.Type) (string, error) {
 func (o *Object) String() string {
 	return o.remote
 }
+
+// Check the interfaces are satisfied
+var (
+	_ fs.Fs = (*Fs)(nil)
+	// _ fs.Purger          = (*Fs)(nil)
+	// _ fs.PutStreamer     = (*Fs)(nil)
+	// _ fs.Copier          = (*Fs)(nil)
+	_ fs.Abouter = (*Fs)(nil)
+	_ fs.Mover   = (*Fs)(nil)
+	// _ fs.DirMover        = (*Fs)(nil)
+	_ fs.Object = (*Object)(nil)
+	// _ fs.IDer            = (*Object)(nil)
+)
