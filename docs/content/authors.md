@@ -954,3 +954,4 @@ put them back in again.` >}}
   * eccoisle <167755281+eccoisle@users.noreply.github.com>
   * Klaas Freitag <kraft@freisturz.de>
   * Danny Garside <dannygarside@outlook.com>
+  * Samantha Bowen <sam@bbowen.net>
