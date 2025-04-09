@@ -631,7 +631,7 @@ func NewUpdateFileInfo() UpdateFileInfo {
 		FileFlags: FileFlags{
 			IsExecutable: true,
 			IsHidden:     false,
-			IsWritable:   false,
+			IsWritable:   true,
 		},
 	}
 }
