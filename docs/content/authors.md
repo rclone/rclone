@@ -953,3 +953,4 @@ put them back in again.` >}}
   * Fernando Fernández <ferferga@hotmail.com>
   * eccoisle <167755281+eccoisle@users.noreply.github.com>
   * Klaas Freitag <kraft@freisturz.de>
+  * Danny Garside <dannygarside@outlook.com>
