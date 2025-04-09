@@ -957,3 +957,4 @@ put them back in again.` >}}
   * Samantha Bowen <sam@bbowen.net>
   * simonmcnair <101189766+simonmcnair@users.noreply.github.com>
   * huanghaojun <jasen.huang@ugreen.com>
+  * Enduriel <endur1el@protonmail.com>
