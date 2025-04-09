@@ -275,7 +275,7 @@ func NewFs(ctx context.Context, name string, root string, config configmap.Mappe
 	}
 
 	for _, cookie := range sessionResp.Cookies() {
-		if cookie.Name == authCookieName && cookie.Value != "" {
+		if (cookie.Name == authCookieName) && (cookie.Value != "") {
 			config.Set(authCookieName, cookie.Value)
 		}
 	}
@@ -728,6 +728,97 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	o.size = src.Size()
 
 	return nil
+}
+
+// ChangeNotify calls the passed function with a path that has had changes.
+// If the implementation uses polling, it should adhere to the given interval.
+//
+// Automatically restarts itself in case of unexpected behavior of the remote.
+//
+// Close the returned channel to stop being notified.
+func (f *Fs) ChangeNotify(ctx context.Context, notifyFunc func(string, fs.EntryType), pollIntervalChan <-chan time.Duration) {
+	go func() {
+		var ticker *time.Ticker
+		var tickerC <-chan time.Time
+		for {
+			select {
+			case pollInterval, ok := <-pollIntervalChan:
+				if !ok {
+					if ticker != nil {
+						ticker.Stop()
+					}
+					return
+				}
+				if ticker != nil {
+					ticker.Stop()
+					ticker, tickerC = nil, nil
+				}
+				if pollInterval != 0 {
+					ticker = time.NewTicker(pollInterval)
+					tickerC = ticker.C
+				}
+			case <-tickerC:
+				fs.Debugf(f, "Checking for changes on remote")
+				err := f.changeNotifyRunner(ctx, notifyFunc)
+				if err != nil {
+					fs.Infof(f, "Change notify listener failure: %s", err)
+				}
+			}
+		}
+	}()
+}
+
+func (f *Fs) changeNotifyRunner(ctx context.Context, notifyFunc func(string, fs.EntryType)) error {
+	for {
+		var changes []api.Event
+
+		opts := rest.Opts{
+			Method: "GET",
+			Path:   "/api/events",
+		}
+
+		err := f.pacer.Call(func() (bool, error) {
+			resp, err := f.srv.CallJSON(ctx, &opts, nil, &changes)
+			return shouldRetry(ctx, resp, err)
+		})
+
+		if err != nil {
+			return err
+		}
+
+		type fileEntryType struct {
+			path      string
+			entryType fs.EntryType
+		}
+		var pathsToClear []fileEntryType
+		for _, change := range changes {
+			addPathToClear := func(parentID string) {
+				if path, ok := f.dirCache.GetInv(parentID); ok {
+					entryType := fs.EntryObject
+					if change.Source.Type != "file" {
+						entryType = fs.EntryDirectory
+					}
+					pathsToClear = append(pathsToClear, fileEntryType{path: path, entryType: entryType})
+				}
+			}
+
+			// Check original parent location
+			addPathToClear(change.Source.ParentId)
+
+			// Check destination parent location if file was moved
+			if change.Source.DestParentId != "" {
+				addPathToClear(change.Source.DestParentId)
+			}
+		}
+		notifiedPaths := make(map[string]bool)
+		for _, entry := range pathsToClear {
+			if _, ok := notifiedPaths[entry.path]; ok {
+				continue
+			}
+			notifiedPaths[entry.path] = true
+			notifyFunc(entry.path, entry.entryType)
+		}
+	}
 }
 
 // OpenChunkWriter returns the chunk size and a ChunkWriter

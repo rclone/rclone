@@ -129,3 +129,18 @@ type FileShare struct {
 type CategorySize struct {
 	Size int64 `json:"totalSize"`
 }
+
+type EventSource struct {
+	ID           string `json:"id"`
+	Name         string `json:"name"`
+	Type         string `json:"type"`
+	ParentId     string `json:"parentId"`
+	DestParentId string `json:"destParentId"`
+}
+
+type Event struct {
+	ID        string      `json:"id"`
+	Type      string      `json:"type"`
+	CreatedAt time.Time   `json:"createdAt"`
+	Source    EventSource `json:"Source"`
+}
