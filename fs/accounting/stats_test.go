@@ -265,7 +265,7 @@ func TestRemoteStats(t *testing.T) {
 		}
 		s.AddTransfer(tr1)
 		time.Sleep(time.Millisecond)
-		rs, err := s.RemoteStats()
+		rs, err := s.RemoteStats(false)
 
 		require.NoError(t, err)
 		assert.Equal(t, float64(10), rs["transferTime"])

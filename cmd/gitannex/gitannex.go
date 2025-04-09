@@ -35,6 +35,7 @@ import (
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/cache"
 	"github.com/rclone/rclone/fs/config"
+	"github.com/rclone/rclone/fs/fspath"
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/spf13/cobra"
 )
@@ -262,38 +263,58 @@ func (s *server) run() error {
 }
 
 // Idempotently handle an incoming INITREMOTE message. This should perform
-// one-time setup operations, but we may receive the command again, e.g. when
-// this git-annex remote is initialized in a different repository.
+// one-time setup operations for the remote, such as validating or rejecting
+// config values. We may receive the INITREMOTE message again in later sessions,
+// e.g. when the same git-annex remote is initialized in a different repository.
+// However, we are *not* guaranteed to receive the INITREMOTE message once per
+// session, so do not mutate state here and expect it to always be available in
+// other handler functions.
 func (s *server) handleInitRemote() error {
 	if err := s.queryConfigs(); err != nil {
 		return fmt.Errorf("failed to get configs: %w", err)
 	}
 
-	// Explicitly check that a remote with the given name exists. If we just
-	// relied on `cache.Get()` to return `fs.ErrorNotFoundInConfigFile`, this
-	// function would incorrectly succeed when the given remote name is actually
-	// a file path.
+	// Explicitly check whether [server.configRcloneRemoteName] names a remote.
 	//
-	// The :local: backend does not correspond to a remote named by the rclone
-	// config, but is permitted to enable testing. Technically, a user might hit
-	// this code path, but it would be a strange choice because git-annex
-	// natively supports a "directory" special remote.
-
+	// - We do not permit file paths in the remote name; that's what
+	//   [s.configPrefix] is for. If we simply checked whether [cache.Get]
+	//   returns [fs.ErrorNotFoundInConfigFile], we would incorrectly identify
+	//   file names as valid remote names.
+	//
+	// - In order to support remotes defined by environment variables, we must
+	//   use [config.GetRemoteNames] instead of [config.FileSections].
 	trimmedName := strings.TrimSuffix(s.configRcloneRemoteName, ":")
-
-	if s.configRcloneRemoteName != ":local" {
-		var remoteExists bool
-		if slices.Contains(config.FileSections(), trimmedName) {
-			remoteExists = true
-		}
-		if !remoteExists {
-			s.sendMsg("INITREMOTE-FAILURE remote does not exist: " + s.configRcloneRemoteName)
-			return fmt.Errorf("remote does not exist: %s", s.configRcloneRemoteName)
-		}
+	if slices.Contains(config.GetRemoteNames(), trimmedName) {
+		s.sendMsg("INITREMOTE-SUCCESS")
+		return nil
 	}
 
-	s.configRcloneRemoteName = trimmedName + ":"
-
+	// Otherwise, check whether [server.configRcloneRemoteName] is actually a
+	// backend string such as ":local:". These are not remote names, per se, but
+	// they are permitted for compatibility with [fstest]. We could guard this
+	// behavior behind [testing.Testing] to prevent users from specifying
+	// backend strings, but there's no obvious harm in permitting it.
+	maybeBackend := strings.HasPrefix(s.configRcloneRemoteName, ":")
+	if !maybeBackend {
+		s.sendMsg("INITREMOTE-FAILURE remote does not exist: " + s.configRcloneRemoteName)
+		return fmt.Errorf("remote does not exist: %s", s.configRcloneRemoteName)
+	}
+	parsed, err := fspath.Parse(s.configRcloneRemoteName)
+	if err != nil {
+		s.sendMsg("INITREMOTE-FAILURE remote could not be parsed as a backend: " + s.configRcloneRemoteName)
+		return fmt.Errorf("remote could not be parsed as a backend: %s", s.configRcloneRemoteName)
+	}
+	if parsed.Path != "" {
+		s.sendMsg("INITREMOTE-FAILURE backend must not have a path: " + s.configRcloneRemoteName)
+		return fmt.Errorf("backend must not have a path: %s", s.configRcloneRemoteName)
+	}
+	// Strip the leading colon and options before searching for the backend,
+	// i.e. search for "local" instead of ":local,description=hello:/tmp/foo".
+	trimmedBackendName := strings.TrimPrefix(parsed.Name, ":")
+	if _, err = fs.Find(trimmedBackendName); err != nil {
+		s.sendMsg("INITREMOTE-FAILURE backend does not exist: " + trimmedBackendName)
+		return fmt.Errorf("backend does not exist: %s", trimmedBackendName)
+	}
 	s.sendMsg("INITREMOTE-SUCCESS")
 	return nil
 }

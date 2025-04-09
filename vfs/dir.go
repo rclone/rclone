@@ -2,6 +2,7 @@ package vfs
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"os"
 	"path"
@@ -15,6 +16,7 @@ import (
 	"github.com/rclone/rclone/fs/dirtree"
 	"github.com/rclone/rclone/fs/list"
 	"github.com/rclone/rclone/fs/log"
+	"github.com/rclone/rclone/fs/object"
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/fs/walk"
 	"github.com/rclone/rclone/vfs/vfscommon"
@@ -817,6 +819,51 @@ func (d *Dir) readDir() error {
 	return d._readDir()
 }
 
+// jsonErrorf formats the string according to a format specifier and
+// returns the resulting string as a JSON blob with key "error"
+func jsonErrorf(format string, a ...any) []byte {
+	errMsg := fmt.Sprintf(format, a...)
+	jsonBlob, _ := json.MarshalIndent(map[string]string{"error": errMsg}, "", "\t")
+	return jsonBlob
+}
+
+// stat a single metadata item in the directory
+//
+// Returns true if it is a metadata name
+func (d *Dir) statMetadata(leaf, baseLeaf string) (metaNode Node, err error) {
+	// Find original file - note that this is recursing into stat()
+	node, err := d.stat(baseLeaf)
+	if err != nil {
+		return node, err
+	}
+	// Read the metadata from the original entry into a JSON dump
+	entry := node.DirEntry()
+	var metadataDump []byte
+	if entry != nil {
+		metadata, err := fs.GetMetadata(context.TODO(), entry)
+		if err != nil {
+			metadataDump = jsonErrorf("failed to read metadata: %v", err)
+		} else if metadata == nil {
+			metadataDump = []byte("{}") // no metadata to read
+		} else {
+			metadataDump, err = json.MarshalIndent(metadata, "", "\t")
+			if err != nil {
+				metadataDump = jsonErrorf("failed to write metadata: %v", err)
+			}
+		}
+	} else {
+		metadataDump = []byte("{}") // no metadata yet when an object is being written
+	}
+	// Make a memory based file with metadataDump in
+	remote := path.Join(d.path, leaf)
+	o := object.NewMemoryObject(remote, entry.ModTime(context.TODO()), metadataDump)
+	f := newFile(d, d.path, o, leaf)
+	// Base the metadata inode number off the real file inode number
+	// to keep it constant
+	f.inode = node.Inode() ^ (1 << 63)
+	return f, nil
+}
+
 // stat a single item in the directory
 //
 // returns ENOENT if not found.
@@ -824,22 +871,38 @@ func (d *Dir) readDir() error {
 // contains files with names that differ only by case.
 func (d *Dir) stat(leaf string) (Node, error) {
 	d.mu.Lock()
-	defer d.mu.Unlock()
 	err := d._readDir()
 	if err != nil {
+		d.mu.Unlock()
 		return nil, err
 	}
 	item, ok := d.items[leaf]
+	d.mu.Unlock()
+
+	// Look for a metadata file
+	if !ok {
+		if baseLeaf, found := d.vfs.isMetadataFile(leaf); found {
+			node, err := d.statMetadata(leaf, baseLeaf)
+			if err != nil {
+				return nil, err
+			}
+			// Add metadata file to directory as virtual object
+			d.addObject(node)
+			return node, nil
+		}
+	}
 
 	ci := fs.GetConfig(context.TODO())
 	normUnicode := !ci.NoUnicodeNormalization
 	normCase := ci.IgnoreCaseSync || d.vfs.Opt.CaseInsensitive
 	if !ok && (normUnicode || normCase) {
 		leafNormalized := operations.ToNormal(leaf, normUnicode, normCase) // this handles both case and unicode normalization
+		d.mu.Lock()
 		for name, node := range d.items {
 			if operations.ToNormal(name, normUnicode, normCase) == leafNormalized {
 				if ok {
 					// duplicate normalized match is an error
+					d.mu.Unlock()
 					return nil, fmt.Errorf("duplicate filename %q detected with case/unicode normalization settings", leaf)
 				}
 				// found a normalized match
@@ -847,6 +910,7 @@ func (d *Dir) stat(leaf string) (Node, error) {
 				item = node
 			}
 		}
+		d.mu.Unlock()
 	}
 
 	if !ok {

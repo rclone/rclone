@@ -900,3 +900,15 @@ func (vfs *VFS) Symlink(oldname, newname string) error {
 	_, err := vfs.CreateSymlink(oldname, newname)
 	return err
 }
+
+// Return true if name represents a metadata file
+//
+// It returns the underlying path
+func (vfs *VFS) isMetadataFile(name string) (rawName string, found bool) {
+	ext := vfs.Opt.MetadataExtension
+	if ext == "" {
+		return name, false
+	}
+	rawName, found = strings.CutSuffix(name, ext)
+	return rawName, found
+}

@@ -27,6 +27,7 @@ package nfs
 
 import (
 	"bytes"
+	"encoding/binary"
 	"errors"
 	"fmt"
 	"os"
@@ -81,8 +82,34 @@ func (dh *diskHandler) makeSymlinkCache() error {
 	dh.read = dh.symlinkCacheRead
 	dh.write = dh.symlinkCacheWrite
 	dh.remove = dh.symlinkCacheRemove
+	dh.suffix = dh.symlinkCacheSuffix
 
 	return nil
+}
+
+// Prefixes a []byte with its length as a 4-byte big-endian integer.
+func addLengthPrefix(data []byte) []byte {
+	length := uint32(len(data))
+	buf := new(bytes.Buffer)
+	err := binary.Write(buf, binary.BigEndian, length)
+	if err != nil {
+		// This should never fail
+		panic(err)
+	}
+	buf.Write(data)
+	return buf.Bytes()
+}
+
+// Removes the 4-byte big-endian length prefix from a []byte.
+func removeLengthPrefix(data []byte) ([]byte, error) {
+	if len(data) < 4 {
+		return nil, errors.New("file handle too short")
+	}
+	length := binary.BigEndian.Uint32(data[:4])
+	if int(length) != len(data)-4 {
+		return nil, errors.New("file handle invalid length")
+	}
+	return data[4 : 4+length], nil
 }
 
 // Write the fullPath into cachePath returning the possibly updated fh
@@ -115,7 +142,8 @@ func (dh *diskHandler) symlinkCacheWrite(fh []byte, cachePath string, fullPath s
 		dh.handleType = handle.Type()
 	}
 
-	return handle.Bytes(), nil
+	// Adjust the raw handle so it has a length prefix
+	return addLengthPrefix(handle.Bytes()), nil
 }
 
 // Read the contents of (fh, cachePath)
@@ -127,6 +155,12 @@ func (dh *diskHandler) symlinkCacheWrite(fh []byte, cachePath string, fullPath s
 // Note that the caller needs CAP_DAC_READ_SEARCH to use this.
 func (dh *diskHandler) symlinkCacheRead(fh []byte, cachePath string) (fullPath []byte, err error) {
 	//defer log.Trace(nil, "fh=%x, cachePath=%q", fh, cachePath)("fullPath=%q, err=%v", &fullPath, &err)
+
+	// First check and remove the file handle prefix length
+	fh, err = removeLengthPrefix(fh)
+	if err != nil {
+		return nil, fmt.Errorf("symlink cache open by handle at: %w", err)
+	}
 
 	// Find the file with the handle passed in
 	handle := unix.NewFileHandle(dh.handleType, fh)
@@ -174,4 +208,16 @@ func (dh *diskHandler) symlinkCacheRemove(fh []byte, cachePath string) error {
 	cachePath = dh.handleToPath(fh)
 
 	return os.Remove(cachePath)
+}
+
+// Return a suffix for the file handle or nil
+func (dh *diskHandler) symlinkCacheSuffix(fh []byte) []byte {
+	if len(fh) < 4 {
+		return nil
+	}
+	length := int(binary.BigEndian.Uint32(fh[:4])) + 4
+	if len(fh) <= length {
+		return nil
+	}
+	return fh[length:]
 }

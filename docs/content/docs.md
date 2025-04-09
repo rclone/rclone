@@ -1448,6 +1448,19 @@ backends and the VFS. There are individual flags for just enabling it
 for the VFS `--vfs-links` and the local backend `--local-links` if
 required.
 
+### --list-cutoff N {#list-cutoff}
+
+When syncing rclone needs to sort directory entries before comparing
+them. Below this threshold (1,000,000) by default, rclone will store
+the directory entries in memory. 1,000,000 entries will take approx
+1GB of RAM to store. Above this threshold rclone will store directory
+entries on disk and sort them without using a lot of memory.
+
+Doing this is slightly less efficient then sorting them in memory and
+will only work well for the bucket based backends (eg s3, b2,
+azureblob, swift) but these are the only backends likely to have
+millions of entries in a directory.
+
 ### --log-file=FILE ###
 
 Log all of rclone's output to FILE.  This is not active by default.
@@ -1525,6 +1538,24 @@ of the remote which may be desirable.
 
 Setting this to a negative number will make the backlog as large as
 possible.
+
+### --max-buffer-memory=SIZE {#max-buffer-memory}
+
+If set, don't allocate more than SIZE amount of memory as buffers. If
+not set or set to `0` or `off` this will not limit the amount of memory
+in use.
+
+This includes memory used by buffers created by the `--buffer` flag
+and buffers used by multi-thread transfers.
+
+Most multi-thread transfers do not take additional memory, but some do
+depending on the backend (eg the s3 backend for uploads). This means
+there is a tension between total setting `--transfers` as high as
+possible and memory use.
+
+Setting `--max-buffer-memory` allows the buffer memory to be
+controlled so that it doesn't overwhelm the machine and allows
+`--transfers` to be set large.
 
 ### --max-delete=N ###
 
@@ -1784,6 +1815,14 @@ This will work with the `sync`/`copy`/`move` commands and friends
 `copyto`/`moveto`. Multi thread transfers will be used with `rclone
 mount` and `rclone serve` if `--vfs-cache-mode` is set to `writes` or
 above.
+
+Most multi-thread transfers do not take additional memory, but some do
+(for example uploading to s3). In the worst case memory usage can be
+at maximum `--transfers` * `--multi-thread-chunk-size` *
+`--multi-thread-streams` or specifically for the s3 backend
+`--transfers` * `--s3-chunk-size` * `--s3-concurrency`. However you
+can use the the [--max-buffer-memory](/docs/#max-buffer-memory) flag
+to control the maximum memory used here.
 
 **NB** that this **only** works with supported backends as the
 destination but will work with any backend as the source.
@@ -2808,6 +2847,7 @@ For the filtering options
   * `--max-size`
   * `--min-age`
   * `--max-age`
+  * `--hash-filter`
   * `--dump filters`
   * `--metadata-include`
   * `--metadata-include-from`
