@@ -581,7 +581,7 @@ func (d *Dir) _readDir() error {
 		return err
 	}
 
-	d.read = when
+	d.read = time.Now()
 	d.cleanupTimer.Reset(time.Duration(d.vfs.Opt.DirCacheTime * 2))
 
 	return nil
