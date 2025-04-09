@@ -45,7 +45,7 @@ on the host.
 The _FUSE_ driver is a prerequisite for rclone mounting and should be
 installed on host:
 ```
-sudo apt-get -y install fuse
+sudo apt-get -y install fuse3
 ```
 
 Create two directories required by rclone docker plugin:
