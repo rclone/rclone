@@ -1,5 +1,5 @@
 > ⚠️ **Unofficial Fork Disclaimer**  
-> This is an **unofficial fork** of [rclone](https://rclone.org), with additional enhancements such as **Teldrive** and **Terabox** support.  
+> This is an **unofficial fork** of [rclone](https://rclone.org), with additional enhancements such as **Alist**, **Teldrive** and **Terabox** support.  
 > I am **not affiliated with the upstream maintainers**, and this fork **does not intend to be malicious or harmful** in any way.  
 > Please **read the source code** if you're unsure or want to verify that it behaves as described.  
 > Contributions, feedback, and scrutiny are welcome.
@@ -26,6 +26,7 @@ Rclone *("rsync for cloud storage")* is a command-line program to sync files and
   * 1Fichier [:page_facing_up:](https://rclone.org/fichier/)
   * Akamai Netstorage [:page_facing_up:](https://rclone.org/netstorage/)
   * Alibaba Cloud (Aliyun) Object Storage System (OSS) [:page_facing_up:](https://rclone.org/s3/#alibaba-oss)
+  * Alist [:page_facing_up:](https://github.com/AlistGo/alist)
   * Amazon S3 [:page_facing_up:](https://rclone.org/s3/)
   * ArvanCloud Object Storage (AOS) [:page_facing_up:](https://rclone.org/s3/#arvan-cloud-object-storage-aos)
   * Backblaze B2 [:page_facing_up:](https://rclone.org/b2/)
