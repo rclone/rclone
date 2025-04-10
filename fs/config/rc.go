@@ -75,6 +75,9 @@ See the [listremotes](/commands/rclone_listremotes/) command for more informatio
 // including any defined by environment variables.
 func rcListRemotes(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 	remoteNames := GetRemoteNames()
+	if remoteNames == nil {
+		remoteNames = []string{}
+	}
 	out = rc.Params{
 		"remotes": remoteNames,
 	}
