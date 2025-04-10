@@ -51,6 +51,7 @@ func Decrypt(b io.ReadSeeker) (io.Reader, error) {
 	ctx := context.Background()
 	ci := fs.GetConfig(ctx)
 	var usingPasswordCommand bool
+	var usingEnvPassword bool
 
 	// Find first non-empty line
 	r := bufio.NewReader(b)
@@ -99,15 +100,18 @@ func Decrypt(b io.ReadSeeker) (io.Reader, error) {
 		} else {
 			usingPasswordCommand = false
 
-			envpw := os.Getenv("RCLONE_CONFIG_PASS")
+			envPassword := os.Getenv("RCLONE_CONFIG_PASS")
 
-			if envpw != "" {
-				err := SetConfigPassword(envpw)
+			if envPassword != "" {
+				usingEnvPassword = true
+				err := SetConfigPassword(envPassword)
 				if err != nil {
 					fs.Errorf(nil, "Using RCLONE_CONFIG_PASS returned: %v", err)
 				} else {
 					fs.Debugf(nil, "Using RCLONE_CONFIG_PASS password.")
 				}
+			} else {
+				usingEnvPassword = false
 			}
 		}
 	}
@@ -143,6 +147,9 @@ func Decrypt(b io.ReadSeeker) (io.Reader, error) {
 		} else if len(configKey) == 0 {
 			if usingPasswordCommand {
 				return nil, errors.New("using --password-command derived password, unable to decrypt configuration")
+			}
+			if usingEnvPassword {
+				return nil, errors.New("using RCLONE_CONFIG_PASS env password, unable to decrypt configuration")
 			}
 			if !ci.AskPassword {
 				return nil, errors.New("unable to decrypt configuration and not allowed to ask for password - set RCLONE_CONFIG_PASS to your configuration password")
