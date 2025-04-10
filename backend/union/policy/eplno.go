@@ -18,15 +18,28 @@ type EpLno struct {
 	EpAll
 }
 
-func (p *EpLno) lno(upstreams []*upstream.Fs) (*upstream.Fs, error) {
+func (p *EpLno) getUpstreamObjectCount(ctx context.Context, upstream *upstream.Fs) int64 {
+	numObj, err := upstream.GetNumObjects()
+	if err != nil {
+		uName := upstream.Name()
+		fs.LogPrintf(fs.LogLevelNotice, nil,
+			"Number of Objects is not supported for upstream %s, falling back to listing (this may be slower)...", uName)
+		listing, err := upstream.List(ctx, "")
+		if err != nil {
+			fs.LogPrintf(fs.LogLevelError, nil, "Listing failed, treating as 0: %v", err)
+			return 0
+		}
+		numObj = int64(len(listing))
+		fs.LogPrintf(fs.LogLevelDebug, nil, "Counted %d objects for upstream %s by listing", numObj, uName)
+	}
+	return numObj
+}
+
+func (p *EpLno) lno(ctx context.Context, upstreams []*upstream.Fs) (*upstream.Fs, error) {
 	var minNumObj int64 = math.MaxInt64
 	var lnoUpstream *upstream.Fs
 	for _, u := range upstreams {
-		numObj, err := u.GetNumObjects()
-		if err != nil {
-			fs.LogPrintf(fs.LogLevelNotice, nil,
-				"Number of Objects is not supported for upstream %s, treating as 0", u.Name())
-		}
+		numObj := p.getUpstreamObjectCount(ctx, u)
 		if minNumObj > numObj {
 			minNumObj = numObj
 			lnoUpstream = u
@@ -38,15 +51,11 @@ func (p *EpLno) lno(upstreams []*upstream.Fs) (*upstream.Fs, error) {
 	return lnoUpstream, nil
 }
 
-func (p *EpLno) lnoEntries(entries []upstream.Entry) (upstream.Entry, error) {
+func (p *EpLno) lnoEntries(ctx context.Context, entries []upstream.Entry) (upstream.Entry, error) {
 	var minNumObj int64 = math.MaxInt64
 	var lnoEntry upstream.Entry
 	for _, e := range entries {
-		numObj, err := e.UpstreamFs().GetNumObjects()
-		if err != nil {
-			fs.LogPrintf(fs.LogLevelNotice, nil,
-				"Number of Objects is not supported for upstream %s, treating as 0", e.UpstreamFs().Name())
-		}
+		numObj := p.getUpstreamObjectCount(ctx, e.UpstreamFs())
 		if minNumObj > numObj {
 			minNumObj = numObj
 			lnoEntry = e
@@ -61,7 +70,7 @@ func (p *EpLno) Action(ctx context.Context, upstreams []*upstream.Fs, path strin
 	if err != nil {
 		return nil, err
 	}
-	u, err := p.lno(upstreams)
+	u, err := p.lno(ctx, upstreams)
 	return []*upstream.Fs{u}, err
 }
 
@@ -71,7 +80,7 @@ func (p *EpLno) ActionEntries(entries ...upstream.Entry) ([]upstream.Entry, erro
 	if err != nil {
 		return nil, err
 	}
-	e, err := p.lnoEntries(entries)
+	e, err := p.lnoEntries(context.Background(), entries)
 	return []upstream.Entry{e}, err
 }
 
@@ -81,7 +90,7 @@ func (p *EpLno) Create(ctx context.Context, upstreams []*upstream.Fs, path strin
 	if err != nil {
 		return nil, err
 	}
-	u, err := p.lno(upstreams)
+	u, err := p.lno(ctx, upstreams)
 	return []*upstream.Fs{u}, err
 }
 
@@ -91,7 +100,7 @@ func (p *EpLno) CreateEntries(entries ...upstream.Entry) ([]upstream.Entry, erro
 	if err != nil {
 		return nil, err
 	}
-	e, err := p.lnoEntries(entries)
+	e, err := p.lnoEntries(context.Background(), entries)
 	return []upstream.Entry{e}, err
 }
 
@@ -104,7 +113,7 @@ func (p *EpLno) Search(ctx context.Context, upstreams []*upstream.Fs, path strin
 	if err != nil {
 		return nil, err
 	}
-	return p.lno(upstreams)
+	return p.lno(ctx, upstreams)
 }
 
 // SearchEntries is SEARCH category policy but receiving a set of candidate entries
@@ -112,5 +121,5 @@ func (p *EpLno) SearchEntries(entries ...upstream.Entry) (upstream.Entry, error)
 	if len(entries) == 0 {
 		return nil, fs.ErrorObjectNotFound
 	}
-	return p.lnoEntries(entries)
+	return p.lnoEntries(context.Background(), entries)
 }

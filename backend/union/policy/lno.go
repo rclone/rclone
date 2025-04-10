@@ -28,6 +28,6 @@ func (p *Lno) Create(ctx context.Context, upstreams []*upstream.Fs, path string)
 	if len(upstreams) == 0 {
 		return nil, fs.ErrorPermissionDenied
 	}
-	u, err := p.lno(upstreams)
+	u, err := p.lno(ctx, upstreams)
 	return []*upstream.Fs{u}, err
 }
