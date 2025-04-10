@@ -39,7 +39,7 @@ jobs:
         run: |
           make doc
           if [[ $(git status --porcelain) ]]; then
-            echo "Docs are not up to date. Please run 'make docs' and commit the changes."
+            echo "Docs are not up to date. Please run 'make doc' and commit the changes."
             exit 1
           else
             echo "Docs are up to date."
