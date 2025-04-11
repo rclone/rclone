@@ -738,6 +738,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 // Close the returned channel to stop being notified.
 func (f *Fs) ChangeNotify(ctx context.Context, notifyFunc func(string, fs.EntryType), pollIntervalChan <-chan time.Duration) {
 	go func() {
+		processedEventIDs := make(map[string]time.Time)
 		var ticker *time.Ticker
 		var tickerC <-chan time.Time
 		for {
@@ -759,7 +760,12 @@ func (f *Fs) ChangeNotify(ctx context.Context, notifyFunc func(string, fs.EntryT
 				}
 			case <-tickerC:
 				fs.Debugf(f, "Checking for changes on remote")
-				err := f.changeNotifyRunner(ctx, notifyFunc)
+				for eventID, timestamp := range processedEventIDs {
+					if time.Since(timestamp) > 5*time.Minute {
+						delete(processedEventIDs, eventID)
+					}
+				}
+				err := f.changeNotifyRunner(ctx, notifyFunc, processedEventIDs)
 				if err != nil {
 					fs.Infof(f, "Change notify listener failure: %s", err)
 				}
@@ -768,57 +774,61 @@ func (f *Fs) ChangeNotify(ctx context.Context, notifyFunc func(string, fs.EntryT
 	}()
 }
 
-func (f *Fs) changeNotifyRunner(ctx context.Context, notifyFunc func(string, fs.EntryType)) error {
-	for {
-		var changes []api.Event
+func (f *Fs) changeNotifyRunner(ctx context.Context, notifyFunc func(string, fs.EntryType), processedEventIDs map[string]time.Time) error {
 
-		opts := rest.Opts{
-			Method: "GET",
-			Path:   "/api/events",
-		}
+	var changes []api.Event
 
-		err := f.pacer.Call(func() (bool, error) {
-			resp, err := f.srv.CallJSON(ctx, &opts, nil, &changes)
-			return shouldRetry(ctx, resp, err)
-		})
-
-		if err != nil {
-			return err
-		}
-
-		type fileEntryType struct {
-			path      string
-			entryType fs.EntryType
-		}
-		var pathsToClear []fileEntryType
-		for _, change := range changes {
-			addPathToClear := func(parentID string) {
-				if path, ok := f.dirCache.GetInv(parentID); ok {
-					entryType := fs.EntryObject
-					if change.Source.Type != "file" {
-						entryType = fs.EntryDirectory
-					}
-					pathsToClear = append(pathsToClear, fileEntryType{path: path, entryType: entryType})
-				}
-			}
-
-			// Check original parent location
-			addPathToClear(change.Source.ParentId)
-
-			// Check destination parent location if file was moved
-			if change.Source.DestParentId != "" {
-				addPathToClear(change.Source.DestParentId)
-			}
-		}
-		notifiedPaths := make(map[string]bool)
-		for _, entry := range pathsToClear {
-			if _, ok := notifiedPaths[entry.path]; ok {
-				continue
-			}
-			notifiedPaths[entry.path] = true
-			notifyFunc(entry.path, entry.entryType)
-		}
+	opts := rest.Opts{
+		Method: "GET",
+		Path:   "/api/events",
 	}
+
+	err := f.pacer.Call(func() (bool, error) {
+		resp, err := f.srv.CallJSON(ctx, &opts, nil, &changes)
+		return shouldRetry(ctx, resp, err)
+	})
+
+	if err != nil {
+		return err
+	}
+
+	type fileEntryType struct {
+		path      string
+		entryType fs.EntryType
+	}
+	var pathsToClear []fileEntryType
+	for _, change := range changes {
+		if _, ok := processedEventIDs[change.ID]; ok {
+			continue
+		}
+		addPathToClear := func(parentID string) {
+			if path, ok := f.dirCache.GetInv(parentID); ok {
+				entryType := fs.EntryObject
+				if change.Source.Type != "file" {
+					entryType = fs.EntryDirectory
+				}
+				pathsToClear = append(pathsToClear, fileEntryType{path: path, entryType: entryType})
+			}
+		}
+
+		// Check original parent location
+		addPathToClear(change.Source.ParentId)
+
+		// Check destination parent location if file was moved
+		if change.Source.DestParentId != "" {
+			addPathToClear(change.Source.DestParentId)
+		}
+		processedEventIDs[change.ID] = time.Now()
+	}
+	notifiedPaths := make(map[string]bool)
+	for _, entry := range pathsToClear {
+		if _, ok := notifiedPaths[entry.path]; ok {
+			continue
+		}
+		notifiedPaths[entry.path] = true
+		notifyFunc(entry.path, entry.entryType)
+	}
+	return nil
 }
 
 // OpenChunkWriter returns the chunk size and a ChunkWriter

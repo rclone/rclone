@@ -142,5 +142,5 @@ type Event struct {
 	ID        string      `json:"id"`
 	Type      string      `json:"type"`
 	CreatedAt time.Time   `json:"createdAt"`
-	Source    EventSource `json:"Source"`
+	Source    EventSource `json:"source"`
 }
